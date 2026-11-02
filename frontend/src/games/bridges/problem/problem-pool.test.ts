@@ -5,6 +5,7 @@ import {
   encodeBridgesPoolIslands,
   findBridgesPoolEntry,
   findBridgesPoolEntryByProblemId,
+  findBridgesPoolProblemFeatures,
   listBridgesPoolEntries,
   listBridgesPoolProblemIds,
   toBridgesPooledProblem,
@@ -148,5 +149,28 @@ describe("同梱の問題集", () => {
 
       expect(found).toBeNull();
     });
+  });
+});
+
+describe("findBridgesPoolProblemFeatures", () => {
+  const [entry] = listBridgesPoolEntries("3");
+  const pooled = toBridgesPooledProblem(entry!);
+  const problemId = createProblemId(pooled.identity);
+
+  test("問題集の1問の特徴を、復元した問題の盤面の一辺と島の数で返すこと", () => {
+    const features = findBridgesPoolProblemFeatures("3", problemId);
+
+    expect(features).toEqual({
+      size: pooled.problem.width,
+      islandCount: pooled.problem.islands.length,
+    });
+  });
+
+  test("問題集に無い ID と、別の難易度の ID には null を返すこと", () => {
+    const unknown = findBridgesPoolProblemFeatures("3", "unknown");
+    const otherDifficulty = findBridgesPoolProblemFeatures("1", problemId);
+
+    expect(unknown).toBeNull();
+    expect(otherDifficulty).toBeNull();
   });
 });

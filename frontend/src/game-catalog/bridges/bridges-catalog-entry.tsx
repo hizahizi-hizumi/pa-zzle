@@ -1,48 +1,66 @@
-import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
+import { RecordedBridgesResult } from "@/game-catalog/bridges/RecordedBridgesResult";
+import {
+  createProblemFeatureFilter,
+  type GameCatalogEntry,
+  resolveRecordProblemPlayTarget,
+} from "@/game-catalog/game-catalog-entry";
 import pictogramSvg from "@/games/bridges/assets/pictogram.svg?raw";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
-import { PLAY_SCORE_METRIC_ID } from "@/records/play-record-definition";
 import {
-  createPlayRecordDisplay,
-  elapsedTimeProgressDisplay,
-  playScoreMetricPresentation,
-} from "@/records/ui/play-record-display";
+  bridgesPlayRecordDefinition,
+  isBridgesPlayRecord,
+  restoreBridgesRecordedResult,
+} from "@/games/bridges/play-record";
+import {
+  bridgesProblemFeatureAxes,
+  findBridgesPoolProblemFeatures,
+  listBridgesPoolProblemIds,
+} from "@/games/bridges/problem/problem-pool";
+import { canSelectBridgesProblemById } from "@/games/bridges/problem-selection";
+import { bridgesPlayRecordDisplay } from "@/games/bridges/ui/play-record-display";
+import {
+  bridgesProblemFeatureAxisDisplays,
+  formatBridgesProblemFeatures,
+} from "@/games/bridges/ui/problem-features";
+import { parseDifficultyLevel } from "@/games/difficulty";
 
-const BRIDGES_GAME_ID = "bridges";
-
-/**
- * 記録を持たないゲームの記録定義。どの記録もこのゲームの記録として読まず、評価点の指標も値を持たない。
- */
-const bridgesPlayRecordDefinition = {
-  gameId: BRIDGES_GAME_ID,
-  isRecord: () => false,
-  getComparisonKey: () => null,
-  personalBestMetrics: [
-    { id: PLAY_SCORE_METRIC_ID, direction: "higher", getValue: () => null },
-  ],
-  getClearPerformance: () => null,
-} as const;
-
-/**
- * ブリッジパズルの入口とプレイ画面。`gameCatalog` には載せず、パズル選択・記録・図鑑には出さない。
- * 入口とプレイ画面は URL で直接開ける。記録・問題集・結果画面を持たないので、遊び直し先・問題集の問題・記録の結果画面は返さない。
- */
 export const bridgesCatalogEntry = {
-  id: BRIDGES_GAME_ID,
+  id: bridgesPlayRecordDefinition.gameId,
   name: BRIDGES_DISPLAY_NAME,
   pictogramSvg,
   entryPath: "/puzzles/bridges",
   playPath: "/puzzles/bridges/play/:difficulty",
-  playRecordDisplay: createPlayRecordDisplay({
-    definition: bridgesPlayRecordDefinition,
-    getComparisonLabel: () => null,
-    metrics: { [PLAY_SCORE_METRIC_ID]: playScoreMetricPresentation },
-    progress: { elapsedMs: elapsedTimeProgressDisplay },
-  }),
-  recordProblemPlayTarget: () => null,
-  attemptProblemPlayTarget: () => null,
-  listPoolProblemIds: () => [],
-  describePoolProblem: () => null,
-  problemFeatureFilter: { axes: [], findPoolProblemValues: () => null },
-  renderRecordResult: () => null,
+  playRecordDisplay: bridgesPlayRecordDisplay,
+  recordProblemPlayTarget(record) {
+    return isBridgesPlayRecord(record)
+      ? resolveRecordProblemPlayTarget(
+          parseDifficultyLevel(record.payload.difficulty),
+          record.payload.problemIdentity,
+          canSelectBridgesProblemById,
+        )
+      : null;
+  },
+  attemptProblemPlayTarget({ start }) {
+    return resolveRecordProblemPlayTarget(
+      parseDifficultyLevel(start.difficulty),
+      start.problemIdentity,
+      canSelectBridgesProblemById,
+    );
+  },
+  listPoolProblemIds: listBridgesPoolProblemIds,
+  renderRecordResult(record, context) {
+    const recorded = restoreBridgesRecordedResult(record);
+    return recorded ? (
+      <RecordedBridgesResult {...recorded} {...context} />
+    ) : null;
+  },
+  describePoolProblem(difficulty, problemId) {
+    const features = findBridgesPoolProblemFeatures(difficulty, problemId);
+    return features ? formatBridgesProblemFeatures(features) : null;
+  },
+  problemFeatureFilter: createProblemFeatureFilter(
+    findBridgesPoolProblemFeatures,
+    bridgesProblemFeatureAxes,
+    bridgesProblemFeatureAxisDisplays,
+  ),
 } satisfies GameCatalogEntry;

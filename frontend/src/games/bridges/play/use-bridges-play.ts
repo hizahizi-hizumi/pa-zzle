@@ -1,11 +1,15 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { BridgesDifficulty } from "@/games/bridges/difficulty";
 import type {
-  BridgesIdentifiedProblem,
   BridgesProblem,
   BridgesProblemIdentity,
 } from "@/games/bridges/problem/problem";
+import type { BridgesPooledProblem } from "@/games/bridges/problem/problem-pool";
+import {
+  type BridgesSolveWorkload,
+  measureBridgesSolveWorkload,
+} from "@/games/bridges/problem/workload";
 import { selectBridgesProblemForDifficulty } from "@/games/bridges/problem-selection";
 import {
   type BridgesIslandStatus,
@@ -13,11 +17,18 @@ import {
 } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import {
+  type BridgesPlayScore,
+  calculateBridgesPlayScore,
+  calculateBridgesSpeedScoreRule,
+} from "@/games/bridges/score";
+import {
   type BridgesSession,
+  type BridgesSessionResult,
   canRestartBridgesSession,
   canUndoBridgesSession,
   createBridgesSession,
   cycleBridgesSessionEdge,
+  getBridgesSessionResult,
   restartBridgesSession,
   undoBridgesSession,
 } from "@/games/bridges/session/session";
@@ -33,9 +44,15 @@ import {
 } from "@/games/play";
 import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
+import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
-/** クリアしたプレイの評価。評価規則を持たないので、クリアしても評価は無く、盤面を見せたままにする。 */
-export type BridgesResult = never;
+/** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
+export type BridgesResult = BridgesSessionResult & {
+  workload: BridgesSolveWorkload;
+  speedRule: SpeedScoreRule;
+  timeDeltaMs: number;
+  score: BridgesPlayScore;
+};
 
 /**
  * 最後の盤面操作で、橋に起きた変化。盤面が阻まれた操作を返し、プレイ画面が読み上げで知らせるために持つ。
@@ -73,27 +90,48 @@ export type BridgesPlay = GamePlay<
 
 type BridgesPlayState = {
   problemIdentity: BridgesProblemIdentity;
+  workload: BridgesSolveWorkload;
   session: BridgesSession;
   progress: GameProgress;
   edgeNotice: BridgesEdgeNotice | null;
 };
 
 function createPlayState(
-  { problem, identity }: BridgesIdentifiedProblem,
+  pooled: BridgesPooledProblem,
   startedAt: number,
 ): BridgesPlayState {
+  const { problem, identity } = pooled;
   return {
     problemIdentity: identity,
+    workload: measureBridgesSolveWorkload(pooled),
     session: createBridgesSession(problem, startedAt),
     progress: "playing",
     edgeNotice: null,
   };
 }
 
+/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+export function createBridgesResult(
+  sessionResult: BridgesSessionResult,
+  workload: BridgesSolveWorkload,
+): BridgesResult {
+  const speedRule = calculateBridgesSpeedScoreRule(workload);
+  return {
+    ...sessionResult,
+    workload,
+    speedRule,
+    timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
+    score: calculateBridgesPlayScore({
+      elapsedMs: sessionResult.elapsedMs,
+      workload,
+    }),
+  };
+}
+
 function selectProblem(
   difficulty: BridgesDifficulty,
   avoidedProblemId: ProblemId | undefined,
-): BridgesIdentifiedProblem {
+): BridgesPooledProblem {
   return selectProblemAvoiding(
     (seed) => selectBridgesProblemForDifficulty(difficulty, seed),
     avoidedProblemId,
@@ -103,10 +141,11 @@ function selectProblem(
 /**
  * 難易度の問題を選んで遊ぶ。
  * `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。
+ * クリアすると `result` に評価を返す。
  */
 export function useBridgesPlay(
   difficulty: BridgesDifficulty,
-  initialProblem?: BridgesIdentifiedProblem,
+  initialProblem?: BridgesPooledProblem,
   avoidedProblemId?: ProblemId,
 ): BridgesPlay {
   const [play, setPlay] = useState(() =>
@@ -115,7 +154,7 @@ export function useBridgesPlay(
       Date.now(),
     ),
   );
-  const { session, progress, problemIdentity } = play;
+  const { session, progress, problemIdentity, workload } = play;
   const elapsedMs = useSessionElapsedMs(session);
   const { problem, puzzleState } = session;
 
@@ -199,6 +238,11 @@ export function useBridgesPlay(
     setPlay(completePlayClearAnimation);
   }, []);
 
+  const result = useMemo(() => {
+    const sessionResult = getBridgesSessionResult(session);
+    return sessionResult ? createBridgesResult(sessionResult, workload) : null;
+  }, [session, workload]);
+
   return {
     difficulty,
     problemIdentity,
@@ -208,7 +252,7 @@ export function useBridgesPlay(
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
     elapsedMs,
-    result: null,
+    result,
     board: problem,
     bridges: puzzleState.bridges,
     islandStatuses: listBridgesIslandStatuses(problem, puzzleState),

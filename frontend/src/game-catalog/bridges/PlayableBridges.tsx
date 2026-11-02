@@ -1,12 +1,23 @@
 import { bridgesCatalogEntry } from "@/game-catalog/bridges/bridges-catalog-entry";
-import { useGameNavigation } from "@/game-catalog/game-navigation";
 import {
-  useProblemIdQuerySync,
-  useRequestedProblem,
-} from "@/game-catalog/problem-id-query";
+  type CompletedGamePlay,
+  usePlayableGame,
+} from "@/game-catalog/playable-game";
+import { useRequestedProblem } from "@/game-catalog/problem-id-query";
+import { createBridgesDiagnosticSnapshot } from "@/games/bridges/diagnostics";
 import type { BridgesDifficulty } from "@/games/bridges/difficulty";
-import { useBridgesPlay } from "@/games/bridges/play/use-bridges-play";
+import {
+  type BridgesResult,
+  useBridgesPlay,
+} from "@/games/bridges/play/use-bridges-play";
+import { createBridgesPlayAttemptProgress } from "@/games/bridges/play-attempt";
+import {
+  bridgesPlayRecordDefinition,
+  createBridgesPlayRecord,
+} from "@/games/bridges/play-record";
+import type { BridgesProblemIdentity } from "@/games/bridges/problem/problem";
 import { selectBridgesProblemById } from "@/games/bridges/problem-selection";
+import { BridgesDiagnostics } from "@/games/bridges/ui/BridgesDiagnostics";
 import { BridgesPlay } from "@/games/bridges/ui/BridgesPlay";
 import type { ProblemId } from "@/games/problem-id";
 
@@ -16,10 +27,19 @@ type PlayableBridgesProps = {
   avoidedProblemId?: ProblemId;
 };
 
-/**
- * 1問のプレイを URL の問題 ID と画面遷移へつなぐ。
- * 評価・記録・検証情報を持たないので、完了記録・離脱の記録・検証情報（`usePlayableGame`）にはつながない。
- */
+function createPlayRecord(
+  completed: CompletedGamePlay<
+    BridgesDifficulty,
+    BridgesProblemIdentity,
+    BridgesResult
+  >,
+) {
+  return createBridgesPlayRecord({
+    ...completed,
+    workload: completed.result.workload,
+  });
+}
+
 export function PlayableBridges({
   difficulty,
   avoidedProblemId,
@@ -28,32 +48,43 @@ export function PlayableBridges({
     selectBridgesProblemById(difficulty, problemId),
   );
   const play = useBridgesPlay(difficulty, requestedProblem, avoidedProblemId);
-  useProblemIdQuerySync(play.problemIdentity);
-  const navigation = useGameNavigation(bridgesCatalogEntry);
+  const { screenProps, diagnostics } = usePlayableGame({
+    game: bridgesCatalogEntry,
+    play,
+    playRecordDefinition: bridgesPlayRecordDefinition,
+    createPlayRecord,
+    createPlayAttemptProgress: createBridgesPlayAttemptProgress,
+    createDiagnosticSnapshot(buildRevision) {
+      return createBridgesDiagnosticSnapshot({
+        difficulty,
+        problemIdentity: play.problemIdentity,
+        problem: play.board,
+        buildRevision,
+      });
+    },
+  });
 
   return (
-    <BridgesPlay
-      difficulty={difficulty}
-      progress={play.progress}
-      elapsedMs={play.elapsedMs}
-      result={play.result}
-      recordOutcomeNotice={null}
-      board={play.board}
-      bridges={play.bridges}
-      islandStatuses={play.islandStatuses}
-      undoCount={play.undoCount}
-      edgeNotice={play.edgeNotice}
-      canUndo={play.canUndo}
-      canRestart={play.canRestart}
-      onCycleEdge={play.cycleEdge}
-      onUndo={play.undo}
-      onRestart={play.restart}
-      onReplay={play.replay}
-      onClearAnimationComplete={play.completeClearAnimation}
-      onStartNewProblem={play.startNewProblem}
-      onOpenRecords={navigation.openRecords}
-      onChangeDifficulty={navigation.changeDifficulty}
-      onBackToHome={navigation.backToHome}
-    />
+    <>
+      <BridgesPlay
+        {...screenProps}
+        board={play.board}
+        bridges={play.bridges}
+        islandStatuses={play.islandStatuses}
+        undoCount={play.undoCount}
+        edgeNotice={play.edgeNotice}
+        canUndo={play.canUndo}
+        canRestart={play.canRestart}
+        onCycleEdge={play.cycleEdge}
+        onUndo={play.undo}
+        onRestart={play.restart}
+      />
+      {diagnostics.snapshot && (
+        <BridgesDiagnostics
+          snapshot={diagnostics.snapshot}
+          onClose={diagnostics.close}
+        />
+      )}
+    </>
   );
 }

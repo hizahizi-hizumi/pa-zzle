@@ -12,6 +12,7 @@ import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/BridgesStatusAnnouncement";
 import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
+import { BridgesResultScreen } from "@/games/bridges/ui/result/BridgesResultScreen";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,
@@ -30,11 +31,13 @@ type BridgesPlayProps = GamePlayScreenProps<BridgesDifficulty, BridgesResult> &
     onCycleEdge: (edge: number) => void;
   };
 
-/** 1問のプレイ画面。結果画面を持たないので、クリアの演出を終えた後も盤面を見せたままにする。 */
+/** 1問のプレイ画面。クリアの演出を終えると結果画面に替わる。 */
 export function BridgesPlay({
+  difficulty,
   progress,
   elapsedMs,
   result,
+  recordOutcomeNotice,
   board,
   bridges,
   islandStatuses,
@@ -48,6 +51,7 @@ export function BridgesPlay({
   onReplay,
   onClearAnimationComplete,
   onStartNewProblem,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
@@ -71,7 +75,19 @@ export function BridgesPlay({
       renderHowToPlayDialog={({ open, onClose }) => (
         <BridgesHowToPlayDialog open={open} onClose={onClose} />
       )}
-      renderResultScreen={() => null}
+      renderResultScreen={(clearedResult) => (
+        <BridgesResultScreen
+          difficulty={difficulty}
+          result={clearedResult}
+          recordOutcomeNotice={recordOutcomeNotice}
+          onReplay={onReplay}
+          onStartNewProblem={onStartNewProblem}
+          onOpenRecords={onOpenRecords}
+          onChangeDifficulty={onChangeDifficulty}
+          onBackToHome={onBackToHome}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />
+      )}
     >
       {/* 画面端から始まるタッチはブラウザの戻る操作に取られるので、盤面の左右に余白を残す。 */}
       <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-2 [container-type:size] sm:px-6">
