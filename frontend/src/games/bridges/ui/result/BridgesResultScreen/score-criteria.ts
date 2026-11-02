@@ -42,9 +42,9 @@ function listSpeedFormula({
     ...(countRoundCount > 0
       ? [
           {
-            label: "少なくとも1本の読み",
+            label: "見ただけでは決まらない所",
             count: countRoundCount,
-            unit: "回",
+            unit: "か所",
             durationMsPerUnit: BRIDGES_SPEED_PER_COUNT_ROUND_MS,
           } as const,
         ]
@@ -52,9 +52,9 @@ function listSpeedFormula({
     ...(connectivityRoundCount > 0
       ? [
           {
-            label: "つながりの読み",
+            label: "つながりを考える所",
             count: connectivityRoundCount,
-            unit: "回",
+            unit: "か所",
             durationMsPerUnit: BRIDGES_SPEED_PER_CONNECTIVITY_ROUND_MS,
           } as const,
         ]
@@ -62,7 +62,7 @@ function listSpeedFormula({
     ...(countReasoningUndecidedEdgeCount > 0
       ? [
           {
-            label: "つながりで決める島の間",
+            label: "つながりで決める橋",
             count: countReasoningUndecidedEdgeCount,
             unit: "か所",
             durationMsPerUnit: BRIDGES_SPEED_PER_UNDECIDED_EDGE_MS,
@@ -82,18 +82,16 @@ function listSpeedFormulaNotes({
     "式の数はこの問題の盤面で決まり、遊び方では変わらない。橋は2本の組を2本と数える。",
     ...(countRoundCount > 0
       ? [
-          "少なくとも1本の読みは、数字と行き先の数だけでは本数が決まらず、「この島へは少なくとも1本架かる」と読んで進める所。",
+          "見ただけでは決まらない所は、数字と架けられる相手の数を比べて「この島へは少なくとも1本架かる」と考えて進める所。",
         ]
       : []),
     ...(connectivityRoundCount > 0
       ? [
-          "つながりの読みは、数字の読みで止まり、架けると島の組が閉じて孤立しないかを読んで進める所。",
+          "つながりを考える所は、数字だけでは進めず、架けると島の組が閉じて孤立しないかを考えて進める所。",
         ]
       : []),
     ...(countReasoningUndecidedEdgeCount > 0
-      ? [
-          "つながりで決める島の間は、数字の読みだけでは橋の本数が決まらない、橋を架けられる島の組。",
-        ]
+      ? ["つながりで決める橋は、数字だけでは本数が決まらない、島と島の間の数。"]
       : []),
   ];
 }
