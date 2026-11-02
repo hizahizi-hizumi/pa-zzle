@@ -88,6 +88,7 @@ const notationByCell = {
   "brittle-rock": "b",
   "thin-ice": "c",
   outside: "x",
+  floor: "o",
   water: "w",
 } as const satisfies Record<IceFloorMazeStateCell, string>;
 

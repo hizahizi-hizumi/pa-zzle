@@ -35,7 +35,7 @@ vi.mock("@/games/ice-floor-maze/problem-selection", async () => {
         goal: 18,
       },
       identity: {
-        generatorVersion: "2",
+        generatorVersion: "3",
         seed,
         conditions: { width: 5, height: 5 },
       },
@@ -301,7 +301,7 @@ describe("useIceFloorMazePlay", () => {
         goal: 1,
       },
       identity: {
-        generatorVersion: "2",
+        generatorVersion: "3",
         seed: "ice-floor-maze-requested",
         conditions: { width: 4, height: 4 },
       },
@@ -344,7 +344,7 @@ describe("useIceFloorMazePlay", () => {
         goal: 8,
       },
       identity: {
-        generatorVersion: "2",
+        generatorVersion: "3",
         seed: "ice-floor-maze-elements",
         conditions: { width: 3, height: 3 },
       },
@@ -389,6 +389,40 @@ describe("useIceFloorMazePlay", () => {
     });
   });
 
+  describe("床のある問題を渡した場合", () => {
+    // 0  o  2
+    // 3  4  5
+    // 6  7  8
+    // 開始位置 0 から右へ滑ると床 1 に入って止まり、続けて下へ滑ると 7 で止まる。
+    const floorProblem: IceFloorMazePooledProblem = {
+      problem: {
+        board: parseIceFloorMazeBoard([".o.", "...", "..."]),
+        start: 0,
+        goal: 7,
+      },
+      identity: {
+        generatorVersion: "3",
+        seed: "ice-floor-maze-floor",
+        conditions: { width: 3, height: 3 },
+      },
+      optimalMoveCount: 2,
+    };
+
+    beforeEach(() => {
+      ({ result } = renderHook(() => useIceFloorMazePlay("1", floorProblem)));
+    });
+
+    test("床に入って止まった滑りを直前の滑りで知らせ、ほかの滑りでは知らせないこと", () => {
+      act(() => result.current.slide("right"));
+      const intoFloor = result.current.lastSlide;
+      act(() => result.current.slide("down"));
+      const offFloor = result.current.lastSlide;
+
+      expect(intoFloor).toMatchObject({ to: 1, stoppedOnFloor: true });
+      expect(offFloor).toMatchObject({ to: 7, stoppedOnFloor: false });
+    });
+  });
+
   describe("隣のもろい岩へ押した場合", () => {
     // 0  b  2
     // 3  4  5
@@ -401,7 +435,7 @@ describe("useIceFloorMazePlay", () => {
         goal: 8,
       },
       identity: {
-        generatorVersion: "2",
+        generatorVersion: "3",
         seed: "ice-floor-maze-pushed",
         conditions: { width: 3, height: 3 },
       },
@@ -437,7 +471,7 @@ describe("useIceFloorMazePlay", () => {
         goal: 18,
       },
       identity: {
-        generatorVersion: "2",
+        generatorVersion: "3",
         seed: "ice-floor-maze-circling",
         conditions: { width: 4, height: 5 },
       },
@@ -497,7 +531,7 @@ describe("useIceFloorMazePlay", () => {
         goal: 7,
       },
       identity: {
-        generatorVersion: "2",
+        generatorVersion: "3",
         seed: "ice-floor-maze-detour",
         conditions: { width: 4, height: 4 },
       },
@@ -539,7 +573,7 @@ describe("useIceFloorMazePlay", () => {
         .mockReturnValueOnce("ice-floor-maze-avoided")
         .mockReturnValueOnce("ice-floor-maze-other");
       const avoidedProblemId = createProblemId({
-        generatorVersion: "2",
+        generatorVersion: "3",
         seed: "ice-floor-maze-avoided",
         conditions: { width: 5, height: 5 },
       });

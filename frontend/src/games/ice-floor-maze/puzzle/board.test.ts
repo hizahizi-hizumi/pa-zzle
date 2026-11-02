@@ -34,7 +34,7 @@ describe("parseIceFloorMazeBoard", () => {
 
   const invalidCases = [
     ["行の長さが揃わない", ["...", ".."]],
-    ["知らない記号がある", ["..o", "..."]],
+    ["知らない記号がある", ["..s", "..."]],
     ["行が無い", []],
   ] as const;
 
@@ -51,7 +51,7 @@ describe("assertIceFloorMazeBoard", () => {
   const invalidCases = [
     ["マス数が幅×高さと合わない", { width: 2, height: 2, cells: ["ice"] }],
     ["幅が整数でない", { width: 1.5, height: 2, cells: ["ice", "ice"] }],
-    ["知らない種類のマスがある", { width: 1, height: 1, cells: ["floor"] }],
+    ["知らない種類のマスがある", { width: 1, height: 1, cells: ["snow"] }],
     ["初期盤面に水面がある", { width: 1, height: 1, cells: ["water"] }],
   ] as const;
 

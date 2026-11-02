@@ -13,6 +13,7 @@ import {
 export type IceFloorMazeProblemFeatures = {
   rows: number;
   columns: number;
+  floorCount: number;
   brittleRockCount: number;
   thinIceCount: number;
 };
@@ -30,6 +31,7 @@ export function findIceFloorMazePoolProblemFeatures(
   return {
     rows: board.height,
     columns: board.width,
+    floorCount: board.cells.filter((cell) => cell === "floor").length,
     brittleRockCount: board.cells.filter((cell) => cell === "brittle-rock")
       .length,
     thinIceCount: board.cells.filter((cell) => cell === "thin-ice").length,
@@ -42,6 +44,12 @@ export const iceFloorMazeProblemFeatureAxes = [
     id: "board-size",
     getValue({ rows, columns }) {
       return createBoardSizeFeatureValue(rows, columns);
+    },
+  },
+  {
+    id: "floor-count",
+    getValue({ floorCount }) {
+      return createCountFeatureValue(floorCount);
     },
   },
   {

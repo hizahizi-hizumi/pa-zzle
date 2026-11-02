@@ -10,12 +10,13 @@ describe("findIceFloorMazePoolProblemFeatures", () => {
   const { problem, identity } = restoreIceFloorMazePoolEntry(entry);
   const problemId = createProblemId(identity);
 
-  test("問題集の1問の特徴を、盤面の行と列の数と、もろい岩と薄い氷の数で返すこと", () => {
+  test("問題集の1問の特徴を、盤面の行と列の数と、床・もろい岩・薄い氷の数で返すこと", () => {
     const features = findIceFloorMazePoolProblemFeatures("5", problemId);
 
     expect(features).toEqual({
       rows: problem.board.height,
       columns: problem.board.width,
+      floorCount: problem.board.cells.filter((cell) => cell === "floor").length,
       brittleRockCount: problem.board.cells.filter(
         (cell) => cell === "brittle-rock",
       ).length,

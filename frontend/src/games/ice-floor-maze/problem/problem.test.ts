@@ -148,13 +148,24 @@ const elementProblem: IceFloorMazeProblem = {
   goal: 8,
 };
 
+// #  1  b
+// 3  c  5
+// 6  7  o
+// x  10 x
+// 開始位置 3 から右へ滑らせると薄い氷を抜けて 5 で止まり、下へ滑らせると床 8 に入って止まる。
+const floorProblem: IceFloorMazeProblem = {
+  board: parseIceFloorMazeBoard(["#.b", ".c.", "..o", "x.x"]),
+  start: 3,
+  goal: 7,
+};
+
 describe("createIceFloorMazeProblemIdentity", () => {
-  test("2マスずつのマスの種類の base32 符号・開始位置・ゴールを seed にし、盤面の形を条件にすること", () => {
+  test("1マス3ビットのマスの種類の base32 符号・開始位置・ゴールを seed にし、盤面の形を条件にすること", () => {
     const identity = createIceFloorMazeProblemIdentity(problem);
 
     expect(identity).toEqual({
-      generatorVersion: "2",
-      seed: "50000000000000000000000000000000-9-63",
+      generatorVersion: "3",
+      seed: "400000000000000000000000000000000000000-9-63",
       conditions: { width: 8, height: 8 },
     });
   });
@@ -162,18 +173,27 @@ describe("createIceFloorMazeProblemIdentity", () => {
   test("もろい岩・薄い氷・盤面の外を符号に入れること", () => {
     const identity = createIceFloorMazeProblemIdentity(elementProblem);
 
-    expect(identity.seed).toBe("5af044-3-8");
+    expect(identity.seed).toBe("44300420-3-8");
+  });
+
+  test("床を符号に入れること", () => {
+    const identity = createIceFloorMazeProblemIdentity(floorProblem);
+
+    expect(identity.seed).toBe("44301c20-3-7");
   });
 });
 
 describe("restoreIceFloorMazeProblem", () => {
-  describe("要素と盤面の外のある盤面の場合", () => {
-    const identity = createIceFloorMazeProblemIdentity(elementProblem);
+  describe.each([
+    ["要素と盤面の外のある盤面", elementProblem],
+    ["床のある盤面", floorProblem],
+  ])("%sの場合", (_, original) => {
+    const identity = createIceFloorMazeProblemIdentity(original);
 
     test("identity から同じ問題を復号すること", () => {
       const restored = restoreIceFloorMazeProblem(identity);
 
-      expect(restored).toEqual({ problem: elementProblem, identity });
+      expect(restored).toEqual({ problem: original, identity });
     });
   });
 
@@ -206,7 +226,7 @@ describe("restoreIceFloorMazeProblem", () => {
   describe("壊れた seed の場合", () => {
     const identity = {
       ...createIceFloorMazeProblemIdentity(problem),
-      seed: "5000000000000000000000000000000-9-63",
+      seed: "40000000000000000000000000000000000000-9-63",
     };
 
     test("問題を復号せずに拒否すること", () => {
@@ -221,10 +241,11 @@ describe("restoreIceFloorMazeProblem", () => {
 
 describe("decodeIceFloorMazeProblem", () => {
   const shape = { width: 8, height: 8 };
-  const cells = "50000000000000000000000000000000";
+  const cells = `4${"0".repeat(38)}`;
   const invalidSeeds = [
     ["マスの符号の桁が足りない", `${cells.slice(1)}-9-63`],
-    ["2マスの組に当たらない桁がある", `${cells.slice(1)}p-9-63`],
+    ["知らない種類の番号のマスがある", `o${cells.slice(1)}-9-63`],
+    ["base32 に無い桁がある", `${cells.slice(1)}w-9-63`],
     ["大文字の桁がある", `${cells.slice(1)}A-9-63`],
     ["開始位置が岩", `${cells}-0-63`],
     ["ゴールが番号の範囲の外", `${cells}-9-64`],
@@ -232,6 +253,7 @@ describe("decodeIceFloorMazeProblem", () => {
     ["位置の数に先頭の0がある", `${cells}-09-63`],
     ["区切りが足りない", `${cells}-9`],
     ["初期版の符号", "8000000000000000-9-63"],
+    ["版 2 の符号", `5${"0".repeat(31)}-9-63`],
   ] as const;
 
   test.each(invalidSeeds)("%s seed を復号しないこと", (_, seed) => {
@@ -241,11 +263,11 @@ describe("decodeIceFloorMazeProblem", () => {
   });
 
   describe("マス数の外にあたる詰め物が氷でない場合", () => {
-    // 3×3 は9マスで、5桁目の後のマスは詰め物。`1` は（氷, 岩）。
+    // 3×3 は9マス・27ビットで、6桁（30ビット）の最後の3ビットは詰め物。
     const nineCellShape = { width: 3, height: 3 };
 
     test("復号しないこと", () => {
-      const decoded = decodeIceFloorMazeProblem("00001-0-8", nineCellShape);
+      const decoded = decodeIceFloorMazeProblem("000001-0-8", nineCellShape);
 
       expect(decoded).toBeNull();
     });
@@ -311,6 +333,15 @@ describe("isIceFloorMazeRecordedProblemIdentity", () => {
       true,
     ],
     ["今の版で復号できない identity", { ...identity, seed: "broken" }, false],
+    [
+      "床の前の版（版 2）の記録の identity",
+      {
+        generatorVersion: "2",
+        seed: "5af044-3-8",
+        conditions: { width: 3, height: 4 },
+      },
+      true,
+    ],
   ] as const;
 
   test.each(cases)("%sを見分けること", (_, value, expected) => {
@@ -325,6 +356,15 @@ describe("countIceFloorMazeRecordedDrawnCells", () => {
     [
       "今の版は盤面の外を除いて数える",
       createIceFloorMazeProblemIdentity(elementProblem),
+      10,
+    ],
+    [
+      "版 2 は版 2 の符号で読んだ盤面から盤面の外を除いて数える",
+      {
+        generatorVersion: "2",
+        seed: "5af044-3-8",
+        conditions: { width: 3, height: 4 },
+      },
       10,
     ],
     [
@@ -350,6 +390,20 @@ describe("countIceFloorMazeRecordedElements", () => {
     [
       "今の版はもろい岩と薄い氷を数える",
       createIceFloorMazeProblemIdentity(elementProblem),
+      2,
+    ],
+    [
+      "版 2 は版 2 の符号で読んだ盤面から数える",
+      {
+        generatorVersion: "2",
+        seed: "5af044-3-8",
+        conditions: { width: 3, height: 4 },
+      },
+      2,
+    ],
+    [
+      "今の版は床を要素に数えない",
+      createIceFloorMazeProblemIdentity(floorProblem),
       2,
     ],
     [

@@ -12,7 +12,7 @@ import { IceFloorMazeTrail } from "@/games/ice-floor-maze/ui/board/IceFloorMazeT
 
 type HowToPlayFigureProps = {
   /**
-   * 1行を1文字列とした盤面。`.` が氷、`#` が岩、`b` がもろい岩、`c` が薄い氷、`x` が盤面の外、
+   * 1行を1文字列とした盤面。`.` が氷、`#` が岩、`b` がもろい岩、`c` が薄い氷、`o` が床、`x` が盤面の外、
    * `w` が薄い氷の割れた後の水面、`r` がもろい岩の崩れた後の跡。
    */
   rows: readonly string[];

@@ -33,6 +33,7 @@ const cellAttributeByKind = {
   rock: "data-rock-cell",
   "brittle-rock": "data-brittle-rock-cell",
   "thin-ice": "data-thin-ice-cell",
+  floor: "data-floor-cell",
   water: "data-water-cell",
   rubble: "data-rubble-cell",
 } as const satisfies Record<IceFloorMazeCellFaceKind, string>;
@@ -49,7 +50,7 @@ function getCellFaceKind(
 }
 
 /**
- * 外壁・氷・ゴールのマスの地と、岩・もろい岩・崩れたもろい岩の跡・薄い氷・水面。駒・ゴールの印より下の層に描く。
+ * 外壁・氷・ゴールのマスの地と、床・岩・もろい岩・崩れたもろい岩の跡・薄い氷・水面。駒・ゴールの印より下の層に描く。
  * 盤面の外は描かず、外壁は盤面として描くマスの形に沿って囲む。盤面に囲まれた内側の盤面の外は外壁と同じ色で塗る。
  * もろい岩の姿（`data-cell-body`）は、隣から押されたときの揺れで動かせる。
  */
@@ -63,6 +64,10 @@ export function IceFloorMazeTerrain({
   const drawnCellPath = createDrawnCellPath(board);
   const goalPosition =
     goal === undefined ? null : getIceFloorMazeCellPosition(board, goal);
+  const cellFaces = listCellFaces(board, cells);
+  // 床は氷と同じく地の面なので、直前の滑りの跡の下に描き、床で止まった滑りの跡を隠さない。
+  const floorFaces = cellFaces.filter(({ kind }) => kind === "floor");
+  const raisedFaces = cellFaces.filter(({ kind }) => kind !== "floor");
 
   return (
     <g>
@@ -95,35 +100,42 @@ export function IceFloorMazeTerrain({
         strokeWidth={ICE_JOINT_WIDTH}
         className={iceFloorMazeToneClassNames.iceJoint}
       />
+      {floorFaces.map(renderCellFace)}
       {beneathCellFaces}
-      {listCellFaces(board, cells).map(({ cellIndex, kind, x, y }) => (
-        <g
-          // 崩れる・割れるでマスの姿が変わったら描き直す。
-          key={`${cellIndex}-${kind}`}
-          transform={`translate(${x} ${y})`}
-          {...{ [cellAttributeByKind[kind]]: cellIndex }}
-        >
-          <g
-            data-cell-body=""
-            style={{ transformBox: "fill-box", transformOrigin: "50% 90%" }}
-          >
-            <IceFloorMazeCellFace kind={kind} clipIds={clipIds} />
-          </g>
-        </g>
-      ))}
+      {raisedFaces.map(renderCellFace)}
     </g>
   );
+
+  function renderCellFace({ cellIndex, kind, x, y }: IceFloorMazeCellFaceItem) {
+    return (
+      <g
+        // 崩れる・割れるでマスの姿が変わったら描き直す。
+        key={`${cellIndex}-${kind}`}
+        transform={`translate(${x} ${y})`}
+        {...{ [cellAttributeByKind[kind]]: cellIndex }}
+      >
+        <g
+          data-cell-body=""
+          style={{ transformBox: "fill-box", transformOrigin: "50% 90%" }}
+        >
+          <IceFloorMazeCellFace kind={kind} clipIds={clipIds} />
+        </g>
+      </g>
+    );
+  }
 }
 
-function listCellFaces(
-  board: IceFloorMazeBoard,
-  cells: readonly IceFloorMazeStateCell[],
-): {
+type IceFloorMazeCellFaceItem = {
   cellIndex: number;
   kind: IceFloorMazeCellFaceKind;
   x: number;
   y: number;
-}[] {
+};
+
+function listCellFaces(
+  board: IceFloorMazeBoard,
+  cells: readonly IceFloorMazeStateCell[],
+): IceFloorMazeCellFaceItem[] {
   return cells.flatMap((cell, cellIndex) => {
     const kind = getCellFaceKind(board.cells[cellIndex] ?? cell, cell);
     return kind

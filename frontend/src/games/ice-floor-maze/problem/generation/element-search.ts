@@ -13,6 +13,7 @@ import {
   createElementRules,
   DIRECTION_COUNT,
   findSlideEnd,
+  findSlideHit,
   type GenerationBoard,
   maskAfterSlide,
 } from "@/games/ice-floor-maze/problem/generation/state-space";
@@ -300,7 +301,7 @@ function listLureSpots(
     const end = slide % cellCount;
     const direction = Math.floor(slide / cellCount) % DIRECTION_COUNT;
     const origin = Math.floor(slide / cellCount / DIRECTION_COUNT);
-    const stopper = rules.beyond[direction]![end]!;
+    const stopper = findSlideHit(rules, end, direction);
     if (
       searcher.tiles.includes(CELL_BRITTLE) &&
       stopper >= 0 &&

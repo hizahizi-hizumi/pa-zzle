@@ -5,18 +5,18 @@ import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 const record = createIceFloorMazePlayRecord({
   difficulty: "4",
   problemIdentity: {
-    generatorVersion: "2",
-    seed: "00105000110510101055100005000500605010000550005000150000550105015-90-103",
-    conditions: { width: 10, height: 13 },
+    generatorVersion: "3",
+    seed: "0680g000100000000r0g3000cg80g10g01go0i00080g00204004i10200i0-32-48",
+    conditions: { width: 10, height: 10 },
   },
   startedAt: 1_000,
-  completedAt: 52_000,
+  completedAt: 124_500,
   result: {
-    elapsedMs: 51_000,
-    moveCount: 9,
+    elapsedMs: 123_500,
+    moveCount: 20,
     undoCount: 2,
     restartCount: 1,
-    optimalMoveCount: 6,
+    optimalMoveCount: 15,
   },
 });
 
@@ -40,9 +40,9 @@ describe("iceFloorMazePlayRecordDisplay", () => {
     const timeDelta = getFormattedMetric("time-delta-ms");
     const moveDelta = getFormattedMetric("move-delta");
 
-    expect(score).toBe("81点");
+    expect(score).toBe("86点");
     expect(timeDelta).toBe("+00:10");
-    expect(moveDelta).toBe("+3");
+    expect(moveDelta).toBe("+5");
   });
 
   const comparisonLabelCases = [

@@ -17,6 +17,7 @@ export const CELL_ROCK = 1;
 export const CELL_BRITTLE = 2;
 export const CELL_THIN = 3;
 export const CELL_OUTSIDE = 4;
+export const CELL_FLOOR = 5;
 
 /** 方向の番号。0=上、1=右、2=下、3=左（`iceFloorMazeDirections` の順）。 */
 export const DIRECTION_COUNT = 4;
@@ -51,9 +52,9 @@ export function fromGenerationBoard(board: GenerationBoard): IceFloorMazeBoard {
   };
 }
 
-const notationByCode = [".", "#", "b", "c", "x"] as const;
+const notationByCode = [".", "#", "b", "c", "x", "o"] as const;
 
-/** 1行を1文字列とした記法（`.` `#` `b` `c` `x`）。 */
+/** 1行を1文字列とした記法（`.` `#` `b` `c` `x` `o`）。 */
 function formatGenerationBoardRows(board: GenerationBoard): string[] {
   return Array.from({ length: board.height }, (_, y) =>
     Array.from(
@@ -85,6 +86,7 @@ function parseGenerationBoardRows(rows: readonly string[]): GenerationBoard {
  * `変化した要素のビット列 × マス数 + 駒の位置` の数で表す。
  * - `beyond[d][c]`: マス `c` の `d` 方向の隣のマス。外壁なら -1。
  * - `fixedStopper[c]`: 岩か盤面の外で、どの状態でも止め役。
+ * - `floor[c]`: 床で、滑ってきた駒が入るとそこで止まる。
  */
 export type ElementRules = {
   width: number;
@@ -99,6 +101,7 @@ export type ElementRules = {
   beyond: readonly Int32Array[];
   delta: readonly number[];
   fixedStopper: Uint8Array;
+  floor: Uint8Array;
 };
 
 /** 状態を数で表せる要素の数（ビット演算を32ビットに収める）。 */
@@ -110,6 +113,7 @@ export function createElementRules(board: GenerationBoard): ElementRules {
   const elementCells: number[] = [];
   const elementOf = new Int32Array(cellCount).fill(-1);
   const fixedStopper = new Uint8Array(cellCount);
+  const floor = new Uint8Array(cellCount);
   for (let cell = 0; cell < cellCount; cell += 1) {
     const code = cells[cell]!;
     if (code === CELL_BRITTLE || code === CELL_THIN) {
@@ -117,6 +121,8 @@ export function createElementRules(board: GenerationBoard): ElementRules {
       elementCells.push(cell);
     } else if (code === CELL_ROCK || code === CELL_OUTSIDE) {
       fixedStopper[cell] = 1;
+    } else if (code === CELL_FLOOR) {
+      floor[cell] = 1;
     }
   }
   if (elementCells.length > MAXIMUM_ELEMENT_COUNT) {
@@ -156,6 +162,7 @@ export function createElementRules(board: GenerationBoard): ElementRules {
     beyond,
     delta: DX.map((dx, direction) => DY[direction]! * width + dx),
     fixedStopper,
+    floor,
   };
 }
 
@@ -176,7 +183,7 @@ function isStopperCell(
   return rules.kinds[element] === CELL_BRITTLE ? !changed : changed;
 }
 
-/** 変化の組 `mask` の盤面で、`position` から `direction` へ滑って止まるマス。動けなければ `position`。 */
+/** 変化の組 `mask` の盤面で、`position` から `direction` へ滑って止まるマス。床に入るとそこで止まる。動けなければ `position`。 */
 export function findSlideEnd(
   rules: ElementRules,
   position: number,
@@ -184,13 +191,29 @@ export function findSlideEnd(
   direction: number,
 ): number {
   const beyond = rules.beyond[direction]!;
+  const { floor } = rules;
   let current = position;
   let next = beyond[current]!;
   while (next >= 0 && !isStopperCell(rules, next, mask)) {
     current = next;
+    if (floor[current] === 1) {
+      break;
+    }
     next = beyond[current]!;
   }
   return current;
+}
+
+/**
+ * `position` から `end` への滑りを止めたマス（止め役）。外壁か、床に入って止まった（何にもぶつかっていない）なら -1。
+ * `end` は `position` と違う、成立した滑りの止まったマス。
+ */
+export function findSlideHit(
+  rules: ElementRules,
+  end: number,
+  direction: number,
+): number {
+  return rules.floor[end] === 1 ? -1 : rules.beyond[direction]![end]!;
 }
 
 /** `position` から `end` への滑りの後の変化の組。止めたもろい岩が崩れ、出発マスと通過したマスの薄い氷が割れる。 */
@@ -202,7 +225,7 @@ export function maskAfterSlide(
   direction: number,
 ): number {
   let after = mask;
-  const hit = rules.beyond[direction]![end]!;
+  const hit = findSlideHit(rules, end, direction);
   if (hit >= 0) {
     const element = rules.elementOf[hit]!;
     if (element >= 0 && rules.kinds[element] === CELL_BRITTLE) {

@@ -1,5 +1,6 @@
 import blockedSoundUrl from "@/games/ice-floor-maze/assets/sounds/blocked.flac";
 import clearedSoundUrl from "@/games/ice-floor-maze/assets/sounds/cleared.flac";
+import floorStoppedSoundUrl from "@/games/ice-floor-maze/assets/sounds/floor-stopped.flac";
 import goalPassedSoundUrl from "@/games/ice-floor-maze/assets/sounds/goal-passed.flac";
 import iceCrackedSoundUrl from "@/games/ice-floor-maze/assets/sounds/ice-cracked.flac";
 import rockCrumbledSoundUrl from "@/games/ice-floor-maze/assets/sounds/rock-crumbled.flac";
@@ -34,6 +35,12 @@ const slidSound = defineSoundEffect(slidSoundUrl);
 /** 駒が止め役にぶつかって止まる、小さなこつんという音。駒がつぶれて戻る時刻に鳴らす。 */
 const stoppedSound = defineSoundEffect(stoppedSoundUrl);
 
+/**
+ * 駒が床に入って止まる、ざらついた面に擦れて止まる短い音。何にもぶつからずに止まるので、止まる音（こつん）の代わりに鳴らし、
+ * 岩の手前で止まったのか床で止まったのかを耳でも分ける。
+ */
+const floorStoppedSound = defineSoundEffect(floorStoppedSoundUrl);
+
 /** 1マスも動けない向きを選んだときの、責めない鈍い音。 */
 const blockedSound = defineSoundEffect(blockedSoundUrl);
 
@@ -52,6 +59,7 @@ const clearedSound = defineSoundEffect(clearedSoundUrl);
 const iceFloorMazeSounds: readonly SoundEffect[] = [
   slidSound,
   stoppedSound,
+  floorStoppedSound,
   blockedSound,
   rockCrumbledSound,
   iceCrackedSound,
@@ -60,7 +68,8 @@ const iceFloorMazeSounds: readonly SoundEffect[] = [
 ];
 
 /**
- * 滑りの音。滑り出しに滑る音、通り過ぎたゴールと割れた薄い氷はその時刻に、止まった時刻に止まる音か崩れる音を鳴らす。
+ * 滑りの音。滑り出しに滑る音、通り過ぎたゴールと割れた薄い氷はその時刻に、止まった時刻に止まる音（床で止まったら床の音）か
+ * 崩れる音を鳴らす。
  * ゴールで止まった滑りは完成演出のクリア音が止まりを返すので、止まる音を鳴らさない。
  * 動きを減らす設定では駒が終点へ飛び、変わったマスも変わった後の姿ですぐ描かれるので、
  * 滑る音とゴールの通過の音は鳴らさず、止まる音か崩れる音と、割れた薄い氷の音1つだけをすぐ鳴らす。
@@ -86,7 +95,7 @@ function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
   if (slide.crumbledRock !== null) {
     playSound(rockCrumbledSound, { delayMs: stopDelayMs });
   } else if (!slide.isClearingMove) {
-    playSound(stoppedSound, {
+    playSound(slide.stoppedOnFloor ? floorStoppedSound : stoppedSound, {
       delayMs: stopDelayMs,
       variation: REPEATED_SOUND_VARIATION,
     });
@@ -112,7 +121,7 @@ function playBlockedSound() {
 }
 
 /**
- * 滑り・動けない入力・ゴールの通過・もろい岩が崩れる・薄い氷が割れる・ゴールで止まる瞬間に効果音を鳴らす。
+ * 滑り・動けない入力・ゴールの通過・床で止まる・もろい岩が崩れる・薄い氷が割れる・ゴールで止まる瞬間に効果音を鳴らす。
  * 結果の報酬の音はアプリが鳴らす。閉じ込めの知らせ、待った・盤面を戻すでは鳴らさない。
  */
 export function useIceFloorMazeSoundEffects(

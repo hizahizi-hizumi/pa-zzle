@@ -58,6 +58,7 @@ import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
  * 直前の成立した滑り。盤面はこれで跡を描き、滑りを動かす。`id` は滑りごとに変わる。
  * `from` から `path` のマスを順に通り、最後のマス `to` で止まった。`passedGoal` はゴールを止まらずに通り過ぎたか。
  * `crumbledRock` はこの滑りで崩れたもろい岩、`crackedIce` は割れて水面になった薄い氷のマス。
+ * `stoppedOnFloor` は止め役にぶつからず、床に入って止まったか。
  * `entersTrap` はもうゴールに止まれないことを知らせていない状態から、知らせる状態へ入ったか。知らせた後の滑りでは `false`。
  * 成立しない向きの入力では変わらず、待った・盤面を戻す・リセット・別の問題で消える。
  */
@@ -69,6 +70,7 @@ export type IceFloorMazeLastSlide = {
   path: readonly number[];
   crumbledRock: number | null;
   crackedIce: readonly number[];
+  stoppedOnFloor: boolean;
   passedGoal: boolean;
   isClearingMove: boolean;
   entersTrap: boolean;
@@ -248,6 +250,7 @@ function slideInPlay(
       path: slide.path,
       crumbledRock: slide.crumbledRock,
       crackedIce: slide.crackedIce,
+      stoppedOnFloor: board.cells[slide.to] === "floor",
       passedGoal: doesIceFloorMazeSlidePassGoal(slide, goal),
       isClearingMove: session.status === "cleared",
       entersTrap: trapNoticed && !current.trapNoticed,

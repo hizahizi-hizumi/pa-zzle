@@ -5,6 +5,7 @@ describe("formatIceFloorMazeProblemFeatures", () => {
     const features = formatIceFloorMazeProblemFeatures({
       rows: 12,
       columns: 10,
+      floorCount: 0,
       brittleRockCount: 3,
       thinIceCount: 5,
     });
@@ -20,6 +21,7 @@ describe("formatIceFloorMazeProblemFeatures", () => {
     const features = formatIceFloorMazeProblemFeatures({
       rows: 8,
       columns: 8,
+      floorCount: 0,
       brittleRockCount: 0,
       thinIceCount: 0,
     });

@@ -292,6 +292,39 @@ describe("slideIceFloorMazePiece", () => {
     });
   });
 
+  describe("床の場合", () => {
+    // 0 1 o 3 4
+    const floorBoard = parseIceFloorMazeBoard(["..o.."]);
+
+    test("滑ってきた駒が床に入ってそこで止まること", () => {
+      const slide = slideFrom(floorBoard, 0, "right");
+
+      expect(slide).toMatchObject({ status: "slid", to: 2, path: [1, 2] });
+    });
+
+    test("床の上からは氷と同じく滑り出すこと", () => {
+      const slide = slideFrom(floorBoard, 2, "right");
+
+      expect(slide).toMatchObject({ status: "slid", to: 4, path: [3, 4] });
+    });
+
+    describe("床の先がもろい岩の場合", () => {
+      // 0 c o b
+      const beforeBrittleBoard = parseIceFloorMazeBoard([".cob"]);
+
+      test("床で止まり、ぶつかっていないもろい岩を崩さず、通った薄い氷を割ること", () => {
+        const slide = slideFrom(beforeBrittleBoard, 0, "right");
+
+        expect(slide).toMatchObject({
+          status: "slid",
+          to: 2,
+          crumbledRock: null,
+          crackedIce: [1],
+        });
+      });
+    });
+  });
+
   describe("盤面の外の場合", () => {
     // 0 1 x 3 4
     const outsideBoard = parseIceFloorMazeBoard(["..x.."]);

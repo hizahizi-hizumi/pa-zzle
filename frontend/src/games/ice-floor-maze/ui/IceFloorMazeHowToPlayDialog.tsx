@@ -22,6 +22,12 @@ const stopRows = ["....", "...#", "....", "...."];
 const passRows = ["....", "....", "....", "...."];
 const stopAndPassGoal = 6;
 
+// 0 1 2 3 4
+// 5 6 o 8 9
+// 10 11 12 13 14
+// 5 から右へ滑らせると、床 7 に入ってそこで止まる。床の先 8・9 へは進まない。
+const floorRows = [".....", "..o..", "....."];
+
 // 0 1 2 3
 // 4 5 6 b
 // 8 9 10 11
@@ -52,7 +58,7 @@ const rubblePassGoal = 7;
 
 /**
  * ルールと操作を、盤面と同じ見た目の小さな図と短い一文で示す。
- * もろい岩と薄い氷はどのレベルにも出るわけではないが、レベルによって出し分けずに同じ遊び方を示す
+ * 床・もろい岩・薄い氷はどのレベルにも出るわけではないが、レベルによって出し分けずに同じ遊び方を示す
  * （リフレクションも、レベルによって出ないピースを含めて同じ遊び方を示す）。
  */
 export function IceFloorMazeHowToPlayDialog({
@@ -67,7 +73,7 @@ export function IceFloorMazeHowToPlayDialog({
     >
       <li className="space-y-2">
         <p>
-          上下左右のどれかを選ぶと、駒は岩か外壁にぶつかるまで止まらずに滑る。途中で止めることはできない。
+          上下左右のどれかを選ぶと、駒は岩か外壁にぶつかるか、床に入るまで止まらずに滑る。途中で止めることはできない。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure rows={slideRows} goal={slideGoal} piece={10} />
@@ -103,6 +109,19 @@ export function IceFloorMazeHowToPlayDialog({
             <HowToPlayRuleMark allowed={false} />
           </div>
         </div>
+      </li>
+      <li className="space-y-2">
+        <p>
+          点の並んだ灰緑の板は床。滑ってきた駒は床に入るとそこで止まる。ゴールと違い、通り過ぎずに止まる。床の上からは氷と同じく滑り出せる。
+        </p>
+        <HowToPlayTransition>
+          <HowToPlayFigure rows={floorRows} piece={5} />
+          <HowToPlayFigure
+            rows={floorRows}
+            piece={7}
+            trail={{ direction: "right", from: 5 }}
+          />
+        </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>

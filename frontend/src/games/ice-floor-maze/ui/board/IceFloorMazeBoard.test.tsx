@@ -24,6 +24,7 @@ describe("IceFloorMazeBoard", () => {
     path: [1, 2, 3],
     crumbledRock: null,
     crackedIce: [],
+    stoppedOnFloor: false,
     passedGoal: false,
     isClearingMove: false,
     entersTrap: false,
@@ -122,6 +123,47 @@ describe("IceFloorMazeBoard", () => {
     });
   });
 
+  describe("床のある盤面で、床に入って止まった直後の場合", () => {
+    // 0 1 o
+    // 3 4 5
+    // 0 から右へ滑り、床 2 に入って止まった。
+    const floorBoard = parseIceFloorMazeBoard(["..o", "..."]);
+
+    beforeEach(() => {
+      render(
+        <IceFloorMazeBoard
+          board={floorBoard}
+          cells={floorBoard.cells}
+          goal={5}
+          position={2}
+          lastSlide={{
+            ...lastSlide,
+            to: 2,
+            path: [1, 2],
+            stoppedOnFloor: true,
+          }}
+          blockedInput={null}
+          clearing={false}
+          onSlideAnimationActivityChange={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+    });
+
+    test("床を描き、直前の滑りの跡を床の上に重ねること", () => {
+      const boardImage = screen.getByRole("img", { name: "盤面" });
+      const floor = boardImage.querySelector('[data-floor-cell="2"]');
+      const trail = boardImage.querySelector("[data-trail]");
+
+      expect(floor).not.toBeNull();
+      expect(trail).not.toBeNull();
+      expect(
+        floor!.compareDocumentPosition(trail!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+  });
+
   describe("盤面の外がある盤面の場合", () => {
     // x . .
     // . x .
@@ -184,6 +226,7 @@ describe("IceFloorMazeBoard", () => {
       path: [5, 6, 7],
       crumbledRock: null,
       crackedIce: [4, 5],
+      stoppedOnFloor: false,
       passedGoal: false,
       isClearingMove: false,
       entersTrap: false,
@@ -197,6 +240,7 @@ describe("IceFloorMazeBoard", () => {
       path: [7, 11],
       crumbledRock: 15,
       crackedIce: [],
+      stoppedOnFloor: false,
       passedGoal: false,
       isClearingMove: false,
       entersTrap: false,

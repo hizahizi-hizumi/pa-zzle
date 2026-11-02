@@ -5,6 +5,7 @@ import type { IceFloorMazePoint } from "@/games/ice-floor-maze/ui/board/board-ge
  * 岩ともろい岩は同じ形の石の塊（下に影の面）で、もろい岩は上から下まで通る割れ目で2つに分かれ、角が欠ける。
  * 崩れたもろい岩の跡は、氷の上に散らばった平らな石くず（影の無い小さなかけら）。
  * 薄い氷は氷より一段濃い板に中心から3方向へ折れて伸びる白いひび、水面は上の縁に影（くぼみ）と小さな波。
+ * 床は薄い氷と同じ板に、さいころの5の目に並べた点（ざらついた、滑らない面）。
  */
 export const iceFloorMazeRockShape = {
   inset: 0.06,
@@ -20,6 +21,18 @@ export const iceFloorMazePaneShape = {
   size: 0.96,
   cornerRadius: 0.06,
 } as const;
+
+/** 床の板に置く点の中心と半径。320px 幅の 12×14（1マス約24px）でも点が潰れない大きさにする。 */
+export const iceFloorMazeFloorDots = {
+  centers: [
+    { x: 0.28, y: 0.28 },
+    { x: 0.72, y: 0.28 },
+    { x: 0.5, y: 0.5 },
+    { x: 0.28, y: 0.72 },
+    { x: 0.72, y: 0.72 },
+  ],
+  radius: 0.075,
+} as const satisfies { centers: readonly IceFloorMazePoint[]; radius: number };
 
 /**
  * 岩の塊の外接矩形を 0〜1 とした、もろい岩の割れ目で分かれた左右の塊。割れ目の幅を広くとり、左上と右下の角を欠いて、

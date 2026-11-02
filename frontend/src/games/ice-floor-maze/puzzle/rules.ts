@@ -49,7 +49,7 @@ const stopperCells: ReadonlySet<IceFloorMazeStateCell> = new Set([
   "outside",
 ]);
 
-/** 駒がその手前で止まるマスか。岩・もろい岩・水面・盤面の外。 */
+/** 駒がその手前で止まるマスか。岩・もろい岩・水面・盤面の外。床は入って止まるマスで、止め役ではない。 */
 export function isIceFloorMazeStopperCell(
   cell: IceFloorMazeStateCell,
 ): boolean {
@@ -73,8 +73,9 @@ export function getIceFloorMazeNeighbor(
 }
 
 /**
- * 駒を `direction` へ、止め役か外壁にぶつかるまで滑らせる。途中で止まる位置は選べない。
+ * 駒を `direction` へ、止め役か外壁にぶつかるか、床に入るまで滑らせる。途中で止まる位置は選べない。
  * 止めたのがもろい岩ならそれが崩れ、出発マスと通過したマスのうち薄い氷だったものが割れる。止まったマスは割れない。
+ * 床に入って止まったときは、その先のマスにはぶつかっていないので、先がもろい岩でも崩れない。
  */
 export function slideIceFloorMazePiece(
   board: IceFloorMazeBoard,
@@ -88,6 +89,10 @@ export function slideIceFloorMazePiece(
   while (stopper !== null && !isIceFloorMazeStopperCell(cells[stopper]!)) {
     path.push(stopper);
     current = stopper;
+    if (cells[current] === "floor") {
+      stopper = null;
+      break;
+    }
     stopper = getIceFloorMazeNeighbor(board, current, direction);
   }
 

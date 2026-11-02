@@ -80,6 +80,9 @@ const brittleRockHoldTiming: RejectionShakeTiming = {
 const IMPACT_DURATION_MS = 160;
 const IMPACT_SQUASH = 0.8;
 const IMPACT_STRETCH = 1.1;
+/** 床に入って止まった瞬間は、何にもぶつからずに擦れて止まるので、岩の手前より浅くつぶれる。 */
+const FLOOR_STOP_SQUASH = 0.92;
+const FLOOR_STOP_STRETCH = 1.04;
 
 /** ゴールの上を止まらずに通り過ぎた瞬間、ゴールの輪が小さく一度だけ広がる。クリアの輪より小さく短い。 */
 const GOAL_PASS_DURATION_MS = 280;
@@ -340,7 +343,7 @@ function animateSlide(
 }
 
 /**
- * 滑りに合わせた反応。止め役にぶつかって止まった時刻に駒が進んだ向きへつぶれ、ゴールを通り過ぎた時刻にゴールの輪が小さく広がる。
+ * 滑りに合わせた反応。止め役にぶつかって（床では浅く）止まった時刻に駒が進んだ向きへつぶれ、ゴールを通り過ぎた時刻にゴールの輪が小さく広がる。
  * ゴールで止まった滑りは完成演出が駒をふくらませるので、つぶさない。
  */
 function animateSlideReactions(
@@ -351,9 +354,12 @@ function animateSlideReactions(
 ): Animation[] {
   const distance = slide.path.length;
   const horizontal = slide.direction === "left" || slide.direction === "right";
+  const [squashRatio, stretchRatio] = slide.stoppedOnFloor
+    ? [FLOOR_STOP_SQUASH, FLOOR_STOP_STRETCH]
+    : [IMPACT_SQUASH, IMPACT_STRETCH];
   const squash = horizontal
-    ? `scale(${IMPACT_SQUASH}, ${IMPACT_STRETCH})`
-    : `scale(${IMPACT_STRETCH}, ${IMPACT_SQUASH})`;
+    ? `scale(${squashRatio}, ${stretchRatio})`
+    : `scale(${stretchRatio}, ${squashRatio})`;
 
   return [
     slide.isClearingMove

@@ -16,8 +16,18 @@ const speedFullScoreMs = 41_000;
 describe("getIceFloorMazeSpeedReference", () => {
   const cases = [
     [
-      // 3×4 の盤面 `#.b` `.c.` `...` `x.x`。盤面の外が2マス、もろい岩と薄い氷が1つずつ。
-      "今の版は盤面の外を除いたマスと、もろい岩・薄い氷を数える",
+      // 3×4 の盤面 `#.b` `.c.` `..o` `x.x`。盤面の外が2マス、もろい岩と薄い氷が1つずつ、床が1マス。
+      "今の版は盤面の外を除いたマスと、もろい岩・薄い氷（床は除く）を数える",
+      {
+        generatorVersion: "3",
+        seed: "44301c20-3-7",
+        conditions: { width: 3, height: 4 },
+      },
+      { drawnCellCount: 10, elementCount: 2 },
+    ],
+    [
+      // 同じ形で床の無い盤面を、床の前の版（版 2）の符号で記録したもの。
+      "版 2 は版 2 の符号で盤面を読んで数える",
       {
         generatorVersion: "2",
         seed: "5af044-3-8",

@@ -12,6 +12,7 @@ import {
 /** 盤面は正方形とは限らないので行と列で示す。要素の数は問題集の1レベルで値の種類が少ないので、範囲にまとめない。 */
 export const iceFloorMazeProblemFeatureAxisDisplays = {
   "board-size": { label: "盤面", valueFormat: { kind: "board-size" } },
+  "floor-count": { label: "床", valueFormat: { kind: "count", unit: "マス" } },
   "brittle-rock-count": {
     label: "もろい岩",
     valueFormat: { kind: "count", unit: "個" },
@@ -25,12 +26,13 @@ export const iceFloorMazeProblemFeatureAxisDisplays = {
   ProblemFeatureAxisDisplay
 >;
 
-/** もろい岩・薄い氷は、無い問題では示さない。 */
+/** 床・もろい岩・薄い氷は、無い問題では示さない。 */
 export function formatIceFloorMazeProblemFeatures(
   features: IceFloorMazeProblemFeatures,
 ): ProblemFeature[] {
   const shownAxes = iceFloorMazeProblemFeatureAxes.filter(
     ({ id }) =>
+      (id !== "floor-count" || features.floorCount > 0) &&
       (id !== "brittle-rock-count" || features.brittleRockCount > 0) &&
       (id !== "thin-ice-count" || features.thinIceCount > 0),
   );

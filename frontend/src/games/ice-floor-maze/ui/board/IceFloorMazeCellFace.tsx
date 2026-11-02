@@ -4,6 +4,7 @@ import {
   createIceFloorMazeWaterHollowPath,
   createIceFloorMazeWavePath,
   formatIceFloorMazePolygon,
+  iceFloorMazeFloorDots,
   iceFloorMazePaneShape,
   iceFloorMazeRockShape,
   iceFloorMazeRubbleChipPolygons,
@@ -77,6 +78,21 @@ export function IceFloorMazeCellFace({
             >
               {renderThinIcePane()}
             </g>
+          ))}
+        </>
+      );
+    case "floor":
+      return (
+        <>
+          {renderPane(iceFloorMazeToneClassNames.floor)}
+          {iceFloorMazeFloorDots.centers.map(({ x, y }) => (
+            <circle
+              key={`${x}-${y}`}
+              cx={x}
+              cy={y}
+              r={iceFloorMazeFloorDots.radius}
+              className={iceFloorMazeToneClassNames.floorDot}
+            />
           ))}
         </>
       );

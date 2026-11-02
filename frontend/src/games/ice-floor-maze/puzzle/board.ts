@@ -5,20 +5,24 @@
  * - `brittle-rock`: もろい岩。岩と同じ止め役で、駒が滑ってきてその手前で止まると、その滑りの後で崩れて氷になる。
  * - `thin-ice`: 薄い氷。氷と同じく滑れ、駒が離れると割れて水面（止め役）になる。
  * - `outside`: 盤面の外。外壁と同じ止め役で、盤面として描かない。
+ * - `floor`: ふつうの床。駒は入れて、滑ってきて入るとそこで止まる。床の上から動くときは氷と同じに滑る。変化しない。
  */
 export type IceFloorMazeCell =
   | "ice"
   | "rock"
   | "brittle-rock"
   | "thin-ice"
-  | "outside";
+  | "outside"
+  | "floor";
 
+/** マスの種類の並び。問題の identity の符号はこの順の番号を使うので、種類を足すときは末尾に足す。 */
 export const iceFloorMazeCells = [
   "ice",
   "rock",
   "brittle-rock",
   "thin-ice",
   "outside",
+  "floor",
 ] as const satisfies readonly IceFloorMazeCell[];
 
 /** 解いている途中で崩れたり割れたりして変わる要素（もろい岩・薄い氷）。 */
@@ -40,6 +44,7 @@ const cellByNotation = {
   b: "brittle-rock",
   c: "thin-ice",
   x: "outside",
+  o: "floor",
 } as const satisfies Record<string, IceFloorMazeCell>;
 
 type IceFloorMazeCellNotation = keyof typeof cellByNotation;
@@ -73,7 +78,7 @@ export function assertIceFloorMazeBoard(board: IceFloorMazeBoard): void {
 }
 
 /**
- * 1行を1文字列とした記法から盤面を作る。`.` が氷、`#` が岩、`b` がもろい岩、`c` が薄い氷、`x` が盤面の外。
+ * 1行を1文字列とした記法から盤面を作る。`.` が氷、`#` が岩、`b` がもろい岩、`c` が薄い氷、`x` が盤面の外、`o` が床。
  * 固定問題やテストで盤面を読みやすく書くための記法。
  */
 export function parseIceFloorMazeBoard(
@@ -110,7 +115,7 @@ export function isIceFloorMazeCellIndex(
   );
 }
 
-/** 開始位置・ゴールに置ける氷のマスか。薄い氷・盤面の外・番号の範囲の外は氷のマスではない。 */
+/** 開始位置・ゴールに置ける氷のマスか。薄い氷・床・盤面の外・番号の範囲の外は氷のマスではない。 */
 export function isIceFloorMazeIceCell(
   board: IceFloorMazeBoard,
   cellIndex: number,
@@ -134,7 +139,7 @@ export function isIceFloorMazeChangeableCell(
   return cell === "brittle-rock" || cell === "thin-ice";
 }
 
-/** 要素（もろい岩・薄い氷）の無い、解いている途中で変わらない盤面か。 */
+/** 要素（もろい岩・薄い氷）の無い、解いている途中で変わらない盤面か。床は変わらないので、床があってもよい。 */
 export function isIceFloorMazeStaticBoard(board: IceFloorMazeBoard): boolean {
   return !board.cells.some(isIceFloorMazeChangeableCell);
 }

@@ -12,6 +12,7 @@ import {
   exploreStateSpace,
   findCanonicalSolution,
   findSlideEnd,
+  findSlideHit,
   findUsedCells,
   type GenerationBoard,
   getTarget,
@@ -441,7 +442,7 @@ function countUseEvents(
 ): number {
   const { elementOf, kinds } = rules;
   let uses = 0;
-  const hit = rules.beyond[direction]![end]!;
+  const hit = findSlideHit(rules, end, direction);
   const hitElement = hit >= 0 ? elementOf[hit]! : -1;
   if (hitElement >= 0) {
     const changed = ((mask >>> hitElement) & 1) === 1;
@@ -499,7 +500,7 @@ function listSelfMadeUses(
       break;
     }
   }
-  const hit = rules.beyond[direction]![end]!;
+  const hit = findSlideHit(rules, end, direction);
   const hitElement = hit >= 0 ? elementOf[hit]! : -1;
   if (
     hitElement >= 0 &&
