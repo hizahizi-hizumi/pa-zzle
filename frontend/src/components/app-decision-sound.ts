@@ -1,4 +1,7 @@
-/** アプリの画面で、遊ぶゲームを選ぶ・プレイを始める決定の操作に鳴らす音。決定の操作のイベントハンドラで鳴らす。 */
+/**
+ * アプリの画面で、遊ぶゲームを選ぶ・プレイを始める決定の操作に鳴らす音。決定の操作のイベントハンドラで鳴らす。
+ * 効果音の音量を選んだときに、選んだ音量を確かめる音としても鳴らす。
+ */
 
 import gameSelectSoundUrl from "@/assets/sounds/game-select.flac";
 import playStartSoundUrl from "@/assets/sounds/play-start.flac";
@@ -23,6 +26,14 @@ export function playGameSelectSound(): void {
 
 /** プレイを始めるときの音を鳴らす。 */
 export function playPlayStartSound(): void {
+  playSound(playStartSound);
+}
+
+/**
+ * 効果音の音量を選び終えたときに、選んだ音量で鳴らす。
+ * 設定の操作には音を鳴らさないが、効果音の音量は聞かないと合わせられないので、アプリの画面の音で確かめられるようにする。
+ */
+export function playSoundEffectsVolumePreview(): void {
   playSound(playStartSound);
 }
 
