@@ -6,6 +6,7 @@ import {
 import { RecordedTakuzuResult } from "@/game-catalog/takuzu/RecordedTakuzuResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
+import pictogramShowcaseSvg from "@/games/takuzu/assets/pictogram-showcase.svg?raw";
 import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
 import {
   isTakuzuPlayRecord,
@@ -28,6 +29,7 @@ export const takuzuCatalogEntry = {
   id: takuzuPlayRecordDefinition.gameId,
   name: TAKUZU_DISPLAY_NAME,
   pictogramSvg,
+  pictogramShowcaseSvg,
   homePath: "/puzzles/takuzu",
   playPath: "/puzzles/takuzu/play/:difficulty",
   playRecordDisplay: takuzuPlayRecordDisplay,
