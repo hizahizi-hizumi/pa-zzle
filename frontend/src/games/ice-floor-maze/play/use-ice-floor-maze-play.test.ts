@@ -1,6 +1,9 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
-import { useIceFloorMazePlay } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
+import {
+  _private,
+  useIceFloorMazePlay,
+} from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import type { IceFloorMazePooledProblem } from "@/games/ice-floor-maze/problem/problem-pool";
 import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
@@ -48,13 +51,29 @@ vi.mock("@/games/ice-floor-maze/problem-selection", async () => {
 const solution: readonly IceFloorMazeDirection[] = ["down", "right", "up"];
 /** 開始位置から詰みに入る滑り。 */
 const intoDeadlock: readonly IceFloorMazeDirection[] = ["right"];
-/** 詰みに入った後、詰みの中で続ける滑り（19 → 15 → 5 → 7 → 5）。 */
-const withinDeadlock: readonly IceFloorMazeDirection[] = [
+/** 詰みに入った 19 から、詰みの中を一巡りして 19 へ戻る滑り（19 → 15 → 5 → 7 → 5 → 15 → 19）。 */
+const deadlockLoop: readonly IceFloorMazeDirection[] = [
   "left",
   "up",
   "right",
   "left",
+  "down",
+  "right",
 ];
+const { deadlockNoticeSlideCount } = _private;
+
+/** 詰みに入ってから `slidCount` 回滑った後に、詰みの中で続けられる `count` 回の滑り。 */
+function deadlockSlides(count: number, slidCount = 0): IceFloorMazeDirection[] {
+  const loopCount = Math.ceil((slidCount + count) / deadlockLoop.length);
+  return Array.from({ length: loopCount }, () => deadlockLoop)
+    .flat()
+    .slice(slidCount, slidCount + count);
+}
+
+/** 詰みに入った後、知らせるまで詰みの中で続ける滑り。 */
+const withinDeadlock = deadlockSlides(deadlockNoticeSlideCount);
+/** 知らせる1回手前までの滑り。 */
+const untilNotice = withinDeadlock.slice(0, -1);
 
 afterEach(() => {
   cleanup();
@@ -202,49 +221,48 @@ describe("useIceFloorMazePlay", () => {
       });
     });
 
-    test("詰みのまま3回滑っても知らせないこと", () => {
-      slideInOrder(result, withinDeadlock.slice(0, 3));
+    test("詰みのまま知らせる数より1回少なく滑っても知らせないこと", () => {
+      slideInOrder(result, untilNotice);
 
-      expect(result.current.position).toBe(7);
       expect(result.current.isTrapped).toBe(false);
     });
 
-    test("詰みのまま4回滑ると知らせ、知らせ始めた滑りとして渡すこと", () => {
+    test("詰みのまま知らせる数だけ滑ると知らせ、知らせ始めた滑りとして渡すこと", () => {
       slideInOrder(result, withinDeadlock);
 
       expect(result.current.isTrapped).toBe(true);
-      expect(result.current.lastSlide).toMatchObject({
-        from: 7,
-        to: 5,
-        entersTrap: true,
-      });
+      expect(result.current.lastSlide).toMatchObject({ entersTrap: true });
     });
 
     test("成立しない入力は滑りとして数えないこと", () => {
-      slideInOrder(result, withinDeadlock.slice(0, 3));
-      act(() => result.current.slide("down"));
+      act(() => result.current.slide("up"));
+      slideInOrder(result, untilNotice);
       const noticedAfterBlockedInput = result.current.isTrapped;
-      slideInOrder(result, withinDeadlock.slice(3));
+      slideInOrder(result, withinDeadlock.slice(-1));
 
       expect(noticedAfterBlockedInput).toBe(false);
       expect(result.current.isTrapped).toBe(true);
     });
 
     test("途中で待ったを使うと、戻った詰みの状態から数え直すこと", () => {
-      slideInOrder(result, withinDeadlock.slice(0, 3));
+      slideInOrder(result, untilNotice);
       act(() => result.current.undo());
-      slideInOrder(result, ["right", "left", "down"]);
-      const noticedAfterThreeSlides = result.current.isTrapped;
-      slideInOrder(result, ["right"]);
+      const slidesAfterUndo = deadlockSlides(
+        deadlockNoticeSlideCount,
+        untilNotice.length - 1,
+      );
+      slideInOrder(result, slidesAfterUndo.slice(0, -1));
+      const noticedBeforeCountReached = result.current.isTrapped;
+      slideInOrder(result, slidesAfterUndo.slice(-1));
 
-      expect(noticedAfterThreeSlides).toBe(false);
+      expect(noticedBeforeCountReached).toBe(false);
       expect(result.current.isTrapped).toBe(true);
     });
 
     test("リセットすると数え直すこと", () => {
-      slideInOrder(result, withinDeadlock.slice(0, 3));
+      slideInOrder(result, untilNotice);
       act(() => result.current.replay());
-      slideInOrder(result, [...intoDeadlock, ...withinDeadlock.slice(0, 3)]);
+      slideInOrder(result, [...intoDeadlock, ...untilNotice]);
 
       expect(result.current.isTrapped).toBe(false);
     });
@@ -255,14 +273,10 @@ describe("useIceFloorMazePlay", () => {
       });
 
       test("滑っても知らせ続け、知らせ始めた滑りとはしないこと", () => {
-        act(() => result.current.slide("down"));
+        slideInOrder(result, deadlockSlides(1, withinDeadlock.length));
 
         expect(result.current.isTrapped).toBe(true);
-        expect(result.current.lastSlide).toMatchObject({
-          from: 5,
-          to: 15,
-          entersTrap: false,
-        });
+        expect(result.current.lastSlide).toMatchObject({ entersTrap: false });
       });
 
       test("待ったで戻った先がまだ詰みなら知らせ続け、ゴールに止まれる状態まで戻ると知らせをやめること", () => {
@@ -273,14 +287,14 @@ describe("useIceFloorMazePlay", () => {
         }
         act(() => result.current.undo());
 
-        expect(noticedWhileDeadlocked).toEqual([true, true, true, true]);
+        expect(noticedWhileDeadlocked).toEqual(withinDeadlock.map(() => true));
         expect(result.current.position).toBe(17);
         expect(result.current.isTrapped).toBe(false);
       });
 
       test("ゴールに止まれる状態まで戻った後は、また詰みに入っても数え直すこと", () => {
         act(() => result.current.restart());
-        slideInOrder(result, [...intoDeadlock, ...withinDeadlock.slice(0, 3)]);
+        slideInOrder(result, [...intoDeadlock, ...untilNotice]);
 
         expect(result.current.isTrapped).toBe(false);
       });

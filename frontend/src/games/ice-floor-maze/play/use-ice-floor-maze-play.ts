@@ -184,7 +184,7 @@ type IceFloorMazePlayState = {
  * 詰みに入ってから、気づいていなさそうと見なして知らせるまでの滑りの数。詰みに入った滑りは数えない。
  * 詰みに入ってすぐ知らせると試行錯誤を遮るので、詰みのまま滑り続けて気づいていなさそうなときだけ知らせる。
  */
-const deadlockNoticeSlideCount = 4;
+const deadlockNoticeSlideCount = 10;
 
 /** 詰みでない状態の、知らせまでの数と知らせ。 */
 const notDeadlocked = {
@@ -449,3 +449,5 @@ export function useIceFloorMazePlay(
     completeClearAnimation,
   };
 }
+
+export const _private = { deadlockNoticeSlideCount };
