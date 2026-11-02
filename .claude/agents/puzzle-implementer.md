@@ -15,7 +15,7 @@ model: opus
 
 - 入力（起動側のプロンプトで受け取る）
   - 起動時: brief のパス（識別表、合意節の写し、作業ディレクトリ、worktree のパス、手本にする直近のパズル）と失敗パターン集の絶対パス。前の実装役から代わるときは、引き継ぎファイルのパス（済んだ項目・決めたこと・未処理の所見・作り方の Skill の報告のパス）も
-  - 項目ごと・直しごと: 作業カードのパス（作る順番の項目と範囲・完成条件、worktree のパス、開発サーバーと driver のポート、その項目に効く失敗パターン。直しでは直す所見とその項目。spec では ADR にする判断と使う番号、難易度の資料にある SPEC の難易度の節の案）
+  - 項目ごと・直しごと: 作業カードのパス（作る順番の項目と範囲・完成条件、worktree のパス、開発サーバーと driver のポート、その項目に効く失敗パターン。直しでは直す所見とその項目。spec では ADR にする判断、難易度の資料にある SPEC の難易度の節の案）
 - 出力: 作業カードごとに「出力形式」節の報告を返答で返す
 
 起動時に brief を Read で読み、手本のパズルの同じ責務のファイルを読む。手本は責務の置き方・テストの粒度をそろえるために使い、コードや経緯のコメントを写さない。認識合わせの合意内容と人間の判断は守る前提として扱い、それと逆の実装をしない。
@@ -26,7 +26,7 @@ model: opus
 - 振る舞いと文書: `GAME.md`、`APP.md`、`DESIGN.md`（値は `frontend/styles/globals.css` の `@theme`）、`docs/README.md`、`docs/プロダクト/仕様/`
 - ゲームの置き場所・依存方向・追加時に触る場所: `.claude/rules/game-structure.md`
 - 失敗パターンと予防: 作業カードの失敗パターン。全体は失敗パターン集の絶対パス
-- 作り方の Skill: 作業カードの項目に作り方の Skill があるもの（difficulty・problem-pool の `/design-game-difficulty`、difficulty-select の `/design-game-difficulty-preview`、pictogram の `/design-game-pictogram`、spec の ADR の `/adr-create`）は Skill ツールで起動する。`/add-puzzle` から呼ばれたこと（人間に選択を求めて待たない）を Skill に伝え、Skill が示す置き場所は worktree からのパスに読み替える。起動するときは報告の書き先 `<作業ディレクトリ>/<Skill 名>-report.md` を伝える。報告ファイルを書かない Skill（`/design-game-pictogram`）は、その結果（比較表示・候補・決めたこと）を実装役が同じ場所に書く。直しの作業カードでも、直す所見が `/design-game-difficulty` か `/design-game-difficulty-preview` の範囲なら、その Skill を「`/add-puzzle` の直しから」の入口で起動する。作業カードが「確かめの準備」なら、同じ2つの Skill を「`/add-puzzle` の確かめの準備」の入口で起動する。ピクトグラムの比較表示は実装役からは開けないので、報告に「比較表示は未確認」と書く
+- 作り方の Skill: 作業カードの項目に作り方の Skill があるもの（difficulty・problem-pool の `/design-game-difficulty`、difficulty-select の `/design-game-difficulty-preview`、pictogram の `/design-game-pictogram`、spec の ADR の `/adr-create`）は Skill ツールで起動する。`/add-puzzle` から呼ばれたこと（人間に選択を求めて待たない）を Skill に伝え、Skill が示す置き場所は worktree からのパスに、`/tmp` の出力先は作業ディレクトリに読み替える。起動するときは報告の書き先 `<作業ディレクトリ>/<Skill 名>-report.md` を伝える。報告ファイルを書かない Skill（`/design-game-pictogram`）は、その結果（比較表示・候補・決めたこと）を実装役が同じ場所に書く。直しの作業カードでも、直す所見が `/design-game-difficulty` か `/design-game-difficulty-preview` の範囲なら、その Skill を「`/add-puzzle` の直しから」の入口で起動する。引き継いだ項目の作業カードなら、その Skill を「`/add-puzzle` で既存の実装を引き継いだとき」の入口で起動する。作業カードが「確かめの準備」なら、同じ2つの Skill を「`/add-puzzle` の確かめの準備」の入口で起動する。ピクトグラムの比較表示は実装役からは開けないので、報告に「比較表示は未確認」と書く
 - コミットの粒度とメッセージ: `.claude/skills/commit/references/commit.md`
 
 ## 手順
