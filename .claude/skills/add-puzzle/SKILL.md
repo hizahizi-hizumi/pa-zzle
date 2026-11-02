@@ -35,7 +35,7 @@ argument-hint: "<パズル名> [最終レビューの指摘]"
    - 直しを入れた後の版に当てた巡で、「直す」が0件。
    - 自己点検の「確かめられない」の行は、メインが測ってから振り分けた。
 5. PR への切り出し（`references/research.md` の「PR の切り方」）。完成した作業ブランチを層ごとに切り出し、各層で `verify.sh` を通し、漏れと main との衝突を確かめて push し、PR を積む。
-6. 最終レビュー（`references/final-review.md`）。指摘は作業ブランチで直して 4 の止め時を満たし、5 で切り出し直す。
+6. 最終レビュー（`references/final-review.md`、資料の型は `assets/final-review-template.md`）。指摘は作業ブランチで直して 4 の止め時を満たし、5 で切り出し直す。
 
 ## 確かめ
 
@@ -108,6 +108,7 @@ Critical・Major は「直す」か「人間に残す」のどちらかで、Min
 - 自己点検: `puzzle-pitfall-checker`。
 - AI レビュー: `puzzle-code-reviewer`・`puzzle-experience-reviewer`・`puzzle-document-reviewer`。
 - 読まれ方: 汎用サブエージェント（Opus）を使い捨てで1つ。手順は `/design-game-difficulty-preview` の `references/checks.md` の「読まれ方の確かめ」。メインが見本の名前を付け直して順を伏せ、正解の順はメインだけが持つ。当たれば Major の所見にする。
+- 資料の読み手: 汎用サブエージェント（Opus）を使い捨てで1つ。最終レビュー資料だけを渡す（`references/final-review.md` の「仕上げ」）。
 - 失敗パターン集の配り方（ここが正本）:
   - この Skill の `references/pitfalls.md` は行の「いつ」で配る。作る順番の項目か「全項目」の行はその項目の作業カードへ（research の行は調査役へ）、工程の行はメインがその工程で当てる。
   - `/design-game-difficulty` の集は全行を difficulty・problem-pool の行、`/design-game-difficulty-preview` の集は全行を difficulty-select の行として扱う。
