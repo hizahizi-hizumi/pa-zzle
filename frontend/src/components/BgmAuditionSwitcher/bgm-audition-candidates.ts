@@ -16,12 +16,19 @@ import picoDashHomeUrl from "@/assets/bgm-audition/12-pico-dash-home.mp3";
 import picoDashResultUrl from "@/assets/bgm-audition/12-pico-dash-result.mp3";
 import skipMarimbaHomeUrl from "@/assets/bgm-audition/13-skip-marimba-home.mp3";
 import skipMarimbaResultUrl from "@/assets/bgm-audition/13-skip-marimba-result.mp3";
+import puzzlePopAppSoundHomeUrl from "@/assets/bgm-audition/14-puzzle-pop-app-sound-home.mp3";
+import puzzlePopAppSoundResultUrl from "@/assets/bgm-audition/14-puzzle-pop-app-sound-result.mp3";
+import eightBitMalletAppSoundHomeUrl from "@/assets/bgm-audition/15-8bit-mallet-app-sound-home.mp3";
+import eightBitMalletAppSoundResultUrl from "@/assets/bgm-audition/15-8bit-mallet-app-sound-result.mp3";
 
 import type { AppBackgroundMusicTracks } from "@/components/app-background-music";
 import { defineBackgroundMusicTrack } from "@/lib/background-music";
 
 /** 候補の編成（楽器・音色）。同じ編成の中では、曲（主題・和音・構成）だけが違う。 */
-export type BgmAuditionArrangement = "パズルポップ" | "8bit マレット";
+export type BgmAuditionArrangement =
+  | "パズルポップ"
+  | "8bit マレット"
+  | "アプリの音";
 
 export type BgmAuditionCandidate = {
   number: number;
@@ -34,6 +41,7 @@ export type BgmAuditionCandidate = {
 export const bgmAuditionArrangementLabels = {
   パズルポップ: "パズルポップ（マリンバ・木琴・ピチカート）",
   "8bit マレット": "8bit マレット（マリンバ × チップ音）",
+  アプリの音: "アプリの音で鳴らし直し（1・9 と同じ曲）",
 } satisfies Record<BgmAuditionArrangement, string>;
 
 const BGM_AUDITION_STORAGE_KEY = "pa-zzle.bgm-audition.v1";
@@ -94,6 +102,24 @@ export const bgmAuditionCandidates: readonly [
     tracks: {
       home: defineBackgroundMusicTrack(skipMarimbaHomeUrl),
       result: defineBackgroundMusicTrack(skipMarimbaResultUrl),
+    },
+  },
+  {
+    number: 14,
+    name: "パズルポップ（アプリの音）",
+    arrangement: "アプリの音",
+    tracks: {
+      home: defineBackgroundMusicTrack(puzzlePopAppSoundHomeUrl),
+      result: defineBackgroundMusicTrack(puzzlePopAppSoundResultUrl),
+    },
+  },
+  {
+    number: 15,
+    name: "8bit マレット（アプリの音）",
+    arrangement: "アプリの音",
+    tracks: {
+      home: defineBackgroundMusicTrack(eightBitMalletAppSoundHomeUrl),
+      result: defineBackgroundMusicTrack(eightBitMalletAppSoundResultUrl),
     },
   },
 ];
