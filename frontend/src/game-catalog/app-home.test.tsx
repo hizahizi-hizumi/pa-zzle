@@ -17,6 +17,10 @@ import { selectNanpureProblemById } from "@/games/nanpure/problem-selection";
 import type { ProblemIdentity } from "@/games/problem-id";
 import { listSlidePuzzlePoolProblemIds } from "@/games/slide-puzzle/problem/problem-pool";
 import { selectSlidePuzzleProblemById } from "@/games/slide-puzzle/problem-selection";
+import {
+  listTsumeShogiPoolSeeds,
+  parseTsumeShogiPoolSeed,
+} from "@/games/tsume-shogi/problem/problem-pool";
 import { _private as appLaunch, startAppLaunch } from "@/lib/app-launch";
 import {
   abandonPlayAttempt,
@@ -49,6 +53,15 @@ function selectSlidePuzzleIdentity(): ProblemIdentity {
   return problem.identity;
 }
 
+/** 詰将棋の問題集の本体はゲームの画面で読み込むので、ホームでも引ける索引の seed から identity を作る。 */
+function selectTsumeShogiIdentity(): ProblemIdentity {
+  const seed = listTsumeShogiPoolSeeds("3")[0];
+  if (!seed) {
+    throw new Error("No level 3 Tsume Shogi problem");
+  }
+  return parseTsumeShogiPoolSeed(seed);
+}
+
 function saveAbandonedPlay(
   gameId: string,
   startedAt: number,
@@ -73,12 +86,7 @@ type GameHomeProps = {
 
 function GameHome({ game }: GameHomeProps) {
   const { screenProps } = useGameHome(game);
-  return (
-    <GameHomeScreen
-      {...screenProps}
-      renderHowToPlayDialog={() => null}
-    />
-  );
+  return <GameHomeScreen {...screenProps} renderHowToPlayDialog={() => null} />;
 }
 
 function renderAtHome() {
@@ -131,6 +139,26 @@ describe("useAppHome", () => {
         "ウォーターソートを遊ぶ",
       );
       expect(getContinuationText()).toBeNull();
+    });
+  });
+
+  describe("ナンプレのあとに、並びの最後の詰将棋を遊んだ場合", () => {
+    beforeEach(() => {
+      saveAbandonedPlay("nanpure", 100_000, "4", selectNanpureIdentity("4"));
+      saveAbandonedPlay(
+        "tsume-shogi",
+        200_000,
+        "3",
+        selectTsumeShogiIdentity(),
+      );
+      renderAtHome();
+    });
+
+    test("最後に遊んだ詰将棋を選んでおき、開くレベルと挑戦中の問題の数を続きとして示すこと", () => {
+      const heroLink = getHeroLink();
+
+      expect(heroLink.getAttribute("aria-label")).toBe("詰将棋を遊ぶ");
+      expect(getContinuationText()).toBe("レベル 3 ・ 挑戦中 1問");
     });
   });
 
