@@ -54,7 +54,7 @@ export type BridgesReasoningRound = {
 /**
  * - `solved`: 全辺の本数が決まった。
  * - `stuck`: 使える段では、決まらない辺が残った。
- * - `contradiction`: 範囲が成り立たなくなった（数字が規則と合わない盤面）。
+ * - `contradiction`: 範囲が成り立たなくなった、または全辺の本数が決まったのに全島がつながらない（規則を満たす橋が無い盤面）。
  */
 export type BridgesHumanSolveStatus = "solved" | "stuck" | "contradiction";
 
@@ -486,6 +486,15 @@ export function traceBridgesHumanSolve(
       bridges: bounds.lower,
       decidedEdgeRatio: 0,
       undecidedEdgeRatio: 1,
+    };
+  }
+  if (solved && !areAllBridgeComponentsJoined(context, bounds.lower)) {
+    return {
+      status: "contradiction",
+      rounds,
+      bridges: bounds.lower,
+      decidedEdgeRatio: 1,
+      undecidedEdgeRatio: 0,
     };
   }
   const decidedCount = bounds.lower.filter(

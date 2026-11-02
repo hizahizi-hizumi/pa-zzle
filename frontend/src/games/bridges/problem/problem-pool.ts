@@ -14,7 +14,7 @@ import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /**
  * 事前生成した問題集の1問。解の橋は持たない。
- * - `size`・`densityPercent`・`doubleBridgePercent`・`extraBridgePercent`・`candidateIndex` から
+ * - `size`・`densityPercent`・`doubleBridgePercent`・`extraBridgePercent`・`splitPercent`・`candidateIndex` から
  *   `createBridgesProblemIdentity` で identity を再構成する。割合は百分率の整数。
  * - `encodedIslands`（`encodeBridgesPoolIslands`）と `clues`（島の数字を行優先に並べた数字の列）で盤面を表す。
  *   実行時に生成器・解法器を呼ばずに問題を復元するため、生成結果そのものを持つ。
@@ -25,6 +25,7 @@ export type BridgesProblemPoolEntry = readonly [
   densityPercent: number,
   doubleBridgePercent: number,
   extraBridgePercent: number,
+  splitPercent: number,
   candidateIndex: number,
   encodedIslands: string,
   clues: string,
@@ -134,6 +135,7 @@ export function toBridgesPoolIdentity([
   densityPercent,
   doubleBridgePercent,
   extraBridgePercent,
+  splitPercent,
   candidateIndex,
 ]: BridgesProblemPoolEntry): BridgesProblemIdentity {
   const conditions = {
@@ -141,6 +143,7 @@ export function toBridgesPoolIdentity([
     islandDensity: densityPercent / 100,
     doubleBridgeRate: doubleBridgePercent / 100,
     extraBridgeRate: extraBridgePercent / 100,
+    splitRate: splitPercent / 100,
   };
   if (!isBridgesGenerationConditions(conditions)) {
     throw new RangeError(
@@ -154,6 +157,7 @@ export function toBridgesPoolAnalysis(
   entry: BridgesProblemPoolEntry,
 ): BridgesPoolAnalysis {
   const [
+    ,
     ,
     ,
     ,
@@ -177,7 +181,7 @@ export function toBridgesPoolAnalysis(
 export function toBridgesPooledProblem(
   entry: BridgesProblemPoolEntry,
 ): BridgesPooledProblem {
-  const [size, , , , , encodedIslands, clues] = entry;
+  const [size, , , , , , encodedIslands, clues] = entry;
   return {
     problem: decodeBridgesPoolProblem(size, encodedIslands, clues),
     identity: toBridgesPoolIdentity(entry),

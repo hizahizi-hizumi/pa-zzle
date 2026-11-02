@@ -7,11 +7,9 @@ import {
   traceBridgesHumanSolve,
 } from "@/games/bridges/problem/generation/human-solver";
 import { tryBridgesNaively } from "@/games/bridges/problem/generation/naive-solver";
+import { getBridgesSymmetryKey } from "@/games/bridges/problem/generation/symmetry";
 import type { BridgesProblem } from "@/games/bridges/problem/problem";
-import {
-  formatBridgesBoard,
-  getBridgesNetwork,
-} from "@/games/bridges/puzzle/board";
+import { getBridgesNetwork } from "@/games/bridges/puzzle/board";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
 /**
@@ -111,18 +109,18 @@ function measureScale(
 }
 
 /**
- * 素朴な解き方を、盤面だけから決まる乱数で試す。同じ盤面からは同じ結果になる。
+ * 素朴な解き方を、盤面の回転・反転の正規化キーから決まる乱数で試す。同じ形の盤面からは同じ乱数列を使う。
  */
 export function measureBridgesTrialFeatures(
   problem: BridgesProblem,
 ): BridgesTrialFeatures {
-  const boardText = formatBridgesBoard(problem).join("/");
+  const boardKey = getBridgesSymmetryKey(problem);
   const results = Array.from(
     { length: BRIDGES_NAIVE_TRIAL_COUNT },
     (_, trial) =>
       tryBridgesNaively(
         problem,
-        createProblemSeededRandom(`bridges-naive:${trial}:${boardText}`),
+        createProblemSeededRandom(`bridges-naive:${trial}:${boardKey}`),
       ),
   );
   return {

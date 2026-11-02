@@ -35,8 +35,13 @@ export const bridgesExtraBridgeRates = [0, 0.15] as const;
 
 export type BridgesExtraBridgeRate = (typeof bridgesExtraBridgeRates)[number];
 
+/** 木を育てる途中で、既にある橋の途中に島を差して橋を2本に分ける確率（分割）。島の数を増やす。 */
+export const bridgesSplitRates = [0, 0.2] as const;
+
+export type BridgesSplitRate = (typeof bridgesSplitRates)[number];
+
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
-export const BRIDGES_GENERATOR_VERSION = "1";
+export const BRIDGES_GENERATOR_VERSION = "2";
 
 /**
  * 候補を作る条件。どれも難易度の判定条件ではなく、候補の分布を寄せる生成条件。
@@ -47,6 +52,7 @@ export type BridgesGenerationConditions = {
   islandDensity: BridgesIslandDensity;
   doubleBridgeRate: BridgesDoubleBridgeRate;
   extraBridgeRate: BridgesExtraBridgeRate;
+  splitRate: BridgesSplitRate;
 };
 
 /** 同じ問題を再現するための情報。記録から同じ問題を引き直すときに使う。 */
@@ -71,17 +77,24 @@ function toPercent(rate: number): number {
 
 /**
  * 生成条件と候補番号から identity を作る。seed は条件ごとに別の系列になるよう条件を含め、割合は百分率の整数で書く。
- * 例: 10×10・密度0.3・2本0.1・輪0.15・候補番号 3 は `br-10-d30-p10-e15-3`。
+ * 例: 10×10・密度0.3・2本0.1・輪0.15・分割0.2・候補番号 3 は `br-10-d30-p10-e15-s20-3`。
  */
 export function createBridgesProblemIdentity(
   conditions: BridgesGenerationConditions,
   candidateIndex: number,
 ): BridgesProblemIdentity {
-  const { size, islandDensity, doubleBridgeRate, extraBridgeRate } = conditions;
+  const { size, islandDensity, doubleBridgeRate, extraBridgeRate, splitRate } =
+    conditions;
   return {
     generatorVersion: BRIDGES_GENERATOR_VERSION,
-    seed: `br-${size}-d${toPercent(islandDensity)}-p${toPercent(doubleBridgeRate)}-e${toPercent(extraBridgeRate)}-${candidateIndex}`,
-    conditions: { size, islandDensity, doubleBridgeRate, extraBridgeRate },
+    seed: `br-${size}-d${toPercent(islandDensity)}-p${toPercent(doubleBridgeRate)}-e${toPercent(extraBridgeRate)}-s${toPercent(splitRate)}-${candidateIndex}`,
+    conditions: {
+      size,
+      islandDensity,
+      doubleBridgeRate,
+      extraBridgeRate,
+      splitRate,
+    },
   };
 }
 
@@ -98,7 +111,8 @@ export function isBridgesGenerationConditions(
     isOneOf(bridgesBoardSizes, value.size) &&
     isOneOf(bridgesIslandDensities, value.islandDensity) &&
     isOneOf(bridgesDoubleBridgeRates, value.doubleBridgeRate) &&
-    isOneOf(bridgesExtraBridgeRates, value.extraBridgeRate)
+    isOneOf(bridgesExtraBridgeRates, value.extraBridgeRate) &&
+    isOneOf(bridgesSplitRates, value.splitRate)
   );
 }
 

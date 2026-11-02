@@ -14,6 +14,7 @@ describe("generateBridgesProblem", () => {
       islandDensity: 0.3,
       doubleBridgeRate: 0.1,
       extraBridgeRate: 0.15,
+      splitRate: 0.2,
     },
     12,
   );
