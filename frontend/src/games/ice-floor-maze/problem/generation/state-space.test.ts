@@ -1,93 +1,60 @@
 import {
   _private,
-  CELL_BRITTLE,
   createElementRules,
   exploreStateSpace,
-  findSlideEnd,
   fromGenerationBoard,
-  maskAfterSlide,
 } from "@/games/ice-floor-maze/problem/generation/state-space";
-import {
-  applyIceFloorMazeSlide,
-  iceFloorMazeDirections,
-  slideIceFloorMazePiece,
-} from "@/games/ice-floor-maze/puzzle/rules";
-import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
+import { iceFloorMazeDirections } from "@/games/ice-floor-maze/puzzle/rules";
+import { createIceFloorMazeInitialState } from "@/games/ice-floor-maze/puzzle/state";
+import { exploreIceFloorMazeStates } from "@/games/ice-floor-maze/puzzle/state-graph";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
 const { parseGenerationBoardRows } = _private;
 
-describe("findSlideEnd・maskAfterSlide", () => {
+describe("exploreStateSpace", () => {
   const random = createProblemSeededRandom("ice-floor-maze:state-space-floor");
-  const boards = Array.from({ length: 30 }, () =>
+  const boards = Array.from({ length: 60 }, (_, index) =>
     Array.from({ length: 6 }, () =>
       Array.from({ length: 6 }, () => {
         const roll = random();
         if (roll < 0.16) return "#";
-        if (roll < 0.22) return "b";
+        if (roll < 0.22) return index % 3 === 0 ? "b" : "m";
         if (roll < 0.3) return "c";
-        if (roll < 0.38) return "o";
+        if (roll < 0.36) return index % 3 === 1 ? "o" : "s";
         return ".";
       }).join(""),
     ),
   );
 
   test.each(boards.map((rows, index) => [index, rows] as const))(
-    "床と要素のある盤面 %i の到達できるどの状態でも、遊ぶときの規則と同じ位置で止まり同じ要素を変えること",
+    "要素のある盤面 %i で、遊ぶときの規則の状態のグラフと同じ順に同じ状態をたどり、同じ手で移ること",
     (_, rows) => {
       const board = parseGenerationBoardRows(rows);
       const playable = fromGenerationBoard(board);
-      const rules = createElementRules(board);
       const start = board.cells.indexOf(0);
-      const space = exploreStateSpace(rules, start)!;
+      const space = exploreStateSpace(createElementRules(board), start);
+      const graph = exploreIceFloorMazeStates(
+        playable,
+        createIceFloorMazeInitialState(playable, start),
+      );
 
-      const mismatches = Array.from({ length: space.count }, (_, state) => {
-        const position = space.positions[state]!;
-        const mask = space.masks[state]!;
-        const cells = playable.cells.map(
-          (cell, cellIndex): IceFloorMazeStateCell => {
-            const element = rules.elementOf[cellIndex]!;
-            if (element < 0 || ((mask >>> element) & 1) === 0) {
-              return cell;
-            }
-            return rules.kinds[element] === CELL_BRITTLE ? "ice" : "water";
-          },
-        );
-        return iceFloorMazeDirections.flatMap((direction, directionIndex) => {
-          const slide = slideIceFloorMazePiece(
-            playable,
-            { position, cells },
-            direction,
-          );
-          const end = findSlideEnd(rules, position, mask, directionIndex);
-          const expected =
-            slide.status === "slid"
-              ? applyIceFloorMazeSlide({ position, cells }, slide)
-              : null;
-          const after =
-            end === position
-              ? null
-              : maskAfterSlide(rules, position, end, mask, directionIndex);
-          const changed =
-            after === null
-              ? null
-              : Array.from(rules.elements).filter(
-                  (_, element) => ((after >>> element) & 1) === 1,
-                );
-          const expectedChanged =
-            expected === null
-              ? null
-              : Array.from(rules.elements).filter(
-                  (cell) => expected.cells[cell] !== playable.cells[cell],
-                );
-          return (expected?.position ?? position) === end &&
-            JSON.stringify(changed) === JSON.stringify(expectedChanged)
-            ? []
-            : [{ position, mask, direction }];
-        });
-      }).flat();
-
-      expect(mismatches).toEqual([]);
+      expect(space?.count).toBe(graph?.states.length);
+      expect(Array.from(space!.positions)).toEqual(
+        graph!.states.map((state) => state.position),
+      );
+      expect(Array.from(space!.targets)).toEqual(
+        graph!.moves.flatMap((moves) =>
+          iceFloorMazeDirections.map(
+            (direction) =>
+              moves.find((move) => move.direction === direction)?.to ?? -1,
+          ),
+        ),
+      );
+      expect(
+        Array.from(space!.layoutIds, (layoutId) =>
+          Array.from(space!.layouts.layouts[layoutId]!.blocks),
+        ),
+      ).toEqual(graph!.states.map((state) => [...state.blocks]));
     },
   );
 });

@@ -45,8 +45,9 @@ Options:
   --static-per-level <n>   氷と岩だけのレベル（1・2）の問題数 (default: 500)
   --element-per-level <n>  要素のあるレベル（3〜5）の問題数 (default: 300)
   --levels <list>          作り直すレベル（例: 3,4）。ほかのレベルは今の問題集のまま (default: すべて)
-  --search <list>          要素のあるレベルの山登りの止め方（例: 3=early,3-brittle-rock=full,5=full）
-                           early は採用条件を満たした時点で打ち切り、full は最後まで回す (default: ${formatSearchModes(defaultSearchModes)})
+  --search <list>          要素のあるレベルの山登りの止め方（例: 3=early,3-brittle-rock=full,5=patient）
+                           early は採用条件を満たした時点で打ち切り（1,000回で諦める）、patient は同じく打ち切るが
+                           最後まで諦めない、full は最後まで回す (default: ${formatSearchModes(defaultSearchModes)})
   --jobs <n>               並列ワーカー数 (default: 4)
   --compare <n>            問題集を書かず、要素のある各生成条件で n 回ずつ early と full を回して時間と難しさを比べる
   --verify                 問題集を書かず、今の問題集の全問を分析し直してレベルと最少手数を確かめる`;
@@ -57,21 +58,33 @@ const outputPath = new URL(
   import.meta.url,
 );
 
-type SearchMode = "early" | "full";
+type SearchMode = "early" | "patient" | "full";
+
+const searchModes: readonly SearchMode[] = ["early", "patient", "full"];
+
+function isSearchMode(value: string | undefined): value is SearchMode {
+  return searchModes.some((mode) => mode === value);
+}
 
 /**
  * レベル（`3`）か、レベルと要素の種類（`3-brittle-rock`）ごとの山登りの止め方。種類の指定がレベルの指定より優先する。
  * もろい岩だけの L3 は条件1（同じ向きが続く手）を満たしにくく、打ち切る方式では 1,000 回までに採用条件を満たす回がほとんど無いので、
- * 最後まで回す。L5 の薄い氷は最後まで回して自作依存の点を上げ、L5 の両方は最後まで回すと1問に1分半ほどかかるので打ち切る。
+ * 最後まで回す。雪・滑る氷の塊を置く L3・L4 と L5 は、1,000 回までに採用条件を満たさない回が多いが、最後まで回すと自作依存の点が
+ * 帯の上限まで上がるので、採用条件を満たした時点で打ち切り、最後まで諦めない。
  */
 type SearchModes = Readonly<Record<string, SearchMode>>;
 
 const defaultSearchModes: SearchModes = {
   "3": "early",
   "3-brittle-rock": "full",
+  "3-snow": "patient",
+  "3-sliding-block": "patient",
   "4": "early",
-  "5": "full",
-  "5-mixed": "early",
+  "4-snow": "patient",
+  "4-snow-thin-ice": "patient",
+  "4-sliding-block": "patient",
+  "4-sliding-block-thin-ice": "patient",
+  "5": "patient",
 };
 
 function findSearchMode(
@@ -90,6 +103,10 @@ const earlyElementSearch = {
 
 const searchSettings = {
   early: earlyElementSearch,
+  patient: {
+    ...earlyElementSearch,
+    giveUpAfter: earlyElementSearch.iterations,
+  },
   full: fullElementSearch,
 } as const satisfies Record<SearchMode, ElementSearchSettings>;
 
@@ -123,10 +140,20 @@ const variantByComposition = {
   "brittle-rock": "brittle-rock",
   "thin-ice": "thin-ice",
   mixed: "mixed",
+  snow: "snow",
+  "snow-thin-ice": "snow-thin-ice",
+  "sliding-block": "sliding-block",
+  "sliding-block-thin-ice": "sliding-block-thin-ice",
 } as const satisfies Record<
   IceFloorMazeElementPattern["composition"],
   ElementVariant
 >;
+
+const twoTileVariants: ReadonlySet<ElementVariant> = new Set([
+  "mixed",
+  "snow-thin-ice",
+  "sliding-block-thin-ice",
+]);
 
 const TACTIC_ITERATIONS = 2000;
 const TACTIC_SLIDE_WEIGHT = 1;
@@ -207,7 +234,9 @@ function buildElementPlan(
           height: shape.height,
           shortest: shape.shortest,
           elements: pattern.elementCount,
-          minimumEach: variant === "mixed" ? conditions.minimumEachInMixed : 0,
+          minimumEach: twoTileVariants.has(variant)
+            ? conditions.minimumEachInMixed
+            : 0,
           minimumUses: conditions.minimumUses,
           decoyShare: conditions.decoyShare,
           forcedShare: conditions.forcedShare,
@@ -336,7 +365,7 @@ function parseSearchModes(value: string | undefined): SearchModes {
   return Object.fromEntries(
     value.split(",").map((part) => {
       const [key, mode] = part.split("=");
-      if (!key || (mode !== "early" && mode !== "full")) {
+      if (!key || !isSearchMode(mode)) {
         throw new RangeError(`--search: ${part}`);
       }
       return [key, mode];
@@ -621,31 +650,39 @@ function describeLevel(
       `  状態の読み深さ: ${formatCounts(element.map(({ features }) => features.stateReadingDepth ?? "-"))}`,
       `  見た目どおりの読み: ${formatCounts(element.map(({ features }) => features.looksReading))}`,
       `  自作依存の点: ${describeDistribution(element.map(({ features }) => features.selfMadeDependence))}（${formatCounts(element.map(({ features }) => features.selfMadeDependence))}）`,
-      `  2手以上前に作った水面で止まる: ${formatCounts(element.map(({ features }) => features.texture.distantStopCount))}`,
-      `  ゴールを自分で作った水面で止める: ${formatCounts(element.map(({ features }) => (features.texture.goalStopsOnSelfMade ? "あり" : "なし")))}`,
+      `  2手以上前に作った止め役で止まる: ${formatCounts(element.map(({ features }) => features.texture.distantStopCount))}`,
+      `  ゴールを自分で作った止め役で止める: ${formatCounts(element.map(({ features }) => (features.texture.goalStopsOnSelfMade ? "あり" : "なし")))}`,
       `  難しさの点（研究用 v4、段には使わない）: ${describeDistribution(element.map(({ features }) => features.hardness))}`,
       `  1マスの滑りの割合: ${describeDistribution(element.map(({ features }) => features.texture.shortSlideCount / features.optimalMoveCount))}`,
       `  滑りの長さの平均: ${describeDistribution(element.map(({ features }) => features.texture.averageSlideLength))}`,
       `  階段: ${formatCounts(element.map(({ features }) => features.texture.longestStair))}`,
       `  選択肢の無い階段: ${formatCounts(element.map(({ features }) => features.texture.longestChoicelessStair))}`,
       `  読みどころの無い区間: ${formatCounts(element.map(({ features }) => features.texture.longestIdleRun))}`,
-      `  割ってすぐ戻る手筋: ${formatCounts(element.map(({ features }) => features.texture.quickReturnCount))}`,
+      `  作ってすぐ戻る手筋: ${formatCounts(element.map(({ features }) => features.texture.quickReturnCount))}`,
       `  自分で作った地形の別の使い方: ${formatCounts(element.map(({ features }) => features.texture.variedUseCount))}`,
       `  作ってから使うまでの最大手数: ${describeDistribution(element.map(({ features }) => features.texture.selfMadeMaximumGap))}`,
       `  閉じ込めにならないおとり: ${formatCounts(element.map(({ features }) => features.lingeringDecoyCount))}`,
       `  岩の割合: ${describeDistribution(element.map(({ features }) => features.rockShare))}`,
-      ...(["brittle-rock", "thin-ice", "mixed"] as const).flatMap(
-        (composition) => {
-          const ofComposition = element.filter(
-            (item) => item.composition === composition,
-          );
-          return ofComposition.length > 0
-            ? [
-                `    ${composition}: ${ofComposition.length}問 自作依存の点 ${describeDistribution(ofComposition.map(({ features }) => features.selfMadeDependence))} / 最少手数 ${describeDistribution(ofComposition.map(({ features }) => features.optimalMoveCount))}`,
-              ]
-            : [];
-        },
-      ),
+      ...(
+        [
+          "brittle-rock",
+          "thin-ice",
+          "mixed",
+          "snow",
+          "snow-thin-ice",
+          "sliding-block",
+          "sliding-block-thin-ice",
+        ] as const
+      ).flatMap((composition) => {
+        const ofComposition = element.filter(
+          (item) => item.composition === composition,
+        );
+        return ofComposition.length > 0
+          ? [
+              `    ${composition}: ${ofComposition.length}問 自作依存の点 ${describeDistribution(ofComposition.map(({ features }) => features.selfMadeDependence))} / 最少手数 ${describeDistribution(ofComposition.map(({ features }) => features.optimalMoveCount))}`,
+            ]
+          : [];
+      }),
     );
   }
   return lines;

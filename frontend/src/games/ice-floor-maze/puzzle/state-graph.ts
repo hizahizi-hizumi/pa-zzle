@@ -1,9 +1,7 @@
-import {
-  type IceFloorMazeBoard,
-  isIceFloorMazeChangeableCell,
-} from "@/games/ice-floor-maze/puzzle/board";
+import type { IceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import {
   applyIceFloorMazeSlide,
+  doesIceFloorMazeSlideChangeElements,
   type IceFloorMazeDirection,
   iceFloorMazeDirections,
   slideIceFloorMazePiece,
@@ -11,7 +9,7 @@ import {
 import type { IceFloorMazeState } from "@/games/ice-floor-maze/puzzle/state";
 
 /**
- * 状態のグラフでたどる状態の数の上限。要素を崩す・割る順序の組み合わせで状態は増えるが、
+ * 状態のグラフでたどる状態の数の上限。要素を崩す・割る・押し出す・動かす順序の組み合わせで状態は増えるが、
  * 研究用の生成 v4 の試遊候補では最大 3,173 状態で、v4 と同じ上限で打ち切る。
  */
 export const ICE_FLOOR_MAZE_STATE_LIMIT = 20_000;
@@ -41,10 +39,12 @@ type IceFloorMazeStateExploration = {
 };
 
 /**
- * 状態を表す数の、要素ごとの変化のビットの数。状態は駒の位置と各要素が変わったかで決まり、
- * `変化のビット列 × マス数 + 駒の位置` を安全な整数に収めるため、要素の数をこれまでにする。
+ * 盤面のマスと塊の位置の組（配置）を表す文字列。状態は駒の位置と配置で決まる。要素が変わらない滑りでは配置も変わらないので、
+ * 要素が変わる滑りでだけ作る。
  */
-const ICE_FLOOR_MAZE_CHANGEABLE_CELL_LIMIT = 30;
+function describeLayout({ cells, blocks }: IceFloorMazeState): string {
+  return `${cells.join(",")}|${blocks.join(",")}`;
+}
 
 /** 起点から幅優先で状態をたどる。状態の数が `limit` を超えたら `null`。 */
 export function exploreIceFloorMazeStates(
@@ -55,33 +55,13 @@ export function exploreIceFloorMazeStates(
     limit = ICE_FLOOR_MAZE_STATE_LIMIT,
   }: IceFloorMazeStateExploration = {},
 ): IceFloorMazeStateGraph | null {
-  const bitByCell = new Map(
-    board.cells
-      .flatMap((cell, cellIndex) =>
-        isIceFloorMazeChangeableCell(cell) ? [cellIndex] : [],
-      )
-      .map((cellIndex, bitIndex) => [cellIndex, 1 << bitIndex]),
-  );
-  if (bitByCell.size > ICE_FLOOR_MAZE_CHANGEABLE_CELL_LIMIT) {
-    throw new RangeError("Ice floor maze board has too many changeable cells");
-  }
-
   const cellCount = board.cells.length;
   const states = [origin];
-  const changeMasks = [
-    board.cells.reduce(
-      (mask, cell, cellIndex) =>
-        cell === origin.cells[cellIndex]
-          ? mask
-          : mask | (bitByCell.get(cellIndex) ?? 0),
-      0,
-    ),
-  ];
+  const layouts = [0];
+  const layoutByKey = new Map([[describeLayout(origin), 0]]);
   const moveCounts = [0];
   const moves: IceFloorMazeStateMove[][] = [];
-  const indexByKey = new Map([
-    [changeMasks[0]! * cellCount + origin.position, 0],
-  ]);
+  const indexByKey = new Map([[origin.position, 0]]);
 
   for (let order = 0; order < states.length; order += 1) {
     const state = states[order]!;
@@ -97,15 +77,15 @@ export function exploreIceFloorMazeStates(
         continue;
       }
 
-      const changedCells =
-        slide.crumbledRock === null
-          ? slide.crackedIce
-          : [slide.crumbledRock, ...slide.crackedIce];
-      const changeMask = changedCells.reduce(
-        (mask, cellIndex) => mask | bitByCell.get(cellIndex)!,
-        changeMasks[order]!,
-      );
-      const key = changeMask * cellCount + slide.to;
+      const changes = doesIceFloorMazeSlideChangeElements(slide);
+      const next = changes ? applyIceFloorMazeSlide(state, slide) : null;
+      let layout = layouts[order]!;
+      if (next) {
+        const layoutKey = describeLayout(next);
+        layout = layoutByKey.get(layoutKey) ?? layoutByKey.size;
+        layoutByKey.set(layoutKey, layout);
+      }
+      const key = layout * cellCount + slide.to;
       let to = indexByKey.get(key);
       if (to === undefined) {
         to = states.length;
@@ -113,8 +93,8 @@ export function exploreIceFloorMazeStates(
           return null;
         }
         indexByKey.set(key, to);
-        states.push(applyIceFloorMazeSlide(state, slide));
-        changeMasks.push(changeMask);
+        states.push(next ?? applyIceFloorMazeSlide(state, slide));
+        layouts.push(layout);
         moveCounts.push(moveCounts[order]! + 1);
       }
       stateMoves.push({ direction, to });

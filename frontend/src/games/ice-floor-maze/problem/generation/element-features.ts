@@ -1,8 +1,14 @@
 import {
+  BEHAVIOR_PASS,
+  BEHAVIOR_STOP_IN,
+  BEHAVIOR_STOPPER,
+  CELL_BLOCK,
   CELL_BRITTLE,
+  CELL_FLOOR,
   CELL_ICE,
   CELL_OUTSIDE,
   CELL_ROCK,
+  CELL_SNOW,
   CELL_THIN,
   countBits,
   countShortestSolutions,
@@ -11,11 +17,16 @@ import {
   type ElementRules,
   exploreStateSpace,
   findCanonicalSolution,
-  findSlideEnd,
-  findSlideHit,
+  findMovedBlock,
   findUsedCells,
   type GenerationBoard,
+  getBehavior,
+  getLayout,
   getTarget,
+  KIND_BLOCK,
+  KIND_PASS,
+  KIND_STOPPER,
+  type Layout,
   measureDistancesToGoal,
   measureLongestStair,
   type StateSpace,
@@ -23,7 +34,8 @@ import {
 } from "@/games/ice-floor-maze/problem/generation/state-space";
 
 /**
- * もろい岩・薄い氷のある盤面の特徴量（研究用の生成 v4 `ice_floor_hardest_generation_experiment.py` の `measure`）。
+ * 要素（もろい岩・薄い氷・雪・滑る氷の塊）のある盤面の特徴量（研究用の生成 v4 `ice_floor_hardest_generation_experiment.py` の
+ * `measure`。自分で作った地形の数え方は v5 `ice_floor_persistent_generation_experiment.py` の `dependency_trace`）。
  * 氷と岩だけの盤面にも当てられる（要素が無いだけ）。
  */
 
@@ -50,7 +62,7 @@ export type ElementRole =
   | "irrelevant";
 
 /**
- * 見た目どおり（もろい岩→岩、薄い氷→氷）に読んだ盤面の結果。
+ * 見た目どおり（もろい岩→岩、薄い氷→氷、雪→入ると止まる床、滑る氷の塊→岩）に読んだ盤面の結果。
  * - `unsolvable`: 解が無い。
  * - `misleading`: その盤面の最短+`NEAR_SLACK` 手以内のどの解も、元の規則では通らない。
  * - `detour`: 通る解はあるが、元の規則での手数が大きな遠回り。
@@ -83,6 +95,8 @@ export type ElementMetrics = {
   elementCount: number;
   brittleCount: number;
   thinCount: number;
+  snowCount: number;
+  blockCount: number;
   unusedCellCount: number;
   roles: readonly ElementRole[];
   precedenceCount: number;
@@ -92,7 +106,7 @@ export type ElementMetrics = {
   orderLureCount: number;
   solutionRepeatCount: number;
   nearRepeatCount: number;
-  brittleChainCount: number;
+  elementChainCount: number;
   repeatMoveCount: number;
   liveRepeatMoveCount: number;
   looks: StaticSolution;
@@ -106,14 +120,15 @@ export type ElementMetrics = {
 };
 
 /**
- * 最短解の1手で、それより前の自分の手が作った地形を使うこと。
- * - `water`: 割れてできた水面で止まる。
- * - `opening`: 崩れて空いたマスを通る・そこで止まる。
+ * 最短解の1手で、それより前の自分の手が作った地形を使うこと。マスのふるまい（通れる・入ると止まる・止め役）が初期盤面と違う
+ * マスを自分の手で作った地形とし、それを最後に変えた手を作った手とする。
+ * - `stop`: 自分で作った止め役で止まる（水面・雪山・動かした塊）。前に動かした塊をもう一度押して運ぶのも含む。
+ * - `pass`: 自分で空けたマスを通る・そこで止まる（崩れた跡・雪をどけた跡・塊が元あったマス）。
  * - `madeAt` / `gap`: 地形を作った手の番号（0始まり）と、作った手から使う手までの手数。
  */
 export type SelfMadeTerrainUse = {
   cell: number;
-  kind: "water" | "opening";
+  kind: "stop" | "pass";
   madeAt: number;
   gap: number;
 };
@@ -121,9 +136,9 @@ export type SelfMadeTerrainUse = {
 /**
  * 最短解の1手の様子。
  * - `slideLength`: 滑ったマスの数。
- * - `changedCells`: この手の後で崩れる・割れるマス。
+ * - `changedCells`: この手の後でふるまいが変わるマス（崩れる・割れる・雪をどける・雪山ができる・塊が動く）。
  * - `selfMadeUses`: 前の自分の手が作った地形を使うこと。
- * - `useEventCount`: 要素を使う出来事（崩す・崩れた跡を通る・水面で止まる）の数。
+ * - `useEventCount`: 要素を使う出来事（崩す・雪を押し出す・塊を動かす、と自分で作った地形を使うこと）の数。
  * - `freshAlternativeCount` / `temptingAlternativeCount`: 解の手のほかに、まだ訪れていない状態へ移る手の数と、
  *   そのうちもっともらしい手の数。前者が0の手が一本道。
  * - `lure` / `orderTrap`: もっともらしいが詰みか遠回りになる手がある / 後で使う要素を先に変化させて詰みか遠回りになる手がある。
@@ -149,10 +164,10 @@ export type SolutionMove = {
  * - `longestChoicelessStair`: 階段のうち、どの手にももっともらしい別の手が無い連なり。
  * - `longestIdleRun`: 要素を変えず使わず、誘い（もっともらしいが詰みか遠回りになる手）も無い手の最も長い連なり（読みどころの無い区間）。
  * - `selfMadeUseCount` / `selfMadeMaximumGap` / `selfMadeTotalGap`: 自分で作った地形を使う回数と、作ってから使うまでの手数の最大・合計。
- * - `quickReturnCount`: 薄い氷を割った直後の手で、その水面へ戻って止まる回数（割ってすぐ戻る手筋）。
- * - `variedUseCount`: 自分で作った地形を使ううち、割ってすぐ戻る手筋でないもの（遠くから水面で止まる・崩れた跡を通るなど）。
- * - `distantStopCount`: 2手以上前に作った水面で止まる回数。
- * - `goalStopsOnSelfMade`: ゴールで止まる最後の手が、自分で作った水面で止まる。
+ * - `quickReturnCount`: 止め役を作った直後の手で、それで止まる回数（作ってすぐ戻る手筋）。
+ * - `variedUseCount`: 自分で作った地形を使ううち、作ってすぐ戻る手筋でないもの（遠くから水面で止まる・崩れた跡を通るなど）。
+ * - `distantStopCount`: 2手以上前に作った止め役で止まる回数。
+ * - `goalStopsOnSelfMade`: ゴールで止まる最後の手が、自分で作った止め役で止まる。
  * - `changedCellCount` / `maximumChangedPerMove` / `maximumChangeSpread`: 変わるマスの数の合計、1手の最大、1手で変わるマスどうしの
  *   マンハッタン距離の最大。
  * - `changedAreaSpan`: 解の全体で変わるマスを囲む長方形の幅と高さの和（マス数−1ずつ）。変わるマスが無ければ0。
@@ -193,7 +208,7 @@ export function classifyLooksReading(metrics: ElementMetrics): LooksReading {
     : "shortcut";
 }
 
-/** 見た目どおり、またはもう一方（もろい岩→氷、薄い氷→岩）の盤面の解が元の規則でも短く通る。 */
+/** 見た目どおり、またはもう一方（もろい岩→氷、薄い氷→岩、雪→岩、滑る氷の塊→氷）の盤面の解が元の規則でも短く通る。 */
 export function hasStaticShortcut(metrics: ElementMetrics): boolean {
   const { other } = metrics;
   return (
@@ -224,18 +239,28 @@ function replaceCells(
   };
 }
 
+/** 要素を変化しないとみなした見た目どおりの形（研究用 v5 の `NEUTRAL`）。 */
+const neutralCodes = new Map([
+  [CELL_BRITTLE, CELL_ROCK],
+  [CELL_THIN, CELL_ICE],
+  [CELL_SNOW, CELL_FLOOR],
+  [CELL_BLOCK, CELL_ROCK],
+]);
+
+/** 要素が変化した後の形（もう一方の静的な盤面。研究用 v5 の `OTHER`）。 */
+const otherCodes = new Map([
+  [CELL_BRITTLE, CELL_ICE],
+  [CELL_THIN, CELL_ROCK],
+  [CELL_SNOW, CELL_ROCK],
+  [CELL_BLOCK, CELL_ICE],
+]);
+
 function neutralCode(code: number): number {
-  if (code === CELL_BRITTLE) {
-    return CELL_ROCK;
-  }
-  return code === CELL_THIN ? CELL_ICE : code;
+  return neutralCodes.get(code) ?? code;
 }
 
 function otherCode(code: number): number {
-  if (code === CELL_BRITTLE) {
-    return CELL_ICE;
-  }
-  return code === CELL_THIN ? CELL_ROCK : code;
+  return otherCodes.get(code) ?? code;
 }
 
 export function createElementContext(
@@ -277,11 +302,36 @@ export function createElementContext(
   };
 }
 
+/**
+ * 今の盤面を見たとおりに滑らせて止まるマス（研究用の滑りの表 `tables`）。止め役（塊を含む）の手前で止まり、床・雪に入ると
+ * そこで止まる。雪を押し出せるか・塊を押せるかは見ない。
+ */
+function findVisibleSlideEnd(
+  rules: ElementRules,
+  layout: Layout,
+  position: number,
+  direction: number,
+): number {
+  const beyond = rules.beyond[direction]!;
+  let current = position;
+  for (let next = beyond[current]!; next >= 0; next = beyond[current]!) {
+    const kind = layout.kinds[next]!;
+    if (kind === KIND_STOPPER || kind === KIND_BLOCK) {
+      break;
+    }
+    current = next;
+    if (kind !== KIND_PASS) {
+      break;
+    }
+  }
+  return current;
+}
+
 /** 滑った先がゴール・ゴールへ近づく・ゴールと見通しで揃う、または滑りがゴールを通過する手（v2 の定義を今の状態の盤面で測る）。 */
 function createPlausibility(
   space: StateSpace,
 ): (state: number, direction: number, target: number) => boolean {
-  const { rules, goal, positions, masks } = space;
+  const { rules, goal, positions } = space;
   const { width } = rules;
   const goalX = goal % width;
   const goalY = Math.floor(goal / width);
@@ -302,12 +352,17 @@ function createPlausibility(
     }
     return -1;
   }
-  function sees(cell: number, mask: number): boolean {
+  function sees(cell: number, state: number): boolean {
     const direction = toward(cell);
     if (direction < 0) {
       return false;
     }
-    const end = findSlideEnd(rules, cell, mask, direction);
+    const end = findVisibleSlideEnd(
+      rules,
+      getLayout(space, state),
+      cell,
+      direction,
+    );
     const endX = end % width;
     const endY = Math.floor(end / width);
     return [endY <= goalY, endX >= goalX, endY >= goalY, endX <= goalX][
@@ -317,14 +372,14 @@ function createPlausibility(
   return function plausible(state, direction, target) {
     const from = positions[state]!;
     const to = positions[target]!;
-    if (to === goal || gap(to) < gap(from) || sees(to, masks[target]!)) {
+    if (to === goal || gap(to) < gap(from) || sees(to, target)) {
       return true;
     }
-    const mask = masks[state]!;
     return (
       direction === toward(from) &&
-      sees(from, mask) &&
-      findSlideEnd(rules, from, mask, direction) !== goal
+      sees(from, state) &&
+      findVisibleSlideEnd(rules, getLayout(space, state), from, direction) !==
+        goal
     );
   };
 }
@@ -432,89 +487,96 @@ function formatOptionProfile(
     .join("|");
 }
 
-/** 1手の出来事のうち、要素を使う出来事（崩す・崩れた跡を通る・水面で止まる）の数。 */
-function countUseEvents(
-  rules: ElementRules,
-  position: number,
-  end: number,
-  mask: number,
-  direction: number,
+/**
+ * 解（状態の列 `states` と向きの列 `directions`）の各手で、それより前の自分の手が作った地形を使うこと（研究用 v5 の
+ * `dependency_trace`）。同じ手で同じマスを2通りに使うときは、止め役として使う方を数える。
+ */
+function traceSelfMadeUses(
+  space: StateSpace,
+  states: readonly number[],
+  directions: readonly number[],
+): SelfMadeTerrainUse[][] {
+  const { rules, positions } = space;
+  const initial = rules.baseKinds;
+  const madeAtByCell = new Int32Array(rules.cellCount).fill(-1);
+  return directions.map((direction, step) => {
+    const source = states[step]!;
+    const target = states[step + 1]!;
+    const before = getLayout(space, source);
+    const after = getLayout(space, target);
+    const from = positions[source]!;
+    const end = positions[target]!;
+    const uses = new Map<number, SelfMadeTerrainUse>();
+    function use(kind: SelfMadeTerrainUse["kind"], cell: number): void {
+      const madeAt = madeAtByCell[cell]!;
+      if (madeAt >= 0) {
+        uses.set(cell, { cell, kind, madeAt, gap: step - madeAt });
+      }
+    }
+    const delta = rules.delta[direction]!;
+    for (let cell = from + delta; cell !== end; cell += delta) {
+      if (getBehavior(initial[cell]!) !== BEHAVIOR_PASS) {
+        use("pass", cell);
+      }
+    }
+    if (getBehavior(initial[end]!) !== getBehavior(before.kinds[end]!)) {
+      use("pass", end);
+    }
+    if (getBehavior(before.kinds[end]!) !== BEHAVIOR_STOP_IN) {
+      const stopper = rules.beyond[direction]![end]!;
+      if (stopper >= 0 && getBehavior(initial[stopper]!) !== BEHAVIOR_STOPPER) {
+        use("stop", stopper);
+      }
+    }
+    const moved = findMovedBlock(space, source, target);
+    if (moved && getBehavior(initial[moved[0]]!) !== BEHAVIOR_STOPPER) {
+      use("stop", moved[0]);
+    }
+    if (before !== after) {
+      for (let cell = 0; cell < rules.cellCount; cell += 1) {
+        if (
+          getBehavior(before.kinds[cell]!) !== getBehavior(after.kinds[cell]!)
+        ) {
+          madeAtByCell[cell] = step;
+        }
+      }
+    }
+    return [...uses.values()];
+  });
+}
+
+/** 2つの状態の間でふるまいが変わるマス。 */
+function listChangedCells(
+  space: StateSpace,
+  source: number,
+  target: number,
+): number[] {
+  const before = getLayout(space, source).kinds;
+  const after = getLayout(space, target).kinds;
+  if (before === after) {
+    return [];
+  }
+  const changed: number[] = [];
+  for (let cell = 0; cell < before.length; cell += 1) {
+    if (getBehavior(before[cell]!) !== getBehavior(after[cell]!)) {
+      changed.push(cell);
+    }
+  }
+  return changed;
+}
+
+/** 1手で要素に働きかける出来事（もろい岩を崩す・雪を押し出す・塊を動かす）の数。 */
+function countElementActions(
+  space: StateSpace,
+  source: number,
+  target: number,
 ): number {
-  const { elementOf, kinds } = rules;
-  let uses = 0;
-  const hit = findSlideHit(rules, end, direction);
-  const hitElement = hit >= 0 ? elementOf[hit]! : -1;
-  if (hitElement >= 0) {
-    const changed = ((mask >>> hitElement) & 1) === 1;
-    if (kinds[hitElement] === CELL_BRITTLE && !changed) {
-      uses += 1;
-    }
-    if (kinds[hitElement] === CELL_THIN && changed) {
-      uses += 1;
-    }
-  }
-  const step = rules.delta[direction]!;
-  for (let cell = position + step; ; cell += step) {
-    const element = elementOf[cell]!;
-    if (
-      element >= 0 &&
-      kinds[element] === CELL_BRITTLE &&
-      ((mask >>> element) & 1) === 1
-    ) {
-      uses += 1;
-    }
-    if (cell === end) {
-      break;
-    }
-  }
-  return uses;
-}
-
-/** 1手の滑りで、それより前の手が作った水面で止まること・崩れた跡を通ることを並べる。 */
-function listSelfMadeUses(
-  rules: ElementRules,
-  position: number,
-  end: number,
-  mask: number,
-  direction: number,
-  firstChange: ReadonlyMap<number, number>,
-  step: number,
-): SelfMadeTerrainUse[] {
-  const { elementOf, kinds } = rules;
-  const uses: SelfMadeTerrainUse[] = [];
-  function add(cell: number, kind: SelfMadeTerrainUse["kind"]): void {
-    const madeAt = firstChange.get(elementOf[cell]!)!;
-    uses.push({ cell, kind, madeAt, gap: step - madeAt });
-  }
-  const delta = rules.delta[direction]!;
-  for (let cell = position + delta; ; cell += delta) {
-    const element = elementOf[cell]!;
-    if (
-      element >= 0 &&
-      kinds[element] === CELL_BRITTLE &&
-      ((mask >>> element) & 1) === 1
-    ) {
-      add(cell, "opening");
-    }
-    if (cell === end) {
-      break;
-    }
-  }
-  const hit = findSlideHit(rules, end, direction);
-  const hitElement = hit >= 0 ? elementOf[hit]! : -1;
-  if (
-    hitElement >= 0 &&
-    kinds[hitElement] === CELL_THIN &&
-    ((mask >>> hitElement) & 1) === 1
-  ) {
-    add(hit, "water");
-  }
-  return uses;
-}
-
-function listChangedCells(rules: ElementRules, changed: number): number[] {
-  return Array.from(rules.elements).filter(
-    (_, element) => ((changed >>> element) & 1) === 1,
+  const { rules, masks } = space;
+  const newly = masks[target]! & ~masks[source]!;
+  return (
+    Number((newly & rules.brittleBits) !== 0) +
+    Number((newly & rules.snowBits) !== 0) +
+    Number(findMovedBlock(space, source, target) !== null)
   );
 }
 
@@ -523,17 +585,15 @@ function describeMove(
   source: number,
   target: number,
   direction: number,
-  firstChange: ReadonlyMap<number, number>,
-  step: number,
+  selfMadeUses: readonly SelfMadeTerrainUse[],
   choices: Pick<
     SolutionMove,
     "freshAlternativeCount" | "temptingAlternativeCount" | "lure" | "orderTrap"
   >,
 ): SolutionMove {
-  const { rules, positions, masks } = space;
+  const { rules, positions } = space;
   const from = positions[source]!;
   const to = positions[target]!;
-  const mask = masks[source]!;
   return {
     direction,
     from,
@@ -541,17 +601,10 @@ function describeMove(
     slideLength:
       Math.abs((to % rules.width) - (from % rules.width)) +
       Math.abs(Math.floor(to / rules.width) - Math.floor(from / rules.width)),
-    changedCells: listChangedCells(rules, masks[target]! & ~mask),
-    selfMadeUses: listSelfMadeUses(
-      rules,
-      from,
-      to,
-      mask,
-      direction,
-      firstChange,
-      step,
-    ),
-    useEventCount: countUseEvents(rules, from, to, mask, direction),
+    changedCells: listChangedCells(space, source, target),
+    selfMadeUses,
+    useEventCount:
+      countElementActions(space, source, target) + selfMadeUses.length,
     ...choices,
   };
 }
@@ -561,15 +614,15 @@ function describeMove(
  * `puzzle/deadlock.ts` の `trapped` を状態のグラフで求めたもの）。
  */
 function isConfined(space: StateSpace, state: number): boolean {
-  const { masks } = space;
-  const mask = masks[state]!;
+  const { layoutIds } = space;
+  const layout = layoutIds[state]!;
   const reached = [state];
   const indexOf = new Map([[state, 0]]);
   const predecessors: number[][] = [[]];
   for (let index = 0; index < reached.length; index += 1) {
     for (let direction = 0; direction < DIRECTION_COUNT; direction += 1) {
       const target = getTarget(space, reached[index]!, direction);
-      if (target < 0 || masks[target] !== mask) {
+      if (target < 0 || layoutIds[target] !== layout) {
         continue;
       }
       let targetIndex = indexOf.get(target);
@@ -598,7 +651,7 @@ function isConfined(space: StateSpace, state: number): boolean {
   return returnableCount === reached.length;
 }
 
-/** 盤面として描くマス（駒が通るか止まるマスと、それに接する岩・もろい岩）のうち、岩の割合。 */
+/** 盤面として描くマス（駒が通るか止まるマスと、それに接する岩・もろい岩・滑る氷の塊）のうち、岩の割合。 */
 function measureRockShare(
   board: GenerationBoard,
   rules: ElementRules,
@@ -607,7 +660,8 @@ function measureRockShare(
   let drawn = 0;
   let rocks = 0;
   board.cells.forEach((code, cell) => {
-    const isStopper = code === CELL_ROCK || code === CELL_BRITTLE;
+    const isStopper =
+      code === CELL_ROCK || code === CELL_BRITTLE || code === CELL_BLOCK;
     if (
       used[cell] === 1 ||
       (isStopper && rules.beyond.some((table) => used[table[cell]!] === 1))
@@ -649,14 +703,14 @@ function measureSpread(cells: readonly number[], width: number): number {
 }
 
 function isQuickReturn(use: SelfMadeTerrainUse): boolean {
-  return use.kind === "water" && use.gap === 1;
+  return use.kind === "stop" && use.gap === 1;
 }
 
 function isDistantStop(use: SelfMadeTerrainUse): boolean {
-  return use.kind === "water" && use.gap >= 2;
+  return use.kind === "stop" && use.gap >= 2;
 }
 
-/** 自作依存の点の重み。遠くに作った水面で止まる・ゴールを自分で作った水面で止めるほど、初期盤面から読めず覚えておく地形が増える。 */
+/** 自作依存の点の重み。遠くに作った止め役で止まる・ゴールを自分で作った止め役で止めるほど、初期盤面から読めず覚えておく地形が増える。 */
 const selfMadeDependenceWeights = {
   distantStop: 2,
   otherVariedUse: 1,
@@ -689,36 +743,6 @@ export function scoreSelfMadeDependence(
 /** 自作依存の点を比べる最短解の数の上限。最短解が一意の問題（問題集の問題）では1本だけを測る。 */
 const DEPENDENCE_SOLUTION_CAP = 32;
 
-/** 状態の列 `states`（起点から）を通る解の、各手の自分で作った地形の使い方。 */
-function listPathSelfMadeUses(
-  space: StateSpace,
-  states: readonly number[],
-  directions: readonly number[],
-): SelfMadeTerrainUse[][] {
-  const { rules, positions, masks } = space;
-  const firstChange = new Map<number, number>();
-  return directions.map((direction, step) => {
-    const source = states[step]!;
-    const target = states[step + 1]!;
-    const uses = listSelfMadeUses(
-      rules,
-      positions[source]!,
-      positions[target]!,
-      masks[source]!,
-      direction,
-      firstChange,
-      step,
-    );
-    const newly = masks[target]! & ~masks[source]!;
-    for (let element = 0; element < rules.elements.length; element += 1) {
-      if (((newly >>> element) & 1) === 1 && !firstChange.has(element)) {
-        firstChange.set(element, step);
-      }
-    }
-    return uses;
-  });
-}
-
 /** 最短解（`DEPENDENCE_SOLUTION_CAP` 本まで）のうち、自作依存の点が最も低い解の点。 */
 function measureLeastSelfMadeDependence(
   space: StateSpace,
@@ -734,7 +758,7 @@ function measureLeastSelfMadeDependence(
     }
     if (toGoal[state] === 0) {
       found += 1;
-      const uses = listPathSelfMadeUses(space, states, directions);
+      const uses = traceSelfMadeUses(space, states, directions);
       const flat = uses.flat();
       const quickReturnCount = flat.filter(isQuickReturn).length;
       least = Math.min(
@@ -744,7 +768,7 @@ function measureLeastSelfMadeDependence(
           variedUseCount: flat.length - quickReturnCount,
           quickReturnCount,
           goalStopsOnSelfMade:
-            uses.at(-1)?.some((use) => use.kind === "water") ?? false,
+            uses.at(-1)?.some((use) => use.kind === "stop") ?? false,
         }),
       );
       return;
@@ -803,7 +827,7 @@ export function summarizeSolutionMoves(
     variedUseCount: selfMadeUses.length - quickReturnCount,
     distantStopCount: selfMadeUses.filter(isDistantStop).length,
     goalStopsOnSelfMade:
-      moves.at(-1)?.selfMadeUses.some((use) => use.kind === "water") ?? false,
+      moves.at(-1)?.selfMadeUses.some((use) => use.kind === "stop") ?? false,
     changedCellCount: changedCells.length,
     maximumChangedPerMove: Math.max(
       0,
@@ -820,14 +844,41 @@ export function summarizeSolutionMoves(
   };
 }
 
-/** 同じ向きが続く2手の数（研究用の `repeat_stats`）。 */
+const ACTION_NONE = 0;
+const ACTION_CRUMBLE = 1;
+const ACTION_SNOW = 2;
+const ACTION_PUSH = 3;
+
+/** 1手が要素を働かせたか（研究用 v5 の `trigger`）。雪を押し出す・塊を動かす・もろい岩を崩す・どれでもない。 */
+function classifyAction(
+  space: StateSpace,
+  source: number,
+  target: number,
+): number {
+  const { layoutIds, masks, rules } = space;
+  if (layoutIds[source] === layoutIds[target]) {
+    return ACTION_NONE;
+  }
+  const newly = masks[target]! & ~masks[source]!;
+  if ((newly & rules.snowBits) !== 0) {
+    return ACTION_SNOW;
+  }
+  if (findMovedBlock(space, source, target)) {
+    return ACTION_PUSH;
+  }
+  return (newly & rules.brittleBits) !== 0 ? ACTION_CRUMBLE : ACTION_NONE;
+}
+
+/**
+ * 同じ向きが続く2手の数（研究用の `repeat_stats`）。`chains` は、要素を働かせた直後に同じ向きでもう一度同じ種類の要素を
+ * 働かせる2手（もろい岩を続けて崩す・雪を続けて押し出す・塊を続けて動かす）。
+ */
 function measureRepeats(
   space: StateSpace,
   toGoal: Int32Array,
   shortest: number,
 ): { near: number; chains: number; moves: number; live: number } {
-  const { masks, distances, count } = space;
-  const { brittleBits } = space.rules;
+  const { distances, count } = space;
   let near = 0;
   let chains = 0;
   let moves = 0;
@@ -849,9 +900,11 @@ function measureRepeats(
           near += 1;
         }
       }
-      const first = masks[middle]! & ~masks[state]! & brittleBits;
-      const second = masks[last]! & ~masks[middle]! & brittleBits;
-      if (first !== 0 && second !== 0) {
+      const first = classifyAction(space, state, middle);
+      if (
+        first !== ACTION_NONE &&
+        first === classifyAction(space, middle, last)
+      ) {
         chains += 1;
       }
     }
@@ -1030,8 +1083,9 @@ export function measureElementMetrics(
   const steps = listSolutionOptions(space, toGoal, solution)!;
 
   const firstChange = new Map<number, number>();
-  let state = 0;
+  const solutionStates = [0];
   solution.forEach((move, step) => {
+    const state = solutionStates[step]!;
     const target = getTarget(space, state, move);
     const newly = masks[target]! & ~masks[state]!;
     for (let element = 0; element < elementCount; element += 1) {
@@ -1039,9 +1093,13 @@ export function measureElementMetrics(
         firstChange.set(element, step);
       }
     }
-    state = target;
+    solutionStates.push(target);
   });
-  const finalMask = masks[state]!;
+  const usedMask = [...firstChange.keys()].reduce(
+    (mask, element) => mask | (1 << element),
+    0,
+  );
+  const selfMadeUses = traceSelfMadeUses(space, solutionStates, solution);
 
   const visited = new Set([0]);
   let forcedMoveCount = 0;
@@ -1099,7 +1157,7 @@ export function measureElementMetrics(
             continue;
           }
           const changed =
-            masks[branch.target]! & ~masks[branch.source]! & ~finalMask;
+            masks[branch.target]! & ~masks[branch.source]! & ~usedMask;
           decoyAny |= changed;
           if (tempting) {
             decoyPlausible |= changed;
@@ -1111,7 +1169,7 @@ export function measureElementMetrics(
       }
       const target = getTarget(space, source, move);
       visited.add(target);
-      return describeMove(space, source, target, move, firstChange, step, {
+      return describeMove(space, source, target, move, selfMadeUses[step]!, {
         freshAlternativeCount: fresh.length,
         temptingAlternativeCount: fresh.filter((option) => option.plausible)
           .length,
@@ -1155,7 +1213,7 @@ export function measureElementMetrics(
       if (!relevant) {
         return "irrelevant";
       }
-      if (((finalMask >>> element) & 1) === 1) {
+      if (((usedMask >>> element) & 1) === 1) {
         return "used";
       }
       if (((decoyPlausible >>> element) & 1) === 1) {
@@ -1187,12 +1245,12 @@ export function measureElementMetrics(
       code !== CELL_ROCK &&
       code !== CELL_OUTSIDE &&
       code !== CELL_BRITTLE &&
+      code !== CELL_BLOCK &&
       used[cell] === 0
     ) {
       unusedCellCount += 1;
     }
   });
-  const brittleCount = countBits(rules.brittleBits);
   const texture = summarizeSolutionMoves(moves, board.width);
   return {
     shortest,
@@ -1206,8 +1264,10 @@ export function measureElementMetrics(
     useCount,
     changedElementCount: firstChange.size,
     elementCount,
-    brittleCount,
-    thinCount: elementCount - brittleCount,
+    brittleCount: countBits(rules.brittleBits),
+    thinCount: countBits(rules.thinBits),
+    snowCount: countBits(rules.snowBits),
+    blockCount: countBits(rules.blockBits),
     unusedCellCount,
     roles,
     precedenceCount: precedence.strict,
@@ -1219,7 +1279,7 @@ export function measureElementMetrics(
       (move, index) => index > 0 && solution[index - 1] === move,
     ).length,
     nearRepeatCount: repeats.near,
-    brittleChainCount: repeats.chains,
+    elementChainCount: repeats.chains,
     repeatMoveCount: repeats.moves,
     liveRepeatMoveCount: repeats.live,
     looks: solveStatic(context.looksFree, goal, space),

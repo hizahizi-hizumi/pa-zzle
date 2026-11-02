@@ -90,6 +90,8 @@ const notationByCell = {
   outside: "x",
   floor: "o",
   water: "w",
+  snow: "s",
+  "snow-mound": "P",
 } as const satisfies Record<IceFloorMazeStateCell, string>;
 
 const stepByDirection = {
@@ -100,46 +102,92 @@ const stepByDirection = {
 } as const satisfies Record<IceFloorMazeDirection, readonly [number, number]>;
 
 /**
- * 研究用 Python の slow_moves と同じ、盤面の文字を1マスずつ書き換える独立の実装。
- * 崩れたもろい岩は `.`、割れた薄い氷は `w`。動けなければ `null`。
+ * 研究用 Python の slow_moves と同じ、盤面の文字と塊のあるマスを1マスずつ書き換える独立の実装。
+ * 崩れたもろい岩は `.`、割れた薄い氷は `w`、押し出した雪は `.`、雪山は `P`。動けなければ `null`。
  */
 function slideOneCellAtATime(
   board: IceFloorMazeBoard,
   grid: readonly string[],
+  blocks: readonly number[],
   position: number,
   direction: IceFloorMazeDirection,
-): { position: number; grid: string[] } | null {
+): { position: number; grid: string[]; blocks: number[] } | null {
   const [dx, dy] = stepByDirection[direction];
   const { width, height } = board;
-  function cellAt(x: number, y: number): number | null {
+  function step(cellIndex: number): number | null {
+    const x = (cellIndex % width) + dx;
+    const y = Math.floor(cellIndex / width) + dy;
     return x >= 0 && x < width && y >= 0 && y < height ? y * width + x : null;
+  }
+  function isWall(cellIndex: number | null): boolean {
+    return (
+      cellIndex === null ||
+      "#bxwP".includes(grid[cellIndex]!) ||
+      blocks.includes(cellIndex)
+    );
   }
 
   const path = [position];
+  let pushedSnow: [number, number] | null = null;
+  let enteredCell = false;
   while (true) {
     const last = path.at(-1)!;
-    const next = cellAt((last % width) + dx, Math.floor(last / width) + dy);
-    if (next === null || "#bxw".includes(grid[next]!)) {
+    const next = step(last);
+    if (isWall(next)) {
       break;
     }
-    path.push(next);
+    if (grid[next!] === "s") {
+      const ahead = step(next!);
+      if (isWall(ahead) || "so".includes(grid[ahead!]!)) {
+        break;
+      }
+      pushedSnow = [next!, ahead!];
+    }
+    path.push(next!);
+    if ("so".includes(grid[next!]!)) {
+      enteredCell = true;
+      break;
+    }
   }
   if (path.length === 1) {
     return null;
   }
 
-  const end = path.at(-1)!;
   const nextGrid = [...grid];
-  const beyond = cellAt((end % width) + dx, Math.floor(end / width) + dy);
-  if (beyond !== null && nextGrid[beyond] === "b") {
-    nextGrid[beyond] = ".";
+  let nextBlocks = [...blocks];
+  let end = path.at(-1)!;
+  const hit = step(end);
+  if (!enteredCell && hit !== null && blocks.includes(hit)) {
+    let blockEnd = hit;
+    for (
+      let next = step(blockEnd);
+      !isWall(next) && !"so".includes(grid[next!]!);
+      next = step(blockEnd)
+    ) {
+      blockEnd = next!;
+    }
+    if (blockEnd !== hit) {
+      nextBlocks = nextBlocks
+        .map((block) => (block === hit ? blockEnd : block))
+        .sort((left, right) => left - right);
+      while (step(end) !== blockEnd) {
+        end = step(end)!;
+        path.push(end);
+      }
+    }
+  } else if (!enteredCell && hit !== null && nextGrid[hit] === "b") {
+    nextGrid[hit] = ".";
   }
   for (const cellIndex of path.slice(0, -1)) {
     if (nextGrid[cellIndex] === "c") {
       nextGrid[cellIndex] = "w";
     }
   }
-  return { position: end, grid: nextGrid };
+  if (pushedSnow) {
+    nextGrid[pushedSnow[0]] = ".";
+    nextGrid[pushedSnow[1]] = "P";
+  }
+  return { position: end, grid: nextGrid, blocks: nextBlocks };
 }
 
 describe("exploreIceFloorMazeStates", () => {
@@ -195,29 +243,6 @@ describe("exploreIceFloorMazeStates", () => {
       const graph = exploreIceFloorMazeStates(board, origin, { limit });
 
       expect(graph).toBeNull();
-    });
-  });
-
-  describe("要素の数が状態を数で表せる数を超える場合", () => {
-    // 31個のもろい岩。
-    const crowdedBoard = parseIceFloorMazeBoard([
-      ".bbbbb",
-      "bbbbbb",
-      "bbbbbb",
-      "bbbbbb",
-      "bbbbbb",
-      "bb....",
-    ]);
-
-    test("状態をたどらないこと", () => {
-      function act() {
-        exploreIceFloorMazeStates(
-          crowdedBoard,
-          createIceFloorMazeInitialState(crowdedBoard, 0),
-        );
-      }
-
-      expect(act).toThrow(RangeError);
     });
   });
 
@@ -589,11 +614,149 @@ describe("exploreIceFloorMazeStates", () => {
                     grid: applyIceFloorMazeSlide(state, slide).cells.map(
                       (cell) => notationByCell[cell],
                     ),
+                    blocks: [...applyIceFloorMazeSlide(state, slide).blocks],
                   }
                 : null;
             const expected = slideOneCellAtATime(
               candidateBoard,
               grid,
+              state.blocks,
+              state.position,
+              direction,
+            );
+            return JSON.stringify(actual) === JSON.stringify(expected)
+              ? []
+              : [{ state, direction }];
+          });
+        });
+
+        expect(mismatches).toEqual([]);
+      },
+    );
+  });
+
+  describe("研究用 Python の生成 v6 の試遊候補の場合", () => {
+    // 押し出す雪・滑る氷の塊の試遊候補（q01〜q04）。期待値は scripts/research/ice_floor_persistent_generation_experiment.py の
+    // explore（ゴールつき）の状態の数と canonical_solution の最短解（persistent-reference.json と同じ値）。
+    const candidates = [
+      {
+        id: "q01",
+        rows: [
+          "........",
+          ".#..#...",
+          "s...ss..",
+          ".#.#..s.",
+          "##.s....",
+          ".#.s....",
+          "......#.",
+          "######x#",
+        ],
+        start: 38,
+        goal: 2,
+        stateCount: 229,
+        solution: [2, 3, 2, 1, 0, 3, 1, 0, 3, 2, 1, 0],
+      },
+      {
+        id: "q02",
+        rows: [
+          "..m..#x",
+          "..#.m.#",
+          ".....m#",
+          "..#....",
+          "##.....",
+          "#.##...",
+          "..m..m.",
+        ],
+        start: 32,
+        goal: 18,
+        stateCount: 79,
+        solution: [2, 3, 1, 0, 3, 0, 1, 2, 1, 2, 3, 0],
+      },
+      {
+        id: "q03",
+        rows: [
+          ".###.##",
+          ".#.s...",
+          "...c.#.",
+          "c...#..",
+          ".#..cc#",
+          "c##..c.",
+          "...s.##",
+        ],
+        start: 42,
+        goal: 39,
+        stateCount: 172,
+        solution: [1, 0, 3, 1, 2, 1, 2, 3, 1],
+      },
+      {
+        id: "q04",
+        rows: [
+          "###..##",
+          "...#...",
+          "....c#c",
+          ".cm..#m",
+          ".mc....",
+          "##.#.#.",
+          "....c..",
+        ],
+        start: 13,
+        goal: 34,
+        stateCount: 41,
+        solution: [3, 2, 0, 3, 0, 2, 1, 2, 1],
+      },
+    ].map((candidate) => ({
+      ...candidate,
+      board: parseIceFloorMazeBoard(candidate.rows),
+      solution: candidate.solution.map(
+        (direction) => iceFloorMazeDirections[direction]!,
+      ),
+    }));
+
+    test.each(candidates)(
+      "$id の状態の数・最短解・最短解の数が Python と一致すること",
+      ({ board: candidateBoard, start, goal, stateCount, solution }) => {
+        const graph = exploreIceFloorMazeStates(
+          candidateBoard,
+          createIceFloorMazeInitialState(candidateBoard, start),
+          { goal },
+        )!;
+
+        expect(graph.states.length).toBe(stateCount);
+        expect(findFirstShortestSolution(graph, goal)).toEqual(solution);
+        expect(countShortestSolutions(graph, goal)).toBe(1);
+      },
+    );
+
+    test.each(candidates)(
+      "$id の到達できるどの状態でも、4方向の滑りが1マスずつ進める実装と一致すること",
+      ({ board: candidateBoard, start, goal }) => {
+        const graph = exploreIceFloorMazeStates(
+          candidateBoard,
+          createIceFloorMazeInitialState(candidateBoard, start),
+          { goal },
+        )!;
+
+        const mismatches = graph.states.flatMap((state) => {
+          const grid = state.cells.map((cell) => notationByCell[cell]);
+          return iceFloorMazeDirections.flatMap((direction) => {
+            const slide = slideIceFloorMazePiece(
+              candidateBoard,
+              state,
+              direction,
+            );
+            const after =
+              slide.status === "slid"
+                ? applyIceFloorMazeSlide(state, slide)
+                : null;
+            const actual = after && {
+              position: after.position,
+              grid: after.cells.map((cell) => notationByCell[cell]),
+              blocks: [...after.blocks],
+            };
+            const expected = slideOneCellAtATime(
+              candidateBoard,
+              grid,
+              state.blocks,
               state.position,
               direction,
             );

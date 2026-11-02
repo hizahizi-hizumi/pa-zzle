@@ -30,7 +30,7 @@ const unmetConditionLabels = {
   forced: "一本道",
   unreadable: "読めない",
   "repeated-direction": "同じ向きが続く",
-  "brittle-chain": "もろい岩の連鎖",
+  "element-chain": "要素の連打",
   "irrelevant-element": "効かない要素",
   "few-decoys": "おとり不足",
   "few-uses": "使う回数不足",
@@ -49,6 +49,11 @@ const compositionLabels = {
   "brittle-rock": "もろい岩",
   "thin-ice": "薄い氷",
   mixed: "もろい岩と薄い氷",
+  snow: "雪",
+  "snow-thin-ice": "雪と薄い氷",
+  "sliding-block": "滑る氷の塊",
+  "sliding-block-thin-ice": "滑る氷の塊と薄い氷",
+  other: "その他の組み合わせ",
 } as const satisfies Record<IceFloorMazeElementComposition, string>;
 
 const tacticTagLabels = {
@@ -138,7 +143,7 @@ function listElementItems(
     },
     {
       label: "要素",
-      value: `${features.elementCount}（もろい岩 ${features.brittleRockCount} / 薄い氷 ${features.thinIceCount}）`,
+      value: `${features.elementCount}（もろい岩 ${features.brittleRockCount} / 薄い氷 ${features.thinIceCount} / 雪 ${features.snowCount} / 塊 ${features.slidingBlockCount}）`,
       mono: true,
     },
     {

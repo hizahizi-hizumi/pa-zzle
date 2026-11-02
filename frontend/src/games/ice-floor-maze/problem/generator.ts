@@ -36,7 +36,7 @@ import {
 /**
  * 1問の生成条件。
  * - `tactics`: 氷と岩（と床）だけの盤面で、手筋の点を最大にする山登り（研究用の生成 v2。床は PoC §10 の近傍を足した）。
- * - `elements`: もろい岩・薄い氷を置き、難しさの点を最大にする山登り（研究用の生成 v4）。`search` は山登りの止め方。
+ * - `elements`: 要素（もろい岩・薄い氷・雪・滑る氷の塊）を置き、難しさの点を最大にする山登り（研究用の生成 v4・v5）。`search` は山登りの止め方。
  */
 export type IceFloorMazeGenerationRecipe =
   | { kind: "tactics"; recipe: TacticRecipe }

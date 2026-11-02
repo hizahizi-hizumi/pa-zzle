@@ -1,4 +1,5 @@
 import {
+  CELL_BLOCK,
   CELL_BRITTLE,
   CELL_OUTSIDE,
   CELL_ROCK,
@@ -20,9 +21,9 @@ export type GenerationProblem = {
 const UNBOUNDED_STATE_LIMIT = 10_000_000;
 
 /**
- * 到達できるどの状態でも駒が通らない・止まらないマスを盤面の外にし、外周の盤面の外だけの行・列を切り落とす
- * （研究用の生成 v4 の `outside_marked`）。
- * 通るマスに接する岩・もろい岩は残す。どの状態でも崩れないもろい岩は岩にする。
+ * 到達できるどの状態でも駒が通らない・止まらないマス（雪山ができるマスと、滑る氷の塊が通る・止まるマスは通るマスに含める）を
+ * 盤面の外にし、外周の盤面の外だけの行・列を切り落とす（研究用の生成 v4・v5 の `outside_marked`）。
+ * 通るマスに接する岩・もろい岩・滑る氷の塊は残す。どの状態でも崩れないもろい岩と、どの状態でも動かない塊は岩にする。
  * 切り落とした盤面が横長なら、縦横を入れ替えて縦長にする（遊ぶ盤面は正方形か縦長だけ）。入れ替えは同じ問題の写しで、解は変わらない。
  */
 export function markOutsideCells(
@@ -41,7 +42,7 @@ export function markOutsideCells(
     if (used[cell] === 1) {
       return code;
     }
-    if (code !== CELL_ROCK && code !== CELL_BRITTLE) {
+    if (code !== CELL_ROCK && code !== CELL_BRITTLE && code !== CELL_BLOCK) {
       return CELL_OUTSIDE;
     }
     const touchesUsedCell = rules.beyond.some((table) => {
@@ -52,7 +53,7 @@ export function markOutsideCells(
       return CELL_OUTSIDE;
     }
     const element = rules.elementOf[cell]!;
-    return code === CELL_BRITTLE && ((touched >>> element) & 1) === 0
+    return code !== CELL_ROCK && ((touched >>> element) & 1) === 0
       ? CELL_ROCK
       : code;
   });

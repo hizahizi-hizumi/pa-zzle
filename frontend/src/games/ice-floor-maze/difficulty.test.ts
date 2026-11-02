@@ -55,6 +55,8 @@ const baseElements: IceFloorMazeElementFeatures = {
   elementCount: 4,
   brittleRockCount: 0,
   thinIceCount: 4,
+  snowCount: 0,
+  slidingBlockCount: 0,
   usedElementCount: 3,
   decoyCount: 1,
   weakDecoyCount: 0,
@@ -66,7 +68,7 @@ const baseElements: IceFloorMazeElementFeatures = {
   lureCount: 3,
   solutionRepeatCount: 0,
   nearRepeatCount: 0,
-  brittleChainCount: 0,
+  elementChainCount: 0,
   looksReading: "unsolvable",
   staticShortcut: false,
   looksShortest: null,
@@ -262,6 +264,44 @@ describe("assessIceFloorMazeDifficulty", () => {
       "5",
       "mixed",
     ],
+    [
+      "雪だけ3個・自作依存の点3",
+      elements(shape8x8, "snow", {
+        optimalMoveCount: 12,
+        elementCount: 3,
+        thinIceCount: 0,
+        snowCount: 3,
+        usedElementCount: 2,
+        selfMadeDependence: 3,
+      }),
+      "3",
+      "snow",
+    ],
+    [
+      "滑る氷の塊3個と薄い氷2個・自作依存の点5",
+      elements(shape10x10, "sliding-block-thin-ice", {
+        elementCount: 5,
+        thinIceCount: 2,
+        slidingBlockCount: 3,
+        selfMadeDependence: 5,
+      }),
+      "4",
+      "sliding-block-thin-ice",
+    ],
+    [
+      "滑る氷の塊4個・自作依存の点14・2手以上前に作った止め役で3回止まる",
+      elements(shape9x11, "sliding-block", {
+        optimalMoveCount: 18,
+        elementCount: 4,
+        thinIceCount: 0,
+        slidingBlockCount: 4,
+        decoyCount: 1,
+        selfMadeDependence: 14,
+        texture: { ...baseElements.texture, distantStopCount: 3 },
+      }),
+      "5",
+      "sliding-block",
+    ],
   ] as const;
 
   test.each(classifiedCases)(
@@ -278,6 +318,26 @@ describe("assessIceFloorMazeDifficulty", () => {
   );
 
   const unlistedCases = [
+    [
+      "薄い氷だけ7個・2手以上前に作った水面で3回止まるが、自作依存の点が上限14を超える",
+      elements(shape9x11, "thin-ice", {
+        optimalMoveCount: 18,
+        elementCount: 7,
+        thinIceCount: 7,
+        decoyCount: 2,
+        selfMadeDependence: 14.5,
+        texture: { ...baseElements.texture, distantStopCount: 3 },
+      }),
+    ],
+    [
+      "雪と滑る氷の塊を両方置いた盤面",
+      elements(shape8x8, "other", {
+        elementCount: 4,
+        thinIceCount: 0,
+        snowCount: 2,
+        slidingBlockCount: 2,
+      }),
+    ],
     [
       "氷と岩だけ・止め石だけ・最短12手",
       tactics(shape8x8, { optimalMoveCount: 12 }),
@@ -366,14 +426,14 @@ describe("assessIceFloorMazeDifficulty", () => {
     ],
     ["読めない", tactics(shape8x8, { readingDepth: null }), ["unreadable"]],
     [
-      "同じ向きが続く手と、もろい岩の連鎖",
+      "同じ向きが続く手と、要素の連打",
       elements(shape8x8, "mixed", {
         brittleRockCount: 2,
         thinIceCount: 2,
         nearRepeatCount: 1,
-        brittleChainCount: 1,
+        elementChainCount: 1,
       }),
-      ["repeated-direction", "brittle-chain"],
+      ["repeated-direction", "element-chain"],
     ],
     [
       "効かない要素があり、おとりが無い",

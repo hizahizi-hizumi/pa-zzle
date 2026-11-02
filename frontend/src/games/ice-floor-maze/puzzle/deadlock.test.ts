@@ -76,6 +76,21 @@ describe("classifyIceFloorMazeDeadlock", () => {
     // #  #  b  #  #
     // 2 と 4 の間は崩さずに往復でき、2 から下へ滑ればもろい岩を崩せるが、どちらへ進んでもゴールへは行けない。
     const circlingBoard = parseIceFloorMazeBoard([".#...", "##.##", "##b##"]);
+    // G  #  2  3  4
+    // #  #  7  #  #
+    // #  #  s  #  #
+    // #  #  17 #  #
+    // 2 から下へ滑れば雪を押し出せるが、2 と 4 の間の往復のほかはゴールへ行けない。
+    const snowCirclingBoard = parseIceFloorMazeBoard([
+      ".#...",
+      "##.##",
+      "##s##",
+      "##.##",
+    ]);
+    // 0 1 2 s G
+    const snowGoalBoard = parseIceFloorMazeBoard(["...s."]);
+    // 0 1 m G #
+    const blockGoalBoard = parseIceFloorMazeBoard(["..m.#"]);
     const elementCases = [
       [
         "もろい岩を崩せばゴールで止まれる",
@@ -143,6 +158,50 @@ describe("classifyIceFloorMazeDeadlock", () => {
       "%sと判定すること",
       (_, elementBoard, state, expected) => {
         const status = classifyIceFloorMazeDeadlock(elementBoard, state, 0);
+
+        expect(status).toBe(expected);
+      },
+    );
+
+    const snowAndBlockCases = [
+      [
+        "押し出す手が残っていても、押し出さない滑りでは往復するだけなら閉じ込め",
+        snowCirclingBoard,
+        slideInOrder(snowCirclingBoard, 2, []),
+        0,
+        "trapped",
+      ],
+      [
+        "雪を押し出した後に押し出さない滑りで回るだけになれば閉じ込め",
+        snowCirclingBoard,
+        slideInOrder(snowCirclingBoard, 2, ["down"]),
+        0,
+        "trapped",
+      ],
+      [
+        "雪山でゴールが埋まり、往復だけが残れば閉じ込め",
+        snowGoalBoard,
+        slideInOrder(snowGoalBoard, 0, ["right"]),
+        4,
+        "trapped",
+      ],
+      [
+        "動かせない塊がゴールに乗り、往復だけが残れば閉じ込め",
+        blockGoalBoard,
+        slideInOrder(blockGoalBoard, 0, ["right"]),
+        3,
+        "trapped",
+      ],
+    ] as const;
+
+    test.each(snowAndBlockCases)(
+      "%sと判定すること",
+      (_, elementBoard, state, goalCell, expected) => {
+        const status = classifyIceFloorMazeDeadlock(
+          elementBoard,
+          state,
+          goalCell,
+        );
 
         expect(status).toBe(expected);
       },

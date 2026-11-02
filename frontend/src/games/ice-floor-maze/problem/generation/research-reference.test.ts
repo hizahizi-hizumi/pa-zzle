@@ -107,10 +107,14 @@ function measureElementEntry(entry: ElementEntry) {
   })!;
   return {
     ...metrics,
+    // 研究用 v4 は要素の連打をもろい岩の連鎖だけで数え、その名前で書き出している。
+    brittleChainCount: metrics.elementChainCount,
     looksReading: classifyLooksReading(metrics),
     hardness: Number(scoreElementHardness(metrics).toFixed(6)),
     score: Number(scoreElementProblem(metrics, v4Recipe).toFixed(6)),
-    violations: listElementViolations(metrics, v4Recipe),
+    violations: listElementViolations(metrics, v4Recipe).map((violation) =>
+      violation === "element-chain" ? "brittle-chain" : violation,
+    ),
     stateReadingDepth: measureStateReadingDepth(space, 8),
   };
 }

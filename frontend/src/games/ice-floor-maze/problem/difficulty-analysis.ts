@@ -13,9 +13,11 @@ import {
 } from "@/games/ice-floor-maze/problem/generation/element-objective";
 import { measureStateReadingDepth } from "@/games/ice-floor-maze/problem/generation/reading-model";
 import {
+  CELL_BLOCK,
   CELL_BRITTLE,
   CELL_FLOOR,
   CELL_OUTSIDE,
+  CELL_SNOW,
   CELL_THIN,
   type GenerationBoard,
   toGenerationBoard,
@@ -39,12 +41,20 @@ import type {
   IceFloorMazeProblem,
 } from "@/games/ice-floor-maze/problem/problem";
 
-/** 盤面に置かれた要素（もろい岩・薄い氷）の組み合わせ。`none` は要素が無く、氷と岩（と床）だけ。 */
+/**
+ * 盤面に置かれた要素の組み合わせ。`none` は要素が無く、氷と岩（と床）だけ。`mixed` はもろい岩と薄い氷、`snow-thin-ice` は雪と
+ * 薄い氷、`sliding-block-thin-ice` は滑る氷の塊と薄い氷。`other` はそれ以外の組み合わせ（どのレベルにも当たらない）。
+ */
 export type IceFloorMazeElementComposition =
   | "none"
   | "brittle-rock"
   | "thin-ice"
-  | "mixed";
+  | "mixed"
+  | "snow"
+  | "snow-thin-ice"
+  | "sliding-block"
+  | "sliding-block-thin-ice"
+  | "other";
 
 /** 氷と岩だけの盤面の手筋のタグ（`StaticTacticTag` の定義を参照）。 */
 export type IceFloorMazeTacticTag = StaticTacticTag;
@@ -94,24 +104,25 @@ export type IceFloorMazeTacticFeatures = {
 };
 
 /**
- * もろい岩・薄い氷のある盤面の特徴（研究用の生成 v4）。
+ * 要素（もろい岩・薄い氷・雪・滑る氷の塊）のある盤面の特徴（研究用の生成 v4。自分で作った地形の数え方は v5）。
  * - `reachableStateCount` / `deadStateCount`: 開始状態から移れる状態の数と、そのうちゴールで止まれない状態（詰み）の数。
  * - `usedElementCount` / `decoyCount` / `weakDecoyCount` / `irrelevantElementCount`: 要素の役割ごとの数。
  *   おとりは最短解で変化させず、最短解から外れたもっともらしい手が変化させると詰みか遠回りになる要素。効かない要素は、
- *   中立の形（もろい岩→岩、薄い氷→氷）にしても最短解ともっともらしい選択肢が変わらない要素。
- * - `useCount`: 最短解で要素を使う回数（崩す・崩れた跡を通る・水面で止まる）。
+ *   中立の形（もろい岩→岩、薄い氷→氷、雪→入ると止まる床、滑る氷の塊→岩）にしても最短解ともっともらしい選択肢が変わらない要素。
+ * - `useCount`: 最短解で要素を使う回数（崩す・雪を押し出す・塊を動かす・自分で作った地形を使う）。
  * - `orderDependencyCount` / `orderChain`: 最短解で使う順を入れ替えると解けなくなる要素の組の数と、その順序の最も長い連なり。
  * - `orderTrapCount`: 最短解が後で使う要素を先に変化させ、詰みか遠回りになる選択肢の数。
  * - `lureCount`: 最短解の上の、もっともらしいが詰みか遠回りになる選択肢の数。
- * - `solutionRepeatCount` / `nearRepeatCount` / `brittleChainCount`: 同じ向きが続く手（条件1）。最短解で同じ向きが続く手、
- *   最短+2手以内の道筋に乗る同じ向きが続く2手、もろい岩を崩した直後に同じ向きでもう一度もろい岩を崩せる2手。
+ * - `solutionRepeatCount` / `nearRepeatCount` / `elementChainCount`: 同じ向きが続く手（条件1）。最短解で同じ向きが続く手、
+ *   最短+2手以内の道筋に乗る同じ向きが続く2手、要素を働かせた直後に同じ向きでもう一度同じ種類の要素を働かせる2手（もろい岩を
+ *   続けて崩す・雪を続けて押し出す・塊を続けて動かす。到達できる全状態で数える）。
  * - `looksReading`: 見た目どおりに読んだ盤面の結果。`staticShortcut` は、見た目どおりかもう一方の読みで短く解ける。
  *   `looksShortest` は見た目どおりの盤面の最少手数（解なしは `null`）、`looksPassingMoveCount` はその近い解のうちこの規則でも
  *   ゴールで止まるものの、この規則での最少手数（通るものが無ければ `null`）。
  * - `lingeringDecoyCount`: おとりのうち、もっともらしい手で変化させた直後が閉じ込めにならない（遠回りか、まだ動き回れる詰み）もの。
  * - `rockShare`: 盤面として描くマスのうち岩の割合。
  * - `texture`: 最短解の手触り（滑りの長さ・階段・読みどころの無い区間・自分で作った地形の使い方・変わるマスの散らばり）。
- * - `selfMadeDependence`: 自作依存の点（前の自分の手が作った水面・崩れた跡にどれだけ頼るか。最短解が複数あれば最も低い解の点）。
+ * - `selfMadeDependence`: 自作依存の点（前の自分の手が作った止め役・通り道にどれだけ頼るか。最短解が複数あれば最も低い解の点）。
  *   試遊の記録で人の難しさと最もよく揃った特徴量で、レベル3〜5 の段を分ける。
  * - `hardness`: 研究用 v4 の難しさの点に状態の読み深さを足したもの。試遊の難しさとは揃わなかったので段には使わない（比べるために残す）。
  * - `stateReadingDepth`: 規則を知って先を読む人が状態のグラフで解ける読み手数。上限まで読めなければ `null`。
@@ -126,6 +137,8 @@ export type IceFloorMazeElementFeatures = {
   elementCount: number;
   brittleRockCount: number;
   thinIceCount: number;
+  snowCount: number;
+  slidingBlockCount: number;
   usedElementCount: number;
   decoyCount: number;
   weakDecoyCount: number;
@@ -137,7 +150,7 @@ export type IceFloorMazeElementFeatures = {
   lureCount: number;
   solutionRepeatCount: number;
   nearRepeatCount: number;
-  brittleChainCount: number;
+  elementChainCount: number;
   looksReading: LooksReading;
   staticShortcut: boolean;
   looksShortest: number | null;
@@ -258,6 +271,8 @@ function analyzeElements(
     elementCount: metrics.elementCount,
     brittleRockCount: metrics.brittleCount,
     thinIceCount: metrics.thinCount,
+    snowCount: metrics.snowCount,
+    slidingBlockCount: metrics.blockCount,
     usedElementCount: countRoles(metrics, "used"),
     decoyCount: countRoles(metrics, "decoy"),
     weakDecoyCount: countRoles(metrics, "weak-decoy"),
@@ -269,7 +284,7 @@ function analyzeElements(
     lureCount: metrics.lureCount,
     solutionRepeatCount: metrics.solutionRepeatCount,
     nearRepeatCount: metrics.nearRepeatCount,
-    brittleChainCount: metrics.brittleChainCount,
+    elementChainCount: metrics.elementChainCount,
     looksReading: classifyLooksReading(metrics),
     staticShortcut: hasStaticShortcut(metrics),
     looksShortest: metrics.looks.shortest,
@@ -285,19 +300,24 @@ function analyzeElements(
   };
 }
 
+const compositionByTiles = new Map<string, IceFloorMazeElementComposition>([
+  ["", "none"],
+  [String([CELL_BRITTLE]), "brittle-rock"],
+  [String([CELL_THIN]), "thin-ice"],
+  [String([CELL_BRITTLE, CELL_THIN]), "mixed"],
+  [String([CELL_THIN, CELL_SNOW]), "snow-thin-ice"],
+  [String([CELL_SNOW]), "snow"],
+  [String([CELL_THIN, CELL_BLOCK]), "sliding-block-thin-ice"],
+  [String([CELL_BLOCK]), "sliding-block"],
+]);
+
 function findComposition(
   board: GenerationBoard,
 ): IceFloorMazeElementComposition {
-  const codes = new Set(board.cells);
-  const hasBrittle = codes.has(CELL_BRITTLE);
-  const hasThin = codes.has(CELL_THIN);
-  if (hasBrittle && hasThin) {
-    return "mixed";
-  }
-  if (hasBrittle) {
-    return "brittle-rock";
-  }
-  return hasThin ? "thin-ice" : "none";
+  const tiles = [CELL_BRITTLE, CELL_THIN, CELL_SNOW, CELL_BLOCK].filter(
+    (code) => board.cells.includes(code),
+  );
+  return compositionByTiles.get(String(tiles)) ?? "other";
 }
 
 /** 問題の難易度の特徴を求める。氷と岩だけの盤面は手筋、要素のある盤面は要素の特徴を求める。 */

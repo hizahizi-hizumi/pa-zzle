@@ -16,11 +16,21 @@ import {
 } from "@/games/ice-floor-maze/problem/generation/state-space";
 
 /**
- * もろい岩・薄い氷のある問題の目的関数と採用条件（研究用の生成 v4 の `Weights`・`violations`・`hardness`・`evaluate`）。
+ * 要素のある問題の目的関数と採用条件（研究用の生成 v4 の `Weights`・`violations`・`hardness`・`evaluate`）。
  */
 
-/** 盤面に置く要素の組み合わせ。 */
-export type ElementVariant = "brittle-rock" | "thin-ice" | "mixed";
+/**
+ * 盤面に置く要素の組み合わせ。`mixed` はもろい岩と薄い氷、`snow-thin-ice` は雪と薄い氷、`sliding-block-thin-ice` は
+ * 滑る氷の塊と薄い氷。
+ */
+export type ElementVariant =
+  | "brittle-rock"
+  | "thin-ice"
+  | "mixed"
+  | "snow"
+  | "snow-thin-ice"
+  | "sliding-block"
+  | "sliding-block-thin-ice";
 
 /** 難しさの点の重みと上限。 */
 const elementWeights = {
@@ -89,8 +99,8 @@ export const STATE_READING_DEPTH_CAP = 8;
 
 /**
  * 1つの生成条件。最短手数・要素の数の範囲と、採用条件に効く値。
- * - `minimumEach`: `mixed` で、もろい岩・薄い氷それぞれの下限。
- * - `minimumUses`: 最短解で要素を使う（崩す・崩れた跡を通る・水面で止まる）回数の下限。
+ * - `minimumEach`: 2種類を置く組み合わせで、それぞれの種類の下限。
+ * - `minimumUses`: 最短解で要素を使う（崩す・押し出す・動かす・自分で作った地形を使う）回数の下限。
  * - `decoyShare`: おとりを要素の数のこの割合（切り上げ、最低1）以上置く。
  * - `pool`: 問題集の生成条件。`null` なら研究用の生成 v4 と同じ目的関数（難しさの点と状態の読み深さ）と採用条件。
  */
@@ -111,7 +121,7 @@ export type ElementRecipe = {
 /**
  * 問題集の生成条件。挑戦の点（自作依存の点が主）を最大にし、次を採用条件に足す。
  * - `selfMadeDependence`: 自作依存の点の範囲。上限を超えた分も目的関数で減点する。
- * - `minimumDistantStops`: 2手以上前に作った水面で止まる回数の下限。
+ * - `minimumDistantStops`: 2手以上前に作った止め役で止まる回数の下限。
  * - `maximumUsedElements`: 最短解で変化させる要素の数の上限。
  * - `maximumLingeringDecoys`: 変化させた直後が閉じ込めにならないおとりの数の上限。
  * - `texture`: 最短解の手触りの条件。
@@ -128,7 +138,7 @@ export type ElementPoolConditions = {
  * 最短解の手触りの条件（`SolutionTexture` の値に当てる）。
  * - `maximumShortSlideShare`: 1マスだけの滑りを最少手数のこの割合まで。
  * - `maximumChoicelessStair`: 選択肢の無い階段の長さの上限。
- * - `maximumQuickReturns` / `minimumVariedUses`: 割ってすぐ戻る手筋の回数の上限と、自分で作った地形のそれ以外の使い方の回数の下限。
+ * - `maximumQuickReturns` / `minimumVariedUses`: 作ってすぐ戻る手筋の回数の上限と、自分で作った地形のそれ以外の使い方の回数の下限。
  * - `maximumIdleRun`: 読みどころの無い区間の長さの上限。
  */
 export type ElementTextureLimits = {
@@ -138,6 +148,32 @@ export type ElementTextureLimits = {
   minimumVariedUses: number;
   maximumIdleRun: number;
 };
+
+/** 盤面の種類ごとの要素の数。 */
+const tileCounts = {
+  "brittle-rock": (metrics) => [metrics.brittleCount],
+  "thin-ice": (metrics) => [metrics.thinCount],
+  mixed: (metrics) => [metrics.brittleCount, metrics.thinCount],
+  snow: (metrics) => [metrics.snowCount],
+  "snow-thin-ice": (metrics) => [metrics.snowCount, metrics.thinCount],
+  "sliding-block": (metrics) => [metrics.blockCount],
+  "sliding-block-thin-ice": (metrics) => [
+    metrics.blockCount,
+    metrics.thinCount,
+  ],
+} as const satisfies Record<
+  ElementVariant,
+  (metrics: ElementMetrics) => readonly number[]
+>;
+
+/** 2種類を置く組み合わせで、少ない方の種類の数。1種類なら `Infinity`（内訳の下限を課さない）。 */
+function countScarceTile(
+  metrics: ElementMetrics,
+  variant: ElementVariant,
+): number {
+  const counts = tileCounts[variant](metrics);
+  return counts.length > 1 ? Math.min(...counts) : Number.POSITIVE_INFINITY;
+}
 
 export function countNeededDecoys(
   decoyShare: number,
@@ -151,7 +187,7 @@ export type ElementViolation =
   | "shortest"
   | "multiple-solutions"
   | "repeated-direction"
-  | "brittle-chain"
+  | "element-chain"
   | "irrelevant-element"
   | "few-decoys"
   | "element-count"
@@ -243,8 +279,8 @@ export function listElementViolations(
   if (metrics.solutionRepeatCount > 0 || metrics.nearRepeatCount > 0) {
     violations.push("repeated-direction");
   }
-  if (metrics.brittleChainCount > 0) {
-    violations.push("brittle-chain");
+  if (metrics.elementChainCount > 0) {
+    violations.push("element-chain");
   }
   if (countRoles(metrics, "irrelevant") > 0) {
     violations.push("irrelevant-element");
@@ -261,10 +297,7 @@ export function listElementViolations(
   ) {
     violations.push("element-count");
   }
-  if (
-    recipe.variant === "mixed" &&
-    Math.min(metrics.brittleCount, metrics.thinCount) < recipe.minimumEach
-  ) {
+  if (countScarceTile(metrics, recipe.variant) < recipe.minimumEach) {
     violations.push("element-mix");
   }
   if (metrics.useCount < recipe.minimumUses) {
@@ -295,7 +328,7 @@ function measureShortfall(
     (recipe.pool
       ? SOLUTION_REPEAT_FACTOR * Math.min(metrics.solutionRepeatCount, 3)
       : 0) +
-    Math.min(metrics.brittleChainCount, 3) +
+    Math.min(metrics.elementChainCount, 3) +
     countRoles(metrics, "irrelevant") +
     Math.max(
       0,
@@ -307,13 +340,7 @@ function measureShortfall(
       metrics.elementCount - elements.maximum,
       elements.minimum - metrics.elementCount,
     ) +
-    (recipe.variant === "mixed"
-      ? Math.max(
-          0,
-          recipe.minimumEach -
-            Math.min(metrics.brittleCount, metrics.thinCount),
-        )
-      : 0) +
+    Math.max(0, recipe.minimumEach - countScarceTile(metrics, recipe.variant)) +
     Number(metrics.useCount < recipe.minimumUses) +
     Number(hasStaticShortcut(metrics)) +
     Number(metrics.forcedMoveCount > recipe.forcedShare * metrics.shortest) +
@@ -358,11 +385,17 @@ export function scoreElementHardnessWithReading(
 
 /**
  * 問題集の挑戦の点。自作依存の点と見た目どおりの読みを主にし、おとりを少し足す。長く滑る解と、岩の少ない盤面を良しとする。
+ * 自作依存の点は帯の上限で頭打ちにする（上限を超えた分は採用条件の不足として減点するだけでは、滑る氷の塊のように点を上げやすい
+ * 要素で山登りが帯の上へ抜けたまま戻らないため）。
  */
-function scoreElementChallenge(metrics: ElementMetrics): number {
+function scoreElementChallenge(
+  metrics: ElementMetrics,
+  pool: ElementPoolConditions,
+): number {
   const w = challengeWeights;
   return (
-    w.dependence * metrics.selfMadeDependence +
+    w.dependence *
+      Math.min(metrics.selfMadeDependence, pool.selfMadeDependence.maximum) +
     w.looks[classifyLooksReading(metrics)] +
     w.decoy * Math.min(countRoles(metrics, "decoy"), w.decoyCap) +
     w.slide * Math.min(metrics.texture.averageSlideLength, w.slideCap) -
@@ -378,7 +411,7 @@ function scoreElementProblem(
   const w = elementWeights;
   return (
     (recipe.pool
-      ? scoreElementChallenge(metrics)
+      ? scoreElementChallenge(metrics, recipe.pool)
       : scoreElementHardness(metrics)) -
     w.forced * metrics.forcedMoveCount -
     w.near * Math.min(metrics.nearExtraStateCount, w.nearCap) -

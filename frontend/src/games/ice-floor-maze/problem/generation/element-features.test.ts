@@ -59,7 +59,7 @@ describe("summarizeSolutionMoves", () => {
 
       expect(moves.map((move) => move.changedCells)).toEqual([[2], []]);
       expect(moves[1]!.selfMadeUses).toEqual([
-        { cell: 2, kind: "water", madeAt: 0, gap: 1 },
+        { cell: 2, kind: "stop", madeAt: 0, gap: 1 },
       ]);
     });
 

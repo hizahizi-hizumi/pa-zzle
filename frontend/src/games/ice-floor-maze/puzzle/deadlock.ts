@@ -1,6 +1,6 @@
 import type { IceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import {
-  type IceFloorMazeSlide,
+  doesIceFloorMazeSlideChangeElements,
   iceFloorMazeDirections,
   slideIceFloorMazePiece,
 } from "@/games/ice-floor-maze/puzzle/rules";
@@ -11,8 +11,9 @@ import { exploreIceFloorMazeStates } from "@/games/ice-floor-maze/puzzle/state-g
  * 今の状態からゴールで止まれるか。
  * - `goal-reachable`: 滑りを重ねればゴールで止まれる。ゴールにいるときを含む。
  * - `goal-unreachable`: 詰み。ゴールで止まれないが、要素を変えない滑りでまだ戻れない先へ進める。
- * - `trapped`: 閉じ込め。詰みのうち、要素を変えない滑り（もろい岩を崩さず、薄い氷を割らない滑り）で行けるどの位置からも、
- *   同じ滑りで今の位置へ戻れる。崩す・割る手が残っていても、それを除けば同じところを回るだけになっている。
+ * - `trapped`: 閉じ込め。詰みのうち、要素を変えない滑り（もろい岩を崩さず、薄い氷を割らず、雪を押し出さず、滑る氷の塊を
+ *   動かさない滑り）で行けるどの位置からも、同じ滑りで今の位置へ戻れる。要素を変える手が残っていても、それを除けば
+ *   同じところを回るだけになっている。
  *   要素の無い盤面では、行けるどの状態からも今の状態へ戻れ、その中にゴールが無いことにあたる。
  */
 export type IceFloorMazeDeadlockStatus =
@@ -42,19 +43,13 @@ export function classifyIceFloorMazeDeadlock(
     : "goal-unreachable";
 }
 
-function changesElements(
-  slide: Extract<IceFloorMazeSlide, { status: "slid" }>,
-): boolean {
-  return slide.crumbledRock !== null || slide.crackedIce.length > 0;
-}
-
 /**
  * 要素を変えない滑りだけで今の位置から行けるどの位置からも、同じ滑りで今の位置へ戻れるか。
  * 要素を変えない滑りでは盤面のマスが変わらないので、今の盤面のマスのまま駒の位置だけをたどる。
  */
 function canOnlyCircleWithoutChanges(
   board: IceFloorMazeBoard,
-  { position: origin, cells }: IceFloorMazeState,
+  { position: origin, cells, blocks }: IceFloorMazeState,
 ): boolean {
   const reached = [origin];
   const predecessorsByPosition = new Map<number, number[]>([[origin, []]]);
@@ -63,10 +58,13 @@ function canOnlyCircleWithoutChanges(
     for (const direction of iceFloorMazeDirections) {
       const slide = slideIceFloorMazePiece(
         board,
-        { position, cells },
+        { position, cells, blocks },
         direction,
       );
-      if (slide.status === "blocked" || changesElements(slide)) {
+      if (
+        slide.status === "blocked" ||
+        doesIceFloorMazeSlideChangeElements(slide)
+      ) {
         continue;
       }
 

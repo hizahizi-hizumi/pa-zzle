@@ -98,6 +98,8 @@ const cellCodes = {
   "thin-ice": "c",
   outside: "x",
   floor: "o",
+  snow: "s",
+  "sliding-block": "m",
 } as const satisfies Record<IceFloorMazeCell, string>;
 
 /** 盤面の大きさは最大168マスなので、マスの番号は3桁で辞書順と数の順が揃う。 */

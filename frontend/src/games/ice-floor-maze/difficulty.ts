@@ -36,19 +36,25 @@ export type IceFloorMazeTacticPattern = {
   floorCount: NumericRange;
 };
 
+/** 要素のあるレベルで出す要素の組み合わせ。 */
+export type IceFloorMazeLevelComposition = Exclude<
+  IceFloorMazeElementComposition,
+  "none" | "other"
+>;
+
 /**
  * 要素のあるレベルの、挑戦の型。段は自作依存の点（`IceFloorMazeElementFeatures` の `selfMadeDependence`。前の自分の手が作った
- * 水面・崩れた跡にどれだけ頼るか）で分け、要素の種類・数・手数は作業の量として範囲を置く。
+ * 止め役・通り道にどれだけ頼るか）で分け、要素の種類・数・手数は作業の量として範囲を置く。
  * - `composition` / `elementCount`: 置く要素の種類と数。
  * - `usedElementCount`: 最短解で変化させる要素の数の範囲。
  * - `lingeringDecoyCount`: 変化させた直後が閉じ込めにならないおとりの数の範囲。
  * - `selfMadeDependence`: 自作依存の点の範囲。
- * - `distantStopCount`: 2手以上前に作った水面で止まる回数の範囲。
+ * - `distantStopCount`: 2手以上前に作った止め役で止まる回数の範囲。
  * - `floorCount`: 床の数の範囲。要素のあるレベルには床を置かない（床で止まる手が前の手で作った水面で止まる手の代わりになり、
  *   自作依存の点の帯と、要素の盤面の床の働き（目印にならないか）を確かめていないため）。
  */
 export type IceFloorMazeElementPattern = {
-  composition: Exclude<IceFloorMazeElementComposition, "none">;
+  composition: IceFloorMazeLevelComposition;
   optimalMoveCount: NumericRange;
   elementCount: NumericRange;
   usedElementCount: NumericRange;
@@ -106,21 +112,36 @@ const dependencePattern = {
   floorCount: noFloors,
 } as const;
 
-/** L5。自作依存の点が高く、2手以上前に作った水面で2回以上止まる。 */
+/**
+ * L5。自作依存の点が高く、2手以上前に作った止め役で2回以上止まる。自作依存の点に上限 14 を置く（試遊で点の高い問題のギブアップが
+ * 続いたため。どの要素の組み合わせにも同じ上限を当てる）。
+ */
 const deepDependencePattern = {
   optimalMoveCount: { minimum: 14, maximum: 22 },
   elementCount: { minimum: 7, maximum: 8 },
   usedElementCount: anyCount,
   lingeringDecoyCount: anyCount,
-  selfMadeDependence: { minimum: 6, maximum: unbounded },
+  selfMadeDependence: { minimum: 6, maximum: 14 },
   distantStopCount: { minimum: 2, maximum: unbounded },
   floorCount: noFloors,
 } as const;
 
 /**
- * 各レベルの基準。L1・L2 は氷と岩だけ（床を置く問題と置かない問題を混ぜる）で手筋を足し、L3〜L5 は自作依存の点の帯で分ける（L3 はもろい岩か薄い氷の一方を
- * 少し置いた入門）。もろい岩は止め役を作れず通り道を開くだけなので、L4・L5 は薄い氷だけか両方を置く。手数と要素の数の範囲は
- * 試遊で決め直す前の仮の値。
+ * 要素の数の範囲を、組み合わせごとに置き換える。滑る氷の塊は数が増えると状態の数が大きく増えるので少なめにし、雪は1つで
+ * 止め役と通り道を両方作るので薄い氷より少なめにする。隣り合うレベルで同じ組み合わせの数の範囲は重ねない。
+ */
+function withElementCount<T extends object>(
+  pattern: T,
+  minimum: number,
+  maximum: number,
+): T & { elementCount: NumericRange } {
+  return { ...pattern, elementCount: { minimum, maximum } };
+}
+
+/**
+ * 各レベルの基準。L1・L2 は氷と岩だけ（床を置く問題と置かない問題を混ぜる）で手筋を足し、L3〜L5 は自作依存の点の帯で分ける（L3 は要素の
+ * 1種類を少し置いた入門）。もろい岩は止め役を作れず通り道を開くだけなので、L4・L5 では薄い氷と組み合わせる。雪・滑る氷の塊は単独と
+ * 薄い氷との組み合わせを L4・L5 に置く。手数と要素の数の範囲は試遊で決め直す前の仮の値。
  */
 export const iceFloorMazeLevelCriteria = {
   "1": {
@@ -165,6 +186,11 @@ export const iceFloorMazeLevelCriteria = {
     patterns: [
       { composition: "brittle-rock", ...introductionPattern },
       { composition: "thin-ice", ...introductionPattern },
+      { composition: "snow", ...introductionPattern },
+      {
+        composition: "sliding-block",
+        ...withElementCount(introductionPattern, 2, 2),
+      },
     ],
   },
   "4": {
@@ -173,6 +199,13 @@ export const iceFloorMazeLevelCriteria = {
     patterns: [
       { composition: "thin-ice", ...dependencePattern },
       { composition: "mixed", ...dependencePattern },
+      { composition: "snow", ...withElementCount(dependencePattern, 4, 5) },
+      { composition: "snow-thin-ice", ...dependencePattern },
+      {
+        composition: "sliding-block",
+        ...withElementCount(dependencePattern, 3, 3),
+      },
+      { composition: "sliding-block-thin-ice", ...dependencePattern },
     ],
   },
   "5": {
@@ -181,6 +214,16 @@ export const iceFloorMazeLevelCriteria = {
     patterns: [
       { composition: "thin-ice", ...deepDependencePattern },
       { composition: "mixed", ...deepDependencePattern },
+      {
+        composition: "snow",
+        ...withElementCount(deepDependencePattern, 6, 7),
+      },
+      { composition: "snow-thin-ice", ...deepDependencePattern },
+      {
+        composition: "sliding-block",
+        ...withElementCount(deepDependencePattern, 4, 5),
+      },
+      { composition: "sliding-block-thin-ice", ...deepDependencePattern },
     ],
   },
 } as const satisfies Record<IceFloorMazeDifficulty, IceFloorMazeLevelCriteria>;
@@ -195,9 +238,9 @@ export const iceFloorMazeLevelCriteria = {
  * 要素のある盤面だけの条件:
  * - `minimumUses`: 最短解で要素を使う回数の下限。
  * - `decoyShare`: おとりを要素の数のこの割合（切り上げ、最低1）以上。
- * - `minimumEachInMixed`: 両方を置く盤面で、もろい岩・薄い氷それぞれの下限。
- * - `maximumQuickReturns`: 薄い氷を割った直後の手でその水面へ戻って止まる手筋の回数の上限。
- * - `minimumVariedUses`: 前の手が作った地形の、割ってすぐ戻る手筋でない使い方（遠くから水面で止まる・崩れた跡を通るなど）の回数の下限。
+ * - `minimumEachInMixed`: 2種類を置く盤面で、それぞれの種類の下限。
+ * - `maximumQuickReturns`: 止め役を作った直後の手でそれで止まる手筋（作ってすぐ戻る）の回数の上限。
+ * - `minimumVariedUses`: 前の手が作った地形の、作ってすぐ戻る手筋でない使い方（遠くから水面・雪山で止まる・崩れた跡を通るなど）の回数の下限。
  * - `maximumIdleRun`: 要素を変えず使わず、誘いも無い手（読みどころの無い手）が続く長さの上限。
  */
 export const iceFloorMazeCommonConditions = {
@@ -217,7 +260,8 @@ export const iceFloorMazeCommonConditions = {
  * - `multiple-solutions`: 最短解が一意でない。
  * - `forced`: 一本道が多い。
  * - `unreadable`: 先読みのモデルが上限まで読んでも解けない（氷と岩だけ）。
- * - `repeated-direction` / `brittle-chain`: 同じ向きが続く手がある（条件1）。床のある盤面では、最短解で床で止まった後に同じ向きへ
+ * - `repeated-direction` / `element-chain`: 同じ向きが続く手がある（条件1）。`element-chain` は要素を働かせた直後に同じ向きで
+ *   もう一度同じ種類の要素を働かせる2手（もろい岩を続けて崩す・雪を続けて押し出す・塊を続けて動かす）。床のある盤面では、最短解で床で止まった後に同じ向きへ
  *   続けるか、止まれるどこかに床で止まった後に同じ向きへ1マスだけ進むか別の床で止まる手（連打）がある。床で止まった後に同じ向きへ
  *   また滑れること自体は床の働きなので、最少手数+2手以内の道筋に乗っていても数えない。
  * - `irrelevant-floor`: 氷にしても最短解・もっともらしい選択肢・詰みが変わらない床がある。
@@ -226,9 +270,9 @@ export const iceFloorMazeCommonConditions = {
  * - `irrelevant-element` / `few-decoys`: 効かない要素がある・おとりが足りない（条件2）。
  * - `few-uses`: 最短解で要素を使う回数が足りない。
  * - `static-shortcut`: 見た目どおりかもう一方の読みで短く解ける。
- * - `element-mix`: 両方を置く盤面で、一方が少ない。
+ * - `element-mix`: 2種類を置く盤面で、一方が少ない。
  * - `short-slides` / `choiceless-stair`: 1マスだけの滑りが多い・選択肢の無い階段が長い。
- * - `repeated-tactic`: 割ってすぐ戻る手筋が多い、または前の手が作った地形の別の使い方が無い。
+ * - `repeated-tactic`: 作ってすぐ戻る手筋が多い、または前の手が作った地形の別の使い方が無い。
  * - `idle-run`: 読みどころの無い手が長く続く。
  */
 export type IceFloorMazeUnmetCondition =
@@ -238,7 +282,7 @@ export type IceFloorMazeUnmetCondition =
   | "irrelevant-floor"
   | "floor-landmark"
   | "repeated-direction"
-  | "brittle-chain"
+  | "element-chain"
   | "irrelevant-element"
   | "few-decoys"
   | "few-uses"
@@ -343,6 +387,33 @@ export function listIceFloorMazeTacticUnmetConditions(
   return checks.flatMap(([condition, unmet]) => (unmet ? [condition] : []));
 }
 
+/** 盤面の要素の組み合わせごとの、種類ごとの数。 */
+const elementCountsByComposition = {
+  "brittle-rock": (features) => [features.brittleRockCount],
+  "thin-ice": (features) => [features.thinIceCount],
+  mixed: (features) => [features.brittleRockCount, features.thinIceCount],
+  snow: (features) => [features.snowCount],
+  "snow-thin-ice": (features) => [features.snowCount, features.thinIceCount],
+  "sliding-block": (features) => [features.slidingBlockCount],
+  "sliding-block-thin-ice": (features) => [
+    features.slidingBlockCount,
+    features.thinIceCount,
+  ],
+  other: () => [],
+} as const satisfies Record<
+  Exclude<IceFloorMazeElementComposition, "none">,
+  (features: IceFloorMazeElementFeatures) => readonly number[]
+>;
+
+/** 2種類を置く盤面で、少ない方の種類の数。1種類（とそれ以外の組み合わせ）は `Infinity`。 */
+function countScarceElements(
+  composition: Exclude<IceFloorMazeElementComposition, "none">,
+  features: IceFloorMazeElementFeatures,
+): number {
+  const counts = elementCountsByComposition[composition](features);
+  return counts.length > 1 ? Math.min(...counts) : Number.POSITIVE_INFINITY;
+}
+
 export function listIceFloorMazeElementUnmetConditions(
   composition: Exclude<IceFloorMazeElementComposition, "none">,
   features: IceFloorMazeElementFeatures,
@@ -356,7 +427,7 @@ export function listIceFloorMazeElementUnmetConditions(
       "repeated-direction",
       features.solutionRepeatCount > 0 || features.nearRepeatCount > 0,
     ],
-    ["brittle-chain", features.brittleChainCount > 0],
+    ["element-chain", features.elementChainCount > 0],
     ["irrelevant-element", features.irrelevantElementCount > 0],
     [
       "few-decoys",
@@ -366,9 +437,8 @@ export function listIceFloorMazeElementUnmetConditions(
     ["static-shortcut", features.staticShortcut],
     [
       "element-mix",
-      composition === "mixed" &&
-        Math.min(features.brittleRockCount, features.thinIceCount) <
-          conditions.minimumEachInMixed,
+      countScarceElements(composition, features) <
+        conditions.minimumEachInMixed,
     ],
     [
       "short-slides",

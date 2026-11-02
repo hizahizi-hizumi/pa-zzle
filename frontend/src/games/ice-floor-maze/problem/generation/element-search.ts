@@ -6,21 +6,25 @@ import {
   listElementViolations,
 } from "@/games/ice-floor-maze/problem/generation/element-objective";
 import {
+  applySlideToLayout,
+  CELL_BLOCK,
   CELL_BRITTLE,
   CELL_ICE,
   CELL_ROCK,
+  CELL_SNOW,
   CELL_THIN,
   createElementRules,
+  createLayoutTable,
+  createSlideOutcome,
   DIRECTION_COUNT,
-  findSlideEnd,
-  findSlideHit,
   type GenerationBoard,
-  maskAfterSlide,
+  type Layout,
+  slideInLayout,
 } from "@/games/ice-floor-maze/problem/generation/state-space";
 import type { ProblemRandom } from "@/games/problem-seed";
 
 /**
- * もろい岩・薄い氷のある問題の山登り（研究用の生成 v4 の `Searcher`）。悪くならなければ受理し、
+ * 要素のある問題の山登り（研究用の生成 v4・v5 の `Searcher`）。悪くならなければ受理し、
  * 近傍は岩の追加・削除・入れ替え、開始位置の移動、要素の追加・削除・移動、おとりの候補の置き方。
  */
 
@@ -53,7 +57,16 @@ const tilesByVariant = {
   "brittle-rock": [CELL_BRITTLE],
   "thin-ice": [CELL_THIN],
   mixed: [CELL_BRITTLE, CELL_THIN],
+  snow: [CELL_SNOW],
+  "snow-thin-ice": [CELL_SNOW, CELL_THIN],
+  "sliding-block": [CELL_BLOCK],
+  "sliding-block-thin-ice": [CELL_BLOCK, CELL_THIN],
 } as const satisfies Record<ElementVariant, readonly number[]>;
+
+/** 岩の代わりに置ける要素（もろい岩・滑る氷の塊）。氷か岩のマスに置き、取り除くと氷か岩に戻す。 */
+function isRockLikeTile(tile: number): boolean {
+  return tile === CELL_BRITTLE || tile === CELL_BLOCK;
+}
 
 type Candidate = {
   board: GenerationBoard;
@@ -114,13 +127,13 @@ function listHosts(cells: Uint8Array, start: number, tile: number): number[] {
     cells,
     (code, cell) =>
       cell !== start &&
-      (code === CELL_ICE || (tile === CELL_BRITTLE && code === CELL_ROCK)),
+      (code === CELL_ICE || (isRockLikeTile(tile) && code === CELL_ROCK)),
   );
 }
 
 function pickTile(searcher: Searcher, cells: Uint8Array): number {
   const { recipe, tiles, random } = searcher;
-  if (recipe.variant !== "mixed") {
+  if (tiles.length === 1) {
     return tiles[0]!;
   }
   const short = tiles.filter(
@@ -169,18 +182,17 @@ function mutateElements(
     }
   } else if (operation < 0.5 && placed.length > recipe.elements.minimum) {
     const cell = choose(placed, random);
-    cells[cell] =
-      cells[cell] === CELL_BRITTLE
-        ? choose([CELL_ICE, CELL_ROCK], random)
-        : CELL_ICE;
+    cells[cell] = isRockLikeTile(cells[cell]!)
+      ? choose([CELL_ICE, CELL_ROCK], random)
+      : CELL_ICE;
   } else if (placed.length > 0) {
     const source = choose(placed, random);
     let tile = cells[source]!;
-    if (recipe.variant === "mixed" && random() < 0.2) {
-      tile = tile === CELL_BRITTLE ? CELL_THIN : CELL_BRITTLE;
+    if (tiles.length > 1 && random() < 0.2) {
+      tile = tiles.find((other) => other !== tile)!;
     }
     cells[source] =
-      cells[source] === CELL_BRITTLE && random() < 0.5 ? CELL_ROCK : CELL_ICE;
+      isRockLikeTile(cells[source]!) && random() < 0.5 ? CELL_ROCK : CELL_ICE;
     const hosts = listHosts(cells, start, tile);
     if (hosts.length > 0) {
       cells[choose(hosts, random)] = tile;
@@ -244,7 +256,7 @@ function mutate(searcher: Searcher, candidate: Candidate): Candidate {
 }
 
 /**
- * おとりになりうる置き方: 最短解から外れた1手目・2手目の滑りを止める岩をもろい岩にする、その滑りが通る氷をもろい岩・薄い氷にする。
+ * おとりになりうる置き方: 最短解から外れた1手目・2手目の滑りを止める岩をもろい岩・滑る氷の塊にする、その滑りが通る氷を要素にする。
  * 置き方は `マス × 8 + 種類` の昇順。
  */
 function listLureSpots(
@@ -254,32 +266,36 @@ function listLureSpots(
 ): [cell: number, tile: number][] {
   const { board, start, goal } = candidate;
   const rules = createElementRules(board);
+  const table = createLayoutTable(rules);
+  const outcome = createSlideOutcome();
   const slides = new Set<number>();
+  const hits = new Map<number, number>();
   const { cellCount } = rules;
   function encodeSlide(origin: number, direction: number, end: number): number {
     return (origin * DIRECTION_COUNT + direction) * cellCount + end;
   }
   function listMoves(
     position: number,
-    mask: number,
-  ): [number, number, number][] {
-    const moves: [number, number, number][] = [];
+    layout: Layout,
+  ): [number, number, Layout][] {
+    const moves: [number, number, Layout][] = [];
     for (let direction = 0; direction < DIRECTION_COUNT; direction += 1) {
-      const end = findSlideEnd(rules, position, mask, direction);
+      const end = slideInLayout(rules, layout, position, direction, outcome);
       if (end !== position) {
+        hits.set(encodeSlide(position, direction, end), outcome.hit);
         moves.push([
           direction,
           end,
-          maskAfterSlide(rules, position, end, mask, direction),
+          applySlideToLayout(table, layout, direction, outcome),
         ]);
       }
     }
     return moves;
   }
   let position = start;
-  let mask = 0;
+  let layout = table.layouts[0]!;
   for (const move of solution) {
-    const options = listMoves(position, mask);
+    const options = listMoves(position, layout);
     for (const [direction, end, after] of options) {
       if (direction === move) {
         continue;
@@ -293,7 +309,7 @@ function listLureSpots(
     }
     const chosen = options.find(([direction]) => direction === move)!;
     position = chosen[1];
-    mask = chosen[2];
+    layout = chosen[2];
   }
   const spots = new Set<number>();
   const SPOT_RADIX = 8;
@@ -301,13 +317,11 @@ function listLureSpots(
     const end = slide % cellCount;
     const direction = Math.floor(slide / cellCount) % DIRECTION_COUNT;
     const origin = Math.floor(slide / cellCount / DIRECTION_COUNT);
-    const stopper = findSlideHit(rules, end, direction);
-    if (
-      searcher.tiles.includes(CELL_BRITTLE) &&
-      stopper >= 0 &&
-      board.cells[stopper] === CELL_ROCK
-    ) {
-      spots.add(stopper * SPOT_RADIX + CELL_BRITTLE);
+    const stopper = hits.get(slide)!;
+    if (stopper >= 0 && board.cells[stopper] === CELL_ROCK) {
+      for (const tile of searcher.tiles.filter(isRockLikeTile)) {
+        spots.add(stopper * SPOT_RADIX + tile);
+      }
     }
     const step = rules.delta[direction]!;
     for (let cell = origin + step; ; cell += step) {

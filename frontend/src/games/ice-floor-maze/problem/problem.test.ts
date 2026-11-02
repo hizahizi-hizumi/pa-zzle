@@ -159,6 +159,17 @@ const floorProblem: IceFloorMazeProblem = {
   goal: 7,
 };
 
+// #  1  s
+// 3  m  5
+// 6  7  8
+// x  10 x
+// 開始位置 3 から右は隣に接した塊を押すので動かず、下・右の2手でゴール 8 に止まる。
+const snowBlockProblem: IceFloorMazeProblem = {
+  board: parseIceFloorMazeBoard(["#.s", ".m.", "...", "x.x"]),
+  start: 3,
+  goal: 8,
+};
+
 describe("createIceFloorMazeProblemIdentity", () => {
   test("1マス3ビットのマスの種類の base32 符号・開始位置・ゴールを seed にし、盤面の形を条件にすること", () => {
     const identity = createIceFloorMazeProblemIdentity(problem);
@@ -181,12 +192,19 @@ describe("createIceFloorMazeProblemIdentity", () => {
 
     expect(identity.seed).toBe("44301c20-3-7");
   });
+
+  test("雪・滑る氷の塊を符号に入れること", () => {
+    const identity = createIceFloorMazeProblemIdentity(snowBlockProblem);
+
+    expect(identity.seed).toBe("4c700420-3-8");
+  });
 });
 
 describe("restoreIceFloorMazeProblem", () => {
   describe.each([
     ["要素と盤面の外のある盤面", elementProblem],
     ["床のある盤面", floorProblem],
+    ["雪と滑る氷の塊のある盤面", snowBlockProblem],
   ])("%sの場合", (_, original) => {
     const identity = createIceFloorMazeProblemIdentity(original);
 
@@ -244,7 +262,6 @@ describe("decodeIceFloorMazeProblem", () => {
   const cells = `4${"0".repeat(38)}`;
   const invalidSeeds = [
     ["マスの符号の桁が足りない", `${cells.slice(1)}-9-63`],
-    ["知らない種類の番号のマスがある", `o${cells.slice(1)}-9-63`],
     ["base32 に無い桁がある", `${cells.slice(1)}w-9-63`],
     ["大文字の桁がある", `${cells.slice(1)}A-9-63`],
     ["開始位置が岩", `${cells}-0-63`],
@@ -404,6 +421,11 @@ describe("countIceFloorMazeRecordedElements", () => {
     [
       "今の版は床を要素に数えない",
       createIceFloorMazeProblemIdentity(floorProblem),
+      2,
+    ],
+    [
+      "今の版は雪と滑る氷の塊を数える",
+      createIceFloorMazeProblemIdentity(snowBlockProblem),
       2,
     ],
     [

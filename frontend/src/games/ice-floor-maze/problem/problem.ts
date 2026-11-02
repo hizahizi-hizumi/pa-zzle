@@ -18,7 +18,7 @@ import { isPositiveInteger, isRecordObject } from "@/lib/type-guards";
 
 /**
  * 1問を遊ぶためのデータ。駒は `start` から動き出し、`goal` で止まればクリア。
- * 盤面は盤面の外を切り落とした外接の長方形で、開始位置とゴールは氷のマス（薄い氷・床ではない）。
+ * 盤面は盤面の外を切り落とした外接の長方形で、開始位置とゴールは氷のマス（薄い氷・床・雪・滑る氷の塊ではない）。
  */
 export type IceFloorMazeProblem = {
   board: IceFloorMazeBoard;
@@ -151,7 +151,7 @@ function isCroppedToDrawnCells(board: IceFloorMazeBoard): boolean {
  * 盤面のマスの符号の版ごとの形。マスの種類の番号は `iceFloorMazeCells` の順。
  * - 版 `"2"`: 5種類（氷・岩・もろい岩・薄い氷・盤面の外）。2マスを `5 × 先のマス + 後のマス` として base32 の1桁にする。
  * - 版 `"3"`: 1マスを3ビット（8種類まで）とし、行優先のビット列を先頭から5ビットずつ base32 の1桁にする。
- *   種類を `iceFloorMazeCells` の末尾に8種類まで足しても、それまでの seed の意味は変わらない。
+ *   種類を `iceFloorMazeCells` の末尾に足しても、それまでの seed の意味は変わらない（雪・滑る氷の塊を足して8種類を使い切った）。
  */
 type CellCodec = {
   encode: (cells: readonly IceFloorMazeCell[]) => string;
@@ -368,7 +368,7 @@ export function countIceFloorMazeRecordedDrawnCells(
 }
 
 /**
- * 記録の問題で、初期盤面の要素（もろい岩・薄い氷）の数。速さの基準時間に使う。床は変化しないので数えない。
+ * 記録の問題で、初期盤面の要素（もろい岩・薄い氷・雪・滑る氷の塊）の数。速さの基準時間に使う。床は変化しないので数えない。
  * 盤面を読める版（版 `"2"` 以降）は seed の盤面から数える。要素を持たない初期版などは0。
  */
 export function countIceFloorMazeRecordedElements(
