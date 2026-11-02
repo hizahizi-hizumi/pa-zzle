@@ -19,13 +19,13 @@ describe("generateHamiltonianPathProblem", () => {
   test.each(conditions)(
     "一辺 %i・壁率 %s で、条件どおりの壁マス数の一意解の問題を作ること",
     (size, wallRatio) => {
-      const generated = generateHamiltonianPathProblem(
+      const { problem, solution } = generateHamiltonianPathProblem(
         createHamiltonianPathProblemIdentity(size, wallRatio, 0),
       );
-
-      const { problem, solution } = generated;
       const search = countHamiltonianPathSolutions(problem);
-      expect(() => assertHamiltonianPathProblem(problem)).not.toThrow();
+      const assertProblem = () => assertHamiltonianPathProblem(problem);
+
+      expect(assertProblem).not.toThrow();
       expect(problem.size).toBe(size);
       expect(problem.walls).toHaveLength(
         size * size - Math.round(size * size * (1 - wallRatio)),

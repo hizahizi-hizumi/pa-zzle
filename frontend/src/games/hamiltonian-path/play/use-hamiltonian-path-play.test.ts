@@ -6,7 +6,12 @@ import {
 } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
 import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
 import { selectHamiltonianPathProblemForDifficulty } from "@/games/hamiltonian-path/problem-selection";
-import { findHamiltonianPathDirection } from "@/games/hamiltonian-path/puzzle/board";
+import {
+  findHamiltonianPathDirection,
+  getHamiltonianPathNeighborCell,
+  hamiltonianPathDirections,
+  hasHamiltonianPathPartition,
+} from "@/games/hamiltonian-path/puzzle/board";
 import { createProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
 
@@ -110,7 +115,7 @@ describe("useHamiltonianPathPlay", () => {
   describe("先端から離れたマスを押した場合", () => {
     const cell = findCellAwayFromStart();
 
-    test("道を変えず、阻まれた操作として先端と理由を残すこと", () => {
+    test("道を変えず、阻まれた操作として先端・理由・押したマスを残すこと", () => {
       tapAll(result, [cell]);
 
       expect(result.current.path).toEqual([initial.problem.start]);
@@ -118,7 +123,57 @@ describe("useHamiltonianPathPlay", () => {
         reason: "not-adjacent",
         head: initial.problem.start,
         direction: null,
+        cell,
       });
+    });
+
+    test("そのままなぞって先端の隣のマスへ入ると道を延ばすこと", () => {
+      drag(result, [cell, solution[1]!]);
+
+      expect(result.current.path).toEqual(solution.slice(0, 2));
+    });
+  });
+
+  describe("始点から通れない向きへ矢印キーで進もうとした場合", () => {
+    const { size, start } = initial.problem;
+    const direction = hamiltonianPathDirections.find((candidate) => {
+      const neighbor = getHamiltonianPathNeighborCell(size, start, candidate);
+      return (
+        neighbor === null ||
+        initial.problem.walls.includes(neighbor) ||
+        hasHamiltonianPathPartition(initial.problem, start, neighbor)
+      );
+    })!;
+    const neighbor = getHamiltonianPathNeighborCell(size, start, direction);
+
+    test("阻まれた操作として、進もうとした向きと隣のマスを残すこと", () => {
+      act(() => result.current.moveHeadToward(direction));
+
+      expect(result.current.blockedMove).toMatchObject({
+        head: start,
+        direction,
+        cell: neighbor,
+      });
+    });
+  });
+
+  describe("阻まれた操作を残している場合", () => {
+    const cell = findCellAwayFromStart();
+
+    beforeEach(() => {
+      tapAll(result, [solution[1]!, cell]);
+    });
+
+    const cases = [
+      ["待った", "undo"],
+      ["盤面を戻す", "restart"],
+      ["リセット", "replay"],
+    ] as const;
+
+    test.each(cases)("%sで阻まれた操作を消すこと", (_, operation) => {
+      act(() => result.current[operation]());
+
+      expect(result.current.blockedMove).toBeNull();
     });
   });
 

@@ -75,6 +75,7 @@ export function PlayableHamiltonianPath({
         board={play.board}
         path={play.path}
         isDeadEnd={play.isDeadEnd}
+        strandedCells={play.strandedCells}
         blockedMove={play.blockedMove}
         canUndo={play.canUndo}
         canRestart={play.canRestart}

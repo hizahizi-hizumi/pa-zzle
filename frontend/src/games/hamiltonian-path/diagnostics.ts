@@ -13,11 +13,9 @@ import {
 import {
   analyzeHamiltonianPathDifficulty,
   type HamiltonianPathDifficultyAnalysis,
+  searchHamiltonianPathSolutionsForAnalysis,
 } from "@/games/hamiltonian-path/problem/difficulty-analysis";
-import {
-  countHamiltonianPathSolutions,
-  type HamiltonianPathSolutionSearchResult,
-} from "@/games/hamiltonian-path/problem/generation/solver";
+import type { HamiltonianPathSolutionSearchResult } from "@/games/hamiltonian-path/problem/generation/solver";
 import { measureHamiltonianPathStraightRatio } from "@/games/hamiltonian-path/problem/generation/straightness";
 import { getHamiltonianPathSymmetryKey } from "@/games/hamiltonian-path/problem/generation/symmetry";
 import {
@@ -42,7 +40,7 @@ type HamiltonianPathUniquenessCheck = Pick<
 /**
  * 検証情報を開いたときに、遊んでいる問題を解き直し・分析し直して求めた値。プレイ中は求めない。
  * - `symmetryKey`: 回転・反転で重なる盤面に共通の正規化キー（問題集の同型除外に使うもの）。
- * - `uniqueness`: 生成器と同じ探索量の上限で、解を2つまで数えた結果。
+ * - `uniqueness`: 難易度の分析と同じ探索（探索量の上限も同じ）で、解を2つまで数えた結果。
  * - `solution`: 正解の道（始点からのマス番号）。解がただ1つと確かめられたときだけ持つ。
  * - `straightRatio`: 正解の道の直進率。`solution` が無ければ `null`。
  * - `difficultyAnalysis`: 人間向け解法器の経過（推論段階ごとの発火数・仮置き・先読みの手数）と、描画視点の分岐。
@@ -116,18 +114,6 @@ const hamiltonianPathDiagnosticFormat: InternalDiagnosticFormat<HamiltonianPathD
     },
   };
 
-function findUniqueSolution(
-  problem: HamiltonianPathProblem,
-): Pick<HamiltonianPathDiagnosticSnapshot, "uniqueness" | "solution"> {
-  const { status, solutionCount, searchStepCount, firstSolutions } =
-    countHamiltonianPathSolutions(problem);
-  const isUnique = status === "complete" && solutionCount === 1;
-  return {
-    uniqueness: { status, solutionCount, searchStepCount },
-    solution: isUnique ? [...firstSolutions[0]!] : null,
-  };
-}
-
 /**
  * 検証情報としてコピーする値。問題の再現に要る identity と出題した難易度・ビルドに、
  * 遊んでいる問題を解き直した正解の道と、難易度を分析し直した結果を添える。
@@ -142,12 +128,22 @@ export function createHamiltonianPathDiagnosticSnapshot({
   problem: HamiltonianPathProblem;
   buildRevision: string | null;
 }): HamiltonianPathDiagnosticSnapshot {
-  const { uniqueness, solution } = findUniqueSolution(problem);
-  const difficultyAnalysis = analyzeHamiltonianPathDifficulty(problem);
+  const solutionSearch = searchHamiltonianPathSolutionsForAnalysis(problem);
+  const { status, solutionCount, searchStepCount, firstSolutions } =
+    solutionSearch;
+  const solution =
+    status === "complete" && solutionCount === 1
+      ? [...firstSolutions[0]!]
+      : null;
+  const difficultyAnalysis = analyzeHamiltonianPathDifficulty(
+    problem,
+    {},
+    solutionSearch,
+  );
   return {
     ...createInternalDiagnosticSnapshot(hamiltonianPathDiagnosticFormat, input),
     symmetryKey: getHamiltonianPathSymmetryKey(problem),
-    uniqueness,
+    uniqueness: { status, solutionCount, searchStepCount },
     solution,
     straightRatio: solution
       ? measureHamiltonianPathStraightRatio(solution)

@@ -31,35 +31,81 @@ function transformBoard(
   };
 }
 
+function rotateCellClockwise(size: number): CellTransform {
+  return function rotateCell(cell) {
+    const { row, column } = getHamiltonianPathCellPosition(size, cell);
+    return column * size + (size - 1 - row);
+  };
+}
+
+function mirrorCellLeftRight(size: number): CellTransform {
+  return function mirrorCell(cell) {
+    const { row, column } = getHamiltonianPathCellPosition(size, cell);
+    return row * size + (size - 1 - column);
+  };
+}
+
+function thenTransform(
+  first: CellTransform,
+  second: CellTransform,
+): CellTransform {
+  return function transformCell(cell) {
+    return second(first(cell));
+  };
+}
+
 export function rotateHamiltonianPathBoardClockwise(
   board: HamiltonianPathBoard,
 ): HamiltonianPathBoard {
-  const { size } = board;
-  return transformBoard(board, function rotateCell(cell) {
-    const { row, column } = getHamiltonianPathCellPosition(size, cell);
-    return column * size + (size - 1 - row);
-  });
+  return transformBoard(board, rotateCellClockwise(board.size));
 }
 
 export function mirrorHamiltonianPathBoardLeftRight(
   board: HamiltonianPathBoard,
 ): HamiltonianPathBoard {
-  const { size } = board;
-  return transformBoard(board, function mirrorCell(cell) {
-    const { row, column } = getHamiltonianPathCellPosition(size, cell);
-    return row * size + (size - 1 - column);
-  });
+  return transformBoard(board, mirrorCellLeftRight(board.size));
+}
+
+/**
+ * 回転・反転した盤面と、元の盤面のマスをその盤面のマスへ写す関数。
+ * 解の道など、元の盤面のマスで表した値を写した盤面へ移すのに使う。
+ */
+export type HamiltonianPathBoardOrientation = {
+  board: HamiltonianPathBoard;
+  transformCell: CellTransform;
+};
+
+/** 回転4通り（元の盤面を含む）と、それぞれの左右反転4通り。 */
+export function listHamiltonianPathBoardOrientations(
+  board: HamiltonianPathBoard,
+): HamiltonianPathBoardOrientation[] {
+  const rotate = rotateCellClockwise(board.size);
+  const mirror = mirrorCellLeftRight(board.size);
+  const rotations: CellTransform[] = [
+    function keepCell(cell) {
+      return cell;
+    },
+  ];
+  for (let turn = 1; turn < 4; turn += 1) {
+    rotations.push(thenTransform(rotations[turn - 1]!, rotate));
+  }
+  const transforms = [
+    ...rotations,
+    ...rotations.map((rotation) => thenTransform(rotation, mirror)),
+  ];
+  return transforms.map((transformCell) => ({
+    board: transformBoard(board, transformCell),
+    transformCell,
+  }));
 }
 
 /** 回転4通りとそれぞれの左右反転4通り。 */
 export function listHamiltonianPathBoardSymmetries(
   board: HamiltonianPathBoard,
 ): HamiltonianPathBoard[] {
-  const rotations = [board];
-  for (let turn = 1; turn < 4; turn += 1) {
-    rotations.push(rotateHamiltonianPathBoardClockwise(rotations[turn - 1]!));
-  }
-  return [...rotations, ...rotations.map(mirrorHamiltonianPathBoardLeftRight)];
+  return listHamiltonianPathBoardOrientations(board).map(
+    (orientation) => orientation.board,
+  );
 }
 
 /**
