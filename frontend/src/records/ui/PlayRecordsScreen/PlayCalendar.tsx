@@ -18,7 +18,7 @@ export function PlayCalendar({ weeks, label }: PlayCalendarProps) {
       aria-label={label}
       className="grid grid-flow-col grid-rows-7 gap-0.75"
       style={{
-        gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1.25rem))`,
+        gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 2rem))`,
       }}
     >
       {weeks.flatMap((week) =>
