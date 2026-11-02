@@ -452,6 +452,322 @@
       }
     },
     {
+      "includes": ["src/games/bridges/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/bridges/ui/play-record-display.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "!@/records/ui/play-record-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/bridges/puzzle/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/problem/**",
+                      "@/games/bridges/session/**",
+                      "@/games/bridges/play/**",
+                      "@/games/bridges/ui/**"
+                    ],
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/bridges/problem/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/session/**",
+                      "@/games/bridges/play/**",
+                      "@/games/bridges/ui/**"
+                    ],
+                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/bridges/session/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/problem/generation/**",
+                      "@/games/bridges/difficulty",
+                      "@/games/bridges/score",
+                      "@/games/bridges/play/**",
+                      "@/games/bridges/ui/**",
+                      "@/games/bridges/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/bridges/play/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/ui/**",
+                      "@/games/bridges/problem/generation/**",
+                      "@/games/bridges/play-record",
+                      "@/games/bridges/diagnostics"
+                    ],
+                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/games/hitofude-puzzle/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
@@ -477,6 +793,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -523,6 +840,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -568,6 +886,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -623,6 +942,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -677,6 +997,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -794,6 +1115,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -849,6 +1171,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -895,6 +1218,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -940,6 +1264,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -995,6 +1320,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1049,6 +1375,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1166,6 +1493,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1221,6 +1549,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1267,6 +1596,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1312,6 +1642,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1367,6 +1698,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1421,6 +1753,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1538,6 +1871,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1593,6 +1927,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -1639,6 +1974,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -1684,6 +2020,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -1739,6 +2076,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -1793,6 +2131,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -1910,6 +2249,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -1965,6 +2305,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2011,6 +2352,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2056,6 +2398,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2111,6 +2454,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2165,6 +2509,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2282,6 +2627,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2337,6 +2683,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2383,6 +2730,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2428,6 +2776,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2483,6 +2832,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2537,6 +2887,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2654,6 +3005,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2709,6 +3061,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2755,6 +3108,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2800,6 +3154,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2855,6 +3210,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2909,6 +3265,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3026,6 +3383,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3081,6 +3439,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3127,6 +3486,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3172,6 +3532,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3227,6 +3588,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3281,6 +3643,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3398,6 +3761,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3453,6 +3817,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3499,6 +3864,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3544,6 +3910,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3599,6 +3966,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3653,6 +4021,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3770,6 +4139,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3825,6 +4195,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3871,6 +4242,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3916,6 +4288,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3971,6 +4344,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4025,6 +4399,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4142,6 +4517,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4196,6 +4572,55 @@
       }
     },
     {
+      "includes": ["src/game-catalog/bridges/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/views/**", "@/pages/**"],
+                    "message": "[dependency/game-catalog-boundary] ゲームカタログは画面合成・pages へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/game-catalog/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/game-catalog/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/game-catalog/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/game-catalog/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/game-catalog/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/game-catalog/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/game-catalog/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/game-catalog/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/game-catalog/tsume-shogi/**",
+                      "@/games/water-sort/**",
+                      "@/game-catalog/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/game-catalog/hitofude-puzzle/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
@@ -4214,6 +4639,8 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
+                      "@/game-catalog/bridges/**",
                       "@/games/ice-floor-maze/**",
                       "@/game-catalog/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4261,6 +4688,8 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
+                      "@/game-catalog/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
@@ -4308,6 +4737,8 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
+                      "@/game-catalog/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -4355,6 +4786,8 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
+                      "@/game-catalog/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -4402,6 +4835,8 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
+                      "@/game-catalog/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -4449,6 +4884,8 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
+                      "@/game-catalog/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -4496,6 +4933,8 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
+                      "@/game-catalog/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -4543,6 +4982,8 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
+                      "@/game-catalog/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -4590,6 +5031,8 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
+                      "@/game-catalog/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -4637,6 +5080,8 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
+                      "@/game-catalog/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
