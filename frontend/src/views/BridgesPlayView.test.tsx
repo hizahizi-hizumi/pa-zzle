@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
@@ -106,8 +112,27 @@ function dragBetween([from, to]: EdgeEnds): void {
   fireEvent.pointerUp(getBoard(), { ...touch, ...pointToward(from, to, 0.9) });
 }
 
-function countBridgeLines(): number {
-  return getBoard().querySelectorAll("line").length;
+/** 盤面の読み上げの、島ごとの行（「1行3列の島 数字2 橋1本 ちょうど」）。 */
+function readIslands(): string[] {
+  return within(getBoard())
+    .getAllByRole("listitem")
+    .map((item) => item.textContent ?? "");
+}
+
+/** 盤面の読み上げから、全島の橋の本数の合計を求める。橋1本を両端の島で2回数える。 */
+function countPlacedBridges(): number {
+  const total = readIslands().reduce(
+    (sum, text) => sum + Number(/橋(\d+)本/.exec(text)?.[1]),
+    0,
+  );
+  return total / 2;
+}
+
+/** 盤面の読み上げの、その島の行。 */
+function readIsland([row, column]: CellPosition): string {
+  return readIslands().find((text) =>
+    text.startsWith(`${row + 1}行${column + 1}列の島`),
+  )!;
 }
 
 const solutionEdges = solution.flatMap((count, edge) =>
@@ -152,15 +177,18 @@ describe("BridgesPlayView", () => {
 
     test("橋の無い盤面と、その問題 ID の URL を示すこと", () => {
       const search = screen.getByRole("status", { name: "URL のクエリ" });
+      const bridgeCount = countPlacedBridges();
 
-      expect(countBridgeLines()).toBe(0);
-      expect(search.textContent).toBe(`?problem=${createProblemId(identity)}`);
+      expect({ bridgeCount, query: search.textContent }).toEqual({
+        bridgeCount: 0,
+        query: `?problem=${createProblemId(identity)}`,
+      });
     });
 
     test("島と島の間を押すたびに橋が1本 → 2本 → なしと変わること", () => {
       const counts = [1, 2, 3].map(() => {
         tapBetween(doubleEdge);
-        return countBridgeLines();
+        return countPlacedBridges();
       });
 
       expect(counts).toEqual([1, 2, 0]);
@@ -168,8 +196,9 @@ describe("BridgesPlayView", () => {
 
     test("島から隣の島の向きへなぞると橋を架けること", () => {
       dragBetween(doubleEdge);
+      const island = readIsland(doubleEdge[0]);
 
-      expect(countBridgeLines()).toBe(1);
+      expect(island).toContain("橋1本");
     });
 
     test("島の丸の中で離すと橋を架けないこと", () => {
@@ -181,8 +210,9 @@ describe("BridgesPlayView", () => {
         ...touch,
         ...pointToward(...doubleEdge, 0.3),
       });
+      const bridgeCount = countPlacedBridges();
 
-      expect(countBridgeLines()).toBe(0);
+      expect(bridgeCount).toBe(0);
     });
 
     describe("交わる所に橋がある場合", () => {
@@ -192,16 +222,18 @@ describe("BridgesPlayView", () => {
 
       test("交わる辺には架けないこと", () => {
         dragBetween(getEdgeEnds(crossedEdge));
+        const bridgeCount = countPlacedBridges();
 
-        expect(countBridgeLines()).toBe(1);
+        expect(bridgeCount).toBe(1);
       });
     });
 
     test("待ったで直前の橋を取り消すこと", () => {
       tapBetween(doubleEdge);
       fireEvent.click(screen.getByRole("button", { name: "待った" }));
+      const bridgeCount = countPlacedBridges();
 
-      expect(countBridgeLines()).toBe(0);
+      expect(bridgeCount).toBe(0);
     });
 
     describe("最後の1本を除いて解いた場合", () => {
@@ -211,16 +243,27 @@ describe("BridgesPlayView", () => {
 
       test("最後の1本を架けると盤面を見せたまま操作を受け付けなくなること", () => {
         tapBetween(getEdgeEnds(lastEdge));
-        const linesAfterClear = countBridgeLines();
+        const islandsAfterClear = readIslands();
         tapBetween(getEdgeEnds(lastEdge));
+        const islandsAfterTap = readIslands();
+        const bridgeCount = countPlacedBridges();
+        const undoDisabled = screen
+          .getByRole("button", { name: "待った" })
+          .hasAttribute("disabled");
 
-        expect(countBridgeLines()).toBe(linesAfterClear);
-        expect(linesAfterClear).toBe(solutionLineCount);
-        expect(
-          screen
-            .getByRole("button", { name: "待った" })
-            .hasAttribute("disabled"),
-        ).toBe(true);
+        expect({
+          allExact: islandsAfterClear.every((text) =>
+            text.endsWith("ちょうど"),
+          ),
+          bridgeCount,
+          unchanged: islandsAfterTap.join("/") === islandsAfterClear.join("/"),
+          undoDisabled,
+        }).toEqual({
+          allExact: true,
+          bridgeCount: solutionLineCount,
+          unchanged: true,
+          undoDisabled: true,
+        });
       });
     });
   });
@@ -248,8 +291,9 @@ describe("BridgesPlayView", () => {
 
     test("遊べないことを示し、難易度選択へ戻れること", () => {
       fireEvent.click(screen.getByRole("link", { name: "難易度選択へ戻る" }));
+      const destination = screen.queryByText("難易度選択画面");
 
-      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+      expect(destination).not.toBeNull();
     });
   });
 });
