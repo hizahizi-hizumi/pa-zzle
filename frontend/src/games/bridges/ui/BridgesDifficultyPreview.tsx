@@ -112,12 +112,17 @@ const previewBoards = {
 
 const MARK_NOTATION = "o";
 
-/** 島の丸の半径と縁の太さ（マス幅を 1 とした値）。 */
+/**
+ * 島の丸の半径と縁の太さ（マス幅を 1 とした値）。色は盤面の島と同じにし、大きさと縁の太さは見本の大きさに合わせて盤面と違える。
+ * 盤面の縁の太さ（0.06）は1マス 10px では1px 未満で消えるので太くし、盤面の半径（0.4）では外側の輪と重なるので小さくする。
+ */
 const ISLAND_RADIUS = 0.3;
 const ISLAND_OUTLINE_WIDTH = 0.12;
 /** 輪の半径と太さ。島の丸から離して描き、島の丸の色や大きさの違いに見えないようにする。 */
 const MARK_RADIUS = 0.45;
 const MARK_WIDTH = 0.08;
+/** 地の四方の余白（マス幅を 1 とした値）。端の行・列の輪が地の縁に接して見えないようにする。 */
+const GROUND_PADDING = 0.2;
 
 type PreviewBoard = {
   board: BridgesBoard;
@@ -151,7 +156,7 @@ type BridgesDifficultyPreviewProps = {
  * 難易度プレビューは、そのレベルの盤面の横幅いっぱいを数行だけ、解き始めの姿（島だけ。数字と橋は描かない）で描く模式図である。
  * - 横幅（盤面の一辺）と描く行の島の数で、上のレベルほど盤面が広く島が多いことを示す。マスの大きさと行の数はどのレベルでもそろえる。
  * - 数字の読みだけでは橋が決まらない島に輪を付ける。上のレベルほど多く、つながりを読んで決める所が広いことを示す。
- * - 数字は見本の大きさでは読めないので描かない。島の丸は盤面と同じ白い丸にし、輪は丸から離して線だけで描く。
+ * - 数字は見本の大きさでは読めないので描かない。島の丸は盤面の足りない島と同じ色の白い丸にし（大きさと縁の太さは見本に合わせる）、輪は丸から離して線だけで描く。
  */
 export function BridgesDifficultyPreview({
   difficulty,
@@ -159,24 +164,28 @@ export function BridgesDifficultyPreview({
   const { board, top, shownIslands, markedIslands } =
     createPreviewBoard(difficulty);
   const { width } = board;
+  const groundWidth = width + GROUND_PADDING * 2;
+  const groundHeight = PREVIEW_ROWS + GROUND_PADDING * 2;
   const tone = bridgesIslandTones.short;
 
   return (
     <span
       aria-hidden="true"
-      className="flex h-14 w-full items-center [--preview-unit:10px] lg:h-28 lg:justify-center lg:[--preview-unit:16px]"
+      className="flex h-14 w-full items-center [--preview-unit:10px] lg:h-28 lg:justify-center lg:[--preview-unit:14px]"
     >
       <svg
-        viewBox={`0 0 ${width} ${PREVIEW_ROWS}`}
+        viewBox={`${-GROUND_PADDING} ${-GROUND_PADDING} ${groundWidth} ${groundHeight}`}
         className="shrink-0"
         style={{
-          width: `calc(var(--preview-unit) * ${width})`,
-          height: `calc(var(--preview-unit) * ${PREVIEW_ROWS})`,
+          width: `calc(var(--preview-unit) * ${groundWidth})`,
+          height: `calc(var(--preview-unit) * ${groundHeight})`,
         }}
       >
         <rect
-          width={width}
-          height={PREVIEW_ROWS}
+          x={-GROUND_PADDING}
+          y={-GROUND_PADDING}
+          width={groundWidth}
+          height={groundHeight}
           className={bridgesToneClassNames.ground}
         />
         {shownIslands.map((island) => {
@@ -192,7 +201,7 @@ export function BridgesDifficultyPreview({
                   r={MARK_RADIUS}
                   fill="none"
                   strokeWidth={MARK_WIDTH}
-                  className={bridgesToneClassNames.bridge}
+                  className={bridgesToneClassNames.previewMark}
                 />
               )}
               <circle
