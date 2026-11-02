@@ -144,7 +144,7 @@ describe("HitofudePuzzlePlay", () => {
     const actionCases = [
       ["次の問題", "onStartNewProblem"],
       ["もう一度", "onReplay"],
-      ["ゲームのホームへ", "onOpenGameHome"],
+      ["問題選択", "onOpenGameHome"],
     ] as const;
 
     test.each(actionCases)(

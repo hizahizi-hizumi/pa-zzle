@@ -64,9 +64,7 @@ describe("PlayHeader", () => {
     });
 
     test("戻るボタンでゲームのホームへ移る操作を通知すること", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
       expect(props.onOpenGameHome).toHaveBeenCalledOnce();
     });
@@ -82,8 +80,8 @@ describe("PlayHeader", () => {
         "盤面を戻す",
         "リセット",
         "別の問題",
-        "ゲームのホーム",
-        "ホーム",
+        "問題選択",
+        "パズル選択",
         "遊び方",
         "設定",
         "検証情報",
@@ -94,8 +92,8 @@ describe("PlayHeader", () => {
       ["盤面を戻す", "onRestart"],
       ["リセット", "onReplay"],
       ["別の問題", "onStartNewProblem"],
-      ["ゲームのホーム", "onOpenGameHome"],
-      ["ホーム", "onBackToHome"],
+      ["問題選択", "onOpenGameHome"],
+      ["パズル選択", "onBackToHome"],
       ["遊び方", "onOpenHowToPlay"],
       ["検証情報", "onOpenDiagnostics"],
     ] as const;
@@ -122,8 +120,8 @@ describe("PlayHeader", () => {
     const silentMenuItems = [
       "盤面を戻す",
       "リセット",
-      "ゲームのホーム",
-      "ホーム",
+      "問題選択",
+      "パズル選択",
       "遊び方",
       "検証情報",
     ] as const;
@@ -139,9 +137,7 @@ describe("PlayHeader", () => {
     );
 
     test("戻るボタンでは音を鳴らさないこと", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
       expect(playSound).not.toHaveBeenCalled();
     });
@@ -197,12 +193,7 @@ describe("PlayHeader", () => {
         .getAllByRole("menuitem")
         .map((item) => item.textContent);
 
-      expect(itemNames).toEqual([
-        "別の問題",
-        "ゲームのホーム",
-        "ホーム",
-        "設定",
-      ]);
+      expect(itemNames).toEqual(["別の問題", "問題選択", "パズル選択", "設定"]);
     });
   });
 

@@ -29,7 +29,7 @@ export function GameResultActions({
       </Button>
       <Button size="lg" variant="outline" onClick={onOpenGameHome}>
         <Grid2x2 />
-        ゲームのホームへ
+        問題選択
       </Button>
       <Button
         size="lg"
@@ -43,7 +43,7 @@ export function GameResultActions({
       <Button asChild size="lg" variant="ghost">
         <Link to="/">
           <Home />
-          パズル選択へ
+          パズル選択
         </Link>
       </Button>
     </div>

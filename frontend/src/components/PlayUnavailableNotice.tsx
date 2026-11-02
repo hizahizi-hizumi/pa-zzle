@@ -26,7 +26,7 @@ export function PlayUnavailableNotice({
         <AlertDescription>
           {description && <p>{description}</p>}
           <Button asChild>
-            <Link to={backTo}>ゲームのホームへ戻る</Link>
+            <Link to={backTo}>問題選択へ戻る</Link>
           </Button>
         </AlertDescription>
       </Alert>

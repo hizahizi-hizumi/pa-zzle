@@ -239,17 +239,15 @@ describe("ReflectionPlay", () => {
     test("戻るボタンでゲームのホームへの移動を通知すること", () => {
       renderPlay({});
 
-      fireEvent.click(
-        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
       expect(callbacks.onOpenGameHome).toHaveBeenCalledOnce();
       expect(callbacks.onBackToHome).not.toHaveBeenCalled();
     });
 
     test.each([
-      ["ゲームのホーム", "onOpenGameHome"],
-      ["ホーム", "onBackToHome"],
+      ["問題選択", "onOpenGameHome"],
+      ["パズル選択", "onBackToHome"],
     ] as const)("メニューの%sで移動を通知すること", (name, callbackName) => {
       renderPlay({});
       openPlayMenu();
@@ -496,7 +494,7 @@ describe("ReflectionPlay", () => {
       const actionCases = [
         ["次の問題", "onStartNewProblem"],
         ["もう一度", "onReplay"],
-        ["ゲームのホームへ", "onOpenGameHome"],
+        ["問題選択", "onOpenGameHome"],
       ] as const;
 
       test.each(actionCases)(

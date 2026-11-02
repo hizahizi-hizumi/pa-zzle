@@ -67,7 +67,7 @@ export function PlayHeader({
         type="button"
         variant="ghost"
         size="icon-lg"
-        aria-label="ゲームのホームへ戻る"
+        aria-label="問題選択へ戻る"
         onClick={onOpenGameHome}
       >
         <PuzzleBackIcon />

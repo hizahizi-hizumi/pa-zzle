@@ -292,12 +292,12 @@ describe("WaterSortPlay", () => {
       screen.getByRole("button", { name: "その他の操作" }),
       { button: 0, ctrlKey: false },
     );
-    fireEvent.click(screen.getByRole("menuitem", { name: "ゲームのホーム" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "問題選択" }));
     fireEvent.pointerDown(
       screen.getByRole("button", { name: "その他の操作" }),
       { button: 0, ctrlKey: false },
     );
-    fireEvent.click(screen.getByRole("menuitem", { name: "ホーム" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "パズル選択" }));
     fireEvent.pointerDown(
       screen.getByRole("button", { name: "その他の操作" }),
       { button: 0, ctrlKey: false },
@@ -504,7 +504,7 @@ describe("WaterSortPlay", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "次の問題" }));
-    fireEvent.click(screen.getByRole("button", { name: "ゲームのホームへ" }));
+    fireEvent.click(screen.getByRole("button", { name: "問題選択" }));
     fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
     expect(startNewProblem).toHaveBeenCalledOnce();
     expect(onOpenGameHome).toHaveBeenCalledOnce();

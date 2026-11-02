@@ -105,7 +105,7 @@ describe("今の版の記録の場合", () => {
   });
 
   test("ゲームのホームへで、記録の問題を選んだゲームのホームへ移ること", () => {
-    fireEvent.click(screen.getByRole("button", { name: "ゲームのホームへ" }));
+    fireEvent.click(screen.getByRole("button", { name: "問題選択" }));
 
     const { location } = router.state;
 

@@ -78,11 +78,11 @@ export function PlayMenu({
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={onOpenGameHome}>
             <Grid2x2 />
-            ゲームのホーム
+            問題選択
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={onBackToHome}>
             <Home />
-            ホーム
+            パズル選択
           </DropdownMenuItem>
           {onOpenHowToPlay && (
             <>

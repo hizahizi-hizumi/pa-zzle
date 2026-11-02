@@ -339,9 +339,7 @@ describe("HitofudePuzzlePlayView", () => {
     });
 
     test("選べないことを示してゲームのホームへ戻れること", () => {
-      fireEvent.click(
-        screen.getByRole("link", { name: "ゲームのホームへ戻る" }),
-      );
+      fireEvent.click(screen.getByRole("link", { name: "問題選択へ戻る" }));
 
       expect(screen.getByText("ゲームのホーム画面")).toBeTruthy();
     });
@@ -361,9 +359,7 @@ describe("HitofudePuzzlePlayView", () => {
     });
 
     test("戻るボタンで、遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
       const { historyAction, location } = router.state;
 
       expect(location.pathname).toBe("/puzzles/hitofude-puzzle");
@@ -377,9 +373,7 @@ describe("HitofudePuzzlePlayView", () => {
       });
 
       test("遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
-        fireEvent.click(
-          screen.getByRole("menuitem", { name: "ゲームのホーム" }),
-        );
+        fireEvent.click(screen.getByRole("menuitem", { name: "問題選択" }));
         const { historyAction, location } = router.state;
 
         expect(location.pathname).toBe("/puzzles/hitofude-puzzle");

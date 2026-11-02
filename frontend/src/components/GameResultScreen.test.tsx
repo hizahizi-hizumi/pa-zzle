@@ -66,7 +66,7 @@ describe("GameResultScreen", () => {
 
     expect(buttonNames).toEqual([
       "次の問題",
-      "ゲームのホームへ",
+      "問題選択",
       "もう一度",
       "スコアの内訳・採点基準",
       "検証情報",
@@ -76,7 +76,7 @@ describe("GameResultScreen", () => {
   test("次の行動の最後に、パズル選択へ移るリンクを置くこと", () => {
     const replayButton = screen.getByRole("button", { name: "もう一度" });
     const puzzleSelectionLink = screen.getByRole("link", {
-      name: "パズル選択へ",
+      name: "パズル選択",
     });
 
     const position = replayButton.compareDocumentPosition(puzzleSelectionLink);
@@ -121,8 +121,8 @@ describe("GameResultScreen", () => {
     },
   );
 
-  test("ゲームのホームへ では音を鳴らさずに操作を通知すること", () => {
-    fireEvent.click(screen.getByRole("button", { name: "ゲームのホームへ" }));
+  test("問題選択では音を鳴らさずに操作を通知すること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "問題選択" }));
 
     expect(playSound).not.toHaveBeenCalled();
     expect(props.onOpenGameHome).toHaveBeenCalledOnce();
@@ -137,7 +137,7 @@ describe("GameResultScreen", () => {
   });
 });
 
-describe("GameResultScreen のパズル選択へ", () => {
+describe("GameResultScreen のパズル選択", () => {
   beforeEach(() => {
     render(
       <MemoryRouter initialEntries={["/puzzles/test/play/1"]}>
@@ -153,7 +153,7 @@ describe("GameResultScreen のパズル選択へ", () => {
   });
 
   test("押すと音を鳴らさずにパズル選択画面へ移ること", () => {
-    fireEvent.click(screen.getByRole("link", { name: "パズル選択へ" }));
+    fireEvent.click(screen.getByRole("link", { name: "パズル選択" }));
 
     expect(screen.getByText("パズル選択画面")).toBeTruthy();
     expect(playSound).not.toHaveBeenCalled();

@@ -84,20 +84,18 @@ describe("MinesweeperPlay", () => {
     });
 
     test("左上の戻る操作でゲームのホームへの移動を通知すること", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
       expect(onOpenGameHome).toHaveBeenCalledOnce();
       expect(onBackToHome).not.toHaveBeenCalled();
     });
 
-    test("メニューのゲームのホームでゲームのホームへの移動を通知すること", () => {
+    test("メニューの問題選択でゲームのホームへの移動を通知すること", () => {
       fireEvent.pointerDown(
         screen.getByRole("button", { name: "その他の操作" }),
         { button: 0, ctrlKey: false },
       );
-      fireEvent.click(screen.getByRole("menuitem", { name: "ゲームのホーム" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "問題選択" }));
 
       expect(onOpenGameHome).toHaveBeenCalledOnce();
       expect(onBackToHome).not.toHaveBeenCalled();
@@ -418,7 +416,7 @@ describe("MinesweeperPlay", () => {
     test.each([
       ["次の問題", "onStartNewProblem"],
       ["もう一度", "onReplay"],
-      ["ゲームのホームへ", "onOpenGameHome"],
+      ["問題選択", "onOpenGameHome"],
     ] as const)("%sで対応する次の行動を通知すること", (name, handler) => {
       const handlers = {
         onStartNewProblem,

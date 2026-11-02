@@ -150,9 +150,7 @@ describe("TakuzuPlay", () => {
     });
 
     test("戻るボタンでゲームのホームへの移動を通知すること", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
       expect(callbacks.onOpenGameHome).toHaveBeenCalledOnce();
       expect(callbacks.onBackToHome).not.toHaveBeenCalled();
@@ -167,8 +165,8 @@ describe("TakuzuPlay", () => {
         ["盤面を戻す", "onRestart"],
         ["リセット", "onReplay"],
         ["別の問題", "onStartNewProblem"],
-        ["ゲームのホーム", "onOpenGameHome"],
-        ["ホーム", "onBackToHome"],
+        ["問題選択", "onOpenGameHome"],
+        ["パズル選択", "onBackToHome"],
       ] as const;
 
       test.each(menuCases)(
@@ -309,7 +307,7 @@ describe("TakuzuPlay", () => {
     const actionCases = [
       ["次の問題", "onStartNewProblem"],
       ["もう一度", "onReplay"],
-      ["ゲームのホームへ", "onOpenGameHome"],
+      ["問題選択", "onOpenGameHome"],
     ] as const;
 
     test.each(actionCases)(

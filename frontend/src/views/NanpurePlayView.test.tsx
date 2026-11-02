@@ -112,7 +112,7 @@ describe("NanpurePlayView", () => {
     test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
       const message = screen.getByText("この難易度は選べません");
       const backLink = screen.getByRole("link", {
-        name: "ゲームのホームへ戻る",
+        name: "問題選択へ戻る",
       });
 
       expect(message).toBeTruthy();
@@ -133,9 +133,7 @@ describe("NanpurePlayView", () => {
     });
 
     test("戻るボタンで、遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
       const { historyAction, location } = router.state;
 
       expect(location.pathname).toBe("/puzzles/nanpure");
@@ -149,9 +147,7 @@ describe("NanpurePlayView", () => {
       });
 
       test("遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
-        fireEvent.click(
-          screen.getByRole("menuitem", { name: "ゲームのホーム" }),
-        );
+        fireEvent.click(screen.getByRole("menuitem", { name: "問題選択" }));
         const { historyAction, location } = router.state;
 
         expect(location.pathname).toBe("/puzzles/nanpure");
