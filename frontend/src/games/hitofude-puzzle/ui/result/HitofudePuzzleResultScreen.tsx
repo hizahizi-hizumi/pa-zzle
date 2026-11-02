@@ -39,9 +39,7 @@ export function HitofudePuzzleResultScreen({
   recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
+  onOpenGameHome,
   onOpenDiagnostics,
 }: HitofudePuzzleResultScreenProps) {
   return (
@@ -60,9 +58,7 @@ export function HitofudePuzzleResultScreen({
       recordOutcomeNotice={recordOutcomeNotice}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
-      onOpenRecords={onOpenRecords}
-      onChangeDifficulty={onChangeDifficulty}
-      onBackToHome={onBackToHome}
+      onOpenGameHome={onOpenGameHome}
       onOpenDiagnostics={onOpenDiagnostics}
     />
   );

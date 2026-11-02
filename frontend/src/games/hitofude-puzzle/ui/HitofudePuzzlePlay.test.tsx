@@ -1,17 +1,23 @@
 import {
   cleanup,
   fireEvent,
-  render,
+  render as renderWithoutRouter,
   screen,
   within,
 } from "@testing-library/react";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactElement } from "react";
+import { MemoryRouter } from "react-router";
 
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import { createHitofudePuzzleResult } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 import type { HitofudePuzzleSessionResult } from "@/games/hitofude-puzzle/session/session";
 import { HitofudePuzzlePlay } from "@/games/hitofude-puzzle/ui/HitofudePuzzlePlay";
+
+/** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
+function render(ui: ReactElement) {
+  return renderWithoutRouter(ui, { wrapper: MemoryRouter });
+}
 
 afterEach(() => {
   cleanup();
@@ -53,8 +59,7 @@ describe("HitofudePuzzlePlay", () => {
     onReplay: vi.fn(),
     onClearAnimationComplete: vi.fn(),
     onStartNewProblem: vi.fn(),
-    onOpenRecords: vi.fn(),
-    onChangeDifficulty: vi.fn(),
+    onOpenGameHome: vi.fn(),
     onBackToHome: vi.fn(),
   };
   const baseProps: ComponentProps<typeof HitofudePuzzlePlay> = {
@@ -137,11 +142,9 @@ describe("HitofudePuzzlePlay", () => {
     });
 
     const actionCases = [
-      ["プレイ！", "onStartNewProblem"],
-      ["同じ問題", "onReplay"],
-      ["記録を確認", "onOpenRecords"],
-      ["難易度変更", "onChangeDifficulty"],
-      ["ホーム", "onBackToHome"],
+      ["次の問題", "onStartNewProblem"],
+      ["もう一度", "onReplay"],
+      ["ゲームのホームへ", "onOpenGameHome"],
     ] as const;
 
     test.each(actionCases)(

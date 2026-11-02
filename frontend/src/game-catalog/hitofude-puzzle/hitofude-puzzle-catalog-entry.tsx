@@ -28,7 +28,7 @@ export const hitofudePuzzleCatalogEntry = {
   id: hitofudePuzzlePlayRecordDefinition.gameId,
   name: HITOFUDE_PUZZLE_DISPLAY_NAME,
   pictogramSvg,
-  entryPath: "/puzzles/hitofude-puzzle",
+  homePath: "/puzzles/hitofude-puzzle",
   playPath: "/puzzles/hitofude-puzzle/play/:difficulty",
   playRecordDisplay: hitofudePuzzlePlayRecordDisplay,
   recordProblemPlayTarget(record) {

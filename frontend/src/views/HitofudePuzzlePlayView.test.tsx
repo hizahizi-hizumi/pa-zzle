@@ -5,7 +5,14 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+  useLocation,
+} from "react-router";
 
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
@@ -59,7 +66,7 @@ function renderAt(path: string): void {
         />
         <Route
           path="/puzzles/hitofude-puzzle"
-          element={<p>難易度選択画面</p>}
+          element={<p>ゲームのホーム画面</p>}
         />
         <Route path="/records" element={<p>記録画面</p>} />
         <Route
@@ -69,6 +76,23 @@ function renderAt(path: string): void {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+type PlayRouter = ReturnType<typeof createMemoryRouter>;
+
+function renderRouterAt(path: string): PlayRouter {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/puzzles/hitofude-puzzle/play/:difficulty",
+        element: <HitofudePuzzlePlayView />,
+      },
+      { path: "/puzzles/hitofude-puzzle", element: <p>ゲームのホーム画面</p> },
+    ],
+    { initialEntries: [path] },
+  );
+  render(<RouterProvider router={router} />);
+  return router;
 }
 
 function listCells(): HTMLElement[] {
@@ -230,15 +254,9 @@ describe("HitofudePuzzlePlayView", () => {
         });
       });
 
-      test("記録を確認で記録画面へ移ること", () => {
-        fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
-
-        expect(screen.getByText("記録画面")).toBeTruthy();
-      });
-
       describe("同じ問題をもう一度解いた場合", () => {
         beforeEach(() => {
-          fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+          fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
           for (const cell of solution.slice(1)) {
             tapCell(cell);
           }
@@ -320,10 +338,54 @@ describe("HitofudePuzzlePlayView", () => {
       renderAt("/puzzles/hitofude-puzzle/play/9");
     });
 
-    test("選べないことを示して難易度選択へ戻れること", () => {
-      fireEvent.click(screen.getByRole("link", { name: "難易度選択へ戻る" }));
+    test("選べないことを示してゲームのホームへ戻れること", () => {
+      fireEvent.click(
+        screen.getByRole("link", { name: "ゲームのホームへ戻る" }),
+      );
 
-      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+      expect(screen.getByText("ゲームのホーム画面")).toBeTruthy();
+    });
+  });
+
+  describe("問題集にある問題IDで開いた場合", () => {
+    const poolProblemId = createProblemId(
+      selectHitofudePuzzleProblemForDifficulty("1", "game-home-navigation")
+        .identity,
+    );
+    let router: PlayRouter;
+
+    beforeEach(() => {
+      router = renderRouterAt(
+        `/puzzles/hitofude-puzzle/play/1?problem=${poolProblemId}`,
+      );
+    });
+
+    test("戻るボタンで、遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+      );
+      const { historyAction, location } = router.state;
+
+      expect(location.pathname).toBe("/puzzles/hitofude-puzzle");
+      expect(location.search).toBe(`?problem=${poolProblemId}`);
+      expect(historyAction).toBe("REPLACE");
+    });
+
+    describe("メニューからゲームのホームを選んだ場合", () => {
+      beforeEach(() => {
+        openMenu();
+      });
+
+      test("遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+        fireEvent.click(
+          screen.getByRole("menuitem", { name: "ゲームのホーム" }),
+        );
+        const { historyAction, location } = router.state;
+
+        expect(location.pathname).toBe("/puzzles/hitofude-puzzle");
+        expect(location.search).toBe(`?problem=${poolProblemId}`);
+        expect(historyAction).toBe("REPLACE");
+      });
     });
   });
 });

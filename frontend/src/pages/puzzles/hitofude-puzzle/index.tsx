@@ -1,1 +1,1 @@
-export { HitofudePuzzleDifficultyView as default } from "@/views/HitofudePuzzleDifficultyView";
+export { HitofudePuzzleHomeView as default } from "@/views/HitofudePuzzleHomeView";
