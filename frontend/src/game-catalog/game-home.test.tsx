@@ -129,9 +129,12 @@ function readStoredLastViewed(): Record<string, Record<string, unknown>> {
   );
 }
 
-function getChangeSummary(): string | null | undefined {
-  return screen.queryAllByText(/新しく解いた|段階が上がった/)[0]?.closest("p")
-    ?.textContent;
+/** まだ見せていない変化があると示しているレベルのカードの名前。 */
+function listLevelsWithUnseenChanges(): (string | undefined)[] {
+  return screen
+    .queryAllByRole("tab", { name: /前回から変化あり/ })
+    .map((tab) => tab.getAttribute("aria-label") ?? tab.textContent ?? "")
+    .map((name) => name.match(/^レベル \d/)?.[0]);
 }
 
 describe("useGameHome", () => {
@@ -397,9 +400,9 @@ describe("useGameHome", () => {
       });
 
       test("保存する前に読んだ前回の状態から、変化を示すこと", () => {
-        const summary = getChangeSummary();
+        const levels = listLevelsWithUnseenChanges();
 
-        expect(summary).toBe("新しく解いた 1問");
+        expect(levels).toEqual(["レベル 2"]);
       });
 
       test("変化の無いレベルを今の状態で保存し、まだ見せていない変化のあるレベルは前回の状態のまま残すこと", () => {
@@ -425,13 +428,9 @@ describe("useGameHome", () => {
       });
 
       test("そのレベルの変化をもう一度示すこと", () => {
-        const summary = getChangeSummary();
-        const markedTab = screen.getByRole("tab", {
-          name: /^レベル 2、.*前回から変化あり/,
-        });
+        const levels = listLevelsWithUnseenChanges();
 
-        expect(summary).toBe("新しく解いた 1問");
-        expect(markedTab).toBeTruthy();
+        expect(levels).toEqual(["レベル 2"]);
       });
     });
 
@@ -452,9 +451,9 @@ describe("useGameHome", () => {
       test("閉じて開き直すと、同じ変化を示さないこと", () => {
         cleanup();
         renderAt("/puzzles/nanpure");
-        const summary = getChangeSummary();
+        const levels = listLevelsWithUnseenChanges();
 
-        expect(summary).toBeUndefined();
+        expect(levels).toEqual([]);
       });
     });
 
@@ -465,9 +464,9 @@ describe("useGameHome", () => {
       });
 
       test("開いたときに保存した状態ではなく、前回の状態から変化を示すこと", () => {
-        const summary = getChangeSummary();
+        const levels = listLevelsWithUnseenChanges();
 
-        expect(summary).toBe("新しく解いた 1問");
+        expect(levels).toEqual(["レベル 2"]);
       });
     });
 
@@ -483,10 +482,10 @@ describe("useGameHome", () => {
 
       test("移る前のゲームの前回の状態を使わず、そのゲームの前回の状態から変化を示すこと", () => {
         const heading = screen.getByRole("heading", { level: 1 });
-        const summary = getChangeSummary();
+        const levels = listLevelsWithUnseenChanges();
 
         expect(heading.textContent).toBe("ナンプレ");
-        expect(summary).toBe("新しく解いた 1問");
+        expect(levels).toEqual(["レベル 2"]);
       });
 
       test("それぞれのゲームの前回の状態を混ぜずに保存すること", () => {

@@ -568,14 +568,12 @@ describe("GameHomeScreen", () => {
     });
 
     test("前回からの変化が無ければ、変化を示さないこと", () => {
-      const summary = screen.queryAllByText(/新しく解いた|段階が上がった/);
       const changedSquares = within(getSheet("レベル 3の問題"))
         .getAllByRole("button")
         .filter((square) =>
           square.getAttribute("aria-label")?.includes("前回から"),
         );
 
-      expect(summary).toEqual([]);
       expect(changedSquares).toEqual([]);
     });
 
@@ -1427,10 +1425,7 @@ describe("GameHomeScreen", () => {
           ["p-c", { kind: "newly-solved", previousStatus: "untouched" }],
         ]),
       },
-      newlySolvedCount: 2,
-      raisedCount: 1,
     };
-    const finalSummary = "新しく解いた 2問・段階が上がった 1問";
 
     function getChangedSquareNames(sheetName: string): (string | null)[] {
       return within(getSheet(sheetName))
@@ -1464,11 +1459,6 @@ describe("GameHomeScreen", () => {
         (total, count) => total + Number(count?.split(" / ")[0]),
         0,
       );
-    }
-
-    function getSummaryText(): string | null | undefined {
-      return screen.getAllByText(/新しく解いた|段階が上がった/)[0]?.closest("p")
-        ?.textContent;
     }
 
     function getSolvedCountText(): string | null {
@@ -1585,12 +1575,6 @@ describe("GameHomeScreen", () => {
           expect(stages).toEqual(["waiting", null, "waiting", null]);
         });
 
-        test("1行には、全レベルを合わせた前回からの変化の数を最初から示すこと", () => {
-          const summary = getSummaryText();
-
-          expect(summary).toBe(finalSummary);
-        });
-
         test("開いているレベルの状態ごとの数とカードの数を前回の数から始め、画面全体の解いた数をカードの数の合計にすること", () => {
           const levelCounts = getStatusCountNames();
           const tabCounts = getTabCounts();
@@ -1671,12 +1655,6 @@ describe("GameHomeScreen", () => {
             "未挑戦 2問",
           ]);
           expect(solvedCount).toBe("解いた問題 1 / 1200");
-        });
-
-        test("段階が上がったマスを押しても、1行の数を変えないこと", () => {
-          const summary = getSummaryText();
-
-          expect(summary).toBe(finalSummary);
         });
       });
 
@@ -2088,8 +2066,6 @@ describe("GameHomeScreen", () => {
             ]),
           ),
         },
-        newlySolvedCount: 15,
-        raisedCount: 0,
       };
       let samples: { untouched: number; solved: number; total: number }[];
 

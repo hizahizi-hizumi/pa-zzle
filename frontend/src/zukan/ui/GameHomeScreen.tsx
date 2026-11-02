@@ -38,7 +38,6 @@ import {
   useZukanChangeReveal,
   type ZukanStampProgress,
 } from "@/zukan/ui/GameHomeScreen/use-zukan-change-reveal";
-import { ZukanChangeSummary } from "@/zukan/ui/GameHomeScreen/ZukanChangeSummary";
 import { ZukanFilter } from "@/zukan/ui/GameHomeScreen/ZukanFilter";
 import { ZukanLegend } from "@/zukan/ui/GameHomeScreen/ZukanLegend";
 import { ZukanMatchedCount } from "@/zukan/ui/GameHomeScreen/ZukanMatchedCount";
@@ -297,7 +296,7 @@ function listPendingChanges(
  * 画面の高さに収め、台紙だけをスクロールさせる。台紙の上には、そのレベルの問題の数を評価段階ごとと挑戦中・未挑戦に分けて示す。
  * マスを選んでいる間だけ、その問題の詳細と始める操作を出す。スマートフォンでは台紙の高さを変えずに下端へ重ね、PC では台紙の幅を変えないよう横の列を空けておく。
  * 詳細は、閉じるボタン・選んでいるマスをもう一度押す・Escape で閉じる。解いた問題の数は全問の数と並べた静かな計数で示し、カードに示す数の合計と常に一致させる。
- * 前回図鑑を見たときからの変化は、全レベルを合わせた1行の数と、変化をまだ見せていないレベルのカードの点で示し、各レベルの台紙を初めて開いたときに一度だけ見せる。
+ * 前回図鑑を見たときからの変化は、変化をまだ見せていないレベルのカードの点で示し、各レベルの台紙を初めて開いたときに一度だけ見せる。
  * 見せるときは、台紙と数を前回の姿で描き始め、変化したマスを1つずつ押していき、押してマスに着くたびに、そのレベルのカードの数・状態ごとの数・解いた数を今の数へ数え上げる。
  * ページが見えるまでは見せ始めない。画面を押すかキーを押すと最後の姿まで飛ばす。
  * 絞り込みは開いているレベルの台紙にかけ、当たった問題を前に詰め、当たらなかった問題を薄くして後ろに並べる。条件は保存せず、開いたときは条件なしで始め、レベルを切り替えると外す。
@@ -498,7 +497,6 @@ export function GameHomeScreen({
     selectedKey,
   );
   const numberDigitCount = getZukanNumberDigitCount(zukan.problemCount);
-  const hasChanges = changes.newlySolvedCount + changes.raisedCount > 0;
 
   const handleSelect = useCallback(
     ({ difficulty, problemId }: ZukanProblem) => {
@@ -631,12 +629,6 @@ export function GameHomeScreen({
             ランダムに遊ぶ
           </Button>
         </div>
-        {hasChanges && (
-          <ZukanChangeSummary
-            newlySolvedCount={changes.newlySolvedCount}
-            raisedCount={changes.raisedCount}
-          />
-        )}
 
         <div className="relative flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_--spacing(64)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
           <div className="flex min-h-0 flex-1 flex-col">
