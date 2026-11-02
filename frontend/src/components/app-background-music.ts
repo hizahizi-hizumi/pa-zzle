@@ -10,8 +10,8 @@ import { useEffect, useSyncExternalStore } from "react";
 import { matchPath, useLocation } from "react-router";
 
 import homeMusicUrl from "@/assets/background-music/home.mp3";
-import playMusicUrl from "@/assets/background-music/play.mp3";
 import resultMusicUrl from "@/assets/background-music/result.mp3";
+import { usePlayMusicAuditionCandidate } from "@/components/play-music-audition";
 import type { GameProgress } from "@/games/play";
 import {
   type BackgroundMusicTrack,
@@ -42,14 +42,11 @@ export type PlayScreenMusicState = {
   resultShown: boolean;
 };
 
-const appBackgroundMusicTracks: AppBackgroundMusicTracks = {
+/** 試聴用: プレイ中の曲は、試聴の切り替えで選んだ候補にする（`useAppBackgroundMusic`）。 */
+const appBackgroundMusicTracks: Omit<AppBackgroundMusicTracks, "play"> = {
   home: defineBackgroundMusicTrack({
     url: homeMusicUrl,
     loopLength: 3_686_400,
-  }),
-  play: defineBackgroundMusicTrack({
-    url: playMusicUrl,
-    loopLength: 6_144_000,
   }),
   result: defineBackgroundMusicTrack({
     url: resultMusicUrl,
@@ -123,15 +120,19 @@ export function useAppBackgroundMusic(): void {
     subscribePlayScreenMusicState,
     getPlayScreenMusicState,
   );
+  const play = usePlayMusicAuditionCandidate().track;
   const scene = getAppBackgroundMusicScene(pathname, playScreen);
-  const music = selectAppBackgroundMusic(scene, appBackgroundMusicTracks);
+  const music = selectAppBackgroundMusic(scene, {
+    ...appBackgroundMusicTracks,
+    play,
+  });
   const track = music?.track ?? null;
   const gain = music?.gain;
 
   useEffect(() => {
-    const { home, play, result } = appBackgroundMusicTracks;
+    const { home, result } = appBackgroundMusicTracks;
     prepareBackgroundMusic([home, play, result]);
-  }, []);
+  }, [play]);
 
   useEffect(() => {
     playBackgroundMusic(track, { gain });

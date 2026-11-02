@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useAppBackgroundMusic } from "@/components/app-background-music";
 import { usePrepareAppDecisionSounds } from "@/components/app-decision-sound";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { PlayMusicAuditionSwitcher } from "@/components/PlayMusicAuditionSwitcher";
 
 type AppShellProps = {
   children: ReactNode;
@@ -35,6 +36,7 @@ export function AppShell({
     <div className="flex min-h-screen flex-col bg-muted/30 font-ui">
       <BrandIdentityHeader linkToHome size="regular" />
       <main className={mainClassNames[contentLayout]}>{children}</main>
+      <PlayMusicAuditionSwitcher />
     </div>
   );
 }
