@@ -25,8 +25,8 @@ const heavyWorkload: BridgesSolveWorkload = {
   countReasoningUndecidedEdgeCount: 26,
 };
 
-const lightFullScoreMs = 22_000;
-const heavyFullScoreMs = 93_800;
+const lightFullScoreMs = 28_600;
+const heavyFullScoreMs = 105_800;
 
 describe("calculateBridgesSpeedFullScoreMs", () => {
   const cases = [
@@ -35,7 +35,7 @@ describe("calculateBridgesSpeedFullScoreMs", () => {
   ] as const;
 
   test.each(cases)(
-    "%sで、見渡す6秒に島1つ0.8秒・橋1本0.6秒・少なくとも1本の手詰まり1回3秒・つながりの手詰まり1回6秒・決まらない行き先1つ1秒を足すこと",
+    "%sで、見渡す8秒に島1つ1秒・橋1本0.8秒・少なくとも1本の手詰まり1回3秒・つながりの手詰まり1回6秒・決まらない行き先1つ1秒を足すこと",
     (_, workload, expected) => {
       const speedFullScoreMs = calculateBridgesSpeedFullScoreMs(workload);
 
