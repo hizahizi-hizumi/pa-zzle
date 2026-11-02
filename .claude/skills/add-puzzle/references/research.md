@@ -1,12 +1,20 @@
 # 調査
 
-認識合わせの合意をもとに、実装の前提を確かめて仮に決め、作る順番と PR の切り方を決める。ここで書いたものを、以後の実装・再開・レビューが読む。
+認識合わせの合意をもとに、作業ブランチを作り、実装の前提を確かめて仮に決め、作る順番と PR の切り方を決める。ここで書いたものを、以後の実装・再開・レビューが読む。
+
+## 作業ブランチ
+
+1. 接頭辞は、`git ls-remote origin '<接頭辞>/*'` が空のものを選ぶ（既存のブランチを force-push で消さないため）。
+2. main から作業ブランチと worktree を作る: `git worktree add <作業ディレクトリ>/work -b <接頭辞>/work origin/main`。
+3. 作業ブランチと、層のブランチと同じ形の名前（`<接頭辞>/00-check`）を push し、後者を消して、push できることを実際に確かめる。
+
+既存の実装を引き継ぐと合意したときも、作業ブランチは main から作り、既存の実装は取り込まない。作業カードの「出発点」に既存のブランチとパスを書き、実装役と作り方の Skill に読ませる。
 
 ## 作るもの
 
 | もの | 置き場所 | 中身 |
 |---|---|---|
-| 導入調査 Issue | GitHub の Issue | 合意節と、山場・巡ごとの記録（SKILL.md の「記録」） |
+| 導入調査 Issue | GitHub の Issue（題 `導入調査: <パズル名>`） | 合意節と、山場・巡ごとの記録（SKILL.md の「記録」） |
 | 実装前提調査 | `docs/パズル/導入調査/<パズル名>/<パズル名>実装前提調査.md` | 下の「実装前提調査の節」 |
 | 調査コード | `scripts/research/<ゲーム ID>_<観点>.py` | seed を固定し、標準ライブラリだけで測る |
 | 難易度の資料 | `docs/パズル/README.md` から辿る難易度文書の決まりに従う | 採用ゲートの根拠。難易度の観点の調査役が下書きする |
@@ -16,7 +24,7 @@
 
 上から順に置く。書き方は `docs/README.md` に従う。
 
-1. 識別表: タイトルの直後に `| 項目 | 値 |` の2列で、パズル名・ゲーム ID・ブランチ接頭辞・候補 ID・SPEC 番号・導入調査 Issue 番号を1行ずつ（ほかのファイルが「識別表」と言うときはこの項目を指す）
+1. 識別表: タイトルの直後に `| 項目 | 値 |` の2列で、パズル名・ゲーム ID・ブランチ接頭辞・候補 ID・SPEC 番号・導入調査 Issue 番号を1行ずつ（ほかのファイルが「識別表」と言うときはこの項目を指す）。SPEC 番号と候補 ID は、origin のどのブランチでも対象パズル以外に使われていないことを `git ls-tree` と `git grep` で確かめて予約する（台帳に対象パズルの行があれば、その ID を使う）。ADR の番号は `/adr-create` が決め、衝突は文書レビューで確かめる
 2. 根拠の書き分け: 事実・計測（どのスクリプトで）・推測・AI判断（仮決定）
 3. 認識合わせの合意
 4. 成立性: 観点ごと
@@ -32,7 +40,7 @@
 | 観点 | 問い |
 |---|---|
 | 問題供給 | 想定の盤面の大きさごとに、一意解の問題を作れる割合と生成時間。必要な問題数をそろえる時間、問題集の大きさ |
-| 難易度 | 挑戦の定義、つまみの候補（2〜3系統）と系統間の相関、各レベルを利用者向けの一言で言えるか、素朴な解き方で上位が解けてしまわないか。難易度の資料の下書きも書く |
+| 難易度 | 挑戦の定義、つまみの候補（2〜3系統）と系統間の相関、各レベルを利用者向けの一言で言えるか、素朴な解き方で上位が解けてしまわないか |
 | スマホ操作 | スマホ縦画面の最小幅でのマスの大きさ（既存ゲームと比べる）、盤面と全操作が一画面に収まる盤面の上限、操作とスクロールの競合 |
 | 導入判断 | 近い既存ゲーム・候補との違い、表示名（商標を避けた一般名）、台帳の各成立性の値 |
 
@@ -40,20 +48,22 @@
 
 実装役はこの順で作る。いくつかの項目を続けて1つの作業カードにしてよい。片方を直すともう片方を必ず作り直す項目（difficulty と problem-pool など）は1つのカードにする。失敗パターン集の「いつ」はこの項目名で書く。
 
-| 項目 | 作るもの |
-|---|---|
-| research | この文書の「作るもの」 |
-| rules | ルール・判定・状態とそのテスト（画面なし）。`frontend/src/games/<game>/` を初めて作るので、カタログの網羅テスト（`game-catalog.test.ts`）からこのゲームを外す一時的な除外を足し（前例: `git log --all -S gamesNotInCatalogYet`）、`generate:dependency-rules` で依存規則を作り直す |
-| playable | 1問を最後まで遊べるプレイ画面（盤面・操作・クリア判定）、遊ぶためのルート（`pages/puzzles/<game>/` と View）と、一覧に出さないカタログエントリ（`GameCatalogEntry` の全項目を、後の項目で作るものは仮の実装で埋める）。固定問題を開く入口パス（レベルの値を含む）を報告に書く |
-| play-ui | 補助操作（待った・盤面を戻すなど）、状態の知らせ、遊び方、クリア演出 |
-| difficulty | 解法器・難易度の判定・生成器・`problem-selection.ts`、難易度の資料（`/design-game-difficulty`。報告は作業ディレクトリの `design-game-difficulty-report.md`） |
-| problem-pool | 問題集と生成スクリプト（`--verify` で全問を再検証できる）。件数と全問の再検証で完了を確かめてからコミットする。問題 ID で問題集の問題を開くレベルごとのプレイ画面のパスを報告に書く |
-| pictogram | ゲーム一覧のピクトグラム（`/design-game-pictogram`） |
-| difficulty-select | 難易度選択の画面と難易度プレビュー（`/design-game-difficulty-preview`） |
-| score | スコア（評価規則と基準時間） |
-| result-records | 結果画面・記録（`play-record.ts`・`play-attempt.ts`・`diagnostics.ts`）・記録からの遊び直し |
-| catalog | 一覧への掲載と並び。網羅テストの一時的な除外を消す |
-| spec | SPEC、ADR（`/adr-create`）、台帳の行（導入判断を正式採用にする。マージが決定） |
+| 項目 | 作るもの | 作り方の Skill |
+|---|---|---|
+| research | この文書の「作るもの」 | — |
+| rules | ルール・判定・状態とそのテスト（画面なし）。依存規則を `generate:dependency-rules` で作り直し、カタログの一時的な除外（下）を足す | — |
+| playable | 1問を最後まで遊べるプレイ画面（盤面・操作・クリア判定）、遊ぶためのルート（`pages/puzzles/<game>/` と View）、一覧に出さないカタログエントリ（`GameCatalogEntry` の全項目を、後の項目で作るものは仮の実装で埋める）。固定問題を開く入口パスを報告に書く | — |
+| play-ui | 補助操作（待った・盤面を戻すなど）、状態の知らせ、遊び方、クリア演出 | — |
+| difficulty | 解法器・難易度の判定・生成器・`problem-selection.ts`、難易度の資料 | `/design-game-difficulty` |
+| problem-pool | 問題集と生成スクリプト。完成条件は、件数がそろい `--verify` で全問の再検証が通ること。問題 ID で開くレベルごとのプレイ画面のパスを報告に書く | `/design-game-difficulty` |
+| pictogram | ゲーム一覧のピクトグラム | `/design-game-pictogram` |
+| difficulty-select | 難易度選択の画面と難易度プレビュー | `/design-game-difficulty-preview` |
+| score | スコア（評価規則と基準時間） | — |
+| result-records | 結果画面・記録（`play-record.ts`・`play-attempt.ts`・`diagnostics.ts`）・記録からの遊び直し | — |
+| catalog | 一覧への掲載と並び。カタログの一時的な除外を消す | — |
+| spec | SPEC、ADR、台帳の行（導入判断を正式採用にする。マージが決定） | `/adr-create` |
+
+カタログの一時的な除外: カタログの網羅テスト（`frontend/src/game-catalog/game-catalog.test.ts`）は `src/games/` の全ゲームが一覧にあることを確かめるので、一覧に載せる前は、このゲームを外す一時的な除外を置く（前例は `git log --all -S gamesNotInCatalogYet`）。作業ブランチでは rules で足して catalog で消し、PR では「ルールと問題」の層で足して「掲載」の層で消す。
 
 ## PR の切り方
 
@@ -62,10 +72,16 @@
 | 層（ブランチ名の topic） | 入るもの |
 |---|---|
 | 調査（research） | `docs/パズル/導入調査/<パズル名>/`（実装前提調査は「実装で確定した差分」を含む最終版）、`scripts/research/<ゲーム ID>_*` |
-| ルールと問題（rules-problem） | `frontend/src/games/<game>/` の `puzzle/`・`problem/`（生成と問題集）・`session/`・`difficulty.ts`・`problem-selection.ts`・`display-name.ts`、問題集の生成スクリプトと分析スクリプト（`frontend/scripts/*<game>*`）と `package.json` の scripts、`frontend/biome.json`（問題集の除外と、`generate:dependency-rules` で作り直した依存規則） |
+| ルールと問題（rules-problem） | `frontend/src/games/<game>/` の `puzzle/`・`problem/`（生成と問題集）・`session/`・`difficulty.ts`・`problem-selection.ts`・`display-name.ts`、生成と分析のスクリプト（`frontend/scripts/*<game>*`）と `package.json` の scripts、`frontend/biome.json`（問題集の除外と依存規則） |
 | プレイと画面（play-ui） | `play/`・`ui/`（難易度プレビュー・遊び方を含む）・`assets/`・`score.ts`・`play-record.ts`・`play-attempt.ts`・`diagnostics.ts` |
 | 掲載（catalog） | `frontend/src/game-catalog/<game>/` と `game-catalog.ts`、`frontend/src/pages/puzzles/<game>/` と View、generouted が作り直す `frontend/src/router.ts`、一覧のテスト |
 | 文書（docs） | SPEC・ADR・台帳の行と候補ファイル・各 README の一覧、最終レビューで足した正本と失敗パターン集への追記 |
 
-- 一時的な除外: 作業ブランチの最終版には残っていないので、`frontend/src/games/<game>/` を最初に入れる層（ルールと問題）で `frontend/src/game-catalog/game-catalog.test.ts` に手で足し、掲載の層で消す。
-- 層のファイルの取り込み方（ゲーム固有のパスと共通のファイルで違う）は SKILL.md の流れ 5。どの層にも入らないファイルが残ったら、実装前提調査の「PR の切り方」に足してから切り直す。
+切り出しの手順:
+
+1. 最下層のブランチ `<接頭辞>/01-<topic>` を `git merge-base origin/main <接頭辞>/work` から作り、上の層を前の層の上に作る。各層は層ごとの worktree（`git worktree add <作業ディレクトリ>/layer-<NN> -b <ブランチ> <下の層>`）で作る。
+2. 各層に、ゲーム固有のパスは作業ブランチの版で取り込み（`git checkout <接頭辞>/work -- <存在するパス>`）、共通のファイルは作業ブランチでの差分だけを当てて（`git diff <merge-base> <接頭辞>/work -- <パス> | git apply -3`）、main に並行で入った変更を消さないようにしてコミットする。
+3. 各層を detach した worktree に展開し、依存を入れて（frontend と tools/semantic-lint の `bun install --frozen-lockfile`）`verify.sh` を通す。
+4. `git diff --stat <最上層> <接頭辞>/work` が空であることを確かめる。空でなければ、どの層にも入らなかったファイルを実装前提調査の「PR の切り方」に足して切り直す。
+5. 積んだ PR では上の層と main の衝突が GitHub に出ないので、`git merge-tree --write-tree origin/main <最上層>` で衝突しないことを確かめる。衝突したら `final-review.md` の「コンフリクトと部分マージ」。
+6. 全部を push して PR を積み、PR 本文は SKILL.md の「記録」の型で書く。CI（Quality Gate）は PR で走るので、落ちたら作業ブランチで直して切り出し直す。
