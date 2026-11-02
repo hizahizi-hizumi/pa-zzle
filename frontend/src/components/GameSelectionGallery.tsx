@@ -3,7 +3,7 @@ import { Link } from "react-router";
 
 import { playGameSelectSound } from "@/components/app-decision-sound";
 import { GamePictogram } from "@/components/GamePictogram";
-import { SoundEffectsToggle } from "@/components/GameSelectionGallery/SoundEffectsToggle";
+import { SettingsButton } from "@/components/GameSelectionGallery/SettingsButton";
 import type { Path } from "@/router";
 
 type GameSelectionGame = {
@@ -67,8 +67,8 @@ export function GameSelectionGallery({
         <h1 className="absolute inset-x-0 top-0 z-10 flex h-[4.5rem] items-center justify-center border-b-(length:--border-width-normal) bg-background text-screen-title sm:h-20">
           パズル選択
         </h1>
-        <div className="absolute top-0 right-3 z-20 flex h-[4.5rem] items-center gap-1 sm:right-6 sm:h-20">
-          <SoundEffectsToggle />
+        <div className="absolute top-0 right-3 z-20 flex h-[4.5rem] items-center sm:right-6 sm:h-20 sm:gap-1">
+          <SettingsButton />
           <Link
             to={recordsTo}
             className="flex h-full items-center px-2 text-supporting font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

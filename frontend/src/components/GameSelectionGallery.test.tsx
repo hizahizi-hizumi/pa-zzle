@@ -1,13 +1,15 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
 import { _private as appDecisionSound } from "@/components/app-decision-sound";
 import { GameSelectionGallery } from "@/components/GameSelectionGallery";
 import { playSound } from "@/lib/sound-effects";
-import {
-  isSoundEffectsEnabled,
-  setSoundEffectsEnabled,
-} from "@/lib/sound-effects-setting";
 
 vi.mock("@/lib/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),
@@ -30,7 +32,7 @@ const games = [
 afterEach(() => {
   cleanup();
   vi.mocked(playSound).mockClear();
-  setSoundEffectsEnabled(true);
+  vi.unstubAllGlobals();
   window.localStorage.clear();
 });
 
@@ -116,27 +118,27 @@ describe("遊ぶゲームの選択", () => {
   });
 });
 
-describe("効果音の切り替え", () => {
+describe("設定", () => {
   beforeEach(() => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
     renderGallery();
   });
 
-  test("はじめは効果音を鳴らす設定として示すこと", () => {
-    const toggle = screen.getByRole("button", { name: "効果音" });
+  test("見出しの設定ボタンで、効果音と BGM の音量を選ぶダイアログを開き、開く操作では音を鳴らさないこと", () => {
+    fireEvent.click(screen.getByRole("button", { name: "設定" }));
 
-    expect(toggle.getAttribute("aria-pressed")).toBe("true");
-  });
-
-  test("押すと鳴らさない設定に切り替えて保存し、切り替えでは音を鳴らさないこと", () => {
-    const toggle = screen.getByRole("button", { name: "効果音" });
-
-    fireEvent.click(toggle);
-
-    expect(toggle.getAttribute("aria-pressed")).toBe("false");
-    expect(isSoundEffectsEnabled()).toBe(false);
-    expect(window.localStorage.getItem("pa-zzle.sound-effects.v1")).toBe(
-      JSON.stringify({ enabled: false }),
-    );
+    const dialog = screen.getByRole("dialog", { name: "設定" });
+    const volumeNames = within(dialog)
+      .getAllByRole("group")
+      .map((group) => group.textContent);
+    expect(volumeNames).toEqual(["効果音5", "BGM5"]);
     expect(playSound).not.toHaveBeenCalled();
   });
 });
