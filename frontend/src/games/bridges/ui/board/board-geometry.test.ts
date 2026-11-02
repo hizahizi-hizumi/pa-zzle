@@ -162,6 +162,28 @@ describe("findBoardTarget", () => {
       expect(target).toEqual({ kind: "edge", edge: 0 });
     });
   });
+
+  describe("交わらない平行な2線の片方に橋があり、両方の線から同じ距離の所を押した場合", () => {
+    // 辺0 = 島0 (0,0)-島1 (0,3)（横 y=0.5）、辺1 = 島2 (1,1)-島3 (1,4)（横 y=1.5）。
+    const parallelBoard = parseBridgesBoard([
+      "1..1.",
+      ".1..1",
+      ".....",
+      ".....",
+    ]);
+    const bridges: readonly BridgeCount[] = getBridgesNetwork(
+      parallelBoard,
+    ).edges.map((_, edge) => (edge === 0 ? 1 : 0));
+
+    test("橋のある方を選ばず、2つの辺を候補として返すこと", () => {
+      const target = findBoardTarget(parallelBoard, bridges, {
+        x: 2.5,
+        y: 1,
+      });
+
+      expect(target).toEqual({ kind: "ambiguous", edges: [0, 1] });
+    });
+  });
 });
 
 describe("findDragEdge", () => {

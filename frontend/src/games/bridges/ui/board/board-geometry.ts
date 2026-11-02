@@ -246,10 +246,15 @@ export function findBoardTarget(
   }
   const { crossingEdges } = getBridgesNetwork(board);
   const { ambiguous, edge } = selectEdge(candidates, crossingEdges);
+  // 橋のある方を選ぶのは、交わる2辺の間で迷うときだけ。交わらない平行な2線の間では選ばない。
   const bridgedAlternatives = ambiguous.filter(
     (candidate) =>
       bridges[candidate.edge] !== 0 &&
-      (edge === null || crossingEdges[edge]!.includes(candidate.edge)),
+      (edge === null
+        ? ambiguous.some((other) =>
+            crossingEdges[candidate.edge]!.includes(other.edge),
+          )
+        : crossingEdges[edge]!.includes(candidate.edge)),
   );
   if (
     (edge === null || bridges[edge] === 0) &&
