@@ -2,6 +2,7 @@ import type { BridgesDifficulty } from "@/games/bridges/difficulty";
 import {
   assertBridgesProblem,
   type BRIDGES_GENERATOR_VERSION,
+  type BridgesGenerationConditions,
   type BridgesIdentifiedProblem,
   type BridgesProblem,
   type BridgesProblemIdentity,
@@ -215,6 +216,28 @@ export function findBridgesPoolEntryByProblemId(
 
 let entriesBySeed: ReadonlyMap<string, BridgesProblemPoolEntry> | undefined;
 
+function getEntriesBySeed(): ReadonlyMap<string, BridgesProblemPoolEntry> {
+  entriesBySeed ??= new Map(
+    Object.values(problemPool.levels)
+      .flat()
+      .map((entry) => [toBridgesPoolIdentity(entry).seed, entry]),
+  );
+  return entriesBySeed;
+}
+
+function isSameGenerationConditions(
+  left: BridgesGenerationConditions,
+  right: BridgesGenerationConditions,
+): boolean {
+  return (
+    left.size === right.size &&
+    left.islandDensity === right.islandDensity &&
+    left.doubleBridgeRate === right.doubleBridgeRate &&
+    left.extraBridgeRate === right.extraBridgeRate &&
+    left.splitRate === right.splitRate
+  );
+}
+
 /** identity に一致する問題集の1問を探す。生成器の版や条件が違う identity・問題集に無い identity には `null` を返す。 */
 export function findBridgesPoolEntry(
   identity: BridgesProblemIdentity,
@@ -222,12 +245,14 @@ export function findBridgesPoolEntry(
   if (identity.generatorVersion !== problemPool.generatorVersion) {
     return null;
   }
-  entriesBySeed ??= new Map(
-    Object.values(problemPool.levels)
-      .flat()
-      .map((entry) => [toBridgesPoolIdentity(entry).seed, entry]),
-  );
-  return entriesBySeed.get(identity.seed) ?? null;
+  const entry = getEntriesBySeed().get(identity.seed);
+  return entry &&
+    isSameGenerationConditions(
+      toBridgesPoolIdentity(entry).conditions,
+      identity.conditions,
+    )
+    ? entry
+    : null;
 }
 
 /** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
