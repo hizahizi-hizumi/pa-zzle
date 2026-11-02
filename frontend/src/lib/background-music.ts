@@ -10,6 +10,7 @@
  * 流しうる曲は `prepareBackgroundMusic` で渡し、今の画面で流す曲は `playBackgroundMusic` で決める。
  * 読み込みは今の画面で流す曲を先にし、流しうる曲はそのあとで1曲ずつ取得しておく。
  * 曲を切り替えるとクロスフェードし、同じ曲を流したまま別の画面に移っても頭から流し直さない。
+ * 場面に合わせて曲を奥へ下げるときは、`playBackgroundMusic` の `gain` で曲に掛ける大きさを決める。
  * 音量は `@/lib/background-music-setting` の設定に従い、流している曲も音量を変えるとすぐに変わる。音量が 0 の間は、読み込みも再生もしない。
  * 画面が見えない間（タブを切り替えた・アプリを裏に回したなど）はフェードアウトして止め、見えるようになったら止めた位置から流し直す。
  */
@@ -49,6 +50,12 @@ export type BackgroundMusicTrack = {
    * 詰め物を除いた区間だけをループする。
    */
   readonly loopLength: number;
+};
+
+/** `playBackgroundMusic` で、流す曲の流し方を決める。 */
+export type PlayBackgroundMusicOptions = {
+  /** 曲に掛ける大きさ（倍）。音量の設定で決まる BGM の大きさに、さらに掛ける。省くと 1。 */
+  gain?: number;
 };
 
 /** 読み解いた曲と、その中でループする区間（秒）。 */
@@ -92,6 +99,10 @@ type LoopSource = VoiceSource<AudioBufferSourceNode> & {
 type MusicVoice = {
   url: string;
   fader: GainNode;
+  /** 曲に掛ける大きさ（`PlayBackgroundMusicOptions` の `gain`）を、フェードとは別に掛ける。 */
+  level: GainNode;
+  /** `level` を近づけている大きさ。 */
+  levelGain: number;
   sounding: boolean;
   fading: boolean;
   stream: VoiceSource<StreamPlayer> | null;
@@ -107,6 +118,8 @@ type MusicVoice = {
 const BACKGROUND_MUSIC_MAX_GAIN = 0.198;
 /** 音量を変えたとき、出口の大きさが新しい音量に近づく速さ。急に変えて音にノイズが乗らないよう、わずかに時間を掛ける。 */
 const VOLUME_CHANGE_TIME_CONSTANT_SEC = 0.02;
+/** 流している曲に掛ける大きさを変えたとき、新しい大きさに近づく速さ。曲を切り替えるフェードと同じくらいの時間で変える。 */
+const LEVEL_CHANGE_TIME_CONSTANT_SEC = 0.3;
 const FADE_IN_SEC = 1.2;
 const FADE_OUT_SEC = 0.8;
 /**
@@ -138,6 +151,8 @@ let currentVoice: MusicVoice | null = null;
 const previousVoices = new Set<MusicVoice>();
 /** 今の画面で流したい曲の URL。音量を 0 から上げたときや、AudioContext を待ってから流すときに使う。 */
 let wantedUrl: string | null = null;
+/** 今の画面で流したい曲に掛ける大きさ。 */
+let wantedGain = 1;
 /** 画面が見えなくなって止めた曲と、止めたときの1ループの中の位置（秒）。見えるようになったら、ここから流し直す。 */
 let resumePosition: { url: string; position: number } | null = null;
 /** 先に取得しておく曲の URL。これと流したい曲・流している曲のほかは、取得したファイルを捨てる。 */
@@ -189,16 +204,20 @@ export function prepareBackgroundMusic(
 /**
  * 今の画面で流す曲を決める。`null` ならフェードアウトして止める。
  *
- * - 流している曲と同じ曲なら、何もしない（頭から流し直さない）。
+ * - 流している曲と同じ曲なら、頭から流し直さない。`gain` だけが違えば、流したまま大きさを変える。
  * - 別の曲なら、次の曲が鳴り始めてからクロスフェードで切り替える。鳴り始めるまでは今の曲を流し続ける。
  * - 利用者がまだ操作しておらず音を出せないときは、曲の読み込みだけを始め、操作の中で流し始める。
  * - 音量が 0 の間は流さず、音量を 0 から上げたときに流し始める。
  */
-export function playBackgroundMusic(track: BackgroundMusicTrack | null): void {
+export function playBackgroundMusic(
+  track: BackgroundMusicTrack | null,
+  { gain = 1 }: PlayBackgroundMusicOptions = {},
+): void {
   if (!canPlayAudio()) {
     return;
   }
   wantedUrl = track?.url ?? null;
+  wantedGain = gain;
   if (track) {
     knownTracks.set(track.url, track);
   }
@@ -279,6 +298,7 @@ function syncBackgroundMusic() {
   } else if (currentVoice?.url !== wantedUrl) {
     switchToWantedTrack(getMusicOutput(getRunningAudioContext()));
   }
+  applyWantedGain();
   advanceCurrentVoice();
   forgetUnwantedTracks();
   preloadWantedTrack();
@@ -300,6 +320,7 @@ function handleUserGesture(context: AudioContext) {
   if (currentVoice?.url !== wantedUrl) {
     switchToWantedTrack(getMusicOutput(context));
   }
+  applyWantedGain();
   unlockStreamPlayers(context);
   updateUserGestureSubscription();
 }
@@ -345,6 +366,24 @@ function switchToWantedTrack(output: MusicOutput | null) {
     return;
   }
   currentVoice = startVoice(output, url);
+}
+
+/** 流したい曲を流していて、掛ける大きさだけが違えば、流したまま大きさを変える。 */
+function applyWantedGain() {
+  const voice = currentVoice;
+  if (
+    !voice ||
+    !musicOutput ||
+    voice.url !== wantedUrl ||
+    voice.levelGain === wantedGain
+  ) {
+    return;
+  }
+  voice.levelGain = wantedGain;
+  const now = musicOutput.context.currentTime;
+  const { gain } = voice.level;
+  gain.cancelScheduledValues(now);
+  gain.setTargetAtTime(wantedGain, now, LEVEL_CHANGE_TIME_CONSTANT_SEC);
 }
 
 /** 今の曲を前の曲へ回す。まだ鳴り始めていなければ、そのまま止める。 */
@@ -430,10 +469,15 @@ function createVoice(
 ): MusicVoice {
   const fader = context.createGain();
   fader.gain.value = 0;
-  fader.connect(volume);
+  const level = context.createGain();
+  level.gain.value = wantedGain;
+  fader.connect(level);
+  level.connect(volume);
   return {
     url,
     fader,
+    level,
+    levelGain: wantedGain,
     sounding: false,
     fading: false,
     stream: null,
@@ -670,6 +714,7 @@ function disposeVoice(voice: MusicVoice) {
     voice.loop = null;
   }
   voice.fader.disconnect();
+  voice.level.disconnect();
 }
 
 function disposeStream({ source, gain }: VoiceSource<StreamPlayer>) {

@@ -284,6 +284,17 @@ function getStoppedLoopUrls() {
   );
 }
 
+/** 曲ごとに掛ける大きさの GainNode。BGM の出口へじかにつないだ GainNode を、作った順に返す。 */
+function getVoiceLevels() {
+  const context = getAudioContext();
+  const output = context?.gains[0];
+  return (
+    context?.gains.filter(({ connect }) =>
+      connect.mock.calls.some(([destination]) => destination === output),
+    ) ?? []
+  );
+}
+
 function findAudio(src: string): FakeAudio | undefined {
   return FakeAudio.instances.find((audio) => audio.src === src);
 }
@@ -663,6 +674,34 @@ describe("playBackgroundMusic", () => {
         findAudio("blob:track")?.dispatch("playing");
 
         expect(getStoppedLoopUrls()).toEqual(["/home.mp3"]);
+      });
+    });
+
+    describe("掛ける大きさを決めて別の曲に切り替えた場合", () => {
+      test("次の曲にだけ、決めた大きさを掛けること", async () => {
+        backgroundMusic.playBackgroundMusic(
+          defineTrack(backgroundMusic, "/result.mp3"),
+          { gain: 0.5 },
+        );
+        await settle();
+        await stream.deliverPart("/result.mp3");
+
+        const levels = getVoiceLevels().map(({ gain }) => gain.value);
+        expect(levels).toEqual([1, 0.5]);
+      });
+    });
+
+    describe("同じ曲に掛ける大きさだけを変えた場合", () => {
+      test("流し直さずに、曲に掛ける大きさを変えること", async () => {
+        backgroundMusic.playBackgroundMusic(
+          defineTrack(backgroundMusic, "/home.mp3"),
+          { gain: 0.5 },
+        );
+        await settle();
+
+        const [level] = getVoiceLevels();
+        expect(getLoopStarts()).toHaveLength(1);
+        expect(level?.gain.setTargetAtTime.mock.lastCall?.[0]).toBe(0.5);
       });
     });
 
