@@ -20,10 +20,12 @@ import {
 export type IceFloorMazeDifficulty = DifficultyLevel;
 
 /**
- * 氷と岩だけのレベルの、挑戦の型（研究用の生成 v2 の手筋の組み合わせ）。
+ * 氷と岩（と床）だけのレベルの、挑戦の型（研究用の生成 v2 の手筋の組み合わせ）。
  * - `required` / `forbidden`: 含む手筋のタグ / 含まない手筋のタグ。
- * - `readingDepth`: 先読みのモデルで解ける読み手数の範囲。
+ * - `readingDepth`: 先読みのモデルで解ける読み手数の範囲。床で止まる問題は、最短解を止まる床で区切った読み深さ
+ *   （床を中間の目標と見抜いた人の読み深さ）も下限以上にする。
  * - `nearPathCount`: 最少手数+2手以内の近い別解の数の範囲。どこからでも何となく着く問題を外す。
+ * - `floorCount`: 床の数の範囲。
  */
 export type IceFloorMazeTacticPattern = {
   optimalMoveCount: NumericRange;
@@ -31,6 +33,7 @@ export type IceFloorMazeTacticPattern = {
   forbidden: readonly IceFloorMazeTacticTag[];
   readingDepth: NumericRange;
   nearPathCount: NumericRange;
+  floorCount: NumericRange;
 };
 
 /**
@@ -41,6 +44,8 @@ export type IceFloorMazeTacticPattern = {
  * - `lingeringDecoyCount`: 変化させた直後が閉じ込めにならないおとりの数の範囲。
  * - `selfMadeDependence`: 自作依存の点の範囲。
  * - `distantStopCount`: 2手以上前に作った水面で止まる回数の範囲。
+ * - `floorCount`: 床の数の範囲。要素のあるレベルには床を置かない（床で止まる手が前の手で作った水面で止まる手の代わりになり、
+ *   自作依存の点の帯と、要素の盤面の床の働き（目印にならないか）を確かめていないため）。
  */
 export type IceFloorMazeElementPattern = {
   composition: Exclude<IceFloorMazeElementComposition, "none">;
@@ -50,6 +55,7 @@ export type IceFloorMazeElementPattern = {
   lingeringDecoyCount: NumericRange;
   selfMadeDependence: NumericRange;
   distantStopCount: NumericRange;
+  floorCount: NumericRange;
 };
 
 /**
@@ -70,6 +76,10 @@ export type IceFloorMazeLevelCriteria =
 
 const unbounded = Number.POSITIVE_INFINITY;
 const anyCount = { minimum: 0, maximum: unbounded } as const;
+const noFloors = { minimum: 0, maximum: 0 } as const;
+
+/** 氷と岩のレベルで置く床の数。0 は床の無い問題で、床のある問題と混ぜて出す。 */
+const tacticFloorCount = { minimum: 0, maximum: 4 } as const;
 
 /**
  * L3（要素の入門）。要素を2〜3個にし、最短解で変化させる要素を2個までにして気づきを1つに絞り、おとりは変化させるとすぐ
@@ -82,6 +92,7 @@ const introductionPattern = {
   lingeringDecoyCount: { minimum: 0, maximum: 0 },
   selfMadeDependence: { minimum: 0, maximum: 3 },
   distantStopCount: anyCount,
+  floorCount: noFloors,
 } as const;
 
 /** L4。自作依存の点を L3 と L5 の間の帯に置く。 */
@@ -92,6 +103,7 @@ const dependencePattern = {
   lingeringDecoyCount: anyCount,
   selfMadeDependence: { minimum: 3.5, maximum: 5.5 },
   distantStopCount: anyCount,
+  floorCount: noFloors,
 } as const;
 
 /** L5。自作依存の点が高く、2手以上前に作った水面で2回以上止まる。 */
@@ -102,10 +114,11 @@ const deepDependencePattern = {
   lingeringDecoyCount: anyCount,
   selfMadeDependence: { minimum: 6, maximum: unbounded },
   distantStopCount: { minimum: 2, maximum: unbounded },
+  floorCount: noFloors,
 } as const;
 
 /**
- * 各レベルの基準。L1・L2 は氷と岩だけで手筋を足し、L3〜L5 は自作依存の点の帯で分ける（L3 はもろい岩か薄い氷の一方を
+ * 各レベルの基準。L1・L2 は氷と岩だけ（床を置く問題と置かない問題を混ぜる）で手筋を足し、L3〜L5 は自作依存の点の帯で分ける（L3 はもろい岩か薄い氷の一方を
  * 少し置いた入門）。もろい岩は止め役を作れず通り道を開くだけなので、L4・L5 は薄い氷だけか両方を置く。手数と要素の数の範囲は
  * 試遊で決め直す前の仮の値。
  */
@@ -120,6 +133,7 @@ export const iceFloorMazeLevelCriteria = {
         forbidden: ["wrap-around", "pass-lure", "trap-lure", "backward-funnel"],
         readingDepth: { minimum: 1, maximum: 2 },
         nearPathCount: { minimum: 0, maximum: unbounded },
+        floorCount: tacticFloorCount,
       },
     ],
   },
@@ -133,6 +147,7 @@ export const iceFloorMazeLevelCriteria = {
         forbidden: ["trap-lure"],
         readingDepth: { minimum: 2, maximum: unbounded },
         nearPathCount: { minimum: 0, maximum: 30 },
+        floorCount: tacticFloorCount,
       },
       {
         optimalMoveCount: { minimum: 12, maximum: 16 },
@@ -140,6 +155,7 @@ export const iceFloorMazeLevelCriteria = {
         forbidden: ["trap-lure"],
         readingDepth: { minimum: 3, maximum: unbounded },
         nearPathCount: { minimum: 0, maximum: 40 },
+        floorCount: tacticFloorCount,
       },
     ],
   },
@@ -174,6 +190,8 @@ export const iceFloorMazeLevelCriteria = {
  * - `forcedShare`: 一本道（戻らない選択肢が1つしかない手）を最少手数のこの割合まで。
  * - `maximumShortSlideShare`: 最短解の1マスだけの滑りを最少手数のこの割合（切り捨て）まで。
  * - `maximumChoicelessStair`: 最短解で、もっともらしい別の手が無い手だけで直交する2つの向きを交互に続ける連なり（選択肢の無い階段）の長さの上限。
+ * 床のある盤面の条件（`listIceFloorMazeTacticUnmetConditions`）: 最短解で止まる床とおとりの床を両方置き、効かない床を置かず、
+ * 最短解に同じ向きが続く手を作らず、止まれるどこからでも、床で止まった後に同じ向きへ1マスだけ進むか別の床で止まる手（連打）を作らない。
  * 要素のある盤面だけの条件:
  * - `minimumUses`: 最短解で要素を使う回数の下限。
  * - `decoyShare`: おとりを要素の数のこの割合（切り上げ、最低1）以上。
@@ -199,7 +217,12 @@ export const iceFloorMazeCommonConditions = {
  * - `multiple-solutions`: 最短解が一意でない。
  * - `forced`: 一本道が多い。
  * - `unreadable`: 先読みのモデルが上限まで読んでも解けない（氷と岩だけ）。
- * - `repeated-direction` / `brittle-chain`: 同じ向きが続く手がある（条件1）。
+ * - `repeated-direction` / `brittle-chain`: 同じ向きが続く手がある（条件1）。床のある盤面では、最短解で床で止まった後に同じ向きへ
+ *   続けるか、止まれるどこかに床で止まった後に同じ向きへ1マスだけ進むか別の床で止まる手（連打）がある。床で止まった後に同じ向きへ
+ *   また滑れること自体は床の働きなので、最少手数+2手以内の道筋に乗っていても数えない。
+ * - `irrelevant-floor`: 氷にしても最短解・もっともらしい選択肢・詰みが変わらない床がある。
+ * - `floor-landmark`: 床があるのに、最短解で止まる床か、おとりの床（最短解では止まらないが、もっともらしい別の手が止まる床）の
+ *   どちらかが無い。床が答えの目印（または、避ける目印）になる。
  * - `irrelevant-element` / `few-decoys`: 効かない要素がある・おとりが足りない（条件2）。
  * - `few-uses`: 最短解で要素を使う回数が足りない。
  * - `static-shortcut`: 見た目どおりかもう一方の読みで短く解ける。
@@ -212,6 +235,8 @@ export type IceFloorMazeUnmetCondition =
   | "multiple-solutions"
   | "forced"
   | "unreadable"
+  | "irrelevant-floor"
+  | "floor-landmark"
   | "repeated-direction"
   | "brittle-chain"
   | "irrelevant-element"
@@ -292,6 +317,17 @@ export function listIceFloorMazeTacticUnmetConditions(
     ["multiple-solutions", features.optimalSolutionCount > 1],
     ["forced", hasManyForcedMoves(features)],
     ["unreadable", features.readingDepth === null],
+    [
+      "repeated-direction",
+      features.floors.repeatCount > 0 || features.floors.tapCount > 0,
+    ],
+    ["irrelevant-floor", features.floors.irrelevantFloorCount > 0],
+    [
+      "floor-landmark",
+      features.floors.floorCount > 0 &&
+        (features.floors.usedFloorCount === 0 ||
+          features.floors.decoyFloorCount === 0),
+    ],
     [
       "short-slides",
       hasManyShortSlides(features.shortSlideCount, features.optimalMoveCount),
@@ -380,7 +416,10 @@ function matchesTacticPattern(
       features.readingDepth ?? unbounded,
       pattern.readingDepth,
     ) &&
-    isInNumericRange(features.nearPathCount, pattern.nearPathCount)
+    (features.floors.splitReadingDepth ?? unbounded) >=
+      pattern.readingDepth.minimum &&
+    isInNumericRange(features.nearPathCount, pattern.nearPathCount) &&
+    isInNumericRange(features.floors.floorCount, pattern.floorCount)
   );
 }
 
@@ -402,7 +441,8 @@ function matchesElementPattern(
     isInNumericRange(
       features.texture.distantStopCount,
       pattern.distantStopCount,
-    )
+    ) &&
+    isInNumericRange(features.floorCount, pattern.floorCount)
   );
 }
 

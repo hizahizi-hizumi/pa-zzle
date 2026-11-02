@@ -55,6 +55,7 @@ const elementFeatures: IceFloorMazeElementFeatures = {
   },
   stateReadingDepth: 7,
   hardness: 50.75,
+  floorCount: 0,
 };
 
 const tacticFeatures: IceFloorMazeTacticFeatures = {
@@ -76,6 +77,17 @@ const tacticFeatures: IceFloorMazeTacticFeatures = {
   shortSlideCount: 1,
   averageSlideLength: 3,
   longestChoicelessStair: 2,
+  floors: {
+    floorCount: 0,
+    usedFloorCount: 0,
+    floorStopCount: 0,
+    decoyFloorCount: 0,
+    irrelevantFloorCount: 0,
+    repeatCount: 0,
+    nearRepeatCount: 0,
+    tapCount: 0,
+    splitReadingDepth: 2,
+  },
 };
 
 const snapshot: IceFloorMazeDiagnosticSnapshot = {

@@ -7,6 +7,7 @@ import {
   TIE_ORDERS,
 } from "@/games/ice-floor-maze/problem/generation/reading-model";
 import {
+  CELL_FLOOR,
   CELL_OUTSIDE,
   CELL_ROCK,
   DIRECTION_COUNT,
@@ -33,17 +34,30 @@ export const MAXIMUM_READING_DEPTH = 12;
 /** 近い別解を数える上限。 */
 const NEAR_PATH_CAP = 5000;
 
-/** 各マスから上・右・下・左へ滑って止まるマス。すぐ止め役・外壁なら自分自身（`stopper` のマスの値は使わない）。 */
+/**
+ * 各マスから上・右・下・左へ滑って止まるマス。すぐ止め役・外壁なら自分自身、隣が床ならその床（`stopper` のマスの値は使わない）。
+ * 隣が氷なら、その氷から同じ向きへ滑って止まるマスと同じ。
+ */
 function createStopTables(
   width: number,
   height: number,
   stopper: Uint8Array,
+  floor: Uint8Array | null,
 ): Int32Array[] {
   const cellCount = width * height;
   const tables = Array.from(
     { length: DIRECTION_COUNT },
     () => new Int32Array(cellCount),
   );
+  function fill(table: Int32Array, cell: number, neighbor: number): void {
+    if (neighbor < 0 || stopper[neighbor] === 1) {
+      table[cell] = cell;
+    } else if (floor?.[neighbor] === 1) {
+      table[cell] = neighbor;
+    } else {
+      table[cell] = table[neighbor]!;
+    }
+  }
   const [up, right, down, left] = tables as [
     Int32Array,
     Int32Array,
@@ -51,55 +65,31 @@ function createStopTables(
     Int32Array,
   ];
   for (let x = 0; x < width; x += 1) {
-    let last = -1;
     for (let y = 0; y < height; y += 1) {
       const cell = y * width + x;
-      if (stopper[cell] === 1) {
-        last = -1;
-        continue;
+      if (stopper[cell] !== 1) {
+        fill(up, cell, y > 0 ? cell - width : -1);
       }
-      if (last < 0) {
-        last = cell;
-      }
-      up[cell] = last;
     }
-    last = -1;
     for (let y = height - 1; y >= 0; y -= 1) {
       const cell = y * width + x;
-      if (stopper[cell] === 1) {
-        last = -1;
-        continue;
+      if (stopper[cell] !== 1) {
+        fill(down, cell, y < height - 1 ? cell + width : -1);
       }
-      if (last < 0) {
-        last = cell;
-      }
-      down[cell] = last;
     }
   }
   for (let y = 0; y < height; y += 1) {
-    let last = -1;
     for (let x = 0; x < width; x += 1) {
       const cell = y * width + x;
-      if (stopper[cell] === 1) {
-        last = -1;
-        continue;
+      if (stopper[cell] !== 1) {
+        fill(left, cell, x > 0 ? cell - 1 : -1);
       }
-      if (last < 0) {
-        last = cell;
-      }
-      left[cell] = last;
     }
-    last = -1;
     for (let x = width - 1; x >= 0; x -= 1) {
       const cell = y * width + x;
-      if (stopper[cell] === 1) {
-        last = -1;
-        continue;
+      if (stopper[cell] !== 1) {
+        fill(right, cell, x < width - 1 ? cell + 1 : -1);
       }
-      if (last < 0) {
-        last = cell;
-      }
-      right[cell] = last;
     }
   }
   return tables;
@@ -111,6 +101,7 @@ function createStopTables(
  * - `order`: 到達できる停止点を幅優先の順に並べたもの。
  * - `ends[4 * c + d]`: 停止点 `c` から `d` へ滑って止まるマス。動けなければ -1。
  * - `globalTables` / `globalPredecessors`: 盤面全体（到達できるかを問わない）の滑り。関係する岩と盤面の外だけを止め役にする。
+ * - `floor`: 床のマス（入ると止まる）。床の無い盤面では `null`。
  * - `startBall`: 開始位置と、そこから1手で止まる停止点。
  */
 export type StaticBoardGraph = {
@@ -118,6 +109,8 @@ export type StaticBoardGraph = {
   height: number;
   cellCount: number;
   stopper: Uint8Array;
+  outside: Uint8Array | null;
+  floor: Uint8Array | null;
   tables: Int32Array[];
   distances: Int32Array;
   order: Int32Array;
@@ -144,15 +137,23 @@ export function createStaticStopper(board: GenerationBoard): Uint8Array {
   );
 }
 
+/** 床のマス。床が無ければ `null`。 */
+export function createStaticFloor(board: GenerationBoard): Uint8Array | null {
+  return board.cells.includes(CELL_FLOOR)
+    ? board.cells.map((code) => (code === CELL_FLOOR ? 1 : 0))
+    : null;
+}
+
 export function createStaticBoardGraph(
   width: number,
   height: number,
   stopper: Uint8Array,
   start: number,
   outside: Uint8Array | null = null,
+  floor: Uint8Array | null = null,
 ): StaticBoardGraph {
   const cellCount = width * height;
-  const tables = createStopTables(width, height, stopper);
+  const tables = createStopTables(width, height, stopper, floor);
   const distances = new Int32Array(cellCount).fill(-1);
   const ends = new Int32Array(cellCount * DIRECTION_COUNT).fill(-1);
   const order = [start];
@@ -164,7 +165,10 @@ export function createStaticBoardGraph(
       const end = tables[direction]![state]!;
       const x = (end % width) + DX[direction]!;
       const y = Math.floor(end / width) + DY[direction]!;
-      if (isInside(width, height, x, y)) {
+      if (
+        isInside(width, height, x, y) &&
+        (end === state || floor?.[end] !== 1)
+      ) {
         stoppers[y * width + x] = 1;
       }
       if (end === state) {
@@ -199,7 +203,7 @@ export function createStaticBoardGraph(
   }
   const globalTables = sameAsStopper
     ? tables
-    : createStopTables(width, height, globalStopper);
+    : createStopTables(width, height, globalStopper, floor);
   const isNode = new Uint8Array(cellCount);
   isNode[start] = 1;
   for (let cell = 0; cell < cellCount; cell += 1) {
@@ -236,6 +240,8 @@ export function createStaticBoardGraph(
     height,
     cellCount,
     stopper,
+    outside,
+    floor,
     tables,
     distances,
     order: Int32Array.from(order),
@@ -339,12 +345,12 @@ export type StaticTactics = {
   longestChoicelessStair: number;
 };
 
-export function measureStaticTactics(
-  graph: StaticBoardGraph,
-  start: number,
-  goal: number,
-): StaticTactics {
-  const { width, height, tables, distances, ends, order } = graph;
+/**
+ * 「もっともらしい手」の判定と、その元になる量。もっともらしい手は、滑った先がゴールへ近づく、ゴールと見通しで揃う、
+ * 滑りがゴールを通過する、のどれかに当たる手。
+ */
+function createStaticPlausibility(graph: StaticBoardGraph, goal: number) {
+  const { width, tables } = graph;
   const goalX = goal % width;
   const goalY = Math.floor(goal / width);
   function gap(cell: number): number {
@@ -391,6 +397,21 @@ export function measureStaticTactics(
       passes(cell, direction)
     );
   }
+  return { gap, toward, sees, passes, plausible };
+}
+
+export function measureStaticTactics(
+  graph: StaticBoardGraph,
+  start: number,
+  goal: number,
+): StaticTactics {
+  const { width, height, tables, distances, ends, order } = graph;
+  const { gap, toward, sees, passes, plausible } = createStaticPlausibility(
+    graph,
+    goal,
+  );
+  const goalX = goal % width;
+  const goalY = Math.floor(goal / width);
 
   const toGoal = measureBackwardLayers(graph, goal);
   const shortest = distances[goal]!;
@@ -510,6 +531,7 @@ export function measureStaticTactics(
       }
     }
     if (
+      graph.floor?.[nextState] !== 1 &&
       isInside(
         width,
         height,
@@ -813,6 +835,32 @@ export function countNearPaths(
   return count;
 }
 
+/** 到達できる滑りが止まらずに通り抜けるマス（床を置くと、その滑りが止まるようになるマス）。開始位置は除く。 */
+export function listPassedStaticCells(graph: StaticBoardGraph): number[] {
+  const { width, cellCount, order, ends } = graph;
+  const steps = DX.map((dx, direction) => DY[direction]! * width + dx);
+  const passed = new Uint8Array(cellCount);
+  for (const state of order) {
+    for (let direction = 0; direction < DIRECTION_COUNT; direction += 1) {
+      const end = ends[state * DIRECTION_COUNT + direction]!;
+      if (end < 0) {
+        continue;
+      }
+      for (
+        let cell = state + steps[direction]!;
+        cell !== end;
+        cell += steps[direction]!
+      ) {
+        passed[cell] = 1;
+      }
+    }
+  }
+  passed[order[0]!] = 0;
+  return Array.from({ length: cellCount }, (_, cell) => cell).filter(
+    (cell) => passed[cell] === 1,
+  );
+}
+
 /** 止め役でないマスのうち、到達できるどの滑りでも駒が通らない・止まらないマス（盤面の外になるマス）の数。 */
 export function countUnusedStaticCells(graph: StaticBoardGraph): number {
   const { width, cellCount, order, ends, stopper } = graph;
@@ -835,4 +883,240 @@ export function countUnusedStaticCells(graph: StaticBoardGraph): number {
     }
   }
   return unused;
+}
+
+/**
+ * 床の働き（止まれる場所を変える床が、答えの目印にならないか）。
+ * - `floorCount`: 盤面の床の数。
+ * - `usedFloorCount` / `floorStopCount`: 最短の道筋（方向番号の小さい手を優先）が止まる床の数と、床で止まる手の数。
+ *   床で止まる手は、床の先が止め役・外壁でない（氷なら先へ滑り続けた）手だけを数える。
+ * - `decoyFloorCount`: おとりの床。最短の道筋では止まらないが、道筋の上でもっともらしい別の手がそこで（床だから）止まる床。
+ * - `irrelevantFloorCount`: 効かない床。氷にしても、最短の道筋・道筋の上のもっともらしい選択肢（滑った先と詰みか）・
+ *   選択肢ごとの詰みが変わらない床。
+ * - `repeatCount` / `nearRepeatCount`: 最短の道筋で同じ向きが続く2手と、最少手数+2手以内の道筋に乗る同じ向きが続く2手。
+ *   床で止まった後でなければ同じ向きへはもう滑れないので、床の無い盤面ではどちらも0。
+ * - `tapCount`: 止まれるどこかから床に入って止まり、同じ向きへもう一度滑ると1マスだけ進むか別の床で止まる手（同じ向きの連打）。
+ *   床で止まった後に同じ向きへ続けて滑れること自体は床の働きなので数えず、刻むように止まる手だけを数える。
+ * - `splitReadingDepth`: 最短の道筋を、止まる床で区切った区間ごとの読み深さの最大。床を中間の目標と見抜いた人の読み深さで、
+ *   止まる床が無ければ0（呼び出し側で元の読み深さを使う）。読み深さの上限まで読めなければ上限+1。
+ */
+export type StaticFloorFeatures = {
+  floorCount: number;
+  usedFloorCount: number;
+  floorStopCount: number;
+  decoyFloorCount: number;
+  irrelevantFloorCount: number;
+  repeatCount: number;
+  nearRepeatCount: number;
+  tapCount: number;
+  splitReadingDepth: number;
+};
+
+/** 最短の道筋の1手と、その手の前の状態から戻らない選択肢。 */
+type StaticSolutionStep = {
+  state: number;
+  direction: number;
+  end: number;
+  options: {
+    direction: number;
+    end: number;
+    plausible: boolean;
+    dead: boolean;
+  }[];
+};
+
+/** 方向番号の小さい手を優先した最短の道筋と、その上の選択肢。ゴールへ止まれなければ `null`。 */
+function traceStaticSolution(
+  graph: StaticBoardGraph,
+  start: number,
+  goal: number,
+): StaticSolutionStep[] | null {
+  const toGoal = measureBackwardLayers(graph, goal);
+  if (toGoal[start]! < 0) {
+    return null;
+  }
+  const { plausible } = createStaticPlausibility(graph, goal);
+  const prefix = new Set([start]);
+  const steps: StaticSolutionStep[] = [];
+  let state = start;
+  while (state !== goal) {
+    const remaining = toGoal[state]!;
+    const options: StaticSolutionStep["options"] = [];
+    let next: [number, number] | null = null;
+    for (let direction = 0; direction < DIRECTION_COUNT; direction += 1) {
+      const end = graph.ends[state * DIRECTION_COUNT + direction]!;
+      if (end < 0) {
+        continue;
+      }
+      if (!prefix.has(end)) {
+        options.push({
+          direction,
+          end,
+          plausible: plausible(state, direction, end),
+          dead: toGoal[end]! < 0,
+        });
+      }
+      if (next === null && toGoal[end] === remaining - 1) {
+        next = [direction, end];
+      }
+    }
+    const [direction, end] = next!;
+    steps.push({ state, direction, end, options });
+    state = end;
+    prefix.add(state);
+  }
+  return steps;
+}
+
+/** 床を氷にしたときに比べる、最短の道筋・もっともらしい選択肢・選択肢ごとの詰み。 */
+function describeStaticSolution(steps: readonly StaticSolutionStep[]): string {
+  return steps
+    .map(
+      ({ direction, end, options }) =>
+        `${direction}>${end}:${options
+          .map((option) =>
+            option.plausible
+              ? `${option.direction}>${option.end}${option.dead ? "x" : ""}`
+              : `${option.direction}${option.dead ? "x" : ""}`,
+          )
+          .join(",")}`,
+    )
+    .join("|");
+}
+
+export function measureStaticFloors(
+  graph: StaticBoardGraph,
+  start: number,
+  goal: number,
+  maximumReadingDepth: number,
+): StaticFloorFeatures {
+  const { floor, width, height, cellCount, stopper, outside, ends, order } =
+    graph;
+  const floors: number[] = [];
+  for (let cell = 0; floor && cell < cellCount; cell += 1) {
+    if (floor[cell] === 1) {
+      floors.push(cell);
+    }
+  }
+  const steps = traceStaticSolution(graph, start, goal);
+  if (floors.length === 0 || !steps) {
+    return {
+      floorCount: floors.length,
+      usedFloorCount: 0,
+      floorStopCount: 0,
+      decoyFloorCount: 0,
+      irrelevantFloorCount: 0,
+      repeatCount: 0,
+      nearRepeatCount: 0,
+      tapCount: 0,
+      splitReadingDepth: 0,
+    };
+  }
+
+  /** 床に入って止まり、そこが氷なら先へ滑り続けた滑りか。床の先が止め役・外壁なら、床でなくても同じマスで止まる。 */
+  function stopsByFloor(end: number, direction: number): boolean {
+    return floor![end] === 1 && graph.tables[direction]![end] !== end;
+  }
+  const stopFloors = steps.flatMap(({ direction, end }) =>
+    stopsByFloor(end, direction) ? [end] : [],
+  );
+  const used = new Set(stopFloors);
+  const decoys = new Set(
+    steps.flatMap(({ direction, options }) =>
+      options.flatMap((option) =>
+        option.direction !== direction &&
+        option.plausible &&
+        stopsByFloor(option.end, option.direction) &&
+        !used.has(option.end)
+          ? [option.end]
+          : [],
+      ),
+    ),
+  );
+
+  const signature = describeStaticSolution(steps);
+  let irrelevantFloorCount = 0;
+  for (const cell of floors) {
+    const neutral = floor!.slice();
+    neutral[cell] = 0;
+    const neutralGraph = createStaticBoardGraph(
+      width,
+      height,
+      stopper,
+      start,
+      outside,
+      neutral,
+    );
+    const neutralSteps = traceStaticSolution(neutralGraph, start, goal);
+    if (neutralSteps && describeStaticSolution(neutralSteps) === signature) {
+      irrelevantFloorCount += 1;
+    }
+  }
+
+  const toGoal = measureBackwardLayers(graph, goal);
+  const shortest = graph.distances[goal]!;
+  let nearRepeatCount = 0;
+  let tapCount = 0;
+  for (const state of order) {
+    if (state === goal) {
+      continue;
+    }
+    for (let direction = 0; direction < DIRECTION_COUNT; direction += 1) {
+      const end = ends[state * DIRECTION_COUNT + direction]!;
+      if (end < 0 || end === goal || floor![end] !== 1) {
+        continue;
+      }
+      const after = ends[end * DIRECTION_COUNT + direction]!;
+      if (after < 0) {
+        continue;
+      }
+      const length =
+        Math.abs((after % width) - (end % width)) +
+        Math.abs(Math.floor(after / width) - Math.floor(end / width));
+      if (length === 1 || floor![after] === 1) {
+        tapCount += 1;
+      }
+      if (
+        toGoal[after]! >= 0 &&
+        graph.distances[state]! + 2 + toGoal[after]! <= shortest + NEAR_SLACK
+      ) {
+        nearRepeatCount += 1;
+      }
+    }
+  }
+  const repeatCount = steps.filter(
+    (step, index) =>
+      index > 0 && steps[index - 1]!.direction === step.direction,
+  ).length;
+
+  let splitReadingDepth = 0;
+  const waypoints = [start, ...stopFloors, goal];
+  for (
+    let index = 0;
+    stopFloors.length > 0 && index + 1 < waypoints.length;
+    index += 1
+  ) {
+    const from = waypoints[index]!;
+    const to = waypoints[index + 1]!;
+    const segmentGraph =
+      from === start
+        ? graph
+        : createStaticBoardGraph(width, height, stopper, from, outside, floor);
+    splitReadingDepth = Math.max(
+      splitReadingDepth,
+      measureStaticReadingDepth(segmentGraph, from, to, maximumReadingDepth),
+    );
+  }
+
+  return {
+    floorCount: floors.length,
+    usedFloorCount: used.size,
+    floorStopCount: stopFloors.length,
+    decoyFloorCount: decoys.size,
+    irrelevantFloorCount,
+    repeatCount,
+    nearRepeatCount,
+    tapCount,
+    splitReadingDepth,
+  };
 }

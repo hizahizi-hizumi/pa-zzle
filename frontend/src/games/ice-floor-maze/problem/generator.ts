@@ -12,6 +12,7 @@ import {
   markOutsideCells,
 } from "@/games/ice-floor-maze/problem/generation/outside-cells";
 import {
+  CELL_FLOOR,
   CELL_ICE,
   CELL_ROCK,
   fromGenerationBoard,
@@ -34,7 +35,7 @@ import {
 
 /**
  * 1問の生成条件。
- * - `tactics`: 氷と岩だけの盤面で、手筋の点を最大にする山登り（研究用の生成 v2）。
+ * - `tactics`: 氷と岩（と床）だけの盤面で、手筋の点を最大にする山登り（研究用の生成 v2。床は PoC §10 の近傍を足した）。
  * - `elements`: もろい岩・薄い氷を置き、難しさの点を最大にする山登り（研究用の生成 v4）。`search` は山登りの止め方。
  */
 export type IceFloorMazeGenerationRecipe =
@@ -80,8 +81,12 @@ function search(
             board: {
               width: recipe.width,
               height: recipe.height,
-              cells: found.stopper.map((value) =>
-                value === 1 ? CELL_ROCK : CELL_ICE,
+              cells: found.stopper.map((value, cell) =>
+                value === 1
+                  ? CELL_ROCK
+                  : found.floor[cell] === 1
+                    ? CELL_FLOOR
+                    : CELL_ICE,
               ),
             },
             start: found.start,

@@ -33,6 +33,17 @@ const baseTactics: IceFloorMazeTacticFeatures = {
   shortSlideCount: 1,
   averageSlideLength: 3,
   longestChoicelessStair: 2,
+  floors: {
+    floorCount: 0,
+    usedFloorCount: 0,
+    floorStopCount: 0,
+    decoyFloorCount: 0,
+    irrelevantFloorCount: 0,
+    repeatCount: 0,
+    nearRepeatCount: 0,
+    tapCount: 0,
+    splitReadingDepth: 2,
+  },
 };
 
 const baseElements: IceFloorMazeElementFeatures = {
@@ -83,19 +94,45 @@ const baseElements: IceFloorMazeElementFeatures = {
   },
   stateReadingDepth: 6,
   hardness: 40,
+  floorCount: 0,
 };
 
+/** 床の無い盤面の、床で区切った読み深さは元の読み深さと同じ。 */
 function tactics(
   shape: IceFloorMazeBoardShape,
   features: Partial<IceFloorMazeTacticFeatures>,
 ): IceFloorMazeDifficultyAnalysis {
+  const readingDepth =
+    features.readingDepth === undefined
+      ? baseTactics.readingDepth
+      : features.readingDepth;
   return {
     status: "analyzed",
     shape,
     composition: "none",
-    features: { ...baseTactics, ...features },
+    features: {
+      ...baseTactics,
+      ...features,
+      floors: features.floors ?? {
+        ...baseTactics.floors,
+        splitReadingDepth: readingDepth,
+      },
+    },
   };
 }
+
+/** 床で止まる手とおとりの床が1つずつある、採用条件を満たす床の働き。 */
+const usefulFloors: IceFloorMazeTacticFeatures["floors"] = {
+  floorCount: 2,
+  usedFloorCount: 1,
+  floorStopCount: 1,
+  decoyFloorCount: 1,
+  irrelevantFloorCount: 0,
+  repeatCount: 0,
+  nearRepeatCount: 1,
+  tapCount: 0,
+  splitReadingDepth: 2,
+};
 
 function elements(
   shape: IceFloorMazeBoardShape,
@@ -116,6 +153,23 @@ describe("assessIceFloorMazeDifficulty", () => {
       "氷と岩だけ・止め石・読み2手・最短8手",
       tactics(shape8x8, {}),
       "1",
+      "none",
+    ],
+    [
+      "氷と岩と床2マス（止まる床とおとりの床）・止め石・読み2手・最短8手",
+      tactics(shape8x8, { floors: usefulFloors }),
+      "1",
+      "none",
+    ],
+    [
+      "氷と岩と床・止め石と回り込み・読み3手・最短11手・床で区切っても読み3手",
+      tactics(shape10x10, {
+        optimalMoveCount: 11,
+        tags: ["stopper", "wrap-around", "detour"],
+        readingDepth: 3,
+        floors: { ...usefulFloors, splitReadingDepth: 3 },
+      }),
+      "2",
       "none",
     ],
     [
@@ -234,6 +288,29 @@ describe("assessIceFloorMazeDifficulty", () => {
     ],
     ["レベル1の手筋だが盤面がレベル1の形に収まらない", tactics(shape10x10, {})],
     [
+      "止め石と回り込み・読み3手・最短11手だが、床で区切ると読み1手",
+      tactics(shape10x10, {
+        optimalMoveCount: 11,
+        tags: ["stopper", "wrap-around", "detour"],
+        readingDepth: 3,
+        floors: { ...usefulFloors, splitReadingDepth: 1 },
+      }),
+    ],
+    [
+      "止め石・読み2手・最短8手だが、床が5マス",
+      tactics(shape8x8, { floors: { ...usefulFloors, floorCount: 5 } }),
+    ],
+    [
+      "薄い氷だけ2個・自作依存の点3だが、床がある",
+      elements(shape8x8, "thin-ice", {
+        elementCount: 2,
+        usedElementCount: 2,
+        decoyCount: 1,
+        selfMadeDependence: 3,
+        floorCount: 1,
+      }),
+    ],
+    [
       "もろい岩と薄い氷8個・自作依存の点6だが、2手以上前に作った水面で1回しか止まらない",
       elements(shape10x10, "mixed", {
         optimalMoveCount: 18,
@@ -325,6 +402,42 @@ describe("assessIceFloorMazeDifficulty", () => {
       "選択肢の無い階段が3手",
       tactics(shape8x8, { longestChoicelessStair: 3 }),
       ["choiceless-stair"],
+    ],
+    [
+      "最短解が床で止まった後に同じ向きへ続ける",
+      tactics(shape8x8, { floors: { ...usefulFloors, repeatCount: 1 } }),
+      ["repeated-direction"],
+    ],
+    [
+      "床で止まった後に同じ向きへ1マスだけ進む手がどこかにある",
+      tactics(shape8x8, { floors: { ...usefulFloors, tapCount: 1 } }),
+      ["repeated-direction"],
+    ],
+    [
+      "氷にしても何も変わらない床がある",
+      tactics(shape8x8, {
+        floors: { ...usefulFloors, floorCount: 3, irrelevantFloorCount: 1 },
+      }),
+      ["irrelevant-floor"],
+    ],
+    [
+      "床が最短解で止まる床だけで、おとりの床が無い",
+      tactics(shape8x8, {
+        floors: { ...usefulFloors, floorCount: 1, decoyFloorCount: 0 },
+      }),
+      ["floor-landmark"],
+    ],
+    [
+      "床がおとりだけで、最短解は床で止まらない",
+      tactics(shape8x8, {
+        floors: {
+          ...usefulFloors,
+          usedFloorCount: 0,
+          floorStopCount: 0,
+          decoyFloorCount: 2,
+        },
+      }),
+      ["floor-landmark"],
     ],
     [
       "割ってすぐ戻る手筋が3回で、読みどころの無い手が5手続く",

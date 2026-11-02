@@ -14,6 +14,7 @@ import {
 import { measureStateReadingDepth } from "@/games/ice-floor-maze/problem/generation/reading-model";
 import {
   CELL_BRITTLE,
+  CELL_FLOOR,
   CELL_OUTSIDE,
   CELL_THIN,
   type GenerationBoard,
@@ -23,11 +24,14 @@ import {
 import {
   countNearPaths,
   createStaticBoardGraph,
+  createStaticFloor,
   createStaticStopper,
   listStaticTacticTags,
   MAXIMUM_READING_DEPTH,
+  measureStaticFloors,
   measureStaticReadingDepth,
   measureStaticTactics,
+  type StaticFloorFeatures,
   type StaticTacticTag,
 } from "@/games/ice-floor-maze/problem/generation/static-tactics";
 import type {
@@ -35,7 +39,7 @@ import type {
   IceFloorMazeProblem,
 } from "@/games/ice-floor-maze/problem/problem";
 
-/** 盤面に置かれた要素の組み合わせ。`none` は氷と岩だけ。 */
+/** 盤面に置かれた要素（もろい岩・薄い氷）の組み合わせ。`none` は要素が無く、氷と岩（と床）だけ。 */
 export type IceFloorMazeElementComposition =
   | "none"
   | "brittle-rock"
@@ -46,7 +50,16 @@ export type IceFloorMazeElementComposition =
 export type IceFloorMazeTacticTag = StaticTacticTag;
 
 /**
- * 氷と岩だけの盤面の特徴（研究用の生成 v2 の手筋）。
+ * 床の働き。`StaticFloorFeatures` の定義を参照。`splitReadingDepth` は、止まる床が無ければ元の読み深さと同じ値で、
+ * 上限まで読めなければ `null`。
+ */
+export type IceFloorMazeFloorFeatures = Omit<
+  StaticFloorFeatures,
+  "splitReadingDepth"
+> & { splitReadingDepth: number | null };
+
+/**
+ * 氷と岩（と床）だけの盤面の特徴（研究用の生成 v2 の手筋）。
  * - `optimalMoveCount` / `optimalSolutionCount`: 最少手数と、最少手数で止まる向きの並びの数。
  * - `forcedMoveCount`: 最短の道筋のうち、戻らない選択肢が1つしかない手（一本道）。
  * - `reachableStopCount` / `deadStopCount`: 開始位置から止まれる停止点の数と、そのうちゴールへ止まれない停止点（詰み）の数。
@@ -55,6 +68,7 @@ export type IceFloorMazeTacticTag = StaticTacticTag;
  * - `nearPathCount`: 最少手数+2手以内で、同じ停止点を二度通らない道筋の数（近い別解）。
  * - `shortSlideCount` / `averageSlideLength` / `longestChoicelessStair`: 最短の道筋の1マスだけの滑りの数、滑りの長さの平均、
  *   もっともらしい別の手が無い手だけで直交する2つの向きを交互に続けた最も長い連なり（選択肢の無い階段）。
+ * - `floors`: 床の働き。
  * - そのほかは手筋のタグの元になった数。
  */
 export type IceFloorMazeTacticFeatures = {
@@ -76,6 +90,7 @@ export type IceFloorMazeTacticFeatures = {
   shortSlideCount: number;
   averageSlideLength: number;
   longestChoicelessStair: number;
+  floors: IceFloorMazeFloorFeatures;
 };
 
 /**
@@ -100,6 +115,7 @@ export type IceFloorMazeTacticFeatures = {
  *   試遊の記録で人の難しさと最もよく揃った特徴量で、レベル3〜5 の段を分ける。
  * - `hardness`: 研究用 v4 の難しさの点に状態の読み深さを足したもの。試遊の難しさとは揃わなかったので段には使わない（比べるために残す）。
  * - `stateReadingDepth`: 規則を知って先を読む人が状態のグラフで解ける読み手数。上限まで読めなければ `null`。
+ * - `floorCount`: 床の数。要素のある盤面の床の働き（目印にならないか）は測らないので、レベルの基準で床を置かない。
  */
 export type IceFloorMazeElementFeatures = {
   optimalMoveCount: number;
@@ -132,6 +148,7 @@ export type IceFloorMazeElementFeatures = {
   selfMadeDependence: number;
   stateReadingDepth: number | null;
   hardness: number;
+  floorCount: number;
 };
 
 /**
@@ -175,6 +192,7 @@ function analyzeTactics(
     createStaticStopper(board),
     start,
     outside,
+    createStaticFloor(board),
   );
   if (graph.distances[goal]! <= 0) {
     return null;
@@ -186,6 +204,9 @@ function analyzeTactics(
     goal,
     MAXIMUM_READING_DEPTH,
   );
+  const floors = measureStaticFloors(graph, start, goal, MAXIMUM_READING_DEPTH);
+  const splitReadingDepth =
+    floors.floorStopCount === 0 ? readingDepth : floors.splitReadingDepth;
   return {
     optimalMoveCount: tactics.shortest,
     optimalSolutionCount: tactics.optimalPathCount,
@@ -205,6 +226,11 @@ function analyzeTactics(
     shortSlideCount: tactics.shortSlideCount,
     averageSlideLength: tactics.averageSlideLength,
     longestChoicelessStair: tactics.longestChoicelessStair,
+    floors: {
+      ...floors,
+      splitReadingDepth:
+        splitReadingDepth > MAXIMUM_READING_DEPTH ? null : splitReadingDepth,
+    },
   };
 }
 
@@ -255,6 +281,7 @@ function analyzeElements(
     stateReadingDepth:
       readingDepth > STATE_READING_DEPTH_CAP ? null : readingDepth,
     hardness: scoreElementHardnessWithReading(metrics, readingDepth),
+    floorCount: board.cells.filter((code) => code === CELL_FLOOR).length,
   };
 }
 

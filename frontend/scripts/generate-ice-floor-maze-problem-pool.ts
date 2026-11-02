@@ -142,11 +142,22 @@ type GenerationPlan = {
   build: (index: number) => IceFloorMazeGenerationRecipe;
 };
 
+/** 床を置く氷と岩の生成条件の、床の数の下限。最短解で止まる床とおとりの床を1つずつ置ける数。 */
+const TACTIC_MINIMUM_FLOORS = 2;
+
 function buildTacticPlan(
   difficulty: IceFloorMazeDifficulty,
   shape: IceFloorMazeBoardShape,
   pattern: IceFloorMazeTacticPattern,
+  withFloors: boolean,
 ): GenerationPlan {
+  const floors = withFloors
+    ? {
+        minimum: TACTIC_MINIMUM_FLOORS,
+        maximum: pattern.floorCount.maximum,
+        minimumReadingDepth: pattern.readingDepth.minimum,
+      }
+    : null;
   const { minimum, maximum } = pattern.optimalMoveCount;
   const weights = {
     ...createTacticWeights(pattern.required, pattern.forbidden),
@@ -157,7 +168,7 @@ function buildTacticPlan(
   // 読みの浅い問題を求める型では、読み深さを点にしない（易しい問題を作るため。研究用 v2 の L1 と同じ）。
   const readsShallowly = pattern.readingDepth.maximum <= 2;
   return {
-    label: `L${difficulty} 氷と岩 ${shape.width}×${shape.height} ${minimum}〜${maximum}手 +${pattern.required.join("+")}`,
+    label: `L${difficulty} 氷と岩${floors ? `と床${floors.minimum}〜${floors.maximum}` : ""} ${shape.width}×${shape.height} ${minimum}〜${maximum}手 +${pattern.required.join("+")}`,
     build(index) {
       const cap = minimum + (index % (maximum - minimum + 1));
       return {
@@ -169,6 +180,7 @@ function buildTacticPlan(
           weights: readsShallowly ? { ...weights, read: 0 } : weights,
           iterations: TACTIC_ITERATIONS,
           maximumRockDensity: TACTIC_MAXIMUM_ROCK_DENSITY,
+          floors,
         },
       };
     },
@@ -226,8 +238,15 @@ function listPlans(
 ): GenerationPlan[] {
   const criteria = iceFloorMazeLevelCriteria[difficulty];
   if (criteria.kind === "tactics") {
-    return criteria.patterns.map((pattern) =>
-      buildTacticPlan(difficulty, criteria.largestBoardShape, pattern),
+    return criteria.patterns.flatMap((pattern) =>
+      [false, true].map((withFloors) =>
+        buildTacticPlan(
+          difficulty,
+          criteria.largestBoardShape,
+          pattern,
+          withFloors,
+        ),
+      ),
     );
   }
   const elementDifficulty = difficulty as "3" | "4" | "5";

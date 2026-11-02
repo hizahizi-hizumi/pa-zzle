@@ -40,6 +40,8 @@ const unmetConditionLabels = {
   "choiceless-stair": "選択肢の無い階段",
   "repeated-tactic": "同じ手筋の繰り返し",
   "idle-run": "読みどころの無い区間",
+  "irrelevant-floor": "効かない床",
+  "floor-landmark": "床が目印になる",
 } as const satisfies Record<IceFloorMazeUnmetCondition, string>;
 
 const compositionLabels = {
@@ -113,6 +115,15 @@ function listTacticItems(
       mono: true,
     },
     { label: "近い別解", value: String(features.nearPathCount), mono: true },
+    ...(features.floors.floorCount > 0
+      ? [
+          {
+            label: "床",
+            value: `${features.floors.floorCount}（止まる ${features.floors.usedFloorCount} / おとり ${features.floors.decoyFloorCount} / 区切った読み深さ ${formatReadingDepth(features.floors.splitReadingDepth)}）`,
+            mono: true,
+          },
+        ]
+      : []),
   ];
 }
 
