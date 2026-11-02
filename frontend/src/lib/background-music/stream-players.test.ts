@@ -87,6 +87,14 @@ describe("getStreamPlayer", () => {
 
       expect(player?.element.src).toBe("blob:home");
     });
+
+    test("取得中のファイルの届いた分なら、終わりまで流したら頭に戻らないこと", () => {
+      const player = streamPlayers.getStreamPlayer("/home.mp3", file, {
+        partial: true,
+      });
+
+      expect(player?.element).toMatchObject({ src: "blob:home", loop: false });
+    });
   });
 
   describe("全ての要素を使っている場合", () => {
