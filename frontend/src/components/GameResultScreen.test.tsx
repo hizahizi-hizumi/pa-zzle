@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { _private as appDecisionSound } from "@/components/app-decision-sound";
 import { GameResultScreen } from "@/components/GameResultScreen";
 import { playSound } from "@/lib/sound-effects";
@@ -73,6 +73,18 @@ describe("GameResultScreen", () => {
     ]);
   });
 
+  test("次の行動の最後に、パズル選択へ移るリンクを置くこと", () => {
+    const replayButton = screen.getByRole("button", { name: "もう一度" });
+    const puzzleSelectionLink = screen.getByRole("link", {
+      name: "パズル選択へ",
+    });
+
+    const position = replayButton.compareDocumentPosition(puzzleSelectionLink);
+
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(puzzleSelectionLink.getAttribute("href")).toBe("/");
+  });
+
   test("スコアの内訳と、全ゲーム共通の丸め方を添えた採点基準を開けること", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
@@ -122,6 +134,29 @@ describe("GameResultScreen", () => {
     const href = homeLink.getAttribute("href");
 
     expect(href).toBe("/");
+  });
+});
+
+describe("GameResultScreen のパズル選択へ", () => {
+  beforeEach(() => {
+    render(
+      <MemoryRouter initialEntries={["/puzzles/test/play/1"]}>
+        <Routes>
+          <Route
+            path="/puzzles/test/play/1"
+            element={<GameResultScreen {...createProps()} />}
+          />
+          <Route path="/" element={<p>パズル選択画面</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+  });
+
+  test("押すと音を鳴らさずにパズル選択画面へ移ること", () => {
+    fireEvent.click(screen.getByRole("link", { name: "パズル選択へ" }));
+
+    expect(screen.getByText("パズル選択画面")).toBeTruthy();
+    expect(playSound).not.toHaveBeenCalled();
   });
 });
 
