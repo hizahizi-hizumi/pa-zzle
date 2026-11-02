@@ -1,0 +1,114 @@
+/* 人間に見せるページ（認識合わせ・最終レビュー）の共通の見た目。
+   Vercel の Geist に寄せる。書体は Geist（日本語は Noto Sans JP）を Google Fonts から読む:
+   https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap
+   Geist の色は公式の値が公開されていないので、Vercel の画面に合わせた近似。明るい表示だけ。
+   Artifact の CSP は外部の stylesheet を Google Fonts しか読まないので、このファイルの中身を <style> に入れて出す。 */
+.review {
+  --bg: #ffffff;
+  --bg-subtle: #fafafa;
+  --fg: #171717;
+  --fg-muted: #666666;
+  --fg-faint: #8f8f8f;
+  --border: #ebebeb;
+  --border-strong: #171717;
+  --link: #0070f3;
+  --ok: #0a7d33;
+  --radius: 12px;
+  color-scheme: light;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Geist', 'Noto Sans JP', sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding-block: 2rem 4rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body:has(.review) { background: #ffffff; }
+.review * { box-sizing: border-box; }
+.review h1, .review h2, .review h3, .review p { margin: 0; }
+.review a { color: var(--link); text-decoration: none; }
+.review a:hover { text-decoration: underline; }
+.review a:focus-visible, .review summary:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 6px; }
+.review img, .review svg { display: block; max-width: 100%; height: auto; }
+.review .mono { font-family: 'Geist Mono', monospace; }
+
+/* 見出し */
+.review .eyebrow { color: var(--fg-muted); font-size: 0.875rem; }
+.review h1 { font-size: 2rem; font-weight: 600; letter-spacing: -0.04em; line-height: 1.2; margin-top: 0.25rem; }
+.review .lead { color: var(--fg-muted); margin-top: 0.75rem; }
+.review .hero { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: end; }
+.review .hero img { width: 104px; border: 1px solid var(--border); border-radius: 8px; }
+.review section { margin-top: 2.5rem; }
+.review h2 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.4; display: flex; gap: 0.5rem; align-items: baseline; }
+.review h2 .n { color: var(--fg-faint); font-family: 'Geist Mono', monospace; font-size: 0.875rem; font-weight: 400; }
+.review .hint { color: var(--fg-muted); font-size: 0.875rem; margin-top: 0.25rem; }
+
+/* やること */
+.review .todo { list-style: none; padding: 0; margin: 1.5rem 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.review .todo a { display: block; height: 100%; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem; color: var(--fg); }
+.review .todo a:hover { border-color: var(--border-strong); text-decoration: none; }
+.review .todo .k { font-family: 'Geist Mono', monospace; font-size: 0.75rem; color: var(--fg-faint); }
+.review .todo b { display: block; font-weight: 600; }
+.review .todo span { display: block; color: var(--fg-muted); font-size: 0.8125rem; line-height: 1.4; }
+
+/* 遊ぶ */
+.review .cards { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 0.5rem; }
+.review .play { display: grid; grid-template-columns: auto 1fr auto; gap: 0.25rem 0.75rem; align-items: center; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.875rem 1rem; }
+.review .lv { font-family: 'Geist Mono', monospace; font-size: 0.75rem; font-weight: 500; border: 1px solid var(--border); border-radius: 6px; padding: 0.125rem 0.375rem; color: var(--fg-muted); }
+.review .play b { font-weight: 600; }
+.review .play p { grid-column: 2 / -1; color: var(--fg-muted); font-size: 0.875rem; line-height: 1.5; }
+.review .btn { justify-self: end; white-space: nowrap; background: var(--fg); color: var(--bg); border-radius: 999px; font-size: 0.875rem; font-weight: 500; padding: 0.375rem 0.875rem; }
+.review a.btn:hover { text-decoration: none; opacity: 0.85; }
+.review .btn .t { color: #a1a1a1; font-family: 'Geist Mono', monospace; font-weight: 400; margin-left: 0.25rem; }
+
+/* 答える */
+.review .q { border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+.review .q h3 { font-size: 1rem; font-weight: 600; }
+.review .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.75rem; }
+.review .opt { border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; font-size: 0.875rem; line-height: 1.5; color: var(--fg-muted); display: grid; gap: 0.375rem; align-content: start; }
+.review .opt.rec { border: 1.5px solid var(--border-strong); color: var(--fg); }
+.review .tag { justify-self: start; font-size: 0.75rem; font-weight: 500; border-radius: 999px; padding: 0.0625rem 0.5rem; background: var(--bg-subtle); border: 1px solid var(--border); color: var(--fg-muted); }
+.review .rec .tag { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.review .opt b { color: var(--fg); font-weight: 600; }
+.review .cost { color: var(--fg-faint); font-size: 0.8125rem; }
+
+/* マージ */
+.review .prs { list-style: none; padding: 0; margin: 1rem 0 0; border: 1px solid var(--border); border-radius: var(--radius); }
+.review .prs li { display: grid; grid-template-columns: 1.25rem 3.5rem 1fr auto; gap: 0.5rem; align-items: center; padding: 0.625rem 1rem; border-top: 1px solid var(--border); font-size: 0.9375rem; }
+.review .prs li:first-child { border-top: 0; }
+.review .prs .i { color: var(--fg-faint); font-family: 'Geist Mono', monospace; font-size: 0.75rem; }
+.review .prs .ci { color: var(--ok); font-size: 0.8125rem; }
+
+/* 参考（畳む） */
+.review .more { margin-top: 2.5rem; border-top: 1px solid var(--border); }
+.review details { border-bottom: 1px solid var(--border); }
+.review summary { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.875rem 0; cursor: pointer; list-style: none; font-weight: 500; }
+.review summary::-webkit-details-marker { display: none; }
+.review summary::after { content: "+"; color: var(--fg-faint); font-family: 'Geist Mono', monospace; }
+.review details[open] summary::after { content: "−"; }
+.review summary .c { color: var(--fg-faint); font-family: 'Geist Mono', monospace; font-size: 0.8125rem; font-weight: 400; margin-left: auto; }
+.review details > div { padding: 0 0 1rem; font-size: 0.9375rem; color: var(--fg-muted); }
+.review details ul { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.375rem; }
+.review details li b { color: var(--fg); font-weight: 500; }
+.review .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.75rem; }
+.review .stat { border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.75rem; }
+.review .stat .v { color: var(--fg); font-family: 'Geist Mono', monospace; font-size: 1.125rem; font-weight: 500; }
+.review .stat .l { font-size: 0.75rem; }
+.review .stat p { font-size: 0.8125rem; line-height: 1.4; margin-top: 0.25rem; }
+.review footer { margin-top: 2rem; color: var(--fg-muted); font-size: 0.875rem; }
+
+/* 並べて見比べる図（認識合わせのレベル比較など） */
+.review .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem; }
+.review .pair figure { margin: 0; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem; display: grid; gap: 0.5rem; align-content: start; }
+.review .pair figcaption { font-size: 0.875rem; line-height: 1.5; color: var(--fg-muted); }
+.review .pair figcaption b { color: var(--fg); font-weight: 600; display: block; }
+
+/* 触れる見本 */
+.review .demo { margin-top: 1rem; border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; display: grid; justify-items: center; gap: 0.75rem; }
+.review .demo .state { font-size: 0.875rem; color: var(--fg-muted); min-height: 1.5em; }
+.review .demo .state.done { color: var(--ok); font-weight: 600; }
+
+@media (max-width: 380px) { .review .opts, .review .pair { grid-template-columns: 1fr; } }
