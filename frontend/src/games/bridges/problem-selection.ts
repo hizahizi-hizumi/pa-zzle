@@ -1,52 +1,60 @@
 import type { BridgesDifficulty } from "@/games/bridges/difficulty";
-import type { BridgesIdentifiedProblem } from "@/games/bridges/problem/problem";
-import { parseBridgesBoard } from "@/games/bridges/puzzle/board";
-import { createProblemId, type ProblemId } from "@/games/problem-id";
+import {
+  type BridgesRecordedProblemIdentity,
+  isBridgesProblemIdentity,
+} from "@/games/bridges/problem/problem";
+import {
+  type BridgesPooledProblem,
+  findBridgesPoolEntry,
+  findBridgesPoolEntryByProblemId,
+  listBridgesPoolEntries,
+  toBridgesPooledProblem,
+} from "@/games/bridges/problem/problem-pool";
 import type { ProblemSeed } from "@/games/problem-seed";
+import { selectProblemPoolEntry } from "@/games/problem-selection";
 
 /**
- * どの難易度でも出す1問。研究用の生成器（`scripts/research/bridges_supply.py` の `generate`、
- * 乱数の種 2・7×7・島の密度 0.3・2本橋 0.3・閉路 0.3）で作った一意解の問題で、全部の島のつながりを読む所がある。
+ * 難易度の問題集から seed で1問を選ぶ。
+ * 問題集は生成時に一意解と難易度を確かめ済みなので、プレイ時には生成・解探索・難易度分析を走らせない。
  */
-const fixedProblem: BridgesIdentifiedProblem = {
-  problem: parseBridgesBoard([
-    "2..2..2",
-    ".2..3..",
-    "3.1...2",
-    ".2..3..",
-    ".......",
-    ".2.1...",
-    "3...4.2",
-  ]),
-  identity: {
-    generatorVersion: "research-supply",
-    seed: "2",
-    conditions: { width: 7, height: 7 },
-  },
-};
-
-/** 難易度の問題を seed で1問選ぶ。どの難易度・seed でも同じ1問を返す。 */
 export function selectBridgesProblemForDifficulty(
-  _difficulty: BridgesDifficulty,
-  _seed: ProblemSeed,
-): BridgesIdentifiedProblem {
-  return fixedProblem;
+  difficulty: BridgesDifficulty,
+  seed: ProblemSeed,
+): BridgesPooledProblem {
+  const entry = selectProblemPoolEntry(
+    listBridgesPoolEntries(difficulty),
+    seed,
+    `level ${difficulty} Bridges`,
+  );
+  return toBridgesPooledProblem(entry);
 }
 
-/** 難易度で出す問題を問題 ID で引く。引けない ID には `null` を返す。 */
-export function selectBridgesProblemById(
-  _difficulty: BridgesDifficulty,
-  problemId: ProblemId,
-): BridgesIdentifiedProblem | null {
-  return createProblemId(fixedProblem.identity) === problemId
-    ? fixedProblem
+/**
+ * 記録に残した identity から同じ問題を復元する。
+ * 問題集に無い identity（生成器の版が今と違う記録など）は復元できないので `null` を返す。
+ */
+export function restoreBridgesProblem(
+  identity: BridgesRecordedProblemIdentity,
+): BridgesPooledProblem | null {
+  const entry = isBridgesProblemIdentity(identity)
+    ? findBridgesPoolEntry(identity)
     : null;
+  return entry ? toBridgesPooledProblem(entry) : null;
 }
 
-/** 難易度で出す問題を問題 ID で引けるか。 */
+/** 難易度の問題集から問題 ID で1問を引く。引けない ID には `null` を返す。 */
+export function selectBridgesProblemById(
+  difficulty: BridgesDifficulty,
+  problemId: string,
+): BridgesPooledProblem | null {
+  const entry = findBridgesPoolEntryByProblemId(difficulty, problemId);
+  return entry ? toBridgesPooledProblem(entry) : null;
+}
+
+/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
 export function canSelectBridgesProblemById(
   difficulty: BridgesDifficulty,
-  problemId: ProblemId,
+  problemId: string,
 ): boolean {
-  return selectBridgesProblemById(difficulty, problemId) !== null;
+  return findBridgesPoolEntryByProblemId(difficulty, problemId) !== null;
 }
