@@ -41,7 +41,7 @@ export const bridgesSplitRates = [0, 0.2] as const;
 export type BridgesSplitRate = (typeof bridgesSplitRates)[number];
 
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
-export const BRIDGES_GENERATOR_VERSION = "2";
+export const BRIDGES_GENERATOR_VERSION = "3";
 
 /**
  * 候補を作る条件。どれも難易度の判定条件ではなく、候補の分布を寄せる生成条件。

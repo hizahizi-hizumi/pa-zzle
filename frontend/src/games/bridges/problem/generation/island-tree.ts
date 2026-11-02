@@ -25,6 +25,23 @@ const directionSteps = {
 /** 島を伸ばす試みの上限を、島の数の目標の何倍にするか。伸ばせる所が尽きた盤面で止めるための上限。 */
 const GROWTH_ATTEMPTS_PER_TARGET_ISLAND = 60;
 
+/**
+ * 盤面の上下左右の端の行・列のどれにも島があるか。島の無い外周の行・列があると、盤面がその分だけ小さい問題と同じになり、
+ * 盤面の広さが見かけだけになる。
+ */
+function reachesEveryBorder(
+  islands: readonly CellPosition[],
+  size: number,
+): boolean {
+  const last = size - 1;
+  return (
+    islands.some(({ row }) => row === 0) &&
+    islands.some(({ row }) => row === last) &&
+    islands.some(({ column }) => column === 0) &&
+    islands.some(({ column }) => column === last)
+  );
+}
+
 function keyOf({ row, column }: CellPosition): number {
   return row * 1_000 + column;
 }
@@ -34,7 +51,8 @@ function keyOf({ row, column }: CellPosition): number {
  * （橋の通るマスと、既存の島の上下左右には島を置かない）。木として育つので全島がつながる。
  * 木を育てる途中で、`splitRate` の確率で、既にある橋の途中に島を差して橋を2本に分ける（分割）。
  * 次に、まだ橋の無い島の組のうち、既存の橋と交わらない組に `extraBridgeRate` の確率で輪を作る橋を足す。
- * 橋は `doubleBridgeRate` の確率で2本にし、数字は島から出る橋の本数にする。島が2つに届かなければ `null`。
+ * 橋は `doubleBridgeRate` の確率で2本にし、数字は島から出る橋の本数にする。島が2つに届かないか、上下左右の端の行・列に
+ * 島の無いものがあれば `null`。
  */
 export function growBridgesIslandTree(
   {
@@ -163,7 +181,7 @@ export function growBridgesIslandTree(
     bridgeCounts.set(`${origin}:${island}`, drawBridgeCount());
     bridgePaths.set(`${origin}:${island}`, path);
   }
-  if (islands.length < 2) {
+  if (islands.length < 2 || !reachesEveryBorder(islands, size)) {
     return null;
   }
 

@@ -78,8 +78,8 @@ describe("countBridgesSolutions", () => {
   describe("小さな盤面を総当たりで数えた場合", () => {
     // 解のある盤面を作るため、生成器で木と輪の橋を置いてから、一部の島の数字を1つずらして解の無い盤面や複数ある盤面も混ぜる。
     const random = createProblemSeededRandom("bridges-exact-solver");
-    const boards = Array.from({ length: 300 }, (_, index) => {
-      const layout = growBridgesIslandTree(
+    const layouts = Array.from({ length: 2000 }, () =>
+      growBridgesIslandTree(
         {
           size: 6,
           islandDensity: 0.24,
@@ -88,18 +88,22 @@ describe("countBridgesSolutions", () => {
           splitRate: 0.2,
         },
         random,
-      )!;
-      return index % 3 === 0
-        ? {
-            ...layout.board,
-            islands: layout.board.islands.map((island, islandIndex) =>
-              islandIndex === 0
-                ? { ...island, clue: Math.min(8, island.clue + 1) }
-                : island,
-            ),
-          }
-        : layout.board;
-    }).filter((board) => getBridgesNetwork(board).edges.length <= 9);
+      ),
+    ).flatMap((layout) => (layout ? [layout] : []));
+    const boards = layouts
+      .map((layout, index) => {
+        return index % 3 === 0
+          ? {
+              ...layout.board,
+              islands: layout.board.islands.map((island, islandIndex) =>
+                islandIndex === 0
+                  ? { ...island, clue: Math.min(8, island.clue + 1) }
+                  : island,
+              ),
+            }
+          : layout.board;
+      })
+      .filter((board) => getBridgesNetwork(board).edges.length <= 9);
 
     test("解の数が総当たりと一致すること", () => {
       const counts = boards.map(

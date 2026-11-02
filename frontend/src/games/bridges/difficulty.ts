@@ -43,12 +43,20 @@ const anyCount: NumericRange = {
   maximum: Number.POSITIVE_INFINITY,
 };
 
+/** 島の数の下限を決める、盤面のマスに対する島の割合（百分率）。 */
+const MINIMUM_ISLAND_PERCENT = 18;
+
 /**
- * 島の数の下限。上のレベルほど島が多い（合意）。下のレベルの典型（10 パーセンタイル）を下回るほど疎な盤面は、
- * 広い盤面でも見渡すだけで解けるので除く。6×6 で島が4〜6つの盤面も同じ。
+ * 島の数の下限。そのレベルの最も小さい盤面のマスの 18% にする。それより疎な盤面は島どうしが離れて行き先が少なく、
+ * 盤面が広くても見渡すだけで橋が決まり、広さが挑戦にならない。上のレベルほど盤面が広いので、下限も上がる（合意）。
  */
-function atLeastIslands(minimum: number): NumericRange {
-  return { minimum, maximum: Number.POSITIVE_INFINITY };
+function atLeastIslandsOn(smallestSize: number): NumericRange {
+  return {
+    minimum: Math.ceil(
+      (smallestSize * smallestSize * MINIMUM_ISLAND_PERCENT) / 100,
+    ),
+    maximum: Number.POSITIVE_INFINITY,
+  };
 }
 
 /**
@@ -59,7 +67,7 @@ function atLeastIslands(minimum: number): NumericRange {
 export const bridgesLevelCombinations = {
   "1": {
     boardSize: { minimum: 6, maximum: 7 },
-    islandCount: atLeastIslands(7),
+    islandCount: atLeastIslandsOn(6),
     // 入口が全部の問題（解き始めに全行き先が狭まる）は、読むところが無いので除く。
     openingEdgeRatio: { minimum: 0.5, maximum: 0.95 },
     countRoundCount: { minimum: 0, maximum: 0 },
@@ -68,15 +76,16 @@ export const bridgesLevelCombinations = {
   },
   "2": {
     boardSize: { minimum: 7, maximum: 8 },
-    islandCount: atLeastIslands(9),
+    islandCount: atLeastIslandsOn(7),
     openingEdgeRatio: { minimum: 0, maximum: 0.45 },
-    countRoundCount: { minimum: 1, maximum: Number.POSITIVE_INFINITY },
+    // 「少なくとも1本」の読みを1回だけ要る問題は、入口が狭くても1か所で抜けて後は見るだけで決まり、レベル1 と手応えが同じになる。
+    countRoundCount: { minimum: 2, maximum: Number.POSITIVE_INFINITY },
     connectivityRoundCount: { minimum: 0, maximum: 0 },
     countReasoningUndecidedRatio: { minimum: 0, maximum: 0 },
   },
   "3": {
     boardSize: { minimum: 8, maximum: 9 },
-    islandCount: atLeastIslands(12),
+    islandCount: atLeastIslandsOn(8),
     openingEdgeRatio: { minimum: 0, maximum: 0.45 },
     countRoundCount: anyCount,
     connectivityRoundCount: { minimum: 1, maximum: 1 },
@@ -84,7 +93,7 @@ export const bridgesLevelCombinations = {
   },
   "4": {
     boardSize: { minimum: 9, maximum: 10 },
-    islandCount: atLeastIslands(15),
+    islandCount: atLeastIslandsOn(9),
     openingEdgeRatio: { minimum: 0, maximum: 0.45 },
     countRoundCount: anyCount,
     connectivityRoundCount: { minimum: 2, maximum: 2 },
@@ -96,7 +105,7 @@ export const bridgesLevelCombinations = {
   },
   "5": {
     boardSize: { minimum: 10, maximum: 10 },
-    islandCount: atLeastIslands(18),
+    islandCount: atLeastIslandsOn(10),
     openingEdgeRatio: { minimum: 0, maximum: 0.45 },
     countRoundCount: anyCount,
     // つながりの手詰まりが7回以上の問題は帯の中で突出して重い（問題集の 90 パーセンタイルは 4）ので、上限を置く。

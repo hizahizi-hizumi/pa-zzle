@@ -21,10 +21,27 @@ describe("growBridgesIslandTree", () => {
       extraBridgeRate: 0.15,
       splitRate: 0.2,
     };
-    return Array.from(
-      { length: 40 },
-      () => growBridgesIslandTree(conditions, random)!,
-    );
+    return Array.from({ length: 40 }, () =>
+      growBridgesIslandTree(conditions, random),
+    ).flatMap((layout) => (layout ? [layout] : []));
+  });
+
+  test("作った盤面は、上下左右の端の行・列のどれにも島があること", () => {
+    const missing = layouts.filter(({ board }) => {
+      const last = board.width - 1;
+      const { islands } = board;
+      return !(
+        islands.some(({ row }) => row === 0) &&
+        islands.some(({ row }) => row === last) &&
+        islands.some(({ column }) => column === 0) &&
+        islands.some(({ column }) => column === last)
+      );
+    });
+
+    expect({ built: layouts.length > 0, missing }).toEqual({
+      built: true,
+      missing: [],
+    });
   });
 
   test("島が上下左右に隣り合わない、形の正しい盤面を作ること", () => {
@@ -93,21 +110,19 @@ describe("growBridgesIslandTree", () => {
       const random = createProblemSeededRandom(
         `island-tree-split-${splitRate}`,
       );
-      const total = Array.from(
-        { length: 60 },
-        () =>
-          growBridgesIslandTree(
-            {
-              size: 10,
-              islandDensity: 0.3,
-              doubleBridgeRate: 0.2,
-              extraBridgeRate: 0,
-              splitRate,
-            },
-            random,
-          )!.board.islands.length,
-      ).reduce((sum, count) => sum + count, 0);
-      return total / 60;
+      const counts = Array.from({ length: 60 }, () =>
+        growBridgesIslandTree(
+          {
+            size: 10,
+            islandDensity: 0.3,
+            doubleBridgeRate: 0.2,
+            extraBridgeRate: 0,
+            splitRate,
+          },
+          random,
+        ),
+      ).flatMap((layout) => (layout ? [layout.board.islands.length] : []));
+      return counts.reduce((sum, count) => sum + count, 0) / counts.length;
     });
 
     test("島の数の平均が増えること", () => {

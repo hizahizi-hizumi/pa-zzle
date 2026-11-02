@@ -73,13 +73,13 @@ describe("assessBridgesDifficulty", () => {
   test.each([
     ["入口が広く、数字のちょうどの読みだけで決まる 6×6", level1, "1"],
     [
-      "入口が狭く、少なくとも1本の読みが要る 7×7",
+      "入口が狭く、少なくとも1本の読みが2回要る 7×7",
       {
         ...level1,
         size: 7,
         islandCount: 12,
         openingEdgeRatio: 0.4,
-        countRoundCount: 1,
+        countRoundCount: 2,
       },
       "2",
     ],
@@ -112,6 +112,16 @@ describe("assessBridgesDifficulty", () => {
   test.each([
     ["入口が全部の 6×6", { ...level1, openingEdgeRatio: 1 }],
     ["島が6つの 6×6", { ...level1, islandCount: 6 }],
+    [
+      "入口が狭く、少なくとも1本の読みが1回だけの 7×7",
+      {
+        ...level1,
+        size: 7,
+        islandCount: 12,
+        openingEdgeRatio: 0.4,
+        countRoundCount: 1,
+      },
+    ],
     [
       "入口の広い、少なくとも1本の読みが要る 8×8",
       {

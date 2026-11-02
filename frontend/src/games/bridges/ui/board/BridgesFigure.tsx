@@ -42,8 +42,6 @@ type BridgesFigureProps = {
   blockingEdges?: readonly number[];
   /** 阻んだ橋の線を点けたまま描くか。遊び方の図で、阻まれたときの盤面の反応を見せるときに使う。 */
   showsBlockingEdges?: boolean;
-  /** 丸を淡い黄色で塗る島。難易度プレビューで、数字の読みだけでは橋が決まらない島を示す。 */
-  highlightedIslands?: readonly number[];
   /** どちらを狙ったか決まらない所を押したとき、候補の辺。点ける線を描いておき、盤面の反応で短く点ける。 */
   ambiguousEdges?: readonly number[];
   ref?: Ref<SVGSVGElement>;
@@ -96,7 +94,6 @@ export function BridgesFigure({
   focusedIsland = null,
   blockingEdges = [],
   showsBlockingEdges = false,
-  highlightedIslands = [],
   ambiguousEdges = [],
   ref,
 }: BridgesFigureProps) {
@@ -193,11 +190,7 @@ export function BridgesFigure({
               cy={y}
               r={ISLAND_RADIUS - tone.outlineWidth / 2}
               strokeWidth={tone.outlineWidth}
-              className={cn(
-                tone.disc,
-                highlightedIslands.includes(index) &&
-                  bridgesToneClassNames.highlightedIsland,
-              )}
+              className={tone.disc}
             />
             <text
               x={x}
