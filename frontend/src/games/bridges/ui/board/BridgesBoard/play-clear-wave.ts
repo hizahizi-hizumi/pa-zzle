@@ -11,9 +11,11 @@ const WAVE_STEP_MS = 90;
 const WAVE_MAX_SPREAD_MS = 900;
 /** 1つの島が膨らんで戻る時間。 */
 const ISLAND_POP_MS = 320;
+/** 島が最も膨らむ時点の、膨らみ始めからの割合。 */
+const ISLAND_POP_PEAK_OFFSET = 0.45;
 const islandPopKeyframes: Keyframe[] = [
   { transform: "scale(1)" },
-  { transform: "scale(1.22)", offset: 0.45 },
+  { transform: "scale(1.22)", offset: ISLAND_POP_PEAK_OFFSET },
   { transform: "scale(1)" },
 ];
 /** 波が渡り切った後、つながった盤面を見せておく時間。 */
@@ -47,6 +49,31 @@ export function listClearWaveDepths(
   return depths;
 }
 
+/** 隣の島へ波が渡る間隔。波全体が上限に収まるよう、段の多い盤面では縮める。 */
+function getWaveStepMs(deepest: number): number {
+  return Math.min(WAVE_STEP_MS, WAVE_MAX_SPREAD_MS / Math.max(1, deepest));
+}
+
+/**
+ * 波の時間の区切り。
+ * - `lastPopStartMs`: 最も遠い島が膨らみ始めるまでの時間。
+ * - `lastPopPeakMs`: 最も遠い島が最も膨らむまでの時間。全島がつながったことが見え切る時点。
+ */
+export function getClearWaveTiming(
+  board: BridgesBoard,
+  bridges: readonly BridgeCount[],
+): { lastPopStartMs: number; lastPopPeakMs: number } {
+  const deepest = Math.max(
+    0,
+    ...listClearWaveDepths(board, bridges).map((depth) => depth ?? 0),
+  );
+  const lastPopStartMs = deepest * getWaveStepMs(deepest);
+  return {
+    lastPopStartMs,
+    lastPopPeakMs: lastPopStartMs + ISLAND_POP_MS * ISLAND_POP_PEAK_OFFSET,
+  };
+}
+
 /**
  * クリアした盤面で、島0 から橋をたどって島を順に膨らませ、全島が1つにつながったことを見せてから `onFinished` を呼ぶ。
  * 全島がちょうどなのにつながっていない盤面（クリアにならない）と見分けられるよう、橋のつながりに沿って波を渡す。
@@ -62,10 +89,7 @@ export function playClearWave(
     animate() {
       const depths = listClearWaveDepths(board, bridges);
       const deepest = Math.max(0, ...depths.map((depth) => depth ?? 0));
-      const stepMs = Math.min(
-        WAVE_STEP_MS,
-        WAVE_MAX_SPREAD_MS / Math.max(1, deepest),
-      );
+      const stepMs = getWaveStepMs(deepest);
       return depths.flatMap((depth, island) => {
         const animation = figure
           ?.querySelector(`[${bridgesFigureParts.island}="${island}"]`)
