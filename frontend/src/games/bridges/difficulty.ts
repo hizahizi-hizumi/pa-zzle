@@ -52,7 +52,7 @@ const MINIMUM_ISLAND_PERCENT = 18;
 
 /**
  * 島の数の下限を、そのレベルの最も小さい盤面のマスの 18% にして組み合わせに足す。それより疎な盤面は島どうしが離れて
- * 行き先が少なく、盤面が広くても見渡すだけで橋が決まりやすく、広さが挑戦にならない。上のレベルほど盤面が広いので、
+ * 行き先が少なく、盤面が広くても見渡すだけで橋が決まりやすく、広さが挑戦にならないという見込みで置く（人の試遊では確かめていない）。上のレベルほど盤面が広いので、
  * 下限も上がる（合意）。
  */
 function withIslandLowerBound<
@@ -86,7 +86,7 @@ export const bridgesLevelCombinations = {
   }),
   "2": withIslandLowerBound({
     boardSize: { minimum: 7, maximum: 8 },
-    // 入口がレベル3 より狭い問題は、つながりを読まないのにレベル3 より解き始めにくいので除く。
+    // 入口が 0.2 未満の問題は、つながりを読まないのにレベル3 の多くの問題より解き始めにくいので除く。
     openingEdgeRatio: { minimum: 0.2, maximum: 0.45 },
     countRoundCount: atLeastTwoCountRounds,
     connectivityRoundCount: { minimum: 0, maximum: 0 },
