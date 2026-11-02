@@ -14,7 +14,12 @@ import type { ProblemRandom } from "@/games/problem-seed";
  * 研究用と違い、駒が通らないマス（盤面の外になるマス）を v4 と同じく減点する。
  */
 
-/** 手筋の重みと、効き目の上限（その数を超えても点が増えない）。研究用 v2 の `Weights`。 */
+/**
+ * 手筋の重みと、効き目の上限（その数を超えても点が増えない）。研究用 v2 の `Weights` に、滑りの手触りを足した。
+ * - `slide` / `slideCap`: 最短の道筋の滑りの長さの平均（`slideCap` まで）の重み。
+ * - `maximumShortSlideShare` / `maximumChoicelessStair`: 1マスだけの滑りの割合と選択肢の無い階段の長さの上限。超えた分を
+ *   `constraint` で減点する。既定の重みは研究用 v2 と同じ点になるよう、手触りを点にしない。
+ */
 export type TacticWeights = {
   stopper: number;
   passLure: number;
@@ -40,6 +45,10 @@ export type TacticWeights = {
   capFunnel: number;
   capDetour: number;
   capFalseLead: number;
+  slide: number;
+  slideCap: number;
+  maximumShortSlideShare: number;
+  maximumChoicelessStair: number;
   required: readonly StaticTacticTag[];
   forbidden: readonly StaticTacticTag[];
   constraint: number;
@@ -70,6 +79,10 @@ const defaultTacticWeights = {
   capFunnel: 4,
   capDetour: 2,
   capFalseLead: 10,
+  slide: 0,
+  slideCap: 4,
+  maximumShortSlideShare: 1,
+  maximumChoicelessStair: Number.POSITIVE_INFINITY,
   required: [],
   forbidden: [],
   constraint: 6,
@@ -80,7 +93,12 @@ const ROCK_TARGET = 0.22;
 
 type TacticWeightName = Exclude<
   keyof TacticWeights,
-  "required" | "forbidden" | `cap${string}` | "readCap"
+  | "required"
+  | "forbidden"
+  | `cap${string}`
+  | "readCap"
+  | "slideCap"
+  | `maximum${string}`
 >;
 
 /** タグを目的関数で強める・抑えるときに動かす重み。 */
@@ -150,7 +168,16 @@ function scoreTactics(
     w.near * tactics.nearStateCount -
     w.optimalPaths * Math.log2(Math.max(tactics.optimalPathCount, 1)) -
     w.excessRock * excess -
-    w.unused * unusedCellCount -
+    w.unused * unusedCellCount +
+    w.slide * Math.min(tactics.averageSlideLength, w.slideCap) -
+    w.constraint *
+      Math.max(
+        0,
+        tactics.shortSlideCount -
+          Math.floor(w.maximumShortSlideShare * tactics.shortest + 1e-9),
+      ) -
+    w.constraint *
+      Math.max(0, tactics.longestChoicelessStair - w.maximumChoicelessStair) -
     w.constraint *
       w.required.filter((tag) => !hasStaticTacticTag(tactics, tag)).length -
     w.constraint *

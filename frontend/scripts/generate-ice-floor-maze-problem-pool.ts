@@ -61,7 +61,8 @@ type SearchMode = "early" | "full";
 
 /**
  * レベル（`3`）か、レベルと要素の種類（`3-brittle-rock`）ごとの山登りの止め方。種類の指定がレベルの指定より優先する。
- * もろい岩は条件1（同じ向きが続く手）を満たしにくく、打ち切る方式では 1,000 回までに採用条件を満たす回が少ないので、最後まで回す。
+ * もろい岩だけの L3 は条件1（同じ向きが続く手）を満たしにくく、打ち切る方式では 1,000 回までに採用条件を満たす回がほとんど無いので、
+ * 最後まで回す。L5 の薄い氷は最後まで回して自作依存の点を上げ、L5 の両方は最後まで回すと1問に1分半ほどかかるので打ち切る。
  */
 type SearchModes = Readonly<Record<string, SearchMode>>;
 
@@ -70,6 +71,7 @@ const defaultSearchModes: SearchModes = {
   "3-brittle-rock": "full",
   "4": "early",
   "5": "full",
+  "5-mixed": "early",
 };
 
 function findSearchMode(
@@ -83,7 +85,6 @@ function findSearchMode(
 const earlyElementSearch = {
   iterations: 3000,
   stopWhenAccepted: true,
-  minimumHardness: 0,
   giveUpAfter: 1000,
 } as const satisfies ElementSearchSettings;
 
@@ -99,10 +100,10 @@ const elementShapes = {
   large: { width: 10, height: 12, shortest: { minimum: 17, maximum: 22 } },
 } as const;
 
-/** L3 は要素が少ないので、同じ盤面で短めの手数を求める。 */
+/** L3 は要素の入門なので、同じ盤面で短めの手数を求める。 */
 const shortElementShapes = {
-  small: { width: 8, height: 8, shortest: { minimum: 10, maximum: 14 } },
-  medium: { width: 10, height: 10, shortest: { minimum: 12, maximum: 16 } },
+  small: { width: 8, height: 8, shortest: { minimum: 9, maximum: 12 } },
+  medium: { width: 10, height: 10, shortest: { minimum: 11, maximum: 14 } },
 } as const;
 
 type ElementShape = {
@@ -128,6 +129,7 @@ const variantByComposition = {
 >;
 
 const TACTIC_ITERATIONS = 2000;
+const TACTIC_SLIDE_WEIGHT = 1;
 const TACTIC_MAXIMUM_ROCK_DENSITY = 0.34;
 const ELEMENT_MAXIMUM_ROCK_DENSITY = 0.3;
 
@@ -146,7 +148,12 @@ function buildTacticPlan(
   pattern: IceFloorMazeTacticPattern,
 ): GenerationPlan {
   const { minimum, maximum } = pattern.optimalMoveCount;
-  const weights = createTacticWeights(pattern.required, pattern.forbidden);
+  const weights = {
+    ...createTacticWeights(pattern.required, pattern.forbidden),
+    slide: TACTIC_SLIDE_WEIGHT,
+    maximumShortSlideShare: iceFloorMazeCommonConditions.maximumShortSlideShare,
+    maximumChoicelessStair: iceFloorMazeCommonConditions.maximumChoicelessStair,
+  };
   // 読みの浅い問題を求める型では、読み深さを点にしない（易しい問題を作るため。研究用 v2 の L1 と同じ）。
   const readsShallowly = pattern.readingDepth.maximum <= 2;
   return {
@@ -176,6 +183,7 @@ function buildElementPlan(
 ): GenerationPlan {
   const variant = variantByComposition[pattern.composition];
   const settings = searchSettings[mode];
+  const conditions = iceFloorMazeCommonConditions;
   return {
     label: `L${difficulty} ${variant} ${shape.width}×${shape.height} ${shape.shortest.minimum}〜${shape.shortest.maximum}手 要素${pattern.elementCount.minimum}〜${pattern.elementCount.maximum} ${mode}`,
     build() {
@@ -187,14 +195,24 @@ function buildElementPlan(
           height: shape.height,
           shortest: shape.shortest,
           elements: pattern.elementCount,
-          minimumEach:
-            variant === "mixed"
-              ? iceFloorMazeCommonConditions.minimumEachInMixed
-              : 0,
-          minimumUses: iceFloorMazeCommonConditions.minimumUses,
-          decoyShare: iceFloorMazeCommonConditions.decoyShare,
-          forcedShare: iceFloorMazeCommonConditions.forcedShare,
+          minimumEach: variant === "mixed" ? conditions.minimumEachInMixed : 0,
+          minimumUses: conditions.minimumUses,
+          decoyShare: conditions.decoyShare,
+          forcedShare: conditions.forcedShare,
           maximumRockDensity: ELEMENT_MAXIMUM_ROCK_DENSITY,
+          pool: {
+            selfMadeDependence: pattern.selfMadeDependence,
+            minimumDistantStops: pattern.distantStopCount.minimum,
+            maximumUsedElements: pattern.usedElementCount.maximum,
+            maximumLingeringDecoys: pattern.lingeringDecoyCount.maximum,
+            texture: {
+              maximumShortSlideShare: conditions.maximumShortSlideShare,
+              maximumChoicelessStair: conditions.maximumChoicelessStair,
+              maximumQuickReturns: conditions.maximumQuickReturns,
+              minimumVariedUses: conditions.minimumVariedUses,
+              maximumIdleRun: conditions.maximumIdleRun,
+            },
+          },
         },
         search: settings,
       };
@@ -564,6 +582,9 @@ function describeLevel(
       `  近い別解: ${describeDistribution(tactic.map((features) => features.nearPathCount))}`,
       `  到達できる停止点: ${describeDistribution(tactic.map((features) => features.reachableStopCount))}`,
       `  手筋のタグ: ${formatCounts(tactic.flatMap((features) => features.tags))}`,
+      `  1マスの滑りの割合: ${describeDistribution(tactic.map((features) => features.shortSlideCount / features.optimalMoveCount))}`,
+      `  滑りの長さの平均: ${describeDistribution(tactic.map((features) => features.averageSlideLength))}`,
+      `  選択肢の無い階段: ${formatCounts(tactic.map((features) => features.longestChoicelessStair))}`,
     );
   }
   const element = analyses.flatMap((analysis) =>
@@ -580,7 +601,20 @@ function describeLevel(
       `  状態の数: ${describeDistribution(element.map(({ features }) => features.reachableStateCount))}`,
       `  状態の読み深さ: ${formatCounts(element.map(({ features }) => features.stateReadingDepth ?? "-"))}`,
       `  見た目どおりの読み: ${formatCounts(element.map(({ features }) => features.looksReading))}`,
-      `  難しさの点: ${describeDistribution(element.map(({ features }) => features.hardness))}`,
+      `  自作依存の点: ${describeDistribution(element.map(({ features }) => features.selfMadeDependence))}（${formatCounts(element.map(({ features }) => features.selfMadeDependence))}）`,
+      `  2手以上前に作った水面で止まる: ${formatCounts(element.map(({ features }) => features.texture.distantStopCount))}`,
+      `  ゴールを自分で作った水面で止める: ${formatCounts(element.map(({ features }) => (features.texture.goalStopsOnSelfMade ? "あり" : "なし")))}`,
+      `  難しさの点（研究用 v4、段には使わない）: ${describeDistribution(element.map(({ features }) => features.hardness))}`,
+      `  1マスの滑りの割合: ${describeDistribution(element.map(({ features }) => features.texture.shortSlideCount / features.optimalMoveCount))}`,
+      `  滑りの長さの平均: ${describeDistribution(element.map(({ features }) => features.texture.averageSlideLength))}`,
+      `  階段: ${formatCounts(element.map(({ features }) => features.texture.longestStair))}`,
+      `  選択肢の無い階段: ${formatCounts(element.map(({ features }) => features.texture.longestChoicelessStair))}`,
+      `  読みどころの無い区間: ${formatCounts(element.map(({ features }) => features.texture.longestIdleRun))}`,
+      `  割ってすぐ戻る手筋: ${formatCounts(element.map(({ features }) => features.texture.quickReturnCount))}`,
+      `  自分で作った地形の別の使い方: ${formatCounts(element.map(({ features }) => features.texture.variedUseCount))}`,
+      `  作ってから使うまでの最大手数: ${describeDistribution(element.map(({ features }) => features.texture.selfMadeMaximumGap))}`,
+      `  閉じ込めにならないおとり: ${formatCounts(element.map(({ features }) => features.lingeringDecoyCount))}`,
+      `  岩の割合: ${describeDistribution(element.map(({ features }) => features.rockShare))}`,
       ...(["brittle-rock", "thin-ice", "mixed"] as const).flatMap(
         (composition) => {
           const ofComposition = element.filter(
@@ -588,7 +622,7 @@ function describeLevel(
           );
           return ofComposition.length > 0
             ? [
-                `    ${composition}: ${ofComposition.length}問 難しさ ${describeDistribution(ofComposition.map(({ features }) => features.hardness))} / 最少手数 ${describeDistribution(ofComposition.map(({ features }) => features.optimalMoveCount))}`,
+                `    ${composition}: ${ofComposition.length}問 自作依存の点 ${describeDistribution(ofComposition.map(({ features }) => features.selfMadeDependence))} / 最少手数 ${describeDistribution(ofComposition.map(({ features }) => features.optimalMoveCount))}`,
               ]
             : [];
         },
@@ -784,14 +818,14 @@ async function runCompare(runs: number): Promise<void> {
     );
     const seconds = results.map((result) => result.seconds);
     const total = seconds.reduce((sum, value) => sum + value, 0);
-    const hardness = accepted.flatMap((result) =>
+    const dependence = accepted.flatMap((result) =>
       result.analysis?.status === "analyzed" &&
       result.analysis.composition !== "none"
-        ? [result.analysis.features.hardness]
+        ? [result.analysis.features.selfMadeDependence]
         : [],
     );
     lines.push(
-      `${state.plan.label}: 採用 ${accepted.length}/${results.length} / 1回 ${(total / results.length).toFixed(1)}s（${describeDistribution(seconds)}）/ 1問 ${(total / Math.max(1, accepted.length)).toFixed(1)}s / 難しさ ${describeDistribution(hardness)} / 採用条件を初めて満たした回 ${describeDistribution(accepted.flatMap((result) => (result.acceptedAtIteration === null ? [] : [result.acceptedAtIteration])))}`,
+      `${state.plan.label}: 採用 ${accepted.length}/${results.length} / 1回 ${(total / results.length).toFixed(1)}s（${describeDistribution(seconds)}）/ 1問 ${(total / Math.max(1, accepted.length)).toFixed(1)}s / 自作依存の点 ${describeDistribution(dependence)} / 採用条件を初めて満たした回 ${describeDistribution(accepted.flatMap((result) => (result.acceptedAtIteration === null ? [] : [result.acceptedAtIteration])))}`,
       `  外れた理由: ${formatCounts(results.flatMap((result) => (result.rejection ? [result.rejection] : [])))}`,
     );
   }
@@ -849,6 +883,10 @@ async function runVerify(): Promise<void> {
           { stdout: "pipe", stderr: "inherit" },
         );
         const output = await new Response(worker.stdout).text();
+        if ((await worker.exited) !== 0) {
+          failures.push(`L${chunk[0]} ${chunk[1]}〜: 検証のワーカーが失敗した`);
+          continue;
+        }
         for (const line of output.trim().split("\n").filter(Boolean)) {
           const result = JSON.parse(line) as {
             seed: string;
@@ -865,6 +903,15 @@ async function runVerify(): Promise<void> {
       }
     }),
   );
+  const expected = difficultyLevels.reduce(
+    (sum, { id }) => sum + pool.levels[id].length,
+    0,
+  );
+  if (total !== expected) {
+    failures.push(
+      `検証した問題の数 ${total} が問題集の問題の数 ${expected} と違う`,
+    );
+  }
   console.log(
     [
       ...failures,

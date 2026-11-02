@@ -32,7 +32,10 @@ describe("createIceFloorMazeDiagnosticSnapshot", () => {
     expect(snapshot.difficultyAssessment).toMatchObject({
       status: "classified",
       difficulty: "5",
-      composition: "mixed",
+      composition:
+        expectedAnalysis.status === "analyzed"
+          ? expectedAnalysis.composition
+          : null,
     });
     expect(serialized).toContain('"hardness"');
   });

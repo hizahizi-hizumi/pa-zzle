@@ -68,6 +68,7 @@ const v4Recipe: ElementRecipe = {
   decoyShare: 0.2,
   forcedShare: 0.25,
   maximumRockDensity: 0.3,
+  pool: null,
 };
 
 type ElementEntry = {

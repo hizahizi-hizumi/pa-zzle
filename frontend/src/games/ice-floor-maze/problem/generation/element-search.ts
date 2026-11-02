@@ -4,7 +4,6 @@ import {
   type ElementVariant,
   evaluateElementBoard,
   listElementViolations,
-  scoreElementHardness,
 } from "@/games/ice-floor-maze/problem/generation/element-objective";
 import {
   CELL_BRITTLE,
@@ -25,23 +24,22 @@ import type { ProblemRandom } from "@/games/problem-seed";
  */
 
 /**
- * 山登りの止め方。
+ * 山登りの止め方。採用は、生成条件の採用条件をすべて満たすこと。
  * - `iterations`: 山登りの回数。
- * - `stopWhenAccepted`: 採用条件を満たし、難しさの点（読み深さを除く）が `minimumHardness` 以上になった時点で止める。
- * - `giveUpAfter`: 打ち切る方式で、この回数までに採用条件を満たさなければ諦める。
+ * - `stopWhenAccepted`: 採用できる盤面になった時点で止める。止めないときは、採用できた盤面のうち点の最もよいもの
+ *   （無ければ点の最もよい盤面）を返す。
+ * - `giveUpAfter`: 打ち切る方式で、この回数までに採用できなければ諦める。
  */
 export type ElementSearchSettings = {
   iterations: number;
   stopWhenAccepted: boolean;
-  minimumHardness: number;
   giveUpAfter: number;
 };
 
-/** 研究用の v4 と同じ、最後まで回す山登り。 */
+/** 研究用の v4 と同じ回数を最後まで回す山登り。 */
 export const fullElementSearch = {
   iterations: 3000,
   stopWhenAccepted: false,
-  minimumHardness: 0,
   giveUpAfter: 3000,
 } as const satisfies ElementSearchSettings;
 
@@ -374,15 +372,10 @@ function polish(searcher: Searcher, current: Scored): Scored | null {
   return found;
 }
 
-function isAccepted(
-  scored: Scored,
-  recipe: ElementRecipe,
-  settings: ElementSearchSettings,
-): boolean {
+function isAccepted(scored: Scored, recipe: ElementRecipe): boolean {
   return (
     scored.metrics !== null &&
-    listElementViolations(scored.metrics, recipe).length === 0 &&
-    scoreElementHardness(scored.metrics) >= settings.minimumHardness
+    listElementViolations(scored.metrics, recipe).length === 0
   );
 }
 
@@ -405,9 +398,18 @@ export function searchElementProblem(
   const evaluation = evaluateElementBoard(initial.board, initial.start, recipe);
   let current: Scored = { ...initial, ...evaluation };
   let best = current;
-  let acceptedAtIteration: number | null = isAccepted(current, recipe, settings)
-    ? 0
-    : null;
+  let bestAccepted: Scored | null = null;
+  let acceptedAtIteration: number | null = null;
+  function considerAccepting(candidate: Scored, iteration: number): void {
+    if (
+      (!bestAccepted || candidate.score > bestAccepted.score) &&
+      isAccepted(candidate, recipe)
+    ) {
+      bestAccepted = candidate;
+      acceptedAtIteration ??= iteration;
+    }
+  }
+  considerAccepting(current, 0);
   let iteration = 1;
   for (; iteration < settings.iterations; iteration += 1) {
     if (settings.stopWhenAccepted) {
@@ -418,13 +420,11 @@ export function searchElementProblem(
         return null;
       }
     }
+    const previous = current;
     if (iteration % POLISH_EVERY === 0 && current.metrics) {
       const polished = polish(searcher, current);
       if (polished) {
         current = polished;
-        if (polished.score >= best.score) {
-          best = polished;
-        }
       }
     } else {
       const next = mutate(searcher, current);
@@ -436,22 +436,18 @@ export function searchElementProblem(
       );
       if (nextEvaluation.score >= current.score) {
         current = { ...next, ...nextEvaluation };
-        if (current.score >= best.score) {
-          best = current;
-        }
       }
     }
-    if (
-      settings.stopWhenAccepted &&
-      acceptedAtIteration === null &&
-      isAccepted(current, recipe, settings)
-    ) {
-      acceptedAtIteration = iteration;
-      best = current;
+    if (current !== previous) {
+      if (current.score >= best.score) {
+        best = current;
+      }
+      considerAccepting(current, iteration);
     }
   }
   if (settings.stopWhenAccepted && acceptedAtIteration === null) {
     return null;
   }
-  return { ...best, iterationCount: iteration, acceptedAtIteration };
+  const found: Scored = bestAccepted ?? best;
+  return { ...found, iterationCount: iteration, acceptedAtIteration };
 }

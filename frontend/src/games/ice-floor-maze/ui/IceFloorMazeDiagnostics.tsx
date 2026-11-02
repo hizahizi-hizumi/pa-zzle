@@ -36,6 +36,10 @@ const unmetConditionLabels = {
   "few-uses": "使う回数不足",
   "static-shortcut": "見た目どおりで解ける",
   "element-mix": "要素の内訳",
+  "short-slides": "1マスの滑りが多い",
+  "choiceless-stair": "選択肢の無い階段",
+  "repeated-tactic": "同じ手筋の繰り返し",
+  "idle-run": "読みどころの無い区間",
 } as const satisfies Record<IceFloorMazeUnmetCondition, string>;
 
 const compositionLabels = {

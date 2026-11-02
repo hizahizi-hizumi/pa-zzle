@@ -34,6 +34,7 @@ const elementFeatures: IceFloorMazeElementFeatures = {
   looksPassingMoveCount: null,
   lingeringDecoyCount: 0,
   rockShare: 0.2,
+  selfMadeDependence: 3.5,
   texture: {
     shortSlideCount: 2,
     averageSlideLength: 3,
@@ -45,6 +46,8 @@ const elementFeatures: IceFloorMazeElementFeatures = {
     selfMadeTotalGap: 7,
     quickReturnCount: 1,
     variedUseCount: 2,
+    distantStopCount: 1,
+    goalStopsOnSelfMade: false,
     changedCellCount: 4,
     maximumChangedPerMove: 2,
     maximumChangeSpread: 1,

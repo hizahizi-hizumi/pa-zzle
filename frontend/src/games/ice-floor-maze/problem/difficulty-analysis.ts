@@ -6,7 +6,6 @@ import {
   type LooksReading,
   measureElementMetrics,
   type SolutionTexture,
-  summarizeSolutionMoves,
 } from "@/games/ice-floor-maze/problem/generation/element-features";
 import {
   STATE_READING_DEPTH_CAP,
@@ -97,8 +96,10 @@ export type IceFloorMazeTacticFeatures = {
  * - `lingeringDecoyCount`: おとりのうち、もっともらしい手で変化させた直後が閉じ込めにならない（遠回りか、まだ動き回れる詰み）もの。
  * - `rockShare`: 盤面として描くマスのうち岩の割合。
  * - `texture`: 最短解の手触り（滑りの長さ・階段・読みどころの無い区間・自分で作った地形の使い方・変わるマスの散らばり）。
+ * - `selfMadeDependence`: 自作依存の点（前の自分の手が作った水面・崩れた跡にどれだけ頼るか。最短解が複数あれば最も低い解の点）。
+ *   試遊の記録で人の難しさと最もよく揃った特徴量で、レベル3〜5 の段を分ける。
+ * - `hardness`: 研究用 v4 の難しさの点に状態の読み深さを足したもの。試遊の難しさとは揃わなかったので段には使わない（比べるために残す）。
  * - `stateReadingDepth`: 規則を知って先を読む人が状態のグラフで解ける読み手数。上限まで読めなければ `null`。
- * - `hardness`: 難しさの点（研究用 v4 の点に状態の読み深さを足したもの。大きいほど難しい）。
  */
 export type IceFloorMazeElementFeatures = {
   optimalMoveCount: number;
@@ -128,6 +129,7 @@ export type IceFloorMazeElementFeatures = {
   lingeringDecoyCount: number;
   rockShare: number;
   texture: SolutionTexture;
+  selfMadeDependence: number;
   stateReadingDepth: number | null;
   hardness: number;
 };
@@ -248,7 +250,8 @@ function analyzeElements(
     looksPassingMoveCount: metrics.looks.passingMoveCount,
     lingeringDecoyCount: metrics.lingeringDecoyCount,
     rockShare: metrics.rockShare,
-    texture: summarizeSolutionMoves(metrics.moves, board.width),
+    texture: metrics.texture,
+    selfMadeDependence: metrics.selfMadeDependence,
     stateReadingDepth:
       readingDepth > STATE_READING_DEPTH_CAP ? null : readingDepth,
     hardness: scoreElementHardnessWithReading(metrics, readingDepth),

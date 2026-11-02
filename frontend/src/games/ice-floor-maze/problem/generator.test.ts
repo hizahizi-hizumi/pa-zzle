@@ -36,6 +36,7 @@ const elementRecipe: ElementRecipe = {
   decoyShare: 0.2,
   forcedShare: 0.25,
   maximumRockDensity: 0.3,
+  pool: null,
 };
 
 describe("generateIceFloorMazeProblem", () => {
@@ -96,13 +97,26 @@ describe("generateIceFloorMazeProblem", () => {
   describe("採用条件を満たした時点で打ち切る方式で、条件を満たさないまま諦める回数に達した場合", () => {
     const recipe: IceFloorMazeGenerationRecipe = {
       kind: "elements",
-      recipe: elementRecipe,
-      search: {
-        iterations: 3000,
-        stopWhenAccepted: true,
-        minimumHardness: Number.POSITIVE_INFINITY,
-        giveUpAfter: 5,
+      recipe: {
+        ...elementRecipe,
+        pool: {
+          selfMadeDependence: {
+            minimum: Number.POSITIVE_INFINITY,
+            maximum: Number.POSITIVE_INFINITY,
+          },
+          minimumDistantStops: 0,
+          maximumUsedElements: Number.POSITIVE_INFINITY,
+          maximumLingeringDecoys: Number.POSITIVE_INFINITY,
+          texture: {
+            maximumShortSlideShare: 1,
+            maximumChoicelessStair: Number.POSITIVE_INFINITY,
+            maximumQuickReturns: Number.POSITIVE_INFINITY,
+            minimumVariedUses: 0,
+            maximumIdleRun: Number.POSITIVE_INFINITY,
+          },
+        },
       },
+      search: { iterations: 3000, stopWhenAccepted: true, giveUpAfter: 5 },
     };
 
     test("問題を作らないこと", () => {

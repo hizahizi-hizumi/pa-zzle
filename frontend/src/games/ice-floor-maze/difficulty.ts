@@ -34,15 +34,22 @@ export type IceFloorMazeTacticPattern = {
 };
 
 /**
- * 要素のあるレベルの、挑戦の型（研究用の生成 v4 の要素の組み合わせ）。
+ * 要素のあるレベルの、挑戦の型。段は自作依存の点（`IceFloorMazeElementFeatures` の `selfMadeDependence`。前の自分の手が作った
+ * 水面・崩れた跡にどれだけ頼るか）で分け、要素の種類・数・手数は作業の量として範囲を置く。
  * - `composition` / `elementCount`: 置く要素の種類と数。
- * - `hardness`: 難しさの点（`IceFloorMazeElementFeatures` の `hardness`）の範囲。
+ * - `usedElementCount`: 最短解で変化させる要素の数の範囲。
+ * - `lingeringDecoyCount`: 変化させた直後が閉じ込めにならないおとりの数の範囲。
+ * - `selfMadeDependence`: 自作依存の点の範囲。
+ * - `distantStopCount`: 2手以上前に作った水面で止まる回数の範囲。
  */
 export type IceFloorMazeElementPattern = {
   composition: Exclude<IceFloorMazeElementComposition, "none">;
   optimalMoveCount: NumericRange;
   elementCount: NumericRange;
-  hardness: NumericRange;
+  usedElementCount: NumericRange;
+  lingeringDecoyCount: NumericRange;
+  selfMadeDependence: NumericRange;
+  distantStopCount: NumericRange;
 };
 
 /**
@@ -62,11 +69,45 @@ export type IceFloorMazeLevelCriteria =
     };
 
 const unbounded = Number.POSITIVE_INFINITY;
-const anyHardness = { minimum: 0, maximum: unbounded } as const;
+const anyCount = { minimum: 0, maximum: unbounded } as const;
 
 /**
- * 各レベルの基準。L1・L2 は氷と岩だけで手筋を足し、L3 はもろい岩か薄い氷の一方、L4 は薄い氷を多く、または両方を少し、
- * L5 は両方を多く置いて難しさの点が高いもの。手数と要素の数の範囲は試遊で決め直す前の仮の値。
+ * L3（要素の入門）。要素を2〜3個にし、最短解で変化させる要素を2個までにして気づきを1つに絞り、おとりは変化させるとすぐ
+ * 閉じ込めになるものだけにする。自作依存の点に上限を置く。
+ */
+const introductionPattern = {
+  optimalMoveCount: { minimum: 9, maximum: 14 },
+  elementCount: { minimum: 2, maximum: 3 },
+  usedElementCount: { minimum: 0, maximum: 2 },
+  lingeringDecoyCount: { minimum: 0, maximum: 0 },
+  selfMadeDependence: { minimum: 0, maximum: 3 },
+  distantStopCount: anyCount,
+} as const;
+
+/** L4。自作依存の点を L3 と L5 の間の帯に置く。 */
+const dependencePattern = {
+  optimalMoveCount: { minimum: 12, maximum: 19 },
+  elementCount: { minimum: 4, maximum: 6 },
+  usedElementCount: anyCount,
+  lingeringDecoyCount: anyCount,
+  selfMadeDependence: { minimum: 3.5, maximum: 5.5 },
+  distantStopCount: anyCount,
+} as const;
+
+/** L5。自作依存の点が高く、2手以上前に作った水面で2回以上止まる。 */
+const deepDependencePattern = {
+  optimalMoveCount: { minimum: 14, maximum: 22 },
+  elementCount: { minimum: 7, maximum: 8 },
+  usedElementCount: anyCount,
+  lingeringDecoyCount: anyCount,
+  selfMadeDependence: { minimum: 6, maximum: unbounded },
+  distantStopCount: { minimum: 2, maximum: unbounded },
+} as const;
+
+/**
+ * 各レベルの基準。L1・L2 は氷と岩だけで手筋を足し、L3〜L5 は自作依存の点の帯で分ける（L3 はもろい岩か薄い氷の一方を
+ * 少し置いた入門）。もろい岩は止め役を作れず通り道を開くだけなので、L4・L5 は薄い氷だけか両方を置く。手数と要素の数の範囲は
+ * 試遊で決め直す前の仮の値。
  */
 export const iceFloorMazeLevelCriteria = {
   "1": {
@@ -106,48 +147,24 @@ export const iceFloorMazeLevelCriteria = {
     kind: "elements",
     largestBoardShape: { width: 10, height: 10 },
     patterns: [
-      {
-        composition: "brittle-rock",
-        optimalMoveCount: { minimum: 10, maximum: 16 },
-        elementCount: { minimum: 3, maximum: 5 },
-        hardness: anyHardness,
-      },
-      {
-        composition: "thin-ice",
-        optimalMoveCount: { minimum: 10, maximum: 16 },
-        elementCount: { minimum: 3, maximum: 5 },
-        hardness: anyHardness,
-      },
+      { composition: "brittle-rock", ...introductionPattern },
+      { composition: "thin-ice", ...introductionPattern },
     ],
   },
   "4": {
     kind: "elements",
     largestBoardShape: { width: 10, height: 10 },
     patterns: [
-      {
-        composition: "thin-ice",
-        optimalMoveCount: { minimum: 12, maximum: 19 },
-        elementCount: { minimum: 6, maximum: 7 },
-        hardness: anyHardness,
-      },
-      {
-        composition: "mixed",
-        optimalMoveCount: { minimum: 12, maximum: 19 },
-        elementCount: { minimum: 4, maximum: 6 },
-        hardness: anyHardness,
-      },
+      { composition: "thin-ice", ...dependencePattern },
+      { composition: "mixed", ...dependencePattern },
     ],
   },
   "5": {
     kind: "elements",
     largestBoardShape: { width: 10, height: 12 },
     patterns: [
-      {
-        composition: "mixed",
-        optimalMoveCount: { minimum: 14, maximum: 22 },
-        elementCount: { minimum: 7, maximum: 8 },
-        hardness: { minimum: 45, maximum: unbounded },
-      },
+      { composition: "thin-ice", ...deepDependencePattern },
+      { composition: "mixed", ...deepDependencePattern },
     ],
   },
 } as const satisfies Record<IceFloorMazeDifficulty, IceFloorMazeLevelCriteria>;
@@ -155,15 +172,26 @@ export const iceFloorMazeLevelCriteria = {
 /**
  * 全レベルに共通の採用条件。
  * - `forcedShare`: 一本道（戻らない選択肢が1つしかない手）を最少手数のこの割合まで。
+ * - `maximumShortSlideShare`: 最短解の1マスだけの滑りを最少手数のこの割合（切り捨て）まで。
+ * - `maximumChoicelessStair`: 最短解で、もっともらしい別の手が無い手だけで直交する2つの向きを交互に続ける連なり（選択肢の無い階段）の長さの上限。
+ * 要素のある盤面だけの条件:
  * - `minimumUses`: 最短解で要素を使う回数の下限。
  * - `decoyShare`: おとりを要素の数のこの割合（切り上げ、最低1）以上。
  * - `minimumEachInMixed`: 両方を置く盤面で、もろい岩・薄い氷それぞれの下限。
+ * - `maximumQuickReturns`: 薄い氷を割った直後の手でその水面へ戻って止まる手筋の回数の上限。
+ * - `minimumVariedUses`: 前の手が作った地形の、割ってすぐ戻る手筋でない使い方（遠くから水面で止まる・崩れた跡を通るなど）の回数の下限。
+ * - `maximumIdleRun`: 要素を変えず使わず、誘いも無い手（読みどころの無い手）が続く長さの上限。
  */
 export const iceFloorMazeCommonConditions = {
   forcedShare: 0.25,
-  minimumUses: 3,
+  maximumShortSlideShare: 0.25,
+  maximumChoicelessStair: 2,
+  minimumUses: 2,
   decoyShare: 0.2,
   minimumEachInMixed: 2,
+  maximumQuickReturns: 2,
+  minimumVariedUses: 1,
+  maximumIdleRun: 4,
 } as const;
 
 /**
@@ -176,6 +204,9 @@ export const iceFloorMazeCommonConditions = {
  * - `few-uses`: 最短解で要素を使う回数が足りない。
  * - `static-shortcut`: 見た目どおりかもう一方の読みで短く解ける。
  * - `element-mix`: 両方を置く盤面で、一方が少ない。
+ * - `short-slides` / `choiceless-stair`: 1マスだけの滑りが多い・選択肢の無い階段が長い。
+ * - `repeated-tactic`: 割ってすぐ戻る手筋が多い、または前の手が作った地形の別の使い方が無い。
+ * - `idle-run`: 読みどころの無い手が長く続く。
  */
 export type IceFloorMazeUnmetCondition =
   | "multiple-solutions"
@@ -187,7 +218,11 @@ export type IceFloorMazeUnmetCondition =
   | "few-decoys"
   | "few-uses"
   | "static-shortcut"
-  | "element-mix";
+  | "element-mix"
+  | "short-slides"
+  | "choiceless-stair"
+  | "repeated-tactic"
+  | "idle-run";
 
 /**
  * 分析結果を難易度へ分類した結果。
@@ -231,16 +266,45 @@ function hasManyForcedMoves(features: {
   );
 }
 
+function hasManyShortSlides(
+  shortSlideCount: number,
+  optimalMoveCount: number,
+): boolean {
+  return (
+    shortSlideCount >
+    Math.floor(
+      iceFloorMazeCommonConditions.maximumShortSlideShare * optimalMoveCount +
+        1e-9,
+    )
+  );
+}
+
+function hasLongChoicelessStair(longestChoicelessStair: number): boolean {
+  return (
+    longestChoicelessStair > iceFloorMazeCommonConditions.maximumChoicelessStair
+  );
+}
+
 export function listIceFloorMazeTacticUnmetConditions(
   features: IceFloorMazeTacticFeatures,
 ): IceFloorMazeUnmetCondition[] {
-  return [
-    ...(features.optimalSolutionCount > 1
-      ? (["multiple-solutions"] as const)
-      : []),
-    ...(hasManyForcedMoves(features) ? (["forced"] as const) : []),
-    ...(features.readingDepth === null ? (["unreadable"] as const) : []),
-  ];
+  const checks = [
+    ["multiple-solutions", features.optimalSolutionCount > 1],
+    ["forced", hasManyForcedMoves(features)],
+    ["unreadable", features.readingDepth === null],
+    [
+      "short-slides",
+      hasManyShortSlides(features.shortSlideCount, features.optimalMoveCount),
+    ],
+    [
+      "choiceless-stair",
+      hasLongChoicelessStair(features.longestChoicelessStair),
+    ],
+  ] as const satisfies readonly (readonly [
+    IceFloorMazeUnmetCondition,
+    boolean,
+  ])[];
+  return checks.flatMap(([condition, unmet]) => (unmet ? [condition] : []));
 }
 
 export function listIceFloorMazeElementUnmetConditions(
@@ -248,6 +312,7 @@ export function listIceFloorMazeElementUnmetConditions(
   features: IceFloorMazeElementFeatures,
 ): IceFloorMazeUnmetCondition[] {
   const conditions = iceFloorMazeCommonConditions;
+  const { texture } = features;
   const checks = [
     ["multiple-solutions", features.optimalSolutionCount > 1],
     ["forced", hasManyForcedMoves(features)],
@@ -269,6 +334,20 @@ export function listIceFloorMazeElementUnmetConditions(
         Math.min(features.brittleRockCount, features.thinIceCount) <
           conditions.minimumEachInMixed,
     ],
+    [
+      "short-slides",
+      hasManyShortSlides(texture.shortSlideCount, features.optimalMoveCount),
+    ],
+    [
+      "choiceless-stair",
+      hasLongChoicelessStair(texture.longestChoicelessStair),
+    ],
+    [
+      "repeated-tactic",
+      texture.quickReturnCount > conditions.maximumQuickReturns ||
+        texture.variedUseCount < conditions.minimumVariedUses,
+    ],
+    ["idle-run", texture.longestIdleRun > conditions.maximumIdleRun],
   ] as const satisfies readonly (readonly [
     IceFloorMazeUnmetCondition,
     boolean,
@@ -314,7 +393,16 @@ function matchesElementPattern(
     composition === pattern.composition &&
     isInNumericRange(features.optimalMoveCount, pattern.optimalMoveCount) &&
     isInNumericRange(features.elementCount, pattern.elementCount) &&
-    isInNumericRange(features.hardness, pattern.hardness)
+    isInNumericRange(features.usedElementCount, pattern.usedElementCount) &&
+    isInNumericRange(
+      features.lingeringDecoyCount,
+      pattern.lingeringDecoyCount,
+    ) &&
+    isInNumericRange(features.selfMadeDependence, pattern.selfMadeDependence) &&
+    isInNumericRange(
+      features.texture.distantStopCount,
+      pattern.distantStopCount,
+    )
   );
 }
 

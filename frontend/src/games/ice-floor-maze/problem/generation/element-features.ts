@@ -98,6 +98,8 @@ export type ElementMetrics = {
   other: StaticSolution;
   solution: readonly number[];
   moves: readonly SolutionMove[];
+  texture: SolutionTexture;
+  selfMadeDependence: number;
   lingeringDecoyCount: number;
   rockShare: number;
 };
@@ -148,6 +150,8 @@ export type SolutionMove = {
  * - `selfMadeUseCount` / `selfMadeMaximumGap` / `selfMadeTotalGap`: 自分で作った地形を使う回数と、作ってから使うまでの手数の最大・合計。
  * - `quickReturnCount`: 薄い氷を割った直後の手で、その水面へ戻って止まる回数（割ってすぐ戻る手筋）。
  * - `variedUseCount`: 自分で作った地形を使ううち、割ってすぐ戻る手筋でないもの（遠くから水面で止まる・崩れた跡を通るなど）。
+ * - `distantStopCount`: 2手以上前に作った水面で止まる回数。
+ * - `goalStopsOnSelfMade`: ゴールで止まる最後の手が、自分で作った水面で止まる。
  * - `changedCellCount` / `maximumChangedPerMove` / `maximumChangeSpread`: 変わるマスの数の合計、1手の最大、1手で変わるマスどうしの
  *   マンハッタン距離の最大。
  * - `changedAreaSpan`: 解の全体で変わるマスを囲む長方形の幅と高さの和（マス数−1ずつ）。変わるマスが無ければ0。
@@ -163,6 +167,8 @@ export type SolutionTexture = {
   selfMadeTotalGap: number;
   quickReturnCount: number;
   variedUseCount: number;
+  distantStopCount: number;
+  goalStopsOnSelfMade: boolean;
   changedCellCount: number;
   maximumChangedPerMove: number;
   maximumChangeSpread: number;
@@ -645,6 +651,118 @@ function isQuickReturn(use: SelfMadeTerrainUse): boolean {
   return use.kind === "water" && use.gap === 1;
 }
 
+function isDistantStop(use: SelfMadeTerrainUse): boolean {
+  return use.kind === "water" && use.gap >= 2;
+}
+
+/** 自作依存の点の重み。遠くに作った水面で止まる・ゴールを自分で作った水面で止めるほど、初期盤面から読めず覚えておく地形が増える。 */
+const selfMadeDependenceWeights = {
+  distantStop: 2,
+  otherVariedUse: 1,
+  quickReturn: 0.5,
+  goalStop: 2,
+} as const;
+
+/**
+ * 1本の解の自作依存の点（初期盤面に無く、前の自分の手が作った地形にどれだけ頼るか）。試遊の記録と最もよく揃った特徴量
+ * （`docs/パズル/導入調査/氷の床迷路/氷の床迷路試遊記録の分析.md`）。
+ */
+export function scoreSelfMadeDependence(
+  texture: Pick<
+    SolutionTexture,
+    | "distantStopCount"
+    | "variedUseCount"
+    | "quickReturnCount"
+    | "goalStopsOnSelfMade"
+  >,
+): number {
+  const w = selfMadeDependenceWeights;
+  return (
+    w.distantStop * texture.distantStopCount +
+    w.otherVariedUse * (texture.variedUseCount - texture.distantStopCount) +
+    w.quickReturn * texture.quickReturnCount +
+    w.goalStop * Number(texture.goalStopsOnSelfMade)
+  );
+}
+
+/** 自作依存の点を比べる最短解の数の上限。最短解が一意の問題（問題集の問題）では1本だけを測る。 */
+const DEPENDENCE_SOLUTION_CAP = 32;
+
+/** 状態の列 `states`（起点から）を通る解の、各手の自分で作った地形の使い方。 */
+function listPathSelfMadeUses(
+  space: StateSpace,
+  states: readonly number[],
+  directions: readonly number[],
+): SelfMadeTerrainUse[][] {
+  const { rules, positions, masks } = space;
+  const firstChange = new Map<number, number>();
+  return directions.map((direction, step) => {
+    const source = states[step]!;
+    const target = states[step + 1]!;
+    const uses = listSelfMadeUses(
+      rules,
+      positions[source]!,
+      positions[target]!,
+      masks[source]!,
+      direction,
+      firstChange,
+      step,
+    );
+    const newly = masks[target]! & ~masks[source]!;
+    for (let element = 0; element < rules.elements.length; element += 1) {
+      if (((newly >>> element) & 1) === 1 && !firstChange.has(element)) {
+        firstChange.set(element, step);
+      }
+    }
+    return uses;
+  });
+}
+
+/** 最短解（`DEPENDENCE_SOLUTION_CAP` 本まで）のうち、自作依存の点が最も低い解の点。 */
+function measureLeastSelfMadeDependence(
+  space: StateSpace,
+  toGoal: Int32Array,
+): number {
+  let least = Number.POSITIVE_INFINITY;
+  let found = 0;
+  const states = [0];
+  const directions: number[] = [];
+  function visit(state: number): void {
+    if (found >= DEPENDENCE_SOLUTION_CAP) {
+      return;
+    }
+    if (toGoal[state] === 0) {
+      found += 1;
+      const uses = listPathSelfMadeUses(space, states, directions);
+      const flat = uses.flat();
+      const quickReturnCount = flat.filter(isQuickReturn).length;
+      least = Math.min(
+        least,
+        scoreSelfMadeDependence({
+          distantStopCount: flat.filter(isDistantStop).length,
+          variedUseCount: flat.length - quickReturnCount,
+          quickReturnCount,
+          goalStopsOnSelfMade:
+            uses.at(-1)?.some((use) => use.kind === "water") ?? false,
+        }),
+      );
+      return;
+    }
+    for (let direction = 0; direction < DIRECTION_COUNT; direction += 1) {
+      const target = getTarget(space, state, direction);
+      if (target >= 0 && toGoal[target] === toGoal[state]! - 1) {
+        states.push(target);
+        directions.push(direction);
+        visit(target);
+        states.pop();
+        directions.pop();
+      }
+    }
+  }
+  visit(0);
+  return least;
+}
+
 /** 最短解の手の様子を集計する。`width` は盤面の幅。 */
 export function summarizeSolutionMoves(
   moves: readonly SolutionMove[],
@@ -682,6 +800,9 @@ export function summarizeSolutionMoves(
     selfMadeTotalGap: selfMadeUses.reduce((sum, use) => sum + use.gap, 0),
     quickReturnCount,
     variedUseCount: selfMadeUses.length - quickReturnCount,
+    distantStopCount: selfMadeUses.filter(isDistantStop).length,
+    goalStopsOnSelfMade:
+      moves.at(-1)?.selfMadeUses.some((use) => use.kind === "water") ?? false,
     changedCellCount: changedCells.length,
     maximumChangedPerMove: Math.max(
       0,
@@ -1071,6 +1192,7 @@ export function measureElementMetrics(
     }
   });
   const brittleCount = countBits(rules.brittleBits);
+  const texture = summarizeSolutionMoves(moves, board.width);
   return {
     shortest,
     solutionCount,
@@ -1103,6 +1225,11 @@ export function measureElementMetrics(
     other: solveStatic(context.otherFree, goal, space),
     solution,
     moves,
+    texture,
+    selfMadeDependence:
+      solutionCount === 1
+        ? scoreSelfMadeDependence(texture)
+        : measureLeastSelfMadeDependence(space, toGoal),
     lingeringDecoyCount: roles.filter(
       (role, element) =>
         role === "decoy" && ((decoyLingering >>> element) & 1) === 1,
