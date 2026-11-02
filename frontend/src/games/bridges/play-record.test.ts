@@ -21,7 +21,7 @@ const problemIdentity = createBridgesProblemIdentity(
   16,
 );
 
-// 基準時間は 6 + 24×0.8 + 26×0.6 + 3×3 + 3×6 + 26×1 = 93.8秒。
+// 基準時間は 8 + 24×1 + 26×0.8 + 3×3 + 3×6 + 26×1 = 105.8秒。
 const workload = {
   islandCount: 24,
   edgeCount: 32,
@@ -31,23 +31,23 @@ const workload = {
   countReasoningUndecidedEdgeCount: 26,
 };
 
-// 速さは 100 × (1 − 20秒 / 187.6秒) ≒ 89点。
+// 速さは 100 × (1 − 23秒 / 211.6秒) ≒ 89点。
 const performance = {
-  elapsedMs: 113_800,
+  elapsedMs: 128_800,
   undoCount: 2,
   restartCount: 1,
   inputCount: 40,
   blockedCount: 3,
 };
 const expectedScore = 89;
-const expectedTimeDeltaMs = 20_000;
+const expectedTimeDeltaMs = 23_000;
 
 const record = createBridgesPlayRecord({
   difficulty: "5",
   problemIdentity,
   workload,
   startedAt: 1_000,
-  completedAt: 114_800,
+  completedAt: 129_800,
   result: performance,
 });
 
@@ -72,7 +72,7 @@ describe("createBridgesPlayRecord", () => {
     const { id, gameId, payloadVersion, payload } = record;
 
     expect({ id, gameId, payloadVersion }).toEqual({
-      id: "bridges:1000:114800:br-10-d30-p10-e15-s20-16",
+      id: "bridges:1000:129800:br-10-d30-p10-e15-s20-16",
       gameId: "bridges",
       payloadVersion: 1,
     });
@@ -91,7 +91,7 @@ describe("createBridgesPlayRecord", () => {
       problemIdentity,
       workload,
       startedAt: 1_000,
-      completedAt: 114_800,
+      completedAt: 129_800,
       result: createBridgesResult(performance, workload),
     });
 
@@ -277,7 +277,7 @@ describe("restoreBridgesRecordedResult", () => {
         result: {
           ...performance,
           workload,
-          speedRule: { fullScoreMs: 93_800, zeroScoreMs: 281_400 },
+          speedRule: { fullScoreMs: 105_800, zeroScoreMs: 317_400 },
           timeDeltaMs: expectedTimeDeltaMs,
           score: { total: expectedScore, breakdown: { speed: expectedScore } },
         },

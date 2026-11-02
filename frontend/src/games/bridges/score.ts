@@ -20,11 +20,11 @@ export const BRIDGES_SCORE_MAXIMUMS = {
 } as const satisfies ScoreMaximums<"speed">;
 
 /** 基準時間の係数（暫定）。盤面を見渡して始める時間。 */
-export const BRIDGES_SPEED_INITIAL_RECOGNITION_MS = 6_000;
+export const BRIDGES_SPEED_INITIAL_RECOGNITION_MS = 8_000;
 /** 基準時間の係数（暫定）。島1つの数字と行き先を見比べる時間。 */
-export const BRIDGES_SPEED_PER_ISLAND_MS = 800;
+export const BRIDGES_SPEED_PER_ISLAND_MS = 1_000;
 /** 基準時間の係数（暫定）。橋1本を架ける操作の時間（2本の組は2回）。 */
-export const BRIDGES_SPEED_PER_BRIDGE_MS = 600;
+export const BRIDGES_SPEED_PER_BRIDGE_MS = 800;
 /** 基準時間の係数（暫定）。「ちょうど」で止まり、「少なくとも1本」の読みを探す手詰まり1回ごとの時間。 */
 export const BRIDGES_SPEED_PER_COUNT_ROUND_MS = 3_000;
 /** 基準時間の係数（暫定）。数字の読みで止まり、つながりを読む所を探す手詰まり1回ごとの時間。 */
