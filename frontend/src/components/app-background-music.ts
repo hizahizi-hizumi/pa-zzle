@@ -27,8 +27,14 @@ export type AppBackgroundMusicTracks = {
 export type AppBackgroundMusicScene = "home" | "result" | "silent";
 
 const appBackgroundMusicTracks: AppBackgroundMusicTracks = {
-  home: defineBackgroundMusicTrack(homeMusicUrl),
-  result: defineBackgroundMusicTrack(resultMusicUrl),
+  home: defineBackgroundMusicTrack({
+    url: homeMusicUrl,
+    loopLength: 3_686_400,
+  }),
+  result: defineBackgroundMusicTrack({
+    url: resultMusicUrl,
+    loopLength: 3_072_000,
+  }),
 };
 
 const preparedTracks = [

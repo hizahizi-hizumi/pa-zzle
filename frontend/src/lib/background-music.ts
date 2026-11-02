@@ -6,7 +6,7 @@
  * 読み解いた曲の継ぎ目のないループ再生へ短いクロスフェードで渡す。要素のループは継ぎ目に隙間が出るブラウザがあるので、渡すまでのつなぎにだけ使う。
  * 要素の音も AudioContext へ通し、音量は BGM の出口で掛ける。モバイルのブラウザには、要素の `volume` をプログラムから変えられないものがある。
  *
- * 曲は Vite のアセット import で URL として受け取り、`defineBackgroundMusicTrack` に渡して作る。
+ * 曲は Vite のアセット import で URL として受け取り、1ループのサンプル数と合わせて `defineBackgroundMusicTrack` に渡して作る。
  * 流しうる曲は `prepareBackgroundMusic` で渡し、今の画面で流す曲は `playBackgroundMusic` で決める。
  * 読み込みは今の画面で流す曲を先にし、流しうる曲はそのあとで1曲ずつ取得しておく。
  * 曲を切り替えるとクロスフェードし、同じ曲を流したまま別の画面に移っても頭から流し直さない。
@@ -43,6 +43,18 @@ import { getVolumeGain } from "@/lib/stored-volume-setting";
 /** 同梱した、ループする曲1つ。曲は頭から終わりまでで1ループになるよう作り、継ぎ目に無音を入れない。 */
 export type BackgroundMusicTrack = {
   readonly url: string;
+  /**
+   * 1ループのサンプル数（48 kHz）。読み解いた曲がこれより長ければ、MP3 の詰め物が残っているので、
+   * 詰め物を除いた区間だけをループする。
+   */
+  readonly loopLength: number;
+};
+
+/** 読み解いた曲と、その中でループする区間（秒）。 */
+type DecodedTrack = {
+  buffer: AudioBuffer;
+  loopStart: number;
+  loopDuration: number;
 };
 
 type MusicOutput = {
@@ -88,6 +100,13 @@ const FADE_OUT_SEC = 0.8;
 const LOOP_HANDOFF_SEC = 0.05;
 /** ループ再生へ渡し始めるまでの余裕。渡す時刻より前に、音源の開始を AudioContext へ確実に頼んでおく。 */
 const LOOP_HANDOFF_LEAD_SEC = 0.1;
+/**
+ * MP3 を読み解いても詰め物を取り除かないブラウザで、読み解いた曲の先頭に残る詰め物のサンプル数。
+ * 同梱する MP3 のエンコーダ（LAME）の遅延 576 に、MP3 の読み解きの遅延 529 を足したもの。
+ */
+const MP3_LEADING_PADDING_LENGTH = 576 + 529;
+/** 要素の曲の長さが1ループより長いと見なす差（秒）。これより長ければ、要素も先頭の詰め物を流している。 */
+const PADDED_DURATION_TOLERANCE_SEC = 0.001;
 /** フェードを終えてから要素を止めるまでの余裕。タイマーが早く来ても、鳴っている要素を止めない。 */
 const RELEASE_MARGIN_MS = 100;
 
@@ -106,7 +125,9 @@ let fetchingUrl: string | null = null;
 let trackFileFetchScheduled = false;
 const failedUrls = new Set<string>();
 /** 流したい曲を読み解いたもの。1分で 20 MB 以上あるので、流したい曲のほかは持ち続けない。 */
-const decodedTracks = new Map<string, AudioBuffer>();
+const decodedTracks = new Map<string, DecodedTrack>();
+/** 渡された曲。読み解いた曲のループする区間を、曲の1ループのサンプル数から決める。 */
+const knownTracks = new Map<string, BackgroundMusicTrack>();
 let decodingUrl: string | null = null;
 /** これから流し始める曲を、この時刻（`performance.now()`）まで流し始めない。 */
 let startHeldUntilMs = 0;
@@ -114,9 +135,11 @@ let heldStartTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubscribeUserGesture: (() => void) | null = null;
 let listening = false;
 
-/** 音声ファイルの URL から曲を作る。 */
-export function defineBackgroundMusicTrack(url: string): BackgroundMusicTrack {
-  return { url };
+/** 音声ファイルの URL と1ループのサンプル数から曲を作る。 */
+export function defineBackgroundMusicTrack(
+  track: BackgroundMusicTrack,
+): BackgroundMusicTrack {
+  return track;
 }
 
 /**
@@ -131,6 +154,9 @@ export function prepareBackgroundMusic(
     return;
   }
   preparedUrls = new Set(tracks.map(({ url }) => url));
+  for (const track of tracks) {
+    knownTracks.set(track.url, track);
+  }
   listenForChanges();
   syncBackgroundMusic();
 }
@@ -148,6 +174,9 @@ export function playBackgroundMusic(track: BackgroundMusicTrack | null): void {
     return;
   }
   wantedUrl = track?.url ?? null;
+  if (track) {
+    knownTracks.set(track.url, track);
+  }
   listenForChanges();
   syncBackgroundMusic();
 }
@@ -305,11 +334,11 @@ function takePreviousVoice(url: string): MusicVoice | null {
  */
 function startVoice(output: MusicOutput, url: string): MusicVoice | null {
   const heldMs = Math.max(0, startHeldUntilMs - performance.now());
-  const buffer = decodedTracks.get(url);
-  if (buffer) {
+  const track = decodedTracks.get(url);
+  if (track) {
     const startTime = output.context.currentTime + heldMs / 1000;
     const voice = createVoice(output, url);
-    voice.loop = startLoopSource(output, voice.fader, buffer, startTime, 0);
+    voice.loop = startLoopSource(output, voice.fader, track, startTime, 0);
     beginSounding(voice, startTime);
     return voice;
   }
@@ -357,21 +386,54 @@ function createVoice(
   };
 }
 
+/** 読み解いた曲のループする区間の、`position` 秒の位置からループ再生を始める。 */
 function startLoopSource(
   { context }: MusicOutput,
   destination: AudioNode,
-  buffer: AudioBuffer,
+  track: DecodedTrack,
   startTime: number,
-  offset: number,
+  position: number,
 ): VoiceSource<AudioBufferSourceNode> {
   const gain = context.createGain();
   gain.connect(destination);
   const source = context.createBufferSource();
+  const { buffer, loopStart, loopDuration } = track;
   source.buffer = buffer;
   source.loop = true;
+  if (isPadded(track)) {
+    source.loopStart = loopStart;
+    source.loopEnd = loopStart + loopDuration;
+  }
   source.connect(gain);
-  source.start(startTime, offset);
+  source.start(startTime, loopStart + position);
   return { source, gain };
+}
+
+/**
+ * 読み解いた曲のうち、ループする区間を決める。読み解いた曲が1ループより長ければ、
+ * 先頭の詰め物を除いたところから1ループの長さだけをループする。長さが同じなら、曲全体をループする。
+ */
+function toDecodedTrack(
+  buffer: AudioBuffer,
+  { loopLength }: BackgroundMusicTrack,
+): DecodedTrack {
+  const paddingLength = buffer.length - loopLength;
+  if (paddingLength <= 0) {
+    return { buffer, loopStart: 0, loopDuration: buffer.duration };
+  }
+  const leadingPaddingLength = Math.min(
+    MP3_LEADING_PADDING_LENGTH,
+    paddingLength,
+  );
+  return {
+    buffer,
+    loopStart: leadingPaddingLength / buffer.sampleRate,
+    loopDuration: loopLength / buffer.sampleRate,
+  };
+}
+
+function isPadded({ buffer, loopDuration }: DecodedTrack): boolean {
+  return loopDuration < buffer.duration;
 }
 
 /** 曲が鳴り始めたら、フェードインし、前の曲をフェードアウトする。 */
@@ -392,9 +454,9 @@ function advanceCurrentVoice() {
   if (!voice.sounding && voice.stream.source.playing) {
     beginSounding(voice, musicOutput.context.currentTime);
   }
-  const buffer = decodedTracks.get(voice.url);
-  if (buffer) {
-    handOffToLoop(musicOutput, voice, buffer);
+  const track = decodedTracks.get(voice.url);
+  if (track) {
+    handOffToLoop(musicOutput, voice, track);
   }
 }
 
@@ -405,7 +467,7 @@ function advanceCurrentVoice() {
 function handOffToLoop(
   output: MusicOutput,
   voice: MusicVoice,
-  buffer: AudioBuffer,
+  track: DecodedTrack,
 ) {
   const { stream } = voice;
   if (!stream) {
@@ -415,20 +477,21 @@ function handOffToLoop(
   const now = output.context.currentTime;
   if (!voice.sounding) {
     disposeStream(stream);
-    voice.loop = startLoopSource(output, voice.fader, buffer, now, 0);
+    voice.loop = startLoopSource(output, voice.fader, track, now, 0);
     beginSounding(voice, now);
     return;
   }
   const handoffTime = now + LOOP_HANDOFF_LEAD_SEC;
-  const offset =
-    (stream.source.element.currentTime + LOOP_HANDOFF_LEAD_SEC) %
-    buffer.duration;
+  const position = getLoopPosition(
+    track,
+    getStreamPosition(stream.source.element, track) + LOOP_HANDOFF_LEAD_SEC,
+  );
   const loop = startLoopSource(
     output,
     voice.fader,
-    buffer,
+    track,
     handoffTime,
-    offset,
+    position,
   );
   crossfade(stream.gain, loop.gain, handoffTime, LOOP_HANDOFF_SEC);
   voice.loop = loop;
@@ -439,6 +502,28 @@ function handOffToLoop(
     },
     (LOOP_HANDOFF_LEAD_SEC + LOOP_HANDOFF_SEC) * 1000 + RELEASE_MARGIN_MS,
   );
+}
+
+/**
+ * 要素が流している、曲の中の位置（秒）。要素の曲の長さが1ループより長ければ、
+ * 要素も読み解いた曲と同じ先頭の詰め物を流しているので、その分を差し引く。
+ */
+function getStreamPosition(
+  element: HTMLAudioElement,
+  { loopStart, loopDuration }: DecodedTrack,
+): number {
+  const padded =
+    element.duration > loopDuration + PADDED_DURATION_TOLERANCE_SEC;
+  return element.currentTime - (padded ? loopStart : 0);
+}
+
+/** 曲の中の位置を、1ループの中の位置に直す。 */
+function getLoopPosition(
+  { loopDuration }: DecodedTrack,
+  seconds: number,
+): number {
+  const position = seconds % loopDuration;
+  return position < 0 ? position + loopDuration : position;
 }
 
 function crossfade(
@@ -603,8 +688,9 @@ function decodeWantedTrack() {
   decoding.then(
     function keepDecodedTrack(buffer) {
       decodingUrl = null;
-      if (wantsMusic() && wantedUrl === url) {
-        decodedTracks.set(url, buffer);
+      const track = knownTracks.get(url);
+      if (track && wantsMusic() && wantedUrl === url) {
+        decodedTracks.set(url, toDecodedTrack(buffer, track));
       }
       syncBackgroundMusic();
     },
