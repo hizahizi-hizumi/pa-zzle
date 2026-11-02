@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { useAppBackgroundMusic } from "@/components/app-background-music";
 import { usePrepareAppDecisionSounds } from "@/components/app-decision-sound";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 
@@ -28,6 +29,8 @@ export function AppShell({
   contentLayout = "contained",
 }: AppShellProps) {
   usePrepareAppDecisionSounds();
+  useAppBackgroundMusic();
+
   return (
     <div className="flex min-h-screen flex-col bg-muted/30 font-ui">
       <BrandIdentityHeader linkToHome size="regular" />

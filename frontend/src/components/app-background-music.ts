@@ -9,8 +9,11 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { matchPath, useLocation } from "react-router";
 
+import homeMusicUrl from "@/assets/background-music/home.mp3";
+import resultMusicUrl from "@/assets/background-music/result.mp3";
 import {
   type BackgroundMusicTrack,
+  defineBackgroundMusicTrack,
   playBackgroundMusic,
   prepareBackgroundMusic,
 } from "@/lib/background-music";
@@ -22,6 +25,16 @@ export type AppBackgroundMusicTracks = {
 };
 
 export type AppBackgroundMusicScene = "home" | "result" | "silent";
+
+const appBackgroundMusicTracks: AppBackgroundMusicTracks = {
+  home: defineBackgroundMusicTrack(homeMusicUrl),
+  result: defineBackgroundMusicTrack(resultMusicUrl),
+};
+
+const preparedTracks = [
+  appBackgroundMusicTracks.home,
+  appBackgroundMusicTracks.result,
+];
 
 const PLAY_PATH_PATTERN = "/puzzles/:game/play/:difficulty";
 const RESULT_PATH_PATTERN = "/puzzles/:game/result/:recordId";
@@ -62,29 +75,25 @@ export function selectAppBackgroundMusicTrack(
 }
 
 /**
- * 今の画面に合わせて BGM を流し、今の画面の場面を返す。アプリの全画面を包む部品で一度呼ぶ。
+ * 今の画面に合わせて BGM を流す。アプリの全画面を包む部品で一度呼ぶ。
  * 流しうる曲（ホームと結果の曲）は先に読み込み、プレイを終えて結果画面へ移ったときに待たせない。
  */
-export function useAppBackgroundMusic(
-  tracks: AppBackgroundMusicTracks,
-): AppBackgroundMusicScene {
+export function useAppBackgroundMusic(): void {
   const { pathname } = useLocation();
   const resultShown = useSyncExternalStore(
     subscribeResultShownOnPlayScreen,
     isResultShownOnPlayScreen,
   );
   const scene = getAppBackgroundMusicScene(pathname, resultShown);
-  const track = selectAppBackgroundMusicTrack(scene, tracks);
+  const track = selectAppBackgroundMusicTrack(scene, appBackgroundMusicTracks);
 
   useEffect(() => {
-    prepareBackgroundMusic([tracks.home, tracks.result]);
-  }, [tracks]);
+    prepareBackgroundMusic(preparedTracks);
+  }, []);
 
   useEffect(() => {
     playBackgroundMusic(track);
   }, [track]);
-
-  return scene;
 }
 
 /**
