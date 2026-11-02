@@ -20,6 +20,7 @@ import {
   type TsumeShogiHandPieceType,
   type TsumeShogiPosition,
   type TsumeShogiSide,
+  type TsumeShogiSquare,
   toEnginePieceType,
   toEngineSquare,
   tsumeShogiHandPieceTypes,
@@ -111,6 +112,24 @@ export class TsumeShogiSearchPosition {
 
   isDefenderInCheck(): boolean {
     return this.#engine.board.isChecked(Color.WHITE);
+  }
+
+  /** 盤上の `square` に駒があるか。 */
+  isOccupied(square: TsumeShogiSquare): boolean {
+    return this.#engine.board.at(toEngineSquare(square)) !== null;
+  }
+
+  /** 玉方の玉の位置。 */
+  get defenderKingSquare(): TsumeShogiSquare {
+    return fromEngineSquare(this.#engine.board.findKing(Color.WHITE)!);
+  }
+
+  /** 玉方の玉に王手をかけている攻方の駒のマス。両王手なら2つ。 */
+  listCheckingSquares(): TsumeShogiSquare[] {
+    const board = this.#engine.board;
+    return listCheckers(this.#engine, board.findKing(Color.WHITE)!).map(
+      fromEngineSquare,
+    );
   }
 
   /** 今の局面を、変更されない詰将棋の局面として取り出す。 */
