@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="一筆パズル">
-  <path d="M18 18H78V42H102V102H18Z" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M18 18H82V38H102V102H18Z" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round"/>
   <g fill="var(--game-pictogram-soft)">
     <circle cx="90" cy="50" r="5"/>
     <circle cx="70" cy="70" r="5"/>
