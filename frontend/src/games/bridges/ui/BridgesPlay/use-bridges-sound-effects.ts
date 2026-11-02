@@ -11,7 +11,7 @@ import clearedWave5SoundUrl from "@/games/bridges/assets/sounds/cleared-wave-5.f
 import type { BridgesEdgeNotice } from "@/games/bridges/play/use-bridges-play";
 import type { BridgesBoard } from "@/games/bridges/puzzle/board";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
-import { getClearWaveTiming } from "@/games/bridges/ui/board/BridgesBoard/play-clear-wave";
+import { getClearWaveTiming } from "@/games/bridges/ui/board/clear-wave";
 import type { GameProgress } from "@/games/play";
 import {
   useClearSound,
