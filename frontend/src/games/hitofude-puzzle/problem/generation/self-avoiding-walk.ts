@@ -1,5 +1,5 @@
 import { listHitofudePuzzleGridNeighbors } from "@/games/hitofude-puzzle/puzzle/board";
-import type { ProblemRandom } from "@/games/problem-seed";
+import { type ProblemRandom, pickProblemValue } from "@/games/problem-seed";
 
 /** 道を混ぜる変形の回数を、盤面のマス数の何倍にするか。 */
 const MIXING_SWEEPS = 30;
@@ -11,10 +11,6 @@ function createSerpentinePath(size: number): number[] {
     const orderedColumns = row % 2 === 0 ? columns : columns.reverse();
     return orderedColumns.map((column) => row * size + column);
   }).flat();
-}
-
-function pickProblemValue<T>(values: readonly T[], random: ProblemRandom): T {
-  return values[Math.floor(random() * values.length)]!;
 }
 
 /**

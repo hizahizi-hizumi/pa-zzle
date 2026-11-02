@@ -13,7 +13,7 @@ import {
   listHitofudePuzzleGridNeighbors,
 } from "@/games/hitofude-puzzle/puzzle/board";
 import { areHitofudePuzzleOpenCellsConnected } from "@/games/hitofude-puzzle/puzzle/rules";
-import type { ProblemRandom } from "@/games/problem-seed";
+import { type ProblemRandom, pickProblemValue } from "@/games/problem-seed";
 
 /** 一意解の盤面と、そのただ1つの解の道。 */
 export type HitofudePuzzleUniqueHoleBoard = {
@@ -108,10 +108,6 @@ function accepts(
   );
 }
 
-function pickValue<T>(values: readonly T[], random: ProblemRandom): T {
-  return values[Math.floor(random() * values.length)]!;
-}
-
 /** 近傍の選び方の累積の割合。穴を足す・消す・動かす、始点を動かす。 */
 const ADD_HOLE_UNTIL = 0.25;
 const REMOVE_HOLE_UNTIL = 0.45;
@@ -139,17 +135,17 @@ function moveHoles(
     if (otherOpenCells.length === 0) {
       return null;
     }
-    holes.add(pickValue(otherOpenCells, random));
+    holes.add(pickProblemValue(otherOpenCells, random));
   } else if (choice < REMOVE_HOLE_UNTIL) {
     if (board.holes.length === 0) {
       return null;
     }
-    holes.delete(pickValue(board.holes, random));
+    holes.delete(pickProblemValue(board.holes, random));
   } else if (choice < MOVE_HOLE_UNTIL) {
     if (board.holes.length === 0) {
       return null;
     }
-    const hole = pickValue(board.holes, random);
+    const hole = pickProblemValue(board.holes, random);
     const destinations = (
       random() < MOVE_HOLE_TO_NEIGHBOR_RATIO
         ? listHitofudePuzzleGridNeighbors(size, hole)
@@ -159,7 +155,7 @@ function moveHoles(
       return null;
     }
     holes.delete(hole);
-    holes.add(pickValue(destinations, random));
+    holes.add(pickProblemValue(destinations, random));
   } else {
     const destinations = (
       random() < MOVE_START_TO_NEIGHBOR_RATIO
@@ -169,7 +165,7 @@ function moveHoles(
     if (destinations.length === 0) {
       return null;
     }
-    start = pickValue(destinations, random);
+    start = pickProblemValue(destinations, random);
   }
   const moved = {
     size,

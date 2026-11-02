@@ -40,6 +40,14 @@ export function createProblemSeededRandom(seed: string): ProblemRandom {
   };
 }
 
+/** 空でない `values` から1つを、乱数を1つ使って選ぶ。 */
+export function pickProblemValue<T>(
+  values: readonly T[],
+  random: ProblemRandom,
+): T {
+  return values[Math.floor(random() * values.length)]!;
+}
+
 export function shuffleProblemValues<T>(
   values: readonly T[],
   random: ProblemRandom,
