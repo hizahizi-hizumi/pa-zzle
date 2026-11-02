@@ -343,6 +343,15 @@ const deductionTiers = [
   (context: BridgesSolverContext, bounds: BridgeBounds) => Deductions,
 ])[];
 
+function deduceByTier(
+  tier: Exclude<BridgesReasoningTier, "T">,
+  context: BridgesSolverContext,
+  bounds: BridgeBounds,
+): Deductions {
+  const [, deduce] = deductionTiers.find(([name]) => name === tier)!;
+  return deduce(context, bounds);
+}
+
 function tierRank(tier: BridgesReasoningTier): number {
   return bridgesReasoningTiers.indexOf(tier);
 }
@@ -407,14 +416,6 @@ function deduceByTrial(
   return new Map();
 }
 
-/** 3島以上の組で閉じない読み（C1g）だけの推論。2島で閉じない読み（C1p）と同じ手詰まりで一緒に当てるのに使う。 */
-function deduceClosingGroups(
-  context: BridgesSolverContext,
-  bounds: BridgeBounds,
-): Deductions {
-  return deduceUnclosedGroups(context, bounds, false);
-}
-
 /** 同じ辺の範囲をいくつかの推論が狭めたら、それらの重なりにする。 */
 function mergeDeductions(
   deductions: readonly [number, readonly [number, number]][],
@@ -438,7 +439,7 @@ function mergeDeductions(
  *   どちらも「架けると組が閉じる」同じ読みで、人は同じ局面で両方を見る。分けて当てると、低い段だけを当てる規則のせいで
  *   C1g で決まる所が次の手詰まりへ回り、つながりの読みの回数が増える。研究用の解法器との突き合わせでだけ `false` にする。
  */
-export type BridgesHumanSolveOptions = {
+type BridgesHumanSolveOptions = {
   closingTiersTogether: boolean;
 };
 
@@ -482,7 +483,7 @@ function runTiers(
         tier === "C1p" &&
         tierRank("C1g") <= limit
           ? listEffectiveDeductions(
-              deduceClosingGroups(context, bounds),
+              deduceByTier("C1g", context, bounds),
               bounds,
             )
           : [];
@@ -494,7 +495,7 @@ function runTiers(
         bounds.lower[edge] = atLeast;
         bounds.upper[edge] = atMost;
       }
-      const widenedByGroups = merged.some(
+      const narrowedFurtherByGroups = merged.some(
         ([edge, range]) =>
           !effective.some(
             ([own, ownRange]) =>
@@ -504,7 +505,7 @@ function runTiers(
           ),
       );
       rounds?.push({
-        tier: widenedByGroups ? "C1g" : tier,
+        tier: narrowedFurtherByGroups ? "C1g" : tier,
         edgeCount: merged.length,
       });
       progressed = true;
@@ -532,7 +533,14 @@ function runTiers(
 export function traceBridgesHumanSolve(
   board: BridgesBoard,
   maximumTier: BridgesReasoningTier = "T",
-  options: BridgesHumanSolveOptions = defaultHumanSolveOptions,
+): BridgesHumanSolveTrace {
+  return traceHumanSolve(board, maximumTier, defaultHumanSolveOptions);
+}
+
+function traceHumanSolve(
+  board: BridgesBoard,
+  maximumTier: BridgesReasoningTier,
+  options: BridgesHumanSolveOptions,
 ): BridgesHumanSolveTrace {
   const context = createBridgesSolverContext(board);
   const bounds = createInitialBridgeBounds(context);
@@ -599,4 +607,12 @@ export function propagateBridgesCountReasoning(
   return runTiers(context, bounds, "A2", null);
 }
 
-export const _private = { failsAfterOneStep };
+/** 研究用の解法器と突き合わせるための、C1p と C1g を別の手詰まりで当てる経過。 */
+function traceWithSeparateClosingTiers(
+  board: BridgesBoard,
+  maximumTier: BridgesReasoningTier = "T",
+): BridgesHumanSolveTrace {
+  return traceHumanSolve(board, maximumTier, { closingTiersTogether: false });
+}
+
+export const _private = { failsAfterOneStep, traceWithSeparateClosingTiers };
