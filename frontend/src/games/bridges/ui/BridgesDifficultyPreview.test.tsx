@@ -105,7 +105,7 @@ describe("BridgesDifficultyPreview", () => {
       expect(container.querySelectorAll("line, text")).toHaveLength(0);
     });
 
-    test("描く行の島の丸だけを描き、島に印を付けないこと", () => {
+    test("描く行の島ごとに丸を1つずつ描くこと", () => {
       const circles = container.querySelectorAll("circle");
 
       expect(circles).toHaveLength(shownIslands.length);

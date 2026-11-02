@@ -126,7 +126,7 @@ type BridgesDifficultyPreviewProps = {
  * 難易度プレビューは、そのレベルの盤面の横幅いっぱいを数行だけ、解き始めの姿（島だけ。数字と橋は描かない）で描く模式図である。
  * - 横幅（盤面の一辺）と描く行の島の数で、上のレベルほど盤面が広く島が多いことを示す。マスの大きさと行の数はどのレベルでもそろえる。
  * - 数字は見本の大きさでは読めないので描かない。島の丸は盤面の足りない島と同じ色の白い丸にする（大きさと縁の太さは見本に合わせる）。
- * - 島に印を付けない。見本の大きさでは何の印か分からない（最終レビューの人間の判断）。
+ * - 島に印を付けない。見本の大きさでは何の印か読み取れない。
  */
 export function BridgesDifficultyPreview({
   difficulty,
@@ -177,6 +177,5 @@ export function BridgesDifficultyPreview({
 
 export const _private = {
   PREVIEW_ROWS,
-  previewBoards,
   createPreviewBoard,
 };
