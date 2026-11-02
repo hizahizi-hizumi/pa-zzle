@@ -1,6 +1,7 @@
 import {
   assertHamiltonianPathBoard,
   createHamiltonianPathAdjacency,
+  findHamiltonianPathDirection,
   formatHamiltonianPathBoard,
   getHamiltonianPathNeighborCell,
   type HamiltonianPathBoard,
@@ -114,6 +115,27 @@ describe("getHamiltonianPathNeighborCell", () => {
       const neighbor = getHamiltonianPathNeighborCell(3, cell, direction);
 
       expect(neighbor).toBe(expected);
+    },
+  );
+});
+
+describe("findHamiltonianPathDirection", () => {
+  const cases: readonly [number, number, HamiltonianPathDirection | null][] = [
+    [4, 1, "up"],
+    [4, 5, "right"],
+    [4, 7, "down"],
+    [4, 3, "left"],
+    [4, 0, null],
+    [2, 3, null],
+    [4, 4, null],
+  ];
+
+  test.each(cases)(
+    "3×3 のマス %i から見たマス %i の向きが %s であること",
+    (from, to, expected) => {
+      const direction = findHamiltonianPathDirection(3, from, to);
+
+      expect(direction).toBe(expected);
     },
   );
 });

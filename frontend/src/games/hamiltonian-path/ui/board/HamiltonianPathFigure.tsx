@@ -1,0 +1,224 @@
+import type { Ref } from "react";
+
+import {
+  getHamiltonianPathCellPosition,
+  type HamiltonianPathBoard,
+  type HamiltonianPathPartition,
+  listHamiltonianPathCells,
+  listHamiltonianPathOpenCells,
+} from "@/games/hamiltonian-path/puzzle/board";
+import {
+  getPathColor,
+  getVisitedCellColor,
+  hamiltonianPathToneClassNames,
+} from "@/games/hamiltonian-path/ui/hamiltonian-path-tone";
+import { cn } from "@/lib/utils";
+
+type HamiltonianPathFigureProps = {
+  board: HamiltonianPathBoard;
+  /** 始点から先端までに通ったマスの番号。 */
+  path: readonly number[];
+  /** 全マスを通る前に、先端から延ばせるマスが無くなったか。 */
+  isDeadEnd: boolean;
+  /** 道が全マスを通り終えたか。始点から終点へ道をなぞる光を描く。 */
+  solved: boolean;
+  ref?: Ref<SVGSVGElement>;
+};
+
+/** 図の寸法はマス幅を 1 とした値。 */
+const PATH_LINE_WIDTH = 0.3;
+const START_MARK_RADIUS = 0.2;
+const START_MARK_OUTLINE_WIDTH = 0.07;
+/** 先端は指に隠れるので、マス幅に対して大きめの輪にする。道が始点だけのときも、輪の内に始点の印が見える。 */
+const HEAD_RING_RADIUS = 0.37;
+const HEAD_RING_WIDTH = 0.09;
+/** 行き止まりの先端は、輪を欠けさせる。 */
+const DEAD_END_HEAD_DASH = "0.32 0.17";
+/** 仕切りは辺いっぱいにせず、両端を空けた短い棒にする。辺いっぱいだと隣り合う仕切りがつながり迷路の壁に見える。 */
+const PARTITION_THICKNESS = 0.16;
+const PARTITION_END_INSET = 0.18;
+/** 阻んだ仕切りを強調する光の、仕切りからのはみ出し。 */
+const PARTITION_HALO_SPREAD = 0.1;
+const CLEAR_TRACE_WIDTH = 0.1;
+
+function getCellCenter(size: number, cell: number): { x: number; y: number } {
+  const { row, column } = getHamiltonianPathCellPosition(size, cell);
+  return { x: column + 0.5, y: row + 0.5 };
+}
+
+function getPartitionRect(
+  size: number,
+  [left, right]: HamiltonianPathPartition,
+  spread = 0,
+): { x: number; y: number; width: number; height: number } {
+  const { row, column } = getHamiltonianPathCellPosition(size, left);
+  const length = 1 - PARTITION_END_INSET * 2 + spread * 2;
+  const thickness = PARTITION_THICKNESS + spread * 2;
+  const separatesColumns = right === left + 1;
+  return separatesColumns
+    ? {
+        x: column + 1 - thickness / 2,
+        y: row + PARTITION_END_INSET - spread,
+        width: thickness,
+        height: length,
+      }
+    : {
+        x: column + PARTITION_END_INSET - spread,
+        y: row + 1 - thickness / 2,
+        width: length,
+        height: thickness,
+      };
+}
+
+/** 盤面の要素を、盤面の反応や演出から探すための印。 */
+export const hamiltonianPathFigureParts = {
+  head: "data-head",
+  partitionHalo: "data-partition-halo",
+  clearTrace: "data-clear-trace",
+} as const;
+
+export function getPartitionKey([left, right]: HamiltonianPathPartition) {
+  return `${left}-${right}`;
+}
+
+/**
+ * 盤面の絵。マスの塗り・道・仕切り・始点・先端を、下から順にこの層で描く。
+ * 道が仕切りに沿って走っても隠れないよう、仕切りと始点・先端の印は道より上に描く。
+ * 道とマスの塗りは、通った順に色を移す（`getPathColor`）。
+ */
+export function HamiltonianPathFigure({
+  board,
+  path,
+  isDeadEnd,
+  solved,
+  ref,
+}: HamiltonianPathFigureProps) {
+  const { size } = board;
+  const walls = new Set(board.walls);
+  const lastProgressIndex = Math.max(
+    1,
+    listHamiltonianPathOpenCells(board).length - 1,
+  );
+  const progressAt = (index: number) => index / lastProgressIndex;
+  const visitedOrder = new Map(path.map((cell, index) => [cell, index]));
+  const start = getCellCenter(size, board.start);
+  const headIndex = path.length - 1;
+  const head = getCellCenter(size, path[headIndex] ?? board.start);
+  const headColor = getPathColor(progressAt(headIndex));
+  const centers = path.map((cell) => getCellCenter(size, cell));
+
+  return (
+    <svg
+      ref={ref}
+      viewBox={`0 0 ${size} ${size}`}
+      aria-hidden="true"
+      className={cn(
+        "pointer-events-none absolute inset-0 size-full overflow-visible",
+        hamiltonianPathToneClassNames.pathColorVariables,
+      )}
+    >
+      {listHamiltonianPathCells(size).map((cell) => {
+        const { row, column } = getHamiltonianPathCellPosition(size, cell);
+        const order = visitedOrder.get(cell);
+        return (
+          <rect
+            key={cell}
+            x={column}
+            y={row}
+            width={1}
+            height={1}
+            vectorEffect="non-scaling-stroke"
+            className={
+              walls.has(cell)
+                ? hamiltonianPathToneClassNames.wallCell
+                : cn(
+                    hamiltonianPathToneClassNames.gridLine,
+                    order === undefined &&
+                      hamiltonianPathToneClassNames.unvisitedCell,
+                  )
+            }
+            style={
+              order === undefined
+                ? undefined
+                : { fill: getVisitedCellColor(progressAt(order)) }
+            }
+          />
+        );
+      })}
+      {centers.slice(1).map((to, index) => {
+        const from = centers[index]!;
+        return (
+          <line
+            // 道の何本目の線かで、通った順の色が決まる。
+            // biome-ignore lint/suspicious/noArrayIndexKey: 道の線は並び順そのものが識別になる
+            key={index}
+            x1={from.x}
+            y1={from.y}
+            x2={to.x}
+            y2={to.y}
+            strokeWidth={PATH_LINE_WIDTH}
+            strokeLinecap="round"
+            style={{ stroke: getPathColor(progressAt(index + 0.5)) }}
+          />
+        );
+      })}
+      {solved ? (
+        <polyline
+          {...{ [hamiltonianPathFigureParts.clearTrace]: "" }}
+          points={centers.map(({ x, y }) => `${x},${y}`).join(" ")}
+          pathLength={1}
+          strokeDasharray="1 1"
+          fill="none"
+          strokeWidth={CLEAR_TRACE_WIDTH}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={hamiltonianPathToneClassNames.clearTrace}
+        />
+      ) : null}
+      {board.partitions.map((partition) => (
+        <rect
+          key={`halo-${getPartitionKey(partition)}`}
+          {...{
+            [hamiltonianPathFigureParts.partitionHalo]:
+              getPartitionKey(partition),
+          }}
+          {...getPartitionRect(size, partition, PARTITION_HALO_SPREAD)}
+          rx={PARTITION_THICKNESS / 2 + PARTITION_HALO_SPREAD}
+          opacity={0}
+          style={{ fill: headColor }}
+        />
+      ))}
+      {board.partitions.map((partition) => (
+        <rect
+          key={getPartitionKey(partition)}
+          {...getPartitionRect(size, partition)}
+          rx={PARTITION_THICKNESS / 2}
+          className={hamiltonianPathToneClassNames.partition}
+        />
+      ))}
+      <circle
+        cx={start.x}
+        cy={start.y}
+        r={START_MARK_RADIUS}
+        strokeWidth={START_MARK_OUTLINE_WIDTH}
+        className={hamiltonianPathToneClassNames.startMarkOutline}
+        style={{ fill: getPathColor(0) }}
+      />
+      <g transform={`translate(${head.x} ${head.y})`}>
+        {/* 揺れは CSS の transform で動かすので、位置の transform 属性とは別の要素に置く。 */}
+        <g {...{ [hamiltonianPathFigureParts.head]: "" }}>
+          <circle
+            r={HEAD_RING_RADIUS}
+            fill="none"
+            strokeWidth={HEAD_RING_WIDTH}
+            strokeDasharray={isDeadEnd ? DEAD_END_HEAD_DASH : undefined}
+            className={
+              isDeadEnd ? hamiltonianPathToneClassNames.deadEndHead : undefined
+            }
+            style={isDeadEnd ? undefined : { stroke: headColor }}
+          />
+        </g>
+      </g>
+    </svg>
+  );
+}

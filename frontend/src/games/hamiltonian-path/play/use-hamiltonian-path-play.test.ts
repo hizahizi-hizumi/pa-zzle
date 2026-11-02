@@ -3,6 +3,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { useHamiltonianPathPlay } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
 import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
 import { selectHamiltonianPathProblemForDifficulty } from "@/games/hamiltonian-path/problem-selection";
+import { findHamiltonianPathDirection } from "@/games/hamiltonian-path/puzzle/board";
 import { createProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
 
@@ -23,10 +24,44 @@ const initial = selectHamiltonianPathProblemForDifficulty(
 const other = selectHamiltonianPathProblemForDifficulty(difficulty, otherSeed);
 const { solution } = generateHamiltonianPathProblem(initial.identity);
 
-function extendAll(result: HookResult, cells: readonly number[]): void {
+/** マスを1つずつ押して離す。 */
+function tapAll(result: HookResult, cells: readonly number[]): void {
   for (const cell of cells) {
-    act(() => result.current.extendPath(cell));
+    act(() => {
+      result.current.beginStroke(cell);
+      result.current.endStroke();
+    });
   }
+}
+
+/** `cells` の先頭を押し、残りのマスを順になぞって離すまでを、1回の入力として流す。 */
+function drag(
+  result: HookResult,
+  [pressed, ...cells]: readonly number[],
+): void {
+  act(() => {
+    result.current.beginStroke(pressed!);
+    let from = pressed!;
+    for (const to of cells) {
+      result.current.traceStroke({ from, to, horizontalFirst: true });
+      from = to;
+    }
+    result.current.endStroke();
+  });
+}
+
+/** 盤面の始点から上下左右に2マス以上離れた有効マス。 */
+function findCellAwayFromStart(): number {
+  const { size, start, walls } = initial.problem;
+  const startRow = Math.floor(start / size);
+  const startColumn = start % size;
+  return Array.from({ length: size * size }, (_, cell) => cell).find(
+    (cell) =>
+      !walls.includes(cell) &&
+      Math.abs(Math.floor(cell / size) - startRow) +
+        Math.abs((cell % size) - startColumn) >=
+        2,
+  )!;
 }
 
 afterEach(() => {
@@ -51,27 +86,58 @@ describe("useHamiltonianPathPlay", () => {
     expect(problemIdentity).toEqual(initial.identity);
   });
 
-  test("先端に隣り合うマスへ道を延ばすこと", () => {
-    act(() => result.current.extendPath(solution[1]!));
+  test("先端に隣り合うマスを押すと道を延ばすこと", () => {
+    tapAll(result, [solution[1]!]);
 
     expect(result.current.path).toEqual(solution.slice(0, 2));
     expect(result.current.canUndo).toBe(true);
     expect(result.current.canRestart).toBe(true);
+    expect(result.current.isDeadEnd).toBe(false);
+  });
+
+  test("1回のなぞりで通ったマスへ順に道を延ばし、待った1回で取り消せること", () => {
+    drag(result, solution.slice(0, 5));
+    const tracedPath = result.current.path;
+    act(() => result.current.undo());
+
+    expect(tracedPath).toEqual(solution.slice(0, 5));
+    expect(result.current.path).toEqual([initial.problem.start]);
+  });
+
+  describe("先端から離れたマスを押した場合", () => {
+    const cell = findCellAwayFromStart();
+
+    test("道を変えず、阻まれた操作として先端と理由を残すこと", () => {
+      tapAll(result, [cell]);
+
+      expect(result.current.path).toEqual([initial.problem.start]);
+      expect(result.current.blockedMove).toMatchObject({
+        reason: "not-adjacent",
+        head: initial.problem.start,
+        direction: null,
+      });
+    });
   });
 
   describe("道を延ばした後の場合", () => {
+    const direction = findHamiltonianPathDirection(
+      initial.problem.size,
+      solution[3]!,
+      solution[2]!,
+    )!;
+
     beforeEach(() => {
-      extendAll(result, solution.slice(1, 4));
+      tapAll(result, solution.slice(1, 4));
     });
 
-    test("先端を直前のマスへ動かすと道を1マス縮めること", () => {
-      act(() => result.current.moveHead(solution[2]!));
+    test("来た向きへ先端を動かすと道を1マス縮めること", () => {
+      act(() => result.current.moveHeadToward(direction));
 
       expect(result.current.path).toEqual(solution.slice(0, 3));
     });
 
-    test("道の途中のマスまで巻き戻すこと", () => {
-      act(() => result.current.rewindPath(solution[1]!));
+    test("道の途中のマスを押すとそこまで巻き戻すこと", () => {
+      tapAll(result, [solution[1]!]);
 
       expect(result.current.path).toEqual(solution.slice(0, 2));
     });
@@ -93,7 +159,7 @@ describe("useHamiltonianPathPlay", () => {
 
   describe("全有効マスを通った場合", () => {
     beforeEach(() => {
-      extendAll(result, solution.slice(1));
+      tapAll(result, solution.slice(1));
     });
 
     test("クリアして完成演出へ進み、評価は持たないこと", () => {
