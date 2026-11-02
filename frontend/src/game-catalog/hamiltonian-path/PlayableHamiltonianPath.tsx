@@ -18,7 +18,7 @@ type PlayableHamiltonianPathProps = {
 
 /**
  * 1問のプレイを URL の問題 ID と画面遷移へつなぐ。
- * 評価・記録・検証情報はまだ無いので、完了記録・離脱の記録・検証情報（`usePlayableGame`）にはつながない。
+ * 結果画面・記録表示・検証情報がまだ無いので、完了記録・離脱の記録・検証情報（`usePlayableGame`）にはつながない。
  */
 export function PlayableHamiltonianPath({
   difficulty,
@@ -40,7 +40,8 @@ export function PlayableHamiltonianPath({
       difficulty={difficulty}
       progress={play.progress}
       elapsedMs={play.elapsedMs}
-      result={play.result}
+      // 結果画面が無いので評価を渡さず、クリア後も盤面を見せたままにする。
+      result={null}
       recordOutcomeNotice={null}
       board={play.board}
       path={play.path}

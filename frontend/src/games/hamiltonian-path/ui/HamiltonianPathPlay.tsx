@@ -119,7 +119,7 @@ export function HamiltonianPathPlay({
       renderHowToPlayDialog={({ open, onClose }) => (
         <HamiltonianPathHowToPlayDialog open={open} onClose={onClose} />
       )}
-      // 評価が無いうちは結果画面へ進まない（`result` は常に `null`）。
+      // 結果画面が無い。評価を渡すと完成演出の後に盤面の代わりに何も描かないので、呼び出し側は評価を渡さない。
       renderResultScreen={() => null}
     >
       {/* 画面端から始まるタッチはブラウザの戻る操作に取られるので、盤面の左右に余白を残す。 */}

@@ -437,14 +437,102 @@ describe("getHamiltonianPathSessionResult", () => {
       clearedAt,
     );
 
-    test("経過時間・待った・盤面を戻した回数を返すこと", () => {
+    test("経過時間・引き直し・戻したマス・待った・盤面を戻した回数・入力回数を返すこと", () => {
       const result = getHamiltonianPathSessionResult(session);
 
       expect(result).toEqual({
         elapsedMs: clearedAt - startedAt,
+        backtrackCount: 1,
+        retractedCellCount: 2,
         undoCount: 1,
         restartCount: 1,
+        inputCount: 9,
       });
     });
   });
+});
+
+describe("引き直しの数え方", () => {
+  const rewoundNearStart = stroke(extendAll(initial, [3, 4, 5]), [3]);
+  const cases = [
+    [
+      "途中のマスを押して別の向きへ引き直すと1回と数えること",
+      stroke(halfway, [1, 4, 3]),
+      { backtrackCount: 1, retractedCellCount: 3 },
+    ],
+    [
+      "1回のなぞりで戻してすぐ同じマスへ引き直しても数えないこと",
+      stroke(halfway, [4, 5, 4]),
+      { backtrackCount: 0, retractedCellCount: 0 },
+    ],
+    [
+      "1回のなぞりで別のマスへ寄ってから元の道へ戻しても数えないこと",
+      stroke(halfway, [4, 3, 4]),
+      { backtrackCount: 0, retractedCellCount: 0 },
+    ],
+    [
+      "巻き戻した後、別のなぞりで同じマスへ引き直しても数えないこと",
+      stroke(stroke(halfway, [2]), [2, 5, 4]),
+      { backtrackCount: 0, retractedCellCount: 2 },
+    ],
+    [
+      "巻き戻した後、同じマスを通ってその先で別のマスへ引くと1回と数えること",
+      extendAll(rewoundNearStart, [4, 1]),
+      { backtrackCount: 1, retractedCellCount: 2 },
+    ],
+    [
+      "矢印キーで戻して同じマスへ進め直しても数えないこと",
+      moveHamiltonianPathSessionHead(
+        moveHamiltonianPathSessionHead(halfway, 5, startedAt).session,
+        4,
+        startedAt,
+      ).session,
+      { backtrackCount: 0, retractedCellCount: 1 },
+    ],
+    [
+      "待ったで取り消した後に別のマスへ引くと1回と数えること",
+      extendAll(undoHamiltonianPathSession(extendAll(initial, [1, 4])), [2]),
+      { backtrackCount: 1, retractedCellCount: 1 },
+    ],
+    [
+      "盤面を戻した後に別の向きへ引くと1回と数えること",
+      extendAll(restartHamiltonianPathSession(halfway), [3]),
+      { backtrackCount: 1, retractedCellCount: 4 },
+    ],
+    [
+      "盤面を戻した後に同じ道を引き直しても数えないこと",
+      extendAll(restartHamiltonianPathSession(halfway), [1, 2, 5, 4]),
+      { backtrackCount: 0, retractedCellCount: 4 },
+    ],
+    [
+      "待ったで前の道筋へ戻すと別のマスへ引いたのと同じに数えること",
+      undoHamiltonianPathSession(stroke(halfway, [1, 4, 3])),
+      { backtrackCount: 2, retractedCellCount: 5 },
+    ],
+  ] as const;
+
+  test.each(cases)("%s", (_, session, expected) => {
+    const { backtrackCount, retractedCellCount } = session;
+
+    expect({ backtrackCount, retractedCellCount }).toEqual(expected);
+  });
+});
+
+describe("入力回数", () => {
+  const cases = [
+    ["1マスずつ4回延ばした後", halfway, 4],
+    ["続けて道を変えるなぞりをした後", stroke(halfway, [4, 3, 6]), 5],
+    ["続けて道が変わらないなぞりをした後", stroke(halfway, [4, 3, 4]), 4],
+    ["続けて待ったをした後", undoHamiltonianPathSession(halfway), 4],
+    ["続けて盤面を戻した後", restartHamiltonianPathSession(halfway), 4],
+  ] as const;
+
+  test.each(cases)(
+    "道を変えた入力だけを数えていること: %s",
+    (_, session, expected) => {
+      const { inputCount } = session;
+
+      expect(inputCount).toBe(expected);
+    },
+  );
 });

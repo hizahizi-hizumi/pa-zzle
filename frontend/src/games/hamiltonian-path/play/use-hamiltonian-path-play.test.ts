@@ -1,6 +1,9 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
-import { useHamiltonianPathPlay } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
+import {
+  createHamiltonianPathResult,
+  useHamiltonianPathPlay,
+} from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
 import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
 import { selectHamiltonianPathProblemForDifficulty } from "@/games/hamiltonian-path/problem-selection";
 import { findHamiltonianPathDirection } from "@/games/hamiltonian-path/puzzle/board";
@@ -162,13 +165,31 @@ describe("useHamiltonianPathPlay", () => {
       tapAll(result, solution.slice(1));
     });
 
-    test("クリアして完成演出へ進み、評価は持たないこと", () => {
+    test("クリアして完成演出へ進むこと", () => {
       const { status, progress, completedAt } = result.current;
 
       expect(status).toBe("cleared");
       expect(progress).toBe("clearing");
       expect(completedAt).not.toBeNull();
-      expect(result.current.result).toBeNull();
+    });
+
+    test("プレイの事実と問題の作業の量から評価を返すこと", () => {
+      const { startedAt, completedAt } = result.current;
+      const playResult = result.current.result;
+
+      expect(playResult).toEqual(
+        createHamiltonianPathResult(
+          {
+            elapsedMs: completedAt! - startedAt,
+            backtrackCount: 0,
+            retractedCellCount: 0,
+            undoCount: 0,
+            restartCount: 0,
+            inputCount: solution.length - 1,
+          },
+          initial.workload,
+        ),
+      );
     });
 
     test("完成演出を終えると結果表示へ進むこと", () => {
@@ -183,6 +204,33 @@ describe("useHamiltonianPathPlay", () => {
       expect(result.current.progress).toBe("playing");
       expect(result.current.path).toEqual([initial.problem.start]);
       expect(result.current.problemIdentity).toEqual(initial.identity);
+    });
+  });
+
+  describe("引き直してからクリアした場合", () => {
+    beforeEach(() => {
+      tapAll(result, solution.slice(1, 4));
+      act(() => result.current.restart());
+      drag(result, solution);
+    });
+
+    test("盤面を戻した後に同じ道を引き直した分は引き直しに数えないこと", () => {
+      const playResult = result.current.result;
+
+      expect(playResult).toMatchObject({
+        backtrackCount: 0,
+        retractedCellCount: 3,
+        restartCount: 1,
+        inputCount: 4,
+      });
+    });
+  });
+
+  describe("プレイ中の場合", () => {
+    test("評価を返さないこと", () => {
+      const playResult = result.current.result;
+
+      expect(playResult).toBeNull();
     });
   });
 
