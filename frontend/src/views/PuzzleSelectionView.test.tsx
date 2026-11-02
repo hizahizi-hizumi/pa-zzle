@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router";
 
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
+import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 import { PuzzleSelectionView } from "@/views/PuzzleSelectionView";
 
 vi.mock("@/lib/internal-diagnostics", () => ({
@@ -22,6 +23,7 @@ describe("PuzzleSelectionView", () => {
     ["バイナリパズル", "/puzzles/takuzu"],
     [REFLECTION_DISPLAY_NAME, "/puzzles/reflection"],
     [HITOFUDE_PUZZLE_DISPLAY_NAME, "/puzzles/hitofude-puzzle"],
+    [TSUME_SHOGI_DISPLAY_NAME, "/puzzles/tsume-shogi"],
   ] as const;
 
   beforeEach(() => {

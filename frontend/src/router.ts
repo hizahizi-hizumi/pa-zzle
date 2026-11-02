@@ -21,6 +21,7 @@ export type Path =
   | `/puzzles/slide-puzzle/play/:difficulty`
   | `/puzzles/takuzu`
   | `/puzzles/takuzu/play/:difficulty`
+  | `/puzzles/tsume-shogi`
   | `/puzzles/tsume-shogi/play/:difficulty`
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`
