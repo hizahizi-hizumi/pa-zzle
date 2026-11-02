@@ -24,6 +24,9 @@ vi.mock("@/lib/internal-diagnostics", () => ({
   buildRevision: null,
 }));
 
+// ブリッジパズルは一覧に載せず、入口とプレイ画面の URL でだけ開ける。
+const gamesNotInCatalogYet = ["bridges"];
+
 describe("gameCatalog", () => {
   // Vite は `new URL(..., import.meta.url)` を配信用の URL へ書き換え、jsdom では http の URL になるので、ファイルのパスから求める。
   const gamesDirectory = path.resolve(
@@ -33,6 +36,7 @@ describe("gameCatalog", () => {
   const concreteGames = readdirSync(gamesDirectory, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
+    .filter((name) => !gamesNotInCatalogYet.includes(name))
     .sort();
 
   test("src/games の全ゲームを1つずつ持つこと", () => {
