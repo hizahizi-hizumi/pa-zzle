@@ -83,7 +83,7 @@ CSS の `animation-timing-function` は keyframe と次の keyframe の間（セ
 
 - 静止状態が白黒版と同じパズルだと、一覧サイズの比較列で分かる
 - 一覧選択中サイズで他ゲームのピクトグラムと並べたとき、重量・大きさが突出せず、小さすぎもしない
-- 動きの全期間で viewBox からはみ出さない（`observe_animation.cjs` の `min viewBox margin`）
+- 動きの全期間で viewBox からはみ出さない（`observe_animation.cjs` の `min viewBox margin`）。画面の外へ出ていく表現は、切り抜き（入れ子の `<svg>` の viewport や `clip-path`）の内側で走り去らせてよい。はみ出し・重なり・余白は切り抜いた後の描画される範囲で測る（切り抜き自体が viewBox の外へ広がれば、その分ははみ出し）
 
 大きさ・位置・重さは主観だけで決めず、数値と比較列をあわせて確かめる。`observe_animation.cjs` は次を出す。
 

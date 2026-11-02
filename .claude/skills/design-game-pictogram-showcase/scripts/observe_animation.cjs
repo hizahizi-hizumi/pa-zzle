@@ -7,7 +7,9 @@
 //   (c) real frames from the moment the SVG is inserted: an element that shows the static state while
 //       its animation is still in its delay, and (cut) a first frame equal to the static state
 //   (d) that the hero stays in the static state under prefers-reduced-motion: reduce, in light and dark
-//   (e) how far any visible shape goes outside the 0 0 120 120 viewBox over one cycle
+//   (e) how far any visible shape goes outside the 0 0 120 120 viewBox over one cycle, by its drawn part:
+//       a part outside the clip of a nested <svg> viewport or a clip-path: url(#id) is not drawn, so it
+//       does not count (the overlap, clearance and bounds below cut shapes by their clip the same way)
 //   (f) speed continuity: every moving shape is scanned with paused time every 2ms and the jump of its
 //       velocity between neighbouring steps (relative to its peak speed) is reported (WARN only)
 //   (g) optional: overlap between the painted shapes (stroke width included) of two selectors over one
@@ -217,6 +219,90 @@ window.__pz = (() => {
     const miter = style.strokeLinejoin === 'miter' || style.strokeLinejoin === 'miter-clip' ? parseFloat(style.strokeMiterlimit) || 4 : 1;
     return half * Math.max(Math.SQRT2, miter) + 1;
   };
+  // Clipping (screen px rectangles). A shape is drawn only inside the viewports of its nested <svg>
+  // ancestors whose overflow clips (the default of a nested <svg>) and inside the bounding box of every
+  // <clipPath> that it or an ancestor references with clip-path: url(#id). Measures use the painted box
+  // intersected with that rectangle, so a part outside the clip is not counted (a clip that reaches past
+  // the viewBox still is). Basic shapes in clip-path (inset(), circle(), ...) are not read: they count as
+  // no clip. The root <svg> is not a clip: the viewBox is what the measures compare against.
+  const CLIP_REFERENCE = /url\\(\\s*["']?#([^"')\\s]+)["']?\\s*\\)/;
+  const CLIPPING_OVERFLOW = new Set(['hidden', 'clip', 'scroll']);
+  const rectOfCorners = (matrix, x, y, width, height) => {
+    const points = [[x, y], [x + width, y], [x, y + height], [x + width, y + height]]
+      .map(([px, py]) => new DOMPoint(px, py).matrixTransform(matrix));
+    const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
+    return { left: Math.min(...xs), top: Math.min(...ys), right: Math.max(...xs), bottom: Math.max(...ys) };
+  };
+  const intersect = (a, b) => ({ left: Math.max(a.left, b.left), top: Math.max(a.top, b.top), right: Math.min(a.right, b.right), bottom: Math.min(a.bottom, b.bottom) });
+  const isEmpty = (rect) => rect.right <= rect.left || rect.bottom <= rect.top;
+  const inRect = (rect, x, y) => !rect || (x >= rect.left - 1e-6 && x <= rect.right + 1e-6 && y >= rect.top - 1e-6 && y <= rect.bottom + 1e-6);
+  // x / y / width / height of a nested <svg>: the computed px value, or the attribute resolved by the
+  // DOM (width and height compute to auto there; percentages resolve against the parent viewport).
+  const viewportLength = (node, prop) => {
+    const value = getComputedStyle(node).getPropertyValue(prop).trim();
+    return value.endsWith('px') ? parseFloat(value) : node[prop].animVal.value;
+  };
+  const viewportRect = (node, style) => {
+    const matrix = node.parentElement && node.parentElement.getScreenCTM ? node.parentElement.getScreenCTM() : null;
+    if (!matrix) return null;
+    const rect = rectOfCorners(matrix, viewportLength(node, 'x'), viewportLength(node, 'y'), viewportLength(node, 'width'), viewportLength(node, 'height'));
+    if (!CLIPPING_OVERFLOW.has(style.overflowX)) { rect.left = -Infinity; rect.right = Infinity; }
+    if (!CLIPPING_OVERFLOW.has(style.overflowY)) { rect.top = -Infinity; rect.bottom = Infinity; }
+    return rect;
+  };
+  // Bounding box on screen of the children of a <clipPath> placed in the user space of the element that
+  // references it. A child's getScreenCTM places it as if the <clipPath> stood where it is written (its
+  // own and the <clipPath>'s transforms included), so that placement is taken relative to the parent of
+  // the <clipPath> and applied in the referencing element's user space. An id resolves like the
+  // browser does (the first element in the document), and a <clipPath> without a drawn child clips all.
+  const clipPathRect = (node, id) => {
+    const clip = document.getElementById(id);
+    if (!clip || clip.localName !== 'clipPath') return null;
+    const nodeMatrix = node.getScreenCTM();
+    const holder = clip.parentElement && clip.parentElement.getScreenCTM ? clip.parentElement.getScreenCTM() : null;
+    if (!nodeMatrix || !holder) return null;
+    const asDOMMatrix = (m) => new DOMMatrix([m.a, m.b, m.c, m.d, m.e, m.f]);
+    let user = asDOMMatrix(nodeMatrix);
+    if (clip.getAttribute('clipPathUnits') === 'objectBoundingBox') {
+      const box = node.getBBox();
+      user = user.multiply(new DOMMatrix([box.width, 0, 0, box.height, box.x, box.y]));
+    }
+    const toUser = asDOMMatrix(holder).inverse();
+    let rect = null;
+    for (const child of clip.children) {
+      if (!SHAPES.has(child.localName) && child.localName !== 'use') continue;
+      const style = getComputedStyle(child);
+      if (style.display === 'none' || style.visibility === 'hidden') continue;
+      const matrix = child.getScreenCTM();
+      let box = null;
+      try { box = child.getBBox(); } catch {}
+      if (!matrix || !box) continue;
+      const own = rectOfCorners(user.multiply(toUser.multiply(asDOMMatrix(matrix))), box.x, box.y, box.width, box.height);
+      rect = rect ? { left: Math.min(rect.left, own.left), top: Math.min(rect.top, own.top), right: Math.max(rect.right, own.right), bottom: Math.max(rect.bottom, own.bottom) } : own;
+    }
+    return rect || { left: 0, top: 0, right: 0, bottom: 0 };
+  };
+  // The clip rectangle of a shape (null when nothing clips it).
+  const clipOf = (el, svg) => {
+    let clip = null;
+    for (let node = el; node && node !== svg; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      const reference = CLIP_REFERENCE.exec(style.clipPath || '');
+      const rects = [reference ? clipPathRect(node, reference[1]) : null, node !== el && node.localName === 'svg' ? viewportRect(node, style) : null];
+      for (const rect of rects) if (rect) clip = clip ? intersect(clip, rect) : rect;
+    }
+    return clip;
+  };
+  // Painted box of a visible shape on screen (px): its bounding box widened by reach px, cut by its
+  // clip; null when nothing of it is drawn.
+  const drawnBox = (el, svg, reach) => {
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return null;
+    const box = { left: rect.left - reach, top: rect.top - reach, right: rect.right + reach, bottom: rect.bottom + reach };
+    const clip = clipOf(el, svg);
+    const drawn = clip ? intersect(box, clip) : box;
+    return isEmpty(drawn) ? null : drawn;
+  };
   const effectiveOpacity = (el, svg) => {
     let value = 1;
     for (let node = el; node && node !== svg.parentElement; node = node.parentElement) {
@@ -250,7 +336,7 @@ window.__pz = (() => {
     animation.pause();
     animation.currentTime = where === 'start' ? delay : delay + Number(timing.duration || 0) - epsilon;
   });
-  // Union of the visible shapes (stroke included) in viewBox units.
+  // Union of the drawn parts of the visible shapes (stroke included, clipping applied) in viewBox units.
   const bounds = () => {
     const host = firstHero();
     const svg = host.querySelector('svg');
@@ -259,17 +345,18 @@ window.__pz = (() => {
     let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
     elementsOf(host).forEach((el) => {
       if (!SHAPES.has(el.localName) || effectiveOpacity(el, svg) <= 0.001) return;
-      const rect = el.getBoundingClientRect();
-      if (rect.width === 0 && rect.height === 0) return;
-      const half = strokeHalfPx(el, getComputedStyle(el), el.getScreenCTM());
-      left = Math.min(left, rect.left - half); top = Math.min(top, rect.top - half);
-      right = Math.max(right, rect.right + half); bottom = Math.max(bottom, rect.bottom + half);
+      const drawn = drawnBox(el, svg, strokeHalfPx(el, getComputedStyle(el), el.getScreenCTM()));
+      if (!drawn) return;
+      left = Math.min(left, drawn.left); top = Math.min(top, drawn.top);
+      right = Math.max(right, drawn.right); bottom = Math.max(bottom, drawn.bottom);
     });
     if (!Number.isFinite(left)) return null;
     const round = (value) => Number(value.toFixed(1));
     const width = (right - left) * unit, height = (bottom - top) * unit;
     return { width: round(width), height: round(height), centerX: round(((left + right) / 2 - box.left) * unit), centerY: round(((top + bottom) / 2 - box.top) * unit) };
   };
+  // Smallest margin (viewBox units) between the drawn part of a visible shape (stroke included, clipping
+  // applied) and the viewBox edge; negative when it goes outside.
   const overflow = () => {
     const host = firstHero();
     const svg = host.querySelector('svg');
@@ -278,10 +365,9 @@ window.__pz = (() => {
     let worst = { margin: Infinity, key: null };
     elementsOf(host).forEach((el, index) => {
       if (!SHAPES.has(el.localName) || effectiveOpacity(el, svg) <= 0.001) return;
-      const rect = el.getBoundingClientRect();
-      if (rect.width === 0 && rect.height === 0) return;
-      const strokePx = strokeHalfPx(el, getComputedStyle(el), el.getScreenCTM());
-      const margin = (Math.min(rect.left - box.left, box.right - rect.right, rect.top - box.top, box.bottom - rect.bottom) - strokePx) * unit;
+      const drawn = drawnBox(el, svg, strokeHalfPx(el, getComputedStyle(el), el.getScreenCTM()));
+      if (!drawn) return;
+      const margin = Math.min(drawn.left - box.left, box.right - drawn.right, drawn.top - box.top, box.bottom - drawn.bottom) * unit;
       if (margin < worst.margin) worst = { margin, key: keyOf(el, index) };
     });
     return worst;
@@ -306,8 +392,9 @@ window.__pz = (() => {
     return { groupA, groupB: shapesOf(svg, selectorB).filter(({ el }) => !shapesA.has(el)), sameSet: false };
   };
   // Area (viewBox units^2) covered by a visible shape of both selectors: bounding boxes widened by the
-  // reach of the painted stroke first, then a 1px grid tested in each shape's own coordinates
-  // (isPointInStroke uses the computed stroke-width; the transforms scale it). A paint of none is not part
+  // reach of the painted stroke and cut by the clip first (a part outside the clip is not drawn), then a
+  // 1px grid in their common part tested in each shape's own coordinates (isPointInStroke uses the
+  // computed stroke-width; the transforms scale it). A paint of none is not part
   // of the shape. <text> has no isPointInFill, so it is approximated by its bounding box (reported as
   // textApproximated). With the same selector on both sides, the shapes of one matched element are tested
   // against those of the other matched elements (not their own, nor an ancestor's or descendant's).
@@ -315,11 +402,7 @@ window.__pz = (() => {
     const host = firstHero();
     const svg = host.querySelector('svg');
     const unit = 120 / svg.getBoundingClientRect().width;
-    const paintedBox = (el) => {
-      const rect = el.getBoundingClientRect();
-      const reach = strokeReachPx(el, getComputedStyle(el), el.getScreenCTM());
-      return { left: rect.left - reach, right: rect.right + reach, top: rect.top - reach, bottom: rect.bottom + reach };
-    };
+    const paintedBox = (el) => drawnBox(el, svg, strokeReachPx(el, getComputedStyle(el), el.getScreenCTM()));
     const insideTest = (el) => {
       const matrix = el.getScreenCTM();
       if (!matrix) return () => false;
@@ -347,9 +430,11 @@ window.__pz = (() => {
       const inside = new Map([...groupA, ...groupB].map(({ el }) => [el, insideTest(el)]));
       for (const [i, { el: a, owner: ownerA }] of groupA.entries()) {
         const ra = boxes.get(a);
+        if (!ra) continue;
         for (const [j, { el: b, owner: ownerB }] of groupB.entries()) {
           if (sameSet && (j <= i || related(ownerA, ownerB))) continue;
           const rb = boxes.get(b);
+          if (!rb) continue;
           const left = Math.max(ra.left, rb.left), right = Math.min(ra.right, rb.right);
           const top = Math.max(ra.top, rb.top), bottom = Math.min(ra.bottom, rb.bottom);
           if (right <= left || bottom <= top) continue;
@@ -365,11 +450,26 @@ window.__pz = (() => {
       return { area: hits * unit * unit, textApproximated };
     });
   };
+  // A point (screen px) inside the fill of a shape (its bounding box for <text>).
+  const insideFill = (el, x, y) => {
+    const matrix = el.getScreenCTM();
+    if (!matrix) return false;
+    const point = new DOMPoint(x, y).matrixTransform(matrix.inverse());
+    if (typeof el.isPointInFill !== 'function') {
+      const box = el.getBBox();
+      return point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height;
+    }
+    return el.isPointInFill(point);
+  };
   // Outline of a visible shape on screen (px): points every step px along its geometry
   // (getPointAtLength, through getScreenCTM so the CSS transforms apply) and the half stroke width on
   // screen; its outer edge lies that far from the points (a butt cap or miter join reads as round).
-  // <text> uses its bounding box. A shape that paints neither fill nor stroke has no outline.
-  const outlineOf = (el, step) => {
+  // <text> uses its bounding box. A shape that paints neither fill nor stroke has no outline. A clipped
+  // shape keeps only the points inside its clip, each reaching no farther than the clip border, and
+  // where the clip cuts it the cut edge (points every step px along the clip border where the shape
+  // paints, with no stroke width) is part of the outline; a shape the clip hides has no outline. Each
+  // point is [x, y, reach].
+  const outlineOf = (el, step, svg) => {
     const matrix = el.getScreenCTM();
     if (!matrix) return null;
     const style = getComputedStyle(el);
@@ -390,26 +490,43 @@ window.__pz = (() => {
         for (let i = 0; i < count; i++) local.push({ x: x0 + (x1 - x0) * i / count, y: y0 + (y1 - y0) * i / count });
       }
     }
-    const points = local.map((p) => { const q = new DOMPoint(p.x, p.y).matrixTransform(matrix); return [q.x, q.y]; });
-    const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
-    return { el, fill, half, points,
-      box: { left: Math.min(...xs) - half, right: Math.max(...xs) + half, top: Math.min(...ys) - half, bottom: Math.max(...ys) + half } };
-  };
-  // A point (screen px) inside the fill of a shape (its bounding box for <text>).
-  const insideFill = (el, x, y) => {
-    const matrix = el.getScreenCTM();
-    if (!matrix) return false;
-    const point = new DOMPoint(x, y).matrixTransform(matrix.inverse());
-    if (typeof el.isPointInFill !== 'function') {
-      const box = el.getBBox();
-      return point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height;
+    let points = local.map((p) => { const q = new DOMPoint(p.x, p.y).matrixTransform(matrix); return [q.x, q.y, half]; });
+    const clip = clipOf(el, svg);
+    if (clip) {
+      const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
+      const whole = { left: Math.min(...xs) - half, right: Math.max(...xs) + half, top: Math.min(...ys) - half, bottom: Math.max(...ys) + half };
+      points = points.filter(([x, y]) => inRect(clip, x, y))
+        .map(([x, y]) => [x, y, Math.max(0, Math.min(half, x - clip.left, clip.right - x, y - clip.top, clip.bottom - y))]);
+      const cut = intersect(whole, clip);
+      if (!isEmpty(cut)) {
+        const inverse = matrix.inverse();
+        const paints = (x, y) => {
+          if (fill && insideFill(el, x, y)) return true;
+          return half > 0 && typeof el.isPointInStroke === 'function' && el.isPointInStroke(new DOMPoint(x, y).matrixTransform(inverse));
+        };
+        const sides = [];
+        if (clip.left > whole.left) sides.push([[cut.left, cut.top], [cut.left, cut.bottom]]);
+        if (clip.right < whole.right) sides.push([[cut.right, cut.top], [cut.right, cut.bottom]]);
+        if (clip.top > whole.top) sides.push([[cut.left, cut.top], [cut.right, cut.top]]);
+        if (clip.bottom < whole.bottom) sides.push([[cut.left, cut.bottom], [cut.right, cut.bottom]]);
+        for (const [[x0, y0], [x1, y1]] of sides) {
+          const count = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / step));
+          for (let i = 0; i <= count; i++) {
+            const x = x0 + (x1 - x0) * i / count, y = y0 + (y1 - y0) * i / count;
+            if (paints(x, y)) points.push([x, y, 0]);
+          }
+        }
+      }
+      if (!points.length) return null;
     }
-    return el.isPointInFill(point);
+    return { el, fill, half, points, clip,
+      box: { left: Math.min(...points.map((p) => p[0] - p[2])), right: Math.max(...points.map((p) => p[0] + p[2])),
+        top: Math.min(...points.map((p) => p[1] - p[2])), bottom: Math.max(...points.map((p) => p[1] + p[2])) } };
   };
-  // Smallest gap (viewBox units) between the outer edges of the visible shapes of both selectors:
-  // distance between outline points less both half stroke widths, negative where the strokes cross,
-  // and at most 0 where an outline point lies inside the other shape's fill. Gaps of range or more
-  // read as range. Same pairing rules as overlap.
+  // Smallest gap (viewBox units) between the outer edges of the drawn parts of the visible shapes of
+  // both selectors: distance between outline points less both reaches (half stroke widths, cut by the
+  // clip), negative where the strokes cross, and at most 0 where an outline point lies inside the other
+  // shape's drawn fill. Gaps of range or more read as range. Same pairing rules as overlap.
   const clearance = (pairs, step, range) => {
     const host = firstHero();
     const svg = host.querySelector('svg');
@@ -417,7 +534,7 @@ window.__pz = (() => {
     const stepPx = step / unit, rangePx = range / unit;
     return pairs.map(([selectorA, selectorB]) => {
       const { groupA, groupB, sameSet } = pairShapes(svg, selectorA, selectorB);
-      const outlines = new Map([...groupA, ...groupB].map(({ el }) => [el, outlineOf(el, stepPx)]));
+      const outlines = new Map([...groupA, ...groupB].map(({ el }) => [el, outlineOf(el, stepPx, svg)]));
       let best = { gap: rangePx, a: null, b: null };
       for (const [i, { el: elA, owner: ownerA }] of groupA.entries()) {
         const a = outlines.get(elA);
@@ -428,20 +545,18 @@ window.__pz = (() => {
           if (!b) continue;
           const apart = Math.max(a.box.left - b.box.right, b.box.left - a.box.right, a.box.top - b.box.bottom, b.box.top - a.box.bottom);
           if (apart >= best.gap) continue;
-          const within = (box) => ([x, y]) => x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
-          const crossing = apart < 0 && ((a.fill && b.points.filter(within(a.box)).some(([x, y]) => insideFill(elA, x, y)))
-            || (b.fill && a.points.filter(within(b.box)).some(([x, y]) => insideFill(elB, x, y))));
-          let gap = crossing ? 0 : Infinity;
+          const within = (shape) => ([x, y]) => x >= shape.box.left && x <= shape.box.right && y >= shape.box.top && y <= shape.box.bottom && inRect(shape.clip, x, y);
+          const inFillOf = (shape, other) => shape.fill && other.points.filter(within(shape)).some(([x, y]) => insideFill(shape.el, x, y));
+          let gap = apart < 0 && (inFillOf(a, b) || inFillOf(b, a)) ? 0 : best.gap;
           const reach = best.gap + a.half + b.half;
           const near = b.points.filter(([x, y]) => x >= a.box.left - reach && x <= a.box.right + reach && y >= a.box.top - reach && y <= a.box.bottom + reach);
-          let distance = Infinity;
-          for (const [ax, ay] of a.points) {
-            for (const [bx, by] of near) {
+          for (const [ax, ay, ah] of a.points) {
+            for (const [bx, by, bh] of near) {
+              const limit = gap + ah + bh;
               const d = (ax - bx) * (ax - bx) + (ay - by) * (ay - by);
-              if (d < distance) distance = d;
+              if (limit > 0 && d < limit * limit) gap = Math.sqrt(d) - ah - bh;
             }
           }
-          gap = Math.min(gap, Math.sqrt(distance) - a.half - b.half);
           if (gap < best.gap) best = { gap, a: elA, b: elB };
         }
       }
