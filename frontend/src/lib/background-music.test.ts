@@ -9,6 +9,8 @@ type FakeAudioBuffer = {
   length: number;
   sampleRate: number;
   duration: number;
+  numberOfChannels: number;
+  getChannelData: (channel: number) => Float32Array;
 };
 
 /** テストの曲の1ループの長さ（48 kHz で 60 秒）。 */
@@ -134,18 +136,27 @@ class FakeAudioContext {
 
 /**
  * 音声ファイルの中身として、取得した URL をそのまま持つ音のデータを返す。中身の前後の空白は取り除く。
- * `paddingLength` を決めると、MP3 の詰め物を取り除かないブラウザのように、1ループよりその分だけ長くする。
+ * `paddingLength` を決めると、MP3 の詰め物を取り除かないブラウザのように、1ループよりその分だけ長くし、
+ * 先頭の `leadingPaddingLength` を無音、それより後を音のあるサンプルにする。
  */
 class FakeOfflineAudioContext {
   static paddingLength = 0;
+  static leadingPaddingLength = 0;
 
   async decodeAudioData(data: ArrayBuffer): Promise<FakeAudioBuffer> {
     const length = TRACK_LOOP_LENGTH + FakeOfflineAudioContext.paddingLength;
+    const { leadingPaddingLength } = FakeOfflineAudioContext;
     return {
       url: new TextDecoder().decode(data).trim(),
       length,
       sampleRate: SAMPLE_RATE,
       duration: length / SAMPLE_RATE,
+      numberOfChannels: 1,
+      getChannelData() {
+        return new Float32Array(length)
+          .fill(0.05)
+          .fill(0, 0, leadingPaddingLength);
+      },
     };
   }
 }
@@ -293,6 +304,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   FakeAudio.allowsPlay = true;
   FakeOfflineAudioContext.paddingLength = 0;
+  FakeOfflineAudioContext.leadingPaddingLength = 0;
   const addEventListener = window.addEventListener.bind(window);
   vi.spyOn(window, "addEventListener").mockImplementation(
     function recordListener(
@@ -498,13 +510,16 @@ describe("playBackgroundMusic", () => {
   });
 
   describe("読み解いた曲が、MP3 の詰め物の分だけ1ループより長い場合", () => {
-    const loopStart = 1105 / SAMPLE_RATE;
+    // 先頭の情報フレームまで無音として読み解くブラウザの、エンコーダの遅延・情報フレーム・読み解きの遅延を合わせた長さ。
+    const leadingPaddingLength = 576 + 1152 + 529;
+    const loopStart = leadingPaddingLength / SAMPLE_RATE;
     const loopEnd = loopStart + TRACK_LOOP_LENGTH / SAMPLE_RATE;
     let backgroundMusic: BackgroundMusic;
 
     beforeEach(async () => {
       stubAudio();
-      FakeOfflineAudioContext.paddingLength = 1152;
+      FakeOfflineAudioContext.paddingLength = 2304;
+      FakeOfflineAudioContext.leadingPaddingLength = leadingPaddingLength;
     });
 
     describe("操作の前に読み解き終えた場合", () => {

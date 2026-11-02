@@ -117,10 +117,11 @@ const LOOP_HANDOFF_SEC = 0.05;
 /** ループ再生へ渡し始めるまでの余裕。渡す時刻より前に、音源の開始を AudioContext へ確実に頼んでおく。 */
 const LOOP_HANDOFF_LEAD_SEC = 0.1;
 /**
- * MP3 を読み解いても詰め物を取り除かないブラウザで、読み解いた曲の先頭に残る詰め物のサンプル数。
- * 同梱する MP3 のエンコーダ（LAME）の遅延 576 に、MP3 の読み解きの遅延 529 を足したもの。
+ * MP3 を読み解いても詰め物を取り除かないブラウザで、読み解いた曲の先頭の詰め物と見なす無音の大きさの上限（約 -60 dBFS）。
+ * 先頭に残る詰め物の長さはブラウザの読み解き方で変わるので、決まった長さを当てにせず無音の続く長さを数える。
+ * 同梱する曲は、ループの頭からこれより大きな音が鳴っている。
  */
-const MP3_LEADING_PADDING_LENGTH = 576 + 529;
+const LEADING_PADDING_SILENCE_THRESHOLD = 0.001;
 /** 要素の曲の長さが1ループより長いと見なす差（秒）。これより長ければ、要素も先頭の詰め物を流している。 */
 const PADDED_DURATION_TOLERANCE_SEC = 0.001;
 /**
@@ -465,7 +466,7 @@ function startLoopSource(
 
 /**
  * 読み解いた曲のうち、ループする区間を決める。読み解いた曲が1ループより長ければ、
- * 先頭の詰め物を除いたところから1ループの長さだけをループする。長さが同じなら、曲全体をループする。
+ * 先頭に続く無音を詰め物として除いたところから、1ループの長さだけをループする。長さが同じなら、曲全体をループする。
  */
 function toDecodedTrack(
   buffer: AudioBuffer,
@@ -475,15 +476,29 @@ function toDecodedTrack(
   if (paddingLength <= 0) {
     return { buffer, loopStart: 0, loopDuration: buffer.duration };
   }
-  const leadingPaddingLength = Math.min(
-    MP3_LEADING_PADDING_LENGTH,
-    paddingLength,
-  );
+  const leadingPaddingLength = countLeadingSilence(buffer, paddingLength);
   return {
     buffer,
     loopStart: leadingPaddingLength / buffer.sampleRate,
     loopDuration: loopLength / buffer.sampleRate,
   };
+}
+
+/** 曲の先頭から、どのチャンネルも無音のまま続くサンプル数を、`limit` を上限に数える。 */
+function countLeadingSilence(buffer: AudioBuffer, limit: number): number {
+  const channels = Array.from({ length: buffer.numberOfChannels }, (_, index) =>
+    buffer.getChannelData(index),
+  );
+  for (let index = 0; index < limit; index += 1) {
+    const isSilent = channels.every(
+      (samples) =>
+        Math.abs(samples[index] ?? 0) <= LEADING_PADDING_SILENCE_THRESHOLD,
+    );
+    if (!isSilent) {
+      return index;
+    }
+  }
+  return limit;
 }
 
 function isPadded({ buffer, loopDuration }: DecodedTrack): boolean {
