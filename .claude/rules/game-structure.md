@@ -183,6 +183,7 @@ frontend/src/game-catalog/
 ├── game-navigation.ts
 ├── app-home.ts
 ├── game-home.tsx
+├── play-timeline.ts
 ├── playable-game.tsx
 ├── recorded-game-result.ts
 ├── internal-diagnostics-dialog.ts
@@ -202,6 +203,7 @@ frontend/src/game-catalog/
 - `game-navigation.ts`: ゲームのホーム（問題を選んだ状態でも開ける。プレイから戻るときは履歴を置き換える `replacesHistory`）・ホーム・同じゲームの次の問題へ移る `GameNavigation` と、記録の問題を遊び直すプレイ画面を開く `openRecordProblemPlay` を置く。ゲームの画面からの遷移はこれを使い、パスを直書きしない。ゲームのホームとプレイ画面のパスはカタログ項目の `homePath`・`playPath` を正とする。
 - `app-home.ts`: アプリのホームで選んでおくゲームと選んでいるゲームの続きを、記録と離脱したプレイへつなぐ `useAppHome` を置く。続きは図鑑と同じ導出（`zukan/zukan-collection.ts`）から求め、要るゲームの分だけ求める。
 - `game-home.tsx`: ゲームのホームを、そのゲームの図鑑・前回からの変化・URL の `problem` クエリで選ぶ問題・プレイ画面への遷移へつなぐ `useGameHome` を置く。返す `screenProps` をゲームのホームの画面へそのまま渡す。
+- `play-timeline.ts`: 記録画面の時間の流れに並べる、今のアプリにあるゲームの完了記録と離脱したプレイ、1件に示すゲーム・レベル・図鑑の番号・評価点、1件を押して開く画面（結果画面か、その問題を選んだゲームのホーム）を置く。
 - `playable-game.tsx`: 1問のプレイを URL の問題 ID・完了記録の保存と記録の結果画面への遷移・離脱の記録・画面遷移・検証情報へつなぐ `usePlayableGame` を置く。返す `screenProps` をプレイ画面へそのまま渡す。
 - `recorded-game-result.ts`: 記録から作り直した結果を、次の問題（記録と同じ難易度で記録の問題を避ける）・画面遷移・検証情報へつなぐ `useRecordedGameResult` と、`Recorded<Game>Result` の props `RecordedGameResultProps` を置く。
 - `internal-diagnostics-dialog.ts`: 検証情報のダイアログを開いたときだけ診断スナップショットを作る `useInternalDiagnosticsDialog` を置く。検証情報を開く操作は内部診断を使えるビルドでだけ出し、ダイアログはスナップショットがあるときだけ描く。
@@ -210,7 +212,7 @@ frontend/src/game-catalog/
 - `record-result-location-state.ts`: 結果画面へ渡す location state（記録の保存結果）の作成と、形を確かめた読み取りを置く。
 - `record-result-navigation.ts`: クリアして記録を保存できたプレイを、記録の結果画面 `/puzzles/<game>/result/<記録ID>` へ履歴を置き換えて移す共通フックを置く。
 - `result-reward-sound.ts`: プレイを終えて結果を受け取る瞬間に、評価段階に応じた報酬の音を鳴らす共通フックを置く。記録から開いた結果画面では鳴らさない。
-- `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、ゲームのホームのパス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面を持つ。遊び直し先は記録一覧の全行で求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。
+- `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、ゲームのホームのパス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面と描けるかを持つ。遊び直し先は記録の一覧の行ごとに求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。
 - `Playable<Game>.tsx`: URL の問題 ID で最初の問題を引いて `play/` を始め、`usePlayableGame` に完了記録・離脱の進み具合・診断スナップショットの作り方を渡し、`ui/<Game>Play.tsx` と診断ダイアログを描く。記録を保存できたクリアは記録の結果画面へ移し、その場の結果画面は記録の保存に失敗したプレイでだけ出す。
 - `Recorded<Game>Result.tsx`: `useRecordedGameResult` に診断スナップショットの作り方を渡し、記録から作り直した結果を `ui/result/<Game>ResultScreen.tsx` と診断ダイアログで描く。
 
