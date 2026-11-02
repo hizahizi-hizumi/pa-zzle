@@ -9,6 +9,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import { countBridgesSolutions } from "@/games/bridges/problem/generation/exact-solver";
+import { measureBridgesSolveWorkload } from "@/games/bridges/problem/workload";
 import { selectBridgesProblemForDifficulty } from "@/games/bridges/problem-selection";
 import {
   bridgesDirections,
@@ -16,6 +17,8 @@ import {
   getBridgesNetwork,
 } from "@/games/bridges/puzzle/board";
 import { createProblemId } from "@/games/problem-id";
+import { readPlayAttempts } from "@/records/play-attempt-storage";
+import { readPlayRecords } from "@/records/storage";
 import { BridgesPlayView } from "@/views/BridgesPlayView";
 
 const problemSeed = "bridges-play-view";
@@ -32,10 +35,15 @@ vi.mock("@/lib/internal-diagnostics", () => ({
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
 });
 
 function LocationSearch() {
   return <output aria-label="URL のクエリ">{useLocation().search}</output>;
+}
+
+function LocationPath() {
+  return <output aria-label="URL のパス">{useLocation().pathname}</output>;
 }
 
 function renderAt(path: string): void {
@@ -52,15 +60,17 @@ function renderAt(path: string): void {
           }
         />
         <Route path="/puzzles/bridges" element={<p>難易度選択画面</p>} />
+        <Route
+          path="/puzzles/:game/result/:recordId"
+          element={<LocationPath />}
+        />
       </Routes>
     </MemoryRouter>,
   );
 }
 
-const { problem, identity } = selectBridgesProblemForDifficulty(
-  "5",
-  problemSeed,
-);
+const pooled = selectBridgesProblemForDifficulty("5", problemSeed);
+const { problem, identity } = pooled;
 const network = getBridgesNetwork(problem);
 const solution = countBridgesSolutions(problem, {
   limit: 1,
@@ -103,11 +113,9 @@ function pointToward(from: CellPosition, to: CellPosition, reach: number) {
 
 /** 2島の間の、島の丸のすぐ外の線の上を押す。 */
 function tapBetween([from, to]: EdgeEnds): void {
-  fireEvent.pointerDown(getBoard(), {
-    ...touch,
-    ...pointToward(from, to, 0.75),
-  });
-  fireEvent.pointerUp(getBoard(), { ...touch, ...pointToward(from, to, 0.75) });
+  const board = getBoard();
+  fireEvent.pointerDown(board, { ...touch, ...pointToward(from, to, 0.75) });
+  fireEvent.pointerUp(board, { ...touch, ...pointToward(from, to, 0.75) });
 }
 
 /** `from` の島の丸の中から押し、`to` の島の向きへ丸の外までなぞって離す。 */
@@ -282,28 +290,73 @@ describe("BridgesPlayView", () => {
         solveAllButLast();
       });
 
-      test("最後の1本を架けると盤面を見せたまま操作を受け付けなくなること", () => {
-        tapBetween(getEdgeEnds(lastEdge));
-        const islandsAfterClear = readIslands();
-        tapBetween(getEdgeEnds(lastEdge));
-        const islandsAfterTap = readIslands();
-        const bridgeCount = countPlacedBridges();
-        const undoDisabled = screen
-          .getByRole("button", { name: "待った" })
-          .hasAttribute("disabled");
+      test("全島がちょうどになるまでは、記録を保存しないこと", () => {
+        const allExact = readIslands().every((text) =>
+          text.endsWith("ちょうど"),
+        );
+        const records = readPlayRecords();
 
-        expect({
-          allExact: islandsAfterClear.every((text) =>
-            text.endsWith("ちょうど"),
-          ),
-          bridgeCount,
-          unchanged: islandsAfterTap.join("/") === islandsAfterClear.join("/"),
-          undoDisabled,
-        }).toEqual({
-          allExact: true,
-          bridgeCount: solutionLineCount,
-          unchanged: true,
-          undoDisabled: true,
+        expect({ allExact, records }).toEqual({
+          allExact: false,
+          records: [],
+        });
+      });
+
+      describe("最後の1本を架けた場合", () => {
+        beforeEach(() => {
+          tapBetween(getEdgeEnds(lastEdge));
+        });
+
+        test("遊んだ問題と作業の量とプレイの事実を記録へ保存すること", () => {
+          const records = readPlayRecords();
+
+          expect(records).toHaveLength(1);
+          expect(records[0]).toMatchObject({
+            gameId: "bridges",
+            payload: {
+              difficulty: "5",
+              problemIdentity: identity,
+              workload: measureBridgesSolveWorkload(pooled),
+              performance: {
+                undoCount: 0,
+                restartCount: 0,
+                inputCount: solutionLineCount,
+                blockedCount: 0,
+              },
+            },
+          });
+        });
+
+        test("保存した記録の結果画面へ移ること", () => {
+          const path = screen.getByRole("status", { name: "URL のパス" });
+          const [record] = readPlayRecords();
+
+          expect(path.textContent).toBe(
+            `/puzzles/bridges/result/${encodeURIComponent(record?.id ?? "")}`,
+          );
+        });
+      });
+    });
+
+    describe("橋を1本架けて別の問題へ移った場合", () => {
+      beforeEach(() => {
+        tapBetween(getEdgeEnds(solutionEdges[0]!));
+        fireEvent.pointerDown(
+          screen.getByRole("button", { name: "その他の操作" }),
+          { button: 0, ctrlKey: false },
+        );
+        fireEvent.click(screen.getByRole("menuitem", { name: "別の問題" }));
+      });
+
+      test("離れたプレイの進み具合を、架けた橋の本数とともに記録すること", () => {
+        const abandoned = readPlayAttempts().find(
+          (attempt) => attempt.abandonment !== null,
+        );
+
+        expect(abandoned?.abandonment?.progress).toMatchObject({
+          placedBridgeCount: 1,
+          requiredBridgeCount: solutionLineCount,
+          inputCount: 1,
         });
       });
     });

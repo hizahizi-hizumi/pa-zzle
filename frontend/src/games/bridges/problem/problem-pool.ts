@@ -10,6 +10,11 @@ import {
 } from "@/games/bridges/problem/problem";
 import problemPoolJson from "@/games/bridges/problem/problem-pool.json";
 import type { BridgesBoard, BridgesIsland } from "@/games/bridges/puzzle/board";
+import {
+  createBoardSizeFeatureValue,
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /**
@@ -231,3 +236,41 @@ export function listBridgesPoolProblemIds(
 ): readonly ProblemId[] {
   return poolIndex.listProblemIds(difficulty);
 }
+
+/** 始めたときの盤面を見れば分かる、問題の特徴。`size` は盤面の一辺のマスの数。 */
+export type BridgesProblemFeatures = {
+  size: number;
+  islandCount: number;
+};
+
+/** 難易度の問題集の1問の特徴を、分析結果を使わず問題集の項目の盤面から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findBridgesPoolProblemFeatures(
+  difficulty: BridgesDifficulty,
+  problemId: string,
+): BridgesProblemFeatures | null {
+  const entry = findBridgesPoolEntryByProblemId(difficulty, problemId);
+  if (!entry) {
+    return null;
+  }
+  const [size, , , , , , , clues] = entry;
+  return { size, islandCount: clues.length };
+}
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
+export const bridgesProblemFeatureAxes = [
+  {
+    id: "board-size",
+    getValue({ size }) {
+      return createBoardSizeFeatureValue(size, size);
+    },
+  },
+  {
+    id: "island-count",
+    getValue({ islandCount }) {
+      return createCountFeatureValue(islandCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<BridgesProblemFeatures>[];
+
+export type BridgesProblemFeatureAxisId =
+  (typeof bridgesProblemFeatureAxes)[number]["id"];

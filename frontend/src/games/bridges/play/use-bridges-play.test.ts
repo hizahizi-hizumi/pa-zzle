@@ -2,6 +2,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 
 import { useBridgesPlay } from "@/games/bridges/play/use-bridges-play";
 import { countBridgesSolutions } from "@/games/bridges/problem/generation/exact-solver";
+import { measureBridgesSolveWorkload } from "@/games/bridges/problem/workload";
 import { selectBridgesProblemForDifficulty } from "@/games/bridges/problem-selection";
 import { getBridgesNetwork } from "@/games/bridges/puzzle/board";
 import { createProblemId } from "@/games/problem-id";
@@ -155,13 +156,21 @@ describe("useBridgesPlay", () => {
       placeSolution(result);
     });
 
-    test("クリアして盤面を見せたまま、評価の無い完成演出の段へ進むこと", () => {
+    test("クリアして完成演出の段へ進み、遊んだ問題の作業の量で評価を返すこと", () => {
       const { status, progress, result: playResult } = result.current;
 
-      expect({ status, progress, playResult }).toEqual({
+      expect({
+        status,
+        progress,
+        inputCount: playResult?.inputCount,
+        workload: playResult?.workload,
+        speedMaximum: playResult?.score.breakdown.speed,
+      }).toEqual({
         status: "cleared",
         progress: "clearing",
-        playResult: null,
+        inputCount: solution.reduce((total, count) => total + count, 0),
+        workload: measureBridgesSolveWorkload(initial),
+        speedMaximum: 100,
       });
     });
 
