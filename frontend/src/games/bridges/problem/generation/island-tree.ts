@@ -32,6 +32,7 @@ function keyOf({ row, column }: CellPosition): number {
 /**
  * 完成グラフを先に作る。島を1つ置き、既存の島から縦横にまっすぐ伸ばした先の空きマスへ島を足して、その間に橋を架けることを繰り返す
  * （橋の通るマスと、既存の島の上下左右には島を置かない）。木として育つので全島がつながる。
+ * 木を育てる途中で、`splitRate` の確率で、既にある橋の途中に島を差して橋を2本に分ける（分割）。
  * 次に、まだ橋の無い島の組のうち、既存の橋と交わらない組に `extraBridgeRate` の確率で輪を作る橋を足す。
  * 橋は `doubleBridgeRate` の確率で2本にし、数字は島から出る橋の本数にする。島が2つに届かなければ `null`。
  */
@@ -41,6 +42,7 @@ export function growBridgesIslandTree(
     islandDensity,
     doubleBridgeRate,
     extraBridgeRate,
+    splitRate,
   }: BridgesGenerationConditions,
   random: ProblemRandom,
 ): BridgesCompletedLayout | null {
@@ -52,22 +54,27 @@ export function growBridgesIslandTree(
   const islandKeys = new Set<number>();
   const bridgeCells = new Set<number>();
   const bridgeCounts = new Map<string, number>();
+  /** 橋ごとの、通るマス（`origin` の島の側から順に）。分割で橋の途中に島を差すのに使う。 */
+  const bridgePaths = new Map<string, CellPosition[]>();
 
   function isInside({ row, column }: CellPosition): boolean {
     return row >= 0 && row < size && column >= 0 && column < size;
   }
 
-  function canPlaceIsland(cell: CellPosition): boolean {
-    const key = keyOf(cell);
-    if (islandKeys.has(key) || bridgeCells.has(key)) {
-      return false;
-    }
+  function isAwayFromIslands(cell: CellPosition): boolean {
     return bridgesDirections.every((direction) => {
       const step = directionSteps[direction];
       return !islandKeys.has(
         keyOf({ row: cell.row + step.row, column: cell.column + step.column }),
       );
     });
+  }
+
+  function canPlaceIsland(cell: CellPosition): boolean {
+    const key = keyOf(cell);
+    return (
+      !islandKeys.has(key) && !bridgeCells.has(key) && isAwayFromIslands(cell)
+    );
   }
 
   function addIsland(cell: CellPosition): number {
@@ -80,6 +87,35 @@ export function growBridgesIslandTree(
     return random() < doubleBridgeRate ? 2 : 1;
   }
 
+  /**
+   * 既にある橋の途中（両端の島から2マス以上離れたマス）に島を差し、橋を同じ本数の2本に分ける。島の数を増やし、
+   * 木を育てるだけでは伸ばせる所が尽きる密度より上へ島を置く。置けなければ `false`。
+   */
+  function splitBridge(): boolean {
+    const keys = [...bridgeCounts.keys()];
+    const key = pickProblemValue(keys, random);
+    const path = bridgePaths.get(key)!;
+    if (path.length < 3) {
+      return false;
+    }
+    const index = 1 + Math.floor(random() * (path.length - 2));
+    const cell = path[index]!;
+    if (!isAwayFromIslands(cell)) {
+      return false;
+    }
+    const [origin, end] = key.split(":").map(Number) as [number, number];
+    const count = bridgeCounts.get(key)!;
+    const island = addIsland(cell);
+    bridgeCells.delete(keyOf(cell));
+    bridgeCounts.delete(key);
+    bridgePaths.delete(key);
+    bridgeCounts.set(`${origin}:${island}`, count);
+    bridgePaths.set(`${origin}:${island}`, path.slice(0, index));
+    bridgeCounts.set(`${island}:${end}`, count);
+    bridgePaths.set(`${island}:${end}`, path.slice(index + 1));
+    return true;
+  }
+
   addIsland({
     row: Math.floor(random() * size),
     column: Math.floor(random() * size),
@@ -90,6 +126,10 @@ export function growBridgesIslandTree(
     attempt < targetIslandCount * GROWTH_ATTEMPTS_PER_TARGET_ISLAND;
     attempt += 1
   ) {
+    if (bridgeCounts.size > 0 && random() < splitRate) {
+      splitBridge();
+      continue;
+    }
     const origin = Math.floor(random() * islands.length);
     const step = directionSteps[pickProblemValue(bridgesDirections, random)];
     const run: CellPosition[] = [];
@@ -116,10 +156,12 @@ export function growBridgesIslandTree(
     }
     const distance = pickProblemValue(options, random);
     const island = addIsland(run[distance]!);
-    for (const cell of run.slice(0, distance)) {
+    const path = run.slice(0, distance);
+    for (const cell of path) {
       bridgeCells.add(keyOf(cell));
     }
     bridgeCounts.set(`${origin}:${island}`, drawBridgeCount());
+    bridgePaths.set(`${origin}:${island}`, path);
   }
   if (islands.length < 2) {
     return null;

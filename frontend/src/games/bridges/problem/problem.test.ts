@@ -12,18 +12,20 @@ describe("createBridgesProblemIdentity", () => {
         islandDensity: 0.3,
         doubleBridgeRate: 0.1,
         extraBridgeRate: 0.15,
+        splitRate: 0.2,
       },
       3,
     );
 
     expect(identity).toEqual({
-      generatorVersion: "1",
-      seed: "br-10-d30-p10-e15-3",
+      generatorVersion: "2",
+      seed: "br-10-d30-p10-e15-s20-3",
       conditions: {
         size: 10,
         islandDensity: 0.3,
         doubleBridgeRate: 0.1,
         extraBridgeRate: 0.15,
+        splitRate: 0.2,
       },
     });
   });
@@ -31,7 +33,13 @@ describe("createBridgesProblemIdentity", () => {
 
 describe("isBridgesProblemIdentity", () => {
   const identity = createBridgesProblemIdentity(
-    { size: 7, islandDensity: 0.24, doubleBridgeRate: 0.2, extraBridgeRate: 0 },
+    {
+      size: 7,
+      islandDensity: 0.24,
+      doubleBridgeRate: 0.2,
+      extraBridgeRate: 0,
+      splitRate: 0,
+    },
     0,
   );
 

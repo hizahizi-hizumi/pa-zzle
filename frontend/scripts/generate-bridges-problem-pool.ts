@@ -80,8 +80,9 @@ function conditionKeyOf({
   islandDensity,
   doubleBridgeRate,
   extraBridgeRate,
+  splitRate,
 }: BridgesGenerationConditions): string {
-  return `${size}×${size}/d${islandDensity}/p${doubleBridgeRate}/e${extraBridgeRate}`;
+  return `${size}×${size}/d${islandDensity}/p${doubleBridgeRate}/e${extraBridgeRate}/s${splitRate}`;
 }
 
 function toPercent(rate: number): number {
@@ -100,6 +101,7 @@ function toPoolEntry(
     toPercent(conditions.islandDensity),
     toPercent(conditions.doubleBridgeRate),
     toPercent(conditions.extraBridgeRate),
+    toPercent(conditions.splitRate),
     candidateIndex,
     encodeBridgesPoolIslands(board),
     encodeBridgesPoolClues(board),
@@ -200,7 +202,7 @@ function describeEntries(
   return [
     `L${difficulty}: ${entries.length}問`,
     `  盤面の一辺 ${formatCounts(entries.map(([size]) => size))}`,
-    `  島の密度(%) ${formatCounts(entries.map((entry) => entry[1]))} / 2本(%) ${formatCounts(entries.map((entry) => entry[2]))} / 輪(%) ${formatCounts(entries.map((entry) => entry[3]))}`,
+    `  島の密度(%) ${formatCounts(entries.map((entry) => entry[1]))} / 2本(%) ${formatCounts(entries.map((entry) => entry[2]))} / 輪(%) ${formatCounts(entries.map((entry) => entry[3]))} / 分割(%) ${formatCounts(entries.map((entry) => entry[4]))}`,
     `  島の数 ${describeDistribution(pooled.map(({ problem }) => problem.islands.length))}`,
     `  行き先の数 ${describeDistribution(edgeCounts)}`,
     `  A2 の手詰まり ${describeDistribution(pooled.map(({ analysis }) => analysis.countRoundCount))}`,
@@ -356,7 +358,7 @@ function verifyEntry(
   }
   const expected = toPoolEntry(
     pooled.identity.conditions,
-    entry[4],
+    entry[5],
     analysis,
     pooled.problem,
   );

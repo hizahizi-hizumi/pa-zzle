@@ -4,6 +4,8 @@ import {
 } from "@/games/bridges/problem/generation/human-solver";
 import researchCases from "@/games/bridges/problem/generation/research-solver-cases.json";
 import { parseBridgesBoard } from "@/games/bridges/puzzle/board";
+import { areBridgesIslandsConnected } from "@/games/bridges/puzzle/rules";
+import type { BridgeCount } from "@/games/bridges/puzzle/state";
 
 const cases = researchCases.map((researchCase) => ({
   ...researchCase,
@@ -12,19 +14,33 @@ const cases = researchCases.map((researchCase) => ({
 
 describe("traceBridgesHumanSolve", () => {
   describe("研究用の解法器（scripts/research/bridges_parity_cases.py）で解いた盤面の場合", () => {
-    test("状態と、手詰まりごとの段と狭めた辺の数が一致すること", () => {
-      const traces = cases.map(({ parsed }) => {
-        const trace = traceBridgesHumanSolve(parsed, "T");
-        return [
-          trace.status,
-          trace.rounds
-            .map(({ tier, edgeCount }) => `${tier}:${edgeCount}`)
-            .join(" "),
-        ];
-      });
+    // 研究用の解法器は、全辺の本数が決まれば全島がつながらなくても solved と返す。製品コードはそれを contradiction と返す。
+    const traces = cases.map(({ parsed }) =>
+      traceBridgesHumanSolve(parsed, "T"),
+    );
 
-      expect(traces).toEqual(
-        cases.map(({ status, rounds }) => [status, rounds]),
+    test("手詰まりごとの段と狭めた辺の数が一致すること", () => {
+      const rounds = traces.map((trace) =>
+        trace.rounds
+          .map(({ tier, edgeCount }) => `${tier}:${edgeCount}`)
+          .join(" "),
+      );
+
+      expect(rounds).toEqual(cases.map((researchCase) => researchCase.rounds));
+    });
+
+    test("状態が一致し、つながらない解き終わりだけを矛盾として返すこと", () => {
+      const statuses = traces.map((trace) => trace.status);
+
+      expect(statuses).toEqual(
+        cases.map(({ status, parsed }, index) =>
+          status === "solved" &&
+          !areBridgesIslandsConnected(parsed, {
+            bridges: traces[index]!.bridges as BridgeCount[],
+          })
+            ? "contradiction"
+            : status,
+        ),
       );
     });
 
@@ -72,6 +88,17 @@ describe("traceBridgesHumanSolve", () => {
         status: "solved",
         bridges: [1, 1, 1],
       });
+    });
+  });
+
+  describe("全辺の本数が決まっても全島がつながらない盤面の場合", () => {
+    // 1-1 の組が2つ。どちらの組も行き先が1つずつで数字の読みで決まるが、2組に分かれる。
+    const board = parseBridgesBoard(["1.1...", "......", "...1.1"]);
+
+    test("矛盾として返すこと", () => {
+      const trace = traceBridgesHumanSolve(board, "A2");
+
+      expect(trace.status).toBe("contradiction");
     });
   });
 

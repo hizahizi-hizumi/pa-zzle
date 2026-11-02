@@ -8,23 +8,25 @@ import { difficultyLevels } from "@/games/difficulty";
 
 type Features = {
   size: number;
+  islandCount: number;
+  openingEdgeRatio: number;
   countRoundCount: number;
   connectivityRoundCount: number;
   undecidedRatio: number;
-  backtrackCount: number;
 };
 
 function createAnalysis({
   size,
+  islandCount,
+  openingEdgeRatio,
   countRoundCount,
   connectivityRoundCount,
   undecidedRatio,
-  backtrackCount,
 }: Features): BridgesDifficultyAnalysis {
   return {
     status: "analyzed",
     requiresTrial: false,
-    scale: { size, islandCount: 20, edgeCount: 30, bridgeCount: 25 },
+    scale: { size, islandCount, edgeCount: 30, bridgeCount: 25 },
     reasoning: {
       maximumTier:
         connectivityRoundCount > 0 ? "C1p" : countRoundCount > 0 ? "A2" : "A1",
@@ -40,62 +42,62 @@ function createAnalysis({
         T: 0,
       },
       countReasoningUndecidedRatio: undecidedRatio,
-      openingEdgeRatio: 0.3,
+      openingEdgeRatio,
     },
     trial: {
-      medianBacktrackCount: backtrackCount,
+      medianBacktrackCount: 0,
       medianDisconnectedFullCount: 0,
-      firstTrySolvedRatio: 0,
+      firstTrySolvedRatio: 1,
     },
   };
 }
 
-const base = {
+const level1: Features = {
+  size: 6,
+  islandCount: 9,
+  openingEdgeRatio: 0.6,
   countRoundCount: 0,
   connectivityRoundCount: 0,
   undecidedRatio: 0,
-  backtrackCount: 0,
+};
+const level4: Features = {
+  size: 10,
+  islandCount: 22,
+  openingEdgeRatio: 0.2,
+  countRoundCount: 2,
+  connectivityRoundCount: 2,
+  undecidedRatio: 0.7,
 };
 
 describe("assessBridgesDifficulty", () => {
   test.each([
-    ["数字のちょうどの読みだけで決まる 6×6", { ...base, size: 6 }, "1"],
+    ["入口が広く、数字のちょうどの読みだけで決まる 6×6", level1, "1"],
     [
-      "少なくとも1本の読みが要る 7×7",
-      { ...base, size: 7, countRoundCount: 1 },
+      "入口が狭く、少なくとも1本の読みが要る 7×7",
+      {
+        ...level1,
+        size: 7,
+        islandCount: 12,
+        openingEdgeRatio: 0.4,
+        countRoundCount: 1,
+      },
       "2",
     ],
     [
-      "つながりを1回読み、数字で半分まで決まる 8×8",
+      "つながりを1か所読み、数字で半分まで決まる 8×8",
       {
-        ...base,
+        ...level4,
         size: 8,
-        countRoundCount: 1,
+        islandCount: 16,
         connectivityRoundCount: 1,
         undecidedRatio: 0.5,
       },
       "3",
     ],
+    ["つながりを2か所読む 10×10", level4, "4"],
     [
-      "つながりを1回読み、数字で半分も決まらず試し置きで1回戻す 9×9",
-      {
-        ...base,
-        size: 9,
-        connectivityRoundCount: 1,
-        undecidedRatio: 0.55,
-        backtrackCount: 1,
-      },
-      "4",
-    ],
-    [
-      "レベル4 と 5 の両方に当たる 10×10",
-      {
-        ...base,
-        size: 10,
-        connectivityRoundCount: 2,
-        undecidedRatio: 0.7,
-        backtrackCount: 3,
-      },
+      "つながりを3か所読む 10×10",
+      { ...level4, connectivityRoundCount: 3 },
       "5",
     ],
   ] as const)("%sをレベル %s にすること", (_, features, expected) => {
@@ -108,17 +110,25 @@ describe("assessBridgesDifficulty", () => {
   });
 
   test.each([
-    ["数字だけで決まる 10×10", { ...base, size: 10, countRoundCount: 2 }],
-    ["少なくとも1本の読みが要る 6×6", { ...base, size: 6, countRoundCount: 1 }],
+    ["入口が全部の 6×6", { ...level1, openingEdgeRatio: 1 }],
+    ["島が6つの 6×6", { ...level1, islandCount: 6 }],
     [
-      "数字で6割より多く決まらず試し置きで2回しか戻さない 10×10 の、つながり1回の問題で、数字で半分決まるもの",
+      "入口の広い、少なくとも1本の読みが要る 8×8",
       {
-        ...base,
-        size: 10,
-        connectivityRoundCount: 1,
-        undecidedRatio: 0.5,
-        backtrackCount: 2,
+        ...level1,
+        size: 8,
+        islandCount: 15,
+        openingEdgeRatio: 0.5,
+        countRoundCount: 1,
       },
+    ],
+    [
+      "数字だけでは6割しか決まらない、つながり3か所の 10×10",
+      { ...level4, connectivityRoundCount: 3, undecidedRatio: 0.6 },
+    ],
+    [
+      "つながりを5か所読む 9×9",
+      { ...level4, size: 9, connectivityRoundCount: 5 },
     ],
   ] as const)("%sを組み合わせ外にすること", (_, features) => {
     const assessment = assessBridgesDifficulty(createAnalysis(features));
@@ -168,19 +178,28 @@ describe("bridgesLevelCombinations", () => {
     ]);
 
   // 「少なくとも」の手詰まり回数は、つながりを読まない レベル1・2 を分けるだけに使う。レベル3 からはつながりの読み（上の段）が要る。
-  const systems = [
+  const raisingSystems = [
     "boardSize",
+    "islandCount",
     "connectivityRoundCount",
     "countReasoningUndecidedRatio",
-    "trialBacktrackCount",
   ] as const;
 
-  test("上のレベルほど、盤面・つながり・数字で決まらない割合・試し置きの戻しの下限を下げないこと", () => {
+  test("上のレベルほど、盤面・島の数・つながり・数字で決まらない割合の下限を下げないこと", () => {
     const lowered = pairs.flatMap(([lower, upper]) =>
-      systems.filter((key) => upper![key].minimum < lower![key].minimum),
+      raisingSystems.filter((key) => upper![key].minimum < lower![key].minimum),
     );
 
     expect(lowered).toEqual([]);
+  });
+
+  test("上のレベルほど、入口の広さの上限を上げないこと", () => {
+    const raised = pairs.filter(
+      ([lower, upper]) =>
+        upper!.openingEdgeRatio.maximum > lower!.openingEdgeRatio.maximum,
+    );
+
+    expect(raised).toEqual([]);
   });
 
   test("隣のレベルと盤面の一辺を1つ共有すること", () => {
@@ -201,9 +220,9 @@ describe("listBridgesGenerationConditions", () => {
     expect(sizes).toEqual([[6, 7], [7, 8], [8, 9], [9, 10], [10]]);
   });
 
-  test("密度・2本の割合・輪の割合の全ての組を挙げること", () => {
+  test("密度・2本の割合・輪の割合・分割の全ての組を挙げること", () => {
     const count = listBridgesGenerationConditions("5").length;
 
-    expect(count).toBe(12);
+    expect(count).toBe(24);
   });
 });

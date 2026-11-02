@@ -19,6 +19,7 @@ describe("growBridgesIslandTree", () => {
       islandDensity: 0.3,
       doubleBridgeRate: 0.3,
       extraBridgeRate: 0.15,
+      splitRate: 0.2,
     };
     return Array.from(
       { length: 40 },
@@ -63,6 +64,7 @@ describe("growBridgesIslandTree", () => {
       islandDensity: 0.24,
       doubleBridgeRate: 0.1,
       extraBridgeRate: 0,
+      splitRate: 0,
     };
 
     test("同じ盤面と解を作ること", () => {
@@ -84,5 +86,34 @@ describe("growBridgesIslandTree", () => {
     );
 
     expect(lengths).toEqual(layouts.map(() => true));
+  });
+
+  describe("分割の確率を上げた場合", () => {
+    const islandCounts = ([0, 0.2] as const).map((splitRate) => {
+      const random = createProblemSeededRandom(
+        `island-tree-split-${splitRate}`,
+      );
+      const total = Array.from(
+        { length: 60 },
+        () =>
+          growBridgesIslandTree(
+            {
+              size: 10,
+              islandDensity: 0.3,
+              doubleBridgeRate: 0.2,
+              extraBridgeRate: 0,
+              splitRate,
+            },
+            random,
+          )!.board.islands.length,
+      ).reduce((sum, count) => sum + count, 0);
+      return total / 60;
+    });
+
+    test("島の数の平均が増えること", () => {
+      const [withoutSplit, withSplit] = islandCounts;
+
+      expect(withSplit!).toBeGreaterThan(withoutSplit!);
+    });
   });
 });

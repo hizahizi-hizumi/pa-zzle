@@ -16,6 +16,7 @@ import {
   bridgesDoubleBridgeRates,
   bridgesExtraBridgeRates,
   bridgesIslandDensities,
+  bridgesSplitRates,
   createBridgesProblemIdentity,
 } from "@/games/bridges/problem/problem";
 import { formatBridgesBoard } from "@/games/bridges/puzzle/board";
@@ -53,12 +54,15 @@ function listAllConditions(): BridgesGenerationConditions[] {
   return bridgesBoardSizes.flatMap((size) =>
     bridgesIslandDensities.flatMap((islandDensity) =>
       bridgesDoubleBridgeRates.flatMap((doubleBridgeRate) =>
-        bridgesExtraBridgeRates.map((extraBridgeRate) => ({
-          size,
-          islandDensity,
-          doubleBridgeRate,
-          extraBridgeRate,
-        })),
+        bridgesExtraBridgeRates.flatMap((extraBridgeRate) =>
+          bridgesSplitRates.map((splitRate) => ({
+            size,
+            islandDensity,
+            doubleBridgeRate,
+            extraBridgeRate,
+            splitRate,
+          })),
+        ),
       ),
     ),
   );
@@ -69,8 +73,9 @@ function conditionKeyOf({
   islandDensity,
   doubleBridgeRate,
   extraBridgeRate,
+  splitRate,
 }: BridgesGenerationConditions): string {
-  return `${size}×${size} d${islandDensity} p${doubleBridgeRate} e${extraBridgeRate}`;
+  return `${size}×${size} d${islandDensity} p${doubleBridgeRate} e${extraBridgeRate} s${splitRate}`;
 }
 
 function quantile(sorted: readonly number[], ratio: number): number {

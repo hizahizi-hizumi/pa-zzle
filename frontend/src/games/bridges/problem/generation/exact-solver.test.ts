@@ -85,6 +85,7 @@ describe("countBridgesSolutions", () => {
           islandDensity: 0.24,
           doubleBridgeRate: 0.3,
           extraBridgeRate: 0.15,
+          splitRate: 0.2,
         },
         random,
       )!;
