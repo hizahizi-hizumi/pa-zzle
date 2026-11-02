@@ -33,8 +33,8 @@ describe("getAppBackgroundMusicScene", () => {
 
 describe("selectAppBackgroundMusicTrack", () => {
   const tracks: AppBackgroundMusicTracks = {
-    home: { url: "/home.mp3" },
-    result: { url: "/result.mp3" },
+    home: { url: "/home.mp3", loopLength: 48_000 },
+    result: { url: "/result.mp3", loopLength: 48_000 },
   };
   const cases = [
     ["home", tracks.home],

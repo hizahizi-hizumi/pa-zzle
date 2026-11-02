@@ -4,7 +4,16 @@ import type { VolumeSetting } from "@/lib/stored-volume-setting";
 
 type BackgroundMusic = typeof import("@/lib/background-music");
 
-type FakeAudioBuffer = { url: string; duration: number };
+type FakeAudioBuffer = {
+  url: string;
+  length: number;
+  sampleRate: number;
+  duration: number;
+};
+
+/** テストの曲の1ループの長さ（48 kHz で 60 秒）。 */
+const TRACK_LOOP_LENGTH = 2_880_000;
+const SAMPLE_RATE = 48_000;
 
 const realSetTimeout = globalThis.setTimeout;
 
@@ -22,6 +31,8 @@ function createFakeBufferSource() {
   return {
     buffer: null as FakeAudioBuffer | null,
     loop: false,
+    loopStart: 0,
+    loopEnd: 0,
     connect: vi.fn(),
     disconnect: vi.fn(),
     start: vi.fn<(when: number, offset: number) => void>(),
@@ -45,6 +56,7 @@ class FakeAudio {
   preload = "";
   loop = false;
   currentTime = 0;
+  duration = Number.NaN;
   error = null;
   listeners = new Map<string, (() => void)[]>();
   play = vi.fn(() =>
@@ -119,11 +131,32 @@ class FakeAudioContext {
   }
 }
 
-/** 音声ファイルの中身として、取得した URL をそのまま持つ音のデータを返す。 */
+/**
+ * 音声ファイルの中身として、取得した URL をそのまま持つ音のデータを返す。
+ * `paddingLength` を決めると、MP3 の詰め物を取り除かないブラウザのように、1ループよりその分だけ長くする。
+ */
 class FakeOfflineAudioContext {
+  static paddingLength = 0;
+
   async decodeAudioData(data: ArrayBuffer): Promise<FakeAudioBuffer> {
-    return { url: new TextDecoder().decode(data), duration: 60 };
+    const length = TRACK_LOOP_LENGTH + FakeOfflineAudioContext.paddingLength;
+    return {
+      url: new TextDecoder().decode(data),
+      length,
+      sampleRate: SAMPLE_RATE,
+      duration: length / SAMPLE_RATE,
+    };
   }
+}
+
+function defineTrack(
+  backgroundMusic: BackgroundMusic,
+  url: string,
+): BackgroundMusicTrack {
+  return backgroundMusic.defineBackgroundMusicTrack({
+    url,
+    loopLength: TRACK_LOOP_LENGTH,
+  });
 }
 
 function stubFetch() {
@@ -188,6 +221,16 @@ function getLoopStarts() {
   );
 }
 
+function getLoopRegions() {
+  return (
+    getAudioContext()?.sources.map(({ loopStart, loopEnd, start }) => ({
+      loopStart,
+      loopEnd,
+      offset: start.mock.calls[0]?.[1],
+    })) ?? []
+  );
+}
+
 function getStoppedLoopUrls() {
   return (
     getAudioContext()
@@ -212,6 +255,7 @@ const addedWindowListeners: [string, EventListenerOrEventListenerObject][] = [];
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   FakeAudio.allowsPlay = true;
+  FakeOfflineAudioContext.paddingLength = 0;
   const addEventListener = window.addEventListener.bind(window);
   vi.spyOn(window, "addEventListener").mockImplementation(
     function recordListener(
@@ -251,7 +295,7 @@ describe("playBackgroundMusic", () => {
       stubAudio();
       fetch = stubFetch();
       backgroundMusic = await importBackgroundMusic();
-      homeTrack = backgroundMusic.defineBackgroundMusicTrack("/home.mp3");
+      homeTrack = defineTrack(backgroundMusic, "/home.mp3");
     });
 
     test("AudioContext を作らず、流す曲を要素に読み込ませるだけにすること", async () => {
@@ -333,7 +377,7 @@ describe("playBackgroundMusic", () => {
       stubFetch();
       backgroundMusic = await importBackgroundMusic();
       backgroundMusic.playBackgroundMusic(
-        backgroundMusic.defineBackgroundMusicTrack("/home.mp3"),
+        defineTrack(backgroundMusic, "/home.mp3"),
       );
       await settle();
       await unlockByUserGesture();
@@ -376,6 +420,64 @@ describe("playBackgroundMusic", () => {
     });
   });
 
+  describe("読み解いた曲が、MP3 の詰め物の分だけ1ループより長い場合", () => {
+    const loopStart = 1105 / SAMPLE_RATE;
+    const loopEnd = loopStart + TRACK_LOOP_LENGTH / SAMPLE_RATE;
+    let homeAudio: FakeAudio | undefined;
+
+    beforeEach(async () => {
+      stubAudio();
+      stubFetch();
+      FakeOfflineAudioContext.paddingLength = 1152;
+      const backgroundMusic = await importBackgroundMusic();
+      backgroundMusic.playBackgroundMusic(
+        defineTrack(backgroundMusic, "/home.mp3"),
+      );
+      await settle();
+      homeAudio = findAudio("/home.mp3");
+    });
+
+    test("詰め物を除いた1ループの区間を、区間の頭からループ再生すること", async () => {
+      await finishLoading(homeAudio);
+      await unlockByUserGesture();
+
+      expect(getLoopRegions()).toEqual([
+        { loopStart, loopEnd, offset: loopStart },
+      ]);
+    });
+
+    describe("要素で流し始めた後に読み解いた場合", () => {
+      beforeEach(async () => {
+        await unlockByUserGesture();
+        homeAudio?.dispatch("playing");
+      });
+
+      test("要素の再生位置を1ループの区間の中の位置に直して、ループ再生を始めること", async () => {
+        if (homeAudio) {
+          homeAudio.duration = 60;
+          homeAudio.currentTime = 59.95;
+        }
+
+        await finishLoading(homeAudio);
+
+        const [region] = getLoopRegions();
+        expect(region?.offset).toBeCloseTo(loopStart + 0.05);
+      });
+
+      test("要素の曲も詰め物の分だけ長ければ、要素の再生位置から詰め物の分を差し引くこと", async () => {
+        if (homeAudio) {
+          homeAudio.duration = 60 + 1152 / SAMPLE_RATE;
+          homeAudio.currentTime = 12;
+        }
+
+        await finishLoading(homeAudio);
+
+        const [region] = getLoopRegions();
+        expect(region?.offset).toBeCloseTo(12.1);
+      });
+    });
+  });
+
   describe("要素の再生を拒まれた場合", () => {
     let homeAudio: FakeAudio | undefined;
 
@@ -385,7 +487,7 @@ describe("playBackgroundMusic", () => {
       FakeAudio.allowsPlay = false;
       const backgroundMusic = await importBackgroundMusic();
       backgroundMusic.playBackgroundMusic(
-        backgroundMusic.defineBackgroundMusicTrack("/home.mp3"),
+        defineTrack(backgroundMusic, "/home.mp3"),
       );
       await settle();
       await unlockByUserGesture();
@@ -408,7 +510,7 @@ describe("playBackgroundMusic", () => {
       stubFetch();
       backgroundMusic = await importBackgroundMusic();
       backgroundMusic.playBackgroundMusic(
-        backgroundMusic.defineBackgroundMusicTrack("/home.mp3"),
+        defineTrack(backgroundMusic, "/home.mp3"),
       );
       await settle();
       await finishLoading(findAudio("/home.mp3"));
@@ -417,7 +519,7 @@ describe("playBackgroundMusic", () => {
 
     test("同じ曲を流すよう頼まれても頭から流し直さないこと", async () => {
       backgroundMusic.playBackgroundMusic(
-        backgroundMusic.defineBackgroundMusicTrack("/home.mp3"),
+        defineTrack(backgroundMusic, "/home.mp3"),
       );
       await settle();
 
@@ -428,7 +530,7 @@ describe("playBackgroundMusic", () => {
     describe("別の曲に切り替えた場合", () => {
       beforeEach(async () => {
         backgroundMusic.playBackgroundMusic(
-          backgroundMusic.defineBackgroundMusicTrack("/result.mp3"),
+          defineTrack(backgroundMusic, "/result.mp3"),
         );
         await settle();
       });
@@ -486,10 +588,10 @@ describe("playBackgroundMusic", () => {
       stubFetch();
       vi.spyOn(performance, "now").mockReturnValue(1000);
       backgroundMusic = await importBackgroundMusic();
-      resultTrack = backgroundMusic.defineBackgroundMusicTrack("/result.mp3");
+      resultTrack = defineTrack(backgroundMusic, "/result.mp3");
       backgroundMusic.prepareBackgroundMusic([resultTrack]);
       backgroundMusic.playBackgroundMusic(
-        backgroundMusic.defineBackgroundMusicTrack("/home.mp3"),
+        defineTrack(backgroundMusic, "/home.mp3"),
       );
       await settle();
       await finishLoading(findAudio("/home.mp3"));
@@ -529,11 +631,10 @@ describe("playBackgroundMusic", () => {
       now = 1000;
       vi.spyOn(performance, "now").mockImplementation(() => now);
       backgroundMusic = await importBackgroundMusic();
-      const resultTrack =
-        backgroundMusic.defineBackgroundMusicTrack("/result.mp3");
+      const resultTrack = defineTrack(backgroundMusic, "/result.mp3");
       backgroundMusic.prepareBackgroundMusic([resultTrack]);
       backgroundMusic.playBackgroundMusic(
-        backgroundMusic.defineBackgroundMusicTrack("/home.mp3"),
+        defineTrack(backgroundMusic, "/home.mp3"),
       );
       await settle();
       await unlockByUserGesture();
@@ -571,7 +672,7 @@ describe("playBackgroundMusic", () => {
       fetch = stubFetch();
       backgroundMusic = await importBackgroundMusic();
       backgroundMusic.setBackgroundMusicVolume(0);
-      homeTrack = backgroundMusic.defineBackgroundMusicTrack("/home.mp3");
+      homeTrack = defineTrack(backgroundMusic, "/home.mp3");
     });
 
     test("曲を読み込まず、利用者が操作しても AudioContext を作らないこと", async () => {
@@ -606,7 +707,7 @@ describe("playBackgroundMusic", () => {
       stubFetch();
       backgroundMusic = await importBackgroundMusic();
       backgroundMusic.playBackgroundMusic(
-        backgroundMusic.defineBackgroundMusicTrack("/home.mp3"),
+        defineTrack(backgroundMusic, "/home.mp3"),
       );
       await settle();
       await finishLoading(findAudio("/home.mp3"));
@@ -647,8 +748,8 @@ describe("prepareBackgroundMusic", () => {
     stubAudio();
     fetch = stubFetch();
     backgroundMusic = await importBackgroundMusic();
-    tracks = ["/home.mp3", "/result.mp3"].map(
-      backgroundMusic.defineBackgroundMusicTrack,
+    tracks = ["/home.mp3", "/result.mp3"].map((url) =>
+      defineTrack(backgroundMusic, url),
     );
   });
 
