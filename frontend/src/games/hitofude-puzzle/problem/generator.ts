@@ -50,9 +50,7 @@ export function generateHitofudePuzzleProblem(
 ): HitofudePuzzleGeneratedProblem {
   validateIdentity(identity);
   const { seed, conditions } = identity;
-  // 乱数列の接頭辞は、内部ID を `hitofude-puzzle` へ変える前の `hamiltonian-path` のまま固定する。
-  // 変えると同じ identity から別の問題ができ、生成器の版を上げない限り問題集と合わなくなる。
-  const random = createProblemSeededRandom(`hamiltonian-path:${seed}`);
+  const random = createProblemSeededRandom(`hitofude-puzzle:${seed}`);
 
   for (let attempt = 1; attempt <= MAXIMUM_GENERATION_ATTEMPTS; attempt += 1) {
     const generated = createHitofudePuzzleHoleBoard(

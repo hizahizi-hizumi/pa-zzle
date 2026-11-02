@@ -5,8 +5,12 @@ import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficult
 import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
 import {
   createHitofudePuzzleProblemIdentity,
-  type HitofudePuzzleProblemIdentity,
+  type HitofudePuzzleIdentifiedProblem,
 } from "@/games/hitofude-puzzle/problem/problem";
+import {
+  listHitofudePuzzlePoolEntries,
+  toHitofudePuzzlePooledProblem,
+} from "@/games/hitofude-puzzle/problem/problem-pool";
 import { HitofudePuzzleDiagnostics } from "@/games/hitofude-puzzle/ui/HitofudePuzzleDiagnostics";
 
 afterEach(cleanup);
@@ -23,10 +27,9 @@ function getRowValue(
 }
 
 function createSnapshot(
-  identity: HitofudePuzzleProblemIdentity,
+  { problem, identity }: HitofudePuzzleIdentifiedProblem,
   difficulty: HitofudePuzzleDifficulty,
 ) {
-  const { problem } = generateHitofudePuzzleProblem(identity);
   return createHitofudePuzzleDiagnosticSnapshot({
     difficulty,
     problemIdentity: identity,
@@ -37,9 +40,10 @@ function createSnapshot(
 
 describe("HitofudePuzzleDiagnostics", () => {
   describe("迷う分岐の無い問題の場合", () => {
-    // hp-5-t0-4: 5×5・穴4。始点から取り残しを避けるだけで道が1通りに決まる。
+    // hp-5-t0-4: 5×5 は問題集に無い盤面の大きさで、迷う分岐の無い問題になる。
+    const identity = createHitofudePuzzleProblemIdentity(5, 0, 4);
     const snapshot = createSnapshot(
-      createHitofudePuzzleProblemIdentity(5, 0, 4),
+      { problem: generateHitofudePuzzleProblem(identity).problem, identity },
       "1",
     );
 
@@ -58,13 +62,13 @@ describe("HitofudePuzzleDiagnostics", () => {
     test("盤面の穴・有効マスを単位付きで表示すること", () => {
       const values = ["穴", "有効マス"].map((label) => getRowValue(label));
 
-      expect(values).toEqual(["4マス", "21マス"]);
+      expect(values).toEqual(["6マス", "19マス"]);
     });
 
     test("一意性と、正解の道を始点から進む向きの矢印で表示すること", () => {
       const values = ["一意性", "正解の道"].map((label) => getRowValue(label));
 
-      expect(values).toEqual(["一意（探索 20節点）", "↑↑↑←↓←↑←←↓→↓→↓→↓←←↑←"]);
+      expect(values).toEqual(["一意（探索 18節点）", "↑→↓↓←↓→↓←←↑←←↑→↑↑←"]);
     });
 
     test("提供範囲外と表示し、レベルの条件の行を出さないこと", () => {
@@ -79,9 +83,9 @@ describe("HitofudePuzzleDiagnostics", () => {
   });
 
   describe("レベル5に分類できた問題の場合", () => {
-    // hp-8-t0-7: 8×8・穴7。仮置き3局面・最も長い先読み9手（先読みの重さ4）で、レベル5 の組み合わせに当たる。
+    // 問題集のレベル5 の先頭の問題。生成し直さずに問題集の盤面をそのまま使う。
     const snapshot = createSnapshot(
-      createHitofudePuzzleProblemIdentity(8, 0, 7),
+      toHitofudePuzzlePooledProblem(listHitofudePuzzlePoolEntries("5")[0]!),
       "5",
     );
 
@@ -117,10 +121,10 @@ describe("HitofudePuzzleDiagnostics", () => {
       );
 
       expect(values).toEqual([
-        "12か所",
-        "12か所",
-        "2: 11 / 3: 0 / 4: 0 / 5: 1 / 6: 0",
-        "探索の上限超",
+        "18か所",
+        "18か所",
+        "2: 18 / 3: 0 / 4: 0 / 5: 0 / 6: 0",
+        "40マス",
       ]);
     });
   });
