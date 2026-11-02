@@ -20,7 +20,7 @@ import {
   countBridgesIslandBridges,
 } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
-import { animateBlockingBridges } from "@/games/bridges/ui/board/BridgesBoard/animate-blocking-bridges";
+import { flashBoardLines } from "@/games/bridges/ui/board/BridgesBoard/flash-board-lines";
 import { playClearWave } from "@/games/bridges/ui/board/BridgesBoard/play-clear-wave";
 import {
   BridgesFigure,
@@ -102,6 +102,11 @@ export function BridgesBoard({
   // 別の問題へ移ると島の数が減ることがあるので、描画のたびに今の盤面の島へ丸める。
   const focusedIsland = Math.min(selectedIsland, board.islands.length - 1);
   const [keyboardFocused, setKeyboardFocused] = useState(false);
+  /** 最後に、どちらを狙ったか決まらない所を押したときの候補の辺。`id` は押すたびに変え、同じ所を続けて押しても点け直す。 */
+  const [ambiguousTap, setAmbiguousTap] = useState<{
+    id: number;
+    edges: readonly number[];
+  } | null>(null);
   const islandBridgeCounts = countBridgesIslandBridges(board, { bridges });
   const blockingEdges =
     edgeNotice?.change === "blocked" ? edgeNotice.crossingEdges : [];
@@ -112,9 +117,15 @@ export function BridgesBoard({
 
   useLayoutEffect(() => {
     if (edgeNotice?.change === "blocked") {
-      animateBlockingBridges(figureRef.current);
+      flashBoardLines(figureRef.current, "blockingBridges");
     }
   }, [edgeNotice]);
+
+  useLayoutEffect(() => {
+    if (ambiguousTap) {
+      flashBoardLines(figureRef.current, "ambiguousEdges");
+    }
+  }, [ambiguousTap]);
 
   useEffect(() => {
     if (!clearing) {
@@ -150,6 +161,13 @@ export function BridgesBoard({
     event.preventDefault();
     if (target.kind === "edge") {
       onCycleEdge(target.edge);
+      return;
+    }
+    if (target.kind === "ambiguous") {
+      setAmbiguousTap((current) => ({
+        id: (current?.id ?? 0) + 1,
+        edges: target.edges,
+      }));
       return;
     }
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -234,6 +252,7 @@ export function BridgesBoard({
         guide={guide}
         focusedIsland={keyboardFocused ? focusedIsland : null}
         blockingEdges={blockingEdges}
+        ambiguousEdges={ambiguousTap?.edges ?? []}
       />
       <ul className="sr-only">
         {board.islands.map(({ row, column, clue }, island) => (

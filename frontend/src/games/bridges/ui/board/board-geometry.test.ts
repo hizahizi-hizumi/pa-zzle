@@ -67,7 +67,11 @@ describe("findBoardTarget", () => {
       { x: 2.2, y: 2.6 },
       { kind: "edge", edge: 3 },
     ],
-    ["2本の線からちょうど同じ距離の所", { x: 3.0, y: 2.0 }, null],
+    [
+      "2本の線からちょうど同じ距離の所",
+      { x: 3.0, y: 2.0 },
+      { kind: "ambiguous", edges: [2, 3] },
+    ],
   ] as const)("%sを押すと %j を指すこと", (_, point, expected) => {
     const target = findBoardTarget(board, noBridges, point);
 
@@ -77,13 +81,13 @@ describe("findBoardTarget", () => {
   describe("交わる辺の横の方に橋がある場合", () => {
     const horizontalBridged: readonly BridgeCount[] = [0, 0, 0, 1];
 
-    test("縦の線に近い所を押しても橋のある横の辺を指すこと", () => {
-      const target = findBoardTarget(board, horizontalBridged, {
-        x: 2.6,
-        y: 2.2,
-      });
+    test.each([
+      ["縦の線にはっきり近い所", { x: 2.6, y: 2.2 }, 2],
+      ["交点のすぐそばで、2本の線から見分けにくい所", { x: 2.55, y: 2.4 }, 3],
+    ] as const)("%sを押すと辺 %s を指すこと", (_, point, expected) => {
+      const target = findBoardTarget(board, horizontalBridged, point);
 
-      expect(target).toEqual({ kind: "edge", edge: 3 });
+      expect(target).toEqual({ kind: "edge", edge: expected });
     });
   });
 
@@ -91,12 +95,12 @@ describe("findBoardTarget", () => {
     const verticalBridged: readonly BridgeCount[] = [0, 0, 2, 0];
 
     test.each([
-      ["横の線に近い所", { x: 2.2, y: 2.6 }],
-      ["2本の線からちょうど同じ距離の所", { x: 3.0, y: 2.0 }],
-    ] as const)("%sを押しても橋のある縦の辺を指すこと", (_, point) => {
+      ["横の線にはっきり近い所", { x: 2.2, y: 2.6 }, 3],
+      ["2本の線からちょうど同じ距離の所", { x: 3.0, y: 2.0 }, 2],
+    ] as const)("%sを押すと辺 %s を指すこと", (_, point, expected) => {
       const target = findBoardTarget(board, verticalBridged, point);
 
-      expect(target).toEqual({ kind: "edge", edge: 2 });
+      expect(target).toEqual({ kind: "edge", edge: expected });
     });
   });
 
