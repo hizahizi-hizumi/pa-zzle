@@ -1,3 +1,4 @@
+import blockStoppedSoundUrl from "@/games/ice-floor-maze/assets/sounds/block-stopped.flac";
 import blockedSoundUrl from "@/games/ice-floor-maze/assets/sounds/blocked.flac";
 import clearedSoundUrl from "@/games/ice-floor-maze/assets/sounds/cleared.flac";
 import floorStoppedSoundUrl from "@/games/ice-floor-maze/assets/sounds/floor-stopped.flac";
@@ -5,15 +6,18 @@ import goalPassedSoundUrl from "@/games/ice-floor-maze/assets/sounds/goal-passed
 import iceCrackedSoundUrl from "@/games/ice-floor-maze/assets/sounds/ice-cracked.flac";
 import rockCrumbledSoundUrl from "@/games/ice-floor-maze/assets/sounds/rock-crumbled.flac";
 import slidSoundUrl from "@/games/ice-floor-maze/assets/sounds/slid.flac";
+import snowPushedSoundUrl from "@/games/ice-floor-maze/assets/sounds/snow-pushed.flac";
 import stoppedSoundUrl from "@/games/ice-floor-maze/assets/sounds/stopped.flac";
 import type {
   IceFloorMazeBlockedInput,
   IceFloorMazeLastSlide,
 } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import {
+  getIceFloorMazeBlockContactMs,
   getIceFloorMazeCrackDelayMs,
   getIceFloorMazeSlideDurationMs,
   getIceFloorMazeSlideProgressMs,
+  getIceFloorMazeSnowPushDelayMs,
 } from "@/games/ice-floor-maze/ui/board/slide-timing";
 import type { GameProgress } from "@/games/play";
 import {
@@ -47,6 +51,20 @@ const blockedSound = defineSoundEffect(blockedSoundUrl);
 /** もろい岩にぶつかって止まり、岩が崩れる音。止まる音の代わりに鳴らす。 */
 const rockCrumbledSound = defineSoundEffect(rockCrumbledSoundUrl);
 
+/**
+ * 雪を押し寄せる、くぐもったざくっという音。駒が雪のマスに入り、雪が押し出され始める時刻に、止まる音の代わりに鳴らす。
+ * 駒は雪のあったマスで柔らかく止まるので、こつんとは鳴らさない。
+ */
+const snowPushedSound = defineSoundEffect(snowPushedSoundUrl);
+
+/**
+ * 押された滑る氷の塊が氷の上を擦って滑り、止め役に当たって止まる音。駒は塊と一緒に止まるので、止まる音の代わりに鳴らす。
+ * 音声ファイルは短い擦れから始まり `BLOCK_STOPPED_SOUND_LEAD_MS` 後に当たるので、塊が止まる時刻よりその分だけ早く鳴らし始める。
+ * 駒が塊に触れる前には鳴らし始めない。
+ */
+const blockStoppedSound = defineSoundEffect(blockStoppedSoundUrl);
+const BLOCK_STOPPED_SOUND_LEAD_MS = 40;
+
 /** 薄い氷が割れて水面になる音。割れたマスごとに、そのマスが割れる時刻に鳴らす。 */
 const iceCrackedSound = defineSoundEffect(iceCrackedSoundUrl);
 
@@ -62,17 +80,20 @@ const iceFloorMazeSounds: readonly SoundEffect[] = [
   floorStoppedSound,
   blockedSound,
   rockCrumbledSound,
+  snowPushedSound,
+  blockStoppedSound,
   iceCrackedSound,
   goalPassedSound,
   clearedSound,
 ];
 
 /**
- * 滑りの音。滑り出しに滑る音、通り過ぎたゴールと割れた薄い氷はその時刻に、止まった時刻に止まる音（床で止まったら床の音）か
- * 崩れる音を鳴らす。
+ * 滑りの音。滑り出しに滑る音、通り過ぎたゴールと割れた薄い氷はその時刻に鳴らす。止まり方の音は1つだけ鳴らし、
+ * もろい岩を崩したら止まった時刻に崩れる音、雪を押し出したら押し出し始める時刻に雪の音、滑る氷の塊を押したら塊が止まる時刻に
+ * 塊の音、ほかは止まった時刻に止まる音（床で止まったら床の音）を鳴らす。
  * ゴールで止まった滑りは完成演出のクリア音が止まりを返すので、止まる音を鳴らさない。
  * 動きを減らす設定では駒が終点へ飛び、変わったマスも変わった後の姿ですぐ描かれるので、
- * 滑る音とゴールの通過の音は鳴らさず、止まる音か崩れる音と、割れた薄い氷の音1つだけをすぐ鳴らす。
+ * 滑る音とゴールの通過の音は鳴らさず、止まり方の音と、割れた薄い氷の音1つだけをすぐ鳴らす。
  */
 function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
   const reducedMotion = prefersReducedMotion();
@@ -94,6 +115,19 @@ function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
   }
   if (slide.crumbledRock !== null) {
     playSound(rockCrumbledSound, { delayMs: stopDelayMs });
+  } else if (slide.pushedSnow) {
+    playSound(snowPushedSound, {
+      delayMs: reducedMotion ? 0 : getIceFloorMazeSnowPushDelayMs(slide),
+    });
+  } else if (slide.movedBlock) {
+    playSound(blockStoppedSound, {
+      delayMs: reducedMotion
+        ? 0
+        : Math.max(
+            getIceFloorMazeBlockContactMs(slide, slide.movedBlock.from),
+            stopDelayMs - BLOCK_STOPPED_SOUND_LEAD_MS,
+          ),
+    });
   } else if (!slide.isClearingMove) {
     playSound(slide.stoppedOnFloor ? floorStoppedSound : stoppedSound, {
       delayMs: stopDelayMs,
@@ -121,7 +155,8 @@ function playBlockedSound() {
 }
 
 /**
- * 滑り・動けない入力・ゴールの通過・床で止まる・もろい岩が崩れる・薄い氷が割れる・ゴールで止まる瞬間に効果音を鳴らす。
+ * 滑り・動けない入力・ゴールの通過・床で止まる・もろい岩が崩れる・薄い氷が割れる・雪を押し出す・押した滑る氷の塊が止まる・
+ * ゴールで止まる瞬間に効果音を鳴らす。
  * 結果の報酬の音はアプリが鳴らす。閉じ込めの知らせ、待った・盤面を戻すでは鳴らさない。
  */
 export function useIceFloorMazeSoundEffects(

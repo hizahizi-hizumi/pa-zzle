@@ -456,6 +456,133 @@ describe("useIceFloorMazePlay", () => {
     });
   });
 
+  describe("雪のある問題を渡した場合", () => {
+    // 0  s  2
+    // 3  4  5
+    // s  7  8
+    // 開始位置 0 から右へ滑ると雪 1 に入って雪を 2 へ押し出し、1 で止まる。
+    // 0 から下へは雪 6 の先が盤面の外なので押し出せず、雪の手前の 3 で止まる。3 から下は1マスも動けない。
+    const snowProblem: IceFloorMazePooledProblem = {
+      problem: {
+        board: parseIceFloorMazeBoard([".s.", "...", "s.."]),
+        start: 0,
+        goal: 5,
+      },
+      identity: {
+        generatorVersion: "3",
+        seed: "ice-floor-maze-snow",
+        conditions: { width: 3, height: 3 },
+      },
+      optimalMoveCount: 3,
+    };
+
+    beforeEach(() => {
+      ({ result } = renderHook(() => useIceFloorMazePlay("3", snowProblem)));
+    });
+
+    test("押し出した雪を直前の滑りと今の盤面で渡すこと", () => {
+      act(() => result.current.slide("right"));
+
+      const { lastSlide, position, cells } = result.current;
+
+      expect(lastSlide).toMatchObject({
+        to: 1,
+        pushedSnow: { from: 1, to: 2 },
+        movedBlock: null,
+        stoppedOnFloor: false,
+      });
+      expect(position).toBe(1);
+      expect([cells[1], cells[2]]).toEqual(["ice", "snow-mound"]);
+    });
+
+    test("待ったで押し出した雪を戻すこと", () => {
+      act(() => result.current.slide("right"));
+
+      act(() => result.current.undo());
+
+      expect([result.current.cells[1], result.current.cells[2]]).toEqual([
+        "snow",
+        "ice",
+      ]);
+    });
+
+    test("押し出せない雪の手前で止まり、続けて雪へ押すと阻んだ雪のマスを渡し、雪を動かさないこと", () => {
+      slideInOrder(result, ["down", "down"]);
+
+      const { blockedInput, position, cells } = result.current;
+
+      expect(position).toBe(3);
+      expect(blockedInput).toMatchObject({ direction: "down", stopper: 6 });
+      expect(cells[6]).toBe("snow");
+    });
+  });
+
+  describe("滑る氷の塊のある問題を渡した場合", () => {
+    // 0  1  m  3
+    // 4  5  6  7
+    // 8  9  10 11
+    // 12 13 14 15
+    // 開始位置 0 から右へ滑ると、1 から塊 2 を押して塊が外壁の手前の 3 まで滑り、駒は 2 で止まる。
+    // 続けて右は隣の塊に阻まれて1マスも動けない。
+    const blockProblem: IceFloorMazePooledProblem = {
+      problem: {
+        board: parseIceFloorMazeBoard(["..m.", "....", "....", "...."]),
+        start: 0,
+        goal: 15,
+      },
+      identity: {
+        generatorVersion: "3",
+        seed: "ice-floor-maze-block",
+        conditions: { width: 4, height: 4 },
+      },
+      optimalMoveCount: 2,
+    };
+
+    beforeEach(() => {
+      ({ result } = renderHook(() => useIceFloorMazePlay("3", blockProblem)));
+    });
+
+    test("始めたときの塊のマスを渡し、塊の元のマスを氷として渡すこと", () => {
+      const { blocks, cells } = result.current;
+
+      expect(blocks).toEqual([2]);
+      expect(cells[2]).toBe("ice");
+    });
+
+    test("押して動かした塊を直前の滑りと塊のマスで渡すこと", () => {
+      act(() => result.current.slide("right"));
+
+      const { lastSlide, position, blocks } = result.current;
+
+      expect(lastSlide).toMatchObject({
+        to: 2,
+        path: [1, 2],
+        movedBlock: { from: 2, to: 3 },
+        pushedSnow: null,
+      });
+      expect(position).toBe(2);
+      expect(blocks).toEqual([3]);
+    });
+
+    test("隣の塊へ押すと、阻んだ塊のマスを渡し、塊を動かさないこと", () => {
+      act(() => result.current.slide("right"));
+      act(() => result.current.slide("right"));
+
+      const { blockedInput, blocks } = result.current;
+
+      expect(blockedInput).toMatchObject({ direction: "right", stopper: 3 });
+      expect(blocks).toEqual([3]);
+    });
+
+    test("待ったで動かした塊を戻すこと", () => {
+      act(() => result.current.slide("right"));
+
+      act(() => result.current.undo());
+
+      expect(result.current.blocks).toEqual([2]);
+    });
+  });
+
   describe("閉じ込めから崩す滑りで進んだ場合", () => {
     // b  1  S  3
     // #  5  6  7

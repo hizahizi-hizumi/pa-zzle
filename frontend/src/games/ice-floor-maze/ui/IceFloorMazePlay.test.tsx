@@ -12,6 +12,7 @@ import type {
   IceFloorMazeResult,
 } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
+import { createIceFloorMazeInitialState } from "@/games/ice-floor-maze/puzzle/state";
 import { IceFloorMazePlay } from "@/games/ice-floor-maze/ui/IceFloorMazePlay";
 import type { GameProgress } from "@/games/play";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
@@ -80,7 +81,8 @@ describe("IceFloorMazePlay", () => {
         recordOutcomeNotice={null}
         elapsedMs={65_000}
         board={board}
-        cells={board.cells}
+        cells={createIceFloorMazeInitialState(board, 17).cells}
+        blocks={[]}
         goal={18}
         position={17}
         moveCount={7}
@@ -285,7 +287,7 @@ describe("IceFloorMazePlay", () => {
       },
     );
 
-    test("メニューの 遊び方 で、もろい岩・薄い氷とスワイプの操作を説明する遊び方を開くこと", () => {
+    test("メニューの 遊び方 で、もろい岩・薄い氷・雪・滑る氷の塊とスワイプの操作を説明する遊び方を開くこと", () => {
       fireEvent.pointerDown(
         screen.getByRole("button", { name: "その他の操作" }),
         { button: 0, ctrlKey: false },
@@ -298,6 +300,10 @@ describe("IceFloorMazePlay", () => {
         dialog.getByText(/もろい岩.*すぐ隣から押しても崩れない/),
       ).toBeTruthy();
       expect(dialog.getByText(/薄い氷.*割れて水面になる/)).toBeTruthy();
+      expect(dialog.getByText(/雪を1マス先へ押し出して/)).toBeTruthy();
+      expect(
+        dialog.getByText(/滑る氷の塊.*すぐ隣から押しても動かない/),
+      ).toBeTruthy();
       expect(dialog.getByText(/盤面をスワイプして/)).toBeTruthy();
       expect(dialog.queryByText(/スライド|矢印ボタン/)).toBeNull();
     });
@@ -351,6 +357,8 @@ describe("IceFloorMazePlay", () => {
         path: [18, 19],
         crumbledRock: null,
         crackedIce: [],
+        pushedSnow: null,
+        movedBlock: null,
         stoppedOnFloor: false,
         passedGoal: true,
         isClearingMove: false,
@@ -383,6 +391,8 @@ describe("IceFloorMazePlay", () => {
         path: [18, 17, 16, 15],
         crumbledRock: null,
         crackedIce: [],
+        pushedSnow: null,
+        movedBlock: null,
         stoppedOnFloor: false,
         passedGoal: true,
         isClearingMove: false,
@@ -416,6 +426,8 @@ describe("IceFloorMazePlay", () => {
       path: [16, 17],
       crumbledRock: null,
       crackedIce: [],
+      pushedSnow: null,
+      movedBlock: null,
       stoppedOnFloor: false,
       passedGoal: false,
       isClearingMove: false,

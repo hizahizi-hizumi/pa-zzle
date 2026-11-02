@@ -16,6 +16,7 @@ import {
   doesIceFloorMazeSlidePassGoal,
   getIceFloorMazeNeighbor,
   type IceFloorMazeDirection,
+  type IceFloorMazeShift,
 } from "@/games/ice-floor-maze/puzzle/rules";
 import type {
   IceFloorMazeState,
@@ -58,6 +59,8 @@ import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
  * 直前の成立した滑り。盤面はこれで跡を描き、滑りを動かす。`id` は滑りごとに変わる。
  * `from` から `path` のマスを順に通り、最後のマス `to` で止まった。`passedGoal` はゴールを止まらずに通り過ぎたか。
  * `crumbledRock` はこの滑りで崩れたもろい岩、`crackedIce` は割れて水面になった薄い氷のマス。
+ * `pushedSnow` は押し出した雪（雪のマスから雪山になったマスへ）で、駒は雪のマスで止まった。
+ * `movedBlock` は押して動かした滑る氷の塊で、駒は塊の元のマスに入ってから塊と一緒に進み、塊の止まったマスの手前で止まった。
  * `stoppedOnFloor` は止め役にぶつからず、床に入って止まったか。
  * `entersTrap` はもうゴールに止まれないことを知らせていない状態から、知らせる状態へ入ったか。知らせた後の滑りでは `false`。
  * 成立しない向きの入力では変わらず、待った・盤面を戻す・リセット・別の問題で消える。
@@ -70,6 +73,8 @@ export type IceFloorMazeLastSlide = {
   path: readonly number[];
   crumbledRock: number | null;
   crackedIce: readonly number[];
+  pushedSnow: IceFloorMazeShift | null;
+  movedBlock: IceFloorMazeShift | null;
   stoppedOnFloor: boolean;
   passedGoal: boolean;
   isClearingMove: boolean;
@@ -78,7 +83,8 @@ export type IceFloorMazeLastSlide = {
 
 /**
  * 直前の入力が、すぐ隣が止め役か外壁で1マスも動けなかったこと。盤面はこれで押し戻しを動かす。盤面と直前の滑りは変わらない。
- * `stopper` は駒を阻んだ隣のマス（岩・もろい岩・水面・盤面の外）で、外周の外壁なら `null`。隣のもろい岩はこの入力では崩れない。
+ * `stopper` は駒を阻んだ隣のマス（岩・もろい岩・水面・雪山・盤面の外・押し出せない雪・滑る氷の塊のあるマス）で、外周の外壁なら `null`。
+ * 隣のもろい岩はこの入力では崩れず、隣の滑る氷の塊は動かない。
  * `id` は入力ごとに変わり、同じ向きを続けて選んでも別の入力として見分けられる。
  */
 export type IceFloorMazeBlockedInput = {
@@ -140,15 +146,17 @@ export type IceFloorMazePlay = GamePlay<
     goal: number;
     /** 駒のいるマス。 */
     position: number;
-    /** 今の盤面のマス。崩れたもろい岩は氷に、割れた薄い氷は水面に変わっている。 */
+    /** 今の盤面のマス。崩れたもろい岩は氷に、割れた薄い氷は水面に、押し出した雪は氷に、押し出した先は雪山に変わっている。 */
     cells: readonly IceFloorMazeStateCell[];
+    /** 滑る氷の塊のあるマス（昇順）。 */
+    blocks: readonly number[];
     moveCount: number;
     undoCount: number;
     restartCount: number;
     optimalMoveCount: number;
     /**
-     * もうゴールに止まれないことを知らせるプレイ中だけ `true`。ゴールで止まれず、もろい岩を崩さず薄い氷を割らない滑りでは
-     * 同じところを回るだけの状態（閉じ込め）に入ったら知らせ、そこから崩す・割る滑りで進んでも、待った・盤面を戻すで戻っても、
+     * もうゴールに止まれないことを知らせるプレイ中だけ `true`。ゴールで止まれず、要素を変えない滑りでは
+     * 同じところを回るだけの状態（閉じ込め）に入ったら知らせ、そこから要素を変える滑りで進んでも、待った・盤面を戻すで戻っても、
      * ゴールで止まれる状態に戻るまで知らせ続ける。
      */
     isTrapped: boolean;
@@ -250,6 +258,8 @@ function slideInPlay(
       path: slide.path,
       crumbledRock: slide.crumbledRock,
       crackedIce: slide.crackedIce,
+      pushedSnow: slide.pushedSnow,
+      movedBlock: slide.movedBlock,
       stoppedOnFloor: board.cells[slide.to] === "floor",
       passedGoal: doesIceFloorMazeSlidePassGoal(slide, goal),
       isClearingMove: session.status === "cleared",
@@ -306,7 +316,7 @@ function classifyDeadlock(
 
 /**
  * 移った先の状態で、もうゴールに止まれないことを知らせるか。閉じ込めに入ったら知らせる。
- * 知らせた後は、崩す・割る滑りで閉じ込めでなくなっても、待った・盤面を戻すで戻っても、詰みのままなら知らせ続ける。
+ * 知らせた後は、要素を変える滑りで閉じ込めでなくなっても、待った・盤面を戻すで戻っても、詰みのままなら知らせ続ける。
  * 知らせが消えて、抜け出せた・戻れたと誤らせないため。ゴールで止まれる状態に戻ったら知らせをやめる。
  */
 function noticeTrap(
@@ -408,6 +418,7 @@ export function useIceFloorMazePlay(
     goal,
     position: puzzleState.position,
     cells: puzzleState.cells,
+    blocks: puzzleState.blocks,
     moveCount: session.moveCount,
     undoCount: session.undoCount,
     restartCount: session.restartCount,

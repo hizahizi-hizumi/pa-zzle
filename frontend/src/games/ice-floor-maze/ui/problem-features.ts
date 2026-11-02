@@ -21,20 +21,40 @@ export const iceFloorMazeProblemFeatureAxisDisplays = {
     label: "薄い氷",
     valueFormat: { kind: "count", unit: "マス" },
   },
+  "snow-count": { label: "雪", valueFormat: { kind: "count", unit: "マス" } },
+  "sliding-block-count": {
+    label: "滑る氷の塊",
+    valueFormat: { kind: "count", unit: "個" },
+  },
 } as const satisfies Record<
   IceFloorMazeProblemFeatureAxisId,
   ProblemFeatureAxisDisplay
 >;
 
-/** 床・もろい岩・薄い氷は、無い問題では示さない。 */
+/** 要素の数の軸ごとの、その数を持つ特徴。 */
+const elementCountFeatureByAxis = {
+  "floor-count": "floorCount",
+  "brittle-rock-count": "brittleRockCount",
+  "thin-ice-count": "thinIceCount",
+  "snow-count": "snowCount",
+  "sliding-block-count": "slidingBlockCount",
+} as const satisfies Partial<
+  Record<IceFloorMazeProblemFeatureAxisId, keyof IceFloorMazeProblemFeatures>
+>;
+
+function isElementCountAxis(
+  id: IceFloorMazeProblemFeatureAxisId,
+): id is keyof typeof elementCountFeatureByAxis {
+  return Object.hasOwn(elementCountFeatureByAxis, id);
+}
+
+/** 床・もろい岩・薄い氷・雪・滑る氷の塊は、無い問題では示さない。 */
 export function formatIceFloorMazeProblemFeatures(
   features: IceFloorMazeProblemFeatures,
 ): ProblemFeature[] {
   const shownAxes = iceFloorMazeProblemFeatureAxes.filter(
     ({ id }) =>
-      (id !== "floor-count" || features.floorCount > 0) &&
-      (id !== "brittle-rock-count" || features.brittleRockCount > 0) &&
-      (id !== "thin-ice-count" || features.thinIceCount > 0),
+      !isElementCountAxis(id) || features[elementCountFeatureByAxis[id]] > 0,
   );
   return formatProblemFeatures(
     features,

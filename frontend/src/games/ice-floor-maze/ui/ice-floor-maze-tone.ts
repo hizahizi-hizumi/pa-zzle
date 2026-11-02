@@ -11,6 +11,11 @@
  * - 床（入ると止まる床）は、氷・薄い氷の青とも石の色・ゴールのアンバーとも違う灰緑の平らな板に、ざらつきを表す濃い点を5つ置く。
  *   影を付けず出っ張りに見せないので、岩（手前で止まる）と違って「入って止まる面」と読める。グレースケールでは氷・薄い氷より
  *   暗く岩より明るい面に点が並び、ひびの入った薄い氷・平らな雪と形で見分けられる。跡は床の上を通して、床で止まった滑りを隠さない。
+ * - 雪は白の段階で、平らな雪は縁を薄い青灰で縁取った波打つ面に粒の点、雪山は同じ白の山に青灰の影の面を付けた出っ張りにする。
+ *   氷の明るい青の地でも縁と影で形が読め、ダークでは白を一段落として氷の暗い地から浮かせる。グレースケールでも岩の石の色より明るく、
+ *   平らな雪は影の無い波形、雪山は影のある山の形で見分ける。
+ * - 滑る氷の塊は、氷の系統の色（氷より緑寄りの水色）の、岩と同じ大きさで下に影の面を持つ塊にし、上の面に白い光の筋を入れる。
+ *   石の色の岩・もろい岩とは色相と光の筋、雪山とは四角い外形、水面とは影の向き（下に影の出っ張り）で見分ける。
  * - 駒は白い縁取りの濃い円、ゴールは氷と別の色系統の地と輪と中心の点にする。跡やゴールの印に重なっても駒を見失わない。
  * - 跡は駒と同じ色相の半透明の帯で、ゴールの輪の下を通す。ゴールを通り過ぎた滑りは、帯がゴールの先まで続いて見える。
  *   跡はマスに載る要素（水面・薄い氷・石くず）の下を通し、割れたばかりの水面を帯で覆って見えにくくしない。
@@ -32,6 +37,16 @@ export const iceFloorMazeToneClassNames = {
   wave: "stroke-sky-200/90 dark:stroke-sky-400/85",
   floor: "fill-[oklch(80%_0.05_155)] dark:fill-[oklch(38%_0.045_160)]",
   floorDot: "fill-[oklch(55%_0.07_158)] dark:fill-[oklch(68%_0.06_158)]",
+  snow: "fill-white stroke-[oklch(78%_0.035_245)] dark:fill-slate-200 dark:stroke-slate-400",
+  snowDot: "fill-[oklch(88%_0.03_240)] dark:fill-[oklch(82%_0.025_255)]",
+  snowMound: "fill-white dark:fill-slate-200",
+  snowMoundShadow: "fill-[oklch(78%_0.035_245)] dark:fill-slate-400",
+  slidingBlock: "fill-[oklch(86%_0.08_200)] dark:fill-[oklch(60%_0.085_205)]",
+  slidingBlockShadow:
+    "fill-[oklch(64%_0.1_215)] dark:fill-[oklch(40%_0.07_220)]",
+  slidingBlockGlint: "stroke-white/90 dark:stroke-[oklch(92%_0.03_205/0.85)]",
+  slidingBlockEdge:
+    "stroke-[oklch(64%_0.1_215/0.7)] dark:stroke-[oklch(40%_0.07_220/0.7)]",
   trail: "fill-indigo-400/45 dark:fill-indigo-300/35",
   goalCell: "fill-amber-100 dark:fill-amber-950",
   goalMark: "fill-none stroke-amber-500 dark:stroke-amber-400",

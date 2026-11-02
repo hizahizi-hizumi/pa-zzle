@@ -29,3 +29,23 @@ export function getIceFloorMazeCrackDelayMs(
   const cellsFromStart = cellIndex === from ? 0 : path.indexOf(cellIndex) + 1;
   return getIceFloorMazeSlideProgressMs(path.length, cellsFromStart + 0.5);
 }
+
+/** 滑りで雪を押し出し始める時刻。駒が雪のマスに入り始める、最後の1マスを進み始めた時刻とする。 */
+export function getIceFloorMazeSnowPushDelayMs({
+  path,
+}: {
+  path: readonly number[];
+}): number {
+  return getIceFloorMazeSlideProgressMs(path.length, path.length - 1);
+}
+
+/**
+ * 滑りで押した滑る氷の塊に駒が触れる時刻。駒は塊の元のマス `blockFrom` の手前まで進んだところで触れ、
+ * そこから塊と同じ速さで一緒に進む。`path` の `i` 番目は `i + 1` マス目なので、塊の元のマスの番号がそのまま触れるまでのマス数。
+ */
+export function getIceFloorMazeBlockContactMs(
+  { path }: { path: readonly number[] },
+  blockFrom: number,
+): number {
+  return getIceFloorMazeSlideProgressMs(path.length, path.indexOf(blockFrom));
+}

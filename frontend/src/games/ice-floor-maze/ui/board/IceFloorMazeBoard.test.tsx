@@ -5,8 +5,22 @@ import type {
   IceFloorMazeBlockedInput,
   IceFloorMazeLastSlide,
 } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
-import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
+import {
+  type IceFloorMazeBoard as IceFloorMazeBoardState,
+  parseIceFloorMazeBoard,
+} from "@/games/ice-floor-maze/puzzle/board";
+import {
+  createIceFloorMazeInitialState,
+  type IceFloorMazeStateCell,
+} from "@/games/ice-floor-maze/puzzle/state";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
+
+/** 要素がまだ変わっていない盤面のマス。 */
+function listInitialCells(
+  board: IceFloorMazeBoardState,
+): readonly IceFloorMazeStateCell[] {
+  return createIceFloorMazeInitialState(board, 0).cells;
+}
 
 afterEach(() => {
   cleanup();
@@ -24,6 +38,8 @@ describe("IceFloorMazeBoard", () => {
     path: [1, 2, 3],
     crumbledRock: null,
     crackedIce: [],
+    pushedSnow: null,
+    movedBlock: null,
     stoppedOnFloor: false,
     passedGoal: false,
     isClearingMove: false,
@@ -57,7 +73,8 @@ describe("IceFloorMazeBoard", () => {
       const element = (blocked: IceFloorMazeBlockedInput | null) => (
         <IceFloorMazeBoard
           board={board}
-          cells={board.cells}
+          cells={listInitialCells(board)}
+          blocks={[]}
           goal={15}
           position={3}
           lastSlide={lastSlide}
@@ -90,13 +107,18 @@ describe("IceFloorMazeBoard", () => {
     // 6 7 8
     // もろい岩 0 が崩れて氷になり、薄い氷 1 が割れて水面になった。
     const elementBoard = parseIceFloorMazeBoard(["bcx", "...", "..."]);
-    const cells = ["ice", "water", ...elementBoard.cells.slice(2)] as const;
+    const cells: readonly IceFloorMazeStateCell[] = [
+      "ice",
+      "water",
+      ...listInitialCells(elementBoard).slice(2),
+    ];
 
     beforeEach(() => {
       render(
         <IceFloorMazeBoard
           board={elementBoard}
           cells={cells}
+          blocks={[]}
           goal={8}
           position={3}
           lastSlide={null}
@@ -133,7 +155,8 @@ describe("IceFloorMazeBoard", () => {
       render(
         <IceFloorMazeBoard
           board={floorBoard}
-          cells={floorBoard.cells}
+          cells={listInitialCells(floorBoard)}
+          blocks={[]}
           goal={5}
           position={2}
           lastSlide={{
@@ -175,7 +198,8 @@ describe("IceFloorMazeBoard", () => {
       render(
         <IceFloorMazeBoard
           board={outsideBoard}
-          cells={outsideBoard.cells}
+          cells={listInitialCells(outsideBoard)}
+          blocks={[]}
           goal={8}
           position={3}
           lastSlide={null}
@@ -226,6 +250,8 @@ describe("IceFloorMazeBoard", () => {
       path: [5, 6, 7],
       crumbledRock: null,
       crackedIce: [4, 5],
+      pushedSnow: null,
+      movedBlock: null,
       stoppedOnFloor: false,
       passedGoal: false,
       isClearingMove: false,
@@ -240,6 +266,8 @@ describe("IceFloorMazeBoard", () => {
       path: [7, 11],
       crumbledRock: 15,
       crackedIce: [],
+      pushedSnow: null,
+      movedBlock: null,
       stoppedOnFloor: false,
       passedGoal: false,
       isClearingMove: false,
@@ -255,7 +283,8 @@ describe("IceFloorMazeBoard", () => {
       render(
         <IceFloorMazeBoard
           board={changedBoard}
-          cells={changedBoard.cells.map((cell, cellIndex) =>
+          blocks={[]}
+          cells={listInitialCells(changedBoard).map((cell, cellIndex) =>
             slide.crackedIce.includes(cellIndex)
               ? "water"
               : cellIndex === slide.crumbledRock
@@ -377,7 +406,8 @@ describe("IceFloorMazeBoard", () => {
       const element = (blocked: IceFloorMazeBlockedInput | null) => (
         <IceFloorMazeBoard
           board={pushedBoard}
-          cells={pushedBoard.cells}
+          cells={listInitialCells(pushedBoard)}
+          blocks={[]}
           goal={8}
           position={0}
           lastSlide={null}
@@ -405,6 +435,274 @@ describe("IceFloorMazeBoard", () => {
 
       expect(shaken).toContain("1");
       expect(brittleRocks).toHaveLength(1);
+    });
+  });
+  describe.each([
+    [
+      "押し出した雪山",
+      ["snow", "ice", "ice", "ice", "snow-mound", "ice", "ice", "ice", "ice"],
+      [8],
+      '[data-snow-mound-cell="4"]',
+    ],
+    [
+      "押した滑る氷の塊",
+      ["snow", "ice", "ice", "ice", "ice", "ice", "ice", "ice", "ice"],
+      [4],
+      '[data-sliding-block-cell="4"]',
+    ],
+  ] as const)(
+    "%sがゴールをふさいだ盤面の場合",
+    (_, cells, blocks, coveringSelector) => {
+      // s 1 2
+      // 3 G 5
+      // 6 7 8
+      // 雪 0 と、ゴール 4 をふさぐ雪山か塊がある。
+      const coveredBoard = parseIceFloorMazeBoard(["s..", "...", "..."]);
+
+      beforeEach(() => {
+        render(
+          <IceFloorMazeBoard
+            board={coveredBoard}
+            cells={cells}
+            blocks={blocks}
+            goal={4}
+            position={2}
+            lastSlide={null}
+            blockedInput={null}
+            clearing={false}
+            onSlideAnimationActivityChange={vi.fn()}
+            onClearAnimationComplete={vi.fn()}
+          />,
+        );
+      });
+
+      test("ゴールをふさぐ要素を、ゴールの印の上に重ねて描くこと", () => {
+        const boardImage = screen.getByRole("img", { name: "盤面" });
+        const goalMark = boardImage.querySelector("[data-goal]");
+        const covering = boardImage.querySelector(coveringSelector);
+
+        expect(covering).not.toBeNull();
+        expect(
+          goalMark!.compareDocumentPosition(covering!) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+      });
+
+      test("雪と、状態の塊のマスにある塊を描くこと", () => {
+        const boardImage = screen.getByRole("img", { name: "盤面" });
+
+        const drawnBlocks = Array.from(
+          boardImage.querySelectorAll("[data-sliding-block-cell]"),
+          (block) => Number(block.getAttribute("data-sliding-block-cell")),
+        );
+        const snow = boardImage.querySelectorAll("[data-snow-cell]");
+
+        expect(drawnBlocks).toEqual(blocks);
+        expect(snow).toHaveLength(1);
+      });
+    },
+  );
+
+  describe("雪を押し出し、滑る氷の塊を押した滑りの直後の場合", () => {
+    // 0  1  2  3
+    // 4  5  6  7
+    // 0 から右へ2マス滑り、1 から塊 2 を押して 3 まで動かし、2 で止まった。
+    // 4 から右へ2マス滑り、雪 6 を 7 へ押し出して雪山にし、6 で止まった。
+    // どちらの滑りも2マスで 109 ミリ秒。1マス進んだ 54.5 ミリ秒に、駒が塊に触れ、雪のマスに入り始める。
+    const movedBoard = parseIceFloorMazeBoard(["..m.", "..s."]);
+    const blockSlide: IceFloorMazeLastSlide = {
+      ...lastSlide,
+      from: 0,
+      to: 2,
+      path: [1, 2],
+      movedBlock: { from: 2, to: 3 },
+    };
+    const snowSlide: IceFloorMazeLastSlide = {
+      ...lastSlide,
+      from: 4,
+      to: 6,
+      path: [5, 6],
+      pushedSnow: { from: 6, to: 7 },
+    };
+    const movedCells: readonly IceFloorMazeStateCell[] = [
+      "ice",
+      "ice",
+      "ice",
+      "ice",
+      "ice",
+      "ice",
+      "ice",
+      "snow-mound",
+    ];
+    let animate: Mock;
+
+    function renderSlide(slide: IceFloorMazeLastSlide, reduced: boolean) {
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn(() => ({ matches: reduced }) as MediaQueryList),
+      );
+      render(
+        <IceFloorMazeBoard
+          board={movedBoard}
+          cells={movedCells}
+          blocks={[3]}
+          goal={0}
+          position={slide.to}
+          lastSlide={slide}
+          blockedInput={null}
+          clearing={false}
+          onSlideAnimationActivityChange={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+    }
+
+    /** `selector` に当たる要素の動きの、遅れ・長さ・埋め方。 */
+    function listAnimationTimings(selector: string) {
+      return animate.mock.contexts.flatMap((element, call) => {
+        const options = animate.mock.calls[call]?.[1] as
+          | KeyframeAnimationOptions
+          | undefined;
+        return (element as Element).matches(selector)
+          ? [
+              {
+                delay: options?.delay,
+                duration: options?.duration,
+                fill: options?.fill,
+              },
+            ]
+          : [];
+      });
+    }
+
+    beforeEach(() => {
+      animate = vi.fn(
+        () =>
+          ({
+            finished: new Promise<void>(() => {}),
+            cancel: vi.fn(),
+          }) as unknown as Animation,
+      );
+      Object.defineProperty(Element.prototype, "animate", {
+        configurable: true,
+        value: animate,
+      });
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    describe("雪を押し出した場合", () => {
+      beforeEach(() => {
+        renderSlide(snowSlide, false);
+      });
+
+      test("駒が雪のマスに入り始める時刻に押し出した雪を動かし、少し後に先のマスの雪山を盛り上げること", () => {
+        const pushedSnow = listAnimationTimings("[data-snow-body]");
+        const risingMound = listAnimationTimings(
+          '[data-snow-mound-cell="7"] > [data-cell-body]',
+        );
+
+        expect(pushedSnow).toEqual([
+          { delay: 54.5, duration: 180, fill: "both" },
+        ]);
+        expect(risingMound).toEqual([
+          { delay: 144.5, duration: 240, fill: "backwards" },
+        ]);
+      });
+    });
+
+    describe("滑る氷の塊を押した場合", () => {
+      beforeEach(() => {
+        renderSlide(blockSlide, false);
+      });
+
+      test("駒が触れた時刻から駒と同じ速さで塊を滑らせ、止まった時刻に塊をつぶすこと", () => {
+        const sliding = listAnimationTimings(
+          '[data-sliding-block-cell="3"] [data-block-shift]',
+        );
+        const squashing = listAnimationTimings(
+          '[data-sliding-block-cell="3"] [data-cell-body]',
+        );
+
+        expect(sliding).toEqual([
+          { delay: 54.5, duration: 54.5, fill: "backwards" },
+        ]);
+        expect(squashing).toEqual([
+          { delay: 109, duration: 180, fill: undefined },
+        ]);
+      });
+    });
+
+    describe("動きを減らす設定の場合", () => {
+      beforeEach(() => {
+        renderSlide(blockSlide, true);
+      });
+
+      test("塊を動かさないこと", () => {
+        const sliding = listAnimationTimings("[data-block-shift]");
+
+        expect(sliding).toHaveLength(0);
+      });
+    });
+  });
+
+  describe("隣の滑る氷の塊へ押した場合", () => {
+    // 0 m 2
+    // 3 4 5
+    // 0 から右は隣の塊 1 に阻まれて1マスも動けない。
+    const pushedBoard = parseIceFloorMazeBoard([".m.", "..."]);
+    const pushedInput: IceFloorMazeBlockedInput = {
+      id: 6,
+      direction: "right",
+      from: 0,
+      stopper: 1,
+    };
+    let animate: Mock;
+    let renderBoard: (blocked: IceFloorMazeBlockedInput | null) => void;
+
+    beforeEach(() => {
+      animate = vi.fn();
+      Object.defineProperty(Element.prototype, "animate", {
+        configurable: true,
+        value: animate,
+      });
+      const element = (blocked: IceFloorMazeBlockedInput | null) => (
+        <IceFloorMazeBoard
+          board={pushedBoard}
+          cells={listInitialCells(pushedBoard)}
+          blocks={[1]}
+          goal={5}
+          position={0}
+          lastSlide={null}
+          blockedInput={blocked}
+          clearing={false}
+          onSlideAnimationActivityChange={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />
+      );
+      const { rerender } = render(element(null));
+      renderBoard = (blocked) => rerender(element(blocked));
+    });
+
+    test("押された塊をわずかにずらして戻し、動かさないこと", () => {
+      renderBoard(pushedInput);
+
+      const nudged = animate.mock.contexts.map((element) =>
+        (element as Element)
+          .closest("[data-sliding-block-cell]")
+          ?.getAttribute("data-sliding-block-cell"),
+      );
+      const blocks = Array.from(
+        screen
+          .getByRole("img", { name: "盤面" })
+          .querySelectorAll("[data-sliding-block-cell]"),
+        (block) => block.getAttribute("data-sliding-block-cell"),
+      );
+
+      expect(nudged).toContain("1");
+      expect(blocks).toEqual(["1"]);
     });
   });
 });

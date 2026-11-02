@@ -6,6 +6,8 @@ import type { IceFloorMazePoint } from "@/games/ice-floor-maze/ui/board/board-ge
  * 崩れたもろい岩の跡は、氷の上に散らばった平らな石くず（影の無い小さなかけら）。
  * 薄い氷は氷より一段濃い板に中心から3方向へ折れて伸びる白いひび、水面は上の縁に影（くぼみ）と小さな波。
  * 床は薄い氷と同じ板に、さいころの5の目に並べた点（ざらついた、滑らない面）。
+ * 雪は縁が波打つ平らな白い面（影が無く、上に載っているだけ）。雪山は下に影を付けた盛り上がった白い山で、岩と同じくぶつかる物と読ませる。
+ * 滑る氷の塊は岩と同じ大きさ・同じ影の塊で、角を岩より小さく丸め、上の面に光の筋と下寄りの面の線を引いて氷の塊と読ませる。
  */
 export const iceFloorMazeRockShape = {
   inset: 0.06,
@@ -171,3 +173,58 @@ export function formatIceFloorMazePolygon(
 ): string {
   return points.map(([x, y]) => `${x},${y}`).join(" ");
 }
+
+/** 雪の縁の波の数と大きさ。辺ごとに `scallopsPerSide` 個の弧を外へふくらませる。 */
+const snowPatch = {
+  inset: 0.08,
+  scallopsPerSide: 3,
+  scallopRadius: 0.2,
+} as const;
+
+/** 雪の面に置く、雪の粒の影の点。 */
+export const iceFloorMazeSnowDots = {
+  centers: [
+    { x: 0.3, y: 0.32 },
+    { x: 0.68, y: 0.62 },
+  ],
+  radius: 0.045,
+} as const satisfies { centers: readonly IceFloorMazePoint[]; radius: number };
+
+/** 縁が波打つ平らな雪。四隅を結ぶ辺を、同じ大きさの弧でつないで描く。 */
+export function createIceFloorMazeSnowPatchPath(): string {
+  const { inset, scallopsPerSide, scallopRadius } = snowPatch;
+  const far = 1 - inset;
+  const step = (far - inset) / scallopsPerSide;
+  const arcTo = (x: number, y: number) =>
+    `A${scallopRadius} ${scallopRadius} 0 0 1 ${formatPoint(x, y)}`;
+  const offsets = Array.from(
+    { length: scallopsPerSide },
+    (_, index) => step * (index + 1),
+  );
+  return [
+    `M${formatPoint(inset, inset)}`,
+    ...offsets.map((offset) => arcTo(inset + offset, inset)),
+    ...offsets.map((offset) => arcTo(far, inset + offset)),
+    ...offsets.map((offset) => arcTo(far - offset, far)),
+    ...offsets.map((offset) => arcTo(inset, far - offset)),
+    "Z",
+  ].join("");
+}
+
+/** 雪山の影を落とす深さ。岩の影と同じ。 */
+export const ICE_FLOOR_MAZE_SNOW_MOUND_SHADOW_DEPTH = 0.08;
+
+/** 雪山。左の低い肩から右の高い頂へ盛り上がる、底の平らな山。 */
+export const iceFloorMazeSnowMoundPath =
+  "M0.1 0.84C0.08 0.52 0.3 0.36 0.44 0.44C0.52 0.22 0.84 0.24 0.86 0.52C0.95 0.6 0.94 0.8 0.9 0.84Z";
+
+/** 滑る氷の塊。外形と影は岩と同じ大きさで、角の丸みだけを小さくする。 */
+export const iceFloorMazeSlidingBlockShape = {
+  ...iceFloorMazeRockShape,
+  cornerRadius: 0.14,
+} as const;
+
+/** 滑る氷の塊の上の面の光の筋（左上の角に沿う線と、斜めの短い線）と、下寄りの面の線。 */
+export const iceFloorMazeSlidingBlockGlintPath =
+  "M0.2 0.5V0.24Q0.2 0.2 0.24 0.2H0.52M0.66 0.3L0.4 0.56";
+export const iceFloorMazeSlidingBlockEdgePath = "M0.24 0.74H0.76";

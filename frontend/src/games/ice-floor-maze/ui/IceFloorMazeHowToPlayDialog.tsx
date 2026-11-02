@@ -43,6 +43,36 @@ const thinBeforeRows = ["....", ".cc.", "...."];
 const thinAfterRows = ["....", ".ww.", "...."];
 
 // 0 1 2 3
+// 4 5 s 7
+// 8 9 10 11
+// 4 から右へ滑らせると、雪 6 に入って雪を 7 へ押し出し、6 で止まる。押し出した雪は 7 で雪山になる。
+// ゴールを 7 に置くと、雪山がゴールをふさぐ。
+const snowBeforeRows = ["....", "..s.", "...."];
+const snowAfterRows = ["....", "...h", "...."];
+const snowCoveredGoal = 7;
+
+// 0 1 2 3
+// 4 5 6 s
+// 8 9 10 11
+// 雪 7 の先は外壁なので押し出せない。4 から右へ滑らせると、雪は動かず、駒は雪の手前の 6 で止まる。
+const snowStuckRows = ["....", "...s", "...."];
+
+// 0 1 2  3 4
+// 5 6 m  8 9
+// 10 11 12 13 14
+// 5 から右へ滑らせると、6 から滑る氷の塊 7 を押し、塊が外壁の手前の 9 まで滑って、駒はその手前の 8 で止まる。
+const blockBeforeRows = [".....", "..m..", "....."];
+const blockAfterRows = [".....", "....m", "....."];
+
+// 0 1 2 3
+// 4 5 m G
+// 8 9 10 11
+// 4 から右へ滑らせると、塊 6 がゴール 7 へ押されて載り、駒は 6 で止まる。塊が載っている間はゴールに入れない。
+const blockGoalBeforeRows = ["....", "..m.", "...."];
+const blockGoalAfterRows = ["....", "...m", "...."];
+const blockGoal = 7;
+
+// 0 1 2 3
 // 4 w G 7
 // 8 9 10 11
 // 割れてできた水面 5 は止め役になる。7 から左へ滑らせると、水面の手前のゴール 6 で止まる。
@@ -58,7 +88,7 @@ const rubblePassGoal = 7;
 
 /**
  * ルールと操作を、盤面と同じ見た目の小さな図と短い一文で示す。
- * 床・もろい岩・薄い氷はどのレベルにも出るわけではないが、レベルによって出し分けずに同じ遊び方を示す
+ * 床・もろい岩・薄い氷・雪・滑る氷の塊はどのレベルにも出るわけではないが、レベルによって出し分けずに同じ遊び方を示す
  * （リフレクションも、レベルによって出ないピースを含めて同じ遊び方を示す）。
  */
 export function IceFloorMazeHowToPlayDialog({
@@ -151,6 +181,76 @@ export function IceFloorMazeHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
+          白く積もった平らな面は雪。滑ってきた駒が雪に入ると、雪を1マス先へ押し出して、雪のあったマスで止まる。押し出した雪は雪山になり、岩と同じく駒を止める。
+        </p>
+        <HowToPlayTransition>
+          <HowToPlayFigure rows={snowBeforeRows} piece={4} />
+          <HowToPlayFigure
+            rows={snowAfterRows}
+            piece={6}
+            trail={{ direction: "right", from: 4 }}
+          />
+        </HowToPlayTransition>
+      </li>
+      <li className="space-y-2">
+        <p>
+          押し出す先が氷か薄い氷でなければ、雪は動かず、駒は雪の手前で止まる。雪山をゴールに押し出すと、そのゴールには止まれなくなる。
+        </p>
+        <HowToPlayTransition>
+          <HowToPlayFigure rows={snowStuckRows} piece={4} />
+          <HowToPlayFigure
+            rows={snowStuckRows}
+            piece={6}
+            trail={{ direction: "right", from: 4 }}
+          />
+        </HowToPlayTransition>
+        <HowToPlayTransition>
+          <HowToPlayFigure
+            rows={snowBeforeRows}
+            goal={snowCoveredGoal}
+            piece={4}
+          />
+          <HowToPlayFigure
+            rows={snowAfterRows}
+            goal={snowCoveredGoal}
+            piece={6}
+            trail={{ direction: "right", from: 4 }}
+          />
+        </HowToPlayTransition>
+      </li>
+      <li className="space-y-2">
+        <p>
+          水色の四角い塊は滑る氷の塊。岩と同じく駒を止めるが、滑ってきた駒がぶつかると、塊を押しながら一緒に滑り、塊が止まるとその手前で止まる。すぐ隣から押しても動かない。
+        </p>
+        <HowToPlayTransition>
+          <HowToPlayFigure rows={blockBeforeRows} piece={5} />
+          <HowToPlayFigure
+            rows={blockAfterRows}
+            piece={8}
+            trail={{ direction: "right", from: 5 }}
+          />
+        </HowToPlayTransition>
+      </li>
+      <li className="space-y-2">
+        <p>
+          塊がゴールに載っている間は、ゴールに入れない。押してどかせば、またゴールに止まれる。
+        </p>
+        <HowToPlayTransition>
+          <HowToPlayFigure
+            rows={blockGoalBeforeRows}
+            goal={blockGoal}
+            piece={4}
+          />
+          <HowToPlayFigure
+            rows={blockGoalAfterRows}
+            goal={blockGoal}
+            piece={6}
+            trail={{ direction: "right", from: 4 }}
+          />
+        </HowToPlayTransition>
+      </li>
+      <li className="space-y-2">
+        <p>
           変わった後の盤面も使える。割れてできた水面は駒を止める足場になり、もろい岩を崩すと通り道が開く。
         </p>
         <HowToPlayTransition>
@@ -185,7 +285,7 @@ export function IceFloorMazeHowToPlayDialog({
       </li>
       <li>
         <p>
-          待ったで1手ずつ戻せる。崩れた岩や割れた氷も元に戻る。どう滑ってもゴールに止まれなくなったら知らせるので、待ったか盤面を戻すで、止まれるところまで戻る。
+          待ったで1手ずつ戻せる。崩れた岩や割れた氷、押した雪や塊も元に戻る。どう滑ってもゴールに止まれなくなったら知らせるので、待ったか盤面を戻すで、止まれるところまで戻る。
         </p>
       </li>
       <li className="hidden pointer-fine:list-item">

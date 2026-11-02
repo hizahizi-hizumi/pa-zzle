@@ -16,6 +16,8 @@ export type IceFloorMazeProblemFeatures = {
   floorCount: number;
   brittleRockCount: number;
   thinIceCount: number;
+  snowCount: number;
+  slidingBlockCount: number;
 };
 
 /** 難易度の問題集の1問の特徴を、問題集の盤面の符号から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
@@ -35,6 +37,9 @@ export function findIceFloorMazePoolProblemFeatures(
     brittleRockCount: board.cells.filter((cell) => cell === "brittle-rock")
       .length,
     thinIceCount: board.cells.filter((cell) => cell === "thin-ice").length,
+    snowCount: board.cells.filter((cell) => cell === "snow").length,
+    slidingBlockCount: board.cells.filter((cell) => cell === "sliding-block")
+      .length,
   };
 }
 
@@ -62,6 +67,18 @@ export const iceFloorMazeProblemFeatureAxes = [
     id: "thin-ice-count",
     getValue({ thinIceCount }) {
       return createCountFeatureValue(thinIceCount);
+    },
+  },
+  {
+    id: "snow-count",
+    getValue({ snowCount }) {
+      return createCountFeatureValue(snowCount);
+    },
+  },
+  {
+    id: "sliding-block-count",
+    getValue({ slidingBlockCount }) {
+      return createCountFeatureValue(slidingBlockCount);
     },
   },
 ] as const satisfies readonly ProblemFeatureAxis<IceFloorMazeProblemFeatures>[];

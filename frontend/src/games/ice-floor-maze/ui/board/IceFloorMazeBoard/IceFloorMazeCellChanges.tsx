@@ -18,6 +18,7 @@ import { IceFloorMazeCellFace } from "@/games/ice-floor-maze/ui/board/IceFloorMa
 import {
   getIceFloorMazeCrackDelayMs,
   getIceFloorMazeSlideDurationMs,
+  getIceFloorMazeSnowPushDelayMs,
 } from "@/games/ice-floor-maze/ui/board/slide-timing";
 import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
@@ -35,11 +36,14 @@ const RIPPLE_DURATION_MS = 420;
 const RIPPLE_DELAY_MS = 120;
 const RIPPLE_RADIUS = 0.16;
 const RIPPLE_WIDTH = 0.06;
+/** 押し出した雪が、進む向きへすべりながら縮んで消えるまで。先のマスの雪山はこの途中から盛り上がる。 */
+const SNOW_PUSH_DURATION_MS = 180;
 
 /**
- * 直前の滑りで崩れたもろい岩と割れた薄い氷の、変わる前の姿を盤面の上に重ね、崩れる・割れる動きで消す。
+ * 直前の滑りで崩れたもろい岩・割れた薄い氷・押し出した雪の、変わる前の姿を盤面の上に重ね、崩れる・割れる・押し出される動きで消す。
  * 下の地形には変わった後の姿（氷・水面）が描いてある。もろい岩は駒が止まった時刻に、割れ目で2つに分かれて
  * ぶつかった向きへ傾きながら沈む。薄い氷は駒がそのマスを離れる時刻に、ひびの線で3つに割れて沈み、水面に波紋が広がる。
+ * 雪は駒が雪のマスに入り始める時刻に、進む向きへ先のマスの手前まですべりながら縮んで消える。
  * 重ねた姿はふだん透明で、動いている間だけ見える。動きを減らす設定と動かせない環境では何も見せず、変わった後の姿だけが残る。
  */
 export function IceFloorMazeCellChanges({
@@ -48,7 +52,7 @@ export function IceFloorMazeCellChanges({
 }: IceFloorMazeCellChangesProps) {
   const layerRef = useRef<SVGGElement>(null);
   const clipIds = useIceFloorMazeCellClipIds();
-  const { crumbledRock, crackedIce } = slide;
+  const { crumbledRock, crackedIce, pushedSnow } = slide;
 
   useLayoutEffect(() => {
     const layer = layerRef.current;
@@ -96,6 +100,20 @@ export function IceFloorMazeCellChanges({
           <IceFloorMazeCellFace kind="thin-ice" clipIds={clipIds} />
         </g>
       ))}
+      {pushedSnow ? (
+        <g
+          data-pushed-snow={pushedSnow.from}
+          opacity={0}
+          transform={formatCellTransform(board, pushedSnow.from)}
+        >
+          <g
+            data-snow-body=""
+            style={{ transformBox: "fill-box", transformOrigin: "center" }}
+          >
+            <IceFloorMazeCellFace kind="snow" clipIds={clipIds} />
+          </g>
+        </g>
+      ) : null}
     </g>
   );
 }
@@ -201,6 +219,38 @@ function animateCellChanges(
           duration: RIPPLE_DURATION_MS,
           delay: delay + RIPPLE_DELAY_MS,
           easing: MOTION_EASING.enter,
+          fill: "both",
+        },
+      ),
+    );
+  }
+
+  const pushedSnow = layer.querySelector<SVGGElement>("[data-pushed-snow]");
+  if (pushedSnow) {
+    const delay = getIceFloorMazeSnowPushDelayMs(slide);
+    const push = iceFloorMazeDirectionVectors[slide.direction];
+    // 押す向きには縮め、横にはわずかに広げて、押し寄せられた雪に見せる。
+    const squeezeX = push.x === 0 ? 1.05 : 0.6;
+    const squeezeY = push.y === 0 ? 1.05 : 0.6;
+    animations.push(
+      keepVisible(pushedSnow, delay + SNOW_PUSH_DURATION_MS),
+      pushedSnow.querySelector<SVGGElement>("[data-snow-body]")?.animate?.(
+        [
+          { transform: "translate(0px, 0px) scale(1, 1)", opacity: 1 },
+          {
+            transform: `translate(${push.x * 0.7}px, ${push.y * 0.7}px) scale(${squeezeX}, ${squeezeY})`,
+            opacity: 0.9,
+            offset: 0.7,
+          },
+          {
+            transform: `translate(${push.x * 0.9}px, ${push.y * 0.9}px) scale(0.5, 0.5)`,
+            opacity: 0,
+          },
+        ],
+        {
+          duration: SNOW_PUSH_DURATION_MS,
+          delay,
+          easing: MOTION_EASING.standard,
           fill: "both",
         },
       ),

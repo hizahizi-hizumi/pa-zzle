@@ -33,6 +33,8 @@ type IceFloorMazePlayProps = GamePlayScreenProps<
     board: IceFloorMazeBoardState;
     /** 今の盤面のマス。 */
     cells: readonly IceFloorMazeStateCell[];
+    /** 滑る氷の塊のあるマス。 */
+    blocks: readonly number[];
     goal: number;
     /** 駒のいるマス。 */
     position: number;
@@ -58,6 +60,7 @@ export function IceFloorMazePlay({
   recordOutcomeNotice,
   board,
   cells,
+  blocks,
   goal,
   position,
   moveCount,
@@ -159,6 +162,7 @@ export function IceFloorMazePlay({
           <IceFloorMazeBoard
             board={board}
             cells={cells}
+            blocks={blocks}
             goal={goal}
             position={position}
             lastSlide={lastSlide}

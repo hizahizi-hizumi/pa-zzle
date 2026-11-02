@@ -1,24 +1,32 @@
 import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import {
   createIceFloorMazeCrackPath,
+  createIceFloorMazeSnowPatchPath,
   createIceFloorMazeWaterHollowPath,
   createIceFloorMazeWavePath,
   formatIceFloorMazePolygon,
+  ICE_FLOOR_MAZE_SNOW_MOUND_SHADOW_DEPTH,
   iceFloorMazeFloorDots,
   iceFloorMazePaneShape,
   iceFloorMazeRockShape,
   iceFloorMazeRubbleChipPolygons,
+  iceFloorMazeSlidingBlockEdgePath,
+  iceFloorMazeSlidingBlockGlintPath,
+  iceFloorMazeSlidingBlockShape,
+  iceFloorMazeSnowDots,
+  iceFloorMazeSnowMoundPath,
 } from "@/games/ice-floor-maze/ui/board/cell-shapes";
 import type { IceFloorMazeCellClipIds } from "@/games/ice-floor-maze/ui/board/IceFloorMazeCellClipPaths";
 import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 
 /**
  * 氷の地の上に載せて描くマス。氷と盤面の外は地形の地で描く。
- * `rubble` は、もろい岩が崩れてできた氷のマスに残す石くずの跡。
+ * `rubble` は、もろい岩が崩れてできた氷のマスに残す石くずの跡。`sliding-block` はマスではなく、マスの上に載る滑る氷の塊。
  */
 export type IceFloorMazeCellFaceKind =
   | Exclude<IceFloorMazeStateCell, "ice" | "outside">
-  | "rubble";
+  | "rubble"
+  | "sliding-block";
 
 const rockTones = {
   face: iceFloorMazeToneClassNames.stoneFace,
@@ -34,11 +42,20 @@ type IceFloorMazeCellFaceProps = {
   clipIds: IceFloorMazeCellClipIds;
 };
 
+const slidingBlockTones = {
+  face: iceFloorMazeToneClassNames.slidingBlock,
+  shadow: iceFloorMazeToneClassNames.slidingBlockShadow,
+};
+
 const crackPath = createIceFloorMazeCrackPath();
+const snowPatchPath = createIceFloorMazeSnowPatchPath();
 const waterHollowPath = createIceFloorMazeWaterHollowPath();
 const wavePath = createIceFloorMazeWavePath();
 const CRACK_WIDTH = 0.055;
 const WAVE_WIDTH = 0.06;
+const SNOW_EDGE_WIDTH = 0.045;
+const SLIDING_BLOCK_GLINT_WIDTH = 0.07;
+const SLIDING_BLOCK_EDGE_WIDTH = 0.045;
 
 /**
  * マスの左上を原点に、1マスの姿を描く。親がマスの位置へ置く。
@@ -50,7 +67,7 @@ export function IceFloorMazeCellFace({
 }: IceFloorMazeCellFaceProps) {
   switch (kind) {
     case "rock":
-      return renderRockBlock(rockTones);
+      return renderRockBlock(rockTones, iceFloorMazeRockShape);
     case "brittle-rock":
       return (
         <>
@@ -61,7 +78,7 @@ export function IceFloorMazeCellFace({
               clipPath={`url(#${clipId})`}
               style={{ transformBox: "fill-box", transformOrigin: "center" }}
             >
-              {renderRockBlock(brittleRockTones)}
+              {renderRockBlock(brittleRockTones, iceFloorMazeRockShape)}
             </g>
           ))}
         </>
@@ -122,12 +139,74 @@ export function IceFloorMazeCellFace({
           />
         </>
       );
+    case "snow":
+      return (
+        <>
+          <path
+            d={snowPatchPath}
+            strokeWidth={SNOW_EDGE_WIDTH}
+            strokeLinejoin="round"
+            className={iceFloorMazeToneClassNames.snow}
+          />
+          {iceFloorMazeSnowDots.centers.map(({ x, y }) => (
+            <circle
+              key={`${x}-${y}`}
+              cx={x}
+              cy={y}
+              r={iceFloorMazeSnowDots.radius}
+              className={iceFloorMazeToneClassNames.snowDot}
+            />
+          ))}
+        </>
+      );
+    case "snow-mound":
+      return (
+        <>
+          <path
+            d={iceFloorMazeSnowMoundPath}
+            transform={`translate(0 ${ICE_FLOOR_MAZE_SNOW_MOUND_SHADOW_DEPTH})`}
+            className={iceFloorMazeToneClassNames.snowMoundShadow}
+          />
+          <path
+            d={iceFloorMazeSnowMoundPath}
+            className={iceFloorMazeToneClassNames.snowMound}
+          />
+        </>
+      );
+    case "sliding-block":
+      return (
+        <>
+          {renderRockBlock(slidingBlockTones, iceFloorMazeSlidingBlockShape)}
+          <path
+            d={iceFloorMazeSlidingBlockEdgePath}
+            fill="none"
+            strokeWidth={SLIDING_BLOCK_EDGE_WIDTH}
+            strokeLinecap="round"
+            className={iceFloorMazeToneClassNames.slidingBlockEdge}
+          />
+          <path
+            d={iceFloorMazeSlidingBlockGlintPath}
+            fill="none"
+            strokeWidth={SLIDING_BLOCK_GLINT_WIDTH}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={iceFloorMazeToneClassNames.slidingBlockGlint}
+          />
+        </>
+      );
   }
 }
 
-function renderRockBlock(tones: { face: string; shadow: string }) {
-  const { inset, width, height, shadowDepth, cornerRadius } =
-    iceFloorMazeRockShape;
+function renderRockBlock(
+  tones: { face: string; shadow: string },
+  {
+    inset,
+    width,
+    height,
+    shadowDepth,
+    cornerRadius,
+  }: typeof iceFloorMazeRockShape | typeof iceFloorMazeSlidingBlockShape,
+) {
   return (
     <>
       <rect

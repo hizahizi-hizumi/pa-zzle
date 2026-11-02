@@ -53,6 +53,7 @@ export function PlayableIceFloorMaze({
         {...screenProps}
         board={play.board}
         cells={play.cells}
+        blocks={play.blocks}
         goal={play.goal}
         position={play.position}
         moveCount={play.moveCount}

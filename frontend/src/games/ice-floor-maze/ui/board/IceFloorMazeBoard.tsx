@@ -12,6 +12,8 @@ import {
   iceFloorMazeDirectionVectors,
 } from "@/games/ice-floor-maze/ui/board/board-geometry";
 import { IceFloorMazeCellChanges } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/IceFloorMazeCellChanges";
+import { IceFloorMazeGoalBurst } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/IceFloorMazeGoalBurst";
+import { animateIceFloorMazeMovedElements } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/moved-element-motion";
 import { IceFloorMazeGoalMark } from "@/games/ice-floor-maze/ui/board/IceFloorMazeGoalMark";
 import { IceFloorMazePieceMark } from "@/games/ice-floor-maze/ui/board/IceFloorMazePieceMark";
 import { IceFloorMazeTerrain } from "@/games/ice-floor-maze/ui/board/IceFloorMazeTerrain";
@@ -33,12 +35,14 @@ type IceFloorMazeBoardProps = {
   board: IceFloorMazeBoardState;
   /** 今の盤面のマス。 */
   cells: readonly IceFloorMazeStateCell[];
+  /** 滑る氷の塊のあるマス。 */
+  blocks: readonly number[];
   goal: number;
   /** 駒のいるマス。 */
   position: number;
   /** 直前の成立した滑り。跡を描き、滑りを動かす。 */
   lastSlide: IceFloorMazeLastSlide | null;
-  /** 直前の成立しなかった入力。押し戻しと、阻んだもろい岩の揺れを動かす。跡には関わらない。 */
+  /** 直前の成立しなかった入力。押し戻しと、阻んだもろい岩・滑る氷の塊の揺れを動かす。跡には関わらない。 */
   blockedInput: IceFloorMazeBlockedInput | null;
   /** ゴールで止まってから完成演出を終えるまでの間だけ `true`。 */
   clearing: boolean;
@@ -76,11 +80,21 @@ const brittleRockHoldTiming: RejectionShakeTiming = {
   easing: "ease-out",
 };
 
+/**
+ * 隣の滑る氷の塊へ押したときは、塊が押された向きへわずかにずれて戻り、動かない。滑ってきてぶつかったときだけ動くことを返す。
+ * もろい岩と同じく、駒の押し戻しが塊に届く時刻から動かす。
+ */
+const SLIDING_BLOCK_HOLD_PUSH = 0.06;
+const slidingBlockHoldTiming: RejectionShakeTiming = {
+  durationMs: 260,
+  easing: "ease-out",
+};
+
 /** 駒が止め役にぶつかって止まった瞬間、進んだ向きに少しつぶれて戻る。 */
 const IMPACT_DURATION_MS = 160;
 const IMPACT_SQUASH = 0.8;
 const IMPACT_STRETCH = 1.1;
-/** 床に入って止まった瞬間は、何にもぶつからずに擦れて止まるので、岩の手前より浅くつぶれる。 */
+/** 床に入って止まった瞬間と雪を押し出して止まった瞬間は、柔らかく止まるので、岩の手前より浅くつぶれる。 */
 const FLOOR_STOP_SQUASH = 0.92;
 const FLOOR_STOP_STRETCH = 1.04;
 
@@ -109,12 +123,14 @@ const clearPopKeyframes: Keyframe[] = [
 ];
 
 /**
- * 盤面の外壁・氷・岩・もろい岩・崩れた跡・薄い氷・水面・ゴール・駒と直前の滑りの跡を描き、滑り・ぶつかって止まる反応・
- * ゴールの通過・崩れる・割れる・押し戻し・完成演出を動かす。入力は受けない。
+ * 盤面の外壁・氷・床・岩・もろい岩・崩れた跡・薄い氷・水面・雪・雪山・滑る氷の塊・ゴール・駒と直前の滑りの跡を描き、
+ * 滑り・ぶつかって止まる反応・ゴールの通過・崩れる・割れる・雪を押し出す・塊を押す・押し戻し・完成演出を動かす。入力は受けない。
+ * 雪山と滑る氷の塊はゴールの印の上に描き、ゴールをふさいでいると読ませる。
  */
 export function IceFloorMazeBoard({
   board,
   cells,
+  blocks,
   goal,
   position,
   lastSlide,
@@ -152,12 +168,15 @@ export function IceFloorMazeBoard({
       return;
     }
 
-    const reactions = animateSlideReactions(
-      pieceImpactRef.current,
-      goalBurstRef.current,
-      lastSlide,
-      goal,
-    );
+    const reactions = [
+      ...animateSlideReactions(
+        pieceImpactRef.current,
+        goalBurstRef.current,
+        lastSlide,
+        goal,
+      ),
+      ...animateIceFloorMazeMovedElements(svgRef.current, lastSlide, board),
+    ];
     onSlideAnimationActivityChange(true);
     const stopWaiting = waitForAnimations(animations, () =>
       onSlideAnimationActivityChange(false),
@@ -206,7 +225,16 @@ export function IceFloorMazeBoard({
         brittleRockHoldTiming,
       );
     }
-  }, [blockedInput, cells, viewBox.width]);
+    if (stopper !== null && blocks.includes(stopper)) {
+      playRejectionShake(
+        svgRef.current?.querySelector(
+          `[data-sliding-block-cell="${stopper}"] [data-block-shift]`,
+        ),
+        createSlidingBlockHoldKeyframes(vector),
+        slidingBlockHoldTiming,
+      );
+    }
+  }, [blockedInput, blocks, cells, viewBox.width]);
 
   const clearingSlideDistance =
     lastSlide?.isClearingMove === true ? lastSlide.path.length : 0;
@@ -256,19 +284,24 @@ export function IceFloorMazeBoard({
       >
         <IceFloorMazeTerrain
           board={board}
-          cells={cells}
+          state={{ cells, blocks }}
           goal={goal}
           beneathCellFaces={
-            lastSlide ? (
-              <IceFloorMazeTrail
-                key={lastSlide.id}
-                ref={trailRef}
-                board={board}
-                direction={lastSlide.direction}
-                from={lastSlide.from}
-                to={lastSlide.to}
-              />
-            ) : null
+            <>
+              {lastSlide ? (
+                <IceFloorMazeTrail
+                  key={lastSlide.id}
+                  ref={trailRef}
+                  board={board}
+                  direction={lastSlide.direction}
+                  from={lastSlide.from}
+                  to={lastSlide.to}
+                />
+              ) : null}
+              <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
+                <IceFloorMazeGoalMark />
+              </g>
+            </>
           }
         />
         {lastSlide ? (
@@ -279,7 +312,7 @@ export function IceFloorMazeBoard({
           />
         ) : null}
         <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
-          <IceFloorMazeGoalMark burstRef={goalBurstRef} />
+          <IceFloorMazeGoalBurst ref={goalBurstRef} />
         </g>
         <g
           data-piece-cell={position}
@@ -343,7 +376,7 @@ function animateSlide(
 }
 
 /**
- * 滑りに合わせた反応。止め役にぶつかって（床では浅く）止まった時刻に駒が進んだ向きへつぶれ、ゴールを通り過ぎた時刻にゴールの輪が小さく広がる。
+ * 滑りに合わせた反応。止め役にぶつかって（床と雪を押し出したときは浅く）止まった時刻に駒が進んだ向きへつぶれ、ゴールを通り過ぎた時刻にゴールの輪が小さく広がる。
  * ゴールで止まった滑りは完成演出が駒をふくらませるので、つぶさない。
  */
 function animateSlideReactions(
@@ -354,7 +387,8 @@ function animateSlideReactions(
 ): Animation[] {
   const distance = slide.path.length;
   const horizontal = slide.direction === "left" || slide.direction === "right";
-  const [squashRatio, stretchRatio] = slide.stoppedOnFloor
+  const stoppedSoftly = slide.stoppedOnFloor || slide.pushedSnow !== null;
+  const [squashRatio, stretchRatio] = stoppedSoftly
     ? [FLOOR_STOP_SQUASH, FLOOR_STOP_STRETCH]
     : [IMPACT_SQUASH, IMPACT_STRETCH];
   const squash = horizontal
@@ -410,6 +444,25 @@ function createBrittleRockHoldKeyframes(vector: {
     },
     { transform: `translate(0px, 0px) rotate(${tilt * 0.3}deg)`, offset: 0.8 },
     { transform: "translate(0px, 0px) rotate(0deg)" },
+  ];
+}
+
+/** 押された向きへわずかにずれて戻る。駒の押し戻しが届くまでは動かさない。 */
+function createSlidingBlockHoldKeyframes(vector: {
+  x: number;
+  y: number;
+}): Keyframe[] {
+  const pushX = vector.x * SLIDING_BLOCK_HOLD_PUSH;
+  const pushY = vector.y * SLIDING_BLOCK_HOLD_PUSH;
+  return [
+    { transform: "translate(0px, 0px)" },
+    { transform: "translate(0px, 0px)", offset: 0.15 },
+    { transform: `translate(${pushX}px, ${pushY}px)`, offset: 0.35 },
+    {
+      transform: `translate(${-pushX * 0.3}px, ${-pushY * 0.3}px)`,
+      offset: 0.65,
+    },
+    { transform: "translate(0px, 0px)" },
   ];
 }
 

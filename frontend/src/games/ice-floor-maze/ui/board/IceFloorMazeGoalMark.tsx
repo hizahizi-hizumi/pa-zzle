@@ -1,39 +1,25 @@
-import type { Ref } from "react";
-
 import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 
-type IceFloorMazeGoalMarkProps = {
-  /** クリア演出で広がる輪。ふだんは見せない。 */
-  burstRef?: Ref<SVGCircleElement>;
-};
-
-const GOAL_RING_RADIUS = 0.4;
-const GOAL_RING_WIDTH = 0.08;
+/** ゴールの輪の半径と線の太さ。広がる輪も同じ大きさから広げる。 */
+export const iceFloorMazeGoalRing = { radius: 0.4, width: 0.08 } as const;
 const GOAL_DOT_RADIUS = 0.11;
 
-/** ゴールの輪と中心の点。親がゴールのマスの中心へ置く。駒が止まっても輪は駒の外側に見える。 */
-export function IceFloorMazeGoalMark({ burstRef }: IceFloorMazeGoalMarkProps) {
+/**
+ * ゴールの輪と中心の点。親がゴールのマスの中心へ置く。駒が止まっても輪は駒の外側に見える。
+ * 床に描いた印なので、ゴールへ押し出した雪山やゴールに載った滑る氷の塊はこの上に描く。
+ */
+export function IceFloorMazeGoalMark() {
   return (
     <g data-goal="">
       <circle
-        r={GOAL_RING_RADIUS}
-        strokeWidth={GOAL_RING_WIDTH}
+        r={iceFloorMazeGoalRing.radius}
+        strokeWidth={iceFloorMazeGoalRing.width}
         className={iceFloorMazeToneClassNames.goalMark}
       />
       <circle
         r={GOAL_DOT_RADIUS}
         className={iceFloorMazeToneClassNames.goalDot}
       />
-      {burstRef ? (
-        <circle
-          ref={burstRef}
-          r={GOAL_RING_RADIUS}
-          strokeWidth={GOAL_RING_WIDTH}
-          opacity={0}
-          className={iceFloorMazeToneClassNames.goalMark}
-          style={{ transformBox: "fill-box", transformOrigin: "center" }}
-        />
-      ) : null}
     </g>
   );
 }

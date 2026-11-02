@@ -3,8 +3,13 @@ import type { ReactNode } from "react";
 import {
   getIceFloorMazeCellPosition,
   type IceFloorMazeBoard,
+  type IceFloorMazeCell,
 } from "@/games/ice-floor-maze/puzzle/board";
-import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
+import {
+  createIceFloorMazeInitialState,
+  type IceFloorMazeState,
+  type IceFloorMazeStateCell,
+} from "@/games/ice-floor-maze/puzzle/state";
 import { ICE_FLOOR_MAZE_WALL_THICKNESS } from "@/games/ice-floor-maze/ui/board/board-geometry";
 import {
   IceFloorMazeCellClipPaths,
@@ -18,11 +23,14 @@ import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-
 
 type IceFloorMazeTerrainProps = {
   board: IceFloorMazeBoard;
-  /** 今の盤面のマス。渡さなければ初期盤面のマスを描く。 */
-  cells?: readonly IceFloorMazeStateCell[];
+  /** 今の盤面のマスと滑る氷の塊。渡さなければ初期盤面を描く。 */
+  state?: Pick<IceFloorMazeState, "cells" | "blocks">;
   /** ゴールのマス。渡さなければゴールの地を描かない。 */
   goal?: number;
-  /** 氷とゴールの地の上、マスに載る要素の下に描くもの（直前の滑りの跡）。 */
+  /**
+   * 氷とゴールの地の上、マスに載る要素の下に描くもの（直前の滑りの跡とゴールの印）。
+   * ゴールへ押し出した雪山とゴールに載った滑る氷の塊は、この上に描いてゴールの印を覆う。
+   */
   beneathCellFaces?: ReactNode;
 };
 
@@ -36,11 +44,14 @@ const cellAttributeByKind = {
   floor: "data-floor-cell",
   water: "data-water-cell",
   rubble: "data-rubble-cell",
+  snow: "data-snow-cell",
+  "snow-mound": "data-snow-mound-cell",
+  "sliding-block": "data-sliding-block-cell",
 } as const satisfies Record<IceFloorMazeCellFaceKind, string>;
 
 /** 今のマスの姿。初期盤面のもろい岩が氷になったマスは、崩れた跡の石くずとして描く。 */
 function getCellFaceKind(
-  initial: IceFloorMazeStateCell,
+  initial: IceFloorMazeCell,
   current: IceFloorMazeStateCell,
 ): IceFloorMazeCellFaceKind | null {
   if (initial === "brittle-rock" && current === "ice") {
@@ -50,13 +61,14 @@ function getCellFaceKind(
 }
 
 /**
- * 外壁・氷・ゴールのマスの地と、床・岩・もろい岩・崩れたもろい岩の跡・薄い氷・水面。駒・ゴールの印より下の層に描く。
+ * 外壁・氷・ゴールのマスの地と、床・岩・もろい岩・崩れたもろい岩の跡・薄い氷・水面・雪・雪山と、その上に載る滑る氷の塊。駒より下の層に描く。
  * 盤面の外は描かず、外壁は盤面として描くマスの形に沿って囲む。盤面に囲まれた内側の盤面の外は外壁と同じ色で塗る。
- * もろい岩の姿（`data-cell-body`）は、隣から押されたときの揺れで動かせる。
+ * もろい岩・雪山・滑る氷の塊の姿（`data-cell-body`）は、隣から押されたときの揺れ・盛り上がり・止まるときのつぶれで動かせる。
+ * 滑る氷の塊は、姿を包む `data-block-shift` を動かして、押されて滑る動きを描ける。
  */
 export function IceFloorMazeTerrain({
   board,
-  cells = board.cells,
+  state,
   goal,
   beneathCellFaces,
 }: IceFloorMazeTerrainProps) {
@@ -64,6 +76,8 @@ export function IceFloorMazeTerrain({
   const drawnCellPath = createDrawnCellPath(board);
   const goalPosition =
     goal === undefined ? null : getIceFloorMazeCellPosition(board, goal);
+  // 初期盤面の駒の位置は描かないので、どのマスを渡しても同じ。
+  const { cells, blocks } = state ?? createIceFloorMazeInitialState(board, 0);
   const cellFaces = listCellFaces(board, cells);
   // 床は氷と同じく地の面なので、直前の滑りの跡の下に描き、床で止まった滑りの跡を隠さない。
   const floorFaces = cellFaces.filter(({ kind }) => kind === "floor");
@@ -103,13 +117,34 @@ export function IceFloorMazeTerrain({
       {floorFaces.map(renderCellFace)}
       {beneathCellFaces}
       {raisedFaces.map(renderCellFace)}
+      {blocks.map(renderBlock)}
     </g>
   );
+
+  function renderBlock(cellIndex: number) {
+    const { x, y } = getIceFloorMazeCellPosition(board, cellIndex);
+    return (
+      <g
+        key={cellIndex}
+        transform={`translate(${x} ${y})`}
+        {...{ [cellAttributeByKind["sliding-block"]]: cellIndex }}
+      >
+        <g data-block-shift="">
+          <g
+            data-cell-body=""
+            style={{ transformBox: "fill-box", transformOrigin: "center" }}
+          >
+            <IceFloorMazeCellFace kind="sliding-block" clipIds={clipIds} />
+          </g>
+        </g>
+      </g>
+    );
+  }
 
   function renderCellFace({ cellIndex, kind, x, y }: IceFloorMazeCellFaceItem) {
     return (
       <g
-        // 崩れる・割れるでマスの姿が変わったら描き直す。
+        // 崩れる・割れる・押し出すでマスの姿が変わったら描き直す。
         key={`${cellIndex}-${kind}`}
         transform={`translate(${x} ${y})`}
         {...{ [cellAttributeByKind[kind]]: cellIndex }}
@@ -137,7 +172,7 @@ function listCellFaces(
   cells: readonly IceFloorMazeStateCell[],
 ): IceFloorMazeCellFaceItem[] {
   return cells.flatMap((cell, cellIndex) => {
-    const kind = getCellFaceKind(board.cells[cellIndex] ?? cell, cell);
+    const kind = getCellFaceKind(board.cells[cellIndex]!, cell);
     return kind
       ? [{ cellIndex, kind, ...getIceFloorMazeCellPosition(board, cellIndex) }]
       : [];
