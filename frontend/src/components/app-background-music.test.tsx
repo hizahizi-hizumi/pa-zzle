@@ -1,17 +1,20 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useNavigate } from "react-router";
 
 import {
+  type AppBackgroundMusicScene,
   type AppBackgroundMusicTracks,
   getAppBackgroundMusicScene,
   type PlayScreenMusicState,
   selectAppBackgroundMusic,
+  selectAppBackgroundMusicTransition,
   useAppBackgroundMusic,
   usePlayScreenMusicState,
 } from "@/components/app-background-music";
 import {
   type BackgroundMusicTrack,
+  type BackgroundMusicTransition,
   playBackgroundMusic,
 } from "@/lib/background-music";
 
@@ -41,6 +44,23 @@ function renderPlayScreen(initialProps: PlayScreenMusicState) {
 function getLastPlayedMusic() {
   const [track, options] = vi.mocked(playBackgroundMusic).mock.lastCall ?? [];
   return { url: track?.url ?? null, gain: options?.gain };
+}
+
+/** 最後に流すよう頼んだ曲の、切り替え方の種類。 */
+function getLastTransitionKind() {
+  const [, options] = vi.mocked(playBackgroundMusic).mock.lastCall ?? [];
+  return options?.transition?.kind;
+}
+
+/** 画面に合わせて BGM を流し、画面を移れるようにする。 */
+function renderAppBackgroundMusic(path: string) {
+  return renderHook(
+    () => {
+      useAppBackgroundMusic();
+      return useNavigate();
+    },
+    { wrapper: createWrapper(path) },
+  );
 }
 
 afterEach(() => {
@@ -144,7 +164,120 @@ describe("selectAppBackgroundMusic", () => {
   });
 });
 
+describe("selectAppBackgroundMusicTransition", () => {
+  const cases: {
+    situation: string;
+    previousScene: AppBackgroundMusicScene | null;
+    scene: AppBackgroundMusicScene;
+    expected: BackgroundMusicTransition["kind"];
+  }[] = [
+    {
+      situation: "ホームからプレイに入る",
+      previousScene: "home",
+      scene: "play",
+      expected: "break",
+    },
+    {
+      situation: "結果からプレイに入る",
+      previousScene: "result",
+      scene: "play",
+      expected: "break",
+    },
+    {
+      situation: "プレイ画面を開いて初めて流す",
+      previousScene: null,
+      scene: "play",
+      expected: "break",
+    },
+    {
+      situation: "プレイ中に曲だけを替える",
+      previousScene: "play",
+      scene: "play",
+      expected: "crossfade",
+    },
+    {
+      situation: "プレイからホームへ戻る",
+      previousScene: "play",
+      scene: "home",
+      expected: "crossfade",
+    },
+    {
+      situation: "クリアして曲を止める",
+      previousScene: "play",
+      scene: "silent",
+      expected: "crossfade",
+    },
+    {
+      situation: "結果からホームへ戻る",
+      previousScene: "result",
+      scene: "home",
+      expected: "crossfade",
+    },
+    {
+      situation: "ホームを開いて初めて流す",
+      previousScene: null,
+      scene: "home",
+      expected: "crossfade",
+    },
+  ];
+
+  test.each(cases)(
+    "$situation切り替えを $expected にすること",
+    ({ previousScene, scene, expected }) => {
+      const transition = selectAppBackgroundMusicTransition(
+        previousScene,
+        scene,
+      );
+
+      expect(transition.kind).toBe(expected);
+    },
+  );
+});
+
 describe("useAppBackgroundMusic", () => {
+  describe("難易度選択からプレイ画面に移った場合", () => {
+    let navigate: ReturnType<typeof useNavigate>;
+
+    beforeEach(() => {
+      navigate = renderAppBackgroundMusic("/puzzles/nanpure").result.current;
+    });
+
+    test("ホームの曲を引いて間を空けてから、プレイ中の曲を流すこと", () => {
+      act(() => navigate(playPath));
+
+      expect(getLastPlayedMusic().url).toMatch(/play.*\.mp3$/);
+      expect(getLastTransitionKind()).toBe("break");
+    });
+
+    describe("プレイ画面から戻った場合", () => {
+      beforeEach(() => {
+        act(() => navigate(playPath));
+      });
+
+      test("ホームの曲へクロスフェードすること", () => {
+        act(() => navigate("/puzzles/nanpure"));
+
+        expect(getLastPlayedMusic().url).toMatch(/home\.mp3$/);
+        expect(getLastTransitionKind()).toBe("crossfade");
+      });
+    });
+  });
+
+  describe("ホームから難易度選択に移った場合", () => {
+    let navigate: ReturnType<typeof useNavigate>;
+
+    beforeEach(() => {
+      navigate = renderAppBackgroundMusic("/").result.current;
+      vi.mocked(playBackgroundMusic).mockClear();
+    });
+
+    test("ホームの曲を流し直さないこと", () => {
+      act(() => navigate("/puzzles/nanpure"));
+
+      expect(playBackgroundMusic).not.toHaveBeenCalled();
+    });
+  });
+
   describe("プレイ画面で盤面を解いている場合", () => {
     let playScreen: ReturnType<typeof renderPlayScreen>;
 
