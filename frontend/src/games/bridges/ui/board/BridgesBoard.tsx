@@ -5,7 +5,10 @@ import {
   type BridgesBoard as BridgesBoardState,
   findBridgesEdgeToward,
 } from "@/games/bridges/puzzle/board";
-import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
+import {
+  type BridgesIslandStatus,
+  countBridgesIslandBridges,
+} from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { BridgesFigure } from "@/games/bridges/ui/board/BridgesFigure";
 import {
@@ -13,6 +16,7 @@ import {
   findBoardTarget,
   findDragDirection,
   hasLeftIsland,
+  toBoardPoint,
 } from "@/games/bridges/ui/board/board-geometry";
 
 type BridgesBoardProps = {
@@ -23,6 +27,13 @@ type BridgesBoardProps = {
   /** 辺の橋を 1本 → 2本 → なし と回す。 */
   onCycleEdge: (edge: number) => void;
 };
+
+/** 島の状態の読み上げ。足りない間は何も添えない。 */
+const islandStatusLabels = {
+  short: "",
+  exact: " ちょうど",
+  over: " 多すぎ",
+} as const satisfies Record<BridgesIslandStatus, string>;
 
 type IslandDrag = {
   pointerId: number;
@@ -43,13 +54,15 @@ export function BridgesBoard({
   onCycleEdge,
 }: BridgesBoardProps) {
   const dragRef = useRef<IslandDrag | null>(null);
+  const islandBridgeCounts = countBridgesIslandBridges(board, { bridges });
 
-  function toBoardPoint(event: ReactPointerEvent<HTMLElement>): BoardPoint {
-    const rect = event.currentTarget.getBoundingClientRect();
-    return {
-      x: ((event.clientX - rect.left) / rect.width) * board.width,
-      y: ((event.clientY - rect.top) / rect.height) * board.height,
-    };
+  function readBoardPoint(event: ReactPointerEvent<HTMLElement>): BoardPoint {
+    return toBoardPoint(
+      board,
+      event.currentTarget.getBoundingClientRect(),
+      event.clientX,
+      event.clientY,
+    );
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
@@ -62,7 +75,7 @@ export function BridgesBoard({
     ) {
       return;
     }
-    const target = findBoardTarget(board, bridges, toBoardPoint(event));
+    const target = findBoardTarget(board, bridges, readBoardPoint(event));
     if (target === null) {
       return;
     }
@@ -81,7 +94,7 @@ export function BridgesBoard({
       return;
     }
     dragRef.current = null;
-    const point = toBoardPoint(event);
+    const point = readBoardPoint(event);
     if (interactionDisabled || !hasLeftIsland(board, drag.island, point)) {
       return;
     }
@@ -117,6 +130,13 @@ export function BridgesBoard({
         bridges={bridges}
         islandStatuses={islandStatuses}
       />
+      <ul className="sr-only">
+        {board.islands.map(({ row, column, clue }, island) => (
+          <li key={`${row}:${column}`}>
+            {`${row + 1}行${column + 1}列の島 数字${clue} 橋${islandBridgeCounts[island]}本${islandStatusLabels[islandStatuses[island]!]}`}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

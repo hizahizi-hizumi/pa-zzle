@@ -11,14 +11,22 @@ import {
 } from "@/games/bridges/session/session";
 
 // 辺0 = 左上-右上（横）、辺1 = 左上-左下（縦）。両方に1本ずつで解ける。
-const problem = parseBridgesBoard(["2.1", "...", "1.."]);
+const problem = parseBridgesBoard([
+  "2.1...",
+  "......",
+  "1.....",
+  "......",
+  "......",
+  "......",
+]);
 // 辺0 = 島0-島1（横）、辺1 = 島0-島2（縦）、辺2 = 島1-島4（縦）、辺3 = 島2-島3（横）。辺2と辺3が交わる。
 const crossingProblem = parseBridgesBoard([
-  "1.1..",
-  ".....",
-  "1...1",
-  ".....",
-  "..1..",
+  "1.1...",
+  "......",
+  "1...1.",
+  "......",
+  "..1...",
+  "......",
 ]);
 const startedAt = 1_000;
 
@@ -48,17 +56,25 @@ describe("createBridgesSession", () => {
     });
   });
 
-  describe("隣り合う島のある問題の場合", () => {
-    const invalid = {
-      width: 3,
-      height: 1,
-      islands: [
-        { row: 0, column: 0, clue: 1 },
-        { row: 0, column: 1, clue: 1 },
+  describe("扱えない問題の場合", () => {
+    test.each([
+      [
+        "隣り合う島のある",
+        {
+          width: 6,
+          height: 6,
+          islands: [
+            { row: 0, column: 0, clue: 1 },
+            { row: 0, column: 1, clue: 1 },
+          ],
+        },
       ],
-    };
-
-    test("拒むこと", () => {
+      [
+        "正方形でない",
+        parseBridgesBoard(["1.1....", ...Array(5).fill(".......")]),
+      ],
+      ["一辺が5の", parseBridgesBoard(["1.1..", ...Array(4).fill(".....")])],
+    ])("%s問題を拒むこと", (_, invalid) => {
       const act = () => createBridgesSession(invalid, startedAt);
 
       expect(act).toThrow(RangeError);
