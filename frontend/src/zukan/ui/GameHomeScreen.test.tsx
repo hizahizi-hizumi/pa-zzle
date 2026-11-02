@@ -2167,30 +2167,53 @@ describe("GameHomeScreen", () => {
       });
     });
 
-    describe("選んでおく問題の詳細を出したまま押している途中の場合", () => {
+    describe("動きを減らす設定で、選んでおく問題を渡した場合", () => {
+      beforeEach(() => {
+        prefersReduced = true;
+        renderScreen(changedZukan, changes, "p-c");
+      });
+
+      test("印を載せた台紙とともに、選んでおいた問題の詳細を出すこと", () => {
+        const stages = getChangeStages("レベル 3の問題");
+
+        expect(stages).toEqual(["marked", null, "marked", null]);
+        expect(getDetail().textContent).toMatch(/^No\.0007/);
+      });
+    });
+
+    describe("選んでおく問題を渡し、押している途中の場合", () => {
       beforeEach(async () => {
         renderScreen(changedZukan, changes, "p-c");
         await advanceStamps(400);
       });
 
-      test("詳細の遊ぶを1回タップすると、最後の姿まで飛ばしてその問題を始めること", () => {
-        const playButton = within(getDetail()).getByRole("button", {
-          name: "遊ぶ",
-        });
+      test("選んでおいた問題のマスを選び、詳細を出さないこと", () => {
+        const square = getSquare("レベル 3の問題", "No.0007");
 
-        tap(playButton, { x: 10, y: 10 });
-        fireEvent.click(playButton);
-        const startedProblemIds = onPlayProblem.mock.calls.map(
-          ([problem]) => problem.problemId,
-        );
+        expect(square.getAttribute("aria-current")).toBe("true");
+        expect(queryDetail()).toBeNull();
+      });
 
-        expect(getChangeStages("レベル 3の問題")).toEqual([
-          null,
-          null,
-          null,
-          null,
-        ]);
-        expect(startedProblemIds).toEqual(["p-c"]);
+      test("押し終えると、選んでおいた問題の詳細を出すこと", async () => {
+        await finishStamps();
+
+        expect(getDetail().textContent).toMatch(/^No\.0007/);
+      });
+
+      test("別のマスをタップして飛ばすと、そのマスを選ばずに、選んでおいた問題の詳細を出すこと", () => {
+        const otherSquare = getSquare("レベル 3の問題", "No.0005");
+
+        tap(otherSquare, { x: 10, y: 10 });
+        fireEvent.click(otherSquare);
+
+        expect(getDetail().textContent).toMatch(/^No\.0007/);
+        expect(otherSquare.getAttribute("aria-current")).toBeNull();
+      });
+
+      test("Escape で飛ばしても、選んでおいた問題の選択を解かずに詳細を出すこと", () => {
+        fireEvent.keyDown(document, { key: "Escape" });
+
+        expect(getDetail().textContent).toMatch(/^No\.0007/);
       });
 
       test("ランダムに遊ぶを1回タップすると、最後の姿まで飛ばして開いているレベルで始めること", () => {

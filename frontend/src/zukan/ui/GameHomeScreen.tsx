@@ -299,10 +299,11 @@ function listPendingChanges(
  * 前回図鑑を見たときからの変化は、変化をまだ見せていないレベルのカードの点で示し、各レベルの台紙を初めて開いたときに一度だけ見せる。
  * 見せるときは、台紙と数を前回の姿で描き始め、変化したマスを1つずつ押していき、押してマスに着くたびに、そのレベルのカードの数・状態ごとの数・解いた数を今の数へ数え上げる。
  * ページが見えるまでは見せ始めない。画面を押すかキーを押すと最後の姿まで飛ばす。
+ * 選んでおいた問題があっても、そのレベルの変化を見せ終えるまで詳細を出さず、見せ終えてから出す。マスが詳細に隠れるなら、台紙を寄せる。
  * 絞り込みは開いているレベルの台紙にかけ、当たった問題を前に詰め、当たらなかった問題を薄くして後ろに並べる。条件は保存せず、開いたときは条件なしで始め、レベルを切り替えると外す。
  * 条件は、かけたレベルを添えて持ち、選ぶ前に最初に開くレベルが変わったときも、ほかのレベルには持ち越さない。条件を変えると台紙を先頭までスクロールし、前に集めた問題を見せる。
  * 変化は絞り込みの無い台紙で見せる。見せている途中で絞り込みを開くか条件を選ぶと、見せ終えたものとする。
- * 遊び方・見方・絞り込みのボタン、「ランダムに遊ぶ」、詳細の中の操作を押したタップは、最後の姿まで飛ばしたうえでそのまま操作する。
+ * 遊び方・見方・絞り込みのボタンと「ランダムに遊ぶ」を押したタップは、最後の姿まで飛ばしたうえでそのまま操作する。
  * 状態ごとの数は、絞り込んでいても台紙の全問で数え、当たった問題の数は同じ行の右に添える。
  */
 export function GameHomeScreen({
@@ -437,7 +438,7 @@ export function GameHomeScreen({
     isClickThroughTarget(target) {
       return (
         target instanceof Node &&
-        [headerActionsRef, playRandomRef, detailRef].some(
+        [headerActionsRef, playRandomRef].some(
           ({ current }) => current?.contains(target) === true,
         )
       );
@@ -496,6 +497,11 @@ export function GameHomeScreen({
     openProblems,
     selectedKey,
   );
+  // 下端に重ねる詳細が押していくマスを隠さないよう、開いているレベルの変化を見せ終えるまで、選んでおいた問題の詳細を出さない。
+  const detailProblem =
+    openChanges !== undefined && openRevealStatus === undefined
+      ? null
+      : (selected?.problem ?? null);
   const numberDigitCount = getZukanNumberDigitCount(zukan.problemCount);
 
   const handleSelect = useCallback(
@@ -536,7 +542,7 @@ export function GameHomeScreen({
     focusOnOpen();
   }, []);
 
-  const isDetailOpen = selected !== null;
+  const isDetailOpen = detailProblem !== null;
   const closeDetailByEscape = useEffectEvent((event: KeyboardEvent) => {
     // 見方などの開いた層が Escape を受けて閉じたときは、詳細を閉じない。
     if (event.key === "Escape" && !event.defaultPrevented) {
@@ -666,7 +672,7 @@ export function GameHomeScreen({
           <ZukanProblemDetail
             ref={detailRef}
             coverLimitRef={scrollerRef}
-            problem={selected?.problem ?? null}
+            problem={detailProblem}
             numberDigitCount={numberDigitCount}
             describeProblem={describeProblem}
             onPlay={onPlayProblem}
