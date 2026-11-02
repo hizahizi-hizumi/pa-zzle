@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import {
   type BridgesBoard as BridgesBoardState,
@@ -9,7 +9,10 @@ import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
 
 afterEach(cleanup);
 
-function renderBoard(board: BridgesBoardState) {
+function renderBoard(
+  board: BridgesBoardState,
+  onCycleEdge: (edge: number) => void = vi.fn(),
+) {
   return (
     <BridgesBoard
       board={board}
@@ -18,7 +21,7 @@ function renderBoard(board: BridgesBoardState) {
       edgeNotice={null}
       clearing={false}
       interactionDisabled={false}
-      onCycleEdge={vi.fn()}
+      onCycleEdge={onCycleEdge}
       onClearAnimationComplete={vi.fn()}
     />
   );
@@ -61,5 +64,42 @@ describe("BridgesBoard", () => {
       expect(tabbable).toHaveLength(1);
       expect(tabbable[0]?.textContent).toMatch(/^1行3列の島/);
     });
+  });
+});
+
+describe("BridgesBoard の交点", () => {
+  // 辺2（縦 x=2.5）と辺3（横 y=2.5）が (2.5, 2.5) で交わる。1マスを 100px で置く。
+  const crossingBoard = parseBridgesBoard([
+    "1.1..",
+    ".....",
+    "1...1",
+    ".....",
+    "..1..",
+  ]);
+  const onCycleEdge = vi.fn();
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = render(renderBoard(crossingBoard, onCycleEdge)).container;
+    const surface = screen.getByRole("group");
+    vi.spyOn(surface, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(0, 0, 500, 500),
+    );
+    fireEvent.pointerDown(surface, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 300,
+      clientY: 200,
+    });
+  });
+
+  test("2本の線から同じ距離の所を押すと、橋を回さずに候補の2本の線を描くこと", () => {
+    const candidates = container.querySelectorAll(
+      "[data-bridges-ambiguous] line",
+    );
+
+    expect(onCycleEdge).not.toHaveBeenCalled();
+    expect(candidates).toHaveLength(2);
   });
 });

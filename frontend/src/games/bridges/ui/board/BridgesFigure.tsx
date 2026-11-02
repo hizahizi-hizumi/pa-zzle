@@ -44,6 +44,8 @@ type BridgesFigureProps = {
   showsBlockingEdges?: boolean;
   /** 丸を淡い黄色で塗る島。難易度プレビューで、数字の読みだけでは橋が決まらない島を示す。 */
   highlightedIslands?: readonly number[];
+  /** どちらを狙ったか決まらない所を押したとき、候補の辺。点ける線を描いておき、盤面の反応で短く点ける。 */
+  ambiguousEdges?: readonly number[];
   ref?: Ref<SVGSVGElement>;
 };
 
@@ -51,6 +53,7 @@ type BridgesFigureProps = {
 export const bridgesFigureParts = {
   island: "data-bridges-island",
   blockingBridges: "data-bridges-blocking",
+  ambiguousEdges: "data-bridges-ambiguous",
 } as const;
 
 /** 図の寸法はマス幅を 1 とした値。 */
@@ -82,7 +85,7 @@ function renderSegment(
 }
 
 /**
- * 盤面の絵。下から、地・架けられる相手への線・橋・阻んだ橋の点灯・島の丸と数字・キーボードの輪の順に重ねる。
+ * 盤面の絵。下から、地・架けられる相手への線・橋・阻んだ橋の点灯・決まらない所の候補の点灯・島の丸と数字・キーボードの輪の順に重ねる。
  * 島は橋の端を覆うので、橋と点灯の線の上に置く。
  */
 export function BridgesFigure({
@@ -94,6 +97,7 @@ export function BridgesFigure({
   blockingEdges = [],
   showsBlockingEdges = false,
   highlightedIslands = [],
+  ambiguousEdges = [],
   ref,
 }: BridgesFigureProps) {
   const { width, height, islands } = board;
@@ -162,6 +166,17 @@ export function BridgesFigure({
       >
         {blockingEdges.map((edge) =>
           renderSegment(getEdgeSegment(board, edge), `blocking-${edge}`),
+        )}
+      </g>
+      <g
+        {...{ [bridgesFigureParts.ambiguousEdges]: "" }}
+        className={bridgesToneClassNames.guidePreview}
+        strokeWidth={GUIDE_PREVIEW_LINE_WIDTH}
+        strokeLinecap="round"
+        opacity={0}
+      >
+        {ambiguousEdges.map((edge) =>
+          renderSegment(getEdgeSegment(board, edge), `ambiguous-${edge}`),
         )}
       </g>
       {islands.map((island, index) => {

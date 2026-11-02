@@ -78,10 +78,14 @@ export function getBridgeLineOffsets(count: BridgeCount): readonly number[] {
     : [-DOUBLE_BRIDGE_SPACING / 2, DOUBLE_BRIDGE_SPACING / 2];
 }
 
-/** 押した位置が指すもの。島の丸の中なら島、島の外で線に近ければ辺。 */
+/**
+ * 押した位置が指すもの。島の丸の中なら島、島の外で線に近ければ辺。
+ * 交わる2辺の交点の真上のように、どちらを狙ったか決まらないときは `ambiguous` で候補の辺を返す。
+ */
 export type BoardTarget =
   | { kind: "island"; island: number }
-  | { kind: "edge"; edge: number };
+  | { kind: "edge"; edge: number }
+  | { kind: "ambiguous"; edges: readonly number[] };
 
 function findIslandAt(board: BridgesBoard, point: BoardPoint): number | null {
   const index = board.islands.findIndex((island) => {
@@ -178,12 +182,13 @@ function findFirst(
 /**
  * 押した点が指す辺。線が最も近い辺を選ぶ。最も近い辺と交わり、線までの距離の差が `CROSSING_AMBIGUITY` 以下の辺があれば、
  * 真ん中が重なっていれば短い辺を、そうでなければ2島の間の真ん中に近い（線に沿ったずれが辺の長さに対して小さい）辺を選ぶ。
- * それでも決まらない（同じ距離の平行な2線など）ときは `null`。
+ * - `ambiguous`: 選び分けた辺の候補（最も近い辺と、それと見分けにくい交わる辺）。
+ * - `edge`: 選んだ辺。それでも決まらない（交点の真上、同じ距離の平行な2線など）ときは `null`。
  */
 function selectEdge(
   candidates: readonly EdgeCandidate[],
   crossingEdges: readonly (readonly number[])[],
-): number | null {
+): { ambiguous: readonly EdgeCandidate[]; edge: number | null } {
   const nearestDistance = Math.min(
     ...candidates.map(({ distance }) => distance),
   );
@@ -199,26 +204,32 @@ function selectEdge(
         )),
   );
   if (ambiguous.length === 1) {
-    return ambiguous[0]!.edge;
+    return { ambiguous, edge: ambiguous[0]!.edge };
   }
   const crosses = ambiguous.some(({ edge }) =>
     ambiguous.some((other) => crossingEdges[edge]!.includes(other.edge)),
   );
   if (!crosses) {
-    return null;
+    return { ambiguous, edge: null };
   }
   const atSharedMidpoint = ambiguous.filter(
     ({ midpointDistance }) => midpointDistance <= SHARED_MIDPOINT_RADIUS,
   );
-  return atSharedMidpoint.length >= 2
-    ? findFirst(atSharedMidpoint, compareBySpan)
-    : findFirst(ambiguous, compareByMidpoint);
+  return {
+    ambiguous,
+    edge:
+      atSharedMidpoint.length >= 2
+        ? findFirst(atSharedMidpoint, compareBySpan)
+        : findFirst(ambiguous, compareByMidpoint),
+  };
 }
 
 /**
  * 押した位置が指す島か辺。島の丸の中なら島。島の外なら、線から半マスまでの辺から `selectEdge` で選ぶ。
- * 交わる2辺の近くを押したときは、片方にだけ橋があれば橋のある方を選ぶ。橋の無い方は交わる橋に阻まれて架けられないので、
- * 架かった橋を回す操作を取らせない。
+ * 選んだ辺が交わる橋に阻まれていても、そのまま返す（架けようとして阻まれたことを盤面で返す）。
+ * ただし、阻んでいる橋の辺が選んだ辺と見分けにくい候補に入っているときは、その橋のある辺を選ぶ。
+ * 交わる2辺の近くでどちらを狙ったか分からないときは、片方にだけ橋があればそれを回す方が狙いに近い。
+ * 決まらないときは、候補の辺を `ambiguous` で返す。
  */
 export function findBoardTarget(
   board: BridgesBoard,
@@ -229,19 +240,30 @@ export function findBoardTarget(
   if (island !== null) {
     return { kind: "island", island };
   }
-  const { crossingEdges } = getBridgesNetwork(board);
   const candidates = listReachableEdges(board, point);
-  const bridgedCandidates = new Set(
-    candidates.flatMap(({ edge }) => (bridges[edge] === 0 ? [] : [edge])),
+  if (candidates.length === 0) {
+    return null;
+  }
+  const { crossingEdges } = getBridgesNetwork(board);
+  const { ambiguous, edge } = selectEdge(candidates, crossingEdges);
+  const bridgedAlternatives = ambiguous.filter(
+    (candidate) =>
+      bridges[candidate.edge] !== 0 &&
+      (edge === null || crossingEdges[edge]!.includes(candidate.edge)),
   );
-  const selectable = candidates.filter(
-    ({ edge }) =>
-      bridges[edge] !== 0 ||
-      !crossingEdges[edge]!.some((crossing) => bridgedCandidates.has(crossing)),
-  );
-  const edge =
-    selectable.length === 0 ? null : selectEdge(selectable, crossingEdges);
-  return edge === null ? null : { kind: "edge", edge };
+  if (
+    (edge === null || bridges[edge] === 0) &&
+    bridgedAlternatives.length === 1
+  ) {
+    return { kind: "edge", edge: bridgedAlternatives[0]!.edge };
+  }
+  if (edge === null) {
+    return {
+      kind: "ambiguous",
+      edges: ambiguous.map((candidate) => candidate.edge),
+    };
+  }
+  return { kind: "edge", edge };
 }
 
 /**
