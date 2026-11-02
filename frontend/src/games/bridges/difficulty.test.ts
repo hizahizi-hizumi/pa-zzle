@@ -133,6 +133,27 @@ describe("assessBridgesDifficulty", () => {
       },
     ],
     [
+      "入口がレベル3 より狭い、少なくとも1本の読みが2回要る 7×7",
+      {
+        ...level1,
+        size: 7,
+        islandCount: 12,
+        openingEdgeRatio: 0.15,
+        countRoundCount: 2,
+      },
+    ],
+    [
+      "つながりを1か所読むが、少なくとも1本の読みが1回だけの 8×8",
+      {
+        ...level4,
+        size: 8,
+        islandCount: 16,
+        countRoundCount: 1,
+        connectivityRoundCount: 1,
+        undecidedRatio: 0.3,
+      },
+    ],
+    [
       "数字だけでは6割しか決まらない、つながり3か所の 10×10",
       { ...level4, connectivityRoundCount: 3, undecidedRatio: 0.6 },
     ],
@@ -187,15 +208,15 @@ describe("bridgesLevelCombinations", () => {
       bridgesLevelCombinations[id],
     ]);
 
-  // 「少なくとも」の手詰まり回数は、つながりを読まない レベル1・2 を分けるだけに使う。レベル3 からはつながりの読み（上の段）が要る。
   const raisingSystems = [
     "boardSize",
     "islandCount",
+    "countRoundCount",
     "connectivityRoundCount",
     "countReasoningUndecidedRatio",
   ] as const;
 
-  test("上のレベルほど、盤面・島の数・つながり・数字で決まらない割合の下限を下げないこと", () => {
+  test("上のレベルほど、盤面・島の数・少なくとも1本の読み・つながり・数字で決まらない割合の下限を下げないこと", () => {
     const lowered = pairs.flatMap(([lower, upper]) =>
       raisingSystems.filter((key) => upper![key].minimum < lower![key].minimum),
     );

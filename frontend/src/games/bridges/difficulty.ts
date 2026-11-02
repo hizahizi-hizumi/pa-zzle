@@ -38,8 +38,12 @@ export type BridgesLevelCombination = {
   countReasoningUndecidedRatio: NumericRange;
 };
 
-const anyCount: NumericRange = {
-  minimum: 0,
+/**
+ * レベル2 以上の「少なくとも1本」の読みの回数。1回だけ要る問題は、入口が狭くても1か所で抜けて後は見るだけで決まり、
+ * レベル1 と手応えが同じになる。レベル3 以上も同じ下限にし、上のレベルが下のレベルの読みを含むようにする。
+ */
+const atLeastTwoCountRounds: NumericRange = {
+  minimum: 2,
   maximum: Number.POSITIVE_INFINITY,
 };
 
@@ -47,15 +51,22 @@ const anyCount: NumericRange = {
 const MINIMUM_ISLAND_PERCENT = 18;
 
 /**
- * 島の数の下限。そのレベルの最も小さい盤面のマスの 18% にする。それより疎な盤面は島どうしが離れて行き先が少なく、
- * 盤面が広くても見渡すだけで橋が決まり、広さが挑戦にならない。上のレベルほど盤面が広いので、下限も上がる（合意）。
+ * 島の数の下限を、そのレベルの最も小さい盤面のマスの 18% にして組み合わせに足す。それより疎な盤面は島どうしが離れて
+ * 行き先が少なく、盤面が広くても見渡すだけで橋が決まりやすく、広さが挑戦にならない。上のレベルほど盤面が広いので、
+ * 下限も上がる（合意）。
  */
-function atLeastIslandsOn(smallestSize: number): NumericRange {
+function withIslandLowerBound<
+  Combination extends Omit<BridgesLevelCombination, "islandCount">,
+>(combination: Combination): Combination & { islandCount: NumericRange } {
+  const smallestSize = combination.boardSize.minimum;
   return {
-    minimum: Math.ceil(
-      (smallestSize * smallestSize * MINIMUM_ISLAND_PERCENT) / 100,
-    ),
-    maximum: Number.POSITIVE_INFINITY,
+    ...combination,
+    islandCount: {
+      minimum: Math.ceil(
+        (smallestSize * smallestSize * MINIMUM_ISLAND_PERCENT) / 100,
+      ),
+      maximum: Number.POSITIVE_INFINITY,
+    },
   };
 }
 
@@ -65,49 +76,44 @@ function atLeastIslandsOn(smallestSize: number): NumericRange {
  * 境界は人間の実プレイで確かめる前の暫定値。
  */
 export const bridgesLevelCombinations = {
-  "1": {
+  "1": withIslandLowerBound({
     boardSize: { minimum: 6, maximum: 7 },
-    islandCount: atLeastIslandsOn(6),
     // 入口が全部の問題（解き始めに全行き先が狭まる）は、読むところが無いので除く。
     openingEdgeRatio: { minimum: 0.5, maximum: 0.95 },
     countRoundCount: { minimum: 0, maximum: 0 },
     connectivityRoundCount: { minimum: 0, maximum: 0 },
     countReasoningUndecidedRatio: { minimum: 0, maximum: 0 },
-  },
-  "2": {
+  }),
+  "2": withIslandLowerBound({
     boardSize: { minimum: 7, maximum: 8 },
-    islandCount: atLeastIslandsOn(7),
-    openingEdgeRatio: { minimum: 0, maximum: 0.45 },
-    // 「少なくとも1本」の読みを1回だけ要る問題は、入口が狭くても1か所で抜けて後は見るだけで決まり、レベル1 と手応えが同じになる。
-    countRoundCount: { minimum: 2, maximum: Number.POSITIVE_INFINITY },
+    // 入口がレベル3 より狭い問題は、つながりを読まないのにレベル3 より解き始めにくいので除く。
+    openingEdgeRatio: { minimum: 0.2, maximum: 0.45 },
+    countRoundCount: atLeastTwoCountRounds,
     connectivityRoundCount: { minimum: 0, maximum: 0 },
     countReasoningUndecidedRatio: { minimum: 0, maximum: 0 },
-  },
-  "3": {
+  }),
+  "3": withIslandLowerBound({
     boardSize: { minimum: 8, maximum: 9 },
-    islandCount: atLeastIslandsOn(8),
     openingEdgeRatio: { minimum: 0, maximum: 0.45 },
-    countRoundCount: anyCount,
+    countRoundCount: atLeastTwoCountRounds,
     connectivityRoundCount: { minimum: 1, maximum: 1 },
     countReasoningUndecidedRatio: { minimum: 0, maximum: 0.5 },
-  },
-  "4": {
+  }),
+  "4": withIslandLowerBound({
     boardSize: { minimum: 9, maximum: 10 },
-    islandCount: atLeastIslandsOn(9),
     openingEdgeRatio: { minimum: 0, maximum: 0.45 },
-    countRoundCount: anyCount,
+    countRoundCount: atLeastTwoCountRounds,
     connectivityRoundCount: { minimum: 2, maximum: 2 },
     countReasoningUndecidedRatio: {
       minimum: 0.5,
       maximum: 1,
       excludesMinimum: true,
     },
-  },
-  "5": {
+  }),
+  "5": withIslandLowerBound({
     boardSize: { minimum: 10, maximum: 10 },
-    islandCount: atLeastIslandsOn(10),
     openingEdgeRatio: { minimum: 0, maximum: 0.45 },
-    countRoundCount: anyCount,
+    countRoundCount: atLeastTwoCountRounds,
     // つながりの手詰まりが7回以上の問題は帯の中で突出して重い（問題集の 90 パーセンタイルは 4）ので、上限を置く。
     connectivityRoundCount: { minimum: 3, maximum: 6 },
     countReasoningUndecidedRatio: {
@@ -115,7 +121,7 @@ export const bridgesLevelCombinations = {
       maximum: 1,
       excludesMinimum: true,
     },
-  },
+  }),
 } as const satisfies Record<BridgesDifficulty, BridgesLevelCombination>;
 
 /** 分類に使った特徴。 */
