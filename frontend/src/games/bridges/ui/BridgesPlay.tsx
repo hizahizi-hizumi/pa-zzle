@@ -11,6 +11,7 @@ import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/BridgesStatusAnnouncement";
+import { useBridgesSoundEffects } from "@/games/bridges/ui/BridgesPlay/use-bridges-sound-effects";
 import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
 import { BridgesResultScreen } from "@/games/bridges/ui/result/BridgesResultScreen";
 import type {
@@ -56,6 +57,8 @@ export function BridgesPlay({
   onBackToHome,
   onOpenDiagnostics,
 }: BridgesPlayProps) {
+  useBridgesSoundEffects(edgeNotice, progress, board, bridges);
+
   return (
     <GamePlayFrame
       progress={progress}
