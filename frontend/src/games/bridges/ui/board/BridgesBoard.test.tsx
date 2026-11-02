@@ -119,14 +119,16 @@ describe("BridgesBoard", () => {
       expect(candidates).toHaveLength(2);
     });
 
-    test("辺の少ない盤面へ移っても描画でき、前の盤面の候補の線を残さないこと", () => {
-      fireEvent.pointerDown(readBoardSurface(), equidistantPoint);
-      rerender(renderBoard(fewEdges, onCycleEdge));
-      const candidates = container.querySelectorAll(
-        "[data-bridges-ambiguous] line",
-      );
+    describe("押した後に辺の少ない盤面へ移った場合", () => {
+      test("描画でき、前の盤面の候補の線を残さないこと", () => {
+        fireEvent.pointerDown(readBoardSurface(), equidistantPoint);
+        rerender(renderBoard(fewEdges, onCycleEdge));
+        const candidates = container.querySelectorAll(
+          "[data-bridges-ambiguous] line",
+        );
 
-      expect(candidates).toHaveLength(0);
+        expect(candidates).toHaveLength(0);
+      });
     });
   });
 });
