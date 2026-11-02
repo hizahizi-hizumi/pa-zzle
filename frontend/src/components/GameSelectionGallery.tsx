@@ -1,9 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Link } from "react-router";
 
 import { playGameSelectSound } from "@/components/app-decision-sound";
 import { GamePictogram } from "@/components/GamePictogram";
 import { SettingsButton } from "@/components/SettingsButton";
+import { Badge } from "@/components/ui/badge";
+import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
 import type { Path } from "@/router";
 
 type GameSelectionGame = {
@@ -12,23 +21,69 @@ type GameSelectionGame = {
   to: Path;
 };
 
+/** 選んでいるゲームの続き。ゲームのホームを開いたときに開くレベルと、そのレベルの挑戦中の問題の数。 */
+export type GameSelectionContinuation = {
+  difficulty: DifficultyLevel;
+  attemptedCount: number;
+};
+
 type GameSelectionGalleryProps = {
   games: readonly GameSelectionGame[];
   recordsTo: Path;
+  /** 選んでいるゲームの、並びの中の位置。 */
+  selectedIndex: number;
+  /** 選んでいるゲームの続き。そのゲームを遊んだことが無ければ `null`。 */
+  continuation: GameSelectionContinuation | null;
+  onSelect: (index: number) => void;
 };
 
+function formatContinuation({
+  difficulty,
+  attemptedCount,
+}: GameSelectionContinuation): string {
+  const level = getDifficultyLabel(difficulty);
+  return attemptedCount > 0 ? `${level} ・ 挑戦中 ${attemptedCount}問` : level;
+}
+
+/** 並びの中で `item` を見える位置へ送るのに要る、横の送り量。並びの端の余白（scroll-padding）を空ける。 */
+function findScrollIntoListDelta(list: Element, item: Element): number {
+  const listRect = list.getBoundingClientRect();
+  const itemRect = item.getBoundingClientRect();
+  const padding = Number.parseFloat(getComputedStyle(list).scrollPaddingLeft);
+  const inset = Number.isNaN(padding) ? 0 : padding;
+  if (itemRect.left < listRect.left + inset) {
+    return itemRect.left - listRect.left - inset;
+  }
+  if (itemRect.right > listRect.right - inset) {
+    return itemRect.right - listRect.right + inset;
+  }
+  return 0;
+}
+
+/**
+ * アプリのホーム。選んでいるゲームのピクトグラムと名前を大きく示してそのゲームのホームへの入口にし、全ゲームを選ぶ並びを下に置く。
+ * 選んでいるゲームの名前の下に、そのゲームの続きを小さな枠で添える。続きの行の高さは続きが無くても取っておき、ゲームを切り替えても名前とピクトグラムを動かさない。
+ * 利用者が並びを触るまでは、選んでいるゲームを並びの見える位置へ送る。
+ */
 export function GameSelectionGallery({
   games,
   recordsTo,
+  selectedIndex,
+  continuation,
+  onSelect,
 }: GameSelectionGalleryProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedGame = games[selectedIndex] ?? games[0];
+  const continuationId = useId();
+  const isTouchedRef = useRef(false);
 
   function selectGame(index: number) {
     if (index !== selectedIndex) {
       playGameSelectSound();
     }
-    setSelectedIndex(index);
+    onSelect(index);
+  }
+  function markTouched() {
+    isTouchedRef.current = true;
   }
   const listRef = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState({ start: false, end: false });
@@ -57,6 +112,16 @@ export function GameSelectionGallery({
     return () => window.removeEventListener("resize", updateOverflow);
   }, [updateOverflow]);
 
+  // 並びの中だけを横へ送り、低い画面でページを縦に送らないよう scrollIntoView は使わない。
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const selectedButton = list?.children[selectedIndex];
+    if (!list || !selectedButton || isTouchedRef.current) {
+      return;
+    }
+    list.scrollLeft += findScrollIntoListDelta(list, selectedButton);
+  }, [selectedIndex]);
+
   if (!selectedGame) {
     return null;
   }
@@ -80,6 +145,7 @@ export function GameSelectionGallery({
         <Link
           to={selectedGame.to}
           aria-label={`${selectedGame.name}を遊ぶ`}
+          aria-describedby={continuation ? continuationId : undefined}
           onClick={playGameSelectSound}
           className="flex h-full flex-col items-center justify-center transition-colors duration-(--duration-slow) hover:bg-muted/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         >
@@ -87,6 +153,13 @@ export function GameSelectionGallery({
             <GamePictogram svg={selectedGame.pictogramSvg} />
           </span>
           <span className="mt-2 text-heading sm:mt-3">{selectedGame.name}</span>
+          <span className="mt-2 flex h-6 items-center">
+            {continuation && (
+              <Badge id={continuationId} variant="outline">
+                {formatContinuation(continuation)}
+              </Badge>
+            )}
+          </span>
         </Link>
       </div>
 
@@ -98,6 +171,9 @@ export function GameSelectionGallery({
           <div
             ref={listRef}
             onScroll={updateOverflow}
+            onPointerDown={markTouched}
+            onWheel={markTouched}
+            onKeyDown={markTouched}
             data-overflow-start={overflow.start}
             data-overflow-end={overflow.end}
             style={{

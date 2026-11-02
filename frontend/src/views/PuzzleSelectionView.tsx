@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 
 import { AppTitleScreen } from "@/components/AppTitleScreen";
 import { GameSelectionGallery } from "@/components/GameSelectionGallery";
+import { useAppHome } from "@/game-catalog/app-home";
 import { gameCatalog } from "@/game-catalog/game-catalog";
 import {
   enterApp,
@@ -20,10 +21,18 @@ export function PuzzleSelectionView() {
     subscribeAppLaunchTitle,
     getAppLaunchTitle,
   );
+  const { selectedGameIndex, selectedGameContinuation, selectGame } =
+    useAppHome(gameCatalog, { isCovered: title.status !== "hidden" });
 
   return (
     <>
-      <GameSelectionGallery games={games} recordsTo="/records" />
+      <GameSelectionGallery
+        games={games}
+        recordsTo="/records"
+        selectedIndex={selectedGameIndex}
+        continuation={selectedGameContinuation}
+        onSelect={selectGame}
+      />
       <AppTitleScreen title={title} games={games} onEnter={enterApp} />
     </>
   );

@@ -18,6 +18,7 @@ import type { PlayAttempt } from "@/records/play-attempt";
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 import type { Path } from "@/router";
+import type { ZukanGameSource } from "@/zukan/zukan-collection";
 
 /** ゲームのホームのパス。アプリのホームからゲームを選ぶと開く。 */
 export type GameHomePath = Exclude<
@@ -130,6 +131,17 @@ export type GameCatalogEntry = {
     context: RecordResultContext,
   ) => ReactNode | null;
 };
+
+/** 図鑑とゲームの続きを記録から導くのに要る、カタログ項目の部分。 */
+export function toZukanGameSource(game: GameCatalogEntry): ZukanGameSource {
+  return {
+    id: game.id,
+    listPoolProblemIds: game.listPoolProblemIds,
+    recordProblemPlayTarget: game.recordProblemPlayTarget,
+    attemptProblemPlayTarget: game.attemptProblemPlayTarget,
+    playRecordDefinition: game.playRecordDisplay.definition,
+  };
+}
 
 /**
  * 完了記録や試行の難易度と identity から遊び直し先を求める。

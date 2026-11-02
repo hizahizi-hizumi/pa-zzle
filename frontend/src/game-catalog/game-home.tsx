@@ -6,7 +6,10 @@ import {
   useSyncExternalStore,
 } from "react";
 
-import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
+import {
+  type GameCatalogEntry,
+  toZukanGameSource,
+} from "@/game-catalog/game-catalog-entry";
 import { openRecordProblemPlay } from "@/game-catalog/game-navigation";
 import { useRequestedProblemId } from "@/game-catalog/problem-id-query";
 import type { DifficultyLevel } from "@/games/difficulty";
@@ -55,18 +58,7 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
   const requestedProblemId = useRequestedProblemId();
   const navigate = useNavigate();
   const zukan = useMemo(
-    () =>
-      deriveGameZukan(
-        {
-          id: game.id,
-          listPoolProblemIds: game.listPoolProblemIds,
-          recordProblemPlayTarget: game.recordProblemPlayTarget,
-          attemptProblemPlayTarget: game.attemptProblemPlayTarget,
-          playRecordDefinition: game.playRecordDisplay.definition,
-        },
-        records,
-        attempts,
-      ),
+    () => deriveGameZukan(toZukanGameSource(game), records, attempts),
     [game, records, attempts],
   );
   const changes = useMemo(
