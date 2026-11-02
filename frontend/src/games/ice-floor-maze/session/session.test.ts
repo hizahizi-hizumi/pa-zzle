@@ -57,6 +57,7 @@ describe("createIceFloorMazeSession", () => {
     expect(result.puzzleState).toEqual({
       position: 17,
       cells: problem.board.cells,
+      blocks: [],
     });
     expect(result.history).toEqual([]);
     expect(result.moveCount).toBe(0);
@@ -164,6 +165,7 @@ describe("要素のある問題の場合", () => {
     expect(result.puzzleState).toEqual({
       position: 0,
       cells: elementProblem.board.cells,
+      blocks: [],
     });
   });
 
@@ -173,6 +175,7 @@ describe("要素のある問題の場合", () => {
     expect(result.puzzleState).toEqual({
       position: 0,
       cells: elementProblem.board.cells,
+      blocks: [],
     });
     expect(result.restartCount).toBe(1);
   });

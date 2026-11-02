@@ -10,9 +10,11 @@ import {
 } from "@/games/ice-floor-maze/difficulty";
 import { analyzeIceFloorMazeDifficulty } from "@/games/ice-floor-maze/problem/difficulty-analysis";
 import {
+  CELL_BLOCK,
   CELL_BRITTLE,
   CELL_ICE,
   CELL_ROCK,
+  CELL_SNOW,
   CELL_THIN,
   countShortestSolutions,
   createElementRules,
@@ -38,6 +40,25 @@ const difficulties = difficultyLevels.map(({ id }) => id);
 /** 分析し直して分類を確かめる、各レベルの先頭の問題の数。全問は `generate:ice-floor-maze-pool -- --verify` で確かめる。 */
 const classifiedSampleSize = 24;
 
+/** 要素の種類の組（もろい岩・薄い氷・雪・滑る氷の塊の文字を並べたもの）ごとの、レベルの基準の組み合わせの名前。 */
+const compositionByKinds = new Map([
+  ["", "none"],
+  ["b", "brittle-rock"],
+  ["c", "thin-ice"],
+  ["bc", "mixed"],
+  ["s", "snow"],
+  ["cs", "snow-thin-ice"],
+  ["m", "sliding-block"],
+  ["cm", "sliding-block-thin-ice"],
+]);
+
+const kindNotationByCode = new Map([
+  [CELL_BRITTLE, "b"],
+  [CELL_THIN, "c"],
+  [CELL_SNOW, "s"],
+  [CELL_BLOCK, "m"],
+]);
+
 function listPooledProblems(difficulty: IceFloorMazeDifficulty) {
   return listIceFloorMazePoolEntries(difficulty).map(
     restoreIceFloorMazePoolEntry,
@@ -58,14 +79,12 @@ function listStructuralViolations(
   })!;
   const toGoal = measureDistancesToGoal(space);
   const used = findUsedCells(space);
-  const composition =
-    rules.elements.length === 0
-      ? "none"
-      : new Set(rules.kinds).size === 2
-        ? "mixed"
-        : rules.kinds[0] === CELL_BRITTLE
-          ? "brittle-rock"
-          : "thin-ice";
+  const composition = compositionByKinds.get(
+    [...new Set(rules.kinds)]
+      .sort((left, right) => left - right)
+      .map((code) => kindNotationByCode.get(code))
+      .join(""),
+  );
   const patternMatches =
     criteria.kind === "tactics"
       ? composition === "none" &&
@@ -83,7 +102,8 @@ function listStructuralViolations(
       used[cell] === 0 &&
       (code === CELL_ICE ||
         code === CELL_THIN ||
-        ((code === CELL_ROCK || code === CELL_BRITTLE) &&
+        code === CELL_SNOW ||
+        ((code === CELL_ROCK || code === CELL_BRITTLE || code === CELL_BLOCK) &&
           !rules.beyond.some((table) => used[table[cell]!] === 1))),
   );
   return [
@@ -100,6 +120,15 @@ function listStructuralViolations(
 }
 
 describe("問題集", () => {
+  // 要素のあるレベルは、1つの要素の種類に盤面の違う生成条件が2つ並び、生成条件ごとの問題数を1問以内の差で割り振る。
+  const plansPerComposition = {
+    "1": 1,
+    "2": 1,
+    "3": 2,
+    "4": 2,
+    "5": 2,
+  } as const satisfies Record<IceFloorMazeDifficulty, number>;
+
   test.each(difficulties)(
     "レベル %s の全問題が、そのレベルの盤面の形・要素・最少手数で、最短解が一意で、駒が通らないマスを盤面に描かないこと",
     (difficulty) => {
@@ -143,14 +172,18 @@ describe("問題集", () => {
   );
 
   test.each(difficulties)(
-    "レベル %s の生成条件ごとの問題数の差が、要素の種類で見て1問以内であること",
+    "レベル %s の要素の種類ごとの問題数の差が、生成条件ごとに1問以内に収まる差であること",
     (difficulty) => {
       const pooled = listPooledProblems(difficulty);
 
       const countsByComposition = Map.groupBy(pooled, ({ problem }) => {
         const kinds = new Set(
           problem.board.cells.filter(
-            (cell) => cell === "brittle-rock" || cell === "thin-ice",
+            (cell) =>
+              cell === "brittle-rock" ||
+              cell === "thin-ice" ||
+              cell === "snow" ||
+              cell === "sliding-block",
           ),
         );
         return [...kinds].sort().join("+");
@@ -159,7 +192,9 @@ describe("問題集", () => {
         (problems) => problems.length,
       );
 
-      expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(1);
+      expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(
+        plansPerComposition[difficulty],
+      );
     },
   );
 

@@ -198,7 +198,9 @@ describe("IceFloorMazePlayView", () => {
       // 出題した難易度と、分析し直した分類。
       expect(dialog.getAllByText("レベル 3")).toHaveLength(2);
       expect(dialog.getByText(/^\d+×\d+$/)).toBeTruthy();
-      expect(dialog.getByText(/^(もろい岩|薄い氷)$/)).toBeTruthy();
+      expect(
+        dialog.getByText(/^(もろい岩|薄い氷|雪|滑る氷の塊)$/),
+      ).toBeTruthy();
     });
   });
 
