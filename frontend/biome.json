@@ -14,7 +14,7 @@
       "!src/games/slide-puzzle/problem/problem-pool.json",
       "!src/games/takuzu/problem/problem-pool.json",
       "!src/games/reflection/problem/problem-pool.json",
-      "!src/games/hamiltonian-path/problem/problem-pool.json"
+      "!src/games/hitofude-puzzle/problem/problem-pool.json"
     ]
   },
   "formatter": {
@@ -449,7 +449,7 @@
       }
     },
     {
-      "includes": ["src/games/hamiltonian-path/**/*.{ts,tsx}"],
+      "includes": ["src/games/hitofude-puzzle/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
@@ -492,7 +492,7 @@
       }
     },
     {
-      "includes": ["src/games/hamiltonian-path/ui/play-record-display.ts"],
+      "includes": ["src/games/hitofude-puzzle/ui/play-record-display.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -536,7 +536,7 @@
       }
     },
     {
-      "includes": ["src/games/hamiltonian-path/puzzle/**/*.{ts,tsx}"],
+      "includes": ["src/games/hitofude-puzzle/puzzle/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
@@ -573,10 +573,10 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/problem/**",
-                      "@/games/hamiltonian-path/session/**",
-                      "@/games/hamiltonian-path/play/**",
-                      "@/games/hamiltonian-path/ui/**"
+                      "@/games/hitofude-puzzle/problem/**",
+                      "@/games/hitofude-puzzle/session/**",
+                      "@/games/hitofude-puzzle/play/**",
+                      "@/games/hitofude-puzzle/ui/**"
                     ],
                     "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
                   }
@@ -588,7 +588,7 @@
       }
     },
     {
-      "includes": ["src/games/hamiltonian-path/problem/**/*.{ts,tsx}"],
+      "includes": ["src/games/hitofude-puzzle/problem/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
@@ -625,9 +625,9 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/session/**",
-                      "@/games/hamiltonian-path/play/**",
-                      "@/games/hamiltonian-path/ui/**"
+                      "@/games/hitofude-puzzle/session/**",
+                      "@/games/hitofude-puzzle/play/**",
+                      "@/games/hitofude-puzzle/ui/**"
                     ],
                     "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
                   }
@@ -639,7 +639,7 @@
       }
     },
     {
-      "includes": ["src/games/hamiltonian-path/session/**/*.{ts,tsx}"],
+      "includes": ["src/games/hitofude-puzzle/session/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
@@ -676,12 +676,12 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/problem/generation/**",
-                      "@/games/hamiltonian-path/difficulty",
-                      "@/games/hamiltonian-path/score",
-                      "@/games/hamiltonian-path/play/**",
-                      "@/games/hamiltonian-path/ui/**",
-                      "@/games/hamiltonian-path/play-record",
+                      "@/games/hitofude-puzzle/problem/generation/**",
+                      "@/games/hitofude-puzzle/difficulty",
+                      "@/games/hitofude-puzzle/score",
+                      "@/games/hitofude-puzzle/play/**",
+                      "@/games/hitofude-puzzle/ui/**",
+                      "@/games/hitofude-puzzle/play-record",
                       "@/records/**",
                       "react*"
                     ],
@@ -695,7 +695,7 @@
       }
     },
     {
-      "includes": ["src/games/hamiltonian-path/play/**/*.{ts,tsx}"],
+      "includes": ["src/games/hitofude-puzzle/play/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
@@ -732,10 +732,10 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/ui/**",
-                      "@/games/hamiltonian-path/problem/generation/**",
-                      "@/games/hamiltonian-path/play-record",
-                      "@/games/hamiltonian-path/diagnostics"
+                      "@/games/hitofude-puzzle/ui/**",
+                      "@/games/hitofude-puzzle/problem/generation/**",
+                      "@/games/hitofude-puzzle/play-record",
+                      "@/games/hitofude-puzzle/diagnostics"
                     ],
                     "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
@@ -772,7 +772,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -816,7 +816,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -859,7 +859,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -911,7 +911,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -962,7 +962,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -1018,7 +1018,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -1070,7 +1070,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -1114,7 +1114,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -1157,7 +1157,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -1209,7 +1209,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -1260,7 +1260,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -1316,7 +1316,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -1368,7 +1368,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1412,7 +1412,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1455,7 +1455,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1507,7 +1507,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1558,7 +1558,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1614,7 +1614,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1666,7 +1666,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1710,7 +1710,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1753,7 +1753,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1805,7 +1805,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1856,7 +1856,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1912,7 +1912,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1964,7 +1964,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2008,7 +2008,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2051,7 +2051,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2103,7 +2103,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2154,7 +2154,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2210,7 +2210,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2262,7 +2262,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2306,7 +2306,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2349,7 +2349,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2401,7 +2401,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2452,7 +2452,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2508,7 +2508,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2560,7 +2560,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2604,7 +2604,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2647,7 +2647,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2699,7 +2699,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2750,7 +2750,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2806,7 +2806,7 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2857,7 +2857,7 @@
       }
     },
     {
-      "includes": ["src/game-catalog/hamiltonian-path/**/*.{ts,tsx}"],
+      "includes": ["src/game-catalog/hitofude-puzzle/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
@@ -2918,8 +2918,8 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
-                      "@/game-catalog/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/game-catalog/hitofude-puzzle/**",
                       "@/games/nanpure/**",
                       "@/game-catalog/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2961,8 +2961,8 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
-                      "@/game-catalog/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/game-catalog/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/parking-jam/**",
@@ -3004,8 +3004,8 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
-                      "@/game-catalog/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/game-catalog/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/nanpure/**",
@@ -3047,8 +3047,8 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
-                      "@/game-catalog/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/game-catalog/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/nanpure/**",
@@ -3090,8 +3090,8 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
-                      "@/game-catalog/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/game-catalog/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/nanpure/**",
@@ -3133,8 +3133,8 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
-                      "@/game-catalog/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/game-catalog/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/nanpure/**",
@@ -3176,8 +3176,8 @@
                   },
                   {
                     "group": [
-                      "@/games/hamiltonian-path/**",
-                      "@/game-catalog/hamiltonian-path/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/game-catalog/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/nanpure/**",

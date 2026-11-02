@@ -7,8 +7,8 @@ export type Path =
   | `/`
   | `/puzzles/:game/result/:recordId`
   | `/puzzles/:game/zukan`
-  | `/puzzles/hamiltonian-path`
-  | `/puzzles/hamiltonian-path/play/:difficulty`
+  | `/puzzles/hitofude-puzzle`
+  | `/puzzles/hitofude-puzzle/play/:difficulty`
   | `/puzzles/minesweeper`
   | `/puzzles/minesweeper/play/:difficulty`
   | `/puzzles/nanpure`
@@ -28,7 +28,7 @@ export type Path =
 export type Params = {
   '/puzzles/:game/result/:recordId': { game: string; recordId: string }
   '/puzzles/:game/zukan': { game: string }
-  '/puzzles/hamiltonian-path/play/:difficulty': { difficulty: string }
+  '/puzzles/hitofude-puzzle/play/:difficulty': { difficulty: string }
   '/puzzles/minesweeper/play/:difficulty': { difficulty: string }
   '/puzzles/nanpure/play/:difficulty': { difficulty: string }
   '/puzzles/parking-jam/play/:difficulty': { difficulty: string }
