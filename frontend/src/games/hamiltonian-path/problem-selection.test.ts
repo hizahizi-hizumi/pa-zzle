@@ -1,4 +1,7 @@
 import { difficultyLevels } from "@/games/difficulty";
+import { assessHamiltonianPathDifficulty } from "@/games/hamiltonian-path/difficulty";
+import { analyzeHamiltonianPathDifficulty } from "@/games/hamiltonian-path/problem/difficulty-analysis";
+import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
 import {
   _private,
   selectHamiltonianPathProblemById,
@@ -7,6 +10,29 @@ import {
 import { createProblemId } from "@/games/problem-id";
 
 const { listProvisionalIdentities } = _private;
+
+describe("listProvisionalIdentities", () => {
+  test.each(difficultyLevels.map(({ id }) => id))(
+    "レベル %s の仮の候補がどれもそのレベルに分類されること",
+    (difficulty) => {
+      const difficulties = listProvisionalIdentities(difficulty).map(
+        (identity) => {
+          const assessment = assessHamiltonianPathDifficulty(
+            analyzeHamiltonianPathDifficulty(
+              generateHamiltonianPathProblem(identity).problem,
+            ),
+          );
+          return assessment.status === "classified"
+            ? assessment.difficulty
+            : assessment.status;
+        },
+      );
+
+      expect(new Set(difficulties)).toEqual(new Set([difficulty]));
+    },
+    20_000,
+  );
+});
 
 describe("selectHamiltonianPathProblemForDifficulty", () => {
   const seed = "hamiltonian-path-selection";
