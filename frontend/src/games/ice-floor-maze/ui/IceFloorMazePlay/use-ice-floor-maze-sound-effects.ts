@@ -157,7 +157,7 @@ function playBlockedSound() {
 /**
  * 滑り・動けない入力・ゴールの通過・床で止まる・もろい岩が崩れる・薄い氷が割れる・雪を押し出す・押した滑る氷の塊が止まる・
  * ゴールで止まる瞬間に効果音を鳴らす。
- * 結果の報酬の音はアプリが鳴らす。閉じ込めの知らせ、待った・盤面を戻すでは鳴らさない。
+ * 結果の報酬の音はアプリが鳴らす。もうゴールに止まれないことの知らせ、待った・盤面を戻すでは鳴らさない。
  */
 export function useIceFloorMazeSoundEffects(
   lastSlide: IceFloorMazeLastSlide | null,

@@ -8,10 +8,7 @@ import type {
 import type { IceFloorMazePooledProblem } from "@/games/ice-floor-maze/problem/problem-pool";
 import { selectIceFloorMazeProblemForDifficulty } from "@/games/ice-floor-maze/problem-selection";
 import type { IceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
-import {
-  classifyIceFloorMazeDeadlock,
-  type IceFloorMazeDeadlockStatus,
-} from "@/games/ice-floor-maze/puzzle/deadlock";
+import { isIceFloorMazeDeadlocked } from "@/games/ice-floor-maze/puzzle/deadlock";
 import {
   doesIceFloorMazeSlidePassGoal,
   getIceFloorMazeNeighbor,
@@ -155,8 +152,8 @@ export type IceFloorMazePlay = GamePlay<
     restartCount: number;
     optimalMoveCount: number;
     /**
-     * もうゴールに止まれないことを知らせるプレイ中だけ `true`。ゴールで止まれず、要素を変えない滑りでは
-     * 同じところを回るだけの状態（閉じ込め）に入ったら知らせ、そこから要素を変える滑りで進んでも、待った・盤面を戻すで戻っても、
+     * もうゴールに止まれないことを知らせるプレイ中だけ `true`。詰み（どう滑ってもゴールで止まれない）のまま、
+     * 待った・盤面を戻すを使わずに `deadlockNoticeSlideCount` 回滑ったら知らせ、そこから待った・盤面を戻すで戻っても、
      * ゴールで止まれる状態に戻るまで知らせ続ける。
      */
     isTrapped: boolean;
@@ -172,11 +169,31 @@ type IceFloorMazePlayState = {
   problemIdentity: IceFloorMazeProblemIdentity;
   optimalMoveCount: number;
   progress: GameProgress;
+  /**
+   * 詰みの状態から、待った・盤面を戻すを使わずに続けた滑りの数。詰みに入った時点と、待った・盤面を戻すで詰みの状態へ
+   * 戻った時点で 0 になる。詰みでない状態にいる間は `null`。
+   */
+  deadlockedSlideCount: number | null;
   /** もうゴールに止まれないことを知らせているか。どの状態から来たかで決まるので、盤面の状態とは別に持つ。 */
   trapNoticed: boolean;
   lastSlide: IceFloorMazeLastSlide | null;
   blockedInput: IceFloorMazeBlockedInput | null;
 };
+
+/**
+ * 詰みに入ってから、気づいていなさそうと見なして知らせるまでの滑りの数。詰みに入った滑りは数えない。
+ * 詰みに入ってすぐ知らせると試行錯誤を遮るので、詰みのまま滑り続けて気づいていなさそうなときだけ知らせる。
+ */
+const deadlockNoticeSlideCount = 4;
+
+/** 詰みでない状態の、知らせまでの数と知らせ。 */
+const notDeadlocked = {
+  deadlockedSlideCount: null,
+  trapNoticed: false,
+} as const satisfies Pick<
+  IceFloorMazePlayState,
+  "deadlockedSlideCount" | "trapNoticed"
+>;
 
 /** プレイを始めたときと待った・盤面を戻すの後の、直前の滑りも成立しなかった入力も無い状態。 */
 const clearedInputs = {
@@ -193,7 +210,7 @@ function createPlayState(
     problemIdentity: identity,
     optimalMoveCount,
     progress: "playing",
-    trapNoticed: false,
+    ...notDeadlocked,
     ...clearedInputs,
   };
 }
@@ -241,15 +258,13 @@ function slideInPlay(
     };
   }
 
-  const trapNoticed = noticeTrap(
-    board,
-    session.puzzleState,
-    goal,
-    current.trapNoticed,
+  const deadlockNotice = noticeDeadlockAfterSlide(
+    current,
+    isDeadlocked(board, session.puzzleState, goal),
   );
   return {
     ...applyPlaySession(current, session),
-    trapNoticed,
+    ...deadlockNotice,
     lastSlide: {
       id: inputId,
       direction,
@@ -263,13 +278,13 @@ function slideInPlay(
       stoppedOnFloor: board.cells[slide.to] === "floor",
       passedGoal: doesIceFloorMazeSlidePassGoal(slide, goal),
       isClearingMove: session.status === "cleared",
-      entersTrap: trapNoticed && !current.trapNoticed,
+      entersTrap: deadlockNotice.trapNoticed && !current.trapNoticed,
     },
     blockedInput: null,
   };
 }
 
-/** 待った・盤面を戻すで戻った後の状態。戻った先でも、知らせるかを決め直す。 */
+/** 待った・盤面を戻すで戻った後の状態。戻った先で知らせるかを決め直し、知らせまでの滑りを数え直す。 */
 function returnInPlay(
   current: IceFloorMazePlayState,
   returned: IceFloorMazeSession,
@@ -279,56 +294,54 @@ function returnInPlay(
     return current;
   }
   const { board, goal } = returned.problem;
+  const deadlockNotice = isDeadlocked(board, returned.puzzleState, goal)
+    ? { deadlockedSlideCount: 0, trapNoticed: current.trapNoticed }
+    : notDeadlocked;
   return {
     ...next,
-    trapNoticed: noticeTrap(
-      board,
-      returned.puzzleState,
-      goal,
-      current.trapNoticed,
-    ),
+    ...deadlockNotice,
     ...clearedInputs,
   };
 }
 
 /**
- * 状態ごとの、ゴールで止まれるかの判定。判定は状態のグラフをたどるので、同じ状態を何度も判定しない。
+ * 状態ごとの、詰みかの判定。判定は状態のグラフをたどるので、同じ状態を何度も判定しない。
  * 状態のオブジェクトは滑るたびに作られ、待ったで戻る先として使い回され、別の問題の状態と共有されないので、状態だけを鍵にする。
  */
-const deadlockStatusByState = new WeakMap<
-  IceFloorMazeState,
-  IceFloorMazeDeadlockStatus
->();
+const deadlockedByState = new WeakMap<IceFloorMazeState, boolean>();
 
-function classifyDeadlock(
+function isDeadlocked(
   board: IceFloorMazeBoard,
   state: IceFloorMazeState,
   goal: number,
-): IceFloorMazeDeadlockStatus {
-  const cached = deadlockStatusByState.get(state);
+): boolean {
+  const cached = deadlockedByState.get(state);
   if (cached !== undefined) {
     return cached;
   }
-  const status = classifyIceFloorMazeDeadlock(board, state, goal);
-  deadlockStatusByState.set(state, status);
-  return status;
+  const deadlocked = isIceFloorMazeDeadlocked(board, state, goal);
+  deadlockedByState.set(state, deadlocked);
+  return deadlocked;
 }
 
 /**
- * 移った先の状態で、もうゴールに止まれないことを知らせるか。閉じ込めに入ったら知らせる。
- * 知らせた後は、要素を変える滑りで閉じ込めでなくなっても、待った・盤面を戻すで戻っても、詰みのままなら知らせ続ける。
- * 知らせが消えて、抜け出せた・戻れたと誤らせないため。ゴールで止まれる状態に戻ったら知らせをやめる。
+ * 滑った後に、もうゴールに止まれないことを知らせるか。詰みの状態から滑るたびに数え、
+ * `deadlockNoticeSlideCount` 回に達したら知らせる。詰みの状態からどう滑っても詰みのままなので、
+ * 一度知らせたら滑っても消えない。
  */
-function noticeTrap(
-  board: IceFloorMazeBoard,
-  state: IceFloorMazeState,
-  goal: number,
-  wasTrapNoticed: boolean,
-): boolean {
-  const status = classifyDeadlock(board, state, goal);
-  return (
-    status === "trapped" || (wasTrapNoticed && status !== "goal-reachable")
-  );
+function noticeDeadlockAfterSlide(
+  { deadlockedSlideCount, trapNoticed }: IceFloorMazePlayState,
+  deadlocked: boolean,
+): Pick<IceFloorMazePlayState, "deadlockedSlideCount" | "trapNoticed"> {
+  if (!deadlocked) {
+    return notDeadlocked;
+  }
+  const nextCount =
+    deadlockedSlideCount === null ? 0 : deadlockedSlideCount + 1;
+  return {
+    deadlockedSlideCount: nextCount,
+    trapNoticed: trapNoticed || nextCount >= deadlockNoticeSlideCount,
+  };
 }
 
 /** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
@@ -372,7 +385,7 @@ export function useIceFloorMazePlay(
         current,
         createIceFloorMazeSession(current.session.problem, startedAt),
       ),
-      trapNoticed: false,
+      ...notDeadlocked,
       ...clearedInputs,
     }));
   }, []);

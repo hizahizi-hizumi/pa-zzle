@@ -292,7 +292,7 @@ function measureGlobalLayers(
   return toGoal;
 }
 
-/** SPEC-020 の閉じ込め: 今の位置から滑って行けるどの位置からも今の位置へ戻れる。 */
+/** 閉じ込め: 今の位置から滑って行けるどの位置からも今の位置へ戻れる。詰みに入ったと気づきやすい。 */
 function isConfined(graph: StaticBoardGraph, state: number): boolean {
   const ahead = new Set([state]);
   const queue = [state];
@@ -642,7 +642,7 @@ const staticTacticTags = [
  * - `wrap-around`（回り込み）: 最後の滑りが開始位置の側へ向かう。
  * - `pass-lure`（通過の誘い）/ `pass-trap`（通過で詰む）: 近い道筋の停止点から、ゴールを通過して止まらない滑り／その先が詰み。
  * - `reentry`（入り直し）: 最短の道筋でゴールと見通しで揃った停止点から揃わない停止点へ離れる。
- * - `trap-lure`（詰みの誘い）/ `silent-trap`（知らせのない詰み）: 最短の道筋上で詰みに入るもっともらしい選択肢／入った直後に閉じ込めの知らせが出ないもの。
+ * - `trap-lure`（詰みの誘い）/ `silent-trap`（知らせのない詰み）: 最短の道筋上で詰みに入るもっともらしい選択肢／入った直後が閉じ込めでないもの。
  * - `detour`（遠回り）/ `double-detour`（遠回り2回）: もっともらしい別の手を捨てて始まる、ゴールから離れる区間が1つ以上／2つ以上。
  * - `backward-funnel`（逆算3段）: ゴールから逆にたどり、候補が2つ以下の段が3段以上続く。
  * - `fork`（分かれ道）: もっともらしい選択肢が2つ以上ある手が最短手数の1/4以上。

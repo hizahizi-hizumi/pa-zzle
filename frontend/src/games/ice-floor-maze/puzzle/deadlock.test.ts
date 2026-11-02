@@ -2,7 +2,7 @@ import {
   type IceFloorMazeBoard,
   parseIceFloorMazeBoard,
 } from "@/games/ice-floor-maze/puzzle/board";
-import { classifyIceFloorMazeDeadlock } from "@/games/ice-floor-maze/puzzle/deadlock";
+import { isIceFloorMazeDeadlocked } from "@/games/ice-floor-maze/puzzle/deadlock";
 import {
   applyIceFloorMazeSlide,
   type IceFloorMazeDirection,
@@ -32,7 +32,7 @@ function slideInOrder(
   );
 }
 
-describe("classifyIceFloorMazeDeadlock", () => {
+describe("isIceFloorMazeDeadlocked", () => {
   // 8×8 の研究用盤面（下の Python 一致の8×8と同じ）。開始位置 12、ゴール 29。
   const board = parseIceFloorMazeBoard([
     "#...#.#.",
@@ -46,20 +46,20 @@ describe("classifyIceFloorMazeDeadlock", () => {
   ]);
   const goal = 29;
   const cases = [
-    ["開始位置からはゴールで止まれる", 12, "goal-reachable"],
-    ["ゴールにいればゴールで止まれる", 29, "goal-reachable"],
-    ["ゴールで止まれないが、まだ別の位置へ抜けられる", 8, "goal-unreachable"],
-    ["ゴールの無い領域から出られない", 56, "trapped"],
+    ["開始位置からはゴールで止まれるので詰みでない", 12, false],
+    ["ゴールにいれば詰みでない", 29, false],
+    ["ゴールで止まれなければ、まだ別の位置へ抜けられても詰み", 8, true],
+    ["ゴールの無い領域から出られなければ詰み", 56, true],
   ] as const;
 
   test.each(cases)("%sと判定すること", (_, position, expected) => {
-    const status = classifyIceFloorMazeDeadlock(
+    const deadlocked = isIceFloorMazeDeadlocked(
       board,
       createIceFloorMazeInitialState(board, position),
       goal,
     );
 
-    expect(status).toBe(expected);
+    expect(deadlocked).toBe(expected);
   });
 
   describe("要素のある盤面の場合", () => {
@@ -69,141 +69,58 @@ describe("classifyIceFloorMazeDeadlock", () => {
     const thinBoard = parseIceFloorMazeBoard([".#.c."]);
     // G b 2 3 4
     const reachableBoard = parseIceFloorMazeBoard([".b..."]);
-    // G 1 2 b 4
-    const pushedBoard = parseIceFloorMazeBoard(["...b."]);
-    // G  #  2  3  4
-    // #  #  7  #  #
-    // #  #  b  #  #
-    // 2 と 4 の間は崩さずに往復でき、2 から下へ滑ればもろい岩を崩せるが、どちらへ進んでもゴールへは行けない。
-    const circlingBoard = parseIceFloorMazeBoard([".#...", "##.##", "##b##"]);
-    // G  #  2  3  4
-    // #  #  7  #  #
-    // #  #  s  #  #
-    // #  #  17 #  #
-    // 2 から下へ滑れば雪を押し出せるが、2 と 4 の間の往復のほかはゴールへ行けない。
-    const snowCirclingBoard = parseIceFloorMazeBoard([
-      ".#...",
-      "##.##",
-      "##s##",
-      "##.##",
-    ]);
     // 0 1 2 s G
     const snowGoalBoard = parseIceFloorMazeBoard(["...s."]);
     // 0 1 m G #
     const blockGoalBoard = parseIceFloorMazeBoard(["..m.#"]);
     const elementCases = [
       [
-        "もろい岩を崩せばゴールで止まれる",
+        "もろい岩を崩せばゴールで止まれるので詰みでない",
         reachableBoard,
         slideInOrder(reachableBoard, 4, []),
-        "goal-reachable",
+        0,
+        false,
       ],
       [
-        "ゴールへ行けず、崩す手のほかに動けなければ閉じ込め",
+        "崩す手が残っていても、どう滑ってもゴールへ行けなければ詰み",
         brittleBoard,
         slideInOrder(brittleBoard, 6, []),
-        "trapped",
+        0,
+        true,
       ],
       [
-        "崩した後に戻れない状態は閉じ込めでない",
-        brittleBoard,
-        slideInOrder(brittleBoard, 6, ["left"]),
-        "goal-unreachable",
-      ],
-      [
-        "崩した後の往復だけが残れば閉じ込め",
-        brittleBoard,
-        slideInOrder(brittleBoard, 6, ["left", "left"]),
-        "trapped",
-      ],
-      [
-        "ゴールへ行けず、割る手のほかに動けなければ閉じ込め",
+        "割る手が残っていても、どう滑ってもゴールへ行けなければ詰み",
         thinBoard,
         slideInOrder(thinBoard, 4, []),
-        "trapped",
+        0,
+        true,
       ],
       [
-        "割れた水面に阻まれて動けなければ閉じ込め",
-        thinBoard,
-        slideInOrder(thinBoard, 4, ["left"]),
-        "trapped",
+        "雪山でゴールが埋まれば詰み",
+        snowGoalBoard,
+        slideInOrder(snowGoalBoard, 0, ["right"]),
+        4,
+        true,
       ],
       [
-        "崩す手が残っていても、崩さない滑りでは往復するだけなら閉じ込め",
-        circlingBoard,
-        slideInOrder(circlingBoard, 2, []),
-        "trapped",
-      ],
-      [
-        "崩さない滑りで戻れない先へ進めるなら閉じ込めでない",
-        circlingBoard,
-        slideInOrder(circlingBoard, 2, ["down"]),
-        "goal-unreachable",
-      ],
-      [
-        "崩した後に崩さない滑りで回るだけになれば閉じ込め",
-        circlingBoard,
-        slideInOrder(circlingBoard, 2, ["down", "down"]),
-        "trapped",
-      ],
-      [
-        "隣のもろい岩は押しても崩れないので、動けなければ閉じ込め",
-        pushedBoard,
-        slideInOrder(pushedBoard, 4, []),
-        "trapped",
+        "動かせない塊がゴールに乗れば詰み",
+        blockGoalBoard,
+        slideInOrder(blockGoalBoard, 0, ["right"]),
+        3,
+        true,
       ],
     ] as const;
 
     test.each(elementCases)(
       "%sと判定すること",
-      (_, elementBoard, state, expected) => {
-        const status = classifyIceFloorMazeDeadlock(elementBoard, state, 0);
-
-        expect(status).toBe(expected);
-      },
-    );
-
-    const snowAndBlockCases = [
-      [
-        "押し出す手が残っていても、押し出さない滑りでは往復するだけなら閉じ込め",
-        snowCirclingBoard,
-        slideInOrder(snowCirclingBoard, 2, []),
-        0,
-        "trapped",
-      ],
-      [
-        "雪を押し出した後に押し出さない滑りで回るだけになれば閉じ込め",
-        snowCirclingBoard,
-        slideInOrder(snowCirclingBoard, 2, ["down"]),
-        0,
-        "trapped",
-      ],
-      [
-        "雪山でゴールが埋まり、往復だけが残れば閉じ込め",
-        snowGoalBoard,
-        slideInOrder(snowGoalBoard, 0, ["right"]),
-        4,
-        "trapped",
-      ],
-      [
-        "動かせない塊がゴールに乗り、往復だけが残れば閉じ込め",
-        blockGoalBoard,
-        slideInOrder(blockGoalBoard, 0, ["right"]),
-        3,
-        "trapped",
-      ],
-    ] as const;
-
-    test.each(snowAndBlockCases)(
-      "%sと判定すること",
       (_, elementBoard, state, goalCell, expected) => {
-        const status = classifyIceFloorMazeDeadlock(
+        const deadlocked = isIceFloorMazeDeadlocked(
           elementBoard,
           state,
           goalCell,
         );
 
-        expect(status).toBe(expected);
+        expect(deadlocked).toBe(expected);
       },
     );
   });
@@ -211,7 +128,7 @@ describe("classifyIceFloorMazeDeadlock", () => {
   describe("研究用 Python の固定盤面の場合", () => {
     // scripts/research/ice_floor_supply_experiment.py の random_board_candidates で作った盤面と開始位置に、
     // 最も遠い停止点をゴールにした問題。期待値は ice_floor_difficulty_experiment.py の
-    // trap_structure の dead（詰み）と trapped（閉じ込め）。
+    // trap_structure の dead（詰み）。
     const researchCases = [
       {
         name: "8×8",
@@ -228,7 +145,6 @@ describe("classifyIceFloorMazeDeadlock", () => {
         start: 12,
         goal: 29,
         expectedDead: [1, 3, 7, 8, 15, 24, 31, 40, 41, 43, 56, 57],
-        expectedTrapped: [1, 3, 43, 56, 57],
       },
       {
         name: "9×12",
@@ -249,40 +165,25 @@ describe("classifyIceFloorMazeDeadlock", () => {
         start: 31,
         goal: 63,
         expectedDead: [0, 2, 7, 20, 25, 27, 29, 36, 38, 44, 95, 98, 104, 107],
-        expectedTrapped: [0, 36, 44, 95, 98, 104, 107],
       },
     ];
 
     test.each(researchCases)(
-      "$name の到達できる各停止点の詰みと閉じ込めが Python の trap_structure と一致すること",
-      ({
-        board: researchBoard,
-        start,
-        goal: researchGoal,
-        expectedDead,
-        expectedTrapped,
-      }) => {
+      "$name の到達できる各停止点の詰みが Python の trap_structure と一致すること",
+      ({ board: researchBoard, start, goal: researchGoal, expectedDead }) => {
         const { stops } = exploreIceFloorMazeStops(researchBoard, start);
 
-        const statuses = stops
-          .map((stop) => ({
-            stop,
-            status: classifyIceFloorMazeDeadlock(
+        const dead = stops
+          .filter((stop) =>
+            isIceFloorMazeDeadlocked(
               researchBoard,
               createIceFloorMazeInitialState(researchBoard, stop),
               researchGoal,
             ),
-          }))
-          .sort((left, right) => left.stop - right.stop);
-        const dead = statuses
-          .filter(({ status }) => status !== "goal-reachable")
-          .map(({ stop }) => stop);
-        const trapped = statuses
-          .filter(({ status }) => status === "trapped")
-          .map(({ stop }) => stop);
+          )
+          .sort((left, right) => left - right);
 
         expect(dead).toEqual(expectedDead);
-        expect(trapped).toEqual(expectedTrapped);
       },
     );
   });

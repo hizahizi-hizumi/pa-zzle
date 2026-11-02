@@ -260,7 +260,7 @@ describe("IceFloorMazePlay", () => {
       });
     });
 
-    test("閉じ込めの知らせを出さないこと", () => {
+    test("もうゴールに止まれないことを知らせないこと", () => {
       const notice = screen.queryByText("もうゴールに止まれない");
 
       expect(notice).toBeNull();
@@ -309,7 +309,7 @@ describe("IceFloorMazePlay", () => {
     });
   });
 
-  describe("閉じ込めに入った場合", () => {
+  describe("もうゴールに止まれないことを知らせる場合", () => {
     beforeEach(() => {
       renderPlay({ isTrapped: true });
     });
@@ -348,7 +348,7 @@ describe("IceFloorMazePlay", () => {
       });
     });
 
-    describe("閉じ込めの外から閉じ込めへ滑り込む場合", () => {
+    describe("知らせ始める滑りの場合", () => {
       const lastSlide: IceFloorMazeLastSlide = {
         id: 1,
         direction: "right",
@@ -382,7 +382,7 @@ describe("IceFloorMazePlay", () => {
       });
     });
 
-    describe("閉じ込めの中で滑る場合", () => {
+    describe("知らせた後に滑る場合", () => {
       const lastSlide: IceFloorMazeLastSlide = {
         id: 2,
         direction: "left",
@@ -406,7 +406,7 @@ describe("IceFloorMazePlay", () => {
         notice = screen.getByRole("status");
       });
 
-      test("閉じ込めの知らせを出し続けること", () => {
+      test("知らせを出し続けること", () => {
         rerenderPlay({ isTrapped: true, lastSlide });
 
         const noticeWhileSliding = screen.getByRole("status");

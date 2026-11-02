@@ -84,7 +84,7 @@ export function IceFloorMazePlay({
   const [slideAnimating, setSlideAnimating] = useState(false);
   const playing = progress === "playing";
   useIceFloorMazeSoundEffects(lastSlide, blockedInput, goal, progress);
-  // 閉じ込めへ入る滑りでは、駒が滑り着いてから知らせる。閉じ込めの中での滑りでは知らせを出したままにする。
+  // 知らせ始める滑りでは、駒が滑り着いてから知らせる。知らせた後の滑りでは知らせを出したままにする。
   const showTrappedNotice =
     isTrapped && !(slideAnimating && lastSlide?.entersTrap === true);
 

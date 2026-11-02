@@ -13,7 +13,8 @@ import * as problemSeed from "@/games/problem-seed";
 // 15 16 S  G  19
 // #  21 22 23 #
 // 開始位置 17 から下・右・上の3手でゴール 18 に止まる。上は岩ですぐ止まる。
-// 右はゴールを通り過ぎて 19 で止まり、19 から行ける 15・5・7 はどれも 19 へ戻れてゴールが無い（閉じ込め）。
+// 右はゴールを通り過ぎて 19 で止まり、19 から行ける 15・5・7 のどこからもゴールで止まれない（詰み）。
+// 詰みの中では 19 →左 15 →上 5 →右 7 →左 5 →下 15 →右 19 と滑れ、7 から下と 19 から上は1マスも動けない。
 vi.mock("@/games/ice-floor-maze/problem-selection", async () => {
   const { parseIceFloorMazeBoard } = await import(
     "@/games/ice-floor-maze/puzzle/board"
@@ -45,6 +46,15 @@ vi.mock("@/games/ice-floor-maze/problem-selection", async () => {
 });
 
 const solution: readonly IceFloorMazeDirection[] = ["down", "right", "up"];
+/** 開始位置から詰みに入る滑り。 */
+const intoDeadlock: readonly IceFloorMazeDirection[] = ["right"];
+/** 詰みに入った後、詰みの中で続ける滑り（19 → 15 → 5 → 7 → 5）。 */
+const withinDeadlock: readonly IceFloorMazeDirection[] = [
+  "left",
+  "up",
+  "right",
+  "left",
+];
 
 afterEach(() => {
   cleanup();
@@ -173,32 +183,106 @@ describe("useIceFloorMazePlay", () => {
     expect(result.current.status).toBe("cleared");
   });
 
-  test("閉じ込められていないプレイ中は閉じ込めを知らせないこと", () => {
+  test("ゴールに止まれるプレイ中は、もうゴールに止まれないことを知らせないこと", () => {
     act(() => result.current.slide("down"));
 
     expect(result.current.isTrapped).toBe(false);
   });
 
-  describe("閉じ込めの外から閉じ込めへ滑り込んだ場合", () => {
+  describe("詰みに入った場合", () => {
     beforeEach(() => {
-      slideInOrder(result, ["right"]);
+      slideInOrder(result, intoDeadlock);
     });
 
-    test("閉じ込めを知らせ、閉じ込めへ入った滑りとして渡すこと", () => {
-      const { isTrapped, lastSlide } = result.current;
-
-      expect(isTrapped).toBe(true);
-      expect(lastSlide).toMatchObject({ to: 19, entersTrap: true });
+    test("詰みに入った滑りでは知らせないこと", () => {
+      expect(result.current.isTrapped).toBe(false);
+      expect(result.current.lastSlide).toMatchObject({
+        to: 19,
+        entersTrap: false,
+      });
     });
 
-    test("閉じ込めの中で滑っても閉じ込めを知らせ続け、閉じ込めへ入った滑りとはしないこと", () => {
-      act(() => result.current.slide("left"));
+    test("詰みのまま3回滑っても知らせないこと", () => {
+      slideInOrder(result, withinDeadlock.slice(0, 3));
+
+      expect(result.current.position).toBe(7);
+      expect(result.current.isTrapped).toBe(false);
+    });
+
+    test("詰みのまま4回滑ると知らせ、知らせ始めた滑りとして渡すこと", () => {
+      slideInOrder(result, withinDeadlock);
 
       expect(result.current.isTrapped).toBe(true);
       expect(result.current.lastSlide).toMatchObject({
-        from: 19,
-        to: 15,
-        entersTrap: false,
+        from: 7,
+        to: 5,
+        entersTrap: true,
+      });
+    });
+
+    test("成立しない入力は滑りとして数えないこと", () => {
+      slideInOrder(result, withinDeadlock.slice(0, 3));
+      act(() => result.current.slide("down"));
+      const noticedAfterBlockedInput = result.current.isTrapped;
+      slideInOrder(result, withinDeadlock.slice(3));
+
+      expect(noticedAfterBlockedInput).toBe(false);
+      expect(result.current.isTrapped).toBe(true);
+    });
+
+    test("途中で待ったを使うと、戻った詰みの状態から数え直すこと", () => {
+      slideInOrder(result, withinDeadlock.slice(0, 3));
+      act(() => result.current.undo());
+      slideInOrder(result, ["right", "left", "down"]);
+      const noticedAfterThreeSlides = result.current.isTrapped;
+      slideInOrder(result, ["right"]);
+
+      expect(noticedAfterThreeSlides).toBe(false);
+      expect(result.current.isTrapped).toBe(true);
+    });
+
+    test("リセットすると数え直すこと", () => {
+      slideInOrder(result, withinDeadlock.slice(0, 3));
+      act(() => result.current.replay());
+      slideInOrder(result, [...intoDeadlock, ...withinDeadlock.slice(0, 3)]);
+
+      expect(result.current.isTrapped).toBe(false);
+    });
+
+    describe("知らせた後", () => {
+      beforeEach(() => {
+        slideInOrder(result, withinDeadlock);
+      });
+
+      test("滑っても知らせ続け、知らせ始めた滑りとはしないこと", () => {
+        act(() => result.current.slide("down"));
+
+        expect(result.current.isTrapped).toBe(true);
+        expect(result.current.lastSlide).toMatchObject({
+          from: 5,
+          to: 15,
+          entersTrap: false,
+        });
+      });
+
+      test("待ったで戻った先がまだ詰みなら知らせ続け、ゴールに止まれる状態まで戻ると知らせをやめること", () => {
+        const noticedWhileDeadlocked: boolean[] = [];
+        for (const _ of withinDeadlock) {
+          act(() => result.current.undo());
+          noticedWhileDeadlocked.push(result.current.isTrapped);
+        }
+        act(() => result.current.undo());
+
+        expect(noticedWhileDeadlocked).toEqual([true, true, true, true]);
+        expect(result.current.position).toBe(17);
+        expect(result.current.isTrapped).toBe(false);
+      });
+
+      test("ゴールに止まれる状態まで戻った後は、また詰みに入っても数え直すこと", () => {
+        act(() => result.current.restart());
+        slideInOrder(result, [...intoDeadlock, ...withinDeadlock.slice(0, 3)]);
+
+        expect(result.current.isTrapped).toBe(false);
       });
     });
   });
@@ -580,117 +664,6 @@ describe("useIceFloorMazePlay", () => {
       act(() => result.current.undo());
 
       expect(result.current.blocks).toEqual([2]);
-    });
-  });
-
-  describe("閉じ込めから崩す滑りで進んだ場合", () => {
-    // b  1  S  3
-    // #  5  6  7
-    // 8  9  10 11
-    // b  13 14 15
-    // 16 17 G  19
-    // 開始位置 2 から右へ滑ると、崩さない滑りでは 3・19・16 を回るだけになる（閉じ込め）。
-    // そこから左へ滑るともろい岩 0 を崩して 1 で止まり、詰みのまま崩さない滑りで戻れない先へ進めるようになる。
-    const circlingProblem: IceFloorMazePooledProblem = {
-      problem: {
-        board: parseIceFloorMazeBoard(["b...", "#...", "....", "b...", "...."]),
-        start: 2,
-        goal: 18,
-      },
-      identity: {
-        generatorVersion: "3",
-        seed: "ice-floor-maze-circling",
-        conditions: { width: 4, height: 5 },
-      },
-      optimalMoveCount: 1,
-    };
-
-    beforeEach(() => {
-      ({ result } = renderHook(() =>
-        useIceFloorMazePlay("3", circlingProblem),
-      ));
-      slideInOrder(result, ["right"]);
-    });
-
-    test("閉じ込めへ入った滑りとして知らせること", () => {
-      const { isTrapped, lastSlide } = result.current;
-
-      expect(isTrapped).toBe(true);
-      expect(lastSlide).toMatchObject({ to: 3, entersTrap: true });
-    });
-
-    test("詰みのまま閉じ込めでなくなっても知らせ続けること", () => {
-      slideInOrder(result, ["left"]);
-
-      const { isTrapped, lastSlide } = result.current;
-
-      expect(isTrapped).toBe(true);
-      expect(lastSlide).toMatchObject({
-        to: 1,
-        crumbledRock: 0,
-        entersTrap: false,
-      });
-    });
-
-    test("待ったで閉じ込めの前の、ゴールに止まれる状態まで戻すと知らせをやめること", () => {
-      slideInOrder(result, ["left"]);
-
-      act(() => result.current.undo());
-      const trappedAfterFirstUndo = result.current.isTrapped;
-      act(() => result.current.undo());
-
-      expect(trappedAfterFirstUndo).toBe(true);
-      expect(result.current.isTrapped).toBe(false);
-    });
-  });
-
-  describe("詰みを経て閉じ込めへ入ってから待ったで戻した場合", () => {
-    // 0  #  #  3
-    // 4  5  6  G
-    // 8  S  10 11
-    // 12 13 14 15
-    // 開始位置 9 から右へ滑ると 11 で詰みになるが、崩さない滑りで 11 へ戻れない 3 へ進めるので、まだ閉じ込めではない。
-    // 11 から上へ滑ると 3 で閉じ込めになる（3・15・12・0 を回るだけ）。開始位置 9 からは上・右でゴール 7 に止まれる。
-    const detourProblem: IceFloorMazePooledProblem = {
-      problem: {
-        board: parseIceFloorMazeBoard([".##.", "....", "....", "...."]),
-        start: 9,
-        goal: 7,
-      },
-      identity: {
-        generatorVersion: "3",
-        seed: "ice-floor-maze-detour",
-        conditions: { width: 4, height: 4 },
-      },
-      optimalMoveCount: 2,
-    };
-
-    beforeEach(() => {
-      ({ result } = renderHook(() => useIceFloorMazePlay("1", detourProblem)));
-      slideInOrder(result, ["right"]);
-    });
-
-    test("詰みでも閉じ込めの前は知らせないこと", () => {
-      expect(result.current.isTrapped).toBe(false);
-    });
-
-    test("戻った先がまだ詰みなら知らせ続け、ゴールに止まれる状態まで戻ると知らせをやめること", () => {
-      slideInOrder(result, ["up"]);
-
-      act(() => result.current.undo());
-      const noticedAfterFirstUndo = result.current.isTrapped;
-      act(() => result.current.undo());
-
-      expect(noticedAfterFirstUndo).toBe(true);
-      expect(result.current.isTrapped).toBe(false);
-    });
-
-    test("知らせた後に盤面を戻すと知らせをやめること", () => {
-      slideInOrder(result, ["up"]);
-
-      act(() => result.current.restart());
-
-      expect(result.current.isTrapped).toBe(false);
     });
   });
 

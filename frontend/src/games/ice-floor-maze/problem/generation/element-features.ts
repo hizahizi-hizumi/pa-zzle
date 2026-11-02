@@ -611,7 +611,7 @@ function describeMove(
 
 /**
  * 詰みの状態で、要素を変えない滑りだけで行けるどの状態からも、要素を変えない滑りでその状態へ戻れるか（閉じ込め。
- * `puzzle/deadlock.ts` の `trapped` を状態のグラフで求めたもの）。
+ * 要素を変える手を除けば同じところを回るだけで、詰みに入ったと気づきやすい）。
  */
 function isConfined(space: StateSpace, state: number): boolean {
   const { layoutIds } = space;
