@@ -6,11 +6,11 @@ import {
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import {
   findBoardTarget,
-  findDragDirection,
+  findDragEdge,
+  findIslandToward,
   getBridgeLineOffsets,
   getEdgeSegment,
   getIslandCenter,
-  hasLeftIsland,
 } from "@/games/bridges/ui/board/board-geometry";
 
 // 島: 0 (0,0)、1 (0,2)、2 (2,0)、3 (2,4)、4 (4,2)。
@@ -157,29 +157,50 @@ describe("findBoardTarget", () => {
   });
 });
 
-describe("hasLeftIsland", () => {
+describe("findDragEdge", () => {
   test.each([
-    [{ x: 0.8, y: 0.5 }, false],
-    [{ x: 0.95, y: 0.5 }, true],
-  ] as const)("島0 から %j まで動いたら %s を返すこと", (point, expected) => {
-    const left = hasLeftIsland(board, 0, point);
+    ["島の丸の中", 0, { x: 0.8, y: 0.5 }, null],
+    ["右へなぞった先", 0, { x: 1.4, y: 0.8 }, 0],
+    ["下へなぞった先", 0, { x: 0.8, y: 1.4 }, 1],
+    ["右下へ縦横同じだけなぞった先", 0, { x: 1.3, y: 1.3 }, null],
+    ["隣の島の丸の中", 0, { x: 2.3, y: 0.6 }, 0],
+    ["辺の無い島の丸の中", 0, { x: 2.5, y: 4.5 }, null],
+    ["辺の無い向きへなぞった先", 0, { x: -0.5, y: 0.5 }, null],
+    [
+      "左上へ斜めになぞった先（近い向きのうち辺は左だけ）",
+      3,
+      { x: 3.8, y: 1.8 },
+      3,
+    ],
+    [
+      "左下へ斜めになぞった先（近い向きの両方に辺がある）",
+      1,
+      { x: 1.8, y: 1.2 },
+      null,
+    ],
+  ] as const)(
+    "%s（島 %s から %j）で離すと辺 %s を回すこと",
+    (_, island, point, expected) => {
+      const edge = findDragEdge(board, island, point);
 
-    expect(left).toBe(expected);
-  });
+      expect(edge).toBe(expected);
+    },
+  );
 });
 
-describe("findDragDirection", () => {
+describe("findIslandToward", () => {
   test.each([
-    [{ x: 1.4, y: 0.8 }, "right"],
-    [{ x: 0.8, y: 1.4 }, "down"],
-    [{ x: -0.4, y: 0.6 }, "left"],
-    [{ x: 0.6, y: -0.4 }, "up"],
+    [0, "right", 1],
+    [0, "down", 2],
+    [0, "up", null],
+    [3, "up", 1],
+    [4, "left", 2],
   ] as const)(
-    "島0 から %j へなぞった向きが %s であること",
-    (point, expected) => {
-      const direction = findDragDirection(board, 0, point);
+    "島 %s から %s へ移ると島 %s に着くこと",
+    (island, direction, expected) => {
+      const next = findIslandToward(board, island, direction);
 
-      expect(direction).toBe(expected);
+      expect(next).toBe(expected);
     },
   );
 });

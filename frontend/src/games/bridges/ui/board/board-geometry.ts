@@ -2,6 +2,7 @@ import {
   type BridgesBoard,
   type BridgesDirection,
   type BridgesIsland,
+  findBridgesEdgeToward,
   getBridgesNetwork,
 } from "@/games/bridges/puzzle/board";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
@@ -243,27 +244,106 @@ export function findBoardTarget(
   return edge === null ? null : { kind: "edge", edge };
 }
 
-/** 島からなぞった指が、島の丸の外へ出たか。 */
-export function hasLeftIsland(
-  board: BridgesBoard,
-  island: number,
-  point: BoardPoint,
-): boolean {
-  const center = getIslandCenter(board.islands[island]!);
-  return Math.hypot(point.x - center.x, point.y - center.y) > ISLAND_RADIUS;
-}
+/**
+ * なぞりで縦横のどちらへ向かったかを決めるのに要る、離れた量の比。縦と横の離れた量の大きい方が、小さい方のこの倍以上なら、
+ * 大きい方の向きにする。斜めに近いなぞり（試遊で、縦と横に同じだけ動かして狙いと違う島へ架かった）では向きを決めない。
+ */
+const DRAG_DOMINANCE_RATIO = 1.5;
 
-/** 島の中心から指への向き。縦横のうち、離れた量の大きい方の向きにする。 */
-export function findDragDirection(
+const horizontalDirections = { positive: "right", negative: "left" } as const;
+const verticalDirections = { positive: "down", negative: "up" } as const;
+
+/**
+ * 島 `island` からなぞって `point` で離したときに橋を回す辺。決まらなければ `null`。
+ * - 隣の島（`island` から辺の伸びる島）の丸の中で離したら、その辺。
+ * - 島の丸の中で離したら、なぞっていないので `null`。
+ * - それ以外は、島の中心から見て縦横の離れた量の大きい方の向きの辺。斜めに近いとき（`DRAG_DOMINANCE_RATIO`）は、
+ *   近い2つの向きのうち辺のある向きが1つだけならその辺、どちらにもあれば狙いが分からないので `null`。
+ */
+export function findDragEdge(
   board: BridgesBoard,
   island: number,
   point: BoardPoint,
-): BridgesDirection {
+): number | null {
+  const { edges, islandEdges } = getBridgesNetwork(board);
+  const releasedOn = findIslandAt(board, point);
+  if (releasedOn === island) {
+    return null;
+  }
+  if (releasedOn !== null) {
+    return (
+      islandEdges[island]!.find((edge) => {
+        const { from, to } = edges[edge]!;
+        return from === releasedOn || to === releasedOn;
+      }) ?? null
+    );
+  }
   const center = getIslandCenter(board.islands[island]!);
   const dx = point.x - center.x;
   const dy = point.y - center.y;
-  if (Math.abs(dx) >= Math.abs(dy)) {
-    return dx >= 0 ? "right" : "left";
+  if (Math.hypot(dx, dy) <= ISLAND_RADIUS) {
+    return null;
   }
-  return dy >= 0 ? "down" : "up";
+  const horizontal = findBridgesEdgeToward(
+    board,
+    island,
+    horizontalDirections[dx >= 0 ? "positive" : "negative"],
+  );
+  const vertical = findBridgesEdgeToward(
+    board,
+    island,
+    verticalDirections[dy >= 0 ? "positive" : "negative"],
+  );
+  const [major, minor] = [Math.abs(dx), Math.abs(dy)].sort((a, b) => b - a) as [
+    number,
+    number,
+  ];
+  if (major >= minor * DRAG_DOMINANCE_RATIO) {
+    return Math.abs(dx) >= Math.abs(dy) ? horizontal : vertical;
+  }
+  if (horizontal !== null && vertical !== null) {
+    return null;
+  }
+  return horizontal ?? vertical;
+}
+
+const directionVectors = {
+  up: { x: 0, y: -1 },
+  right: { x: 1, y: 0 },
+  down: { x: 0, y: 1 },
+  left: { x: -1, y: 0 },
+} as const satisfies Record<BridgesDirection, BoardPoint>;
+
+/**
+ * キーボードで `direction` の向きへ移るときの、次の島。その向きに辺のある島があればその島、無ければ、その向きにある島のうち
+ * 向きに沿った距離と横へのずれの2倍の和が最も小さい島。その向きに島が無ければ `null`。
+ */
+export function findIslandToward(
+  board: BridgesBoard,
+  island: number,
+  direction: BridgesDirection,
+): number | null {
+  const edge = findBridgesEdgeToward(board, island, direction);
+  if (edge !== null) {
+    const { from, to } = getBridgesNetwork(board).edges[edge]!;
+    return from === island ? to : from;
+  }
+  const origin = board.islands[island]!;
+  const vector = directionVectors[direction];
+  let best: number | null = null;
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (const [index, other] of board.islands.entries()) {
+    const dx = other.column - origin.column;
+    const dy = other.row - origin.row;
+    const along = dx * vector.x + dy * vector.y;
+    if (along <= 0) {
+      continue;
+    }
+    const score = along + 2 * Math.abs(dx * vector.y + dy * vector.x);
+    if (score < bestScore) {
+      best = index;
+      bestScore = score;
+    }
+  }
+  return best;
 }

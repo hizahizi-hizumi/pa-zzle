@@ -3,6 +3,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { useBridgesPlay } from "@/games/bridges/play/use-bridges-play";
 import { countBridgesSolutions } from "@/games/bridges/problem/generation/exact-solver";
 import { selectBridgesProblemForDifficulty } from "@/games/bridges/problem-selection";
+import { getBridgesNetwork } from "@/games/bridges/puzzle/board";
 import { createProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
 
@@ -42,6 +43,42 @@ afterEach(() => {
 });
 
 describe("useBridgesPlay", () => {
+  describe("交わる橋に阻まれた場合", () => {
+    let blocked: HookResult;
+    const crossing = selectBridgesProblemForDifficulty(
+      "5",
+      "use-bridges-play-crossing",
+    );
+    const network = getBridgesNetwork(crossing.problem);
+    const crossingEdge = network.crossingEdges.findIndex(
+      (crossings) => crossings.length > 0,
+    );
+    const crossedEdge = network.crossingEdges[crossingEdge]![0]!;
+
+    beforeEach(() => {
+      blocked = renderHook(() => useBridgesPlay("5", crossing)).result;
+      act(() => {
+        blocked.current.cycleEdge(crossingEdge);
+      });
+      act(() => {
+        blocked.current.cycleEdge(crossedEdge);
+      });
+    });
+
+    test("架けずに、阻んだ橋の辺を橋の変化として返すこと", () => {
+      const { edgeNotice, bridges } = blocked.current;
+
+      expect({ edgeNotice, placed: bridges[crossedEdge] }).toMatchObject({
+        edgeNotice: {
+          change: "blocked",
+          edge: crossedEdge,
+          crossingEdges: [crossingEdge],
+        },
+        placed: 0,
+      });
+    });
+  });
+
   let result: HookResult;
 
   beforeEach(() => {
@@ -65,6 +102,16 @@ describe("useBridgesPlay", () => {
     beforeEach(() => {
       act(() => {
         result.current.cycleEdge(firstEdge);
+      });
+    });
+
+    test("架けた辺と本数を、橋の変化として返すこと", () => {
+      const { edgeNotice } = result.current;
+
+      expect(edgeNotice).toMatchObject({
+        change: "changed",
+        edge: firstEdge,
+        count: 1,
       });
     });
 

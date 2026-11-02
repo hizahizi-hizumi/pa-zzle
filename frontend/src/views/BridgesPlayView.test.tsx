@@ -10,7 +10,11 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import { countBridgesSolutions } from "@/games/bridges/problem/generation/exact-solver";
 import { selectBridgesProblemForDifficulty } from "@/games/bridges/problem-selection";
-import { getBridgesNetwork } from "@/games/bridges/puzzle/board";
+import {
+  bridgesDirections,
+  findBridgesEdgeToward,
+  getBridgesNetwork,
+} from "@/games/bridges/puzzle/board";
 import { createProblemId } from "@/games/problem-id";
 import { BridgesPlayView } from "@/views/BridgesPlayView";
 
@@ -234,6 +238,43 @@ describe("BridgesPlayView", () => {
       const bridgeCount = countPlacedBridges();
 
       expect(bridgeCount).toBe(0);
+    });
+
+    describe("キーボードで島を選んだ場合", () => {
+      const direction = bridgesDirections.find(
+        (candidate) => findBridgesEdgeToward(problem, 0, candidate) !== null,
+      )!;
+      const arrowKey = {
+        up: "ArrowUp",
+        right: "ArrowRight",
+        down: "ArrowDown",
+        left: "ArrowLeft",
+      }[direction];
+      const first = problem.islands[0]!;
+      const firstLabel = `${first.row + 1}行${first.column + 1}列の島`;
+
+      beforeEach(() => {
+        within(getBoard())
+          .getByRole("button", { name: new RegExp(`^${firstLabel}`) })
+          .focus();
+      });
+
+      test("Shift と矢印キーで、その向きの辺の橋を架けること", () => {
+        fireEvent.keyDown(document.activeElement!, {
+          key: arrowKey,
+          shiftKey: true,
+        });
+        const island = readIsland([first.row, first.column]);
+
+        expect(island).toContain("橋1本");
+      });
+
+      test("矢印キーで、その向きの隣の島へ移ること", () => {
+        fireEvent.keyDown(document.activeElement!, { key: arrowKey });
+        const focused = document.activeElement?.textContent ?? "";
+
+        expect(focused.startsWith(firstLabel)).toBe(false);
+      });
     });
 
     describe("最後の1本を除いて解いた場合", () => {
