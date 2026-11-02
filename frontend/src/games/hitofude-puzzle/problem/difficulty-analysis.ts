@@ -163,8 +163,8 @@ function compareSerialized(left: unknown, right: unknown): number {
 }
 
 /**
- * 読み方の上手さの順（上手な方が先）。2段仮置きの回数、仮置きの回数、先読みの手数の合計、最も長い先読みの順に少ない方を
- * 上手とする。それでも並ぶ読み方は特徴全体の表記の順で決め、どの向きの盤面から数えても同じ読み方を選ぶ。
+ * 読み方の上手さの順（上手な方が先）。2段仮置きの回数、先読みの重さ、仮置きの回数、先読みの手数の合計、最も長い先読みの
+ * 順に少ない方を上手とする。それでも並ぶ読み方は特徴全体の表記の順で決め、どの向きの盤面から数えても同じ読み方を選ぶ。
  */
 function compareReasoning(
   left: HitofudePuzzleReasoningFeatures,
@@ -172,6 +172,7 @@ function compareReasoning(
 ): number {
   return (
     left.deepAssumptionCount - right.deepAssumptionCount ||
+    left.lookaheadLoad - right.lookaheadLoad ||
     left.assumptionCount - right.assumptionCount ||
     sumRefutationLengths(left) - sumRefutationLengths(right) ||
     left.longestRefutationLength - right.longestRefutationLength ||
@@ -283,10 +284,7 @@ export function getHitofudePuzzleSolveWorkload({
   return {
     openCellCount: scale.openCellCount,
     assumptionCount: reasoning.assumptionCount,
-    refutationStepCount: reasoning.refutationLengths.reduce(
-      (sum, length) => sum + length,
-      0,
-    ),
+    refutationStepCount: sumRefutationLengths(reasoning),
     longestRefutationLength: reasoning.longestRefutationLength,
     fatalBranchCount: drawing.fatalBranchCount,
   };
