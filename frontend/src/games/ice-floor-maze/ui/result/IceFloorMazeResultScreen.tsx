@@ -27,9 +27,7 @@ export function IceFloorMazeResultScreen({
   recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
+  onOpenGameHome,
   onOpenDiagnostics,
 }: IceFloorMazeResultScreenProps) {
   return (
@@ -53,9 +51,7 @@ export function IceFloorMazeResultScreen({
       scoreCriteria={getIceFloorMazeScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
-      onOpenRecords={onOpenRecords}
-      onChangeDifficulty={onChangeDifficulty}
-      onBackToHome={onBackToHome}
+      onOpenGameHome={onOpenGameHome}
       onOpenDiagnostics={onOpenDiagnostics}
     />
   );

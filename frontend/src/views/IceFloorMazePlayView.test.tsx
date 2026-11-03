@@ -57,7 +57,7 @@ function renderAt(entry: InitialEntry): PlayRouter {
         path: "/puzzles/ice-floor-maze/play/:difficulty",
         element: <IceFloorMazePlayView />,
       },
-      { path: "/puzzles/ice-floor-maze", element: <p>難易度選択画面</p> },
+      { path: "/puzzles/ice-floor-maze", element: <p>ゲームのホーム画面</p> },
       {
         path: "/puzzles/:game/result/:recordId",
         element: <PlayResultView />,
@@ -160,17 +160,17 @@ describe("IceFloorMazePlayView", () => {
       renderAt("/puzzles/ice-floor-maze/play/1");
     });
 
-    test("戻るボタンで難易度選択画面へ移ること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+    test("戻るボタンでゲームのホームへ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
-      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+      expect(screen.getByText("ゲームのホーム画面")).toBeTruthy();
     });
 
-    test("メニューの難易度変更で難易度選択画面へ移ること", () => {
+    test("メニューの問題選択でゲームのホームへ移ること", () => {
       openMenu();
-      fireEvent.click(screen.getByRole("menuitem", { name: "難易度変更" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "問題選択" }));
 
-      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+      expect(screen.getByText("ゲームのホーム画面")).toBeTruthy();
     });
 
     test("内部診断を使えないビルドではメニューに検証情報を出さないこと", () => {
@@ -249,15 +249,15 @@ describe("IceFloorMazePlayView", () => {
       });
     });
 
-    test("記録を確認で記録画面へ移ること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
+    test("問題選択でゲームのホームへ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "問題選択" }));
 
-      expect(screen.getByText("記録画面")).toBeTruthy();
+      expect(screen.getByText("ゲームのホーム画面")).toBeTruthy();
     });
 
-    describe("同じ問題を選んだ場合", () => {
+    describe("もう一度を選んだ場合", () => {
       beforeEach(() => {
-        fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+        fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
       });
 
       test("同じ問題IDのプレイ画面で新しいプレイを始めること", () => {
@@ -278,7 +278,7 @@ describe("IceFloorMazePlayView", () => {
     beforeEach(async () => {
       renderAt("/puzzles/ice-floor-maze/play/2");
       slide(["up", "left", "down", "right"]);
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
       await act(async () => {
         await Promise.resolve();
       });
@@ -303,9 +303,9 @@ describe("IceFloorMazePlayView", () => {
       renderAt(`/puzzles/ice-floor-maze/play/${value}`);
     });
 
-    test("選べない難易度であることを示し難易度選択へ戻る導線を出すこと", () => {
+    test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
       const message = screen.getByText("この難易度は選べません");
-      const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
+      const backLink = screen.getByRole("link", { name: "問題選択へ戻る" });
 
       expect(message).toBeTruthy();
       expect(backLink.getAttribute("href")).toBe("/puzzles/ice-floor-maze");
@@ -345,6 +345,30 @@ describe("IceFloorMazePlayView", () => {
 
         expect(problemId).toBe(poolProblemId);
         expect(router.state.historyAction).toBe("POP");
+      });
+
+      test("戻るボタンで、遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+        fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
+        const { historyAction, location } = router.state;
+
+        expect(location.pathname).toBe("/puzzles/ice-floor-maze");
+        expect(location.search).toBe(`?problem=${poolProblemId}`);
+        expect(historyAction).toBe("REPLACE");
+      });
+
+      describe("メニューからゲームのホームを選んだ場合", () => {
+        beforeEach(() => {
+          openMenu();
+        });
+
+        test("遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+          fireEvent.click(screen.getByRole("menuitem", { name: "問題選択" }));
+          const { historyAction, location } = router.state;
+
+          expect(location.pathname).toBe("/puzzles/ice-floor-maze");
+          expect(location.search).toBe(`?problem=${poolProblemId}`);
+          expect(historyAction).toBe("REPLACE");
+        });
       });
 
       describe("メニューから別の問題を選んだ場合", () => {

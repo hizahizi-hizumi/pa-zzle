@@ -2,10 +2,12 @@ import {
   act,
   cleanup,
   fireEvent,
-  render,
+  render as renderWithoutRouter,
   screen,
   within,
 } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router";
 
 import type {
   IceFloorMazeLastSlide,
@@ -16,6 +18,11 @@ import { createIceFloorMazeInitialState } from "@/games/ice-floor-maze/puzzle/st
 import { IceFloorMazePlay } from "@/games/ice-floor-maze/ui/IceFloorMazePlay";
 import type { GameProgress } from "@/games/play";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
+
+/** 結果画面はブランドの帯とパズル選択からホームへ戻るリンクを持つので、ルーターの中で描く。 */
+function render(ui: ReactElement) {
+  return renderWithoutRouter(ui, { wrapper: MemoryRouter });
+}
 
 // #  1  #  3  4
 // 5  6  7  #  #
@@ -56,9 +63,8 @@ describe("IceFloorMazePlay", () => {
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
-    onOpenRecords: vi.fn(),
     onClearAnimationComplete: vi.fn(),
-    onChangeDifficulty: vi.fn(),
+    onOpenGameHome: vi.fn(),
     onBackToHome: vi.fn(),
   };
 
@@ -270,8 +276,8 @@ describe("IceFloorMazePlay", () => {
       ["盤面を戻す", "onRestart"],
       ["リセット", "onReplay"],
       ["別の問題", "onStartNewProblem"],
-      ["難易度変更", "onChangeDifficulty"],
-      ["ホーム", "onBackToHome"],
+      ["問題選択", "onOpenGameHome"],
+      ["パズル選択", "onBackToHome"],
     ] as const;
 
     test.each(menuCases)(
@@ -500,11 +506,9 @@ describe("IceFloorMazePlay", () => {
     });
 
     const actionCases = [
-      ["プレイ！", "onStartNewProblem"],
-      ["同じ問題", "onReplay"],
-      ["記録を確認", "onOpenRecords"],
-      ["難易度変更", "onChangeDifficulty"],
-      ["ホーム", "onBackToHome"],
+      ["次の問題", "onStartNewProblem"],
+      ["もう一度", "onReplay"],
+      ["問題選択", "onOpenGameHome"],
     ] as const;
 
     test.each(actionCases)(
