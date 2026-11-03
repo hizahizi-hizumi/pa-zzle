@@ -68,7 +68,7 @@ gh actions-lock # 全ワークフローを走査して actions.lock を更新
 
 ## 文書
 
-どの文書に何を書き、どう保つかは `docs/README.md` を正とする。文書を書く・変える前に読む。
+どの文書に何を書き、どう保つかは `.claude/rules/documents.md` を正とする。文書を書く・変える前に読む。
 
 いつ読むか:
 
