@@ -2,10 +2,11 @@ import type { MockInstance } from "vitest";
 
 import type { SoundEffect, SoundLayer } from "@/lib/sound-effects";
 
-type SoundEffects = typeof import("@/lib/sound-effects");
-type SoundEffectsSetting = typeof import("@/lib/sound-effects-setting");
+import type { VolumeSetting } from "@/lib/stored-volume-setting";
 
-type FakeAudioBuffer = { url: string };
+type SoundEffects = typeof import("@/lib/sound-effects");
+
+type FakeAudioBuffer = { url: string; duration: number };
 
 function createFakeBufferSource() {
   return {
@@ -41,6 +42,7 @@ class FakeAudioContext {
   resume = vi.fn(async () => {
     this.state = "running";
   });
+  addEventListener = vi.fn();
 
   constructor() {
     FakeAudioContext.instances.push(this);
@@ -70,10 +72,10 @@ class FakeAudioContext {
   }
 }
 
-/** 音声ファイルの中身として、取得した URL をそのまま持つ音のデータを返す。 */
+/** 音声ファイルの中身として、取得した URL をそのまま持つ 0.2 秒の音のデータを返す。 */
 class FakeOfflineAudioContext {
   async decodeAudioData(data: ArrayBuffer): Promise<FakeAudioBuffer> {
-    return { url: new TextDecoder().decode(data) };
+    return { url: new TextDecoder().decode(data), duration: 0.2 };
   }
 }
 
@@ -100,7 +102,7 @@ function finishLoading(): Promise<void> {
 
 /** AudioContext と設定を一つだけ持つモジュールの状態を、テストごとに作り直して読み込む。 */
 async function importSoundEffects(): Promise<
-  SoundEffects & Pick<SoundEffectsSetting, "setSoundEffectsEnabled">
+  SoundEffects & { setSoundEffectsVolume: VolumeSetting["setVolume"] }
 > {
   vi.resetModules();
   const [soundEffects, setting] = await Promise.all([
@@ -109,7 +111,7 @@ async function importSoundEffects(): Promise<
   ]);
   return {
     ...soundEffects,
-    setSoundEffectsEnabled: setting.setSoundEffectsEnabled,
+    setSoundEffectsVolume: setting.soundEffectsVolumeSetting.setVolume,
   };
 }
 
@@ -175,6 +177,12 @@ describe("playSound", () => {
       expect(getStartedSources()).toEqual([
         { url: "/tap.flac", playbackRate: 1, when: 10.5 },
       ]);
+    });
+
+    test("遅らせた時間を含め、鳴り終わるまでの時間を返すこと", () => {
+      const remainingMs = soundEffects.playSound(sound, { delayMs: 500 });
+
+      expect(remainingMs).toBe(700);
     });
   });
 
@@ -273,7 +281,7 @@ describe("playSound", () => {
     });
   });
 
-  describe("鳴らさない設定の場合", () => {
+  describe("音量が 0 の設定の場合", () => {
     let soundEffects: Awaited<ReturnType<typeof importSoundEffects>>;
     let sound: SoundEffect;
 
@@ -284,17 +292,18 @@ describe("playSound", () => {
       sound = soundEffects.defineSoundEffect("/tap.flac");
       soundEffects.prepareSoundEffects([sound]);
       await finishLoading();
-      soundEffects.setSoundEffectsEnabled(false);
+      soundEffects.setSoundEffectsVolume(0);
     });
 
-    test("AudioContext を作らないこと", () => {
-      soundEffects.playSound(sound);
+    test("AudioContext を作らず、鳴らさなかったことを返すこと", () => {
+      const remainingMs = soundEffects.playSound(sound);
 
       expect(FakeAudioContext.instances).toEqual([]);
+      expect(remainingMs).toBeNull();
     });
   });
 
-  describe("鳴らしている間に鳴らさない設定へ切り替えた場合", () => {
+  describe("鳴らしている間に音量を 0 にした場合", () => {
     let soundEffects: Awaited<ReturnType<typeof importSoundEffects>>;
 
     beforeEach(async () => {
@@ -308,7 +317,7 @@ describe("playSound", () => {
     });
 
     test("鳴っている音を出口で消すこと", () => {
-      soundEffects.setSoundEffectsEnabled(false);
+      soundEffects.setSoundEffectsVolume(0);
 
       const master = FakeAudioContext.instances[0]?.gains[0];
       expect(master?.gain.setTargetAtTime).toHaveBeenCalledWith(
@@ -316,6 +325,31 @@ describe("playSound", () => {
         10,
         expect.any(Number),
       );
+    });
+  });
+
+  describe("鳴らしている間に初期の音量から 1 段階下げた場合", () => {
+    let soundEffects: Awaited<ReturnType<typeof importSoundEffects>>;
+    let master: ReturnType<typeof createFakeGain> | undefined;
+    let initialGain: number;
+
+    beforeEach(async () => {
+      stubWebAudio();
+      stubFetch();
+      soundEffects = await importSoundEffects();
+      const sound = soundEffects.defineSoundEffect("/tap.flac");
+      soundEffects.prepareSoundEffects([sound]);
+      await finishLoading();
+      soundEffects.playSound(sound);
+      master = FakeAudioContext.instances[0]?.gains[0];
+      initialGain = master?.gain.value ?? 0;
+    });
+
+    test("鳴っている音も含め、出口の大きさを音量の比の二乗にすること", () => {
+      soundEffects.setSoundEffectsVolume(4);
+
+      const target = master?.gain.setTargetAtTime.mock.lastCall?.[0];
+      expect(target).toBeCloseTo(initialGain * (4 / 5) ** 2);
     });
   });
 });
@@ -390,7 +424,7 @@ describe("playLayeredSound", () => {
 });
 
 describe("prepareSoundEffects", () => {
-  describe("鳴らす設定の場合", () => {
+  describe("音量が 0 より大きい設定の場合", () => {
     let soundEffects: SoundEffects;
     let fetch: ReturnType<typeof stubFetch>;
     let sound: SoundEffect;
@@ -471,7 +505,7 @@ describe("prepareSoundEffects", () => {
     });
   });
 
-  describe("鳴らさない設定の場合", () => {
+  describe("音量が 0 の設定の場合", () => {
     let soundEffects: Awaited<ReturnType<typeof importSoundEffects>>;
     let fetch: ReturnType<typeof stubFetch>;
     let sound: SoundEffect;
@@ -480,7 +514,7 @@ describe("prepareSoundEffects", () => {
       stubWebAudio();
       fetch = stubFetch();
       soundEffects = await importSoundEffects();
-      soundEffects.setSoundEffectsEnabled(false);
+      soundEffects.setSoundEffectsVolume(0);
       sound = soundEffects.defineSoundEffect("/tap.flac");
     });
 
@@ -490,10 +524,10 @@ describe("prepareSoundEffects", () => {
       expect(fetch).not.toHaveBeenCalled();
     });
 
-    describe("呼んだ後に鳴らす設定へ変えた場合", () => {
+    describe("呼んだ後に音量を上げた場合", () => {
       beforeEach(async () => {
         soundEffects.prepareSoundEffects([sound]);
-        soundEffects.setSoundEffectsEnabled(true);
+        soundEffects.setSoundEffectsVolume(6);
         await finishLoading();
       });
 
