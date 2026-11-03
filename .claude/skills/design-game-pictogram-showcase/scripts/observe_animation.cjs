@@ -234,6 +234,11 @@ window.__pz = (() => {
     return { left: Math.min(...xs), top: Math.min(...ys), right: Math.max(...xs), bottom: Math.max(...ys) };
   };
   const intersect = (a, b) => ({ left: Math.max(a.left, b.left), top: Math.max(a.top, b.top), right: Math.min(a.right, b.right), bottom: Math.min(a.bottom, b.bottom) });
+  // SVGMatrix.inverse throws on a degenerate transform such as scaleY(0); such an element paints nothing.
+  const inverseOf = (m) => {
+    const inverse = new DOMMatrix([m.a, m.b, m.c, m.d, m.e, m.f]).inverse();
+    return [inverse.a, inverse.b, inverse.c, inverse.d, inverse.e, inverse.f].every(Number.isFinite) ? inverse : null;
+  };
   const isEmpty = (rect) => rect.right <= rect.left || rect.bottom <= rect.top;
   const inRect = (rect, x, y) => !rect || (x >= rect.left - 1e-6 && x <= rect.right + 1e-6 && y >= rect.top - 1e-6 && y <= rect.bottom + 1e-6);
   // x / y / width / height of a nested <svg>: the computed px value, or the attribute resolved by the
@@ -267,7 +272,8 @@ window.__pz = (() => {
       const box = node.getBBox();
       user = user.multiply(new DOMMatrix([box.width, 0, 0, box.height, box.x, box.y]));
     }
-    const toUser = asDOMMatrix(holder).inverse();
+    const toUser = inverseOf(holder);
+    if (!toUser) return null;
     let rect = null;
     for (const child of clip.children) {
       if (!SHAPES.has(child.localName) && child.localName !== 'use') continue;
@@ -405,8 +411,8 @@ window.__pz = (() => {
     const paintedBox = (el) => drawnBox(el, svg, strokeReachPx(el, getComputedStyle(el), el.getScreenCTM()));
     const insideTest = (el) => {
       const matrix = el.getScreenCTM();
-      if (!matrix) return () => false;
-      const inverse = matrix.inverse();
+      const inverse = matrix && inverseOf(matrix);
+      if (!inverse) return () => false;
       if (typeof el.isPointInFill !== 'function') {
         const box = el.getBBox();
         return (x, y) => {
@@ -453,8 +459,9 @@ window.__pz = (() => {
   // A point (screen px) inside the fill of a shape (its bounding box for <text>).
   const insideFill = (el, x, y) => {
     const matrix = el.getScreenCTM();
-    if (!matrix) return false;
-    const point = new DOMPoint(x, y).matrixTransform(matrix.inverse());
+    const inverse = matrix && inverseOf(matrix);
+    if (!inverse) return false;
+    const point = new DOMPoint(x, y).matrixTransform(inverse);
     if (typeof el.isPointInFill !== 'function') {
       const box = el.getBBox();
       return point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height;
@@ -499,10 +506,10 @@ window.__pz = (() => {
         .map(([x, y]) => [x, y, Math.max(0, Math.min(half, x - clip.left, clip.right - x, y - clip.top, clip.bottom - y))]);
       const cut = intersect(whole, clip);
       if (!isEmpty(cut)) {
-        const inverse = matrix.inverse();
+        const inverse = inverseOf(matrix);
         const paints = (x, y) => {
           if (fill && insideFill(el, x, y)) return true;
-          return half > 0 && typeof el.isPointInStroke === 'function' && el.isPointInStroke(new DOMPoint(x, y).matrixTransform(inverse));
+          return half > 0 && inverse !== null && typeof el.isPointInStroke === 'function' && el.isPointInStroke(new DOMPoint(x, y).matrixTransform(inverse));
         };
         const sides = [];
         if (clip.left > whole.left) sides.push([[cut.left, cut.top], [cut.left, cut.bottom]]);
