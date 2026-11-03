@@ -1,0 +1,56 @@
+/**
+ * アイスフロア迷路固有の色。共通UIの意味色（`primary`・`ring`・`success` など）は流用しない。
+ * - 岩・もろい岩と外壁は同じ石の色系統で、どれも「ぶつかって止まる面」と読ませる。岩は下側に影の面を重ねた塊にする。
+ *   もろい岩は岩より一段明るい石にし、割れ目と欠けた角とあわせて、小さなマスやグレースケールでも岩と見分けられるようにする。
+ *   崩れたもろい岩の跡の石くずは、岩と同じ石の色の影の無い小さなかけらで、止め役ではない平らな跡と読ませる。
+ * - 外壁は盤面として描くマスの形に沿い、盤面の外は描かずに画面の地のままにする。盤面の内側に囲まれた盤面の外は、
+ *   外壁と同じ色で塗り、外壁が内側へ食い込んでいると読ませる。
+ * - 氷・薄い氷・水面は青の明るさの段階で、明るいほど滑れる。氷は明るい青の地に細い目地を引き、行と列を数えやすくする。
+ *   薄い氷は氷より一段濃く（下の水が透ける）白いひびを入れ、水面は濃い青のくぼみに小さな波を描く。
+ *   ダークでは水面を氷より暗い穴にし、波だけを明るく残す。グレースケールでも 氷＞薄い氷＞水面 の順に読める。
+ * - 床（入ると止まる床）は、氷・薄い氷の青とも石の色・ゴールのアンバーとも違う灰緑の平らな板に、ざらつきを表す濃い点を5つ置く。
+ *   影を付けず出っ張りに見せないので、岩（手前で止まる）と違って「入って止まる面」と読める。グレースケールでは氷・薄い氷より
+ *   暗く岩より明るい面に点が並び、ひびの入った薄い氷・平らな雪と形で見分けられる。跡は床の上を通して、床で止まった滑りを隠さない。
+ * - 雪は白の段階で、平らな雪は縁を薄い青灰で縁取った波打つ面に粒の点、雪山は同じ白の山に青灰の影の面を付けた出っ張りにする。
+ *   氷の明るい青の地でも縁と影で形が読め、ダークでは白を一段落として氷の暗い地から浮かせる。グレースケールでも岩の石の色より明るく、
+ *   平らな雪は影の無い波形、雪山は影のある山の形で見分ける。
+ * - 滑る氷の塊は、氷の系統の色（氷より緑寄りの水色）の、岩と同じ大きさで下に影の面を持つ塊にし、上の面に白い光の筋を入れる。
+ *   石の色の岩・もろい岩とは色相と光の筋、雪山とは四角い外形、水面とは影の向き（下に影の出っ張り）で見分ける。
+ * - 駒は白い縁取りの濃い円、ゴールは氷と別の色系統の地と輪と中心の点にする。跡やゴールの印に重なっても駒を見失わない。
+ * - 跡は駒と同じ色相の半透明の帯で、ゴールの輪の下を通す。ゴールを通り過ぎた滑りは、帯がゴールの先まで続いて見える。
+ *   跡はマスに載る要素（水面・薄い氷・石くず）の下を通し、割れたばかりの水面を帯で覆って見えにくくしない。
+ */
+export const iceFloorMazeToneClassNames = {
+  stoneFace: "fill-stone-400 dark:fill-stone-500",
+  stoneShadow: "fill-stone-500 dark:fill-stone-600",
+  brittleFace: "fill-stone-300 dark:fill-stone-400",
+  brittleShadow: "fill-stone-400 dark:fill-stone-500",
+  rubble: "fill-stone-400 dark:fill-stone-500",
+  wall: "fill-stone-400 stroke-stone-400 dark:fill-stone-500 dark:stroke-stone-500",
+  wallFill: "fill-stone-400 dark:fill-stone-500",
+  ice: "fill-sky-100 dark:fill-slate-800",
+  iceJoint: "stroke-sky-200 dark:stroke-slate-700",
+  thinIce: "fill-[oklch(85.5%_0.085_231)] dark:fill-[oklch(40%_0.075_240)]",
+  thinIceCrack: "stroke-white dark:stroke-[oklch(90%_0.03_235/0.95)]",
+  water: "fill-sky-600 dark:fill-[oklch(19%_0.055_250)]",
+  waterHollow: "fill-sky-700 dark:fill-[oklch(14%_0.04_252)]",
+  wave: "stroke-sky-200/90 dark:stroke-sky-400/85",
+  floor: "fill-[oklch(80%_0.05_155)] dark:fill-[oklch(38%_0.045_160)]",
+  floorDot: "fill-[oklch(55%_0.07_158)] dark:fill-[oklch(68%_0.06_158)]",
+  snow: "fill-white stroke-[oklch(78%_0.035_245)] dark:fill-slate-200 dark:stroke-slate-400",
+  snowDot: "fill-[oklch(88%_0.03_240)] dark:fill-[oklch(82%_0.025_255)]",
+  snowMound: "fill-white dark:fill-slate-200",
+  snowMoundShadow: "fill-[oklch(78%_0.035_245)] dark:fill-slate-400",
+  slidingBlock: "fill-[oklch(86%_0.08_200)] dark:fill-[oklch(60%_0.085_205)]",
+  slidingBlockShadow:
+    "fill-[oklch(64%_0.1_215)] dark:fill-[oklch(40%_0.07_220)]",
+  slidingBlockGlint: "stroke-white/90 dark:stroke-[oklch(92%_0.03_205/0.85)]",
+  slidingBlockEdge:
+    "stroke-[oklch(64%_0.1_215/0.7)] dark:stroke-[oklch(40%_0.07_220/0.7)]",
+  trail: "fill-indigo-400/45 dark:fill-indigo-300/35",
+  goalCell: "fill-amber-100 dark:fill-amber-950",
+  goalMark: "fill-none stroke-amber-500 dark:stroke-amber-400",
+  goalDot: "fill-amber-500 dark:fill-amber-400",
+  piece:
+    "fill-indigo-600 stroke-white dark:fill-indigo-400 dark:stroke-slate-50",
+} as const;
