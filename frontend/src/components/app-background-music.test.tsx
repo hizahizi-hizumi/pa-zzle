@@ -74,7 +74,7 @@ describe("getAppBackgroundMusicScene", () => {
   };
   const cases = [
     ["ホーム", "/", "home"],
-    ["難易度選択", "/puzzles/nanpure", "home"],
+    ["ゲームのホーム", "/puzzles/nanpure", "home"],
     ["記録", "/records", "home"],
     ["ページが見つからない画面", "/no-such-page", "home"],
     ["プレイ画面", playPath, "play"],
@@ -235,7 +235,7 @@ describe("selectAppBackgroundMusicTransition", () => {
 });
 
 describe("useAppBackgroundMusic", () => {
-  describe("難易度選択からプレイ画面に移った場合", () => {
+  describe("ゲームのホームからプレイ画面に移った場合", () => {
     let navigate: ReturnType<typeof useNavigate>;
 
     beforeEach(() => {
@@ -263,7 +263,7 @@ describe("useAppBackgroundMusic", () => {
     });
   });
 
-  describe("ホームから難易度選択に移った場合", () => {
+  describe("ホームからゲームのホームに移った場合", () => {
     let navigate: ReturnType<typeof useNavigate>;
 
     beforeEach(() => {
