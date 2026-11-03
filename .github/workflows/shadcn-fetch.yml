@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout request
-        uses: actions/checkout@v6.1.0
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 1
           path: request
@@ -50,7 +50,7 @@ jobs:
           echo "target-sha=$target_sha" >> "$GITHUB_OUTPUT"
 
       - name: Checkout target
-        uses: actions/checkout@v6.1.0
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ steps.request.outputs.target-sha }}
           fetch-depth: 1
