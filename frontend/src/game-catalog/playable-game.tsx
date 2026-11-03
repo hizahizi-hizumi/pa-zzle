@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { useResultShownOnPlayScreen } from "@/components/app-background-music";
+import { usePlayScreenMusicState } from "@/components/app-background-music";
 import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
 import { useGameNavigation } from "@/game-catalog/game-navigation";
 import {
@@ -114,7 +114,8 @@ export function usePlayableGame<
     recordOutcome,
   );
   useResultRewardSound(play.progress, result?.score.total ?? null);
-  useResultShownOnPlayScreen(
+  usePlayScreenMusicState(
+    play.progress,
     play.progress === "result" && result !== null && !navigatesToRecordResult,
   );
   usePlayAttemptRecord({

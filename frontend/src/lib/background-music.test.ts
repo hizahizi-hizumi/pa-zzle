@@ -284,6 +284,39 @@ function getStoppedLoopUrls() {
   );
 }
 
+/** 曲ごとに掛ける大きさの GainNode。BGM の出口へじかにつないだ GainNode を、作った順に返す。 */
+function getVoiceLevels() {
+  const context = getAudioContext();
+  const output = context?.gains[0];
+  return (
+    context?.gains.filter(({ connect }) =>
+      connect.mock.calls.some(([destination]) => destination === output),
+    ) ?? []
+  );
+}
+
+/** 曲ごとにフェードイン・フェードアウトする GainNode。曲ごとに掛ける大きさの GainNode へつないだ GainNode を、作った順に返す。 */
+function getVoiceFaders() {
+  const levels: unknown[] = getVoiceLevels();
+  return (
+    getAudioContext()?.gains.filter(({ connect }) =>
+      connect.mock.calls.some(([destination]) => levels.includes(destination)),
+    ) ?? []
+  );
+}
+
+/** ループ再生を止めるよう頼んだ時刻を、曲ごとに返す。 */
+function getLoopStops() {
+  return (
+    getAudioContext()
+      ?.sources.filter(({ stop }) => stop.mock.calls.length > 0)
+      .map(({ buffer, stop }) => ({
+        url: buffer?.url,
+        when: stop.mock.calls[0]?.[0],
+      })) ?? []
+  );
+}
+
 function findAudio(src: string): FakeAudio | undefined {
   return FakeAudio.instances.find((audio) => audio.src === src);
 }
@@ -663,6 +696,142 @@ describe("playBackgroundMusic", () => {
         findAudio("blob:track")?.dispatch("playing");
 
         expect(getStoppedLoopUrls()).toEqual(["/home.mp3"]);
+      });
+    });
+
+    describe("区切って別の曲に切り替えた場合", () => {
+      const transition = {
+        kind: "break",
+        fadeOutSec: 0.5,
+        silenceSec: 1,
+        fadeInSec: 4,
+      } as const;
+      const homeFadedAt = 10 + transition.fadeOutSec;
+      const playStartsAt = homeFadedAt + transition.silenceSec;
+      let playTrack: BackgroundMusicTrack;
+      let now: number;
+
+      beforeEach(() => {
+        now = 1000;
+        vi.spyOn(performance, "now").mockImplementation(() => now);
+        playTrack = defineTrack(backgroundMusic, "/play.mp3");
+      });
+
+      test("次の曲を待たずに、前の曲を決めた長さでフェードアウトして止めること", () => {
+        backgroundMusic.playBackgroundMusic(playTrack, { transition });
+
+        const [homeFader] = getVoiceFaders();
+        expect(
+          homeFader?.gain.linearRampToValueAtTime,
+        ).toHaveBeenLastCalledWith(0, homeFadedAt);
+        expect(getLoopStops()).toEqual([
+          { url: "/home.mp3", when: homeFadedAt },
+        ]);
+      });
+
+      test("前の曲を引き切って無音を空けてから、次の曲を決めた長さでフェードインすること", async () => {
+        backgroundMusic.playBackgroundMusic(playTrack, { transition });
+        await settle();
+        await stream.finish("/play.mp3");
+
+        const playStart = getLoopStarts().at(-1);
+        const [, playFader] = getVoiceFaders();
+        expect(playStart?.url).toBe("/play.mp3");
+        expect(playStart?.when).toBeCloseTo(playStartsAt);
+        expect(playFader?.gain.setValueAtTime).toHaveBeenCalledWith(
+          0,
+          playStart?.when,
+        );
+        expect(
+          playFader?.gain.linearRampToValueAtTime,
+        ).toHaveBeenLastCalledWith(
+          1,
+          (playStart?.when ?? 0) + transition.fadeInSec,
+        );
+      });
+
+      describe("次の曲を読み解き終えていない場合", () => {
+        beforeEach(async () => {
+          backgroundMusic.playBackgroundMusic(playTrack, { transition });
+          await settle();
+          await stream.deliverPart("/play.mp3");
+        });
+
+        test("無音を空け終えるまでは、次の曲を要素で流し始めないこと", () => {
+          const loadsAnyTrack = FakeAudio.instances.some(
+            ({ src }) => src !== "",
+          );
+
+          expect(loadsAnyTrack).toBe(false);
+        });
+
+        test("無音を空け終えたら、次の曲を要素で流し始めること", async () => {
+          now += (playStartsAt - 10) * 1000;
+          await settle((playStartsAt - 10) * 1000);
+
+          expect(findAudio("blob:track")?.play).toHaveBeenCalled();
+        });
+      });
+
+      describe("無音を空け終える前に元の曲へ戻した場合", () => {
+        beforeEach(async () => {
+          backgroundMusic.playBackgroundMusic(playTrack, { transition });
+          await settle();
+          await stream.finish("/play.mp3");
+        });
+
+        test("次の曲を鳴らさずに止め、空けた無音のあとに元の曲をクロスフェードの長さで流し直すこと", async () => {
+          backgroundMusic.playBackgroundMusic(
+            defineTrack(backgroundMusic, "/home.mp3"),
+          );
+          await settle();
+          await stream.finish("/home.mp3");
+
+          const starts = getLoopStarts();
+          const playStop = getLoopStops().find(
+            ({ url }) => url === "/play.mp3",
+          );
+          const homeRestart = starts.at(-1);
+          const homeFader = getVoiceFaders().at(-1);
+          expect(starts.map(({ url }) => url)).toEqual([
+            "/home.mp3",
+            "/play.mp3",
+            "/home.mp3",
+          ]);
+          expect(playStop).toEqual({ url: "/play.mp3", when: undefined });
+          expect(homeRestart?.when).toBeCloseTo(playStartsAt);
+          expect(
+            homeFader?.gain.linearRampToValueAtTime,
+          ).toHaveBeenLastCalledWith(1, (homeRestart?.when ?? 0) + 1.2);
+        });
+      });
+    });
+
+    describe("掛ける大きさを決めて別の曲に切り替えた場合", () => {
+      test("次の曲にだけ、決めた大きさを掛けること", async () => {
+        backgroundMusic.playBackgroundMusic(
+          defineTrack(backgroundMusic, "/result.mp3"),
+          { gain: 0.5 },
+        );
+        await settle();
+        await stream.deliverPart("/result.mp3");
+
+        const levels = getVoiceLevels().map(({ gain }) => gain.value);
+        expect(levels).toEqual([1, 0.5]);
+      });
+    });
+
+    describe("同じ曲に掛ける大きさだけを変えた場合", () => {
+      test("流し直さずに、曲に掛ける大きさを変えること", async () => {
+        backgroundMusic.playBackgroundMusic(
+          defineTrack(backgroundMusic, "/home.mp3"),
+          { gain: 0.5 },
+        );
+        await settle();
+
+        const [level] = getVoiceLevels();
+        expect(getLoopStarts()).toHaveLength(1);
+        expect(level?.gain.setTargetAtTime.mock.lastCall?.[0]).toBe(0.5);
       });
     });
 
