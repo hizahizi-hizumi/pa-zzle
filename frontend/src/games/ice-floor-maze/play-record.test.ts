@@ -90,7 +90,7 @@ test("クリアの成績として、経過時間と、取り消した手も含�
 });
 
 describe("isIceFloorMazePlayRecord", () => {
-  test("保存用記録を氷の床迷路の記録として認めること", () => {
+  test("保存用記録をアイスフロア迷路の記録として認めること", () => {
     const recognized = isIceFloorMazePlayRecord(record);
 
     expect(recognized).toBe(true);

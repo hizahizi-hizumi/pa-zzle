@@ -15,7 +15,7 @@ type RecordedIceFloorMazeResultProps = RecordedGameResultProps<
   IceFloorMazeResult
 >;
 
-/** 記録から作り直した氷の床迷路の結果画面。 */
+/** 記録から作り直したアイスフロア迷路の結果画面。 */
 export function RecordedIceFloorMazeResult(
   props: RecordedIceFloorMazeResultProps,
 ) {

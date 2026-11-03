@@ -110,7 +110,7 @@ describe("IceFloorMazePlay", () => {
     });
 
     test("ゲーム名と手数・経過時間を表示すること", () => {
-      const heading = screen.getByRole("heading", { name: "氷の床迷路" });
+      const heading = screen.getByRole("heading", { name: "アイスフロア迷路" });
       const moveCount = screen.getByText("手数").parentElement;
       const elapsedTime = screen.getByText("時間").parentElement;
 
