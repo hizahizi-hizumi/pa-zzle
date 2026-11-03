@@ -1,7 +1,19 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render as renderWithoutRouter,
+  screen,
+} from "@testing-library/react";
+import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router";
 
 import type { TsumeShogiResult } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import { TsumeShogiResultScreen } from "@/games/tsume-shogi/ui/result/TsumeShogiResultScreen";
+
+/** 結果画面はブランドの帯とパズル選択からホームへ戻るリンクを持つので、ルーターの中で描く。 */
+function render(ui: ReactElement) {
+  return renderWithoutRouter(ui, { wrapper: MemoryRouter });
+}
 
 const performance = {
   elapsedMs: 30_000,
@@ -27,14 +39,44 @@ const handlers = {
   recordOutcomeNotice: null,
   onReplay: vi.fn(),
   onStartNewProblem: vi.fn(),
-  onOpenRecords: vi.fn(),
-  onChangeDifficulty: vi.fn(),
-  onBackToHome: vi.fn(),
+  onOpenGameHome: vi.fn(),
 };
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 describe("TsumeShogiResultScreen", () => {
+  describe("次の行動", () => {
+    beforeEach(() => {
+      render(
+        <TsumeShogiResultScreen difficulty="1" result={result} {...handlers} />,
+      );
+    });
+
+    const actionCases = [
+      ["次の問題", "onStartNewProblem"],
+      ["もう一度", "onReplay"],
+      ["問題選択", "onOpenGameHome"],
+    ] as const;
+
+    test.each(actionCases)(
+      "%s ボタンで対応する操作を通知すること",
+      (buttonName, callbackName) => {
+        fireEvent.click(screen.getByRole("button", { name: buttonName }));
+
+        expect(handlers[callbackName]).toHaveBeenCalledOnce();
+      },
+    );
+
+    test("パズル選択のリンクでホームへ戻れること", () => {
+      const link = screen.getByRole("link", { name: "パズル選択" });
+
+      expect(link.getAttribute("href")).toBe("/");
+    });
+  });
+
   describe("問題集の問題を詰ませた場合", () => {
     beforeEach(() => {
       render(

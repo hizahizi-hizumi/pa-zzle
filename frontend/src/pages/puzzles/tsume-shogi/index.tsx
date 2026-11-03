@@ -1,1 +1,1 @@
-export { TsumeShogiDifficultyView as default } from "@/views/TsumeShogiDifficultyView";
+export { TsumeShogiHomeView as default } from "@/views/TsumeShogiHomeView";

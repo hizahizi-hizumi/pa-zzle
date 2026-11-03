@@ -28,7 +28,7 @@ export const tsumeShogiCatalogEntry = {
   id: tsumeShogiPlayRecordDefinition.gameId,
   name: TSUME_SHOGI_DISPLAY_NAME,
   pictogramSvg,
-  entryPath: "/puzzles/tsume-shogi",
+  homePath: "/puzzles/tsume-shogi",
   playPath: "/puzzles/tsume-shogi/play/:difficulty",
   playRecordDisplay: tsumeShogiPlayRecordDisplay,
   recordProblemPlayTarget(record) {

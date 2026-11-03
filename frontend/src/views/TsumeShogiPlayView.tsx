@@ -20,7 +20,7 @@ export function TsumeShogiPlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={tsumeShogiCatalogEntry.entryPath}
+        backTo={tsumeShogiCatalogEntry.homePath}
       />
     );
   }
@@ -29,7 +29,7 @@ export function TsumeShogiPlayView() {
       <PlayUnavailableNotice
         title="問題を読み込めませんでした"
         description="通信できることを確かめて、もう一度開いてください。"
-        backTo={tsumeShogiCatalogEntry.entryPath}
+        backTo={tsumeShogiCatalogEntry.homePath}
       />
     );
   }
