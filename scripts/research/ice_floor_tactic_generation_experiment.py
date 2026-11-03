@@ -90,7 +90,7 @@ class Tactics:
     # 詰みの誘い手: 最短の道筋上の各停止点で、詰みに入る選択肢と、そのうちもっともらしいもの
     trap_options: int
     trap_lures: int
-    # そのうち、入った直後に閉じ込めの知らせ（SPEC-019）が出ないもの。知らせが出る詰みは
+    # そのうち、入った直後に閉じ込めの知らせ（SPEC-020）が出ないもの。知らせが出る詰みは
     # その場で待ったへ導かれるので、誘いとして弱い
     silent_trap_lures: int
     # 入り直し: 最短の道筋で、ゴールと見通しで揃った停止点から、揃わない停止点へ離れる回数
@@ -208,7 +208,7 @@ def global_layers(g: BoardGraph, goal: int) -> dict[int, int]:
 
 
 def confined(g: BoardGraph, state: int) -> bool:
-    """SPEC-019 の閉じ込め（ゴールが無ければ知らせる）: 今の位置から滑って行けるどの位置からも
+    """SPEC-020 の閉じ込め（ゴールが無ければ知らせる）: 今の位置から滑って行けるどの位置からも
     今の位置へ戻れる。"""
     ahead = {state}
     queue = [state]

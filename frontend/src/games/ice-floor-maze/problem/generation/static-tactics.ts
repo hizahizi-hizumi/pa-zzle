@@ -286,7 +286,7 @@ function measureGlobalLayers(
   return toGoal;
 }
 
-/** SPEC-019 の閉じ込め: 今の位置から滑って行けるどの位置からも今の位置へ戻れる。 */
+/** SPEC-020 の閉じ込め: 今の位置から滑って行けるどの位置からも今の位置へ戻れる。 */
 function isConfined(graph: StaticBoardGraph, state: number): boolean {
   const ahead = new Set([state]);
   const queue = [state];
