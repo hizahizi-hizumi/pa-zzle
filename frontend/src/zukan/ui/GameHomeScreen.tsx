@@ -118,10 +118,21 @@ export type GameHomeScreenProps = {
   ) => ReadonlyMap<string, ProblemFeatureValue> | null;
   /** ゲーム固有の遊び方ダイアログを描く。開閉の状態は見出しが持ち、引数で渡す。 */
   renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
+  /**
+   * ゲーム固有のチュートリアルを描く。開閉の状態は見出しが持ち、終えてレベル1を始める操作と一緒に引数で渡す。
+   * 省略すると、チュートリアルを開くボタンを出さない。
+   */
+  renderTutorial?: (control: GameHomeTutorialControl) => ReactNode;
   /** 全記録。開いているレベルの成績（自己ベスト・推移）を、成績を開いたときにこの中から求める。 */
   records: readonly PlayRecord[];
   /** そのゲームの記録表示。成績の指標の名前と値の書き方に使う。 */
   playRecordDisplay: PlayRecordDisplayDefinition;
+};
+
+/** ゲームのホームから開いたチュートリアルの開閉の状態と、終えてプレイへ進む操作。 */
+export type GameHomeTutorialControl = HowToPlayDialogControl & {
+  /** チュートリアルを終えて、レベル1のプレイを始める。 */
+  onStartPlay: () => void;
 };
 
 type SelectedProblemKey = { difficulty: DifficultyLevel; problemId: ProblemId };
@@ -327,6 +338,7 @@ export function GameHomeScreen({
   featureAxes,
   findProblemFeatureValues,
   renderHowToPlayDialog,
+  renderTutorial,
   records,
   playRecordDisplay,
 }: GameHomeScreenProps) {
@@ -607,6 +619,9 @@ export function GameHomeScreen({
     onPlayRandom(openDifficulty),
   );
 
+  // チュートリアルは最初のレベルへつなぐので、開いているレベルによらずレベル1を始める。
+  const handleStartTutorialPlay = withPlayStartSound(() => onPlayRandom("1"));
+
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 pt-4 sm:px-6 sm:pt-6 lg:pb-8">
       <GameHomeHeading
@@ -617,6 +632,14 @@ export function GameHomeScreen({
         titleRef={titleRef}
         actionsRef={headerActionsRef}
         renderHowToPlayDialog={renderHowToPlayDialog}
+        renderTutorial={
+          renderTutorial &&
+          ((control) =>
+            renderTutorial({
+              ...control,
+              onStartPlay: handleStartTutorialPlay,
+            }))
+        }
       >
         <ZukanLegend />
         <ZukanFilter

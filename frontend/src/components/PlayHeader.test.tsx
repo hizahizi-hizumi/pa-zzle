@@ -42,6 +42,7 @@ function createProps(): ComponentProps<typeof PlayHeader> {
     onOpenGameHome: vi.fn(),
     onBackToHome: vi.fn(),
     onOpenHowToPlay: vi.fn(),
+    onOpenTutorial: vi.fn(),
     onOpenDiagnostics: vi.fn(),
   };
 }
@@ -83,6 +84,7 @@ describe("PlayHeader", () => {
         "問題選択",
         "パズル選択",
         "遊び方",
+        "チュートリアル",
         "設定",
         "検証情報",
       ]);
@@ -95,6 +97,7 @@ describe("PlayHeader", () => {
       ["問題選択", "onOpenGameHome"],
       ["パズル選択", "onBackToHome"],
       ["遊び方", "onOpenHowToPlay"],
+      ["チュートリアル", "onOpenTutorial"],
       ["検証情報", "onOpenDiagnostics"],
     ] as const;
 
@@ -180,6 +183,7 @@ describe("PlayHeader", () => {
         onRestart: _onRestart,
         onReplay: _onReplay,
         onOpenHowToPlay: _onOpenHowToPlay,
+        onOpenTutorial: _onOpenTutorial,
         onOpenDiagnostics: _onOpenDiagnostics,
         ...requiredProps
       } = createProps();

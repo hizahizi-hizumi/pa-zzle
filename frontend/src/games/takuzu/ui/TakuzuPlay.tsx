@@ -22,6 +22,7 @@ import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearA
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 import { TakuzuResultScreen } from "@/games/takuzu/ui/result/TakuzuResultScreen";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
+import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
 import { useTakuzuSoundEffects } from "@/games/takuzu/ui/use-takuzu-sound-effects";
 
 type TakuzuPlayProps = GamePlayScreenProps<TakuzuDifficulty, TakuzuResult> &
@@ -83,6 +84,9 @@ export function TakuzuPlay({
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <TakuzuHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderTutorial={({ open, onClose }) => (
+        <TakuzuTutorial open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <TakuzuResultScreen
