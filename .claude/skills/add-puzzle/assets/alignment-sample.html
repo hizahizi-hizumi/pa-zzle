@@ -8,13 +8,13 @@
     <div>
       <p class="eyebrow">認識合わせ</p>
       <h1>ノノグラム</h1>
-      <p class="lead">こういうパズルだと理解しています。イメージと違っていたら、一言かスクショで教えてください。</p>
+      <p class="lead">こういうパズルだと理解しています。合っていれば「OK」だけで大丈夫です。違っていたら、この会話に一言かスクショで教えてください。</p>
     </div>
   </div>
 
   <section>
     <h2>触ってみる</h2>
-    <p class="hint">タップで 塗る → × → 空白。行と列の数字どおりに塗ればクリア。</p>
+    <p class="hint">タップで 塗る → × → 空白。なぞると、最初のマスと同じ状態で続けて塗れる。行と列の数字どおりに塗ればクリア。</p>
     <div class="demo">
       <div id="demo"></div>
       <p class="state" id="demo-state">数字は、黒く塗るマスが何個続くかを表します。</p>
@@ -25,17 +25,17 @@
     <h2>解き方</h2>
     <p class="hint">当てずっぽうではなく、数字から「ここは必ず黒」を決めていく。</p>
     <div class="pair">
-      <figure><div data-board="progress"></div><figcaption><b>途中</b>1行で決まったマスが、交わる列の手がかりになる。そろった行は数字が薄くなる。</figcaption></figure>
+      <figure><div data-board="progress"></div><figcaption><b>途中</b>上下の行が数字だけで決まり、交わる左右の列も決まった。そろった行と列は数字が薄くなる。</figcaption></figure>
       <figure><div data-board="solved"></div><figcaption><b>クリア</b>全部の数字に合うと、模様が出る。</figcaption></figure>
     </div>
   </section>
 
   <section>
     <h2>レベルの違い</h2>
-    <p class="hint">5段階。上ほど盤面が縦に伸び、手がかりが少なくなる。</p>
+    <p class="hint">5段階。上ほど盤面が縦に伸び、数字だけで一目で決まる行が少なくなる。</p>
     <div class="pair">
-      <figure><div data-board="l1"></div><figcaption><b>L1</b>小さく、どこからでも解き始められる。</figcaption></figure>
-      <figure><div data-board="l5"></div><figcaption><b>L5</b>縦長で、解き始められる所が少ない。</figcaption></figure>
+      <figure><div data-board="l1"></div><figcaption><b>L1</b>7×7。「7」の行のように、一目で決まる行がある。</figcaption></figure>
+      <figure><div data-board="l5"></div><figcaption><b>L5</b>10×15。一目で決まる行が無く、行と列を行き来して解く。</figcaption></figure>
     </div>
   </section>
 
@@ -57,7 +57,7 @@
           <li><b>どのレベルも推理だけで解ける</b>　上級者には物足りないかも</li>
           <li><b>正解・不正解は出さない</b>　そろった行の数字を薄くするだけ</li>
           <li><b>点数は速さが中心、塗り直しは少し減点</b>　×は何度付け外ししても減点しない</li>
-          <li><b>名前は「ノノグラム」</b>　「ピクロス」などは商標のため</li>
+          <li><b>名前は「ノノグラム」</b>　「ピクロス」は商標のため避ける。「ノノグラム」が使えるかは、最後に確かめてもらう</li>
           <li><b>図鑑はレベルごとに500問</b>　毎日1問でも1年以上集められ、全部埋める前提にはしない</li>
         </ul>
       </div>
@@ -68,13 +68,12 @@
         <ul>
           <li>模様で達成感が出るか</li>
           <li>縦15マスが小さいスマホに入るか</li>
-          <li>iPhone でのなぞる操作</li>
+          <li>iPhone で、なぞる途中に画面が動かないか</li>
         </ul>
       </div>
     </details>
   </div>
 
-  <footer>イメージどおりなら「OK」だけで大丈夫です。</footer>
 </main>
 
 <script>
@@ -120,16 +119,23 @@
     msg.textContent = won ? 'クリア！' : '数字は、黒く塗るマスが何個続くかを表します。';
     msg.className = won ? 'state done' : 'state';
   }
-  box.addEventListener('click', function (e) { var t = e.target; if (!t.dataset || t.dataset.r === undefined) return; var r = +t.dataset.r, k = +t.dataset.k; st[r][k] = (st[r][k] + 1) % 3; draw(); });
+  // タップで 塗る → × → 空白。なぞると、最初のマスで決めた状態を続けて塗る。
+  var painting = null;
+  function cellAt(x, y) { var t = document.elementFromPoint(x, y); return t && t.dataset && t.dataset.r !== undefined ? t : null; }
+  box.style.touchAction = 'none';
+  box.addEventListener('pointerdown', function (e) { var t = cellAt(e.clientX, e.clientY); if (!t) return; var r = +t.dataset.r, k = +t.dataset.k; painting = (st[r][k] + 1) % 3; st[r][k] = painting; draw(); });
+  box.addEventListener('pointermove', function (e) { if (painting === null) return; var t = cellAt(e.clientX, e.clientY); if (!t) return; var r = +t.dataset.r, k = +t.dataset.k; if (st[r][k] !== painting) { st[r][k] = painting; draw(); } });
+  window.addEventListener('pointerup', function () { painting = null; });
   draw();
 
   // 図
   var pic = rows(['0011111100', '0110000110', '1101001011', '1000000001', '1010000101', '1001111001', '0100000010', '0011001100', '0001111000', '0000110000']);
-  var prog = pic.map(function (r, i) { return r.map(function (v, k) { var d = [0, 1, 2, 3, 8, 9].indexOf(i) >= 0 || (i === 4 && (k === 0 || k === 9)); return d ? (v ? 1 : 2) : 0; }); });
+  var prog = pic.map(function (r, i) { return r.map(function (v, k) { var d = [0, 1, 2, 3, 8, 9].indexOf(i) >= 0 || [0, 1, 8, 9].indexOf(k) >= 0; return d ? (v ? 1 : 2) : 0; }); });
   var l1 = rows(['0011100', '0111110', '1101011', '1111111', '1011101', '0100010', '0011100']);
-  var l5 = []; var seed = 7; for (var i = 0; i < 15; i++) { var row = ''; for (var k = 0; k < 10; k++) { seed = (seed * 1103515245 + 12345) % 2147483648; row += seed / 2147483648 < 0.5 ? '1' : '0'; } l5.push(row); } l5 = rows(l5);
+  // L5: 縦長の模様（ひし形の重なり）。どの行も、数字だけでは一目で決まらない。
+  var l5 = []; for (var i = 0; i < 15; i++) { var row = ''; for (var k = 0; k < 10; k++) { var d = Math.abs(i - 7) + Math.abs(k - 4.5); row += Math.floor(d) % 4 < 2 ? '1' : '0'; } l5.push(row); } l5 = rows(l5);
   var empty = function (g) { return g.map(function (r) { return r.map(function () { return 0; }); }); };
-  var boards = { progress: svg(pic, prog, { cell: 14, dim: true }), solved: svg(pic, pic, { cell: 14 }), l1: svg(l1, empty(l1), { cell: 14 }), l5: svg(l5, empty(l5), { cell: 10 }) };
+  var boards = { progress: svg(pic, prog, { cell: 14, dim: true }), solved: svg(pic, pic, { cell: 14 }), l1: svg(l1, empty(l1), { cell: 12 }), l5: svg(l5, empty(l5), { cell: 12 }) };
   document.querySelectorAll('[data-board]').forEach(function (el) { el.innerHTML = boards[el.dataset.board]; });
 })();
 </script>
