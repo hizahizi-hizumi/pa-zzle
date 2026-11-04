@@ -56,10 +56,11 @@
 | rules | ルール・判定・状態とそのテスト（画面なし）。依存規則を `generate:dependency-rules` で作り直し、カタログの一時的な除外（下）を足す | — |
 | playable | 1問を最後まで遊べるプレイ画面（盤面・操作・クリア判定）、遊ぶためのルート（`pages/puzzles/<game>/` と View）、一覧に出さないカタログエントリ（`GameCatalogEntry` の全項目を、後の項目で作るものは仮の実装で埋める）。固定問題を開く入口パスを報告に書く | — |
 | play-ui | 補助操作（待った・盤面を戻すなど）、状態の知らせ、遊び方、クリア演出 | — |
+| sound | 盤面操作とクリアの効果音。鳴らす瞬間と強さは `DESIGN.md` の「効果音」、つなぎ方は `.claude/rules/game-structure.md` の「効果音」。音は題材から作って一度だけ書き出し、`assets/sounds/` に同梱する。書き出したスクリプトは `scripts/assets/<ゲーム ID>_sounds.py` に残す（前例は `scripts/assets/tsume_shogi_sounds.py`） | — |
 | difficulty | 調査で決めた案の解法器・難易度の判定・生成器・`problem-selection.ts`、難易度の資料 | `/design-game-difficulty` |
 | problem-pool | 問題集と生成スクリプト。完成条件は、件数がそろい `--verify` で全問の再検証が通ること。問題 ID で開くレベルごとのプレイ画面のパスを報告に書く | `/design-game-difficulty` |
 | pictogram | ゲーム一覧のピクトグラム | `/design-game-pictogram` |
-| difficulty-select | 難易度選択の画面と難易度プレビュー | `/design-game-difficulty-preview` |
+| game-home | ゲームのホーム（`pages/puzzles/<game>/index.tsx` と `views/<Game>HomeView.tsx`）と、図鑑に渡す問題集の全問と問題の特徴（カタログエントリの `listPoolProblemIds`・`describePoolProblem`・`problemFeatureFilter`）。特徴は始めたときの盤面で分かるものだけにする（SPEC-026 の「問題の特徴」） | — |
 | score | スコア（評価規則と基準時間） | — |
 | result-records | 結果画面・記録（`play-record.ts`・`play-attempt.ts`・`diagnostics.ts`）・記録からの遊び直し | — |
 | catalog | 一覧への掲載と並び。カタログの一時的な除外を消す | — |
@@ -75,8 +76,8 @@
 |---|---|
 | 調査（research） | `docs/パズル/導入調査/<パズル名>/`（実装前提調査は「実装で確定した差分」を含む最終版）、`scripts/research/<ゲーム ID>_*` |
 | ルールと問題（rules-problem） | `frontend/src/games/<game>/` の `puzzle/`・`problem/`（生成と問題集）・`session/`・`difficulty.ts`・`problem-selection.ts`・`display-name.ts`、生成と分析のスクリプト（`frontend/scripts/*<game>*`）と `package.json` の scripts、`frontend/biome.json`（問題集の除外と依存規則） |
-| プレイと画面（play-ui） | `play/`・`ui/`（難易度プレビュー・遊び方を含む）・`assets/`・`score.ts`・`play-record.ts`・`play-attempt.ts`・`diagnostics.ts` |
-| 掲載（catalog） | `frontend/src/game-catalog/<game>/` と `game-catalog.ts`、`frontend/src/pages/puzzles/<game>/` と View、generouted が作り直す `frontend/src/router.ts`、一覧のテスト |
+| プレイと画面（play-ui） | `play/`・`ui/`（遊び方を含む）・`assets/`（効果音を含む）・`scripts/assets/<ゲーム ID>_*`・`score.ts`・`play-record.ts`・`play-attempt.ts`・`diagnostics.ts` |
+| 掲載（catalog） | `frontend/src/game-catalog/<game>/` と `game-catalog.ts`、`frontend/src/pages/puzzles/<game>/` と View（ゲームのホーム・プレイ）、generouted が作り直す `frontend/src/router.ts`、一覧のテスト |
 | 文書（docs） | SPEC・ADR・台帳の行と候補ファイル・各 README の一覧、最終レビューで足した正本と失敗パターン集への追記 |
 
 切り出しの手順:

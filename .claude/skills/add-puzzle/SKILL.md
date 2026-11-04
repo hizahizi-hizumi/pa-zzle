@@ -41,13 +41,13 @@ argument-hint: "<パズル名> [最終レビューの指摘]"
 
 確かめの役には経緯を渡さず、互いに独立なので同時に起動してよい。機械検査は `verify.sh`（CI の制限時間内に収まること）と問題集の `--verify`。難易度の判定を変えたときは、難易度の計測（難易度の Skill の `references/checks.md` のうち機械で測るもの）も流す。
 
-| 時点 | 試遊 | 自己点検 | コード | 体験 | 文書 | 読まれ方 |
-|---|---|---|---|---|---|---|
-| 調査の後 | — | — | — | — | ○ | — |
-| 山場1（rules・playable） | iphone で入口の1問 | — | ○ | — | — | — |
-| 山場2（difficulty・problem-pool） | iphone で難易度の Skill の「試遊に渡す問題」 | ○（頼まれた解法器の確かめを含む） | — | — | — | — |
-| 作り込み（1回だけ） | iphone でレベル1〜5の各1問、pc で1問 | ○ | ○ | ○ | ○ | ○ |
-| 最終レビューの反映 | 直した所に関わる役だけを、作り込みと同じ条件で | 〃 | 〃 | 〃 | 〃 | 〃 |
+| 時点 | 試遊 | 自己点検 | コード | 体験 | 文書 |
+|---|---|---|---|---|---|
+| 調査の後 | — | — | — | — | ○ |
+| 山場1（rules・playable） | iphone で入口の1問 | — | ○ | — | — |
+| 山場2（difficulty・problem-pool） | iphone で難易度の Skill の「試遊に渡す問題」 | ○（頼まれた解法器の確かめを含む） | — | — | — |
+| 作り込み（1回だけ） | iphone でレベル1〜5の各1問、pc で1問 | ○ | ○ | ○ | ○ |
+| 最終レビューの反映 | 直した所に関わる役だけを、作り込みと同じ条件で | 〃 | 〃 | 〃 | 〃 |
 
 ## 所見の振り分け
 
@@ -99,7 +99,7 @@ Critical・Major は「直す」か「人間に残す」のどちらかで、Min
 | 画面 | 対象の画面と比較用の既存ゲームの同じ画面（メインが `playtest-driver.mjs` の goto と shot で撮る）、画面名と端末の一覧、browser-errors.log | 体験レビュー役・自己点検役 |
 | 文書の場所と使用中の番号 | SPEC・導入調査・台帳のパス、origin の全ブランチで使われている SPEC・候補 ID・ADR の番号 | 文書レビュー役 |
 | 難易度の計測 | `difficulty-checks.md`、難易度の資料、頼まれた確かめ（難易度の Skill の報告） | 自己点検役 |
-| 試遊の入力 | アプリの URL、入口パス（一覧に載る前は実装役が報告したプレイ画面のパス）、端末、遊ぶレベルと問題数、出力先、driver のポート（端末ごとに重ならないもの）、まだ作っていない画面・機能、比較用の既存ゲーム（作り込み） | 試遊役 |
+| 試遊の入力 | アプリの URL、入口パス（ゲームのホームのパス。一覧に載る前は実装役が報告したプレイ画面のパス）、端末、遊ぶレベルと問題数、出力先、driver のポート（端末ごとに重ならないもの）、まだ作っていない画面・機能、比較用の既存ゲーム（作り込み） | 試遊役 |
 | 失敗パターン集 | 下の「配り方」で決めた集の絶対パスと、自己点検役には当てる「いつ」 | 調査役・実装役・体験レビュー役・自己点検役 |
 
 ## 実行役
@@ -109,13 +109,12 @@ Critical・Major は「直す」か「人間に残す」のどちらかで、Min
 - 試遊: `puzzle-playtester`。
 - 自己点検: `puzzle-pitfall-checker`。
 - AI レビュー: `puzzle-code-reviewer`・`puzzle-experience-reviewer`・`puzzle-document-reviewer`。
-- 読まれ方: 汎用サブエージェント（Opus）を使い捨てで1つ。手順は `/design-game-difficulty-preview` の `references/checks.md` の「読まれ方の確かめ」。メインが見本の名前を付け直して順を伏せ、正解の順はメインだけが持つ。当たれば Major の所見にする。
 - ページの読み手: 汎用サブエージェント（Opus）を使い捨てで1つ。認識合わせのページか最終レビュー資料だけを渡す（`references/alignment.md` の「見せるページ」、`references/final-review.md` の「資料」）。
 - 失敗パターン集の配り方（ここが正本）:
   - この Skill の `references/pitfalls.md` は行の「いつ」で配る。作る順番の項目か「全項目」の行はその項目の作業カードへ（research の行は調査役へ）、工程の行はメインがその工程で当てる。
-  - `/design-game-difficulty` の集は全行を difficulty・problem-pool の行、`/design-game-difficulty-preview` の集は全行を difficulty-select の行として扱う。
+  - `/design-game-difficulty` の集は全行を difficulty・problem-pool の行として扱う。
   - 自己点検役に渡す「いつ」は、山場2では difficulty・problem-pool と「全項目」、作り込みでは difficulty・problem-pool を除く全項目（山場2の後に難易度の判定を変えたときは含める）。
-  - 体験レビュー役には、この Skill の集の「プレイUI・プレビュー・見た目」の節と、プレビューの集を渡す。
+  - 体験レビュー役には、この Skill の集の「プレイUI・見た目」の節を渡す。
 - スクリプトは `scripts/playtest-driver.mjs`（試遊と撮影のための常駐ブラウザ。使い方は冒頭）だけ。
 
 ## 人間への知らせ方

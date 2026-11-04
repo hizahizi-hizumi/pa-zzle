@@ -4,7 +4,7 @@
 
 ## 受け取る記録
 
-記録画面のコピーで書き出した JSON（`frontend/src/records/play-record-copy.ts`）。形:
+ゲームのホームの「成績」のコピーで書き出した JSON（`frontend/src/records/play-record-copy.ts`）。形:
 
 ```json
 { "formatVersion": 1, "records": [ { "gameId": "...", "recordId": "...", "startedAt": "...", "completedAt": "...", "payloadVersion": 4, "payload": { } } ] }
