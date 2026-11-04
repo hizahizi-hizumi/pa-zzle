@@ -71,7 +71,7 @@ upstream未設定なら:
 git push --set-upstream origin "<currentBranch>"
 ```
 
-設定済みなら `git push`。force pushはしない。
+設定済みなら `git push`。PR の中の修正を元のコミットに含めて履歴を書き換えたときだけ `git push --force-with-lease` を使う。
 
 ### 6. PR作成
 

@@ -9,6 +9,7 @@ paths:
 
 - `bun:test`、Bun test runner固有API、Bunでしか動作しないAPIへ依存しない。
 - テストはNode上のVitestで実行可能にする。
+- TSX のテストの描画・DOM 探索・`act` は Testing Library の API を使い、同じ仕組みを手製のヘルパで作らない。
 - テストの実行環境は層で決まる。各ゲームの `puzzle/`・`problem/`・`session/` と各ゲームの直下のテストは、画面（DOM）なしの node 環境で動くように書き、ファイルごとに環境を指定しない。
 
 ## テスト配置
