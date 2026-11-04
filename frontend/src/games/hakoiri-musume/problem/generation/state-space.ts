@@ -328,9 +328,9 @@ export function createHakoiriMusumeComponentGraph(
 /**
  * 盤面ごとの、最短手数と難易度の特徴。
  * - `optimal`: 娘を出口の前へ運ぶ最短手数。運べなければ -1。
- * - `preparation`: 準備の長さ。娘が出口へ今までで最も近づく（出口の前との距離が今までの最小を下回る）手を「前進」とし、
- *   前進と前進のあいだに要る手の数の最長。どんな長さの解でもよく、その最長が最も小さくなる解で数える。
- *   娘を往復させても、遠ざけた分を戻す手は前進にならないので、手を足して短くすることはできない。
+ * - `preparation`: 準備の長さ。娘の距離が今までの最小を下回り、その後二度と上回らない手を「前進」とし、前進と前進のあいだに
+ *   要る手の数の最長。どんな長さの解でもよく、その最長が最も小さくなる解で数える。娘を往復させても、一時的に前へ出して
+ *   戻しても、その手は前進にならないので、手を足して短くすることはできない。
  * - `detour`: 娘の遠回り。娘の左上と出口の前のマンハッタン距離が増える手の数。どんな長さの解でもよく、最も少ない解で数える。
  * - `lure`・`daughterMoves`・`optimalFirstMoves`: 最短解の上で、値が最も少ない解で数える（記録だけ）。
  *   誘いの局面の数、娘を動かす手の数、最短手数を縮める初手の数。
@@ -365,13 +365,20 @@ export function measureHakoiriMusumeDaughterDistance(
 const maximumDaughterDistance = 4;
 const unreached = 2_147_483_647;
 
+const recordCount = maximumDaughterDistance + 1;
+
 /**
- * 準備の長さ（`HakoiriMusumeStateMeasures` の `preparation`）。前進した直後の盤面（娘が今までで最も出口に近い盤面）ごとに、
- * 次の前進までに要る手の数と、その先の準備の長さの大きい方を、最も小さくする。距離の小さい盤面から順に求める。運べなければ -1。
+ * 準備の長さ（`HakoiriMusumeStateMeasures` の `preparation`）。運べなければ -1。
  *
- * 距離 `r` の盤面 `u` の値は、距離 `r` 以上の盤面だけを通って、距離が `r` より小さい盤面 `v` へ動ける盤面 `w` までの手の数
- * `d(u, w)` と、`v` の値 `c` の組の `max(d, c)` の最小。値が `T` 以下になるのは、`c` が `T` 以下の `w` のどれかへ `T` 手以内で
- * 行けるときなので、`T` を 0 から1つずつ上げ、`c` が `T` の `w` を起点に足しながら、起点からの手の数を幅優先で更新していく。
+ * 解の上の娘の距離を見て、今までの最小を下回り、その後の解で二度と上回らない距離へ出る手を「前進」とする。前進の手を除いた
+ * 手を、前進と前進のあいだ（始めから最初の前進まで、最後の前進から出口の前まで）で数え、その最長を準備の長さとする。
+ * どんな長さの解でもよく、最長が最も小さくなる解で数える。
+ *
+ * 前進するたびに、その距離を上限として以後の娘の距離を縛る。上限 `c` の区間を、盤面と今までの最小の距離 `r` の組の上で
+ * たどる。上限が `c` の区間の始め（距離 `c` へ前進した直後）の値は、`r` を下回る盤面 `w` へ前進できる組までの手の数と、
+ * `w` から始まる区間の値の大きい方の最小。値が `T` 以下になるのは、値が `T` 以下の前進へ `T` 手以内で行けるときなので、
+ * `T` を 0 から1つずつ上げ、起点を足しながら、起点からの手の数を幅優先で更新していく。上限の小さい区間から順に求める。
+ * 始めの盤面は上限なし（最大の距離 4）で、今までの最小をその盤面の距離として求める。
  */
 function measureRecordPreparation(
   graph: HakoiriMusumeStateGraph,
@@ -381,71 +388,113 @@ function measureRecordPreparation(
   const { boards, edgeStarts, edges } = graph;
   const count = boards.length;
   const preparation = new Int32Array(count).fill(-1);
+  // 距離 `d` へ前進した直後の盤面の値（上限 `d` の区間の始め）
+  const afterAdvance = new Int32Array(count).fill(-1);
   for (let index = 0; index < count; index += 1) {
     if (optimal[index] === 0) {
       preparation[index] = 0;
+      afterAdvance[index] = 0;
     }
   }
-  const stepsToExit = new Int32Array(count);
-  for (let record = 1; record <= maximumDaughterDistance; record += 1) {
-    stepsToExit.fill(unreached);
-    const exitsByValue: number[][] = [];
-    for (let exit = 0; exit < count; exit += 1) {
-      if (distance[exit]! < record) {
+  const stepsToAdvance = new Int32Array(count * recordCount);
+  for (let limit = 1; limit <= maximumDaughterDistance; limit += 1) {
+    stepsToAdvance.fill(unreached);
+    const advancesByValue: number[][] = [];
+    for (let current = 0; current < count; current += 1) {
+      if (distance[current]! > limit) {
         continue;
       }
-      let best = unreached;
-      for (
-        let edge = edgeStarts[exit]!;
-        edge < edgeStarts[exit + 1]!;
-        edge += 1
-      ) {
-        const next = edges[edge]!;
-        if (distance[next]! < record && preparation[next]! >= 0) {
-          best = Math.min(best, preparation[next]!);
+      if (optimal[current] === 0) {
+        for (let record = 0; record <= distance[current]!; record += 1) {
+          (advancesByValue[0] ??= []).push(current * recordCount + record);
+        }
+        continue;
+      }
+      for (let record = 1; record <= distance[current]!; record += 1) {
+        let best = unreached;
+        for (
+          let edge = edgeStarts[current]!;
+          edge < edgeStarts[current + 1]!;
+          edge += 1
+        ) {
+          const next = edges[edge]!;
+          if (distance[next]! < record && afterAdvance[next]! >= 0) {
+            best = Math.min(best, afterAdvance[next]!);
+          }
+        }
+        if (best !== unreached) {
+          (advancesByValue[best] ??= []).push(current * recordCount + record);
         }
       }
-      if (best !== unreached) {
-        (exitsByValue[best] ??= []).push(exit);
-      }
     }
-    // 値を求める盤面は、距離 `r` で、前進できる盤面（`r` を下回る盤面へ動ける盤面）へたどり着けるものだけ。
+    const isLast = limit === maximumDaughterDistance;
     let pending = boards.flatMap((_, index) =>
-      distance[index] === record && optimal[index]! > 0 ? [index] : [],
+      optimal[index]! > 0 &&
+      (isLast ? distance[index]! <= limit : distance[index] === limit)
+        ? [index]
+        : [],
     );
     for (
       let threshold = 0;
-      pending.length > 0 && threshold < count;
+      pending.length > 0 && threshold < advancesByValue.length;
       threshold += 1
     ) {
-      const queue = exitsByValue[threshold] ?? [];
-      for (const exit of queue) {
-        stepsToExit[exit] = 0;
+      const queue: number[] = [];
+      for (const state of advancesByValue[threshold] ?? []) {
+        if (stepsToAdvance[state] !== 0) {
+          stepsToAdvance[state] = 0;
+          queue.push(state);
+        }
       }
       for (let head = 0; head < queue.length; head += 1) {
-        const current = queue[head]!;
+        const state = queue[head]!;
+        const current = Math.floor(state / recordCount);
+        const record = state % recordCount;
+        const steps = stepsToAdvance[state]! + 1;
         for (
           let edge = edgeStarts[current]!;
           edge < edgeStarts[current + 1]!;
           edge += 1
         ) {
           const previous = edges[edge]!;
-          if (
-            distance[previous]! >= record &&
-            stepsToExit[current]! + 1 < stepsToExit[previous]!
+          const previousDistance = distance[previous]!;
+          if (previousDistance > limit || previousDistance < record) {
+            continue;
+          }
+          // 前進しない手で `current` へ来て、今までの最小が `record` になる組。
+          const highestRecord =
+            record === distance[current]
+              ? Math.min(limit, previousDistance)
+              : record;
+          for (
+            let previousRecord = record;
+            previousRecord <= highestRecord;
+            previousRecord += 1
           ) {
-            stepsToExit[previous] = stepsToExit[current]! + 1;
-            queue.push(previous);
+            const previousState = previous * recordCount + previousRecord;
+            if (steps < stepsToAdvance[previousState]!) {
+              stepsToAdvance[previousState] = steps;
+              queue.push(previousState);
+            }
           }
         }
       }
       pending = pending.filter((index) => {
-        if (stepsToExit[index]! <= threshold) {
-          preparation[index] = threshold;
+        const record = isLast ? distance[index]! : limit;
+        if (stepsToAdvance[index * recordCount + record]! <= threshold) {
+          (isLast ? preparation : afterAdvance)[index] = threshold;
           return false;
         }
         return true;
       });
+    }
+    // 起点を足し終えた後は手の数が減らないので、残った組の値は前進までの手の数（前進できなければ -1 のまま）。
+    for (const index of pending) {
+      const record = isLast ? distance[index]! : limit;
+      const steps = stepsToAdvance[index * recordCount + record]!;
+      if (steps !== unreached) {
+        (isLast ? preparation : afterAdvance)[index] = steps;
+      }
     }
   }
   return preparation;

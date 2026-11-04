@@ -17,7 +17,7 @@ function toRange([minimum, maximum]: readonly (number | null)[]) {
 describe("hakoiriMusumeLevelCriteria", () => {
   const { criteria } = reference;
 
-  test("調査で決めた案 F の基準表と同じ範囲であること", () => {
+  test("調査で決めた案 G の基準表と同じ範囲であること", () => {
     const fromResearch = Object.fromEntries(
       Object.entries(criteria.levels).map(([level, ranges]) => [
         level,
@@ -89,10 +89,10 @@ describe("classifyHakoiriMusumeFeatures", () => {
       { status: "out-of-range", reason: "unlisted-combination" },
     ],
     [
-      "準備30手・遠回り2回・空き2（横刀立馬）",
+      "準備40手・遠回り2回・空き2（横刀立馬）",
       {
         optimalMoveCount: 81,
-        preparationLength: 30,
+        preparationLength: 40,
         daughterDetourCount: 2,
         emptyCellCount: 2,
       },

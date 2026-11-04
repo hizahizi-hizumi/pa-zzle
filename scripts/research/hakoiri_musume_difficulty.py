@@ -8,8 +8,8 @@
   1. 候補空間（駒の組 = 縦長・横長・小駒の数）ごとに、置き方を全部数え上げ、
      ゴールからの多始点 BFS で全状態の最短手数を求める。
   2. 最短解の DAG の上で、解き方の道筋に依らない特徴（最短解のうちの最小・最大）を求め、
-     どんな長さの解でも崩れない準備の長さ（rprep）と娘の遠回り（adet）を求める。
-  3. つまみの案（A〜F）ごとに、レベル1〜5 の仮の基準表で全候補を分類し、
+     どんな長さの解でも崩れない準備の長さ（記録の更新で区切る rprep、後で超えない前進で区切る pprep）と娘の遠回り（adet）を求める。
+  3. つまみの案（A〜G）ごとに、レベル1〜5 の仮の基準表で全候補を分類し、
      分布（B1/B2/B4）・数え方の変種（A3）・素朴な解き方（D1）・収率（E1/E3）・天井（D2）を出す。
   4. 採った案の seed ごとの結果を移植の期待値（.expected.json）に書く。
 
@@ -326,6 +326,7 @@ def analyze_set(ps):
     f["branch"] = [len(x) for x in E]
     f["ar"] = ar
     f["rprep"] = record_preparation(E, d, adist)
+    f["pprep"] = permanent_preparation(E, d, adist)
     f["adet"] = any_detour(E, d, adist)
     return S, idx, E, d, comp, f
 
@@ -384,6 +385,80 @@ def record_preparation(E, d, adist):
     return rp
 
 
+def permanent_preparation(E, d, adist):
+    """準備の長さ（後で超えない前進で区切る、任意の長さの解での最小）。
+
+    娘の距離が今までの最小を下回り、その後の解で二度と上回らない手を「前進」とし、前進の手を除いた手を前進と前進のあいだで
+    数えた最長を、どんな長さの解でもよく、最も小さくなる解で数える。前進した距離を上限として以後の距離を縛り、上限 c の区間を
+    （盤面, 今までの最小の距離 r）の組の上でたどる。区間の始めの値は、r を下回る盤面へ前進できる組までの手の数と、その先の
+    区間の値の max の最小で、閾値 T を 0 から上げて起点を足しながら幅優先で更新する。上限の小さい区間から順に求め、始めの盤面は
+    上限 4、今までの最小をその盤面の距離として求める。運べなければ -1。"""
+    N = len(E)
+    INF = 10 ** 9
+    K = 5
+    pp = [-1] * N
+    after = [-1] * N
+    for i in range(N):
+        if d[i] == 0:
+            pp[i] = 0
+            after[i] = 0
+    for c in range(1, 5):
+        last = c == 4
+        steps = [INF] * (N * K)
+        seeds = {}
+        for u in range(N):
+            if adist[u] > c:
+                continue
+            if d[u] == 0:
+                for r in range(adist[u] + 1):
+                    seeds.setdefault(0, []).append(u * K + r)
+                continue
+            for r in range(1, adist[u] + 1):
+                best = INF
+                for v in E[u]:
+                    if adist[v] < r and after[v] >= 0 and after[v] < best:
+                        best = after[v]
+                if best < INF:
+                    seeds.setdefault(best, []).append(u * K + r)
+        pending = [i for i in range(N) if d[i] > 0 and (adist[i] <= c if last else adist[i] == c)]
+        top = max(seeds) if seeds else -1
+        T = 0
+        while pending and T <= top:
+            q = deque()
+            for s in seeds.get(T, ()):
+                if steps[s] != 0:
+                    steps[s] = 0
+                    q.append(s)
+            while q:
+                s = q.popleft()
+                u, r = divmod(s, K)
+                ns = steps[s] + 1
+                for p in E[u]:
+                    dp = adist[p]
+                    if dp > c or dp < r:
+                        continue
+                    hi_r = min(c, dp) if r == adist[u] else r
+                    for pr in range(r, hi_r + 1):
+                        t = p * K + pr
+                        if ns < steps[t]:
+                            steps[t] = ns
+                            q.append(t)
+            rest = []
+            for i in pending:
+                r = adist[i] if last else c
+                if steps[i * K + r] <= T:
+                    (pp if last else after)[i] = T
+                else:
+                    rest.append(i)
+            pending = rest
+            T += 1
+        for i in pending:
+            r = adist[i] if last else c
+            if steps[i * K + r] < INF:
+                (pp if last else after)[i] = steps[i * K + r]
+    return pp
+
+
 def any_detour(E, d, adist):
     """娘の遠回り（任意の長さの解での最小）。出口の前から逆にたどる 0-1 の幅優先探索。運べなければ -1。"""
     N = len(E)
@@ -422,6 +497,8 @@ PLAN_DESC = {
     "E0": "E の閾値違い（レベル2 の遠回りを 0〜1 回まで許す）。別の案ではなく E の境目の比較",
     "F": "E の準備の長さと遠回りを、どんな長さの解でも崩れない数え方にしたもの（準備: 娘が今までで最も出口に近づく手で区切る、"
          "遠回り: 任意の長さの解での最小）+ 空きの範囲。山場2の確かめ（F1）の所見で E から作り直した",
+    "G": "F の準備の長さを、後で超えない前進（その後の解で娘の距離が上回らない前進）だけで区切るようにしたもの。"
+         "一時的に娘を前へ出して戻す手で区切れない。F1 の再確認の所見で F から作り直した",
 }
 BANDS = {
     "A": ("opt", {1: (8, 15), 2: (16, 25), 3: (26, 40), 4: (41, 60), 5: (61, 90)}),
@@ -431,16 +508,18 @@ BANDS = {
     "E": ("prep", {1: (0, 4), 2: (5, 7), 3: (8, 11), 4: (12, 16), 5: (17, 99)}),
     "E0": ("prep", {1: (0, 4), 2: (5, 7), 3: (8, 11), 4: (12, 16), 5: (17, 99)}),
     "F": ("rprep", {1: (0, 8), 2: (9, 15), 3: (16, 22), 4: (23, 29), 5: (30, 999)}),
+    "G": ("pprep", {1: (0, 8), 2: (9, 15), 3: (16, 22), 4: (23, 29), 5: (30, 999)}),
 }
 BACK_RANGE = {
     "E": {1: (0, 1), 2: (1, 1), 3: (1, 2), 4: (2, 3), 5: (3, 99)},
     "E0": {1: (0, 1), 2: (0, 1), 3: (1, 2), 4: (2, 3), 5: (3, 99)},
     "F": {1: (0, 0), 2: (0, 1), 3: (1, 2), 4: (1, 2), 5: (2, 99)},
+    "G": {1: (0, 0), 2: (0, 1), 3: (1, 2), 4: (1, 2), 5: (2, 99)},
 }
-# 遠回りの範囲を確かめる特徴。F はどんな長さの解でも崩れない遠回り。
-BACK_KEY = {"F": "adet"}
+# 遠回りの範囲を確かめる特徴。F・G はどんな長さの解でも崩れない遠回り。
+BACK_KEY = {"F": "adet", "G": "adet"}
 PLANS = list(PLAN_DESC)
-CHOSEN = "F"
+CHOSEN = "G"
 
 
 def classify(plan, x, sub=None):
@@ -582,7 +661,7 @@ def pack(lst, E, d, radius, strict, cap):
 # ---------------------------------------------------------------- 1つの駒の組の処理
 
 JOINT = ("opt", "bmin", "prep", "lmin", "branch", "e")
-FEATS = ("opt", "bmin", "prep", "lmin", "dmv", "branch", "nopt", "ar", "e", "rprep", "adet")
+FEATS = ("opt", "bmin", "prep", "lmin", "dmv", "branch", "nopt", "ar", "e", "rprep", "pprep", "adet")
 
 
 def process(args):
@@ -608,7 +687,7 @@ def process(args):
         mi = idx[mirror(S[i])]
         if chosen_orientation(seed, texts[i], texts[mi]) != texts[i]:
             # 左右反転は同じ問題。特徴が一致するかだけ確かめる
-            for k in ("bmin", "prep", "lmin", "bmax", "prepf", "rprep", "adet"):
+            for k in ("bmin", "prep", "lmin", "bmax", "prepf", "rprep", "pprep", "adet"):
                 if f[k][i] != f[k][mi]:
                     mirror_mismatch += 1
                     break
@@ -894,7 +973,7 @@ def fixture_features(rows):
     ps = (cnt[1], cnt[2], cnt[3])
     S, idx, E, d, comp, f = analyze_set(ps)
     i = idx[st]
-    x = {k: f[k][i] for k in ("bmin", "bmax", "brow", "prep", "prepf", "lmin", "lsum", "dmv", "branch", "nopt", "rprep", "adet")}
+    x = {k: f[k][i] for k in ("bmin", "bmax", "brow", "prep", "prepf", "lmin", "lsum", "dmv", "branch", "nopt", "rprep", "pprep", "adet")}
     x["opt"] = d[i]
     x["e"] = empties(ps)
     return ps, x
