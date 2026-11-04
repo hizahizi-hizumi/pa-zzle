@@ -1,0 +1,249 @@
+[
+  {
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "record": {
+      "id": "water-sort:1767225600000:1767225601000:ws4-2-0:1",
+      "gameId": "water-sort",
+      "startedAt": 1767225600000,
+      "completedAt": 1767225601000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ws4-2-0",
+          "conditions": {
+            "colorCount": 4,
+            "capacity": 4,
+            "emptyBottleCount": 2
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveCount": 12,
+          "completionMoveCount": 12,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 12
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル1・速いが、最短より3手多く注ぎ、待ったで2手戻した",
+    "record": {
+      "id": "water-sort:1767312000000:1767312001000:ws4-2-0:1",
+      "gameId": "water-sort",
+      "startedAt": 1767312000000,
+      "completedAt": 1767312001000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ws4-2-0",
+          "conditions": {
+            "colorCount": 4,
+            "capacity": 4,
+            "emptyBottleCount": 2
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveCount": 17,
+          "completionMoveCount": 15,
+          "undoCount": 2,
+          "restartCount": 0,
+          "optimalMoveCount": 12
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "record": {
+      "id": "water-sort:1767398400000:1767398620937:ws10-2-1:1",
+      "gameId": "water-sort",
+      "startedAt": 1767398400000,
+      "completedAt": 1767398620937,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ws10-2-1",
+          "conditions": {
+            "colorCount": 10,
+            "capacity": 4,
+            "emptyBottleCount": 2
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 220937,
+          "moveCount": 31,
+          "completionMoveCount": 31,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 31
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "record": {
+      "id": "water-sort:1767484800000:1767485020938:ws10-2-1:1",
+      "gameId": "water-sort",
+      "startedAt": 1767484800000,
+      "completedAt": 1767485020938,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ws10-2-1",
+          "conditions": {
+            "colorCount": 10,
+            "capacity": 4,
+            "emptyBottleCount": 2
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 220938,
+          "moveCount": 31,
+          "completionMoveCount": 31,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 31
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "record": {
+      "id": "water-sort:1767571200000:1767571464687:ws10-2-1:1",
+      "gameId": "water-sort",
+      "startedAt": 1767571200000,
+      "completedAt": 1767571464687,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ws10-2-1",
+          "conditions": {
+            "colorCount": 10,
+            "capacity": 4,
+            "emptyBottleCount": 2
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 264687,
+          "moveCount": 31,
+          "completionMoveCount": 31,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 31
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "record": {
+      "id": "water-sort:1767657600000:1767657864688:ws10-2-1:1",
+      "gameId": "water-sort",
+      "startedAt": 1767657600000,
+      "completedAt": 1767657864688,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ws10-2-1",
+          "conditions": {
+            "colorCount": 10,
+            "capacity": 4,
+            "emptyBottleCount": 2
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 264688,
+          "moveCount": 31,
+          "completionMoveCount": 31,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 31
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・3時間かかったプレイ",
+    "record": {
+      "id": "water-sort:1767744000000:1767754800000:ws10-2-1:1",
+      "gameId": "water-sort",
+      "startedAt": 1767744000000,
+      "completedAt": 1767754800000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ws10-2-1",
+          "conditions": {
+            "colorCount": 10,
+            "capacity": 4,
+            "emptyBottleCount": 2
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 10800000,
+          "moveCount": 31,
+          "completionMoveCount": 31,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 31
+        }
+      }
+    }
+  },
+  {
+    "label": "完成までの手数を持たない payloadVersion 1",
+    "record": {
+      "id": "water-sort:1767830400000:1767830401000:ws4-2-0:1",
+      "gameId": "water-sort",
+      "startedAt": 1767830400000,
+      "completedAt": 1767830401000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "normal",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ws4-2-0",
+          "conditions": {
+            "colorCount": 4,
+            "capacity": 4,
+            "emptyBottleCount": 2
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveCount": 12,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 12
+        }
+      }
+    }
+  }
+]

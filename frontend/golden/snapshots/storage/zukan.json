@@ -1,0 +1,380 @@
+{
+  "hitofude-puzzle": {
+    "lastViewed": null,
+    "zukan": {
+      "latestPlayedDifficulty": "5",
+      "problemCount": 2500,
+      "solvedCount": 2,
+      "touchedProblems": [
+        {
+          "bestScore": 100,
+          "difficulty": "1",
+          "fastestElapsedMs": 1000,
+          "fewestMistakes": null,
+          "fewestMoves": null,
+          "firstClearedAt": 1767225601000,
+          "kind": "solved",
+          "number": 1,
+          "problemId": "s40r8bsbul",
+          "status": "perfect"
+        },
+        {
+          "bestScore": 90,
+          "difficulty": "5",
+          "fastestElapsedMs": 152550,
+          "fewestMistakes": null,
+          "fewestMoves": null,
+          "firstClearedAt": 1767398552550,
+          "kind": "solved",
+          "number": 2001,
+          "problemId": "p4av27ffrp",
+          "status": "great"
+        }
+      ]
+    }
+  },
+  "ice-floor-maze": {
+    "lastViewed": null,
+    "zukan": {
+      "latestPlayedDifficulty": "5",
+      "problemCount": 1900,
+      "solvedCount": 2,
+      "touchedProblems": [
+        {
+          "bestScore": 100,
+          "difficulty": "1",
+          "fastestElapsedMs": 1000,
+          "fewestMistakes": null,
+          "fewestMoves": {
+            "completionMoveCount": 9,
+            "optimalMoveCount": 9
+          },
+          "firstClearedAt": 1767225601000,
+          "kind": "solved",
+          "number": 1,
+          "problemId": "q5tuvi39iv",
+          "status": "perfect"
+        },
+        {
+          "bestScore": 90,
+          "difficulty": "5",
+          "fastestElapsedMs": 143041,
+          "fewestMistakes": null,
+          "fewestMoves": {
+            "completionMoveCount": 15,
+            "optimalMoveCount": 15
+          },
+          "firstClearedAt": 1767398543041,
+          "kind": "solved",
+          "number": 1601,
+          "problemId": "ai2p2s3euf",
+          "status": "great"
+        }
+      ]
+    }
+  },
+  "minesweeper": {
+    "lastViewed": {
+      "1": {
+        "frr16m084o": "perfect"
+      }
+    },
+    "zukan": {
+      "latestPlayedDifficulty": "5",
+      "problemCount": 5000,
+      "solvedCount": 2,
+      "touchedProblems": [
+        {
+          "bestScore": 100,
+          "difficulty": "1",
+          "fastestElapsedMs": 1000,
+          "fewestMistakes": 0,
+          "fewestMoves": null,
+          "firstClearedAt": 1767225601000,
+          "kind": "solved",
+          "number": 1,
+          "problemId": "frr16m084o",
+          "status": "perfect"
+        },
+        {
+          "bestScore": 90,
+          "difficulty": "5",
+          "fastestElapsedMs": 213362,
+          "fewestMistakes": 0,
+          "fewestMoves": null,
+          "firstClearedAt": 1767398613362,
+          "kind": "solved",
+          "number": 4001,
+          "problemId": "84hv2vf89v",
+          "status": "great"
+        }
+      ]
+    }
+  },
+  "nanpure": {
+    "lastViewed": {
+      "1": {
+        "321qncjdqm": "good"
+      },
+      "5": {
+        "i16a2ffbh7": "clear",
+        "uadf12p07p": "attempted"
+      }
+    },
+    "zukan": {
+      "latestPlayedDifficulty": "5",
+      "problemCount": 1500,
+      "solvedCount": 2,
+      "touchedProblems": [
+        {
+          "bestScore": 100,
+          "difficulty": "1",
+          "fastestElapsedMs": 1000,
+          "fewestMistakes": 0,
+          "fewestMoves": null,
+          "firstClearedAt": 1767225601000,
+          "kind": "solved",
+          "number": 1,
+          "problemId": "321qncjdqm",
+          "status": "perfect"
+        },
+        {
+          "bestScore": 90,
+          "difficulty": "5",
+          "fastestElapsedMs": 1500000,
+          "fewestMistakes": 0,
+          "fewestMoves": null,
+          "firstClearedAt": 1767399900000,
+          "kind": "solved",
+          "number": 1201,
+          "problemId": "i16a2ffbh7",
+          "status": "great"
+        },
+        {
+          "attempted": true,
+          "difficulty": "5",
+          "kind": "unsolved",
+          "number": 1202,
+          "problemId": "uadf12p07p",
+          "status": "attempted"
+        }
+      ]
+    }
+  },
+  "parking-jam": {
+    "lastViewed": null,
+    "zukan": {
+      "latestPlayedDifficulty": "5",
+      "problemCount": 5000,
+      "solvedCount": 2,
+      "touchedProblems": [
+        {
+          "bestScore": 100,
+          "difficulty": "1",
+          "fastestElapsedMs": 1000,
+          "fewestMistakes": 0,
+          "fewestMoves": null,
+          "firstClearedAt": 1767225601000,
+          "kind": "solved",
+          "number": 1,
+          "problemId": "mgdvjnbqu0",
+          "status": "perfect"
+        },
+        {
+          "bestScore": 90,
+          "difficulty": "5",
+          "fastestElapsedMs": 51762,
+          "fewestMistakes": 0,
+          "fewestMoves": null,
+          "firstClearedAt": 1767398451762,
+          "kind": "solved",
+          "number": 4001,
+          "problemId": "f689tsshb2",
+          "status": "great"
+        }
+      ]
+    }
+  },
+  "reflection": {
+    "lastViewed": null,
+    "zukan": {
+      "latestPlayedDifficulty": "1",
+      "problemCount": 2100,
+      "solvedCount": 2,
+      "touchedProblems": [
+        {
+          "bestScore": 100,
+          "difficulty": "1",
+          "fastestElapsedMs": 1000,
+          "fewestMistakes": null,
+          "fewestMoves": null,
+          "firstClearedAt": 1767225601000,
+          "kind": "solved",
+          "number": 1,
+          "problemId": "penio94uu8",
+          "status": "perfect"
+        },
+        {
+          "bestScore": 90,
+          "difficulty": "5",
+          "fastestElapsedMs": 179987,
+          "fewestMistakes": null,
+          "fewestMoves": null,
+          "firstClearedAt": 1767398579987,
+          "kind": "solved",
+          "number": 1801,
+          "problemId": "pv6n651k0g",
+          "status": "great"
+        }
+      ]
+    }
+  },
+  "slide-puzzle": {
+    "lastViewed": null,
+    "zukan": {
+      "latestPlayedDifficulty": "5",
+      "problemCount": 1000,
+      "solvedCount": 2,
+      "touchedProblems": [
+        {
+          "bestScore": 100,
+          "difficulty": "1",
+          "fastestElapsedMs": 1000,
+          "fewestMistakes": null,
+          "fewestMoves": {
+            "completionMoveCount": 20,
+            "optimalMoveCount": 20
+          },
+          "firstClearedAt": 1767225601000,
+          "kind": "solved",
+          "number": 1,
+          "problemId": "c6c3ahct24",
+          "status": "perfect"
+        },
+        {
+          "bestScore": 90,
+          "difficulty": "5",
+          "fastestElapsedMs": 130037,
+          "fewestMistakes": null,
+          "fewestMoves": {
+            "completionMoveCount": 44,
+            "optimalMoveCount": 44
+          },
+          "firstClearedAt": 1767398530037,
+          "kind": "solved",
+          "number": 801,
+          "problemId": "l34o969l62",
+          "status": "great"
+        }
+      ]
+    }
+  },
+  "takuzu": {
+    "lastViewed": null,
+    "zukan": {
+      "latestPlayedDifficulty": "1",
+      "problemCount": 2500,
+      "solvedCount": 2,
+      "touchedProblems": [
+        {
+          "bestScore": 100,
+          "difficulty": "1",
+          "fastestElapsedMs": 1000,
+          "fewestMistakes": null,
+          "fewestMoves": null,
+          "firstClearedAt": 1767225601000,
+          "kind": "solved",
+          "number": 1,
+          "problemId": "uvfs6952b4",
+          "status": "perfect"
+        },
+        {
+          "bestScore": 90,
+          "difficulty": "5",
+          "fastestElapsedMs": 271437,
+          "fewestMistakes": null,
+          "fewestMoves": null,
+          "firstClearedAt": 1767398671437,
+          "kind": "solved",
+          "number": 2001,
+          "problemId": "niprfh6u57",
+          "status": "great"
+        }
+      ]
+    }
+  },
+  "tsume-shogi": {
+    "lastViewed": null,
+    "zukan": {
+      "latestPlayedDifficulty": "5",
+      "problemCount": 4000,
+      "solvedCount": 2,
+      "touchedProblems": [
+        {
+          "bestScore": 100,
+          "difficulty": "1",
+          "fastestElapsedMs": 1000,
+          "fewestMistakes": 0,
+          "fewestMoves": null,
+          "firstClearedAt": 1767225601000,
+          "kind": "solved",
+          "number": 1,
+          "problemId": "5mehu4drf7",
+          "status": "perfect"
+        },
+        {
+          "bestScore": 90,
+          "difficulty": "5",
+          "fastestElapsedMs": 151500,
+          "fewestMistakes": 0,
+          "fewestMoves": null,
+          "firstClearedAt": 1767398551500,
+          "kind": "solved",
+          "number": 3501,
+          "problemId": "1vr2mb2b5n",
+          "status": "great"
+        }
+      ]
+    }
+  },
+  "water-sort": {
+    "lastViewed": null,
+    "zukan": {
+      "latestPlayedDifficulty": "5",
+      "problemCount": 5000,
+      "solvedCount": 2,
+      "touchedProblems": [
+        {
+          "bestScore": 100,
+          "difficulty": "1",
+          "fastestElapsedMs": 1000,
+          "fewestMistakes": null,
+          "fewestMoves": {
+            "completionMoveCount": 12,
+            "optimalMoveCount": 12
+          },
+          "firstClearedAt": 1767225601000,
+          "kind": "solved",
+          "number": 1,
+          "problemId": "vjqd8721fr",
+          "status": "perfect"
+        },
+        {
+          "bestScore": 90,
+          "difficulty": "5",
+          "fastestElapsedMs": 220937,
+          "fewestMistakes": null,
+          "fewestMoves": {
+            "completionMoveCount": 31,
+            "optimalMoveCount": 31
+          },
+          "firstClearedAt": 1767398620937,
+          "kind": "solved",
+          "number": 4001,
+          "problemId": "3u61ll2tnj",
+          "status": "great"
+        }
+      ]
+    }
+  }
+}

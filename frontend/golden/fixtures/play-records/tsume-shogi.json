@@ -1,0 +1,315 @@
+[
+  {
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "record": {
+      "id": "tsume-shogi:1767225600000:1767225601000:ts-3-c1-4-0",
+      "gameId": "tsume-shogi",
+      "startedAt": 1767225600000,
+      "completedAt": 1767225601000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ts-3-c1-4-0",
+          "conditions": {
+            "plies": 3,
+            "rootChecks": {
+              "minimum": 1,
+              "maximum": 4
+            }
+          }
+        },
+        "poolReference": {
+          "poolVersion": "1",
+          "problemId": "1-1"
+        },
+        "workload": {
+          "plies": 3,
+          "rootChecks": 3,
+          "plausibleWrong": 0,
+          "deepDecoyCount": 0
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "wrongCheckCount": 0,
+          "refutationViewCount": 0,
+          "returnCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "illegalInputCount": 0,
+          "inputCount": 10
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル1・速いが、王手でない・詰まない王手2回、うち1回を待ったで戻した",
+    "record": {
+      "id": "tsume-shogi:1767312000000:1767312001000:ts-3-c1-4-0",
+      "gameId": "tsume-shogi",
+      "startedAt": 1767312000000,
+      "completedAt": 1767312001000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ts-3-c1-4-0",
+          "conditions": {
+            "plies": 3,
+            "rootChecks": {
+              "minimum": 1,
+              "maximum": 4
+            }
+          }
+        },
+        "poolReference": {
+          "poolVersion": "1",
+          "problemId": "1-1"
+        },
+        "workload": {
+          "plies": 3,
+          "rootChecks": 3,
+          "plausibleWrong": 0,
+          "deepDecoyCount": 0
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "wrongCheckCount": 2,
+          "refutationViewCount": 2,
+          "returnCount": 1,
+          "undoCount": 1,
+          "restartCount": 0,
+          "illegalInputCount": 1,
+          "inputCount": 14
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "record": {
+      "id": "tsume-shogi:1767398400000:1767398551500:ts-5-c2-10-mid-0",
+      "gameId": "tsume-shogi",
+      "startedAt": 1767398400000,
+      "completedAt": 1767398551500,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ts-5-c2-10-mid-0",
+          "conditions": {
+            "plies": 5,
+            "rootChecks": {
+              "minimum": 2,
+              "maximum": 10
+            },
+            "baseKingArea": "middle"
+          }
+        },
+        "poolReference": {
+          "poolVersion": "1",
+          "problemId": "5-1"
+        },
+        "workload": {
+          "plies": 5,
+          "rootChecks": 10,
+          "plausibleWrong": 11,
+          "deepDecoyCount": 6
+        },
+        "performance": {
+          "elapsedMs": 151500,
+          "wrongCheckCount": 0,
+          "refutationViewCount": 0,
+          "returnCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "illegalInputCount": 0,
+          "inputCount": 10
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "record": {
+      "id": "tsume-shogi:1767484800000:1767484951501:ts-5-c2-10-mid-0",
+      "gameId": "tsume-shogi",
+      "startedAt": 1767484800000,
+      "completedAt": 1767484951501,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ts-5-c2-10-mid-0",
+          "conditions": {
+            "plies": 5,
+            "rootChecks": {
+              "minimum": 2,
+              "maximum": 10
+            },
+            "baseKingArea": "middle"
+          }
+        },
+        "poolReference": {
+          "poolVersion": "1",
+          "problemId": "5-1"
+        },
+        "workload": {
+          "plies": 5,
+          "rootChecks": 10,
+          "plausibleWrong": 11,
+          "deepDecoyCount": 6
+        },
+        "performance": {
+          "elapsedMs": 151501,
+          "wrongCheckCount": 0,
+          "refutationViewCount": 0,
+          "returnCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "illegalInputCount": 0,
+          "inputCount": 10
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "record": {
+      "id": "tsume-shogi:1767571200000:1767571381500:ts-5-c2-10-mid-0",
+      "gameId": "tsume-shogi",
+      "startedAt": 1767571200000,
+      "completedAt": 1767571381500,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ts-5-c2-10-mid-0",
+          "conditions": {
+            "plies": 5,
+            "rootChecks": {
+              "minimum": 2,
+              "maximum": 10
+            },
+            "baseKingArea": "middle"
+          }
+        },
+        "poolReference": {
+          "poolVersion": "1",
+          "problemId": "5-1"
+        },
+        "workload": {
+          "plies": 5,
+          "rootChecks": 10,
+          "plausibleWrong": 11,
+          "deepDecoyCount": 6
+        },
+        "performance": {
+          "elapsedMs": 181500,
+          "wrongCheckCount": 0,
+          "refutationViewCount": 0,
+          "returnCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "illegalInputCount": 0,
+          "inputCount": 10
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "record": {
+      "id": "tsume-shogi:1767657600000:1767657781501:ts-5-c2-10-mid-0",
+      "gameId": "tsume-shogi",
+      "startedAt": 1767657600000,
+      "completedAt": 1767657781501,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ts-5-c2-10-mid-0",
+          "conditions": {
+            "plies": 5,
+            "rootChecks": {
+              "minimum": 2,
+              "maximum": 10
+            },
+            "baseKingArea": "middle"
+          }
+        },
+        "poolReference": {
+          "poolVersion": "1",
+          "problemId": "5-1"
+        },
+        "workload": {
+          "plies": 5,
+          "rootChecks": 10,
+          "plausibleWrong": 11,
+          "deepDecoyCount": 6
+        },
+        "performance": {
+          "elapsedMs": 181501,
+          "wrongCheckCount": 0,
+          "refutationViewCount": 0,
+          "returnCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "illegalInputCount": 0,
+          "inputCount": 10
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・3時間かかったプレイ",
+    "record": {
+      "id": "tsume-shogi:1767744000000:1767754800000:ts-5-c2-10-mid-0",
+      "gameId": "tsume-shogi",
+      "startedAt": 1767744000000,
+      "completedAt": 1767754800000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ts-5-c2-10-mid-0",
+          "conditions": {
+            "plies": 5,
+            "rootChecks": {
+              "minimum": 2,
+              "maximum": 10
+            },
+            "baseKingArea": "middle"
+          }
+        },
+        "poolReference": {
+          "poolVersion": "1",
+          "problemId": "5-1"
+        },
+        "workload": {
+          "plies": 5,
+          "rootChecks": 10,
+          "plausibleWrong": 11,
+          "deepDecoyCount": 6
+        },
+        "performance": {
+          "elapsedMs": 10800000,
+          "wrongCheckCount": 0,
+          "refutationViewCount": 0,
+          "returnCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "illegalInputCount": 0,
+          "inputCount": 10
+        }
+      }
+    }
+  }
+]

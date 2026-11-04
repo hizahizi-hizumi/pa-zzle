@@ -1,0 +1,50 @@
+[
+  {
+    "label": "何も保存していない端末",
+    "items": {}
+  },
+  {
+    "label": "音量を選んで保存した端末",
+    "items": {
+      "pa-zzle.sound-effects-volume.v1": { "volume": 8, "unmutedVolume": 8 },
+      "pa-zzle.background-music-volume.v1": { "volume": 3, "unmutedVolume": 3 }
+    }
+  },
+  {
+    "label": "消音した端末（消音を戻すときの音量を覚えている）",
+    "items": {
+      "pa-zzle.sound-effects-volume.v1": { "volume": 0, "unmutedVolume": 7 },
+      "pa-zzle.background-music-volume.v1": { "volume": 0, "unmutedVolume": 2 }
+    }
+  },
+  {
+    "label": "音量を選べるようにする前の、鳴らさない設定だけを保存した端末",
+    "items": {
+      "pa-zzle.sound-effects.v1": { "enabled": false },
+      "pa-zzle.background-music.v1": { "enabled": false }
+    }
+  },
+  {
+    "label": "音量を選べるようにする前の、鳴らす設定だけを保存した端末",
+    "items": {
+      "pa-zzle.sound-effects.v1": { "enabled": true },
+      "pa-zzle.background-music.v1": { "enabled": true }
+    }
+  },
+  {
+    "label": "音量と、音量を選べるようにする前の設定の両方を保存した端末",
+    "items": {
+      "pa-zzle.sound-effects-volume.v1": { "volume": 6, "unmutedVolume": 6 },
+      "pa-zzle.sound-effects.v1": { "enabled": false },
+      "pa-zzle.background-music-volume.v1": { "volume": 4, "unmutedVolume": 4 },
+      "pa-zzle.background-music.v1": { "enabled": false }
+    }
+  },
+  {
+    "label": "範囲外の音量を保存した端末",
+    "items": {
+      "pa-zzle.sound-effects-volume.v1": { "volume": 11, "unmutedVolume": 11 },
+      "pa-zzle.background-music-volume.v1": { "volume": 2, "unmutedVolume": 0 }
+    }
+  }
+]

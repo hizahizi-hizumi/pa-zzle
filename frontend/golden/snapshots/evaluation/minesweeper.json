@@ -1,0 +1,240 @@
+[
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "metrics": {
+      "mistake-count": 0,
+      "play-score": 100,
+      "time-delta-ms": -60000
+    },
+    "recognized": true,
+    "recordId": "minesweeper:1767225600000:1767225601000:ms-pool-1-9x9-9-2:1",
+    "restoredResult": {
+      "elapsedMs": 1000,
+      "mineCount": 9,
+      "minimumOpenCount": 10,
+      "mistakeCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 40
+        },
+        "total": 100
+      },
+      "speedRule": {
+        "fullScoreMs": 61000,
+        "zeroScoreMs": 122000
+      },
+      "timeDeltaMs": -60000
+    },
+    "resultLevel": "perfect"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000,
+      "mistakeCount": 1
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速いが、地雷を1つ踏んだ",
+    "metrics": {
+      "mistake-count": 1,
+      "play-score": 85,
+      "time-delta-ms": -60000
+    },
+    "recognized": true,
+    "recordId": "minesweeper:1767312000000:1767312001000:ms-pool-1-9x9-9-2:1",
+    "restoredResult": {
+      "elapsedMs": 1000,
+      "mineCount": 9,
+      "minimumOpenCount": 10,
+      "mistakeCount": 1,
+      "score": {
+        "breakdown": {
+          "accuracy": 45,
+          "speed": 40
+        },
+        "total": 85
+      },
+      "speedRule": {
+        "fullScoreMs": 61000,
+        "zeroScoreMs": 122000
+      },
+      "timeDeltaMs": -60000
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 213362,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "metrics": {
+      "mistake-count": 0,
+      "play-score": 90,
+      "time-delta-ms": 44362
+    },
+    "recognized": true,
+    "recordId": "minesweeper:1767398400000:1767398613362:ms-pool-5-14x10-26-60:1",
+    "restoredResult": {
+      "elapsedMs": 213362,
+      "mineCount": 26,
+      "minimumOpenCount": 30,
+      "mistakeCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 30
+        },
+        "total": 90
+      },
+      "speedRule": {
+        "fullScoreMs": 169000,
+        "zeroScoreMs": 338000
+      },
+      "timeDeltaMs": 44362
+    },
+    "resultLevel": "great"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 213363,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "metrics": {
+      "mistake-count": 0,
+      "play-score": 89,
+      "time-delta-ms": 44363
+    },
+    "recognized": true,
+    "recordId": "minesweeper:1767484800000:1767485013363:ms-pool-5-14x10-26-60:1",
+    "restoredResult": {
+      "elapsedMs": 213363,
+      "mineCount": 26,
+      "minimumOpenCount": 30,
+      "mistakeCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 29
+        },
+        "total": 89
+      },
+      "speedRule": {
+        "fullScoreMs": 169000,
+        "zeroScoreMs": 338000
+      },
+      "timeDeltaMs": 44363
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 255612,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "metrics": {
+      "mistake-count": 0,
+      "play-score": 80,
+      "time-delta-ms": 86612
+    },
+    "recognized": true,
+    "recordId": "minesweeper:1767571200000:1767571455612:ms-pool-5-14x10-26-60:1",
+    "restoredResult": {
+      "elapsedMs": 255612,
+      "mineCount": 26,
+      "minimumOpenCount": 30,
+      "mistakeCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 20
+        },
+        "total": 80
+      },
+      "speedRule": {
+        "fullScoreMs": 169000,
+        "zeroScoreMs": 338000
+      },
+      "timeDeltaMs": 86612
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 255613,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "metrics": {
+      "mistake-count": 0,
+      "play-score": 79,
+      "time-delta-ms": 86613
+    },
+    "recognized": true,
+    "recordId": "minesweeper:1767657600000:1767657855613:ms-pool-5-14x10-26-60:1",
+    "restoredResult": {
+      "elapsedMs": 255613,
+      "mineCount": 26,
+      "minimumOpenCount": 30,
+      "mistakeCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 19
+        },
+        "total": 79
+      },
+      "speedRule": {
+        "fullScoreMs": 169000,
+        "zeroScoreMs": 338000
+      },
+      "timeDeltaMs": 86613
+    },
+    "resultLevel": "clear"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 10800000,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・3時間かかったプレイ",
+    "metrics": {
+      "mistake-count": 0,
+      "play-score": 60,
+      "time-delta-ms": 10631000
+    },
+    "recognized": true,
+    "recordId": "minesweeper:1767744000000:1767754800000:ms-pool-5-14x10-26-60:1",
+    "restoredResult": {
+      "elapsedMs": 10800000,
+      "mineCount": 26,
+      "minimumOpenCount": 30,
+      "mistakeCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 0
+        },
+        "total": 60
+      },
+      "speedRule": {
+        "fullScoreMs": 169000,
+        "zeroScoreMs": 338000
+      },
+      "timeDeltaMs": 10631000
+    },
+    "resultLevel": "clear"
+  }
+]

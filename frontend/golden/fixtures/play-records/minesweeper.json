@@ -1,0 +1,205 @@
+[
+  {
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "record": {
+      "id": "minesweeper:1767225600000:1767225601000:ms-pool-1-9x9-9-2:1",
+      "gameId": "minesweeper",
+      "startedAt": 1767225600000,
+      "completedAt": 1767225601000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ms-pool-1-9x9-9-2",
+          "conditions": {
+            "rows": 9,
+            "columns": 9,
+            "mineCount": 9,
+            "startCellPlacement": "random"
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "mistakeCount": 0,
+          "minimumOpenCount": 10
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル1・速いが、地雷を1つ踏んだ",
+    "record": {
+      "id": "minesweeper:1767312000000:1767312001000:ms-pool-1-9x9-9-2:1",
+      "gameId": "minesweeper",
+      "startedAt": 1767312000000,
+      "completedAt": 1767312001000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ms-pool-1-9x9-9-2",
+          "conditions": {
+            "rows": 9,
+            "columns": 9,
+            "mineCount": 9,
+            "startCellPlacement": "random"
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "mistakeCount": 1,
+          "minimumOpenCount": 10
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "record": {
+      "id": "minesweeper:1767398400000:1767398613362:ms-pool-5-14x10-26-60:1",
+      "gameId": "minesweeper",
+      "startedAt": 1767398400000,
+      "completedAt": 1767398613362,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ms-pool-5-14x10-26-60",
+          "conditions": {
+            "rows": 14,
+            "columns": 10,
+            "mineCount": 26,
+            "startCellPlacement": "random"
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 213362,
+          "mistakeCount": 0,
+          "minimumOpenCount": 30
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "record": {
+      "id": "minesweeper:1767484800000:1767485013363:ms-pool-5-14x10-26-60:1",
+      "gameId": "minesweeper",
+      "startedAt": 1767484800000,
+      "completedAt": 1767485013363,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ms-pool-5-14x10-26-60",
+          "conditions": {
+            "rows": 14,
+            "columns": 10,
+            "mineCount": 26,
+            "startCellPlacement": "random"
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 213363,
+          "mistakeCount": 0,
+          "minimumOpenCount": 30
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "record": {
+      "id": "minesweeper:1767571200000:1767571455612:ms-pool-5-14x10-26-60:1",
+      "gameId": "minesweeper",
+      "startedAt": 1767571200000,
+      "completedAt": 1767571455612,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ms-pool-5-14x10-26-60",
+          "conditions": {
+            "rows": 14,
+            "columns": 10,
+            "mineCount": 26,
+            "startCellPlacement": "random"
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 255612,
+          "mistakeCount": 0,
+          "minimumOpenCount": 30
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "record": {
+      "id": "minesweeper:1767657600000:1767657855613:ms-pool-5-14x10-26-60:1",
+      "gameId": "minesweeper",
+      "startedAt": 1767657600000,
+      "completedAt": 1767657855613,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ms-pool-5-14x10-26-60",
+          "conditions": {
+            "rows": 14,
+            "columns": 10,
+            "mineCount": 26,
+            "startCellPlacement": "random"
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 255613,
+          "mistakeCount": 0,
+          "minimumOpenCount": 30
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・3時間かかったプレイ",
+    "record": {
+      "id": "minesweeper:1767744000000:1767754800000:ms-pool-5-14x10-26-60:1",
+      "gameId": "minesweeper",
+      "startedAt": 1767744000000,
+      "completedAt": 1767754800000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ms-pool-5-14x10-26-60",
+          "conditions": {
+            "rows": 14,
+            "columns": 10,
+            "mineCount": 26,
+            "startCellPlacement": "random"
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 10800000,
+          "mistakeCount": 0,
+          "minimumOpenCount": 30
+        }
+      }
+    }
+  }
+]

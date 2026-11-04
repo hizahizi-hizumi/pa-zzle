@@ -1,0 +1,273 @@
+[
+  {
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "record": {
+      "id": "takuzu:1767225600000:1767225601000:tk-adjacency-0-0",
+      "gameId": "takuzu",
+      "startedAt": 1767225600000,
+      "completedAt": 1767225601000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "tk-adjacency-0-0",
+          "conditions": {
+            "size": 8,
+            "removalTechniqueLimit": "adjacency",
+            "extraGivenCount": 0
+          }
+        },
+        "workload": {
+          "emptyCellCount": 40,
+          "roundCount": 4,
+          "lineReadingRoundCount": 0
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "correctionCount": 0,
+          "restartCount": 0,
+          "undoCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル1・速いが、置き直し2回・待った1回・盤面を戻す1回",
+    "record": {
+      "id": "takuzu:1767312000000:1767312001000:tk-adjacency-0-0",
+      "gameId": "takuzu",
+      "startedAt": 1767312000000,
+      "completedAt": 1767312001000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "tk-adjacency-0-0",
+          "conditions": {
+            "size": 8,
+            "removalTechniqueLimit": "adjacency",
+            "extraGivenCount": 0
+          }
+        },
+        "workload": {
+          "emptyCellCount": 40,
+          "roundCount": 4,
+          "lineReadingRoundCount": 0
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "correctionCount": 2,
+          "restartCount": 1,
+          "undoCount": 1,
+          "inputCount": 50
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "record": {
+      "id": "takuzu:1767398400000:1767398671437:tk-duplicate-avoidance-0-11",
+      "gameId": "takuzu",
+      "startedAt": 1767398400000,
+      "completedAt": 1767398671437,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "tk-duplicate-avoidance-0-11",
+          "conditions": {
+            "size": 8,
+            "removalTechniqueLimit": "duplicate-avoidance",
+            "extraGivenCount": 0
+          }
+        },
+        "workload": {
+          "emptyCellCount": 48,
+          "roundCount": 23,
+          "lineReadingRoundCount": 4
+        },
+        "performance": {
+          "elapsedMs": 271437,
+          "correctionCount": 0,
+          "restartCount": 0,
+          "undoCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "record": {
+      "id": "takuzu:1767484800000:1767485071438:tk-duplicate-avoidance-0-11",
+      "gameId": "takuzu",
+      "startedAt": 1767484800000,
+      "completedAt": 1767485071438,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "tk-duplicate-avoidance-0-11",
+          "conditions": {
+            "size": 8,
+            "removalTechniqueLimit": "duplicate-avoidance",
+            "extraGivenCount": 0
+          }
+        },
+        "workload": {
+          "emptyCellCount": 48,
+          "roundCount": 23,
+          "lineReadingRoundCount": 4
+        },
+        "performance": {
+          "elapsedMs": 271438,
+          "correctionCount": 0,
+          "restartCount": 0,
+          "undoCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "record": {
+      "id": "takuzu:1767571200000:1767571525187:tk-duplicate-avoidance-0-11",
+      "gameId": "takuzu",
+      "startedAt": 1767571200000,
+      "completedAt": 1767571525187,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "tk-duplicate-avoidance-0-11",
+          "conditions": {
+            "size": 8,
+            "removalTechniqueLimit": "duplicate-avoidance",
+            "extraGivenCount": 0
+          }
+        },
+        "workload": {
+          "emptyCellCount": 48,
+          "roundCount": 23,
+          "lineReadingRoundCount": 4
+        },
+        "performance": {
+          "elapsedMs": 325187,
+          "correctionCount": 0,
+          "restartCount": 0,
+          "undoCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "record": {
+      "id": "takuzu:1767657600000:1767657925188:tk-duplicate-avoidance-0-11",
+      "gameId": "takuzu",
+      "startedAt": 1767657600000,
+      "completedAt": 1767657925188,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "tk-duplicate-avoidance-0-11",
+          "conditions": {
+            "size": 8,
+            "removalTechniqueLimit": "duplicate-avoidance",
+            "extraGivenCount": 0
+          }
+        },
+        "workload": {
+          "emptyCellCount": 48,
+          "roundCount": 23,
+          "lineReadingRoundCount": 4
+        },
+        "performance": {
+          "elapsedMs": 325188,
+          "correctionCount": 0,
+          "restartCount": 0,
+          "undoCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・3時間かかったプレイ",
+    "record": {
+      "id": "takuzu:1767744000000:1767754800000:tk-duplicate-avoidance-0-11",
+      "gameId": "takuzu",
+      "startedAt": 1767744000000,
+      "completedAt": 1767754800000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "tk-duplicate-avoidance-0-11",
+          "conditions": {
+            "size": 8,
+            "removalTechniqueLimit": "duplicate-avoidance",
+            "extraGivenCount": 0
+          }
+        },
+        "workload": {
+          "emptyCellCount": 48,
+          "roundCount": 23,
+          "lineReadingRoundCount": 4
+        },
+        "performance": {
+          "elapsedMs": 10800000,
+          "correctionCount": 0,
+          "restartCount": 0,
+          "undoCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "待ったの回数を持たない以前の記録",
+    "record": {
+      "id": "takuzu:1767830400000:1767830401000:tk-adjacency-0-0",
+      "gameId": "takuzu",
+      "startedAt": 1767830400000,
+      "completedAt": 1767830401000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "tk-adjacency-0-0",
+          "conditions": {
+            "size": 8,
+            "removalTechniqueLimit": "adjacency",
+            "extraGivenCount": 0
+          }
+        },
+        "workload": {
+          "emptyCellCount": 40,
+          "roundCount": 4,
+          "lineReadingRoundCount": 0
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "correctionCount": 0,
+          "restartCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  }
+]

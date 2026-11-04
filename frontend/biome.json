@@ -17,7 +17,9 @@
       "!src/games/reflection/problem/problem-pool.json",
       "!src/games/hitofude-puzzle/problem/problem-pool.json",
       "!src/games/ice-floor-maze/problem/problem-pool.json",
-      "!src/games/tsume-shogi/problem/problem-pool.json"
+      "!src/games/tsume-shogi/problem/problem-pool.json",
+      "!golden/snapshots",
+      "!e2e-results"
     ]
   },
   "formatter": {
@@ -42,7 +44,9 @@
           "options": {
             "ignoreTypes": false
           }
-        }
+        },
+        "noFocusedTests": "error",
+        "noSkippedTests": "error"
       },
       "complexity": {
         "noImportantStyles": "off"

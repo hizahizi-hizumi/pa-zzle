@@ -1,0 +1,314 @@
+[
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "metrics": {
+      "correction-count": 0,
+      "play-score": 100,
+      "time-delta-ms": -101000
+    },
+    "recognized": true,
+    "recordId": "takuzu:1767225600000:1767225601000:tk-adjacency-0-0",
+    "restoredResult": {
+      "correctionCount": 0,
+      "elapsedMs": 1000,
+      "inputCount": 40,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 40
+        },
+        "total": 100
+      },
+      "speedRule": {
+        "fullScoreMs": 102000,
+        "zeroScoreMs": 204000
+      },
+      "timeDeltaMs": -101000,
+      "undoCount": 0,
+      "workload": {
+        "emptyCellCount": 40,
+        "lineReadingRoundCount": 0,
+        "roundCount": 4
+      }
+    },
+    "resultLevel": "perfect"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速いが、置き直し2回・待った1回・盤面を戻す1回",
+    "metrics": {
+      "correction-count": 2,
+      "play-score": 73,
+      "time-delta-ms": -101000
+    },
+    "recognized": true,
+    "recordId": "takuzu:1767312000000:1767312001000:tk-adjacency-0-0",
+    "restoredResult": {
+      "correctionCount": 2,
+      "elapsedMs": 1000,
+      "inputCount": 50,
+      "restartCount": 1,
+      "score": {
+        "breakdown": {
+          "accuracy": 33,
+          "speed": 40
+        },
+        "total": 73
+      },
+      "speedRule": {
+        "fullScoreMs": 102000,
+        "zeroScoreMs": 204000
+      },
+      "timeDeltaMs": -101000,
+      "undoCount": 1,
+      "workload": {
+        "emptyCellCount": 40,
+        "lineReadingRoundCount": 0,
+        "roundCount": 4
+      }
+    },
+    "resultLevel": "clear"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 271437
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "metrics": {
+      "correction-count": 0,
+      "play-score": 90,
+      "time-delta-ms": 56437
+    },
+    "recognized": true,
+    "recordId": "takuzu:1767398400000:1767398671437:tk-duplicate-avoidance-0-11",
+    "restoredResult": {
+      "correctionCount": 0,
+      "elapsedMs": 271437,
+      "inputCount": 40,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 30
+        },
+        "total": 90
+      },
+      "speedRule": {
+        "fullScoreMs": 215000,
+        "zeroScoreMs": 430000
+      },
+      "timeDeltaMs": 56437,
+      "undoCount": 0,
+      "workload": {
+        "emptyCellCount": 48,
+        "lineReadingRoundCount": 4,
+        "roundCount": 23
+      }
+    },
+    "resultLevel": "great"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 271438
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "metrics": {
+      "correction-count": 0,
+      "play-score": 89,
+      "time-delta-ms": 56438
+    },
+    "recognized": true,
+    "recordId": "takuzu:1767484800000:1767485071438:tk-duplicate-avoidance-0-11",
+    "restoredResult": {
+      "correctionCount": 0,
+      "elapsedMs": 271438,
+      "inputCount": 40,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 29
+        },
+        "total": 89
+      },
+      "speedRule": {
+        "fullScoreMs": 215000,
+        "zeroScoreMs": 430000
+      },
+      "timeDeltaMs": 56438,
+      "undoCount": 0,
+      "workload": {
+        "emptyCellCount": 48,
+        "lineReadingRoundCount": 4,
+        "roundCount": 23
+      }
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 325187
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "metrics": {
+      "correction-count": 0,
+      "play-score": 80,
+      "time-delta-ms": 110187
+    },
+    "recognized": true,
+    "recordId": "takuzu:1767571200000:1767571525187:tk-duplicate-avoidance-0-11",
+    "restoredResult": {
+      "correctionCount": 0,
+      "elapsedMs": 325187,
+      "inputCount": 40,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 20
+        },
+        "total": 80
+      },
+      "speedRule": {
+        "fullScoreMs": 215000,
+        "zeroScoreMs": 430000
+      },
+      "timeDeltaMs": 110187,
+      "undoCount": 0,
+      "workload": {
+        "emptyCellCount": 48,
+        "lineReadingRoundCount": 4,
+        "roundCount": 23
+      }
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 325188
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "metrics": {
+      "correction-count": 0,
+      "play-score": 79,
+      "time-delta-ms": 110188
+    },
+    "recognized": true,
+    "recordId": "takuzu:1767657600000:1767657925188:tk-duplicate-avoidance-0-11",
+    "restoredResult": {
+      "correctionCount": 0,
+      "elapsedMs": 325188,
+      "inputCount": 40,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 19
+        },
+        "total": 79
+      },
+      "speedRule": {
+        "fullScoreMs": 215000,
+        "zeroScoreMs": 430000
+      },
+      "timeDeltaMs": 110188,
+      "undoCount": 0,
+      "workload": {
+        "emptyCellCount": 48,
+        "lineReadingRoundCount": 4,
+        "roundCount": 23
+      }
+    },
+    "resultLevel": "clear"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 10800000
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・3時間かかったプレイ",
+    "metrics": {
+      "correction-count": 0,
+      "play-score": 60,
+      "time-delta-ms": 10585000
+    },
+    "recognized": true,
+    "recordId": "takuzu:1767744000000:1767754800000:tk-duplicate-avoidance-0-11",
+    "restoredResult": {
+      "correctionCount": 0,
+      "elapsedMs": 10800000,
+      "inputCount": 40,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 0
+        },
+        "total": 60
+      },
+      "speedRule": {
+        "fullScoreMs": 215000,
+        "zeroScoreMs": 430000
+      },
+      "timeDeltaMs": 10585000,
+      "undoCount": 0,
+      "workload": {
+        "emptyCellCount": 48,
+        "lineReadingRoundCount": 4,
+        "roundCount": 23
+      }
+    },
+    "resultLevel": "clear"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000
+    },
+    "comparisonKey": "1",
+    "label": "待ったの回数を持たない以前の記録",
+    "metrics": {
+      "correction-count": 0,
+      "play-score": 100,
+      "time-delta-ms": -101000
+    },
+    "recognized": true,
+    "recordId": "takuzu:1767830400000:1767830401000:tk-adjacency-0-0",
+    "restoredResult": {
+      "correctionCount": 0,
+      "elapsedMs": 1000,
+      "inputCount": 40,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 60,
+          "speed": 40
+        },
+        "total": 100
+      },
+      "speedRule": {
+        "fullScoreMs": 102000,
+        "zeroScoreMs": 204000
+      },
+      "timeDeltaMs": -101000,
+      "undoCount": 0,
+      "workload": {
+        "emptyCellCount": 40,
+        "lineReadingRoundCount": 0,
+        "roundCount": 4
+      }
+    },
+    "resultLevel": "perfect"
+  }
+]

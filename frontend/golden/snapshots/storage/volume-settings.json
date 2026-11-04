@@ -1,0 +1,79 @@
+[
+  {
+    "backgroundMusic": {
+      "volume": 5,
+      "volumeAfterToggleMuted": 0
+    },
+    "label": "何も保存していない端末",
+    "soundEffects": {
+      "volume": 5,
+      "volumeAfterToggleMuted": 0
+    }
+  },
+  {
+    "backgroundMusic": {
+      "volume": 3,
+      "volumeAfterToggleMuted": 0
+    },
+    "label": "音量を選んで保存した端末",
+    "soundEffects": {
+      "volume": 8,
+      "volumeAfterToggleMuted": 0
+    }
+  },
+  {
+    "backgroundMusic": {
+      "volume": 0,
+      "volumeAfterToggleMuted": 2
+    },
+    "label": "消音した端末（消音を戻すときの音量を覚えている）",
+    "soundEffects": {
+      "volume": 0,
+      "volumeAfterToggleMuted": 7
+    }
+  },
+  {
+    "backgroundMusic": {
+      "volume": 0,
+      "volumeAfterToggleMuted": 5
+    },
+    "label": "音量を選べるようにする前の、鳴らさない設定だけを保存した端末",
+    "soundEffects": {
+      "volume": 0,
+      "volumeAfterToggleMuted": 5
+    }
+  },
+  {
+    "backgroundMusic": {
+      "volume": 5,
+      "volumeAfterToggleMuted": 0
+    },
+    "label": "音量を選べるようにする前の、鳴らす設定だけを保存した端末",
+    "soundEffects": {
+      "volume": 5,
+      "volumeAfterToggleMuted": 0
+    }
+  },
+  {
+    "backgroundMusic": {
+      "volume": 4,
+      "volumeAfterToggleMuted": 0
+    },
+    "label": "音量と、音量を選べるようにする前の設定の両方を保存した端末",
+    "soundEffects": {
+      "volume": 6,
+      "volumeAfterToggleMuted": 0
+    }
+  },
+  {
+    "backgroundMusic": {
+      "volume": 5,
+      "volumeAfterToggleMuted": 0
+    },
+    "label": "範囲外の音量を保存した端末",
+    "soundEffects": {
+      "volume": 5,
+      "volumeAfterToggleMuted": 0
+    }
+  }
+]

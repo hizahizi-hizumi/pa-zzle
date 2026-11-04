@@ -1,0 +1,283 @@
+[
+  {
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "record": {
+      "id": "reflection:1767225600000:1767225601000:rf-5-2-1",
+      "gameId": "reflection",
+      "startedAt": 1767225600000,
+      "completedAt": 1767225601000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "rf-5-2-1",
+          "conditions": {
+            "size": 5,
+            "pieceCount": 2
+          }
+        },
+        "workload": {
+          "pieceCount": 2,
+          "clueCount": 20,
+          "propagationRoundCount": 0,
+          "assumptionTestCount": 0,
+          "trialMoveCount": 2
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "relocationCount": 0,
+          "restartCount": 0,
+          "laserCheckCount": 0,
+          "inputCount": 20
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル1・速いが、置き直し3回・盤面を戻す1回・光路を5回確かめた",
+    "record": {
+      "id": "reflection:1767312000000:1767312001000:rf-5-2-1",
+      "gameId": "reflection",
+      "startedAt": 1767312000000,
+      "completedAt": 1767312001000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "rf-5-2-1",
+          "conditions": {
+            "size": 5,
+            "pieceCount": 2
+          }
+        },
+        "workload": {
+          "pieceCount": 2,
+          "clueCount": 20,
+          "propagationRoundCount": 0,
+          "assumptionTestCount": 0,
+          "trialMoveCount": 2
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "relocationCount": 3,
+          "restartCount": 1,
+          "laserCheckCount": 5,
+          "inputCount": 30
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "record": {
+      "id": "reflection:1767398400000:1767398579987:rf-9-17-4",
+      "gameId": "reflection",
+      "startedAt": 1767398400000,
+      "completedAt": 1767398579987,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "rf-9-17-4",
+          "conditions": {
+            "size": 9,
+            "pieceCount": 17
+          }
+        },
+        "workload": {
+          "pieceCount": 17,
+          "clueCount": 36,
+          "propagationRoundCount": 29,
+          "assumptionTestCount": 83,
+          "trialMoveCount": null
+        },
+        "performance": {
+          "elapsedMs": 179987,
+          "relocationCount": 0,
+          "restartCount": 0,
+          "laserCheckCount": 0,
+          "inputCount": 20
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "record": {
+      "id": "reflection:1767484800000:1767484979988:rf-9-17-4",
+      "gameId": "reflection",
+      "startedAt": 1767484800000,
+      "completedAt": 1767484979988,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "rf-9-17-4",
+          "conditions": {
+            "size": 9,
+            "pieceCount": 17
+          }
+        },
+        "workload": {
+          "pieceCount": 17,
+          "clueCount": 36,
+          "propagationRoundCount": 29,
+          "assumptionTestCount": 83,
+          "trialMoveCount": null
+        },
+        "performance": {
+          "elapsedMs": 179988,
+          "relocationCount": 0,
+          "restartCount": 0,
+          "laserCheckCount": 0,
+          "inputCount": 20
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "record": {
+      "id": "reflection:1767571200000:1767571409737:rf-9-17-4",
+      "gameId": "reflection",
+      "startedAt": 1767571200000,
+      "completedAt": 1767571409737,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "rf-9-17-4",
+          "conditions": {
+            "size": 9,
+            "pieceCount": 17
+          }
+        },
+        "workload": {
+          "pieceCount": 17,
+          "clueCount": 36,
+          "propagationRoundCount": 29,
+          "assumptionTestCount": 83,
+          "trialMoveCount": null
+        },
+        "performance": {
+          "elapsedMs": 209737,
+          "relocationCount": 0,
+          "restartCount": 0,
+          "laserCheckCount": 0,
+          "inputCount": 20
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "record": {
+      "id": "reflection:1767657600000:1767657809738:rf-9-17-4",
+      "gameId": "reflection",
+      "startedAt": 1767657600000,
+      "completedAt": 1767657809738,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "rf-9-17-4",
+          "conditions": {
+            "size": 9,
+            "pieceCount": 17
+          }
+        },
+        "workload": {
+          "pieceCount": 17,
+          "clueCount": 36,
+          "propagationRoundCount": 29,
+          "assumptionTestCount": 83,
+          "trialMoveCount": null
+        },
+        "performance": {
+          "elapsedMs": 209738,
+          "relocationCount": 0,
+          "restartCount": 0,
+          "laserCheckCount": 0,
+          "inputCount": 20
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・3時間かかったプレイ",
+    "record": {
+      "id": "reflection:1767744000000:1767754800000:rf-9-17-4",
+      "gameId": "reflection",
+      "startedAt": 1767744000000,
+      "completedAt": 1767754800000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "rf-9-17-4",
+          "conditions": {
+            "size": 9,
+            "pieceCount": 17
+          }
+        },
+        "workload": {
+          "pieceCount": 17,
+          "clueCount": 36,
+          "propagationRoundCount": 29,
+          "assumptionTestCount": 83,
+          "trialMoveCount": null
+        },
+        "performance": {
+          "elapsedMs": 10800000,
+          "relocationCount": 0,
+          "restartCount": 0,
+          "laserCheckCount": 0,
+          "inputCount": 20
+        }
+      }
+    }
+  },
+  {
+    "label": "評価に使わない待ったの回数を持つ以前の記録",
+    "record": {
+      "id": "reflection:1767830400000:1767830401000:rf-5-2-1",
+      "gameId": "reflection",
+      "startedAt": 1767830400000,
+      "completedAt": 1767830401000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "rf-5-2-1",
+          "conditions": {
+            "size": 5,
+            "pieceCount": 2
+          }
+        },
+        "workload": {
+          "pieceCount": 2,
+          "clueCount": 20,
+          "propagationRoundCount": 0,
+          "assumptionTestCount": 0,
+          "trialMoveCount": 2
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "relocationCount": 0,
+          "restartCount": 0,
+          "laserCheckCount": 0,
+          "inputCount": 20,
+          "undoCount": 2
+        }
+      }
+    }
+  }
+]

@@ -1,0 +1,842 @@
+[
+  {
+    "gameId": "hitofude-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "hitofude-puzzle:1767225600000:1767225601000:hp-6-t0-0",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "s40r8bsbul"
+    }
+  },
+  {
+    "gameId": "hitofude-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "hitofude-puzzle:1767312000000:1767312001000:hp-6-t0-0",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "s40r8bsbul"
+    }
+  },
+  {
+    "gameId": "hitofude-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "hitofude-puzzle:1767398400000:1767398552550:hp-8-t4-15",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "p4av27ffrp"
+    }
+  },
+  {
+    "gameId": "hitofude-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "hitofude-puzzle:1767484800000:1767484952551:hp-8-t4-15",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "p4av27ffrp"
+    }
+  },
+  {
+    "gameId": "hitofude-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "hitofude-puzzle:1767571200000:1767571390216:hp-8-t4-15",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "p4av27ffrp"
+    }
+  },
+  {
+    "gameId": "hitofude-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "hitofude-puzzle:1767657600000:1767657790217:hp-8-t4-15",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "p4av27ffrp"
+    }
+  },
+  {
+    "gameId": "hitofude-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "hitofude-puzzle:1767744000000:1767754800000:hp-8-t4-15",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "p4av27ffrp"
+    }
+  },
+  {
+    "gameId": "hitofude-puzzle",
+    "hasRecordResult": false,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "hitofude-puzzle:1767830400000:1767830401000:hp-6-t0-0",
+    "replayTarget": null
+  },
+  {
+    "gameId": "ice-floor-maze",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "ice-floor-maze:1767225600000:1767225601000:i200110i80g00000290g00i00g4401008008000-4-52",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "q5tuvi39iv"
+    }
+  },
+  {
+    "gameId": "ice-floor-maze",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "ice-floor-maze:1767312000000:1767312001000:i200110i80g00000290g00i00g4401008008000-4-52",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "q5tuvi39iv"
+    }
+  },
+  {
+    "gameId": "ice-floor-maze",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "ice-floor-maze:1767398400000:1767398543041:420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "ai2p2s3euf"
+    }
+  },
+  {
+    "gameId": "ice-floor-maze",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "ice-floor-maze:1767484800000:1767484943042:420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "ai2p2s3euf"
+    }
+  },
+  {
+    "gameId": "ice-floor-maze",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "ice-floor-maze:1767571200000:1767571371366:420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "ai2p2s3euf"
+    }
+  },
+  {
+    "gameId": "ice-floor-maze",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "ice-floor-maze:1767657600000:1767657771367:420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "ai2p2s3euf"
+    }
+  },
+  {
+    "gameId": "ice-floor-maze",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "ice-floor-maze:1767744000000:1767754800000:420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "ai2p2s3euf"
+    }
+  },
+  {
+    "gameId": "ice-floor-maze",
+    "hasRecordResult": false,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "ice-floor-maze:1767830400000:1767830401000:i200110i80g00000290g00i00g4401008008000-4-52",
+    "replayTarget": null
+  },
+  {
+    "gameId": "minesweeper",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "minesweeper:1767225600000:1767225601000:ms-pool-1-9x9-9-2:1",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "frr16m084o"
+    }
+  },
+  {
+    "gameId": "minesweeper",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "minesweeper:1767312000000:1767312001000:ms-pool-1-9x9-9-2:1",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "frr16m084o"
+    }
+  },
+  {
+    "gameId": "minesweeper",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "minesweeper:1767398400000:1767398613362:ms-pool-5-14x10-26-60:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "84hv2vf89v"
+    }
+  },
+  {
+    "gameId": "minesweeper",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "minesweeper:1767484800000:1767485013363:ms-pool-5-14x10-26-60:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "84hv2vf89v"
+    }
+  },
+  {
+    "gameId": "minesweeper",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "minesweeper:1767571200000:1767571455612:ms-pool-5-14x10-26-60:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "84hv2vf89v"
+    }
+  },
+  {
+    "gameId": "minesweeper",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "minesweeper:1767657600000:1767657855613:ms-pool-5-14x10-26-60:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "84hv2vf89v"
+    }
+  },
+  {
+    "gameId": "minesweeper",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "minesweeper:1767744000000:1767754800000:ms-pool-5-14x10-26-60:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "84hv2vf89v"
+    }
+  },
+  {
+    "gameId": "nanpure",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "nanpure:1767225600000:1767225601000:np-hidden-single-block-0",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "321qncjdqm"
+    }
+  },
+  {
+    "gameId": "nanpure",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "nanpure:1767312000000:1767312001000:np-hidden-single-block-0",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "321qncjdqm"
+    }
+  },
+  {
+    "gameId": "nanpure",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "nanpure:1767398400000:1767399900000:np-xyz-wing-23",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "i16a2ffbh7"
+    }
+  },
+  {
+    "gameId": "nanpure",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "nanpure:1767484800000:1767486300001:np-xyz-wing-23",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "i16a2ffbh7"
+    }
+  },
+  {
+    "gameId": "nanpure",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "nanpure:1767571200000:1767573300000:np-xyz-wing-23",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "i16a2ffbh7"
+    }
+  },
+  {
+    "gameId": "nanpure",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "nanpure:1767657600000:1767659700001:np-xyz-wing-23",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "i16a2ffbh7"
+    }
+  },
+  {
+    "gameId": "nanpure",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "nanpure:1767744000000:1767754800000:np-xyz-wing-23",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "i16a2ffbh7"
+    }
+  },
+  {
+    "gameId": "nanpure",
+    "hasRecordResult": false,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "nanpure:1767830400000:1767830401000:np-hidden-single-block-0",
+    "replayTarget": null
+  },
+  {
+    "gameId": "parking-jam",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 4,
+    "recordId": "parking-jam:1767225600000:1767225601000:pj-pool-0:2",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "mgdvjnbqu0"
+    }
+  },
+  {
+    "gameId": "parking-jam",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 4,
+    "recordId": "parking-jam:1767312000000:1767312001000:pj-pool-0:2",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "mgdvjnbqu0"
+    }
+  },
+  {
+    "gameId": "parking-jam",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 4,
+    "recordId": "parking-jam:1767398400000:1767398451762:pj-pool-0:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "f689tsshb2"
+    }
+  },
+  {
+    "gameId": "parking-jam",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 4,
+    "recordId": "parking-jam:1767484800000:1767484851763:pj-pool-0:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "f689tsshb2"
+    }
+  },
+  {
+    "gameId": "parking-jam",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 4,
+    "recordId": "parking-jam:1767571200000:1767571262012:pj-pool-0:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "f689tsshb2"
+    }
+  },
+  {
+    "gameId": "parking-jam",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 4,
+    "recordId": "parking-jam:1767657600000:1767657662013:pj-pool-0:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "f689tsshb2"
+    }
+  },
+  {
+    "gameId": "parking-jam",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 4,
+    "recordId": "parking-jam:1767744000000:1767754800000:pj-pool-0:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "f689tsshb2"
+    }
+  },
+  {
+    "gameId": "parking-jam",
+    "hasRecordResult": false,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "parking-jam:1767830400000:1767830401000:pj-pool-0:2",
+    "replayTarget": null
+  },
+  {
+    "gameId": "parking-jam",
+    "hasRecordResult": false,
+    "knownGame": true,
+    "payloadVersion": 3,
+    "recordId": "parking-jam:1767916800000:1767916801000:pj-pool-0:2",
+    "replayTarget": null
+  },
+  {
+    "gameId": "reflection",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "reflection:1767225600000:1767225601000:rf-5-2-1",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "penio94uu8"
+    }
+  },
+  {
+    "gameId": "reflection",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "reflection:1767312000000:1767312001000:rf-5-2-1",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "penio94uu8"
+    }
+  },
+  {
+    "gameId": "reflection",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "reflection:1767398400000:1767398579987:rf-9-17-4",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "pv6n651k0g"
+    }
+  },
+  {
+    "gameId": "reflection",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "reflection:1767484800000:1767484979988:rf-9-17-4",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "pv6n651k0g"
+    }
+  },
+  {
+    "gameId": "reflection",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "reflection:1767571200000:1767571409737:rf-9-17-4",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "pv6n651k0g"
+    }
+  },
+  {
+    "gameId": "reflection",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "reflection:1767657600000:1767657809738:rf-9-17-4",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "pv6n651k0g"
+    }
+  },
+  {
+    "gameId": "reflection",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "reflection:1767744000000:1767754800000:rf-9-17-4",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "pv6n651k0g"
+    }
+  },
+  {
+    "gameId": "reflection",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "reflection:1767830400000:1767830401000:rf-5-2-1",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "penio94uu8"
+    }
+  },
+  {
+    "gameId": "slide-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "slide-puzzle:1767225600000:1767225601000:sp3-20-0",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "c6c3ahct24"
+    }
+  },
+  {
+    "gameId": "slide-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "slide-puzzle:1767312000000:1767312001000:sp3-20-0",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "c6c3ahct24"
+    }
+  },
+  {
+    "gameId": "slide-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "slide-puzzle:1767398400000:1767398530037:sp5-60-2",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "l34o969l62"
+    }
+  },
+  {
+    "gameId": "slide-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "slide-puzzle:1767484800000:1767484930038:sp5-60-2",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "l34o969l62"
+    }
+  },
+  {
+    "gameId": "slide-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "slide-puzzle:1767571200000:1767571355787:sp5-60-2",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "l34o969l62"
+    }
+  },
+  {
+    "gameId": "slide-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "slide-puzzle:1767657600000:1767657755788:sp5-60-2",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "l34o969l62"
+    }
+  },
+  {
+    "gameId": "slide-puzzle",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "slide-puzzle:1767744000000:1767754800000:sp5-60-2",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "l34o969l62"
+    }
+  },
+  {
+    "gameId": "takuzu",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "takuzu:1767225600000:1767225601000:tk-adjacency-0-0",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "uvfs6952b4"
+    }
+  },
+  {
+    "gameId": "takuzu",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "takuzu:1767312000000:1767312001000:tk-adjacency-0-0",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "uvfs6952b4"
+    }
+  },
+  {
+    "gameId": "takuzu",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "takuzu:1767398400000:1767398671437:tk-duplicate-avoidance-0-11",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "niprfh6u57"
+    }
+  },
+  {
+    "gameId": "takuzu",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "takuzu:1767484800000:1767485071438:tk-duplicate-avoidance-0-11",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "niprfh6u57"
+    }
+  },
+  {
+    "gameId": "takuzu",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "takuzu:1767571200000:1767571525187:tk-duplicate-avoidance-0-11",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "niprfh6u57"
+    }
+  },
+  {
+    "gameId": "takuzu",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "takuzu:1767657600000:1767657925188:tk-duplicate-avoidance-0-11",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "niprfh6u57"
+    }
+  },
+  {
+    "gameId": "takuzu",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "takuzu:1767744000000:1767754800000:tk-duplicate-avoidance-0-11",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "niprfh6u57"
+    }
+  },
+  {
+    "gameId": "takuzu",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "takuzu:1767830400000:1767830401000:tk-adjacency-0-0",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "uvfs6952b4"
+    }
+  },
+  {
+    "gameId": "tsume-shogi",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "tsume-shogi:1767225600000:1767225601000:ts-3-c1-4-0",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "5mehu4drf7"
+    }
+  },
+  {
+    "gameId": "tsume-shogi",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "tsume-shogi:1767312000000:1767312001000:ts-3-c1-4-0",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "5mehu4drf7"
+    }
+  },
+  {
+    "gameId": "tsume-shogi",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "tsume-shogi:1767398400000:1767398551500:ts-5-c2-10-mid-0",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "1vr2mb2b5n"
+    }
+  },
+  {
+    "gameId": "tsume-shogi",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "tsume-shogi:1767484800000:1767484951501:ts-5-c2-10-mid-0",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "1vr2mb2b5n"
+    }
+  },
+  {
+    "gameId": "tsume-shogi",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "tsume-shogi:1767571200000:1767571381500:ts-5-c2-10-mid-0",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "1vr2mb2b5n"
+    }
+  },
+  {
+    "gameId": "tsume-shogi",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "tsume-shogi:1767657600000:1767657781501:ts-5-c2-10-mid-0",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "1vr2mb2b5n"
+    }
+  },
+  {
+    "gameId": "tsume-shogi",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "tsume-shogi:1767744000000:1767754800000:ts-5-c2-10-mid-0",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "1vr2mb2b5n"
+    }
+  },
+  {
+    "gameId": "water-sort",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "water-sort:1767225600000:1767225601000:ws4-2-0:1",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "vjqd8721fr"
+    }
+  },
+  {
+    "gameId": "water-sort",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "water-sort:1767312000000:1767312001000:ws4-2-0:1",
+    "replayTarget": {
+      "difficulty": "1",
+      "problemId": "vjqd8721fr"
+    }
+  },
+  {
+    "gameId": "water-sort",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "water-sort:1767398400000:1767398620937:ws10-2-1:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "3u61ll2tnj"
+    }
+  },
+  {
+    "gameId": "water-sort",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "water-sort:1767484800000:1767485020938:ws10-2-1:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "3u61ll2tnj"
+    }
+  },
+  {
+    "gameId": "water-sort",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "water-sort:1767571200000:1767571464687:ws10-2-1:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "3u61ll2tnj"
+    }
+  },
+  {
+    "gameId": "water-sort",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "water-sort:1767657600000:1767657864688:ws10-2-1:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "3u61ll2tnj"
+    }
+  },
+  {
+    "gameId": "water-sort",
+    "hasRecordResult": true,
+    "knownGame": true,
+    "payloadVersion": 2,
+    "recordId": "water-sort:1767744000000:1767754800000:ws10-2-1:1",
+    "replayTarget": {
+      "difficulty": "5",
+      "problemId": "3u61ll2tnj"
+    }
+  },
+  {
+    "gameId": "water-sort",
+    "hasRecordResult": false,
+    "knownGame": true,
+    "payloadVersion": 1,
+    "recordId": "water-sort:1767830400000:1767830401000:ws4-2-0:1",
+    "replayTarget": null
+  }
+]

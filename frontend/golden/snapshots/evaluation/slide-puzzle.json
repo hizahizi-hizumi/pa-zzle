@@ -1,0 +1,289 @@
+[
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000,
+      "moves": {
+        "completionMoveCount": 20,
+        "optimalMoveCount": 20
+      }
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "metrics": {
+      "move-delta": 0,
+      "play-score": 100,
+      "time-delta-ms": -44000
+    },
+    "recognized": true,
+    "recordId": "slide-puzzle:1767225600000:1767225601000:sp3-20-0",
+    "restoredResult": {
+      "boardSize": 3,
+      "completionMoveCount": 20,
+      "elapsedMs": 1000,
+      "moveCount": 20,
+      "moveDelta": 0,
+      "optimalMoveCount": 20,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "efficiency": 60,
+          "speed": 40
+        },
+        "total": 100
+      },
+      "slideCount": 20,
+      "speedRule": {
+        "fullScoreMs": 45000,
+        "zeroScoreMs": 90000
+      },
+      "timeDeltaMs": -44000
+    },
+    "resultLevel": "perfect"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000,
+      "moves": {
+        "completionMoveCount": 26,
+        "optimalMoveCount": 20
+      }
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速いが、最短より6枚多く動かし、盤面を戻す前に4枚動かした",
+    "metrics": {
+      "move-delta": 10,
+      "play-score": 80,
+      "time-delta-ms": -44000
+    },
+    "recognized": true,
+    "recordId": "slide-puzzle:1767312000000:1767312001000:sp3-20-0",
+    "restoredResult": {
+      "boardSize": 3,
+      "completionMoveCount": 26,
+      "elapsedMs": 1000,
+      "moveCount": 30,
+      "moveDelta": 10,
+      "optimalMoveCount": 20,
+      "restartCount": 1,
+      "score": {
+        "breakdown": {
+          "efficiency": 40,
+          "speed": 40
+        },
+        "total": 80
+      },
+      "slideCount": 26,
+      "speedRule": {
+        "fullScoreMs": 45000,
+        "zeroScoreMs": 90000
+      },
+      "timeDeltaMs": -44000
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 130037,
+      "moves": {
+        "completionMoveCount": 44,
+        "optimalMoveCount": 44
+      }
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "metrics": {
+      "move-delta": 0,
+      "play-score": 90,
+      "time-delta-ms": 27037
+    },
+    "recognized": true,
+    "recordId": "slide-puzzle:1767398400000:1767398530037:sp5-60-2",
+    "restoredResult": {
+      "boardSize": 5,
+      "completionMoveCount": 44,
+      "elapsedMs": 130037,
+      "moveCount": 44,
+      "moveDelta": 0,
+      "optimalMoveCount": 44,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "efficiency": 60,
+          "speed": 30
+        },
+        "total": 90
+      },
+      "slideCount": 44,
+      "speedRule": {
+        "fullScoreMs": 103000,
+        "zeroScoreMs": 206000
+      },
+      "timeDeltaMs": 27037
+    },
+    "resultLevel": "great"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 130038,
+      "moves": {
+        "completionMoveCount": 44,
+        "optimalMoveCount": 44
+      }
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "metrics": {
+      "move-delta": 0,
+      "play-score": 89,
+      "time-delta-ms": 27038
+    },
+    "recognized": true,
+    "recordId": "slide-puzzle:1767484800000:1767484930038:sp5-60-2",
+    "restoredResult": {
+      "boardSize": 5,
+      "completionMoveCount": 44,
+      "elapsedMs": 130038,
+      "moveCount": 44,
+      "moveDelta": 0,
+      "optimalMoveCount": 44,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "efficiency": 60,
+          "speed": 29
+        },
+        "total": 89
+      },
+      "slideCount": 44,
+      "speedRule": {
+        "fullScoreMs": 103000,
+        "zeroScoreMs": 206000
+      },
+      "timeDeltaMs": 27038
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 155787,
+      "moves": {
+        "completionMoveCount": 44,
+        "optimalMoveCount": 44
+      }
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "metrics": {
+      "move-delta": 0,
+      "play-score": 80,
+      "time-delta-ms": 52787
+    },
+    "recognized": true,
+    "recordId": "slide-puzzle:1767571200000:1767571355787:sp5-60-2",
+    "restoredResult": {
+      "boardSize": 5,
+      "completionMoveCount": 44,
+      "elapsedMs": 155787,
+      "moveCount": 44,
+      "moveDelta": 0,
+      "optimalMoveCount": 44,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "efficiency": 60,
+          "speed": 20
+        },
+        "total": 80
+      },
+      "slideCount": 44,
+      "speedRule": {
+        "fullScoreMs": 103000,
+        "zeroScoreMs": 206000
+      },
+      "timeDeltaMs": 52787
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 155788,
+      "moves": {
+        "completionMoveCount": 44,
+        "optimalMoveCount": 44
+      }
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "metrics": {
+      "move-delta": 0,
+      "play-score": 79,
+      "time-delta-ms": 52788
+    },
+    "recognized": true,
+    "recordId": "slide-puzzle:1767657600000:1767657755788:sp5-60-2",
+    "restoredResult": {
+      "boardSize": 5,
+      "completionMoveCount": 44,
+      "elapsedMs": 155788,
+      "moveCount": 44,
+      "moveDelta": 0,
+      "optimalMoveCount": 44,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "efficiency": 60,
+          "speed": 19
+        },
+        "total": 79
+      },
+      "slideCount": 44,
+      "speedRule": {
+        "fullScoreMs": 103000,
+        "zeroScoreMs": 206000
+      },
+      "timeDeltaMs": 52788
+    },
+    "resultLevel": "clear"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 10800000,
+      "moves": {
+        "completionMoveCount": 44,
+        "optimalMoveCount": 44
+      }
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・3時間かかったプレイ",
+    "metrics": {
+      "move-delta": 0,
+      "play-score": 60,
+      "time-delta-ms": 10697000
+    },
+    "recognized": true,
+    "recordId": "slide-puzzle:1767744000000:1767754800000:sp5-60-2",
+    "restoredResult": {
+      "boardSize": 5,
+      "completionMoveCount": 44,
+      "elapsedMs": 10800000,
+      "moveCount": 44,
+      "moveDelta": 0,
+      "optimalMoveCount": 44,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "efficiency": 60,
+          "speed": 0
+        },
+        "total": 60
+      },
+      "slideCount": 44,
+      "speedRule": {
+        "fullScoreMs": 103000,
+        "zeroScoreMs": 206000
+      },
+      "timeDeltaMs": 10697000
+    },
+    "resultLevel": "clear"
+  }
+]

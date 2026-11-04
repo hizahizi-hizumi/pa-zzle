@@ -1,0 +1,211 @@
+[
+  {
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "record": {
+      "id": "nanpure:1767225600000:1767225601000:np-hidden-single-block-0",
+      "gameId": "nanpure",
+      "startedAt": 1767225600000,
+      "completedAt": 1767225601000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "np-hidden-single-block-0",
+          "conditions": {
+            "removalTechniqueLimit": "hidden-single-block"
+          }
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "mistakeCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル1・速いが、ミス2回・待った1回・盤面を戻す1回",
+    "record": {
+      "id": "nanpure:1767312000000:1767312001000:np-hidden-single-block-0",
+      "gameId": "nanpure",
+      "startedAt": 1767312000000,
+      "completedAt": 1767312001000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "np-hidden-single-block-0",
+          "conditions": {
+            "removalTechniqueLimit": "hidden-single-block"
+          }
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "mistakeCount": 2,
+          "undoCount": 1,
+          "restartCount": 1
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "record": {
+      "id": "nanpure:1767398400000:1767399900000:np-xyz-wing-23",
+      "gameId": "nanpure",
+      "startedAt": 1767398400000,
+      "completedAt": 1767399900000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "np-xyz-wing-23",
+          "conditions": {
+            "removalTechniqueLimit": "xyz-wing"
+          }
+        },
+        "performance": {
+          "elapsedMs": 1500000,
+          "mistakeCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "record": {
+      "id": "nanpure:1767484800000:1767486300001:np-xyz-wing-23",
+      "gameId": "nanpure",
+      "startedAt": 1767484800000,
+      "completedAt": 1767486300001,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "np-xyz-wing-23",
+          "conditions": {
+            "removalTechniqueLimit": "xyz-wing"
+          }
+        },
+        "performance": {
+          "elapsedMs": 1500001,
+          "mistakeCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "record": {
+      "id": "nanpure:1767571200000:1767573300000:np-xyz-wing-23",
+      "gameId": "nanpure",
+      "startedAt": 1767571200000,
+      "completedAt": 1767573300000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "np-xyz-wing-23",
+          "conditions": {
+            "removalTechniqueLimit": "xyz-wing"
+          }
+        },
+        "performance": {
+          "elapsedMs": 2100000,
+          "mistakeCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "record": {
+      "id": "nanpure:1767657600000:1767659700001:np-xyz-wing-23",
+      "gameId": "nanpure",
+      "startedAt": 1767657600000,
+      "completedAt": 1767659700001,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "np-xyz-wing-23",
+          "conditions": {
+            "removalTechniqueLimit": "xyz-wing"
+          }
+        },
+        "performance": {
+          "elapsedMs": 2100001,
+          "mistakeCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・3時間かかったプレイ",
+    "record": {
+      "id": "nanpure:1767744000000:1767754800000:np-xyz-wing-23",
+      "gameId": "nanpure",
+      "startedAt": 1767744000000,
+      "completedAt": 1767754800000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "np-xyz-wing-23",
+          "conditions": {
+            "removalTechniqueLimit": "xyz-wing"
+          }
+        },
+        "performance": {
+          "elapsedMs": 10800000,
+          "mistakeCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "3段階の難易度とヒント数指定の生成器（版 1）で記録した payloadVersion 1",
+    "record": {
+      "id": "nanpure:1767830400000:1767830401000:np-hidden-single-block-0",
+      "gameId": "nanpure",
+      "startedAt": 1767830400000,
+      "completedAt": 1767830401000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "normal",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "nanpure-seed",
+          "conditions": {
+            "clueCount": 32
+          },
+          "generationAttempt": 1
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "mistakeCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  }
+]

@@ -1,0 +1,366 @@
+[
+  {
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "record": {
+      "id": "parking-jam:1767225600000:1767225601000:pj-pool-0:2",
+      "gameId": "parking-jam",
+      "startedAt": 1767225600000,
+      "completedAt": 1767225601000,
+      "payloadVersion": 4,
+      "payload": {
+        "difficulty": "1",
+        "difficultyModelVersion": "challenge-levers-v1",
+        "scoreModelVersion": "play-quality-v2",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "pj-pool-0",
+          "conditions": {
+            "width": 6,
+            "height": 6,
+            "vehicleCount": 8,
+            "roadOpeningCount": 3,
+            "roadOpeningSpan": 3,
+            "fixedAreaCount": 1,
+            "fixedAreaLength": 2,
+            "blockingPlacementProbability": 0
+          },
+          "generationAttempt": 2
+        },
+        "problemFacts": {
+          "initialBlockedVehicleCount": 2
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveAttemptCount": 8,
+          "successfulMoveCount": 8,
+          "failedMoveCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル1・速いが、出せなかった出庫2回・待った1回・盤面を戻す1回",
+    "record": {
+      "id": "parking-jam:1767312000000:1767312001000:pj-pool-0:2",
+      "gameId": "parking-jam",
+      "startedAt": 1767312000000,
+      "completedAt": 1767312001000,
+      "payloadVersion": 4,
+      "payload": {
+        "difficulty": "1",
+        "difficultyModelVersion": "challenge-levers-v1",
+        "scoreModelVersion": "play-quality-v2",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "pj-pool-0",
+          "conditions": {
+            "width": 6,
+            "height": 6,
+            "vehicleCount": 8,
+            "roadOpeningCount": 3,
+            "roadOpeningSpan": 3,
+            "fixedAreaCount": 1,
+            "fixedAreaLength": 2,
+            "blockingPlacementProbability": 0
+          },
+          "generationAttempt": 2
+        },
+        "problemFacts": {
+          "initialBlockedVehicleCount": 2
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveAttemptCount": 10,
+          "successfulMoveCount": 8,
+          "failedMoveCount": 2,
+          "undoCount": 1,
+          "restartCount": 1
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "record": {
+      "id": "parking-jam:1767398400000:1767398451762:pj-pool-0:1",
+      "gameId": "parking-jam",
+      "startedAt": 1767398400000,
+      "completedAt": 1767398451762,
+      "payloadVersion": 4,
+      "payload": {
+        "difficulty": "5",
+        "difficultyModelVersion": "challenge-levers-v1",
+        "scoreModelVersion": "play-quality-v2",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "pj-pool-0",
+          "conditions": {
+            "width": 6,
+            "height": 8,
+            "vehicleCount": 8,
+            "roadOpeningCount": 4,
+            "roadOpeningSpan": 3,
+            "fixedAreaCount": 1,
+            "fixedAreaLength": 2,
+            "blockingPlacementProbability": 0.5
+          },
+          "generationAttempt": 1
+        },
+        "problemFacts": {
+          "initialBlockedVehicleCount": 4
+        },
+        "performance": {
+          "elapsedMs": 51762,
+          "moveAttemptCount": 8,
+          "successfulMoveCount": 8,
+          "failedMoveCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "record": {
+      "id": "parking-jam:1767484800000:1767484851763:pj-pool-0:1",
+      "gameId": "parking-jam",
+      "startedAt": 1767484800000,
+      "completedAt": 1767484851763,
+      "payloadVersion": 4,
+      "payload": {
+        "difficulty": "5",
+        "difficultyModelVersion": "challenge-levers-v1",
+        "scoreModelVersion": "play-quality-v2",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "pj-pool-0",
+          "conditions": {
+            "width": 6,
+            "height": 8,
+            "vehicleCount": 8,
+            "roadOpeningCount": 4,
+            "roadOpeningSpan": 3,
+            "fixedAreaCount": 1,
+            "fixedAreaLength": 2,
+            "blockingPlacementProbability": 0.5
+          },
+          "generationAttempt": 1
+        },
+        "problemFacts": {
+          "initialBlockedVehicleCount": 4
+        },
+        "performance": {
+          "elapsedMs": 51763,
+          "moveAttemptCount": 8,
+          "successfulMoveCount": 8,
+          "failedMoveCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "record": {
+      "id": "parking-jam:1767571200000:1767571262012:pj-pool-0:1",
+      "gameId": "parking-jam",
+      "startedAt": 1767571200000,
+      "completedAt": 1767571262012,
+      "payloadVersion": 4,
+      "payload": {
+        "difficulty": "5",
+        "difficultyModelVersion": "challenge-levers-v1",
+        "scoreModelVersion": "play-quality-v2",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "pj-pool-0",
+          "conditions": {
+            "width": 6,
+            "height": 8,
+            "vehicleCount": 8,
+            "roadOpeningCount": 4,
+            "roadOpeningSpan": 3,
+            "fixedAreaCount": 1,
+            "fixedAreaLength": 2,
+            "blockingPlacementProbability": 0.5
+          },
+          "generationAttempt": 1
+        },
+        "problemFacts": {
+          "initialBlockedVehicleCount": 4
+        },
+        "performance": {
+          "elapsedMs": 62012,
+          "moveAttemptCount": 8,
+          "successfulMoveCount": 8,
+          "failedMoveCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "record": {
+      "id": "parking-jam:1767657600000:1767657662013:pj-pool-0:1",
+      "gameId": "parking-jam",
+      "startedAt": 1767657600000,
+      "completedAt": 1767657662013,
+      "payloadVersion": 4,
+      "payload": {
+        "difficulty": "5",
+        "difficultyModelVersion": "challenge-levers-v1",
+        "scoreModelVersion": "play-quality-v2",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "pj-pool-0",
+          "conditions": {
+            "width": 6,
+            "height": 8,
+            "vehicleCount": 8,
+            "roadOpeningCount": 4,
+            "roadOpeningSpan": 3,
+            "fixedAreaCount": 1,
+            "fixedAreaLength": 2,
+            "blockingPlacementProbability": 0.5
+          },
+          "generationAttempt": 1
+        },
+        "problemFacts": {
+          "initialBlockedVehicleCount": 4
+        },
+        "performance": {
+          "elapsedMs": 62013,
+          "moveAttemptCount": 8,
+          "successfulMoveCount": 8,
+          "failedMoveCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・3時間かかったプレイ",
+    "record": {
+      "id": "parking-jam:1767744000000:1767754800000:pj-pool-0:1",
+      "gameId": "parking-jam",
+      "startedAt": 1767744000000,
+      "completedAt": 1767754800000,
+      "payloadVersion": 4,
+      "payload": {
+        "difficulty": "5",
+        "difficultyModelVersion": "challenge-levers-v1",
+        "scoreModelVersion": "play-quality-v2",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "pj-pool-0",
+          "conditions": {
+            "width": 6,
+            "height": 8,
+            "vehicleCount": 8,
+            "roadOpeningCount": 4,
+            "roadOpeningSpan": 3,
+            "fixedAreaCount": 1,
+            "fixedAreaLength": 2,
+            "blockingPlacementProbability": 0.5
+          },
+          "generationAttempt": 1
+        },
+        "problemFacts": {
+          "initialBlockedVehicleCount": 4
+        },
+        "performance": {
+          "elapsedMs": 10800000,
+          "moveAttemptCount": 8,
+          "successfulMoveCount": 8,
+          "failedMoveCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "play-quality-v1 で採点し問題の事実を持たない payloadVersion 2",
+    "record": {
+      "id": "parking-jam:1767830400000:1767830401000:pj-pool-0:2",
+      "gameId": "parking-jam",
+      "startedAt": 1767830400000,
+      "completedAt": 1767830401000,
+      "payloadVersion": 2,
+      "payload": {
+        "difficulty": "normal",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "pj-pool-0",
+          "conditions": {
+            "width": 6,
+            "height": 6,
+            "vehicleCount": 8,
+            "roadOpeningCount": 3,
+            "roadOpeningSpan": 3,
+            "fixedAreaCount": 1,
+            "fixedAreaLength": 2,
+            "blockingPlacementProbability": 0
+          },
+          "generationAttempt": 2
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveAttemptCount": 8,
+          "successfulMoveCount": 8,
+          "failedMoveCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  },
+  {
+    "label": "3段階の難易度で記録した payloadVersion 3",
+    "record": {
+      "id": "parking-jam:1767916800000:1767916801000:pj-pool-0:2",
+      "gameId": "parking-jam",
+      "startedAt": 1767916800000,
+      "completedAt": 1767916801000,
+      "payloadVersion": 3,
+      "payload": {
+        "difficulty": "hard",
+        "difficultyModelVersion": "visual-local-load-v1",
+        "scoreModelVersion": "play-quality-v2",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "pj-pool-0",
+          "conditions": {
+            "width": 6,
+            "height": 6,
+            "vehicleCount": 8,
+            "roadOpeningCount": 3,
+            "roadOpeningSpan": 3,
+            "fixedAreaCount": 1,
+            "fixedAreaLength": 2,
+            "blockingPlacementProbability": 0
+          },
+          "generationAttempt": 2
+        },
+        "problemFacts": {
+          "initialBlockedVehicleCount": 2
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveAttemptCount": 8,
+          "successfulMoveCount": 8,
+          "failedMoveCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    }
+  }
+]

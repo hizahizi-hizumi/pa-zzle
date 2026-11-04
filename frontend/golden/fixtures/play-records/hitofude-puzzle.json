@@ -1,0 +1,290 @@
+[
+  {
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "record": {
+      "id": "hitofude-puzzle:1767225600000:1767225601000:hp-6-t0-0",
+      "gameId": "hitofude-puzzle",
+      "startedAt": 1767225600000,
+      "completedAt": 1767225601000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "hp-6-t0-0",
+          "conditions": {
+            "size": 6,
+            "targetLookaheadLoad": 0
+          }
+        },
+        "workload": {
+          "openCellCount": 29,
+          "assumptionCount": 0,
+          "refutationStepCount": 0,
+          "longestRefutationLength": 0,
+          "fatalBranchCount": 2
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "backtrackCount": 0,
+          "retractedCellCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル1・速いが、引き直し3回・待った2回・盤面を戻す1回",
+    "record": {
+      "id": "hitofude-puzzle:1767312000000:1767312001000:hp-6-t0-0",
+      "gameId": "hitofude-puzzle",
+      "startedAt": 1767312000000,
+      "completedAt": 1767312001000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "hp-6-t0-0",
+          "conditions": {
+            "size": 6,
+            "targetLookaheadLoad": 0
+          }
+        },
+        "workload": {
+          "openCellCount": 29,
+          "assumptionCount": 0,
+          "refutationStepCount": 0,
+          "longestRefutationLength": 0,
+          "fatalBranchCount": 2
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "backtrackCount": 3,
+          "retractedCellCount": 12,
+          "undoCount": 2,
+          "restartCount": 1,
+          "inputCount": 60
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "record": {
+      "id": "hitofude-puzzle:1767398400000:1767398552550:hp-8-t4-15",
+      "gameId": "hitofude-puzzle",
+      "startedAt": 1767398400000,
+      "completedAt": 1767398552550,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "hp-8-t4-15",
+          "conditions": {
+            "size": 8,
+            "targetLookaheadLoad": 4
+          }
+        },
+        "workload": {
+          "openCellCount": 56,
+          "assumptionCount": 3,
+          "refutationStepCount": 17,
+          "longestRefutationLength": 9,
+          "fatalBranchCount": 18
+        },
+        "performance": {
+          "elapsedMs": 152550,
+          "backtrackCount": 0,
+          "retractedCellCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "record": {
+      "id": "hitofude-puzzle:1767484800000:1767484952551:hp-8-t4-15",
+      "gameId": "hitofude-puzzle",
+      "startedAt": 1767484800000,
+      "completedAt": 1767484952551,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "hp-8-t4-15",
+          "conditions": {
+            "size": 8,
+            "targetLookaheadLoad": 4
+          }
+        },
+        "workload": {
+          "openCellCount": 56,
+          "assumptionCount": 3,
+          "refutationStepCount": 17,
+          "longestRefutationLength": 9,
+          "fatalBranchCount": 18
+        },
+        "performance": {
+          "elapsedMs": 152551,
+          "backtrackCount": 0,
+          "retractedCellCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "record": {
+      "id": "hitofude-puzzle:1767571200000:1767571390216:hp-8-t4-15",
+      "gameId": "hitofude-puzzle",
+      "startedAt": 1767571200000,
+      "completedAt": 1767571390216,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "hp-8-t4-15",
+          "conditions": {
+            "size": 8,
+            "targetLookaheadLoad": 4
+          }
+        },
+        "workload": {
+          "openCellCount": 56,
+          "assumptionCount": 3,
+          "refutationStepCount": 17,
+          "longestRefutationLength": 9,
+          "fatalBranchCount": 18
+        },
+        "performance": {
+          "elapsedMs": 190216,
+          "backtrackCount": 0,
+          "retractedCellCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "record": {
+      "id": "hitofude-puzzle:1767657600000:1767657790217:hp-8-t4-15",
+      "gameId": "hitofude-puzzle",
+      "startedAt": 1767657600000,
+      "completedAt": 1767657790217,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "hp-8-t4-15",
+          "conditions": {
+            "size": 8,
+            "targetLookaheadLoad": 4
+          }
+        },
+        "workload": {
+          "openCellCount": 56,
+          "assumptionCount": 3,
+          "refutationStepCount": 17,
+          "longestRefutationLength": 9,
+          "fatalBranchCount": 18
+        },
+        "performance": {
+          "elapsedMs": 190217,
+          "backtrackCount": 0,
+          "retractedCellCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・3時間かかったプレイ",
+    "record": {
+      "id": "hitofude-puzzle:1767744000000:1767754800000:hp-8-t4-15",
+      "gameId": "hitofude-puzzle",
+      "startedAt": 1767744000000,
+      "completedAt": 1767754800000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "hp-8-t4-15",
+          "conditions": {
+            "size": 8,
+            "targetLookaheadLoad": 4
+          }
+        },
+        "workload": {
+          "openCellCount": 56,
+          "assumptionCount": 3,
+          "refutationStepCount": 17,
+          "longestRefutationLength": 9,
+          "fatalBranchCount": 18
+        },
+        "performance": {
+          "elapsedMs": 10800000,
+          "backtrackCount": 0,
+          "retractedCellCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  },
+  {
+    "label": "前の生成器（版 1）の問題の記録",
+    "record": {
+      "id": "hitofude-puzzle:1767830400000:1767830401000:hp-6-t0-0",
+      "gameId": "hitofude-puzzle",
+      "startedAt": 1767830400000,
+      "completedAt": 1767830401000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "hp-8-0-16",
+          "conditions": {
+            "size": 8,
+            "wallRatio": 0
+          }
+        },
+        "workload": {
+          "openCellCount": 29,
+          "assumptionCount": 0,
+          "refutationStepCount": 0,
+          "longestRefutationLength": 0,
+          "fatalBranchCount": 2
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "backtrackCount": 0,
+          "retractedCellCount": 0,
+          "undoCount": 0,
+          "restartCount": 0,
+          "inputCount": 40
+        }
+      }
+    }
+  }
+]

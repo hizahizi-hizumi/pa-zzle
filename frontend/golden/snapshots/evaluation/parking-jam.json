@@ -1,0 +1,323 @@
+[
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "metrics": {
+      "failed-move-count": 0,
+      "play-score": 100,
+      "time-delta-ms": -34000
+    },
+    "recognized": true,
+    "recordId": "parking-jam:1767225600000:1767225601000:pj-pool-0:2",
+    "restoredResult": {
+      "elapsedMs": 1000,
+      "failedMoveCount": 0,
+      "moveAttemptCount": 8,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 40,
+          "stability": 20
+        },
+        "total": 100
+      },
+      "speedReference": {
+        "initialBlockedVehicleCount": 2,
+        "vehicleCount": 8
+      },
+      "speedRule": {
+        "fullScoreMs": 35000,
+        "zeroScoreMs": 70000
+      },
+      "successfulMoveCount": 8,
+      "timeDeltaMs": -34000,
+      "undoCount": 0
+    },
+    "resultLevel": "perfect"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000,
+      "mistakeCount": 2
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速いが、出せなかった出庫2回・待った1回・盤面を戻す1回",
+    "metrics": {
+      "failed-move-count": 2,
+      "play-score": 83,
+      "time-delta-ms": -34000
+    },
+    "recognized": true,
+    "recordId": "parking-jam:1767312000000:1767312001000:pj-pool-0:2",
+    "restoredResult": {
+      "elapsedMs": 1000,
+      "failedMoveCount": 2,
+      "moveAttemptCount": 10,
+      "restartCount": 1,
+      "score": {
+        "breakdown": {
+          "accuracy": 30,
+          "speed": 40,
+          "stability": 13
+        },
+        "total": 83
+      },
+      "speedReference": {
+        "initialBlockedVehicleCount": 2,
+        "vehicleCount": 8
+      },
+      "speedRule": {
+        "fullScoreMs": 35000,
+        "zeroScoreMs": 70000
+      },
+      "successfulMoveCount": 8,
+      "timeDeltaMs": -34000,
+      "undoCount": 1
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 51762,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "metrics": {
+      "failed-move-count": 0,
+      "play-score": 90,
+      "time-delta-ms": 10762
+    },
+    "recognized": true,
+    "recordId": "parking-jam:1767398400000:1767398451762:pj-pool-0:1",
+    "restoredResult": {
+      "elapsedMs": 51762,
+      "failedMoveCount": 0,
+      "moveAttemptCount": 8,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 30,
+          "stability": 20
+        },
+        "total": 90
+      },
+      "speedReference": {
+        "initialBlockedVehicleCount": 4,
+        "vehicleCount": 8
+      },
+      "speedRule": {
+        "fullScoreMs": 41000,
+        "zeroScoreMs": 82000
+      },
+      "successfulMoveCount": 8,
+      "timeDeltaMs": 10762,
+      "undoCount": 0
+    },
+    "resultLevel": "great"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 51763,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "metrics": {
+      "failed-move-count": 0,
+      "play-score": 89,
+      "time-delta-ms": 10763
+    },
+    "recognized": true,
+    "recordId": "parking-jam:1767484800000:1767484851763:pj-pool-0:1",
+    "restoredResult": {
+      "elapsedMs": 51763,
+      "failedMoveCount": 0,
+      "moveAttemptCount": 8,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 29,
+          "stability": 20
+        },
+        "total": 89
+      },
+      "speedReference": {
+        "initialBlockedVehicleCount": 4,
+        "vehicleCount": 8
+      },
+      "speedRule": {
+        "fullScoreMs": 41000,
+        "zeroScoreMs": 82000
+      },
+      "successfulMoveCount": 8,
+      "timeDeltaMs": 10763,
+      "undoCount": 0
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 62012,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "metrics": {
+      "failed-move-count": 0,
+      "play-score": 80,
+      "time-delta-ms": 21012
+    },
+    "recognized": true,
+    "recordId": "parking-jam:1767571200000:1767571262012:pj-pool-0:1",
+    "restoredResult": {
+      "elapsedMs": 62012,
+      "failedMoveCount": 0,
+      "moveAttemptCount": 8,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 20,
+          "stability": 20
+        },
+        "total": 80
+      },
+      "speedReference": {
+        "initialBlockedVehicleCount": 4,
+        "vehicleCount": 8
+      },
+      "speedRule": {
+        "fullScoreMs": 41000,
+        "zeroScoreMs": 82000
+      },
+      "successfulMoveCount": 8,
+      "timeDeltaMs": 21012,
+      "undoCount": 0
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 62013,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "metrics": {
+      "failed-move-count": 0,
+      "play-score": 79,
+      "time-delta-ms": 21013
+    },
+    "recognized": true,
+    "recordId": "parking-jam:1767657600000:1767657662013:pj-pool-0:1",
+    "restoredResult": {
+      "elapsedMs": 62013,
+      "failedMoveCount": 0,
+      "moveAttemptCount": 8,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 19,
+          "stability": 20
+        },
+        "total": 79
+      },
+      "speedReference": {
+        "initialBlockedVehicleCount": 4,
+        "vehicleCount": 8
+      },
+      "speedRule": {
+        "fullScoreMs": 41000,
+        "zeroScoreMs": 82000
+      },
+      "successfulMoveCount": 8,
+      "timeDeltaMs": 21013,
+      "undoCount": 0
+    },
+    "resultLevel": "clear"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 10800000,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・3時間かかったプレイ",
+    "metrics": {
+      "failed-move-count": 0,
+      "play-score": 60,
+      "time-delta-ms": 10759000
+    },
+    "recognized": true,
+    "recordId": "parking-jam:1767744000000:1767754800000:pj-pool-0:1",
+    "restoredResult": {
+      "elapsedMs": 10800000,
+      "failedMoveCount": 0,
+      "moveAttemptCount": 8,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 0,
+          "stability": 20
+        },
+        "total": 60
+      },
+      "speedReference": {
+        "initialBlockedVehicleCount": 4,
+        "vehicleCount": 8
+      },
+      "speedRule": {
+        "fullScoreMs": 41000,
+        "zeroScoreMs": 82000
+      },
+      "successfulMoveCount": 8,
+      "timeDeltaMs": 10759000,
+      "undoCount": 0
+    },
+    "resultLevel": "clear"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "normal",
+    "label": "play-quality-v1 で採点し問題の事実を持たない payloadVersion 2",
+    "metrics": {
+      "failed-move-count": null,
+      "play-score": null,
+      "time-delta-ms": null
+    },
+    "recognized": true,
+    "recordId": "parking-jam:1767830400000:1767830401000:pj-pool-0:2",
+    "restoredResult": null,
+    "resultLevel": null
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000,
+      "mistakeCount": 0
+    },
+    "comparisonKey": "hard",
+    "label": "3段階の難易度で記録した payloadVersion 3",
+    "metrics": {
+      "failed-move-count": 0,
+      "play-score": 100,
+      "time-delta-ms": -34000
+    },
+    "recognized": true,
+    "recordId": "parking-jam:1767916800000:1767916801000:pj-pool-0:2",
+    "restoredResult": null,
+    "resultLevel": "perfect"
+  }
+]

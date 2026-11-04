@@ -1,0 +1,314 @@
+[
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "metrics": {
+      "play-score": 100,
+      "time-delta-ms": -16000
+    },
+    "recognized": true,
+    "recordId": "reflection:1767225600000:1767225601000:rf-5-2-1",
+    "restoredResult": {
+      "elapsedMs": 1000,
+      "inputCount": 20,
+      "laserCheckCount": 0,
+      "relocationCount": 0,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "speed": 100
+        },
+        "total": 100
+      },
+      "speedRule": {
+        "fullScoreMs": 17000,
+        "zeroScoreMs": 51000
+      },
+      "timeDeltaMs": -16000,
+      "workload": {
+        "assumptionTestCount": 0,
+        "clueCount": 20,
+        "pieceCount": 2,
+        "propagationRoundCount": 0,
+        "trialMoveCount": 2
+      }
+    },
+    "resultLevel": "perfect"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速いが、置き直し3回・盤面を戻す1回・光路を5回確かめた",
+    "metrics": {
+      "play-score": 100,
+      "time-delta-ms": -16000
+    },
+    "recognized": true,
+    "recordId": "reflection:1767312000000:1767312001000:rf-5-2-1",
+    "restoredResult": {
+      "elapsedMs": 1000,
+      "inputCount": 30,
+      "laserCheckCount": 5,
+      "relocationCount": 3,
+      "restartCount": 1,
+      "score": {
+        "breakdown": {
+          "speed": 100
+        },
+        "total": 100
+      },
+      "speedRule": {
+        "fullScoreMs": 17000,
+        "zeroScoreMs": 51000
+      },
+      "timeDeltaMs": -16000,
+      "workload": {
+        "assumptionTestCount": 0,
+        "clueCount": 20,
+        "pieceCount": 2,
+        "propagationRoundCount": 0,
+        "trialMoveCount": 2
+      }
+    },
+    "resultLevel": "perfect"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 179987
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "metrics": {
+      "play-score": 90,
+      "time-delta-ms": 31237
+    },
+    "recognized": true,
+    "recordId": "reflection:1767398400000:1767398579987:rf-9-17-4",
+    "restoredResult": {
+      "elapsedMs": 179987,
+      "inputCount": 20,
+      "laserCheckCount": 0,
+      "relocationCount": 0,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "speed": 90
+        },
+        "total": 90
+      },
+      "speedRule": {
+        "fullScoreMs": 148750,
+        "zeroScoreMs": 446250
+      },
+      "timeDeltaMs": 31237,
+      "workload": {
+        "assumptionTestCount": 83,
+        "clueCount": 36,
+        "pieceCount": 17,
+        "propagationRoundCount": 29,
+        "trialMoveCount": null
+      }
+    },
+    "resultLevel": "great"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 179988
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "metrics": {
+      "play-score": 89,
+      "time-delta-ms": 31238
+    },
+    "recognized": true,
+    "recordId": "reflection:1767484800000:1767484979988:rf-9-17-4",
+    "restoredResult": {
+      "elapsedMs": 179988,
+      "inputCount": 20,
+      "laserCheckCount": 0,
+      "relocationCount": 0,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "speed": 89
+        },
+        "total": 89
+      },
+      "speedRule": {
+        "fullScoreMs": 148750,
+        "zeroScoreMs": 446250
+      },
+      "timeDeltaMs": 31238,
+      "workload": {
+        "assumptionTestCount": 83,
+        "clueCount": 36,
+        "pieceCount": 17,
+        "propagationRoundCount": 29,
+        "trialMoveCount": null
+      }
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 209737
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "metrics": {
+      "play-score": 80,
+      "time-delta-ms": 60987
+    },
+    "recognized": true,
+    "recordId": "reflection:1767571200000:1767571409737:rf-9-17-4",
+    "restoredResult": {
+      "elapsedMs": 209737,
+      "inputCount": 20,
+      "laserCheckCount": 0,
+      "relocationCount": 0,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "speed": 80
+        },
+        "total": 80
+      },
+      "speedRule": {
+        "fullScoreMs": 148750,
+        "zeroScoreMs": 446250
+      },
+      "timeDeltaMs": 60987,
+      "workload": {
+        "assumptionTestCount": 83,
+        "clueCount": 36,
+        "pieceCount": 17,
+        "propagationRoundCount": 29,
+        "trialMoveCount": null
+      }
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 209738
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "metrics": {
+      "play-score": 79,
+      "time-delta-ms": 60988
+    },
+    "recognized": true,
+    "recordId": "reflection:1767657600000:1767657809738:rf-9-17-4",
+    "restoredResult": {
+      "elapsedMs": 209738,
+      "inputCount": 20,
+      "laserCheckCount": 0,
+      "relocationCount": 0,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "speed": 79
+        },
+        "total": 79
+      },
+      "speedRule": {
+        "fullScoreMs": 148750,
+        "zeroScoreMs": 446250
+      },
+      "timeDeltaMs": 60988,
+      "workload": {
+        "assumptionTestCount": 83,
+        "clueCount": 36,
+        "pieceCount": 17,
+        "propagationRoundCount": 29,
+        "trialMoveCount": null
+      }
+    },
+    "resultLevel": "clear"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 10800000
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・3時間かかったプレイ",
+    "metrics": {
+      "play-score": 0,
+      "time-delta-ms": 10651250
+    },
+    "recognized": true,
+    "recordId": "reflection:1767744000000:1767754800000:rf-9-17-4",
+    "restoredResult": {
+      "elapsedMs": 10800000,
+      "inputCount": 20,
+      "laserCheckCount": 0,
+      "relocationCount": 0,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "speed": 0
+        },
+        "total": 0
+      },
+      "speedRule": {
+        "fullScoreMs": 148750,
+        "zeroScoreMs": 446250
+      },
+      "timeDeltaMs": 10651250,
+      "workload": {
+        "assumptionTestCount": 83,
+        "clueCount": 36,
+        "pieceCount": 17,
+        "propagationRoundCount": 29,
+        "trialMoveCount": null
+      }
+    },
+    "resultLevel": "clear"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000
+    },
+    "comparisonKey": "1",
+    "label": "評価に使わない待ったの回数を持つ以前の記録",
+    "metrics": {
+      "play-score": 100,
+      "time-delta-ms": -16000
+    },
+    "recognized": true,
+    "recordId": "reflection:1767830400000:1767830401000:rf-5-2-1",
+    "restoredResult": {
+      "elapsedMs": 1000,
+      "inputCount": 20,
+      "laserCheckCount": 0,
+      "relocationCount": 0,
+      "restartCount": 0,
+      "score": {
+        "breakdown": {
+          "speed": 100
+        },
+        "total": 100
+      },
+      "speedRule": {
+        "fullScoreMs": 17000,
+        "zeroScoreMs": 51000
+      },
+      "timeDeltaMs": -16000,
+      "workload": {
+        "assumptionTestCount": 0,
+        "clueCount": 20,
+        "pieceCount": 2,
+        "propagationRoundCount": 0,
+        "trialMoveCount": 2
+      }
+    },
+    "resultLevel": "perfect"
+  }
+]

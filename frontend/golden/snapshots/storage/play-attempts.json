@@ -1,0 +1,118 @@
+{
+  "abandoned": [
+    {
+      "gameId": "nanpure",
+      "startedAt": 1768262400000
+    },
+    {
+      "gameId": "water-sort",
+      "startedAt": 1768435200000
+    }
+  ],
+  "attempts": [
+    {
+      "abandonment": {
+        "abandonedAt": 1768262700000,
+        "progress": {
+          "elapsedMs": 300000,
+          "mistakeCount": 1,
+          "restartCount": 0,
+          "undoCount": 2
+        }
+      },
+      "gameId": "nanpure",
+      "replayTarget": {
+        "difficulty": "5",
+        "problemId": "uadf12p07p"
+      },
+      "start": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "conditions": {
+            "removalTechniqueLimit": null
+          },
+          "generatorVersion": "2",
+          "seed": "np-uniqueness-12"
+        }
+      },
+      "startedAt": 1768262400000
+    },
+    {
+      "abandonment": {
+        "abandonedAt": 1767225600500,
+        "progress": {
+          "elapsedMs": 500,
+          "mistakeCount": 0,
+          "restartCount": 0,
+          "undoCount": 0
+        }
+      },
+      "gameId": "nanpure",
+      "replayTarget": {
+        "difficulty": "1",
+        "problemId": "321qncjdqm"
+      },
+      "start": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "conditions": {
+            "removalTechniqueLimit": "hidden-single-block"
+          },
+          "generatorVersion": "2",
+          "seed": "np-hidden-single-block-0"
+        }
+      },
+      "startedAt": 1767225600000
+    },
+    {
+      "abandonment": null,
+      "gameId": "minesweeper",
+      "replayTarget": {
+        "difficulty": "1",
+        "problemId": "frr16m084o"
+      },
+      "start": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "conditions": {
+            "columns": 9,
+            "mineCount": 9,
+            "rows": 9,
+            "startCellPlacement": "random"
+          },
+          "generationAttempt": 1,
+          "generatorVersion": "1",
+          "seed": "ms-pool-1-9x9-9-2"
+        }
+      },
+      "startedAt": 1768348800000
+    },
+    {
+      "abandonment": {
+        "abandonedAt": 1768435260000,
+        "progress": {
+          "elapsedMs": 60000,
+          "moveCount": 5,
+          "restartCount": 0,
+          "undoCount": 1
+        }
+      },
+      "gameId": "water-sort",
+      "replayTarget": null,
+      "start": {
+        "difficulty": "normal",
+        "problemIdentity": {
+          "conditions": {
+            "capacity": 4,
+            "colorCount": 4,
+            "emptyBottleCount": 2
+          },
+          "generationAttempt": 1,
+          "generatorVersion": "1",
+          "seed": "ws4-2-0"
+        }
+      },
+      "startedAt": 1768435200000
+    }
+  ]
+}

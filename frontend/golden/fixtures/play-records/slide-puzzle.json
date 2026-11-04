@@ -1,0 +1,205 @@
+[
+  {
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "record": {
+      "id": "slide-puzzle:1767225600000:1767225601000:sp3-20-0",
+      "gameId": "slide-puzzle",
+      "startedAt": 1767225600000,
+      "completedAt": 1767225601000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "sp3-20-0",
+          "conditions": {
+            "size": 3,
+            "scrambleLength": 20
+          }
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveCount": 20,
+          "completionMoveCount": 20,
+          "slideCount": 20,
+          "restartCount": 0,
+          "optimalMoveCount": 20
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル1・速いが、最短より6枚多く動かし、盤面を戻す前に4枚動かした",
+    "record": {
+      "id": "slide-puzzle:1767312000000:1767312001000:sp3-20-0",
+      "gameId": "slide-puzzle",
+      "startedAt": 1767312000000,
+      "completedAt": 1767312001000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "sp3-20-0",
+          "conditions": {
+            "size": 3,
+            "scrambleLength": 20
+          }
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveCount": 30,
+          "completionMoveCount": 26,
+          "slideCount": 26,
+          "restartCount": 1,
+          "optimalMoveCount": 20
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "record": {
+      "id": "slide-puzzle:1767398400000:1767398530037:sp5-60-2",
+      "gameId": "slide-puzzle",
+      "startedAt": 1767398400000,
+      "completedAt": 1767398530037,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "sp5-60-2",
+          "conditions": {
+            "size": 5,
+            "scrambleLength": 60
+          }
+        },
+        "performance": {
+          "elapsedMs": 130037,
+          "moveCount": 44,
+          "completionMoveCount": 44,
+          "slideCount": 44,
+          "restartCount": 0,
+          "optimalMoveCount": 44
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "record": {
+      "id": "slide-puzzle:1767484800000:1767484930038:sp5-60-2",
+      "gameId": "slide-puzzle",
+      "startedAt": 1767484800000,
+      "completedAt": 1767484930038,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "sp5-60-2",
+          "conditions": {
+            "size": 5,
+            "scrambleLength": 60
+          }
+        },
+        "performance": {
+          "elapsedMs": 130038,
+          "moveCount": 44,
+          "completionMoveCount": 44,
+          "slideCount": 44,
+          "restartCount": 0,
+          "optimalMoveCount": 44
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "record": {
+      "id": "slide-puzzle:1767571200000:1767571355787:sp5-60-2",
+      "gameId": "slide-puzzle",
+      "startedAt": 1767571200000,
+      "completedAt": 1767571355787,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "sp5-60-2",
+          "conditions": {
+            "size": 5,
+            "scrambleLength": 60
+          }
+        },
+        "performance": {
+          "elapsedMs": 155787,
+          "moveCount": 44,
+          "completionMoveCount": 44,
+          "slideCount": 44,
+          "restartCount": 0,
+          "optimalMoveCount": 44
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "record": {
+      "id": "slide-puzzle:1767657600000:1767657755788:sp5-60-2",
+      "gameId": "slide-puzzle",
+      "startedAt": 1767657600000,
+      "completedAt": 1767657755788,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "sp5-60-2",
+          "conditions": {
+            "size": 5,
+            "scrambleLength": 60
+          }
+        },
+        "performance": {
+          "elapsedMs": 155788,
+          "moveCount": 44,
+          "completionMoveCount": 44,
+          "slideCount": 44,
+          "restartCount": 0,
+          "optimalMoveCount": 44
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・3時間かかったプレイ",
+    "record": {
+      "id": "slide-puzzle:1767744000000:1767754800000:sp5-60-2",
+      "gameId": "slide-puzzle",
+      "startedAt": 1767744000000,
+      "completedAt": 1767754800000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "sp5-60-2",
+          "conditions": {
+            "size": 5,
+            "scrambleLength": 60
+          }
+        },
+        "performance": {
+          "elapsedMs": 10800000,
+          "moveCount": 44,
+          "completionMoveCount": 44,
+          "slideCount": 44,
+          "restartCount": 0,
+          "optimalMoveCount": 44
+        }
+      }
+    }
+  }
+]

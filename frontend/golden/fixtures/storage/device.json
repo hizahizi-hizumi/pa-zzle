@@ -1,0 +1,118 @@
+{
+  "pa-zzle.play-attempts.v1": [
+    {
+      "gameId": "nanpure",
+      "startedAt": 1768262400000,
+      "start": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "np-uniqueness-12",
+          "conditions": { "removalTechniqueLimit": null }
+        }
+      },
+      "abandonment": {
+        "abandonedAt": 1768262700000,
+        "progress": {
+          "elapsedMs": 300000,
+          "mistakeCount": 1,
+          "undoCount": 2,
+          "restartCount": 0
+        }
+      }
+    },
+    {
+      "gameId": "nanpure",
+      "startedAt": 1767225600000,
+      "start": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "2",
+          "seed": "np-hidden-single-block-0",
+          "conditions": { "removalTechniqueLimit": "hidden-single-block" }
+        }
+      },
+      "abandonment": {
+        "abandonedAt": 1767225600500,
+        "progress": {
+          "elapsedMs": 500,
+          "mistakeCount": 0,
+          "undoCount": 0,
+          "restartCount": 0
+        }
+      }
+    },
+    {
+      "gameId": "minesweeper",
+      "startedAt": 1768348800000,
+      "start": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ms-pool-1-9x9-9-2",
+          "conditions": {
+            "rows": 9,
+            "columns": 9,
+            "mineCount": 9,
+            "startCellPlacement": "random"
+          },
+          "generationAttempt": 1
+        }
+      },
+      "abandonment": null
+    },
+    {
+      "gameId": "water-sort",
+      "startedAt": 1768435200000,
+      "start": {
+        "difficulty": "normal",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "ws4-2-0",
+          "conditions": {
+            "colorCount": 4,
+            "capacity": 4,
+            "emptyBottleCount": 2
+          },
+          "generationAttempt": 1
+        }
+      },
+      "abandonment": {
+        "abandonedAt": 1768435260000,
+        "progress": {
+          "elapsedMs": 60000,
+          "moveCount": 5,
+          "undoCount": 1,
+          "restartCount": 0
+        }
+      }
+    },
+    {
+      "gameId": "takuzu",
+      "startedAt": 1768521600000,
+      "start": {
+        "difficulty": "3",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "unknown-seed",
+          "conditions": {}
+        }
+      },
+      "abandonment": {
+        "abandonedAt": 1768521500000,
+        "progress": { "elapsedMs": 1000 }
+      }
+    }
+  ],
+  "pa-zzle.zukan-last-viewed.v1": {
+    "nanpure": {
+      "1": { "321qncjdqm": "good" },
+      "5": { "i16a2ffbh7": "clear", "uadf12p07p": "attempted" }
+    },
+    "minesweeper": {
+      "1": { "frr16m084o": "perfect", "6r967l0r4h": "unknown-status" },
+      "easy": { "frr16m084o": "great" }
+    },
+    "water-sort": "broken"
+  }
+}

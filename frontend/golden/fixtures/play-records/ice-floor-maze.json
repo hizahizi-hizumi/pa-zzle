@@ -1,0 +1,226 @@
+[
+  {
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "record": {
+      "id": "ice-floor-maze:1767225600000:1767225601000:i200110i80g00000290g00i00g4401008008000-4-52",
+      "gameId": "ice-floor-maze",
+      "startedAt": 1767225600000,
+      "completedAt": 1767225601000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "i200110i80g00000290g00i00g4401008008000-4-52",
+          "conditions": {
+            "width": 8,
+            "height": 8
+          }
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveCount": 9,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 9
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル1・速いが、最短より4手多い試し滑り・待った2回・盤面を戻す1回",
+    "record": {
+      "id": "ice-floor-maze:1767312000000:1767312001000:i200110i80g00000290g00i00g4401008008000-4-52",
+      "gameId": "ice-floor-maze",
+      "startedAt": 1767312000000,
+      "completedAt": 1767312001000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "i200110i80g00000290g00i00g4401008008000-4-52",
+          "conditions": {
+            "width": 8,
+            "height": 8
+          }
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveCount": 13,
+          "undoCount": 2,
+          "restartCount": 1,
+          "optimalMoveCount": 9
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "record": {
+      "id": "ice-floor-maze:1767398400000:1767398543041:420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+      "gameId": "ice-floor-maze",
+      "startedAt": 1767398400000,
+      "completedAt": 1767398543041,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+          "conditions": {
+            "width": 10,
+            "height": 10
+          }
+        },
+        "performance": {
+          "elapsedMs": 143041,
+          "moveCount": 15,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 15
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "record": {
+      "id": "ice-floor-maze:1767484800000:1767484943042:420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+      "gameId": "ice-floor-maze",
+      "startedAt": 1767484800000,
+      "completedAt": 1767484943042,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+          "conditions": {
+            "width": 10,
+            "height": 10
+          }
+        },
+        "performance": {
+          "elapsedMs": 143042,
+          "moveCount": 15,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 15
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "record": {
+      "id": "ice-floor-maze:1767571200000:1767571371366:420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+      "gameId": "ice-floor-maze",
+      "startedAt": 1767571200000,
+      "completedAt": 1767571371366,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+          "conditions": {
+            "width": 10,
+            "height": 10
+          }
+        },
+        "performance": {
+          "elapsedMs": 171366,
+          "moveCount": 15,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 15
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "record": {
+      "id": "ice-floor-maze:1767657600000:1767657771367:420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+      "gameId": "ice-floor-maze",
+      "startedAt": 1767657600000,
+      "completedAt": 1767657771367,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+          "conditions": {
+            "width": 10,
+            "height": 10
+          }
+        },
+        "performance": {
+          "elapsedMs": 171367,
+          "moveCount": 15,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 15
+        }
+      }
+    }
+  },
+  {
+    "label": "レベル5・3時間かかったプレイ",
+    "record": {
+      "id": "ice-floor-maze:1767744000000:1767754800000:420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+      "gameId": "ice-floor-maze",
+      "startedAt": 1767744000000,
+      "completedAt": 1767754800000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "5",
+        "problemIdentity": {
+          "generatorVersion": "3",
+          "seed": "420001000dg802000oc000604g30280000080g0008020c20428g21000401-46-25",
+          "conditions": {
+            "width": 10,
+            "height": 10
+          }
+        },
+        "performance": {
+          "elapsedMs": 10800000,
+          "moveCount": 15,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 15
+        }
+      }
+    }
+  },
+  {
+    "label": "盤面の外も要素も持たない初期の生成器（版 1）の問題の記録",
+    "record": {
+      "id": "ice-floor-maze:1767830400000:1767830401000:i200110i80g00000290g00i00g4401008008000-4-52",
+      "gameId": "ice-floor-maze",
+      "startedAt": 1767830400000,
+      "completedAt": 1767830401000,
+      "payloadVersion": 1,
+      "payload": {
+        "difficulty": "1",
+        "problemIdentity": {
+          "generatorVersion": "1",
+          "seed": "048052444a402020c84028080600a1218-90-103",
+          "conditions": {
+            "width": 10,
+            "height": 13
+          }
+        },
+        "performance": {
+          "elapsedMs": 1000,
+          "moveCount": 9,
+          "undoCount": 0,
+          "restartCount": 0,
+          "optimalMoveCount": 9
+        }
+      }
+    }
+  }
+]

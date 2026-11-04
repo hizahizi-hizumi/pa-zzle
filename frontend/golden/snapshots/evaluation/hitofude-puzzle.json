@@ -1,0 +1,312 @@
+[
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速く、ミスも待ったも無い",
+    "metrics": {
+      "backtrack-count": 0,
+      "play-score": 100,
+      "time-delta-ms": -24500
+    },
+    "recognized": true,
+    "recordId": "hitofude-puzzle:1767225600000:1767225601000:hp-6-t0-0",
+    "restoredResult": {
+      "backtrackCount": 0,
+      "elapsedMs": 1000,
+      "inputCount": 40,
+      "restartCount": 0,
+      "retractedCellCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 60
+        },
+        "total": 100
+      },
+      "speedRule": {
+        "fullScoreMs": 25500,
+        "zeroScoreMs": 76500
+      },
+      "timeDeltaMs": -24500,
+      "undoCount": 0,
+      "workload": {
+        "assumptionCount": 0,
+        "fatalBranchCount": 2,
+        "longestRefutationLength": 0,
+        "openCellCount": 29,
+        "refutationStepCount": 0
+      }
+    },
+    "resultLevel": "perfect"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000
+    },
+    "comparisonKey": "1",
+    "label": "レベル1・速いが、引き直し3回・待った2回・盤面を戻す1回",
+    "metrics": {
+      "backtrack-count": 3,
+      "play-score": 91,
+      "time-delta-ms": -24500
+    },
+    "recognized": true,
+    "recordId": "hitofude-puzzle:1767312000000:1767312001000:hp-6-t0-0",
+    "restoredResult": {
+      "backtrackCount": 3,
+      "elapsedMs": 1000,
+      "inputCount": 60,
+      "restartCount": 1,
+      "retractedCellCount": 12,
+      "score": {
+        "breakdown": {
+          "accuracy": 31,
+          "speed": 60
+        },
+        "total": 91
+      },
+      "speedRule": {
+        "fullScoreMs": 25500,
+        "zeroScoreMs": 76500
+      },
+      "timeDeltaMs": -24500,
+      "undoCount": 2,
+      "workload": {
+        "assumptionCount": 0,
+        "fatalBranchCount": 2,
+        "longestRefutationLength": 0,
+        "openCellCount": 29,
+        "refutationStepCount": 0
+      }
+    },
+    "resultLevel": "great"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 152550
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、90点に残る最も遅いプレイ",
+    "metrics": {
+      "backtrack-count": 0,
+      "play-score": 90,
+      "time-delta-ms": 39550
+    },
+    "recognized": true,
+    "recordId": "hitofude-puzzle:1767398400000:1767398552550:hp-8-t4-15",
+    "restoredResult": {
+      "backtrackCount": 0,
+      "elapsedMs": 152550,
+      "inputCount": 40,
+      "restartCount": 0,
+      "retractedCellCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 50
+        },
+        "total": 90
+      },
+      "speedRule": {
+        "fullScoreMs": 113000,
+        "zeroScoreMs": 339000
+      },
+      "timeDeltaMs": 39550,
+      "undoCount": 0,
+      "workload": {
+        "assumptionCount": 3,
+        "fatalBranchCount": 18,
+        "longestRefutationLength": 9,
+        "openCellCount": 56,
+        "refutationStepCount": 17
+      }
+    },
+    "resultLevel": "great"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 152551
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、90点を下回るプレイ",
+    "metrics": {
+      "backtrack-count": 0,
+      "play-score": 89,
+      "time-delta-ms": 39551
+    },
+    "recognized": true,
+    "recordId": "hitofude-puzzle:1767484800000:1767484952551:hp-8-t4-15",
+    "restoredResult": {
+      "backtrackCount": 0,
+      "elapsedMs": 152551,
+      "inputCount": 40,
+      "restartCount": 0,
+      "retractedCellCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 49
+        },
+        "total": 89
+      },
+      "speedRule": {
+        "fullScoreMs": 113000,
+        "zeroScoreMs": 339000
+      },
+      "timeDeltaMs": 39551,
+      "undoCount": 0,
+      "workload": {
+        "assumptionCount": 3,
+        "fatalBranchCount": 18,
+        "longestRefutationLength": 9,
+        "openCellCount": 56,
+        "refutationStepCount": 17
+      }
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 190216
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・遅れだけで減点され、80点に残る最も遅いプレイ",
+    "metrics": {
+      "backtrack-count": 0,
+      "play-score": 80,
+      "time-delta-ms": 77216
+    },
+    "recognized": true,
+    "recordId": "hitofude-puzzle:1767571200000:1767571390216:hp-8-t4-15",
+    "restoredResult": {
+      "backtrackCount": 0,
+      "elapsedMs": 190216,
+      "inputCount": 40,
+      "restartCount": 0,
+      "retractedCellCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 40
+        },
+        "total": 80
+      },
+      "speedRule": {
+        "fullScoreMs": 113000,
+        "zeroScoreMs": 339000
+      },
+      "timeDeltaMs": 77216,
+      "undoCount": 0,
+      "workload": {
+        "assumptionCount": 3,
+        "fatalBranchCount": 18,
+        "longestRefutationLength": 9,
+        "openCellCount": 56,
+        "refutationStepCount": 17
+      }
+    },
+    "resultLevel": "good"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 190217
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・その1ミリ秒遅く、80点を下回るプレイ",
+    "metrics": {
+      "backtrack-count": 0,
+      "play-score": 79,
+      "time-delta-ms": 77217
+    },
+    "recognized": true,
+    "recordId": "hitofude-puzzle:1767657600000:1767657790217:hp-8-t4-15",
+    "restoredResult": {
+      "backtrackCount": 0,
+      "elapsedMs": 190217,
+      "inputCount": 40,
+      "restartCount": 0,
+      "retractedCellCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 39
+        },
+        "total": 79
+      },
+      "speedRule": {
+        "fullScoreMs": 113000,
+        "zeroScoreMs": 339000
+      },
+      "timeDeltaMs": 77217,
+      "undoCount": 0,
+      "workload": {
+        "assumptionCount": 3,
+        "fatalBranchCount": 18,
+        "longestRefutationLength": 9,
+        "openCellCount": 56,
+        "refutationStepCount": 17
+      }
+    },
+    "resultLevel": "clear"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 10800000
+    },
+    "comparisonKey": "5",
+    "label": "レベル5・3時間かかったプレイ",
+    "metrics": {
+      "backtrack-count": 0,
+      "play-score": 40,
+      "time-delta-ms": 10687000
+    },
+    "recognized": true,
+    "recordId": "hitofude-puzzle:1767744000000:1767754800000:hp-8-t4-15",
+    "restoredResult": {
+      "backtrackCount": 0,
+      "elapsedMs": 10800000,
+      "inputCount": 40,
+      "restartCount": 0,
+      "retractedCellCount": 0,
+      "score": {
+        "breakdown": {
+          "accuracy": 40,
+          "speed": 0
+        },
+        "total": 40
+      },
+      "speedRule": {
+        "fullScoreMs": 113000,
+        "zeroScoreMs": 339000
+      },
+      "timeDeltaMs": 10687000,
+      "undoCount": 0,
+      "workload": {
+        "assumptionCount": 3,
+        "fatalBranchCount": 18,
+        "longestRefutationLength": 9,
+        "openCellCount": 56,
+        "refutationStepCount": 17
+      }
+    },
+    "resultLevel": "clear"
+  },
+  {
+    "clearPerformance": {
+      "elapsedMs": 1000
+    },
+    "comparisonKey": "1",
+    "label": "前の生成器（版 1）の問題の記録",
+    "metrics": {
+      "backtrack-count": 0,
+      "play-score": 100,
+      "time-delta-ms": -24500
+    },
+    "recognized": true,
+    "recordId": "hitofude-puzzle:1767830400000:1767830401000:hp-6-t0-0",
+    "restoredResult": null,
+    "resultLevel": "perfect"
+  }
+]

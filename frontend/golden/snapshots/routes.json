@@ -1,0 +1,31 @@
+{
+  "modalPages": [],
+  "notFoundRoute": "*",
+  "problemIdSearch": "?problem=0123456789",
+  "routePaths": [
+    "/",
+    "/puzzles/:game/result/:recordId",
+    "/puzzles/:game/zukan",
+    "/puzzles/hitofude-puzzle",
+    "/puzzles/hitofude-puzzle/play/:difficulty",
+    "/puzzles/ice-floor-maze",
+    "/puzzles/ice-floor-maze/play/:difficulty",
+    "/puzzles/minesweeper",
+    "/puzzles/minesweeper/play/:difficulty",
+    "/puzzles/nanpure",
+    "/puzzles/nanpure/play/:difficulty",
+    "/puzzles/parking-jam",
+    "/puzzles/parking-jam/play/:difficulty",
+    "/puzzles/reflection",
+    "/puzzles/reflection/play/:difficulty",
+    "/puzzles/slide-puzzle",
+    "/puzzles/slide-puzzle/play/:difficulty",
+    "/puzzles/takuzu",
+    "/puzzles/takuzu/play/:difficulty",
+    "/puzzles/tsume-shogi",
+    "/puzzles/tsume-shogi/play/:difficulty",
+    "/puzzles/water-sort",
+    "/puzzles/water-sort/play/:difficulty",
+    "/records"
+  ]
+}
