@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   type TutorialBoardIntro,
+  type TutorialFinish,
   TutorialOverlay,
 } from "@/components/TutorialOverlay";
-import { getDifficultyLabel } from "@/games/difficulty";
 import type { GameProgress } from "@/games/play";
 import pictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
 import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
@@ -39,7 +39,7 @@ import {
 
 type TakuzuTutorialProps = {
   open: boolean;
-  /** 渡すと、終えたときにレベル1を始める操作を出す。渡さなければ、閉じてプレイに戻る操作を出す。 */
+  /** ゲームのホームから開いたときに渡す。終えたときにレベル1を始める操作を出す。渡さなければプレイ中に開いたとして、閉じてプレイに戻る操作を出す。 */
   onStartPlay?: () => void;
   onClose: () => void;
 };
@@ -56,18 +56,17 @@ type TakuzuTutorialProgress = TutorialProgress<
  */
 const VIOLATION_REACTION_DELAY_MS = 500;
 
+/**
+ * 手順のマスを正しい手へ向かう途中にしたまま手が止まってから、盤面にルールに合わないところを見せるまでの間。
+ * 教わったばかりの2回タップを、確かめながらゆっくり押す間隔でも出ないよう、違反の一言と揺れより長く取る。
+ */
+const TOWARD_STEP_REVEAL_DELAY_MS = 1000;
+
 /** 手順どおりに置いてから次の印を付けるまでの間。決め手が光って消えるのを見届けてから示す。 */
 const NEXT_STEP_CUE_DELAY_MS = 900;
 
 /** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
-
-/**
- * 導入で盤面が見せるもの。
- * - `goal`: 解き終えた盤面を、解けたときと同じ波で見せる。
- * - `rewind`: 置いたタイルを消して、始めの盤面へ戻す。
- */
-type TakuzuTutorialBoardIntroStage = "goal" | "rewind";
 
 const goalBoardState = takuzuTutorial.goal();
 
@@ -119,25 +118,41 @@ function getCellCues(
   hintCellIndices: readonly number[],
   recallId: number | null,
 ): TakuzuCellCue[] {
-  const { lastMove, moveCount } = state;
-  const moveCues: TakuzuCellCue[] = !lastMove
-    ? []
-    : lastMove.violated
-      ? violationSettled
-        ? [{ cellIndex: lastMove.cellIndex, kind: "rejected", id: moveCount }]
-        : []
-      : lastMove.reasonCellIndices.map((cellIndex) => ({
-          cellIndex,
-          kind: "reason",
-          id: moveCount,
-        }));
   return [
-    ...moveCues,
+    ...getMoveCues(state, violationSettled),
     ...hintCellIndices.map(
       (cellIndex): TakuzuCellCue =>
         recallId === null
           ? { cellIndex, kind: "hint", id: 0 }
           : { cellIndex, kind: "recall", id: recallId },
+    ),
+  ];
+}
+
+/** 直前の手への合図。違反の揺れか、ルールに合う手なら手順のマスを正しく置いた合図と決め手の光。 */
+function getMoveCues(
+  { lastMove, moveCount }: TakuzuTutorialBoardState,
+  violationSettled: boolean,
+): TakuzuCellCue[] {
+  if (!lastMove) {
+    return [];
+  }
+  if (lastMove.violated) {
+    return violationSettled
+      ? [{ cellIndex: lastMove.cellIndex, kind: "rejected", id: moveCount }]
+      : [];
+  }
+  const fittedCues: TakuzuCellCue[] = lastMove.fitsStep
+    ? [{ cellIndex: lastMove.cellIndex, kind: "fitted", id: moveCount }]
+    : [];
+  return [
+    ...fittedCues,
+    ...lastMove.reasonCellIndices.map(
+      (cellIndex): TakuzuCellCue => ({
+        cellIndex,
+        kind: "reason",
+        id: moveCount,
+      }),
     ),
   ];
 }
@@ -154,23 +169,27 @@ export function TakuzuTutorial({
   const [progress, setProgress] = useState<TakuzuTutorialProgress>(() =>
     startTutorial(takuzuTutorial),
   );
-  // 開いたときは解き終えた盤面から見せる。もう一度始めたときは解き終えた盤面がもう見えているので、戻すところから見せる。
-  const [boardIntroStage, setBoardIntroStage] =
-    useState<TakuzuTutorialBoardIntroStage>("goal");
   const [idleProgress, setIdleProgress] =
     useState<TakuzuTutorialProgress | null>(null);
   const [settledViolationProgress, setSettledViolationProgress] =
+    useState<TakuzuTutorialProgress | null>(null);
+  const [settledTowardStepProgress, setSettledTowardStepProgress] =
     useState<TakuzuTutorialProgress | null>(null);
   const [recall, setRecall] = useState<TakuzuTutorialRecall | null>(null);
   // 本番と同じく、置いた・消した・固定マスで通らなかったを知らせ、音を鳴らす。固定マスは盤面が揺らす。
   const [operation, setOperation] = useState<TakuzuOperation | null>(null);
   // 開き直しても同じ知らせとみなされないよう、もう一度始めても数え直さない。
   const operationIdRef = useRef(0);
-  const violationTimerRef = useRef<number | null>(null);
+  const reactionTimerRef = useRef<number | null>(null);
   const situation = getTutorialSituation(takuzuTutorial, progress);
   const guiding = situation.step !== null;
   const { boardState } = progress;
-  const cellViews = getTakuzuTutorialCellViews(situation, boardState);
+  const towardStepSettled = settledTowardStepProgress === progress;
+  const cellViews = getTakuzuTutorialCellViews(
+    situation,
+    boardState,
+    towardStepSettled,
+  );
   const violationSettled = settledViolationProgress === progress;
   const recallId = recall?.progress === progress ? recall.id : null;
   const cueDelayMs = getCueDelayMs(progress, guiding);
@@ -209,25 +228,33 @@ export function TakuzuTutorial({
 
   useEffect(() => {
     return () => {
-      if (violationTimerRef.current !== null) {
-        window.clearTimeout(violationTimerRef.current);
+      if (reactionTimerRef.current !== null) {
+        window.clearTimeout(reactionTimerRef.current);
       }
     };
   }, []);
 
-  function cancelViolationReaction(): void {
-    if (violationTimerRef.current !== null) {
-      window.clearTimeout(violationTimerRef.current);
-      violationTimerRef.current = null;
+  function cancelPendingReaction(): void {
+    if (reactionTimerRef.current !== null) {
+      window.clearTimeout(reactionTimerRef.current);
+      reactionTimerRef.current = null;
     }
+  }
+
+  /** 手の後、盤面が変わらないまま `delayMs` が過ぎたら、その手の進行を `settle` に渡す。 */
+  function scheduleReaction(
+    next: TakuzuTutorialProgress,
+    delayMs: number,
+    settle: (progress: TakuzuTutorialProgress) => void,
+  ): void {
+    reactionTimerRef.current = window.setTimeout(() => {
+      reactionTimerRef.current = null;
+      settle(next);
+    }, delayMs);
   }
 
   const handleClearAnimationComplete = useCallback(() => {
     setProgress(completeTutorial);
-  }, []);
-
-  const handleGoalShown = useCallback(() => {
-    setBoardIntroStage("rewind");
   }, []);
 
   function handleIntroEnd(): void {
@@ -272,13 +299,21 @@ export function TakuzuTutorial({
       placed === null ? { type: "emptied" } : { type: "placed", tile: placed },
     );
     setProgress(next);
-    // 次の手が来たら、前の手の違反には応えない。
-    cancelViolationReaction();
+    // 次の手が来たら、前の手には応えない。
+    cancelPendingReaction();
     if (next.violated) {
-      violationTimerRef.current = window.setTimeout(() => {
-        violationTimerRef.current = null;
-        setSettledViolationProgress(next);
-      }, VIOLATION_REACTION_DELAY_MS);
+      scheduleReaction(
+        next,
+        VIOLATION_REACTION_DELAY_MS,
+        setSettledViolationProgress,
+      );
+    } else if (next.boardState.lastMove?.towardStep) {
+      // 途中の盤面のまま手が止まったら、責めずに済ませていたルールに合わないところを盤面に出す。
+      scheduleReaction(
+        next,
+        TOWARD_STEP_REVEAL_DELAY_MS,
+        setSettledTowardStepProgress,
+      );
     }
   }
 
@@ -293,53 +328,54 @@ export function TakuzuTutorial({
     perform({ type: "place", cellIndex, cell });
   }
 
-  function restart(introStage: TakuzuTutorialBoardIntroStage): void {
-    cancelViolationReaction();
+  function restart(): void {
+    cancelPendingReaction();
     setIdleProgress(null);
     setSettledViolationProgress(null);
+    setSettledTowardStepProgress(null);
     setRecall(null);
     setOperation(null);
     setProgress(startTutorial(takuzuTutorial));
-    setBoardIntroStage(introStage);
-  }
-
-  function handleRestart(): void {
-    restart("rewind");
   }
 
   // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
-    restart("goal");
+    restart();
     onClose();
   }
 
   function handleStartPlay(): void {
-    restart("goal");
+    restart();
     onStartPlay?.();
   }
 
-  function renderBoard({ playing, onEnd }: TutorialBoardIntro) {
-    const introducing = progress.phase === "intro";
-    const shownBoardState = introducing ? goalBoardState : boardState;
-    const goalShowing = playing && boardIntroStage === "goal";
+  /** 始めの盤面の場面では、解き終えた盤面から置いたタイルを消し、消し終えたら始めの盤面に替える。 */
+  function renderBoard({ scene, playing, onSceneEnd }: TutorialBoardIntro) {
+    const goalShown = scene === "goal" || (scene === "start" && playing);
+    const shownBoardState = goalShown ? goalBoardState : boardState;
     return (
       <div className="aspect-square w-[min(100cqw,100cqh,28rem)]">
         <TakuzuClearAnimation
-          active={progress.phase === "solved" || goalShowing}
+          active={progress.phase === "solved" || (scene === "goal" && playing)}
           onComplete={
-            introducing ? handleGoalShown : handleClearAnimationComplete
+            scene === "goal" ? onSceneEnd : handleClearAnimationComplete
           }
         >
           <TakuzuTutorialRewind
-            active={playing && boardIntroStage === "rewind"}
-            onComplete={onEnd}
+            active={scene === "start" && playing}
+            onComplete={onSceneEnd}
           >
             <TakuzuBoard
               size={shownBoardState.board.size}
-              cells={getTakuzuTutorialCellViews(situation, shownBoardState)}
+              cells={getTakuzuTutorialCellViews(
+                situation,
+                shownBoardState,
+                towardStepSettled,
+              )}
               lineViolations={getTakuzuTutorialLineViolations(
                 situation,
                 shownBoardState,
+                towardStepSettled,
               )}
               operation={operation}
               interactionDisabled={progress.phase !== "playing"}
@@ -359,30 +395,31 @@ export function TakuzuTutorial({
     );
   }
 
+  const finish: TutorialFinish = onStartPlay
+    ? { entry: "home", onStartPlay: handleStartPlay }
+    : { entry: "play", onReturnToPlay: handleClose };
+
   return (
     <TutorialOverlay
       open={open}
       title={TAKUZU_DISPLAY_NAME}
       pictogramSvg={pictogramSvg}
+      intro={takuzuTutorial.intro}
       rules={takuzuTutorial.rules.map((rule) => ({
         ...rule,
         earned: progress.earnedRuleIds.includes(rule.id),
         current: situation.step?.introducedRuleId === rule.id,
       }))}
-      message={getTutorialMessage(takuzuTutorial, progress, violationSettled)}
+      message={getTutorialMessage(takuzuTutorial, progress, {
+        entry: finish.entry,
+        violationSettled,
+      })}
       introducing={progress.phase === "intro"}
       completed={progress.phase === "completed"}
-      finishAction={
-        onStartPlay
-          ? {
-              label: `${getDifficultyLabel("1")}を遊ぶ`,
-              onSelect: handleStartPlay,
-            }
-          : { label: "プレイに戻る", onSelect: handleClose }
-      }
+      finish={finish}
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
-      onRestart={handleRestart}
+      onRestart={restart}
       onClose={handleClose}
     />
   );

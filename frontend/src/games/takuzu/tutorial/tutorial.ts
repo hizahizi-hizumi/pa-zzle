@@ -1,3 +1,4 @@
+import { getDifficultyLabel } from "@/games/difficulty";
 import {
   getTakuzuCellPosition,
   getTakuzuLineCellIndices,
@@ -63,15 +64,17 @@ export type TakuzuTutorialStep = TutorialStep<TakuzuTutorialRuleId> & {
 
 /**
  * 直前の手。盤面の上の合図に使う。
- * - `towardStep`: 手を引いている手順のマスを、正しい手へ向かう途中にした。責めないよう、ルールに合わないところを見せない。
+ * - `towardStep`: 手を引いている手順のマスを、正しい手へ向かう途中にした。責めないよう、すぐにはルールに合わないところを見せない。
  * - `violated`: 置いたマスが、見せているルールに合わないところに入っている。
  * - `reasonCellIndices`: 置いたタイルが手前の盤面だけで決まっていたときの決め手のマス。決まっていなければ空。
+ * - `fitsStep`: 手を引いている手順のマスに、解と同じタイルを置いた。手を離した後は常に `false`。
  */
 export type TakuzuTutorialMove = {
   cellIndex: number;
   towardStep: boolean;
   violated: boolean;
   reasonCellIndices: readonly number[];
+  fitsStep: boolean;
 };
 
 /** `moveCount`: 盤面を変えた手の数。同じマスへの合図をやり直す目印に使う。 */
@@ -132,20 +135,20 @@ const steps: readonly TakuzuTutorialStep[] = [
     lesson: null,
   },
   {
-    message: { headline: "同じものは、3つ続けられません", detail: null },
+    message: { headline: "同じ形は3つ続けられません", detail: null },
     introducedRuleId: "run",
     cellIndices: [cellAt(1, 3)],
     lesson: { ruleId: "run", axis: "row" },
   },
   {
-    message: { headline: "縦にも、3つ続けられません", detail: null },
+    message: { headline: "縦にも3つ続けられません", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(4, 1)],
     lesson: { ruleId: "run", axis: "column" },
   },
   {
     message: {
-      headline: "どの行にも四角と丸が同じ数ずつ入ります",
+      headline: "どの行にも四角と丸が\n同じ数ずつ入ります",
       detail: null,
     },
     introducedRuleId: "count",
@@ -160,7 +163,7 @@ const steps: readonly TakuzuTutorialStep[] = [
   },
   {
     message: {
-      headline: "ここまでのルールで、このマスも分かります",
+      headline: "ここまでのルールで\nこのマスも分かります",
       detail: null,
     },
     introducedRuleId: null,
@@ -374,12 +377,16 @@ const noViolations: TakuzuRuleViolations = {
   duplicateLines: [],
 };
 
-/** 盤面に見せる違反。手順のマスを正しい手へ向かう途中にした直後は、責めないよう何も見せない。 */
+/**
+ * 盤面に見せる違反。手順のマスを正しい手へ向かう途中にした直後は、責めないよう何も見せない。
+ * 途中の盤面のまま手が止まったら（`towardStepSettled`）、ルールに合わないところを見せる。
+ */
 function findShownViolations(
   { board, lastMove }: TakuzuTutorialBoardState,
   ruleIds: readonly TakuzuTutorialRuleId[],
+  towardStepSettled: boolean,
 ): TakuzuRuleViolations {
-  return lastMove?.towardStep
+  return lastMove?.towardStep && !towardStepSettled
     ? noViolations
     : findVisibleViolations(board, ruleIds);
 }
@@ -427,7 +434,7 @@ function getPlacementReason(
 
 /**
  * 手を引いている手順のマスを、正しい手へ向かう途中にしたか。
- * 解のタイルにした手と、同じ向きにもう一度押せば解のタイルになり、そうすればルールに合わないところが無くなる手を、途中とみなす。
+ * 解のタイルにした手と、同じ向きにもう一度押せば解のタイルになる手のうち、解のタイルにすればルールに合わないところが無くなるものを、途中とみなす。
  * 途中でない手（別のマスのタイルのせいでルールに合わないままになる手や、キーで違うタイルを置いた手）は、ルールに合わないところを見せる。
  */
 function isTowardStep(
@@ -440,13 +447,10 @@ function isTowardStep(
     return false;
   }
   const target = solution.cells[action.cellIndex] ?? null;
-  if (placed === target) {
-    return true;
-  }
-  if (
-    action.type !== "cycle" ||
-    getNextTakuzuCell(placed, action.direction) !== target
-  ) {
+  const reachesNext =
+    action.type === "cycle" &&
+    getNextTakuzuCell(placed, action.direction) === target;
+  if (placed !== target && !reachesNext) {
     return false;
   }
   const reached = placeTakuzuCell(givens, board, action.cellIndex, target);
@@ -500,6 +504,7 @@ function performTakuzuTutorialAction(
         placed === null
           ? []
           : getPlacementReason(situation, state.board, cellIndex, placed),
+      fitsStep: step !== null && placed === solution.cells[cellIndex],
     },
   };
 
@@ -515,12 +520,14 @@ function performTakuzuTutorialAction(
   return { state: next, outcome: "continued" };
 }
 
+/** `towardStepSettled`: 正しい手へ向かう途中の盤面のまま、手が止まった。ルールに合わないところを見せる。 */
 export function getTakuzuTutorialCellViews(
   { earnedRuleIds }: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
+  towardStepSettled = false,
 ): TakuzuCellView[] {
   const runCellIndices = new Set(
-    findShownViolations(state, earnedRuleIds).runCellIndices,
+    findShownViolations(state, earnedRuleIds, towardStepSettled).runCellIndices,
   );
   return state.board.cells.map(function createCellView(cell, cellIndex) {
     return {
@@ -535,13 +542,16 @@ function isSameLine(left: TakuzuLine, right: TakuzuLine): boolean {
   return left.axis === right.axis && left.index === right.index;
 }
 
+/** `towardStepSettled`: `getTakuzuTutorialCellViews` と同じ。 */
 export function getTakuzuTutorialLineViolations(
   { earnedRuleIds }: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
+  towardStepSettled = false,
 ): TakuzuLineViolationView[] {
   const { overfilledLines, duplicateLines } = findShownViolations(
     state,
     earnedRuleIds,
+    towardStepSettled,
   );
   return listTakuzuLines(state.board.size).flatMap(
     function createLineViolation(line) {
@@ -568,13 +578,6 @@ const lineNames = { row: "行", column: "列" } as const satisfies Record<
   TakuzuLine["axis"],
   string
 >;
-
-/** 違反の一言の補足に添える、当たったルールそのもの。 */
-const ruleStatements = {
-  run: "同じものは、3つ続けられません",
-  count: "行にも列にも、四角と丸が同じ数ずつ入ります",
-  duplicate: "同じ並びの行や列は作れません",
-} as const satisfies Record<TakuzuTutorialRuleId, string>;
 
 /** 隣り合う行・列は向きで、離れた行・列は何番目かで言う。 */
 function getLinePlaceName(line: TakuzuLine, twin: TakuzuLine): string {
@@ -630,7 +633,7 @@ function listViolationDescriptions(
             cellIndices: [cellIndex],
             message: {
               headline: `${tileNames[tile]}が3つ続いています`,
-              detail: ruleStatements.run,
+              detail: null,
             },
           },
         ]
@@ -647,8 +650,8 @@ function listViolationDescriptions(
           {
             cellIndices,
             message: {
-              headline: `${tileNames[tile]}が多すぎる${lineNames[line.axis]}があります`,
-              detail: ruleStatements.count,
+              headline: `この${lineNames[line.axis]}は${tileNames[tile]}が多すぎます`,
+              detail: null,
             },
           },
         ]
@@ -658,7 +661,7 @@ function listViolationDescriptions(
     cellIndices: getTakuzuLineCellIndices(board.size, line),
     message: {
       headline: `${describeTwinLine(board, violations.duplicateLines, line)}と同じ並びになっています`,
-      detail: ruleStatements.duplicate,
+      detail: null,
     },
   }));
   return [...runs, ...overfilled, ...duplicates];
@@ -671,7 +674,7 @@ function describeTakuzuTutorialViolation(
 ): TutorialMessage {
   const descriptions = listViolationDescriptions(
     state.board,
-    findShownViolations(state, earnedRuleIds),
+    findShownViolations(state, earnedRuleIds, false),
   );
   const lastCellIndex = state.lastMove?.cellIndex;
   const description =
@@ -696,12 +699,21 @@ export function getTakuzuTutorialStepCellIndices(
   );
 }
 
-/** 手を離した後、手が止まったときに示す、今の盤面と手に入れたルールだけで決まるマス。無ければ `null`。 */
+/**
+ * 手を離した後、手が止まったときに示すマス。無ければ `null`。
+ * 解と違うタイルがあればそのマスを先に示す。違うタイルを前提に決まるマスを示すと、印に従っても解から離れるため。
+ * 無ければ、今の盤面と手に入れたルールだけで決まるマスを示す。
+ */
 export function findTakuzuTutorialHintCellIndex(
   { earnedRuleIds }: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
 ): number | null {
-  return findDeducibleCellIndex(state.board, earnedRuleIds);
+  const mistakenCellIndex = state.board.cells.findIndex(
+    (cell, cellIndex) => cell !== null && cell !== solution.cells[cellIndex],
+  );
+  return mistakenCellIndex >= 0
+    ? mistakenCellIndex
+    : findDeducibleCellIndex(state.board, earnedRuleIds);
 }
 
 export const takuzuTutorial: Tutorial<
@@ -710,19 +722,30 @@ export const takuzuTutorial: Tutorial<
   TakuzuTutorialBoardState,
   TakuzuTutorialAction
 > = {
+  intro: {
+    purpose: "すべてのマスを四角か丸で\nルールどおりに埋めるパズルです",
+    goalCaption: "この盤面がゴールです",
+    startCaption: "最初は一部のマスだけ埋まっています",
+  },
   rules: [
-    { id: "run", label: "3つ続かない" },
-    { id: "count", label: "同じ数" },
-    { id: "duplicate", label: "同じ並びなし" },
+    { id: "run", label: "3つ続けない" },
+    { id: "count", label: "同じ数にする" },
+    { id: "duplicate", label: "同じ並びにしない" },
   ],
   steps,
   freePlay: {
     headline: "残りを埋めると完成です",
-    detail: "迷ったら、少し待つと印が出ます",
+    detail: null,
   },
   completion: {
-    headline: "完成です",
-    detail: "本番は 8×8 で、ルールは同じです",
+    home: {
+      headline: "完成です",
+      detail: `${getDifficultyLabel("1")}は 8×8 です`,
+    },
+    play: {
+      headline: "完成です",
+      detail: "プレイ中の盤面も同じルールです",
+    },
   },
   start: startTakuzuTutorial,
   goal: getTakuzuTutorialGoal,

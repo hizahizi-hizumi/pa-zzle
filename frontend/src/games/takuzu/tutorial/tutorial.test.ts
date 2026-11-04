@@ -2,6 +2,7 @@ import type { TakuzuBoard, TakuzuCell } from "@/games/takuzu/puzzle/board";
 import {
   findTakuzuRuleViolations,
   hasTakuzuRuleViolation,
+  isTakuzuSolved,
 } from "@/games/takuzu/puzzle/rules";
 import {
   _private,
@@ -92,6 +93,30 @@ function listSolutions(board: TakuzuBoard): string[] {
       (filled) => !hasTakuzuRuleViolation(findTakuzuRuleViolations(filled)),
     )
     .map((filled) => filled.cells.join(""));
+}
+
+/**
+ * 固定マスのほかを空き・四角・丸のどれかにした盤面のうち、ルールに合わないところが無く、解けていないものすべて。
+ * タイルを足してもルールに合わないところは消えないので、合わなくなった所で先を数えない。
+ */
+function listUnsolvedConsistentBoards(): TakuzuBoard[] {
+  const freeCellIndices = getEmptyCellIndices(givens);
+  const choices = [null, "a", "b"] as const satisfies readonly TakuzuCell[];
+  function extend(board: TakuzuBoard, position: number): TakuzuBoard[] {
+    if (hasTakuzuRuleViolation(findTakuzuRuleViolations(board))) {
+      return [];
+    }
+    const cellIndex = freeCellIndices[position];
+    if (cellIndex === undefined) {
+      return isTakuzuSolved(board) ? [] : [board];
+    }
+    return choices.flatMap((choice) => {
+      const cells = [...board.cells];
+      cells[cellIndex] = choice;
+      return extend({ ...board, cells }, position + 1);
+    });
+  }
+  return extend(givens, 0);
 }
 
 /** 決まるマスを、決まらなくなるまで1つずつ埋める。 */
@@ -277,10 +302,14 @@ describe("takuzuTutorial.perform", () => {
   describe("3つ続かないことを示す手順で", () => {
     const runStep = finishSteps(2);
 
-    function getRunFlags(progress: Progress): boolean[] {
+    function getRunFlags(
+      progress: Progress,
+      towardStepSettled = false,
+    ): boolean[] {
       return getTakuzuTutorialCellViews(
         getTutorialSituation(takuzuTutorial, progress),
         progress.boardState,
+        towardStepSettled,
       )
         .slice(0, 4)
         .map((view) => view.inViolatingRun);
@@ -292,6 +321,13 @@ describe("takuzuTutorial.perform", () => {
       expect(result.violated).toBe(false);
       expect(result.stepIndex).toBe(2);
       expect(getRunFlags(result)).toEqual([false, false, false, false]);
+    });
+
+    test("丸へ向かう途中の四角のまま手が止まったら、ルールに合わないとはせず、3つ続くマスを示すこと", () => {
+      const result = performAll(runStep, [tap(cellAt(1, 3))]);
+
+      expect(result.violated).toBe(false);
+      expect(getRunFlags(result, true)).toEqual([true, true, true, false]);
     });
 
     test("キーで四角を置くと、ルールに合わないとして進まず、3つ続くマスを示すこと", () => {
@@ -349,7 +385,7 @@ describe("takuzuTutorial.perform", () => {
       ]);
     });
 
-    test("同じ並びを1マスずつ直す途中では、ルールに合わないところを見せないこと", () => {
+    test("同じ並びから1マスだけ解のタイルに直しても、もう片方のせいで3つ続いて多すぎるなら、ルールに合わないとして示すこと", () => {
       const result = performAll(sameAsAbove, [tap(cellAt(3, 3))]);
       const situation = getTutorialSituation(takuzuTutorial, result);
       const runFlags = getTakuzuTutorialCellViews(
@@ -362,9 +398,38 @@ describe("takuzuTutorial.perform", () => {
       );
 
       expect(result.boardState.board.cells[cellAt(3, 3)]).toBe("b");
-      expect(result.violated).toBe(false);
-      expect(runFlags.every((flag) => !flag)).toBe(true);
-      expect(lineViolations).toEqual([]);
+      expect(result.violated).toBe(true);
+      expect(runFlags.slice(cellAt(3, 1), cellAt(3, 4) + 1)).toEqual([
+        true,
+        true,
+        true,
+        false,
+      ]);
+      expect(lineViolations).toEqual([
+        { axis: "row", index: 2, overfilled: true, duplicated: false },
+      ]);
+    });
+
+    test("解のタイルを置いても、別のマスのタイルのせいで残るルールに合わないところは見せること", () => {
+      const result = performAll(duplicateStep, [
+        tap(cellAt(3, 2)),
+        tap(cellAt(3, 2)),
+        tap(cellAt(3, 3)),
+        tap(cellAt(3, 2)),
+        tap(cellAt(3, 2)),
+      ]);
+      const runFlags = getTakuzuTutorialCellViews(
+        getTutorialSituation(takuzuTutorial, result),
+        result.boardState,
+      )
+        .slice(cellAt(3, 1), cellAt(3, 4) + 1)
+        .map((view) => view.inViolatingRun);
+
+      expect(
+        result.boardState.board.cells.slice(cellAt(3, 1), cellAt(3, 4) + 1),
+      ).toEqual(["b", "a", "a", "a"]);
+      expect(result.violated).toBe(true);
+      expect(runFlags).toEqual([false, true, true, true]);
     });
   });
 
@@ -397,6 +462,27 @@ describe("takuzuTutorial.perform", () => {
       expect(deduction?.tile).toBe(solution.cells[cellIndex ?? -1]);
     });
 
+    test("ルールに合わないところが無いどの盤面でも、示すマスを解のタイルにすると解に近づくこと", () => {
+      const strayHints = listUnsolvedConsistentBoards().filter((board) => {
+        const cellIndex = findTakuzuTutorialHintCellIndex(situation, {
+          board,
+          moveCount: 0,
+          lastMove: null,
+        });
+        if (cellIndex === null) {
+          return true;
+        }
+        const target = solution.cells[cellIndex];
+        const deduction = deduceCell(board, allLessons, cellIndex);
+        return (
+          board.cells[cellIndex] === target ||
+          (board.cells[cellIndex] === null && deduction?.tile !== target)
+        );
+      });
+
+      expect(strayHints).toEqual([]);
+    });
+
     test("残りを解のとおりに埋めると解けること", () => {
       const result = performAll(
         released,
@@ -416,7 +502,7 @@ describe("takuzuTutorial.describeViolation", () => {
       [place(cellAt(1, 3), "a")],
       {
         headline: "四角が3つ続いています",
-        detail: "同じものは、3つ続けられません",
+        detail: null,
       },
     ],
     [
@@ -424,8 +510,8 @@ describe("takuzuTutorial.describeViolation", () => {
       4,
       [place(cellAt(2, 4), "b")],
       {
-        headline: "丸が多すぎる行があります",
-        detail: "行にも列にも、四角と丸が同じ数ずつ入ります",
+        headline: "この行は丸が多すぎます",
+        detail: null,
       },
     ],
     [
@@ -434,7 +520,7 @@ describe("takuzuTutorial.describeViolation", () => {
       [place(cellAt(3, 2), "b"), place(cellAt(3, 3), "a")],
       {
         headline: "上の行と同じ並びになっています",
-        detail: "同じ並びの行や列は作れません",
+        detail: null,
       },
     ],
     [
@@ -442,8 +528,8 @@ describe("takuzuTutorial.describeViolation", () => {
       takuzuTutorial.steps.length,
       [place(cellAt(4, 2), "a")],
       {
-        headline: "四角が多すぎる列があります",
-        detail: "行にも列にも、四角と丸が同じ数ずつ入ります",
+        headline: "この列は四角が多すぎます",
+        detail: null,
       },
     ],
   ] as const;

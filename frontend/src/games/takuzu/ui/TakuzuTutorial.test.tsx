@@ -44,6 +44,9 @@ const remainingPlacements: readonly CellPlacement[] = [
 /** ルールに合わない手に、揺れと違反の一言で応えるまでの間。 */
 const violationReactionDelayMs = 500;
 
+/** 手順のマスを正しい手へ向かう途中にしたまま手が止まってから、盤面にルールに合わないところを示すまでの間。 */
+const towardStepRevealDelayMs = 1000;
+
 /** 手順どおりに置いてから、次の印を付けるまでの間。 */
 const nextStepCueDelayMs = 900;
 
@@ -54,7 +57,10 @@ const idleHintDelayMs = 4000;
 const introBoardStartMs = 550;
 
 /** 導入を最後まで見せるのに十分な間。 */
-const introEnoughMs = 3000;
+const introEnoughMs = 8000;
+
+/** 動きを減らす設定で、ゴールの盤面を見せる間。 */
+const stillGoalHoldMs = 2800;
 
 afterEach(() => {
   cleanup();
@@ -99,6 +105,11 @@ async function advanceTimeInSlices(ms: number): Promise<void> {
   }
 }
 
+/** 導入を飛ばして、最初の手順から始める。 */
+function skipIntro(): void {
+  fireEvent.pointerDown(getBoard());
+}
+
 function stubReducedMotion(): void {
   vi.stubGlobal(
     "matchMedia",
@@ -140,12 +151,17 @@ function solveAll(): void {
   placeAll(remainingPlacements);
 }
 
-/** 印を付けているマスの位置。 */
-function getHintedCellPositions(): string[] {
+/** 合図を重ねているマスの位置。 */
+function getCuedCellPositions(kind: "hint" | "fitted"): string[] {
   return within(getBoard())
     .getAllByRole("button")
-    .filter((cell) => cell.querySelector('[data-cell-cue="hint"]'))
+    .filter((cell) => cell.querySelector(`[data-cell-cue="${kind}"]`))
     .map((cell) => cell.getAttribute("aria-label")?.split(" ")[0] ?? "");
+}
+
+/** 印を付けているマスの位置。 */
+function getHintedCellPositions(): string[] {
+  return getCuedCellPositions("hint");
 }
 
 /** 違反のある行・列として、盤面の中で囲んでいる数。 */
@@ -155,23 +171,23 @@ function getViolatedOutlineCount(): number {
   ).length;
 }
 
-function getRuleChips(): HTMLElement[] {
+function getRuleItems(): HTMLElement[] {
   return within(screen.getByRole("list", { name: "ルール" })).getAllByRole(
     "listitem",
   );
 }
 
-function getRuleChipTexts(): string[] {
-  return getRuleChips().map((item) => item.textContent ?? "");
+function getRuleTexts(): string[] {
+  return getRuleItems().map((item) => item.textContent ?? "");
 }
 
 function getCellLabel(row: number, column: number): string | null {
   return getCell(row, column).getAttribute("aria-label");
 }
 
-/** 今の手順で示しているルールとして目立たせているチップ。 */
-function getCurrentRuleChipTexts(): string[] {
-  return getRuleChips()
+/** 今の手順で示しているルールとして目立たせているもの。 */
+function getCurrentRuleTexts(): string[] {
+  return getRuleItems()
     .filter((item) => item.querySelector('[aria-current="step"]'))
     .map((item) => item.textContent ?? "");
 }
@@ -205,6 +221,7 @@ describe("TakuzuTutorial", () => {
             onClose={onClose}
           />,
         );
+      skipIntro();
     });
 
     test("パズルの名前と4×4の盤面を出し、最初に押すマスと操作を示して、ルールを伏せておくこと", () => {
@@ -212,24 +229,26 @@ describe("TakuzuTutorial", () => {
       const cells = within(getBoard()).getAllByRole("button");
       const headline = screen.getByText("印のマスをタップすると四角が入ります");
       const hinted = getHintedCellPositions();
-      const chips = getRuleChipTexts();
+      const rules = getRuleTexts();
 
       expect(title).toBeTruthy();
       expect(cells).toHaveLength(16);
       expect(headline).toBeTruthy();
       expect(hinted).toEqual(["1行1列"]);
-      expect(chips).toEqual(["？", "？", "？"]);
+      expect(rules).toEqual(["？", "？", "？"]);
     });
 
-    test("印のマスをタップすると四角になり、丸の置き方と次のマスを示すこと", () => {
+    test("印のマスをタップすると四角になり、そのマスを光らせて、丸の置き方と次のマスを示すこと", () => {
       tapCell(1, 1);
 
       const label = getCell(1, 1).getAttribute("aria-label");
       const message = screen.getByText("2回タップすると丸が入ります");
+      const fitted = getCuedCellPositions("fitted");
       const hinted = getHintedCellPositions();
 
       expect(label).toBe("1行1列 四角");
       expect(message).toBeTruthy();
+      expect(fitted).toEqual(["1行1列"]);
       expect(hinted).toEqual(["1行4列"]);
     });
 
@@ -301,28 +320,53 @@ describe("TakuzuTutorial", () => {
         finishSteps(2);
       });
 
-      test("ルールを示してチップに加え、今示しているルールとして目立たせること", () => {
-        const message = screen.getByText("同じものは、3つ続けられません");
-        const chips = getRuleChipTexts();
-        const currentChips = getCurrentRuleChipTexts();
+      test("ルールを示してルールの並びに加え、今示しているルールとして目立たせること", () => {
+        const message = screen.getByText("同じ形は3つ続けられません");
+        const rules = getRuleTexts();
+        const currentRules = getCurrentRuleTexts();
 
         expect(message).toBeTruthy();
-        expect(chips).toEqual(["3つ続かない", "？", "？"]);
-        expect(currentChips).toEqual(["3つ続かない"]);
+        expect(rules).toEqual(["3つ続けない", "？", "？"]);
+        expect(currentRules).toEqual(["3つ続けない"]);
       });
 
-      test("丸へ向かう途中の四角では、待っても違反の一言も揺れも出さず、印を付け続けること", () => {
+      test("丸へ向かう途中の四角では、すぐには3つ続くことを示さず、違反の一言も揺れも出さないこと", () => {
         const animate = installAnimate();
         tapCell(1, 3);
-        advanceTime(violationReactionDelayMs * 4);
+        advanceTime(towardStepRevealDelayMs - 1);
 
-        const message = screen.getByText("同じものは、3つ続けられません");
+        const message = screen.getByText("同じ形は3つ続けられません");
         const label = getCell(1, 3).getAttribute("aria-label");
 
         expect(message).toBeTruthy();
         expect(label).toBe("1行3列 四角");
         expect(animate).not.toHaveBeenCalled();
         expect(getHintedCellPositions()).toEqual(["1行3列"]);
+      });
+
+      test("丸へ向かう途中の四角のまま手が止まると、盤面で3つ続くマスを示し、違反の一言も揺れも出さずに印を付け続けること", () => {
+        const animate = installAnimate();
+        tapCell(1, 3);
+        advanceTime(towardStepRevealDelayMs);
+
+        const message = screen.getByText("同じ形は3つ続けられません");
+        const labels = [getCellLabel(1, 1), getCellLabel(1, 3)];
+
+        expect(message).toBeTruthy();
+        expect(labels).toEqual(["1行1列 四角 3連続", "1行3列 四角 3連続"]);
+        expect(animate).not.toHaveBeenCalled();
+        expect(getHintedCellPositions()).toEqual(["1行3列"]);
+      });
+
+      test("丸へ向かう途中の四角からすぐ丸にすると、3つ続くことを示さないこと", () => {
+        tapCell(1, 3);
+        advanceTime(towardStepRevealDelayMs / 2);
+        tapCell(1, 3);
+        advanceTime(towardStepRevealDelayMs * 2);
+
+        const labels = [getCellLabel(1, 1), getCellLabel(1, 3)];
+
+        expect(labels).toEqual(["1行1列 四角", "1行3列 丸"]);
       });
 
       test("キーで四角を置いて違反が続くと、違反の一言を出して置いたタイルを揺らし、印を付け続けること", () => {
@@ -353,12 +397,23 @@ describe("TakuzuTutorial", () => {
         tapCell(1, 3);
         advanceTime(violationReactionDelayMs * 2);
 
-        const message = screen.getByText("縦にも、3つ続けられません");
-        const currentChips = getCurrentRuleChipTexts();
+        const message = screen.getByText("縦にも3つ続けられません");
+        const currentRules = getCurrentRuleTexts();
 
         expect(message).toBeTruthy();
-        expect(currentChips).toEqual([]);
+        expect(currentRules).toEqual([]);
         expect(animate).not.toHaveBeenCalled();
+      });
+
+      test("解と違う四角では光らせず、丸を置くとそのマスを光らせること", () => {
+        tapCell(1, 3);
+        const fittedOnSquare = getCuedCellPositions("fitted");
+        tapCell(1, 3);
+
+        const fittedOnCircle = getCuedCellPositions("fitted");
+
+        expect(fittedOnSquare).toEqual([]);
+        expect(fittedOnCircle).toEqual(["1行3列"]);
       });
 
       test("丸を置くと、決め手が光った後に次の印を付けること", () => {
@@ -379,16 +434,16 @@ describe("TakuzuTutorial", () => {
         finishSteps(4);
       });
 
-      test("ルールを示してチップに加え、今示しているルールとして目立たせること", () => {
+      test("ルールを示してルールの並びに加え、今示しているルールとして目立たせること", () => {
         const message = screen.getByText(
-          "どの行にも四角と丸が同じ数ずつ入ります",
+          "どの行にも四角と丸が 同じ数ずつ入ります",
         );
-        const chips = getRuleChipTexts();
-        const currentChips = getCurrentRuleChipTexts();
+        const rules = getRuleTexts();
+        const currentRules = getCurrentRuleTexts();
 
         expect(message).toBeTruthy();
-        expect(chips).toEqual(["3つ続かない", "同じ数", "？"]);
-        expect(currentChips).toEqual(["同じ数"]);
+        expect(rules).toEqual(["3つ続けない", "同じ数にする", "？"]);
+        expect(currentRules).toEqual(["同じ数にする"]);
       });
 
       test("丸が多すぎる行を作ると、その行を盤面の中で囲み、違反の一言を出すこと", () => {
@@ -398,7 +453,7 @@ describe("TakuzuTutorial", () => {
         fireEvent.keyDown(getCell(2, 4), { key: "2" });
         advanceTime(violationReactionDelayMs);
 
-        const message = screen.getByText("丸が多すぎる行があります");
+        const message = screen.getByText("この行は丸が多すぎます");
         const label = getCellLabel(2, 1);
 
         expect(message).toBeTruthy();
@@ -413,17 +468,21 @@ describe("TakuzuTutorial", () => {
         advanceTime(nextStepCueDelayMs);
       });
 
-      test("ルールを示してチップに加え、3行目の2マスに印を付けること", () => {
+      test("ルールを示してルールの並びに加え、3行目の2マスに印を付けること", () => {
         const message = screen.getByText("同じ並びの行や列は作れません");
         const detail = screen.getByText("上の行と見比べると分かります");
-        const chips = getRuleChipTexts();
-        const currentChips = getCurrentRuleChipTexts();
+        const rules = getRuleTexts();
+        const currentRules = getCurrentRuleTexts();
         const hinted = getHintedCellPositions();
 
         expect(message).toBeTruthy();
         expect(detail).toBeTruthy();
-        expect(chips).toEqual(["3つ続かない", "同じ数", "同じ並びなし"]);
-        expect(currentChips).toEqual(["同じ並びなし"]);
+        expect(rules).toEqual([
+          "3つ続けない",
+          "同じ数にする",
+          "同じ並びにしない",
+        ]);
+        expect(currentRules).toEqual(["同じ並びにしない"]);
         expect(hinted).toEqual(["3行2列", "3行3列"]);
       });
 
@@ -439,20 +498,20 @@ describe("TakuzuTutorial", () => {
         expect(getViolatedOutlineCount()).toBe(2);
       });
 
-      test("同じ並びを1マスずつ直す途中では、違反の一言も囲みも出さないこと", () => {
+      test("同じ並びから1マスだけ直しても、もう片方のせいで3つ続くと、そのことを伝えて3つ続くマスと多すぎる行を示すこと", () => {
         tapCell(3, 2);
         tapCell(3, 2);
         tapCell(3, 3);
         advanceTime(violationReactionDelayMs);
         tapCell(3, 3);
-        advanceTime(violationReactionDelayMs * 4);
+        advanceTime(violationReactionDelayMs);
 
-        const message = screen.getByText("同じ並びの行や列は作れません");
+        const message = screen.getByText("丸が3つ続いています");
         const label = getCellLabel(3, 3);
 
         expect(message).toBeTruthy();
-        expect(label).toBe("3行3列 丸");
-        expect(getViolatedOutlineCount()).toBe(0);
+        expect(label).toBe("3行3列 丸 3連続 行の個数超過");
+        expect(getViolatedOutlineCount()).toBe(1);
         expect(getHintedCellPositions()).toEqual(["3行2列"]);
       });
     });
@@ -475,21 +534,25 @@ describe("TakuzuTutorial", () => {
         expect(hinted).toHaveLength(1);
       });
 
-      test("どのマスにも置けること", () => {
-        tapCell(4, 2);
+      test("どのマスにも置け、正しく置いても光らせないこと", () => {
+        tapCell(4, 3);
 
-        const label = getCell(4, 2).getAttribute("aria-label");
+        const label = getCell(4, 3).getAttribute("aria-label");
+        const fitted = getCuedCellPositions("fitted");
 
-        expect(label).toBe("4行2列 四角 列の個数超過");
+        expect(label).toBe("4行3列 四角");
+        expect(fitted).toEqual([]);
       });
 
       test("ルールに合わない手を置いて違反が続くと、違反の一言を出すこと", () => {
         tapCell(4, 2);
         advanceTime(violationReactionDelayMs);
 
-        const message = screen.getByText("四角が多すぎる列があります");
+        const label = getCell(4, 2).getAttribute("aria-label");
+        const message = screen.getByText("この列は四角が多すぎます");
         const freePlayMessage = screen.queryByText("残りを埋めると完成です");
 
+        expect(label).toBe("4行2列 四角 列の個数超過");
         expect(message).toBeTruthy();
         expect(freePlayMessage).toBeNull();
       });
@@ -498,9 +561,11 @@ describe("TakuzuTutorial", () => {
     test("解き終えると、終わりの一言を出し、レベル1を遊ぶで本番を始めること", () => {
       solveAll();
       const message = screen.getByText("完成です");
+      const detail = screen.getByText("レベル 1は 8×8 です");
       fireEvent.click(screen.getByRole("button", { name: "レベル 1を遊ぶ" }));
 
       expect(message).toBeTruthy();
+      expect(detail).toBeTruthy();
       expect(onStartPlay).toHaveBeenCalledOnce();
     });
 
@@ -523,17 +588,20 @@ describe("TakuzuTutorial", () => {
       ]);
     });
 
-    test("終えた後のもう一度で、最初から始めること", () => {
+    test("終えた後のもう一度で、始まりの盤面を見せてから最初から始めること", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+      const caption = screen.getByText("最初は一部のマスだけ埋まっています");
+      advanceTime(introEnoughMs);
 
       const message = screen.getByText("印のマスをタップすると四角が入ります");
       const label = getCell(1, 1).getAttribute("aria-label");
-      const chips = getRuleChipTexts();
+      const rules = getRuleTexts();
 
+      expect(caption).toBeTruthy();
       expect(message).toBeTruthy();
       expect(label).toBe("1行1列 空き");
-      expect(chips).toEqual(["？", "？", "？"]);
+      expect(rules).toEqual(["？", "？", "？"]);
     });
 
     test("閉じてから開き直すと、最初から始まること", () => {
@@ -541,6 +609,7 @@ describe("TakuzuTutorial", () => {
       fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
       rerenderTutorial(false);
       rerenderTutorial(true);
+      skipIntro();
 
       const message = screen.getByText("印のマスをタップすると四角が入ります");
 
@@ -561,17 +630,21 @@ describe("TakuzuTutorial", () => {
       );
     });
 
-    test("開くと、パズル選択と同じピクトグラムと名前を出し、解き終えた盤面を、印を付けずに見せること", () => {
-      const pictogram = screen.getByRole("img", {
+    test("開くと、パズル選択と同じピクトグラムと名前、何をするパズルかを出し、解き終えた盤面を、印を付けずに見せること", () => {
+      const pictograms = screen.getAllByRole("img", {
         name: "バイナリパズル",
         hidden: true,
       });
       const title = screen.getByRole("heading", { name: "バイナリパズル" });
+      const purpose = screen.getByText(
+        "すべてのマスを四角か丸で ルールどおりに埋めるパズルです",
+      );
       const labels = [getCellLabel(1, 1), getCellLabel(3, 3)];
       const hinted = getHintedCellPositions();
 
-      expect(pictogram).toBeTruthy();
+      expect(pictograms.length).toBeGreaterThan(0);
       expect(title).toBeTruthy();
+      expect(purpose).toBeTruthy();
       expect(labels).toEqual(["1行1列 四角", "3行3列 丸"]);
       expect(hinted).toEqual([]);
     });
@@ -582,12 +655,12 @@ describe("TakuzuTutorial", () => {
       const headline = screen.getByText("印のマスをタップすると四角が入ります");
       const labels = [getCellLabel(1, 1), getCellLabel(1, 2)];
       const hinted = getHintedCellPositions();
-      const chips = getRuleChipTexts();
+      const rules = getRuleTexts();
 
       expect(headline).toBeTruthy();
       expect(labels).toEqual(["1行1列 空き", "1行2列 四角 固定"]);
       expect(hinted).toEqual(["1行1列"]);
-      expect(chips).toEqual(["？", "？", "？"]);
+      expect(rules).toEqual(["？", "？", "？"]);
     });
 
     describe("盤面の段まで進んだ場合", () => {
@@ -664,7 +737,32 @@ describe("TakuzuTutorial", () => {
       render(<TakuzuTutorial open={true} onClose={onClose} />);
     });
 
-    test("導入を見せずに、始めの盤面の最初の手順から始めること", () => {
+    test("最初の画面で、何をするパズルかとゴールの盤面を、ゴールの一言と一緒に見せること", () => {
+      const purpose = screen.getByText(
+        "すべてのマスを四角か丸で ルールどおりに埋めるパズルです",
+      );
+      const caption = screen.getByText("この盤面がゴールです");
+      const label = getCellLabel(1, 1);
+
+      expect(purpose).toBeTruthy();
+      expect(caption).toBeTruthy();
+      expect(label).toBe("1行1列 四角");
+    });
+
+    test("ゴールを見せた後に、始まりの一言を添えて始めの盤面を見せること", () => {
+      advanceTime(stillGoalHoldMs);
+
+      const caption = screen.getByText("最初は一部のマスだけ埋まっています");
+      const label = getCellLabel(1, 1);
+
+      expect(caption).toBeTruthy();
+      expect(label).toBe("1行1列 空き");
+    });
+
+    test("最後まで見せると、始めの盤面の最初の手順から始めること", () => {
+      advanceTime(stillGoalHoldMs);
+      advanceTime(introEnoughMs);
+
       const headline = screen.getByText("印のマスをタップすると四角が入ります");
       const label = getCellLabel(1, 1);
       const hinted = getHintedCellPositions();
@@ -678,12 +776,15 @@ describe("TakuzuTutorial", () => {
   describe("プレイ中に開いた場合", () => {
     beforeEach(() => {
       render(<TakuzuTutorial open={true} onClose={onClose} />);
+      skipIntro();
     });
 
-    test("解き終えると、プレイに戻る操作で閉じること", () => {
+    test("解き終えると、プレイに戻ることを伝え、プレイに戻る操作で閉じること", () => {
       solveAll();
+      const detail = screen.getByText("プレイ中の盤面も同じルールです");
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
+      expect(detail).toBeTruthy();
       expect(onClose).toHaveBeenCalledOnce();
     });
   });
