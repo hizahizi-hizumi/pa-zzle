@@ -1,6 +1,8 @@
 import {
+  Fragment,
   type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -19,9 +21,11 @@ import type {
   TakuzuCellView,
   TakuzuLineViolationView,
 } from "@/games/takuzu/session/session";
-import { animateGivenCellRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-given-cell-rejection";
+import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
+import { animateTakuzuTileRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-tile-rejection";
 import { TakuzuCell } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuCell";
 import { TakuzuLineViolationMark } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationMark";
+import { TakuzuLineViolationOutline } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationOutline";
 
 type TakuzuBoardProps = {
   size: number;
@@ -29,6 +33,10 @@ type TakuzuBoardProps = {
   lineViolations: readonly TakuzuLineViolationView[];
   operation: TakuzuOperation | null;
   interactionDisabled: boolean;
+  /** マスに一時的に重ねる合図。通常のプレイでは渡さない。 */
+  cues?: readonly TakuzuCellCue[];
+  /** 個数超過・重複の行・列を、縁の外の印に加えて盤面の中でも囲む。チュートリアルで使い、通常のプレイでは渡さない。 */
+  outlinesViolatedLines?: boolean;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
 };
@@ -84,6 +92,8 @@ export function TakuzuBoard({
   lineViolations,
   operation,
   interactionDisabled,
+  cues = [],
+  outlinesViolatedLines = false,
   onCycleCell,
   onPlaceCell,
 }: TakuzuBoardProps) {
@@ -92,10 +102,22 @@ export function TakuzuBoard({
   const lineViolationByKey = new Map(
     lineViolations.map((violation) => [getLineKey(violation), violation]),
   );
+  const cueByCellIndex = new Map(cues.map((cue) => [cue.cellIndex, cue]));
+  const rejectedCue = cues.find((cue) => cue.kind === "rejected");
+  const rejectedCueId = rejectedCue?.id ?? null;
+  const rejectedCellIndex = rejectedCue?.cellIndex ?? null;
+
+  // 揺れは DOM のアニメーションで描くので、合図が届いたときに要素へ掛ける。
+  useEffect(() => {
+    if (rejectedCueId === null || rejectedCellIndex === null) {
+      return;
+    }
+    animateTakuzuTileRejection(cellElementRefs.current.get(rejectedCellIndex));
+  }, [rejectedCueId, rejectedCellIndex]);
 
   useLayoutEffect(() => {
     if (operation?.type === "invalid") {
-      animateGivenCellRejection(
+      animateTakuzuTileRejection(
         cellElementRefs.current.get(operation.cellIndex),
       );
     }
@@ -178,6 +200,7 @@ export function TakuzuBoard({
                 ),
               ]}
               disabled={interactionDisabled}
+              cue={cueByCellIndex.get(cellIndex)}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}
               onCycle={onCycleCell}
@@ -186,13 +209,22 @@ export function TakuzuBoard({
           );
         })}
         {listTakuzuLines(size).map(function renderLineMark(line) {
+          const violated = lineViolationByKey.has(getLineKey(line));
           return (
-            <TakuzuLineViolationMark
-              key={getLineKey(line)}
-              size={size}
-              line={line}
-              violated={lineViolationByKey.has(getLineKey(line))}
-            />
+            <Fragment key={getLineKey(line)}>
+              <TakuzuLineViolationMark
+                size={size}
+                line={line}
+                violated={violated}
+              />
+              {outlinesViolatedLines && (
+                <TakuzuLineViolationOutline
+                  size={size}
+                  line={line}
+                  violated={violated}
+                />
+              )}
+            </Fragment>
           );
         })}
       </div>

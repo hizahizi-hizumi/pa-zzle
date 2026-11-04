@@ -9,3 +9,7 @@ export const runViolationCellClassName = "bg-rose-100/80 dark:bg-rose-950/50";
 /** 個数超過・重複の行・列の、盤面の縁の外に置く細い線の色。 */
 export const lineViolationBarClassName =
   "rounded-full bg-rose-400 dark:bg-rose-400/80";
+
+/** 個数超過・重複の行・列を、盤面の中で囲む枠の色。チュートリアルで、どのマスがルールに当たっているかを示すのに使う。 */
+export const lineViolationOutlineClassName =
+  "rounded-sm ring-[3px] ring-rose-400 ring-inset dark:ring-rose-400/80";
