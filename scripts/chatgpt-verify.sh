@@ -113,7 +113,7 @@ run_frontend_check() {
 
 run_frontend_check biome node_modules/.bin/biome check .
 run_frontend_check typecheck env TERM=dumb node_modules/.bin/tsc --noEmit --pretty false
-run_frontend_check test node_modules/.bin/vitest run --pool=vmForks
+run_frontend_check test node_modules/.bin/vitest run
 run_frontend_check build node_modules/.bin/vite build --config vite.config.ts
 
 failed_checks=()
