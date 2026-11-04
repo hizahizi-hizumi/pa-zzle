@@ -1,5 +1,6 @@
 import { difficultyLevels } from "@/games/difficulty";
-import { measureHakoiriMusumeOptimalMoveCount } from "@/games/hakoiri-musume/problem/generation/shortest-solution";
+import { assessHakoiriMusumeDifficulty } from "@/games/hakoiri-musume/difficulty";
+import { analyzeHakoiriMusumeDifficulty } from "@/games/hakoiri-musume/problem/difficulty-analysis";
 import {
   decodeHakoiriMusumePoolEntry,
   findHakoiriMusumePoolEntryByProblemId,
@@ -16,18 +17,52 @@ const poolEntries = difficultyLevels.flatMap(({ id: difficulty }) =>
   })),
 );
 
-describe("restoreHakoiriMusumePoolEntry", () => {
-  test("全項目の盤面を問題として読み、最短手数が解き直した手数と一致すること", () => {
-    const mismatches = poolEntries.filter(({ entry }) => {
-      const { problem, optimalMoveCount } =
-        restoreHakoiriMusumePoolEntry(entry);
-      return (
-        measureHakoiriMusumeOptimalMoveCount(problem.pieces) !==
-        optimalMoveCount
-      );
-    });
+describe("listHakoiriMusumePoolEntries", () => {
+  const countCases = [
+    ["1", 500],
+    ["2", 500],
+    ["3", 500],
+    ["4", 500],
+    ["5", 300],
+  ] as const;
 
-    expect(mismatches).toEqual([]);
+  test.each(countCases)("レベル %s は %i 問を持つこと", (difficulty, count) => {
+    const entries = listHakoiriMusumePoolEntries(difficulty);
+
+    expect(entries).toHaveLength(count);
+  });
+});
+
+describe("restoreHakoiriMusumePoolEntry", () => {
+  test("全項目の盤面を問題として読み、最短手数を添えること", () => {
+    const restored = poolEntries.map(({ entry }) =>
+      restoreHakoiriMusumePoolEntry(entry),
+    );
+
+    expect(
+      restored.every(
+        ({ optimalMoveCount }, index) =>
+          optimalMoveCount === poolEntries[index]!.entry[1],
+      ),
+    ).toBe(true);
+  });
+
+  describe("レベル5 の先頭の問題の場合", () => {
+    // 全問の分析し直しは問題集の生成スクリプトの --verify が受け持つ。ここでは全局面の少ない1問で、問題集と分析のつながりを確かめる。
+    const pooled = restoreHakoiriMusumePoolEntry(
+      listHakoiriMusumePoolEntries("5")[0]!,
+    );
+
+    test("分析し直すと、問題集の最短手数とレベルになること", () => {
+      const analysis = analyzeHakoiriMusumeDifficulty(pooled.problem);
+      const assessment = assessHakoiriMusumeDifficulty(analysis);
+
+      expect(analysis).toMatchObject({
+        status: "analyzed",
+        features: { optimalMoveCount: pooled.optimalMoveCount },
+      });
+      expect(assessment).toEqual({ status: "classified", difficulty: "5" });
+    });
   });
 });
 

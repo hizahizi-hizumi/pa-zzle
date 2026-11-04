@@ -1,5 +1,8 @@
 import { difficultyLevels } from "@/games/difficulty";
-import { listHakoiriMusumePoolProblemIds } from "@/games/hakoiri-musume/problem/problem-pool";
+import {
+  listHakoiriMusumePoolEntries,
+  listHakoiriMusumePoolProblemIds,
+} from "@/games/hakoiri-musume/problem/problem-pool";
 import {
   canSelectHakoiriMusumeProblemById,
   selectHakoiriMusumeProblemById,
@@ -24,12 +27,13 @@ describe("selectHakoiriMusumeProblemForDifficulty", () => {
 
 describe("selectHakoiriMusumeProblemById", () => {
   const [problemId] = listHakoiriMusumePoolProblemIds("1");
+  const [board, optimalMoveCount] = listHakoiriMusumePoolEntries("1")[0]!;
 
   test("問題 ID で引いた問題を最短手数とともに復元すること", () => {
     const selected = selectHakoiriMusumeProblemById("1", problemId!);
 
-    expect(selected?.identity.seed).toBe("vAAvwAAwv..vwhiws..s");
-    expect(selected?.optimalMoveCount).toBe(13);
+    expect(selected?.identity.seed).toBe(board);
+    expect(selected?.optimalMoveCount).toBe(optimalMoveCount);
   });
 
   test("別の難易度の問題 ID は引けないこと", () => {
