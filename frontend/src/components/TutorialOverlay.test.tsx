@@ -26,6 +26,9 @@ const introFinishEnoughMs = 1000;
 /** 盤面を読むのに十分すぎる間。導入はこれだけ待っても自動では進まない。 */
 const longWaitMs = 60_000;
 
+/** 名前を上部へ戻し始めてから、ルールと一言を出し始めるまでの間。 */
+const revealAfterNameDelayMs = 350;
+
 afterEach(() => {
   cleanup();
   delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
@@ -133,6 +136,20 @@ describe("TutorialOverlay", () => {
 
       expect(onIntroEnd).toHaveBeenCalledOnce();
       expect(nextButton).toBeNull();
+    });
+
+    test("名前を上部へ戻すときは、ルールと一言を出し始めてから、出したことを盤面へ伝えること", () => {
+      pressNext();
+      pressNext();
+      pressNext();
+      const beforeReveal = boardIntro?.messageShown;
+      advanceTime(revealAfterNameDelayMs);
+
+      const revealed = boardIntro?.messageShown;
+
+      expect(beforeReveal).toBe(false);
+      expect(revealed).toBe(true);
+      expect(onIntroEnd).not.toHaveBeenCalled();
     });
 
     describe("ゴールの場面の動きを終えた場合", () => {
