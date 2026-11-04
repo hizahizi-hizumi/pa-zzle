@@ -38,7 +38,8 @@ game id は `frontend/src/games/<game>/` のディレクトリ名。
 ## 作るもの
 
 - 白黒版 `pictogram.svg` を土台にした SVG を 1 つ作る。白黒版と同じパズルだと一覧で分かること。
-- 静止状態は、見せ場の後の姿（解けた・揃った状態）にする。白黒版が途中の姿なら、それは開始の姿の候補になる。
+- 静止状態は、白黒版と同じ絵に色を付けた姿にする。選んだ瞬間に変わるのは色だけで、形が跳ぶとがたつきになる（`references/contract.md` の 2 節）。アプリはヒーローもこの静止状態から再生し始める。
+- 静止状態は、見せ場の後の姿（解けた・揃った状態）であることが望ましい。白黒版が途中の姿を描いていて、そのままでは見せ場の後で止まれない、または動きの余地が無いときは、白黒版を描き直す修正案を `base_revision` で添え、色付き版を白黒版に寄せる案と並べて人間に選んでもらう。
 - 動きは切り替えループ（`cut`）を基本にする。開始の姿から見せ場まで動き、静止状態で止まり、周の境界で開始の姿へ瞬時に戻る。継ぎ目ループ（`seam`）は継ぎ目が意味として自然に成り立つ場合だけにする。1 回だけ再生して止まる形式は使わない。
 - 色はプレイ画面の色をそのまま使う。
 - 書き方の規則は `references/contract.md`。違反は `scripts/check_animation.py` が報告する。
@@ -120,7 +121,7 @@ Skill 配下には特定ゲームの生成物を置かない。
 - `.claude/agents/showcase-pictogram-reviewer.md` — 人間へ見せる前のレビュー役
 - `references/self-review.md` — 観察方法、必須チェックリスト、`self-review.json`
 - `scripts/` — 検査（`check_animation.py`、`check_self_review.py`）、観察（`observe_animation.cjs`、`capture_frames.cjs`）、ギャラリー（`make_review_gallery.py`、`check_gallery.cjs`）、色の実値（`resolve_color.py`）。オプションは各スクリプトの `--help`
-- `DESIGN.md` の「ゲームピクトグラム」、`docs/adr/ADR-0004-selected-pictogram-color-motion.md`
+- `DESIGN.md` の「ゲームピクトグラム」、`docs/adr/ADR-0015-selected-pictogram-color-motion.md`
 
 ## 制約
 

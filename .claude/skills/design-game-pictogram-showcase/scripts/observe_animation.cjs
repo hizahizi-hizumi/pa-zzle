@@ -22,6 +22,10 @@
 //       played hero (no matched element, undefined @keyframes, or overridden)
 //   (j) optional: a filmstrip of real-time screenshots of the 138px hero over one cycle (--filmstrip)
 //   (k) optional: static / end screenshots and errors in WebKit when it can be launched (--webkit)
+//   (l) the static state against the monochrome pictogram it replaces on selection (the candidate's
+//       base_revision, else the manifest's base_pictogram), by ink masks at 138px in light and dark: the
+//       share of each one's ink that the other does not cover (1px tolerance). On selection only the color
+//       may change, so a share above MONO_MATCH_FAIL fails (references/contract.md)
 // Each candidate is rendered alone in its own page (never in a srcdoc iframe; see references/self-review.md).
 // The host defines the color tokens of frontend/styles/globals.css (:root and .dark) like the app, so an
 // SVG may reference the app color tokens with var().
@@ -70,6 +74,11 @@ const FALLBACK_THEMES = {
 const HERO_SIZES = [177, 138];
 // The selected list pictogram in the app is about 46px (phone) / 56px (desktop).
 const LIST_SIZE = 46;
+// Ink mask comparison of the static state with the monochrome pictogram (see (l) above).
+const MONO_MATCH_SIZE = 138;
+const MONO_MATCH_INK = 40;
+const MONO_MATCH_WARN = 0.02;
+const MONO_MATCH_FAIL = 0.05;
 const NUMBER_TOLERANCE = 0.01;
 const END_OFFSET_MS = 0.01;
 const OVERFLOW_STEP_MS = 20;
@@ -840,6 +849,101 @@ async function inkCoverage(page, themes) {
   }, [shot.toString('base64'), themes.light.background, themes.light.foreground]);
 }
 
+async function heroStill(context, svg, theme, themes) {
+  const { page } = await render(context, svg, { play: false, theme, themes });
+  const shot = await page.locator('.host.hero').nth(HERO_SIZES.indexOf(MONO_MATCH_SIZE)).screenshot();
+  await page.close();
+  return shot.toString('base64');
+}
+
+// Share of the ink of a that b does not cover, and of b that a does not cover. Ink is a pixel whose color
+// is farther than MONO_MATCH_INK (0-255, any channel) from the background; the cover grows by 1px so
+// antialiasing does not count.
+async function inkMismatch(context, a, b, background) {
+  const page = await context.newPage();
+  const result = await page.evaluate(async ([a, b, background, threshold]) => {
+    const toRgb = (color) => {
+      const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
+      const context = canvas.getContext('2d'); context.fillStyle = color; context.fillRect(0, 0, 1, 1);
+      return [...context.getImageData(0, 0, 1, 1).data.slice(0, 3)];
+    };
+    const bg = toRgb(background);
+    const mask = async (data) => {
+      const image = await new Promise((resolve) => { const img = new Image(); img.onload = () => resolve(img); img.src = 'data:image/png;base64,' + data; });
+      const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+      const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      const ink = new Uint8Array(canvas.width * canvas.height);
+      for (let i = 0; i < ink.length; i++) {
+        const o = i * 4;
+        ink[i] = Math.max(Math.abs(pixels[o] - bg[0]), Math.abs(pixels[o + 1] - bg[1]), Math.abs(pixels[o + 2] - bg[2])) > threshold ? 1 : 0;
+      }
+      return { ink, width: canvas.width, height: canvas.height };
+    };
+    const grown = ({ ink, width, height }) => {
+      const out = new Uint8Array(ink.length);
+      for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+        if (!ink[y * width + x]) continue;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx, ny = y + dy;
+          if (nx >= 0 && ny >= 0 && nx < width && ny < height) out[ny * width + nx] = 1;
+        }
+      }
+      return out;
+    };
+    const uncovered = (from, cover) => {
+      let total = 0, missing = 0;
+      for (let i = 0; i < from.ink.length; i++) if (from.ink[i]) { total++; if (!cover[i]) missing++; }
+      return total ? missing / total : 0;
+    };
+    const ma = await mask(a), mb = await mask(b);
+    return { aNotInB: uncovered(ma, grown(mb)), bNotInA: uncovered(mb, grown(ma)) };
+  }, [a, b, background, MONO_MATCH_INK]);
+  await page.close();
+  return result;
+}
+
+// The monochrome pictograms a candidate's static state is compared with: its base_revision (a path, or
+// a list of paths or { file, label }), else the manifest's base_pictogram.
+function monoTargets(candidate, options) {
+  const resolve = (file) => (path.isAbsolute(file) ? file : path.join(options.manifestDir, file));
+  const revision = candidate.base_revision;
+  if (revision) {
+    const items = Array.isArray(revision) ? revision : [revision];
+    return items.map((item) => (typeof item === 'string' ? { label: path.basename(item), file: resolve(item) } : { label: item.label || path.basename(item.file), file: resolve(item.file) }));
+  }
+  return options.baseFile ? [{ label: 'base_pictogram', file: options.baseFile }] : [];
+}
+
+async function monoMatch(context, svg, candidate, options, report) {
+  const targets = monoTargets(candidate, options).filter((target) => fs.existsSync(target.file));
+  if (!targets.length) return;
+  const stills = {};
+  for (const theme of ['light', 'dark']) stills[theme] = await heroStill(context, svg, theme, options.themes);
+  const results = [];
+  for (const target of targets) {
+    const mono = fs.readFileSync(target.file, 'utf8');
+    const entry = { target: target.label };
+    for (const theme of ['light', 'dark']) {
+      const shot = await heroStill(context, mono, theme, options.themes);
+      const { aNotInB, bNotInA } = await inkMismatch(context, shot, stills[theme], options.themes[theme].background);
+      entry[theme] = { monoNotInStatic: Number(aNotInB.toFixed(3)), staticNotInMono: Number(bNotInA.toFixed(3)) };
+    }
+    entry.worst = Math.max(...['light', 'dark'].flatMap((theme) => [entry[theme].monoNotInStatic, entry[theme].staticNotInMono]));
+    results.push(entry);
+  }
+  results.sort((a, b) => a.worst - b.worst);
+  const best = results[0];
+  report.monoMatch = { best: best.target, results };
+  const share = (v) => (v * 100).toFixed(1) + '%';
+  const detail = `${share(best.light.monoNotInStatic)} of the monochrome ink is not in the static state, ${share(best.light.staticNotInMono)} of the static state's ink is not in the monochrome (light, ${best.target})`;
+  if (best.worst > MONO_MATCH_FAIL) {
+    report.failures.push(`static state differs from the monochrome pictogram: ${detail}; on selection only the color may change, so draw the static state as the monochrome pictogram in color, or revise the monochrome (base_revision) (references/contract.md 2)`);
+  } else if (best.worst > MONO_MATCH_WARN) {
+    report.warnings.push(`static state is close to but not the same as the monochrome pictogram: ${detail}`);
+  }
+}
+
 async function staticMeasures(context, svg, themes) {
   const { page } = await render(context, svg, { play: false, theme: 'light', themes });
   const bounds = await page.evaluate(() => window.__pz.bounds());
@@ -947,6 +1051,7 @@ async function observe(browser, candidate, options) {
         centerYMedian: Number(median(references.others.map((b) => b.centerY)).toFixed(1)), bottomMedian: Number(median(references.others.map(bottom)).toFixed(1)) };
     }
   }
+  await monoMatch(context, svg, candidate, options, report);
   const ink = await inkCoverage(light.rest.page, options.themes);
   report.ink = { coverage: Number(ink.toFixed(3)), listSize: LIST_SIZE };
   if (options.references.baseInk) report.ink.vsBase = Number((ink / options.references.baseInk).toFixed(2));
@@ -1211,6 +1316,11 @@ function printReport(report) {
     if (ink.othersMedian != null) parts.push(`x${ink.vsOthersMedian} of the other games' median ${(ink.othersMedian * 100).toFixed(1)}% (their range ${ink.othersRange.map((v) => (v * 100).toFixed(1) + '%').join('-')})`);
     lines.push(`  ink coverage: ${parts.join(', ')}`);
   }
+  if (report.monoMatch) {
+    const best = report.monoMatch.results[0];
+    const share = (v) => (v * 100).toFixed(1) + '%';
+    lines.push(`  vs monochrome (${best.target}): worst ${share(best.worst)} (light ${share(best.light.monoNotInStatic)} / ${share(best.light.staticNotInMono)}, dark ${share(best.dark.monoNotInStatic)} / ${share(best.dark.staticNotInMono)}; monochrome ink not in static / static ink not in monochrome)`);
+  }
   if (report.minViewBoxMargin) lines.push(`  min viewBox margin ${report.minViewBoxMargin.margin} at ${report.minViewBoxMargin.atMs}ms (${report.minViewBoxMargin.element})`);
   if (report.smoothness) {
     const top = report.smoothness.shapes[0];
@@ -1251,6 +1361,11 @@ function printReport(report) {
     } catch (error) {
       options.webkitReason = String(error.message || error).split('\n')[0];
     }
+  }
+  options.manifestDir = path.dirname(manifestPath);
+  if (manifest.base_pictogram) {
+    const file = path.isAbsolute(manifest.base_pictogram) ? manifest.base_pictogram : path.join(options.manifestDir, manifest.base_pictogram);
+    if (fs.existsSync(file)) options.baseFile = file;
   }
   options.references = await referenceBounds(browser, manifest, manifestPath, options);
   const reports = [];

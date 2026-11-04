@@ -1,9 +1,14 @@
 import { useEffect, useRef } from "react";
 
+import { startShowcaseAtRest } from "@/components/game-pictogram-motion";
+
 type GamePictogramProps = {
   svg: string;
   variant?: "default" | "result";
-  /** `play` のとき、SVG が自身の `<style>` に持つ動きを再生させる。既定の `rest` では静止状態を見せる。 */
+  /**
+   * `play` のとき、SVG が自身の `<style>` に持つ動きを、周の終わりの静止状態から再生させる。
+   * 既定の `rest` では静止状態を見せる。
+   */
   motion?: "rest" | "play";
 };
 
@@ -42,9 +47,10 @@ export function GamePictogram({
     if (!container) return;
 
     container.replaceChildren(document.importNode(parseSvg(svg), true));
+    if (motion === "play") startShowcaseAtRest(container);
 
     return () => container.replaceChildren();
-  }, [svg]);
+  }, [svg, motion]);
 
   return (
     <span

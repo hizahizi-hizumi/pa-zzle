@@ -18,7 +18,7 @@ COMMON_CHECKS = (
     "aim_b_payoff_visible",
     "aim_c_selection_response_emerges",
     "aim_d_calm_first_impression",
-    "static_is_same_puzzle_as_base",
+    "static_matches_base",
     "static_colors_match_play_screen",
     "static_readable_at_list_size",
     "light_and_dark_both_hold",
