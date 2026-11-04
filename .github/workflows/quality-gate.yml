@@ -44,3 +44,232 @@ jobs:
 
       - name: Verify repository quality
         run: ./scripts/verify.sh
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      artifact-url: ${{ steps.upload-e2e-results.outputs.artifact-url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      # Playwright と、それが起動する vite は Node で動く。
+      - name: Setup Node
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Install Playwright browser
+        working-directory: frontend
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run E2E
+        run: bun run --cwd frontend test:e2e
+
+      - name: Upload E2E results
+        id: upload-e2e-results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: e2e-results
+          path: frontend/e2e-results/
+          if-no-files-found: warn
+
+  pool-verify:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # 問題集の --verify は全問を生成し直して確かめるため、ゲームによっては数十分かかる。
+    timeout-minutes: 180
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version-file: .bun-version
+
+      - name: Find games whose problem generation changed
+        id: targets
+        working-directory: frontend
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          games="$(bun scripts/factory/list-pool-verify-targets.ts --base "$BASE_SHA" --head "$HEAD_SHA" | tr '\n' ' ')"
+          echo "games=${games}" >> "$GITHUB_OUTPUT"
+          if [[ -z "${games// }" ]]; then
+            echo "問題の生成・プールが変わったゲームは無い。" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "問題集の --verify を実行するゲーム: ${games}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Install frontend dependencies
+        if: steps.targets.outputs.games != ''
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Verify problem pools
+        if: steps.targets.outputs.games != ''
+        working-directory: frontend
+        env:
+          GAMES: ${{ steps.targets.outputs.games }}
+        run: |
+          set -euo pipefail
+          failed_games=()
+          for game in $GAMES; do
+            echo "::group::${game}"
+            if ! bun "scripts/generate-${game}-problem-pool.ts" --verify; then
+              failed_games+=("$game")
+            fi
+            echo "::endgroup::"
+          done
+          if (( ${#failed_games[@]} > 0 )); then
+            echo "問題集の --verify に失敗したゲーム: ${failed_games[*]}" | tee -a "$GITHUB_STEP_SUMMARY" >&2
+            exit 1
+          fi
+
+  classify:
+    if: ${{ github.event_name == 'pull_request' && !cancelled() }}
+    # 体験レビュー票に E2E のスクリーンショットの artifact を載せるため、e2e の後に動く。
+    needs: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    outputs:
+      treatment: ${{ steps.classify.outputs.treatment }}
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version-file: .bun-version
+
+      - name: Classify change
+        id: classify
+        working-directory: frontend
+        run: |
+          set -euo pipefail
+          classification="$RUNNER_TEMP/change-classification.json"
+          bun scripts/factory/classify-change.ts --base "$BASE_SHA" --head "$HEAD_SHA" --json "$classification" > /dev/null
+          echo "treatment=$(jq -r .treatment "$classification")" >> "$GITHUB_OUTPUT"
+          echo "treatment-label=$(jq -r .treatmentLabel "$classification")" >> "$GITHUB_OUTPUT"
+
+      - name: Write experience review
+        working-directory: frontend
+        env:
+          E2E_ARTIFACT_URL: ${{ needs.e2e.outputs.artifact-url }}
+        run: |
+          set -euo pipefail
+          bun scripts/factory/report-experience-review.ts --base "$BASE_SHA" --head "$HEAD_SHA" --e2e-artifact-url "$E2E_ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          bun scripts/factory/report-requirement-trace.ts >> "$GITHUB_STEP_SUMMARY"
+
+      # fork からの PR では GITHUB_TOKEN に書き込み権限が無い。
+      - name: Label treatment
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          TREATMENT_LABEL: ${{ steps.classify.outputs.treatment-label }}
+        run: |
+          set -euo pipefail
+          declare -A label_colors=(["扱い:自動"]="0e8a16" ["扱い:体験確認"]="fbca04" ["扱い:承認"]="d93f0b")
+          selected="扱い:${TREATMENT_LABEL}"
+          [[ -v "label_colors[$selected]" ]] || { echo "未知の扱い: ${TREATMENT_LABEL}" >&2; exit 1; }
+          current_labels="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels" --jq '.[].name')"
+          for label in "${!label_colors[@]}"; do
+            encoded="$(jq -rn --arg label "$label" '$label | @uri')"
+            if [[ "$label" == "$selected" ]]; then
+              if ! gh api "repos/${GITHUB_REPOSITORY}/labels/${encoded}" > /dev/null 2>&1; then
+                gh api -X POST "repos/${GITHUB_REPOSITORY}/labels" -f name="$label" -f color="${label_colors[$label]}" > /dev/null
+              fi
+              gh api -X POST "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels" -f "labels[]=${label}" > /dev/null
+            elif grep -Fqx -- "$label" <<< "$current_labels"; then
+              gh api -X DELETE "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels/${encoded}" > /dev/null
+            fi
+          done
+
+  auto-merge:
+    if: ${{ github.event_name == 'pull_request' && vars.FACTORY_AUTO_MERGE == 'true' && !cancelled() }}
+    needs:
+      - quality-gate
+      - e2e
+      - pool-verify
+      - classify
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Merge when the change is automatic
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_IS_DRAFT: ${{ github.event.pull_request.draft }}
+          PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # pull_request で検証したのは、head を base に merge した refs/pull/<n>/merge のコミット。
+          VERIFIED_MERGE_SHA: ${{ github.sha }}
+          TREATMENT: ${{ needs.classify.outputs.treatment }}
+          QUALITY_GATE_RESULT: ${{ needs.quality-gate.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+          POOL_VERIFY_RESULT: ${{ needs.pool-verify.result }}
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+        run: |
+          set -euo pipefail
+          function skip_merge() {
+            printf '## 自動 merge\n\nmerge しなかった: %s\n' "$1" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          }
+          [[ "$PR_HEAD_REPOSITORY" == "$GITHUB_REPOSITORY" ]] || skip_merge "fork からの PR"
+          [[ "$PR_IS_DRAFT" != "true" ]] || skip_merge "ドラフトの PR"
+          [[ "$BASE_REF" == "main" ]] || skip_merge "merge 先が main ではない（${BASE_REF}）"
+          [[ "$CLASSIFY_RESULT" == "success" ]] || skip_merge "classify が成功していない（${CLASSIFY_RESULT}）"
+          [[ "$TREATMENT" == "auto" ]] || skip_merge "扱いが自動ではない（${TREATMENT}）"
+          [[ "$QUALITY_GATE_RESULT" == "success" ]] || skip_merge "quality-gate が成功していない（${QUALITY_GATE_RESULT}）"
+          [[ "$E2E_RESULT" == "success" ]] || skip_merge "e2e が成功していない（${E2E_RESULT}）"
+          [[ "$POOL_VERIFY_RESULT" == "success" || "$POOL_VERIFY_RESULT" == "skipped" ]] || skip_merge "pool-verify が成功していない（${POOL_VERIFY_RESULT}）"
+
+          verified_parents="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${VERIFIED_MERGE_SHA}" --jq '[.parents[].sha] | join(" ")')"
+          read -r verified_base verified_head <<< "$verified_parents"
+          [[ "$verified_head" == "$HEAD_SHA" ]] || skip_merge "検証した merge コミットの head（${verified_head}）が PR の head（${HEAD_SHA}）と違う"
+          current_main="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          [[ "$verified_base" == "$current_main" ]] || skip_merge "検証した後に main が進んだ（検証した base: ${verified_base}、今の main: ${current_main}）。最新の main と合わせて検証し直す"
+
+          gh api -X PUT "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/merge" -f merge_method=merge -f sha="$HEAD_SHA" > /dev/null
+          printf '## 自動 merge\n\n検証した %s を merge commit で merge した。\n' "$HEAD_SHA" >> "$GITHUB_STEP_SUMMARY"
