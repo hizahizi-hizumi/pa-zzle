@@ -150,12 +150,6 @@ describe("合意の2例の最短解をたどった場合", () => {
       });
     });
 
-    test("最短手数が合意の手数であること", () => {
-      const moveCount = solution.length;
-
-      expect(moveCount).toBe(optimalMoveCount);
-    });
-
     test("1マスずつたどるとクリアになり、指した手の数が最短手数と一致すること", () => {
       const result = getHakoiriMusumeSessionResult(session);
 

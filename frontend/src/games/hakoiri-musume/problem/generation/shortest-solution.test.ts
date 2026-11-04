@@ -3,17 +3,19 @@ import { parseHakoiriMusumeBoard } from "@/games/hakoiri-musume/puzzle/board";
 
 describe("measureHakoiriMusumeOptimalMoveCount", () => {
   const cases = [
-    ["合意の易しい例", "vAAvwAAwv..vwhiws..s", 13],
-    ["横刀立馬", "vAAvwAAwvhivwssws..s", 81],
-    ["娘が出口の1段上にいて真下が空いている", "v..vwssw.AAv.AAws..s", 1],
+    ["合意の易しい例", parseHakoiriMusumeBoard("vAAvwAAwv..vwhiws..s")!, 13],
+    ["横刀立馬", parseHakoiriMusumeBoard("vAAvwAAwvhivwssws..s")!, 81],
+    [
+      "娘が出口の1段上にいて真下が空いている",
+      parseHakoiriMusumeBoard("v..vwssw.AAv.AAws..s")!,
+      1,
+    ],
   ] as const;
 
   test.each(cases)(
     "娘を出口の前へ運ぶ最短手数を数えること: %s",
-    (_, board, expected) => {
-      const moveCount = measureHakoiriMusumeOptimalMoveCount(
-        parseHakoiriMusumeBoard(board)!,
-      );
+    (_, pieces, expected) => {
+      const moveCount = measureHakoiriMusumeOptimalMoveCount(pieces);
 
       expect(moveCount).toBe(expected);
     },
