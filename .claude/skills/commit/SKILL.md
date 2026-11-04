@@ -27,7 +27,7 @@ allowed-tools: Read, Glob, Bash(git *), TaskCreate, TaskUpdate, TaskGet, TaskLis
 - `git branch --show-current` が空なら停止する。
 - `main` / `master` / `staging` 上ではコミットしない。作業ブランチが必要なら `commit-pr` を使う。
 - `git status --porcelain=v1 -uall` で対象差分があることを確認する。
-- リモートに同名ブランチが存在する場合、公開済み履歴を書き換える `--amend` / interactive rebase / force push を行わない。
+- リモートに同名ブランチが存在する場合、公開済み履歴を書き換えない。例外は、そのブランチの PR の中で指摘を直す修正を元のコミットに含めるときだけで、push は `--force-with-lease` で行う。
 
 ### 2. ルール読込
 

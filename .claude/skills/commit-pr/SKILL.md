@@ -130,7 +130,7 @@ git switch -c "<type>/<short-description>-<timestamp>" "<branch-base>"
 ## 制約
 
 - 作業中に `main` を取り込まない。`main` 追従は `pr` Skill の完了時競合確認に従う。
-- force pushしない。
+- `--force-with-lease` を伴わない force push はしない。
 - `main` / `master` / `staging` へ直接コミットしない。
 - 計画外の差分を勝手に捨てない。
 - PR数を増やすこと自体を目的にしない。
