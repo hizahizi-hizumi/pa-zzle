@@ -18,11 +18,19 @@
 //   shot                        撮るだけ
 //   zoom <x> <y> <幅> <高さ> [倍率]  ビューポートの矩形を倍率（既定4、1〜8）で描き直して撮る。拡大画像の (px, py) は
 //                               ビューポートの (x + px/倍率, y + py/倍率)。盤面は動かさない
-//   quit                        ブラウザを閉じて常駐を終える
-// 返す1行: <画像のパス> t=<起動からの秒数>s scrollY=<window.scrollY>（zoom は末尾に zoom=<倍率>x、quit は "quit"）
+//   rect <セレクタ>             合う要素（最大20）の外接矩形を、ビューポートの座標で返す。中心をそのまま tap に使える。
+//                               セレクタは Playwright のもの（CSS、text=次の問題、role=button[name="遊ぶ"] など）
+//   save-storage <ファイル>     今のページの localStorage を JSON でファイルに書き出す（解いた記録のある状態を残す）
+//   load-storage <ファイル>     save-storage で書き出した localStorage を今のページに読み込み、ページを読み直す。
+//                               先に goto でアプリのページを開いておく
+//   quit                        ブラウザを閉じて常駐を終える（自分で起動した driver は、終わったら必ずこれで止める）
+// 返す1行: <画像のパス> t=<起動からの秒数>s scrollY=<window.scrollY> [scrolled=<要素>:<scrollTop>,...]
+//   scrolled は、ページの中でスクロールしている要素（scrollTop が 0 でないもの）。zoom は末尾に zoom=<倍率>x。
+//   rect・save-storage・load-storage は、その後の行に結果を並べる（rect は1要素1行で
+//   rect <番号> x=<左> y=<上> w=<幅> h=<高さ> cx=<中心x> cy=<中心y> <要素の文字の先頭>）。quit は quit とだけ返す
 // ブラウザエラー: pageerror と console.error を <画像の出力先>/browser-errors.log に追記する。
 
-import { appendFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -35,6 +43,7 @@ const SERVE_WAIT_MILLISECONDS = 30_000;
 const SERVE_RETRY_MILLISECONDS = 300;
 const DEFAULT_ZOOM = 4;
 const MAX_ZOOM = 8;
+const MAX_RECTS = 20;
 
 // playwright はリポジトリの依存に無く、環境の全体インストール（NODE_PATH や /opt/node*/lib/node_modules）から読む。
 function loadPlaywright() {
@@ -149,11 +158,51 @@ async function serve(args) {
     wait: (milliseconds) => page.waitForTimeout(Math.max(0, Number(milliseconds) - SETTLE_MILLISECONDS)),
     shot: async () => {},
     zoom: async () => {},
+    rect: async (...selectorWords) => {
+      const elements = await page.locator(selectorWords.join(" ")).all();
+      const lines = [];
+      for (const [index, element] of elements.slice(0, MAX_RECTS).entries()) {
+        const box = await element.boundingBox();
+        if (!box) continue;
+        const text = ((await element.textContent()) ?? "").replace(/\s+/g, " ").trim().slice(0, 30);
+        const round = (value) => Math.round(value);
+        lines.push(
+          `rect ${index + 1} x=${round(box.x)} y=${round(box.y)} w=${round(box.width)} h=${round(box.height)} cx=${round(box.x + box.width / 2)} cy=${round(box.y + box.height / 2)} ${text}`,
+        );
+      }
+      return lines.length > 0 ? lines.join("\n") : "rect: 合う要素が無い";
+    },
+    "save-storage": async (file) => {
+      const entries = await page.evaluate(() => Object.fromEntries(Object.entries(window.localStorage)));
+      writeFileSync(file, JSON.stringify(entries, null, 2));
+      return `saved ${Object.keys(entries).length} keys to ${file}`;
+    },
+    "load-storage": async (file) => {
+      const entries = JSON.parse(readFileSync(file, "utf8"));
+      await page.evaluate((items) => {
+        for (const [key, value] of Object.entries(items)) window.localStorage.setItem(key, value);
+      }, entries);
+      await page.reload({ waitUntil: "networkidle" });
+      return `loaded ${Object.keys(entries).length} keys from ${file}`;
+    },
   };
+
+  // ページの中でスクロールしている要素（盤面や台紙など）。window.scrollY だけでは見えない。
+  async function scrolledElements() {
+    return page.evaluate(() =>
+      [...document.querySelectorAll("*")]
+        .filter((element) => element.scrollTop !== 0)
+        .map((element) => {
+          const id = element.id ? `#${element.id}` : "";
+          const label = element.getAttribute("aria-label");
+          return `${element.tagName.toLowerCase()}${id}${label ? `[${label}]` : ""}:${Math.round(element.scrollTop)}`;
+        }),
+    );
+  }
 
   async function run(name, operands) {
     const clip = name === "zoom" ? zoomClip(...operands) : null;
-    await operations[name](...operands);
+    const detail = await operations[name](...operands);
     await page.waitForTimeout(SETTLE_MILLISECONDS);
     shotNumber += 1;
     const file = path.join(values.out, `${String(shotNumber).padStart(3, "0")}-${name}.png`);
@@ -162,7 +211,10 @@ async function serve(args) {
     const note = clip ? ` zoom=${clip.scale}x` : "";
     const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
     const scrollY = await page.evaluate(() => window.scrollY);
-    return `${file} t=${seconds}s scrollY=${scrollY}${note}`;
+    const scrolled = await scrolledElements();
+    const scrolledNote = scrolled.length > 0 ? ` scrolled=${scrolled.join(",")}` : "";
+    const detailLines = typeof detail === "string" ? `\n${detail}` : "";
+    return `${file} t=${seconds}s scrollY=${scrollY}${scrolledNote}${note}${detailLines}`;
   }
 
   const server = createServer(async (request, response) => {
@@ -222,6 +274,6 @@ if (command === "serve") await serve(rest);
 else if (command === "send") await send(rest);
 else {
   console.error("使い方: node playtest-driver.mjs serve --url <URL> --device <iphone|pc> --out <出力先> --port <ポート>");
-  console.error("        node playtest-driver.mjs send --port <ポート> <goto|tap|swipe|scroll|wait|shot|zoom|quit> [引数...]");
+  console.error("        node playtest-driver.mjs send --port <ポート> <goto|tap|swipe|scroll|wait|shot|zoom|rect|save-storage|load-storage|quit> [引数...]");
   process.exit(2);
 }
