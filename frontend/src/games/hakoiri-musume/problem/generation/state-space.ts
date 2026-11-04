@@ -1,10 +1,12 @@
 import {
+  getHakoiriMusumeCellPosition,
   HAKOIRI_MUSUME_CELL_COUNT,
   HAKOIRI_MUSUME_COLUMNS,
   HAKOIRI_MUSUME_GOAL_CELL,
   HAKOIRI_MUSUME_ROWS,
   type HakoiriMusumePieceKind,
   hakoiriMusumePieceShapes,
+  listHakoiriMusumePieceCellsAt,
 } from "@/games/hakoiri-musume/puzzle/board";
 
 /**
@@ -329,8 +331,9 @@ export function createHakoiriMusumeComponentGraph(
  * 盤面ごとの、最短手数と難易度の特徴。
  * - `optimal`: 娘を出口の前へ運ぶ最短手数。運べなければ -1。
  * - `preparation`: 準備の長さ。娘の距離が今までの最小を下回り、その後二度と上回らない手を「前進」とし、前進と前進のあいだに
- *   要る手の数の最長。どんな長さの解でもよく、その最長が最も小さくなる解で数える。娘を往復させても、一時的に前へ出して
- *   戻しても、その手は前進にならないので、手を足して短くすることはできない。
+ *   要る手の数の最長。「上回らない」には、1手の滑りの途中で娘が通る位置の距離も含める。どんな長さの解でもよく、その最長が
+ *   最も小さくなる解で数える。娘を往復させても、一時的に前へ出して戻しても、1手の中で遠回りして戻っても、その手は前進を
+ *   作らないので、手を足したりまとめたりして短くすることはできない。
  * - `detour`: 娘の遠回り。娘の左上と出口の前のマンハッタン距離が増える手の数。どんな長さの解でもよく、最も少ない解で数える。
  * - `lure`・`daughterMoves`・`optimalFirstMoves`: 最短解の上で、値が最も少ない解で数える（記録だけ）。
  *   誘いの局面の数、娘を動かす手の数、最短手数を縮める初手の数。
@@ -365,6 +368,93 @@ export function measureHakoiriMusumeDaughterDistance(
 const maximumDaughterDistance = 4;
 const unreached = 2_147_483_647;
 
+/**
+ * 辺ごとの、その1手で娘が通る位置の距離の最大（娘を動かさない手は -1）。娘は1手の中で何マスも曲がって滑れるので、
+ * 手の終わりの距離だけでは途中で遠いマスを通ったかが分からない。ほかの駒を止めたまま娘の左上が動ける位置をたどり、
+ * 始めから終わりへ行ける道のうち、通る距離の最大が最も小さい道の値を取る（遊ぶ人はその道を選べる）。
+ */
+function measureDaughterSlidePeaks(
+  graph: HakoiriMusumeStateGraph,
+  daughterCell: Int32Array,
+): Int8Array {
+  const { boards, edgeStarts, edges } = graph;
+  const peaks = new Int8Array(edges.length).fill(-1);
+  const daughterCells = listHakoiriMusumePieceCellsAt(
+    "daughter",
+    getHakoiriMusumeCellPosition(0),
+  );
+  for (let from = 0; from < boards.length; from += 1) {
+    const board = boards[from]!;
+    const start = daughterCell[from]!;
+    for (
+      let edge = edgeStarts[from]!;
+      edge < edgeStarts[from + 1]!;
+      edge += 1
+    ) {
+      const goal = daughterCell[edges[edge]!]!;
+      if (goal === start) {
+        continue;
+      }
+      const isFree = (anchor: number) => {
+        const { row, column } = getHakoiriMusumeCellPosition(anchor);
+        if (
+          row + hakoiriMusumePieceShapes.daughter.rows > HAKOIRI_MUSUME_ROWS ||
+          column + hakoiriMusumePieceShapes.daughter.columns >
+            HAKOIRI_MUSUME_COLUMNS
+        ) {
+          return false;
+        }
+        return daughterCells.every((offset) => {
+          const character = board[anchor + offset]!;
+          return character === "." || character === "A";
+        });
+      };
+      for (
+        let peak = Math.max(
+          measureHakoiriMusumeDaughterDistance(start),
+          measureHakoiriMusumeDaughterDistance(goal),
+        );
+        peak <= maximumDaughterDistance;
+        peak += 1
+      ) {
+        const reached = new Set([start]);
+        const queue = [start];
+        for (let head = 0; head < queue.length; head += 1) {
+          const { row, column } = getHakoiriMusumeCellPosition(queue[head]!);
+          for (const [nextRow, nextColumn] of [
+            [row - 1, column],
+            [row + 1, column],
+            [row, column - 1],
+            [row, column + 1],
+          ] as const) {
+            if (
+              nextRow < 0 ||
+              nextColumn < 0 ||
+              nextColumn >= HAKOIRI_MUSUME_COLUMNS
+            ) {
+              continue;
+            }
+            const next = nextRow * HAKOIRI_MUSUME_COLUMNS + nextColumn;
+            if (
+              !reached.has(next) &&
+              isFree(next) &&
+              measureHakoiriMusumeDaughterDistance(next) <= peak
+            ) {
+              reached.add(next);
+              queue.push(next);
+            }
+          }
+        }
+        if (reached.has(goal)) {
+          peaks[edge] = peak;
+          break;
+        }
+      }
+    }
+  }
+  return peaks;
+}
+
 const recordCount = maximumDaughterDistance + 1;
 
 /**
@@ -374,7 +464,7 @@ const recordCount = maximumDaughterDistance + 1;
  * 手を、前進と前進のあいだ（始めから最初の前進まで、最後の前進から出口の前まで）で数え、その最長を準備の長さとする。
  * どんな長さの解でもよく、最長が最も小さくなる解で数える。
  *
- * 前進するたびに、その距離を上限として以後の娘の距離を縛る。上限 `c` の区間を、盤面と今までの最小の距離 `r` の組の上で
+ * 前進するたびに、その距離を上限として以後の娘の距離を縛る。1手の途中で娘が上限より遠い位置を通る手（`slidePeaks`）も使えない。上限 `c` の区間を、盤面と今までの最小の距離 `r` の組の上で
  * たどる。上限が `c` の区間の始め（距離 `c` へ前進した直後）の値は、`r` を下回る盤面 `w` へ前進できる組までの手の数と、
  * `w` から始まる区間の値の大きい方の最小。値が `T` 以下になるのは、値が `T` 以下の前進へ `T` 手以内で行けるときなので、
  * `T` を 0 から1つずつ上げ、起点を足しながら、起点からの手の数を幅優先で更新していく。上限の小さい区間から順に求める。
@@ -383,6 +473,7 @@ const recordCount = maximumDaughterDistance + 1;
 function measureRecordPreparation(
   graph: HakoiriMusumeStateGraph,
   distance: Int32Array,
+  slidePeaks: Int8Array,
   optimal: Int32Array,
 ): Int32Array {
   const { boards, edgeStarts, edges } = graph;
@@ -418,7 +509,11 @@ function measureRecordPreparation(
           edge += 1
         ) {
           const next = edges[edge]!;
-          if (distance[next]! < record && afterAdvance[next]! >= 0) {
+          if (
+            distance[next]! < record &&
+            afterAdvance[next]! >= 0 &&
+            slidePeaks[edge]! <= limit
+          ) {
             best = Math.min(best, afterAdvance[next]!);
           }
         }
@@ -458,7 +553,11 @@ function measureRecordPreparation(
         ) {
           const previous = edges[edge]!;
           const previousDistance = distance[previous]!;
-          if (previousDistance > limit || previousDistance < record) {
+          if (
+            previousDistance > limit ||
+            previousDistance < record ||
+            slidePeaks[edge]! > limit
+          ) {
             continue;
           }
           // 前進しない手で `current` へ来て、今までの最小が `record` になる組。
@@ -579,7 +678,12 @@ export function measureHakoiriMusumeStateGraph(
 
   const measures: HakoiriMusumeStateMeasures = {
     optimal,
-    preparation: measureRecordPreparation(graph, distance, optimal),
+    preparation: measureRecordPreparation(
+      graph,
+      distance,
+      measureDaughterSlidePeaks(graph, daughterCell),
+      optimal,
+    ),
     detour: measureDetour(graph, distance, optimal),
     lure: new Int32Array(count),
     daughterMoves: new Int32Array(count),

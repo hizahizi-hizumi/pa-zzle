@@ -326,7 +326,7 @@ def analyze_set(ps):
     f["branch"] = [len(x) for x in E]
     f["ar"] = ar
     f["rprep"] = record_preparation(E, d, adist)
-    f["pprep"] = permanent_preparation(E, d, adist)
+    f["pprep"] = permanent_preparation(E, d, adist, slide_peaks(S, E))
     f["adet"] = any_detour(E, d, adist)
     return S, idx, E, d, comp, f
 
@@ -385,14 +385,54 @@ def record_preparation(E, d, adist):
     return rp
 
 
-def permanent_preparation(E, d, adist):
+def anchor_distance(p):
+    r, c = POS[0][p]
+    return abs(r - GOAL_RC[0]) + abs(c - GOAL_RC[1])
+
+
+def slide_peaks(S, E):
+    """辺ごとの、その1手で娘が通る位置の距離の最大（娘を動かさない手は -1）。ほかの駒を止めたまま娘の左上が動ける
+    位置をたどり、始めから終わりへ行ける道のうち、通る距離の最大が最も小さい道の値を取る。"""
+    out = []
+    for u, nbrs in enumerate(E):
+        st = S[u]
+        a = st[0][1]
+        occ = 0
+        for t, p in st[1:]:
+            occ |= MASK[t][p]
+        row = []
+        for v in nbrs:
+            b = S[v][0][1]
+            if a == b:
+                row.append(-1)
+                continue
+            peak = max(anchor_distance(a), anchor_distance(b))
+            while True:
+                seen = {a}
+                q = [a]
+                while q:
+                    x = q.pop()
+                    for y in ADJ[0][x]:
+                        if y not in seen and not (MASK[0][y] & occ) and anchor_distance(y) <= peak:
+                            seen.add(y)
+                            q.append(y)
+                if b in seen:
+                    break
+                peak += 1
+            row.append(peak)
+        out.append(row)
+    return out
+
+
+def permanent_preparation(E, d, adist, peaks):
     """準備の長さ（後で超えない前進で区切る、任意の長さの解での最小）。
 
     娘の距離が今までの最小を下回り、その後の解で二度と上回らない手を「前進」とし、前進の手を除いた手を前進と前進のあいだで
     数えた最長を、どんな長さの解でもよく、最も小さくなる解で数える。前進した距離を上限として以後の距離を縛り、上限 c の区間を
     （盤面, 今までの最小の距離 r）の組の上でたどる。区間の始めの値は、r を下回る盤面へ前進できる組までの手の数と、その先の
     区間の値の max の最小で、閾値 T を 0 から上げて起点を足しながら幅優先で更新する。上限の小さい区間から順に求め、始めの盤面は
-    上限 4、今までの最小をその盤面の距離として求める。運べなければ -1。"""
+    上限 4、今までの最小をその盤面の距離として求める。1手の途中で娘が上限より遠い位置を通る手（peaks）は、その区間では
+    使えない。運べなければ -1。"""
     N = len(E)
     INF = 10 ** 9
     K = 5
@@ -415,8 +455,8 @@ def permanent_preparation(E, d, adist):
                 continue
             for r in range(1, adist[u] + 1):
                 best = INF
-                for v in E[u]:
-                    if adist[v] < r and after[v] >= 0 and after[v] < best:
+                for v, pk in zip(E[u], peaks[u]):
+                    if adist[v] < r and after[v] >= 0 and after[v] < best and pk <= c:
                         best = after[v]
                 if best < INF:
                     seeds.setdefault(best, []).append(u * K + r)
@@ -433,9 +473,9 @@ def permanent_preparation(E, d, adist):
                 s = q.popleft()
                 u, r = divmod(s, K)
                 ns = steps[s] + 1
-                for p in E[u]:
+                for p, pk in zip(E[u], peaks[u]):
                     dp = adist[p]
-                    if dp > c or dp < r:
+                    if dp > c or dp < r or pk > c:
                         continue
                     hi_r = min(c, dp) if r == adist[u] else r
                     for pr in range(r, hi_r + 1):
@@ -498,7 +538,8 @@ PLAN_DESC = {
     "F": "E の準備の長さと遠回りを、どんな長さの解でも崩れない数え方にしたもの（準備: 娘が今までで最も出口に近づく手で区切る、"
          "遠回り: 任意の長さの解での最小）+ 空きの範囲。山場2の確かめ（F1）の所見で E から作り直した",
     "G": "F の準備の長さを、後で超えない前進（その後の解で娘の距離が上回らない前進）だけで区切るようにしたもの。"
-         "一時的に娘を前へ出して戻す手で区切れない。F1 の再確認の所見で F から作り直した",
+         "一時的に娘を前へ出して戻す手でも、1手の滑りの途中で遠い位置を通る手でも区切れない。"
+         "F1 の再確認・再々確認の所見で F から作り直した",
 }
 BANDS = {
     "A": ("opt", {1: (8, 15), 2: (16, 25), 3: (26, 40), 4: (41, 60), 5: (61, 90)}),

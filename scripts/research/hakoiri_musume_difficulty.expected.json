@@ -1660,30 +1660,30 @@
    "states": 51660,
    "candidates_mirror_dedup": 24835,
    "levels": {
-    "1": 14711,
-    "2": 2728,
-    "3": 517,
+    "1": 14459,
+    "2": 2901,
+    "3": 547,
     "4": 0,
     "5": 0
    },
    "status": {
-    "1": 14711,
+    "1": 14459,
     "too-light": 6651,
-    "2": 2728,
-    "3": 517,
-    "unlisted-combination": 228
+    "2": 2901,
+    "3": 547,
+    "unlisted-combination": 277
    },
    "near_duplicate_packing": {
     "1": {
-     "ball": 645,
-     "strict": 173
+     "ball": 640,
+     "strict": 171
     },
     "2": {
-     "ball": 253,
-     "strict": 76
+     "ball": 252,
+     "strict": 75
     },
     "3": {
-     "ball": 53,
+     "ball": 57,
      "strict": 17
     }
    }
@@ -1697,18 +1697,18 @@
    "states": 106800,
    "candidates_mirror_dedup": 49392,
    "levels": {
-    "1": 26834,
-    "2": 8517,
-    "3": 179,
+    "1": 26826,
+    "2": 8496,
+    "3": 175,
     "4": 0,
     "5": 0
    },
    "status": {
-    "1": 26834,
-    "unlisted-combination": 939,
-    "2": 8517,
+    "1": 26826,
+    "unlisted-combination": 972,
+    "2": 8496,
     "too-light": 12923,
-    "3": 179
+    "3": 175
    },
    "near_duplicate_packing": {
     "1": {
@@ -1716,12 +1716,12 @@
      "strict": 291
     },
     "2": {
-     "ball": 472,
+     "ball": 470,
      "strict": 147
     },
     "3": {
-     "ball": 21,
-     "strict": 15
+     "ball": 19,
+     "strict": 13
     }
    }
   },
@@ -1734,31 +1734,31 @@
    "states": 109260,
    "candidates_mirror_dedup": 49079,
    "levels": {
-    "1": 27311,
-    "2": 5775,
-    "3": 327,
+    "1": 26867,
+    "2": 6116,
+    "3": 391,
     "4": 0,
     "5": 0
    },
    "status": {
-    "2": 5775,
-    "1": 27311,
+    "2": 6116,
+    "1": 26867,
     "too-light": 15158,
-    "3": 327,
-    "unlisted-combination": 508
+    "3": 391,
+    "unlisted-combination": 547
    },
    "near_duplicate_packing": {
     "2": {
-     "ball": 398,
-     "strict": 95
+     "ball": 414,
+     "strict": 99
     },
     "1": {
      "ball": 1000,
-     "strict": 250
+     "strict": 248
     },
     "3": {
-     "ball": 44,
-     "strict": 18
+     "ball": 50,
+     "strict": 19
     }
    }
   },
@@ -1771,31 +1771,31 @@
    "states": 65880,
    "candidates_mirror_dedup": 29511,
    "levels": {
-    "1": 15344,
-    "2": 2375,
-    "3": 6,
+    "1": 15050,
+    "2": 2670,
+    "3": 55,
     "4": 0,
     "5": 0
    },
    "status": {
-    "2": 2375,
-    "1": 15344,
-    "unlisted-combination": 432,
+    "2": 2670,
+    "unlisted-combination": 382,
+    "1": 15050,
     "too-light": 11354,
-    "3": 6
+    "3": 55
    },
    "near_duplicate_packing": {
     "2": {
-     "ball": 166,
-     "strict": 57
+     "ball": 189,
+     "strict": 61
     },
     "1": {
-     "ball": 568,
-     "strict": 161
+     "ball": 564,
+     "strict": 160
     },
     "3": {
-     "ball": 1,
-     "strict": 1
+     "ball": 16,
+     "strict": 7
     }
    }
   },
@@ -1834,27 +1834,27 @@
    "states": 92400,
    "candidates_mirror_dedup": 45204,
    "levels": {
-    "1": 29636,
-    "2": 1206,
+    "1": 29589,
+    "2": 1261,
     "3": 2,
     "4": 0,
     "5": 0
    },
    "status": {
-    "1": 29636,
+    "1": 29589,
     "too-light": 14073,
-    "2": 1206,
-    "unlisted-combination": 287,
+    "2": 1261,
+    "unlisted-combination": 279,
     "3": 2
    },
    "near_duplicate_packing": {
     "1": {
-     "ball": 844,
+     "ball": 841,
      "strict": 296
     },
     "2": {
-     "ball": 101,
-     "strict": 67
+     "ball": 103,
+     "strict": 66
     },
     "3": {
      "ball": 1,
@@ -1871,31 +1871,31 @@
    "states": 327600,
    "candidates_mirror_dedup": 155542,
    "levels": {
-    "1": 98264,
-    "2": 12212,
-    "3": 159,
+    "1": 96453,
+    "2": 14031,
+    "3": 168,
     "4": 0,
     "5": 0
    },
    "status": {
-    "2": 12212,
-    "1": 98264,
-    "unlisted-combination": 922,
+    "2": 14031,
+    "1": 96453,
+    "unlisted-combination": 905,
     "too-light": 43985,
-    "3": 159
+    "3": 168
    },
    "near_duplicate_packing": {
     "2": {
-     "ball": 673,
-     "strict": 275
+     "ball": 741,
+     "strict": 283
     },
     "1": {
      "ball": 1000,
      "strict": 500
     },
     "3": {
-     "ball": 19,
-     "strict": 12
+     "ball": 23,
+     "strict": 16
     }
    }
   },
@@ -1908,27 +1908,27 @@
    "states": 507360,
    "candidates_mirror_dedup": 234782,
    "levels": {
-    "1": 139221,
-    "2": 19885,
-    "3": 524,
+    "1": 135978,
+    "2": 22820,
+    "3": 834,
     "4": 0,
     "5": 0
    },
    "status": {
-    "3": 524,
-    "2": 19885,
-    "1": 139221,
-    "unlisted-combination": 1828,
+    "3": 834,
+    "2": 22820,
+    "1": 135978,
+    "unlisted-combination": 1826,
     "too-light": 73324
    },
    "near_duplicate_packing": {
     "3": {
-     "ball": 50,
-     "strict": 21
+     "ball": 68,
+     "strict": 33
     },
     "2": {
-     "ball": 935,
-     "strict": 303
+     "ball": 1000,
+     "strict": 325
     },
     "1": {
      "ball": 1000,
@@ -1945,31 +1945,31 @@
    "states": 374080,
    "candidates_mirror_dedup": 169162,
    "levels": {
-    "1": 92433,
-    "2": 7752,
-    "3": 64,
+    "1": 89078,
+    "2": 11124,
+    "3": 143,
     "4": 0,
     "5": 0
    },
    "status": {
-    "2": 7752,
-    "1": 92433,
-    "unlisted-combination": 1241,
-    "too-light": 67672,
-    "3": 64
+    "2": 11124,
+    "unlisted-combination": 1145,
+    "3": 143,
+    "1": 89078,
+    "too-light": 67672
    },
    "near_duplicate_packing": {
     "2": {
-     "ball": 374,
-     "strict": 170
+     "ball": 554,
+     "strict": 190
+    },
+    "3": {
+     "ball": 24,
+     "strict": 14
     },
     "1": {
      "ball": 1000,
      "strict": 500
-    },
-    "3": {
-     "ball": 7,
-     "strict": 6
     }
    }
   },
@@ -2222,25 +2222,25 @@
    "states": 20664,
    "candidates_mirror_dedup": 10014,
    "levels": {
-    "1": 5883,
-    "2": 425,
+    "1": 5832,
+    "2": 476,
     "3": 0,
     "4": 0,
     "5": 0
    },
    "status": {
-    "1": 5883,
+    "1": 5832,
     "too-light": 3589,
-    "2": 425,
+    "2": 476,
     "unlisted-combination": 117
    },
    "near_duplicate_packing": {
     "1": {
-     "ball": 195,
+     "ball": 192,
      "strict": 68
     },
     "2": {
-     "ball": 40,
+     "ball": 41,
      "strict": 21
     }
    }
@@ -2254,25 +2254,25 @@
    "states": 42720,
    "candidates_mirror_dedup": 19938,
    "levels": {
-    "1": 11316,
-    "2": 654,
+    "1": 11174,
+    "2": 748,
     "3": 0,
     "4": 0,
     "5": 0
    },
    "status": {
-    "1": 11316,
-    "2": 654,
+    "1": 11174,
+    "2": 748,
     "too-light": 7717,
-    "unlisted-combination": 251
+    "unlisted-combination": 299
    },
    "near_duplicate_packing": {
     "1": {
-     "ball": 351,
-     "strict": 129
+     "ball": 348,
+     "strict": 130
     },
     "2": {
-     "ball": 49,
+     "ball": 55,
      "strict": 24
     }
    }
@@ -2286,25 +2286,25 @@
    "states": 43704,
    "candidates_mirror_dedup": 19898,
    "levels": {
-    "1": 11504,
-    "2": 756,
+    "1": 11486,
+    "2": 771,
     "3": 0,
     "4": 0,
     "5": 0
    },
    "status": {
-    "1": 11504,
-    "2": 756,
+    "1": 11486,
+    "2": 771,
     "too-light": 7442,
-    "unlisted-combination": 196
+    "unlisted-combination": 199
    },
    "near_duplicate_packing": {
     "1": {
-     "ball": 320,
+     "ball": 319,
      "strict": 106
     },
     "2": {
-     "ball": 57,
+     "ball": 62,
      "strict": 29
     }
    }
@@ -2318,26 +2318,26 @@
    "states": 26352,
    "candidates_mirror_dedup": 11817,
    "levels": {
-    "1": 5581,
-    "2": 54,
+    "1": 5536,
+    "2": 186,
     "3": 0,
     "4": 0,
     "5": 0
    },
    "status": {
-    "1": 5581,
+    "1": 5536,
     "too-light": 6036,
-    "unlisted-combination": 146,
-    "2": 54
+    "2": 186,
+    "unlisted-combination": 59
    },
    "near_duplicate_packing": {
     "1": {
-     "ball": 154,
+     "ball": 152,
      "strict": 58
     },
     "2": {
-     "ball": 6,
-     "strict": 4
+     "ball": 20,
+     "strict": 10
     }
    }
   },
@@ -2461,21 +2461,21 @@
    "states": 7284,
    "candidates_mirror_dedup": 3367,
    "levels": {
-    "1": 1501,
-    "2": 4,
+    "1": 1495,
+    "2": 12,
     "3": 0,
     "4": 0,
     "5": 0
    },
    "status": {
-    "2": 4,
-    "1": 1501,
-    "unlisted-combination": 20,
-    "too-light": 1842
+    "2": 12,
+    "1": 1495,
+    "too-light": 1842,
+    "unlisted-combination": 18
    },
    "near_duplicate_packing": {
     "2": {
-     "ball": 2,
+     "ball": 3,
      "strict": 2
     },
     "1": {
@@ -2568,7 +2568,7 @@
    "candidates_mirror_dedup": 62300,
    "levels": {
     "1": 26108,
-    "2": 0,
+    "2": 22,
     "3": 0,
     "4": 0,
     "5": 0
@@ -2576,12 +2576,17 @@
    "status": {
     "1": 26108,
     "too-light": 35918,
-    "unlisted-combination": 274
+    "unlisted-combination": 252,
+    "2": 22
    },
    "near_duplicate_packing": {
     "1": {
      "ball": 390,
      "strict": 203
+    },
+    "2": {
+     "ball": 5,
+     "strict": 5
     }
    }
   },
@@ -2594,22 +2599,22 @@
    "states": 202944,
    "candidates_mirror_dedup": 94472,
    "levels": {
-    "1": 38550,
-    "2": 125,
+    "1": 38529,
+    "2": 154,
     "3": 0,
     "4": 0,
     "5": 0
    },
    "status": {
-    "2": 125,
-    "1": 38550,
-    "unlisted-combination": 336,
+    "2": 154,
+    "1": 38529,
+    "unlisted-combination": 328,
     "too-light": 55461
    },
    "near_duplicate_packing": {
     "2": {
-     "ball": 14,
-     "strict": 7
+     "ball": 15,
+     "strict": 8
     },
     "1": {
      "ball": 577,
@@ -2626,21 +2631,26 @@
    "states": 149632,
    "candidates_mirror_dedup": 67844,
    "levels": {
-    "1": 24763,
-    "2": 0,
+    "1": 24740,
+    "2": 23,
     "3": 0,
     "4": 0,
     "5": 0
    },
    "status": {
-    "1": 24763,
+    "1": 24740,
     "too-light": 42958,
-    "unlisted-combination": 123
+    "unlisted-combination": 123,
+    "2": 23
    },
    "near_duplicate_packing": {
     "1": {
-     "ball": 315,
+     "ball": 314,
      "strict": 167
+    },
+    "2": {
+     "ball": 4,
+     "strict": 4
     }
    }
   },
@@ -12293,21 +12303,21 @@
     2
    ],
    "rows": [
-    "..b.",
-    "ccdd",
-    "AAe.",
-    "AAef",
-    "gghh"
+    "AAbc",
+    "AAb.",
+    ".dee",
+    "ffgg",
+    "hh.."
    ],
    "features": {
-    "opt": 10,
+    "opt": 16,
     "bmin": 0,
-    "prep": 6,
-    "lmin": 1,
-    "dmv": 2,
+    "prep": 7,
+    "lmin": 3,
+    "dmv": 3,
     "branch": 5,
-    "nopt": 2,
-    "ar": 2,
+    "nopt": 1,
+    "ar": 0,
     "e": 4,
     "rprep": 6,
     "pprep": 6,
@@ -12323,24 +12333,24 @@
     2
    ],
    "rows": [
-    ".bcc",
-    "db..",
-    "e.AA",
-    "ffAA",
-    "gghh"
+    "AAbc",
+    "AAb.",
+    "dd.e",
+    "ffgg",
+    "..hh"
    ],
    "features": {
-    "opt": 10,
+    "opt": 15,
     "bmin": 0,
-    "prep": 3,
-    "lmin": 0,
-    "dmv": 2,
-    "branch": 5,
+    "prep": 7,
+    "lmin": 2,
+    "dmv": 3,
+    "branch": 8,
     "nopt": 2,
-    "ar": 2,
+    "ar": 0,
     "e": 4,
-    "rprep": 5,
-    "pprep": 5,
+    "rprep": 6,
+    "pprep": 6,
     "adet": 0
    },
    "level": 1
@@ -12353,24 +12363,24 @@
     2
    ],
    "rows": [
-    ".bb.",
-    ".AAc",
-    "dAAc",
-    "ee.f",
-    "gghh"
+    "AAbb",
+    "AAcc",
+    "dd.e",
+    "...e",
+    "ffgh"
    ],
    "features": {
-    "opt": 11,
-    "bmin": 1,
-    "prep": 3,
-    "lmin": 3,
+    "opt": 16,
+    "bmin": 0,
+    "prep": 6,
+    "lmin": 1,
     "dmv": 3,
-    "branch": 7,
-    "nopt": 2,
-    "ar": 1,
+    "branch": 10,
+    "nopt": 3,
+    "ar": 0,
     "e": 4,
-    "rprep": 6,
-    "pprep": 6,
+    "rprep": 4,
+    "pprep": 4,
     "adet": 0
    },
    "level": 1
@@ -12413,24 +12423,24 @@
     2
    ],
    "rows": [
-    "..bb",
-    "ccdd",
-    "eAA.",
-    "fAAg",
-    "f.hh"
+    ".AAb",
+    "cAAb",
+    "ddee",
+    "ffg.",
+    ".hh."
    ],
    "features": {
-    "opt": 15,
+    "opt": 23,
     "bmin": 0,
-    "prep": 5,
-    "lmin": 0,
-    "dmv": 2,
+    "prep": 7,
+    "lmin": 3,
+    "dmv": 4,
     "branch": 5,
     "nopt": 2,
-    "ar": 2,
+    "ar": 0,
     "e": 4,
-    "rprep": 14,
-    "pprep": 14,
+    "rprep": 9,
+    "pprep": 11,
     "adet": 0
    },
    "level": 2
@@ -12443,60 +12453,30 @@
     2
    ],
    "rows": [
-    "..bb",
-    "ccdd",
-    "eAAf",
-    "gAA.",
-    "ghh."
+    ".AAb",
+    ".AAc",
+    ".ddc",
+    "eeff",
+    "g.hh"
    ],
    "features": {
-    "opt": 14,
+    "opt": 26,
     "bmin": 1,
-    "prep": 5,
-    "lmin": 1,
-    "dmv": 3,
-    "branch": 6,
+    "prep": 12,
+    "lmin": 4,
+    "dmv": 4,
+    "branch": 4,
     "nopt": 2,
-    "ar": 2,
+    "ar": 0,
     "e": 4,
-    "rprep": 13,
-    "pprep": 13,
-    "adet": 0
+    "rprep": 14,
+    "pprep": 14,
+    "adet": 1
    },
    "level": 2
   },
   {
    "name": "sample-(1, 4, 2)-L3-0",
-   "pieces": [
-    1,
-    4,
-    2
-   ],
-   "rows": [
-    "..b.",
-    "AAcc",
-    "AAdd",
-    "effg",
-    "e.hh"
-   ],
-   "features": {
-    "opt": 28,
-    "bmin": 1,
-    "prep": 9,
-    "lmin": 6,
-    "dmv": 5,
-    "branch": 5,
-    "nopt": 1,
-    "ar": 1,
-    "e": 4,
-    "rprep": 15,
-    "pprep": 16,
-    "adet": 1
-   },
-   "level": 3
-  },
-  {
-   "name": "sample-(1, 4, 2)-L3-1",
    "pieces": [
     1,
     4,
@@ -12526,6 +12506,36 @@
    "level": 3
   },
   {
+   "name": "sample-(1, 4, 2)-L3-1",
+   "pieces": [
+    1,
+    4,
+    2
+   ],
+   "rows": [
+    ".bbc",
+    "ddAA",
+    "eeAA",
+    ".f.g",
+    ".hhg"
+   ],
+   "features": {
+    "opt": 30,
+    "bmin": 1,
+    "prep": 7,
+    "lmin": 6,
+    "dmv": 5,
+    "branch": 5,
+    "nopt": 1,
+    "ar": 1,
+    "e": 4,
+    "rprep": 16,
+    "pprep": 18,
+    "adet": 1
+   },
+   "level": 3
+  },
+  {
    "name": "sample-(1, 4, 2)-L3-2",
    "pieces": [
     1,
@@ -12533,24 +12543,24 @@
     2
    ],
    "rows": [
-    ".b.c",
-    ".bdd",
-    "eeAA",
-    "ffAA",
-    ".ghh"
+    ".bbc",
+    "ddee",
+    "fAA.",
+    ".AAg",
+    "hh.g"
    ],
    "features": {
-    "opt": 22,
-    "bmin": 2,
-    "prep": 7,
-    "lmin": 5,
-    "dmv": 5,
-    "branch": 3,
-    "nopt": 1,
+    "opt": 20,
+    "bmin": 1,
+    "prep": 5,
+    "lmin": 2,
+    "dmv": 3,
+    "branch": 4,
+    "nopt": 2,
     "ar": 2,
     "e": 4,
-    "rprep": 17,
-    "pprep": 17,
+    "rprep": 19,
+    "pprep": 19,
     "adet": 1
    },
    "level": 3
@@ -12563,19 +12573,19 @@
     2
    ],
    "rows": [
-    "..b.",
-    "AAcc",
-    "AAde",
-    "ffde",
-    "ggh."
+    "..bb",
+    "c.AA",
+    "deAA",
+    "dffg",
+    ".hhg"
    ],
    "features": {
-    "opt": 15,
+    "opt": 16,
     "bmin": 0,
-    "prep": 7,
-    "lmin": 1,
-    "dmv": 2,
-    "branch": 6,
+    "prep": 5,
+    "lmin": 5,
+    "dmv": 4,
+    "branch": 10,
     "nopt": 2,
     "ar": 1,
     "e": 4,
@@ -12593,24 +12603,24 @@
     2
    ],
    "rows": [
-    ".AAb",
-    ".AA.",
-    ".ccd",
-    "eefg",
-    "hhfg"
+    ".bcc",
+    "dbAA",
+    "e.AA",
+    "e.f.",
+    "gghh"
    ],
    "features": {
-    "opt": 16,
+    "opt": 12,
     "bmin": 0,
-    "prep": 4,
+    "prep": 6,
     "lmin": 2,
-    "dmv": 3,
-    "branch": 4,
+    "dmv": 2,
+    "branch": 7,
     "nopt": 1,
-    "ar": 0,
+    "ar": 1,
     "e": 4,
-    "rprep": 6,
-    "pprep": 6,
+    "rprep": 5,
+    "pprep": 5,
     "adet": 0
    },
    "level": 1
@@ -12624,23 +12634,23 @@
    ],
    "rows": [
     ".bb.",
-    "AAcd",
-    "AAcd",
-    "eeff",
-    "..gh"
+    ".cc.",
+    "AAde",
+    "AAde",
+    "ffgh"
    ],
    "features": {
-    "opt": 10,
+    "opt": 9,
     "bmin": 0,
-    "prep": 5,
-    "lmin": 1,
+    "prep": 4,
+    "lmin": 3,
     "dmv": 2,
     "branch": 6,
-    "nopt": 2,
-    "ar": 1,
+    "nopt": 3,
+    "ar": 2,
     "e": 4,
     "rprep": 4,
-    "pprep": 4,
+    "pprep": 5,
     "adet": 0
    },
    "level": 1
@@ -12653,24 +12663,24 @@
     2
    ],
    "rows": [
-    "..bb",
-    "cc.d",
-    "eAAf",
-    "gAAf",
-    "g.hh"
+    ".AA.",
+    "bAAc",
+    ".ddc",
+    "efgg",
+    "e.hh"
    ],
    "features": {
-    "opt": 11,
-    "bmin": 0,
-    "prep": 6,
-    "lmin": 0,
-    "dmv": 2,
-    "branch": 6,
-    "nopt": 1,
-    "ar": 2,
+    "opt": 29,
+    "bmin": 1,
+    "prep": 5,
+    "lmin": 1,
+    "dmv": 6,
+    "branch": 7,
+    "nopt": 4,
+    "ar": 0,
     "e": 4,
-    "rprep": 10,
-    "pprep": 10,
+    "rprep": 12,
+    "pprep": 12,
     "adet": 0
    },
    "level": 2
@@ -12683,24 +12693,24 @@
     2
    ],
    "rows": [
-    ".AA.",
-    "bAAc",
-    "dd.c",
-    "e.ff",
-    "eggh"
+    ".AAb",
+    "cAAb",
+    "d..e",
+    "d.ff",
+    "gghh"
    ],
    "features": {
-    "opt": 28,
+    "opt": 27,
     "bmin": 1,
-    "prep": 4,
-    "lmin": 2,
-    "dmv": 6,
-    "branch": 4,
-    "nopt": 3,
+    "prep": 7,
+    "lmin": 6,
+    "dmv": 5,
+    "branch": 8,
+    "nopt": 1,
     "ar": 0,
     "e": 4,
-    "rprep": 11,
-    "pprep": 11,
+    "rprep": 13,
+    "pprep": 13,
     "adet": 0
    },
    "level": 2
@@ -12713,24 +12723,24 @@
     2
    ],
    "rows": [
-    ".AA.",
-    "bAAc",
-    "ddec",
-    ".fgg",
-    ".fhh"
+    ".bbc",
+    "dAAc",
+    "dAA.",
+    "eef.",
+    ".ggh"
    ],
    "features": {
-    "opt": 28,
-    "bmin": 1,
-    "prep": 4,
-    "lmin": 2,
-    "dmv": 6,
-    "branch": 3,
-    "nopt": 2,
-    "ar": 0,
+    "opt": 14,
+    "bmin": 0,
+    "prep": 5,
+    "lmin": 3,
+    "dmv": 3,
+    "branch": 9,
+    "nopt": 3,
+    "ar": 1,
     "e": 4,
-    "rprep": 11,
-    "pprep": 11,
+    "rprep": 7,
+    "pprep": 9,
     "adet": 0
    },
    "level": 2
@@ -12743,24 +12753,24 @@
     2
    ],
    "rows": [
-    "...b",
-    "AAcc",
-    "AAdd",
-    "ef.g",
-    "efhh"
+    ".bc.",
+    ".bcd",
+    "eeAA",
+    "ffAA",
+    "gg.h"
    ],
    "features": {
-    "opt": 26,
-    "bmin": 1,
-    "prep": 8,
-    "lmin": 6,
+    "opt": 22,
+    "bmin": 2,
+    "prep": 6,
+    "lmin": 4,
     "dmv": 5,
-    "branch": 5,
+    "branch": 4,
     "nopt": 1,
-    "ar": 1,
+    "ar": 2,
     "e": 4,
-    "rprep": 15,
-    "pprep": 18,
+    "rprep": 17,
+    "pprep": 17,
     "adet": 1
    },
    "level": 3
@@ -12773,24 +12783,24 @@
     2
    ],
    "rows": [
-    "..b.",
-    "AAcc",
+    ".bbc",
     "AAdd",
-    "ef.g",
-    "efhh"
+    "AA..",
+    "efgg",
+    "ef.h"
    ],
    "features": {
-    "opt": 27,
+    "opt": 26,
     "bmin": 1,
-    "prep": 8,
-    "lmin": 6,
-    "dmv": 5,
-    "branch": 5,
-    "nopt": 2,
+    "prep": 16,
+    "lmin": 4,
+    "dmv": 3,
+    "branch": 4,
+    "nopt": 1,
     "ar": 1,
     "e": 4,
-    "rprep": 16,
-    "pprep": 19,
+    "rprep": 17,
+    "pprep": 17,
     "adet": 1
    },
    "level": 3
@@ -12803,24 +12813,24 @@
     2
    ],
    "rows": [
-    "..b.",
-    "ccAA",
-    "ddAA",
-    "eefg",
-    "h.fg"
+    ".bbc",
+    "AAdd",
+    "AAee",
+    "fg.h",
+    "fg.."
    ],
    "features": {
-    "opt": 24,
+    "opt": 28,
     "bmin": 1,
-    "prep": 6,
-    "lmin": 6,
-    "dmv": 5,
+    "prep": 16,
+    "lmin": 4,
+    "dmv": 3,
     "branch": 5,
-    "nopt": 1,
+    "nopt": 2,
     "ar": 1,
     "e": 4,
-    "rprep": 14,
-    "pprep": 17,
+    "rprep": 19,
+    "pprep": 19,
     "adet": 1
    },
    "level": 3
@@ -12863,21 +12873,21 @@
     2
    ],
    "rows": [
-    ".bcc",
-    ".bd.",
-    "eedf",
-    "ghAA",
-    ".hAA"
+    ".AA.",
+    ".AAb",
+    "ccdb",
+    ".edf",
+    "ghhf"
    ],
    "features": {
-    "opt": 8,
-    "bmin": 0,
-    "prep": 7,
-    "lmin": 0,
-    "dmv": 1,
-    "branch": 3,
+    "opt": 19,
+    "bmin": 1,
+    "prep": 6,
+    "lmin": 3,
+    "dmv": 4,
+    "branch": 4,
     "nopt": 2,
-    "ar": 3,
+    "ar": 0,
     "e": 4,
     "rprep": 7,
     "pprep": 7,
@@ -12893,24 +12903,24 @@
     2
    ],
    "rows": [
-    ".bbc",
-    "AAde",
-    "AAde",
-    "..fg",
-    ".hhg"
+    ".AAb",
+    "cAAb",
+    "ddef",
+    "g..f",
+    "g.hh"
    ],
    "features": {
-    "opt": 12,
-    "bmin": 0,
-    "prep": 5,
-    "lmin": 6,
-    "dmv": 2,
+    "opt": 18,
+    "bmin": 1,
+    "prep": 4,
+    "lmin": 1,
+    "dmv": 5,
     "branch": 7,
     "nopt": 1,
-    "ar": 1,
+    "ar": 0,
     "e": 4,
-    "rprep": 5,
-    "pprep": 5,
+    "rprep": 7,
+    "pprep": 8,
     "adet": 0
    },
    "level": 1
@@ -12923,25 +12933,25 @@
     2
    ],
    "rows": [
-    ".b.c",
-    "db.c",
-    "dAA.",
-    "eAAf",
-    "gghh"
+    "..bb",
+    "cAA.",
+    "cAAd",
+    "effd",
+    "e.gh"
    ],
    "features": {
-    "opt": 12,
+    "opt": 15,
     "bmin": 1,
-    "prep": 3,
-    "lmin": 1,
+    "prep": 6,
+    "lmin": 2,
     "dmv": 3,
     "branch": 5,
-    "nopt": 4,
-    "ar": 2,
+    "nopt": 1,
+    "ar": 1,
     "e": 4,
-    "rprep": 11,
-    "pprep": 11,
-    "adet": 1
+    "rprep": 9,
+    "pprep": 10,
+    "adet": 0
    },
    "level": 2
   },
@@ -12953,24 +12963,24 @@
     2
    ],
    "rows": [
-    ".b.c",
-    "dAA.",
-    "dAA.",
-    "efgg",
-    "efhh"
+    ".bcd",
+    "eecd",
+    ".AA.",
+    "fAA.",
+    "fggh"
    ],
    "features": {
-    "opt": 16,
+    "opt": 14,
     "bmin": 1,
-    "prep": 5,
-    "lmin": 3,
-    "dmv": 4,
+    "prep": 4,
+    "lmin": 1,
+    "dmv": 3,
     "branch": 7,
-    "nopt": 2,
-    "ar": 1,
+    "nopt": 1,
+    "ar": 2,
     "e": 4,
-    "rprep": 9,
-    "pprep": 11,
+    "rprep": 13,
+    "pprep": 13,
     "adet": 1
    },
    "level": 2
@@ -12987,21 +12997,21 @@
     "eecd",
     "fAA.",
     "fAA.",
-    "gg.h"
+    "g.hh"
    ],
    "features": {
-    "opt": 13,
+    "opt": 12,
     "bmin": 1,
-    "prep": 4,
+    "prep": 7,
     "lmin": 1,
     "dmv": 3,
-    "branch": 8,
+    "branch": 6,
     "nopt": 1,
     "ar": 2,
     "e": 4,
-    "rprep": 12,
-    "pprep": 12,
-    "adet": 1
+    "rprep": 11,
+    "pprep": 11,
+    "adet": 0
    },
    "level": 2
   },
@@ -13013,25 +13023,25 @@
     2
    ],
    "rows": [
-    "..bc",
-    "ddbc",
-    "AAee",
-    "AAf.",
-    ".gfh"
+    "..b.",
+    ".AAc",
+    "dAAc",
+    "deef",
+    "ghhf"
    ],
    "features": {
-    "opt": 24,
-    "bmin": 2,
+    "opt": 18,
+    "bmin": 1,
     "prep": 6,
-    "lmin": 3,
-    "dmv": 5,
-    "branch": 3,
-    "nopt": 2,
-    "ar": 2,
+    "lmin": 1,
+    "dmv": 4,
+    "branch": 7,
+    "nopt": 3,
+    "ar": 1,
     "e": 4,
-    "rprep": 18,
-    "pprep": 19,
-    "adet": 2
+    "rprep": 9,
+    "pprep": 17,
+    "adet": 1
    },
    "level": 3
   },
@@ -13043,23 +13053,23 @@
     2
    ],
    "rows": [
-    "..bc",
-    "dAAc",
-    "dAAe",
-    "ff.e",
-    "ggh."
+    ".bcc",
+    "db.e",
+    "fAAe",
+    "fAAg",
+    "hh.."
    ],
    "features": {
     "opt": 17,
     "bmin": 1,
-    "prep": 4,
-    "lmin": 1,
-    "dmv": 4,
-    "branch": 7,
-    "nopt": 4,
-    "ar": 1,
+    "prep": 7,
+    "lmin": 2,
+    "dmv": 3,
+    "branch": 5,
+    "nopt": 2,
+    "ar": 2,
     "e": 4,
-    "rprep": 9,
+    "rprep": 16,
     "pprep": 16,
     "adet": 1
    },
@@ -13074,22 +13084,22 @@
    ],
    "rows": [
     ".b.c",
-    "db.c",
-    "eeAA",
-    "f.AA",
-    "fggh"
+    ".AAc",
+    "dAA.",
+    "deff",
+    "gehh"
    ],
    "features": {
-    "opt": 18,
-    "bmin": 1,
+    "opt": 20,
+    "bmin": 2,
     "prep": 4,
-    "lmin": 1,
-    "dmv": 4,
-    "branch": 3,
-    "nopt": 1,
-    "ar": 2,
+    "lmin": 5,
+    "dmv": 5,
+    "branch": 6,
+    "nopt": 2,
+    "ar": 1,
     "e": 4,
-    "rprep": 12,
+    "rprep": 10,
     "pprep": 17,
     "adet": 1
    },
@@ -13103,24 +13113,24 @@
     2
    ],
    "rows": [
-    "..AA",
-    "bcAA",
-    "bcde",
-    "ffdg",
-    "..hg"
+    ".bAA",
+    ".bAA",
+    ".cde",
+    ".cde",
+    "ffgh"
    ],
    "features": {
-    "opt": 17,
+    "opt": 11,
     "bmin": 0,
-    "prep": 9,
+    "prep": 6,
     "lmin": 4,
     "dmv": 2,
-    "branch": 5,
-    "nopt": 3,
+    "branch": 6,
+    "nopt": 1,
     "ar": 0,
     "e": 4,
-    "rprep": 5,
-    "pprep": 7,
+    "rprep": 4,
+    "pprep": 5,
     "adet": 0
    },
    "level": 1
@@ -13133,23 +13143,23 @@
     2
    ],
    "rows": [
-    "..AA",
-    "bcAA",
-    "bcde",
-    ".fge",
-    ".fhh"
+    ".bAA",
+    "cbAA",
+    "c.de",
+    "ffde",
+    ".gh."
    ],
    "features": {
-    "opt": 15,
+    "opt": 14,
     "bmin": 0,
     "prep": 6,
     "lmin": 4,
     "dmv": 2,
     "branch": 5,
-    "nopt": 3,
+    "nopt": 2,
     "ar": 0,
     "e": 4,
-    "rprep": 4,
+    "rprep": 5,
     "pprep": 6,
     "adet": 0
    },
@@ -13163,24 +13173,24 @@
     2
    ],
    "rows": [
-    ".bbc",
-    "AAdc",
-    "AAde",
-    ".f.e",
-    ".fgh"
+    ".bAA",
+    "cbAA",
+    "cdd.",
+    "efg.",
+    "e.gh"
    ],
    "features": {
-    "opt": 8,
+    "opt": 14,
     "bmin": 0,
-    "prep": 3,
-    "lmin": 1,
+    "prep": 7,
+    "lmin": 3,
     "dmv": 2,
-    "branch": 4,
-    "nopt": 1,
-    "ar": 1,
+    "branch": 5,
+    "nopt": 3,
+    "ar": 0,
     "e": 4,
-    "rprep": 3,
-    "pprep": 3,
+    "rprep": 5,
+    "pprep": 5,
     "adet": 0
    },
    "level": 1
@@ -13193,24 +13203,24 @@
     2
    ],
    "rows": [
-    ".AAb",
-    ".AAb",
-    "cdee",
-    "c.fg",
-    ".hfg"
+    "...b",
+    "c.de",
+    "cAAe",
+    "fAAg",
+    "fhhg"
    ],
    "features": {
-    "opt": 16,
+    "opt": 12,
     "bmin": 0,
-    "prep": 7,
-    "lmin": 2,
-    "dmv": 3,
-    "branch": 7,
-    "nopt": 1,
-    "ar": 0,
+    "prep": 6,
+    "lmin": 0,
+    "dmv": 2,
+    "branch": 10,
+    "nopt": 2,
+    "ar": 2,
     "e": 4,
-    "rprep": 7,
-    "pprep": 9,
+    "rprep": 11,
+    "pprep": 11,
     "adet": 0
    },
    "level": 2
@@ -13223,24 +13233,24 @@
     2
    ],
    "rows": [
-    ".bcd",
-    "..cd",
-    "eAAf",
-    "eAAf",
-    "g.hh"
+    "..b.",
+    "c.bd",
+    "eAAd",
+    "fAAg",
+    "fhhg"
    ],
    "features": {
-    "opt": 14,
-    "bmin": 1,
-    "prep": 4,
-    "lmin": 4,
-    "dmv": 3,
-    "branch": 7,
+    "opt": 12,
+    "bmin": 0,
+    "prep": 6,
+    "lmin": 0,
+    "dmv": 2,
+    "branch": 5,
     "nopt": 3,
     "ar": 2,
     "e": 4,
-    "rprep": 13,
-    "pprep": 13,
+    "rprep": 11,
+    "pprep": 11,
     "adet": 0
    },
    "level": 2
@@ -13253,24 +13263,24 @@
     2
    ],
    "rows": [
-    "b.cd",
-    "b.cd",
-    "eAAf",
-    ".AAf",
-    ".ggh"
+    "..b.",
+    "cAAd",
+    "eAAd",
+    "e.fg",
+    "hhfg"
    ],
    "features": {
-    "opt": 10,
+    "opt": 19,
     "bmin": 1,
-    "prep": 3,
-    "lmin": 1,
-    "dmv": 3,
-    "branch": 5,
+    "prep": 7,
+    "lmin": 2,
+    "dmv": 4,
+    "branch": 6,
     "nopt": 1,
-    "ar": 2,
+    "ar": 1,
     "e": 4,
-    "rprep": 9,
-    "pprep": 9,
+    "rprep": 10,
+    "pprep": 13,
     "adet": 1
    },
    "level": 2
@@ -13283,23 +13293,23 @@
     2
    ],
    "rows": [
-    ".b.c",
-    "dbec",
-    "fAAg",
-    "fAAg",
-    "hh.."
+    "...b",
+    "cAAb",
+    "cAA.",
+    "deff",
+    "degh"
    ],
    "features": {
     "opt": 17,
-    "bmin": 1,
-    "prep": 6,
-    "lmin": 1,
-    "dmv": 3,
-    "branch": 5,
-    "nopt": 3,
-    "ar": 2,
+    "bmin": 2,
+    "prep": 5,
+    "lmin": 5,
+    "dmv": 4,
+    "branch": 3,
+    "nopt": 2,
+    "ar": 1,
     "e": 4,
-    "rprep": 16,
+    "rprep": 8,
     "pprep": 16,
     "adet": 1
    },
@@ -13313,23 +13323,23 @@
     2
    ],
    "rows": [
-    ".bcd",
-    "eb.d",
-    "fAAg",
-    "fAAg",
-    "hh.."
+    ".bc.",
+    "dAAe",
+    "dAAe",
+    "ffgh",
+    "..gh"
    ],
    "features": {
-    "opt": 17,
+    "opt": 22,
     "bmin": 1,
     "prep": 6,
-    "lmin": 1,
-    "dmv": 3,
+    "lmin": 2,
+    "dmv": 4,
     "branch": 5,
     "nopt": 3,
-    "ar": 2,
+    "ar": 1,
     "e": 4,
-    "rprep": 16,
+    "rprep": 11,
     "pprep": 16,
     "adet": 1
    },
@@ -13343,24 +13353,24 @@
     2
    ],
    "rows": [
-    "bc.d",
-    ".ced",
-    "fAAg",
-    "fAAg",
-    "hh.."
+    "b.cd",
+    "bAAd",
+    ".AAe",
+    "ffge",
+    ".hg."
    ],
    "features": {
-    "opt": 17,
-    "bmin": 1,
-    "prep": 6,
-    "lmin": 1,
-    "dmv": 3,
-    "branch": 6,
-    "nopt": 3,
-    "ar": 2,
+    "opt": 21,
+    "bmin": 2,
+    "prep": 4,
+    "lmin": 6,
+    "dmv": 5,
+    "branch": 4,
+    "nopt": 1,
+    "ar": 1,
     "e": 4,
-    "rprep": 16,
-    "pprep": 16,
+    "rprep": 10,
+    "pprep": 17,
     "adet": 1
    },
    "level": 3
@@ -13463,24 +13473,24 @@
     4
    ],
    "rows": [
-    "AA..",
-    "AAbb",
-    "c.dd",
-    "eefg",
-    "hhi."
+    ".bb.",
+    "ccAA",
+    "ddAA",
+    ".eef",
+    "gh.i"
    ],
    "features": {
-    "opt": 15,
+    "opt": 10,
     "bmin": 0,
-    "prep": 5,
-    "lmin": 4,
+    "prep": 4,
+    "lmin": 2,
     "dmv": 2,
-    "branch": 5,
-    "nopt": 2,
-    "ar": 0,
+    "branch": 6,
+    "nopt": 3,
+    "ar": 1,
     "e": 4,
-    "rprep": 4,
-    "pprep": 5,
+    "rprep": 3,
+    "pprep": 3,
     "adet": 0
    },
    "level": 1
@@ -13493,24 +13503,24 @@
     4
    ],
    "rows": [
-    "AAb.",
-    "AAcc",
-    "ddee",
-    ".f..",
-    "ghhi"
+    "bb..",
+    ".cAA",
+    "ddAA",
+    "effg",
+    ".hii"
    ],
    "features": {
-    "opt": 18,
-    "bmin": 0,
-    "prep": 6,
-    "lmin": 2,
-    "dmv": 3,
-    "branch": 8,
-    "nopt": 2,
-    "ar": 0,
+    "opt": 16,
+    "bmin": 1,
+    "prep": 5,
+    "lmin": 5,
+    "dmv": 4,
+    "branch": 6,
+    "nopt": 1,
+    "ar": 1,
     "e": 4,
-    "rprep": 5,
-    "pprep": 5,
+    "rprep": 6,
+    "pprep": 6,
     "adet": 0
    },
    "level": 1
@@ -13524,19 +13534,19 @@
    ],
    "rows": [
     "bbAA",
-    "cdAA",
-    "ee..",
-    "f.gg",
-    "h.ii"
+    "..AA",
+    "cdee",
+    ".ff.",
+    "ghii"
    ],
    "features": {
-    "opt": 12,
+    "opt": 14,
     "bmin": 0,
     "prep": 4,
-    "lmin": 6,
+    "lmin": 3,
     "dmv": 3,
-    "branch": 10,
-    "nopt": 1,
+    "branch": 9,
+    "nopt": 5,
     "ar": 0,
     "e": 4,
     "rprep": 4,
@@ -13613,25 +13623,25 @@
     4
    ],
    "rows": [
-    "bbcc",
-    ".dd.",
-    "eAAf",
-    "gAA.",
-    "hii."
+    "b.cc",
+    ".dee",
+    ".AAf",
+    ".AAg",
+    "hhii"
    ],
    "features": {
     "opt": 10,
-    "bmin": 0,
-    "prep": 3,
-    "lmin": 0,
-    "dmv": 2,
-    "branch": 7,
-    "nopt": 4,
+    "bmin": 1,
+    "prep": 4,
+    "lmin": 3,
+    "dmv": 3,
+    "branch": 10,
+    "nopt": 1,
     "ar": 2,
     "e": 4,
     "rprep": 9,
     "pprep": 9,
-    "adet": 0
+    "adet": 1
    },
    "level": 2
   },
@@ -13703,11 +13713,11 @@
     4
    ],
    "rows": [
-    "AAb.",
-    "AAcc",
-    "d.ee",
-    "fghh",
-    "fi.."
+    "AA..",
+    "AAbb",
+    "ccd.",
+    "e.fg",
+    "ehii"
    ],
    "features": {
     "opt": 17,
@@ -13715,12 +13725,12 @@
     "prep": 8,
     "lmin": 2,
     "dmv": 3,
-    "branch": 7,
+    "branch": 5,
     "nopt": 1,
     "ar": 0,
     "e": 4,
     "rprep": 5,
-    "pprep": 6,
+    "pprep": 5,
     "adet": 0
    },
    "level": 1
@@ -13733,24 +13743,24 @@
     4
    ],
    "rows": [
-    "bbAA",
-    "..AA",
-    "cdef",
-    "g.hh",
-    "gii."
+    "bc..",
+    "bdd.",
+    "AAee",
+    "AAf.",
+    "ghhi"
    ],
    "features": {
-    "opt": 16,
+    "opt": 10,
     "bmin": 0,
     "prep": 6,
-    "lmin": 1,
-    "dmv": 3,
-    "branch": 8,
-    "nopt": 3,
-    "ar": 0,
+    "lmin": 0,
+    "dmv": 2,
+    "branch": 7,
+    "nopt": 1,
+    "ar": 2,
     "e": 4,
-    "rprep": 4,
-    "pprep": 5,
+    "rprep": 6,
+    "pprep": 6,
     "adet": 0
    },
    "level": 1
@@ -13764,23 +13774,23 @@
    ],
    "rows": [
     "bbAA",
-    "c.AA",
-    "cdd.",
-    ".eff",
-    "ghi."
+    "..AA",
+    "cdef",
+    ".ggh",
+    ".iih"
    ],
    "features": {
-    "opt": 13,
+    "opt": 18,
     "bmin": 0,
-    "prep": 6,
-    "lmin": 4,
+    "prep": 7,
+    "lmin": 2,
     "dmv": 2,
-    "branch": 5,
-    "nopt": 3,
+    "branch": 9,
+    "nopt": 2,
     "ar": 0,
     "e": 4,
     "rprep": 5,
-    "pprep": 5,
+    "pprep": 6,
     "adet": 0
    },
    "level": 1
@@ -13793,24 +13803,24 @@
     4
    ],
    "rows": [
-    "bb..",
-    "cAAd",
-    ".AAe",
-    "ffge",
-    "hii."
+    ".bc.",
+    "dbee",
+    "ffAA",
+    ".gAA",
+    ".hhi"
    ],
    "features": {
-    "opt": 14,
+    "opt": 15,
     "bmin": 1,
-    "prep": 6,
-    "lmin": 4,
+    "prep": 5,
+    "lmin": 3,
     "dmv": 3,
-    "branch": 7,
+    "branch": 5,
     "nopt": 1,
-    "ar": 1,
+    "ar": 2,
     "e": 4,
-    "rprep": 8,
-    "pprep": 9,
+    "rprep": 10,
+    "pprep": 10,
     "adet": 0
    },
    "level": 2
@@ -13823,24 +13833,24 @@
     4
    ],
    "rows": [
-    "bbcc",
-    "defg",
-    "hAA.",
-    "hAA.",
-    "..ii"
+    "bb..",
+    "cc.d",
+    ".AAd",
+    "eAAf",
+    "ghhi"
    ],
    "features": {
-    "opt": 10,
+    "opt": 11,
     "bmin": 0,
-    "prep": 7,
+    "prep": 3,
     "lmin": 0,
     "dmv": 2,
     "branch": 6,
-    "nopt": 1,
+    "nopt": 2,
     "ar": 2,
     "e": 4,
-    "rprep": 9,
-    "pprep": 9,
+    "rprep": 10,
+    "pprep": 10,
     "adet": 0
    },
    "level": 2
@@ -13853,24 +13863,24 @@
     4
    ],
    "rows": [
-    "b..c",
-    "dAAe",
-    "dAA.",
-    "ffgg",
-    ".hii"
+    "bbc.",
+    "ddce",
+    ".AA.",
+    "fAAg",
+    "hh.i"
    ],
    "features": {
-    "opt": 19,
+    "opt": 10,
     "bmin": 1,
-    "prep": 7,
-    "lmin": 3,
-    "dmv": 4,
-    "branch": 7,
+    "prep": 3,
+    "lmin": 1,
+    "dmv": 3,
+    "branch": 6,
     "nopt": 2,
-    "ar": 1,
+    "ar": 2,
     "e": 4,
-    "rprep": 12,
-    "pprep": 13,
+    "rprep": 9,
+    "pprep": 9,
     "adet": 1
    },
    "level": 2
@@ -13883,23 +13893,23 @@
     4
    ],
    "rows": [
-    ".bc.",
-    ".bde",
+    ".b..",
+    "cb.d",
+    "eeAA",
     "ffAA",
-    "ggAA",
-    "h.ii"
+    "ghhi"
    ],
    "features": {
-    "opt": 22,
-    "bmin": 2,
+    "opt": 21,
+    "bmin": 1,
     "prep": 7,
-    "lmin": 5,
-    "dmv": 5,
+    "lmin": 2,
+    "dmv": 4,
     "branch": 5,
     "nopt": 1,
     "ar": 2,
     "e": 4,
-    "rprep": 17,
+    "rprep": 14,
     "pprep": 17,
     "adet": 1
    },
@@ -13913,24 +13923,24 @@
     4
    ],
    "rows": [
-    "b..c",
-    "b.de",
+    "b.c.",
+    "bd.e",
     "ffAA",
     "ggAA",
-    "hii."
+    "h.ii"
    ],
    "features": {
-    "opt": 22,
+    "opt": 21,
     "bmin": 2,
     "prep": 7,
     "lmin": 5,
     "dmv": 5,
-    "branch": 8,
-    "nopt": 6,
+    "branch": 9,
+    "nopt": 2,
     "ar": 2,
     "e": 4,
-    "rprep": 16,
-    "pprep": 17,
+    "rprep": 15,
+    "pprep": 16,
     "adet": 1
    },
    "level": 3
@@ -13943,23 +13953,23 @@
     4
    ],
    "rows": [
-    "b.cc",
-    "b...",
+    "bbc.",
     "ddAA",
-    "efAA",
-    "gghi"
+    "eeAA",
+    "f.g.",
+    "hig."
    ],
    "features": {
-    "opt": 21,
+    "opt": 25,
     "bmin": 1,
     "prep": 6,
-    "lmin": 4,
-    "dmv": 5,
-    "branch": 5,
-    "nopt": 2,
-    "ar": 2,
+    "lmin": 2,
+    "dmv": 4,
+    "branch": 4,
+    "nopt": 1,
+    "ar": 1,
     "e": 4,
-    "rprep": 11,
+    "rprep": 16,
     "pprep": 16,
     "adet": 1
    },
@@ -13974,23 +13984,23 @@
    ],
    "rows": [
     "AAb.",
-    "AA.c",
-    "ddec",
-    "fge.",
-    "hh.i"
+    "AAbc",
+    "d.ee",
+    "df.g",
+    ".hhi"
    ],
    "features": {
-    "opt": 16,
+    "opt": 21,
     "bmin": 0,
-    "prep": 5,
+    "prep": 10,
     "lmin": 3,
     "dmv": 3,
-    "branch": 9,
-    "nopt": 1,
+    "branch": 7,
+    "nopt": 3,
     "ar": 0,
     "e": 4,
-    "rprep": 4,
-    "pprep": 5,
+    "rprep": 6,
+    "pprep": 6,
     "adet": 0
    },
    "level": 1
@@ -14003,24 +14013,24 @@
     4
    ],
    "rows": [
-    "bcdd",
-    "beAA",
-    "f.AA",
-    "fg.h",
-    "ii.."
+    "AAb.",
+    "AAcd",
+    "..cd",
+    ".efg",
+    "hhii"
    ],
    "features": {
-    "opt": 10,
+    "opt": 15,
     "bmin": 0,
-    "prep": 6,
-    "lmin": 1,
-    "dmv": 2,
-    "branch": 10,
-    "nopt": 5,
-    "ar": 1,
+    "prep": 7,
+    "lmin": 7,
+    "dmv": 3,
+    "branch": 6,
+    "nopt": 1,
+    "ar": 0,
     "e": 4,
-    "rprep": 4,
-    "pprep": 4,
+    "rprep": 5,
+    "pprep": 5,
     "adet": 0
    },
    "level": 1
@@ -14033,24 +14043,24 @@
     4
    ],
    "rows": [
-    "bbAA",
-    "cdAA",
-    "cd.e",
-    "ff..",
-    "gh.i"
+    "AAb.",
+    "AAcc",
+    "deff",
+    "degh",
+    "...i"
    ],
    "features": {
-    "opt": 13,
+    "opt": 18,
     "bmin": 0,
-    "prep": 6,
+    "prep": 7,
     "lmin": 1,
     "dmv": 3,
-    "branch": 14,
-    "nopt": 3,
+    "branch": 9,
+    "nopt": 1,
     "ar": 0,
     "e": 4,
-    "rprep": 4,
-    "pprep": 4,
+    "rprep": 6,
+    "pprep": 7,
     "adet": 0
    },
    "level": 1
@@ -14063,25 +14073,25 @@
     4
    ],
    "rows": [
-    ".bb.",
-    "cAAd",
-    "cAAd",
-    "efg.",
-    ".hhi"
+    "b.cd",
+    "b...",
+    "eAAf",
+    "gAAf",
+    "hhii"
    ],
    "features": {
-    "opt": 13,
-    "bmin": 0,
-    "prep": 6,
-    "lmin": 5,
-    "dmv": 2,
-    "branch": 9,
-    "nopt": 3,
-    "ar": 1,
+    "opt": 11,
+    "bmin": 1,
+    "prep": 3,
+    "lmin": 2,
+    "dmv": 3,
+    "branch": 11,
+    "nopt": 2,
+    "ar": 2,
     "e": 4,
-    "rprep": 6,
-    "pprep": 9,
-    "adet": 0
+    "rprep": 10,
+    "pprep": 10,
+    "adet": 1
    },
    "level": 2
   },
@@ -14093,25 +14103,25 @@
     4
    ],
    "rows": [
-    "bAA.",
-    "bAA.",
-    "cdde",
-    "ff.g",
-    "h.ig"
+    "bc.d",
+    "b.AA",
+    "eeAA",
+    "f.g.",
+    "hhgi"
    ],
    "features": {
     "opt": 22,
     "bmin": 1,
-    "prep": 5,
-    "lmin": 1,
-    "dmv": 4,
-    "branch": 7,
-    "nopt": 2,
-    "ar": 0,
+    "prep": 4,
+    "lmin": 4,
+    "dmv": 3,
+    "branch": 5,
+    "nopt": 1,
+    "ar": 1,
     "e": 4,
     "rprep": 8,
     "pprep": 9,
-    "adet": 0
+    "adet": 1
    },
    "level": 2
   },
@@ -14123,23 +14133,23 @@
     4
    ],
    "rows": [
-    "bAAc",
-    "bAAc",
-    "deff",
-    "gg..",
-    "h.i."
+    "bc.d",
+    "bAA.",
+    "eAAf",
+    ".ggf",
+    "h.ii"
    ],
    "features": {
-    "opt": 20,
-    "bmin": 1,
-    "prep": 7,
+    "opt": 14,
+    "bmin": 0,
+    "prep": 5,
     "lmin": 3,
-    "dmv": 4,
-    "branch": 8,
-    "nopt": 1,
-    "ar": 0,
+    "dmv": 3,
+    "branch": 9,
+    "nopt": 2,
+    "ar": 1,
     "e": 4,
-    "rprep": 8,
+    "rprep": 7,
     "pprep": 9,
     "adet": 0
    },
@@ -14153,19 +14163,19 @@
     4
    ],
    "rows": [
-    ".b..",
-    "cAAd",
-    "cAAd",
-    "effg",
-    "hhi."
+    "b...",
+    "bAAc",
+    ".AAd",
+    "eefd",
+    "ghhi"
    ],
    "features": {
-    "opt": 19,
+    "opt": 20,
     "bmin": 1,
-    "prep": 7,
+    "prep": 8,
     "lmin": 1,
     "dmv": 4,
-    "branch": 7,
+    "branch": 5,
     "nopt": 2,
     "ar": 1,
     "e": 4,
@@ -14185,21 +14195,21 @@
    "rows": [
     "b...",
     "bAAc",
-    "dAAc",
-    ".eef",
+    "dAAe",
+    ".ffe",
     "ghhi"
    ],
    "features": {
-    "opt": 21,
-    "bmin": 2,
-    "prep": 4,
-    "lmin": 4,
-    "dmv": 5,
-    "branch": 5,
+    "opt": 18,
+    "bmin": 1,
+    "prep": 6,
+    "lmin": 1,
+    "dmv": 4,
+    "branch": 7,
     "nopt": 3,
     "ar": 1,
     "e": 4,
-    "rprep": 11,
+    "rprep": 10,
     "pprep": 16,
     "adet": 1
    },
@@ -14213,24 +14223,24 @@
     4
    ],
    "rows": [
-    "b...",
-    "bAAc",
-    "dAAe",
-    ".ffe",
-    "ghii"
+    "b..c",
+    "bAAd",
+    ".AAd",
+    "eefg",
+    "hii."
    ],
    "features": {
     "opt": 20,
     "bmin": 1,
-    "prep": 8,
+    "prep": 5,
     "lmin": 1,
     "dmv": 4,
-    "branch": 7,
-    "nopt": 3,
+    "branch": 6,
+    "nopt": 4,
     "ar": 1,
     "e": 4,
     "rprep": 10,
-    "pprep": 16,
+    "pprep": 17,
     "adet": 1
    },
    "level": 3
@@ -14243,24 +14253,24 @@
     4
    ],
    "rows": [
-    ".b..",
-    "AAcd",
-    "AA.d",
-    "eefg",
-    "hifg"
+    "bAA.",
+    "bAA.",
+    "cc.d",
+    "efgd",
+    "eh.i"
    ],
    "features": {
-    "opt": 12,
-    "bmin": 1,
-    "prep": 6,
-    "lmin": 4,
+    "opt": 18,
+    "bmin": 0,
+    "prep": 8,
+    "lmin": 3,
     "dmv": 3,
     "branch": 8,
-    "nopt": 2,
-    "ar": 1,
+    "nopt": 1,
+    "ar": 0,
     "e": 4,
-    "rprep": 5,
-    "pprep": 5,
+    "rprep": 7,
+    "pprep": 8,
     "adet": 0
    },
    "level": 1
@@ -14273,24 +14283,24 @@
     4
    ],
    "rows": [
-    "AA..",
-    "AA.b",
-    "cdee",
-    "fdgh",
-    ".igh"
+    "bAAc",
+    "bAAc",
+    "defg",
+    ".h..",
+    ".hii"
    ],
    "features": {
     "opt": 15,
     "bmin": 0,
     "prep": 5,
-    "lmin": 2,
+    "lmin": 1,
     "dmv": 3,
-    "branch": 6,
-    "nopt": 3,
+    "branch": 8,
+    "nopt": 2,
     "ar": 0,
     "e": 4,
-    "rprep": 5,
-    "pprep": 5,
+    "rprep": 7,
+    "pprep": 7,
     "adet": 0
    },
    "level": 1
@@ -14303,24 +14313,24 @@
     4
    ],
    "rows": [
-    "AAb.",
-    "AAbc",
-    "def.",
-    ".efg",
-    "hii."
+    "bcde",
+    "bc..",
+    "AAf.",
+    "AAfg",
+    "hh.i"
    ],
    "features": {
-    "opt": 14,
+    "opt": 8,
     "bmin": 0,
-    "prep": 6,
+    "prep": 3,
     "lmin": 4,
     "dmv": 2,
-    "branch": 7,
-    "nopt": 2,
-    "ar": 0,
+    "branch": 14,
+    "nopt": 1,
+    "ar": 2,
     "e": 4,
     "rprep": 4,
-    "pprep": 6,
+    "pprep": 4,
     "adet": 0
    },
    "level": 1
@@ -14333,25 +14343,25 @@
     4
    ],
    "rows": [
-    "b.c.",
-    "bdc.",
-    "eAA.",
-    "fAAg",
-    "hhig"
+    ".b..",
+    "cdef",
+    "cAAf",
+    "gAA.",
+    "ghhi"
    ],
    "features": {
-    "opt": 10,
+    "opt": 12,
     "bmin": 1,
-    "prep": 3,
+    "prep": 5,
     "lmin": 1,
     "dmv": 3,
-    "branch": 6,
+    "branch": 9,
     "nopt": 2,
     "ar": 2,
     "e": 4,
-    "rprep": 9,
-    "pprep": 9,
-    "adet": 1
+    "rprep": 11,
+    "pprep": 11,
+    "adet": 0
    },
    "level": 2
   },
@@ -14363,24 +14373,24 @@
     4
    ],
    "rows": [
-    "bc..",
-    "bc.d",
+    "b..c",
+    "bAAd",
     ".AAe",
-    "fAAg",
-    "hiig"
+    "ffge",
+    "hig."
    ],
    "features": {
-    "opt": 11,
+    "opt": 15,
     "bmin": 0,
-    "prep": 3,
-    "lmin": 0,
-    "dmv": 2,
-    "branch": 6,
+    "prep": 4,
+    "lmin": 3,
+    "dmv": 3,
+    "branch": 5,
     "nopt": 3,
-    "ar": 2,
+    "ar": 1,
     "e": 4,
-    "rprep": 10,
-    "pprep": 10,
+    "rprep": 7,
+    "pprep": 11,
     "adet": 0
    },
    "level": 2
@@ -14393,25 +14403,25 @@
     4
    ],
    "rows": [
-    "bc.d",
-    "bc..",
-    "eAAf",
-    "gAAf",
-    "hii."
+    "bAA.",
+    "bAAc",
+    "deef",
+    ".ghf",
+    ".g.i"
    ],
    "features": {
-    "opt": 12,
+    "opt": 18,
     "bmin": 1,
-    "prep": 4,
-    "lmin": 1,
-    "dmv": 3,
-    "branch": 7,
+    "prep": 5,
+    "lmin": 4,
+    "dmv": 4,
+    "branch": 6,
     "nopt": 2,
-    "ar": 2,
+    "ar": 0,
     "e": 4,
-    "rprep": 11,
-    "pprep": 11,
-    "adet": 1
+    "rprep": 7,
+    "pprep": 9,
+    "adet": 0
    },
    "level": 2
   },
@@ -14423,25 +14433,25 @@
     4
    ],
    "rows": [
-    ".bc.",
-    "dbc.",
-    "AAee",
-    "AAf.",
-    "ghfi"
+    "b...",
+    "bAAc",
+    ".AAc",
+    "deff",
+    "gehi"
    ],
    "features": {
-    "opt": 27,
-    "bmin": 2,
-    "prep": 7,
-    "lmin": 8,
+    "opt": 18,
+    "bmin": 1,
+    "prep": 6,
+    "lmin": 4,
     "dmv": 4,
-    "branch": 3,
+    "branch": 4,
     "nopt": 2,
-    "ar": 2,
+    "ar": 1,
     "e": 4,
-    "rprep": 19,
-    "pprep": 20,
-    "adet": 2
+    "rprep": 8,
+    "pprep": 16,
+    "adet": 1
    },
    "level": 3
   },
@@ -14454,24 +14464,24 @@
    ],
    "rows": [
     "b.c.",
-    "b.cd",
-    "eeAA",
-    ".fAA",
-    "gfhi"
+    "bAAd",
+    "eAAd",
+    ".fgg",
+    "hfi."
    ],
    "features": {
-    "opt": 26,
+    "opt": 17,
     "bmin": 2,
-    "prep": 7,
-    "lmin": 8,
+    "prep": 5,
+    "lmin": 6,
     "dmv": 4,
-    "branch": 4,
-    "nopt": 2,
-    "ar": 2,
+    "branch": 6,
+    "nopt": 1,
+    "ar": 1,
     "e": 4,
-    "rprep": 18,
-    "pprep": 19,
-    "adet": 2
+    "rprep": 8,
+    "pprep": 16,
+    "adet": 1
    },
    "level": 3
   },
@@ -14483,24 +14493,24 @@
     4
    ],
    "rows": [
-    "b.cd",
-    "b.c.",
-    "eeAA",
-    ".fAA",
-    "gfhi"
+    "bc..",
+    "bcde",
+    "ffAA",
+    ".gAA",
+    "hgi."
    ],
    "features": {
-    "opt": 25,
+    "opt": 27,
     "bmin": 2,
     "prep": 7,
-    "lmin": 8,
+    "lmin": 3,
     "dmv": 4,
-    "branch": 4,
-    "nopt": 1,
+    "branch": 6,
+    "nopt": 5,
     "ar": 2,
     "e": 4,
-    "rprep": 17,
-    "pprep": 18,
+    "rprep": 18,
+    "pprep": 22,
     "adet": 2
    },
    "level": 3
@@ -15443,25 +15453,25 @@
     1
    ],
    "rows": [
-    ".bb.",
-    "cdd.",
-    "eAA.",
-    "eAA.",
-    "ffgg"
+    ".AA.",
+    "bAA.",
+    "b.cc",
+    "ddee",
+    ".fgg"
    ],
    "features": {
-    "opt": 10,
+    "opt": 21,
     "bmin": 1,
-    "prep": 3,
-    "lmin": 1,
-    "dmv": 3,
-    "branch": 5,
-    "nopt": 4,
-    "ar": 2,
+    "prep": 10,
+    "lmin": 4,
+    "dmv": 4,
+    "branch": 4,
+    "nopt": 1,
+    "ar": 0,
     "e": 5,
-    "rprep": 9,
-    "pprep": 9,
-    "adet": 1
+    "rprep": 10,
+    "pprep": 11,
+    "adet": 0
    },
    "level": 2
   },
@@ -15474,24 +15484,24 @@
    ],
    "rows": [
     "b...",
-    "bAAc",
-    ".AA.",
+    "b.AA",
+    "ccAA",
     "ddee",
-    "ffgg"
+    ".ffg"
    ],
    "features": {
-    "opt": 14,
-    "bmin": 1,
-    "prep": 5,
-    "lmin": 2,
+    "opt": 22,
+    "bmin": 0,
+    "prep": 6,
+    "lmin": 1,
     "dmv": 4,
-    "branch": 6,
-    "nopt": 2,
+    "branch": 4,
+    "nopt": 3,
     "ar": 1,
     "e": 5,
-    "rprep": 8,
-    "pprep": 10,
-    "adet": 1
+    "rprep": 9,
+    "pprep": 11,
+    "adet": 0
    },
    "level": 2
   },
@@ -15503,24 +15513,24 @@
     1
    ],
    "rows": [
-    "bcc.",
     "b...",
+    "b.cc",
     "ddAA",
     "eeAA",
-    "fgg."
+    "ff.g"
    ],
    "features": {
-    "opt": 17,
+    "opt": 16,
     "bmin": 2,
-    "prep": 6,
-    "lmin": 5,
+    "prep": 4,
+    "lmin": 4,
     "dmv": 5,
-    "branch": 5,
+    "branch": 6,
     "nopt": 1,
     "ar": 2,
     "e": 5,
-    "rprep": 12,
-    "pprep": 12,
+    "rprep": 11,
+    "pprep": 11,
     "adet": 1
    },
    "level": 2
@@ -15533,24 +15543,24 @@
     1
    ],
    "rows": [
-    "b.AA",
-    "b.AA",
-    "ccdd",
-    "eff.",
-    "eg.."
+    ".bb.",
+    "c.AA",
+    "c.AA",
+    "dde.",
+    "ffeg"
    ],
    "features": {
-    "opt": 15,
+    "opt": 13,
     "bmin": 0,
-    "prep": 6,
-    "lmin": 8,
-    "dmv": 2,
-    "branch": 7,
-    "nopt": 2,
-    "ar": 0,
+    "prep": 3,
+    "lmin": 2,
+    "dmv": 4,
+    "branch": 6,
+    "nopt": 3,
+    "ar": 1,
     "e": 5,
-    "rprep": 4,
-    "pprep": 5,
+    "rprep": 6,
+    "pprep": 6,
     "adet": 0
    },
    "level": 1
@@ -15563,24 +15573,24 @@
     1
    ],
    "rows": [
-    "bAA.",
-    "bAA.",
-    ".cdd",
-    ".cee",
-    "fgg."
+    "bc..",
+    "b.AA",
+    ".dAA",
+    ".dee",
+    "ffgg"
    ],
    "features": {
-    "opt": 12,
-    "bmin": 1,
-    "prep": 5,
-    "lmin": 3,
-    "dmv": 3,
-    "branch": 7,
-    "nopt": 1,
-    "ar": 0,
+    "opt": 9,
+    "bmin": 0,
+    "prep": 4,
+    "lmin": 2,
+    "dmv": 2,
+    "branch": 8,
+    "nopt": 2,
+    "ar": 1,
     "e": 5,
-    "rprep": 4,
-    "pprep": 5,
+    "rprep": 3,
+    "pprep": 3,
     "adet": 0
    },
    "level": 1
@@ -15593,24 +15603,24 @@
     1
    ],
    "rows": [
-    "bAAc",
-    "bAAc",
-    "ddee",
-    "f...",
-    ".gg."
+    "bcAA",
+    "b.AA",
+    "..dd",
+    ".eef",
+    ".ggf"
    ],
    "features": {
-    "opt": 15,
-    "bmin": 1,
-    "prep": 5,
-    "lmin": 3,
+    "opt": 12,
+    "bmin": 0,
+    "prep": 4,
+    "lmin": 5,
     "dmv": 3,
-    "branch": 11,
-    "nopt": 3,
+    "branch": 14,
+    "nopt": 1,
     "ar": 0,
     "e": 5,
-    "rprep": 8,
-    "pprep": 8,
+    "rprep": 4,
+    "pprep": 5,
     "adet": 0
    },
    "level": 1
@@ -15623,25 +15633,25 @@
     1
    ],
    "rows": [
-    "b...",
-    "bAAc",
-    ".AAc",
-    "dee.",
+    ".AA.",
+    "bAA.",
+    "bccd",
+    "e..d",
     "ffgg"
    ],
    "features": {
-    "opt": 17,
-    "bmin": 2,
+    "opt": 16,
+    "bmin": 1,
     "prep": 5,
-    "lmin": 4,
-    "dmv": 4,
-    "branch": 6,
-    "nopt": 1,
-    "ar": 1,
+    "lmin": 3,
+    "dmv": 3,
+    "branch": 7,
+    "nopt": 2,
+    "ar": 0,
     "e": 5,
-    "rprep": 13,
-    "pprep": 13,
-    "adet": 1
+    "rprep": 9,
+    "pprep": 9,
+    "adet": 0
    },
    "level": 2
   },
@@ -15653,23 +15663,23 @@
     1
    ],
    "rows": [
-    "b.cc",
-    "bAA.",
-    ".AAd",
-    "ee.d",
-    "fgg."
+    "b...",
+    "b.AA",
+    "ccAA",
+    "dde.",
+    "ffeg"
    ],
    "features": {
-    "opt": 14,
-    "bmin": 0,
-    "prep": 6,
-    "lmin": 2,
+    "opt": 15,
+    "bmin": 1,
+    "prep": 9,
+    "lmin": 8,
     "dmv": 3,
-    "branch": 6,
-    "nopt": 3,
+    "branch": 4,
+    "nopt": 1,
     "ar": 1,
     "e": 5,
-    "rprep": 7,
+    "rprep": 9,
     "pprep": 9,
     "adet": 0
    },
@@ -15684,23 +15694,23 @@
    ],
    "rows": [
     "bAA.",
-    "bAAc",
-    "dd.c",
-    "eeff",
-    "g..."
+    "bAA.",
+    "ccdd",
+    "eefg",
+    "..f."
    ],
    "features": {
-    "opt": 15,
+    "opt": 19,
     "bmin": 1,
-    "prep": 5,
+    "prep": 7,
     "lmin": 3,
     "dmv": 3,
-    "branch": 7,
-    "nopt": 2,
+    "branch": 3,
+    "nopt": 3,
     "ar": 0,
     "e": 5,
-    "rprep": 9,
-    "pprep": 9,
+    "rprep": 11,
+    "pprep": 11,
     "adet": 0
    },
    "level": 2
@@ -15713,24 +15723,24 @@
     1
    ],
    "rows": [
-    ".AA.",
-    "bAA.",
-    "bccd",
-    "eefd",
-    "g.f."
+    ".b..",
+    ".bAA",
+    "cdAA",
+    "cdee",
+    "f.gg"
    ],
    "features": {
-    "opt": 17,
-    "bmin": 1,
-    "prep": 6,
-    "lmin": 2,
-    "dmv": 4,
-    "branch": 6,
-    "nopt": 2,
-    "ar": 0,
+    "opt": 14,
+    "bmin": 0,
+    "prep": 4,
+    "lmin": 1,
+    "dmv": 3,
+    "branch": 7,
+    "nopt": 1,
+    "ar": 1,
     "e": 5,
-    "rprep": 7,
-    "pprep": 8,
+    "rprep": 4,
+    "pprep": 4,
     "adet": 0
    },
    "level": 1
@@ -15743,24 +15753,24 @@
     1
    ],
    "rows": [
-    "bAAc",
-    "bAAc",
-    "d..e",
-    "d.ff",
-    "..gg"
+    "b..c",
+    "b..c",
+    "deAA",
+    ".eAA",
+    "ffgg"
    ],
    "features": {
-    "opt": 13,
-    "bmin": 1,
+    "opt": 8,
+    "bmin": 0,
     "prep": 3,
-    "lmin": 4,
-    "dmv": 4,
-    "branch": 13,
-    "nopt": 1,
-    "ar": 0,
+    "lmin": 1,
+    "dmv": 2,
+    "branch": 8,
+    "nopt": 2,
+    "ar": 2,
     "e": 5,
-    "rprep": 6,
-    "pprep": 6,
+    "rprep": 3,
+    "pprep": 3,
     "adet": 0
    },
    "level": 1
@@ -15773,24 +15783,24 @@
     1
    ],
    "rows": [
-    "bAAc",
-    "bAAc",
-    "ddee",
-    "f.g.",
-    "..g."
+    "b..c",
+    "bdd.",
+    "AAef",
+    "AAef",
+    "gg.."
    ],
    "features": {
-    "opt": 18,
-    "bmin": 1,
-    "prep": 7,
-    "lmin": 2,
-    "dmv": 4,
-    "branch": 5,
+    "opt": 8,
+    "bmin": 0,
+    "prep": 4,
+    "lmin": 0,
+    "dmv": 2,
+    "branch": 10,
     "nopt": 2,
-    "ar": 0,
+    "ar": 2,
     "e": 5,
-    "rprep": 7,
-    "pprep": 8,
+    "rprep": 4,
+    "pprep": 4,
     "adet": 0
    },
    "level": 1
@@ -15803,24 +15813,24 @@
     1
    ],
    "rows": [
-    "....",
+    "b..c",
     "bAAc",
-    "bAAc",
+    "dAA.",
     "deef",
-    "dgg."
+    "..gg"
    ],
    "features": {
-    "opt": 17,
+    "opt": 14,
     "bmin": 1,
-    "prep": 6,
+    "prep": 3,
     "lmin": 1,
     "dmv": 4,
-    "branch": 5,
+    "branch": 6,
     "nopt": 2,
     "ar": 1,
     "e": 5,
     "rprep": 9,
-    "pprep": 15,
+    "pprep": 13,
     "adet": 1
    },
    "level": 2
@@ -15833,25 +15843,25 @@
     1
    ],
    "rows": [
-    "....",
+    "b..c",
     "bAAc",
-    "bAAd",
-    "effd",
-    "e.gg"
+    "dAAe",
+    "d.ff",
+    "gg.."
    ],
    "features": {
-    "opt": 14,
-    "bmin": 0,
-    "prep": 6,
-    "lmin": 3,
-    "dmv": 3,
-    "branch": 7,
-    "nopt": 2,
+    "opt": 12,
+    "bmin": 1,
+    "prep": 3,
+    "lmin": 1,
+    "dmv": 4,
+    "branch": 5,
+    "nopt": 1,
     "ar": 1,
     "e": 5,
-    "rprep": 7,
-    "pprep": 10,
-    "adet": 0
+    "rprep": 9,
+    "pprep": 11,
+    "adet": 1
    },
    "level": 2
   },
@@ -15863,25 +15873,25 @@
     1
    ],
    "rows": [
-    "....",
-    "bccd",
-    "bAA.",
-    "eAAf",
-    "eggf"
+    "b..c",
+    "bAAc",
+    "dAAe",
+    "dff.",
+    ".gg."
    ],
    "features": {
-    "opt": 10,
-    "bmin": 0,
-    "prep": 5,
-    "lmin": 0,
-    "dmv": 2,
-    "branch": 10,
-    "nopt": 2,
-    "ar": 2,
+    "opt": 13,
+    "bmin": 1,
+    "prep": 3,
+    "lmin": 1,
+    "dmv": 4,
+    "branch": 7,
+    "nopt": 1,
+    "ar": 1,
     "e": 5,
     "rprep": 9,
-    "pprep": 9,
-    "adet": 0
+    "pprep": 12,
+    "adet": 1
    },
    "level": 2
   },
@@ -15893,24 +15903,24 @@
     1
    ],
    "rows": [
-    ".b..",
-    "c.AA",
-    "cdAA",
-    ".def",
-    "ggef"
+    "AA..",
+    "AA.b",
+    "cddb",
+    "c.ef",
+    "g.ef"
    ],
    "features": {
     "opt": 11,
     "bmin": 0,
-    "prep": 6,
-    "lmin": 1,
+    "prep": 5,
+    "lmin": 3,
     "dmv": 2,
-    "branch": 8,
-    "nopt": 2,
-    "ar": 1,
+    "branch": 6,
+    "nopt": 1,
+    "ar": 0,
     "e": 5,
-    "rprep": 5,
-    "pprep": 6,
+    "rprep": 4,
+    "pprep": 4,
     "adet": 0
    },
    "level": 1
@@ -15923,24 +15933,24 @@
     1
    ],
    "rows": [
+    "AA..",
     "AAb.",
-    "AAc.",
-    "ddc.",
-    "e.fg",
-    "e.fg"
+    "cdbe",
+    "cdfe",
+    ".gg."
    ],
    "features": {
-    "opt": 11,
+    "opt": 13,
     "bmin": 0,
-    "prep": 3,
-    "lmin": 2,
+    "prep": 5,
+    "lmin": 5,
     "dmv": 3,
-    "branch": 10,
-    "nopt": 1,
+    "branch": 8,
+    "nopt": 4,
     "ar": 0,
     "e": 5,
     "rprep": 3,
-    "pprep": 3,
+    "pprep": 5,
     "adet": 0
    },
    "level": 1
@@ -15954,23 +15964,23 @@
    ],
    "rows": [
     "AAb.",
-    "AAcd",
-    "..cd",
-    "e..f",
-    "eggf"
+    "AA..",
+    ".cdd",
+    "ecfg",
+    "e.fg"
    ],
    "features": {
-    "opt": 14,
+    "opt": 9,
     "bmin": 0,
-    "prep": 5,
-    "lmin": 4,
-    "dmv": 2,
-    "branch": 8,
-    "nopt": 3,
+    "prep": 3,
+    "lmin": 2,
+    "dmv": 3,
+    "branch": 6,
+    "nopt": 1,
     "ar": 0,
     "e": 5,
-    "rprep": 4,
-    "pprep": 4,
+    "rprep": 3,
+    "pprep": 3,
     "adet": 0
    },
    "level": 1
@@ -15983,24 +15993,24 @@
     1
    ],
    "rows": [
-    ".b..",
-    ".b.c",
-    "dAAc",
-    "eAAf",
-    "eggf"
+    "....",
+    "bAAc",
+    "bAAc",
+    "deef",
+    "dg.f"
    ],
    "features": {
-    "opt": 10,
+    "opt": 13,
     "bmin": 1,
-    "prep": 3,
-    "lmin": 1,
+    "prep": 4,
+    "lmin": 2,
     "dmv": 3,
-    "branch": 6,
-    "nopt": 1,
-    "ar": 2,
+    "branch": 4,
+    "nopt": 2,
+    "ar": 1,
     "e": 5,
-    "rprep": 9,
-    "pprep": 9,
+    "rprep": 6,
+    "pprep": 12,
     "adet": 0
    },
    "level": 2
@@ -16013,25 +16023,25 @@
     1
    ],
    "rows": [
-    ".b..",
-    "cbde",
-    "cAAe",
-    "fAA.",
-    "f.gg"
+    "b...",
+    "bAAc",
+    "dAAc",
+    "de..",
+    "fegg"
    ],
    "features": {
-    "opt": 10,
-    "bmin": 0,
-    "prep": 4,
-    "lmin": 0,
-    "dmv": 2,
-    "branch": 6,
-    "nopt": 3,
-    "ar": 2,
+    "opt": 11,
+    "bmin": 2,
+    "prep": 3,
+    "lmin": 5,
+    "dmv": 4,
+    "branch": 4,
+    "nopt": 2,
+    "ar": 1,
     "e": 5,
-    "rprep": 9,
+    "rprep": 6,
     "pprep": 9,
-    "adet": 0
+    "adet": 1
    },
    "level": 2
   },
@@ -16043,25 +16053,25 @@
     1
    ],
    "rows": [
-    "b.cd",
-    "b.c.",
+    "b..c",
+    "bAAc",
     ".AA.",
-    "eAAf",
-    "eggf"
+    "deff",
+    "deg."
    ],
    "features": {
-    "opt": 10,
-    "bmin": 0,
+    "opt": 13,
+    "bmin": 2,
     "prep": 3,
-    "lmin": 0,
-    "dmv": 2,
-    "branch": 8,
-    "nopt": 3,
-    "ar": 2,
+    "lmin": 5,
+    "dmv": 4,
+    "branch": 5,
+    "nopt": 2,
+    "ar": 1,
     "e": 5,
-    "rprep": 9,
-    "pprep": 9,
-    "adet": 0
+    "rprep": 6,
+    "pprep": 12,
+    "adet": 1
    },
    "level": 2
   },
@@ -16464,23 +16474,23 @@
    ],
    "rows": [
     "...b",
-    "cc.b",
-    "dAA.",
-    "dAAe",
-    "ff.e"
+    "AAcb",
+    "AAcd",
+    "ee.d",
+    "..ff"
    ],
    "features": {
-    "opt": 8,
+    "opt": 10,
     "bmin": 0,
-    "prep": 3,
-    "lmin": 0,
-    "dmv": 2,
+    "prep": 4,
+    "lmin": 2,
+    "dmv": 3,
     "branch": 7,
-    "nopt": 5,
-    "ar": 2,
+    "nopt": 1,
+    "ar": 1,
     "e": 6,
-    "rprep": 7,
-    "pprep": 7,
+    "rprep": 4,
+    "pprep": 4,
     "adet": 0
    },
    "level": 1
@@ -16493,21 +16503,21 @@
     0
    ],
    "rows": [
-    "..b.",
-    "AAbc",
-    "AA.c",
+    ".AAb",
+    "cAAb",
+    "c...",
     "dd.e",
-    "ff.e"
+    ".ffe"
    ],
    "features": {
-    "opt": 13,
+    "opt": 12,
     "bmin": 0,
     "prep": 4,
-    "lmin": 1,
+    "lmin": 7,
     "dmv": 3,
     "branch": 9,
     "nopt": 2,
-    "ar": 1,
+    "ar": 0,
     "e": 6,
     "rprep": 4,
     "pprep": 4,
@@ -16523,24 +16533,24 @@
     0
    ],
    "rows": [
-    ".AA.",
-    "bAAc",
-    "bddc",
-    "...e",
-    ".ffe"
+    ".bAA",
+    ".bAA",
+    "..c.",
+    "ddce",
+    "ff.e"
    ],
    "features": {
-    "opt": 13,
+    "opt": 14,
     "bmin": 0,
-    "prep": 5,
-    "lmin": 3,
+    "prep": 4,
+    "lmin": 2,
     "dmv": 3,
-    "branch": 9,
+    "branch": 7,
     "nopt": 2,
     "ar": 0,
     "e": 6,
-    "rprep": 5,
-    "pprep": 5,
+    "rprep": 3,
+    "pprep": 3,
     "adet": 0
    },
    "level": 1
@@ -16556,8 +16566,8 @@
     "....",
     ".AAb",
     ".AAb",
-    "cdee",
-    "cdff"
+    "cdde",
+    "cffe"
    ],
    "features": {
     "opt": 13,
@@ -16566,10 +16576,10 @@
     "lmin": 3,
     "dmv": 3,
     "branch": 7,
-    "nopt": 2,
+    "nopt": 3,
     "ar": 1,
     "e": 6,
-    "rprep": 7,
+    "rprep": 6,
     "pprep": 9,
     "adet": 0
    },
@@ -16585,23 +16595,23 @@
    "rows": [
     "....",
     ".AAb",
-    "cAAb",
-    "cdee",
-    ".dff"
+    ".AAb",
+    "ccde",
+    "ffde"
    ],
    "features": {
     "opt": 13,
-    "bmin": 0,
+    "bmin": 1,
     "prep": 5,
-    "lmin": 3,
-    "dmv": 3,
-    "branch": 6,
-    "nopt": 2,
+    "lmin": 1,
+    "dmv": 4,
+    "branch": 4,
+    "nopt": 3,
     "ar": 1,
     "e": 6,
     "rprep": 7,
     "pprep": 9,
-    "adet": 0
+    "adet": 1
    },
    "level": 2
   },
@@ -16614,10 +16624,10 @@
    ],
    "rows": [
     "....",
-    "bAAc",
-    "bAAc",
-    ".dee",
-    ".dff"
+    ".AAb",
+    "cAAb",
+    "cdde",
+    ".ffe"
    ],
    "features": {
     "opt": 13,
@@ -16625,7 +16635,7 @@
     "prep": 5,
     "lmin": 3,
     "dmv": 3,
-    "branch": 6,
+    "branch": 7,
     "nopt": 2,
     "ar": 1,
     "e": 6,
@@ -16660,7 +16670,7 @@
     "ar": 1,
     "e": 6,
     "rprep": 5,
-    "pprep": 5,
+    "pprep": 7,
     "adet": 0
    },
    "level": 1
@@ -16690,7 +16700,7 @@
     "ar": 0,
     "e": 6,
     "rprep": 4,
-    "pprep": 5,
+    "pprep": 6,
     "adet": 0
    },
    "level": 1
@@ -16824,23 +16834,23 @@
    ],
    "rows": [
     ".bb.",
-    "cdAA",
-    ".dAA",
-    ".eef",
-    "..gg"
+    "AA..",
+    "AA.c",
+    "d.ee",
+    "dfgg"
    ],
    "features": {
     "opt": 8,
     "bmin": 0,
-    "prep": 4,
-    "lmin": 4,
-    "dmv": 2,
-    "branch": 11,
+    "prep": 3,
+    "lmin": 6,
+    "dmv": 3,
+    "branch": 10,
     "nopt": 1,
     "ar": 1,
     "e": 6,
     "rprep": 3,
-    "pprep": 3,
+    "pprep": 4,
     "adet": 0
    },
    "level": 1
@@ -16853,21 +16863,21 @@
     2
    ],
    "rows": [
-    "AA..",
-    "AA..",
-    ".b.c",
-    "deec",
+    ".b..",
+    "AAc.",
+    "AA.d",
+    ".eed",
     "ffgg"
    ],
    "features": {
-    "opt": 10,
+    "opt": 8,
     "bmin": 0,
-    "prep": 5,
-    "lmin": 4,
+    "prep": 3,
+    "lmin": 2,
     "dmv": 2,
-    "branch": 13,
-    "nopt": 4,
-    "ar": 0,
+    "branch": 11,
+    "nopt": 1,
+    "ar": 1,
     "e": 6,
     "rprep": 3,
     "pprep": 3,
@@ -16883,27 +16893,117 @@
     2
    ],
    "rows": [
-    "AA..",
-    "AAbb",
-    "ccd.",
-    "ef..",
-    "e.gg"
+    "b.AA",
+    "b.AA",
+    ".c..",
+    "ddee",
+    "f.gg"
    ],
    "features": {
     "opt": 10,
     "bmin": 0,
-    "prep": 6,
-    "lmin": 2,
+    "prep": 5,
+    "lmin": 7,
     "dmv": 2,
-    "branch": 10,
-    "nopt": 2,
+    "branch": 12,
+    "nopt": 1,
     "ar": 0,
     "e": 6,
     "rprep": 3,
-    "pprep": 3,
+    "pprep": 4,
     "adet": 0
    },
    "level": 1
+  },
+  {
+   "name": "sample-(1, 3, 2)-L2-0",
+   "pieces": [
+    1,
+    3,
+    2
+   ],
+   "rows": [
+    "....",
+    "bAA.",
+    "bAAc",
+    "ddee",
+    "ff.g"
+   ],
+   "features": {
+    "opt": 11,
+    "bmin": 1,
+    "prep": 5,
+    "lmin": 5,
+    "dmv": 3,
+    "branch": 10,
+    "nopt": 2,
+    "ar": 1,
+    "e": 6,
+    "rprep": 8,
+    "pprep": 9,
+    "adet": 1
+   },
+   "level": 2
+  },
+  {
+   "name": "sample-(1, 3, 2)-L2-1",
+   "pieces": [
+    1,
+    3,
+    2
+   ],
+   "rows": [
+    "....",
+    "bAAc",
+    "bAA.",
+    "ddee",
+    ".ffg"
+   ],
+   "features": {
+    "opt": 11,
+    "bmin": 1,
+    "prep": 5,
+    "lmin": 5,
+    "dmv": 3,
+    "branch": 8,
+    "nopt": 1,
+    "ar": 1,
+    "e": 6,
+    "rprep": 8,
+    "pprep": 10,
+    "adet": 1
+   },
+   "level": 2
+  },
+  {
+   "name": "sample-(1, 3, 2)-L2-2",
+   "pieces": [
+    1,
+    3,
+    2
+   ],
+   "rows": [
+    ".b..",
+    ".AAc",
+    ".AAc",
+    "ddee",
+    "fgg."
+   ],
+   "features": {
+    "opt": 11,
+    "bmin": 1,
+    "prep": 5,
+    "lmin": 5,
+    "dmv": 3,
+    "branch": 8,
+    "nopt": 1,
+    "ar": 1,
+    "e": 6,
+    "rprep": 8,
+    "pprep": 10,
+    "adet": 1
+   },
+   "level": 2
   },
   {
    "name": "sample-(2, 2, 2)-L1-0",
@@ -16913,60 +17013,30 @@
     2
    ],
    "rows": [
-    ".bb.",
-    "cAAd",
-    "cAAd",
-    "e.ff",
-    ".g.."
+    ".b..",
+    "c.AA",
+    "c.AA",
+    "deff",
+    "d.gg"
    ],
    "features": {
-    "opt": 8,
+    "opt": 9,
     "bmin": 0,
-    "prep": 3,
-    "lmin": 5,
+    "prep": 5,
+    "lmin": 7,
     "dmv": 2,
-    "branch": 12,
-    "nopt": 3,
+    "branch": 13,
+    "nopt": 2,
     "ar": 1,
     "e": 6,
-    "rprep": 4,
-    "pprep": 5,
+    "rprep": 3,
+    "pprep": 4,
     "adet": 0
    },
    "level": 1
   },
   {
    "name": "sample-(2, 2, 2)-L1-1",
-   "pieces": [
-    2,
-    2,
-    2
-   ],
-   "rows": [
-    ".bb.",
-    "cdAA",
-    "ceAA",
-    ".f..",
-    ".fgg"
-   ],
-   "features": {
-    "opt": 8,
-    "bmin": 0,
-    "prep": 4,
-    "lmin": 2,
-    "dmv": 2,
-    "branch": 8,
-    "nopt": 3,
-    "ar": 1,
-    "e": 6,
-    "rprep": 3,
-    "pprep": 3,
-    "adet": 0
-   },
-   "level": 1
-  },
-  {
-   "name": "sample-(2, 2, 2)-L1-2",
    "pieces": [
     2,
     2,
@@ -16996,6 +17066,36 @@
    "level": 1
   },
   {
+   "name": "sample-(2, 2, 2)-L1-2",
+   "pieces": [
+    2,
+    2,
+    2
+   ],
+   "rows": [
+    "AAb.",
+    "AAcc",
+    "dd.e",
+    "fg..",
+    "fg.."
+   ],
+   "features": {
+    "opt": 10,
+    "bmin": 0,
+    "prep": 6,
+    "lmin": 2,
+    "dmv": 2,
+    "branch": 10,
+    "nopt": 1,
+    "ar": 0,
+    "e": 6,
+    "rprep": 3,
+    "pprep": 3,
+    "adet": 0
+   },
+   "level": 1
+  },
+  {
    "name": "sample-(2, 2, 2)-L2-0",
    "pieces": [
     2,
@@ -17004,23 +17104,23 @@
    ],
    "rows": [
     "....",
+    "bAA.",
     "bAAc",
-    "bAAc",
-    "ddee",
-    "fg.."
+    "deec",
+    "ffg."
    ],
    "features": {
-    "opt": 15,
+    "opt": 12,
     "bmin": 0,
-    "prep": 4,
-    "lmin": 5,
+    "prep": 5,
+    "lmin": 8,
     "dmv": 2,
-    "branch": 6,
-    "nopt": 4,
+    "branch": 7,
+    "nopt": 3,
     "ar": 1,
     "e": 6,
-    "rprep": 7,
-    "pprep": 10,
+    "rprep": 6,
+    "pprep": 9,
     "adet": 0
    },
    "level": 2
@@ -17033,20 +17133,20 @@
     2
    ],
    "rows": [
-    "....",
-    "bAAc",
-    "bAAc",
-    "dee.",
-    "ffg."
+    ".b..",
+    "cAAd",
+    "cAAd",
+    "..ee",
+    ".ffg"
    ],
    "features": {
     "opt": 12,
     "bmin": 0,
     "prep": 5,
-    "lmin": 8,
+    "lmin": 6,
     "dmv": 2,
-    "branch": 8,
-    "nopt": 3,
+    "branch": 11,
+    "nopt": 4,
     "ar": 1,
     "e": 6,
     "rprep": 6,
@@ -17063,9 +17163,9 @@
     2
    ],
    "rows": [
-    ".b..",
-    ".b.c",
-    "dAAc",
+    "b...",
+    "b..c",
+    "dAAe",
     ".AAe",
     "ffgg"
    ],
@@ -17075,8 +17175,8 @@
     "prep": 3,
     "lmin": 1,
     "dmv": 2,
-    "branch": 7,
-    "nopt": 5,
+    "branch": 10,
+    "nopt": 9,
     "ar": 2,
     "e": 6,
     "rprep": 9,
@@ -17093,24 +17193,24 @@
     2
    ],
    "rows": [
-    ".AA.",
-    "bAAc",
-    "b.d.",
-    "efd.",
-    "e.gg"
+    ".b..",
+    "cAA.",
+    "cAAd",
+    "..ed",
+    "ffeg"
    ],
    "features": {
-    "opt": 10,
+    "opt": 9,
     "bmin": 0,
-    "prep": 3,
-    "lmin": 4,
+    "prep": 4,
+    "lmin": 5,
     "dmv": 2,
-    "branch": 8,
-    "nopt": 5,
-    "ar": 0,
+    "branch": 9,
+    "nopt": 2,
+    "ar": 1,
     "e": 6,
     "rprep": 4,
-    "pprep": 4,
+    "pprep": 5,
     "adet": 0
    },
    "level": 1
@@ -17123,24 +17223,24 @@
     2
    ],
    "rows": [
-    ".AA.",
-    "bAA.",
-    "..cc",
-    "defg",
-    ".efg"
+    "AA..",
+    "AAb.",
+    "cdbe",
+    "ffge",
+    "..g."
    ],
    "features": {
-    "opt": 8,
+    "opt": 10,
     "bmin": 0,
-    "prep": 4,
-    "lmin": 3,
+    "prep": 5,
+    "lmin": 2,
     "dmv": 2,
-    "branch": 10,
-    "nopt": 2,
+    "branch": 6,
+    "nopt": 4,
     "ar": 0,
     "e": 6,
-    "rprep": 4,
-    "pprep": 4,
+    "rprep": 3,
+    "pprep": 3,
     "adet": 0
    },
    "level": 1
@@ -17153,27 +17253,117 @@
     2
    ],
    "rows": [
-    "AAb.",
-    "AAbc",
-    ".dd.",
-    "ef.g",
-    "e..g"
+    "AA..",
+    "AAbb",
+    "cd..",
+    "edfg",
+    "e.f."
    ],
    "features": {
-    "opt": 9,
+    "opt": 8,
+    "bmin": 0,
+    "prep": 4,
+    "lmin": 2,
+    "dmv": 2,
+    "branch": 7,
+    "nopt": 2,
+    "ar": 0,
+    "e": 6,
+    "rprep": 2,
+    "pprep": 2,
+    "adet": 0
+   },
+   "level": 1
+  },
+  {
+   "name": "sample-(3, 1, 2)-L2-0",
+   "pieces": [
+    3,
+    1,
+    2
+   ],
+   "rows": [
+    "....",
+    "bAAc",
+    "bAAc",
+    "d.ee",
+    "df.g"
+   ],
+   "features": {
+    "opt": 11,
     "bmin": 0,
     "prep": 4,
     "lmin": 5,
     "dmv": 2,
-    "branch": 10,
-    "nopt": 1,
-    "ar": 0,
+    "branch": 7,
+    "nopt": 3,
+    "ar": 1,
     "e": 6,
-    "rprep": 3,
-    "pprep": 3,
+    "rprep": 5,
+    "pprep": 9,
     "adet": 0
    },
-   "level": 1
+   "level": 2
+  },
+  {
+   "name": "sample-(3, 1, 2)-L2-1",
+   "pieces": [
+    3,
+    1,
+    2
+   ],
+   "rows": [
+    "....",
+    "bAAc",
+    "bAAc",
+    "dde.",
+    "f.eg"
+   ],
+   "features": {
+    "opt": 11,
+    "bmin": 0,
+    "prep": 4,
+    "lmin": 5,
+    "dmv": 2,
+    "branch": 6,
+    "nopt": 3,
+    "ar": 1,
+    "e": 6,
+    "rprep": 5,
+    "pprep": 9,
+    "adet": 0
+   },
+   "level": 2
+  },
+  {
+   "name": "sample-(3, 1, 2)-L2-2",
+   "pieces": [
+    3,
+    1,
+    2
+   ],
+   "rows": [
+    "b...",
+    "bAAc",
+    ".AAc",
+    ".dee",
+    "fd.g"
+   ],
+   "features": {
+    "opt": 10,
+    "bmin": 0,
+    "prep": 4,
+    "lmin": 5,
+    "dmv": 2,
+    "branch": 7,
+    "nopt": 3,
+    "ar": 1,
+    "e": 6,
+    "rprep": 5,
+    "pprep": 9,
+    "adet": 0
+   },
+   "level": 2
   },
   {
    "name": "sample-(4, 0, 2)-L1-0",

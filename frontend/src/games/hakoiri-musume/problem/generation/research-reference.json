@@ -590,52 +590,52 @@
       "states": 51660,
       "candidates": 24835,
       "status": {
-        "1": 14711,
+        "1": 14459,
         "too-light": 6651,
-        "2": 2728,
-        "3": 517,
-        "unlisted-combination": 228
+        "2": 2901,
+        "3": 547,
+        "unlisted-combination": 277
       },
-      "picked": { "1": 173, "2": 76, "3": 17 }
+      "picked": { "1": 171, "2": 75, "3": 17 }
     },
     {
       "pieceSet": { "vertical": 2, "horizontal": 3, "small": 2 },
       "states": 106800,
       "candidates": 49392,
       "status": {
-        "1": 26834,
-        "unlisted-combination": 939,
-        "2": 8517,
+        "1": 26826,
+        "unlisted-combination": 972,
+        "2": 8496,
         "too-light": 12923,
-        "3": 179
+        "3": 175
       },
-      "picked": { "1": 291, "2": 147, "3": 15 }
+      "picked": { "1": 291, "2": 147, "3": 13 }
     },
     {
       "pieceSet": { "vertical": 3, "horizontal": 2, "small": 2 },
       "states": 109260,
       "candidates": 49079,
       "status": {
-        "2": 5775,
-        "1": 27311,
+        "2": 6116,
+        "1": 26867,
         "too-light": 15158,
-        "3": 327,
-        "unlisted-combination": 508
+        "3": 391,
+        "unlisted-combination": 547
       },
-      "picked": { "1": 250, "2": 95, "3": 18 }
+      "picked": { "1": 248, "2": 99, "3": 19 }
     },
     {
       "pieceSet": { "vertical": 4, "horizontal": 1, "small": 2 },
       "states": 65880,
       "candidates": 29511,
       "status": {
-        "2": 2375,
-        "1": 15344,
-        "unlisted-combination": 432,
+        "2": 2670,
+        "unlisted-combination": 382,
+        "1": 15050,
         "too-light": 11354,
-        "3": 6
+        "3": 55
       },
-      "picked": { "1": 161, "2": 57, "3": 1 }
+      "picked": { "1": 160, "2": 61, "3": 7 }
     },
     {
       "pieceSet": { "vertical": 5, "horizontal": 0, "small": 2 },
@@ -649,52 +649,52 @@
       "states": 92400,
       "candidates": 45204,
       "status": {
-        "1": 29636,
+        "1": 29589,
         "too-light": 14073,
-        "2": 1206,
-        "unlisted-combination": 287,
+        "2": 1261,
+        "unlisted-combination": 279,
         "3": 2
       },
-      "picked": { "1": 296, "2": 67, "3": 1 }
+      "picked": { "1": 296, "2": 66, "3": 1 }
     },
     {
       "pieceSet": { "vertical": 1, "horizontal": 3, "small": 4 },
       "states": 327600,
       "candidates": 155542,
       "status": {
-        "2": 12212,
-        "1": 98264,
-        "unlisted-combination": 922,
+        "2": 14031,
+        "1": 96453,
+        "unlisted-combination": 905,
         "too-light": 43985,
-        "3": 159
+        "3": 168
       },
-      "picked": { "1": 500, "2": 275, "3": 12 }
+      "picked": { "1": 500, "2": 283, "3": 16 }
     },
     {
       "pieceSet": { "vertical": 2, "horizontal": 2, "small": 4 },
       "states": 507360,
       "candidates": 234782,
       "status": {
-        "3": 524,
-        "2": 19885,
-        "1": 139221,
-        "unlisted-combination": 1828,
+        "3": 834,
+        "2": 22820,
+        "1": 135978,
+        "unlisted-combination": 1826,
         "too-light": 73324
       },
-      "picked": { "1": 500, "2": 303, "3": 21 }
+      "picked": { "1": 500, "2": 325, "3": 33 }
     },
     {
       "pieceSet": { "vertical": 3, "horizontal": 1, "small": 4 },
       "states": 374080,
       "candidates": 169162,
       "status": {
-        "2": 7752,
-        "1": 92433,
-        "unlisted-combination": 1241,
-        "too-light": 67672,
-        "3": 64
+        "2": 11124,
+        "unlisted-combination": 1145,
+        "3": 143,
+        "1": 89078,
+        "too-light": 67672
       },
-      "picked": { "1": 500, "2": 170, "3": 6 }
+      "picked": { "1": 500, "2": 190, "3": 14 }
     },
     {
       "pieceSet": { "vertical": 4, "horizontal": 0, "small": 4 },
@@ -785,9 +785,9 @@
       "states": 20664,
       "candidates": 10014,
       "status": {
-        "1": 5883,
+        "1": 5832,
         "too-light": 3589,
-        "2": 425,
+        "2": 476,
         "unlisted-combination": 117
       },
       "picked": { "1": 68, "2": 21 }
@@ -797,22 +797,22 @@
       "states": 42720,
       "candidates": 19938,
       "status": {
-        "1": 11316,
-        "2": 654,
+        "1": 11174,
+        "2": 748,
         "too-light": 7717,
-        "unlisted-combination": 251
+        "unlisted-combination": 299
       },
-      "picked": { "1": 129, "2": 24 }
+      "picked": { "1": 130, "2": 24 }
     },
     {
       "pieceSet": { "vertical": 3, "horizontal": 2, "small": 1 },
       "states": 43704,
       "candidates": 19898,
       "status": {
-        "1": 11504,
-        "2": 756,
+        "1": 11486,
+        "2": 771,
         "too-light": 7442,
-        "unlisted-combination": 196
+        "unlisted-combination": 199
       },
       "picked": { "1": 106, "2": 29 }
     },
@@ -821,12 +821,12 @@
       "states": 26352,
       "candidates": 11817,
       "status": {
-        "1": 5581,
+        "1": 5536,
         "too-light": 6036,
-        "unlisted-combination": 146,
-        "2": 54
+        "2": 186,
+        "unlisted-combination": 59
       },
-      "picked": { "1": 58, "2": 4 }
+      "picked": { "1": 58, "2": 10 }
     },
     {
       "pieceSet": { "vertical": 5, "horizontal": 0, "small": 1 },
@@ -871,10 +871,10 @@
       "states": 7284,
       "candidates": 3367,
       "status": {
-        "2": 4,
-        "1": 1501,
-        "unlisted-combination": 20,
-        "too-light": 1842
+        "2": 12,
+        "1": 1495,
+        "too-light": 1842,
+        "unlisted-combination": 18
       },
       "picked": { "1": 20, "2": 2 }
     },
@@ -903,27 +903,37 @@
       "pieceSet": { "vertical": 1, "horizontal": 3, "small": 2 },
       "states": 131040,
       "candidates": 62300,
-      "status": { "1": 26108, "too-light": 35918, "unlisted-combination": 274 },
-      "picked": { "1": 203 }
+      "status": {
+        "1": 26108,
+        "too-light": 35918,
+        "unlisted-combination": 252,
+        "2": 22
+      },
+      "picked": { "1": 203, "2": 5 }
     },
     {
       "pieceSet": { "vertical": 2, "horizontal": 2, "small": 2 },
       "states": 202944,
       "candidates": 94472,
       "status": {
-        "2": 125,
-        "1": 38550,
-        "unlisted-combination": 336,
+        "2": 154,
+        "1": 38529,
+        "unlisted-combination": 328,
         "too-light": 55461
       },
-      "picked": { "1": 264, "2": 7 }
+      "picked": { "1": 264, "2": 8 }
     },
     {
       "pieceSet": { "vertical": 3, "horizontal": 1, "small": 2 },
       "states": 149632,
       "candidates": 67844,
-      "status": { "1": 24763, "too-light": 42958, "unlisted-combination": 123 },
-      "picked": { "1": 167 }
+      "status": {
+        "1": 24740,
+        "too-light": 42958,
+        "unlisted-combination": 123,
+        "2": 23
+      },
+      "picked": { "1": 167, "2": 4 }
     },
     {
       "pieceSet": { "vertical": 4, "horizontal": 0, "small": 2 },
@@ -5736,46 +5746,46 @@
     },
     {
       "name": "sample-(1, 4, 2)-L1-0",
-      "board": "..s.hihiAAv.AAwshihi",
+      "board": "AAvsAAw..shihihihi..",
       "level": 1,
       "features": {
-        "optimalMoveCount": 10,
+        "optimalMoveCount": 16,
         "preparationLength": 6,
         "daughterDetourCount": 0,
-        "lureCount": 1,
-        "daughterMoveCount": 2,
+        "lureCount": 3,
+        "daughterMoveCount": 3,
         "firstMoveCount": 5,
-        "optimalFirstMoveCount": 2,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(1, 4, 2)-L1-1",
-      "board": ".vhisw..s.AAhiAAhihi",
+      "board": "AAvsAAw.hi.shihi..hi",
       "level": 1,
       "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 5,
+        "optimalMoveCount": 15,
+        "preparationLength": 6,
         "daughterDetourCount": 0,
-        "lureCount": 0,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 5,
+        "lureCount": 2,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 8,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(1, 4, 2)-L1-2",
-      "board": ".hi..AAvsAAwhi.shihi",
+      "board": "AAhiAAhihi.v...whiss",
       "level": 1,
       "features": {
-        "optimalMoveCount": 11,
-        "preparationLength": 6,
+        "optimalMoveCount": 16,
+        "preparationLength": 4,
         "daughterDetourCount": 0,
-        "lureCount": 3,
+        "lureCount": 1,
         "daughterMoveCount": 3,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 2,
+        "firstMoveCount": 10,
+        "optimalFirstMoveCount": 3,
         "emptyCellCount": 4
       }
     },
@@ -5796,14 +5806,14 @@
     },
     {
       "name": "sample-(1, 4, 2)-L2-1",
-      "board": "..hihihisAA.vAAsw.hi",
+      "board": ".AAvsAAwhihihis..hi.",
       "level": 2,
       "features": {
-        "optimalMoveCount": 15,
-        "preparationLength": 14,
+        "optimalMoveCount": 23,
+        "preparationLength": 11,
         "daughterDetourCount": 0,
-        "lureCount": 0,
-        "daughterMoveCount": 2,
+        "lureCount": 3,
+        "daughterMoveCount": 4,
         "firstMoveCount": 5,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
@@ -5811,36 +5821,21 @@
     },
     {
       "name": "sample-(1, 4, 2)-L2-2",
-      "board": "..hihihisAAsvAA.whi.",
+      "board": ".AAs.AAv.hiwhihis.hi",
       "level": 2,
       "features": {
-        "optimalMoveCount": 14,
-        "preparationLength": 13,
-        "daughterDetourCount": 0,
-        "lureCount": 1,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 6,
+        "optimalMoveCount": 26,
+        "preparationLength": 14,
+        "daughterDetourCount": 1,
+        "lureCount": 4,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 4,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(1, 4, 2)-L3-0",
-      "board": "..s.AAhiAAhivhisw.hi",
-      "level": 3,
-      "features": {
-        "optimalMoveCount": 28,
-        "preparationLength": 16,
-        "daughterDetourCount": 1,
-        "lureCount": 6,
-        "daughterMoveCount": 5,
-        "firstMoveCount": 5,
-        "optimalFirstMoveCount": 1,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(1, 4, 2)-L3-1",
       "board": "..sshiAAhiAAhi.v.hiw",
       "level": 3,
       "features": {
@@ -5855,116 +5850,11 @@
       }
     },
     {
-      "name": "sample-(1, 4, 2)-L3-2",
-      "board": ".v.s.whihiAAhiAA.shi",
+      "name": "sample-(1, 4, 2)-L3-1",
+      "board": ".hishiAAhiAA.s.v.hiw",
       "level": 3,
       "features": {
-        "optimalMoveCount": 22,
-        "preparationLength": 17,
-        "daughterDetourCount": 1,
-        "lureCount": 5,
-        "daughterMoveCount": 5,
-        "firstMoveCount": 3,
-        "optimalFirstMoveCount": 1,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 3, 2)-L1-0",
-      "board": "..s.AAhiAAvvhiwwhis.",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 15,
-        "preparationLength": 6,
-        "daughterDetourCount": 0,
-        "lureCount": 1,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 3, 2)-L1-1",
-      "board": ".AAs.AA..hishivvhiww",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 16,
-        "preparationLength": 6,
-        "daughterDetourCount": 0,
-        "lureCount": 2,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 4,
-        "optimalFirstMoveCount": 1,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 3, 2)-L1-2",
-      "board": ".hi.AAvvAAwwhihi..ss",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 4,
-        "daughterDetourCount": 0,
-        "lureCount": 1,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 3, 2)-L2-0",
-      "board": "..hihi.ssAAvvAAww.hi",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 11,
-        "preparationLength": 10,
-        "daughterDetourCount": 0,
-        "lureCount": 0,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 1,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 3, 2)-L2-1",
-      "board": ".AA.sAAvhi.wv.hiwhis",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 28,
-        "preparationLength": 11,
-        "daughterDetourCount": 0,
-        "lureCount": 2,
-        "daughterMoveCount": 6,
-        "firstMoveCount": 4,
-        "optimalFirstMoveCount": 3,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 3, 2)-L2-2",
-      "board": ".AA.sAAvhisw.vhi.whi",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 28,
-        "preparationLength": 11,
-        "daughterDetourCount": 0,
-        "lureCount": 2,
-        "daughterMoveCount": 6,
-        "firstMoveCount": 3,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 3, 2)-L3-0",
-      "board": "...sAAhiAAhivv.swwhi",
-      "level": 3,
-      "features": {
-        "optimalMoveCount": 26,
+        "optimalMoveCount": 30,
         "preparationLength": 18,
         "daughterDetourCount": 1,
         "lureCount": 6,
@@ -5975,32 +5865,152 @@
       }
     },
     {
-      "name": "sample-(2, 3, 2)-L3-1",
-      "board": "..s.AAhiAAhivv.swwhi",
+      "name": "sample-(1, 4, 2)-L3-2",
+      "board": ".hishihisAA..AAvhi.w",
       "level": 3,
       "features": {
-        "optimalMoveCount": 27,
+        "optimalMoveCount": 20,
         "preparationLength": 19,
         "daughterDetourCount": 1,
-        "lureCount": 6,
-        "daughterMoveCount": 5,
-        "firstMoveCount": 5,
+        "lureCount": 2,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 4,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
       }
     },
     {
-      "name": "sample-(2, 3, 2)-L3-2",
-      "board": "..s.hiAAhiAAhivvs.ww",
-      "level": 3,
+      "name": "sample-(2, 3, 2)-L1-0",
+      "board": "..his.AAvsAAwhiv.hiw",
+      "level": 1,
       "features": {
-        "optimalMoveCount": 24,
-        "preparationLength": 17,
-        "daughterDetourCount": 1,
+        "optimalMoveCount": 16,
+        "preparationLength": 6,
+        "daughterDetourCount": 0,
+        "lureCount": 5,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 10,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 3, 2)-L1-1",
+      "board": ".vhiswAAv.AAw.s.hihi",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 12,
+        "preparationLength": 5,
+        "daughterDetourCount": 0,
+        "lureCount": 2,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 3, 2)-L1-2",
+      "board": ".hi..hi.AAvvAAwwhiss",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 9,
+        "preparationLength": 5,
+        "daughterDetourCount": 0,
+        "lureCount": 3,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 3,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 3, 2)-L2-0",
+      "board": ".AA.sAAv.hiwvshiw.hi",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 29,
+        "preparationLength": 12,
+        "daughterDetourCount": 0,
+        "lureCount": 1,
+        "daughterMoveCount": 6,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 4,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 3, 2)-L2-1",
+      "board": ".AAvsAAwv..sw.hihihi",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 27,
+        "preparationLength": 13,
+        "daughterDetourCount": 0,
         "lureCount": 6,
         "daughterMoveCount": 5,
-        "firstMoveCount": 5,
+        "firstMoveCount": 8,
         "optimalFirstMoveCount": 1,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 3, 2)-L2-2",
+      "board": ".hivvAAwwAA.his..his",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 14,
+        "preparationLength": 9,
+        "daughterDetourCount": 0,
+        "lureCount": 3,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 9,
+        "optimalFirstMoveCount": 3,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 3, 2)-L3-0",
+      "board": ".vv..wwshiAAhiAAhi.s",
+      "level": 3,
+      "features": {
+        "optimalMoveCount": 22,
+        "preparationLength": 17,
+        "daughterDetourCount": 1,
+        "lureCount": 4,
+        "daughterMoveCount": 5,
+        "firstMoveCount": 4,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 3, 2)-L3-1",
+      "board": ".hisAAhiAA..vvhiww.s",
+      "level": 3,
+      "features": {
+        "optimalMoveCount": 26,
+        "preparationLength": 17,
+        "daughterDetourCount": 1,
+        "lureCount": 4,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 4,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 3, 2)-L3-2",
+      "board": ".hisAAhiAAhivv.sww..",
+      "level": 3,
+      "features": {
+        "optimalMoveCount": 28,
+        "preparationLength": 19,
+        "daughterDetourCount": 1,
+        "lureCount": 4,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 5,
+        "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
       }
     },
@@ -6021,29 +6031,29 @@
     },
     {
       "name": "sample-(3, 2, 2)-L1-1",
-      "board": ".vhi.wv.hiwssvAA.wAA",
+      "board": ".AA..AAvhivw.swvshiw",
       "level": 1,
       "features": {
-        "optimalMoveCount": 8,
+        "optimalMoveCount": 19,
         "preparationLength": 7,
         "daughterDetourCount": 0,
-        "lureCount": 0,
-        "daughterMoveCount": 1,
-        "firstMoveCount": 3,
+        "lureCount": 3,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 4,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(3, 2, 2)-L1-2",
-      "board": ".hisAAvvAAww..sv.hiw",
+      "board": ".AAvsAAwhisvv..ww.hi",
       "level": 1,
       "features": {
-        "optimalMoveCount": 12,
-        "preparationLength": 5,
+        "optimalMoveCount": 18,
+        "preparationLength": 8,
         "daughterDetourCount": 0,
-        "lureCount": 6,
-        "daughterMoveCount": 2,
+        "lureCount": 1,
+        "daughterMoveCount": 5,
         "firstMoveCount": 7,
         "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
@@ -6051,82 +6061,52 @@
     },
     {
       "name": "sample-(3, 2, 2)-L2-0",
-      "board": ".v.vvw.wwAA.sAAshihi",
+      "board": "..hivAA.wAAvvhiww.ss",
       "level": 2,
       "features": {
-        "optimalMoveCount": 12,
-        "preparationLength": 11,
-        "daughterDetourCount": 1,
-        "lureCount": 1,
+        "optimalMoveCount": 15,
+        "preparationLength": 10,
+        "daughterDetourCount": 0,
+        "lureCount": 2,
         "daughterMoveCount": 3,
         "firstMoveCount": 5,
-        "optimalFirstMoveCount": 4,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(3, 2, 2)-L2-1",
-      "board": ".s.svAA.wAA.vvhiwwhi",
+      "board": ".svvhiww.AA.vAA.whis",
       "level": 2,
       "features": {
-        "optimalMoveCount": 16,
-        "preparationLength": 11,
+        "optimalMoveCount": 14,
+        "preparationLength": 13,
         "daughterDetourCount": 1,
-        "lureCount": 3,
-        "daughterMoveCount": 4,
+        "lureCount": 1,
+        "daughterMoveCount": 3,
         "firstMoveCount": 7,
-        "optimalFirstMoveCount": 2,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(3, 2, 2)-L2-2",
-      "board": ".svvhiwwvAA.wAA.hi.s",
+      "board": ".svvhiwwvAA.wAA.s.hi",
       "level": 2,
       "features": {
-        "optimalMoveCount": 13,
-        "preparationLength": 12,
-        "daughterDetourCount": 1,
+        "optimalMoveCount": 12,
+        "preparationLength": 11,
+        "daughterDetourCount": 0,
         "lureCount": 1,
         "daughterMoveCount": 3,
-        "firstMoveCount": 8,
+        "firstMoveCount": 6,
         "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(3, 2, 2)-L3-0",
-      "board": "..vvhiwwAAhiAAv..sws",
-      "level": 3,
-      "features": {
-        "optimalMoveCount": 24,
-        "preparationLength": 19,
-        "daughterDetourCount": 2,
-        "lureCount": 3,
-        "daughterMoveCount": 5,
-        "firstMoveCount": 3,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(3, 2, 2)-L3-1",
-      "board": "..svvAAwwAAvhi.whis.",
-      "level": 3,
-      "features": {
-        "optimalMoveCount": 17,
-        "preparationLength": 16,
-        "daughterDetourCount": 1,
-        "lureCount": 1,
-        "daughterMoveCount": 4,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 4,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(3, 2, 2)-L3-2",
-      "board": ".v.vsw.whiAAv.AAwhis",
+      "board": "..s..AAvvAAwwhivshiw",
       "level": 3,
       "features": {
         "optimalMoveCount": 18,
@@ -6134,35 +6114,80 @@
         "daughterDetourCount": 1,
         "lureCount": 1,
         "daughterMoveCount": 4,
-        "firstMoveCount": 3,
-        "optimalFirstMoveCount": 1,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 3,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(3, 2, 2)-L3-1",
+      "board": ".vhisw.vvAAwwAAshi..",
+      "level": 3,
+      "features": {
+        "optimalMoveCount": 17,
+        "preparationLength": 16,
+        "daughterDetourCount": 1,
+        "lureCount": 2,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 5,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(3, 2, 2)-L3-2",
+      "board": ".s.v.AAwvAA.wvhiswhi",
+      "level": 3,
+      "features": {
+        "optimalMoveCount": 20,
+        "preparationLength": 17,
+        "daughterDetourCount": 1,
+        "lureCount": 5,
+        "daughterMoveCount": 5,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(4, 1, 2)-L1-0",
-      "board": "..AAvvAAwwvshiwv..sw",
+      "board": ".vAA.wAA.vvv.wwwhiss",
       "level": 1,
       "features": {
-        "optimalMoveCount": 17,
-        "preparationLength": 7,
+        "optimalMoveCount": 11,
+        "preparationLength": 5,
         "daughterDetourCount": 0,
         "lureCount": 4,
         "daughterMoveCount": 2,
-        "firstMoveCount": 5,
-        "optimalFirstMoveCount": 3,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(4, 1, 2)-L1-1",
-      "board": "..AAvvAAwwsv.vsw.whi",
+      "board": ".vAAvwAAw.vvhiww.ss.",
       "level": 1,
       "features": {
-        "optimalMoveCount": 15,
+        "optimalMoveCount": 14,
         "preparationLength": 6,
         "daughterDetourCount": 0,
         "lureCount": 4,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 5,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(4, 1, 2)-L1-2",
+      "board": ".vAAvwAAwhi.vsv.w.ws",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 14,
+        "preparationLength": 5,
+        "daughterDetourCount": 0,
+        "lureCount": 3,
         "daughterMoveCount": 2,
         "firstMoveCount": 5,
         "optimalFirstMoveCount": 3,
@@ -6170,90 +6195,75 @@
       }
     },
     {
-      "name": "sample-(4, 1, 2)-L1-2",
-      "board": ".hivAAvwAAwv.v.w.wss",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 8,
-        "preparationLength": 3,
-        "daughterDetourCount": 0,
-        "lureCount": 1,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 4,
-        "optimalFirstMoveCount": 1,
-        "emptyCellCount": 4
-      }
-    },
-    {
       "name": "sample-(4, 1, 2)-L2-0",
-      "board": ".AAv.AAwvshiw.vv.sww",
+      "board": "...sv.svwAAwvAAvwhiw",
       "level": 2,
       "features": {
-        "optimalMoveCount": 16,
-        "preparationLength": 9,
+        "optimalMoveCount": 12,
+        "preparationLength": 11,
         "daughterDetourCount": 0,
-        "lureCount": 2,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 1,
+        "lureCount": 0,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 10,
+        "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(4, 1, 2)-L2-1",
-      "board": ".svv..wwvAAvwAAws.hi",
+      "board": "..v.s.wvsAAwvAAvwhiw",
       "level": 2,
       "features": {
-        "optimalMoveCount": 14,
-        "preparationLength": 13,
+        "optimalMoveCount": 12,
+        "preparationLength": 11,
         "daughterDetourCount": 0,
-        "lureCount": 4,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 7,
+        "lureCount": 0,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 5,
         "optimalFirstMoveCount": 3,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(4, 1, 2)-L2-2",
-      "board": "v.vvw.wwsAAv.AAw.his",
+      "board": "..s.sAAvvAAww.vvhiww",
       "level": 2,
       "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 9,
+        "optimalMoveCount": 19,
+        "preparationLength": 13,
         "daughterDetourCount": 1,
-        "lureCount": 1,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 5,
+        "lureCount": 2,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 6,
         "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(4, 1, 2)-L3-0",
-      "board": ".v.vswswvAAvwAAwhi..",
+      "board": "...vvAAwwAA.vvhiwwss",
       "level": 3,
       "features": {
         "optimalMoveCount": 17,
         "preparationLength": 16,
         "daughterDetourCount": 1,
-        "lureCount": 1,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 5,
-        "optimalFirstMoveCount": 3,
+        "lureCount": 5,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 3,
+        "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(4, 1, 2)-L3-1",
-      "board": ".vsvsw.wvAAvwAAwhi..",
+      "board": ".ss.vAAvwAAwhivv..ww",
       "level": 3,
       "features": {
-        "optimalMoveCount": 17,
+        "optimalMoveCount": 22,
         "preparationLength": 16,
         "daughterDetourCount": 1,
-        "lureCount": 1,
-        "daughterMoveCount": 3,
+        "lureCount": 2,
+        "daughterMoveCount": 4,
         "firstMoveCount": 5,
         "optimalFirstMoveCount": 3,
         "emptyCellCount": 4
@@ -6261,16 +6271,16 @@
     },
     {
       "name": "sample-(4, 1, 2)-L3-2",
-      "board": "sv.v.wswvAAvwAAwhi..",
+      "board": "v.svwAAw.AAvhivw.sw.",
       "level": 3,
       "features": {
-        "optimalMoveCount": 17,
-        "preparationLength": 16,
+        "optimalMoveCount": 21,
+        "preparationLength": 17,
         "daughterDetourCount": 1,
-        "lureCount": 1,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 3,
+        "lureCount": 6,
+        "daughterMoveCount": 5,
+        "firstMoveCount": 4,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
@@ -6321,46 +6331,46 @@
     },
     {
       "name": "sample-(0, 4, 4)-L1-0",
-      "board": "AA..AAhis.hihisshis.",
+      "board": ".hi.hiAAhiAA.hisss.s",
       "level": 1,
       "features": {
-        "optimalMoveCount": 15,
-        "preparationLength": 5,
+        "optimalMoveCount": 10,
+        "preparationLength": 3,
         "daughterDetourCount": 0,
-        "lureCount": 4,
+        "lureCount": 2,
         "daughterMoveCount": 2,
-        "firstMoveCount": 5,
-        "optimalFirstMoveCount": 2,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 3,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(0, 4, 4)-L1-1",
-      "board": "AAs.AAhihihi.s..shis",
+      "board": "hi...sAAhiAAshis.shi",
       "level": 1,
       "features": {
-        "optimalMoveCount": 18,
-        "preparationLength": 5,
+        "optimalMoveCount": 16,
+        "preparationLength": 6,
         "daughterDetourCount": 0,
-        "lureCount": 2,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 8,
-        "optimalFirstMoveCount": 2,
+        "lureCount": 5,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(0, 4, 4)-L1-2",
-      "board": "hiAAssAAhi..s.his.hi",
+      "board": "hiAA..AAsshi.hi.sshi",
       "level": 1,
       "features": {
-        "optimalMoveCount": 12,
+        "optimalMoveCount": 14,
         "preparationLength": 4,
         "daughterDetourCount": 0,
-        "lureCount": 6,
+        "lureCount": 3,
         "daughterMoveCount": 3,
-        "firstMoveCount": 10,
-        "optimalFirstMoveCount": 1,
+        "firstMoveCount": 9,
+        "optimalFirstMoveCount": 5,
         "emptyCellCount": 4
       }
     },
@@ -6396,16 +6406,16 @@
     },
     {
       "name": "sample-(0, 4, 4)-L2-2",
-      "board": "hihi.hi.sAAssAA.shi.",
+      "board": "s.hi.shi.AAs.AAshihi",
       "level": 2,
       "features": {
         "optimalMoveCount": 10,
         "preparationLength": 9,
-        "daughterDetourCount": 0,
-        "lureCount": 0,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 4,
+        "daughterDetourCount": 1,
+        "lureCount": 3,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 10,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
@@ -6441,337 +6451,67 @@
     },
     {
       "name": "sample-(1, 3, 4)-L1-0",
-      "board": "AAs.AAhis.hivshiws..",
+      "board": "AA..AAhihis.v.sswshi",
       "level": 1,
       "features": {
         "optimalMoveCount": 17,
-        "preparationLength": 6,
+        "preparationLength": 5,
         "daughterDetourCount": 0,
         "lureCount": 2,
         "daughterMoveCount": 3,
-        "firstMoveCount": 7,
+        "firstMoveCount": 5,
         "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(1, 3, 4)-L1-1",
-      "board": "hiAA..AAssssv.hiwhi.",
+      "board": "vs..whi.AAhiAAs.shis",
       "level": 1,
       "features": {
-        "optimalMoveCount": 16,
-        "preparationLength": 5,
+        "optimalMoveCount": 10,
+        "preparationLength": 6,
         "daughterDetourCount": 0,
-        "lureCount": 1,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 8,
-        "optimalFirstMoveCount": 3,
+        "lureCount": 0,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(1, 3, 4)-L1-2",
-      "board": "hiAAv.AAwhi..shisss.",
+      "board": "hiAA..AAssss.hiv.hiw",
       "level": 1,
       "features": {
-        "optimalMoveCount": 13,
-        "preparationLength": 5,
+        "optimalMoveCount": 18,
+        "preparationLength": 6,
         "daughterDetourCount": 0,
-        "lureCount": 4,
+        "lureCount": 2,
         "daughterMoveCount": 2,
-        "firstMoveCount": 5,
-        "optimalFirstMoveCount": 3,
+        "firstMoveCount": 9,
+        "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(1, 3, 4)-L2-0",
-      "board": "hi..sAAs.AAvhiswshi.",
+      "board": ".vs.swhihiAA.sAA.his",
       "level": 2,
       "features": {
-        "optimalMoveCount": 14,
-        "preparationLength": 9,
+        "optimalMoveCount": 15,
+        "preparationLength": 10,
         "daughterDetourCount": 0,
-        "lureCount": 4,
+        "lureCount": 3,
         "daughterMoveCount": 3,
-        "firstMoveCount": 7,
+        "firstMoveCount": 5,
         "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(1, 3, 4)-L2-1",
-      "board": "hihissssvAA.wAA...hi",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 9,
-        "daughterDetourCount": 0,
-        "lureCount": 0,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 1,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(1, 3, 4)-L2-2",
-      "board": "s..svAAswAA.hihi.shi",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 19,
-        "preparationLength": 13,
-        "daughterDetourCount": 1,
-        "lureCount": 3,
-        "daughterMoveCount": 4,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(1, 3, 4)-L3-0",
-      "board": ".vs..wsshiAAhiAAs.hi",
-      "level": 3,
-      "features": {
-        "optimalMoveCount": 22,
-        "preparationLength": 17,
-        "daughterDetourCount": 1,
-        "lureCount": 5,
-        "daughterMoveCount": 5,
-        "firstMoveCount": 5,
-        "optimalFirstMoveCount": 1,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(1, 3, 4)-L3-1",
-      "board": "v..sw.sshiAAhiAAshi.",
-      "level": 3,
-      "features": {
-        "optimalMoveCount": 22,
-        "preparationLength": 17,
-        "daughterDetourCount": 1,
-        "lureCount": 5,
-        "daughterMoveCount": 5,
-        "firstMoveCount": 8,
-        "optimalFirstMoveCount": 6,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(1, 3, 4)-L3-2",
-      "board": "v.hiw...hiAAssAAhiss",
-      "level": 3,
-      "features": {
-        "optimalMoveCount": 21,
-        "preparationLength": 16,
-        "daughterDetourCount": 1,
-        "lureCount": 4,
-        "daughterMoveCount": 5,
-        "firstMoveCount": 5,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 2, 4)-L1-0",
-      "board": "AAs.AA.vhivwssw.hi.s",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 16,
-        "preparationLength": 5,
-        "daughterDetourCount": 0,
-        "lureCount": 3,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 9,
-        "optimalFirstMoveCount": 1,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 2, 4)-L1-1",
-      "board": "vshiwsAAv.AAws.shi..",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 4,
-        "daughterDetourCount": 0,
-        "lureCount": 1,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 10,
-        "optimalFirstMoveCount": 5,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 2, 4)-L1-2",
-      "board": "hiAAvvAAww.shi..ss.s",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 13,
-        "preparationLength": 4,
-        "daughterDetourCount": 0,
-        "lureCount": 1,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 14,
-        "optimalFirstMoveCount": 3,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 2, 4)-L2-0",
-      "board": ".hi.vAAvwAAwsss..his",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 13,
-        "preparationLength": 9,
-        "daughterDetourCount": 0,
-        "lureCount": 5,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 9,
-        "optimalFirstMoveCount": 3,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 2, 4)-L2-1",
-      "board": "vAA.wAA.shishi.vs.sw",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 22,
-        "preparationLength": 9,
-        "daughterDetourCount": 0,
-        "lureCount": 1,
-        "daughterMoveCount": 4,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 2, 4)-L2-2",
-      "board": "vAAvwAAwsshihi..s.s.",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 20,
-        "preparationLength": 9,
-        "daughterDetourCount": 0,
-        "lureCount": 3,
-        "daughterMoveCount": 4,
-        "firstMoveCount": 8,
-        "optimalFirstMoveCount": 1,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 2, 4)-L3-0",
-      "board": ".s..vAAvwAAwshishis.",
-      "level": 3,
-      "features": {
-        "optimalMoveCount": 19,
-        "preparationLength": 17,
-        "daughterDetourCount": 1,
-        "lureCount": 1,
-        "daughterMoveCount": 4,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 2, 4)-L3-1",
-      "board": "v...wAAvsAAw.hisshis",
-      "level": 3,
-      "features": {
-        "optimalMoveCount": 21,
-        "preparationLength": 16,
-        "daughterDetourCount": 1,
-        "lureCount": 4,
-        "daughterMoveCount": 5,
-        "firstMoveCount": 5,
-        "optimalFirstMoveCount": 3,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(2, 2, 4)-L3-2",
-      "board": "v...wAAssAAv.hiwsshi",
-      "level": 3,
-      "features": {
-        "optimalMoveCount": 20,
-        "preparationLength": 16,
-        "daughterDetourCount": 1,
-        "lureCount": 1,
-        "daughterMoveCount": 4,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 3,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(3, 1, 4)-L1-0",
-      "board": ".s..AAsvAA.whivvssww",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 12,
-        "preparationLength": 5,
-        "daughterDetourCount": 0,
-        "lureCount": 4,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 8,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(3, 1, 4)-L1-1",
-      "board": "AA..AA.ssvhiswvv.sww",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 15,
-        "preparationLength": 5,
-        "daughterDetourCount": 0,
-        "lureCount": 2,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 3,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(3, 1, 4)-L1-2",
-      "board": "AAv.AAwssvv..wwsshi.",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 14,
-        "preparationLength": 6,
-        "daughterDetourCount": 0,
-        "lureCount": 4,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(3, 1, 4)-L2-0",
-      "board": "v.v.wsw.sAA.sAAvhisw",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 9,
-        "daughterDetourCount": 1,
-        "lureCount": 1,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 4
-      }
-    },
-    {
-      "name": "sample-(3, 1, 4)-L2-1",
-      "board": "vv..ww.s.AAssAAvshiw",
+      "board": "hi..hi.v.AAwsAAsshis",
       "level": 2,
       "features": {
         "optimalMoveCount": 11,
@@ -6780,67 +6520,337 @@
         "lureCount": 0,
         "daughterMoveCount": 2,
         "firstMoveCount": 6,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(1, 3, 4)-L2-2",
+      "board": "hiv.hiws.AA.sAAshi.s",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 10,
+        "preparationLength": 9,
+        "daughterDetourCount": 1,
+        "lureCount": 1,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(1, 3, 4)-L3-0",
+      "board": ".v..sw.shiAAhiAAshis",
+      "level": 3,
+      "features": {
+        "optimalMoveCount": 21,
+        "preparationLength": 17,
+        "daughterDetourCount": 1,
+        "lureCount": 2,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 5,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(1, 3, 4)-L3-1",
+      "board": "v.s.ws.shiAAhiAAs.hi",
+      "level": 3,
+      "features": {
+        "optimalMoveCount": 21,
+        "preparationLength": 16,
+        "daughterDetourCount": 1,
+        "lureCount": 5,
+        "daughterMoveCount": 5,
+        "firstMoveCount": 9,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(1, 3, 4)-L3-2",
+      "board": "his.hiAAhiAAs.v.ssw.",
+      "level": 3,
+      "features": {
+        "optimalMoveCount": 25,
+        "preparationLength": 16,
+        "daughterDetourCount": 1,
+        "lureCount": 2,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 4,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 2, 4)-L1-0",
+      "board": "AAv.AAwsv.hiws.s.his",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 21,
+        "preparationLength": 6,
+        "daughterDetourCount": 0,
+        "lureCount": 3,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 3,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 2, 4)-L1-1",
+      "board": "AAs.AAvv..ww.ssshihi",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 15,
+        "preparationLength": 5,
+        "daughterDetourCount": 0,
+        "lureCount": 7,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 2, 4)-L1-2",
+      "board": "AAs.AAhivvhiwwss...s",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 18,
+        "preparationLength": 7,
+        "daughterDetourCount": 0,
+        "lureCount": 1,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 9,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 2, 4)-L2-0",
+      "board": "v.ssw...sAAvsAAwhihi",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 11,
+        "preparationLength": 10,
+        "daughterDetourCount": 1,
+        "lureCount": 2,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 11,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 2, 4)-L2-1",
+      "board": "vs.sw.AAhiAAs.v.hiws",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 22,
+        "preparationLength": 9,
+        "daughterDetourCount": 1,
+        "lureCount": 4,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 5,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 2, 4)-L2-2",
+      "board": "vs.swAA.sAAv.hiws.hi",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 14,
+        "preparationLength": 9,
+        "daughterDetourCount": 0,
+        "lureCount": 3,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 9,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 2, 4)-L3-0",
+      "board": "v...wAAs.AAvhiswshis",
+      "level": 3,
+      "features": {
+        "optimalMoveCount": 20,
+        "preparationLength": 17,
+        "daughterDetourCount": 1,
+        "lureCount": 1,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 5,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 2, 4)-L3-1",
+      "board": "v...wAAssAAv.hiwshis",
+      "level": 3,
+      "features": {
+        "optimalMoveCount": 18,
+        "preparationLength": 16,
+        "daughterDetourCount": 1,
+        "lureCount": 1,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 3,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(2, 2, 4)-L3-2",
+      "board": "v..swAAv.AAwhissshi.",
+      "level": 3,
+      "features": {
+        "optimalMoveCount": 20,
+        "preparationLength": 17,
+        "daughterDetourCount": 1,
+        "lureCount": 1,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 4,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(3, 1, 4)-L1-0",
+      "board": "vAA.wAA.hi.vvsswws.s",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 18,
+        "preparationLength": 8,
+        "daughterDetourCount": 0,
+        "lureCount": 3,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 8,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(3, 1, 4)-L1-1",
+      "board": "vAAvwAAwssss.v...whi",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 15,
+        "preparationLength": 7,
+        "daughterDetourCount": 0,
+        "lureCount": 1,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 8,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(3, 1, 4)-L1-2",
+      "board": "vvssww..AAv.AAwshi.s",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 8,
+        "preparationLength": 4,
+        "daughterDetourCount": 0,
+        "lureCount": 4,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 14,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(3, 1, 4)-L2-0",
+      "board": ".s..vssvwAAwvAA.whis",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 12,
+        "preparationLength": 11,
+        "daughterDetourCount": 0,
+        "lureCount": 1,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 9,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 4
+      }
+    },
+    {
+      "name": "sample-(3, 1, 4)-L2-1",
+      "board": "v..swAAs.AAvhivwssw.",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 15,
+        "preparationLength": 11,
+        "daughterDetourCount": 0,
+        "lureCount": 3,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 5,
         "optimalFirstMoveCount": 3,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(3, 1, 4)-L2-2",
-      "board": "vv.sww..sAAvsAAwshi.",
+      "board": "vAA.wAAsshiv.vsw.w.s",
       "level": 2,
       "features": {
-        "optimalMoveCount": 12,
-        "preparationLength": 11,
-        "daughterDetourCount": 1,
-        "lureCount": 1,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 7,
+        "optimalMoveCount": 18,
+        "preparationLength": 9,
+        "daughterDetourCount": 0,
+        "lureCount": 4,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 6,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(3, 1, 4)-L3-0",
-      "board": ".vv.sww.AAhiAAv.ssws",
+      "board": "v...wAAv.AAwsvhiswss",
       "level": 3,
       "features": {
-        "optimalMoveCount": 27,
-        "preparationLength": 20,
-        "daughterDetourCount": 2,
-        "lureCount": 8,
+        "optimalMoveCount": 18,
+        "preparationLength": 16,
+        "daughterDetourCount": 1,
+        "lureCount": 4,
         "daughterMoveCount": 4,
-        "firstMoveCount": 3,
+        "firstMoveCount": 4,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(3, 1, 4)-L3-1",
-      "board": "v.v.w.wshiAA.vAAswss",
+      "board": "v.s.wAAvsAAw.vhisws.",
       "level": 3,
       "features": {
-        "optimalMoveCount": 26,
-        "preparationLength": 19,
-        "daughterDetourCount": 2,
-        "lureCount": 8,
+        "optimalMoveCount": 17,
+        "preparationLength": 16,
+        "daughterDetourCount": 1,
+        "lureCount": 6,
         "daughterMoveCount": 4,
-        "firstMoveCount": 4,
-        "optimalFirstMoveCount": 2,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 4
       }
     },
     {
       "name": "sample-(3, 1, 4)-L3-2",
-      "board": "v.vsw.w.hiAA.vAAswss",
+      "board": "vv..wwsshiAA.vAAsws.",
       "level": 3,
       "features": {
-        "optimalMoveCount": 25,
-        "preparationLength": 18,
+        "optimalMoveCount": 27,
+        "preparationLength": 22,
         "daughterDetourCount": 2,
-        "lureCount": 8,
+        "lureCount": 3,
         "daughterMoveCount": 4,
-        "firstMoveCount": 4,
-        "optimalFirstMoveCount": 1,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 5,
         "emptyCellCount": 4
       }
     },
@@ -7311,283 +7321,268 @@
     },
     {
       "name": "sample-(1, 4, 1)-L2-0",
-      "board": ".hi.shi.vAA.wAA.hihi",
+      "board": ".AA.vAA.w.hihihi.shi",
       "level": 2,
       "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 9,
-        "daughterDetourCount": 1,
-        "lureCount": 1,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 5,
-        "optimalFirstMoveCount": 4,
+        "optimalMoveCount": 21,
+        "preparationLength": 11,
+        "daughterDetourCount": 0,
+        "lureCount": 4,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 4,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 5
       }
     },
     {
       "name": "sample-(1, 4, 1)-L2-1",
-      "board": "v...wAAs.AA.hihihihi",
+      "board": "v...w.AAhiAAhihi.his",
       "level": 2,
       "features": {
-        "optimalMoveCount": 14,
-        "preparationLength": 10,
-        "daughterDetourCount": 1,
-        "lureCount": 2,
+        "optimalMoveCount": 22,
+        "preparationLength": 11,
+        "daughterDetourCount": 0,
+        "lureCount": 1,
         "daughterMoveCount": 4,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 2,
+        "firstMoveCount": 4,
+        "optimalFirstMoveCount": 3,
         "emptyCellCount": 5
       }
     },
     {
       "name": "sample-(1, 4, 1)-L2-2",
-      "board": "vhi.w...hiAAhiAAshi.",
+      "board": "v...w.hihiAAhiAAhi.s",
       "level": 2,
       "features": {
-        "optimalMoveCount": 17,
-        "preparationLength": 12,
+        "optimalMoveCount": 16,
+        "preparationLength": 11,
         "daughterDetourCount": 1,
-        "lureCount": 5,
+        "lureCount": 4,
         "daughterMoveCount": 5,
-        "firstMoveCount": 5,
+        "firstMoveCount": 6,
         "optimalFirstMoveCount": 1,
         "emptyCellCount": 5
       }
     },
     {
       "name": "sample-(2, 3, 1)-L1-0",
-      "board": "v.AAw.AAhihivhi.ws..",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 15,
-        "preparationLength": 5,
-        "daughterDetourCount": 0,
-        "lureCount": 8,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 5
-      }
-    },
-    {
-      "name": "sample-(2, 3, 1)-L1-1",
-      "board": "vAA.wAA..vhi.whishi.",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 12,
-        "preparationLength": 5,
-        "daughterDetourCount": 0,
-        "lureCount": 3,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 1,
-        "emptyCellCount": 5
-      }
-    },
-    {
-      "name": "sample-(2, 3, 1)-L1-2",
-      "board": "vAAvwAAwhihis....hi.",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 15,
-        "preparationLength": 8,
-        "daughterDetourCount": 0,
-        "lureCount": 3,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 11,
-        "optimalFirstMoveCount": 3,
-        "emptyCellCount": 5
-      }
-    },
-    {
-      "name": "sample-(2, 3, 1)-L2-0",
-      "board": "v...wAAv.AAwshi.hihi",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 17,
-        "preparationLength": 13,
-        "daughterDetourCount": 1,
-        "lureCount": 4,
-        "daughterMoveCount": 4,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 1,
-        "emptyCellCount": 5
-      }
-    },
-    {
-      "name": "sample-(2, 3, 1)-L2-1",
-      "board": "v.hiwAA..AAvhi.wshi.",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 14,
-        "preparationLength": 9,
-        "daughterDetourCount": 0,
-        "lureCount": 2,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 3,
-        "emptyCellCount": 5
-      }
-    },
-    {
-      "name": "sample-(2, 3, 1)-L2-2",
-      "board": "vAA.wAAvhi.whihis...",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 15,
-        "preparationLength": 9,
-        "daughterDetourCount": 0,
-        "lureCount": 3,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 5
-      }
-    },
-    {
-      "name": "sample-(3, 2, 1)-L1-0",
-      "board": ".AA.vAA.whivhivws.w.",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 17,
-        "preparationLength": 8,
-        "daughterDetourCount": 0,
-        "lureCount": 2,
-        "daughterMoveCount": 4,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 2,
-        "emptyCellCount": 5
-      }
-    },
-    {
-      "name": "sample-(3, 2, 1)-L1-1",
-      "board": "vAAvwAAwv..sw.hi..hi",
+      "board": ".hi.v.AAw.AAhiv.hiws",
       "level": 1,
       "features": {
         "optimalMoveCount": 13,
         "preparationLength": 6,
         "daughterDetourCount": 0,
-        "lureCount": 4,
+        "lureCount": 2,
         "daughterMoveCount": 4,
-        "firstMoveCount": 13,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 3,
+        "emptyCellCount": 5
+      }
+    },
+    {
+      "name": "sample-(2, 3, 1)-L1-1",
+      "board": "vs..w.AA.vAA.whihihi",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 9,
+        "preparationLength": 3,
+        "daughterDetourCount": 0,
+        "lureCount": 2,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 8,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 5
+      }
+    },
+    {
+      "name": "sample-(2, 3, 1)-L1-2",
+      "board": "vsAAw.AA..hi.hiv.hiw",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 12,
+        "preparationLength": 5,
+        "daughterDetourCount": 0,
+        "lureCount": 5,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 14,
         "optimalFirstMoveCount": 1,
         "emptyCellCount": 5
       }
     },
     {
-      "name": "sample-(3, 2, 1)-L1-2",
-      "board": "vAAvwAAwhihis.v...w.",
+      "name": "sample-(2, 3, 1)-L2-0",
+      "board": ".AA.vAA.whivs..whihi",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 16,
+        "preparationLength": 9,
+        "daughterDetourCount": 0,
+        "lureCount": 3,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 5
+      }
+    },
+    {
+      "name": "sample-(2, 3, 1)-L2-1",
+      "board": "v...w.AAhiAAhiv.hiws",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 15,
+        "preparationLength": 9,
+        "daughterDetourCount": 0,
+        "lureCount": 8,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 4,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 5
+      }
+    },
+    {
+      "name": "sample-(2, 3, 1)-L2-2",
+      "board": "vAA.wAA.hihihivs..w.",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 19,
+        "preparationLength": 11,
+        "daughterDetourCount": 0,
+        "lureCount": 3,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 3,
+        "optimalFirstMoveCount": 3,
+        "emptyCellCount": 5
+      }
+    },
+    {
+      "name": "sample-(3, 2, 1)-L1-0",
+      "board": ".v...wAAvvAAwwhis.hi",
       "level": 1,
       "features": {
-        "optimalMoveCount": 18,
-        "preparationLength": 8,
+        "optimalMoveCount": 14,
+        "preparationLength": 4,
         "daughterDetourCount": 0,
-        "lureCount": 2,
-        "daughterMoveCount": 4,
-        "firstMoveCount": 5,
+        "lureCount": 1,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 5
+      }
+    },
+    {
+      "name": "sample-(3, 2, 1)-L1-1",
+      "board": "v..vw..wsvAA.wAAhihi",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 8,
+        "preparationLength": 3,
+        "daughterDetourCount": 0,
+        "lureCount": 1,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 8,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 5
+      }
+    },
+    {
+      "name": "sample-(3, 2, 1)-L1-2",
+      "board": "v..swhi.AAvvAAwwhi..",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 8,
+        "preparationLength": 4,
+        "daughterDetourCount": 0,
+        "lureCount": 0,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 10,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 5
       }
     },
     {
       "name": "sample-(3, 2, 1)-L2-0",
-      "board": "....vAAvwAAwvhiswhi.",
+      "board": "v..vwAAwvAA.whis..hi",
       "level": 2,
       "features": {
-        "optimalMoveCount": 17,
-        "preparationLength": 15,
+        "optimalMoveCount": 14,
+        "preparationLength": 13,
         "daughterDetourCount": 1,
         "lureCount": 1,
         "daughterMoveCount": 4,
-        "firstMoveCount": 5,
+        "firstMoveCount": 6,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 5
       }
     },
     {
       "name": "sample-(3, 2, 1)-L2-1",
-      "board": "....vAAswAAvvhiww.hi",
+      "board": "v..vwAAwvAAsw.hihi..",
       "level": 2,
       "features": {
-        "optimalMoveCount": 14,
-        "preparationLength": 10,
-        "daughterDetourCount": 0,
-        "lureCount": 3,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 2,
+        "optimalMoveCount": 12,
+        "preparationLength": 11,
+        "daughterDetourCount": 1,
+        "lureCount": 1,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 5,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 5
       }
     },
     {
       "name": "sample-(3, 2, 1)-L2-2",
-      "board": "....vhiswAA.vAAvwhiw",
+      "board": "v..vwAAwvAAswhi..hi.",
       "level": 2,
       "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 9,
-        "daughterDetourCount": 0,
-        "lureCount": 0,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 10,
-        "optimalFirstMoveCount": 2,
+        "optimalMoveCount": 13,
+        "preparationLength": 12,
+        "daughterDetourCount": 1,
+        "lureCount": 1,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 5
       }
     },
     {
       "name": "sample-(4, 1, 1)-L1-0",
-      "board": ".s..v.AAwvAA.wvvhiww",
+      "board": "AA..AA.vvhiww.vvs.ww",
       "level": 1,
       "features": {
         "optimalMoveCount": 11,
-        "preparationLength": 6,
+        "preparationLength": 4,
         "daughterDetourCount": 0,
-        "lureCount": 1,
+        "lureCount": 3,
         "daughterMoveCount": 2,
-        "firstMoveCount": 8,
-        "optimalFirstMoveCount": 2,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 5
       }
     },
     {
       "name": "sample-(4, 1, 1)-L1-1",
-      "board": "AAs.AAv.hiw.v.vvw.ww",
+      "board": "AA..AAv.vvwvwwsw.hi.",
       "level": 1,
       "features": {
-        "optimalMoveCount": 11,
-        "preparationLength": 3,
+        "optimalMoveCount": 13,
+        "preparationLength": 5,
         "daughterDetourCount": 0,
-        "lureCount": 2,
+        "lureCount": 5,
         "daughterMoveCount": 3,
-        "firstMoveCount": 10,
-        "optimalFirstMoveCount": 1,
+        "firstMoveCount": 8,
+        "optimalFirstMoveCount": 4,
         "emptyCellCount": 5
       }
     },
     {
       "name": "sample-(4, 1, 1)-L1-2",
-      "board": "AAs.AAvv..wwv..vwhiw",
+      "board": "AAs.AA...vhivwvvw.ww",
       "level": 1,
       "features": {
-        "optimalMoveCount": 14,
-        "preparationLength": 4,
+        "optimalMoveCount": 9,
+        "preparationLength": 3,
         "daughterDetourCount": 0,
-        "lureCount": 4,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 8,
-        "optimalFirstMoveCount": 3,
-        "emptyCellCount": 5
-      }
-    },
-    {
-      "name": "sample-(4, 1, 1)-L2-0",
-      "board": ".v...w.vsAAwvAAvwhiw",
-      "level": 2,
-      "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 9,
-        "daughterDetourCount": 0,
-        "lureCount": 1,
+        "lureCount": 2,
         "daughterMoveCount": 3,
         "firstMoveCount": 6,
         "optimalFirstMoveCount": 1,
@@ -7595,32 +7590,47 @@
       }
     },
     {
-      "name": "sample-(4, 1, 1)-L2-1",
-      "board": ".v..vwsvwAAwvAA.w.hi",
+      "name": "sample-(4, 1, 1)-L2-0",
+      "board": "....vAAvwAAwvhivws.w",
       "level": 2,
       "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 9,
+        "optimalMoveCount": 13,
+        "preparationLength": 12,
         "daughterDetourCount": 0,
-        "lureCount": 0,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 3,
+        "lureCount": 2,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 4,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 5
+      }
+    },
+    {
+      "name": "sample-(4, 1, 1)-L2-1",
+      "board": "v...wAAvvAAwwv..swhi",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 11,
+        "preparationLength": 9,
+        "daughterDetourCount": 1,
+        "lureCount": 5,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 4,
+        "optimalFirstMoveCount": 2,
         "emptyCellCount": 5
       }
     },
     {
       "name": "sample-(4, 1, 1)-L2-2",
-      "board": "v.vsw.w..AA.vAAvwhiw",
+      "board": "v..vwAAw.AA.vvhiwws.",
       "level": 2,
       "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 9,
-        "daughterDetourCount": 0,
-        "lureCount": 0,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 8,
-        "optimalFirstMoveCount": 3,
+        "optimalMoveCount": 13,
+        "preparationLength": 12,
+        "daughterDetourCount": 1,
+        "lureCount": 5,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 5,
+        "optimalFirstMoveCount": 2,
         "emptyCellCount": 5
       }
     },
@@ -7821,28 +7831,28 @@
     },
     {
       "name": "sample-(3, 2, 0)-L1-0",
-      "board": "...vhi.wvAA.wAAvhi.w",
+      "board": "...vAAvwAAwvhi.w..hi",
       "level": 1,
       "features": {
-        "optimalMoveCount": 8,
-        "preparationLength": 7,
+        "optimalMoveCount": 10,
+        "preparationLength": 4,
         "daughterDetourCount": 0,
-        "lureCount": 0,
-        "daughterMoveCount": 2,
+        "lureCount": 2,
+        "daughterMoveCount": 3,
         "firstMoveCount": 7,
-        "optimalFirstMoveCount": 5,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 6
       }
     },
     {
       "name": "sample-(3, 2, 0)-L1-1",
-      "board": "..v.AAwvAA.whi.vhi.w",
+      "board": ".AAvvAAww...hi.v.hiw",
       "level": 1,
       "features": {
-        "optimalMoveCount": 13,
+        "optimalMoveCount": 12,
         "preparationLength": 4,
         "daughterDetourCount": 0,
-        "lureCount": 1,
+        "lureCount": 7,
         "daughterMoveCount": 3,
         "firstMoveCount": 9,
         "optimalFirstMoveCount": 2,
@@ -7851,22 +7861,22 @@
     },
     {
       "name": "sample-(3, 2, 0)-L1-2",
-      "board": ".AA.vAAvwhiw...v.hiw",
+      "board": ".vAA.wAA..v.hiwvhi.w",
       "level": 1,
       "features": {
-        "optimalMoveCount": 13,
-        "preparationLength": 5,
+        "optimalMoveCount": 14,
+        "preparationLength": 3,
         "daughterDetourCount": 0,
-        "lureCount": 3,
+        "lureCount": 2,
         "daughterMoveCount": 3,
-        "firstMoveCount": 9,
+        "firstMoveCount": 7,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 6
       }
     },
     {
       "name": "sample-(3, 2, 0)-L2-0",
-      "board": ".....AAv.AAwvvhiwwhi",
+      "board": ".....AAv.AAwvhivwhiw",
       "level": 2,
       "features": {
         "optimalMoveCount": 13,
@@ -7875,28 +7885,28 @@
         "lureCount": 3,
         "daughterMoveCount": 3,
         "firstMoveCount": 7,
-        "optimalFirstMoveCount": 2,
+        "optimalFirstMoveCount": 3,
         "emptyCellCount": 6
       }
     },
     {
       "name": "sample-(3, 2, 0)-L2-1",
-      "board": ".....AAvvAAwwvhi.whi",
+      "board": ".....AAv.AAwhivvhiww",
       "level": 2,
       "features": {
         "optimalMoveCount": 13,
         "preparationLength": 9,
-        "daughterDetourCount": 0,
-        "lureCount": 3,
-        "daughterMoveCount": 3,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 2,
+        "daughterDetourCount": 1,
+        "lureCount": 1,
+        "daughterMoveCount": 4,
+        "firstMoveCount": 4,
+        "optimalFirstMoveCount": 3,
         "emptyCellCount": 6
       }
     },
     {
       "name": "sample-(3, 2, 0)-L2-2",
-      "board": "....vAAvwAAw.vhi.whi",
+      "board": ".....AAvvAAwwhiv.hiw",
       "level": 2,
       "features": {
         "optimalMoveCount": 13,
@@ -7904,7 +7914,7 @@
         "daughterDetourCount": 0,
         "lureCount": 3,
         "daughterMoveCount": 3,
-        "firstMoveCount": 6,
+        "firstMoveCount": 7,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 6
       }
@@ -7915,7 +7925,7 @@
       "level": 1,
       "features": {
         "optimalMoveCount": 8,
-        "preparationLength": 5,
+        "preparationLength": 7,
         "daughterDetourCount": 0,
         "lureCount": 2,
         "daughterMoveCount": 3,
@@ -7930,7 +7940,7 @@
       "level": 1,
       "features": {
         "optimalMoveCount": 10,
-        "preparationLength": 5,
+        "preparationLength": 6,
         "daughterDetourCount": 0,
         "lureCount": 1,
         "daughterMoveCount": 3,
@@ -8001,13 +8011,28 @@
     },
     {
       "name": "sample-(1, 3, 2)-L1-0",
-      "board": ".hi.svAA.wAA.his..hi",
+      "board": ".hi.AA..AA.sv.hiwshi",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 8,
+        "preparationLength": 4,
+        "daughterDetourCount": 0,
+        "lureCount": 6,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 10,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 6
+      }
+    },
+    {
+      "name": "sample-(1, 3, 2)-L1-1",
+      "board": ".s..AAs.AA.v.hiwhihi",
       "level": 1,
       "features": {
         "optimalMoveCount": 8,
         "preparationLength": 3,
         "daughterDetourCount": 0,
-        "lureCount": 4,
+        "lureCount": 2,
         "daughterMoveCount": 2,
         "firstMoveCount": 11,
         "optimalFirstMoveCount": 1,
@@ -8015,67 +8040,82 @@
       }
     },
     {
-      "name": "sample-(1, 3, 2)-L1-1",
-      "board": "AA..AA...s.vshiwhihi",
+      "name": "sample-(1, 3, 2)-L1-2",
+      "board": "v.AAw.AA.s..hihis.hi",
       "level": 1,
       "features": {
         "optimalMoveCount": 10,
-        "preparationLength": 3,
+        "preparationLength": 4,
         "daughterDetourCount": 0,
-        "lureCount": 4,
+        "lureCount": 7,
         "daughterMoveCount": 2,
-        "firstMoveCount": 13,
-        "optimalFirstMoveCount": 4,
+        "firstMoveCount": 12,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 6
       }
     },
     {
-      "name": "sample-(1, 3, 2)-L1-2",
-      "board": "AA..AAhihis.vs..w.hi",
-      "level": 1,
+      "name": "sample-(1, 3, 2)-L2-0",
+      "board": "....vAA.wAAshihihi.s",
+      "level": 2,
       "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 3,
-        "daughterDetourCount": 0,
-        "lureCount": 2,
-        "daughterMoveCount": 2,
+        "optimalMoveCount": 11,
+        "preparationLength": 9,
+        "daughterDetourCount": 1,
+        "lureCount": 5,
+        "daughterMoveCount": 3,
         "firstMoveCount": 10,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 6
       }
     },
     {
+      "name": "sample-(1, 3, 2)-L2-1",
+      "board": "....vAAswAA.hihi.his",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 11,
+        "preparationLength": 10,
+        "daughterDetourCount": 1,
+        "lureCount": 5,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 8,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 6
+      }
+    },
+    {
+      "name": "sample-(1, 3, 2)-L2-2",
+      "board": ".s...AAv.AAwhihishi.",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 11,
+        "preparationLength": 10,
+        "daughterDetourCount": 1,
+        "lureCount": 5,
+        "daughterMoveCount": 3,
+        "firstMoveCount": 8,
+        "optimalFirstMoveCount": 1,
+        "emptyCellCount": 6
+      }
+    },
+    {
       "name": "sample-(2, 2, 2)-L1-0",
-      "board": ".hi.vAAvwAAws.hi.s..",
+      "board": ".s..v.AAw.AAvshiw.hi",
       "level": 1,
       "features": {
-        "optimalMoveCount": 8,
-        "preparationLength": 5,
+        "optimalMoveCount": 9,
+        "preparationLength": 4,
         "daughterDetourCount": 0,
-        "lureCount": 5,
+        "lureCount": 7,
         "daughterMoveCount": 2,
-        "firstMoveCount": 12,
-        "optimalFirstMoveCount": 3,
+        "firstMoveCount": 13,
+        "optimalFirstMoveCount": 2,
         "emptyCellCount": 6
       }
     },
     {
       "name": "sample-(2, 2, 2)-L1-1",
-      "board": ".hi.vsAAwsAA.v...whi",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 8,
-        "preparationLength": 3,
-        "daughterDetourCount": 0,
-        "lureCount": 2,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 8,
-        "optimalFirstMoveCount": 3,
-        "emptyCellCount": 6
-      }
-    },
-    {
-      "name": "sample-(2, 2, 2)-L1-2",
       "board": "AAv.AAw.hi.v..sw.his",
       "level": 1,
       "features": {
@@ -8090,23 +8130,23 @@
       }
     },
     {
-      "name": "sample-(2, 2, 2)-L2-0",
-      "board": "....vAAvwAAwhihiss..",
-      "level": 2,
+      "name": "sample-(2, 2, 2)-L1-2",
+      "board": "AAs.AAhihi.svv..ww..",
+      "level": 1,
       "features": {
-        "optimalMoveCount": 15,
-        "preparationLength": 10,
+        "optimalMoveCount": 10,
+        "preparationLength": 3,
         "daughterDetourCount": 0,
-        "lureCount": 5,
+        "lureCount": 2,
         "daughterMoveCount": 2,
-        "firstMoveCount": 6,
-        "optimalFirstMoveCount": 4,
+        "firstMoveCount": 10,
+        "optimalFirstMoveCount": 1,
         "emptyCellCount": 6
       }
     },
     {
-      "name": "sample-(2, 2, 2)-L2-1",
-      "board": "....vAAvwAAwshi.his.",
+      "name": "sample-(2, 2, 2)-L2-0",
+      "board": "....vAA.wAAvshiwhis.",
       "level": 2,
       "features": {
         "optimalMoveCount": 12,
@@ -8114,14 +8154,29 @@
         "daughterDetourCount": 0,
         "lureCount": 8,
         "daughterMoveCount": 2,
-        "firstMoveCount": 8,
+        "firstMoveCount": 7,
         "optimalFirstMoveCount": 3,
         "emptyCellCount": 6
       }
     },
     {
+      "name": "sample-(2, 2, 2)-L2-1",
+      "board": ".s..vAAvwAAw..hi.his",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 12,
+        "preparationLength": 9,
+        "daughterDetourCount": 0,
+        "lureCount": 6,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 11,
+        "optimalFirstMoveCount": 4,
+        "emptyCellCount": 6
+      }
+    },
+    {
       "name": "sample-(2, 2, 2)-L2-2",
-      "board": ".v...w.vsAAw.AAshihi",
+      "board": "v...w..ssAAv.AAwhihi",
       "level": 2,
       "features": {
         "optimalMoveCount": 10,
@@ -8129,53 +8184,98 @@
         "daughterDetourCount": 1,
         "lureCount": 1,
         "daughterMoveCount": 2,
-        "firstMoveCount": 7,
-        "optimalFirstMoveCount": 5,
+        "firstMoveCount": 10,
+        "optimalFirstMoveCount": 9,
         "emptyCellCount": 6
       }
     },
     {
       "name": "sample-(3, 1, 2)-L1-0",
-      "board": ".AA.vAAsw.v.vsw.w.hi",
+      "board": ".s..vAA.wAAv..vwhiws",
       "level": 1,
       "features": {
-        "optimalMoveCount": 10,
-        "preparationLength": 4,
+        "optimalMoveCount": 9,
+        "preparationLength": 5,
         "daughterDetourCount": 0,
-        "lureCount": 4,
+        "lureCount": 5,
         "daughterMoveCount": 2,
-        "firstMoveCount": 8,
-        "optimalFirstMoveCount": 5,
-        "emptyCellCount": 6
-      }
-    },
-    {
-      "name": "sample-(3, 1, 2)-L1-1",
-      "board": ".AA.sAA...hisvvv.www",
-      "level": 1,
-      "features": {
-        "optimalMoveCount": 8,
-        "preparationLength": 4,
-        "daughterDetourCount": 0,
-        "lureCount": 3,
-        "daughterMoveCount": 2,
-        "firstMoveCount": 10,
+        "firstMoveCount": 9,
         "optimalFirstMoveCount": 2,
         "emptyCellCount": 6
       }
     },
     {
-      "name": "sample-(3, 1, 2)-L1-2",
-      "board": "AAv.AAws.hi.vs.vw..w",
+      "name": "sample-(3, 1, 2)-L1-1",
+      "board": "AA..AAv.sswvhivw..w.",
       "level": 1,
       "features": {
-        "optimalMoveCount": 9,
+        "optimalMoveCount": 10,
         "preparationLength": 3,
+        "daughterDetourCount": 0,
+        "lureCount": 2,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 4,
+        "emptyCellCount": 6
+      }
+    },
+    {
+      "name": "sample-(3, 1, 2)-L1-2",
+      "board": "AA..AAhisv..vwvsw.w.",
+      "level": 1,
+      "features": {
+        "optimalMoveCount": 8,
+        "preparationLength": 2,
+        "daughterDetourCount": 0,
+        "lureCount": 2,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 2,
+        "emptyCellCount": 6
+      }
+    },
+    {
+      "name": "sample-(3, 1, 2)-L2-0",
+      "board": "....vAAvwAAwv.hiws.s",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 11,
+        "preparationLength": 9,
         "daughterDetourCount": 0,
         "lureCount": 5,
         "daughterMoveCount": 2,
-        "firstMoveCount": 10,
-        "optimalFirstMoveCount": 1,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 3,
+        "emptyCellCount": 6
+      }
+    },
+    {
+      "name": "sample-(3, 1, 2)-L2-1",
+      "board": "....vAAvwAAwhiv.s.ws",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 11,
+        "preparationLength": 9,
+        "daughterDetourCount": 0,
+        "lureCount": 5,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 6,
+        "optimalFirstMoveCount": 3,
+        "emptyCellCount": 6
+      }
+    },
+    {
+      "name": "sample-(3, 1, 2)-L2-2",
+      "board": "v...wAAv.AAw.vhisw.s",
+      "level": 2,
+      "features": {
+        "optimalMoveCount": 10,
+        "preparationLength": 9,
+        "daughterDetourCount": 0,
+        "lureCount": 5,
+        "daughterMoveCount": 2,
+        "firstMoveCount": 7,
+        "optimalFirstMoveCount": 3,
         "emptyCellCount": 6
       }
     },
