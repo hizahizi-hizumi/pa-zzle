@@ -5,9 +5,9 @@ import { configDefaults, defineConfig } from "vitest/config";
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
-// 各ゲームの puzzle/・problem/・session/ とゲーム直下、scripts/ は画面に依存しないので DOM なしで動かす。
+// 各ゲームの puzzle/・problem/・session/・tutorial/ とゲーム直下、scripts/ は画面に依存しないので DOM なしで動かす。
 const logicTestFiles = [
-  "src/games/*/{puzzle,problem,session}/**/*.test.ts",
+  "src/games/*/{puzzle,problem,session,tutorial}/**/*.test.ts",
   "src/games/*/*.test.ts",
   "scripts/**/*.test.ts",
 ];
