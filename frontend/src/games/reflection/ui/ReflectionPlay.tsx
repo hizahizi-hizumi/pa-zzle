@@ -29,9 +29,9 @@ import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowTo
 import {
   listReflectionStockPieces,
   ReflectionStock,
-} from "@/games/reflection/ui/ReflectionPlay/ReflectionStock";
-import { useReflectionSoundEffects } from "@/games/reflection/ui/ReflectionPlay/use-reflection-sound-effects";
+} from "@/games/reflection/ui/ReflectionStock";
 import { ReflectionResultScreen } from "@/games/reflection/ui/result/ReflectionResultScreen";
+import { useReflectionSoundEffects } from "@/games/reflection/ui/use-reflection-sound-effects";
 
 type ReflectionPlayProps = GamePlayScreenProps<
   ReflectionDifficulty,
