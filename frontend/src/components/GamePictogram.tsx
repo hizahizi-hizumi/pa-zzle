@@ -1,8 +1,16 @@
 import { useEffect, useRef } from "react";
 
+import { startShowcaseAtRest } from "@/components/game-pictogram-motion";
+import { subscribePrefersReducedMotion } from "@/lib/motion";
+
 type GamePictogramProps = {
   svg: string;
   variant?: "default" | "result";
+  /**
+   * `play` のとき、SVG が自身の `<style>` に持つ動きを、周の終わりの静止状態から再生させる。
+   * 既定の `rest` では静止状態を見せる。
+   */
+  motion?: "rest" | "play";
 };
 
 const baseClassName =
@@ -31,6 +39,7 @@ function parseSvg(svg: string): Element {
 export function GamePictogram({
   svg,
   variant = "default",
+  motion = "rest",
 }: GamePictogramProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
 
@@ -39,14 +48,25 @@ export function GamePictogram({
     if (!container) return;
 
     container.replaceChildren(document.importNode(parseSvg(svg), true));
+    if (motion !== "play") return () => container.replaceChildren();
 
-    return () => container.replaceChildren();
-  }, [svg]);
+    // 動きを減らす設定を戻すと動きが周の頭から作り直されるので、そのたびに静止状態から始め直す。
+    function startAtRest() {
+      if (container) startShowcaseAtRest(container);
+    }
+    startAtRest();
+    const unsubscribe = subscribePrefersReducedMotion(startAtRest);
+    return () => {
+      unsubscribe();
+      container.replaceChildren();
+    };
+  }, [svg, motion]);
 
   return (
     <span
       ref={containerRef}
       className={`${baseClassName} ${variant === "result" ? resultColorClassName : defaultColorClassName}`}
+      data-pictogram-motion={motion === "play" ? "play" : undefined}
       aria-hidden="true"
     />
   );
