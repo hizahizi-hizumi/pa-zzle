@@ -12,7 +12,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design
 
 # design-game-pictogram-showcase
 
-パズル選択画面で、選ばれたパズルを色と動きで見せる `pictogram-showcase.svg` を作る Skill。下部一覧の選択中は色付きで静止し、上部のヒーローでは動く。人間が方向を選び、選ばれた方向を仕上げてカタログへ登録するまでを扱う。
+ホーム（パズル選択画面、SCR-001）で、選ばれたパズルを色と動きで見せる `pictogram-showcase.svg` を作る Skill。下部一覧の選択中は色付きで静止し、上部のヒーローでは動く。人間が方向を選び、選ばれた方向を仕上げてカタログへ登録するまでを扱う。
 
 ## 起動
 
@@ -37,7 +37,7 @@ game id は `frontend/src/games/<game>/` のディレクトリ名。
 
 ## 作るもの
 
-- 白黒版 `pictogram.svg` を土台にした SVG を 1 つ作る。白黒版と同じパズルだと一覧で分かること。
+- 白黒版 `pictogram.svg` を土台にした SVG を 1 つ作る。
 - 静止状態は、白黒版と同じ形にし、違うのは色だけにする。白黒版の図形をそのまま写して色を付ける（白黒版を直すなら、静止状態の図形を写して白黒 2 色にする）。選んだ瞬間に変わるのは色だけで、形が跳ぶとがたつきになる（`references/contract.md` の 2 節）。アプリはヒーローもこの静止状態から再生し始める。
 - 静止状態は、見せ場の後の姿（解けた・揃った状態）であることが望ましい。白黒版が途中の姿を描いていて、そのままでは見せ場の後で止まれない、または動きの余地が無いときは、白黒版を描き直す修正案を `base_revision` で添え、色付き版を白黒版に寄せる案と並べて人間に選んでもらう。
 - 動きは切り替えループ（`cut`）を基本にする。開始の姿から見せ場まで動き、静止状態で止まり、周の境界で開始の姿へ瞬時に戻る。継ぎ目ループ（`seam`）は継ぎ目が意味として自然に成り立つ場合だけにする。1 回だけ再生して止まる形式は使わない。
@@ -67,7 +67,7 @@ A と B の材料が欠けたまま次へ進まない。詳しくは `references
 
 ### 3. 束ねて試作する
 
-A の見せ方 × B の見せ場で束ね、系統ごとに代表を選ぶ。代表の組は、人間がヒーローで見て違いが分かる幅を優先し、見せ場と終わり方が同じ代表で埋めない。成立しなさそうという予測だけで系統を落とさない。代表を、A と B の核が伝わるところまで試作する。静止状態を先に描いて白黒版と並べ、同じパズルに見えることを確かめてから動きを足す。束ね方は `references/exploration.md` の 7 節、試作の削り方は 8 節、緩急は `references/motion.md` の 3 節。候補は `manifest.json` にまとめる（`references/review.md` の 1 節）。
+A の見せ方 × B の見せ場で束ね、系統ごとに代表を選ぶ。代表の組は、人間がヒーローで見て違いが分かる幅を優先し、見せ場と終わり方が同じ代表で埋めない。成立しなさそうという予測だけで系統を落とさない。代表を、A と B の核が伝わるところまで試作する。静止状態を先に、白黒版（白黒版を直す案ではその修正案）の図形を写して描き、そこから動きを足す。束ね方は `references/exploration.md` の 7 節、試作の削り方は 8 節、緩急は `references/motion.md` の 3 節。候補は `manifest.json` にまとめる（`references/review.md` の 1 節）。
 
 ### 4. 自己チェックとレビューで、人間へ見せる品質へ引き上げる
 
@@ -102,7 +102,7 @@ node .claude/skills/design-game-pictogram-showcase/scripts/check_gallery.cjs <ht
 2. `frontend/src/games/<game>/assets/pictogram-showcase.svg` に置く。
 3. `frontend/src/game-catalog/<game>/<game>-catalog-entry.tsx` で `?raw` import し、`pictogramShowcaseSvg` に渡す。
 4. `bun run --cwd frontend check` / `typecheck` / `test` を通す。
-5. `bun run --cwd frontend dev` をバックグラウンドで起動し、実アプリのパズル選択画面で、ヒーロー・一覧の選択中・ライト/ダーク・動きを減らす設定を確かめる（Playwright のスクリプトは `/tmp/pictogram-showcase-<game>/` に置き、`scripts/playwright_resolve.cjs` で読み込む）。
+5. `bun run --cwd frontend dev` をバックグラウンドで起動し、実アプリのホームで、ヒーロー・一覧の選択中・ライト/ダーク・動きを減らす設定を確かめる（Playwright のスクリプトは `/tmp/pictogram-showcase-<game>/` に置き、`scripts/playwright_resolve.cjs` で読み込む）。
 
 ## 出力先
 
@@ -121,7 +121,7 @@ Skill 配下には特定ゲームの生成物を置かない。
 - `.claude/agents/showcase-pictogram-reviewer.md` — 人間へ見せる前のレビュー役
 - `references/self-review.md` — 観察方法、必須チェックリスト、`self-review.json`
 - `scripts/` — 検査（`check_animation.py`、`check_self_review.py`）、観察（`observe_animation.cjs`、`capture_frames.cjs`）、ギャラリー（`make_review_gallery.py`、`check_gallery.cjs`）、色の実値（`resolve_color.py`）。オプションは各スクリプトの `--help`
-- `DESIGN.md` の「ゲームピクトグラム」、`docs/adr/ADR-0015-selected-pictogram-color-motion.md`
+- `DESIGN.md` の「コンポーネント」の「ゲームを表す表現」「ゲームピクトグラム」と「動き」、`docs/プロダクト/画面/SCR-001.md`（ホーム）、`docs/adr/ADR-0016-selected-pictogram-color-motion.md`
 
 ## 制約
 

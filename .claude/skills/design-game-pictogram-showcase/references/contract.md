@@ -2,7 +2,7 @@
 
 `pictogram-showcase.svg` をアプリへ渡すための書き方の規則。アプリ側の受け口（`frontend/src/components/GamePictogram.tsx`、`GameSelectionGallery.tsx`）がこの形を前提に表示する。機械的に確かめられる規則は `scripts/check_animation.py` が `FAIL` / `WARN` にするので、違反の詳細はその出力で確かめる。
 
-契約の変更は人間の判断で、この Skill の外で行う。変える場合は、アプリ側の受け口・`DESIGN.md`・`docs/adr/ADR-0015-selected-pictogram-color-motion.md`・この文書・`scripts/` の検査とギャラリーを同じ変更で揃える。
+契約の変更は人間の判断で、この Skill の外で行う。変える場合は、アプリ側の受け口・`DESIGN.md`・`docs/adr/ADR-0016-selected-pictogram-color-motion.md`・この文書・`scripts/` の検査とギャラリーを同じ変更で揃える。
 
 ## 1. ファイルと座標系
 
@@ -14,7 +14,7 @@
 
 - アニメーション指定の無い基本スタイルで描かれた姿が静止状態。一覧の選択中と、OS の動きを減らす設定ではこれが表示される。
 - 選んだ瞬間に変わるのは色だけにする（`DESIGN.md` の「ゲームピクトグラム」、ADR-0016）。静止状態は、白黒版と同じ形にする。白黒版の図形（要素・座標・大きさ・線幅・字形）をそのまま使い、塗りと線の色だけを変える。候補が `base_revision` で白黒版を直す場合は、修正案を静止状態の図形から色だけを白黒 2 色に変えて作る。どちらも、片方の図形をもう片方へ写して作り、似せて描き直さない。
-- アプリはヒーローの動きを、周の終わりの静止状態から再生し始める。静止状態の区間が 600ms より長ければ、その終わりの 600ms から始める（`frontend/src/components/game-pictogram-motion.ts`）。そのため選んだ直後のヒーローは静止状態のまま色が入り、その後に開始の姿へ切り替わる。
+- アプリはヒーローの動きを、周の終わりの静止状態から再生し始める。静止状態の区間が 600ms より長ければ、その終わりの 600ms から始める（`frontend/src/components/game-pictogram-motion.ts`）。そのため選んだ直後のヒーローは静止状態のまま色が入り、その後に開始の姿へ切り替わる。ホームがタイトルに覆われている間は静止状態のまま待ち、覆いが外れたときにそこから始める。
 - animation は SVG 内 `<style>` の CSS animation で書く。animation を付けるルールは `@media (prefers-reduced-motion: no-preference)` の内側に置き、祖先の `[data-pictogram-motion="play"]` を条件にする（例: `[data-pictogram-motion="play"] .pz-<game>-x { animation: … }`）。この属性はアプリがヒーローの祖先に付ける。SVG 自身や対象には付けない。
 - 全 animation を `infinite` にする。再生形式は `cut`（基本）か `seam`（例外）。`cut` は全 animation を同じ周期・同じ遅延にする。作り方は `references/motion.md` の 1 節。
 

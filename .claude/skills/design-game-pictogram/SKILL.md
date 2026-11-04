@@ -148,6 +148,7 @@ python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py \
 ## 制約
 
 - `DESIGN.md` をこの Skill の成果物として変更しない
+- そのゲームに `pictogram-showcase.svg` があるときに白黒版の図形を変えたら、showcase の静止状態にも同じ図形を写し、`/design-game-pictogram-showcase` の自己チェックとレビューをやり直す（選んだ瞬間に変わるのは色だけ。`DESIGN.md` の「ゲームピクトグラム」）
 - ゲーム本体コンポーネントの縮小・再利用を目的にしない
 - ゲーム固有図形の無理な共通コンポーネント化をしない
 - 生成案を構造化すること自体を目的にしない

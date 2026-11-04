@@ -230,7 +230,7 @@ describe("選んでいるパズルの色と動きのあるピクトグラム", (
     games[1],
   ];
 
-  function renderWithShowcase(selectedIndex: number) {
+  function renderWithShowcase(selectedIndex: number, isCovered = false) {
     return render(
       <MemoryRouter>
         <GameSelectionGallery
@@ -239,6 +239,7 @@ describe("選んでいるパズルの色と動きのあるピクトグラム", (
           selectedIndex={selectedIndex}
           continuation={null}
           onSelect={onSelect}
+          isCovered={isCovered}
         />
       </MemoryRouter>,
     );
@@ -271,6 +272,21 @@ describe("選んでいるパズルの色と動きのあるピクトグラム", (
       expect(
         selectedButton.querySelector("[data-pictogram-motion]"),
       ).toBeNull();
+    });
+  });
+
+  describe("持っているパズルを選んでいて、ホームが覆われている場合", () => {
+    beforeEach(() => {
+      renderWithShowcase(0, true);
+    });
+
+    test("ヒーローを動かさずに静止させて待たせること", () => {
+      const heroWrapper = heroPictogramWrapper("ウォーターソート");
+
+      expect(
+        heroWrapper?.querySelector('svg[data-game="water-sort-showcase"]'),
+      ).toBeTruthy();
+      expect(heroWrapper?.getAttribute("data-pictogram-motion")).toBeNull();
     });
   });
 

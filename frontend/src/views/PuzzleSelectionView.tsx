@@ -30,8 +30,9 @@ export function PuzzleSelectionView() {
     subscribeAppLaunchTitle,
     getAppLaunchTitle,
   );
+  const isCovered = title.status !== "hidden";
   const { selectedGameIndex, selectedGameContinuation, selectGame } =
-    useAppHome(gameCatalog, { isCovered: title.status !== "hidden" });
+    useAppHome(gameCatalog, { isCovered });
 
   return (
     <>
@@ -41,6 +42,7 @@ export function PuzzleSelectionView() {
         selectedIndex={selectedGameIndex}
         continuation={selectedGameContinuation}
         onSelect={selectGame}
+        isCovered={isCovered}
       />
       <AppTitleScreen title={title} games={games} onEnter={enterApp} />
     </>

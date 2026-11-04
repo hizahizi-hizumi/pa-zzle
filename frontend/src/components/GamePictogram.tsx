@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import { startShowcaseAtRest } from "@/components/game-pictogram-motion";
+import { subscribePrefersReducedMotion } from "@/lib/motion";
 
 type GamePictogramProps = {
   svg: string;
@@ -47,9 +48,18 @@ export function GamePictogram({
     if (!container) return;
 
     container.replaceChildren(document.importNode(parseSvg(svg), true));
-    if (motion === "play") startShowcaseAtRest(container);
+    if (motion !== "play") return () => container.replaceChildren();
 
-    return () => container.replaceChildren();
+    // 動きを減らす設定を戻すと動きが周の頭から作り直されるので、そのたびに静止状態から始め直す。
+    function startAtRest() {
+      if (container) startShowcaseAtRest(container);
+    }
+    startAtRest();
+    const unsubscribe = subscribePrefersReducedMotion(startAtRest);
+    return () => {
+      unsubscribe();
+      container.replaceChildren();
+    };
   }, [svg, motion]);
 
   return (

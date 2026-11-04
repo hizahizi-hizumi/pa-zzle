@@ -36,6 +36,8 @@ type GameSelectionGalleryProps = {
   /** 選んでいるゲームの続き。そのゲームを遊んだことが無ければ `null`。 */
   continuation: GameSelectionContinuation | null;
   onSelect: (index: number) => void;
+  /** タイトルなどがホームを覆っている間は、ヒーローを動かさず静止状態で待たせる。 */
+  isCovered?: boolean;
 };
 
 function formatContinuation({
@@ -72,6 +74,7 @@ export function GameSelectionGallery({
   selectedIndex,
   continuation,
   onSelect,
+  isCovered = false,
 }: GameSelectionGalleryProps) {
   const selectedGame = games[selectedIndex] ?? games[0];
   const continuationId = useId();
@@ -154,7 +157,7 @@ export function GameSelectionGallery({
             {selectedGame.pictogramShowcaseSvg ? (
               <GamePictogram
                 svg={selectedGame.pictogramShowcaseSvg}
-                motion="play"
+                motion={isCovered ? "rest" : "play"}
               />
             ) : (
               <GamePictogram svg={selectedGame.pictogramSvg} />

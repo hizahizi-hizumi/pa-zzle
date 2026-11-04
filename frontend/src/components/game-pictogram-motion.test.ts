@@ -1,7 +1,9 @@
 import {
-  SHOWCASE_ENTRY_REST_MS,
+  _private,
   startShowcaseAtRest,
 } from "@/components/game-pictogram-motion";
+
+const { SHOWCASE_ENTRY_REST_MS } = _private;
 
 type FakeKeyframe = { computedOffset: number; [property: string]: unknown };
 

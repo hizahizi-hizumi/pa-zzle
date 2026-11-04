@@ -2,7 +2,7 @@
  * 動きを再生し始めてから、静止した姿のまま見せる時間。
  * 選んだ瞬間は白黒版から色だけが変わり、この時間の後に動きの周の頭へ切り替わる。
  */
-export const SHOWCASE_ENTRY_REST_MS = 600;
+const SHOWCASE_ENTRY_REST_MS = 600;
 
 const TIMING_KEYS = new Set([
   "offset",
@@ -72,3 +72,5 @@ export function startShowcaseAtRest(container: Element): void {
     animation.currentTime = delay + entry;
   }
 }
+
+export const _private = { SHOWCASE_ENTRY_REST_MS };
