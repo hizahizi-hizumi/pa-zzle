@@ -88,6 +88,7 @@ function playClearSound() {
 /**
  * 数字の入力、メモの書き込み・削除と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
  * マスの選択と、数字やメモを消すボタンでは鳴らさない。
+ * チュートリアルも本番と同じ音を鳴らすため、プレイ画面とチュートリアルの両方が使う。
  */
 export function useNanpureSoundEffects(
   operation: NanpureOperation | null,
