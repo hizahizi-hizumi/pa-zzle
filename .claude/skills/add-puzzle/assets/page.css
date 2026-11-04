@@ -111,4 +111,4 @@ body:has(.review) { background: #ffffff; }
 .review .demo .state { font-size: 0.875rem; color: var(--fg-muted); min-height: 1.5em; }
 .review .demo .state.done { color: var(--ok); font-weight: 600; }
 
-@media (max-width: 380px) { .review .opts, .review .pair { grid-template-columns: 1fr; } }
+@media (max-width: 440px) { .review .opts, .review .pair { grid-template-columns: 1fr; } }
