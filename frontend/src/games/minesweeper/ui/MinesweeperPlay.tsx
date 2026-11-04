@@ -9,14 +9,14 @@ import type {
 } from "@/games/minesweeper/play/use-minesweeper-play";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import { MinesweeperClearAnimation } from "@/games/minesweeper/ui/board/clear/MinesweeperClearAnimation";
+import { InputModeToggle } from "@/games/minesweeper/ui/board/InputModeToggle";
 import {
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
-import { InputModeToggle } from "@/games/minesweeper/ui/MinesweeperPlay/InputModeToggle";
-import { useMinesweeperSoundEffects } from "@/games/minesweeper/ui/MinesweeperPlay/use-minesweeper-sound-effects";
 import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
+import { useMinesweeperSoundEffects } from "@/games/minesweeper/ui/use-minesweeper-sound-effects";
 import type { GamePlayScreenProps } from "@/games/play";
 
 type MinesweeperPlayProps = GamePlayScreenProps<
