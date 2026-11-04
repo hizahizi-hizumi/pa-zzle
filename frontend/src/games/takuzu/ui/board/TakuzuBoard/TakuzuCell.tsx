@@ -5,6 +5,8 @@ import {
   useRef,
 } from "react";
 
+import { TutorialCue } from "@/components/TutorialCue";
+import { TutorialSubduable } from "@/components/TutorialSubduable";
 import { getTakuzuCellPosition } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
@@ -21,8 +23,10 @@ type TakuzuCellProps = {
   /** このマスを含む行・列の違反の読み上げ名（例「行の個数超過」）。 */
   lineViolationNames: readonly string[];
   disabled: boolean;
-  /** 揺れの合図は盤面が掛けるので、マスは光と目印の合図だけを描く。 */
+  /** 揺れの合図は盤面が掛けるので、マスは印と応えだけを描く。 */
   cue: TakuzuCellCue | undefined;
+  /** チュートリアルで手を引いている間、元の明るさで残すマスのほかのマスのタイルを一段沈める。 */
+  subdued: boolean;
   focusable: boolean;
   onElementChange: (
     cellIndex: number,
@@ -33,6 +37,9 @@ type TakuzuCellProps = {
 };
 
 const tileNameByCell = { a: "四角", b: "丸" } as const;
+
+/** 印と応えの線は、隣り合うマスの線と重ならないよう、マスの縁から少し内側に、角の立ったマスの形で引く。 */
+const cueOutlinePlacementClassName = "pointer-events-none absolute inset-1";
 
 function getAccessibleName(
   size: number,
@@ -57,6 +64,7 @@ export function TakuzuCell({
   lineViolationNames,
   disabled,
   cue,
+  subdued,
   focusable,
   onElementChange,
   onCycle,
@@ -112,36 +120,24 @@ export function TakuzuCell({
       />
       {cue?.kind === "fitted" && (
         <span
-          key={cue.id}
           aria-hidden="true"
           data-cell-cue={cue.kind}
-          className="pointer-events-none absolute inset-1 rounded-sm bg-sky-100/60 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/50 dark:ring-sky-300/50"
-        />
-      )}
-      {cue?.kind === "reason" && (
-        <span
-          key={cue.id}
-          aria-hidden="true"
-          data-cell-cue={cue.kind}
-          className="pointer-events-none absolute inset-0 bg-sky-100 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/60 dark:ring-sky-300/50"
-        />
-      )}
-      {cue?.kind === "recall" && (
-        // 動きを減らす設定でも分かるよう、位置や大きさは変えず、色が引いていく光だけで示す。
-        <span
-          key={cue.id}
-          aria-hidden="true"
-          data-cell-cue={cue.kind}
-          className="pointer-events-none absolute inset-0 bg-sky-200 ring-[3px] ring-sky-600 ring-inset fill-mode-forwards animate-out fade-out-0 duration-1000 ease-in dark:bg-sky-800 dark:ring-sky-300"
-        />
+          className={cueOutlinePlacementClassName}
+        >
+          <TutorialCue kind="acknowledgement" id={cue.id} />
+        </span>
       )}
       {(cue?.kind === "hint" || cue?.kind === "recall") && (
-        // 光らせ直しても印そのものは付け直さず、出ているまま光だけを重ねる。
         <span
           aria-hidden="true"
           data-cell-cue="hint"
-          className="pointer-events-none absolute inset-1 rounded-sm border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400"
-        />
+          className={cueOutlinePlacementClassName}
+        >
+          <TutorialCue
+            kind="mark"
+            recallId={cue.kind === "recall" ? cue.id : null}
+          />
+        </span>
       )}
       {/*
         固定マスを押したときの揺れと完成の波は、格子を崩さないよう中のタイルだけに掛ける。
@@ -154,12 +150,14 @@ export function TakuzuCell({
         data-clear-wave-step={row + column}
         className="relative size-[80%] will-change-transform"
       >
-        <TakuzuCellFace
-          key={view.cell}
-          cell={view.cell}
-          given={view.given}
-          size="board"
-        />
+        <TutorialSubduable subdued={subdued}>
+          <TakuzuCellFace
+            key={view.cell}
+            cell={view.cell}
+            given={view.given}
+            size="board"
+          />
+        </TutorialSubduable>
       </span>
     </button>
   );

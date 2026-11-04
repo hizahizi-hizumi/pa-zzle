@@ -11,14 +11,17 @@ import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
 import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCell, TakuzuTile } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
+import type { TakuzuCellView } from "@/games/takuzu/session/session";
 import {
   findTakuzuTutorialHintCellIndex,
   getTakuzuTutorialCellViews,
   getTakuzuTutorialLineViolations,
   getTakuzuTutorialStepCellIndices,
+  getTakuzuTutorialStepReasonCellIndices,
   type TakuzuTutorialAction,
   type TakuzuTutorialBoardState,
   type TakuzuTutorialRuleId,
+  type TakuzuTutorialSituation,
   takuzuTutorial,
 } from "@/games/takuzu/tutorial/tutorial";
 import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
@@ -62,7 +65,7 @@ const VIOLATION_REACTION_DELAY_MS = 500;
  */
 const TOWARD_STEP_REVEAL_DELAY_MS = 1000;
 
-/** 手順どおりに置いてから次の印を付けるまでの間。決め手が光って消えるのを見届けてから示す。 */
+/** 手順どおりに置いてから次の印を付けるまでの間。置いたマスと決め手を残して見せてから、次の印とその決め手に替える。 */
 const NEXT_STEP_CUE_DELAY_MS = 900;
 
 /** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
@@ -71,9 +74,9 @@ const IDLE_HINT_DELAY_MS = 4000;
 const goalBoardState = takuzuTutorial.goal();
 
 /**
- * 手を引いている間に印の無いマスを押されたときの、印の光らせ直し。
- * - `id`: 押されるたびに増やし、続けて押されても光らせ直す。
- * - `progress`: 押されたときの進行。手が進んだら光らせ直しを終える。
+ * 手を引いている間に印の無いマスを押されたときの、印の押し直し。印の線を短く濃くして戻す。
+ * - `id`: 押されるたびに増やし、続けて押されても押し直す。
+ * - `progress`: 押されたときの進行。手が進んだら押し直しを終える。
  */
 type TakuzuTutorialRecall = {
   id: number;
@@ -110,7 +113,7 @@ function getCueDelayMs(
 
 /**
  * 違反の揺れは、違反が続いたとき（`violationSettled`）だけ返す。
- * 印は手を置くたびには付け直さず、光らせ直すとき（`recallId`）だけ光を重ねる。
+ * 印は手を置くたびには付け直さず、押し直すとき（`recallId`）だけ線を濃くする。
  */
 function getCellCues(
   state: TakuzuTutorialBoardState,
@@ -129,7 +132,7 @@ function getCellCues(
   ];
 }
 
-/** 直前の手への合図。違反の揺れか、ルールに合う手なら手順のマスを正しく置いた合図と決め手の光。 */
+/** 直前の手への合図。違反の揺れか、手順のマスを正しく置いた応え。 */
 function getMoveCues(
   { lastMove, moveCount }: TakuzuTutorialBoardState,
   violationSettled: boolean,
@@ -142,19 +145,39 @@ function getMoveCues(
       ? [{ cellIndex: lastMove.cellIndex, kind: "rejected", id: moveCount }]
       : [];
   }
-  const fittedCues: TakuzuCellCue[] = lastMove.fitsStep
+  return lastMove.fitsStep
     ? [{ cellIndex: lastMove.cellIndex, kind: "fitted", id: moveCount }]
     : [];
-  return [
-    ...fittedCues,
-    ...lastMove.reasonCellIndices.map(
-      (cellIndex): TakuzuCellCue => ({
-        cellIndex,
-        kind: "reason",
-        id: moveCount,
-      }),
-    ),
-  ];
+}
+
+/**
+ * 手を引いている間に元の明るさで見せるマス。ほかのマスは沈める。手を引いていなければ `null` で、何も沈めない。
+ * - 印が出ている間は、印を付ける手順のマスとその決め手。
+ * - 置いてから次の印を出すまでの間は、置いたマスとその決め手。前の手の決め手を、次の印の決め手と読み違えさせないため、印と一緒に替える。
+ * - ルールに合わない3連続のマスは、違反の地の上のタイルを読めるよう残す。
+ */
+function getFocusedCellIndices(
+  situation: TakuzuTutorialSituation,
+  state: TakuzuTutorialBoardState,
+  hintShown: boolean,
+  cellViews: readonly TakuzuCellView[],
+): number[] | null {
+  if (situation.step === null) {
+    return null;
+  }
+  const { lastMove } = state;
+  const focused = hintShown
+    ? [
+        ...situation.step.cellIndices,
+        ...getTakuzuTutorialStepReasonCellIndices(situation, state),
+      ]
+    : lastMove
+      ? [lastMove.cellIndex, ...lastMove.reasonCellIndices]
+      : [];
+  const runCellIndices = cellViews.flatMap((view, cellIndex) =>
+    view.inViolatingRun ? [cellIndex] : [],
+  );
+  return [...focused, ...runCellIndices];
 }
 
 /**
@@ -271,7 +294,7 @@ export function TakuzuTutorial({
     setOperation({ ...notice, id: operationIdRef.current });
   }
 
-  /** 印の無いマスを押されたら、赤は使わず、印を光らせ直して目を向けさせる。 */
+  /** 印の無いマスを押されたら、赤は使わず、印の線を短く濃くして目を向けさせる。 */
   function recallHint(): void {
     setRecall((current) => ({ id: (current?.id ?? 0) + 1, progress }));
   }
@@ -379,13 +402,27 @@ export function TakuzuTutorial({
               )}
               operation={operation}
               interactionDisabled={progress.phase !== "playing"}
-              cues={getCellCues(
-                boardState,
-                violationSettled,
-                hintCellIndices,
-                recallId,
-              )}
-              outlinesViolatedLines
+              focusedCellIndices={
+                progress.phase === "playing" && !goalShown
+                  ? getFocusedCellIndices(
+                      situation,
+                      boardState,
+                      cueShown,
+                      cellViews,
+                    )
+                  : null
+              }
+              cues={
+                // 完成の波と完成した盤面に、最後の手の合図を残さない。
+                progress.phase === "playing"
+                  ? getCellCues(
+                      boardState,
+                      violationSettled,
+                      hintCellIndices,
+                      recallId,
+                    )
+                  : []
+              }
               onCycleCell={handleCycleCell}
               onPlaceCell={handlePlaceCell}
             />

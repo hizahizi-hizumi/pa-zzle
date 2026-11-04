@@ -84,7 +84,7 @@ export type TakuzuTutorialBoardState = {
   lastMove: TakuzuTutorialMove | null;
 };
 
-type TakuzuTutorialSituation = TutorialSituation<
+export type TakuzuTutorialSituation = TutorialSituation<
   TakuzuTutorialRuleId,
   TakuzuTutorialStep
 >;
@@ -697,6 +697,29 @@ export function getTakuzuTutorialStepCellIndices(
   return (step?.cellIndices ?? []).filter(
     (cellIndex) => state.board.cells[cellIndex] !== solution.cells[cellIndex],
   );
+}
+
+/**
+ * 手順で印を付けるマスのタイルを決めるもの（決め手）のマス。手順で使わせる見方の決め手を先に探す。
+ * 印のマスに解と違うタイルが置かれていても、空けた盤面で決め手を探す。決まらない操作の手順と、手を離した後は空。
+ */
+export function getTakuzuTutorialStepReasonCellIndices(
+  situation: TakuzuTutorialSituation,
+  state: TakuzuTutorialBoardState,
+): readonly number[] {
+  const { step, earnedRuleIds } = situation;
+  const lessons = [
+    ...(step?.lesson ? [step.lesson] : []),
+    ...listLessons(earnedRuleIds),
+  ];
+  const reasonCellIndices = getTakuzuTutorialStepCellIndices(
+    situation,
+    state,
+  ).flatMap((cellIndex) => {
+    const emptied = placeTakuzuCell(givens, state.board, cellIndex, null);
+    return deduceCell(emptied, lessons, cellIndex)?.reasonCellIndices ?? [];
+  });
+  return [...new Set(reasonCellIndices)];
 }
 
 /**
