@@ -16,6 +16,7 @@ import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display
 import type { ProblemId } from "@/games/problem-id";
 import {
   GameHomeScreen,
+  type GameHomeScreenProps,
   type ZukanFeatureAxis,
 } from "@/zukan/ui/GameHomeScreen";
 import type {
@@ -162,6 +163,7 @@ function createScreen(
   shownZukan: GameZukan = zukan,
   changes: ZukanChanges = noZukanChanges,
   initialSelectedProblemId: ProblemId | null = null,
+  renderTutorial?: GameHomeScreenProps["renderTutorial"],
 ) {
   return (
     <MemoryRouter>
@@ -180,6 +182,7 @@ function createScreen(
         renderHowToPlayDialog={({ open }) =>
           open ? <p>遊び方のダイアログ</p> : null
         }
+        renderTutorial={renderTutorial}
         records={playRecords}
         playRecordDisplay={nanpurePlayRecordDisplay}
       />
@@ -191,8 +194,11 @@ function renderScreen(
   shownZukan: GameZukan = zukan,
   changes: ZukanChanges = noZukanChanges,
   initialSelectedProblemId: ProblemId | null = null,
+  renderTutorial?: GameHomeScreenProps["renderTutorial"],
 ) {
-  return render(createScreen(shownZukan, changes, initialSelectedProblemId));
+  return render(
+    createScreen(shownZukan, changes, initialSelectedProblemId, renderTutorial),
+  );
 }
 
 function getSheet(name: string): HTMLElement {
@@ -926,6 +932,12 @@ describe("GameHomeScreen", () => {
       expect(dialog).toBeTruthy();
     });
 
+    test("チュートリアルを渡さなければ、チュートリアルを開くボタンを出さないこと", () => {
+      const button = screen.queryByRole("button", { name: "チュートリアル" });
+
+      expect(button).toBeNull();
+    });
+
     test("絞り込みを開くまで、問題の特徴の値を求めないこと", () => {
       const calls = findProblemFeatureValues.mock.calls;
 
@@ -940,6 +952,58 @@ describe("GameHomeScreen", () => {
       expect(order).toEqual(["No.0005", "No.0006", "No.0007", "No.0008"]);
       expect(filterButton.getAttribute("aria-label")).toBe("絞り込み");
       expect(matchedCount).toBeNull();
+    });
+  });
+
+  describe("チュートリアルを渡した場合", () => {
+    beforeEach(() => {
+      renderScreen(
+        zukan,
+        noZukanChanges,
+        null,
+        ({ open, onClose, playStart }) =>
+          open ? (
+            <div role="dialog" aria-label="チュートリアル">
+              <button type="button" onClick={playStart.onStart}>
+                {`${playStart.difficulty}を遊ぶ`}
+              </button>
+              <button type="button" onClick={onClose}>
+                閉じる
+              </button>
+            </div>
+          ) : null,
+      );
+    });
+
+    test("チュートリアルを最初は開かないこと", () => {
+      const dialog = screen.queryByRole("dialog", { name: "チュートリアル" });
+
+      expect(dialog).toBeNull();
+    });
+
+    test("チュートリアルを押すと、ゲームのチュートリアルを開くこと", () => {
+      fireEvent.click(screen.getByRole("button", { name: "チュートリアル" }));
+
+      const dialog = screen.getByRole("dialog", { name: "チュートリアル" });
+
+      expect(dialog).toBeTruthy();
+    });
+
+    test("チュートリアルを閉じると、フォーカスをチュートリアルのボタンへ戻すこと", () => {
+      const button = screen.getByRole("button", { name: "チュートリアル" });
+      fireEvent.click(button);
+
+      fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+
+      expect(document.activeElement).toBe(button);
+    });
+
+    test("チュートリアルから遊び始めると、開いているレベルでプレイを始めること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "チュートリアル" }));
+
+      fireEvent.click(screen.getByRole("button", { name: "3を遊ぶ" }));
+
+      expect(onPlayRandom.mock.calls).toEqual([["3"]]);
     });
   });
 
