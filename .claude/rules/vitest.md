@@ -9,6 +9,7 @@ paths:
 
 - `bun:test`、Bun test runner固有API、Bunでしか動作しないAPIへ依存しない。
 - テストはNode上のVitestで実行可能にする。
+- テストの実行環境は層で決まる。各ゲームの `puzzle/`・`problem/`・`session/` と各ゲームの直下のテストは、画面（DOM）なしの node 環境で動くように書き、ファイルごとに環境を指定しない。
 
 ## テスト配置
 
