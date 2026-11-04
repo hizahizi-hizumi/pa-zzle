@@ -1,13 +1,17 @@
 import {
   analyzeHakoiriMusumePieceSet,
   createHakoiriMusumeNearProblemFilter,
+  HAKOIRI_MUSUME_MERGE_SHARE,
   HAKOIRI_MUSUME_NEAR_MOVE_COUNT,
   hakoiriMusumePieceSets,
   interleaveHakoiriMusumeProblems,
+  listHakoiriMusumeCandidates,
+  pickHakoiriMusumePieceSetProblems,
 } from "@/games/hakoiri-musume/problem/generation/pool-selection";
+import reference from "@/games/hakoiri-musume/problem/generation/research-reference.json";
 
 describe("hakoiriMusumePieceSets", () => {
-  test("空き2〜6の駒の組を66組持つこと", () => {
+  test("空き2〜6の駒の組を82組持つこと", () => {
     const empties = new Set(
       hakoiriMusumePieceSets.map(
         ({ vertical, horizontal, small }) =>
@@ -15,7 +19,7 @@ describe("hakoiriMusumePieceSets", () => {
       ),
     );
 
-    expect(hakoiriMusumePieceSets).toHaveLength(66);
+    expect(hakoiriMusumePieceSets).toHaveLength(82);
     expect([...empties].sort()).toEqual([2, 3, 4, 5, 6]);
   });
 });
@@ -52,6 +56,73 @@ describe("createHakoiriMusumeNearProblemFilter", () => {
       frontier = next;
     }
     return frontier[0]!;
+  }
+
+  function listNeighbors(from: number): number[] {
+    return Array.from(
+      { length: edgeStarts[from + 1]! - edgeStarts[from]! },
+      (_, offset) => edges[edgeStarts[from]! + offset]!,
+    );
+  }
+
+  /** `from` の最短解の上にある局面（`from` を含む）。 */
+  function listShortestDescendants(from: number): Set<number> {
+    const reached = new Set([from]);
+    const stack = [from];
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      for (const next of listNeighbors(current)) {
+        if (optimal[next] === optimal[current]! - 1 && !reached.has(next)) {
+          reached.add(next);
+          stack.push(next);
+        }
+      }
+    }
+    return reached;
+  }
+
+  /** `from` から近い問題とみなす手数以内で行ける局面。 */
+  function listWithinNearMoves(from: number): Set<number> {
+    const reached = new Set([from]);
+    let frontier = [from];
+    for (let step = 0; step < HAKOIRI_MUSUME_NEAR_MOVE_COUNT; step += 1) {
+      frontier = frontier.flatMap((current) =>
+        listNeighbors(current).filter((next) => {
+          const isNew = !reached.has(next);
+          reached.add(next);
+          return isNew;
+        }),
+      );
+    }
+    return reached;
+  }
+
+  /** `start` と手数でも最短解の上でも離れた候補ごとの、最短解が合流してからの手数の、短い方の最短手数に対する割合。 */
+  function listMergeShares(): { board: number; share: number }[] {
+    const startDescendants = listShortestDescendants(start);
+    const withinReach = listWithinNearMoves(start);
+    return boards.flatMap((_, board) => {
+      const descendants = listShortestDescendants(board);
+      if (
+        optimal[board]! <= 0 ||
+        withinReach.has(board) ||
+        startDescendants.has(board) ||
+        descendants.has(start)
+      ) {
+        return [];
+      }
+      const tail = Math.max(
+        ...[...descendants]
+          .filter((reached) => startDescendants.has(reached))
+          .map((reached) => optimal[reached]!),
+      );
+      return [
+        {
+          board,
+          share: tail / Math.min(optimal[board]!, optimal[start]!),
+        },
+      ];
+    });
   }
 
   /** `from` から最短手数が1つずつ減る向きへ `steps` 手進んだ局面（最短解の途中）。 */
@@ -91,6 +162,56 @@ describe("createHakoiriMusumeNearProblemFilter", () => {
     filter.take(onShortestPath);
 
     expect(filter.isNear(startBoard)).toBe(true);
+  });
+
+  test("最短解が合流してからの手数が、短い方の最短手数の決まった割合以上の局面だけを近い問題とすること", () => {
+    const shares = listMergeShares();
+    const filter = createHakoiriMusumeNearProblemFilter(space);
+    filter.take(startBoard);
+    const misjudged = shares.filter(
+      ({ board, share }) =>
+        filter.isNear(boards[board]!) !== share >= HAKOIRI_MUSUME_MERGE_SHARE,
+    );
+
+    expect(
+      shares.some(({ share }) => share >= HAKOIRI_MUSUME_MERGE_SHARE),
+    ).toBe(true);
+    expect(shares.some(({ share }) => share < HAKOIRI_MUSUME_MERGE_SHARE)).toBe(
+      true,
+    );
+    expect(misjudged).toEqual([]);
+  });
+});
+
+describe("pickHakoiriMusumePieceSetProblems", () => {
+  // 調査コードが同じ規則と順で採った数。状態の数が少ない駒の組だけを確かめる。
+  const cases = reference.pieceSets.filter(({ states }) => states <= 20_000);
+
+  test.each(cases)(
+    "近い問題を除いて採る数が、レベルごとに調査コードと一致すること: $pieceSet",
+    ({ pieceSet, picked }) => {
+      const space = analyzeHakoiriMusumePieceSet(pieceSet);
+      const problems = pickHakoiriMusumePieceSetProblems(
+        space,
+        listHakoiriMusumeCandidates(space, reference.seed),
+        reference.seed,
+        reference.packingRule.limit,
+      );
+      const counts = Object.fromEntries(
+        Object.entries(problems).flatMap(([level, levelProblems]) =>
+          levelProblems.length > 0 ? [[level, levelProblems.length]] : [],
+        ),
+      );
+
+      expect(counts).toEqual(picked);
+    },
+  );
+
+  test("調査コードと同じ近さの規則であること", () => {
+    expect(reference.packingRule).toMatchObject({
+      nearMoveCount: HAKOIRI_MUSUME_NEAR_MOVE_COUNT,
+      mergeShare: HAKOIRI_MUSUME_MERGE_SHARE,
+    });
   });
 });
 

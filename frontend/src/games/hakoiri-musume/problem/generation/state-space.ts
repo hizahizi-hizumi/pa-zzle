@@ -326,13 +326,14 @@ export function createHakoiriMusumeComponentGraph(
 }
 
 /**
- * 盤面ごとの、最短手数と難易度の特徴。どれも最短解の DAG の上で、最短解の選び方に依らない最小をとる。
+ * 盤面ごとの、最短手数と難易度の特徴。
  * - `optimal`: 娘を出口の前へ運ぶ最短手数。運べなければ -1。
- * - `preparation`: 準備の長さ。最短解の中で、娘を動かさずに続ける手の連続の最長。
- * - `detour`: 娘の遠回り。最短解の中で、娘の左上と出口の前のマンハッタン距離が増える手の数。
- * - `lure`: 誘いの局面の数。娘を出口へ近づける手があるのに、それが最短を縮めない局面の数。
- * - `daughterMoves`: 最短解で娘を動かす手の数。
- * - `optimalFirstMoves`: 最短手数を縮める初手の数。
+ * - `preparation`: 準備の長さ。娘が出口へ今までで最も近づく（出口の前との距離が今までの最小を下回る）手を「前進」とし、
+ *   前進と前進のあいだに要る手の数の最長。どんな長さの解でもよく、その最長が最も小さくなる解で数える。
+ *   娘を往復させても、遠ざけた分を戻す手は前進にならないので、手を足して短くすることはできない。
+ * - `detour`: 娘の遠回り。娘の左上と出口の前のマンハッタン距離が増える手の数。どんな長さの解でもよく、最も少ない解で数える。
+ * - `lure`・`daughterMoves`・`optimalFirstMoves`: 最短解の上で、値が最も少ない解で数える（記録だけ）。
+ *   誘いの局面の数、娘を動かす手の数、最短手数を縮める初手の数。
  * - `firstMoves`: 初手の合法手の数。
  */
 export type HakoiriMusumeStateMeasures = {
@@ -350,7 +351,10 @@ const goalPosition = {
   column: HAKOIRI_MUSUME_GOAL_CELL % HAKOIRI_MUSUME_COLUMNS,
 };
 
-function measureDaughterDistance(daughterCell: number): number {
+/** 娘の左上と出口の前のマンハッタン距離。娘が盤面のどこにいても 4 以下。 */
+export function measureHakoiriMusumeDaughterDistance(
+  daughterCell: number,
+): number {
   return (
     Math.abs(
       Math.floor(daughterCell / HAKOIRI_MUSUME_COLUMNS) - goalPosition.row,
@@ -358,36 +362,149 @@ function measureDaughterDistance(daughterCell: number): number {
   );
 }
 
-/**
- * 準備の長さを、最短解の後ろから求めるための組（`run`: 盤面から最初に娘を動かすまでの手の数、`longest`: それまでを含む
- * 連続の最長）。`run` が長くても `longest` が小さい道があるので、`run` ごとに `longest` の最小を残す（パレート前線）。
- */
-type PreparationFront = readonly (readonly [run: number, longest: number])[];
+const maximumDaughterDistance = 4;
+const unreached = 2_147_483_647;
 
-function reduceFront(candidates: [number, number][]): {
-  front: PreparationFront;
-  best: number;
-} {
-  candidates.sort((left, right) => left[0] - right[0] || left[1] - right[1]);
-  const front: [number, number][] = [];
-  let best = Number.POSITIVE_INFINITY;
-  for (const [run, longest] of candidates) {
-    if (longest < best) {
-      front.push([run, longest]);
-      best = longest;
+/**
+ * 準備の長さ（`HakoiriMusumeStateMeasures` の `preparation`）。前進した直後の盤面（娘が今までで最も出口に近い盤面）ごとに、
+ * 次の前進までに要る手の数と、その先の準備の長さの大きい方を、最も小さくする。距離の小さい盤面から順に求める。運べなければ -1。
+ *
+ * 距離 `r` の盤面 `u` の値は、距離 `r` 以上の盤面だけを通って、距離が `r` より小さい盤面 `v` へ動ける盤面 `w` までの手の数
+ * `d(u, w)` と、`v` の値 `c` の組の `max(d, c)` の最小。値が `T` 以下になるのは、`c` が `T` 以下の `w` のどれかへ `T` 手以内で
+ * 行けるときなので、`T` を 0 から1つずつ上げ、`c` が `T` の `w` を起点に足しながら、起点からの手の数を幅優先で更新していく。
+ */
+function measureRecordPreparation(
+  graph: HakoiriMusumeStateGraph,
+  distance: Int32Array,
+  optimal: Int32Array,
+): Int32Array {
+  const { boards, edgeStarts, edges } = graph;
+  const count = boards.length;
+  const preparation = new Int32Array(count).fill(-1);
+  for (let index = 0; index < count; index += 1) {
+    if (optimal[index] === 0) {
+      preparation[index] = 0;
     }
   }
-  return { front, best };
+  const stepsToExit = new Int32Array(count);
+  for (let record = 1; record <= maximumDaughterDistance; record += 1) {
+    stepsToExit.fill(unreached);
+    const exitsByValue: number[][] = [];
+    for (let exit = 0; exit < count; exit += 1) {
+      if (distance[exit]! < record) {
+        continue;
+      }
+      let best = unreached;
+      for (
+        let edge = edgeStarts[exit]!;
+        edge < edgeStarts[exit + 1]!;
+        edge += 1
+      ) {
+        const next = edges[edge]!;
+        if (distance[next]! < record && preparation[next]! >= 0) {
+          best = Math.min(best, preparation[next]!);
+        }
+      }
+      if (best !== unreached) {
+        (exitsByValue[best] ??= []).push(exit);
+      }
+    }
+    // 値を求める盤面は、距離 `r` で、前進できる盤面（`r` を下回る盤面へ動ける盤面）へたどり着けるものだけ。
+    let pending = boards.flatMap((_, index) =>
+      distance[index] === record && optimal[index]! > 0 ? [index] : [],
+    );
+    for (
+      let threshold = 0;
+      pending.length > 0 && threshold < count;
+      threshold += 1
+    ) {
+      const queue = exitsByValue[threshold] ?? [];
+      for (const exit of queue) {
+        stepsToExit[exit] = 0;
+      }
+      for (let head = 0; head < queue.length; head += 1) {
+        const current = queue[head]!;
+        for (
+          let edge = edgeStarts[current]!;
+          edge < edgeStarts[current + 1]!;
+          edge += 1
+        ) {
+          const previous = edges[edge]!;
+          if (
+            distance[previous]! >= record &&
+            stepsToExit[current]! + 1 < stepsToExit[previous]!
+          ) {
+            stepsToExit[previous] = stepsToExit[current]! + 1;
+            queue.push(previous);
+          }
+        }
+      }
+      pending = pending.filter((index) => {
+        if (stepsToExit[index]! <= threshold) {
+          preparation[index] = threshold;
+          return false;
+        }
+        return true;
+      });
+    }
+  }
+  return preparation;
 }
 
-/** ゴール（娘が出口の前）からの多始点の幅優先探索で最短手数を求め、最短手数の小さい順に特徴を積み上げる。 */
+/**
+ * 娘の遠回り（`HakoiriMusumeStateMeasures` の `detour`）。娘を出口から遠ざける手を 1、ほかの手を 0 とした、出口の前までの最小の和。
+ * 手は戻せる（辺は両向き）ので、出口の前から逆にたどる 0-1 の幅優先探索で求める。運べなければ -1。
+ */
+function measureDetour(
+  graph: HakoiriMusumeStateGraph,
+  distance: Int32Array,
+  optimal: Int32Array,
+): Int32Array {
+  const { boards, edgeStarts, edges } = graph;
+  const detour = new Int32Array(boards.length).fill(unreached);
+  let level: number[] = [];
+  boards.forEach((_, index) => {
+    if (optimal[index] === 0) {
+      detour[index] = 0;
+      level.push(index);
+    }
+  });
+  for (let cost = 0; level.length > 0; cost += 1) {
+    const nextLevel: number[] = [];
+    for (let head = 0; head < level.length; head += 1) {
+      const current = level[head]!;
+      if (detour[current] !== cost) {
+        continue;
+      }
+      for (
+        let edge = edgeStarts[current]!;
+        edge < edgeStarts[current + 1]!;
+        edge += 1
+      ) {
+        const previous = edges[edge]!;
+        const away = distance[current]! > distance[previous]! ? 1 : 0;
+        if (cost + away < detour[previous]!) {
+          detour[previous] = cost + away;
+          (away ? nextLevel : level).push(previous);
+        }
+      }
+    }
+    level = nextLevel;
+  }
+  return detour.map((value) => (value === unreached ? -1 : value));
+}
+
+/** ゴール（娘が出口の前）からの多始点の幅優先探索で最短手数を求め、特徴を求める。 */
 export function measureHakoiriMusumeStateGraph(
   graph: HakoiriMusumeStateGraph,
 ): HakoiriMusumeStateMeasures {
   const { boards, edgeStarts, edges } = graph;
   const count = boards.length;
   const daughterCell = Int32Array.from(boards, findHakoiriMusumeDaughterCell);
-  const distance = Int32Array.from(daughterCell, measureDaughterDistance);
+  const distance = Int32Array.from(
+    daughterCell,
+    measureHakoiriMusumeDaughterDistance,
+  );
   const optimal = new Int32Array(count).fill(-1);
   const order: number[] = [];
   for (let index = 0; index < count; index += 1) {
@@ -413,19 +530,15 @@ export function measureHakoiriMusumeStateGraph(
 
   const measures: HakoiriMusumeStateMeasures = {
     optimal,
-    preparation: new Int32Array(count),
-    detour: new Int32Array(count),
+    preparation: measureRecordPreparation(graph, distance, optimal),
+    detour: measureDetour(graph, distance, optimal),
     lure: new Int32Array(count),
     daughterMoves: new Int32Array(count),
     optimalFirstMoves: new Int32Array(count),
     firstMoves: new Int32Array(count),
   };
-  const fronts = new Array<PreparationFront>(count);
   for (const current of order) {
-    measures.firstMoves[current] =
-      edgeStarts[current + 1]! - edgeStarts[current]!;
     if (optimal[current] === 0) {
-      fronts[current] = [[0, 0]];
       continue;
     }
     const remaining = optimal[current]!;
@@ -440,11 +553,9 @@ export function measureHakoiriMusumeStateGraph(
         tempted = true;
       }
     }
-    let detour = Number.POSITIVE_INFINITY;
     let lure = Number.POSITIVE_INFINITY;
     let daughterMoves = Number.POSITIVE_INFINITY;
     let optimalFirstMoves = 0;
-    const candidates: [number, number][] = [];
     for (
       let edge = edgeStarts[current]!;
       edge < edgeStarts[current + 1]!;
@@ -456,33 +567,18 @@ export function measureHakoiriMusumeStateGraph(
       }
       optimalFirstMoves += 1;
       const movesDaughter = daughterCell[next] !== daughterCell[current];
-      detour = Math.min(
-        detour,
-        (distance[next]! > distance[current]! ? 1 : 0) + measures.detour[next]!,
-      );
       lure = Math.min(lure, (tempted ? 1 : 0) + measures.lure[next]!);
       daughterMoves = Math.min(
         daughterMoves,
         (movesDaughter ? 1 : 0) + measures.daughterMoves[next]!,
       );
-      for (const [run, longest] of fronts[next]!) {
-        candidates.push(
-          movesDaughter ? [0, longest] : [run + 1, Math.max(longest, run + 1)],
-        );
-      }
     }
-    const { front, best } = reduceFront(candidates);
-    fronts[current] = front;
-    measures.preparation[current] = best;
-    measures.detour[current] = detour;
     measures.lure[current] = lure;
     measures.daughterMoves[current] = daughterMoves;
     measures.optimalFirstMoves[current] = optimalFirstMoves;
   }
   for (let index = 0; index < count; index += 1) {
-    if (optimal[index] === -1) {
-      measures.firstMoves[index] = edgeStarts[index + 1]! - edgeStarts[index]!;
-    }
+    measures.firstMoves[index] = edgeStarts[index + 1]! - edgeStarts[index]!;
   }
   return measures;
 }

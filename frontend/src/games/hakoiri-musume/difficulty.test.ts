@@ -6,40 +6,33 @@ import {
 } from "@/games/hakoiri-musume/difficulty";
 import reference from "@/games/hakoiri-musume/problem/generation/research-reference.json";
 
-/** 調査コードの範囲の書き方（上限のない範囲は 99）を、基準表の書き方にする。 */
-function toRange([minimum, maximum]: readonly number[]) {
+/** 調査コードの範囲の書き方（上限のない範囲は `null`）を、基準表の書き方にする。 */
+function toRange([minimum, maximum]: readonly (number | null)[]) {
   return {
     minimum: minimum!,
-    maximum: maximum === 99 ? Number.POSITIVE_INFINITY : maximum!,
+    maximum: maximum ?? Number.POSITIVE_INFINITY,
   };
 }
 
 describe("hakoiriMusumeLevelCriteria", () => {
   const { criteria } = reference;
 
-  test("調査で決めた案 E の基準表と同じ範囲であること", () => {
+  test("調査で決めた案 F の基準表と同じ範囲であること", () => {
     const fromResearch = Object.fromEntries(
-      Object.keys(criteria.prep).map((level) => [
+      Object.entries(criteria.levels).map(([level, ranges]) => [
         level,
         {
-          preparationLength: toRange(
-            criteria.prep[level as keyof typeof criteria.prep],
-          ),
-          daughterDetourCount: toRange(
-            criteria.bmin[level as keyof typeof criteria.bmin],
-          ),
-          emptyCellCount: toRange(
-            criteria.empties[level as keyof typeof criteria.empties],
-          ),
+          preparationLength: toRange(ranges.preparationLength),
+          daughterDetourCount: toRange(ranges.daughterDetourCount),
+          emptyCellCount: toRange(ranges.emptyCellCount),
         },
       ]),
     );
 
     expect(hakoiriMusumeLevelCriteria).toEqual(fromResearch);
-    expect(hakoiriMusumeOptimalMoveCountRange).toEqual({
-      minimum: criteria.opt_floor,
-      maximum: criteria.opt_ceil,
-    });
+    expect(hakoiriMusumeOptimalMoveCountRange).toEqual(
+      toRange(criteria.optimalMoveCount),
+    );
   });
 });
 
@@ -59,48 +52,48 @@ describe("classifyHakoiriMusumeFeatures", () => {
       "最短91手",
       {
         optimalMoveCount: 91,
-        preparationLength: 20,
+        preparationLength: 40,
         daughterDetourCount: 3,
         emptyCellCount: 2,
       },
       { status: "out-of-range", reason: "too-long" },
     ],
     [
-      "準備4手・遠回り1回・空き4",
+      "準備6手・遠回り0回・空き4（合意の易しい例）",
       {
         optimalMoveCount: 13,
-        preparationLength: 4,
-        daughterDetourCount: 1,
+        preparationLength: 6,
+        daughterDetourCount: 0,
         emptyCellCount: 4,
       },
       { status: "classified", difficulty: "1" },
     ],
     [
-      "準備5手だが遠回りが無い",
+      "準備6手だが遠回りが1回ある",
       {
         optimalMoveCount: 15,
-        preparationLength: 5,
-        daughterDetourCount: 0,
+        preparationLength: 6,
+        daughterDetourCount: 1,
         emptyCellCount: 4,
       },
       { status: "out-of-range", reason: "unlisted-combination" },
     ],
     [
-      "準備12手で空き4",
+      "準備16手で空き5",
       {
-        optimalMoveCount: 40,
-        preparationLength: 12,
-        daughterDetourCount: 2,
-        emptyCellCount: 4,
+        optimalMoveCount: 30,
+        preparationLength: 16,
+        daughterDetourCount: 1,
+        emptyCellCount: 5,
       },
       { status: "out-of-range", reason: "unlisted-combination" },
     ],
     [
-      "準備25手・遠回り3回・空き2（横刀立馬）",
+      "準備30手・遠回り2回・空き2（横刀立馬）",
       {
         optimalMoveCount: 81,
-        preparationLength: 25,
-        daughterDetourCount: 3,
+        preparationLength: 30,
+        daughterDetourCount: 2,
         emptyCellCount: 2,
       },
       { status: "classified", difficulty: "5" },

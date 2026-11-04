@@ -7,8 +7,9 @@
 やること
   1. 候補空間（駒の組 = 縦長・横長・小駒の数）ごとに、置き方を全部数え上げ、
      ゴールからの多始点 BFS で全状態の最短手数を求める。
-  2. 最短解の DAG の上で、解き方の道筋に依らない特徴（最短解のうちの最小・最大）を求める。
-  3. つまみの案（A〜E）ごとに、レベル1〜5 の仮の基準表で全候補を分類し、
+  2. 最短解の DAG の上で、解き方の道筋に依らない特徴（最短解のうちの最小・最大）を求め、
+     どんな長さの解でも崩れない準備の長さ（rprep）と娘の遠回り（adet）を求める。
+  3. つまみの案（A〜F）ごとに、レベル1〜5 の仮の基準表で全候補を分類し、
      分布（B1/B2/B4）・数え方の変種（A3）・素朴な解き方（D1）・収率（E1/E3）・天井（D2）を出す。
   4. 採った案の seed ごとの結果を移植の期待値（.expected.json）に書く。
 
@@ -60,8 +61,8 @@ GOAL_A = POS[0].index(GOAL_RC)
 
 # 候補空間: (空き, 長い駒の数 = 縦長+横長, 小駒の数)。縦長と横長の分け方はすべて入れる。
 FAMILY_SHAPES = [
-    (2, 5, 4), (2, 6, 2), (2, 4, 6),
-    (3, 5, 3), (3, 6, 1),
+    (2, 5, 4), (2, 6, 2), (2, 4, 6), (2, 3, 8), (2, 2, 10),
+    (3, 5, 3), (3, 6, 1), (3, 4, 5), (3, 3, 7),
     (4, 5, 2), (4, 4, 4), (4, 6, 0),
     (5, 5, 1),
     (6, 5, 0), (6, 4, 2),
@@ -184,6 +185,38 @@ def parse_rows(rows):
     return tuple(sorted(st))
 
 
+def board_text(st):
+    """ゲームの盤面の20文字（`A` 娘、`v`/`w` 縦長、`h`/`i` 横長、`s` 小駒、`.` 空き）。"""
+    g = ["."] * (W * H)
+    for t, p in st:
+        r, c = POS[t][p]
+        i = r * W + c
+        if t == 0:
+            for a in (0, 1, W, W + 1):
+                g[i + a] = "A"
+        elif t == 1:
+            g[i], g[i + W] = "v", "w"
+        elif t == 2:
+            g[i], g[i + 1] = "h", "i"
+        else:
+            g[i] = "s"
+    return "".join(g)
+
+
+def fnv(text):
+    """ゲームの `hashProblemSeed`（FNV-1a 32bit）と同じ値。候補を見る順と左右反転の向きをゲームとそろえるのに使う。"""
+    h = 0x811C9DC5
+    for ch in text:
+        h ^= ord(ch)
+        h = (h * 0x01000193) & 0xFFFFFFFF
+    return h
+
+
+def chosen_orientation(seed, text, mirrored_text):
+    first, second = sorted((text, mirrored_text))
+    return first if fnv(f"{seed}:orientation:{first}") % 2 == 0 else second
+
+
 # ---------------------------------------------------------------- 分析
 
 def analyze_set(ps):
@@ -292,7 +325,86 @@ def analyze_set(ps):
         f["lmin"][u] = l1; f["lsum"][u] = l2; f["dmv"][u] = dm; f["nopt"][u] = nopt
     f["branch"] = [len(x) for x in E]
     f["ar"] = ar
+    f["rprep"] = record_preparation(E, d, adist)
+    f["adet"] = any_detour(E, d, adist)
     return S, idx, E, d, comp, f
+
+
+def record_preparation(E, d, adist):
+    """準備の長さ（記録の更新で区切る、任意の長さの解での最小）。
+
+    娘が出口の前へ今までで最も近づく手（距離が今までの最小を下回る手）を「前進」とし、前進と前進のあいだの手の数の最長を、
+    どんな長さの解でもよく、最も小さくなる解で数える。距離 r の盤面の値は、距離 r 以上の盤面だけを通って、距離が r より小さい
+    盤面へ動ける盤面 w までの手の数と、その先の値 c の max の最小。閾値 T を 0 から上げ、c が T の w を起点に足しながら
+    起点からの手の数を幅優先で更新する。運べなければ -1。"""
+    N = len(E)
+    INF = 10 ** 9
+    rp = [-1] * N
+    for i in range(N):
+        if d[i] == 0:
+            rp[i] = 0
+    for r in range(1, 5):
+        steps = [INF] * N
+        exits = {}
+        for w in range(N):
+            if adist[w] < r:
+                continue
+            best = INF
+            for v in E[w]:
+                if adist[v] < r and rp[v] >= 0 and rp[v] < best:
+                    best = rp[v]
+            if best < INF:
+                exits.setdefault(best, []).append(w)
+        pending = {i for i in range(N) if adist[i] == r and d[i] > 0}
+        buckets = {}
+        T = 0
+        while pending and T < N:
+            q = deque()
+            for w in exits.get(T, ()):
+                if steps[w] > 0:
+                    steps[w] = 0
+                    q.append(w)
+            while q:
+                u = q.popleft()
+                su = steps[u]
+                if adist[u] == r and u in pending and su <= T:
+                    rp[u] = T
+                    pending.discard(u)
+                elif adist[u] == r and u in pending:
+                    buckets.setdefault(su, []).append(u)
+                for x in E[u]:
+                    if adist[x] >= r and su + 1 < steps[x]:
+                        steps[x] = su + 1
+                        q.append(x)
+            for u in buckets.pop(T, ()):
+                if u in pending and steps[u] <= T:
+                    rp[u] = T
+                    pending.discard(u)
+            T += 1
+    return rp
+
+
+def any_detour(E, d, adist):
+    """娘の遠回り（任意の長さの解での最小）。出口の前から逆にたどる 0-1 の幅優先探索。運べなければ -1。"""
+    N = len(E)
+    INF = 10 ** 9
+    dt = [INF] * N
+    q = deque()
+    for i in range(N):
+        if d[i] == 0:
+            dt[i] = 0
+            q.append(i)
+    while q:
+        v = q.popleft()
+        for x in E[v]:
+            w = 1 if adist[v] > adist[x] else 0
+            if dt[v] + w < dt[x]:
+                dt[x] = dt[v] + w
+                if w:
+                    q.append(x)
+                else:
+                    q.appendleft(x)
+    return [x if x < INF else -1 for x in dt]
 
 
 # ---------------------------------------------------------------- 案（仮の基準表）
@@ -308,6 +420,8 @@ PLAN_DESC = {
     "D": "誘いの局面の数（娘を出口へ近づけられるが最短から外れる局面）の帯 + 空きの範囲",
     "E": "準備の長さの帯 + 娘の遠回りの回数の範囲 + 空きの範囲",
     "E0": "E の閾値違い（レベル2 の遠回りを 0〜1 回まで許す）。別の案ではなく E の境目の比較",
+    "F": "E の準備の長さと遠回りを、どんな長さの解でも崩れない数え方にしたもの（準備: 娘が今までで最も出口に近づく手で区切る、"
+         "遠回り: 任意の長さの解での最小）+ 空きの範囲。山場2の確かめ（F1）の所見で E から作り直した",
 }
 BANDS = {
     "A": ("opt", {1: (8, 15), 2: (16, 25), 3: (26, 40), 4: (41, 60), 5: (61, 90)}),
@@ -316,13 +430,17 @@ BANDS = {
     "D": ("lmin", {1: (0, 0), 2: (1, 1), 3: (2, 2), 4: (3, 3), 5: (4, 99)}),
     "E": ("prep", {1: (0, 4), 2: (5, 7), 3: (8, 11), 4: (12, 16), 5: (17, 99)}),
     "E0": ("prep", {1: (0, 4), 2: (5, 7), 3: (8, 11), 4: (12, 16), 5: (17, 99)}),
+    "F": ("rprep", {1: (0, 8), 2: (9, 15), 3: (16, 22), 4: (23, 29), 5: (30, 999)}),
 }
 BACK_RANGE = {
     "E": {1: (0, 1), 2: (1, 1), 3: (1, 2), 4: (2, 3), 5: (3, 99)},
     "E0": {1: (0, 1), 2: (0, 1), 3: (1, 2), 4: (2, 3), 5: (3, 99)},
+    "F": {1: (0, 0), 2: (0, 1), 3: (1, 2), 4: (1, 2), 5: (2, 99)},
 }
+# 遠回りの範囲を確かめる特徴。F はどんな長さの解でも崩れない遠回り。
+BACK_KEY = {"F": "adet"}
 PLANS = list(PLAN_DESC)
-CHOSEN = "E"
+CHOSEN = "F"
 
 
 def classify(plan, x, sub=None):
@@ -349,7 +467,7 @@ def classify(plan, x, sub=None):
         return "unlisted-combination"
     if plan in BACK_RANGE:
         lo, hi = BACK_RANGE[plan][lvl]
-        if not lo <= g("bmin") <= hi:
+        if not lo <= g(BACK_KEY.get(plan, "bmin")) <= hi:
             return "unlisted-combination"
     return lvl
 
@@ -388,50 +506,83 @@ SAMPLES_OTHER = 1
 
 # ---------------------------------------------------------------- 近い問題（E3）
 PACK_RADIUS = 4       # この手数以内で行き来できる2問は近い問題とみなす
+PACK_MERGE_SHARE = 0.5  # 2問の最短解が合流し、共通の後半が短い方の最短手数のこの割合以上なら近い問題とみなす
 PACK_CAP_BALL = 1000  # 駒の組・レベルごとに数える上限（時間のため）
-PACK_CAP_STRICT = 300
+PACK_CAP_STRICT = 500 # ゲームの問題集の生成と同じ（1レベルの問題数の上限）
+NO_OWNER = 2 ** 31 - 1
 
 
 def pack(lst, E, d, radius, strict, cap):
-    """lst の順に採り、採った問題から radius 手以内の状態を除く。
-    strict では、採った問題の最短解の上にある状態（最短の子孫）と、
-    採った問題を最短解の上に持つ状態（最短の祖先）も除く（解の後半が同じになるため）。"""
-    blocked = set()
+    """lst の順に採り、採った問題から radius 手以内の状態を除く（手数の探索は採った問題ごとに、前の印で止めずにたどる）。
+    strict では、採った問題を最短解の上に持つ状態（最短の祖先）と、最短解が採った問題の最短解と合流して共通の後半が
+    PACK_MERGE_SHARE 以上になる状態（採った問題の最短解の上にある状態を含む）も除く。
+    ゲームの問題集の生成（`pool-selection.ts`）と同じ規則。"""
+    near = set()
+    ancestors = set()
+    owner = {}  # 最短の子孫 -> そこを通る採った問題の最短手数の最小
+    shortest_taken = NO_OWNER
     picked = 0
+
+    def merges(i):
+        if shortest_taken == NO_OWNER:
+            return False
+        own = d[i]
+        floor = PACK_MERGE_SHARE * min(own, shortest_taken)
+        seen = {i}
+        q = [i]
+        while q:
+            u = q.pop()
+            if u in owner and d[u] >= PACK_MERGE_SHARE * min(own, owner[u]):
+                return True
+            for v in E[u]:
+                if d[v] == d[u] - 1 and d[v] >= floor and v not in seen:
+                    seen.add(v)
+                    q.append(v)
+        return False
+
     for i in lst:
-        if i in blocked:
+        if i in near or (strict and (i in ancestors or merges(i))):
             continue
         picked += 1
         if picked >= cap:
             break
+        seen = {i}
         frontier = [i]
-        blocked.add(i)
         for _ in range(radius):
             nxt = []
             for u in frontier:
                 for v in E[u]:
-                    if v not in blocked:
-                        blocked.add(v)
+                    if v not in seen:
+                        seen.add(v)
                         nxt.append(v)
             frontier = nxt
+        near |= seen
         if strict:
-            for sign in (-1, 1):
-                q = [i]
-                seen = {i}
-                while q:
-                    u = q.pop()
-                    for v in E[u]:
-                        if d[v] == d[u] + sign and v not in seen:
-                            seen.add(v)
-                            q.append(v)
-                blocked |= seen
+            ancestors.add(i)
+            q = [i]
+            while q:
+                u = q.pop()
+                for v in E[u]:
+                    if d[v] == d[u] + 1 and v not in ancestors:
+                        ancestors.add(v)
+                        q.append(v)
+            own = d[i]
+            owner[i] = min(owner.get(i, NO_OWNER), own)
+            q = [i]
+            while q:
+                u = q.pop()
+                for v in E[u]:
+                    if d[v] == d[u] - 1 and owner.get(v, NO_OWNER) > own:
+                        owner[v] = own
+                        q.append(v)
+            shortest_taken = min(shortest_taken, own)
     return picked
 
 
 # ---------------------------------------------------------------- 1つの駒の組の処理
 
 JOINT = ("opt", "bmin", "prep", "lmin", "branch", "e")
-FEATS = ("opt", "bmin", "prep", "lmin", "dmv", "branch", "nopt", "ar", "e")
+FEATS = ("opt", "bmin", "prep", "lmin", "dmv", "branch", "nopt", "ar", "e", "rprep", "adet")
 
 
 def process(args):
@@ -450,13 +601,14 @@ def process(args):
     seen_n = {p: Counter() for p in PLANS}
     cand = 0
     chosen_idx = {}
+    texts = [board_text(st) for st in S]
     for i in range(N):
         if d[i] <= 0:
             continue
         mi = idx[mirror(S[i])]
-        if mi < i:
+        if chosen_orientation(seed, texts[i], texts[mi]) != texts[i]:
             # 左右反転は同じ問題。特徴が一致するかだけ確かめる
-            for k in ("bmin", "prep", "lmin", "bmax", "prepf"):
+            for k in ("bmin", "prep", "lmin", "bmax", "prepf", "rprep", "adet"):
                 if f[k][i] != f[k][mi]:
                     mirror_mismatch += 1
                     break
@@ -522,8 +674,7 @@ def process(args):
     # E3: 近い問題を除いたときに採れる数（採った案だけ）
     packing = {}
     for L, lst in chosen_idx.items():
-        lst = list(lst)
-        rng.shuffle(lst)
+        lst = sorted(lst, key=lambda i: (fnv(f"{seed}:{texts[i]}"), texts[i]))
         packing[L] = {"ball": pack(lst, E, d, PACK_RADIUS, False, PACK_CAP_BALL),
                       "strict": pack(lst, E, d, PACK_RADIUS, True, PACK_CAP_STRICT)}
     # 成分ごとの最大最短手数
@@ -743,7 +894,7 @@ def fixture_features(rows):
     ps = (cnt[1], cnt[2], cnt[3])
     S, idx, E, d, comp, f = analyze_set(ps)
     i = idx[st]
-    x = {k: f[k][i] for k in ("bmin", "bmax", "brow", "prep", "prepf", "lmin", "lsum", "dmv", "branch", "nopt")}
+    x = {k: f[k][i] for k in ("bmin", "bmax", "brow", "prep", "prepf", "lmin", "lsum", "dmv", "branch", "nopt", "rprep", "adet")}
     x["opt"] = d[i]
     x["e"] = empties(ps)
     return ps, x
@@ -769,8 +920,8 @@ def expected(out):
                             "levels": {str(L): (r["acc"][CHOSEN].get(L) or {}).get("n", 0) for L in range(1, 6)},
                             "status": r["status"][CHOSEN],
                             "near_duplicate_packing": r["packing"]} for r in res],
-        "packing_rule": {"radius": PACK_RADIUS, "cap_ball": PACK_CAP_BALL, "cap_strict": PACK_CAP_STRICT,
-                         "order": "seed から作る乱数で候補を並べ替えた順"},
+        "packing_rule": {"radius": PACK_RADIUS, "merge_share": PACK_MERGE_SHARE, "cap_ball": PACK_CAP_BALL,
+                         "cap_strict": PACK_CAP_STRICT, "order": "fnv(seed:盤面) の小さい順、同じなら盤面の順"},
         "fixtures": fixtures,
     }
 

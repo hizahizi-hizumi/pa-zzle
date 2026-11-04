@@ -15,8 +15,10 @@ export type HakoiriMusumeDifficulty = DifficultyLevel;
 
 /**
  * 1つのレベルの基準。準備の長さの帯でレベルが1つに決まり、娘の遠回りと空きはそのレベルで許す範囲として確かめる。
- * - `preparationLength`: 娘を動かせないあいだに、よける駒と順を頭の中でつなぐ長さ。
- * - `daughterDetourCount`: 娘をいったん出口から遠ざける、見た目の進み具合に逆らう判断の回数。
+ * どちらの量も、どんな長さの解でもよく、値が最も小さくなる解で数える（娘を往復させるなど、手を足しても小さくならない）。
+ * - `preparationLength`: 娘が出口へ新しく一歩近づくまでに要る手の数の最長。その間は盤面に進み具合が見えず、よける駒と順を
+ *   頭の中でつなぐ読みが要る。
+ * - `daughterDetourCount`: どう解いても避けられない、娘を出口から遠ざける手の数。見た目の進み具合に逆らう判断の回数。
  * - `emptyCellCount`: 空きマスの数。少ないほど、1つの駒を動かすために先に動かす駒の連鎖が長い。隣のレベルと重ね、規模だけで
  *   レベルが決まらないようにする。
  */
@@ -30,32 +32,33 @@ const unbounded = Number.POSITIVE_INFINITY;
 
 /**
  * 各レベルの基準（暫定値。人の試遊で確かめる前）。上のレベルは、準備の長さ・遠回り・空きのどの系統でも下げない。
- * レベル2 の遠回りを「ちょうど1回」にして、娘を一度わきへよけることをレベル1 との違いにする。
+ * レベル1 の準備の上限は合意の易しい例（準備6）が入る値、レベル5 の下限は合意の天井の横刀立馬（準備30・遠回り2・空き2）が入る値に
+ * 置き、その間を準備の長さ7手ずつに分けた。遠回りはレベル3 から1回以上、レベル5 で2回以上を求める。
  */
 export const hakoiriMusumeLevelCriteria = {
   "1": {
-    preparationLength: { minimum: 0, maximum: 4 },
-    daughterDetourCount: { minimum: 0, maximum: 1 },
+    preparationLength: { minimum: 0, maximum: 8 },
+    daughterDetourCount: { minimum: 0, maximum: 0 },
     emptyCellCount: { minimum: 4, maximum: 6 },
   },
   "2": {
-    preparationLength: { minimum: 5, maximum: 7 },
-    daughterDetourCount: { minimum: 1, maximum: 1 },
+    preparationLength: { minimum: 9, maximum: 15 },
+    daughterDetourCount: { minimum: 0, maximum: 1 },
     emptyCellCount: { minimum: 3, maximum: 6 },
   },
   "3": {
-    preparationLength: { minimum: 8, maximum: 11 },
+    preparationLength: { minimum: 16, maximum: 22 },
     daughterDetourCount: { minimum: 1, maximum: 2 },
     emptyCellCount: { minimum: 2, maximum: 4 },
   },
   "4": {
-    preparationLength: { minimum: 12, maximum: 16 },
-    daughterDetourCount: { minimum: 2, maximum: 3 },
+    preparationLength: { minimum: 23, maximum: 29 },
+    daughterDetourCount: { minimum: 1, maximum: 2 },
     emptyCellCount: { minimum: 2, maximum: 3 },
   },
   "5": {
-    preparationLength: { minimum: 17, maximum: unbounded },
-    daughterDetourCount: { minimum: 3, maximum: unbounded },
+    preparationLength: { minimum: 30, maximum: unbounded },
+    daughterDetourCount: { minimum: 2, maximum: unbounded },
     emptyCellCount: { minimum: 2, maximum: 2 },
   },
 } as const satisfies Record<

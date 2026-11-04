@@ -17,8 +17,9 @@ import {
 } from "@/games/hakoiri-musume/problem/generation/naive-play";
 import {
   analyzeHakoiriMusumePieceSet,
-  createHakoiriMusumeNearProblemFilter,
   formatHakoiriMusumePieceSet,
+  HAKOIRI_MUSUME_MERGE_SHARE,
+  HAKOIRI_MUSUME_NEAR_MOVE_COUNT,
   type HakoiriMusumeCandidate,
   hakoiriMusumePieceSets,
   interleaveHakoiriMusumeProblems,
@@ -28,6 +29,7 @@ import {
 import {
   countHakoiriMusumePieceSet,
   type HakoiriMusumePieceSet,
+  type HakoiriMusumeStateGraph,
   mirrorHakoiriMusumeBoard,
 } from "@/games/hakoiri-musume/problem/generation/state-space";
 import { HAKOIRI_MUSUME_GENERATOR_VERSION } from "@/games/hakoiri-musume/problem/problem";
@@ -43,7 +45,7 @@ import {
 function formatUsage(): string {
   return `Usage: bun run generate:hakoiri-musume-pool -- [options]
 
-駒の組（66組）ごとに全局面を数え上げて分類し、レベルごとに近い問題を除いて採り、駒の組を seed で並べ替えた順に
+駒の組（82組）ごとに全局面を数え上げて分類し、レベルごとに近い問題を除いて採り、駒の組を seed で並べ替えた順に
 1問ずつ巡回して並べる。駒の組ごとの結果はキャッシュに書き、途中で止めても続きから作り直せる。
 
 Options:
@@ -55,7 +57,7 @@ Options:
 const defaultSeed = "20261104";
 const defaultCacheDirectory = path.join(tmpdir(), "hakoiri-musume-pool-cache");
 
-/** レベルごとの問題数。レベル5 は近い問題を除くと約 380 問しか採れないので絞る。 */
+/** レベルごとの問題数。レベル5 は近い問題と合流する問題を除くと約 460 問しか採れないので絞る。 */
 const problemCountByDifficulty = {
   "1": 500,
   "2": 500,
@@ -130,7 +132,7 @@ function processPieceSet(
 ): PieceSetResult {
   const startedAt = performance.now();
   const space = analyzeHakoiriMusumePieceSet(pieceSet);
-  const candidates = listHakoiriMusumeCandidates(space);
+  const candidates = listHakoiriMusumeCandidates(space, seed);
   const statusCounts: Histogram = {};
   const classifiedFeatureHistograms = createLevelRecord(
     () =>
@@ -158,7 +160,6 @@ function processPieceSet(
     }
   }
   const picked = pickHakoiriMusumePieceSetProblems(
-    pieceSet,
     space,
     candidates,
     seed,
@@ -395,7 +396,70 @@ function generate(seed: string, cacheDirectory: string) {
   );
 }
 
-/** 今の問題集の全問を、駒の組ごとに全局面から分析し直して確かめる。 */
+/** 盤面 `start` から `limit` 手以内で行ける盤面（生成の近い問題の印とは別に、印に関わらずたどる）。 */
+function listBoardsWithinMoves(
+  graph: HakoiriMusumeStateGraph,
+  start: number,
+  limit: number,
+): Set<number> {
+  const reached = new Set([start]);
+  let frontier = [start];
+  for (let step = 0; step < limit; step += 1) {
+    const next: number[] = [];
+    for (const current of frontier) {
+      for (
+        let edge = graph.edgeStarts[current]!;
+        edge < graph.edgeStarts[current + 1]!;
+        edge += 1
+      ) {
+        const neighbor = graph.edges[edge]!;
+        if (!reached.has(neighbor)) {
+          reached.add(neighbor);
+          next.push(neighbor);
+        }
+      }
+    }
+    frontier = next;
+  }
+  return reached;
+}
+
+/** 盤面 `start` の最短解の上にある盤面を、最短手数の大きい順（`start` に近い順）の層に分けて返す。 */
+function listShortestDescendantLayers(
+  graph: HakoiriMusumeStateGraph,
+  optimal: Int32Array,
+  start: number,
+): number[][] {
+  const layers = [[start]];
+  const seen = new Set([start]);
+  while (optimal[layers.at(-1)![0]!]! > 0) {
+    const next: number[] = [];
+    for (const current of layers.at(-1)!) {
+      for (
+        let edge = graph.edgeStarts[current]!;
+        edge < graph.edgeStarts[current + 1]!;
+        edge += 1
+      ) {
+        const neighbor = graph.edges[edge]!;
+        if (
+          optimal[neighbor] === optimal[current]! - 1 &&
+          !seen.has(neighbor)
+        ) {
+          seen.add(neighbor);
+          next.push(neighbor);
+        }
+      }
+    }
+    layers.push(next);
+  }
+  return layers;
+}
+
+/**
+ * 今の問題集の全問を、駒の組ごとに全局面から分析し直して確かめる。近い問題は、生成の印とは別に、各問から4手以内の盤面と
+ * 最短解の上の盤面をたどって、同じレベルのほかの問題に当たる組を数える。あわせて、同じレベルの2問の最短解が合流する
+ * （後半が同じになる）長さを、短い方の最短手数に対する割合で数え、`HAKOIRI_MUSUME_MERGE_SHARE` 以上の組も近い問題に数える。
+ */
 function verify() {
   const pool = JSON.parse(
     readFileSync(outputPath, "utf8"),
@@ -424,16 +488,17 @@ function verify() {
     }
   }
   const seenBoards = new Set<string>();
+  const mergeRatios = createLevelRecord<number[]>(() => []);
+  let nearPairs = 0;
   for (const [key, entries] of entriesBySet) {
     const space = analyzeHakoiriMusumePieceSet(
       countHakoiriMusumePieceSet(entries[0]!.entry[0]),
     );
-    const filters = createLevelRecord(() =>
-      createHakoiriMusumeNearProblemFilter(space),
-    );
+    const { graph, measures, emptyCellCount } = space;
+    const indicesByLevel = createLevelRecord<number[]>(() => []);
     for (const { difficulty, entry } of entries) {
       const [board, optimalMoveCount] = entry;
-      const index = space.graph.indexByBoard.get(board);
+      const index = graph.indexByBoard.get(board);
       if (index === undefined) {
         failures.push(`${board}: not a board of ${key}`);
         continue;
@@ -443,7 +508,6 @@ function verify() {
         failures.push(`${board}: duplicated`);
       }
       seenBoards.add(canonical);
-      const { measures, emptyCellCount } = space;
       const assessment = classifyHakoiriMusumeFeatures({
         optimalMoveCount: measures.optimal[index]!,
         preparationLength: measures.preparation[index]!,
@@ -463,14 +527,100 @@ function verify() {
           `${board}: ${JSON.stringify(assessment)} != level ${difficulty}`,
         );
       }
-      const filter = filters[difficulty];
-      if (filter.isNear(board)) {
-        failures.push(`${board}: near another level ${difficulty} problem`);
-      }
-      filter.take(board);
+      indicesByLevel[difficulty].push(index);
+    }
+    for (const { id: difficulty } of difficultyLevels) {
+      const indices = indicesByLevel[difficulty];
+      const pooled = new Set(indices);
+      // 盤面ごとに、最短解の上にその盤面を持つ問題（の並びの番号）
+      const ownersByBoard = new Map<number, number[]>();
+      indices.forEach((start, order) => {
+        for (const reached of listBoardsWithinMoves(
+          graph,
+          start,
+          HAKOIRI_MUSUME_NEAR_MOVE_COUNT,
+        )) {
+          if (reached !== start && pooled.has(reached)) {
+            nearPairs += 1;
+            failures.push(
+              `${graph.boards[start]}: within ${HAKOIRI_MUSUME_NEAR_MOVE_COUNT} moves of ${graph.boards[reached]}`,
+            );
+          }
+        }
+        const merged = new Set<number>();
+        for (const layer of listShortestDescendantLayers(
+          graph,
+          measures.optimal,
+          start,
+        )) {
+          for (const board of layer) {
+            if (board !== start && pooled.has(board)) {
+              nearPairs += 1;
+              failures.push(
+                `${graph.boards[board]}: on a shortest solution of ${graph.boards[start]}`,
+              );
+            }
+            for (const other of ownersByBoard.get(board) ?? []) {
+              if (!merged.has(other)) {
+                merged.add(other);
+                const ratio =
+                  measures.optimal[board]! /
+                  Math.min(
+                    measures.optimal[start]!,
+                    measures.optimal[indices[other]!]!,
+                  );
+                mergeRatios[difficulty].push(ratio);
+                if (ratio >= HAKOIRI_MUSUME_MERGE_SHARE) {
+                  nearPairs += 1;
+                  failures.push(
+                    `${graph.boards[start]}: shares ${measures.optimal[board]} moves with ${graph.boards[indices[other]!]}`,
+                  );
+                }
+              }
+            }
+            ownersByBoard.set(board, [
+              ...(ownersByBoard.get(board) ?? []),
+              order,
+            ]);
+          }
+        }
+      });
     }
     console.error(`${key}: ${entries.length} problems verified`);
   }
+  const mergeSummary = Object.fromEntries(
+    difficultyLevels.map(({ id: difficulty }) => {
+      const ratios = mergeRatios[difficulty].sort(
+        (left, right) => left - right,
+      );
+      const share = (minimum: number) =>
+        Math.round(
+          (ratios.filter((ratio) => ratio >= minimum).length /
+            Math.max(1, ratios.length)) *
+            1000,
+        ) / 1000;
+      return [
+        difficulty,
+        {
+          pairs: ratios.length,
+          percentiles: [0, 10, 50, 90, 100].map(
+            (percent) =>
+              Math.round(
+                (ratios[
+                  Math.min(
+                    ratios.length - 1,
+                    Math.floor((ratios.length * percent) / 100),
+                  )
+                ] ?? 0) * 100,
+              ) / 100,
+          ),
+          atLeastQuarter: share(0.25),
+          atLeastMergeShare: share(HAKOIRI_MUSUME_MERGE_SHARE),
+        },
+      ];
+    }),
+  );
+  console.log(JSON.stringify({ nearPairs, merge: mergeSummary }, null, 1));
   if (failures.length > 0) {
     console.error(failures.slice(0, 20).join("\n"));
     throw new Error(`${failures.length} problems failed verification`);

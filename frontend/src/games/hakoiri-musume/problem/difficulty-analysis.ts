@@ -8,9 +8,10 @@ import type { HakoiriMusumeProblem } from "@/games/hakoiri-musume/problem/proble
 import { formatHakoiriMusumeBoard } from "@/games/hakoiri-musume/puzzle/board";
 
 /**
- * 難易度の判定に使う、問題の特徴。準備の長さ・娘の遠回り・誘いの局面・娘の手は、最短解の中で値が最も少ない解で数える。
+ * 難易度の判定に使う、問題の特徴。準備の長さと娘の遠回りはどんな長さの解でもよく、誘いの局面・娘の手は最短解の中で、
+ * 値が最も少ない解で数える（`HakoiriMusumeStateMeasures`）。
  * - `optimalMoveCount`: 最短手数（同じ駒を続けて動かした移動を1手）。分類には使わず、提供範囲の下限・上限にだけ使う。
- * - `preparationLength`: 準備の長さ。娘を動かさずに続ける手の連続の最長。分類の主のつまみ。
+ * - `preparationLength`: 準備の長さ。娘が出口へ今までで最も近づく手と手のあいだに要る手の数の最長。分類の主のつまみ。
  * - `daughterDetourCount`: 娘の遠回り。娘の左上と出口の前のマンハッタン距離が増える手の数。
  * - `emptyCellCount`: 空きマスの数（規模）。
  * - `lureCount`・`daughterMoveCount`・`optimalFirstMoveCount`・`firstMoveCount`: 記録だけ。

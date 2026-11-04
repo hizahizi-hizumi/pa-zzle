@@ -13,8 +13,8 @@ import {
 import reference from "@/games/hakoiri-musume/problem/generation/research-reference.json";
 import { parseHakoiriMusumeBoard } from "@/games/hakoiri-musume/puzzle/board";
 
-// 調査コード（scripts/research/hakoiri_musume_difficulty.py）が出した、採った案 E の特徴とレベル。
-// 全356局面の突き合わせは試験の時間に収まらないので、ここでは合意の2例と、状態の数の少ない駒の組だけを確かめる。
+// 調査コード（scripts/research/hakoiri_musume_difficulty.py）が出した、採った案 F の特徴とレベル。
+// 全480局面の突き合わせは試験の時間に収まらないので、ここでは合意の2例と、状態の数の少ない駒の組だけを確かめる。
 
 describe("analyzeHakoiriMusumeDifficulty", () => {
   const agreementCases = reference.fixtures.filter(
@@ -62,6 +62,7 @@ describe("listHakoiriMusumeCandidates", () => {
       test("左右反転を除いた候補の数と、分類の状態ごとの数が調査コードと一致すること", () => {
         const candidates = listHakoiriMusumeCandidates(
           analyzeHakoiriMusumePieceSet(pieceSet),
+          reference.seed,
         );
         const counts: Record<string, number> = {};
         for (const { assessment } of candidates) {
