@@ -22,6 +22,8 @@ export const hakoiriMusumeToneClassNames = {
   /** 娘の駒。朱漆の面と、面取りの照り・陰、底に落ちる影。 */
   daughterPiece:
     "bg-[linear-gradient(145deg,#cf4a36,#a8301f_55%,#8a2416)] shadow-[inset_1px_1px_0_rgb(255_200_180/0.5),inset_-1px_-1px_0_rgb(60_10_5/0.5),0_2px_4px_rgb(30_10_5/0.5)]",
+  /** 遊び方の図で、駒をなぞる指の道。木の上でも箱の底の上でも読めるよう、白く抜く。 */
+  howToPlayTrace: "stroke-white/85",
   /** 娘の駒に入れた金の字。 */
   daughterMark: "text-[#f3d488] [text-shadow:0_1px_0_rgb(70_15_5/0.6)]",
 } as const;

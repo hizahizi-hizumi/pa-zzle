@@ -26,7 +26,7 @@ const exitRect = getBoxRect(
 );
 
 type HakoiriMusumeBoxProps = {
-  /** 箱の中に置く駒。箱の外形に対する位置（`board-geometry` の割合）で置く。 */
+  /** 箱の中に置く駒。箱の外形に対する位置（`board-geometry` の割合）で置き、箱の外形からはみ出した所は見せない。 */
   children: ReactNode;
 };
 
@@ -51,7 +51,10 @@ export function HakoiriMusumeBox({ children }: HakoiriMusumeBoxProps) {
         className={`absolute ${hakoiriMusumeToneClassNames.exitOpening}`}
         style={toBoxStyle(exitRect)}
       />
-      {children}
+      {/* 出口を抜けた娘が箱の外へはみ出さないよう、駒は箱の外形で切り取る。 */}
+      <div className="absolute inset-0 overflow-hidden rounded-[2cqw]">
+        {children}
+      </div>
     </div>
   );
 }

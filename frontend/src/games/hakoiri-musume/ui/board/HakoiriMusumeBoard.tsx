@@ -57,6 +57,12 @@ type PieceDrag = {
   trace: HakoiriMusumeFingerTrace;
 };
 
+/**
+ * 駒が隣のマスへ移る動きの長さ。指が隣のマスへ入ってから駒が着くまでを 0.1 秒ほどに収めて、速くなぞっても駒が指に遅れて
+ * 見えないようにし、マスを飛び移ったようには見えない長さを残す。
+ */
+const PIECE_STEP_MS = 60;
+
 const hakoiriMusumePieceLabels = {
   daughter: "娘",
   vertical: "縦長",
@@ -262,10 +268,13 @@ export function HakoiriMusumeBoard({
               data-piece-index={pieceIndex}
               aria-label={`${hakoiriMusumePieceLabels[piece.kind]} ${position.row + 1}行${position.column + 1}列`}
               disabled={interactionDisabled}
-              className="absolute rounded-[2.4cqw] transition-[left,top] duration-(--duration-fast) ease-standard focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:cursor-default"
-              style={toBoxStyle(
-                getPieceRect(position, hakoiriMusumePieceShapes[piece.kind]),
-              )}
+              className="absolute rounded-[2.4cqw] transition-[left,top] ease-out focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:cursor-default"
+              style={{
+                ...toBoxStyle(
+                  getPieceRect(position, hakoiriMusumePieceShapes[piece.kind]),
+                ),
+                transitionDuration: `${PIECE_STEP_MS}ms`,
+              }}
               onKeyDown={(event) => handlePieceKeyDown(event, pieceIndex)}
             >
               <HakoiriMusumePieceFace kind={piece.kind} />
