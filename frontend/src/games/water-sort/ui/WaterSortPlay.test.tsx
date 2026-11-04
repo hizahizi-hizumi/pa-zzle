@@ -4,6 +4,7 @@ import {
   fireEvent,
   render as renderWithoutRouter,
   screen,
+  within,
 } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router";
@@ -341,6 +342,46 @@ describe("WaterSortPlay", () => {
     const dialog = screen.getByRole("dialog", { name: "遊び方" });
 
     expect(dialog).toBeTruthy();
+  });
+
+  describe("メニューからチュートリアルを選んだ場合", () => {
+    beforeEach(() => {
+      render(<WaterSortPlay {...baseProps} />);
+      fireEvent.pointerDown(
+        screen.getByRole("button", { name: "その他の操作" }),
+        { button: 0, ctrlKey: false },
+      );
+      fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+    });
+
+    test("チュートリアルを開くこと", () => {
+      const dialog = screen.getByRole("dialog", {
+        name: "ウォーターソート",
+        description: "チュートリアル",
+      });
+
+      expect(dialog).toBeTruthy();
+    });
+
+    test("閉じるとチュートリアルを閉じて同じプレイの盤面へ戻ること", () => {
+      fireEvent.click(
+        within(
+          screen.getByRole("dialog", {
+            name: "ウォーターソート",
+            description: "チュートリアル",
+          }),
+        ).getByRole("button", { name: "閉じる" }),
+      );
+
+      const dialog = screen.queryByRole("dialog", { name: "ウォーターソート" });
+      const firstBottle = screen
+        .getByRole("button", { name: /^ボトル 1:/ })
+        .getAttribute("aria-label");
+
+      expect(dialog).toBeNull();
+      expect(firstBottle).toBe("ボトル 1: 赤、青");
+      expect(baseProps.onReplay).not.toHaveBeenCalled();
+    });
   });
 
   test("待ったで戻せる手がない操作を無効にすること", () => {

@@ -19,6 +19,7 @@ import { WaterSortResultScreen } from "@/games/water-sort/ui/result/WaterSortRes
 import { useWaterSortSoundEffects } from "@/games/water-sort/ui/use-water-sort-sound-effects";
 import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
+import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
 
 type WaterSortPlayProps = GamePlayScreenProps<
   WaterSortDifficulty,
@@ -82,6 +83,9 @@ export function WaterSortPlay({
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <WaterSortHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderTutorial={({ open, onClose }) => (
+        <WaterSortTutorial open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <WaterSortResultScreen
