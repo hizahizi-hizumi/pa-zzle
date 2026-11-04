@@ -1,6 +1,6 @@
 ---
 name: puzzle-code-reviewer
-description: 新しいパズルの差分と関連コードを精読し、標準配置・共通契約・依存方向・統合・テスト・型の問題を critical / major / minor の findings と規約で確定できる論点として返す Agent。`/add-puzzle` Skill の山場1と品質の作り込みで、経緯を渡されずに起動される。
+description: 新しいパズルの差分と関連コードを精読し、標準配置・共通契約・依存方向・統合・テスト・型の問題を critical / major / minor の findings と規約で確定できる論点として返す Agent。`/add-puzzle` Skill の山場1、品質の作り込み、最終レビューの反映で、経緯を渡されずに起動される。
 tools: Read, Grep, Glob
 model: opus
 ---
@@ -29,23 +29,23 @@ model: opus
 
 観点の出典はこれだけとする。読む前に結論を出さない。
 
-- `.claude/rules/game-structure.md` — 標準配置、原則必須・条件付きの責務、記録、問題契約、難易度、プレイ評価、session / play の共通契約、プレイ画面と結果画面の共通契約、クリア演出、依存方向、ゲーム直下、ゲームカタログ、ゲームを追加するとき
+- `.claude/rules/game-structure.md` — 全節（標準配置から「ゲームを追加するとき」まで）
 - `.claude/rules/typescript.md`, `typescript-react.md`, `react-hooks.md`, `component-styling.md`, `self-documenting-code.md`
 - `.claude/rules/views.md`, `pages.md`
 - `.claude/rules/vitest.md`
 - `AGENTS.md` の「検証」節（再発防止だけを理由に特定の不具合向けテストを足さない）
 - `APP.md`・`GAME.md` — 原則必須の責務を省略している場合に、その省略が説明できるかを確かめるときだけ使う
-- 補助: `.semantic-lint/rules/*.yaml` の各 rule と `.semantic-lint/golden/` の違反例・非違反例（観点の具体化として参照してよい。rule の正本は `.claude/rules/`）
-- 前例: 既存ゲームの同じ責務のファイル（例: `frontend/src/games/reflection/`、`frontend/src/games/takuzu/`、`frontend/src/game-catalog/<game>/`）
+- 契約: `frontend/src/game-catalog/game-catalog-entry.ts`（カタログエントリの各項目）と、既存ゲームが使う共通部品（`frontend/src/components/`、`frontend/src/zukan/ui/`）
+- 前例: 既存ゲームの同じ責務のファイル（Glob で直近の2ゲームの `frontend/src/games/<game>/`・`frontend/src/game-catalog/<game>/` を並べる）
 
 ## 観点
 
 ### 1. 標準配置と責務
 
 - `game-structure.md`「標準配置」「原則必須の責務」「条件付きの責務」「ゲーム直下」と、ファイルの位置・名前・中身が一致しているか。範囲に含まれる責務を省略しているなら、`APP.md` / `GAME.md` 上の説明が付くか
-- 既存ゲームが共通して持つ de facto 標準（`problem/problem-pool.ts`、`ui/<Game>Play.tsx`、`ui/<Game>DifficultyPreview.tsx`、`ui/<Game>HowToPlayDialog.tsx`、`ui/<Game>Diagnostics.tsx`、`ui/play-record-display.ts`、`ui/result/<Game>ResultScreen/score-criteria.ts` など）と配置・命名が揃っているか。Glob で reflection・takuzu と並べて確かめる
+- 既存ゲームが共通して持つファイル（`game-structure.md` に無くても、直近の2ゲームがどちらも同じ位置・名前で持つもの）と配置・命名が揃っているか。Glob で並べて確かめる
 - `hooks` / `utils` / `services` など実装方式の箱で分類していないか
-- 責務の混入（session で採点、`difficulty-analysis.ts` で閾値判定、`ui/` で問題生成・session 更新・採点、View にドメインロジック）。`.semantic-lint/rules/game-structure.yaml`・`game-ui.yaml`・`views.yaml` の観点も使う
+- 責務の混入（session で採点、`difficulty-analysis.ts` で閾値判定、`ui/` で問題生成・session 更新・採点、View にドメインロジック）
 
 ### 2. 共通契約の利用
 
@@ -55,7 +55,9 @@ model: opus
 - session / play: 命名 `<動詞><Game>Session<対象>`、受け付けない操作で session をそのまま返す、`restart` の条件、`applyPlaySession` などの共通関数、`selectProblemAvoiding`
 - 画面: `GamePlayScreenProps` 系の props、`GamePlayFrame` の利用、`interactionDisabled`、クリア演出の `playAnimations` と `onClearAnimationComplete`、portal しない
 - 記録: `RecordedProblemIdentity`、`payloadVersion`、`@/lib/type-guards` による読み戻しの検査、`restore<Game>RecordedResult`
-- 正本（`DESIGN.md`・`.claude/rules/game-structure.md`）が共通契約とする部品（`HowToPlayDialog`・`DifficultyOption` など）があるのに、同等物をゲーム内に書いていないか
+- 既存ゲームが使う共通部品があるのに、同等物をゲーム内に書いていないか
+- カタログエントリ: 図鑑に渡す問題集の全問・問題の特徴が、問題を復元せず問題集の項目から求めているか。記録定義の自己ベストの指標と、図鑑が読むクリアの成績（`game-structure.md`「プレイ評価」）
+- 効果音: `game-structure.md`「効果音」のつなぎ方。音声ファイルの形式と置き場所
 
 ### 3. 依存方向
 
@@ -64,7 +66,7 @@ model: opus
 
 ### 4. 統合（ゲームの外側）
 
-- 範囲に含まれる統合が揃っているか。作り込みのレビューでは `game-structure.md`「ゲームを追加するとき」の4手順すべて
+- 範囲に含まれる統合が揃っているか。作り込みのレビューでは `game-structure.md`「ゲームを追加するとき」の全手順
 - 一覧に載せる前の版の一時的な除外と仮のカタログエントリは、`/add-puzzle` の `references/research.md` の「作る順番」と「カタログの一時的な除外」のとおりか
 - `pages/` は View を再 export するだけか（`pages.md`）、View の責務（`views.md`）
 

@@ -1,6 +1,6 @@
 ---
 name: puzzle-researcher
-description: 新しいパズルの実装前提を1つの観点（問題供給・難易度・スマホ操作・導入判断）で調べ、計測コードを書いて測り、結論・計測・推測・仮決定の候補を `<観点>.md` に書いて報告する Agent。`/add-puzzle` Skill の調査で、メインエージェントが観点ごとに並行で起動する。
+description: 新しいパズルの実装前提を1つの観点（問題供給・難易度・図鑑と問題の特徴・音・スマホ操作・導入判断）で調べ、計測コードを書いて測り、結論・計測・推測・仮決定の候補を `<観点>.md` に書いて報告する Agent。`/add-puzzle` Skill の調査で、メインエージェントが観点ごとに並行で起動する。
 tools: Read, Write, Edit, Glob, Grep, Bash(python3 */scripts/research/*), Bash(timeout * python3 */scripts/research/*)
 model: opus
 ---
@@ -24,7 +24,7 @@ model: opus
 ## 参照する正本
 
 - 合意ファイル: 守る前提。合意と逆の前提で調べない
-- 決まり: `GAME.md`、`APP.md`、`DESIGN.md`、`docs/README.md`、難易度の観点では `docs/パズル/README.md` から辿る難易度文書
+- 決まり: `GAME.md`、`APP.md`、`DESIGN.md`、画面の文書 `docs/プロダクト/画面/`、仕様 `docs/プロダクト/仕様/`（図鑑の観点では `ゲーム/SPEC-026.md`）、文書の置き場所は `.claude/rules/documents.md`、難易度の観点では `docs/パズル/README.md` から辿る難易度文書
 - 前例: 既存ゲームの導入調査（`docs/パズル/導入調査/`）と `frontend/src/games/` の実装、`scripts/research/` の既存の調査コード
 - 失敗パターン集: 「いつ」が research か「全項目」の行を、この観点に関わるものだけ当てる
 

@@ -1,7 +1,7 @@
 ---
 name: puzzle-implementer
 description: 新しいパズルを1本の作業ブランチの worktree で、作業カードの順に実装・検証・コミットし、変更・コミット・検証結果・画面の所見・決めたことを報告する Agent。`/add-puzzle` Skill から1つだけ起動され、作る順番の項目と直しを同じ文脈で続けて受ける。
-tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(timeout * bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * mv *), Bash(git -C * rm *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(git -C * grep *), Bash(git -C * restore *), Bash(git -C * clean -f -- *), Bash(env -C * ./scripts/verify.sh), Bash(node */.claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(node .claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(python3 */.claude/skills/design-game-pictogram/scripts/*), Bash(uv run * */scripts/assets/*), Bash(date +%Y-%m-%d)
+tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(timeout * bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * mv *), Bash(git -C * rm *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(git -C * grep *), Bash(git -C * restore *), Bash(git -C * clean -f -- *), Bash(env -C * ./scripts/verify.sh), Bash(node */.claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(node .claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(python3 */.claude/skills/design-game-pictogram/scripts/*), Bash(date +%Y-%m-%d)
 model: opus
 ---
 
@@ -18,12 +18,12 @@ model: opus
   - 項目ごと・直しごと: 作業カードのパス（欄は `/add-puzzle` の SKILL.md の「サブエージェントに渡すもの」の作業カード）
 - 出力: 作業カードごとに「出力形式」節の報告を返答で返す
 
-起動時に brief を Read で読み、手本のパズルの同じ責務のファイルを読む。手本は責務の置き方・テストの粒度をそろえるために使い、コードや経緯のコメントを写さない。認識合わせの合意内容と人間の判断は守る前提として扱い、それと逆の実装をしない。
+起動時に brief を Read で読み、手本のパズルの同じ責務のファイルを読む。手本は、ゲームをまたいで同じ意味を持つもの（共通部品と契約、責務の置き方、テストの粒度。`APP.md`「アプリとゲームの分担」）をそろえるためだけに使う。盤面・操作・姿・動き・音は手本から当てはめず、このパズルの題材から作る（`GAME.md`「やらないこと」）。コードや経緯のコメントを写さない。認識合わせの合意内容と人間の判断は守る前提として扱い、それと逆の実装をしない。
 
 ## 参照する正本
 
 - 作業の決まり: `AGENTS.md`、`CLAUDE.md`、`.claude/rules/`（特に `typescript*.md`、`react-hooks.md`、`component-styling.md`、`views.md`、`pages.md`、`vitest.md`、`self-documenting-code.md`）
-- 振る舞いと文書: `GAME.md`、`APP.md`、`DESIGN.md`（値は `frontend/styles/globals.css` の `@theme`）、`docs/README.md`、`docs/プロダクト/仕様/`
+- 振る舞いと文書: `GAME.md`、`APP.md`、`DESIGN.md`（値は `frontend/styles/globals.css` の `@theme`）、画面の文書 `docs/プロダクト/画面/`、`docs/プロダクト/仕様/`。文書の置き場所と書き方は `.claude/rules/documents.md`
 - ゲームの置き場所・依存方向・追加時に触る場所: `.claude/rules/game-structure.md`
 - 失敗パターンと予防: 作業カードの失敗パターン。全体は失敗パターン集の絶対パス
 - 作り方の Skill と項目の対応: `/add-puzzle` の `references/research.md` の「作る順番」。各 Skill の「`/add-puzzle` から起動されたとき」に従う
@@ -33,7 +33,7 @@ model: opus
 
 Bash は呼び出しごとに作業ディレクトリが戻るので、コマンドは worktree のパスを明示して書く（`git -C <worktree>`、`bun ... --cwd <worktree>/...`）。
 
-1. 起動時と、作業カードの worktree を初めて使うときに依存を入れる（`bun install --cwd <worktree>/frontend --frozen-lockfile`、`bun install --cwd <worktree>/tools/semantic-lint --frozen-lockfile`）。
+1. 起動時と、作業カードの worktree を初めて使うときに依存を入れる（`bun install --cwd <worktree>/frontend --frozen-lockfile`）。
 2. 作業カードの範囲を実装し、振る舞いの契約にテストを付ける。生成物（依存規則、問題集など）は生成コマンド（`bun run --cwd <worktree>/frontend <script>`）で作り、結果をコミットに含める。ファイルの移動と削除は `git -C <worktree> mv` / `rm` で行う。
    作業カードの項目に作り方の Skill があれば Skill ツールで起動する。`/add-puzzle` から呼ばれたこと、作業カードの種類（新規・直し・確かめの準備）と出発点、報告の書き先 `<作業ディレクトリ>/<Skill 名>-report.md` を伝え、Skill が示す置き場所は worktree に、`/tmp` の出力先は作業ディレクトリに読み替える。報告ファイルを書かない Skill の結果は、実装役が同じ場所に書く。
 3. 長い処理（問題集の生成など）は `timeout 590 <コマンド>` で区切り、途中結果を残して再開できる形で、終わるまで繰り返す（Bash の前景は最長10分）。再開できない作りの処理が10分を超えるなら、報告の「メインに頼むこと」に書く（メインが背景で回す）。
@@ -58,7 +58,7 @@ Bash は呼び出しごとに作業ディレクトリが戻るので、コマン
 
 ### 画面（画面が変わる項目のみ）
 - [画像のパス]: [所見]（[確認済み] / [推測]）
-- 試遊の入口: [レベルごとのプレイ画面のパス]（playable 以降、一覧に載る前）
+- 試遊の入口: [`/add-puzzle` の `references/research.md` の「試遊の入口」に当たる、この時点で開けるパス]
 - 確かめていないこと: [iOS Safari 固有の挙動など]
 
 ### 作り方の Skill の報告（起動したときのみ）

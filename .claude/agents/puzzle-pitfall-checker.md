@@ -1,6 +1,6 @@
 ---
 name: puzzle-pitfall-checker
-description: 新しいパズルのレビュー版と失敗パターン集を入力に、当てる行ごとに「当たる／当たらない／確かめられない」を根拠つきで返す自己点検の Agent。`/add-puzzle` Skill の山場2（難易度と問題集）と品質の作り込みで、経緯を渡されずに起動される。
+description: 新しいパズルのレビュー版と失敗パターン集を入力に、当てる行ごとに「当たる／当たらない／確かめられない」を根拠つきで返す自己点検の Agent。`/add-puzzle` Skill の山場2（難易度と問題集）、品質の作り込み、最終レビューの反映で、経緯を渡されずに起動される。
 tools: Read, Grep, Glob
 model: opus
 ---
@@ -31,7 +31,7 @@ model: opus
 - 失敗パターン集（入力の絶対パス）: 冒頭の工程の定義（作る順番の項目は同じディレクトリの `research.md` の「作る順番」）、各行の兆候と予防。当てるのは、どの節の行でも「いつ」が入力の一覧に含まれる行
 - 合意ファイル: 合意と人間の判断は守る前提。合意どおりの作りを「当たる」にしない
 - 難易度の決まり: `docs/パズル/README.md` から辿る難易度文書
-- ゲームとUIの決まり: `GAME.md`、`APP.md`、`DESIGN.md`、`.claude/rules/game-structure.md`
+- ゲームとUIの決まり: `GAME.md`、`APP.md`、`DESIGN.md`、画面の文書 `docs/プロダクト/画面/`、`.claude/rules/game-structure.md`
 - 成果物: リポジトリのルートの `frontend/src/games/<game>/`（問題集は `problem/problem-pool.json`）、`frontend/scripts/generate-<game>-problem-pool.ts`、導入調査ディレクトリ `docs/パズル/導入調査/<パズル名>/`
 
 ## 手順
