@@ -13,6 +13,10 @@
 //   goto <パス>                 アプリの URL からのパスを開く
 //   tap <x> <y>                 iphone はタッチのタップ、pc はクリック
 //   swipe <x1> <y1> <x2> <y2>   iphone はタッチのドラッグ（CDP の Input.dispatchTouchEvent）、pc はマウスのドラッグ
+//   path <x1> <y1> <x2> <y2> [<x3> <y3> ...]  折れ線をなぞる（指を離さずに角を曲がる）。iphone はタッチ、pc はマウス
+//   key <キー>                  キーを押す（Playwright のキー名: ArrowLeft、Escape、z など）
+//   trace <CSSセレクタ> <ミリ秒> <操作> [引数...]  合う要素（最大20）の位置と大きさを毎フレーム記録しながら操作を行い、
+//                               ミリ秒が過ぎてから撮る。セレクタは空白を含まない CSS にする
 //   scroll <dy>                 マウスホイールでページを縦にスクロールする
 //   wait <ミリ秒>               待ってから撮る
 //   shot                        撮るだけ
@@ -26,8 +30,9 @@
 //   quit                        ブラウザを閉じて常駐を終える（自分で起動した driver は、終わったら必ずこれで止める）
 // 返す1行: <画像のパス> t=<起動からの秒数>s scrollY=<window.scrollY> [scrolled=<要素>:<scrollTop>,...]
 //   scrolled は、ページの中でスクロールしている要素（scrollTop が 0 でないもの）。zoom は末尾に zoom=<倍率>x。
-//   rect・save-storage・load-storage は、その後の行に結果を並べる（rect は1要素1行で
-//   rect <番号> x=<左> y=<上> w=<幅> h=<高さ> cx=<中心x> cy=<中心y> <要素の文字の先頭>）。quit は quit とだけ返す
+//   rect・save-storage・load-storage・trace は、その後の行に結果を並べる（rect は1要素1行で
+//   rect <番号> x=<左> y=<上> w=<幅> h=<高さ> cx=<中心x> cy=<中心y> <要素の文字の先頭>、trace は1要素1行で
+//   trace <番号> frames=<フレーム数> dx=<最初からの横のずれの最大> dy=<縦> dw=<幅の変化の最大> dh=<高さ>）。quit は quit とだけ返す
 // ブラウザエラー: pageerror と console.error を <画像の出力先>/browser-errors.log に追記する。
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
@@ -130,6 +135,78 @@ async function serve(args) {
     await page.mouse.up();
   }
 
+  // 折れ線の各区間を SWIPE_STEPS に刻んで動かし、指（ボタン）は最後まで離さない。
+  async function tracePath(...coordinates) {
+    const values = coordinates.map(Number);
+    if (values.length < 4 || values.length % 2 !== 0 || !values.every(Number.isFinite)) {
+      throw new Error("path は <x1> <y1> <x2> <y2> [<x3> <y3> ...] を数の組で受ける");
+    }
+    const points = [];
+    for (let index = 0; index < values.length; index += 2) points.push({ x: values[index], y: values[index + 1] });
+    const [first, ...rest] = points;
+    if (isTouch) {
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [first] });
+      let previous = first;
+      for (const next of rest) {
+        for (let step = 1; step <= SWIPE_STEPS; step++) {
+          const ratio = step / SWIPE_STEPS;
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchMove",
+            touchPoints: [{ x: previous.x + (next.x - previous.x) * ratio, y: previous.y + (next.y - previous.y) * ratio }],
+          });
+        }
+        previous = next;
+      }
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      return;
+    }
+    await page.mouse.move(first.x, first.y);
+    await page.mouse.down();
+    for (const next of rest) await page.mouse.move(next.x, next.y, { steps: SWIPE_STEPS });
+    await page.mouse.up();
+  }
+
+  // 操作の間、合う要素の矩形を requestAnimationFrame ごとに記録し、最初のフレームからのずれの最大を返す。
+  async function traceDuring(selector, milliseconds, name, ...operands) {
+    const duration = Number(milliseconds);
+    if (!selector || !Number.isFinite(duration) || duration <= 0) {
+      throw new Error("trace は <CSSセレクタ> <ミリ秒> <操作> [引数...] を受ける");
+    }
+    if (!(name in operations) || name === "trace") throw new Error(`trace で包めない操作: ${name}`);
+    await page.evaluate(
+      ({ cssSelector, ms, limit }) => {
+        const frames = [];
+        const end = performance.now() + ms;
+        window.__playtestTrace = frames;
+        const tick = () => {
+          frames.push(
+            [...document.querySelectorAll(cssSelector)].slice(0, limit).map((element) => {
+              const box = element.getBoundingClientRect();
+              return [box.x, box.y, box.width, box.height];
+            }),
+          );
+          if (performance.now() < end) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      },
+      { cssSelector: selector, ms: duration, limit: MAX_RECTS },
+    );
+    const startedAtMs = Date.now();
+    await operations[name](...operands);
+    await page.waitForTimeout(Math.max(0, duration - (Date.now() - startedAtMs)));
+    const frames = await page.evaluate(() => window.__playtestTrace ?? []);
+    if (frames.length === 0 || frames[0].length === 0) return "trace: 合う要素が無い";
+    const round = (value) => Math.round(value * 10) / 10;
+    return frames[0]
+      .map((first, index) => {
+        const deltas = [0, 1, 2, 3].map((axis) =>
+          Math.max(...frames.map((frame) => (frame[index] ? Math.abs(frame[index][axis] - first[axis]) : 0))),
+        );
+        return `trace ${index + 1} frames=${frames.length} dx=${round(deltas[0])} dy=${round(deltas[1])} dw=${round(deltas[2])} dh=${round(deltas[3])}`;
+      })
+      .join("\n");
+  }
+
   // 縮小した画像を引き伸ばすのではなく、CDP の clip.scale でその倍率で描き直すので、細い線・重なり・境界が見える。
   // clip は文書の座標なので、ビューポートの座標にスクロール量を足す。
   function zoomClip(x, y, width, height, magnification = DEFAULT_ZOOM) {
@@ -154,6 +231,9 @@ async function serve(args) {
     goto: (pathname) => page.goto(baseUrl + pathname, { waitUntil: "networkidle" }),
     tap: (x, y) => (isTouch ? page.touchscreen.tap(Number(x), Number(y)) : page.mouse.click(Number(x), Number(y))),
     swipe: (...coordinates) => (isTouch ? touchSwipe : mouseSwipe)(...coordinates.map(Number)),
+    path: (...coordinates) => tracePath(...coordinates),
+    key: (key) => page.keyboard.press(key),
+    trace: (...operands) => traceDuring(...operands),
     scroll: (dy) => page.mouse.wheel(0, Number(dy)),
     wait: (milliseconds) => page.waitForTimeout(Math.max(0, Number(milliseconds) - SETTLE_MILLISECONDS)),
     shot: async () => {},
@@ -274,6 +354,6 @@ if (command === "serve") await serve(rest);
 else if (command === "send") await send(rest);
 else {
   console.error("使い方: node playtest-driver.mjs serve --url <URL> --device <iphone|pc> --out <出力先> --port <ポート>");
-  console.error("        node playtest-driver.mjs send --port <ポート> <goto|tap|swipe|scroll|wait|shot|zoom|rect|save-storage|load-storage|quit> [引数...]");
+  console.error("        node playtest-driver.mjs send --port <ポート> <goto|tap|swipe|path|key|trace|scroll|wait|shot|zoom|rect|save-storage|load-storage|quit> [引数...]");
   process.exit(2);
 }
