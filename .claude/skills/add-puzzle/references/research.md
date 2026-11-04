@@ -24,9 +24,9 @@
 
 ## 実装前提調査の節
 
-上から順に置く。書き方は `docs/README.md` に従う。
+上から順に置く。実装前提調査は資料で、書き方は `.claude/rules/documents.md` と `docs/パズル/README.md` に従う。決まりとその意図の正本は、マージで仕様（SPEC）に移したもの。
 
-1. 識別表: タイトルの直後に `| 項目 | 値 |` の2列で、パズル名・ゲーム ID・ブランチ接頭辞・候補 ID・SPEC 番号・導入調査 Issue 番号を1行ずつ（ほかのファイルが「識別表」と言うときはこの項目を指す）。SPEC 番号と候補 ID は、origin のどのブランチでも対象パズル以外に使われていないことを `git ls-tree` と `git grep` で確かめて予約する（台帳に対象パズルの行があれば、その ID を使う）。ADR の番号は `/adr-create` が決め、衝突は文書レビューで確かめる
+1. 識別表: タイトルの直後に `| 項目 | 値 |` の2列で、パズル名・ゲーム ID・ブランチ接頭辞・候補 ID・SPEC 番号・導入調査 Issue 番号を1行ずつ（ほかのファイルが「識別表」と言うときはこの項目を指す）。SPEC 番号と候補 ID は、origin のどのブランチでも対象パズル以外に使われていないことを `git ls-tree` と `git grep` で確かめて予約する（台帳に対象パズルの行があれば、その ID を使う）
 2. 根拠の書き分け: 事実・計測（どのスクリプトで）・推測・AI判断（仮決定）
 3. 認識合わせの合意
 4. 成立性: 観点ごと
@@ -41,30 +41,34 @@
 
 | 観点 | 問い |
 |---|---|
-| 問題供給 | 想定の盤面の大きさごとに、一意解の問題を作れる割合と生成時間。必要な問題数をそろえる時間、問題集の大きさ |
+| 問題供給 | 問題集の件数と並び。件数と並びは図鑑の枠の数と番号として遊ぶ人に見える（SPEC-026「載せる問題」「番号」）ので、供給の都合ではなく、レベルごとにどれだけ集められると「もう1問」になるかで件数を決める。その件数を、想定の盤面の大きさごとの一意解の割合と生成時間でそろえられるか。問題集の大きさ |
 | 難易度 | 挑戦の定義。難しさの源を全部当ててつまみの案を広げ、案ごとに上限・隣のレベルの分かれ方・素朴な解き方で押し切れる割合・数え方でレベルが変わる割合・収率を小さな生成で測って比べ、1つに決める。各レベルを利用者向けの一言で言えるか。手順は `/design-game-difficulty` の SKILL.md の入口「`/add-puzzle` の調査」 |
+| 図鑑と問題の特徴 | 始めたときの盤面で分かる特徴（SPEC-026「問題の特徴」）のうち、遊ぶ人が次の1問を選ぶ切り口になるもの。難易度の写しにならないか（ADR-0004 の背景）を、案ごとにレベルの中で値が分かれるかで測る。値の書き方と、数をまとめる幅 |
+| 音 | どの操作の瞬間に何を返すか（`DESIGN.md`「音」に当てる）と、題材のどの素材から作るか。録音を使うなら出典とライセンス。既存ゲームの効果音の本数と合計の大きさを測り、このゲームの目安を決める（タイトルで全部を読み込むので、大きさは遊び始めるまでの待ちに効く。SPEC-022） |
 | スマホ操作 | スマホ縦画面の最小幅でのマスの大きさ（既存ゲームと比べる）、盤面と全操作が一画面に収まる盤面の上限、操作とスクロールの競合 |
 | 導入判断 | 近い既存ゲーム・候補との違い、表示名（商標を避けた一般名）、台帳の各成立性の値 |
 
 ## 作る順番
 
-実装役はこの順で作る。いくつかの項目を続けて1つの作業カードにしてよい。片方を直すともう片方を必ず作り直す項目（difficulty と problem-pool など）は1つのカードにする。失敗パターン集の「いつ」はこの項目名で書く。
+実装役はこの順で作る。順は依存で決まる: 後の項目は前の項目の上でだけ完成を確かめられる。いくつかの項目を続けて1つの作業カードにしてよい。片方を直すともう片方を必ず作り直す項目（difficulty と problem-pool など）は1つのカードにする。失敗パターン集の「いつ」はこの項目名で書く。
 
 | 項目 | 作るもの | 作り方の Skill |
 |---|---|---|
 | research | この文書の「作るもの」 | — |
 | rules | ルール・判定・状態とそのテスト（画面なし）。依存規則を `generate:dependency-rules` で作り直し、カタログの一時的な除外（下）を足す | — |
-| playable | 1問を最後まで遊べるプレイ画面（盤面・操作・クリア判定）、遊ぶためのルート（`pages/puzzles/<game>/` と View）、一覧に出さないカタログエントリ（`GameCatalogEntry` の全項目を、後の項目で作るものは仮の実装で埋める）。固定問題を開く入口パスを報告に書く | — |
-| play-ui | 補助操作（待った・盤面を戻すなど）、状態の知らせ、遊び方、クリア演出 | — |
-| sound | 盤面操作とクリアの効果音。鳴らす瞬間と強さは `DESIGN.md` の「効果音」、つなぎ方は `.claude/rules/game-structure.md` の「効果音」。音は題材から作って一度だけ書き出し、`assets/sounds/` に同梱する。書き出したスクリプトは `scripts/assets/<ゲーム ID>_sounds.py` に残し、worktree の絶対パスで `uv run` する（前例は `scripts/assets/tsume_shogi_sounds.py`） | — |
+| playable | 1問を最後まで遊べるプレイ画面（盤面・操作・クリア判定）と、ゲームのホームとプレイのルート（`.claude/rules/game-structure.md`「ゲームを追加するとき」の 3。ゲームのホームの View は、既存ゲームと同じく共通の画面に `useGameHome` をつなぐだけ）。一覧に出さないカタログエントリ（`GameCatalogEntry` の全項目。問題集は固定問題、問題の特徴の軸は無しで、その時点で正しい値にする） | — |
+| play-ui | 補助操作（待った・盤面を戻すなど）、状態の知らせ、遊び方（プレイ画面とゲームのホームの両方につなぐ）、クリア演出 | — |
+| sound | 盤面操作とクリアの効果音。決まりは `DESIGN.md`「音」と `game-structure.md`「効果音」。壊すとまずい取り決め: `assets/sounds/` に FLAC で同梱する（タイトルで全部を読み込むので、調査で決めた大きさの目安に収める）。録音を使うなら出典とライセンスを書き出し先に残す（前例は詰将棋の `VCSL.CC0.txt`）。作り方は実装役が決める | — |
 | difficulty | 調査で決めた案の解法器・難易度の判定・生成器・`problem-selection.ts`、難易度の資料 | `/design-game-difficulty` |
-| problem-pool | 問題集と生成スクリプト。完成条件は、件数がそろい `--verify` で全問の再検証が通ること。問題 ID で開くレベルごとのプレイ画面のパスを報告に書く | `/design-game-difficulty` |
+| problem-pool | 問題集と生成スクリプト。完成条件は、調査で決めた件数と並びでそろい、`--verify` で全問の再検証が通ること | `/design-game-difficulty` |
 | pictogram | ゲーム一覧のピクトグラム | `/design-game-pictogram` |
-| game-home | ゲームのホーム（`pages/puzzles/<game>/index.tsx` と `views/<Game>HomeView.tsx`）と、図鑑に渡す問題集の全問と問題の特徴（カタログエントリの `listPoolProblemIds`・`describePoolProblem`・`problemFeatureFilter`）。特徴は始めたときの盤面で分かるものだけにする（SPEC-026 の「問題の特徴」） | — |
-| score | スコア（評価規則と基準時間） | — |
-| result-records | 結果画面・記録（`play-record.ts`・`play-attempt.ts`・`diagnostics.ts`）・記録からの遊び直し | — |
-| catalog | 一覧への掲載と並び。カタログの一時的な除外を消す | — |
-| spec | SPEC、ADR、台帳の行（導入判断を正式採用にする。マージが決定） | `/adr-create` |
+| score | スコア（評価規則と基準時間）。図鑑から同じ問題を遊び直したプレイも同じ規則で採られ、自己ベストと問題ごとの出来に入る（SPEC-002・SPEC-026）ので、覚えて速く解いた2回目をどう評価するかを決めて仮決定一覧に書く | — |
+| result-records | 結果画面・記録（`play-record.ts` の記録定義。自己ベストの指標と、図鑑が問題ごとの出来に読むクリアの成績を含む）・`play-attempt.ts`・`diagnostics.ts`・記録からの遊び直し | — |
+| zukan | 図鑑に渡す問題の特徴（カタログエントリの `describePoolProblem`・`problemFeatureFilter`）。調査で決めた切り口で作る。完成条件は、ゲームのホームの図鑑に問題集の全問が並び、クリアした問題に出来が付き、状態・問題の特徴・成績で絞り込めること | — |
+| catalog | 一覧への掲載と並び、一覧のテスト。カタログの一時的な除外を消す | — |
+| spec | 仕様（このパズルの決まりとその意図。難易度の節は難易度の資料の案から）、台帳の行（導入判断を正式採用にする。マージが決定）。ゲームをまたぐ判断が出たときだけ ADR にする（`docs/adr/README.md`） | ADR を作るときだけ `/adr-create` |
+
+試遊の入口（SKILL.md の「試遊の入力」と実装役の報告はここを指す）: playable から後は、ゲームのホームのパス（`/puzzles/<game>`）。決まった問題を遊ぶときは、problem-pool の後の、問題 ID で開くレベルごとのプレイ画面のパス（`/puzzles/<game>/play/<レベル>?problem=<問題ID>`）。それより前は、playable で開ける固定問題のプレイ画面のパス。
 
 カタログの一時的な除外: カタログの網羅テスト（`frontend/src/game-catalog/game-catalog.test.ts`）は `src/games/` の全ゲームが一覧にあることを確かめるので、一覧に載せる前は、このゲームを外す一時的な除外を置く（前例は `git log --all -S gamesNotInCatalogYet`）。作業ブランチでは rules で足して catalog で消し、PR では「ルールと問題」の層で足して「掲載」の層で消す。
 
@@ -76,9 +80,9 @@
 |---|---|
 | 調査（research） | `docs/パズル/導入調査/<パズル名>/`（実装前提調査は「実装で確定した差分」を含む最終版）、`scripts/research/<ゲーム ID>_*` |
 | ルールと問題（rules-problem） | `frontend/src/games/<game>/` の `puzzle/`・`problem/`（生成と問題集）・`session/`・`difficulty.ts`・`problem-selection.ts`・`display-name.ts`、生成と分析のスクリプト（`frontend/scripts/*<game>*`）と `package.json` の scripts、`frontend/biome.json`（問題集の除外と依存規則） |
-| プレイと画面（play-ui） | `play/`・`ui/`（遊び方を含む）・`assets/`（効果音を含む）・`scripts/assets/<ゲーム ID>_*`・`score.ts`・`play-record.ts`・`play-attempt.ts`・`diagnostics.ts` |
+| プレイと画面（play-ui） | `play/`・`ui/`（遊び方を含む）・`assets/`（効果音を含む。書き出しのスクリプトを残したならそれも）・`score.ts`・`play-record.ts`・`play-attempt.ts`・`diagnostics.ts` |
 | 掲載（catalog） | `frontend/src/game-catalog/<game>/` と `game-catalog.ts`、`frontend/src/pages/puzzles/<game>/` と View（ゲームのホーム・プレイ）、generouted が作り直す `frontend/src/router.ts`、一覧のテスト |
-| 文書（docs） | SPEC・ADR・台帳の行と候補ファイル・各 README の一覧、最終レビューで足した正本と失敗パターン集への追記 |
+| 文書（docs） | 仕様・台帳の行と候補ファイル・各 README の一覧、ゲームをまたぐ判断の ADR（あるときだけ）、最終レビューで足した正本と失敗パターン集への追記 |
 
 切り出しの手順:
 
