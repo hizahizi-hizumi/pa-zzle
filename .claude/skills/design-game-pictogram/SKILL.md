@@ -5,6 +5,7 @@ description: >
   game pictogram, puzzle pictogram, game icon, or SVG used to identify a game in the pa-zzle game list.
   It explores many low-cost concepts before SVG production, filters candidates in stages, compares SVGs at
   real display sizes, and refines the strongest directions into a high-quality final pictogram.
+  Not for the colored or animated showcase pictogram (use design-game-pictogram-showcase).
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design-game-pictogram/scripts/check_svg.py *), Bash(python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py *)
 ---
 
@@ -143,6 +144,8 @@ python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py \
 人間へ方向候補を提示した時点は中間成果であり、明示的に選択を委任されていない限り完成扱いにしない。
 
 レビュー / 検証のみの依頼では、対象を変更せず評価結果と機械検査結果を返した時点を完了とする。
+
+そのゲームに `pictogram-showcase.svg`（選んでいるときの色と動きのある姿）があり、`pictogram.svg` の図形を変えた場合は、showcase の静止状態にも同じ図形を写し、`/design-game-pictogram-showcase` の手順 4（自己チェックとレビュー）からやり直すまでを完了に含める。選んだ瞬間に変わるのは色だけにするため（`DESIGN.md` の「ゲームピクトグラム」）。
 
 ## 制約
 
