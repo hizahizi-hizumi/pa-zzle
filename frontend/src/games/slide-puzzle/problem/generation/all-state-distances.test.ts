@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import { buildSlidePuzzleAllStateDistances } from "@/games/slide-puzzle/problem/generation/all-state-distances";
 import { solveSlidePuzzleOptimally } from "@/games/slide-puzzle/problem/generation/solver";
 import { generateSlidePuzzleBoard } from "@/games/slide-puzzle/problem/generator";

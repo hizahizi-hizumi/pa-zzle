@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import type { SlidePuzzleProblem } from "@/games/slide-puzzle/problem/problem";
 import {
   createSlidePuzzleSession,

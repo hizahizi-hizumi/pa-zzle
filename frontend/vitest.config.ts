@@ -1,9 +1,16 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
+
+// 各ゲームの puzzle/・problem/・session/ とゲーム直下、scripts/ は画面に依存しないので DOM なしで動かす。
+const logicTestFiles = [
+  "src/games/*/{puzzle,problem,session}/**/*.test.ts",
+  "src/games/*/*.test.ts",
+  "scripts/**/*.test.ts",
+];
 
 export default defineConfig({
   plugins: [react()],
@@ -18,9 +25,7 @@ export default defineConfig({
     },
   },
   test: {
-    environment: "jsdom",
     globals: true,
-    include: ["src/**/*.{test,spec}.{ts,tsx}", "scripts/**/*.test.ts"],
     passWithNoTests: true,
     server: {
       deps: {
@@ -28,5 +33,26 @@ export default defineConfig({
         inline: ["@generouted/react-router"],
       },
     },
+    projects: [
+      {
+        test: {
+          name: "logic",
+          environment: "node",
+          // vm の中では計算の重い探索が数倍遅くなるので、vm を使わない。
+          pool: "forks",
+          include: logicTestFiles,
+        },
+      },
+      {
+        test: {
+          name: "dom",
+          environment: "jsdom",
+          // forks ではファイルごとに jsdom の環境を用意する時間が大半を占めるので、それが軽い vm を使う。
+          pool: "vmForks",
+          include: ["src/**/*.{test,spec}.{ts,tsx}"],
+          exclude: [...configDefaults.exclude, ...logicTestFiles],
+        },
+      },
+    ],
   },
 });

@@ -1,5 +1,5 @@
-// @vitest-environment node
 import { readdirSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -25,10 +25,12 @@ vi.mock("@/lib/internal-diagnostics", () => ({
 }));
 
 describe("gameCatalog", () => {
-  const concreteGames = readdirSync(
-    fileURLToPath(new URL("../games", import.meta.url)),
-    { withFileTypes: true },
-  )
+  // Vite は `new URL(..., import.meta.url)` を配信用の URL へ書き換え、jsdom では http の URL になるので、ファイルのパスから求める。
+  const gamesDirectory = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../games",
+  );
+  const concreteGames = readdirSync(gamesDirectory, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();

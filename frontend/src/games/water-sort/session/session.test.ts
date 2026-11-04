@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import type { WaterSortProblem } from "@/games/water-sort/problem/problem";
 import type { WaterSortMove } from "@/games/water-sort/puzzle/state";
 import {

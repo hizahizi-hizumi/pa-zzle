@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import { assessSlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import type { SlidePuzzleDifficultyAnalysis } from "@/games/slide-puzzle/problem/difficulty-analysis";
 import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";

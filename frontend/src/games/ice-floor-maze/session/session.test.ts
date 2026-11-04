@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import type { IceFloorMazeProblem } from "@/games/ice-floor-maze/problem/problem";
 import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";

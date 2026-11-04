@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import { createSlidePuzzleOptimalMoveCounter } from "@/games/slide-puzzle/problem/generation/optimal-move-count";
 
 describe("createSlidePuzzleOptimalMoveCounter", () => {

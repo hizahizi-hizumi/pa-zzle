@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import { difficultyLevels } from "@/games/difficulty";
 import {
   assessSlidePuzzleDifficulty,
