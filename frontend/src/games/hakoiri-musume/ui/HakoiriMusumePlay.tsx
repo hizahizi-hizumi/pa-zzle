@@ -92,10 +92,11 @@ export function HakoiriMusumePlay({
       )}
     >
       {/* 画面端から始まるタッチはブラウザの戻る操作に取られるので、盤面の左右に余白を残す。 */}
+      {/* 長い辺（縦）の上限は、ほかのゲームの盤面の長い辺と同じ 44rem にそろえる。 */}
       <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-2 [container-type:size] sm:px-6">
         <div
           style={{
-            width: `min(100cqw, calc(100cqh * ${BOX_WIDTH_CELLS} / ${BOX_HEIGHT_CELLS}), 30rem)`,
+            width: `min(100cqw, min(100cqh, 44rem) * ${BOX_WIDTH_CELLS} / ${BOX_HEIGHT_CELLS})`,
           }}
         >
           <HakoiriMusumeBoard

@@ -42,7 +42,7 @@ export function getHakoiriMusumeScoreCriteria(
             durationMsPerUnit: HAKOIRI_MUSUME_SPEED_PER_OPTIMAL_MOVE_MS,
           },
           {
-            label: "準備の長さ",
+            label: "娘を進める前に読む",
             count: result.preparationLength,
             unit: "手",
             durationMsPerUnit: HAKOIRI_MUSUME_SPEED_PER_PREPARATION_MOVE_MS,

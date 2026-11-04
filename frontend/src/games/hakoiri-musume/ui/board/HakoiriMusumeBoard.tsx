@@ -268,7 +268,7 @@ export function HakoiriMusumeBoard({
               data-piece-index={pieceIndex}
               aria-label={`${hakoiriMusumePieceLabels[piece.kind]} ${position.row + 1}行${position.column + 1}列`}
               disabled={interactionDisabled}
-              className="absolute rounded-[2.4cqw] transition-[left,top] ease-out focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:cursor-default"
+              className="absolute rounded-[2.4cqw] transition-[left,top] ease-enter motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:cursor-default"
               style={{
                 ...toBoxStyle(
                   getPieceRect(position, hakoiriMusumePieceShapes[piece.kind]),

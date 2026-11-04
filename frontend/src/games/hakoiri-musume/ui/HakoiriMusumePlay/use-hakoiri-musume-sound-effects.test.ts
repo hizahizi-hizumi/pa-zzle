@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 
 import type { HakoiriMusumeStepNotice } from "@/games/hakoiri-musume/play/use-hakoiri-musume-play";
-import { DAUGHTER_EXIT_MS } from "@/games/hakoiri-musume/ui/board/HakoiriMusumeBoard/play-daughter-exit";
+import { DAUGHTER_EXIT_MS } from "@/games/hakoiri-musume/ui/board/daughter-exit-timing";
 import { useHakoiriMusumeSoundEffects } from "@/games/hakoiri-musume/ui/HakoiriMusumePlay/use-hakoiri-musume-sound-effects";
 import type { GameProgress } from "@/games/play";
 import {
@@ -118,10 +118,14 @@ describe("useHakoiriMusumeSoundEffects", () => {
       renderSoundEffects(true);
     });
 
-    test("娘を出口の前に止めたまま見せるので、クリア音を鳴らさないこと", () => {
+    test("娘を出口の前に止めたまま見せるので、抜けていく音を重ねず、箱の胴鳴りだけを鳴らすこと", () => {
       rerender({ stepNotice: smallStep(1), progress: "clearing" });
+      const played = vi
+        .mocked(playSound)
+        .mock.calls.map(([sound]) => nameOf(sound));
 
       expect(vi.mocked(playLayeredSound)).not.toHaveBeenCalled();
+      expect(played.at(-1)).toBe("cleared-thud");
     });
   });
 });

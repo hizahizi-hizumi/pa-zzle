@@ -4,7 +4,7 @@ import pieceSlidSoundUrl from "@/games/hakoiri-musume/assets/sounds/piece-slid.f
 import pieceSlid2SoundUrl from "@/games/hakoiri-musume/assets/sounds/piece-slid-2.flac";
 import pieceSlid3SoundUrl from "@/games/hakoiri-musume/assets/sounds/piece-slid-3.flac";
 import type { HakoiriMusumeStepNotice } from "@/games/hakoiri-musume/play/use-hakoiri-musume-play";
-import { DAUGHTER_EXIT_MS } from "@/games/hakoiri-musume/ui/board/HakoiriMusumeBoard/play-daughter-exit";
+import { DAUGHTER_EXIT_MS } from "@/games/hakoiri-musume/ui/board/daughter-exit-timing";
 import type { GameProgress } from "@/games/play";
 import {
   useClearSound,
@@ -54,10 +54,14 @@ function playClearSound() {
   ]);
 }
 
+/** 動きを減らす設定のクリア音。娘を出口の前に止めたまま見せるので、抜けていくこすれは鳴らさず、箱の胴鳴りだけを鳴らす。 */
+function playReducedMotionClearSound() {
+  playSound(clearedThudSound);
+}
+
 /**
  * 駒が新しいマスへ移るたびのすべる音と、娘が出口から抜けていく演出の音を鳴らす。結果の報酬の音はアプリが鳴らす。
- * 動けない向きの入力・待った・盤面を戻す・リセットでは鳴らさない。動きを減らす設定では、娘を出口の前に止めたまま見せ、
- * 抜けていく姿が無いのでクリア音を鳴らさない。
+ * 動けない向きの入力・待った・盤面を戻す・リセットでは鳴らさない。
  */
 export function useHakoiriMusumeSoundEffects(
   stepNotice: HakoiriMusumeStepNotice | null,
@@ -65,5 +69,5 @@ export function useHakoiriMusumeSoundEffects(
 ) {
   usePrepareSoundEffects(hakoiriMusumeSounds);
   useOperationSound(stepNotice, playStepSound);
-  useClearSound(progress, playClearSound);
+  useClearSound(progress, playClearSound, { playReducedMotionClearSound });
 }
