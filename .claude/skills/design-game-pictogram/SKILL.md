@@ -42,7 +42,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design
 
 制作開始時に次を確認する。
 
-- `DESIGN.md` — ゲームを表す視覚表現と一覧での視覚的優先順位
+- `DESIGN.md` — 「コンポーネント」の「ゲームを表す表現」と「ゲームピクトグラム」
 - `references/method.md` — 探索とふるい分けで使う評価方法
 - `examples/README.md` — レビュー済み完成見本と品質観点
 
