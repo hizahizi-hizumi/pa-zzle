@@ -107,6 +107,14 @@ function tapCell(cell: number): void {
   fireEvent.click(listCells()[cell] as HTMLElement);
 }
 
+// マスは押しても同じ DOM ノードのまま残るので、一度引いた盤面のマスを順に押す。
+function tapCellsInOrder(path: readonly number[]): void {
+  const cells = listCells();
+  for (const cell of path) {
+    fireEvent.click(cells[cell] as HTMLElement);
+  }
+}
+
 /** 盤面を一辺 `boardWidth` px の正方形として置き、マスの中心の座標を返す。 */
 const boardWidth = 300;
 
@@ -223,9 +231,7 @@ describe("HitofudePuzzlePlayView", () => {
 
     describe("解の道どおりに全マスを通った場合", () => {
       beforeEach(() => {
-        for (const cell of solution.slice(1)) {
-          tapCell(cell);
-        }
+        tapCellsInOrder(solution.slice(1));
       });
 
       test("結果画面で難易度とスコアを示すこと", () => {
@@ -257,9 +263,7 @@ describe("HitofudePuzzlePlayView", () => {
       describe("同じ問題をもう一度解いた場合", () => {
         beforeEach(() => {
           fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-          for (const cell of solution.slice(1)) {
-            tapCell(cell);
-          }
+          tapCellsInOrder(solution.slice(1));
         });
 
         test("もう1件の記録として保存すること", () => {

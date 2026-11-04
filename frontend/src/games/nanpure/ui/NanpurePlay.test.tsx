@@ -109,8 +109,11 @@ describe("NanpurePlay", () => {
     });
 
     test("手動メモモードと待ったを通知すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "メモ" }));
-      fireEvent.click(screen.getByRole("button", { name: "待った" }));
+      const inputPanel = screen.getByRole("contentinfo");
+      fireEvent.click(within(inputPanel).getByRole("button", { name: "メモ" }));
+      fireEvent.click(
+        within(inputPanel).getByRole("button", { name: "待った" }),
+      );
 
       expect(props.onToggleNotesMode).toHaveBeenCalledOnce();
       expect(props.onUndo).toHaveBeenCalledOnce();
@@ -164,7 +167,8 @@ describe("NanpurePlay", () => {
       });
 
       test("閉じてもプレイを測り直さないこと", () => {
-        fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+        const dialog = screen.getByRole("dialog", { name: "遊び方" });
+        fireEvent.click(within(dialog).getByRole("button", { name: "閉じる" }));
 
         expect(props.onReplay).not.toHaveBeenCalled();
       });
@@ -213,7 +217,9 @@ describe("NanpurePlay", () => {
       const notes = [...props.notes];
       notes[0] = [4];
       render(<NanpurePlay {...props} notes={notes} />);
-      erase = screen.getByRole("button", { name: "消す" });
+      erase = within(screen.getByRole("contentinfo")).getByRole("button", {
+        name: "消す",
+      });
     });
 
     test("消す操作を有効にすること", () => {
@@ -246,19 +252,21 @@ describe("NanpurePlay", () => {
       },
     };
     let board: HTMLElement;
+    let inputPanel: HTMLElement;
     let digitInput: HTMLElement;
 
     beforeEach(() => {
       const props = createProps();
       render(<NanpurePlay {...props} progress="clearing" result={result} />);
       board = screen.getByRole("main");
-      digitInput = screen.getByRole("group", { name: "数字入力" });
+      inputPanel = screen.getByRole("contentinfo");
+      digitInput = within(inputPanel).getByRole("group", { name: "数字入力" });
     });
 
     test("完成盤を見せて結果画面への遷移を待つこと", () => {
       const resultHeading = screen.queryByRole("heading", { name: "クリア" });
       const cells = within(board).getAllByRole("button", { name: /行.*列/ });
-      const erase = screen.getByRole("button", { name: "消す" });
+      const erase = within(inputPanel).getByRole("button", { name: "消す" });
       const firstDigit = within(digitInput).getByText("1");
 
       expect(resultHeading).toBeNull();

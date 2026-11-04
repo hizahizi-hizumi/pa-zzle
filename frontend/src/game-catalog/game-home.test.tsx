@@ -48,8 +48,21 @@ function countClues(problem: ReturnType<typeof selectPoolProblem>) {
   return problem.problem.clues.filter((cell) => cell !== null).length;
 }
 
+/** 全問の台紙を描くと重いので、ホームの導き方を確かめるのに足りる、問題集の各レベルの先頭の数問だけを持つゲームにする。 */
+function withLeadingPoolProblems(game: GameCatalogEntry): GameCatalogEntry {
+  return {
+    ...game,
+    listPoolProblemIds(difficulty) {
+      return game.listPoolProblemIds(difficulty).slice(0, 3);
+    },
+  };
+}
+
+const nanpureGame = withLeadingPoolProblems(nanpureCatalogEntry);
+const minesweeperGame = withLeadingPoolProblems(minesweeperCatalogEntry);
+
 const nanpureProblemCount = difficultyLevels.reduce(
-  (total, { id }) => total + listNanpurePoolProblemIds(id).length,
+  (total, { id }) => total + nanpureGame.listPoolProblemIds(id).length,
   0,
 );
 
@@ -106,11 +119,11 @@ function renderAt(path: string, { strict = false } = {}) {
     [
       {
         path: "/puzzles/nanpure",
-        element: <GameHome game={nanpureCatalogEntry} />,
+        element: <GameHome game={nanpureGame} />,
       },
       {
         path: "/puzzles/minesweeper",
-        element: <GameHome game={minesweeperCatalogEntry} />,
+        element: <GameHome game={minesweeperGame} />,
       },
       { path: "/puzzles/nanpure/play/:difficulty", element: <PlayLocation /> },
     ],
@@ -525,7 +538,7 @@ describe("useGameHome", () => {
       )[0];
 
       expect(firstSquare?.getAttribute("aria-label")).toBe(
-        "No.0001 レベル 1 未挑戦",
+        "No.01 レベル 1 未挑戦",
       );
     });
 

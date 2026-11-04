@@ -142,26 +142,41 @@ describe("TakuzuPlayView", () => {
       (cellIndex) => problem.solution.cells[cellIndex] === "a",
     );
 
-    function pressCell(cellIndex: number, times: number): void {
+    // マスは押しても同じ DOM ノードのまま残るので、一連の操作の間は一度引いた盤面のマスを押し続ける。
+    function boardCells(): HTMLElement[] {
+      return within(
+        screen.getByRole("group", { name: "バイナリパズル盤面" }),
+      ).getAllByRole("button");
+    }
+
+    function pressCell(
+      cells: HTMLElement[],
+      cellIndex: number,
+      times: number,
+    ): void {
       for (let press = 0; press < times; press += 1) {
-        const cells = within(
-          screen.getByRole("group", { name: "バイナリパズル盤面" }),
-        ).getAllByRole("button");
         fireEvent.click(cells[cellIndex] as HTMLElement);
       }
     }
 
     /** 空きマスを順に、解のタイルになるまで押す（A は1回、B は2回）。 */
     function solve(): void {
+      const cells = boardCells();
       for (const cellIndex of emptyCellIndices) {
-        pressCell(cellIndex, problem.solution.cells[cellIndex] === "a" ? 1 : 2);
+        pressCell(
+          cells,
+          cellIndex,
+          problem.solution.cells[cellIndex] === "a" ? 1 : 2,
+        );
       }
     }
 
     /** A が入る最初の空きマスに B を置いて先へ進み、最後に A へ直して解き終える。 */
     function solveWithOneCorrection(): void {
+      const cells = boardCells();
       for (const cellIndex of emptyCellIndices) {
         pressCell(
+          cells,
           cellIndex,
           cellIndex === correctedCellIndex ||
             problem.solution.cells[cellIndex] === "b"
@@ -170,13 +185,13 @@ describe("TakuzuPlayView", () => {
         );
       }
       // B → 空き → A と、別のマスへ移った後で置いたタイルを直す。
-      pressCell(correctedCellIndex as number, 2);
+      pressCell(cells, correctedCellIndex as number, 2);
     }
 
     describe("置いたタイルを待ったで取り消してから解いた場合", () => {
       beforeEach(() => {
         renderAt("/puzzles/takuzu/play/1");
-        pressCell(emptyCellIndices[0] as number, 1);
+        pressCell(boardCells(), emptyCellIndices[0] as number, 1);
         fireEvent.click(screen.getByRole("button", { name: "待った" }));
         solve();
       });

@@ -2067,31 +2067,62 @@ describe("GameHomeScreen", () => {
           ),
         },
       };
-      let samples: { untouched: number; solved: number; total: number }[];
+      type CountSample = { untouched: number; solved: number; total: number };
 
-      function readUntouchedCount(): number {
-        const name = getStatusCountNames().find((item) =>
-          item?.startsWith("未挑戦"),
+      /** 押していく途中に数を示す、見出し・レベルのカード・状態ごとの数の領域。 */
+      type CountRegions = {
+        heading: HTMLElement;
+        tabList: HTMLElement;
+        statusCounts: HTMLElement;
+      };
+
+      /**
+       * 押し終えるまで20msごとに読んだ数。テストは読むだけなので、押していく描画をテストごとに繰り返さず、最初に読んだものを共有する。
+       */
+      let samples: readonly CountSample[] = [];
+
+      /**
+       * 文書全体から引き直すと1回ごとに時間がかかるので、開いたときに引いた領域の中を読む。
+       * 領域が描き直しで入れ替わると数が動かなくなり、テストが失敗する。
+       */
+      function readCounts({
+        heading,
+        tabList,
+        statusCounts,
+      }: CountRegions): CountSample {
+        const untouchedName = within(statusCounts)
+          .getAllByRole("listitem")
+          .map((item) => item.getAttribute("aria-label"))
+          .find((name) => name?.startsWith("未挑戦"));
+        const levelTwoCount = readLevelCardCount(
+          within(tabList).getAllByRole("tab")[1] as HTMLElement,
         );
-        return Number(name?.match(/\d+/)?.[0]);
+        const solvedCountText =
+          within(heading).getByText(/^解いた問題 \d+ \/ 1200$/).textContent;
+        return {
+          untouched: Number(untouchedName?.match(/\d+/)?.[0]),
+          solved: Number(levelTwoCount?.split(" / ")[0]),
+          total: Number(solvedCountText?.match(/(\d+) \//)?.[1]),
+        };
       }
 
       beforeEach(async () => {
+        if (samples.length > 0) {
+          return;
+        }
         renderScreen(manyZukan, manyChanges);
-        samples = [];
+        const regions: CountRegions = {
+          heading: screen.getByRole("banner"),
+          tabList: screen.getByRole("tablist", { name: "レベル" }),
+          statusCounts: getStatusCounts(),
+        };
+        const readSamples: CountSample[] = [];
         for (let elapsedMs = 0; elapsedMs < 1800; elapsedMs += 20) {
-          samples.push({
-            untouched: readUntouchedCount(),
-            solved: Number(getTabCounts()[1]?.split(" / ")[0]),
-            total: getShownSolvedCount(),
-          });
+          readSamples.push(readCounts(regions));
           await advanceStamps(20);
         }
-        samples.push({
-          untouched: readUntouchedCount(),
-          solved: Number(getTabCounts()[1]?.split(" / ")[0]),
-          total: getShownSolvedCount(),
-        });
+        readSamples.push(readCounts(regions));
+        samples = readSamples;
       });
 
       test("未挑戦の数を一度も増やさずに減らしていき、最後に0にすること", () => {
