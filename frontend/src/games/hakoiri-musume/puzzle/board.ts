@@ -116,14 +116,14 @@ export function listHakoiriMusumePieceCells(
  * 娘は4マスとも `A`、縦長は上が `v`・下が `w`、横長は左が `h`・右が `i`、小駒は `s`、空きは `.`。
  * 例: 合意の易しい例は `vAAv` `wAAw` `v..v` `whiw` `s..s`（行ごと）を続けた `vAAvwAAwv..vwhiws..s`。
  */
-const notationByPieceCell = {
+export const hakoiriMusumeNotationByPieceCell = {
   daughter: ["A", "A", "A", "A"],
   vertical: ["v", "w"],
   horizontal: ["h", "i"],
   small: ["s"],
 } as const satisfies Record<HakoiriMusumePieceKind, readonly string[]>;
 
-const pieceKindByLeadingNotation = {
+export const hakoiriMusumePieceKindByLeadingNotation = {
   A: "daughter",
   v: "vertical",
   h: "horizontal",
@@ -132,10 +132,11 @@ const pieceKindByLeadingNotation = {
 
 const emptyCellNotation = ".";
 
-function isLeadingNotation(
+/** 盤面の20文字の1文字が、駒の始まり（左上）の書き方か。 */
+export function isHakoiriMusumeLeadingNotation(
   character: string,
-): character is keyof typeof pieceKindByLeadingNotation {
-  return Object.hasOwn(pieceKindByLeadingNotation, character);
+): character is keyof typeof hakoiriMusumePieceKindByLeadingNotation {
+  return Object.hasOwn(hakoiriMusumePieceKindByLeadingNotation, character);
 }
 
 /** 駒の並びを盤面の20文字にする。駒は重ならず箱に収まっているものとする。 */
@@ -147,7 +148,7 @@ export function formatHakoiriMusumeBoard(
     () => emptyCellNotation,
   );
   for (const piece of pieces) {
-    const notations = notationByPieceCell[piece.kind];
+    const notations = hakoiriMusumeNotationByPieceCell[piece.kind];
     listHakoiriMusumePieceCells(piece).forEach((cell, index) => {
       characters[cell] = notations[index]!;
     });
@@ -172,15 +173,15 @@ export function parseHakoiriMusumeBoard(
     if (covered[cell] || character === emptyCellNotation) {
       continue;
     }
-    if (!isLeadingNotation(character)) {
+    if (!isHakoiriMusumeLeadingNotation(character)) {
       return null;
     }
-    const kind = pieceKindByLeadingNotation[character];
+    const kind = hakoiriMusumePieceKindByLeadingNotation[character];
     const position = getHakoiriMusumeCellPosition(cell);
     if (!isHakoiriMusumePieceInsideBoard(kind, position)) {
       return null;
     }
-    const notations = notationByPieceCell[kind];
+    const notations = hakoiriMusumeNotationByPieceCell[kind];
     const pieceCells = listHakoiriMusumePieceCellsAt(kind, position);
     const matches = pieceCells.every(
       (pieceCell, index) =>

@@ -1,7 +1,5 @@
-import {
-  DAUGHTER_EXIT_MS,
-  playDaughterExit,
-} from "@/games/hakoiri-musume/ui/board/HakoiriMusumeBoard/play-daughter-exit";
+import { DAUGHTER_EXIT_MS } from "@/games/hakoiri-musume/ui/board/daughter-exit-timing";
+import { playDaughterExit } from "@/games/hakoiri-musume/ui/board/HakoiriMusumeBoard/play-daughter-exit";
 
 /** 演出とその後の間を十分に超える時間。 */
 const longEnoughMs = 10_000;

@@ -11,8 +11,8 @@ import {
   hakoiriMusumeDirections,
   hakoiriMusumeStepByDirection,
   isHakoiriMusumeCleared,
-  listHakoiriMusumePieceDestinations,
   moveHakoiriMusumePiece,
+  _private as rules,
 } from "@/games/hakoiri-musume/puzzle/rules";
 import {
   createHakoiriMusumeInitialState,
@@ -160,19 +160,28 @@ describe("moveHakoiriMusumePiece", () => {
 describe("listHakoiriMusumePieceDestinations", () => {
   describe("易しい例の始めの盤面の場合", () => {
     test("左下の小駒は空いたマスを曲がって進める所まで行けること", () => {
-      const destinations = listHakoiriMusumePieceDestinations(easyExample, 6);
+      const destinations = rules.listHakoiriMusumePieceDestinations(
+        easyExample,
+        6,
+      );
 
       expect(destinations).toEqual([17, 18]);
     });
 
     test("四方をふさがれた駒には行き先が無いこと", () => {
-      const destinations = listHakoiriMusumePieceDestinations(easyExample, 0);
+      const destinations = rules.listHakoiriMusumePieceDestinations(
+        easyExample,
+        0,
+      );
 
       expect(destinations).toEqual([]);
     });
 
     test("横長は上下の空いた段へ行けること", () => {
-      const destinations = listHakoiriMusumePieceDestinations(easyExample, 5);
+      const destinations = rules.listHakoiriMusumePieceDestinations(
+        easyExample,
+        5,
+      );
 
       expect(destinations).toEqual([9, 17]);
     });
@@ -187,7 +196,7 @@ describe("listHakoiriMusumePieceDestinations", () => {
     const state = stateOf("s.hiv.AAw.AAvhivw..w");
 
     test("右へ1マス進んでから下へ曲がった先まで、近い順に返すこと", () => {
-      const destinations = listHakoiriMusumePieceDestinations(state, 0);
+      const destinations = rules.listHakoiriMusumePieceDestinations(state, 0);
 
       expect(destinations).toEqual([1, 5, 9]);
     });

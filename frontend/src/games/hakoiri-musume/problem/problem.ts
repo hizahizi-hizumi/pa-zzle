@@ -91,12 +91,13 @@ function decodeHakoiriMusumeProblem(seed: string): HakoiriMusumeProblem | null {
   return pieces && findProblemDefect(pieces) === null ? { pieces } : null;
 }
 
+/** 始めの盤面の20文字（`formatHakoiriMusumeBoard` の書き方）を seed にした identity。問題集の1問から作る。 */
 export function createHakoiriMusumeProblemIdentity(
-  problem: HakoiriMusumeProblem,
+  board: string,
 ): HakoiriMusumeProblemIdentity {
   return {
     generatorVersion: HAKOIRI_MUSUME_GENERATOR_VERSION,
-    seed: formatHakoiriMusumeBoard(problem.pieces),
+    seed: board,
     conditions: {},
   };
 }

@@ -11,8 +11,30 @@ import {
 } from "@/games/hakoiri-musume/play/use-hakoiri-musume-play";
 import type { HakoiriMusumePooledProblem } from "@/games/hakoiri-musume/problem/problem-pool";
 import { parseHakoiriMusumeBoard } from "@/games/hakoiri-musume/puzzle/board";
+import { createProblemId } from "@/games/problem-id";
+import * as problemSeed from "@/games/problem-seed";
 
-afterEach(cleanup);
+// 問題集から引く問題は、seed をそのまま identity の seed にした同じ盤面の問題にする（どの問題を引いたかを seed で見分ける）。
+vi.mock("@/games/hakoiri-musume/problem-selection", async () => {
+  const { parseHakoiriMusumeBoard } = await import(
+    "@/games/hakoiri-musume/puzzle/board"
+  );
+  return {
+    selectHakoiriMusumeProblemForDifficulty: (
+      _difficulty: string,
+      seed: string,
+    ) => ({
+      problem: { pieces: parseHakoiriMusumeBoard("v..vwssw.AAv.AAws...")! },
+      identity: { generatorVersion: "1", seed, conditions: {} },
+      workload: { optimalMoveCount: 1, preparationLength: 0 },
+    }),
+  };
+});
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 /**
  * 娘が出口の1段上にいて、真下が空いている盤面（最短1手）。
@@ -96,5 +118,77 @@ describe("useHakoiriMusumePlay", () => {
       expect(result.current.pieces).toEqual(problem.problem.pieces);
       expect(result.current.moveCount).toBe(0);
     });
+  });
+
+  describe("盤面を戻した場合", () => {
+    test("始めの盤面へ戻し、手数を引き継いで回数を数え、知らせを消すこと", () => {
+      act(() => {
+        result.current.movePiece(6, "right");
+        result.current.movePiece(0, "down");
+      });
+
+      act(() => result.current.restart());
+
+      expect(result.current.pieces).toEqual(problem.problem.pieces);
+      expect(result.current.moveCount).toBe(2);
+      expect(result.current.restartCount).toBe(1);
+      expect(result.current.stepNotice).toBeNull();
+      expect(result.current.canRestart).toBe(false);
+    });
+  });
+
+  describe("リセットした場合", () => {
+    test("同じ問題の新しいプレイを始めること", () => {
+      const { problemIdentity } = result.current;
+      act(() => result.current.movePiece(6, "right"));
+
+      act(() => result.current.replay());
+
+      expect(result.current.problemIdentity).toBe(problemIdentity);
+      expect(result.current.pieces).toEqual(problem.problem.pieces);
+      expect(result.current.moveCount).toBe(0);
+      expect(result.current.restartCount).toBe(0);
+      expect(result.current.stepNotice).toBeNull();
+    });
+  });
+});
+
+describe("最初に避ける問題を渡し、最初に引いた seed がその問題を指す場合", () => {
+  let result: RenderHookResult<HakoiriMusumePlay, unknown>["result"];
+
+  beforeEach(() => {
+    vi.spyOn(problemSeed, "createProblemSeed")
+      .mockReturnValueOnce("hakoiri-avoided")
+      .mockReturnValueOnce("hakoiri-other");
+    const avoidedProblemId = createProblemId({
+      generatorVersion: "1",
+      seed: "hakoiri-avoided",
+      conditions: {},
+    });
+    ({ result } = renderHook(() =>
+      useHakoiriMusumePlay("1", undefined, avoidedProblemId),
+    ));
+  });
+
+  test("seed を引き直して避ける問題と別の問題で始めること", () => {
+    expect(result.current.problemIdentity.seed).toBe("hakoiri-other");
+  });
+});
+
+describe("別の問題で最初に引いた seed が今と同じ問題を指す場合", () => {
+  let result: RenderHookResult<HakoiriMusumePlay, unknown>["result"];
+
+  beforeEach(() => {
+    vi.spyOn(problemSeed, "createProblemSeed")
+      .mockReturnValueOnce("hakoiri-current")
+      .mockReturnValueOnce("hakoiri-current")
+      .mockReturnValueOnce("hakoiri-other");
+    ({ result } = renderHook(() => useHakoiriMusumePlay("1")));
+  });
+
+  test("seed を引き直して今と別の問題を始めること", () => {
+    act(() => result.current.startNewProblem());
+
+    expect(result.current.problemIdentity.seed).toBe("hakoiri-other");
   });
 });

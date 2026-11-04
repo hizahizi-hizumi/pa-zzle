@@ -13,7 +13,7 @@ const easyProblem = { pieces: parseHakoiriMusumeBoard(easyBoard)! };
 
 describe("createHakoiriMusumeProblemIdentity", () => {
   test("盤面の20文字を seed にすること", () => {
-    const identity = createHakoiriMusumeProblemIdentity(easyProblem);
+    const identity = createHakoiriMusumeProblemIdentity(easyBoard);
 
     expect(identity).toEqual({
       generatorVersion: HAKOIRI_MUSUME_GENERATOR_VERSION,
@@ -24,7 +24,7 @@ describe("createHakoiriMusumeProblemIdentity", () => {
 });
 
 describe("restoreHakoiriMusumeProblem", () => {
-  const identity = createHakoiriMusumeProblemIdentity(easyProblem);
+  const identity = createHakoiriMusumeProblemIdentity(easyBoard);
 
   test("identity の盤面から同じ駒の並びを読むこと", () => {
     const { problem } = restoreHakoiriMusumeProblem(identity);
@@ -87,7 +87,7 @@ describe("assertHakoiriMusumeProblem", () => {
 
 describe("isHakoiriMusumeProblemIdentity", () => {
   const cases = [
-    ["今の版の易しい例", createHakoiriMusumeProblemIdentity(easyProblem), true],
+    ["今の版の易しい例", createHakoiriMusumeProblemIdentity(easyBoard), true],
     [
       "別の版",
       { generatorVersion: "0", seed: easyBoard, conditions: {} },

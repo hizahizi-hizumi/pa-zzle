@@ -1,11 +1,9 @@
 import {
   findHakoiriMusumeDaughterCell,
   type HakoiriMusumeStateGraph,
+  measureHakoiriMusumeDaughterDistance,
 } from "@/games/hakoiri-musume/problem/generation/state-space";
-import {
-  HAKOIRI_MUSUME_COLUMNS,
-  HAKOIRI_MUSUME_GOAL_CELL,
-} from "@/games/hakoiri-musume/puzzle/board";
+import { HAKOIRI_MUSUME_GOAL_CELL } from "@/games/hakoiri-musume/puzzle/board";
 import type { ProblemRandom } from "@/games/problem-seed";
 
 /**
@@ -23,20 +21,6 @@ export const hakoiriMusumeNaivePlayKinds = [
 
 export type HakoiriMusumeNaivePlayKind =
   (typeof hakoiriMusumeNaivePlayKinds)[number];
-
-function measureDaughterDistance(board: string): number {
-  const cell = findHakoiriMusumeDaughterCell(board);
-  return (
-    Math.abs(
-      Math.floor(cell / HAKOIRI_MUSUME_COLUMNS) -
-        Math.floor(HAKOIRI_MUSUME_GOAL_CELL / HAKOIRI_MUSUME_COLUMNS),
-    ) +
-    Math.abs(
-      (cell % HAKOIRI_MUSUME_COLUMNS) -
-        (HAKOIRI_MUSUME_GOAL_CELL % HAKOIRI_MUSUME_COLUMNS),
-    )
-  );
-}
 
 /**
  * 素朴な解き方で `start` の盤面から娘を出口の前へ運び、運べた手数を返す。`budget` 手で運べなければ `null`。
@@ -63,8 +47,12 @@ export function playHakoiriMusumeNaively(
         kind === "greedy"
           ? fresh.filter(
               (next) =>
-                measureDaughterDistance(boards[next]!) <
-                measureDaughterDistance(boards[current]!),
+                measureHakoiriMusumeDaughterDistance(
+                  findHakoiriMusumeDaughterCell(boards[next]!),
+                ) <
+                measureHakoiriMusumeDaughterDistance(
+                  findHakoiriMusumeDaughterCell(boards[current]!),
+                ),
             )
           : [];
       pool =

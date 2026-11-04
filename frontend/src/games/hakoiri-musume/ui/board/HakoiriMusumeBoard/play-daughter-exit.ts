@@ -1,16 +1,15 @@
+import { DAUGHTER_EXIT_MS } from "@/games/hakoiri-musume/ui/board/daughter-exit-timing";
 import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
-/**
- * 娘が出口の前から、下の縁の切り欠きを抜けて箱の外へ出ていく時間。止まった所から加速し、上の辺が箱の外形の下端を
- * 越えるまで（駒の見た目の高さ 1.93 マスに対して、2マスと縁の太さ 0.2 マス分。高さの 115%）下がって終える。箱の外へ出た分は、箱の外形で切り取られて見えなくなる。
- * 抜け切った娘が箱の外へ落ちる音は、この時刻に合わせる。
- */
-export const DAUGHTER_EXIT_MS = 700;
 /** 娘が抜けた後の空いた箱を、結果へ進める前に見せておく時間。 */
 const DAUGHTER_EXIT_HOLD_MS = 400;
 /** 動きを減らす設定で、出口の前に着いた娘を動かさずに見せておく時間。 */
 const REDUCED_MOTION_CLEAR_HOLD_MS = 1_000;
 
+/**
+ * 止まった所から加速し、上の辺が箱の外形の下端を越えるまで（駒の見た目の高さ 1.93 マスに対して、2マスと縁の太さ 0.2 マス分。
+ * 高さの 115%）下がって終える。箱の外へ出た分は、箱の外形で切り取られて見えなくなる。
+ */
 const daughterExitKeyframes: Keyframe[] = [
   { transform: "translateY(0)" },
   { transform: "translateY(115%)" },

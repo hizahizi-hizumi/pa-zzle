@@ -6,9 +6,8 @@ import {
   type HakoiriMusumeDirection,
   hakoiriMusumeDirections,
   isHakoiriMusumeCleared,
-  listHakoiriMusumePieceDestinations,
   moveHakoiriMusumePiece,
-  placeHakoiriMusumePiece,
+  _private as rules,
 } from "@/games/hakoiri-musume/puzzle/rules";
 import {
   createHakoiriMusumeInitialState,
@@ -52,11 +51,11 @@ function findShortestSolution(start: HakoiriMusumeState): Move[] {
       return moves;
     }
     state.pieces.forEach((_, pieceIndex) => {
-      for (const cell of listHakoiriMusumePieceDestinations(
+      for (const cell of rules.listHakoiriMusumePieceDestinations(
         state,
         pieceIndex,
       )) {
-        const next = placeHakoiriMusumePiece(state, pieceIndex, cell);
+        const next = rules.placeHakoiriMusumePiece(state, pieceIndex, cell);
         const nextKey = formatHakoiriMusumeBoard(next.pieces);
         if (!reached.has(nextKey)) {
           reached.set(nextKey, {

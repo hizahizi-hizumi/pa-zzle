@@ -100,7 +100,7 @@ export function moveHakoiriMusumePiece(
  * 1手で駒が行ける左上のマス。ほかの駒を動かさずに、空いたマスを1マスずつ何回曲がってもたどれる所で、
  * 今のマスは含めない。近い順（同じ近さはたどった順）に並ぶ。
  */
-export function listHakoiriMusumePieceDestinations(
+function listHakoiriMusumePieceDestinations(
   state: HakoiriMusumeState,
   pieceIndex: number,
 ): number[] {
@@ -126,7 +126,7 @@ export function listHakoiriMusumePieceDestinations(
 }
 
 /** 1手で駒を `cell` へ動かした盤面。`cell` は `listHakoiriMusumePieceDestinations` が返したマスに限る。 */
-export function placeHakoiriMusumePiece(
+function placeHakoiriMusumePiece(
   state: HakoiriMusumeState,
   pieceIndex: number,
   cell: number,
@@ -141,3 +141,9 @@ export function isHakoiriMusumeCleared(state: HakoiriMusumeState): boolean {
       piece.kind === "daughter" && piece.cell === HAKOIRI_MUSUME_GOAL_CELL,
   );
 }
+
+/** ルールの関数（駒ごとの1手の行き先）。全局面の数え上げとセッションの試験で、別の作り方と突き合わせるのに使う。 */
+export const _private = {
+  listHakoiriMusumePieceDestinations,
+  placeHakoiriMusumePiece,
+};

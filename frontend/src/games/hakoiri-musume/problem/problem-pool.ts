@@ -1,6 +1,7 @@
 import type { HakoiriMusumeDifficulty } from "@/games/hakoiri-musume/difficulty";
 import {
-  HAKOIRI_MUSUME_GENERATOR_VERSION,
+  createHakoiriMusumeProblemIdentity,
+  type HAKOIRI_MUSUME_GENERATOR_VERSION,
   type HakoiriMusumeIdentifiedProblem,
   type HakoiriMusumeProblemIdentity,
   restoreHakoiriMusumeProblem,
@@ -57,11 +58,7 @@ export function decodeHakoiriMusumePoolEntry([
   preparationLength,
 ]: HakoiriMusumeProblemPoolEntry): HakoiriMusumeDecodedPoolEntry {
   return {
-    identity: {
-      generatorVersion: HAKOIRI_MUSUME_GENERATOR_VERSION,
-      seed: board,
-      conditions: {},
-    },
+    identity: createHakoiriMusumeProblemIdentity(board),
     workload: { optimalMoveCount, preparationLength },
   };
 }

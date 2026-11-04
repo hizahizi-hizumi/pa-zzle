@@ -8,6 +8,7 @@ import {
   readHakoiriMusumeDifficultyFeatures,
 } from "@/games/hakoiri-musume/problem/difficulty-analysis";
 import {
+  countHakoiriMusumePieceSetEmptyCells,
   createHakoiriMusumeStateGraph,
   enumerateHakoiriMusumePieceSetBoards,
   type HakoiriMusumeBoardText,
@@ -81,8 +82,7 @@ export function analyzeHakoiriMusumePieceSet(
   return {
     graph,
     measures: measureHakoiriMusumeStateGraph(graph),
-    emptyCellCount:
-      16 - 2 * (pieceSet.vertical + pieceSet.horizontal) - pieceSet.small,
+    emptyCellCount: countHakoiriMusumePieceSetEmptyCells(pieceSet),
   };
 }
 
@@ -162,8 +162,8 @@ const noOwner = 2 ** 31 - 1;
  * 局面（最短の祖先）に印を付け、採った問題の最短解の上にある局面（最短の子孫）には、そこを通る採った問題の最短手数の最小を残す。
  * 候補は、印の付いた局面か、最短解が採った問題の最短解と合流して共通の後半が `mergeShare` 以上になるなら近い問題とする。
  * 最短の子孫に入る候補は、共通の後半が候補の最短手数そのものなので、必ず近い問題になる。
- * 手数の探索は採った問題ごとに印に関わらずたどり、前に付けた印で止めない。左右反転は候補を代表1つにまとめる段で除くので、
- * ここでは盤面どうしの近さだけを見る。
+ * 手数の探索は採った問題ごとに印に関わらずたどり、前に付けた印で止めない。左右反転は、候補を代表1つにまとめる段で同じ問題を
+ * 除くだけにし、近さの判定は反転した盤面へ広げない。広げるとレベル5 が問題集の件数に足りなくなるので、そう決めている。
  */
 export function createHakoiriMusumeNearProblemFilter(
   { graph, measures }: Pick<HakoiriMusumePieceSetSpace, "graph" | "measures">,

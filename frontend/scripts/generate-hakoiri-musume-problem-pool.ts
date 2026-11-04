@@ -8,6 +8,8 @@ import { difficultyLevels } from "@/games/difficulty";
 import {
   classifyHakoiriMusumeFeatures,
   type HakoiriMusumeDifficulty,
+  hakoiriMusumeLevelCriteria,
+  hakoiriMusumeOptimalMoveCountRange,
 } from "@/games/hakoiri-musume/difficulty";
 import type { HakoiriMusumeDifficultyFeatures } from "@/games/hakoiri-musume/problem/difficulty-analysis";
 import {
@@ -39,6 +41,7 @@ import type {
 } from "@/games/hakoiri-musume/problem/problem-pool";
 import {
   createProblemSeededRandom,
+  hashProblemSeed,
   shuffleProblemValues,
 } from "@/games/problem-seed";
 
@@ -206,6 +209,21 @@ function processPieceSet(
   };
 }
 
+/**
+ * 駒の組ごとの結果を左右する値（基準表・提供範囲・近さの規則・採る数・素朴な解き方の条件）の hash。キャッシュのファイル名に
+ * 含め、値を変えたら古い結果を使わずに作り直す。
+ */
+const selectionRuleKey = hashProblemSeed(
+  JSON.stringify({
+    criteria: hakoiriMusumeLevelCriteria,
+    optimalMoveCountRange: hakoiriMusumeOptimalMoveCountRange,
+    nearMoveCount: HAKOIRI_MUSUME_NEAR_MOVE_COUNT,
+    mergeShare: HAKOIRI_MUSUME_MERGE_SHARE,
+    limit: Math.max(...Object.values(problemCountByDifficulty)),
+    naivePlay: [naivePlayProblemsPerSet, naivePlayTrials, naivePlayBudget],
+  }),
+).toString(36);
+
 function readOrProcess(
   pieceSet: HakoiriMusumePieceSet,
   seed: string,
@@ -213,7 +231,7 @@ function readOrProcess(
 ): PieceSetResult {
   const cachePath = path.join(
     cacheDirectory,
-    `${HAKOIRI_MUSUME_GENERATOR_VERSION}-${seed}-${formatHakoiriMusumePieceSet(pieceSet)}.json`,
+    `${HAKOIRI_MUSUME_GENERATOR_VERSION}-${selectionRuleKey}-${seed}-${formatHakoiriMusumePieceSet(pieceSet)}.json`,
   );
   if (existsSync(cachePath)) {
     return JSON.parse(readFileSync(cachePath, "utf8")) as PieceSetResult;

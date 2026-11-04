@@ -5,7 +5,10 @@ import {
   HAKOIRI_MUSUME_GOAL_CELL,
   HAKOIRI_MUSUME_ROWS,
   type HakoiriMusumePieceKind,
+  hakoiriMusumeNotationByPieceCell,
+  hakoiriMusumePieceKindByLeadingNotation,
   hakoiriMusumePieceShapes,
+  isHakoiriMusumeLeadingNotation,
   listHakoiriMusumePieceCellsAt,
 } from "@/games/hakoiri-musume/puzzle/board";
 
@@ -28,23 +31,9 @@ type PieceLayout = {
   cellsByAnchor: ReadonlyMap<number, readonly (readonly [number, string])[]>;
 };
 
-const notationByKind = {
-  daughter: ["A", "A", "A", "A"],
-  vertical: ["v", "w"],
-  horizontal: ["h", "i"],
-  small: ["s"],
-} as const satisfies Record<HakoiriMusumePieceKind, readonly string[]>;
-
-const kindByLeading: Readonly<Record<string, HakoiriMusumePieceKind>> = {
-  A: "daughter",
-  v: "vertical",
-  h: "horizontal",
-  s: "small",
-};
-
 function createLayout(kind: HakoiriMusumePieceKind): PieceLayout {
   const { columns, rows } = hakoiriMusumePieceShapes[kind];
-  const notations = notationByKind[kind];
+  const notations = hakoiriMusumeNotationByPieceCell[kind];
   const cellsByAnchor = new Map<number, (readonly [number, string])[]>();
   for (let row = 0; row + rows <= HAKOIRI_MUSUME_ROWS; row += 1) {
     for (
@@ -100,7 +89,10 @@ function listAnchors(
 ): { kind: HakoiriMusumePieceKind; anchor: number }[] {
   const anchors: { kind: HakoiriMusumePieceKind; anchor: number }[] = [];
   for (let cell = 0; cell < HAKOIRI_MUSUME_CELL_COUNT; cell += 1) {
-    const kind = kindByLeading[board[cell]!];
+    const character = board[cell]!;
+    const kind = isHakoiriMusumeLeadingNotation(character)
+      ? hakoiriMusumePieceKindByLeadingNotation[character]
+      : null;
     // 娘は4マスとも `A` なので、左上（左と上が娘でないマス）だけを駒の始まりとする。
     if (
       kind &&
@@ -206,14 +198,35 @@ export function countHakoiriMusumeEmptyCells(
   return board.split(".").length - 1;
 }
 
+/** 駒の組を置いたときの空きマスの数。駒の組だけで決まる。 */
+export function countHakoiriMusumePieceSetEmptyCells({
+  vertical,
+  horizontal,
+  small,
+}: HakoiriMusumePieceSet): number {
+  const cellsOf = (kind: HakoiriMusumePieceKind) =>
+    hakoiriMusumePieceShapes[kind].columns *
+    hakoiriMusumePieceShapes[kind].rows;
+  return (
+    HAKOIRI_MUSUME_CELL_COUNT -
+    cellsOf("daughter") -
+    vertical * cellsOf("vertical") -
+    horizontal * cellsOf("horizontal") -
+    small * cellsOf("small")
+  );
+}
+
 /** 駒の組の置き方をすべて数え上げる。左上のマスから順に、空きか、そのマスを左上とする駒を置く。 */
 export function enumerateHakoiriMusumePieceSetBoards({
   vertical,
   horizontal,
   small,
 }: HakoiriMusumePieceSet): HakoiriMusumeBoardText[] {
-  const emptyCount =
-    HAKOIRI_MUSUME_CELL_COUNT - 4 - 2 * (vertical + horizontal) - small;
+  const emptyCount = countHakoiriMusumePieceSetEmptyCells({
+    vertical,
+    horizontal,
+    small,
+  });
   if (emptyCount < 0) {
     return [];
   }

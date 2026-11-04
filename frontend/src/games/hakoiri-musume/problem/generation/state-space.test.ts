@@ -9,10 +9,7 @@ import {
   formatHakoiriMusumeBoard,
   parseHakoiriMusumeBoard,
 } from "@/games/hakoiri-musume/puzzle/board";
-import {
-  listHakoiriMusumePieceDestinations,
-  placeHakoiriMusumePiece,
-} from "@/games/hakoiri-musume/puzzle/rules";
+import { _private as rules } from "@/games/hakoiri-musume/puzzle/rules";
 import { createHakoiriMusumeInitialState } from "@/games/hakoiri-musume/puzzle/state";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
@@ -23,10 +20,13 @@ function listNextBoardsByRules(board: string): string[] {
   );
   const boards = new Set<string>();
   state.pieces.forEach((_, pieceIndex) => {
-    for (const cell of listHakoiriMusumePieceDestinations(state, pieceIndex)) {
+    for (const cell of rules.listHakoiriMusumePieceDestinations(
+      state,
+      pieceIndex,
+    )) {
       boards.add(
         formatHakoiriMusumeBoard(
-          placeHakoiriMusumePiece(state, pieceIndex, cell).pieces,
+          rules.placeHakoiriMusumePiece(state, pieceIndex, cell).pieces,
         ),
       );
     }
