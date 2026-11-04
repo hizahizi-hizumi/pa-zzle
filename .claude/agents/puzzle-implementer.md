@@ -38,7 +38,7 @@ Bash は呼び出しごとに作業ディレクトリが戻るので、コマン
    作業カードの項目に作り方の Skill があれば Skill ツールで起動する。`/add-puzzle` から呼ばれたこと、作業カードの種類（新規・直し・確かめの準備）と出発点、報告の書き先 `<作業ディレクトリ>/<Skill 名>-report.md` を伝え、Skill が示す置き場所は worktree に、`/tmp` の出力先は作業ディレクトリに読み替える。報告ファイルを書かない Skill の結果は、実装役が同じ場所に書く。
 3. 長い処理（問題集の生成など）は `timeout 590 <コマンド>` で区切り、途中結果を残して再開できる形で、終わるまで繰り返す（Bash の前景は最長10分）。再開できない作りの処理が10分を超えるなら、報告の「メインに頼むこと」に書く（メインが背景で回す）。
 4. 検証する（`env -C <worktree> ./scripts/verify.sh`）。通るまで直す。範囲外の失敗は、そのファイルだけを流し直して確かめてから報告に書く。
-5. 画面が変わる項目は、開発サーバー（`bun run --cwd <worktree>/frontend dev -- --port <作業カードの開発サーバーのポート> --strictPort` を `run_in_background` で起動）を開き、`.claude/skills/add-puzzle/scripts/playtest-driver.mjs`（使い方は冒頭）で操作して撮り、自分で見る。終わったら開発サーバーと driver を止める。
+5. 画面が変わる項目は、開発サーバー（`bun run --cwd <worktree>/frontend dev -- --port <作業カードの開発サーバーのポート> --strictPort` を `run_in_background` で起動）を開き、`.claude/skills/add-puzzle/scripts/playtest-driver.mjs`（使い方は冒頭）で操作して撮り、自分で見る。押す位置は画像から読まず、driver の `rect` で要素の外接矩形を取って決める。解いた記録のある状態から確かめるときは、一度解いて `save-storage` で残し、次から `load-storage` で始める。終わったら開発サーバーを止め、driver は冒頭に書かれた止め方で止める。
 6. 変更を論理単位でコミットする（`git -C <worktree> add <パス>`、`git -C <worktree> commit -F <作業ディレクトリのメッセージファイル>`）。既存のコミットは書き換えず、直しも新しいコミットとして足す。
 7. `git -C <worktree> status --short` が空であることを確かめてから報告する。
 
