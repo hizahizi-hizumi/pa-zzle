@@ -1,3 +1,6 @@
+// jsdom の環境には ReadableStream が無い実行方法（vitest の vmForks など）があるので、Node のものを使う。
+import { ReadableStream } from "node:stream/web";
+
 import type { BackgroundMusicTrack } from "@/lib/background-music";
 
 import type { VolumeSetting } from "@/lib/stored-volume-setting";
