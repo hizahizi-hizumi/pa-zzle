@@ -35,7 +35,6 @@ Playwright は `scripts/playwright_resolve.cjs` が探す（`require('playwright
 | 重なり（任意） | ライト | `--overlap 'A|B'`（全候補）か manifest の候補の `overlap`（その候補だけ）があるとき、1 周を 20ms ごとに止め、A と B の見えている図形の外接矩形（線幅の届く範囲まで広げる）が交わる範囲を 1px 格子で図形の内側判定（塗りが `none` でなければ `isPointInFill`、線が `none` でなければ computed の線幅と transform の拡縮を反映した `isPointInStroke`。`<text>` は外接矩形で近似し `NOTE` を出す）し、重なりの面積（viewBox 単位²）の最大と時刻を出す。0.25 以上なら `WARN` とその時刻のスクリーンショット（`<id>-overlap-<n>.png`）。`--clearance 'A|B[|最小]'`（manifest の候補の `clearance` も同じ）では A と B の外縁（線幅込み）の最小余白（viewBox 単位、交差なら負）を 1 周の走査と静止状態で出し、最小（既定 0.5）未満なら `WARN` とスクリーンショット（`<id>-clearance-<n>.png`） |
 | 大きさと位置 | ライト | 静止状態の見えている図形の外接矩形（線幅込み、viewBox 単位）と中心・下端。`base_pictogram` との中心のずれと大きさの比、他ゲームの `pictogram.svg` の中央値との大きさの比と中心・下端の中央値を出す（判定はしない。目安は `references/motion.md` の 4 節） |
 | インク量 | ライト | 一覧 46px の静止状態の塗りと線の被覆率（`ink coverage`）。白黒版との比、他ゲームの白黒版の中央値との比と範囲。範囲を外れたら `NOTE` |
-| 白黒版との一致 | ライト・ダーク | ヒーロー 138px の静止状態と白黒版（`base_revision` があればその修正案。複数あれば最も近いもの）のインクの重なり（`vs monochrome`）。一方のインクのうち、もう一方に覆われない割合。5% を超えると `FAIL`、2% を超えると `WARN` |
 | フィルムストリップ（任意） | ライト | `--filmstrip` を付けたとき、SVG を挿入した瞬間からヒーロー 138px を実時間で連続して撮り（間隔は `--filmstrip-interval`、既定 100ms）、アニメーションの時刻を添えて 1 枚に並べる（`<id>-filmstrip.png`）。`cut` は最初の切り替えの後まで撮る |
 | WebKit（任意） | ライト/ダーク | `--webkit` を付けたとき、WebKit を起動できれば静止状態と終点のスクリーンショット（`<id>-webkit-*.png`）、終点と静止状態の computed style の差（あれば `WARN`）、`pageerror`（`FAIL`）。起動できなければ `NOTE: WebKit was not checked` |
 | エラー | 全ページ | `pageerror` / `console.error` |
@@ -85,7 +84,7 @@ Playwright は `scripts/playwright_resolve.cjs` が探す（`require('playwright
 4. 始点が静止状態と異なり `animation-delay` を使う候補は、遅延中のちらつきを 1.1 の実フレームの報告で確かめる。
 5. 動きが滑らかかを、1.1 の速度の連続性の報告と実時間の再生で見る。区間の継ぎ目で速度が急に変わる、止まりかけて再び動くなどの「かくつき」がないか。`WARN` の時刻は時刻スライダーで止めて、意図した不連続かを判断する。`check_animation.py` の線形サンプリングの `WARN` が出ている候補は特に注意する（`references/motion.md`）。
 6. 動く対象が他の対象（隣のマス・駒・盤の枠など、動かない要素）と重ならないかを見る。1.1 の `--overlap` か manifest の `overlap` に動く対象と他の対象のセレクタを渡して時刻走査で重なりの最大と時刻を出し、その時刻のスクリーンショットを見る。セレクタで分けにくい構造なら、時刻スライダーで動きの全期間を細かく止め、外接矩形が交わる時刻を拡大表示で確かめる。
-7. 一覧選択中サイズの静止状態を、`base_pictogram`（白黒版）と、比較列の他ゲームのピクトグラムと並べて見る。白黒版から色だけが変わる絵になっているかを、1.1 の `vs monochrome` と合わせて見る。1.1 の大きさと位置、インク量の数値と合わせて判断する（`references/motion.md` の 4 節）。
+7. 一覧選択中サイズの静止状態を、`base_pictogram`（白黒版）と、比較列の他ゲームのピクトグラムと並べて見る。白黒版から色だけが変わる絵になっているかを見る。1.1 の大きさと位置、インク量の数値と合わせて判断する（`references/motion.md` の 4 節）。
 8. ライト/ダークの静止状態との一致、動きを減らす設定、`pageerror` / `console.error` は 1.1 の報告で確かめる。
 
 再生途中で止まる場面（動きを減らす設定への切り替え、ゲームの切り替え、再生属性の付け外し）で静止状態へ切り替わる跳びは、受け口の契約の対象外とし、不合格の理由にしない。
@@ -113,7 +112,7 @@ Playwright は `scripts/playwright_resolve.cjs` が探す（`require('playwright
 
 ### 静止状態
 
-- `static_matches_base`: 静止状態が白黒版（`base_revision` があればその修正案）と同じ絵に色を付けた姿で、選んだ瞬間に色だけが変わる。`observe_animation.cjs` の `vs monochrome` が `FAIL` / `WARN` でなく、両方を重ねて見ても線・面・字がずれていない
+- `static_matches_base`: 静止状態が白黒版（`base_revision` があればその修正案）と同じ形で、片方の図形をもう片方へ写して作り、違うのは塗りと線の色だけである
 - `static_colors_match_play_screen`: 色がプレイ画面の定義元と一致する（アプリのトークンは同じトークンの `var()`、それ以外は実値）。前景の線は `--game-pictogram-strong`、補助は `--game-pictogram-soft` を使っている。実表示で見えないために代えた色は、理由を `notes` に書いている
 - `static_readable_at_list_size`: 一覧選択中サイズで色付き静止画として読め、色や線が潰れず、比較列で他のピクトグラムと並べて重量・大きさが突出せず小さすぎもしない
 - `light_and_dark_both_hold`: ライト/ダークの両方で、輪郭とゲーム固有色の見分けが成立する。プレイ画面の色がテーマで変わるゲームは、ダーク側でダークのプレイ画面の色に切り替わっている

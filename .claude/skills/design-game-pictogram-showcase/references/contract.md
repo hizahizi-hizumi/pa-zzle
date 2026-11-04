@@ -13,7 +13,7 @@
 ## 2. 静止状態と再生
 
 - アニメーション指定の無い基本スタイルで描かれた姿が静止状態。一覧の選択中と、OS の動きを減らす設定ではこれが表示される。
-- 選んだ瞬間に変わるのは色だけにする（`DESIGN.md` の「ゲームピクトグラム」、ADR-0016）。静止状態は、白黒版と同じ絵に色を付けた姿にする。線・面・字の位置と形と、描いている状態（盤の中身や対象の配置）を白黒版とそろえる。候補が `base_revision` で白黒版を直す場合は、その修正案とそろえる。`observe_animation.cjs` が白黒版とのインクのずれを測り、5% を超えると `FAIL`、2% を超えると `WARN` にする。
+- 選んだ瞬間に変わるのは色だけにする（`DESIGN.md` の「ゲームピクトグラム」、ADR-0016）。静止状態は、白黒版と同じ形にする。白黒版の図形（要素・座標・大きさ・線幅・字形）をそのまま使い、塗りと線の色だけを変える。候補が `base_revision` で白黒版を直す場合は、修正案を静止状態の図形から色だけを白黒 2 色に変えて作る。どちらも、片方の図形をもう片方へ写して作り、似せて描き直さない。
 - アプリはヒーローの動きを、周の終わりの静止状態から再生し始める。静止状態の区間が 600ms より長ければ、その終わりの 600ms から始める（`frontend/src/components/game-pictogram-motion.ts`）。そのため選んだ直後のヒーローは静止状態のまま色が入り、その後に開始の姿へ切り替わる。
 - animation は SVG 内 `<style>` の CSS animation で書く。animation を付けるルールは `@media (prefers-reduced-motion: no-preference)` の内側に置き、祖先の `[data-pictogram-motion="play"]` を条件にする（例: `[data-pictogram-motion="play"] .pz-<game>-x { animation: … }`）。この属性はアプリがヒーローの祖先に付ける。SVG 自身や対象には付けない。
 - 全 animation を `infinite` にする。再生形式は `cut`（基本）か `seam`（例外）。`cut` は全 animation を同じ周期・同じ遅延にする。作り方は `references/motion.md` の 1 節。

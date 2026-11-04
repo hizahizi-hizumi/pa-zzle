@@ -81,7 +81,7 @@ CSS の `animation-timing-function` は keyframe と次の keyframe の間（セ
 
 調整したら次を確かめる。
 
-- 静止状態が白黒版と同じ絵である（`observe_animation.cjs` の `vs monochrome`）
+- 静止状態が白黒版と同じ形で、違うのは色だけである（`references/contract.md` の 2 節）
 - 一覧選択中サイズで他ゲームのピクトグラムと並べたとき、重量・大きさが突出せず、小さすぎもしない
 - 動きの全期間で viewBox からはみ出さない（`observe_animation.cjs` の `min viewBox margin`）。画面の外へ出ていく表現は、切り抜き（入れ子の `<svg>` の viewport や `clip-path`）の内側で走り去らせてよい。はみ出し・重なり・余白は切り抜いた後の描画される範囲で測る（切り抜き自体が viewBox の外へ広がれば、その分ははみ出し）
 
