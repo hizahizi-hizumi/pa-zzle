@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import type { ElementRecipe } from "@/games/ice-floor-maze/problem/generation/element-objective";
 import { fullElementSearch } from "@/games/ice-floor-maze/problem/generation/element-search";
 import { getIceFloorMazeSymmetryKey } from "@/games/ice-floor-maze/problem/generation/symmetry";

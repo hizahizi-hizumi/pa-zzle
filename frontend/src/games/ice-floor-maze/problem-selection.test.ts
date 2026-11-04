@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import { difficultyLevels, isInNumericRange } from "@/games/difficulty";
 import {
   assessIceFloorMazeDifficulty,

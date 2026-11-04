@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import { analyzeIceFloorMazeDifficulty } from "@/games/ice-floor-maze/problem/difficulty-analysis";
 import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 
