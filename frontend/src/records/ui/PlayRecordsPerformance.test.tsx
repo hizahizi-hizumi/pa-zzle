@@ -12,6 +12,15 @@ import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-di
 import { serializePlayRecordsForCopy } from "@/records/play-record-copy";
 import { PlayRecordsPerformance } from "@/records/ui/PlayRecordsPerformance";
 
+const internalDiagnostics = vi.hoisted(() => ({ available: false }));
+
+vi.mock("@/lib/internal-diagnostics", () => ({
+  get internalDiagnosticsAvailable() {
+    return internalDiagnostics.available;
+  },
+  buildRevision: null,
+}));
+
 function createRecord(
   difficulty: DifficultyLevel,
   seed: string,
@@ -45,18 +54,14 @@ const newerLevelThree = createRecord("3", "water-2", 275_000, 75_000, 10);
 const levelFour = createRecord("4", "water-3", 500_000, 40_000, 10);
 const records = [olderLevelThree, levelFour, newerLevelThree];
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  internalDiagnostics.available = false;
+});
 
 describe("PlayRecordsPerformance", () => {
   describe("比較単位の記録がある場合", () => {
-    let writeText: ReturnType<typeof vi.fn<(text: string) => Promise<void>>>;
-
     beforeEach(() => {
-      writeText = vi.fn(async (_text: string) => undefined);
-      Object.defineProperty(navigator, "clipboard", {
-        configurable: true,
-        value: { writeText },
-      });
       render(
         <PlayRecordsPerformance
           records={records}
@@ -86,6 +91,32 @@ describe("PlayRecordsPerformance", () => {
       const chart = screen.getByRole("img", { name: "基準時間との差の推移" });
 
       expect(chart).toBeTruthy();
+    });
+
+    test("記録の JSON コピーを出さないこと", () => {
+      const copy = screen.queryByRole("button", { name: "記録をJSONでコピー" });
+
+      expect(copy).toBeNull();
+    });
+  });
+
+  describe("内部診断が有効なビルドで比較単位の記録がある場合", () => {
+    let writeText: ReturnType<typeof vi.fn<(text: string) => Promise<void>>>;
+
+    beforeEach(() => {
+      internalDiagnostics.available = true;
+      writeText = vi.fn(async (_text: string) => undefined);
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText },
+      });
+      render(
+        <PlayRecordsPerformance
+          records={records}
+          display={waterSortPlayRecordDisplay}
+          comparisonKey="3"
+        />,
+      );
     });
 
     test("比較単位の記録を新しい順に JSON でコピーすること", async () => {

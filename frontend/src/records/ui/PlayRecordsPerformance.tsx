@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { internalDiagnosticsAvailable } from "@/lib/internal-diagnostics";
 import {
   getPersonalBests,
   listComparableRecords,
@@ -19,7 +20,7 @@ type PlayRecordsPerformanceProps = {
 };
 
 /**
- * 1つの比較単位（同じゲームの同じ難易度）の成績。自己ベストと、一度に1つの指標の推移を示し、その比較単位の記録を JSON でコピーできる。
+ * 1つの比較単位（同じゲームの同じ難易度）の成績。自己ベストと、一度に1つの指標の推移を示す。内部診断が有効なビルドでは、その比較単位の記録を JSON でコピーできる。
  */
 export function PlayRecordsPerformance({
   records,
@@ -56,10 +57,12 @@ export function PlayRecordsPerformance({
             <p className="text-meta text-muted-foreground tabular-nums">
               {comparableRecords.length}件
             </p>
-            <CopyPlayRecordsButton
-              records={comparableRecords}
-              label="記録をJSONでコピー"
-            />
+            {internalDiagnosticsAvailable && (
+              <CopyPlayRecordsButton
+                records={comparableRecords}
+                label="記録をJSONでコピー"
+              />
+            )}
           </div>
         </>
       )}
