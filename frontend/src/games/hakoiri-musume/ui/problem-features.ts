@@ -15,6 +15,10 @@ export const hakoiriMusumeProblemFeatureAxisDisplays = {
     valueFormat: { kind: "count", unit: "個" },
   },
   "small-count": { label: "小駒", valueFormat: { kind: "count", unit: "個" } },
+  "empty-group-count": {
+    label: "空き",
+    valueFormat: { kind: "count", unit: "か所" },
+  },
 } as const satisfies Record<
   HakoiriMusumeProblemFeatureAxisId,
   ProblemFeatureAxisDisplay
