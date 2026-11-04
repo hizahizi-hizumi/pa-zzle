@@ -32,7 +32,7 @@ type TutorialOverlayProps = {
   finish: TutorialFinish;
   /** ゲーム固有の盤面。盤面の大きさは盤面の側が、この領域の大きさから決める。導入の盤面の段も盤面が受け持つ。 */
   renderBoard: (intro: TutorialBoardIntro) => ReactNode;
-  /** 導入を終えたか、飛ばした。 */
+  /** 導入を終えた。 */
   onIntroEnd: () => void;
   onRestart: () => void;
   onClose: () => void;

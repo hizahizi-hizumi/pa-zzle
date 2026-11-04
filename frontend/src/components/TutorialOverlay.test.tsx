@@ -6,7 +6,10 @@ import {
   screen,
 } from "@testing-library/react";
 
-import { TutorialOverlay } from "@/components/TutorialOverlay";
+import {
+  type TutorialBoardIntro,
+  TutorialOverlay,
+} from "@/components/TutorialOverlay";
 
 /** 盤面は場面の動きを終えないので、導入は「次へ」を押したときだけ進む。 */
 const intro = {
@@ -17,6 +20,9 @@ const intro = {
 
 /** 名前を上部へ戻してから、最初の手順を始めるまでに十分な間。 */
 const introFinishEnoughMs = 1000;
+
+/** 盤面を読むのに十分すぎる間。導入はこれだけ待っても自動では進まない。 */
+const longWaitMs = 60_000;
 
 afterEach(() => {
   cleanup();
@@ -58,6 +64,8 @@ function pressNext(): void {
 
 describe("TutorialOverlay", () => {
   let onIntroEnd: ReturnType<typeof vi.fn<() => void>>;
+  // 盤面に渡された導入の場面。盤面の代わりに場面の終わりを伝える。
+  let boardIntro: TutorialBoardIntro | undefined;
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -76,7 +84,10 @@ describe("TutorialOverlay", () => {
         introducing={true}
         completed={false}
         finish={{ entry: "play", onReturnToPlay: vi.fn() }}
-        renderBoard={() => <div role="group" aria-label="盤面" />}
+        renderBoard={(currentIntro) => {
+          boardIntro = currentIntro;
+          return <div role="group" aria-label="盤面" />;
+        }}
         onIntroEnd={onIntroEnd}
         onRestart={vi.fn()}
         onClose={vi.fn()}
@@ -114,7 +125,25 @@ describe("TutorialOverlay", () => {
       expect(nextButton).toBeNull();
     });
 
-    test("次へでEnterを押しても、導入を飛ばさないこと", () => {
+    describe("ゴールの場面の動きを終えた場合", () => {
+      beforeEach(() => {
+        pressNext();
+        act(() => boardIntro?.onSceneEnd());
+      });
+
+      test("待っても始まりの盤面へ進まず、ゴールの盤面を止めて見せ続けること", () => {
+        advanceTime(longWaitMs);
+
+        const goalCaption = screen.queryByText(intro.goalCaption);
+        const startCaption = screen.queryByText(intro.startCaption);
+
+        expect(goalCaption).not.toBeNull();
+        expect(startCaption).toBeNull();
+        expect(boardIntro?.playing).toBe(false);
+      });
+    });
+
+    test("次へでEnterを押しても、導入を終えないこと", () => {
       fireEvent.keyDown(screen.getByRole("button", { name: "次へ" }), {
         key: "Enter",
       });
@@ -122,14 +151,84 @@ describe("TutorialOverlay", () => {
       expect(onIntroEnd).not.toHaveBeenCalled();
     });
 
-    test("盤面を押すと、導入を飛ばすこと", () => {
-      fireEvent.pointerDown(screen.getByRole("group", { name: "盤面" }));
+    const finishMotionCases = [
+      [
+        "盤面を押す",
+        () =>
+          fireEvent.pointerDown(screen.getByRole("group", { name: "盤面" })),
+      ],
+      [
+        "キーを押す",
+        () =>
+          fireEvent.keyDown(screen.getByRole("group", { name: "盤面" }), {
+            key: "a",
+          }),
+      ],
+    ] as const;
 
-      const nextButton = screen.queryByRole("button", { name: "次へ" });
+    test.each(finishMotionCases)(
+      "名前を見せている間に%sと、ゴールの盤面を動きを終えた姿で見せ、次へを待つこと",
+      (_, finishMotion) => {
+        finishMotion();
+        advanceTime(longWaitMs);
 
-      expect(onIntroEnd).toHaveBeenCalledOnce();
-      expect(nextButton).toBeNull();
-    });
+        const goalCaption = screen.queryByText(intro.goalCaption);
+        const nextButton = screen.queryByRole("button", { name: "次へ" });
+
+        expect(goalCaption).not.toBeNull();
+        expect(boardIntro?.scene).toBe("goal");
+        expect(boardIntro?.playing).toBe(false);
+        expect(nextButton).not.toBeNull();
+        expect(onIntroEnd).not.toHaveBeenCalled();
+      },
+    );
+
+    test.each(finishMotionCases)(
+      "始めの盤面へ移る間に%sと、始めの盤面を動きを終えた姿で見せ、次へを待つこと",
+      (_, finishMotion) => {
+        pressNext();
+        pressNext();
+        finishMotion();
+
+        const startCaption = screen.queryByText(intro.startCaption);
+
+        expect(startCaption).not.toBeNull();
+        expect(boardIntro?.scene).toBe("start");
+        expect(boardIntro?.playing).toBe(false);
+        expect(onIntroEnd).not.toHaveBeenCalled();
+      },
+    );
+
+    test.each(finishMotionCases)(
+      "ゴールの盤面を見せ終えた後に%sと、始まりの盤面へ進まずにゴールの盤面を見せ続けること",
+      (_, finishMotion) => {
+        pressNext();
+        act(() => boardIntro?.onSceneEnd());
+        finishMotion();
+
+        const goalCaption = screen.queryByText(intro.goalCaption);
+        const startCaption = screen.queryByText(intro.startCaption);
+
+        expect(goalCaption).not.toBeNull();
+        expect(startCaption).toBeNull();
+        expect(onIntroEnd).not.toHaveBeenCalled();
+      },
+    );
+
+    test.each(finishMotionCases)(
+      "始まりの盤面の後、名前を上部へ戻す間に%sと、待たずに導入を終えること",
+      (_, finishMotion) => {
+        pressNext();
+        pressNext();
+        pressNext();
+        finishMotion();
+
+        const nextButton = screen.queryByRole("button", { name: "次へ" });
+
+        expect(onIntroEnd).toHaveBeenCalledOnce();
+        expect(nextButton).toBeNull();
+      },
+    );
   });
 
   describe("動きを減らす設定の場合", () => {
