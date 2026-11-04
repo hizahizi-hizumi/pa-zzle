@@ -4,6 +4,7 @@
  * - ホーム・ゲームのホーム・記録と、それ以外の案内の画面（ページが見つからないなど）: ホームの曲
  * - プレイ画面: 盤面を解いている間はプレイ中の曲。クリアして完成演出が始まったらフェードアウトし、クリア音と報酬の音を前に出す
  * - 結果画面: 結果の曲
+ * - アプリを開いたときのタイトル: 流さない。入ったら、入った先の画面の曲を流し始める
  *
  * プレイに入るときは、流れている曲を引いて間を空けてからプレイ中の曲を立ち上げ、ここから解くという区切りを聞かせる。
  * そのほかの曲の切り替えはクロスフェードにする。
@@ -16,6 +17,7 @@ import homeMusicUrl from "@/assets/background-music/home.mp3";
 import playMusicUrl from "@/assets/background-music/play.mp3";
 import resultMusicUrl from "@/assets/background-music/result.mp3";
 import type { GameProgress } from "@/games/play";
+import { getAppLaunchTitle, subscribeAppLaunchTitle } from "@/lib/app-launch";
 import {
   type BackgroundMusicTrack,
   type BackgroundMusicTransition,
@@ -163,7 +165,14 @@ export function useAppBackgroundMusic(): void {
     subscribePlayScreenMusicState,
     getPlayScreenMusicState,
   );
-  const scene = getAppBackgroundMusicScene(pathname, playScreen);
+  const titleShown = useSyncExternalStore(
+    subscribeAppLaunchTitle,
+    isAppLaunchTitleShown,
+  );
+  // タイトルはホームの上に重ねるので、裏のホームの曲を流さない。設定のボタンなどの操作で音を出せるようになっても鳴らさない。
+  const scene = titleShown
+    ? "silent"
+    : getAppBackgroundMusicScene(pathname, playScreen);
   const music = selectAppBackgroundMusic(scene, appBackgroundMusicTracks);
   const track = music?.track ?? null;
   const gain = music?.gain;
@@ -198,6 +207,10 @@ export function usePlayScreenMusicState(
       setPlayScreenMusicState(initialPlayScreenMusicState);
     };
   }, [progress, resultShown]);
+}
+
+function isAppLaunchTitleShown(): boolean {
+  return getAppLaunchTitle().status !== "hidden";
 }
 
 function getPlayScreenMusicState(): PlayScreenMusicState {

@@ -1,12 +1,13 @@
 import { BrandLogo } from "@/components/BrandMark/BrandLogo";
 
 type BrandMarkProps = {
-  size?: "default" | "compact";
+  size?: "default" | "compact" | "title";
   tone?: "default" | "inverse";
 };
 
 const brandMarkToneClassNames = {
-  default: "text-brand-foreground",
+  // ブランド色は暗い配色の値を持たないので、暗い面では前景色で示す。
+  default: "text-brand-foreground dark:text-foreground",
   inverse: "text-brand-inverse-foreground",
 } satisfies Record<NonNullable<BrandMarkProps["tone"]>, string>;
 

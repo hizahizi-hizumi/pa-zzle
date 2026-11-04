@@ -3,7 +3,7 @@ import logoInlineSvg from "@/assets/brand/pa-zzle-logo-inline.svg?raw";
 import logoStackedSvg from "@/assets/brand/pa-zzle-logo-stacked.svg?raw";
 
 type BrandLogoProps = {
-  size: "default" | "compact";
+  size: "default" | "compact" | "title";
 };
 
 type BrandLogoArtwork = {
@@ -16,6 +16,8 @@ type BrandLogoArtwork = {
 const brandLogoArtworks = {
   default: { svg: logoStackedSvg, heightClassName: "h-[22.34px]" },
   compact: { svg: logoInlineSvg, heightClassName: "h-[11.03px]" },
+  // タイトルではロゴを画面の主役にする。
+  title: { svg: logoStackedSvg, heightClassName: "h-16 sm:h-20" },
 } satisfies Record<BrandLogoProps["size"], BrandLogoArtwork>;
 
 export function BrandLogo({ size }: BrandLogoProps) {

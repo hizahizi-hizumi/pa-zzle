@@ -560,3 +560,62 @@ describe("prepareSoundEffects", () => {
     });
   });
 });
+
+describe("loadSoundEffects", () => {
+  describe("音量が0より大きく、読み込めない効果音を含む場合", () => {
+    let soundEffects: SoundEffects;
+    let sounds: SoundEffect[];
+    let reportedProgress: number[];
+
+    beforeEach(async () => {
+      stubWebAudio();
+      stubFetch(["/missing.flac"]);
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      soundEffects = await importSoundEffects();
+      sounds = ["/tap.flac", "/missing.flac"].map(
+        soundEffects.defineSoundEffect,
+      );
+      reportedProgress = [];
+    });
+
+    test("すべて済むまで待ち、済んだ割合を知らせること", async () => {
+      await soundEffects.loadSoundEffects(sounds, (progress) => {
+        reportedProgress.push(progress);
+      });
+
+      expect(reportedProgress).toEqual([0.5, 1]);
+    });
+
+    test("読み込めた効果音は待ち終えたときに鳴らせること", async () => {
+      await soundEffects.loadSoundEffects(sounds);
+      soundEffects.playSound(sounds[0]!);
+
+      expect(getStartedSources().map(({ url }) => url)).toEqual(["/tap.flac"]);
+    });
+  });
+
+  describe("音量が0の場合", () => {
+    let soundEffects: Awaited<ReturnType<typeof importSoundEffects>>;
+    let fetch: ReturnType<typeof stubFetch>;
+    let sound: SoundEffect;
+    let reportedProgress: number[];
+
+    beforeEach(async () => {
+      stubWebAudio();
+      fetch = stubFetch();
+      soundEffects = await importSoundEffects();
+      soundEffects.setSoundEffectsVolume(0);
+      sound = soundEffects.defineSoundEffect("/tap.flac");
+      reportedProgress = [];
+    });
+
+    test("読み込まずに待ち終えること", async () => {
+      await soundEffects.loadSoundEffects([sound], (progress) => {
+        reportedProgress.push(progress);
+      });
+
+      expect(fetch).not.toHaveBeenCalled();
+      expect(reportedProgress).toEqual([]);
+    });
+  });
+});

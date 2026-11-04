@@ -13,6 +13,11 @@ import {
   usePlayScreenMusicState,
 } from "@/components/app-background-music";
 import {
+  _private as appLaunch,
+  enterApp,
+  startAppLaunch,
+} from "@/lib/app-launch";
+import {
   type BackgroundMusicTrack,
   type BackgroundMusicTransition,
   playBackgroundMusic,
@@ -235,6 +240,29 @@ describe("selectAppBackgroundMusicTransition", () => {
 });
 
 describe("useAppBackgroundMusic", () => {
+  describe("ホームをタイトルで覆って開いた場合", () => {
+    beforeEach(() => {
+      startAppLaunch({ showTitle: true, sounds: [] });
+      renderAppBackgroundMusic("/");
+    });
+
+    afterEach(() => {
+      appLaunch.resetAppLaunch();
+    });
+
+    test("タイトルの間は、裏のホームの曲を流さないこと", () => {
+      const music = getLastPlayedMusic();
+
+      expect(music.url).toBeNull();
+    });
+
+    test("タイトルから入ると、ホームの曲を流し始めること", () => {
+      act(() => enterApp());
+
+      expect(getLastPlayedMusic().url).toMatch(/home\.mp3$/);
+    });
+  });
+
   describe("ゲームのホームからプレイ画面に移った場合", () => {
     let navigate: ReturnType<typeof useNavigate>;
 
