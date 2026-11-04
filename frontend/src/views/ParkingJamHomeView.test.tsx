@@ -86,6 +86,17 @@ describe("ParkingJamHomeView", () => {
     expect(dialog).toBeTruthy();
   });
 
+  test("チュートリアルを開けること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "チュートリアル" }));
+
+    const dialog = screen.getByRole("dialog", {
+      name: "パーキングジャム",
+      description: "チュートリアル",
+    });
+
+    expect(dialog).toBeTruthy();
+  });
+
   test("戻るリンクでホームへ戻れること", () => {
     const backLink = screen.getByRole("link", { name: "戻る" });
 
