@@ -31,10 +31,8 @@ import {
   traceHakoiriMusumeFinger,
 } from "@/games/hakoiri-musume/ui/board/finger-trace";
 import { playDaughterExit } from "@/games/hakoiri-musume/ui/board/HakoiriMusumeBoard/play-daughter-exit";
-import {
-  HakoiriMusumeBox,
-  HakoiriMusumePieceFace,
-} from "@/games/hakoiri-musume/ui/board/HakoiriMusumeBox";
+import { HakoiriMusumeBox } from "@/games/hakoiri-musume/ui/board/HakoiriMusumeBox";
+import { HakoiriMusumePieceFace } from "@/games/hakoiri-musume/ui/board/HakoiriMusumePieceFace";
 
 type HakoiriMusumeBoardProps = {
   pieces: readonly HakoiriMusumePiece[];
@@ -56,7 +54,7 @@ type PieceDrag = {
   trace: HakoiriMusumeFingerTrace;
 };
 
-export const hakoiriMusumePieceLabels = {
+const hakoiriMusumePieceLabels = {
   daughter: "娘",
   vertical: "縦長",
   horizontal: "横長",

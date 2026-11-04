@@ -7,10 +7,8 @@ import {
   getPieceRect,
   toBoxStyle,
 } from "@/games/hakoiri-musume/ui/board/board-geometry";
-import {
-  HakoiriMusumeBox,
-  HakoiriMusumePieceFace,
-} from "@/games/hakoiri-musume/ui/board/HakoiriMusumeBox";
+import { HakoiriMusumeBox } from "@/games/hakoiri-musume/ui/board/HakoiriMusumeBox";
+import { HakoiriMusumePieceFace } from "@/games/hakoiri-musume/ui/board/HakoiriMusumePieceFace";
 
 type HowToPlayFigureProps = {
   pieces: readonly HakoiriMusumePiece[];
