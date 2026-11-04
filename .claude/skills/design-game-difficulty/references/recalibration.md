@@ -4,7 +4,7 @@
 
 ## 受け取る記録
 
-ゲームのホームの「成績」のコピーで書き出した JSON（`frontend/src/records/play-record-copy.ts`）。形:
+ゲームのホームの「成績」で、レベルごとにコピーした JSON（`frontend/src/records/play-record-copy.ts`）を集めたもの。コピーは開いているレベルの記録だけを書き出すので、レベルを比べる問い（4 の順序）には、比べるレベルの分がそろっている必要がある。届かなかったレベルは「記録なし」と書き、そのレベルを含む比べ方はしない。1つの JSON の形:
 
 ```json
 { "formatVersion": 1, "records": [ { "gameId": "...", "recordId": "...", "startedAt": "...", "completedAt": "...", "payloadVersion": 4, "payload": { } } ] }
@@ -18,7 +18,7 @@
 
 ### 1. 分ける
 
-- `gameId` で対象のゲームに絞る。
+- 届いた JSON をまとめ、`gameId` で対象のゲームに絞り、`recordId` の重複を除く。どのレベルの記録が届いたかを書く。
 - `payloadVersion`・判定モデル版・生成器の版・採点版で、今の版と同じ記録と古い版の記録に分ける。古い版は今の分類で読み替えず、別に集計する。
 - 同じ問題の再プレイ（identity が同じ）を印で分ける。再プレイは慣れが入るので、初回と分けて見る。
 
