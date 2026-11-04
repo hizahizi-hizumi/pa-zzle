@@ -1,1 +1,1 @@
-export { IceFloorMazeDifficultyView as default } from "@/views/IceFloorMazeDifficultyView";
+export { IceFloorMazeHomeView as default } from "@/views/IceFloorMazeHomeView";

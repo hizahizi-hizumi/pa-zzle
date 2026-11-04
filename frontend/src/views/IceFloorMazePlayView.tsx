@@ -17,7 +17,7 @@ export function IceFloorMazePlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={iceFloorMazeCatalogEntry.entryPath}
+        backTo={iceFloorMazeCatalogEntry.homePath}
       />
     );
   }

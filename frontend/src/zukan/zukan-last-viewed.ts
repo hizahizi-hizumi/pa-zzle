@@ -36,15 +36,9 @@ export type ZukanChanges = {
   byDifficulty: Partial<
     Record<DifficultyLevel, ReadonlyMap<ProblemId, ZukanProblemChange>>
   >;
-  newlySolvedCount: number;
-  raisedCount: number;
 };
 
-export const noZukanChanges: ZukanChanges = {
-  byDifficulty: {},
-  newlySolvedCount: 0,
-  raisedCount: 0,
-};
+export const noZukanChanges: ZukanChanges = { byDifficulty: {} };
 
 /** 図鑑の難易度 `difficulties` の今の状態を、見たときの状態として残す形にする。 */
 export function listZukanViewedStatuses(
@@ -106,11 +100,7 @@ export function findZukanChanges(
     return noZukanChanges;
   }
 
-  const changes: ZukanChanges = {
-    byDifficulty: {},
-    newlySolvedCount: 0,
-    raisedCount: 0,
-  };
+  const changes: ZukanChanges = { byDifficulty: {} };
   for (const { difficulty, problems } of zukan.sections) {
     const sectionChanges = new Map<ProblemId, ZukanProblemChange>();
     for (const problem of problems) {
@@ -125,11 +115,6 @@ export function findZukanChanges(
         continue;
       }
       sectionChanges.set(problem.problemId, change);
-      if (change.kind === "newly-solved") {
-        changes.newlySolvedCount += 1;
-      } else {
-        changes.raisedCount += 1;
-      }
     }
     if (sectionChanges.size > 0) {
       changes.byDifficulty[difficulty] = sectionChanges;

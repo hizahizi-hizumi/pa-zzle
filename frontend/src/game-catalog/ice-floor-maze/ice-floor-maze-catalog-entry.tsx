@@ -28,7 +28,7 @@ export const iceFloorMazeCatalogEntry = {
   id: iceFloorMazePlayRecordDefinition.gameId,
   name: ICE_FLOOR_MAZE_DISPLAY_NAME,
   pictogramSvg,
-  entryPath: "/puzzles/ice-floor-maze",
+  homePath: "/puzzles/ice-floor-maze",
   playPath: "/puzzles/ice-floor-maze/play/:difficulty",
   playRecordDisplay: iceFloorMazePlayRecordDisplay,
   recordProblemPlayTarget(record) {

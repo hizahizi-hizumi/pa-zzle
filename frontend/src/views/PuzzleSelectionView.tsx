@@ -1,10 +1,10 @@
 import { GameSelectionGallery } from "@/components/GameSelectionGallery";
 import { gameCatalog } from "@/game-catalog/game-catalog";
 
-const games = gameCatalog.map(({ name, pictogramSvg, entryPath }) => ({
+const games = gameCatalog.map(({ name, pictogramSvg, homePath }) => ({
   name,
   pictogramSvg,
-  to: entryPath,
+  to: homePath,
 }));
 
 export function PuzzleSelectionView() {

@@ -122,18 +122,6 @@ describe("findZukanChanges", () => {
         ]),
       });
     });
-
-    test("新しく解いた問題と段階が上がった問題をそれぞれ数えること", () => {
-      const { newlySolvedCount, raisedCount } = findZukanChanges(
-        zukan,
-        lastViewed,
-      );
-
-      expect({ newlySolvedCount, raisedCount }).toEqual({
-        newlySolvedCount: 2,
-        raisedCount: 1,
-      });
-    });
   });
 
   describe("前回より段階が下がった問題がある場合", () => {

@@ -396,6 +396,26 @@ describe("playLayeredSound", () => {
         expect(effectVolumes).toEqual([1.5]);
       });
     });
+
+    describe("再生の速さと音量を渡した場合", () => {
+      const options = {
+        variation: { pitchCents: 1200, volumeRatio: 0.5 },
+        playbackRate: 1.5,
+        volume: 0.5,
+      };
+
+      test("揺らぎに掛け合わせて、素材すべてを同じ速さと音量で鳴らすこと", () => {
+        soundEffects.playLayeredSound(layers, options);
+
+        const effectVolumes = FakeAudioContext.instances[0]?.gains
+          .slice(1)
+          .map(({ gain }) => gain.value);
+        expect(
+          getStartedSources().map(({ playbackRate }) => playbackRate),
+        ).toEqual([3, 3]);
+        expect(effectVolumes).toEqual([0.75]);
+      });
+    });
   });
 
   describe("読み込みに失敗した素材を含む場合", () => {

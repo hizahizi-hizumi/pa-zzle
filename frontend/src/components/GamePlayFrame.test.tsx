@@ -14,7 +14,7 @@ function renderFrame(progress: GameProgress, result: string | null): void {
     metrics: [{ type: "elapsed-time", elapsedMs: 0 }],
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
-    onChangeDifficulty: vi.fn(),
+    onOpenGameHome: vi.fn(),
     onBackToHome: vi.fn(),
     renderResultScreen: (clearedResult) => <p>結果 {clearedResult}</p>,
     renderHowToPlayDialog: () => null,

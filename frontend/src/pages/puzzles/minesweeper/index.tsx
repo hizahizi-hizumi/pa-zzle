@@ -1,1 +1,1 @@
-export { MinesweeperDifficultyView as default } from "@/views/MinesweeperDifficultyView";
+export { MinesweeperHomeView as default } from "@/views/MinesweeperHomeView";

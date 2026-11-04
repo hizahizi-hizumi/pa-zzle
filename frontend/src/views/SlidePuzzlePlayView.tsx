@@ -17,7 +17,7 @@ export function SlidePuzzlePlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={slidePuzzleCatalogEntry.entryPath}
+        backTo={slidePuzzleCatalogEntry.homePath}
       />
     );
   }

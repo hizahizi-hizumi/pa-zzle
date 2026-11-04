@@ -28,7 +28,7 @@ export const minesweeperCatalogEntry = {
   id: minesweeperPlayRecordDefinition.gameId,
   name: MINESWEEPER_DISPLAY_NAME,
   pictogramSvg,
-  entryPath: "/puzzles/minesweeper",
+  homePath: "/puzzles/minesweeper",
   playPath: "/puzzles/minesweeper/play/:difficulty",
   playRecordDisplay: minesweeperPlayRecordDisplay,
   recordProblemPlayTarget(record) {

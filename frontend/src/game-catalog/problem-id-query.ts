@@ -7,12 +7,41 @@ import {
   type ProblemIdentity,
 } from "@/games/problem-id";
 
-/** プレイ画面の URL で、遊んでいる問題を問題 ID で表すクエリ。例: `/puzzles/minesweeper/play/1?problem=0123456789` */
+/**
+ * プレイ画面の URL で遊んでいる問題を、ゲームのホームの URL で選んでおく問題を、問題 ID で表すクエリ。
+ * 例: `/puzzles/minesweeper/play/1?problem=0123456789`、`/puzzles/minesweeper?problem=0123456789`
+ */
 const problemIdQueryKey = "problem";
 
-/** プレイ画面を問題 ID の問題で開くための URL のクエリ文字列（`?problem=<問題ID>`）を作る。 */
+/** プレイ画面・ゲームのホームを問題 ID の問題で開くための URL のクエリ文字列（`?problem=<問題ID>`）を作る。 */
 export function createProblemIdSearch(problemId: ProblemId): string {
   return `?${new URLSearchParams({ [problemIdQueryKey]: problemId })}`;
+}
+
+/**
+ * ゲームのホームを開いたときの URL が指す問題 ID。指定が無ければ `null`。最初に選んでおく問題を決めるためだけに使い、以後 URL が変わっても読み直さない。
+ * 読んだら履歴を増やさずに URL から外し、選びを変えたあとの再読み込みやブックマークで、開いたときの問題を選び直さないようにする。
+ */
+export function useRequestedProblemId(): ProblemId | null {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [problemId] = useState(() => searchParams.get(problemIdQueryKey));
+  const hasProblemIdQuery = searchParams.has(problemIdQueryKey);
+
+  useEffect(() => {
+    if (!hasProblemIdQuery) {
+      return;
+    }
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete(problemIdQueryKey);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [hasProblemIdQuery, setSearchParams]);
+
+  return problemId;
 }
 
 /**

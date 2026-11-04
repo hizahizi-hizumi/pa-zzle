@@ -22,7 +22,7 @@ export type RecordedGameResult<Difficulty, Result, Snapshot> = {
 
 /**
  * 記録から作り直した結果を、結果画面の操作と検証情報へつなぐ。
- * 次の問題は記録と同じ難易度で、記録の問題を避けて始める。
+ * 次の問題は記録と同じ難易度で、記録の問題を避けて始める。ゲームのホームは、図鑑で記録の問題を選んだ状態で開く。
  */
 export function useRecordedGameResult<
   Difficulty extends string,
@@ -53,9 +53,9 @@ export function useRecordedGameResult<
       recordOutcomeNotice,
       onReplay,
       onStartNewProblem: startNewProblem,
-      onOpenRecords: navigation.openRecords,
-      onChangeDifficulty: navigation.changeDifficulty,
-      onBackToHome: navigation.backToHome,
+      onOpenGameHome() {
+        navigation.openGameHome(createProblemId(problemIdentity));
+      },
       onOpenDiagnostics: diagnostics.open,
     },
     diagnostics,

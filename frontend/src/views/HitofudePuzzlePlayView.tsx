@@ -17,7 +17,7 @@ export function HitofudePuzzlePlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={hitofudePuzzleCatalogEntry.entryPath}
+        backTo={hitofudePuzzleCatalogEntry.homePath}
       />
     );
   }

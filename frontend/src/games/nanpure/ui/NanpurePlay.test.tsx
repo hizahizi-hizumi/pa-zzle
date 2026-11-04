@@ -1,14 +1,20 @@
 import {
   cleanup,
   fireEvent,
-  render,
+  render as renderWithoutRouter,
   screen,
   within,
 } from "@testing-library/react";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactElement } from "react";
+import { MemoryRouter } from "react-router";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+
+/** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
+function render(ui: ReactElement) {
+  return renderWithoutRouter(ui, { wrapper: MemoryRouter });
+}
 
 afterEach(cleanup);
 
@@ -48,8 +54,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
-    onOpenRecords: vi.fn(),
-    onChangeDifficulty: vi.fn(),
+    onOpenGameHome: vi.fn(),
     onBackToHome: vi.fn(),
     onClearAnimationComplete: vi.fn(),
   };
@@ -104,8 +109,11 @@ describe("NanpurePlay", () => {
     });
 
     test("手動メモモードと待ったを通知すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "メモ" }));
-      fireEvent.click(screen.getByRole("button", { name: "待った" }));
+      const inputPanel = screen.getByRole("contentinfo");
+      fireEvent.click(within(inputPanel).getByRole("button", { name: "メモ" }));
+      fireEvent.click(
+        within(inputPanel).getByRole("button", { name: "待った" }),
+      );
 
       expect(props.onToggleNotesMode).toHaveBeenCalledOnce();
       expect(props.onUndo).toHaveBeenCalledOnce();
@@ -159,7 +167,8 @@ describe("NanpurePlay", () => {
       });
 
       test("閉じてもプレイを測り直さないこと", () => {
-        fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+        const dialog = screen.getByRole("dialog", { name: "遊び方" });
+        fireEvent.click(within(dialog).getByRole("button", { name: "閉じる" }));
 
         expect(props.onReplay).not.toHaveBeenCalled();
       });
@@ -208,7 +217,9 @@ describe("NanpurePlay", () => {
       const notes = [...props.notes];
       notes[0] = [4];
       render(<NanpurePlay {...props} notes={notes} />);
-      erase = screen.getByRole("button", { name: "消す" });
+      erase = within(screen.getByRole("contentinfo")).getByRole("button", {
+        name: "消す",
+      });
     });
 
     test("消す操作を有効にすること", () => {
@@ -241,19 +252,21 @@ describe("NanpurePlay", () => {
       },
     };
     let board: HTMLElement;
+    let inputPanel: HTMLElement;
     let digitInput: HTMLElement;
 
     beforeEach(() => {
       const props = createProps();
       render(<NanpurePlay {...props} progress="clearing" result={result} />);
       board = screen.getByRole("main");
-      digitInput = screen.getByRole("group", { name: "数字入力" });
+      inputPanel = screen.getByRole("contentinfo");
+      digitInput = within(inputPanel).getByRole("group", { name: "数字入力" });
     });
 
     test("完成盤を見せて結果画面への遷移を待つこと", () => {
       const resultHeading = screen.queryByRole("heading", { name: "クリア" });
       const cells = within(board).getAllByRole("button", { name: /行.*列/ });
-      const erase = screen.getByRole("button", { name: "消す" });
+      const erase = within(inputPanel).getByRole("button", { name: "消す" });
       const firstDigit = within(digitInput).getByText("1");
 
       expect(resultHeading).toBeNull();
@@ -299,8 +312,8 @@ describe("NanpurePlay", () => {
       const pictogram = document.querySelector('svg[aria-label="ナンプレ"]');
       const elapsedTime = screen.getByText("02:05");
       const score = screen.getByText("79");
-      const playButton = screen.getByRole("button", { name: "プレイ！" });
-      const replayButton = screen.getByRole("button", { name: "同じ問題" });
+      const playButton = screen.getByRole("button", { name: "次の問題" });
+      const replayButton = screen.getByRole("button", { name: "もう一度" });
 
       expect(heading).toBeTruthy();
       expect(pictogram).toBeTruthy();
@@ -324,11 +337,8 @@ describe("NanpurePlay", () => {
   });
 
   describe("自己ベスト更新がある場合", () => {
-    let onOpenRecords: () => void;
-
     beforeEach(() => {
       const props = createProps();
-      onOpenRecords = vi.fn();
       render(
         <NanpurePlay
           {...props}
@@ -364,20 +374,17 @@ describe("NanpurePlay", () => {
               display={nanpurePlayRecordDisplay}
             />
           }
-          onOpenRecords={onOpenRecords}
         />,
       );
     });
 
-    test("更新内容と記録画面への導線を表示すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
+    test("更新内容を表示すること", () => {
       const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
 
       expect(bestUpdate.textContent).toContain("基準時間との差");
       expect(bestUpdate.textContent).toContain("-12:30");
       expect(bestUpdate.textContent).toContain("-13:00");
       expect(bestUpdate.textContent).toContain("30秒短縮");
-      expect(onOpenRecords).toHaveBeenCalledOnce();
     });
   });
 

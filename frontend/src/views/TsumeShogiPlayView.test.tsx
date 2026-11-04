@@ -90,7 +90,10 @@ function renderAt(path: string): void {
           path="/puzzles/tsume-shogi/play/:difficulty"
           element={<TsumeShogiPlayView />}
         />
-        <Route path="/puzzles/tsume-shogi" element={<p>難易度選択画面</p>} />
+        <Route
+          path="/puzzles/tsume-shogi"
+          element={<p>ゲームのホーム画面</p>}
+        />
         <Route path="/records" element={<p>記録画面</p>} />
         <Route path="/" element={<p>ホーム画面</p>} />
         <Route
@@ -111,6 +114,7 @@ function renderRouterAt(path: string): PlayRouter {
         path: "/puzzles/tsume-shogi/play/:difficulty",
         element: <TsumeShogiPlayView />,
       },
+      { path: "/puzzles/tsume-shogi", element: <p>ゲームのホーム画面</p> },
       { path: "/puzzles/:game/result/:recordId", element: <PlayResultView /> },
     ],
     { initialEntries: [path] },
@@ -258,22 +262,22 @@ describe("TsumeShogiPlayView", () => {
       expect(squares).toHaveLength(81);
     });
 
-    test("戻るボタンで難易度選択画面へ移ること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+    test("戻るボタンでゲームのホームへ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
-      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+      expect(screen.getByText("ゲームのホーム画面")).toBeTruthy();
     });
 
-    test("メニューの難易度変更で難易度選択画面へ移ること", () => {
+    test("メニューの問題選択でゲームのホームへ移ること", () => {
       openMenu();
-      fireEvent.click(screen.getByRole("menuitem", { name: "難易度変更" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "問題選択" }));
 
-      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+      expect(screen.getByText("ゲームのホーム画面")).toBeTruthy();
     });
 
-    test("メニューのホームでホームへ移ること", () => {
+    test("メニューのパズル選択でホームへ移ること", () => {
       openMenu();
-      fireEvent.click(screen.getByRole("menuitem", { name: "ホーム" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "パズル選択" }));
 
       expect(screen.getByText("ホーム画面")).toBeTruthy();
     });
@@ -310,15 +314,15 @@ describe("TsumeShogiPlayView", () => {
       });
     });
 
-    test("記録を確認で記録画面へ移ること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
+    test("問題選択でゲームのホームへ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "問題選択" }));
 
-      expect(screen.getByText("記録画面")).toBeTruthy();
+      expect(screen.getByText("ゲームのホーム画面")).toBeTruthy();
     });
 
     describe("同じ問題をもう一度詰ませた場合", () => {
       beforeEach(() => {
-        fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+        fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
         playMainLine(selected.problem);
       });
 
@@ -424,9 +428,9 @@ describe("TsumeShogiPlayView", () => {
       renderAt("/puzzles/tsume-shogi/play/9");
     });
 
-    test("選べない難易度であることを示し難易度選択へ戻る導線を出すこと", () => {
+    test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
       const message = screen.getByText("この難易度は選べません");
-      const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
+      const backLink = screen.getByRole("link", { name: "問題選択へ戻る" });
 
       expect(message).toBeTruthy();
       expect(backLink.getAttribute("href")).toBe("/puzzles/tsume-shogi");
@@ -613,6 +617,30 @@ describe("TsumeShogiPlayView", () => {
         expect(problemId).toBe(requestedProblemId);
         expect(router.state.historyAction).toBe("POP");
         expect(plies).toBeTruthy();
+      });
+
+      test("戻るボタンで、遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+        fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
+        const { historyAction, location } = router.state;
+
+        expect(location.pathname).toBe("/puzzles/tsume-shogi");
+        expect(location.search).toBe(`?problem=${requestedProblemId}`);
+        expect(historyAction).toBe("REPLACE");
+      });
+
+      describe("メニューからゲームのホームを選んだ場合", () => {
+        beforeEach(() => {
+          openMenu();
+        });
+
+        test("遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+          fireEvent.click(screen.getByRole("menuitem", { name: "問題選択" }));
+          const { historyAction, location } = router.state;
+
+          expect(location.pathname).toBe("/puzzles/tsume-shogi");
+          expect(location.search).toBe(`?problem=${requestedProblemId}`);
+          expect(historyAction).toBe("REPLACE");
+        });
       });
     });
 

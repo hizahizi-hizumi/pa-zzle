@@ -13,7 +13,7 @@ export type IceFloorMazeCellClipIds = {
 };
 
 /**
- * 同じ文書に盤面・遊び方の図・難易度プレビューの SVG が並ぶので、`clipPath` の ID は描く場所ごとに分ける。
+ * 同じ文書に盤面・遊び方の図の SVG が並ぶので、`clipPath` の ID は描く場所ごとに分ける。
  * ID は `url(#…)` に入れるので、英数字だけにする。
  */
 export function useIceFloorMazeCellClipIds(): IceFloorMazeCellClipIds {

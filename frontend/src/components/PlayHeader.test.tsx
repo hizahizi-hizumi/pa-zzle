@@ -39,7 +39,7 @@ function createProps(): ComponentProps<typeof PlayHeader> {
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
-    onChangeDifficulty: vi.fn(),
+    onOpenGameHome: vi.fn(),
     onBackToHome: vi.fn(),
     onOpenHowToPlay: vi.fn(),
     onOpenDiagnostics: vi.fn(),
@@ -63,10 +63,10 @@ describe("PlayHeader", () => {
       expect(elapsed).toBeTruthy();
     });
 
-    test("戻るボタンで難易度変更を通知すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+    test("戻るボタンでゲームのホームへ移る操作を通知すること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
-      expect(props.onChangeDifficulty).toHaveBeenCalledOnce();
+      expect(props.onOpenGameHome).toHaveBeenCalledOnce();
     });
 
     test("メニュー項目を補助操作・移動・説明・設定・検証の順に並べること", () => {
@@ -80,8 +80,8 @@ describe("PlayHeader", () => {
         "盤面を戻す",
         "リセット",
         "別の問題",
-        "難易度変更",
-        "ホーム",
+        "問題選択",
+        "パズル選択",
         "遊び方",
         "設定",
         "検証情報",
@@ -92,8 +92,8 @@ describe("PlayHeader", () => {
       ["盤面を戻す", "onRestart"],
       ["リセット", "onReplay"],
       ["別の問題", "onStartNewProblem"],
-      ["難易度変更", "onChangeDifficulty"],
-      ["ホーム", "onBackToHome"],
+      ["問題選択", "onOpenGameHome"],
+      ["パズル選択", "onBackToHome"],
       ["遊び方", "onOpenHowToPlay"],
       ["検証情報", "onOpenDiagnostics"],
     ] as const;
@@ -120,8 +120,8 @@ describe("PlayHeader", () => {
     const silentMenuItems = [
       "盤面を戻す",
       "リセット",
-      "難易度変更",
-      "ホーム",
+      "問題選択",
+      "パズル選択",
       "遊び方",
       "検証情報",
     ] as const;
@@ -137,7 +137,7 @@ describe("PlayHeader", () => {
     );
 
     test("戻るボタンでは音を鳴らさないこと", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
       expect(playSound).not.toHaveBeenCalled();
     });
@@ -169,7 +169,7 @@ describe("PlayHeader", () => {
         .map((group) => group.textContent);
       expect(volumeNames).toEqual(["効果音5", "BGM5"]);
       expect(props.onBackToHome).not.toHaveBeenCalled();
-      expect(props.onChangeDifficulty).not.toHaveBeenCalled();
+      expect(props.onOpenGameHome).not.toHaveBeenCalled();
       expect(playSound).not.toHaveBeenCalled();
     });
   });
@@ -193,7 +193,7 @@ describe("PlayHeader", () => {
         .getAllByRole("menuitem")
         .map((item) => item.textContent);
 
-      expect(itemNames).toEqual(["別の問題", "難易度変更", "ホーム", "設定"]);
+      expect(itemNames).toEqual(["別の問題", "問題選択", "パズル選択", "設定"]);
     });
   });
 

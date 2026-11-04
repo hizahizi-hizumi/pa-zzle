@@ -17,7 +17,7 @@ export function NanpurePlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={nanpureCatalogEntry.entryPath}
+        backTo={nanpureCatalogEntry.homePath}
       />
     );
   }

@@ -2,7 +2,7 @@ import { Bomb, Flag } from "lucide-react";
 
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 
-/** `board` は盤面のマス、`preview` は難易度選択の小さな盤面、`figure` は遊び方の図のマス。 */
+/** `board` は盤面のマス、`preview` はゲームのホームのレベルのカードの小さな盤面、`figure` は遊び方の図のマス。 */
 export type MinesweeperCellFaceSize = "board" | "preview" | "figure";
 
 const NUMBER_CLASS_NAMES = [

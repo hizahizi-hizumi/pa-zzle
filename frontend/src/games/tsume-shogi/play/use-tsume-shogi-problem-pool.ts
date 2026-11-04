@@ -38,7 +38,7 @@ export function useTsumeShogiProblemPool(): TsumeShogiProblemPoolStatus {
 }
 
 /**
- * 詰将棋のプレイ画面へ進む前の画面（難易度選択）を開いたときに、問題集の本体を先に読み込み始める。
+ * 詰将棋のプレイ画面へ進む前の画面（ゲームのホーム）を開いたときに、問題集の本体を先に読み込み始める。
  * 読み込めなくても知らせず、プレイ画面を開いたときに読み込み直す。
  */
 export function usePreloadTsumeShogiProblemPool(): void {

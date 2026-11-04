@@ -1,15 +1,22 @@
 import {
   cleanup,
   fireEvent,
-  render,
+  render as renderWithoutRouter,
   screen,
   within,
 } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router";
 
 import type { GameProgress } from "@/games/play";
 import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
 import { TakuzuPlay } from "@/games/takuzu/ui/TakuzuPlay";
+
+/** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
+function render(ui: ReactElement) {
+  return renderWithoutRouter(ui, { wrapper: MemoryRouter });
+}
 
 const cells: TakuzuCellView[] = [
   { cell: "a", given: true, inViolatingRun: false },
@@ -54,8 +61,7 @@ describe("TakuzuPlay", () => {
     onReplay: vi.fn(),
     onClearAnimationComplete: vi.fn(),
     onStartNewProblem: vi.fn(),
-    onOpenRecords: vi.fn(),
-    onChangeDifficulty: vi.fn(),
+    onOpenGameHome: vi.fn(),
     onBackToHome: vi.fn(),
   };
 
@@ -143,10 +149,10 @@ describe("TakuzuPlay", () => {
       expect(callbacks.onUndo).toHaveBeenCalledOnce();
     });
 
-    test("戻るボタンで難易度選択への移動を通知すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+    test("戻るボタンでゲームのホームへの移動を通知すること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
-      expect(callbacks.onChangeDifficulty).toHaveBeenCalledOnce();
+      expect(callbacks.onOpenGameHome).toHaveBeenCalledOnce();
       expect(callbacks.onBackToHome).not.toHaveBeenCalled();
     });
 
@@ -159,8 +165,8 @@ describe("TakuzuPlay", () => {
         ["盤面を戻す", "onRestart"],
         ["リセット", "onReplay"],
         ["別の問題", "onStartNewProblem"],
-        ["難易度変更", "onChangeDifficulty"],
-        ["ホーム", "onBackToHome"],
+        ["問題選択", "onOpenGameHome"],
+        ["パズル選択", "onBackToHome"],
       ] as const;
 
       test.each(menuCases)(
@@ -299,11 +305,9 @@ describe("TakuzuPlay", () => {
     });
 
     const actionCases = [
-      ["プレイ！", "onStartNewProblem"],
-      ["同じ問題", "onReplay"],
-      ["記録を確認", "onOpenRecords"],
-      ["難易度変更", "onChangeDifficulty"],
-      ["ホーム", "onBackToHome"],
+      ["次の問題", "onStartNewProblem"],
+      ["もう一度", "onReplay"],
+      ["問題選択", "onOpenGameHome"],
     ] as const;
 
     test.each(actionCases)(

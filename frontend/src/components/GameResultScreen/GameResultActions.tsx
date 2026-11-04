@@ -1,58 +1,51 @@
-import {
-  BookOpen,
-  Home,
-  Play,
-  RotateCcw,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Grid2x2, Home, Play, RotateCcw } from "lucide-react";
 
 import { withPlayStartSound } from "@/components/app-decision-sound";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/router";
 
 type GameResultActionsProps = {
   onStartNewProblem: () => void;
-  /** 省略すると「同じ問題」を押せない状態で出す。 */
+  onOpenGameHome: () => void;
+  /** 省略すると「もう一度」を押せない状態で出す。 */
   onReplay?: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
 };
 
+/**
+ * 結果を受け取ったあとの次の行動。次の問題を主とし、ゲームのホームへ移る・同じ問題をもう一度遊ぶを従として縦に並べる。
+ * 最後に、ほかのパズルを選びに戻るパズル選択（アプリのホーム）を、従よりさらに弱く置く。
+ * アイコンはプレイ中のメニューの同じ行き先（ゲームのホーム・ホーム）とそろえる。
+ */
 export function GameResultActions({
   onStartNewProblem,
+  onOpenGameHome,
   onReplay,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
 }: GameResultActionsProps) {
   return (
-    <div className="mt-4 grid gap-3">
+    <div className="mt-4 grid gap-2">
       <Button size="lg" onClick={withPlayStartSound(onStartNewProblem)}>
         <Play />
-        プレイ！
+        次の問題
       </Button>
-      <div className="grid grid-cols-2 gap-2">
-        <Button
-          variant="outline"
-          disabled={!onReplay}
-          onClick={onReplay && withPlayStartSound(onReplay)}
-        >
-          <RotateCcw />
-          同じ問題
-        </Button>
-        <Button variant="outline" onClick={onOpenRecords}>
-          <BookOpen />
-          記録を確認
-        </Button>
-        <Button variant="outline" onClick={onChangeDifficulty}>
-          <SlidersHorizontal />
-          難易度変更
-        </Button>
-        <Button variant="outline" onClick={onBackToHome}>
+      <Button size="lg" variant="outline" onClick={onOpenGameHome}>
+        <Grid2x2 />
+        問題選択
+      </Button>
+      <Button
+        size="lg"
+        variant="outline"
+        disabled={!onReplay}
+        onClick={onReplay && withPlayStartSound(onReplay)}
+      >
+        <RotateCcw />
+        もう一度
+      </Button>
+      <Button asChild size="lg" variant="ghost">
+        <Link to="/">
           <Home />
-          ホーム
-        </Button>
-      </div>
+          パズル選択
+        </Link>
+      </Button>
     </div>
   );
 }

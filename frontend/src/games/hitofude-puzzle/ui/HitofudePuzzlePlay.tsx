@@ -70,8 +70,7 @@ export function HitofudePuzzlePlay({
   onReplay,
   onClearAnimationComplete,
   onStartNewProblem,
-  onOpenRecords,
-  onChangeDifficulty,
+  onOpenGameHome,
   onBackToHome,
   onOpenDiagnostics,
 }: HitofudePuzzlePlayProps) {
@@ -129,7 +128,7 @@ export function HitofudePuzzlePlay({
       onRestart={onRestart}
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
-      onChangeDifficulty={onChangeDifficulty}
+      onOpenGameHome={onOpenGameHome}
       onBackToHome={onBackToHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
@@ -142,9 +141,7 @@ export function HitofudePuzzlePlay({
           recordOutcomeNotice={recordOutcomeNotice}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
-          onOpenRecords={onOpenRecords}
-          onChangeDifficulty={onChangeDifficulty}
-          onBackToHome={onBackToHome}
+          onOpenGameHome={onOpenGameHome}
           onOpenDiagnostics={onOpenDiagnostics}
         />
       )}
