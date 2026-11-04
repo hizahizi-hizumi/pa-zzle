@@ -1,6 +1,7 @@
 import { useGameHome } from "@/game-catalog/game-home";
 import { slidePuzzleCatalogEntry } from "@/game-catalog/slide-puzzle/slide-puzzle-catalog-entry";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
+import { SlidePuzzleTutorial } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial";
 import { GameHomeScreen } from "@/zukan/ui/GameHomeScreen";
 
 export function SlidePuzzleHomeView() {
@@ -11,6 +12,13 @@ export function SlidePuzzleHomeView() {
       {...screenProps}
       renderHowToPlayDialog={({ open, onClose }) => (
         <SlidePuzzleHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderTutorial={({ open, onClose, onStartPlay }) => (
+        <SlidePuzzleTutorial
+          open={open}
+          onStartPlay={onStartPlay}
+          onClose={onClose}
+        />
       )}
     />
   );
