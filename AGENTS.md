@@ -19,6 +19,9 @@ bun run --cwd frontend check # Biome のチェック
 bun run --cwd frontend typecheck # TypeScript の型検査
 bun run --cwd frontend test # Vitest の1回実行
 bun run --cwd frontend build # プロダクションビルド
+bun run --cwd frontend test:e2e # Playwright の E2E（スマホと PC）。スクリーンショットは frontend/e2e-results/
+bun run --cwd frontend test golden -u # 一方向ドア面の golden の更新
+cd frontend && bun scripts/factory/classify-change.ts --base origin/main # 変更の扱いの判定（作業ツリーを含む）
 ```
 
 
@@ -56,6 +59,17 @@ gh actions-lock # 全ワークフローを走査して actions.lock を更新
 - 恒久的な検証には、既存のテスト基盤・静的解析・ビルドツールなどの汎用的な検証手段を用いること。
   - 特定の変更や不具合だけを対象とする検証を、再発防止だけを理由に追加しない。
 - 人間の動作確認は、PRに Cloudflare が投稿するプレビューURLで行う。仕組みと設定は `frontend/README.md` の「PRプレビュー」を参照。
+
+## 変更の扱い
+
+PR は CI が差分から「自動」「体験確認」「承認」に分け、`扱い:*` ラベルと体験レビュー票をジョブサマリーに出す（ADR-0015）。判定の規則は `frontend/scripts/factory/change-treatment.ts` を正とする。
+
+- エージェントは PR を merge しない。自動の扱いは CI が merge し（リポジトリ変数 `FACTORY_AUTO_MERGE` が `true` のとき）、体験確認と承認の扱いはプロダクトオーナーが merge する
+- 合格基準（テストの削除、`frontend/golden/`、`frontend/e2e/` の既存テスト、CI、静的検査とテストの設定、要求・要件、ルール）を緩める変更は、実装と別の PR にし、緩める理由を PR 本文に書く
+- `frontend/golden/` のテストが失敗したら、一方向ドア面（保存形式、問題ID・問題集の並び、評価規則、URL）に触れている
+  - 意図した変更でなければ、コードを直す
+  - 意図した変更なら golden を更新し、遊ぶ人に何が起きるか（遊び直せなくなる記録、変わる評価など）を PR 本文に書く
+- 遊ぶ人の端末から情報を外へ送る処理（利用状況の計測、エラー収集など）を入れない。プライバシーポリシーなどを持たずに公開するため
 
 ## 文書
 
