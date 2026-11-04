@@ -67,6 +67,28 @@ describe("useHakoiriMusumePlay", () => {
     });
   });
 
+  describe("駒が移った場合", () => {
+    test("移るたびに別の id の知らせを出し、動けない入力では変えず、待ったで消すこと", () => {
+      act(() => result.current.movePiece(6, "right"));
+      const first = result.current.stepNotice;
+      act(() => result.current.movePiece(6, "right"));
+      const second = result.current.stepNotice;
+      act(() => result.current.movePiece(0, "up"));
+      const afterBlocked = result.current.stepNotice;
+      act(() => result.current.undo());
+
+      expect(first).toMatchObject({
+        pieceIndex: 6,
+        kind: "small",
+        from: 16,
+        to: 17,
+      });
+      expect(second?.id).not.toBe(first?.id);
+      expect(afterBlocked).toBe(second);
+      expect(result.current.stepNotice).toBeNull();
+    });
+  });
+
   describe("動けない向きの場合", () => {
     test("手数も盤面も変えないこと", () => {
       act(() => result.current.movePiece(0, "up"));

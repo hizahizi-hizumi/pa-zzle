@@ -2,7 +2,10 @@ import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
 import type { HakoiriMusumeDifficulty } from "@/games/hakoiri-musume/difficulty";
 import { HAKOIRI_MUSUME_DISPLAY_NAME } from "@/games/hakoiri-musume/display-name";
-import type { HakoiriMusumeResult } from "@/games/hakoiri-musume/play/use-hakoiri-musume-play";
+import type {
+  HakoiriMusumeResult,
+  HakoiriMusumeStepNotice,
+} from "@/games/hakoiri-musume/play/use-hakoiri-musume-play";
 import type { HakoiriMusumePiece } from "@/games/hakoiri-musume/puzzle/board";
 import type { HakoiriMusumeDirection } from "@/games/hakoiri-musume/puzzle/rules";
 import {
@@ -11,6 +14,7 @@ import {
 } from "@/games/hakoiri-musume/ui/board/board-geometry";
 import { HakoiriMusumeBoard } from "@/games/hakoiri-musume/ui/board/HakoiriMusumeBoard";
 import { HakoiriMusumeHowToPlayDialog } from "@/games/hakoiri-musume/ui/HakoiriMusumeHowToPlayDialog";
+import { useHakoiriMusumeSoundEffects } from "@/games/hakoiri-musume/ui/HakoiriMusumePlay/use-hakoiri-musume-sound-effects";
 import { HakoiriMusumeResultScreen } from "@/games/hakoiri-musume/ui/result/HakoiriMusumeResultScreen";
 import type {
   GamePlayScreenProps,
@@ -26,6 +30,7 @@ type HakoiriMusumePlayProps = GamePlayScreenProps<
   UndoableGamePlayScreenProps & {
     pieces: readonly HakoiriMusumePiece[];
     moveCount: number;
+    stepNotice: HakoiriMusumeStepNotice | null;
     onMovePiece: (
       pieceIndex: number,
       direction: HakoiriMusumeDirection,
@@ -40,6 +45,7 @@ export function HakoiriMusumePlay({
   recordOutcomeNotice,
   pieces,
   moveCount,
+  stepNotice,
   canUndo,
   canRestart,
   onMovePiece,
@@ -52,6 +58,8 @@ export function HakoiriMusumePlay({
   onBackToHome,
   onOpenDiagnostics,
 }: HakoiriMusumePlayProps) {
+  useHakoiriMusumeSoundEffects(stepNotice, progress);
+
   return (
     <GamePlayFrame
       progress={progress}

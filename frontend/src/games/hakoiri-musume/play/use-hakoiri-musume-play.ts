@@ -1,10 +1,13 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { HakoiriMusumeDifficulty } from "@/games/hakoiri-musume/difficulty";
 import type { HakoiriMusumeProblemIdentity } from "@/games/hakoiri-musume/problem/problem";
 import type { HakoiriMusumePooledProblem } from "@/games/hakoiri-musume/problem/problem-pool";
 import { selectHakoiriMusumeProblemForDifficulty } from "@/games/hakoiri-musume/problem-selection";
-import type { HakoiriMusumePiece } from "@/games/hakoiri-musume/puzzle/board";
+import type {
+  HakoiriMusumePiece,
+  HakoiriMusumePieceKind,
+} from "@/games/hakoiri-musume/puzzle/board";
 import type { HakoiriMusumeDirection } from "@/games/hakoiri-musume/puzzle/rules";
 import {
   calculateHakoiriMusumeMoveDelta,
@@ -69,6 +72,18 @@ export function createHakoiriMusumeResult(
   };
 }
 
+/**
+ * 駒が新しいマスへ移った知らせ。なぞりの途中でも、駒が1マス移るたびに出す。`id` は移るたびに変わる。
+ * 動けない向きの入力では変わらず、待った・盤面を戻す・リセット・別の問題で消える。
+ */
+export type HakoiriMusumeStepNotice = {
+  id: number;
+  pieceIndex: number;
+  kind: HakoiriMusumePieceKind;
+  from: number;
+  to: number;
+};
+
 export type HakoiriMusumePlay = GamePlay<
   HakoiriMusumeDifficulty,
   HakoiriMusumeProblemIdentity,
@@ -83,6 +98,7 @@ export type HakoiriMusumePlay = GamePlay<
     undoCount: number;
     restartCount: number;
     optimalMoveCount: number;
+    stepNotice: HakoiriMusumeStepNotice | null;
     /** 駒を1マス動かす。動けない向きなら何もしない。 */
     movePiece: (pieceIndex: number, direction: HakoiriMusumeDirection) => void;
   };
@@ -92,6 +108,7 @@ type HakoiriMusumePlayState = {
   problemIdentity: HakoiriMusumeProblemIdentity;
   optimalMoveCount: number;
   progress: GameProgress;
+  stepNotice: HakoiriMusumeStepNotice | null;
 };
 
 function createPlayState(
@@ -103,6 +120,7 @@ function createPlayState(
     problemIdentity: identity,
     optimalMoveCount,
     progress: "playing",
+    stepNotice: null,
   };
 }
 
@@ -121,6 +139,7 @@ function moveInPlay(
   pieceIndex: number,
   direction: HakoiriMusumeDirection,
   movedAt: number,
+  noticeId: number,
 ): HakoiriMusumePlayState {
   if (current.progress !== "playing") {
     return current;
@@ -131,9 +150,28 @@ function moveInPlay(
     direction,
     movedAt,
   );
-  return step.outcome === "moved"
-    ? applyPlaySession(current, step.session)
-    : current;
+  if (step.outcome !== "moved") {
+    return current;
+  }
+  return {
+    ...applyPlaySession(current, step.session),
+    stepNotice: {
+      id: noticeId,
+      pieceIndex,
+      kind: step.session.puzzleState.pieces[pieceIndex]!.kind,
+      from: step.from,
+      to: step.to,
+    },
+  };
+}
+
+/** 待った・盤面を戻すで盤面が戻った後の状態。駒が移った知らせは消す。 */
+function returnInPlay(
+  current: HakoiriMusumePlayState,
+  returned: HakoiriMusumeSession,
+): HakoiriMusumePlayState {
+  const next = applyPlaySession(current, returned);
+  return next === current ? current : { ...next, stepNotice: null };
 }
 
 /** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
@@ -150,35 +188,40 @@ export function useHakoiriMusumePlay(
   );
   const { session, problemIdentity, optimalMoveCount } = play;
   const elapsedMs = useSessionElapsedMs(session);
+  const nextNoticeId = useRef(0);
 
   const movePiece = useCallback(
     (pieceIndex: number, direction: HakoiriMusumeDirection) => {
       const movedAt = Date.now();
-      setPlay((current) => moveInPlay(current, pieceIndex, direction, movedAt));
+      const noticeId = nextNoticeId.current++;
+      setPlay((current) =>
+        moveInPlay(current, pieceIndex, direction, movedAt, noticeId),
+      );
     },
     [],
   );
 
   const undo = useCallback(() => {
     setPlay((current) =>
-      applyPlaySession(current, undoHakoiriMusumeSession(current.session)),
+      returnInPlay(current, undoHakoiriMusumeSession(current.session)),
     );
   }, []);
 
   const restart = useCallback(() => {
     setPlay((current) =>
-      applyPlaySession(current, restartHakoiriMusumeSession(current.session)),
+      returnInPlay(current, restartHakoiriMusumeSession(current.session)),
     );
   }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setPlay((current) =>
-      startPlaySession(
+    setPlay((current) => ({
+      ...startPlaySession(
         current,
         createHakoiriMusumeSession(current.session.problem, startedAt),
       ),
-    );
+      stepNotice: null,
+    }));
   }, []);
 
   const startNewProblem = useCallback(() => {
@@ -216,6 +259,7 @@ export function useHakoiriMusumePlay(
     undoCount: session.undoCount,
     restartCount: session.restartCount,
     optimalMoveCount,
+    stepNotice: play.stepNotice,
     canUndo: canUndoHakoiriMusumeSession(session),
     canRestart: canRestartHakoiriMusumeSession(session),
     movePiece,

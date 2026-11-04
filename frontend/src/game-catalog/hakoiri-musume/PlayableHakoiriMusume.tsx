@@ -53,6 +53,7 @@ export function PlayableHakoiriMusume({
         {...screenProps}
         pieces={play.pieces}
         moveCount={play.moveCount}
+        stepNotice={play.stepNotice}
         onMovePiece={play.movePiece}
         canUndo={play.canUndo}
         onUndo={play.undo}
