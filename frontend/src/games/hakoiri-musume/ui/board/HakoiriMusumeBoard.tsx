@@ -2,11 +2,13 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
+  useLayoutEffect,
   useRef,
 } from "react";
 
 import { HAKOIRI_MUSUME_DISPLAY_NAME } from "@/games/hakoiri-musume/display-name";
 import {
+  getHakoiriMusumeCell,
   getHakoiriMusumeCellPosition,
   type HakoiriMusumeCellPosition,
   type HakoiriMusumePiece,
@@ -43,10 +45,11 @@ type HakoiriMusumeBoardProps = {
   onClearAnimationComplete: () => void;
 };
 
-/** なぞっている駒と、押したときの指の位置。 */
+/** なぞっている駒と、押したときの指の位置。`startPieces` は押したときの盤面。 */
 type PieceDrag = {
   pointerId: number;
   pieceIndex: number;
+  startPieces: readonly HakoiriMusumePiece[];
   kind: HakoiriMusumePieceKind;
   canPlace: HakoiriMusumePlacementCheck;
   origin: HakoiriMusumeCellPosition;
@@ -94,6 +97,22 @@ function findPieceAt(
 }
 
 /**
+ * 盤面が、なぞりで動かした駒のほかは押したときのままで、なぞっている駒がなぞりの追った位置にあるか。
+ * 待った・盤面を戻すなど、なぞり以外で盤面が変わっていれば `false`。
+ */
+function isBoardFollowingDrag(
+  pieces: readonly HakoiriMusumePiece[],
+  drag: PieceDrag,
+): boolean {
+  const { row, column } = drag.trace.piece;
+  return pieces.every((piece, index) =>
+    index === drag.pieceIndex
+      ? piece.cell === getHakoiriMusumeCell({ row, column })
+      : piece.cell === drag.startPieces[index]!.cell,
+  );
+}
+
+/**
  * 盤面。駒を押してなぞると、指のいるマスが隣で空いているときだけ、駒が1マスずつついて行く。なぞったまま角を曲がれる。
  * 駒の占めるマスのどこを押してもその駒をつかむ。ふさがれた向きへ押し込んでも駒は動かず、ほかの駒を回り込まない。
  * 盤面は Pointer Events だけで受け、ページのスクロールや長押しのメニューに指を奪わせない。
@@ -109,6 +128,14 @@ export function HakoiriMusumeBoard({
   const surfaceRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<PieceDrag | null>(null);
   const daughterIndex = pieces.findIndex((piece) => piece.kind === "daughter");
+
+  // なぞりの途中で盤面がなぞり以外の操作で変わったら、押したときの盤面で作った置き場所の判定が使えないので、なぞりをやめる。
+  useLayoutEffect(() => {
+    const drag = dragRef.current;
+    if (drag && !isBoardFollowingDrag(pieces, drag)) {
+      dragRef.current = null;
+    }
+  }, [pieces]);
 
   useEffect(() => {
     if (!clearing) {
@@ -153,6 +180,7 @@ export function HakoiriMusumeBoard({
     dragRef.current = {
       pointerId: event.pointerId,
       pieceIndex,
+      startPieces: pieces,
       kind: piece.kind,
       canPlace: createHakoiriMusumePlacementCheck({ pieces }, pieceIndex),
       origin,
