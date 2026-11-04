@@ -10,6 +10,9 @@ import {
 import { MemoryRouter } from "react-router";
 
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
+import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
+import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import type { ProblemId } from "@/games/problem-id";
 import {
   GameHomeScreen,
@@ -139,6 +142,22 @@ const findProblemFeatureValues = vi.fn(
     ]),
 );
 
+/** 開いているレベル 3 の記録2件と、ほかのレベルの記録1件。 */
+const playRecords = (["3", "3", "1"] as const).map((difficulty, index) =>
+  createNanpurePlayRecord({
+    difficulty,
+    problemIdentity: createNanpureProblemIdentity("naked-single", 41 + index),
+    startedAt: 1_000 + index * 100_000,
+    completedAt: 91_000 + index * 100_000,
+    result: {
+      elapsedMs: 90_000,
+      mistakeCount: index,
+      undoCount: 0,
+      restartCount: 0,
+    },
+  }),
+);
+
 function createScreen(
   shownZukan: GameZukan = zukan,
   changes: ZukanChanges = noZukanChanges,
@@ -161,6 +180,8 @@ function createScreen(
         renderHowToPlayDialog={({ open }) =>
           open ? <p>遊び方のダイアログ</p> : null
         }
+        records={playRecords}
+        playRecordDisplay={nanpurePlayRecordDisplay}
       />
     </MemoryRouter>
   );
@@ -506,6 +527,26 @@ describe("GameHomeScreen", () => {
         .map((square) => square.getAttribute("aria-label")?.split(" ")[0]);
 
       expect(tabStops).toEqual(["No.0005"]);
+    });
+
+    test("成績を常には示さないこと", () => {
+      const performance = screen.queryByRole("dialog", { name: "成績" });
+
+      expect(performance).toBeNull();
+    });
+
+    test("成績を押すと、開いているレベルの記録だけから自己ベストと推移を示すこと", async () => {
+      fireEvent.click(screen.getByRole("button", { name: "成績" }));
+      const performance = await screen.findByRole("dialog", { name: "成績" });
+
+      expect(within(performance).getByText("レベル 3")).toBeTruthy();
+      expect(
+        within(performance).getByRole("region", { name: "自己ベスト" }),
+      ).toBeTruthy();
+      expect(
+        within(performance).getByRole("combobox", { name: "推移する指標" }),
+      ).toBeTruthy();
+      expect(within(performance).getByText("2件")).toBeTruthy();
     });
 
     test("マスの見方を常には示さないこと", () => {

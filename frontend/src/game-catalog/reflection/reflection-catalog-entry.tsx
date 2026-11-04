@@ -48,6 +48,9 @@ export const reflectionCatalogEntry = {
     );
   },
   listPoolProblemIds: listReflectionPoolProblemIds,
+  hasRecordResult(record) {
+    return restoreReflectionRecordedResult(record) !== null;
+  },
   renderRecordResult(record, context) {
     const recorded = restoreReflectionRecordedResult(record);
     return recorded ? (

@@ -1,7 +1,4 @@
-import {
-  formatDurationInWords,
-  formatElapsedTime,
-} from "@/lib/format-elapsed-time";
+import { formatDurationInWords } from "@/lib/format-elapsed-time";
 import {
   formatCountDelta,
   formatElapsedTimeDelta,
@@ -22,7 +19,6 @@ export type PlayRecordMetricAxisDisplay = PlayRecordMetricAxisBounds &
 export type PlayRecordMetricDisplay = {
   id: string;
   label: string;
-  historyLabel: string;
   formatValue: (value: number) => string;
   /** 自己ベストを更新した幅。良くなった向きの差を0以上の値で受け取る。 */
   formatImprovement: (amount: number) => string;
@@ -32,17 +28,10 @@ export type PlayRecordMetricDisplay = {
 
 type PlayRecordMetricPresentation = Omit<PlayRecordMetricDisplay, "id">;
 
-type PlayAttemptProgressDisplay = {
-  label: string;
-  formatValue: (value: number) => string;
-};
-
 export type PlayRecordDisplayDefinition = {
   definition: PlayRecordDefinition;
   getComparisonLabel: (comparisonKey: string) => string | null;
   metrics: readonly PlayRecordMetricDisplay[];
-  /** 離脱したプレイで見せる進み具合。進み具合の名前ごとの表示を、見せる順に並べる。 */
-  progress: Readonly<Record<string, PlayAttemptProgressDisplay>>;
 };
 
 type PlayRecordDisplaySource<Definition extends PlayRecordDefinition> = Omit<
@@ -52,17 +41,6 @@ type PlayRecordDisplaySource<Definition extends PlayRecordDefinition> = Omit<
   definition: Definition;
   metrics: Record<PlayRecordMetricId<Definition>, PlayRecordMetricPresentation>;
 };
-
-/** 記録画面で選べる1つのゲーム。 */
-export type PlayRecordGame = {
-  name: string;
-  playRecordDisplay: PlayRecordDisplayDefinition;
-};
-
-export type PlayRecordGameCatalog = readonly [
-  PlayRecordGame,
-  ...PlayRecordGame[],
-];
 
 /**
  * 記録定義の全指標に表示を対応させた記録表示を作る。
@@ -98,7 +76,6 @@ type PlayRecordCountUnit = "回" | "手" | "マス";
 /** 100点満点の評価点。 */
 export const playScoreMetricPresentation: PlayRecordMetricPresentation = {
   label: "スコア",
-  historyLabel: "スコア",
   formatValue(value: number) {
     return `${value}点`;
   },
@@ -112,7 +89,6 @@ export const playScoreMetricPresentation: PlayRecordMetricPresentation = {
 /** 問題ごとの基準時間とクリア時間との差。 */
 export const timeDeltaMetricPresentation: PlayRecordMetricPresentation = {
   label: "基準時間との差",
-  historyLabel: "時間差",
   formatValue: formatElapsedTimeDelta,
   formatImprovement(amount: number) {
     const wholeSecondsMs = Math.floor(amount / 1_000) * 1_000;
@@ -129,7 +105,6 @@ export function createCountMetricPresentation(
 ): PlayRecordMetricPresentation {
   return {
     label,
-    historyLabel: label,
     formatValue(value: number) {
       return `${value}${unit}`;
     },
@@ -144,7 +119,6 @@ export function createCountMetricPresentation(
 /** 最短手数とクリア手数との差。 */
 export const moveDeltaMetricPresentation: PlayRecordMetricPresentation = {
   label: "最短手数との差",
-  historyLabel: "手数差",
   formatValue: formatCountDelta,
   formatImprovement(amount: number) {
     return `${amount}手減`;
@@ -152,22 +126,3 @@ export const moveDeltaMetricPresentation: PlayRecordMetricPresentation = {
   referenceValue: 0,
   axis: { kind: "integer", minimum: 0 },
 };
-
-/** 離脱したプレイの経過時間。 */
-export const elapsedTimeProgressDisplay: PlayAttemptProgressDisplay = {
-  label: "時間",
-  formatValue: formatElapsedTime,
-};
-
-/** 離脱したプレイまでに数えた回数。 */
-export function createCountProgressDisplay(
-  label: string,
-  unit: PlayRecordCountUnit,
-): PlayAttemptProgressDisplay {
-  return {
-    label,
-    formatValue(value: number) {
-      return `${value}${unit}`;
-    },
-  };
-}

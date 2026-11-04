@@ -33,18 +33,6 @@ describe("hitofudePuzzlePlayRecordDisplay", () => {
     });
   });
 
-  test("離脱の進み具合を時間・通ったマス・引き直しの順に単位付きで表示すること", () => {
-    const progress = Object.values(
-      hitofudePuzzlePlayRecordDisplay.progress,
-    ).map(({ label, formatValue }) => `${label} ${formatValue(12)}`);
-
-    expect(progress).toEqual([
-      "時間 00:00",
-      "通ったマス 12マス",
-      "引き直し 12回",
-    ]);
-  });
-
   const comparisonLabelCases = [
     ["1", "レベル 1"],
     ["5", "レベル 5"],

@@ -18,10 +18,8 @@ import { getDifficultyLabel } from "@/games/difficulty";
 import { getGameResultLevel } from "@/games/result";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import { formatPlayedDate } from "@/lib/format-played-at";
-import {
-  formatZukanNumber,
-  zukanProblemStatusLabels,
-} from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
+import { zukanProblemStatusLabels } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
+import { formatZukanNumber } from "@/zukan/ui/zukan-number-format";
 import {
   getZukanProblemStatus,
   type ZukanProblem,

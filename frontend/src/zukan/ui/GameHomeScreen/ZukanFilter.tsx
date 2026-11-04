@@ -1,6 +1,6 @@
 import { ListFilterIcon, XIcon } from "lucide-react";
 import { VisuallyHidden } from "radix-ui";
-import { useId, useSyncExternalStore } from "react";
+import { useId } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useHeaderLayerSheet } from "@/zukan/ui/GameHomeScreen/use-header-layer-sheet";
 import { ZukanFilterPanel } from "@/zukan/ui/GameHomeScreen/ZukanFilter/ZukanFilterPanel";
 import { ZukanHeaderButton } from "@/zukan/ui/GameHomeScreen/ZukanHeaderButton";
 import type { ZukanFilterFeatureAxis } from "@/zukan/ui/GameHomeScreen/zukan-filter-appearance";
@@ -46,19 +47,6 @@ type ZukanFilterProps = {
   onConditionsChange: (conditions: ZukanFilterConditions) => void;
 };
 
-/** 条件を選ぶ並びを、画面の下から出すシートで出す画面幅。より広い幅では、ボタンから出すポップオーバーで出す。 */
-const SHEET_MEDIA_QUERY = "(width < 40rem)";
-
-function subscribeSheetMedia(onChange: () => void): () => void {
-  const media = window.matchMedia?.(SHEET_MEDIA_QUERY);
-  media?.addEventListener("change", onChange);
-  return () => media?.removeEventListener("change", onChange);
-}
-
-function readSheetMedia(): boolean {
-  return window.matchMedia?.(SHEET_MEDIA_QUERY).matches ?? false;
-}
-
 /**
  * 図鑑の絞り込み。押すと条件を選ぶ並びを、スマートフォンでは画面の下からのシート、PC ではボタンから出すポップオーバーで出す。
  * 選んだ条件はすぐ台紙に映し、当たる問題の数を並びの下に示す。条件をかけている間は、ボタンに条件の数を添え、並びの「解除」で全部外せる。
@@ -74,7 +62,7 @@ export function ZukanFilter({
   onOpenChange,
   onConditionsChange,
 }: ZukanFilterProps) {
-  const isSheet = useSyncExternalStore(subscribeSheetMedia, readSheetMedia);
+  const isSheet = useHeaderLayerSheet();
   const titleId = useId();
   const conditionCount = countZukanFilterConditions(conditions);
   const isFiltering = conditionCount > 0;

@@ -29,7 +29,10 @@ import {
   prefersReducedMotion as readPrefersReducedMotion,
   subscribePrefersReducedMotion,
 } from "@/lib/motion";
+import type { PlayRecord } from "@/records/play-record";
+import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 import { GameHomeHeading } from "@/zukan/ui/GameHomeScreen/GameHomeHeading";
+import { GameHomePerformance } from "@/zukan/ui/GameHomeScreen/GameHomePerformance";
 import {
   type GameLevelCard,
   GameLevelCards,
@@ -52,7 +55,7 @@ import {
   type ZukanChangeStage,
 } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 import type { ZukanFilterFeatureAxis } from "@/zukan/ui/GameHomeScreen/zukan-filter-appearance";
-import { getZukanNumberDigitCount } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
+import { getZukanNumberDigitCount } from "@/zukan/ui/zukan-number-format";
 import {
   countZukanProblemsByStatus,
   type GameZukan,
@@ -115,6 +118,10 @@ export type GameHomeScreenProps = {
   ) => ReadonlyMap<string, ProblemFeatureValue> | null;
   /** ゲーム固有の遊び方ダイアログを描く。開閉の状態は見出しが持ち、引数で渡す。 */
   renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
+  /** 全記録。開いているレベルの成績（自己ベスト・推移）を、成績を開いたときにこの中から求める。 */
+  records: readonly PlayRecord[];
+  /** そのゲームの記録表示。成績の指標の名前と値の書き方に使う。 */
+  playRecordDisplay: PlayRecordDisplayDefinition;
 };
 
 type SelectedProblemKey = { difficulty: DifficultyLevel; problemId: ProblemId };
@@ -303,7 +310,8 @@ function listPendingChanges(
  * 絞り込みは開いているレベルの台紙にかけ、当たった問題を前に詰め、当たらなかった問題を薄くして後ろに並べる。条件は保存せず、開いたときは条件なしで始め、レベルを切り替えると外す。
  * 条件は、かけたレベルを添えて持ち、選ぶ前に最初に開くレベルが変わったときも、ほかのレベルには持ち越さない。条件を変えると台紙を先頭までスクロールし、前に集めた問題を見せる。
  * 変化は絞り込みの無い台紙で見せる。見せている途中で絞り込みを開くか条件を選ぶと、見せ終えたものとする。
- * 遊び方・見方・絞り込みのボタンと「ランダムに遊ぶ」を押したタップは、最後の姿まで飛ばしたうえでそのまま操作する。
+ * 遊び方・見方・絞り込み・成績のボタンと「ランダムに遊ぶ」を押したタップは、最後の姿まで飛ばしたうえでそのまま操作する。
+ * 成績は、開いているレベルの自己ベスト・推移・記録の JSON コピーを、見出しの並びのボタンから開いたときだけ示す。
  * 状態ごとの数は、絞り込んでいても台紙の全問で数え、当たった問題の数は同じ行の右に添える。
  */
 export function GameHomeScreen({
@@ -319,6 +327,8 @@ export function GameHomeScreen({
   featureAxes,
   findProblemFeatureValues,
   renderHowToPlayDialog,
+  records,
+  playRecordDisplay,
 }: GameHomeScreenProps) {
   const [initialSelectedKey] = useState(() =>
     findProblemKey(zukan.sections, initialSelectedProblemId),
@@ -619,6 +629,11 @@ export function GameHomeScreen({
           open={isFilterOpen}
           onOpenChange={handleFilterOpenChange}
           onConditionsChange={handleFilterConditionsChange}
+        />
+        <GameHomePerformance
+          records={records}
+          playRecordDisplay={playRecordDisplay}
+          difficulty={openDifficulty}
         />
       </GameHomeHeading>
 

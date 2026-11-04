@@ -48,6 +48,9 @@ export const minesweeperCatalogEntry = {
     );
   },
   listPoolProblemIds: listMinesweeperPoolProblemIds,
+  hasRecordResult(record) {
+    return restoreMinesweeperRecordedResult(record) !== null;
+  },
   renderRecordResult(record, context) {
     const recorded = restoreMinesweeperRecordedResult(record);
     return recorded ? (

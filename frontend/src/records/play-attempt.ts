@@ -54,14 +54,21 @@ export function isPlayAttemptCleared(
   return records.some((record) => isSamePlayStart(record, attempt));
 }
 
+function toPlayStartKey({ gameId, startedAt }: PlayStartKey): string {
+  return `${startedAt}:${gameId}`;
+}
+
 /** 状態が離脱の試行だけを選ぶ。完了記録がある試行は離脱を記録していてもクリアとして除く。 */
 export function getAbandonedPlayAttempts(
   attempts: readonly PlayAttempt[],
   records: readonly PlayRecord[],
 ): AbandonedPlayAttempt[] {
+  // 記録が数千件あっても試行ごとに全記録を探さないよう、完了したプレイの開始を先にまとめる。
+  const clearedStarts = new Set(records.map(toPlayStartKey));
   return attempts.filter(
     (attempt): attempt is AbandonedPlayAttempt =>
-      attempt.abandonment !== null && !isPlayAttemptCleared(attempt, records),
+      attempt.abandonment !== null &&
+      !clearedStarts.has(toPlayStartKey(attempt)),
   );
 }
 

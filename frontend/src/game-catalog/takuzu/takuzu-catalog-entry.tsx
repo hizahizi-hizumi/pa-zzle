@@ -48,6 +48,9 @@ export const takuzuCatalogEntry = {
     );
   },
   listPoolProblemIds: listTakuzuPoolProblemIds,
+  hasRecordResult(record) {
+    return restoreTakuzuRecordedResult(record) !== null;
+  },
   renderRecordResult(record, context) {
     const recorded = restoreTakuzuRecordedResult(record);
     return recorded ? (

@@ -98,7 +98,7 @@ export type GameCatalogEntry = {
   playRecordDisplay: PlayRecordDisplayDefinition;
   /**
    * 記録の問題を遊び直すプレイ画面の難易度と問題 ID を返す。遊び直せない記録には `null` を返す。
-   * 記録一覧の全行で求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。
+   * 記録の一覧の行ごとに求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。
    */
   recordProblemPlayTarget: (
     record: PlayRecord,
@@ -122,6 +122,8 @@ export type GameCatalogEntry = {
   ) => readonly ProblemFeature[] | null;
   /** 図鑑の絞り込みに使う、問題の特徴の軸と値。 */
   problemFeatureFilter: ProblemFeatureFilter;
+  /** 記録から結果画面を描けるか。`renderRecordResult` が結果画面を返すときだけ `true`。 */
+  hasRecordResult: (record: PlayRecord) => boolean;
   /**
    * 記録から結果画面を描く。今の版の記録でなく結果を作れないときは `null` を返す。
    * 呼び出し側は記録の `gameId` がこのゲームの `id` と一致することを確かめてから渡す。

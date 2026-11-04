@@ -48,6 +48,9 @@ export const tsumeShogiCatalogEntry = {
     );
   },
   listPoolProblemIds: listTsumeShogiPoolProblemIds,
+  hasRecordResult(record) {
+    return restoreTsumeShogiRecordedResult(record) !== null;
+  },
   renderRecordResult(record, context) {
     const recorded = restoreTsumeShogiRecordedResult(record);
     return recorded ? (
