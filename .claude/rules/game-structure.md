@@ -54,7 +54,7 @@ frontend/src/games/
 - `play-record.ts`: ゲーム固有の完了事実を共通記録機能へ接続する。今の版の記録から結果画面に出す内容を作り直す `restore<Game>RecordedResult` も置き、結果の計算は `play/` の `create<Game>Result` をプレイ中と共用する。
 - `play-attempt.ts`: 完了せずに離れたプレイの進み具合として記録する実測値を、`session/` から選ぶ。
 
-これらを省略するのは、`APP.md` / `GAME.md` 上、そのゲームだけ当該体験を持たないと説明できる場合に限る。
+これらを省略するのは、そのパズルの仕様上、当該体験を持たないと説明できる場合に限る。
 
 ## 記録
 
