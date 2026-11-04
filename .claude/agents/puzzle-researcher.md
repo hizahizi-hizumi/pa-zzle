@@ -1,6 +1,6 @@
 ---
 name: puzzle-researcher
-description: 新しいパズルの実装前提を1つの観点（問題供給・難易度・図鑑と問題の特徴・音・スマホ操作・導入判断）で調べ、計測コードを書いて測り、結論・計測・推測・仮決定の候補を `<観点>.md` に書いて報告する Agent。`/add-puzzle` Skill の調査で、メインエージェントが観点ごとに並行で起動する。
+description: 新しいパズルの実装前提を1つの観点で調べて測り、結論・計測・推測・仮決定の候補を `<観点>.md` に書いて報告する Agent。`/add-puzzle` Skill の調査で、観点ごとに並行で起動される。
 tools: Read, Write, Edit, Glob, Grep, Bash(python3 */scripts/research/*), Bash(timeout * python3 */scripts/research/*)
 model: opus
 ---
@@ -16,7 +16,7 @@ model: opus
 - 入力（起動側のプロンプトで受け取る。すべて必須）
   - リポジトリのルート: 調べる版の worktree。以下のパスはここからの相対パスとして読む
   - 識別表（項目は `/add-puzzle` の `references/research.md` の「実装前提調査の節」）
-  - 観点カードのパス: 観点と問い、書いてよいパス（`scripts/research/<ゲーム ID>_<観点>.py` と作業ディレクトリの `<観点>.md`。難易度の観点では難易度の資料の下書きのパスも）
+  - 観点カードのパス: 観点と問い、書いてよいパス（`scripts/research/<ゲーム ID>_<観点>.py`、移植の期待値 `scripts/research/<ゲーム ID>_<観点>.expected.json`、作業ディレクトリの `<観点>.md`。難易度の観点では難易度の資料の下書きのパスも）
   - 合意ファイルのパス: 認識合わせの合意と人間の判断
   - 失敗パターン集の絶対パス
 - 出力: 書いてよいパスの `<観点>.md` と、同じ内容の要約を返答で返す

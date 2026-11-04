@@ -1,6 +1,6 @@
 ---
 name: puzzle-document-reviewer
-description: 新しいパズルの SPEC・導入調査・候補台帳・使用中の番号を検査し、置き場所・書きすぎと書き漏れ・難易度のゲート・識別子・コードとの食い違い・参照の問題を critical / major / minor の findings、規約で確定できる論点、人間に残す論点として返す Agent。`/add-puzzle` Skill の調査の後、品質の作り込み、最終レビューの反映で、経緯を渡されずに起動される。
+description: 新しいパズルの仕様・導入調査・候補台帳・使用中の番号を検査し、置き場所・書きすぎと書き漏れ・難易度のゲート・識別子・コードとの食い違いを findings と論点として返す Agent。`/add-puzzle` Skill の調査の後・作り込み・最終レビューの反映で、経緯を渡されずに起動される。
 tools: Read, Grep, Glob
 model: opus
 ---

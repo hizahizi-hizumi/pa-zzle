@@ -1,6 +1,6 @@
 ---
 name: puzzle-code-reviewer
-description: 新しいパズルの差分と関連コードを精読し、標準配置・共通契約・依存方向・統合・テスト・型の問題を critical / major / minor の findings と規約で確定できる論点として返す Agent。`/add-puzzle` Skill の山場1、品質の作り込み、最終レビューの反映で、経緯を渡されずに起動される。
+description: 新しいパズルの差分と関連コードを精読し、標準配置・共通契約・依存方向・統合・テスト・型の問題を findings と規約で確定できる論点として返す Agent。`/add-puzzle` Skill の山場1・作り込み・最終レビューの反映で、経緯を渡されずに起動される。
 tools: Read, Grep, Glob
 model: opus
 ---
@@ -67,7 +67,7 @@ model: opus
 ### 4. 統合（ゲームの外側）
 
 - 範囲に含まれる統合が揃っているか。作り込みのレビューでは `game-structure.md`「ゲームを追加するとき」の全手順
-- 一覧に載せる前の版の一時的な除外と仮のカタログエントリは、`/add-puzzle` の `references/research.md` の「作る順番」と「カタログの一時的な除外」のとおりか
+- 範囲が作る順番の途中の版なら、各項目が置いた最初の版と一時的に置くものが `/add-puzzle` の `references/build-order.md` のとおりか。一時的に置くものが、置き換える項目の後に残っていないか
 - `pages/` は View を再 export するだけか（`pages.md`）、View の責務（`views.md`）
 
 ### 5. テスト
