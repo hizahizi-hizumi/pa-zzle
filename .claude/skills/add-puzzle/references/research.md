@@ -56,7 +56,7 @@
 | rules | ルール・判定・状態とそのテスト（画面なし）。依存規則を `generate:dependency-rules` で作り直し、カタログの一時的な除外（下）を足す | — |
 | playable | 1問を最後まで遊べるプレイ画面（盤面・操作・クリア判定）、遊ぶためのルート（`pages/puzzles/<game>/` と View）、一覧に出さないカタログエントリ（`GameCatalogEntry` の全項目を、後の項目で作るものは仮の実装で埋める）。固定問題を開く入口パスを報告に書く | — |
 | play-ui | 補助操作（待った・盤面を戻すなど）、状態の知らせ、遊び方、クリア演出 | — |
-| sound | 盤面操作とクリアの効果音。鳴らす瞬間と強さは `DESIGN.md` の「効果音」、つなぎ方は `.claude/rules/game-structure.md` の「効果音」。音は題材から作って一度だけ書き出し、`assets/sounds/` に同梱する。書き出したスクリプトは `scripts/assets/<ゲーム ID>_sounds.py` に残す（前例は `scripts/assets/tsume_shogi_sounds.py`） | — |
+| sound | 盤面操作とクリアの効果音。鳴らす瞬間と強さは `DESIGN.md` の「効果音」、つなぎ方は `.claude/rules/game-structure.md` の「効果音」。音は題材から作って一度だけ書き出し、`assets/sounds/` に同梱する。書き出したスクリプトは `scripts/assets/<ゲーム ID>_sounds.py` に残し、worktree の絶対パスで `uv run` する（前例は `scripts/assets/tsume_shogi_sounds.py`） | — |
 | difficulty | 調査で決めた案の解法器・難易度の判定・生成器・`problem-selection.ts`、難易度の資料 | `/design-game-difficulty` |
 | problem-pool | 問題集と生成スクリプト。完成条件は、件数がそろい `--verify` で全問の再検証が通ること。問題 ID で開くレベルごとのプレイ画面のパスを報告に書く | `/design-game-difficulty` |
 | pictogram | ゲーム一覧のピクトグラム | `/design-game-pictogram` |
