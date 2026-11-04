@@ -5,6 +5,7 @@ import {
   getSlidePuzzleBoardSize,
   SLIDE_PUZZLE_BLANK,
   type SlidePuzzleBoard as SlidePuzzleBoardState,
+  type SlidePuzzleTile as SlidePuzzleTileNumber,
 } from "@/games/slide-puzzle/puzzle/state";
 import {
   CLEAR_WAVE_DURATION_MS,
@@ -27,6 +28,8 @@ type SlidePuzzleBoardProps = {
   clearing: boolean;
   /** タイルに重ねる合図。1枚に1つまで。 */
   cues?: readonly SlidePuzzleTileCue[];
+  /** チュートリアルで手を引いている間、元の明るさで見せるタイル。ほかのタイルは沈める。`null` なら沈めない。通常のプレイでは渡さない。 */
+  focusedTiles?: readonly SlidePuzzleTileNumber[] | null;
   onSlideTile: (tileIndex: number) => void;
   onClearAnimationComplete: () => void;
 };
@@ -52,6 +55,7 @@ export function SlidePuzzleBoard({
   interactionDisabled,
   clearing,
   cues = [],
+  focusedTiles = null,
   onSlideTile,
   onClearAnimationComplete,
 }: SlidePuzzleBoardProps) {
@@ -108,6 +112,7 @@ export function SlidePuzzleBoard({
             boardSize={boardSize}
             disabled={interactionDisabled}
             cue={cues.find((cue) => cue.tile === tile)}
+            subdued={focusedTiles !== null && !focusedTiles.includes(tile)}
             // 盤面を戻す・別の問題などの置き換えでは、タイル同士が交差して滑らないよう即座に並べ替える。
             slideAnimated={operation !== null}
             faceRef={(element) => {

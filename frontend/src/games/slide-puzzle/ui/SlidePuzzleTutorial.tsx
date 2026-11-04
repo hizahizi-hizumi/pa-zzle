@@ -9,12 +9,17 @@ import type { GameProgress } from "@/games/play";
 import pictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
 import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import type { SlidePuzzleOperation } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
-import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-puzzle/puzzle/state";
+import type {
+  SlidePuzzleBoard as SlidePuzzleBoardState,
+  SlidePuzzleTile,
+} from "@/games/slide-puzzle/puzzle/state";
 import {
   findSlidePuzzleTutorialHintTile,
+  getSlidePuzzleTutorialStepCarriedTiles,
   getSlidePuzzleTutorialStepTile,
   type SlidePuzzleTutorialBoardState,
   type SlidePuzzleTutorialRuleId,
+  type SlidePuzzleTutorialSituation,
   slidePuzzleTutorial,
 } from "@/games/slide-puzzle/tutorial/tutorial";
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
@@ -109,7 +114,7 @@ function getCueDelayMs(
     : 0;
 }
 
-/** `recallId` があれば、印のタイルを光らせ直す。`recallId` が変わるたびに光らせ直す。 */
+/** `recallId` があれば、印の線を短く濃くして戻す。`recallId` が変わるたびにやり直す。 */
 function getTileCues(
   state: SlidePuzzleTutorialBoardState,
   hintTile: number | null,
@@ -136,6 +141,30 @@ function getTileCues(
 }
 
 /**
+ * 手を引いている間に元の明るさで見せるタイル。ほかのタイルは沈める。手を引いていなければ `null` で、何も沈めない。
+ * - 印が出ている間は、印のタイルと、それをタップすると一緒にスライドするタイル。
+ * - スライドしてから次の印を出すまでの間は、収まったタイル。
+ * - ルールに当たってスライドしなかったタイルは、揺れとわけの一言が指すタイルとして残す。
+ */
+function getFocusedTiles(
+  situation: SlidePuzzleTutorialSituation,
+  state: SlidePuzzleTutorialBoardState,
+  hintTile: SlidePuzzleTile | null,
+): SlidePuzzleTile[] | null {
+  if (situation.step === null) {
+    return null;
+  }
+  const { lastMove } = state;
+  const focused =
+    hintTile !== null
+      ? [hintTile, ...getSlidePuzzleTutorialStepCarriedTiles(situation, state)]
+      : lastMove?.type === "slid"
+        ? [...lastMove.landedTiles]
+        : [];
+  return lastMove?.type === "rejected" ? [...focused, lastMove.tile] : focused;
+}
+
+/**
  * 3×3 の盤面を、一言と印に沿って1枚ずつスライドさせ、ルールを1つずつ使って身につけさせる。
  * 手順を終えたら手を離し、残りを自分で並べさせる。盤面・スライドの動き・完成の波は本番と同じ部品を使う。
  */
@@ -153,7 +182,7 @@ export function SlidePuzzleTutorial({
   const operationIdRef = useRef(0);
   const [idleProgress, setIdleProgress] =
     useState<SlidePuzzleTutorialProgress | null>(null);
-  // 手を引いている間に、ルールに当たらない印の無いタイルを押されたら、進行が変わるまで印を光らせ直し続ける。
+  // 手を引いている間に、ルールに当たらない印の無いタイルを押されたら、押されるたびに印の線を短く濃くして戻す。
   // 揺れと違反の一言はルールに当たった手にだけ返すので、ここでは印へ目を向けさせるだけにする。
   const [recall, setRecall] = useState<{
     progress: SlidePuzzleTutorialProgress;
@@ -238,7 +267,7 @@ export function SlidePuzzleTutorial({
   }
 
   /**
-   * 印を光らせ直したときと、手を離した後に止まって印が出たときは、前の違反の一言を下げて、
+   * 印の線を濃くし直したときと、手を離した後に止まって印が出たときは、前の違反の一言を下げて、
    * 印のタイルへ向かう手順の一言か、残りを収める一言に戻す。
    */
   function getMessage(): TutorialMessage {
@@ -274,6 +303,11 @@ export function SlidePuzzleTutorial({
                 frame ? frame.operation : scene === null ? operation : null
               }
               interactionDisabled={progress.phase !== "playing"}
+              focusedTiles={
+                progress.phase === "playing" && scene === null
+                  ? getFocusedTiles(situation, boardState, hintTile)
+                  : null
+              }
               clearing={
                 progress.phase === "solved" || (scene === "goal" && playing)
               }
