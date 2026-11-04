@@ -9,8 +9,10 @@ import {
   type PlayScreenMusicState,
   selectAppBackgroundMusic,
   selectAppBackgroundMusicTransition,
+  type TutorialMusicState,
   useAppBackgroundMusic,
   usePlayScreenMusicState,
+  useTutorialMusicState,
 } from "@/components/app-background-music";
 import {
   _private as appLaunch,
@@ -35,6 +37,13 @@ function createWrapper(path: string) {
   return function RouterWrapper({ children }: { children: ReactNode }) {
     return <MemoryRouter initialEntries={[path]}>{children}</MemoryRouter>;
   };
+}
+
+function renderTutorial(initialState: TutorialMusicState) {
+  return renderHook(
+    ({ state }: { state: TutorialMusicState }) => useTutorialMusicState(state),
+    { initialProps: { state: initialState } },
+  );
 }
 
 function renderPlayScreen(initialProps: PlayScreenMusicState) {
@@ -87,7 +96,7 @@ describe("getAppBackgroundMusicScene", () => {
   ] as const;
 
   test.each(cases)("%sの場面を返すこと", (_, pathname, expected) => {
-    const scene = getAppBackgroundMusicScene(pathname, solving);
+    const scene = getAppBackgroundMusicScene(pathname, solving, "closed");
 
     expect(scene).toBe(expected);
   });
@@ -123,10 +132,29 @@ describe("getAppBackgroundMusicScene", () => {
     test.each(playScreenCases)(
       "$situation間は $expected の場面を返すこと",
       ({ progress, resultShown, expected }) => {
-        const scene = getAppBackgroundMusicScene(playPath, {
-          progress,
-          resultShown,
-        });
+        const scene = getAppBackgroundMusicScene(
+          playPath,
+          { progress, resultShown },
+          "closed",
+        );
+
+        expect(scene).toBe(expected);
+      },
+    );
+  });
+
+  describe("チュートリアルを開いている場合", () => {
+    const tutorialCases = [
+      ["ゲームのホーム", "/puzzles/nanpure", "solving", "play"],
+      ["ゲームのホーム", "/puzzles/nanpure", "solved", "silent"],
+      ["プレイ画面", playPath, "solving", "play"],
+      ["プレイ画面", playPath, "solved", "silent"],
+    ] as const;
+
+    test.each(tutorialCases)(
+      "%sの上で %s の間は %s の場面を返すこと",
+      (_, pathname, tutorial, expected) => {
+        const scene = getAppBackgroundMusicScene(pathname, solving, tutorial);
 
         expect(scene).toBe(expected);
       },
@@ -352,6 +380,35 @@ describe("useAppBackgroundMusic", () => {
           gain: 1,
         });
       });
+    });
+  });
+
+  describe("ゲームのホームでチュートリアルを開いた場合", () => {
+    let tutorial: ReturnType<typeof renderTutorial>;
+
+    beforeEach(() => {
+      renderAppBackgroundMusic("/puzzles/nanpure");
+      tutorial = renderTutorial("solving");
+    });
+
+    test("ホームの曲を引いて間を空けてから、プレイ中の曲を流すこと", () => {
+      const music = getLastPlayedMusic();
+
+      expect(music.url).toMatch(/play.*\.mp3$/);
+      expect(getLastTransitionKind()).toBe("break");
+    });
+
+    test("解き終えたら、曲を止めること", () => {
+      tutorial.rerender({ state: "solved" });
+
+      expect(getLastPlayedMusic().url).toBeNull();
+    });
+
+    test("閉じたら、ホームの曲へクロスフェードすること", () => {
+      tutorial.unmount();
+
+      expect(getLastPlayedMusic().url).toMatch(/home\.mp3$/);
+      expect(getLastTransitionKind()).toBe("crossfade");
     });
   });
 });
