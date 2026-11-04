@@ -129,6 +129,14 @@ function applyOperatedSession(
   return next === state ? state : { ...next, operation };
 }
 
+/** 数字を入れた操作の知らせ。`mistaken` ならミスとして返す入力として、`mistake-entered` にする。 */
+export function createNanpureDigitOperation(
+  id: number,
+  mistaken: boolean,
+): NanpureOperation {
+  return { id, type: mistaken ? "mistake-entered" : "digit-entered" };
+}
+
 function getNoteOperationType(
   notes: NanpureNotes,
   cellIndex: number,
@@ -196,13 +204,14 @@ export function useNanpurePlay(
         digit,
         enteredAt,
       );
-      return applyOperatedSession(current, session, {
-        id: operationId,
-        type:
-          session.mistakeCount > current.session.mistakeCount
-            ? "mistake-entered"
-            : "digit-entered",
-      });
+      return applyOperatedSession(
+        current,
+        session,
+        createNanpureDigitOperation(
+          operationId,
+          session.mistakeCount > current.session.mistakeCount,
+        ),
+      );
     });
   }, []);
 
