@@ -17,6 +17,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type { DifficultyLevel } from "@/games/difficulty";
 import type { TutorialMessage } from "@/games/tutorial";
 import {
   MOTION_DURATION_MS,
@@ -40,6 +41,16 @@ export type TutorialRuleChip = {
 export type TutorialFinishAction = {
   label: string;
   onSelect: () => void;
+};
+
+/**
+ * ゲームのホームから開いたときの、終えて遊び始める操作。特定のレベルを勧めないよう、ゲームのホームで開いているレベルを始める。
+ * - `difficulty`: 始めるレベル。終えたときの操作の名前に出す。
+ * - `onStart`: そのレベルのプレイを始める。
+ */
+export type TutorialPlayStart = {
+  difficulty: DifficultyLevel;
+  onStart: () => void;
 };
 
 /**

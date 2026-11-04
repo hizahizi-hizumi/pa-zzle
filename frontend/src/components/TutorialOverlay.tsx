@@ -16,6 +16,7 @@ import type { TutorialMessage, TutorialPhase } from "@/games/tutorial";
 export type {
   TutorialBoardIntro,
   TutorialFinishAction,
+  TutorialPlayStart,
   TutorialRuleChip,
 } from "@/components/TutorialOverlay/TutorialScreen";
 
