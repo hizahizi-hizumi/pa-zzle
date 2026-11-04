@@ -1,0 +1,1470 @@
+#!/usr/bin/env node
+// Observe showcase pictogram candidates in a real browser (Playwright Chromium) and report:
+//   (a) the static state against the hold before the switch (cut), the seam (seam), or the start and
+//       end of the cycle (rest-cut), by computed style of every visible element, in light and dark; every
+//       animation must loop (infinite)
+//   (b) for cut, real frames around each cycle boundary (detected by currentIteration, so a delay is
+//       allowed): the frame before / after the switch and the number of in-between frames; for rest-cut,
+//       by paused time the closing rest, the switch into it and the payoff hold before it, and in real
+//       frames the frames before each return to the static state
+//   (c) real frames from the moment the SVG is inserted: an element that shows the static state while
+//       its animation is still in its delay, and (cut) a first frame equal to the static state
+//   (d) that the hero stays in the static state under prefers-reduced-motion: reduce, in light and dark
+//   (e) how far any visible shape goes outside the 0 0 120 120 viewBox over one cycle, by its drawn part:
+//       a part outside the clip of a nested <svg> viewport or a clip-path: url(#id) is not drawn, so it
+//       does not count (the overlap, clearance and bounds below cut shapes by their clip the same way)
+//   (f) speed continuity: every moving shape is scanned with paused time every 2ms and the jump of its
+//       velocity between neighbouring steps (relative to its peak speed) is reported (WARN only)
+//   (g) optional: overlap between the painted shapes (stroke width included) of two selectors over one
+//       cycle (--overlap A|B, WARN only; A|A checks the matched elements of A against each other), and the
+//       smallest gap between their outer edges (--clearance A|B[|min], WARN below min)
+//   (h) the static state's visible bounds (viewBox units, stroke included) against the base pictogram and
+//       the median of the other games' pictogram.svg, and its ink coverage at list size against theirs
+//       (NOTE only; references/motion.md)
+//   (i) pageerror / console.error, and animation rules of the SVG's <style> that run no animation in the
+//       played hero (no matched element, undefined @keyframes, or overridden)
+//   (j) optional: a filmstrip of real-time screenshots of the 138px hero over one cycle (--filmstrip)
+//   (k) optional: static / end screenshots and errors in WebKit when it can be launched (--webkit)
+// Each candidate is rendered alone in its own page (never in a srcdoc iframe; see references/self-review.md).
+// The host defines the color tokens of frontend/styles/globals.css (:root and .dark) like the app, so an
+// SVG may reference the app color tokens with var().
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const { loadPlaywright } = require('./playwright_resolve.cjs');
+
+const USAGE = `usage: node observe_animation.cjs --manifest <manifest.json> [options]
+  --only id,id               observe only these candidates
+  --out <dir>                screenshots and observe-report.json (default: <manifest dir>/observe)
+  --cycles <n>               cut, rest-cut: cycles of real frames to record (default 3.3)
+  --pixels                   pixel difference between the end and the static screenshots
+  --overlap '<sel>|<sel>'    overlap of two selectors over one cycle (repeatable; the manifest
+                             candidate field "overlap" adds pairs per candidate). The same selector
+                             on both sides checks its matched elements against each other.
+                             Fill and stroke (computed stroke-width scaled by the transforms)
+                             are both the shape
+  --clearance '<sel>|<sel>[|<min>]'
+                             smallest gap (viewBox units) between the outer edges, stroke
+                             included, of the visible shapes of two selectors over one cycle
+                             and in the static state; WARN below min (default 0.5), negative
+                             when they cross (repeatable; the manifest candidate field
+                             "clearance" adds pairs per candidate)
+  --smooth-threshold <x>     speed jump relative to peak that is a WARN (default 0.15)
+  --filmstrip                real-time screenshots of the 138px hero over one cycle, in one image
+  --filmstrip-interval <ms>  minimum time between filmstrip frames (default 100)
+  --webkit                   also render the static state and the end in WebKit, if it can be launched
+  --globals-css <file>       theme colors (default: frontend/styles/globals.css)
+  --games-dir <dir>          other games' pictogram.svg for size and ink comparison
+  -h, --help                 show this help`;
+
+const REPOSITORY_ROOT = path.resolve(__dirname, '../../../..');
+const DEFAULT_GLOBALS_CSS = path.join(REPOSITORY_ROOT, 'frontend/styles/globals.css');
+const DEFAULT_GAMES_DIR = path.join(REPOSITORY_ROOT, 'frontend/src/games');
+const THEME_SELECTORS = { light: ':root', dark: '.dark' };
+const THEME_TOKENS = ['foreground', 'muted-foreground', 'background'];
+const FILMSTRIP_HERO_INDEX = 1;
+const FILMSTRIP_COLUMNS = 8;
+const FILMSTRIP_PAST_CYCLE_MS = 600;
+const FALLBACK_THEMES = {
+  light: { foreground: 'oklch(0.145 0 0)', 'muted-foreground': 'oklch(0.556 0 0)', background: 'oklch(1 0 0)' },
+  dark: { foreground: 'oklch(0.985 0 0)', 'muted-foreground': 'oklch(0.708 0 0)', background: 'oklch(0.145 0 0)' },
+};
+const HERO_SIZES = [177, 138];
+// The selected list pictogram in the app is about 46px (phone) / 56px (desktop).
+const LIST_SIZE = 46;
+const NUMBER_TOLERANCE = 0.01;
+const END_OFFSET_MS = 0.01;
+const OVERFLOW_STEP_MS = 20;
+const HOLD_STEP_MS = 10;
+const SMOOTH_STEP_MS = 2;
+const SEAM_SCAN_PAST_MS = 200;
+const FLASH_MIN_RECORD_MS = 300;
+const PIXEL_CHANNEL_THRESHOLD = 24;
+const OVERLAP_MIN_AREA = 0.25;
+// Clearance: outline points every CLEARANCE_STEP viewBox units; gaps of CLEARANCE_RANGE or more are
+// reported as at least that; below the default minimum the edges read as touching at hero size.
+const CLEARANCE_STEP = 0.2;
+const CLEARANCE_RANGE = 8;
+const CLEARANCE_DEFAULT_MIN = 0.5;
+const PLAYBACKS = new Set(['cut', 'rest-cut', 'seam']);
+const PLAYBACK_ERROR = 'playback must be cut, rest-cut or seam (once is not used: it moves only at the moment of selection and is easily missed)';
+// rest-cut: the static state closes the cycle for at least the rest the app shows on selection
+// (SHOWCASE_ENTRY_REST_MS in frontend/src/components/game-pictogram-motion.ts), as long as a cut shows,
+// and the switch into it from the payoff pose takes at most one frame at 60fps.
+const REST_CUT_MIN_REST_MS = 600;
+const FRAME_MS = 1000 / 60;
+// rest-cut is scanned at 1ms steps, so its closing rest and switch are read up to 1ms off.
+const REST_CUT_SCAN_TOLERANCE_MS = 1;
+// The app's entry rest (SHOWCASE_ENTRY_REST_MS in frontend/src/components/game-pictogram-motion.ts).
+const APP_ENTRY_REST_MS = 600;
+// Guide for the hold after the payoff before the rest-cut switch (references/motion.md); outside is a WARN.
+const PAYOFF_HOLD_MS = [1500, 2500];
+
+function parseOverlap(value) {
+  const pair = String(value).split('|').map((part) => part.trim());
+  if (pair.length !== 2 || !pair[0] || !pair[1]) throw new Error(`overlap takes '<selector>|<selector>': ${value}`);
+  return pair;
+}
+
+function parseClearance(value) {
+  const parts = String(value).split('|').map((part) => part.trim());
+  const min = parts.length === 3 ? Number(parts[2]) : CLEARANCE_DEFAULT_MIN;
+  if (parts.length < 2 || parts.length > 3 || !parts[0] || !parts[1] || !Number.isFinite(min)) {
+    throw new Error(`clearance takes '<selector>|<selector>[|<min viewBox units>]': ${value}`);
+  }
+  return { pair: [parts[0], parts[1]], min };
+}
+
+function parseArgs(argv) {
+  const args = { cycles: 3.3, only: [], pixels: false, overlap: [], clearance: [], smoothThreshold: 0.15, globalsCss: DEFAULT_GLOBALS_CSS, gamesDir: DEFAULT_GAMES_DIR,
+    filmstrip: false, filmstripInterval: 100, webkit: false };
+  for (let i = 0; i < argv.length; i++) {
+    const flag = argv[i];
+    if (flag === '-h' || flag === '--help') { console.log(USAGE); process.exit(0); }
+    else if (flag === '--manifest') args.manifest = argv[++i];
+    else if (flag === '--out') args.out = argv[++i];
+    else if (flag === '--only') args.only = argv[++i].split(',').filter(Boolean);
+    else if (flag === '--cycles') args.cycles = Number(argv[++i]);
+    else if (flag === '--pixels') args.pixels = true;
+    else if (flag === '--smooth-threshold') args.smoothThreshold = Number(argv[++i]);
+    else if (flag === '--globals-css') args.globalsCss = argv[++i];
+    else if (flag === '--games-dir') args.gamesDir = argv[++i];
+    else if (flag === '--filmstrip') args.filmstrip = true;
+    else if (flag === '--filmstrip-interval') args.filmstripInterval = Number(argv[++i]);
+    else if (flag === '--webkit') args.webkit = true;
+    else if (flag === '--overlap') args.overlap.push(parseOverlap(argv[++i]));
+    else if (flag === '--clearance') args.clearance.push(parseClearance(argv[++i]));
+    else throw new Error(`unknown argument: ${flag}\n${USAGE}`);
+  }
+  if (!args.manifest) throw new Error(USAGE);
+  return args;
+}
+
+function candidateOverlaps(candidate, globalPairs) {
+  const own = candidate.overlap == null ? [] : (Array.isArray(candidate.overlap) ? candidate.overlap : [candidate.overlap]);
+  return [...globalPairs, ...own.map(parseOverlap)];
+}
+
+function candidateClearances(candidate, globalPairs) {
+  const own = candidate.clearance == null ? [] : (Array.isArray(candidate.clearance) ? candidate.clearance : [candidate.clearance]);
+  return [...globalPairs, ...own.map(parseClearance)];
+}
+
+function loadThemes(file) {
+  let css;
+  try {
+    css = fs.readFileSync(file, 'utf8');
+  } catch (error) {
+    console.error(`WARN: cannot read ${file}; using fallback theme values: ${error.message}`);
+    return FALLBACK_THEMES;
+  }
+  const themes = {};
+  for (const [theme, selector] of Object.entries(THEME_SELECTORS)) {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const block = (css.match(new RegExp(`^${escaped}\\s*\\{([\\s\\S]*?)^\\}`, 'm')) || [])[1] || '';
+    themes[theme] = { tokens: Object.fromEntries([...block.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()])) };
+    for (const token of THEME_TOKENS) {
+      const value = themes[theme].tokens[`--${token}`];
+      if (!value) console.error(`WARN: --${token} not found in ${selector} of ${file}; using fallback`);
+      themes[theme][token] = value || FALLBACK_THEMES[theme][token];
+    }
+  }
+  return themes;
+}
+
+// The host page: play attribute on an ancestor span, .dark on <html>, like the app. With deferred the
+// hosts are empty and the SVG is inserted later by __pz.live() so that its very first frames are seen.
+function hostPage(svg, { play, theme, themes, deferred }) {
+  const colors = themes[theme];
+  const motion = play ? ' data-pictogram-motion="play"' : '';
+  const content = deferred ? '' : svg;
+  const heroes = HERO_SIZES.map((size) => `<span class="host hero"${motion} style="width:${size}px;height:${size}px">${content}</span>`).join('');
+  const declarations = (tokens) => Object.entries(tokens || {}).map(([name, value]) => `${name}:${value}`).join(';');
+  return `<!doctype html><html${theme === 'dark' ? ' class="dark"' : ''}><head><style>
+:root{${declarations(themes.light.tokens)}}
+.dark{${declarations(themes.dark.tokens)}}
+html,body{margin:0;background:${colors.background}}
+body{display:flex;gap:8px;align-items:flex-start;padding:8px}
+.host{display:block;--game-pictogram-strong:${colors.foreground};--game-pictogram-soft:${colors['muted-foreground']}}
+.host>svg{display:block;width:100%;height:100%}
+</style></head><body>${heroes}<span class="host list" style="width:${LIST_SIZE}px;height:${LIST_SIZE}px">${content}</span></body></html>`;
+}
+
+// Runs in the page. Collects the computed style that decides how each element looks, and seeks / scans.
+const IN_PAGE = `
+window.__pz = (() => {
+  const PROPS = ['transform', 'translate', 'rotate', 'scale', 'opacity', 'fill', 'stroke', 'fill-opacity',
+    'stroke-opacity', 'stroke-width', 'stroke-dasharray', 'stroke-dashoffset', 'visibility', 'display', 'd',
+    'cx', 'cy', 'r', 'rx', 'ry', 'x', 'y', 'width', 'height', 'clip-path', 'offset-distance', 'stop-color'];
+  const SHAPES = new Set(['path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'text']);
+  const SKIP = new Set(['style', 'title', 'desc', 'metadata', 'defs']);
+  const firstHero = () => document.querySelector('.host.hero');
+  const elementsOf = (host) => [...host.querySelector('svg').querySelectorAll('*')]
+    .filter((el) => !SKIP.has(el.localName) && !el.closest('defs'));
+  const keyOf = (el, index) => index + ':' + el.localName + (el.getAttribute('class') ? '.' + el.getAttribute('class') : '');
+  const keyOfElement = (el) => keyOf(el, elementsOf(firstHero()).indexOf(el));
+  // Largest scale of a matrix in any direction (its larger singular value).
+  const maxScale = (m) => {
+    const sum = m.a * m.a + m.b * m.b + m.c * m.c + m.d * m.d;
+    const det = m.a * m.d - m.b * m.c;
+    return Math.sqrt((sum + Math.sqrt(Math.max(0, sum * sum - 4 * det * det))) / 2);
+  };
+  // Half the painted stroke width on screen (px): the computed stroke-width (a percentage resolves
+  // against the viewport diagonal) scaled by the element's transforms (not with non-scaling-stroke).
+  const strokeHalfPx = (el, style, matrix) => {
+    if (style.stroke === 'none' || !matrix) return 0;
+    const raw = style.strokeWidth.trim();
+    let width = parseFloat(raw) || 0;
+    if (raw.endsWith('%')) {
+      const viewport = el.viewportElement || el.ownerSVGElement;
+      const box = viewport && viewport.viewBox && viewport.viewBox.baseVal;
+      const diagonal = box && box.width ? Math.hypot(box.width, box.height) / Math.SQRT2 : 120;
+      width = width / 100 * diagonal;
+    }
+    if (style.vectorEffect === 'non-scaling-stroke') return width / 2;
+    return width / 2 * maxScale(matrix);
+  };
+  // How far the painted stroke can reach beyond the geometry's bounding box (px): miter joins up to
+  // stroke-miterlimit, square caps by sqrt 2, plus a pixel for antialiasing.
+  const strokeReachPx = (el, style, matrix) => {
+    const half = strokeHalfPx(el, style, matrix);
+    if (!half) return 0;
+    const miter = style.strokeLinejoin === 'miter' || style.strokeLinejoin === 'miter-clip' ? parseFloat(style.strokeMiterlimit) || 4 : 1;
+    return half * Math.max(Math.SQRT2, miter) + 1;
+  };
+  // Clipping (screen px rectangles). A shape is drawn only inside the viewports of its nested <svg>
+  // ancestors whose overflow clips (the default of a nested <svg>) and inside the bounding box of every
+  // <clipPath> that it or an ancestor references with clip-path: url(#id). Measures use the painted box
+  // intersected with that rectangle, so a part outside the clip is not counted (a clip that reaches past
+  // the viewBox still is). Basic shapes in clip-path (inset(), circle(), ...) are not read: they count as
+  // no clip. The root <svg> is not a clip: the viewBox is what the measures compare against.
+  const CLIP_REFERENCE = /url\\(\\s*["']?#([^"')\\s]+)["']?\\s*\\)/;
+  const CLIPPING_OVERFLOW = new Set(['hidden', 'clip', 'scroll']);
+  const rectOfCorners = (matrix, x, y, width, height) => {
+    const points = [[x, y], [x + width, y], [x, y + height], [x + width, y + height]]
+      .map(([px, py]) => new DOMPoint(px, py).matrixTransform(matrix));
+    const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
+    return { left: Math.min(...xs), top: Math.min(...ys), right: Math.max(...xs), bottom: Math.max(...ys) };
+  };
+  const intersect = (a, b) => ({ left: Math.max(a.left, b.left), top: Math.max(a.top, b.top), right: Math.min(a.right, b.right), bottom: Math.min(a.bottom, b.bottom) });
+  // SVGMatrix.inverse throws on a degenerate transform such as scaleY(0); such an element paints nothing.
+  const inverseOf = (m) => {
+    const inverse = new DOMMatrix([m.a, m.b, m.c, m.d, m.e, m.f]).inverse();
+    return [inverse.a, inverse.b, inverse.c, inverse.d, inverse.e, inverse.f].every(Number.isFinite) ? inverse : null;
+  };
+  const isEmpty = (rect) => rect.right <= rect.left || rect.bottom <= rect.top;
+  const inRect = (rect, x, y) => !rect || (x >= rect.left - 1e-6 && x <= rect.right + 1e-6 && y >= rect.top - 1e-6 && y <= rect.bottom + 1e-6);
+  // x / y / width / height of a nested <svg>: the computed px value, or the attribute resolved by the
+  // DOM (width and height compute to auto there; percentages resolve against the parent viewport).
+  const viewportLength = (node, prop) => {
+    const value = getComputedStyle(node).getPropertyValue(prop).trim();
+    return value.endsWith('px') ? parseFloat(value) : node[prop].animVal.value;
+  };
+  const viewportRect = (node, style) => {
+    const matrix = node.parentElement && node.parentElement.getScreenCTM ? node.parentElement.getScreenCTM() : null;
+    if (!matrix) return null;
+    const rect = rectOfCorners(matrix, viewportLength(node, 'x'), viewportLength(node, 'y'), viewportLength(node, 'width'), viewportLength(node, 'height'));
+    if (!CLIPPING_OVERFLOW.has(style.overflowX)) { rect.left = -Infinity; rect.right = Infinity; }
+    if (!CLIPPING_OVERFLOW.has(style.overflowY)) { rect.top = -Infinity; rect.bottom = Infinity; }
+    return rect;
+  };
+  // Bounding box on screen of the children of a <clipPath> placed in the user space of the element that
+  // references it. A child's getScreenCTM places it as if the <clipPath> stood where it is written (its
+  // own and the <clipPath>'s transforms included), so that placement is taken relative to the parent of
+  // the <clipPath> and applied in the referencing element's user space. An id resolves like the
+  // browser does (the first element in the document), and a <clipPath> without a drawn child clips all.
+  const clipPathRect = (node, id) => {
+    const clip = document.getElementById(id);
+    if (!clip || clip.localName !== 'clipPath') return null;
+    const nodeMatrix = node.getScreenCTM();
+    const holder = clip.parentElement && clip.parentElement.getScreenCTM ? clip.parentElement.getScreenCTM() : null;
+    if (!nodeMatrix || !holder) return null;
+    const asDOMMatrix = (m) => new DOMMatrix([m.a, m.b, m.c, m.d, m.e, m.f]);
+    let user = asDOMMatrix(nodeMatrix);
+    if (clip.getAttribute('clipPathUnits') === 'objectBoundingBox') {
+      const box = node.getBBox();
+      user = user.multiply(new DOMMatrix([box.width, 0, 0, box.height, box.x, box.y]));
+    }
+    const toUser = inverseOf(holder);
+    if (!toUser) return null;
+    let rect = null;
+    for (const child of clip.children) {
+      if (!SHAPES.has(child.localName) && child.localName !== 'use') continue;
+      const style = getComputedStyle(child);
+      if (style.display === 'none' || style.visibility === 'hidden') continue;
+      const matrix = child.getScreenCTM();
+      let box = null;
+      try { box = child.getBBox(); } catch {}
+      if (!matrix || !box) continue;
+      const own = rectOfCorners(user.multiply(toUser.multiply(asDOMMatrix(matrix))), box.x, box.y, box.width, box.height);
+      rect = rect ? { left: Math.min(rect.left, own.left), top: Math.min(rect.top, own.top), right: Math.max(rect.right, own.right), bottom: Math.max(rect.bottom, own.bottom) } : own;
+    }
+    return rect || { left: 0, top: 0, right: 0, bottom: 0 };
+  };
+  // The clip rectangle of a shape (null when nothing clips it).
+  const clipOf = (el, svg) => {
+    let clip = null;
+    for (let node = el; node && node !== svg; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      const reference = CLIP_REFERENCE.exec(style.clipPath || '');
+      const rects = [reference ? clipPathRect(node, reference[1]) : null, node !== el && node.localName === 'svg' ? viewportRect(node, style) : null];
+      for (const rect of rects) if (rect) clip = clip ? intersect(clip, rect) : rect;
+    }
+    return clip;
+  };
+  // Painted box of a visible shape on screen (px): its bounding box widened by reach px, cut by its
+  // clip; null when nothing of it is drawn.
+  const drawnBox = (el, svg, reach) => {
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return null;
+    const box = { left: rect.left - reach, top: rect.top - reach, right: rect.right + reach, bottom: rect.bottom + reach };
+    const clip = clipOf(el, svg);
+    const drawn = clip ? intersect(box, clip) : box;
+    return isEmpty(drawn) ? null : drawn;
+  };
+  const effectiveOpacity = (el, svg) => {
+    let value = 1;
+    for (let node = el; node && node !== svg.parentElement; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (style.display === 'none' || style.visibility === 'hidden') return 0;
+      value *= Number(style.opacity);
+    }
+    return value;
+  };
+  const state = (host = firstHero()) => {
+    const svg = host.querySelector('svg');
+    return elementsOf(host).map((el, index) => {
+      const style = getComputedStyle(el);
+      const props = {};
+      for (const prop of PROPS) props[prop] = style.getPropertyValue(prop);
+      return { key: keyOf(el, index), visible: effectiveOpacity(el, svg) > 0.001, props };
+    });
+  };
+  const animations = (host) => host ? host.getAnimations({ subtree: true }) : document.getAnimations();
+  const timings = () => animations(firstHero()).map((animation) => {
+    const timing = animation.effect.getComputedTiming();
+    return { delay: timing.delay || 0, duration: Number(timing.duration) || 0, iterations: Number.isFinite(timing.iterations) ? timing.iterations : 'infinite' };
+  });
+  // Seek every animation to one absolute time.
+  const seek = (time) => animations().forEach((animation) => { animation.pause(); animation.currentTime = time; });
+  // Seek every animation to its own start (its delay, the 0% keyframe) or to just before the end of its
+  // first iteration (100%).
+  const seekEach = (where, epsilon) => animations().forEach((animation) => {
+    const timing = animation.effect.getComputedTiming();
+    const delay = timing.delay || 0;
+    animation.pause();
+    animation.currentTime = where === 'start' ? delay : delay + Number(timing.duration || 0) - epsilon;
+  });
+  // Union of the drawn parts of the visible shapes (stroke included, clipping applied) in viewBox units.
+  const bounds = () => {
+    const host = firstHero();
+    const svg = host.querySelector('svg');
+    const box = svg.getBoundingClientRect();
+    const unit = 120 / box.width;
+    let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+    elementsOf(host).forEach((el) => {
+      if (!SHAPES.has(el.localName) || effectiveOpacity(el, svg) <= 0.001) return;
+      const drawn = drawnBox(el, svg, strokeHalfPx(el, getComputedStyle(el), el.getScreenCTM()));
+      if (!drawn) return;
+      left = Math.min(left, drawn.left); top = Math.min(top, drawn.top);
+      right = Math.max(right, drawn.right); bottom = Math.max(bottom, drawn.bottom);
+    });
+    if (!Number.isFinite(left)) return null;
+    const round = (value) => Number(value.toFixed(1));
+    const width = (right - left) * unit, height = (bottom - top) * unit;
+    return { width: round(width), height: round(height), centerX: round(((left + right) / 2 - box.left) * unit), centerY: round(((top + bottom) / 2 - box.top) * unit) };
+  };
+  // Smallest margin (viewBox units) between the drawn part of a visible shape (stroke included, clipping
+  // applied) and the viewBox edge; negative when it goes outside.
+  const overflow = () => {
+    const host = firstHero();
+    const svg = host.querySelector('svg');
+    const box = svg.getBoundingClientRect();
+    const unit = 120 / box.width;
+    let worst = { margin: Infinity, key: null };
+    elementsOf(host).forEach((el, index) => {
+      if (!SHAPES.has(el.localName) || effectiveOpacity(el, svg) <= 0.001) return;
+      const drawn = drawnBox(el, svg, strokeHalfPx(el, getComputedStyle(el), el.getScreenCTM()));
+      if (!drawn) return;
+      const margin = Math.min(drawn.left - box.left, box.right - drawn.right, drawn.top - box.top, box.bottom - drawn.bottom) * unit;
+      if (margin < worst.margin) worst = { margin, key: keyOf(el, index) };
+    });
+    return worst;
+  };
+  // Visible shapes inside the elements a selector matches, each with the matched element that owns it.
+  const shapesOf = (svg, selector) => {
+    const owners = new Map();
+    for (const owner of svg.querySelectorAll(selector)) {
+      for (const el of [owner, ...owner.querySelectorAll('*')]) {
+        if (!owners.has(el) && SHAPES.has(el.localName) && effectiveOpacity(el, svg) > 0.001) owners.set(el, owner);
+      }
+    }
+    return [...owners].map(([el, owner]) => ({ el, owner }));
+  };
+  const related = (a, b) => a === b || a.contains(b) || b.contains(a);
+  // The shapes of a selector pair: with the same selector on both sides, B is A (pairs of related owners
+  // are skipped by the caller); otherwise A's shapes are removed from B.
+  const pairShapes = (svg, selectorA, selectorB) => {
+    const groupA = shapesOf(svg, selectorA);
+    if (selectorA === selectorB) return { groupA, groupB: groupA, sameSet: true };
+    const shapesA = new Set(groupA.map(({ el }) => el));
+    return { groupA, groupB: shapesOf(svg, selectorB).filter(({ el }) => !shapesA.has(el)), sameSet: false };
+  };
+  // Area (viewBox units^2) covered by a visible shape of both selectors: bounding boxes widened by the
+  // reach of the painted stroke and cut by the clip first (a part outside the clip is not drawn), then a
+  // 1px grid in their common part tested in each shape's own coordinates (isPointInStroke uses the
+  // computed stroke-width; the transforms scale it). A paint of none is not part
+  // of the shape. <text> has no isPointInFill, so it is approximated by its bounding box (reported as
+  // textApproximated). With the same selector on both sides, the shapes of one matched element are tested
+  // against those of the other matched elements (not their own, nor an ancestor's or descendant's).
+  const overlap = (pairs) => {
+    const host = firstHero();
+    const svg = host.querySelector('svg');
+    const unit = 120 / svg.getBoundingClientRect().width;
+    const paintedBox = (el) => drawnBox(el, svg, strokeReachPx(el, getComputedStyle(el), el.getScreenCTM()));
+    const insideTest = (el) => {
+      const matrix = el.getScreenCTM();
+      const inverse = matrix && inverseOf(matrix);
+      if (!inverse) return () => false;
+      if (typeof el.isPointInFill !== 'function') {
+        const box = el.getBBox();
+        return (x, y) => {
+          const point = new DOMPoint(x, y).matrixTransform(inverse);
+          return point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height;
+        };
+      }
+      const style = getComputedStyle(el);
+      const fill = style.fill !== 'none', stroke = style.stroke !== 'none';
+      return (x, y) => {
+        const point = new DOMPoint(x, y).matrixTransform(inverse);
+        return (fill && el.isPointInFill(point)) || (stroke && el.isPointInStroke(point));
+      };
+    };
+    return pairs.map(([selectorA, selectorB]) => {
+      const { groupA, groupB, sameSet } = pairShapes(svg, selectorA, selectorB);
+      let hits = 0;
+      const textApproximated = [...groupA, ...groupB].some(({ el }) => el.localName === 'text');
+      const counted = new Set();
+      const boxes = new Map([...groupA, ...groupB].map(({ el }) => [el, paintedBox(el)]));
+      const inside = new Map([...groupA, ...groupB].map(({ el }) => [el, insideTest(el)]));
+      for (const [i, { el: a, owner: ownerA }] of groupA.entries()) {
+        const ra = boxes.get(a);
+        if (!ra) continue;
+        for (const [j, { el: b, owner: ownerB }] of groupB.entries()) {
+          if (sameSet && (j <= i || related(ownerA, ownerB))) continue;
+          const rb = boxes.get(b);
+          if (!rb) continue;
+          const left = Math.max(ra.left, rb.left), right = Math.min(ra.right, rb.right);
+          const top = Math.max(ra.top, rb.top), bottom = Math.min(ra.bottom, rb.bottom);
+          if (right <= left || bottom <= top) continue;
+          for (let x = Math.floor(left) + 0.5; x < right; x += 1) {
+            for (let y = Math.floor(top) + 0.5; y < bottom; y += 1) {
+              const key = x + ',' + y;
+              if (counted.has(key)) continue;
+              if (inside.get(a)(x, y) && inside.get(b)(x, y)) { counted.add(key); hits++; }
+            }
+          }
+        }
+      }
+      return { area: hits * unit * unit, textApproximated };
+    });
+  };
+  // A point (screen px) inside the fill of a shape (its bounding box for <text>).
+  const insideFill = (el, x, y) => {
+    const matrix = el.getScreenCTM();
+    const inverse = matrix && inverseOf(matrix);
+    if (!inverse) return false;
+    const point = new DOMPoint(x, y).matrixTransform(inverse);
+    if (typeof el.isPointInFill !== 'function') {
+      const box = el.getBBox();
+      return point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height;
+    }
+    return el.isPointInFill(point);
+  };
+  // Outline of a visible shape on screen (px): points every step px along its geometry
+  // (getPointAtLength, through getScreenCTM so the CSS transforms apply) and the half stroke width on
+  // screen; its outer edge lies that far from the points (a butt cap or miter join reads as round).
+  // <text> uses its bounding box. A shape that paints neither fill nor stroke has no outline. A clipped
+  // shape keeps only the points inside its clip, each reaching no farther than the clip border, and
+  // where the clip cuts it the cut edge (points every step px along the clip border where the shape
+  // paints, with no stroke width) is part of the outline; a shape the clip hides has no outline. Each
+  // point is [x, y, reach].
+  const outlineOf = (el, step, svg) => {
+    const matrix = el.getScreenCTM();
+    if (!matrix) return null;
+    const style = getComputedStyle(el);
+    const fill = style.fill !== 'none';
+    const half = strokeHalfPx(el, style, matrix);
+    if (!fill && !half) return null;
+    let local = [];
+    if (el.localName !== 'text' && typeof el.getTotalLength === 'function') {
+      const total = el.getTotalLength();
+      const count = Math.min(4000, Math.max(1, Math.ceil(total * maxScale(matrix) / step)));
+      for (let i = 0; i <= count; i++) local.push(el.getPointAtLength(total * i / count));
+    } else {
+      const box = el.getBBox();
+      const corners = [[box.x, box.y], [box.x + box.width, box.y], [box.x + box.width, box.y + box.height], [box.x, box.y + box.height], [box.x, box.y]];
+      for (let k = 0; k < 4; k++) {
+        const [[x0, y0], [x1, y1]] = [corners[k], corners[k + 1]];
+        const count = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * maxScale(matrix) / step));
+        for (let i = 0; i < count; i++) local.push({ x: x0 + (x1 - x0) * i / count, y: y0 + (y1 - y0) * i / count });
+      }
+    }
+    let points = local.map((p) => { const q = new DOMPoint(p.x, p.y).matrixTransform(matrix); return [q.x, q.y, half]; });
+    const clip = clipOf(el, svg);
+    if (clip) {
+      const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
+      const whole = { left: Math.min(...xs) - half, right: Math.max(...xs) + half, top: Math.min(...ys) - half, bottom: Math.max(...ys) + half };
+      points = points.filter(([x, y]) => inRect(clip, x, y))
+        .map(([x, y]) => [x, y, Math.max(0, Math.min(half, x - clip.left, clip.right - x, y - clip.top, clip.bottom - y))]);
+      const cut = intersect(whole, clip);
+      if (!isEmpty(cut)) {
+        const inverse = inverseOf(matrix);
+        const paints = (x, y) => {
+          if (fill && insideFill(el, x, y)) return true;
+          return half > 0 && inverse !== null && typeof el.isPointInStroke === 'function' && el.isPointInStroke(new DOMPoint(x, y).matrixTransform(inverse));
+        };
+        const sides = [];
+        if (clip.left > whole.left) sides.push([[cut.left, cut.top], [cut.left, cut.bottom]]);
+        if (clip.right < whole.right) sides.push([[cut.right, cut.top], [cut.right, cut.bottom]]);
+        if (clip.top > whole.top) sides.push([[cut.left, cut.top], [cut.right, cut.top]]);
+        if (clip.bottom < whole.bottom) sides.push([[cut.left, cut.bottom], [cut.right, cut.bottom]]);
+        for (const [[x0, y0], [x1, y1]] of sides) {
+          const count = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / step));
+          for (let i = 0; i <= count; i++) {
+            const x = x0 + (x1 - x0) * i / count, y = y0 + (y1 - y0) * i / count;
+            if (paints(x, y)) points.push([x, y, 0]);
+          }
+        }
+      }
+      if (!points.length) return null;
+    }
+    return { el, fill, half, points, clip,
+      box: { left: Math.min(...points.map((p) => p[0] - p[2])), right: Math.max(...points.map((p) => p[0] + p[2])),
+        top: Math.min(...points.map((p) => p[1] - p[2])), bottom: Math.max(...points.map((p) => p[1] + p[2])) } };
+  };
+  // Smallest gap (viewBox units) between the outer edges of the drawn parts of the visible shapes of
+  // both selectors: distance between outline points less both reaches (half stroke widths, cut by the
+  // clip), negative where the strokes cross, and at most 0 where an outline point lies inside the other
+  // shape's drawn fill. Gaps of range or more read as range. Same pairing rules as overlap.
+  const clearance = (pairs, step, range) => {
+    const host = firstHero();
+    const svg = host.querySelector('svg');
+    const unit = 120 / svg.getBoundingClientRect().width;
+    const stepPx = step / unit, rangePx = range / unit;
+    return pairs.map(([selectorA, selectorB]) => {
+      const { groupA, groupB, sameSet } = pairShapes(svg, selectorA, selectorB);
+      const outlines = new Map([...groupA, ...groupB].map(({ el }) => [el, outlineOf(el, stepPx, svg)]));
+      let best = { gap: rangePx, a: null, b: null };
+      for (const [i, { el: elA, owner: ownerA }] of groupA.entries()) {
+        const a = outlines.get(elA);
+        if (!a) continue;
+        for (const [j, { el: elB, owner: ownerB }] of groupB.entries()) {
+          if (sameSet && (j <= i || related(ownerA, ownerB))) continue;
+          const b = outlines.get(elB);
+          if (!b) continue;
+          const apart = Math.max(a.box.left - b.box.right, b.box.left - a.box.right, a.box.top - b.box.bottom, b.box.top - a.box.bottom);
+          if (apart >= best.gap) continue;
+          const within = (shape) => ([x, y]) => x >= shape.box.left && x <= shape.box.right && y >= shape.box.top && y <= shape.box.bottom && inRect(shape.clip, x, y);
+          const inFillOf = (shape, other) => shape.fill && other.points.filter(within(shape)).some(([x, y]) => insideFill(shape.el, x, y));
+          let gap = apart < 0 && (inFillOf(a, b) || inFillOf(b, a)) ? 0 : best.gap;
+          const reach = best.gap + a.half + b.half;
+          const near = b.points.filter(([x, y]) => x >= a.box.left - reach && x <= a.box.right + reach && y >= a.box.top - reach && y <= a.box.bottom + reach);
+          for (const [ax, ay, ah] of a.points) {
+            for (const [bx, by, bh] of near) {
+              const limit = gap + ah + bh;
+              const d = (ax - bx) * (ax - bx) + (ay - by) * (ay - by);
+              if (limit > 0 && d < limit * limit) gap = Math.sqrt(d) - ah - bh;
+            }
+          }
+          if (gap < best.gap) best = { gap, a: elA, b: elB };
+        }
+      }
+      return { gap: best.gap * unit, a: best.a ? keyOfElement(best.a) : null, b: best.b ? keyOfElement(best.b) : null };
+    });
+  };
+  // Rules of the SVG's <style> (in media that match) that set an animation, with the number of hero
+  // elements each matches and, per animation name, whether @keyframes defines it and how many matched
+  // elements run it (getAnimations).
+  const animationRules = () => {
+    const host = firstHero();
+    const svg = host.querySelector('svg');
+    const keyframes = new Set();
+    const rules = [];
+    const walk = (list) => {
+      for (const rule of list) {
+        if (typeof CSSKeyframesRule !== 'undefined' && rule instanceof CSSKeyframesRule) keyframes.add(rule.name);
+        else if (rule instanceof CSSMediaRule) { if (window.matchMedia(rule.media.mediaText).matches) walk(rule.cssRules); }
+        else if (rule instanceof CSSStyleRule) {
+          const names = (rule.style.getPropertyValue('animation-name') || '').split(',').map((name) => name.trim().replace(/^["']|["']$/g, '')).filter((name) => name && name !== 'none');
+          if (names.length) rules.push({ selector: rule.selectorText, names });
+        }
+      }
+    };
+    for (const style of svg.querySelectorAll('style')) if (style.sheet) walk(style.sheet.cssRules);
+    return rules.map(({ selector, names }) => {
+      let matched = [];
+      try { matched = [...host.querySelectorAll(selector)]; } catch {}
+      return { selector, matched: matched.length, names: names.map((name) => ({ name, defined: keyframes.has(name),
+        running: matched.filter((el) => el.getAnimations().some((animation) => animation.animationName === name)).length })) };
+    });
+  };
+  // Text is laid out at screen scale: its box edges snap to 1/128px and its ascent / descent to whole
+  // pixels, so its own box jumps while a transform scales it although the glyphs move smoothly. Its
+  // motion is measured by moving its first visible box with the transforms (a change of its own size is
+  // not measured).
+  const holdFirstBox = (samples) => {
+    const first = samples.find(Boolean);
+    if (first) samples.forEach((sample) => { if (sample) sample.box = first.box; });
+  };
+  // Speed continuity: positions (viewBox units) of the bounding-box corners and centre of every shape,
+  // through getScreenCTM (it includes the CSS transforms), at paused times from..to every step ms.
+  const smoothness = (from, to, step) => {
+    const host = firstHero();
+    const svg = host.querySelector('svg');
+    const unit = 120 / svg.getBoundingClientRect().width;
+    const shapes = elementsOf(host).map((el, index) => ({ el, key: keyOf(el, index) })).filter(({ el }) => SHAPES.has(el.localName));
+    const placements = shapes.map(() => []);
+    const times = [];
+    for (let time = from; time < to; time += step) {
+      seek(time);
+      times.push(time);
+      shapes.forEach(({ el }, k) => {
+        const matrix = el.getScreenCTM();
+        let box = null;
+        try { const { x, y, width, height } = el.getBBox(); box = { x, y, width, height }; } catch {}
+        placements[k].push(!matrix || !box || effectiveOpacity(el, svg) <= 0.001 ? null : { box, matrix });
+      });
+    }
+    shapes.forEach(({ el }, k) => { if (el.localName === 'text') holdFirstBox(placements[k]); });
+    const series = placements.map((samples) => samples.map((sample) => {
+      if (!sample) return null;
+      const { box, matrix } = sample;
+      const corners = [[box.x, box.y], [box.x + box.width, box.y], [box.x, box.y + box.height],
+        [box.x + box.width, box.y + box.height], [box.x + box.width / 2, box.y + box.height / 2]];
+      return corners.map(([x, y]) => { const p = new DOMPoint(x, y).matrixTransform(matrix); return [p.x * unit, p.y * unit]; });
+    }));
+    const results = [];
+    shapes.forEach(({ key }, k) => {
+      const samples = series[k];
+      const velocities = [];
+      let peak = 0;
+      let extent = 0;
+      for (let i = 1; i < samples.length; i++) {
+        if (!samples[i] || !samples[i - 1]) { velocities.push(null); continue; }
+        const v = samples[i].map((p, j) => [(p[0] - samples[i - 1][j][0]) / step, (p[1] - samples[i - 1][j][1]) / step]);
+        velocities.push(v);
+        v.forEach(([vx, vy]) => { peak = Math.max(peak, Math.hypot(vx, vy)); });
+      }
+      const visible = samples.filter(Boolean);
+      if (visible.length) {
+        visible[0].forEach((_, j) => {
+          const xs = visible.map((s) => s[j][0]); const ys = visible.map((s) => s[j][1]);
+          extent = Math.max(extent, Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+        });
+      }
+      if (extent < 0.5 || peak === 0) return;
+      let worst = 0, at = null;
+      for (let i = 1; i < velocities.length; i++) {
+        const a = velocities[i - 1], b = velocities[i];
+        if (!a || !b) continue;
+        a.forEach(([ax, ay], j) => {
+          const [bx, by] = b[j];
+          if (Math.max(Math.hypot(ax, ay), Math.hypot(bx, by)) < peak * 0.02) return;
+          const jump = Math.hypot(bx - ax, by - ay) / peak;
+          if (jump > worst) { worst = jump; at = times[i]; }
+        });
+      }
+      results.push({ element: key, peakUnitsPerSecond: Number((peak * 1000).toFixed(1)), worstJump: Number(worst.toFixed(3)), atMs: at });
+    });
+    return results;
+  };
+  // Insert the SVG into every (empty) host and record real frames from the first one. Each frame keeps
+  // the reference animation time and iteration, the state, and which elements are still in their delay.
+  const live = (svg, durationMs) => new Promise((resolve) => {
+    document.querySelectorAll('.host').forEach((host) => { host.innerHTML = svg; });
+    const frames = [];
+    const start = performance.now();
+    const tick = () => {
+      const host = firstHero();
+      const reference = animations(host)[0];
+      const timing = reference ? reference.effect.getComputedTiming() : null;
+      const delayed = elementsOf(host).map((el) => {
+        const own = el.getAnimations();
+        return own.length > 0 && own.every((animation) => (animation.currentTime || 0) < (animation.effect.getComputedTiming().delay || 0));
+      });
+      frames.push({ time: reference ? reference.currentTime || 0 : null, iteration: timing ? timing.currentIteration : null, state: state(), delayed });
+      if (performance.now() - start < durationMs) requestAnimationFrame(tick); else resolve(frames);
+    };
+    requestAnimationFrame(tick);
+  });
+  // Per animation, where its last keyframe values start to hold (ms into the iteration), read from the
+  // keyframes like the app does (restStartFraction in game-pictogram-motion.ts).
+  const keyframeRests = () => animations(firstHero()).map((animation) => {
+    const effect = animation.effect;
+    const duration = Number(effect.getComputedTiming().duration) || 0;
+    const values = (keyframe) => JSON.stringify(Object.entries(keyframe)
+      .filter(([key]) => !['offset', 'computedOffset', 'easing', 'composite'].includes(key))
+      .sort(([a], [b]) => a.localeCompare(b)));
+    const keyframes = effect.getKeyframes();
+    const last = keyframes[keyframes.length - 1];
+    if (!last) return duration;
+    let start = last.computedOffset;
+    for (const keyframe of [...keyframes].reverse()) {
+      if (values(keyframe) !== values(last)) break;
+      start = keyframe.computedOffset;
+    }
+    return start * duration;
+  });
+  return { state, timings, seek, seekEach, bounds, overflow, overlap, clearance, animationRules, smoothness, live, keyframeRests, count: () => animations().length };
+})();
+`;
+
+const TRANSFORM_IDENTITY = { transform: 'matrix(1, 0, 0, 1, 0, 0)', translate: '0px', rotate: '0deg', scale: '1' };
+
+function normalize(prop, value) {
+  const trimmed = String(value).trim();
+  return trimmed === 'none' && TRANSFORM_IDENTITY[prop] ? TRANSFORM_IDENTITY[prop] : trimmed;
+}
+
+function sameValue(prop, a, b) {
+  const left = normalize(prop, a);
+  const right = normalize(prop, b);
+  if (left === right) return true;
+  const numbers = /-?(?:\d+\.?\d*|\.\d+)(?:e-?\d+)?/gi;
+  if (left.replace(numbers, '#') !== right.replace(numbers, '#')) return false;
+  const leftNumbers = left.match(numbers) || [];
+  const rightNumbers = right.match(numbers) || [];
+  return leftNumbers.every((n, i) => Math.abs(Number(n) - Number(rightNumbers[i])) <= NUMBER_TOLERANCE);
+}
+
+// Differences of one element; an element invisible in both is ignored (its transform or color does not show).
+function elementDifferences(element, other) {
+  if (!element.visible && !other.visible) return [];
+  if (element.visible !== other.visible) return [`${element.key} visible ${element.visible} / ${other.visible}`];
+  return Object.keys(element.props)
+    .filter((prop) => !sameValue(prop, element.props[prop], other.props[prop]))
+    .map((prop) => `${element.key} ${prop}: ${element.props[prop]} / ${other.props[prop]}`);
+}
+
+function differences(a, b) {
+  return a.flatMap((element, index) => elementDifferences(element, b[index]));
+}
+
+async function pixelDifference(page, a, b) {
+  return page.evaluate(async ([left, right, threshold]) => {
+    const load = (data) => new Promise((resolve) => { const image = new Image(); image.onload = () => resolve(image); image.src = 'data:image/png;base64,' + data; });
+    const [imageA, imageB] = await Promise.all([load(left), load(right)]);
+    const canvas = document.createElement('canvas');
+    canvas.width = imageA.width; canvas.height = imageA.height;
+    const context = canvas.getContext('2d');
+    context.drawImage(imageA, 0, 0); const dataA = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(imageB, 0, 0); const dataB = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let count = 0; let max = 0;
+    for (let i = 0; i < dataA.length; i += 4) {
+      const d = Math.max(Math.abs(dataA[i] - dataB[i]), Math.abs(dataA[i + 1] - dataB[i + 1]), Math.abs(dataA[i + 2] - dataB[i + 2]));
+      if (d > threshold) count++;
+      max = Math.max(max, d);
+    }
+    return { pixels: count, ratio: count / (canvas.width * canvas.height), max };
+  }, [a.toString('base64'), b.toString('base64'), PIXEL_CHANNEL_THRESHOLD]);
+}
+
+async function render(context, svg, options) {
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (error) => errors.push('pageerror: ' + error.message));
+  page.on('console', (message) => { if (message.type() === 'error') errors.push('console.error: ' + message.text()); });
+  await page.setContent(hostPage(svg, options));
+  await page.addScriptTag({ content: IN_PAGE });
+  return { page, errors };
+}
+
+// Jumps of several shapes at (nearly) the same time share one cause (one segment boundary moving a group),
+// so they are reported once per time, worst first.
+function groupJumps(entries) {
+  const sorted = [...entries].sort((a, b) => a.atMs - b.atMs);
+  const groups = [];
+  for (const entry of sorted) {
+    const last = groups[groups.length - 1];
+    if (last && entry.atMs - last[last.length - 1].atMs <= 2 * SMOOTH_STEP_MS) last.push(entry);
+    else groups.push([entry]);
+  }
+  return groups.map((group) => group.sort((a, b) => b.worstJump - a.worstJump));
+}
+
+function classify(state, references) {
+  for (const [label, reference] of Object.entries(references)) {
+    if (differences(state, reference).length === 0) return label;
+  }
+  return 'M';
+}
+
+// Reads the rAF record around every cycle boundary of a cut loop. A boundary is where the iteration of
+// the reference animation goes up, so an animation-delay before the first iteration does not shift it.
+function cutBoundaries(frames, references) {
+  const classes = frames.map((frame) => classify(frame.state, references));
+  const boundaries = [];
+  for (let i = 1; i < frames.length; i++) {
+    const previous = frames[i - 1].iteration;
+    const current = frames[i].iteration;
+    if (previous == null || current == null || current <= previous) continue;
+    let before = i - 1;
+    while (before >= 0 && classes[before] !== 'S') before--;
+    const intermediateBefore = i - 1 - before;
+    let holdStart = before;
+    while (holdStart > 0 && classes[holdStart - 1] === 'S') holdStart--;
+    let firstStart = i;
+    while (firstStart < frames.length && classes[firstStart] !== 'P0' && frames[firstStart].time - frames[i].time < 500) firstStart++;
+    const reachedStart = firstStart < frames.length && classes[firstStart] === 'P0';
+    const intermediateAfter = reachedStart ? firstStart - i : 0;
+    let beatEnd = firstStart;
+    while (reachedStart && beatEnd + 1 < frames.length && classes[beatEnd + 1] === 'P0') beatEnd++;
+    boundaries.push({
+      atMs: Math.round(frames[i].time),
+      frameBefore: classes[i - 1],
+      frameAfter: classes[i],
+      intermediateFrames: intermediateBefore + intermediateAfter,
+      holdMs: before >= 0 ? Math.round(frames[before].time - frames[holdStart].time) : 0,
+      startBeatMs: reachedStart ? Math.round(frames[beatEnd].time - frames[firstStart].time) : 0,
+    });
+  }
+  return { boundaries, firstFrame: classes[0] };
+}
+
+// rest-cut by paused time (ms from the start of the first iteration): the closing rest (the static state up
+// to the cycle end), the switch into it (from the last pose that still holds, found by comparing poses
+// HOLD_STEP_MS apart, to the first static millisecond), the payoff hold before the switch, the start beat
+// at 0%, and how many times a held pose switches to the static state inside the cycle (a motion that only
+// passes through the static pose is not a switch).
+async function restCutScan(at, reference, staticState) {
+  const cycleStart = reference.delay;
+  const cycleEnd = reference.delay + reference.duration - END_OFFSET_MS;
+  const isStatic = async (time) => differences(await at(time), staticState).length === 0;
+  const same = (a, b) => differences(a, b).length === 0;
+  let restStart = cycleEnd;
+  for (let time = cycleEnd; time >= cycleStart; time -= HOLD_STEP_MS) {
+    if (!(await isStatic(time))) break;
+    restStart = time;
+  }
+  let firstStatic = restStart;
+  for (let time = restStart - 1; time > restStart - HOLD_STEP_MS && time >= cycleStart; time -= 1) {
+    if (!(await isStatic(time))) break;
+    firstStatic = time;
+  }
+  let holdEnd = firstStatic - 1;
+  while (holdEnd - HOLD_STEP_MS >= cycleStart && !same(await at(holdEnd), await at(holdEnd - HOLD_STEP_MS))) holdEnd -= HOLD_STEP_MS;
+  const holdPose = await at(holdEnd);
+  for (let time = holdEnd + 1; time < firstStatic; time += 1) {
+    if (!same(await at(time), holdPose)) break;
+    holdEnd = time;
+  }
+  let holdStart = holdEnd;
+  for (let time = holdEnd - HOLD_STEP_MS; time >= cycleStart; time -= HOLD_STEP_MS) {
+    if (!same(await at(time), holdPose)) break;
+    holdStart = time;
+  }
+  let startBeat = 0;
+  for (let time = cycleStart; time < firstStatic; time += HOLD_STEP_MS) {
+    if (!(await isStatic(time))) break;
+    startBeat = time - cycleStart;
+  }
+  let switches = 0;
+  let earlier = await at(cycleStart);
+  let previous = await at(cycleStart + HOLD_STEP_MS);
+  for (let time = cycleStart + 2 * HOLD_STEP_MS; time <= cycleEnd; time += HOLD_STEP_MS) {
+    const now = await at(time);
+    if (same(now, staticState) && !same(previous, staticState) && same(previous, earlier)) switches++;
+    earlier = previous;
+    previous = now;
+  }
+  return {
+    restMs: Number((cycleEnd + END_OFFSET_MS - firstStatic).toFixed(2)),
+    switchStartMs: holdEnd - cycleStart,
+    switchAtMs: firstStatic - cycleStart,
+    switchMs: firstStatic - holdEnd,
+    holdMs: holdEnd - holdStart,
+    startBeatMs: startBeat,
+    switches,
+  };
+}
+
+// The start of the closing rest that the app reads from the keyframe values (restStartFraction in
+// game-pictogram-motion.ts) and the time it enters the cycle on selection, both from the cycle start.
+// Every element counts there, invisible ones included, so a keyframe value that changes inside a rest
+// that looks still moves the entry later than the picture allows.
+function appEntry(keyframeRests, duration) {
+  const restStart = Math.max(...keyframeRests);
+  return { keyframeRestStartMs: Number(restStart.toFixed(1)), entryMs: Number(Math.max(restStart, duration - APP_ENTRY_REST_MS).toFixed(1)) };
+}
+
+// Reads the rAF record of a rest-cut loop. A switch is an entry into the static state (S) straight from
+// the payoff hold (H), or with one in-between frame drawn inside a switch written within a frame; an entry
+// from a motion that passes through the static pose is not one. The entry that opens the closing rest (its
+// S run reaches the cycle boundary) must be a switch. Also the frame before each cycle boundary.
+function restCutSwitches(frames, references) {
+  const classes = frames.map((frame) => classify(frame.state, references));
+  const switches = [];
+  const closingEntries = [];
+  const boundaries = [];
+  for (let i = 1; i < frames.length; i++) {
+    const previous = frames[i - 1].iteration;
+    const current = frames[i].iteration;
+    if (previous != null && current != null && current > previous) {
+      boundaries.push({ atMs: Math.round(frames[i].time), frameBefore: classes[i - 1], frameAfter: classes[i] });
+    }
+    if (classes[i] !== 'S' || classes[i - 1] === 'S') continue;
+    let before = i - 1;
+    while (before >= 0 && classes[before] === 'M') before--;
+    const intermediateFrames = i - 1 - before;
+    const isSwitch = before >= 0 && classes[before] === 'H' && intermediateFrames <= 1;
+    let runEnd = i;
+    while (runEnd + 1 < frames.length && classes[runEnd + 1] === 'S' && frames[runEnd + 1].iteration === frames[i].iteration) runEnd++;
+    const closing = runEnd + 1 < frames.length && frames[runEnd + 1].iteration > frames[i].iteration;
+    const atMs = Math.round(frames[i].time);
+    if (closing) closingEntries.push({ atMs, isSwitch, frameBefore: before >= 0 ? classes[before] : '-', intermediateFrames });
+    if (!isSwitch) continue;
+    let holdStart = before;
+    while (holdStart > 0 && classes[holdStart - 1] === 'H') holdStart--;
+    switches.push({ atMs, intermediateFrames, holdMs: Math.round(frames[before].time - frames[holdStart].time) });
+  }
+  return { switches, closingEntries, boundaries };
+}
+
+// The worst speed jump of every element over several scan windows.
+function worstPerElement(entries) {
+  const worst = new Map();
+  for (const entry of entries) {
+    const known = worst.get(entry.element);
+    if (!known || entry.worstJump > known.worstJump) worst.set(entry.element, entry);
+  }
+  return [...worst.values()];
+}
+
+// Elements that show the static state in real frames while their animation is still in its delay,
+// although their start pose (0% keyframe) differs from it: animation-fill-mode backwards / both is missing.
+function delayFlashes(frames, startState, staticState) {
+  const flashes = new Map();
+  frames.forEach((frame, index) => {
+    frame.delayed.forEach((delayed, k) => {
+      if (!delayed || flashes.has(k)) return;
+      if (!elementDifferences(startState[k], staticState[k]).length) return;
+      if (!elementDifferences(frame.state[k], staticState[k]).length) flashes.set(k, { element: frame.state[k].key, frame: index, atMs: Math.round(frame.time || 0) });
+    });
+  });
+  return [...flashes.values()];
+}
+
+// Mean ink of the list-size static pictogram: per pixel, its colour distance from the background
+// relative to the foreground's (1 = a foreground pixel, 0 = background), averaged over the square.
+// Unlike the bounds, it reflects how much is drawn inside the outline, so board-like pictograms compare.
+async function inkCoverage(page, themes) {
+  const shot = await page.locator('.host.list').screenshot();
+  return page.evaluate(async ([data, background, foreground]) => {
+    const toRgb = (color) => {
+      const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
+      const context = canvas.getContext('2d'); context.fillStyle = color; context.fillRect(0, 0, 1, 1);
+      return [...context.getImageData(0, 0, 1, 1).data.slice(0, 3)];
+    };
+    const image = await new Promise((resolve) => { const img = new Image(); img.onload = () => resolve(img); img.src = 'data:image/png;base64,' + data; });
+    const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+    const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    const bg = toRgb(background); const fg = toRgb(foreground);
+    const distance = (r, g, b) => Math.max(Math.abs(r - bg[0]), Math.abs(g - bg[1]), Math.abs(b - bg[2]));
+    const full = distance(...fg) || 1;
+    let sum = 0;
+    for (let i = 0; i < pixels.length; i += 4) sum += Math.min(1, distance(pixels[i], pixels[i + 1], pixels[i + 2]) / full);
+    return sum / (pixels.length / 4);
+  }, [shot.toString('base64'), themes.light.background, themes.light.foreground]);
+}
+
+async function staticMeasures(context, svg, themes) {
+  const { page } = await render(context, svg, { play: false, theme: 'light', themes });
+  const bounds = await page.evaluate(() => window.__pz.bounds());
+  const ink = await inkCoverage(page, themes);
+  await page.close();
+  return { bounds, ink };
+}
+
+const size = (bounds) => Math.sqrt(bounds.width * bounds.height);
+const bottom = (bounds) => bounds.centerY + bounds.height / 2;
+const median = (values) => { const sorted = [...values].sort((a, b) => a - b); const mid = Math.floor(sorted.length / 2); return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2; };
+
+// Bounds of the base pictogram and of the other games' pictogram.svg, measured once.
+async function referenceBounds(browser, manifest, manifestPath, options) {
+  const context = await browser.newContext({ viewport: { width: 420, height: 200 }, deviceScaleFactor: 1 });
+  const result = { base: null, others: [] };
+  if (manifest.base_pictogram) {
+    const file = path.isAbsolute(manifest.base_pictogram) ? manifest.base_pictogram : path.join(path.dirname(manifestPath), manifest.base_pictogram);
+    if (fs.existsSync(file)) {
+      const measures = await staticMeasures(context, fs.readFileSync(file, 'utf8'), options.themes);
+      result.base = measures.bounds;
+      result.baseInk = measures.ink;
+    }
+  }
+  if (fs.existsSync(options.gamesDir)) {
+    for (const game of fs.readdirSync(options.gamesDir).sort()) {
+      const file = path.join(options.gamesDir, game, 'assets/pictogram.svg');
+      if (game === manifest.game_id || !fs.existsSync(file)) continue;
+      const { bounds, ink } = await staticMeasures(context, fs.readFileSync(file, 'utf8'), options.themes);
+      if (bounds) result.others.push({ game, ...bounds, ink });
+    }
+  }
+  await context.close();
+  return result;
+}
+
+// Static state, start pose and end pose in one theme; compares the end (and the seam start) with the static state.
+async function poses(context, svg, candidate, theme, options, report) {
+  const suffix = theme === 'light' ? '' : `-${theme}`;
+  const rest = await render(context, svg, { play: false, theme, themes: options.themes });
+  const staticState = await rest.page.evaluate(() => window.__pz.state());
+  const staticShot = await rest.page.locator('.host.hero').first().screenshot();
+  fs.writeFileSync(path.join(options.out, `${candidate.id}${suffix}-static.png`), staticShot);
+
+  const play = await render(context, svg, { play: true, theme, themes: options.themes });
+  const timings = await play.page.evaluate(() => window.__pz.timings());
+  const result = { rest, play, staticState, timings };
+  if (!timings.length) return result;
+  const shot = async (name) => {
+    const buffer = await play.page.locator('.host.hero').first().screenshot();
+    fs.writeFileSync(path.join(options.out, `${candidate.id}${suffix}-${name}.png`), buffer);
+    return buffer;
+  };
+  await play.page.evaluate(() => window.__pz.seekEach('start', 0));
+  result.startState = await play.page.evaluate(() => window.__pz.state());
+  await shot('start');
+  await play.page.evaluate((epsilon) => window.__pz.seekEach('end', epsilon), END_OFFSET_MS);
+  result.endState = await play.page.evaluate(() => window.__pz.state());
+  const endShot = await shot('end');
+  const label = { cut: 'hold (100%)', 'rest-cut': 'rest-cut end (100%)', seam: 'seam (100%)' }[candidate.playback];
+  const endDiff = differences(result.endState, staticState);
+  report.themes[theme].endVsStatic = endDiff;
+  if (endDiff.length) report.failures.push(`${theme}: ${label} differs from the static state: ${endDiff.slice(0, 5).join(' | ')}`);
+  if (candidate.playback === 'seam' || candidate.playback === 'rest-cut') {
+    const startDiff = differences(result.startState, staticState);
+    report.themes[theme].startVsStatic = startDiff;
+    if (startDiff.length) report.failures.push(`${theme}: ${candidate.playback} start (0%) differs from the static state: ${startDiff.slice(0, 5).join(' | ')}`);
+  }
+  if (options.pixels) report.themes[theme].endVsStaticPixels = await pixelDifference(play.page, endShot, staticShot);
+  return result;
+}
+
+async function reducedMotion(browser, svg, theme, staticState, options, report) {
+  const reduced = await browser.newContext({ viewport: { width: 420, height: 200 }, reducedMotion: 'reduce' });
+  const page = await render(reduced, svg, { play: true, theme, themes: options.themes });
+  const count = await page.page.evaluate(() => window.__pz.count());
+  const diff = differences(await page.page.evaluate(() => window.__pz.state()), staticState);
+  report.themes[theme].reducedMotion = { animations: count, differences: diff };
+  if (count || diff.length) report.failures.push(`${theme}: reduced motion is not the static state: ${count} animation(s), ${diff.length} difference(s)`);
+  await reduced.close();
+  return page.errors;
+}
+
+async function observe(browser, candidate, options) {
+  const report = { id: candidate.id, playback: candidate.playback, failures: [], warnings: [], notes: [], themes: { light: {}, dark: {} } };
+  const fail = (message) => report.failures.push(message);
+  const svg = fs.readFileSync(candidate.file, 'utf8');
+  const context = await browser.newContext({ viewport: { width: 420, height: 200 }, deviceScaleFactor: 1 });
+  const errors = [];
+
+  const dark = await poses(context, svg, candidate, 'dark', options, report);
+  errors.push(...dark.rest.errors, ...dark.play.errors, ...(await reducedMotion(browser, svg, 'dark', dark.staticState, options, report)));
+  const light = await poses(context, svg, candidate, 'light', options, report);
+  errors.push(...(await reducedMotion(browser, svg, 'light', light.staticState, options, report)));
+  const { play, staticState, startState, timings } = light;
+  const bounds = await light.rest.page.evaluate(() => window.__pz.bounds());
+  if (bounds) {
+    const references = options.references;
+    report.staticBounds = { ...bounds };
+    if (references.base) {
+      report.staticBounds.vsBase = { dx: Number((bounds.centerX - references.base.centerX).toFixed(1)), dy: Number((bounds.centerY - references.base.centerY).toFixed(1)), sizeRatio: Number((size(bounds) / size(references.base)).toFixed(2)) };
+    }
+    if (references.others.length) {
+      report.staticBounds.vsOthers = { games: references.others.length, sizeRatioToMedian: Number((size(bounds) / median(references.others.map(size))).toFixed(2)),
+        centerYMedian: Number(median(references.others.map((b) => b.centerY)).toFixed(1)), bottomMedian: Number(median(references.others.map(bottom)).toFixed(1)) };
+    }
+  }
+  const ink = await inkCoverage(light.rest.page, options.themes);
+  report.ink = { coverage: Number(ink.toFixed(3)), listSize: LIST_SIZE };
+  if (options.references.baseInk) report.ink.vsBase = Number((ink / options.references.baseInk).toFixed(2));
+  if (options.references.others.length) {
+    const othersMedian = median(options.references.others.map((other) => other.ink));
+    report.ink.othersMedian = Number(othersMedian.toFixed(3));
+    report.ink.vsOthersMedian = Number((ink / othersMedian).toFixed(2));
+    report.ink.others = options.references.others.map((other) => ({ game: other.game, coverage: Number(other.ink.toFixed(3)) }));
+    const inks = options.references.others.map((other) => other.ink);
+    report.ink.othersRange = [Number(Math.min(...inks).toFixed(3)), Number(Math.max(...inks).toFixed(3))];
+    if (ink < Math.min(...inks) || ink > Math.max(...inks)) {
+      report.notes.push(`ink coverage at ${LIST_SIZE}px (${(ink * 100).toFixed(1)}%) is outside the other games' range ${report.ink.othersRange.map((v) => (v * 100).toFixed(1) + '%').join('-')}; check the weight in the comparison row`);
+    }
+  }
+  if (!timings.length) fail('no running animation with the play attribute');
+  checkAnimationRules(await play.page.evaluate(() => window.__pz.animationRules()), report);
+
+  if (timings.length) {
+    const reference = timings[0];
+    const firstCycleEnd = Math.max(...timings.map((t) => t.delay + t.duration));
+    const finite = timings.filter((t) => t.iterations !== 'infinite');
+    if (finite.length) fail(`${finite.length} animation(s) play a finite number of times (${finite.map((t) => t.iterations).join(', ')}); every animation loops (cut, rest-cut or seam), so animation-iteration-count must be infinite`);
+    report.periodMs = Math.round(reference.duration);
+    report.delayMs = Math.round(Math.max(...timings.map((t) => t.delay)));
+    const at = async (time) => { await play.page.evaluate((t) => window.__pz.seek(t), time); return play.page.evaluate(() => window.__pz.state()); };
+
+    if (candidate.playback === 'cut') {
+      if (timings.some((t) => t.duration !== reference.duration || t.delay !== reference.delay)) {
+        report.notes.push('animations do not share one duration and delay; hold and start beat follow the first animation');
+      }
+      if (differences(startState, staticState).length === 0) {
+        fail('0% equals the static state: a cut loop starts from a different pose; if 0% = 100% declare seam, or rest-cut when the picture switches to the static state once inside the cycle');
+      }
+      const cycleStart = reference.delay;
+      const cycleEnd = reference.delay + reference.duration - END_OFFSET_MS;
+      let holdStart = cycleEnd;
+      for (let time = cycleEnd; time >= cycleStart; time -= HOLD_STEP_MS) {
+        if (differences(await at(time), staticState).length) break;
+        holdStart = time;
+      }
+      report.holdMs = Math.round(cycleEnd + END_OFFSET_MS - holdStart);
+      let beatEnd = 0;
+      for (let time = cycleStart; time < cycleEnd; time += HOLD_STEP_MS) {
+        if (differences(await at(time), startState).length) break;
+        beatEnd = time - cycleStart;
+      }
+      report.startBeatMs = beatEnd;
+      report.stillRatio = Number(((report.holdMs + report.startBeatMs) / reference.duration).toFixed(3));
+    }
+    if (candidate.playback === 'rest-cut') {
+      if (timings.some((t) => t.duration !== reference.duration || t.delay !== reference.delay)) {
+        fail('rest-cut: animations do not share one duration and delay, so the elements do not switch to the static state in the same frame');
+      }
+      report.restCut = await restCutScan(at, reference, staticState);
+      const { restMs, switchMs, switchAtMs, switches, holdMs } = report.restCut;
+      if (holdMs < PAYOFF_HOLD_MS[0] || holdMs > PAYOFF_HOLD_MS[1]) report.warnings.push(`rest-cut: the payoff pose holds for ${holdMs}ms before the switch; the guide is ${PAYOFF_HOLD_MS.join('-')}ms`);
+      if (restMs < REST_CUT_MIN_REST_MS - REST_CUT_SCAN_TOLERANCE_MS) fail(`rest-cut: the static state closes the cycle for ${restMs}ms; it must last at least ${REST_CUT_MIN_REST_MS}ms`);
+      if (switchMs > FRAME_MS + REST_CUT_SCAN_TOLERANCE_MS) fail(`rest-cut: the change into the closing static state takes ${switchMs}ms (to ${switchAtMs}ms); switch from the payoff pose within one frame, without a fade or rewind`);
+      if (switches !== 1) fail(`rest-cut: a held pose switches to the static state ${switches} time(s) inside the cycle; switch there once, after the payoff hold`);
+    }
+
+    if (report.holdMs != null || report.restCut) {
+      const staticFromMs = report.restCut ? report.restCut.switchAtMs : reference.duration - report.holdMs;
+      const entry = appEntry(await play.page.evaluate(() => window.__pz.keyframeRests()), reference.duration);
+      const visibleEntryMs = Math.max(staticFromMs, reference.duration - APP_ENTRY_REST_MS);
+      report.appEntry = { ...entry, staticFromMs: Number(staticFromMs.toFixed(1)) };
+      if (candidate.playback === 'cut' && reference.duration - entry.entryMs < FRAME_MS) {
+        fail(`the app reads the closing rest from the keyframe values as starting at ${entry.keyframeRestStartMs}ms, so on selection it enters the cycle at its end and shows the start pose at once; ` +
+          'a keyframe value (of an invisible element too) changes inside the hold. Keep every keyframe value the same through the hold');
+      } else if (entry.entryMs - visibleEntryMs > HOLD_STEP_MS) {
+        report.warnings.push(`the app reads the closing rest from the keyframe values as starting at ${entry.keyframeRestStartMs}ms and enters the cycle at ${entry.entryMs}ms, ` +
+          `while the picture is static from ${report.appEntry.staticFromMs}ms; a keyframe value (of an invisible element too) changes inside the rest, so selection shows less of it`);
+      }
+    }
+
+    let worst = { margin: Infinity, key: null, atMs: 0 };
+    const overlapPairs = candidateOverlaps(candidate, options.overlap);
+    const overlaps = overlapPairs.map((pair) => ({ pair: pair.join(' | '), maxArea: 0, atMs: null }));
+    const clearanceSpecs = candidateClearances(candidate, options.clearance);
+    const clearancePairs = clearanceSpecs.map((spec) => spec.pair);
+    const measureClearance = (page) => page.evaluate(([pairs, step, range]) => window.__pz.clearance(pairs, step, range), [clearancePairs, CLEARANCE_STEP, CLEARANCE_RANGE]);
+    const staticClearance = clearancePairs.length ? await measureClearance(light.rest.page) : [];
+    const clearances = clearanceSpecs.map((spec, i) => ({ pair: spec.pair.join(' | '), min: spec.min, staticGap: staticClearance[i].gap,
+      minGap: Infinity, atMs: null, elements: null }));
+    for (let time = 0; time < firstCycleEnd; time += OVERFLOW_STEP_MS) {
+      await play.page.evaluate((t) => window.__pz.seek(t), time);
+      const sample = await play.page.evaluate(() => window.__pz.overflow());
+      if (sample.margin < worst.margin) worst = { ...sample, atMs: time };
+      if (overlaps.length) {
+        const areas = await play.page.evaluate((pairs) => window.__pz.overlap(pairs), overlapPairs);
+        areas.forEach(({ area, textApproximated }, i) => {
+          if (textApproximated) overlaps[i].textApproximated = true;
+          if (area > overlaps[i].maxArea) { overlaps[i].maxArea = area; overlaps[i].atMs = time; }
+        });
+      }
+      if (clearances.length) {
+        (await measureClearance(play.page)).forEach(({ gap, a, b }, i) => {
+          if (gap < clearances[i].minGap) Object.assign(clearances[i], { minGap: gap, atMs: time, elements: a && b ? [a, b] : null });
+        });
+      }
+    }
+    report.minViewBoxMargin = { margin: Number(worst.margin.toFixed(2)), element: worst.key, atMs: worst.atMs };
+    if (worst.margin < 0) fail(`goes outside the viewBox by ${(-worst.margin).toFixed(2)} at ${worst.atMs}ms (${worst.key})`);
+    for (const [i, entry] of overlaps.entries()) {
+      entry.maxArea = Number(entry.maxArea.toFixed(2));
+      if (entry.textApproximated) report.notes.push(`overlap ${entry.pair}: <text> is measured by its bounding box, so it can read larger than the glyphs; judge by the screenshot`);
+      if (entry.maxArea >= OVERLAP_MIN_AREA) {
+        await play.page.evaluate((t) => window.__pz.seek(t), entry.atMs);
+        fs.writeFileSync(path.join(options.out, `${candidate.id}-overlap-${i + 1}.png`), await play.page.locator('.host.hero').first().screenshot());
+        report.warnings.push(`overlap ${entry.pair}: ${entry.maxArea} viewBox units^2 at ${entry.atMs}ms (${candidate.id}-overlap-${i + 1}.png); judge whether it is intended`);
+      }
+    }
+    report.overlaps = overlaps;
+    for (const [i, entry] of clearances.entries()) {
+      entry.minGap = Number(entry.minGap.toFixed(2));
+      entry.staticGap = Number(entry.staticGap.toFixed(2));
+      if (entry.minGap < entry.min) {
+        await play.page.evaluate((t) => window.__pz.seek(t), entry.atMs);
+        fs.writeFileSync(path.join(options.out, `${candidate.id}-clearance-${i + 1}.png`), await play.page.locator('.host.hero').first().screenshot());
+        const how = entry.minGap < 0 ? `the outer edges cross by ${-entry.minGap}` : `gap ${entry.minGap}`;
+        report.warnings.push(`clearance ${entry.pair}: ${how} viewBox units at ${entry.atMs}ms (${entry.elements ? entry.elements.join(' / ') : '-'}), below ${entry.min}; static ${entry.staticGap} (${candidate.id}-clearance-${i + 1}.png); judge whether the edges should touch`);
+      }
+    }
+    report.clearances = clearances;
+
+    // One iteration for cut (the cut switch is intended), one iteration plus the wrap for seam and
+    // rest-cut (the rest-cut switch inside the cycle is intended, so the scan skips it).
+    const scanFrom = Math.min(...timings.map((t) => t.delay));
+    const scanTo = reference.delay + reference.duration + (candidate.playback === 'cut' ? 0 : SEAM_SCAN_PAST_MS);
+    const scan = ([from, to]) => play.page.evaluate(([a, b, step]) => window.__pz.smoothness(a, b, step), [from, to, SMOOTH_STEP_MS]);
+    const windows = report.restCut
+      ? [[scanFrom, reference.delay + report.restCut.switchStartMs], [reference.delay + report.restCut.switchAtMs, scanTo]]
+      : [[scanFrom, scanTo]];
+    const scanned = [];
+    for (const range of windows) scanned.push(...(await scan(range)));
+    const smooth = worstPerElement(scanned);
+    smooth.sort((a, b) => b.worstJump - a.worstJump);
+    report.smoothness = { stepMs: SMOOTH_STEP_MS, threshold: options.smoothThreshold, movingShapes: smooth.length, shapes: smooth };
+    groupJumps(smooth.filter((entry) => entry.worstJump > options.smoothThreshold)).forEach((group) => {
+      const worst = group[0];
+      const others = group.slice(1, 4).map((entry) => entry.element);
+      const span = group.map((entry) => entry.atMs);
+      const at = Math.min(...span) === Math.max(...span) ? `${worst.atMs}ms` : `${Math.min(...span)}-${Math.max(...span)}ms`;
+      const shapes = group.length === 1
+        ? `${worst.worstJump} of peak (${worst.element})`
+        : `${group.length} shapes at once, worst ${worst.worstJump} of peak (${worst.element}), also ${others.join(', ')}${group.length > 4 ? ', ...' : ''}; likely one cause`;
+      report.warnings.push(`speed jump at ${at}: ${shapes}; a stutter unless it is an intended collision, appearance, or start`);
+    });
+
+    const live = await render(context, svg, { play: true, theme: 'light', themes: options.themes, deferred: true });
+    const recordMs = candidate.playback !== 'seam'
+      ? reference.delay + reference.duration * options.cycles
+      : report.delayMs + FLASH_MIN_RECORD_MS;
+    const frames = await live.page.evaluate(([markup, ms]) => window.__pz.live(markup, ms), [svg, recordMs]);
+    const flashes = delayFlashes(frames, startState, staticState);
+    report.delayFlashes = flashes;
+    flashes.forEach((flash) => fail(`static state shows during animation-delay (${flash.element}, frame ${flash.frame}); add animation-fill-mode backwards or both`));
+    const startsAwayFromStatic = differences(startState, staticState).length > 0;
+    const firstFrame = classify(frames[0].state, { S: staticState, P0: startState });
+    report.firstFrame = firstFrame;
+    if (candidate.playback === 'cut' && startsAwayFromStatic && firstFrame === 'S') {
+      fail('the first frame of the first play shows the static (payoff) pose; the switch is not at the cycle boundary, or the delay has no backwards fill');
+    }
+    if (candidate.playback === 'cut') {
+      const { boundaries } = cutBoundaries(frames, { S: staticState, P0: startState });
+      report.realFrames = { frames: frames.length, firstFrame, boundaries };
+      if (!boundaries.length) fail('no cycle boundary was crossed while recording');
+      for (const boundary of boundaries) {
+        if (boundary.frameBefore !== 'S') fail(`frame before the switch at ${boundary.atMs}ms is not the static state (${boundary.frameBefore})`);
+        if (boundary.intermediateFrames > 0) fail(`${boundary.intermediateFrames} in-between frame(s) around the switch at ${boundary.atMs}ms`);
+        if (boundary.frameAfter !== 'P0') report.notes.push(`frame after the switch at ${boundary.atMs}ms is ${boundary.frameAfter}: motion starts without a start beat`);
+      }
+    }
+    if (candidate.playback === 'rest-cut') {
+      const holdPose = await at(reference.delay + report.restCut.switchStartMs);
+      const { switches, closingEntries, boundaries } = restCutSwitches(frames, { S: staticState, H: holdPose });
+      report.realFrames = { frames: frames.length, firstFrame, switches, closingEntries, boundaries };
+      if (!closingEntries.length) fail('no entry into the closing static state was seen while recording');
+      for (const entry of closingEntries) {
+        if (!entry.isSwitch) fail(`the closing static state at ${entry.atMs}ms is entered after ${entry.intermediateFrames} in-between frame(s) from ${entry.frameBefore}, not straight from the payoff hold`);
+      }
+      for (const entry of switches) {
+        if (entry.intermediateFrames === 1) report.notes.push(`a frame landed inside the switch at ${entry.atMs}ms (written over ${report.restCut.switchMs}ms); step-end on the hold makes the switch exact`);
+      }
+      for (const boundary of boundaries) {
+        if (boundary.frameBefore !== 'S') fail(`frame before the cycle boundary at ${boundary.atMs}ms is not the static state (${boundary.frameBefore})`);
+      }
+    }
+    errors.push(...live.errors);
+    if (options.filmstrip) report.filmstrip = await filmstrip(context, svg, candidate, report, options);
+  }
+  if (options.webkitBrowser) await observeWebkit(options.webkitBrowser, svg, candidate, options, report);
+  else if (options.webkit) report.webkit = { available: false, reason: options.webkitReason };
+
+  errors.push(...light.rest.errors, ...play.errors);
+  report.errors = errors;
+  if (errors.length) fail(`page errors: ${errors.join(' | ')}`);
+  await context.close();
+  return report;
+}
+
+// Animation rules that run nothing in the played hero. An undefined @keyframes name is a FAIL (the
+// animation never runs); a rule that matches no element or is overridden on all its elements is a WARN.
+function checkAnimationRules(rules, report) {
+  report.animationRules = rules;
+  for (const rule of rules) {
+    if (!rule.matched) {
+      report.warnings.push(`animation rule matches no element in the played hero, so its animation never runs: ${rule.selector} (check the class names in the selector and the class attributes)`);
+      continue;
+    }
+    for (const entry of rule.names) {
+      if (!entry.defined) report.failures.push(`animation ${entry.name} has no @keyframes, so it never runs: ${rule.selector}`);
+      else if (!entry.running) report.warnings.push(`animation ${entry.name} runs on none of the ${rule.matched} element(s) of ${rule.selector}; another rule overrides it`);
+    }
+  }
+}
+
+// Real-time screenshots of the 138px hero from the moment the SVG is inserted, over one cycle (cut: past
+// the first switch), laid out in one image with the animation time of each frame.
+async function filmstrip(context, svg, candidate, report, options) {
+  const page = await render(context, svg, { play: true, theme: 'light', themes: options.themes, deferred: true });
+  const recordMs = report.delayMs + report.periodMs + FILMSTRIP_PAST_CYCLE_MS;
+  await page.page.evaluate((markup) => document.querySelectorAll('.host').forEach((host) => { host.innerHTML = markup; }), svg);
+  const hero = page.page.locator('.host.hero').nth(FILMSTRIP_HERO_INDEX);
+  const frames = [];
+  const started = Date.now();
+  while (Date.now() - started < recordMs) {
+    const before = Date.now();
+    const time = await page.page.evaluate(() => { const first = document.querySelector('.host.hero').getAnimations({ subtree: true })[0]; return first ? first.currentTime || 0 : 0; });
+    frames.push({ label: `${Math.round(time)}ms`, data: (await hero.screenshot()).toString('base64') });
+    const wait = options.filmstripInterval - (Date.now() - before);
+    if (wait > 0) await page.page.waitForTimeout(wait);
+  }
+  const sheet = await page.page.evaluate(async ([items, columns, background, color]) => {
+    const images = await Promise.all(items.map((item) => new Promise((resolve) => { const img = new Image(); img.onload = () => resolve(img); img.src = 'data:image/png;base64,' + item.data; })));
+    const cellWidth = images[0].width; const cellHeight = images[0].height + 16;
+    const canvas = document.createElement('canvas');
+    canvas.width = cellWidth * Math.min(columns, images.length); canvas.height = cellHeight * Math.ceil(images.length / columns);
+    const context = canvas.getContext('2d');
+    context.fillStyle = background; context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = color; context.font = '11px sans-serif';
+    images.forEach((img, i) => {
+      const x = (i % columns) * cellWidth; const y = Math.floor(i / columns) * cellHeight;
+      context.drawImage(img, x, y);
+      context.fillText(items[i].label, x + 4, y + img.height + 12);
+    });
+    return canvas.toDataURL('image/png').split(',')[1];
+  }, [frames, FILMSTRIP_COLUMNS, options.themes.light.background, options.themes.light['muted-foreground']]);
+  const file = path.join(options.out, `${candidate.id}-filmstrip.png`);
+  fs.writeFileSync(file, Buffer.from(sheet, 'base64'));
+  await page.page.close();
+  return { frames: frames.length, size: HERO_SIZES[FILMSTRIP_HERO_INDEX], file: path.basename(file) };
+}
+
+// WebKit (the engine of Safari and the iOS app web view): static and end screenshots per theme, the end
+// compared with the static state by computed style within WebKit, and page errors.
+async function observeWebkit(browser, svg, candidate, options, report) {
+  report.webkit = { available: true, themes: {} };
+  try {
+    const context = await browser.newContext({ viewport: { width: 420, height: 200 }, deviceScaleFactor: 1 });
+    for (const theme of ['light', 'dark']) {
+      const suffix = theme === 'light' ? '' : `-${theme}`;
+      const rest = await render(context, svg, { play: false, theme, themes: options.themes });
+      const staticState = await rest.page.evaluate(() => window.__pz.state());
+      fs.writeFileSync(path.join(options.out, `${candidate.id}-webkit${suffix}-static.png`), await rest.page.locator('.host.hero').first().screenshot());
+      const play = await render(context, svg, { play: true, theme, themes: options.themes });
+      await play.page.evaluate((epsilon) => window.__pz.seekEach('end', epsilon), END_OFFSET_MS);
+      const endDiff = differences(await play.page.evaluate(() => window.__pz.state()), staticState);
+      fs.writeFileSync(path.join(options.out, `${candidate.id}-webkit${suffix}-end.png`), await play.page.locator('.host.hero').first().screenshot());
+      const errors = [...rest.errors, ...play.errors];
+      report.webkit.themes[theme] = { endVsStatic: endDiff, errors };
+      if (endDiff.length) report.warnings.push(`webkit ${theme}: end differs from the static state: ${endDiff.slice(0, 3).join(' | ')}`);
+      if (errors.length) report.failures.push(`webkit ${theme}: page errors: ${errors.join(' | ')}`);
+    }
+    await context.close();
+  } catch (error) {
+    report.webkit = { available: false, reason: String(error.message || error).split('\n')[0] };
+  }
+}
+
+function printReport(report) {
+  const lines = [`candidate: ${report.id} (${report.playback}, period ${report.periodMs}ms, delay ${report.delayMs}ms)`];
+  for (const [theme, result] of Object.entries(report.themes)) {
+    const parts = [`end vs static ${result.endVsStatic ? result.endVsStatic.length : '-'} difference(s)`];
+    if (result.reducedMotion) parts.push(`reduced motion ${result.reducedMotion.animations} animation(s) / ${result.reducedMotion.differences.length} difference(s)`);
+    if (result.endVsStaticPixels) parts.push(`end vs static pixels ${result.endVsStaticPixels.pixels} (${(result.endVsStaticPixels.ratio * 100).toFixed(2)}%), max channel diff ${result.endVsStaticPixels.max} (edges of animated layers rasterize differently; up to about 4% is expected, judge by computed style)`);
+    lines.push(`  ${theme}: ${parts.join(', ')}`);
+  }
+  if (report.playback === 'cut') {
+    lines.push(`  hold ${report.holdMs}ms, start beat ${report.startBeatMs}ms, still ratio ${report.stillRatio} (paused-time scan)`);
+    if (report.realFrames) {
+      lines.push(`  real frames ${report.realFrames.frames}, first frame ${report.realFrames.firstFrame} (hold / start beat in real frames read up to 2 frames short)`);
+      report.realFrames.boundaries.forEach((b) => lines.push(`  switch @${b.atMs}ms: ${b.frameBefore} -> ${b.frameAfter}, in-between frames ${b.intermediateFrames}, hold ${b.holdMs}ms, start beat ${b.startBeatMs}ms`));
+    }
+  } else if (report.playback === 'rest-cut' && report.restCut) {
+    const r = report.restCut;
+    lines.push(`  start beat ${r.startBeatMs}ms, payoff hold ${r.holdMs}ms, switch ${r.switchMs}ms at ${r.switchAtMs}ms, closing rest ${r.restMs}ms, ` +
+      `switches to the static state ${r.switches} time(s) per cycle (paused-time scan, 1ms steps around the switch)`);
+    if (report.realFrames) {
+      lines.push(`  real frames ${report.realFrames.frames}, first frame ${report.realFrames.firstFrame} (hold in real frames reads up to 2 frames short)`);
+      report.realFrames.switches.forEach((w) => lines.push(`  switch @${w.atMs}ms: H -> S, in-between frames ${w.intermediateFrames}, hold ${w.holdMs}ms`));
+      report.realFrames.boundaries.forEach((b) => lines.push(`  cycle boundary @${b.atMs}ms: ${b.frameBefore} -> ${b.frameAfter}`));
+    }
+  } else if (report.firstFrame) {
+    lines.push(`  first frame ${report.firstFrame}`);
+  }
+  if (report.staticBounds) {
+    const b = report.staticBounds;
+    const parts = [`${b.width}x${b.height} centre (${b.centerX}, ${b.centerY}) bottom ${Number(bottom(b).toFixed(1))}`];
+    if (b.vsBase) parts.push(`vs base centre ${b.vsBase.dx >= 0 ? '+' : ''}${b.vsBase.dx}, ${b.vsBase.dy >= 0 ? '+' : ''}${b.vsBase.dy} size x${b.vsBase.sizeRatio}`);
+    if (b.vsOthers) parts.push(`size x${b.vsOthers.sizeRatioToMedian} of the median of ${b.vsOthers.games} other game(s) (their centre y ${b.vsOthers.centerYMedian}, bottom ${b.vsOthers.bottomMedian})`);
+    lines.push(`  static bounds: ${parts.join(', ')}`);
+  }
+  if (report.ink) {
+    const ink = report.ink;
+    const parts = [`${(ink.coverage * 100).toFixed(1)}% at ${ink.listSize}px`];
+    if (ink.vsBase != null) parts.push(`x${ink.vsBase} of base`);
+    if (ink.othersMedian != null) parts.push(`x${ink.vsOthersMedian} of the other games' median ${(ink.othersMedian * 100).toFixed(1)}% (their range ${ink.othersRange.map((v) => (v * 100).toFixed(1) + '%').join('-')})`);
+    lines.push(`  ink coverage: ${parts.join(', ')}`);
+  }
+  if (report.appEntry) lines.push(`  app entry ${report.appEntry.entryMs}ms (keyframe rest from ${report.appEntry.keyframeRestStartMs}ms, static from ${report.appEntry.staticFromMs}ms)`);
+  if (report.minViewBoxMargin) lines.push(`  min viewBox margin ${report.minViewBoxMargin.margin} at ${report.minViewBoxMargin.atMs}ms (${report.minViewBoxMargin.element})`);
+  if (report.smoothness) {
+    const top = report.smoothness.shapes[0];
+    lines.push(`  smoothness (${report.smoothness.stepMs}ms scan, threshold ${report.smoothness.threshold}): ${report.smoothness.movingShapes} moving shape(s)` +
+      (top ? `, worst jump ${top.worstJump} at ${top.atMs}ms (${top.element})` : ''));
+  }
+  if (report.filmstrip) lines.push(`  filmstrip: ${report.filmstrip.frames} real-time frame(s) at ${report.filmstrip.size}px -> ${report.filmstrip.file}`);
+  if (report.webkit) {
+    lines.push(report.webkit.available
+      ? `  webkit: ${Object.entries(report.webkit.themes).map(([theme, r]) => `${theme} end vs static ${r.endVsStatic.length} difference(s)`).join(', ')}`
+      : `  NOTE: WebKit was not checked (${report.webkit.reason}); record that Safari rendering is unverified`);
+  }
+  (report.overlaps || []).forEach((entry) => lines.push(`  overlap ${entry.pair}: ${entry.atMs == null ? 'none' : `max ${entry.maxArea} viewBox units^2 at ${entry.atMs}ms`}`));
+  (report.clearances || []).forEach((entry) => lines.push(`  clearance ${entry.pair}: min ${entry.minGap >= CLEARANCE_RANGE ? `>= ${CLEARANCE_RANGE}` : entry.minGap} at ${entry.atMs}ms` +
+    `${entry.elements ? ` (${entry.elements.join(' / ')})` : ''}, static ${entry.staticGap >= CLEARANCE_RANGE ? `>= ${CLEARANCE_RANGE}` : entry.staticGap} (viewBox units, stroke included)`));
+  report.notes.forEach((note) => lines.push(`  NOTE: ${note}`));
+  report.warnings.forEach((warning) => lines.push(`  WARN: ${warning}`));
+  report.failures.forEach((failure) => lines.push(`  FAIL: ${failure}`));
+  if (!report.failures.length) lines.push('  PASS');
+  console.log(lines.join('\n'));
+}
+
+(async () => {
+  const options = parseArgs(process.argv.slice(2));
+  const manifestPath = path.resolve(options.manifest);
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  options.out = path.resolve(options.out || path.join(path.dirname(manifestPath), 'observe'));
+  options.themes = loadThemes(options.globalsCss);
+  fs.mkdirSync(options.out, { recursive: true });
+  const candidates = manifest.candidates
+    .filter((candidate) => !options.only.length || options.only.includes(candidate.id))
+    .map((candidate) => ({ ...candidate, file: path.isAbsolute(candidate.file) ? candidate.file : path.join(path.dirname(manifestPath), candidate.file) }));
+  const playwright = loadPlaywright();
+  const browser = await playwright.chromium.launch();
+  if (options.webkit) {
+    try {
+      options.webkitBrowser = await playwright.webkit.launch();
+    } catch (error) {
+      options.webkitReason = String(error.message || error).split('\n')[0];
+    }
+  }
+  options.references = await referenceBounds(browser, manifest, manifestPath, options);
+  const reports = [];
+  for (const candidate of candidates) {
+    if (!PLAYBACKS.has(candidate.playback)) {
+      reports.push({ id: candidate.id, playback: candidate.playback, failures: [PLAYBACK_ERROR], warnings: [], notes: [] });
+      console.log(`candidate: ${candidate.id}\n  FAIL: ${PLAYBACK_ERROR}`);
+      continue;
+    }
+    const report = await observe(browser, candidate, options);
+    reports.push(report);
+    printReport(report);
+  }
+  await browser.close();
+  if (options.webkitBrowser) await options.webkitBrowser.close();
+  fs.writeFileSync(path.join(options.out, 'observe-report.json'), JSON.stringify(reports, null, 1));
+  console.log(`report: ${path.join(options.out, 'observe-report.json')}`);
+  process.exit(reports.some((report) => report.failures.length) ? 1 : 0);
+})().catch((error) => { console.error(error); process.exit(2); });
