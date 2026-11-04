@@ -7,6 +7,12 @@ dist
 generated
 *.tgz
 
+# end-to-end test output (Playwright)
+e2e-results
+test-results
+playwright-report
+blob-report
+
 # code coverage
 coverage
 *.lcov
