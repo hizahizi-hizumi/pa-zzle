@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="箱入り娘">
-  <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M42 105H24V15H96V105H78"/>
-  <rect x="27" y="18" width="12" height="30" rx="2.5" fill="var(--game-pictogram-soft)"/>
-  <rect x="81" y="18" width="12" height="30" rx="2.5" fill="var(--game-pictogram-soft)"/>
-  <rect x="45" y="18" width="30" height="12" rx="2.5" fill="var(--game-pictogram-soft)"/>
-  <rect x="27" y="54" width="12" height="12" rx="2.5" fill="var(--game-pictogram-soft)"/>
-  <rect x="81" y="72" width="12" height="30" rx="2.5" fill="var(--game-pictogram-soft)"/>
-  <rect x="44" y="53" width="32" height="32" rx="3.5" fill="var(--game-pictogram-strong)"/>
+  <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M41 107H22V13H98V107H79"/>
+  <rect x="25.5" y="16.5" width="15" height="33" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="43.5" y="16.5" width="33" height="15" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="79.5" y="16.5" width="15" height="33" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="25.5" y="52.5" width="15" height="15" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="43.5" y="34.5" width="15" height="15" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="79.5" y="52.5" width="15" height="15" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="43.5" y="78.5" width="33" height="33" rx="3.5" fill="var(--game-pictogram-strong)"/>
 </svg>
