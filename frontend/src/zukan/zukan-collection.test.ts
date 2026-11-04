@@ -5,6 +5,7 @@ import { PLAY_SCORE_METRIC_ID } from "@/records/play-record-definition";
 import {
   countZukanProblemsByStatus,
   deriveGameZukan,
+  deriveZukanContinuation,
   getZukanProblemStatus,
   type ZukanGameSource,
   type ZukanProblem,
@@ -375,6 +376,74 @@ describe("deriveGameZukan", () => {
 
       expect(latestPlayedDifficulty).toBe("1");
     });
+  });
+});
+
+describe("deriveZukanContinuation", () => {
+  describe("記録も試行も無い場合", () => {
+    test("続きを無しとすること", () => {
+      const continuation = deriveZukanContinuation(game, [], []);
+
+      expect(continuation).toBeNull();
+    });
+  });
+
+  describe("図鑑に使える記録と試行がある場合", () => {
+    const records = [
+      createRecord(2_000, { difficulty: "4", problemId: "p-d", score: 80 }),
+      createRecord(9_000, { difficulty: "2", problemId: "p-c", score: 90 }),
+      createRecord(10_000, { difficulty: "1", problemId: "p-a", score: 90 }),
+    ];
+    const attempts = [
+      createAbandonedAttempt(1_000, { difficulty: "4", problemId: "p-d" }),
+      createAbandonedAttempt(3_000, { difficulty: "4", problemId: "p-e" }),
+      createAbandonedAttempt(4_000, { difficulty: "4", problemId: "p-e" }),
+      createAbandonedAttempt(5_000, { difficulty: "1", problemId: "p-b" }),
+      createAbandonedAttempt(11_000, { difficulty: "4", problemId: "gone" }),
+      createAbandonedAttempt(
+        12_000,
+        { difficulty: "1", problemId: "p-b" },
+        "other",
+      ),
+      createAbandonedAttempt(8_000, { difficulty: "4", problemId: "p-d" }),
+    ];
+
+    test("最後にクリアまたは離脱したプレイのレベルと時刻、そのレベルでクリアしていない挑戦中の問題の数を返すこと", () => {
+      const continuation = deriveZukanContinuation(game, records, attempts);
+
+      expect(continuation).toEqual({
+        difficulty: "1",
+        playedAt: 10_000,
+        attemptedCount: 1,
+      });
+    });
+
+    const cases = [
+      ["クリアが最後", records, attempts],
+      ["離脱が最後", records.slice(0, 1), attempts],
+      ["離脱だけ", [], attempts],
+      ["クリアだけ", records, []],
+    ] as const;
+
+    test.each(cases)(
+      "図鑑で開くレベルと、そのレベルの挑戦中の問題の数に一致すること: %s",
+      (_, caseRecords, caseAttempts) => {
+        const continuation = deriveZukanContinuation(
+          game,
+          caseRecords,
+          caseAttempts,
+        );
+        const zukan = deriveGameZukan(game, caseRecords, caseAttempts);
+
+        const section = zukan.sections.find(
+          ({ difficulty }) => difficulty === zukan.latestPlayedDifficulty,
+        );
+        expect(continuation?.difficulty).toBe(zukan.latestPlayedDifficulty);
+        expect(continuation?.attemptedCount).toBe(
+          countZukanProblemsByStatus(section?.problems ?? []).attempted,
+        );
+      },
+    );
   });
 });
 
