@@ -15,7 +15,7 @@ allowed-tools: Read, Glob, Grep
 
 pa-zzleの既存 ADR を参照し、過去の意思決定の背景・比較・理由を確認する Skill。設計・実装・レビュー・新規 ADR 起票時に使う。
 
-`docs/adr/index.csv` を一次情報源として使い、本文 Read を最小化する。ADR は現在仕様の正本ではないため、「現在どうなっているか」の確認では ADR だけで結論を出さず、関連するコード・設定・現行文書も確認する。
+`docs/adr/index.csv` を一次情報源として使い、本文 Read を最小化する。ADR は意思決定の記録で今の決まりの正本ではないため、「今どうなっているか」の確認では ADR だけで結論を出さず、関連するコード・設定・該当する文書も確認する。
 
 ## 起動
 
@@ -31,7 +31,7 @@ pa-zzleの既存 ADR を参照し、過去の意思決定の背景・比較・�
 2. 0件なら `references/output-format.md` の0件形式で返す。
 3. 1件なら当該ファイルを Read し、frontmatter と本文を表示する。
 4. 2件以上なら連番重複の仕様違反として停止し、該当パスを列挙する。
-5. `status` が `superseded by ADR-NNNN` の場合、置き換え先を必ず併記する。
+5. `status` が `superseded by ADR-NNNN` の場合は置き換え先を、front matter に `partially_superseded_by` がある場合は置き換え先と置き換えた部分を必ず併記する。
 
 ## B. キーワード検索モード
 
@@ -39,7 +39,7 @@ pa-zzleの既存 ADR を参照し、過去の意思決定の背景・比較・�
 
 - `docs/adr/index.csv` をキーワードで Grep する。
 - `id` / `title` / `summary` / `status` / `date` / `path` のいずれかにヒットした行を候補にする。
-- CSV で十分な場合は ADR 本文を Read しない。
+- CSV で十分な場合は ADR 本文を Read しない。ただし手順3の置き換えの確認は行う。
 
 ### 2. ADR 本文を fallback 検索
 
@@ -56,7 +56,9 @@ pa-zzleの既存 ADR を参照し、過去の意思決定の背景・比較・�
 - ファイル単位で重複排除する。
 - `references/output-format.md` に従って最大10件表示する。
 - 10件超の場合は連番が新しい順で上位10件のみ表示し、絞り込みを促す。
-- `status` が superseded の場合は置き換え先を警告する。
+- `status` が superseded の場合と、`partially_superseded_by` がある場合は置き換え先を警告する。
+  - `status` は index.csv で分かる。`partially_superseded_by` は index.csv に無く ADR の front matter にだけあるため、`docs/adr/ADR-*.md` を `^partially_superseded_by:` で Grep し、候補に該当する ADR があるか確かめる。
+  - 該当する ADR は、front matter と表題直後の置き換えの注記だけを Read し、置き換え先と置き換えた部分を得る。本文全体は Read しない。
 
 ## 本文展開が必要な場合
 
@@ -68,13 +70,13 @@ ID 指定以外でも、次の場合は ADR 本文を Read する。
 
 最初から全件本文を Read しない。
 
-## 現在仕様を確認する場合
+## 今の決まりを確認する場合
 
-ADR は「なぜそう決めたか」を残す履歴層である。ユーザーの質問が現在仕様・現在実装を求める場合は、該当 ADR の内容だけで回答せず、次を行う。
+ADR は意思決定の記録で、今の決まりの正本ではない。今の決まりとその Why / Why not は該当する文書にある。ユーザーの質問が今の決まり・今の実装を求める場合は、該当 ADR の内容だけで回答せず、次を行う。
 
-1. ADR から判断理由と関連する論点を把握する。
-2. `AGENTS.md` の文書案内と、関連するコード・設定・現行文書を Read する。
-3. 現在の実装・文書と ADR が食い違う場合は現在の事実を優先し、ADR の status / supersede 管理が古い可能性を指摘する。
+1. ADR から意思決定の背景・比較・理由と関連する論点を把握する。
+2. `AGENTS.md` の文書案内と、関連するコード・設定・該当する文書を Read する。
+3. 今の実装・文書と ADR が食い違う場合は今の事実を優先し、ADR の `status` / `partially_superseded_by` の管理が古い可能性を指摘する。
 
 ## 参照する真実情報
 
@@ -90,5 +92,5 @@ ADR は「なぜそう決めたか」を残す履歴層である。ユーザー�
 - 参照専用。ADR や index.csv を書き換えない。
 - 一時ファイルを書き出さない。
 - 10件超を一度に本文展開しない。
-- superseded な ADR を現在方針として提示しない。
-- 現在仕様を問われた場合に ADR だけで回答を確定しない。
+- superseded な ADR と、`partially_superseded_by` がある ADR の置き換えた部分を、今の方針として提示しない。
+- 今の決まりを問われた場合に ADR だけで回答を確定しない。
