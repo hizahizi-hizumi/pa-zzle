@@ -7,7 +7,10 @@
  * - `Action`: 利用者の1回の操作。
  */
 
-/** 盤面の上に出す一言。`detail` は見出しを補う短い一文。 */
+/**
+ * 盤面の上に出す一言。`detail` は見出しを補う短い一文。
+ * 一言と導入の文の改行（`\n`）は、狭い画面でも意味の切れ目で折り返すために置き、そこで改行して見せる。
+ */
 export type TutorialMessage = {
   headline: string;
   detail: string | null;
@@ -22,7 +25,7 @@ export type TutorialRule<RuleId extends string> = {
 /**
  * 手を引く1手順。ゲームは、手順で操作させるところと、そこを終えたとみなす盤面を、この型を広げて持つ。
  * - `message`: この手順の間の一言。
- * - `introducedRuleId`: この手順で示すルール。手順を始めた時点で手に入り、上部のチップでも今示しているルールとして目立たせる。
+ * - `introducedRuleId`: この手順で示すルール。手順を始めた時点で手に入り、上部のルールの並びでも今示しているルールとして目立たせる。
  */
 export type TutorialStep<RuleId extends string> = {
   message: TutorialMessage;
@@ -44,10 +47,10 @@ export type TutorialSituation<
 
 /**
  * ゲームが判定した1手の結果。
- * - `ignored`: 盤面が変わらなかった。手を引いている間に、手順で操作させていないところを押した場合も含む。
+ * - `ignored`: 何も起きなかった。手を引いている間に、手順で操作させていないところを押した場合も含む。
  * - `continued`: 盤面が変わった。ルールに合わないところは無く、手順もまだ終えていない。
  * - `stepped`: 手順で操作させたところを、手順どおりにした。次の手順へ進む。
- * - `violated`: 手に入れたルールに合わないところができた。
+ * - `violated`: 手に入れたルールに合わない手だった。盤面にルールに合わないところができた手も、ルールで成り立たず盤面が変わらなかった手も含む。
  * - `solved`: 解けた。
  */
 export type TutorialMoveOutcome =
@@ -57,20 +60,40 @@ export type TutorialMoveOutcome =
   | "violated"
   | "solved";
 
+/**
+ * 操作より先に見せる、パズルの入口。
+ * - `purpose`: 何をするパズルかの一文。名前の下に出す。
+ * - `goalCaption`: 解き終えた盤面に添える一言。
+ * - `startCaption`: 始めの盤面に添える一言。
+ */
+export type TutorialIntro = {
+  purpose: string;
+  goalCaption: string;
+  startCaption: string;
+};
+
+/**
+ * チュートリアルを開いた場所。終えた後の行き先と、解き終えたときの一言が変わる。
+ * - `home`: ゲームのホーム。終えたら、ゲームのホームで開いているレベルを始める。
+ * - `play`: プレイ中のメニュー。終えたらプレイに戻る。
+ */
+export type TutorialEntry = "home" | "play";
+
 export type Tutorial<
   RuleId extends string,
   Step extends TutorialStep<RuleId>,
   BoardState,
   Action,
 > = {
+  intro: TutorialIntro;
   /** 上部に並べる順。 */
   rules: readonly TutorialRule<RuleId>[];
   /** 手を引く順。最後の手順を終えると手を離す。 */
   steps: readonly Step[];
   /** 手を離した後、解き終えるまでの一言。 */
   freePlay: TutorialMessage;
-  /** 解き終えたときの一言。 */
-  completion: TutorialMessage;
+  /** 解き終えたときの一言。本番へどうつながるかを、開いた場所ごとに言う。 */
+  completion: Record<TutorialEntry, TutorialMessage>;
   start: () => BoardState;
   /** 解き終えた盤面。導入で、何を目指すかを始めの盤面より先に見せる。 */
   goal: () => BoardState;
@@ -96,7 +119,7 @@ export type TutorialPhase = "intro" | "playing" | "solved" | "completed";
 
 /**
  * - `stepIndex`: 今の手順の位置。手順の数と同じなら手を離している。
- * - `violated`: 最後の手でルールに合わないところができている。違反の一言は、違反がしばらく続いたときに出す側が出す。
+ * - `violated`: 最後の手が、手に入れたルールに合わなかった。違反の一言は、違反が続いたことを出す側が確かめてから出す。
  */
 export type TutorialProgress<RuleId extends string, BoardState> = {
   boardState: BoardState;
@@ -193,7 +216,8 @@ export function getTutorialSituation<
 
 /**
  * 盤面の上に出す一言。
- * 違反の一言は、切り替えの途中で一瞬だけ違反になった手で文言がちらつかないよう、出す側が違反の続いたこと（`violationSettled`）を確かめてから出す。
+ * - `entry`: 開いた場所。解き終えたときの一言を選ぶ。
+ * - `violationSettled`: 違反が続いたか。切り替えの途中で一瞬だけ違反になる手で文言がちらつかないよう、出す側が確かめる。一瞬の違反が起きないゲームは常に `true` を渡す。
  */
 export function getTutorialMessage<
   RuleId extends string,
@@ -203,10 +227,13 @@ export function getTutorialMessage<
 >(
   tutorial: Tutorial<RuleId, Step, BoardState, Action>,
   progress: TutorialProgress<RuleId, BoardState>,
-  violationSettled: boolean,
+  {
+    entry,
+    violationSettled,
+  }: { entry: TutorialEntry; violationSettled: boolean },
 ): TutorialMessage {
   if (progress.phase === "solved" || progress.phase === "completed") {
-    return tutorial.completion;
+    return tutorial.completion[entry];
   }
   const situation = getTutorialSituation(tutorial, progress);
   if (progress.violated && violationSettled) {
