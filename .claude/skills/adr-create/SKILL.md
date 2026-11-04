@@ -3,7 +3,7 @@ name: adr-create
 description: >
   This skill should be used when the user asks to "/adr-create", "ADR を作成", "新規 ADR",
   "意思決定を記録", "ADR 起票", "MADR で書く", "decision を残したい",
-  "なぜそう決めたか残す", "create ADR", "record a decision", "write a decision record".
+  "create ADR", "record a decision", "write a decision record".
   Creates a new ADR (Any Decision Record) under docs/adr/, assigns the next NNNN sequence
   number, and appends a row to docs/adr/index.csv with a searchable summary. Optional
   argument is a short Japanese ADR title; the filename uses an ASCII slug.
@@ -13,7 +13,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(date *)
 
 # adr-create
 
-pa-zzleの重要な意思決定を MADR v3 ベースの ADR として作成する Skill。アーキテクチャ、実行環境、データ契約、公開境界、運用、ワークフローなど、将来判断理由を再評価する価値がある決定を対象にする。
+pa-zzleの重要な意思決定を MADR v3 ベースの ADR として作成する Skill。アーキテクチャ、実行環境、データ契約、公開境界、運用、ワークフローなど、将来の意思決定を揃える価値がある、プロジェクト全体（ゲームをまたぐ）の決定を対象にする。
 
 ## 起動
 
@@ -28,13 +28,14 @@ pa-zzleの重要な意思決定を MADR v3 ベースの ADR として作成す�
 
 - `docs/adr/README.md` と `docs/adr/index.csv` が存在することを確認する。
 - どちらかがなければ ADR 運用基盤が不完全として停止する。
-- `docs/adr/README.md` を Read し、ADR と現在仕様を混同しないことを確認する。
+- `docs/adr/README.md` を Read し、ADR と今の決まりの正本を混同しないことを確認する。
 
 ### 2. ADR にするべき判断か確認
 
 - 単発バグ修正、局所的リファクタリング、誤字修正、単純なデータ追加であれば ADR を作らず、commit / PR 履歴で十分と判断する。
-- 技術・実行環境・契約・公開境界・横断運用など、複数案の比較や将来の再評価価値がある判断なら続行する。
-- ADR は現在仕様の代替ではない。決定によって現在仕様が変わる場合、該当するコードや文書の更新も必要であることを作業結果に明示する。
+- 1つのゲームに閉じた決定は ADR にしない。決まりの Why / Why not は該当する文書に書くので、それだけを残すための ADR も作らない。
+- 技術・実行環境・契約・公開境界・横断運用など、プロジェクト全体にかかり、複数案の比較や将来の意思決定を揃える価値がある判断なら続行する。
+- ADR は今の決まりの代替ではない。決定によって今の決まりが変わる場合、該当するコードや文書の更新も必要であることを作業結果に明示する。
 
 ### 3. 連番採番
 
@@ -83,20 +84,24 @@ pa-zzleの重要な意思決定を MADR v3 ベースの ADR として作成す�
 
 - ADR 本文の `status` / `date` / title と index.csv 行が一致することを確認する。
 - 本文 `要約` と CSV `summary` が同一文字列であることを確認する。
-- 同じ論点の既存 ADR がある場合、置き換えなのか補完なのかを確認する。置き換えなら旧 ADR の status を勝手に変更せず、必要な supersede 操作をユーザーへ提示する。
+- 同じ論点の既存 ADR がある場合、置き換えなのか補完なのかを確認する。置き換えなら旧 ADR を自動で書き換えず、`docs/adr/README.md` の「置き換え」に沿った次の操作をユーザーへ提示する。
+  - 全体を置き換える場合: 旧 ADR の `status` と index.csv の status を `superseded by ADR-<NNNN>` にする。
+  - 一部を置き換える場合: 旧 ADR の `status` は変えず、front matter の `partially_superseded_by` に新 ADR の ID を足し、表題の直後に置き換えた部分を明記する。
+- 置き換える場合は、新 ADR の本文に、どの ADR のどの部分を置き換えるかを書く。
 
 ### 10. 報告
 
 - 作成した ADR パス
 - index.csv に追記した行
 - status
-- 現在仕様側で別途更新が必要なコード・文書があればその候補
+- 置き換えがある場合は、旧 ADR に必要な操作（`status` または `partially_superseded_by` と注記）
+- 今の決まりの側で別途更新が必要なコード・文書があればその候補
 - `proposed` の場合は残っている判断点
 
 ## 参照する真実情報
 
 - `assets/adr-template.md` — ADR 本文テンプレート
-- `references/madr-authoring-rules.md` — 執筆・命名・CSV・現在仕様との分離ルール
+- `references/madr-authoring-rules.md` — 執筆・命名・CSV・今の決まりとの分離ルール
 - `docs/adr/README.md` — ADR 運用方針と status 定義
 - `docs/adr/index.csv` — ADR 一覧
 - `docs/adr/ADR-*.md` — 採番・既存判断確認対象
@@ -107,6 +112,6 @@ pa-zzleの重要な意思決定を MADR v3 ベースの ADR として作成す�
 - 起動 context: inline。
 - `index.csv` への追記を省略しない。
 - 本文 `要約` と CSV `summary` を別々の文章にしない。
-- ADR を現在仕様の正本として扱わない。
-- 既存 ADR の status を自動で書き換えない。
+- ADR を今の決まりの正本として扱わない。
+- 既存 ADR の `status`・`partially_superseded_by`・置き換えの注記を自動で書き換えない。
 - 自動コミット / 自動 PR は作成しない。
