@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import type { TapHandlers } from "@/components/touch-tap";
 import type {
   ReflectionClue,
@@ -7,6 +7,8 @@ import type {
   ReflectionSide,
 } from "@/games/reflection/puzzle/laser";
 import { getReflectionClueGridPosition } from "@/games/reflection/ui/board/board-geometry";
+import type { ReflectionCue } from "@/games/reflection/ui/board/cue";
+import { ReflectionCueLayer } from "@/games/reflection/ui/board/ReflectionCueLayer";
 import { ReflectionOutcomeMark } from "@/games/reflection/ui/board/ReflectionOutcomeMark";
 import { formatReflectionEntry } from "@/games/reflection/ui/format-entry";
 import { reflectionOutcomeLabels } from "@/games/reflection/ui/outcome-label";
@@ -33,6 +35,8 @@ type ReflectionClueButtonProps = {
   /** 押したときの受け口。タッチは押した位置のボタンで受ける（`useTouchTap`）。 */
   selectHandlers: TapHandlers;
   onFocus: (key: string) => void;
+  /** この外周ヒントに重ねる、チュートリアルの印・覆いから抜く所。 */
+  cues?: readonly ReflectionCue[];
 };
 
 /**
@@ -74,6 +78,7 @@ export function ReflectionClueButton({
   onElementChange,
   selectHandlers,
   onFocus,
+  cues = [],
 }: ReflectionClueButtonProps) {
   const { row, column } = getReflectionClueGridPosition(size, entry);
   // 一致しているときは緑の地で目標と同じと分かるので、今のマスの数は出さない。
@@ -83,6 +88,7 @@ export function ReflectionClueButton({
       ? outsideLaserCountClassNames[entry.side]
       : null;
   const insideLaserCount = outsideCountClassName === null ? laserCount : null;
+  const spotlit = cues.some((cue) => cue.kind === "spotlight");
   const buttonRef = useCallback(
     (element: HTMLButtonElement | null) => onElementChange(focusKey, element),
     [focusKey, onElementChange],
@@ -122,6 +128,15 @@ export function ReflectionClueButton({
           reflectionToneClassNames.clueMatchSurfaceInteractive,
           !matched && "invisible",
         )}
+      />
+      {/* 印の線は一致の地に隠れないよう地より上に、数字と結果の形より下に重ねる。 */}
+      <ReflectionCueLayer
+        cues={cues}
+        place={
+          entry.side === "left" || entry.side === "right"
+            ? "row-clue"
+            : "column-clue"
+        }
       />
       <span
         className={cn(
@@ -172,6 +187,8 @@ export function ReflectionClueButton({
           )}
         >
           {laserCount}
+          {/* 外へ出した今のマスの数も外周ヒントの一部なので、外周ヒントと一緒に覆いから抜く。 */}
+          <TutorialSpotlight active={spotlit} className="inset-0" />
         </span>
       ) : null}
     </button>
