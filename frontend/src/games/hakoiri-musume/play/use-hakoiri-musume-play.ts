@@ -2,7 +2,10 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { HakoiriMusumeDifficulty } from "@/games/hakoiri-musume/difficulty";
 import type { HakoiriMusumeProblemIdentity } from "@/games/hakoiri-musume/problem/problem";
-import type { HakoiriMusumePooledProblem } from "@/games/hakoiri-musume/problem/problem-pool";
+import type {
+  HakoiriMusumePooledProblem,
+  HakoiriMusumeWorkload,
+} from "@/games/hakoiri-musume/problem/problem-pool";
 import { selectHakoiriMusumeProblemForDifficulty } from "@/games/hakoiri-musume/problem-selection";
 import type {
   HakoiriMusumePiece,
@@ -40,24 +43,25 @@ import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
-export type HakoiriMusumeResult = HakoiriMusumeSessionResult & {
-  optimalMoveCount: number;
-  moveDelta: number;
-  speedRule: SpeedScoreRule;
-  timeDeltaMs: number;
-  score: HakoiriMusumePlayScore;
-};
+export type HakoiriMusumeResult = HakoiriMusumeSessionResult &
+  HakoiriMusumeWorkload & {
+    moveDelta: number;
+    speedRule: SpeedScoreRule;
+    timeDeltaMs: number;
+    score: HakoiriMusumePlayScore;
+  };
 
-/** 完了したプレイの事実と問題の最短手数から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+/** 完了したプレイの事実と問題の作業の量から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createHakoiriMusumeResult(
   sessionResult: HakoiriMusumeSessionResult,
-  optimalMoveCount: number,
+  workload: HakoiriMusumeWorkload,
 ): HakoiriMusumeResult {
-  const speedRule = calculateHakoiriMusumeSpeedScoreRule({ optimalMoveCount });
+  const { optimalMoveCount } = workload;
+  const speedRule = calculateHakoiriMusumeSpeedScoreRule(workload);
 
   return {
     ...sessionResult,
-    optimalMoveCount,
+    ...workload,
     moveDelta: calculateHakoiriMusumeMoveDelta({
       moveCount: sessionResult.moveCount,
       optimalMoveCount,
@@ -67,7 +71,7 @@ export function createHakoiriMusumeResult(
     score: calculateHakoiriMusumePlayScore({
       elapsedMs: sessionResult.elapsedMs,
       moveCount: sessionResult.moveCount,
-      optimalMoveCount,
+      ...workload,
     }),
   };
 }
@@ -106,19 +110,19 @@ export type HakoiriMusumePlay = GamePlay<
 type HakoiriMusumePlayState = {
   session: HakoiriMusumeSession;
   problemIdentity: HakoiriMusumeProblemIdentity;
-  optimalMoveCount: number;
+  workload: HakoiriMusumeWorkload;
   progress: GameProgress;
   stepNotice: HakoiriMusumeStepNotice | null;
 };
 
 function createPlayState(
-  { problem, identity, optimalMoveCount }: HakoiriMusumePooledProblem,
+  { problem, identity, workload }: HakoiriMusumePooledProblem,
   startedAt: number,
 ): HakoiriMusumePlayState {
   return {
     session: createHakoiriMusumeSession(problem, startedAt),
     problemIdentity: identity,
-    optimalMoveCount,
+    workload,
     progress: "playing",
     stepNotice: null,
   };
@@ -186,7 +190,7 @@ export function useHakoiriMusumePlay(
       Date.now(),
     ),
   );
-  const { session, problemIdentity, optimalMoveCount } = play;
+  const { session, problemIdentity, workload } = play;
   const elapsedMs = useSessionElapsedMs(session);
   const nextNoticeId = useRef(0);
 
@@ -240,9 +244,9 @@ export function useHakoiriMusumePlay(
   const result = useMemo(() => {
     const sessionResult = getHakoiriMusumeSessionResult(session);
     return sessionResult
-      ? createHakoiriMusumeResult(sessionResult, optimalMoveCount)
+      ? createHakoiriMusumeResult(sessionResult, workload)
       : null;
-  }, [optimalMoveCount, session]);
+  }, [workload, session]);
 
   return {
     difficulty,
@@ -258,7 +262,7 @@ export function useHakoiriMusumePlay(
     moveCount: session.moveCount,
     undoCount: session.undoCount,
     restartCount: session.restartCount,
-    optimalMoveCount,
+    optimalMoveCount: workload.optimalMoveCount,
     stepNotice: play.stepNotice,
     canUndo: canUndoHakoiriMusumeSession(session),
     canRestart: canRestartHakoiriMusumeSession(session),

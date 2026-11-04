@@ -51,7 +51,7 @@ function formatUsage(): string {
 Options:
   --seed <seed>     並べ替えの seed (default: ${defaultSeed})
   --cache <dir>     駒の組ごとの結果を置くディレクトリ (default: ${defaultCacheDirectory})
-  --verify          問題集を書かず、今の問題集の全問を分析し直して、レベル・最短手数・近い問題が無いことを確かめる`;
+  --verify          問題集を書かず、今の問題集の全問を分析し直して、レベル・最短手数・準備の長さと、近い問題が無いことを確かめる`;
 }
 
 const defaultSeed = "20261104";
@@ -277,6 +277,7 @@ function generate(seed: string, cacheDirectory: string) {
     levels[difficulty] = problems.map(({ board, features }) => [
       board,
       features.optimalMoveCount,
+      features.preparationLength,
     ]);
     const pooledHistograms = Object.fromEntries(
       featureKeys.map((key) => {
@@ -497,7 +498,7 @@ function verify() {
     const { graph, measures, emptyCellCount } = space;
     const indicesByLevel = createLevelRecord<number[]>(() => []);
     for (const { difficulty, entry } of entries) {
-      const [board, optimalMoveCount] = entry;
+      const [board, optimalMoveCount, preparationLength] = entry;
       const index = graph.indexByBoard.get(board);
       if (index === undefined) {
         failures.push(`${board}: not a board of ${key}`);
@@ -517,6 +518,11 @@ function verify() {
       if (measures.optimal[index] !== optimalMoveCount) {
         failures.push(
           `${board}: optimal ${measures.optimal[index]} != ${optimalMoveCount}`,
+        );
+      }
+      if (measures.preparation[index] !== preparationLength) {
+        failures.push(
+          `${board}: preparation ${measures.preparation[index]} != ${preparationLength}`,
         );
       }
       if (

@@ -12,10 +12,12 @@ import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
  * 問題集の1問。
  * - `board`: 始めたときの盤面の20文字。問題の identity の `seed` で、生成器を走らせずに問題を復元できる。
  * - `optimalMoveCount`: 娘を出口の前へ運ぶ最短手数（同じ駒を続けて動かした移動を1手と数える）。評価の基準に使う。
+ * - `preparationLength`: 準備の長さ（難易度の分析と同じ量）。速さの基準時間に使う。
  */
 export type HakoiriMusumeProblemPoolEntry = readonly [
   board: string,
   optimalMoveCount: number,
+  preparationLength: number,
 ];
 
 export type HakoiriMusumeProblemPool = {
@@ -26,15 +28,25 @@ export type HakoiriMusumeProblemPool = {
   >;
 };
 
+/**
+ * 問題の作業の量。評価の基準に使い、問題集と記録の事実に残るので、問題集から外れた記録でも評価し直せる。
+ * - `optimalMoveCount`: 娘を出口の前へ運ぶ最短手数。
+ * - `preparationLength`: 準備の長さ（難易度の分析と同じ量）。
+ */
+export type HakoiriMusumeWorkload = {
+  optimalMoveCount: number;
+  preparationLength: number;
+};
+
 /** 問題集の1項目を読み解いた値。問題は identity から復元する。 */
 type HakoiriMusumeDecodedPoolEntry = {
   identity: HakoiriMusumeProblemIdentity;
-  optimalMoveCount: number;
+  workload: HakoiriMusumeWorkload;
 };
 
-/** 問題集から復元した1問。評価の基準になる最短手数を伴う。 */
+/** 問題集から復元した1問。評価の基準になる作業の量を伴う。 */
 export type HakoiriMusumePooledProblem = HakoiriMusumeIdentifiedProblem & {
-  optimalMoveCount: number;
+  workload: HakoiriMusumeWorkload;
 };
 
 const problemPool = problemPoolJson as unknown as HakoiriMusumeProblemPool;
@@ -42,6 +54,7 @@ const problemPool = problemPoolJson as unknown as HakoiriMusumeProblemPool;
 export function decodeHakoiriMusumePoolEntry([
   board,
   optimalMoveCount,
+  preparationLength,
 ]: HakoiriMusumeProblemPoolEntry): HakoiriMusumeDecodedPoolEntry {
   return {
     identity: {
@@ -49,7 +62,7 @@ export function decodeHakoiriMusumePoolEntry([
       seed: board,
       conditions: {},
     },
-    optimalMoveCount,
+    workload: { optimalMoveCount, preparationLength },
   };
 }
 
@@ -57,8 +70,8 @@ export function decodeHakoiriMusumePoolEntry([
 export function restoreHakoiriMusumePoolEntry(
   entry: HakoiriMusumeProblemPoolEntry,
 ): HakoiriMusumePooledProblem {
-  const { identity, optimalMoveCount } = decodeHakoiriMusumePoolEntry(entry);
-  return { ...restoreHakoiriMusumeProblem(identity), optimalMoveCount };
+  const { identity, workload } = decodeHakoiriMusumePoolEntry(entry);
+  return { ...restoreHakoiriMusumeProblem(identity), workload };
 }
 
 export function listHakoiriMusumePoolEntries(

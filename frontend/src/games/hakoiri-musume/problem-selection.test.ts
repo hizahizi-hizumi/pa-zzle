@@ -27,13 +27,14 @@ describe("selectHakoiriMusumeProblemForDifficulty", () => {
 
 describe("selectHakoiriMusumeProblemById", () => {
   const [problemId] = listHakoiriMusumePoolProblemIds("1");
-  const [board, optimalMoveCount] = listHakoiriMusumePoolEntries("1")[0]!;
+  const [board, optimalMoveCount, preparationLength] =
+    listHakoiriMusumePoolEntries("1")[0]!;
 
-  test("問題 ID で引いた問題を最短手数とともに復元すること", () => {
+  test("問題 ID で引いた問題を作業の量とともに復元すること", () => {
     const selected = selectHakoiriMusumeProblemById("1", problemId!);
 
     expect(selected?.identity.seed).toBe(board);
-    expect(selected?.optimalMoveCount).toBe(optimalMoveCount);
+    expect(selected?.workload).toEqual({ optimalMoveCount, preparationLength });
   });
 
   test("別の難易度の問題 ID は引けないこと", () => {

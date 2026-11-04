@@ -1,3 +1,4 @@
+import type { HakoiriMusumeWorkload } from "@/games/hakoiri-musume/problem/problem-pool";
 import {
   calculateLinearScore,
   calculateSpeedScore,
@@ -24,10 +25,15 @@ export const HAKOIRI_MUSUME_SCORE_MAXIMUMS = {
  */
 export const HAKOIRI_MUSUME_EFFICIENCY_SLACK_MOVES = 5;
 
-/** 基準時間の係数。始めの盤面を見て、娘を通す道とよける駒の見当をつける時間。 */
-export const HAKOIRI_MUSUME_SPEED_READING_MS = 15_000;
-/** 基準時間の係数。最短1手ごとの、次によける駒を選んでなぞる時間。 */
-export const HAKOIRI_MUSUME_SPEED_PER_OPTIMAL_MOVE_MS = 4_000;
+/** 基準時間の係数。始めの盤面を見て、娘を通す道の見当をつける時間。 */
+export const HAKOIRI_MUSUME_SPEED_READING_MS = 10_000;
+/** 基準時間の係数。最短1手ごとの、駒を選んでなぞる時間。 */
+export const HAKOIRI_MUSUME_SPEED_PER_OPTIMAL_MOVE_MS = 2_500;
+/**
+ * 基準時間の係数。準備の長さ1手ごとの、娘を進められないあいだによける駒と順を頭の中でつなぐ時間。
+ * 準備の長い問題は、最短手数が同じでも1手ごとに先を読む時間が長い。
+ */
+export const HAKOIRI_MUSUME_SPEED_PER_PREPARATION_MOVE_MS = 2_500;
 /** 速さが0点になる時間の、基準時間に対する倍率。 */
 export const HAKOIRI_MUSUME_SPEED_ZERO_SCORE_RATIO = 2;
 
@@ -35,9 +41,7 @@ export type HakoiriMusumePlayScore = PlayScore<
   keyof typeof HAKOIRI_MUSUME_SCORE_MAXIMUMS
 >;
 
-type HakoiriMusumeSpeedFullScoreInput = {
-  optimalMoveCount: number;
-};
+type HakoiriMusumeSpeedFullScoreInput = HakoiriMusumeWorkload;
 
 type HakoiriMusumeTimeDeltaInput = HakoiriMusumeSpeedFullScoreInput & {
   elapsedMs: number;
@@ -53,15 +57,17 @@ type HakoiriMusumePlayScoreInput = HakoiriMusumeTimeDeltaInput &
   HakoiriMusumeMoveDeltaInput;
 
 /**
- * 問題ごとの速さ満点の基準時間。最短手数という問題の作業の量だけから決め、難易度そのものは使わない。
- * 最短手数は記録の事実に残るので、問題集から外れた記録でも求め直せる。
+ * 問題ごとの速さ満点の基準時間。最短手数と準備の長さという問題の作業の量だけから決め、難易度そのものは使わない。
  */
 export function calculateHakoiriMusumeSpeedFullScoreMs({
   optimalMoveCount,
+  preparationLength,
 }: HakoiriMusumeSpeedFullScoreInput): number {
   return (
     HAKOIRI_MUSUME_SPEED_READING_MS +
-    Math.max(0, optimalMoveCount) * HAKOIRI_MUSUME_SPEED_PER_OPTIMAL_MOVE_MS
+    Math.max(0, optimalMoveCount) * HAKOIRI_MUSUME_SPEED_PER_OPTIMAL_MOVE_MS +
+    Math.max(0, preparationLength) *
+      HAKOIRI_MUSUME_SPEED_PER_PREPARATION_MOVE_MS
   );
 }
 
@@ -114,8 +120,9 @@ function calculateHakoiriMusumeEfficiencyScore({
 export function calculateHakoiriMusumePlayScore({
   elapsedMs,
   moveCount,
-  optimalMoveCount,
+  ...workload
 }: HakoiriMusumePlayScoreInput): HakoiriMusumePlayScore {
+  const { optimalMoveCount } = workload;
   const efficiency = calculateHakoiriMusumeEfficiencyScore({
     moveCount,
     optimalMoveCount,
@@ -123,7 +130,7 @@ export function calculateHakoiriMusumePlayScore({
   const speed = calculateSpeedScore(
     HAKOIRI_MUSUME_SCORE_MAXIMUMS.speed,
     elapsedMs,
-    calculateHakoiriMusumeSpeedScoreRule({ optimalMoveCount }),
+    calculateHakoiriMusumeSpeedScoreRule(workload),
   );
 
   return sumPlayScore({ efficiency, speed });

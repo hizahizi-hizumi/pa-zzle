@@ -9,6 +9,7 @@ import {
   HAKOIRI_MUSUME_EFFICIENCY_SLACK_MOVES,
   HAKOIRI_MUSUME_SCORE_MAXIMUMS,
   HAKOIRI_MUSUME_SPEED_PER_OPTIMAL_MOVE_MS,
+  HAKOIRI_MUSUME_SPEED_PER_PREPARATION_MOVE_MS,
   HAKOIRI_MUSUME_SPEED_READING_MS,
 } from "@/games/hakoiri-musume/score";
 
@@ -39,6 +40,12 @@ export function getHakoiriMusumeScoreCriteria(
             count: result.optimalMoveCount,
             unit: "手",
             durationMsPerUnit: HAKOIRI_MUSUME_SPEED_PER_OPTIMAL_MOVE_MS,
+          },
+          {
+            label: "準備",
+            count: result.preparationLength,
+            unit: "手",
+            durationMsPerUnit: HAKOIRI_MUSUME_SPEED_PER_PREPARATION_MOVE_MS,
           },
         ],
       }),

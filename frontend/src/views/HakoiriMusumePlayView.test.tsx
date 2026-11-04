@@ -157,11 +157,11 @@ function findRoute(
   throw new Error(`No single move reaches ${target}`);
 }
 
-const [problemBoard, problemOptimalMoveCount] =
-  listHakoiriMusumePoolEntries("1")[0]!;
+const problemEntry = listHakoiriMusumePoolEntries("1")[0]!;
+const [problemBoard, problemOptimalMoveCount, problemPreparationLength] =
+  problemEntry;
 const problemId = createProblemId(
-  decodeHakoiriMusumePoolEntry([problemBoard, problemOptimalMoveCount])
-    .identity,
+  decodeHakoiriMusumePoolEntry(problemEntry).identity,
 );
 const problemPath = `/puzzles/hakoiri-musume/play/1?problem=${problemId}`;
 const solution = findSolutionSteps(problemBoard);
@@ -240,6 +240,7 @@ describe("HakoiriMusumePlayView", () => {
             undoCount: 0,
             restartCount: 0,
             optimalMoveCount: problemOptimalMoveCount,
+            preparationLength: problemPreparationLength,
           },
         },
       });

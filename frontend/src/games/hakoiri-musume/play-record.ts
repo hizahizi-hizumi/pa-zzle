@@ -34,11 +34,12 @@ type HakoiriMusumePlayPerformance = {
   undoCount: number;
   restartCount: number;
   optimalMoveCount: number;
+  preparationLength: number;
 };
 
 /**
  * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
- * - `performance`: そのプレイで起きた事実と、問題集から外れても評価できるよう残す最短手数。
+ * - `performance`: そのプレイで起きた事実と、問題集から外れても評価できるよう残す問題の作業の量（最短手数と準備の長さ）。
  *   評価点・評価段階・基準との差は保存せず、現在の評価規則で導出する。
  */
 type HakoiriMusumePlayRecordPayload = {
@@ -73,7 +74,9 @@ function isHakoiriMusumePerformance(
     value.undoCount <= value.moveCount &&
     isNonNegativeInteger(value.restartCount) &&
     isPositiveInteger(value.optimalMoveCount) &&
-    value.optimalMoveCount <= value.moveCount
+    value.optimalMoveCount <= value.moveCount &&
+    isNonNegativeInteger(value.preparationLength) &&
+    value.preparationLength < value.optimalMoveCount
   );
 }
 
@@ -127,6 +130,7 @@ export function createHakoiriMusumePlayRecord({
         undoCount: result.undoCount,
         restartCount: result.restartCount,
         optimalMoveCount: result.optimalMoveCount,
+        preparationLength: result.preparationLength,
       },
     },
   };
@@ -154,11 +158,14 @@ export function restoreHakoiriMusumeRecordedResult(
   }
 
   const { difficulty, problemIdentity, performance } = record.payload;
-  const { optimalMoveCount, ...sessionResult } = performance;
+  const { optimalMoveCount, preparationLength, ...sessionResult } = performance;
   return {
     difficulty,
     problemIdentity,
-    result: createHakoiriMusumeResult(sessionResult, optimalMoveCount),
+    result: createHakoiriMusumeResult(sessionResult, {
+      optimalMoveCount,
+      preparationLength,
+    }),
   };
 }
 
@@ -167,11 +174,13 @@ function getHakoiriMusumePlayRecordScore(record: PlayRecord): number | null {
     return null;
   }
 
-  const { elapsedMs, moveCount, optimalMoveCount } = record.payload.performance;
+  const { elapsedMs, moveCount, optimalMoveCount, preparationLength } =
+    record.payload.performance;
   return calculateHakoiriMusumePlayScore({
     elapsedMs,
     moveCount,
     optimalMoveCount,
+    preparationLength,
   }).total;
 }
 
@@ -182,8 +191,13 @@ function getHakoiriMusumePlayRecordTimeDelta(
     return null;
   }
 
-  const { elapsedMs, optimalMoveCount } = record.payload.performance;
-  return calculateHakoiriMusumeTimeDeltaMs({ elapsedMs, optimalMoveCount });
+  const { elapsedMs, optimalMoveCount, preparationLength } =
+    record.payload.performance;
+  return calculateHakoiriMusumeTimeDeltaMs({
+    elapsedMs,
+    optimalMoveCount,
+    preparationLength,
+  });
 }
 
 function getHakoiriMusumePlayRecordMoveDelta(

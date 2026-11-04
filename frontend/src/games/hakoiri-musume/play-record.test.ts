@@ -13,7 +13,7 @@ const {
   getHakoiriMusumePlayRecordTimeDelta,
 } = _private;
 
-// 合意の易しい例（最短13手）。基準時間は 15秒 + 13手 × 4秒 = 67秒。
+// 合意の易しい例（最短13手・準備6手）。基準時間は 10秒 + 13手 × 2.5秒 + 6手 × 2.5秒 = 57.5秒。
 const seed = "vAAvwAAwv..vwhiws..s";
 const record = createHakoiriMusumePlayRecord({
   difficulty: "1",
@@ -26,6 +26,7 @@ const record = createHakoiriMusumePlayRecord({
     undoCount: 2,
     restartCount: 1,
     optimalMoveCount: 13,
+    preparationLength: 6,
   },
 });
 
@@ -39,7 +40,7 @@ function withPerformance(performance: Record<string, unknown>): PlayRecord {
   };
 }
 
-test("評価値を保存せず評価元の事実と最短手数だけを保存用記録へ写すこと", () => {
+test("評価値を保存せず評価元の事実と問題の作業の量だけを保存用記録へ写すこと", () => {
   const performance = record.payload.performance;
 
   expect(record.id).toBe(`hakoiri-musume:1000:81000:${seed}`);
@@ -49,6 +50,7 @@ test("評価値を保存せず評価元の事実と最短手数だけを保存�
     undoCount: 2,
     restartCount: 1,
     optimalMoveCount: 13,
+    preparationLength: 6,
   });
 });
 
@@ -57,8 +59,8 @@ test("保存した事実から現在のプレイ評価と比較指標を導出�
   const timeDelta = getHakoiriMusumePlayRecordTimeDelta(record);
   const moveDelta = getHakoiriMusumePlayRecordMoveDelta(record);
 
-  expect(score).toBe(74);
-  expect(timeDelta).toBe(13_000);
+  expect(score).toBe(68);
+  expect(timeDelta).toBe(22_500);
   expect(moveDelta).toBe(7);
 });
 
@@ -74,6 +76,8 @@ describe("isHakoiriMusumePlayRecord", () => {
     ["最短手数より少ない手数", withPerformance({ moveCount: 12 })],
     ["手数を超える待った", withPerformance({ undoCount: 21 })],
     ["負の時間", withPerformance({ elapsedMs: -1 })],
+    ["最短手数に届く準備の長さ", withPerformance({ preparationLength: 13 })],
+    ["準備の長さが無い", withPerformance({ preparationLength: undefined })],
   ] as const;
 
   test.each(invalidCases)(
@@ -93,9 +97,9 @@ describe("restoreHakoiriMusumeRecordedResult", () => {
     expect(restored).toMatchObject({
       difficulty: "1",
       problemIdentity: record.payload.problemIdentity,
-      result: { moveCount: 20, moveDelta: 7, timeDeltaMs: 13_000 },
+      result: { moveCount: 20, moveDelta: 7, timeDeltaMs: 22_500 },
     });
-    expect(restored?.result.score.total).toBe(74);
+    expect(restored?.result.score.total).toBe(68);
   });
 
   describe("別の生成器の版の記録の場合", () => {

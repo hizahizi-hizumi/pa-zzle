@@ -25,7 +25,7 @@ const problem: HakoiriMusumePooledProblem = {
     seed: "v..vwssw.AAv.AAws...",
     conditions: {},
   },
-  optimalMoveCount: 1,
+  workload: { optimalMoveCount: 1, preparationLength: 0 },
 };
 
 describe("useHakoiriMusumePlay", () => {

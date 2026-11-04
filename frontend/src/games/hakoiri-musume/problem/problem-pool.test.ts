@@ -34,15 +34,16 @@ describe("listHakoiriMusumePoolEntries", () => {
 });
 
 describe("restoreHakoiriMusumePoolEntry", () => {
-  test("全項目の盤面を問題として読み、最短手数を添えること", () => {
+  test("全項目の盤面を問題として読み、最短手数と準備の長さを添えること", () => {
     const restored = poolEntries.map(({ entry }) =>
       restoreHakoiriMusumePoolEntry(entry),
     );
 
     expect(
       restored.every(
-        ({ optimalMoveCount }, index) =>
-          optimalMoveCount === poolEntries[index]!.entry[1],
+        ({ workload }, index) =>
+          workload.optimalMoveCount === poolEntries[index]!.entry[1] &&
+          workload.preparationLength === poolEntries[index]!.entry[2],
       ),
     ).toBe(true);
   });
@@ -53,13 +54,16 @@ describe("restoreHakoiriMusumePoolEntry", () => {
       listHakoiriMusumePoolEntries("5")[0]!,
     );
 
-    test("分析し直すと、問題集の最短手数とレベルになること", () => {
+    test("分析し直すと、問題集の最短手数・準備の長さとレベルになること", () => {
       const analysis = analyzeHakoiriMusumeDifficulty(pooled.problem);
       const assessment = assessHakoiriMusumeDifficulty(analysis);
 
       expect(analysis).toMatchObject({
         status: "analyzed",
-        features: { optimalMoveCount: pooled.optimalMoveCount },
+        features: {
+          optimalMoveCount: pooled.workload.optimalMoveCount,
+          preparationLength: pooled.workload.preparationLength,
+        },
       });
       expect(assessment).toEqual({ status: "classified", difficulty: "5" });
     });
