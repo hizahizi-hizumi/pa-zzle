@@ -6,6 +6,7 @@ import {
 import { RecordedHitofudePuzzleResult } from "@/game-catalog/hitofude-puzzle/RecordedHitofudePuzzleResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/hitofude-puzzle/assets/pictogram.svg?raw";
+import pictogramShowcaseSvg from "@/games/hitofude-puzzle/assets/pictogram-showcase.svg?raw";
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import {
   hitofudePuzzlePlayRecordDefinition,
@@ -28,6 +29,7 @@ export const hitofudePuzzleCatalogEntry = {
   id: hitofudePuzzlePlayRecordDefinition.gameId,
   name: HITOFUDE_PUZZLE_DISPLAY_NAME,
   pictogramSvg,
+  pictogramShowcaseSvg,
   homePath: "/puzzles/hitofude-puzzle",
   playPath: "/puzzles/hitofude-puzzle/play/:difficulty",
   playRecordDisplay: hitofudePuzzlePlayRecordDisplay,
