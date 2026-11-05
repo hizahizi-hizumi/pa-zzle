@@ -78,7 +78,7 @@ frontend/src/games/
 - 問題に付随情報を添えた型は、役割で名前と置き場所を決める。
   - `<Game>IdentifiedProblem`（`problem/problem.ts`）: `problem` と `identity` だけを持つ。
   - `<Game>GeneratedProblem`（`problem/generator.ts`）: 生成器が返す問題。生成時の解析結果や下流で必要な派生情報を添える。
-  - `<Game>PooledProblem`（`problem/problem-pool.ts`）: 問題集から復元した問題。問題集が持つ派生情報（作業の量、最短手数など）を添える。問題を含まない問題集項目の読み解き結果は `<Game>DecodedPoolEntry` と呼ぶ。
+  - `<Game>PooledProblem`（`problem/problem-pool.ts`）: 問題集から復元した問題。問題集が持つ派生情報（作業の量、最短手数など）を添える。問題を含まない問題集項目の読み解き結果は `<Game>DecodedPoolEntry` と呼ぶ。図鑑に渡す問題の特徴（`<Game>ProblemFeatures` と、それを求める関数・軸）も、問題集の項目から求める派生情報としてここに置く。名前と値の書き方は表示なので `ui/problem-features.ts` に置く。
 - `problem/problem.ts` は、今の生成器で扱える identity かを確かめる `is<Game>ProblemIdentity`、記録の identity として読めるかを確かめる `is<Game>RecordedProblemIdentity`、問題の形を確かめる `assert<Game>Problem` を置く。`session/` は問題を受け取るときに `assert<Game>Problem` で確かめる。
 - 問題生成の乱数は `games/problem-seed.ts` の `ProblemRandom` で受け、並べ替えは `shuffleProblemValues` を使う。
 - 解探索の手順や探索履歴は生成内部に閉じる。下流で必要なら `optimalMoveCount` のような意味のある派生値へ縮約する。
@@ -140,6 +140,7 @@ frontend/src/games/
 ## 効果音
 
 - ゲームの効果音は題材から作った音声ファイルを `assets/` に同梱し、`@/lib/sound-effects` の `playSound` で鳴らす。音の中身をコードで合成しない。回数の多い操作の音には `REPEATED_SOUND_VARIATION` を渡す。
+- 音声ファイルは FLAC にする。アプリはタイトルで、同梱した FLAC を `frontend/src/frontend.tsx` の `import.meta.glob` ですべて読み込んでから入る（SPEC-022）。ほかの形式の音は前もって読み込まれず、FLAC の合計の大きさは入るまでの待ちに効く。
 - プレイ画面は、盤面操作の音を `games/play-sound-effects.ts` の `useOperationSound` で、プレイフックが返す `id` 付きの操作の知らせから鳴らす。クリア音は `useClearSound` で完成演出の始まりに鳴らす。
 - 動きを減らす設定では、不成立の動きが出ず画面が何も変わらない操作の音と、完成演出が無くすぐ結果へ進むときのクリア音を鳴らさない。完成した盤面を保持して見せるゲームだけ、その姿に合わせたクリア音を `useClearSound` へ渡す。
 - 結果を受け取る瞬間の報酬の音はアプリが `usePlayableGame` で鳴らすので、ゲームは鳴らさない。
@@ -222,3 +223,5 @@ frontend/src/game-catalog/
 2. `game-catalog/<game>/` に `Playable<Game>.tsx`、`Recorded<Game>Result.tsx`、`<game>-catalog-entry.tsx` を置き、`game-catalog.ts` の並びへ加える。
 3. `pages/puzzles/<game>/` と、そのルートの View（ゲームのホーム・プレイ）を置く。ゲームのホームは `pages/puzzles/<game>/index.tsx` に置き、`pages/puzzles/[game]/` の動的ルートにまとめない（静的な `<game>/play/` を持つゲームでは静的な枝が優先され、ゲームのホームが開けなくなる）。
 4. `bun run --cwd frontend generate:dependency-rules` で `frontend/biome.json` の依存規則を生成し直す。規則は `src/games/` 直下のディレクトリから全ゲームに同じ形で作られ、生成結果との一致はテストで検査される。
+5. 問題集を持つゲームは、生成スクリプト `frontend/scripts/generate-<game>-problem-pool.ts`（`--verify` で全問を再検証できる）と `package.json` の scripts を置き、`frontend/biome.json` の `files.includes` で `problem-pool.json` を除外する。
+6. 一覧の並びを確かめるテスト `frontend/src/views/PuzzleSelectionView.test.tsx` に加える。

@@ -1,0 +1,435 @@
+// playtest-driver.mjs
+// 試遊のためにブラウザを開いたまま常駐し、HTTP で1操作ずつ受けて、操作のたびにビューポートを撮る。
+// 1回の node 呼び出しごとにブラウザを開き直すと盤面の状態が消えるため、常駐させる。
+//
+// 端末: iphone は Playwright の devices['iPhone 13']（390×664 = Safari の表示領域相当、タッチ、isMobile）、
+// pc は 1280×800。画像は scale: 'css'（画像の1px = CSS の1px）なので、画像から読んだ座標をそのまま tap に使える。
+//
+// 使い方:
+//   起動（背景で）: node playtest-driver.mjs serve --url <アプリの URL> --device <iphone|pc> --out <画像の出力先> --port <ポート>
+//   操作:           node playtest-driver.mjs send --port <ポート> <操作> [引数...]
+//   （serve の起動直後の send は、つながるまで最長30秒待つ）
+// 操作:
+//   goto <パス>                 アプリの URL からのパスを開く
+//   tap <x> <y>                 iphone はタッチのタップ、pc はクリック
+//   swipe <x1> <y1> <x2> <y2>   iphone はタッチのドラッグ（CDP の Input.dispatchTouchEvent）、pc はマウスのドラッグ
+//   path <x1> <y1> <x2> <y2> [<x3> <y3> ...]  折れ線をなぞる（指を離さずに角を曲がる）。iphone はタッチ、pc はマウス
+//   key <キー>                  キーを押す（Playwright のキー名: ArrowLeft、Escape、z など）
+//   trace <ミリ秒> <セレクタ> then <操作> [引数...]  セレクタに合う要素（最大20。セレクタの受け方は rect と同じ）の
+//                               位置と大きさを毎フレーム記録しながら操作を行い、ミリ秒が過ぎてから撮る
+//   frames <枚数> <間隔ミリ秒> <操作> [引数...]  操作の直後から、間隔ごとに枚数だけ撮る（拒否の揺れなど途中の動きを見る）。
+//                               最後にいつもどおり撮る
+//   scroll <dy>                 マウスホイールでページを縦にスクロールする
+//   wait <ミリ秒>               待ってから撮る
+//   shot                        撮るだけ
+//   zoom <x> <y> <幅> <高さ> [倍率]  ビューポートの矩形を倍率（既定4、1〜8）で描き直して撮る。拡大画像の (px, py) は
+//                               ビューポートの (x + px/倍率, y + py/倍率)。盤面は動かさない
+//   rect <セレクタ>             合う要素（最大20）の外接矩形を、ビューポートの座標で返す。中心をそのまま tap に使える。
+//                               セレクタは Playwright のもの（CSS、text=次の問題、role=button[name="遊ぶ"] など）
+//   save-storage <ファイル>     今のページの localStorage を JSON でファイルに書き出す（解いた記録のある状態を残す）
+//   load-storage <ファイル>     save-storage で書き出した localStorage を今のページに読み込み、ページを読み直す。
+//                               先に goto でアプリのページを開いておく
+//   quit                        ブラウザを閉じて常駐を終える（自分で起動した driver は、終わったら必ずこれで止める）
+// 返す1行: <画像のパス> t=<起動からの秒数>s scrollY=<window.scrollY> diff=<前の画像と違う画素の割合>% [scrolled=<要素>:<scrollTop>,...]
+//   diff は、前に撮ったビューポートの画像との差。0% なら画面は変わっていない（空振りの手に気づくため）。経過時間の表示だけが
+//   変わったときは小さな値になる。scrolled は、ページの中でスクロールしている要素（scrollTop が 0 でないもの）。
+//   zoom は末尾に zoom=<倍率>x。
+//   rect・save-storage・load-storage・trace・frames は、その後の行に結果を並べる（rect は1要素1行で
+//   rect <番号> x=<左> y=<上> w=<幅> h=<高さ> cx=<中心x> cy=<中心y> <要素の文字の先頭>、trace は1要素1行で
+//   trace <番号> frames=<フレーム数> dx=<最初からの横のずれの最大> dy=<縦> dw=<幅の変化の最大> dh=<高さ>、
+//   frames は1枚1行で frame <番号> <画像のパス> +<操作の後のミリ秒>ms）。quit は quit とだけ返す
+// ブラウザエラー: pageerror と console.error を <画像の出力先>/browser-errors.log に追記する。
+
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { createServer } from "node:http";
+import { createRequire } from "node:module";
+import path from "node:path";
+import { parseArgs } from "node:util";
+
+const SETTLE_MILLISECONDS = 400;
+const SWIPE_STEPS = 12;
+const HOST = "127.0.0.1";
+const SERVE_WAIT_MILLISECONDS = 30_000;
+const SERVE_RETRY_MILLISECONDS = 300;
+const DEFAULT_ZOOM = 4;
+const MAX_ZOOM = 8;
+const MAX_RECTS = 20;
+
+// playwright はリポジトリの依存に無く、環境の全体インストール（NODE_PATH や /opt/node*/lib/node_modules）から読む。
+function loadPlaywright() {
+  const globalModuleDirectories = [
+    ...(process.env.NODE_PATH ?? "").split(path.delimiter).filter(Boolean),
+    ...(existsSync("/opt") ? readdirSync("/opt", { withFileTypes: true }) : [])
+      .filter((entry) => entry.isDirectory() && entry.name.startsWith("node"))
+      .map((entry) => path.join("/opt", entry.name, "lib", "node_modules")),
+  ];
+  for (const base of [import.meta.url, ...globalModuleDirectories.map((directory) => path.join(directory, "_"))]) {
+    try {
+      return createRequire(base)("playwright");
+    } catch {}
+  }
+  console.error("ERROR: playwright が見つからない。NODE_PATH に playwright のある node_modules を指定する");
+  process.exit(2);
+}
+
+function contextOptionsFor(device, devices) {
+  if (device === "iphone") {
+    const { defaultBrowserType: _webkitOnly, ...iphone13 } = devices["iPhone 13"];
+    return iphone13;
+  }
+  if (device === "pc") return { viewport: { width: 1280, height: 800 } };
+  console.error(`ERROR: --device は iphone か pc: ${device}`);
+  process.exit(2);
+}
+
+function requireOptions(values, names) {
+  for (const name of names) {
+    if (!values[name]) {
+      console.error(`ERROR: --${name} が必要`);
+      process.exit(2);
+    }
+  }
+}
+
+async function serve(args) {
+  const { values } = parseArgs({
+    args,
+    options: {
+      url: { type: "string" },
+      device: { type: "string" },
+      out: { type: "string" },
+      port: { type: "string" },
+    },
+  });
+  requireOptions(values, ["url", "device", "out", "port"]);
+  const { chromium, devices } = loadPlaywright();
+  const baseUrl = values.url.replace(/\/$/, "");
+  const isTouch = values.device === "iphone";
+  mkdirSync(values.out, { recursive: true });
+  const errorLog = path.join(values.out, "browser-errors.log");
+
+  const browser = await chromium.launch();
+  const context = await browser.newContext(contextOptionsFor(values.device, devices));
+  const page = await context.newPage();
+  const cdp = await context.newCDPSession(page);
+  page.on("pageerror", (error) => appendFileSync(errorLog, `pageerror: ${error.message}\n`));
+  page.on("console", (message) => {
+    if (message.type() === "error") appendFileSync(errorLog, `console.error: ${message.text()}\n`);
+  });
+
+  const startedAt = Date.now();
+  let shotNumber = 0;
+
+  async function touchSwipe(x1, y1, x2, y2) {
+    const point = (x, y) => [{ x, y }];
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: point(x1, y1) });
+    for (let step = 1; step <= SWIPE_STEPS; step++) {
+      const ratio = step / SWIPE_STEPS;
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: point(x1 + (x2 - x1) * ratio, y1 + (y2 - y1) * ratio),
+      });
+    }
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  }
+
+  async function mouseSwipe(x1, y1, x2, y2) {
+    await page.mouse.move(x1, y1);
+    await page.mouse.down();
+    await page.mouse.move(x2, y2, { steps: SWIPE_STEPS });
+    await page.mouse.up();
+  }
+
+  // 折れ線の各区間を SWIPE_STEPS に刻んで動かし、指（ボタン）は最後まで離さない。
+  async function tracePath(...coordinates) {
+    const values = coordinates.map(Number);
+    if (values.length < 4 || values.length % 2 !== 0 || !values.every(Number.isFinite)) {
+      throw new Error("path は <x1> <y1> <x2> <y2> [<x3> <y3> ...] を数の組で受ける");
+    }
+    const points = [];
+    for (let index = 0; index < values.length; index += 2) points.push({ x: values[index], y: values[index + 1] });
+    const [first, ...rest] = points;
+    if (isTouch) {
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [first] });
+      let previous = first;
+      for (const next of rest) {
+        for (let step = 1; step <= SWIPE_STEPS; step++) {
+          const ratio = step / SWIPE_STEPS;
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchMove",
+            touchPoints: [{ x: previous.x + (next.x - previous.x) * ratio, y: previous.y + (next.y - previous.y) * ratio }],
+          });
+        }
+        previous = next;
+      }
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      return;
+    }
+    await page.mouse.move(first.x, first.y);
+    await page.mouse.down();
+    for (const next of rest) await page.mouse.move(next.x, next.y, { steps: SWIPE_STEPS });
+    await page.mouse.up();
+  }
+
+  // 「then」の前をセレクタ、後を包む操作に分ける。セレクタは rect と同じく空白を含んでよい。
+  function splitWrapped(words, usage) {
+    const separator = words.indexOf("then");
+    if (separator < 1 || separator === words.length - 1) throw new Error(usage);
+    const [name, ...operands] = words.slice(separator + 1);
+    if (!(name in operations) || ["trace", "frames"].includes(name)) throw new Error(`包めない操作: ${name}`);
+    return { selector: words.slice(0, separator).join(" "), name, operands };
+  }
+
+  // 操作の間、合う要素の矩形を requestAnimationFrame ごとに記録し、最初のフレームからのずれの最大を返す。
+  // 要素は Playwright のセレクタで先に引いて渡すので、セレクタの誤りはページの中ではなくここで失敗する。
+  async function traceDuring(milliseconds, ...words) {
+    const usage = "trace は <ミリ秒> <セレクタ> then <操作> [引数...] を受ける";
+    const duration = Number(milliseconds);
+    if (!Number.isFinite(duration) || duration <= 0) throw new Error(usage);
+    const { selector, name, operands } = splitWrapped(words, usage);
+    const elements = (await page.locator(selector).elementHandles()).slice(0, MAX_RECTS);
+    if (elements.length === 0) return "trace: 合う要素が無い";
+    await page.evaluate(
+      ({ targets, ms }) => {
+        const frames = [];
+        const end = performance.now() + ms;
+        window.__playtestTrace = frames;
+        const tick = () => {
+          frames.push(
+            targets.map((element) => {
+              const box = element.getBoundingClientRect();
+              return [box.x, box.y, box.width, box.height];
+            }),
+          );
+          if (performance.now() < end) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      },
+      { targets: elements, ms: duration },
+    );
+    const startedAtMs = Date.now();
+    await operations[name](...operands);
+    await page.waitForTimeout(Math.max(0, duration - (Date.now() - startedAtMs)));
+    const frames = await page.evaluate(() => window.__playtestTrace ?? []);
+    if (frames.length === 0) return "trace: 記録できたフレームが無い";
+    const round = (value) => Math.round(value * 10) / 10;
+    return frames[0]
+      .map((first, index) => {
+        const deltas = [0, 1, 2, 3].map((axis) => Math.max(...frames.map((frame) => Math.abs(frame[index][axis] - first[axis]))));
+        return `trace ${index + 1} frames=${frames.length} dx=${round(deltas[0])} dy=${round(deltas[1])} dw=${round(deltas[2])} dh=${round(deltas[3])}`;
+      })
+      .join("\n");
+  }
+
+  // 操作の直後から、間隔ごとに撮る。settle を待つ前の動き（拒否の揺れ・すべりの途中）を見るため。
+  async function framesAfter(count, interval, name, ...operands) {
+    const [shots, gap] = [count, interval].map(Number);
+    if (!(Number.isInteger(shots) && shots >= 1 && shots <= 20) || !(gap >= 0)) {
+      throw new Error("frames は <枚数 1〜20> <間隔ミリ秒> <操作> [引数...] を受ける");
+    }
+    if (!(name in operations) || ["trace", "frames"].includes(name)) throw new Error(`包めない操作: ${name}`);
+    const startedAtMs = Date.now();
+    await operations[name](...operands);
+    const lines = [];
+    for (let index = 1; index <= shots; index++) {
+      const file = path.join(values.out, `${String(shotNumber + 1).padStart(3, "0")}-frames-${String(index).padStart(2, "0")}.png`);
+      await page.screenshot({ path: file, scale: "css" });
+      lines.push(`frame ${index} ${file} +${Date.now() - startedAtMs}ms`);
+      if (index < shots) await page.waitForTimeout(gap);
+    }
+    return lines.join("\n");
+  }
+
+  // 前に撮った画像と今の画像で違う画素の割合（%）。PNG の読み解きはブラウザの別のページの canvas に任せる。
+  let diffPage = null;
+  let previousShot = null;
+  async function changedPercent(current) {
+    const before = previousShot;
+    previousShot = current;
+    if (!before) return null;
+    diffPage ??= await context.newPage();
+    return diffPage.evaluate(
+      async ({ a, b }) => {
+        const load = (data) =>
+          new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = reject;
+            image.src = `data:image/png;base64,${data}`;
+          });
+        const [first, second] = await Promise.all([load(a), load(b)]);
+        if (first.width !== second.width || first.height !== second.height) return 100;
+        const pixels = (image) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = image.width;
+          canvas.height = image.height;
+          const context2d = canvas.getContext("2d");
+          context2d.drawImage(image, 0, 0);
+          return context2d.getImageData(0, 0, image.width, image.height).data;
+        };
+        const [x, y] = [pixels(first), pixels(second)];
+        let changed = 0;
+        for (let index = 0; index < x.length; index += 4) {
+          if (Math.abs(x[index] - y[index]) + Math.abs(x[index + 1] - y[index + 1]) + Math.abs(x[index + 2] - y[index + 2]) > 24) changed++;
+        }
+        return (changed / (x.length / 4)) * 100;
+      },
+      { a: before.toString("base64"), b: current.toString("base64") },
+    );
+  }
+
+  // 縮小した画像を引き伸ばすのではなく、CDP の clip.scale でその倍率で描き直すので、細い線・重なり・境界が見える。
+  // clip は文書の座標なので、ビューポートの座標にスクロール量を足す。
+  function zoomClip(x, y, width, height, magnification = DEFAULT_ZOOM) {
+    const [left, top, w, h, scale] = [x, y, width, height, magnification].map(Number);
+    if (![left, top, w, h].every(Number.isFinite) || w <= 0 || h <= 0) {
+      throw new Error("zoom は <x> <y> <幅> <高さ> [倍率] を数で受ける（幅・高さは正）");
+    }
+    if (!(scale >= 1 && scale <= MAX_ZOOM)) throw new Error(`倍率は 1〜${MAX_ZOOM}: ${magnification}`);
+    return { x: left, y: top, width: w, height: h, scale };
+  }
+
+  async function zoomShot(file, clip) {
+    const scrolled = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+    const { data } = await cdp.send("Page.captureScreenshot", {
+      format: "png",
+      clip: { ...clip, x: clip.x + scrolled.x, y: clip.y + scrolled.y },
+    });
+    writeFileSync(file, Buffer.from(data, "base64"));
+  }
+
+  const operations = {
+    goto: (pathname) => page.goto(baseUrl + pathname, { waitUntil: "networkidle" }),
+    tap: (x, y) => (isTouch ? page.touchscreen.tap(Number(x), Number(y)) : page.mouse.click(Number(x), Number(y))),
+    swipe: (...coordinates) => (isTouch ? touchSwipe : mouseSwipe)(...coordinates.map(Number)),
+    path: (...coordinates) => tracePath(...coordinates),
+    key: (key) => page.keyboard.press(key),
+    trace: (...operands) => traceDuring(...operands),
+    frames: (...operands) => framesAfter(...operands),
+    scroll: (dy) => page.mouse.wheel(0, Number(dy)),
+    wait: (milliseconds) => page.waitForTimeout(Math.max(0, Number(milliseconds) - SETTLE_MILLISECONDS)),
+    shot: async () => {},
+    zoom: async () => {},
+    rect: async (...selectorWords) => {
+      const elements = await page.locator(selectorWords.join(" ")).all();
+      const lines = [];
+      for (const [index, element] of elements.slice(0, MAX_RECTS).entries()) {
+        const box = await element.boundingBox();
+        if (!box) continue;
+        const text = ((await element.textContent()) ?? "").replace(/\s+/g, " ").trim().slice(0, 30);
+        const round = (value) => Math.round(value);
+        lines.push(
+          `rect ${index + 1} x=${round(box.x)} y=${round(box.y)} w=${round(box.width)} h=${round(box.height)} cx=${round(box.x + box.width / 2)} cy=${round(box.y + box.height / 2)} ${text}`,
+        );
+      }
+      return lines.length > 0 ? lines.join("\n") : "rect: 合う要素が無い";
+    },
+    "save-storage": async (file) => {
+      const entries = await page.evaluate(() => Object.fromEntries(Object.entries(window.localStorage)));
+      writeFileSync(file, JSON.stringify(entries, null, 2));
+      return `saved ${Object.keys(entries).length} keys to ${file}`;
+    },
+    "load-storage": async (file) => {
+      const entries = JSON.parse(readFileSync(file, "utf8"));
+      await page.evaluate((items) => {
+        for (const [key, value] of Object.entries(items)) window.localStorage.setItem(key, value);
+      }, entries);
+      await page.reload({ waitUntil: "networkidle" });
+      return `loaded ${Object.keys(entries).length} keys from ${file}`;
+    },
+  };
+
+  // ページの中でスクロールしている要素（盤面や台紙など）。window.scrollY だけでは見えない。
+  async function scrolledElements() {
+    return page.evaluate(() =>
+      [...document.querySelectorAll("*")]
+        .filter((element) => element.scrollTop !== 0)
+        .map((element) => {
+          const id = element.id ? `#${element.id}` : "";
+          const label = element.getAttribute("aria-label");
+          return `${element.tagName.toLowerCase()}${id}${label ? `[${label}]` : ""}:${Math.round(element.scrollTop)}`;
+        }),
+    );
+  }
+
+  async function run(name, operands) {
+    const clip = name === "zoom" ? zoomClip(...operands) : null;
+    const detail = await operations[name](...operands);
+    await page.waitForTimeout(SETTLE_MILLISECONDS);
+    shotNumber += 1;
+    const file = path.join(values.out, `${String(shotNumber).padStart(3, "0")}-${name}.png`);
+    let diffNote = "";
+    if (clip) await zoomShot(file, clip);
+    else {
+      const percent = await changedPercent(await page.screenshot({ path: file, scale: "css" }));
+      diffNote = percent === null ? "" : ` diff=${percent < 0.1 ? percent.toFixed(2) : percent.toFixed(1)}%`;
+    }
+    const note = clip ? ` zoom=${clip.scale}x` : "";
+    const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+    const scrollY = await page.evaluate(() => window.scrollY);
+    const scrolled = await scrolledElements();
+    const scrolledNote = scrolled.length > 0 ? ` scrolled=${scrolled.join(",")}` : "";
+    const detailLines = typeof detail === "string" ? `\n${detail}` : "";
+    return `${file} t=${seconds}s scrollY=${scrollY}${diffNote}${scrolledNote}${note}${detailLines}`;
+  }
+
+  const server = createServer(async (request, response) => {
+    const [name, ...operands] = JSON.parse(new URL(request.url, `http://${HOST}`).searchParams.get("op"));
+    if (name === "quit") {
+      response.end("quit\n");
+      server.close();
+      await browser.close();
+      return;
+    }
+    if (!(name in operations)) {
+      response.statusCode = 400;
+      response.end(`ERROR: 不明な操作: ${name}（${Object.keys(operations).join(" / ")} / quit）\n`);
+      return;
+    }
+    try {
+      response.end(`${await run(name, operands)}\n`);
+    } catch (error) {
+      response.statusCode = 500;
+      response.end(`ERROR: ${name}: ${error.message.split("\n")[0]}\n`);
+    }
+  });
+  server.listen(Number(values.port), HOST, () => console.log(`serving ${values.device} on ${HOST}:${values.port}`));
+}
+
+async function send(args) {
+  const { values, positionals } = parseArgs({ args, options: { port: { type: "string" } }, allowPositionals: true });
+  requireOptions(values, ["port"]);
+  if (positionals.length === 0) {
+    console.error("ERROR: 操作が必要");
+    process.exit(2);
+  }
+  const query = encodeURIComponent(JSON.stringify(positionals));
+  const response = await fetchWhenServing(`http://${HOST}:${values.port}/?op=${query}`);
+  process.stdout.write(await response.text());
+  process.exit(response.ok ? 0 : 1);
+}
+
+// serve を背景で起動した直後は、ブラウザの起動が終わるまで接続できないので待ち直す。
+async function fetchWhenServing(url) {
+  const deadline = Date.now() + SERVE_WAIT_MILLISECONDS;
+  for (;;) {
+    try {
+      return await fetch(url);
+    } catch (error) {
+      if (Date.now() > deadline) {
+        console.error(`ERROR: driver に接続できない（serve を起動したか、ポートが合っているか）: ${error.cause?.code ?? error.message}`);
+        process.exit(1);
+      }
+      await new Promise((resolve) => setTimeout(resolve, SERVE_RETRY_MILLISECONDS));
+    }
+  }
+}
+
+const [command, ...rest] = process.argv.slice(2);
+if (command === "serve") await serve(rest);
+else if (command === "send") await send(rest);
+else {
+  console.error("使い方: node playtest-driver.mjs serve --url <URL> --device <iphone|pc> --out <出力先> --port <ポート>");
+  console.error("        node playtest-driver.mjs send --port <ポート> <goto|tap|swipe|path|key|trace|frames|scroll|wait|shot|zoom|rect|save-storage|load-storage|quit> [引数...]");
+  process.exit(2);
+}

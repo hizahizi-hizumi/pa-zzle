@@ -1,0 +1,191 @@
+<title>ノノグラム 最終レビュー</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="page.css">
+
+<main class="review">
+  <div class="hero">
+    <div>
+      <p class="eyebrow">最終レビュー · 1回目</p>
+      <h1>ノノグラム</h1>
+      <p class="lead">行と列の数字どおりにマスを塗るパズル。推理だけで解けて、正解・不正解は出ません。</p>
+      <p class="lead">気になる所は、この会話に一言とスクショで。答えがない問いはおすすめで進めます。マージしたら、それで決まりです。</p>
+    </div>
+    <div class="hero-board" data-board="hero" role="img" aria-label="レベル3の途中の盤面"></div>
+  </div>
+
+  <ol class="todo">
+    <li><a href="#play"><span class="k">1</span><b>遊ぶ</b><span>5つ・17分</span></a></li>
+    <li><a href="#ask"><span class="k">2</span><b>答える</b><span>質問3つ</span></a></li>
+    <li><a href="#merge"><span class="k">3</span><b>マージ</b><span>PR 5つ</span></a></li>
+  </ol>
+
+  <section id="play">
+    <h2>遊ぶ</h2>
+    <p class="hint">上から順に。遊び方は読まずに始めてください。</p>
+    <ul class="cards">
+      <li class="play">
+        <span class="lv">L1</span><b>説明なしで遊べる？</b>
+        <a class="btn" href="https://8f3c2a1e-pa-zzle-preview.example.workers.dev/">遊ぶ<span class="t">2分</span></a>
+        <p>一覧から開いてください。</p>
+      </li>
+      <li class="play">
+        <span class="lv">L3</span><b>そろったと分かる？</b>
+        <a class="btn" href="https://8f3c2a1e-pa-zzle-preview.example.workers.dev/puzzles/nonogram/play/3?problem=ng-10x10-d0.55-s0-n-812">遊ぶ<span class="t">4分</span></a>
+        <p>そろった行は数字が薄くなります。塗る音も聞いてください（AI は聞けていません）。iPhone で、なぞる途中に画面が動かないかも見てください。</p>
+      </li>
+      <li class="play">
+        <span class="lv">L5</span><b>L3 より難しい？</b>
+        <a class="btn" href="https://8f3c2a1e-pa-zzle-preview.example.workers.dev/puzzles/nonogram/play/5?problem=ng-10x15-d0.45-s0-n-2077">遊ぶ<span class="t">6分</span></a>
+        <p>ただ広いだけに感じないか。</p>
+      </li>
+      <li class="play">
+        <span class="lv">結果</span><b>点数に納得できる？</b>
+        <a class="btn" href="https://8f3c2a1e-pa-zzle-preview.example.workers.dev/puzzles/nonogram/play/1?problem=ng-7x7-d0.60-s0-n-133">遊ぶ<span class="t">2分</span></a>
+        <p>わざと塗り直してみてください。満点は100点（速さ70点・塗り直し30点）で、塗り直しは1マスごとに減ります。</p>
+      </li>
+      <li class="play">
+        <span class="lv">図鑑</span><b>もう一度遊びたくなる？</b>
+        <a class="btn" href="https://8f3c2a1e-pa-zzle-preview.example.workers.dev/puzzles/nonogram">遊ぶ<span class="t">3分</span></a>
+        <p>上の L3 で解いた問題を、ゲームのホームの図鑑で選んで、もう一度（レベル3のタブの No.1312、色の付いたマス）。2回目の点数と、図鑑の色の変わり方に納得できるか。</p>
+      </li>
+    </ul>
+  </section>
+
+  <section id="ask">
+    <h2>答える</h2>
+    <p class="hint">おすすめは今の作りです。返事がなければ、このまま進めます。</p>
+    <div class="cards">
+      <div class="q">
+        <h3>L5、物足りなくない？</h3>
+        <div class="opts">
+          <div class="opt rec"><span class="tag">おすすめ</span><b>1行ずつ考えれば解ける問題だけ</b>どこかの行か列が、その数字だけで必ず進む。止まらずに解き切れる。</div>
+          <div class="opt"><span class="tag">別案</span><b>L5 に、2行を見比べないと進まない問題も入れる</b>1行ずつでは手が止まる場面ができ、歯ごたえが増す。<span class="cost">作り直し: 生成と難易度</span></div>
+        </div>
+      </div>
+      <div class="q">
+        <h3>そろった行の数字、この薄さでいい？</h3>
+        <div class="opts">
+          <div class="opt rec"><span class="tag">おすすめ</span><div data-board="hint-now" role="img" aria-label="今の薄さ"></div>そろったと分かり、読み返せる。</div>
+          <div class="opt"><span class="tag">別案</span><div data-board="hint-lighter" role="img" aria-label="もっと薄くした場合"></div>そろったのがよく分かる。読み返しにくい。</div>
+        </div>
+      </div>
+      <div class="q">
+        <h3>塗り直しの減点、重すぎない？</h3>
+        <p class="hint">満点100点のうち、塗り直しの分は30点。</p>
+        <div class="opts">
+          <div class="opt rec"><span class="tag">おすすめ</span><b>1マス 3点</b>10マス塗り直すと30点を失う。推理して塗った人が報われる。</div>
+          <div class="opt"><span class="tag">別案</span><b>1マス 2点</b>15マスで30点を失う。押し間違いに優しい。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="merge">
+    <h2>マージ</h2>
+    <p class="hint">問題なければ、上から順に。</p>
+    <ol class="prs">
+      <li><span class="i">1</span><a class="mono" href="#">#101</a><span>調査</span><span class="ci">CI 通過</span></li>
+      <li><span class="i">2</span><a class="mono" href="#">#102</a><span>ルールと問題</span><span class="ci">CI 通過</span></li>
+      <li><span class="i">3</span><a class="mono" href="#">#103</a><span>画面・点数・記録</span><span class="ci">CI 通過</span></li>
+      <li><span class="i">4</span><a class="mono" href="#">#104</a><span>一覧に載せる</span><span class="ci">CI 通過</span></li>
+      <li><span class="i">5</span><a class="mono" href="#">#105</a><span>仕様と記録</span><span class="ci">CI 通過</span></li>
+    </ol>
+  </section>
+
+  <div class="more">
+    <details>
+      <summary>AI が遊んだ結果<span class="c">3</span></summary>
+      <div>
+        <p class="hint">時間は、レベルの分け方を直した後の版で遊んだもの。</p>
+        <div class="stats">
+          <div class="stat"><div class="l">L1</div><div class="v">2:10</div><p>迷わず解けた</p></div>
+          <div class="stat"><div class="l">L3</div><div class="v">3:40</div><p>列がそろうのを待つ場面あり</p></div>
+          <div class="stat"><div class="l">L5</div><div class="v">5:50</div><p>一目で決まる行が無く、行と列を行き来した</p></div>
+        </div>
+        <ul>
+          <li><b>なぞると消えるのが分かりにくい</b> → 遊び方に図を足した</li>
+          <li><b>縦の数字が詰まって数え違える</b> → 数字を大きくした</li>
+          <li><b>途中で遊んだとき、L1・L3・L5 の難しさが同じだった</b> → レベルの分け方を直した（上の時間は直した後）</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>最初の約束から変えたこと<span class="c">2</span></summary>
+      <div>
+        <ul>
+          <li><b>左右対称の模様は L1 だけ</b>　対称だと L5 が半分の時間で解けた</li>
+          <li><b>リセットで消した塗りも減点</b>　しないとリセットで満点が取れた</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>AI が決めたこと<span class="c">11</span></summary>
+      <div>
+        <ul>
+          <li><b>盤面は最大 10×15</b>　変えると画面・生成・難易度を作り直し</li>
+          <li><b>難易度は、推理の長さと手がかりの少なさで分ける</b>　変えると難易度と問題を作り直し</li>
+          <li><b>操作はタップで 塗る → × → 空白、なぞると同じ状態で続けて塗る</b>　変えると画面を作り直し</li>
+          <li>クリアすると模様がふくらむ</li>
+          <li>ほか7つ</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>まだ確かめていないこと<span class="c">3</span></summary>
+      <div>
+        <ul>
+          <li>幅の狭い iPhone での押し間違い</li>
+          <li>人が遊んだときの時間（基準は L1 2分・L3 4分・L5 6分。遊ぶカードの目安と同じ）</li>
+          <li>「ノノグラム」という名前が使えるか（「ピクロス」は商標なので避けた）</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+
+  <footer>遊んだレベルごとに、ゲームのホームの「成績」でコピーできる JSON を貼ってもらえると、難易度の調整に使えます。</footer>
+</main>
+
+<script>
+(function () {
+  var INK = '#171717', DIM = '#8f8f8f', LINE = '#d4d4d4', BG = '#ffffff';
+  function rows(s) { return s.map(function (r) { return r.split('').map(Number); }); }
+  function clues(line) { var c = [], n = 0; line.forEach(function (v) { if (v === 1) n++; else if (n) { c.push(n); n = 0; } }); if (n) c.push(n); return c.length ? c : [0]; }
+  function col(g, k) { return g.map(function (r) { return r[k]; }); }
+  function same(a, b) { return a.join() === b.join(); }
+
+  // sol: 解。state: 0 空白・1 塗り・2 ×。done: 行・列の数字を薄くするか。
+  function svg(sol, state, opt) {
+    opt = opt || {};
+    var H = sol.length, W = sol[0].length, cs = opt.cell || 16;
+    var rowC = sol.map(clues), colC = W ? Array.from({ length: W }, function (_, k) { return clues(col(sol, k)); }) : [];
+    var fs = Math.max(9, Math.round(cs * 0.6)), left = Math.max.apply(null, rowC.map(function (c) { return c.length; })) * fs * 0.9 + 6;
+    var top = Math.max.apply(null, colC.map(function (c) { return c.length; })) * (fs + 2) + 4;
+    var o = ['<svg viewBox="0 0 ' + (left + W * cs + 2) + ' ' + (top + H * cs + 2) + '" role="img" aria-label="盤面">'];
+    var cur = state.map(function (r) { return r.map(function (v) { return v === 1 ? 1 : 0; }); });
+    rowC.forEach(function (c, r) { var ok = opt.dim && same(clues(cur[r]), c); o.push('<text x="' + (left - 4) + '" y="' + (top + r * cs + cs * 0.72) + '" text-anchor="end" font-size="' + fs + '" font-weight="600" fill="' + (ok ? DIM : INK) + '" opacity="' + (ok ? (opt.dimOpacity || 0.55) : 1) + '">' + c.join('\u2002') + '</text>'); });
+    colC.forEach(function (c, k) { var ok = opt.dim && same(clues(col(cur, k)), c); c.forEach(function (v, i) { o.push('<text x="' + (left + k * cs + cs / 2) + '" y="' + (top - 4 - (c.length - 1 - i) * (fs + 2)) + '" text-anchor="middle" font-size="' + fs + '" font-weight="600" fill="' + (ok ? DIM : INK) + '" opacity="' + (ok ? (opt.dimOpacity || 0.55) : 1) + '">' + v + '</text>'); }); });
+    for (var r = 0; r < H; r++) for (var k = 0; k < W; k++) {
+      var x = left + k * cs, y = top + r * cs, v = state[r][k];
+      o.push('<rect data-r="' + r + '" data-k="' + k + '" x="' + x + '" y="' + y + '" width="' + cs + '" height="' + cs + '" fill="' + (v === 1 ? INK : BG) + '" stroke="' + (v === 1 ? INK : LINE) + '"/>');
+      if (v === 2) o.push('<path pointer-events="none" d="M' + (x + cs * 0.3) + ',' + (y + cs * 0.3) + 'l' + cs * 0.4 + ',' + cs * 0.4 + 'm0,-' + cs * 0.4 + 'l-' + cs * 0.4 + ',' + cs * 0.4 + '" stroke="' + DIM + '" stroke-width="1.4"/>');
+    }
+    o.push('<rect x="' + left + '" y="' + top + '" width="' + W * cs + '" height="' + H * cs + '" fill="none" stroke="' + INK + '" stroke-width="1.5"/>');
+    for (var g = 5; g < W; g += 5) o.push('<path d="M' + (left + g * cs) + ',' + top + 'v' + H * cs + '" stroke="' + INK + '" stroke-width="1.2"/>');
+    for (var h = 5; h < H; h += 5) o.push('<path d="M' + left + ',' + (top + h * cs) + 'h' + W * cs + '" stroke="' + INK + '" stroke-width="1.2"/>');
+    o.push('</svg>');
+    return o.join('');
+  }
+
+
+  // 盤面の図（レベル3の途中と、そろった行の数字の薄さの比べ）
+  var pic = rows(['0011111100', '0110000110', '1101001011', '1000000001', '1010000101', '1001111001', '0100000010', '0011001100', '0001111000', '0000110000']);
+  var prog = pic.map(function (r, i) { return r.map(function (v, k) { var d = [0, 1, 2, 8, 9].indexOf(i) >= 0 || [0, 9].indexOf(k) >= 0; return d ? (v ? 1 : 2) : 0; }); });
+  var boards = {
+    hero: { html: svg(pic, prog, { cell: 10, dim: true }), width: '104px' },
+    'hint-now': { html: svg(pic, prog, { cell: 12, dim: true, dimOpacity: 0.55 }), width: '100%' },
+    'hint-lighter': { html: svg(pic, prog, { cell: 12, dim: true, dimOpacity: 0.25 }), width: '100%' }
+  };
+  document.querySelectorAll('[data-board]').forEach(function (el) { var b = boards[el.dataset.board]; el.innerHTML = b.html; el.firstChild.style.width = b.width; });
+})();
+</script>
