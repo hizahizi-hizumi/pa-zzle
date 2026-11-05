@@ -322,7 +322,7 @@ describe("NanpurePlay", () => {
       expect(playButton).toBeTruthy();
       expect(replayButton).toBeTruthy();
 
-      fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
+      fireEvent.click(screen.getByText("内訳を見る"));
 
       expect(screen.getByText("30 / 40")).toBeTruthy();
       expect(screen.getByText("9 / 20")).toBeTruthy();

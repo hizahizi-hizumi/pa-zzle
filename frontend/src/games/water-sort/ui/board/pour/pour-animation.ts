@@ -14,12 +14,16 @@ type PourAnimationBottle = {
   bottleIndex: number;
   before: WaterSortBottle;
   after: WaterSortBottle;
+  /** 置かれている位置。注ぎ元として持ち上げていても、持ち上げる前の位置にする。 */
   rect: BottleRect;
 };
 
 export type PourAnimation = {
   id: number;
-  source: PourAnimationBottle;
+  source: PourAnimationBottle & {
+    /** 注ぎ始めたときに注ぎ元を持ち上げていた量（px、上が負）。注ぐ動きはこの高さから始め、置かれている位置へ戻す。 */
+    liftY: number;
+  };
   destination: PourAnimationBottle;
   colorIndex: number;
   isClearingMove: boolean;
@@ -28,6 +32,7 @@ export type PourAnimation = {
 export function createPourAnimation(
   operation: PourOperation,
   sourceRect: BottleRect,
+  sourceLiftY: number,
   destinationRect: BottleRect,
 ): PourAnimation | null {
   const sourceBefore = operation.stateBefore[operation.sourceBottleIndex] ?? [];
@@ -43,6 +48,7 @@ export function createPourAnimation(
       before: sourceBefore,
       after: operation.stateAfter[operation.sourceBottleIndex] ?? [],
       rect: sourceRect,
+      liftY: sourceLiftY,
     },
     destination: {
       bottleIndex: operation.destinationBottleIndex,

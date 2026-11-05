@@ -37,9 +37,9 @@ export function GameResultDetails({
     <Collapsible open={open} onOpenChange={setOpen}>
       <div className="mt-3 flex justify-center">
         <CollapsibleTrigger asChild>
-          <Button type="button" variant="outline" size="sm">
+          <Button type="button" variant="ghost" size="sm">
+            {open ? "内訳を閉じる" : "内訳を見る"}
             {open ? <ChevronUp /> : <ChevronDown />}
-            スコアの内訳・採点基準
           </Button>
         </CollapsibleTrigger>
       </div>

@@ -106,15 +106,15 @@ export function GameResultScreen({
           ))}
         </dl>
 
+        <GameResultDetails
+          breakdown={scoreBreakdown}
+          criteria={scoreCriteria}
+        />
+
         <GameResultActions
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}
           onReplay={onReplay}
-        />
-
-        <GameResultDetails
-          breakdown={scoreBreakdown}
-          criteria={scoreCriteria}
         />
 
         {onOpenDiagnostics && (

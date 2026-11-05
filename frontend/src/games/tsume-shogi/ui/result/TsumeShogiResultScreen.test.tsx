@@ -82,9 +82,7 @@ describe("TsumeShogiResultScreen", () => {
       render(
         <TsumeShogiResultScreen difficulty="1" result={result} {...handlers} />,
       );
-      fireEvent.click(
-        screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "内訳を見る" }));
     });
 
     test("時間と基準時間との差・誤王手の回数を主要成績に示すこと", () => {

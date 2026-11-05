@@ -158,9 +158,7 @@ describe("HitofudePuzzlePlay", () => {
 
     describe("スコアの内訳を開いた場合", () => {
       beforeEach(() => {
-        fireEvent.click(
-          screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-        );
+        fireEvent.click(screen.getByRole("button", { name: "内訳を見る" }));
       });
 
       test("速さ・正確さの点を速さから並べ、操作の回数・基準時間を内訳に表示し、問題の作業の量は内訳に並べないこと", () => {
@@ -217,9 +215,7 @@ describe("HitofudePuzzlePlay", () => {
           longestRefutationLength: 0,
         }),
       });
-      fireEvent.click(
-        screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "内訳を見る" }));
     });
 
     test("速さの基準の式にも説明にも先読みを出さないこと", () => {

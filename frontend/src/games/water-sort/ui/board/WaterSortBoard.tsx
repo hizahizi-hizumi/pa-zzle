@@ -108,7 +108,7 @@ export function WaterSortBoard({
               aria-label={`${bottleLabel}: ${contents}`}
               aria-pressed={isSource}
               onClick={() => selectBottle(bottleIndex)}
-              className="relative aspect-[0.36] w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-(--duration-normal) ease-enter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4"
+              className="relative aspect-[0.36] w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-(--duration-normal) ease-enter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 aria-pressed:-translate-y-3.5 motion-reduce:transition-none"
               disabled={interactionDisabled}
             >
               <span

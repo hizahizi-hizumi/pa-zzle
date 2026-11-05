@@ -253,9 +253,7 @@ describe("SlidePuzzlePlay", () => {
     );
 
     test("スコアの内訳と採点基準を開けること", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "内訳を見る" }));
 
       const efficiency = screen.getByText("43 / 60");
       const speed = screen.getByText("34 / 40");
