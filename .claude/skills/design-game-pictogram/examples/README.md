@@ -4,7 +4,7 @@
 
 - `frontend/src/games/water-sort/assets/pictogram.svg`: 容器 + 水量差を最小構成で表現する例。プロダクションで利用する SVG 自体を正本とする
 - `nanpure.svg`: 3×3格子 + 数字を、外枠 / 格子 / 記号の視覚階層を付けて表現する例
-- `frontend/src/games/parking-jam/assets/pictogram.svg`: 車両 + 出口 + 詰まりを、一定の余白と車幅で単純化して表現する例。プロダクションで利用する SVG 自体を正本とする
+- `frontend/src/games/parking-jam/assets/pictogram.svg`: 車両 + 開いた出口を、一定の余白と車幅で単純化して表現する例。プロダクションで利用する SVG 自体を正本とする
 
 完成見本の配置場所は `examples/` に限定しない。プロダクションで同じ形状を利用する場合はプロダクション側の SVG を正本とし、Skill 側へ複製しない。
 
@@ -22,6 +22,6 @@
 
 - `frontend/src/games/water-sort/assets/pictogram.svg`: 左へ1 / 下へ3。右側の背が高い容器でわずかに右寄り、外形上端の差で上寄りに見えたため
 - `nanpure.svg`: 補正なし。外枠が上下左右で均衡し、数字を含めても偏りが目立たないため
-- `parking-jam.svg`: 補正なし。内部の黒量には偏りがあるが、外枠と出口を含む全体形状は中央に見えるため
+- `frontend/src/games/parking-jam/assets/pictogram.svg`: 補正なし。内部の黒量には偏りがあるが、外枠と出口を含む全体形状は中央に見えるため
 
 PoCの途中案・比較・不採用案は `docs/立ち上げ/ゲーム選択ピクトグラムPoC.md` と同名ディレクトリを参照する。
