@@ -110,6 +110,14 @@ export function TakuzuCell({
           runViolationCellClassName,
         )}
       />
+      {cue?.kind === "fitted" && (
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className="pointer-events-none absolute inset-1 rounded-sm border-(length:--border-width-normal) border-foreground fill-mode-forwards animate-out fade-out-0 delay-(--duration-slow) duration-(--duration-slow) ease-standard"
+        />
+      )}
       {cue?.kind === "reason" && (
         <span
           key={cue.id}
@@ -132,7 +140,7 @@ export function TakuzuCell({
         <span
           aria-hidden="true"
           data-cell-cue="hint"
-          className="pointer-events-none absolute inset-1 rounded-sm border-(length:--border-width-strong) border-ring animate-in fade-in-0 duration-(--duration-slow) ease-(--ease-enter) motion-reduce:animate-none"
+          className="pointer-events-none absolute inset-1 rounded-sm border-(length:--border-width-strong) border-ring animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none"
         />
       )}
       {/*
