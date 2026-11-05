@@ -136,7 +136,7 @@ export function GameSelectionGallery({
           <SettingsButton />
           <Link
             to={recordsTo}
-            className="flex h-full items-center px-2 text-supporting font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-full items-center px-2 text-supporting font-medium text-muted-foreground hover:text-foreground outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-ring"
           >
             記録
           </Link>
@@ -147,7 +147,7 @@ export function GameSelectionGallery({
           aria-label={`${selectedGame.name}を遊ぶ`}
           aria-describedby={continuation ? continuationId : undefined}
           onClick={playGameSelectSound}
-          className="flex h-full flex-col items-center justify-center transition-colors duration-(--duration-slow) hover:bg-muted/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+          className="flex h-full flex-col items-center justify-center transition-colors duration-(--duration-slow) hover:bg-muted/10 outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-ring"
         >
           <span className="size-[10.625rem] p-4 sm:size-[14.0625rem] sm:p-6">
             <GamePictogram svg={selectedGame.pictogramSvg} />
@@ -193,13 +193,11 @@ export function GameSelectionGallery({
                   aria-label={`${game.name}を選択`}
                   aria-pressed={isSelected}
                   onClick={() => selectGame(index)}
-                  className="group flex shrink-0 snap-start focus-visible:outline-none"
+                  className="group flex shrink-0 snap-start outline-none"
                 >
                   <span
-                    className={`flex size-[4.875rem] items-center justify-center rounded-md bg-background p-[18%] transition-colors group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2 sm:size-[6.25rem] sm:rounded-md sm:p-[20%] ${
-                      isSelected
-                        ? "border-(length:--border-width-strong) border-ring"
-                        : "border-(length:--border-width-normal) border-border group-hover:bg-accent"
+                    className={`flex size-[4.875rem] items-center justify-center rounded-md border-(length:--border-width-normal) border-border bg-background p-[18%] transition-colors group-focus-visible:outline-2 group-focus-visible:outline-solid group-focus-visible:outline-offset-2 group-focus-visible:outline-ring sm:size-[6.25rem] sm:rounded-md sm:p-[20%] ${
+                      isSelected ? "ring-2 ring-ring" : "group-hover:bg-accent"
                     }`}
                   >
                     <GamePictogram svg={game.pictogramSvg} />

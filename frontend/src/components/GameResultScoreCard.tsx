@@ -50,7 +50,7 @@ export function GameResultScoreCard({
               {style.message}
             </p>
           )}
-          <p className="mt-1 text-meta font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+          <p className="mt-1 text-meta font-medium text-muted-foreground">
             スコア
           </p>
           <p
