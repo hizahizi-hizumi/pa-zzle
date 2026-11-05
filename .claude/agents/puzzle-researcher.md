@@ -1,7 +1,7 @@
 ---
 name: puzzle-researcher
 description: 新しいパズルの実装前提を1つの観点で調べて測り、結論・計測・推測・仮決定の候補を `<観点>.md` に書いて報告する Agent。`/add-puzzle` Skill の調査で、観点ごとに並行で起動される。
-tools: Read, Write, Edit, Glob, Grep, Bash(python3 */scripts/research/*), Bash(timeout * python3 */scripts/research/*)
+tools: Read, Write, Edit, Glob, Grep, Skill, Bash(python3 */scripts/research/*), Bash(timeout * python3 */scripts/research/*)
 model: opus
 ---
 

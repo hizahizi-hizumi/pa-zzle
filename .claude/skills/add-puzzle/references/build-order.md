@@ -15,7 +15,7 @@
 | sound | 盤面操作とクリアの効果音。書き出しのスクリプト `scripts/assets/<ゲーム ID>_sounds.ts` を作り、実装役が `bun` で動かす。音の定義を Chromium の `OfflineAudioContext` で描き、ffmpeg で FLAC にして `assets/sounds/` へ書き出す（形式の決まりは `game-structure.md`「効果音」）。Chromium で描く TS の前例はまだ無い。読む前例は、詰将棋の `scripts/assets/tsume_shogi_sounds.py`（ffmpeg の引数、PADDING の外し方、ピークの上限）と、この Skill の `scripts/playtest-driver.mjs`（playwright の読み込み方）。録音を素材にするときも同じスクリプトで加工し、出典とライセンスを書き出し先に残す（前例は詰将棋の `VCSL.CC0.txt`）。直しで前の音の定義が残っていなければ、題材から作り直す。前の音に寄せるのは、人間が今の音を気に入っているときだけ。完成条件は、書き出したスクリプトに `bun x --cwd <worktree>/frontend biome check <スクリプトのパス>` が通ること（`scripts/assets/` は `verify.sh` の対象外） | 同上 | — | — |
 | difficulty | 調査で決めた案の解法器・難易度の判定・生成器・`problem-selection.ts`、難易度の資料 | 同上 | — | `/design-game-difficulty` |
 | problem-pool | 問題集と生成スクリプト。カタログエントリの問題集の全問・遊び直し先・問題の選び方を、固定問題から問題集に切り替える。完成条件は、調査で決めた件数と並びでそろい、`--verify`（生成とは別の手順で全問を確かめ直す。難易度の Skill の検査 A2）が通り、固定問題が残っていないこと | ゲームのホーム、問題 ID で開くレベルごとのプレイ画面 `/puzzles/<game>/play/<レベル>?problem=<問題ID>` | — | `/design-game-difficulty` |
-| pictogram | ゲーム一覧のピクトグラム | 同上 | — | `/design-game-pictogram` |
+| pictogram | ゲーム一覧のピクトグラム（`assets/pictogram.svg`）と、選んでいるときの色と動きのある姿（`assets/pictogram-showcase.svg`。白黒版を土台に作るので後に作る） | 同上 | — | `/design-game-pictogram`、続けて `/design-game-pictogram-showcase` |
 | score | スコア（評価規則と基準時間） | 同上 | — | — |
 | result-records | 結果画面・記録（`play-record.ts`）・`play-attempt.ts`・`diagnostics.ts`・記録からの遊び直し | 同上 | — | — |
 | zukan | カタログエントリの問題の特徴（`describePoolProblem`・`problemFeatureFilter`）を、調査で決めた切り口で作る。完成条件は、ゲームのホームの図鑑で、クリアした問題に出来が付き、状態と問題の特徴で絞り込めること。成績の絞り込みは、ミスか手数を評価に使うパズルでは使えること、どちらも使わないパズルでは出ないこと（SPEC-026「絞り込み」） | 同上 | — | — |
