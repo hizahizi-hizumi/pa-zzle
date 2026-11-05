@@ -25,6 +25,10 @@ import {
   listReflectionGridLines,
 } from "@/games/reflection/ui/board/board-geometry";
 import { ReflectionClearLight } from "@/games/reflection/ui/board/clear/ReflectionClearLight";
+import {
+  filterReflectionCues,
+  type ReflectionCue,
+} from "@/games/reflection/ui/board/cue";
 import { ReflectionCell } from "@/games/reflection/ui/board/ReflectionBoard/ReflectionCell";
 import { ReflectionClueButton } from "@/games/reflection/ui/board/ReflectionBoard/ReflectionClueButton";
 import { ReflectionLaserPath } from "@/games/reflection/ui/board/ReflectionLaserPath";
@@ -45,6 +49,8 @@ type ReflectionBoardProps = {
   onSelectClue: (entry: ReflectionEntry) => void;
   onRemovePiece: (cellIndex: number) => void;
   onClearAnimationComplete: () => void;
+  /** マスと外周ヒントに重ねる、チュートリアルの印・応え・覆いから抜く所。 */
+  cues?: readonly ReflectionCue[];
 };
 
 /**
@@ -134,6 +140,7 @@ export function ReflectionBoard({
   onSelectClue,
   onRemovePiece,
   onClearAnimationComplete,
+  cues = [],
 }: ReflectionBoardProps) {
   const { size } = board;
   const [focusableKey, setFocusableKey] = useState(getCellFocusKey(0));
@@ -275,6 +282,7 @@ export function ReflectionBoard({
               onElementChange={handleElementChange}
               selectHandlers={getTapHandlers(() => onSelectCell(cellIndex))}
               onFocus={setFocusableKey}
+              cues={filterReflectionCues(cues, { type: "cell", cellIndex })}
             />
           );
         })}
@@ -303,6 +311,7 @@ export function ReflectionBoard({
             onElementChange={handleElementChange}
             selectHandlers={getTapHandlers(() => onSelectClue(entry))}
             onFocus={setFocusableKey}
+            cues={filterReflectionCues(cues, { type: "clue", entry })}
           />
         ) : null;
       })}

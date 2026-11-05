@@ -2,6 +2,7 @@ import { useGameHome } from "@/game-catalog/game-home";
 import { reflectionCatalogEntry } from "@/game-catalog/reflection/reflection-catalog-entry";
 import { reflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowToPlayDialog";
+import { ReflectionTutorial } from "@/games/reflection/ui/ReflectionTutorial";
 import { GameHomeScreen } from "@/zukan/ui/GameHomeScreen";
 
 export function ReflectionHomeView() {
@@ -14,6 +15,13 @@ export function ReflectionHomeView() {
         <ReflectionHowToPlayDialog
           open={open}
           laserPathMode={reflectionLaserPathMode}
+          onClose={onClose}
+        />
+      )}
+      renderTutorial={({ open, onClose, playStart }) => (
+        <ReflectionTutorial
+          open={open}
+          playStart={playStart}
           onClose={onClose}
         />
       )}

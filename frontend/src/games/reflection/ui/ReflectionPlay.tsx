@@ -29,9 +29,10 @@ import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowTo
 import {
   listReflectionStockPieces,
   ReflectionStock,
-} from "@/games/reflection/ui/ReflectionPlay/ReflectionStock";
-import { useReflectionSoundEffects } from "@/games/reflection/ui/ReflectionPlay/use-reflection-sound-effects";
+} from "@/games/reflection/ui/ReflectionStock";
+import { ReflectionTutorial } from "@/games/reflection/ui/ReflectionTutorial";
 import { ReflectionResultScreen } from "@/games/reflection/ui/result/ReflectionResultScreen";
+import { useReflectionSoundEffects } from "@/games/reflection/ui/use-reflection-sound-effects";
 
 type ReflectionPlayProps = GamePlayScreenProps<
   ReflectionDifficulty,
@@ -157,6 +158,9 @@ export function ReflectionPlay({
           laserPathMode={laserPathMode}
           onClose={onClose}
         />
+      )}
+      renderTutorial={({ open, onClose }) => (
+        <ReflectionTutorial open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <ReflectionResultScreen
