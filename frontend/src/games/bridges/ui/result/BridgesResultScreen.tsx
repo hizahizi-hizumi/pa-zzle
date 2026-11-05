@@ -41,9 +41,7 @@ export function BridgesResultScreen({
   recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
+  onOpenGameHome,
   onOpenDiagnostics,
 }: BridgesResultScreenProps) {
   return (
@@ -62,9 +60,7 @@ export function BridgesResultScreen({
       recordOutcomeNotice={recordOutcomeNotice}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
-      onOpenRecords={onOpenRecords}
-      onChangeDifficulty={onChangeDifficulty}
-      onBackToHome={onBackToHome}
+      onOpenGameHome={onOpenGameHome}
       onOpenDiagnostics={onOpenDiagnostics}
     />
   );

@@ -5,7 +5,14 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+  useLocation,
+} from "react-router";
 
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import { countBridgesSolutions } from "@/games/bridges/problem/generation/exact-solver";
@@ -59,7 +66,7 @@ function renderAt(path: string): void {
             </>
           }
         />
-        <Route path="/puzzles/bridges" element={<p>難易度選択画面</p>} />
+        <Route path="/puzzles/bridges" element={<p>ゲームのホーム画面</p>} />
         <Route
           path="/puzzles/:game/result/:recordId"
           element={<LocationPath />}
@@ -67,6 +74,30 @@ function renderAt(path: string): void {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+type PlayRouter = ReturnType<typeof createMemoryRouter>;
+
+function renderRouterAt(path: string): PlayRouter {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/puzzles/bridges/play/:difficulty",
+        element: <BridgesPlayView />,
+      },
+      { path: "/puzzles/bridges", element: <p>ゲームのホーム画面</p> },
+    ],
+    { initialEntries: [path] },
+  );
+  render(<RouterProvider router={router} />);
+  return router;
+}
+
+function openMenu(): void {
+  fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
+    button: 0,
+    ctrlKey: false,
+  });
 }
 
 const pooled = selectBridgesProblemForDifficulty("5", problemSeed);
@@ -383,11 +414,48 @@ describe("BridgesPlayView", () => {
       renderAt("/puzzles/bridges/play/9");
     });
 
-    test("遊べないことを示し、難易度選択へ戻れること", () => {
-      fireEvent.click(screen.getByRole("link", { name: "難易度選択へ戻る" }));
-      const destination = screen.queryByText("難易度選択画面");
+    test("遊べないことを示し、ゲームのホームへ戻れること", () => {
+      fireEvent.click(screen.getByRole("link", { name: "問題選択へ戻る" }));
+      const destination = screen.queryByText("ゲームのホーム画面");
 
       expect(destination).not.toBeNull();
+    });
+  });
+
+  describe("問題集にある問題IDで開いた場合", () => {
+    const poolProblemId = createProblemId(
+      selectBridgesProblemForDifficulty("1", "game-home-navigation").identity,
+    );
+    let router: PlayRouter;
+
+    beforeEach(() => {
+      router = renderRouterAt(
+        `/puzzles/bridges/play/1?problem=${poolProblemId}`,
+      );
+    });
+
+    test("戻るボタンで、遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
+      const { historyAction, location } = router.state;
+
+      expect(location.pathname).toBe("/puzzles/bridges");
+      expect(location.search).toBe(`?problem=${poolProblemId}`);
+      expect(historyAction).toBe("REPLACE");
+    });
+
+    describe("メニューからゲームのホームを選んだ場合", () => {
+      beforeEach(() => {
+        openMenu();
+      });
+
+      test("遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+        fireEvent.click(screen.getByRole("menuitem", { name: "問題選択" }));
+        const { historyAction, location } = router.state;
+
+        expect(location.pathname).toBe("/puzzles/bridges");
+        expect(location.search).toBe(`?problem=${poolProblemId}`);
+        expect(historyAction).toBe("REPLACE");
+      });
     });
   });
 });
