@@ -33,11 +33,16 @@ import {
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 import { GameHomeHeading } from "@/zukan/ui/GameHomeScreen/GameHomeHeading";
+import { GameHomeMenu } from "@/zukan/ui/GameHomeScreen/GameHomeMenu";
 import { GameHomePerformance } from "@/zukan/ui/GameHomeScreen/GameHomePerformance";
 import {
   type GameLevelCard,
   GameLevelCards,
 } from "@/zukan/ui/GameHomeScreen/GameLevelCards";
+import {
+  type GameHomeLayer,
+  useGameHomeLayers,
+} from "@/zukan/ui/GameHomeScreen/use-game-home-layers";
 import {
   useZukanChangeReveal,
   type ZukanStampProgress,
@@ -118,11 +123,11 @@ export type GameHomeScreenProps = {
   findProblemFeatureValues: (
     problem: ZukanProblem,
   ) => ReadonlyMap<string, ProblemFeatureValue> | null;
-  /** ゲーム固有の遊び方ダイアログを描く。開閉の状態は見出しが持ち、引数で渡す。 */
+  /** ゲーム固有の遊び方ダイアログを描く。開閉の状態は画面が持ち、引数で渡す。 */
   renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
   /**
-   * ゲーム固有のチュートリアルを描く。開閉の状態は見出しが持ち、終えて開いているレベルを始める操作と一緒に引数で渡す。
-   * 省略すると、チュートリアルを開くボタンを出さない。
+   * ゲーム固有のチュートリアルを描く。開閉の状態は画面が持ち、終えて開いているレベルを始める操作と一緒に引数で渡す。
+   * 省略すると、見出しのメニューにチュートリアルを出さない。
    */
   renderTutorial?: (control: GameHomeTutorialControl) => ReactNode;
   /** 全記録。開いているレベルの成績（自己ベスト・推移）を、成績を開いたときにこの中から求める。 */
@@ -323,8 +328,8 @@ function listPendingChanges(
  * 絞り込みは開いているレベルの台紙にかけ、当たった問題を前に詰め、当たらなかった問題を薄くして後ろに並べる。条件は保存せず、開いたときは条件なしで始め、レベルを切り替えると外す。
  * 条件は、かけたレベルを添えて持ち、選ぶ前に最初に開くレベルが変わったときも、ほかのレベルには持ち越さない。条件を変えると台紙を先頭までスクロールし、前に集めた問題を見せる。
  * 変化は絞り込みの無い台紙で見せる。見せている途中で絞り込みを開くか条件を選ぶと、見せ終えたものとする。
- * 遊び方・見方・絞り込み・成績のボタンと「ランダムに遊ぶ」を押したタップは、最後の姿まで飛ばしたうえでそのまま操作する。
- * 成績は、開いているレベルの自己ベスト・推移・記録の JSON コピーを、見出しの並びのボタンから開いたときだけ示す。
+ * 遊び方・見方・絞り込み・成績は、見出しの1つのメニューから開く。メニューのボタンと「ランダムに遊ぶ」を押したタップは、最後の姿まで飛ばしたうえでそのまま操作する。
+ * 成績は、開いているレベルの自己ベスト・推移・記録の JSON コピーを、見出しのメニューから開いたときだけ示す。
  * 状態ごとの数は、絞り込んでいても台紙の全問で数え、当たった問題の数は同じ行の右に添える。
  */
 export function GameHomeScreen({
@@ -355,7 +360,8 @@ export function GameHomeScreen({
     initialSelectedKey,
   );
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(noLevelFilter);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { openLayer, menuButtonRef, changeLayerOpen } = useGameHomeLayers();
+  const isFilterOpen = openLayer === "filter";
   // 選択肢ごとの数は絞り込みを開くまで見せないので、開くまで数えず、ゲームのホームを開くまでの時間を縮める。閉じる動きの間も数を保つよう、一度開いたら数え続ける。
   const [hasOpenedFilter, setHasOpenedFilter] = useState(false);
   const [revealStatuses, setRevealStatuses] = useState<
@@ -406,7 +412,8 @@ export function GameHomeScreen({
         : null,
     [openDifficulty, openProblems, needsLevelFeatures, findLevelFeatures],
   );
-  const isFiltering = countZukanFilterConditions(filterConditions) > 0;
+  const filterConditionCount = countZukanFilterConditions(filterConditions);
+  const isFiltering = filterConditionCount > 0;
   const arrangement = useMemo(
     () => arrangeOpenProblems(openProblems, filterConditions, levelFeatures),
     [openProblems, filterConditions, levelFeatures],
@@ -606,7 +613,15 @@ export function GameHomeScreen({
       finishOpenLevelReveal();
       setHasOpenedFilter(true);
     }
-    setIsFilterOpen(open);
+    changeLayerOpen("filter", open);
+  }
+
+  function handleOpenLayer(layer: GameHomeLayer) {
+    if (layer === "filter") {
+      handleFilterOpenChange(true);
+      return;
+    }
+    changeLayerOpen(layer, true);
   }
 
   function handleFilterConditionsChange(conditions: ZukanFilterConditions) {
@@ -638,34 +653,52 @@ export function GameHomeScreen({
         problemCount={zukan.problemCount}
         titleRef={titleRef}
         actionsRef={headerActionsRef}
-        renderHowToPlayDialog={renderHowToPlayDialog}
-        renderTutorial={
-          renderTutorial &&
-          ((control) =>
-            renderTutorial({
-              ...control,
-              playStart: tutorialPlayStart,
-            }))
-        }
       >
-        <ZukanLegend />
-        <ZukanFilter
-          conditions={filterConditions}
-          matchedCount={arrangement.matchedCount}
-          featureAxes={listFilterFeatureAxes(levelFeatures, featureAxes)}
-          performanceAxes={performanceAxes}
-          optionCounts={filterOptionCounts}
-          optionCountLimits={filterOptionCountLimits}
-          open={isFilterOpen}
-          onOpenChange={handleFilterOpenChange}
-          onConditionsChange={handleFilterConditionsChange}
-        />
-        <GameHomePerformance
-          records={records}
-          playRecordDisplay={playRecordDisplay}
-          difficulty={openDifficulty}
+        <GameHomeMenu
+          buttonRef={menuButtonRef}
+          filterConditionCount={filterConditionCount}
+          hasTutorial={renderTutorial !== undefined}
+          onOpenLayer={handleOpenLayer}
         />
       </GameHomeHeading>
+      {renderHowToPlayDialog({
+        open: openLayer === "howToPlay",
+        onClose() {
+          changeLayerOpen("howToPlay", false);
+        },
+      })}
+      {renderTutorial?.({
+        open: openLayer === "tutorial",
+        onClose() {
+          changeLayerOpen("tutorial", false);
+        },
+        playStart: tutorialPlayStart,
+      })}
+      <ZukanLegend
+        open={openLayer === "legend"}
+        onOpenChange={(open) => changeLayerOpen("legend", open)}
+        anchorRef={menuButtonRef}
+      />
+      <ZukanFilter
+        conditions={filterConditions}
+        matchedCount={arrangement.matchedCount}
+        featureAxes={listFilterFeatureAxes(levelFeatures, featureAxes)}
+        performanceAxes={performanceAxes}
+        optionCounts={filterOptionCounts}
+        optionCountLimits={filterOptionCountLimits}
+        open={isFilterOpen}
+        onOpenChange={handleFilterOpenChange}
+        anchorRef={menuButtonRef}
+        onConditionsChange={handleFilterConditionsChange}
+      />
+      <GameHomePerformance
+        records={records}
+        playRecordDisplay={playRecordDisplay}
+        difficulty={openDifficulty}
+        open={openLayer === "performance"}
+        onOpenChange={(open) => changeLayerOpen("performance", open)}
+        anchorRef={menuButtonRef}
+      />
 
       <Tabs
         value={openDifficulty}

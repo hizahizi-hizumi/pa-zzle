@@ -270,8 +270,18 @@ function getShownMatchedCount(): string | null {
   return shown.textContent;
 }
 
-function getFilterButton(): HTMLElement {
-  return screen.getByRole("button", { name: /^絞り込み/ });
+function getMenuButton(): HTMLElement {
+  return screen.getByRole("button", { name: /^メニュー/ });
+}
+
+function openMenu() {
+  fireEvent.pointerDown(getMenuButton(), { button: 0, ctrlKey: false });
+}
+
+/** 見出しのメニューを開き、層を開く項目を選ぶ。 */
+function openFromMenu(itemName: string | RegExp) {
+  openMenu();
+  fireEvent.click(screen.getByRole("menuitem", { name: itemName }));
 }
 
 /** 絞り込みの選択肢。読み上げ名は、名前に当たる問題の数を添えた「名前、数問」。 */
@@ -542,8 +552,8 @@ describe("GameHomeScreen", () => {
       expect(performance).toBeNull();
     });
 
-    test("成績を押すと、開いているレベルの記録だけから自己ベストと推移を示すこと", async () => {
-      fireEvent.click(screen.getByRole("button", { name: "成績" }));
+    test("メニューから成績を開くと、開いているレベルの記録だけから自己ベストと推移を示すこと", async () => {
+      openFromMenu("成績");
       const performance = await screen.findByRole("dialog", { name: "成績" });
 
       expect(within(performance).getByText("レベル 3")).toBeTruthy();
@@ -562,8 +572,8 @@ describe("GameHomeScreen", () => {
       expect(legend).toBeNull();
     });
 
-    test("見方を押すと、評価段階の高い順に続けて挑戦中・未挑戦のマスの見方を示すこと", async () => {
-      fireEvent.click(screen.getByRole("button", { name: "見方" }));
+    test("メニューから見方を開くと、評価段階の高い順に続けて挑戦中・未挑戦のマスの見方を示すこと", async () => {
+      openFromMenu("見方");
       const legend = await screen.findByRole("list", { name: "マスの見方" });
 
       const items = within(legend)
@@ -819,7 +829,7 @@ describe("GameHomeScreen", () => {
 
       describe("見方を開いている場合", () => {
         beforeEach(async () => {
-          fireEvent.click(screen.getByRole("button", { name: "見方" }));
+          openFromMenu("見方");
           await screen.findByRole("list", { name: "マスの見方" });
         });
 
@@ -925,18 +935,20 @@ describe("GameHomeScreen", () => {
       expect(onPlayRandom.mock.calls).toEqual([["3"]]);
     });
 
-    test("遊び方を押すと、ゲームの遊び方を開くこと", () => {
-      fireEvent.click(screen.getByRole("button", { name: "遊び方" }));
+    test("メニューから遊び方を開くと、ゲームの遊び方を開くこと", async () => {
+      openFromMenu("遊び方");
 
-      const dialog = screen.getByText("遊び方のダイアログ");
+      const dialog = await screen.findByText("遊び方のダイアログ");
 
       expect(dialog).toBeTruthy();
     });
 
-    test("チュートリアルを渡さなければ、チュートリアルを開くボタンを出さないこと", () => {
-      const button = screen.queryByRole("button", { name: "チュートリアル" });
+    test("チュートリアルを渡さなければ、メニューにチュートリアルを出さないこと", () => {
+      openMenu();
 
-      expect(button).toBeNull();
+      const item = screen.queryByRole("menuitem", { name: "チュートリアル" });
+
+      expect(item).toBeNull();
     });
 
     test("絞り込みを開くまで、問題の特徴の値を求めないこと", () => {
@@ -947,11 +959,11 @@ describe("GameHomeScreen", () => {
 
     test("絞り込みの条件をかけるまで、マスを並べ替えず、当たった数を示さないこと", () => {
       const order = listSquareOrder("レベル 3の問題");
-      const filterButton = getFilterButton();
+      const menuButton = getMenuButton();
       const matchedCount = getShownMatchedCount();
 
       expect(order).toEqual(["No.0005", "No.0006", "No.0007", "No.0008"]);
-      expect(filterButton.getAttribute("aria-label")).toBe("絞り込み");
+      expect(menuButton.getAttribute("aria-label")).toBe("メニュー");
       expect(matchedCount).toBeNull();
     });
   });
@@ -982,27 +994,39 @@ describe("GameHomeScreen", () => {
       expect(dialog).toBeNull();
     });
 
-    test("チュートリアルを押すと、ゲームのチュートリアルを開くこと", () => {
-      fireEvent.click(screen.getByRole("button", { name: "チュートリアル" }));
+    test("メニューで、チュートリアルを遊び方の次に置くこと", () => {
+      openMenu();
 
-      const dialog = screen.getByRole("dialog", { name: "チュートリアル" });
+      const items = screen
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent);
+
+      expect(items.slice(0, 2)).toEqual(["遊び方", "チュートリアル"]);
+    });
+
+    test("メニューからチュートリアルを開くと、ゲームのチュートリアルを開くこと", async () => {
+      openFromMenu("チュートリアル");
+
+      const dialog = await screen.findByRole("dialog", {
+        name: "チュートリアル",
+      });
 
       expect(dialog).toBeTruthy();
     });
 
-    test("チュートリアルを閉じると、フォーカスをチュートリアルのボタンへ戻すこと", () => {
-      const button = screen.getByRole("button", { name: "チュートリアル" });
-      fireEvent.click(button);
+    test("チュートリアルを閉じると、フォーカスをメニューのボタンへ戻すこと", async () => {
+      openFromMenu("チュートリアル");
+      fireEvent.click(await screen.findByRole("button", { name: "閉じる" }));
 
-      fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
-
-      expect(document.activeElement).toBe(button);
+      await waitFor(() => {
+        expect(document.activeElement).toBe(getMenuButton());
+      });
     });
 
-    test("チュートリアルから遊び始めると、開いているレベルでプレイを始めること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "チュートリアル" }));
+    test("チュートリアルから遊び始めると、開いているレベルでプレイを始めること", async () => {
+      openFromMenu("チュートリアル");
 
-      fireEvent.click(screen.getByRole("button", { name: "3を遊ぶ" }));
+      fireEvent.click(await screen.findByRole("button", { name: "3を遊ぶ" }));
 
       expect(onPlayRandom.mock.calls).toEqual([["3"]]);
     });
@@ -1013,7 +1037,7 @@ describe("GameHomeScreen", () => {
 
     beforeEach(async () => {
       renderScreen();
-      fireEvent.click(getFilterButton());
+      openFromMenu(/^絞り込み/);
       panel = await screen.findByRole("dialog", { name: "絞り込み" });
     });
 
@@ -1080,7 +1104,7 @@ describe("GameHomeScreen", () => {
       await waitFor(() => {
         expect(screen.queryByRole("dialog", { name: "絞り込み" })).toBeNull();
       });
-      fireEvent.click(getFilterButton());
+      openFromMenu(/^絞り込み/);
       await screen.findByRole("dialog", { name: "絞り込み" });
 
       expect(findProblemFeatureValues).toHaveBeenCalledTimes(callCount);
@@ -1105,10 +1129,8 @@ describe("GameHomeScreen", () => {
       expect(cleared).toEqual(before);
     });
 
-    test("条件をかけていない間も、絞り込みボタンの条件の数の印の場所を見えなくして取っておくこと", () => {
-      const mark = getFilterButton().querySelector(
-        "[data-condition-count-mark]",
-      );
+    test("条件をかけていない間も、メニューのボタンの条件の数の印の場所を見えなくして取っておくこと", () => {
+      const mark = getMenuButton().querySelector("[data-condition-count-mark]");
       const hiddenBefore = mark?.classList.contains("invisible");
 
       chooseFilterOption(panel, "状態", "未挑戦");
@@ -1186,7 +1208,7 @@ describe("GameHomeScreen", () => {
       fireEvent.click(clearButton);
 
       expect(clearButton.getAttribute("aria-disabled")).toBe("true");
-      expect(getFilterButton().getAttribute("aria-label")).toBe("絞り込み");
+      expect(getMenuButton().getAttribute("aria-label")).toBe("メニュー");
       expect(document.activeElement).toBe(clearButton);
     });
 
@@ -1223,17 +1245,40 @@ describe("GameHomeScreen", () => {
         ]);
       });
 
-      test("台紙の上と絞り込みに当たった数を、絞り込みボタンに条件の数を示し、カードは変えないこと", () => {
+      test("台紙の上と絞り込みに当たった数を、メニューのボタンに条件の数を示し、カードは変えないこと", () => {
         const openTab = screen.getByRole("tab", { selected: true });
         const panelCount = within(panel).getByText(/^該当/).textContent;
-        const filterButton = getFilterButton();
+        const menuButton = getMenuButton();
 
         expect(readLevelCardName(openTab)).toBe("レベル 3、4問中2問を解いた");
         expect(getShownMatchedCount()).toBe("該当 2問");
         expect(panelCount).toBe("該当 2問");
-        expect(filterButton.getAttribute("aria-label")).toBe(
-          "絞り込み、条件2つ",
+        expect(menuButton.getAttribute("aria-label")).toBe(
+          "メニュー、絞り込みの条件2つ",
         );
+      });
+
+      describe("絞り込みを閉じてメニューを開いた場合", () => {
+        beforeEach(async () => {
+          fireEvent.keyDown(panel, { key: "Escape" });
+          await waitFor(() => {
+            expect(
+              screen.queryByRole("dialog", { name: "絞り込み" }),
+            ).toBeNull();
+          });
+          openMenu();
+        });
+
+        test("メニューの絞り込みに条件の数を示すこと", () => {
+          const filterItem = screen.getByRole("menuitem", {
+            name: /^絞り込み/,
+          });
+
+          expect(filterItem.getAttribute("aria-label")).toBe(
+            "絞り込み、条件2つ",
+          );
+          expect(filterItem.textContent).toBe("絞り込み2");
+        });
       });
 
       test("状態ごとの数は、絞り込んでも台紙の全問で数えること", () => {
@@ -1271,10 +1316,10 @@ describe("GameHomeScreen", () => {
       test("解除を押すと、条件を外して番号の順に戻すこと", () => {
         fireEvent.click(within(panel).getByRole("button", { name: "解除" }));
         const order = listSquareOrder("レベル 3の問題");
-        const filterButton = getFilterButton();
+        const menuButton = getMenuButton();
 
         expect(order).toEqual(["No.0005", "No.0006", "No.0007", "No.0008"]);
-        expect(filterButton.getAttribute("aria-label")).toBe("絞り込み");
+        expect(menuButton.getAttribute("aria-label")).toBe("メニュー");
       });
 
       test("マスで右矢印キーを押すと、並べた順の次のマスへ移って選ぶこと", () => {
@@ -1303,10 +1348,10 @@ describe("GameHomeScreen", () => {
 
       test("レベルを切り替えると、条件を外すこと", () => {
         chooseLevel("レベル 1");
-        const filterButton = getFilterButton();
+        const menuButton = getMenuButton();
         const order = listSquareOrder("レベル 1の問題");
 
-        expect(filterButton.getAttribute("aria-label")).toBe("絞り込み");
+        expect(menuButton.getAttribute("aria-label")).toBe("メニュー");
         expect(order).toEqual(["No.0001", "No.0002", "No.0003"]);
       });
     });
@@ -1460,7 +1505,7 @@ describe("GameHomeScreen", () => {
             : section,
         ),
       });
-      fireEvent.click(getFilterButton());
+      openFromMenu(/^絞り込み/);
       const panel = await screen.findByRole("dialog", { name: "絞り込み" });
       chooseFilterOption(panel, "ミス", "ミスなし");
       chooseFilterOption(panel, "手数", "最短より多い");
@@ -1479,7 +1524,7 @@ describe("GameHomeScreen", () => {
         ...zukan,
         latestPlayedDifficulty: "1",
       });
-      fireEvent.click(getFilterButton());
+      openFromMenu(/^絞り込み/);
       const panel = await screen.findByRole("dialog", { name: "絞り込み" });
       chooseFilterOption(panel, "状態", "未挑戦");
       rerender(createScreen());
@@ -1488,11 +1533,11 @@ describe("GameHomeScreen", () => {
     test("前のレベルにかけた条件を、新しく開いたレベルにかけないこと", () => {
       const sheetNames = getShownSheetNames();
       const order = listSquareOrder("レベル 3の問題");
-      const filterButton = getFilterButton();
+      const menuButton = getMenuButton();
 
       expect(sheetNames).toEqual(["レベル 3の問題"]);
       expect(order).toEqual(["No.0005", "No.0006", "No.0007", "No.0008"]);
-      expect(filterButton.getAttribute("aria-label")).toBe("絞り込み");
+      expect(menuButton.getAttribute("aria-label")).toBe("メニュー");
       expect(getShownMatchedCount()).toBeNull();
     });
   });
@@ -1589,7 +1634,13 @@ describe("GameHomeScreen", () => {
     }
 
     function tap(target: Element, { x, y }: { x: number; y: number }) {
-      fireEvent.pointerDown(target, { pointerId: 1, clientX: x, clientY: y });
+      fireEvent.pointerDown(target, {
+        pointerId: 1,
+        button: 0,
+        ctrlKey: false,
+        clientX: x,
+        clientY: y,
+      });
       fireEvent.pointerUp(target, { pointerId: 1, clientX: x, clientY: y });
     }
 
@@ -1931,40 +1982,27 @@ describe("GameHomeScreen", () => {
           await advanceStamps(400);
         });
 
-        test("絞り込みボタンを1回タップすると、最後の姿まで飛ばして絞り込みを開くこと", () => {
-          const filterButton = getFilterButton();
-
-          tap(filterButton, { x: 10, y: 10 });
-          fireEvent.click(filterButton);
+        test("メニューのボタンを1回タップすると、最後の姿まで飛ばしてメニューを開くこと", () => {
+          tap(getMenuButton(), { x: 10, y: 10 });
+          const menu = screen.queryByRole("menu");
+          // 開いたメニューはほかの要素を読み上げから外すので、閉じてから台紙を確かめる。
+          fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
           const stages = getChangeStages("レベル 3の問題");
-          const panel = screen.queryByRole("dialog", { name: "絞り込み" });
 
+          expect(menu).not.toBeNull();
           expect(stages).toEqual([null, null, null, null]);
-          expect(panel).not.toBeNull();
           expect(onLevelChangesShown.mock.calls).toEqual([["3"]]);
         });
 
-        test("見方ボタンを1回タップすると、最後の姿まで飛ばして見方を開くこと", () => {
-          const legendButton = screen.getByRole("button", { name: "見方" });
-
-          tap(legendButton, { x: 10, y: 10 });
-          fireEvent.click(legendButton);
-          const legend = screen.queryByRole("list", { name: "マスの見方" });
-
-          expect(getChangeStages("レベル 3の問題")).toEqual([
-            null,
-            null,
-            null,
-            null,
-          ]);
-          expect(legend).not.toBeNull();
-        });
-
-        test("最後の姿まで飛ばし、見せ終えたと知らせること", () => {
-          fireEvent.click(getFilterButton());
+        test("メニューから絞り込みを開くと、最後の姿まで飛ばし、見せ終えたと知らせること", async () => {
+          openFromMenu(/^絞り込み/);
+          // メニューが閉じ切ってから絞り込みを開くので、閉じるのを待つ。
+          await advanceStamps(20);
+          const panel = screen.queryByRole("dialog", { name: "絞り込み" });
           const stages = getChangeStages("レベル 3の問題");
           const shownDifficulties = onLevelChangesShown.mock.calls;
 
+          expect(panel).not.toBeNull();
           expect(stages).toEqual([null, null, null, null]);
           expect(shownDifficulties).toEqual([["3"]]);
         });

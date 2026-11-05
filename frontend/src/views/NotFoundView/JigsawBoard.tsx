@@ -44,7 +44,7 @@ export function JigsawBoard({
         d={outlinePath}
         fill="none"
         className={seamStrokeClassNames.back}
-        strokeWidth="2.5"
+        strokeWidth="1"
       />
       <Digit404 glyphs={digits} />
       {holes.map((hole) => (
@@ -52,7 +52,7 @@ export function JigsawBoard({
           key={hole.id}
           d={hole.path}
           className={holeClassNames[hole.status]}
-          strokeWidth="3"
+          strokeWidth="1.5"
         />
       ))}
     </svg>
