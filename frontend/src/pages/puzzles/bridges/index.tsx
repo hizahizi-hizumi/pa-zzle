@@ -1,1 +1,1 @@
-export { BridgesDifficultyView as default } from "@/views/BridgesDifficultyView";
+export { BridgesHomeView as default } from "@/views/BridgesHomeView";

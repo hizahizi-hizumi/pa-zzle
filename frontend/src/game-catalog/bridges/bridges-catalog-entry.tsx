@@ -28,7 +28,7 @@ export const bridgesCatalogEntry = {
   id: bridgesPlayRecordDefinition.gameId,
   name: BRIDGES_DISPLAY_NAME,
   pictogramSvg,
-  entryPath: "/puzzles/bridges",
+  homePath: "/puzzles/bridges",
   playPath: "/puzzles/bridges/play/:difficulty",
   playRecordDisplay: bridgesPlayRecordDisplay,
   recordProblemPlayTarget(record) {
@@ -48,6 +48,9 @@ export const bridgesCatalogEntry = {
     );
   },
   listPoolProblemIds: listBridgesPoolProblemIds,
+  hasRecordResult(record) {
+    return restoreBridgesRecordedResult(record) !== null;
+  },
   renderRecordResult(record, context) {
     const recorded = restoreBridgesRecordedResult(record);
     return recorded ? (

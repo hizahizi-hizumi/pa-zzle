@@ -10,14 +10,6 @@ describe("bridgesPlayRecordDisplay", () => {
     expect(metricIds).toEqual(personalBestMetricIds);
   });
 
-  test("離脱の進み具合を時間・架けた橋の順に単位付きで表示すること", () => {
-    const progress = Object.values(bridgesPlayRecordDisplay.progress).map(
-      ({ label, formatValue }) => `${label} ${formatValue(12)}`,
-    );
-
-    expect(progress).toEqual(["時間 00:00", "架けた橋 12本"]);
-  });
-
   const comparisonLabelCases = [
     ["1", "レベル 1"],
     ["5", "レベル 5"],

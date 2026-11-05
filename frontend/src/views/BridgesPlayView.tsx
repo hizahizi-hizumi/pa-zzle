@@ -17,7 +17,7 @@ export function BridgesPlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={bridgesCatalogEntry.entryPath}
+        backTo={bridgesCatalogEntry.homePath}
       />
     );
   }
