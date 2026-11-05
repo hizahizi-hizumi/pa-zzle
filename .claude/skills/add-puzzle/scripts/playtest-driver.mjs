@@ -15,8 +15,10 @@
 //   swipe <x1> <y1> <x2> <y2>   iphone はタッチのドラッグ（CDP の Input.dispatchTouchEvent）、pc はマウスのドラッグ
 //   path <x1> <y1> <x2> <y2> [<x3> <y3> ...]  折れ線をなぞる（指を離さずに角を曲がる）。iphone はタッチ、pc はマウス
 //   key <キー>                  キーを押す（Playwright のキー名: ArrowLeft、Escape、z など）
-//   trace <CSSセレクタ> <ミリ秒> <操作> [引数...]  合う要素（最大20）の位置と大きさを毎フレーム記録しながら操作を行い、
-//                               ミリ秒が過ぎてから撮る。セレクタは空白を含まない CSS にする
+//   trace <ミリ秒> <セレクタ> then <操作> [引数...]  セレクタに合う要素（最大20。セレクタの受け方は rect と同じ）の
+//                               位置と大きさを毎フレーム記録しながら操作を行い、ミリ秒が過ぎてから撮る
+//   frames <枚数> <間隔ミリ秒> <操作> [引数...]  操作の直後から、間隔ごとに枚数だけ撮る（拒否の揺れなど途中の動きを見る）。
+//                               最後にいつもどおり撮る
 //   scroll <dy>                 マウスホイールでページを縦にスクロールする
 //   wait <ミリ秒>               待ってから撮る
 //   shot                        撮るだけ
@@ -28,11 +30,14 @@
 //   load-storage <ファイル>     save-storage で書き出した localStorage を今のページに読み込み、ページを読み直す。
 //                               先に goto でアプリのページを開いておく
 //   quit                        ブラウザを閉じて常駐を終える（自分で起動した driver は、終わったら必ずこれで止める）
-// 返す1行: <画像のパス> t=<起動からの秒数>s scrollY=<window.scrollY> [scrolled=<要素>:<scrollTop>,...]
-//   scrolled は、ページの中でスクロールしている要素（scrollTop が 0 でないもの）。zoom は末尾に zoom=<倍率>x。
-//   rect・save-storage・load-storage・trace は、その後の行に結果を並べる（rect は1要素1行で
+// 返す1行: <画像のパス> t=<起動からの秒数>s scrollY=<window.scrollY> diff=<前の画像と違う画素の割合>% [scrolled=<要素>:<scrollTop>,...]
+//   diff は、前に撮ったビューポートの画像との差。0% なら画面は変わっていない（空振りの手に気づくため）。経過時間の表示だけが
+//   変わったときは小さな値になる。scrolled は、ページの中でスクロールしている要素（scrollTop が 0 でないもの）。
+//   zoom は末尾に zoom=<倍率>x。
+//   rect・save-storage・load-storage・trace・frames は、その後の行に結果を並べる（rect は1要素1行で
 //   rect <番号> x=<左> y=<上> w=<幅> h=<高さ> cx=<中心x> cy=<中心y> <要素の文字の先頭>、trace は1要素1行で
-//   trace <番号> frames=<フレーム数> dx=<最初からの横のずれの最大> dy=<縦> dw=<幅の変化の最大> dh=<高さ>）。quit は quit とだけ返す
+//   trace <番号> frames=<フレーム数> dx=<最初からの横のずれの最大> dy=<縦> dw=<幅の変化の最大> dh=<高さ>、
+//   frames は1枚1行で frame <番号> <画像のパス> +<操作の後のミリ秒>ms）。quit は quit とだけ返す
 // ブラウザエラー: pageerror と console.error を <画像の出力先>/browser-errors.log に追記する。
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
@@ -166,21 +171,32 @@ async function serve(args) {
     await page.mouse.up();
   }
 
+  // 「then」の前をセレクタ、後を包む操作に分ける。セレクタは rect と同じく空白を含んでよい。
+  function splitWrapped(words, usage) {
+    const separator = words.indexOf("then");
+    if (separator < 1 || separator === words.length - 1) throw new Error(usage);
+    const [name, ...operands] = words.slice(separator + 1);
+    if (!(name in operations) || ["trace", "frames"].includes(name)) throw new Error(`包めない操作: ${name}`);
+    return { selector: words.slice(0, separator).join(" "), name, operands };
+  }
+
   // 操作の間、合う要素の矩形を requestAnimationFrame ごとに記録し、最初のフレームからのずれの最大を返す。
-  async function traceDuring(selector, milliseconds, name, ...operands) {
+  // 要素は Playwright のセレクタで先に引いて渡すので、セレクタの誤りはページの中ではなくここで失敗する。
+  async function traceDuring(milliseconds, ...words) {
+    const usage = "trace は <ミリ秒> <セレクタ> then <操作> [引数...] を受ける";
     const duration = Number(milliseconds);
-    if (!selector || !Number.isFinite(duration) || duration <= 0) {
-      throw new Error("trace は <CSSセレクタ> <ミリ秒> <操作> [引数...] を受ける");
-    }
-    if (!(name in operations) || name === "trace") throw new Error(`trace で包めない操作: ${name}`);
+    if (!Number.isFinite(duration) || duration <= 0) throw new Error(usage);
+    const { selector, name, operands } = splitWrapped(words, usage);
+    const elements = (await page.locator(selector).elementHandles()).slice(0, MAX_RECTS);
+    if (elements.length === 0) return "trace: 合う要素が無い";
     await page.evaluate(
-      ({ cssSelector, ms, limit }) => {
+      ({ targets, ms }) => {
         const frames = [];
         const end = performance.now() + ms;
         window.__playtestTrace = frames;
         const tick = () => {
           frames.push(
-            [...document.querySelectorAll(cssSelector)].slice(0, limit).map((element) => {
+            targets.map((element) => {
               const box = element.getBoundingClientRect();
               return [box.x, box.y, box.width, box.height];
             }),
@@ -189,22 +205,77 @@ async function serve(args) {
         };
         requestAnimationFrame(tick);
       },
-      { cssSelector: selector, ms: duration, limit: MAX_RECTS },
+      { targets: elements, ms: duration },
     );
     const startedAtMs = Date.now();
     await operations[name](...operands);
     await page.waitForTimeout(Math.max(0, duration - (Date.now() - startedAtMs)));
     const frames = await page.evaluate(() => window.__playtestTrace ?? []);
-    if (frames.length === 0 || frames[0].length === 0) return "trace: 合う要素が無い";
+    if (frames.length === 0) return "trace: 記録できたフレームが無い";
     const round = (value) => Math.round(value * 10) / 10;
     return frames[0]
       .map((first, index) => {
-        const deltas = [0, 1, 2, 3].map((axis) =>
-          Math.max(...frames.map((frame) => (frame[index] ? Math.abs(frame[index][axis] - first[axis]) : 0))),
-        );
+        const deltas = [0, 1, 2, 3].map((axis) => Math.max(...frames.map((frame) => Math.abs(frame[index][axis] - first[axis]))));
         return `trace ${index + 1} frames=${frames.length} dx=${round(deltas[0])} dy=${round(deltas[1])} dw=${round(deltas[2])} dh=${round(deltas[3])}`;
       })
       .join("\n");
+  }
+
+  // 操作の直後から、間隔ごとに撮る。settle を待つ前の動き（拒否の揺れ・すべりの途中）を見るため。
+  async function framesAfter(count, interval, name, ...operands) {
+    const [shots, gap] = [count, interval].map(Number);
+    if (!(Number.isInteger(shots) && shots >= 1 && shots <= 20) || !(gap >= 0)) {
+      throw new Error("frames は <枚数 1〜20> <間隔ミリ秒> <操作> [引数...] を受ける");
+    }
+    if (!(name in operations) || ["trace", "frames"].includes(name)) throw new Error(`包めない操作: ${name}`);
+    const startedAtMs = Date.now();
+    await operations[name](...operands);
+    const lines = [];
+    for (let index = 1; index <= shots; index++) {
+      const file = path.join(values.out, `${String(shotNumber + 1).padStart(3, "0")}-frames-${String(index).padStart(2, "0")}.png`);
+      await page.screenshot({ path: file, scale: "css" });
+      lines.push(`frame ${index} ${file} +${Date.now() - startedAtMs}ms`);
+      if (index < shots) await page.waitForTimeout(gap);
+    }
+    return lines.join("\n");
+  }
+
+  // 前に撮った画像と今の画像で違う画素の割合（%）。PNG の読み解きはブラウザの別のページの canvas に任せる。
+  let diffPage = null;
+  let previousShot = null;
+  async function changedPercent(current) {
+    const before = previousShot;
+    previousShot = current;
+    if (!before) return null;
+    diffPage ??= await context.newPage();
+    return diffPage.evaluate(
+      async ({ a, b }) => {
+        const load = (data) =>
+          new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = reject;
+            image.src = `data:image/png;base64,${data}`;
+          });
+        const [first, second] = await Promise.all([load(a), load(b)]);
+        if (first.width !== second.width || first.height !== second.height) return 100;
+        const pixels = (image) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = image.width;
+          canvas.height = image.height;
+          const context2d = canvas.getContext("2d");
+          context2d.drawImage(image, 0, 0);
+          return context2d.getImageData(0, 0, image.width, image.height).data;
+        };
+        const [x, y] = [pixels(first), pixels(second)];
+        let changed = 0;
+        for (let index = 0; index < x.length; index += 4) {
+          if (Math.abs(x[index] - y[index]) + Math.abs(x[index + 1] - y[index + 1]) + Math.abs(x[index + 2] - y[index + 2]) > 24) changed++;
+        }
+        return (changed / (x.length / 4)) * 100;
+      },
+      { a: before.toString("base64"), b: current.toString("base64") },
+    );
   }
 
   // 縮小した画像を引き伸ばすのではなく、CDP の clip.scale でその倍率で描き直すので、細い線・重なり・境界が見える。
@@ -234,6 +305,7 @@ async function serve(args) {
     path: (...coordinates) => tracePath(...coordinates),
     key: (key) => page.keyboard.press(key),
     trace: (...operands) => traceDuring(...operands),
+    frames: (...operands) => framesAfter(...operands),
     scroll: (dy) => page.mouse.wheel(0, Number(dy)),
     wait: (milliseconds) => page.waitForTimeout(Math.max(0, Number(milliseconds) - SETTLE_MILLISECONDS)),
     shot: async () => {},
@@ -286,15 +358,19 @@ async function serve(args) {
     await page.waitForTimeout(SETTLE_MILLISECONDS);
     shotNumber += 1;
     const file = path.join(values.out, `${String(shotNumber).padStart(3, "0")}-${name}.png`);
+    let diffNote = "";
     if (clip) await zoomShot(file, clip);
-    else await page.screenshot({ path: file, scale: "css" });
+    else {
+      const percent = await changedPercent(await page.screenshot({ path: file, scale: "css" }));
+      diffNote = percent === null ? "" : ` diff=${percent < 0.1 ? percent.toFixed(2) : percent.toFixed(1)}%`;
+    }
     const note = clip ? ` zoom=${clip.scale}x` : "";
     const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
     const scrollY = await page.evaluate(() => window.scrollY);
     const scrolled = await scrolledElements();
     const scrolledNote = scrolled.length > 0 ? ` scrolled=${scrolled.join(",")}` : "";
     const detailLines = typeof detail === "string" ? `\n${detail}` : "";
-    return `${file} t=${seconds}s scrollY=${scrollY}${scrolledNote}${note}${detailLines}`;
+    return `${file} t=${seconds}s scrollY=${scrollY}${diffNote}${scrolledNote}${note}${detailLines}`;
   }
 
   const server = createServer(async (request, response) => {
@@ -354,6 +430,6 @@ if (command === "serve") await serve(rest);
 else if (command === "send") await send(rest);
 else {
   console.error("使い方: node playtest-driver.mjs serve --url <URL> --device <iphone|pc> --out <出力先> --port <ポート>");
-  console.error("        node playtest-driver.mjs send --port <ポート> <goto|tap|swipe|path|key|trace|scroll|wait|shot|zoom|rect|save-storage|load-storage|quit> [引数...]");
+  console.error("        node playtest-driver.mjs send --port <ポート> <goto|tap|swipe|path|key|trace|frames|scroll|wait|shot|zoom|rect|save-storage|load-storage|quit> [引数...]");
   process.exit(2);
 }
