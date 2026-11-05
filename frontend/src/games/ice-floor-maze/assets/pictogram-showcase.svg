@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="アイスフロア迷路">
+<style>
+.pz-ice-floor-maze-wall{fill:#dff2fe;stroke:var(--game-pictogram-strong)}
+.dark .pz-ice-floor-maze-wall{fill:#1d293d}
+.pz-ice-floor-maze-trail{opacity:.45}
+.dark .pz-ice-floor-maze-trail{opacity:.35}
+.pz-ice-floor-maze-tf{fill:#7c86ff}
+.dark .pz-ice-floor-maze-tf{fill:#a3b3ff}
+.pz-ice-floor-maze-tl{fill:none;stroke:#7c86ff;opacity:0;stroke-dashoffset:0}
+.dark .pz-ice-floor-maze-tl{stroke:#a3b3ff}
+.pz-ice-floor-maze-rock{fill:#a6a09b}
+.dark .pz-ice-floor-maze-rock{fill:#79716b}
+.pz-ice-floor-maze-ring{fill:none;stroke:#fe9a00;transform-box:fill-box;transform-origin:center}
+.dark .pz-ice-floor-maze-ring{stroke:#ffb900}
+.pz-ice-floor-maze-sq{transform-box:view-box;transform-origin:72px 84px}
+.pz-ice-floor-maze-piece{fill:#4f39f6;transform-box:fill-box;transform-origin:center}
+.dark .pz-ice-floor-maze-piece{fill:#7c86ff}
+@media (prefers-reduced-motion: no-preference){
+[data-pictogram-motion="play"] .pz-ice-floor-maze-mv{animation:pz-ice-floor-maze-mv 4500ms linear infinite}
+[data-pictogram-motion="play"] .pz-ice-floor-maze-sq{animation:pz-ice-floor-maze-sq 4500ms linear infinite}
+[data-pictogram-motion="play"] .pz-ice-floor-maze-t1{animation:pz-ice-floor-maze-t1 4500ms linear infinite}
+[data-pictogram-motion="play"] .pz-ice-floor-maze-t2{animation:pz-ice-floor-maze-t2 4500ms linear infinite}
+[data-pictogram-motion="play"] .pz-ice-floor-maze-tf{animation:pz-ice-floor-maze-tf 4500ms linear infinite}
+[data-pictogram-motion="play"] .pz-ice-floor-maze-piece{animation:pz-ice-floor-maze-piece 4500ms linear infinite}
+[data-pictogram-motion="play"] .pz-ice-floor-maze-goal{animation:pz-ice-floor-maze-goal 4500ms linear infinite}
+@keyframes pz-ice-floor-maze-mv{0%{transform:translate(-34px,-48px)}6.667%{transform:translate(-34px,-48px);animation-timing-function:cubic-bezier(.4,0,.8,.7)}14.667%{transform:translate(0px,-48px)}28.889%{transform:translate(0px,-48px);animation-timing-function:cubic-bezier(.4,0,.8,.7)}39.556%{transform:none}100%{transform:none}}
+@keyframes pz-ice-floor-maze-sq{0%{transform:none}14.667%{transform:none;animation-timing-function:cubic-bezier(.2,.6,.35,1)}16.444%{transform:translate(3px,0px) scale(.76,1.14);animation-timing-function:cubic-bezier(.45,0,.55,1)}21.333%{transform:none}100%{transform:none}}
+@keyframes pz-ice-floor-maze-t1{0%{opacity:1;stroke-dashoffset:34px}6.667%{opacity:1;stroke-dashoffset:34px;animation-timing-function:cubic-bezier(.4,0,.8,.7)}14.667%{opacity:1;stroke-dashoffset:0px}39.533%{opacity:1;stroke-dashoffset:0px}39.556%{opacity:0;stroke-dashoffset:0px}100%{opacity:0;stroke-dashoffset:0px}}
+@keyframes pz-ice-floor-maze-t2{0%{opacity:0;stroke-dashoffset:48px}28.867%{opacity:0;stroke-dashoffset:48px}28.889%{opacity:1;stroke-dashoffset:48px;animation-timing-function:cubic-bezier(.4,0,.8,.7)}39.533%{opacity:1;stroke-dashoffset:0px}39.556%{opacity:0;stroke-dashoffset:0px}100%{opacity:0;stroke-dashoffset:0px}}
+@keyframes pz-ice-floor-maze-tf{0%{opacity:0}39.533%{opacity:0}39.556%{opacity:1}100%{opacity:1}}
+@keyframes pz-ice-floor-maze-piece{0%{transform:none}39.556%{transform:none;animation-timing-function:cubic-bezier(.2,.6,.35,1)}41.333%{transform:scale(1.14,.76);animation-timing-function:cubic-bezier(.45,0,.55,1)}46.667%{transform:none}100%{transform:none}}
+@keyframes pz-ice-floor-maze-goal{0%{transform:none}39.556%{transform:none;animation-timing-function:cubic-bezier(.2,.6,.35,1)}41.556%{transform:scale(.86);animation-timing-function:cubic-bezier(.45,0,.55,1)}45.333%{transform:scale(1.05);animation-timing-function:cubic-bezier(.45,0,.55,1)}49.333%{transform:none}100%{transform:none}}
+}
+</style>
+<rect class="pz-ice-floor-maze-wall" x="18" y="18" width="84" height="84" rx="2" stroke-width="4"/>
+<g class="pz-ice-floor-maze-trail">
+<path class="pz-ice-floor-maze-tf" d="M30 30.5H64A5.5 5.5 0 0 1 69.5 36V84A5.5 5.5 0 0 1 58.5 84V41.5H30A5.5 5.5 0 0 1 30 30.5Z"/>
+<path class="pz-ice-floor-maze-tl pz-ice-floor-maze-t1" d="M30 36H64" stroke-width="11" stroke-linecap="round" stroke-dasharray="34 120"/>
+<path class="pz-ice-floor-maze-tl pz-ice-floor-maze-t2" d="M64 36V84" stroke-width="11" stroke-linecap="round" stroke-dasharray="48 120"/>
+</g>
+<rect class="pz-ice-floor-maze-rock" x="77" y="27" width="18" height="18" rx="3.5"/>
+<circle class="pz-ice-floor-maze-ring pz-ice-floor-maze-goal" cx="64" cy="84" r="12" stroke-width="2"/>
+<g class="pz-ice-floor-maze-mv"><g class="pz-ice-floor-maze-sq"><circle class="pz-ice-floor-maze-piece" cx="64" cy="84" r="8"/></g></g>
+</svg>

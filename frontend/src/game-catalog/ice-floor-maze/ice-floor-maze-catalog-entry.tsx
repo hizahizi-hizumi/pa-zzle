@@ -6,6 +6,7 @@ import {
 import { RecordedIceFloorMazeResult } from "@/game-catalog/ice-floor-maze/RecordedIceFloorMazeResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/ice-floor-maze/assets/pictogram.svg?raw";
+import pictogramShowcaseSvg from "@/games/ice-floor-maze/assets/pictogram-showcase.svg?raw";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
 import {
   iceFloorMazePlayRecordDefinition,
@@ -28,6 +29,7 @@ export const iceFloorMazeCatalogEntry = {
   id: iceFloorMazePlayRecordDefinition.gameId,
   name: ICE_FLOOR_MAZE_DISPLAY_NAME,
   pictogramSvg,
+  pictogramShowcaseSvg,
   homePath: "/puzzles/ice-floor-maze",
   playPath: "/puzzles/ice-floor-maze/play/:difficulty",
   playRecordDisplay: iceFloorMazePlayRecordDisplay,
