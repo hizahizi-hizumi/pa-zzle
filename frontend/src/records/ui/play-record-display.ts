@@ -71,7 +71,7 @@ export function getPlayRecordMetricDisplay(
 }
 
 /** 数を示すときの単位。数には必ず単位を付ける。 */
-type PlayRecordCountUnit = "回" | "手" | "マス";
+type PlayRecordCountUnit = "回" | "手" | "本" | "マス";
 
 /** 100点満点の評価点。 */
 export const playScoreMetricPresentation: PlayRecordMetricPresentation = {
