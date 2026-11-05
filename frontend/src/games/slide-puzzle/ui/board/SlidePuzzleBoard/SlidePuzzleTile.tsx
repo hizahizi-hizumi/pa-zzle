@@ -1,5 +1,7 @@
 import type { Ref } from "react";
 
+import { TutorialCue } from "@/components/TutorialCue";
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import {
   getSlidePuzzleColumn,
   getSlidePuzzleRow,
@@ -10,11 +12,16 @@ import { SlidePuzzleTileFace } from "@/games/slide-puzzle/ui/board/SlidePuzzleTi
 import type { SlidePuzzleTileCue } from "@/games/slide-puzzle/ui/board/tile-cue";
 
 /** 盤面の幅を一辺のマス数で等分する。 */
-const tileSizeClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
+export const tileSizeClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
   3: "size-1/3",
   4: "size-1/4",
   5: "size-1/5",
 };
+
+/** タイルの面の位置と角丸。印と応えはこの形で囲み、手を引く間はこの形のまま覆いから抜く。 */
+export const tileFaceShapeClassName = "inset-[1cqw] rounded-[1.6cqw]";
+
+const cuePlacementClassName = `pointer-events-none absolute ${tileFaceShapeClassName}`;
 
 type SlidePuzzleTileProps = {
   tile: SlidePuzzleTileNumber;
@@ -22,6 +29,8 @@ type SlidePuzzleTileProps = {
   boardSize: SlidePuzzleBoardSize;
   disabled: boolean;
   cue: SlidePuzzleTileCue | undefined;
+  /** チュートリアルで手を引いている間、画面全体の覆いからこのタイルを抜き、元の明るさで見せる。 */
+  spotlit: boolean;
   slideAnimated: boolean;
   faceRef: Ref<HTMLSpanElement>;
   onPress: (cellIndex: number) => void;
@@ -33,6 +42,7 @@ export function SlidePuzzleTile({
   boardSize,
   disabled,
   cue,
+  spotlit,
   slideAnimated,
   faceRef,
   onPress,
@@ -53,28 +63,27 @@ export function SlidePuzzleTile({
       style={{ transform: `translate(${column * 100}%, ${row * 100}%)` }}
     >
       <SlidePuzzleTileFace tile={tile} boardSize={boardSize} ref={faceRef} />
+      <TutorialSpotlight active={spotlit} className={tileFaceShapeClassName} />
       {cue?.kind === "landed" && (
         <span
-          key={cue.id}
           aria-hidden="true"
           data-tile-cue={cue.kind}
-          className="pointer-events-none absolute inset-[1cqw] rounded-[1.6cqw] border-(length:--border-width-normal) border-foreground fill-mode-forwards animate-out fade-out-0 delay-(--duration-slow) duration-(--duration-slow) ease-standard"
-        />
+          className={cuePlacementClassName}
+        >
+          <TutorialCue kind="acknowledgement" id={cue.id} />
+        </span>
       )}
       {(cue?.kind === "hint" || cue?.kind === "recall") && (
         <span
           aria-hidden="true"
           data-tile-cue="hint"
-          className="pointer-events-none absolute inset-[1cqw] rounded-[1.6cqw] border-(length:--border-width-strong) border-ring animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none"
-        />
-      )}
-      {cue?.kind === "recall" && (
-        <span
-          key={cue.id}
-          aria-hidden="true"
-          data-tile-cue={cue.kind}
-          className="pointer-events-none absolute inset-[1cqw] rounded-[1.6cqw] border-(length:--border-width-strong) border-foreground fill-mode-forwards animate-out fade-out-0 delay-(--duration-slow) duration-(--duration-slow) ease-standard"
-        />
+          className={cuePlacementClassName}
+        >
+          <TutorialCue
+            kind="mark"
+            recallId={cue.kind === "recall" ? cue.id : null}
+          />
+        </span>
       )}
     </button>
   );

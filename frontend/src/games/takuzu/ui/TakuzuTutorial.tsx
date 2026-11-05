@@ -10,21 +10,32 @@ import type { GameProgress } from "@/games/play";
 import pictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
 import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
 import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
-import type { TakuzuCell, TakuzuTile } from "@/games/takuzu/puzzle/board";
+import {
+  getTakuzuLineCellIndices,
+  type TakuzuCell,
+  type TakuzuLine,
+  type TakuzuTile,
+} from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
+import type { TakuzuCellView } from "@/games/takuzu/session/session";
 import {
   findTakuzuTutorialHintCellIndex,
   getTakuzuTutorialCellViews,
   getTakuzuTutorialLineViolations,
   getTakuzuTutorialStepCellIndices,
+  getTakuzuTutorialStepReasonCellIndices,
   type TakuzuTutorialAction,
   type TakuzuTutorialBoardState,
   type TakuzuTutorialRuleId,
+  type TakuzuTutorialSituation,
   takuzuTutorial,
 } from "@/games/takuzu/tutorial/tutorial";
 import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
-import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
+import {
+  TakuzuBoard,
+  type TakuzuBoardSpotlight,
+} from "@/games/takuzu/ui/board/TakuzuBoard";
 import { TakuzuTutorialRewind } from "@/games/takuzu/ui/TakuzuTutorial/TakuzuTutorialRewind";
 import { useTakuzuSoundEffects } from "@/games/takuzu/ui/use-takuzu-sound-effects";
 import {
@@ -63,7 +74,7 @@ const VIOLATION_REACTION_DELAY_MS = 500;
  */
 const TOWARD_STEP_REVEAL_DELAY_MS = 1000;
 
-/** 手順どおりに置いてから次の印を付けるまでの間。決め手が光って消えるのを見届けてから示す。 */
+/** 手順どおりに置いてから次の印を付けるまでの間。置いたマスへの応えと決め手を残して見せてから、次の印とその決め手に替える。 */
 const NEXT_STEP_CUE_DELAY_MS = 900;
 
 /** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
@@ -72,9 +83,9 @@ const IDLE_HINT_DELAY_MS = 4000;
 const goalBoardState = takuzuTutorial.goal();
 
 /**
- * 手を引いている間に印の無いマスを押されたときの、印の光らせ直し。
- * - `id`: 押されるたびに増やし、続けて押されても光らせ直す。
- * - `progress`: 押されたときの進行。手が進んだら光らせ直しを終える。
+ * 手を引いている間に印の無いマスを押されたときの、印の押し直し。印の線を短く濃くして戻す。
+ * - `id`: 押されるたびに増やし、続けて押されても押し直す。
+ * - `progress`: 押されたときの進行。手が進んだら押し直しを終える。
  */
 type TakuzuTutorialRecall = {
   id: number;
@@ -105,13 +116,15 @@ function getCueDelayMs(
   if (!guiding) {
     return progress.violated || lastMove?.violated ? null : IDLE_HINT_DELAY_MS;
   }
-  const reasoned = (lastMove?.reasonCellIndices.length ?? 0) > 0;
-  return reasoned ? NEXT_STEP_CUE_DELAY_MS : 0;
+  // 手順のマスを正しく置いた手は、置いたマスへの応えと決め手を覆いから抜いて見せてから、次の印へ替える。
+  // ルールに合わないところが残る手では、待たずにすぐ印へ戻す。
+  const fitted = !lastMove?.violated && (lastMove?.fitsStep ?? false);
+  return fitted ? NEXT_STEP_CUE_DELAY_MS : 0;
 }
 
 /**
  * ルールに合わない手は、本番と同じ違反の印だけで示し、タイルは揺らさない。
- * 印は手を置くたびには付け直さず、光らせ直すとき（`recallId`）だけ光を重ねる。
+ * 印は手を置くたびには付け直さず、押し直すとき（`recallId`）だけ線を濃くする。
  */
 function getCellCues(
   state: TakuzuTutorialBoardState,
@@ -129,7 +142,7 @@ function getCellCues(
   ];
 }
 
-/** 直前の手への合図。ルールに合う手なら、手順のマスを正しく置いた合図と決め手の光。 */
+/** 直前の手への合図。手順のマスを正しく置いた応え。 */
 function getMoveCues({
   lastMove,
   moveCount,
@@ -137,19 +150,50 @@ function getMoveCues({
   if (!lastMove || lastMove.violated) {
     return [];
   }
-  const fittedCues: TakuzuCellCue[] = lastMove.fitsStep
+  return lastMove.fitsStep
     ? [{ cellIndex: lastMove.cellIndex, kind: "fitted", id: moveCount }]
     : [];
-  return [
-    ...fittedCues,
-    ...lastMove.reasonCellIndices.map(
-      (cellIndex): TakuzuCellCue => ({
-        cellIndex,
-        kind: "reason",
-        id: moveCount,
-      }),
-    ),
-  ];
+}
+
+/**
+ * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せるマス。手を引いていなければ `null` で、覆いを出さない。
+ * - 印が出ている間は、印を付ける手順のマスとその決め手。
+ * - 置いてから次の印を出すまでの間は、置いたマスとその決め手。前の手の決め手を、次の印の決め手と読み違えさせないため、印と一緒に替える。
+ * - ルールに合わない3連続のマスと、個数超過・重複の行・列のマスは、どこがルールに当たっているかを読めるよう抜く。
+ */
+function getSpotlitCellIndices(
+  situation: TakuzuTutorialSituation,
+  state: TakuzuTutorialBoardState,
+  hintShown: boolean,
+  cellViews: readonly TakuzuCellView[],
+  lineViolations: readonly TakuzuLine[],
+): number[] | null {
+  if (situation.step === null) {
+    return null;
+  }
+  const { lastMove } = state;
+  const focused = hintShown
+    ? [
+        ...situation.step.cellIndices,
+        ...getTakuzuTutorialStepReasonCellIndices(situation, state),
+      ]
+    : lastMove
+      ? [lastMove.cellIndex, ...lastMove.reasonCellIndices]
+      : [];
+  const runCellIndices = cellViews.flatMap((view, cellIndex) =>
+    view.inViolatingRun ? [cellIndex] : [],
+  );
+  const lineCellIndices = lineViolations.flatMap((line) =>
+    getTakuzuLineCellIndices(state.board.size, line),
+  );
+  return [...new Set([...focused, ...runCellIndices, ...lineCellIndices])];
+}
+
+/** 手を引いている間は、抜くマスに加えて、個数超過・重複の行・列の縁の外の印も覆いから抜く。 */
+function getBoardSpotlight(
+  cellIndices: readonly number[] | null,
+): TakuzuBoardSpotlight | null {
+  return cellIndices === null ? null : { cellIndices, lineViolations: true };
 }
 
 /**
@@ -171,6 +215,11 @@ export function TakuzuTutorial({
   const [settledTowardStepProgress, setSettledTowardStepProgress] =
     useState<TakuzuTutorialProgress | null>(null);
   const [recall, setRecall] = useState<TakuzuTutorialRecall | null>(null);
+  // 手順を終えた手の進行と、その手の前の進行。置いたマスと決め手を残して見せる間は、一言とルールの並びも終えた手順のままにする。
+  const [finishedStep, setFinishedStep] = useState<{
+    progress: TakuzuTutorialProgress;
+    previous: TakuzuTutorialProgress;
+  } | null>(null);
   // 本番と同じく、置いた・消した・固定マスで通らなかったを知らせ、音を鳴らす。固定マスは盤面が揺らす。
   const [operation, setOperation] = useState<TakuzuOperation | null>(null);
   // 開き直しても同じ知らせとみなされないよう、もう一度始めても数え直さない。
@@ -266,7 +315,7 @@ export function TakuzuTutorial({
     setOperation({ ...notice, id: operationIdRef.current });
   }
 
-  /** 印の無いマスを押されたら、赤は使わず、印を光らせ直して目を向けさせる。 */
+  /** 印の無いマスを押されたら、赤は使わず、印の線を短く濃くして目を向けさせる。 */
   function recallHint(): void {
     setRecall((current) => ({ id: (current?.id ?? 0) + 1, progress }));
   }
@@ -293,6 +342,9 @@ export function TakuzuTutorial({
     notifyOperation(
       placed === null ? { type: "emptied" } : { type: "placed", tile: placed },
     );
+    if (next.stepIndex !== progress.stepIndex) {
+      setFinishedStep({ progress: next, previous: progress });
+    }
     setProgress(next);
     // 次の手が来たら、前の手には応えない。
     cancelPendingReaction();
@@ -329,6 +381,7 @@ export function TakuzuTutorial({
     setSettledViolationProgress(null);
     setSettledTowardStepProgress(null);
     setRecall(null);
+    setFinishedStep(null);
     setOperation(null);
     setProgress(startTutorial(takuzuTutorial));
   }
@@ -374,8 +427,29 @@ export function TakuzuTutorial({
               )}
               operation={operation}
               interactionDisabled={progress.phase !== "playing"}
-              cues={getCellCues(boardState, hintCellIndices, recallId)}
-              outlinesViolatedLines
+              spotlight={
+                progress.phase === "playing" && !goalShown
+                  ? getBoardSpotlight(
+                      getSpotlitCellIndices(
+                        situation,
+                        boardState,
+                        cueShown,
+                        cellViews,
+                        getTakuzuTutorialLineViolations(
+                          situation,
+                          boardState,
+                          towardStepSettled,
+                        ),
+                      ),
+                    )
+                  : null
+              }
+              cues={
+                // 完成の波と完成した盤面に、最後の手の合図を残さない。
+                progress.phase === "playing"
+                  ? getCellCues(boardState, hintCellIndices, recallId)
+                  : []
+              }
               onCycleCell={handleCycleCell}
               onPlaceCell={handlePlaceCell}
             />
@@ -384,6 +458,13 @@ export function TakuzuTutorial({
       </div>
     );
   }
+
+  // 次の印を付けるまでは、覆いから抜いた置いたマスと決め手に合わせて、一言とルールの並びも終えた手順のまま見せる。
+  const shownProgress =
+    guiding && !cueShown && finishedStep?.progress === progress
+      ? finishedStep.previous
+      : progress;
+  const shownSituation = getTutorialSituation(takuzuTutorial, shownProgress);
 
   const finish: TutorialFinish = playStart
     ? {
@@ -401,14 +482,15 @@ export function TakuzuTutorial({
       intro={takuzuTutorial.intro}
       rules={takuzuTutorial.rules.map((rule) => ({
         ...rule,
-        earned: progress.earnedRuleIds.includes(rule.id),
-        current: situation.step?.introducedRuleId === rule.id,
+        earned: shownProgress.earnedRuleIds.includes(rule.id),
+        current: shownSituation.step?.introducedRuleId === rule.id,
       }))}
-      message={getTutorialMessage(takuzuTutorial, progress, {
+      message={getTutorialMessage(takuzuTutorial, shownProgress, {
         entry: finish.entry,
-        violationSettled,
+        violationSettled: shownProgress === progress && violationSettled,
       })}
       phase={progress.phase}
+      guiding={progress.phase === "playing" && guiding}
       finish={finish}
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}

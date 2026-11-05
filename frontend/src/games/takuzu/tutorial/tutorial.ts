@@ -83,7 +83,7 @@ export type TakuzuTutorialBoardState = {
   lastMove: TakuzuTutorialMove | null;
 };
 
-type TakuzuTutorialSituation = TutorialSituation<
+export type TakuzuTutorialSituation = TutorialSituation<
   TakuzuTutorialRuleId,
   TakuzuTutorialStep
 >;
@@ -356,20 +356,78 @@ function findDeducibleCellIndex(
   return null;
 }
 
-/** 手に入れたルールのぶんだけの違反。まだ知らないルールの違反は見せない。 */
+/**
+ * ここまでに伝えた見方。ルールを行と列に分けて伝えるので、手を引いている間は今の手順までに使わせた見方だけにする。
+ * 手を離した後は、手に入れたルールを行と列の両方に当てはめる。
+ */
+function listTaughtLessons({
+  step,
+  earnedRuleIds,
+}: TakuzuTutorialSituation): TakuzuTutorialLesson[] {
+  if (step === null) {
+    return listLessons(earnedRuleIds);
+  }
+  return steps
+    .slice(0, steps.indexOf(step) + 1)
+    .flatMap((taught) => (taught.lesson ? [taught.lesson] : []));
+}
+
+function isLessonTaught(
+  lessons: readonly TakuzuTutorialLesson[],
+  ruleId: TakuzuTutorialRuleId,
+  axis: TakuzuLine["axis"],
+): boolean {
+  return lessons.some(
+    (lesson) => lesson.ruleId === ruleId && lesson.axis === axis,
+  );
+}
+
+/** マスが、その向きの行・列で3つ以上続く同じタイルの中にあるか。 */
+function isInRunAlong(
+  board: TakuzuBoard,
+  cellIndex: number,
+  axis: TakuzuLine["axis"],
+): boolean {
+  const line = getCellLine(board.size, cellIndex, axis);
+  const cells = getTakuzuLineCells(board, line);
+  const position = getTakuzuLineCellIndices(board.size, line).indexOf(
+    cellIndex,
+  );
+  const tile = cells[position];
+  if (!tile) {
+    return false;
+  }
+  let start = position;
+  while (start > 0 && cells[start - 1] === tile) {
+    start -= 1;
+  }
+  let end = position;
+  while (end < cells.length - 1 && cells[end + 1] === tile) {
+    end += 1;
+  }
+  return end - start + 1 >= 3;
+}
+
+/** 伝えた見方のぶんだけの違反。まだ伝えていないルールと、まだ伝えていない向き（行・列）の違反は見せない。 */
 function findVisibleViolations(
   board: TakuzuBoard,
-  ruleIds: readonly TakuzuTutorialRuleId[],
+  lessons: readonly TakuzuTutorialLesson[],
 ): TakuzuRuleViolations {
   const violations = findTakuzuRuleViolations(board);
   return {
-    runCellIndices: ruleIds.includes("run") ? violations.runCellIndices : [],
-    overfilledLines: ruleIds.includes("count")
-      ? violations.overfilledLines
-      : [],
-    duplicateLines: ruleIds.includes("duplicate")
-      ? violations.duplicateLines
-      : [],
+    runCellIndices: violations.runCellIndices.filter((cellIndex) =>
+      takuzuAxes.some(
+        (axis) =>
+          isLessonTaught(lessons, "run", axis) &&
+          isInRunAlong(board, cellIndex, axis),
+      ),
+    ),
+    overfilledLines: violations.overfilledLines.filter((line) =>
+      isLessonTaught(lessons, "count", line.axis),
+    ),
+    duplicateLines: violations.duplicateLines.filter((line) =>
+      isLessonTaught(lessons, "duplicate", line.axis),
+    ),
   };
 }
 
@@ -385,12 +443,12 @@ const noViolations: TakuzuRuleViolations = {
  */
 function findShownViolations(
   { board, lastMove }: TakuzuTutorialBoardState,
-  ruleIds: readonly TakuzuTutorialRuleId[],
+  lessons: readonly TakuzuTutorialLesson[],
   towardStepSettled: boolean,
 ): TakuzuRuleViolations {
   return lastMove?.towardStep && !towardStepSettled
     ? noViolations
-    : findVisibleViolations(board, ruleIds);
+    : findVisibleViolations(board, lessons);
 }
 
 function isCellInViolation(
@@ -423,7 +481,16 @@ function getPlacementReason(
   cellIndex: number,
   placed: TakuzuCell,
 ): readonly number[] {
-  const emptied = placeTakuzuCell(givens, before, cellIndex, null);
+  // 解と違うタイルには決め手を付けない。手順のほかのマスに残った解と違うタイルも、決め手を探す前に空ける。
+  if (placed !== solution.cells[cellIndex]) {
+    return [];
+  }
+  const emptied = placeTakuzuCell(
+    givens,
+    clearMistakenStepCells(step, before),
+    cellIndex,
+    null,
+  );
   const lessons = [
     ...(step?.lesson ? [step.lesson] : []),
     ...listLessons(earnedRuleIds),
@@ -440,11 +507,12 @@ function getPlacementReason(
  * 途中でない手（別のマスのタイルのせいでルールに合わないままになる手や、キーで違うタイルを置いた手）は、ルールに合わないところを見せる。
  */
 function isTowardStep(
-  { step, earnedRuleIds }: TakuzuTutorialSituation,
+  situation: TakuzuTutorialSituation,
   board: TakuzuBoard,
   action: TakuzuTutorialAction,
   placed: TakuzuCell,
 ): boolean {
+  const { step } = situation;
   if (step === null || !step.cellIndices.includes(action.cellIndex)) {
     return false;
   }
@@ -456,7 +524,23 @@ function isTowardStep(
     return false;
   }
   const reached = placeTakuzuCell(givens, board, action.cellIndex, target);
-  return !hasTakuzuRuleViolation(findVisibleViolations(reached, earnedRuleIds));
+  return !hasTakuzuRuleViolation(
+    findVisibleViolations(reached, listTaughtLessons(situation)),
+  );
+}
+
+/** 手順の印のマスのうち、解と違うタイルが置かれたマスを空けた盤面。 */
+function clearMistakenStepCells(
+  step: TakuzuTutorialStep | null,
+  board: TakuzuBoard,
+): TakuzuBoard {
+  return (step?.cellIndices ?? []).reduce(
+    (current, cellIndex) =>
+      current.cells[cellIndex] === solution.cells[cellIndex]
+        ? current
+        : placeTakuzuCell(givens, current, cellIndex, null),
+    board,
+  );
 }
 
 function isStepDone(step: TakuzuTutorialStep, board: TakuzuBoard): boolean {
@@ -478,7 +562,7 @@ function performTakuzuTutorialAction(
   state: TakuzuTutorialBoardState,
   action: TakuzuTutorialAction,
 ): { state: TakuzuTutorialBoardState; outcome: TutorialMoveOutcome } {
-  const { step, earnedRuleIds } = situation;
+  const { step } = situation;
   const { cellIndex } = action;
   const current = state.board.cells[cellIndex];
   const outsideStep = step !== null && !step.cellIndices.includes(cellIndex);
@@ -494,7 +578,7 @@ function performTakuzuTutorialAction(
   const towardStep = isTowardStep(situation, board, action, placed);
   const shownViolations = towardStep
     ? noViolations
-    : findVisibleViolations(board, earnedRuleIds);
+    : findVisibleViolations(board, listTaughtLessons(situation));
   const next: TakuzuTutorialBoardState = {
     board,
     moveCount: state.moveCount + 1,
@@ -524,12 +608,13 @@ function performTakuzuTutorialAction(
 
 /** `towardStepSettled`: 正しい手へ向かう途中の盤面のまま、手が止まった。ルールに合わないところを見せる。 */
 export function getTakuzuTutorialCellViews(
-  { earnedRuleIds }: TakuzuTutorialSituation,
+  situation: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
   towardStepSettled = false,
 ): TakuzuCellView[] {
   const runCellIndices = new Set(
-    findShownViolations(state, earnedRuleIds, towardStepSettled).runCellIndices,
+    findShownViolations(state, listTaughtLessons(situation), towardStepSettled)
+      .runCellIndices,
   );
   return state.board.cells.map(function createCellView(cell, cellIndex) {
     return {
@@ -546,13 +631,13 @@ function isSameLine(left: TakuzuLine, right: TakuzuLine): boolean {
 
 /** `towardStepSettled`: `getTakuzuTutorialCellViews` と同じ。 */
 export function getTakuzuTutorialLineViolations(
-  { earnedRuleIds }: TakuzuTutorialSituation,
+  situation: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
   towardStepSettled = false,
 ): TakuzuLineViolationView[] {
   const { overfilledLines, duplicateLines } = findShownViolations(
     state,
-    earnedRuleIds,
+    listTaughtLessons(situation),
     towardStepSettled,
   );
   return listTakuzuLines(state.board.size).flatMap(
@@ -671,12 +756,12 @@ function listViolationDescriptions(
 
 /** 直前に置いたマスが当たっている違反を先に言う。古い違反が残っていても、今の手の結果を返すため。 */
 function describeTakuzuTutorialViolation(
-  { earnedRuleIds }: TakuzuTutorialSituation,
+  situation: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
 ): TutorialMessage {
   const descriptions = listViolationDescriptions(
     state.board,
-    findShownViolations(state, earnedRuleIds, false),
+    findShownViolations(state, listTaughtLessons(situation), false),
   );
   const lastCellIndex = state.lastMove?.cellIndex;
   const description =
@@ -699,6 +784,33 @@ export function getTakuzuTutorialStepCellIndices(
   return (step?.cellIndices ?? []).filter(
     (cellIndex) => state.board.cells[cellIndex] !== solution.cells[cellIndex],
   );
+}
+
+/**
+ * 手順で印を付けるマスのタイルを決めるもの（決め手）のマス。手順で使わせる見方の決め手を先に探す。
+ * 印のマスに解と違うタイルが置かれていても、空けた盤面で決め手を探す。決まらない操作の手順と、手を離した後は空。
+ */
+export function getTakuzuTutorialStepReasonCellIndices(
+  situation: TakuzuTutorialSituation,
+  state: TakuzuTutorialBoardState,
+): readonly number[] {
+  const { step, earnedRuleIds } = situation;
+  const lessons = [
+    ...(step?.lesson ? [step.lesson] : []),
+    ...listLessons(earnedRuleIds),
+  ];
+  // 印のマスに置かれた解と違うタイルを前提にすると、誤った手へ導く決め手になるので、空けた盤面で探す。
+  const cleared = clearMistakenStepCells(step, state.board);
+  const reasonCellIndices = getTakuzuTutorialStepCellIndices(
+    situation,
+    state,
+  ).flatMap((cellIndex) => {
+    const deduction = deduceCell(cleared, lessons, cellIndex);
+    return deduction && deduction.tile === solution.cells[cellIndex]
+      ? deduction.reasonCellIndices
+      : [];
+  });
+  return [...new Set(reasonCellIndices)];
 }
 
 /**
@@ -757,4 +869,10 @@ export const takuzuTutorial: Tutorial<
   describeViolation: describeTakuzuTutorialViolation,
 };
 
-export const _private = { givens, solution, deduceCell, listLessons };
+export const _private = {
+  givens,
+  solution,
+  deduceCell,
+  listLessons,
+  findVisibleViolations,
+};

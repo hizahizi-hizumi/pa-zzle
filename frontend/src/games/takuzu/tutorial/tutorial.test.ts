@@ -10,6 +10,7 @@ import {
   getTakuzuTutorialCellViews,
   getTakuzuTutorialLineViolations,
   getTakuzuTutorialStepCellIndices,
+  getTakuzuTutorialStepReasonCellIndices,
   type TakuzuTutorialAction,
   type TakuzuTutorialBoardState,
   type TakuzuTutorialLesson,
@@ -24,7 +25,8 @@ import {
   type TutorialProgress,
 } from "@/games/tutorial";
 
-const { givens, solution, deduceCell, listLessons } = _private;
+const { givens, solution, deduceCell, listLessons, findVisibleViolations } =
+  _private;
 
 type Progress = TutorialProgress<
   TakuzuTutorialRuleId,
@@ -169,17 +171,6 @@ const lessonStepCases = ruleStepCases.flatMap(([stepIndex, stepCase]) =>
     : [],
 );
 
-/** 盤面に現れているルールの違反。 */
-function listViolatedRuleIds(board: TakuzuBoard): TakuzuTutorialRuleId[] {
-  const { runCellIndices, overfilledLines, duplicateLines } =
-    findTakuzuRuleViolations(board);
-  return [
-    ...(runCellIndices.length > 0 ? (["run"] as const) : []),
-    ...(overfilledLines.length > 0 ? (["count"] as const) : []),
-    ...(duplicateLines.length > 0 ? (["duplicate"] as const) : []),
-  ];
-}
-
 function withCell(
   board: TakuzuBoard,
   cellIndex: number,
@@ -195,18 +186,22 @@ function withCell(
 
 /**
  * 丸はタップで空き→四角→丸と入れるので、丸を入れる印のマスは途中で四角になる。
- * 手順ごとに、印のマスの1つを途中の四角にした盤面（ほかの印のマスは空きのままと、解を置いた後の両方）と、その手順でもまだ伝えていないルール。
+ * 手順ごとに、印のマスの1つを途中の四角にした盤面（ほかの印のマスは空きのままと、解を置いた後の両方）と、その手順でもまだ伝えていない見方。
+ * ルールは行と列に分けて伝えるので、まだ伝えていない向き（行・列）も、まだ伝えていない見方に数える。
  */
 const towardCircleCases = takuzuTutorial.steps.flatMap(
   function createTowardCircleCases(step, stepIndex) {
     const progress = finishSteps(stepIndex);
-    const taughtRuleIds = [
-      ...progress.earnedRuleIds,
-      ...(step.introducedRuleId ? [step.introducedRuleId] : []),
-    ];
-    const untaughtRuleIds = takuzuTutorial.rules
-      .map((rule) => rule.id)
-      .filter((ruleId) => !taughtRuleIds.includes(ruleId));
+    const taughtLessons = takuzuTutorial.steps
+      .slice(0, stepIndex + 1)
+      .flatMap((taught) => (taught.lesson ? [taught.lesson] : []));
+    const untaughtLessons = allLessons.filter(
+      (lesson) =>
+        !taughtLessons.some(
+          (taught) =>
+            taught.ruleId === lesson.ruleId && taught.axis === lesson.axis,
+        ),
+    );
     const startBoard = progress.boardState.board;
     const othersPlaced = step.cellIndices.reduce(
       (board, cellIndex) =>
@@ -221,7 +216,7 @@ const towardCircleCases = takuzuTutorial.steps.flatMap(
             [
               stepIndex,
               cellIndex,
-              { board: withCell(board, cellIndex, "a"), untaughtRuleIds },
+              { board: withCell(board, cellIndex, "a"), untaughtLessons },
             ] as const,
         ),
       );
@@ -296,15 +291,13 @@ describe("takuzuTutorial の盤面", () => {
   });
 
   test.each(towardCircleCases)(
-    "手順 %i でマス %i へ丸を入れる途中の盤面は、まだ伝えていないルールに当たらないこと",
-    (_, __, { board, untaughtRuleIds }) => {
-      const violated = listViolatedRuleIds(board);
+    "手順 %i でマス %i へ丸を入れる途中の盤面は、まだ伝えていないルールにも、まだ伝えていない向きにも当たらないこと",
+    (_, __, { board, untaughtLessons }) => {
+      const violations = findVisibleViolations(board, untaughtLessons);
 
-      const result = violated.filter((ruleId) =>
-        untaughtRuleIds.includes(ruleId),
-      );
+      const result = hasTakuzuRuleViolation(violations);
 
-      expect(result).toEqual([]);
+      expect(result).toBe(false);
     },
   );
 
@@ -470,6 +463,28 @@ describe("takuzuTutorial.perform", () => {
       place(cellAt(3, 2), "b"),
       place(cellAt(3, 3), "a"),
     ]);
+
+    describe("片方の印のマスに解と違うタイルを置いた場合", () => {
+      const mistaken = performAll(duplicateStep, [place(cellAt(3, 2), "b")]);
+      const upperRow = [cellAt(2, 1), cellAt(2, 2), cellAt(2, 3), cellAt(2, 4)];
+
+      test("印のマスの決め手は、違うタイルを前提にせず、見比べる上の行であること", () => {
+        const result = getTakuzuTutorialStepReasonCellIndices(
+          getTutorialSituation(takuzuTutorial, mistaken),
+          mistaken.boardState,
+        );
+
+        expect([...result].sort((left, right) => left - right)).toEqual(
+          upperRow,
+        );
+      });
+
+      test("もう片方にも解と違うタイルを置くと、その手に決め手を付けないこと", () => {
+        const result = performAll(mistaken, [place(cellAt(3, 3), "a")]);
+
+        expect(result.boardState.lastMove?.reasonCellIndices).toEqual([]);
+      });
+    });
 
     test("片方のマスを置いても進まず、もう片方に印を付け続けること", () => {
       const result = performAll(duplicateStep, placeSolution([cellAt(3, 2)]));
