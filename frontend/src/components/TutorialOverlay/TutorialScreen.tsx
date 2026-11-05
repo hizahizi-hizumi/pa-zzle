@@ -13,6 +13,8 @@ import {
 } from "react";
 
 import { GamePictogram } from "@/components/GamePictogram";
+import { TutorialFocusScrim } from "@/components/TutorialOverlay/TutorialFocusScrim";
+import { TUTORIAL_SPOTLIGHT_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import { Button } from "@/components/ui/button";
 import {
   DialogClose,
@@ -69,7 +71,7 @@ export type TutorialIntroScene = "goal" | "start";
  * 導入のうち、盤面が受け持つ場面。
  * - `scene`: 今見せる場面。導入を終えた後は `null` で、解いている盤面を見せる。
  * - `playing`: 場面の動きを見せる間。盤面が見えるまでと、動きを終えた後は `false` で、場面の終わりの盤面を見せる。
- * - `onSceneEnd`: 場面の動きを終えたら呼ぶ。動きを減らす設定では、動かさずにすぐ呼ぶ。
+ * - `onSceneEnd`: 場面の動きを終えたら呼ぶ。動かさずに見せる場面と、動きを減らす設定では、すぐ呼ぶ。
  */
 export type TutorialBoardIntro = {
   scene: TutorialIntroScene | null;
@@ -88,10 +90,12 @@ type TutorialScreenProps = {
   /** 導入を見せている間。開いたときと、もう一度始めたときに導入から始まる。 */
   introducing: boolean;
   completed: boolean;
+  /** 手を引いている間。導入を終えてから完成までのうち、手を離すまでの間だけ、画面全体に覆いを重ねる。 */
+  guiding: boolean;
   finish: TutorialFinish;
   /** ゲーム固有の盤面。盤面の大きさは盤面の側が、この領域の大きさから決める。 */
   renderBoard: (intro: TutorialBoardIntro) => ReactNode;
-  /** 導入を終えたか、飛ばした。 */
+  /** 導入を終えた。 */
   onIntroEnd: () => void;
   onRestart: () => void;
   /** 画面そのもの。開いたときのフォーカスを置く。 */
@@ -102,8 +106,8 @@ type TutorialScreenProps = {
  * 導入の段。開いたときは `name` から、もう一度始めたときは `start` から進む。
  * - `name`: 上部の領域の中央に、ピクトグラムと名前を大きく、その下に何をするパズルかの一文を出す。
  * - `goalAppearing`: その下に、解き終えた盤面とゴールの一言を出す。
- * - `goal`: 解き終えた盤面の動きを盤面に任せ、終えたら読む間だけ待つ。
- * - `start`: 始めの盤面へ移る動きを盤面に任せ、始まりの一言を添えて、終えたら読む間だけ待つ。
+ * - `goal`: 解き終えた盤面の動きを盤面に任せ、終えたら「次へ」を待つ。
+ * - `start`: 始めの盤面へ移る動きを盤面に任せ、始まりの一言を添えて、終えたら「次へ」を待つ。
  * - `header`: 名前を上部へ移し、移し終える頃にルールと一言を出す。
  * - `reveal`: 名前がもう上部にあるときに、ルールと一言を出す。
  * - `done`: 導入を終えた。
@@ -127,18 +131,6 @@ const NAME_MOVE_MS = 400;
 const REVEAL_AFTER_NAME_DELAY_MS = 350;
 /** ルールと一言を出す間。`header` と `reveal` の見せ方と同じ値。 */
 const REVEAL_MS = MOTION_DURATION_MS.slow;
-
-/**
- * 盤面の場面を見せ終えてから、次へ進むまでの読む間。
- * 動きを減らす設定では、盤面の動きで場面を見せる間が無いので、そのぶん長く止めて読ませる。
- */
-const sceneHoldMs = {
-  animated: { goal: 1200, start: 1200 },
-  still: { goal: 2800, start: 2200 },
-} as const satisfies Record<
-  "animated" | "still",
-  Record<TutorialIntroScene, number>
->;
 
 /**
  * 段ごとの見せ方。
@@ -298,7 +290,7 @@ function getMoveFromIntroName(
 /**
  * 開いたときに、パズルの名前と何をするパズルか、ゴールの盤面、始めの盤面を順に見せてから、1つの盤面を埋めながらルールを1つずつ身につけていく画面。
  * 盤面を主役にし、上部にパズルの名前と手に入れたルール、盤面の直上に短い一言だけを出す。
- * 導入は自分のペースで進められるよう、自動で進むほかに「次へ」で次の場面へ進められ、ほかのどこを押しても、どのキーでも飛ばせる。
+ * 導入は自分のペースで進められるよう、ゴールと始まりの盤面は「次へ」で進める。ほかのどこを押しても、どのキーでも、今の段の動きを終えて見せられる。
  */
 export function TutorialScreen({
   title,
@@ -308,6 +300,7 @@ export function TutorialScreen({
   message,
   introducing,
   completed,
+  guiding,
   finish,
   renderBoard,
   onIntroEnd,
@@ -333,6 +326,7 @@ export function TutorialScreen({
   const animationsRef = useRef<Animation[]>([]);
   const onIntroEndRef = useRef(onIntroEnd);
   const introPlaying = stage !== "done";
+  const scrimActive = guiding && !introPlaying && !completed;
 
   useLayoutEffect(() => {
     onIntroEndRef.current = onIntroEnd;
@@ -435,7 +429,10 @@ export function TutorialScreen({
     );
   }, [changeStage, finishIntro, schedule]);
 
-  // 盤面が場面の動きを終えたら、読む間だけ待って次の場面へ進む。
+  /**
+   * 盤面が場面の動きを終えたら、終わりの盤面を見せたまま「次へ」を待つ。
+   * 盤面を見る速さは人によって違うので、ゴールと始まりの盤面は自動では先へ進めない。
+   */
   const handleSceneEnd = useCallback(() => {
     const current = stageRef.current;
     if (
@@ -446,15 +443,9 @@ export function TutorialScreen({
     }
     endedStageRef.current = current;
     setSceneEnded(true);
-    const holdMs =
-      sceneHoldMs[animatedRef.current ? "animated" : "still"][current];
-    schedule(
-      current === "goal" ? () => changeStage("start") : finishScenes,
-      holdMs,
-    );
-  }, [changeStage, finishScenes, schedule]);
+  }, []);
 
-  // 「次へ」は待たずに次の場面へ進める。最後の場面では、名前を上部へ戻してから最初の手順を始める。
+  // 「次へ」で次の場面へ進める。最後の場面では、名前を上部へ戻してから最初の手順を始める。
   function showNextScene(): void {
     const current = stageRef.current;
     stopIntroMotion();
@@ -482,9 +473,44 @@ export function TutorialScreen({
     return target instanceof Node && !!nextButtonRef.current?.contains(target);
   }
 
-  function skipIntro(event: ReactPointerEvent): void {
+  /**
+   * 今の段の動きを終えて、その段の終わりの画面を見せる。終える動きが無ければ何もせず `false` を返す。
+   * ゴールと始めの盤面を見ないまま手順に入らないよう、2つの盤面の場面は「次へ」でしか先へ進めない。
+   */
+  function finishStageMotion(): boolean {
+    const current = stageRef.current;
+    switch (current) {
+      case "name":
+      case "goalAppearing":
+        stopIntroMotion();
+        changeStage("goal");
+        endScene("goal");
+        return true;
+      case "goal":
+      case "start":
+        if (endedStageRef.current === current) {
+          return false;
+        }
+        endScene(current);
+        return true;
+      case "header":
+      case "reveal":
+        finishIntro();
+        return true;
+      case "done":
+        return false;
+    }
+  }
+
+  /** 盤面の場面の動きを止め、場面の終わりの盤面を見せて「次へ」を待つ。 */
+  function endScene(scene: IntroStage): void {
+    endedStageRef.current = scene;
+    setSceneEnded(true);
+  }
+
+  function handlePointerDownCapture(event: ReactPointerEvent): void {
     if (introPlaying && !isOnNextButton(event.target)) {
-      finishIntro();
+      finishStageMotion();
     }
   }
 
@@ -492,16 +518,17 @@ export function TutorialScreen({
     if (!introPlaying || event.key === "Escape" || event.key === "Tab") {
       return;
     }
-    // 「次へ」を押すキーは、飛ばさずに「次へ」に任せる。
+    // 「次へ」を押すキーは、今の段の動きを終えさせずに「次へ」に任せる。
     if (
       isOnNextButton(event.target) &&
       (event.key === "Enter" || event.key === " ")
     ) {
       return;
     }
-    // 導入を飛ばすキーで、閉じるボタンなどを押さないようにする。
-    event.preventDefault();
-    finishIntro();
+    // 動きを終えるキーで、閉じるボタンなどを押さないようにする。
+    if (finishStageMotion()) {
+      event.preventDefault();
+    }
   }
 
   // もう一度始めるときは、名前はもう上部にあるので、盤面を始めの盤面へ戻すところから見せる。
@@ -535,12 +562,12 @@ export function TutorialScreen({
         ? intro.startCaption
         : null;
   return (
-    // 導入の間は、「次へ」のほかはどこを押しても、どのキーでも導入を飛ばす。
+    // 導入の間は、「次へ」のほかはどこを押しても、どのキーでも、今の段の動きを終えて見せる。
     <div
       ref={mergeRefs(rootRef, ref)}
       tabIndex={-1}
-      className="flex min-h-0 flex-1 flex-col outline-none"
-      onPointerDownCapture={skipIntro}
+      className="relative flex min-h-0 flex-1 flex-col outline-none"
+      onPointerDownCapture={handlePointerDownCapture}
       onKeyDownCapture={handleKeyDownCapture}
     >
       <DialogDescription className="sr-only">チュートリアル</DialogDescription>
@@ -611,9 +638,19 @@ export function TutorialScreen({
                     </span>
                   </span>
                 ) : (
-                  // 中身を伏せたルール。押せる部品に見えないよう、枠を付けずに文字の並びの一つとして置く。
-                  <span key="hidden" className="text-muted-foreground/60">
-                    ？
+                  // 中身を伏せたルール。押せる部品や問いかけに見えないよう、記号も枠も付けず、伏せた文字の幅の薄い線だけを置く。
+                  // 手に入れたときに並びの折り返しが変わって下の盤面が動かないよう、伏せている間も、手に入れた後の太い字の幅を取っておく。
+                  <span key="hidden" className="relative flex items-center">
+                    <span
+                      aria-hidden="true"
+                      data-label={rule.label}
+                      className="invisible font-semibold after:content-[attr(data-label)]"
+                    />
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-x-0 h-1 rounded-full bg-muted-foreground/20"
+                    />
+                    <span className="sr-only">まだ出ていないルール</span>
                   </span>
                 )}
               </li>
@@ -621,23 +658,33 @@ export function TutorialScreen({
           })}
         </ul>
 
-        {/* 一言が差し替わっても盤面が上下に動かないよう、見出し2行と補足1行がルールの行から離れて収まる高さに固定する。 */}
+        {/*
+          一言が差し替わっても盤面が上下に動かないよう、見出し2行と補足1行、または見出し1行と補足2行が、ルールの行から離れて収まる高さに固定する。
+          上から詰めて、補足の行数で見出しの位置を動かさない。
+        */}
         <div
           aria-live="polite"
           className={cn(
-            "flex h-24 shrink-0 flex-col items-center justify-end px-4",
+            "flex h-28 shrink-0 flex-col items-center justify-start px-4 pt-1",
             stageView.rulesClassName,
           )}
           style={rulesStyle}
         >
+          {/*
+            一言は補助面（muted）に載せ、どの段でも同じ面として見せる。手を引く間は、盤面の物と同じく、その面を元の形のまま覆いから抜く。
+            まとまりは背景差だけで示し、枠と影は重ねない。補足が無いときは空の行を置かず、面を文字のある所だけにする。
+          */}
           <p
             key={`${message.headline}\n${message.detail ?? ""}`}
-            className="flex animate-in flex-col items-center gap-0.5 text-balance text-center duration-(--duration-slow) ease-(--ease-enter) fade-in-0 slide-in-from-bottom-1 whitespace-pre-line [word-break:auto-phrase] motion-reduce:animate-none"
+            {...{ [TUTORIAL_SPOTLIGHT_ATTRIBUTE]: "" }}
+            className="flex animate-in flex-col items-center gap-0.5 rounded-md bg-muted p-3 text-balance text-center duration-(--duration-normal) ease-(--ease-enter) fade-in-0 whitespace-pre-line [word-break:auto-phrase] motion-reduce:animate-none"
           >
             <span className="text-heading">{message.headline}</span>
-            <span className="min-h-5 text-muted-foreground text-supporting">
-              {message.detail}
-            </span>
+            {message.detail && (
+              <span className="text-muted-foreground text-supporting">
+                {message.detail}
+              </span>
+            )}
           </p>
         </div>
 
@@ -674,7 +721,7 @@ export function TutorialScreen({
       <main
         inert={introPlaying}
         className={cn(
-          "flex min-h-0 flex-1 justify-center px-4 pt-4 pb-2 [container-type:size]",
+          "flex min-h-0 flex-1 items-start justify-center px-4 pt-4 pb-2 [container-type:size]",
           stageView.boardAreaClassName,
         )}
       >
@@ -686,10 +733,10 @@ export function TutorialScreen({
       </main>
 
       {/*
-        一言2行と「次へ」が収まる高さに固定し、導入の場面が替わっても、終えたときのボタンが出ても盤面を動かさない。
+        高さを固定し、導入の場面が替わっても、終えたときのボタンが出ても盤面を動かさない。
         導入の間は一言の場所を2行ぶん取っておき、一言が出ても替わっても「次へ」を動かさない。
       */}
-      <footer className="flex h-28 shrink-0 flex-col items-center justify-center gap-2 px-4 pb-2">
+      <footer className="flex h-28 shrink-0 flex-col items-center justify-center gap-3 px-4">
         {introPlaying && (
           <div className="flex min-h-14 flex-col justify-end">
             {caption !== null && (
@@ -734,6 +781,8 @@ export function TutorialScreen({
           </div>
         )}
       </footer>
+
+      <TutorialFocusScrim active={scrimActive} containerRef={rootRef} />
     </div>
   );
 }
