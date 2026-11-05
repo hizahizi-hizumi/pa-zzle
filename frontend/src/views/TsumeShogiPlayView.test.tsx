@@ -281,6 +281,22 @@ describe("TsumeShogiPlayView", () => {
 
       expect(screen.getByText("ホーム画面")).toBeTruthy();
     });
+
+    test("メニューからチュートリアルを開き、閉じると同じプレイの盤へ戻ること", () => {
+      openMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+      const tutorial = screen.getByRole("dialog", {
+        name: "詰将棋",
+        description: "チュートリアル",
+      });
+      fireEvent.click(within(tutorial).getByRole("button", { name: "閉じる" }));
+
+      const closed = screen.queryByRole("dialog", { name: "詰将棋" });
+
+      expect(tutorial).toBeTruthy();
+      expect(closed).toBeNull();
+      expect(getBoard()).toBeTruthy();
+    });
   });
 
   describe("通常の出題を詰ませた場合", () => {
