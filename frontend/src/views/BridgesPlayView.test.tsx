@@ -28,6 +28,7 @@ import { readPlayAttempts } from "@/records/play-attempt-storage";
 import { readPlayRecords } from "@/records/storage";
 import { BridgesPlayView } from "@/views/BridgesPlayView";
 
+const internalDiagnostics = vi.hoisted(() => ({ available: false }));
 const problemSeed = "bridges-play-view";
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
@@ -36,12 +37,15 @@ vi.mock("@/games/problem-seed", async (importOriginal) => ({
 }));
 
 vi.mock("@/lib/internal-diagnostics", () => ({
-  internalDiagnosticsAvailable: false,
+  get internalDiagnosticsAvailable() {
+    return internalDiagnostics.available;
+  },
   buildRevision: null,
 }));
 
 afterEach(() => {
   cleanup();
+  internalDiagnostics.available = false;
   window.localStorage.clear();
 });
 
@@ -372,10 +376,7 @@ describe("BridgesPlayView", () => {
     describe("橋を1本架けて別の問題へ移った場合", () => {
       beforeEach(() => {
         tapBetween(getEdgeEnds(solutionEdges[0]!));
-        fireEvent.pointerDown(
-          screen.getByRole("button", { name: "その他の操作" }),
-          { button: 0, ctrlKey: false },
-        );
+        openMenu();
         fireEvent.click(screen.getByRole("menuitem", { name: "別の問題" }));
       });
 
@@ -406,6 +407,24 @@ describe("BridgesPlayView", () => {
       expect(search.textContent).toBe(
         `?problem=${createProblemId(expected.identity)}`,
       );
+    });
+  });
+
+  describe("内部診断を使えるビルドの場合", () => {
+    beforeEach(() => {
+      internalDiagnostics.available = true;
+      renderAt("/puzzles/bridges/play/3");
+      openMenu();
+    });
+
+    test("メニューの検証情報から、出題中の問題を分析し直した検証情報を開けること", () => {
+      fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
+
+      const dialog = within(screen.getByRole("dialog", { name: "検証情報" }));
+
+      // 出題した難易度と、分析し直した判定。
+      expect(dialog.getAllByText("レベル 3")).toHaveLength(2);
+      expect(dialog.getByText(/^一意（探索 \d+局面）$/)).toBeTruthy();
     });
   });
 

@@ -80,137 +80,139 @@ describe("useBridgesPlay", () => {
     });
   });
 
-  let result: HookResult;
+  describe("seed で問題を選んで始めた場合", () => {
+    let result: HookResult;
 
-  beforeEach(() => {
-    vi.mocked(createProblemSeed)
-      .mockReturnValueOnce(initialSeed)
-      .mockReturnValue(otherSeed);
-    result = renderHook(() => useBridgesPlay(difficulty)).result;
-  });
-
-  test("seed で選んだ問題を、橋の無い盤面で始めること", () => {
-    const { problemIdentity, bridges, progress } = result.current;
-
-    expect({ problemIdentity, bridges, progress }).toEqual({
-      problemIdentity: initial.identity,
-      bridges: solution.map(() => 0),
-      progress: "playing",
-    });
-  });
-
-  describe("橋を1本架けた場合", () => {
     beforeEach(() => {
-      act(() => {
-        result.current.cycleEdge(firstEdge);
+      vi.mocked(createProblemSeed)
+        .mockReturnValueOnce(initialSeed)
+        .mockReturnValue(otherSeed);
+      result = renderHook(() => useBridgesPlay(difficulty)).result;
+    });
+
+    test("seed で選んだ問題を、橋の無い盤面で始めること", () => {
+      const { problemIdentity, bridges, progress } = result.current;
+
+      expect({ problemIdentity, bridges, progress }).toEqual({
+        problemIdentity: initial.identity,
+        bridges: solution.map(() => 0),
+        progress: "playing",
       });
     });
 
-    test("架けた辺と本数を、橋の変化として返すこと", () => {
-      const { edgeNotice } = result.current;
+    describe("橋を1本架けた場合", () => {
+      beforeEach(() => {
+        act(() => {
+          result.current.cycleEdge(firstEdge);
+        });
+      });
 
-      expect(edgeNotice).toMatchObject({
-        change: "changed",
-        edge: firstEdge,
-        count: 1,
+      test("架けた辺と本数を、橋の変化として返すこと", () => {
+        const { edgeNotice } = result.current;
+
+        expect(edgeNotice).toMatchObject({
+          change: "changed",
+          edge: firstEdge,
+          count: 1,
+        });
+      });
+
+      test("待ったと盤面を戻すが使えること", () => {
+        const { canUndo, canRestart } = result.current;
+
+        expect({ canUndo, canRestart }).toEqual({
+          canUndo: true,
+          canRestart: true,
+        });
+      });
+
+      test("待ったで橋を外し、待ったの回数を数えること", () => {
+        act(() => {
+          result.current.undo();
+        });
+        const { bridges, undoCount } = result.current;
+
+        expect({ placed: bridges[firstEdge], undoCount }).toEqual({
+          placed: 0,
+          undoCount: 1,
+        });
+      });
+
+      test("盤面を戻すで橋を全部外し、待ったも使えなくなること", () => {
+        act(() => {
+          result.current.restart();
+        });
+        const { bridges, canUndo, canRestart } = result.current;
+
+        expect({
+          empty: bridges.every((count) => count === 0),
+          canUndo,
+          canRestart,
+        }).toEqual({ empty: true, canUndo: false, canRestart: false });
       });
     });
 
-    test("待ったと盤面を戻すが使えること", () => {
-      const { canUndo, canRestart } = result.current;
+    describe("解の橋を全部架けた場合", () => {
+      beforeEach(() => {
+        placeSolution(result);
+      });
 
-      expect({ canUndo, canRestart }).toEqual({
-        canUndo: true,
-        canRestart: true,
+      test("クリアして完成演出の段へ進み、遊んだ問題の作業の量で評価を返すこと", () => {
+        const { status, progress, result: playResult } = result.current;
+
+        expect({
+          status,
+          progress,
+          inputCount: playResult?.inputCount,
+          workload: playResult?.workload,
+          speedScore: playResult?.score.breakdown.speed,
+        }).toEqual({
+          status: "cleared",
+          progress: "clearing",
+          inputCount: solution.reduce((total, count) => total + count, 0),
+          workload: measureBridgesSolveWorkload(initial),
+          speedScore: 100,
+        });
+      });
+
+      test("リセットで同じ問題を橋の無い盤面から始め直すこと", () => {
+        act(() => {
+          result.current.replay();
+        });
+        const { problemIdentity, status, bridges } = result.current;
+
+        expect({
+          problemId: createProblemId(problemIdentity),
+          status,
+          empty: bridges.every((count) => count === 0),
+        }).toEqual({
+          problemId: createProblemId(initial.identity),
+          status: "playing",
+          empty: true,
+        });
       });
     });
 
-    test("待ったで橋を外し、待ったの回数を数えること", () => {
-      act(() => {
-        result.current.undo();
+    describe("別の問題を始めた場合", () => {
+      beforeEach(() => {
+        placeSolution(result, true);
+        act(() => {
+          result.current.startNewProblem();
+        });
       });
-      const { bridges, undoCount } = result.current;
 
-      expect({ placed: bridges[firstEdge], undoCount }).toEqual({
-        placed: 0,
-        undoCount: 1,
-      });
-    });
+      test("今の問題を避けて選んだ問題を、橋の無い盤面で始めること", () => {
+        const { problemIdentity, bridges, status } = result.current;
 
-    test("盤面を戻すで橋を全部外し、待ったも使えなくなること", () => {
-      act(() => {
-        result.current.restart();
-      });
-      const { bridges, canUndo, canRestart } = result.current;
-
-      expect({
-        empty: bridges.every((count) => count === 0),
-        canUndo,
-        canRestart,
-      }).toEqual({ empty: true, canUndo: false, canRestart: false });
-    });
-  });
-
-  describe("解の橋を全部架けた場合", () => {
-    beforeEach(() => {
-      placeSolution(result);
-    });
-
-    test("クリアして完成演出の段へ進み、遊んだ問題の作業の量で評価を返すこと", () => {
-      const { status, progress, result: playResult } = result.current;
-
-      expect({
-        status,
-        progress,
-        inputCount: playResult?.inputCount,
-        workload: playResult?.workload,
-        speedMaximum: playResult?.score.breakdown.speed,
-      }).toEqual({
-        status: "cleared",
-        progress: "clearing",
-        inputCount: solution.reduce((total, count) => total + count, 0),
-        workload: measureBridgesSolveWorkload(initial),
-        speedMaximum: 100,
-      });
-    });
-
-    test("リセットで同じ問題を橋の無い盤面から始め直すこと", () => {
-      act(() => {
-        result.current.replay();
-      });
-      const { problemIdentity, status, bridges } = result.current;
-
-      expect({
-        problemId: createProblemId(problemIdentity),
-        status,
-        empty: bridges.every((count) => count === 0),
-      }).toEqual({
-        problemId: createProblemId(initial.identity),
-        status: "playing",
-        empty: true,
-      });
-    });
-  });
-
-  describe("別の問題を始めた場合", () => {
-    beforeEach(() => {
-      placeSolution(result, true);
-      act(() => {
-        result.current.startNewProblem();
-      });
-    });
-
-    test("今の問題を避けて選んだ問題を、橋の無い盤面で始めること", () => {
-      const { problemIdentity, bridges, status } = result.current;
-
-      expect({
-        problemIdentity,
-        empty: bridges.every((count) => count === 0),
-        status,
-      }).toEqual({
-        problemIdentity: other.identity,
-        empty: true,
-        status: "playing",
+        expect({
+          problemIdentity,
+          empty: bridges.every((count) => count === 0),
+          status,
+        }).toEqual({
+          problemIdentity: other.identity,
+          empty: true,
+          status: "playing",
+        });
       });
     });
   });

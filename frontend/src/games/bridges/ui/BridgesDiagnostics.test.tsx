@@ -43,12 +43,16 @@ describe("BridgesDiagnostics", () => {
     });
 
     test("レベルの判定に、判定したレベルとつながりの手詰まりの条件を並べること", () => {
-      const section = getSection("レベルの判定");
+      const levelSection = getSection("レベルの判定");
 
-      expect(getRowValue("判定", section)).toBe("レベル 4");
-      expect(getRowValue("つながりの手詰まり", section)).toBe(
-        `${analysis.connectivityRoundCount}（条件 2）`,
+      const values = ["判定", "つながりの手詰まり"].map((label) =>
+        getRowValue(label, levelSection),
       );
+
+      expect(values).toEqual([
+        "レベル 4",
+        `${analysis.connectivityRoundCount}（条件 2）`,
+      ]);
     });
 
     test("一意解を示すこと", () => {
