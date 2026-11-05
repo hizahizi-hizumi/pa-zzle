@@ -93,7 +93,7 @@ export function SlidePuzzleBoard({
     <div
       role="group"
       aria-label="盤面"
-      className="@container size-full rounded-xl bg-muted p-[1%]"
+      className="@container size-full rounded-[1rem] bg-muted p-[1%]"
     >
       <div className="relative size-full">
         {tiles.map(({ tile, cellIndex }) => (

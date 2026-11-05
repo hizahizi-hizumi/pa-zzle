@@ -21,7 +21,7 @@ export function IceFloorMazeTrappedNotice({
   return (
     <div
       role="status"
-      className="mx-auto max-w-md rounded-xl border-(length:--border-width-normal) bg-muted/50 px-3 py-2"
+      className="mx-auto max-w-md rounded-lg border-(length:--border-width-normal) bg-muted/50 px-3 py-2"
     >
       <div className="text-center">
         <p className="text-play-context">もうゴールに止まれない</p>

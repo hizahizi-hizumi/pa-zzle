@@ -130,7 +130,7 @@ export function InternalDiagnosticsDialog({
                   {section.title}
                 </h3>
               )}
-              <dl className="divide-y-(length:--border-width-normal) rounded-xl border-(length:--border-width-normal) bg-muted/25 px-4">
+              <dl className="divide-y-(length:--border-width-normal) rounded-lg border-(length:--border-width-normal) bg-muted/25 px-4">
                 {section.items.map((item) => (
                   <InternalDiagnosticRow
                     key={item.label}

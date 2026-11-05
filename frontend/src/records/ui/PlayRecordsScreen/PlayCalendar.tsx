@@ -27,7 +27,7 @@ export function PlayCalendar({ weeks, label }: PlayCalendarProps) {
             key={dayStart}
             data-day-start={dayStart}
             data-play-amount={level ?? undefined}
-            className={`aspect-square rounded-[3px] ${getPlayCalendarDayClassName(level)}`}
+            className={`aspect-square rounded-sm ${getPlayCalendarDayClassName(level)}`}
           />
         )),
       )}

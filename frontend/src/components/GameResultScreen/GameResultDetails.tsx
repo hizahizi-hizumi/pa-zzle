@@ -44,7 +44,7 @@ export function GameResultDetails({
         </CollapsibleTrigger>
       </div>
       <CollapsibleContent>
-        <div className="mt-2 rounded-xl border-(length:--border-width-normal) px-3 py-3 text-supporting text-muted-foreground">
+        <div className="mt-2 rounded-lg border-(length:--border-width-normal) px-3 py-3 text-supporting text-muted-foreground">
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
             {breakdown.map((metric) => (
               <DetailMetric

@@ -83,10 +83,10 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
+  --radius-*: initial;
+  --radius-sm: 1px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
   --shadow-raised: 0 1px 3px rgb(0 0 0 / 0.08);
 }
 

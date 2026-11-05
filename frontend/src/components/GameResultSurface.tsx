@@ -27,7 +27,7 @@ export function GameResultSurface({
   return (
     <section
       aria-label={label}
-      className={`rounded-xl border-(length:--border-width-normal) px-4 py-3 shadow-raised ${variantClassNames[variant]}`}
+      className={`rounded-lg border-(length:--border-width-normal) px-4 py-3 shadow-raised ${variantClassNames[variant]}`}
     >
       {children}
     </section>
