@@ -1,5 +1,5 @@
 import {
-  getZukanProblemStatusClassName,
+  getZukanProblemStatusColorClassName,
   zukanProblemStatusLabels,
   zukanProblemStatusOrder,
 } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
@@ -30,7 +30,7 @@ export function ZukanProblemStatusCounts({
         >
           <span
             aria-hidden="true"
-            className={`size-3 shrink-0 ${getZukanProblemStatusClassName(status)}`}
+            className={`size-3 shrink-0 bg-current ${getZukanProblemStatusColorClassName(status)}`}
           />
           <span className="font-medium text-foreground tabular-nums">
             {counts[status]}

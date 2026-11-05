@@ -5,6 +5,10 @@ import {
   ZUKAN_STAMP_DURATION_MS,
   type ZukanStamp,
 } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
+import {
+  getZukanPiecePath,
+  ZUKAN_PIECE_VIEW_BOX,
+} from "@/zukan/ui/GameHomeScreen/zukan-piece-shape";
 import { zukanProblemStatusOrder } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
 import { playZukanStampSound } from "@/zukan/ui/GameHomeScreen/zukan-stamp-sound";
 import type { ZukanProblemStatus } from "@/zukan/zukan-collection";
@@ -95,6 +99,8 @@ const FLASH_OPACITY = 0.55;
 /** perfect の金色に重ねる、明るい金の粒。 */
 const FINEST_SPARKLE_COLOR = "rgb(253 224 71)";
 const FINEST_GLOW_OPACITY = 0.8;
+/** perfect の浮いた姿の周りの光の線の太さとぼかし（ピースの1辺に対する比）。 */
+const GLOW = { width: 0.3, blur: 0.12 } as const;
 const FINEST_EFFECTS = {
   innerShockwave: { scaleRatio: 0.6, durationRatio: 0.8, widthPx: 2 },
   sparkles: { count: 6, distancePx: 28 },
@@ -187,6 +193,63 @@ export function createZukanStampEffectLayer(
 type Point = { x: number; y: number };
 type SquareBox = Point & { size: number };
 
+/** マスに `data-piece-shape` が無いときに描く、四角いピースの形。 */
+const SQUARE_PIECE_SHAPE = "0,0,0,0";
+
+/** 効果をピースの形で描く SVG。マスの2倍の大きさの要素いっぱいに、マスと中心を揃えて描く。 */
+function createPieceSvg(
+  path: string,
+  attributes: Record<string, string>,
+): SVGSVGElement {
+  const namespace = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(namespace, "svg");
+  svg.setAttribute("viewBox", ZUKAN_PIECE_VIEW_BOX);
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", "100%");
+  svg.style.overflow = "visible";
+  const shape = document.createElementNS(namespace, "path");
+  shape.setAttribute("d", path);
+  shape.setAttribute("stroke-linejoin", "round");
+  for (const [name, value] of Object.entries(attributes)) {
+    shape.setAttribute(name, value);
+  }
+  svg.append(shape);
+  return svg;
+}
+
+let glowSequence = 0;
+
+/**
+ * ピースの外側だけに光をにじませる SVG。ぼかした線をピースの形で外側だけに切り抜く。
+ * 内側へにじむと、光の層の下にある浮いた押す面がぼやけて見えるため。
+ */
+function createPieceGlowSvg(
+  path: string,
+  color: string,
+  { width, blur }: { width: number; blur: number },
+): SVGSVGElement {
+  const namespace = "http://www.w3.org/2000/svg";
+  glowSequence += 1;
+  const maskId = `zukan-stamp-glow-mask-${glowSequence}`;
+  const filterId = `zukan-stamp-glow-blur-${glowSequence}`;
+  const svg = createPieceSvg(path, {
+    fill: "none",
+    stroke: color,
+    "stroke-width": String(width),
+    filter: `url(#${filterId})`,
+  });
+  const glow = svg.firstElementChild;
+  const defs = document.createElementNS(namespace, "defs");
+  defs.innerHTML = `<filter id="${filterId}" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="${blur}"/></filter><mask id="${maskId}" maskUnits="userSpaceOnUse" x="-1" y="-1" width="3" height="3"><rect x="-1" y="-1" width="3" height="3" fill="#fff"/><path d="${path}" fill="#000"/></mask>`;
+  const group = document.createElementNS(namespace, "g");
+  group.setAttribute("mask", `url(#${maskId})`);
+  if (glow) {
+    group.append(glow);
+  }
+  svg.replaceChildren(defs, group);
+  return svg;
+}
+
 function readSquareBox(element: Element): SquareBox {
   const rect = element.getBoundingClientRect();
   return {
@@ -223,13 +286,14 @@ class StampMotion {
     animation.finished.then(then, function ignoreCancelled() {});
   }
 
-  /** 層の、中心 `at` に大きさ `size` の要素を置き、動き終えたら外す。 */
+  /** 層の、中心 `at` に大きさ `size` の要素を置き、動き終えたら外す。`content` があれば要素の中に描く。 */
   spawn(
     at: Point,
     size: number,
     style: Partial<CSSStyleDeclaration>,
     keyframes: Keyframe[],
     options: KeyframeAnimationOptions,
+    content?: Element,
   ) {
     const element = document.createElement("div");
     Object.assign(element.style, {
@@ -240,6 +304,9 @@ class StampMotion {
       height: `${size}px`,
       ...style,
     });
+    if (content) {
+      element.append(content);
+    }
     this.layer.element.append(element);
     this.elements.push(element);
     const animation = this.animate(element, keyframes, {
@@ -306,6 +373,7 @@ function burstParticles(
 function shockwave(
   motion: StampMotion,
   at: SquareBox,
+  piecePath: string,
   color: string,
   {
     scale,
@@ -315,8 +383,8 @@ function shockwave(
 ) {
   motion.spawn(
     at,
-    at.size,
-    { border: `${widthPx}px solid ${color}`, boxSizing: "border-box" },
+    at.size * 2,
+    {},
     [
       { transform: "scale(1)", opacity: 1 },
       {
@@ -327,6 +395,11 @@ function shockwave(
       { transform: `scale(${scale})`, opacity: 0 },
     ],
     { duration: durationMs, easing: MOTION_EASING.enter },
+    createPieceSvg(piecePath, {
+      fill: "none",
+      stroke: color,
+      "stroke-width": String(widthPx / at.size),
+    }),
   );
 }
 
@@ -334,21 +407,20 @@ function shockwave(
 function flash(
   motion: StampMotion,
   at: SquareBox,
+  piecePath: string,
   color: string,
   { durationMs, scale }: { durationMs: number; scale: number },
 ) {
   motion.spawn(
     at,
-    at.size,
-    {
-      background: color,
-      boxShadow: `0 0 ${at.size}px ${at.size / 2}px ${color}`,
-    },
+    at.size * 2,
+    { filter: `drop-shadow(0 0 ${at.size / 4}px ${color})` },
     [
       { transform: "scale(1)", opacity: FLASH_OPACITY },
       { transform: `scale(${scale})`, opacity: 0 },
     ],
     { duration: durationMs, easing: MOTION_EASING.enter },
+    createPieceSvg(piecePath, { fill: color }),
   );
 }
 
@@ -356,20 +428,22 @@ function flash(
 function glowWhileLifted(
   motion: StampMotion,
   at: SquareBox,
+  piecePath: string,
   color: string,
   { liftedScale, durationMs }: { liftedScale: number; durationMs: number },
 ) {
   const size = at.size * liftedScale;
   motion.spawn(
     at,
-    size,
-    { boxShadow: `0 0 ${size / 3}px ${size / 6}px ${color}` },
+    size * 2,
+    {},
     [
       { opacity: 0 },
       { opacity: FINEST_GLOW_OPACITY, offset: APPEARED_OFFSET },
       { opacity: 0, transform: `scale(${1 / liftedScale})` },
     ],
     { duration: durationMs, easing: MOTION_EASING.standard },
+    createPieceGlowSvg(piecePath, color, GLOW),
   );
 }
 
@@ -525,7 +599,11 @@ export function playZukanStamp(
     ? ZUKAN_STAMP_DURATION_MS.perfectDrop
     : ZUKAN_STAMP_DURATION_MS.drop;
   const impactTailMs = getZukanStampTailMs(stamp) - dropMs;
-  const color = getComputedStyle(parts.face).backgroundColor;
+  // 押す面は文字色を `currentColor` にしてピースを塗る。
+  const color = getComputedStyle(parts.face).color;
+  const piecePath = getZukanPiecePath(
+    square.getAttribute("data-piece-shape") ?? SQUARE_PIECE_SHAPE,
+  );
   const liftPx = stamp.isRaised ? RAISED_LIFT_PX : 0;
 
   const drop = motion.animate(
@@ -564,7 +642,7 @@ export function playZukanStamp(
     { duration: dropMs },
   );
   if (isFinest) {
-    glowWhileLifted(motion, readSquareBox(square), color, {
+    glowWhileLifted(motion, readSquareBox(square), piecePath, color, {
       liftedScale: tier.liftedScale,
       durationMs: dropMs,
     });
@@ -593,13 +671,13 @@ export function playZukanStamp(
     drop.cancel();
     const at = readSquareBox(square);
     const effects = isFinest ? FINEST_EFFECTS : OTHER_EFFECTS;
-    shockwave(motion, at, color, {
+    shockwave(motion, at, piecePath, color, {
       scale: tier.shockwaveScale,
       durationMs: impactTailMs,
       widthPx: tier.shockwaveWidthPx,
     });
     if (tier.flashes) {
-      flash(motion, at, color, effects.flash);
+      flash(motion, at, piecePath, color, effects.flash);
     }
     burstParticles(motion, at, color, {
       count: tier.particleCount,
@@ -608,7 +686,7 @@ export function playZukanStamp(
     });
     if (isFinest) {
       const { innerShockwave, sparkles } = FINEST_EFFECTS;
-      shockwave(motion, at, color, {
+      shockwave(motion, at, piecePath, color, {
         scale: tier.shockwaveScale * innerShockwave.scaleRatio,
         durationMs: impactTailMs * innerShockwave.durationRatio,
         widthPx: innerShockwave.widthPx,

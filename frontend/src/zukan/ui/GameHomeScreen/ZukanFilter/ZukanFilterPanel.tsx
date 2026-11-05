@@ -9,7 +9,7 @@ import {
   zukanPerformanceConditionLabels,
 } from "@/zukan/ui/GameHomeScreen/zukan-filter-appearance";
 import {
-  getZukanProblemStatusClassName,
+  getZukanProblemStatusColorClassName,
   zukanProblemStatusLabels,
   zukanProblemStatusOrder,
 } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
@@ -89,7 +89,7 @@ export function ZukanFilterPanel({
                 sample={
                   <span
                     aria-hidden="true"
-                    className={`size-3 shrink-0 ${getZukanProblemStatusClassName(status)}`}
+                    className={`size-3 shrink-0 bg-current ${getZukanProblemStatusColorClassName(status)}`}
                   />
                 }
                 isSelected={conditions.statuses.includes(status)}

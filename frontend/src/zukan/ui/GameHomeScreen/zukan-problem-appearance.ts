@@ -29,24 +29,23 @@ export const zukanProblemStatusLabels: Record<ZukanProblemStatus, string> = {
 };
 
 /**
- * マスと凡例の見本に共通する、状態ごとの塗りと枠。
- * 解いた問題は結果画面と同じ評価段階の色で塗る。未挑戦は塗らずに枠だけにし、挑戦中は枠を強める。
+ * マスと凡例の見本に共通する、状態ごとの塗りの色。文字色として与え、面は `currentColor` で塗る。
+ * 解いた問題は結果画面と同じ評価段階の色で塗る。未挑戦は淡い灰色で塗り、挑戦中はそれより少し濃い灰色で塗る。
+ * 未挑戦と挑戦中を枠で示すと、ピースの輪郭が台紙一面に線の模様を作って騒がしく、白抜きのピースが穴のように浮くので、塗りの濃さで分ける。
  */
-const zukanProblemStatusClassNames: Record<ZukanProblemStatus, string> = {
-  perfect: getGameResultStyle("perfect").fillClassName,
-  great: getGameResultStyle("great").fillClassName,
-  good: getGameResultStyle("good").fillClassName,
-  clear: getGameResultStyle("clear").fillClassName,
-  attempted:
-    "border-(length:--border-width-strong) border-muted-foreground bg-background",
-  untouched:
-    "border-(length:--border-width-normal) border-border bg-background",
+const zukanProblemStatusColorClassNames: Record<ZukanProblemStatus, string> = {
+  perfect: getGameResultStyle("perfect").fillColorClassName,
+  great: getGameResultStyle("great").fillColorClassName,
+  good: getGameResultStyle("good").fillColorClassName,
+  clear: getGameResultStyle("clear").fillColorClassName,
+  attempted: "text-[oklch(0.86_0_0)] dark:text-[oklch(0.36_0_0)]",
+  untouched: "text-[oklch(0.95_0_0)] dark:text-[oklch(0.23_0_0)]",
 };
 
-export function getZukanProblemStatusClassName(
+export function getZukanProblemStatusColorClassName(
   status: ZukanProblemStatus,
 ): string {
-  return zukanProblemStatusClassNames[status];
+  return zukanProblemStatusColorClassNames[status];
 }
 
 const zukanProblemChangeLabels: Record<ZukanProblemChange["kind"], string> = {

@@ -12,8 +12,11 @@ type GameResultStyle = {
   scoreClassName: string;
   surfaceVariant: GameResultSurfaceVariant;
   markClassName: string;
-  /** 評価段階を小さな面の塗りだけで示すときの色。段階のある色はスコアの文字と同じにし、`clear` は前景より弱い無彩色にする。 */
-  fillClassName: string;
+  /**
+   * 評価段階を小さな面の塗りだけで示すときの色。段階のある色はスコアの文字と同じにし、`clear` は前景より弱い無彩色にする。
+   * 文字色として与え、面は `currentColor` で塗る（`bg-current`、SVG の `fill="currentColor"`）。
+   */
+  fillColorClassName: string;
   confettiIntensity: "strong" | "light" | null;
 };
 
@@ -24,7 +27,7 @@ const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
     surfaceVariant: "perfect",
     markClassName:
       "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-    fillClassName: "bg-amber-600 dark:bg-amber-300",
+    fillColorClassName: "text-amber-600 dark:text-amber-300",
     confettiIntensity: "strong",
   },
   great: {
@@ -33,7 +36,7 @@ const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
     surfaceVariant: "great",
     markClassName:
       "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-    fillClassName: "bg-emerald-600 dark:bg-emerald-300",
+    fillColorClassName: "text-emerald-600 dark:text-emerald-300",
     confettiIntensity: "light",
   },
   good: {
@@ -42,7 +45,7 @@ const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
     surfaceVariant: "good",
     markClassName:
       "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
-    fillClassName: "bg-sky-600 dark:bg-sky-300",
+    fillColorClassName: "text-sky-600 dark:text-sky-300",
     confettiIntensity: null,
   },
   clear: {
@@ -50,7 +53,7 @@ const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
     scoreClassName: "text-foreground",
     surfaceVariant: "neutral",
     markClassName: "bg-muted text-foreground",
-    fillClassName: "bg-muted-foreground",
+    fillColorClassName: "text-muted-foreground",
     confettiIntensity: null,
   },
 };
