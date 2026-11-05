@@ -398,6 +398,51 @@ describe("HitofudePuzzlePlay", () => {
       expect(callbacks.onBeginStroke).toHaveBeenCalledWith(0);
       expect(callbacks.onEndStroke).toHaveBeenCalledOnce();
     });
+
+    describe("メニューからチュートリアルを選んだ場合", () => {
+      function getTutorialDialog(): HTMLElement {
+        return screen.getByRole("dialog", {
+          name: HITOFUDE_PUZZLE_DISPLAY_NAME,
+          description: "チュートリアル",
+        });
+      }
+
+      beforeEach(() => {
+        fireEvent.pointerDown(
+          screen.getByRole("button", { name: "その他の操作" }),
+          { button: 0, ctrlKey: false },
+        );
+        fireEvent.click(
+          screen.getByRole("menuitem", { name: "チュートリアル" }),
+        );
+      });
+
+      test("チュートリアルを開くこと", () => {
+        const dialog = getTutorialDialog();
+
+        expect(dialog).toBeTruthy();
+      });
+
+      test("チュートリアルの中で矢印キーを押しても、プレイの先端を動かさないこと", () => {
+        fireEvent.keyDown(getTutorialDialog(), { key: "ArrowRight" });
+
+        expect(callbacks.onMoveHeadToward).not.toHaveBeenCalled();
+      });
+
+      test("閉じるとチュートリアルを閉じて同じプレイの盤面へ戻ること", () => {
+        fireEvent.click(
+          within(getTutorialDialog()).getByRole("button", { name: "閉じる" }),
+        );
+        const dialog = screen.queryByRole("dialog", {
+          name: HITOFUDE_PUZZLE_DISPLAY_NAME,
+        });
+        const boardGroup = getBoardGroup();
+
+        expect(dialog).toBeNull();
+        expect(boardGroup).toBeTruthy();
+        expect(callbacks.onReplay).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe("キーボードで盤面を操作する場合", () => {
