@@ -3,8 +3,8 @@
     <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M58 18V104M16 62H102"/>
     <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M16 18H102V104"/>
     <polygon points="79.5,57 92.94,48.36 95.5,25 63.5,25 66.06,48.36" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round"/>
-    <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2" stroke-linecap="round" d="M73.1 47H85.9M74.38 39H84.62M71.5 31H87.5M79.5 47V31"/>
-    <polygon points="79.5,67 93.78,76.18 96.5,101 62.5,101 65.22,76.18" fill="var(--game-pictogram-strong)"/>
-    <polygon points="37,67 51.28,76.18 54,101 20,101 22.72,76.18" fill="var(--game-pictogram-soft)"/>
+    <path fill="var(--game-pictogram-strong)" stroke="var(--game-pictogram-strong)" stroke-width="6.7" stroke-linejoin="round" paint-order="stroke" transform="translate(80.73 39.43) rotate(180) scale(0.0980)" d="m-84.4 92.4l-2.3-9.4q9.4 1.3 16.2 1.5 6.8 .2 6.8 .2l49.8 0 0-82.7-38.7 0q0 0-3.2 0-3.1 0-7.8 .2-4.7 .2-9.7 .8l-2.3-9.3q9.2 1.3 16.1 1.5 6.9 .2 6.9 .2l38.7 0 0-64.4-44.1 0q0 0-3.1 0-3.2 0-7.9 .2-4.7 .2-9.7 .8l-2.3-9.3q9.4 1.3 16.2 1.5 6.8 .2 6.8 .2l100.6 0q2 0 3-.3 1.1-.3 2-1.9 1-1.3 2.7-3.9 1.7-2.6 3.5-5.2 1.7-2.6 2.3-3.7 1.1-1.8 2.7-1.8 1.5 0 4.5 2.1 2.9 2.1 6.4 5 3.4 3 6.4 5.9 3 2.9 4.3 4.7 1 1.1 1 2.6 0 3.1-2.3 3.1l-68.5 0 0 64.4 32.2 0q3.1 0 4.8-2.2 .8-1.3 2.4-3.8 1.7-2.5 3.3-4.9 1.6-2.4 2.2-3.2 1.1-1.8 2.7-1.8 .7 0 1.9 .7 2.7 1.3 6.4 4.4 3.8 3.2 7.2 6.6 3.5 3.4 4.8 5.3 1 1.1 1 2.6 0 2.9-2.2 2.9l-66.7 0 0 82.7 35.3 0q2.1 0 3.1-.4 .9-.4 2.1-2 .9-1.3 2.8-4 1.8-2.7 3.6-5.5 1.8-2.9 2.6-4 1.1-1.7 2.9-1.7 1.7 0 4.9 2.1 3.1 2 6.8 5.1 3.6 3 6.6 6.1 2.9 3 4.3 4.8 1.1 1.3 1.1 3 0 3.1-2.5 3.1l-147.9 0q0 0-3.1 0-3.1 0-7.9 .2-4.8 .2-9.7 .9zm134.7-34q-3.4 0-6.2-2.2-2.8-2.2-3.8-7-2.1-10.9-7.1-21-5.1-10.1-12.6-16-.2-.4-.2-1.1 0-2.4 2.1-3.3 10.8 2 19.9 5.6 9.1 3.6 15.1 9.5 6 5.9 7.2 15.2 .2 .9 .2 1.8 0 .8 0 1.7 0 7.8-4.7 12.3-4.7 4.5-9.9 4.5z"/>
+    <polygon points="79.50,69.00 92.10,77.10 94.50,99.00 64.50,99.00 66.90,77.10" fill="var(--game-pictogram-strong)"/>
+    <polygon points="37.00,68.50 50.02,76.87 52.50,99.50 21.50,99.50 23.98,76.87" fill="var(--game-pictogram-soft)"/>
   </g>
 </svg>

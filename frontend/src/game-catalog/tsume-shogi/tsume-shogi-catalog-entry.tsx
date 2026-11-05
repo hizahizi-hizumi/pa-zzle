@@ -6,6 +6,7 @@ import {
 import { RecordedTsumeShogiResult } from "@/game-catalog/tsume-shogi/RecordedTsumeShogiResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/tsume-shogi/assets/pictogram.svg?raw";
+import pictogramShowcaseSvg from "@/games/tsume-shogi/assets/pictogram-showcase.svg?raw";
 import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 import {
   isTsumeShogiPlayRecord,
@@ -28,6 +29,7 @@ export const tsumeShogiCatalogEntry = {
   id: tsumeShogiPlayRecordDefinition.gameId,
   name: TSUME_SHOGI_DISPLAY_NAME,
   pictogramSvg,
+  pictogramShowcaseSvg,
   homePath: "/puzzles/tsume-shogi",
   playPath: "/puzzles/tsume-shogi/play/:difficulty",
   playRecordDisplay: tsumeShogiPlayRecordDisplay,
