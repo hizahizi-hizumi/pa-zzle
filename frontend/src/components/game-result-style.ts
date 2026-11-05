@@ -23,29 +23,26 @@ type GameResultStyle = {
 const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
   perfect: {
     message: "パーフェクト！",
-    scoreClassName: "text-amber-600 dark:text-amber-300",
+    scoreClassName: "text-result-perfect",
     surfaceVariant: "perfect",
-    markClassName:
-      "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-    fillColorClassName: "text-amber-600 dark:text-amber-300",
+    markClassName: "bg-result-perfect-subtle text-result-perfect-strong",
+    fillColorClassName: "text-result-perfect",
     confettiIntensity: "strong",
   },
   great: {
     message: "すばらしい！",
-    scoreClassName: "text-emerald-600 dark:text-emerald-300",
+    scoreClassName: "text-result-great",
     surfaceVariant: "great",
-    markClassName:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-    fillColorClassName: "text-emerald-600 dark:text-emerald-300",
+    markClassName: "bg-result-great-subtle text-result-great-strong",
+    fillColorClassName: "text-result-great",
     confettiIntensity: "light",
   },
   good: {
     message: "ナイスプレイ！",
-    scoreClassName: "text-sky-600 dark:text-sky-300",
+    scoreClassName: "text-result-good",
     surfaceVariant: "good",
-    markClassName:
-      "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
-    fillColorClassName: "text-sky-600 dark:text-sky-300",
+    markClassName: "bg-result-good-subtle text-result-good-strong",
+    fillColorClassName: "text-result-good",
     confettiIntensity: null,
   },
   clear: {

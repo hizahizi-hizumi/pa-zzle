@@ -70,7 +70,7 @@ export function ZukanFilterPanel({
             variant="outline"
             size="sm"
             spacing={1}
-            selection="filled"
+            selection="ring"
             layout="wrap"
             aria-labelledby={`${id}-status`}
             value={[...conditions.statuses]}
@@ -128,7 +128,7 @@ export function ZukanFilterPanel({
                     variant="outline"
                     size="sm"
                     spacing={1}
-                    selection="filled"
+                    selection="ring"
                     layout="wrap"
                     aria-labelledby={`${id}-feature-${axisId}`}
                     value={[...selectedKeys]}
@@ -187,7 +187,7 @@ export function ZukanFilterPanel({
                   variant="outline"
                   size="sm"
                   spacing={1}
-                  selection="filled"
+                  selection="ring"
                   layout="wrap"
                   aria-labelledby={`${id}-performance-${axis}`}
                   value={conditions.performances.filter((condition) =>

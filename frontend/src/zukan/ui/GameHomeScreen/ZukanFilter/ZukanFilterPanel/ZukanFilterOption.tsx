@@ -50,9 +50,7 @@ export function ZukanFilterOption({
       {sample}
       <span className="inline-flex items-baseline gap-1.5 tabular-nums">
         {label}
-        <span
-          className={`inline-grid text-meta ${isSelected ? "text-primary-foreground/75" : "text-muted-foreground"}`}
-        >
+        <span className="inline-grid text-meta text-muted-foreground">
           <span
             aria-hidden="true"
             className="invisible col-start-1 row-start-1"
