@@ -11,6 +11,16 @@ import {
   type NanpureDigit,
 } from "@/games/nanpure/puzzle/board";
 
+/** 1〜9が1つずつ入るまとまりの種類。 */
+export type NanpureUnitKind = "row" | "column" | "block";
+
+/** ルールのまとまりのすべて。どれか一部だけで調べるのは、ルールを1つずつ示すチュートリアル。 */
+export const NANPURE_UNIT_KINDS = [
+  "row",
+  "column",
+  "block",
+] as const satisfies readonly NanpureUnitKind[];
+
 function collectUnitConflicts(
   board: NanpureBoard,
   cellIndices: readonly number[],
@@ -74,9 +84,23 @@ function blockCellIndices(block: number): number[] {
   return indices;
 }
 
+const unitCellIndicesByKind = {
+  row: rowCellIndices,
+  column: columnCellIndices,
+  block: blockCellIndices,
+} as const satisfies Record<NanpureUnitKind, (unit: number) => number[]>;
+
+const unitIndexGetters = {
+  row: getNanpureRowIndex,
+  column: getNanpureColumnIndex,
+  block: getNanpureBlockIndex,
+} as const satisfies Record<NanpureUnitKind, (cellIndex: number) => number>;
+
+/** 空きマスに入り得る数字。`unitKinds` の種類のまとまりにある数字を除く。 */
 export function getNanpureCandidates(
   board: NanpureBoard,
   cellIndex: number,
+  unitKinds: readonly NanpureUnitKind[] = NANPURE_UNIT_KINDS,
 ): NanpureDigit[] {
   assertNanpureBoard(board);
   assertNanpureCellIndex(cellIndex);
@@ -85,44 +109,34 @@ export function getNanpureCandidates(
     return [];
   }
 
-  const row = getNanpureRowIndex(cellIndex);
-  const column = getNanpureColumnIndex(cellIndex);
-  const block = getNanpureBlockIndex(cellIndex);
   const usedDigits = new Set<NanpureDigit>();
 
-  for (const peerIndex of rowCellIndices(row)) {
-    const digit = board[peerIndex];
-    if (digit !== null && digit !== undefined) {
-      usedDigits.add(digit);
-    }
-  }
-
-  for (const peerIndex of columnCellIndices(column)) {
-    const digit = board[peerIndex];
-    if (digit !== null && digit !== undefined) {
-      usedDigits.add(digit);
-    }
-  }
-
-  for (const peerIndex of blockCellIndices(block)) {
-    const digit = board[peerIndex];
-    if (digit !== null && digit !== undefined) {
-      usedDigits.add(digit);
+  for (const kind of unitKinds) {
+    const unit = unitIndexGetters[kind](cellIndex);
+    for (const peerIndex of unitCellIndicesByKind[kind](unit)) {
+      const digit = board[peerIndex];
+      if (digit !== null && digit !== undefined) {
+        usedDigits.add(digit);
+      }
     }
   }
 
   return NANPURE_DIGITS.filter((digit) => !usedDigits.has(digit));
 }
 
-export function findNanpureConflictCellIndices(board: NanpureBoard): number[] {
+/** 同じまとまりで、ほかのマスと数字が重なったマス。`unitKinds` の種類のまとまりだけを調べる。 */
+export function findNanpureConflictCellIndices(
+  board: NanpureBoard,
+  unitKinds: readonly NanpureUnitKind[] = NANPURE_UNIT_KINDS,
+): number[] {
   assertNanpureBoard(board);
 
   const conflicts = new Set<number>();
 
-  for (let unit = 0; unit < NANPURE_SIZE; unit += 1) {
-    collectUnitConflicts(board, rowCellIndices(unit), conflicts);
-    collectUnitConflicts(board, columnCellIndices(unit), conflicts);
-    collectUnitConflicts(board, blockCellIndices(unit), conflicts);
+  for (const kind of unitKinds) {
+    for (let unit = 0; unit < NANPURE_SIZE; unit += 1) {
+      collectUnitConflicts(board, unitCellIndicesByKind[kind](unit), conflicts);
+    }
   }
 
   return [...conflicts].sort((left, right) => left - right);

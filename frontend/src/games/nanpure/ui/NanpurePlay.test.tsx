@@ -173,6 +173,44 @@ describe("NanpurePlay", () => {
         expect(props.onReplay).not.toHaveBeenCalled();
       });
     });
+
+    describe("その他の操作からチュートリアルを選んだ場合", () => {
+      beforeEach(() => {
+        fireEvent.pointerDown(
+          screen.getByRole("button", { name: "その他の操作" }),
+          { button: 0, ctrlKey: false },
+        );
+        fireEvent.click(
+          screen.getByRole("menuitem", { name: "チュートリアル" }),
+        );
+      });
+
+      test("チュートリアルを開くこと", () => {
+        const dialog = screen.getByRole("dialog", {
+          name: "ナンプレ",
+          description: "チュートリアル",
+        });
+
+        expect(dialog).toBeTruthy();
+      });
+
+      test("閉じるとチュートリアルを閉じて同じプレイの盤面へ戻ること", () => {
+        fireEvent.click(
+          within(
+            screen.getByRole("dialog", {
+              name: "ナンプレ",
+              description: "チュートリアル",
+            }),
+          ).getByRole("button", { name: "閉じる" }),
+        );
+        const dialog = screen.queryByRole("dialog", { name: "ナンプレ" });
+        const cell = screen.getByRole("button", { name: "1行1列、空き" });
+
+        expect(dialog).toBeNull();
+        expect(cell).toBeTruthy();
+        expect(props.onReplay).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe("数字9を使い切っている場合", () => {
