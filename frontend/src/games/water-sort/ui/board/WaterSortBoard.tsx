@@ -13,6 +13,7 @@ import {
 import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
 import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 type WaterSortBoardProps = {
   state: WaterSortState;
@@ -29,7 +30,7 @@ type WaterSortBoardProps = {
   /**
    * ボトルの並べ方。
    * - `rows`: 本数に応じて段に分け、画面の幅に応じた幅にする。
-   * - `single-row`: 全部を1段に並べ、置いた場所の幅いっぱいにする。注ぐ動きが盤面の外へはみ出さない余白を、置く側が取るときに使う。
+   * - `single-row`: 全部を1段に並べ、置いた場所の幅いっぱいにする。注ぐ動きと、選んだボトルの持ち上げが盤面の外へはみ出さない余白を、置く側が上に取るときに使う。
    */
   layout?: "rows" | "single-row";
 };
@@ -102,11 +103,15 @@ export function WaterSortBoard({
       : getBoardLayout(state.length);
   const rowCount = Math.ceil(state.length / layout.columnCount);
   // ボトルの縦横比と隙間を保ったまま、見出し・下端を除いた高さにも収める。
-  const widthForAvailableHeight = `calc((100cqh - ${layout.rowGap * (rowCount - 1)}px) * ${(bottleAspectRatio * layout.columnCount) / rowCount} + ${layout.columnGap * (layout.columnCount - 1)}px)`;
+  // 上の段のボトルを選ぶと持ち上げるので、その分の高さは盤面の上に取っておく。
+  const widthForAvailableHeight = `calc((100cqh - var(--selected-bottle-lift) - ${layout.rowGap * (rowCount - 1)}px) * ${(bottleAspectRatio * layout.columnCount) / rowCount} + ${layout.columnGap * (layout.columnCount - 1)}px)`;
 
   const bottles = (
     <fieldset
-      className="grid w-full items-end justify-center border-0 p-0"
+      className={cn(
+        "grid w-full items-end justify-center border-0 p-0 [--selected-bottle-lift:--spacing(3.5)]",
+        layoutKind === "rows" && "pt-(--selected-bottle-lift)",
+      )}
       style={{
         gridTemplateColumns: `repeat(${layout.columnCount}, minmax(0, 1fr))`,
         columnGap: layout.columnGap,
@@ -139,7 +144,7 @@ export function WaterSortBoard({
             aria-label={`${bottleLabel}: ${contents}`}
             aria-pressed={isSource}
             onClick={() => selectBottle(bottleIndex)}
-            className="relative w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-(--duration-normal) ease-enter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4"
+            className="relative w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-(--duration-normal) ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 aria-pressed:-translate-y-(--selected-bottle-lift) motion-reduce:transition-none"
             style={{ aspectRatio: bottleAspectRatio }}
             disabled={interactionDisabled}
           >

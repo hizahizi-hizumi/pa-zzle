@@ -44,6 +44,7 @@ function animation(
       ),
     ),
     rect,
+    0,
     rect,
   );
   if (!result) {
