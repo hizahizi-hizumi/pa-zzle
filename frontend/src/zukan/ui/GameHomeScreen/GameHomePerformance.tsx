@@ -1,11 +1,11 @@
-import { ChartLine, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { useId } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
-  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   Sheet,
@@ -14,16 +14,15 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
 import type { PlayRecord } from "@/records/play-record";
 import { PlayRecordsPerformance } from "@/records/ui/PlayRecordsPerformance";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
+import type { GameHomeLayerControl } from "@/zukan/ui/GameHomeScreen/use-game-home-layers";
 import { useHeaderLayerSheet } from "@/zukan/ui/GameHomeScreen/use-header-layer-sheet";
-import { ZukanHeaderButton } from "@/zukan/ui/GameHomeScreen/ZukanHeaderButton";
 
-type GameHomePerformanceProps = {
+type GameHomePerformanceProps = GameHomeLayerControl & {
   /** 全記録。開いているレベルの記録は、成績を開いたときにこの中から選ぶ。 */
   records: readonly PlayRecord[];
   playRecordDisplay: PlayRecordDisplayDefinition;
@@ -32,20 +31,20 @@ type GameHomePerformanceProps = {
 };
 
 /**
- * 開いているレベルの成績（自己ベスト・推移。内部診断が有効なビルドでは記録の JSON コピーも）。見出しの並びのボタンから、スマートフォンでは画面の下からのシート、PC ではボタンから出すポップオーバーで出す。
+ * 開いているレベルの成績（自己ベスト・推移。内部診断が有効なビルドでは記録の JSON コピーも）。見出しのメニューから、スマートフォンでは画面の下からのシート、PC ではメニューのボタンから出すポップオーバーで出す。
  * 中身は開いたときだけ描き、ゲームのホームを開くまでの時間を延ばさない。
  */
 export function GameHomePerformance({
   records,
   playRecordDisplay,
   difficulty,
+  open,
+  onOpenChange,
+  anchorRef,
 }: GameHomePerformanceProps) {
   const isSheet = useHeaderLayerSheet();
   const titleId = useId();
   const levelLabel = getDifficultyLabel(difficulty);
-  const trigger = (
-    <ZukanHeaderButton icon={<ChartLine aria-hidden="true" />} label="成績" />
-  );
   const performance = (
     <PlayRecordsPerformance
       records={records}
@@ -56,8 +55,7 @@ export function GameHomePerformance({
 
   if (isSheet) {
     return (
-      <Sheet>
-        <SheetTrigger asChild>{trigger}</SheetTrigger>
+      <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" layout="sections" showCloseButton={false}>
           <SheetHeader layout="inline">
             <div className="flex items-baseline gap-2">
@@ -79,8 +77,8 @@ export function GameHomePerformance({
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverAnchor virtualRef={anchorRef} />
       <PopoverContent align="end" size="wide" aria-labelledby={titleId}>
         <div className="grid gap-3">
           <div className="flex items-baseline gap-2">

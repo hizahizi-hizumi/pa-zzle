@@ -84,22 +84,28 @@ describe("WaterSortHomeView", () => {
     expect(cards).toHaveLength(levelLabels.length);
   });
 
-  test("遊び方を開けること", () => {
-    fireEvent.click(screen.getByRole("button", { name: "遊び方" }));
+  test("見出しのメニューから遊び方を開けること", async () => {
+    fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = screen.getByRole("dialog", { name: "遊び方" });
+    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
 
     expect(dialog).toBeTruthy();
   });
 
   describe("遊び方を開いた場合", () => {
-    beforeEach(() => {
-      const howToPlayButton = screen.getByRole("button", { name: "遊び方" });
-      howToPlayButton.focus();
-      fireEvent.click(howToPlayButton);
+    beforeEach(async () => {
+      const menuButton = screen.getByRole("button", { name: "メニュー" });
+      menuButton.focus();
+      fireEvent.pointerDown(menuButton, { button: 0, ctrlKey: false });
+      fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+      await screen.findByRole("dialog", { name: "遊び方" });
     });
 
-    test("閉じると、遊び方のボタンへフォーカスを戻すこと", () => {
+    test("閉じると、メニューのボタンへフォーカスを戻すこと", () => {
       fireEvent.click(
         within(screen.getByRole("dialog", { name: "遊び方" })).getByRole(
           "button",
@@ -108,7 +114,7 @@ describe("WaterSortHomeView", () => {
       );
       const focused = document.activeElement;
 
-      expect(focused).toBe(screen.getByRole("button", { name: "遊び方" }));
+      expect(focused).toBe(screen.getByRole("button", { name: "メニュー" }));
     });
   });
 

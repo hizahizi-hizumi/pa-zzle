@@ -13,6 +13,7 @@ import { GamePictogram } from "@/components/GamePictogram";
 import { SelectedGamePictogram } from "@/components/GameSelectionGallery/SelectedGamePictogram";
 import { SettingsButton } from "@/components/SettingsButton";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
 import type { Path } from "@/router";
 
@@ -65,7 +66,8 @@ function findScrollIntoListDelta(list: Element, item: Element): number {
 }
 
 /**
- * アプリのホーム。選んでいるゲームのピクトグラムと名前を大きく示してそのゲームのホームへの入口にし、全ゲームを選ぶ並びを下に置く。
+ * アプリのホーム。選んでいるゲームのピクトグラムと名前を大きく示し、「遊ぶ」の印を添えてそのゲームのホームへの入口にし、全ゲームを選ぶ並びを下に置く。
+ * 画面の題名は控えめにし、主役を選んでいるゲームの名前へ譲る。スマートフォンでは並びの下に余った高さを、入口の面へ渡す。
  * 選んでいるゲームの名前の下に、そのゲームの続きを小さな枠で添える。続きの行の高さは続きが無くても取っておき、ゲームを切り替えても名前とピクトグラムを動かさない。
  * 利用者が並びを触るまでは、選んでいるゲームを並びの見える位置へ送る。
  */
@@ -135,12 +137,12 @@ export function GameSelectionGallery({
   }
 
   return (
-    <section className="grid min-h-[calc(100dvh-3rem-env(safe-area-inset-top))] grid-rows-[29.375rem_minmax(0,1fr)] bg-background sm:grid-rows-[minmax(0,1fr)_14.375rem]">
-      <div className="relative min-h-0 bg-muted/30">
-        <h1 className="absolute inset-x-0 top-0 z-10 flex h-[4.5rem] items-center justify-center border-b-(length:--border-width-normal) bg-background text-screen-title sm:h-20">
+    <section className="grid min-h-[calc(100dvh-3rem-env(safe-area-inset-top))] grid-rows-[1fr_auto] bg-background sm:grid-rows-[minmax(0,1fr)_14.375rem]">
+      <div className="relative flex min-h-0 flex-col bg-muted/30">
+        <h1 className="flex h-14 shrink-0 items-center justify-center border-b-(length:--border-width-normal) bg-background text-heading sm:h-16">
           パズル選択
         </h1>
-        <div className="absolute top-0 right-3 z-20 flex h-[4.5rem] items-center sm:right-6 sm:h-20 sm:gap-1">
+        <div className="absolute top-0 right-3 z-20 flex h-14 items-center sm:right-6 sm:h-16 sm:gap-1">
           <SettingsButton />
           <Link
             to={recordsTo}
@@ -155,7 +157,7 @@ export function GameSelectionGallery({
           aria-label={`${selectedGame.name}を遊ぶ`}
           aria-describedby={continuation ? continuationId : undefined}
           onClick={playGameSelectSound}
-          className="flex h-full flex-col items-center justify-center transition-colors duration-(--duration-slow) hover:bg-muted/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+          className="flex flex-1 flex-col items-center justify-center py-8 transition-colors duration-(--duration-slow) hover:bg-muted/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         >
           <span className="size-[10.625rem] p-4 sm:size-[14.0625rem] sm:p-6">
             <SelectedGamePictogram
@@ -167,7 +169,7 @@ export function GameSelectionGallery({
               colorsIn={colorsInIndex === selectedIndex}
             />
           </span>
-          <span className="mt-2 text-heading sm:mt-3">{selectedGame.name}</span>
+          <span className="mt-4 text-screen-title">{selectedGame.name}</span>
           <span className="mt-2 flex h-6 items-center">
             {continuation && (
               <Badge id={continuationId} variant="outline">
@@ -175,12 +177,16 @@ export function GameSelectionGallery({
               </Badge>
             )}
           </span>
+          {/* ステージ全体が入口のリンクなので、ボタンの姿をした印を中に置き、押せることを示す。 */}
+          <span aria-hidden="true" className="mt-4 grid min-w-40">
+            <span className={buttonVariants({ size: "lg" })}>遊ぶ</span>
+          </span>
         </Link>
       </div>
 
       <nav
         aria-label="パズル一覧"
-        className="min-h-0 overflow-hidden border-t-(length:--border-width-normal) bg-background pt-4 sm:flex sm:items-center sm:px-[max(calc(var(--spacing)*6),calc((100vw-73.75rem)/2))] sm:py-6"
+        className="min-h-0 overflow-hidden border-t-(length:--border-width-normal) bg-background pt-4 pb-6 sm:flex sm:items-center sm:px-[max(calc(var(--spacing)*6),calc((100vw-73.75rem)/2))] sm:py-6"
       >
         <div className="w-full">
           <div
