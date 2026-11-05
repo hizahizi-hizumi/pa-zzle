@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ブリッジパズル">
+  <g transform="translate(3 2)">
+    <path d="M47 28H73M47 38H73" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M30 51V71" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="30" cy="33" r="15" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+    <path fill="var(--game-pictogram-strong)" d="M217 -10Q146 -10 94.5 27.5Q43 65 20 138L118 171Q123 157 134 138.5Q145 120 165 106Q185 92 215 92Q266 92 296 117Q326 142 326 201Q326 254 296 286Q266 318 210 318H160V416H210Q260 416 284 445.5Q308 475 308 518Q308 568 279.5 588.5Q251 609 215 609Q189 609 171 594.5Q153 580 141.5 561.5Q130 543 125 529L28 568Q54 636 104.5 673.5Q155 711 217 711Q278 711 323.5 687.5Q369 664 394.5 622Q420 580 420 523Q420 471 392.5 429.5Q365 388 323 369Q373 350 404.5 304Q436 258 436 197Q436 102 378.5 46Q321 -10 217 -10Z" transform="translate(25.11 40.51) scale(0.0214 -0.0214)"/>
+    <circle cx="90" cy="33" r="15" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+    <path fill="var(--game-pictogram-strong)" d="M28 0V33Q28 105 65.5 173Q103 241 191 325Q222 355 250 385.5Q278 416 296 445.5Q314 475 315 502Q316 554 291.5 579Q267 604 222 604Q179 604 158 573Q137 542 137 486H31Q31 590 84 648Q137 706 222 706Q280 706 325.5 682Q371 658 397 612Q423 566 421 499Q420 452 399 412Q378 372 343.5 334.5Q309 297 265 255Q219 210 183.5 169Q148 128 142 98H409V0Z" transform="translate(85.19 40.56) scale(0.0214 -0.0214)"/>
+    <circle cx="30" cy="89" r="15" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+    <path fill="var(--game-pictogram-strong)" d="M181 0V564L59 484L2 575L206 701H288V0Z" transform="translate(26.89 96.51) scale(0.0214 -0.0214)"/>
+  </g>
+</svg>
