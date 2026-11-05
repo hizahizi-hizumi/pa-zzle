@@ -8,7 +8,7 @@ import { ToggleGroup as ToggleGroupPrimitive } from "radix-ui"
 import { toggleVariants } from "@/components/ui/toggle"
 
 const toggleGroupVariants = cva(
-  "group/toggle-group flex w-fit items-center gap-[--spacing(var(--gap))] rounded-md data-[spacing=default]:data-[variant=outline]:shadow-xs",
+  "group/toggle-group flex w-fit items-center gap-[--spacing(var(--gap))] rounded-md",
   {
     variants: {
       // wrap: 並びの幅に収まらない項目を次の行へ折り返す。

@@ -94,7 +94,7 @@ export function GameSelectionOrderPanel() {
               const game = gameCatalog.find((item) => item.id === source.id);
               if (!game) return null;
               return (
-                <div className="flex h-12 items-center gap-2 rounded-md border border-border bg-popover px-2 shadow-lg">
+                <div className="flex h-12 items-center gap-2 rounded-md bg-popover px-2 shadow-raised">
                   {game.pictogramSvg && (
                     <span className="size-8 shrink-0 p-1">
                       <GamePictogram svg={game.pictogramSvg} />

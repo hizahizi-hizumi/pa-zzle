@@ -5,9 +5,9 @@ import {
   MoreHorizontal,
   Play,
   Pointer,
-  RefreshCw,
   RotateCcw,
   Settings,
+  SkipBack,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
@@ -65,14 +65,18 @@ export function PlayMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {onRestart && (
-            <DropdownMenuItem disabled={!canRestart} onSelect={onRestart}>
-              <RotateCcw />
+            <DropdownMenuItem
+              variant="destructive"
+              disabled={!canRestart}
+              onSelect={onRestart}
+            >
+              <SkipBack />
               {PLAY_OPERATION_LABELS.restart}
             </DropdownMenuItem>
           )}
           {onReplay && (
-            <DropdownMenuItem onSelect={onReplay}>
-              <RefreshCw />
+            <DropdownMenuItem variant="destructive" onSelect={onReplay}>
+              <RotateCcw />
               {PLAY_OPERATION_LABELS.replay}
             </DropdownMenuItem>
           )}
@@ -80,6 +84,7 @@ export function PlayMenu({
             <Play />
             {PLAY_OPERATION_LABELS.startNewProblem}
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={onOpenGameHome}>
             <Grid2x2 />
             問題選択
@@ -88,7 +93,7 @@ export function PlayMenu({
             <Home />
             パズル選択
           </DropdownMenuItem>
-          {(onOpenHowToPlay || onOpenTutorial) && <DropdownMenuSeparator />}
+          <DropdownMenuSeparator />
           {onOpenHowToPlay && (
             <DropdownMenuItem onSelect={onOpenHowToPlay}>
               <CircleHelp />
@@ -101,7 +106,6 @@ export function PlayMenu({
               チュートリアル
             </DropdownMenuItem>
           )}
-          <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => setSettingsOpen(true)}>
             <Settings />
             設定
