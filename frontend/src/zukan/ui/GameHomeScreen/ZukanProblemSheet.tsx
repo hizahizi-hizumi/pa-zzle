@@ -20,6 +20,7 @@ import {
 } from "@/lib/motion";
 import { ZukanProblemSquare } from "@/zukan/ui/GameHomeScreen/ZukanProblemSheet/ZukanProblemSquare";
 import type { ZukanChangeStage } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
+import { findZukanPieceShape } from "@/zukan/ui/GameHomeScreen/zukan-piece-shape";
 import type { ZukanProblem } from "@/zukan/zukan-collection";
 import type { ZukanProblemChange } from "@/zukan/zukan-last-viewed";
 
@@ -162,6 +163,7 @@ function ZukanProblemSheetContent({
 }: ZukanProblemSheetProps) {
   const [lastSelectedProblemId, setLastSelectedProblemId] =
     useState<ProblemId | null>(null);
+  const [columnCount, setColumnCount] = useState(1);
   const gridRef = useRef<HTMLDivElement>(null);
   const shownScrollTopRef = useRef(0);
   const previousCoveredBottomHeightRef = useRef(coveredBottomHeight);
@@ -180,6 +182,24 @@ function ZukanProblemSheetContent({
       : lastSelectedProblemId !== null && indices.has(lastSelectedProblemId)
         ? lastSelectedProblemId
         : (arrangedProblems[0]?.problemId ?? null);
+
+  // ピースの形は並べた位置で決まり、列の数は画面幅で変わるので、台紙の幅を見張って数え直す。
+  useLayoutEffect(() => {
+    const grid = gridRef.current;
+    if (grid === null) {
+      return;
+    }
+    function updateColumnCount() {
+      setColumnCount(countGridColumns(grid));
+    }
+    updateColumnCount();
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const observer = new ResizeObserver(updateColumnCount);
+    observer.observe(grid);
+    return () => observer.disconnect();
+  }, []);
 
   // 覆うものが退いて末尾の余白が減ると、末尾まで送っていた台紙はスクロール位置が詰められて跳ぶので、元の位置から滑らせて下ろす。
   useLayoutEffect(() => {
@@ -271,7 +291,8 @@ function ZukanProblemSheetContent({
 
   // 押すときに大きく浮くマスが、台紙の端のマスでもスクロール領域で切れないよう、領域をページの余白へ広げ、内側に浮いたマスが収まる余白を取る。
   // 覆われたところの余白は、領域の余白ではなく末尾の要素で取る。画面が低く、覆う高さが領域より高いときも、領域が縮めずにページをはみ出さないようにする。
-  // スクロールした行が台紙の上の数の真下で途切れて見えないよう、上端の余白の中で薄れさせる。選んだマスはこの余白より内側へ寄せる。
+  // スクロールした行が台紙の上の数の真下で途切れて見えないよう、上端の余白の中で背景の色を重ねて薄れさせる。選んだマスはこの余白より内側へ寄せる。
+  // 薄れは `mask-image` で作らない。iOS の Safari は mask をかけた要素の中身を低い解像度で描き、ピースの輪郭がぼやけるため。
   return (
     <div
       ref={scrollerRef}
@@ -279,15 +300,22 @@ function ZukanProblemSheetContent({
       style={
         { "--covered-bottom": `${coveredBottomHeight}px` } as CSSProperties
       }
-      className="-mx-4 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-4 pt-4 pb-4 [mask-image:linear-gradient(to_bottom,transparent,#000_--spacing(3))]"
+      className="-mx-4 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-4 pt-4 pb-4"
     >
+      {/* 画面の地は、背景の色に `muted` を薄く重ねた色なので、薄れも同じ2層で重ねる。 */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none sticky -top-4 z-10 -mt-4 mb-1 h-3 bg-linear-to-b from-background"
+      >
+        <div className="size-full bg-linear-to-b from-muted/30" />
+      </div>
       <div
         ref={gridRef}
         role="group"
         aria-label={`${getDifficultyLabel(difficulty)}の問題`}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-        className="isolate grid grid-cols-[repeat(auto-fill,--spacing(3.5))] gap-0.5 sm:grid-cols-[repeat(auto-fill,--spacing(4))] [&>[data-filtered-out]]:order-2"
+        className="isolate grid grid-cols-[repeat(auto-fill,--spacing(6))] sm:grid-cols-[repeat(auto-fill,--spacing(6.5))] [&>[data-filtered-out]]:order-2"
       >
         {matchedCount === 0 && (
           <p className="col-span-full text-supporting text-muted-foreground">
@@ -299,6 +327,12 @@ function ZukanProblemSheetContent({
             key={problem.problemId}
             problem={problem}
             index={index}
+            pieceShape={findZukanPieceShape(
+              positions.get(problem.problemId) ?? index,
+              matchedCount ?? arrangedProblems.length,
+              arrangedProblems.length,
+              columnCount,
+            )}
             numberDigitCount={numberDigitCount}
             isTabStop={problem.problemId === tabStopProblemId}
             isSelected={index === selectedIndex}

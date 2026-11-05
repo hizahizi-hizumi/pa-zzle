@@ -1594,14 +1594,14 @@ describe("GameHomeScreen", () => {
       animate = vi.fn((_: Keyframe[], options?: KeyframeAnimationOptions) =>
         createTimedAnimation(options),
       );
-      HTMLElement.prototype.animate =
-        animate as unknown as HTMLElement["animate"];
+      // 押す姿の影と前の色の面は SVG の要素なので、HTML の要素に限らず動きを差し替える。
+      Element.prototype.animate = animate as unknown as Element["animate"];
     });
 
     afterEach(() => {
       vi.useRealTimers();
       vi.unstubAllGlobals();
-      Reflect.deleteProperty(HTMLElement.prototype, "animate");
+      Reflect.deleteProperty(Element.prototype, "animate");
     });
 
     describe("動きを減らさない設定の場合", () => {

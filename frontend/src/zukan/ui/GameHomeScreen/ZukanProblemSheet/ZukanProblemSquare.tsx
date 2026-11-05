@@ -5,8 +5,14 @@ import {
   type ZukanChangeStage,
 } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 import {
+  getZukanPiecePath,
+  ZUKAN_PIECE_GROOVE_WIDTH,
+  ZUKAN_PIECE_VIEW_BOX,
+  type ZukanPieceShape,
+} from "@/zukan/ui/GameHomeScreen/zukan-piece-shape";
+import {
   describeZukanProblem,
-  getZukanProblemStatusClassName,
+  getZukanProblemStatusColorClassName,
 } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
 import {
   getZukanProblemStatus,
@@ -18,6 +24,8 @@ type ZukanProblemSquareProps = {
   problem: ZukanProblem;
   /** 台紙に番号の順で置いた中の位置。押した・矢印で動いたマスと、変化を押すマスを台紙が見分けるのに使う。 */
   index: number;
+  /** 台紙に並べた位置が決める、ピースの形。 */
+  pieceShape: ZukanPieceShape;
   numberDigitCount: number;
   /** 台紙へ Tab で入ったときにフォーカスを受けるマスか。 */
   isTabStop: boolean;
@@ -30,18 +38,30 @@ type ZukanProblemSquareProps = {
   changeStage: ZukanChangeStage | null;
 };
 
+/** 選んだピースの周りを空ける幅と、その外を囲む線の太さ。ホバーとフォーカスの線の太さ。どれもピースの1辺に対する比。 */
+const SELECTION_HALO_WIDTH = 0.2;
+const SELECTION_LINE_WIDTH = 0.083;
+const HOVER_LINE_WIDTH = 0.11;
+
+/** ピースを描く SVG を、マスの2倍の大きさでマスと中心を揃えて置く。 */
+const PIECE_LAYER_CLASS_NAME =
+  "pointer-events-none absolute -top-1/2 -left-1/2 size-[200%] overflow-visible";
+
 /**
- * 台紙の1問のマス。状態を塗りと枠だけで示し、文字は読み上げ名に持たせる。
+ * 台紙の1問のマス。台紙が並べた位置で決めたジグソーのピースの形に描き、状態を塗りだけで示し、文字は読み上げ名に持たせる。
+ * ピースは SVG の図形で描く。画像で切り抜くと、画素の細かい画面でも等倍で描かれてぼやけるため。
  * 押す・矢印キーの操作は台紙がまとめて受けるので、マス自身はイベントを持たない。
  * 前回からの変化は、マスに着くまで前回の姿で描く。押していく演出が動かす押す姿・浮いた影を、押し終えるまで重ねておく。
  * 段階が上がったマスは、押す姿に前の段階の色を重ね、落ちながら今の色へ塗り替えられるようにする。
- * 押していく演出が押し方を決められるよう、変化したマスに今の段階と段階が上がったかを持たせる。
+ * 押していく演出が押し方を決められるよう、変化したマスに今の段階と段階が上がったか、ピースの形を持たせる。
  * 動きを減らす設定では今の姿に印を載せる。
  * 絞り込みの条件に当たらなかったマスは、色を変えずに薄くする。選んでいる間は、選んだことが分かるよう薄くしない。
+ * 選んだピースは、周りを背景の色で空けて前景色の線で囲む。`ring` の明るさの線は、小さなピースでは塗りに紛れるため。
  */
 function ZukanProblemSquareContent({
   problem,
   index,
+  pieceShape,
   numberDigitCount,
   isTabStop,
   isSelected,
@@ -55,13 +75,11 @@ function ZukanProblemSquareContent({
   const isLifted = changeStage === "stamping" || changeStage === "landed";
   const shownStatus =
     change !== null && isPending ? change.previousStatus : status;
+  const path = getZukanPiecePath(pieceShape);
 
-  // `ring` の明るさでは小さなマスの選択が塗りに紛れるので、選んだマスは前景色の輪郭で示す。
-  // 輪郭はマスの間の隙間より外へ出て、後に描く右・下のマスに覆われるので、輪郭のあるマスを手前に重ねる。選んだマスの輪郭は、隣のマスのホバーより手前に置く。
+  // 選んだピースの囲みとホバー・フォーカスの線は隣のピースへはみ出すので、そのピースを手前に重ねる。選んだピースは、隣のホバーより手前に置く。
   // 重ね順は台紙の中に閉じ（台紙が `isolate`）、台紙の外の詳細やレベルのカードより手前には出ない。
-  const selectionClassName = isSelected
-    ? "z-20 outline-2 outline-foreground"
-    : "hover:z-10 hover:outline-2 hover:outline-ring focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-ring";
+  const layerClassName = isSelected ? "z-20" : "hover:z-10 focus-visible:z-10";
   // 押す姿はマスより大きく浮くので、選んだマスも含めて周りのマスより手前に重ねる。
   const stampClassName = isLifted ? "z-30" : "";
   const filteredOutClassName = isFilteredOut && !isSelected ? "opacity-30" : "";
@@ -72,6 +90,7 @@ function ZukanProblemSquareContent({
     <button
       type="button"
       data-index={index}
+      data-piece-shape={pieceShape}
       data-change-stage={changeStage ?? undefined}
       data-change-level={stamp?.level}
       data-change-raised={stamp?.isRaised ? "" : undefined}
@@ -81,24 +100,75 @@ function ZukanProblemSquareContent({
         isFilteredOut ? `${description} 絞り込みの条件外` : description
       }
       aria-current={isSelected ? "true" : undefined}
-      className={`relative size-3.5 scroll-m-3 outline-offset-1 sm:size-4 ${getZukanProblemStatusClassName(shownStatus)} ${selectionClassName} ${stampClassName} ${filteredOutClassName}`}
+      className={`group relative size-6 scroll-m-3 outline-none sm:size-6.5 ${layerClassName} ${stampClassName} ${filteredOutClassName}`}
     >
+      <svg
+        aria-hidden="true"
+        viewBox={ZUKAN_PIECE_VIEW_BOX}
+        className={`${PIECE_LAYER_CLASS_NAME} ${getZukanProblemStatusColorClassName(shownStatus)}`}
+      >
+        {isSelected && (
+          <path
+            d={path}
+            className="fill-background stroke-background"
+            strokeWidth={SELECTION_HALO_WIDTH}
+            strokeLinejoin="round"
+          />
+        )}
+        <path
+          d={path}
+          fill="currentColor"
+          className="stroke-background"
+          strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
+          strokeLinejoin="round"
+        />
+        <path
+          d={path}
+          fill="none"
+          className={
+            isSelected
+              ? "stroke-foreground"
+              : "stroke-ring opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+          }
+          strokeWidth={isSelected ? SELECTION_LINE_WIDTH : HOVER_LINE_WIDTH}
+          strokeLinejoin="round"
+        />
+      </svg>
+      {hasStamp && (
+        <svg
+          aria-hidden="true"
+          data-stamp-part="shadow"
+          viewBox={ZUKAN_PIECE_VIEW_BOX}
+          className={`${PIECE_LAYER_CLASS_NAME} translate-y-[3px] text-black/35 opacity-0 blur-[2px]`}
+        >
+          <path d={path} fill="currentColor" />
+        </svg>
+      )}
       {hasStamp && (
         <span
           aria-hidden="true"
           data-stamp-part="face"
-          className={`pointer-events-none absolute inset-0 opacity-0 ${getZukanProblemStatusClassName(status)}`}
+          className={`${PIECE_LAYER_CLASS_NAME} opacity-0 ${getZukanProblemStatusColorClassName(status)}`}
         >
-          {change?.kind === "raised" && (
-            <span
-              data-stamp-part="previous"
-              className={`absolute inset-0 ${getZukanProblemStatusClassName(change.previousStatus)}`}
+          <svg viewBox={ZUKAN_PIECE_VIEW_BOX} className="size-full">
+            <path
+              d={path}
+              fill="currentColor"
+              className="stroke-background"
+              strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
+              strokeLinejoin="round"
             />
-          )}
-          <span
-            data-stamp-part="shadow"
-            className="absolute inset-0 opacity-0 shadow-[0_3px_5px_rgb(0_0_0/0.35)]"
-          />
+            {change?.kind === "raised" && (
+              <path
+                data-stamp-part="previous"
+                d={path}
+                fill="currentColor"
+                className={getZukanProblemStatusColorClassName(
+                  change.previousStatus,
+                )}
+              />
+            )}
+          </svg>
         </span>
       )}
       {changeStage === "marked" && (

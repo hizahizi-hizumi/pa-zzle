@@ -7,13 +7,13 @@ import {
 } from "@/components/ui/popover";
 import { ZukanHeaderButton } from "@/zukan/ui/GameHomeScreen/ZukanHeaderButton";
 import {
-  getZukanProblemStatusClassName,
+  getZukanProblemStatusColorClassName,
   zukanProblemStatusLabels,
   zukanProblemStatusOrder,
 } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
 
 /**
- * マスの塗りと枠が、どの評価段階・状態を表すかの見本。台紙を広く見せるよう、常には出さず「見方」を押したときだけ出す。
+ * マスの塗りが、どの評価段階・状態を表すかの見本。台紙を広く見せるよう、常には出さず「見方」を押したときだけ出す。
  */
 export function ZukanLegend() {
   return (
@@ -33,7 +33,7 @@ export function ZukanLegend() {
             <li key={status} className="flex items-center gap-2">
               <span
                 aria-hidden="true"
-                className={`size-4 shrink-0 ${getZukanProblemStatusClassName(status)}`}
+                className={`size-4 shrink-0 bg-current ${getZukanProblemStatusColorClassName(status)}`}
               />
               {zukanProblemStatusLabels[status]}
             </li>
