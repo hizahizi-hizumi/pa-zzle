@@ -6,6 +6,7 @@ import {
 import { RecordedNanpureResult } from "@/game-catalog/nanpure/RecordedNanpureResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
+import pictogramShowcaseSvg from "@/games/nanpure/assets/pictogram-showcase.svg?raw";
 import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
 import {
   isNanpurePlayRecord,
@@ -28,6 +29,7 @@ export const nanpureCatalogEntry = {
   id: nanpurePlayRecordDefinition.gameId,
   name: NANPURE_DISPLAY_NAME,
   pictogramSvg,
+  pictogramShowcaseSvg,
   homePath: "/puzzles/nanpure",
   playPath: "/puzzles/nanpure/play/:difficulty",
   playRecordDisplay: nanpurePlayRecordDisplay,
