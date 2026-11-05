@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
@@ -27,18 +27,18 @@ import type {
   TsumeShogiSessionPhase,
 } from "@/games/tsume-shogi/session/session";
 import { TsumeShogiClearAnimation } from "@/games/tsume-shogi/ui/board/clear/TsumeShogiClearAnimation";
-import {
-  TsumeShogiBoard,
-  tsumeShogiBoardFrameStyle,
-} from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
+import { TsumeShogiBoard } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
 import { TsumeShogiPieceDefs } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs";
 import { TsumeShogiResultScreen } from "@/games/tsume-shogi/ui/result/TsumeShogiResultScreen";
 import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
 import {
+  TsumeShogiBoardGroup,
+  tsumeShogiBoardGroupSizeStyle,
+} from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiBoardGroup";
+import {
   TsumeShogiHand,
   type TsumeShogiHandAvailability,
 } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiHand";
-import { TsumeShogiPieceBox } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPieceBox";
 import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPlayStatus";
 import { useShortPlayArea } from "@/games/tsume-shogi/ui/TsumeShogiPlay/use-short-play-area";
 import { useTsumeShogiSoundEffects } from "@/games/tsume-shogi/ui/TsumeShogiPlay/use-tsume-shogi-sound-effects";
@@ -69,19 +69,6 @@ type TsumeShogiPlayProps = GamePlayScreenProps<
     onCancelPromotion: () => void;
     onClearSelection: () => void;
   };
-
-/**
- * 盤の幅。盤の木の縁（`tsumeShogiBoardFrameStyle`）を含め、升は実物の盤と同じ縦長（横 35.2 : 縦 38.6）。
- * 盤の上下に玉方の駒箱の札・攻方の駒台（`--piece-box-height`・`--komadai-height`）、その下に直前の手（1.25rem）を置き、
- * 隙間を除いた高さと、左右の余白（`--board-gutter`）を除いた幅のどちらにも収まる大きさにする。PC では 40rem まで広げる。
- */
-const boardSizeStyle = {
-  ...tsumeShogiBoardFrameStyle,
-  "--board-chrome":
-    "calc(var(--piece-box-height) + var(--komadai-height) + 1.25rem + 3 * 0.25rem)",
-  "--board-width":
-    "min(calc(100cqw - 2 * var(--board-gutter)), calc((100cqh - var(--board-chrome) - 2 * var(--board-frame)) * 352 / 386 + 2 * var(--board-frame)), 40rem)",
-} as CSSProperties;
 
 /**
  * 着手させなかった入力ごとの読み上げの key。同じ文でも入力ごとに読み上げ直すよう、入力ごとに要素を作り直す。
@@ -218,17 +205,11 @@ export function TsumeShogiPlay({
             "flex min-h-0 flex-1 items-center justify-center py-1 [container-type:size]",
             tsumeShogiToneClassNames.tableSurface,
           )}
-          style={boardSizeStyle}
+          style={tsumeShogiBoardGroupSizeStyle}
         >
-          {/* 玉方の駒箱の札・盤・攻方の駒台を、盤の幅の中に縦に並べる。 */}
-          <div
+          <TsumeShogiBoardGroup
             ref={boardGroupRef}
-            className="flex w-(--board-width) flex-col gap-1"
-          >
-            <div className="h-(--piece-box-height)">
-              <TsumeShogiPieceBox />
-            </div>
-            <div className="relative h-[calc((var(--board-width)-2*var(--board-frame))*386/352+2*var(--board-frame))]">
+            board={
               <TsumeShogiClearAnimation
                 active={progress === "clearing"}
                 onClearAnimationComplete={onClearAnimationComplete}
@@ -247,8 +228,8 @@ export function TsumeShogiPlay({
                   onChoosePromotion={onChoosePromotion}
                 />
               </TsumeShogiClearAnimation>
-            </div>
-            <div className="h-(--komadai-height)">
+            }
+            hand={
               <TsumeShogiHand
                 hand={attackerHand}
                 selectedPieceType={
@@ -260,16 +241,16 @@ export function TsumeShogiPlay({
                 leadingAction={shortPlayArea ? undoButton : undefined}
                 onSelectHandPiece={onSelectHandPiece}
               />
-            </div>
-            <div className="h-5">
+            }
+            status={
               <TsumeShogiPlayStatus
                 plies={plies}
                 phase={phase}
                 shownMoves={shownMoves}
                 precedingMoveTo={precedingMoveTo}
               />
-            </div>
-          </div>
+            }
+          />
           {/* 画面では駒で返し、理由は文で示さない。読み上げでも指せなかったことだけを伝える。 */}
           <p aria-live="polite" className="sr-only">
             {rejection && (
