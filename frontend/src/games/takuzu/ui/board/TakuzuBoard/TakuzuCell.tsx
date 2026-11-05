@@ -5,6 +5,8 @@ import {
   useRef,
 } from "react";
 
+import { TutorialCue } from "@/components/TutorialCue";
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import { getTakuzuCellPosition } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
@@ -21,8 +23,10 @@ type TakuzuCellProps = {
   /** このマスを含む行・列の違反の読み上げ名（例「行の個数超過」）。 */
   lineViolationNames: readonly string[];
   disabled: boolean;
-  /** 揺れの合図は盤面が掛けるので、マスは光と目印の合図だけを描く。 */
+  /** 揺れの合図は盤面が掛けるので、マスは印と応えだけを描く。 */
   cue: TakuzuCellCue | undefined;
+  /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜き、元の明るさで見せる。 */
+  spotlit: boolean;
   focusable: boolean;
   onElementChange: (
     cellIndex: number,
@@ -33,6 +37,9 @@ type TakuzuCellProps = {
 };
 
 const tileNameByCell = { a: "四角", b: "丸" } as const;
+
+/** 印と応えの線は、隣り合うマスの線と重ならないよう、マスの縁から少し内側に、角の立ったマスの形で引く。 */
+const cueOutlinePlacementClassName = "pointer-events-none absolute inset-1";
 
 function getAccessibleName(
   size: number,
@@ -57,6 +64,7 @@ export function TakuzuCell({
   lineViolationNames,
   disabled,
   cue,
+  spotlit,
   focusable,
   onElementChange,
   onCycle,
@@ -110,38 +118,28 @@ export function TakuzuCell({
           runViolationCellClassName,
         )}
       />
+      {/* マスの形のまま、角の無い四角で覆いから抜く。 */}
+      <TutorialSpotlight active={spotlit} className="inset-0" />
       {cue?.kind === "fitted" && (
         <span
-          key={cue.id}
           aria-hidden="true"
           data-cell-cue={cue.kind}
-          className="pointer-events-none absolute inset-1 rounded-sm border-(length:--border-width-normal) border-foreground fill-mode-forwards animate-out fade-out-0 delay-(--duration-slow) duration-(--duration-slow) ease-standard"
-        />
-      )}
-      {cue?.kind === "reason" && (
-        <span
-          key={cue.id}
-          aria-hidden="true"
-          data-cell-cue={cue.kind}
-          className="pointer-events-none absolute inset-0 bg-accent ring-(length:--border-width-strong) ring-ring ring-inset fill-mode-forwards animate-out fade-out-0 delay-(--duration-slow) duration-(--duration-slow) ease-standard"
-        />
-      )}
-      {cue?.kind === "recall" && (
-        // 動きを減らす設定でも分かるよう、位置や大きさは変えず、印の線を短く濃くして戻すだけで示す。
-        <span
-          key={cue.id}
-          aria-hidden="true"
-          data-cell-cue={cue.kind}
-          className="pointer-events-none absolute inset-1 rounded-sm border-(length:--border-width-strong) border-foreground fill-mode-forwards animate-out fade-out-0 delay-(--duration-slow) duration-(--duration-slow) ease-standard"
-        />
+          className={cueOutlinePlacementClassName}
+        >
+          <TutorialCue kind="acknowledgement" id={cue.id} />
+        </span>
       )}
       {(cue?.kind === "hint" || cue?.kind === "recall") && (
-        // 光らせ直しても印そのものは付け直さず、出ているまま光だけを重ねる。
         <span
           aria-hidden="true"
           data-cell-cue="hint"
-          className="pointer-events-none absolute inset-1 rounded-sm border-(length:--border-width-strong) border-ring animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none"
-        />
+          className={cueOutlinePlacementClassName}
+        >
+          <TutorialCue
+            kind="mark"
+            recallId={cue.kind === "recall" ? cue.id : null}
+          />
+        </span>
       )}
       {/*
         固定マスを押したときの揺れと完成の波は、格子を崩さないよう中のタイルだけに掛ける。
