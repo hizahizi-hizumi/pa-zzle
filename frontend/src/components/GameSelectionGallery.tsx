@@ -18,6 +18,7 @@ import type { Path } from "@/router";
 type GameSelectionGame = {
   name: string;
   pictogramSvg: string;
+  pictogramShowcaseSvg?: string;
   to: Path;
 };
 
@@ -35,6 +36,8 @@ type GameSelectionGalleryProps = {
   /** 選んでいるゲームの続き。そのゲームを遊んだことが無ければ `null`。 */
   continuation: GameSelectionContinuation | null;
   onSelect: (index: number) => void;
+  /** タイトルなどがホームを覆っている間は、ヒーローを動かさず静止状態で待たせる。 */
+  isCovered?: boolean;
 };
 
 function formatContinuation({
@@ -71,6 +74,7 @@ export function GameSelectionGallery({
   selectedIndex,
   continuation,
   onSelect,
+  isCovered = false,
 }: GameSelectionGalleryProps) {
   const selectedGame = games[selectedIndex] ?? games[0];
   const continuationId = useId();
@@ -150,7 +154,14 @@ export function GameSelectionGallery({
           className="flex h-full flex-col items-center justify-center transition-colors duration-(--duration-slow) hover:bg-muted/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         >
           <span className="size-[10.625rem] p-4 sm:size-[14.0625rem] sm:p-6">
-            <GamePictogram svg={selectedGame.pictogramSvg} />
+            {selectedGame.pictogramShowcaseSvg ? (
+              <GamePictogram
+                svg={selectedGame.pictogramShowcaseSvg}
+                motion={isCovered ? "rest" : "play"}
+              />
+            ) : (
+              <GamePictogram svg={selectedGame.pictogramSvg} />
+            )}
           </span>
           <span className="mt-2 text-heading sm:mt-3">{selectedGame.name}</span>
           <span className="mt-2 flex h-6 items-center">
@@ -202,7 +213,13 @@ export function GameSelectionGallery({
                         : "border-(length:--border-width-normal) border-border group-hover:bg-accent"
                     }`}
                   >
-                    <GamePictogram svg={game.pictogramSvg} />
+                    <GamePictogram
+                      svg={
+                        isSelected && game.pictogramShowcaseSvg
+                          ? game.pictogramShowcaseSvg
+                          : game.pictogramSvg
+                      }
+                    />
                   </span>
                 </button>
               );
