@@ -52,7 +52,7 @@ pa-zzle の文書に何を書き、どう保つかのルール。いつ読むか
 
 ## 4. 書き方
 
-ADR と `.claude/rules/` を除く正本に適用する。ADR は `docs/adr/README.md` と adr-create スキルに、`.claude/rules/` は `.claude/rules/rules.md` に従う。
+ADR・`.claude/rules/`・`AGENTS.md`・`CLAUDE.md` を除く正本に適用する。ADR は `docs/adr/README.md` と adr-create スキルに、`.claude/rules/` は `.claude/rules/rules.md` に、`AGENTS.md`・`CLAUDE.md` は `.claude/rules/agents-md.md` に従う。
 
 ### 何を書くか
 
