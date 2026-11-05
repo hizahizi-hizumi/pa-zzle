@@ -1,117 +1,36 @@
 ---
 name: adr-create
 description: >
-  This skill should be used when the user asks to "/adr-create", "ADR を作成", "新規 ADR",
-  "意思決定を記録", "ADR 起票", "MADR で書く", "decision を残したい",
-  "create ADR", "record a decision", "write a decision record".
-  Creates a new ADR (Any Decision Record) under docs/adr/, assigns the next NNNN sequence
-  number, and appends a row to docs/adr/index.csv with a searchable summary. Optional
-  argument is a short Japanese ADR title; the filename uses an ASCII slug.
+  プロジェクト全体の意思決定を MADR v3 ベースの ADR として docs/adr/ に作り、次の連番を振り、
+  docs/adr/index.csv に検索用の要約付きの行を足す。引数は日本語の短い ADR タイトル（省略可）で、
+  ファイル名には英語の ASCII slug を使う。
+  「ADR を作成して」「新規 ADR」「意思決定を記録して」「ADR を起票して」「決定を残したい」
+  「create an ADR」「record a decision」「write a decision record」と頼まれたときに使う。
 argument-hint: "<日本語タイトル>?"
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash(date *)
+allowed-tools: Read, Glob, Grep, Bash(date +%Y-%m-%d)
 ---
 
 # adr-create
 
-pa-zzleの重要な意思決定を MADR v3 ベースの ADR として作成する Skill。アーキテクチャ、実行環境、データ契約、公開境界、運用、ワークフローなど、将来の意思決定を揃える価値がある、プロジェクト全体（ゲームをまたぐ）の決定を対象にする。
-
-## 起動
-
-`/adr-create [<日本語タイトル>]`
-
-- `<日本語タイトル>`: ADR本文とindexで使う短いタイトル。省略時は会話 context から提案して確認する。
-- ファイル名にはタイトルの意味を表す短い英語ASCII slugを使う。
-
-## 動作フロー
-
-### 1. 運用基盤を確認
-
-- `docs/adr/README.md` と `docs/adr/index.csv` が存在することを確認する。
-- どちらかがなければ ADR 運用基盤が不完全として停止する。
-- `docs/adr/README.md` を Read し、ADR と今の決まりの正本を混同しないことを確認する。
-
-### 2. ADR にするべき判断か確認
-
-- 単発バグ修正、局所的リファクタリング、誤字修正、単純なデータ追加であれば ADR を作らず、commit / PR 履歴で十分と判断する。
-- 1つのゲームに閉じた決定は ADR にしない。決まりの Why / Why not は該当する文書に書くので、それだけを残すための ADR も作らない。
-- 技術・実行環境・契約・公開境界・横断運用など、プロジェクト全体にかかり、複数案の比較や将来の意思決定を揃える価値がある判断なら続行する。
-- ADR は今の決まりの代替ではない。決定によって今の決まりが変わる場合、該当するコードや文書の更新も必要であることを作業結果に明示する。
-
-### 3. 連番採番
-
-- `docs/adr/ADR-*.md` を Glob する。
-- ADR が0件なら `0001` を採番する。
-- 既存ADRがある場合は、ファイル名の `NNNN` 最大値 + 1 を4桁ゼロ埋めして新しい番号にする。
-- 同一番号が複数存在しないことを確認する。
-
-### 4. タイトルとslugを確定
-
-- 引数があればADRタイトルとして使用する。
-- 未指定なら会話 context から日本語タイトルを1つ提案して確認する。
-- タイトルの意味を表す短い英語slugを lowercase kebab-case で作る。使用できる文字はASCII英小文字・数字・ハイフンだけとする。
-- ファイル名は `ADR-<NNNN>-<ascii-slug>.md` とする。
-
-### 5. 日付取得
-
-- `Bash(date +%Y-%m-%d)` で日付を取得し、frontmatter の `date` に入れる。
-
-### 6. summary を生成
-
-- `references/madr-authoring-rules.md` に従い、3文・100〜200字程度で次を含める。
-  1. 何を決めたか
-  2. 主な選択肢
-  3. 決め手
-- 検索対象にしたい技術名・概念名を含める。
-- この summary 文字列を ADR 本文 `## 要約` の `要約` と `docs/adr/index.csv` の `summary` に同一文字列で使用する。
-
-### 7. ADR を作成
-
-- `assets/adr-template.md` を Read する。
-- `references/madr-authoring-rules.md` を Read する。
-- 会話 context から埋められる内容は埋める。不確定点が残る場合は ADR を `proposed` とし、本文で明示する。
-- 検討した選択肢は原則2案以上にする。
-- `### 帰結` には Good / Bad の両方を最低1件書く。
-- `docs/adr/ADR-<NNNN>-<ascii-slug>.md` に Write する。
-
-### 8. index.csv を更新
-
-- `docs/adr/index.csv` の末尾に1行追記する。
-- 6カラム `id,title,summary,status,date,path` を維持する。
-- `summary` は本文と完全一致させる。
-- CSV 全体を書き直さず Edit で末尾へ追加する。
-
-### 9. 整合確認
-
-- ADR 本文の `status` / `date` / title と index.csv 行が一致することを確認する。
-- 本文 `要約` と CSV `summary` が同一文字列であることを確認する。
-- 同じ論点の既存 ADR がある場合、置き換えなのか補完なのかを確認する。置き換えなら旧 ADR を自動で書き換えず、`docs/adr/README.md` の「置き換え」に沿った次の操作をユーザーへ提示する。
-  - 全体を置き換える場合: 旧 ADR の `status` と index.csv の status を `superseded by ADR-<NNNN>` にする。
-  - 一部を置き換える場合: 旧 ADR の `status` は変えず、front matter の `partially_superseded_by` に新 ADR の ID を足し、表題の直後に置き換えた部分を明記する。
-- 置き換える場合は、新 ADR の本文に、どの ADR のどの部分を置き換えるかを書く。
-
-### 10. 報告
-
-- 作成した ADR パス
-- index.csv に追記した行
-- status
-- 置き換えがある場合は、旧 ADR に必要な操作（`status` または `partially_superseded_by` と注記）
-- 今の決まりの側で別途更新が必要なコード・文書があればその候補
-- `proposed` の場合は残っている判断点
-
-## 参照する真実情報
-
-- `assets/adr-template.md` — ADR 本文テンプレート
-- `references/madr-authoring-rules.md` — 執筆・命名・CSV・今の決まりとの分離ルール
-- `docs/adr/README.md` — ADR 運用方針と status 定義
-- `docs/adr/index.csv` — ADR 一覧
-- `docs/adr/ADR-*.md` — 採番・既存判断確認対象
-- `AGENTS.md` — 文書の位置付けと開発運用
-
-## 制約
-
-- 起動 context: inline。
-- `index.csv` への追記を省略しない。
-- 本文 `要約` と CSV `summary` を別々の文章にしない。
-- ADR を今の決まりの正本として扱わない。
-- 既存 ADR の `status`・`partially_superseded_by`・置き換えの注記を自動で書き換えない。
-- 自動コミット / 自動 PR は作成しない。
+1. `docs/adr/README.md` と `docs/adr/index.csv` があるかを確かめる。どちらかが無ければ、ADR の置き場所が揃っていないことをユーザーに伝えて終える
+2. `docs/adr/README.md` を読み、ADR にする意思決定の範囲・`status`・置き換えの決まりを確かめる
+3. 記録したい判断が README の範囲に当たるかを確かめる。範囲外の判断と、単発のバグ修正・局所的なリファクタリング・誤字修正・単純なデータ追加は ADR にせず、コミットと PR の履歴で足りることをユーザーに伝えて終える
+4. 記録したい判断の論点を表すキーワード（技術名・概念名など）を会話から選び、それぞれを引数にして `adr-reference` スキルを起動し、同じ論点の既存 ADR を探す。見つかったら、新しい ADR がその全体を置き換えるか、一部を置き換えるか、補うかを決める
+5. `docs/adr/ADR-*.md` を Glob し、ファイル名の `NNNN` の最大値に 1 を足して4桁にゼロ埋めした番号を新しい番号にする。ADR が無ければ `0001` にする。同じ番号のファイルが2つ以上あれば、その番号をユーザーに伝えて終える
+6. `${CLAUDE_SKILL_DIR}/references/madr-authoring-rules.md` と `${CLAUDE_SKILL_DIR}/assets/adr-template.md` を読む
+7. タイトルを決める。引数があればそれを使い、無ければ会話から日本語のタイトルを1つ提案してユーザーに確かめる
+8. madr-authoring-rules.md の「ファイル名規約」に沿って slug とファイル名を決める
+9. `date +%Y-%m-%d` で今日の日付を得る
+10. adr-template.md を元に、madr-authoring-rules.md の「章立てルール」に沿って本文を書く
+    - 会話から埋められるところを埋め、決まっていない点は本文に書く
+    - 手順 4 で置き換えると決めたときは、どの ADR のどの部分を置き換えるかを `## 補足` に書く
+11. madr-authoring-rules.md の「summary の書き方」に沿って、書いた本文から summary を作り、`## 要約` の `要約` に入れる
+12. `docs/adr/ADR-<NNNN>-<ascii-slug>.md` を Write する
+13. madr-authoring-rules.md の「index.csv 追記行」に沿って、`docs/adr/index.csv` の末尾に1行を Edit で足す。`summary` には手順 11 と同じ文字列を入れる
+14. 書いた ADR の `status`・`date`・タイトルと index.csv の行が一致し、`要約` と `summary` が同じ文字列であることを確かめる
+15. 次をユーザーに伝える。コミットと PR はユーザーの指示を待つ
+    - 作った ADR のパス
+    - index.csv に足した行
+    - `status`。`proposed` のときは残っている判断点
+    - 既存 ADR を置き換えるときは、README の「置き換え」に沿って旧 ADR と index.csv の旧い行に要る操作。旧 ADR の `status`・`partially_superseded_by`・置き換えの注記と index.csv の旧い行は自分では書き換えない
+    - 決定によって今の決まりが変わるときは、直す必要があるコードと文書の候補

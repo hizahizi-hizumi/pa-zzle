@@ -2,7 +2,7 @@
 
 `pictogram-showcase.svg` をアプリへ渡すための書き方の規則。アプリ側の受け口（`frontend/src/components/GamePictogram.tsx`、`GameSelectionGallery.tsx`）がこの形を前提に表示する。機械的に確かめられる規則は `scripts/check_animation.py` が `FAIL` / `WARN` にするので、違反の詳細はその出力で確かめる。
 
-契約の変更は人間の判断で、この Skill の外で行う。変える場合は、アプリ側の受け口・`DESIGN.md`・この文書・`scripts/` の検査とギャラリーを同じ変更で揃え、決め直した理由は新しい ADR に残す（`docs/adr/ADR-0016-selected-pictogram-color-motion.md` の本文は書き換えない）。
+契約の変更は人間の判断で、この Skill の外で行う。変える場合は、アプリ側の受け口・`DESIGN.md`・この文書・`scripts/` の検査とギャラリーを同じ変更で揃え、決め直した理由は `docs/adr/README.md` に従って ADR に残す。
 
 ## 1. ファイルと座標系
 
