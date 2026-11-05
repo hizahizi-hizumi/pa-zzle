@@ -3,7 +3,7 @@
 `/design-game-pictogram` で到達すべき品質水準を示す、レビュー済みの完成見本。
 
 - `nanpure.svg`: 3×3格子 + 数字を、外枠 / 格子 / 記号の視覚階層を付けて表現する例
-- `frontend/src/games/parking-jam/assets/pictogram.svg`: 車両 + 出口 + 詰まりを、一定の余白と車幅で単純化して表現する例。プロダクションで利用する SVG 自体を正本とする
+- `frontend/src/games/parking-jam/assets/pictogram.svg`: 車両 + 開いた出口を、一定の余白と車幅で単純化して表現する例。プロダクションで利用する SVG 自体を正本とする
 
 完成見本の配置場所は `examples/` に限定しない。プロダクションで同じ形状を利用する場合はプロダクション側の SVG を正本とし、Skill 側へ複製しない。
 
@@ -20,6 +20,6 @@
 完成見本は `viewBox` の幾何学中心だけでなく、112px と48pxの実表示で見た目の中心を確認する。補正した場合は移動量と理由を残す。
 
 - `nanpure.svg`: 補正なし。外枠が上下左右で均衡し、数字を含めても偏りが目立たないため
-- `parking-jam.svg`: 補正なし。内部の黒量には偏りがあるが、外枠と出口を含む全体形状は中央に見えるため
+- `frontend/src/games/parking-jam/assets/pictogram.svg`: 補正なし。内部の黒量には偏りがあるが、外枠と出口を含む全体形状は中央に見えるため
 
 PoCの途中案・比較・不採用案は `docs/立ち上げ/ゲーム選択ピクトグラムPoC.md` と同名ディレクトリを参照する。
