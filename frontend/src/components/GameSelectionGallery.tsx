@@ -196,7 +196,7 @@ export function GameSelectionGallery({
                   className="group flex shrink-0 snap-start focus-visible:outline-none"
                 >
                   <span
-                    className={`flex size-[4.875rem] items-center justify-center rounded-xl bg-background p-[18%] transition-colors group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2 sm:size-[6.25rem] sm:rounded-xl sm:p-[20%] ${
+                    className={`flex size-[4.875rem] items-center justify-center rounded-md bg-background p-[18%] transition-colors group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2 sm:size-[6.25rem] sm:rounded-md sm:p-[20%] ${
                       isSelected
                         ? "border-(length:--border-width-strong) border-ring"
                         : "border-(length:--border-width-normal) border-border group-hover:bg-accent"

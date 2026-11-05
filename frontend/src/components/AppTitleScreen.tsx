@@ -94,7 +94,7 @@ export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
                     aria-label={`${game.name}を遊ぶ`}
                     inert={!ready}
                     onClick={enterGame}
-                    className="flex size-full items-center justify-center rounded-lg border-(length:--border-width-normal) border-border bg-background p-[18%] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="flex size-full items-center justify-center rounded-md border-(length:--border-width-normal) border-border bg-background p-[18%] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     <GamePictogram svg={game.pictogramSvg} />
                   </Link>
