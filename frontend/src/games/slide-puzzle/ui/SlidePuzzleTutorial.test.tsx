@@ -29,10 +29,7 @@ const nextStepCueDelayMs = 450;
 /** 手を離した後、手が止まってから次のタイルを示すまでの間。 */
 const idleHintDelayMs = 4000;
 
-/** 動きを減らす設定で、ゴールの盤面を見せる間。 */
-const stillGoalHoldMs = 2800;
-
-/** 導入を最後まで見せるのに十分な間。 */
+/** 導入の場面の動きを見せ終えるのに十分な間。 */
 const introEnoughMs = 8000;
 
 afterEach(() => {
@@ -70,6 +67,24 @@ function advanceTime(ms: number): void {
   });
 }
 
+/** 導入の「次へ」を押す。導入は自動では先へ進まない。 */
+function pressNext(): void {
+  fireEvent.click(screen.getByRole("button", { name: "次へ" }));
+}
+
+/** 場面の動きを待っては「次へ」を押し、導入を最後まで進める。 */
+function goThroughIntroSync(): void {
+  for (let press = 0; press < 3; press += 1) {
+    advanceTime(introEnoughMs);
+    const next = screen.queryByRole("button", { name: "次へ" });
+    if (!next) {
+      return;
+    }
+    fireEvent.click(next);
+  }
+  advanceTime(introEnoughMs);
+}
+
 function getBoard(): HTMLElement {
   return screen.getByRole("group", { name: "盤面" });
 }
@@ -84,9 +99,25 @@ function tapTiles(tiles: readonly number[]): void {
   }
 }
 
-/** 導入を飛ばして、最初の手順から始める。 */
-function skipIntro(): void {
-  fireEvent.pointerDown(getBoard());
+/** 手順のタイルを、収まったタイルを見せてから次の印が付くまで待ちながらタップする。最後のタップの後は待たない。 */
+function playSteps(tiles: readonly number[]): void {
+  tiles.forEach((tile, index) => {
+    if (index > 0) {
+      advanceTime(nextStepCueDelayMs);
+    }
+    tapTiles([tile]);
+  });
+}
+
+/** 場面の動きを待たずに「次へ」を続けて押し、ゴールと始まりの盤面を通って最初の手順から始める。 */
+function pressNextThroughIntro(): void {
+  for (
+    let next = screen.queryByRole("button", { name: "次へ" });
+    next;
+    next = screen.queryByRole("button", { name: "次へ" })
+  ) {
+    fireEvent.click(next);
+  }
 }
 
 /** 鳴らした効果音の音声ファイル名。 */
@@ -106,11 +137,33 @@ function getTilePosition(tile: number): string {
     : "";
 }
 
+/** 印の線を短く濃くしている合図。 */
+const recallSelector = '[data-tutorial-cue="recall"]';
+
 function getCuedTiles(kind: "hint" | "landed" | "recall"): string[] {
+  const selector =
+    kind === "recall" ? recallSelector : `[data-tile-cue="${kind}"]`;
   return within(getBoard())
     .getAllByRole("button")
-    .filter((tile) => tile.querySelector(`[data-tile-cue="${kind}"]`))
+    .filter((tile) => tile.querySelector(selector))
     .map((tile) => tile.textContent ?? "");
+}
+
+/** 画面全体の覆いから抜いて、元の明るさで見せているタイル。 */
+function getSpotlitTiles(): string[] {
+  return within(getBoard())
+    .getAllByRole("button")
+    .filter((tile) => tile.querySelector("[data-tutorial-spotlight]"))
+    .map((tile) => tile.textContent ?? "");
+}
+
+/** 画面全体の覆いから抜いている所の数。タイルのほか、タイルが収まる空白と一言の面を含む。 */
+function getSpotlightCount(): number {
+  return document.querySelectorAll("[data-tutorial-spotlight]").length;
+}
+
+function getScrim(): Element | null {
+  return document.querySelector("[data-tutorial-focus-scrim]");
 }
 
 function getRuleTexts(): string[] {
@@ -138,7 +191,7 @@ describe("SlidePuzzleTutorial", () => {
           onClose={onClose}
         />,
       );
-      skipIntro();
+      pressNextThroughIntro();
     });
 
     test("崩れた始めの盤面で、空白の隣のタイルのタップを示し、まだ示していないルールを伏せておくこと", () => {
@@ -152,10 +205,20 @@ describe("SlidePuzzleTutorial", () => {
       expect(headline).toBeTruthy();
       expect(positions).toEqual(["1行1列", "3行2列"]);
       expect(hinted).toEqual(["5"]);
-      expect(rules).toEqual(["空白にスライド", "？"]);
+      expect(rules).toEqual(["空白にスライド", "まだ出ていないルール"]);
     });
 
-    test("空白の隣でも印の無いタイルを押すと、スライドさせず音も鳴らさずに、一言を変えずに印のタイルを光らせ直すこと", () => {
+    test("画面全体に覆いを重ね、印のタイルと、タイルが収まる空白と、一言の面だけを覆いから抜くこと", () => {
+      const scrim = getScrim();
+      const spotlit = getSpotlitTiles();
+      const spotlightCount = getSpotlightCount();
+
+      expect(scrim).not.toBeNull();
+      expect(spotlit).toEqual(["5"]);
+      expect(spotlightCount).toBe(3);
+    });
+
+    test("空白の隣でも印の無いタイルを押すと、スライドさせず音も鳴らさずに、一言を変えずに印のタイルの線を濃くし直すこと", () => {
       tapTiles([7]);
 
       const position = getTilePosition(7);
@@ -172,32 +235,62 @@ describe("SlidePuzzleTutorial", () => {
       expect(playSound).not.toHaveBeenCalled();
     });
 
-    test("印の無いタイルを続けて押すたびに、印のタイルを光らせ直すこと", () => {
+    test("印の無いタイルを続けて押すたびに、印のタイルの線を濃くし直すこと", () => {
       tapTiles([7]);
-      const firstFlash = getTile(5).querySelector('[data-tile-cue="recall"]');
+      const firstFlash = getTile(5).querySelector(recallSelector);
       tapTiles([3]);
 
-      const secondFlash = getTile(5).querySelector('[data-tile-cue="recall"]');
+      const secondFlash = getTile(5).querySelector(recallSelector);
 
       expect(firstFlash).not.toBeNull();
       expect(secondFlash).not.toBeNull();
       expect(secondFlash).not.toBe(firstFlash);
     });
 
-    test("印のタイルをタップすると、空白にスライドして収まり、収まってから次の印を付けること", () => {
+    test("覆いから抜いた空白を押すと、何も動かさずに印のタイルの線を濃くし直すこと", () => {
+      const blank = Array.from(
+        getBoard().querySelectorAll("[data-tutorial-spotlight]"),
+      ).find((spotlight) => !spotlight.closest("button"));
+      fireEvent.click(blank ?? getBoard());
+
+      const recalled = getCuedTiles("recall");
+
+      expect(blank).toBeDefined();
+      expect(recalled).toEqual(["5"]);
+    });
+
+    test("印のタイルをタップすると、空白にスライドして収まり、収まってから次の印と一言を出すこと", () => {
       tapTiles([5]);
       const position = getTilePosition(5);
       const landed = getCuedTiles("landed");
-      const headline = screen.getByText("この空白には 8 が収まります");
+      const headlineBeforeDelay = screen.queryByText(
+        "この空白には 8 が収まります",
+      );
       const hintedBeforeDelay = getCuedTiles("hint");
       advanceTime(nextStepCueDelayMs);
 
+      const headline = screen.queryByText("この空白には 8 が収まります");
       const hinted = getCuedTiles("hint");
 
       expect(position).toBe("2行2列");
       expect(landed).toEqual(["5"]);
-      expect(headline).toBeTruthy();
+      expect(headlineBeforeDelay).toBeNull();
       expect(hintedBeforeDelay).toEqual([]);
+      expect(headline).not.toBeNull();
+      expect(hinted).toEqual(["8"]);
+    });
+
+    test("収まったタイルを見せている間に次のタイルをタップしても、スライドさせずに、次の手順の一言と印を出すこと", () => {
+      tapTiles([5]);
+      const positionBefore = getTilePosition(8);
+      tapTiles([8]);
+
+      const position = getTilePosition(8);
+      const headline = screen.queryByText("この空白には 8 が収まります");
+      const hinted = getCuedTiles("hint");
+
+      expect(position).toBe(positionBefore);
+      expect(headline).not.toBeNull();
       expect(hinted).toEqual(["8"]);
     });
 
@@ -211,7 +304,8 @@ describe("SlidePuzzleTutorial", () => {
 
     describe("同じ行・列のルールを示す手順に進んだ場合", () => {
       beforeEach(() => {
-        tapTiles(stepTiles.slice(0, 2));
+        playSteps(stepTiles.slice(0, 2));
+        advanceTime(nextStepCueDelayMs);
         advanceTime(nextStepCueDelayMs);
       });
 
@@ -225,7 +319,7 @@ describe("SlidePuzzleTutorial", () => {
         expect(detail).toBeTruthy();
       });
 
-      test("隣にある 7 をタップしても、スライドさせずに、手順の一言のまま印のタイルを光らせ直すこと", () => {
+      test("隣にある 7 をタップしても、スライドさせずに、手順の一言のまま印のタイルの線を濃くし直すこと", () => {
         tapTiles([7]);
 
         const position = getTilePosition(7);
@@ -242,7 +336,7 @@ describe("SlidePuzzleTutorial", () => {
           installAnimate();
         });
 
-        test("空白と同じ行・列にないタイルをタップすると、本番と同じく揺らして音を鳴らし、スライドさせずにわけを伝えること", () => {
+        test("空白と同じ行・列にないタイルをタップすると、本番と同じく揺らして音を鳴らし、スライドさせずにわけを伝え、揺らしたタイルを覆いから抜くこと", () => {
           tapTiles([5]);
 
           const position = getTilePosition(5);
@@ -253,16 +347,18 @@ describe("SlidePuzzleTutorial", () => {
             .length;
           const sounds = getPlayedSoundNames();
           const recalled = getCuedTiles("recall");
+          const spotlit = getSpotlitTiles();
 
           expect(position).toBe("2行2列");
           expect(headline).toBeTruthy();
           expect(shakeCount).toBe(1);
           expect(sounds).toEqual(["slid.flac", "slid.flac", "invalid.flac"]);
           expect(recalled).toEqual([]);
+          expect(spotlit).toEqual(["4", "5", "7"]);
         });
       });
 
-      test("わけを伝えた後に印の無い 7 をタップすると、印のタイルを光らせ直して、手順の一言に戻すこと", () => {
+      test("わけを伝えた後に印の無い 7 をタップすると、印のタイルの線を濃くし直して、手順の一言に戻すこと", () => {
         tapTiles([5, 7]);
 
         const detail = screen.getByText("4 をタップすると 7 もスライドします");
@@ -270,6 +366,12 @@ describe("SlidePuzzleTutorial", () => {
 
         expect(detail).toBeTruthy();
         expect(recalled).toEqual(["4"]);
+      });
+
+      test("印のタイルと、一緒にスライドするタイルを覆いから抜くこと", () => {
+        const spotlit = getSpotlitTiles();
+
+        expect(spotlit).toEqual(["4", "7"]);
       });
 
       test("ルールをルールの並びに加え、離れたタイルをタップすると間のタイルもまとめてスライドさせること", () => {
@@ -287,7 +389,27 @@ describe("SlidePuzzleTutorial", () => {
 
     describe("手順を終えた場合", () => {
       beforeEach(() => {
-        tapTiles(stepTiles);
+        playSteps(stepTiles);
+      });
+
+      test("タイルが自分の場所に収まっても、本番に無い合図は返さないこと", () => {
+        tapTiles([2]);
+
+        const landed = getCuedTiles("landed");
+
+        expect(landed).toEqual([]);
+      });
+
+      test("覆いを重ねず、手が止まって印が出ても覆いを重ねないこと", () => {
+        const scrim = getScrim();
+        advanceTime(idleHintDelayMs);
+
+        const scrimWithHint = getScrim();
+        const spotlit = getSpotlitTiles();
+
+        expect(scrim).toBeNull();
+        expect(scrimWithHint).toBeNull();
+        expect(spotlit).toEqual([]);
       });
 
       test("残りを並べることを伝え、手が止まったときだけ次にスライドさせるタイルを示すこと", () => {
@@ -357,7 +479,7 @@ describe("SlidePuzzleTutorial", () => {
         tapTiles(remainingTiles);
         fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
         const caption = screen.getByText("最初はこのように崩れています");
-        advanceTime(introEnoughMs);
+        goThroughIntroSync();
 
         const position = getTilePosition(5);
         const hinted = getCuedTiles("hint");
@@ -366,7 +488,7 @@ describe("SlidePuzzleTutorial", () => {
         expect(caption).toBeTruthy();
         expect(position).toBe("3行2列");
         expect(hinted).toEqual(["5"]);
-        expect(rules).toEqual(["空白にスライド", "？"]);
+        expect(rules).toEqual(["空白にスライド", "まだ出ていないルール"]);
       });
     });
   });
@@ -414,8 +536,8 @@ describe("SlidePuzzleTutorial", () => {
       expect(position).toBe("1行1列");
     });
 
-    test("ゴールを見せた後に、始まりの一言を添えて崩れた始めの盤面を見せること", () => {
-      advanceTime(stillGoalHoldMs);
+    test("ゴールで次へを押すと、始まりの一言を添えて崩れた始めの盤面を見せること", () => {
+      pressNext();
 
       const caption = screen.getByText("最初はこのように崩れています");
       const position = getTilePosition(1);
@@ -424,9 +546,9 @@ describe("SlidePuzzleTutorial", () => {
       expect(position).toBe("1行2列");
     });
 
-    test("最後まで見せると、最初の手順の一言と印を出すこと", () => {
-      advanceTime(stillGoalHoldMs);
-      advanceTime(introEnoughMs);
+    test("次へで最後まで進めると、最初の手順の一言と印を出すこと", () => {
+      pressNext();
+      goThroughIntroSync();
 
       const headline = screen.getByText(
         "空白の隣のタイルは タップするとスライドします",
@@ -437,8 +559,8 @@ describe("SlidePuzzleTutorial", () => {
       expect(hinted).toEqual(["5"]);
     });
 
-    test("印の無いタイルを押すと、動きを減らす設定でも印のタイルを光らせ直すこと", () => {
-      skipIntro();
+    test("印の無いタイルを押すと、動きを減らす設定でも印のタイルの線を濃くし直すこと", () => {
+      pressNextThroughIntro();
       tapTiles([7]);
 
       const recalled = getCuedTiles("recall");
@@ -450,11 +572,12 @@ describe("SlidePuzzleTutorial", () => {
   describe("プレイ中に開いた場合", () => {
     beforeEach(() => {
       render(<SlidePuzzleTutorial open={true} onClose={onClose} />);
-      skipIntro();
+      pressNextThroughIntro();
     });
 
     test("並べ終えると、プレイに戻ることを伝え、プレイに戻る操作で閉じること", () => {
-      tapTiles([...stepTiles, ...remainingTiles]);
+      playSteps(stepTiles);
+      tapTiles(remainingTiles);
       const detail = screen.getByText("プレイ中の盤面も同じルールです");
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 

@@ -59,7 +59,7 @@ export type SlidePuzzleTutorialBoardState = {
   lastMove: SlidePuzzleTutorialMove | null;
 };
 
-type SlidePuzzleTutorialSituation = TutorialSituation<
+export type SlidePuzzleTutorialSituation = TutorialSituation<
   SlidePuzzleTutorialRuleId,
   SlidePuzzleTutorialStep
 >;
@@ -286,6 +286,25 @@ export function getSlidePuzzleTutorialStepTile({
   step,
 }: SlidePuzzleTutorialSituation): SlidePuzzleTile | null {
   return step?.tile ?? null;
+}
+
+/**
+ * 手順で印を付けるタイルをタップしたときに、一緒にスライドするタイル。印のタイルは含めない。
+ * 空白の隣なら空。手を離した後も空。
+ */
+export function getSlidePuzzleTutorialStepCarriedTiles(
+  situation: SlidePuzzleTutorialSituation,
+  state: SlidePuzzleTutorialBoardState,
+): SlidePuzzleTile[] {
+  const tile = getSlidePuzzleTutorialStepTile(situation);
+  if (tile === null) {
+    return [];
+  }
+  const slide = getSlidePuzzleSlide(state.board, state.board.indexOf(tile));
+  return (slide?.movedTileIndices ?? []).flatMap((cellIndex) => {
+    const moved = state.board[cellIndex];
+    return moved === undefined || moved === tile ? [] : [moved];
+  });
 }
 
 /** 手を離した後、手が止まったときに示す、最短で完成させるために次にスライドさせるタイル。完成していれば `null`。 */
