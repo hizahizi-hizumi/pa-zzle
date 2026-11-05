@@ -161,7 +161,7 @@ frontend/src/games/
 - `problem-selection.ts` は問題供給と `difficulty.ts` へ依存できる。
 - `score.ts` は評価に必要な事実の契約とゲーム共通契約へ依存できるが、`play/`、`ui/` を知らない。
 - `play/` は下位のゲーム責務を調停するが、`ui/` を import しない。
-- `tutorial/` は `problem/`・`puzzle/`・`session/` とゲーム共通契約へ依存できるが、生成内部、難易度分類、採点、`play/`、保存、React、UIを知らない。通常プレイの生成・採点・記録・タイマーを通さず、`puzzle/` のルールと遷移を使う純関数で盤面を進める。
+- `tutorial/` は `problem/`・`puzzle/`・`session/` とゲーム共通契約へ依存できるが、生成内部、難易度分類、採点、`play/`、保存、React、UIを知らない。通常プレイの生成・採点・記録・タイマーを通さず、`puzzle/` のルールと遷移を使う純関数で盤面を進める。`session/` は、盤面の見え方や、選ぶ・指す・着手させない・戻すといった操作への盤面の反応を本番と同じにするために使う。
 - `ui/` は `play/` と表示に必要な読み取り専用の契約へ依存できる。問題生成、session更新、採点規則を実装しない。チュートリアルの UI は `tutorial/` の定義を `games/tutorial.ts` の進行関数で進める。
 - `play-record.ts`、`play-attempt.ts`、`diagnostics.ts` は接続先と必要なゲーム内部契約へ依存できるが、通常プレイから逆依存させない。
 - `ui/play-record-display.ts` は記録 UI の表示契約（`@/records/ui/play-record-display`）へ接続できる。記録表示は記録定義の全指標を網羅する。
