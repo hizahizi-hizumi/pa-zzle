@@ -521,9 +521,7 @@ describe("IceFloorMazePlay", () => {
     );
 
     test("スコアの内訳と、待った・盤面を戻すの回数、採点基準を開けること", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "内訳を見る" }));
 
       const efficiency = screen.getByText("40 / 60");
       const speed = screen.getByText("30 / 40");

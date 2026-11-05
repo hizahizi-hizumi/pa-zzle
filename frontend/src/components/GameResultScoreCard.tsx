@@ -43,22 +43,12 @@ export function GameResultScoreCard({
     <div ref={cardRef} className="mt-3">
       <GameResultSurface variant={style.surfaceVariant} label="スコア">
         <div className="text-center">
-          {style.message && (
-            <p
-              className={`text-supporting font-bold tracking-wide ${style.scoreClassName}`}
-            >
-              {style.message}
-            </p>
-          )}
-          <p className="mt-1 text-meta font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-            スコア
-          </p>
-          <p
-            className={`mt-1 font-mono text-5xl font-bold tracking-tight tabular-nums ${style.scoreClassName}`}
-          >
-            {score}
-            <span className="ml-1 text-body font-medium text-muted-foreground">
-              {" "}
+          <p className={style.messageClassName}>{style.message}</p>
+          <p className="mt-1 font-mono tabular-nums">
+            <span className={`tracking-tight ${style.scoreFigureClassName}`}>
+              {score}
+            </span>
+            <span className="ml-1 text-supporting text-muted-foreground">
               / 100
             </span>
           </p>

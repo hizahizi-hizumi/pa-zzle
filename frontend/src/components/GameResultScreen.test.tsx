@@ -59,18 +59,27 @@ describe("GameResultScreen", () => {
     expect(metricDetail).toBeTruthy();
   });
 
-  test("次の行動を主要行動・補助操作の順に並べること", () => {
+  test("評価のすぐ下に内訳の開閉を置き、次の行動を主要行動・補助操作の順に並べること", () => {
     const buttonNames = screen
       .getAllByRole("button")
       .map((button) => button.textContent);
 
     expect(buttonNames).toEqual([
+      "内訳を見る",
       "次の問題",
       "問題選択",
       "もう一度",
-      "スコアの内訳・採点基準",
       "検証情報",
     ]);
+  });
+
+  test("評価段階の言葉を評価点と同じまとまりに出すこと", () => {
+    const scoreRegion = screen.getByRole("region", { name: "スコア" });
+
+    const text = scoreRegion.textContent;
+
+    expect(text).toContain("ナイスプレイ！");
+    expect(text).toContain("82");
   });
 
   test("次の行動の最後に、パズル選択へ移るリンクを置くこと", () => {
@@ -86,9 +95,7 @@ describe("GameResultScreen", () => {
   });
 
   test("スコアの内訳と、全ゲーム共通の丸め方を添えた採点基準を開けること", () => {
-    fireEvent.click(
-      screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "内訳を見る" }));
 
     const criterion = screen.getByText("基準時間以内で満点。");
     const note = screen.getByText(
@@ -173,5 +180,24 @@ describe("GameResultScreen の遊び直せない記録", () => {
     const replayButton = screen.getByRole("button", { name: "もう一度" });
 
     expect(replayButton.hasAttribute("disabled")).toBe(true);
+  });
+});
+
+describe("GameResultScreen の称賛の段階に届かない評価", () => {
+  beforeEach(() => {
+    render(
+      <MemoryRouter>
+        <GameResultScreen {...createProps()} score={73} />
+      </MemoryRouter>,
+    );
+  });
+
+  test("段階の言葉としてクリアを出すこと", () => {
+    const scoreRegion = screen.getByRole("region", { name: "スコア" });
+
+    const text = scoreRegion.textContent;
+
+    expect(text).toContain("クリア");
+    expect(text).toContain("73");
   });
 });

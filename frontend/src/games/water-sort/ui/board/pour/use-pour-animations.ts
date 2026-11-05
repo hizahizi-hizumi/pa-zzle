@@ -103,8 +103,12 @@ export function usePourAnimations({
       return;
     }
 
-    const sourceRect = captureRect(sourceBottle);
-    const destinationRect = captureRect(destinationBottle);
+    const sourceLiftY = captureLiftY(sourceBottle);
+    const sourceRect = captureRestingRect(sourceBottle, sourceLiftY);
+    const destinationRect = captureRestingRect(
+      destinationBottle,
+      captureLiftY(destinationBottle),
+    );
     if (!sourceRect || !destinationRect) {
       if (operation.isClearingMove) {
         onClearAnimationComplete?.();
@@ -115,6 +119,7 @@ export function usePourAnimations({
     const animation = createPourAnimation(
       operation,
       sourceRect,
+      sourceLiftY,
       destinationRect,
     );
     if (!animation) {
@@ -134,17 +139,35 @@ export function usePourAnimations({
   };
 }
 
-function captureRect(element: HTMLElement): BottleRect | null {
+/**
+ * ボトルを今持ち上げている量（px、上が負）。
+ * 持ち上げは CSS の `translate` で行い、選択を外した直後は置かれている位置へ戻る遷移の途中にあるので、計算済みの値を読む。
+ */
+function captureLiftY(element: HTMLElement): number {
+  const { translate } = getComputedStyle(element);
+  const translateY = translate?.split(" ")[1];
+  if (!translateY) {
+    return 0;
+  }
+  const liftY = Number.parseFloat(translateY);
+  return Number.isFinite(liftY) ? liftY : 0;
+}
+
+function captureRestingRect(
+  element: HTMLElement,
+  liftY: number,
+): BottleRect | null {
   const rect = element.getBoundingClientRect();
-  const values = [rect.left, rect.top, rect.width, rect.height];
+  const restingRect = {
+    left: rect.left,
+    top: rect.top - liftY,
+    width: rect.width,
+    height: rect.height,
+  };
+  const values = Object.values(restingRect);
   if (values.some((value) => !Number.isFinite(value))) {
     return null;
   }
 
-  return {
-    left: rect.left,
-    top: rect.top,
-    width: rect.width,
-    height: rect.height,
-  };
+  return restingRect;
 }

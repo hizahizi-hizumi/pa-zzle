@@ -8,8 +8,13 @@ export type GameResultSurfaceVariant =
   | "personalBest";
 
 type GameResultStyle = {
-  message: string | null;
+  /** 評価段階の言葉。結果の場面で最も大きい文字にし、称賛の無い `clear` は中立色にする。 */
+  message: string;
+  messageClassName: string;
+  /** 評価段階を文字の色だけで示すときの色。 */
   scoreClassName: string;
+  /** 結果の場面の評価点の数字。段階の言葉を支える大きさにし、`clear` では大きさと濃さを一段下げる。 */
+  scoreFigureClassName: string;
   surfaceVariant: GameResultSurfaceVariant;
   markClassName: string;
   /**
@@ -23,7 +28,10 @@ type GameResultStyle = {
 const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
   perfect: {
     message: "パーフェクト！",
+    messageClassName: "text-reward text-amber-600 dark:text-amber-300",
     scoreClassName: "text-amber-600 dark:text-amber-300",
+    scoreFigureClassName:
+      "text-3xl font-bold text-amber-600 dark:text-amber-300",
     surfaceVariant: "perfect",
     markClassName:
       "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
@@ -32,7 +40,10 @@ const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
   },
   great: {
     message: "すばらしい！",
+    messageClassName: "text-reward text-emerald-600 dark:text-emerald-300",
     scoreClassName: "text-emerald-600 dark:text-emerald-300",
+    scoreFigureClassName:
+      "text-3xl font-bold text-emerald-600 dark:text-emerald-300",
     surfaceVariant: "great",
     markClassName:
       "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
@@ -41,7 +52,9 @@ const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
   },
   good: {
     message: "ナイスプレイ！",
+    messageClassName: "text-reward text-sky-600 dark:text-sky-300",
     scoreClassName: "text-sky-600 dark:text-sky-300",
+    scoreFigureClassName: "text-3xl font-bold text-sky-600 dark:text-sky-300",
     surfaceVariant: "good",
     markClassName:
       "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
@@ -49,8 +62,10 @@ const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
     confettiIntensity: null,
   },
   clear: {
-    message: null,
+    message: "クリア",
+    messageClassName: "text-reward text-foreground/85",
     scoreClassName: "text-foreground",
+    scoreFigureClassName: "text-2xl font-semibold text-foreground/70",
     surfaceVariant: "neutral",
     markClassName: "bg-muted text-foreground",
     fillColorClassName: "text-muted-foreground",
