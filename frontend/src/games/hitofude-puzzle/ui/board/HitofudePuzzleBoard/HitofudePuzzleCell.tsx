@@ -1,4 +1,7 @@
+import { TutorialCue } from "@/components/TutorialCue";
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import { getHitofudePuzzleCellPosition } from "@/games/hitofude-puzzle/puzzle/board";
+import type { HitofudePuzzleCellCue } from "@/games/hitofude-puzzle/ui/board/cell-cue";
 
 /** マスの今の状態。`visited` は道が通ったマスで、始点と先端を含む。 */
 export type HitofudePuzzleCellState = "hole" | "unvisited" | "visited";
@@ -14,11 +17,20 @@ type HitofudePuzzleCellProps = {
   disabled: boolean;
   /** 盤面の Tab の止まり先か。 */
   focusable: boolean;
+  cue: HitofudePuzzleCellCue | undefined;
+  /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜く。 */
+  spotlit: boolean;
   onPress: (cell: number) => void;
   onFocus: (cell: number) => void;
 };
 
 const CELL_ATTRIBUTE = "data-cell";
+
+/**
+ * 印と応えは、盤面の絵のマスと同じ四角に沿って囲む。マスの縁の格子線や外形の線と重ねると線に紛れるので、
+ * マスの内側へ少し寄せて、格子線と離した四角にする。
+ */
+const cuePlacementClassName = "pointer-events-none absolute inset-[7%]";
 
 /** 盤面の中から、マスのボタンを探す。 */
 export function findCellButton(
@@ -51,7 +63,7 @@ function describeCell(
 }
 
 /**
- * キーボードと支援技術からマスを押す受け口。地・道・印は盤面の絵が下の層に描く。
+ * キーボードと支援技術からマスを押す受け口。地・道・印は盤面の絵が下の層に描き、チュートリアルの印と合図だけをこのマスの上に重ねる。
  * ポインターでの押下は盤面がなぞりとして受けるので、ポインターから届く click（`detail` が 1 以上）は受けない。
  */
 export function HitofudePuzzleCell({
@@ -63,6 +75,8 @@ export function HitofudePuzzleCell({
   isDeadEnd,
   disabled,
   focusable,
+  cue,
+  spotlit,
   onPress,
   onFocus,
 }: HitofudePuzzleCellProps) {
@@ -88,6 +102,29 @@ export function HitofudePuzzleCell({
       // フォーカスの枠は先端の輪（マス幅の8割強の円）と重ならないよう、マスの外側に沿わせる。穴の縁（マスの辺に沿う
       // 角張った濃い線）とは、角の丸い ring の色の枠と、マスを ring の色で淡く染めることで見分けさせる。
       className="relative min-h-0 min-w-0 rounded-[22%] outline-none focus-visible:z-10 focus-visible:bg-ring/25 focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-1 focus-visible:outline-ring disabled:cursor-default"
-    />
+    >
+      <TutorialSpotlight active={spotlit} className="inset-0" />
+      {cue?.kind === "extended" && (
+        <span
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className={cuePlacementClassName}
+        >
+          <TutorialCue kind="acknowledgement" id={cue.id} />
+        </span>
+      )}
+      {(cue?.kind === "hint" || cue?.kind === "recall") && (
+        <span
+          aria-hidden="true"
+          data-cell-cue="hint"
+          className={cuePlacementClassName}
+        >
+          <TutorialCue
+            kind="mark"
+            recallId={cue.kind === "recall" ? cue.id : null}
+          />
+        </span>
+      )}
+    </button>
   );
 }

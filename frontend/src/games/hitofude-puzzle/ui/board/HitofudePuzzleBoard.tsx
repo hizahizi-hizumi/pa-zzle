@@ -16,6 +16,7 @@ import {
 } from "@/games/hitofude-puzzle/puzzle/board";
 import type { HitofudePuzzleTraceStep } from "@/games/hitofude-puzzle/puzzle/transitions";
 import { findArrowKeyDirection } from "@/games/hitofude-puzzle/ui/arrow-key-direction";
+import type { HitofudePuzzleCellCue } from "@/games/hitofude-puzzle/ui/board/cell-cue";
 import {
   type BoardPoint,
   findCellAt,
@@ -42,6 +43,10 @@ type HitofudePuzzleBoardProps = {
   /** クリアしてから演出を終えるまで `true`。 */
   clearing: boolean;
   interactionDisabled: boolean;
+  /** マスに重ねる合図。1マスに1つまで。 */
+  cues?: readonly HitofudePuzzleCellCue[];
+  /** チュートリアルで手を引いている間、画面全体の覆いから抜くマス。通常のプレイでは渡さない。 */
+  spotlitCells?: readonly number[];
   onBeginStroke: (cell: number) => void;
   onTraceStroke: (step: HitofudePuzzleTraceStep) => void;
   onEndStroke: () => void;
@@ -82,6 +87,8 @@ export function HitofudePuzzleBoard({
   solved,
   clearing,
   interactionDisabled,
+  cues = [],
+  spotlitCells = [],
   onBeginStroke,
   onTraceStroke,
   onEndStroke,
@@ -263,6 +270,8 @@ export function HitofudePuzzleBoard({
             isDeadEnd={cell === head && isDeadEnd}
             disabled={interactionDisabled}
             focusable={cell === focusableCell}
+            cue={cues.find((cue) => cue.cell === cell)}
+            spotlit={spotlitCells.includes(cell)}
             onPress={pressCell}
             onFocus={(focusedCell) =>
               setKeyboardFocus({ head, cell: focusedCell })
