@@ -1,7 +1,7 @@
 {
   "$comment": "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH は上限を絞るためではなく引き上げるために設定している。クラウド環境では基盤側が 1 を注入し、環境設定の環境変数より優先されるため、ここで上書きしてサブエージェントのネストを許可する。CLAUDE_CODE_THRIFTY_SONIC は auto mode でファイルの読み取りを Bash（cat・sed など）へ寄せる指示を止めるために false にしている。paths 付きの .claude/rules は Read ツールで対象ファイルを読んだときにしか読み込まれず、Bash で読まれるとルールが効かないため。非公開のフラグなので、Claude Code の更新で名前が変わったり消えたりすると、黙って Bash 寄りに戻る。",
   "env": {
-    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "3",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "2",
     "CLAUDE_CODE_THRIFTY_SONIC": "false"
   },
   "permissions": {
