@@ -130,7 +130,8 @@ function createPlayState(
   };
 }
 
-function createOpeningOperation(
+/** マスを開いた操作の知らせ。開いたマスの数と、踏んだ地雷の数を、操作の前後の盤面から求める。 */
+export function createMinesweeperOpeningOperation(
   id: number,
   cellIndex: number,
   previous: MinesweeperPuzzleState,
@@ -151,7 +152,8 @@ function createOpeningOperation(
     : { id, type: "cells-opened", cellIndex, openedCellCount };
 }
 
-function createFlagOperation(
+/** 旗を置いたか外した操作の知らせ。 */
+export function createMinesweeperFlagOperation(
   id: number,
   cellIndex: number,
   next: MinesweeperPuzzleState,
@@ -223,7 +225,12 @@ export function useMinesweeperPlay(
         current,
         revealMinesweeperSessionCell(current.session, cellIndex, revealedAt),
         (previous, next) =>
-          createOpeningOperation(operationId, cellIndex, previous, next),
+          createMinesweeperOpeningOperation(
+            operationId,
+            cellIndex,
+            previous,
+            next,
+          ),
       ),
     );
   }, []);
@@ -234,7 +241,8 @@ export function useMinesweeperPlay(
       applyOperation(
         current,
         toggleMinesweeperSessionFlag(current.session, cellIndex),
-        (_previous, next) => createFlagOperation(operationId, cellIndex, next),
+        (_previous, next) =>
+          createMinesweeperFlagOperation(operationId, cellIndex, next),
       ),
     );
   }, []);
@@ -247,7 +255,12 @@ export function useMinesweeperPlay(
         current,
         chordMinesweeperSessionCell(current.session, cellIndex, chordedAt),
         (previous, next) =>
-          createOpeningOperation(operationId, cellIndex, previous, next),
+          createMinesweeperOpeningOperation(
+            operationId,
+            cellIndex,
+            previous,
+            next,
+          ),
       ),
     );
   }, []);
