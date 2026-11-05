@@ -10,6 +10,7 @@ import { Link } from "react-router";
 
 import { playGameSelectSound } from "@/components/app-decision-sound";
 import { GamePictogram } from "@/components/GamePictogram";
+import { SelectedGamePictogram } from "@/components/GameSelectionGallery/SelectedGamePictogram";
 import { SettingsButton } from "@/components/SettingsButton";
 import { Badge } from "@/components/ui/badge";
 import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
@@ -79,10 +80,13 @@ export function GameSelectionGallery({
   const selectedGame = games[selectedIndex] ?? games[0];
   const continuationId = useId();
   const isTouchedRef = useRef(false);
+  // 遊ぶ人が選んだゲームだけ、選んだ瞬間に色を入れる。最初に選んでおくゲームには入れない。
+  const [colorsInIndex, setColorsInIndex] = useState<number | null>(null);
 
   function selectGame(index: number) {
     if (index !== selectedIndex) {
       playGameSelectSound();
+      setColorsInIndex(index);
     }
     onSelect(index);
   }
@@ -154,14 +158,14 @@ export function GameSelectionGallery({
           className="flex h-full flex-col items-center justify-center transition-colors duration-(--duration-slow) hover:bg-muted/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         >
           <span className="size-[10.625rem] p-4 sm:size-[14.0625rem] sm:p-6">
-            {selectedGame.pictogramShowcaseSvg ? (
-              <GamePictogram
-                svg={selectedGame.pictogramShowcaseSvg}
-                motion={isCovered ? "rest" : "play"}
-              />
-            ) : (
-              <GamePictogram svg={selectedGame.pictogramSvg} />
-            )}
+            <SelectedGamePictogram
+              key={selectedGame.to}
+              pictogramSvg={selectedGame.pictogramSvg}
+              pictogramShowcaseSvg={selectedGame.pictogramShowcaseSvg}
+              size="hero"
+              motion={isCovered ? "rest" : "play"}
+              colorsIn={colorsInIndex === selectedIndex}
+            />
           </span>
           <span className="mt-2 text-heading sm:mt-3">{selectedGame.name}</span>
           <span className="mt-2 flex h-6 items-center">
@@ -213,13 +217,16 @@ export function GameSelectionGallery({
                         : "border-(length:--border-width-normal) border-border group-hover:bg-accent"
                     }`}
                   >
-                    <GamePictogram
-                      svg={
-                        isSelected && game.pictogramShowcaseSvg
-                          ? game.pictogramShowcaseSvg
-                          : game.pictogramSvg
-                      }
-                    />
+                    {isSelected ? (
+                      <SelectedGamePictogram
+                        pictogramSvg={game.pictogramSvg}
+                        pictogramShowcaseSvg={game.pictogramShowcaseSvg}
+                        size="list"
+                        colorsIn={colorsInIndex === index}
+                      />
+                    ) : (
+                      <GamePictogram svg={game.pictogramSvg} />
+                    )}
                   </span>
                 </button>
               );
