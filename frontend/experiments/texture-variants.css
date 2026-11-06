@@ -1,0 +1,221 @@
+/* 比較用HTMLだけが読む試作。候補を採用したら、各ゲームの所有する描画へ実装し直す。 */
+:root {
+  --lab-frame: #4d5358;
+  --lab-line: #d3d7da;
+  --lab-open: #f0f2f3;
+  --lab-shadow: 0 2px 0 rgb(24 32 40 / 0.14), 0 4px 6px rgb(24 32 40 / 0.1);
+}
+
+/* 1〜5の共通の土台。数字・駒・道・選択・ミスの色は変更しない。 */
+:root:not([data-texture="original"]) [data-lab-grid] {
+  border: 2px solid var(--lab-frame) !important;
+}
+:root:not([data-texture="original"]) [data-lab-grid] > button {
+  border-color: var(--lab-line) !important;
+}
+:root:not([data-texture="original"])[data-game="nanpure"]
+  [data-lab-grid]
+  > button[class*="border-b-2"] {
+  border-bottom-color: var(--lab-frame) !important;
+}
+:root:not([data-texture="original"])[data-game="nanpure"]
+  [data-lab-grid]
+  > button[class*="border-r-2"] {
+  border-right-color: var(--lab-frame) !important;
+}
+:root:not([data-texture="original"]) [data-lab-reflection-grid] {
+  outline: 2px solid var(--lab-frame) !important;
+}
+:root:not([data-texture="original"])[data-game="reflection"] g.stroke-border {
+  stroke: var(--lab-line) !important;
+}
+:root:not([data-texture="original"]) [data-outline] {
+  stroke: var(--lab-frame) !important;
+}
+:root:not([data-texture="original"])[data-game="hitofude-puzzle"] svg > rect {
+  stroke: var(--lab-line) !important;
+}
+:root:not([data-texture="original"])[data-game="minesweeper"]
+  [data-lab-grid]
+  > button {
+  border-width: 0 1px 1px 0 !important;
+}
+:root:not([data-texture="original"])[data-game="minesweeper"]
+  button[aria-label*="開示済み"] {
+  background: var(--lab-open) !important;
+}
+
+/* 2: 題材の質感は残し、特に重い影を個別に弱める。 */
+:root[data-texture="individual"] [data-lab-wood] {
+  box-shadow:
+    0 2px 4px rgb(45 22 5 / 0.1),
+    0 6px 12px rgb(45 22 5 / 0.12) !important;
+}
+:root[data-texture="individual"] .parking-jam-car__body {
+  filter: drop-shadow(0 3px 2px rgb(0 0 0 / 0.2)) !important;
+}
+:root[data-texture="individual"]
+  :is(.parking-jam-board__curb, .parking-jam-board__island) {
+  filter: drop-shadow(0 2px 1px rgb(0 0 0 / 0.12)) !important;
+}
+:root[data-texture="individual"] [data-lab-bottle] span[class*="border-[3px]"] {
+  box-shadow:
+    inset 0 -1px 2px rgb(15 23 42 / 0.06),
+    0 2px 4px rgb(15 23 42 / 0.06) !important;
+  filter: none !important;
+}
+
+/* 3・4・5: 材質の描き込みを減らした共通の土台。 */
+:root:is(
+  [data-texture="objects"],
+  [data-texture="movable"],
+  [data-texture="flat"]
+) [data-lab-wood] {
+  background-image: none !important;
+  box-shadow: none !important;
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"],
+    [data-texture="flat"]
+  )
+  :is([data-lab-sheen], [data-lab-glyph-gloss], [data-lab-piece-shadow]) {
+  display: none !important;
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"],
+    [data-texture="flat"]
+  )[data-game="tsume-shogi"]
+  g
+  > path:is([fill^="url("], [stroke^="url("]) {
+  display: none !important;
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"],
+    [data-texture="flat"]
+  )
+  :is(.parking-jam-board__lot, .parking-jam-board__access-road) {
+  fill: #586267 !important;
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"],
+    [data-texture="flat"]
+  )
+  .parking-jam-board__asphalt-speck {
+  opacity: 0 !important;
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"],
+    [data-texture="flat"]
+  )
+  :is(.parking-jam-car__glass, .parking-jam-car__rear-glass) {
+  fill: #b6d3df !important;
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"],
+    [data-texture="flat"]
+  )
+  .parking-jam-car__highlight {
+  display: none !important;
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"],
+    [data-texture="flat"]
+  )
+  :is(
+    .parking-jam-car__body,
+    .parking-jam-board__curb,
+    .parking-jam-board__island
+  ) {
+  filter: none !important;
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"],
+    [data-texture="flat"]
+  )
+  [data-lab-bottle]
+  span[class*="border-[3px]"] {
+  box-shadow: none !important;
+  filter: none !important;
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"],
+    [data-texture="flat"]
+  )[data-game="ice-floor-maze"]
+  :is([data-rock-cell], [data-brittle-rock-cell], [data-sliding-block-cell])
+  rect:first-of-type {
+  visibility: hidden;
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"],
+    [data-texture="flat"]
+  )
+  [data-lab-tile] {
+  box-shadow: none !important;
+}
+
+/* 3・4: 操作する物には同じ弱さの一段の厚み。文字を入れるマスは持ち上げない。 */
+:root:is([data-texture="objects"], [data-texture="movable"]) [data-lab-tile] {
+  box-shadow: var(--lab-shadow) !important;
+}
+:root:is([data-texture="objects"], [data-texture="movable"])
+  [data-lab-bottle]
+  span[class*="border-[3px]"] {
+  box-shadow: var(--lab-shadow) !important;
+}
+:root:is([data-texture="objects"], [data-texture="movable"])
+  [data-lab-piece-face] {
+  filter: drop-shadow(0 12px 6px rgb(24 32 40 / 0.22));
+}
+:root:is([data-texture="objects"], [data-texture="movable"])
+  .parking-jam-car__body {
+  filter: drop-shadow(0 4px 2px rgb(24 32 40 / 0.22)) !important;
+}
+:root:is([data-texture="objects"], [data-texture="movable"])
+  :is([data-piece-cell], [data-sliding-block-cell], [data-snow-mound-cell]) {
+  filter: drop-shadow(0 0.045px 0.025px rgb(24 32 40 / 0.24));
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"]
+  )[data-game="minesweeper"]
+  button:is([aria-label*="未開示"], [aria-label*="旗"]) {
+  box-shadow:
+    inset 0 -2px 0 rgb(24 32 40 / 0.14),
+    inset 0 1px 0 rgb(255 255 255 / 0.65) !important;
+}
+:root:is(
+    [data-texture="objects"],
+    [data-texture="movable"]
+  )[data-game="reflection"]
+  [aria-label="リフレクション盤面"]
+  button
+  svg {
+  filter: drop-shadow(0 4px 2px rgb(24 32 40 / 0.22));
+}
+
+/* 3だけ: 動かない岩や縁石も、盤面に載る物として持ち上げる。 */
+:root[data-texture="objects"] :is([data-rock-cell], [data-brittle-rock-cell]) {
+  filter: drop-shadow(0 0.045px 0.025px rgb(24 32 40 / 0.24));
+}
+:root[data-texture="objects"]
+  :is(.parking-jam-board__curb, .parking-jam-board__island) {
+  filter: drop-shadow(0 4px 2px rgb(24 32 40 / 0.22)) !important;
+}
+
+/* 5: 選択や状態の反応は残し、静止時の奥行きだけを外す。 */
+:root[data-texture="flat"] [data-snow-mound-cell] path:first-child {
+  fill: #e4e9ed !important;
+}
+:root[data-texture="flat"][data-game="minesweeper"] [data-lab-grid] > button {
+  box-shadow: none !important;
+}
