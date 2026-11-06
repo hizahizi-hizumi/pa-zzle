@@ -37,9 +37,9 @@ export function ReflectionFigureGrid({
         y={top}
         width={size}
         height={rows.count}
-        className="fill-background"
+        className="fill-board-surface"
       />
-      <g className="stroke-border" strokeWidth={GRID_LINE_WIDTH}>
+      <g className="stroke-board-line" strokeWidth={GRID_LINE_WIDTH}>
         {Array.from({ length: size - 1 }, (_, index) => (
           <line
             // biome-ignore lint/suspicious/noArrayIndexKey: 格子線は位置だけで決まる
@@ -62,7 +62,7 @@ export function ReflectionFigureGrid({
         })}
       </g>
       <g
-        className="stroke-foreground/55"
+        className="stroke-board-outline"
         strokeWidth={FRAME_WIDTH}
         strokeLinecap="butt"
       >

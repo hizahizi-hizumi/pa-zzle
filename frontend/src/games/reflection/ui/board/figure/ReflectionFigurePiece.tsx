@@ -39,7 +39,7 @@ export function ReflectionFigurePiece({
       strokeLinejoin="round"
     >
       <g
-        className="fill-background stroke-background"
+        className="fill-board-surface stroke-board-surface"
         strokeWidth={
           REFLECTION_PIECE_STROKE_WIDTH + REFLECTION_PIECE_HALO_WIDTH
         }

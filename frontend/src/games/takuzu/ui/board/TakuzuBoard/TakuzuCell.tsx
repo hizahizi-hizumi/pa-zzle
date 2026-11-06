@@ -93,9 +93,11 @@ export function TakuzuCell({
       onFocus={() => onFocus(cellIndex)}
       data-violated={view.inViolatingRun || undefined}
       className={cn(
-        "group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center bg-background outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:not-aria-disabled:hover:bg-accent/60 enabled:not-aria-disabled:active:bg-accent",
-        row !== size - 1 && "border-b border-b-border",
-        column !== size - 1 && "border-r border-r-border",
+        "group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center bg-board-surface outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:not-aria-disabled:hover:bg-accent/60 enabled:not-aria-disabled:active:bg-accent",
+        row !== size - 1 &&
+          "border-b-(length:--border-width-normal) border-b-board-line",
+        column !== size - 1 &&
+          "border-r-(length:--border-width-normal) border-r-board-line",
       )}
     >
       <span

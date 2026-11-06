@@ -51,7 +51,7 @@ export function HowToPlayFigure({ rows }: HowToPlayFigureProps) {
   return (
     <span
       aria-hidden="true"
-      className="inline-grid shrink-0 border-2 border-foreground/55 bg-background"
+      className="inline-grid shrink-0 border-(length:--border-width-strong) border-board-outline bg-board-surface"
       style={{ gridTemplateColumns: `repeat(${columnCount}, 2.5rem)` }}
     >
       {toPositionedCells(rows).map(function renderCell({
@@ -69,8 +69,10 @@ export function HowToPlayFigure({ rows }: HowToPlayFigureProps) {
             key={key}
             className={cn(
               "flex size-10 items-center justify-center font-sans text-xl leading-none",
-              !bottomEdge && "border-b border-b-border",
-              !rightEdge && "border-r border-r-border",
+              !bottomEdge &&
+                "border-b-(length:--border-width-normal) border-b-board-line",
+              !rightEdge &&
+                "border-r-(length:--border-width-normal) border-r-board-line",
               highlight !== undefined && nanpureCellToneClassNames[highlight],
               digit !== undefined &&
                 (given

@@ -92,7 +92,11 @@ export function ReflectionPieceIcon({
     >
       {size === "stock" ? null : (
         <g
-          className="fill-background stroke-background"
+          className={
+            size === "cell"
+              ? "fill-board-surface stroke-board-surface"
+              : "fill-background stroke-background"
+          }
           strokeWidth={
             REFLECTION_PIECE_STROKE_WIDTH + REFLECTION_PIECE_HALO_WIDTH
           }

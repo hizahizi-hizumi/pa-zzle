@@ -61,7 +61,7 @@ export function HowToPlayFigure({ rows, pressed }: HowToPlayFigureProps) {
   return (
     <span
       aria-hidden="true"
-      className="inline-grid shrink-0 border-t border-l border-slate-300 dark:border-slate-600"
+      className="inline-grid shrink-0 gap-(--border-width-normal) border-(length:--border-width-strong) border-board-outline bg-board-line"
       style={{ gridTemplateColumns: `repeat(${columnCount}, 1.5rem)` }}
     >
       {toFigureCells(rows, pressed).map(function renderCell(cell) {

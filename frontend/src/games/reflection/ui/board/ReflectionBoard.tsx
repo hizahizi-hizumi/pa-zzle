@@ -204,7 +204,7 @@ export function ReflectionBoard({
       */}
       <div
         aria-hidden="true"
-        className="pointer-events-none relative z-0 bg-background outline-2 outline-foreground/55 outline-solid"
+        className="pointer-events-none relative z-0 bg-board-surface outline-(length:--border-width-strong) outline-board-outline outline-solid"
         style={getReflectionBoardGridArea(size)}
       />
       {/*
@@ -220,8 +220,7 @@ export function ReflectionBoard({
         )}
       >
         <g
-          className="stroke-border"
-          strokeWidth={1}
+          className="stroke-board-line stroke-(length:--border-width-normal)"
           shapeRendering="crispEdges"
         >
           {gridLines.map(function renderGridLine(line) {

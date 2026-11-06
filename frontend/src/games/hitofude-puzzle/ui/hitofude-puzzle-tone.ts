@@ -13,17 +13,15 @@
  */
 export const hitofudePuzzleToneClassNames = {
   pathColorVariables:
-    "[--hitofude-puzzle-from:var(--color-cyan-600)] [--hitofude-puzzle-to:var(--color-violet-600)] [--hitofude-puzzle-cell:var(--color-stone-100)] dark:[--hitofude-puzzle-from:var(--color-cyan-400)] dark:[--hitofude-puzzle-to:var(--color-violet-400)] dark:[--hitofude-puzzle-cell:var(--color-stone-800)]",
+    "[--hitofude-puzzle-from:var(--color-cyan-600)] [--hitofude-puzzle-to:var(--color-violet-600)] [--hitofude-puzzle-cell:var(--color-board-surface)] dark:[--hitofude-puzzle-from:var(--color-cyan-400)] dark:[--hitofude-puzzle-to:var(--color-violet-400)]",
   unvisitedCell: "fill-(--hitofude-puzzle-cell)",
-  gridLine:
-    "stroke-stone-300 stroke-(length:--border-width-normal) dark:stroke-stone-600",
-  outline:
-    "stroke-stone-800 stroke-(length:--border-width-strong) dark:stroke-stone-200",
+  gridLine: "stroke-board-line stroke-(length:--border-width-normal)",
+  outline: "stroke-board-outline stroke-(length:--border-width-strong)",
   /** 阻まれたマスの×の縁取り。道の上でも×が読めるよう、マスの地の色で囲む。 */
   blockedMarkOutline: "stroke-(--hitofude-puzzle-cell)",
   /** 始点の印の縁取り。道の上でも印として浮くよう、マスの地の色で囲む。 */
   startMarkOutline: "stroke-(--hitofude-puzzle-cell)",
-  deadEndHead: "fill-stone-800 dark:fill-stone-200",
+  deadEndHead: "fill-board-outline",
   deadEndBar: "fill-(--hitofude-puzzle-cell)",
   /** クリアしたとき、始点から終点へ道をなぞる光。 */
   clearTrace: "stroke-white/80 dark:stroke-white/70",

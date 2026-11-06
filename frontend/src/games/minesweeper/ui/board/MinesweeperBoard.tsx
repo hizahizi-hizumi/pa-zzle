@@ -73,7 +73,7 @@ export function MinesweeperBoard({
     <div
       role="group"
       aria-label={`${MINESWEEPER_DISPLAY_NAME}盤面`}
-      className="grid w-full border-l border-t border-slate-300 dark:border-slate-600"
+      className="grid w-full gap-(--border-width-normal) border-(length:--border-width-strong) border-board-outline bg-board-line"
       style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
     >
       {cells.map(function renderCell(cell, cellIndex) {

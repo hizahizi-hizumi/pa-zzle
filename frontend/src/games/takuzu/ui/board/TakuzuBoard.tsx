@@ -150,7 +150,7 @@ export function TakuzuBoard({
       <div
         role="group"
         aria-label={`${TAKUZU_DISPLAY_NAME}盤面`}
-        className="relative grid size-full border-2 border-foreground/55 bg-background"
+        className="relative grid size-full border-(length:--border-width-strong) border-board-outline bg-board-surface"
         style={{
           gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${size}, minmax(0, 1fr))`,

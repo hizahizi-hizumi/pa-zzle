@@ -50,7 +50,7 @@ export function HowToPlayFigure({ rows, violation }: HowToPlayFigureProps) {
     <span
       aria-hidden="true"
       className={cn(
-        "relative inline-grid gap-px border-2 border-foreground/55 bg-border",
+        "relative inline-grid gap-(--border-width-normal) border-(length:--border-width-strong) border-board-outline bg-board-line",
         violation === "line" && "mx-2",
       )}
       style={{ gridTemplateColumns: `repeat(${columnCount}, 1.5rem)` }}
@@ -65,7 +65,7 @@ export function HowToPlayFigure({ rows, violation }: HowToPlayFigureProps) {
           <span
             key={key}
             className={cn(
-              "relative flex size-6 items-center justify-center bg-background",
+              "relative flex size-6 items-center justify-center bg-board-surface",
               violation === "run" && runViolationCellClassName,
             )}
           >

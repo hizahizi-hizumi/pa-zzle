@@ -39,7 +39,7 @@ export function NanpureBoard({
     selectedCellIndex === null ? null : (board[selectedCellIndex] ?? null);
 
   return (
-    <div className="grid aspect-square w-[min(96vw,calc(100svh-12rem),38rem)] grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background">
+    <div className="grid aspect-square w-[min(96vw,calc(100svh-12rem),38rem)] grid-cols-9 overflow-hidden border-(length:--border-width-strong) border-board-outline bg-board-surface">
       {NANPURE_CELL_INDICES.map((cellIndex) => {
         const value = board[cellIndex] ?? null;
         const selected = selectedCellIndex === cellIndex;

@@ -35,7 +35,7 @@ function getStateClassName(view: MinesweeperVisibleCell): string {
     return "bg-rose-100 text-rose-700 dark:bg-rose-950/45 dark:text-rose-300";
   }
   if (view.state === "revealed") {
-    return `bg-background ${NUMBER_CLASS_NAMES[view.adjacentMineCount] ?? ""}`;
+    return `bg-board-surface ${NUMBER_CLASS_NAMES[view.adjacentMineCount] ?? ""}`;
   }
   if (view.state === "flagged") {
     return "bg-slate-200 text-red-600 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.7)] dark:bg-slate-700 dark:text-red-400 dark:shadow-none";
@@ -51,7 +51,7 @@ export function getMinesweeperCellFaceClassName(
   view: MinesweeperVisibleCell,
   size: MinesweeperCellFaceSize,
 ): string {
-  return `flex aspect-square items-center justify-center border-b border-r border-slate-300 font-sans font-bold leading-none dark:border-slate-600 ${SIZE_CLASS_NAMES[size]} ${getStateClassName(view)}`;
+  return `flex aspect-square items-center justify-center font-sans font-bold leading-none ${SIZE_CLASS_NAMES[size]} ${getStateClassName(view)}`;
 }
 
 type MinesweeperCellFaceProps = {
