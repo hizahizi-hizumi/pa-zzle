@@ -1,142 +1,71 @@
 ---
 name: commit-pr
 description: >
-  This skill should be used when the user asks to "コミットしてPRを作って", "未コミット差分をPRにして",
-  "変更をPRにまとめて", "差分をコミット・PR化して", "commit and create PR",
-  "作業内容をPRにして", "変更をGitHubに上げてPRを作成して".
-  Analyzes uncommitted diffs, designs commit and PR boundaries, creates branches as needed,
-  then orchestrates the commit and pr skills to produce one or more open pull requests.
+  未コミット差分を分析してコミットと PR の境界を決め、必要なブランチを作り、commit スキルと pr スキルを起動して1つ以上のオープンな PR を作る。
+  「コミットしてPRを作って」「未コミット差分をPRにして」「変更をPRにまとめて」「差分をコミット・PR化して」
+  「作業内容をPRにして」「変更をGitHubに上げてPRを作成して」「commit and create PR」「open PRs for my changes」と頼まれたときに使う。
 argument-hint: "baseBranch=main, preview=false"
-allowed-tools: Read, Glob, Bash(git *), Bash(find *), Bash(*validate-input.sh*), Skill, TaskCreate, TaskUpdate, TaskGet, TaskList
+allowed-tools: Read, Bash(*/.claude/skills/commit-pr/scripts/validate-input.sh*), Bash(git status *), Bash(git diff *), Bash(git switch --no-track -c *), Skill, TaskCreate, TaskUpdate, TaskGet, TaskList
 ---
 
-# 未コミット差分のコミットとPR作成
-
-未コミット差分全体を分析し、必要なら複数PRへ分割する。各PR内のコミット境界は `commit`、PR作成は `pr` に委譲する。
+# commit-pr
 
 ## 入力
 
 - `${input:baseBranch}`: 既定 `main`
-- `${input:preview}`: 既定 `false`。`true` ならPR計画だけを返す。
+- `${input:preview}`: 既定 `false`。`true` のときは PR 計画だけを返す
 
 ## 手順
 
-### 1. 入力検証
+1. 入力を確かめる
 
-プロジェクト内スクリプトを使う。
+   ```bash
+   "$CLAUDE_PROJECT_DIR/.claude/skills/commit-pr/scripts/validate-input.sh" "<baseBranch>"
+   ```
 
-```bash
-"$CLAUDE_PROJECT_DIR/.claude/skills/commit-pr/scripts/validate-input.sh" "<baseBranch>"
-```
+   - 失敗したら停止して、出力されたエラーを報告する
+   - 成功すると `baseBranch`・`baseRef`・`currentBranch`・`isCreateBranch` が `key=value` の行で返る
+2. `AGENTS.md` の「Git運用」と `references/pr-boundaries.md` を読む
+3. 差分を把握する。差分が無ければ終える
 
-成功時は次を返す。
+   ```bash
+   git status --porcelain=v1 -uall
+   git diff -M --name-status
+   git diff -M --stat
+   git diff
+   git diff --staged
+   ```
 
-```text
-baseBranch=main
-baseRef=main
-currentBranch=main
-isCreateBranch=true
-```
+4. `pr-boundaries.md` に沿って PR を計画し、各 PR について次を決める
+   - 1文で説明できる目的
+   - 含めるファイル / 必要なら hunk
+   - 独立 PR かスタック PR か
+   - 作る順序
+   - タイトル候補
+   - base
+5. `pr-boundaries.md` の「数」の見直しに当たるときは、実行前に分割方針を示す
+6. `preview=true` なら計画を返して終える
+7. 1件目の PR のブランチを用意する
+   - `isCreateBranch=true` のときは、PR の目的に合った作業ブランチを `baseRef` から作る。未コミット差分は作業ツリーごと持ち越す
 
-- `isCreateBranch=true`: 現在ブランチへ直接コミットせず、最初のPR用ブランチを `baseRef` から作る。
-- `isCreateBranch=false`: 現在の作業ブランチを最初のPRに使う。
+     ```bash
+     git switch --no-track -c "<type>/<short-description>-<timestamp>" "<baseRef>"
+     ```
 
-### 2. PR境界ルール
+   - `isCreateBranch=false` のときは、現在ブランチをそのまま使い、新しいブランチを重ねて作らない
+8. この PR に含める範囲を渡して `commit` スキルを起動し、終わったら `pr` スキルを起動する
 
-`references/pr-boundaries.md` を読む。
+   ```text
+   Skill(commit, args="scope=<このPRの対象>, preview=false")
+   Skill(pr, args="baseBranch=<PRのbase>, preview=false")
+   ```
 
-### 3. 未コミット差分把握
-
-```bash
-git status --porcelain=v1 -uall
-git diff -M --name-status
-git diff -M --stat
-git diff
-git diff --staged
-```
-
-差分が無ければ終了する。
-
-### 4. PR計画
-
-各PRについて以下を確定する。
-
-- 1文で説明できる目的
-- 含めるファイル / 必要ならhunk
-- 独立PRかスタックPRか
-- 作成順序
-- タイトル候補
-- base
-
-フォルダ単位で機械的に分割せず、成立する垂直スライスや契約単位を優先する。
-
-1PRで十分なら分けない。5PRを超えそうなら、実行前に分割方針を明示する。
-
-`preview=true` ならここで計画を返して終了する。
-
-### 5. 1件目のPR
-
-#### 現在がbaseブランチの場合
-
-`isCreateBranch=true` なら、PR目的に応じた作業ブランチを作る。
-
-```bash
-git switch -c "<type>/<short-description>-<timestamp>" "<baseRef>"
-```
-
-未コミット差分は作業ツリーごと持ち越す。stashは使わない。
-
-#### 既存作業ブランチの場合
-
-`isCreateBranch=false` なら現在ブランチをそのまま1件目に使う。新しいブランチを重ねて作らない。
-
-#### commit / PR
-
-このPRに含めるscopeを指定して `commit` を起動する。
-
-```text
-Skill(commit, args="scope=<このPRの対象>, preview=false")
-```
-
-完了後、`pr` を起動する。
-
-```text
-Skill(pr, args="baseBranch=<baseBranch>, preview=false")
-```
-
-### 6. 2件目以降
-
-残った未コミット差分について、前PRへの依存有無でbranch baseを決める。
-
-- 前PRに依存する: 前PRブランチから新ブランチを作る。
-- 独立する: `baseRef` から新ブランチを作る。
-
-```bash
-git switch -c "<type>/<short-description>-<timestamp>" "<branch-base>"
-```
-
-その後 `commit` → `pr` を同様に実行する。独立PRの `pr baseBranch` は入力base、スタックPRは直前のPRブランチを指定する。
-
-ブランチ切替時に残差分が競合して持ち越せない場合は停止し、無理にstash・resetしない。
-
-### 7. 完了報告
-
-- 作成したPR URL
-- 各PRのbase / head
-- 残った未コミット差分があればその存在
-
-を返す。
+9. 2件目以降は、残った未コミット差分ごとに次を行う
+   1. 前の PR に依存するなら前の PR のブランチから、独立するなら `baseRef` から、`git switch --no-track -c "<type>/<short-description>-<timestamp>" "<branch-base>"` でブランチを作る
+   2. 8 と同じく `commit` スキル、`pr` スキルの順に起動する。`pr` の `baseBranch` は、独立 PR なら入力の `baseBranch`、スタック PR なら直前の PR のブランチにする
+10. 作った PR の URL、各 PR の base / head、残った未コミット差分があればその存在を報告する
 
 ## 制約
 
-- 作業中に `main` を取り込まない。`main` 追従は `pr` Skill の完了時競合確認に従う。
-- `--force-with-lease` を伴わない force push はしない。
-- `main` / `master` / `staging` へ直接コミットしない。
-- 計画外の差分を勝手に捨てない。
-- PR数を増やすこと自体を目的にしない。
-
-## 参照
-
-- `references/pr-boundaries.md` — 複数PR境界
-- `.claude/skills/commit/` — コミット作成
-- `.claude/skills/pr/` — PR作成
+- ブランチを切り替えるときに残りの差分が競合して持ち越せなければ停止し、stash・reset をしない
+- 計画外の差分を捨てない
