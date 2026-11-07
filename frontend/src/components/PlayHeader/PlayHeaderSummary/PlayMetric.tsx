@@ -11,7 +11,7 @@ export function PlayMetric({ label, value, reservedDigits }: PlayMetricProps) {
       <span>{label}</span>
       {/* 等幅の数字なので、`ch`（「0」の幅）で桁の幅そのものを確保できる。 */}
       <span
-        className="text-left font-mono font-medium tabular-nums text-foreground/80"
+        className="text-left font-ui font-medium tabular-nums text-foreground/80"
         style={
           reservedDigits === undefined
             ? undefined

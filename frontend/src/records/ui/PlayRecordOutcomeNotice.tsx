@@ -84,10 +84,10 @@ export function PlayRecordOutcomeNotice({
                   </dd>
                 </div>
                 <div className="mt-1 grid grid-cols-[1fr_auto_1fr] items-end gap-3">
-                  <dd className="justify-self-start font-mono text-meta text-muted-foreground line-through tabular-nums">
+                  <dd className="justify-self-start font-ui text-meta text-muted-foreground line-through tabular-nums">
                     {metricDisplay.formatValue(update.previousValue)}
                   </dd>
-                  <dd className="justify-self-center font-mono text-4xl font-bold tracking-tight text-foreground tabular-nums">
+                  <dd className="justify-self-center font-ui text-4xl font-bold tracking-tight text-foreground tabular-nums">
                     {metricDisplay.formatValue(update.currentValue)}
                   </dd>
                   <span aria-hidden="true" />

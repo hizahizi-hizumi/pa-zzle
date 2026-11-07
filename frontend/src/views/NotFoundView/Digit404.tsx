@@ -1,3 +1,5 @@
+import "@fontsource/zen-kaku-gothic-new/latin-700.css";
+
 import type { Digit404Glyphs } from "@/views/NotFoundView/jigsawLayout";
 
 type Digit404Props = {

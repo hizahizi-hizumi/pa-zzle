@@ -4,8 +4,8 @@ import path from "node:path";
 import subsetFont from "subset-font";
 import type { Plugin, Rolldown } from "vite";
 
-const FONT_WEIGHTS = [400, 500, 700] as const;
-const FONTSOURCE_PACKAGE = "@fontsource/zen-kaku-gothic-new";
+const FONT_WEIGHTS = [400, 500, 600, 700] as const;
+const FONTSOURCE_PACKAGE = "@fontsource/m-plus-2";
 const PRINTABLE_ASCII = Array.from({ length: 0x7e - 0x20 + 1 }, (_, offset) =>
   String.fromCodePoint(0x20 + offset),
 ).join("");
@@ -37,7 +37,7 @@ type Manifest = {
 };
 
 /**
- * UI書体 Zen Kaku Gothic New から、アプリのソースに現れる文字だけを切り出した
+ * UI書体 M PLUS 2 から、アプリのソースに現れる文字だけを切り出した
  * フォントを生成し、`index.html` で preload する。
  *
  * Fontsource の unicode-range 分割のままだと、ページ遷移で初めて出る文字のたびに
@@ -180,7 +180,7 @@ async function generateUiFont({
   const fonts = await Promise.all(
     FONT_WEIGHTS.map(async (weight) => ({
       file: {
-        fileName: `zen-kaku-gothic-new-subset-${weight}.woff2`,
+        fileName: `m-plus-2-subset-${weight}.woff2`,
         weight,
       },
       font: await subsetFont(
@@ -214,7 +214,7 @@ async function generateUiFont({
  * 切り出したフォントからも落ち、後続の Fontsource の分割ファイルが受け持つ。
  */
 function sourceFontFileName(weight: number): string {
-  return `zen-kaku-gothic-new-japanese-${weight}-normal.woff2`;
+  return `m-plus-2-japanese-${weight}-normal.woff2`;
 }
 
 async function listTextSources(root: string): Promise<string[]> {
