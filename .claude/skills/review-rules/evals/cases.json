@@ -1,0 +1,38 @@
+[
+  {
+    "id": "RULE-ARROW-DECLARATION",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "rule_path": ".claude/rules/typescript.md",
+    "target_path": "frontend/src/lib/review-fixture-value.ts",
+    "content": "export const calculateAdjustedValue = (input: number) => Math.max(0, 100 - input);",
+    "prompt": "提供した対象ファイルの内容を、指定コミット時点の適用規約に照らしてレビューしてください。確認した違反と疑義を区別してください。"
+  },
+  {
+    "id": "RULE-EXCLUDED-UI",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "rule_path": ".claude/rules/typescript.md",
+    "target_path": "frontend/src/components/ui/Example.tsx",
+    "content": "export const Example = () => <span>例</span>;",
+    "prompt": "提供した対象ファイルの内容を、指定コミット時点の適用規約に照らしてレビューしてください。確認した違反と疑義を区別してください。"
+  },
+  {
+    "id": "RULE-VALID-FUNCTION",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "rule_path": ".claude/rules/typescript.md",
+    "target_path": "frontend/src/lib/review-fixture-value.ts",
+    "content": "export function calculateAdjustedValue(input: number): number { return Math.max(0, 100 - input); }",
+    "prompt": "提供した対象ファイルの内容を、指定コミット時点の適用規約に照らしてレビューしてください。確認した違反と疑義を区別してください。"
+  },
+  {
+    "id": "RULE-SKILL-TRIGGER",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "rule_path": ".claude/rules/skills.md",
+    "target_path": ".claude/skills/example/SKILL.md",
+    "content": "---\nname: example\ndescription: A helper.\n---\n\n# example\n\n1. `AGENTS.md` を読む。",
+    "prompt": "提供した対象ファイルの内容を、指定コミット時点の適用規約に照らしてレビューしてください。確認した違反と疑義を区別してください。"
+  }
+]
