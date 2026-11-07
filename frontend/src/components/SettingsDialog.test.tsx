@@ -7,8 +7,13 @@ import {
 } from "@testing-library/react";
 
 import { _private as appDecisionSound } from "@/components/app-decision-sound";
+import { RandomProblemGameOptionsProvider } from "@/components/RandomProblemGameOptionsContext";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { backgroundMusicVolumeSetting } from "@/lib/background-music-setting";
+import {
+  randomProblemSettings,
+  _private as randomSettingsPrivate,
+} from "@/lib/random-problem-settings";
 import { playSound } from "@/lib/sound-effects";
 import { soundEffectsVolumeSetting } from "@/lib/sound-effects-setting";
 import { DEFAULT_VOLUME } from "@/lib/stored-volume-setting";
@@ -46,6 +51,7 @@ afterEach(() => {
   soundEffectsVolumeSetting.commitVolume(DEFAULT_VOLUME);
   backgroundMusicVolumeSetting.commitVolume(DEFAULT_VOLUME);
   window.localStorage.clear();
+  randomSettingsPrivate.reset();
 });
 
 describe("SettingsDialog", () => {
@@ -160,5 +166,40 @@ describe("SettingsDialog", () => {
 
       expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(true);
     });
+  });
+});
+
+describe("ランダム出題の設定", () => {
+  test("共通の6状態を切り替えて保存し、ゲーム個別の上書きを作成・解除できること", () => {
+    render(
+      <RandomProblemGameOptionsProvider
+        games={[{ id: "nanpure", name: "ナンプレ" }]}
+      >
+        <SettingsDialog open onOpenChange={vi.fn()} />
+      </RandomProblemGameOptionsProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "ランダム出題の設定" }));
+    const dialog = within(screen.getByRole("dialog", { name: "ランダム出題" }));
+    expect(dialog.getAllByRole("checkbox")).toHaveLength(6);
+    fireEvent.click(dialog.getByRole("checkbox", { name: /perfect/ }));
+    expect(randomProblemSettings.getSnapshot().global).not.toContain("perfect");
+
+    fireEvent.change(dialog.getByLabelText("設定するゲーム"), {
+      target: { value: "nanpure" },
+    });
+    expect(
+      dialog.getByRole("checkbox", { name: /perfect/ }).matches(":disabled"),
+    ).toBe(true);
+    fireEvent.click(dialog.getByRole("button", { name: "個別に設定" }));
+    fireEvent.click(dialog.getByRole("checkbox", { name: /perfect/ }));
+    expect(randomProblemSettings.getEffective("nanpure")).toContain("perfect");
+    expect(randomProblemSettings.getSnapshot().global).not.toContain("perfect");
+    fireEvent.click(dialog.getByRole("button", { name: "共通に戻す" }));
+    expect(randomProblemSettings.getEffective("nanpure")).not.toContain(
+      "perfect",
+    );
+    expect(
+      randomProblemSettings.getSnapshot().overrides.nanpure,
+    ).toBeUndefined();
   });
 });

@@ -299,7 +299,10 @@ describe("useGameHome", () => {
       fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
 
       expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/4");
-      expect(router.state.location.search).toBe("");
+      const problemId = new URLSearchParams(router.state.location.search).get(
+        "problem",
+      );
+      expect(nanpureGame.listPoolProblemIds("4")).toContain(problemId);
     });
   });
 

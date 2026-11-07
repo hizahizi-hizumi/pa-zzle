@@ -4,6 +4,7 @@ import { type ReactNode, type Ref, useEffect, useRef, useState } from "react";
 import { GamePictogram } from "@/components/GamePictogram";
 import { HomeBackLink } from "@/components/HomeBackLink";
 import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
+import { SettingsButton } from "@/components/SettingsButton";
 import { ZukanHeaderButton } from "@/zukan/ui/GameHomeScreen/ZukanHeaderButton";
 
 type GameHomeHeadingProps = {
@@ -87,6 +88,7 @@ export function GameHomeHeading({
             onClick={() => setHowToPlayOpen(true)}
           />
           {children}
+          <SettingsButton />
         </div>
       </div>
       {renderHowToPlayDialog({
