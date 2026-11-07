@@ -1,37 +1,25 @@
 ---
 paths:
   - "frontend/src/**/*.tsx"
+  - "frontend/src/components/**/*.ts"
+  - "!frontend/src/components/ui/**/*"
+  - "!**/*.test.{ts,tsx}"
 ---
 
-# コンポーネントの外観契約
+# コンポーネントの外観
 
-- コンポーネントが所有する外観を、利用側から `className` や `style` で上書きしない。
-- 利用側から変更可能にする外観は、コンポーネントの公開APIとして明示する。
-- 意味のある外観差分は、`variant`、`size`、意味を表す専用propsなど、そのコンポーネントに適した公開APIで表現する。
-- 外観と振る舞いをひとまとまりのUIとして所有させる場合は専用コンポーネントへ分離し、利用側に実装詳細を持たせない。
-- 公開APIは外観の意味を表現し、CSSクラスや具体的なスタイル値を利用側へ漏らさない。
-- 共通コンポーネントを利用するコードは、その公開APIを迂回して外観を変更しない。
-- UI・デザインを変更するときは `DESIGN.md` を読み、正確なデザイントークン値が必要な場合は `frontend/styles/globals.css` の `@theme` を参照する。
+- 利用側は、コンポーネントの外観をそのコンポーネントが公開した props を通して変える
 
-## 動き
+  ```
+  OK:
+  <Button variant="destructive" />
+  NG:
+  <Button className="bg-red-500" />
+  <Button style={{ color: "red" }} />
+  ```
 
-- 共通UIの時間とイージングは `@theme` の動きのトークンから取る。Tailwind では `duration-(--duration-*)` と `ease-*`、TS（Web Animations API）では `@/lib/motion` の `MOTION_DURATION_MS` と `MOTION_EASING` を使う。
-- ゲームの演出・結果画面の演出・図鑑の変化の演出の時間・イージングは、トークンかその演出の名前付き定数にする。トークンに合わせるために演出の値を変えない。
-- 動きを減らす設定は `@/lib/motion` の `prefersReducedMotion` で判定し、TS から動かす演出はその設定で動かさない。描いている間に設定が変わったら見た目を切り替える画面は、`subscribePrefersReducedMotion` で設定の変化に追従する。
-- 操作が通らなかったことを返す揺れは `@/lib/motion` の `playRejectionShake` で再生する。揺れ方・長さ・イージングはゲームが渡す。
-
-## 適用除外
-
-- `frontend/src/components/ui/**` は shadcn/ui の上流形状を維持するため、本規約の適用対象外とする。
-
-## 例
-
-```tsx
-// 外観差分は公開APIにする
-<Button className="bg-red-500" /> // NG
-<Button variant="destructive" /> // OK
-
-// 独立したUIは利用側で組み立てない
-<div className="...">...</div> // NG
-<GameCard game={game} /> // OK
-```
+- 利用側から変えられる外観は、コンポーネントの props として公開する
+- 外観の差分を出す props は、`variant`・`size` か、外観の意味を表す名前の専用の props にする
+- 外観の差分を出す props には、CSS クラスやスタイルの値でなく外観の意味を渡す
+- 外観と振る舞いをひとまとまりで持つ UI は専用のコンポーネントにし、利用側はそのコンポーネントの props だけで使う
+- `DESIGN.md` に意味が定義されていないトークン（shadcn/ui 由来の `chart-*`・`sidebar-*` など）を共通UIで使い始めるときは、同じ変更で `DESIGN.md` にその意味と使い分けを定義する

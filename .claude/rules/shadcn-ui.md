@@ -1,17 +1,26 @@
 ---
 paths:
-  - "frontend/src/components/*.tsx"
+  - "frontend/src/components/**/*.tsx"
   - "frontend/src/games/*/ui/**/*.tsx"
   - "frontend/src/records/ui/**/*.tsx"
   - "frontend/src/zukan/ui/**/*.tsx"
   - "frontend/src/views/**/*.tsx"
+  - "!frontend/src/components/ui/**/*"
+  - "!**/*.test.tsx"
 ---
 
 # shadcn/ui の利用
 
-- パズル固有ではない一般UIでは、画面ごとの独自実装でトンマナ・操作感・状態表現を崩して利用者体験を損なわないよう、shadcn/ui への委譲を第一候補とする。
-- 一般UIを実装するときは、まず既存の `frontend/src/components/ui/` と shadcn/ui の提供コンポーネントを確認する。
-- 必要な一般UIの責務に対応する shadcn/ui コンポーネントがある場合は、それを使用し、同等のUIを標準HTML要素や独自コンポーネントで作り直さない。
-- 必要なUIの責務は利用者体験と画面設計から決め、shadcn/ui の提供コンポーネントに合わせるためだけに、不要なUI・操作・状態を追加しない。
-- 見出し・段落・リストなど、UIコンポーネントではなく文書構造として使う標準HTML要素は対象外とする。
-- 盤面、セル、駒、ボトル、パズル固有の入力など、パズルの題材・ルール・操作に由来するUIには適用しない。
+- パズル固有でない一般UIを作る前に、`frontend/src/components/ui/` と shadcn/ui の提供コンポーネントから、その UI の役割に当たるものを探す
+- 役割に当たる shadcn/ui のコンポーネントがある一般UIは、そのコンポーネントで作る
+
+  ```
+  OK:
+  <Button onClick={retry}>もう一度</Button>
+  NG:
+  <button className="rounded-md bg-primary px-4" onClick={retry}>もう一度</button>
+  ```
+
+- 一般UIに置く UI・操作・状態は、利用者体験と `docs/プロダクト/画面/` の該当する画面の文書から決めたものだけにする
+- 見出し・段落・リストなど、文書の構造に使う標準HTML要素には、このルールを当てない
+- 盤面・セル・駒・ボトル・パズル固有の入力など、パズルの題材・ルール・操作に由来する UI には、このルールを当てない
