@@ -32,7 +32,7 @@ export function AppShell({
   useAppBackgroundMusic();
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30 font-ui">
+    <div className="flex min-h-dvh flex-col bg-muted/30 font-ui">
       <BrandIdentityHeader linkToHome size="regular" />
       <main className={mainClassNames[contentLayout]}>{children}</main>
     </div>
