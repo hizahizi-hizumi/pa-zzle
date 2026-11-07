@@ -1,4 +1,5 @@
 import {
+  Fragment,
   type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
   useLayoutEffect,
@@ -19,9 +20,11 @@ import type {
   TakuzuCellView,
   TakuzuLineViolationView,
 } from "@/games/takuzu/session/session";
+import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { animateGivenCellRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-given-cell-rejection";
 import { TakuzuCell } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuCell";
 import { TakuzuLineViolationMark } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationMark";
+import { TakuzuLineViolationOutline } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationOutline";
 
 type TakuzuBoardProps = {
   size: number;
@@ -29,6 +32,10 @@ type TakuzuBoardProps = {
   lineViolations: readonly TakuzuLineViolationView[];
   operation: TakuzuOperation | null;
   interactionDisabled: boolean;
+  /** マスに一時的に重ねる合図。通常のプレイでは渡さない。 */
+  cues?: readonly TakuzuCellCue[];
+  /** 個数超過・重複の行・列を、縁の外の印に加えて盤面の中でも囲む。チュートリアルで使い、通常のプレイでは渡さない。 */
+  outlinesViolatedLines?: boolean;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
 };
@@ -84,6 +91,8 @@ export function TakuzuBoard({
   lineViolations,
   operation,
   interactionDisabled,
+  cues = [],
+  outlinesViolatedLines = false,
   onCycleCell,
   onPlaceCell,
 }: TakuzuBoardProps) {
@@ -92,6 +101,7 @@ export function TakuzuBoard({
   const lineViolationByKey = new Map(
     lineViolations.map((violation) => [getLineKey(violation), violation]),
   );
+  const cueByCellIndex = new Map(cues.map((cue) => [cue.cellIndex, cue]));
 
   useLayoutEffect(() => {
     if (operation?.type === "invalid") {
@@ -178,6 +188,7 @@ export function TakuzuBoard({
                 ),
               ]}
               disabled={interactionDisabled}
+              cue={cueByCellIndex.get(cellIndex)}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}
               onCycle={onCycleCell}
@@ -186,13 +197,22 @@ export function TakuzuBoard({
           );
         })}
         {listTakuzuLines(size).map(function renderLineMark(line) {
+          const violated = lineViolationByKey.has(getLineKey(line));
           return (
-            <TakuzuLineViolationMark
-              key={getLineKey(line)}
-              size={size}
-              line={line}
-              violated={lineViolationByKey.has(getLineKey(line))}
-            />
+            <Fragment key={getLineKey(line)}>
+              <TakuzuLineViolationMark
+                size={size}
+                line={line}
+                violated={violated}
+              />
+              {outlinesViolatedLines && (
+                <TakuzuLineViolationOutline
+                  size={size}
+                  line={line}
+                  violated={violated}
+                />
+              )}
+            </Fragment>
           );
         })}
       </div>

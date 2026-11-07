@@ -4,6 +4,7 @@ import {
   Home,
   MoreHorizontal,
   Play,
+  Pointer,
   RefreshCw,
   RotateCcw,
   Settings,
@@ -31,6 +32,8 @@ type PlayMenuProps = {
   onOpenGameHome: () => void;
   onBackToHome: () => void;
   onOpenHowToPlay?: () => void;
+  /** 省略するとメニューに「チュートリアル」を出さない。 */
+  onOpenTutorial?: () => void;
   onOpenDiagnostics?: () => void;
 };
 
@@ -42,6 +45,7 @@ export function PlayMenu({
   onOpenGameHome,
   onBackToHome,
   onOpenHowToPlay,
+  onOpenTutorial,
   onOpenDiagnostics,
 }: PlayMenuProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -84,14 +88,18 @@ export function PlayMenu({
             <Home />
             パズル選択
           </DropdownMenuItem>
+          {(onOpenHowToPlay || onOpenTutorial) && <DropdownMenuSeparator />}
           {onOpenHowToPlay && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={onOpenHowToPlay}>
-                <CircleHelp />
-                遊び方
-              </DropdownMenuItem>
-            </>
+            <DropdownMenuItem onSelect={onOpenHowToPlay}>
+              <CircleHelp />
+              遊び方
+            </DropdownMenuItem>
+          )}
+          {onOpenTutorial && (
+            <DropdownMenuItem onSelect={onOpenTutorial}>
+              <Pointer />
+              チュートリアル
+            </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => setSettingsOpen(true)}>

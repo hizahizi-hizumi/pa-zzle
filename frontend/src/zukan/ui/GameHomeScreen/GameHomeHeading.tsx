@@ -1,4 +1,4 @@
-import { CircleHelp } from "lucide-react";
+import { CircleHelp, Pointer } from "lucide-react";
 import { type ReactNode, type Ref, useEffect, useRef, useState } from "react";
 
 import { GamePictogram } from "@/components/GamePictogram";
@@ -18,12 +18,17 @@ type GameHomeHeadingProps = {
   actionsRef: Ref<HTMLDivElement>;
   /** ゲーム固有の遊び方ダイアログを描く。開閉の状態は見出しが持ち、引数で渡す。 */
   renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
-  /** 遊び方に続けて並べる、台紙を見る助けになる層のボタン。 */
+  /**
+   * ゲーム固有のチュートリアルを描く。開閉の状態は見出しが持ち、引数で渡す。
+   * 省略すると、チュートリアルを開くボタンを出さない。
+   */
+  renderTutorial?: (control: HowToPlayDialogControl) => ReactNode;
+  /** 遊び方・チュートリアルに続けて並べる、台紙を見る助けになる層のボタン。 */
   children: ReactNode;
 };
 
 /**
- * ゲームのホームの見出し。ホームへ戻るアイコンを頭に置いたピクトグラムとゲーム名に、解いた問題の数を全問の数と並べた静かな計数と、遊び方などの層を開くボタンを添える。
+ * ゲームのホームの見出し。ホームへ戻るアイコンを頭に置いたピクトグラムとゲーム名に、解いた問題の数を全問の数と並べた静かな計数と、遊び方・チュートリアルなどの層を開くボタンを添える。
  * 台紙を広く見せるよう、PC では1行に並べ、それより狭い画面では計数とボタンをゲーム名の下の1行に並べる。狭い画面ではボタンをアイコンで示す。
  */
 export function GameHomeHeading({
@@ -34,20 +39,11 @@ export function GameHomeHeading({
   titleRef,
   actionsRef,
   renderHowToPlayDialog,
+  renderTutorial,
   children,
 }: GameHomeHeadingProps) {
-  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
-  const howToPlayButtonRef = useRef<HTMLButtonElement>(null);
-  const returnsFocusRef = useRef(false);
-
-  // 遊び方のダイアログは開いたボタンを知らないので、閉じたらフォーカスを遊び方のボタンへ戻す。
-  // ダイアログがフォーカスを閉じ込めるのをやめてから戻すよう、閉じた姿を描いたあとに戻す。
-  useEffect(() => {
-    if (!howToPlayOpen && returnsFocusRef.current) {
-      returnsFocusRef.current = false;
-      howToPlayButtonRef.current?.focus();
-    }
-  }, [howToPlayOpen]);
+  const howToPlay = useLayerOpenedByButton();
+  const tutorial = useLayerOpenedByButton();
 
   return (
     <header className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1 lg:grid-cols-[auto_auto_minmax(0,1fr)_auto] lg:gap-x-3">
@@ -80,22 +76,58 @@ export function GameHomeHeading({
         </p>
         <div className="flex items-center">
           <ZukanHeaderButton
-            ref={howToPlayButtonRef}
+            ref={howToPlay.buttonRef}
             type="button"
             icon={<CircleHelp aria-hidden="true" />}
             label="遊び方"
-            onClick={() => setHowToPlayOpen(true)}
+            onClick={howToPlay.open}
           />
+          {renderTutorial && (
+            <ZukanHeaderButton
+              ref={tutorial.buttonRef}
+              type="button"
+              icon={<Pointer aria-hidden="true" />}
+              label="チュートリアル"
+              onClick={tutorial.open}
+            />
+          )}
           {children}
         </div>
       </div>
-      {renderHowToPlayDialog({
-        open: howToPlayOpen,
-        onClose() {
-          returnsFocusRef.current = true;
-          setHowToPlayOpen(false);
-        },
-      })}
+      {renderHowToPlayDialog(howToPlay.control)}
+      {renderTutorial?.(tutorial.control)}
     </header>
   );
+}
+
+/**
+ * 見出しのボタンで開く層（遊び方・チュートリアル）の開閉の状態。
+ * 層は開いたボタンを知らないので、閉じたらフォーカスを開いたボタンへ戻す。
+ * 層がフォーカスを閉じ込めるのをやめてから戻すよう、閉じた姿を描いたあとに戻す。
+ */
+function useLayerOpenedByButton() {
+  const [layerOpen, setLayerOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const returnsFocusRef = useRef(false);
+
+  useEffect(() => {
+    if (!layerOpen && returnsFocusRef.current) {
+      returnsFocusRef.current = false;
+      buttonRef.current?.focus();
+    }
+  }, [layerOpen]);
+
+  const control: HowToPlayDialogControl = {
+    open: layerOpen,
+    onClose() {
+      returnsFocusRef.current = true;
+      setLayerOpen(false);
+    },
+  };
+
+  return {
+    buttonRef,
+    open: () => setLayerOpen(true),
+    control,
+  };
 }

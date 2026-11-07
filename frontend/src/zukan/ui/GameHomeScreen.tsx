@@ -16,6 +16,7 @@ import type {
   ProblemFeature,
   ProblemFeatureAxisDisplay,
 } from "@/components/problem-features";
+import type { TutorialPlayStart } from "@/components/TutorialOverlay";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { type DifficultyLevel, parseDifficultyLevel } from "@/games/difficulty";
@@ -118,10 +119,21 @@ export type GameHomeScreenProps = {
   ) => ReadonlyMap<string, ProblemFeatureValue> | null;
   /** ゲーム固有の遊び方ダイアログを描く。開閉の状態は見出しが持ち、引数で渡す。 */
   renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
+  /**
+   * ゲーム固有のチュートリアルを描く。開閉の状態は見出しが持ち、終えて開いているレベルを始める操作と一緒に引数で渡す。
+   * 省略すると、チュートリアルを開くボタンを出さない。
+   */
+  renderTutorial?: (control: GameHomeTutorialControl) => ReactNode;
   /** 全記録。開いているレベルの成績（自己ベスト・推移）を、成績を開いたときにこの中から求める。 */
   records: readonly PlayRecord[];
   /** そのゲームの記録表示。成績の指標の名前と値の書き方に使う。 */
   playRecordDisplay: PlayRecordDisplayDefinition;
+};
+
+/** ゲームのホームから開いたチュートリアルの開閉の状態と、終えてプレイへ進む操作。 */
+export type GameHomeTutorialControl = HowToPlayDialogControl & {
+  /** チュートリアルを終えて、開いているレベルのプレイを始める。 */
+  playStart: TutorialPlayStart;
 };
 
 type SelectedProblemKey = { difficulty: DifficultyLevel; problemId: ProblemId };
@@ -327,6 +339,7 @@ export function GameHomeScreen({
   featureAxes,
   findProblemFeatureValues,
   renderHowToPlayDialog,
+  renderTutorial,
   records,
   playRecordDisplay,
 }: GameHomeScreenProps) {
@@ -607,6 +620,12 @@ export function GameHomeScreen({
     onPlayRandom(openDifficulty),
   );
 
+  // 特定のレベルを勧めないよう、チュートリアルを終えたら、「ランダムに遊ぶ」と同じく開いているレベルを始める。
+  const tutorialPlayStart: TutorialPlayStart = {
+    difficulty: openDifficulty,
+    onStart: handlePlayRandom,
+  };
+
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 pt-4 sm:px-6 sm:pt-6 lg:pb-8">
       <GameHomeHeading
@@ -617,6 +636,14 @@ export function GameHomeScreen({
         titleRef={titleRef}
         actionsRef={headerActionsRef}
         renderHowToPlayDialog={renderHowToPlayDialog}
+        renderTutorial={
+          renderTutorial &&
+          ((control) =>
+            renderTutorial({
+              ...control,
+              playStart: tutorialPlayStart,
+            }))
+        }
       >
         <ZukanLegend />
         <ZukanFilter

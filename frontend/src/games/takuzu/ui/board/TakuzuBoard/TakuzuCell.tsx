@@ -8,6 +8,7 @@ import {
 import { getTakuzuCellPosition } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
+import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/TakuzuBoard/violation-mark-timing";
 import { TakuzuCellFace } from "@/games/takuzu/ui/board/TakuzuCellFace";
 import { runViolationCellClassName } from "@/games/takuzu/ui/board/violation-mark-style";
@@ -20,6 +21,8 @@ type TakuzuCellProps = {
   /** このマスを含む行・列の違反の読み上げ名（例「行の個数超過」）。 */
   lineViolationNames: readonly string[];
   disabled: boolean;
+  /** 揺れの合図は盤面が掛けるので、マスは光と目印の合図だけを描く。 */
+  cue: TakuzuCellCue | undefined;
   focusable: boolean;
   onElementChange: (
     cellIndex: number,
@@ -53,6 +56,7 @@ export function TakuzuCell({
   view,
   lineViolationNames,
   disabled,
+  cue,
   focusable,
   onElementChange,
   onCycle,
@@ -106,13 +110,39 @@ export function TakuzuCell({
           runViolationCellClassName,
         )}
       />
+      {cue?.kind === "reason" && (
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className="pointer-events-none absolute inset-0 bg-accent ring-(length:--border-width-strong) ring-ring ring-inset fill-mode-forwards animate-out fade-out-0 delay-(--duration-slow) duration-(--duration-slow) ease-standard"
+        />
+      )}
+      {cue?.kind === "recall" && (
+        // 動きを減らす設定でも分かるよう、位置や大きさは変えず、印の線を短く濃くして戻すだけで示す。
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className="pointer-events-none absolute inset-1 rounded-sm border-(length:--border-width-strong) border-foreground fill-mode-forwards animate-out fade-out-0 delay-(--duration-slow) duration-(--duration-slow) ease-standard"
+        />
+      )}
+      {(cue?.kind === "hint" || cue?.kind === "recall") && (
+        // 光らせ直しても印そのものは付け直さず、出ているまま光だけを重ねる。
+        <span
+          aria-hidden="true"
+          data-cell-cue="hint"
+          className="pointer-events-none absolute inset-1 rounded-sm border-(length:--border-width-strong) border-ring animate-in fade-in-0 duration-(--duration-slow) ease-(--ease-enter) motion-reduce:animate-none"
+        />
+      )}
       {/*
         固定マスを押したときの揺れと完成の波は、格子を崩さないよう中のタイルだけに掛ける。
         タイルは常に独立した合成レイヤーに置く。動くときだけレイヤーに上がると、後ろに描くマスがまとめて
         レイヤーに分け直され、ほかのタイルが小数ピクセルずれて描き直されるため、動きの始まりと終わりに盤面全体が揺れて見える。
+        固定か置いたものかは、チュートリアルの導入で置いたタイルだけを消して始めの盤面へ戻すのに使う。
       */}
       <span
-        data-takuzu-tile=""
+        data-takuzu-tile={view.given ? "given" : "placed"}
         data-clear-wave-step={row + column}
         className="relative size-[80%] will-change-transform"
       >
