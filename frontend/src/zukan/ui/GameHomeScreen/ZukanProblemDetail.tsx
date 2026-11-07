@@ -84,7 +84,8 @@ function hasRunningAnimation(element: HTMLElement): boolean {
 
 type SolvedProblemFact = { label: string; value: ReactNode };
 
-const factValueClassName = "font-mono text-supporting text-foreground";
+const factValueClassName =
+  "font-ui tabular-nums text-supporting text-foreground";
 
 /** 解いた問題の、次に挑むときの目標になる最も良い値と、初めてクリアした日。そのゲームで数えない値は並べない。 */
 function listSolvedProblemFacts(
@@ -96,7 +97,7 @@ function listSolvedProblemFacts(
       label: "最高スコア",
       value: (
         <span
-          className={`rounded-full px-2 font-mono text-supporting font-bold ${getGameResultStyle(getGameResultLevel(bestScore)).markClassName}`}
+          className={`rounded-full px-2 font-ui tabular-nums text-supporting font-bold ${getGameResultStyle(getGameResultLevel(bestScore)).markClassName}`}
         >
           {bestScore}点
         </span>
@@ -234,7 +235,7 @@ export function ZukanProblemDetail({
         <div className="min-w-0 lg:col-span-full">
           <p className="flex flex-wrap items-center gap-x-2">
             <span className="flex items-center gap-2">
-              <span className="font-mono text-supporting tabular-nums">
+              <span className="font-ui tabular-nums text-supporting">
                 {formatZukanNumber(shownProblem.number, numberDigitCount)}
               </span>
               <DifficultyLevelPieces level={shownProblem.difficulty} />

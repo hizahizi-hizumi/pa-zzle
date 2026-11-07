@@ -1,12 +1,13 @@
-@import "@fontsource/zen-kaku-gothic-new/400.css";
-@import "@fontsource/zen-kaku-gothic-new/500.css";
-@import "@fontsource/zen-kaku-gothic-new/700.css";
+@import "@fontsource/m-plus-2/400.css";
+@import "@fontsource/m-plus-2/500.css";
+@import "@fontsource/m-plus-2/600.css";
+@import "@fontsource/m-plus-2/700.css";
 @import "../generated/ui-font/ui-font.css";
 @import "../styles/globals.css";
 
 @layer base {
   :root {
-    @apply font-sans;
+    @apply font-ui;
   }
 
   body {

@@ -15,7 +15,7 @@ const uiFontDir = fileURLToPath(
   new URL("./generated/ui-font/", import.meta.url),
 );
 const internalDiagnosticsEnabled = env.PA_ZZLE_INTERNAL_DIAGNOSTICS === "true";
-const uiFontSubsetFamily = "Zen Kaku Gothic New Subset";
+const uiFontSubsetFamily = "M PLUS 2 Subset";
 const buildRevision = env.WORKERS_CI_COMMIT_SHA ?? env.GITHUB_SHA ?? null;
 
 export default defineConfig({

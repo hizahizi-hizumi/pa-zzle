@@ -54,7 +54,7 @@ export function GameResultScoreCard({
             スコア
           </p>
           <p
-            className={`mt-1 font-mono text-5xl font-bold tracking-tight tabular-nums ${style.scoreClassName}`}
+            className={`mt-1 font-ui text-5xl font-bold tracking-tight tabular-nums ${style.scoreClassName}`}
           >
             {score}
             <span className="ml-1 text-body font-medium text-muted-foreground">

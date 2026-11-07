@@ -43,7 +43,7 @@ export function PersonalBests({ personalBests, display }: PersonalBestsProps) {
                   <dt className="text-meta text-muted-foreground">
                     {metricDisplay.label}
                   </dt>
-                  <dd className="font-mono text-body font-semibold tabular-nums">
+                  <dd className="font-ui text-body font-semibold tabular-nums">
                     {metricDisplay.formatValue(best.value)}
                   </dd>
                 </div>,
