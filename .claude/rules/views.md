@@ -1,63 +1,64 @@
 ---
 paths:
-  - "frontend/src/views/**/*.tsx"
+  - "frontend/src/views/**/*.{ts,tsx}"
+  - "!**/*.test.{ts,tsx}"
 ---
 
 # Views
 
-- Viewは、1つのUI描画ルートに対応し、その画面を成立させる責務を接続する合成境界とする。
-- Viewは `<画面の役割>View` と命名し、URLやルートファイル名ではなく画面の役割から名前を決める。
-- View自体を複数のルートから直接利用しない。
+## 名前
 
-```text
-pages/index.tsx
-→ views/PuzzleSelectionView.tsx
+- View は `<画面の役割>View` と名付け、URL やルートファイル名ではなく画面の役割から名前を決める
 
-pages/records.tsx
-→ views/PlayRecordsView.tsx
+  ```text
+  OK:
+  pages/index.tsx → views/PuzzleSelectionView.tsx
+  pages/records/index.tsx → views/PlayRecordsView.tsx
+  pages/puzzles/nanpure/index.tsx → views/NanpureHomeView.tsx
+  pages/puzzles/nanpure/play/[difficulty].tsx → views/NanpurePlayView.tsx
+  ```
 
-pages/games/nanpure/play/[difficulty].tsx
-→ views/NanpurePlayView.tsx
-```
+## View に置く処理
 
-## 責務
+- URL パラメータやルーター状態の取得
+- URL 由来の値の検証・変換の呼び出し
+- 画面遷移の接続
+- その画面で使う hooks・ユースケースの接続
+- 複数の責務の間の値の受け渡し
+- 画面固有の状態、レイアウト、UI の合成
+- View の処理は View に書き、props を中継するだけのコンポーネントへ移さない
 
-- URLパラメータやルーター状態を取得する。
-- URL由来の値の検証・変換を、意味を所有する処理へ委譲して呼び出す。
-- 画面遷移を接続する。
-- その画面で利用するhooks・ユースケースを接続する。
-- 複数の責務間で値を受け渡す。
-- 画面固有の状態、レイアウト、UIの合成を持ってよい。
-- Viewを薄くすることだけを目的に、中継するだけのコンポーネントを作らない。
+## View の外に置く処理
 
-## 所有しないもの
+- URL 由来の値の検証・変換は、その値の意味を所有する処理に置く
+- ゲームやドメインのロジックは View で実装しない
+- 保存、評価など、独立した機能に固有の規則は View で実装しない
+- 他の View でも使う処理や再利用できる UI は、View の外のその処理が属する責務に置く
 
-- ゲームやドメインのロジックを実装しない。
-- 保存、評価など、独立した機能固有の規則を実装しない。
-- 他のViewでも利用する処理や再利用可能なUIをViewの責務として所有しない。
-- 共有したい処理が生じても `views/common`、`views/hooks`、`views/utils` へ集約せず、その処理が属する責務を見直す。
-  - 例: ゲームのプレイ合成は、`game-catalog/<game>/Playable<Game>.tsx` に置く。
+- `views/common`、`views/hooks`、`views/utils` を作らない
+
+## ゲームカタログの使い方
+
+- パズル選択・記録・結果の画面は、ゲームを列挙せず `@/game-catalog/game-catalog` の `gameCatalog` を回す
+- ゲームの画面への遷移は `@/game-catalog/game-navigation` の `createGameNavigation`・`useGameNavigation`・`openRecordProblemPlay` を使い、パスを直書きしない
+- ゲームのホームの View は、`useGameHome` が返す `screenProps` をゲームのホームの画面へそのまま渡す
 
 ## 配置
 
-- `views/` のディレクトリ構造をURL階層に合わせない。
-- 単一のViewを置くためだけにディレクトリを作らない。
-- 複数のViewに共通する意味上のまとまりが明確になった場合だけ、そのまとまりでディレクトリを分ける。
+- View ファイルは `views/` 直下に置き、複数の View に共通する意味上のまとまりがあるときだけ、そのまとまりのディレクトリに置く
+- `views/` のディレクトリ構造を URL 階層に合わせない
 
-```text
-# OK: 画面の役割で配置する
-views/
-├── PuzzleSelectionView.tsx
-├── PlayRecordsView.tsx
-├── NanpurePlayView.tsx
-└── WaterSortPlayView.tsx
-```
-
-```text
-# NG: URL構造をそのまま複製する
-views/
-└── games/
-    └── nanpure/
-        └── play/
-            └── NanpurePlayView.tsx
-```
+  ```text
+  OK:
+  views/
+  ├── PuzzleSelectionView.tsx
+  ├── PlayRecordsView.tsx
+  ├── NanpurePlayView.tsx
+  └── WaterSortPlayView.tsx
+  NG:
+  views/
+  └── puzzles/
+      └── nanpure/
+          └── play/
+              └── NanpurePlayView.tsx
+  ```
