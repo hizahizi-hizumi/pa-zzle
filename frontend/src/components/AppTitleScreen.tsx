@@ -67,9 +67,10 @@ export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
         <DialogPrimitive.Content
           ref={surfaceRef}
           aria-describedby={undefined}
+          data-browser-surface="self"
           onOpenAutoFocus={focusSurface}
           onClick={enter}
-          className="fixed inset-0 z-(--layer-overlay) flex flex-col bg-background font-ui outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-(--duration-normal) data-[state=closed]:ease-exit motion-reduce:animate-none"
+          className="fixed inset-0 z-(--layer-overlay) flex flex-col bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] font-ui outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-(--duration-normal) data-[state=closed]:ease-exit motion-reduce:animate-none"
         >
           {/* 設定のボタンと、開いた設定のダイアログの中の操作で入らないよう、押した操作を面へ伝えない。 */}
           <div

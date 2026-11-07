@@ -1,6 +1,7 @@
 import { type ReactNode, type Ref, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { BrowserBottomSurface } from "@/components/BrowserBottomSurface";
 import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
 import { PlayHeader } from "@/components/PlayHeader";
 import type { PlayHeaderMetric } from "@/components/play-header-metric";
@@ -69,35 +70,37 @@ export function GamePlayFrame<Result>({
   return (
     <section
       ref={ref}
-      className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-[var(--browser-surface,var(--background))]"
     >
-      {background != null && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10"
-        >
-          {background}
-        </div>
-      )}
-      <BrandIdentityHeader surface="game" />
-      <PlayHeader
-        title={title}
-        metrics={metrics}
-        trailingAction={trailingAction}
-        canRestart={canRestart}
-        onRestart={onRestart}
-        onReplay={onReplay}
-        onStartNewProblem={onStartNewProblem}
-        onOpenGameHome={onOpenGameHome}
-        onBackToHome={onBackToHome}
-        onOpenHowToPlay={() => setHowToPlayOpen(true)}
-        onOpenDiagnostics={onOpenDiagnostics}
-      />
-      {renderHowToPlayDialog({
-        open: howToPlayOpen,
-        onClose: () => setHowToPlayOpen(false),
-      })}
-      {children}
+      <div
+        aria-hidden="true"
+        data-browser-surface="child"
+        className="pointer-events-none absolute inset-0 -z-10"
+      >
+        {background ?? <div className="size-full bg-background" />}
+      </div>
+      <BrandIdentityHeader surface="game" pinned />
+      <div className="flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+        <PlayHeader
+          title={title}
+          metrics={metrics}
+          trailingAction={trailingAction}
+          canRestart={canRestart}
+          onRestart={onRestart}
+          onReplay={onReplay}
+          onStartNewProblem={onStartNewProblem}
+          onOpenGameHome={onOpenGameHome}
+          onBackToHome={onBackToHome}
+          onOpenHowToPlay={() => setHowToPlayOpen(true)}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />
+        {renderHowToPlayDialog({
+          open: howToPlayOpen,
+          onClose: () => setHowToPlayOpen(false),
+        })}
+        {children}
+      </div>
+      <BrowserBottomSurface surface="game" />
     </section>
   );
 }
