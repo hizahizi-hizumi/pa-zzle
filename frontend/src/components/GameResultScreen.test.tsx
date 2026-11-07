@@ -68,7 +68,7 @@ describe("GameResultScreen", () => {
       "次の問題",
       "問題選択",
       "もう一度",
-      "スコアの内訳・採点基準",
+      "内訳を見る",
       "検証情報",
     ]);
   });
@@ -86,9 +86,7 @@ describe("GameResultScreen", () => {
   });
 
   test("スコアの内訳と、全ゲーム共通の丸め方を添えた採点基準を開けること", () => {
-    fireEvent.click(
-      screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "内訳を見る" }));
 
     const criterion = screen.getByText("基準時間以内で満点。");
     const note = screen.getByText(
@@ -174,4 +172,26 @@ describe("GameResultScreen の遊び直せない記録", () => {
 
     expect(replayButton.hasAttribute("disabled")).toBe(true);
   });
+});
+
+describe("GameResultScreen の評価段階", () => {
+  test.each([
+    [65, "クリア"],
+    [82, "ナイスプレイ！"],
+    [94, "すばらしい！"],
+    [100, "パーフェクト！"],
+  ])(
+    "%i点の場合に評価の言葉と点数を同じ領域に表示すること",
+    (score, praise) => {
+      render(
+        <MemoryRouter>
+          <GameResultScreen {...createProps()} score={score} />
+        </MemoryRouter>,
+      );
+
+      const scoreRegion = screen.getByRole("region", { name: "スコア" });
+      expect(scoreRegion.textContent).toContain(praise);
+      expect(scoreRegion.textContent).toContain(`${score}`);
+    },
+  );
 });

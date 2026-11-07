@@ -365,12 +365,12 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("最短 +2")).toBeTruthy();
     expect(screen.getByText("基準 +00:01")).toBeTruthy();
     expect(screen.queryByText("手戻り")).toBeNull();
-    expect(screen.getByText("スコア")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "スコア" })).toBeTruthy();
     expect(screen.getByText("87")).toBeTruthy();
     expect(screen.getByText("ナイスプレイ！")).toBeTruthy();
     expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
     expect(screen.getByText("/ 100")).toBeTruthy();
-    fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
+    fireEvent.click(screen.getByText("内訳を見る"));
     expect(screen.getByText("手戻り")).toBeTruthy();
     expect(screen.getByText("2手")).toBeTruthy();
     expect(screen.getByText("待った")).toBeTruthy();

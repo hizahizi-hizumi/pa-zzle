@@ -329,9 +329,7 @@ describe("TakuzuPlay", () => {
 
     describe("スコアの内訳を開いた場合", () => {
       beforeEach(() => {
-        fireEvent.click(
-          screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-        );
+        fireEvent.click(screen.getByRole("button", { name: "内訳を見る" }));
       });
 
       const detailLabels = [

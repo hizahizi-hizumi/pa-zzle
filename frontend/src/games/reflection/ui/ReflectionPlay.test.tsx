@@ -514,9 +514,7 @@ describe("ReflectionPlay", () => {
 
       describe("スコアの内訳を開いた場合", () => {
         beforeEach(() => {
-          fireEvent.click(
-            screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-          );
+          fireEvent.click(screen.getByRole("button", { name: "内訳を見る" }));
         });
 
         test("速さの点・盤面を戻した回数・光路の確認・基準時間・作業の量を内訳に表示すること", () => {
@@ -575,9 +573,7 @@ describe("ReflectionPlay", () => {
     describe("光路表示を通常の操作として扱う場合", () => {
       beforeEach(() => {
         renderResult({ laserPathMode: "normal" });
-        fireEvent.click(
-          screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-        );
+        fireEvent.click(screen.getByRole("button", { name: "内訳を見る" }));
       });
 
       test("光路を確かめた回数を出さないこと", () => {

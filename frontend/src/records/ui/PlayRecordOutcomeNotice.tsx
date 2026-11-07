@@ -1,7 +1,9 @@
 import { Sparkles, Trophy } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 import { GameResultSurface } from "@/components/GameResultSurface";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 import type { PersonalBestUpdate } from "@/records/personal-best";
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import {
@@ -14,7 +16,6 @@ type PlayRecordOutcomeNoticeProps = {
   display: PlayRecordDisplayDefinition;
 };
 
-/** 自己ベストを良くなった向きに更新した幅。 */
 function getImprovementAmount(
   display: PlayRecordDisplayDefinition,
   { metricId, previousValue, currentValue }: PersonalBestUpdate,
@@ -29,10 +30,34 @@ function getImprovementAmount(
   return Math.max(0, difference);
 }
 
+const BEST_REVEAL_MS = 520;
+const BEST_REVEAL_DELAY_MS = 220;
+const bestRevealKeyframes: Keyframe[] = [
+  { transform: "translateY(8px) scale(0.98)", opacity: 0 },
+  { transform: "translateY(0) scale(1)", opacity: 1 },
+];
+
 export function PlayRecordOutcomeNotice({
   outcome,
   display,
 }: PlayRecordOutcomeNoticeProps) {
+  const noticeRef = useRef<HTMLDivElement>(null);
+  const updated = outcome?.status === "updated";
+
+  useEffect(() => {
+    if (!updated || prefersReducedMotion()) {
+      return;
+    }
+
+    const animation = noticeRef.current?.animate?.(bestRevealKeyframes, {
+      duration: BEST_REVEAL_MS,
+      delay: BEST_REVEAL_DELAY_MS,
+      easing: MOTION_EASING.celebrate,
+      fill: "backwards",
+    });
+    return () => animation?.cancel();
+  }, [updated]);
+
   if (
     !outcome ||
     outcome.status === "recorded" ||
@@ -54,14 +79,14 @@ export function PlayRecordOutcomeNotice({
   }
 
   return (
-    <div className="mt-3">
+    <div ref={noticeRef} className="mt-2">
       <GameResultSurface variant="personalBest" label="自己ベスト更新">
-        <div className="flex items-center justify-center gap-2 text-amber-700 dark:text-amber-300">
-          <Trophy className="size-4" />
-          <p className="text-supporting font-bold">自己ベスト更新</p>
-          <Sparkles className="size-4" />
+        <div className="flex items-center justify-center gap-2 text-violet-700 dark:text-violet-300">
+          <Trophy className="size-6 shrink-0" aria-hidden="true" />
+          <p className="text-heading font-bold">自己ベスト更新</p>
+          <Sparkles className="size-4 shrink-0" aria-hidden="true" />
         </div>
-        <dl className="mt-3 divide-y-(length:--border-width-normal) divide-amber-200/80 dark:divide-amber-900/70">
+        <dl className="mt-2 divide-y-(length:--border-width-normal) divide-violet-200/80 dark:divide-violet-900/70">
           {outcome.updates.flatMap((update) => {
             const metricDisplay = getPlayRecordMetricDisplay(
               display,
@@ -70,28 +95,25 @@ export function PlayRecordOutcomeNotice({
             if (!metricDisplay) {
               return [];
             }
-
             return [
-              <div key={update.metricId} className="py-2 first:pt-0 last:pb-0">
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-supporting font-medium text-foreground/85">
-                    {metricDisplay.label}
-                  </dt>
-                  <dd className="rounded-full bg-amber-100 px-3 py-1 text-meta font-bold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
-                    {metricDisplay.formatImprovement(
-                      getImprovementAmount(display, update),
-                    )}
-                  </dd>
-                </div>
-                <div className="mt-1 grid grid-cols-[1fr_auto_1fr] items-end gap-3">
-                  <dd className="justify-self-start font-ui text-meta text-muted-foreground line-through tabular-nums">
-                    {metricDisplay.formatValue(update.previousValue)}
-                  </dd>
-                  <dd className="justify-self-center font-ui text-4xl font-bold tracking-tight text-foreground tabular-nums">
-                    {metricDisplay.formatValue(update.currentValue)}
-                  </dd>
-                  <span aria-hidden="true" />
-                </div>
+              <div
+                key={update.metricId}
+                className="flex min-w-0 items-center gap-2 py-1 first:pt-1 last:pb-0"
+              >
+                <dt className="min-w-0 flex-1 text-meta font-medium text-foreground/85">
+                  {metricDisplay.label}
+                </dt>
+                <dd className="shrink-0 font-ui text-meta text-muted-foreground line-through tabular-nums">
+                  {metricDisplay.formatValue(update.previousValue)}
+                </dd>
+                <dd className="shrink-0 font-ui text-body font-bold tabular-nums text-foreground">
+                  {metricDisplay.formatValue(update.currentValue)}
+                </dd>
+                <dd className="shrink-0 rounded-full bg-violet-100 px-2 py-1 text-meta font-bold tabular-nums text-violet-800 dark:bg-violet-500/20 dark:text-violet-200">
+                  {metricDisplay.formatImprovement(
+                    getImprovementAmount(display, update),
+                  )}
+                </dd>
               </div>,
             ];
           })}

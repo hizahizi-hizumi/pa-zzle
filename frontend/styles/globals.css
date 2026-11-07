@@ -21,6 +21,10 @@
   --ease-celebrate: cubic-bezier(0.2, 0.8, 0.2, 1);
   --default-transition-duration: var(--duration-normal);
   --default-transition-timing-function: var(--ease-standard);
+  --text-reward: 2rem;
+  --text-reward--line-height: 2.5rem;
+  --text-reward--letter-spacing: 0;
+  --text-reward--font-weight: 700;
   --text-screen-title: 1.5rem;
   --text-screen-title--line-height: 2rem;
   --text-screen-title--letter-spacing: 0;

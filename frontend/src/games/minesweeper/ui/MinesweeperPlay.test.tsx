@@ -401,7 +401,7 @@ describe("MinesweeperPlay", () => {
     });
 
     test("スコアの内訳と採点基準を開けること", () => {
-      fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
+      fireEvent.click(screen.getByText("内訳を見る"));
 
       expect(screen.getByText("45 / 60")).toBeTruthy();
       expect(screen.getByText("32 / 40")).toBeTruthy();

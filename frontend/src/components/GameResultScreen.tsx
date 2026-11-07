@@ -81,7 +81,7 @@ export function GameResultScreen({
     >
       <BrandIdentityHeader linkToHome />
       <GameResultConfetti level={resultLevel} />
-      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-3 pb-[max(calc(var(--spacing)*4),env(safe-area-inset-bottom))]">
+      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-3 sm:max-w-xl sm:px-6 md:justify-center pb-[max(calc(var(--spacing)*4),env(safe-area-inset-bottom))]">
         <GameResultIdentity
           gameName={gameName}
           difficultyLabel={difficultyLabel}

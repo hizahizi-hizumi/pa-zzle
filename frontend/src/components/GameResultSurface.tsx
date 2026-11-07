@@ -16,7 +16,7 @@ const variantClassNames: Record<GameResultSurfaceVariant, string> = {
   perfect:
     "border-amber-300/80 bg-amber-50/85 dark:border-amber-900/80 dark:bg-amber-950/30",
   personalBest:
-    "border-amber-300/80 bg-amber-50/85 dark:border-amber-900/80 dark:bg-amber-950/30",
+    "border-violet-300 bg-violet-50/85 dark:border-violet-800 dark:bg-violet-950/35",
 };
 
 export function GameResultSurface({
@@ -27,7 +27,7 @@ export function GameResultSurface({
   return (
     <section
       aria-label={label}
-      className={`rounded-lg border-(length:--border-width-normal) px-4 py-3 shadow-raised ${variantClassNames[variant]}`}
+      className={`rounded-lg border-(length:--border-width-normal) px-4 py-3 ${variantClassNames[variant]}`}
     >
       {children}
     </section>

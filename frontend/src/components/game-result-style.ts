@@ -8,7 +8,9 @@ export type GameResultSurfaceVariant =
   | "personalBest";
 
 type GameResultStyle = {
-  message: string | null;
+  message: string;
+  messageClassName: string;
+  scoreFigureClassName: string;
   scoreClassName: string;
   surfaceVariant: GameResultSurfaceVariant;
   markClassName: string;
@@ -23,6 +25,9 @@ type GameResultStyle = {
 const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
   perfect: {
     message: "パーフェクト！",
+    messageClassName: "text-reward text-amber-600 dark:text-amber-300",
+    scoreFigureClassName:
+      "text-screen-title font-bold text-amber-600 dark:text-amber-300",
     scoreClassName: "text-amber-600 dark:text-amber-300",
     surfaceVariant: "perfect",
     markClassName:
@@ -32,6 +37,9 @@ const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
   },
   great: {
     message: "すばらしい！",
+    messageClassName: "text-reward text-emerald-600 dark:text-emerald-300",
+    scoreFigureClassName:
+      "text-screen-title font-bold text-emerald-600 dark:text-emerald-300",
     scoreClassName: "text-emerald-600 dark:text-emerald-300",
     surfaceVariant: "great",
     markClassName:
@@ -41,6 +49,9 @@ const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
   },
   good: {
     message: "ナイスプレイ！",
+    messageClassName: "text-reward text-sky-600 dark:text-sky-300",
+    scoreFigureClassName:
+      "text-screen-title font-bold text-sky-600 dark:text-sky-300",
     scoreClassName: "text-sky-600 dark:text-sky-300",
     surfaceVariant: "good",
     markClassName:
@@ -49,7 +60,9 @@ const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
     confettiIntensity: null,
   },
   clear: {
-    message: null,
+    message: "クリア",
+    messageClassName: "text-screen-title text-foreground/85",
+    scoreFigureClassName: "text-heading font-semibold text-foreground/75",
     scoreClassName: "text-foreground",
     surfaceVariant: "neutral",
     markClassName: "bg-muted text-foreground",
