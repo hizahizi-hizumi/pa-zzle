@@ -2,6 +2,7 @@ import { Wrench } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { BrowserBottomSurface } from "@/components/BrowserBottomSurface";
 import { GameResultConfetti } from "@/components/GameResultConfetti";
 import { GameResultIdentity } from "@/components/GameResultIdentity";
 import { GameResultScoreCard } from "@/components/GameResultScoreCard";
@@ -79,9 +80,9 @@ export function GameResultScreen({
       aria-label="プレイ結果"
       className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background outline-none"
     >
-      <BrandIdentityHeader linkToHome />
+      <BrandIdentityHeader linkToHome pinned />
       <GameResultConfetti level={resultLevel} />
-      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-3 pb-[max(calc(var(--spacing)*4),env(safe-area-inset-bottom))]">
+      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col py-3 pb-[max(calc(var(--spacing)*4),env(safe-area-inset-bottom))] pl-[max(--spacing(4),env(safe-area-inset-left))] pr-[max(--spacing(4),env(safe-area-inset-right))]">
         <GameResultIdentity
           gameName={gameName}
           difficultyLabel={difficultyLabel}
@@ -131,6 +132,7 @@ export function GameResultScreen({
           </div>
         )}
       </div>
+      <BrowserBottomSurface />
     </section>
   );
 }
