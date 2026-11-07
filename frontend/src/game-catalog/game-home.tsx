@@ -11,8 +11,13 @@ import {
   toZukanGameSource,
 } from "@/game-catalog/game-catalog-entry";
 import { openRecordProblemPlay } from "@/game-catalog/game-navigation";
-import { useRequestedProblemId } from "@/game-catalog/problem-id-query";
+import {
+  createProblemIdSearch,
+  useRequestedProblemId,
+} from "@/game-catalog/problem-id-query";
+import { selectRandomProblemId } from "@/game-catalog/random-problem-selection";
 import type { DifficultyLevel } from "@/games/difficulty";
+import { randomProblemUnavailable } from "@/lib/random-problem-unavailable";
 import {
   readPlayAttemptsSnapshot,
   subscribePlayAttempts,
@@ -108,7 +113,15 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
       onLevelChangesShown: handleLevelChangesShown,
       initialSelectedProblemId: requestedProblemId,
       onPlayRandom(difficulty) {
-        navigate(game.playPath, { params: { difficulty } });
+        const problemId = selectRandomProblemId(game, difficulty);
+        if (problemId === null) {
+          randomProblemUnavailable.show(game.id, game.name);
+          return;
+        }
+        navigate(
+          { pathname: game.playPath, search: createProblemIdSearch(problemId) },
+          { params: { difficulty } },
+        );
       },
       onPlayProblem({ difficulty, problemId }) {
         openRecordProblemPlay(navigate, {
