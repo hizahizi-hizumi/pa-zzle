@@ -1,0 +1,182 @@
+{
+  "QUALITY-CLAMP-BEFORE": {
+    "function": "clampScore",
+    "checks": [
+      {
+        "args": [
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          -6
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          120
+        ],
+        "expected": 100
+      }
+    ]
+  },
+  "QUALITY-CLAMP-AFTER": {
+    "function": "clampScore",
+    "checks": [
+      {
+        "args": [
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          -6
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          120
+        ],
+        "expected": 100
+      }
+    ]
+  },
+  "QUALITY-IMMUTABLE-BEFORE": {
+    "function": "appendRecentMoves",
+    "checks": [
+      {
+        "args": [
+          [
+            2,
+            5,
+            7
+          ],
+          9
+        ],
+        "expected": [
+          5,
+          7,
+          9
+        ],
+        "inputs_unchanged": true
+      },
+      {
+        "args": [
+          [
+            2
+          ],
+          3
+        ],
+        "expected": [
+          2,
+          3
+        ],
+        "inputs_unchanged": true
+      }
+    ]
+  },
+  "QUALITY-IMMUTABLE-AFTER": {
+    "function": "appendRecentMoves",
+    "checks": [
+      {
+        "args": [
+          [
+            2,
+            5,
+            7
+          ],
+          9
+        ],
+        "expected": [
+          5,
+          7,
+          9
+        ],
+        "inputs_unchanged": true
+      },
+      {
+        "args": [
+          [
+            2
+          ],
+          3
+        ],
+        "expected": [
+          2,
+          3
+        ],
+        "inputs_unchanged": true
+      }
+    ]
+  },
+  "QUALITY-STALE-BEFORE": {
+    "function": "applyPuzzleLoad",
+    "checks": [
+      {
+        "args": [
+          {
+            "requestId": 8,
+            "puzzle": "new"
+          },
+          7,
+          "old"
+        ],
+        "expected": {
+          "requestId": 8,
+          "puzzle": "new"
+        }
+      },
+      {
+        "args": [
+          {
+            "requestId": 8,
+            "puzzle": "loading"
+          },
+          8,
+          "new"
+        ],
+        "expected": {
+          "requestId": 8,
+          "puzzle": "new"
+        }
+      }
+    ]
+  },
+  "QUALITY-STALE-AFTER": {
+    "function": "applyPuzzleLoad",
+    "checks": [
+      {
+        "args": [
+          {
+            "requestId": 8,
+            "puzzle": "new"
+          },
+          7,
+          "old"
+        ],
+        "expected": {
+          "requestId": 8,
+          "puzzle": "new"
+        }
+      },
+      {
+        "args": [
+          {
+            "requestId": 8,
+            "puzzle": "loading"
+          },
+          8,
+          "new"
+        ],
+        "expected": {
+          "requestId": 8,
+          "puzzle": "new"
+        }
+      }
+    ]
+  }
+}

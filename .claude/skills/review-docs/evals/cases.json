@@ -1,0 +1,36 @@
+[
+  {
+    "id": "DOC-HIGHER-REQUIREMENT",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "target_path": "frontend/src/games/example/puzzle/limit.ts",
+    "files": {
+      "docs/プロダクト/要件/FR-EVAL.md": "入力可能な整数は 1 から 9 まで。9 も受け付ける。",
+      "frontend/src/games/example/puzzle/limit.ts": "export function isAccepted(n: number): boolean { return Number.isInteger(n) && n >= 1 && n < 9; }"
+    },
+    "prompt": "提供した評価用ファイル間の整合性を、指定コミットの文書優先順位の規約に沿ってレビューしてください。存在しない要件は補わないでください。"
+  },
+  {
+    "id": "DOC-STALE-SPEC",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "target_path": "frontend/src/games/example/puzzle/limit.ts",
+    "files": {
+      "docs/プロダクト/仕様/SPEC-EVAL.md": "入力可能な整数は 1 から 8 まで。",
+      "frontend/src/games/example/puzzle/limit.ts": "export function isAccepted(n: number): boolean { return Number.isInteger(n) && n >= 1 && n <= 9; }"
+    },
+    "prompt": "提供した評価用ファイル間の整合性を、指定コミットの文書優先順位の規約に沿ってレビューしてください。存在しない要件は補わないでください。"
+  },
+  {
+    "id": "DOC-HISTORICAL-ADR",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "target_path": "frontend/src/components/ActionButton.tsx",
+    "files": {
+      "DESIGN.md": "共通UIの操作は既存のテーマトークンで配色する。",
+      "docs/adr/0010-old-colors.md": "過去に操作ボタンの色を独立した青へ統一する判断をした。",
+      "frontend/src/components/ActionButton.tsx": "export function ActionButton() { return <button className=\"bg-primary\">開始</button>; }"
+    },
+    "prompt": "提供した評価用ファイル間の整合性を、指定コミットの文書優先順位の規約に沿ってレビューしてください。存在しない要件は補わないでください。"
+  }
+]

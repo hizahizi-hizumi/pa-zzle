@@ -1,0 +1,38 @@
+[
+  {
+    "id": "ORCH-DEDUP",
+    "prompt": "専門レビューの固定出力を統合してください。専門レビューを再実行しないでください。",
+    "specialists": {
+      "review-rules": {"status": "completed", "findings": [
+        {"id": "R-1", "severity": "Major", "location": "src/action.ts:20", "issue": "入力チェックを省いた操作が規約に違反し、不正値を保存する", "evidence": "保存前に検証するという適用規約と、検証を行わない呼び出し"}
+      ]},
+      "review-docs": {"status": "completed", "findings": []},
+      "review-quality": {"status": "completed", "findings": [
+        {"id": "Q-1", "severity": "Major", "location": "src/action.ts:20", "issue": "未検証の値が保存経路へ流入して不正データが残る", "evidence": "同じ操作の保存経路を追跡"},
+        {"id": "Q-2", "severity": "Minor", "location": "src/form.ts:55", "issue": "エラー時に操作の再実行ボタンが無効のまま戻らない", "evidence": "失敗した非同期処理で状態復帰がない"}
+      ]}
+    }
+  },
+  {
+    "id": "ORCH-CONFLICT",
+    "prompt": "専門レビューの固定出力を統合してください。専門レビューを再実行しないでください。",
+    "specialists": {
+      "review-rules": {"status": "completed", "findings": [
+        {"id": "R-1", "severity": "Major", "location": "src/widget.tsx:18", "issue": "この記述は適用規約に反する", "evidence": "規約が該当すると主張。ただし具体的な適用 glob の記載なし"}
+      ]},
+      "review-docs": {"status": "completed", "findings": [
+        {"id": "D-1", "severity": "Minor", "location": "src/widget.tsx:18", "issue": "同じ記述は仕様で例外として定義されている", "evidence": "仕様の該当箇所を引用。ただし規約との優先順位は未確認"}
+      ]},
+      "review-quality": {"status": "completed", "findings": []}
+    }
+  },
+  {
+    "id": "ORCH-INCOMPLETE",
+    "prompt": "専門レビューの固定出力を統合してください。専門レビューを再実行しないでください。",
+    "specialists": {
+      "review-rules": {"status": "completed", "findings": []},
+      "review-docs": {"status": "not-run", "reason": "必要な正本文書へのアクセス失敗", "findings": []},
+      "review-quality": {"status": "completed", "findings": []}
+    }
+  }
+]

@@ -1,0 +1,130 @@
+[
+  {
+    "id": "WATER-BEFORE",
+    "ref": "926242b0d8dd3ffde352599ba942d9c2e2648e92",
+    "scope": [
+      "frontend/src/games/water-sort/ui/board/water-bottle/Water.tsx",
+      "frontend/src/games/water-sort/ui/board/water-bottle/WaterBottle.tsx"
+    ],
+    "prompt": "指定コミットのウォーターソートの表示実装を、一般的なコード品質の観点からレビューしてください。根拠がある問題と未確認の疑義を区別してください。",
+    "kind": "historical",
+    "scoring": "exploratory"
+  },
+  {
+    "id": "VIEWPORT-BEFORE",
+    "ref": "d3d15d72c8164328c7876f3d20414e478e37eee3",
+    "scope": [
+      "frontend/src/components/AppShell.tsx",
+      "frontend/src/index.css",
+      "frontend/src/components/GameSelectionGallery.tsx"
+    ],
+    "prompt": "指定コミットのパズル選択画面のレイアウト実装を、スマートフォンも含めてレビューしてください。根拠がある問題と未確認の疑義を区別してください。",
+    "kind": "historical",
+    "scoring": "exploratory"
+  },
+  {
+    "id": "WATER-AFTER",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "scope": [
+      "frontend/src/games/water-sort/ui/board/water-bottle/Water.tsx",
+      "frontend/src/games/water-sort/ui/board/water-bottle/WaterBottle.tsx"
+    ],
+    "prompt": "指定コミットのウォーターソートの表示実装を、一般的なコード品質の観点からレビューしてください。根拠がある問題と未確認の疑義を区別してください。",
+    "kind": "historical",
+    "scoring": "exploratory"
+  },
+  {
+    "id": "VIEWPORT-AFTER",
+    "ref": "926242b0d8dd3ffde352599ba942d9c2e2648e92",
+    "scope": [
+      "frontend/src/components/AppShell.tsx",
+      "frontend/src/index.css",
+      "frontend/src/components/GameSelectionGallery.tsx"
+    ],
+    "prompt": "指定コミットのパズル選択画面のレイアウト実装を、スマートフォンも含めてレビューしてください。根拠がある問題と未確認の疑義を区別してください。",
+    "kind": "historical",
+    "scoring": "exploratory"
+  },
+  {
+    "id": "TRACE-BEFORE",
+    "ref": "eff13ea8874976604376488729d87f531a4e1c6a",
+    "scope": [
+      "frontend/src/games/hitofude-puzzle/puzzle/transitions.ts",
+      "frontend/src/games/hitofude-puzzle/puzzle/transitions.test.ts"
+    ],
+    "prompt": "指定コミットの一筆パズルのプレイ状態更新を、一般的なコード品質の観点からレビューしてください。発生条件と影響を根拠付きで示してください。",
+    "kind": "historical",
+    "scoring": "exploratory"
+  },
+  {
+    "id": "TRACE-AFTER",
+    "ref": "3ff2eaba83066ab5436e9ab8af0fcb1287769523",
+    "scope": [
+      "frontend/src/games/hitofude-puzzle/puzzle/transitions.ts",
+      "frontend/src/games/hitofude-puzzle/puzzle/transitions.test.ts"
+    ],
+    "prompt": "指定コミットの一筆パズルのプレイ状態更新を、一般的なコード品質の観点からレビューしてください。発生条件と影響を根拠付きで示してください。",
+    "kind": "historical",
+    "scoring": "exploratory"
+  },
+  {
+    "id": "QUALITY-CLAMP-BEFORE",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "target_path": "frontend/src/games/example/puzzle/score.ts",
+    "contract": "整数の入力を 0 以上 100 以下へ制限する。0 は有効な結果であり、0 のまま返す。",
+    "content": "export function clampScore(n: number): number { return Math.max(1, Math.min(100, n)); }",
+    "prompt": "提供された契約と実装を一般的な品質の観点からレビューしてください。検証した入力と結果を示してください。",
+    "scoring": "primary"
+  },
+  {
+    "id": "QUALITY-CLAMP-AFTER",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "target_path": "frontend/src/games/example/puzzle/score.ts",
+    "contract": "整数の入力を 0 以上 100 以下へ制限する。0 は有効な結果であり、0 のまま返す。",
+    "content": "export function clampScore(n: number): number { return Math.max(0, Math.min(100, n)); }",
+    "prompt": "提供された契約と実装を一般的な品質の観点からレビューしてください。検証した入力と結果を示してください。",
+    "scoring": "primary"
+  },
+  {
+    "id": "QUALITY-IMMUTABLE-BEFORE",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "target_path": "frontend/src/lib/review-fixtures/appendRecentMoves.ts",
+    "contract": "入力の手順履歴に新しい手順番号を追加し、最後の3件だけを新しい配列で返す。引数の履歴配列を変更しない。",
+    "content": "export function appendRecentMoves(history: number[], move: number): number[] { history.push(move); if (history.length > 3) history.shift(); return history; }",
+    "prompt": "提供された契約と実装を一般的な品質の観点からレビューしてください。実行条件、確認した結果、疑義と確定指摘を区別してください。",
+    "scoring": "primary"
+  },
+  {
+    "id": "QUALITY-IMMUTABLE-AFTER",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "target_path": "frontend/src/lib/review-fixtures/appendRecentMoves.ts",
+    "contract": "入力の手順履歴に新しい手順番号を追加し、最後の3件だけを新しい配列で返す。引数の履歴配列を変更しない。",
+    "content": "export function appendRecentMoves(history: number[], move: number): number[] { return [...history, move].slice(-3); }",
+    "prompt": "提供された契約と実装を一般的な品質の観点からレビューしてください。実行条件、確認した結果、疑義と確定指摘を区別してください。",
+    "scoring": "primary"
+  },
+  {
+    "id": "QUALITY-STALE-BEFORE",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "target_path": "frontend/src/lib/review-fixtures/applyPuzzleLoad.ts",
+    "contract": "表示状態の requestId は最後に発行した要求の識別子である。応答の requestId が一致する場合だけ盤面を更新し、一致しない古い応答では現在の状態を維持する。",
+    "content": "export function applyPuzzleLoad(state: { requestId: number; puzzle: string }, responseId: number, puzzle: string): { requestId: number; puzzle: string } { return { ...state, puzzle }; }",
+    "prompt": "提供された契約と実装を一般的な品質の観点からレビューしてください。実行条件、確認した結果、疑義と確定指摘を区別してください。",
+    "scoring": "primary"
+  },
+  {
+    "id": "QUALITY-STALE-AFTER",
+    "kind": "synthetic",
+    "ref": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+    "target_path": "frontend/src/lib/review-fixtures/applyPuzzleLoad.ts",
+    "contract": "表示状態の requestId は最後に発行した要求の識別子である。応答の requestId が一致する場合だけ盤面を更新し、一致しない古い応答では現在の状態を維持する。",
+    "content": "export function applyPuzzleLoad(state: { requestId: number; puzzle: string }, responseId: number, puzzle: string): { requestId: number; puzzle: string } { if (state.requestId !== responseId) return state; return { ...state, puzzle }; }",
+    "prompt": "提供された契約と実装を一般的な品質の観点からレビューしてください。実行条件、確認した結果、疑義と確定指摘を区別してください。",
+    "scoring": "primary"
+  }
+]
