@@ -1,6 +1,8 @@
 # ChatGPT環境での画面確認
 
-ChatGPT実行環境で `pa-zzle` のVite開発サーバーをPlaywright / Chromiumから確認する手順。
+ChatGPT実行環境で `pa-zzle` のVite開発サーバーをPlaywright / Chromiumから確認するための環境固有手順。
+
+画面レビューの観点と確認工程は `../開発/画面レビュー手順.md` を正とする。
 
 ## 前提
 
@@ -120,15 +122,9 @@ Viteは `vite.chatgpt.config.ts` により依存最適化を起動時に完了�
 
 Memory Routerへ差し替えているため、アドレスバーのURL、ブラウザの戻る・進む、`window.history` / `window.location` に依存する挙動は本手順では忠実に検証できない。それらは別のテストで確認し、この手順では画面描画・アプリ内遷移・操作結果を検証する。
 
-## 確認項目
+## レビュー項目
 
-画面変更を確認するときは、少なくとも以下を実施する。
-
-- 対象画面を実際に描画する。
-- 変更箇所をPlaywrightで操作する。
-- `browser.assert_no_browser_errors()` で `pageerror`、`console.error`、失敗した要求がないことを確認する。
-- 見た目が重要な変更ではスクリーンショットを確認する。
-- レスポンシブ対応に関係する変更ではスマートフォン相当の画面幅でも確認する。
+画面変更で何を確認するかは `../開発/画面レビュー手順.md` に従う。この環境では `browser.assert_no_browser_errors()` で `pageerror`、意図しない `console.error`、失敗した要求を確認する。
 
 ## 失敗したとき
 
