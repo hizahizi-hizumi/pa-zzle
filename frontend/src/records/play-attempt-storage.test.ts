@@ -8,8 +8,10 @@ import {
 import type { PlayRecord } from "@/records/play-record";
 import { appendPlayRecord, type PlayRecordStorage } from "@/records/storage";
 
-function createMemoryStorage(): PlayRecordStorage {
-  const values = new Map<string, string>();
+function createMemoryStorage(
+  initial: Record<string, string> = {},
+): PlayRecordStorage {
+  const values = new Map(Object.entries(initial));
   return {
     getItem(key) {
       return values.get(key) ?? null;
@@ -136,5 +138,41 @@ describe("保存領域へアクセスできない場合", () => {
     const attempts = readPlayAttempts();
 
     expect(attempts).toEqual([]);
+  });
+});
+
+const PLAY_ATTEMPTS_KEY = "pa-zzle.play-attempts.v1";
+
+describe("壊れたプレイ試行を保持した保存先の場合", () => {
+  const invalidValues = [
+    ["不正なJSON", "not-json"],
+    ["配列ではない値", "{}"],
+    ["一部が不正な試行", JSON.stringify([attempt, { gameId: "broken" }])],
+  ] as const;
+  const cases = invalidValues.map(([name, value]) => ({
+    name,
+    value,
+    storage: createMemoryStorage({ [PLAY_ATTEMPTS_KEY]: value }),
+  }));
+
+  test.each(cases)(
+    "通常のプレイ開始で元の値を上書きしないこと: $name",
+    ({ value, storage }) => {
+      startPlayAttempt(nextAttempt, storage);
+      const persisted = storage.getItem(PLAY_ATTEMPTS_KEY);
+
+      expect(persisted).toBe(value);
+    },
+  );
+
+  const nextAttempt = createAttempt(2_000);
+  const invalidStorage = createMemoryStorage({ [PLAY_ATTEMPTS_KEY]: "{" });
+
+  test("離脱や完了の保存処理でも壊れた試行を上書きしないこと", () => {
+    abandonPlayAttempt(attempt, abandonment, invalidStorage);
+    removeClearedPlayAttempts(invalidStorage);
+    const persisted = invalidStorage.getItem(PLAY_ATTEMPTS_KEY);
+
+    expect(persisted).toBe("{");
   });
 });

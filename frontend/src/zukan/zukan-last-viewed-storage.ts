@@ -52,6 +52,20 @@ function parseViewedStatuses(value: unknown): ZukanViewedStatuses | null {
   return statuses;
 }
 
+function isWritableViewedStatuses(
+  value: unknown,
+): value is ZukanViewedStatuses {
+  if (!isRecordObject(value)) {
+    return false;
+  }
+  return Object.entries(value).every(
+    ([difficulty, section]) =>
+      parseDifficultyLevel(difficulty) !== undefined &&
+      isRecordObject(section) &&
+      Object.values(section).every(isZukanViewedStatus),
+  );
+}
+
 function readStoredGames(
   storage: PlayRecordStorage,
 ): Record<string, unknown> | null {
@@ -96,8 +110,15 @@ export function writeZukanLastViewed(
   if (!storage) {
     return;
   }
-  const games = readStoredGames(storage) ?? {};
-  const game = { ...readStoredGame(games, gameId), ...statuses };
+  const games = readStoredGames(storage);
+  if (games === null) {
+    return;
+  }
+  const previousGame = games[gameId] ?? {};
+  if (!isWritableViewedStatuses(previousGame)) {
+    return;
+  }
+  const game = { ...previousGame, ...statuses };
   try {
     storage.setItem(
       ZUKAN_LAST_VIEWED_STORAGE_KEY,

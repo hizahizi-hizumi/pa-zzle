@@ -166,11 +166,11 @@ describe("writeZukanLastViewed", () => {
       storage = createMemoryStorage({ [STORAGE_KEY]: "{" });
     });
 
-    test("今の状態で保存し直すこと", () => {
+    test("元の保存値を上書きしないこと", () => {
       writeZukanLastViewed("nanpure", nanpureLevels, storage);
-      const saved = readZukanLastViewed("nanpure", storage);
+      const persisted = storage.getItem(STORAGE_KEY);
 
-      expect(saved).toEqual(nanpureLevels);
+      expect(persisted).toBe("{");
     });
   });
 
@@ -188,6 +188,45 @@ describe("writeZukanLastViewed", () => {
       const act = () => writeZukanLastViewed("nanpure", nanpureLevels, storage);
 
       expect(act).not.toThrow();
+    });
+  });
+});
+
+describe("writeZukanLastViewed", () => {
+  const invalidGameValues = [
+    ["ゲームの状態が配列", []],
+    ["難易度の状態が配列", { "1": ["a"] }],
+    ["読めない問題の状態が含まれる", { "1": { a: "unknown" } }],
+  ] as const;
+  const cases = invalidGameValues.map(([name, game]) => {
+    const raw = JSON.stringify({ nanpure: game });
+    return { name, raw, storage: createMemoryStorage({ [STORAGE_KEY]: raw }) };
+  });
+
+  test.each(cases)(
+    "一部が壊れたゲームの状態を上書きしないこと: $name",
+    ({ raw, storage }) => {
+      writeZukanLastViewed("nanpure", nanpureLevels, storage);
+      const persisted = storage.getItem(STORAGE_KEY);
+
+      expect(persisted).toBe(raw);
+    },
+  );
+
+  const previousOtherGame = { "water-sort": waterSortLevels };
+  const updatedWaterSort: ZukanViewedStatuses = { "3": { e: "great" } };
+  const preservedOtherGame = createMemoryStorage({
+    [STORAGE_KEY]: JSON.stringify({ ...previousOtherGame, nanpure: [] }),
+  });
+
+  test("別のゲームの壊れた値を残して正常なゲームを更新できること", () => {
+    writeZukanLastViewed("water-sort", updatedWaterSort, preservedOtherGame);
+    const persisted = preservedOtherGame.getItem(STORAGE_KEY);
+
+    expect(JSON.parse(persisted ?? "{}")).toEqual({
+      ...previousOtherGame,
+      "water-sort": { ...waterSortLevels, ...updatedWaterSort },
+      nanpure: [],
     });
   });
 });
