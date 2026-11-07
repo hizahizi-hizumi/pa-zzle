@@ -69,6 +69,7 @@ export function TakuzuPlay({
       progress={progress}
       result={result}
       title={TAKUZU_DISPLAY_NAME}
+      background={<div className="size-full bg-[#e4e8ed] dark:bg-[#22272d]" />}
       metrics={[
         { type: "count", label: "置き直し", count: correctionCount },
         { type: "elapsed-time", elapsedMs },

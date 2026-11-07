@@ -128,6 +128,7 @@ export function IceFloorMazePlay({
       progress={progress}
       result={result}
       title={ICE_FLOOR_MAZE_DISPLAY_NAME}
+      background={<div className="size-full bg-[#e7eef3] dark:bg-[#202c35]" />}
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },

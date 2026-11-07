@@ -77,6 +77,7 @@ export function MinesweeperPlay({
       progress={progress}
       result={result}
       title={MINESWEEPER_DISPLAY_NAME}
+      background={<div className="size-full bg-[#dbe2d4] dark:bg-[#252c23]" />}
       metrics={[
         { type: "count", label: "地雷", count: mineCount },
         { type: "count", label: "旗", count: flagCount },

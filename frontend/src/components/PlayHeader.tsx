@@ -59,8 +59,8 @@ export function PlayHeader({
     <header
       className={
         hasTrailingAction
-          ? "grid h-[4.5rem] shrink-0 grid-cols-[5.25rem_minmax(0,1fr)_5.25rem] items-start bg-background px-3 pt-2"
-          : "grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-start bg-background px-3 pt-2"
+          ? "grid h-[4.5rem] shrink-0 grid-cols-[5.25rem_minmax(0,1fr)_5.25rem] items-start px-3 pt-2"
+          : "grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-start px-3 pt-2"
       }
     >
       <Button

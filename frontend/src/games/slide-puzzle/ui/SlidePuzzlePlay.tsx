@@ -98,6 +98,7 @@ export function SlidePuzzlePlay({
       progress={progress}
       result={result}
       title={SLIDE_PUZZLE_DISPLAY_NAME}
+      background={<div className="size-full bg-[#e8e2d8] dark:bg-[#2b2722]" />}
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },

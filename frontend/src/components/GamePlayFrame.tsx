@@ -22,6 +22,8 @@ type GamePlayFrameProps<Result> = Pick<
   Partial<RestartableGamePlayScreenProps> & {
     /** ゲームの表示名。 */
     title: string;
+    /** ゲーム固有の地。見出しから盤面まで、プレイ画面全体の背景として敷く。 */
+    background?: ReactNode;
     metrics: readonly PlayHeaderMetric[];
     /** 見出しのメニューの手前に置くゲーム固有の操作。 */
     trailingAction?: ReactNode;
@@ -43,6 +45,7 @@ export function GamePlayFrame<Result>({
   progress,
   result,
   title,
+  background,
   metrics,
   trailingAction,
   canRestart,
@@ -68,7 +71,15 @@ export function GamePlayFrame<Result>({
       ref={ref}
       className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]"
     >
-      <BrandIdentityHeader />
+      {background != null && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10"
+        >
+          {background}
+        </div>
+      )}
+      <BrandIdentityHeader surface="game" />
       <PlayHeader
         title={title}
         metrics={metrics}
