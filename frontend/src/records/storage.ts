@@ -40,11 +40,26 @@ export function readPlayRecords(
   }
 }
 
+function readPlayRecordsForUpdate(
+  storage: PlayRecordStorage,
+): PlayRecord[] | null {
+  try {
+    const stored = storage.getItem(PLAY_RECORDS_STORAGE_KEY);
+    if (stored === null) {
+      return [];
+    }
+    const parsed: unknown = JSON.parse(stored);
+    return Array.isArray(parsed) && parsed.every(isPlayRecord) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export function writePlayRecords(
   records: readonly PlayRecord[],
   storage: PlayRecordStorage | null = getDefaultStorage(),
 ): boolean {
-  if (!storage) {
+  if (!storage || readPlayRecordsForUpdate(storage) === null) {
     return false;
   }
 
@@ -60,7 +75,10 @@ export function appendPlayRecord(
   record: PlayRecord,
   storage: PlayRecordStorage | null = getDefaultStorage(),
 ): "saved" | "duplicate" | "failed" {
-  const records = readPlayRecords(storage);
+  const records = storage ? readPlayRecordsForUpdate(storage) : null;
+  if (records === null) {
+    return "failed";
+  }
   if (records.some((existing) => existing.id === record.id)) {
     return "duplicate";
   }

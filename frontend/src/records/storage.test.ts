@@ -4,6 +4,7 @@ import {
   findPlayRecord,
   type PlayRecordStorage,
   readPlayRecords,
+  writePlayRecords,
 } from "@/records/storage";
 
 function createMemoryStorage(
@@ -89,5 +90,62 @@ describe("findPlayRecord", () => {
     const record = findPlayRecord("record-3", storage);
 
     expect(record).toBeNull();
+  });
+});
+
+const PLAY_RECORDS_KEY = "pa-zzle.play-records.v1";
+
+describe("appendPlayRecord", () => {
+  const record = createRecord("new-record");
+  const preservedRecord = createRecord("existing-record");
+  const invalidValues = [
+    ["不正なJSON", "not-json"],
+    ["配列以外の値", "{}"],
+    ["部分的に壊れた履歴", JSON.stringify([preservedRecord, { id: "broken" }])],
+  ] as const;
+  const cases = invalidValues.map(([name, value]) => ({
+    name,
+    value,
+    storage: createMemoryStorage(value),
+  }));
+
+  test.each(cases)(
+    "壊れた保存値を上書きしないこと: $name",
+    ({ value, storage }) => {
+      const saveStatus = appendPlayRecord(record, storage);
+      const persisted = storage.getItem(PLAY_RECORDS_KEY);
+
+      expect(saveStatus).toBe("failed");
+      expect(persisted).toBe(value);
+    },
+  );
+
+  const inaccessibleStorage: PlayRecordStorage = {
+    getItem() {
+      throw new Error("access denied");
+    },
+    setItem() {
+      throw new Error("should not be called");
+    },
+  };
+
+  test("保存済みの履歴が読めないとき書き込まないこと", () => {
+    const saveStatus = appendPlayRecord(record, inaccessibleStorage);
+
+    expect(saveStatus).toBe("failed");
+  });
+});
+
+describe("writePlayRecords", () => {
+  const invalidValue = "not-json";
+  const storage = createMemoryStorage(invalidValue);
+  const replacementRecord = createRecord("new-record");
+
+  test("明示的な保存でも壊れた既存値を上書きしないこと", () => {
+    const saved = writePlayRecords([replacementRecord], storage);
+    const persisted = storage.getItem(PLAY_RECORDS_KEY);
+
+    expect(saved).toBe(false);
+    expect(persisted).toBe(invalidValue);
   });
 });
