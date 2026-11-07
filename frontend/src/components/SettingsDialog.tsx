@@ -2,6 +2,7 @@ import { createLucideIcon, Music, Volume2, VolumeX, X } from "lucide-react";
 import { type ReactNode, useSyncExternalStore } from "react";
 
 import { playSoundEffectsVolumePreview } from "@/components/app-decision-sound";
+import { RandomProblemSettingsPanel } from "@/components/SettingsDialog/RandomProblemSettingsPanel";
 import { VolumeSettingRow } from "@/components/SettingsDialog/VolumeSettingRow";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,10 +30,11 @@ type SettingsDialogProps = {
   onOpenChange: (open: boolean) => void;
   /** 開くボタン。渡すと、閉じたときにこのボタンへ操作の位置を戻す。 */
   trigger?: ReactNode;
+  initialGameId?: string;
 };
 
 /**
- * 全ゲームで共通の設定を選ぶダイアログ。効果音と BGM の音量を選ぶ。
+ * 全ゲーム共通の設定を選ぶダイアログ。効果音・BGM の音量とランダム出題対象を選ぶ。
  * 選んだ音量はその場で鳴っている音に効き、端末に保存して次に開いたときも引き継ぐ。
  * 設定の操作には音を鳴らさない。ただし効果音の音量は、選び終えたときに選んだ音量で確かめの音を鳴らす。
  */
@@ -40,6 +42,7 @@ export function SettingsDialog({
   open,
   onOpenChange,
   trigger,
+  initialGameId,
 }: SettingsDialogProps) {
   const soundEffectsVolume = useSyncExternalStore(
     soundEffectsVolumeSetting.subscribe,
@@ -58,8 +61,11 @@ export function SettingsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent showCloseButton={false} className="sm:max-w-sm">
-        <DialogHeader className="text-left">
+      <DialogContent
+        showCloseButton={false}
+        className="flex max-h-[min(90dvh,48rem)] flex-col overflow-hidden sm:max-w-md"
+      >
+        <DialogHeader className="shrink-0 text-left">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle>設定</DialogTitle>
             <DialogClose asChild>
@@ -73,28 +79,54 @@ export function SettingsDialog({
               </Button>
             </DialogClose>
           </div>
-          <DialogDescription>音量は全てのゲームで共通です。</DialogDescription>
+          <DialogDescription className="sr-only">
+            音量とランダム出題の対象を選びます。
+          </DialogDescription>
         </DialogHeader>
-
-        <div className="grid gap-4">
-          <VolumeSettingRow
-            label="効果音"
-            volume={soundEffectsVolume}
-            icon={Volume2}
-            mutedIcon={VolumeX}
-            onChange={soundEffectsVolumeSetting.setVolume}
-            onCommit={commitSoundEffectsVolume}
-            onToggleMuted={soundEffectsVolumeSetting.toggleMuted}
-          />
-          <VolumeSettingRow
-            label="BGM"
-            volume={backgroundMusicVolume}
-            icon={Music}
-            mutedIcon={MusicOff}
-            onChange={backgroundMusicVolumeSetting.setVolume}
-            onCommit={backgroundMusicVolumeSetting.commitVolume}
-            onToggleMuted={backgroundMusicVolumeSetting.toggleMuted}
-          />
+        <div className="min-h-0 overflow-y-auto pr-1">
+          <div className="grid gap-4">
+            <section
+              aria-labelledby="sound-settings-title"
+              className="grid gap-2"
+            >
+              <h3
+                id="sound-settings-title"
+                className="text-supporting font-medium"
+              >
+                サウンド
+              </h3>
+              <VolumeSettingRow
+                label="効果音"
+                volume={soundEffectsVolume}
+                icon={Volume2}
+                mutedIcon={VolumeX}
+                onChange={soundEffectsVolumeSetting.setVolume}
+                onCommit={commitSoundEffectsVolume}
+                onToggleMuted={soundEffectsVolumeSetting.toggleMuted}
+              />
+              <VolumeSettingRow
+                label="BGM"
+                volume={backgroundMusicVolume}
+                icon={Music}
+                mutedIcon={MusicOff}
+                onChange={backgroundMusicVolumeSetting.setVolume}
+                onCommit={backgroundMusicVolumeSetting.commitVolume}
+                onToggleMuted={backgroundMusicVolumeSetting.toggleMuted}
+              />
+            </section>
+            <section
+              aria-labelledby="random-settings-title"
+              className="grid gap-3 border-t border-border pt-4"
+            >
+              <h3
+                id="random-settings-title"
+                className="text-supporting font-medium"
+              >
+                ランダム出題
+              </h3>
+              <RandomProblemSettingsPanel initialGameId={initialGameId} />
+            </section>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

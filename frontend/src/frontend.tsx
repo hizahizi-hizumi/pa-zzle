@@ -4,6 +4,9 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import "@/index.css";
+import { RandomProblemGameOptionsProvider } from "@/components/RandomProblemGameOptionsContext";
+import { RandomProblemUnavailableDialog } from "@/components/RandomProblemUnavailableDialog";
+import { gameCatalog } from "@/game-catalog/game-catalog";
 import { startAppLaunch } from "@/lib/app-launch";
 import { defineSoundEffect } from "@/lib/sound-effects";
 
@@ -44,6 +47,9 @@ const router = createBrowserRouter(routes);
 
 createRoot(root).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <RandomProblemGameOptionsProvider games={gameCatalog}>
+      <RouterProvider router={router} />
+      <RandomProblemUnavailableDialog />
+    </RandomProblemGameOptionsProvider>
   </StrictMode>,
 );

@@ -41,7 +41,7 @@ type PlayableGameSource<
   Result extends ScoredResult,
   Snapshot,
 > = {
-  game: Pick<GameCatalogEntry, "homePath" | "playPath" | "playRecordDisplay">;
+  game: GameCatalogEntry;
   play: GamePlay<Difficulty, Identity, Session, Result>;
   playRecordDefinition: PlayRecordDefinition;
   /** クリアしたプレイの完了記録を作る。記録を作り直さないよう、描画ごとに作り直さない関数を渡す。 */
@@ -144,7 +144,13 @@ export function usePlayableGame<
       ),
       onReplay: play.replay,
       onClearAnimationComplete: play.completeClearAnimation,
-      onStartNewProblem: play.startNewProblem,
+      onStartNewProblem() {
+        navigation.startNewProblem(
+          difficulty,
+          createProblemId(problemIdentity),
+          { replacesHistory: true },
+        );
+      },
       // やめた問題のプレイ画面は、ブラウザの戻るで開き直さないよう履歴に残さない。
       onOpenGameHome() {
         navigation.openGameHome(createProblemId(problemIdentity), {
