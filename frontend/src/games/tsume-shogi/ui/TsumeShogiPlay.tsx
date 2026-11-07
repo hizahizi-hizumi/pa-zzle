@@ -184,6 +184,11 @@ export function TsumeShogiPlay({
       progress={progress}
       result={result}
       title={TSUME_SHOGI_DISPLAY_NAME}
+      background={
+        <div
+          className={cn("size-full", tsumeShogiToneClassNames.tableSurface)}
+        />
+      }
       metrics={[
         { type: "problem-fact", text: `${plies}手詰` },
         { type: "elapsed-time", elapsedMs },

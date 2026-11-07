@@ -74,6 +74,7 @@ export function ParkingJamPlay({
       progress={progress}
       result={result}
       title={PARKING_JAM_DISPLAY_NAME}
+      background={<div className="size-full bg-[#e2e5e4] dark:bg-[#22282a]" />}
       metrics={[
         { type: "count", label: "ミス", count: failedMoveCount },
         { type: "elapsed-time", elapsedMs },

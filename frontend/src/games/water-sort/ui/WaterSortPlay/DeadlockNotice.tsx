@@ -14,24 +14,21 @@ export function DeadlockNotice({
   onRestart,
 }: DeadlockNoticeProps) {
   return (
-    <div
-      role="status"
-      className="mx-auto max-w-md rounded-lg border-(length:--border-width-normal) bg-muted/50 px-3 py-2"
-    >
+    <div role="status" className="mx-auto max-w-md px-3 py-2">
       <div className="text-center">
         <p className="text-play-context">手詰まり</p>
       </div>
       <div className="mt-1 flex justify-center gap-1">
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
           onClick={onUndo}
           disabled={!canUndo}
         >
           <Undo2 />
           {PLAY_OPERATION_LABELS.undo}
         </Button>
-        <Button type="button" variant="outline" onClick={onRestart}>
+        <Button type="button" variant="secondary" onClick={onRestart}>
           <RotateCcw />
           {PLAY_OPERATION_LABELS.restart}
         </Button>

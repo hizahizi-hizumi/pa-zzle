@@ -68,6 +68,7 @@ export function WaterSortPlay({
       progress={progress}
       result={result}
       title={WATER_SORT_DISPLAY_NAME}
+      background={<div className="size-full bg-[#e5eef0] dark:bg-[#1c292d]" />}
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },

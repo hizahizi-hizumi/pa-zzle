@@ -142,6 +142,7 @@ export function ReflectionPlay({
       progress={progress}
       result={result}
       title={REFLECTION_DISPLAY_NAME}
+      background={<div className="size-full bg-[#eae7ef] dark:bg-[#272431]" />}
       // 置き直しは点に入らないので、プレイ中は時間だけを示す。置き直しの回数は結果と記録に出す。
       metrics={[{ type: "elapsed-time", elapsedMs }]}
       canRestart={canRestart}
