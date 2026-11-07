@@ -5,7 +5,7 @@ import {
   RouterProvider,
 } from "react-router";
 
-import { createPlayLocationState } from "@/game-catalog/play-location-state";
+import { readRandomPlaySerial } from "@/game-catalog/play-location-state";
 import { createRecordResultLocationState } from "@/game-catalog/record-result-location-state";
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
@@ -91,8 +91,11 @@ describe("今の版の記録の場合", () => {
     const { location } = router.state;
 
     expect(location.pathname).toBe("/puzzles/nanpure/play/3");
-    expect(location.search).toBe("");
-    expect(location.state).toEqual(createPlayLocationState(nanpureProblemId));
+    const nextProblemId = new URLSearchParams(location.search).get("problem");
+
+    expect(nextProblemId).toBeTruthy();
+    expect(nextProblemId).not.toBe(nanpureProblemId);
+    expect(readRandomPlaySerial(location.state)).toBeGreaterThan(0);
   });
 
   test("もう一度で記録の問題 ID を付けたプレイ画面へ移ること", () => {
