@@ -52,7 +52,7 @@ export function NotFoundView() {
           />
           {/* 見出しは盤面に印刷された文字として、背景の継ぎ目の上・前面の継ぎ目の下に描く。 */}
           <h1
-            className="absolute inset-x-0 -translate-y-1/2 px-4 text-center text-screen-title text-foreground/80"
+            className="absolute inset-x-0 -translate-y-1/2 px-4 text-center text-screen-title text-foreground"
             style={{
               fontSize: `calc(var(--text-screen-title) * ${layout.textScale})`,
               lineHeight: `calc(var(--text-screen-title--line-height) * ${layout.textScale})`,

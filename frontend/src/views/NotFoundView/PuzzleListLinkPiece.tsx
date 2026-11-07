@@ -1,5 +1,4 @@
 import { Link } from "@/router";
-import { seamStrokeClassNames } from "@/views/NotFoundView/seamStroke";
 
 type PuzzleListLinkPieceProps = {
   /** セル部分の高さ。 */
@@ -18,7 +17,7 @@ type PuzzleListLinkPieceProps = {
 const ringAllowance = 4;
 
 /**
- * 盤面に噛み合った1枚のピースとして描く、パズル一覧へ戻るリンク。
+ * 盤面に噛み合った1枚のピースとして描く、パズル一覧へ戻るリンク。画面の目的を前へ進める主要操作として、ピースを主要操作の色で塗る。
  * 押せる範囲をピースの形に合わせるため、リンク自体はポインタを受けずピースの塗りだけが受ける。
  */
 export function PuzzleListLinkPiece({
@@ -58,12 +57,12 @@ export function PuzzleListLinkPiece({
         />
         <path
           d={path}
-          className={`pointer-events-auto cursor-pointer fill-brand-subtle ${seamStrokeClassNames.back} transition-colors duration-(--duration-fast) group-hover:fill-brand/50 group-hover:stroke-brand-strong group-active:fill-brand motion-reduce:transition-none`}
-          strokeWidth="3"
+          className="pointer-events-auto cursor-pointer fill-primary stroke-primary transition-colors duration-(--duration-fast) group-hover:fill-primary/90 group-hover:stroke-primary/90 motion-reduce:transition-none"
+          strokeWidth="1"
         />
       </svg>
       <span
-        className="relative text-body font-semibold text-foreground"
+        className="relative text-body font-semibold text-primary-foreground"
         style={{
           fontSize: `calc(var(--text-body) * ${textScale})`,
           lineHeight: `calc(var(--text-body--line-height) * ${textScale})`,

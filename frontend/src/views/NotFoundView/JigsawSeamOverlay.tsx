@@ -22,7 +22,7 @@ export function JigsawSeamOverlay({
         d={outlinePath}
         fill="none"
         className={seamStrokeClassNames.front}
-        strokeWidth="2.5"
+        strokeWidth="1"
       />
     </svg>
   );

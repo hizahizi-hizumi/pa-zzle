@@ -57,7 +57,8 @@ export function LoosePuzzlePiece({
       : start.x < slot.x
         ? -looseTiltDegrees
         : looseTiltDegrees;
-  const strokeWidth = piece.isPlaced ? 2.5 : 3;
+  // はまったピースは盤面の継ぎ目と同じ線にして盤面に溶け込ませ、外れている間だけ太い輪郭で動かせることを示す。
+  const strokeWidth = piece.isPlaced ? 1 : 3;
   const padding = tabExtent + ringAllowance;
   const boxSize = pieceSize + padding * 2;
 

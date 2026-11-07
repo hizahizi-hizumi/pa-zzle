@@ -268,9 +268,15 @@ function arrangeBoard({
   const centerX = width / 2;
 
   // 見出しは盤面に印刷した文字として継ぎ目線の下に描くため、横の継ぎ目が字面を貫かないよう、リンクのすぐ上の行の中央に置く。
+  // 主要操作の色で塗ったリンクのピースは見出しより前に描くので、ピースが小さく頭の出っ張りが字面に掛かるときは、掛からない高さまで見出しを上げる。
   // 外れピースは 0 と見出しの間の中央に置き、上下とも頭の出っ張り分の間隔を空ける。
   const minimumGap = pieceSize * minimumGapInPieces;
-  const headingClearanceAboveLink = pieceSize / 2 + scaledHeadingBandHeight / 2;
+  const headingCenterAboveLink = Math.max(
+    pieceSize / 2,
+    tabExtent + minimumGap + scaledHeadingBandHeight / 2,
+  );
+  const headingClearanceAboveLink =
+    headingCenterAboveLink + scaledHeadingBandHeight / 2;
   const minimumZeroToLinkDistance =
     pieceSize +
     (minimumGap + tabExtent) +
@@ -292,7 +298,7 @@ function arrangeBoard({
   const zeroCenterY =
     topMargin + pieceSize + (height - stackHeight(rowsToLink)) / 2;
   const linkTop = zeroCenterY + pieceSize * rowsToLink;
-  const headingCenterY = linkTop - pieceSize / 2;
+  const headingCenterY = linkTop - headingCenterAboveLink;
   const zeroBottom = zeroCenterY + pieceSize;
   const headingTop = headingCenterY - scaledHeadingBandHeight / 2;
   const looseTop = (zeroBottom + headingTop) / 2 - pieceSize / 2;

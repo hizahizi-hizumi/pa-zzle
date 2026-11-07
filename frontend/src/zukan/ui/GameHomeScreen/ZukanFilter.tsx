@@ -1,13 +1,12 @@
-import { ListFilterIcon, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { VisuallyHidden } from "radix-ui";
 import { useId } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
-  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   Sheet,
@@ -17,11 +16,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
+import type { GameHomeLayerControl } from "@/zukan/ui/GameHomeScreen/use-game-home-layers";
 import { useHeaderLayerSheet } from "@/zukan/ui/GameHomeScreen/use-header-layer-sheet";
 import { ZukanFilterPanel } from "@/zukan/ui/GameHomeScreen/ZukanFilter/ZukanFilterPanel";
-import { ZukanHeaderButton } from "@/zukan/ui/GameHomeScreen/ZukanHeaderButton";
 import type { ZukanFilterFeatureAxis } from "@/zukan/ui/GameHomeScreen/zukan-filter-appearance";
 import {
   countZukanFilterConditions,
@@ -31,7 +29,7 @@ import {
   type ZukanPerformanceAxis,
 } from "@/zukan/zukan-filter";
 
-type ZukanFilterProps = {
+type ZukanFilterProps = GameHomeLayerControl & {
   conditions: ZukanFilterConditions;
   /** 開いているレベルの、条件に当たる問題の数。 */
   matchedCount: number;
@@ -42,14 +40,12 @@ type ZukanFilterProps = {
   optionCounts: ZukanFilterOptionCounts;
   /** 開いているレベルの選択肢ごとの、条件をかけないときに当たる問題の数。 */
   optionCountLimits: ZukanFilterOptionCounts;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   onConditionsChange: (conditions: ZukanFilterConditions) => void;
 };
 
 /**
- * 図鑑の絞り込み。押すと条件を選ぶ並びを、スマートフォンでは画面の下からのシート、PC ではボタンから出すポップオーバーで出す。
- * 選んだ条件はすぐ台紙に映し、当たる問題の数を並びの下に示す。条件をかけている間は、ボタンに条件の数を添え、並びの「解除」で全部外せる。
+ * 図鑑の絞り込み。条件を選ぶ並びを、スマートフォンでは画面の下からのシート、PC では見出しのメニューのボタンから出すポップオーバーで出す。
+ * 選んだ条件はすぐ台紙に映し、当たる問題の数を並びの下に示す。条件は並びの「解除」で全部外せる。
  */
 export function ZukanFilter({
   conditions,
@@ -60,34 +56,13 @@ export function ZukanFilter({
   optionCountLimits,
   open,
   onOpenChange,
+  anchorRef,
   onConditionsChange,
 }: ZukanFilterProps) {
   const isSheet = useHeaderLayerSheet();
   const titleId = useId();
-  const conditionCount = countZukanFilterConditions(conditions);
-  const isFiltering = conditionCount > 0;
+  const isFiltering = countZukanFilterConditions(conditions) > 0;
 
-  const trigger = (
-    <ZukanHeaderButton
-      aria-label={
-        isFiltering ? `絞り込み、条件${conditionCount}つ` : "絞り込み"
-      }
-      icon={<ListFilterIcon aria-hidden="true" />}
-      label="絞り込み"
-      mark={
-        // 条件を付け外ししても見出しの並びの要素を足し引きしないよう、条件の数の印は常に置き、条件が無い間は見えなくする。
-        <span
-          aria-hidden="true"
-          data-condition-count-mark=""
-          className={isFiltering ? "inline-flex" : "invisible inline-flex"}
-        >
-          <Badge>
-            <span className="tabular-nums">{conditionCount}</span>
-          </Badge>
-        </span>
-      }
-    />
-  );
   const panel = (
     <ZukanFilterPanel
       conditions={conditions}
@@ -130,7 +105,6 @@ export function ZukanFilter({
   if (isSheet) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetTrigger asChild>{trigger}</SheetTrigger>
         <SheetContent side="bottom" layout="sections" showCloseButton={false}>
           <SheetHeader layout="inline">
             <SheetTitle>絞り込み</SheetTitle>
@@ -154,7 +128,7 @@ export function ZukanFilter({
 
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverAnchor virtualRef={anchorRef} />
       <PopoverContent align="end" size="wide" aria-labelledby={titleId}>
         <div className="grid gap-3">
           <h2 id={titleId} className="font-semibold">
