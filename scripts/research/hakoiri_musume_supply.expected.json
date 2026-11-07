@@ -1,0 +1,234 @@
+{
+ "description": "箱入り娘 問題供給の調査で採った案（左右反転を同じ問題とみなす・同じ問題集の中で6手以内に近い問題を採らない・仮の5段階に 500/500/500/500/300 問・駒の組を巡回）の seed ごとの結果。python3 scripts/research/hakoiri_musume_supply.py pool --seed <seed> --per-level 500,500,500,500,300 --radius 6",
+ "reference_states": {
+  "v4h1s4 (横刀立馬の駒の組)": {
+   "states": 53954,
+   "components": 52,
+   "max_moves": 93,
+   "yokotoritsuba_moves": 81
+  },
+  "v4h1s2 (易しい例の駒の組)": {
+   "states": 65688,
+   "components": 1,
+   "max_moves": 26,
+   "easy_example_moves": 13
+  },
+  "v3h2s4": {
+   "states": 83972,
+   "components": 230,
+   "max_moves": 138
+  }
+ },
+ "seeds": {
+  "1": {
+   "seed": 1,
+   "per_level": [
+    500,
+    500,
+    500,
+    500,
+    300
+   ],
+   "radius": 6,
+   "mirror": "canon",
+   "levels": [
+    {
+     "level": 1,
+     "taken": 500,
+     "available_upto_cap": 9315,
+     "piece_sets": 50,
+     "moves_min": 8,
+     "moves_max": 15,
+     "moves_median": 11
+    },
+    {
+     "level": 2,
+     "taken": 500,
+     "available_upto_cap": 11152,
+     "piece_sets": 49,
+     "moves_min": 16,
+     "moves_max": 30,
+     "moves_median": 22
+    },
+    {
+     "level": 3,
+     "taken": 500,
+     "available_upto_cap": 6918,
+     "piece_sets": 35,
+     "moves_min": 31,
+     "moves_max": 50,
+     "moves_median": 34
+    },
+    {
+     "level": 4,
+     "taken": 500,
+     "available_upto_cap": 1739,
+     "piece_sets": 18,
+     "moves_min": 51,
+     "moves_max": 70,
+     "moves_median": 57
+    },
+    {
+     "level": 5,
+     "taken": 300,
+     "available_upto_cap": 760,
+     "piece_sets": 6,
+     "moves_min": 71,
+     "moves_max": 95,
+     "moves_median": 77
+    }
+   ],
+   "json_bytes": 64313,
+   "gzip_bytes": 15077,
+   "first_of_each_level": {
+    "1": [
+     "..hiAAsvAA.wv.vvwsww",
+     8
+    ],
+    "2": [
+     ".AAssAAvssswsss.ss.s",
+     16
+    ],
+    "3": [
+     "..AAv.AAwhivssswssss",
+     31
+    ],
+    "4": [
+     ".AA.vAAvwhiwshisssss",
+     51
+    ],
+    "5": [
+     ".AA.sAAvhiswvsvvwsww",
+     71
+    ]
+   },
+   "last_of_each_level": {
+    "1": [
+     "vvvswwwvsAAwsAA...hi",
+     15
+    ],
+    "2": [
+     "v.vvwvwwswAAssAAs.hi",
+     30
+    ],
+    "3": [
+     "vssvwsswsAAs.AAvhi.w",
+     50
+    ],
+    "4": [
+     "vAAvwAAwvs.vw..whihi",
+     70
+    ],
+    "5": [
+     "vsvvwswws.s.hiAAhiAA",
+     95
+    ]
+   }
+  },
+  "2": {
+   "seed": 2,
+   "per_level": [
+    500,
+    500,
+    500,
+    500,
+    300
+   ],
+   "radius": 6,
+   "mirror": "canon",
+   "levels": [
+    {
+     "level": 1,
+     "taken": 500,
+     "available_upto_cap": 9383,
+     "piece_sets": 50,
+     "moves_min": 8,
+     "moves_max": 15,
+     "moves_median": 11
+    },
+    {
+     "level": 2,
+     "taken": 500,
+     "available_upto_cap": 11235,
+     "piece_sets": 49,
+     "moves_min": 16,
+     "moves_max": 30,
+     "moves_median": 23
+    },
+    {
+     "level": 3,
+     "taken": 500,
+     "available_upto_cap": 6912,
+     "piece_sets": 35,
+     "moves_min": 31,
+     "moves_max": 50,
+     "moves_median": 34
+    },
+    {
+     "level": 4,
+     "taken": 500,
+     "available_upto_cap": 1761,
+     "piece_sets": 18,
+     "moves_min": 51,
+     "moves_max": 70,
+     "moves_median": 56
+    },
+    {
+     "level": 5,
+     "taken": 300,
+     "available_upto_cap": 763,
+     "piece_sets": 6,
+     "moves_min": 71,
+     "moves_max": 95,
+     "moves_median": 78
+    }
+   ],
+   "json_bytes": 64318,
+   "gzip_bytes": 15043,
+   "first_of_each_level": {
+    "1": [
+     "..vv.swwhiss.sAAhiAA",
+     8
+    ],
+    "2": [
+     ".AAsvAAswvs..wvvssww",
+     16
+    ],
+    "3": [
+     "..AAssAAshivssswssss",
+     31
+    ],
+    "4": [
+     "..vssswshiAAhiAAshis",
+     51
+    ],
+    "5": [
+     "..vvAAwwAAvvhiwwssss",
+     71
+    ]
+   },
+   "last_of_each_level": {
+    "1": [
+     "vv..ww.vsAAwsAAssshi",
+     15
+    ],
+    "2": [
+     "vshiwss.vhi.wsAAhiAA",
+     30
+    ],
+    "3": [
+     "vhivws.wss.sAAhiAAhi",
+     50
+    ],
+    "4": [
+     "vsAAwsAAhivvsvwwsw..",
+     70
+    ],
+    "5": [
+     "ssAAv.AAwshis.vvhiww",
+     95
+    ]
+   }
+  }
+ }
+}
