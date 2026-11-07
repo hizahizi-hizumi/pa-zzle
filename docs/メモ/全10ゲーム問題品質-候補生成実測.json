@@ -1,0 +1,562 @@
+{
+  "note": "per condition first 1000 deterministic indices, 2 conditions per game, sequential node-v22 vitest",
+  "data": {
+    "nanpure": {
+      "candidates": 2000,
+      "eligible": 143,
+      "strictEligible": 40,
+      "baselineYield": 0.0715,
+      "strictYield": 0.02,
+      "strictRelativeToBaseline": 0.27972027972027974,
+      "msPerBaselineAccepted": 411.2,
+      "msPerStrictAccepted": 1470.2,
+      "details": [
+        {
+          "condition": "xyz-wing",
+          "window": 0,
+          "n": 500,
+          "eligible": 41,
+          "strictEligible": 18
+        },
+        {
+          "condition": "uniqueness",
+          "window": 0,
+          "n": 500,
+          "eligible": 21,
+          "strictEligible": 3
+        },
+        {
+          "condition": "xyz-wing",
+          "window": 1,
+          "n": 500,
+          "eligible": 53,
+          "strictEligible": 13
+        },
+        {
+          "condition": "uniqueness",
+          "window": 1,
+          "n": 500,
+          "eligible": 28,
+          "strictEligible": 6
+        }
+      ],
+      "candidateElapsedMs": 58808.4,
+      "elapsedPerAcceptanceMultiplier": 3.58
+    },
+    "minesweeper": {
+      "candidates": 2000,
+      "eligible": 20,
+      "strictEligible": 1,
+      "baselineYield": 0.01,
+      "strictYield": 0.0005,
+      "strictRelativeToBaseline": 0.05,
+      "msPerBaselineAccepted": 146.8,
+      "msPerStrictAccepted": 2936.3,
+      "details": [
+        {
+          "condition": "14x10-26",
+          "window": 0,
+          "n": 500,
+          "eligible": 6,
+          "strictEligible": 1
+        },
+        {
+          "condition": "16x10-29",
+          "window": 0,
+          "n": 500,
+          "eligible": 5,
+          "strictEligible": 0
+        },
+        {
+          "condition": "14x10-26",
+          "window": 1,
+          "n": 500,
+          "eligible": 2,
+          "strictEligible": 0
+        },
+        {
+          "condition": "16x10-29",
+          "window": 1,
+          "n": 500,
+          "eligible": 7,
+          "strictEligible": 0
+        }
+      ],
+      "candidateElapsedMs": 2936.3,
+      "elapsedPerAcceptanceMultiplier": 20.0
+    }
+  },
+  "windowResults": [
+    [
+      {
+        "game": "nanpure",
+        "condition": "xyz-wing",
+        "key": "xyz-wing",
+        "n": 500,
+        "eligible": 41,
+        "strict": 18,
+        "extraRejected": 23,
+        "msTotal": 15765.809702999972,
+        "msMean": 31.531619405999944,
+        "msP90": 40.21115800000007,
+        "msPerBaselineAccepted": 384.53194397560907,
+        "msPerStrictAccepted": 875.8783168333317,
+        "firstCandidateIds": [
+          {
+            "index": 23,
+            "high": 1,
+            "clueCount": 25
+          },
+          {
+            "index": 24,
+            "high": 3,
+            "clueCount": 27
+          },
+          {
+            "index": 27,
+            "high": 2,
+            "clueCount": 24
+          },
+          {
+            "index": 31,
+            "high": 1,
+            "clueCount": 25
+          },
+          {
+            "index": 63,
+            "high": 1,
+            "clueCount": 24
+          },
+          {
+            "index": 68,
+            "high": 2,
+            "clueCount": 26
+          },
+          {
+            "index": 104,
+            "high": 1,
+            "clueCount": 26
+          },
+          {
+            "index": 106,
+            "high": 2,
+            "clueCount": 25
+          },
+          {
+            "index": 110,
+            "high": 1,
+            "clueCount": 23
+          },
+          {
+            "index": 121,
+            "high": 2,
+            "clueCount": 26
+          },
+          {
+            "index": 123,
+            "high": 2,
+            "clueCount": 24
+          },
+          {
+            "index": 128,
+            "high": 1,
+            "clueCount": 23
+          }
+        ]
+      },
+      {
+        "game": "nanpure",
+        "condition": "uniqueness",
+        "key": "uniqueness",
+        "n": 500,
+        "eligible": 21,
+        "strict": 3,
+        "extraRejected": 18,
+        "msTotal": 14147.708296000035,
+        "msMean": 28.29541659200007,
+        "msP90": 49.46795899999779,
+        "msPerBaselineAccepted": 673.7003950476208,
+        "msPerStrictAccepted": 4715.902765333345,
+        "firstCandidateIds": [
+          {
+            "index": 12,
+            "high": 1,
+            "clueCount": 23
+          },
+          {
+            "index": 44,
+            "high": 2,
+            "clueCount": 27
+          },
+          {
+            "index": 62,
+            "high": 1,
+            "clueCount": 25
+          },
+          {
+            "index": 63,
+            "high": 1,
+            "clueCount": 25
+          },
+          {
+            "index": 72,
+            "high": 1,
+            "clueCount": 23
+          },
+          {
+            "index": 92,
+            "high": 1,
+            "clueCount": 24
+          },
+          {
+            "index": 108,
+            "high": 1,
+            "clueCount": 24
+          },
+          {
+            "index": 121,
+            "high": 1,
+            "clueCount": 24
+          },
+          {
+            "index": 125,
+            "high": 1,
+            "clueCount": 24
+          },
+          {
+            "index": 129,
+            "high": 1,
+            "clueCount": 26
+          },
+          {
+            "index": 138,
+            "high": 1,
+            "clueCount": 27
+          },
+          {
+            "index": 269,
+            "high": 1,
+            "clueCount": 23
+          }
+        ]
+      },
+      {
+        "game": "minesweeper",
+        "condition": "14x10-26",
+        "key": "ms-14-26",
+        "n": 500,
+        "eligible": 6,
+        "strict": 1,
+        "extraRejected": 5,
+        "msTotal": 745.7007109999904,
+        "msMean": 1.4914014219999807,
+        "msP90": 2.2740389999999024,
+        "msPerBaselineAccepted": 124.28345183333174,
+        "msPerStrictAccepted": 745.7007109999904,
+        "firstCandidateIds": [
+          {
+            "index": 60,
+            "high": 1
+          },
+          {
+            "index": 62,
+            "high": 1
+          },
+          {
+            "index": 362,
+            "high": 1
+          },
+          {
+            "index": 395,
+            "high": 2
+          },
+          {
+            "index": 413,
+            "high": 1
+          },
+          {
+            "index": 494,
+            "high": 1
+          }
+        ]
+      },
+      {
+        "game": "minesweeper",
+        "condition": "16x10-29",
+        "key": "ms-16-29",
+        "n": 500,
+        "eligible": 5,
+        "strict": 0,
+        "extraRejected": 5,
+        "msTotal": 769.4153820000574,
+        "msMean": 1.5388307640001149,
+        "msP90": 2.1491099999984726,
+        "msPerBaselineAccepted": 153.88307640001148,
+        "msPerStrictAccepted": null,
+        "firstCandidateIds": [
+          {
+            "index": 25,
+            "high": 1
+          },
+          {
+            "index": 38,
+            "high": 1
+          },
+          {
+            "index": 125,
+            "high": 1
+          },
+          {
+            "index": 273,
+            "high": 1
+          },
+          {
+            "index": 364,
+            "high": 1
+          }
+        ]
+      }
+    ],
+    [
+      {
+        "game": "nanpure",
+        "condition": "xyz-wing",
+        "key": "xyz-wing",
+        "n": 500,
+        "eligible": 53,
+        "strict": 13,
+        "extraRejected": 40,
+        "msTotal": 15463.443828999994,
+        "msMean": 30.926887657999988,
+        "msP90": 36.631836999998995,
+        "msPerBaselineAccepted": 291.76309111320745,
+        "msPerStrictAccepted": 1189.4956791538457,
+        "firstCandidateIds": [
+          {
+            "index": 521,
+            "high": 2,
+            "clueCount": 24
+          },
+          {
+            "index": 544,
+            "high": 1,
+            "clueCount": 26
+          },
+          {
+            "index": 554,
+            "high": 3,
+            "clueCount": 26
+          },
+          {
+            "index": 555,
+            "high": 1,
+            "clueCount": 23
+          },
+          {
+            "index": 569,
+            "high": 1,
+            "clueCount": 23
+          },
+          {
+            "index": 572,
+            "high": 1,
+            "clueCount": 24
+          },
+          {
+            "index": 626,
+            "high": 1,
+            "clueCount": 25
+          },
+          {
+            "index": 636,
+            "high": 1,
+            "clueCount": 25
+          },
+          {
+            "index": 642,
+            "high": 1,
+            "clueCount": 23
+          },
+          {
+            "index": 654,
+            "high": 2,
+            "clueCount": 26
+          },
+          {
+            "index": 670,
+            "high": 1,
+            "clueCount": 23
+          },
+          {
+            "index": 681,
+            "high": 1,
+            "clueCount": 25
+          }
+        ]
+      },
+      {
+        "game": "nanpure",
+        "condition": "uniqueness",
+        "key": "uniqueness",
+        "n": 500,
+        "eligible": 28,
+        "strict": 6,
+        "extraRejected": 22,
+        "msTotal": 13431.39578100002,
+        "msMean": 26.862791562000037,
+        "msP90": 48.20145399999819,
+        "msPerBaselineAccepted": 479.6927064642864,
+        "msPerStrictAccepted": 2238.5659635000034,
+        "firstCandidateIds": [
+          {
+            "index": 509,
+            "high": 1,
+            "clueCount": 25
+          },
+          {
+            "index": 510,
+            "high": 1,
+            "clueCount": 25
+          },
+          {
+            "index": 574,
+            "high": 1,
+            "clueCount": 26
+          },
+          {
+            "index": 581,
+            "high": 1,
+            "clueCount": 23
+          },
+          {
+            "index": 630,
+            "high": 1,
+            "clueCount": 23
+          },
+          {
+            "index": 640,
+            "high": 2,
+            "clueCount": 23
+          },
+          {
+            "index": 641,
+            "high": 1,
+            "clueCount": 24
+          },
+          {
+            "index": 643,
+            "high": 2,
+            "clueCount": 23
+          },
+          {
+            "index": 666,
+            "high": 1,
+            "clueCount": 24
+          },
+          {
+            "index": 669,
+            "high": 1,
+            "clueCount": 24
+          },
+          {
+            "index": 711,
+            "high": 2,
+            "clueCount": 23
+          },
+          {
+            "index": 716,
+            "high": 2,
+            "clueCount": 24
+          }
+        ]
+      },
+      {
+        "game": "minesweeper",
+        "condition": "14x10-26",
+        "key": "ms-14-26",
+        "n": 500,
+        "eligible": 2,
+        "strict": 0,
+        "extraRejected": 2,
+        "msTotal": 694.6322270000164,
+        "msMean": 1.389264454000033,
+        "msP90": 1.9146459999974468,
+        "msPerBaselineAccepted": 347.3161135000082,
+        "msPerStrictAccepted": null,
+        "firstCandidateIds": [
+          {
+            "index": 517,
+            "high": 1
+          },
+          {
+            "index": 918,
+            "high": 1
+          }
+        ]
+      },
+      {
+        "game": "minesweeper",
+        "condition": "16x10-29",
+        "key": "ms-16-29",
+        "n": 500,
+        "eligible": 7,
+        "strict": 0,
+        "extraRejected": 7,
+        "msTotal": 726.502843000042,
+        "msMean": 1.4530056860000842,
+        "msP90": 2.1422999999995227,
+        "msPerBaselineAccepted": 103.78612042857743,
+        "msPerStrictAccepted": null,
+        "firstCandidateIds": [
+          {
+            "index": 639,
+            "high": 1
+          },
+          {
+            "index": 764,
+            "high": 1
+          },
+          {
+            "index": 789,
+            "high": 1
+          },
+          {
+            "index": 814,
+            "high": 1
+          },
+          {
+            "index": 888,
+            "high": 1
+          },
+          {
+            "index": 892,
+            "high": 1
+          },
+          {
+            "index": 901,
+            "high": 1
+          }
+        ]
+      }
+    ]
+  ],
+  "sourceRef": "33e053906d9e6d896ffa0959787781ed120b2fd9",
+  "analysisEnvironment": {
+    "runtime": "Node.js v22.16.0 / Vitest v5.0.0",
+    "instrument": "performance.now elapsed time, sequential candidate evaluation, excludes process startup and output serialization",
+    "code": "temporary frontend/scripts/tmp-issue660-yield-benchmark.test.ts; not committed",
+    "conditions": "nanpure removalTechniqueLimit = xyz-wing and null; minesweeper (14,10,26) and (16,10,29), first candidate indices 0 through 999 in each condition",
+    "eligibility": "nanpure official classified level 5 plus 23-27 clues; minesweeper official classified level 5; new filter top inference rounds >= 2",
+    "limits": "No symmetry deduplication, condition round robin, real generator worker overhead, no human quality data; not whole-level yield"
+  },
+  "validations": {
+    "candidateIndexes": [
+      "0..499",
+      "500..999"
+    ],
+    "baselineFormula": "baselineEligible / totalCandidates",
+    "strictFormula": "(baselineEligible AND highRounds>=2) / totalCandidates",
+    "perAcceptedTime": "sum candidate evaluation elapsed_ms / eligible count",
+    "replication": "run temporary Vitest from snapshot with ISSUE660_START=0/500 ISSUE660_N=500; compare JSON exports; source code included in local evidence ZIP"
+  }
+}
