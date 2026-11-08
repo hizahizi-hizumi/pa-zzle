@@ -68,6 +68,111 @@ describe("SlidePuzzleBoard", () => {
     );
   });
 
+  describe("触って滑らせる比較操作の場合", () => {
+    function renderGestureBoard() {
+      render(
+        <SlidePuzzleBoard
+          board={board}
+          operation={null}
+          surface="crafted"
+          gestureEnabled
+          interactionDisabled={false}
+          clearing={false}
+          onSlideTile={onSlideTile}
+          onClearAnimationComplete={onClearAnimationComplete}
+        />,
+      );
+      return screen.getByRole("group", { name: "盤面" });
+    }
+
+    function pointerGesture(tile: HTMLElement, endX: number, endY: number) {
+      Object.defineProperty(tile, "clientWidth", {
+        configurable: true,
+        value: 100,
+      });
+      fireEvent.pointerDown(tile, {
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 100,
+        clientY: 100,
+      });
+      fireEvent.pointerMove(tile, {
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: endX,
+        clientY: endY,
+      });
+      fireEvent.pointerUp(tile, {
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: endX,
+        clientY: endY,
+      });
+      fireEvent.click(tile, { detail: 1 });
+    }
+
+    test("空白へ向かって滑らせるとタイルが一度だけ移動すること", () => {
+      const boardGroup = renderGestureBoard();
+      const tile = within(boardGroup).getByRole("button", { name: "13" });
+      pointerGesture(tile, 60, 100);
+      expect(onSlideTile).toHaveBeenCalledOnce();
+      expect(onSlideTile).toHaveBeenCalledWith(13);
+    });
+
+    test("複数タイル越しでも空白の方向なら滑らせられること", () => {
+      const boardGroup = renderGestureBoard();
+      const tile = within(boardGroup).getByRole("button", { name: "15" });
+      pointerGesture(tile, 60, 100);
+      expect(onSlideTile).toHaveBeenCalledWith(15);
+    });
+
+    test("斜めや逆方向へ滑らせても誤って移動しないこと", () => {
+      const boardGroup = renderGestureBoard();
+      const tile = within(boardGroup).getByRole("button", { name: "13" });
+      pointerGesture(tile, 100, 60);
+      expect(onSlideTile).not.toHaveBeenCalled();
+    });
+
+    test("軽くタップした場合は従来と同じ一回の操作になること", () => {
+      const boardGroup = renderGestureBoard();
+      const tile = within(boardGroup).getByRole("button", { name: "13" });
+      pointerGesture(tile, 98, 100);
+      expect(onSlideTile).toHaveBeenCalledOnce();
+    });
+
+    test("比較操作を無効にするとスワイプで操作されないこと", () => {
+      render(
+        <SlidePuzzleBoard
+          board={board}
+          operation={null}
+          gestureEnabled={false}
+          interactionDisabled={false}
+          clearing={false}
+          onSlideTile={onSlideTile}
+          onClearAnimationComplete={onClearAnimationComplete}
+        />,
+      );
+      const tile = screen.getByRole("button", { name: "13" });
+      Object.defineProperty(tile, "clientWidth", {
+        configurable: true,
+        value: 100,
+      });
+      fireEvent.pointerDown(tile, {
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 100,
+        clientY: 100,
+      });
+      fireEvent.pointerUp(tile, {
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 60,
+        clientY: 100,
+      });
+      expect(onSlideTile).not.toHaveBeenCalled();
+    });
+  });
+
   describe.each([
     ["3×3", [1, 2, 3, 4, 5, 6, 7, 0, 8], "8", 8],
     [

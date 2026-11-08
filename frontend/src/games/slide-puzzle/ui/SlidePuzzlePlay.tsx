@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import type {
@@ -14,6 +15,10 @@ import type {
 import type { SlidePuzzleDirection } from "@/games/slide-puzzle/puzzle/rules";
 import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
+import {
+  type SlidePuzzleSurface,
+  slidePuzzleSurfaces,
+} from "@/games/slide-puzzle/ui/board/slide-puzzle-surface";
 import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
 import { useSlidePuzzleSoundEffects } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/use-slide-puzzle-sound-effects";
@@ -58,6 +63,9 @@ export function SlidePuzzlePlay({
   onOpenDiagnostics,
 }: SlidePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
+  const [searchParams] = useSearchParams();
+  const compareSurfaces = searchParams.get("slideDesign") === "compare";
+  const [surface, setSurface] = useState<SlidePuzzleSurface>("original");
   useSlidePuzzleSoundEffects(operation, progress, board.length - 1);
 
   useEffect(() => {
@@ -98,7 +106,19 @@ export function SlidePuzzlePlay({
       progress={progress}
       result={result}
       title={SLIDE_PUZZLE_DISPLAY_NAME}
-      background={<div className="size-full bg-[#e8e2d8] dark:bg-[#2b2722]" />}
+      background={
+        <div
+          className={`size-full transition-colors duration-(--duration-normal) motion-reduce:transition-none ${
+            compareSurfaces && surface === "crafted"
+              ? "bg-[#ede2d4] dark:bg-[#302820]"
+              : compareSurfaces && surface === "precision"
+                ? "bg-[#e3eaf0] dark:bg-[#202d38]"
+                : compareSurfaces && surface === "playful"
+                  ? "bg-[#f5eee0] dark:bg-[#322d32]"
+                  : "bg-[#e8e2d8] dark:bg-[#2b2722]"
+          }`}
+        />
+      }
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },
@@ -126,9 +146,40 @@ export function SlidePuzzlePlay({
       )}
     >
       <main className="flex min-h-0 flex-1 items-center justify-center px-3 pt-2 pb-6 [container-type:size] sm:px-6 sm:pb-8">
-        <div className="relative aspect-square w-[min(100cqw,100cqh,40rem)]">
+        <div
+          className={`relative aspect-square ${
+            compareSurfaces
+              ? "w-[min(100cqw,100cqh,40rem)] sm:w-[min(100cqw,calc(100cqh-10rem),40rem)] xl:w-[min(100cqw,100cqh,40rem)]"
+              : "w-[min(100cqw,100cqh,40rem)]"
+          }`}
+        >
+          {compareSurfaces && (
+            <div
+              role="group"
+              aria-label="盤面デザイン比較"
+              className="absolute bottom-[calc(100%+12px)] left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-foreground/10 bg-background/90 p-1 shadow-sm backdrop-blur-sm xl:top-1/2 xl:right-[calc(100%+16px)] xl:bottom-auto xl:left-auto xl:-translate-y-1/2 xl:translate-x-0 xl:flex-col xl:items-stretch xl:rounded-2xl"
+            >
+              {slidePuzzleSurfaces.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={surface === option.id}
+                  onClick={() => setSurface(option.id)}
+                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                    surface === option.id
+                      ? "bg-foreground text-background"
+                      : "text-foreground/75 hover:bg-foreground/10"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
           <SlidePuzzleBoard
             board={board}
+            surface={surface}
+            gestureEnabled={compareSurfaces}
             operation={operation}
             interactionDisabled={progress !== "playing"}
             clearing={progress === "clearing"}
