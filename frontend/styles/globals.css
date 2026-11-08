@@ -171,3 +171,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* The sortable overlay lives in the viewport, outside the transformed dialog.
+   Keep its placement independent of dnd-kit's dynamically injected styles,
+   which may be applied asynchronously on mobile Safari. */
+.game-selection-drag-overlay:not([data-dnd-dragging]) {
+  display: none;
+}
+.game-selection-drag-overlay[data-dnd-dragging] {
+  position: fixed;
+  pointer-events: none;
+  z-index: 100;
+  top: var(--dnd-top, 0px);
+  left: var(--dnd-left, 0px);
+  width: var(--dnd-width, auto);
+  height: var(--dnd-height, auto);
+  margin: 0;
+}
+.game-selection-drag-overlay[data-dnd-dragging]:not([data-dnd-dropping]) {
+  translate: var(--dnd-translate, 0px 0px 0px);
+}

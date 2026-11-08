@@ -35,6 +35,8 @@
     "generate:ice-floor-maze-pool": "bun scripts/generate-ice-floor-maze-problem-pool.ts"
   },
   "dependencies": {
+    "@dnd-kit/collision": "0.5.3",
+    "@dnd-kit/react": "0.5.3",
     "@fontsource/m-plus-2": "5.3.1",
     "@fontsource/zen-kaku-gothic-new": "5.3.0",
     "@generouted/react-router": "^1.20.2",
