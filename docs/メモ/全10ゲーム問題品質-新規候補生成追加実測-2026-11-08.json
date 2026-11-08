@@ -1,0 +1,237 @@
+{
+  "sourceSnapshot": "3d4bc685bb6f188b21a4fa5edca14ad4a6250e2e",
+  "evaluatedAt": "2026-11-08",
+  "scope": "fresh generation sample, not full official pool construction or final product throughput",
+  "environment": "Node 22 / Vitest 5 with offline dependencies; sequential performance.now elapsed milliseconds, no process.cpuUsage measurements",
+  "samplingRule": "For takuzu/hitofude/tsume/reflection/parking/water/slide: first n accepted pool condition records per level, fresh deterministic candidate seed. For ice: first official difficulty pattern per level, five new seeds, bounded iterations.",
+  "caveats": [
+    "Selected conditions are conditional on prior accepted pools, not random selection across generator profiles. Rates cannot be generalized to each level or the full product.",
+    "Generation-only timings are not an end-to-end cost. In particular water-sort excludes natural-play 60-trial screening; slide board generation excludes pattern DB setup and optimal-count search; ice includes a bounded generator search, not a production pool scheduling run.",
+    "The measured times are sequential elapsed wall-time, not CPU seconds. No new selection logic was shipped.",
+    "Samples are small for several computationally expensive generators, so p90 values have high sampling error."
+  ],
+  "measurements": [
+    {
+      "game": "takuzu",
+      "n": 250,
+      "levels": [
+        50,
+        50,
+        50,
+        50,
+        50
+      ],
+      "generated": 250,
+      "failed": 0,
+      "classifiedSameLevel": 187,
+      "perLevelSameLevel": [
+        48,
+        50,
+        40,
+        27,
+        22
+      ],
+      "medianAttemptMs": 14,
+      "p90NearestRankMs": 19,
+      "maxAttemptMs": 51,
+      "measures": "generation plus difficulty assessment"
+    },
+    {
+      "game": "hitofude-puzzle",
+      "n": 20,
+      "levels": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "generated": 20,
+      "failed": 0,
+      "classifiedSameLevel": 7,
+      "perLevelSameLevel": [
+        4,
+        0,
+        0,
+        2,
+        1
+      ],
+      "medianAttemptMs": 4442,
+      "p90NearestRankMs": 15093,
+      "maxAttemptMs": 48001,
+      "measures": "generation plus best-of-eight orientation difficulty assessment"
+    },
+    {
+      "game": "tsume-shogi",
+      "n": 20,
+      "levels": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "generated": 17,
+      "failed": 3,
+      "classifiedSameLevel": 5,
+      "perLevelSameLevel": [
+        1,
+        3,
+        1,
+        0,
+        0
+      ],
+      "medianAttemptMs": 1420,
+      "p90NearestRankMs": 7183,
+      "maxAttemptMs": 16251,
+      "measures": "generation including bounded failures plus exact difficulty analysis"
+    },
+    {
+      "game": "reflection",
+      "n": 25,
+      "levels": [
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "generated": 25,
+      "failed": 0,
+      "classifiedSameLevel": 10,
+      "perLevelSameLevel": [
+        4,
+        2,
+        1,
+        1,
+        2
+      ],
+      "medianAttemptMs": 12,
+      "p90NearestRankMs": 1505,
+      "maxAttemptMs": 16850,
+      "measures": "generation plus human-oriented difficulty classification with known solution"
+    },
+    {
+      "game": "slide-puzzle",
+      "n": 250,
+      "levels": [
+        50,
+        50,
+        50,
+        50,
+        50
+      ],
+      "generated": 250,
+      "failed": 0,
+      "classifiedSameLevel": null,
+      "medianAttemptMs": 0,
+      "p90NearestRankMs": 0,
+      "maxAttemptMs": 1,
+      "measures": "board scramble generation only, millisecond precision rounds most timings to zero"
+    },
+    {
+      "game": "water-sort",
+      "n": 20,
+      "levels": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "generated": 20,
+      "failed": 0,
+      "classifiedSameLevel": null,
+      "medianAttemptMs": 30,
+      "p90NearestRankMs": 128,
+      "maxAttemptMs": 305,
+      "measures": "candidate generation with optimal-solution search, maxAttempts 10; excludes 60-run natural-play classification"
+    },
+    {
+      "game": "parking-jam",
+      "n": 20,
+      "levels": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "generated": 20,
+      "failed": 0,
+      "classifiedSameLevel": 1,
+      "perLevelSameLevel": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "medianAttemptMs": 29,
+      "p90NearestRankMs": 95,
+      "maxAttemptMs": 153,
+      "measures": "candidate generation with built-in difficulty analysis; maxAttempts 10"
+    },
+    {
+      "game": "ice-floor-maze",
+      "n": 25,
+      "levels": [
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "generated": 21,
+      "failed": 4,
+      "classifiedSameLevel": null,
+      "perLevelGenerated": [
+        5,
+        5,
+        1,
+        5,
+        5
+      ],
+      "medianAttemptMs": 467,
+      "p90NearestRankMs": 6411,
+      "maxAttemptMs": 11278,
+      "measures": "bounded level-specific first recipe, tactic search 2000 iterations or element search 3000; no-candidate is a bounded selection result, not an exception"
+    }
+  ],
+  "slidePuzzleExactCounter": {
+    "method": "createSlidePuzzleOptimalMoveCounter, pattern database initialization once per dimension; then generate board and find shortest solution with bounded IDA*",
+    "setupMsBySize": {
+      "3": 296,
+      "4": 3147,
+      "5": 179118
+    },
+    "sampleCountsBySize": {
+      "3": 5,
+      "4": 5,
+      "5": 2
+    },
+    "warmOptimalCounterSolveMsBySize": {
+      "3": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "4": [
+        2,
+        1,
+        0,
+        0,
+        0
+      ],
+      "5": [
+        11,
+        0
+      ]
+    },
+    "caution": "Size 5 pattern database initialization was ~179 seconds for this process. It is setup per counter instantiation, not per puzzle; warm per-problem times are very small on these shallow sample boards and cannot be extrapolated to all 5x5 difficulty levels."
+  },
+  "predecessor": "docs/メモ/全10ゲーム問題品質-候補生成実測.json contains the two fixed-condition Lv5 experiments: nanpure 2000, minesweeper 2000.",
+  "evidence": "Conversation attachment issue660-machine-evidence-final.zip contains raw case records and one-off Vitest sources; these are not production tests."
+}

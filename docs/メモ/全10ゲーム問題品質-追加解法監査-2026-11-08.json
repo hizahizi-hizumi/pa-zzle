@@ -1,0 +1,213 @@
+{
+  "sourceSnapshot": "e9c1b2e6d0e50004d05955b8520a7c4e7c9535c9",
+  "evaluationType": "Existing solvers executed against shipped puzzle pools; does not measure human experience",
+  "hitofude": {
+    "total": 2500,
+    "levels": [
+      {
+        "level": 1,
+        "n": 500,
+        "storedWorkloadReproduced": 500,
+        "orientationSensitive": 0,
+        "identityOrientationMatches": 500
+      },
+      {
+        "level": 2,
+        "n": 500,
+        "storedWorkloadReproduced": 500,
+        "orientationSensitive": 104,
+        "identityOrientationMatches": 440
+      },
+      {
+        "level": 3,
+        "n": 500,
+        "storedWorkloadReproduced": 500,
+        "orientationSensitive": 296,
+        "identityOrientationMatches": 335
+      },
+      {
+        "level": 4,
+        "n": 500,
+        "storedWorkloadReproduced": 500,
+        "orientationSensitive": 297,
+        "identityOrientationMatches": 294
+      },
+      {
+        "level": 5,
+        "n": 500,
+        "storedWorkloadReproduced": 500,
+        "orientationSensitive": 349,
+        "identityOrientationMatches": 266
+      }
+    ],
+    "allEightOrientationsSolved": 2500,
+    "comparator": "best of eight dihedral orientations by deep assumption count, lookahead load, assumption count, total refutation length and longest refutation; pool workloads match exactly",
+    "examples": [
+      {
+        "level": 4,
+        "poolIndex": 1,
+        "seed": "hp-8-t4-1",
+        "fixedView": {
+          "assumptions": 4,
+          "refutation": 31,
+          "lookahead": 5
+        },
+        "bestOrientation": {
+          "assumptions": 2,
+          "refutation": 16,
+          "lookahead": 3
+        }
+      },
+      {
+        "level": 5,
+        "poolIndex": 1,
+        "seed": "hp-8-t4-26",
+        "fixedView": {
+          "assumptions": 4,
+          "refutation": 30,
+          "lookahead": 5
+        },
+        "bestOrientation": {
+          "assumptions": 3,
+          "refutation": 25,
+          "lookahead": 4
+        }
+      }
+    ],
+    "warning": "The UI shows a fixed orientation, while the difficulty analysis takes the most favorable one; whether mental rotation offsets this difference is untested. The solver is not an independent human."
+  },
+  "reflection": {
+    "totalPool": 2100,
+    "exactDihedral8SymmetryDuplicateGroups": 0,
+    "symmetryTransformation": "rotate/reflect cell positions and piece orientations; excludes arbitrary clue rearrangement",
+    "trialSolver": {
+      "source": "traceReflectionTrialSolve without reasoning, uses currently visible clue-match feedback; full levels 4 and 5",
+      "levels": [
+        {
+          "level": 4,
+          "total": 300,
+          "solved": 268,
+          "unsolved": 32,
+          "underMinimumRetry": 0,
+          "minimumRetry": 3,
+          "solvedRetryP10": 3,
+          "solvedRetryMedian": 8,
+          "solvedRetryP90": 53,
+          "storedMoveCountMismatch": 0
+        },
+        {
+          "level": 5,
+          "total": 300,
+          "solved": 213,
+          "unsolved": 87,
+          "underMinimumRetry": 0,
+          "minimumRetry": 15,
+          "solvedRetryP10": 19,
+          "solvedRetryMedian": 45,
+          "solvedRetryP90": 180,
+          "storedMoveCountMismatch": 0
+        }
+      ],
+      "caution": "Solved by simple trials does not imply easy or low-reasoning: the level test requires multiple failed/revised placements. The trial solver has a finite move limit and is not a person."
+    },
+    "humanSolverFullPool": {
+      "method": "Existing human-oriented inference solver, sliced in index windows; every puzzle in all five current pools restored once and solved",
+      "total": 2100,
+      "statuses": {
+        "solved": 2100,
+        "errors": 0
+      },
+      "storedPropagationCountMismatches": 0,
+      "storedAssumptionCountMismatches": 0,
+      "byLevel": [
+        {
+          "level": 1,
+          "n": 500,
+          "solved": 500,
+          "propagationMismatches": 0,
+          "assumptionMismatches": 0
+        },
+        {
+          "level": 2,
+          "n": 500,
+          "solved": 500,
+          "propagationMismatches": 0,
+          "assumptionMismatches": 0
+        },
+        {
+          "level": 3,
+          "n": 500,
+          "solved": 500,
+          "propagationMismatches": 0,
+          "assumptionMismatches": 0
+        },
+        {
+          "level": 4,
+          "n": 300,
+          "solved": 300,
+          "propagationMismatches": 0,
+          "assumptionMismatches": 0
+        },
+        {
+          "level": 5,
+          "n": 300,
+          "solved": 300,
+          "propagationMismatches": 0,
+          "assumptionMismatches": 0
+        }
+      ],
+      "runs": "First 50 cases per level plus successive ranges of 50 from index 50 through each level's end, total 2100. Explicit 50-element chunks in raw JSON.",
+      "caveat": "The solver is the existing one used to classify problems; successful reproduction is not an independent validation of human difficulty or enjoyment."
+    }
+  },
+  "tsumeShogi": {
+    "sampleMethod": "All existing problem pool entries, levels 1-5; reproduce complete mainline",
+    "total": 4000,
+    "exactMainlineMatches": 4000,
+    "errors": 0,
+    "byLevel": [
+      {
+        "level": 1,
+        "n": 500,
+        "exactMainlineMatches": 500,
+        "firstMoveUniqueMatingMove": 500
+      },
+      {
+        "level": 2,
+        "n": 1000,
+        "exactMainlineMatches": 1000,
+        "firstMoveUniqueMatingMove": 1000
+      },
+      {
+        "level": 3,
+        "n": 1000,
+        "exactMainlineMatches": 1000,
+        "firstMoveUniqueMatingMove": 1000
+      },
+      {
+        "level": 4,
+        "n": 1000,
+        "exactMainlineMatches": 1000,
+        "firstMoveUniqueMatingMove": 1000
+      },
+      {
+        "level": 5,
+        "n": 500,
+        "exactMainlineMatches": 500,
+        "firstMoveUniqueMatingMove": 500
+      }
+    ],
+    "caveat": "Solving a stored mainline again is not an independent validation that decoys are interesting or that players read the same branches."
+  },
+  "reproducibility": {
+    "temporaryVitestScripts": [
+      "tmp-issue660-human-trace-extra.test.ts",
+      "tmp-issue660-hitofude-orientation.test.ts",
+      "tmp-issue660-reflection-trial-retry.test.ts",
+      "tmp-issue660-reflection-symmetry.test.ts",
+      "tmp-issue660-tsume-mainline.test.ts"
+    ],
+    "rawLocalEvidence": "issue660-machine-evidence-final.zip",
+    "shippableCodeChanges": 0
+  }
+}
