@@ -7,13 +7,16 @@ import {
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
 import { TransferLiquidView } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/TransferLiquidView";
 import type { PourAnimation } from "@/games/water-sort/ui/board/pour/pour-animation";
+import type { WaterSortAppearance } from "@/games/water-sort/ui/board/water-bottle/appearance";
 
 type AnimatedDestinationTransferProps = {
   animation: PourAnimation;
+  appearance: WaterSortAppearance;
 };
 
 export function AnimatedDestinationTransfer({
   animation,
+  appearance,
 }: AnimatedDestinationTransferProps) {
   const transferRef = useRef<HTMLSpanElement>(null);
 
@@ -37,6 +40,7 @@ export function AnimatedDestinationTransfer({
 
   return (
     <TransferLiquidView
+      appearance={appearance}
       transfer={{
         colorIndex: animation.colorIndex,
         startSlot: animation.destination.before.length,

@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-
 import {
   getOverlayStyle,
   getPourStreamStyle,
@@ -11,18 +10,26 @@ import {
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
 import { TransferLiquidView } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/TransferLiquidView";
 import type { PourAnimation } from "@/games/water-sort/ui/board/pour/pour-animation";
+import type { WaterSortAppearance } from "@/games/water-sort/ui/board/water-bottle/appearance";
+import { paintGlassBottle } from "@/games/water-sort/ui/board/water-bottle/glass-bottle-renderer";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
 import { waitForAnimations } from "@/lib/motion";
 
 type PourSourceLayerProps = {
+  appearance: WaterSortAppearance;
   animation: PourAnimation;
   onFinish: (animationId: number) => void;
 };
 
-export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
+export function PourSourceLayer({
+  appearance,
+  animation,
+  onFinish,
+}: PourSourceLayerProps) {
   const sourceRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<HTMLDivElement>(null);
   const sourceTransferRef = useRef<HTMLSpanElement>(null);
+  const animationAppearance = useRef(appearance);
 
   useEffect(() => {
     const sourceElement = sourceRef.current;
@@ -40,15 +47,20 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
     const direction = deltaX >= 0 ? 1 : -1;
     const sourceTransferElement = sourceTransferRef.current;
 
+    const initialTransform = animation.gesture
+      ? `translate(${animation.gesture.offsetX}px, ${animation.gesture.offsetY}px) rotate(${animation.gesture.tiltDegrees}deg)`
+      : "translate(0, 0) rotate(0deg)";
     const sourceAnimation = sourceElement.animate(
       [
         {
-          transform: "translate(0, 0) rotate(0deg)",
+          transform: initialTransform,
           offset: 0,
           easing: "ease-out",
         },
         {
-          transform: "translate(0, -4px) rotate(0deg)",
+          transform: animation.gesture
+            ? initialTransform
+            : "translate(0, -4px) rotate(0deg)",
           offset: 0.06,
           easing: POUR_TILT_EASING,
         },
@@ -79,6 +91,41 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
         easing: "linear",
       },
     );
+
+    const canvas = sourceElement.querySelector<HTMLCanvasElement>(
+      "[data-water-sort-glass]",
+    );
+    let frameRequest = 0;
+    if (canvas && animationAppearance.current === "glass") {
+      const amountBefore = animation.source.before.length;
+      const amountAfter = animation.source.after.length;
+      const startAt = performance.now();
+      const render = (time: number) => {
+        const progress = Math.min(
+          1,
+          (time - startAt) / POUR_ANIMATION_DURATION_MS,
+        );
+        const transfer = Math.max(
+          0,
+          Math.min(
+            1,
+            (progress - POUR_TRANSFER_START_OFFSET) /
+              (POUR_TRANSFER_END_OFFSET - POUR_TRANSFER_START_OFFSET),
+          ),
+        );
+        const rotation = new DOMMatrixReadOnly(
+          getComputedStyle(sourceElement).transform,
+        );
+        paintGlassBottle(canvas, {
+          contents: animation.source.before,
+          amount: amountBefore + (amountAfter - amountBefore) * transfer,
+          tiltDegrees: (Math.atan2(rotation.b, rotation.a) * 180) / Math.PI,
+        });
+        if (progress < 1) frameRequest = requestAnimationFrame(render);
+      };
+      render(startAt);
+      frameRequest = requestAnimationFrame(render);
+    }
 
     const streamAnimation = streamElement?.animate?.(
       [
@@ -117,6 +164,7 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
     return () => {
       stopWaiting();
       sourceAnimation.cancel();
+      cancelAnimationFrame(frameRequest);
       streamAnimation?.cancel();
       sourceTransferAnimation?.cancel();
     };
@@ -131,26 +179,35 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
         style={getOverlayStyle(animation.source.rect, POUR_LAYER_ORDER.source)}
       >
         <WaterBottle
-          contents={animation.source.after}
+          appearance={appearance}
+          contents={
+            appearance === "glass"
+              ? animation.source.before
+              : animation.source.after
+          }
           waterOverlay={
-            <TransferLiquidView
-              transfer={{
-                colorIndex: animation.colorIndex,
-                startSlot: animation.source.after.length,
-                slotCount:
-                  animation.source.before.length -
-                  animation.source.after.length,
-                elementRef: sourceTransferRef,
-                initialScaleY: 1,
-              }}
-            />
+            appearance === "glass" ? undefined : (
+              <TransferLiquidView
+                appearance={appearance}
+                transfer={{
+                  colorIndex: animation.colorIndex,
+                  startSlot: animation.source.after.length,
+                  slotCount:
+                    animation.source.before.length -
+                    animation.source.after.length,
+                  elementRef: sourceTransferRef,
+                  initialScaleY: 1,
+                }}
+              />
+            )
           }
         />
       </div>
       <div
         ref={streamRef}
         aria-hidden="true"
-        className="pointer-events-none fixed origin-top rounded-full opacity-0 will-change-transform"
+        className="water-sort-pour-stream pointer-events-none fixed origin-top rounded-full opacity-0 will-change-transform"
+        data-appearance={appearance}
         style={getPourStreamStyle(animation)}
       />
     </>

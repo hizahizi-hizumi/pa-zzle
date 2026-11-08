@@ -41,6 +41,12 @@ import {
   type WaterSortSessionResult,
 } from "@/games/water-sort/session/session";
 
+export type WaterSortPourGesture = {
+  offsetX: number;
+  offsetY: number;
+  tiltDegrees: number;
+};
+
 export type WaterSortOperation =
   | {
       id: number;
@@ -56,6 +62,7 @@ export type WaterSortOperation =
       stateBefore: WaterSortState;
       stateAfter: WaterSortState;
       isClearingMove: boolean;
+      gesture?: WaterSortPourGesture;
     };
 
 export type WaterSortResult = WaterSortSessionResult & {
@@ -118,6 +125,11 @@ export type WaterSortPlay = GamePlay<
     sourceBottleIndex: number | null;
     operation: WaterSortOperation | null;
     selectBottle: (bottleIndex: number) => void;
+    pourBottle: (
+      sourceBottleIndex: number,
+      destinationBottleIndex: number,
+      gesture?: WaterSortPourGesture,
+    ) => void;
   };
 
 type WaterSortPlayState = {
@@ -151,6 +163,63 @@ function selectProblem(
     (seed) => selectWaterSortProblemForDifficulty(difficulty, seed),
     avoidedProblemId,
   ).problem;
+}
+
+function performWaterSortPour(
+  current: WaterSortPlayState,
+  sourceBottleIndex: number,
+  destinationBottleIndex: number,
+  selectedAt: number,
+  operationId: number,
+  gesture?: WaterSortPourGesture,
+): WaterSortPlayState {
+  const { session } = current;
+  const source = session.puzzleState[sourceBottleIndex];
+  const destination = session.puzzleState[destinationBottleIndex];
+  if (
+    !source ||
+    !destination ||
+    sourceBottleIndex === destinationBottleIndex ||
+    isCompleteWaterSortBottle(source)
+  ) {
+    return {
+      ...current,
+      operation: {
+        id: operationId,
+        type: "invalid",
+        bottleIndex: sourceBottleIndex,
+      },
+    };
+  }
+  const nextSession = applyWaterSortSessionMove(
+    session,
+    { sourceBottleIndex, destinationBottleIndex },
+    selectedAt,
+  );
+  if (nextSession === session) {
+    return {
+      ...current,
+      operation: {
+        id: operationId,
+        type: "invalid",
+        bottleIndex: destinationBottleIndex,
+      },
+    };
+  }
+  return {
+    ...applyPlaySession(current, nextSession),
+    sourceBottleIndex: null,
+    operation: {
+      id: operationId,
+      type: "poured",
+      sourceBottleIndex,
+      destinationBottleIndex,
+      stateBefore: session.puzzleState,
+      stateAfter: nextSession.puzzleState,
+      isClearingMove: nextSession.status === "cleared",
+      ...(gesture && { gesture }),
+    },
+  };
 }
 
 /** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
@@ -213,37 +282,38 @@ export function useWaterSortPlay(
         };
       }
 
-      const sourceBottleIndex = current.sourceBottleIndex;
-      const nextSession = applyWaterSortSessionMove(
-        session,
-        {
-          sourceBottleIndex,
-          destinationBottleIndex: bottleIndex,
-        },
+      return performWaterSortPour(
+        current,
+        current.sourceBottleIndex,
+        bottleIndex,
         selectedAt,
+        operationId,
       );
-      if (nextSession === session) {
-        return {
-          ...current,
-          operation: { id: operationId, type: "invalid", bottleIndex },
-        };
-      }
-
-      return {
-        ...applyPlaySession(current, nextSession),
-        sourceBottleIndex: null,
-        operation: {
-          id: operationId,
-          type: "poured",
-          sourceBottleIndex,
-          destinationBottleIndex: bottleIndex,
-          stateBefore: session.puzzleState,
-          stateAfter: nextSession.puzzleState,
-          isClearingMove: nextSession.status === "cleared",
-        },
-      };
     });
   }, []);
+
+  const pourBottle = useCallback(
+    (
+      sourceBottleIndex: number,
+      destinationBottleIndex: number,
+      gesture?: WaterSortPourGesture,
+    ) => {
+      const selectedAt = Date.now();
+      const operationId = nextOperationId.current++;
+      setPlay((current) => {
+        if (current.progress !== "playing") return current;
+        return performWaterSortPour(
+          current,
+          sourceBottleIndex,
+          destinationBottleIndex,
+          selectedAt,
+          operationId,
+          gesture,
+        );
+      });
+    },
+    [],
+  );
 
   const undo = useCallback(() => {
     setPlay((current) => {
@@ -332,6 +402,7 @@ export function useWaterSortPlay(
     sourceBottleIndex: play.sourceBottleIndex,
     operation: play.operation,
     selectBottle,
+    pourBottle,
     undo,
     restart,
     replay,

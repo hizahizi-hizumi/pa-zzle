@@ -71,6 +71,53 @@ function createResult(
 }
 
 describe("WaterSortPlay", () => {
+  describe("体験比較モード", () => {
+    test("通常のプレイには比較UIを表示しないこと", () => {
+      render(<WaterSortPlay {...baseProps} />);
+
+      expect(
+        screen.queryByRole("group", { name: "ウォーターソート体験比較" }),
+      ).toBeNull();
+      expect(
+        document.querySelector('[data-appearance="classic"]'),
+      ).toBeTruthy();
+    });
+
+    test("同じ盤面のまま複数の外観を切り替えられること", () => {
+      const onSelectBottle = vi.fn();
+      renderWithoutRouter(
+        <MemoryRouter
+          initialEntries={["/puzzles/water-sort/play/3?waterSortLab=1"]}
+        >
+          <WaterSortPlay {...baseProps} onSelectBottle={onSelectBottle} />
+        </MemoryRouter>,
+      );
+      const group = screen.getByRole("group", {
+        name: "ウォーターソート体験比較",
+      });
+      const glass = screen.getByRole("button", { name: "硝子" });
+      const classic = screen.getByRole("button", { name: "現行" });
+      expect(group).toBeTruthy();
+      expect(glass.getAttribute("aria-pressed")).toBe("false");
+
+      fireEvent.click(glass);
+      expect(glass.getAttribute("aria-pressed")).toBe("true");
+      expect(document.querySelector('[data-appearance="glass"]')).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: "ボトル 1: 赤、青" }));
+      fireEvent.click(classic);
+
+      expect(classic.getAttribute("aria-pressed")).toBe("true");
+      expect(glass.getAttribute("aria-pressed")).toBe("false");
+      expect(
+        document.querySelector('[data-appearance="classic"]'),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: "ボトル 1: 赤、青" }),
+      ).toBeTruthy();
+      expect(onSelectBottle).toHaveBeenCalledWith(0);
+    });
+  });
+
   test("プレイ中はゲーム名と主要な計測値をミニマルに表示すること", () => {
     const selectBottle = vi.fn();
     render(<WaterSortPlay {...baseProps} onSelectBottle={selectBottle} />);

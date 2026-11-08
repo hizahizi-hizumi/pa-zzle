@@ -23,6 +23,7 @@ export type PourAnimation = {
   destination: PourAnimationBottle;
   colorIndex: number;
   isClearingMove: boolean;
+  gesture?: PourOperation["gesture"];
 };
 
 export function createPourAnimation(
@@ -52,6 +53,7 @@ export function createPourAnimation(
     },
     colorIndex,
     isClearingMove: operation.isClearingMove,
+    gesture: operation.gesture,
   };
 }
 

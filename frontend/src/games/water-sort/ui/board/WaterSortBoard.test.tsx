@@ -26,6 +26,53 @@ afterEach(() => {
 });
 
 describe("WaterSortBoard", () => {
+  test("ドラッグしたボトルを別のボトルへ離すと移動元と移動先を通知すること", () => {
+    const onSelectBottle = vi.fn();
+    const onPourBottle = vi.fn();
+    render(
+      <WaterSortBoard
+        interactionDisabled={false}
+        state={[[0], [], [1], []]}
+        sourceBottleIndex={null}
+        operation={null}
+        onSelectBottle={onSelectBottle}
+        onPourBottle={onPourBottle}
+      />,
+    );
+    const source = screen.getByRole("button", { name: "ボトル 1: 赤" });
+    const destination = screen.getByRole("button", { name: "ボトル 2: 空" });
+    vi.spyOn(destination, "getBoundingClientRect").mockReturnValue({
+      left: 80,
+      right: 130,
+      top: 40,
+      bottom: 220,
+      x: 80,
+      y: 40,
+      width: 50,
+      height: 180,
+      toJSON: () => undefined,
+    });
+
+    fireEvent.pointerDown(source, {
+      pointerId: 4,
+      button: 0,
+      clientX: 20,
+      clientY: 60,
+    });
+    fireEvent.pointerMove(source, { pointerId: 4, clientX: 110, clientY: 120 });
+    expect(destination.dataset.waterSortDropTarget).toBe("true");
+    fireEvent.pointerUp(source, { pointerId: 4, clientX: 110, clientY: 120 });
+    expect(destination.dataset.waterSortDropTarget).toBeUndefined();
+    fireEvent.click(source);
+
+    expect(onPourBottle).toHaveBeenCalledExactlyOnceWith(0, 1, {
+      offsetX: 90,
+      offsetY: 48,
+      tiltDegrees: 5,
+    });
+    expect(onSelectBottle).not.toHaveBeenCalled();
+  });
+
   test("注水アニメーションの完了を待たずに次の操作を通知できること", () => {
     installPendingAnimations();
     const onSelectBottle = vi.fn();
