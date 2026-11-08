@@ -14,6 +14,7 @@ import type {
   ParkingJamState,
   ParkingJamVehicle,
   ParkingJamVehicleId,
+  ParkingJamMove,
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamBoardDefs } from "@/games/parking-jam/ui/board/ParkingJamBoardDefs";
 import { ParkingJamCar } from "@/games/parking-jam/ui/board/ParkingJamCar";
@@ -21,6 +22,7 @@ import {
   getParkingJamDirectionControls,
   ParkingJamDirectionMark,
 } from "@/games/parking-jam/ui/board/ParkingJamDirectionMark";
+import { ParkingJamExitTrail } from "@/games/parking-jam/ui/board/ParkingJamExitTrail";
 import { ParkingJamLot } from "@/games/parking-jam/ui/board/ParkingJamLot";
 import {
   PARKING_JAM_CELL,
@@ -28,11 +30,16 @@ import {
   parkingJamBoardGeometry,
 } from "@/games/parking-jam/ui/board/parking-jam-board-geometry";
 import { useParkingJamBoardPaint } from "@/games/parking-jam/ui/board/parking-jam-board-paint";
+import { listParkingJamMoveBlockers } from "@/games/parking-jam/puzzle/rules";
 import { playAnimations } from "@/lib/motion";
 
 import "@/games/parking-jam/ui/board/parking-jam-board.css";
 
+export type ParkingJamBoardConcept = "original" | "plan";
+
 type ParkingJamBoardProps = {
+  concept?: ParkingJamBoardConcept;
+  plannedMoves?: readonly ParkingJamMove[];
   board: ParkingJamBoardDefinition;
   state: ParkingJamState;
   selectedVehicleId: ParkingJamVehicleId | null;
@@ -101,6 +108,8 @@ function getKeyboardDirection(
 
 export function ParkingJamBoard({
   board,
+  concept = "original",
+  plannedMoves = [],
   state,
   selectedVehicleId,
   operation,
@@ -112,8 +121,15 @@ export function ParkingJamBoard({
 }: ParkingJamBoardProps) {
   const pointerStart = useRef<{
     vehicleId: string;
+    pointerId: number;
     x: number;
     y: number;
+  } | null>(null);
+  const release = useRef<{
+    vehicleId: string;
+    direction: ParkingJamDirection;
+    x: string;
+    y: string;
   } | null>(null);
   const remaining = new Set(state.remainingVehicleIds);
   const width = board.width * PARKING_JAM_CELL;
@@ -147,10 +163,68 @@ export function ParkingJamBoard({
     if (interactionDisabled) return;
     pointerStart.current = {
       vehicleId: vehicle.id,
+      pointerId: event.pointerId,
       x: event.clientX,
       y: event.clientY,
     };
     event.currentTarget.setPointerCapture?.(event.pointerId);
+    if (concept !== "original") {
+      event.currentTarget.classList.add("parking-jam-car--dragging");
+    }
+  }
+
+  function handlePointerMove(
+    event: PointerEvent<SVGGElement>,
+    vehicle: ParkingJamVehicle,
+  ) {
+    const start = pointerStart.current;
+    if (
+      !start ||
+      start.pointerId !== event.pointerId ||
+      start.vehicleId !== vehicle.id ||
+      concept === "original" ||
+      interactionDisabled
+    )
+      return;
+
+    const delta =
+      vehicle.orientation === "horizontal"
+        ? event.clientX - start.x
+        : event.clientY - start.y;
+    const scale =
+      Math.hypot(
+        event.currentTarget.ownerSVGElement?.getScreenCTM?.()?.a ?? 1,
+        event.currentTarget.ownerSVGElement?.getScreenCTM?.()?.b ?? 0,
+      ) || 1;
+    const direction = getSwipeDirection(
+      vehicle,
+      event.clientX - start.x,
+      event.clientY - start.y,
+    );
+    const legal = direction
+      ? listParkingJamMoveBlockers(board, state, {
+          vehicleId: vehicle.id,
+          direction,
+        }).length === 0
+      : false;
+    const limit = legal ? PARKING_JAM_CELL * 0.82 : PARKING_JAM_CELL * 0.16;
+    const movement = Math.max(-limit, Math.min(limit, delta / scale));
+    event.currentTarget.style.setProperty(
+      "--parking-jam-drag-x",
+      `${vehicle.orientation === "horizontal" ? movement : 0}px`,
+    );
+    event.currentTarget.style.setProperty(
+      "--parking-jam-drag-y",
+      `${vehicle.orientation === "vertical" ? movement : 0}px`,
+    );
+  }
+
+  function resetPointer(event: PointerEvent<SVGGElement>) {
+    if (pointerStart.current?.pointerId !== event.pointerId) return;
+    pointerStart.current = null;
+    event.currentTarget.classList.remove("parking-jam-car--dragging");
+    event.currentTarget.style.removeProperty("--parking-jam-drag-x");
+    event.currentTarget.style.removeProperty("--parking-jam-drag-y");
   }
 
   function handlePointerUp(
@@ -158,14 +232,19 @@ export function ParkingJamBoard({
     vehicle: ParkingJamVehicle,
   ) {
     const start = pointerStart.current;
-    pointerStart.current = null;
+    const x = event.currentTarget.style.getPropertyValue("--parking-jam-drag-x");
+    const y = event.currentTarget.style.getPropertyValue("--parking-jam-drag-y");
+    resetPointer(event);
     if (!start || start.vehicleId !== vehicle.id || interactionDisabled) return;
     const direction = getSwipeDirection(
       vehicle,
       event.clientX - start.x,
       event.clientY - start.y,
     );
-    if (direction) onMove(vehicle.id, direction);
+    if (direction) {
+      release.current = { vehicleId: vehicle.id, direction, x, y };
+      onMove(vehicle.id, direction);
+    }
     else onSelectVehicle(vehicle.id);
   }
 
@@ -191,10 +270,42 @@ export function ParkingJamBoard({
       role="group"
       aria-label={`${PARKING_JAM_DISPLAY_NAME}盤面`}
       viewBox={`${-PARKING_JAM_MARGIN} ${-PARKING_JAM_MARGIN} ${width + PARKING_JAM_MARGIN * 2} ${height + PARKING_JAM_MARGIN * 2}`}
-      className="parking-jam-board"
+      className={`parking-jam-board parking-jam-board--${concept}`}
     >
       <ParkingJamBoardDefs board={board} paint={paint} />
       <ParkingJamLot board={board} paint={paint} />
+      {concept !== "original" && operation?.type === "exited" ? (
+        <ParkingJamExitTrail
+          board={board}
+          vehicle={board.vehicles.find((vehicle) => vehicle.id === operation.vehicleId)!}
+          direction={operation.direction}
+        />
+      ) : null}
+      {concept !== "original" && operation?.type === "exited" ? (
+        <g key={operation.id} clipPath={paint.vehicleSpaceClipPath}>
+          {board.vehicles
+            .filter((vehicle) => vehicle.id === operation.vehicleId)
+            .map((vehicle) => (
+              <rect
+                key={vehicle.id}
+                x={vehicle.column * PARKING_JAM_CELL + 7}
+                y={vehicle.row * PARKING_JAM_CELL + 7}
+                width={
+                  (vehicle.orientation === "horizontal" ? vehicle.length : 1) *
+                    PARKING_JAM_CELL -
+                  14
+                }
+                height={
+                  (vehicle.orientation === "vertical" ? vehicle.length : 1) *
+                    PARKING_JAM_CELL -
+                  14
+                }
+                rx="13"
+                className="parking-jam-board__freed-space"
+              />
+            ))}
+        </g>
+      ) : null}
       <g clipPath={paint.vehicleSpaceClipPath}>
         {board.vehicles.map((vehicle) => {
           const isRemaining = remaining.has(vehicle.id);
@@ -218,6 +329,18 @@ export function ParkingJamBoard({
             ? ({
                 "--parking-jam-exit-x": `${exitTranslation.x}px`,
                 "--parking-jam-exit-y": `${exitTranslation.y}px`,
+                "--parking-jam-exit-start-x":
+                  concept !== "original" &&
+                  release.current?.vehicleId === vehicle.id &&
+                  release.current.direction === operation?.direction
+                    ? release.current.x
+                    : "0px",
+                "--parking-jam-exit-start-y":
+                  concept !== "original" &&
+                  release.current?.vehicleId === vehicle.id &&
+                  release.current.direction === operation?.direction
+                    ? release.current.y
+                    : "0px",
               } as CSSProperties)
             : undefined;
           return (
@@ -225,12 +348,15 @@ export function ParkingJamBoard({
               key={targeted ? `${vehicle.id}-${operation?.id}` : vehicle.id}
               ref={exiting ? exitingCarRef : undefined}
               role="button"
+              data-length={vehicle.length}
               tabIndex={interactionDisabled || exiting ? -1 : 0}
               aria-label={getVehicleLabel(vehicle)}
               aria-pressed={selected}
               className={`parking-jam-car${selected ? " parking-jam-car--selected" : ""}${feedbackClass}`}
               style={exitStyle}
               onPointerDown={(event) => handlePointerDown(event, vehicle)}
+              onPointerMove={(event) => handlePointerMove(event, vehicle)}
+              onPointerCancel={resetPointer}
               onPointerUp={(event) => handlePointerUp(event, vehicle)}
               onKeyDown={(event) => handleKeyDown(event, vehicle)}
             >
@@ -239,6 +365,16 @@ export function ParkingJamBoard({
           );
         })}
       </g>
+      {plannedMoves.map((move, index) => {
+        const vehicle = board.vehicles.find((candidate) => candidate.id === move.vehicleId);
+        if (!vehicle || !remaining.has(vehicle.id)) return null;
+        return (
+          <g key={`planned-${vehicle.id}`} className="parking-jam-board__plan-number" aria-hidden="true">
+            <circle cx={(vehicle.column + 0.25) * PARKING_JAM_CELL} cy={(vehicle.row + 0.25) * PARKING_JAM_CELL} r="19" />
+            <text x={(vehicle.column + 0.25) * PARKING_JAM_CELL} y={(vehicle.row + 0.25) * PARKING_JAM_CELL} textAnchor="middle" dominantBaseline="central">{index + 1}</text>
+          </g>
+        );
+      })}
       {selectedVehicle && !interactionDisabled
         ? getParkingJamDirectionControls(selectedVehicle).map((control) => (
             <g

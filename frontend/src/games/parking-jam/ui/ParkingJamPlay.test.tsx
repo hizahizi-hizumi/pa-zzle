@@ -60,6 +60,17 @@ describe("ParkingJamPlay", () => {
     render(<ParkingJamPlay {...props} />);
   });
 
+  test("通常のプレイでは体験比較操作を表示しないこと", () => {
+    expect(
+      screen.queryByRole("group", { name: "パーキングジャムのプレイ体験比較" }),
+    ).toBeNull();
+    expect(
+      screen
+        .getByRole("group", { name: "パーキングジャム盤面" })
+        .classList.contains("parking-jam-board--original"),
+    ).toBe(true);
+  });
+
   test("プレイ中に難易度を表示しないこと", () => {
     expect(screen.queryByText("レベル 3")).toBeNull();
   });
@@ -183,5 +194,36 @@ describe("盤面を戻せない場合", () => {
     const restartItem = screen.getByRole("menuitem", { name: "盤面を戻す" });
 
     expect(restartItem.getAttribute("aria-disabled")).toBe("true");
+  });
+});
+
+describe("パーキングジャム体験比較モードの場合", () => {
+  let props: ComponentProps<typeof ParkingJamPlay>;
+
+  beforeEach(() => {
+    window.history.replaceState({}, "", "?parkingJamLab=1");
+    props = createProps();
+    render(<ParkingJamPlay {...props} />);
+  });
+
+  afterEach(() => {
+    window.history.replaceState({}, "", "/");
+  });
+
+  test("現行と出庫計画を切り替えられること", () => {
+    const board = screen.getByRole("group", { name: "パーキングジャム盤面" });
+    expect(board.classList.contains("parking-jam-board--original")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "順番を組み立てる" }));
+    expect(board.classList.contains("parking-jam-board--plan")).toBe(true);
+    expect(props.onMove).not.toHaveBeenCalled();
+  });
+
+  test("計画した車はまとめて出庫を押すまで移動しないこと", () => {
+    fireEvent.click(screen.getByRole("button", { name: "順番を組み立てる" }));
+    fireEvent.keyDown(screen.getByRole("button", { name: "横向きの車 行2 列1" }), { key: "ArrowRight" });
+    expect(screen.getByLabelText("1番目 →")).toBeTruthy();
+    expect(props.onMove).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "まとめて出庫" }));
+    expect(props.onMove).toHaveBeenCalledWith("a", "right");
   });
 });
