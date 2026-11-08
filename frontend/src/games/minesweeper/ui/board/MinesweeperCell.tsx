@@ -5,6 +5,7 @@ import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session
 import {
   getMinesweeperCellFaceClassName,
   MinesweeperCellFace,
+  type MinesweeperVisualStyle,
 } from "@/games/minesweeper/ui/board/MinesweeperCellFace";
 
 const LONG_PRESS_DELAY_MS = 450;
@@ -13,6 +14,7 @@ type MinesweeperCellProps = {
   cellIndex: number;
   view: MinesweeperVisibleCell;
   disabled: boolean;
+  visualStyle?: MinesweeperVisualStyle;
   onPress: (cellIndex: number) => void;
   onFlagPress: (cellIndex: number) => void;
 };
@@ -39,13 +41,26 @@ function getAccessibleName(
   return `${position} 未開示`;
 }
 
-function getCellClassName(view: MinesweeperVisibleCell): string {
-  const faceClassName = getMinesweeperCellFaceClassName(view, "board");
+function getCellClassName(
+  view: MinesweeperVisibleCell,
+  visualStyle: MinesweeperVisualStyle,
+): string {
+  const faceClassName = getMinesweeperCellFaceClassName(
+    view,
+    "board",
+    visualStyle,
+  );
   const interactionClassName =
-    "min-w-0 touch-manipulation select-none outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
+    "min-w-0 touch-manipulation select-none outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
   if (view.state === "hidden" || view.state === "flagged") {
-    return `${faceClassName} ${interactionClassName} hover:bg-slate-300 dark:hover:bg-slate-600`;
+    const feedbackClassName =
+      visualStyle === "classic"
+        ? "transition-colors duration-(--duration-fast) hover:bg-slate-300 dark:hover:bg-slate-600"
+        : visualStyle === "hybrid"
+          ? "transition-[filter] duration-75 hover:brightness-[1.015] active:brightness-[0.95]"
+          : "transition-[filter,transform] duration-(--duration-fast) hover:brightness-105 active:translate-y-[3px] active:brightness-95";
+    return `${faceClassName} ${interactionClassName} ${feedbackClassName}`;
   }
   return `${faceClassName} ${interactionClassName}`;
 }
@@ -54,6 +69,7 @@ export function MinesweeperCell({
   cellIndex,
   view,
   disabled,
+  visualStyle = "classic",
   onPress,
   onFlagPress,
 }: MinesweeperCellProps) {
@@ -113,9 +129,11 @@ export function MinesweeperCell({
       onPointerUp={handlePointerEnd}
       onPointerCancel={handlePointerEnd}
       onPointerLeave={handlePointerEnd}
-      className={getCellClassName(view)}
+      data-cell-index={cellIndex}
+      data-cell-state={view.state}
+      className={getCellClassName(view, visualStyle)}
     >
-      <MinesweeperCellFace view={view} size="board" />
+      <MinesweeperCellFace view={view} size="board" visualStyle={visualStyle} />
     </button>
   );
 }

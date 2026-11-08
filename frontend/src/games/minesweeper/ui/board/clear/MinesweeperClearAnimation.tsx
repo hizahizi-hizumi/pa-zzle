@@ -8,19 +8,45 @@ type MinesweeperClearAnimationProps = {
   children: ReactNode;
 };
 
-/** クリア音（`assets/sounds/cleared.flac`）は、脈打ち終わるときに鳴り終える長さで作っているので、変えるなら作り直す。 */
+/** クリア音（`assets/sounds/cleared.flac`）に合わせた盤面完成の長さ。 */
 const CLEAR_PULSE_MS = 700;
 const CLEAR_HOLD_MS = 200;
-/** 動かせない環境でも、脈打つ演出と同じ間を置いてから結果へ進める。 */
 const CLEAR_UNANIMATED_HOLD_MS = CLEAR_PULSE_MS + CLEAR_HOLD_MS;
 
 const clearPulseKeyframes: Keyframe[] = [
   { transform: "scale(1)", filter: "saturate(1)" },
-  { transform: "scale(1.014)", filter: "saturate(1.24)", offset: 0.5 },
+  { transform: "scale(1.012)", filter: "saturate(1.12)", offset: 0.5 },
   { transform: "scale(1)", filter: "saturate(1)" },
 ];
 
-/** クリアを決めた最終操作と、明かした地雷配置を見せてから結果へ進める。 */
+/** 完成した安全マスを左上から右下へ短く照らし、推理で開いた盤面全体を見せる。 */
+function animateCompletedCells(container: HTMLElement): Animation[] {
+  const cells = Array.from(
+    container.querySelectorAll<HTMLElement>('[data-cell-state="revealed"]'),
+  );
+  const lastIndex = Math.max(1, cells.length - 1);
+  return cells.flatMap((cell, index) => {
+    if (typeof cell.animate !== "function") {
+      return [];
+    }
+    return [
+      cell.animate(
+        [
+          { filter: "brightness(1)", offset: 0 },
+          { filter: "brightness(1.13)", offset: 0.45 },
+          { filter: "brightness(1)", offset: 1 },
+        ],
+        {
+          duration: 240,
+          delay: Math.round((index / lastIndex) * 440),
+          easing: MOTION_EASING.celebrate,
+        },
+      ),
+    ];
+  });
+}
+
+/** 最終操作で開いた盤面を見せ、完成の余韻を作ってから結果へ進む。 */
 export function MinesweeperClearAnimation({
   active,
   onComplete,
@@ -35,11 +61,15 @@ export function MinesweeperClearAnimation({
 
     return playAnimations({
       animate() {
-        const animation = containerRef.current?.animate?.(clearPulseKeyframes, {
+        const container = containerRef.current;
+        if (!container?.animate) {
+          return [];
+        }
+        const pulse = container.animate(clearPulseKeyframes, {
           duration: CLEAR_PULSE_MS,
           easing: MOTION_EASING.celebrate,
         });
-        return animation ? [animation] : [];
+        return [pulse, ...animateCompletedCells(container)];
       },
       completion: { type: "after-animations", holdMs: CLEAR_HOLD_MS },
       reducedMotionHoldMs: 0,
@@ -54,7 +84,7 @@ export function MinesweeperClearAnimation({
       {active && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-slate-200/15 dark:bg-slate-700/10"
+          className="pointer-events-none absolute inset-0 bg-slate-200/10 dark:bg-slate-700/10"
         />
       )}
     </div>
