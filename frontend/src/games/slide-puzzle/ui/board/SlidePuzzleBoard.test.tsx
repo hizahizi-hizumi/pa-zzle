@@ -114,6 +114,195 @@ describe("SlidePuzzleBoard", () => {
     },
   );
 
+  describe("タイルを押し送る体験の場合", () => {
+    let boardGroup: HTMLElement;
+    let lastTile: HTMLElement;
+
+    beforeEach(() => {
+      render(
+        <SlidePuzzleBoard
+          board={board}
+          experience="kinetic"
+          operation={null}
+          interactionDisabled={false}
+          clearing={false}
+          onSlideTile={onSlideTile}
+          onClearAnimationComplete={onClearAnimationComplete}
+        />,
+      );
+      boardGroup = screen.getByRole("group", { name: "盤面" });
+      lastTile = within(boardGroup).getByRole("button", { name: "15" });
+      Object.defineProperty(lastTile, "clientWidth", {
+        configurable: true,
+        value: 100,
+      });
+    });
+
+    test("離れたタイルをドラッグすると間のタイルも指と一緒に滑ること", () => {
+      fireEvent.pointerDown(lastTile, {
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 300,
+        clientY: 100,
+      });
+      fireEvent.pointerMove(lastTile, {
+        pointerId: 1,
+        clientX: 260,
+        clientY: 100,
+      });
+
+      for (const number of ["13", "14", "15"]) {
+        const face = within(boardGroup).getByRole("button", {
+          name: number,
+        }).firstElementChild;
+        expect((face as HTMLElement).style.translate).toBe("-40px 0px");
+      }
+    });
+
+    test("十分に滑らせて指を離すと移動を一度だけ確定すること", () => {
+      fireEvent.pointerDown(lastTile, {
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 300,
+        clientY: 100,
+      });
+      fireEvent.pointerMove(lastTile, {
+        pointerId: 1,
+        clientX: 240,
+        clientY: 100,
+      });
+      fireEvent.pointerUp(lastTile, {
+        pointerId: 1,
+        clientX: 240,
+        clientY: 100,
+      });
+      fireEvent.click(lastTile);
+
+      expect(onSlideTile).toHaveBeenCalledExactlyOnceWith(15);
+    });
+
+    test("途中でドラッグを取り消すと盤面が戻り手数が増えないこと", () => {
+      fireEvent.pointerDown(lastTile, {
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 300,
+        clientY: 100,
+      });
+      fireEvent.pointerMove(lastTile, {
+        pointerId: 1,
+        clientX: 260,
+        clientY: 100,
+      });
+      fireEvent.pointerCancel(lastTile, { pointerId: 1 });
+
+      const face = within(boardGroup).getByRole("button", {
+        name: "15",
+      }).firstElementChild;
+      expect((face as HTMLElement).style.translate).toBe("");
+      expect(onSlideTile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("空白を動かす体験の場合", () => {
+    let boardGroup: HTMLElement;
+    let pocket: HTMLElement;
+    let track: HTMLElement;
+
+    beforeEach(() => {
+      render(
+        <SlidePuzzleBoard
+          board={board}
+          experience="pocket"
+          operation={null}
+          interactionDisabled={false}
+          clearing={false}
+          onSlideTile={onSlideTile}
+          onClearAnimationComplete={onClearAnimationComplete}
+        />,
+      );
+      boardGroup = screen.getByRole("group", { name: "盤面" });
+      pocket = within(boardGroup).getByRole("button", {
+        name: "空白を動かす",
+      });
+      track = pocket.parentElement as HTMLElement;
+      vi.spyOn(track, "getBoundingClientRect").mockReturnValue({
+        top: 0,
+        left: 0,
+        width: 400,
+        height: 400,
+        right: 400,
+        bottom: 400,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      });
+    });
+
+    test("マスをまたぐ前から空白と隣のタイルが指に追従すること", () => {
+      fireEvent.pointerDown(pocket, {
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 50,
+        clientY: 350,
+      });
+      fireEvent.pointerMove(track, {
+        pointerId: 1,
+        clientX: 85,
+        clientY: 350,
+      });
+
+      const face = within(boardGroup).getByRole("button", {
+        name: "13",
+      }).firstElementChild;
+      expect((face as HTMLElement).style.translate).toBe("-35px 0px");
+      expect(pocket.style.transform).toContain("translate(35px, 0px)");
+      expect(onSlideTile).not.toHaveBeenCalled();
+    });
+
+    test("空白を次のマスまで運ぶと隣のタイルを動かすこと", () => {
+      fireEvent.pointerDown(pocket, {
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 50,
+        clientY: 350,
+      });
+      fireEvent.pointerMove(track, {
+        pointerId: 1,
+        clientX: 130,
+        clientY: 350,
+      });
+
+      expect(onSlideTile).toHaveBeenCalledExactlyOnceWith(13);
+    });
+
+    test("空白のドラッグを途中で取り消してもタイルが動かないこと", () => {
+      fireEvent.pointerDown(pocket, {
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 50,
+        clientY: 350,
+      });
+      fireEvent.pointerMove(track, {
+        pointerId: 1,
+        clientX: 85,
+        clientY: 350,
+      });
+      fireEvent.pointerCancel(track, { pointerId: 1 });
+
+      const face = within(boardGroup).getByRole("button", {
+        name: "13",
+      }).firstElementChild;
+      expect((face as HTMLElement).style.translate).toBe("");
+      expect(onSlideTile).not.toHaveBeenCalled();
+    });
+  });
+
   describe("完成した場合", () => {
     let rerender: ReturnType<typeof render>["rerender"];
 
