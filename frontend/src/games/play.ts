@@ -144,6 +144,7 @@ export type GamePlayResultScreenProps<Difficulty, Result> = {
   /** 同じ問題を遊び直す。省略すると押せない状態で出す。 */
   onReplay?: () => void;
   onStartNewProblem: () => void;
+  nextProblemLabel?: string;
   /** ゲームのホームへ移る。図鑑で今の問題を選んだ状態で開く。 */
   onOpenGameHome: () => void;
   /** 省略すると検証情報を開く操作を出さない。 */

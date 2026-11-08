@@ -26,6 +26,7 @@ export function NanpureResultScreen({
   recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
+  nextProblemLabel,
   onOpenGameHome,
   onOpenDiagnostics,
 }: NanpureResultScreenProps) {
@@ -48,6 +49,7 @@ export function NanpureResultScreen({
       ]}
       scoreCriteria={getNanpureScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}
+      nextProblemLabel={nextProblemLabel}
       onReplay={onReplay}
       onOpenGameHome={onOpenGameHome}
       onOpenDiagnostics={onOpenDiagnostics}

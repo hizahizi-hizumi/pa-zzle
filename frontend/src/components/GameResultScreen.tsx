@@ -42,6 +42,7 @@ type GameResultScreenProps = {
   metrics: GameResultMetrics;
   recordOutcomeNotice: ReactNode;
   onStartNewProblem: () => void;
+  nextProblemLabel?: string;
   /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
   onReplay?: () => void;
   /** ゲームのホームへ移る。 */
@@ -60,6 +61,7 @@ export function GameResultScreen({
   scoreBreakdown,
   scoreCriteria,
   onStartNewProblem,
+  nextProblemLabel,
   onReplay,
   onOpenGameHome,
   onOpenDiagnostics,
@@ -109,6 +111,7 @@ export function GameResultScreen({
 
         <GameResultActions
           onStartNewProblem={onStartNewProblem}
+          nextProblemLabel={nextProblemLabel}
           onOpenGameHome={onOpenGameHome}
           onReplay={onReplay}
         />
