@@ -19,6 +19,12 @@
   }
 }
 @keyframes pj-exit {
+  from {
+    transform: translate(
+      var(--parking-jam-exit-start-x, 0),
+      var(--parking-jam-exit-start-y, 0)
+    );
+  }
   to {
     transform: translate(
       var(--parking-jam-exit-x, 0),
@@ -128,12 +134,24 @@
   stroke-linecap: round;
   pointer-events: none;
 }
+.parking-jam-board--lane .parking-jam-car__body {
+  filter: drop-shadow(0 7px 2px rgb(3 21 25 / 0.33));
+}
+.parking-jam-board--toy .parking-jam-car__body {
+  stroke: #243a3e;
+  stroke-width: 5;
+  filter: drop-shadow(0 7px 1px rgb(14 38 38 / 0.32));
+}
 .parking-jam-car--selected .parking-jam-car__body {
   stroke: #fff;
   stroke-width: 7;
 }
 .parking-jam-car:focus-visible .parking-jam-car__body {
   stroke: #fff;
+  stroke-width: 7;
+}
+.parking-jam-board--toy .parking-jam-car--selected .parking-jam-car__body {
+  stroke: #fff3d0;
   stroke-width: 7;
 }
 .parking-jam-car--blocked-left {
@@ -192,3 +210,87 @@
   .parking-jam-direction-control__surface {
   stroke-width: 6;
 }
+
+.parking-jam-car--dragging {
+  transform: translate(
+    var(--parking-jam-drag-x, 0),
+    var(--parking-jam-drag-y, 0)
+  );
+}
+@keyframes pj-freed-space {
+  from {
+    fill: rgb(220 251 208 / 0.4);
+  }
+  to {
+    fill: rgb(220 251 208 / 0);
+  }
+}
+.parking-jam-board__freed-space {
+  pointer-events: none;
+  animation: pj-freed-space 520ms ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .parking-jam-board__freed-space {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+
+
+.parking-jam-board--drive .parking-jam-car--dragging {
+  filter: drop-shadow(0 9px 6px rgb(0 0 0 / 0.3));
+}
+.parking-jam-board__exit-trail {
+  pointer-events: none;
+}
+.parking-jam-board__exit-trail line {
+  stroke: rgb(255 246 189 / 0.9);
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-dasharray: 18 15;
+  animation: pj-trail 640ms ease-out both;
+}
+.parking-jam-board__exit-trail circle {
+  fill: rgb(255 245 177 / 0.6);
+  stroke: #fff8d0;
+  stroke-width: 4;
+  animation: pj-trail-end 620ms ease-out both;
+}
+@keyframes pj-trail {
+  from {
+    opacity: 0;
+    stroke-dashoffset: 80;
+  }
+  25% {
+    opacity: 0.95;
+  }
+  to {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes pj-trail-end {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+    transform-origin: center;
+  }
+  45% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.5);
+    transform-origin: center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .parking-jam-board__exit-trail {
+    display: none;
+  }
+}
+
+.parking-jam-board__plan-number { pointer-events: none; }
+.parking-jam-board__plan-number circle { fill: #fff8dc; stroke: #1e293b; stroke-width: 3; }
+.parking-jam-board__plan-number text { fill: #1e293b; font-size: 24px; font-weight: 800; }
