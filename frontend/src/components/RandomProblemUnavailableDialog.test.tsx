@@ -6,18 +6,15 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-
-import { RandomProblemGameOptionsProvider } from "@/components/RandomProblemGameOptionsContext";
+import { GameCatalogProvider } from "@/components/GameCatalogContext";
 import { RandomProblemUnavailableDialog } from "@/components/RandomProblemUnavailableDialog";
 import { randomProblemUnavailable } from "@/lib/random-problem-unavailable";
 
 function renderDialog() {
   return render(
-    <RandomProblemGameOptionsProvider
-      games={[{ id: "nanpure", name: "ナンプレ" }]}
-    >
+    <GameCatalogProvider games={[{ id: "nanpure", name: "ナンプレ" }]}>
       <RandomProblemUnavailableDialog />
-    </RandomProblemGameOptionsProvider>,
+    </GameCatalogProvider>,
   );
 }
 
@@ -64,9 +61,8 @@ describe("出題候補がない場合", () => {
     ).toBeNull();
     fireEvent.click(dialog.getByRole("button", { name: "出題対象を変更" }));
     const settings = within(screen.getByRole("dialog", { name: "設定" }));
-    expect(settings.getByRole("heading", { name: "サウンド" })).toBeTruthy();
-    expect(
-      settings.getByRole("heading", { name: "ランダム出題" }),
-    ).toBeTruthy();
+    fireEvent.click(settings.getByRole("button", { name: /ランダム出題/ }));
+    const random = within(screen.getByRole("dialog", { name: "ランダム出題" }));
+    expect(random.getByRole("group", { name: "出題対象" })).toBeTruthy();
   });
 });

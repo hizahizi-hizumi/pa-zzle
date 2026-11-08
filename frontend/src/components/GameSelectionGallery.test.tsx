@@ -211,7 +211,9 @@ describe("設定", () => {
   test("見出しの設定ボタンで、効果音と BGM の音量を選ぶダイアログを開き、開く操作では音を鳴らさないこと", () => {
     fireEvent.click(screen.getByRole("button", { name: "設定" }));
 
-    const dialog = screen.getByRole("dialog", { name: "設定" });
+    const settings = screen.getByRole("dialog", { name: "設定" });
+    fireEvent.click(within(settings).getByRole("button", { name: /サウンド/ }));
+    const dialog = screen.getByRole("dialog", { name: "サウンド" });
     const volumeNames = ["効果音", "BGM"].map(
       (name) => within(dialog).getByRole("group", { name }).textContent,
     );

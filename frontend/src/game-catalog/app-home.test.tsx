@@ -23,6 +23,10 @@ import {
 } from "@/games/tsume-shogi/problem/problem-pool";
 import { _private as appLaunch, startAppLaunch } from "@/lib/app-launch";
 import {
+  gameSelectionOrderSetting,
+  _private as orderPrivate,
+} from "@/lib/game-selection-order-setting";
+import {
   abandonPlayAttempt,
   startPlayAttempt,
 } from "@/records/play-attempt-storage";
@@ -122,6 +126,7 @@ afterEach(() => {
   cleanup();
   appLaunch.resetAppLaunch();
   window.localStorage.clear();
+  orderPrivate.resetCache();
   Reflect.deleteProperty(Element.prototype, "scrollIntoView");
   Reflect.deleteProperty(window, "ResizeObserver");
 });
@@ -139,6 +144,20 @@ describe("useAppHome", () => {
         "ウォーターソートを遊ぶ",
       );
       expect(getContinuationText()).toBeNull();
+    });
+  });
+
+  describe("並び順とプレイ履歴が両方ある場合", () => {
+    beforeEach(() => {
+      gameSelectionOrderSetting.setOrder(["water-sort", "tsume-shogi"]);
+      saveAbandonedPlay("nanpure", 100_000, "4", selectNanpureIdentity("4"));
+      renderAtHome();
+    });
+
+    test("並びの先頭よりも最後に遊んだゲームを選んでおくこと", () => {
+      const selected = getHeroLink();
+
+      expect(selected.getAttribute("aria-label")).toBe("ナンプレを遊ぶ");
     });
   });
 

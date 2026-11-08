@@ -32,6 +32,8 @@ export type AppHome = {
 type AppHomeOptions = {
   /** ホームを開いたときに、ホームがタイトルで覆われているか。 */
   isCovered: boolean;
+  /** 遊んだ履歴がないとき、選んでおくゲームの ID。 */
+  firstGameId?: string;
 };
 
 /** 空いている時間に `task` を呼ぶ。`requestIdleCallback` の無いブラウザでは次のタスクで呼ぶ。 */
@@ -70,7 +72,7 @@ function prefetchContinuations(
  */
 export function useAppHome(
   games: readonly GameCatalogEntry[],
-  { isCovered }: AppHomeOptions,
+  { isCovered, firstGameId }: AppHomeOptions,
 ): AppHome {
   const [records] = useState(() => readPlayRecords());
   const attempts = useSyncExternalStore(
@@ -109,8 +111,12 @@ export function useAppHome(
   const latestPlayedIndex = games.findIndex(
     ({ id }) => id === latestPlayedGameId,
   );
+  const firstGameIndex = games.findIndex(({ id }) => id === firstGameId);
   const selectedGameIndex =
-    chosenIndex ?? (latestPlayedIndex === -1 ? 0 : latestPlayedIndex);
+    chosenIndex ??
+    (latestPlayedIndex === -1
+      ? Math.max(firstGameIndex, 0)
+      : latestPlayedIndex);
   const selectedGame = games[selectedGameIndex];
 
   return {

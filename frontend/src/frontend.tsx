@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import "@/index.css";
-import { RandomProblemGameOptionsProvider } from "@/components/RandomProblemGameOptionsContext";
+import { GameCatalogProvider } from "@/components/GameCatalogContext";
 import { RandomProblemUnavailableDialog } from "@/components/RandomProblemUnavailableDialog";
 import { gameCatalog } from "@/game-catalog/game-catalog";
 import { startAppLaunch } from "@/lib/app-launch";
@@ -47,9 +47,9 @@ const router = createBrowserRouter(routes);
 
 createRoot(root).render(
   <StrictMode>
-    <RandomProblemGameOptionsProvider games={gameCatalog}>
+    <GameCatalogProvider games={gameCatalog}>
       <RouterProvider router={router} />
       <RandomProblemUnavailableDialog />
-    </RandomProblemGameOptionsProvider>
+    </GameCatalogProvider>
   </StrictMode>,
 );

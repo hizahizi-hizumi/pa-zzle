@@ -81,12 +81,12 @@ export function GameSelectionGallery({
   const continuationId = useId();
   const isTouchedRef = useRef(false);
   // 遊ぶ人が選んだゲームだけ、選んだ瞬間に色を入れる。最初に選んでおくゲームには入れない。
-  const [colorsInIndex, setColorsInIndex] = useState<number | null>(null);
+  const [colorsInGame, setColorsInGame] = useState<Path | null>(null);
 
   function selectGame(index: number) {
     if (index !== selectedIndex) {
       playGameSelectSound();
-      setColorsInIndex(index);
+      setColorsInGame(games[index]?.to ?? null);
     }
     onSelect(index);
   }
@@ -164,7 +164,7 @@ export function GameSelectionGallery({
               pictogramShowcaseSvg={selectedGame.pictogramShowcaseSvg}
               size="hero"
               motion={isCovered ? "rest" : "play"}
-              colorsIn={colorsInIndex === selectedIndex}
+              colorsIn={colorsInGame === selectedGame.to}
             />
           </span>
           <span className="mt-2 text-heading sm:mt-3">{selectedGame.name}</span>
@@ -222,7 +222,7 @@ export function GameSelectionGallery({
                         pictogramSvg={game.pictogramSvg}
                         pictogramShowcaseSvg={game.pictogramShowcaseSvg}
                         size="list"
-                        colorsIn={colorsInIndex === index}
+                        colorsIn={colorsInGame === game.to}
                       />
                     ) : (
                       <GamePictogram svg={game.pictogramSvg} />
