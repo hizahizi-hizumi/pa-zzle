@@ -119,6 +119,69 @@ describe("SlidePuzzleBoard", () => {
       expect(onSlideTile).toHaveBeenCalledWith(13);
     });
 
+    test("複数タイルを滑らせる途中では列全体が一緒に動くこと", () => {
+      const boardGroup = renderGestureBoard();
+      const tile = within(boardGroup).getByRole("button", { name: "15" });
+      Object.defineProperty(tile, "clientWidth", {
+        configurable: true,
+        value: 100,
+      });
+      fireEvent.pointerDown(tile, {
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 100,
+        clientY: 100,
+      });
+      fireEvent.pointerMove(tile, {
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 80,
+        clientY: 100,
+      });
+      for (const number of ["13", "14", "15"]) {
+        const face = within(boardGroup).getByRole("button", {
+          name: number,
+        }).firstElementChild;
+        expect((face as HTMLElement).style.translate).toBe("-20px 0");
+      }
+      fireEvent.pointerCancel(tile, { pointerId: 1 });
+      for (const number of ["13", "14", "15"]) {
+        const face = within(boardGroup).getByRole("button", {
+          name: number,
+        }).firstElementChild;
+        expect((face as HTMLElement).style.translate).toBe("");
+      }
+    });
+
+    test("ドラッグ中はタイルが空白の1マス分まで追従し、それ以上ははみ出さないこと", () => {
+      const boardGroup = renderGestureBoard();
+      const tile = within(boardGroup).getByRole("button", { name: "15" });
+      Object.defineProperty(tile, "clientWidth", {
+        configurable: true,
+        value: 100,
+      });
+      fireEvent.pointerDown(tile, {
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 200,
+        clientY: 100,
+      });
+      fireEvent.pointerMove(tile, {
+        pointerId: 1,
+        pointerType: "touch",
+        clientX: 80,
+        clientY: 100,
+      });
+      for (const number of ["13", "14", "15"]) {
+        const face = within(boardGroup).getByRole("button", {
+          name: number,
+        }).firstElementChild;
+        expect((face as HTMLElement).style.translate).toBe("-100px 0");
+      }
+      fireEvent.pointerCancel(tile, { pointerId: 1 });
+      expect(onSlideTile).not.toHaveBeenCalled();
+    });
+
     test("複数タイル越しでも空白の方向なら滑らせられること", () => {
       const boardGroup = renderGestureBoard();
       const tile = within(boardGroup).getByRole("button", { name: "15" });

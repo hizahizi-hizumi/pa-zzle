@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { SlidePuzzleOperation } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { getSlidePuzzleSlide } from "@/games/slide-puzzle/puzzle/rules";
 import {
@@ -88,6 +88,10 @@ export function SlidePuzzleBoard({
   onClearAnimationComplete,
 }: SlidePuzzleBoardProps) {
   const tileFaceRefs = useRef(new Map<number, HTMLSpanElement>());
+  const [dragPreview, setDragPreview] = useState<{
+    indices: readonly number[];
+    offset: number;
+  } | null>(null);
   const boardSize = getSlidePuzzleBoardSize(board);
   const blankIndex = findSlidePuzzleBlankIndex(board);
   const tileCount = board.length - 1;
@@ -156,6 +160,17 @@ export function SlidePuzzleBoard({
             moveDirection={
               getSlidePuzzleSlide(board, cellIndex)?.direction ?? null
             }
+            previewOffset={
+              dragPreview?.indices.includes(cellIndex) ? dragPreview.offset : 0
+            }
+            onDragPreview={(offset) => {
+              const slide = getSlidePuzzleSlide(board, cellIndex);
+              setDragPreview(
+                slide && offset > 0
+                  ? { indices: slide.movedTileIndices, offset }
+                  : null,
+              );
+            }}
             gestureEnabled={gestureEnabled}
             disabled={interactionDisabled}
             // 盤面を戻す・別の問題などの置き換えでは、タイル同士が交差して滑らないよう即座に並べ替える。

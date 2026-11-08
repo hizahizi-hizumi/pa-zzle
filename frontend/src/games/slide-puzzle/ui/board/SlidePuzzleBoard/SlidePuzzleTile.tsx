@@ -1,4 +1,4 @@
-import { type PointerEvent, type Ref, useRef, useState } from "react";
+import { type PointerEvent, type Ref, useRef } from "react";
 
 import type { SlidePuzzleDirection } from "@/games/slide-puzzle/puzzle/rules";
 import {
@@ -24,6 +24,8 @@ type SlidePuzzleTileProps = {
   surface?: SlidePuzzleSurface;
   moveDirection?: SlidePuzzleDirection | null;
   gestureEnabled?: boolean;
+  previewOffset?: number;
+  onDragPreview?: (offset: number) => void;
   disabled: boolean;
   slideAnimated: boolean;
   faceRef: Ref<HTMLSpanElement>;
@@ -37,6 +39,8 @@ export function SlidePuzzleTile({
   surface = "original",
   moveDirection = null,
   gestureEnabled = false,
+  previewOffset = 0,
+  onDragPreview,
   disabled,
   slideAnimated,
   faceRef,
@@ -48,7 +52,6 @@ export function SlidePuzzleTile({
     null,
   );
   const suppressNextPointerClick = useRef(false);
-  const [previewOffset, setPreviewOffset] = useState(0);
 
   function dragDistance(event: PointerEvent<HTMLButtonElement>) {
     const start = pointerStart.current;
@@ -98,15 +101,15 @@ export function SlidePuzzleTile({
     const { forward, cross } = alongSlideDirection(distance.x, distance.y);
     const preview =
       forward > Math.abs(cross)
-        ? Math.min(forward, event.currentTarget.clientWidth * 0.27)
+        ? Math.min(forward, event.currentTarget.clientWidth)
         : 0;
-    setPreviewOffset(preview);
+    onDragPreview?.(preview);
   }
 
   function handlePointerUp(event: PointerEvent<HTMLButtonElement>) {
     const distance = dragDistance(event);
     pointerStart.current = null;
-    setPreviewOffset(0);
+    onDragPreview?.(0);
     if (!distance) {
       return;
     }
@@ -123,7 +126,7 @@ export function SlidePuzzleTile({
 
   function handlePointerCancel() {
     pointerStart.current = null;
-    setPreviewOffset(0);
+    onDragPreview?.(0);
   }
 
   return (
