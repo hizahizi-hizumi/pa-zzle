@@ -1,0 +1,517 @@
+{
+  "date": "2026-11-08",
+  "sourceSnapshot": "7be961e69dd60b0d89cd8b3a3d02aea7ff8e75e3",
+  "mainCodeSha": "add7b90d4d6889973f92ca8af84d2251c3366a17",
+  "kind": "supplemental technical audit, not independent human play",
+  "ui": {
+    "method": "Chromium Playwright via HTTP relay and page.set_content; response-only test override, repository unchanged",
+    "rootCauses": [
+      "frontend.tsx now constructs BrowserRouter, while relay attempted to patch the older generouted implementation",
+      "about:blank origin caused invalid URL base in React Router"
+    ],
+    "workaround": [
+      "HTTP response for frontend.tsx uses MemoryRouter with initialEntries supplied by test path",
+      "HTTP response for React Router URL fallback uses http://localhost instead of about:blank"
+    ],
+    "mobileViewport": {
+      "width": 390,
+      "height": 844
+    },
+    "cases": [
+      {
+        "game": "nanpure",
+        "level": 5,
+        "problemId": "hnqkaeh8lf",
+        "zukanNumber": 1205,
+        "result": "home -> Lv5 -> gallery No. -> detail -> play screen passed",
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "failedRequests": 0
+      },
+      {
+        "game": "takuzu",
+        "level": 5,
+        "problemId": "39439vl3hr",
+        "zukanNumber": 2004,
+        "result": "home -> Lv5 -> gallery No. -> detail -> play screen passed",
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "failedRequests": 0
+      },
+      {
+        "game": "hitofude-puzzle",
+        "level": 5,
+        "problemId": "2krcu6iqge",
+        "zukanNumber": 2014,
+        "result": "home -> Lv5 -> gallery No. -> detail -> play screen passed",
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "failedRequests": 0
+      },
+      {
+        "game": "tsume-shogi",
+        "level": 5,
+        "problemId": "fqnft7o39d",
+        "zukanNumber": 3505,
+        "result": "home -> Lv5 -> gallery No. -> detail -> play screen passed",
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "failedRequests": 0
+      },
+      {
+        "game": "ice-floor-maze",
+        "level": 5,
+        "problemId": "26tcqgd10k",
+        "zukanNumber": 1608,
+        "result": "home -> Lv5 -> gallery No. -> detail -> play screen passed",
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "failedRequests": 0
+      },
+      {
+        "game": "slide-puzzle",
+        "level": 5,
+        "problemId": "qggvdlhdlc",
+        "zukanNumber": 803,
+        "result": "home -> Lv5 -> gallery No. -> detail -> play screen passed",
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "failedRequests": 0
+      },
+      {
+        "game": "minesweeper",
+        "level": 5,
+        "problemId": "84hv2vf89v",
+        "zukanNumber": 4001,
+        "result": "home -> Lv5 -> gallery No. -> detail -> play screen passed",
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "failedRequests": 0
+      },
+      {
+        "game": "parking-jam",
+        "level": 5,
+        "problemId": "am5fcjmpsp",
+        "zukanNumber": 4003,
+        "result": "home -> Lv5 -> gallery No. -> detail -> play screen passed",
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "failedRequests": 0
+      },
+      {
+        "game": "water-sort",
+        "level": 5,
+        "problemId": "8rueqe4o83",
+        "zukanNumber": 4014,
+        "result": "home -> Lv5 -> gallery No. -> detail -> play screen passed",
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "failedRequests": 0
+      },
+      {
+        "game": "reflection",
+        "level": 5,
+        "problemId": "pv6n651k0g",
+        "zukanNumber": 1801,
+        "result": "home -> Lv5 -> gallery No. -> detail -> play screen passed",
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "failedRequests": 0
+      }
+    ],
+    "actions": [
+      {
+        "game": "water-sort",
+        "problemId": "8rueqe4o83",
+        "action": "pour from bottle 1 to empty bottle 12",
+        "observed": "move count 0->1, bottle contents changed; browser errors 0"
+      },
+      {
+        "game": "reflection",
+        "problemId": "pv6n651k0g",
+        "action": "place up-right mirror at row 1 col 1",
+        "observed": "cell changed, piece count 3->2; browser errors 0"
+      }
+    ],
+    "limits": "8 remaining games verified start navigation only; UI automation is not human puzzle-quality trial"
+  },
+  "waterSort": {
+    "scope": "5 levels x 1000 problems x 3 policies x 12 runs = 180000 automated trials, plus 36 exploratory IDs x 3 policies x 300 new-seed runs = 32400",
+    "trialSeed": "issue660-2026-11-08-${problemId}-${policy}",
+    "repeatSeed": "issue660-validation-2026-11-08-${problemId}-${policy}",
+    "policies": {
+      "uniform": "random among unvisited legal states",
+      "greedy": "unvisited state with fewest color blocks; random ties",
+      "preserve": "prefer not moving from a complete single-color bottle and prefer matching-color pours; random ties"
+    },
+    "stop": "Solved or no unvisited legal transition or 500 moves; all policies exclude previously visited states",
+    "aggregateColumns": [
+      "level",
+      "storedNaturalMean",
+      "uniformMean",
+      "greedyMean",
+      "preserveMean",
+      "meanAlternativeMinusStored",
+      "lower95",
+      "upper95"
+    ],
+    "aggregateRows": [
+      [
+        1,
+        0.0121,
+        0.0217,
+        0.0198,
+        0.0193,
+        0.0082,
+        0.00641,
+        0.00999
+      ],
+      [
+        2,
+        0.2168,
+        0.226,
+        0.2316,
+        0.2265,
+        0.01127,
+        0.00613,
+        0.01667
+      ],
+      [
+        3,
+        0.5453,
+        0.5368,
+        0.544,
+        0.5417,
+        -0.00445,
+        -0.01071,
+        0.00203
+      ],
+      [
+        4,
+        0.8242,
+        0.8287,
+        0.8259,
+        0.83,
+        0.00397,
+        -0.00079,
+        0.00855
+      ],
+      [
+        5,
+        0.9751,
+        0.9703,
+        0.9682,
+        0.9707,
+        -0.00534,
+        -0.00751,
+        -0.00318
+      ]
+    ],
+    "bootstrap": "1500 bootstrap resamples of 1000 problem IDs, percentile interval of each level's mean within-problem difference",
+    "exploratoryRecheckColumns": [
+      "level",
+      "problemId",
+      "storedNatural",
+      "uniform300",
+      "greedy300",
+      "preserve300"
+    ],
+    "exploratoryRecheck": [
+      [
+        "3",
+        "13vuic1prp",
+        0.633,
+        0.5,
+        0.517,
+        0.467
+      ],
+      [
+        "3",
+        "4i3746g2nj",
+        0.5,
+        0.45,
+        0.48,
+        0.497
+      ],
+      [
+        "3",
+        "50kqicdrdg",
+        0.583,
+        0.51,
+        0.547,
+        0.607
+      ],
+      [
+        "3",
+        "74fhf2mfid",
+        0.65,
+        0.56,
+        0.633,
+        0.563
+      ],
+      [
+        "3",
+        "847jt4ongm",
+        0.467,
+        0.403,
+        0.483,
+        0.447
+      ],
+      [
+        "3",
+        "8cjc233n2l",
+        0.417,
+        0.413,
+        0.427,
+        0.43
+      ],
+      [
+        "3",
+        "8eofod2lf6",
+        0.5,
+        0.447,
+        0.467,
+        0.497
+      ],
+      [
+        "3",
+        "9vgb3mvlal",
+        0.55,
+        0.59,
+        0.563,
+        0.61
+      ],
+      [
+        "3",
+        "c6o31kr8gr",
+        0.683,
+        0.593,
+        0.667,
+        0.637
+      ],
+      [
+        "3",
+        "h2lbg4o7sj",
+        0.617,
+        0.537,
+        0.53,
+        0.513
+      ],
+      [
+        "3",
+        "hcc4rilfbm",
+        0.617,
+        0.417,
+        0.473,
+        0.52
+      ],
+      [
+        "3",
+        "hgjmv11acn",
+        0.517,
+        0.503,
+        0.5,
+        0.513
+      ],
+      [
+        "4",
+        "0sidlvmtm4",
+        0.8,
+        0.74,
+        0.737,
+        0.733
+      ],
+      [
+        "4",
+        "4bl6l241ff",
+        0.867,
+        0.913,
+        0.913,
+        0.893
+      ],
+      [
+        "4",
+        "6vv4mcbvo8",
+        0.75,
+        0.743,
+        0.753,
+        0.763
+      ],
+      [
+        "4",
+        "839uul7u2h",
+        0.85,
+        0.72,
+        0.683,
+        0.65
+      ],
+      [
+        "4",
+        "86968hcg12",
+        0.817,
+        0.687,
+        0.747,
+        0.743
+      ],
+      [
+        "4",
+        "fuaft2n7d6",
+        0.833,
+        0.81,
+        0.8,
+        0.847
+      ],
+      [
+        "4",
+        "gln44s0nsf",
+        0.883,
+        0.8,
+        0.793,
+        0.823
+      ],
+      [
+        "4",
+        "ini7r5enjp",
+        0.8,
+        0.807,
+        0.793,
+        0.81
+      ],
+      [
+        "4",
+        "j9f72qq1vs",
+        0.817,
+        0.78,
+        0.753,
+        0.73
+      ],
+      [
+        "4",
+        "jifasvqihl",
+        0.9,
+        0.76,
+        0.773,
+        0.803
+      ],
+      [
+        "4",
+        "k6uvu9re6b",
+        0.733,
+        0.63,
+        0.607,
+        0.607
+      ],
+      [
+        "4",
+        "vke4qcpl5g",
+        0.85,
+        0.723,
+        0.763,
+        0.697
+      ],
+      [
+        "5",
+        "1l4djhsbgr",
+        0.95,
+        0.943,
+        0.94,
+        0.927
+      ],
+      [
+        "5",
+        "3v0jcd7hn3",
+        0.917,
+        0.783,
+        0.83,
+        0.817
+      ],
+      [
+        "5",
+        "b1suti82qt",
+        0.95,
+        0.94,
+        0.957,
+        0.957
+      ],
+      [
+        "5",
+        "gtcno7jh2g",
+        1,
+        0.99,
+        0.987,
+        0.977
+      ],
+      [
+        "5",
+        "h4regveqhb",
+        0.967,
+        0.95,
+        0.933,
+        0.927
+      ],
+      [
+        "5",
+        "jfhd26mn4e",
+        0.933,
+        0.867,
+        0.857,
+        0.85
+      ],
+      [
+        "5",
+        "m3qncom87a",
+        0.933,
+        0.94,
+        0.907,
+        0.9
+      ],
+      [
+        "5",
+        "oh2u5gqraa",
+        0.917,
+        0.853,
+        0.837,
+        0.853
+      ],
+      [
+        "5",
+        "os850tgkdk",
+        0.933,
+        0.86,
+        0.87,
+        0.86
+      ],
+      [
+        "5",
+        "qtitme86iv",
+        1,
+        0.957,
+        0.957,
+        0.98
+      ],
+      [
+        "5",
+        "t0h4lfke95",
+        0.917,
+        0.84,
+        0.82,
+        0.82
+      ],
+      [
+        "5",
+        "tejuvghtv8",
+        0.95,
+        0.907,
+        0.953,
+        0.937
+      ]
+    ],
+    "limitation": [
+      "Stored value measured under an existing distinct randomized policy (30 runs)",
+      "Per problem alternative estimate uses only 12 trials, with high uncertainty",
+      "Exploratory outlier choice selected on apparent low stuck rates and is not held-out independent selection",
+      "All simulated policies have no strategic planning, so results do not establish expert difficulty or enjoyment"
+    ],
+    "full5000ProblemRecordLocation": "issue660-continued-evidence.zip in conversation attachment (raw level-specific JSON; no replacement of the shipped pool)"
+  }
+}

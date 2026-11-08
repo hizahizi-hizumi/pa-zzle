@@ -1,0 +1,265 @@
+{
+  "sourceSnapshot": "e9c1b2e6d0e50004d05955b8520a7c4e7c9535c9",
+  "method": "exploratory supplemental technical audit; no human experienced-difficulty validation",
+  "sudokuEquivalence": {
+    "count": 1500,
+    "legalTransformations": "digit permutation; any row permutation within each 3-row band and 3-band permutation; any column permutation within 3-column stacks and stack permutation; transpose",
+    "method": "given-board colored constraint graph, 6-iteration Weisfeiler–Lehman hash, compare isomorphism inside hash buckets; no bucket with more than one puzzle",
+    "hashGroups": 1500,
+    "strictIsomorphicGroups": 0,
+    "syntheticPositiveControls": [
+      "band swap+within stack swap+digit permutation",
+      "transpose"
+    ],
+    "controlsPass": true,
+    "note": "Only equivalent visible givens under Sudoku constraint group, not equivalent solution strategy."
+  },
+  "takuzuEquivalence": {
+    "count": 2500,
+    "legalTransformations": "8 square dihedral symmetries and global binary a/b inversion; given cells preserved",
+    "exactEquivalentGroups": 0,
+    "note": "does not prove solver-semantic non-repetition"
+  },
+  "continuous20": {
+    "scope": "20 previously fixed Lv5 playtest cases per each of ten games; NOT observed human repeated play nor actual random play ordering",
+    "note": "selected fingerprints use game-specific coarse saved proxies, not perceptual or solver-equivalence classes; categories are exploratory",
+    "fingerprintObservations": [
+      {
+        "game": "nanpure",
+        "fixedDistinct": 4,
+        "randomMean": 4.55,
+        "random90": [
+          3,
+          6
+        ],
+        "adjacentSame": 8
+      },
+      {
+        "game": "takuzu",
+        "fixedDistinct": 6,
+        "randomMean": 5.94,
+        "random90": [
+          5,
+          7
+        ],
+        "adjacentSame": 10
+      },
+      {
+        "game": "water-sort",
+        "fixedDistinct": 10,
+        "randomMean": 9.48,
+        "random90": [
+          8,
+          11
+        ],
+        "adjacentSame": 2
+      },
+      {
+        "game": "hitofude-puzzle",
+        "fixedDistinct": 4,
+        "randomMean": 6.28,
+        "random90": [
+          5,
+          8
+        ],
+        "adjacentSame": 7
+      },
+      {
+        "game": "tsume-shogi",
+        "fixedDistinct": 11,
+        "randomMean": 12.14,
+        "random90": [
+          9,
+          15
+        ],
+        "adjacentSame": 3
+      },
+      {
+        "game": "ice-floor-maze",
+        "fixedDistinct": 6,
+        "randomMean": 5.6,
+        "random90": [
+          5,
+          6
+        ],
+        "adjacentSame": 6
+      },
+      {
+        "game": "slide-puzzle",
+        "fixedDistinct": 5,
+        "randomMean": 6.39,
+        "random90": [
+          5,
+          8
+        ],
+        "adjacentSame": 3
+      },
+      {
+        "game": "minesweeper",
+        "fixedDistinct": 8,
+        "randomMean": 8.38,
+        "random90": [
+          7,
+          10
+        ],
+        "adjacentSame": 2
+      },
+      {
+        "game": "parking-jam",
+        "fixedDistinct": 11,
+        "randomMean": 10.5,
+        "random90": [
+          8,
+          13
+        ],
+        "adjacentSame": 1
+      },
+      {
+        "game": "reflection",
+        "fixedDistinct": 20,
+        "randomMean": 19.88,
+        "random90": [
+          19,
+          20
+        ],
+        "adjacentSame": 0
+      }
+    ],
+    "randomBaseline": "5000 pseudorandom draws of 20 distinct pool positions per game, fixed Python random seed; baseline is descriptive not a hypothesis test of human enjoyment",
+    "actualSolverTraceSubset": [
+      {
+        "game": "nanpure",
+        "fixed20DistinctCompressedTechniqueSequences": 20,
+        "advancedTechniqueOnce": 15,
+        "advancedTechniqueTwiceOrMore": 5
+      },
+      {
+        "game": "takuzu",
+        "fixed20DistinctCompressedTechniqueSequences": 20,
+        "advancedTechniqueOnce": 0,
+        "advancedTechniqueTwiceOrMore": 20
+      },
+      {
+        "game": "minesweeper",
+        "fixed20DistinctCompressedTechniqueSequences": 19,
+        "advancedTechniqueOnce": 20,
+        "advancedTechniqueTwiceOrMore": 0
+      }
+    ],
+    "solverTraceProxyBaseline": [
+      {
+        "game": "nanpure",
+        "fixed20DistinctCategoryPatterns": 11,
+        "randomMean": 10.1,
+        "random90": [
+          7,
+          13
+        ],
+        "fixed20AdjacentSame": 1
+      },
+      {
+        "game": "takuzu",
+        "fixed20DistinctCategoryPatterns": 8,
+        "randomMean": 9.19,
+        "random90": [
+          7,
+          12
+        ],
+        "fixed20AdjacentSame": 3
+      },
+      {
+        "game": "minesweeper",
+        "fixed20DistinctCategoryPatterns": 10,
+        "randomMean": 12.1,
+        "random90": [
+          9,
+          15
+        ],
+        "fixed20AdjacentSame": 2
+      }
+    ],
+    "minesweeperAllOneAdvancedChanceGivenPool": 0.16257452915981319,
+    "limitation": "A complete solver sequence differs from the subjective sequence of decisions and can vary with deterministic solver ordering. 'No repeats' is not supported."
+  },
+  "waterSortShortestPathChoices": {
+    "gamesLevel": [
+      3,
+      5
+    ],
+    "sample": "Five preregistered representative problem IDs per level from issue660 trial manifest; compare with saved optimal move count",
+    "all10ShortestCountsMatchPool": true,
+    "stepsSampledPerPuzzle": 5,
+    "independentAStar": "same legal pour rules, distinct states up to bottle permutation, admissible h=number of color runs minus color count; each alternative capped to 0.7s",
+    "snapshots": 50,
+    "distinctLegalChoices": 338,
+    "measuredAlternatives": 309,
+    "timeoutAlternatives": 0,
+    "level3": {
+      "snapshots": 25,
+      "fullyMeasured": 20,
+      "snapshotsWithLocallyEqualOrBetterLookingButLongerAlternative": 7,
+      "fullMeasuredSnapshotsWithSingleShortestAlternative": 8
+    },
+    "level5": {
+      "snapshots": 25,
+      "fullyMeasured": 20,
+      "snapshotsWithLocallyEqualOrBetterLookingButLongerAlternative": 9,
+      "fullMeasuredSnapshotsWithSingleShortestAlternative": 4
+    },
+    "example": {
+      "problemId": "i33rjhtr1l",
+      "level": 5,
+      "observedStep": 2,
+      "maximumExtraMovesOverShortest": 3
+    },
+    "limitation": "A* samples one shortest solution route, not the entire shortest-solution DAG. 29 moves produce dead-end states with no continuation to a clear state, which the game allows players to undo. Immediate block count is a solver proxy, not human perception.",
+    "deadEndAlternatives": 29,
+    "solvableAlternatives": 309,
+    "recheckedIndependentBfsExamples": [
+      {
+        "problemId": "3et5psg825",
+        "level": 3,
+        "step": 0,
+        "moves": [
+          [
+            1,
+            4
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "reachableStateCounts": [
+          1,
+          1
+        ],
+        "goalReached": false
+      },
+      {
+        "problemId": "4mprkmcumb",
+        "level": 3,
+        "step": 0,
+        "moves": [
+          [
+            2,
+            4
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "reachableStateCounts": [
+          1,
+          6
+        ],
+        "goalReached": false
+      }
+    ],
+    "independentProofLimit": "Four low-color level3 dead-end successors validated via separate BFS enumeration to exhaustion; other 25 are concluded unsolvable by the original A* implementation, which finished without a goal. No timeouts in this dataset.",
+    "undoSemantics": "Unsolvable continuation can be recovered by pressing the in-game Undo control; it is not irreversible damage to the session."
+  },
+  "sources": "Full raw results and one-off scripts in issue660-endgame-research.zip (conversation artifact); committed repository report is an indexed summary, not a new permanent solver.",
+  "humanStudy": "not performed; no independent experienced participants available in current tools"
+}

@@ -1,0 +1,59 @@
+{
+  "sourceSnapshot": "3d4bc685bb6f188b21a4fa5edca14ad4a6250e2e",
+  "method": "Each saved problem is restored from its generator-version, seed, generationAttempt and conditions; analyzeWaterSortNaturalPlay is invoked with trialCount 60 and createProblemSeededRandom(`natural-play:${seed}`), matching frontend/scripts/generate-water-sort-problem-pool.ts.",
+  "sourceGeneratorFile": "frontend/scripts/generate-water-sort-problem-pool.ts",
+  "outcomes": {
+    "restoredProblems": 5000,
+    "trialsPerProblem": 60,
+    "randomizedAutomatedTrials": 300000,
+    "stuckRateRounding": "Math.round(rate * 1000) / 1000",
+    "storedStuckRateMismatches": 0,
+    "assessedLevelMismatches": 0,
+    "wholeMethodWallMs": 69900,
+    "byLevel": [
+      {
+        "level": 1,
+        "n": 1000,
+        "wallMs": 12255,
+        "chunks": 1,
+        "rateMismatches": 0,
+        "levelMismatches": 0
+      },
+      {
+        "level": 2,
+        "n": 1000,
+        "wallMs": 17965,
+        "chunks": 1,
+        "rateMismatches": 0,
+        "levelMismatches": 0
+      },
+      {
+        "level": 3,
+        "n": 1000,
+        "wallMs": 13726,
+        "chunks": 10,
+        "rateMismatches": 0,
+        "levelMismatches": 0
+      },
+      {
+        "level": 4,
+        "n": 1000,
+        "wallMs": 13402,
+        "chunks": 5,
+        "rateMismatches": 0,
+        "levelMismatches": 0
+      },
+      {
+        "level": 5,
+        "n": 1000,
+        "wallMs": 12552,
+        "chunks": 5,
+        "rateMismatches": 0,
+        "levelMismatches": 0
+      }
+    ]
+  },
+  "reliability": "This is exact self-reproducibility of the shipped classifier and seeded random simulation, not validation of whether the random strategy reflects a human player.",
+  "correction": "The stored rate in this snapshot was estimated with 60 trials, not 30. The three additional policies (12 runs each) are a separate sensitivity experiment; previous comparison incorrectly claimed the stored rate used 30 runs.",
+  "evidence": "One-off runnable test frontend/scripts/tmp-issue660-water-natural-recheck.test.ts and per-chunk JSON results are in conversation evidence ZIP."
+}

@@ -1,0 +1,498 @@
+{
+  "sourceSnapshot": "471fde1127214758d1fc331a0d573b7f6467f14d",
+  "method": "existing game-specific human-like solvers on every pool entry (not human play). Rounds use each solver's own priority order. See src/games/{nanpure,takuzu,minesweeper}/problem/generation/human-solver.ts",
+  "scope": {
+    "games": [
+      "nanpure",
+      "takuzu",
+      "minesweeper"
+    ],
+    "levels": 5,
+    "count": 9000
+  },
+  "definitions": {
+    "nanpureAdvanced": "x-wing/swordfish/xy-wing/xyz-wing rounds",
+    "takuzuAdvanced": "requiresDuplicateAvoidance rounds",
+    "minesweeperAdvanced": "deductionLevel=4 excluding nested-sum with inferenceWidth=3; equals chainedGroupRoundCount in difficulty-analysis.ts"
+  },
+  "byGameLevel": {
+    "nanpure": {
+      "1": {
+        "count": 300,
+        "solved": 300,
+        "advancedZero": 300,
+        "advancedOnce": 0,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": null,
+        "uniqueCompleteTechniqueSequences": 300,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 13,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 7.92,
+        "mostCommonConsecutiveCollapsedSequenceCount": 73
+      },
+      "2": {
+        "count": 300,
+        "solved": 300,
+        "advancedZero": 300,
+        "advancedOnce": 0,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": null,
+        "uniqueCompleteTechniqueSequences": 300,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 275,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 29.64,
+        "mostCommonConsecutiveCollapsedSequenceCount": 5
+      },
+      "3": {
+        "count": 300,
+        "solved": 300,
+        "advancedZero": 300,
+        "advancedOnce": 0,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": null,
+        "uniqueCompleteTechniqueSequences": 300,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 298,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 29.98,
+        "mostCommonConsecutiveCollapsedSequenceCount": 2
+      },
+      "4": {
+        "count": 300,
+        "solved": 300,
+        "advancedZero": 300,
+        "advancedOnce": 0,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": null,
+        "uniqueCompleteTechniqueSequences": 300,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 299,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 29.99,
+        "mostCommonConsecutiveCollapsedSequenceCount": 2
+      },
+      "5": {
+        "count": 300,
+        "solved": 300,
+        "advancedZero": 0,
+        "advancedOnce": 215,
+        "advancedTwiceOrMore": 85,
+        "medianFirstAdvancedRoundRelative": 0.55,
+        "uniqueCompleteTechniqueSequences": 300,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 300,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 30,
+        "mostCommonConsecutiveCollapsedSequenceCount": 1
+      }
+    },
+    "takuzu": {
+      "1": {
+        "count": 500,
+        "solved": 500,
+        "advancedZero": 500,
+        "advancedOnce": 0,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": null,
+        "uniqueCompleteTechniqueSequences": 12,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 1,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 1,
+        "mostCommonConsecutiveCollapsedSequenceCount": 500
+      },
+      "2": {
+        "count": 500,
+        "solved": 500,
+        "advancedZero": 500,
+        "advancedOnce": 0,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": null,
+        "uniqueCompleteTechniqueSequences": 436,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 17,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 9.41,
+        "mostCommonConsecutiveCollapsedSequenceCount": 104
+      },
+      "3": {
+        "count": 500,
+        "solved": 500,
+        "advancedZero": 500,
+        "advancedOnce": 0,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": null,
+        "uniqueCompleteTechniqueSequences": 499,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 247,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 26.99,
+        "mostCommonConsecutiveCollapsedSequenceCount": 21
+      },
+      "4": {
+        "count": 500,
+        "solved": 500,
+        "advancedZero": 0,
+        "advancedOnce": 500,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": 0.8235,
+        "uniqueCompleteTechniqueSequences": 500,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 417,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 29.59,
+        "mostCommonConsecutiveCollapsedSequenceCount": 5
+      },
+      "5": {
+        "count": 500,
+        "solved": 500,
+        "advancedZero": 0,
+        "advancedOnce": 7,
+        "advancedTwiceOrMore": 493,
+        "medianFirstAdvancedRoundRelative": 0.5,
+        "uniqueCompleteTechniqueSequences": 500,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 493,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 29.97,
+        "mostCommonConsecutiveCollapsedSequenceCount": 2
+      }
+    },
+    "minesweeper": {
+      "1": {
+        "count": 1000,
+        "solved": 1000,
+        "advancedZero": 1000,
+        "advancedOnce": 0,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": null,
+        "uniqueCompleteTechniqueSequences": 27,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 2,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 2,
+        "mostCommonConsecutiveCollapsedSequenceCount": 740
+      },
+      "2": {
+        "count": 1000,
+        "solved": 1000,
+        "advancedZero": 1000,
+        "advancedOnce": 0,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": null,
+        "uniqueCompleteTechniqueSequences": 630,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 31,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 9.86,
+        "mostCommonConsecutiveCollapsedSequenceCount": 376
+      },
+      "3": {
+        "count": 1000,
+        "solved": 1000,
+        "advancedZero": 1000,
+        "advancedOnce": 0,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": null,
+        "uniqueCompleteTechniqueSequences": 901,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 178,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 22.37,
+        "mostCommonConsecutiveCollapsedSequenceCount": 94
+      },
+      "4": {
+        "count": 1000,
+        "solved": 1000,
+        "advancedZero": 1000,
+        "advancedOnce": 0,
+        "advancedTwiceOrMore": 0,
+        "medianFirstAdvancedRoundRelative": null,
+        "uniqueCompleteTechniqueSequences": 984,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 507,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 27.73,
+        "mostCommonConsecutiveCollapsedSequenceCount": 42
+      },
+      "5": {
+        "count": 1000,
+        "solved": 1000,
+        "advancedZero": 0,
+        "advancedOnce": 914,
+        "advancedTwiceOrMore": 86,
+        "medianFirstAdvancedRoundRelative": 0.4167,
+        "uniqueCompleteTechniqueSequences": 994,
+        "uniqueConsecutiveCollapsedTechniqueSequences": 682,
+        "meanDifferentConsecutiveCollapsedSequencesIn30Draws": 29.03,
+        "mostCommonConsecutiveCollapsedSequenceCount": 27
+      }
+    }
+  },
+  "sameCoarseFeaturePairChecks": [
+    {
+      "game": "nanpure",
+      "level": "1",
+      "a": {
+        "id": "2m875es0ib",
+        "rounds": 22
+      },
+      "b": {
+        "id": "vj68e6u0vn",
+        "rounds": 23
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "nanpure",
+      "level": "2",
+      "a": {
+        "id": "d5g4i73ub4",
+        "rounds": 27
+      },
+      "b": {
+        "id": "g0r9foj4qo",
+        "rounds": 30
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "nanpure",
+      "level": "3",
+      "a": {
+        "id": "thkn3hbfi2",
+        "rounds": 31
+      },
+      "b": {
+        "id": "8h8g30l85u",
+        "rounds": 35
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "nanpure",
+      "level": "4",
+      "a": {
+        "id": "idekescd9a",
+        "rounds": 40
+      },
+      "b": {
+        "id": "bgv3vut0o9",
+        "rounds": 38
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "nanpure",
+      "level": "5",
+      "a": {
+        "id": "do9cn955p2",
+        "rounds": 31
+      },
+      "b": {
+        "id": "lrqrvqgf5j",
+        "rounds": 32
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "takuzu",
+      "level": "1",
+      "a": {
+        "id": "anr7b1mg9p",
+        "rounds": 7
+      },
+      "b": {
+        "id": "tkm6cfkb09",
+        "rounds": 6
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "takuzu",
+      "level": "2",
+      "a": {
+        "id": "mvd5vmbios",
+        "rounds": 17
+      },
+      "b": {
+        "id": "bcjdqa264r",
+        "rounds": 12
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "takuzu",
+      "level": "3",
+      "a": {
+        "id": "7noachfm7a",
+        "rounds": 10
+      },
+      "b": {
+        "id": "98hila1k61",
+        "rounds": 16
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "takuzu",
+      "level": "4",
+      "a": {
+        "id": "gkq4h5hfoh",
+        "rounds": 17
+      },
+      "b": {
+        "id": "7npl3u03gk",
+        "rounds": 21
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "takuzu",
+      "level": "5",
+      "a": {
+        "id": "e4qn6c5poc",
+        "rounds": 19
+      },
+      "b": {
+        "id": "ukbg457j92",
+        "rounds": 15
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "minesweeper",
+      "level": "1",
+      "a": {
+        "id": "q7gn8dcaiq",
+        "rounds": 9
+      },
+      "b": {
+        "id": "v56br5m6tk",
+        "rounds": 13
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "minesweeper",
+      "level": "2",
+      "a": {
+        "id": "gbged011ib",
+        "rounds": 19
+      },
+      "b": {
+        "id": "4evepa9vtj",
+        "rounds": 10
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "minesweeper",
+      "level": "3",
+      "a": {
+        "id": "8bg8rqc9il",
+        "rounds": 11
+      },
+      "b": {
+        "id": "u9cjjpe9th",
+        "rounds": 21
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "minesweeper",
+      "level": "4",
+      "a": {
+        "id": "ca2t7j8ecs",
+        "rounds": 27
+      },
+      "b": {
+        "id": "h8vbpvskto",
+        "rounds": 33
+      },
+      "exactTechniqueSequenceSame": false
+    },
+    {
+      "game": "minesweeper",
+      "level": "5",
+      "a": {
+        "id": "qo4mdbug2u",
+        "rounds": 30
+      },
+      "b": {
+        "id": "2k9caidu3k",
+        "rounds": 31
+      },
+      "exactTechniqueSequenceSame": false
+    }
+  ],
+  "controlledComparisons": [
+    {
+      "game": "nanpure",
+      "level": "5",
+      "common": {
+        "givenCells": 25
+      },
+      "a": {
+        "id": "m0n9910c0v",
+        "rounds": 38,
+        "advancedRounds": 1,
+        "firstAdvancedRoundIndex0": 25,
+        "ordinal": 6,
+        "generatorSeed": "None|62",
+        "sourcePoolEntry": [
+          null,
+          62,
+          "256398471314567298789421536165849327437215689892673145573182964628954713941736852010803c9005f898011558"
+        ]
+      },
+      "b": {
+        "id": "0eir330c1m",
+        "rounds": 38,
+        "advancedRounds": 2,
+        "firstAdvancedRoundIndex0": 29,
+        "ordinal": 163,
+        "generatorSeed": "xyz-wing|942",
+        "sourcePoolEntry": [
+          "xyz-wing",
+          942,
+          "914876532528913674736452198381564729279381456645729813452637981167298345893145267a812d0528c143009190a0"
+        ]
+      },
+      "interpretation": "comparison candidate only: greater solver-reported advanced-round count does not prove greater human challenge"
+    },
+    {
+      "game": "minesweeper",
+      "level": "5",
+      "common": {
+        "rows": 16,
+        "cols": 10,
+        "mines": 29
+      },
+      "a": {
+        "id": "4p7lfdihcs",
+        "rounds": 28,
+        "advancedRounds": 1,
+        "firstAdvancedRoundIndex0": 22,
+        "ordinal": 7,
+        "generatorSeed": "16x10|29|25",
+        "sourcePoolEntry": [
+          16,
+          10,
+          29,
+          25
+        ]
+      },
+      "b": {
+        "id": "6i05vurd45",
+        "rounds": 28,
+        "advancedRounds": 3,
+        "firstAdvancedRoundIndex0": 2,
+        "ordinal": 539,
+        "generatorSeed": "16x10|29|3657",
+        "sourcePoolEntry": [
+          16,
+          10,
+          29,
+          3657
+        ]
+      },
+      "interpretation": "comparison candidate only: greater solver-reported advanced-round count does not prove greater human challenge"
+    }
+  ],
+  "limitations": [
+    "solver follows only its implemented heuristic priority, not a human's strategy",
+    "same full/short trace does not mean same board or same felt solving experience",
+    "unique technique sequences are only an internal pattern proxy, not novelty or satisfaction",
+    "selection over same data cannot independently validate the difficulty model"
+  ],
+  "reproducibility": {
+    "solverSources": [
+      "frontend/src/games/nanpure/problem/generation/human-solver.ts",
+      "frontend/src/games/takuzu/problem/generation/human-solver.ts",
+      "frontend/src/games/minesweeper/problem/generation/human-solver.ts"
+    ],
+    "sourceProblemPools": "frontend/src/games/<game>/problem/problem-pool.json",
+    "temporaryTest": "frontend/scripts/tmp-issue660-full-traces.test.ts (one-off test, not committed)",
+    "simulation": "500 independent sampling replicates per level, sample size 30, Python random.Random seeded with 660/trace/<game><level>, no replacement within draw",
+    "advancedDefinitions": {
+      "nanpureAdvanced": "x-wing/swordfish/xy-wing/xyz-wing rounds",
+      "takuzuAdvanced": "requiresDuplicateAvoidance rounds",
+      "minesweeperAdvanced": "deductionLevel=4 excluding nested-sum with inferenceWidth=3; equals chainedGroupRoundCount in difficulty-analysis.ts"
+    }
+  }
+}
