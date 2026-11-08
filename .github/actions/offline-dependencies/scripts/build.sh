@@ -18,7 +18,7 @@ source .github/actions/offline-dependencies/inputs.env
 actual_platform="$(uname -s | tr '[:upper:]' '[:lower:]')"
 actual_arch="$(uname -m)"
 actual_libc="$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{print $1}')"
-expected_bun_version="$(tr -d '[:space:]' < .bun-version)"
+expected_bun_version="$(python3 -S .github/actions/offline-dependencies/scripts/artifact_state.py bun-version --repo-root "$repo_root")"
 actual_bun_version="$(bun --version)"
 
 [[ "$actual_platform" == "$PLATFORM" ]] || {
