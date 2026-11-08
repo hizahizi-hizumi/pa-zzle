@@ -9,16 +9,36 @@ type GlassBottleProps = {
 
 export function GlassBottle({ contents, selected }: GlassBottleProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const previousSelectedRef = useRef(selected);
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || typeof CanvasRenderingContext2D === "undefined") return;
-    function redraw() {
-      if (canvas) paintGlassBottle(canvas, { contents, selected });
+    let frameRequest = 0;
+    const shouldSlosh =
+      previousSelectedRef.current !== selected &&
+      contents.length > 0 &&
+      !window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    previousSelectedRef.current = selected;
+
+    function redraw(ripples = 0) {
+      if (canvas) paintGlassBottle(canvas, { contents, selected, ripples });
     }
     redraw();
-    const observer = new ResizeObserver(redraw);
+    if (shouldSlosh) {
+      const startedAt = performance.now();
+      function settle(time: number) {
+        const progress = Math.min(1, (time - startedAt) / 420);
+        redraw(progress);
+        if (progress < 1) frameRequest = requestAnimationFrame(settle);
+      }
+      frameRequest = requestAnimationFrame(settle);
+    }
+    const observer = new ResizeObserver(() => redraw());
     observer.observe(canvas);
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(frameRequest);
+      observer.disconnect();
+    };
   }, [contents, selected]);
 
   return (

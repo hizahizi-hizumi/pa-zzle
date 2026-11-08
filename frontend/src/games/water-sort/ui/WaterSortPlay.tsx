@@ -86,7 +86,7 @@ export function WaterSortPlay({
     );
   }
   const showDeadlockNotice = isDeadlocked && !hasActivePourAnimation;
-  useWaterSortSoundEffects(operation, progress);
+  useWaterSortSoundEffects(operation, progress, appearance);
 
   return (
     <GamePlayFrame

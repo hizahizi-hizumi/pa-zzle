@@ -3,7 +3,11 @@ import type {
   WaterSortOperation,
   WaterSortPourGesture,
 } from "@/games/water-sort/play/use-water-sort-play";
-import type { WaterSortState } from "@/games/water-sort/puzzle/state";
+import { getWaterSortPourAmount } from "@/games/water-sort/puzzle/rules";
+import {
+  isCompleteWaterSortBottle,
+  type WaterSortState,
+} from "@/games/water-sort/puzzle/state";
 import { PourAnimationLayer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer";
 import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-animations";
 import type { WaterSortAppearance } from "@/games/water-sort/ui/board/water-bottle/appearance";
@@ -66,36 +70,95 @@ export function WaterSortBoard({
   const currentDropTargetRef = useRef<number | null>(null);
 
   function detectDropTarget(sourceIndex: number, x: number, y: number) {
-    return bottleRefs.current.findIndex((bottle, index) => {
-      if (!bottle || index === sourceIndex) return false;
+    let closest = -1;
+    let shortestDistance = Number.POSITIVE_INFINITY;
+    bottleRefs.current.forEach((bottle, index) => {
+      if (!bottle || index === sourceIndex) return;
       const rect = bottle.getBoundingClientRect();
-      return (
-        x >= rect.left - 12 &&
-        x <= rect.right + 12 &&
-        y >= rect.top - 12 &&
-        y <= rect.bottom + 12
+      if (
+        x < rect.left - 12 ||
+        x > rect.right + 12 ||
+        y < rect.top - 12 ||
+        y > rect.bottom + 12
+      )
+        return;
+      const distance = Math.hypot(
+        x - (rect.left + rect.right) / 2,
+        y - (rect.top + rect.bottom) / 2,
       );
+      if (distance < shortestDistance) {
+        shortestDistance = distance;
+        closest = index;
+      }
     });
+    return closest;
   }
 
-  function markDropTarget(index: number | null) {
+  function markDropTarget(index: number | null, sourceIndex?: number) {
     if (currentDropTargetRef.current === index) return;
-    bottleRefs.current[currentDropTargetRef.current ?? -1]?.removeAttribute(
-      "data-water-sort-drop-target",
+    const previous = currentDropTargetRef.current;
+    const previousBottle = bottleRefs.current[previous ?? -1];
+    previousBottle?.removeAttribute("data-water-sort-drop-target");
+    previousBottle?.removeAttribute("data-water-sort-preview-count");
+    const previousCanvas = previousBottle?.querySelector<HTMLCanvasElement>(
+      "[data-water-sort-glass]",
     );
-    if (index !== null)
-      bottleRefs.current[index]?.setAttribute(
-        "data-water-sort-drop-target",
-        "true",
-      );
+    if (previousCanvas && previous !== null) {
+      const contents = state[previous];
+      if (contents)
+        paintGlassBottle(previousCanvas, {
+          contents,
+          selected: previous === sourceBottleIndex,
+        });
+    }
+
+    if (index !== null) {
+      const destination = bottleRefs.current[index];
+      destination?.setAttribute("data-water-sort-drop-target", "true");
+      if (appearance === "glass" && sourceIndex !== undefined) {
+        const source = state[sourceIndex];
+        const contents = state[index];
+        const color = source?.at(-1);
+        const amount = getWaterSortPourAmount(state, {
+          sourceBottleIndex: sourceIndex,
+          destinationBottleIndex: index,
+        });
+        const canvas = destination?.querySelector<HTMLCanvasElement>(
+          "[data-water-sort-glass]",
+        );
+        if (canvas && contents && color !== undefined && amount > 0) {
+          destination?.setAttribute(
+            "data-water-sort-preview-count",
+            String(amount),
+          );
+          paintGlassBottle(canvas, {
+            contents: [...contents, ...Array<number>(amount).fill(color)],
+            previewFrom: contents.length,
+          });
+        }
+      }
+    }
     currentDropTargetRef.current = index;
+  }
+
+  function dragLift(element: HTMLButtonElement, distance: number) {
+    const lifted = Math.min(1, Math.max(0, (distance - 12) / 90));
+    return 12 + element.offsetHeight * 0.75 * lifted;
   }
 
   function beginDrag(
     event: PointerEvent<HTMLButtonElement>,
     sourceIndex: number,
   ) {
-    if (!onPourBottle || interactionDisabled || event.button !== 0) return;
+    const source = state[sourceIndex];
+    if (
+      !onPourBottle ||
+      interactionDisabled ||
+      event.button !== 0 ||
+      !source ||
+      isCompleteWaterSortBottle(source)
+    )
+      return;
     event.currentTarget.setPointerCapture?.(event.pointerId);
     pointerGestureRef.current = {
       pointerId: event.pointerId,
@@ -117,20 +180,30 @@ export function WaterSortBoard({
     element.style.transition = "none";
     element.style.zIndex = "10";
     const tilt = Math.max(-12, Math.min(12, dx / 18));
-    element.style.transform = `translate(${dx}px, ${dy - 12}px) rotate(${tilt}deg)`;
+    const lift = dragLift(element, Math.hypot(dx, dy));
+    element.style.transform = `translate(${dx}px, ${dy - lift}px) rotate(${tilt}deg)`;
     const canvas = element.querySelector<HTMLCanvasElement>(
       "[data-water-sort-glass]",
     );
     const contents = state[gesture.sourceIndex];
     if (canvas && contents)
       paintGlassBottle(canvas, { contents, tiltDegrees: tilt });
-    element.style.filter = "drop-shadow(0 12px 13px rgba(20,43,50,.22))";
+    element.style.filter = "drop-shadow(0 9px 10px rgba(20,43,50,.16))";
     const target = detectDropTarget(
       gesture.sourceIndex,
       event.clientX,
       event.clientY,
     );
-    markDropTarget(target >= 0 ? target : null);
+    markDropTarget(
+      target >= 0 &&
+        getWaterSortPourAmount(state, {
+          sourceBottleIndex: gesture.sourceIndex,
+          destinationBottleIndex: target,
+        }) > 0
+        ? target
+        : null,
+      gesture.sourceIndex,
+    );
   }
 
   function endDrag(event: PointerEvent<HTMLButtonElement>) {
@@ -157,11 +230,17 @@ export function WaterSortBoard({
       event.clientX,
       event.clientY,
     );
-    markDropTarget(null);
+    markDropTarget(null, gesture.sourceIndex);
     if (candidate >= 0) {
       onPourBottle?.(gesture.sourceIndex, candidate, {
         offsetX: event.clientX - gesture.x,
-        offsetY: event.clientY - gesture.y - 12,
+        offsetY:
+          event.clientY -
+          gesture.y -
+          dragLift(
+            element,
+            Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y),
+          ),
         tiltDegrees: Math.max(
           -12,
           Math.min(12, (event.clientX - gesture.x) / 18),
@@ -173,7 +252,7 @@ export function WaterSortBoard({
   function cancelDrag(event: PointerEvent<HTMLButtonElement>) {
     const gesture = pointerGestureRef.current;
     pointerGestureRef.current = null;
-    markDropTarget(null);
+    markDropTarget(null, gesture?.sourceIndex);
     const element = event.currentTarget;
     element.style.removeProperty("transition");
     element.style.removeProperty("z-index");
@@ -264,7 +343,7 @@ export function WaterSortBoard({
                 onClick={() => {
                   if (!suppressClickRef.current) selectBottle(bottleIndex);
                 }}
-                className={`relative w-full origin-top cursor-pointer touch-none rounded-b-[1.45rem] transition-transform duration-(--duration-normal) ease-enter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 data-[water-sort-drop-target=true]:ring-2 data-[water-sort-drop-target=true]:ring-[#598a91] data-[water-sort-drop-target=true]:ring-offset-3 ${isSource && appearance !== "classic" ? "-translate-y-2" : ""}`}
+                className={`relative w-full origin-top cursor-pointer touch-none rounded-b-[1.45rem] transition-transform duration-(--duration-normal) ease-enter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 ${appearance === "classic" ? "data-[water-sort-drop-target=true]:ring-2 data-[water-sort-drop-target=true]:ring-[#598a91] data-[water-sort-drop-target=true]:ring-offset-3" : ""} ${isSource && appearance !== "classic" ? "-translate-y-2" : ""}`}
                 style={{ aspectRatio: bottleAspectRatio }}
                 disabled={interactionDisabled}
               >

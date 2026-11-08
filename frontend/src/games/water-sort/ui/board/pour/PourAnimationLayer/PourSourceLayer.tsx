@@ -2,12 +2,12 @@ import { useEffect, useRef } from "react";
 import {
   getOverlayStyle,
   getPourStreamStyle,
-  POUR_ANIMATION_DURATION_MS,
   POUR_LAYER_ORDER,
-  POUR_TILT_EASING,
   POUR_TRANSFER_END_OFFSET,
   POUR_TRANSFER_START_OFFSET,
+  pourDuration,
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
+import { getPourSourceKeyframes } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/pour-source-motion";
 import { TransferLiquidView } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/TransferLiquidView";
 import type { PourAnimation } from "@/games/water-sort/ui/board/pour/pour-animation";
 import type { WaterSortAppearance } from "@/games/water-sort/ui/board/water-bottle/appearance";
@@ -39,57 +39,15 @@ export function PourSourceLayer({
       return;
     }
 
-    const { rect: sourceRect } = animation.source;
-    const { rect: destinationRect } = animation.destination;
-    const deltaX = destinationRect.left - sourceRect.left;
-    const deltaY = destinationRect.top - sourceRect.top;
-    const hoverY = deltaY - sourceRect.height * 0.55;
-    const direction = deltaX >= 0 ? 1 : -1;
     const sourceTransferElement = sourceTransferRef.current;
-
-    const initialTransform = animation.gesture
-      ? `translate(${animation.gesture.offsetX}px, ${animation.gesture.offsetY}px) rotate(${animation.gesture.tiltDegrees}deg)`
-      : "translate(0, 0) rotate(0deg)";
+    const durationMs = pourDuration(animationAppearance.current);
     const sourceAnimation = sourceElement.animate(
-      [
-        {
-          transform: initialTransform,
-          offset: 0,
-          easing: "ease-out",
-        },
-        {
-          transform: animation.gesture
-            ? initialTransform
-            : "translate(0, -4px) rotate(0deg)",
-          offset: 0.06,
-          easing: POUR_TILT_EASING,
-        },
-        {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
-          offset: 0.2,
-          easing: "ease-in-out",
-        },
-        {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 68}deg)`,
-          offset: 0.32,
-          easing: "ease-out",
-        },
-        {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 68}deg)`,
-          offset: 0.76,
-          easing: "ease-in",
-        },
-        {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
-          offset: 0.86,
-          easing: POUR_TILT_EASING,
-        },
-        { transform: "translate(0, 0) rotate(0deg)", offset: 1 },
-      ],
-      {
-        duration: POUR_ANIMATION_DURATION_MS,
-        easing: "linear",
-      },
+      getPourSourceKeyframes(
+        animation,
+        animationAppearance.current,
+        window.innerWidth,
+      ),
+      { duration: durationMs, easing: "linear" },
     );
 
     const canvas = sourceElement.querySelector<HTMLCanvasElement>(
@@ -101,10 +59,7 @@ export function PourSourceLayer({
       const amountAfter = animation.source.after.length;
       const startAt = performance.now();
       const render = (time: number) => {
-        const progress = Math.min(
-          1,
-          (time - startAt) / POUR_ANIMATION_DURATION_MS,
-        );
+        const progress = Math.min(1, (time - startAt) / durationMs);
         const transfer = Math.max(
           0,
           Math.min(
@@ -140,7 +95,7 @@ export function PourSourceLayer({
         { opacity: 0, transform: "scaleY(0.35)", offset: 0.77 },
         { opacity: 0, transform: "scaleY(0.15)", offset: 1 },
       ],
-      { duration: POUR_ANIMATION_DURATION_MS, easing: "linear" },
+      { duration: durationMs, easing: "linear" },
     );
 
     const sourceTransferAnimation = sourceTransferElement?.animate?.(
@@ -151,7 +106,7 @@ export function PourSourceLayer({
         { transform: "scaleY(0)", offset: 1 },
       ],
       {
-        duration: POUR_ANIMATION_DURATION_MS,
+        duration: durationMs,
         easing: "linear",
         fill: "forwards",
       },
@@ -208,7 +163,7 @@ export function PourSourceLayer({
         aria-hidden="true"
         className="water-sort-pour-stream pointer-events-none fixed origin-top rounded-full opacity-0 will-change-transform"
         data-appearance={appearance}
-        style={getPourStreamStyle(animation)}
+        style={getPourStreamStyle(animation, appearance)}
       />
     </>
   );

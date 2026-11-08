@@ -1,10 +1,10 @@
 import { useLayoutEffect, useRef } from "react";
 import {
   getOverlayStyle,
-  POUR_ANIMATION_DURATION_MS,
   POUR_LAYER_ORDER,
   POUR_TRANSFER_END_OFFSET,
   POUR_TRANSFER_START_OFFSET,
+  pourDuration,
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
 import { AnimatedDestinationTransfer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/PourDestinationLayer/AnimatedDestinationTransfer";
 import type { PourAnimation } from "@/games/water-sort/ui/board/pour/pour-animation";
@@ -35,10 +35,7 @@ export function PourDestinationLayer({
     const beganAt = performance.now();
     let frameRequest = 0;
     const render = (time: number) => {
-      const progress = Math.min(
-        1,
-        (time - beganAt) / POUR_ANIMATION_DURATION_MS,
-      );
+      const progress = Math.min(1, (time - beganAt) / pourDuration(appearance));
       const transfer = Math.max(
         0,
         Math.min(
@@ -65,7 +62,30 @@ export function PourDestinationLayer({
     };
     render(beganAt);
     frameRequest = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(frameRequest);
+    const completed =
+      lastAnimation.destination.before.length < 4 &&
+      lastAnimation.destination.after.length === 4 &&
+      lastAnimation.destination.after.every(
+        (color) => color === lastAnimation.destination.after[0],
+      );
+    const settleAnimation = completed
+      ? destinationRef.current?.animate?.(
+          [
+            { transform: "translateY(0) scale(1)", offset: 0.7 },
+            {
+              transform: "translateY(-3px) scale(1.035)",
+              offset: 0.82,
+              easing: "ease-out",
+            },
+            { transform: "translateY(0) scale(1)", offset: 1 },
+          ],
+          { duration: pourDuration(appearance), easing: "ease-in-out" },
+        )
+      : null;
+    return () => {
+      cancelAnimationFrame(frameRequest);
+      settleAnimation?.cancel();
+    };
   }, [appearance, firstAnimation, lastAnimation]);
   if (!firstAnimation) {
     return null;
@@ -75,7 +95,7 @@ export function PourDestinationLayer({
     <div
       aria-hidden="true"
       ref={destinationRef}
-      className="pointer-events-none fixed aspect-[0.36] rounded-b-[1.45rem]"
+      className="pointer-events-none fixed aspect-[0.36] origin-bottom rounded-b-[1.45rem]"
       style={getOverlayStyle(
         firstAnimation.destination.rect,
         POUR_LAYER_ORDER.destination,
