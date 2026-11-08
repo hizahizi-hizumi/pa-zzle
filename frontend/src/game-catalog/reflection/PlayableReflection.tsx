@@ -7,7 +7,6 @@ import { reflectionCatalogEntry } from "@/game-catalog/reflection/reflection-cat
 import type { ProblemId } from "@/games/problem-id";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
-import { reflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import {
   type ReflectionResult,
   useReflectionPlay,
@@ -73,7 +72,6 @@ export function PlayableReflection({
     <>
       <ReflectionPlay
         {...screenProps}
-        laserPathMode={reflectionLaserPathMode}
         board={play.board}
         clues={play.clues}
         inventory={play.inventory}
