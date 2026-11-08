@@ -1,7 +1,17 @@
-import { createLucideIcon, Music, Volume2, VolumeX, X } from "lucide-react";
-import { type ReactNode, useSyncExternalStore } from "react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  createLucideIcon,
+  Music,
+  Volume2,
+  VolumeX,
+  X,
+} from "lucide-react";
+import { type ReactNode, useState, useSyncExternalStore } from "react";
 
 import { playSoundEffectsVolumePreview } from "@/components/app-decision-sound";
+import { useGameCatalog } from "@/components/GameCatalogContext";
+import { GameSelectionOrderPanel } from "@/components/SettingsDialog/GameSelectionOrderPanel";
 import { RandomProblemSettingsPanel } from "@/components/SettingsDialog/RandomProblemSettingsPanel";
 import { VolumeSettingRow } from "@/components/SettingsDialog/VolumeSettingRow";
 import { Button } from "@/components/ui/button";
@@ -15,9 +25,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { backgroundMusicVolumeSetting } from "@/lib/background-music-setting";
+import { gameSelectionOrderSetting } from "@/lib/game-selection-order-setting";
+import {
+  randomProblemSettings,
+  randomProblemStatuses,
+} from "@/lib/random-problem-settings";
 import { soundEffectsVolumeSetting } from "@/lib/sound-effects-setting";
 
-/** 音符に斜線を引いた、BGM を流さない設定の印。lucide に無いので、音符のアイコンに斜線を足して作る。 */
 const MusicOff = createLucideIcon("music-off", [
   ["path", { d: "M9 18V5l12-2v13", key: "music-stem" }],
   ["circle", { cx: "6", cy: "18", r: "3", key: "music-left-head" }],
@@ -25,21 +39,30 @@ const MusicOff = createLucideIcon("music-off", [
   ["path", { d: "m2 2 20 20", key: "off-slash" }],
 ]);
 
+type SettingsPanel = "settings" | "order" | "random" | "sound";
+
 type SettingsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** 開くボタン。渡すと、閉じたときにこのボタンへ操作の位置を戻す。 */
   trigger?: ReactNode;
   initialGameId?: string;
 };
 
-/** 効果音・BGMの音量とランダム出題条件をまとめて変更する。 */
+const panelTitles: Record<SettingsPanel, string> = {
+  settings: "設定",
+  order: "パズルの並び順",
+  random: "ランダム出題",
+  sound: "サウンド",
+};
+
 export function SettingsDialog({
   open,
   onOpenChange,
   trigger,
   initialGameId,
 }: SettingsDialogProps) {
+  const [panel, setPanel] = useState<SettingsPanel>("settings");
+  const gameCatalog = useGameCatalog();
   const soundEffectsVolume = useSyncExternalStore(
     soundEffectsVolumeSetting.subscribe,
     soundEffectsVolumeSetting.getVolume,
@@ -48,14 +71,54 @@ export function SettingsDialog({
     backgroundMusicVolumeSetting.subscribe,
     backgroundMusicVolumeSetting.getVolume,
   );
+  const preferredOrder = useSyncExternalStore(
+    gameSelectionOrderSetting.subscribe,
+    gameSelectionOrderSetting.getSnapshot,
+    gameSelectionOrderSetting.getSnapshot,
+  );
+  const randomSettings = useSyncExternalStore(
+    randomProblemSettings.subscribe,
+    randomProblemSettings.getSnapshot,
+    randomProblemSettings.getSnapshot,
+  );
+  const defaultGameIds = gameCatalog.map(({ id }) => id);
+  const currentOrder = gameSelectionOrderSetting.sortGameIds(
+    defaultGameIds,
+    preferredOrder,
+  );
+  const isDefaultOrder = currentOrder.every(
+    (id, index) => id === defaultGameIds[index],
+  );
+  const overriddenGames = gameCatalog.filter(({ id }) =>
+    Object.hasOwn(randomSettings.overrides, id),
+  ).length;
+  const settingEntries = [
+    {
+      id: "order",
+      summary: isDefaultOrder ? "初期順" : "並び替え済み",
+    },
+    {
+      id: "random",
+      summary: `出題対象 ${randomSettings.global.length}/${randomProblemStatuses.length}${overriddenGames > 0 ? ` · 個別設定 ${overriddenGames}件` : ""}`,
+    },
+    {
+      id: "sound",
+      summary: `効果音 ${soundEffectsVolume === 0 ? "オフ" : soundEffectsVolume} · BGM ${backgroundMusicVolume === 0 ? "オフ" : backgroundMusicVolume}`,
+    },
+  ] as const;
 
   function commitSoundEffectsVolume(volume: number) {
     soundEffectsVolumeSetting.commitVolume(volume);
     playSoundEffectsVolumePreview();
   }
 
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) setPanel("settings");
+    onOpenChange(nextOpen);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
         showCloseButton={false}
@@ -63,7 +126,18 @@ export function SettingsDialog({
       >
         <DialogHeader className="shrink-0 text-left">
           <div className="flex items-center justify-between gap-4">
-            <DialogTitle>設定</DialogTitle>
+            {panel !== "settings" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="設定に戻る"
+                onClick={() => setPanel("settings")}
+              >
+                <ArrowLeft />
+              </Button>
+            )}
+            <DialogTitle className="mr-auto">{panelTitles[panel]}</DialogTitle>
             <DialogClose asChild>
               <Button
                 type="button"
@@ -76,21 +150,39 @@ export function SettingsDialog({
             </DialogClose>
           </div>
           <DialogDescription className="sr-only">
-            音量とランダム出題の対象を選びます。
+            パズルの並び順、ランダム出題、サウンドを設定します。
           </DialogDescription>
         </DialogHeader>
-        <div className="min-h-0 overflow-y-auto pr-1">
-          <div className="grid gap-4">
-            <section
-              aria-labelledby="sound-settings-title"
-              className="grid gap-2"
-            >
-              <h3
-                id="sound-settings-title"
-                className="text-supporting font-medium"
-              >
-                サウンド
-              </h3>
+        <div className="min-h-0 overflow-y-auto">
+          {panel === "settings" && (
+            <nav aria-label="設定項目" className="divide-y divide-border">
+              {settingEntries.map(({ id, summary }) => (
+                <Button
+                  key={id}
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setPanel(id)}
+                  className="h-auto min-h-18 w-full justify-start gap-3 rounded-sm px-2 py-3 text-left hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-inset"
+                >
+                  <span className="grid min-w-0 flex-1 gap-1">
+                    <span className="text-body font-medium">
+                      {panelTitles[id]}
+                    </span>
+                    <span className="text-supporting text-muted-foreground">
+                      {summary}
+                    </span>
+                  </span>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </Button>
+              ))}
+            </nav>
+          )}
+          {panel === "order" && <GameSelectionOrderPanel />}
+          {panel === "random" && (
+            <RandomProblemSettingsPanel initialGameId={initialGameId} />
+          )}
+          {panel === "sound" && (
+            <div className="grid gap-4 py-1">
               <VolumeSettingRow
                 label="効果音"
                 volume={soundEffectsVolume}
@@ -109,20 +201,8 @@ export function SettingsDialog({
                 onCommit={backgroundMusicVolumeSetting.commitVolume}
                 onToggleMuted={backgroundMusicVolumeSetting.toggleMuted}
               />
-            </section>
-            <section
-              aria-labelledby="random-settings-title"
-              className="grid gap-3 border-t border-border pt-4"
-            >
-              <h3
-                id="random-settings-title"
-                className="text-supporting font-medium"
-              >
-                ランダム出題
-              </h3>
-              <RandomProblemSettingsPanel initialGameId={initialGameId} />
-            </section>
-          </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

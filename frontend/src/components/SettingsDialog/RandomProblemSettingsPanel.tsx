@@ -1,5 +1,5 @@
 import { useState, useSyncExternalStore } from "react";
-import { useRandomProblemGameOptions } from "@/components/RandomProblemGameOptionsContext";
+import { useGameCatalog } from "@/components/GameCatalogContext";
 import { RandomProblemStatusChecklist } from "@/components/SettingsDialog/RandomProblemStatusChecklist";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +21,7 @@ export function RandomProblemSettingsPanel({
   initialGameId,
 }: RandomProblemSettingsPanelProps) {
   const [scope, setScope] = useState(initialGameId ?? "global");
-  const gameCatalog = useRandomProblemGameOptions();
+  const gameCatalog = useGameCatalog();
   const settings = useSyncExternalStore(
     randomProblemSettings.subscribe,
     randomProblemSettings.getSnapshot,

@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -7,9 +8,13 @@ import {
 } from "@testing-library/react";
 
 import { _private as appDecisionSound } from "@/components/app-decision-sound";
-import { RandomProblemGameOptionsProvider } from "@/components/RandomProblemGameOptionsContext";
+import { GameCatalogProvider } from "@/components/GameCatalogContext";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { backgroundMusicVolumeSetting } from "@/lib/background-music-setting";
+import {
+  _private as gameOrderPrivate,
+  gameSelectionOrderSetting,
+} from "@/lib/game-selection-order-setting";
 import {
   randomProblemSettings,
   _private as randomSettingsPrivate,
@@ -52,6 +57,7 @@ afterEach(() => {
   backgroundMusicVolumeSetting.commitVolume(DEFAULT_VOLUME);
   window.localStorage.clear();
   randomSettingsPrivate.reset();
+  gameOrderPrivate.resetCache();
 });
 
 describe("SettingsDialog", () => {
@@ -61,10 +67,11 @@ describe("SettingsDialog", () => {
     beforeEach(() => {
       onOpenChange = vi.fn();
       render(<SettingsDialog open onOpenChange={onOpenChange} />);
+      fireEvent.click(screen.getByRole("button", { name: /サウンド/ }));
     });
 
     test("効果音と BGM の音量を、はじめの音量で示すこと", () => {
-      const dialog = screen.getByRole("dialog", { name: "設定" });
+      const dialog = screen.getByRole("dialog", { name: "サウンド" });
 
       const volumes = ["効果音", "BGM"].map((name) => {
         const row = within(dialog).getByRole("group", { name });
@@ -172,6 +179,7 @@ describe("SettingsDialog", () => {
 describe("ランダム出題の設定", () => {
   test("パズルを指定せず開くと適用先が全パズルになること", () => {
     render(<SettingsDialog open onOpenChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /ランダム出題/ }));
     const scope = screen.getByLabelText("適用先") as HTMLSelectElement;
 
     expect(scope.value).toBe("global");
@@ -181,18 +189,12 @@ describe("ランダム出題の設定", () => {
 
   test("共通の6状態を切り替えて保存し、ゲーム個別の上書きを作成・解除できること", () => {
     render(
-      <RandomProblemGameOptionsProvider
-        games={[{ id: "nanpure", name: "ナンプレ" }]}
-      >
+      <GameCatalogProvider games={[{ id: "nanpure", name: "ナンプレ" }]}>
         <SettingsDialog open onOpenChange={vi.fn()} />
-      </RandomProblemGameOptionsProvider>,
+      </GameCatalogProvider>,
     );
-    const dialog = within(screen.getByRole("dialog", { name: "設定" }));
-    expect(dialog.getByRole("heading", { name: "サウンド" })).toBeTruthy();
-    expect(dialog.getByRole("heading", { name: "ランダム出題" })).toBeTruthy();
-    expect(
-      dialog.queryByRole("button", { name: "ランダム出題の設定" }),
-    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /ランダム出題/ }));
+    const dialog = within(screen.getByRole("dialog", { name: "ランダム出題" }));
     expect(dialog.getAllByRole("checkbox")).toHaveLength(6);
     fireEvent.click(dialog.getByRole("checkbox", { name: /perfect/ }));
     expect(randomProblemSettings.getSnapshot().global).not.toContain("perfect");
@@ -223,5 +225,97 @@ describe("ランダム出題の設定", () => {
       randomProblemSettings.getSnapshot().overrides.nanpure,
     ).toBeUndefined();
     expect(dialog.getAllByRole("checkbox")).toHaveLength(6);
+  });
+});
+
+describe("パズルの並び順の設定", () => {
+  beforeEach(() => {
+    render(
+      <GameCatalogProvider
+        games={[
+          { id: "water-sort", name: "ウォーターソート" },
+          { id: "nanpure", name: "ナンプレ" },
+        ]}
+      >
+        <SettingsDialog open onOpenChange={vi.fn()} />
+      </GameCatalogProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /パズルの並び順/ }));
+  });
+
+  test("パズルの並びを操作できるつまみを表示すること", () => {
+    const list = screen.getByRole("list", { name: "パズルの並び順" });
+
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(
+      screen.getByRole("button", { name: "ナンプレを並び替え" }),
+    ).toBeTruthy();
+    expect(gameSelectionOrderSetting.getSnapshot()).toEqual([]);
+  });
+
+  test("設定した並びを初期順に戻せること", () => {
+    act(() => gameSelectionOrderSetting.setOrder(["nanpure", "water-sort"]));
+    fireEvent.click(screen.getByRole("button", { name: "初期順に戻す" }));
+    fireEvent.click(screen.getByRole("button", { name: "設定に戻る" }));
+
+    expect(gameSelectionOrderSetting.getSnapshot()).toEqual([]);
+    expect(screen.getByRole("dialog", { name: "設定" })).toBeTruthy();
+  });
+});
+
+describe("設定一覧", () => {
+  beforeEach(() => {
+    render(
+      <GameCatalogProvider
+        games={[
+          { id: "water-sort", name: "ウォーターソート" },
+          { id: "nanpure", name: "ナンプレ" },
+        ]}
+      >
+        <SettingsDialog open onOpenChange={vi.fn()} />
+      </GameCatalogProvider>,
+    );
+  });
+
+  test("並び順・ランダム出題・サウンドの順に、現在値とともに表示すること", () => {
+    const navigation = screen.getByRole("navigation", { name: "設定項目" });
+    const items = within(navigation).getAllByRole("button");
+    const contents = items.map((item) => item.textContent);
+
+    expect(contents).toEqual([
+      "パズルの並び順初期順",
+      "ランダム出題出題対象 6/6",
+      "サウンド効果音 5 · BGM 5",
+    ]);
+    expect(screen.queryByRole("slider")).toBeNull();
+    expect(screen.queryByRole("checkbox")).toBeNull();
+  });
+
+  test("並び順を変更すると設定一覧の要約に反映すること", () => {
+    fireEvent.click(screen.getByRole("button", { name: /パズルの並び順/ }));
+    act(() => gameSelectionOrderSetting.setOrder(["nanpure", "water-sort"]));
+    fireEvent.click(screen.getByRole("button", { name: "設定に戻る" }));
+
+    expect(screen.getByRole("dialog", { name: "設定" })).toBeTruthy();
+    expect(screen.getByText("並び替え済み")).toBeTruthy();
+    expect(gameSelectionOrderSetting.getSnapshot()[0]).toBe("nanpure");
+  });
+
+  test("ランダム出題の条件を変更すると設定一覧の要約に反映すること", () => {
+    fireEvent.click(screen.getByRole("button", { name: /ランダム出題/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /perfect/ }));
+    fireEvent.click(screen.getByRole("button", { name: "設定に戻る" }));
+
+    expect(screen.getByText("出題対象 5/6")).toBeTruthy();
+    expect(randomProblemSettings.getSnapshot().global).not.toContain("perfect");
+  });
+
+  test("サウンドの消音を変更すると設定一覧の要約に反映すること", () => {
+    fireEvent.click(screen.getByRole("button", { name: /サウンド/ }));
+    fireEvent.click(screen.getByRole("button", { name: "BGMを消音" }));
+    fireEvent.click(screen.getByRole("button", { name: "設定に戻る" }));
+
+    expect(screen.getByText("効果音 5 · BGM オフ")).toBeTruthy();
+    expect(backgroundMusicVolumeSetting.getVolume()).toBe(0);
   });
 });

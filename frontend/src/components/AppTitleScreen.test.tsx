@@ -134,22 +134,31 @@ describe("AppTitleScreen", () => {
         const settings = screen.getByRole("dialog", { name: "設定" });
 
         expect(onEnter).not.toHaveBeenCalled();
+        fireEvent.click(
+          within(settings).getByRole("button", { name: /サウンド/ }),
+        );
+        const sound = screen.getByRole("dialog", { name: "サウンド" });
         expect(
-          within(settings).getByRole("group", { name: "効果音" }),
+          within(sound).getByRole("group", { name: "効果音" }),
         ).toBeTruthy();
+        expect(within(sound).getByRole("group", { name: "BGM" })).toBeTruthy();
+        fireEvent.click(
+          within(sound).getByRole("button", { name: "設定に戻る" }),
+        );
+        fireEvent.click(screen.getByRole("button", { name: /ランダム出題/ }));
         expect(
-          within(settings).getByRole("group", { name: "BGM" }),
-        ).toBeTruthy();
-        expect(
-          within(settings).getByRole("group", { name: "出題対象" }),
+          within(
+            screen.getByRole("dialog", { name: "ランダム出題" }),
+          ).getByRole("group", { name: "出題対象" }),
         ).toBeTruthy();
       });
 
       test("設定のダイアログの中の操作では入らず、設定を変えること", () => {
         const settings = screen.getByRole("dialog", { name: "設定" });
         fireEvent.click(
-          within(settings).getByRole("button", { name: "効果音を消音" }),
+          within(settings).getByRole("button", { name: /サウンド/ }),
         );
+        fireEvent.click(screen.getByRole("button", { name: "効果音を消音" }));
         const enabled = isSoundEffectsEnabled();
 
         expect(onEnter).not.toHaveBeenCalled();

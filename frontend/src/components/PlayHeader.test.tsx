@@ -163,7 +163,11 @@ describe("PlayHeader", () => {
     test("メニューの設定で、画面を移らずに効果音と BGM の音量を選ぶダイアログを開くこと", () => {
       fireEvent.click(screen.getByRole("menuitem", { name: "設定" }));
 
-      const dialog = screen.getByRole("dialog", { name: "設定" });
+      const settings = screen.getByRole("dialog", { name: "設定" });
+      fireEvent.click(
+        within(settings).getByRole("button", { name: /サウンド/ }),
+      );
+      const dialog = screen.getByRole("dialog", { name: "サウンド" });
       const volumeNames = ["効果音", "BGM"].map(
         (name) => within(dialog).getByRole("group", { name }).textContent,
       );

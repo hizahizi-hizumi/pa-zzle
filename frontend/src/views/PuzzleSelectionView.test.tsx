@@ -12,6 +12,10 @@ import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 import { _private, startAppLaunch } from "@/lib/app-launch";
+import {
+  _private as gameOrderPrivate,
+  gameSelectionOrderSetting,
+} from "@/lib/game-selection-order-setting";
 import { PuzzleSelectionView } from "@/views/PuzzleSelectionView";
 
 vi.mock("@/lib/internal-diagnostics", () => ({
@@ -44,6 +48,7 @@ afterEach(() => {
   cleanup();
   resetAppLaunch();
   window.localStorage.clear();
+  gameOrderPrivate.resetCache();
 });
 
 describe("PuzzleSelectionView", () => {
@@ -142,5 +147,53 @@ describe("PuzzleSelectionView", () => {
 
       expect(title).toBeNull();
     });
+  });
+});
+
+describe("保存されたホームの並び順", () => {
+  beforeEach(() => {
+    gameSelectionOrderSetting.setOrder(["nanpure", "water-sort"]);
+    renderAtHome();
+  });
+
+  test("下部一覧を設定順にし、履歴がなければ先頭のゲームを選んでおくこと", () => {
+    const selectButtons = screen.getAllByRole("button", { name: /を選択$/ });
+    const selected = screen.getByRole("link", {
+      name: "ナンプレを遊ぶ",
+    });
+
+    expect(selectButtons[0]?.getAttribute("aria-label")).toBe("ナンプレを選択");
+    expect(selectButtons[1]?.getAttribute("aria-label")).toBe(
+      "ウォーターソートを選択",
+    );
+    expect(selected.getAttribute("href")).toBe("/puzzles/nanpure");
+  });
+
+  test("並び替えた2番目を選んでも対応するゲームへ進めること", () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: "ウォーターソートを選択" }),
+    );
+    const selected = screen.getByRole("link", {
+      name: "ウォーターソートを遊ぶ",
+    });
+
+    expect(selected.getAttribute("href")).toBe("/puzzles/water-sort");
+  });
+
+  test("並び替えによる位置の変更で選択中のゲームが切り替わらないこと", () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: "ウォーターソートを選択" }),
+    );
+    act(() => gameSelectionOrderSetting.restoreDefault());
+    const selected = screen.getByRole("link", {
+      name: "ウォーターソートを遊ぶ",
+    });
+
+    expect(selected.getAttribute("href")).toBe("/puzzles/water-sort");
+    expect(
+      screen
+        .getByRole("button", { name: "ウォーターソートを選択" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
   });
 });

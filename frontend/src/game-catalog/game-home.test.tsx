@@ -9,7 +9,7 @@ import {
 import { StrictMode } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { RandomProblemGameOptionsProvider } from "@/components/RandomProblemGameOptionsContext";
+import { GameCatalogProvider } from "@/components/GameCatalogContext";
 import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
 import { useGameHome } from "@/game-catalog/game-home";
 import { minesweeperCatalogEntry } from "@/game-catalog/minesweeper/minesweeper-catalog-entry";
@@ -131,14 +131,14 @@ function renderAt(path: string, { strict = false } = {}) {
     { initialEntries: [path] },
   );
   const app = (
-    <RandomProblemGameOptionsProvider
+    <GameCatalogProvider
       games={[
         { id: "nanpure", name: "ナンプレ" },
         { id: "minesweeper", name: "マインスイーパー" },
       ]}
     >
       <RouterProvider router={router} />
-    </RandomProblemGameOptionsProvider>
+    </GameCatalogProvider>
   );
   render(strict ? <StrictMode>{app}</StrictMode> : app);
   return router;
@@ -211,7 +211,11 @@ describe("useGameHome", () => {
 
     test("ナンプレの問題選択画面から設定を開くと、適用先にナンプレを選んでいること", () => {
       fireEvent.click(screen.getByRole("button", { name: "設定" }));
-      const dialog = within(screen.getByRole("dialog", { name: "設定" }));
+      const settings = within(screen.getByRole("dialog", { name: "設定" }));
+      fireEvent.click(settings.getByRole("button", { name: /ランダム出題/ }));
+      const dialog = within(
+        screen.getByRole("dialog", { name: "ランダム出題" }),
+      );
       const scope = dialog.getByLabelText("適用先") as HTMLSelectElement;
 
       expect(scope.value).toBe("nanpure");
