@@ -9,6 +9,8 @@ import {
   canUndoTsumeShogiSession,
   chooseTsumeShogiSessionPromotion,
   createTsumeShogiSession,
+  dragTsumeShogiSessionBoardPiece,
+  dragTsumeShogiSessionHandPiece,
   getTsumeShogiSessionPhase,
   getTsumeShogiSessionRemainingPlies,
   getTsumeShogiSessionResult,
@@ -437,5 +439,69 @@ describe("作意ではない詰み", () => {
     expect(getTsumeShogiSessionPhase(cleared)).toBe("cleared");
     expect(cleared.turns[0]?.line).toBe("alternative");
     expect(cleared.wrongCheckCount).toBe(0);
+  });
+});
+
+describe("dragTsumeShogiSessionPiece", () => {
+  test("持駒を直接打つと、選択操作なしで同じ王手と応手を生む", () => {
+    const dropped = dragTsumeShogiSessionHandPiece(
+      initial,
+      "silver",
+      square(2, 2),
+      2_000,
+    );
+
+    expect(getTsumeShogiSessionPhase(dropped)).toBe("defender");
+    expect(formatTsumeShogiMoveUsi(dropped.turns[0]!.attackerMove)).toBe(
+      "S*2b",
+    );
+    expect(dropped.inputCount).toBe(1);
+  });
+
+  test("盤上の駒を直接運んで最後の王手を指せる", () => {
+    const moved = dragTsumeShogiSessionBoardPiece(
+      afterCorrectReply,
+      square(4, 3),
+      square(1, 3),
+      4_000,
+    );
+
+    expect(getTsumeShogiSessionPhase(moved)).toBe("cleared");
+    expect(formatTsumeShogiMoveUsi(moved.turns.at(-1)!.attackerMove)).toBe(
+      "4c1c",
+    );
+  });
+
+  test("駒を動かしても王手にならなければ、従来と同じ拒否と採点になる", () => {
+    const moved = dragTsumeShogiSessionBoardPiece(
+      initial,
+      square(4, 3),
+      square(4, 4),
+      2_000,
+    );
+
+    expect(moved.turns).toHaveLength(0);
+    expect(moved.rejection?.reason).toBe("not-check");
+    expect(moved.selection).toEqual({ type: "board", square: square(4, 3) });
+    expect(moved.illegalInputCount).toBe(1);
+  });
+
+  test("同じ升に置き直す・玉方の応手中の着手は無視する", () => {
+    expect(
+      dragTsumeShogiSessionBoardPiece(
+        initial,
+        square(4, 3),
+        square(4, 3),
+        2_000,
+      ),
+    ).toBe(initial);
+    expect(
+      dragTsumeShogiSessionHandPiece(
+        afterCorrectCheck,
+        "silver",
+        square(2, 3),
+        2_500,
+      ),
+    ).toBe(afterCorrectCheck);
   });
 });

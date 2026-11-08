@@ -57,6 +57,8 @@ import {
   chooseTsumeShogiSessionPromotion,
   clearTsumeShogiSessionSelection,
   createTsumeShogiSession,
+  dragTsumeShogiSessionBoardPiece,
+  dragTsumeShogiSessionHandPiece,
   getTsumeShogiSessionPhase,
   getTsumeShogiSessionResult,
   playTsumeShogiSessionDefenderReply,
@@ -232,6 +234,11 @@ export type TsumeShogiPlay = GamePlay<
     /** 効果音を鳴らす盤面の操作の知らせ。待った・盤面を戻すで消える。 */
     operation: TsumeShogiOperation | null;
     selectSquare: (square: TsumeShogiSquare) => void;
+    dragBoardPiece: (from: TsumeShogiSquare, to: TsumeShogiSquare) => void;
+    dragHandPiece: (
+      pieceType: TsumeShogiHandPieceType,
+      to: TsumeShogiSquare,
+    ) => void;
     selectHandPiece: (pieceType: TsumeShogiHandPieceType) => void;
     choosePromotion: (promote: boolean) => void;
     cancelPromotion: () => void;
@@ -396,6 +403,26 @@ export function useTsumeShogiPlay(
     [playAttackerOperation],
   );
 
+  const dragBoardPiece = useCallback(
+    (from: TsumeShogiSquare, to: TsumeShogiSquare) => {
+      const operatedAt = Date.now();
+      playAttackerOperation((current) =>
+        dragTsumeShogiSessionBoardPiece(current, from, to, operatedAt),
+      );
+    },
+    [playAttackerOperation],
+  );
+
+  const dragHandPiece = useCallback(
+    (pieceType: TsumeShogiHandPieceType, to: TsumeShogiSquare) => {
+      const operatedAt = Date.now();
+      playAttackerOperation((current) =>
+        dragTsumeShogiSessionHandPiece(current, pieceType, to, operatedAt),
+      );
+    },
+    [playAttackerOperation],
+  );
+
   const selectHandPiece = useCallback(
     (pieceType: TsumeShogiHandPieceType) => {
       updateSession((current) => tapTsumeShogiSessionHand(current, pieceType));
@@ -524,6 +551,8 @@ export function useTsumeShogiPlay(
     canUndo: canUndoTsumeShogiSession(session),
     canRestart: canRestartTsumeShogiSession(session),
     selectSquare,
+    dragBoardPiece,
+    dragHandPiece,
     selectHandPiece,
     choosePromotion,
     cancelPromotion,

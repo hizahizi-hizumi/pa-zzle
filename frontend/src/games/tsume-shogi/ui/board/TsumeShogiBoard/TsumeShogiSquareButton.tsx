@@ -44,6 +44,7 @@ const ARRIVAL_EASING = "cubic-bezier(0.2, 0.8, 0.2, 1)";
 
 type TsumeShogiSquareButtonProps = {
   square: TsumeShogiSquare;
+  dragEnabled?: boolean;
   piece: TsumeShogiPiece | null;
   /** 駒の、指し手で変わらない識別。駒ごとの木目の位置を決める。 */
   pieceId: string | null;
@@ -99,6 +100,7 @@ function useArrivalAnimation(arrivedMove: TsumeShogiPlayedMove | null) {
 
 export function TsumeShogiSquareButton({
   square,
+  dragEnabled = false,
   piece,
   pieceId,
   clearGlow,
@@ -125,11 +127,20 @@ export function TsumeShogiSquareButton({
       aria-disabled={disabled || undefined}
       data-file={square.file}
       data-rank={square.rank}
+      data-shogi-drag-source={
+        dragEnabled && piece?.side === "attacker" ? "board" : undefined
+      }
+      data-shogi-piece-type={
+        dragEnabled && piece?.side === "attacker" ? piece.type : undefined
+      }
       data-mated-king={highlight === "mated" ? "" : undefined}
       onPointerUp={tapHandlers.onPointerUp}
       onClick={tapHandlers.onClick}
       className={cn(
         "relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 aria-disabled:cursor-default",
+        dragEnabled &&
+          piece?.side === "attacker" &&
+          "touch-none cursor-grab active:cursor-grabbing",
         tsumeShogiToneClassNames.boardLine,
         !isLastFile && "border-r",
         !isLastRank && "border-b",

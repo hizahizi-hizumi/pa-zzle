@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 
 type TsumeShogiBoardProps = {
   boardPieces: readonly TsumeShogiBoardPiece[];
+  dragEnabled?: boolean;
   /** 盤上の駒ごとの、指し手で変わらない識別（`formatTsumeShogiSquareKey` の升から）。駒ごとの木目の位置を決める。 */
   boardPieceIds: ReadonlyMap<string, string>;
   selection: TsumeShogiSelection | null;
@@ -92,6 +93,7 @@ function findPiece(
  */
 export function TsumeShogiBoard({
   boardPieces,
+  dragEnabled = false,
   boardPieceIds,
   selection,
   shownMoves,
@@ -172,12 +174,17 @@ export function TsumeShogiBoard({
               <TsumeShogiSquareButton
                 key={`${file}-${rank}`}
                 square={square}
+                dragEnabled={dragEnabled}
                 piece={findPiece(boardPieces, square)}
                 pieceId={
                   boardPieceIds.get(formatTsumeShogiSquareKey(square)) ?? null
                 }
                 clearGlow={mated}
-                arrivedMove={arrivedMove}
+                arrivedMove={
+                  dragEnabled && arrivedMove?.side === "attacker"
+                    ? null
+                    : arrivedMove
+                }
                 highlight={getHighlight(square)}
                 disabled={interactionDisabled}
                 tapHandlers={getTapHandlers(() => onSelectSquare(square))}

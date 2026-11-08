@@ -1,5 +1,5 @@
 import { type CSSProperties, useEffect, useRef } from "react";
-
+import { useSearchParams } from "react-router";
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
 import type {
@@ -35,12 +35,17 @@ import { TsumeShogiPieceDefs } from "@/games/tsume-shogi/ui/board/TsumeShogiPiec
 import { TsumeShogiResultScreen } from "@/games/tsume-shogi/ui/result/TsumeShogiResultScreen";
 import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
 import {
+  type TsumeShogiExperience,
+  TsumeShogiExperienceComparison,
+} from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiExperienceComparison";
+import {
   TsumeShogiHand,
   type TsumeShogiHandAvailability,
 } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiHand";
 import { TsumeShogiPieceBox } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPieceBox";
 import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPlayStatus";
 import { useShortPlayArea } from "@/games/tsume-shogi/ui/TsumeShogiPlay/use-short-play-area";
+import { useTsumeShogiPieceDrag } from "@/games/tsume-shogi/ui/TsumeShogiPlay/use-tsume-shogi-piece-drag";
 import { useTsumeShogiSoundEffects } from "@/games/tsume-shogi/ui/TsumeShogiPlay/use-tsume-shogi-sound-effects";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { cn } from "@/lib/utils";
@@ -64,6 +69,11 @@ type TsumeShogiPlayProps = GamePlayScreenProps<
     rejection: TsumeShogiRejection | null;
     operation: TsumeShogiOperation | null;
     onSelectSquare: (square: TsumeShogiSquare) => void;
+    onDragBoardPiece: (from: TsumeShogiSquare, to: TsumeShogiSquare) => void;
+    onDragHandPiece: (
+      pieceType: TsumeShogiHandPieceType,
+      to: TsumeShogiSquare,
+    ) => void;
     onSelectHandPiece: (pieceType: TsumeShogiHandPieceType) => void;
     onChoosePromotion: (promote: boolean) => void;
     onCancelPromotion: () => void;
@@ -82,6 +92,9 @@ const boardSizeStyle = {
   "--board-width":
     "min(calc(100cqw - 2 * var(--board-gutter)), calc((100cqh - var(--board-chrome) - 2 * var(--board-frame)) * 352 / 386 + 2 * var(--board-frame)), 40rem)",
 } as CSSProperties;
+
+// 試作では現行の榧盤・座卓の質感を変えず、読める情報と手の応酬を比較する。
+const experienceSurface = tsumeShogiToneClassNames.tableSurface;
 
 /**
  * 着手させなかった入力ごとの読み上げの key。同じ文でも入力ごとに読み上げ直すよう、入力ごとに要素を作り直す。
@@ -119,6 +132,8 @@ export function TsumeShogiPlay({
   canUndo,
   canRestart,
   onSelectSquare,
+  onDragBoardPiece,
+  onDragHandPiece,
   onSelectHandPiece,
   onChoosePromotion,
   onCancelPromotion,
@@ -132,6 +147,11 @@ export function TsumeShogiPlay({
   onBackToHome,
   onOpenDiagnostics,
 }: TsumeShogiPlayProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const experienceParam = searchParams.get("tsume-concept");
+  const experience: TsumeShogiExperience =
+    experienceParam === "focus" ? "focus" : "current";
+  const surface = experienceSurface;
   const playing = progress === "playing";
   const kingSquare =
     boardPieces.find(
@@ -149,6 +169,20 @@ export function TsumeShogiPlay({
   const boardGroupRef = useRef<HTMLDivElement>(null);
   const shortPlayArea = useShortPlayArea(boardAreaRef, boardGroupRef);
   const undoButton = <UndoButton disabled={!canUndo} onUndo={onUndo} />;
+  const undoBesideHand = shortPlayArea;
+  const drag = useTsumeShogiPieceDrag({
+    enabled: experience === "focus" && acceptsInput && !promotionChoice,
+    boardPieces,
+    attackerHand,
+    onDragBoardPiece,
+    onDragHandPiece,
+  });
+
+  function changeExperience(next: TsumeShogiExperience): void {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("tsume-concept", next);
+    setSearchParams(nextParams, { replace: true });
+  }
 
   useEffect(() => {
     if (!playing) return;
@@ -184,11 +218,7 @@ export function TsumeShogiPlay({
       progress={progress}
       result={result}
       title={TSUME_SHOGI_DISPLAY_NAME}
-      background={
-        <div
-          className={cn("size-full", tsumeShogiToneClassNames.tableSurface)}
-        />
-      }
+      background={<div className={cn("size-full", surface)} />}
       metrics={[
         { type: "problem-fact", text: `${plies}手詰` },
         { type: "elapsed-time", elapsedMs },
@@ -216,16 +246,20 @@ export function TsumeShogiPlay({
       )}
     >
       <TsumeShogiPieceDefs>
-        {/* 他のゲームと同じく、盤を残りの高さの中央に置き、待ったを画面の下の中央に置く。地は盤を置いた座卓の面にする。 */}
+        {/* 榧盤と駒の位置は同じに保ち、駒の運び方だけを比較する。 */}
         <main
           ref={boardAreaRef}
           className={cn(
             "flex min-h-0 flex-1 items-center justify-center py-1 [container-type:size]",
-            tsumeShogiToneClassNames.tableSurface,
+            surface,
           )}
           style={boardSizeStyle}
+          onPointerDownCapture={drag.onPointerDownCapture}
+          onPointerMoveCapture={drag.onPointerMoveCapture}
+          onPointerUpCapture={drag.onPointerUpCapture}
+          onPointerCancelCapture={drag.onPointerCancelCapture}
+          onClickCapture={drag.onClickCapture}
         >
-          {/* 玉方の駒箱の札・盤・攻方の駒台を、盤の幅の中に縦に並べる。 */}
           <div
             ref={boardGroupRef}
             className="flex w-(--board-width) flex-col gap-1"
@@ -239,6 +273,7 @@ export function TsumeShogiPlay({
                 onClearAnimationComplete={onClearAnimationComplete}
               >
                 <TsumeShogiBoard
+                  dragEnabled={experience === "focus"}
                   boardPieces={boardPieces}
                   boardPieceIds={boardPieceIds}
                   selection={selection}
@@ -255,14 +290,15 @@ export function TsumeShogiPlay({
             </div>
             <div className="h-(--komadai-height)">
               <TsumeShogiHand
+                dragEnabled={experience === "focus"}
                 hand={attackerHand}
                 selectedPieceType={
                   selection?.type === "hand" ? selection.pieceType : null
                 }
                 availability={handAvailability}
                 rejection={rejection}
-                // 背の低い画面では、待ったの欄を無くして盤に高さを回し、待ったを駒台と同じ行の左の空きに置く。
-                leadingAction={shortPlayArea ? undoButton : undefined}
+                // 背の低い画面では、盤に高さを回すため駒台の横へ置く。
+                leadingAction={undoBesideHand ? undoButton : undefined}
                 onSelectHandPiece={onSelectHandPiece}
               />
             </div>
@@ -284,12 +320,9 @@ export function TsumeShogiPlay({
             )}
           </p>
         </main>
-        {!shortPlayArea && (
+        {!undoBesideHand && (
           <footer
-            className={cn(
-              "grid h-28 shrink-0 items-end px-4 pb-2",
-              tsumeShogiToneClassNames.tableSurface,
-            )}
+            className={cn("grid h-28 shrink-0 items-end px-4 pb-2", surface)}
           >
             <div className="flex h-14 items-center justify-center">
               {undoButton}
@@ -297,6 +330,13 @@ export function TsumeShogiPlay({
           </footer>
         )}
       </TsumeShogiPieceDefs>
+      {drag.ghost}
+      {experienceParam !== null && (
+        <TsumeShogiExperienceComparison
+          experience={experience}
+          onChange={changeExperience}
+        />
+      )}
     </GamePlayFrame>
   );
 }

@@ -27,6 +27,7 @@ export type TsumeShogiHandAvailability =
 
 type TsumeShogiHandProps = {
   hand: TsumeShogiHandCounts;
+  dragEnabled?: boolean;
   selectedPieceType: TsumeShogiHandPieceType | null;
   availability: TsumeShogiHandAvailability;
   /** 直前の入力を着手させなかった。選んでいる持駒で返す。 */
@@ -43,6 +44,7 @@ const selectedHandPieceGlyphSelector = '[aria-pressed="true"] svg';
  */
 export function TsumeShogiHand({
   hand,
+  dragEnabled = false,
   selectedPieceType,
   availability,
   rejection,
@@ -82,11 +84,14 @@ export function TsumeShogiHand({
               type="button"
               aria-label={`${tsumeShogiHandPieceNames[type]} ${hand[type]}枚`}
               aria-pressed={selected}
+              data-shogi-drag-source={dragEnabled ? "hand" : undefined}
+              data-shogi-piece-type={dragEnabled ? type : undefined}
               aria-disabled={availability !== "available" || undefined}
               onPointerUp={tapHandlers.onPointerUp}
               onClick={tapHandlers.onClick}
               className={cn(
                 "relative flex h-10 min-w-10 touch-manipulation select-none items-center justify-center gap-0.5 rounded-[2px] px-1 outline-none transition-colors duration-(--duration-fast) focus-visible:outline-2 focus-visible:outline-solid aria-disabled:cursor-default",
+                dragEnabled && "touch-none cursor-grab active:cursor-grabbing",
                 tsumeShogiToneClassNames.focusRing,
                 tsumeShogiToneClassNames.handHover,
                 selected &&

@@ -94,6 +94,8 @@ export function PlayableTsumeShogi({
         canUndo={play.canUndo}
         canRestart={play.canRestart}
         onSelectSquare={play.selectSquare}
+        onDragBoardPiece={play.dragBoardPiece}
+        onDragHandPiece={play.dragHandPiece}
         onSelectHandPiece={play.selectHandPiece}
         onChoosePromotion={play.choosePromotion}
         onCancelPromotion={play.cancelPromotion}

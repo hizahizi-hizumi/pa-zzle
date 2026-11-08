@@ -528,6 +528,44 @@ export function tapTsumeShogiSessionSquare(
   return moveSelectedPiece(session, selection, square, operatedAt);
 }
 
+/** 駒を持ち上げて升へ置く。タップ式と同じ合法王手・成の判定を用い、選択状態には依存しない。 */
+export function dragTsumeShogiSessionBoardPiece(
+  session: TsumeShogiSession,
+  from: TsumeShogiSquare,
+  to: TsumeShogiSquare,
+  operatedAt: number,
+): TsumeShogiSession {
+  if (
+    !acceptsAttackerInput(session) ||
+    session.promotionChoice ||
+    isSameTsumeShogiSquare(from, to)
+  )
+    return session;
+  if (getTsumeShogiPieceAt(session.puzzleState, from)?.side !== "attacker")
+    return session;
+  const selection: TsumeShogiSelection = { type: "board", square: from };
+  const next = moveSelectedPiece(session, selection, to, operatedAt);
+  return next.rejection ? { ...next, selection } : next;
+}
+
+/** 駒台から升に打つ。持駒の存在を再確認し、タップ式と同じ王手判定を用いる。 */
+export function dragTsumeShogiSessionHandPiece(
+  session: TsumeShogiSession,
+  pieceType: TsumeShogiHandPieceType,
+  to: TsumeShogiSquare,
+  operatedAt: number,
+): TsumeShogiSession {
+  if (
+    !acceptsAttackerInput(session) ||
+    session.promotionChoice ||
+    getTsumeShogiHand(session.puzzleState, "attacker")[pieceType] <= 0
+  )
+    return session;
+  const selection: TsumeShogiSelection = { type: "hand", pieceType };
+  const next = moveSelectedPiece(session, selection, to, operatedAt);
+  return next.rejection ? { ...next, selection } : next;
+}
+
 /** 攻方の持駒を押す。選んでいる種類をもう一度押すと選択を解除する。持っていない種類は選べない。 */
 export function tapTsumeShogiSessionHand(
   session: TsumeShogiSession,
