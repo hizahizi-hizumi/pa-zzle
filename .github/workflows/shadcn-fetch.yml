@@ -59,7 +59,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2.2.0
         with:
-          bun-version-file: work/.bun-version
+          bun-version-file: work/frontend/package.json
 
       - name: Fetch shadcn components
         shell: bash
