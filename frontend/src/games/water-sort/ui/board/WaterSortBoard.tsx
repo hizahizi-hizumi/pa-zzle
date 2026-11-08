@@ -30,6 +30,8 @@ const invalidBottleShakeTiming: RejectionShakeTiming = {
   easing: "ease-out",
 };
 
+const bottleAspectRatio = 0.36;
+
 export function WaterSortBoard({
   state,
   sourceBottleIndex,
@@ -75,52 +77,59 @@ export function WaterSortBoard({
     ]),
   );
   const layout = getBoardLayout(state.length);
+  const rowCount = Math.ceil(state.length / layout.columnCount);
+  // ボトルの縦横比と隙間を保ったまま、見出し・下端を除いた高さにも収める。
+  const widthForAvailableHeight = `calc((100cqh - ${layout.rowGap * (rowCount - 1)}px) * ${(bottleAspectRatio * layout.columnCount) / rowCount} + ${layout.columnGap * (layout.columnCount - 1)}px)`;
 
   return (
     <>
-      <fieldset
-        className="grid w-full items-end justify-center border-0 p-0"
-        style={{
-          gridTemplateColumns: `repeat(${layout.columnCount}, minmax(0, 1fr))`,
-          columnGap: layout.columnGap,
-          rowGap: layout.rowGap,
-          width: layout.width,
-        }}
-      >
-        {state.map((bottle, bottleIndex) => {
-          const bottleLabel = `ボトル ${bottleIndex + 1}`;
-          const contents =
-            bottle.length === 0
-              ? "空"
-              : bottle
-                  .map((colorIndex) => getWaterColorView(colorIndex).name)
-                  .join("、");
-          const isSource = bottleIndex === sourceBottleIndex;
-          const isAnimated = animatedBottleIndexes.has(bottleIndex);
+      <div className="flex size-full items-center justify-center [container-type:size]">
+        <fieldset
+          className="grid w-full items-end justify-center border-0 p-0"
+          style={{
+            gridTemplateColumns: `repeat(${layout.columnCount}, minmax(0, 1fr))`,
+            columnGap: layout.columnGap,
+            rowGap: layout.rowGap,
+            width: `min(${layout.width}, ${widthForAvailableHeight})`,
+          }}
+        >
+          {state.map((bottle, bottleIndex) => {
+            const bottleLabel = `ボトル ${bottleIndex + 1}`;
+            const contents =
+              bottle.length === 0
+                ? "空"
+                : bottle
+                    .map((colorIndex) => getWaterColorView(colorIndex).name)
+                    .join("、");
+            const isSource = bottleIndex === sourceBottleIndex;
+            const isAnimated = animatedBottleIndexes.has(bottleIndex);
 
-          return (
-            <button
-              key={bottleLabel}
-              ref={(element) => {
-                bottleRefs.current[bottleIndex] = element;
-              }}
-              type="button"
-              aria-label={`${bottleLabel}: ${contents}`}
-              aria-pressed={isSource}
-              onClick={() => selectBottle(bottleIndex)}
-              className="relative aspect-[0.36] w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-(--duration-normal) ease-enter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4"
-              disabled={interactionDisabled}
-            >
-              <span
-                className={`absolute inset-0 ${isAnimated ? "invisible" : ""}`}
+            return (
+              <button
+                key={bottleLabel}
+                ref={(element) => {
+                  bottleRefs.current[bottleIndex] = element;
+                }}
+                type="button"
+                aria-label={`${bottleLabel}: ${contents}`}
+                aria-pressed={isSource}
+                onClick={() => selectBottle(bottleIndex)}
+                className="relative w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-(--duration-normal) ease-enter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4"
+                style={{ aspectRatio: bottleAspectRatio }}
+                disabled={interactionDisabled}
               >
-                <WaterBottle contents={bottle} selected={isSource} />
-              </span>
-            </button>
-          );
-        })}
-      </fieldset>
+                <span
+                  className={`absolute inset-0 ${isAnimated ? "invisible" : ""}`}
+                >
+                  <WaterBottle contents={bottle} selected={isSource} />
+                </span>
+              </button>
+            );
+          })}
+        </fieldset>
+      </div>
 
+      {/* 注ぐ演出はviewport座標を使うので、サイズを制約するコンテナの外へ置く。 */}
       <PourAnimationLayer animations={animations} onFinish={finishAnimation} />
     </>
   );

@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-
+import { useBrowserSurface } from "@/components/AppShell/use-browser-surface";
 import { useAppBackgroundMusic } from "@/components/app-background-music";
 import { usePrepareAppDecisionSounds } from "@/components/app-decision-sound";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { BrowserBottomSurface } from "@/components/BrowserBottomSurface";
 
 type AppShellProps = {
   children: ReactNode;
@@ -21,7 +22,7 @@ const mainClassNames = {
   fill: "flex w-full flex-1 flex-col",
   // アドレスバーの伸び縮みで見えている高さが変わっても収まるよう、動的なビューポートの高さからヘッダーの高さを引く。
   viewport:
-    "flex h-[calc(100dvh-3rem-env(safe-area-inset-top))] w-full flex-col",
+    "flex h-[calc(100dvh-3.75rem-env(safe-area-inset-top))] w-full flex-col",
 } satisfies Record<NonNullable<AppShellProps["contentLayout"]>, string>;
 
 export function AppShell({
@@ -30,11 +31,15 @@ export function AppShell({
 }: AppShellProps) {
   usePrepareAppDecisionSounds();
   useAppBackgroundMusic();
+  useBrowserSurface();
 
   return (
-    <div className="flex min-h-dvh flex-col bg-muted/30 font-ui">
+    <div className="flex min-h-dvh flex-col bg-background font-ui">
       <BrandIdentityHeader linkToHome size="regular" />
-      <main className={mainClassNames[contentLayout]}>{children}</main>
+      <div className="flex flex-1 flex-col bg-muted/30 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+        <main className={mainClassNames[contentLayout]}>{children}</main>
+      </div>
+      <BrowserBottomSurface />
     </div>
   );
 }
