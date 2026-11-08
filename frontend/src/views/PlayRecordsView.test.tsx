@@ -75,6 +75,10 @@ afterEach(() => {
 });
 
 function getRow(name: RegExp): HTMLElement {
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "プレイ履歴" }), {
+    button: 0,
+    ctrlKey: false,
+  });
   return within(screen.getByRole("list", { name: "遊んだ日" })).getByRole(
     "button",
     { name },
@@ -82,6 +86,18 @@ function getRow(name: RegExp): HTMLElement {
 }
 
 describe("PlayRecordsView", () => {
+  test("初回はコレクションを主表示とし、履歴も切り替えられること", () => {
+    renderRecords([]);
+    expect(
+      screen.getByRole("heading", { name: "自分のパズルの風景" }),
+    ).toBeTruthy();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "プレイ履歴" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    expect(screen.getByText("まだ記録がありません")).toBeTruthy();
+  });
+
   describe("結果画面を描ける記録の場合", () => {
     let router: RecordsRouter;
 
@@ -190,6 +206,10 @@ describe("PlayRecordsView", () => {
     });
 
     test("記録が無いものとして示すこと", () => {
+      fireEvent.mouseDown(screen.getByRole("tab", { name: "プレイ履歴" }), {
+        button: 0,
+        ctrlKey: false,
+      });
       const message = screen.getByText("まだ記録がありません");
 
       expect(message).toBeTruthy();
@@ -203,6 +223,10 @@ describe("PlayRecordsView", () => {
     });
 
     test("保存した離脱を一覧に表示すること", () => {
+      fireEvent.mouseDown(screen.getByRole("tab", { name: "プレイ履歴" }), {
+        button: 0,
+        ctrlKey: false,
+      });
       act(() => {
         abandonPlayAttempt(minesweeperAttempt, abandonment);
       });

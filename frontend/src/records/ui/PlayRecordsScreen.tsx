@@ -25,6 +25,7 @@ type PlayRecordsScreenProps = {
   shownEntryCount: number;
   onShownEntryCountChange: (count: number) => void;
   emptyAction: ReactNode;
+  showHeading?: boolean;
 };
 
 /** 記録画面を開いたときに一覧に描くプレイの数。 */
@@ -43,6 +44,7 @@ export function PlayRecordsScreen({
   shownEntryCount,
   onShownEntryCountChange,
   emptyAction,
+  showHeading = true,
 }: PlayRecordsScreenProps) {
   const calendarLabelId = useId();
   const calendarWeeks = useMemo(
@@ -53,9 +55,11 @@ export function PlayRecordsScreen({
 
   return (
     <>
-      <header className="mt-2">
-        <h1 className="text-screen-title">記録</h1>
-      </header>
+      {showHeading && (
+        <header className="mt-2">
+          <h1 className="text-screen-title">記録</h1>
+        </header>
+      )}
       <section
         aria-labelledby={calendarLabelId}
         className="mt-1 mb-6 grid justify-items-start gap-2"
