@@ -1,5 +1,10 @@
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import {
+  getGlassPourPose,
+  getPourTiltDirection,
+} from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
+import { getPourSourceKeyframes } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/pour-source-motion";
+import {
   addPourAnimation,
   createPourAnimation,
   groupPourAnimationsByDestination,
@@ -103,5 +108,81 @@ describe("groupPourAnimationsByDestination", () => {
       [1, 2],
       [3],
     ]);
+  });
+});
+
+describe("getPourTiltDirection", () => {
+  test.each([
+    [40, -1],
+    [260, 1],
+  ])(
+    "移動先が画面端に近いときは反対側へ傾けて表示領域を守ること: %i",
+    (left, expected) => {
+      const direction = getPourTiltDirection({ ...rect, left }, 390);
+
+      expect(direction).toBe(expected);
+    },
+  );
+});
+
+describe("getGlassPourPose", () => {
+  const source = { left: 35, top: 228, width: 64, height: 180 };
+  const destinations = [
+    { left: 205, top: 458, width: 64, height: 180, viewportWidth: 390 },
+    { left: 50, top: 318, width: 42, height: 115, viewportWidth: 320 },
+  ] as const;
+
+  test.each(destinations)(
+    "注ぎ口を移動先の中央へ配置し、容器本体を注ぎ口より上へ持ち上げること: $viewportWidth",
+    (destination) => {
+      const result = getGlassPourPose(
+        source,
+        destination,
+        destination.viewportWidth,
+      );
+      const angle = (result.tiltDegrees * Math.PI) / 180;
+      const rimCenterX = source.left + source.width / 2 + result.offsetX;
+      const lipX =
+        rimCenterX + result.direction * (source.width / 2) * Math.cos(angle);
+      const lipY =
+        source.top +
+        result.offsetY +
+        (source.width / 2) * Math.sin(Math.abs(angle));
+      const oppositeEndY =
+        source.top + result.offsetY + source.height * Math.cos(angle);
+
+      expect(lipX).toBeCloseTo(destination.left + destination.width / 2, 5);
+      expect(lipY).toBeCloseTo(result.streamTop, 5);
+      expect(oppositeEndY).toBeLessThan(lipY);
+      expect(result.streamTop).toBeLessThan(destination.top);
+    },
+  );
+});
+
+describe("getPourSourceKeyframes", () => {
+  const current = animation(1, 0, 2);
+
+  test("硝子の注水元は注水終了後に目立たず戻り、最後に元の位置へ復帰すること", () => {
+    const keyframes = getPourSourceKeyframes(current, "glass", 390);
+
+    const disappearing = keyframes.find((frame) => frame.offset === 0.82);
+    const returning = keyframes.at(-1);
+
+    expect(disappearing?.opacity).toBe(0);
+    expect(returning).toMatchObject({
+      transform: "translate(0, 0) rotate(0deg)",
+      opacity: 1,
+      offset: 1,
+    });
+  });
+
+  test("現行の注水元には透明化を適用しないこと", () => {
+    const keyframes = getPourSourceKeyframes(current, "classic", 390);
+
+    const includesTransparency = keyframes.some(
+      (frame) => frame.opacity !== undefined,
+    );
+
+    expect(includesTransparency).toBe(false);
   });
 });

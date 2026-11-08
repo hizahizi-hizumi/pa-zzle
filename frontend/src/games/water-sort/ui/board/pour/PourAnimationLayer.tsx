@@ -4,13 +4,16 @@ import {
   groupPourAnimationsByDestination,
   type PourAnimation,
 } from "@/games/water-sort/ui/board/pour/pour-animation";
+import type { WaterSortAppearance } from "@/games/water-sort/ui/board/water-bottle/appearance";
 
 type PourAnimationLayerProps = {
+  appearance: WaterSortAppearance;
   animations: readonly PourAnimation[];
   onFinish: (animationId: number) => void;
 };
 
 export function PourAnimationLayer({
+  appearance,
   animations,
   onFinish,
 }: PourAnimationLayerProps) {
@@ -18,6 +21,7 @@ export function PourAnimationLayer({
     <>
       {animations.map((animation) => (
         <PourSourceLayer
+          appearance={appearance}
           key={animation.id}
           animation={animation}
           onFinish={onFinish}
@@ -26,6 +30,7 @@ export function PourAnimationLayer({
       {groupPourAnimationsByDestination(animations).map(
         (destinationAnimations) => (
           <PourDestinationLayer
+            appearance={appearance}
             key={destinationAnimations[0]?.destination.bottleIndex}
             animations={destinationAnimations}
           />

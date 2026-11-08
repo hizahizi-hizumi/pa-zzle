@@ -26,6 +26,230 @@ afterEach(() => {
 });
 
 describe("WaterSortBoard", () => {
+  beforeEach(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  });
+
+  test("ドラッグしたボトルを別のボトルへ離すと移動元と移動先を通知すること", () => {
+    const onSelectBottle = vi.fn();
+    const onPourBottle = vi.fn();
+    render(
+      <WaterSortBoard
+        interactionDisabled={false}
+        state={[[0], [], [1], []]}
+        sourceBottleIndex={null}
+        operation={null}
+        onSelectBottle={onSelectBottle}
+        onPourBottle={onPourBottle}
+      />,
+    );
+    const source = screen.getByRole("button", { name: "ボトル 1: 赤" });
+    const destination = screen.getByRole("button", { name: "ボトル 2: 空" });
+    vi.spyOn(destination, "getBoundingClientRect").mockReturnValue({
+      left: 80,
+      right: 130,
+      top: 40,
+      bottom: 220,
+      x: 80,
+      y: 40,
+      width: 50,
+      height: 180,
+      toJSON: () => undefined,
+    });
+
+    fireEvent.pointerDown(source, {
+      pointerId: 4,
+      button: 0,
+      clientX: 20,
+      clientY: 60,
+    });
+    fireEvent.pointerMove(source, { pointerId: 4, clientX: 110, clientY: 120 });
+    expect(destination.dataset.waterSortDropTarget).toBe("true");
+    fireEvent.pointerUp(source, { pointerId: 4, clientX: 110, clientY: 120 });
+    expect(destination.dataset.waterSortDropTarget).toBeUndefined();
+    fireEvent.click(source);
+
+    expect(onPourBottle).toHaveBeenCalledExactlyOnceWith(0, 1, {
+      offsetX: 90,
+      offsetY: 48,
+      tiltDegrees: 5,
+    });
+    expect(onSelectBottle).not.toHaveBeenCalled();
+  });
+
+  test("ドラッグ中は注水できない容器を候補として強調しないこと", () => {
+    const onPourBottle = vi.fn();
+    render(
+      <WaterSortBoard
+        appearance="glass"
+        interactionDisabled={false}
+        state={[[0], [1], [], []]}
+        sourceBottleIndex={null}
+        operation={null}
+        onSelectBottle={vi.fn()}
+        onPourBottle={onPourBottle}
+      />,
+    );
+    const source = screen.getByRole("button", { name: "ボトル 1: 赤" });
+    const incompatible = screen.getByRole("button", { name: "ボトル 2: 青" });
+    vi.spyOn(incompatible, "getBoundingClientRect").mockReturnValue({
+      left: 80,
+      right: 130,
+      top: 40,
+      bottom: 220,
+      x: 80,
+      y: 40,
+      width: 50,
+      height: 180,
+      toJSON: () => undefined,
+    });
+    fireEvent.pointerDown(source, {
+      pointerId: 5,
+      button: 0,
+      clientX: 20,
+      clientY: 60,
+    });
+    fireEvent.pointerMove(source, { pointerId: 5, clientX: 110, clientY: 120 });
+    expect(incompatible.dataset.waterSortDropTarget).toBeUndefined();
+    fireEvent.pointerUp(source, { pointerId: 5, clientX: 110, clientY: 120 });
+    expect(onPourBottle).toHaveBeenCalledExactlyOnceWith(0, 1, {
+      offsetX: 90,
+      offsetY: 48,
+      tiltDegrees: 5,
+    });
+  });
+
+  test("ドラッグ先に移せる色の量を半透明で予告し、指を離すと予告を消すこと", () => {
+    render(
+      <WaterSortBoard
+        appearance="glass"
+        interactionDisabled={false}
+        state={[[0, 0], [], [1], []]}
+        sourceBottleIndex={null}
+        operation={null}
+        onSelectBottle={vi.fn()}
+        onPourBottle={vi.fn()}
+      />,
+    );
+    const source = screen.getByRole("button", { name: "ボトル 1: 赤、赤" });
+    const destination = screen.getByRole("button", { name: "ボトル 2: 空" });
+    vi.spyOn(destination, "getBoundingClientRect").mockReturnValue({
+      left: 80,
+      right: 130,
+      top: 40,
+      bottom: 220,
+      x: 80,
+      y: 40,
+      width: 50,
+      height: 180,
+      toJSON: () => undefined,
+    });
+
+    fireEvent.pointerDown(source, {
+      pointerId: 8,
+      button: 0,
+      clientX: 20,
+      clientY: 60,
+    });
+    fireEvent.pointerMove(source, { pointerId: 8, clientX: 110, clientY: 120 });
+
+    expect(destination.dataset.waterSortDropTarget).toBe("true");
+    expect(destination.dataset.waterSortPreviewCount).toBe("2");
+
+    fireEvent.pointerUp(source, { pointerId: 8, clientX: 110, clientY: 120 });
+
+    expect(destination.dataset.waterSortDropTarget).toBeUndefined();
+    expect(destination.dataset.waterSortPreviewCount).toBeUndefined();
+  });
+
+  test("完成済みボトルはドラッグしても注水の予告や操作を開始しないこと", () => {
+    const onPourBottle = vi.fn();
+    render(
+      <WaterSortBoard
+        appearance="glass"
+        interactionDisabled={false}
+        state={[[0, 0, 0, 0], [], [1], []]}
+        sourceBottleIndex={null}
+        operation={null}
+        onSelectBottle={vi.fn()}
+        onPourBottle={onPourBottle}
+      />,
+    );
+    const source = screen.getByRole("button", {
+      name: "ボトル 1: 赤、赤、赤、赤",
+    });
+    const destination = screen.getByRole("button", { name: "ボトル 2: 空" });
+    vi.spyOn(destination, "getBoundingClientRect").mockReturnValue({
+      left: 80,
+      right: 130,
+      top: 40,
+      bottom: 220,
+      x: 80,
+      y: 40,
+      width: 50,
+      height: 180,
+      toJSON: () => undefined,
+    });
+
+    fireEvent.pointerDown(source, {
+      pointerId: 9,
+      button: 0,
+      clientX: 20,
+      clientY: 60,
+    });
+    fireEvent.pointerMove(source, { pointerId: 9, clientX: 110, clientY: 120 });
+    fireEvent.pointerUp(source, { pointerId: 9, clientX: 110, clientY: 120 });
+
+    expect(destination.dataset.waterSortDropTarget).toBeUndefined();
+    expect(destination.dataset.waterSortPreviewCount).toBeUndefined();
+    expect(onPourBottle).not.toHaveBeenCalled();
+  });
+
+  test("注水先の判定領域が重なるときは指に近い容器を選ぶこと", () => {
+    const onPourBottle = vi.fn();
+    render(
+      <WaterSortBoard
+        appearance="glass"
+        interactionDisabled={false}
+        state={[[0], [], []]}
+        sourceBottleIndex={null}
+        operation={null}
+        onSelectBottle={vi.fn()}
+        onPourBottle={onPourBottle}
+      />,
+    );
+    const source = screen.getByRole("button", { name: "ボトル 1: 赤" });
+    const first = screen.getByRole("button", { name: "ボトル 2: 空" });
+    const second = screen.getByRole("button", { name: "ボトル 3: 空" });
+    for (const [bottle, left] of [
+      [first, 80],
+      [second, 100],
+    ] as const) {
+      vi.spyOn(bottle, "getBoundingClientRect").mockReturnValue({
+        left,
+        right: left + 20,
+        top: 40,
+        bottom: 220,
+        x: left,
+        y: 40,
+        width: 20,
+        height: 180,
+        toJSON: () => undefined,
+      });
+    }
+    fireEvent.pointerDown(source, {
+      pointerId: 6,
+      button: 0,
+      clientX: 20,
+      clientY: 60,
+    });
+    fireEvent.pointerMove(source, { pointerId: 6, clientX: 107, clientY: 120 });
+    expect(first.dataset.waterSortDropTarget).toBeUndefined();
+    expect(second.dataset.waterSortDropTarget).toBe("true");
+    fireEvent.pointerUp(source, { pointerId: 6, clientX: 107, clientY: 120 });
+    expect(onPourBottle).toHaveBeenCalledWith(0, 2, expect.any(Object));
+  });
+
   test("注水アニメーションの完了を待たずに次の操作を通知できること", () => {
     installPendingAnimations();
     const onSelectBottle = vi.fn();

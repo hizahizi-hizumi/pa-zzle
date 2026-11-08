@@ -81,6 +81,36 @@ describe("useWaterSortPlay", () => {
     },
   );
 
+  test("ボトルを直接運ぶと一度の操作で注水できること", () => {
+    const { result } = renderHook(() => useWaterSortPlay("1"));
+    const move = listWaterSortLegalMoves(result.current.state)[0];
+    if (!move) throw new Error("合法手がありません");
+    const expected = applyWaterSortMove(result.current.state, move);
+
+    act(() =>
+      result.current.pourBottle(
+        move.sourceBottleIndex,
+        move.destinationBottleIndex,
+      ),
+    );
+
+    expect(result.current.state).toEqual(expected);
+    expect(result.current.moveCount).toBe(1);
+    expect(result.current.sourceBottleIndex).toBeNull();
+    expect(result.current.operation?.type).toBe("poured");
+  });
+
+  test("ボトルを直接運んでも不成立の移動はカウントしないこと", () => {
+    const { result } = renderHook(() => useWaterSortPlay("1"));
+    const original = result.current.state;
+
+    act(() => result.current.pourBottle(0, 1));
+
+    expect(result.current.state).toEqual(original);
+    expect(result.current.moveCount).toBe(0);
+    expect(result.current.operation?.type).toBe("invalid");
+  });
+
   test("合法な注ぎ元と注ぎ先を順に選ぶとパズルの状態遷移を適用すること", () => {
     const { result } = renderHook(() => useWaterSortPlay("1"));
     const move = listWaterSortLegalMoves(result.current.state)[0];
