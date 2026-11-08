@@ -1,5 +1,6 @@
 import {
   createRecordResultLocationState,
+  readRecordResultStudyCode,
   readRecordSaveOutcome,
 } from "@/game-catalog/record-result-location-state";
 
@@ -30,4 +31,25 @@ describe("readRecordSaveOutcome", () => {
 
     expect(outcome).toBeUndefined();
   });
+});
+
+describe("readRecordResultStudyCode", () => {
+  test("結果へ保存する試遊識別子を読むこと", () => {
+    const state = createRecordResultLocationState(
+      { status: "recorded" },
+      "nanpure.c.0.p",
+    );
+    const code = readRecordResultStudyCode(state);
+
+    expect(code).toBe("nanpure.c.0.p");
+  });
+
+  test.each([null, {}, { studyCode: 30 }])(
+    "不適切なstateから試遊識別子を復元しないこと",
+    (value) => {
+      const code = readRecordResultStudyCode(value);
+
+      expect(code).toBeNull();
+    },
+  );
 });

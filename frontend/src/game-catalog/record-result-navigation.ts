@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useLocation } from "react-router";
 
 import { createRecordResultLocationState } from "@/game-catalog/record-result-location-state";
 import type { PlayRecord } from "@/records/play-record";
@@ -18,6 +19,8 @@ export function useRecordResultNavigation(
   recordOutcome: PlayRecordSaveOutcome | null,
 ): boolean {
   const navigate = useNavigate();
+  const search = new URLSearchParams(useLocation().search);
+  const studyCode = search.get("study") ?? undefined;
   const navigatesToRecordResult =
     resultReached && record !== null && recordOutcome?.status !== "failed";
 
@@ -34,9 +37,9 @@ export function useRecordResultNavigation(
     navigate("/puzzles/:game/result/:recordId", {
       params: { game: record.gameId, recordId: record.id },
       replace: true,
-      state: createRecordResultLocationState(recordOutcome),
+      state: createRecordResultLocationState(recordOutcome, studyCode),
     });
-  }, [navigate, record, recordOutcome, resultReached]);
+  }, [navigate, record, recordOutcome, resultReached, studyCode]);
 
   return navigatesToRecordResult;
 }

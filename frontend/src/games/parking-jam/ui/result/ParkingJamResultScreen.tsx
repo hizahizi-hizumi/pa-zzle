@@ -26,6 +26,7 @@ export function ParkingJamResultScreen({
   recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
+  nextProblemLabel,
   onOpenGameHome,
   onOpenDiagnostics,
 }: ParkingJamResultScreenProps) {
@@ -54,6 +55,7 @@ export function ParkingJamResultScreen({
       ]}
       scoreCriteria={getParkingJamScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}
+      nextProblemLabel={nextProblemLabel}
       onReplay={onReplay}
       onOpenGameHome={onOpenGameHome}
       onOpenDiagnostics={onOpenDiagnostics}

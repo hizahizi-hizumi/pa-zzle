@@ -1,3 +1,5 @@
+import { useLocation, useNavigate } from "react-router";
+import { getCuratedStudyContinuation } from "@/experiments/curated-study";
 import { parkingJamCatalogEntry } from "@/game-catalog/parking-jam/parking-jam-catalog-entry";
 import {
   type CompletedGamePlay,
@@ -20,6 +22,7 @@ import { selectParkingJamProblemById } from "@/games/parking-jam/problem-selecti
 import { ParkingJamDiagnostics } from "@/games/parking-jam/ui/ParkingJamDiagnostics";
 import { ParkingJamPlay } from "@/games/parking-jam/ui/ParkingJamPlay";
 import type { ProblemId } from "@/games/problem-id";
+import { createProblemId } from "@/games/problem-id";
 
 type PlayableParkingJamProps = {
   difficulty: ParkingJamDifficulty;
@@ -52,12 +55,24 @@ export function PlayableParkingJam({
     requestedProblem,
     avoidedProblemId,
   );
+  const search = new URLSearchParams(useLocation().search);
+  const navigate = useNavigate();
+  const continuation = getCuratedStudyContinuation(
+    search.get("study"),
+    "parking-jam",
+    difficulty,
+    createProblemId(play.problemIdentity),
+  );
   const { screenProps, diagnostics } = usePlayableGame({
     game: parkingJamCatalogEntry,
     play,
     playRecordDefinition: parkingJamPlayRecordDefinition,
     createPlayRecord,
     createPlayAttemptProgress: createParkingJamPlayAttemptProgress,
+    onStartNewProblem: continuation
+      ? () => navigate(continuation.destination)
+      : undefined,
+    nextProblemLabel: continuation?.label,
     createDiagnosticSnapshot(buildRevision) {
       return createParkingJamDiagnosticSnapshot({
         difficulty,

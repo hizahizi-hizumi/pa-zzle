@@ -1,6 +1,10 @@
 import { useMemo } from "react";
-import { useLocation } from "react-router";
-
+import {
+  useLocation,
+  useNavigate as useReactRouterNavigate,
+} from "react-router";
+import { getContinuousStudyContinuation } from "@/experiments/continuous-study";
+import { getCuratedStudyContinuation } from "@/experiments/curated-study";
 import {
   findGameCatalogEntry,
   findRecordProblemPlayDestination,
@@ -9,7 +13,10 @@ import {
   createGameNavigation,
   openRecordProblemPlay,
 } from "@/game-catalog/game-navigation";
-import { readRecordSaveOutcome } from "@/game-catalog/record-result-location-state";
+import {
+  readRecordResultStudyCode,
+  readRecordSaveOutcome,
+} from "@/game-catalog/record-result-location-state";
 import { findPlayRecord } from "@/records/storage";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { Link, useNavigate, useParams } from "@/router";
@@ -18,11 +25,29 @@ export function PlayResultView() {
   const { game: gameId, recordId } = useParams(
     "/puzzles/:game/result/:recordId",
   );
-  const recordSaveOutcome = readRecordSaveOutcome(useLocation().state);
+  const locationState = useLocation().state;
+  const recordSaveOutcome = readRecordSaveOutcome(locationState);
+  const studyCode = readRecordResultStudyCode(locationState);
   const navigate = useNavigate();
+  const studyNavigate = useReactRouterNavigate();
   const record = useMemo(() => findPlayRecord(recordId), [recordId]);
   const game = findGameCatalogEntry(gameId);
   const replayDestination = record && findRecordProblemPlayDestination(record);
+  const continuation =
+    record && replayDestination
+      ? (getCuratedStudyContinuation(
+          studyCode,
+          record.gameId,
+          replayDestination.difficulty,
+          replayDestination.problemId,
+        ) ??
+        getContinuousStudyContinuation(
+          studyCode,
+          record.gameId,
+          replayDestination.difficulty,
+          replayDestination.problemId,
+        ))
+      : null;
 
   const resultScreen =
     game && record?.gameId === game.id
@@ -36,7 +61,16 @@ export function PlayResultView() {
           onReplay: replayDestination
             ? () => openRecordProblemPlay(navigate, replayDestination)
             : undefined,
-          navigation: createGameNavigation(navigate, game),
+          navigation: {
+            ...createGameNavigation(navigate, game),
+            ...(continuation
+              ? {
+                  startNewProblem: () =>
+                    studyNavigate(continuation.destination),
+                }
+              : {}),
+          },
+          nextProblemLabel: continuation?.label,
         })
       : null;
 

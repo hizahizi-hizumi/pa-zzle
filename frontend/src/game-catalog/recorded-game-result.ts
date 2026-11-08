@@ -37,6 +37,7 @@ export function useRecordedGameResult<
     recordOutcomeNotice,
     onReplay,
     navigation,
+    nextProblemLabel,
   }: RecordedGameResultProps<Difficulty, Identity, Result>,
   createDiagnosticSnapshot: (buildRevision: string | null) => Snapshot | null,
 ): RecordedGameResult<Difficulty, Result, Snapshot> {
@@ -53,6 +54,7 @@ export function useRecordedGameResult<
       recordOutcomeNotice,
       onReplay,
       onStartNewProblem: startNewProblem,
+      nextProblemLabel,
       onOpenGameHome() {
         navigation.openGameHome(createProblemId(problemIdentity));
       },

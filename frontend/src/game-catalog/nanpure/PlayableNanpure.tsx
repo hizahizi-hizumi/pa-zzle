@@ -1,3 +1,5 @@
+import { useLocation, useNavigate } from "react-router";
+import { getCuratedStudyContinuation } from "@/experiments/curated-study";
 import { nanpureCatalogEntry } from "@/game-catalog/nanpure/nanpure-catalog-entry";
 import { usePlayableGame } from "@/game-catalog/playable-game";
 import { useRequestedProblem } from "@/game-catalog/problem-id-query";
@@ -13,6 +15,7 @@ import { selectNanpureProblemById } from "@/games/nanpure/problem-selection";
 import { NanpureDiagnostics } from "@/games/nanpure/ui/NanpureDiagnostics";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import type { ProblemId } from "@/games/problem-id";
+import { createProblemId } from "@/games/problem-id";
 
 type PlayableNanpureProps = {
   difficulty: NanpureDifficulty;
@@ -28,12 +31,24 @@ export function PlayableNanpure({
     selectNanpureProblemById(difficulty, problemId),
   );
   const play = useNanpurePlay(difficulty, requestedProblem, avoidedProblemId);
+  const search = new URLSearchParams(useLocation().search);
+  const navigate = useNavigate();
+  const continuation = getCuratedStudyContinuation(
+    search.get("study"),
+    "nanpure",
+    difficulty,
+    createProblemId(play.problemIdentity),
+  );
   const { screenProps, diagnostics } = usePlayableGame({
     game: nanpureCatalogEntry,
     play,
     playRecordDefinition: nanpurePlayRecordDefinition,
     createPlayRecord: createNanpurePlayRecord,
     createPlayAttemptProgress: createNanpurePlayAttemptProgress,
+    onStartNewProblem: continuation
+      ? () => navigate(continuation.destination)
+      : undefined,
+    nextProblemLabel: continuation?.label,
     createDiagnosticSnapshot(buildRevision) {
       return createNanpureDiagnosticSnapshot({
         difficulty,

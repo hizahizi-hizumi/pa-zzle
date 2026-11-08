@@ -67,6 +67,7 @@ export type RecordResultContext = {
   /** 記録の問題を遊び直す。遊び直せない記録では `undefined`。 */
   onReplay: (() => void) | undefined;
   navigation: GameNavigation;
+  nextProblemLabel?: string;
 };
 
 /** 図鑑の絞り込みで問題を分ける、問題の特徴の1つの軸と、その名前と値の書き方。 */

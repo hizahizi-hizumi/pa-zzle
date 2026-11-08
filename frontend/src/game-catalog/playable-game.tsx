@@ -53,6 +53,8 @@ type PlayableGameSource<
     abandonedAt: number,
   ) => PlayAttemptProgress;
   createDiagnosticSnapshot: (buildRevision: string | null) => Snapshot | null;
+  onStartNewProblem?: () => void;
+  nextProblemLabel?: string;
 };
 
 export type PlayableGame<Difficulty, Result, Snapshot> = {
@@ -78,6 +80,8 @@ export function usePlayableGame<
   createPlayRecord,
   createPlayAttemptProgress,
   createDiagnosticSnapshot,
+  onStartNewProblem,
+  nextProblemLabel,
 }: PlayableGameSource<
   Difficulty,
   Identity,
@@ -144,13 +148,16 @@ export function usePlayableGame<
       ),
       onReplay: play.replay,
       onClearAnimationComplete: play.completeClearAnimation,
-      onStartNewProblem() {
-        navigation.startNewProblem(
-          difficulty,
-          createProblemId(problemIdentity),
-          { replacesHistory: true },
-        );
-      },
+      onStartNewProblem:
+        onStartNewProblem ??
+        (() => {
+          navigation.startNewProblem(
+            difficulty,
+            createProblemId(problemIdentity),
+            { replacesHistory: true },
+          );
+        }),
+      nextProblemLabel,
       // やめた問題のプレイ画面は、ブラウザの戻るで開き直さないよう履歴に残さない。
       onOpenGameHome() {
         navigation.openGameHome(createProblemId(problemIdentity), {

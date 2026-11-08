@@ -6,6 +6,7 @@ import { Link } from "@/router";
 
 type GameResultActionsProps = {
   onStartNewProblem: () => void;
+  nextProblemLabel?: string;
   onOpenGameHome: () => void;
   /** 省略すると「もう一度」を押せない状態で出す。 */
   onReplay?: () => void;
@@ -18,6 +19,7 @@ type GameResultActionsProps = {
  */
 export function GameResultActions({
   onStartNewProblem,
+  nextProblemLabel = "次の問題",
   onOpenGameHome,
   onReplay,
 }: GameResultActionsProps) {
@@ -25,7 +27,7 @@ export function GameResultActions({
     <div className="mt-4 grid gap-2">
       <Button size="lg" onClick={withPlayStartSound(onStartNewProblem)}>
         <Play />
-        次の問題
+        {nextProblemLabel}
       </Button>
       <Button size="lg" variant="outline" onClick={onOpenGameHome}>
         <Grid2x2 />

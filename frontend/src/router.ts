@@ -28,6 +28,8 @@ export type Path =
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`
   | `/records`
+  | `/studies/continuous`
+  | `/studies/curated`
 
 export type Params = {
   '/puzzles/:game/result/:recordId': { game: string; recordId: string }
