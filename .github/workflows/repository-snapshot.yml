@@ -143,10 +143,12 @@ jobs:
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          ACTIVE_KEYS: ${{ steps.dependencies.outputs.active-keys }}
         run: >-
           python3 .github/actions/offline-dependencies/scripts/artifact_state.py
           prune
           --repo-root "$GITHUB_WORKSPACE"
+          --planned-keys "$ACTIVE_KEYS"
 
   build-offline-dependencies:
     needs: snapshot
@@ -185,11 +187,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          ACTIVE_KEYS: ${{ steps.dependencies.outputs.active-keys }}
         run: >-
           python3 .github/actions/offline-dependencies/scripts/artifact_state.py
           prune
           --repo-root "$GITHUB_WORKSPACE"
           --inactive-only
+          --planned-keys "$ACTIVE_KEYS"
 
       - name: Build Offline Dependencies
         if: steps.dependencies.outputs.build == 'true'
@@ -236,10 +240,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          ACTIVE_KEYS: ${{ steps.dependencies.outputs.active-keys }}
         run: >-
           python3 .github/actions/offline-dependencies/scripts/artifact_state.py
           prune
           --repo-root "$GITHUB_WORKSPACE"
+          --planned-keys "$ACTIVE_KEYS"
 
   publish-environment-manifest:
     needs:
