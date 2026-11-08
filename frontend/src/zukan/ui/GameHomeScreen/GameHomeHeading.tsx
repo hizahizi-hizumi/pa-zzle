@@ -4,9 +4,11 @@ import { type ReactNode, type Ref, useEffect, useRef, useState } from "react";
 import { GamePictogram } from "@/components/GamePictogram";
 import { HomeBackLink } from "@/components/HomeBackLink";
 import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
+import { SettingsButton } from "@/components/SettingsButton";
 import { ZukanHeaderButton } from "@/zukan/ui/GameHomeScreen/ZukanHeaderButton";
 
 type GameHomeHeadingProps = {
+  gameId: string;
   gameTitle: string;
   pictogramSvg: string;
   /** 今示す解いた問題の数。各レベルのカードに示す数の合計。 */
@@ -27,6 +29,7 @@ type GameHomeHeadingProps = {
  * 台紙を広く見せるよう、PC では1行に並べ、それより狭い画面では計数とボタンをゲーム名の下の1行に並べる。狭い画面ではボタンをアイコンで示す。
  */
 export function GameHomeHeading({
+  gameId,
   gameTitle,
   pictogramSvg,
   solvedCount,
@@ -87,6 +90,7 @@ export function GameHomeHeading({
             onClick={() => setHowToPlayOpen(true)}
           />
           {children}
+          <SettingsButton initialGameId={gameId} />
         </div>
       </div>
       {renderHowToPlayDialog({

@@ -87,6 +87,7 @@ export type ZukanFeatureAxis = ZukanFeatureAxisSource & {
 };
 
 export type GameHomeScreenProps = {
+  gameId: string;
   /** 見出しに使うゲームの表示名。 */
   gameTitle: string;
   /** 見出しに添えるゲームのピクトグラム。 */
@@ -315,6 +316,7 @@ function listPendingChanges(
  * 状態ごとの数は、絞り込んでいても台紙の全問で数え、当たった問題の数は同じ行の右に添える。
  */
 export function GameHomeScreen({
+  gameId,
   gameTitle,
   pictogramSvg,
   zukan,
@@ -610,6 +612,7 @@ export function GameHomeScreen({
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 pt-4 sm:px-6 sm:pt-6 lg:pb-8">
       <GameHomeHeading
+        gameId={gameId}
         gameTitle={gameTitle}
         pictogramSvg={pictogramSvg}
         solvedCount={shownSolvedCount}

@@ -166,6 +166,7 @@ function createScreen(
   return (
     <MemoryRouter>
       <GameHomeScreen
+        gameId="nanpure"
         gameTitle="ナンプレ"
         pictogramSvg="<svg></svg>"
         zukan={shownZukan}

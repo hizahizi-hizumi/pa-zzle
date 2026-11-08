@@ -18,6 +18,11 @@ export function createProblemIdSearch(problemId: ProblemId): string {
   return `?${new URLSearchParams({ [problemIdQueryKey]: problemId })}`;
 }
 
+/** 問題IDを明示したプレイかどうか。難易度だけのURLからの出題と区別する。 */
+export function hasProblemIdQuery(search: string): boolean {
+  return new URLSearchParams(search).has(problemIdQueryKey);
+}
+
 /**
  * ゲームのホームを開いたときの URL が指す問題 ID。指定が無ければ `null`。最初に選んでおく問題を決めるためだけに使い、以後 URL が変わっても読み直さない。
  * 読んだら履歴を増やさずに URL から外し、選びを変えたあとの再読み込みやブックマークで、開いたときの問題を選び直さないようにする。

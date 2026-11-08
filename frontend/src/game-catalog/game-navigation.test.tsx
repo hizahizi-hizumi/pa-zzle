@@ -6,12 +6,10 @@ import {
   openRecordProblemPlay,
   useGameNavigation,
 } from "@/game-catalog/game-navigation";
+import { minesweeperCatalogEntry } from "@/game-catalog/minesweeper/minesweeper-catalog-entry";
 import { useNavigate } from "@/router";
 
-const game = {
-  homePath: "/puzzles/minesweeper",
-  playPath: "/puzzles/minesweeper/play/:difficulty",
-} as const;
+const game = minesweeperCatalogEntry;
 
 function RouterWrapper({ children }: { children: ReactNode }) {
   return (
@@ -86,13 +84,25 @@ describe("useGameNavigation", () => {
     expect(navigationType).toBe("REPLACE");
   });
 
-  test("startNewProblem で難易度のプレイ画面を開き、避ける問題の ID を state に渡すこと", () => {
+  test("startNewProblem で難易度のプレイ画面を開き、別の問題の ID を URL に載せること", () => {
     act(() => result.current.navigation.startNewProblem("3", "problem-1"));
 
-    const { pathname, state } = result.current.location;
+    const { pathname, search } = result.current.location;
 
     expect(pathname).toBe("/puzzles/minesweeper/play/3");
-    expect(state).toEqual({ avoidedProblemId: "problem-1" });
+    expect(game.listPoolProblemIds("3")).toContain(
+      new URLSearchParams(search).get("problem"),
+    );
+    expect(result.current.navigationType).toBe("PUSH");
+  });
+
+  test("プレイ中の別の問題では履歴を置き換えること", () => {
+    act(() =>
+      result.current.navigation.startNewProblem("3", "problem-1", {
+        replacesHistory: true,
+      }),
+    );
+    expect(result.current.navigationType).toBe("REPLACE");
   });
 });
 

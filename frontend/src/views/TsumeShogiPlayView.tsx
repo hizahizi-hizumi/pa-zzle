@@ -1,9 +1,12 @@
 import { useLocation } from "react-router";
-
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
-import { readAvoidedProblemId } from "@/game-catalog/play-location-state";
+import {
+  readAvoidedProblemId,
+  readRandomPlaySerial,
+} from "@/game-catalog/play-location-state";
 import { PlayableTsumeShogi } from "@/game-catalog/tsume-shogi/PlayableTsumeShogi";
 import { tsumeShogiCatalogEntry } from "@/game-catalog/tsume-shogi/tsume-shogi-catalog-entry";
+import { useRandomPlayEntry } from "@/game-catalog/use-random-play-entry";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import { useTsumeShogiProblemPool } from "@/games/tsume-shogi/play/use-tsume-shogi-problem-pool";
 import { useParams } from "@/router";
@@ -12,8 +15,15 @@ export function TsumeShogiPlayView() {
   const { difficulty: difficultyParam } = useParams(
     tsumeShogiCatalogEntry.playPath,
   );
-  const avoidedProblemId = readAvoidedProblemId(useLocation().state);
+  const location = useLocation();
+  const avoidedProblemId = readAvoidedProblemId(location.state);
+  const playSerial = readRandomPlaySerial(location.state);
   const difficulty = parseDifficultyLevel(difficultyParam);
+  const randomEntry = useRandomPlayEntry(
+    tsumeShogiCatalogEntry,
+    difficulty,
+    avoidedProblemId,
+  );
   const problemPoolStatus = useTsumeShogiProblemPool();
 
   if (!difficulty) {
@@ -38,9 +48,19 @@ export function TsumeShogiPlayView() {
     return null;
   }
 
+  if (randomEntry !== "ready") {
+    return randomEntry === "unavailable" ? (
+      <PlayUnavailableNotice
+        title="条件に合う問題がありません"
+        description="設定で出題対象を変更してください。"
+        backTo={tsumeShogiCatalogEntry.homePath}
+      />
+    ) : null;
+  }
+
   return (
     <PlayableTsumeShogi
-      key={difficulty}
+      key={`${difficulty}:${playSerial}`}
       difficulty={difficulty}
       avoidedProblemId={avoidedProblemId}
     />

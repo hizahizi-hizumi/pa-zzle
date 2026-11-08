@@ -53,7 +53,11 @@ export type GameNavigation = {
   /** アプリのホームへ移る。 */
   backToHome: () => void;
   /** その難易度のプレイ画面を開き、最初の問題として `avoidedProblemId` の問題を避ける。 */
-  startNewProblem: (difficulty: string, avoidedProblemId: ProblemId) => void;
+  startNewProblem: (
+    difficulty: string,
+    avoidedProblemId: ProblemId,
+    options?: { replacesHistory: boolean },
+  ) => void;
 };
 
 /** 記録から描く結果画面へ、ゲームの外側が渡す告知と操作。検証情報はゲームが記録から用意する。 */

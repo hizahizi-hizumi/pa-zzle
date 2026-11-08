@@ -9,6 +9,7 @@ import {
 import { StrictMode } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import { RandomProblemGameOptionsProvider } from "@/components/RandomProblemGameOptionsContext";
 import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
 import { useGameHome } from "@/game-catalog/game-home";
 import { minesweeperCatalogEntry } from "@/game-catalog/minesweeper/minesweeper-catalog-entry";
@@ -129,7 +130,16 @@ function renderAt(path: string, { strict = false } = {}) {
     ],
     { initialEntries: [path] },
   );
-  const app = <RouterProvider router={router} />;
+  const app = (
+    <RandomProblemGameOptionsProvider
+      games={[
+        { id: "nanpure", name: "ナンプレ" },
+        { id: "minesweeper", name: "マインスイーパー" },
+      ]}
+    >
+      <RouterProvider router={router} />
+    </RandomProblemGameOptionsProvider>
+  );
   render(strict ? <StrictMode>{app}</StrictMode> : app);
   return router;
 }
@@ -197,6 +207,15 @@ describe("useGameHome", () => {
         { abandonedAt: 360_000, progress: { elapsedMs: 60_000 } },
       );
       router = renderAt("/puzzles/nanpure");
+    });
+
+    test("ナンプレの問題選択画面から設定を開くと、適用先にナンプレを選んでいること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "設定" }));
+      const dialog = within(screen.getByRole("dialog", { name: "設定" }));
+      const scope = dialog.getByLabelText("適用先") as HTMLSelectElement;
+
+      expect(scope.value).toBe("nanpure");
+      expect(dialog.getAllByRole("checkbox")).toHaveLength(6);
     });
 
     test("ゲーム名を見出しに出し、解いた問題の数を問題集の全問の数と並べて示すこと", () => {
@@ -299,7 +318,10 @@ describe("useGameHome", () => {
       fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
 
       expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/4");
-      expect(router.state.location.search).toBe("");
+      const problemId = new URLSearchParams(router.state.location.search).get(
+        "problem",
+      );
+      expect(nanpureGame.listPoolProblemIds("4")).toContain(problemId);
     });
   });
 
