@@ -20,8 +20,12 @@ import type { GameProgress } from "@/games/play";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 /** 結果画面はブランドの帯とパズル選択からホームへ戻るリンクを持つので、ルーターの中で描く。 */
-function render(ui: ReactElement) {
-  return renderWithoutRouter(ui, { wrapper: MemoryRouter });
+function render(ui: ReactElement, initialEntry = "/") {
+  return renderWithoutRouter(ui, {
+    wrapper: ({ children }) => (
+      <MemoryRouter initialEntries={[initialEntry]}>{children}</MemoryRouter>
+    ),
+  });
 }
 
 // #  1  #  3  4
@@ -108,6 +112,48 @@ describe("IceFloorMazePlay", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe("表現を比較する場合", () => {
+    beforeEach(() => {
+      render(createPlay(), "/?experience=compare");
+    });
+
+    test("問題と手数を保って現行・氷晶・滑走・氷原を切り替えられること", () => {
+      const boardImage = screen.getByRole("img", { name: "盤面" });
+      const comparison = screen.getByRole("radiogroup", {
+        name: "盤面の表現を比較",
+      });
+      const glacier = within(comparison).getByRole("radio", {
+        name: "氷晶の盤面",
+      });
+      const aurora = within(comparison).getByRole("radio", {
+        name: "滑走の盤面",
+      });
+      const penguin = within(comparison).getByRole("radio", {
+        name: "ペンギンの氷原",
+      });
+      const originalPosition = boardImage
+        .querySelector("[data-piece-cell]")
+        ?.getAttribute("data-piece-cell");
+
+      fireEvent.click(glacier);
+      const glacierLook = boardImage.getAttribute("data-ice-look");
+      fireEvent.click(aurora);
+      const auroraLook = boardImage.getAttribute("data-ice-look");
+      fireEvent.click(penguin);
+      const penguinLook = boardImage.getAttribute("data-ice-look");
+
+      expect(glacierLook).toBe("glacier");
+      expect(auroraLook).toBe("aurora");
+      expect(penguinLook).toBe("penguin");
+      expect(
+        boardImage
+          .querySelector("[data-piece-cell]")
+          ?.getAttribute("data-piece-cell"),
+      ).toBe(originalPosition);
+      expect(screen.getByText("手数").parentElement?.textContent).toBe("手数7");
+    });
   });
 
   describe("プレイ中の場合", () => {

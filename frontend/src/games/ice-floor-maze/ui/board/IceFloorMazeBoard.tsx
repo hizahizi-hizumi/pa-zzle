@@ -1,3 +1,4 @@
+import "@/games/ice-floor-maze/ui/board/ice-floor-maze-looks.css";
 import { useEffect, useLayoutEffect, useRef } from "react";
 
 import type {
@@ -18,6 +19,7 @@ import { IceFloorMazeGoalMark } from "@/games/ice-floor-maze/ui/board/IceFloorMa
 import { IceFloorMazePieceMark } from "@/games/ice-floor-maze/ui/board/IceFloorMazePieceMark";
 import { IceFloorMazeTerrain } from "@/games/ice-floor-maze/ui/board/IceFloorMazeTerrain";
 import { IceFloorMazeTrail } from "@/games/ice-floor-maze/ui/board/IceFloorMazeTrail";
+import type { IceFloorMazeLook } from "@/games/ice-floor-maze/ui/board/ice-floor-maze-look";
 import {
   getIceFloorMazeSlideDurationMs,
   getIceFloorMazeSlideProgressMs,
@@ -32,6 +34,7 @@ import {
 } from "@/lib/motion";
 
 type IceFloorMazeBoardProps = {
+  look?: IceFloorMazeLook;
   board: IceFloorMazeBoardState;
   /** 今の盤面のマス。 */
   cells: readonly IceFloorMazeStateCell[];
@@ -105,6 +108,9 @@ const goalPassKeyframes: Keyframe[] = [
   { transform: "scale(1.5)", opacity: 0 },
 ];
 
+/** 滑走案は速さの余韻だけを残し、次の一手を読むときに光跡で盤面を塞がない。 */
+const TRAIL_AFTERGLOW_FADE_MS = 420;
+const TRAIL_AFTERGLOW_DELAY_MS = 100;
 const CLEAR_BURST_DURATION_MS = 560;
 const CLEAR_POP_DURATION_MS = 360;
 const CLEAR_HOLD_MS = 280;
@@ -129,6 +135,7 @@ const clearPopKeyframes: Keyframe[] = [
  */
 export function IceFloorMazeBoard({
   board,
+  look = "current",
   cells,
   blocks,
   goal,
@@ -144,7 +151,10 @@ export function IceFloorMazeBoard({
   const piecePushRef = useRef<SVGGElement>(null);
   const pieceImpactRef = useRef<SVGGElement>(null);
   const piecePopRef = useRef<SVGGElement>(null);
-  const trailRef = useRef<SVGRectElement>(null);
+  const trailRef = useRef<SVGGElement>(null);
+  const speedWakeRef = useRef<SVGGElement>(null);
+  const impactEchoRef = useRef<SVGCircleElement>(null);
+  const clearCrystalRef = useRef<SVGGElement>(null);
   const goalBurstRef = useRef<SVGCircleElement>(null);
   const viewBox = getIceFloorMazeBoardViewBox(board);
   const aspectRatio = viewBox.width / viewBox.height;
@@ -163,6 +173,7 @@ export function IceFloorMazeBoard({
     const animations = animateSlide(
       pieceSlideRef.current,
       trailRef.current,
+      speedWakeRef.current,
       lastSlide,
       board,
     );
@@ -174,10 +185,17 @@ export function IceFloorMazeBoard({
       ...animateSlideReactions(
         pieceImpactRef.current,
         goalBurstRef.current,
+        impactEchoRef.current,
         lastSlide,
         goal,
       ),
       ...animateIceFloorMazeMovedElements(svgRef.current, lastSlide, board),
+      ...(svgRef.current?.getAttribute("data-ice-look") === "aurora"
+        ? animateTrailAfterglow(trailRef.current, lastSlide)
+        : []),
+      ...(svgRef.current?.getAttribute("data-ice-look") === "penguin"
+        ? animatePenguinFlippers(svgRef.current, lastSlide)
+        : []),
     ];
     onSlideAnimationActivityChange(true);
     const stopWaiting = waitForAnimations(animations, () =>
@@ -262,6 +280,18 @@ export function IceFloorMazeBoard({
             delay,
             easing: MOTION_EASING.celebrate,
           }),
+          clearCrystalRef.current?.animate?.(
+            [
+              { opacity: 0, transform: "scale(0.48) rotate(-12deg)" },
+              {
+                opacity: 0.85,
+                transform: "scale(1.05) rotate(0deg)",
+                offset: 0.4,
+              },
+              { opacity: 0, transform: "scale(1.6) rotate(12deg)" },
+            ],
+            { duration: 720, delay, easing: MOTION_EASING.celebrate },
+          ),
         ].filter((animation) => animation !== undefined),
       completion: { type: "after-animations", holdMs: CLEAR_HOLD_MS },
       reducedMotionHoldMs: CLEAR_REDUCED_MOTION_HOLD_MS,
@@ -274,6 +304,7 @@ export function IceFloorMazeBoard({
     <div className="flex size-full items-center justify-center [container-type:size]">
       <svg
         ref={svgRef}
+        data-ice-look={look}
         role="img"
         aria-label="盤面"
         viewBox={`${viewBox.minX} ${viewBox.minY} ${viewBox.width} ${viewBox.height}`}
@@ -286,6 +317,7 @@ export function IceFloorMazeBoard({
       >
         <IceFloorMazeTerrain
           board={board}
+          look={look}
           state={{ cells, blocks }}
           goal={goal}
           beneathCellFaces={
@@ -296,13 +328,14 @@ export function IceFloorMazeBoard({
                   ref={trailRef}
                   board={board}
                   direction={lastSlide.direction}
+                  look={look}
                   from={lastSlide.from}
                   to={lastSlide.to}
                 />
               ) : null}
               {isGoalBuried ? null : (
                 <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
-                  <IceFloorMazeGoalMark />
+                  <IceFloorMazeGoalMark look={look} />
                 </g>
               )}
             </>
@@ -313,16 +346,61 @@ export function IceFloorMazeBoard({
             key={`cell-changes-${lastSlide.id}`}
             board={board}
             slide={lastSlide}
+            look={look}
           />
         ) : null}
         <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
           <IceFloorMazeGoalBurst ref={goalBurstRef} />
+          {look === "penguin" ? (
+            <g data-clear-fish-bubbles="" ref={clearCrystalRef} opacity="0">
+              {[0, 60, 120, 180, 240, 300].map((angle, index) => (
+                <circle
+                  key={angle}
+                  cx="0"
+                  cy="-0.72"
+                  r={index % 2 === 0 ? 0.075 : 0.045}
+                  transform={`rotate(${angle})`}
+                />
+              ))}
+            </g>
+          ) : look === "aurora" ? (
+            <g data-clear-crystals="" ref={clearCrystalRef} opacity="0">
+              {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
+                <path
+                  key={angle}
+                  d="M -.075 -.65 L 0 -.97 L .075 -.65 L 0 -.52 Z"
+                  transform={`rotate(${angle})`}
+                />
+              ))}
+            </g>
+          ) : null}
         </g>
         <g
           data-piece-cell={position}
           transform={`translate(${piece.x} ${piece.y})`}
         >
           <g ref={pieceSlideRef}>
+            {look === "aurora" || look === "penguin" ? (
+              <>
+                <g
+                  data-slide-wake=""
+                  ref={speedWakeRef}
+                  opacity="0"
+                  transform={`rotate(${lastSlide?.direction === "up" ? 90 : lastSlide?.direction === "down" ? -90 : lastSlide?.direction === "left" ? 180 : 0})`}
+                >
+                  <path d="M-.3 -.15 L-1.08 -.035 L-1.3 0 L-1.08 .035 L-.3 .15" />
+                  <path d="M-.45 -.21 L-.82 -.29 M-.45 .21 L-.82 .29" />
+                </g>
+                <circle
+                  data-ice-impact=""
+                  ref={impactEchoRef}
+                  r="0.43"
+                  fill="none"
+                  opacity="0"
+                  strokeWidth="0.055"
+                />
+              </>
+            ) : null}
             <g ref={piecePushRef}>
               <g
                 ref={pieceImpactRef}
@@ -335,7 +413,10 @@ export function IceFloorMazeBoard({
                     transformOrigin: "center",
                   }}
                 >
-                  <IceFloorMazePieceMark />
+                  <IceFloorMazePieceMark
+                    look={look}
+                    direction={lastSlide?.direction}
+                  />
                 </g>
               </g>
             </g>
@@ -352,7 +433,8 @@ export function IceFloorMazeBoard({
  */
 function animateSlide(
   piece: SVGGElement | null,
-  trail: SVGRectElement | null,
+  trail: SVGGElement | null,
+  speedWake: SVGGElement | null,
   slide: IceFloorMazeLastSlide,
   board: IceFloorMazeBoardState,
 ): Animation[] {
@@ -376,7 +458,56 @@ function animateSlide(
       [{ transform: `${scaleAxis}(0)` }, { transform: `${scaleAxis}(1)` }],
       timing,
     ),
+    speedWake?.animate?.(
+      [
+        { opacity: 0 },
+        { opacity: 0.9, offset: 0.18 },
+        { opacity: 0.82, offset: 0.73 },
+        { opacity: 0 },
+      ],
+      timing,
+    ),
   ].filter((animation) => animation !== undefined);
+}
+
+/** 翼の小さな動きで滑走の長さを伝える。滑りの時間を伸ばさず、盤面の読みを妨げない。 */
+function animatePenguinFlippers(
+  board: SVGSVGElement | null,
+  slide: IceFloorMazeLastSlide,
+): Animation[] {
+  const duration = getIceFloorMazeSlideDurationMs(slide.path.length);
+  return [
+    ["[data-penguin-left-wing]", -16],
+    ["[data-penguin-right-wing]", 16],
+  ].flatMap(([selector, degrees]) => {
+    const wing = board?.querySelector<SVGGElement>(String(selector));
+    const animation = wing?.animate?.(
+      [
+        { transform: "rotate(0deg)" },
+        { transform: `rotate(${degrees}deg)`, offset: 0.22 },
+        { transform: `rotate(${-Number(degrees) * 0.6}deg)`, offset: 0.66 },
+        { transform: "rotate(0deg)" },
+      ],
+      { duration, easing: "ease-in-out" },
+    );
+    return animation ? [animation] : [];
+  });
+}
+
+/** 光の滑走跡は、駒が止まった後にゆっくり薄れる。滑走自体の完了は待たせない。 */
+function animateTrailAfterglow(
+  trail: SVGGElement | null,
+  slide: IceFloorMazeLastSlide,
+): Animation[] {
+  const afterglow = trail?.animate?.([{ opacity: 1 }, { opacity: 0.25 }], {
+    duration: TRAIL_AFTERGLOW_FADE_MS,
+    delay:
+      getIceFloorMazeSlideDurationMs(slide.path.length) +
+      TRAIL_AFTERGLOW_DELAY_MS,
+    easing: MOTION_EASING.exit,
+    fill: "forwards",
+  });
+  return afterglow ? [afterglow] : [];
 }
 
 /**
@@ -386,6 +517,7 @@ function animateSlide(
 function animateSlideReactions(
   piece: SVGGElement | null,
   goalBurst: SVGCircleElement | null,
+  impactEcho: SVGCircleElement | null,
   slide: IceFloorMazeLastSlide,
   goal: number,
 ): Animation[] {
@@ -412,6 +544,20 @@ function animateSlideReactions(
             duration: IMPACT_DURATION_MS,
             delay: getIceFloorMazeSlideDurationMs(distance),
             easing: MOTION_EASING.standard,
+          },
+        ),
+    slide.isClearingMove
+      ? undefined
+      : impactEcho?.animate?.(
+          [
+            { opacity: 0.8, transform: "scale(0.38)" },
+            { opacity: 0.38, transform: "scale(1.25)", offset: 0.42 },
+            { opacity: 0, transform: "scale(1.9)" },
+          ],
+          {
+            duration: stoppedSoftly ? 380 : 310,
+            delay: getIceFloorMazeSlideDurationMs(distance),
+            easing: MOTION_EASING.exit,
           },
         ),
     slide.passedGoal

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 
 import {
   getIceFloorMazeCellPosition,
@@ -19,9 +19,11 @@ import {
   IceFloorMazeCellFace,
   type IceFloorMazeCellFaceKind,
 } from "@/games/ice-floor-maze/ui/board/IceFloorMazeCellFace";
+import type { IceFloorMazeLook } from "@/games/ice-floor-maze/ui/board/ice-floor-maze-look";
 import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 
 type IceFloorMazeTerrainProps = {
+  look?: IceFloorMazeLook;
   board: IceFloorMazeBoard;
   /** 今の盤面のマスと滑る氷の塊。渡さなければ初期盤面を描く。 */
   state?: Pick<IceFloorMazeState, "cells" | "blocks">;
@@ -68,11 +70,16 @@ function getCellFaceKind(
  */
 export function IceFloorMazeTerrain({
   board,
+  look = "current",
   state,
   goal,
   beneathCellFaces,
 }: IceFloorMazeTerrainProps) {
   const clipIds = useIceFloorMazeCellClipIds();
+  const iceGradientId = useId();
+  const iceShineId = useId();
+  const surfaceMaskId = useId();
+  const iceLightId = useId();
   const drawnCellPath = createDrawnCellPath(board);
   const goalPosition =
     goal === undefined ? null : getIceFloorMazeCellPosition(board, goal);
@@ -86,6 +93,56 @@ export function IceFloorMazeTerrain({
   return (
     <g>
       <IceFloorMazeCellClipPaths ids={clipIds} />
+      {look !== "current" ? (
+        <defs>
+          <linearGradient id={iceGradientId} x1="0" y1="0" x2="1" y2="1">
+            {look === "glacier" ? (
+              <>
+                <stop offset="0%" stopColor="#e6fafb" />
+                <stop offset="42%" stopColor="#9bcedb" />
+                <stop offset="72%" stopColor="#c4e9f1" />
+                <stop offset="100%" stopColor="#70b3cc" />
+              </>
+            ) : look === "penguin" ? (
+              <>
+                <stop offset="0%" stopColor="#e8ffff" />
+                <stop offset="45%" stopColor="#a5e0ea" />
+                <stop offset="100%" stopColor="#71baca" />
+              </>
+            ) : (
+              <>
+                <stop offset="0%" stopColor="#276a82" />
+                <stop offset="45%" stopColor="#164a63" />
+                <stop offset="100%" stopColor="#0c2c48" />
+              </>
+            )}
+          </linearGradient>
+          <linearGradient id={iceShineId} x1="0" y1="0" x2="0.85" y2="1">
+            <stop
+              offset="0%"
+              stopColor="#ffffff"
+              stopOpacity={look === "glacier" ? 0.28 : 0.18}
+            />
+            <stop offset="48%" stopColor="#ffffff" stopOpacity="0" />
+            <stop
+              offset="100%"
+              stopColor="#ffffff"
+              stopOpacity={look === "glacier" ? 0.22 : 0.09}
+            />
+          </linearGradient>
+          <radialGradient id={iceLightId} cx="0.18" cy="0.15" r="0.95">
+            <stop
+              offset="0%"
+              stopColor="#e8ffff"
+              stopOpacity={look === "glacier" ? 0.42 : 0.17}
+            />
+            <stop offset="65%" stopColor="#e8ffff" stopOpacity="0" />
+          </radialGradient>
+          <clipPath id={surfaceMaskId}>
+            <path d={drawnCellPath} />
+          </clipPath>
+        </defs>
+      ) : null}
       <path
         data-wall=""
         d={drawnCellPath}
@@ -99,8 +156,40 @@ export function IceFloorMazeTerrain({
         className={iceFloorMazeToneClassNames.wallFill}
       />
       <path d={drawnCellPath} className={iceFloorMazeToneClassNames.ice} />
+      {look !== "current" ? (
+        <>
+          <path d={drawnCellPath} fill={`url(#${iceGradientId})`} />
+          <path
+            data-ice-sheen=""
+            d={drawnCellPath}
+            fill={`url(#${iceShineId})`}
+          />
+          <path d={drawnCellPath} fill={`url(#${iceLightId})`} />
+          <g clipPath={`url(#${surfaceMaskId})`} data-ice-refraction="">
+            <path
+              d={`M -2 ${board.height * 0.28} Q ${board.width * 0.35} ${-board.height * 0.1} ${board.width + 2} ${board.height * 0.36}`}
+            />
+            <path
+              d={`M -2 ${board.height * 0.36} Q ${board.width * 0.35} ${board.height * 0.02} ${board.width + 2} ${board.height * 0.43}`}
+            />
+            <path
+              d={`M -2 ${board.height * 0.89} Q ${board.width * 0.46} ${board.height * 0.57} ${board.width + 2} ${board.height * 0.79}`}
+            />
+          </g>
+        </>
+      ) : null}
+      {look !== "current" ? (
+        <path
+          data-ice-rim=""
+          d={drawnCellPath}
+          fill="none"
+          strokeWidth="0.055"
+          strokeLinejoin="round"
+        />
+      ) : null}
       {goalPosition ? (
         <rect
+          data-goal-cell=""
           x={goalPosition.x}
           y={goalPosition.y}
           width={1}
@@ -109,6 +198,7 @@ export function IceFloorMazeTerrain({
         />
       ) : null}
       <path
+        data-ice-joints=""
         d={createIceJointPath(board)}
         fill="none"
         strokeWidth={ICE_JOINT_WIDTH}
@@ -134,7 +224,11 @@ export function IceFloorMazeTerrain({
             data-cell-body=""
             style={{ transformBox: "fill-box", transformOrigin: "center" }}
           >
-            <IceFloorMazeCellFace kind="sliding-block" clipIds={clipIds} />
+            <IceFloorMazeCellFace
+              kind="sliding-block"
+              clipIds={clipIds}
+              look={look}
+            />
           </g>
         </g>
       </g>
@@ -153,7 +247,7 @@ export function IceFloorMazeTerrain({
           data-cell-body=""
           style={{ transformBox: "fill-box", transformOrigin: "50% 90%" }}
         >
-          <IceFloorMazeCellFace kind={kind} clipIds={clipIds} />
+          <IceFloorMazeCellFace kind={kind} clipIds={clipIds} look={look} />
         </g>
       </g>
     );

@@ -1,0 +1,366 @@
+/* 実験モードのみ。平常時は氷面を読みやすく保ち、滑走中の運動と衝突に表情を集める。 */
+svg[data-ice-look="glacier"] [data-wall] {
+  fill: #507a8e;
+  stroke: #507a8e;
+}
+svg[data-ice-look="glacier"] [data-enclosed-outside] {
+  fill: #507a8e;
+}
+svg[data-ice-look="glacier"] [data-ice-joints] {
+  stroke: #e8ffff;
+  stroke-width: 0.028;
+  opacity: 0.64;
+}
+svg[data-ice-look="glacier"] [data-rock-cell] rect:first-of-type {
+  fill: #355e77;
+}
+svg[data-ice-look="glacier"] [data-rock-cell] rect:nth-of-type(2) {
+  fill: #6e96a4;
+}
+svg[data-ice-look="glacier"] [data-brittle-rock-cell] rect:first-of-type {
+  fill: #72959f;
+}
+svg[data-ice-look="glacier"] [data-brittle-rock-cell] rect:nth-of-type(2) {
+  fill: #bad5d5;
+}
+svg[data-ice-look="glacier"] [data-floor-cell] rect {
+  fill: #bbd5c8;
+}
+svg[data-ice-look="glacier"] [data-floor-cell] circle {
+  fill: #5d9085;
+}
+svg[data-ice-look="glacier"] [data-water-cell] rect {
+  fill: #327d9d;
+}
+svg[data-ice-look="glacier"] [data-water-cell] path:first-of-type {
+  fill: #19546f;
+}
+svg[data-ice-look="glacier"] [data-goal-cell] {
+  fill: #fbe6b1;
+}
+svg[data-ice-look="glacier"] [data-trail] {
+  fill: #f2ffff;
+  opacity: 0.18;
+}
+svg[data-ice-look="glacier"] [data-ice-skate-mark] {
+  stroke: #ffffff;
+  opacity: 0.66;
+}
+svg[data-ice-look="glacier"] [data-ice-skate-reflection] {
+  stroke: #2c9ac2;
+  opacity: 0.48;
+}
+svg[data-ice-look="glacier"] [data-ice-impact] {
+  stroke: #eaffff;
+}
+svg[data-ice-look="glacier"] [data-slide-wake] {
+  stroke: #f7ffff;
+}
+svg[data-ice-look="glacier"] [data-clear-crystals] {
+  fill: #fff8dd;
+}
+svg[data-ice-look="glacier"] [data-piece-shadow] {
+  fill: #1b5772;
+  opacity: 0.38;
+}
+svg[data-ice-look="glacier"] [data-piece-shell] {
+  fill: #246c8a;
+  stroke: #f4ffff;
+  stroke-width: 0.055;
+}
+svg[data-ice-look="glacier"] [data-piece-core] {
+  fill: #c1f7fd;
+}
+svg[data-ice-look="glacier"] [data-piece-halo] {
+  stroke: #dcffff;
+  opacity: 0.48;
+}
+svg[data-ice-look="glacier"] [data-piece-reflection] {
+  stroke: #fff;
+  opacity: 0.9;
+}
+svg[data-ice-look="glacier"] [data-piece-facet] {
+  opacity: 0.78;
+}
+svg[data-ice-look="glacier"] [data-piece-glint] {
+  fill: #fff;
+}
+svg[data-ice-look="glacier"] [data-goal-well] {
+  fill: #b8741d;
+}
+svg[data-ice-look="glacier"] [data-goal-aura] {
+  stroke: #fff0b8;
+}
+svg[data-ice-look="glacier"] [data-goal-inner] {
+  stroke: #ffdc8e;
+}
+svg[data-ice-look="glacier"] [data-goal-heart] {
+  fill: #fff9dc;
+}
+svg[data-ice-look="glacier"] [data-goal-shine] {
+  fill: #fff4c4;
+}
+
+svg[data-ice-look="aurora"] [data-wall] {
+  fill: #355c73;
+  stroke: #355c73;
+}
+svg[data-ice-look="aurora"] [data-enclosed-outside] {
+  fill: #355c73;
+}
+svg[data-ice-look="aurora"] [data-ice-joints] {
+  stroke: #72b7c8;
+  stroke-width: 0.031;
+  opacity: 0.48;
+}
+svg[data-ice-look="aurora"] [data-rock-cell] rect:first-of-type {
+  fill: #0f3049;
+}
+svg[data-ice-look="aurora"] [data-rock-cell] rect:nth-of-type(2) {
+  fill: #6b91a0;
+}
+svg[data-ice-look="aurora"] [data-brittle-rock-cell] rect:first-of-type {
+  fill: #315b72;
+}
+svg[data-ice-look="aurora"] [data-brittle-rock-cell] rect:nth-of-type(2) {
+  fill: #99c0c8;
+}
+svg[data-ice-look="aurora"] [data-floor-cell] rect {
+  fill: #447d78;
+}
+svg[data-ice-look="aurora"] [data-floor-cell] circle {
+  fill: #b9e1cd;
+}
+svg[data-ice-look="aurora"] [data-water-cell] rect {
+  fill: #0c2943;
+}
+svg[data-ice-look="aurora"] [data-water-cell] path:first-of-type {
+  fill: #04192b;
+}
+svg[data-ice-look="aurora"] [data-goal-cell] {
+  fill: #214b68;
+}
+svg[data-ice-look="aurora"] [data-trail] {
+  fill: #66ede4;
+  opacity: 0.18;
+}
+svg[data-ice-look="aurora"] [data-ice-skate-mark] {
+  stroke: #b0fff2;
+  opacity: 0.95;
+}
+svg[data-ice-look="aurora"] [data-ice-skate-reflection] {
+  stroke: #b2e8f8;
+  opacity: 0.68;
+}
+svg[data-ice-look="aurora"] [data-ice-impact] {
+  stroke: #86f4ea;
+}
+svg[data-ice-look="aurora"] [data-slide-wake] {
+  stroke: #d7fff6;
+}
+svg[data-ice-look="aurora"] [data-clear-crystals] {
+  fill: #ffdca0;
+}
+svg[data-ice-look="aurora"] [data-piece-shadow] {
+  fill: #021a36;
+  opacity: 0.75;
+}
+svg[data-ice-look="aurora"] [data-piece-shell] {
+  fill: #25a5b5;
+  stroke: #ecffff;
+  stroke-width: 0.055;
+}
+svg[data-ice-look="aurora"] [data-piece-core] {
+  fill: #aaf6ed;
+}
+svg[data-ice-look="aurora"] [data-piece-halo] {
+  stroke: #aafcf5;
+  opacity: 0.58;
+}
+svg[data-ice-look="aurora"] [data-piece-reflection] {
+  stroke: #fff;
+  opacity: 0.9;
+}
+svg[data-ice-look="aurora"] [data-piece-facet] {
+  opacity: 0.7;
+}
+svg[data-ice-look="aurora"] [data-piece-glint] {
+  fill: #fff;
+}
+svg[data-ice-look="aurora"] [data-goal-well] {
+  fill: #e0a049;
+}
+svg[data-ice-look="aurora"] [data-goal-aura] {
+  stroke: #ffd496;
+}
+svg[data-ice-look="aurora"] [data-goal-inner] {
+  stroke: #fff0bc;
+}
+svg[data-ice-look="aurora"] [data-goal-heart] {
+  fill: #fff8e0;
+}
+svg[data-ice-look="aurora"] [data-goal-shine] {
+  fill: #fff;
+}
+
+svg[data-ice-look]:not([data-ice-look="current"]) [data-ice-refraction] {
+  fill: none;
+  stroke: #f0ffff;
+  stroke-width: 0.055;
+  opacity: 0.13;
+  stroke-linecap: round;
+}
+svg[data-ice-look]:not([data-ice-look="current"]) [data-rock-bevel] {
+  stroke: #e4feff;
+  opacity: 0.5;
+}
+svg[data-ice-look]:not([data-ice-look="current"]) [data-rock-facet] {
+  fill: #e2ffff;
+  opacity: 0.09;
+}
+svg[data-ice-look]:not([data-ice-look="current"]) [data-slide-wake] {
+  fill: none;
+  stroke-width: 0.04;
+  stroke-linecap: round;
+}
+svg[data-ice-look]:not([data-ice-look="current"]) [data-clear-crystals] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+svg[data-ice-look]:not([data-ice-look="current"]) [data-ice-impact] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+svg[data-ice-look="glacier"] [data-stone-body] {
+  fill: #627f95;
+}
+svg[data-ice-look="glacier"] [data-stone-shadow] {
+  fill: #3f6d86;
+}
+svg[data-ice-look="glacier"] [data-stone-top] {
+  fill: #a2cbd0;
+}
+svg[data-ice-look="glacier"] [data-stone-right] {
+  fill: #466983;
+}
+svg[data-ice-look="glacier"] [data-stone-chisel] {
+  stroke: #b7dbd8;
+  opacity: 0.65;
+}
+svg[data-ice-look="glacier"] [data-ice-rim] {
+  stroke: #dfecf0;
+  opacity: 0.64;
+}
+svg[data-ice-look="aurora"] [data-stone-body] {
+  fill: #698ea4;
+}
+svg[data-ice-look="aurora"] [data-stone-shadow] {
+  fill: #18374d;
+}
+svg[data-ice-look="aurora"] [data-stone-top] {
+  fill: #add4db;
+}
+svg[data-ice-look="aurora"] [data-stone-right] {
+  fill: #345a75;
+}
+svg[data-ice-look="aurora"] [data-stone-chisel] {
+  stroke: #c1e8eb;
+  opacity: 0.65;
+}
+svg[data-ice-look="aurora"] [data-ice-rim] {
+  stroke: #8ab3c7;
+  opacity: 0.5;
+}
+
+svg[data-ice-look="glacier"] [data-piece-light] {
+  fill: #e1ffff;
+  opacity: 0.8;
+}
+svg[data-ice-look="glacier"] [data-piece-facet] {
+  fill: #135c7f;
+  opacity: 0.62;
+}
+svg[data-ice-look="aurora"] [data-piece-light] {
+  fill: #ebfff6;
+  opacity: 0.94;
+}
+svg[data-ice-look="aurora"] [data-piece-facet] {
+  fill: #0e6888;
+  opacity: 0.7;
+}
+
+/* 静かな氷晶と、操作中だけ輝く滑走。動きを減らす環境でも光跡は抑える。 */
+svg[data-ice-look="aurora"] [data-trail-group] {
+  opacity: 0.32;
+}
+
+/* 氷原：駒の存在感と到着の目的を持たせた、体験の方向性が異なる試作。 */
+svg[data-ice-look="penguin"] [data-wall],
+svg[data-ice-look="penguin"] [data-enclosed-outside] {
+  fill: #437b89;
+  stroke: #437b89;
+}
+svg[data-ice-look="penguin"] [data-ice-joints] {
+  stroke: #f2ffff;
+  stroke-width: 0.026;
+  opacity: 0.54;
+}
+svg[data-ice-look="penguin"] [data-ice-rim] {
+  stroke: #f5ffff;
+  opacity: 0.85;
+}
+svg[data-ice-look="penguin"]:not([data-ice-look="current"])
+  [data-ice-refraction] {
+  stroke: #e8ffff;
+  stroke-width: 0.038;
+  opacity: 0.21;
+}
+svg[data-ice-look="penguin"] [data-stone-body] {
+  fill: #49758a;
+}
+svg[data-ice-look="penguin"] [data-stone-shadow] {
+  fill: #285a6c;
+}
+svg[data-ice-look="penguin"] [data-stone-top] {
+  fill: #d2f4ee;
+}
+svg[data-ice-look="penguin"] [data-stone-right] {
+  fill: #3e7082;
+}
+svg[data-ice-look="penguin"] [data-stone-chisel] {
+  stroke: #bbdfe8;
+  opacity: 0.72;
+}
+svg[data-ice-look="penguin"] [data-goal-cell] {
+  fill: #a1dfe5;
+}
+svg[data-ice-look="penguin"] [data-trail] {
+  fill: #f4ffff;
+  opacity: 0.3;
+}
+svg[data-ice-look="penguin"] [data-ice-skate-mark] {
+  stroke: #f3ffff;
+  opacity: 0.72;
+}
+svg[data-ice-look="penguin"] [data-ice-skate-reflection] {
+  stroke: #438da7;
+  opacity: 0.54;
+}
+svg[data-ice-look="penguin"]:not([data-ice-look="current"]) [data-slide-wake] {
+  stroke: #fffdf3;
+}
+svg[data-ice-look="penguin"]:not([data-ice-look="current"]) [data-ice-impact] {
+  stroke: #eafef9;
+}
+svg[data-ice-look="penguin"] [data-clear-fish-bubbles] {
+  fill: #fff3c3;
+}
+svg[data-ice-look="penguin"] [data-penguin-slide-groove] {
+  stroke: #e5f7f7;
+  opacity: 0.55;
+}
+svg[data-ice-look="penguin"] [data-penguin-slide-ridge] {
+  stroke: #6eb8c5;
+  opacity: 0.58;
+}

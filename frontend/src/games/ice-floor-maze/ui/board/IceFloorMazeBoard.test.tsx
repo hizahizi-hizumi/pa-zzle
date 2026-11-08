@@ -710,4 +710,59 @@ describe("IceFloorMazeBoard", () => {
       expect(blocks).toEqual(["1"]);
     });
   });
+
+  describe("現行・氷晶・滑走・氷原の表現を比較する場合", () => {
+    function renderLook(look: "current" | "glacier" | "aurora" | "penguin") {
+      render(
+        <IceFloorMazeBoard
+          look={look}
+          board={board}
+          cells={listInitialCells(board)}
+          blocks={[]}
+          goal={15}
+          position={3}
+          lastSlide={null}
+          blockedInput={null}
+          clearing={false}
+          onSlideAnimationActivityChange={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+      return screen.getByRole("img", { name: "盤面" });
+    }
+
+    test("現行版は比較案の造形や演出を持ち込まないこと", () => {
+      const image = renderLook("current");
+      expect(image.querySelector("[data-piece-mark]")).not.toBeNull();
+      expect(image.querySelector("[data-piece-shell]")).toBeNull();
+      expect(image.querySelector("[data-slide-wake]")).toBeNull();
+      expect(image.querySelector("[data-ice-refraction]")).toBeNull();
+    });
+
+    test("氷晶案は氷の素材感を持つ一方、動的な光の残像を描かないこと", () => {
+      const image = renderLook("glacier");
+      expect(image.querySelector("[data-piece-shell]")).not.toBeNull();
+      expect(image.querySelector("[data-ice-refraction]")).not.toBeNull();
+      expect(image.querySelector("[data-slide-wake]")).toBeNull();
+      expect(image.querySelector("[data-ice-impact]")).toBeNull();
+    });
+
+    test("滑走案は光の残像と衝突時の余韻を備え、着地点の先読みを表示しないこと", () => {
+      const image = renderLook("aurora");
+      expect(image.querySelector("[data-slide-wake]")).not.toBeNull();
+      expect(image.querySelector("[data-ice-impact]")).not.toBeNull();
+      expect(image.querySelector("[data-landing-preview]")).toBeNull();
+    });
+
+    test("氷原案はペンギンと魚を描き、氷晶の駒とゴールの造形を再利用しないこと", () => {
+      const image = renderLook("penguin");
+
+      expect(image.querySelector("[data-penguin]")).not.toBeNull();
+      expect(image.querySelector("[data-goal-fish]")).not.toBeNull();
+      expect(image.querySelector("[data-piece-shell]")).toBeNull();
+      expect(image.querySelector("[data-clear-fish-bubbles]")).not.toBeNull();
+      expect(image.querySelector("[data-clear-crystals]")).toBeNull();
+      expect(image.querySelector("[data-landing-preview]")).toBeNull();
+    });
+  });
 });

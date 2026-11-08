@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
@@ -13,7 +14,9 @@ import type { IceFloorMazeBoard as IceFloorMazeBoardState } from "@/games/ice-fl
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
 import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
+import type { IceFloorMazeLook } from "@/games/ice-floor-maze/ui/board/ice-floor-maze-look";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
+import { IceFloorMazeLookComparison } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeLookComparison";
 import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeSwipeArea";
 import { IceFloorMazeTrappedNotice } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeTrappedNotice";
 import { useIceFloorMazeSoundEffects } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/use-ice-floor-maze-sound-effects";
@@ -79,6 +82,10 @@ export function IceFloorMazePlay({
   onBackToHome,
   onOpenDiagnostics,
 }: IceFloorMazePlayProps) {
+  const location = useLocation();
+  const comparingLooks =
+    new URLSearchParams(location.search).get("experience") === "compare";
+  const [look, setLook] = useState<IceFloorMazeLook>("current");
   const playAreaRef = useRef<HTMLElement>(null);
   const [slideAnimating, setSlideAnimating] = useState(false);
   const playing = progress === "playing";
@@ -128,7 +135,19 @@ export function IceFloorMazePlay({
       progress={progress}
       result={result}
       title={ICE_FLOOR_MAZE_DISPLAY_NAME}
-      background={<div className="size-full bg-[#e7eef3] dark:bg-[#202c35]" />}
+      background={
+        <div
+          className={
+            comparingLooks && look === "glacier"
+              ? "size-full bg-[#dcecf0] dark:bg-[#183745]"
+              : comparingLooks && look === "aurora"
+                ? "size-full bg-[#d3e1e9] dark:bg-[#112838]"
+                : comparingLooks && look === "penguin"
+                  ? "size-full bg-[#e0f1ef] dark:bg-[#143443]"
+                  : "size-full bg-[#e7eef3] dark:bg-[#202c35]"
+          }
+        />
+      }
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },
@@ -159,6 +178,7 @@ export function IceFloorMazePlay({
         <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
           <IceFloorMazeBoard
             board={board}
+            look={comparingLooks ? look : "current"}
             cells={cells}
             blocks={blocks}
             goal={goal}
@@ -170,7 +190,10 @@ export function IceFloorMazePlay({
             onClearAnimationComplete={onClearAnimationComplete}
           />
         </main>
-        <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
+        <footer className="grid h-28 shrink-0 content-end justify-items-center gap-2 px-4 pb-2">
+          {comparingLooks && playing ? (
+            <IceFloorMazeLookComparison value={look} onChange={setLook} />
+          ) : null}
           {showTrappedNotice ? (
             <IceFloorMazeTrappedNotice
               canUndo={canUndo}
