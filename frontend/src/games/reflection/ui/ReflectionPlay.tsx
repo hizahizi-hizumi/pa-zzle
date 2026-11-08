@@ -7,7 +7,6 @@ import type {
 } from "@/games/play";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
-import type { ReflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import type {
   ReflectionLaserView,
   ReflectionOperation,
@@ -38,7 +37,6 @@ type ReflectionPlayProps = GamePlayScreenProps<
   ReflectionResult
 > &
   RestartableGamePlayScreenProps & {
-    laserPathMode: ReflectionLaserPathMode;
     board: ReflectionBoardState;
     clues: readonly ReflectionClue[];
     inventory: ReflectionInventory;
@@ -64,7 +62,6 @@ export function ReflectionPlay({
   elapsedMs,
   result,
   recordOutcomeNotice,
-  laserPathMode,
   board,
   clues,
   inventory,
@@ -153,16 +150,11 @@ export function ReflectionPlay({
       onBackToHome={onBackToHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
-        <ReflectionHowToPlayDialog
-          open={open}
-          laserPathMode={laserPathMode}
-          onClose={onClose}
-        />
+        <ReflectionHowToPlayDialog open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <ReflectionResultScreen
           difficulty={difficulty}
-          laserPathMode={laserPathMode}
           result={clearedResult}
           recordOutcomeNotice={recordOutcomeNotice}
           onReplay={onReplay}
