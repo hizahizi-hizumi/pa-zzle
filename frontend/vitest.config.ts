@@ -47,6 +47,7 @@ export default defineConfig({
         test: {
           name: "dom",
           environment: "jsdom",
+          setupFiles: ["src/testing/setup-dom.ts"],
           // forks ではファイルごとに jsdom の環境を用意する時間が大半を占めるので、それが軽い vm を使う。
           pool: "vmForks",
           include: ["src/**/*.{test,spec}.{ts,tsx}"],

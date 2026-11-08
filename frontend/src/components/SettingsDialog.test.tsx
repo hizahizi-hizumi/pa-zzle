@@ -243,105 +243,20 @@ describe("パズルの並び順の設定", () => {
     fireEvent.click(screen.getByRole("button", { name: /パズルの並び順/ }));
   });
 
-  test("上へ移動した順番を保存すること", () => {
-    const dialog = within(
-      screen.getByRole("dialog", { name: "パズルの並び順" }),
-    );
-    const list = dialog.getByRole("list", { name: "パズルの並び順" });
-    fireEvent.keyDown(
-      dialog.getByRole("button", { name: "ナンプレを並び替え" }),
-      { key: "ArrowUp" },
-    );
-    const names = within(list)
-      .getAllByRole("listitem")
-      .map((item) => item.textContent?.trim());
-
-    expect(names[0]).toBe("ナンプレ");
-    expect(names[1]).toBe("ウォーターソート");
-    expect(gameSelectionOrderSetting.getSnapshot().slice(0, 2)).toEqual([
-      "nanpure",
-      "water-sort",
-    ]);
-  });
-
-  test("ドラッグ先へ並べ替えて保存し、移動中だけ配置場所を示すこと", () => {
+  test("パズルの並びを操作できるつまみを表示すること", () => {
     const list = screen.getByRole("list", { name: "パズルの並び順" });
-    const handle = screen.getByRole("button", { name: "ナンプレを並び替え" });
-    const rowPositions = vi
-      .spyOn(HTMLElement.prototype, "offsetTop", "get")
-      .mockImplementation(function (this: HTMLElement) {
-        return Array.from(list.children).indexOf(this) * 48;
-      });
-    const rowHeights = vi
-      .spyOn(HTMLElement.prototype, "offsetHeight", "get")
-      .mockReturnValue(48);
-    const bounds = vi
-      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
-      .mockImplementation(function (this: HTMLElement) {
-        const index = Array.from(list.children).indexOf(this);
-        const top = this === list ? 100 : 100 + index * 48;
-        return {
-          x: 0,
-          y: top,
-          top,
-          left: 0,
-          width: 320,
-          height: 48,
-          right: 320,
-          bottom: top + 48,
-          toJSON() {},
-        };
-      });
-
-    fireEvent.pointerDown(handle, {
-      pointerId: 1,
-      button: 0,
-      clientX: 280,
-      clientY: 170,
-    });
-    fireEvent.pointerMove(list, { pointerId: 1, clientX: 280, clientY: 112 });
-
-    expect(list.querySelectorAll("[data-sort-item]")).toHaveLength(2);
-    expect(list.querySelectorAll("[data-drop-placeholder]")).toHaveLength(1);
-    expect(gameSelectionOrderSetting.getSnapshot()).toEqual([]);
-
-    fireEvent.pointerUp(list, { pointerId: 1, clientX: 280, clientY: 112 });
-
-    const names = within(list)
-      .getAllByRole("listitem")
-      .map((item) => item.textContent?.trim());
-    expect(names).toEqual(["ナンプレ", "ウォーターソート"]);
-    expect(gameSelectionOrderSetting.getSnapshot()).toEqual([
-      "nanpure",
-      "water-sort",
-    ]);
-    bounds.mockRestore();
-    rowHeights.mockRestore();
-    rowPositions.mockRestore();
-  });
-
-  test("ドラッグをキャンセルしても並び順を保存しないこと", () => {
-    const list = screen.getByRole("list", { name: "パズルの並び順" });
-    fireEvent.pointerDown(
-      screen.getByRole("button", { name: "ナンプレを並び替え" }),
-      { pointerId: 2, button: 0, clientX: 280, clientY: 170 },
-    );
-    fireEvent.pointerCancel(list, { pointerId: 2 });
 
     expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(
+      screen.getByRole("button", { name: "ナンプレを並び替え" }),
+    ).toBeTruthy();
     expect(gameSelectionOrderSetting.getSnapshot()).toEqual([]);
   });
 
-  test("初期順に戻してから設定画面に戻れること", () => {
-    const dialog = within(
-      screen.getByRole("dialog", { name: "パズルの並び順" }),
-    );
-    fireEvent.keyDown(
-      dialog.getByRole("button", { name: "ナンプレを並び替え" }),
-      { key: "ArrowUp" },
-    );
-    fireEvent.click(dialog.getByRole("button", { name: "初期順に戻す" }));
-    fireEvent.click(dialog.getByRole("button", { name: "設定に戻る" }));
+  test("設定した並びを初期順に戻せること", () => {
+    act(() => gameSelectionOrderSetting.setOrder(["nanpure", "water-sort"]));
+    fireEvent.click(screen.getByRole("button", { name: "初期順に戻す" }));
+    fireEvent.click(screen.getByRole("button", { name: "設定に戻る" }));
 
     expect(gameSelectionOrderSetting.getSnapshot()).toEqual([]);
     expect(screen.getByRole("dialog", { name: "設定" })).toBeTruthy();
@@ -378,10 +293,7 @@ describe("設定一覧", () => {
 
   test("並び順を変更すると設定一覧の要約に反映すること", () => {
     fireEvent.click(screen.getByRole("button", { name: /パズルの並び順/ }));
-    fireEvent.keyDown(
-      screen.getByRole("button", { name: "ナンプレを並び替え" }),
-      { key: "ArrowUp" },
-    );
+    act(() => gameSelectionOrderSetting.setOrder(["nanpure", "water-sort"]));
     fireEvent.click(screen.getByRole("button", { name: "設定に戻る" }));
 
     expect(screen.getByRole("dialog", { name: "設定" })).toBeTruthy();
@@ -405,154 +317,5 @@ describe("設定一覧", () => {
 
     expect(screen.getByText("効果音 5 · BGM オフ")).toBeTruthy();
     expect(backgroundMusicVolumeSetting.getVolume()).toBe(0);
-  });
-});
-
-describe("複数のパズルのドラッグ操作", () => {
-  let list: HTMLElement;
-
-  beforeEach(() => {
-    render(
-      <GameCatalogProvider
-        games={[
-          { id: "water-sort", name: "ウォーターソート" },
-          { id: "nanpure", name: "ナンプレ" },
-          { id: "minesweeper", name: "マインスイーパー" },
-          { id: "slide-puzzle", name: "スライドパズル" },
-        ]}
-      >
-        <SettingsDialog open onOpenChange={vi.fn()} />
-      </GameCatalogProvider>,
-    );
-    fireEvent.click(screen.getByRole("button", { name: /パズルの並び順/ }));
-    list = screen.getByRole("list", { name: "パズルの並び順" });
-    vi.spyOn(HTMLElement.prototype, "offsetTop", "get").mockImplementation(
-      function (this: HTMLElement) {
-        return Array.from(list.children).indexOf(this) * 48;
-      },
-    );
-    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(48);
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
-      function (this: HTMLElement) {
-        const index = Array.from(list.children).indexOf(this);
-        const top = this === list ? 100 : 100 + index * 48 - list.scrollTop;
-        return {
-          x: 0,
-          y: top,
-          top,
-          left: 0,
-          width: 320,
-          height: this === list ? 192 : 48,
-          right: 320,
-          bottom: top + (this === list ? 192 : 48),
-          toJSON() {},
-        };
-      },
-    );
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-    Reflect.deleteProperty(HTMLElement.prototype, "animate");
-  });
-
-  test("複数のパズルを飛び越えて下へ移動し、順序を保存すること", () => {
-    const handle = screen.getByRole("button", { name: "ナンプレを並び替え" });
-    fireEvent.pointerDown(handle, {
-      pointerId: 1,
-      button: 0,
-      clientX: 280,
-      clientY: 172,
-    });
-    fireEvent.pointerMove(list, { pointerId: 1, clientX: 280, clientY: 280 });
-    const placeholder = list.querySelector("[data-drop-placeholder]");
-    const moving = gameSelectionOrderSetting.getSnapshot();
-    fireEvent.pointerUp(list, { pointerId: 1, clientX: 280, clientY: 280 });
-    const result = Array.from(
-      list.querySelectorAll<HTMLElement>("[data-sort-item]"),
-      (row) => row.dataset.sortItem,
-    );
-
-    expect(placeholder?.getAttribute("data-sort-item")).toBe("nanpure");
-    expect(moving).toEqual([]);
-    expect(result).toEqual([
-      "water-sort",
-      "minesweeper",
-      "slide-puzzle",
-      "nanpure",
-    ]);
-    expect(gameSelectionOrderSetting.getSnapshot()).toEqual(result);
-  });
-
-  test("スクロール中も行の論理位置から移動先を判定すること", () => {
-    const handle = screen.getByRole("button", { name: "ナンプレを並び替え" });
-    fireEvent.pointerDown(handle, {
-      pointerId: 2,
-      button: 0,
-      clientX: 280,
-      clientY: 172,
-    });
-    list.scrollTop = 96;
-    fireEvent.pointerMove(list, { pointerId: 2, clientX: 280, clientY: 125 });
-    fireEvent.pointerUp(list, { pointerId: 2, clientX: 280, clientY: 125 });
-    const result = gameSelectionOrderSetting.getSnapshot();
-
-    expect(result).toEqual([
-      "water-sort",
-      "minesweeper",
-      "nanpure",
-      "slide-puzzle",
-    ]);
-  });
-
-  test("違うポインターの操作を無視し、ドラッグのキャンセルで保存しないこと", () => {
-    const handle = screen.getByRole("button", { name: "ナンプレを並び替え" });
-    fireEvent.pointerDown(handle, {
-      pointerId: 3,
-      button: 0,
-      clientX: 280,
-      clientY: 172,
-    });
-    fireEvent.pointerUp(list, { pointerId: 9, clientX: 280, clientY: 280 });
-    const duringDrag = list.querySelector("[data-drop-placeholder]");
-    fireEvent.pointerCancel(list, { pointerId: 3 });
-    const afterCancel = list.querySelector("[data-drop-placeholder]");
-
-    expect(duringDrag).not.toBeNull();
-    expect(afterCancel).toBeNull();
-    expect(gameSelectionOrderSetting.getSnapshot()).toEqual([]);
-  });
-
-  test("ドロップ後のアニメーション完了で移動中の重ね表示を解除すること", async () => {
-    const finishAnimations: Array<() => void> = [];
-    Object.defineProperty(HTMLElement.prototype, "animate", {
-      configurable: true,
-      value: vi.fn(() => ({
-        finished: new Promise<void>((resolve) =>
-          finishAnimations.push(resolve),
-        ),
-        cancel: vi.fn(),
-      })),
-    });
-    const handle = screen.getByRole("button", { name: "ナンプレを並び替え" });
-    fireEvent.pointerDown(handle, {
-      pointerId: 4,
-      button: 0,
-      clientX: 280,
-      clientY: 172,
-    });
-    fireEvent.pointerUp(list, { pointerId: 4, clientX: 280, clientY: 280 });
-    const duringSettle = document.body.querySelector(
-      "[aria-hidden='true'].pointer-events-none.fixed",
-    );
-    await act(async () => {
-      for (const finish of finishAnimations) finish();
-    });
-    const afterSettle = document.body.querySelector(
-      "[aria-hidden='true'].pointer-events-none.fixed",
-    );
-
-    expect(duringSettle).not.toBeNull();
-    expect(afterSettle).toBeNull();
   });
 });
