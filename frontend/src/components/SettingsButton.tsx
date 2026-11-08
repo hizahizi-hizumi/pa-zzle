@@ -3,14 +3,19 @@ import { useState } from "react";
 
 import { SettingsDialog } from "@/components/SettingsDialog";
 
+type SettingsButtonProps = {
+  initialGameId?: string;
+};
+
 /** 設定のダイアログを開く小さなアイコンのボタン。開く操作には音を鳴らさない。 */
-export function SettingsButton() {
+export function SettingsButton({ initialGameId }: SettingsButtonProps) {
   const [open, setOpen] = useState(false);
 
   return (
     <SettingsDialog
       open={open}
       onOpenChange={setOpen}
+      initialGameId={initialGameId}
       trigger={
         <button
           type="button"

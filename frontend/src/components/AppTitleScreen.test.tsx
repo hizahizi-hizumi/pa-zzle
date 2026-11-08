@@ -134,7 +134,15 @@ describe("AppTitleScreen", () => {
         const settings = screen.getByRole("dialog", { name: "設定" });
 
         expect(onEnter).not.toHaveBeenCalled();
-        expect(within(settings).getAllByRole("group")).toHaveLength(2);
+        expect(
+          within(settings).getByRole("group", { name: "効果音" }),
+        ).toBeTruthy();
+        expect(
+          within(settings).getByRole("group", { name: "BGM" }),
+        ).toBeTruthy();
+        expect(
+          within(settings).getByRole("group", { name: "出題対象" }),
+        ).toBeTruthy();
       });
 
       test("設定のダイアログの中の操作では入らず、設定を変えること", () => {

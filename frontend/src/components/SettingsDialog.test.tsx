@@ -7,8 +7,13 @@ import {
 } from "@testing-library/react";
 
 import { _private as appDecisionSound } from "@/components/app-decision-sound";
+import { RandomProblemGameOptionsProvider } from "@/components/RandomProblemGameOptionsContext";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { backgroundMusicVolumeSetting } from "@/lib/background-music-setting";
+import {
+  randomProblemSettings,
+  _private as randomSettingsPrivate,
+} from "@/lib/random-problem-settings";
 import { playSound } from "@/lib/sound-effects";
 import { soundEffectsVolumeSetting } from "@/lib/sound-effects-setting";
 import { DEFAULT_VOLUME } from "@/lib/stored-volume-setting";
@@ -46,6 +51,7 @@ afterEach(() => {
   soundEffectsVolumeSetting.commitVolume(DEFAULT_VOLUME);
   backgroundMusicVolumeSetting.commitVolume(DEFAULT_VOLUME);
   window.localStorage.clear();
+  randomSettingsPrivate.reset();
 });
 
 describe("SettingsDialog", () => {
@@ -160,5 +166,62 @@ describe("SettingsDialog", () => {
 
       expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(true);
     });
+  });
+});
+
+describe("ランダム出題の設定", () => {
+  test("パズルを指定せず開くと適用先が全パズルになること", () => {
+    render(<SettingsDialog open onOpenChange={vi.fn()} />);
+    const scope = screen.getByLabelText("適用先") as HTMLSelectElement;
+
+    expect(scope.value).toBe("global");
+    expect(screen.getByText("全パズル")).toBeTruthy();
+    expect(screen.getByText("クリア済み")).toBeTruthy();
+  });
+
+  test("共通の6状態を切り替えて保存し、ゲーム個別の上書きを作成・解除できること", () => {
+    render(
+      <RandomProblemGameOptionsProvider
+        games={[{ id: "nanpure", name: "ナンプレ" }]}
+      >
+        <SettingsDialog open onOpenChange={vi.fn()} />
+      </RandomProblemGameOptionsProvider>,
+    );
+    const dialog = within(screen.getByRole("dialog", { name: "設定" }));
+    expect(dialog.getByRole("heading", { name: "サウンド" })).toBeTruthy();
+    expect(dialog.getByRole("heading", { name: "ランダム出題" })).toBeTruthy();
+    expect(
+      dialog.queryByRole("button", { name: "ランダム出題の設定" }),
+    ).toBeNull();
+    expect(dialog.getAllByRole("checkbox")).toHaveLength(6);
+    fireEvent.click(dialog.getByRole("checkbox", { name: /perfect/ }));
+    expect(randomProblemSettings.getSnapshot().global).not.toContain("perfect");
+
+    fireEvent.change(dialog.getByLabelText("適用先"), {
+      target: { value: "nanpure" },
+    });
+    expect(dialog.getAllByRole("checkbox")).toHaveLength(6);
+    expect(dialog.queryByText(/全パズルの設定を使用中/)).toBeNull();
+    expect(dialog.queryByRole("button", { name: "共通に戻す" })).toBeNull();
+    expect(dialog.getByRole("option", { name: "ナンプレ" })).toBeTruthy();
+    expect(
+      randomProblemSettings.getSnapshot().overrides.nanpure,
+    ).toBeUndefined();
+    fireEvent.click(dialog.getByRole("checkbox", { name: /perfect/ }));
+    expect(randomProblemSettings.getEffective("nanpure")).toContain("perfect");
+    expect(randomProblemSettings.getSnapshot().overrides.nanpure).toContain(
+      "perfect",
+    );
+    expect(randomProblemSettings.getSnapshot().global).not.toContain("perfect");
+    expect(dialog.getByRole("option", { name: "ナンプレ" })).toBeTruthy();
+    expect(dialog.getByRole("button", { name: "共通に戻す" })).toBeTruthy();
+    fireEvent.click(dialog.getByRole("button", { name: "共通に戻す" }));
+    expect(randomProblemSettings.getEffective("nanpure")).not.toContain(
+      "perfect",
+    );
+    expect(
+      randomProblemSettings.getSnapshot().overrides.nanpure,
+    ).toBeUndefined();
+    expect(dialog.getAllByRole("checkbox")).toHaveLength(6);
   });
 });

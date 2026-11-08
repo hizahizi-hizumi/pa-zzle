@@ -212,9 +212,9 @@ describe("設定", () => {
     fireEvent.click(screen.getByRole("button", { name: "設定" }));
 
     const dialog = screen.getByRole("dialog", { name: "設定" });
-    const volumeNames = within(dialog)
-      .getAllByRole("group")
-      .map((group) => group.textContent);
+    const volumeNames = ["効果音", "BGM"].map(
+      (name) => within(dialog).getByRole("group", { name }).textContent,
+    );
     expect(volumeNames).toEqual(["効果音5", "BGM5"]);
     expect(playSound).not.toHaveBeenCalled();
   });

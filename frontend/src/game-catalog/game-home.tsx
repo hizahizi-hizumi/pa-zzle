@@ -11,8 +11,17 @@ import {
   toZukanGameSource,
 } from "@/game-catalog/game-catalog-entry";
 import { openRecordProblemPlay } from "@/game-catalog/game-navigation";
-import { useRequestedProblemId } from "@/game-catalog/problem-id-query";
+import {
+  createProblemIdSearch,
+  useRequestedProblemId,
+} from "@/game-catalog/problem-id-query";
+import {
+  selectAnyRandomProblemId,
+  selectRandomProblemId,
+} from "@/game-catalog/random-problem-selection";
 import type { DifficultyLevel } from "@/games/difficulty";
+import type { ProblemId } from "@/games/problem-id";
+import { randomProblemUnavailable } from "@/lib/random-problem-unavailable";
 import {
   readPlayAttemptsSnapshot,
   subscribePlayAttempts,
@@ -101,6 +110,7 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
 
   return {
     screenProps: {
+      gameId: game.id,
       gameTitle: game.name,
       pictogramSvg: game.pictogramSvg,
       zukan,
@@ -108,7 +118,26 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
       onLevelChangesShown: handleLevelChangesShown,
       initialSelectedProblemId: requestedProblemId,
       onPlayRandom(difficulty) {
-        navigate(game.playPath, { params: { difficulty } });
+        function openProblem(problemId: ProblemId) {
+          navigate(
+            {
+              pathname: game.playPath,
+              search: createProblemIdSearch(problemId),
+            },
+            { params: { difficulty } },
+          );
+        }
+        const problemId = selectRandomProblemId(game, difficulty);
+        if (problemId === null) {
+          const anyProblemId = selectAnyRandomProblemId(game, difficulty);
+          randomProblemUnavailable.show(
+            game.id,
+            game.name,
+            anyProblemId === null ? undefined : () => openProblem(anyProblemId),
+          );
+          return;
+        }
+        openProblem(problemId);
       },
       onPlayProblem({ difficulty, problemId }) {
         openRecordProblemPlay(navigate, {
