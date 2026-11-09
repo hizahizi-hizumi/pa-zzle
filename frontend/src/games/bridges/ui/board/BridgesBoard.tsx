@@ -20,12 +20,17 @@ import {
   countBridgesIslandBridges,
 } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
+import { BridgesBoardCues } from "@/games/bridges/ui/board/BridgesBoard/BridgesBoardCues";
 import { flashBoardLines } from "@/games/bridges/ui/board/BridgesBoard/flash-board-lines";
 import { playClearWave } from "@/games/bridges/ui/board/BridgesBoard/play-clear-wave";
 import {
   BridgesFigure,
   type BridgesFigureGuide,
 } from "@/games/bridges/ui/board/BridgesFigure";
+import type {
+  BridgesBoardCue,
+  BridgesBoardSpotlight,
+} from "@/games/bridges/ui/board/board-cue";
 import {
   type BoardPoint,
   findBoardTarget,
@@ -43,6 +48,10 @@ type BridgesBoardProps = {
   /** クリアしてから演出を終えるまで `true`。 */
   clearing: boolean;
   interactionDisabled: boolean;
+  /** 辺に一時的に重ねる合図。通常のプレイでは渡さない。 */
+  cues?: readonly BridgesBoardCue[];
+  /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せる島と辺。通常のプレイでは渡さない。 */
+  spotlight?: BridgesBoardSpotlight | null;
   /** 辺の橋を 1本 → 2本 → なし と回す。 */
   onCycleEdge: (edge: number) => void;
   onClearAnimationComplete: () => void;
@@ -92,6 +101,8 @@ export function BridgesBoard({
   edgeNotice,
   clearing,
   interactionDisabled,
+  cues = [],
+  spotlight = null,
   onCycleEdge,
   onClearAnimationComplete,
 }: BridgesBoardProps) {
@@ -261,6 +272,9 @@ export function BridgesBoard({
         blockingEdges={blockingEdges}
         ambiguousEdges={ambiguousEdges}
       />
+      {(cues.length > 0 || spotlight !== null) && (
+        <BridgesBoardCues board={board} cues={cues} spotlight={spotlight} />
+      )}
       <ul className="sr-only">
         {board.islands.map(({ row, column, clue }, island) => (
           <li key={`${row}:${column}`}>
