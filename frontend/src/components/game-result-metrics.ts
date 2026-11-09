@@ -56,6 +56,11 @@ export function createElapsedTimeMetric({
     label: "時間",
     value: formatElapsedTime(elapsedMs),
     detail: `基準 ${formatElapsedTimeDelta(timeDeltaMs)}`,
+    comparison: {
+      basis: "referenceTime",
+      difference: timeDeltaMs,
+      display: formatElapsedTimeDelta(timeDeltaMs),
+    },
   };
 }
 
@@ -70,6 +75,11 @@ export function createMoveCountMetric({
   return {
     ...createCountMetric("手数", moveCount, "手"),
     detail: `最短 ${formatCountDelta(moveDelta)}`,
+    comparison: {
+      basis: "minimumMoves",
+      difference: moveDelta,
+      display: formatCountDelta(moveDelta),
+    },
   };
 }
 

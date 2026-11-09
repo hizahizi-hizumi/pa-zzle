@@ -49,6 +49,7 @@ export function NanpurePlay({
   elapsedMs,
   result,
   recordOutcomeNotice,
+  issue690BoardSnapshot,
   clues,
   board,
   notes,
@@ -111,6 +112,7 @@ export function NanpurePlay({
           difficulty={difficulty}
           result={clearedResult}
           recordOutcomeNotice={recordOutcomeNotice}
+          issue690BoardSnapshot={issue690BoardSnapshot}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}

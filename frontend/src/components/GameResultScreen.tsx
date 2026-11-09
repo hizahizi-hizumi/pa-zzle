@@ -1,6 +1,5 @@
 import { Wrench } from "lucide-react";
-import { type ReactNode, useEffect, useRef } from "react";
-
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { BrowserBottomSurface } from "@/components/BrowserBottomSurface";
 import { GameResultConfetti } from "@/components/GameResultConfetti";
@@ -16,7 +15,15 @@ import {
   type GameResultMetric,
   ResultMetric,
 } from "@/components/GameResultScreen/ResultMetric";
+import {
+  getIssue690QuerySelection,
+  Issue690CompareToolbar,
+  Issue690LiveResult,
+  type Issue690LiveSelection,
+  isIssue690LivePreview,
+} from "@/components/Issue690LiveCompare";
 import { Button } from "@/components/ui/button";
+import type { Issue690BoardSnapshot } from "@/games/issue690-board-snapshot";
 import { getGameResultLevel } from "@/games/result";
 
 export type { GameResultScoreCriteria };
@@ -41,6 +48,8 @@ type GameResultScreenProps = {
   /** 評価を理解するためのゲーム固有の主要成績。1行に並べる。 */
   metrics: GameResultMetrics;
   recordOutcomeNotice: ReactNode;
+  issue690RecordSummary?: ReactNode;
+  issue690BoardSnapshot?: Issue690BoardSnapshot;
   onStartNewProblem: () => void;
   /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
   onReplay?: () => void;
@@ -57,6 +66,8 @@ export function GameResultScreen({
   score,
   metrics,
   recordOutcomeNotice,
+  issue690RecordSummary,
+  issue690BoardSnapshot,
   scoreBreakdown,
   scoreCriteria,
   onStartNewProblem,
@@ -66,6 +77,15 @@ export function GameResultScreen({
 }: GameResultScreenProps) {
   const resultLevel = getGameResultLevel(score);
   const screenRef = useRef<HTMLElement>(null);
+  const previewEnabled =
+    isIssue690LivePreview() &&
+    (gameName === "ウォーターソート" || gameName === "ナンプレ");
+  const [selection, setSelection] = useState<Issue690LiveSelection>(() =>
+    getIssue690QuerySelection(),
+  );
+  const [replayIndex, setReplayIndex] = useState(0);
+  const activeIdea =
+    previewEnabled && selection !== "original" ? selection : null;
 
   // クリアした操作の対象は盤面ごと消え、フォーカスも失われる。
   // 結果画面へフォーカスを移し、次の Tab で次の行動へ進めるようにする。
@@ -81,57 +101,89 @@ export function GameResultScreen({
       className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background outline-none"
     >
       <BrandIdentityHeader linkToHome pinned />
-      <GameResultConfetti level={resultLevel} />
-      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col py-3 pb-[max(calc(var(--spacing)*4),env(safe-area-inset-bottom))] pl-[max(--spacing(4),env(safe-area-inset-left))] pr-[max(--spacing(4),env(safe-area-inset-right))]">
-        <GameResultIdentity
+      {!activeIdea && <GameResultConfetti level={resultLevel} />}
+      {previewEnabled && (
+        <Issue690CompareToolbar
+          selection={selection}
+          onChange={setSelection}
           gameName={gameName}
-          difficultyLabel={difficultyLabel}
-          pictogramSvg={pictogramSvg}
-          level={resultLevel}
+          onReplay={() => setReplayIndex((current) => current + 1)}
         />
-
-        <GameResultScoreCard score={score} level={resultLevel} />
-
-        {recordOutcomeNotice}
-
-        <dl
-          className={`mt-3 grid ${metricColumnsClassNames[metrics.length]} gap-2`}
-        >
-          {metrics.map((metric) => (
-            <ResultMetric
-              key={metric.label}
-              label={metric.label}
-              value={metric.value}
-              detail={metric.detail}
-            />
-          ))}
-        </dl>
-
-        <GameResultActions
-          onStartNewProblem={onStartNewProblem}
-          onOpenGameHome={onOpenGameHome}
-          onReplay={onReplay}
+      )}
+      {activeIdea && (
+        <Issue690LiveResult
+          key={`${activeIdea}-${replayIndex}`}
+          idea={activeIdea}
+          data={{
+            gameName,
+            difficultyLabel,
+            pictogramSvg,
+            score,
+            metrics,
+            recordOutcomeNotice,
+            issue690RecordSummary,
+            issue690BoardSnapshot,
+            scoreBreakdown,
+            scoreCriteria,
+            onStartNewProblem,
+            onReplay,
+            onOpenGameHome,
+            onOpenDiagnostics,
+          }}
         />
+      )}
+      {!activeIdea && (
+        <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col py-3 pb-[max(calc(var(--spacing)*4),env(safe-area-inset-bottom))] pl-[max(--spacing(4),env(safe-area-inset-left))] pr-[max(--spacing(4),env(safe-area-inset-right))]">
+          <GameResultIdentity
+            gameName={gameName}
+            difficultyLabel={difficultyLabel}
+            pictogramSvg={pictogramSvg}
+            level={resultLevel}
+          />
 
-        <GameResultDetails
-          breakdown={scoreBreakdown}
-          criteria={scoreCriteria}
-        />
+          <GameResultScoreCard score={score} level={resultLevel} />
 
-        {onOpenDiagnostics && (
-          <div className="mt-1 flex justify-center">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onOpenDiagnostics}
-            >
-              <Wrench />
-              検証情報
-            </Button>
-          </div>
-        )}
-      </div>
+          {recordOutcomeNotice}
+
+          <dl
+            className={`mt-3 grid ${metricColumnsClassNames[metrics.length]} gap-2`}
+          >
+            {metrics.map((metric) => (
+              <ResultMetric
+                key={metric.label}
+                label={metric.label}
+                value={metric.value}
+                detail={metric.detail}
+              />
+            ))}
+          </dl>
+
+          <GameResultActions
+            onStartNewProblem={onStartNewProblem}
+            onOpenGameHome={onOpenGameHome}
+            onReplay={onReplay}
+          />
+
+          <GameResultDetails
+            breakdown={scoreBreakdown}
+            criteria={scoreCriteria}
+          />
+
+          {onOpenDiagnostics && (
+            <div className="mt-1 flex justify-center">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onOpenDiagnostics}
+              >
+                <Wrench />
+                検証情報
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
       <BrowserBottomSurface />
     </section>
   );

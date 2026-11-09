@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useState } from "react";
+import type { Issue690BoardSnapshot } from "@/games/issue690-board-snapshot";
 
 import {
   type GameSession,
@@ -141,6 +142,9 @@ export type GamePlayResultScreenProps<Difficulty, Result> = {
   result: Result;
   /** 記録を保存した直後の自己ベスト更新などの告知。 */
   recordOutcomeNotice: ReactNode;
+  /** 表示案の比較で使う、実際の保存結果と指標の表示定義。 */
+  issue690RecordSummary?: ReactNode;
+  issue690BoardSnapshot?: Issue690BoardSnapshot;
   /** 同じ問題を遊び直す。省略すると押せない状態で出す。 */
   onReplay?: () => void;
   onStartNewProblem: () => void;

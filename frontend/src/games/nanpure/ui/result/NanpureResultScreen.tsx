@@ -24,6 +24,8 @@ export function NanpureResultScreen({
   difficulty,
   result,
   recordOutcomeNotice,
+  issue690RecordSummary,
+  issue690BoardSnapshot,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -41,6 +43,8 @@ export function NanpureResultScreen({
         createOperationCountMetric("undo", result.undoCount),
       ]}
       recordOutcomeNotice={recordOutcomeNotice}
+      issue690RecordSummary={issue690RecordSummary}
+      issue690BoardSnapshot={issue690BoardSnapshot}
       scoreBreakdown={[
         ...listScoreBreakdownMetrics(result.score, NANPURE_SCORE_MAXIMUMS),
         createSpeedFullScoreMetric(result.speedRule),

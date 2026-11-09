@@ -41,6 +41,7 @@ export function WaterSortPlay({
   elapsedMs,
   result,
   recordOutcomeNotice,
+  issue690BoardSnapshot,
   state,
   moveCount,
   undoCount,
@@ -89,6 +90,7 @@ export function WaterSortPlay({
           difficulty={difficulty}
           result={clearedResult}
           recordOutcomeNotice={recordOutcomeNotice}
+          issue690BoardSnapshot={issue690BoardSnapshot}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}

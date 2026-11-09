@@ -11,6 +11,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export type GameResultScoreCriterion = {
   label: string;
@@ -25,13 +31,65 @@ const SCORE_ROUNDING_NOTE = "各項目は1点単位に四捨五入し、0点を�
 type GameResultDetailsProps = {
   breakdown: readonly GameResultDetailMetric[];
   criteria: GameResultScoreCriteria;
+  variant?: "standard" | "quiet";
 };
 
 export function GameResultDetails({
   breakdown,
   criteria,
+  variant = "standard",
 }: GameResultDetailsProps) {
   const [open, setOpen] = useState(false);
+
+  const details = (
+    <>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+        {breakdown.map((metric) => (
+          <DetailMetric
+            key={metric.label}
+            label={metric.label}
+            value={metric.value}
+          />
+        ))}
+      </dl>
+      <div className="mt-3 border-t-(length:--border-width-normal) pt-3">
+        <dl className="mt-3 grid gap-3 text-meta">
+          {criteria.map((criterion) => (
+            <div key={criterion.label}>
+              <dt className="font-semibold text-foreground">
+                {criterion.label}
+              </dt>
+              <dd className="mt-1">{criterion.description}</dd>
+            </div>
+          ))}
+          <div>
+            <dt className="sr-only">丸め</dt>
+            <dd>{SCORE_ROUNDING_NOTE}</dd>
+          </div>
+        </dl>
+      </div>
+    </>
+  );
+
+  if (variant === "quiet") {
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 px-2 text-xs text-muted-foreground"
+          >
+            採点内訳
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-h-[min(78svh,680px)] overflow-y-auto">
+          <DialogTitle>スコアの内訳・採点基準</DialogTitle>
+          <div className="text-supporting text-muted-foreground">{details}</div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -45,31 +103,7 @@ export function GameResultDetails({
       </div>
       <CollapsibleContent>
         <div className="mt-2 rounded-lg border-(length:--border-width-normal) px-3 py-3 text-supporting text-muted-foreground">
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
-            {breakdown.map((metric) => (
-              <DetailMetric
-                key={metric.label}
-                label={metric.label}
-                value={metric.value}
-              />
-            ))}
-          </dl>
-          <div className="mt-3 border-t-(length:--border-width-normal) pt-3">
-            <dl className="mt-3 grid gap-3 text-meta">
-              {criteria.map((criterion) => (
-                <div key={criterion.label}>
-                  <dt className="font-semibold text-foreground">
-                    {criterion.label}
-                  </dt>
-                  <dd className="mt-1">{criterion.description}</dd>
-                </div>
-              ))}
-              <div>
-                <dt className="sr-only">丸め</dt>
-                <dd>{SCORE_ROUNDING_NOTE}</dd>
-              </div>
-            </dl>
-          </div>
+          {details}
         </div>
       </CollapsibleContent>
     </Collapsible>

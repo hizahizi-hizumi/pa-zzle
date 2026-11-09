@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-
 import type {
   ProblemFeature,
   ProblemFeatureAxisDisplay,
 } from "@/components/problem-features";
 import type { DifficultyLevel } from "@/games/difficulty";
+import type { Issue690BoardSnapshot } from "@/games/issue690-board-snapshot";
 import type {
   ProblemFeatureAxis,
   ProblemFeatureValue,
@@ -64,6 +64,8 @@ export type GameNavigation = {
 export type RecordResultContext = {
   /** 記録を保存した直後の自己ベスト更新などの告知。 */
   recordOutcomeNotice: ReactNode;
+  issue690RecordSummary?: ReactNode;
+  issue690BoardSnapshot?: Issue690BoardSnapshot;
   /** 記録の問題を遊び直す。遊び直せない記録では `undefined`。 */
   onReplay: (() => void) | undefined;
   navigation: GameNavigation;

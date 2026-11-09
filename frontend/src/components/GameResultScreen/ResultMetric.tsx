@@ -3,6 +3,11 @@ export type GameResultMetric = {
   value: string;
   /** 値を読むための補足。基準との差など。 */
   detail?: string;
+  comparison?: {
+    basis: "referenceTime" | "minimumMoves";
+    difference: number;
+    display: string;
+  };
 };
 
 type ResultMetricProps = GameResultMetric;

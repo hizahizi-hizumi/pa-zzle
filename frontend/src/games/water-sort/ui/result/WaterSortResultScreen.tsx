@@ -25,6 +25,8 @@ export function WaterSortResultScreen({
   difficulty,
   result,
   recordOutcomeNotice,
+  issue690RecordSummary,
+  issue690BoardSnapshot,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -44,6 +46,8 @@ export function WaterSortResultScreen({
         createElapsedTimeMetric(result),
       ]}
       recordOutcomeNotice={recordOutcomeNotice}
+      issue690RecordSummary={issue690RecordSummary}
+      issue690BoardSnapshot={issue690BoardSnapshot}
       scoreBreakdown={[
         ...listScoreBreakdownMetrics(result.score, WATER_SORT_SCORE_MAXIMUMS),
         createSpeedFullScoreMetric(result.speedRule),

@@ -1,5 +1,6 @@
 import {
   createRecordResultLocationState,
+  readIssue690BoardSnapshot,
   readRecordSaveOutcome,
 } from "@/game-catalog/record-result-location-state";
 
@@ -29,5 +30,33 @@ describe("readRecordSaveOutcome", () => {
     const outcome = readRecordSaveOutcome(state);
 
     expect(outcome).toBeUndefined();
+  });
+});
+
+describe("readIssue690BoardSnapshot", () => {
+  const snapshot = {
+    gameId: "water-sort" as const,
+    bottles: [[0, 0, 0, 0], []],
+    palette: ["#78aabf"],
+    lastMove: { sourceBottleIndex: 1, destinationBottleIndex: 0 },
+    reconstructed: false,
+  };
+
+  test("クリア直後の実際の完成配置と最後の操作を保持する", () => {
+    const state = createRecordResultLocationState(
+      { status: "recorded" },
+      snapshot,
+    );
+    expect(readIssue690BoardSnapshot(state)).toEqual(snapshot);
+  });
+
+  test("ありえない最終操作の指定は採用しない", () => {
+    const invalid = {
+      ...snapshot,
+      lastMove: { sourceBottleIndex: 4, destinationBottleIndex: 0 },
+    };
+    expect(
+      readIssue690BoardSnapshot({ issue690BoardSnapshot: invalid }),
+    ).toBeUndefined();
   });
 });

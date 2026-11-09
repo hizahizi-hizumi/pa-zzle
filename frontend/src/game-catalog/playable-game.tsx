@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-
 import { usePlayScreenMusicState } from "@/components/app-background-music";
+import { isIssue690LivePreview } from "@/components/Issue690LiveCompare";
 import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
 import { useGameNavigation } from "@/game-catalog/game-navigation";
 import {
@@ -10,6 +10,7 @@ import {
 import { useProblemIdQuerySync } from "@/game-catalog/problem-id-query";
 import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
 import { useResultRewardSound } from "@/game-catalog/result-reward-sound";
+import type { Issue690BoardSnapshot } from "@/games/issue690-board-snapshot";
 import type { GamePlay, GamePlayScreenProps } from "@/games/play";
 import { createProblemId, type ProblemIdentity } from "@/games/problem-id";
 import type { PlayScore, ScoreItem } from "@/games/score";
@@ -18,6 +19,7 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import type { PlayAttemptProgress } from "@/records/play-attempt";
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
+import { Issue690RecordSummary } from "@/records/ui/Issue690RecordSummary";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 
 /** 結果画面と報酬の音が評価段階を決めるのに使う、プレイの評価点。 */
@@ -53,6 +55,7 @@ type PlayableGameSource<
     abandonedAt: number,
   ) => PlayAttemptProgress;
   createDiagnosticSnapshot: (buildRevision: string | null) => Snapshot | null;
+  issue690BoardSnapshot?: Issue690BoardSnapshot;
 };
 
 export type PlayableGame<Difficulty, Result, Snapshot> = {
@@ -78,6 +81,7 @@ export function usePlayableGame<
   createPlayRecord,
   createPlayAttemptProgress,
   createDiagnosticSnapshot,
+  issue690BoardSnapshot,
 }: PlayableGameSource<
   Difficulty,
   Identity,
@@ -112,6 +116,7 @@ export function usePlayableGame<
     play.progress === "result",
     playRecord,
     recordOutcome,
+    isIssue690LivePreview() ? issue690BoardSnapshot : undefined,
   );
   useResultRewardSound(play.progress, result?.score.total ?? null);
   usePlayScreenMusicState(
@@ -136,6 +141,13 @@ export function usePlayableGame<
       progress: play.progress,
       elapsedMs: play.elapsedMs,
       result: navigatesToRecordResult ? null : result,
+      issue690BoardSnapshot,
+      issue690RecordSummary: (
+        <Issue690RecordSummary
+          outcome={recordOutcome}
+          display={game.playRecordDisplay}
+        />
+      ),
       recordOutcomeNotice: (
         <PlayRecordOutcomeNotice
           outcome={recordOutcome}

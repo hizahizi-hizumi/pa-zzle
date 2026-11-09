@@ -1,4 +1,5 @@
-import { Grid2x2, Home, Play, RotateCcw } from "lucide-react";
+import { ArrowRight, Grid2x2, Home, Play, RotateCcw } from "lucide-react";
+import "@/components/GameResultScreen/GameResultActions.css";
 
 import { withPlayStartSound } from "@/components/app-decision-sound";
 import { Button } from "@/components/ui/button";
@@ -9,18 +10,46 @@ type GameResultActionsProps = {
   onOpenGameHome: () => void;
   /** 省略すると「もう一度」を押せない状態で出す。 */
   onReplay?: () => void;
+  variant?: "standard" | "quiet";
 };
 
-/**
- * 結果を受け取ったあとの次の行動。次の問題を主とし、ゲームのホームへ移る・同じ問題をもう一度遊ぶを従として縦に並べる。
- * 最後に、ほかのパズルを選びに戻るパズル選択（アプリのホーム）を、従よりさらに弱く置く。
- * アイコンはプレイ中のメニューの同じ行き先（ゲームのホーム・ホーム）とそろえる。
- */
+/** 結果から進む主操作と、遊び方を変える副操作。 */
 export function GameResultActions({
   onStartNewProblem,
   onOpenGameHome,
   onReplay,
+  variant = "standard",
 }: GameResultActionsProps) {
+  if (variant === "quiet") {
+    return (
+      <nav className="result-actions--quiet" aria-label="結果からの操作">
+        <Button
+          size="lg"
+          variant="ghost"
+          onClick={withPlayStartSound(onStartNewProblem)}
+        >
+          次の問題
+          <ArrowRight className="size-5" />
+        </Button>
+        <div className="result-actions--quiet-secondary">
+          <Button variant="ghost" onClick={onOpenGameHome}>
+            問題選択
+          </Button>
+          <Button
+            variant="ghost"
+            disabled={!onReplay}
+            onClick={onReplay && withPlayStartSound(onReplay)}
+          >
+            もう一度
+          </Button>
+          <Button asChild variant="ghost">
+            <Link to="/">パズル選択</Link>
+          </Button>
+        </div>
+      </nav>
+    );
+  }
+
   return (
     <div className="mt-4 grid gap-2">
       <Button size="lg" onClick={withPlayStartSound(onStartNewProblem)}>

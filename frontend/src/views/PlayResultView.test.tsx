@@ -23,6 +23,7 @@ vi.mock("@/lib/internal-diagnostics", () => ({
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  window.history.replaceState({}, "", "/");
 });
 
 const performance = {
@@ -184,4 +185,26 @@ describe.each(unrenderableCases)("%sの場合", (_, path) => {
     expect(heading).toBeTruthy();
     expect(backLink.getAttribute("href")).toBe("/records");
   });
+});
+
+describe("#690の比較用結果URLの場合", () => {
+  beforeEach(() => {
+    window.history.replaceState({}, "", "/?issue690Preview");
+  });
+
+  test.each(["nanpure", "water-sort"])(
+    "%sで端末に記録がなくても結果と比較操作を表示できること",
+    (gameId) => {
+      renderAt(`/puzzles/${gameId}/result/issue690-comparison-sample`);
+
+      const result = screen.getByRole("region", { name: "プレイ結果" });
+      const toolbar = screen.getByRole("complementary", {
+        name: "結果演出の比較操作",
+      });
+
+      expect(result).toBeTruthy();
+      expect(toolbar).toBeTruthy();
+      expect(screen.queryByText("記録が見つかりません")).toBeNull();
+    },
+  );
 });
