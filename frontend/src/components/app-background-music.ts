@@ -3,6 +3,7 @@
  *
  * - ホーム・ゲームのホーム・記録と、それ以外の案内の画面（ページが見つからないなど）: ホームの曲
  * - プレイ画面: 盤面を解いている間はプレイ中の曲。クリアして完成演出が始まったらフェードアウトし、クリア音と報酬の音を前に出す
+ * - チュートリアル: 開いた画面によらず、盤面を解く場面としてプレイ中の曲。解き終えて完成演出が始まったらフェードアウトし、クリア音を前に出す
  * - 結果画面: 結果の曲
  * - アプリを開いたときのタイトル: 流さない。入ったら、入った先の画面の曲を流し始める
  *
@@ -97,6 +98,14 @@ const enterPlayTransition: BackgroundMusicTransition = {
 
 const crossfadeTransition: BackgroundMusicTransition = { kind: "crossfade" };
 
+/**
+ * チュートリアルが知らせる、BGM の場面を決めるための状態。チュートリアルは開いた画面の上に重ねる、盤面を解く場面として扱う。
+ * - `closed`: 開いていない。
+ * - `solving`: 開いて、導入を見せているか、盤面を解いている。
+ * - `solved`: 盤面を解き終えて、完成演出か完成した盤面を見せている。
+ */
+export type TutorialMusicState = "closed" | "solving" | "solved";
+
 const PLAY_PATH_PATTERN = "/puzzles/:game/play/:difficulty";
 const RESULT_PATH_PATTERN = "/puzzles/:game/result/:recordId";
 
@@ -109,15 +118,23 @@ const initialPlayScreenMusicState: PlayScreenMusicState = {
 let playScreenMusicState = initialPlayScreenMusicState;
 const playScreenMusicStateListeners = new Set<() => void>();
 
+let tutorialMusicState: TutorialMusicState = "closed";
+const tutorialMusicStateListeners = new Set<() => void>();
+
 /**
  * 画面で流す BGM の場面を決める。
+ * チュートリアルを開いている間は、開いた画面によらず、盤面を解いている間だけプレイ中の場面にし、解き終えてからは流さない。
  * プレイ画面のパスでは、盤面を解いている間だけプレイ中の場面にし、クリアしてからは流さない。
  * 記録を保存できずその場で結果画面を出している間は結果の場面にする。
  */
 export function getAppBackgroundMusicScene(
   pathname: string,
   { progress, resultShown }: PlayScreenMusicState,
+  tutorial: TutorialMusicState,
 ): AppBackgroundMusicScene {
+  if (tutorial !== "closed") {
+    return tutorial === "solving" ? "play" : "silent";
+  }
   if (matchPath(RESULT_PATH_PATTERN, pathname)) {
     return "result";
   }
@@ -165,6 +182,10 @@ export function useAppBackgroundMusic(): void {
     subscribePlayScreenMusicState,
     getPlayScreenMusicState,
   );
+  const tutorial = useSyncExternalStore(
+    subscribeTutorialMusicState,
+    getTutorialMusicState,
+  );
   const titleShown = useSyncExternalStore(
     subscribeAppLaunchTitle,
     isAppLaunchTitleShown,
@@ -172,7 +193,7 @@ export function useAppBackgroundMusic(): void {
   // タイトルはホームの上に重ねるので、裏のホームの曲を流さない。設定のボタンなどの操作で音を出せるようになっても鳴らさない。
   const scene = titleShown
     ? "silent"
-    : getAppBackgroundMusicScene(pathname, playScreen);
+    : getAppBackgroundMusicScene(pathname, playScreen, tutorial);
   const music = selectAppBackgroundMusic(scene, appBackgroundMusicTracks);
   const track = music?.track ?? null;
   const gain = music?.gain;
@@ -207,6 +228,37 @@ export function usePlayScreenMusicState(
       setPlayScreenMusicState(initialPlayScreenMusicState);
     };
   }, [progress, resultShown]);
+}
+
+/**
+ * チュートリアルの状態を、画面で流す BGM の場面に知らせる。チュートリアルの枠を描く間、描くたびに呼ぶ。
+ * 閉じたか、枠を描かなくなったら、開いた画面の曲へ戻す。
+ */
+export function useTutorialMusicState(state: TutorialMusicState): void {
+  useEffect(() => {
+    setTutorialMusicState(state);
+    return function leaveTutorial() {
+      setTutorialMusicState("closed");
+    };
+  }, [state]);
+}
+
+function getTutorialMusicState(): TutorialMusicState {
+  return tutorialMusicState;
+}
+
+function setTutorialMusicState(state: TutorialMusicState) {
+  tutorialMusicState = state;
+  for (const listener of tutorialMusicStateListeners) {
+    listener();
+  }
+}
+
+function subscribeTutorialMusicState(onChange: () => void): () => void {
+  tutorialMusicStateListeners.add(onChange);
+  return function unsubscribe() {
+    tutorialMusicStateListeners.delete(onChange);
+  };
 }
 
 function isAppLaunchTitleShown(): boolean {
