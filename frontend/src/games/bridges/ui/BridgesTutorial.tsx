@@ -19,6 +19,7 @@ import {
   getBridgesTutorialIslandStatuses,
   getBridgesTutorialSpotlight,
   getBridgesTutorialStepEdge,
+  hasBridgesTutorialBoardViolation,
 } from "@/games/bridges/tutorial/tutorial";
 import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/BridgesStatusAnnouncement";
 import { useBridgesSoundEffects } from "@/games/bridges/ui/BridgesPlay/use-bridges-sound-effects";
@@ -151,8 +152,11 @@ export function BridgesTutorial({
   const guiding = situation.step !== null;
   const { boardState } = progress;
   const recallId = recall?.progress === progress ? recall.id : null;
+  // 阻まれた手は盤面を変えないので、盤面にルールに合わないところが無ければ、止まったときに手がかりを出す。
   const idleHintPending =
-    progress.phase === "playing" && !guiding && !progress.violated;
+    progress.phase === "playing" &&
+    !guiding &&
+    !hasBridgesTutorialBoardViolation(situation, boardState);
   const idleHintEdge =
     idleHintPending && idleProgress === progress
       ? findBridgesTutorialHintEdge(situation, boardState)
@@ -198,9 +202,18 @@ export function BridgesTutorial({
     setProgress(finishTutorialIntro);
   }
 
-  /** 印の無い所を押されたら、赤は使わず、印の線を短く濃くして目を向けさせる。 */
-  function recallHint(): void {
-    setRecall((current) => ({ id: (current?.id ?? 0) + 1, progress }));
+  /**
+   * 印の無い所を押されたら、赤は使わず、印の線を短く濃くして目を向けさせる。
+   * `pressed` は押した後の進行。阻まれた手は、本番と同じ阻まれた反応を返した後の進行で印を濃くする。
+   */
+  function recallHint(pressed: BridgesTutorialProgress = progress): void {
+    setRecall((current) => ({ id: (current?.id ?? 0) + 1, progress: pressed }));
+  }
+
+  function handleIneffectivePress(): void {
+    if (guiding && progress.phase === "playing") {
+      recallHint();
+    }
   }
 
   function handleCycleEdge(edge: number): void {
@@ -209,14 +222,15 @@ export function BridgesTutorial({
       edge,
     });
     if (next === progress) {
-      if (guiding && progress.phase === "playing") {
-        recallHint();
-      }
+      handleIneffectivePress();
       return;
     }
     noticeIdRef.current += 1;
     setEdgeNotice(createEdgeNotice(next.boardState, noticeIdRef.current));
     setProgress(next);
+    if (guiding && next.boardState.lastMove?.kind === "blocked") {
+      recallHint(next);
+    }
   }
 
   function restart(): void {
@@ -276,6 +290,7 @@ export function BridgesTutorial({
                     : null
                 }
                 onCycleEdge={handleCycleEdge}
+                onIneffectivePress={handleIneffectivePress}
                 onClearAnimationComplete={handleClearAnimationComplete}
               />
             );

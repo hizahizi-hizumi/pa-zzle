@@ -110,6 +110,23 @@ function tap([x, y]: BoardPoint): void {
   });
 }
 
+/** 島の丸の中を押して、動かさずに離す。 */
+function pressIsland([x, y]: BoardPoint): void {
+  const board = getBoard();
+  vi.spyOn(board, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(0, 0, 500, 500),
+  );
+  const point = {
+    pointerId: 1,
+    pointerType: "touch",
+    isPrimary: true,
+    clientX: x * 100,
+    clientY: y * 100,
+  };
+  fireEvent.pointerDown(board, point);
+  fireEvent.pointerUp(board, point);
+}
+
 function tapAll(points: readonly BoardPoint[]): void {
   for (const point of points) {
     tap(point);
@@ -210,6 +227,21 @@ describe("BridgesTutorial", () => {
         ]);
       });
 
+      test("印の縦の帯が横の辺と交わる所を押しても、印の辺として橋を架けること", () => {
+        tap([2.5, 2.5]);
+
+        expect(getIslandLabel(4, 3)).toBe("4行3列の島 数字2 橋1本");
+      });
+
+      test("島の丸を押して動かさずに離すと、橋を架けず、印の線を濃くし直すこと", () => {
+        pressIsland([0.5, 0.5]);
+
+        expect(getIslandLabel(1, 1)).toBe("1行1列の島 数字2 橋0本");
+        expect(getEdgesWithCue("recall")).toEqual([
+          edgeBetween([1, 3], [4, 3]),
+        ]);
+      });
+
       test("印の辺を押すと、本番と同じ架ける音を鳴らして応え、もう一度押す手順へ進むこと", () => {
         tap(edgePoints.center);
 
@@ -239,6 +271,25 @@ describe("BridgesTutorial", () => {
         );
       });
 
+      test("交差の手順で、覆いから抜いた架けられない横の辺を押すと、盤面を変えずに本番と同じく阻んだ橋を点けて阻まれた音を鳴らし、印の線を濃くし直すこと", () => {
+        tapAll(stepTaps.slice(0, 4));
+        vi.mocked(playSound).mockClear();
+        tap(edgePoints.middle);
+        const blockingLines = getBoard().querySelectorAll(
+          "[data-bridges-blocking] line",
+        );
+
+        expect(getIslandLabel(3, 1)).toBe("3行1列の島 数字1 橋0本");
+        expect(blockingLines).toHaveLength(1);
+        expect(getPlayedSoundNames()).toEqual(["blocked.flac"]);
+        expect(getEdgesWithCue("recall")).toEqual([
+          edgeBetween([1, 5], [3, 5]),
+        ]);
+        expect(
+          screen.queryByText(/橋どうしは\s*交差できません/),
+        ).not.toBeNull();
+      });
+
       describe("手順を終えた場合", () => {
         beforeEach(() => {
           tapAll(stepTaps);
@@ -254,6 +305,13 @@ describe("BridgesTutorial", () => {
         });
 
         test("手が止まると、橋が要ると決まる辺に印を付けること", () => {
+          advanceTime(idleHintDelayMs);
+
+          expect(getEdgesWithCue("mark")).toHaveLength(1);
+        });
+
+        test("交わる橋に阻まれた後に手が止まると、盤面は変わっていないので手がかりの印を付けること", () => {
+          tap(edgePoints.middle);
           advanceTime(idleHintDelayMs);
 
           expect(getEdgesWithCue("mark")).toHaveLength(1);

@@ -13,6 +13,7 @@ import {
   findBridgesTutorialHintEdge,
   getBridgesTutorialStepEdge,
   getBridgesTutorialStepReason,
+  hasBridgesTutorialBoardViolation,
 } from "@/games/bridges/tutorial/tutorial";
 import {
   finishTutorialIntro,
@@ -208,6 +209,116 @@ describe("bridgesTutorial の盤面", () => {
   });
 });
 
+/** 本番のルールで、交わる2辺の両方に橋が架かっていないか。 */
+function hasNoCrossing(bridges: readonly BridgeCount[]): boolean {
+  return bridges.every(
+    (count, edge) =>
+      count === 0 ||
+      network.crossingEdges[edge]!.every((crossing) => bridges[crossing] === 0),
+  );
+}
+
+function isWithin(
+  bridges: readonly BridgeCount[],
+  limit: readonly BridgeCount[],
+): boolean {
+  return bridges.every((count, edge) => count <= limit[edge]!);
+}
+
+describe("本番のルールで確かめた bridgesTutorial の盤面", () => {
+  const allBridges = listAllBridges();
+  const solutions = allBridges.filter((bridges) =>
+    isBridgesSolved(board, { bridges }),
+  );
+  const [uniqueSolution] = solutions;
+
+  test("全通りの架け方のうち、本番の判定で解けるのは1つだけであること", () => {
+    expect(solutions).toHaveLength(1);
+  });
+
+  test("各手順の本数は、その唯一の解の本数と一致すること", () => {
+    for (const step of bridgesTutorial.steps.slice(1)) {
+      expect(uniqueSolution![step.edge]).toBe(step.bridgeCount);
+    }
+    expect(
+      uniqueSolution![bridgesTutorial.steps[0]!.edge],
+    ).toBeGreaterThanOrEqual(bridgesTutorial.steps[0]!.bridgeCount);
+  });
+
+  test("印の辺を押していく途中の盤面は、本番の判定で多すぎの島も交わる橋も無く、唯一の解に含まれること", () => {
+    let progress = finishTutorialIntro(startTutorial(bridgesTutorial));
+    for (const step of bridgesTutorial.steps) {
+      while (progress.boardState.bridges[step.edge]! < step.bridgeCount) {
+        progress = cycle(progress, step.edge);
+        const { bridges } = progress.boardState;
+
+        expect(listBridgesIslandStatuses(board, { bridges })).not.toContain(
+          "over",
+        );
+        expect(hasNoCrossing(bridges)).toBe(true);
+        expect(isWithin(bridges, uniqueSolution!)).toBe(true);
+      }
+    }
+  });
+
+  test("手を離した後、伝えたルールで決まる辺を架けていくと、どの手も唯一の解を越えず、本番の判定で解けること", () => {
+    const freed = finishSteps(bridgesTutorial.steps.length);
+    let bridges = freed.boardState.bridges;
+    for (;;) {
+      const edge = bridges.findIndex(
+        (_, candidate) =>
+          deduceEdge(bridges, freed.earnedRuleIds, candidate) !== null,
+      );
+      if (edge < 0) {
+        break;
+      }
+      const { minimum } = deduceEdge(bridges, freed.earnedRuleIds, edge)!;
+      bridges = bridges.with(edge, minimum as BridgeCount);
+
+      expect(isWithin(bridges, uniqueSolution!)).toBe(true);
+    }
+
+    expect(isBridgesSolved(board, { bridges })).toBe(true);
+  });
+
+  test("交わる橋も伝えたルールに合わないところも無い、解けていないどの盤面でも、手がかりの辺を示し、阻まれる辺を示さないこと", () => {
+    const situation: BridgesTutorialSituation = {
+      step: null,
+      earnedRuleIds: allRuleIds,
+    };
+    const unsolvedStates = allBridges.filter(
+      (bridges) =>
+        hasNoCrossing(bridges) &&
+        !isBridgesSolved(board, { bridges }) &&
+        !hasBridgesTutorialBoardViolation(situation, {
+          bridges,
+          moveCount: 0,
+          lastMove: null,
+        }),
+    );
+    const hints = unsolvedStates.map((bridges) => ({
+      bridges,
+      edge: findBridgesTutorialHintEdge(situation, {
+        bridges,
+        moveCount: 0,
+        lastMove: null,
+      }),
+    }));
+
+    expect(unsolvedStates.length).toBeGreaterThan(0);
+    expect(hints.filter(({ edge }) => edge === null)).toEqual([]);
+    expect(
+      hints.filter(
+        ({ bridges, edge }) =>
+          bridges[edge!] === 0 &&
+          network.crossingEdges[edge!]!.some(
+            (crossing) => bridges[crossing] !== 0,
+          ),
+      ),
+    ).toEqual([]);
+  });
+});
+
 describe("bridgesTutorial.perform", () => {
   test("導入の間は、操作を受け付けないこと", () => {
     const progress = startTutorial(bridgesTutorial);
@@ -265,6 +376,21 @@ describe("bridgesTutorial.perform", () => {
     );
   });
 
+  test("手を引いている間に交わる橋に阻まれる辺を押すと、盤面と手順を変えずに阻んだ橋を残し、ルールに合わない手とはしないこと", () => {
+    const progress = finishSteps(3);
+    const blockedEdge = edgeBetween([3, 1], [3, 5]);
+    const next = cycle(progress, blockedEdge);
+
+    expect(next.boardState.bridges).toEqual(progress.boardState.bridges);
+    expect(next.stepIndex).toBe(progress.stepIndex);
+    expect(next.violated).toBe(false);
+    expect(next.boardState.lastMove).toEqual({
+      kind: "blocked",
+      edge: blockedEdge,
+      crossingEdges: [edgeBetween([1, 3], [4, 3])],
+    });
+  });
+
   describe("手順を終えた後", () => {
     const freed = finishSteps(bridgesTutorial.steps.length);
 
@@ -279,11 +405,17 @@ describe("bridgesTutorial.perform", () => {
       ).toBe(bridgesTutorial.freePlay);
     });
 
-    test("交わる橋に阻まれた手は、盤面を変えず、阻んだ橋を添えてルールに合わない手とすること", () => {
+    test("交わる橋に阻まれた手は、盤面を変えず、阻んだ橋を添えてルールに合わない手とし、盤面の違反にはしないこと", () => {
       const blockedEdge = edgeBetween([3, 1], [3, 5]);
       const progress = cycle(freed, blockedEdge);
 
       expect(progress.violated).toBe(true);
+      expect(
+        hasBridgesTutorialBoardViolation(
+          situationOf(progress),
+          progress.boardState,
+        ),
+      ).toBe(false);
       expect(progress.boardState.bridges).toEqual(freed.boardState.bridges);
       expect(progress.boardState.lastMove).toEqual({
         kind: "blocked",
@@ -383,12 +515,15 @@ describe("bridgesTutorial.perform", () => {
 });
 
 describe("手順の決め手", () => {
-  test("数字の手順は、右下の3と左の1を決め手にすること", () => {
+  test("数字の手順は、右下の3と、1本までしか受けられない左の1とそこへの辺を決め手にすること", () => {
     const progress = finishSteps(2);
 
     expect(
       getBridgesTutorialStepReason(situationOf(progress), progress.boardState),
-    ).toEqual({ islands: [islandAt(5, 5), islandAt(5, 1)], edges: [] });
+    ).toEqual({
+      islands: [islandAt(5, 5), islandAt(5, 1)],
+      edges: [edgeBetween([5, 1], [5, 5])],
+    });
   });
 
   test("交差の手順は、右の3と、左へ架けられない辺とそこに交わる真ん中の縦の橋と、2本架かった下の橋を決め手にすること", () => {
