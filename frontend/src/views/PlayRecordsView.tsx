@@ -7,8 +7,9 @@ import {
   useSyncExternalStore,
 } from "react";
 import { useLocation } from "react-router";
-
+import { CollectionScreen } from "@/collection/ui/CollectionScreen";
 import { HomeBackLink } from "@/components/HomeBackLink";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createGameNavigation } from "@/game-catalog/game-navigation";
 import {
   describePlayTimelineEntry,
@@ -93,17 +94,36 @@ export function PlayRecordsView() {
   );
 
   return (
-    <section className="mx-auto w-full max-w-3xl">
+    <section className="mx-auto w-full max-w-5xl">
       <HomeBackLink />
-      <PlayRecordsScreen
-        entries={entries}
-        now={now}
-        describeEntry={describePlayTimelineEntry}
-        onOpenEntry={openEntry}
-        shownEntryCount={shownEntryCount}
-        onShownEntryCountChange={changeShownEntryCount}
-        emptyAction={<Link to="/">パズルを選ぶ</Link>}
-      />
+      <header className="mt-2 mb-4">
+        <h1 className="text-screen-title">記録</h1>
+      </header>
+      <Tabs defaultValue={returnedPosition ? "history" : "collection"}>
+        <div>
+          <TabsList>
+            <TabsTrigger value="collection">コレクション</TabsTrigger>
+            <TabsTrigger value="history">プレイ履歴</TabsTrigger>
+          </TabsList>
+        </div>
+        <TabsContent value="collection">
+          <CollectionScreen records={records} now={now} />
+        </TabsContent>
+        <div className="max-w-3xl">
+          <TabsContent value="history">
+            <PlayRecordsScreen
+              entries={entries}
+              now={now}
+              describeEntry={describePlayTimelineEntry}
+              onOpenEntry={openEntry}
+              shownEntryCount={shownEntryCount}
+              onShownEntryCountChange={changeShownEntryCount}
+              emptyAction={<Link to="/">パズルを選ぶ</Link>}
+              showHeading={false}
+            />
+          </TabsContent>
+        </div>
+      </Tabs>
     </section>
   );
 }

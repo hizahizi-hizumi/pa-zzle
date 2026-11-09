@@ -6,31 +6,22 @@ import {
 import type { ProblemId } from "@/games/problem-id";
 import { type GameResultLevel, getGameResultLevel } from "@/games/result";
 import {
+  type ClearedProblemSource,
+  toClearedProblem,
+} from "@/records/cleared-problem";
+import {
   getAbandonedPlayAttempts,
   type PlayAttempt,
 } from "@/records/play-attempt";
 import type { PlayRecord } from "@/records/play-record";
-import {
-  getPlayRecordMetricValue,
-  PLAY_SCORE_METRIC_ID,
-  type PlayRecordClearPerformance,
-  type PlayRecordDefinition,
-} from "@/records/play-record-definition";
+import type { PlayRecordClearPerformance } from "@/records/play-record-definition";
 
 /** 記録と試行のうち図鑑に使うものを選ぶのに要る、1ゲーム分のカタログ項目の部分。 */
-export type ZukanPlaySource = {
-  /** 記録の `gameId` と同じ値。 */
-  id: string;
-  /** 記録の問題を今の問題集で引けるときだけ、その難易度と問題 ID を返す。 */
-  recordProblemPlayTarget: (
-    record: PlayRecord,
-  ) => { difficulty: string; problemId: ProblemId } | null;
+export type ZukanPlaySource = ClearedProblemSource & {
   /** 離脱した試行の問題を今の問題集で引けるときだけ、その難易度と問題 ID を返す。 */
   attemptProblemPlayTarget: (
     attempt: PlayAttempt,
   ) => { difficulty: string; problemId: ProblemId } | null;
-  /** そのゲームの記録定義。記録の評価点とクリアの成績を読むのに使う。 */
-  playRecordDefinition: PlayRecordDefinition;
 };
 
 /** 図鑑を記録から導くのに要る、1ゲーム分のカタログ項目の部分。 */
@@ -202,20 +193,17 @@ function collectZukanPlays(
     if (record.gameId !== game.id) {
       continue;
     }
-    const problem = toPlayableProblem(game.recordProblemPlayTarget(record));
-    const score = getPlayRecordMetricValue(
-      record,
-      game.playRecordDefinition,
-      PLAY_SCORE_METRIC_ID,
-    );
-    const performance = game.playRecordDefinition.getClearPerformance(record);
-    if (problem === null || score === null || performance === null) {
-      continue;
-    }
+    const problem = toClearedProblem(record, game);
+    if (problem === null) continue;
     const key = toProblemKey(problem.difficulty, problem.problemId);
     tallies.set(
       key,
-      addClear(tallies.get(key), score, performance, record.completedAt),
+      addClear(
+        tallies.get(key),
+        problem.score,
+        problem.performance,
+        record.completedAt,
+      ),
     );
     latestPlay = pickLatestPlay(latestPlay, {
       playedAt: record.completedAt,
