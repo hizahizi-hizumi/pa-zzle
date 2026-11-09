@@ -2,7 +2,7 @@
    Vercel の Geist に寄せる。書体は Geist（日本語は Noto Sans JP）を Google Fonts から読む:
    https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap
    Geist の色は公式の値が公開されていないので、Vercel の画面に合わせた近似。明るい表示だけ。
-   Artifact の CSP は外部の stylesheet を Google Fonts しか読まないので、このファイルの中身を <style> に入れて出す。 */
+   使い方は .claude/skills/share/human-notice.md に従う。 */
 .review {
   --bg: #ffffff;
   --bg-subtle: #fafafa;
