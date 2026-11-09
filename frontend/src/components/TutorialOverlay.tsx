@@ -42,6 +42,8 @@ type TutorialOverlayProps = {
   finish: TutorialFinish;
   /** ゲーム固有の盤面。盤面の大きさは盤面の側が、この領域の大きさから決める。導入の盤面の段も盤面が受け持つ。 */
   renderBoard: (intro: TutorialBoardIntro) => ReactNode;
+  /** 解いている間だけ盤面の下に置く、ゲーム固有の操作（本番で盤の下の帯に置く操作）。導入の間と終えた後は出さない。 */
+  controls?: ReactNode;
   /** 導入を終えた。 */
   onIntroEnd: () => void;
   onRestart: () => void;
@@ -67,6 +69,7 @@ function getMusicState(
  * - 進行は `games/tutorial.ts` の `startTutorial`・`performTutorialAction`・`finishTutorialIntro`・`completeTutorial` で進め、`phase` と、一言（`getTutorialMessage`）を渡す。
  * - `guiding` は、`phase` が `playing` で、`getTutorialSituation` の `step` があるときに `true` にする。
  * - `renderBoard` で本番の盤面部品を描き、次に押す所と決め手に `TutorialSpotlight`、印と合図に `TutorialCue` を置く。導入の場面（`TutorialBoardIntro`）は盤面が受け持つ。
+ * - 本番で盤の下の帯に置く操作（入力の切り替えなど）は `controls` で渡し、印と抜きは盤面と同じく重ねる。
  * - `finish` は、ゲームのホームから開いたとき（`GameHomeTutorialControl` の `playStart` があるとき）は `home`、プレイ中のメニューから開いたときは `play` にする。
  * - ゲームのホームへは `GameHomeScreen` の `renderTutorial`、プレイ中のメニューへは `GamePlayFrame` の `renderTutorial` で渡す。
  */
@@ -81,6 +84,7 @@ export function TutorialOverlay({
   guiding,
   finish,
   renderBoard,
+  controls,
   onIntroEnd,
   onRestart,
   onClose,
@@ -119,6 +123,7 @@ export function TutorialOverlay({
           guiding={guiding}
           finish={finish}
           renderBoard={renderBoard}
+          controls={controls}
           onIntroEnd={onIntroEnd}
           onRestart={onRestart}
         />

@@ -172,8 +172,8 @@ const steps: readonly MinesweeperTutorialStep[] = [
 
 /** 手を引いている間、盤面の切り替えが手順の操作に合っていないときの補足。 */
 export const minesweeperTutorialModeSwitchDetails = {
-  flag: "旗に切り替えて、印のマスを押してください",
-  reveal: "旗から戻して、印のマスを押してください",
+  flag: "旗をオンにして、印のマスを押してください",
+  reveal: "旗をオフにして、印のマスを押してください",
 } as const satisfies Record<MinesweeperTutorialOperation, string>;
 
 /** 数字の決まりで、まだ決まっていないマスが決まるもの。決め手は、そう決めた数字のマスと、その数字の周りの、もう地雷と決まったマス。 */

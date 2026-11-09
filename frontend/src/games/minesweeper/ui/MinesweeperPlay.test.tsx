@@ -3,6 +3,7 @@ import {
   fireEvent,
   render as renderWithoutRouter,
   screen,
+  within,
 } from "@testing-library/react";
 import type { ComponentProps, ReactElement } from "react";
 import { MemoryRouter } from "react-router";
@@ -17,6 +18,13 @@ function render(ui: ReactElement) {
 }
 
 afterEach(cleanup);
+
+/** 盤の下の操作の帯にある、旗を置く入力へ切り替えるボタン。 */
+function getFlagToggle(): HTMLElement {
+  return within(screen.getByRole("contentinfo")).getByRole("button", {
+    name: "旗",
+  });
+}
 
 function openPlayMenu(): void {
   fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
@@ -151,23 +159,23 @@ describe("MinesweeperPlay", () => {
       });
     });
 
-    test("ヘッダーの旗モード切替が初期状態で押されていないこと", () => {
-      const toggle = screen.getByRole("button", { name: "旗モード" });
+    test("盤の下の旗が初期状態でオフであること", () => {
+      const toggle = getFlagToggle();
 
       expect(toggle.getAttribute("aria-pressed")).toBe("false");
     });
 
-    test("旗モード切替を押すと旗モードが押された状態になること", () => {
-      const toggle = screen.getByRole("button", { name: "旗モード" });
+    test("旗を押すとオンになること", () => {
+      const toggle = getFlagToggle();
 
       fireEvent.click(toggle);
 
       expect(toggle.getAttribute("aria-pressed")).toBe("true");
     });
 
-    describe("旗モードの場合", () => {
+    describe("旗をオンにした場合", () => {
       beforeEach(() => {
-        fireEvent.click(screen.getByRole("button", { name: "旗モード" }));
+        fireEvent.click(getFlagToggle());
       });
 
       test("未開示マスを押すと旗操作を通知すること", () => {
@@ -177,8 +185,8 @@ describe("MinesweeperPlay", () => {
         expect(onRevealCell).not.toHaveBeenCalled();
       });
 
-      test("旗モード切替をもう一度押すと開示モードへ戻ること", () => {
-        const toggle = screen.getByRole("button", { name: "旗モード" });
+      test("旗をもう一度押すとマスを開く入力へ戻ること", () => {
+        const toggle = getFlagToggle();
 
         fireEvent.click(toggle);
         fireEvent.click(screen.getByLabelText("マス 1 未開示"));
@@ -187,18 +195,16 @@ describe("MinesweeperPlay", () => {
         expect(onRevealCell).toHaveBeenCalledWith(0);
       });
 
-      test("リセットすると開示モードへ戻ること", () => {
+      test("リセットすると旗がオフに戻ること", () => {
         fireEvent.pointerDown(
           screen.getByRole("button", { name: "その他の操作" }),
           { button: 0, ctrlKey: false },
         );
         fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
 
-        expect(
-          screen
-            .getByRole("button", { name: "旗モード" })
-            .getAttribute("aria-pressed"),
-        ).toBe("false");
+        const toggle = getFlagToggle();
+
+        expect(toggle.getAttribute("aria-pressed")).toBe("false");
       });
     });
   });
@@ -345,10 +351,10 @@ describe("MinesweeperPlay", () => {
       expect(mine).toBeTruthy();
     });
 
-    test("旗モード切替を表示しないこと", () => {
-      const toggle = screen.queryByRole("button", { name: "旗モード" });
+    test("旗を押せないこと", () => {
+      const toggle = getFlagToggle();
 
-      expect(toggle).toBeNull();
+      expect(toggle).toHaveProperty("disabled", true);
     });
 
     test("盤面の操作を通知しないこと", () => {

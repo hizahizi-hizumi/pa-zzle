@@ -37,9 +37,10 @@ import {
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
 import { MinesweeperTutorialCover } from "@/games/minesweeper/ui/MinesweeperTutorial/MinesweeperTutorialCover";
 import {
-  MinesweeperTutorialStatus,
+  MinesweeperTutorialModeToggle,
   type MinesweeperTutorialToggleCue,
-} from "@/games/minesweeper/ui/MinesweeperTutorial/MinesweeperTutorialStatus";
+} from "@/games/minesweeper/ui/MinesweeperTutorial/MinesweeperTutorialModeToggle";
+import { MinesweeperTutorialStatus } from "@/games/minesweeper/ui/MinesweeperTutorial/MinesweeperTutorialStatus";
 import { useMinesweeperSoundEffects } from "@/games/minesweeper/ui/use-minesweeper-sound-effects";
 import type { GameProgress } from "@/games/play";
 import {
@@ -184,7 +185,7 @@ function getSpotlitCellIndices(
 
 /**
  * 5×5 の盤面を、一言と印に沿って一緒に解き、数字と地雷の総数の決まりを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分で開かせる。盤面・旗の切り替え・解けたときの演出は本番と同じ部品を使う。
+ * 手順を終えたら手を離し、残りを自分で開かせる。盤面・盤面の下の旗の切り替え・解けたときの演出は本番と同じ部品と並びを使う。
  */
 export function MinesweeperTutorial({
   open,
@@ -348,22 +349,13 @@ export function MinesweeperTutorial({
       !goalShown &&
       (progress.phase === "intro" || progress.phase === "playing");
     const stepSpotlit = step !== null && progress.phase === "playing";
-    const toggleCue: MinesweeperTutorialToggleCue | null =
-      stepMarksShown && modeMismatched
-        ? { recallId }
-        : idleHintNeedsSwitch
-          ? { recallId: null }
-          : null;
     return (
-      <div className="flex w-[min(100cqw,calc(100cqh-3.25rem),28rem)] flex-col gap-2">
+      // 盤面の高さに、上の数の並び（h-5）とその間（gap-2）を足した高さを、盤の領域に収める。
+      <div className="flex w-[min(100cqw,calc(100cqh-1.75rem),28rem)] flex-col gap-2">
         <MinesweeperTutorialStatus
           mineCount={MINESWEEPER_TUTORIAL_MINE_COUNT}
           flagCount={shownBoardState.puzzle.flaggedCellIndices.length}
           mineCountSpotlit={stepSpotlit && step.reasonMineCount}
-          mode={mode}
-          toggleCue={toggleCue}
-          toggleSpotlit={stepSpotlit && modeMismatched}
-          onModeChange={setMode}
         />
         <MinesweeperClearAnimation
           active={progress.phase === "solved" || (scene === "goal" && playing)}
@@ -410,6 +402,16 @@ export function MinesweeperTutorial({
     );
   }
 
+  // 切り替えは導入を終えてから出すので、印は導入の終わりを待たずに手順の間ずっと付ける。
+  const toggleCue: MinesweeperTutorialToggleCue | null =
+    progress.phase === "playing" && step !== null && modeMismatched
+      ? { recallId }
+      : idleHintNeedsSwitch
+        ? { recallId: null }
+        : null;
+  const toggleSpotlit =
+    progress.phase === "playing" && step !== null && modeMismatched;
+
   const finish: TutorialFinish = playStart
     ? {
         entry: "home",
@@ -434,6 +436,15 @@ export function MinesweeperTutorial({
       guiding={progress.phase === "playing" && guiding}
       finish={finish}
       renderBoard={renderBoard}
+      controls={
+        <MinesweeperTutorialModeToggle
+          mode={mode}
+          disabled={progress.phase !== "playing"}
+          cue={toggleCue}
+          spotlit={toggleSpotlit}
+          onModeChange={setMode}
+        />
+      }
       onIntroEnd={handleIntroEnd}
       onRestart={restart}
       onClose={handleClose}
