@@ -32,7 +32,7 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
       return;
     }
 
-    const { rect: sourceRect } = animation.source;
+    const { rect: sourceRect, liftY } = animation.source;
     const { rect: destinationRect } = animation.destination;
     const deltaX = destinationRect.left - sourceRect.left;
     const deltaY = destinationRect.top - sourceRect.top;
@@ -43,12 +43,12 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
     const sourceAnimation = sourceElement.animate(
       [
         {
-          transform: "translate(0, 0) rotate(0deg)",
+          transform: `translate(0, ${liftY}px) rotate(0deg)`,
           offset: 0,
           easing: "ease-out",
         },
         {
-          transform: "translate(0, -4px) rotate(0deg)",
+          transform: `translate(0, ${liftY - 4}px) rotate(0deg)`,
           offset: 0.06,
           easing: POUR_TILT_EASING,
         },

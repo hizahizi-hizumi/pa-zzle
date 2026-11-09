@@ -101,7 +101,8 @@ export function TakuzuPlay({
         />
       )}
     >
-      <main className="flex min-h-0 flex-1 items-center justify-center py-2 [container-type:size] sm:px-3">
+      {/* 行・列の違反の印は盤面の縁の外に出るので、狭い画面でも画面の端に寄らないよう左右に余白を取る。 */}
+      <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 [container-type:size]">
         <div className="relative aspect-square w-[min(100cqw,100cqh,42rem)]">
           <TakuzuClearAnimation
             active={progress === "clearing"}
