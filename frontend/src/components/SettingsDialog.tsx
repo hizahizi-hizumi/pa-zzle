@@ -161,7 +161,7 @@ export function SettingsDialog({
                   key={id}
                   type="button"
                   onClick={() => setPanel(id)}
-                  className="flex min-h-18 w-full items-center gap-3 rounded-sm px-2 py-3 text-left transition-colors hover:bg-accent/50 hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  className="flex min-h-18 w-full items-center gap-3 rounded-sm px-2 py-3 text-left transition-colors hover:bg-accent/50 hover:text-accent-foreground outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-ring"
                 >
                   <span className="grid min-w-0 flex-1 gap-1">
                     <span className="text-body font-medium">

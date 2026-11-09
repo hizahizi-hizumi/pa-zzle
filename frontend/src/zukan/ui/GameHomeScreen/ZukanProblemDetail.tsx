@@ -97,7 +97,7 @@ function listSolvedProblemFacts(
       label: "最高スコア",
       value: (
         <span
-          className={`rounded-full px-2 font-ui tabular-nums text-supporting font-bold ${getGameResultStyle(getGameResultLevel(bestScore)).markClassName}`}
+          className={`rounded-sm px-2 font-ui tabular-nums text-supporting font-bold ${getGameResultStyle(getGameResultLevel(bestScore)).markClassName}`}
         >
           {bestScore}点
         </span>

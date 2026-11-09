@@ -6,24 +6,23 @@ import { cn } from "@/lib/utils"
 import { Toggle as TogglePrimitive } from "radix-ui"
 
 const toggleVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-[color,box-shadow] outline-none hover:bg-muted hover:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex items-center justify-center gap-2 rounded-md text-supporting font-medium whitespace-nowrap transition-[color,box-shadow] hover:bg-muted hover:text-muted-foreground outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: "bg-transparent",
         outline:
-          "border border-input bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground",
       },
       size: {
         default: "h-9 min-w-9 px-2",
         sm: "h-8 min-w-8 px-1.5",
         lg: "h-10 min-w-10 px-2.5",
       },
-      // filled: 押している間は主色で塗って文字を反転させ、押していないものと塗りの明暗ではっきり見分けさせる。
+      // ring: 押している間は accent の面に ring の輪郭を重ね、枠の太さを変えずに、押していないものと見分けさせる。
       selection: {
         default: "",
-        filled:
-          "data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:data-[state=on]:bg-primary/90 hover:data-[state=on]:text-primary-foreground",
+        ring: "data-[state=on]:ring-2 data-[state=on]:ring-ring",
       },
     },
     defaultVariants: {

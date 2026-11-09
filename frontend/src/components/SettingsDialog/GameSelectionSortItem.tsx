@@ -52,7 +52,7 @@ export function GameSelectionSortItem({
         data-game-id={game.id}
         aria-label={`${game.name}を並び替え`}
         aria-describedby="game-order-help"
-        className="inline-flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 active:cursor-grabbing"
+        className="inline-flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-ring active:cursor-grabbing"
       >
         <GripVertical className="pointer-events-none size-5 shrink-0" />
       </button>

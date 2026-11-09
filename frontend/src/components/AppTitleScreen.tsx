@@ -95,7 +95,7 @@ export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
                     aria-label={`${game.name}を遊ぶ`}
                     inert={!ready}
                     onClick={enterGame}
-                    className="flex size-full items-center justify-center rounded-md border-(length:--border-width-normal) border-border bg-background p-[18%] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="flex size-full items-center justify-center rounded-md border-(length:--border-width-normal) border-border bg-background p-[18%] transition-colors hover:bg-accent outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring"
                   >
                     <GamePictogram svg={game.pictogramSvg} />
                   </Link>
@@ -114,7 +114,7 @@ export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
                 <button
                   type="button"
                   onClick={enter}
-                  className="flex h-full w-full items-center justify-center rounded-md text-supporting font-medium text-muted-foreground animate-in fade-in duration-(--duration-slow) ease-enter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:animate-none"
+                  className="flex h-full w-full items-center justify-center rounded-md text-supporting font-medium text-muted-foreground animate-in fade-in duration-(--duration-slow) ease-enter outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:animate-none"
                 >
                   タップしてはじめる
                 </button>

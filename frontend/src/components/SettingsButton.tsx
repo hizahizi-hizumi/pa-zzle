@@ -21,7 +21,7 @@ export function SettingsButton({ initialGameId }: SettingsButtonProps) {
           type="button"
           aria-label="設定"
           title="設定"
-          className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <Settings className="size-4.5" aria-hidden="true" />
         </button>
