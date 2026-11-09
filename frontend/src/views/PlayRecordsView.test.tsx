@@ -118,6 +118,20 @@ describe("PlayRecordsView", () => {
       });
       expect(screen.getByText("まだ記録がありません")).toBeTruthy();
     });
+    test("月ごとの評価段階上昇を自己ベスト更新と区別して示すこと", () => {
+      const timeline = screen.getByRole("region", {
+        name: "時間ごとの積み重ね",
+      });
+      const selectedPeriod = within(timeline).getByRole("region", {
+        name: "選択中の期間とゲームの記録",
+      });
+      const monthCell = within(timeline).getByRole("button", {
+        name: /初クリア0問、評価アップ0問/,
+      });
+
+      expect(within(selectedPeriod).getByText("評価アップ")).toBeTruthy();
+      expect(monthCell).toBeTruthy();
+    });
     test("設定の並び替えを積み上げと時間表に即時反映すること", () => {
       const timeline = screen.getByRole("region", {
         name: "時間ごとの積み重ね",
