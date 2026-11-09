@@ -29,6 +29,7 @@ import {
   listReflectionStockPieces,
   ReflectionStock,
 } from "@/games/reflection/ui/ReflectionStock";
+import { ReflectionTutorial } from "@/games/reflection/ui/ReflectionTutorial";
 import { ReflectionResultScreen } from "@/games/reflection/ui/result/ReflectionResultScreen";
 import { useReflectionSoundEffects } from "@/games/reflection/ui/use-reflection-sound-effects";
 
@@ -151,6 +152,9 @@ export function ReflectionPlay({
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <ReflectionHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderTutorial={({ open, onClose }) => (
+        <ReflectionTutorial open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <ReflectionResultScreen
