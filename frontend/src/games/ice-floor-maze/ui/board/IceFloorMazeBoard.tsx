@@ -11,8 +11,10 @@ import {
   getIceFloorMazeCellCenter,
   iceFloorMazeDirectionVectors,
 } from "@/games/ice-floor-maze/ui/board/board-geometry";
+import type { IceFloorMazeCellCue } from "@/games/ice-floor-maze/ui/board/cell-cue";
 import { IceFloorMazeCellChanges } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/IceFloorMazeCellChanges";
 import { IceFloorMazeGoalBurst } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/IceFloorMazeGoalBurst";
+import { IceFloorMazeTutorialLayer } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/IceFloorMazeTutorialLayer";
 import { animateIceFloorMazeMovedElements } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/moved-element-motion";
 import { IceFloorMazeGoalMark } from "@/games/ice-floor-maze/ui/board/IceFloorMazeGoalMark";
 import { IceFloorMazePieceMark } from "@/games/ice-floor-maze/ui/board/IceFloorMazePieceMark";
@@ -46,6 +48,10 @@ type IceFloorMazeBoardProps = {
   blockedInput: IceFloorMazeBlockedInput | null;
   /** ゴールで止まってから完成演出を終えるまでの間だけ `true`。 */
   clearing: boolean;
+  /** チュートリアルで、駒を止めるマスに付ける印。 */
+  cue?: IceFloorMazeCellCue | null;
+  /** チュートリアルで手を引いている間、画面全体の覆いから抜くマス。 */
+  spotlitCells?: readonly number[];
   /** 駒が滑って見えている間だけ `true` を知らせる。 */
   onSlideAnimationActivityChange: (active: boolean) => void;
   onClearAnimationComplete: () => void;
@@ -126,6 +132,7 @@ const clearPopKeyframes: Keyframe[] = [
  * 盤面の外壁・氷・床・岩・もろい岩・崩れた跡・薄い氷・水面・雪・雪山・滑る氷の塊・ゴール・駒と直前の滑りの跡を描き、
  * 滑り・ぶつかって止まる反応・ゴールの通過・崩れる・割れる・雪を押し出す・塊を押す・押し戻し・完成演出を動かす。入力は受けない。
  * 雪山と滑る氷の塊はゴールの印の上に描き、ゴールをふさいでいると読ませる。
+ * チュートリアルでは、駒を止めるマスの印と、画面全体の覆いから抜くマスを盤面の上に重ねる。
  */
 export function IceFloorMazeBoard({
   board,
@@ -136,6 +143,8 @@ export function IceFloorMazeBoard({
   lastSlide,
   blockedInput,
   clearing,
+  cue = null,
+  spotlitCells = [],
   onSlideAnimationActivityChange,
   onClearAnimationComplete,
 }: IceFloorMazeBoardProps) {
@@ -272,76 +281,90 @@ export function IceFloorMazeBoard({
 
   return (
     <div className="flex size-full items-center justify-center [container-type:size]">
-      <svg
-        ref={svgRef}
-        role="img"
-        aria-label="盤面"
-        viewBox={`${viewBox.minX} ${viewBox.minY} ${viewBox.width} ${viewBox.height}`}
-        className="block max-h-full max-w-full overflow-visible"
+      <div
+        className="relative max-h-full max-w-full"
         style={{
           aspectRatio,
           // PC の広い画面でも盤面を読みやすい大きさに留める。
           width: `min(100cqw, min(100cqh, 44rem) * ${aspectRatio})`,
         }}
       >
-        <IceFloorMazeTerrain
-          board={board}
-          state={{ cells, blocks }}
-          goal={goal}
-          beneathCellFaces={
-            <>
-              {lastSlide ? (
-                <IceFloorMazeTrail
-                  key={lastSlide.id}
-                  ref={trailRef}
-                  board={board}
-                  direction={lastSlide.direction}
-                  from={lastSlide.from}
-                  to={lastSlide.to}
-                />
-              ) : null}
-              {isGoalBuried ? null : (
-                <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
-                  <IceFloorMazeGoalMark />
-                </g>
-              )}
-            </>
-          }
-        />
-        {lastSlide ? (
-          <IceFloorMazeCellChanges
-            key={`cell-changes-${lastSlide.id}`}
-            board={board}
-            slide={lastSlide}
-          />
-        ) : null}
-        <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
-          <IceFloorMazeGoalBurst ref={goalBurstRef} />
-        </g>
-        <g
-          data-piece-cell={position}
-          transform={`translate(${piece.x} ${piece.y})`}
+        <svg
+          ref={svgRef}
+          role="img"
+          aria-label="盤面"
+          viewBox={`${viewBox.minX} ${viewBox.minY} ${viewBox.width} ${viewBox.height}`}
+          className="block size-full overflow-visible"
         >
-          <g ref={pieceSlideRef}>
-            <g ref={piecePushRef}>
-              <g
-                ref={pieceImpactRef}
-                style={{ transformBox: "fill-box", transformOrigin: "center" }}
-              >
+          <IceFloorMazeTerrain
+            board={board}
+            state={{ cells, blocks }}
+            goal={goal}
+            beneathCellFaces={
+              <>
+                {lastSlide ? (
+                  <IceFloorMazeTrail
+                    key={lastSlide.id}
+                    ref={trailRef}
+                    board={board}
+                    direction={lastSlide.direction}
+                    from={lastSlide.from}
+                    to={lastSlide.to}
+                  />
+                ) : null}
+                {isGoalBuried ? null : (
+                  <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
+                    <IceFloorMazeGoalMark />
+                  </g>
+                )}
+              </>
+            }
+          />
+          {lastSlide ? (
+            <IceFloorMazeCellChanges
+              key={`cell-changes-${lastSlide.id}`}
+              board={board}
+              slide={lastSlide}
+            />
+          ) : null}
+          <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
+            <IceFloorMazeGoalBurst ref={goalBurstRef} />
+          </g>
+          <g
+            data-piece-cell={position}
+            transform={`translate(${piece.x} ${piece.y})`}
+          >
+            <g ref={pieceSlideRef}>
+              <g ref={piecePushRef}>
                 <g
-                  ref={piecePopRef}
+                  ref={pieceImpactRef}
                   style={{
                     transformBox: "fill-box",
                     transformOrigin: "center",
                   }}
                 >
-                  <IceFloorMazePieceMark />
+                  <g
+                    ref={piecePopRef}
+                    style={{
+                      transformBox: "fill-box",
+                      transformOrigin: "center",
+                    }}
+                  >
+                    <IceFloorMazePieceMark />
+                  </g>
                 </g>
               </g>
             </g>
           </g>
-        </g>
-      </svg>
+        </svg>
+        {cue !== null || spotlitCells.length > 0 ? (
+          <IceFloorMazeTutorialLayer
+            board={board}
+            cue={cue}
+            spotlitCells={spotlitCells}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { _private } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeSwipeArea";
+import { _private } from "@/games/ice-floor-maze/ui/IceFloorMazeSwipeArea";
 
 const { getSwipeDirection } = _private;
 
