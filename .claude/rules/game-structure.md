@@ -16,6 +16,7 @@ frontend/src/games/
 ├── result.ts
 ├── score.ts
 ├── play-vocabulary.ts
+├── tutorial.ts
 └── <game>/
     ├── puzzle/
     ├── problem/
@@ -27,6 +28,8 @@ frontend/src/games/
     │   └── session.ts
     ├── play/
     │   └── use-<game>-play.ts
+    ├── tutorial/
+    │   └── tutorial.ts
     ├── ui/
     │   └── result/
     │       └── <Game>ResultScreen.tsx
@@ -47,7 +50,7 @@ frontend/src/games/
 - `session/session.ts`: 1問に対する1回のプレイ状態、操作、経過事実を置く。
 - `play/`: 問題供給、session、評価を組み合わせ、UIへプレイ状態と操作を提供する。
 - `ui/`: ゲーム固有の表示とユーザー操作を扱う。結果画面はプレイ画面と記録の結果画面の両方から使うので、プレイ画面の内部実装ではなく `ui/result/` に置く。
-- `display-name.ts`: 利用者に見せるゲーム名 `<GAME>_DISPLAY_NAME` を置く。カタログ・ゲームのホーム・プレイ画面・盤面の読み上げ名・結果画面はこれを参照し、ゲーム名を直書きしない。
+- `display-name.ts`: 利用者に見せるゲーム名 `<GAME>_DISPLAY_NAME` を置く。カタログ・ゲームのホーム・プレイ画面・盤面の読み上げ名・チュートリアル・結果画面はこれを参照し、ゲーム名を直書きしない。
 - `difficulty.ts`: ゲームとしての難易度の分類方針を置く。難易度レベルの一覧・表示名は `games/difficulty.ts` の共通契約を使う。
 - `score.ts`: 完了したプレイの事実をゲーム固有の評価へ変換する。
 - `problem-selection.ts`: 開始条件に合う問題を問題供給元と難易度方針から選ぶ。
@@ -70,6 +73,7 @@ frontend/src/games/
 - `problem/generation/`: 問題生成・検証の内部でだけ使う解探索、手筋解析などを置く。通常プレイから直接参照しない。
 - `diagnostics.ts`: ゲーム固有の内部診断を提供する場合に置く。`games/diagnostics.ts` の `InternalDiagnosticFormat` を定義し、snapshot の作成と読み戻しは共通の `createInternalDiagnosticSnapshot` / `parseInternalDiagnosticSnapshot` を使う。公開するのは `<Game>DiagnosticSnapshot` と `create<Game>DiagnosticSnapshot` だけで、読み戻しと問題の復元はテスト用に `_private` で公開する。
 - `assets/`: ゲーム固有の静的資産がある場合に置く。
+- `tutorial/`: チュートリアルを提供するゲームに置く。
 
 ## 問題契約
 
@@ -125,7 +129,7 @@ frontend/src/games/
 ## プレイ画面と結果画面の共通契約
 
 - `ui/<Game>Play.tsx` の props は `games/play.ts` の `GamePlayScreenProps<Difficulty, Result>` に、盤面を戻せるなら `RestartableGamePlayScreenProps`、待ったがあるなら `UndoableGamePlayScreenProps` と、ゲーム固有の値・操作を足して作る。`ui/result/<Game>ResultScreen.tsx` の props は `GamePlayResultScreenProps<Difficulty, Result>` で作る。難易度は値で受け取り、表示名は UI が決める。
-- プレイ画面は `components/GamePlayFrame.tsx` にゲーム固有の地（`background`）、盤面（`main`）、ゲーム固有の操作（`footer`）を渡して作り、外枠・ブランドの帯・見出し・遊び方の開閉・結果画面への切り替えを各ゲームで書かない。結果画面は `progress` が `result` で評価があるときだけ出る。
+- プレイ画面は `components/GamePlayFrame.tsx` にゲーム固有の地（`background`）、盤面（`main`）、ゲーム固有の操作（`footer`）を渡して作り、外枠・ブランドの帯・見出し・遊び方とチュートリアルの開閉・結果画面への切り替えを各ゲームで書かない。結果画面は `progress` が `result` で評価があるときだけ出る。
 - 見出しの計測値は `PlayHeaderMetric` の回数（`count`）と経過時間（`elapsed-time`）で渡し、書式・行の分け方は共通部品に任せる。プレイで変わらない問題そのものの条件（例: 詰将棋の「5手詰」）は、数え上げる回数と混同しないよう `problem-fact` の文言で渡す。回数の桁の確保は共通部品の既定に任せ、変えるときは `reservedDigits` で渡す。
 - 盤面は `progress` が `playing` の間だけ操作を受け付け、受け付けないことを `interactionDisabled` で受け取る。
 - 操作の callback props は、タップ・キーボードなどの入力手段ではなく操作の意味で名付ける。
@@ -144,22 +148,35 @@ frontend/src/games/
 - プレイ画面は、盤面操作の音を `games/play-sound-effects.ts` の `useOperationSound` で、プレイフックが返す `id` 付きの操作の知らせから鳴らす。クリア音は `useClearSound` で完成演出の始まりに鳴らす。
 - 動きを減らす設定では、不成立の動きが出ず画面が何も変わらない操作の音と、完成演出が無くすぐ結果へ進むときのクリア音を鳴らさない。完成した盤面を保持して見せるゲームだけ、その姿に合わせたクリア音を `useClearSound` へ渡す。
 - 結果を受け取る瞬間の報酬の音はアプリが `usePlayableGame` で鳴らすので、ゲームは鳴らさない。
-- ゲームを選ぶ・プレイを始める音はアプリの共通部品（ゲームのホームの「ランダムに遊ぶ」と図鑑の「遊ぶ」、結果画面、プレイ中のメニュー）が `@/components/app-decision-sound` で鳴らすので、ゲームは鳴らさない。
+- ゲームを選ぶ・プレイを始める音はアプリの共通部品（ゲームのホームの「ランダムに遊ぶ」と図鑑の「遊ぶ」、ゲームのホームから開いたチュートリアルを終えて遊び始める操作、結果画面、プレイ中のメニュー）が `@/components/app-decision-sound` で鳴らすので、ゲームは鳴らさない。
 - BGM はプレイ中の曲も含めてアプリが画面ごとに `@/components/app-background-music` で流すので、ゲームは BGM を流さない。
+
+## チュートリアル
+
+- `tutorial/tutorial.ts` に、`games/tutorial.ts` の `Tutorial` を満たす `<game>Tutorial`（例: `takuzuTutorial`）を置く。
+- 盤面は `puzzle/` の遷移で進める。
+- 本番と同じ盤面の反応と見え方が要るときは `session/` の関数で求め、経過時間と回数は使わない。
+- 画面は `ui/<Game>Tutorial.tsx` に置き、`<game>Tutorial` を `games/tutorial.ts` の進行関数で進めて `@/components/TutorialOverlay` に渡す。
+- 盤面操作の音とクリア音は、プレイ画面と同じゲームの効果音のフックで鳴らす。
+- 解き終えたら本番と同じクリア演出を見せ、その完了で `completeTutorial` を呼ぶ。
+- 印と合図は `@/components/TutorialCue`、覆いから抜く所は `@/components/TutorialSpotlight` だけで描く。
+- 盤面部品は印・合図・抜く所を任意の props で受け取り、受け取らないときは本番と同じに描く。
+- ゲームのホームへは `views/<Game>HomeView.tsx` から `GameHomeScreen` の `renderTutorial` で、プレイ中のメニューへは `ui/<Game>Play.tsx` から `GamePlayFrame` の `renderTutorial` で渡す。
 
 ## 依存方向
 
 - `frontend/src/games/` 直下のゲーム共通契約は React に依存しない。プレイフックの共通部分を置く `games/play.ts` と、プレイ画面の効果音のフックを置く `games/play-sound-effects.ts` だけは React に依存できる。
 
-- `puzzle/` は `problem/`、`session/`、`play/`、`ui/` を知らない。
-- `problem/` は `puzzle/` とゲーム共通契約へ依存できるが、`session/`、`play/`、`ui/` を知らない。
+- `puzzle/` は `problem/`、`session/`、`play/`、`tutorial/`、`ui/` を知らない。
+- `problem/` は `puzzle/` とゲーム共通契約へ依存できるが、`session/`、`play/`、`tutorial/`、`ui/` を知らない。
 - `problem/generation/` は問題生成・検証から使われ、通常プレイから直接参照されない。
-- `session/` は `problem/` と `puzzle/` へ依存できるが、難易度分類、採点、保存、React、UIを知らない。
+- `session/` は `problem/` と `puzzle/` へ依存できるが、難易度分類、採点、`tutorial/`、保存、React、UIを知らない。
 - `difficulty.ts` は問題解析結果へ依存できる。
 - `problem-selection.ts` は問題供給と `difficulty.ts` へ依存できる。
 - `score.ts` は評価に必要な事実の契約とゲーム共通契約へ依存できるが、`play/`、`ui/` を知らない。
-- `play/` は下位のゲーム責務を調停するが、`ui/` を import しない。
-- `ui/` は `play/` と表示に必要な読み取り専用の契約へ依存できる。問題生成、session更新、採点規則を実装しない。
+- `play/` は下位のゲーム責務を調停するが、`ui/` と `tutorial/` を import しない。
+- `tutorial/` は `problem/`、`puzzle/`、`session/` とゲーム共通契約へ依存できるが、生成内部、難易度分類、採点、`play/`、保存、React、UIを知らない。
+- `ui/` は `play/`・`tutorial/` と表示に必要な読み取り専用の契約へ依存できる。問題生成、session更新、採点規則を実装しない。
 - `play-record.ts`、`play-attempt.ts`、`diagnostics.ts` は接続先と必要なゲーム内部契約へ依存できるが、通常プレイから逆依存させない。
 - `ui/play-record-display.ts` は記録 UI の表示契約（`@/records/ui/play-record-display`）へ接続できる。記録表示は記録定義の全指標を網羅する。
 - ゲームカタログ（`frontend/src/game-catalog/`）へ依存しない。
