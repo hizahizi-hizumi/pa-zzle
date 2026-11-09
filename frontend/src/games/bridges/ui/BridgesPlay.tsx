@@ -63,8 +63,8 @@ export function BridgesPlay({
       progress={progress}
       result={result}
       title={BRIDGES_DISPLAY_NAME}
-      // 島の盤を囲む海に見立て、盤面の明るい地と分かれる、くすんだ青緑の地にする。
-      background={<div className="size-full bg-[#dfe7e6] dark:bg-[#1b2524]" />}
+      // ライトは島の盤を囲む海に見立てたくすんだ青緑の地にする。ダークは盤面の暖色の地と色相をそろえ、盤面より一段暗い灰にする。
+      background={<div className="size-full bg-[#dfe7e6] dark:bg-[#1c1a18]" />}
       metrics={[
         { type: "elapsed-time", elapsedMs },
         { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },
