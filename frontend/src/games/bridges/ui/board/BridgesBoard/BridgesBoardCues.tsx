@@ -8,15 +8,11 @@ import type {
   BridgesBoardSpotlight,
 } from "@/games/bridges/ui/board/board-cue";
 import {
-  getEdgeSegment,
+  type BoardRect,
+  getEdgeBand,
   getIslandCenter,
   ISLAND_RADIUS,
 } from "@/games/bridges/ui/board/board-geometry";
-
-/** 辺の印と抜く所の太さ。マス幅を 1 とした値。2本の橋の2線を収め、島の丸より細くして、どの2島の間かを読めるようにする。 */
-const EDGE_BAND_WIDTH = 0.5;
-
-type BoardRect = { x: number; y: number; width: number; height: number };
 
 function getIslandRect(board: BridgesBoard, island: number): BoardRect {
   const { x, y } = getIslandCenter(board.islands[island]!);
@@ -26,25 +22,6 @@ function getIslandRect(board: BridgesBoard, island: number): BoardRect {
     width: ISLAND_RADIUS * 2,
     height: ISLAND_RADIUS * 2,
   };
-}
-
-/** 辺の、両端の島の丸の縁から縁までを、橋の線に沿った帯にする。 */
-function getEdgeRect(board: BridgesBoard, edge: number): BoardRect {
-  const { start, end } = getEdgeSegment(board, edge);
-  const half = EDGE_BAND_WIDTH / 2;
-  return start.y === end.y
-    ? {
-        x: start.x,
-        y: start.y - half,
-        width: end.x - start.x,
-        height: EDGE_BAND_WIDTH,
-      }
-    : {
-        x: start.x - half,
-        y: start.y,
-        width: EDGE_BAND_WIDTH,
-        height: end.y - start.y,
-      };
 }
 
 /** 盤面の座標の四角を、盤面に対する割合の位置にする。 */
@@ -89,7 +66,7 @@ export function BridgesBoardCues({
           key={`spotlit-edge-${edge}`}
           data-spotlit-edge={edge}
           className="absolute rounded-full"
-          style={toPlacementStyle(board, getEdgeRect(board, edge))}
+          style={toPlacementStyle(board, getEdgeBand(board, edge))}
         >
           <TutorialSpotlight active className="inset-0 rounded-full" />
         </span>
@@ -99,7 +76,7 @@ export function BridgesBoardCues({
           key={`${cue.kind}-${cue.edge}`}
           data-cue-edge={cue.edge}
           className="absolute rounded-full"
-          style={toPlacementStyle(board, getEdgeRect(board, cue.edge))}
+          style={toPlacementStyle(board, getEdgeBand(board, cue.edge))}
         >
           {cue.kind === "mark" ? (
             <TutorialCue kind="mark" recallId={cue.recallId} />

@@ -36,6 +36,7 @@ import {
   findBoardTarget,
   findDragEdge,
   findIslandToward,
+  isPointInEdgeBand,
   toBoardPoint,
 } from "@/games/bridges/ui/board/board-geometry";
 
@@ -48,12 +49,14 @@ type BridgesBoardProps = {
   /** クリアしてから演出を終えるまで `true`。 */
   clearing: boolean;
   interactionDisabled: boolean;
-  /** 辺に一時的に重ねる合図。通常のプレイでは渡さない。 */
+  /** 辺に一時的に重ねる合図。印（`mark`）の付いた辺は、印の帯の中の押しをその辺として受ける。通常のプレイでは渡さない。 */
   cues?: readonly BridgesBoardCue[];
   /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せる島と辺。通常のプレイでは渡さない。 */
   spotlight?: BridgesBoardSpotlight | null;
   /** 辺の橋を 1本 → 2本 → なし と回す。 */
   onCycleEdge: (edge: number) => void;
+  /** 押したが、どの辺の橋も回さなかった（線から遠い所、どちらを狙ったか決まらない所、島から押して島の上で離した）。 */
+  onIneffectivePress?: () => void;
   onClearAnimationComplete: () => void;
 };
 
@@ -104,6 +107,7 @@ export function BridgesBoard({
   cues = [],
   spotlight = null,
   onCycleEdge,
+  onIneffectivePress,
   onClearAnimationComplete,
 }: BridgesBoardProps) {
   const boardRef = useRef<HTMLDivElement>(null);
@@ -125,6 +129,10 @@ export function BridgesBoard({
   const ambiguousEdges =
     ambiguousTap?.board === board ? ambiguousTap.edges : [];
   const islandBridgeCounts = countBridgesIslandBridges(board, { bridges });
+  // 印の付いた辺は、印の帯の中のどこを押しても、その辺として受ける。交わる辺と重なる所でも、狙いは印の辺に決まる。
+  const markedEdges = cues.flatMap((cue) =>
+    cue.kind === "mark" ? [cue.edge] : [],
+  );
   const blockingEdges =
     edgeNotice?.change === "blocked" ? edgeNotice.crossingEdges : [];
   const guide: BridgesFigureGuide | null = drag && {
@@ -170,8 +178,18 @@ export function BridgesBoard({
     if (interactionDisabled || !event.isPrimary || !isMainButton || drag) {
       return;
     }
-    const target = findBoardTarget(board, bridges, readBoardPoint(event));
+    const point = readBoardPoint(event);
+    const markedEdge = markedEdges.find((edge) =>
+      isPointInEdgeBand(board, edge, point),
+    );
+    if (markedEdge !== undefined) {
+      event.preventDefault();
+      onCycleEdge(markedEdge);
+      return;
+    }
+    const target = findBoardTarget(board, bridges, point);
     if (target === null) {
+      onIneffectivePress?.();
       return;
     }
     // 見えない島のボタンへ focus を移さず、マウスの選択やドラッグも始めない。
@@ -186,6 +204,7 @@ export function BridgesBoard({
         board,
         edges: target.edges,
       }));
+      onIneffectivePress?.();
       return;
     }
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -212,9 +231,14 @@ export function BridgesBoard({
     }
     setDrag(null);
     const edge = findDragEdge(board, drag.island, readBoardPoint(event));
-    if (!interactionDisabled && edge !== null) {
-      onCycleEdge(edge);
+    if (interactionDisabled) {
+      return;
     }
+    if (edge === null) {
+      onIneffectivePress?.();
+      return;
+    }
+    onCycleEdge(edge);
   }
 
   function handlePointerCancel(event: ReactPointerEvent<HTMLDivElement>) {

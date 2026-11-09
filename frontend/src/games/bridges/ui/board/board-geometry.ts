@@ -70,6 +70,45 @@ export function getEdgeSegment(
       };
 }
 
+/** 盤面の上の四角。 */
+export type BoardRect = { x: number; y: number; width: number; height: number };
+
+/** 辺の帯の太さ。2本の橋の2線を収め、島の丸より細くして、どの2島の間かを読めるようにする。 */
+const EDGE_BAND_WIDTH = 0.5;
+
+/** 辺の、両端の島の丸の縁から縁までを、橋の線に沿った帯にする。チュートリアルの印と、印の辺として受ける押しの範囲に使う。 */
+export function getEdgeBand(board: BridgesBoard, edge: number): BoardRect {
+  const { start, end } = getEdgeSegment(board, edge);
+  const half = EDGE_BAND_WIDTH / 2;
+  return start.y === end.y
+    ? {
+        x: start.x,
+        y: start.y - half,
+        width: end.x - start.x,
+        height: EDGE_BAND_WIDTH,
+      }
+    : {
+        x: start.x - half,
+        y: start.y,
+        width: EDGE_BAND_WIDTH,
+        height: end.y - start.y,
+      };
+}
+
+export function isPointInEdgeBand(
+  board: BridgesBoard,
+  edge: number,
+  { x, y }: BoardPoint,
+): boolean {
+  const band = getEdgeBand(board, edge);
+  return (
+    x >= band.x &&
+    x <= band.x + band.width &&
+    y >= band.y &&
+    y <= band.y + band.height
+  );
+}
+
 /** 橋の本数ぶんの線を、辺の中心線から横へずらす量。1本は中心線の上、2本は中心線を挟んだ平行な2線。 */
 export function getBridgeLineOffsets(count: BridgeCount): readonly number[] {
   if (count === 0) return [];
