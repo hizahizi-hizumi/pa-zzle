@@ -17,7 +17,10 @@ import {
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import { countBridgesSolutions } from "@/games/bridges/problem/generation/exact-solver";
 import { measureBridgesSolveWorkload } from "@/games/bridges/problem/workload";
-import { selectBridgesProblemForDifficulty } from "@/games/bridges/problem-selection";
+import {
+  selectBridgesProblemById,
+  selectBridgesProblemForDifficulty,
+} from "@/games/bridges/problem-selection";
 import {
   bridgesDirections,
   findBridgesEdgeToward,
@@ -27,6 +30,7 @@ import { createProblemId } from "@/games/problem-id";
 import { readPlayAttempts } from "@/records/play-attempt-storage";
 import { readPlayRecords } from "@/records/storage";
 import { BridgesPlayView } from "@/views/BridgesPlayView";
+import { PlayResultView } from "@/views/PlayResultView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
 const problemSeed = "bridges-play-view";
@@ -53,10 +57,6 @@ function LocationSearch() {
   return <output aria-label="URL のクエリ">{useLocation().search}</output>;
 }
 
-function LocationPath() {
-  return <output aria-label="URL のパス">{useLocation().pathname}</output>;
-}
-
 function renderAt(path: string): void {
   render(
     <MemoryRouter initialEntries={[path]}>
@@ -73,7 +73,7 @@ function renderAt(path: string): void {
         <Route path="/puzzles/bridges" element={<p>ゲームのホーム画面</p>} />
         <Route
           path="/puzzles/:game/result/:recordId"
-          element={<LocationPath />}
+          element={<PlayResultView />}
         />
       </Routes>
     </MemoryRouter>,
@@ -90,6 +90,7 @@ function renderRouterAt(path: string): PlayRouter {
         element: <BridgesPlayView />,
       },
       { path: "/puzzles/bridges", element: <p>ゲームのホーム画面</p> },
+      { path: "/puzzles/:game/result/:recordId", element: <PlayResultView /> },
     ],
     { initialEntries: [path] },
   );
@@ -208,18 +209,22 @@ function solveAllButLast(): void {
   }
 }
 
+/** 盤面を1マス `cellPixels` の大きさで置く。 */
+function placeBoard(): void {
+  vi.spyOn(getBoard(), "getBoundingClientRect").mockReturnValue(
+    new DOMRect(0, 0, problem.width * cellPixels, problem.height * cellPixels),
+  );
+}
+
+function getResultScreen() {
+  return within(screen.getByRole("region", { name: "プレイ結果" }));
+}
+
 describe("BridgesPlayView", () => {
   describe("定義済みの難易度の場合", () => {
     beforeEach(() => {
       renderAt("/puzzles/bridges/play/5");
-      vi.spyOn(getBoard(), "getBoundingClientRect").mockReturnValue(
-        new DOMRect(
-          0,
-          0,
-          problem.width * cellPixels,
-          problem.height * cellPixels,
-        ),
-      );
+      placeBoard();
     });
 
     test("橋の無い盤面と、その問題 ID の URL を示すこと", () => {
@@ -362,13 +367,28 @@ describe("BridgesPlayView", () => {
           });
         });
 
-        test("保存した記録の結果画面へ移ること", () => {
-          const path = screen.getByRole("status", { name: "URL のパス" });
-          const [record] = readPlayRecords();
+        test("保存した記録の結果画面で難易度とスコアを示すこと", () => {
+          const resultScreen = getResultScreen();
 
-          expect(path.textContent).toBe(
-            `/puzzles/bridges/result/${encodeURIComponent(record?.id ?? "")}`,
-          );
+          expect(resultScreen.getByText("レベル 5")).toBeTruthy();
+          expect(
+            resultScreen.getByRole("region", { name: "スコア" }),
+          ).toBeTruthy();
+        });
+
+        describe("同じ問題をもう一度解いた場合", () => {
+          beforeEach(() => {
+            fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+            placeBoard();
+            solveAllButLast();
+            tapBetween(getEdgeEnds(lastEdge));
+          });
+
+          test("もう1件の記録として保存すること", () => {
+            const records = readPlayRecords();
+
+            expect(records).toHaveLength(2);
+          });
         });
       });
     });
@@ -391,6 +411,51 @@ describe("BridgesPlayView", () => {
           inputCount: 1,
         });
       });
+    });
+  });
+
+  describe("全部の橋を架けて記録を保存した場合", () => {
+    let router: PlayRouter;
+
+    beforeEach(() => {
+      router = renderRouterAt("/puzzles/bridges/play/5");
+      placeBoard();
+      solveAllButLast();
+      tapBetween(getEdgeEnds(lastEdge));
+    });
+
+    test("記録の結果画面のパスへ履歴を置き換えて移ること", () => {
+      const [record] = readPlayRecords();
+
+      expect(router.state.location.pathname).toBe(
+        `/puzzles/bridges/result/${encodeURIComponent(record?.id ?? "")}`,
+      );
+      expect(router.state.historyAction).toBe("REPLACE");
+      expect(getResultScreen().getByText("レベル 5")).toBeTruthy();
+    });
+  });
+
+  describe("URL の問題 ID で問題を指定した場合", () => {
+    const { identity: requestedIdentity } = selectBridgesProblemForDifficulty(
+      "4",
+      "requested-problem",
+    );
+    const problemId = createProblemId(requestedIdentity);
+    const requested = selectBridgesProblemById("4", problemId)!;
+
+    beforeEach(() => {
+      renderAt(`/puzzles/bridges/play/4?problem=${problemId}`);
+    });
+
+    test("その問題で始めること", () => {
+      const board = screen.getByRole("group", {
+        name: `${BRIDGES_DISPLAY_NAME}盤面 ${requested.problem.height}行${requested.problem.width}列`,
+      });
+      const islandCount = within(board).getAllByRole("button").length;
+      const search = screen.getByRole("status", { name: "URL のクエリ" });
+
+      expect(islandCount).toBe(requested.problem.islands.length);
+      expect(search.textContent).toBe(`?problem=${problemId}`);
     });
   });
 

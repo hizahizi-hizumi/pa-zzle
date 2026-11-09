@@ -88,11 +88,15 @@ describe("BridgesPlay", () => {
     return screen.getByRole("group", { name: boardName });
   }
 
-  /** 盤面を1マス 100px で置き、島0 と島1 の間（辺0）の線の上を押す。 */
-  function tapBetweenFirstIslands(): void {
+  /** 盤面を1マス 100px で置く。 */
+  function placeBoard(): void {
     vi.spyOn(getBoardGroup(), "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 500, 500),
     );
+  }
+
+  /** 島0 と島1 の間（辺0）の線の上を押す。 */
+  function tapBetweenFirstIslands(): void {
     fireEvent.pointerDown(getBoardGroup(), {
       pointerId: 1,
       pointerType: "touch",
@@ -109,6 +113,7 @@ describe("BridgesPlay", () => {
   describe("完成演出中の場合", () => {
     beforeEach(() => {
       renderPlay({ progress: "clearing" });
+      placeBoard();
     });
 
     test("盤面を見せ、結果画面をまだ出さないこと", () => {
@@ -129,6 +134,7 @@ describe("BridgesPlay", () => {
   describe("プレイ中の場合", () => {
     beforeEach(() => {
       renderPlay({ progress: "playing", result: null });
+      placeBoard();
     });
 
     test("島と島の間を押すと、その辺の橋を回す操作を通知すること", () => {
