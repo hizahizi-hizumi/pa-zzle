@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { createRecordResultLocationState } from "@/game-catalog/record-result-location-state";
-import type { Issue690BoardSnapshot } from "@/games/issue690-board-snapshot";
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import { useNavigate } from "@/router";
@@ -16,7 +15,6 @@ export function useRecordResultNavigation(
   resultReached: boolean,
   record: PlayRecord | null,
   recordOutcome: PlayRecordSaveOutcome | null,
-  issue690BoardSnapshot?: Issue690BoardSnapshot,
 ): boolean {
   const navigate = useNavigate();
   const navigatesToRecordResult =
@@ -35,12 +33,9 @@ export function useRecordResultNavigation(
     navigate("/puzzles/:game/result/:recordId", {
       params: { game: record.gameId, recordId: record.id },
       replace: true,
-      state: createRecordResultLocationState(
-        recordOutcome,
-        issue690BoardSnapshot,
-      ),
+      state: createRecordResultLocationState(recordOutcome),
     });
-  }, [navigate, record, recordOutcome, resultReached, issue690BoardSnapshot]);
+  }, [navigate, record, recordOutcome, resultReached]);
 
   return navigatesToRecordResult;
 }

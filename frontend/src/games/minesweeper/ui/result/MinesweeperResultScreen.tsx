@@ -6,7 +6,6 @@ import {
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
-import minesweeperPictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
@@ -22,7 +21,7 @@ type MinesweeperResultScreenProps = GamePlayResultScreenProps<
 export function MinesweeperResultScreen({
   difficulty,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -32,13 +31,12 @@ export function MinesweeperResultScreen({
     <GameResultScreen
       gameName={MINESWEEPER_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      pictogramSvg={minesweeperPictogramSvg}
       score={result.score.total}
       metrics={[
         createElapsedTimeMetric(result),
-        createCountMetric("ミス", result.mistakeCount, "回"),
+        createCountMetric("ミス", result.mistakeCount, "回", "mistake-count"),
       ]}
-      recordOutcomeNotice={recordOutcomeNotice}
+      recordFeedback={recordFeedback}
       scoreBreakdown={[
         ...listScoreBreakdownMetrics(result.score, MINESWEEPER_SCORE_MAXIMUMS),
         createSpeedFullScoreMetric(result.speedRule),

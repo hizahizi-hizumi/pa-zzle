@@ -8,7 +8,6 @@ import {
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
 import type { GamePlayResultScreenProps } from "@/games/play";
-import takuzuPictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
 import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
@@ -23,7 +22,7 @@ type TakuzuResultScreenProps = GamePlayResultScreenProps<
 export function TakuzuResultScreen({
   difficulty,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -33,14 +32,18 @@ export function TakuzuResultScreen({
     <GameResultScreen
       gameName={TAKUZU_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      pictogramSvg={takuzuPictogramSvg}
       score={result.score.total}
       metrics={[
         createElapsedTimeMetric(result),
-        createCountMetric("置き直し", result.correctionCount, "回"),
+        createCountMetric(
+          "置き直し",
+          result.correctionCount,
+          "回",
+          "correction-count",
+        ),
         createOperationCountMetric("undo", result.undoCount),
       ]}
-      recordOutcomeNotice={recordOutcomeNotice}
+      recordFeedback={recordFeedback}
       scoreBreakdown={[
         ...listScoreBreakdownMetrics(result.score, TAKUZU_SCORE_MAXIMUMS),
         createOperationCountMetric("restart", result.restartCount),

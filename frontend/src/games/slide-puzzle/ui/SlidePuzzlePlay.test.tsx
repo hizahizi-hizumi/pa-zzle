@@ -60,7 +60,7 @@ describe("SlidePuzzlePlay", () => {
         canRestart
         operation={null}
         result={progress === "playing" ? null : result}
-        recordOutcomeNotice={null}
+        recordFeedback={{ kind: "none" }}
         {...callbacks}
       />,
     );
@@ -218,11 +218,11 @@ describe("SlidePuzzlePlay", () => {
     });
 
     test("スコアと手数・時間を基準との差つきで表示すること", () => {
-      const score = screen.getByText("77");
+      const score = screen.getByText("77点（100点満点）");
       const moveCount = screen.getByText("42手");
-      const moveDelta = screen.getByText("最短 +12");
+      const moveDelta = screen.getByLabelText("最短手数より多い +12");
       const elapsedTime = screen.getByText("01:20");
-      const timeDelta = screen.getByText("基準 +00:10");
+      const timeDelta = screen.getByLabelText("基準時間より長い +00:10");
 
       expect(score).toBeTruthy();
       expect(moveCount).toBeTruthy();
@@ -253,9 +253,7 @@ describe("SlidePuzzlePlay", () => {
     );
 
     test("スコアの内訳と採点基準を開けること", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "採点内訳" }));
 
       const efficiency = screen.getByText("43 / 60");
       const speed = screen.getByText("34 / 40");

@@ -9,7 +9,6 @@ import {
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
 import type { GamePlayResultScreenProps } from "@/games/play";
-import slidePuzzlePictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
@@ -24,7 +23,7 @@ type SlidePuzzleResultScreenProps = GamePlayResultScreenProps<
 export function SlidePuzzleResultScreen({
   difficulty,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -34,10 +33,9 @@ export function SlidePuzzleResultScreen({
     <GameResultScreen
       gameName={SLIDE_PUZZLE_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      pictogramSvg={slidePuzzlePictogramSvg}
       score={result.score.total}
       metrics={[createMoveCountMetric(result), createElapsedTimeMetric(result)]}
-      recordOutcomeNotice={recordOutcomeNotice}
+      recordFeedback={recordFeedback}
       scoreBreakdown={[
         ...listScoreBreakdownMetrics(result.score, SLIDE_PUZZLE_SCORE_MAXIMUMS),
         createCountMetric("最短手数", result.optimalMoveCount, "手"),

@@ -1,8 +1,6 @@
-import { useMemo } from "react";
 import { nanpureCatalogEntry } from "@/game-catalog/nanpure/nanpure-catalog-entry";
 import { usePlayableGame } from "@/game-catalog/playable-game";
 import { useRequestedProblem } from "@/game-catalog/problem-id-query";
-import type { Issue690BoardSnapshot } from "@/games/issue690-board-snapshot";
 import { createNanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
@@ -30,20 +28,7 @@ export function PlayableNanpure({
     selectNanpureProblemById(difficulty, problemId),
   );
   const play = useNanpurePlay(difficulty, requestedProblem, avoidedProblemId);
-  const issue690BoardSnapshot = useMemo<
-    Issue690BoardSnapshot | undefined
-  >(() => {
-    if (play.status !== "cleared") return undefined;
-    return {
-      gameId: "nanpure",
-      board: play.board,
-      clues: play.clues,
-      lastCellIndex: play.selectedCellIndex,
-      reconstructed: false,
-    };
-  }, [play.status, play.board, play.clues, play.selectedCellIndex]);
   const { screenProps, diagnostics } = usePlayableGame({
-    issue690BoardSnapshot,
     game: nanpureCatalogEntry,
     play,
     playRecordDefinition: nanpurePlayRecordDefinition,

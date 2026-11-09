@@ -42,7 +42,7 @@ export function SlidePuzzlePlay({
   progress,
   elapsedMs,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   board,
   moveCount,
   operation,
@@ -117,7 +117,7 @@ export function SlidePuzzlePlay({
         <SlidePuzzleResultScreen
           difficulty={difficulty}
           result={clearedResult}
-          recordOutcomeNotice={recordOutcomeNotice}
+          recordFeedback={recordFeedback}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}

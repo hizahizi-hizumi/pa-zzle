@@ -1,0 +1,602 @@
+.result-screen {
+  --result-award: var(--grade-great-ink);
+  --result-award-soft: var(--grade-great);
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  isolation: isolate;
+  width: 100%;
+  max-width: 650px;
+  min-height: 0;
+  margin: 0 auto;
+  overflow: hidden;
+  padding: 9px max(22px, env(safe-area-inset-left))
+    max(12px, env(safe-area-inset-bottom)) 9px
+    max(22px, env(safe-area-inset-right));
+  color: var(--foreground);
+
+  --result-motion-score-progress: 1250ms 400ms var(--ease-celebrate);
+  --result-motion-atmosphere: 2600ms cubic-bezier(0.16, 0.68, 0.18, 1);
+  --result-motion-feedback: 650ms 1500ms var(--ease-celebrate);
+  --result-motion-daybreak: 2450ms cubic-bezier(0.16, 0.7, 0.27, 1);
+  --result-motion-veil: 2200ms 160ms ease-out;
+  --result-motion-title: 1000ms 120ms cubic-bezier(0.12, 0.86, 0.22, 1);
+  --result-motion-score: 1250ms 360ms cubic-bezier(0.11, 0.84, 0.18, 1);
+  --result-motion-pulse: 1950ms 120ms cubic-bezier(0.15, 0.7, 0.24, 1);
+  --result-motion-second-pulse-delay: 390ms;
+}
+
+.result-screen[data-level="clear"] {
+  --result-award: var(--grade-clear-ink);
+  --result-award-soft: var(--grade-clear);
+}
+
+.result-screen[data-level="good"] {
+  --result-award: var(--grade-good-ink);
+  --result-award-soft: var(--grade-good);
+}
+
+.result-screen[data-level="perfect"] {
+  --result-award: var(--grade-perfect-ink);
+  --result-award-soft: var(--grade-perfect);
+}
+
+.result-theater {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.result-grade {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-grade-name {
+  display: block;
+  color: var(--result-award);
+  font-family: var(--font-ui);
+  font-size: clamp(35px, 9vw, 56px);
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  line-height: 1.22;
+  white-space: nowrap;
+}
+
+.result-grade-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 1px;
+  line-height: 1;
+}
+
+.result-grade-score b {
+  color: var(--result-award);
+  font-family: var(--font-ui);
+  font-size: clamp(75px, 21vw, 116px);
+  font-weight: 850;
+  letter-spacing: -0.09em;
+  line-height: 1.05;
+}
+
+.result-grade-score small {
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--muted-foreground);
+}
+
+.result-grade-progress {
+  position: relative;
+  width: min(154px, 48vw);
+  height: 3px;
+  margin: 13px auto 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--result-award) 16%, transparent);
+  overflow: hidden;
+}
+
+.result-grade-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--result-award);
+  transform-origin: left center;
+  animation: result-06-score-progress var(--result-motion-score-progress) both;
+}
+
+.result-grade-progress-end {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2px;
+  height: 3px;
+  background: color-mix(in srgb, var(--result-award) 35%, transparent);
+}
+
+.result-screen::before {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 75% 58% at 50% 45%,
+    color-mix(in srgb, var(--result-award-soft) 24%, var(--background)),
+    transparent 92%
+  );
+  opacity: 0.58;
+  animation: result-06-atmosphere var(--result-motion-atmosphere) both;
+}
+
+.result-quiet-heading {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  gap: 8px;
+}
+
+.result-quiet-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 10px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
+
+.result-quiet-game {
+  color: var(--foreground);
+  font-weight: 650;
+}
+
+.result-quiet-metrics {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  margin-top: clamp(16px, 3svh, 32px);
+}
+
+.result-metrics {
+  display: flex;
+  justify-content: center;
+  gap: clamp(18px, 6vw, 40px);
+  margin: 0;
+  padding: 0;
+}
+
+.result-metrics > div {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0;
+  text-align: center;
+}
+
+.result-metrics dt {
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.result-screen .result-metric-comparison {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-screen .result-metric-comparison svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2;
+}
+
+.result-metrics dd {
+  margin-top: 5px;
+  color: var(--foreground);
+  font-size: 17px;
+  font-weight: 720;
+  line-height: 1.2;
+}
+
+.result-metrics dd:last-child:not(:first-of-type) {
+  margin-top: 3px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 450;
+}
+
+.result-screen .result-metrics .result-metric-best {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--result-award);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.result-screen .result-metric-best svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+
+.result-grade-best {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 9px;
+  color: var(--result-award);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  animation: result-06-feedback var(--result-motion-feedback) both;
+}
+
+.result-screen .result-grade-best svg {
+  width: 15px;
+  height: 15px;
+}
+
+.result-quiet-moment {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.result-quiet-moment .result-theater {
+  flex: 0 1 100%;
+  min-height: 0;
+  height: 100%;
+}
+
+.result-ambient-daybreak {
+  position: absolute;
+  z-index: -1;
+  width: min(96vw, 640px);
+  height: 122%;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    color-mix(in srgb, var(--result-award-soft) 29%, var(--background)) 0%,
+    transparent 71%
+  );
+  transform: translate(-50%, -50%);
+  animation: result-06-daybreak var(--result-motion-daybreak) both;
+}
+
+.result-ambient-veil {
+  position: absolute;
+  z-index: -1;
+  inset: 6% -12%;
+  background: linear-gradient(
+    115deg,
+    transparent 12%,
+    color-mix(in srgb, var(--result-award) 8%, transparent) 42%,
+    transparent 74%
+  );
+  filter: blur(16px);
+  animation: result-06-veil var(--result-motion-veil) both;
+}
+
+.result-theater .result-grade {
+  transform: translateZ(0);
+}
+
+.result-theater .result-grade-name {
+  font-size: clamp(42px, 10.8vw, 70px);
+  animation: result-06-title var(--result-motion-title) both;
+}
+
+.result-theater .result-grade-score {
+  margin-top: 4px;
+  animation: result-06-score var(--result-motion-score) both;
+}
+
+.result-theater .result-grade-score b {
+  font-size: clamp(105px, 27vw, 150px);
+}
+
+.result-ambient-pulse {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: min(65vw, 300px);
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--result-award) 34%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: result-06-pulse var(--result-motion-pulse) both;
+}
+
+.result-ambient-pulse--second {
+  animation-delay: var(--result-motion-second-pulse-delay);
+}
+
+.result-screen[data-level="clear"] .result-ambient-pulse {
+  border-color: color-mix(in srgb, var(--result-award) 17%, transparent);
+}
+
+.result-screen[data-level="perfect"] .result-ambient-pulse {
+  border-width: 2px;
+}
+
+.result-quiet-feedback {
+  position: absolute;
+  z-index: 2;
+  top: calc(50% + clamp(112px, 15svh, 145px));
+  left: max(22px, env(safe-area-inset-left));
+  right: max(22px, env(safe-area-inset-right));
+  text-align: center;
+}
+
+/* Result feedback is a compact achievement, not a second score table. */
+.result-quiet-feedback .result-record-note {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  min-height: 0;
+  text-align: center;
+}
+
+.result-record-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--result-award);
+}
+
+.result-record-heading .result-record-award {
+  width: 21px;
+  height: 21px;
+  stroke-width: 1.75;
+}
+
+.result-record-title {
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.result-record-note.is-failed .result-record-heading {
+  color: var(--color-error, var(--destructive));
+}
+
+.result-record-detail {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.result-quiet-feedback .result-record-note.is-first {
+  animation: result-06-feedback var(--result-motion-feedback) both;
+}
+
+.result-quiet-footer {
+  position: relative;
+  z-index: 5;
+  flex: none;
+  margin-top: auto;
+  padding-bottom: clamp(6px, 1.5svh, 14px);
+}
+
+@keyframes result-06-score-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes result-06-atmosphere {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  48% {
+    opacity: 0.95;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0.58;
+    transform: scale(1);
+  }
+}
+
+@keyframes result-06-daybreak {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.16);
+  }
+  46% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.12);
+  }
+  100% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes result-06-veil {
+  0% {
+    opacity: 0;
+    transform: translateX(-48%);
+  }
+  48% {
+    opacity: 0.86;
+    transform: translateX(10%);
+  }
+  100% {
+    opacity: 0.2;
+    transform: translateX(30%);
+  }
+}
+
+@keyframes result-06-pulse {
+  0%,
+  12% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.28);
+  }
+  28% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.3);
+  }
+}
+
+@keyframes result-06-title {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.77);
+    filter: blur(7px);
+  }
+  62% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1.065);
+    filter: blur(0);
+  }
+  82% {
+    transform: translateY(2px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes result-06-score {
+  0%,
+  14% {
+    opacity: 0;
+    transform: translateY(22px) scale(0.82);
+  }
+  64% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.065);
+  }
+  82% {
+    transform: translateY(2px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes result-06-feedback {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.dark .result-ambient-daybreak {
+  background: radial-gradient(
+    ellipse,
+    color-mix(in srgb, var(--result-award) 13%, var(--background)) 3%,
+    transparent 70%
+  );
+}
+
+@media (max-height: 740px) {
+  .result-screen {
+    padding-top: 4px;
+    padding-bottom: 6px;
+  }
+  .result-quiet-metrics {
+    margin-top: 18px;
+  }
+  .result-quiet-feedback {
+    top: calc(50% + 105px);
+  }
+}
+
+@media (max-height: 600px) {
+  .result-quiet-metrics {
+    margin-top: 10px;
+  }
+  .result-quiet-moment {
+    transform: translateY(-10px);
+  }
+  .result-quiet-feedback {
+    top: calc(50% + 76px);
+  }
+  .result-quiet-feedback .result-record-note {
+    gap: 3px;
+  }
+  .result-grade-best {
+    margin-top: 4px;
+  }
+  .result-screen .result-metric-best {
+    font-size: 10px;
+  }
+  .result-screen .result-grade-name {
+    font-size: 37px;
+  }
+  .result-screen .result-grade-score b {
+    font-size: 93px;
+  }
+}
+
+@media (min-width: 850px) {
+  .result-quiet-feedback {
+    top: calc(50% + 160px);
+  }
+  .result-screen {
+    max-width: 780px;
+    padding: 24px 46px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-screen *,
+  .result-screen *::before,
+  .result-screen *::after,
+  .result-screen::before {
+    animation: none !important;
+  }
+  .result-theater .result-ambient-daybreak {
+    opacity: 0.7;
+  }
+  .result-ambient-pulse {
+    display: none;
+  }
+}

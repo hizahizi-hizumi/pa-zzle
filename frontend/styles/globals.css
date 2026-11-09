@@ -82,6 +82,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-grade-clear: var(--grade-clear);
+  --color-grade-clear-ink: var(--grade-clear-ink);
+  --color-grade-good: var(--grade-good);
+  --color-grade-good-ink: var(--grade-good-ink);
+  --color-grade-great: var(--grade-great);
+  --color-grade-great-ink: var(--grade-great-ink);
+  --color-grade-perfect: var(--grade-perfect);
+  --color-grade-perfect-ink: var(--grade-perfect-ink);
   --radius-*: initial;
   --radius-sm: 1px;
   --radius-md: 2px;
@@ -91,6 +99,14 @@
 
 :root {
   --brand: #cbd1d8;
+  --grade-clear: #b6d9ea;
+  --grade-clear-ink: #3e758f;
+  --grade-good: #7fb4d8;
+  --grade-good-ink: #2e6791;
+  --grade-great: #4d84c2;
+  --grade-great-ink: #2f62a0;
+  --grade-perfect: #6550a1;
+  --grade-perfect-ink: #6550a1;
   --brand-subtle: #eef1f4;
   --brand-strong: #aeb8c2;
   --brand-foreground: #27313a;
@@ -130,6 +146,14 @@
 }
 
 .dark {
+  --grade-clear: #304f6b;
+  --grade-clear-ink: #9ed5ed;
+  --grade-good: #3974a0;
+  --grade-good-ink: #85bfe5;
+  --grade-great: #5886cd;
+  --grade-great-ink: #8cabed;
+  --grade-perfect: #9f8cdd;
+  --grade-perfect-ink: #baabeb;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);

@@ -10,7 +10,7 @@ import { MemoryRouter } from "react-router";
 import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
 
 /** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
 function render(ui: ReactElement) {
@@ -35,7 +35,7 @@ const baseProps = {
   sourceBottleIndex: null,
   operation: null,
   result: null,
-  recordOutcomeNotice: null,
+  recordFeedback: { kind: "none" } as const,
   onSelectBottle: vi.fn(),
   onUndo: vi.fn(),
   canRestart: true,
@@ -362,15 +362,15 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("01:05")).toBeTruthy();
     expect(screen.getByText("手数")).toBeTruthy();
     expect(screen.getByText("12手")).toBeTruthy();
-    expect(screen.getByText("最短 +2")).toBeTruthy();
-    expect(screen.getByText("基準 +00:01")).toBeTruthy();
+    expect(screen.getByLabelText("最短手数より多い +2")).toBeTruthy();
+    expect(screen.getByLabelText("基準時間より長い +00:01")).toBeTruthy();
     expect(screen.queryByText("手戻り")).toBeNull();
-    expect(screen.getByText("スコア")).toBeTruthy();
-    expect(screen.getByText("87")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "スコア" })).toBeTruthy();
+    expect(screen.getByText("87点（100点満点）")).toBeTruthy();
     expect(screen.getByText("ナイスプレイ！")).toBeTruthy();
     expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
     expect(screen.getByText("/ 100")).toBeTruthy();
-    fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
+    fireEvent.click(screen.getByText("採点内訳"));
     expect(screen.getByText("手戻り")).toBeTruthy();
     expect(screen.getByText("2手")).toBeTruthy();
     expect(screen.getByText("待った")).toBeTruthy();
@@ -420,7 +420,7 @@ describe("WaterSortPlay", () => {
       />,
     );
     expect(screen.getByText("パーフェクト！")).toBeTruthy();
-    expect(screen.getByText("100")).toBeTruthy();
+    expect(screen.getByText("100点（100点満点）")).toBeTruthy();
   });
 
   test("最後の注水演出が完了してから結果画面を表示すること", async () => {
@@ -530,28 +530,26 @@ describe("WaterSortPlay", () => {
             breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
           },
         })}
-        recordOutcomeNotice={
-          <PlayRecordOutcomeNotice
-            outcome={{
-              status: "updated",
-              updates: [
-                {
-                  metricId: "play-score",
-                  previousValue: 92,
-                  currentValue: 100,
-                },
-              ],
-            }}
-            display={waterSortPlayRecordDisplay}
-          />
-        }
+        recordFeedback={createResultRecordFeedback(
+          {
+            status: "updated",
+            updates: [
+              {
+                metricId: "play-score",
+                previousValue: 92,
+                currentValue: 100,
+              },
+            ],
+          },
+          waterSortPlayRecordDisplay,
+        )}
       />,
     );
 
-    const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
-
-    expect(bestUpdate.textContent).toContain("スコア");
-    expect(bestUpdate.textContent).toContain("92点");
-    expect(bestUpdate.textContent).toContain("100点");
+    const score = screen.getByRole("region", { name: "スコア" });
+    expect(score.getAttribute("aria-label")).toBe("スコア");
+    expect(
+      screen.getByLabelText("スコアの自己ベスト更新：92点から100点、+8点"),
+    ).toBeTruthy();
   });
 });

@@ -34,9 +34,7 @@ export function useRecordedGameResult<
     difficulty,
     problemIdentity,
     result,
-    recordOutcomeNotice,
-    issue690RecordSummary,
-    issue690BoardSnapshot,
+    recordFeedback,
     onReplay,
     navigation,
   }: RecordedGameResultProps<Difficulty, Identity, Result>,
@@ -52,9 +50,7 @@ export function useRecordedGameResult<
     screenProps: {
       difficulty,
       result,
-      recordOutcomeNotice,
-      issue690RecordSummary,
-      issue690BoardSnapshot,
+      recordFeedback,
       onReplay,
       onStartNewProblem: startNewProblem,
       onOpenGameHome() {

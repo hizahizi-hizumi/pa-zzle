@@ -8,7 +8,6 @@ import {
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
-import iceFloorMazePictogramSvg from "@/games/ice-floor-maze/assets/pictogram.svg?raw";
 import type { IceFloorMazeDifficulty } from "@/games/ice-floor-maze/difficulty";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
 import type { IceFloorMazeResult } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
@@ -24,7 +23,7 @@ type IceFloorMazeResultScreenProps = GamePlayResultScreenProps<
 export function IceFloorMazeResultScreen({
   difficulty,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -34,10 +33,9 @@ export function IceFloorMazeResultScreen({
     <GameResultScreen
       gameName={ICE_FLOOR_MAZE_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      pictogramSvg={iceFloorMazePictogramSvg}
       score={result.score.total}
       metrics={[createMoveCountMetric(result), createElapsedTimeMetric(result)]}
-      recordOutcomeNotice={recordOutcomeNotice}
+      recordFeedback={recordFeedback}
       scoreBreakdown={[
         ...listScoreBreakdownMetrics(
           result.score,

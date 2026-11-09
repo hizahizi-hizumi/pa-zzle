@@ -36,7 +36,7 @@ const result: TsumeShogiResult = {
 };
 
 const handlers = {
-  recordOutcomeNotice: null,
+  recordFeedback: { kind: "none" } as const,
   onReplay: vi.fn(),
   onStartNewProblem: vi.fn(),
   onOpenGameHome: vi.fn(),
@@ -82,14 +82,12 @@ describe("TsumeShogiResultScreen", () => {
       render(
         <TsumeShogiResultScreen difficulty="1" result={result} {...handlers} />,
       );
-      fireEvent.click(
-        screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "採点内訳" }));
     });
 
     test("時間と基準時間との差・誤王手の回数を主要成績に示すこと", () => {
       const elapsed = screen.getByText("00:30");
-      const delta = screen.getByText("基準 +00:08");
+      const delta = screen.getByLabelText("基準時間より長い +00:08");
       const wrongCheckLabel = screen.getAllByText("誤王手");
 
       expect(elapsed).toBeTruthy();

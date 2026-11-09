@@ -61,7 +61,7 @@ export function ReflectionPlay({
   progress,
   elapsedMs,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   board,
   clues,
   inventory,
@@ -156,7 +156,7 @@ export function ReflectionPlay({
         <ReflectionResultScreen
           difficulty={difficulty}
           result={clearedResult}
-          recordOutcomeNotice={recordOutcomeNotice}
+          recordFeedback={recordFeedback}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}

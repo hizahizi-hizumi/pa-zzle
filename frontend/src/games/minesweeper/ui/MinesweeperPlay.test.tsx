@@ -9,7 +9,7 @@ import { MemoryRouter } from "react-router";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import { MinesweeperPlay } from "@/games/minesweeper/ui/MinesweeperPlay";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
 
 /** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
 function render(ui: ReactElement) {
@@ -59,7 +59,7 @@ describe("MinesweeperPlay", () => {
           visibleCells={visibleCells}
           progress="playing"
           result={null}
-          recordOutcomeNotice={null}
+          recordFeedback={{ kind: "none" }}
           operation={null}
           onRevealCell={onRevealCell}
           onToggleFlag={onToggleFlag}
@@ -225,7 +225,7 @@ describe("MinesweeperPlay", () => {
           ]}
           progress="playing"
           result={null}
-          recordOutcomeNotice={null}
+          recordFeedback={{ kind: "none" }}
           operation={null}
           onRevealCell={vi.fn()}
           onToggleFlag={vi.fn()}
@@ -273,7 +273,7 @@ describe("MinesweeperPlay", () => {
           visibleCells={visibleCells}
           progress="playing"
           result={null}
-          recordOutcomeNotice={null}
+          recordFeedback={{ kind: "none" }}
           operation={null}
           onRevealCell={onRevealCell}
           onToggleFlag={onToggleFlag}
@@ -383,25 +383,27 @@ describe("MinesweeperPlay", () => {
     test("共通の結果階層で採点結果と主要成績を表示すること", () => {
       const brand = screen.getByRole("img", { name: "pa-zzle" });
       const heading = screen.getByRole("heading", { name: "プレイ結果" });
-      const pictogram = document.querySelector(
-        'svg[aria-label="マインスイーパー"]',
-      );
+
       const difficulty = screen.getByText("レベル 1");
-      const score = screen.getByText("77");
-      const timeMetric = screen.getByText("時間").parentElement;
-      const mistakeMetric = screen.getByText("ミス").parentElement;
+      const score = screen.getByText("77点（100点満点）");
+      const timeMetric = screen
+        .getByText("時間")
+        .closest(".result-quiet-metric");
+      const mistakeMetric = screen
+        .getByText("ミス")
+        .closest(".result-quiet-metric");
 
       expect(brand).toBeTruthy();
       expect(heading).toBeTruthy();
-      expect(pictogram).toBeTruthy();
+
       expect(difficulty).toBeTruthy();
       expect(score).toBeTruthy();
-      expect(timeMetric?.textContent).toBe("時間00:25基準 +00:04");
+      expect(timeMetric?.textContent).toBe("時間00:25基準差 +00:04");
       expect(mistakeMetric?.textContent).toBe("ミス1回");
     });
 
     test("スコアの内訳と採点基準を開けること", () => {
-      fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
+      fireEvent.click(screen.getByText("採点内訳"));
 
       expect(screen.getByText("45 / 60")).toBeTruthy();
       expect(screen.getByText("32 / 40")).toBeTruthy();
@@ -442,32 +444,31 @@ describe("MinesweeperPlay", () => {
       render(
         <MinesweeperPlay
           {...createResultProps()}
-          recordOutcomeNotice={
-            <PlayRecordOutcomeNotice
-              outcome={{
-                status: "updated",
-                updates: [
-                  {
-                    metricId: "time-delta-ms",
-                    previousValue: 9_000,
-                    currentValue: 4_000,
-                  },
-                ],
-              }}
-              display={minesweeperPlayRecordDisplay}
-            />
-          }
+          recordFeedback={createResultRecordFeedback(
+            {
+              status: "updated",
+              updates: [
+                {
+                  metricId: "time-delta-ms",
+                  previousValue: 9_000,
+                  currentValue: 4_000,
+                },
+              ],
+            },
+            minesweeperPlayRecordDisplay,
+          )}
         />,
       );
     });
 
     test("採点結果に続けて更新した指標と前後の値を表示すること", () => {
-      const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
-
-      expect(bestUpdate.textContent).toContain("基準時間との差");
-      expect(bestUpdate.textContent).toContain("+00:09");
-      expect(bestUpdate.textContent).toContain("+00:04");
-      expect(bestUpdate.textContent).toContain("5秒短縮");
+      const bestUpdate =
+        screen.getByLabelText(/基準時間との差の自己ベスト更新/);
+      expect(bestUpdate).toBeTruthy();
+      expect(bestUpdate.getAttribute("aria-label")).toContain(
+        "+00:09から+00:04",
+      );
+      expect(bestUpdate.getAttribute("aria-label")).toContain("5秒短縮");
     });
   });
 
@@ -517,7 +518,7 @@ function createResultProps(): ComponentProps<typeof MinesweeperPlay> {
       timeDeltaMs: 4_000,
       score: { total: 77, breakdown: { accuracy: 45, speed: 32 } },
     },
-    recordOutcomeNotice: null,
+    recordFeedback: { kind: "none" } as const,
     operation: null,
     onRevealCell: vi.fn(),
     onToggleFlag: vi.fn(),

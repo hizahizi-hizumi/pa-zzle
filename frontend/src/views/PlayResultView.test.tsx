@@ -81,7 +81,7 @@ describe("今の版の記録の場合", () => {
   });
 
   test("保存結果の state が無いと自己ベスト更新を告知しないこと", () => {
-    const bestUpdate = screen.queryByRole("region", { name: "自己ベスト更新" });
+    const bestUpdate = screen.queryByLabelText(/自己ベスト更新/);
 
     expect(bestUpdate).toBeNull();
   });
@@ -133,9 +133,9 @@ describe("自己ベスト更新の保存結果を state に持つ場合", () => 
   });
 
   test("自己ベスト更新を告知すること", () => {
-    const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
+    const bestUpdate = screen.getByLabelText(/スコアの自己ベスト更新/);
 
-    expect(bestUpdate.textContent).toContain("+10点");
+    expect(bestUpdate.getAttribute("aria-label")).toContain("+10点");
   });
 });
 
@@ -167,6 +167,10 @@ const unrenderableRecord: PlayRecord = {
 };
 const unrenderableCases = [
   ["存在しない記録 ID", "/puzzles/nanpure/result/missing"],
+  [
+    "以前の比較サンプル ID",
+    "/puzzles/nanpure/result/issue690-comparison-sample",
+  ],
   ["結果を作れない版の記録", createResultPath(unrenderableRecord)],
 ] as const;
 
@@ -185,26 +189,4 @@ describe.each(unrenderableCases)("%sの場合", (_, path) => {
     expect(heading).toBeTruthy();
     expect(backLink.getAttribute("href")).toBe("/records");
   });
-});
-
-describe("#690の比較用結果URLの場合", () => {
-  beforeEach(() => {
-    window.history.replaceState({}, "", "/?issue690Preview");
-  });
-
-  test.each(["nanpure", "water-sort"])(
-    "%sで端末に記録がなくても結果と比較操作を表示できること",
-    (gameId) => {
-      renderAt(`/puzzles/${gameId}/result/issue690-comparison-sample`);
-
-      const result = screen.getByRole("region", { name: "プレイ結果" });
-      const toolbar = screen.getByRole("complementary", {
-        name: "結果演出の比較操作",
-      });
-
-      expect(result).toBeTruthy();
-      expect(toolbar).toBeTruthy();
-      expect(screen.queryByText("記録が見つかりません")).toBeNull();
-    },
-  );
 });

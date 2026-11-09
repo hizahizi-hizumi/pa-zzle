@@ -227,7 +227,7 @@ describe("IceFloorMazePlayView", () => {
       );
       expect(resultScreen.getByText("レベル 1")).toBeTruthy();
       expect(resultScreen.getByRole("region", { name: "スコア" })).toBeTruthy();
-      expect(resultScreen.getByText("最短 ±0")).toBeTruthy();
+      expect(resultScreen.getByLabelText("最短手数と同じ ±0")).toBeTruthy();
     });
 
     test("遊んだ問題とプレイの事実と最短手数を記録へ保存すること", () => {

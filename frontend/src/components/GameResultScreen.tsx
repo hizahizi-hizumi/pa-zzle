@@ -1,73 +1,46 @@
 import { Wrench } from "lucide-react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { BrowserBottomSurface } from "@/components/BrowserBottomSurface";
-import { GameResultConfetti } from "@/components/GameResultConfetti";
-import { GameResultIdentity } from "@/components/GameResultIdentity";
-import { GameResultScoreCard } from "@/components/GameResultScoreCard";
 import { GameResultActions } from "@/components/GameResultScreen/GameResultActions";
 import {
   GameResultDetails,
   type GameResultScoreCriteria,
 } from "@/components/GameResultScreen/GameResultDetails";
 import type { GameResultDetailMetric } from "@/components/GameResultScreen/GameResultDetails/DetailMetric";
-import {
-  type GameResultMetric,
-  ResultMetric,
-} from "@/components/GameResultScreen/ResultMetric";
-import {
-  getIssue690QuerySelection,
-  Issue690CompareToolbar,
-  Issue690LiveResult,
-  type Issue690LiveSelection,
-  isIssue690LivePreview,
-} from "@/components/Issue690LiveCompare";
+import { GameResultMetrics } from "@/components/GameResultScreen/GameResultMetrics";
+import { GameResultMoment } from "@/components/GameResultScreen/GameResultMoment";
+import { GameResultRecordNotice } from "@/components/GameResultScreen/GameResultRecordNotice";
+import type { GameResultMetric } from "@/components/GameResultScreen/ResultMetric";
 import { Button } from "@/components/ui/button";
-import type { Issue690BoardSnapshot } from "@/games/issue690-board-snapshot";
+import type { ResultRecordFeedback } from "@/games/play";
 import { getGameResultLevel } from "@/games/result";
+import "@/components/GameResultScreen.css";
 
 export type { GameResultScoreCriteria };
-
-type GameResultMetrics =
-  | readonly [GameResultMetric, GameResultMetric]
-  | readonly [GameResultMetric, GameResultMetric, GameResultMetric];
-
-const metricColumnsClassNames = {
-  2: "grid-cols-2",
-  3: "grid-cols-3",
-} as const;
 
 type GameResultScreenProps = {
   gameName: string;
   difficultyLabel: string;
-  pictogramSvg: string;
   score: number;
-  /** 開いたときに見せるスコアの内訳と、評価材料になった問題の値。 */
+  metrics:
+    | readonly [GameResultMetric, GameResultMetric]
+    | readonly [GameResultMetric, GameResultMetric, GameResultMetric];
+  recordFeedback: ResultRecordFeedback;
   scoreBreakdown: readonly GameResultDetailMetric[];
   scoreCriteria: GameResultScoreCriteria;
-  /** 評価を理解するためのゲーム固有の主要成績。1行に並べる。 */
-  metrics: GameResultMetrics;
-  recordOutcomeNotice: ReactNode;
-  issue690RecordSummary?: ReactNode;
-  issue690BoardSnapshot?: Issue690BoardSnapshot;
   onStartNewProblem: () => void;
-  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
   onReplay?: () => void;
-  /** ゲームのホームへ移る。 */
   onOpenGameHome: () => void;
-  /** 省略すると検証情報を開く操作を出さない。 */
   onOpenDiagnostics?: () => void;
 };
 
 export function GameResultScreen({
   gameName,
   difficultyLabel,
-  pictogramSvg,
   score,
   metrics,
-  recordOutcomeNotice,
-  issue690RecordSummary,
-  issue690BoardSnapshot,
+  recordFeedback,
   scoreBreakdown,
   scoreCriteria,
   onStartNewProblem,
@@ -75,23 +48,22 @@ export function GameResultScreen({
   onOpenGameHome,
   onOpenDiagnostics,
 }: GameResultScreenProps) {
-  const resultLevel = getGameResultLevel(score);
   const screenRef = useRef<HTMLElement>(null);
-  const previewEnabled =
-    isIssue690LivePreview() &&
-    (gameName === "ウォーターソート" || gameName === "ナンプレ");
-  const [selection, setSelection] = useState<Issue690LiveSelection>(() =>
-    getIssue690QuerySelection(),
-  );
-  const [replayIndex, setReplayIndex] = useState(0);
-  const activeIdea =
-    previewEnabled && selection !== "original" ? selection : null;
+  const [skipReveal, setSkipReveal] = useState(false);
+  const level = getGameResultLevel(score);
+  const improvements =
+    recordFeedback.kind === "updated" ? recordFeedback.improvements : [];
 
-  // クリアした操作の対象は盤面ごと消え、フォーカスも失われる。
-  // 結果画面へフォーカスを移し、次の Tab で次の行動へ進めるようにする。
   useEffect(() => {
     screenRef.current?.focus({ preventScroll: true });
   }, []);
+
+  function finishReveal(element: HTMLDivElement) {
+    for (const animation of element.getAnimations?.({ subtree: true }) ?? []) {
+      if (animation.playState === "running") animation.finish();
+    }
+    setSkipReveal(true);
+  }
 
   return (
     <section
@@ -101,89 +73,61 @@ export function GameResultScreen({
       className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background outline-none"
     >
       <BrandIdentityHeader linkToHome pinned />
-      {!activeIdea && <GameResultConfetti level={resultLevel} />}
-      {previewEnabled && (
-        <Issue690CompareToolbar
-          selection={selection}
-          onChange={setSelection}
-          gameName={gameName}
-          onReplay={() => setReplayIndex((current) => current + 1)}
-        />
-      )}
-      {activeIdea && (
-        <Issue690LiveResult
-          key={`${activeIdea}-${replayIndex}`}
-          idea={activeIdea}
-          data={{
-            gameName,
-            difficultyLabel,
-            pictogramSvg,
-            score,
-            metrics,
-            recordOutcomeNotice,
-            issue690RecordSummary,
-            issue690BoardSnapshot,
-            scoreBreakdown,
-            scoreCriteria,
-            onStartNewProblem,
-            onReplay,
-            onOpenGameHome,
-            onOpenDiagnostics,
-          }}
-        />
-      )}
-      {!activeIdea && (
-        <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col py-3 pb-[max(calc(var(--spacing)*4),env(safe-area-inset-bottom))] pl-[max(--spacing(4),env(safe-area-inset-left))] pr-[max(--spacing(4),env(safe-area-inset-right))]">
-          <GameResultIdentity
-            gameName={gameName}
-            difficultyLabel={difficultyLabel}
-            pictogramSvg={pictogramSvg}
-            level={resultLevel}
+      <h1 className="sr-only">プレイ結果</h1>
+      <div
+        className="result-screen"
+        data-level={level}
+        onPointerDown={(event) => finishReveal(event.currentTarget)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ")
+            finishReveal(event.currentTarget);
+        }}
+      >
+        <header className="result-quiet-heading">
+          <div className="result-quiet-context">
+            <span className="result-quiet-game">{gameName}</span>
+            <span>{difficultyLabel}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <GameResultDetails
+              breakdown={scoreBreakdown}
+              criteria={scoreCriteria}
+            />
+            {onOpenDiagnostics && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="検証情報"
+                onClick={onOpenDiagnostics}
+              >
+                <Wrench aria-hidden="true" />
+              </Button>
+            )}
+          </div>
+        </header>
+        <div className="result-quiet-metrics">
+          <GameResultMetrics metrics={metrics} improvements={improvements} />
+        </div>
+        <main className="result-quiet-moment">
+          <GameResultMoment
+            level={level}
+            score={score}
+            skipReveal={skipReveal}
+            improvement={improvements.find((item) => item.id === "play-score")}
           />
-
-          <GameResultScoreCard score={score} level={resultLevel} />
-
-          {recordOutcomeNotice}
-
-          <dl
-            className={`mt-3 grid ${metricColumnsClassNames[metrics.length]} gap-2`}
-          >
-            {metrics.map((metric) => (
-              <ResultMetric
-                key={metric.label}
-                label={metric.label}
-                value={metric.value}
-                detail={metric.detail}
-              />
-            ))}
-          </dl>
-
+        </main>
+        <div className="result-quiet-feedback">
+          <GameResultRecordNotice feedback={recordFeedback} />
+        </div>
+        <footer className="result-quiet-footer">
           <GameResultActions
             onStartNewProblem={onStartNewProblem}
             onOpenGameHome={onOpenGameHome}
             onReplay={onReplay}
           />
-
-          <GameResultDetails
-            breakdown={scoreBreakdown}
-            criteria={scoreCriteria}
-          />
-
-          {onOpenDiagnostics && (
-            <div className="mt-1 flex justify-center">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={onOpenDiagnostics}
-              >
-                <Wrench />
-                検証情報
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+        </footer>
+      </div>
       <BrowserBottomSurface />
     </section>
   );

@@ -9,7 +9,6 @@ import {
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
 import type { GamePlayResultScreenProps } from "@/games/play";
-import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { WATER_SORT_DISPLAY_NAME } from "@/games/water-sort/display-name";
 import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
@@ -24,9 +23,7 @@ type WaterSortResultScreenProps = GamePlayResultScreenProps<
 export function WaterSortResultScreen({
   difficulty,
   result,
-  recordOutcomeNotice,
-  issue690RecordSummary,
-  issue690BoardSnapshot,
+  recordFeedback,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -36,7 +33,6 @@ export function WaterSortResultScreen({
     <GameResultScreen
       gameName={WATER_SORT_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      pictogramSvg={waterSortPictogramSvg}
       score={result.score.total}
       metrics={[
         createMoveCountMetric({
@@ -45,9 +41,7 @@ export function WaterSortResultScreen({
         }),
         createElapsedTimeMetric(result),
       ]}
-      recordOutcomeNotice={recordOutcomeNotice}
-      issue690RecordSummary={issue690RecordSummary}
-      issue690BoardSnapshot={issue690BoardSnapshot}
+      recordFeedback={recordFeedback}
       scoreBreakdown={[
         ...listScoreBreakdownMetrics(result.score, WATER_SORT_SCORE_MAXIMUMS),
         createSpeedFullScoreMetric(result.speedRule),

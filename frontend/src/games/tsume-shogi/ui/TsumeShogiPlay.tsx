@@ -103,7 +103,7 @@ export function TsumeShogiPlay({
   progress,
   elapsedMs,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   plies,
   phase,
   boardPieces,
@@ -207,7 +207,7 @@ export function TsumeShogiPlay({
         <TsumeShogiResultScreen
           difficulty={difficulty}
           result={clearedResult}
-          recordOutcomeNotice={recordOutcomeNotice}
+          recordFeedback={recordFeedback}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}
