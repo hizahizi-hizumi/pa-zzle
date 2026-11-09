@@ -155,7 +155,7 @@ export function CollectionTimeline({
                   <button
                     key={month.key}
                     type="button"
-                    aria-label={`${info.name} ${month.label}: 初クリア${newCount}問、ベスト更新${change?.raised ?? 0}問`}
+                    aria-label={`${info.name} ${month.label}: 初クリア${newCount}問、評価アップ${change?.raised ?? 0}問`}
                     aria-pressed={
                       period === pageStart + index && selectedId === info.id
                     }
@@ -203,7 +203,7 @@ export function CollectionTimeline({
             </strong>
           </span>
           <span className="text-muted-foreground tabular-nums">
-            ベスト更新{" "}
+            評価アップ{" "}
             <strong className="text-foreground">
               {selectedActivity.raised}問
             </strong>
