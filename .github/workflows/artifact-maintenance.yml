@@ -1,0 +1,48 @@
+name: Artifact Maintenance
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/artifact-maintenance.yml'
+      - '.github/actions/offline-dependencies/scripts/artifact_maintenance.py'
+      - '.github/actions/offline-dependencies/scripts/test_artifact_maintenance.py'
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Verify Artifact Maintenance
+        run: python3 -m unittest discover -s .github/actions/offline-dependencies/scripts -p 'test_artifact_maintenance.py'
+
+  prune:
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: offline-dependencies-artifact-pool
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Prune obsolete artifacts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 .github/actions/offline-dependencies/scripts/artifact_maintenance.py
