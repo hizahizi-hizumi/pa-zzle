@@ -21,8 +21,17 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install gh-actions-lock
-        run: gh extension install github/gh-actions-lock --pin v0.4.0
+      - name: Download gh-actions-lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary="$RUNNER_TEMP/gh-actions-lock"
+          curl --fail --location --silent --show-error \
+            https://github.com/github/gh-actions-lock/releases/download/v0.4.0/linux-amd64 \
+            --output "$binary"
+          echo "f9da98f2a6e9e0ae77deadf9a2319a8a86bb002b541cc3203b247cc59fb04842  $binary" | sha256sum --check
+          chmod +x "$binary"
 
       - name: Verify actions.lock
-        run: gh actions-lock --verify
+        run: |
+          "$RUNNER_TEMP/gh-actions-lock" --verify
