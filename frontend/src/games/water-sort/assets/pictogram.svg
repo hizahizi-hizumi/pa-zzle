@@ -1,15 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ウォーターソート">
-  <path fill="var(--game-pictogram-soft)" d="M30.33 73.255H48.73V90.215C48.73 96.066 45.381 99.415 39.53 99.415C33.679 99.415 30.33 96.066 30.33 90.215Z"/>
-  <path fill="var(--game-pictogram-soft)" d="M30.33 55.015H48.73V75.895H30.33Z"/>
-  <path fill="var(--game-pictogram-soft)" d="M30.33 47.095H48.73V57.655H30.33Z"/>
-  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M26.33 41.815V90.215C26.33 98.135 31.61 103.415 39.53 103.415C47.45 103.415 52.73 98.135 52.73 90.215V41.815"/>
-    <path d="M22.81 41.815H56.25"/>
-  </g>
-  <path fill="var(--game-pictogram-soft)" d="M71.27 86.335H89.67V90.215C89.67 96.066 86.321 99.415 80.47 99.415C74.619 99.415 71.27 96.066 71.27 90.215Z"/>
-  <path fill="var(--game-pictogram-strong)" d="M71.27 73.255H89.67V86.335H71.27Z"/>
-  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M67.27 41.815V90.215C67.27 98.135 72.55 103.415 80.47 103.415C88.39 103.415 93.67 98.135 93.67 90.215V41.815"/>
-    <path d="M63.75 41.815H97.19"/>
-  </g>
+<path fill="var(--game-pictogram-soft)" d="M32.18 72.48H49.98V89.1C49.98 94.76 46.74 98 41.08 98C35.42 98 32.18 94.76 32.18 89.1Z"/>
+<g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M28.18 41.8V89.1C28.18 96.84 33.34 102 41.08 102C48.82 102 53.98 96.84 53.98 89.1V41.8"/>
+<path d="M25.16 41.8H57"/>
+</g>
+<path fill="var(--game-pictogram-soft)" d="M70.02 85.24H87.82V89.1C87.82 94.76 84.58 98 78.92 98C73.26 98 70.02 94.76 70.02 89.1Z"/>
+<path fill="var(--game-pictogram-strong)" d="M70.02 72.48H87.82V85.24H70.02Z"/>
+<path fill="var(--game-pictogram-soft)" d="M70.02 46.96H87.82V72.48H70.02Z"/>
+<g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M66.02 34.92V89.1C66.02 96.84 71.18 102 78.92 102C86.66 102 91.82 96.84 91.82 89.1V34.92"/>
+<path d="M63 34.92H94.84"/>
+</g>
 </svg>
