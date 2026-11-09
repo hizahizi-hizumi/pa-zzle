@@ -216,6 +216,11 @@
   line-height: 1.2;
 }
 
+/* Make the updated value itself recognizable; keep the result layout unchanged. */
+.result-screen .result-quiet-metric:has(.result-metric-best) > dd:first-of-type {
+  color: var(--result-award);
+}
+
 .result-metrics dd:last-child:not(:first-of-type) {
   margin-top: 3px;
   color: var(--muted-foreground);
