@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
@@ -13,7 +14,9 @@ import type { NanpureNotes } from "@/games/nanpure/session/session";
 import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureClearAnimation";
 import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
+import { NanpureExperienceSwitcher } from "@/games/nanpure/ui/NanpurePlay/NanpureExperienceSwitcher";
 import { useNanpureSoundEffects } from "@/games/nanpure/ui/NanpurePlay/use-nanpure-sound-effects";
+import type { NanpureExperienceVariant } from "@/games/nanpure/ui/nanpure-experience-variant";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
 import type {
@@ -26,6 +29,7 @@ import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 type NanpurePlayProps = GamePlayScreenProps<NanpureDifficulty, NanpureResult> &
   RestartableGamePlayScreenProps &
   UndoableGamePlayScreenProps & {
+    compareExperiences?: boolean;
     clues: NanpureBoardState;
     board: NanpureBoardState;
     notes: NanpureNotes;
@@ -39,6 +43,7 @@ type NanpurePlayProps = GamePlayScreenProps<NanpureDifficulty, NanpureResult> &
     undoCount: number;
     onSelectCell: (cellIndex: number) => void;
     onInputDigit: (digit: NanpureDigit) => void;
+    onInputDigitAt?: (cellIndex: number, digit: NanpureDigit) => void;
     onErase: () => void;
     onToggleNotesMode: () => void;
   };
@@ -50,6 +55,7 @@ export function NanpurePlay({
   result,
   recordFeedback,
   clues,
+  compareExperiences = false,
   board,
   notes,
   selectedCellIndex,
@@ -63,6 +69,7 @@ export function NanpurePlay({
   canUndo,
   onSelectCell,
   onInputDigit,
+  onInputDigitAt,
   onErase,
   onToggleNotesMode,
   onUndo,
@@ -76,6 +83,42 @@ export function NanpurePlay({
   onOpenDiagnostics,
 }: NanpurePlayProps) {
   useNanpureSoundEffects(operation, progress);
+  const [experience, setExperience] =
+    useState<NanpureExperienceVariant>("classic");
+  const [selectedDigit, setSelectedDigit] = useState<NanpureDigit | null>(null);
+
+  const digitFirst = experience === "paint";
+  const activeDigit =
+    selectedDigit !== null && !completedDigits.includes(selectedDigit)
+      ? selectedDigit
+      : null;
+
+  function handleExperienceChange(next: NanpureExperienceVariant) {
+    setExperience(next);
+    setSelectedDigit(null);
+  }
+
+  function handleDigitInput(digit: NanpureDigit) {
+    if (digitFirst) {
+      setSelectedDigit((current) => (current === digit ? null : digit));
+      return;
+    }
+    onInputDigit(digit);
+  }
+
+  function handleSelectCell(cellIndex: number) {
+    if (digitFirst && activeDigit !== null) {
+      if (clues[cellIndex] !== null) return;
+      if (board[cellIndex] !== null) {
+        setSelectedDigit(null);
+        onSelectCell(cellIndex);
+        return;
+      }
+      onInputDigitAt?.(cellIndex, activeDigit);
+      return;
+    }
+    onSelectCell(cellIndex);
+  }
 
   const interactionEnabled = progress === "playing";
   const selectedIsEditable =
@@ -90,7 +133,7 @@ export function NanpurePlay({
       progress={progress}
       result={result}
       title={NANPURE_DISPLAY_NAME}
-      background={<div className="size-full bg-[#eee9e1] dark:bg-[#28251f]" />}
+      background={<div className="size-full bg-[#eae3ef] dark:bg-[#28251f]" />}
       metrics={[
         { type: "count", label: "ミス", count: mistakeCount },
         { type: "elapsed-time", elapsedMs },
@@ -118,37 +161,50 @@ export function NanpurePlay({
         />
       )}
     >
-      <main className="flex shrink-0 justify-center px-2 pt-1 sm:px-6 sm:pt-3">
-        <NanpureClearAnimation
-          active={progress === "clearing"}
-          onComplete={onClearAnimationComplete}
-        >
-          <NanpureBoard
-            board={board}
-            clues={clues}
-            notes={notes}
-            selectedCellIndex={selectedCellIndex}
-            conflictCellIndices={conflictCellIndices}
-            mistakeCellIndices={mistakeCellIndices}
-            interactionDisabled={!interactionEnabled}
-            onSelectCell={onSelectCell}
-          />
-        </NanpureClearAnimation>
-      </main>
+      {compareExperiences && (
+        <NanpureExperienceSwitcher
+          value={experience}
+          onChange={handleExperienceChange}
+        />
+      )}
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-center lg:justify-center lg:gap-8">
+        <main className="flex shrink-0 justify-center px-2 pt-1 sm:px-6 sm:pt-3 lg:px-0 lg:pt-0">
+          <NanpureClearAnimation
+            active={progress === "clearing"}
+            onComplete={onClearAnimationComplete}
+          >
+            <NanpureBoard
+              board={board}
+              clues={clues}
+              notes={notes}
+              selectedCellIndex={
+                digitFirst && activeDigit !== null ? null : selectedCellIndex
+              }
+              highlightDigit={digitFirst ? activeDigit : null}
+              conflictCellIndices={conflictCellIndices}
+              mistakeCellIndices={mistakeCellIndices}
+              interactionDisabled={!interactionEnabled}
+              onSelectCell={handleSelectCell}
+            />
+          </NanpureClearAnimation>
+        </main>
 
-      <NanpureInputPanel
-        notesMode={notesMode}
-        interactionEnabled={interactionEnabled}
-        selectedIsEditable={selectedIsEditable}
-        selectedHasAnswer={selectedHasAnswer}
-        selectedHasNotes={selectedHasNotes}
-        completedDigits={completedDigits}
-        canUndo={canUndo}
-        onUndo={onUndo}
-        onErase={onErase}
-        onToggleNotesMode={onToggleNotesMode}
-        onInputDigit={onInputDigit}
-      />
+        <NanpureInputPanel
+          notesMode={notesMode}
+          digitFirst={digitFirst}
+          selectedDigit={activeDigit}
+          interactionEnabled={interactionEnabled}
+          selectedIsEditable={selectedIsEditable}
+          selectedHasAnswer={selectedHasAnswer}
+          selectedHasNotes={selectedHasNotes}
+          completedDigits={completedDigits}
+          canUndo={canUndo}
+          onUndo={onUndo}
+          onErase={onErase}
+          onToggleNotesMode={onToggleNotesMode}
+          onInputDigit={handleDigitInput}
+        />
+      </div>
     </GamePlayFrame>
   );
 }

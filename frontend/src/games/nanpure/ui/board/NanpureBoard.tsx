@@ -2,6 +2,7 @@ import {
   areNanpureCellsRelated,
   NANPURE_SIZE,
   type NanpureBoard as NanpureBoardState,
+  type NanpureDigit,
 } from "@/games/nanpure/puzzle/board";
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 
@@ -17,6 +18,7 @@ type NanpureBoardProps = {
   clues: NanpureBoardState;
   notes: NanpureNotes;
   selectedCellIndex: number | null;
+  highlightDigit?: NanpureDigit | null;
   conflictCellIndices: readonly number[];
   mistakeCellIndices: readonly number[];
   interactionDisabled?: boolean;
@@ -28,6 +30,7 @@ export function NanpureBoard({
   clues,
   notes,
   selectedCellIndex,
+  highlightDigit = null,
   conflictCellIndices,
   mistakeCellIndices,
   interactionDisabled = false,
@@ -36,10 +39,11 @@ export function NanpureBoard({
   const conflictCells = new Set(conflictCellIndices);
   const mistakeCells = new Set(mistakeCellIndices);
   const selectedValue =
-    selectedCellIndex === null ? null : (board[selectedCellIndex] ?? null);
+    highlightDigit ??
+    (selectedCellIndex === null ? null : (board[selectedCellIndex] ?? null));
 
   return (
-    <div className="grid aspect-square w-[min(96vw,calc(100svh-12rem),38rem)] grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background">
+    <div className="grid aspect-square w-[min(96vw,calc(100svh-19rem),38rem)] lg:w-[min(58vw,calc(100svh-12rem),38rem)] grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background">
       {NANPURE_CELL_INDICES.map((cellIndex) => {
         const value = board[cellIndex] ?? null;
         const selected = selectedCellIndex === cellIndex;

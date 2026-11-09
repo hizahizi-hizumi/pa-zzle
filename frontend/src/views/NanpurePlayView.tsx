@@ -48,6 +48,9 @@ export function NanpurePlayView() {
       key={`${difficulty}:${playSerial}`}
       difficulty={difficulty}
       avoidedProblemId={avoidedProblemId}
+      compareExperiences={
+        new URLSearchParams(location.search).get("experience") === "compare"
+      }
     />
   );
 }
