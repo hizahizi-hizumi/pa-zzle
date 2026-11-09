@@ -1,6 +1,10 @@
 import { useLayoutEffect, useRef } from "react";
 
-import { TutorialSpotlight } from "@/components/TutorialSpotlight";
+import { TutorialForeground } from "@/components/TutorialForeground";
+import {
+  TutorialSpotlight,
+  type TutorialSpotlightRole,
+} from "@/components/TutorialSpotlight";
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import type { WaterSortBottleCue } from "@/games/water-sort/ui/board/bottle-cue";
@@ -25,14 +29,16 @@ type WaterSortBoardProps = {
   onClearAnimationComplete?: () => void;
   /** ボトルに重ねる合図。チュートリアルだけが渡す。 */
   cues?: readonly WaterSortBottleCue[];
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せるボトル。`null` なら抜かない。通常のプレイでは渡さない。 */
-  spotlitBottleIndices?: readonly number[] | null;
-  /**
-   * ボトルの並べ方。
-   * - `rows`: 本数に応じて段に分け、画面の幅に応じた幅にする。
-   * - `single-row`: 全部を1段に並べ、置いた場所の幅いっぱいにする。注ぐ動きと、選んだボトルの持ち上げが盤面の外へはみ出さない余白を、置く側が上に取るときに使う。
-   */
-  layout?: "rows" | "single-row";
+  /** チュートリアルで手を引いている間、画面全体の覆いから抜くボトルと抜き方。`null` なら抜かない。通常のプレイでは渡さない。 */
+  spotlitBottles?: readonly WaterSortBottleSpotlight[] | null;
+  /** チュートリアルで手を引いている間、注ぐ動きを画面全体の覆いの上に出す。通常のプレイでは渡さない。 */
+  pourInFrontOfTutorialScrim?: boolean;
+};
+
+/** チュートリアルで覆いから抜くボトルと、その抜き方（押す所か決め手か）。 */
+export type WaterSortBottleSpotlight = {
+  bottleIndex: number;
+  role: TutorialSpotlightRole;
 };
 
 const invalidBottleShakeKeyframes: Keyframe[] = [
@@ -59,8 +65,8 @@ export function WaterSortBoard({
   onPourAnimationActivityChange,
   onClearAnimationComplete,
   cues = [],
-  spotlitBottleIndices = null,
-  layout: layoutKind = "rows",
+  spotlitBottles = null,
+  pourInFrontOfTutorialScrim = false,
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const { animations, finishAnimation, interruptForBottleInteraction } =
@@ -97,10 +103,7 @@ export function WaterSortBoard({
       animation.destination.bottleIndex,
     ]),
   );
-  const layout =
-    layoutKind === "single-row"
-      ? getSingleRowLayout(state.length)
-      : getBoardLayout(state.length);
+  const layout = getBoardLayout(state.length);
   const rowCount = Math.ceil(state.length / layout.columnCount);
   // ボトルの縦横比と隙間を保ったまま、見出し・下端を除いた高さにも収める。
   // 上の段のボトルを選ぶと持ち上げるので、その分の高さは盤面の上に取っておく。
@@ -109,17 +112,13 @@ export function WaterSortBoard({
   const bottles = (
     <fieldset
       className={cn(
-        "grid w-full items-end justify-center border-0 p-0 [--selected-bottle-lift:--spacing(3.5)]",
-        layoutKind === "rows" && "pt-(--selected-bottle-lift)",
+        "grid w-full items-end justify-center border-0 p-0 pt-(--selected-bottle-lift) [--selected-bottle-lift:--spacing(3.5)]",
       )}
       style={{
         gridTemplateColumns: `repeat(${layout.columnCount}, minmax(0, 1fr))`,
         columnGap: layout.columnGap,
         rowGap: layout.rowGap,
-        width:
-          layoutKind === "single-row"
-            ? layout.width
-            : `min(${layout.width}, ${widthForAvailableHeight})`,
+        width: `min(${layout.width}, ${widthForAvailableHeight})`,
       }}
     >
       {state.map((bottle, bottleIndex) => {
@@ -133,6 +132,9 @@ export function WaterSortBoard({
         const isSource = bottleIndex === sourceBottleIndex;
         const isAnimated = animatedBottleIndexes.has(bottleIndex);
         const cue = cues.find((item) => item.bottleIndex === bottleIndex);
+        const spotlight = spotlitBottles?.find(
+          (item) => item.bottleIndex === bottleIndex,
+        );
 
         return (
           <button
@@ -154,7 +156,8 @@ export function WaterSortBoard({
               <WaterBottle contents={bottle} selected={isSource} />
             </span>
             <TutorialSpotlight
-              active={spotlitBottleIndices?.includes(bottleIndex) ?? false}
+              active={spotlight !== undefined}
+              role={spotlight?.role}
               className={bottleShapeClassName}
             />
             {cue && <BottleCue cue={cue} />}
@@ -166,31 +169,19 @@ export function WaterSortBoard({
 
   return (
     <>
-      {/* 1段に並べるときは、大きさを置く側が決めるので、高さに収める入れ物に入れない。 */}
-      {layoutKind === "single-row" ? (
-        bottles
-      ) : (
-        <div className="flex size-full items-center justify-center [container-type:size]">
-          {bottles}
-        </div>
-      )}
+      <div className="flex size-full items-center justify-center [container-type:size]">
+        {bottles}
+      </div>
 
       {/* 注ぐ演出はviewport座標を使うので、サイズを制約するコンテナの外へ置く。 */}
-      <PourAnimationLayer animations={animations} onFinish={finishAnimation} />
+      <TutorialForeground active={pourInFrontOfTutorialScrim}>
+        <PourAnimationLayer
+          animations={animations}
+          onFinish={finishAnimation}
+        />
+      </TutorialForeground>
     </>
   );
-}
-
-/** 1段に並べるときのボトルの間。`WaterSortTutorial` の盤面の余白は、この間を前提に取る。 */
-export const WATER_SORT_SINGLE_ROW_GAP_PX = 8;
-
-function getSingleRowLayout(bottleCount: number) {
-  return {
-    columnCount: bottleCount,
-    width: "100%",
-    columnGap: WATER_SORT_SINGLE_ROW_GAP_PX,
-    rowGap: 0,
-  };
 }
 
 function getBoardLayout(bottleCount: number) {
