@@ -31,6 +31,8 @@ type TutorialOverlayProps = {
   title: string;
   /** パズル選択と同じピクトグラム。導入で名前と一緒に見せ、その後も上部で名前に添える。 */
   pictogramSvg: string;
+  /** プレイ画面と同じゲーム固有の地。渡すと、本番と同じ地の上で盤面を見せる。渡さなければ基底面の色にする。 */
+  background?: ReactNode;
   /** 操作より先に見せる、何をするパズルかの一文と、ゴール・始まりの盤面に添える一言。 */
   intro: TutorialIntro;
   rules: readonly TutorialRuleListItem[];
@@ -66,6 +68,7 @@ function getMusicState(
  * ゲームのチュートリアルの画面（`games/<game>/ui/<Game>Tutorial.tsx`）は、次のようにこの枠へつなぐ。
  * - 進行は `games/tutorial.ts` の `startTutorial`・`performTutorialAction`・`finishTutorialIntro`・`completeTutorial` で進め、`phase` と、一言（`getTutorialMessage`）を渡す。
  * - `guiding` は、`phase` が `playing` で、`getTutorialSituation` の `step` があるときに `true` にする。
+ * - `background` にプレイ画面と同じゲーム固有の地を渡す。
  * - `renderBoard` で本番の盤面部品を描き、次に押す所と決め手に `TutorialSpotlight`、印と合図に `TutorialCue` を置く。導入の場面（`TutorialBoardIntro`）は盤面が受け持つ。
  * - `finish` は、ゲームのホームから開いたとき（`GameHomeTutorialControl` の `playStart` があるとき）は `home`、プレイ中のメニューから開いたときは `play` にする。
  * - ゲームのホームへは `GameHomeScreen` の `renderTutorial`、プレイ中のメニューへは `GamePlayFrame` の `renderTutorial` で渡す。
@@ -74,6 +77,7 @@ export function TutorialOverlay({
   open,
   title,
   pictogramSvg,
+  background,
   intro,
   rules,
   message,
@@ -107,6 +111,14 @@ export function TutorialOverlay({
         onOpenAutoFocus={handleOpenAutoFocus}
         className="top-0 left-0 flex h-svh max-h-none w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 pb-[env(safe-area-inset-bottom)] shadow-none sm:max-w-none"
       >
+        {background && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 -z-10"
+          >
+            {background}
+          </div>
+        )}
         <TutorialScreen
           ref={screenRef}
           title={title}

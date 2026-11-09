@@ -61,10 +61,10 @@ argument-hint: <game>
       - 手を引く間: 操作を教える手はゴールの盤面と一致し、ルールを伝えた後の各手は、それまでに伝えたルールで決まる。印の手を打つ途中の盤面も、まだ伝えていないルールに反しない。1で書き出したルールのそれぞれが、1つ以上の手の決め手になる。
       - 手を離した後: マスを確定させていくパズルでは、伝えたルールを当てはめるだけで残りが解き切れる。手を重ねて状態を進めるパズルでは、どう進めても手詰まりにならない。手詰まりを避けられないパズルでは、手詰まりから戻る操作（待ったや盤面を戻すなど）を、解くのに要る操作として手を引く間に教える。
    4. テストをコミットしてブランチを push し、PR を開いて、PR 本文に2-2の表を載せる。
-3. 実装する: 本番の盤面部品と演出を使い、共通の進行と画面に載せる。印・合図・覆いは共通の部品だけで描き、ゲーム独自の見た目を足さない。ゲームのホームとプレイ中のメニューにチュートリアルを渡し、そこから開けるようにする。
+3. 実装する: `.claude/rules/game-structure.md` の「チュートリアル」節に従い、本番の盤面部品と演出を使って共通の進行と画面に載せ、ゲームのホームとプレイ中のメニューから開けるようにする。印・合図・覆いにゲーム独自の見た目を足さない。
 4. 言葉を整える: 表の一言を、出る場面・改行位置と一緒に見直す。新しいサブエージェントに `references/review-requests.md` の「編集者役」で挙げさせ、`【PO】` の言い回しを除いて直す。画面の一言を変えたら、PR 本文の表も揃える。
 5. 自分で通す: `AGENTS.md` の全品質検証を通す。通常の設定に加えて、375px 幅と、動きを減らす設定でも入口から完成まで自分で操作し、スクリーンショットで確かめる。
-6. 見直す: 新しいサブエージェントに、`references/review-requests.md` の「作る側」と「遊ぶ側」で見直させる。2つは並行して走らせてよい。
+6. 見直す: 新しいサブエージェント2つに、`references/review-requests.md` の「作る側」と「遊ぶ側」で、並行して見直させる。
    - 大原則の違反と不具合は直す。同じ原因の所がほかにないか探し、まとめて直す。
    - 遊ぶ側が迷った・止まったと書いた所は、どの大原則に反しているか原因を探して直す。言葉に引っかかった所は、同じ種類の言葉が他にも残っているとみて、4でまとめて直す。
    - それ以外は、直す価値があるものだけ直す。
@@ -99,5 +99,5 @@ PO から指摘を受けたとき:
 | `.claude/rules/game-structure.md` の「チュートリアル」節と「依存方向」の `tutorial/`・`ui/` | 動作フローの3でコードを置くとき |
 | `frontend/src/games/tutorial.ts` | 動作フローの3でステップの進行と違反の一言を作るとき |
 | `frontend/src/components/TutorialOverlay.tsx` | 動作フローの3で画面を作るとき |
-| `frontend/src/components/TutorialCrossFadeIntroScene.tsx` | 動作フローの3で入口のゴールの盤面から始まりの盤面へ替えるとき |
-| `frontend/src/components/TutorialCue.tsx`、`frontend/src/components/TutorialSpotlight.tsx` | 動作フローの3で印・合図を描き、覆いから抜く所を決めるとき |
+| `frontend/src/components/TutorialCrossFadeIntroScene.tsx` | 動作フローの3で入口の場面（`TutorialBoardIntro`）を作るとき |
+| `frontend/src/components/TutorialCue.tsx`、`frontend/src/components/TutorialSpotlight.tsx`、`frontend/src/components/TutorialForeground.tsx` | 動作フローの3で印・合図・覆いを描くとき |

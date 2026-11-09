@@ -157,7 +157,7 @@ function getSpotlitTiles(): string[] {
     .map((tile) => tile.textContent ?? "");
 }
 
-/** 画面全体の覆いから抜いている所の数。タイルのほか、タイルが収まる空白と一言の面を含む。 */
+/** 画面全体の覆いから抜いている所の数。タイルのほか、タイルが収まる空白と一言を含む。 */
 function getSpotlightCount(): number {
   return document.querySelectorAll("[data-tutorial-spotlight]").length;
 }
@@ -208,7 +208,7 @@ describe("SlidePuzzleTutorial", () => {
       expect(rules).toEqual(["空白にスライド", "まだ出ていないルール"]);
     });
 
-    test("画面全体に覆いを重ね、印のタイルと、タイルが収まる空白と、一言の面だけを覆いから抜くこと", () => {
+    test("画面全体に覆いを重ね、印のタイルと、タイルが収まる空白と、一言だけを覆いから抜くこと", () => {
       const scrim = getScrim();
       const spotlit = getSpotlitTiles();
       const spotlightCount = getSpotlightCount();

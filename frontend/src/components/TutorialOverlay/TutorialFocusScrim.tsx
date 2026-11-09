@@ -7,7 +7,11 @@ import {
   useState,
 } from "react";
 
-import { TUTORIAL_SPOTLIGHT_ATTRIBUTE } from "@/components/TutorialSpotlight";
+import {
+  TUTORIAL_FOCUS_SCRIM_Z_INDEX,
+  TUTORIAL_SPOTLIGHT_ATTRIBUTE,
+  type TutorialSpotlightRole,
+} from "@/components/TutorialSpotlight";
 import { cn } from "@/lib/utils";
 
 type TutorialFocusScrimProps = {
@@ -19,6 +23,7 @@ type TutorialFocusScrimProps = {
 
 /** 覆いの座標で表した、抜く所の角丸の四角。角丸は左上・右上・右下・左下の順に、角ごとに持つ。 */
 type Hole = {
+  role: TutorialSpotlightRole;
   x: number;
   y: number;
   width: number;
@@ -34,17 +39,32 @@ const cornerRadiusProperties = [
 ] as const;
 
 /**
- * 覆いの色と濃さ。盤面の状態はまだ読めるが、抜いた所だけが明らかに明るく見える程度にする。
+ * 覆いの色と濃さ。盤面の状態（色の違いなど）はまだ読めるが、抜いた所だけが明らかに明るく見える程度にする。
  * 暗い配色では `foreground` が明るい色になるので、`background` を濃く重ねる。
  */
-const scrimFillClassName = "fill-foreground/55 dark:fill-background/75";
+const scrimFillClassName = "fill-foreground/40 dark:fill-background/65";
 
 function round(value: number): number {
   return Math.round(value * 2) / 2;
 }
 
-function getHoleKey({ x, y, width, height, radii }: Hole): string {
-  return [x, y, width, height, ...radii].join(",");
+function getHoleKey({ role, x, y, width, height, radii }: Hole): string {
+  return [role, x, y, width, height, ...radii].join(",");
+}
+
+/**
+ * 抜き方ごとの、覆いの mask に塗る色。黒は覆いをすべて抜き、灰色は覆いを半分の濃さで残す。
+ * 押す所と決め手を同じ明るさで抜くと、どちらを押すのか見分けられないため、決め手は一段暗くする。
+ */
+const holeFillByRole = {
+  target: "black",
+  clue: "rgb(50% 50% 50%)",
+} as const satisfies Record<TutorialSpotlightRole, string>;
+
+function readRole(element: HTMLElement): TutorialSpotlightRole {
+  return element.getAttribute(TUTORIAL_SPOTLIGHT_ATTRIBUTE) === "clue"
+    ? "clue"
+    : "target";
 }
 
 /** 角ごとの角丸を持つ四角の輪郭。底だけが丸いボトルのように、角ごとに違う角丸の物も、その形のまま抜く。 */
@@ -90,6 +110,7 @@ function measureHoles(svg: SVGSVGElement, container: HTMLElement): Hole[] {
       );
     return [
       {
+        role: readRole(element),
         x: round(rect.left - origin.left),
         y: round(rect.top - origin.top),
         width: round(rect.width),
@@ -98,7 +119,13 @@ function measureHoles(svg: SVGSVGElement, container: HTMLElement): Hole[] {
       } satisfies Hole,
     ];
   });
-  return [...new Map(holes.map((hole) => [getHoleKey(hole), hole])).values()];
+  // 押す所が決め手と重なっても押す所の明るさで見せるよう、決め手を先に、押す所を後に塗る。
+  return [
+    ...new Map(holes.map((hole) => [getHoleKey(hole), hole])).values(),
+  ].sort(
+    (first, second) =>
+      Number(first.role === "target") - Number(second.role === "target"),
+  );
 }
 
 function getHolesKey(holes: readonly Hole[]): string {
@@ -106,7 +133,7 @@ function getHolesKey(holes: readonly Hole[]): string {
 }
 
 /**
- * チュートリアルで手を引いている間、画面全体に暗い覆いを重ね、次に押す所・決め手・一言だけを抜いて元の明るさで見せる。
+ * チュートリアルで手を引いている間、画面全体に暗い覆いを重ね、次に押す所と一言を元の明るさで、決め手を一段暗く抜いて見せる。
  * 全ゲームで同じ見せ方にするため、各ゲームは抜く所に `TutorialSpotlight` を置くか `TUTORIAL_SPOTLIGHT_ATTRIBUTE` を付けるだけにし、覆いを描かない。
  *
  * 覆いは画面の一番上に置いた1枚の SVG に描き、抜く所は `<mask>` の四角で空ける。四角の角丸は抜く物の角丸に合わせる。
@@ -163,9 +190,10 @@ export function TutorialFocusScrim({
       data-tutorial-focus-scrim={active || undefined}
       className={cn(
         // 画面の下端の安全領域（ホームバーの所）まで覆う。
-        "pointer-events-none absolute top-0 left-0 z-30 h-[calc(100%+env(safe-area-inset-bottom))] w-full transition-opacity duration-(--duration-normal) ease-standard motion-reduce:transition-none",
+        "pointer-events-none absolute top-0 left-0 h-[calc(100%+env(safe-area-inset-bottom))] w-full transition-opacity duration-(--duration-normal) ease-standard motion-reduce:transition-none",
         active ? "opacity-100" : "opacity-0",
       )}
+      style={{ zIndex: TUTORIAL_FOCUS_SCRIM_Z_INDEX }}
     >
       <defs>
         <mask
@@ -179,7 +207,11 @@ export function TutorialFocusScrim({
         >
           <rect width="100%" height="100%" fill="white" />
           {holes.map((hole) => (
-            <path key={getHoleKey(hole)} d={getHolePath(hole)} fill="black" />
+            <path
+              key={getHoleKey(hole)}
+              d={getHolePath(hole)}
+              fill={holeFillByRole[hole.role]}
+            />
           ))}
         </mask>
       </defs>

@@ -341,14 +341,16 @@ describe("TutorialOverlay", () => {
         renderOverlay({ phase: "playing", guiding: true });
       });
 
-      test("画面全体に覆いを重ね、一言の面を覆いから抜くこと", () => {
+      test("画面全体に覆いを重ね、一言を覆いから抜いて、覆いの上に描くこと", () => {
         const scrim = getScrim();
-        const spotlit = screen
-          .getByText("最初の一言")
-          .closest("[data-tutorial-spotlight]");
+        const message = screen.getByText("最初の一言").closest("p");
+        const spotlit = message?.closest("[data-tutorial-spotlight]");
+        const messageLayer = Number(message?.style.zIndex);
+        const scrimLayer = Number((scrim as HTMLElement | null)?.style.zIndex);
 
         expect(scrim).not.toBeNull();
         expect(spotlit).not.toBeNull();
+        expect(messageLayer).toBeGreaterThan(scrimLayer);
       });
     });
 

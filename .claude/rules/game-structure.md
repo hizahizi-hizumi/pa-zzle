@@ -2,6 +2,7 @@
 paths:
   - "frontend/src/games/**/*.{ts,tsx}"
   - "frontend/src/game-catalog/**/*.{ts,tsx}"
+  - "frontend/src/views/*HomeView.tsx"
 ---
 
 # ゲーム実装の標準構造
@@ -153,15 +154,25 @@ frontend/src/games/
 
 ## チュートリアル
 
-- `tutorial/tutorial.ts` に、`games/tutorial.ts` の `Tutorial` を満たす `<game>Tutorial`（例: `takuzuTutorial`）を置く。
-- 盤面は `puzzle/` の遷移で進める。
-- 本番と同じ盤面の反応と見え方が要るときは `session/` の関数で求め、経過時間と回数は使わない。
-- 画面は `ui/<Game>Tutorial.tsx` に置き、`<game>Tutorial` を `games/tutorial.ts` の進行関数で進めて `@/components/TutorialOverlay` に渡す。
-- 盤面操作の音とクリア音は、プレイ画面と同じゲームの効果音のフックで鳴らす。
-- 解き終えたら本番と同じクリア演出を見せ、その完了で `completeTutorial` を呼ぶ。
+- `tutorial/tutorial.ts` に、`games/tutorial.ts` の `Tutorial` を満たす `<game>Tutorial` を置く。
+
+  ```
+  OK:
+  - frontend/src/games/water-sort/tutorial/tutorial.ts に waterSortTutorial を置く
+  ```
+
+- 盤面は本番と同じ `puzzle/` の遷移で進める。盤面の反応と見え方に `session/` が要るときは、本番と同じ `session/` の操作で進める。
+- 手が通るかと、駒・マスなどを選べるかの判定は、本番と同じ `puzzle/` か `session/` の関数で求める。
+- `session/` で進めるときは、画面に出すものと判定に使うものを、盤面と操作の結果に限る。
+- 画面は `ui/<Game>Tutorial.tsx` に置く。
+- `ui/<Game>Tutorial.tsx` は `<game>Tutorial` を `games/tutorial.ts` の進行関数で進め、`@/components/TutorialOverlay` で描く。
+- `TutorialOverlay` の `background` には、プレイ画面の地と共有する部品を渡す。
+- 盤面操作の音とクリア音は、プレイ画面と共有する `ui/use-<game>-sound-effects.ts` のフックで鳴らす。
 - 印と合図は `@/components/TutorialCue`、覆いから抜く所は `@/components/TutorialSpotlight` だけで描く。
-- 盤面部品は印・合図・抜く所を任意の props で受け取り、受け取らないときは本番と同じに描く。
-- ゲームのホームへは `views/<Game>HomeView.tsx` から `GameHomeScreen` の `renderTutorial` で、プレイ中のメニューへは `ui/<Game>Play.tsx` から `GamePlayFrame` の `renderTutorial` で渡す。
+- 盤面の外の層で動く物は、覆いを重ねたまま `@/components/TutorialForeground` で覆いの上に出す。
+- 盤面部品は印・合図・覆いから抜く所・覆いの上に出す層を任意の props で受け取り、受け取らないときは本番と同じに描く。
+- 解き終えたら本番と同じクリア演出を見せ、その完了で `completeTutorial` を呼ぶ。
+- チュートリアルの画面を、ゲームのホームへは `views/<Game>HomeView.tsx` から `GameHomeScreen` の `renderTutorial` で、プレイ中のメニューへは `ui/<Game>Play.tsx` から `GamePlayFrame` の `renderTutorial` で渡す。
 
 ## 依存方向
 

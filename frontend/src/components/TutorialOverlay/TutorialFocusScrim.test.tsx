@@ -25,9 +25,12 @@ afterEach(() => {
 });
 
 /** 覆いから抜く所の印を付けた要素を、画面の中の位置・大きさ・角丸で置く。 */
-function addSpotlight(box: SpotlightBox): HTMLElement {
+function addSpotlight(
+  box: SpotlightBox,
+  role: "target" | "clue" = "target",
+): HTMLElement {
   const element = document.createElement("span");
-  element.setAttribute(TUTORIAL_SPOTLIGHT_ATTRIBUTE, "");
+  element.setAttribute(TUTORIAL_SPOTLIGHT_ATTRIBUTE, role);
   if (box.radius !== undefined) {
     element.style.borderTopLeftRadius = box.radius;
     element.style.borderTopRightRadius = box.radius;
@@ -94,6 +97,22 @@ describe("TutorialFocusScrim", () => {
       expect(holes[1]).toBe(
         "M108,20 H132 A8,8 0 0 1 140,28 V52 A8,8 0 0 1 132,60 H108 A8,8 0 0 1 100,52 V28 A8,8 0 0 1 108,20 Z",
       );
+    });
+  });
+
+  describe("押す所と決め手を抜く場合", () => {
+    beforeEach(() => {
+      addSpotlight({ left: 10, top: 20, width: 40, height: 30 }, "target");
+      addSpotlight({ left: 100, top: 20, width: 40, height: 30 }, "clue");
+      renderScrim(true);
+    });
+
+    test("決め手を半分の濃さで先に、押す所をすべて抜いて後に塗ること", () => {
+      const fills = Array.from(document.querySelectorAll("svg mask path")).map(
+        (path) => path.getAttribute("fill"),
+      );
+
+      expect(fills).toEqual(["rgb(50% 50% 50%)", "black"]);
     });
   });
 

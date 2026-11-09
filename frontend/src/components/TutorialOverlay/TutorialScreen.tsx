@@ -14,7 +14,10 @@ import {
 
 import { GamePictogram } from "@/components/GamePictogram";
 import { TutorialFocusScrim } from "@/components/TutorialOverlay/TutorialFocusScrim";
-import { TUTORIAL_SPOTLIGHT_ATTRIBUTE } from "@/components/TutorialSpotlight";
+import {
+  TUTORIAL_FOCUS_SCRIM_Z_INDEX,
+  TUTORIAL_SPOTLIGHT_ATTRIBUTE,
+} from "@/components/TutorialSpotlight";
 import { Button } from "@/components/ui/button";
 import {
   DialogClose,
@@ -123,6 +126,9 @@ type IntroStage =
   | "reveal"
   | "done";
 
+/** 一言の重なり順。覆いと、覆いの上に出す盤面の外の層（`TutorialForeground`）より上に描き、動く物に一言を隠させない。 */
+const TUTORIAL_MESSAGE_Z_INDEX = TUTORIAL_FOCUS_SCRIM_Z_INDEX + 2;
+
 /** 名前が現れてから盤面を出すまで。 */
 const BOARD_APPEAR_DELAY_MS = 300;
 /** 盤面の領域を出す間。盤面を出す段の見せ方と同じ値。 */
@@ -143,7 +149,7 @@ const REVEAL_MS = MOTION_DURATION_MS.slow;
  * - `scenePlaying`: 盤面に場面の動きを任せている間。
  * - `captionScene`: 盤面の下に、どの場面の一言を添えるか。
  * - `captionClassName`: 盤面の下の一言。
- * - `nextButtonClassName`: 盤面の下の「次へ」。導入を終える段では、一言と一緒に消す。
+ * - `nextButtonClassName`: 盤面の下の「次へ」。盤面より先に出さず、盤面と一緒に出す。導入を終える段では、一言と一緒に消す。
  */
 const introStageViews = {
   name: {
@@ -155,7 +161,7 @@ const introStageViews = {
     scenePlaying: false,
     captionScene: null,
     captionClassName: "",
-    nextButtonClassName: "",
+    nextButtonClassName: "opacity-0",
   },
   goalAppearing: {
     introNameClassName: "",
@@ -167,7 +173,8 @@ const introStageViews = {
     captionScene: "goal",
     captionClassName:
       "animate-in fade-in-0 duration-(--duration-slow) ease-(--ease-enter) motion-reduce:animate-none",
-    nextButtonClassName: "",
+    nextButtonClassName:
+      "animate-in fade-in-0 duration-(--duration-slow) ease-(--ease-enter) motion-reduce:animate-none",
   },
   goal: {
     introNameClassName: "",
@@ -644,17 +651,13 @@ export function TutorialScreen({
                     </span>
                   </span>
                 ) : (
-                  // 中身を伏せたルール。押せる部品や問いかけに見えないよう、記号も枠も付けず、伏せた文字の幅の薄い線だけを置く。
+                  // 中身を伏せたルール。読み込み中の表示や押せる部品に見えないよう、何も描かずに場所だけを取っておく。
                   // 手に入れたときに並びの折り返しが変わって下の盤面が動かないよう、伏せている間も、手に入れた後の太い字の幅を取っておく。
-                  <span key="hidden" className="relative flex items-center">
+                  <span key="hidden" className="flex items-center">
                     <span
                       aria-hidden="true"
                       data-label={rule.label}
                       className="invisible font-semibold after:content-[attr(data-label)]"
-                    />
-                    <span
-                      aria-hidden="true"
-                      className="absolute inset-x-0 h-1 rounded-full bg-muted-foreground/20"
                     />
                     <span className="sr-only">まだ出ていないルール</span>
                   </span>
@@ -677,13 +680,14 @@ export function TutorialScreen({
           style={rulesStyle}
         >
           {/*
-            一言は補助面（muted）に載せ、どの段でも同じ面として見せる。手を引く間は、盤面の物と同じく、その面を元の形のまま覆いから抜く。
-            まとまりは背景差だけで示し、枠と影は重ねない。補足が無いときは空の行を置かず、面を文字のある所だけにする。
+            一言は、手を引く間も読む所として、文字の周りを覆いから抜いて元の明るさで見せる。面に色は付けず、抜いた所に画面の地をそのまま見せる。
+            覆いと盤面の外で動く物の上に描き、注ぐボトルなどが通っても一言を隠させない。
           */}
           <p
             key={`${message.headline}\n${message.detail ?? ""}`}
             {...{ [TUTORIAL_SPOTLIGHT_ATTRIBUTE]: "" }}
-            className="flex animate-in flex-col items-center gap-0.5 rounded-md bg-muted p-3 text-balance text-center duration-(--duration-normal) ease-(--ease-enter) fade-in-0 whitespace-pre-line [word-break:auto-phrase] motion-reduce:animate-none"
+            className="relative flex animate-in flex-col items-center gap-0.5 rounded-md p-3 text-balance text-center duration-(--duration-normal) ease-(--ease-enter) fade-in-0 whitespace-pre-line [word-break:auto-phrase] motion-reduce:animate-none"
+            style={{ zIndex: TUTORIAL_MESSAGE_Z_INDEX }}
           >
             <span className="text-heading">{message.headline}</span>
             {message.detail && (
