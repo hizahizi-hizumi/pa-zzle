@@ -4,8 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/artifact-maintenance.yml'
-      - '.github/actions/offline-dependencies/scripts/artifact_maintenance.py'
-      - '.github/actions/offline-dependencies/scripts/test_artifact_maintenance.py'
+      - '.github/actions/offline-dependencies/scripts/**'
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
@@ -22,7 +21,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
       - name: Verify Artifact Maintenance
-        run: python3 -m unittest discover -s .github/actions/offline-dependencies/scripts -p 'test_artifact_maintenance.py'
+        run: python3 -m unittest discover -s .github/actions/offline-dependencies/scripts -p 'test_*.py'
 
   prune:
     permissions:

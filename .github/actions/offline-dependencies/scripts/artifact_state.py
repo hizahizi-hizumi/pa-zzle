@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import base64
 import hashlib
 import json
 import os
@@ -119,10 +118,8 @@ class Artifact:
 @dataclass(frozen=True)
 class Plan:
     input_key: str
-    artifact_name: str
     build: bool
     reason: str
-    active_keys: tuple[str, ...]
     retention_days: int
 
 
@@ -148,107 +145,16 @@ def latest_live_artifact(artifacts: list[Artifact], name: str) -> Artifact:
     return max(candidates, key=lambda item: (item.created_at, item.artifact_id))
 
 
-def decide_plan(
-    *,
-    event_name: str,
-    current_key: str,
-    base_key: str | None,
-    artifact_exists: bool,
-    active_keys: set[str],
-    retained_active_keys: set[str],
-) -> Plan:
-    requested_keys = active_keys | {current_key}
-    dependency_changed = base_key != current_key
-    retention_days = retention_days_for_event(event_name)
-
+def decide_plan(*, event_name: str, current_key: str, artifact_exists: bool) -> Plan:
     if event_name == "workflow_dispatch":
-        return Plan(
-            input_key=current_key,
-            artifact_name=artifact_name(current_key),
-            build=True,
-            reason="manual force build",
-            active_keys=tuple(sorted(requested_keys)),
-            retention_days=retention_days,
-        )
-
+        return Plan(current_key, True, "manual force build", MAIN_RETENTION_DAYS)
     if event_name == "push":
-        return Plan(
-            input_key=current_key,
-            artifact_name=artifact_name(current_key),
-            build=not artifact_exists,
-            reason=(
-                "main dependency artifact missing or retention exceeds limit"
-                if not artifact_exists
-                else "reuse existing dependency artifact"
-            ),
-            active_keys=tuple(sorted(requested_keys)),
-            retention_days=retention_days,
-        )
-
-    if not dependency_changed:
-        if not artifact_exists:
-            raise StateError(
-                "Offline Dependencies Artifact for the current main dependency key is missing. "
-                "This PR does not change dependency inputs, so it will not rebuild the shared main artifact. "
-                "Run Repository Snapshot manually on main first."
-            )
-        return Plan(
-            input_key=current_key,
-            artifact_name=artifact_name(current_key),
-            build=False,
-            reason="dependency inputs unchanged; reuse main artifact",
-            active_keys=tuple(sorted(requested_keys)),
-            retention_days=retention_days,
-        )
-
-    if artifact_exists:
-        return Plan(
-            input_key=current_key,
-            artifact_name=artifact_name(current_key),
-            build=False,
-            reason="reuse matching PR dependency artifact",
-            active_keys=tuple(sorted(requested_keys)),
-            retention_days=retention_days,
-        )
-
-    if len(retained_active_keys) >= MAX_ACTIVE_KEYS:
-        raise StateError(
-            "Offline Dependencies Artifact capacity exceeded. "
-            f"The repository keeps at most {MAX_ACTIVE_KEYS} materialized dependency sets "
-            "for current main and open PRs. "
-            "Merge, update, or close one of the dependency-changing PRs before creating another dependency set."
-        )
-
-    return Plan(
-        input_key=current_key,
-        artifact_name=artifact_name(current_key),
-        build=True,
-        reason="PR dependency artifact missing",
-        active_keys=tuple(sorted(requested_keys)),
-        retention_days=retention_days,
-    )
-
-
-def deletion_ids(artifacts: list[Artifact], active_keys: set[str], *, inactive_only: bool) -> list[int]:
-    grouped: dict[str, list[Artifact]] = {}
-    deletion: list[int] = []
-
-    for artifact in artifacts:
-        input_key = artifact.input_key
-        if input_key is None or artifact.expired:
-            continue
-        if input_key not in active_keys:
-            deletion.append(artifact.artifact_id)
-            continue
-        grouped.setdefault(input_key, []).append(artifact)
-
-    if inactive_only:
-        return sorted(deletion)
-
-    for items in grouped.values():
-        newest = max(items, key=lambda item: (item.created_at, item.artifact_id))
-        deletion.extend(item.artifact_id for item in items if item.artifact_id != newest.artifact_id)
-    return sorted(deletion)
+        reason = "reuse existing dependency artifact" if artifact_exists else "main dependency artifact missing or retention exceeds limit"
+        return Plan(current_key, not artifact_exists, reason, MAIN_RETENTION_DAYS)
+    if event_name == "pull_request":
+        reason = "reuse matching dependency artifact" if artifact_exists else "dependency artifact missing"
+        return Plan(current_key, not artifact_exists, reason, PR_RETENTION_DAYS)
+    raise StateError(f"unsupported event: {event_name}")
 
 
 class GitHubClient:
@@ -308,40 +214,12 @@ class GitHubClient:
                 return pull_requests
             page += 1
 
-    def ref_file_contents(self, ref: str, path: str) -> bytes | None:
-        encoded_path = urllib.parse.quote(path, safe="/")
-        encoded_ref = urllib.parse.quote(ref, safe="")
-        try:
-            data = self._request_json(f"/repos/{self.repository}/contents/{encoded_path}?ref={encoded_ref}")
-        except urllib.error.HTTPError as error:
-            if error.code == HTTP_NOT_FOUND:
-                return None
-            raise
-        if not isinstance(data, dict) or data.get("encoding") != "base64":
-            raise StateError(f"unexpected content response for {path} at {ref}")
-        raw = data.get("content")
-        if not isinstance(raw, str):
-            raise StateError(f"content is missing for {path} at {ref}")
-        return base64.b64decode(raw)
-
-    def ref_key(self, ref: str) -> str | None:
-        contents: dict[str, bytes] = {}
-        for path in INPUT_PATHS:
-            if path == BUN_VERSION_INPUT:
-                package_json = self.ref_file_contents(ref, BUN_PACKAGE_PATH)
-                raw = bun_version_bytes(package_json) if package_json is not None else None
-            else:
-                raw = self.ref_file_contents(ref, path)
-            if raw is None:
-                return None
-            contents[path] = raw
-        return compute_key(contents)
-
-    def artifacts(self) -> list[Artifact]:
+    def artifacts(self, name: str | None = None) -> list[Artifact]:
         artifacts: list[Artifact] = []
         page = 1
+        query = f"&name={urllib.parse.quote(name, safe='')}" if name else ""
         while True:
-            data = self._request_json(f"/repos/{self.repository}/actions/artifacts?per_page={PAGE_SIZE}&page={page}")
+            data = self._request_json(f"/repos/{self.repository}/actions/artifacts?per_page={PAGE_SIZE}&page={page}{query}")
             if not isinstance(data, dict) or not isinstance(data.get("artifacts"), list):
                 raise StateError("artifact response is invalid")
             items = data["artifacts"]
@@ -352,31 +230,6 @@ class GitHubClient:
 
     def delete_artifact(self, artifact_id: int) -> None:
         self._delete(f"/repos/{self.repository}/actions/artifacts/{artifact_id}")
-
-
-def active_keys(
-    client: GitHubClient,
-    *,
-    current_pr_number: int | None = None,
-    current_key: str | None = None,
-    exclude_current_pr: bool = False,
-) -> set[str]:
-    keys: set[str] = set()
-    main_key = client.ref_key(client.main_sha())
-    if main_key is not None:
-        keys.add(main_key)
-
-    for pr_number, head_sha in client.open_pull_requests():
-        if pr_number == current_pr_number:
-            if exclude_current_pr:
-                continue
-            if current_key is not None:
-                keys.add(current_key)
-                continue
-        pr_key = client.ref_key(head_sha)
-        if pr_key is not None:
-            keys.add(pr_key)
-    return keys
 
 
 def write_output(name: str, value: str) -> None:
@@ -400,55 +253,56 @@ def client_from_environment() -> GitHubClient:
     )
 
 
-def command_plan(repo_root: Path) -> None:
+def ensure_capacity(client: GitHubClient, repo_root: Path, current_key: str, current_pr_number: int | None) -> None:
+    from repository_refs import RepositoryReader
+
+    main_sha = client.main_sha()
+    pull_requests = client.open_pull_requests()
+    reader = RepositoryReader(repo_root)
+    if not reader.fetch_refs(main_sha, pull_requests):
+        raise StateError("repository refs changed while checking Offline Dependencies capacity")
+    other_keys = {
+        key
+        for number, sha in [(0, main_sha), *pull_requests]
+        if number != current_pr_number
+        if (key := reader.dependency_key(sha)) is not None
+    }
+    artifacts = [item for item in client.artifacts() if not item.expired and item.input_key is not None]
+    retained = {item.input_key for item in artifacts if item.input_key in other_keys}
+    if client.main_sha() != main_sha or client.open_pull_requests() != pull_requests:
+        raise StateError("repository refs changed while checking Offline Dependencies capacity")
+    if len(retained) >= MAX_ACTIVE_KEYS:
+        raise StateError(
+            f"Offline Dependencies capacity exceeded: {len(retained)} of {MAX_ACTIVE_KEYS} active keys already materialized"
+        )
+    if len({item.input_key for item in artifacts}) >= MAX_ACTIVE_KEYS and current_key not in retained:
+        for item in artifacts:
+            if item.input_key not in other_keys:
+                client.delete_artifact(item.artifact_id)
+
+
+def command_plan(repo_root: Path, *, enforce_capacity: bool) -> None:
     client = client_from_environment()
-    event_name = os.environ.get("GITHUB_EVENT_NAME", "")
-    current_pr_raw = os.environ.get("PR_NUMBER", "")
-    current_pr_number = int(current_pr_raw) if current_pr_raw else None
     current_key = compute_repository_key(repo_root)
     artifact = artifact_name(current_key)
-    artifacts = client.artifacts()
-    existing = reusable_artifact_exists(artifacts, artifact, event_name)
-
-    base_key: str | None = None
-    if event_name == "pull_request":
-        base_sha = os.environ.get("PR_BASE_SHA")
-        if not base_sha:
-            raise StateError("PR_BASE_SHA is required for pull_request")
-        base_key = client.ref_key(base_sha)
-
-    other_keys = active_keys(
-        client,
-        current_pr_number=current_pr_number,
-        exclude_current_pr=True,
-    )
-    retained_keys = {
-        item.input_key
-        for item in artifacts
-        if item.input_key is not None and not item.expired and item.input_key in other_keys
-    }
-    plan = decide_plan(
-        event_name=event_name,
-        current_key=current_key,
-        base_key=base_key,
-        artifact_exists=existing,
-        active_keys=other_keys,
-        retained_active_keys=retained_keys,
-    )
+    event_name = os.environ.get("GITHUB_EVENT_NAME", "")
+    existing = reusable_artifact_exists(client.artifacts(artifact), artifact, event_name)
+    plan = decide_plan(event_name=event_name, current_key=current_key, artifact_exists=existing)
+    if enforce_capacity and plan.build and event_name == "pull_request":
+        current_pr = os.environ.get("PR_NUMBER", "")
+        ensure_capacity(client, repo_root, current_key, int(current_pr) if current_pr else None)
 
     print(f"offline-dependencies: key={plan.input_key} build={str(plan.build).lower()} reason={plan.reason}")
-    print(f"offline-dependencies: active_keys={','.join(plan.active_keys)}")
     write_output("input-key", plan.input_key)
-    write_output("artifact-name", plan.artifact_name)
+    write_output("artifact-name", artifact)
     write_output("build", str(plan.build).lower())
-    write_output("active-keys", ",".join(plan.active_keys))
     write_output("retention-days", str(plan.retention_days))
 
 
 def command_resolve(repo_root: Path) -> None:
     client = client_from_environment()
     input_key = compute_repository_key(repo_root)
-    artifact = latest_live_artifact(client.artifacts(), artifact_name(input_key))
+    artifact = latest_live_artifact(client.artifacts(artifact_name(input_key)), artifact_name(input_key))
     print(f"offline-dependencies: resolved key={input_key} artifact_id={artifact.artifact_id}")
     write_output("input-key", input_key)
     write_output("artifact-id", str(artifact.artifact_id))
@@ -456,40 +310,11 @@ def command_resolve(repo_root: Path) -> None:
     write_output("expires-at", artifact.expires_at)
 
 
-def command_replace_current(repo_root: Path) -> None:
-    client = client_from_environment()
-    current_key = compute_repository_key(repo_root)
-    for artifact in client.artifacts():
-        if artifact.input_key == current_key and not artifact.expired:
-            print(f"offline-dependencies: replacing artifact id={artifact.artifact_id}")
-            client.delete_artifact(artifact.artifact_id)
-
-
-def command_prune(repo_root: Path, *, inactive_only: bool, planned_keys: str | None) -> None:
-    client = client_from_environment()
-    if planned_keys is None:
-        current_pr_raw = os.environ.get("PR_NUMBER", "")
-        current_pr_number = int(current_pr_raw) if current_pr_raw else None
-        current_key = compute_repository_key(repo_root) if current_pr_number is not None else None
-        keys = active_keys(client, current_pr_number=current_pr_number, current_key=current_key)
-    else:
-        keys = set(planned_keys.split(","))
-        if any(not re.fullmatch(r"[0-9a-f]{64}", key) for key in keys):
-            raise StateError("invalid planned active dependency keys")
-    artifacts = client.artifacts()
-    ids = deletion_ids(artifacts, keys, inactive_only=inactive_only)
-    for artifact_id in ids:
-        print(f"offline-dependencies: deleting artifact id={artifact_id}")
-        client.delete_artifact(artifact_id)
-    print(f"offline-dependencies: retained active_keys={','.join(sorted(keys))}")
-
-
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("bun-version", "key", "plan", "prune", "replace-current", "resolve"))
+    parser.add_argument("command", choices=("bun-version", "key", "plan", "resolve"))
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
-    parser.add_argument("--inactive-only", action="store_true")
-    parser.add_argument("--planned-keys")
+    parser.add_argument("--enforce-capacity", action="store_true")
     args = parser.parse_args()
 
     try:
@@ -502,13 +327,9 @@ def main() -> None:
         elif args.command == "key":
             print(compute_repository_key(repo_root))
         elif args.command == "plan":
-            command_plan(repo_root)
-        elif args.command == "replace-current":
-            command_replace_current(repo_root)
-        elif args.command == "resolve":
-            command_resolve(repo_root)
+            command_plan(repo_root, enforce_capacity=args.enforce_capacity)
         else:
-            command_prune(repo_root, inactive_only=args.inactive_only, planned_keys=args.planned_keys)
+            command_resolve(repo_root)
     except (StateError, OSError, urllib.error.HTTPError, urllib.error.URLError) as error:
         print(f"offline-dependencies: {error}", file=sys.stderr)
         raise SystemExit(1) from error
