@@ -1,0 +1,563 @@
+import {
+  getMinesweeperCellCount,
+  getMinesweeperNeighborCellIndices,
+  type MinesweeperBoard,
+} from "@/games/minesweeper/puzzle/board";
+import {
+  collectMinesweeperRevealCellIndices,
+  getAdjacentMinesweeperMineCount,
+  isMinesweeperCleared,
+  isMinesweeperMine,
+} from "@/games/minesweeper/puzzle/rules";
+import type { MinesweeperPuzzleState } from "@/games/minesweeper/puzzle/state";
+import {
+  chordMinesweeperCell,
+  revealMinesweeperCell,
+  toggleMinesweeperFlag,
+} from "@/games/minesweeper/puzzle/transitions";
+import {
+  getMinesweeperVisibleCells,
+  type MinesweeperVisibleCell,
+} from "@/games/minesweeper/session/session";
+import type {
+  Tutorial,
+  TutorialMessage,
+  TutorialMoveOutcome,
+  TutorialSituation,
+  TutorialStep,
+} from "@/games/tutorial";
+
+/**
+ * - `number`: 数字は、周りの8マスにある地雷の数。
+ * - `total`: 盤面全体の地雷の数は、上の「地雷」に出る。
+ */
+export type MinesweeperTutorialRuleId = "number" | "total";
+
+/** 盤面と同じく、開く・旗を置く外す・開いた数字の周りをまとめて開く。 */
+export type MinesweeperTutorialAction = {
+  type: "reveal" | "flag" | "chord";
+  cellIndex: number;
+};
+
+/** 手順で印のマスにさせる操作。 */
+export type MinesweeperTutorialOperation = "reveal" | "flag";
+
+/**
+ * - `message`: 盤面の切り替えが `operation` に合っているときの一言。合っていないときは、補足を `modeSwitchDetails` に替える。
+ * - `cellIndices`: 印を付け、手順の間だけ `operation` を受け付けるマス。すべて開くか旗を置いたら次の手順へ進む。
+ * - `operation`: 印のマスにさせる操作。地雷のマスには旗を置かせ、地雷でないマスは開かせる。
+ * - `reasonCellIndices`: 印のマスを決めるマス（決め手）。決めた数字と、その読みに使った、もう地雷と決まったマス。手順の間、印のマスと一緒に覆いから抜き、操作する前に何で決まるかを盤面で分からせる。
+ * - `reasonMineCount`: 印のマスを決めるのに、上の地雷の総数も使う。手順の間、地雷の総数も覆いから抜く。
+ */
+export type MinesweeperTutorialStep =
+  TutorialStep<MinesweeperTutorialRuleId> & {
+    cellIndices: readonly number[];
+    operation: MinesweeperTutorialOperation;
+    reasonCellIndices: readonly number[];
+    reasonMineCount: boolean;
+  };
+
+/**
+ * 直前の手。盤面の上の応えと、覆いから抜くマスに使う。
+ * - `cellIndex`: 操作したマス。
+ * - `steppedMine`: 地雷を踏んだ。
+ * - `fittedCellIndices`: この手で手順どおりになった、手順の印のマス。開いた数字を押してまとめて開いたときは、押した数字ではなく開いた印のマス。手を離した後は常に空。
+ */
+export type MinesweeperTutorialMove = {
+  cellIndex: number;
+  steppedMine: boolean;
+  fittedCellIndices: readonly number[];
+};
+
+/** `moveCount`: 盤面を変えた手の数。同じマスへの合図をやり直す目印に使う。 */
+export type MinesweeperTutorialBoardState = {
+  puzzle: MinesweeperPuzzleState;
+  moveCount: number;
+  lastMove: MinesweeperTutorialMove | null;
+};
+
+type MinesweeperTutorialSituation = TutorialSituation<
+  MinesweeperTutorialRuleId,
+  MinesweeperTutorialStep
+>;
+
+/**
+ * 開いていないマスが、開いた数字と踏んだ地雷と地雷の総数だけで、地雷か地雷でないかに決まること。
+ * - `reasonCellIndices`: 決め手のマス。決めた数字と、その読みに使った、もう地雷と決まったマス。
+ * - `round`: 何巡目の読みで決まったか。前に決まったマスを使って決まるほど大きい。
+ */
+type MinesweeperDeduction = {
+  mine: boolean;
+  reasonCellIndices: readonly number[];
+  round: number;
+};
+
+/** 1始まりの行・列で書いたマス。 */
+function cellAt(row: number, column: number): number {
+  return (row - 1) * 5 + (column - 1);
+}
+
+/**
+ * 地雷は3つ。左上から開き始め、本番と同じく開いたマスの周りに地雷の無いマスが続けて開いた盤面から始める。
+ * 開いていないマスのうち地雷でないマスは、どれも周りに地雷があり、開いても続けて開かない。
+ *
+ * ```text
+ * 最初    解（*: 地雷）
+ * .....   .....
+ * .111.   .111.
+ * .1#21   .1*21
+ * 12###   123*1
+ * #####   1*211
+ * ```
+ */
+const board: MinesweeperBoard = {
+  rows: 5,
+  columns: 5,
+  mineCellIndices: [cellAt(3, 3), cellAt(4, 4), cellAt(5, 2)],
+};
+
+const initialRevealedCellIndices = collectMinesweeperRevealCellIndices(board, [
+  cellAt(1, 1),
+]);
+
+const cellIndices = Array.from(
+  { length: getMinesweeperCellCount(board) },
+  (_, cellIndex) => cellIndex,
+);
+
+const safeCellIndices = cellIndices.filter(
+  (cellIndex) => !isMinesweeperMine(board, cellIndex),
+);
+
+/**
+ * 1の3つに囲まれたマスが地雷だと数字の決まりで見つけて旗を置き、その旗で数がそろった1の隣を開く。
+ * 開いた3の周りにあと2つ地雷があり、地雷の総数3つと合わせると、3から離れた3マスには地雷が無いと決まる。
+ * 3マスは数字の決まりだけでは決まらない。手順を終えると下の2マスが残り、開いた3マスの数字で1つずつ決まる。
+ */
+const steps: readonly MinesweeperTutorialStep[] = [
+  {
+    message: {
+      headline: "数字は、周りの8マスにある\n地雷の数です",
+      detail: "印のマスを押して、旗を置いてください",
+    },
+    introducedRuleId: "number",
+    cellIndices: [cellAt(3, 3)],
+    operation: "flag",
+    reasonCellIndices: [cellAt(2, 2), cellAt(2, 3), cellAt(2, 4)],
+    reasonMineCount: false,
+  },
+  {
+    message: {
+      headline: "この1の周りの地雷は旗だけです。\n残りのマスに地雷はありません",
+      detail: "印のマスを押してください",
+    },
+    introducedRuleId: null,
+    cellIndices: [cellAt(4, 3)],
+    operation: "reveal",
+    reasonCellIndices: [cellAt(3, 2), cellAt(3, 3)],
+    reasonMineCount: false,
+  },
+  {
+    message: {
+      headline: "地雷は全部で3つ。\n残りの2つはこの3の周りです",
+      detail: "3から離れた印のマスを押してください",
+    },
+    introducedRuleId: "total",
+    cellIndices: [cellAt(4, 5), cellAt(5, 1), cellAt(5, 5)],
+    operation: "reveal",
+    reasonCellIndices: [cellAt(3, 3), cellAt(4, 3)],
+    reasonMineCount: true,
+  },
+];
+
+/** 手を引いている間、盤面の切り替えが手順の操作に合っていないときの補足。 */
+export const minesweeperTutorialModeSwitchDetails = {
+  flag: "旗に切り替えて、印のマスを押してください",
+  reveal: "旗から戻して、印のマスを押してください",
+} as const satisfies Record<MinesweeperTutorialOperation, string>;
+
+/** 数字の決まりで、まだ決まっていないマスが決まるもの。決め手は、そう決めた数字のマスと、その数字の周りの、もう地雷と決まったマス。 */
+function deduceByNumber(
+  revealed: ReadonlySet<number>,
+  known: ReadonlyMap<number, MinesweeperDeduction>,
+  round: number,
+): Map<number, MinesweeperDeduction> {
+  const found = new Map<number, MinesweeperDeduction>();
+  for (const numberCellIndex of revealed) {
+    const mineCount = getAdjacentMinesweeperMineCount(board, numberCellIndex);
+    if (mineCount === 0) {
+      continue;
+    }
+    const closed = getMinesweeperNeighborCellIndices(
+      board,
+      numberCellIndex,
+    ).filter((cellIndex) => !revealed.has(cellIndex));
+    const knownMineCellIndices = closed.filter(
+      (cellIndex) => known.get(cellIndex)?.mine === true,
+    );
+    const unknown = closed.filter((cellIndex) => !known.has(cellIndex));
+    const mine =
+      knownMineCellIndices.length === mineCount
+        ? false
+        : knownMineCellIndices.length + unknown.length === mineCount
+          ? true
+          : null;
+    if (mine === null) {
+      continue;
+    }
+    for (const cellIndex of unknown) {
+      const reasonCellIndices = found.get(cellIndex)?.reasonCellIndices ?? [];
+      found.set(cellIndex, {
+        mine,
+        reasonCellIndices: [
+          ...new Set([
+            ...reasonCellIndices,
+            numberCellIndex,
+            ...knownMineCellIndices,
+          ]),
+        ],
+        round,
+      });
+    }
+  }
+  return found;
+}
+
+/**
+ * 地雷の総数の決まりで決まるもの。数字の決まりで決まるマスが無くなってから使う。
+ * 残りの地雷の数が、まだ決まっていないマスの数と同じならすべて地雷、0 ならすべて地雷でない。
+ * 1つの数字の周りに残りの地雷がすべてあると分かれば、その数字から離れたマスは地雷でない。
+ * 決め手は、その数字のマスと、残りの地雷の数を決めた、もう地雷と決まったマス。
+ */
+function deduceByTotal(
+  revealed: ReadonlySet<number>,
+  known: ReadonlyMap<number, MinesweeperDeduction>,
+  round: number,
+): Map<number, MinesweeperDeduction> {
+  const unknown = cellIndices.filter(
+    (cellIndex) => !revealed.has(cellIndex) && !known.has(cellIndex),
+  );
+  const knownMineCellIndices = [...known]
+    .filter(([, deduction]) => deduction.mine)
+    .map(([cellIndex]) => cellIndex);
+  const remainingMineCount =
+    board.mineCellIndices.length - knownMineCellIndices.length;
+  const found = new Map<number, MinesweeperDeduction>();
+  if (remainingMineCount === 0 || remainingMineCount === unknown.length) {
+    for (const cellIndex of unknown) {
+      found.set(cellIndex, {
+        mine: remainingMineCount > 0,
+        reasonCellIndices: knownMineCellIndices,
+        round,
+      });
+    }
+    return found;
+  }
+
+  for (const numberCellIndex of revealed) {
+    const closed = getMinesweeperNeighborCellIndices(
+      board,
+      numberCellIndex,
+    ).filter((cellIndex) => !revealed.has(cellIndex));
+    const neededMineCount =
+      getAdjacentMinesweeperMineCount(board, numberCellIndex) -
+      closed.filter((cellIndex) => known.get(cellIndex)?.mine === true).length;
+    const around = closed.filter((cellIndex) => !known.has(cellIndex));
+    if (around.length === 0 || neededMineCount !== remainingMineCount) {
+      continue;
+    }
+    for (const cellIndex of unknown) {
+      if (!around.includes(cellIndex) && !found.has(cellIndex)) {
+        found.set(cellIndex, {
+          mine: false,
+          reasonCellIndices: [numberCellIndex, ...knownMineCellIndices],
+          round,
+        });
+      }
+    }
+  }
+  return found;
+}
+
+/**
+ * 今の盤面で、開いた数字と踏んだ地雷から、手に入れたルールだけで決まるマス。決まったマスを使ってさらに決まるマスも含む。
+ * 旗は自分用の印で正しいとは限らないので、決め手にしない。
+ */
+function deduceCells(
+  puzzle: MinesweeperPuzzleState,
+  ruleIds: readonly MinesweeperTutorialRuleId[],
+): Map<number, MinesweeperDeduction> {
+  const revealed = new Set(puzzle.revealedCellIndices);
+  const known = new Map<number, MinesweeperDeduction>(
+    puzzle.steppedMineCellIndices.map((cellIndex) => [
+      cellIndex,
+      { mine: true, reasonCellIndices: [], round: 0 },
+    ]),
+  );
+  const deductions = new Map<number, MinesweeperDeduction>();
+  for (let round = 1; ; round += 1) {
+    let found = ruleIds.includes("number")
+      ? deduceByNumber(revealed, known, round)
+      : new Map<number, MinesweeperDeduction>();
+    if (found.size === 0 && ruleIds.includes("total")) {
+      found = deduceByTotal(revealed, known, round);
+    }
+    if (found.size === 0) {
+      return deductions;
+    }
+    for (const [cellIndex, deduction] of found) {
+      known.set(cellIndex, deduction);
+      deductions.set(cellIndex, deduction);
+    }
+  }
+}
+
+function isStepCellDone(
+  step: MinesweeperTutorialStep,
+  puzzle: MinesweeperPuzzleState,
+  cellIndex: number,
+): boolean {
+  return step.operation === "flag"
+    ? puzzle.flaggedCellIndices.includes(cellIndex)
+    : puzzle.revealedCellIndices.includes(cellIndex);
+}
+
+function isStepDone(
+  step: MinesweeperTutorialStep,
+  puzzle: MinesweeperPuzzleState,
+): boolean {
+  return step.cellIndices.every((cellIndex) =>
+    isStepCellDone(step, puzzle, cellIndex),
+  );
+}
+
+function applyAction(
+  puzzle: MinesweeperPuzzleState,
+  { type, cellIndex }: MinesweeperTutorialAction,
+): MinesweeperPuzzleState {
+  switch (type) {
+    case "reveal":
+      return revealMinesweeperCell(board, puzzle, cellIndex);
+    case "flag":
+      return toggleMinesweeperFlag(board, puzzle, cellIndex);
+    case "chord":
+      return chordMinesweeperCell(board, puzzle, cellIndex);
+  }
+}
+
+function startMinesweeperTutorial(): MinesweeperTutorialBoardState {
+  return {
+    puzzle: {
+      revealedCellIndices: initialRevealedCellIndices,
+      flaggedCellIndices: [],
+      steppedMineCellIndices: [],
+    },
+    moveCount: 0,
+    lastMove: null,
+  };
+}
+
+function getMinesweeperTutorialGoal(): MinesweeperTutorialBoardState {
+  return {
+    puzzle: {
+      revealedCellIndices: safeCellIndices,
+      flaggedCellIndices: [],
+      steppedMineCellIndices: [],
+    },
+    moveCount: 0,
+    lastMove: null,
+  };
+}
+
+/**
+ * 手を引いている間の手が、手順どおりか。印のマスへの手順の操作と、開かせる手順で、開いた数字を押して印のマスだけをまとめて開く手を受け付ける。
+ * 地雷の印を開く手と、開く印に旗を置く手は受け付けない。
+ */
+function fitsStep(
+  step: MinesweeperTutorialStep,
+  before: MinesweeperPuzzleState,
+  after: MinesweeperPuzzleState,
+  action: MinesweeperTutorialAction,
+): boolean {
+  if (action.type === "chord") {
+    const opened = after.revealedCellIndices.filter(
+      (cellIndex) => !before.revealedCellIndices.includes(cellIndex),
+    );
+    return (
+      step.operation === "reveal" &&
+      after.steppedMineCellIndices.length ===
+        before.steppedMineCellIndices.length &&
+      opened.every((cellIndex) => step.cellIndices.includes(cellIndex))
+    );
+  }
+  return (
+    action.type === step.operation &&
+    step.cellIndices.includes(action.cellIndex) &&
+    !isStepCellDone(step, before, action.cellIndex)
+  );
+}
+
+/**
+ * 手を引いている間は、手順どおりの手だけを受け付ける。
+ * 手を離した後は本番と同じく、地雷を踏んでも続けられる。
+ */
+function performMinesweeperTutorialAction(
+  { step }: MinesweeperTutorialSituation,
+  state: MinesweeperTutorialBoardState,
+  action: MinesweeperTutorialAction,
+): {
+  state: MinesweeperTutorialBoardState;
+  outcome: TutorialMoveOutcome;
+} {
+  const applied = applyAction(state.puzzle, action);
+  const puzzle =
+    step !== null && !fitsStep(step, state.puzzle, applied, action)
+      ? state.puzzle
+      : applied;
+  if (puzzle === state.puzzle) {
+    return { state, outcome: "ignored" };
+  }
+
+  const steppedMine =
+    puzzle.steppedMineCellIndices.length >
+    state.puzzle.steppedMineCellIndices.length;
+  const next: MinesweeperTutorialBoardState = {
+    puzzle,
+    moveCount: state.moveCount + 1,
+    lastMove: {
+      cellIndex: action.cellIndex,
+      steppedMine,
+      fittedCellIndices:
+        step === null
+          ? []
+          : step.cellIndices.filter(
+              (cellIndex) =>
+                !isStepCellDone(step, state.puzzle, cellIndex) &&
+                isStepCellDone(step, puzzle, cellIndex),
+            ),
+    },
+  };
+
+  if (isMinesweeperCleared(board, puzzle)) {
+    return { state: next, outcome: "solved" };
+  }
+  if (steppedMine) {
+    return { state: next, outcome: "violated" };
+  }
+  if (step !== null && isStepDone(step, puzzle)) {
+    return { state: next, outcome: "stepped" };
+  }
+  return { state: next, outcome: "continued" };
+}
+
+/** 地雷を踏んだ手への一言。本番と同じく、踏んでも続けられることを言う。 */
+function describeMinesweeperTutorialViolation(): TutorialMessage {
+  return {
+    headline: "地雷を踏みました",
+    detail: "このまま続けられます",
+  };
+}
+
+export const MINESWEEPER_TUTORIAL_ROWS = board.rows;
+export const MINESWEEPER_TUTORIAL_COLUMNS = board.columns;
+export const MINESWEEPER_TUTORIAL_MINE_COUNT = board.mineCellIndices.length;
+
+/** 盤面の見え方。解き終えた盤面では、本番と同じく地雷の配置を明かす。 */
+export function getMinesweeperTutorialVisibleCells(
+  state: MinesweeperTutorialBoardState,
+): MinesweeperVisibleCell[] {
+  return getMinesweeperVisibleCells(
+    board,
+    state.puzzle,
+    isMinesweeperCleared(board, state.puzzle),
+  );
+}
+
+/** 手順で印を付けるマスのうち、まだ手順どおりになっていないもの。手を離した後は空。 */
+export function getMinesweeperTutorialStepCellIndices(
+  { step }: MinesweeperTutorialSituation,
+  state: MinesweeperTutorialBoardState,
+): readonly number[] {
+  return step === null
+    ? []
+    : step.cellIndices.filter(
+        (cellIndex) => !isStepCellDone(step, state.puzzle, cellIndex),
+      );
+}
+
+/**
+ * 手を離した後、手が止まったときに示す、今の盤面と手に入れたルールだけで地雷でないと決まる、開いていないマス。
+ * 前に決まったマスを使わずに決まるマスほど先に返す。旗を置いたマスは押しても開かないので、ほかに無いときだけ返す。無ければ `null`。
+ */
+export function findMinesweeperTutorialHintCellIndex(
+  { earnedRuleIds }: MinesweeperTutorialSituation,
+  state: MinesweeperTutorialBoardState,
+): number | null {
+  const candidates = [...deduceCells(state.puzzle, earnedRuleIds)]
+    .filter(([, deduction]) => !deduction.mine)
+    .map(([cellIndex, { round }]) => ({
+      cellIndex,
+      flagged: state.puzzle.flaggedCellIndices.includes(cellIndex),
+      round,
+    }))
+    .sort(
+      (left, right) =>
+        Number(left.flagged) - Number(right.flagged) ||
+        left.round - right.round ||
+        left.cellIndex - right.cellIndex,
+    );
+  return candidates[0]?.cellIndex ?? null;
+}
+
+/** 旗を置いたマス。手がかりの印が旗のマスに付いたとき、旗を外させるのに使う。 */
+export function isMinesweeperTutorialCellFlagged(
+  state: MinesweeperTutorialBoardState,
+  cellIndex: number,
+): boolean {
+  return state.puzzle.flaggedCellIndices.includes(cellIndex);
+}
+
+export const minesweeperTutorial: Tutorial<
+  MinesweeperTutorialRuleId,
+  MinesweeperTutorialStep,
+  MinesweeperTutorialBoardState,
+  MinesweeperTutorialAction
+> = {
+  intro: {
+    purpose: "数字を手がかりに\n地雷ではないマスをすべて開くパズルです",
+    goalCaption: "この盤面がゴールです",
+    startCaption: "最初から一部のマスが開いています",
+  },
+  rules: [
+    { id: "number", label: "数字は周りの地雷の数" },
+    { id: "total", label: "地雷の総数は上に出る" },
+  ],
+  steps,
+  freePlay: {
+    headline: "地雷ではないマスを\nすべて開くと完成です",
+    detail: null,
+  },
+  completion: {
+    home: {
+      headline: "完成です",
+      detail:
+        "どのレベルも9×9以上の盤面です\n地雷を踏んでも、ミスに数えて続けられます",
+    },
+    play: {
+      headline: "完成です",
+      detail: "地雷を踏んでも、ミスに数えて続けられます",
+    },
+  },
+  start: startMinesweeperTutorial,
+  goal: getMinesweeperTutorialGoal,
+  perform: performMinesweeperTutorialAction,
+  describeViolation: describeMinesweeperTutorialViolation,
+};
+
+export const _private = {
+  board,
+  initialRevealedCellIndices,
+  safeCellIndices,
+  cellAt,
+  deduceCells,
+};

@@ -1,18 +1,32 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useRef } from "react";
 
+import { TutorialCue } from "@/components/TutorialCue";
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
+import type { MinesweeperCellCue } from "@/games/minesweeper/ui/board/cell-cue";
 import {
+  getMinesweeperBoardCellShapeClassName,
   getMinesweeperCellFaceClassName,
   MinesweeperCellFace,
 } from "@/games/minesweeper/ui/board/MinesweeperCellFace";
 
 const LONG_PRESS_DELAY_MS = 450;
 
+/**
+ * 印と応えの線は、マスの面の上に、面の縁から少し内側へ引く。面の縁と浮いたマスの下の縁は線と近い明るさなので、縁に重ねると線が埋もれる。
+ * 角丸は、面の角丸（4px）を同じだけ内側へずらした形なので角が立つ。
+ */
+const cueOutlinePlacementClassName = "pointer-events-none absolute inset-[4px]";
+
 type MinesweeperCellProps = {
   cellIndex: number;
   view: MinesweeperVisibleCell;
   disabled: boolean;
+  /** チュートリアルで重ねる印と応え。通常のプレイでは渡さない。 */
+  cue?: MinesweeperCellCue;
+  /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜き、元の明るさで見せる。 */
+  spotlit?: boolean;
   onPress: (cellIndex: number) => void;
   onFlagPress: (cellIndex: number) => void;
 };
@@ -42,7 +56,7 @@ function getAccessibleName(
 function getCellClassName(view: MinesweeperVisibleCell): string {
   const faceClassName = getMinesweeperCellFaceClassName(view, "board");
   const interactionClassName =
-    "min-w-0 touch-manipulation select-none outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
+    "relative min-w-0 touch-manipulation select-none outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
   if (view.state === "hidden") {
     return `${faceClassName} ${interactionClassName} transition-[filter] duration-75 hover:brightness-[1.015] active:brightness-[0.95]`;
@@ -54,6 +68,8 @@ export function MinesweeperCell({
   cellIndex,
   view,
   disabled,
+  cue,
+  spotlit = false,
   onPress,
   onFlagPress,
 }: MinesweeperCellProps) {
@@ -124,6 +140,32 @@ export function MinesweeperCell({
       className={getCellClassName(view)}
     >
       <MinesweeperCellFace view={view} size="board" />
+      {/* 浮いたマスは下の縁まで含めた、見えるマスの形のまま覆いから抜く。 */}
+      <TutorialSpotlight
+        active={spotlit}
+        className={getMinesweeperBoardCellShapeClassName(view)}
+      />
+      {cue?.kind === "fitted" && (
+        <span
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className={cueOutlinePlacementClassName}
+        >
+          <TutorialCue kind="acknowledgement" id={cue.id} />
+        </span>
+      )}
+      {(cue?.kind === "hint" || cue?.kind === "recall") && (
+        <span
+          aria-hidden="true"
+          data-cell-cue="hint"
+          className={cueOutlinePlacementClassName}
+        >
+          <TutorialCue
+            kind="mark"
+            recallId={cue.kind === "recall" ? cue.id : null}
+          />
+        </span>
+      )}
     </button>
   );
 }
