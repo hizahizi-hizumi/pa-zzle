@@ -75,6 +75,17 @@ describe("GameResultScreen", () => {
     expect(grade).toBeTruthy();
   });
 
+  test("結果画面の下端をブランドヘッダーと同じ背景色にすること", () => {
+    const resultScreen = screen.getByRole("region", { name: "プレイ結果" });
+    const brandHeader = resultScreen.querySelector(
+      "header[data-browser-surface]",
+    );
+    const bottomSurface = resultScreen.lastElementChild;
+
+    expect(brandHeader?.classList.contains("bg-brand-inverse")).toBe(true);
+    expect(bottomSurface?.classList.contains("bg-brand-inverse")).toBe(true);
+  });
+
   test("チェックを上部に重ねず、スコアを主役に表示すること", () => {
     expect(document.querySelector(".result-grade-complete")).toBeNull();
     expect(screen.getByText("82点（100点満点）")).toBeTruthy();

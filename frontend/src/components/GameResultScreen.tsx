@@ -128,7 +128,7 @@ export function GameResultScreen({
           />
         </footer>
       </div>
-      <BrowserBottomSurface />
+      <BrowserBottomSurface surface="brand" />
     </section>
   );
 }
