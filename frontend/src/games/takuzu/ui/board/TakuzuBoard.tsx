@@ -19,6 +19,7 @@ import type {
   TakuzuCellView,
   TakuzuLineViolationView,
 } from "@/games/takuzu/session/session";
+import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { animateGivenCellRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-given-cell-rejection";
 import { TakuzuCell } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuCell";
 import { TakuzuLineViolationMark } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationMark";
@@ -29,8 +30,21 @@ type TakuzuBoardProps = {
   lineViolations: readonly TakuzuLineViolationView[];
   operation: TakuzuOperation | null;
   interactionDisabled: boolean;
+  /** マスに一時的に重ねる合図。通常のプレイでは渡さない。 */
+  cues?: readonly TakuzuCellCue[];
+  /**
+   * チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せるもの。通常のプレイでは渡さない。
+   * - `cellIndices`: 次に置くマスと、そのタイルを決めるマス。
+   * - `lineViolations`: 個数超過・重複の行・列の、縁の外の印も抜くか。
+   */
+  spotlight?: TakuzuBoardSpotlight | null;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
+};
+
+export type TakuzuBoardSpotlight = {
+  cellIndices: readonly number[];
+  lineViolations: boolean;
 };
 
 /** キーボードで直接置くキー。`1` と `2` は巡回の順（A → B）に合わせる。 */
@@ -84,6 +98,8 @@ export function TakuzuBoard({
   lineViolations,
   operation,
   interactionDisabled,
+  cues = [],
+  spotlight = null,
   onCycleCell,
   onPlaceCell,
 }: TakuzuBoardProps) {
@@ -92,6 +108,7 @@ export function TakuzuBoard({
   const lineViolationByKey = new Map(
     lineViolations.map((violation) => [getLineKey(violation), violation]),
   );
+  const cueByCellIndex = new Map(cues.map((cue) => [cue.cellIndex, cue]));
 
   useLayoutEffect(() => {
     if (operation?.type === "invalid") {
@@ -178,6 +195,8 @@ export function TakuzuBoard({
                 ),
               ]}
               disabled={interactionDisabled}
+              cue={cueByCellIndex.get(cellIndex)}
+              spotlit={spotlight?.cellIndices.includes(cellIndex) ?? false}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}
               onCycle={onCycleCell}
@@ -192,6 +211,7 @@ export function TakuzuBoard({
               size={size}
               line={line}
               violated={lineViolationByKey.has(getLineKey(line))}
+              spotlit={spotlight?.lineViolations ?? false}
             />
           );
         })}
