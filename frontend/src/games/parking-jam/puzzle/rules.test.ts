@@ -4,6 +4,7 @@ import {
 } from "@/games/parking-jam/puzzle/board";
 import {
   applyParkingJamMove,
+  findParkingJamExitContact,
   listParkingJamLegalMoves,
   listParkingJamMoveBlockers,
 } from "@/games/parking-jam/puzzle/rules";
@@ -122,5 +123,75 @@ describe("連続した道路開口の場合", () => {
       { vehicleId: "a", direction: "right" },
       { vehicleId: "b", direction: "right" },
     ]);
+  });
+});
+
+describe("findParkingJamExitContact", () => {
+  const board: ParkingJamBoard = {
+    width: 6,
+    height: 3,
+    vehicles: [
+      { id: "a", row: 1, column: 2, orientation: "horizontal", length: 2 },
+      { id: "b", row: 0, column: 0, orientation: "vertical", length: 2 },
+      { id: "c", row: 0, column: 4, orientation: "horizontal", length: 2 },
+    ],
+    fixedAreas: [{ row: 1, column: 5, width: 1, height: 1 }],
+    roadOpenings: [
+      { side: "left", startOffset: 0, length: 1 },
+      { side: "right", startOffset: 1, length: 1 },
+    ],
+  };
+  const state = createParkingJamInitialState(board);
+  const stateWithoutB = { remainingVehicleIds: ["a", "c"] };
+
+  const blockedCases = [
+    [
+      "道路につながっていない車線では、途中の車より先に外周を示す",
+      { vehicleId: "a", direction: "left" },
+      { blocker: { kind: "wall" }, freeCellCount: 2 },
+    ],
+    [
+      "途中に何もなく道路につながっていない車線では、外周を示す",
+      { vehicleId: "c", direction: "right" },
+      { blocker: { kind: "wall" }, freeCellCount: 0 },
+    ],
+    [
+      "道路につながっている車線では、途中で最初に当たる植え込みを示す",
+      { vehicleId: "a", direction: "right" },
+      {
+        blocker: { kind: "fixed-area", cell: { row: 1, column: 5 } },
+        freeCellCount: 1,
+      },
+    ],
+    [
+      "道路につながっている車線では、途中で最初に当たる車を示す",
+      { vehicleId: "c", direction: "left" },
+      { blocker: { kind: "vehicle", vehicleId: "b" }, freeCellCount: 3 },
+    ],
+  ] as const;
+
+  test.each(blockedCases)("%sこと", (_, move, expected) => {
+    const contact = findParkingJamExitContact(board, state, move);
+
+    expect(contact).toEqual(expected);
+  });
+
+  test.each(blockedCases)(
+    "示すものが listParkingJamMoveBlockers の返すわけに含まれること: %s",
+    (_, move) => {
+      const contact = findParkingJamExitContact(board, state, move);
+      const blockers = listParkingJamMoveBlockers(board, state, move);
+
+      expect(blockers).toContainEqual(contact?.blocker);
+    },
+  );
+
+  test("出られる手では何も返さないこと", () => {
+    const contact = findParkingJamExitContact(board, stateWithoutB, {
+      vehicleId: "c",
+      direction: "left",
+    });
+
+    expect(contact).toBeNull();
   });
 });
