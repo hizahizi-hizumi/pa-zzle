@@ -69,7 +69,7 @@ describe("BridgesPlay", () => {
     progress: "result",
     elapsedMs: performance.elapsedMs,
     result,
-    recordOutcomeNotice: null,
+    recordFeedback: { kind: "none" } as const,
     board,
     bridges: [0, 0, 0, 0],
     islandStatuses: ["short", "short", "short", "short", "short"],
@@ -161,7 +161,7 @@ describe("BridgesPlay", () => {
 
       expect(screen.getByText(BRIDGES_DISPLAY_NAME)).toBeTruthy();
       expect(screen.getByText("レベル 5")).toBeTruthy();
-      expect(score.getByText("89")).toBeTruthy();
+      expect(score.getByText("89点（100点満点）")).toBeTruthy();
     });
 
     test("時間と基準時間との差・橋の操作を主な成績として表示すること", () => {
@@ -171,7 +171,7 @@ describe("BridgesPlay", () => {
         .map((definition) => definition.textContent);
 
       expect(terms).toEqual(["時間", "橋の操作"]);
-      expect(definitions).toEqual(["02:08", "基準 +00:23", "40回"]);
+      expect(definitions).toEqual(["02:08", "基準差 +00:23", "40回"]);
     });
 
     test("盤面を表示しないこと", () => {
@@ -197,9 +197,7 @@ describe("BridgesPlay", () => {
 
     describe("スコアの内訳を開いた場合", () => {
       beforeEach(() => {
-        fireEvent.click(
-          screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-        );
+        fireEvent.click(screen.getByRole("button", { name: "採点内訳" }));
       });
 
       test("速さの点と、待った・盤面を戻す・交わる橋に阻まれた回数・基準時間を内訳に表示すること", () => {

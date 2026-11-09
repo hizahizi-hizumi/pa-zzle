@@ -6,7 +6,6 @@ import {
   createSpeedFullScoreMetric,
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
-import bridgesPictogramSvg from "@/games/bridges/assets/pictogram.svg?raw";
 import type { BridgesDifficulty } from "@/games/bridges/difficulty";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import type { BridgesResult } from "@/games/bridges/play/use-bridges-play";
@@ -38,7 +37,7 @@ function listScoreBreakdown(result: BridgesResult) {
 export function BridgesResultScreen({
   difficulty,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -48,7 +47,6 @@ export function BridgesResultScreen({
     <GameResultScreen
       gameName={BRIDGES_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      pictogramSvg={bridgesPictogramSvg}
       // 点は速さだけなので、主な成績は時間と、架けた・外した操作の回数（解に要る本数より多い分が架け直し）にする。
       metrics={[
         createElapsedTimeMetric(result),
@@ -57,7 +55,7 @@ export function BridgesResultScreen({
       score={result.score.total}
       scoreBreakdown={listScoreBreakdown(result)}
       scoreCriteria={getBridgesScoreCriteria(result)}
-      recordOutcomeNotice={recordOutcomeNotice}
+      recordFeedback={recordFeedback}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
       onOpenGameHome={onOpenGameHome}

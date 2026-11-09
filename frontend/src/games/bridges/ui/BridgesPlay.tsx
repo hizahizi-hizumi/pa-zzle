@@ -38,7 +38,7 @@ export function BridgesPlay({
   progress,
   elapsedMs,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   board,
   bridges,
   islandStatuses,
@@ -63,6 +63,8 @@ export function BridgesPlay({
       progress={progress}
       result={result}
       title={BRIDGES_DISPLAY_NAME}
+      // 島の盤を囲む海に見立て、盤面の明るい地と分かれる、くすんだ青緑の地にする。
+      background={<div className="size-full bg-[#dfe7e6] dark:bg-[#1b2524]" />}
       metrics={[
         { type: "elapsed-time", elapsedMs },
         { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },
@@ -81,7 +83,7 @@ export function BridgesPlay({
         <BridgesResultScreen
           difficulty={difficulty}
           result={clearedResult}
-          recordOutcomeNotice={recordOutcomeNotice}
+          recordFeedback={recordFeedback}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}
