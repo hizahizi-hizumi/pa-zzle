@@ -1,0 +1,662 @@
+{
+  "seed": 20261109,
+  "criterion": "5-50% random-legal win, early delayed geometry-dependent bad choice",
+  "results": [
+    {
+      "vehicles": 8,
+      "side": 7,
+      "boards": 8,
+      "requestedQueuesPerBoard": 5,
+      "distinctQueuesTotal": 40,
+      "candidateAttempts": 8,
+      "qualifiedExamples": [
+        {
+          "bays": 3,
+          "candidateIndex": 3,
+          "origin": "random",
+          "randomWinProb": 0.08806,
+          "vehicles": [
+            {
+              "row": 3,
+              "column": 3,
+              "orientation": "vertical",
+              "length": 2
+            },
+            {
+              "row": 3,
+              "column": 2,
+              "orientation": "vertical",
+              "length": 2
+            },
+            {
+              "row": 0,
+              "column": 0,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 2,
+              "column": 5,
+              "orientation": "vertical",
+              "length": 3
+            },
+            {
+              "row": 2,
+              "column": 1,
+              "orientation": "horizontal",
+              "length": 3
+            },
+            {
+              "row": 6,
+              "column": 0,
+              "orientation": "horizontal",
+              "length": 3
+            },
+            {
+              "row": 6,
+              "column": 3,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 1,
+              "column": 5,
+              "orientation": "horizontal",
+              "length": 2
+            }
+          ],
+          "colors": [
+            "A",
+            "C",
+            "D",
+            "A",
+            "B",
+            "C",
+            "D",
+            "B"
+          ],
+          "requestQueue": [
+            "D",
+            "A",
+            "A",
+            "C",
+            "C",
+            "D",
+            "B",
+            "B"
+          ]
+        },
+        {
+          "bays": 4,
+          "candidateIndex": 3,
+          "origin": "random",
+          "randomWinProb": 0.36196,
+          "vehicles": [
+            {
+              "row": 3,
+              "column": 3,
+              "orientation": "vertical",
+              "length": 2
+            },
+            {
+              "row": 3,
+              "column": 2,
+              "orientation": "vertical",
+              "length": 2
+            },
+            {
+              "row": 0,
+              "column": 0,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 2,
+              "column": 5,
+              "orientation": "vertical",
+              "length": 3
+            },
+            {
+              "row": 2,
+              "column": 1,
+              "orientation": "horizontal",
+              "length": 3
+            },
+            {
+              "row": 6,
+              "column": 0,
+              "orientation": "horizontal",
+              "length": 3
+            },
+            {
+              "row": 6,
+              "column": 3,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 1,
+              "column": 5,
+              "orientation": "horizontal",
+              "length": 2
+            }
+          ],
+          "colors": [
+            "A",
+            "C",
+            "D",
+            "A",
+            "B",
+            "C",
+            "D",
+            "B"
+          ],
+          "requestQueue": [
+            "D",
+            "A",
+            "A",
+            "C",
+            "C",
+            "D",
+            "B",
+            "B"
+          ]
+        },
+        {
+          "bays": 3,
+          "candidateIndex": 2,
+          "origin": "random",
+          "randomWinProb": 0.17905,
+          "vehicles": [
+            {
+              "row": 3,
+              "column": 3,
+              "orientation": "horizontal",
+              "length": 3
+            },
+            {
+              "row": 2,
+              "column": 2,
+              "orientation": "vertical",
+              "length": 3
+            },
+            {
+              "row": 3,
+              "column": 6,
+              "orientation": "vertical",
+              "length": 3
+            },
+            {
+              "row": 2,
+              "column": 3,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 4,
+              "column": 5,
+              "orientation": "vertical",
+              "length": 2
+            },
+            {
+              "row": 1,
+              "column": 5,
+              "orientation": "vertical",
+              "length": 2
+            },
+            {
+              "row": 0,
+              "column": 4,
+              "orientation": "horizontal",
+              "length": 3
+            },
+            {
+              "row": 6,
+              "column": 5,
+              "orientation": "horizontal",
+              "length": 2
+            }
+          ],
+          "colors": [
+            "B",
+            "A",
+            "D",
+            "C",
+            "D",
+            "B",
+            "A",
+            "C"
+          ],
+          "requestQueue": [
+            "A",
+            "D",
+            "D",
+            "C",
+            "B",
+            "B",
+            "C",
+            "A"
+          ]
+        },
+        {
+          "bays": 4,
+          "candidateIndex": 2,
+          "origin": "random",
+          "randomWinProb": 0.39337,
+          "vehicles": [
+            {
+              "row": 3,
+              "column": 3,
+              "orientation": "horizontal",
+              "length": 3
+            },
+            {
+              "row": 2,
+              "column": 2,
+              "orientation": "vertical",
+              "length": 3
+            },
+            {
+              "row": 3,
+              "column": 6,
+              "orientation": "vertical",
+              "length": 3
+            },
+            {
+              "row": 2,
+              "column": 3,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 4,
+              "column": 5,
+              "orientation": "vertical",
+              "length": 2
+            },
+            {
+              "row": 1,
+              "column": 5,
+              "orientation": "vertical",
+              "length": 2
+            },
+            {
+              "row": 0,
+              "column": 4,
+              "orientation": "horizontal",
+              "length": 3
+            },
+            {
+              "row": 6,
+              "column": 5,
+              "orientation": "horizontal",
+              "length": 2
+            }
+          ],
+          "colors": [
+            "B",
+            "A",
+            "D",
+            "C",
+            "D",
+            "B",
+            "A",
+            "C"
+          ],
+          "requestQueue": [
+            "A",
+            "D",
+            "D",
+            "C",
+            "B",
+            "B",
+            "C",
+            "A"
+          ]
+        },
+        {
+          "bays": 3,
+          "candidateIndex": 0,
+          "origin": "random",
+          "randomWinProb": 0.18945,
+          "vehicles": [
+            {
+              "row": 3,
+              "column": 0,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 4,
+              "column": 5,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 3,
+              "column": 3,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 1,
+              "column": 5,
+              "orientation": "vertical",
+              "length": 3
+            },
+            {
+              "row": 0,
+              "column": 5,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 4,
+              "column": 0,
+              "orientation": "horizontal",
+              "length": 3
+            },
+            {
+              "row": 6,
+              "column": 2,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 0,
+              "column": 3,
+              "orientation": "vertical",
+              "length": 3
+            }
+          ],
+          "colors": [
+            "A",
+            "C",
+            "B",
+            "D",
+            "A",
+            "D",
+            "C",
+            "B"
+          ],
+          "requestQueue": [
+            "A",
+            "D",
+            "B",
+            "B",
+            "C",
+            "C",
+            "A",
+            "D"
+          ]
+        }
+      ],
+      "byBays": {
+        "2": {
+          "evaluated": 40,
+          "solvable": 40,
+          "inTolerance": 6,
+          "proxyQualified": 0,
+          "byConstruction": {
+            "random": {
+              "evaluated": 36,
+              "qualified": 0
+            },
+            "blocked-first": {
+              "evaluated": 4,
+              "qualified": 0
+            }
+          },
+          "singleDrawBoardsWithQualified": 0,
+          "searchedBoardsWithQualified": 0
+        },
+        "3": {
+          "evaluated": 40,
+          "solvable": 40,
+          "inTolerance": 40,
+          "proxyQualified": 3,
+          "byConstruction": {
+            "random": {
+              "evaluated": 36,
+              "qualified": 3
+            },
+            "blocked-first": {
+              "evaluated": 4,
+              "qualified": 0
+            }
+          },
+          "singleDrawBoardsWithQualified": 1,
+          "searchedBoardsWithQualified": 3
+        },
+        "4": {
+          "evaluated": 40,
+          "solvable": 40,
+          "inTolerance": 18,
+          "proxyQualified": 2,
+          "byConstruction": {
+            "random": {
+              "evaluated": 36,
+              "qualified": 2
+            },
+            "blocked-first": {
+              "evaluated": 4,
+              "qualified": 0
+            }
+          },
+          "singleDrawBoardsWithQualified": 0,
+          "searchedBoardsWithQualified": 2
+        },
+        "5": {
+          "evaluated": 40,
+          "solvable": 40,
+          "inTolerance": 0,
+          "proxyQualified": 0,
+          "byConstruction": {
+            "random": {
+              "evaluated": 36,
+              "qualified": 0
+            },
+            "blocked-first": {
+              "evaluated": 4,
+              "qualified": 0
+            }
+          },
+          "singleDrawBoardsWithQualified": 0,
+          "searchedBoardsWithQualified": 0
+        }
+      }
+    },
+    {
+      "vehicles": 12,
+      "side": 8,
+      "boards": 8,
+      "requestedQueuesPerBoard": 5,
+      "distinctQueuesTotal": 40,
+      "candidateAttempts": 8,
+      "qualifiedExamples": [
+        {
+          "bays": 5,
+          "candidateIndex": 0,
+          "origin": "random",
+          "randomWinProb": 0.09993,
+          "vehicles": [
+            {
+              "row": 1,
+              "column": 0,
+              "orientation": "vertical",
+              "length": 3
+            },
+            {
+              "row": 6,
+              "column": 3,
+              "orientation": "vertical",
+              "length": 2
+            },
+            {
+              "row": 7,
+              "column": 1,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 6,
+              "column": 0,
+              "orientation": "vertical",
+              "length": 2
+            },
+            {
+              "row": 0,
+              "column": 0,
+              "orientation": "horizontal",
+              "length": 3
+            },
+            {
+              "row": 0,
+              "column": 3,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 0,
+              "column": 6,
+              "orientation": "vertical",
+              "length": 2
+            },
+            {
+              "row": 2,
+              "column": 2,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 2,
+              "column": 5,
+              "orientation": "horizontal",
+              "length": 3
+            },
+            {
+              "row": 4,
+              "column": 6,
+              "orientation": "vertical",
+              "length": 3
+            },
+            {
+              "row": 7,
+              "column": 6,
+              "orientation": "horizontal",
+              "length": 2
+            },
+            {
+              "row": 3,
+              "column": 5,
+              "orientation": "horizontal",
+              "length": 3
+            }
+          ],
+          "colors": [
+            "D",
+            "B",
+            "A",
+            "F",
+            "F",
+            "B",
+            "C",
+            "E",
+            "C",
+            "D",
+            "E",
+            "A"
+          ],
+          "requestQueue": [
+            "B",
+            "B",
+            "C",
+            "C",
+            "A",
+            "E",
+            "F",
+            "D",
+            "D",
+            "F",
+            "E",
+            "A"
+          ]
+        }
+      ],
+      "byBays": {
+        "2": {
+          "evaluated": 40,
+          "solvable": 40,
+          "inTolerance": 0,
+          "proxyQualified": 0,
+          "byConstruction": {
+            "random": {
+              "evaluated": 32,
+              "qualified": 0
+            },
+            "blocked-first": {
+              "evaluated": 8,
+              "qualified": 0
+            }
+          },
+          "singleDrawBoardsWithQualified": 0,
+          "searchedBoardsWithQualified": 0
+        },
+        "3": {
+          "evaluated": 40,
+          "solvable": 40,
+          "inTolerance": 0,
+          "proxyQualified": 0,
+          "byConstruction": {
+            "random": {
+              "evaluated": 32,
+              "qualified": 0
+            },
+            "blocked-first": {
+              "evaluated": 8,
+              "qualified": 0
+            }
+          },
+          "singleDrawBoardsWithQualified": 0,
+          "searchedBoardsWithQualified": 0
+        },
+        "4": {
+          "evaluated": 40,
+          "solvable": 40,
+          "inTolerance": 23,
+          "proxyQualified": 0,
+          "byConstruction": {
+            "random": {
+              "evaluated": 32,
+              "qualified": 0
+            },
+            "blocked-first": {
+              "evaluated": 8,
+              "qualified": 0
+            }
+          },
+          "singleDrawBoardsWithQualified": 0,
+          "searchedBoardsWithQualified": 0
+        },
+        "5": {
+          "evaluated": 40,
+          "solvable": 40,
+          "inTolerance": 39,
+          "proxyQualified": 1,
+          "byConstruction": {
+            "random": {
+              "evaluated": 32,
+              "qualified": 1
+            },
+            "blocked-first": {
+              "evaluated": 8,
+              "qualified": 0
+            }
+          },
+          "singleDrawBoardsWithQualified": 1,
+          "searchedBoardsWithQualified": 1
+        }
+      }
+    }
+  ]
+}
