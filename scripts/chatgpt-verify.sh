@@ -21,7 +21,7 @@ fail() {
 archive="$(realpath "$1")"
 repo_root="$(realpath "${2:-.}")"
 [[ -f "$archive" ]] || fail "Artifact archive not found: $archive"
-[[ -f "$repo_root/.bun-version" && -f "$repo_root/.node-version" && -f "$repo_root/frontend/bun.lock" ]] || fail "Repository Snapshot is incomplete: $repo_root"
+[[ -f "$repo_root/frontend/package.json" && -f "$repo_root/.node-version" && -f "$repo_root/frontend/bun.lock" ]] || fail "Repository Snapshot is incomplete: $repo_root"
 
 # shellcheck disable=SC1091
 source "$repo_root/.github/actions/offline-dependencies/inputs.env"
