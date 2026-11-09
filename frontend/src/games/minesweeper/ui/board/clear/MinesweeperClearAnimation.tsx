@@ -9,17 +9,13 @@ type MinesweeperClearAnimationProps = {
 };
 
 /** クリア音（`assets/sounds/cleared.flac`）に合わせた盤面完成の長さ。 */
-const CLEAR_PULSE_MS = 700;
+const CELL_HIGHLIGHT_MS = 240;
+const CELL_STAGGER_MS = 440;
 const CLEAR_HOLD_MS = 200;
-const CLEAR_UNANIMATED_HOLD_MS = CLEAR_PULSE_MS + CLEAR_HOLD_MS;
+const CLEAR_UNANIMATED_HOLD_MS =
+  CELL_HIGHLIGHT_MS + CELL_STAGGER_MS + CLEAR_HOLD_MS;
 
-const clearPulseKeyframes: Keyframe[] = [
-  { transform: "scale(1)", filter: "saturate(1)" },
-  { transform: "scale(1.012)", filter: "saturate(1.12)", offset: 0.5 },
-  { transform: "scale(1)", filter: "saturate(1)" },
-];
-
-/** 完成した安全マスを左上から右下へ短く照らし、推理で開いた盤面全体を見せる。 */
+/** 旗を動かさず、完成した安全マスだけを左上から右下へ照らす。 */
 function animateCompletedCells(container: HTMLElement): Animation[] {
   const cells = Array.from(
     container.querySelectorAll<HTMLElement>('[data-cell-state="revealed"]'),
@@ -37,8 +33,8 @@ function animateCompletedCells(container: HTMLElement): Animation[] {
           { filter: "brightness(1)", offset: 1 },
         ],
         {
-          duration: 240,
-          delay: Math.round((index / lastIndex) * 440),
+          duration: CELL_HIGHLIGHT_MS,
+          delay: Math.round((index / lastIndex) * CELL_STAGGER_MS),
           easing: MOTION_EASING.celebrate,
         },
       ),
@@ -62,14 +58,7 @@ export function MinesweeperClearAnimation({
     return playAnimations({
       animate() {
         const container = containerRef.current;
-        if (!container?.animate) {
-          return [];
-        }
-        const pulse = container.animate(clearPulseKeyframes, {
-          duration: CLEAR_PULSE_MS,
-          easing: MOTION_EASING.celebrate,
-        });
-        return [pulse, ...animateCompletedCells(container)];
+        return container ? animateCompletedCells(container) : [];
       },
       completion: { type: "after-animations", holdMs: CLEAR_HOLD_MS },
       reducedMotionHoldMs: 0,
@@ -81,12 +70,6 @@ export function MinesweeperClearAnimation({
   return (
     <div ref={containerRef} className="relative">
       {children}
-      {active && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-slate-200/10 dark:bg-slate-700/10"
-        />
-      )}
     </div>
   );
 }

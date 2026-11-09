@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useLocation } from "react-router";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
@@ -14,9 +13,7 @@ import {
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
-import type { MinesweeperVisualStyle } from "@/games/minesweeper/ui/board/MinesweeperCellFace";
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
-import { ExperienceCompare } from "@/games/minesweeper/ui/MinesweeperPlay/ExperienceCompare";
 import { InputModeToggle } from "@/games/minesweeper/ui/MinesweeperPlay/InputModeToggle";
 import { useMinesweeperSoundEffects } from "@/games/minesweeper/ui/MinesweeperPlay/use-minesweeper-sound-effects";
 import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
@@ -62,11 +59,6 @@ export function MinesweeperPlay({
   onOpenDiagnostics,
 }: MinesweeperPlayProps) {
   const [mode, setMode] = useState<MinesweeperInputMode>("reveal");
-  const location = useLocation();
-  const compareEnabled =
-    new URLSearchParams(location.search).get("experience") === "compare";
-  const [visualStyle, setVisualStyle] =
-    useState<MinesweeperVisualStyle>("hybrid");
   const interactionEnabled = progress === "playing";
   useMinesweeperSoundEffects(operation, progress);
 
@@ -85,17 +77,7 @@ export function MinesweeperPlay({
       progress={progress}
       result={result}
       title={MINESWEEPER_DISPLAY_NAME}
-      background={
-        <div
-          className={
-            visualStyle === "ink"
-              ? "size-full bg-[#e7e8e4] dark:bg-[#1d272b]"
-              : visualStyle === "relief"
-                ? "size-full bg-[#e3e6e0] dark:bg-[#20282a]"
-                : "size-full bg-[#f0f1f3] dark:bg-[#20242b]"
-          }
-        />
-      }
+      background={<div className="size-full bg-[#dfe6f0] dark:bg-[#1f2732]" />}
       metrics={[
         { type: "count", label: "地雷", count: mineCount },
         { type: "count", label: "旗", count: flagCount },
@@ -128,16 +110,7 @@ export function MinesweeperPlay({
       )}
     >
       <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-3 sm:px-6">
-        <div
-          className={
-            visualStyle === "classic"
-              ? "w-full max-w-[27rem]"
-              : "w-full max-w-[32rem]"
-          }
-        >
-          {compareEnabled && (
-            <ExperienceCompare value={visualStyle} onChange={setVisualStyle} />
-          )}
+        <div className="w-full max-w-[32rem]">
           <MinesweeperClearAnimation
             active={progress === "clearing"}
             onComplete={onClearAnimationComplete}
@@ -147,8 +120,6 @@ export function MinesweeperPlay({
               columns={columns}
               cells={visibleCells}
               mode={mode}
-              visualStyle={visualStyle}
-              operation={operation}
               interactionDisabled={!interactionEnabled}
               onRevealCell={onRevealCell}
               onToggleFlag={onToggleFlag}

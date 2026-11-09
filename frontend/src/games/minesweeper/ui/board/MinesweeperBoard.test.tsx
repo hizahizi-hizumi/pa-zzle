@@ -99,60 +99,52 @@ describe("MinesweeperBoard", () => {
     expect(onToggleFlag).not.toHaveBeenCalled();
   });
 
-  test("盤面デザインを変更してもマスの操作とアクセシブルな状態を保つこと", () => {
-    const common = {
-      rows: 2,
-      columns: 2,
-      cells,
-      mode: "reveal" as const,
-      interactionDisabled: false,
-      onRevealCell,
-      onToggleFlag,
-      onChordCell,
-    };
-    const { rerender } = render(
-      <MinesweeperBoard {...common} visualStyle="relief" />,
+  test("盤面の立体表現を維持して未開示マスを操作できること", () => {
+    render(
+      <MinesweeperBoard
+        rows={2}
+        columns={2}
+        cells={cells}
+        mode="reveal"
+        interactionDisabled={false}
+        onRevealCell={onRevealCell}
+        onToggleFlag={onToggleFlag}
+        onChordCell={onChordCell}
+      />,
     );
     const hiddenCell = screen.getByLabelText("マス 1 未開示");
-    expect(hiddenCell.className).toContain("rounded-[3px]");
 
-    rerender(<MinesweeperBoard {...common} visualStyle="ink" />);
-    expect(screen.getByLabelText("マス 1 未開示")).toBe(hiddenCell);
-    expect(hiddenCell.className).toContain("bg-[#335765]");
     fireEvent.click(hiddenCell);
+
+    expect(hiddenCell.className).toContain("rounded-[4px]");
     expect(onRevealCell).toHaveBeenCalledWith(0);
   });
 });
 
 describe("立体盤面の駒", () => {
-  test("旗と地雷を専用の形で描き、従来の盤面では既存アイコンを保つこと", () => {
-    const cells: readonly MinesweeperVisibleCell[] = [
-      { state: "flagged" },
-      { state: "mine" },
-    ];
-    const props = {
-      rows: 1,
-      columns: 2,
-      cells,
-      mode: "reveal" as const,
-      interactionDisabled: false,
-      onRevealCell: vi.fn(),
-      onToggleFlag: vi.fn(),
-      onChordCell: vi.fn(),
-    };
-    const { rerender } = render(
-      <MinesweeperBoard {...props} visualStyle="relief" />,
-    );
-    expect(
-      screen.getByLabelText("マス 1 旗").querySelector("svg path[d^='M10 5']"),
-    ).not.toBeNull();
-    expect(
-      screen.getByLabelText("マス 2 地雷").querySelector("svg circle[cx='16']"),
-    ).not.toBeNull();
+  const cells: readonly MinesweeperVisibleCell[] = [
+    { state: "flagged" },
+    { state: "mine" },
+  ];
 
-    rerender(<MinesweeperBoard {...props} visualStyle="classic" />);
-    expect(
-      screen.getByLabelText("マス 1 旗").querySelector("svg path[d^='M10 5']"),
-    ).toBeNull();
+  test("旗と地雷を専用の形で描き設置した旗を揺らさないこと", () => {
+    render(
+      <MinesweeperBoard
+        rows={1}
+        columns={2}
+        cells={cells}
+        mode="reveal"
+        interactionDisabled={false}
+        onRevealCell={vi.fn()}
+        onToggleFlag={vi.fn()}
+        onChordCell={vi.fn()}
+      />,
+    );
+    const flagCell = screen.getByLabelText("マス 1 旗");
+    const mineCell = screen.getByLabelText("マス 2 地雷");
+
+    expect(flagCell.querySelector("svg path[d^='M10 5']")).not.toBeNull();
+    expect(mineCell.querySelector("svg circle[cx='16']")).not.toBeNull();
+    expect(flagCell.className).not.toContain("active:brightness");
   });
 });

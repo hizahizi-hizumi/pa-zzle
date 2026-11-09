@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 from urllib.parse import urlsplit
 
 from playwright.sync_api import (
@@ -175,8 +174,14 @@ class ChatGPTBrowser:
                 data=request.post_data_buffer,
             )
 
-            if "@generouted_react-router.js" in url.path:
-                body = self._patch_generouted(body)
+            if url.path == "/src/frontend.tsx":
+                body = self._patch_app_entry(body)
+            elif url.path.startswith("/node_modules/.vite/deps/chunk-"):
+                body = self._patch_router_base(body)
+
+            if url.path == "/src/frontend.tsx" or url.path.startswith(
+                "/node_modules/.vite/deps/chunk-"
+            ):
                 response_headers = {
                     key: value
                     for key, value in response_headers.items()
@@ -187,43 +192,25 @@ class ChatGPTBrowser:
         except PlaywrightError:
             route.abort("failed")
 
-    def _patch_generouted(self, body: bytes) -> bytes:
+    def _patch_app_entry(self, body: bytes) -> bytes:
         text = body.decode()
-        browser_router_call = "createBrowserRouter(routes)"
-        if browser_router_call not in text:
-            raise RuntimeError("Generouted browser router call was not found")
-
-        router_import = re.search(
-            r'import \{([^\n]+createBrowserRouter[^\n]+)\} from "([^"]+)";',
-            text,
-        )
-        if router_import is None:
-            raise RuntimeError("Generouted browser router import was not found")
-
-        bindings, router_chunk_path = router_import.groups()
-        browser_binding = re.search(
-            r"([A-Za-z_$][\w$]*) as createBrowserRouter",
-            bindings,
-        )
-        if browser_binding is None:
-            raise RuntimeError("createBrowserRouter binding was not found")
-
-        _, _, router_chunk = self._fetch(router_chunk_path)
-        memory_binding = re.search(
-            r"createMemoryRouter as ([A-Za-z_$][\w$]*)",
-            router_chunk.decode(),
-        )
-        if memory_binding is None:
-            raise RuntimeError("createMemoryRouter export was not found")
-
+        import_statement = "import { createBrowserRouter } from"
+        router_statement = "const router = createBrowserRouter(routes);"
+        if import_statement not in text or router_statement not in text:
+            raise RuntimeError("App browser router was not found")
+        text = text.replace(import_statement, "import { createMemoryRouter } from", 1)
         text = text.replace(
-            f"{browser_binding.group(1)} as createBrowserRouter",
-            f"{memory_binding.group(1)} as createMemoryRouter",
-            1,
-        )
-        text = text.replace(
-            browser_router_call,
-            'createMemoryRouter(routes, { initialEntries: [window.__PLAYWRIGHT_PATH__ || "/"] })',
+            router_statement,
+            'const router = createMemoryRouter(routes, { initialEntries: [window.__PLAYWRIGHT_PATH__ || "/"] });',
             1,
         )
         return text.encode()
+
+    @staticmethod
+    def _patch_router_base(body: bytes) -> bytes:
+        # React Router uses about:blank as the URL base when location.origin is null.
+        # Use the Vite base URL instead, without changing the application or Chromium policy.
+        return body.replace(
+            b'windowImpl.location.origin : windowImpl.location.href;',
+            b'windowImpl.location.origin : windowImpl.document.baseURI;',
+        )

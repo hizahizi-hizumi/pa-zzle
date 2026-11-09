@@ -5,7 +5,6 @@ import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session
 import {
   getMinesweeperCellFaceClassName,
   MinesweeperCellFace,
-  type MinesweeperVisualStyle,
 } from "@/games/minesweeper/ui/board/MinesweeperCellFace";
 
 const LONG_PRESS_DELAY_MS = 450;
@@ -14,7 +13,6 @@ type MinesweeperCellProps = {
   cellIndex: number;
   view: MinesweeperVisibleCell;
   disabled: boolean;
-  visualStyle?: MinesweeperVisualStyle;
   onPress: (cellIndex: number) => void;
   onFlagPress: (cellIndex: number) => void;
 };
@@ -41,26 +39,13 @@ function getAccessibleName(
   return `${position} 未開示`;
 }
 
-function getCellClassName(
-  view: MinesweeperVisibleCell,
-  visualStyle: MinesweeperVisualStyle,
-): string {
-  const faceClassName = getMinesweeperCellFaceClassName(
-    view,
-    "board",
-    visualStyle,
-  );
+function getCellClassName(view: MinesweeperVisibleCell): string {
+  const faceClassName = getMinesweeperCellFaceClassName(view, "board");
   const interactionClassName =
     "min-w-0 touch-manipulation select-none outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
-  if (view.state === "hidden" || view.state === "flagged") {
-    const feedbackClassName =
-      visualStyle === "classic"
-        ? "transition-colors duration-(--duration-fast) hover:bg-slate-300 dark:hover:bg-slate-600"
-        : visualStyle === "hybrid"
-          ? "transition-[filter] duration-75 hover:brightness-[1.015] active:brightness-[0.95]"
-          : "transition-[filter,transform] duration-(--duration-fast) hover:brightness-105 active:translate-y-[3px] active:brightness-95";
-    return `${faceClassName} ${interactionClassName} ${feedbackClassName}`;
+  if (view.state === "hidden") {
+    return `${faceClassName} ${interactionClassName} transition-[filter] duration-75 hover:brightness-[1.015] active:brightness-[0.95]`;
   }
   return `${faceClassName} ${interactionClassName}`;
 }
@@ -69,7 +54,6 @@ export function MinesweeperCell({
   cellIndex,
   view,
   disabled,
-  visualStyle = "classic",
   onPress,
   onFlagPress,
 }: MinesweeperCellProps) {
@@ -86,12 +70,15 @@ export function MinesweeperCell({
   function handlePointerDown(
     event: ReactPointerEvent<HTMLButtonElement>,
   ): void {
-    if (disabled || event.button !== 0) {
+    if (disabled) {
       return;
     }
 
     longPressTriggeredRef.current = false;
     clearLongPressTimer();
+    if (event.button !== 0) {
+      return;
+    }
     longPressTimerRef.current = setTimeout(function handleLongPress() {
       longPressTriggeredRef.current = true;
       onFlagPress(cellIndex);
@@ -113,9 +100,12 @@ export function MinesweeperCell({
 
   function handleContextMenu(event: React.MouseEvent<HTMLButtonElement>): void {
     event.preventDefault();
-    if (!disabled) {
-      onFlagPress(cellIndex);
+    if (disabled || longPressTriggeredRef.current) {
+      return;
     }
+    clearLongPressTimer();
+    longPressTriggeredRef.current = true;
+    onFlagPress(cellIndex);
   }
 
   return (
@@ -131,9 +121,9 @@ export function MinesweeperCell({
       onPointerLeave={handlePointerEnd}
       data-cell-index={cellIndex}
       data-cell-state={view.state}
-      className={getCellClassName(view, visualStyle)}
+      className={getCellClassName(view)}
     >
-      <MinesweeperCellFace view={view} size="board" visualStyle={visualStyle} />
+      <MinesweeperCellFace view={view} size="board" />
     </button>
   );
 }
