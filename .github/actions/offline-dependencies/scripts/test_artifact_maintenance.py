@@ -60,7 +60,7 @@ class ArtifactMaintenanceTest(unittest.TestCase):
             def head_sha(self) -> str:
                 return "a" * 40
 
-            def fetch_pr_heads(self, pull_requests: list[tuple[int, str]]) -> bool:
+            def fetch_refs(self, main_sha: str, pull_requests: list[tuple[int, str]]) -> bool:
                 return False
 
         self_outer = self
