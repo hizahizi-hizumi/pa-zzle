@@ -14,8 +14,8 @@ import type {
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
 import { ParkingJamHowToPlayDialog } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialog";
-import { useParkingJamSoundEffects } from "@/games/parking-jam/ui/ParkingJamPlay/use-parking-jam-sound-effects";
 import { ParkingJamResultScreen } from "@/games/parking-jam/ui/result/ParkingJamResultScreen";
+import { useParkingJamSoundEffects } from "@/games/parking-jam/ui/use-parking-jam-sound-effects";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,

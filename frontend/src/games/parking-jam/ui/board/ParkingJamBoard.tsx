@@ -11,6 +11,7 @@ import type { ParkingJamOperation } from "@/games/parking-jam/play/use-parking-j
 import type {
   ParkingJamBoard as ParkingJamBoardDefinition,
   ParkingJamDirection,
+  ParkingJamMove,
   ParkingJamState,
   ParkingJamVehicle,
   ParkingJamVehicleId,
@@ -46,7 +47,14 @@ type ParkingJamBoardProps = {
     direction: ParkingJamDirection,
   ) => void;
   onClearAnimationComplete: () => void;
+  /**
+   * 盤面に残っていない車を、`delayMs` だけ待ってからそれぞれの向きへ出ていかせる。
+   * チュートリアルの導入で、車が出ていって空になる駐車場をゴールとして見せるのに使う。
+   */
+  departures?: readonly ParkingJamDeparture[];
 };
+
+export type ParkingJamDeparture = ParkingJamMove & { delayMs: number };
 
 const SWIPE_THRESHOLD = 18;
 
@@ -109,6 +117,7 @@ export function ParkingJamBoard({
   onSelectVehicle,
   onMove,
   onClearAnimationComplete,
+  departures = [],
 }: ParkingJamBoardProps) {
   const pointerStart = useRef<{
     vehicleId: string;
@@ -200,24 +209,34 @@ export function ParkingJamBoard({
           const isRemaining = remaining.has(vehicle.id);
           const targeted = operation?.vehicleId === vehicle.id;
           const exiting = targeted && operation?.type === "exited";
-          if (!isRemaining && !exiting) return null;
+          const departure = isRemaining
+            ? undefined
+            : departures.find(({ vehicleId }) => vehicleId === vehicle.id);
+          if (!isRemaining && !exiting && !departure) return null;
           const selected = selectedVehicleId === vehicle.id;
-          const feedbackClass =
-            targeted && operation
-              ? ` parking-jam-car--${operation.type === "exited" ? "exit" : "blocked"}-${operation.direction}`
+          const exitDirection = exiting
+            ? operation?.direction
+            : departure?.direction;
+          const feedbackClass = exitDirection
+            ? ` parking-jam-car--exit-${exitDirection}`
+            : targeted && operation
+              ? ` parking-jam-car--blocked-${operation.direction}`
               : "";
-          const exitTranslation =
-            exiting && operation
-              ? parkingJamBoardGeometry.getVehicleExitTranslation(
-                  board,
-                  vehicle,
-                  operation.direction,
-                )
-              : null;
+          const exitTranslation = exitDirection
+            ? parkingJamBoardGeometry.getVehicleExitTranslation(
+                board,
+                vehicle,
+                exitDirection,
+              )
+            : null;
           const exitStyle = exitTranslation
             ? ({
                 "--parking-jam-exit-x": `${exitTranslation.x}px`,
                 "--parking-jam-exit-y": `${exitTranslation.y}px`,
+                ...(departure && {
+                  animationDelay: `${departure.delayMs}ms`,
+                  animationFillMode: "both",
+                }),
               } as CSSProperties)
             : undefined;
           return (
@@ -225,7 +244,7 @@ export function ParkingJamBoard({
               key={targeted ? `${vehicle.id}-${operation?.id}` : vehicle.id}
               ref={exiting ? exitingCarRef : undefined}
               role="button"
-              tabIndex={interactionDisabled || exiting ? -1 : 0}
+              tabIndex={interactionDisabled || !isRemaining ? -1 : 0}
               aria-label={getVehicleLabel(vehicle)}
               aria-pressed={selected}
               className={`parking-jam-car${selected ? " parking-jam-car--selected" : ""}${feedbackClass}`}
