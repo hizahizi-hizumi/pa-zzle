@@ -4,8 +4,11 @@ import {
   type NanpureBoard as NanpureBoardState,
 } from "@/games/nanpure/puzzle/board";
 import type { NanpureNotes } from "@/games/nanpure/session/session";
-
+import type { NanpureBoardSpotlight } from "@/games/nanpure/ui/board/board-spotlight";
+import type { NanpureCellCue } from "@/games/nanpure/ui/board/cell-cue";
+import { NanpureUnitSpotlight } from "@/games/nanpure/ui/board/NanpureBoard/NanpureUnitSpotlight";
 import { NanpureCell } from "@/games/nanpure/ui/board/NanpureCell";
+import { cn } from "@/lib/utils";
 
 const NANPURE_CELL_INDICES = Array.from(
   { length: NANPURE_SIZE * NANPURE_SIZE },
@@ -20,6 +23,12 @@ type NanpureBoardProps = {
   conflictCellIndices: readonly number[];
   mistakeCellIndices: readonly number[];
   interactionDisabled?: boolean;
+  /** 盤面の幅。渡さなければ、プレイ画面に合わせて画面の幅と高さから決める。 */
+  sizeClassName?: string;
+  /** チュートリアルで、マスに重ねる印と応え。 */
+  cues?: readonly NanpureCellCue[];
+  /** チュートリアルで手を引いている間、画面全体の覆いから抜く所。`null` なら抜かない。 */
+  spotlight?: NanpureBoardSpotlight | null;
   onSelectCell: (cellIndex: number) => void;
 };
 
@@ -31,15 +40,26 @@ export function NanpureBoard({
   conflictCellIndices,
   mistakeCellIndices,
   interactionDisabled = false,
+  sizeClassName = "w-[min(96vw,calc(100svh-12rem),38rem)]",
+  cues = [],
+  spotlight = null,
   onSelectCell,
 }: NanpureBoardProps) {
+  const cueByCellIndex = new Map(cues.map((cue) => [cue.cellIndex, cue]));
+  const spotlitCells = new Set(spotlight?.cellIndices);
   const conflictCells = new Set(conflictCellIndices);
   const mistakeCells = new Set(mistakeCellIndices);
   const selectedValue =
     selectedCellIndex === null ? null : (board[selectedCellIndex] ?? null);
 
   return (
-    <div className="grid aspect-square w-[min(96vw,calc(100svh-12rem),38rem)] grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background">
+    // マスの数字の大きさを盤面の幅で抑え、狭く置いた盤面でも数字がマスに収まるようにする。
+    <div
+      className={cn(
+        "relative grid aspect-square grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background [container-type:inline-size]",
+        sizeClassName,
+      )}
+    >
       {NANPURE_CELL_INDICES.map((cellIndex) => {
         const value = board[cellIndex] ?? null;
         const selected = selectedCellIndex === cellIndex;
@@ -64,10 +84,15 @@ export function NanpureBoard({
             conflict={conflictCells.has(cellIndex)}
             mistake={mistakeCells.has(cellIndex)}
             disabled={interactionDisabled}
+            cue={cueByCellIndex.get(cellIndex)}
+            spotlit={spotlitCells.has(cellIndex)}
             onSelect={onSelectCell}
           />
         );
       })}
+      {spotlight?.units.map((unit) => (
+        <NanpureUnitSpotlight key={`${unit.kind}:${unit.index}`} unit={unit} />
+      ))}
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { TutorialCue } from "@/components/TutorialCue";
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import {
   getNanpureColumnIndex,
   getNanpureRowIndex,
@@ -6,6 +8,7 @@ import {
   type NanpureDigit,
 } from "@/games/nanpure/puzzle/board";
 import type { NanpureNotes } from "@/games/nanpure/session/session";
+import type { NanpureCellCue } from "@/games/nanpure/ui/board/cell-cue";
 import { NanpureCellNotes } from "@/games/nanpure/ui/board/NanpureCellNotes";
 import { nanpureCellToneClassNames } from "@/games/nanpure/ui/board/nanpure-cell-tone";
 import { cn } from "@/lib/utils";
@@ -22,8 +25,15 @@ type NanpureCellProps = {
   conflict: boolean;
   mistake: boolean;
   disabled: boolean;
+  /** チュートリアルで、このマスに重ねる印か応え。 */
+  cue: NanpureCellCue | undefined;
+  /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜き、元の明るさで見せる。 */
+  spotlit: boolean;
   onSelect: (cellIndex: number) => void;
 };
+
+/** 印と応えの線は、隣り合うマスの線と重ならないよう、マスの縁から少し内側に、角の立ったマスの形で引く。 */
+const cueOutlinePlacementClassName = "pointer-events-none absolute inset-0.5";
 
 function getCellLabel({
   cellIndex,
@@ -65,6 +75,8 @@ export function NanpureCell({
   conflict,
   mistake,
   disabled,
+  cue,
+  spotlit,
   onSelect,
 }: NanpureCellProps) {
   const row = getNanpureRowIndex(cellIndex);
@@ -85,7 +97,7 @@ export function NanpureCell({
       aria-invalid={conflict || mistake || undefined}
       disabled={disabled}
       className={cn(
-        "relative flex aspect-square min-h-0 items-center justify-center font-sans text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-violet-200 dark:focus-visible:bg-violet-900/55",
+        "relative flex aspect-square min-h-0 items-center justify-center font-sans text-[min(clamp(1rem,5vw,2rem),6.5cqw)] outline-none transition-colors focus-visible:bg-violet-200 dark:focus-visible:bg-violet-900/55",
         row !== NANPURE_SIZE - 1 && "border-b border-b-border",
         column !== NANPURE_SIZE - 1 && "border-r border-r-border",
         row % 3 === 2 &&
@@ -104,7 +116,32 @@ export function NanpureCell({
       )}
       onClick={() => onSelect(cellIndex)}
     >
-      {value ?? (
+      {/* マスの形のまま、角の無い四角で覆いから抜く。 */}
+      <TutorialSpotlight active={spotlit} className="inset-0" />
+      {cue?.kind === "fitted" && (
+        <span
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className={cueOutlinePlacementClassName}
+        >
+          <TutorialCue kind="acknowledgement" id={cue.id} />
+        </span>
+      )}
+      {(cue?.kind === "hint" || cue?.kind === "recall") && (
+        <span
+          aria-hidden="true"
+          data-cell-cue="hint"
+          className={cueOutlinePlacementClassName}
+        >
+          <TutorialCue
+            kind="mark"
+            recallId={cue.kind === "recall" ? cue.id : null}
+          />
+        </span>
+      )}
+      {value !== null ? (
+        <span data-nanpure-digit={clue ? "clue" : "entered"}>{value}</span>
+      ) : (
         <NanpureCellNotes
           notes={notes}
           selectedValue={selectedValue}
