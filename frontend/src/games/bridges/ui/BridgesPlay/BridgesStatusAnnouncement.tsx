@@ -35,7 +35,6 @@ function describeNotice(
 
 /**
  * 盤面操作の結果を支援技術へ知らせる、見えない読み上げ。盤面には文字を出さず、形と色で知らせる。
- * 同じ文が続いても読み上げられるよう、操作ごとに要素を作り直す。
  */
 export function BridgesStatusAnnouncement({
   board,
@@ -49,12 +48,9 @@ export function BridgesStatusAnnouncement({
       : describeNotice(board, notice);
 
   return (
-    <p
-      key={solved ? "solved" : (notice?.id ?? "none")}
-      role="status"
-      className="sr-only"
-    >
-      {message}
+    <p role="status" className="sr-only">
+      {/* 同じ文が続いても読み上げ直されるよう、操作ごとに文の要素を作り直す。 */}
+      <span key={solved ? "solved" : (notice?.id ?? "none")}>{message}</span>
     </p>
   );
 }

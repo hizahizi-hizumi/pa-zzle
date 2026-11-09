@@ -4,7 +4,8 @@ import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
  * ブリッジパズル固有の色。共通UIの意味色（`primary`・`error` など）は流用しない。
  * - 盤面の地は、ライトでもダークでも盤面の外の地と分ける。
  * - 橋は島の縁と同じ濃い色の線にし、島と橋がひと続きの形に見えるようにする。
- * - 島は、本数が足りない間は地より明るい丸、ちょうどになったら地に沈む灰色の丸、多すぎたら盤面の中だけで使う薔薇色の丸にする。
+ * - 島は、本数が足りない間は地からはっきり浮く丸（ライトは白、ダークは地より暗い黒）、ちょうどになったら地に沈む丸
+ *   （地に近い灰色。ライトは地より一段暗く、ダークは地より一段明るい）、多すぎたら盤面の中だけで使う薔薇色の丸にする。
  *   色だけに頼らないよう、縁の太さも状態で変える（ちょうどは細く、多すぎは太く）。数字はどの状態でも地の丸に対して 4.5:1 以上。
  * - 交わる橋に阻まれたときは、阻んだ橋を多すぎと同じ薔薇色で短く点ける（規則に合わないものの色）。
  * - 島を押している間に見せる、架けられる相手への線は、状態のどれとも紛れない空色にする。
@@ -27,7 +28,7 @@ type IslandTone = {
   outlineWidth: number;
 };
 
-/** 数字と丸の輝度比: 足りない 17.5:1（白に stone-900）、ちょうど 6.9:1（stone-300 に stone-700。ダークは stone-600 に stone-200 で 6.1:1）、多すぎ 5.0:1（rose-100 に rose-700）。 */
+/** 数字と丸の輝度比: 足りない 17.5:1（白に stone-900）、ちょうど 6.9:1（stone-300 に stone-700。ダークは stone-700 に stone-300 で 6.9:1）、多すぎ 5.0:1（rose-100 に rose-700）。 */
 export const bridgesIslandTones = {
   short: {
     disc: "fill-white stroke-stone-700 dark:fill-stone-950 dark:stroke-stone-300",
@@ -35,8 +36,8 @@ export const bridgesIslandTones = {
     outlineWidth: 0.06,
   },
   exact: {
-    disc: "fill-stone-300 stroke-stone-400 dark:fill-stone-600 dark:stroke-stone-500",
-    clue: "fill-stone-700 dark:fill-stone-200",
+    disc: "fill-stone-300 stroke-stone-400 dark:fill-stone-700 dark:stroke-stone-600",
+    clue: "fill-stone-700 dark:fill-stone-300",
     outlineWidth: 0.03,
   },
   over: {
