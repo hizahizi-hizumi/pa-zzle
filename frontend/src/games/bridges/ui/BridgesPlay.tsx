@@ -12,6 +12,7 @@ import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/BridgesStatusAnnouncement";
 import { useBridgesSoundEffects } from "@/games/bridges/ui/BridgesPlay/use-bridges-sound-effects";
+import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
 import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
 import { BridgesResultScreen } from "@/games/bridges/ui/result/BridgesResultScreen";
 import type {
@@ -78,6 +79,9 @@ export function BridgesPlay({
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <BridgesHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderTutorial={({ open, onClose }) => (
+        <BridgesTutorial open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <BridgesResultScreen
