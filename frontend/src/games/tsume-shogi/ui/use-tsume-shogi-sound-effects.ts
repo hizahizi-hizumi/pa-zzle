@@ -26,7 +26,7 @@ import {
   measureTsumeShogiClearWaveReach,
 } from "@/games/tsume-shogi/ui/board/clear/clear-wave";
 import { CLEAR_GLOW_PEAK_MS } from "@/games/tsume-shogi/ui/board/clear/TsumeShogiClearAnimation";
-import { defineSoundTakes } from "@/games/tsume-shogi/ui/TsumeShogiPlay/sound-takes";
+import { defineSoundTakes } from "@/games/tsume-shogi/ui/sound-takes";
 import {
   defineSoundEffect,
   playLayeredSound,

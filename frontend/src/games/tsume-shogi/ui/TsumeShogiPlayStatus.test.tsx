@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 
 import type { TsumeShogiPlayedMove } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import type { TsumeShogiSessionPhase } from "@/games/tsume-shogi/session/session";
-import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPlayStatus";
+import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlayStatus";
 
 const refutedMoves: readonly TsumeShogiPlayedMove[] = [
   {

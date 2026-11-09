@@ -1,4 +1,4 @@
-import { TsumeShogiBoardLettering } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPieceBox/TsumeShogiBoardLettering";
+import { TsumeShogiBoardLettering } from "@/games/tsume-shogi/ui/TsumeShogiBoardGroup/TsumeShogiPieceBox/TsumeShogiBoardLettering";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { cn } from "@/lib/utils";
 
