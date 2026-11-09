@@ -67,7 +67,7 @@ describe("HitofudePuzzlePlay", () => {
     progress: "result",
     elapsedMs: performance.elapsedMs,
     result,
-    recordOutcomeNotice: null,
+    recordFeedback: { kind: "none" } as const,
     board,
     path: [0, 1, 2, 5, 4, 3, 6, 7, 8],
     isDeadEnd: false,
@@ -111,16 +111,12 @@ describe("HitofudePuzzlePlay", () => {
       renderResult();
     });
 
-    test("共通の結果階層でピクトグラム・ゲーム名・難易度・スコアを表示すること", () => {
-      const pictogram = document.querySelector(
-        `svg[aria-label="${HITOFUDE_PUZZLE_DISPLAY_NAME}"]`,
-      );
+    test("共通の結果階層でゲーム名・難易度・スコアを表示すること", () => {
       const score = within(screen.getByRole("region", { name: "スコア" }));
 
-      expect(pictogram).toBeTruthy();
       expect(screen.getByText(HITOFUDE_PUZZLE_DISPLAY_NAME)).toBeTruthy();
       expect(screen.getByText("レベル 4")).toBeTruthy();
-      expect(score.getByText("89")).toBeTruthy();
+      expect(score.getByText("89点（100点満点）")).toBeTruthy();
     });
 
     test("時間と基準時間との差・引き直しを主な成績として表示すること", () => {
@@ -130,7 +126,7 @@ describe("HitofudePuzzlePlay", () => {
         .map((definition) => definition.textContent);
 
       expect(terms).toEqual(["時間", "引き直し"]);
-      expect(definitions).toEqual(["02:25", "基準 +00:21", "2回"]);
+      expect(definitions).toEqual(["02:25", "基準差 +00:21", "2回"]);
     });
 
     test("盤面を表示しないこと", () => {
@@ -158,9 +154,7 @@ describe("HitofudePuzzlePlay", () => {
 
     describe("スコアの内訳を開いた場合", () => {
       beforeEach(() => {
-        fireEvent.click(
-          screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-        );
+        fireEvent.click(screen.getByRole("button", { name: "採点内訳" }));
       });
 
       test("速さ・正確さの点を速さから並べ、操作の回数・基準時間を内訳に表示し、問題の作業の量は内訳に並べないこと", () => {
@@ -217,9 +211,7 @@ describe("HitofudePuzzlePlay", () => {
           longestRefutationLength: 0,
         }),
       });
-      fireEvent.click(
-        screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "採点内訳" }));
     });
 
     test("速さの基準の式にも説明にも先読みを出さないこと", () => {
@@ -621,7 +613,7 @@ describe("HitofudePuzzlePlay", () => {
 
     test("最高段階として称え、基準時間より速かった差を負の時間で表示すること", () => {
       expect(screen.getByText("パーフェクト！")).toBeTruthy();
-      expect(screen.getByText("基準 -00:09")).toBeTruthy();
+      expect(screen.getByLabelText("基準時間より短い -00:09")).toBeTruthy();
     });
   });
 

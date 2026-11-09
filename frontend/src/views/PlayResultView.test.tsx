@@ -23,6 +23,7 @@ vi.mock("@/lib/internal-diagnostics", () => ({
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  window.history.replaceState({}, "", "/");
 });
 
 const performance = {
@@ -80,7 +81,7 @@ describe("今の版の記録の場合", () => {
   });
 
   test("保存結果の state が無いと自己ベスト更新を告知しないこと", () => {
-    const bestUpdate = screen.queryByRole("region", { name: "自己ベスト更新" });
+    const bestUpdate = screen.queryByLabelText(/自己ベスト更新/);
 
     expect(bestUpdate).toBeNull();
   });
@@ -132,9 +133,9 @@ describe("自己ベスト更新の保存結果を state に持つ場合", () => 
   });
 
   test("自己ベスト更新を告知すること", () => {
-    const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
+    const bestUpdate = screen.getByLabelText(/スコアの自己ベスト更新/);
 
-    expect(bestUpdate.textContent).toContain("+10点");
+    expect(bestUpdate.getAttribute("aria-label")).toContain("+10点");
   });
 });
 
@@ -166,6 +167,10 @@ const unrenderableRecord: PlayRecord = {
 };
 const unrenderableCases = [
   ["存在しない記録 ID", "/puzzles/nanpure/result/missing"],
+  [
+    "以前の比較サンプル ID",
+    "/puzzles/nanpure/result/issue690-comparison-sample",
+  ],
   ["結果を作れない版の記録", createResultPath(unrenderableRecord)],
 ] as const;
 

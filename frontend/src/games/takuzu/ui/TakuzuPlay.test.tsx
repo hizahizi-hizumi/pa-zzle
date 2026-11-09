@@ -91,7 +91,7 @@ describe("TakuzuPlay", () => {
         canRestart
         elapsedMs={65_000}
         result={playResult}
-        recordOutcomeNotice={null}
+        recordFeedback={{ kind: "none" }}
         {...callbacks}
         onOpenDiagnostics={onOpenDiagnostics}
       />,
@@ -269,17 +269,15 @@ describe("TakuzuPlay", () => {
     test("共通の結果階層でゲーム名・難易度・スコアを表示すること", () => {
       const brand = screen.getByRole("img", { name: "pa-zzle" });
       const heading = screen.getByRole("heading", { name: "プレイ結果" });
-      const pictogram = document.querySelector(
-        'svg[aria-label="バイナリパズル"]',
-      );
+
       const difficulty = screen.getByText("レベル 2");
       const score = within(screen.getByRole("region", { name: "スコア" }));
 
       expect(brand).toBeTruthy();
       expect(heading).toBeTruthy();
-      expect(pictogram).toBeTruthy();
+
       expect(difficulty).toBeTruthy();
-      expect(score.getByText("65")).toBeTruthy();
+      expect(score.getByText("65点（100点満点）")).toBeTruthy();
     });
 
     test("時間と基準時間との差・置き直し・待ったを主な成績として表示すること", () => {
@@ -289,7 +287,7 @@ describe("TakuzuPlay", () => {
         .map((definition) => definition.textContent);
 
       expect(terms).toEqual(["時間", "置き直し", "待った"]);
-      expect(definitions).toEqual(["03:00", "基準 +00:15", "2回", "3回"]);
+      expect(definitions).toEqual(["03:00", "基準差 +00:15", "2回", "3回"]);
     });
 
     test("結果画面へフォーカスを移すこと", () => {
@@ -329,9 +327,7 @@ describe("TakuzuPlay", () => {
 
     describe("スコアの内訳を開いた場合", () => {
       beforeEach(() => {
-        fireEvent.click(
-          screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-        );
+        fireEvent.click(screen.getByRole("button", { name: "採点内訳" }));
       });
 
       const detailLabels = [
@@ -395,7 +391,7 @@ describe("TakuzuPlay", () => {
     });
 
     test("基準時間より速かった差を負の時間で表示すること", () => {
-      const timeDelta = screen.getByText("基準 -00:15");
+      const timeDelta = screen.getByLabelText("基準時間より短い -00:15");
 
       expect(timeDelta).toBeTruthy();
     });

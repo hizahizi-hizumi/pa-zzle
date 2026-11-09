@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-
 import { createRecordResultLocationState } from "@/game-catalog/record-result-location-state";
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";

@@ -116,7 +116,7 @@ describe("ReflectionPlay", () => {
     elapsedMs: 65_000,
     canRestart: false,
     result: null,
-    recordOutcomeNotice: null,
+    recordFeedback: { kind: "none" } as const,
     ...callbacks,
   };
 
@@ -436,18 +436,16 @@ describe("ReflectionPlay", () => {
 
       test("共通の結果階層でゲーム名・難易度・スコアを表示すること", () => {
         const heading = screen.getByRole("heading", { name: "プレイ結果" });
-        const pictogram = document.querySelector(
-          `svg[aria-label="${REFLECTION_DISPLAY_NAME}"]`,
-        );
+
         const gameName = screen.getByText(REFLECTION_DISPLAY_NAME);
         const difficulty = screen.getByText("レベル 1");
         const score = within(screen.getByRole("region", { name: "スコア" }));
 
         expect(heading).toBeTruthy();
-        expect(pictogram).toBeTruthy();
+
         expect(gameName).toBeTruthy();
         expect(difficulty).toBeTruthy();
-        expect(score.getByText("93")).toBeTruthy();
+        expect(score.getByText("93点（100点満点）")).toBeTruthy();
       });
 
       test("時間と基準時間との差・置き直しを主な成績として表示すること", () => {
@@ -459,7 +457,7 @@ describe("ReflectionPlay", () => {
           .map((definition) => definition.textContent);
 
         expect(terms).toEqual(["時間", "置き直し"]);
-        expect(definitions).toEqual(["01:35", "基準 +00:12", "2回"]);
+        expect(definitions).toEqual(["01:35", "基準差 +00:12", "2回"]);
       });
 
       test("結果画面へフォーカスを移すこと", () => {
@@ -501,9 +499,7 @@ describe("ReflectionPlay", () => {
 
       describe("スコアの内訳を開いた場合", () => {
         beforeEach(() => {
-          fireEvent.click(
-            screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-          );
+          fireEvent.click(screen.getByRole("button", { name: "採点内訳" }));
         });
 
         test("速さの点・盤面を戻した回数・光路の確認・基準時間・作業の量を内訳に表示すること", () => {
@@ -571,7 +567,7 @@ describe("ReflectionPlay", () => {
       });
 
       test("基準時間より速かった差を負の時間で表示すること", () => {
-        const timeDelta = screen.getByText("基準 -00:15");
+        const timeDelta = screen.getByLabelText("基準時間より短い -00:15");
 
         expect(timeDelta).toBeTruthy();
       });

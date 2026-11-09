@@ -1,0 +1,105 @@
+.result-actions--quiet {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 2px;
+  width: min(100%, 420px);
+  margin-inline: auto;
+}
+
+.result-actions--quiet .result-action {
+  display: flex;
+  border: 0;
+  background: none;
+  text-decoration: none;
+  cursor: pointer;
+  min-width: 0;
+  min-height: 56px;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 2px 7px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.result-actions--quiet .result-action svg {
+  width: 23px;
+  height: 23px;
+  flex: none;
+  opacity: 0.62;
+  stroke-width: 1.6;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.result-actions--quiet .result-action span {
+  white-space: nowrap;
+}
+
+.result-actions--quiet .result-action--primary {
+  grid-column: 1 / -1;
+  min-height: 58px;
+  color: color-mix(in srgb, var(--foreground) 74%, var(--muted-foreground));
+  font-weight: 650;
+}
+
+.result-actions--quiet .result-action--primary svg {
+  width: 32px;
+  height: 32px;
+  opacity: 0.83;
+  stroke-width: 1.6;
+}
+
+.result-actions--quiet .result-action:hover:not(:disabled) {
+  color: var(--foreground);
+}
+
+.result-actions--quiet .result-action:hover:not(:disabled) svg {
+  transform: translateY(-3px);
+}
+
+.result-actions--quiet .result-action:active:not(:disabled) svg {
+  transform: scale(0.92);
+}
+
+@media (max-height: 600px) {
+  .result-actions--quiet .result-action {
+    min-height: 46px;
+    gap: 4px;
+    padding-bottom: 5px;
+  }
+  .result-actions--quiet .result-action--primary {
+    min-height: 50px;
+  }
+  .result-actions--quiet .result-action svg {
+    width: 21px;
+    height: 21px;
+  }
+  .result-actions--quiet .result-action--primary svg {
+    width: 29px;
+    height: 29px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-actions--quiet .result-action svg {
+    transition: none;
+  }
+  .result-actions--quiet .result-action:hover:not(:disabled) svg,
+  .result-actions--quiet .result-action:active:not(:disabled) svg {
+    transform: none;
+  }
+}
+
+.result-actions--quiet .result-action:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.result-actions--quiet .result-action:disabled {
+  cursor: default;
+  opacity: 0.5;
+}

@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useLocation } from "react-router";
-
 import {
   findGameCatalogEntry,
   findRecordProblemPlayDestination,
@@ -11,27 +10,27 @@ import {
 } from "@/game-catalog/game-navigation";
 import { readRecordSaveOutcome } from "@/game-catalog/record-result-location-state";
 import { findPlayRecord } from "@/records/storage";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
 import { Link, useNavigate, useParams } from "@/router";
 
 export function PlayResultView() {
   const { game: gameId, recordId } = useParams(
     "/puzzles/:game/result/:recordId",
   );
-  const recordSaveOutcome = readRecordSaveOutcome(useLocation().state);
+  const locationState = useLocation().state;
+  const recordSaveOutcome = readRecordSaveOutcome(locationState);
   const navigate = useNavigate();
   const record = useMemo(() => findPlayRecord(recordId), [recordId]);
   const game = findGameCatalogEntry(gameId);
   const replayDestination = record && findRecordProblemPlayDestination(record);
+  const noticeOutcome = recordSaveOutcome ?? null;
 
   const resultScreen =
     game && record?.gameId === game.id
       ? game.renderRecordResult(record, {
-          recordOutcomeNotice: (
-            <PlayRecordOutcomeNotice
-              outcome={recordSaveOutcome ?? null}
-              display={game.playRecordDisplay}
-            />
+          recordFeedback: createResultRecordFeedback(
+            noticeOutcome,
+            game.playRecordDisplay,
           ),
           onReplay: replayDestination
             ? () => openRecordProblemPlay(navigate, replayDestination)

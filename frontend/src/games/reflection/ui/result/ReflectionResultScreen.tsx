@@ -8,7 +8,6 @@ import {
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
 import type { GamePlayResultScreenProps } from "@/games/play";
-import reflectionPictogramSvg from "@/games/reflection/assets/pictogram.svg?raw";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import type { ReflectionResult } from "@/games/reflection/play/use-reflection-play";
@@ -40,7 +39,7 @@ function listScoreBreakdown(result: ReflectionResult) {
 export function ReflectionResultScreen({
   difficulty,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -50,7 +49,6 @@ export function ReflectionResultScreen({
     <GameResultScreen
       gameName={REFLECTION_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      pictogramSvg={reflectionPictogramSvg}
       metrics={[
         createElapsedTimeMetric(result),
         createCountMetric("置き直し", result.relocationCount, "回"),
@@ -58,7 +56,7 @@ export function ReflectionResultScreen({
       score={result.score.total}
       scoreBreakdown={listScoreBreakdown(result)}
       scoreCriteria={getReflectionScoreCriteria(result)}
-      recordOutcomeNotice={recordOutcomeNotice}
+      recordFeedback={recordFeedback}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
       onOpenGameHome={onOpenGameHome}

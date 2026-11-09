@@ -84,7 +84,7 @@ describe("IceFloorMazePlay", () => {
         difficulty="4"
         progress={progress}
         result={progress === "result" ? result : null}
-        recordOutcomeNotice={null}
+        recordFeedback={{ kind: "none" }}
         elapsedMs={65_000}
         board={board}
         cells={createIceFloorMazeInitialState(board, 17).cells}
@@ -486,11 +486,11 @@ describe("IceFloorMazePlay", () => {
     });
 
     test("スコアと手数・時間を基準との差つきで表示すること", () => {
-      const score = screen.getByText("70");
+      const score = screen.getByText("70点（100点満点）");
       const moveCount = screen.getByText("9手");
-      const moveDelta = screen.getByText("最短 +3");
+      const moveDelta = screen.getByLabelText("最短手数より多い +3");
       const elapsedTime = screen.getByText("00:51");
-      const timeDelta = screen.getByText("基準 +00:10");
+      const timeDelta = screen.getByLabelText("基準時間より長い +00:10");
 
       expect(score).toBeTruthy();
       expect(moveCount).toBeTruthy();
@@ -521,9 +521,7 @@ describe("IceFloorMazePlay", () => {
     );
 
     test("スコアの内訳と、待った・盤面を戻すの回数、採点基準を開けること", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "採点内訳" }));
 
       const efficiency = screen.getByText("40 / 60");
       const speed = screen.getByText("30 / 40");

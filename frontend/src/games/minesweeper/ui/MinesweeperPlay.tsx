@@ -40,7 +40,7 @@ export function MinesweeperPlay({
   progress,
   elapsedMs,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   rows,
   columns,
   mineCount,
@@ -101,7 +101,7 @@ export function MinesweeperPlay({
         <MinesweeperResultScreen
           difficulty={difficulty}
           result={clearedResult}
-          recordOutcomeNotice={recordOutcomeNotice}
+          recordFeedback={recordFeedback}
           onReplay={handleReplay}
           onStartNewProblem={handleStartNewProblem}
           onOpenGameHome={onOpenGameHome}

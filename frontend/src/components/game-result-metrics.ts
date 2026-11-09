@@ -32,8 +32,9 @@ export function createCountMetric(
   label: string,
   count: number,
   unit: GameResultCountUnit,
+  recordMetricId?: string,
 ): GameResultMetric & GameResultDetailMetric {
-  return { label, value: `${count}${unit}` };
+  return { label, value: `${count}${unit}`, recordMetricId };
 }
 
 /** プレイ中の操作を使った回数。呼び名は操作の共通の呼び名に揃える。 */
@@ -54,8 +55,13 @@ export function createElapsedTimeMetric({
 }): GameResultMetric {
   return {
     label: "時間",
+    recordMetricId: "time-delta-ms",
     value: formatElapsedTime(elapsedMs),
-    detail: `基準 ${formatElapsedTimeDelta(timeDeltaMs)}`,
+    comparison: {
+      basis: "referenceTime",
+      difference: timeDeltaMs,
+      display: formatElapsedTimeDelta(timeDeltaMs),
+    },
   };
 }
 
@@ -69,7 +75,12 @@ export function createMoveCountMetric({
 }): GameResultMetric {
   return {
     ...createCountMetric("手数", moveCount, "手"),
-    detail: `最短 ${formatCountDelta(moveDelta)}`,
+    recordMetricId: "move-delta",
+    comparison: {
+      basis: "minimumMoves",
+      difference: moveDelta,
+      display: formatCountDelta(moveDelta),
+    },
   };
 }
 

@@ -7,7 +7,6 @@ import {
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
-import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
 import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
@@ -23,7 +22,7 @@ type NanpureResultScreenProps = GamePlayResultScreenProps<
 export function NanpureResultScreen({
   difficulty,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -33,14 +32,13 @@ export function NanpureResultScreen({
     <GameResultScreen
       gameName={NANPURE_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      pictogramSvg={nanpurePictogramSvg}
       score={result.score.total}
       metrics={[
         createElapsedTimeMetric(result),
-        createCountMetric("ミス", result.mistakeCount, "回"),
+        createCountMetric("ミス", result.mistakeCount, "回", "mistake-count"),
         createOperationCountMetric("undo", result.undoCount),
       ]}
-      recordOutcomeNotice={recordOutcomeNotice}
+      recordFeedback={recordFeedback}
       scoreBreakdown={[
         ...listScoreBreakdownMetrics(result.score, NANPURE_SCORE_MAXIMUMS),
         createSpeedFullScoreMetric(result.speedRule),

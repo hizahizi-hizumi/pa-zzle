@@ -9,7 +9,7 @@ import type { ComponentProps, ReactElement } from "react";
 import { MemoryRouter } from "react-router";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
 
 /** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
 function render(ui: ReactElement) {
@@ -45,7 +45,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     canUndo: true,
     canRestart: true,
     result: null,
-    recordOutcomeNotice: null,
+    recordFeedback: { kind: "none" } as const,
     onSelectCell: vi.fn(),
     onInputDigit: vi.fn(),
     onErase: vi.fn(),
@@ -309,20 +309,20 @@ describe("NanpurePlay", () => {
 
     test("共通の結果階層で採点結果を表示すること", () => {
       const heading = screen.getByRole("heading", { name: "プレイ結果" });
-      const pictogram = document.querySelector('svg[aria-label="ナンプレ"]');
+
       const elapsedTime = screen.getByText("02:05");
-      const score = screen.getByText("79");
+      const score = screen.getByText("79点（100点満点）");
       const playButton = screen.getByRole("button", { name: "次の問題" });
       const replayButton = screen.getByRole("button", { name: "もう一度" });
 
       expect(heading).toBeTruthy();
-      expect(pictogram).toBeTruthy();
+
       expect(elapsedTime).toBeTruthy();
       expect(score).toBeTruthy();
       expect(playButton).toBeTruthy();
       expect(replayButton).toBeTruthy();
 
-      fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
+      fireEvent.click(screen.getByText("採点内訳"));
 
       expect(screen.getByText("30 / 40")).toBeTruthy();
       expect(screen.getByText("9 / 20")).toBeTruthy();
@@ -359,32 +359,31 @@ describe("NanpurePlay", () => {
               breakdown: { accuracy: 40, speed: 40, stability: 20 },
             },
           }}
-          recordOutcomeNotice={
-            <PlayRecordOutcomeNotice
-              outcome={{
-                status: "updated",
-                updates: [
-                  {
-                    metricId: "time-delta-ms",
-                    previousValue: -750_000,
-                    currentValue: -780_000,
-                  },
-                ],
-              }}
-              display={nanpurePlayRecordDisplay}
-            />
-          }
+          recordFeedback={createResultRecordFeedback(
+            {
+              status: "updated",
+              updates: [
+                {
+                  metricId: "time-delta-ms",
+                  previousValue: -750_000,
+                  currentValue: -780_000,
+                },
+              ],
+            },
+            nanpurePlayRecordDisplay,
+          )}
         />,
       );
     });
 
     test("更新内容を表示すること", () => {
-      const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
-
-      expect(bestUpdate.textContent).toContain("基準時間との差");
-      expect(bestUpdate.textContent).toContain("-12:30");
-      expect(bestUpdate.textContent).toContain("-13:00");
-      expect(bestUpdate.textContent).toContain("30秒短縮");
+      const bestUpdate =
+        screen.getByLabelText(/基準時間との差の自己ベスト更新/);
+      expect(bestUpdate).toBeTruthy();
+      expect(bestUpdate.getAttribute("aria-label")).toContain(
+        "-12:30から-13:00",
+      );
+      expect(bestUpdate.getAttribute("aria-label")).toContain("30秒短縮");
     });
   });
 

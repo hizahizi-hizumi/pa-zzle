@@ -38,7 +38,7 @@ function createProps(): ComponentProps<typeof ParkingJamPlay> {
     canUndo: true,
     canRestart: true,
     result: null,
-    recordOutcomeNotice: null,
+    recordFeedback: { kind: "none" } as const,
     onSelectVehicle: vi.fn(),
     onMove: vi.fn(),
     onUndo: vi.fn(),

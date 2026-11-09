@@ -8,7 +8,6 @@ import {
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
 import type { GamePlayResultScreenProps } from "@/games/play";
-import tsumeShogiPictogramSvg from "@/games/tsume-shogi/assets/pictogram.svg?raw";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
 import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 import type { TsumeShogiResult } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
@@ -38,7 +37,7 @@ function listScoreBreakdown(result: TsumeShogiResult) {
 export function TsumeShogiResultScreen({
   difficulty,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -48,15 +47,19 @@ export function TsumeShogiResultScreen({
     <GameResultScreen
       gameName={TSUME_SHOGI_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      pictogramSvg={tsumeShogiPictogramSvg}
       metrics={[
         createElapsedTimeMetric(result),
-        createCountMetric("誤王手", result.wrongCheckCount, "回"),
+        createCountMetric(
+          "誤王手",
+          result.wrongCheckCount,
+          "回",
+          "wrong-check-count",
+        ),
       ]}
       score={result.score.total}
       scoreBreakdown={listScoreBreakdown(result)}
       scoreCriteria={getTsumeShogiScoreCriteria(result)}
-      recordOutcomeNotice={recordOutcomeNotice}
+      recordFeedback={recordFeedback}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
       onOpenGameHome={onOpenGameHome}

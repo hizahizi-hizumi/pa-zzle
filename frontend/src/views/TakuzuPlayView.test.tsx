@@ -251,12 +251,9 @@ describe("TakuzuPlayView", () => {
         });
 
         test("置き直しの自己ベスト更新を知らせること", () => {
-          const bestUpdate = screen.getByRole("region", {
-            name: "自己ベスト更新",
-          });
+          const bestUpdate = screen.getByLabelText(/置き直しの自己ベスト更新/);
 
-          expect(bestUpdate.textContent).toContain("置き直し");
-          expect(bestUpdate.textContent).toContain("1回減");
+          expect(bestUpdate.getAttribute("aria-label")).toContain("1回減");
         });
       });
     });

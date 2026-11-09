@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-
 import { usePlayScreenMusicState } from "@/components/app-background-music";
 import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
 import { useGameNavigation } from "@/game-catalog/game-navigation";
@@ -18,7 +17,7 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import type { PlayAttemptProgress } from "@/records/play-attempt";
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
 
 /** 結果画面と報酬の音が評価段階を決めるのに使う、プレイの評価点。 */
 type ScoredResult = {
@@ -136,11 +135,9 @@ export function usePlayableGame<
       progress: play.progress,
       elapsedMs: play.elapsedMs,
       result: navigatesToRecordResult ? null : result,
-      recordOutcomeNotice: (
-        <PlayRecordOutcomeNotice
-          outcome={recordOutcome}
-          display={game.playRecordDisplay}
-        />
+      recordFeedback: createResultRecordFeedback(
+        recordOutcome,
+        game.playRecordDisplay,
       ),
       onReplay: play.replay,
       onClearAnimationComplete: play.completeClearAnimation,

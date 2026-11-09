@@ -47,7 +47,7 @@ export function ParkingJamPlay({
   progress,
   elapsedMs,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   board,
   state,
   selectedVehicleId,
@@ -94,7 +94,7 @@ export function ParkingJamPlay({
         <ParkingJamResultScreen
           difficulty={difficulty}
           result={clearedResult}
-          recordOutcomeNotice={recordOutcomeNotice}
+          recordFeedback={recordFeedback}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}

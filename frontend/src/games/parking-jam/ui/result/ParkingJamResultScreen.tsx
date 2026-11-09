@@ -7,7 +7,6 @@ import {
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
-import parkingJamPictogramSvg from "@/games/parking-jam/assets/pictogram.svg?raw";
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
 import type { ParkingJamResult } from "@/games/parking-jam/play/use-parking-jam-play";
@@ -23,7 +22,7 @@ type ParkingJamResultScreenProps = GamePlayResultScreenProps<
 export function ParkingJamResultScreen({
   difficulty,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -33,14 +32,18 @@ export function ParkingJamResultScreen({
     <GameResultScreen
       gameName={PARKING_JAM_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      pictogramSvg={parkingJamPictogramSvg}
       score={result.score.total}
       metrics={[
         createElapsedTimeMetric(result),
-        createCountMetric("ミス", result.failedMoveCount, "回"),
+        createCountMetric(
+          "ミス",
+          result.failedMoveCount,
+          "回",
+          "failed-move-count",
+        ),
         createOperationCountMetric("undo", result.undoCount),
       ]}
-      recordOutcomeNotice={recordOutcomeNotice}
+      recordFeedback={recordFeedback}
       scoreBreakdown={[
         ...listScoreBreakdownMetrics(result.score, PARKING_JAM_SCORE_MAXIMUMS),
         createSpeedFullScoreMetric(result.speedRule),

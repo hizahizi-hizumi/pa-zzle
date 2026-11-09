@@ -42,7 +42,7 @@ export function TakuzuPlay({
   progress,
   elapsedMs,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   size,
   cells,
   lineViolations,
@@ -89,7 +89,7 @@ export function TakuzuPlay({
         <TakuzuResultScreen
           difficulty={difficulty}
           result={clearedResult}
-          recordOutcomeNotice={recordOutcomeNotice}
+          recordFeedback={recordFeedback}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}

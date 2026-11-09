@@ -1,60 +1,40 @@
 import type { GameResultLevel } from "@/games/result";
 
-export type GameResultSurfaceVariant =
-  | "neutral"
-  | "good"
-  | "great"
-  | "perfect"
-  | "personalBest";
-
 type GameResultStyle = {
   message: string | null;
   scoreClassName: string;
-  surfaceVariant: GameResultSurfaceVariant;
   markClassName: string;
   /**
-   * 評価段階を小さな面の塗りだけで示すときの色。段階のある色はスコアの文字と同じにし、`clear` は前景より弱い無彩色にする。
-   * 文字色として与え、面は `currentColor` で塗る（`bg-current`、SVG の `fill="currentColor"`）。
+   * 図鑑などの小さな面に使う評価段階そのものの色。
+   * 文字は同系色の濃いトーンを使い、薄い clear でも読めるようにする。
    */
   fillColorClassName: string;
-  confettiIntensity: "strong" | "light" | null;
 };
 
 const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
   perfect: {
     message: "パーフェクト！",
-    scoreClassName: "text-amber-600 dark:text-amber-300",
-    surfaceVariant: "perfect",
-    markClassName:
-      "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-    fillColorClassName: "text-amber-600 dark:text-amber-300",
-    confettiIntensity: "strong",
+    scoreClassName: "text-grade-perfect-ink",
+    markClassName: "bg-grade-perfect/20 text-grade-perfect-ink",
+    fillColorClassName: "text-grade-perfect",
   },
   great: {
     message: "すばらしい！",
-    scoreClassName: "text-emerald-600 dark:text-emerald-300",
-    surfaceVariant: "great",
-    markClassName:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-    fillColorClassName: "text-emerald-600 dark:text-emerald-300",
-    confettiIntensity: "light",
+    scoreClassName: "text-grade-great-ink",
+    markClassName: "bg-grade-great/20 text-grade-great-ink",
+    fillColorClassName: "text-grade-great",
   },
   good: {
     message: "ナイスプレイ！",
-    scoreClassName: "text-sky-600 dark:text-sky-300",
-    surfaceVariant: "good",
-    markClassName:
-      "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
-    fillColorClassName: "text-sky-600 dark:text-sky-300",
-    confettiIntensity: null,
+    scoreClassName: "text-grade-good-ink",
+    markClassName: "bg-grade-good/20 text-grade-good-ink",
+    fillColorClassName: "text-grade-good",
   },
   clear: {
     message: null,
-    scoreClassName: "text-foreground",
-    surfaceVariant: "neutral",
-    markClassName: "bg-muted text-foreground",
-    fillColorClassName: "text-muted-foreground",
-    confettiIntensity: null,
+    scoreClassName: "text-grade-clear-ink",
+    markClassName: "bg-grade-clear/20 text-grade-clear-ink",
+    fillColorClassName: "text-grade-clear",
   },
 };
 

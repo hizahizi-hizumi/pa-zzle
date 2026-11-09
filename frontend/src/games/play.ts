@@ -1,5 +1,4 @@
-import { type ReactNode, useEffect, useState } from "react";
-
+import { useEffect, useState } from "react";
 import {
   type GameSession,
   type GameSessionStatus,
@@ -136,11 +135,26 @@ export type UndoableGamePlay = {
  * 全ゲームの結果画面 `<Game>ResultScreen` が受け取る、難易度・評価と結果からの操作。
  * 難易度は値で受け取り、表示名は結果画面が決める。
  */
+export type ResultRecordImprovement = {
+  id: string;
+  label: string;
+  previous: string;
+  current: string;
+  improvement: string;
+};
+
+/** 結果画面で使う表示値。記録の保存形式や表示定義を共通ゲームへ持ち込まない。 */
+export type ResultRecordFeedback =
+  | { kind: "none" }
+  | { kind: "first-record" }
+  | { kind: "failed" }
+  | { kind: "updated"; improvements: readonly ResultRecordImprovement[] };
+
 export type GamePlayResultScreenProps<Difficulty, Result> = {
   difficulty: Difficulty;
   result: Result;
-  /** 記録を保存した直後の自己ベスト更新などの告知。 */
-  recordOutcomeNotice: ReactNode;
+  /** 保存結果と指標の定義。結果の数値へ自己ベストを関連づける。 */
+  recordFeedback: ResultRecordFeedback;
   /** 同じ問題を遊び直す。省略すると押せない状態で出す。 */
   onReplay?: () => void;
   onStartNewProblem: () => void;

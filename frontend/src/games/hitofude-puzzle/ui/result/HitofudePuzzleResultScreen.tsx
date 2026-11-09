@@ -7,7 +7,6 @@ import {
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
-import hitofudePuzzlePictogramSvg from "@/games/hitofude-puzzle/assets/pictogram.svg?raw";
 import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import type { HitofudePuzzleResult } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
@@ -36,7 +35,7 @@ function listScoreBreakdown(result: HitofudePuzzleResult) {
 export function HitofudePuzzleResultScreen({
   difficulty,
   result,
-  recordOutcomeNotice,
+  recordFeedback,
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
@@ -46,16 +45,20 @@ export function HitofudePuzzleResultScreen({
     <GameResultScreen
       gameName={HITOFUDE_PUZZLE_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      pictogramSvg={hitofudePuzzlePictogramSvg}
       // 待った・盤面を戻すの回数は点に入らないので内訳に置き、主な成績は時間と、正確さの元の引き直しにする。
       metrics={[
         createElapsedTimeMetric(result),
-        createCountMetric("引き直し", result.backtrackCount, "回"),
+        createCountMetric(
+          "引き直し",
+          result.backtrackCount,
+          "回",
+          "backtrack-count",
+        ),
       ]}
       score={result.score.total}
       scoreBreakdown={listScoreBreakdown(result)}
       scoreCriteria={getHitofudePuzzleScoreCriteria(result)}
-      recordOutcomeNotice={recordOutcomeNotice}
+      recordFeedback={recordFeedback}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
       onOpenGameHome={onOpenGameHome}
