@@ -88,6 +88,21 @@ describe("NanpureHomeView", () => {
     expect(dialog).toBeTruthy();
   });
 
+  test("見出しのメニューからチュートリアルを開けること", async () => {
+    fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "ナンプレ",
+      description: "チュートリアル",
+    });
+
+    expect(dialog).toBeTruthy();
+  });
+
   test("戻るリンクでホームへ戻れること", () => {
     const backLink = screen.getByRole("link", { name: "戻る" });
 
