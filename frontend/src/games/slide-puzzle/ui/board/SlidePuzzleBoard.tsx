@@ -5,13 +5,16 @@ import {
   getSlidePuzzleBoardSize,
   SLIDE_PUZZLE_BLANK,
   type SlidePuzzleBoard as SlidePuzzleBoardState,
+  type SlidePuzzleTile as SlidePuzzleTileNumber,
 } from "@/games/slide-puzzle/puzzle/state";
 import {
   CLEAR_WAVE_DURATION_MS,
   clearWaveKeyframes,
   getClearWaveTileDelayMs,
 } from "@/games/slide-puzzle/ui/board/clear-wave";
+import { SlidePuzzleBlankSpotlight } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard/SlidePuzzleBlankSpotlight";
 import { SlidePuzzleTile } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard/SlidePuzzleTile";
+import type { SlidePuzzleTileCue } from "@/games/slide-puzzle/ui/board/tile-cue";
 import {
   MOTION_EASING,
   playAnimations,
@@ -24,6 +27,13 @@ type SlidePuzzleBoardProps = {
   operation: SlidePuzzleOperation | null;
   interactionDisabled: boolean;
   clearing: boolean;
+  /** タイルに重ねる合図。1枚に1つまで。 */
+  cues?: readonly SlidePuzzleTileCue[];
+  /**
+   * チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せるタイル。`null` なら抜かない。通常のプレイでは渡さない。
+   * 抜くときは、タイルが収まる空白も決め手として抜く。
+   */
+  spotlitTiles?: readonly SlidePuzzleTileNumber[] | null;
   onSlideTile: (tileIndex: number) => void;
   onClearAnimationComplete: () => void;
 };
@@ -48,6 +58,8 @@ export function SlidePuzzleBoard({
   operation,
   interactionDisabled,
   clearing,
+  cues = [],
+  spotlitTiles = null,
   onSlideTile,
   onClearAnimationComplete,
 }: SlidePuzzleBoardProps) {
@@ -96,6 +108,12 @@ export function SlidePuzzleBoard({
       className="@container size-full rounded-[1rem] bg-muted p-[1%]"
     >
       <div className="relative size-full">
+        {spotlitTiles !== null && (
+          <SlidePuzzleBlankSpotlight
+            cellIndex={board.indexOf(SLIDE_PUZZLE_BLANK)}
+            boardSize={boardSize}
+          />
+        )}
         {tiles.map(({ tile, cellIndex }) => (
           <SlidePuzzleTile
             key={tile}
@@ -103,6 +121,8 @@ export function SlidePuzzleBoard({
             cellIndex={cellIndex}
             boardSize={boardSize}
             disabled={interactionDisabled}
+            cue={cues.find((cue) => cue.tile === tile)}
+            spotlit={spotlitTiles?.includes(tile) ?? false}
             // 盤面を戻す・別の問題などの置き換えでは、タイル同士が交差して滑らないよう即座に並べ替える。
             slideAnimated={operation !== null}
             faceRef={(element) => {
