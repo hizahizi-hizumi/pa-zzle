@@ -45,6 +45,12 @@ describe("getNanpureCandidates", () => {
     expect(candidates).toEqual([1, 2, 4]);
   });
 
+  test("選んだ種類のまとまりの数字だけを除いて候補数字を算出すること", () => {
+    const candidates = getNanpureCandidates(problemClues, 2, ["row"]);
+
+    expect(candidates).toEqual([1, 2, 4, 6, 8, 9]);
+  });
+
   test("入力済みのマスには候補数字を返さないこと", () => {
     const candidates = getNanpureCandidates(problemClues, 0);
 
@@ -52,15 +58,30 @@ describe("getNanpureCandidates", () => {
   });
 });
 
-test("競合する数字に関わる全てのマスを返すこと", () => {
-  const board = Array.from({ length: 81 }, () => null) as NanpureCell[];
-  board[0] = 5;
-  board[1] = 5;
-  board[9] = 5;
+describe("findNanpureConflictCellIndices", () => {
+  const board = Array.from({ length: 81 }, (_, cellIndex) =>
+    [0, 1, 9].includes(cellIndex) ? 5 : null,
+  ) as NanpureCell[];
+  const unitKindCases = [
+    [["row"], [0, 1]],
+    [["column"], [0, 9]],
+    [["block"], [0, 1, 9]],
+  ] as const;
 
-  const conflicts = findNanpureConflictCellIndices(board);
+  test("競合する数字に関わる全てのマスを返すこと", () => {
+    const conflicts = findNanpureConflictCellIndices(board);
 
-  expect(conflicts).toEqual([0, 1, 9]);
+    expect(conflicts).toEqual([0, 1, 9]);
+  });
+
+  test.each(unitKindCases)(
+    "選んだ種類のまとまりの中で競合するマスだけを返すこと: %s",
+    (unitKinds, expected) => {
+      const conflicts = findNanpureConflictCellIndices(board, unitKinds);
+
+      expect(conflicts).toEqual(expected);
+    },
+  );
 });
 
 test("競合のない途中盤面を妥当と判定すること", () => {
