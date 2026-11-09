@@ -31,7 +31,7 @@ export const tsumeShogiToneClassNames = {
   figureLine: "stroke-[#2a1b10]/55",
   figureMark: "fill-[#2a1b10] stroke-[#2a1b10]",
   /** プレイ領域の地。座卓の面のような低彩度の色で、ライトとダークで明度だけ変える。盤が白い地から切り抜かれて見えないようにする。 */
-  tableSurface: "bg-[#ddd6cb] dark:bg-[#2b2723]",
+  tableSurface: "bg-[#bbc09e] dark:bg-[#2b2b20]",
   /** 駒台の天面の、木目の画像の平均の色。 */
   komadaiSurface: "bg-[#d4a65c]",
   /** 駒台。盤と同じ材で一段暗い、四角い天板。盤から離して置き、自分の落ち影を落とす。 */
