@@ -222,7 +222,7 @@
   font-weight: 450;
 }
 
-.result-screen .result-metrics .result-metric-best {
+.result-screen .result-metrics dd.result-metric-best {
   display: flex;
   align-items: center;
   justify-content: center;
