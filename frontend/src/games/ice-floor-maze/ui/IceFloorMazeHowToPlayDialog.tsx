@@ -6,6 +6,8 @@ import { HowToPlayFigure } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlay
 type IceFloorMazeHowToPlayDialogProps = {
   open: boolean;
   onClose: () => void;
+  /** 遊び方を閉じてチュートリアルを開く。開いた画面が渡す。 */
+  onOpenTutorial?: () => void;
 };
 
 // x  x  2  3  4
@@ -93,12 +95,14 @@ const rubblePassGoal = 7;
 export function IceFloorMazeHowToPlayDialog({
   open,
   onClose,
+  onOpenTutorial,
 }: IceFloorMazeHowToPlayDialogProps) {
   return (
     <HowToPlayDialog
       open={open}
       description="駒を氷の上で滑らせて、ゴールでぴたりと止める。"
       onClose={onClose}
+      onOpenTutorial={onOpenTutorial}
     >
       <li className="space-y-2">
         <p>

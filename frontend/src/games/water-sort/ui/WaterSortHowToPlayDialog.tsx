@@ -7,6 +7,8 @@ import { HowToPlayFigure } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/
 type WaterSortHowToPlayDialogProps = {
   open: boolean;
   onClose: () => void;
+  /** 遊び方を閉じてチュートリアルを開く。開いた画面が渡す。 */
+  onOpenTutorial?: () => void;
 };
 
 type PourConditionFigure = {
@@ -57,12 +59,14 @@ const pourConditionFigureGroups: readonly {
 export function WaterSortHowToPlayDialog({
   open,
   onClose,
+  onOpenTutorial,
 }: WaterSortHowToPlayDialogProps) {
   return (
     <HowToPlayDialog
       open={open}
       description="液体を注ぎ分けて、どの色も1本のボトルにそろえる。"
       onClose={onClose}
+      onOpenTutorial={onOpenTutorial}
     >
       <li className="space-y-2">
         <p>

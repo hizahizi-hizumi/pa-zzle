@@ -32,6 +32,10 @@ type GamePlayFrameProps<Result> = Pick<
     trailingAction?: ReactNode;
     renderResultScreen: (result: Result) => ReactNode;
     renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
+    /**
+     * ゲーム固有のチュートリアルを描く。開閉の状態は外枠が持ち、引数で渡す。
+     * チュートリアルは遊び方の中からだけ開く。省略すると、遊び方にチュートリアルを始める操作を出さない。
+     */
     renderTutorial?: (control: HowToPlayDialogControl) => ReactNode;
     /** プレイ画面の範囲。盤面の外へ描かれるメニューやダイアログでの操作と見分けるために使う。 */
     ref?: Ref<HTMLElement>;
@@ -101,15 +105,19 @@ export function GamePlayFrame<Result>({
           onOpenGameHome={onOpenGameHome}
           onBackToAppHome={onBackToAppHome}
           onOpenHowToPlay={onOpenHowToPlay ?? (() => setHowToPlayOpen(true))}
-          onOpenTutorial={
-            renderTutorial && (onOpenTutorial ?? (() => setTutorialOpen(true)))
-          }
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenDiagnostics={onOpenDiagnostics}
         />
         {renderHowToPlayDialog({
           open: howToPlayOpen,
           onClose: () => setHowToPlayOpen(false),
+          onOpenTutorial:
+            renderTutorial &&
+            (() => {
+              setHowToPlayOpen(false);
+              if (onOpenTutorial) onOpenTutorial();
+              else setTutorialOpen(true);
+            }),
         })}
         {renderTutorial?.({
           open: tutorialOpen,

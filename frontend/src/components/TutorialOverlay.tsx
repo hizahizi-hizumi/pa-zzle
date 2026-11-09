@@ -31,7 +31,8 @@ type TutorialOverlayProps =
  * - 見せ方は `presentation` で選ぶ。
  * - `scrim` では、`guiding` を、`phase` が `playing` で `getTutorialSituation` の `step` があるときに `true` にする。`renderBoard` で本番の盤面部品を描き、次に押す所と決め手に `TutorialSpotlight`、印と合図に `TutorialCue` を置く。導入の場面（`TutorialBoardIntro`）は盤面が受け持つ。
  * - `stage` では、プレイ画面と同じ地を `background` に渡す。`renderBoard` で本番の盤面部品を描き、次に押す所に `TutorialCue` の `pointer` を置く。決め手も見せるゲームは、押す所と決め手に `TutorialSpotlight` を置き、盤面の要素に `TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE` を付けて、その間 `spotlighting` を渡す。入口の場面（`TutorialStageBoardIntro`）は盤面が受け持つ。
- * - `finish` は、ゲームのホームから開いたとき（`GameHomeTutorialControl` の `playStart` があるとき）は `home`、プレイ中のメニューから開いたときは `play` にする。
+ * - `finish` は、ゲームのホームから開いたとき（`GameHomeTutorialControl` の `playStart` があるとき）は `home`、プレイ画面から開いたときは `play` にする。
+ * - チュートリアルは、ゲームのホームからもプレイ画面からも、遊び方の中（`HowToPlayDialogControl` の `onOpenTutorial`）から開く。
  */
 export function TutorialOverlay(props: TutorialOverlayProps) {
   if (props.presentation === "stage") {

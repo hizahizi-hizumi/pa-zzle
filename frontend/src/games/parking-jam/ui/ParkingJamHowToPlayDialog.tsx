@@ -6,6 +6,8 @@ import { HowToPlayFigure } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialo
 type ParkingJamHowToPlayDialogProps = {
   open: boolean;
   onClose: () => void;
+  /** 遊び方を閉じてチュートリアルを開く。開いた画面が渡す。 */
+  onOpenTutorial?: () => void;
 };
 
 const roadRightOfFirstLane: readonly ParkingJamRoadOpening[] = [
@@ -37,12 +39,14 @@ const blockedFigures = [
 export function ParkingJamHowToPlayDialog({
   open,
   onClose,
+  onOpenTutorial,
 }: ParkingJamHowToPlayDialogProps) {
   return (
     <HowToPlayDialog
       open={open}
       description="駐車場の車を、すべて道路へ出す。"
       onClose={onClose}
+      onOpenTutorial={onOpenTutorial}
     >
       <li className="space-y-2">
         <p>

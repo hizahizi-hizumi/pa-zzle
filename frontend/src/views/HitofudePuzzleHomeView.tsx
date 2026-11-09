@@ -12,8 +12,12 @@ export function HitofudePuzzleHomeView() {
     <GameHomeScreen
       {...screenProps}
       ground={<HitofudePuzzleGround />}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <HitofudePuzzleHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <HitofudePuzzleHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose, playStart }) => (
         <HitofudePuzzleTutorial

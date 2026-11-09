@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
@@ -26,7 +27,7 @@ import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
 type GuideControl = { open: boolean; onClose: () => void };
 type TutorialControl = GuideControl & { playStart?: TutorialPlayStart };
 type GuideComponents = {
-  HowToPlay: ComponentType<GuideControl>;
+  HowToPlay: ComponentType<HowToPlayDialogControl>;
   Tutorial: ComponentType<TutorialControl>;
 };
 

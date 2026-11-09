@@ -167,9 +167,9 @@ const playRecords = (["3", "3", "1"] as const).map((difficulty, index) =>
   }),
 );
 
-function TutorialRouteFixture() {
+function HowToPlayRouteFixture() {
   const location = useLocation();
-  return <p>チュートリアルの画面：{location.state?.difficulty}</p>;
+  return <p>遊び方の画面：{location.state?.difficulty}</p>;
 }
 
 function createScreen(
@@ -207,10 +207,9 @@ function createScreen(
             />
           }
         />
-        <Route path="/puzzles/nanpure/how-to" element={<p>遊び方の画面</p>} />
         <Route
-          path="/puzzles/nanpure/tutorial"
-          element={<TutorialRouteFixture />}
+          path="/puzzles/nanpure/how-to"
+          element={<HowToPlayRouteFixture />}
         />
       </Routes>
     </MemoryRouter>
@@ -1069,7 +1068,7 @@ describe("GameHomeScreen", () => {
     test("メニューから遊び方を開くと、ゲームの遊び方を開くこと", async () => {
       openFromMenu("遊び方");
 
-      const page = await screen.findByText("遊び方の画面");
+      const page = await screen.findByText(/^遊び方の画面/);
 
       expect(page).toBeTruthy();
     });
@@ -1125,28 +1124,19 @@ describe("GameHomeScreen", () => {
       expect(dialog).toBeNull();
     });
 
-    test("メニューで、チュートリアルを遊び方の次に置くこと", () => {
+    test("メニューにチュートリアルの項目を出さないこと", () => {
       openMenu();
 
-      const items = screen
-        .getAllByRole("menuitem")
-        .map((item) => item.textContent);
+      const item = screen.queryByRole("menuitem", { name: "チュートリアル" });
 
-      expect(items.slice(0, 2)).toEqual(["遊び方", "チュートリアル"]);
+      expect(item).toBeNull();
     });
 
-    test("メニューからチュートリアルを開くと、ゲームのチュートリアルを開くこと", async () => {
-      openFromMenu("チュートリアル");
+    // チュートリアルは遊び方の中から開き、遊び方を開いたときのレベルを引き継ぐ。
+    test("選択中のレベルを遊び方へ渡すこと", async () => {
+      openFromMenu("遊び方");
 
-      const page = await screen.findByText("チュートリアルの画面：3");
-
-      expect(page).toBeTruthy();
-    });
-
-    test("選択中のレベルをチュートリアルへ渡すこと", async () => {
-      openFromMenu("チュートリアル");
-
-      const page = await screen.findByText("チュートリアルの画面：3");
+      const page = await screen.findByText("遊び方の画面：3");
 
       expect(page).toBeTruthy();
     });

@@ -12,8 +12,12 @@ export function IceFloorMazeHomeView() {
     <GameHomeScreen
       {...screenProps}
       ground={<IceFloorMazeGround />}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <IceFloorMazeHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <IceFloorMazeHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose, playStart }) => (
         <IceFloorMazeTutorial

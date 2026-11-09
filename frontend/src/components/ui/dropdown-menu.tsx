@@ -50,6 +50,23 @@ function DropdownMenuContent({
   )
 }
 
+// 開いたメニューと同じ面を、押せない静止の図として描く。遊び方で、本番のメニューの中を見せるのに使う。
+function DropdownMenuStaticSurface({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dropdown-menu-static-surface"
+      className={cn(
+        "rounded-lg bg-popover p-1 text-popover-foreground shadow-raised",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
 function DropdownMenuGroup({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Group>) {
@@ -242,6 +259,7 @@ export {
   DropdownMenuPortal,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuStaticSurface,
   DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuItem,

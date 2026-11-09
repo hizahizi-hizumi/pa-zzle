@@ -1,4 +1,11 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { GameHowToView } from "@/views/GameHowToView";
 import { GameTutorialView } from "@/views/GameTutorialView";
@@ -41,6 +48,24 @@ describe("GameHowToView", () => {
     fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
 
     expect(router.state.location.pathname).toBe(homePath);
+  });
+
+  test("遊び方からチュートリアルを始め、閉じると遊び方を開いた画面へ戻ること", async () => {
+    const router = renderGuide(
+      "/puzzles/nanpure/how-to",
+      { returnTo: playPath },
+      playPath,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "チュートリアルで遊んで覚える" }),
+    );
+    const tutorial = await screen.findByRole("dialog", {
+      name: "ナンプレ",
+      description: "チュートリアル",
+    });
+    fireEvent.click(within(tutorial).getByRole("button", { name: "閉じる" }));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe(playPath));
   });
 });
 
