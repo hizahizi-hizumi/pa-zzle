@@ -9,7 +9,10 @@ import {
 
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
 import { bridgesLevelCombinations } from "@/games/bridges/difficulty";
-import { _private } from "@/games/bridges/tutorial/tutorial";
+import {
+  _private,
+  BRIDGES_TUTORIAL_BOARD,
+} from "@/games/bridges/tutorial/tutorial";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
 import { playLayeredSound, playSound } from "@/lib/sound-effects";
 
@@ -216,7 +219,9 @@ describe("BridgesTutorial", () => {
           edgeBetween([1, 3], [4, 3]),
         ]);
         expect(screen.queryByText(/もう一度押すと/)).not.toBeNull();
-        expect(screen.queryByText("同じ島の間は2本までです")).not.toBeNull();
+        expect(
+          screen.queryByText(/1か所に架けられるのは\s*2本までです/),
+        ).not.toBeNull();
       });
 
       test("交差の手順で、右の3と、交わる真ん中の縦の橋と左へ架けられない辺、2本架かった下の橋を覆いから抜くこと", () => {
@@ -243,7 +248,7 @@ describe("BridgesTutorial", () => {
         test("覆いを外し、残りを架けさせる一言を出して、すぐには印を付けないこと", () => {
           expect(hasFocusScrim()).toBe(false);
           expect(
-            screen.queryByText("残りの橋を架けると完成です"),
+            screen.queryByText(/あとは残りの橋を架ければ\s*完成です/),
           ).not.toBeNull();
           expect(getEdgesWithCue("mark")).toEqual([]);
         });
@@ -259,13 +264,13 @@ describe("BridgesTutorial", () => {
           const blockingLines = getBoard().querySelectorAll(
             "[data-bridges-blocking] line",
           );
-          const messageBeforeSettled = screen.queryByText(/交差できません/);
+          const messageBeforeSettled = screen.queryByText(/交差するので/);
           advanceTime(violationReactionDelayMs);
 
           expect(blockingLines).toHaveLength(1);
           expect(getPlayedSoundNames()).toEqual(["blocked.flac"]);
           expect(messageBeforeSettled).toBeNull();
-          expect(screen.queryByText(/交差できません/)).not.toBeNull();
+          expect(screen.queryByText(/交差するので/)).not.toBeNull();
         });
 
         test("数字より多く架けると、本番と同じく島を多すぎにし、続くと多すぎの一言を出すこと", () => {
@@ -276,7 +281,7 @@ describe("BridgesTutorial", () => {
           expect(screen.queryByText(/多く出ています/)).not.toBeNull();
         });
 
-        test("1と1をつないで閉じると、続くとつながれない一言を出すこと", () => {
+        test("1と1をつないで閉じると、続くとつながらない島ができたと伝えること", () => {
           tapAll([
             edgePoints.leftTop,
             edgePoints.leftTop,
@@ -285,7 +290,7 @@ describe("BridgesTutorial", () => {
           advanceTime(violationReactionDelayMs);
 
           expect(
-            screen.queryByText(/つながれない島ができています/),
+            screen.queryByText(/ほかとつながらない島が\s*できています/),
           ).not.toBeNull();
         });
 
@@ -314,11 +319,10 @@ describe("BridgesTutorial", () => {
             expect(playStart.onStart).toHaveBeenCalledOnce();
           });
 
-          test("どのレベルの盤面にも当てはまる、いちばん小さい盤面の大きさを伝えること", () => {
+          test("どのレベルの盤面もチュートリアルより大きいので、本番はもっと大きな盤面だと伝えること", () => {
+            expect(smallestSize).toBeGreaterThan(BRIDGES_TUTORIAL_BOARD.width);
             expect(
-              screen.queryByText(
-                `どのレベルも${smallestSize}×${smallestSize}以上の盤面です`,
-              ),
+              screen.queryByText(/本番はもっと大きな盤面で\s*遊びます/),
             ).not.toBeNull();
           });
 
@@ -346,7 +350,9 @@ describe("BridgesTutorial", () => {
     test("解き終えると、プレイ中の盤面も同じルールだと伝え、プレイに戻る操作を出すこと", () => {
       tapAll([...stepTaps, ...remainingTaps]);
       advanceTime(2000);
-      const detail = screen.queryByText("プレイ中の盤面も同じルールです");
+      const detail = screen.queryByText(
+        /プレイ中の盤面も\s*同じルールで解けます/,
+      );
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
       expect(detail).not.toBeNull();

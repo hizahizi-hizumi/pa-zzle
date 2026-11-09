@@ -169,7 +169,7 @@ const steps: readonly BridgesTutorialStep[] = [
   {
     message: {
       headline: "もう一度押すと\n2本になります",
-      detail: "同じ島の間は2本までです",
+      detail: "1か所に架けられるのは\n2本までです",
     },
     introducedRuleId: "double",
     edge: centerEdge,
@@ -178,7 +178,7 @@ const steps: readonly BridgesTutorialStep[] = [
   },
   {
     message: {
-      headline: "島の数字は\n出ている橋の本数です",
+      headline: "島から出す橋は\n数字と同じ本数にします",
       detail: "1の島へは1本しか架けられません",
     },
     introducedRuleId: "count",
@@ -196,7 +196,7 @@ const steps: readonly BridgesTutorialStep[] = [
   {
     message: {
       headline: "全部の島を\n1つにつなげます",
-      detail: "1と1をつなぐと\nほかの島とつながれません",
+      detail: "1の島どうしをつなげると\nそこで行き止まりです",
     },
     introducedRuleId: "connect",
     edge: leftTopEdge,
@@ -456,7 +456,7 @@ function performBridgesTutorialAction(
 }
 
 const crossingViolation: TutorialMessage = {
-  headline: "橋どうしは\n交差できません",
+  headline: "ほかの橋と交差するので\n架けられません",
   detail: null,
 };
 
@@ -466,7 +466,7 @@ const overViolation: TutorialMessage = {
 };
 
 const closedViolation: TutorialMessage = {
-  headline: "ほかの島と\nつながれない島ができています",
+  headline: "ほかとつながらない島が\nできています",
   detail: null,
 };
 
@@ -596,9 +596,9 @@ export const bridgesTutorial: Tutorial<
   BridgesTutorialAction
 > = {
   intro: {
-    purpose: "島と島を橋でつないで\n全部の島を1つにするパズルです",
-    goalCaption: "この盤面がゴールです",
-    startCaption: "最初は橋が1本もありません",
+    purpose: "島と島に橋を架けて\n全部の島を1つにつなげるパズルです",
+    goalCaption: "完成するとこうなります",
+    startCaption: "まだ橋は1本もありません",
   },
   rules: [
     { id: "double", label: "2本まで" },
@@ -608,17 +608,17 @@ export const bridgesTutorial: Tutorial<
   ],
   steps,
   freePlay: {
-    headline: "残りの橋を架けると完成です",
+    headline: "あとは残りの橋を架ければ\n完成です",
     detail: null,
   },
   completion: {
     home: {
       headline: "完成です",
-      detail: "どのレベルも6×6以上の盤面です",
+      detail: "本番はもっと大きな盤面で\n遊びます",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も同じルールです",
+      detail: "プレイ中の盤面も\n同じルールで解けます",
     },
   },
   start: startBridgesTutorial,

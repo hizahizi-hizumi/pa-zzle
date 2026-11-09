@@ -295,7 +295,7 @@ describe("bridgesTutorial.perform", () => {
           situationOf(progress),
           progress.boardState,
         ).headline,
-      ).toBe("橋どうしは\n交差できません");
+      ).toBe("ほかの橋と交差するので\n架けられません");
     });
 
     test("数字より多く橋を出した手は、ルールに合わない手とすること", () => {
@@ -313,7 +313,7 @@ describe("bridgesTutorial.perform", () => {
       ).toBe("橋が数字より\n多く出ています");
     });
 
-    test("ほかの島とつながれない島の組を作った手は、ルールに合わない手とすること", () => {
+    test("ほかとつながらない島の組を作った手は、ルールに合わない手とすること", () => {
       const beforeClosing: Progress = {
         ...freed,
         boardState: {
@@ -332,7 +332,7 @@ describe("bridgesTutorial.perform", () => {
           situationOf(progress),
           progress.boardState,
         ).headline,
-      ).toBe("ほかの島と\nつながれない島ができています");
+      ).toBe("ほかとつながらない島が\nできています");
     });
 
     test("残りを解のとおりに架けると解けること", () => {
