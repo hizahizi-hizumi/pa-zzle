@@ -3,10 +3,7 @@ import {
   assertWaterSortProblem,
   type WaterSortProblem,
 } from "@/games/water-sort/problem/problem";
-import {
-  applyWaterSortMove,
-  listWaterSortLegalMoves,
-} from "@/games/water-sort/puzzle/rules";
+import { applyWaterSortMove } from "@/games/water-sort/puzzle/rules";
 import {
   isWaterSortCleared,
   type WaterSortMove,
@@ -45,14 +42,6 @@ export function createWaterSortSession(
     undoCount: 0,
     restartCount: 0,
   };
-}
-
-export function listWaterSortSessionLegalMoves(
-  session: WaterSortSession,
-): WaterSortMove[] {
-  return session.status === "playing"
-    ? listWaterSortLegalMoves(session.puzzleState)
-    : [];
 }
 
 /** 注ぐ。注げない組み合わせなら何もしない。 */

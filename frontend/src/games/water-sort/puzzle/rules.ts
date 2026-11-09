@@ -1,4 +1,5 @@
 import {
+  isCompleteWaterSortBottle,
   WATER_SORT_BOTTLE_CAPACITY,
   type WaterSortBottle,
   type WaterSortMove,
@@ -82,6 +83,36 @@ export function applyWaterSortMove(
   nextState[move.destinationBottleIndex] = [...destination, ...movedUnits];
 
   return nextState;
+}
+
+/**
+ * 注ぎ元に選べないわけ。
+ * - `empty`: 空のボトル。
+ * - `complete`: 1色で満杯になったボトル。
+ * - `no-destination`: 注げる先が無いボトル。
+ */
+export type WaterSortSourceRejection = "empty" | "complete" | "no-destination";
+
+/** 注ぎ元に選べないわけ。選べるなら `null`。 */
+export function findWaterSortSourceRejection(
+  state: WaterSortState,
+  bottleIndex: number,
+): WaterSortSourceRejection | null {
+  const bottle = state[bottleIndex];
+  if (!bottle || bottle.length === 0) {
+    return "empty";
+  }
+  if (isCompleteWaterSortBottle(bottle)) {
+    return "complete";
+  }
+  const hasDestination = state.some(
+    (_, destinationBottleIndex) =>
+      getWaterSortPourAmount(state, {
+        sourceBottleIndex: bottleIndex,
+        destinationBottleIndex,
+      }) > 0,
+  );
+  return hasDestination ? null : "no-destination";
 }
 
 export function listWaterSortLegalMoves(

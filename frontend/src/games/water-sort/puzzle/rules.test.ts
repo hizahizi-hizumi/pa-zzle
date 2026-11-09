@@ -1,5 +1,6 @@
 import {
   applyWaterSortMove,
+  findWaterSortSourceRejection,
   getWaterSortPourAmount,
   listWaterSortLegalMoves,
 } from "@/games/water-sort/puzzle/rules";
@@ -140,4 +141,30 @@ describe("isStandardWaterSortInitialState", () => {
 
     expect(result).toBe(false);
   });
+});
+
+describe("findWaterSortSourceRejection", () => {
+  const cases: readonly [string, WaterSortState, number, string | null][] = [
+    ["空のボトルは empty", [[], [0, 1]], 0, "empty"],
+    ["1色で満杯のボトルは complete", [[0, 0, 0, 0], []], 0, "complete"],
+    [
+      "注げる先が無いボトルは no-destination",
+      [
+        [0, 1],
+        [1, 0],
+      ],
+      0,
+      "no-destination",
+    ],
+    ["注げる先があるボトルは null", [[0, 1], [1]], 0, null],
+  ];
+
+  test.each(cases)(
+    "注ぎ元に選べないわけを返すこと: %s",
+    (_, state, bottleIndex, expected) => {
+      const result = findWaterSortSourceRejection(state, bottleIndex);
+
+      expect(result).toBe(expected);
+    },
+  );
 });

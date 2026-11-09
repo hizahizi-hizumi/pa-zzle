@@ -18,10 +18,8 @@ import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/proble
 import type { WaterSortPooledProblem } from "@/games/water-sort/problem/problem-pool";
 import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import { classifyWaterSortDeadlock } from "@/games/water-sort/puzzle/deadlock";
-import {
-  isCompleteWaterSortBottle,
-  type WaterSortState,
-} from "@/games/water-sort/puzzle/state";
+import { findWaterSortSourceRejection } from "@/games/water-sort/puzzle/rules";
+import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import {
   calculateWaterSortMoveDelta,
   calculateWaterSortPlayScore,
@@ -34,7 +32,6 @@ import {
   canUndoWaterSortSession,
   createWaterSortSession,
   getWaterSortSessionResult,
-  listWaterSortSessionLegalMoves,
   restartWaterSortSession,
   undoWaterSortSession,
   type WaterSortSession,
@@ -179,11 +176,10 @@ export function useWaterSortPlay(
       }
 
       if (current.sourceBottleIndex === null) {
-        const bottle = session.puzzleState[bottleIndex];
-        const hasLegalMove = listWaterSortSessionLegalMoves(session).some(
-          (move) => move.sourceBottleIndex === bottleIndex,
-        );
-        if (!bottle || isCompleteWaterSortBottle(bottle) || !hasLegalMove) {
+        if (
+          findWaterSortSourceRejection(session.puzzleState, bottleIndex) !==
+          null
+        ) {
           return {
             ...current,
             operation: { id: operationId, type: "invalid", bottleIndex },
