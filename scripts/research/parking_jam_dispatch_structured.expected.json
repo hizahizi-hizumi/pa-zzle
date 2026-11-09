@@ -1,0 +1,863 @@
+{
+  "study": "same-board, equal proposal budget for four dispatch request-generation strategies",
+  "selectionProxy": "random legal play succeeds 5%-50%; within three prior departures a wrong legal move has >=2 further possible moves and becomes solvable with vehicle blocking removed",
+  "strategies": [
+    "random",
+    "geometry-colors-only",
+    "single-target",
+    "double-target"
+  ],
+  "runs": [
+    {
+      "seed": 738,
+      "boardsPerConfiguration": 60,
+      "proposalsPerBoard": 5,
+      "results": [
+        {
+          "vehicles": 8,
+          "bays": 3,
+          "byMethod": {
+            "random": {
+              "evaluated": 300,
+              "solvable": 300,
+              "tolerance": 300,
+              "proxyQualified": 10,
+              "boardsWithQualified": 10,
+              "uniqueObservedDecisionContexts": 10,
+              "uniqueConstructedMotifs": 10
+            },
+            "geometry-colors-only": {
+              "evaluated": 205,
+              "solvable": 205,
+              "tolerance": 204,
+              "proxyQualified": 6,
+              "boardsWithQualified": 6,
+              "uniqueObservedDecisionContexts": 6,
+              "uniqueConstructedMotifs": 6
+            },
+            "single-target": {
+              "evaluated": 204,
+              "solvable": 204,
+              "tolerance": 181,
+              "proxyQualified": 1,
+              "boardsWithQualified": 1,
+              "uniqueObservedDecisionContexts": 1,
+              "uniqueConstructedMotifs": 1
+            },
+            "double-target": {
+              "evaluated": 99,
+              "solvable": 99,
+              "tolerance": 39,
+              "proxyQualified": 3,
+              "boardsWithQualified": 1,
+              "uniqueObservedDecisionContexts": 1,
+              "uniqueConstructedMotifs": 1
+            }
+          }
+        },
+        {
+          "vehicles": 8,
+          "bays": 4,
+          "byMethod": {
+            "random": {
+              "evaluated": 300,
+              "solvable": 300,
+              "tolerance": 127,
+              "proxyQualified": 8,
+              "boardsWithQualified": 8,
+              "uniqueObservedDecisionContexts": 8,
+              "uniqueConstructedMotifs": 8
+            },
+            "geometry-colors-only": {
+              "evaluated": 240,
+              "solvable": 240,
+              "tolerance": 89,
+              "proxyQualified": 5,
+              "boardsWithQualified": 4,
+              "uniqueObservedDecisionContexts": 5,
+              "uniqueConstructedMotifs": 4
+            },
+            "single-target": {
+              "evaluated": 238,
+              "solvable": 238,
+              "tolerance": 229,
+              "proxyQualified": 3,
+              "boardsWithQualified": 2,
+              "uniqueObservedDecisionContexts": 2,
+              "uniqueConstructedMotifs": 2
+            },
+            "double-target": {
+              "evaluated": 144,
+              "solvable": 144,
+              "tolerance": 144,
+              "proxyQualified": 12,
+              "boardsWithQualified": 5,
+              "uniqueObservedDecisionContexts": 5,
+              "uniqueConstructedMotifs": 5
+            }
+          }
+        },
+        {
+          "vehicles": 12,
+          "bays": 4,
+          "byMethod": {
+            "random": {
+              "evaluated": 300,
+              "solvable": 300,
+              "tolerance": 207,
+              "proxyQualified": 8,
+              "boardsWithQualified": 7,
+              "uniqueObservedDecisionContexts": 8,
+              "uniqueConstructedMotifs": 7
+            },
+            "geometry-colors-only": {
+              "evaluated": 290,
+              "solvable": 290,
+              "tolerance": 215,
+              "proxyQualified": 4,
+              "boardsWithQualified": 4,
+              "uniqueObservedDecisionContexts": 4,
+              "uniqueConstructedMotifs": 4
+            },
+            "single-target": {
+              "evaluated": 290,
+              "solvable": 290,
+              "tolerance": 23,
+              "proxyQualified": 0,
+              "boardsWithQualified": 0,
+              "uniqueObservedDecisionContexts": 0,
+              "uniqueConstructedMotifs": 0
+            },
+            "double-target": {
+              "evaluated": 231,
+              "solvable": 231,
+              "tolerance": 2,
+              "proxyQualified": 1,
+              "boardsWithQualified": 1,
+              "uniqueObservedDecisionContexts": 1,
+              "uniqueConstructedMotifs": 1
+            }
+          }
+        },
+        {
+          "vehicles": 12,
+          "bays": 5,
+          "byMethod": {
+            "random": {
+              "evaluated": 300,
+              "solvable": 300,
+              "tolerance": 299,
+              "proxyQualified": 5,
+              "boardsWithQualified": 4,
+              "uniqueObservedDecisionContexts": 5,
+              "uniqueConstructedMotifs": 4
+            },
+            "geometry-colors-only": {
+              "evaluated": 295,
+              "solvable": 295,
+              "tolerance": 293,
+              "proxyQualified": 3,
+              "boardsWithQualified": 3,
+              "uniqueObservedDecisionContexts": 3,
+              "uniqueConstructedMotifs": 3
+            },
+            "single-target": {
+              "evaluated": 295,
+              "solvable": 295,
+              "tolerance": 238,
+              "proxyQualified": 3,
+              "boardsWithQualified": 2,
+              "uniqueObservedDecisionContexts": 2,
+              "uniqueConstructedMotifs": 2
+            },
+            "double-target": {
+              "evaluated": 237,
+              "solvable": 237,
+              "tolerance": 66,
+              "proxyQualified": 25,
+              "boardsWithQualified": 11,
+              "uniqueObservedDecisionContexts": 13,
+              "uniqueConstructedMotifs": 13
+            }
+          }
+        }
+      ]
+    },
+    {
+      "seed": 20261110,
+      "boardsPerConfiguration": 20,
+      "proposalsPerBoard": 5,
+      "results": [
+        {
+          "vehicles": 8,
+          "bays": 3,
+          "byMethod": {
+            "random": {
+              "evaluated": 100,
+              "solvable": 100,
+              "tolerance": 100,
+              "proxyQualified": 7,
+              "boardsWithQualified": 7,
+              "uniqueObservedDecisionContexts": 7,
+              "uniqueConstructedMotifs": 7
+            },
+            "geometry-colors-only": {
+              "evaluated": 90,
+              "solvable": 90,
+              "tolerance": 90,
+              "proxyQualified": 1,
+              "boardsWithQualified": 1,
+              "uniqueObservedDecisionContexts": 1,
+              "uniqueConstructedMotifs": 1
+            },
+            "single-target": {
+              "evaluated": 90,
+              "solvable": 90,
+              "tolerance": 86,
+              "proxyQualified": 0,
+              "boardsWithQualified": 0,
+              "uniqueObservedDecisionContexts": 0,
+              "uniqueConstructedMotifs": 0
+            },
+            "double-target": {
+              "evaluated": 54,
+              "solvable": 54,
+              "tolerance": 12,
+              "proxyQualified": 2,
+              "boardsWithQualified": 1,
+              "uniqueObservedDecisionContexts": 1,
+              "uniqueConstructedMotifs": 1
+            }
+          }
+        },
+        {
+          "vehicles": 8,
+          "bays": 4,
+          "byMethod": {
+            "random": {
+              "evaluated": 100,
+              "solvable": 100,
+              "tolerance": 41,
+              "proxyQualified": 1,
+              "boardsWithQualified": 1,
+              "uniqueObservedDecisionContexts": 1,
+              "uniqueConstructedMotifs": 1
+            },
+            "geometry-colors-only": {
+              "evaluated": 90,
+              "solvable": 90,
+              "tolerance": 38,
+              "proxyQualified": 1,
+              "boardsWithQualified": 1,
+              "uniqueObservedDecisionContexts": 1,
+              "uniqueConstructedMotifs": 1
+            },
+            "single-target": {
+              "evaluated": 89,
+              "solvable": 89,
+              "tolerance": 86,
+              "proxyQualified": 0,
+              "boardsWithQualified": 0,
+              "uniqueObservedDecisionContexts": 0,
+              "uniqueConstructedMotifs": 0
+            },
+            "double-target": {
+              "evaluated": 44,
+              "solvable": 44,
+              "tolerance": 44,
+              "proxyQualified": 2,
+              "boardsWithQualified": 2,
+              "uniqueObservedDecisionContexts": 2,
+              "uniqueConstructedMotifs": 2
+            }
+          }
+        },
+        {
+          "vehicles": 12,
+          "bays": 4,
+          "byMethod": {
+            "random": {
+              "evaluated": 100,
+              "solvable": 100,
+              "tolerance": 67,
+              "proxyQualified": 2,
+              "boardsWithQualified": 2,
+              "uniqueObservedDecisionContexts": 2,
+              "uniqueConstructedMotifs": 2
+            },
+            "geometry-colors-only": {
+              "evaluated": 95,
+              "solvable": 95,
+              "tolerance": 74,
+              "proxyQualified": 3,
+              "boardsWithQualified": 3,
+              "uniqueObservedDecisionContexts": 3,
+              "uniqueConstructedMotifs": 3
+            },
+            "single-target": {
+              "evaluated": 95,
+              "solvable": 95,
+              "tolerance": 6,
+              "proxyQualified": 0,
+              "boardsWithQualified": 0,
+              "uniqueObservedDecisionContexts": 0,
+              "uniqueConstructedMotifs": 0
+            },
+            "double-target": {
+              "evaluated": 77,
+              "solvable": 77,
+              "tolerance": 2,
+              "proxyQualified": 0,
+              "boardsWithQualified": 0,
+              "uniqueObservedDecisionContexts": 0,
+              "uniqueConstructedMotifs": 0
+            }
+          }
+        },
+        {
+          "vehicles": 12,
+          "bays": 5,
+          "byMethod": {
+            "random": {
+              "evaluated": 100,
+              "solvable": 100,
+              "tolerance": 99,
+              "proxyQualified": 3,
+              "boardsWithQualified": 3,
+              "uniqueObservedDecisionContexts": 3,
+              "uniqueConstructedMotifs": 3
+            },
+            "geometry-colors-only": {
+              "evaluated": 100,
+              "solvable": 100,
+              "tolerance": 99,
+              "proxyQualified": 1,
+              "boardsWithQualified": 1,
+              "uniqueObservedDecisionContexts": 1,
+              "uniqueConstructedMotifs": 1
+            },
+            "single-target": {
+              "evaluated": 100,
+              "solvable": 100,
+              "tolerance": 77,
+              "proxyQualified": 1,
+              "boardsWithQualified": 1,
+              "uniqueObservedDecisionContexts": 1,
+              "uniqueConstructedMotifs": 1
+            },
+            "double-target": {
+              "evaluated": 61,
+              "solvable": 61,
+              "tolerance": 21,
+              "proxyQualified": 8,
+              "boardsWithQualified": 5,
+              "uniqueObservedDecisionContexts": 6,
+              "uniqueConstructedMotifs": 6
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "id": "8-cars-4-bays-double-target-22",
+      "construction": "double-target",
+      "vehicles": [
+        {
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3
+        },
+        {
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 3,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2
+        },
+        {
+          "row": 3,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3
+        },
+        {
+          "row": 2,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 6,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2
+        },
+        {
+          "row": 6,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3
+        }
+      ],
+      "bays": 4,
+      "boardIndex": 22,
+      "colors": [
+        "C",
+        "A",
+        "B",
+        "C",
+        "D",
+        "A",
+        "D",
+        "B"
+      ],
+      "request": [
+        "A",
+        "C",
+        "C",
+        "D",
+        "A",
+        "B",
+        "D",
+        "B"
+      ],
+      "motifs": [
+        {
+          "target": 1,
+          "prerequisites": [
+            0
+          ]
+        },
+        {
+          "target": 3,
+          "prerequisites": [
+            4
+          ]
+        }
+      ],
+      "witness": {
+        "correctPrefix": [
+          2,
+          1,
+          6
+        ],
+        "badExit": 7,
+        "goodExit": 0,
+        "lostAfterAtMostAdditionalMoves": 2,
+        "requestHead": 1,
+        "waitingBefore": 2
+      },
+      "randomWinProb": 0.24382,
+      "initialBad": 0
+    },
+    {
+      "id": "12-cars-5-bays-double-target-0",
+      "construction": "double-target",
+      "vehicles": [
+        {
+          "row": 3,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3
+        },
+        {
+          "row": 5,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 6,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 3
+        },
+        {
+          "row": 0,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2
+        },
+        {
+          "row": 3,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 3
+        },
+        {
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3
+        },
+        {
+          "row": 7,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2
+        },
+        {
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 2,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 3
+        },
+        {
+          "row": 0,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 4,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2
+        }
+      ],
+      "bays": 5,
+      "boardIndex": 0,
+      "colors": [
+        "A",
+        "F",
+        "B",
+        "D",
+        "B",
+        "F",
+        "C",
+        "D",
+        "C",
+        "A",
+        "E",
+        "E"
+      ],
+      "request": [
+        "A",
+        "B",
+        "B",
+        "F",
+        "E",
+        "D",
+        "E",
+        "C",
+        "D",
+        "A",
+        "F",
+        "C"
+      ],
+      "motifs": [
+        {
+          "target": 9,
+          "prerequisites": [
+            2
+          ]
+        },
+        {
+          "target": 4,
+          "prerequisites": [
+            5
+          ]
+        }
+      ],
+      "witness": {
+        "correctPrefix": [
+          6,
+          1,
+          7
+        ],
+        "badExit": 10,
+        "goodExit": 2,
+        "lostAfterAtMostAdditionalMoves": 3,
+        "requestHead": 0,
+        "waitingBefore": 3
+      },
+      "randomWinProb": 0.05044,
+      "initialBad": 0
+    },
+    {
+      "id": "12-cars-5-bays-double-target-12",
+      "construction": "double-target",
+      "vehicles": [
+        {
+          "row": 5,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 3
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 4,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3
+        },
+        {
+          "row": 7,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3
+        },
+        {
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 3,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3
+        },
+        {
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 0,
+          "column": 6,
+          "orientation": "horizontal",
+          "length": 2
+        },
+        {
+          "row": 2,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2
+        },
+        {
+          "row": 6,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 2
+        },
+        {
+          "row": 4,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3
+        }
+      ],
+      "bays": 5,
+      "boardIndex": 12,
+      "colors": [
+        "E",
+        "A",
+        "C",
+        "D",
+        "D",
+        "B",
+        "A",
+        "C",
+        "E",
+        "F",
+        "F",
+        "B"
+      ],
+      "request": [
+        "A",
+        "C",
+        "C",
+        "D",
+        "F",
+        "B",
+        "E",
+        "D",
+        "F",
+        "E",
+        "A",
+        "B"
+      ],
+      "motifs": [
+        {
+          "target": 1,
+          "prerequisites": [
+            7
+          ]
+        },
+        {
+          "target": 2,
+          "prerequisites": [
+            3
+          ]
+        }
+      ],
+      "witness": {
+        "correctPrefix": [
+          0,
+          5,
+          8
+        ],
+        "badExit": 9,
+        "goodExit": 3,
+        "lostAfterAtMostAdditionalMoves": 3,
+        "requestHead": 0,
+        "waitingBefore": 3
+      },
+      "randomWinProb": 0.09323,
+      "initialBad": 0
+    },
+    {
+      "id": "12-cars-5-bays-random-0",
+      "construction": "random",
+      "vehicles": [
+        {
+          "row": 3,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3
+        },
+        {
+          "row": 5,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 6,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 3
+        },
+        {
+          "row": 0,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2
+        },
+        {
+          "row": 3,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 3
+        },
+        {
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3
+        },
+        {
+          "row": 7,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2
+        },
+        {
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 2,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 3
+        },
+        {
+          "row": 0,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 2
+        },
+        {
+          "row": 4,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2
+        }
+      ],
+      "bays": 5,
+      "boardIndex": 0,
+      "colors": [
+        "B",
+        "F",
+        "F",
+        "C",
+        "D",
+        "A",
+        "D",
+        "E",
+        "B",
+        "A",
+        "C",
+        "E"
+      ],
+      "request": [
+        "E",
+        "F",
+        "F",
+        "E",
+        "D",
+        "A",
+        "B",
+        "A",
+        "C",
+        "C",
+        "D",
+        "B"
+      ],
+      "motifs": [],
+      "witness": {
+        "correctPrefix": [
+          5,
+          4,
+          8
+        ],
+        "badExit": 10,
+        "goodExit": 2,
+        "lostAfterAtMostAdditionalMoves": 3,
+        "requestHead": 0,
+        "waitingBefore": 3
+      },
+      "randomWinProb": 0.09712,
+      "initialBad": 0
+    }
+  ]
+}
