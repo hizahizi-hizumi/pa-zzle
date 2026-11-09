@@ -131,4 +131,61 @@ describe("BridgesBoard", () => {
       });
     });
   });
+
+  describe("交わる2本の線の交点を押した場合", () => {
+    // 辺2（縦 x=2.5）と辺3（横 y=2.5）の交点 (2.5, 2.5) を押す。1マスを 100px で置く。
+    const crossingBoard = parseBridgesBoard([
+      "1.1..",
+      ".....",
+      "1...1",
+      ".....",
+      "..1..",
+    ]);
+    const crossingPoint = {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 250,
+      clientY: 250,
+    };
+
+    function renderWith(props: {
+      guidedEdges?: readonly number[];
+      onCycleEdge: (edge: number) => void;
+    }) {
+      render(
+        <BridgesBoard
+          board={crossingBoard}
+          bridges={getBridgesNetwork(crossingBoard).edges.map(() => 0)}
+          islandStatuses={crossingBoard.islands.map(() => "short")}
+          edgeNotice={null}
+          clearing={false}
+          interactionDisabled={false}
+          cues={[{ kind: "mark", edge: 2, recallId: null }]}
+          guidedEdges={props.guidedEdges}
+          onCycleEdge={props.onCycleEdge}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+      vi.spyOn(readBoardSurface(), "getBoundingClientRect").mockReturnValue(
+        new DOMRect(0, 0, 500, 500),
+      );
+    }
+
+    test("手を引いて押させる辺があれば、その帯の中の押しとして、その辺の橋を回すこと", () => {
+      const onCycleEdge = vi.fn<(edge: number) => void>();
+      renderWith({ guidedEdges: [2], onCycleEdge });
+      fireEvent.pointerDown(readBoardSurface(), crossingPoint);
+
+      expect(onCycleEdge).toHaveBeenCalledWith(2);
+    });
+
+    test("印があっても押させる辺が無ければ、本番と同じく狙いを決めずに橋を回さないこと", () => {
+      const onCycleEdge = vi.fn<(edge: number) => void>();
+      renderWith({ onCycleEdge });
+      fireEvent.pointerDown(readBoardSurface(), crossingPoint);
+
+      expect(onCycleEdge).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -49,8 +49,13 @@ type BridgesBoardProps = {
   /** クリアしてから演出を終えるまで `true`。 */
   clearing: boolean;
   interactionDisabled: boolean;
-  /** 辺に一時的に重ねる合図。印（`mark`）の付いた辺は、印の帯の中の押しをその辺として受ける。通常のプレイでは渡さない。 */
+  /** 辺に一時的に重ねる合図。通常のプレイでは渡さない。 */
   cues?: readonly BridgesBoardCue[];
+  /**
+   * チュートリアルで手を引いている間に押させる辺。帯の中のどこを押しても、その辺として受ける。
+   * 交わる辺と重なる所でも、狙いはこの辺に決まる。通常のプレイと、手を離した後は渡さない。
+   */
+  guidedEdges?: readonly number[];
   /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せる島と辺。通常のプレイでは渡さない。 */
   spotlight?: BridgesBoardSpotlight | null;
   /** 辺の橋を 1本 → 2本 → なし と回す。 */
@@ -105,6 +110,7 @@ export function BridgesBoard({
   clearing,
   interactionDisabled,
   cues = [],
+  guidedEdges = [],
   spotlight = null,
   onCycleEdge,
   onIneffectivePress,
@@ -129,10 +135,6 @@ export function BridgesBoard({
   const ambiguousEdges =
     ambiguousTap?.board === board ? ambiguousTap.edges : [];
   const islandBridgeCounts = countBridgesIslandBridges(board, { bridges });
-  // 印の付いた辺は、印の帯の中のどこを押しても、その辺として受ける。交わる辺と重なる所でも、狙いは印の辺に決まる。
-  const markedEdges = cues.flatMap((cue) =>
-    cue.kind === "mark" ? [cue.edge] : [],
-  );
   const blockingEdges =
     edgeNotice?.change === "blocked" ? edgeNotice.crossingEdges : [];
   const guide: BridgesFigureGuide | null = drag && {
@@ -179,7 +181,7 @@ export function BridgesBoard({
       return;
     }
     const point = readBoardPoint(event);
-    const markedEdge = markedEdges.find((edge) =>
+    const markedEdge = guidedEdges.find((edge) =>
       isPointInEdgeBand(board, edge, point),
     );
     if (markedEdge !== undefined) {
