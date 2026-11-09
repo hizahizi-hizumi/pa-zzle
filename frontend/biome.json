@@ -589,9 +589,10 @@
                       "@/games/bridges/problem/**",
                       "@/games/bridges/session/**",
                       "@/games/bridges/play/**",
+                      "@/games/bridges/tutorial/**",
                       "@/games/bridges/ui/**"
                     ],
-                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -643,9 +644,10 @@
                     "group": [
                       "@/games/bridges/session/**",
                       "@/games/bridges/play/**",
+                      "@/games/bridges/tutorial/**",
                       "@/games/bridges/ui/**"
                     ],
-                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -699,12 +701,72 @@
                       "@/games/bridges/difficulty",
                       "@/games/bridges/score",
                       "@/games/bridges/play/**",
+                      "@/games/bridges/tutorial/**",
                       "@/games/bridges/ui/**",
                       "@/games/bridges/play-record",
                       "@/records/**",
                       "react*"
                     ],
-                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/bridges/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/problem/generation/**",
+                      "@/games/bridges/difficulty",
+                      "@/games/bridges/score",
+                      "@/games/bridges/play/**",
+                      "@/games/bridges/ui/**",
+                      "@/games/bridges/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
               }
@@ -755,11 +817,12 @@
                   {
                     "group": [
                       "@/games/bridges/ui/**",
+                      "@/games/bridges/tutorial/**",
                       "@/games/bridges/problem/generation/**",
                       "@/games/bridges/play-record",
                       "@/games/bridges/diagnostics"
                     ],
-                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
               }
@@ -1058,6 +1121,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1436,6 +1500,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1814,6 +1879,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -2192,6 +2258,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2570,6 +2637,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2948,6 +3016,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3326,6 +3395,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3704,6 +3774,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4082,6 +4153,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4460,6 +4532,7 @@
                   },
                   {
                     "group": [
+                      "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
