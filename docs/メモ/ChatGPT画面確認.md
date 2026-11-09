@@ -113,8 +113,9 @@ Viteは `vite.chatgpt.config.ts` により依存最適化を起動時に完了�
 1. PythonからViteのHTMLを取得し、`page.set_content()` で `about:blank` に描画する。
 2. `<base>` をViteへ向け、JS・CSS・画像などの要求を `page.route()` で捕捉する。
 3. 捕捉した要求をPythonからViteへ送り、`route.fulfill()` でブラウザへ返す。
-4. `about:blank` では `createBrowserRouter` が正しいURLを得られないため、ブラウザへ返すGeneroutedの最適化済みモジュールだけを `createMemoryRouter` に差し替える。
-5. `ChatGPTBrowser(path=...)` の値をMemory Routerの初期ルートとして使う。
+4. `about:blank` では `createBrowserRouter` が正しいURLを得られないため、ブラウザへ返す `/src/frontend.tsx` のルーター生成を `createMemoryRouter` に差し替える。
+5. React Router のURL解決が `about:blank` を基準にしないよう、依存モジュールの応答に限ってViteの `<base>` のURLを使用する。
+6. `ChatGPTBrowser(path=...)` の値をMemory Routerの初期ルートとして使う。
 
 リポジトリのソースやChromiumの管理ポリシーは変更しない。差し替えは画面確認中のPlaywright応答だけに適用される。
 
@@ -128,4 +129,4 @@ Memory Routerへ差し替えているため、アドレスバーのURL、ブラ�
 
 ## 失敗したとき
 
-`Generouted browser router ... was not found` または `createMemoryRouter ... was not found` が出た場合、Generouted / React Router / Viteの出力形式が変わっている。`scripts/chatgpt_playwright.py` の差し替え処理を現行依存に合わせて更新し、直接 `page.goto()` へ戻さない。
+`App browser router was not found` が出た場合、アプリのルーター生成またはViteの出力形式が変わっている。白画面と `Failed to construct 'URL': Invalid URL` が出た場合、React RouterのURL解決で `about:blank` が基準として使われていないか確認する。どちらも `scripts/chatgpt_playwright.py` の要求中継を現行の実装に合わせ、直接 `page.goto()` へ戻さない。

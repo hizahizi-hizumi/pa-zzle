@@ -8,19 +8,41 @@ type MinesweeperClearAnimationProps = {
   children: ReactNode;
 };
 
-/** クリア音（`assets/sounds/cleared.flac`）は、脈打ち終わるときに鳴り終える長さで作っているので、変えるなら作り直す。 */
-const CLEAR_PULSE_MS = 700;
+/** クリア音（`assets/sounds/cleared.flac`）に合わせた盤面完成の長さ。 */
+const CELL_HIGHLIGHT_MS = 240;
+const CELL_STAGGER_MS = 440;
 const CLEAR_HOLD_MS = 200;
-/** 動かせない環境でも、脈打つ演出と同じ間を置いてから結果へ進める。 */
-const CLEAR_UNANIMATED_HOLD_MS = CLEAR_PULSE_MS + CLEAR_HOLD_MS;
+const CLEAR_UNANIMATED_HOLD_MS =
+  CELL_HIGHLIGHT_MS + CELL_STAGGER_MS + CLEAR_HOLD_MS;
 
-const clearPulseKeyframes: Keyframe[] = [
-  { transform: "scale(1)", filter: "saturate(1)" },
-  { transform: "scale(1.014)", filter: "saturate(1.24)", offset: 0.5 },
-  { transform: "scale(1)", filter: "saturate(1)" },
-];
+/** 旗を動かさず、完成した安全マスだけを左上から右下へ照らす。 */
+function animateCompletedCells(container: HTMLElement): Animation[] {
+  const cells = Array.from(
+    container.querySelectorAll<HTMLElement>('[data-cell-state="revealed"]'),
+  );
+  const lastIndex = Math.max(1, cells.length - 1);
+  return cells.flatMap((cell, index) => {
+    if (typeof cell.animate !== "function") {
+      return [];
+    }
+    return [
+      cell.animate(
+        [
+          { filter: "brightness(1)", offset: 0 },
+          { filter: "brightness(1.13)", offset: 0.45 },
+          { filter: "brightness(1)", offset: 1 },
+        ],
+        {
+          duration: CELL_HIGHLIGHT_MS,
+          delay: Math.round((index / lastIndex) * CELL_STAGGER_MS),
+          easing: MOTION_EASING.celebrate,
+        },
+      ),
+    ];
+  });
+}
 
-/** クリアを決めた最終操作と、明かした地雷配置を見せてから結果へ進める。 */
+/** 最終操作で開いた盤面を見せ、完成の余韻を作ってから結果へ進む。 */
 export function MinesweeperClearAnimation({
   active,
   onComplete,
@@ -35,11 +57,8 @@ export function MinesweeperClearAnimation({
 
     return playAnimations({
       animate() {
-        const animation = containerRef.current?.animate?.(clearPulseKeyframes, {
-          duration: CLEAR_PULSE_MS,
-          easing: MOTION_EASING.celebrate,
-        });
-        return animation ? [animation] : [];
+        const container = containerRef.current;
+        return container ? animateCompletedCells(container) : [];
       },
       completion: { type: "after-animations", holdMs: CLEAR_HOLD_MS },
       reducedMotionHoldMs: 0,
@@ -51,12 +70,6 @@ export function MinesweeperClearAnimation({
   return (
     <div ref={containerRef} className="relative">
       {children}
-      {active && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-slate-200/15 dark:bg-slate-700/10"
-        />
-      )}
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import { Bomb, Flag } from "lucide-react";
 
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
+import { RaisedFlag } from "@/games/minesweeper/ui/board/MinesweeperCellFace/RaisedFlag";
+import { RaisedMine } from "@/games/minesweeper/ui/board/MinesweeperCellFace/RaisedMine";
 
 /** `board` は盤面のマス、`preview` はゲームのホームのレベルのカードの小さな盤面、`figure` は遊び方の図のマス。 */
 export type MinesweeperCellFaceSize = "board" | "preview" | "figure";
@@ -17,6 +19,14 @@ const NUMBER_CLASS_NAMES = [
   "text-neutral-500 dark:text-neutral-400",
 ] as const;
 
+const BOARD_NUMBER_CLASS_NAMES = [
+  "",
+  "text-blue-700 dark:text-blue-400",
+  "text-emerald-800 dark:text-emerald-400",
+  "text-red-800 dark:text-red-400",
+  ...NUMBER_CLASS_NAMES.slice(4),
+] as const;
+
 const SIZE_CLASS_NAMES = {
   board: "text-[clamp(0.8rem,4vw,1.15rem)]",
   preview: "text-[11px] tabular-nums",
@@ -29,8 +39,7 @@ const MINE_ICON_CLASS_NAMES = {
   figure: "size-[55%]",
 } satisfies Record<MinesweeperCellFaceSize, string>;
 
-function getStateClassName(view: MinesweeperVisibleCell): string {
-  // 踏んだ地雷はプレイを止めないミスとして、盤面の中で見分けられる程度の控えめな色にする。
+function getClassicStateClassName(view: MinesweeperVisibleCell): string {
   if (view.state === "steppedMine") {
     return "bg-rose-100 text-rose-700 dark:bg-rose-950/45 dark:text-rose-300";
   }
@@ -46,12 +55,34 @@ function getStateClassName(view: MinesweeperVisibleCell): string {
   return "bg-slate-200 text-slate-800 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.7)] dark:bg-slate-700 dark:text-slate-100 dark:shadow-none";
 }
 
-// マスの外枠要素に付ける見た目。操作に関わる見た目は外枠要素の側で足す。
+const BOARD_TILE_SURFACE_CLASS_NAME =
+  "bg-[linear-gradient(155deg,#dfe5ee_0%,#d5dde8_100%)] shadow-[inset_0_1px_0_#ffffffef,0_2px_0_#92a0b1,0_3px_4px_#4b5c7529] dark:bg-[linear-gradient(155deg,#56677b_0%,#4d5d72_100%)] dark:shadow-[inset_0_1px_0_#97a7b86c,0_2px_0_#202d3d,0_3px_4px_#050a1388]";
+
+function getBoardStateClassName(view: MinesweeperVisibleCell): string {
+  if (view.state === "steppedMine") {
+    return "bg-rose-200 text-rose-800 shadow-[inset_0_2px_4px_#a65d5d55] dark:bg-rose-900 dark:text-rose-200";
+  }
+  if (view.state === "revealed") {
+    return `bg-[#cbd5df] shadow-[inset_0_1px_2px_#53657b42,inset_0_-1px_0_#ffffff8a] dark:bg-[#2d3947] dark:shadow-[inset_0_2px_4px_#070d1688,inset_0_-1px_0_#74869b2e] ${BOARD_NUMBER_CLASS_NAMES[view.adjacentMineCount] ?? ""}`;
+  }
+  if (view.state === "flagged") {
+    return `${BOARD_TILE_SURFACE_CLASS_NAME} text-red-600 dark:text-red-400`;
+  }
+  if (view.state === "mine") {
+    return "bg-[#e5e9ef] text-slate-700 shadow-[inset_0_2px_3px_#64748b30] dark:bg-[#303c4b] dark:text-slate-200";
+  }
+  return `${BOARD_TILE_SURFACE_CLASS_NAME} text-slate-800 dark:text-slate-100`;
+}
+
 export function getMinesweeperCellFaceClassName(
   view: MinesweeperVisibleCell,
   size: MinesweeperCellFaceSize,
 ): string {
-  return `flex aspect-square items-center justify-center border-b border-r border-slate-300 font-sans font-bold leading-none dark:border-slate-600 ${SIZE_CLASS_NAMES[size]} ${getStateClassName(view)}`;
+  const base = `flex aspect-square items-center justify-center font-sans font-bold leading-none ${SIZE_CLASS_NAMES[size]}`;
+  if (size === "board") {
+    return `${base} rounded-[4px] ${getBoardStateClassName(view)}`;
+  }
+  return `${base} border-b border-r border-slate-300 dark:border-slate-600 ${getClassicStateClassName(view)}`;
 }
 
 type MinesweeperCellFaceProps = {
@@ -61,9 +92,11 @@ type MinesweeperCellFaceProps = {
 
 export function MinesweeperCellFace({ view, size }: MinesweeperCellFaceProps) {
   if (view.state === "flagged") {
+    if (size === "board") return <RaisedFlag />;
     return <Flag className="size-[52%] fill-current" aria-hidden />;
   }
   if (view.state === "mine" || view.state === "steppedMine") {
+    if (size === "board") return <RaisedMine />;
     return <Bomb className={MINE_ICON_CLASS_NAMES[size]} aria-hidden />;
   }
   if (view.state === "revealed" && view.adjacentMineCount > 0) {

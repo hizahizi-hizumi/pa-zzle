@@ -77,7 +77,7 @@ export function MinesweeperPlay({
       progress={progress}
       result={result}
       title={MINESWEEPER_DISPLAY_NAME}
-      background={<div className="size-full bg-[#dbe2d4] dark:bg-[#252c23]" />}
+      background={<div className="size-full bg-[#dfe6f0] dark:bg-[#1f2732]" />}
       metrics={[
         { type: "count", label: "地雷", count: mineCount },
         { type: "count", label: "旗", count: flagCount },
@@ -110,7 +110,7 @@ export function MinesweeperPlay({
       )}
     >
       <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-3 sm:px-6">
-        <div className="w-full max-w-[27rem]">
+        <div className="w-full max-w-[32rem]">
           <MinesweeperClearAnimation
             active={progress === "clearing"}
             onComplete={onClearAnimationComplete}

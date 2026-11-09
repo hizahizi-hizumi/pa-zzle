@@ -42,10 +42,10 @@ function getAccessibleName(
 function getCellClassName(view: MinesweeperVisibleCell): string {
   const faceClassName = getMinesweeperCellFaceClassName(view, "board");
   const interactionClassName =
-    "min-w-0 touch-manipulation select-none outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
+    "min-w-0 touch-manipulation select-none outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
-  if (view.state === "hidden" || view.state === "flagged") {
-    return `${faceClassName} ${interactionClassName} hover:bg-slate-300 dark:hover:bg-slate-600`;
+  if (view.state === "hidden") {
+    return `${faceClassName} ${interactionClassName} transition-[filter] duration-75 hover:brightness-[1.015] active:brightness-[0.95]`;
   }
   return `${faceClassName} ${interactionClassName}`;
 }
@@ -70,12 +70,15 @@ export function MinesweeperCell({
   function handlePointerDown(
     event: ReactPointerEvent<HTMLButtonElement>,
   ): void {
-    if (disabled || event.button !== 0) {
+    if (disabled) {
       return;
     }
 
     longPressTriggeredRef.current = false;
     clearLongPressTimer();
+    if (event.button !== 0) {
+      return;
+    }
     longPressTimerRef.current = setTimeout(function handleLongPress() {
       longPressTriggeredRef.current = true;
       onFlagPress(cellIndex);
@@ -97,9 +100,12 @@ export function MinesweeperCell({
 
   function handleContextMenu(event: React.MouseEvent<HTMLButtonElement>): void {
     event.preventDefault();
-    if (!disabled) {
-      onFlagPress(cellIndex);
+    if (disabled || longPressTriggeredRef.current) {
+      return;
     }
+    clearLongPressTimer();
+    longPressTriggeredRef.current = true;
+    onFlagPress(cellIndex);
   }
 
   return (
@@ -113,6 +119,8 @@ export function MinesweeperCell({
       onPointerUp={handlePointerEnd}
       onPointerCancel={handlePointerEnd}
       onPointerLeave={handlePointerEnd}
+      data-cell-index={cellIndex}
+      data-cell-state={view.state}
       className={getCellClassName(view)}
     >
       <MinesweeperCellFace view={view} size="board" />
