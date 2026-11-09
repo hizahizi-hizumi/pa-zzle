@@ -6,6 +6,8 @@ import { HowToPlayFigure } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDia
 type SlidePuzzleHowToPlayDialogProps = {
   open: boolean;
   onClose: () => void;
+  /** 遊び方を閉じてチュートリアルを開く。開いた画面が渡す。 */
+  onOpenTutorial?: () => void;
 };
 
 const solvedBoard: SlidePuzzleBoard = [1, 2, 3, 4, 5, 6, 7, 8, 0];
@@ -25,12 +27,14 @@ const multipleSlide = {
 export function SlidePuzzleHowToPlayDialog({
   open,
   onClose,
+  onOpenTutorial,
 }: SlidePuzzleHowToPlayDialogProps) {
   return (
     <HowToPlayDialog
       open={open}
       description="タイルを空白にスライドさせて、番号順に並べる。"
       onClose={onClose}
+      onOpenTutorial={onOpenTutorial}
     >
       <li className="space-y-2">
         <p>左上の 1 から番号順に並び、右下が空白になれば完成。</p>

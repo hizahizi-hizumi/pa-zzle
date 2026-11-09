@@ -8,6 +8,8 @@ import {
 type NanpureHowToPlayDialogProps = {
   open: boolean;
   onClose: () => void;
+  /** 遊び方を閉じてチュートリアルを開く。開いた画面が渡す。 */
+  onOpenTutorial?: () => void;
 };
 
 const completedBlock: readonly (readonly HowToPlayFigureCell[])[] = [
@@ -24,12 +26,14 @@ const clueAndEntered = [
 export function NanpureHowToPlayDialog({
   open,
   onClose,
+  onOpenTutorial,
 }: NanpureHowToPlayDialogProps) {
   return (
     <HowToPlayDialog
       open={open}
       description="空いたマスに1〜9の数字を入れて、盤面を完成させる。"
       onClose={onClose}
+      onOpenTutorial={onOpenTutorial}
     >
       <li className="space-y-2">
         <p>各行・各列・各3×3ブロックに、1〜9を1つずつ。</p>

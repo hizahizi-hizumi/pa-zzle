@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { takuzuCatalogEntry } from "@/game-catalog/takuzu/takuzu-catalog-entry";
@@ -83,24 +89,35 @@ describe("TakuzuHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
+    const dialog = await screen.findByRole("dialog", {
+      name: "バイナリパズルの遊び方",
+    });
 
     expect(dialog).toBeTruthy();
   });
 
-  test("見出しのメニューからチュートリアルを開けること", async () => {
+  test("遊び方からチュートリアルを始めると、遊び方を閉じてチュートリアルを開くこと", async () => {
     fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
       button: 0,
       ctrlKey: false,
     });
-    fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+    fireEvent.click(
+      within(
+        await screen.findByRole("dialog", { name: "バイナリパズルの遊び方" }),
+      ).getByRole("button", { name: "チュートリアルで遊んで覚える" }),
+    );
 
-    const dialog = await screen.findByRole("dialog", {
+    const tutorial = await screen.findByRole("dialog", {
       name: "バイナリパズル",
       description: "チュートリアル",
     });
+    const howToPlay = screen.queryByRole("dialog", {
+      name: "バイナリパズルの遊び方",
+    });
 
-    expect(dialog).toBeTruthy();
+    expect(howToPlay).toBeNull();
+    expect(tutorial).toBeTruthy();
   });
 
   test("戻るリンクでホームへ戻れること", () => {

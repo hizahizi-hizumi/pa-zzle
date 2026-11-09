@@ -3,16 +3,17 @@ import {
   Grid2x2,
   Home,
   MoreHorizontal,
-  Play,
-  Pointer,
-  RotateCcw,
   Settings,
-  SkipBack,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
 
 import { withPlayStartSound } from "@/components/app-decision-sound";
+import {
+  PLAY_MENU_TRIGGER_LABEL,
+  type PlayMenuOperationItem,
+  playMenuOperationItems,
+} from "@/components/play-menu-operations";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +23,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 type PlayMenuProps = {
   onRestart?: () => void;
@@ -32,9 +32,16 @@ type PlayMenuProps = {
   onOpenGameHome: () => void;
   onBackToAppHome: () => void;
   onOpenHowToPlay?: () => void;
-  onOpenTutorial?: () => void;
   onOpenDiagnostics?: () => void;
 };
+
+const { restart, replay, startNewProblem } = playMenuOperationItems;
+
+function getItemVariant({
+  destructive,
+}: PlayMenuOperationItem): "default" | "destructive" {
+  return destructive ? "destructive" : "default";
+}
 
 export function PlayMenu({
   onRestart,
@@ -44,7 +51,6 @@ export function PlayMenu({
   onOpenGameHome,
   onBackToAppHome,
   onOpenHowToPlay,
-  onOpenTutorial,
   onOpenDiagnostics,
 }: PlayMenuProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -57,7 +63,7 @@ export function PlayMenu({
             type="button"
             variant="ghost"
             size="icon-lg"
-            aria-label="その他の操作"
+            aria-label={PLAY_MENU_TRIGGER_LABEL}
           >
             <MoreHorizontal />
           </Button>
@@ -65,23 +71,29 @@ export function PlayMenu({
         <DropdownMenuContent align="end">
           {onRestart && (
             <DropdownMenuItem
-              variant="destructive"
+              variant={getItemVariant(restart)}
               disabled={!canRestart}
               onSelect={onRestart}
             >
-              <SkipBack />
-              {PLAY_OPERATION_LABELS.restart}
+              <restart.icon />
+              {restart.label}
             </DropdownMenuItem>
           )}
           {onReplay && (
-            <DropdownMenuItem variant="destructive" onSelect={onReplay}>
-              <RotateCcw />
-              {PLAY_OPERATION_LABELS.replay}
+            <DropdownMenuItem
+              variant={getItemVariant(replay)}
+              onSelect={onReplay}
+            >
+              <replay.icon />
+              {replay.label}
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onSelect={withPlayStartSound(onStartNewProblem)}>
-            <Play />
-            {PLAY_OPERATION_LABELS.startNewProblem}
+          <DropdownMenuItem
+            variant={getItemVariant(startNewProblem)}
+            onSelect={withPlayStartSound(onStartNewProblem)}
+          >
+            <startNewProblem.icon />
+            {startNewProblem.label}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={onOpenGameHome}>
@@ -97,12 +109,6 @@ export function PlayMenu({
             <DropdownMenuItem onSelect={onOpenHowToPlay}>
               <CircleHelp />
               遊び方
-            </DropdownMenuItem>
-          )}
-          {onOpenTutorial && (
-            <DropdownMenuItem onSelect={onOpenTutorial}>
-              <Pointer />
-              チュートリアル
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onSelect={() => setSettingsOpen(true)}>

@@ -113,8 +113,12 @@ export function SlidePuzzlePlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <SlidePuzzleHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <SlidePuzzleHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose }) => (
         <SlidePuzzleTutorial open={open} onClose={onClose} />

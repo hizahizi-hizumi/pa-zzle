@@ -45,26 +45,47 @@ function DialogOverlay({
   )
 }
 
+// fullscreen: 画面全体を覆う層。下の画面と二重に見せないよう、層の地は開いてから除かれるまで不透明にし、中身だけを現し、消す。
+// 閉じるときは、中身が消えるのと同じ長さの見えない退出を層に掛け、それを終えてから層を除く。
+// 動きを減らす設定でも見えない退出は残し、中身ごと一度に除く。
+const dialogContentVariantClassNames = {
+  default:
+    "top-[50%] left-[50%] grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg p-6 shadow-raised duration-100 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 sm:max-w-lg",
+  fullscreen:
+    "group/dialog-fullscreen top-0 left-0 flex h-svh w-full flex-col pb-[env(safe-area-inset-bottom)] duration-(--duration-normal) ease-exit data-[state=closed]:animate-out data-[state=closed]:fade-out-100",
+} as const
+
+const dialogFullscreenBodyClassName =
+  "flex min-h-0 flex-1 flex-col animate-in fade-in-0 duration-(--duration-normal) ease-enter motion-safe:group-data-[state=closed]/dialog-fullscreen:animate-out group-data-[state=closed]/dialog-fullscreen:fade-out-0 group-data-[state=closed]/dialog-fullscreen:ease-exit group-data-[state=closed]/dialog-fullscreen:fill-mode-forwards motion-reduce:animate-none"
+
 function DialogContent({
   className,
   children,
   showCloseButton = true,
+  variant = "default",
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  variant?: keyof typeof dialogContentVariantClassNames
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        data-variant={variant}
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg bg-background p-6 shadow-raised duration-100 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 sm:max-w-lg",
+          "fixed z-50 bg-background outline-none",
+          dialogContentVariantClassNames[variant],
           className
         )}
         {...props}
       >
-        {children}
+        {variant === "fullscreen" ? (
+          <div className={dialogFullscreenBodyClassName}>{children}</div>
+        ) : (
+          children
+        )}
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
@@ -116,14 +137,28 @@ function DialogFooter({
   )
 }
 
+// banner: 全画面の層の帯に、見出しの大きさでゲームの名前を1行に収めて置く。
+const dialogTitleSizeClassNames = {
+  heading: "text-heading",
+  banner: "min-w-0 truncate text-heading",
+} as const
+
 function DialogTitle({
   className,
+  size = "heading",
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Title>) {
+}: React.ComponentProps<typeof DialogPrimitive.Title> & {
+  size?: keyof typeof dialogTitleSizeClassNames
+}) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-heading", className)}
+      // 開いた直後のフォーカスを見出しに置く層があるので、見出しにはフォーカスの枠を出さない。
+      className={cn(
+        "outline-none",
+        dialogTitleSizeClassNames[size],
+        className
+      )}
       {...props}
     />
   )

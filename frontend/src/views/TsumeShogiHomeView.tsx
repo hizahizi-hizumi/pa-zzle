@@ -15,8 +15,12 @@ export function TsumeShogiHomeView() {
     <GameHomeScreen
       {...screenProps}
       ground={<TsumeShogiGround />}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <TsumeShogiHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <TsumeShogiHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose, playStart }) => (
         <TsumeShogiTutorial

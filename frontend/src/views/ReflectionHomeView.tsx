@@ -12,8 +12,12 @@ export function ReflectionHomeView() {
     <GameHomeScreen
       {...screenProps}
       ground={<ReflectionGround />}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <ReflectionHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <ReflectionHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose, playStart }) => (
         <ReflectionTutorial

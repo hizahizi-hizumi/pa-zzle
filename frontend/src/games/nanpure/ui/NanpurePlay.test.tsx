@@ -174,14 +174,17 @@ describe("NanpurePlay", () => {
       });
     });
 
-    describe("その他の操作からチュートリアルを選んだ場合", () => {
+    describe("遊び方からチュートリアルを始めた場合", () => {
       beforeEach(() => {
         fireEvent.pointerDown(
           screen.getByRole("button", { name: "その他の操作" }),
           { button: 0, ctrlKey: false },
         );
+        fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
         fireEvent.click(
-          screen.getByRole("menuitem", { name: "チュートリアル" }),
+          screen.getByRole("button", {
+            name: "チュートリアルで遊んで覚える",
+          }),
         );
       });
 

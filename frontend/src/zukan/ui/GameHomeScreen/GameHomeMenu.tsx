@@ -4,7 +4,6 @@ import {
   InfoIcon,
   ListFilterIcon,
   MenuIcon,
-  Pointer,
 } from "lucide-react";
 import { type RefObject, useRef } from "react";
 
@@ -22,17 +21,16 @@ type GameHomeMenuProps = {
   /** メニューのボタン。開いた層を寄せて出し、層を閉じたらフォーカスを戻すのに使う。 */
   buttonRef: RefObject<HTMLButtonElement | null>;
   filterConditionCount: number;
-  hasTutorial: boolean;
   onOpenLayer: (layer: GameHomeLayer) => void;
 };
 
 /**
  * 見出しの補助の操作は、どの画面幅でも同じ1つのボタンから開く。
+ * チュートリアルは遊び方の中からだけ開く。
  */
 export function GameHomeMenu({
   buttonRef,
   filterConditionCount,
-  hasTutorial,
   onOpenLayer,
 }: GameHomeMenuProps) {
   // 選んだ層は、メニューが閉じ切ってから開く。閉じていくメニューがフォーカスを取り戻すと、開いたばかりのポップオーバーが外へのフォーカスで閉じるため。
@@ -89,13 +87,6 @@ export function GameHomeMenu({
           <CircleHelp aria-hidden="true" />
           遊び方
         </DropdownMenuItem>
-        {/* プレイ中のメニューと同じく、チュートリアルは遊び方の次に置く。 */}
-        {hasTutorial && (
-          <DropdownMenuItem onSelect={() => chooseLayer("tutorial")}>
-            <Pointer aria-hidden="true" />
-            チュートリアル
-          </DropdownMenuItem>
-        )}
         <DropdownMenuItem onSelect={() => chooseLayer("legend")}>
           <InfoIcon aria-hidden="true" />
           見方

@@ -280,9 +280,14 @@ describe("TsumeShogiPlayView", () => {
       expect(screen.getByText("ホーム画面")).toBeTruthy();
     });
 
-    test("メニューからチュートリアルを開き、閉じると同じプレイの盤へ戻ること", () => {
+    test("遊び方からチュートリアルを開き、閉じると同じプレイの盤へ戻ること", () => {
       openMenu();
-      fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "チュートリアルで遊んで覚える",
+        }),
+      );
       const tutorial = screen.getByRole("dialog", {
         name: "詰将棋",
         description: "チュートリアル",

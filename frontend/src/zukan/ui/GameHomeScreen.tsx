@@ -134,6 +134,10 @@ export type GameHomeScreenProps = {
     problem: ZukanProblem,
   ) => ReadonlyMap<string, ProblemFeatureValue> | null;
   renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
+  /**
+   * ゲーム固有のチュートリアルを描く。開閉の状態は画面が持ち、終えて開いているレベルを始める操作と一緒に引数で渡す。
+   * チュートリアルは遊び方の中からだけ開く。省略すると、遊び方にチュートリアルを始める操作を出さない。
+   */
   renderTutorial?: (control: GameHomeTutorialControl) => ReactNode;
   /** 全記録。開いているレベルの成績（自己ベスト・推移）を、成績を開いたときにこの中から求める。 */
   records: readonly PlayRecord[];
@@ -792,7 +796,6 @@ export function GameHomeScreen({
           <GameHomeMenu
             buttonRef={menuButtonRef}
             filterConditionCount={filterConditionCount}
-            hasTutorial={renderTutorial !== undefined}
             onOpenLayer={handleOpenLayer}
           />
         </GameHomeHeading>
@@ -801,6 +804,9 @@ export function GameHomeScreen({
           onClose() {
             changeLayerOpen("howToPlay", false);
           },
+          // 遊び方を閉じてチュートリアルを開く。開く層を1つに保つので、閉じる操作を挟まずに替える。
+          onOpenTutorial:
+            renderTutorial && (() => changeLayerOpen("tutorial", true)),
         })}
         {renderTutorial?.({
           open: openLayer === "tutorial",

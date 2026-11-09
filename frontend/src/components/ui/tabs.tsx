@@ -34,6 +34,8 @@ const tabsListVariants = cva(
       layout: {
         default: "",
         stacked: "w-full group-data-[orientation=horizontal]/tabs:h-auto",
+        // section: 画面の区切りとして、タブを横幅いっぱいに等分し、本文と同じ大きさの名前を並べる。
+        section: "w-full p-0 group-data-[orientation=horizontal]/tabs:h-auto",
         // card: 各タブを面のカードにして、横幅いっぱいに等分して1行に並べる。
         card: "grid w-full auto-cols-fr grid-flow-col items-stretch justify-normal gap-1 rounded-none bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto sm:gap-2",
       },
@@ -77,6 +79,7 @@ function TabsTrigger({
         "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent",
         "data-[state=active]:bg-background data-[state=active]:text-foreground dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 dark:data-[state=active]:text-foreground",
         "group-data-[layout=stacked]/tabs-list:h-auto group-data-[layout=stacked]/tabs-list:min-w-0 group-data-[layout=stacked]/tabs-list:flex-col group-data-[layout=stacked]/tabs-list:gap-0 group-data-[layout=stacked]/tabs-list:px-1 group-data-[layout=stacked]/tabs-list:py-1",
+        "group-data-[layout=section]/tabs-list:h-auto group-data-[layout=section]/tabs-list:min-w-0 group-data-[layout=section]/tabs-list:px-1 group-data-[layout=section]/tabs-list:py-1 group-data-[layout=section]/tabs-list:text-body",
         // card のカードは、地の上に置く面にする。開いていないカードは面を薄くして退かせ、開いているカードは、面を濃くして ring の輪郭を外側に重ねて示す。角丸はボタンと同じ段階にそろえる。
         "group-data-[layout=card]/tabs-list:h-auto group-data-[layout=card]/tabs-list:min-w-0 group-data-[layout=card]/tabs-list:flex-col group-data-[layout=card]/tabs-list:items-stretch group-data-[layout=card]/tabs-list:justify-start group-data-[layout=card]/tabs-list:gap-1 group-data-[layout=card]/tabs-list:rounded-md group-data-[layout=card]/tabs-list:border-0 group-data-[layout=card]/tabs-list:bg-background/70 group-data-[layout=card]/tabs-list:p-1 group-data-[layout=card]/tabs-list:text-left group-data-[layout=card]/tabs-list:text-foreground group-data-[layout=card]/tabs-list:hover:bg-background/85 group-data-[layout=card]/tabs-list:data-[state=active]:bg-background group-data-[layout=card]/tabs-list:data-[state=active]:shadow-none group-data-[layout=card]/tabs-list:data-[state=active]:ring-2 group-data-[layout=card]/tabs-list:data-[state=active]:ring-ring sm:group-data-[layout=card]/tabs-list:p-2",
         "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100",

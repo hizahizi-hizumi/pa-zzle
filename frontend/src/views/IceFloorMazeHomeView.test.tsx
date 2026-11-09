@@ -93,12 +93,17 @@ describe("IceFloorMazeHomeView", () => {
     expect(dialog).toBeTruthy();
   });
 
-  test("見出しのメニューからチュートリアルを開けること", async () => {
+  test("遊び方からチュートリアルを開けること", async () => {
     fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
       button: 0,
       ctrlKey: false,
     });
-    fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "チュートリアルで遊んで覚える",
+      }),
+    );
 
     const dialog = await screen.findByRole("dialog", {
       name: "アイスフロア迷路",

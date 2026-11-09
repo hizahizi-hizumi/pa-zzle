@@ -12,8 +12,12 @@ export function SlidePuzzleHomeView() {
     <GameHomeScreen
       {...screenProps}
       ground={<SlidePuzzleGround />}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <SlidePuzzleHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <SlidePuzzleHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose, playStart }) => (
         <SlidePuzzleTutorial

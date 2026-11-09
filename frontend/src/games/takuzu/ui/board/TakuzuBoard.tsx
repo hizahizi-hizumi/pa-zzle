@@ -19,10 +19,21 @@ import type {
   TakuzuCellView,
   TakuzuLineViolationView,
 } from "@/games/takuzu/session/session";
+import { animateGivenCellRejection } from "@/games/takuzu/ui/board/animate-given-cell-rejection";
+import {
+  takuzuBoardFrameClassName,
+  takuzuCellSurfaceClassName,
+} from "@/games/takuzu/ui/board/board-surface-style";
+import { listTakuzuLineViolationNames } from "@/games/takuzu/ui/board/cell-accessible-name";
 import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
-import { animateGivenCellRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-given-cell-rejection";
+import {
+  type TakuzuArrowKeyMove,
+  takuzuArrowKeys,
+  takuzuPlacementKeys,
+} from "@/games/takuzu/ui/board/keyboard-input";
 import { TakuzuCell } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuCell";
 import { TakuzuLineViolationMark } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationMark";
+import { cn } from "@/lib/utils";
 
 type TakuzuBoardProps = {
   size: number;
@@ -45,25 +56,13 @@ export type TakuzuBoardSpotlight = {
   lineViolations: boolean;
 };
 
-/** キーボードで直接置くキー。`1` と `2` は巡回の順（A → B）に合わせる。 */
-const cellByInputKey: Readonly<Record<string, TakuzuCellValue>> = {
-  "1": "a",
-  "2": "b",
-  "0": null,
-  Backspace: null,
-  Delete: null,
-};
+const cellByInputKey: ReadonlyMap<string, TakuzuCellValue> = new Map(
+  takuzuPlacementKeys.map(({ key, cell }) => [key, cell]),
+);
 
-const offsetByArrowKey: Readonly<
-  Record<string, { rowOffset: number; columnOffset: number }>
-> = {
-  ArrowUp: { rowOffset: -1, columnOffset: 0 },
-  ArrowDown: { rowOffset: 1, columnOffset: 0 },
-  ArrowLeft: { rowOffset: 0, columnOffset: -1 },
-  ArrowRight: { rowOffset: 0, columnOffset: 1 },
-};
-
-const axisName = { row: "行", column: "列" } as const;
+const offsetByArrowKey: ReadonlyMap<string, TakuzuArrowKeyMove> = new Map(
+  takuzuArrowKeys.map((move) => [move.key, move]),
+);
 
 function getCellKey(size: number, cellIndex: number): string {
   const { row, column } = getTakuzuCellPosition(size, cellIndex);
@@ -76,18 +75,6 @@ function getLineKey({ axis, index }: TakuzuLine): string {
 
 function hasModifierKey(event: ReactKeyboardEvent): boolean {
   return event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
-}
-
-function listLineViolationNames(
-  violation: TakuzuLineViolationView | undefined,
-): string[] {
-  if (!violation) {
-    return [];
-  }
-  return [
-    violation.overfilled ? `${axisName[violation.axis]}の個数超過` : null,
-    violation.duplicated ? `${axisName[violation.axis]}の重複` : null,
-  ].filter((name) => name !== null);
 }
 
 export function TakuzuBoard({
@@ -145,18 +132,18 @@ export function TakuzuBoard({
       return;
     }
 
-    const offset = offsetByArrowKey[event.key];
+    const offset = offsetByArrowKey.get(event.key);
     if (offset) {
       event.preventDefault();
       moveFocus(focusableCellIndex, offset.rowOffset, offset.columnOffset);
       return;
     }
 
-    if (!Object.hasOwn(cellByInputKey, event.key)) {
+    if (!cellByInputKey.has(event.key)) {
       return;
     }
     event.preventDefault();
-    onPlaceCell(focusableCellIndex, cellByInputKey[event.key] ?? null);
+    onPlaceCell(focusableCellIndex, cellByInputKey.get(event.key) ?? null);
   }
 
   return (
@@ -165,7 +152,11 @@ export function TakuzuBoard({
       <div
         role="group"
         aria-label={`${TAKUZU_DISPLAY_NAME}盤面`}
-        className="relative grid size-full border-2 border-foreground/55 bg-background"
+        className={cn(
+          "relative grid size-full",
+          takuzuBoardFrameClassName,
+          takuzuCellSurfaceClassName,
+        )}
         style={{
           gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${size}, minmax(0, 1fr))`,
@@ -181,12 +172,12 @@ export function TakuzuBoard({
               cellIndex={cellIndex}
               view={view}
               lineViolationNames={[
-                ...listLineViolationNames(
+                ...listTakuzuLineViolationNames(
                   lineViolationByKey.get(
                     getLineKey({ axis: "row", index: row }),
                   ),
                 ),
-                ...listLineViolationNames(
+                ...listTakuzuLineViolationNames(
                   lineViolationByKey.get(
                     getLineKey({ axis: "column", index: column }),
                   ),

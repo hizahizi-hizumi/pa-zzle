@@ -56,7 +56,8 @@ function getMusicState(
  * - 進行は `games/tutorial.ts` の `startTutorial`・`performTutorialAction`・`finishTutorialIntro`・`completeTutorial` で進め、`phase` と、一言（`getTutorialMessage`）を渡す。
  * - `guiding` は、`phase` が `playing` で、`getTutorialSituation` の `step` があるときに `true` にする。
  * - `renderBoard` で本番の盤面部品を描く。導入の場面（`TutorialBoardIntro`）は盤面が受け持つ。
- * - `finish` は、ゲームのホームから開いたとき（`GameHomeTutorialControl` の `playStart` があるとき）は `home`、プレイ中のメニューから開いたときは `play` にする。
+ * - `finish` は、ゲームのホームから開いたとき（`GameHomeTutorialControl` の `playStart` があるとき）は `home`、プレイ画面から開いたときは `play` にする。
+ * - ゲームのホームへは `GameHomeScreen` の `renderTutorial`、プレイ画面へは `GamePlayFrame` の `renderTutorial` で渡す。どちらも遊び方の中から開く。
  */
 export function TutorialOverlay({
   open,
@@ -91,9 +92,9 @@ export function TutorialOverlay({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
+        variant="fullscreen"
         showCloseButton={false}
         onOpenAutoFocus={handleOpenAutoFocus}
-        className="top-0 left-0 flex h-svh max-h-none w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 pb-[env(safe-area-inset-bottom)] shadow-none sm:max-w-none"
       >
         <TutorialScreen
           ref={screenRef}
