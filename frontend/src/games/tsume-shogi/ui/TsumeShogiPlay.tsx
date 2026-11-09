@@ -41,6 +41,7 @@ import {
 import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
 import { useShortPlayArea } from "@/games/tsume-shogi/ui/TsumeShogiPlay/use-short-play-area";
 import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlayStatus";
+import { TsumeShogiTutorial } from "@/games/tsume-shogi/ui/TsumeShogiTutorial";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { useTsumeShogiSoundEffects } from "@/games/tsume-shogi/ui/use-tsume-shogi-sound-effects";
 import { cn } from "@/lib/utils";
@@ -189,6 +190,9 @@ export function TsumeShogiPlay({
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <TsumeShogiHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderTutorial={({ open, onClose }) => (
+        <TsumeShogiTutorial open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <TsumeShogiResultScreen
