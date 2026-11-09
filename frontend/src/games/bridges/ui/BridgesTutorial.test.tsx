@@ -250,9 +250,9 @@ describe("BridgesTutorial", () => {
         expect(getEdgesWithCue("acknowledgement")).toEqual([
           edgeBetween([1, 3], [4, 3]),
         ]);
-        expect(screen.queryByText(/もう一度押すと/)).not.toBeNull();
+        expect(screen.queryByText(/^もう一度押すと/)).not.toBeNull();
         expect(
-          screen.queryByText(/1か所に架けられるのは\s*2本までです/),
+          screen.queryByText(/2本までで、もう一度押すと\s*外れます/),
         ).not.toBeNull();
       });
 
@@ -299,7 +299,7 @@ describe("BridgesTutorial", () => {
         test("覆いを外し、残りを架けさせる一言を出して、すぐには印を付けないこと", () => {
           expect(hasFocusScrim()).toBe(false);
           expect(
-            screen.queryByText(/あとは残りの橋を架ければ\s*完成です/),
+            screen.queryByText(/^残りの橋を架ければ\s*完成です/),
           ).not.toBeNull();
           expect(getEdgesWithCue("mark")).toEqual([]);
         });
@@ -380,7 +380,7 @@ describe("BridgesTutorial", () => {
           test("どのレベルの盤面もチュートリアルより大きいので、本番はもっと大きな盤面だと伝えること", () => {
             expect(smallestSize).toBeGreaterThan(BRIDGES_TUTORIAL_BOARD.width);
             expect(
-              screen.queryByText(/本番はもっと大きな盤面で\s*遊びます/),
+              screen.queryByText(/本番はもっと大きな盤面で\s*遊べます/),
             ).not.toBeNull();
           });
 

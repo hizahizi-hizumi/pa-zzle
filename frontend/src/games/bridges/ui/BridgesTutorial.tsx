@@ -161,9 +161,16 @@ export function BridgesTutorial({
     idleHintPending && idleProgress === progress
       ? findBridgesTutorialHintEdge(situation, boardState)
       : null;
+  // 手がかりで外させている橋を外す途中は、外し終えるまで待たずに同じ辺へ印を付け続ける。
+  const removingEdge =
+    !guiding &&
+    boardState.lastMove?.kind === "changed" &&
+    boardState.lastMove.removing
+      ? boardState.lastMove.edge
+      : null;
   const markedEdge = guiding
     ? getBridgesTutorialStepEdge(situation, boardState)
-    : idleHintEdge;
+    : (removingEdge ?? idleHintEdge);
 
   useBridgesSoundEffects(
     edgeNotice,
@@ -290,6 +297,11 @@ export function BridgesTutorial({
                     : null
                 }
                 onCycleEdge={handleCycleEdge}
+                guidedEdges={
+                  !showsGoal && solving && guiding && markedEdge !== null
+                    ? [markedEdge]
+                    : []
+                }
                 onIneffectivePress={handleIneffectivePress}
                 onClearAnimationComplete={handleClearAnimationComplete}
               />
