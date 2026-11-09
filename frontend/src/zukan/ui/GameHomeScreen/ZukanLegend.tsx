@@ -1,11 +1,9 @@
-import { InfoIcon } from "lucide-react";
-
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
-  PopoverTrigger,
 } from "@/components/ui/popover";
-import { ZukanHeaderButton } from "@/zukan/ui/GameHomeScreen/ZukanHeaderButton";
+import type { GameHomeLayerControl } from "@/zukan/ui/GameHomeScreen/use-game-home-layers";
 import {
   getZukanProblemStatusColorClassName,
   zukanProblemStatusLabels,
@@ -13,17 +11,16 @@ import {
 } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
 
 /**
- * マスの塗りが、どの評価段階・状態を表すかの見本。台紙を広く見せるよう、常には出さず「見方」を押したときだけ出す。
+ * マスの塗りが、どの評価段階・状態を表すかの見本。台紙を広く見せるよう、常には出さず、見出しのメニューの「見方」を選んだときだけ、メニューのボタンから出す。
  */
-export function ZukanLegend() {
+export function ZukanLegend({
+  open,
+  onOpenChange,
+  anchorRef,
+}: GameHomeLayerControl) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <ZukanHeaderButton
-          icon={<InfoIcon aria-hidden="true" />}
-          label="見方"
-        />
-      </PopoverTrigger>
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverAnchor virtualRef={anchorRef} />
       <PopoverContent align="end">
         <ul
           aria-label="マスの見方"

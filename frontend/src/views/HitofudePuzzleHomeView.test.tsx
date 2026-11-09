@@ -81,10 +81,14 @@ describe("HitofudePuzzleHomeView", () => {
     expect(cards).toHaveLength(levelLabels.length);
   });
 
-  test("遊び方を開けること", () => {
-    fireEvent.click(screen.getByRole("button", { name: "遊び方" }));
+  test("見出しのメニューから遊び方を開けること", async () => {
+    fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = screen.getByRole("dialog", { name: "遊び方" });
+    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
 
     expect(dialog).toBeTruthy();
   });

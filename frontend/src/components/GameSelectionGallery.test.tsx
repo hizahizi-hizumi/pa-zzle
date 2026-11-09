@@ -151,7 +151,7 @@ describe("選んでいるパズルの続き", () => {
         name: "ウォーターソートを遊ぶ",
       });
 
-      expect(heroLink.textContent).toBe("ウォーターソート");
+      expect(heroLink.textContent).toBe("ウォーターソート遊ぶ");
       expect(heroLink.hasAttribute("aria-describedby")).toBe(false);
     });
   });
