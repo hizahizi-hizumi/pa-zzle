@@ -58,6 +58,22 @@ function getClassicStateClassName(view: MinesweeperVisibleCell): string {
 const BOARD_TILE_SURFACE_CLASS_NAME =
   "bg-[linear-gradient(155deg,#dfe5ee_0%,#d5dde8_100%)] shadow-[inset_0_1px_0_#ffffffef,0_2px_0_#92a0b1,0_3px_4px_#4b5c7529] dark:bg-[linear-gradient(155deg,#56677b_0%,#4d5d72_100%)] dark:shadow-[inset_0_1px_0_#97a7b86c,0_2px_0_#202d3d,0_3px_4px_#050a1388]";
 
+function isRaisedBoardTile(view: MinesweeperVisibleCell): boolean {
+  return view.state === "hidden" || view.state === "flagged";
+}
+
+/**
+ * 盤面のマスが見える形の位置と角丸。マスの中に絶対配置で重ねる。
+ * 浮いたマス（開いていない・旗）は、面の下に `BOARD_TILE_SURFACE_CLASS_NAME` の影の `0_2px_0` の縁が見えるので、その分を下へ含める。
+ */
+export function getMinesweeperBoardCellShapeClassName(
+  view: MinesweeperVisibleCell,
+): string {
+  return isRaisedBoardTile(view)
+    ? "inset-x-0 top-0 -bottom-[2px] rounded-[4px]"
+    : "inset-0 rounded-[4px]";
+}
+
 function getBoardStateClassName(view: MinesweeperVisibleCell): string {
   if (view.state === "steppedMine") {
     return "bg-rose-200 text-rose-800 shadow-[inset_0_2px_4px_#a65d5d55] dark:bg-rose-900 dark:text-rose-200";
