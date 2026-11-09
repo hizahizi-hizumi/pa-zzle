@@ -1,4 +1,4 @@
-import { _private } from "@/games/tsume-shogi/ui/TsumeShogiPlay/sound-takes";
+import { _private } from "@/games/tsume-shogi/ui/sound-takes";
 
 const { pickTakeIndex } = _private;
 

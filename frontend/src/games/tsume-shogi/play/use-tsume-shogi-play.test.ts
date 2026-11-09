@@ -5,6 +5,7 @@ import { createProblemSeed } from "@/games/problem-seed";
 import {
   _private,
   formatTsumeShogiSquareKey,
+  listTsumeShogiBoardPieceIds,
   TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS,
   type TsumeShogiPlay,
   useTsumeShogiPlay,
@@ -234,8 +235,7 @@ describe("isDropAmbiguous", () => {
   });
 });
 
-describe("listBoardPieceIds", () => {
-  const { listBoardPieceIds } = _private;
+describe("listTsumeShogiBoardPieceIds", () => {
   // 1一に玉方の玉、2九に攻方の銀、持駒に金。
   const position = createTsumeShogiPosition("8k/9/9/9/9/9/9/9/7S1", {
     gold: 1,
@@ -263,7 +263,7 @@ describe("listBoardPieceIds", () => {
 
   describe("どの応手も盤面に指した場合", () => {
     test("動いた駒は移動先でも同じ識別を持ち、打った駒には新しい識別を付けること", () => {
-      const ids = listBoardPieceIds(position, turns, false);
+      const ids = listTsumeShogiBoardPieceIds(position, turns, false);
 
       expect(Object.fromEntries(ids)).toEqual({
         "2-8": initialIds.get("2-9"),
@@ -275,7 +275,7 @@ describe("listBoardPieceIds", () => {
 
   describe("最後の応手を待っている場合", () => {
     test("まだ指していない応手で駒を動かさないこと", () => {
-      const ids = listBoardPieceIds(position, turns, true);
+      const ids = listTsumeShogiBoardPieceIds(position, turns, true);
 
       expect(Object.fromEntries(ids)).toEqual({
         "2-8": initialIds.get("2-9"),

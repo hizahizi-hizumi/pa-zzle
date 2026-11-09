@@ -42,6 +42,13 @@ type TsumeShogiBoardProps = {
   /** 詰み上がり。詰んだ玉を傾け、詰みの波で光る層を升に置く。 */
   mated: boolean;
   interactionDisabled: boolean;
+  /**
+   * チュートリアルで次に押す升の印。`recallId` は印の無い所が押されるたびに変え、印の線を短く濃くして戻す。
+   * 本番では渡さない。
+   */
+  tutorialMark?: { square: TsumeShogiSquare; recallId: number | null } | null;
+  /** チュートリアルで手を引いている間、画面全体の覆いから抜く升。本番では渡さない。 */
+  spotlitSquares?: readonly TsumeShogiSquare[];
   onSelectSquare: (square: TsumeShogiSquare) => void;
   onChoosePromotion: (promote: boolean) => void;
 };
@@ -100,6 +107,8 @@ export function TsumeShogiBoard({
   rejection,
   mated,
   interactionDisabled,
+  tutorialMark = null,
+  spotlitSquares = [],
   onSelectSquare,
   onChoosePromotion,
 }: TsumeShogiBoardProps) {
@@ -179,6 +188,15 @@ export function TsumeShogiBoard({
                 clearGlow={mated}
                 arrivedMove={arrivedMove}
                 highlight={getHighlight(square)}
+                tutorialMarkRecallId={
+                  tutorialMark &&
+                  isSameTsumeShogiSquare(tutorialMark.square, square)
+                    ? tutorialMark.recallId
+                    : undefined
+                }
+                spotlit={spotlitSquares.some((spotlit) =>
+                  isSameTsumeShogiSquare(spotlit, square),
+                )}
                 disabled={interactionDisabled}
                 tapHandlers={getTapHandlers(() => onSelectSquare(square))}
                 isLastFile={file === 1}

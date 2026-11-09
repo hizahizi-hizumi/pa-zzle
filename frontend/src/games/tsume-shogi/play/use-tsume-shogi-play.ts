@@ -118,7 +118,7 @@ export function formatTsumeShogiSquareKey(square: TsumeShogiSquare): string {
  * 盤上の駒ごとの、指し手で変わらない識別。初期局面の駒に順に名前を付け、指した手で移動先へ持ち運ぶ。打った駒には新しい名前を付ける。
  * 盤面に指していない玉方の応手（応手を待つ間）は持ち運ばない。戻した手は手の並びから消えるので、識別も元に戻る。
  */
-function listBoardPieceIds(
+export function listTsumeShogiBoardPieceIds(
   initialPosition: TsumeShogiPosition,
   turns: readonly TsumeShogiSessionTurn[],
   defenderReplyPending: boolean,
@@ -169,7 +169,11 @@ function toPlayedMove(
   };
 }
 
-function listShownMoves(
+/**
+ * 盤面に見せている最後の組の手。`turn` は最後の組、`positionBeforeTurn` はその組の攻方の手を指す前の局面。
+ * 玉方の応手を待つ間と、詰めた手は攻方の手だけ。
+ */
+export function listTsumeShogiShownMoves(
   turn: TsumeShogiSessionTurn | undefined,
   positionBeforeTurn: TsumeShogiPosition,
   defenderReplyPending: boolean,
@@ -466,7 +470,7 @@ export function useTsumeShogiPlay(
   const lastTurn = session.turns.at(-1);
   const boardPieceIds = useMemo(
     () =>
-      listBoardPieceIds(
+      listTsumeShogiBoardPieceIds(
         session.problem.initialPosition,
         session.turns,
         session.defenderReplyPending,
@@ -482,7 +486,7 @@ export function useTsumeShogiPlay(
     session.problem.initialPosition;
   const shownMoves = useMemo(
     () =>
-      listShownMoves(
+      listTsumeShogiShownMoves(
         lastTurn,
         positionBeforeLastTurn,
         session.defenderReplyPending,
@@ -536,4 +540,4 @@ export function useTsumeShogiPlay(
   };
 }
 
-export const _private = { isDropAmbiguous, listBoardPieceIds };
+export const _private = { isDropAmbiguous };

@@ -16,7 +16,7 @@ import type { TsumeShogiRejection } from "@/games/tsume-shogi/session/session";
 import {
   TsumeShogiHand,
   type TsumeShogiHandAvailability,
-} from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiHand";
+} from "@/games/tsume-shogi/ui/TsumeShogiHand";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 
 const hand = {

@@ -1,4 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
+import { TutorialCue } from "@/components/TutorialCue";
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import type { TapHandlers } from "@/components/touch-tap";
 import type { TsumeShogiPlayedMove } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import type {
@@ -52,6 +54,12 @@ type TsumeShogiSquareButtonProps = {
   /** この升へ指した手。駒を移動元から滑らせる（打った駒は浮かび上がらせる）。 */
   arrivedMove: TsumeShogiPlayedMove | null;
   highlight: TsumeShogiSquareHighlight | null;
+  /**
+   * チュートリアルで次に押す升の印。`undefined` なら印を付けない。値は印の線を短く濃くし直す合図（`TutorialCue` の `recallId`）。
+   */
+  tutorialMarkRecallId: number | null | undefined;
+  /** チュートリアルで手を引いている間、画面全体の覆いからこの升を抜く。 */
+  spotlit: boolean;
   /** 押しても何もしない。応手を待つ間などに押せなくしても、フォーカスは升に残す。 */
   disabled: boolean;
   tapHandlers: TapHandlers;
@@ -104,6 +112,8 @@ export function TsumeShogiSquareButton({
   clearGlow,
   arrivedMove,
   highlight,
+  tutorialMarkRecallId,
+  spotlit,
   disabled,
   tapHandlers,
   isLastFile,
@@ -168,6 +178,10 @@ export function TsumeShogiSquareButton({
             grainSeed={pieceId ?? formatTsumeShogiSquare(square)}
           />
         </span>
+      )}
+      <TutorialSpotlight active={spotlit} className="inset-0" />
+      {tutorialMarkRecallId !== undefined && (
+        <TutorialCue kind="mark" recallId={tutorialMarkRecallId} />
       )}
     </button>
   );

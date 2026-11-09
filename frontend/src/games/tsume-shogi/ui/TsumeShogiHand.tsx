@@ -1,5 +1,6 @@
 import { type ReactNode, useRef } from "react";
-
+import { TutorialCue } from "@/components/TutorialCue";
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import { useTouchTap } from "@/components/touch-tap";
 import {
   type TsumeShogiHand as TsumeShogiHandCounts,
@@ -9,7 +10,7 @@ import {
 import type { TsumeShogiRejection } from "@/games/tsume-shogi/session/session";
 import { TsumeShogiPieceGlyph } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph";
 import { tsumeShogiHandPieceNames } from "@/games/tsume-shogi/ui/piece-label";
-import { TsumeShogiKomadai } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiHand/TsumeShogiKomadai";
+import { TsumeShogiKomadai } from "@/games/tsume-shogi/ui/TsumeShogiHand/TsumeShogiKomadai";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { useRejectedPieceFeedback } from "@/games/tsume-shogi/ui/use-rejected-piece-feedback";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,13 @@ type TsumeShogiHandProps = {
   rejection: TsumeShogiRejection | null;
   /** 駒台と同じ行の、左の空きに置く操作。駒台には重ねない。 */
   leadingAction?: ReactNode;
+  /** チュートリアルで次に押す持駒の印。`recallId` は印の線を短く濃くし直す合図。本番では渡さない。 */
+  tutorialMark?: {
+    pieceType: TsumeShogiHandPieceType;
+    recallId: number | null;
+  } | null;
+  /** チュートリアルで手を引いている間、画面全体の覆いから抜く持駒。本番では渡さない。 */
+  spotlitPieceTypes?: readonly TsumeShogiHandPieceType[];
   onSelectHandPiece: (pieceType: TsumeShogiHandPieceType) => void;
 };
 
@@ -47,6 +55,8 @@ export function TsumeShogiHand({
   availability,
   rejection,
   leadingAction,
+  tutorialMark = null,
+  spotlitPieceTypes = [],
   onSelectHandPiece,
 }: TsumeShogiHandProps) {
   const { getTapHandlers } = useTouchTap();
@@ -117,6 +127,13 @@ export function TsumeShogiHand({
               >
                 {hand[type] > 1 ? hand[type] : null}
               </span>
+              <TutorialSpotlight
+                active={spotlitPieceTypes.includes(type)}
+                className="inset-0 rounded-[2px]"
+              />
+              {tutorialMark?.pieceType === type && (
+                <TutorialCue kind="mark" recallId={tutorialMark.recallId} />
+              )}
             </button>
           );
         })}
