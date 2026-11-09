@@ -5,9 +5,12 @@ import {
   useRef,
 } from "react";
 
+import { TutorialCue } from "@/components/TutorialCue";
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import { getTakuzuCellPosition } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
+import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/TakuzuBoard/violation-mark-timing";
 import { TakuzuCellFace } from "@/games/takuzu/ui/board/TakuzuCellFace";
 import { runViolationCellClassName } from "@/games/takuzu/ui/board/violation-mark-style";
@@ -20,6 +23,10 @@ type TakuzuCellProps = {
   /** このマスを含む行・列の違反の読み上げ名（例「行の個数超過」）。 */
   lineViolationNames: readonly string[];
   disabled: boolean;
+  /** 揺れの合図は盤面が掛けるので、マスは印と応えだけを描く。 */
+  cue: TakuzuCellCue | undefined;
+  /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜き、元の明るさで見せる。 */
+  spotlit: boolean;
   focusable: boolean;
   onElementChange: (
     cellIndex: number,
@@ -30,6 +37,9 @@ type TakuzuCellProps = {
 };
 
 const tileNameByCell = { a: "四角", b: "丸" } as const;
+
+/** 印と応えの線は、隣り合うマスの線と重ならないよう、マスの縁から少し内側に、角の立ったマスの形で引く。 */
+const cueOutlinePlacementClassName = "pointer-events-none absolute inset-1";
 
 function getAccessibleName(
   size: number,
@@ -53,6 +63,8 @@ export function TakuzuCell({
   view,
   lineViolationNames,
   disabled,
+  cue,
+  spotlit,
   focusable,
   onElementChange,
   onCycle,
@@ -106,13 +118,37 @@ export function TakuzuCell({
           runViolationCellClassName,
         )}
       />
+      {/* マスの形のまま、角の無い四角で覆いから抜く。 */}
+      <TutorialSpotlight active={spotlit} className="inset-0" />
+      {cue?.kind === "fitted" && (
+        <span
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className={cueOutlinePlacementClassName}
+        >
+          <TutorialCue kind="acknowledgement" id={cue.id} />
+        </span>
+      )}
+      {(cue?.kind === "hint" || cue?.kind === "recall") && (
+        <span
+          aria-hidden="true"
+          data-cell-cue="hint"
+          className={cueOutlinePlacementClassName}
+        >
+          <TutorialCue
+            kind="mark"
+            recallId={cue.kind === "recall" ? cue.id : null}
+          />
+        </span>
+      )}
       {/*
         固定マスを押したときの揺れと完成の波は、格子を崩さないよう中のタイルだけに掛ける。
         タイルは常に独立した合成レイヤーに置く。動くときだけレイヤーに上がると、後ろに描くマスがまとめて
         レイヤーに分け直され、ほかのタイルが小数ピクセルずれて描き直されるため、動きの始まりと終わりに盤面全体が揺れて見える。
+        固定か置いたものかは、チュートリアルの導入で置いたタイルだけを消して始めの盤面へ戻すのに使う。
       */}
       <span
-        data-takuzu-tile=""
+        data-takuzu-tile={view.given ? "given" : "placed"}
         data-clear-wave-step={row + column}
         className="relative size-[80%] will-change-transform"
       >
