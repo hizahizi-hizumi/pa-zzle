@@ -18,8 +18,8 @@ import { findArrowKeyDirection } from "@/games/hitofude-puzzle/ui/arrow-key-dire
 import { HitofudePuzzleBoard } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard";
 import { HitofudePuzzleHowToPlayDialog } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog";
 import { HitofudePuzzleStatusAnnouncement } from "@/games/hitofude-puzzle/ui/HitofudePuzzlePlay/HitofudePuzzleStatusAnnouncement";
-import { useHitofudePuzzleSoundEffects } from "@/games/hitofude-puzzle/ui/HitofudePuzzlePlay/use-hitofude-puzzle-sound-effects";
 import { HitofudePuzzleResultScreen } from "@/games/hitofude-puzzle/ui/result/HitofudePuzzleResultScreen";
+import { useHitofudePuzzleSoundEffects } from "@/games/hitofude-puzzle/ui/use-hitofude-puzzle-sound-effects";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,
