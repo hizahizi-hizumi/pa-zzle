@@ -5,7 +5,7 @@ description: >
   「コードレビューして」「変更をレビューして」「差分をレビューして」「このブランチをレビューして」
   「review my changes」「review this branch」「review the diff」と頼まれたときに使う。
 argument-hint: "[変更の意図]"
-allowed-tools: Bash(git fetch origin main), Bash(git merge-base origin/main HEAD), Bash(git rev-parse --short HEAD), Bash(git ls-files --others --exclude-standard), Bash(git add -N *), Bash(git diff --output=/tmp/review-changes/*), Bash(git diff --name-only --output=/tmp/review-changes/*), Bash(git log *), Bash(mkdir -p /tmp/review-changes/*)
+allowed-tools: Bash(git fetch origin main), Bash(git merge-base origin/main HEAD), Bash(git rev-parse --short HEAD), Bash(git ls-files --others --exclude-standard), Bash(git add -N *), Bash(git diff --output=/tmp/review-changes/*), Bash(git diff --name-only --output=/tmp/review-changes/*), Bash(git log --format=%B *), Bash(mkdir -p /tmp/review-changes/*)
 ---
 
 # review-changes
@@ -33,4 +33,4 @@ allowed-tools: Bash(git fetch origin main), Bash(git merge-base origin/main HEAD
    - 落とした指摘とその理由
    - 2 で `git add -N` したファイル（インデックスに intent-to-add として残っている）
    - 2つのエージェントの「ほかの気づき」（重なりはまとめる）
-9. 直すかはユーザーの指示を待つ
+9. 直すかは `CLAUDE.md` か呼び出した側の指示に従う。指示が無ければユーザーの指示を待つ
