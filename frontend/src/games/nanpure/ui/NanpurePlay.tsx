@@ -91,7 +91,7 @@ export function NanpurePlay({
       progress={progress}
       result={result}
       title={NANPURE_DISPLAY_NAME}
-      background={<div className="size-full bg-[#eee9e1] dark:bg-[#28251f]" />}
+      background={<div className="size-full bg-[#eae3ef] dark:bg-[#28251f]" />}
       metrics={[
         { type: "count", label: "ミス", count: mistakeCount },
         { type: "elapsed-time", elapsedMs },
