@@ -5,6 +5,7 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import pictogramSvg from "@/games/bridges/assets/pictogram.svg?raw";
+import pictogramShowcaseSvg from "@/games/bridges/assets/pictogram-showcase.svg?raw";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import {
   bridgesPlayRecordDefinition,
@@ -28,6 +29,7 @@ export const bridgesCatalogEntry = {
   id: bridgesPlayRecordDefinition.gameId,
   name: BRIDGES_DISPLAY_NAME,
   pictogramSvg,
+  pictogramShowcaseSvg,
   homePath: "/puzzles/bridges",
   playPath: "/puzzles/bridges/play/:difficulty",
   playRecordDisplay: bridgesPlayRecordDisplay,
