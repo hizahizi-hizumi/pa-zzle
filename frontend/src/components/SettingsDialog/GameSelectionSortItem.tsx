@@ -4,7 +4,6 @@ import { GripVertical } from "lucide-react";
 
 import type { GameCatalogOption } from "@/components/GameCatalogContext";
 import { GamePictogram } from "@/components/GamePictogram";
-import { Button } from "@/components/ui/button";
 import {
   MOTION_DURATION_MS,
   MOTION_EASING,
@@ -46,19 +45,17 @@ export function GameSelectionSortItem({
         </span>
       )}
       <span className="min-w-0 flex-1 truncate text-body">{game.name}</span>
-      <Button
+      <button
         ref={handleRef}
         type="button"
-        variant="ghost"
-        size="icon-lg"
         data-sort-handle=""
         data-game-id={game.id}
         aria-label={`${game.name}を並び替え`}
         aria-describedby="game-order-help"
-        className="size-11 cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+        className="inline-flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 active:cursor-grabbing"
       >
-        <GripVertical className="size-5" />
-      </Button>
+        <GripVertical className="pointer-events-none size-5 shrink-0" />
+      </button>
     </div>
   );
 }

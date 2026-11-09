@@ -157,12 +157,11 @@ export function SettingsDialog({
           {panel === "settings" && (
             <nav aria-label="設定項目" className="divide-y divide-border">
               {settingEntries.map(({ id, summary }) => (
-                <Button
+                <button
                   key={id}
                   type="button"
-                  variant="ghost"
                   onClick={() => setPanel(id)}
-                  className="h-auto min-h-18 w-full justify-start gap-3 rounded-sm px-2 py-3 text-left hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-inset"
+                  className="flex min-h-18 w-full items-center gap-3 rounded-sm px-2 py-3 text-left transition-colors hover:bg-accent/50 hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 >
                   <span className="grid min-w-0 flex-1 gap-1">
                     <span className="text-body font-medium">
@@ -173,7 +172,7 @@ export function SettingsDialog({
                     </span>
                   </span>
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                </Button>
+                </button>
               ))}
             </nav>
           )}
