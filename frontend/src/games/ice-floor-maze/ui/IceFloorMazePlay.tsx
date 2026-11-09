@@ -14,10 +14,11 @@ import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules"
 import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
-import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeSwipeArea";
 import { IceFloorMazeTrappedNotice } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeTrappedNotice";
-import { useIceFloorMazeSoundEffects } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/use-ice-floor-maze-sound-effects";
+import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazeSwipeArea";
+import { IceFloorMazeTutorial } from "@/games/ice-floor-maze/ui/IceFloorMazeTutorial";
 import { IceFloorMazeResultScreen } from "@/games/ice-floor-maze/ui/result/IceFloorMazeResultScreen";
+import { useIceFloorMazeSoundEffects } from "@/games/ice-floor-maze/ui/use-ice-floor-maze-sound-effects";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,
@@ -142,6 +143,9 @@ export function IceFloorMazePlay({
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <IceFloorMazeHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderTutorial={({ open, onClose }) => (
+        <IceFloorMazeTutorial open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <IceFloorMazeResultScreen

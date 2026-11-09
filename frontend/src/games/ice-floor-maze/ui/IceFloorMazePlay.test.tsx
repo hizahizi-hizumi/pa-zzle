@@ -313,6 +313,20 @@ describe("IceFloorMazePlay", () => {
       expect(dialog.getByText(/盤面をスワイプして/)).toBeTruthy();
       expect(dialog.queryByText(/スライド|矢印ボタン/)).toBeNull();
     });
+    test("メニューの チュートリアル で、1枚の盤面を解きながら学ぶチュートリアルを開くこと", () => {
+      fireEvent.pointerDown(
+        screen.getByRole("button", { name: "その他の操作" }),
+        { button: 0, ctrlKey: false },
+      );
+      fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+
+      const dialog = screen.getByRole("dialog", {
+        name: "アイスフロア迷路",
+        description: "チュートリアル",
+      });
+
+      expect(dialog).toBeTruthy();
+    });
   });
 
   describe("もうゴールに止まれないことを知らせる場合", () => {
