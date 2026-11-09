@@ -585,9 +585,10 @@
                       "@/games/hitofude-puzzle/problem/**",
                       "@/games/hitofude-puzzle/session/**",
                       "@/games/hitofude-puzzle/play/**",
+                      "@/games/hitofude-puzzle/tutorial/**",
                       "@/games/hitofude-puzzle/ui/**"
                     ],
-                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -638,9 +639,10 @@
                     "group": [
                       "@/games/hitofude-puzzle/session/**",
                       "@/games/hitofude-puzzle/play/**",
+                      "@/games/hitofude-puzzle/tutorial/**",
                       "@/games/hitofude-puzzle/ui/**"
                     ],
-                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -693,12 +695,71 @@
                       "@/games/hitofude-puzzle/difficulty",
                       "@/games/hitofude-puzzle/score",
                       "@/games/hitofude-puzzle/play/**",
+                      "@/games/hitofude-puzzle/tutorial/**",
                       "@/games/hitofude-puzzle/ui/**",
                       "@/games/hitofude-puzzle/play-record",
                       "@/records/**",
                       "react*"
                     ],
-                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/hitofude-puzzle/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/problem/generation/**",
+                      "@/games/hitofude-puzzle/difficulty",
+                      "@/games/hitofude-puzzle/score",
+                      "@/games/hitofude-puzzle/play/**",
+                      "@/games/hitofude-puzzle/ui/**",
+                      "@/games/hitofude-puzzle/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
               }
@@ -748,11 +809,12 @@
                   {
                     "group": [
                       "@/games/hitofude-puzzle/ui/**",
+                      "@/games/hitofude-puzzle/tutorial/**",
                       "@/games/hitofude-puzzle/problem/generation/**",
                       "@/games/hitofude-puzzle/play-record",
                       "@/games/hitofude-puzzle/diagnostics"
                     ],
-                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
               }
@@ -895,9 +957,10 @@
                       "@/games/ice-floor-maze/problem/**",
                       "@/games/ice-floor-maze/session/**",
                       "@/games/ice-floor-maze/play/**",
+                      "@/games/ice-floor-maze/tutorial/**",
                       "@/games/ice-floor-maze/ui/**"
                     ],
-                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -948,9 +1011,10 @@
                     "group": [
                       "@/games/ice-floor-maze/session/**",
                       "@/games/ice-floor-maze/play/**",
+                      "@/games/ice-floor-maze/tutorial/**",
                       "@/games/ice-floor-maze/ui/**"
                     ],
-                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -1003,12 +1067,71 @@
                       "@/games/ice-floor-maze/difficulty",
                       "@/games/ice-floor-maze/score",
                       "@/games/ice-floor-maze/play/**",
+                      "@/games/ice-floor-maze/tutorial/**",
                       "@/games/ice-floor-maze/ui/**",
                       "@/games/ice-floor-maze/play-record",
                       "@/records/**",
                       "react*"
                     ],
-                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/ice-floor-maze/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/ice-floor-maze/problem/generation/**",
+                      "@/games/ice-floor-maze/difficulty",
+                      "@/games/ice-floor-maze/score",
+                      "@/games/ice-floor-maze/play/**",
+                      "@/games/ice-floor-maze/ui/**",
+                      "@/games/ice-floor-maze/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
               }
@@ -1058,11 +1181,12 @@
                   {
                     "group": [
                       "@/games/ice-floor-maze/ui/**",
+                      "@/games/ice-floor-maze/tutorial/**",
                       "@/games/ice-floor-maze/problem/generation/**",
                       "@/games/ice-floor-maze/play-record",
                       "@/games/ice-floor-maze/diagnostics"
                     ],
-                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
               }
@@ -1205,9 +1329,10 @@
                       "@/games/minesweeper/problem/**",
                       "@/games/minesweeper/session/**",
                       "@/games/minesweeper/play/**",
+                      "@/games/minesweeper/tutorial/**",
                       "@/games/minesweeper/ui/**"
                     ],
-                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -1258,9 +1383,10 @@
                     "group": [
                       "@/games/minesweeper/session/**",
                       "@/games/minesweeper/play/**",
+                      "@/games/minesweeper/tutorial/**",
                       "@/games/minesweeper/ui/**"
                     ],
-                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -1313,12 +1439,71 @@
                       "@/games/minesweeper/difficulty",
                       "@/games/minesweeper/score",
                       "@/games/minesweeper/play/**",
+                      "@/games/minesweeper/tutorial/**",
                       "@/games/minesweeper/ui/**",
                       "@/games/minesweeper/play-record",
                       "@/records/**",
                       "react*"
                     ],
-                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/minesweeper/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/problem/generation/**",
+                      "@/games/minesweeper/difficulty",
+                      "@/games/minesweeper/score",
+                      "@/games/minesweeper/play/**",
+                      "@/games/minesweeper/ui/**",
+                      "@/games/minesweeper/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
               }
@@ -1368,11 +1553,12 @@
                   {
                     "group": [
                       "@/games/minesweeper/ui/**",
+                      "@/games/minesweeper/tutorial/**",
                       "@/games/minesweeper/problem/generation/**",
                       "@/games/minesweeper/play-record",
                       "@/games/minesweeper/diagnostics"
                     ],
-                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
               }
@@ -1515,9 +1701,10 @@
                       "@/games/nanpure/problem/**",
                       "@/games/nanpure/session/**",
                       "@/games/nanpure/play/**",
+                      "@/games/nanpure/tutorial/**",
                       "@/games/nanpure/ui/**"
                     ],
-                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -1568,9 +1755,10 @@
                     "group": [
                       "@/games/nanpure/session/**",
                       "@/games/nanpure/play/**",
+                      "@/games/nanpure/tutorial/**",
                       "@/games/nanpure/ui/**"
                     ],
-                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -1623,12 +1811,71 @@
                       "@/games/nanpure/difficulty",
                       "@/games/nanpure/score",
                       "@/games/nanpure/play/**",
+                      "@/games/nanpure/tutorial/**",
                       "@/games/nanpure/ui/**",
                       "@/games/nanpure/play-record",
                       "@/records/**",
                       "react*"
                     ],
-                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/nanpure/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/nanpure/problem/generation/**",
+                      "@/games/nanpure/difficulty",
+                      "@/games/nanpure/score",
+                      "@/games/nanpure/play/**",
+                      "@/games/nanpure/ui/**",
+                      "@/games/nanpure/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
               }
@@ -1678,11 +1925,12 @@
                   {
                     "group": [
                       "@/games/nanpure/ui/**",
+                      "@/games/nanpure/tutorial/**",
                       "@/games/nanpure/problem/generation/**",
                       "@/games/nanpure/play-record",
                       "@/games/nanpure/diagnostics"
                     ],
-                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
               }
@@ -1825,9 +2073,10 @@
                       "@/games/parking-jam/problem/**",
                       "@/games/parking-jam/session/**",
                       "@/games/parking-jam/play/**",
+                      "@/games/parking-jam/tutorial/**",
                       "@/games/parking-jam/ui/**"
                     ],
-                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -1878,9 +2127,10 @@
                     "group": [
                       "@/games/parking-jam/session/**",
                       "@/games/parking-jam/play/**",
+                      "@/games/parking-jam/tutorial/**",
                       "@/games/parking-jam/ui/**"
                     ],
-                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -1933,12 +2183,71 @@
                       "@/games/parking-jam/difficulty",
                       "@/games/parking-jam/score",
                       "@/games/parking-jam/play/**",
+                      "@/games/parking-jam/tutorial/**",
                       "@/games/parking-jam/ui/**",
                       "@/games/parking-jam/play-record",
                       "@/records/**",
                       "react*"
                     ],
-                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/parking-jam/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/parking-jam/problem/generation/**",
+                      "@/games/parking-jam/difficulty",
+                      "@/games/parking-jam/score",
+                      "@/games/parking-jam/play/**",
+                      "@/games/parking-jam/ui/**",
+                      "@/games/parking-jam/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
               }
@@ -1988,11 +2297,12 @@
                   {
                     "group": [
                       "@/games/parking-jam/ui/**",
+                      "@/games/parking-jam/tutorial/**",
                       "@/games/parking-jam/problem/generation/**",
                       "@/games/parking-jam/play-record",
                       "@/games/parking-jam/diagnostics"
                     ],
-                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
               }
@@ -2135,9 +2445,10 @@
                       "@/games/reflection/problem/**",
                       "@/games/reflection/session/**",
                       "@/games/reflection/play/**",
+                      "@/games/reflection/tutorial/**",
                       "@/games/reflection/ui/**"
                     ],
-                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -2188,9 +2499,10 @@
                     "group": [
                       "@/games/reflection/session/**",
                       "@/games/reflection/play/**",
+                      "@/games/reflection/tutorial/**",
                       "@/games/reflection/ui/**"
                     ],
-                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -2243,12 +2555,71 @@
                       "@/games/reflection/difficulty",
                       "@/games/reflection/score",
                       "@/games/reflection/play/**",
+                      "@/games/reflection/tutorial/**",
                       "@/games/reflection/ui/**",
                       "@/games/reflection/play-record",
                       "@/records/**",
                       "react*"
                     ],
-                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/reflection/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/reflection/problem/generation/**",
+                      "@/games/reflection/difficulty",
+                      "@/games/reflection/score",
+                      "@/games/reflection/play/**",
+                      "@/games/reflection/ui/**",
+                      "@/games/reflection/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
               }
@@ -2298,11 +2669,12 @@
                   {
                     "group": [
                       "@/games/reflection/ui/**",
+                      "@/games/reflection/tutorial/**",
                       "@/games/reflection/problem/generation/**",
                       "@/games/reflection/play-record",
                       "@/games/reflection/diagnostics"
                     ],
-                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
               }
@@ -2445,9 +2817,10 @@
                       "@/games/slide-puzzle/problem/**",
                       "@/games/slide-puzzle/session/**",
                       "@/games/slide-puzzle/play/**",
+                      "@/games/slide-puzzle/tutorial/**",
                       "@/games/slide-puzzle/ui/**"
                     ],
-                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -2498,9 +2871,10 @@
                     "group": [
                       "@/games/slide-puzzle/session/**",
                       "@/games/slide-puzzle/play/**",
+                      "@/games/slide-puzzle/tutorial/**",
                       "@/games/slide-puzzle/ui/**"
                     ],
-                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -2553,12 +2927,71 @@
                       "@/games/slide-puzzle/difficulty",
                       "@/games/slide-puzzle/score",
                       "@/games/slide-puzzle/play/**",
+                      "@/games/slide-puzzle/tutorial/**",
                       "@/games/slide-puzzle/ui/**",
                       "@/games/slide-puzzle/play-record",
                       "@/records/**",
                       "react*"
                     ],
-                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/slide-puzzle/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/slide-puzzle/problem/generation/**",
+                      "@/games/slide-puzzle/difficulty",
+                      "@/games/slide-puzzle/score",
+                      "@/games/slide-puzzle/play/**",
+                      "@/games/slide-puzzle/ui/**",
+                      "@/games/slide-puzzle/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
               }
@@ -2608,11 +3041,12 @@
                   {
                     "group": [
                       "@/games/slide-puzzle/ui/**",
+                      "@/games/slide-puzzle/tutorial/**",
                       "@/games/slide-puzzle/problem/generation/**",
                       "@/games/slide-puzzle/play-record",
                       "@/games/slide-puzzle/diagnostics"
                     ],
-                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
               }
@@ -2755,9 +3189,10 @@
                       "@/games/takuzu/problem/**",
                       "@/games/takuzu/session/**",
                       "@/games/takuzu/play/**",
+                      "@/games/takuzu/tutorial/**",
                       "@/games/takuzu/ui/**"
                     ],
-                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -2808,9 +3243,10 @@
                     "group": [
                       "@/games/takuzu/session/**",
                       "@/games/takuzu/play/**",
+                      "@/games/takuzu/tutorial/**",
                       "@/games/takuzu/ui/**"
                     ],
-                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -2863,12 +3299,71 @@
                       "@/games/takuzu/difficulty",
                       "@/games/takuzu/score",
                       "@/games/takuzu/play/**",
+                      "@/games/takuzu/tutorial/**",
                       "@/games/takuzu/ui/**",
                       "@/games/takuzu/play-record",
                       "@/records/**",
                       "react*"
                     ],
-                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/takuzu/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/takuzu/problem/generation/**",
+                      "@/games/takuzu/difficulty",
+                      "@/games/takuzu/score",
+                      "@/games/takuzu/play/**",
+                      "@/games/takuzu/ui/**",
+                      "@/games/takuzu/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
               }
@@ -2918,11 +3413,12 @@
                   {
                     "group": [
                       "@/games/takuzu/ui/**",
+                      "@/games/takuzu/tutorial/**",
                       "@/games/takuzu/problem/generation/**",
                       "@/games/takuzu/play-record",
                       "@/games/takuzu/diagnostics"
                     ],
-                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
               }
@@ -3065,9 +3561,10 @@
                       "@/games/tsume-shogi/problem/**",
                       "@/games/tsume-shogi/session/**",
                       "@/games/tsume-shogi/play/**",
+                      "@/games/tsume-shogi/tutorial/**",
                       "@/games/tsume-shogi/ui/**"
                     ],
-                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -3118,9 +3615,10 @@
                     "group": [
                       "@/games/tsume-shogi/session/**",
                       "@/games/tsume-shogi/play/**",
+                      "@/games/tsume-shogi/tutorial/**",
                       "@/games/tsume-shogi/ui/**"
                     ],
-                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -3173,12 +3671,71 @@
                       "@/games/tsume-shogi/difficulty",
                       "@/games/tsume-shogi/score",
                       "@/games/tsume-shogi/play/**",
+                      "@/games/tsume-shogi/tutorial/**",
                       "@/games/tsume-shogi/ui/**",
                       "@/games/tsume-shogi/play-record",
                       "@/records/**",
                       "react*"
                     ],
-                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/tsume-shogi/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/tsume-shogi/problem/generation/**",
+                      "@/games/tsume-shogi/difficulty",
+                      "@/games/tsume-shogi/score",
+                      "@/games/tsume-shogi/play/**",
+                      "@/games/tsume-shogi/ui/**",
+                      "@/games/tsume-shogi/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
               }
@@ -3228,11 +3785,12 @@
                   {
                     "group": [
                       "@/games/tsume-shogi/ui/**",
+                      "@/games/tsume-shogi/tutorial/**",
                       "@/games/tsume-shogi/problem/generation/**",
                       "@/games/tsume-shogi/play-record",
                       "@/games/tsume-shogi/diagnostics"
                     ],
-                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
               }
@@ -3375,9 +3933,10 @@
                       "@/games/water-sort/problem/**",
                       "@/games/water-sort/session/**",
                       "@/games/water-sort/play/**",
+                      "@/games/water-sort/tutorial/**",
                       "@/games/water-sort/ui/**"
                     ],
-                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -3428,9 +3987,10 @@
                     "group": [
                       "@/games/water-sort/session/**",
                       "@/games/water-sort/play/**",
+                      "@/games/water-sort/tutorial/**",
                       "@/games/water-sort/ui/**"
                     ],
-                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
                   }
                 ]
               }
@@ -3483,12 +4043,71 @@
                       "@/games/water-sort/difficulty",
                       "@/games/water-sort/score",
                       "@/games/water-sort/play/**",
+                      "@/games/water-sort/tutorial/**",
                       "@/games/water-sort/ui/**",
                       "@/games/water-sort/play-record",
                       "@/records/**",
                       "react*"
                     ],
-                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/water-sort/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/water-sort/problem/generation/**",
+                      "@/games/water-sort/difficulty",
+                      "@/games/water-sort/score",
+                      "@/games/water-sort/play/**",
+                      "@/games/water-sort/ui/**",
+                      "@/games/water-sort/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
               }
@@ -3538,11 +4157,12 @@
                   {
                     "group": [
                       "@/games/water-sort/ui/**",
+                      "@/games/water-sort/tutorial/**",
                       "@/games/water-sort/problem/generation/**",
                       "@/games/water-sort/play-record",
                       "@/games/water-sort/diagnostics"
                     ],
-                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
               }

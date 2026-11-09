@@ -314,10 +314,11 @@ function createConcreteGameOverrides(
           gameImport("problem/**"),
           gameImport("session/**"),
           gameImport("play/**"),
+          gameImport("tutorial/**"),
           gameImport("ui/**"),
         ],
         message:
-          "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。",
+          "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。",
       },
     ]),
     restrictImports(gameFiles("problem/**/*.{ts,tsx}"), [
@@ -326,13 +327,32 @@ function createConcreteGameOverrides(
         group: [
           gameImport("session/**"),
           gameImport("play/**"),
+          gameImport("tutorial/**"),
           gameImport("ui/**"),
         ],
         message:
-          "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。",
+          "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。",
       },
     ]),
     restrictImports(gameFiles("session/**/*.{ts,tsx}"), [
+      ...boundary,
+      {
+        group: [
+          gameImport("problem/generation/**"),
+          gameImport("difficulty"),
+          gameImport("score"),
+          gameImport("play/**"),
+          gameImport("tutorial/**"),
+          gameImport("ui/**"),
+          gameImport("play-record"),
+          "@/records/**",
+          "react*",
+        ],
+        message:
+          "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。",
+      },
+    ]),
+    restrictImports(gameFiles("tutorial/**/*.{ts,tsx}"), [
       ...boundary,
       {
         group: [
@@ -346,7 +366,7 @@ function createConcreteGameOverrides(
           "react*",
         ],
         message:
-          "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。",
+          "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。",
       },
     ]),
     restrictImports(gameFiles("play/**/*.{ts,tsx}"), [
@@ -354,12 +374,13 @@ function createConcreteGameOverrides(
       {
         group: [
           gameImport("ui/**"),
+          gameImport("tutorial/**"),
           gameImport("problem/generation/**"),
           gameImport("play-record"),
           gameImport("diagnostics"),
         ],
         message:
-          "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。",
+          "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。",
       },
     ]),
   ];
