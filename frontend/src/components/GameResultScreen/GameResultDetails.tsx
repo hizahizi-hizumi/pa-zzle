@@ -62,7 +62,7 @@ export function GameResultDetails({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button variant="quiet" size="context">
           採点内訳
         </Button>
       </DialogTrigger>

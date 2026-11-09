@@ -11,9 +11,8 @@
   min-height: 0;
   margin: 0 auto;
   overflow: hidden;
-  padding: 9px max(22px, env(safe-area-inset-left))
-    max(12px, env(safe-area-inset-bottom)) 9px
-    max(22px, env(safe-area-inset-right));
+  padding: 9px max(22px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left));
   color: var(--foreground);
 
   --result-motion-score-progress: 1250ms 400ms var(--ease-celebrate);
