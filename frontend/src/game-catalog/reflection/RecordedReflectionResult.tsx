@@ -4,7 +4,6 @@ import {
 } from "@/game-catalog/recorded-game-result";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
-import { reflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import type { ReflectionResult } from "@/games/reflection/play/use-reflection-play";
 import type { ReflectionProblemIdentity } from "@/games/reflection/problem/problem";
 import { restoreReflectionProblem } from "@/games/reflection/problem-selection";
@@ -37,10 +36,7 @@ export function RecordedReflectionResult(props: RecordedReflectionResultProps) {
 
   return (
     <>
-      <ReflectionResultScreen
-        {...screenProps}
-        laserPathMode={reflectionLaserPathMode}
-      />
+      <ReflectionResultScreen {...screenProps} />
       {diagnostics.snapshot && (
         <ReflectionDiagnostics
           snapshot={diagnostics.snapshot}

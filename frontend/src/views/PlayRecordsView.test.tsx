@@ -11,6 +11,10 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import { createProblemId } from "@/games/problem-id";
+import {
+  gameSelectionOrderSetting,
+  _private as orderPrivate,
+} from "@/lib/game-selection-order-setting";
 import type { PlayAttempt } from "@/records/play-attempt";
 import {
   abandonPlayAttempt,
@@ -72,6 +76,7 @@ function renderRecords(
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  orderPrivate.resetCache();
 });
 
 function getRow(name: RegExp): HTMLElement {
@@ -85,17 +90,173 @@ function getRow(name: RegExp): HTMLElement {
   );
 }
 
+const now = new Date();
+const completedAt = new Date(
+  now.getFullYear(),
+  now.getMonth() - 8,
+  7,
+).getTime();
+const historical = createMinesweeperPlayRecord({
+  difficulty: "1",
+  problemIdentity: minesweeperProblem.identity,
+  startedAt: completedAt - 120_000,
+  completedAt,
+  result: { elapsedMs: 120_000, mistakeCount: 0, minimumOpenCount: 10 },
+});
+
 describe("PlayRecordsView", () => {
-  test("初回はコレクションを主表示とし、履歴も切り替えられること", () => {
-    renderRecords([]);
-    expect(
-      screen.getByRole("heading", { name: "自分のパズルの風景" }),
-    ).toBeTruthy();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "プレイ履歴" }), {
-      button: 0,
-      ctrlKey: false,
+  describe("記録が空の場合", () => {
+    beforeEach(() => {
+      renderRecords([]);
     });
-    expect(screen.getByText("まだ記録がありません")).toBeTruthy();
+
+    test("初回はコレクションを主表示とし、履歴も切り替えられること", () => {
+      expect(screen.getByText("問", { exact: true })).toBeTruthy();
+      fireEvent.mouseDown(screen.getByRole("tab", { name: "プレイ履歴" }), {
+        button: 0,
+        ctrlKey: false,
+      });
+      expect(screen.getByText("まだ記録がありません")).toBeTruthy();
+    });
+    test("設定の並び替えを積み上げと時間表に即時反映すること", () => {
+      const timeline = screen.getByRole("region", {
+        name: "時間ごとの積み重ね",
+      });
+      const before = screen.getByRole("group", {
+        name: "パズルの積み上げ",
+      });
+
+      act(() =>
+        gameSelectionOrderSetting.setOrder([
+          "nanpure",
+          "minesweeper",
+          "water-sort",
+        ]),
+      );
+      const orderedTowers = within(
+        screen.getByRole("group", { name: "パズルの積み上げ" }),
+      ).getAllByRole("button", {
+        name: /内訳を見る/,
+      });
+      fireEvent.click(
+        within(timeline).getByRole("button", { name: "全ゲームを見る" }),
+      );
+      const orderedTimeline = within(timeline).getAllByRole("button", {
+        name: /を選択/,
+      });
+
+      expect(screen.getByRole("group", { name: "パズルの積み上げ" })).toBe(
+        before,
+      );
+      expect(orderedTowers[0]?.getAttribute("aria-label")).toContain(
+        "ナンプレ",
+      );
+      expect(orderedTowers[1]?.getAttribute("aria-label")).toContain(
+        "マインスイーパー",
+      );
+      expect(orderedTowers[2]?.getAttribute("aria-label")).toContain(
+        "ウォーターソート",
+      );
+      expect(orderedTimeline[0]?.getAttribute("aria-label")).toContain(
+        "ナンプレ",
+      );
+      expect(orderedTowers).toHaveLength(10);
+    });
+    test("実際のパズルを選ぶと近くの内訳とゲームへの導線が変わること", () => {
+      const towers = screen.getByRole("group", { name: "パズルの積み上げ" });
+      fireEvent.click(
+        within(towers).getByRole("button", { name: /ナンプレ .*内訳を見る/ }),
+      );
+
+      const breakdown = screen.getByRole("region", { name: "ナンプレの内訳" });
+      expect(within(breakdown).getByText("ナンプレ")).toBeTruthy();
+      expect(
+        within(breakdown).getByRole("link", { name: /ゲームへ/ }),
+      ).toBeTruthy();
+    });
+    test("レベル別の集計は必要なときだけ開けること", () => {
+      const breakdown = screen.getByRole("region", {
+        name: "ウォーターソートの内訳",
+      });
+      const toggle = within(breakdown).getByRole("button", {
+        name: "レベル別",
+      });
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+      expect(
+        within(breakdown).queryByRole("img", { name: /レベル1:/ }),
+      ).toBeNull();
+
+      fireEvent.click(toggle);
+
+      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+      expect(
+        within(breakdown).getByRole("img", { name: /レベル1:/ }),
+      ).toBeTruthy();
+    });
+  });
+
+  describe("過去のクリア記録がある場合", () => {
+    beforeEach(() => {
+      renderRecords([historical]);
+    });
+
+    test("履歴のある月へ戻ると積み上げと内訳がその時点の数値に変わること", () => {
+      const timeline = screen.getByRole("region", {
+        name: "時間ごとの積み重ね",
+      });
+      const selectedPeriod = within(timeline).getByRole("region", {
+        name: "選択中の期間とゲームの記録",
+      });
+      fireEvent.click(
+        within(timeline).getByRole("button", { name: "前の6か月" }),
+      );
+      fireEvent.click(
+        within(timeline).getByRole("button", { name: "全ゲームを見る" }),
+      );
+      const earlier = within(timeline).getAllByRole("button", {
+        name: /マインスイーパー \d{4}年\d{1,2}月: 初クリア/,
+      });
+
+      fireEvent.click(earlier[0] as HTMLElement);
+
+      expect(
+        within(selectedPeriod).getByText(/マインスイーパー · \d{4}年\d{1,2}月/),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("region", { name: "マインスイーパーの内訳" }),
+      ).toBeTruthy();
+      expect(within(selectedPeriod).getByText(/初クリア/)).toBeTruthy();
+      fireEvent.click(within(timeline).getByRole("button", { name: "最新へ" }));
+
+      expect(
+        within(selectedPeriod).getByText(
+          `マインスイーパー · ${now.getFullYear()}年${now.getMonth() + 1}月`,
+        ),
+      ).toBeTruthy();
+    });
+  });
+
+  describe("クリア済みの記録がある場合", () => {
+    beforeEach(() => {
+      renderRecords([minesweeperRecord]);
+    });
+
+    test("保存されたクリア履歴から実際のコレクション件数を表示すること", () => {
+      const towers = screen.getByRole("group", { name: "パズルの積み上げ" });
+      fireEvent.click(
+        within(towers).getByRole("button", {
+          name: /マインスイーパー .*内訳を見る/,
+        }),
+      );
+
+      const breakdown = screen.getByRole("region", {
+        name: "マインスイーパーの内訳",
+      });
+      expect(within(breakdown).getByText("1問")).toBeTruthy();
+      expect(
+        within(towers).getByRole("button", { name: /マインスイーパー 1問/ }),
+      ).toBeTruthy();
+    });
   });
 
   describe("結果画面を描ける記録の場合", () => {

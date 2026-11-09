@@ -105,7 +105,6 @@ describe("ReflectionPlay", () => {
 
   const baseProps: ComponentProps<typeof ReflectionPlay> = {
     difficulty: "1",
-    laserPathMode: "assist",
     progress: "playing",
     board: emptyBoard,
     clues,
@@ -141,38 +140,26 @@ describe("ReflectionPlay", () => {
       fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
     }
 
-    describe("光路表示を補助として扱う場合", () => {
-      beforeEach(() => {
-        renderPlay({});
-        openHowToPlay();
-      });
-
-      test("光路表示を補助として説明すること", () => {
-        const dialog = screen.getByRole("dialog", { name: "遊び方" });
-
-        expect(
-          within(dialog).getByText(/補助。使った回数は記録に残る/),
-        ).toBeTruthy();
-      });
-
-      test("閉じてもプレイを測り直さないこと", () => {
-        fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
-
-        expect(callbacks.onReplay).not.toHaveBeenCalled();
-      });
+    beforeEach(() => {
+      renderPlay({});
+      openHowToPlay();
     });
 
-    describe("光路表示を通常の操作として扱う場合", () => {
-      beforeEach(() => {
-        renderPlay({ laserPathMode: "normal" });
-        openHowToPlay();
-      });
+    test("光路を表示する操作と用途を説明すること", () => {
+      const dialog = screen.getByRole("dialog", { name: "遊び方" });
 
-      test("遊び方で補助と説明しないこと", () => {
-        const dialog = screen.getByRole("dialog", { name: "遊び方" });
+      expect(
+        within(dialog).getByText(
+          /外周の数字を押すと、今の配置での光の道筋を線で表示し/,
+        ),
+      ).toBeTruthy();
+      expect(within(dialog).queryByText(/補助/)).toBeNull();
+    });
 
-        expect(within(dialog).queryByText(/補助/)).toBeNull();
-      });
+    test("閉じてもプレイを測り直さないこと", () => {
+      fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+
+      expect(callbacks.onReplay).not.toHaveBeenCalled();
     });
   });
 
@@ -569,21 +556,6 @@ describe("ReflectionPlay", () => {
             "置き直し・「盤面を戻す」・光路を確かめた回数は点に入らない。置いて確かめ、動かして直しても減点しない。",
           );
         });
-      });
-    });
-
-    describe("光路表示を通常の操作として扱う場合", () => {
-      beforeEach(() => {
-        renderResult({ laserPathMode: "normal" });
-        fireEvent.click(
-          screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
-        );
-      });
-
-      test("光路を確かめた回数を出さないこと", () => {
-        const term = screen.queryByText("光路の確認");
-
-        expect(term).toBeNull();
       });
     });
 

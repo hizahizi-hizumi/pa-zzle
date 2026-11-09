@@ -1,8 +1,4 @@
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
-import {
-  getReflectionLaserPathPolicy,
-  type ReflectionLaserPathMode,
-} from "@/games/reflection/laser-path-mode";
 import type { ReflectionPiece } from "@/games/reflection/puzzle/board";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionOutcomeLabels } from "@/games/reflection/ui/outcome-label";
@@ -11,7 +7,6 @@ import { HowToPlayFigure } from "@/games/reflection/ui/ReflectionHowToPlayDialog
 
 type ReflectionHowToPlayDialogProps = {
   open: boolean;
-  laserPathMode: ReflectionLaserPathMode;
   onClose: () => void;
 };
 
@@ -44,15 +39,11 @@ const leftMiddle = { side: "left", index: 1 } as const;
 
 /**
  * ルールと操作を、盤面と同じ形・色の小さな図と短い一文で示す。
- * 光路表示の説明は光路表示の扱いに合わせる。
  */
 export function ReflectionHowToPlayDialog({
   open,
-  laserPathMode,
   onClose,
 }: ReflectionHowToPlayDialogProps) {
-  const { describedAsAssist } = getReflectionLaserPathPolicy(laserPathMode);
-
   return (
     <HowToPlayDialog
       open={open}
@@ -121,7 +112,6 @@ export function ReflectionHowToPlayDialog({
       <li>
         <p>
           外周の数字を押すと、今の配置での光の道筋を線で表示し、今の光が通るマスの数を、合っていないときだけ数字のそばに示す。合わない理由を探すときに使う。
-          {describedAsAssist ? "（補助。使った回数は記録に残る）" : null}
         </p>
       </li>
       <li className="hidden pointer-fine:list-item">
