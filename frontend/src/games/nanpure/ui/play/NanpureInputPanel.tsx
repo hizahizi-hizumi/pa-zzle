@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 
 type NanpureInputPanelProps = {
   notesMode: boolean;
+  digitFirst?: boolean;
+  selectedDigit?: NanpureDigit | null;
   interactionEnabled: boolean;
   selectedIsEditable: boolean;
   selectedHasAnswer: boolean;
@@ -23,6 +25,8 @@ type NanpureInputPanelProps = {
 
 export function NanpureInputPanel({
   notesMode,
+  digitFirst = false,
+  selectedDigit = null,
   interactionEnabled,
   selectedIsEditable,
   selectedHasAnswer,
@@ -41,7 +45,7 @@ export function NanpureInputPanel({
     (!notesMode || !selectedHasAnswer);
 
   return (
-    <footer className="shrink-0 px-3 pb-3 pt-2">
+    <footer className="shrink-0 px-3 pb-3 pt-2 lg:w-[22rem] lg:px-0 lg:py-0">
       <div className="mx-auto grid w-full max-w-xl gap-3">
         <div className="grid grid-cols-3">
           <PlayActionButton
@@ -79,9 +83,17 @@ export function NanpureInputPanel({
                 notesMode
                   ? "font-medium text-violet-400/75 dark:text-violet-400/70"
                   : "font-medium text-violet-600 dark:text-violet-300",
+                digitFirst &&
+                  selectedDigit === digit &&
+                  "bg-violet-200/70 ring-2 ring-inset ring-violet-500 dark:bg-violet-800/50",
               )}
+              aria-pressed={digitFirst ? selectedDigit === digit : undefined}
               onClick={() => onInputDigit(digit)}
-              disabled={!canEnterDigit || completedDigitSet.has(digit)}
+              disabled={
+                (!digitFirst && !canEnterDigit) ||
+                !interactionEnabled ||
+                completedDigitSet.has(digit)
+              }
             >
               {digit}
             </button>

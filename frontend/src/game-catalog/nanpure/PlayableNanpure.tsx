@@ -18,11 +18,13 @@ type PlayableNanpureProps = {
   difficulty: NanpureDifficulty;
   /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
   avoidedProblemId?: ProblemId;
+  compareExperiences?: boolean;
 };
 
 export function PlayableNanpure({
   difficulty,
   avoidedProblemId,
+  compareExperiences = false,
 }: PlayableNanpureProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectNanpureProblemById(difficulty, problemId),
@@ -46,6 +48,7 @@ export function PlayableNanpure({
   return (
     <>
       <NanpurePlay
+        compareExperiences={compareExperiences}
         {...screenProps}
         clues={play.clues}
         board={play.board}
@@ -61,6 +64,7 @@ export function PlayableNanpure({
         canUndo={play.canUndo}
         onSelectCell={play.selectCell}
         onInputDigit={play.inputDigit}
+        onInputDigitAt={play.inputDigitAt}
         onErase={play.erase}
         onToggleNotesMode={play.toggleNotesMode}
         onUndo={play.undo}

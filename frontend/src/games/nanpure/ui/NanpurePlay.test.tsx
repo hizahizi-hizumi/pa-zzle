@@ -464,3 +464,104 @@ describe("NanpurePlay", () => {
     });
   });
 });
+
+describe("ナンプレ体験比較", () => {
+  let props: ComponentProps<typeof NanpurePlay>;
+  let navigation: HTMLElement;
+  let digitInput: HTMLElement;
+
+  beforeEach(() => {
+    props = {
+      ...createProps(),
+      compareExperiences: true,
+      onInputDigitAt: vi.fn(),
+    };
+    render(<NanpurePlay {...props} />);
+    navigation = screen.getByRole("navigation", { name: "ナンプレ体験比較" });
+    digitInput = screen.getByRole("group", { name: "数字入力" });
+  });
+
+  test("既定では現行の入力操作を維持すること", () => {
+    fireEvent.click(within(digitInput).getByText("5"));
+
+    expect(props.onInputDigit).toHaveBeenCalledWith(5);
+    expect(props.onInputDigitAt).not.toHaveBeenCalled();
+  });
+
+  describe("数字先行を選んだ場合", () => {
+    beforeEach(() => {
+      fireEvent.click(
+        within(navigation).getByRole("button", { name: "数字先行" }),
+      );
+    });
+
+    test("数字を先に選んで別の複数マスに入力できること", () => {
+      fireEvent.click(within(digitInput).getByText("5"));
+      fireEvent.click(screen.getByRole("button", { name: "1行2列、空き" }));
+      fireEvent.click(screen.getByRole("button", { name: "1行3列、空き" }));
+
+      expect(props.onInputDigitAt).toHaveBeenNthCalledWith(1, 1, 5);
+      expect(props.onInputDigitAt).toHaveBeenNthCalledWith(2, 2, 5);
+      expect(props.onInputDigit).not.toHaveBeenCalled();
+    });
+
+    test("同じ数字を再度押すと数字選択を解除すること", () => {
+      const digit = within(digitInput).getByText("5");
+      fireEvent.click(digit);
+      fireEvent.click(digit);
+      fireEvent.click(screen.getByRole("button", { name: "1行2列、空き" }));
+
+      expect(digit.getAttribute("aria-pressed")).toBe("false");
+      expect(props.onInputDigitAt).not.toHaveBeenCalled();
+    });
+
+    test("初期ヒントへの入力を受け付けないこと", () => {
+      const clues = [...props.clues];
+      clues[0] = 1;
+      cleanup();
+      render(<NanpurePlay {...props} clues={clues} />);
+      const compare = screen.getByRole("navigation", {
+        name: "ナンプレ体験比較",
+      });
+      fireEvent.click(
+        within(compare).getByRole("button", { name: "数字先行" }),
+      );
+      fireEvent.click(
+        within(screen.getByRole("group", { name: "数字入力" })).getByText("5"),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "1行1列、空き" }));
+
+      expect(props.onInputDigitAt).not.toHaveBeenCalled();
+    });
+
+    test("入力済みのマスを誤って上書きせず選択して修正できること", () => {
+      const board = [...props.board];
+      board[0] = 3;
+      cleanup();
+      render(<NanpurePlay {...props} board={board} />);
+      fireEvent.click(
+        within(
+          screen.getByRole("navigation", { name: "ナンプレ体験比較" }),
+        ).getByRole("button", { name: "数字先行" }),
+      );
+      const digit = within(
+        screen.getByRole("group", { name: "数字入力" }),
+      ).getByText("5");
+      fireEvent.click(digit);
+      fireEvent.click(screen.getByRole("button", { name: "1行1列、3" }));
+
+      expect(props.onInputDigitAt).not.toHaveBeenCalled();
+      expect(props.onSelectCell).toHaveBeenCalledWith(0);
+      expect(digit.getAttribute("aria-pressed")).toBe("false");
+    });
+
+    test("現行に戻すと数字選択が解除され通常の入力へ戻ること", () => {
+      fireEvent.click(within(digitInput).getByText("5"));
+      fireEvent.click(within(navigation).getByRole("button", { name: "現行" }));
+      fireEvent.click(within(digitInput).getByText("7"));
+
+      expect(props.onInputDigit).toHaveBeenCalledWith(7);
+      expect(props.onInputDigitAt).not.toHaveBeenCalled();
+    });
+  });
+});
