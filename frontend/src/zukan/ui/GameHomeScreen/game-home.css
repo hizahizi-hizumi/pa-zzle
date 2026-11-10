@@ -1,0 +1,72 @@
+/* ゲームごとの地はプレイ画面とそろえ、共通UIはその上で静かに見せる。 */
+.game-home {
+  color: var(--foreground);
+  background: var(--game-home-ground, var(--background));
+}
+:root:has(.game-home[data-game="water-sort"]) {
+  --game-home-ground: #e5eef0;
+}
+:root:has(.game-home[data-game="minesweeper"]) {
+  --game-home-ground: #dfe6f0;
+}
+:root:has(.game-home[data-game="parking-jam"]) {
+  --game-home-ground: #e2e5e4;
+}
+:root:has(.game-home[data-game="reflection"]) {
+  --game-home-ground: #eae7ef;
+}
+:root:has(.game-home[data-game="ice-floor-maze"]) {
+  --game-home-ground: #e7eef3;
+}
+:root:has(.game-home[data-game="takuzu"]) {
+  --game-home-ground: #e4e8ed;
+}
+:root:has(.game-home[data-game="slide-puzzle"]) {
+  --game-home-ground: #e8e2d8;
+}
+:root:has(.game-home[data-game="nanpure"]) {
+  --game-home-ground: #eee9e1;
+}
+:root:has(.game-home[data-game="hitofude-puzzle"]) {
+  --game-home-ground: #e8e6de;
+}
+:root:has(.game-home[data-game="tsume-shogi"]) {
+  --game-home-ground: #ddd6cb;
+}
+:root.dark:has(.game-home[data-game="water-sort"]) {
+  --game-home-ground: #1c292d;
+}
+:root.dark:has(.game-home[data-game="minesweeper"]) {
+  --game-home-ground: #1f2732;
+}
+:root.dark:has(.game-home[data-game="parking-jam"]) {
+  --game-home-ground: #22282a;
+}
+:root.dark:has(.game-home[data-game="reflection"]) {
+  --game-home-ground: #272431;
+}
+:root.dark:has(.game-home[data-game="ice-floor-maze"]) {
+  --game-home-ground: #202c35;
+}
+:root.dark:has(.game-home[data-game="takuzu"]) {
+  --game-home-ground: #22272d;
+}
+:root.dark:has(.game-home[data-game="slide-puzzle"]) {
+  --game-home-ground: #2b2722;
+}
+:root.dark:has(.game-home[data-game="nanpure"]) {
+  --game-home-ground: #28251f;
+}
+:root.dark:has(.game-home[data-game="hitofude-puzzle"]) {
+  --game-home-ground: #1a1916;
+}
+:root.dark:has(.game-home[data-game="tsume-shogi"]) {
+  --game-home-ground: #2b2723;
+}
+
+.game-home-sheet {
+  --background: var(--game-home-ground);
+}
+.game-home-sheet [data-slot="tabs-content"] {
+  min-height: 0;
+}

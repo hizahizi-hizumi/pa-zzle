@@ -1,10 +1,11 @@
 type BrowserBottomSurfaceProps = {
-  surface?: "page" | "game" | "brand";
+  surface?: "page" | "game" | "game-home" | "brand";
 };
 
 const surfaceClassNames = {
   page: "bg-background",
   game: "bg-[var(--browser-surface,var(--background))]",
+  "game-home": "bg-[var(--game-home-ground,var(--background))]",
   brand: "bg-brand-inverse",
 } satisfies Record<NonNullable<BrowserBottomSurfaceProps["surface"]>, string>;
 

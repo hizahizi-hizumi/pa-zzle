@@ -1,3 +1,4 @@
+import "@/zukan/ui/GameHomeScreen/game-home.css";
 import { Shuffle } from "lucide-react";
 import {
   type ReactNode,
@@ -644,121 +645,136 @@ export function GameHomeScreen({
   };
 
   return (
-    <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 pt-4 sm:px-6 sm:pt-6 lg:pb-8">
-      <GameHomeHeading
-        gameId={gameId}
-        gameTitle={gameTitle}
-        pictogramSvg={pictogramSvg}
-        solvedCount={shownSolvedCount}
-        problemCount={zukan.problemCount}
-        titleRef={titleRef}
-        actionsRef={headerActionsRef}
-      >
-        <GameHomeMenu
-          buttonRef={menuButtonRef}
-          filterConditionCount={filterConditionCount}
-          hasTutorial={renderTutorial !== undefined}
-          onOpenLayer={handleOpenLayer}
-        />
-      </GameHomeHeading>
-      {renderHowToPlayDialog({
-        open: openLayer === "howToPlay",
-        onClose() {
-          changeLayerOpen("howToPlay", false);
-        },
-      })}
-      {renderTutorial?.({
-        open: openLayer === "tutorial",
-        onClose() {
-          changeLayerOpen("tutorial", false);
-        },
-        playStart: tutorialPlayStart,
-      })}
-      <ZukanLegend
-        open={openLayer === "legend"}
-        onOpenChange={(open) => changeLayerOpen("legend", open)}
-        anchorRef={menuButtonRef}
-      />
-      <ZukanFilter
-        conditions={filterConditions}
-        matchedCount={arrangement.matchedCount}
-        featureAxes={listFilterFeatureAxes(levelFeatures, featureAxes)}
-        performanceAxes={performanceAxes}
-        optionCounts={filterOptionCounts}
-        optionCountLimits={filterOptionCountLimits}
-        open={isFilterOpen}
-        onOpenChange={handleFilterOpenChange}
-        anchorRef={menuButtonRef}
-        onConditionsChange={handleFilterConditionsChange}
-      />
-      <GameHomePerformance
-        records={records}
-        playRecordDisplay={playRecordDisplay}
-        difficulty={openDifficulty}
-        open={openLayer === "performance"}
-        onOpenChange={(open) => changeLayerOpen("performance", open)}
-        anchorRef={menuButtonRef}
-      />
-
-      <Tabs
-        value={openDifficulty}
-        onValueChange={handleLevelChange}
-        activationMode="manual"
-        className="mt-3 min-h-0 flex-1"
-      >
-        <GameLevelCards levels={levelCards} openDifficulty={openDifficulty} />
-        <div className="grid sm:grid-cols-[--spacing(64)]">
-          <Button ref={playRandomRef} size="lg" onClick={handlePlayRandom}>
-            <Shuffle aria-hidden="true" />
-            ランダムに遊ぶ
-          </Button>
-        </div>
-
-        <div className="relative flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_--spacing(64)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
-          <div className="flex min-h-0 flex-1 flex-col">
-            <TabsContent
-              value={openDifficulty}
-              // 台紙のマスへ Tab で入れるので、見えない囲みを Tab の止まり先にしない。
-              tabIndex={-1}
-              className="flex min-h-0 flex-col"
-            >
-              {/* 当たった数は条件が無い間も場所を取っておくので、条件を付け外ししても状態ごとの数の折り返し方は変わらない。
-                  状態ごとの数がレベルによって2行に折り返す狭い画面では、レベルを切り替えても台紙が動かないよう、常に2行分を取っておく。 */}
-              <div className="flex items-start justify-between gap-x-3 max-[359px]:min-h-9">
-                <ZukanProblemStatusCounts counts={openStatusCounts} />
-                <ZukanMatchedCount
-                  matchedCount={isFiltering ? arrangement.matchedCount : null}
-                  problemCount={openProblems.length}
-                />
-              </div>
-              <ZukanProblemSheet
-                difficulty={openDifficulty}
-                problems={openProblems}
-                arrangedProblems={arrangement.problems}
-                matchedCount={isFiltering ? arrangement.matchedCount : null}
-                numberDigitCount={numberDigitCount}
-                selectedProblemId={selected?.problem.problemId ?? null}
-                changes={openChanges}
-                changeStages={changeStages}
-                scrollerRef={scrollerRef}
-                coveredBottomHeight={detailOverlayHeight}
-                onSelect={handleSelect}
-                onDeselect={handleDeselect}
-              />
-            </TabsContent>
-          </div>
-          <ZukanProblemDetail
-            ref={detailRef}
-            coverLimitRef={scrollerRef}
-            problem={detailProblem}
-            numberDigitCount={numberDigitCount}
-            describeProblem={describeProblem}
-            onPlay={onPlayProblem}
-            onClose={closeDetail}
-            onOverlayHeightChange={setDetailOverlayHeight}
+    <div
+      data-game-home=""
+      data-game={gameId}
+      className="game-home flex min-h-0 w-full flex-1 flex-col px-4 pt-2 sm:px-6 lg:px-8 lg:pt-4"
+    >
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col">
+        <GameHomeHeading
+          gameId={gameId}
+          gameTitle={gameTitle}
+          pictogramSvg={pictogramSvg}
+          solvedCount={shownSolvedCount}
+          problemCount={zukan.problemCount}
+          titleRef={titleRef}
+          actionsRef={headerActionsRef}
+        >
+          <GameHomeMenu
+            buttonRef={menuButtonRef}
+            filterConditionCount={filterConditionCount}
+            hasTutorial={renderTutorial !== undefined}
+            onOpenLayer={handleOpenLayer}
           />
-        </div>
-      </Tabs>
+        </GameHomeHeading>
+        {renderHowToPlayDialog({
+          open: openLayer === "howToPlay",
+          onClose() {
+            changeLayerOpen("howToPlay", false);
+          },
+        })}
+        {renderTutorial?.({
+          open: openLayer === "tutorial",
+          onClose() {
+            changeLayerOpen("tutorial", false);
+          },
+          playStart: tutorialPlayStart,
+        })}
+        <ZukanLegend
+          open={openLayer === "legend"}
+          onOpenChange={(open) => changeLayerOpen("legend", open)}
+          anchorRef={menuButtonRef}
+        />
+        <ZukanFilter
+          conditions={filterConditions}
+          matchedCount={arrangement.matchedCount}
+          featureAxes={listFilterFeatureAxes(levelFeatures, featureAxes)}
+          performanceAxes={performanceAxes}
+          optionCounts={filterOptionCounts}
+          optionCountLimits={filterOptionCountLimits}
+          open={isFilterOpen}
+          onOpenChange={handleFilterOpenChange}
+          anchorRef={menuButtonRef}
+          onConditionsChange={handleFilterConditionsChange}
+        />
+        <GameHomePerformance
+          records={records}
+          playRecordDisplay={playRecordDisplay}
+          difficulty={openDifficulty}
+          open={openLayer === "performance"}
+          onOpenChange={(open) => changeLayerOpen("performance", open)}
+          anchorRef={menuButtonRef}
+        />
+
+        <Tabs
+          value={openDifficulty}
+          onValueChange={handleLevelChange}
+          activationMode="manual"
+          className="mt-2 min-h-0 flex-1 gap-0 lg:grid lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] lg:grid-rows-[auto_auto_minmax(0,1fr)] lg:gap-x-4"
+        >
+          <div className="flex shrink-0 flex-col gap-2 lg:gap-3">
+            <p className="text-meta text-muted-foreground">レベル</p>
+            <GameLevelCards levels={levelCards} />
+          </div>
+
+          <div className="game-home-sheet relative flex min-h-0 flex-1 flex-col overflow-hidden lg:col-start-2 lg:row-span-3 lg:row-start-1">
+            <div className="relative flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_--spacing(60)] lg:grid-rows-[minmax(0,1fr)] lg:gap-3">
+              <div className="flex min-h-0 flex-1 flex-col px-2 lg:px-3">
+                <TabsContent
+                  value={openDifficulty}
+                  tabIndex={-1}
+                  className="flex min-h-0 flex-col"
+                >
+                  <div className="flex min-h-9 items-start justify-between gap-x-3 py-2">
+                    <ZukanProblemStatusCounts counts={openStatusCounts} />
+                    <ZukanMatchedCount
+                      matchedCount={
+                        isFiltering ? arrangement.matchedCount : null
+                      }
+                      problemCount={openProblems.length}
+                    />
+                  </div>
+                  <ZukanProblemSheet
+                    difficulty={openDifficulty}
+                    problems={openProblems}
+                    arrangedProblems={arrangement.problems}
+                    matchedCount={isFiltering ? arrangement.matchedCount : null}
+                    numberDigitCount={numberDigitCount}
+                    selectedProblemId={selected?.problem.problemId ?? null}
+                    changes={openChanges}
+                    changeStages={changeStages}
+                    scrollerRef={scrollerRef}
+                    coveredBottomHeight={detailOverlayHeight}
+                    onSelect={handleSelect}
+                    onDeselect={handleDeselect}
+                  />
+                </TabsContent>
+              </div>
+              <ZukanProblemDetail
+                ref={detailRef}
+                coverLimitRef={scrollerRef}
+                problem={detailProblem}
+                numberDigitCount={numberDigitCount}
+                describeProblem={describeProblem}
+                onPlay={onPlayProblem}
+                onClose={closeDetail}
+                onOverlayHeightChange={setDetailOverlayHeight}
+              />
+            </div>
+          </div>
+          <div className="shrink-0 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:col-start-1 lg:row-start-2 lg:pt-3 lg:pb-0">
+            <Button
+              ref={playRandomRef}
+              size="lg"
+              onClick={handlePlayRandom}
+              className="w-full"
+            >
+              <Shuffle aria-hidden="true" />
+              ランダムに遊ぶ
+            </Button>
+          </div>
+        </Tabs>
+      </div>
     </div>
   );
 }

@@ -687,6 +687,23 @@ describe("GameHomeScreen", () => {
       expect(within(detail).getByText("挑戦中")).toBeTruthy();
     });
 
+    test("未挑戦は空き位置、挑戦中とクリア済みはピースで示すこと", () => {
+      const untouched = getSquare("レベル 3の問題", "No.0008");
+      const attempted = getSquare("レベル 3の問題", "No.0006");
+      const solved = getSquare("レベル 3の問題", "No.0005");
+
+      expect(untouched.getAttribute("data-problem-status")).toBe("untouched");
+      expect(untouched.querySelector("[data-empty-slot]")).not.toBeNull();
+      expect(attempted.getAttribute("data-problem-status")).toBe("attempted");
+      expect(attempted.querySelector("[data-empty-slot]")).toBeNull();
+      expect(solved.getAttribute("data-problem-status")).toBe("great");
+      expect(solved.querySelector("[data-empty-slot]")).toBeNull();
+
+      fireEvent.click(untouched);
+      expect(untouched.getAttribute("aria-current")).toBe("true");
+      expect(within(getDetail()).getByText("未挑戦")).toBeTruthy();
+    });
+
     test("まだ挑んでいない問題のマスを選ぶと、その問題の特徴と、未挑戦であることを詳細に示すこと", () => {
       fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
       const detail = getDetail();
@@ -2427,7 +2444,7 @@ describe("GameHomeScreen", () => {
     });
   });
 
-  describe("開いたあとに最後に遊んだレベルが変わった場合", () => {
+  describe("すべてのレベルを同時に見られる場合", () => {
     let rerender: ReturnType<typeof render>["rerender"];
 
     beforeEach(() => {
@@ -2435,36 +2452,23 @@ describe("GameHomeScreen", () => {
       scrollIntoView.mockClear();
     });
 
-    test("新しく開いたレベルのカードを見える位置へ送ること", () => {
+    test("最後に遊んだレベルが変わると、その台紙を開くこと", () => {
       rerender(createScreen({ ...zukan, latestPlayedDifficulty: "5" }));
-      const scrolled = scrollIntoView.mock.contexts;
 
-      expect(scrolled).toEqual([getLevelTab("レベル 5")]);
-    });
-
-    test("カードを触ったあとは、開いたレベルのカードへ送らないこと", () => {
-      fireEvent.pointerDown(screen.getByRole("tablist", { name: "レベル" }));
-      rerender(createScreen({ ...zukan, latestPlayedDifficulty: "5" }));
-      const scrolled = scrollIntoView.mock.contexts;
-
-      expect(scrolled).toEqual([]);
-    });
-  });
-
-  describe("端で切れたカードを押した場合", () => {
-    beforeEach(() => {
-      renderScreen();
-      scrollIntoView.mockClear();
-    });
-
-    test("押したカードを見える位置へ送ること", () => {
-      fireEvent.click(getLevelTab("レベル 5"));
-      const scrolled = scrollIntoView.mock.contexts;
-
-      expect(scrolled).toEqual([getLevelTab("レベル 5")]);
-      expect(scrollIntoView).toHaveBeenCalledWith(
-        expect.objectContaining({ block: "nearest", inline: "nearest" }),
+      expect(screen.getByRole("tab", { selected: true })).toBe(
+        getLevelTab("レベル 5"),
       );
+      expect(getShownSheetNames()).toEqual(["レベル 5の問題"]);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    test("カードを押しても、ページやレベル一覧をスクロールしないこと", () => {
+      chooseLevel("レベル 5");
+
+      expect(screen.getByRole("tab", { selected: true })).toBe(
+        getLevelTab("レベル 5"),
+      );
+      expect(scrollIntoView).not.toHaveBeenCalled();
     });
   });
 

@@ -1,5 +1,5 @@
+import { ZukanStatusMark } from "@/zukan/ui/GameHomeScreen/ZukanStatusMark";
 import {
-  getZukanProblemStatusColorClassName,
   zukanProblemStatusLabels,
   zukanProblemStatusOrder,
 } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
@@ -20,7 +20,7 @@ export function ZukanProblemStatusCounts({
   return (
     <ul
       aria-label="状態ごとの問題の数"
-      className="flex flex-wrap items-center gap-x-3 gap-y-1 text-meta"
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 text-meta max-[359px]:gap-x-1"
     >
       {zukanProblemStatusOrder.map((status) => (
         <li
@@ -28,10 +28,7 @@ export function ZukanProblemStatusCounts({
           aria-label={`${zukanProblemStatusLabels[status]} ${counts[status]}問`}
           className="flex items-center gap-1 whitespace-nowrap"
         >
-          <span
-            aria-hidden="true"
-            className={`size-3 shrink-0 bg-current ${getZukanProblemStatusColorClassName(status)}`}
-          />
+          <ZukanStatusMark status={status} />
           <span className="font-medium text-foreground tabular-nums">
             {counts[status]}
           </span>

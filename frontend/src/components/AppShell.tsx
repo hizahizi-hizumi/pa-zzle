@@ -39,7 +39,9 @@ export function AppShell({
       <div className="flex flex-1 flex-col bg-muted/30 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         <main className={mainClassNames[contentLayout]}>{children}</main>
       </div>
-      <BrowserBottomSurface />
+      <BrowserBottomSurface
+        surface={contentLayout === "viewport" ? "game-home" : "page"}
+      />
     </div>
   );
 }

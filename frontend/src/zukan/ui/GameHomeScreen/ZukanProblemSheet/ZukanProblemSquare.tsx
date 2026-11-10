@@ -48,7 +48,8 @@ const PIECE_LAYER_CLASS_NAME =
   "pointer-events-none absolute -top-1/2 -left-1/2 size-[200%] overflow-visible";
 
 /**
- * 台紙の1問のマス。台紙が並べた位置で決めたジグソーのピースの形に描き、状態を塗りだけで示し、文字は読み上げ名に持たせる。
+ * 台紙の1問のマス。未挑戦は静かな空き位置として示し、挑戦・クリアして初めてピースの形を見せる。
+ * 選択・ホバーした未挑戦の位置にはピースの形を現し、どの問題を選んだかを明確にする。
  * ピースは SVG の図形で描く。画像で切り抜くと、画素の細かい画面でも等倍で描かれてぼやけるため。
  * 押す・矢印キーの操作は台紙がまとめて受けるので、マス自身はイベントを持たない。
  * 前回からの変化は、マスに着くまで前回の姿で描く。押していく演出が動かす押す姿・浮いた影を、押し終えるまで重ねておく。
@@ -57,6 +58,7 @@ const PIECE_LAYER_CLASS_NAME =
  * 動きを減らす設定では今の姿に印を載せる。
  * 絞り込みの条件に当たらなかったマスは、色を変えずに薄くする。選んでいる間は、選んだことが分かるよう薄くしない。
  * 選んだピースは、周りを背景の色で空けて前景色の線で囲む。`ring` の明るさの線は、小さなピースでは塗りに紛れるため。
+ * ピース間の溝は背景とピースの中間色にする。全問の未挑戦ピースを塗りつぶすと、膨大な問題集では図鑑が灰色の模様に見える。
  */
 function ZukanProblemSquareContent({
   problem,
@@ -76,6 +78,7 @@ function ZukanProblemSquareContent({
   const shownStatus =
     change !== null && isPending ? change.previousStatus : status;
   const path = getZukanPiecePath(pieceShape);
+  const isUntouched = shownStatus === "untouched";
 
   // 選んだピースの囲みとホバー・フォーカスの線は隣のピースへはみ出すので、そのピースを手前に重ねる。選んだピースは、隣のホバーより手前に置く。
   // 重ね順は台紙の中に閉じ（台紙が `isolate`）、台紙の外の詳細やレベルのカードより手前には出ない。
@@ -91,6 +94,7 @@ function ZukanProblemSquareContent({
       type="button"
       data-index={index}
       data-piece-shape={pieceShape}
+      data-problem-status={shownStatus}
       data-change-stage={changeStage ?? undefined}
       data-change-level={stamp?.level}
       data-change-raised={stamp?.isRaised ? "" : undefined}
@@ -102,10 +106,17 @@ function ZukanProblemSquareContent({
       aria-current={isSelected ? "true" : undefined}
       className={`group relative size-6 scroll-m-3 outline-none sm:size-6.5 ${layerClassName} ${stampClassName} ${filteredOutClassName}`}
     >
+      {isUntouched && (
+        <span
+          aria-hidden="true"
+          data-empty-slot=""
+          className={`pointer-events-none absolute inset-0 m-auto size-[5px] rounded-full bg-current ${getZukanProblemStatusColorClassName("untouched")} ${isSelected ? "opacity-0" : "group-hover:opacity-0 group-focus-visible:opacity-0"}`}
+        />
+      )}
       <svg
         aria-hidden="true"
         viewBox={ZUKAN_PIECE_VIEW_BOX}
-        className={`${PIECE_LAYER_CLASS_NAME} ${getZukanProblemStatusColorClassName(shownStatus)}`}
+        className={`${PIECE_LAYER_CLASS_NAME} ${getZukanProblemStatusColorClassName(shownStatus)} ${isUntouched && !isSelected ? "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100" : ""}`}
       >
         {isSelected && (
           <path
@@ -118,7 +129,7 @@ function ZukanProblemSquareContent({
         <path
           d={path}
           fill="currentColor"
-          className="stroke-background"
+          className="stroke-[color-mix(in_oklab,var(--background)_50%,currentColor)]"
           strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
           strokeLinejoin="round"
         />
@@ -154,7 +165,7 @@ function ZukanProblemSquareContent({
             <path
               d={path}
               fill="currentColor"
-              className="stroke-background"
+              className="stroke-[color-mix(in_oklab,var(--background)_50%,currentColor)]"
               strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
               strokeLinejoin="round"
             />

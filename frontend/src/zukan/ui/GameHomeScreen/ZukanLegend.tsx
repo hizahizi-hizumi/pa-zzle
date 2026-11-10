@@ -4,8 +4,8 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import type { GameHomeLayerControl } from "@/zukan/ui/GameHomeScreen/use-game-home-layers";
+import { ZukanStatusMark } from "@/zukan/ui/GameHomeScreen/ZukanStatusMark";
 import {
-  getZukanProblemStatusColorClassName,
   zukanProblemStatusLabels,
   zukanProblemStatusOrder,
 } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
@@ -28,10 +28,7 @@ export function ZukanLegend({
         >
           {zukanProblemStatusOrder.map((status) => (
             <li key={status} className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className={`size-4 shrink-0 bg-current ${getZukanProblemStatusColorClassName(status)}`}
-              />
+              <ZukanStatusMark status={status} size="large" />
               {zukanProblemStatusLabels[status]}
             </li>
           ))}

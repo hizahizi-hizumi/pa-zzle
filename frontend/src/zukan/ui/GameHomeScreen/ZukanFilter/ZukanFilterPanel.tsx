@@ -2,6 +2,7 @@ import { useId } from "react";
 
 import { ToggleGroup } from "@/components/ui/toggle-group";
 import { ZukanFilterOption } from "@/zukan/ui/GameHomeScreen/ZukanFilter/ZukanFilterPanel/ZukanFilterOption";
+import { ZukanStatusMark } from "@/zukan/ui/GameHomeScreen/ZukanStatusMark";
 import {
   formatZukanFeatureOption,
   type ZukanFilterFeatureAxis,
@@ -9,7 +10,6 @@ import {
   zukanPerformanceConditionLabels,
 } from "@/zukan/ui/GameHomeScreen/zukan-filter-appearance";
 import {
-  getZukanProblemStatusColorClassName,
   zukanProblemStatusLabels,
   zukanProblemStatusOrder,
 } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
@@ -86,12 +86,7 @@ export function ZukanFilterPanel({
                 key={status}
                 value={status}
                 label={zukanProblemStatusLabels[status]}
-                sample={
-                  <span
-                    aria-hidden="true"
-                    className={`size-3 shrink-0 bg-current ${getZukanProblemStatusColorClassName(status)}`}
-                  />
-                }
+                sample={<ZukanStatusMark status={status} />}
                 isSelected={conditions.statuses.includes(status)}
                 count={optionCounts.statuses[status]}
                 countLimit={optionCountLimits.statuses[status]}

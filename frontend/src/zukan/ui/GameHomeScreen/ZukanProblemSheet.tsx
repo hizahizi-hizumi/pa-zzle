@@ -291,7 +291,7 @@ function ZukanProblemSheetContent({
 
   // 押すときに大きく浮くマスが、台紙の端のマスでもスクロール領域で切れないよう、領域をページの余白へ広げ、内側に浮いたマスが収まる余白を取る。
   // 覆われたところの余白は、領域の余白ではなく末尾の要素で取る。画面が低く、覆う高さが領域より高いときも、領域が縮めずにページをはみ出さないようにする。
-  // スクロールした行が台紙の上の数の真下で途切れて見えないよう、上端の余白の中で背景の色を重ねて薄れさせる。選んだマスはこの余白より内側へ寄せる。
+  // スクロールした行が台紙の上の数の真下で途切れて見えないよう、上端の余白で背景色へ薄れさせる。選んだマスはこの余白より内側へ寄せる。
   // 薄れは `mask-image` で作らない。iOS の Safari は mask をかけた要素の中身を低い解像度で描き、ピースの輪郭がぼやけるため。
   return (
     <div
@@ -302,13 +302,10 @@ function ZukanProblemSheetContent({
       }
       className="-mx-4 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-4 pt-4 pb-4"
     >
-      {/* 画面の地は、背景の色に `muted` を薄く重ねた色なので、薄れも同じ2層で重ねる。 */}
       <div
         aria-hidden="true"
         className="pointer-events-none sticky -top-4 z-10 -mt-4 mb-1 h-3 bg-linear-to-b from-background"
-      >
-        <div className="size-full bg-linear-to-b from-muted/30" />
-      </div>
+      />
       <div
         ref={gridRef}
         role="group"
