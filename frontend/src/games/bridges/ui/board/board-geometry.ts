@@ -365,7 +365,7 @@ function selectEdge(
   const closest = candidates.filter(
     ({ distance }) => distance - nearestDistance <= pointTolerance,
   );
-  let contenders = candidates.filter(
+  let contenders: readonly EdgeCandidate[] = candidates.filter(
     (candidate) =>
       closest.includes(candidate) ||
       (candidate.distance - nearestDistance <= CROSSING_AMBIGUITY &&
