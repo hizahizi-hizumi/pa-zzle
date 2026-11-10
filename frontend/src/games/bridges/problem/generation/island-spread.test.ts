@@ -1,8 +1,8 @@
-import { spreadBridgesIslands } from "@/games/bridges/problem/generation/island-spread";
 import {
-  type BridgesGenerationConditions,
-  bridgesBoardSizes,
-} from "@/games/bridges/problem/problem";
+  type BridgesSpreadConditions,
+  spreadBridgesIslands,
+} from "@/games/bridges/problem/generation/island-spread";
+import { bridgesBoardSizes } from "@/games/bridges/problem/problem";
 import {
   assertBridgesBoard,
   getBridgesNetwork,
@@ -12,7 +12,7 @@ import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
 function listLayouts(
-  conditions: BridgesGenerationConditions,
+  conditions: BridgesSpreadConditions,
   seed: string,
   count: number,
 ) {
@@ -31,15 +31,13 @@ describe("spreadBridgesIslands", () => {
     listLayouts(
       {
         size,
-        islandDensity: 0.36,
+        islandDensity: 0.22,
         doubleBridgeRate: 0.5,
         extraBridgeRate: 0.45,
         splitRate: 0.2,
-        refinementSteps: 0,
-        refinementGoal: "lookahead",
       },
       `island-spread-${size}`,
-      40,
+      60,
     ),
   );
 
@@ -59,6 +57,14 @@ describe("spreadBridgesIslands", () => {
       built: true,
       missing: [],
     });
+  });
+
+  test("島の数が、盤面のマスの数に島の割合の下限を掛けた数を下回らないこと", () => {
+    const short = layouts.filter(
+      ({ board }) => board.islands.length < Math.ceil(0.22 * board.width ** 2),
+    );
+
+    expect(short).toEqual([]);
   });
 
   test("島が上下左右に隣り合わない、形の正しい盤面を作ること", () => {
@@ -101,14 +107,12 @@ describe("spreadBridgesIslands", () => {
   });
 
   describe("同じ乱数列の場合", () => {
-    const conditions: BridgesGenerationConditions = {
+    const conditions: BridgesSpreadConditions = {
       size: 8,
       islandDensity: 0.26,
       doubleBridgeRate: 0.65,
       extraBridgeRate: 0.25,
       splitRate: 0.45,
-      refinementSteps: 0,
-      refinementGoal: "lookahead",
     };
 
     test("同じ盤面と解を作ること", () => {
@@ -129,12 +133,10 @@ describe("spreadBridgesIslands", () => {
         listLayouts(
           {
             size: 9,
-            islandDensity: 0.36,
+            islandDensity: 0.26,
             doubleBridgeRate,
             extraBridgeRate: 0.25,
             splitRate: 0.2,
-            refinementSteps: 0,
-            refinementGoal: "lookahead",
           },
           `island-spread-double-${doubleBridgeRate}`,
           60,
@@ -159,15 +161,13 @@ describe("spreadBridgesIslands", () => {
         listLayouts(
           {
             size: 10,
-            islandDensity: 0.36,
+            islandDensity: 0,
             doubleBridgeRate: 0.5,
             extraBridgeRate: 0.25,
             splitRate,
-            refinementSteps: 0,
-            refinementGoal: "lookahead",
           },
           `island-spread-split-${splitRate}`,
-          60,
+          120,
         ).map(({ board }) => board.islands.length),
       ),
     );

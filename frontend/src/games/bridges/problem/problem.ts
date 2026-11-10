@@ -20,8 +20,8 @@ export const bridgesBoardSizes = [6, 7, 8, 9, 10] as const;
 
 export type BridgesBoardSize = (typeof bridgesBoardSizes)[number];
 
-/** 島の数の目標（盤面のマスの数に対する割合）。島を置ける所が尽きると目標に届かない。 */
-export const bridgesIslandDensities = [0.26, 0.31, 0.36] as const;
+/** 島の数の下限（盤面のマスの数に対する割合）。島は置ける所が尽きるまで広げ、下限に届かない盤面は作り直す。 */
+export const bridgesIslandDensities = [0.22, 0.24, 0.26] as const;
 
 export type BridgesIslandDensity = (typeof bridgesIslandDensities)[number];
 
@@ -41,21 +41,22 @@ export const bridgesSplitRates = [0.2, 0.45] as const;
 export type BridgesSplitRate = (typeof bridgesSplitRates)[number];
 
 /**
- * 広げた盤面の解を、人が読む量の多い盤面へ磨く山登りの回数（`refineBridgesLayout`）。0 なら磨かない。
+ * 広げた盤面の解を、人が読む量の多い盤面へ磨く焼きなましの回数の上限（`refineBridgesLayout`）。0 なら磨かない。
  * 磨くほど、数字の読みで止まり、つながりや1手の先読みを要る盤面に寄る。どのレベルに入るかは分析で決める。
- * 1500 回は、10×10 で1手の先読みが2回以上要る盤面まで磨くための回数で、レベル5 の候補だけに使う。
  */
-export const bridgesRefinementSteps = [0, 150, 500, 1500, 4000] as const;
+export const bridgesRefinementSteps = [0, 150, 500, 1500, 2000] as const;
 
 export type BridgesRefinementSteps = (typeof bridgesRefinementSteps)[number];
 
 /**
  * 磨くときに読みの量を増やす向き（`refineBridgesLayout`）。どのレベルに入るかは分析で決める。
+ * - `entry`: 読みを増やさず、配分の読みを1か所までにして、数字と形の質だけを整える。
  * - `count`: 配分（少なくとも1本）と2島を閉じない読みを増やし、組の読みと1手の先読みは減らす。
  * - `closure`: つながりの読み（閉じない読み・唯一の通り道・交差）を増やし、1手の先読みは減らす。
  * - `lookahead`: 1手の先読み、とくに組が閉じるのを見る先読みと続けて要る先読みを増やす。
  */
 export const bridgesRefinementGoals = [
+  "entry",
   "count",
   "closure",
   "lookahead",
@@ -64,7 +65,7 @@ export const bridgesRefinementGoals = [
 export type BridgesRefinementGoal = (typeof bridgesRefinementGoals)[number];
 
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
-export const BRIDGES_GENERATOR_VERSION = "5";
+export const BRIDGES_GENERATOR_VERSION = "6";
 
 /**
  * 候補を作る条件。どれも難易度の判定条件ではなく、候補の分布を寄せる生成条件。
@@ -102,8 +103,8 @@ function toPercent(rate: number): number {
 
 /**
  * 生成条件と候補番号から identity を作る。seed は条件ごとに別の系列になるよう条件を含め、割合は百分率の整数で書く。
- * 例: 10×10・密度0.36・2本0.65・輪0.25・分割0.45・磨く回数 500・磨く向き closure・候補番号 3 は
- * `br-10-d36-p65-e25-s45-r500-closure-3`。
+ * 例: 10×10・島の密度の下限0.26・2本0.65・輪0.25・分割0.45・磨く回数 500・磨く向き closure・候補番号 3 は
+ * `br-10-d26-p65-e25-s45-r500-closure-3`。
  */
 export function createBridgesProblemIdentity(
   conditions: BridgesGenerationConditions,

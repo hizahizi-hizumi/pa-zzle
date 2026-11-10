@@ -81,13 +81,11 @@ describe("countBridgesSolutions", () => {
     const layouts = Array.from({ length: 1000 }, () =>
       spreadBridgesIslands(
         {
-          size: 6,
-          islandDensity: 0.26,
+          size: 5,
+          islandDensity: 0,
           doubleBridgeRate: 0.5,
           extraBridgeRate: 0.25,
           splitRate: 0.2,
-          refinementSteps: 0,
-          refinementGoal: "lookahead",
         },
         random,
       ),

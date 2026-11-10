@@ -1,20 +1,20 @@
 import { countBridgesSolutions } from "@/games/bridges/problem/generation/exact-solver";
 import { traceBridgesHumanSolve } from "@/games/bridges/problem/generation/human-solver";
-import { spreadBridgesIslands } from "@/games/bridges/problem/generation/island-spread";
+import {
+  type BridgesSpreadConditions,
+  spreadBridgesIslands,
+} from "@/games/bridges/problem/generation/island-spread";
 import { refineBridgesLayout } from "@/games/bridges/problem/generation/refinement";
-import type { BridgesGenerationConditions } from "@/games/bridges/problem/problem";
 import { isBridgesSolved } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
-const conditions: BridgesGenerationConditions = {
+const conditions: BridgesSpreadConditions = {
   size: 8,
-  islandDensity: 0.36,
+  islandDensity: 0.2,
   doubleBridgeRate: 0.65,
   extraBridgeRate: 0.25,
   splitRate: 0.2,
-  refinementSteps: 150,
-  refinementGoal: "lookahead",
 };
 
 /** つながりの読みの手詰まりの回数。 */
@@ -27,7 +27,7 @@ function countConnectivityRounds(
 }
 
 describe("refineBridgesLayout", () => {
-  const pairs = Array.from({ length: 12 }, (_, index) => {
+  const pairs = Array.from({ length: 16 }, (_, index) => {
     const random = createProblemSeededRandom(`refinement-${index}`);
     const spread = spreadBridgesIslands(conditions, random);
     return spread
@@ -86,6 +86,42 @@ describe("refineBridgesLayout", () => {
       values.reduce((sum, value) => sum + value, 0) / values.length;
 
     expect(total(after)).toBeGreaterThan(total(before));
+  });
+
+  describe("同じ盤面を、決め打ちで入れる向き（entry）と配分の読みを増やす向き（count）で磨いた場合", () => {
+    const refinedPairs = Array.from({ length: 30 }, (_, index) => {
+      const spread = spreadBridgesIslands(
+        { ...conditions, size: 7 },
+        createProblemSeededRandom(`refinement-entry-${index}`),
+      );
+      if (spread === null) {
+        return null;
+      }
+      const [entry, count] = (["entry", "count"] as const).map((goal) =>
+        refineBridgesLayout(
+          spread,
+          150,
+          goal,
+          createProblemSeededRandom(`refinement-entry-steps-${index}`),
+        ),
+      );
+      return entry && count ? { entry, count } : null;
+    }).flatMap((pair) => (pair ? [pair] : []));
+
+    test("entry の向きの方が、ちょうど以外の読みの手詰まりが少ないこと", () => {
+      const sum = (goal: "entry" | "count") =>
+        refinedPairs.reduce(
+          (total, pair) =>
+            total +
+            traceBridgesHumanSolve(pair[goal].board, "D").rounds.filter(
+              ({ tier }) => tier !== "A1",
+            ).length,
+          0,
+        );
+
+      expect(refinedPairs.length).toBeGreaterThan(6);
+      expect(sum("entry")).toBeLessThan(sum("count"));
+    });
   });
 
   describe("同じ盤面を、配分の読みを増やす向き（count）と1手の先読みを増やす向き（lookahead）で磨いた場合", () => {

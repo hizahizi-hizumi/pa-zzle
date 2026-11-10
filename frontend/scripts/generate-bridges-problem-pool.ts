@@ -1,4 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { gzipSync } from "node:zlib";
 import {
   assessBridgesDifficulty,
@@ -53,6 +60,19 @@ function getFlowLimit(perLevel: number): number {
 /** 1つのレベルで、同じ解く手順の指紋（流れに、読む数字の組と外周に沿うかを足したもの）を持つ問題の数の上限。 */
 const FINGERPRINT_LIMIT = 3;
 
+/** 解く手順の始まりとみなす手詰まりの数。 */
+const OPENING_ROUND_COUNT = 3;
+
+/** 1つのレベルで、解く手順の始まり（最初の `OPENING_ROUND_COUNT` 回の手詰まり）が同じ問題の数の上限（問題数に対する割合）。 */
+const MAXIMUM_OPENING_SHARE = 0.05;
+
+function getOpeningLimit(perLevel: number): number {
+  return Math.max(1, Math.ceil(perLevel * MAXIMUM_OPENING_SHARE));
+}
+
+/** 島の配置が近いとみなす、回転・反転をそろえて位置の違う島の数（どちらか一方にだけある島の数）の上限。 */
+const NEAR_LAYOUT_DIFFERENCE = 2;
+
 /**
  * 問題の手筋と見せ場の札。レベルの中で、札のある問題の割合に下限・上限を置き、どのレベルにも同じ形の問題が並ばないようにする。
  * - `corner-opening`: 盤面の四隅の島の決め打ちがある（どの盤面でも同じ始まりになりやすい）。レベル1 の 6×6 は、決め打ちの島の
@@ -62,6 +82,8 @@ const FINGERPRINT_LIMIT = 3;
  * - `loop`: 解に輪がある。
  * - `chained-lookahead`: 1手の先読みの結果から、すぐ次の1手の先読みが要る。
  * - `deep-lookahead`: 1手の先読みが3回以上要る。
+ * - `capping-lookahead`: 架けすぎる手を退けて上限を下げる1手の先読みが要る。
+ * - `isolating-lookahead`: 数島のまとまりが孤立するのを見て退ける1手の先読みが要る。
  */
 type BridgesProblemTag =
   | "corner-opening"
@@ -69,7 +91,9 @@ type BridgesProblemTag =
   | "seven-plus"
   | "loop"
   | "chained-lookahead"
-  | "deep-lookahead";
+  | "deep-lookahead"
+  | "capping-lookahead"
+  | "isolating-lookahead";
 
 type TagShareRule = {
   tag: BridgesProblemTag;
@@ -98,13 +122,16 @@ const tagShareRules = {
     { tag: "corner-opening", maximum: 0.3 },
     { tag: "passage", minimum: 0.03 },
     { tag: "seven-plus", minimum: 0.15 },
+    { tag: "capping-lookahead", minimum: 0.05 },
+    { tag: "isolating-lookahead", minimum: 0.05 },
   ],
   "5": [
     { tag: "corner-opening", maximum: 0.3 },
     { tag: "passage", minimum: 0.03 },
-    { tag: "seven-plus", minimum: 0.03 },
-    { tag: "chained-lookahead", minimum: 0.15 },
-    { tag: "deep-lookahead", minimum: 0.06 },
+    { tag: "seven-plus", minimum: 0.05 },
+    { tag: "deep-lookahead", minimum: 0.1 },
+    { tag: "capping-lookahead", minimum: 0.08 },
+    { tag: "isolating-lookahead", minimum: 0.08 },
   ],
 } as const satisfies Record<BridgesDifficulty, readonly TagShareRule[]>;
 
@@ -124,6 +151,12 @@ function listTags(
       : []),
     ...(reasoning.lookaheadRoundCount >= 3
       ? (["deep-lookahead"] as const)
+      : []),
+    ...(reasoning.cappingLookaheadRoundCount > 0
+      ? (["capping-lookahead"] as const)
+      : []),
+    ...(reasoning.isolatingLookaheadRoundCount > 0
+      ? (["isolating-lookahead"] as const)
       : []),
   ];
 }
@@ -171,26 +204,35 @@ const defaultBudget = 20_000;
 const defaultJobCount = 1;
 
 /**
- * 生成条件を巡回するとき、1つの条件で1問を探して調べる候補の数の上限。届いたら、その条件はその巡では採らずに次の条件へ移る。
- * 札の割合や重複の決まりで当たりにくくなった条件が、ほかの条件で採れる問題を待たせないようにする。
+ * 生成条件を巡回するとき、1つの条件で1問を探して調べる候補の数の上限。届いたら、その条件はその巡では採らずに次の条件へ移り、
+ * 続けて届いた回数を k として、その後 2^k 巡のあいだその条件を飛ばす。札の割合や重複の決まりで当たりにくくなった条件
+ * （島の配置が近い問題で埋まった 6×6 など）が、ほかの条件で採れる問題を待たせないようにする。
  */
 const MAXIMUM_TRIES_PER_TURN = 200;
 
+/**
+ * 1問を採るまでに調べた候補がこの数を超えるごとに、その条件を1巡飛ばす。当たりにくい条件（L4 の 9×9 など）を巡ごとに
+ * 調べ続けると、当たりやすい条件の何倍もの候補を使うので、条件ごとに1問あたりに使う候補の数をそろえる。
+ */
+const TRIES_PER_SKIPPED_TURN = 20;
+
 const usage = `Usage: bun run generate:bridges-pool -- [options]
 
-レベルごとに、レベルの盤面の範囲に入る全生成条件（盤面の一辺 × 島の密度 × 2本の割合 × 輪の割合 × 分割の割合 ×
-レベルに当たりやすい磨く回数）で、決定的な seed の候補を番号順に生成・分析・分類する。そのレベルに分類された候補を、
-回転・反転（8通り）の同型と、数字を見ない島の配置の重複をレベルをまたいで除き、同じ解く手順の指紋はレベルの問題数の 2% までに
-しながら、生成条件を巡回して1問ずつ問題集へ採る。同じ解く手順の指紋は 3問まで、手筋と見せ場の札の割合は
-レベルごとの下限・上限を守る。
+レベルごとに、レベルの盤面の範囲に入る全生成条件（盤面の一辺 × 島の数の下限 × 2本の割合 × 輪の割合 × 分割の割合 ×
+レベルに当たりやすい磨く回数と向き）で、決定的な seed の候補を番号順に生成・分析・分類する。そのレベルに分類された候補を、
+回転・反転（8通り）の同型と、島の配置が近い問題（位置の違う島が2つ以下）をレベルをまたいで除き、同じ解く手順の流れは
+問題数の 2%、始まり（最初の3回の手詰まり）は 5%、指紋は3問までにし、手筋と見せ場の札の割合のレベルごとの下限・上限を
+守りながら、生成条件を巡回して1問ずつ問題集へ採る。
 
 Options:
   --per-level <n>  レベルごとの問題数 (default: ${defaultPerLevel})
   --budget <n>     生成条件ごとに調べる候補数の上限 (default: ${defaultBudget})
   --jobs <n>       候補を調べる・問題を確かめる子プロセスの数。採る問題と確かめる結果は数に依らない (default: ${defaultJobCount})
-  --cache-dir <d>  レベルごとに選んだ結果を <d> に書き出し、あれば読んで続きから作る（途中で止まった生成を再開する）
+  --cache-dir <d>  レベルごとに選んだ結果と、選んでいる途中の状態を <d> に書き出し、あれば読んで続きから作る
+                   （途中で止まった生成を、レベルの途中から同じ順で再開する）
   --verify         生成せず、同梱の問題集の全問を identity から作り直して盤面の一致を確かめ、一意性確認→分析→分類し、
-                   レベル・分析結果・同型と島の配置と seed の重複・指紋の上限・JSON の大きさ・選択時間を確かめる`;
+                   レベル・分析結果・同型と島の配置の重複と近さと seed の重複・流れと始まりと指紋の上限・札の割合・
+                   JSON の大きさ・選択時間を確かめる`;
 
 const outputPath = new URL(
   "../src/games/bridges/problem/problem-pool.json",
@@ -207,7 +249,9 @@ type Candidate = {
   symmetryKey: string;
   layoutKey: string;
   flow: string;
+  opening: string;
   fingerprint: string;
+  cells: number[];
   tags: BridgesProblemTag[];
 };
 
@@ -263,6 +307,7 @@ function toPoolEntry(
     Math.round(reasoning.countReasoningUndecidedRatio * scale.edgeCount),
     trial.medianBacktrackCount,
     reasoning.lookaheadRoundCount,
+    reasoning.crossingBlockCount,
   ];
 }
 
@@ -296,6 +341,12 @@ function evaluateCandidate(
     symmetryKey,
     layoutKey: getBridgesLayoutKey(problem),
     flow: classified ? describeBridgesSolveFlow(problem) : "",
+    opening: classified
+      ? describeOpening(describeBridgesSolveFlow(problem))
+      : "",
+    cells: problem.islands.map(
+      ({ row, column }) => row * problem.width + column,
+    ),
     fingerprint: classified ? describeBridgesSolveFingerprint(problem) : "",
     tags: classified ? listTags(analysis) : [],
   };
@@ -465,45 +516,191 @@ type LevelSelection = {
 };
 
 /**
- * 生成条件ごとに先に調べておく候補の数。どれかの条件の手持ちが尽きたら、手持ちがこの数に満たない条件をまとめて
- * この数ずつ足して子プロセスに配る。磨く回数の多い条件は1候補が重いので少なくする。
+ * 生成条件ごとに先に調べておく候補の数。どれかの条件の手持ちが尽きたら、その条件には `DRAINED_BATCH_PER_JOB` に子プロセスの
+ * 数を掛けた数を、手持ちがこの数に満たないほかの条件にはこの数ずつを足して、まとめて子プロセスに配る。磨く回数の多い条件は
+ * 1候補が重いので少なくする。
  */
+/**
+ * 手持ちが尽きた条件に、子プロセス1つあたりに足す候補の数。尽きた条件は続けて調べることが多く、1〜2候補ずつ子プロセスを
+ * 起こすと、起動の時間が調べる時間を上回り、子プロセスも揃って動かない。
+ */
+const DRAINED_BATCH_PER_JOB = 8;
+
 function getLookaheadBatchSize({
   refinementSteps,
 }: BridgesGenerationConditions): number {
   return refinementSteps >= 1500 ? 2 : 8;
 }
 
+/** 解く手順の流れの、最初の `OPENING_ROUND_COUNT` 回の手詰まり。 */
+function describeOpening(flow: string): string {
+  return flow.split(",").slice(0, OPENING_ROUND_COUNT).join(",");
+}
+
+/** 島の位置（行 × 一辺 + 列）の、回転・反転した8通り。 */
+function listLayoutVariants(
+  size: number,
+  cells: readonly number[],
+): Set<number>[] {
+  const transforms = [
+    (row: number, column: number) => [row, column],
+    (row: number, column: number) => [column, size - 1 - row],
+    (row: number, column: number) => [size - 1 - row, size - 1 - column],
+    (row: number, column: number) => [size - 1 - column, row],
+  ] as const;
+  return transforms.flatMap((transform) =>
+    [false, true].map(
+      (flips) =>
+        new Set(
+          cells.map((cell) => {
+            const row = Math.floor(cell / size);
+            const column = cell % size;
+            const [toRow, toColumn] = transform(
+              row,
+              flips ? size - 1 - column : column,
+            );
+            return toRow! * size + toColumn!;
+          }),
+        ),
+    ),
+  );
+}
+
 /**
- * 1つのレベルの問題を採る。生成条件を巡回し、各条件で次に当たる候補（候補番号の順）を1問ずつ採る。
- * 回転・反転で同じ形の問題と、島の配置が同じ問題は、別のレベルで採ったものも含めて除く。同じ流れ・同じ指紋の問題の数と、
- * 札の割合（`tagShareRules`）を守る。候補の調べは子プロセスに分けて先に走らせ、採る順は1プロセスで調べたときと同じにする。
+ * 問題集に採った問題。回転・反転で同じ形の問題と、島の配置が近い問題（回転・反転をそろえて、位置の違う島が
+ * `NEAR_LAYOUT_DIFFERENCE` 以下）を、レベルをまたいで除くのに使う。
+ */
+class TakenProblems {
+  readonly keys = new Set<string>();
+  private readonly layoutsBySize = new Map<number, Set<number>[]>();
+
+  add(symmetryKey: string, size: number, cells: readonly number[]): void {
+    this.keys.add(symmetryKey);
+    const layouts = this.layoutsBySize.get(size) ?? [];
+    layouts.push(new Set(cells));
+    this.layoutsBySize.set(size, layouts);
+  }
+
+  addEntry(entry: BridgesProblemPoolEntry): void {
+    const { problem } = toBridgesPooledProblem(entry);
+    this.add(
+      getBridgesSymmetryKey(problem),
+      problem.width,
+      problem.islands.map(({ row, column }) => row * problem.width + column),
+    );
+  }
+
+  isNear(size: number, cells: readonly number[]): boolean {
+    const variants = listLayoutVariants(size, cells);
+    return (this.layoutsBySize.get(size) ?? []).some((taken) =>
+      variants.some((variant) => {
+        let difference = 0;
+        for (const cell of variant) {
+          if (!taken.has(cell)) {
+            difference += 1;
+          }
+        }
+        for (const cell of taken) {
+          if (!variant.has(cell)) {
+            difference += 1;
+          }
+        }
+        return difference <= NEAR_LAYOUT_DIFFERENCE;
+      }),
+    );
+  }
+}
+
+/**
+ * 1つのレベルを選んでいる途中の状態。`turn` は次に1問を探す生成条件の番号。止まっても同じ順で続けられるよう、
+ * 生成条件ごとの次の候補番号と、数えた量をすべて持つ。
+ */
+type LevelProgress = {
+  entries: BridgesProblemPoolEntry[];
+  candidateCount: number;
+  outcomes: [string, number][];
+  milliseconds: number[];
+  nextIndex: number[];
+  turn: number;
+  flowCounts: [string, number][];
+  openingCounts: [string, number][];
+  fingerprintCounts: [string, number][];
+  tagCounts: [BridgesProblemTag, number][];
+  round: number;
+  misses: number[];
+  resumeRounds: number[];
+};
+
+/**
+ * 1つのレベルの問題を採る。生成条件を巡回し、各条件で次に当たる候補（候補番号の順）を1問ずつ採る。1つの条件で
+ * `MAXIMUM_TRIES_PER_TURN` 候補を調べても採れなければ、続けて採れなかった回数に応じて何巡かその条件を飛ばす。回転・反転で同じ形の問題と、
+ * 島の配置が近い問題は、別のレベルで採ったものも含めて除く。同じ流れ・同じ始まり・同じ指紋の問題の数と、札の割合
+ * （`tagShareRules`）を守る。候補の調べは子プロセスに分けて先に走らせ、採る順は1プロセスで調べたときと同じにする。
+ * `progressPath` があれば、1つの条件を調べ終えるたびに途中の状態を書き、あれば読んで続ける。
  */
 async function selectLevel(
   difficulty: BridgesDifficulty,
   perLevel: number,
   budget: number,
   jobCount: number,
-  takenKeys: Set<string>,
-  takenLayouts: Set<string>,
+  taken: TakenProblems,
+  progressPath: string | undefined,
 ): Promise<LevelSelection> {
-  const flowCounts = new Map<string, number>();
-  const fingerprintCounts = new Map<string, number>();
-  const tagCounts = new Map<BridgesProblemTag, number>();
   const rules: readonly TagShareRule[] = tagShareRules[difficulty];
   const flowLimit = getFlowLimit(perLevel);
+  const openingLimit = getOpeningLimit(perLevel);
   const conditions = listBridgesGenerationConditions(difficulty);
-  const nextIndex = conditions.map(() => 0);
-  const evaluatedUntil = conditions.map(() => 0);
+  const saved =
+    progressPath !== undefined && existsSync(progressPath)
+      ? (JSON.parse(readFileSync(progressPath, "utf8")) as LevelProgress)
+      : null;
+  if (saved !== null) {
+    for (const entry of saved.entries) {
+      taken.addEntry(entry);
+    }
+    console.log(
+      `${progressPath} から L${difficulty} の途中（${saved.entries.length} 問）を読んだ`,
+    );
+  }
+  const flowCounts = new Map(saved?.flowCounts ?? []);
+  const openingCounts = new Map(saved?.openingCounts ?? []);
+  const fingerprintCounts = new Map(saved?.fingerprintCounts ?? []);
+  const tagCounts = new Map(saved?.tagCounts ?? []);
+  const nextIndex = saved?.nextIndex ?? conditions.map(() => 0);
+  const evaluatedUntil = [...nextIndex];
   const buffers = conditions.map((): Candidate[] => []);
-  const exhausted = conditions.map(() => false);
+  const exhausted = nextIndex.map((index) => index >= budget);
   const selection: LevelSelection = {
-    entries: [],
-    candidateCount: 0,
-    outcomes: new Map(),
-    milliseconds: [],
+    entries: saved?.entries ?? [],
+    candidateCount: saved?.candidateCount ?? 0,
+    outcomes: new Map(saved?.outcomes ?? []),
+    milliseconds: saved?.milliseconds ?? [],
   };
-  async function fillBuffers(): Promise<void> {
+  let turn = saved?.turn ?? 0;
+  let round = saved?.round ?? 0;
+  const misses = saved?.misses ?? conditions.map(() => 0);
+  const resumeRounds = saved?.resumeRounds ?? conditions.map(() => 0);
+  function saveProgress(): void {
+    if (progressPath === undefined) {
+      return;
+    }
+    const progress: LevelProgress = {
+      ...selection,
+      outcomes: [...selection.outcomes],
+      nextIndex,
+      turn,
+      flowCounts: [...flowCounts],
+      openingCounts: [...openingCounts],
+      fingerprintCounts: [...fingerprintCounts],
+      tagCounts: [...tagCounts],
+      round,
+      misses,
+      resumeRounds,
+    };
+    writeFileSync(`${progressPath}.tmp`, JSON.stringify(progress));
+    renameSync(`${progressPath}.tmp`, progressPath);
+  }
+  async function fillBuffers(drained: number): Promise<void> {
     const jobs = conditions.flatMap((condition, conditionIndex) => {
       const batchSize = getLookaheadBatchSize(condition);
       if (
@@ -513,7 +710,12 @@ async function selectLevel(
         return [];
       }
       const start = evaluatedUntil[conditionIndex]!;
-      const count = Math.min(batchSize, budget - start);
+      const count = Math.min(
+        conditionIndex === drained
+          ? DRAINED_BATCH_PER_JOB * jobCount
+          : batchSize,
+        budget - start,
+      );
       return count > 0
         ? [{ conditionIndex, conditions: condition, start, count }]
         : [];
@@ -529,23 +731,68 @@ async function selectLevel(
       evaluatedUntil[job.conditionIndex]! += job.count;
     }
   }
+  function accepts(candidate: Candidate): boolean {
+    return (
+      candidate.difficulty === difficulty &&
+      candidate.entry !== null &&
+      !taken.keys.has(candidate.symmetryKey) &&
+      (flowCounts.get(candidate.flow) ?? 0) < flowLimit &&
+      (openingCounts.get(candidate.opening) ?? 0) < openingLimit &&
+      (fingerprintCounts.get(candidate.fingerprint) ?? 0) < FINGERPRINT_LIMIT &&
+      fitsTagShares(
+        rules,
+        tagCounts,
+        selection.entries.length,
+        perLevel,
+        candidate.tags,
+      ) &&
+      !taken.isNear(candidate.entry[0], candidate.cells)
+    );
+  }
+  function take(candidate: Candidate): void {
+    taken.add(candidate.symmetryKey, candidate.entry![0], candidate.cells);
+    for (const [counts, key] of [
+      [flowCounts, candidate.flow],
+      [openingCounts, candidate.opening],
+      [fingerprintCounts, candidate.fingerprint],
+    ] as const) {
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    for (const tag of candidate.tags) {
+      tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+    }
+    selection.entries.push(candidate.entry!);
+    console.log(
+      `L${difficulty}: ${selection.entries.length}/${perLevel}（候補 ${selection.candidateCount}・札 ${[
+        ...tagCounts,
+      ]
+        .map(([tag, count]) => `${tag} ${count}`)
+        .join(" ")}）`,
+    );
+  }
   while (selection.entries.length < perLevel) {
     if (exhausted.every(Boolean)) {
       throw new Error(
         `Level ${difficulty} ran out of candidates at ${selection.entries.length} problems (${countTagShortage(rules, tagCounts, perLevel).join(", ")})`,
       );
     }
-    for (const [conditionIndex] of conditions.entries()) {
-      if (selection.entries.length >= perLevel || exhausted[conditionIndex]) {
+    for (; turn < conditions.length; turn += 1) {
+      const conditionIndex = turn;
+      if (selection.entries.length >= perLevel) {
+        break;
+      }
+      if (exhausted[conditionIndex] || round < resumeRounds[conditionIndex]!) {
         continue;
       }
-      for (let tries = 0; tries < MAXIMUM_TRIES_PER_TURN; tries += 1) {
+      let accepted = false;
+      let tries = 0;
+      for (; tries < MAXIMUM_TRIES_PER_TURN; tries += 1) {
         if (nextIndex[conditionIndex]! >= budget) {
           exhausted[conditionIndex] = true;
           break;
         }
         if (buffers[conditionIndex]!.length === 0) {
-          await fillBuffers();
+          await fillBuffers(conditionIndex);
         }
         const candidate = buffers[conditionIndex]!.shift()!;
         nextIndex[conditionIndex]! += 1;
@@ -555,46 +802,21 @@ async function selectLevel(
           candidate.outcome,
           (selection.outcomes.get(candidate.outcome) ?? 0) + 1,
         );
-        if (
-          candidate.difficulty === difficulty &&
-          candidate.entry !== null &&
-          !takenKeys.has(candidate.symmetryKey) &&
-          !takenLayouts.has(candidate.layoutKey) &&
-          (flowCounts.get(candidate.flow) ?? 0) < flowLimit &&
-          (fingerprintCounts.get(candidate.fingerprint) ?? 0) <
-            FINGERPRINT_LIMIT &&
-          fitsTagShares(
-            rules,
-            tagCounts,
-            selection.entries.length,
-            perLevel,
-            candidate.tags,
-          )
-        ) {
-          takenKeys.add(candidate.symmetryKey);
-          takenLayouts.add(candidate.layoutKey);
-          flowCounts.set(
-            candidate.flow,
-            (flowCounts.get(candidate.flow) ?? 0) + 1,
-          );
-          fingerprintCounts.set(
-            candidate.fingerprint,
-            (fingerprintCounts.get(candidate.fingerprint) ?? 0) + 1,
-          );
-          for (const tag of candidate.tags) {
-            tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
-          }
-          selection.entries.push(candidate.entry);
-          console.log(
-            `L${difficulty}: ${selection.entries.length}/${perLevel}（候補 ${selection.candidateCount}・札 ${[
-              ...tagCounts,
-            ]
-              .map(([tag, count]) => `${tag} ${count}`)
-              .join(" ")}）`,
-          );
+        if (accepts(candidate)) {
+          take(candidate);
+          accepted = true;
           break;
         }
       }
+      misses[conditionIndex] = accepted ? 0 : misses[conditionIndex]! + 1;
+      resumeRounds[conditionIndex] = accepted
+        ? round + 1 + Math.floor(tries / TRIES_PER_SKIPPED_TURN)
+        : round + 2 ** misses[conditionIndex]!;
+      saveProgress();
+    }
+    if (turn >= conditions.length) {
+      turn = 0;
+      round += 1;
     }
   }
   console.log(
@@ -619,17 +841,14 @@ function writeCachedSelection(path: string, selection: LevelSelection): void {
 /** 書き出したレベルの選んだ結果を読み、そのレベルの問題の同型と島の配置を、後のレベルで除くために覚える。 */
 function readCachedSelection(
   path: string,
-  takenKeys: Set<string>,
-  takenLayouts: Set<string>,
+  taken: TakenProblems,
 ): LevelSelection {
   const cached = JSON.parse(readFileSync(path, "utf8")) as Omit<
     LevelSelection,
     "outcomes"
   > & { outcomes: [string, number][] };
   for (const entry of cached.entries) {
-    const { problem } = toBridgesPooledProblem(entry);
-    takenKeys.add(getBridgesSymmetryKey(problem));
-    takenLayouts.add(getBridgesLayoutKey(problem));
+    taken.addEntry(entry);
   }
   console.log(`${path} から選んだ ${cached.entries.length} 問を読んだ`);
   return { ...cached, outcomes: new Map(cached.outcomes) };
@@ -644,8 +863,7 @@ async function runMain(): Promise<void> {
   if (cacheDirectory !== undefined) {
     mkdirSync(cacheDirectory, { recursive: true });
   }
-  const takenKeys = new Set<string>();
-  const takenLayouts = new Set<string>();
+  const taken = new TakenProblems();
   const levels = {} as Record<BridgesDifficulty, BridgesProblemPoolEntry[]>;
   const selections: { id: BridgesDifficulty; selection: LevelSelection }[] = [];
   for (const { id } of difficultyLevels) {
@@ -655,17 +873,18 @@ async function runMain(): Promise<void> {
         : `${cacheDirectory}/level-${id}-${perLevel}.json`;
     const selection =
       cachePath !== undefined && existsSync(cachePath)
-        ? readCachedSelection(cachePath, takenKeys, takenLayouts)
+        ? readCachedSelection(cachePath, taken)
         : await selectLevel(
             id,
             perLevel,
             budget,
             jobCount,
-            takenKeys,
-            takenLayouts,
+            taken,
+            cachePath === undefined ? undefined : `${cachePath}.progress`,
           );
     if (cachePath !== undefined) {
       writeCachedSelection(cachePath, selection);
+      rmSync(`${cachePath}.progress`, { force: true });
     }
     levels[id] = selection.entries;
     selections.push({ id, selection });
@@ -822,17 +1041,21 @@ async function runVerify(): Promise<void> {
   const seeds = new Set<string>();
   let duplicateCount = 0;
   let layoutDuplicateCount = 0;
+  const near = new TakenProblems();
   let seedDuplicateCount = 0;
   let fingerprintExcessCount = 0;
   let tagShareViolationCount = 0;
   for (const { id } of difficultyLevels) {
     const entries = listBridgesPoolEntries(id);
     const flowCounts = new Map<string, number>();
+    const openingCounts = new Map<string, number>();
     const fingerprintCounts = new Map<string, number>();
     for (const entry of entries) {
       const { problem } = toBridgesPooledProblem(entry);
       const flow = describeBridgesSolveFlow(problem);
       flowCounts.set(flow, (flowCounts.get(flow) ?? 0) + 1);
+      const opening = describeOpening(flow);
+      openingCounts.set(opening, (openingCounts.get(opening) ?? 0) + 1);
       const fingerprint = describeBridgesSolveFingerprint(problem);
       fingerprintCounts.set(
         fingerprint,
@@ -840,13 +1063,16 @@ async function runVerify(): Promise<void> {
       );
     }
     const flowLimit = getFlowLimit(entries.length);
+    const openingLimit = getOpeningLimit(entries.length);
     fingerprintExcessCount +=
       [...flowCounts.values()].filter((count) => count > flowLimit).length +
+      [...openingCounts.values()].filter((count) => count > openingLimit)
+        .length +
       [...fingerprintCounts.values()].filter(
         (count) => count > FINGERPRINT_LIMIT,
       ).length;
     console.log(
-      `L${id}: 解く手順の流れ ${flowCounts.size} 種類（最多 ${Math.max(...flowCounts.values())} 問、上限 ${flowLimit} 問）・指紋 ${fingerprintCounts.size} 種類（最多 ${Math.max(...fingerprintCounts.values())} 問、上限 ${FINGERPRINT_LIMIT} 問）`,
+      `L${id}: 解く手順の流れ ${flowCounts.size} 種類（最多 ${Math.max(...flowCounts.values())} 問、上限 ${flowLimit} 問）・始まり ${openingCounts.size} 種類（最多 ${Math.max(...openingCounts.values())} 問、上限 ${openingLimit} 問）・指紋 ${fingerprintCounts.size} 種類（最多 ${Math.max(...fingerprintCounts.values())} 問、上限 ${FINGERPRINT_LIMIT} 問）`,
     );
     const tagCounts = new Map<BridgesProblemTag, number>();
     for (const [index, entry] of entries.entries()) {
@@ -864,10 +1090,14 @@ async function runVerify(): Promise<void> {
       }
       keys.set(key, `L${id}#${index}`);
       const layoutKey = getBridgesLayoutKey(pooled.problem);
-      if (layouts.has(layoutKey)) {
+      const cells = pooled.problem.islands.map(
+        ({ row, column }) => row * pooled.problem.width + column,
+      );
+      if (layouts.has(layoutKey) || near.isNear(pooled.problem.width, cells)) {
         layoutDuplicateCount += 1;
       }
       layouts.add(layoutKey);
+      near.add(key, pooled.problem.width, cells);
       if (seeds.has(pooled.identity.seed)) {
         seedDuplicateCount += 1;
       }
@@ -895,7 +1125,7 @@ async function runVerify(): Promise<void> {
     console.log(`L${id}: ${listBridgesPoolEntries(id).length}問`);
   }
   console.log(
-    `同型の重複 ${duplicateCount}・島の配置の重複 ${layoutDuplicateCount}・seed の重複 ${seedDuplicateCount}・流れと指紋の上限超え ${fingerprintExcessCount}・札の割合の外れ ${tagShareViolationCount}`,
+    `同型の重複 ${duplicateCount}・島の配置の重複と近い配置 ${layoutDuplicateCount}・seed の重複 ${seedDuplicateCount}・流れと始まりと指紋の上限超え ${fingerprintExcessCount}・札の割合の外れ ${tagShareViolationCount}`,
   );
   console.log(
     `問題集の大きさ（項目だけ）${describeSize(json)}・選択 ${measureSelection()}`,

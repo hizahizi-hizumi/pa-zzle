@@ -1,10 +1,21 @@
-import type { BridgesGenerationConditions } from "@/games/bridges/problem/problem";
 import {
   type BridgesBoard,
   type BridgesIsland,
   getBridgesNetwork,
 } from "@/games/bridges/puzzle/board";
 import { type ProblemRandom, pickProblemValue } from "@/games/problem-seed";
+
+/**
+ * 島を広げる条件。生成条件（`BridgesGenerationConditions`）のうち広げ方に使う値で、問題集の値に限らない。
+ * `islandDensity` は島の数の下限の、盤面のマスに対する割合。
+ */
+export type BridgesSpreadConditions = {
+  size: number;
+  islandDensity: number;
+  doubleBridgeRate: number;
+  extraBridgeRate: number;
+  splitRate: number;
+};
 
 /** 完成した橋の配置から数字を出した盤面と、その配置（辺ごとの本数）。 */
 export type BridgesCompletedLayout = {
@@ -50,6 +61,12 @@ function pickWeighted<T>(
  * 盤面の枠をなぞる問題になる。
  */
 const BORDER_PLACEMENT_WEIGHT = 0.35;
+
+/**
+ * 島の多い偶奇の組（行と列の偶奇が同じマス）に島を置く重みの倍率。間が1マスの橋で島を広げると、島が1マスおきの格子に
+ * 並びやすいので、多い組のマスを選びにくくして、間が偶数マスの橋も混ぜる。
+ */
+const CROWDED_PARITY_PLACEMENT_WEIGHT = 0.5;
 
 /** 分割で島を差すときに、橋の両端の島から空けるマスの数。差した島が両端の島と隣り合わないようにする。 */
 const SPLIT_MARGIN = 2;
@@ -103,6 +120,17 @@ class SpreadLayout {
   private readonly bridgeCells = new Set<number>();
 
   constructor(readonly size: number) {}
+
+  /** 行と列の偶奇が `cell` と同じ島の数が、偶奇の4つの組の平均より多いか。 */
+  isParityCrowded(cell: CellPosition): boolean {
+    const parityOf = ({ row, column }: CellPosition) =>
+      (row % 2) * 2 + (column % 2);
+    const target = parityOf(cell);
+    const same = this.cells.filter(
+      (other) => parityOf(other) === target,
+    ).length;
+    return same * 4 > this.cells.length;
+  }
 
   isOnBorder({ row, column }: CellPosition): boolean {
     const last = this.size - 1;
@@ -232,10 +260,10 @@ function splitBridge(layout: SpreadLayout, random: ProblemRandom): void {
  *    間のマスの数に比べた重みで選び、長い橋を優先する。
  * 2. 島を置く代わりに、`splitRate` の確率で、架けた橋の途中に島を差して2本に分ける（同じ本数の橋が島を通り抜ける形）。
  *    置いた島から別の向きにも既にある島へ架けられるなら、その向きごとに `extraBridgeRate` の確率で橋を足して輪を作る。
- * 3. 島の数が目標（`islandDensity` × マスの数）に届くか、置ける所が尽きたら止める。
+ * 3. 置ける所が尽きるまで続ける。島の多い偶奇の組のマスは選びにくくする。
  * 4. まだ架けていない辺のうち、架けた橋と交わらない辺を `extraBridgeRate` の確率で足して輪を作る。
  * 5. 橋を `doubleBridgeRate` の確率で2本にし、数字は島から出る橋の本数にする。
- * 島が2つに届かないか、外周の行・列に島の無いものがあれば `null`。
+ * 島の数が下限（`islandDensity` × マスの数）に届かないか、外周の行・列に島の無いものがあれば `null`。
  */
 export function spreadBridgesIslands(
   {
@@ -244,19 +272,19 @@ export function spreadBridgesIslands(
     doubleBridgeRate,
     extraBridgeRate,
     splitRate,
-  }: BridgesGenerationConditions,
+  }: BridgesSpreadConditions,
   random: ProblemRandom,
 ): BridgesCompletedLayout | null {
-  const targetIslandCount = Math.max(
+  const minimumIslandCount = Math.max(
     2,
-    Math.round(islandDensity * size * size),
+    Math.ceil(islandDensity * size * size),
   );
   const layout = new SpreadLayout(size);
   layout.addIsland({
     row: Math.floor(random() * size),
     column: Math.floor(random() * size),
   });
-  while (layout.cells.length < targetIslandCount) {
+  for (;;) {
     if (layout.bridges.length > 0 && random() < splitRate) {
       const before = layout.cells.length;
       splitBridge(layout, random);
@@ -274,7 +302,10 @@ export function spreadBridgesIslands(
       (options) =>
         Math.sqrt(Math.max(...options.map(({ path }) => path.length))) *
         options.length *
-        (layout.isOnBorder(options[0]!.cell) ? BORDER_PLACEMENT_WEIGHT : 1),
+        (layout.isOnBorder(options[0]!.cell) ? BORDER_PLACEMENT_WEIGHT : 1) *
+        (layout.isParityCrowded(options[0]!.cell)
+          ? CROWDED_PARITY_PLACEMENT_WEIGHT
+          : 1),
     );
     const first = pickWeighted(anchors, random, ({ path }) => path.length);
     const island = layout.addIsland(first.cell);
@@ -289,7 +320,10 @@ export function spreadBridgesIslands(
       }
     }
   }
-  if (layout.cells.length < 2 || !reachesEveryBorder(layout.cells, size)) {
+  if (
+    layout.cells.length < minimumIslandCount ||
+    !reachesEveryBorder(layout.cells, size)
+  ) {
     return null;
   }
 

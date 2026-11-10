@@ -16,6 +16,8 @@ import {
  * - `countReasoningUndecidedEdgeCount`: 数字の読みだけでは本数が決まらない行き先の数（つながりを読んで決める範囲）。
  * - `lookaheadRoundCount`: つながりの読みの手詰まりのうち、1手の先読みが要った回数。1手の先読みを数えるようになる前の
  *   記録には無い（0 とみなす）。
+ * - `crossingBlockCount`: 架かると決まった橋と交わって消えた、両端の島がまだ足りない行き先の数。数えるようになる前の記録には
+ *   無い（0 とみなす）。
  */
 export type BridgesSolveWorkload = {
   islandCount: number;
@@ -25,6 +27,7 @@ export type BridgesSolveWorkload = {
   connectivityRoundCount: number;
   countReasoningUndecidedEdgeCount: number;
   lookaheadRoundCount?: number;
+  crossingBlockCount?: number;
 };
 
 /** 問題集の1問の作業の量。盤面から数えられる量と、問題集が持つ生成時の分析結果から求める。 */
@@ -44,13 +47,14 @@ export function measureBridgesSolveWorkload({
     connectivityRoundCount: analysis.connectivityRoundCount,
     countReasoningUndecidedEdgeCount: analysis.countReasoningUndecidedEdgeCount,
     lookaheadRoundCount: analysis.lookaheadRoundCount,
+    crossingBlockCount: analysis.crossingBlockCount,
   };
 }
 
 /**
  * 記録など外部から読み戻した値が、作業の量として読めるかを確かめる。
  * 全島が1つにつながるので、行き先と橋の本数は島の数 − 1 以上。決まらない行き先は行き先の数を超えない。
- * 1手の先読みの回数は、つながりの読みの手詰まりの回数を超えない。
+ * 1手の先読みの回数は、つながりの読みの手詰まりの回数を超えない。交差で消えた行き先は行き先の数を超えない。
  */
 export function isBridgesSolveWorkload(
   value: unknown,
@@ -66,6 +70,7 @@ export function isBridgesSolveWorkload(
     connectivityRoundCount,
     countReasoningUndecidedEdgeCount,
     lookaheadRoundCount,
+    crossingBlockCount,
   } = value;
   return (
     isPositiveInteger(islandCount) &&
@@ -79,6 +84,9 @@ export function isBridgesSolveWorkload(
     countReasoningUndecidedEdgeCount <= edgeCount &&
     (lookaheadRoundCount === undefined ||
       (isNonNegativeInteger(lookaheadRoundCount) &&
-        lookaheadRoundCount <= connectivityRoundCount))
+        lookaheadRoundCount <= connectivityRoundCount)) &&
+    (crossingBlockCount === undefined ||
+      (isNonNegativeInteger(crossingBlockCount) &&
+        crossingBlockCount <= edgeCount))
   );
 }

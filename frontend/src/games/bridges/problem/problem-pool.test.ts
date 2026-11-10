@@ -82,6 +82,7 @@ describe("toBridgesPoolIdentity", () => {
       3,
       4,
       1,
+      2,
     ]);
 
     expect(identity).toEqual(
@@ -118,6 +119,7 @@ describe("toBridgesPoolIdentity", () => {
         3,
         4,
         1,
+        2,
       ]);
 
     expect(act).toThrow(RangeError);

@@ -30,14 +30,40 @@ const MAXIMUM_DOMINANT_CLUE_SHARE = 0.35;
 const MAXIMUM_BORDER_BRIDGE_SHARE = 0.5;
 
 /** 下限・上限を外れた分を、読みの量の何点ぶんとして割り引くか。外れない変形を、読みの量が少し下がっても選ぶ強さ。 */
-const QUALITY_SHORTFALL_WEIGHT = 30;
+const QUALITY_SHORTFALL_WEIGHT = 60;
 
 /** 点に数える交差で塞がった行き先と、解の輪の数の上限。それより多くは、読みの量を上げずに数だけを増やす変形になる。 */
 const MAXIMUM_SCORED_CROSSING_BLOCKS = 6;
-const MAXIMUM_SCORED_LOOPS = 3;
+/** 点に数える解の輪の数は、島の数をこの数で割った数まで。島が多いほど輪も多くする。 */
+const ISLANDS_PER_SCORED_LOOP = 6;
+
+/** 解の輪1つの点。 */
+const LOOP_SCORE = 2;
+
+/** 点に数える長い橋（盤面の一辺の半分以上）の数の上限と、1本の点。 */
+const MAXIMUM_SCORED_LONG_BRIDGES = 4;
+const LONG_BRIDGE_SCORE = 0.5;
+
+/** 磨くときに保つ、架ける組のうち間が1マスの短い橋の割合の上限。 */
+const MAXIMUM_SHORT_BRIDGE_SHARE = 0.5;
+
+/** 磨くときに保つ、行き先のうち橋を架ける組の割合の上限。架けない行き先が無いと、どこへ架けるかを選ぶ所が無い。 */
+const MAXIMUM_USED_EDGE_SHARE = 0.85;
+
+/** 磨く途中で最も高い点がこの回数のあいだ上がらなければ、磨くのを打ち切る。 */
+const REFINEMENT_PATIENCE = 700;
 
 /** 1手の先読みが続けて要ったとみなす、前の1手の先読みからほかの読みで狭めた組の数の上限。分析と同じ値。 */
 const LOOKAHEAD_CHAIN_GAP = 3;
+
+/**
+ * 上のレベルが1つ以上を求める読み（本数が破れるのを見る先読み・続けて要る先読み）と、2つ以上を求める解の輪の、最初の分に足す点。
+ * 2つ目からと同じ点では、多い読みを1種類だけ増やす変形が選ばれ、レベルが求める読みの揃わない盤面が残る。
+ */
+const FIRST_COUNT_LOOKAHEAD_SCORE = 12;
+const FIRST_CHAINED_LOOKAHEAD_SCORE = 15;
+const FIRST_LOOP_SCORE = 3;
+const FIRST_SCORED_LOOPS = 2;
 
 /**
  * 焼きなましの温度の始めと終わり（点の差の尺度）。始めは数点下がる変形も時々採って山登りの行き止まりを抜け、
@@ -99,19 +125,44 @@ function isConnected(
 /**
  * 手詰まりの読みを、磨く向き（`goal`）に応じて点にする。1〜2組だけが決まる手詰まり（一か所の気づき）を、多くの組がまとめて決まる
  * 手詰まり（同じ規則で盤面を掃く作業）より重くする。
+ * - `entry`: 最初の配分の読み1点、2つ目からの配分の読みは −4点、つながりの読みは −6点、1手の先読みは −12点。
  * - `count`: 配分の読み（A2）2点、2島を閉じない読みの一か所の気づき2点。ほかのつながりの読みは −6点、1手の先読みは −12点。
  * - `closure`: 配分の読み1点、つながりの読みの一か所の気づき3点（掃く手詰まり1点）、唯一の通り道はさらに4点。1手の先読みは −12点。
- * - `lookahead`: `closure` の点に、1手の先読み8点、組が閉じるか孤立するのを見る先読みはさらに4点、前の先読みから続けて要る
- *   先読みはさらに6点を足す。
+ * - `lookahead`: `closure` の点に、1手の先読み8点、組が閉じるか孤立するのを見る先読みはさらに4点、本数が破れるのを見る
+ *   先読みはさらに3点（最初の1回は12点）、架けすぎを退けて上限を下げる先読みはさらに4点、前の先読みから続けて要る先読みは
+ *   さらに6点（最初の1回は15点）を足す。
  */
 function scoreRounds(
   rounds: readonly BridgesReasoningRound[],
   goal: BridgesRefinementGoal,
 ): number {
   let value = 0;
+  let countRounds = 0;
   let sinceLookahead: number | null = null;
-  for (const { tier, edgeCount, readsGroup } of rounds) {
+  let readsCountSeen = false;
+  let chainSeen = false;
+  for (const {
+    tier,
+    edgeCount,
+    readsGroup,
+    readsCount,
+    lowersUpper,
+  } of rounds) {
     const sharp = edgeCount <= BRIDGES_SHARP_ROUND_EDGE_LIMIT;
+    if (goal === "entry") {
+      countRounds += tier === "A2" ? 1 : 0;
+      value +=
+        tier === "A1"
+          ? 0
+          : tier === "A2"
+            ? countRounds === 1
+              ? 1
+              : -4
+            : tier === "D"
+              ? -12
+              : -6;
+      continue;
+    }
     if (goal === "count") {
       value +=
         tier === "A2"
@@ -137,10 +188,17 @@ function scoreRounds(
     }
     if (tier === "D") {
       value += readsGroup ? 4 : 0;
-      value +=
-        sinceLookahead !== null && sinceLookahead <= LOOKAHEAD_CHAIN_GAP
-          ? 6
-          : 0;
+      value += readsCount
+        ? readsCountSeen
+          ? 3
+          : FIRST_COUNT_LOOKAHEAD_SCORE
+        : 0;
+      value += lowersUpper ? 4 : 0;
+      readsCountSeen ||= readsCount;
+      if (sinceLookahead !== null && sinceLookahead <= LOOKAHEAD_CHAIN_GAP) {
+        value += chainSeen ? 6 : FIRST_CHAINED_LOOKAHEAD_SCORE;
+        chainSeen = true;
+      }
       sinceLookahead = 0;
     } else if (sinceLookahead !== null) {
       sinceLookahead += edgeCount;
@@ -152,9 +210,11 @@ function scoreRounds(
 /**
  * 盤面を、人が読む量で点にする。1手の先読みまでの推理で解き切れる盤面だけに点を付け、ほかは `null`。
  * 推理の段はどれも盤面から必ず言えることだけを決めるので、推理で全辺が決まり全島がつながれば解はそれだけで、一意解になる。
- * 手詰まりの読みを磨く向きに応じて点にし（`scoreRounds`）、交差で塞がった行き先と解の輪は1つ1点（上限あり）、
- * 6以上の数字と7以上の数字があればそれぞれ2点を足す。
- * 数字の平均・2本の割合・数字2の割合・最も多い数字の割合・外周に沿う橋の割合が下限・上限を外れた分は割り引く。
+ * 手詰まりの読みを磨く向きに応じて点にし（`scoreRounds`）、交差で塞がった行き先は1つ1点、解の輪（島6つに1つまで）は1つ2点
+ * （最初の2つはさらに3点）、
+ * 長い橋は1本 0.5点（上限あり）、6以上の数字と7以上の数字があればそれぞれ2点を足す。
+ * 数字の平均・2本の割合・数字2の割合・最も多い数字の割合・外周に沿う橋・短い橋・架ける行き先の割合が下限・上限を
+ * 外れた分は割り引く。
  */
 function scoreLayout(
   board: BridgesBoard,
@@ -169,10 +229,12 @@ function scoreLayout(
   value += Math.min(trace.crossingBlockCount, MAXIMUM_SCORED_CROSSING_BLOCKS);
   const clues = board.islands.map(({ clue }) => clue);
   const used = solution.filter((bridges) => bridges > 0).length;
-  value += Math.min(
-    MAXIMUM_SCORED_LOOPS,
+  const loops = Math.min(
+    Math.floor(board.islands.length / ISLANDS_PER_SCORED_LOOP),
     Math.max(0, used - board.islands.length + 1),
   );
+  value +=
+    LOOP_SCORE * loops + FIRST_LOOP_SCORE * Math.min(loops, FIRST_SCORED_LOOPS);
   value += clues.some((clue) => clue >= 6) ? 2 : 0;
   value += clues.some((clue) => clue >= 7) ? 2 : 0;
   const clueMean =
@@ -187,6 +249,24 @@ function scoreLayout(
   const dominantShare = Math.max(...clueCounts.values()) / clues.length;
   const { edges } = getBridgesNetwork(board);
   const last = board.width - 1;
+  const lengths = edges.flatMap(({ from, to }, edge) => {
+    if (solution[edge] === 0) {
+      return [];
+    }
+    const start = board.islands[from]!;
+    const end = board.islands[to]!;
+    return [
+      Math.abs(start.row - end.row) + Math.abs(start.column - end.column),
+    ];
+  });
+  value +=
+    LONG_BRIDGE_SCORE *
+    Math.min(
+      MAXIMUM_SCORED_LONG_BRIDGES,
+      lengths.filter((length) => length * 2 >= board.width).length,
+    );
+  const shortShare =
+    lengths.filter((length) => length === 2).length / Math.max(1, used);
   const borderShare =
     edges.filter(({ from, to }, edge) => {
       if (solution[edge] === 0) {
@@ -201,6 +281,8 @@ function scoreLayout(
       );
     }).length / Math.max(1, used);
   const shortfall =
+    Math.max(0, shortShare - MAXIMUM_SHORT_BRIDGE_SHARE) +
+    Math.max(0, used / Math.max(1, edges.length) - MAXIMUM_USED_EDGE_SHARE) +
     Math.max(0, borderShare - MAXIMUM_BORDER_BRIDGE_SHARE) +
     Math.max(0, MINIMUM_CLUE_MEAN - clueMean) +
     Math.max(0, MINIMUM_DOUBLE_BRIDGE_RATIO - doubleRatio) +
@@ -231,10 +313,10 @@ function mutate(
 }
 
 /**
- * 島の位置を変えずに、解の橋を1本ずつ変えて、人が読む量の多い盤面へ磨く（山登り）。`steps` 回、辺1つの本数を1段変えた解を作り、
- * 全島がつながったまま、一意解で推理だけで解け、点が下がらなければ採る。初めの解が一意でなければ、一意になる変形を先に採る。
- * 島の位置・候補の辺は変えないので、盤面の形の性質（外周・橋の長さ・島の数）は広げたときのまま。
- * 磨き終えた解が一意でなければ `null`。
+ * 島の位置を変えずに、解の橋を1本ずつ変えて、人が読む量の多い盤面へ磨く（焼きなまし）。`steps` 回まで、辺1つの本数を1段変えた
+ * 解を作り、全島がつながったまま推理だけで解ける盤面のうち、点が下がらないものと、温度に応じて点が少し下がるものを採る。
+ * 途中で最も点の高かった盤面を返し、最も高い点が `REFINEMENT_PATIENCE` 回上がらなければ打ち切る。
+ * 島の位置・候補の辺は変えないので、盤面の形の性質（外周・島の数）は広げたときのまま。推理だけで解ける盤面が1つも無ければ `null`。
  */
 export function refineBridgesLayout(
   layout: BridgesCompletedLayout,
@@ -246,7 +328,11 @@ export function refineBridgesLayout(
   let solution = [...layout.solution];
   let score = scoreLayout(board, solution, goal);
   let best = score === null ? null : { board, solution, score };
+  let improvedAt = 0;
   for (let step = 0; step < steps; step += 1) {
+    if (step - improvedAt > REFINEMENT_PATIENCE) {
+      break;
+    }
     const next = mutate(board, solution, random);
     if (next === null || !isConnected(board, next)) {
       continue;
@@ -269,6 +355,7 @@ export function refineBridgesLayout(
       score = nextScore;
       if (best === null || score.value > best.score.value) {
         best = { board, solution, score };
+        improvedAt = step;
       }
     }
   }

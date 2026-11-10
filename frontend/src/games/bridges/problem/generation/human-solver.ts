@@ -57,12 +57,18 @@ export const bridgesConnectivityTiers = [
  * 1回の手詰まりで使った段と、その段で範囲を狭めた辺。
  * - `edges`: 範囲を狭めた辺の番号。`edgeCount` はその数。
  * - `readsGroup`: 1手の先読み（D）で、3島以上の組が閉じるか数島が孤立するのを見て退けた手があったか。ほかの段では `false`。
+ * - `readsCount`: 1手の先読みで、本数が破れるのを見て退けた手があったか。ほかの段では `false`。
+ * - `lowersUpper`: 1手の先読みで、架けすぎる手（本数を多く仮に決める手）を退けて上限を下げたか。ほかの段では `false`。
+ * - `readsIsolation`: 1手の先読みで、数島のまとまりが孤立するのを見て退けた手があったか。ほかの段では `false`。
  */
 export type BridgesReasoningRound = {
   tier: BridgesReasoningTier;
   edgeCount: number;
   edges: readonly number[];
   readsGroup: boolean;
+  readsCount: boolean;
+  lowersUpper: boolean;
+  readsIsolation: boolean;
 };
 
 /**
@@ -71,6 +77,14 @@ export type BridgesReasoningRound = {
  * 盤面の一部を見ても分からず、試し置きと同じ探索になるので、1手の先読みでは使わない。
  */
 export const BRIDGES_LOOKAHEAD_ISOLATION_LIMIT = 4;
+
+/**
+ * 1手の先読みで、閉じるのを見て退ける組の大きさの上限と、そのとき組の外に残る島の数の上限。組がこの数以下の島か、
+ * 外に残る島がこの数以下なら、閉じた側か残った側のどちらかを見渡せば閉じたと分かる。どちらも超える組が閉じるのを
+ * 確かめるには、十数島をたどる探索になり、試し置きと変わらないので、1手の先読みでは使わない。
+ */
+export const BRIDGES_LOOKAHEAD_CLOSED_GROUP_LIMIT = 7;
+export const BRIDGES_LOOKAHEAD_REMAINING_LIMIT = 5;
 
 /**
  * - `solved`: 全辺の本数が決まった。
@@ -281,7 +295,10 @@ function violatesCount(
  */
 type LookaheadFailure = "count" | "closed-pair" | "closed-group" | "isolated";
 
-/** 架かると決まった橋で閉じた（全島ではなく、どの島も足りた）組のうち最も小さい組の島の数。無ければ `null`。 */
+/**
+ * 架かると決まった橋で閉じた（全島ではなく、どの島も足りた）組のうち、見渡せる組（`BRIDGES_LOOKAHEAD_CLOSED_GROUP_LIMIT`
+ * 以下の島か、外に残る島が `BRIDGES_LOOKAHEAD_REMAINING_LIMIT` 以下）の最も小さい組の島の数。無ければ `null`。
+ */
 function findSmallestClosedGroup(
   context: BridgesSolverContext,
   lower: readonly number[],
@@ -301,7 +318,10 @@ function findSmallestClosedGroup(
   }
   let smallest: number | null = null;
   for (const [root, size] of sizes) {
-    if (size < components.length && remaining.get(root) === 0) {
+    const visible =
+      size <= BRIDGES_LOOKAHEAD_CLOSED_GROUP_LIMIT ||
+      components.length - size <= BRIDGES_LOOKAHEAD_REMAINING_LIMIT;
+    if (size < components.length && remaining.get(root) === 0 && visible) {
       smallest = Math.min(smallest ?? size, size);
     }
   }
@@ -339,8 +359,8 @@ function findSmallestSeparatedPiece(
  * 1手の先読み: 辺 `edge` の範囲を仮に `assumed` にし、交差と両端の島だけを1段進めて、本数・閉じた組・孤立が破れるか。
  * 1段進めるのは、両端の島が埋まる所だけ（足りた島の他の行き先は0本、行き先ごとの上限の合計が数字と同じなら全部上限）。
  * 本数の破れは、仮に決めた辺と1段で変わった辺の両端の島と、架かると決まった辺と交わる辺の両端の島で見る。
- * 閉じた組は大きさを問わない（組のどの島も足りたと島の知らせで見える）。孤立は、残りとつながらなくなるまとまりが
- * `BRIDGES_LOOKAHEAD_ISOLATION_LIMIT` 以下の島のときだけ見る。破れなければ `null`。
+ * 閉じた組は、組か外に残る島の少ない側を見渡せるときだけ見る（`findSmallestClosedGroup`）。孤立は、残りとつながらなくなる
+ * まとまりが `BRIDGES_LOOKAHEAD_ISOLATION_LIMIT` 以下の島のときだけ見る。破れなければ `null`。
  */
 function failsAfterOneStep(
   context: BridgesSolverContext,
@@ -438,25 +458,44 @@ function deduceByLookahead(
   return deductions;
 }
 
-/** 1手の先読みで狭めた範囲のうち、3島以上の組が閉じるか数島が孤立するのを見て退けた手があるか。 */
-function readsGroupByLookahead(
+/** 1手の先読みで狭めた範囲を、退けた手の理由と向きで分ける。 */
+function classifyLookahead(
   context: BridgesSolverContext,
   bounds: BridgeBounds,
   deductions: readonly [number, readonly [number, number]][],
-): boolean {
-  return deductions.some(([edge, [atLeast, atMost]]) => {
-    const failures = [
-      atLeast > bounds.lower[edge]!
-        ? failsAfterOneStep(context, bounds, edge, { upper: atLeast - 1 })
-        : null,
-      atMost < bounds.upper[edge]!
-        ? failsAfterOneStep(context, bounds, edge, { lower: atMost + 1 })
-        : null,
-    ];
-    return failures.some(
+): Pick<
+  BridgesReasoningRound,
+  "readsGroup" | "readsCount" | "lowersUpper" | "readsIsolation"
+> {
+  const failures: LookaheadFailure[] = [];
+  let lowersUpper = false;
+  for (const [edge, [atLeast, atMost]] of deductions) {
+    if (atLeast > bounds.lower[edge]!) {
+      const failure = failsAfterOneStep(context, bounds, edge, {
+        upper: atLeast - 1,
+      });
+      if (failure !== null) {
+        failures.push(failure);
+      }
+    }
+    if (atMost < bounds.upper[edge]!) {
+      lowersUpper = true;
+      const failure = failsAfterOneStep(context, bounds, edge, {
+        lower: atMost + 1,
+      });
+      if (failure !== null) {
+        failures.push(failure);
+      }
+    }
+  }
+  return {
+    readsGroup: failures.some(
       (failure) => failure === "closed-group" || failure === "isolated",
-    );
-  });
+    ),
+    readsCount: failures.includes("count"),
+    lowersUpper,
+    readsIsolation: failures.includes("isolated"),
+  };
 }
 
 /** 解き進めた記録。`traceBridgesHumanSolve` の `rounds` と `crossingBlockCount` になる。 */
@@ -684,10 +723,15 @@ function runTiers(
         tier === "C1p" &&
         !isReachedByCountReasoning(context, bounds, effective, merged);
       const applied = tier === "C1p" && !needsGroups ? effective : merged;
-      const readsGroup =
-        log !== null &&
-        tier === "D" &&
-        readsGroupByLookahead(context, bounds, applied);
+      const lookahead =
+        log !== null && tier === "D"
+          ? classifyLookahead(context, bounds, applied)
+          : {
+              readsGroup: false,
+              readsCount: false,
+              lowersUpper: false,
+              readsIsolation: false,
+            };
       for (const [edge, [atLeast, atMost]] of applied) {
         if (atLeast > atMost) {
           throw new BridgesContradiction();
@@ -699,7 +743,7 @@ function runTiers(
         tier: needsGroups ? "C1g" : tier,
         edgeCount: applied.length,
         edges: applied.map(([edge]) => edge),
-        readsGroup,
+        ...lookahead,
       });
       progressed = true;
       break;
@@ -723,6 +767,9 @@ function runTiers(
       edgeCount: trialDeductions.size,
       edges: [...trialDeductions.keys()],
       readsGroup: false,
+      readsCount: false,
+      lowersUpper: false,
+      readsIsolation: false,
     });
   }
 }

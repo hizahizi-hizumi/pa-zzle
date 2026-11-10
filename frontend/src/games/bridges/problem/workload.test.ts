@@ -18,6 +18,7 @@ describe("measureBridgesSolveWorkload", () => {
       countReasoningUndecidedEdgeCount: 1,
       trialBacktrackCount: 4,
       lookaheadRoundCount: 1,
+      crossingBlockCount: 1,
     };
 
     test("島・行き先・橋の本数を盤面から数え、読みの量を分析結果から写すこと", () => {
@@ -36,6 +37,7 @@ describe("measureBridgesSolveWorkload", () => {
         connectivityRoundCount: 2,
         countReasoningUndecidedEdgeCount: 1,
         lookaheadRoundCount: 1,
+        crossingBlockCount: 1,
       });
     });
   });
@@ -81,6 +83,11 @@ describe("isBridgesSolveWorkload", () => {
       "1手の先読みの回数がつながりの手詰まりの回数以下",
       { ...valid, connectivityRoundCount: 2, lookaheadRoundCount: 1 },
       true,
+    ],
+    [
+      "交差で消えた行き先が行き先の数を超える",
+      { ...valid, crossingBlockCount: 3 },
+      false,
     ],
     [
       "1手の先読みの回数がつながりの手詰まりの回数を超える",

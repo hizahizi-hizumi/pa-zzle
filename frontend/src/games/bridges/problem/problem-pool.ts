@@ -42,6 +42,7 @@ export type BridgesProblemPoolEntry = readonly [
   countReasoningUndecidedEdgeCount: number,
   trialBacktrackCount: number,
   lookaheadRoundCount: number,
+  crossingBlockCount: number,
 ];
 
 /**
@@ -54,6 +55,7 @@ export type BridgesPoolAnalysis = {
   countReasoningUndecidedEdgeCount: number;
   trialBacktrackCount: number;
   lookaheadRoundCount: number;
+  crossingBlockCount: number;
 };
 
 /** 問題集から復元した1問。生成時の分析結果を伴う。 */
@@ -186,6 +188,7 @@ export function toBridgesPoolAnalysis(
     countReasoningUndecidedEdgeCount,
     trialBacktrackCount,
     lookaheadRoundCount,
+    crossingBlockCount,
   ] = entry;
   return {
     countRoundCount,
@@ -193,6 +196,7 @@ export function toBridgesPoolAnalysis(
     countReasoningUndecidedEdgeCount,
     trialBacktrackCount,
     lookaheadRoundCount,
+    crossingBlockCount,
   };
 }
 

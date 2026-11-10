@@ -11,7 +11,7 @@ describe("generateBridgesProblem", () => {
   const identity = createBridgesProblemIdentity(
     {
       size: 10,
-      islandDensity: 0.36,
+      islandDensity: 0.26,
       doubleBridgeRate: 0.65,
       extraBridgeRate: 0.25,
       splitRate: 0.45,

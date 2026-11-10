@@ -291,6 +291,54 @@ describe("failsAfterOneStep", () => {
   });
 });
 
+describe("failsAfterOneStep で閉じる組の大きさ", () => {
+  /**
+   * 上の行に `chained` 島の 1-2-…-2-1 の列、2行下の奇数列に `others` 島の列を置き、上の列の最後の1組を除く橋を架けた局面で、
+   * 最後の1組を架ける手を試す。架けると上の列が全島ではない閉じた組になる。
+   */
+  function tryClosingChain(chained: number, others: number) {
+    const width = chained * 2 - 1;
+    const row = (count: number, offset: number) =>
+      Array.from({ length: width }, (_, column) => {
+        const index = (column - offset) / 2;
+        if (column < offset || !Number.isInteger(index) || index >= count) {
+          return ".";
+        }
+        return index === 0 || index === count - 1 ? "1" : "2";
+      }).join("");
+    const board = parseBridgesBoard([
+      row(chained, 0),
+      ".".repeat(width),
+      row(others, 1),
+    ]);
+    const context = createBridgesSolverContext(board);
+    const bounds = createInitialBridgeBounds(context);
+    const chainEdges = context.endpoints.flatMap(([from, to], edge) =>
+      board.islands[from]!.row === 0 && board.islands[to]!.row === 0
+        ? [edge]
+        : [],
+    );
+    for (const edge of chainEdges.slice(0, -1)) {
+      bounds.lower[edge] = 1;
+      bounds.upper[edge] = 1;
+    }
+    return failsAfterOneStep(context, bounds, chainEdges.at(-1)!, {
+      lower: 1,
+    });
+  }
+
+  test.each([
+    [7, 6, "closed-group"],
+    [8, 5, "closed-group"],
+    [8, 6, null],
+  ] as const)(
+    "%d島の組が閉じ、外に%d島残る手を %s とすること",
+    (chained, others, expected) => {
+      expect(tryClosingChain(chained, others)).toBe(expected);
+    },
+  );
+});
+
 describe("countBridgesOpeningEdges", () => {
   describe("研究用の解法器で数えた盤面の場合", () => {
     test("解き始めに数字の読みで狭められる辺の数が一致すること", () => {

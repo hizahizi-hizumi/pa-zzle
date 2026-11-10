@@ -30,6 +30,8 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
  * - `loopCount`: 解の輪の数（架ける組の数 − 島の数 + 1）。輪が無い解は、伸ばした先から決まる木の読みだけになる。
  * - `borderBridgeShare`: 解で橋を架ける組のうち、盤面の外周の行・列に沿う組の割合。多いと盤面の枠をなぞる問題になる。
  * - `longBridgeShare`: 解で橋を架ける組のうち、盤面の一辺の半分以上の長さの組の割合。
+ * - `usedEdgeShare`: 行き先（橋を架けられる組）のうち、解で橋を架ける組の割合。1 に近いと、どこへ架けるかを選ぶ所が無い。
+ * - `islandShare`: 盤面のマスに対する島の数の割合。
  */
 export type BridgesScaleMetrics = {
   size: number;
@@ -46,6 +48,8 @@ export type BridgesScaleMetrics = {
   loopCount: number;
   borderBridgeShare: number;
   longBridgeShare: number;
+  usedEdgeShare: number;
+  islandShare: number;
 };
 
 /**
@@ -72,6 +76,9 @@ export type BridgesScaleMetrics = {
  * - `crossingBlockCount`: 架かると決まった橋と交わって0本になった行き先のうち、両端の島がまだ足りなかった行き先の数。
  *   交差で行き先が消え、数字の読みが進む所。
  * - `cornerOpeningIslandCount`: 解き始めの決め打ちの島のうち、盤面の四隅の島の数。
+ * - `countLookaheadRoundCount`: 1手の先読みのうち、本数が破れるのを見て退けた手詰まりの回数。
+ * - `cappingLookaheadRoundCount`: 1手の先読みのうち、架けすぎる手を退けて上限を下げた手詰まりの回数。
+ * - `isolatingLookaheadRoundCount`: 1手の先読みのうち、数島のまとまりが孤立するのを見て退けた手詰まりの回数。
  */
 export type BridgesReasoningFeatures = {
   maximumTier: Exclude<BridgesReasoningTier, "T">;
@@ -91,6 +98,9 @@ export type BridgesReasoningFeatures = {
   chainedLookaheadRoundCount: number;
   crossingBlockCount: number;
   cornerOpeningIslandCount: number;
+  countLookaheadRoundCount: number;
+  cappingLookaheadRoundCount: number;
+  isolatingLookaheadRoundCount: number;
 };
 
 /**
@@ -224,6 +234,8 @@ function measureScale(
     loopCount: usedEdgeCount - problem.islands.length + 1,
     borderBridgeShare: usedEdgeCount === 0 ? 0 : borderBridges / usedEdgeCount,
     longBridgeShare: usedEdgeCount === 0 ? 0 : longBridges / usedEdgeCount,
+    usedEdgeShare: edges.length === 0 ? 0 : usedEdgeCount / edges.length,
+    islandShare: problem.islands.length / (problem.width * problem.height),
   };
 }
 
@@ -354,6 +366,15 @@ export function analyzeBridgesDifficulty(
       chainedLookaheadRoundCount: countChainedLookaheads(trace.rounds),
       crossingBlockCount: trace.crossingBlockCount,
       cornerOpeningIslandCount: countBridgesCornerOpeningIslands(problem),
+      countLookaheadRoundCount: trace.rounds.filter(
+        ({ tier, readsCount }) => tier === "D" && readsCount,
+      ).length,
+      cappingLookaheadRoundCount: trace.rounds.filter(
+        ({ tier, lowersUpper }) => tier === "D" && lowersUpper,
+      ).length,
+      isolatingLookaheadRoundCount: trace.rounds.filter(
+        ({ tier, readsIsolation }) => tier === "D" && readsIsolation,
+      ).length,
     },
     trial: measureBridgesTrialFeatures(problem),
   };

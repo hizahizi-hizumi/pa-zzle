@@ -98,6 +98,20 @@ describe("analyzeBridgesDifficulty", () => {
       });
     });
 
+    test("架ける行き先の割合と島の割合、1手の先読みが見た破れの種類（本数・組・孤立）と向きを数えること", () => {
+      const analysis = analyzeBridgesDifficulty(problem);
+
+      expect(analysis).toMatchObject({
+        scale: { usedEdgeShare: 8 / 11, islandShare: 9 / 36 },
+        reasoning: {
+          groupLookaheadRoundCount: 1,
+          countLookaheadRoundCount: 0,
+          cappingLookaheadRoundCount: 0,
+          isolatingLookaheadRoundCount: 0,
+        },
+      });
+    });
+
     test("1手の先読みの手詰まりで3組以上がまとめて決まるとき、一か所の気づきではなく掃く手詰まりに数えること", () => {
       const analysis = analyzeBridgesDifficulty(problem);
 
@@ -115,6 +129,35 @@ describe("analyzeBridgesDifficulty", () => {
       });
 
       expect(trials[0]).toEqual(trials[1]);
+    });
+  });
+
+  describe("1本多い手を退けて上限を下げる1手の先読みが要る問題の場合", () => {
+    const problem = parseBridgesBoard([
+      ".2......3",
+      "1..3..2..",
+      ".1......3",
+      "....2.3..",
+      ".2......4",
+      "2...1....",
+      ".2.4..5.6",
+      ".........",
+      "3.....5.4",
+    ]);
+
+    test("上限を下げる先読みと、本数・組・孤立を見る先読みの手詰まりを数えること", () => {
+      const analysis = analyzeBridgesDifficulty(problem);
+
+      expect(analysis).toMatchObject({
+        status: "analyzed",
+        reasoning: {
+          lookaheadRoundCount: 1,
+          cappingLookaheadRoundCount: 1,
+          countLookaheadRoundCount: 1,
+          groupLookaheadRoundCount: 1,
+          isolatingLookaheadRoundCount: 1,
+        },
+      });
     });
   });
 
