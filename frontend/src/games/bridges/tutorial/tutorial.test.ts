@@ -131,7 +131,7 @@ describe("bridgesTutorial の盤面", () => {
   test("ルールを伝える手順の辺は、それまでに伝えたルールで手順の本数に決まり、伝えたばかりのルールが無いと決まらないこと", () => {
     const ruleSteps = bridgesTutorial.steps
       .map((step, index) => ({ step, index }))
-      .filter(({ index }) => index >= 2);
+      .filter(({ step }) => step.island !== null);
 
     for (const { step, index } of ruleSteps) {
       const { boardState, earnedRuleIds } = finishSteps(index);
@@ -154,6 +154,21 @@ describe("bridgesTutorial の盤面", () => {
       ).toBeNull();
       expect(solvedBridges[step.edge]).toBe(step.bridgeCount);
     }
+  });
+
+  test("島から架ける操作の手順は、ルールをすべて伝えた後に置き、ゴールの盤面と一致し、伝えたルールで手順の本数に決まること", () => {
+    const index = bridgesTutorial.steps.findIndex(
+      ({ gesture }) => gesture === "fromIsland",
+    );
+    const step = bridgesTutorial.steps[index]!;
+    const { boardState, earnedRuleIds } = finishSteps(index);
+
+    expect(step).toMatchObject({ introducedRuleId: null, island: null });
+    expect(earnedRuleIds).toEqual(allRuleIds);
+    expect(solvedBridges[step.edge]).toBe(step.bridgeCount);
+    expect(
+      deduceEdge(boardState.bridges, earnedRuleIds, step.edge)?.minimum,
+    ).toBe(step.bridgeCount);
   });
 
   test("2本までのルールは、交差の手順で、2本架かった橋を決め手にして手を決めること", () => {
@@ -602,7 +617,7 @@ describe("手順の決め手", () => {
     expect(reason.edges).toHaveLength(3);
   });
 
-  test("つながりの手順は、左の真ん中の1と、数字とちょうどの右の3と、つなぐと閉じる下の1を決め手にすること", () => {
+  test("つながりの手順は、左の真ん中の1と、数字とちょうどの右の3と、つなぐと閉じる下の1とその間を決め手にすること", () => {
     const progress = finishSteps(4);
     const reason = getBridgesTutorialStepReason(
       situationOf(progress),
@@ -611,7 +626,7 @@ describe("手順の決め手", () => {
 
     expect(reason).toEqual({
       islands: [islandAt(3, 1), islandAt(3, 5), islandAt(5, 1)],
-      edges: [],
+      edges: [edgeBetween([3, 1], [5, 1])],
     });
   });
 

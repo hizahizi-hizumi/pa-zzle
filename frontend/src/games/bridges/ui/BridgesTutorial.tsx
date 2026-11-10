@@ -304,6 +304,9 @@ export function BridgesTutorial({
                     ? [markedEdge]
                     : []
                 }
+                acceptsEdgePress={
+                  !guiding || situation.step?.gesture !== "fromIsland"
+                }
                 onIneffectivePress={handleIneffectivePress}
                 onClearAnimationComplete={handleClearAnimationComplete}
               />

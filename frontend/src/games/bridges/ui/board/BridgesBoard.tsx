@@ -67,6 +67,11 @@ type BridgesBoardProps = {
    * 交わる辺と重なる所でも、狙いはこの辺に決まる。通常のプレイと、手を離した後は渡さない。
    */
   guidedEdges?: readonly number[];
+  /**
+   * 島の間を押して橋を回すのを受け付けるか。チュートリアルで、島から架ける操作（なぞる、島を選んでから相手の島を押す）を
+   * 体験させる間だけ `false` にし、島の間の押しは回さなかった押しとして知らせる。通常のプレイでは渡さない。
+   */
+  acceptsEdgePress?: boolean;
   /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せる島と辺。通常のプレイでは渡さない。 */
   spotlight?: BridgesBoardSpotlight | null;
   /** 辺の橋を 1本 → 2本 → なし と回す。 */
@@ -158,6 +163,7 @@ export function BridgesBoard({
   showsSea = false,
   cues = [],
   guidedEdges = [],
+  acceptsEdgePress = true,
   spotlight = null,
   onCycleEdge,
   onIneffectivePress,
@@ -284,11 +290,15 @@ export function BridgesBoard({
     );
     if (markedEdge !== undefined) {
       event.preventDefault();
-      cycleEdge(markedEdge, findNearerEnd(board, markedEdge, point));
+      if (acceptsEdgePress) {
+        cycleEdge(markedEdge, findNearerEnd(board, markedEdge, point));
+      } else {
+        rejectPress();
+      }
       return;
     }
     const target = findBoardTarget(board, bridges, point, recentIslands);
-    if (target === null) {
+    if (target === null || (target.kind === "edge" && !acceptsEdgePress)) {
       rejectPress();
       return;
     }
@@ -443,7 +453,12 @@ export function BridgesBoard({
         lit={clearing}
       />
       {(cues.length > 0 || spotlight !== null) && (
-        <BridgesBoardCues view={view} cues={cues} spotlight={spotlight} />
+        <BridgesBoardCues
+          view={view}
+          bridges={bridges}
+          cues={cues}
+          spotlight={spotlight}
+        />
       )}
       <ul className="sr-only">
         {board.islands.map(({ row, column, clue }, island) => (
