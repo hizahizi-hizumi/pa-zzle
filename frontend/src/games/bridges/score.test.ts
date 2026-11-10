@@ -4,10 +4,11 @@ import {
   calculateBridgesSpeedFullScoreMs,
   calculateBridgesSpeedScoreRule,
   calculateBridgesTimeDeltaMs,
+  calculateBridgesZeroScoreRatio,
 } from "@/games/bridges/score";
 import { getGameResultLevel } from "@/games/result";
 
-// レベル1 と レベル5 の問題集の中央値に近い作業の量。
+// 数字の読みだけで決まる小さな盤面と、つながりを何度も読む大きな盤面の作業の量。
 const lightWorkload: BridgesSolveWorkload = {
   islandCount: 11,
   edgeCount: 11,
@@ -23,10 +24,14 @@ const heavyWorkload: BridgesSolveWorkload = {
   countRoundCount: 3,
   connectivityRoundCount: 3,
   countReasoningUndecidedEdgeCount: 26,
+  crossingBlockCount: 2,
 };
 
-const lightFullScoreMs = 28_600;
-const heavyFullScoreMs = 105_800;
+// 見渡す10秒・島11個・橋12本。
+const lightFullScoreMs = 10_000 + 11_000 + 18_000;
+// 見渡す10秒・島24個・橋26本に、読みの項（配分3回・つながり3回・交差2つ・決まらない行き先26）を足す。
+const heavyReadingMs = 24_000 + 60_000 + 8_000 + 26_000;
+const heavyFullScoreMs = 10_000 + 24_000 + 39_000 + heavyReadingMs;
 
 describe("calculateBridgesSpeedFullScoreMs", () => {
   const cases = [
@@ -35,7 +40,7 @@ describe("calculateBridgesSpeedFullScoreMs", () => {
   ] as const;
 
   test.each(cases)(
-    "%sで、見渡す8秒に島1つ1秒・橋1本0.8秒・少なくとも1本の手詰まり1回3秒・つながりの手詰まり1回6秒・決まらない行き先1つ1秒を足すこと",
+    "%sで、見渡す10秒に島1つ1秒・橋1本1.5秒・配分の手詰まり1回8秒・つながりの手詰まり1回20秒・交差で塞がる行き先1つ4秒・決まらない行き先1つ1秒を足すこと",
     (_, workload, expected) => {
       const speedFullScoreMs = calculateBridgesSpeedFullScoreMs(workload);
 
@@ -44,23 +49,22 @@ describe("calculateBridgesSpeedFullScoreMs", () => {
   );
 
   describe("つながりの手詰まりのうち1手の先読みが要った回数がある場合", () => {
-    test("1回ごとに15秒を足すこと", () => {
+    test("1回ごとに45秒を足すこと", () => {
       const speedFullScoreMs = calculateBridgesSpeedFullScoreMs({
         ...heavyWorkload,
         lookaheadRoundCount: 2,
       });
 
-      expect(speedFullScoreMs).toBe(heavyFullScoreMs + 30_000);
+      expect(speedFullScoreMs).toBe(heavyFullScoreMs + 90_000);
     });
+  });
 
-    test("回数の無い作業の量は0回として扱うこと", () => {
-      const speedFullScoreMs = calculateBridgesSpeedFullScoreMs({
-        ...heavyWorkload,
-        lookaheadRoundCount: 0,
-      });
+  describe("先読みと交差の回数の無い作業の量の場合", () => {
+    test("0回として扱うこと", () => {
+      const { crossingBlockCount: _, ...withoutCrossing } = heavyWorkload;
 
-      expect(speedFullScoreMs).toBe(
-        calculateBridgesSpeedFullScoreMs(heavyWorkload),
+      expect(calculateBridgesSpeedFullScoreMs(withoutCrossing)).toBe(
+        heavyFullScoreMs - 8_000,
       );
     });
   });
@@ -76,13 +80,27 @@ describe("calculateBridgesSpeedFullScoreMs", () => {
   });
 });
 
+describe("calculateBridgesZeroScoreRatio", () => {
+  test("読みの無い問題は3倍にすること", () => {
+    expect(calculateBridgesZeroScoreRatio(lightWorkload)).toBe(3);
+  });
+
+  test("読みの項の割合の3倍を3に足し、0.1単位に丸めること", () => {
+    const expected =
+      Math.round((3 + (3 * heavyReadingMs) / heavyFullScoreMs) * 10) / 10;
+
+    expect(calculateBridgesZeroScoreRatio(heavyWorkload)).toBe(expected);
+    expect(expected).toBe(4.9);
+  });
+});
+
 describe("calculateBridgesSpeedScoreRule", () => {
-  test("基準時間の3倍で0点になる規則を返すこと", () => {
-    const rule = calculateBridgesSpeedScoreRule(lightWorkload);
+  test("基準時間と、その倍率で0点になる時間を返すこと", () => {
+    const rule = calculateBridgesSpeedScoreRule(heavyWorkload);
 
     expect(rule).toEqual({
-      fullScoreMs: lightFullScoreMs,
-      zeroScoreMs: lightFullScoreMs * 3,
+      fullScoreMs: heavyFullScoreMs,
+      zeroScoreMs: heavyFullScoreMs * 4.9,
     });
   });
 });
@@ -90,11 +108,11 @@ describe("calculateBridgesSpeedScoreRule", () => {
 describe("calculateBridgesTimeDeltaMs", () => {
   test("クリア時間から基準時間を引いた差を返すこと", () => {
     const deltaMs = calculateBridgesTimeDeltaMs({
-      elapsedMs: 30_000,
+      elapsedMs: 50_000,
       workload: lightWorkload,
     });
 
-    expect(deltaMs).toBe(30_000 - lightFullScoreMs);
+    expect(deltaMs).toBe(50_000 - lightFullScoreMs);
   });
 });
 
@@ -108,11 +126,11 @@ describe("calculateBridgesPlayScore", () => {
   ] as const;
 
   test.each(cases)(
-    "%sでクリアしたとき、速さだけで%d点・%sになること",
+    "読みの無い問題を%sでクリアしたとき、速さだけで%d点・%sになること",
     (_, elapsedRatio, expectedTotal, expectedLevel) => {
       const score = calculateBridgesPlayScore({
-        elapsedMs: heavyFullScoreMs * elapsedRatio,
-        workload: heavyWorkload,
+        elapsedMs: lightFullScoreMs * elapsedRatio,
+        workload: lightWorkload,
       });
 
       expect(score).toEqual({

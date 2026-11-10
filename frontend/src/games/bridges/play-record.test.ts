@@ -23,7 +23,7 @@ const problemIdentity = createBridgesProblemIdentity(
   16,
 );
 
-// 基準時間は 8 + 24×1 + 26×0.8 + 3×3 + 3×6 + 26×1 = 105.8秒。
+// 基準時間は 10 + 24×1 + 26×1.5 + 3×8 + 3×20 + 26×1 = 183秒。0点は読みの割合 110/183 から 4.8倍の 878.4秒。
 const workload = {
   islandCount: 24,
   edgeCount: 32,
@@ -33,15 +33,15 @@ const workload = {
   countReasoningUndecidedEdgeCount: 26,
 };
 
-// 速さは 100 × (1 − 23秒 / 211.6秒) ≒ 89点。
+// 速さは 100 × (1 − 23秒 / 695.4秒) ≒ 97点。
 const performance = {
-  elapsedMs: 128_800,
+  elapsedMs: 206_000,
   undoCount: 2,
   restartCount: 1,
   inputCount: 40,
   blockedCount: 3,
 };
-const expectedScore = 89;
+const expectedScore = 97;
 const expectedTimeDeltaMs = 23_000;
 
 const record = createBridgesPlayRecord({
@@ -49,7 +49,7 @@ const record = createBridgesPlayRecord({
   problemIdentity,
   workload,
   startedAt: 1_000,
-  completedAt: 129_800,
+  completedAt: 207_000,
   result: performance,
 });
 
@@ -74,7 +74,7 @@ describe("createBridgesPlayRecord", () => {
     const { id, gameId, payloadVersion, payload } = record;
 
     expect({ id, gameId, payloadVersion }).toEqual({
-      id: "bridges:1000:129800:br-10-d26-p65-e25-s45-r500-lookahead-16",
+      id: "bridges:1000:207000:br-10-d26-p65-e25-s45-r500-lookahead-16",
       gameId: "bridges",
       payloadVersion: 1,
     });
@@ -93,7 +93,7 @@ describe("createBridgesPlayRecord", () => {
       problemIdentity,
       workload,
       startedAt: 1_000,
-      completedAt: 129_800,
+      completedAt: 207_000,
       result: createBridgesResult(performance, workload),
     });
 
@@ -283,7 +283,7 @@ describe("restoreBridgesRecordedResult", () => {
         result: {
           ...performance,
           workload,
-          speedRule: { fullScoreMs: 105_800, zeroScoreMs: 317_400 },
+          speedRule: { fullScoreMs: 183_000, zeroScoreMs: 878_400 },
           timeDeltaMs: expectedTimeDeltaMs,
           score: { total: expectedScore, breakdown: { speed: expectedScore } },
         },
