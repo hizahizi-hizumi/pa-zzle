@@ -7,7 +7,7 @@ function readSoundName(url: string): string {
 }
 
 describe("createClearedSoundLayers", () => {
-  test("段の少ない盤面では、島が灯る段ごとに五音音階を下から鳴らし、灯り切ったときに海の音を鳴らすこと", () => {
+  test("段の少ない盤面では、島が灯る段ごとに五音音階を下から鳴らし、灯り切ったときに和音を鳴らすこと", () => {
     // 島0 から2段で全島に届く。
     const square = parseBridgesBoard([
       "3...3",
@@ -25,7 +25,7 @@ describe("createClearedSoundLayers", () => {
       ["cleared-light-1.flac", 160],
       ["cleared-light-2.flac", 260],
       ["cleared-light-3.flac", 360],
-      ["cleared-sea.flac", 504],
+      ["cleared-chord.flac", 504],
     ]);
   });
 
@@ -35,9 +35,9 @@ describe("createClearedSoundLayers", () => {
 
     const layers = createClearedSoundLayers(chain, bridges);
 
-    expect(layers).toHaveLength(8);
+    expect(layers).toHaveLength(6);
     expect(layers[0]?.offsetMs).toBe(160);
-    expect(layers[6]?.offsetMs).toBe(860);
-    expect(readSoundName(layers[7]!.sound.url)).toBe("cleared-sea.flac");
+    expect(layers[4]?.offsetMs).toBe(860);
+    expect(readSoundName(layers[5]!.sound.url)).toBe("cleared-chord.flac");
   });
 });
