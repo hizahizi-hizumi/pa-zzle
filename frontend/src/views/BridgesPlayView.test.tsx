@@ -26,6 +26,7 @@ import {
   findBridgesEdgeToward,
   getBridgesNetwork,
 } from "@/games/bridges/puzzle/board";
+import { BOARD_MARGIN } from "@/games/bridges/ui/board/board-geometry";
 import { createProblemId } from "@/games/problem-id";
 import { readPlayAttempts } from "@/records/play-attempt-storage";
 import { readPlayRecords } from "@/records/storage";
@@ -112,7 +113,7 @@ const solution = countBridgesSolutions(problem, {
   limit: 1,
   nodeLimit: 200_000,
 }).firstSolution!;
-/** 盤面を1マス 100px で置く。 */
+/** 盤面を、周りの海の余白も含めて1マス 100px で置く。 */
 const cellPixels = 100;
 const touch = { pointerId: 1, pointerType: "touch", isPrimary: true };
 
@@ -141,9 +142,14 @@ function pointToward(from: CellPosition, to: CellPosition, reach: number) {
   const [toRow, toColumn] = to;
   return {
     clientX:
-      (fromColumn + 0.5 + Math.sign(toColumn - fromColumn) * reach) *
+      (BOARD_MARGIN +
+        fromColumn +
+        0.5 +
+        Math.sign(toColumn - fromColumn) * reach) *
       cellPixels,
-    clientY: (fromRow + 0.5 + Math.sign(toRow - fromRow) * reach) * cellPixels,
+    clientY:
+      (BOARD_MARGIN + fromRow + 0.5 + Math.sign(toRow - fromRow) * reach) *
+      cellPixels,
   };
 }
 
@@ -154,10 +160,10 @@ function tapBetween([from, to]: EdgeEnds): void {
   fireEvent.pointerUp(board, { ...touch, ...pointToward(from, to, 0.75) });
 }
 
-/** `from` の島の丸の中から押し、`to` の島の向きへ丸の外までなぞって離す。 */
+/** `from` の島から押し、`to` の島の上までなぞって離す。 */
 function dragBetween([from, to]: EdgeEnds): void {
   fireEvent.pointerDown(getBoard(), { ...touch, ...pointToward(from, to, 0) });
-  fireEvent.pointerUp(getBoard(), { ...touch, ...pointToward(from, to, 0.9) });
+  fireEvent.pointerUp(getBoard(), { ...touch, ...pointToward(to, from, 0) });
 }
 
 /** 盤面の読み上げの、島ごとの行（「1行3列の島 数字2 橋1本 ちょうど」）。 */
@@ -212,7 +218,12 @@ function solveAllButLast(): void {
 /** 盤面を1マス `cellPixels` の大きさで置く。 */
 function placeBoard(): void {
   vi.spyOn(getBoard(), "getBoundingClientRect").mockReturnValue(
-    new DOMRect(0, 0, problem.width * cellPixels, problem.height * cellPixels),
+    new DOMRect(
+      0,
+      0,
+      (problem.width + 2 * BOARD_MARGIN) * cellPixels,
+      (problem.height + 2 * BOARD_MARGIN) * cellPixels,
+    ),
   );
 }
 
