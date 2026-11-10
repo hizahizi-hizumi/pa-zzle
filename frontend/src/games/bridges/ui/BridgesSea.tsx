@@ -1,44 +1,73 @@
-import { useId } from "react";
-
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { SEA_LIT_MS } from "@/games/bridges/ui/board/clear-wave";
 import { bridgesToneClassNames } from "@/games/bridges/ui/bridges-tone";
+import { SeaWaves } from "@/games/bridges/ui/SeaWaves";
+import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
-/** 波の印を1つ置く、横に2つ山を持つ短い線。`x`・`y` は左端。 */
-function wavePath(x: number, y: number, size: number): string {
-  const half = size / 2;
-  return `M${x} ${y}q${half / 2} ${-half / 2} ${half} 0t${half} 0`;
-}
+type BridgesSeaProps = {
+  /**
+   * 全島がつながった後の明るい海にし始めるまでの時間（ms）。盤面の最後の島が灯り切る時間を渡す。
+   * 明るい海にしないなら `null`。動きを減らす設定では、待たずにすぐ明るい海にする。
+   */
+  litDelayMs?: number | null;
+};
 
-/** 波の印を散らす1区画（px）。印の間を広く空け、動かない静かな水面に見せる。 */
-const WAVE_TILE = { width: 96, height: 64 } as const;
-const WAVE_SIZE = 14;
-const WAVE_STROKE_WIDTH = 1.5;
+/**
+ * プレイ画面の盤面の周りから、ブランドの帯と見出しの後ろまでを満たす海。
+ * 明るい海は、平常の海の上に重ねた明るい面を `litDelayMs` 待って浮かび上がらせて見せる。浮かび上がり切ったら、重ねた面を外して
+ * 海そのものを明るい色にする。ブランドの帯とブラウザの色は海そのものの色を写すので、そこで明るい海にそろう。
+ */
+export function BridgesSea({ litDelayMs = null }: BridgesSeaProps) {
+  const litRef = useRef<HTMLDivElement>(null);
+  const [settledDelayMs, setSettledDelayMs] = useState<number | null>(null);
+  const settled =
+    litDelayMs !== null &&
+    (settledDelayMs === litDelayMs || prefersReducedMotion());
 
-/** プレイ画面の盤面の周りから、ブランドの帯と見出しの後ろまでを満たす海。 */
-export function BridgesSea() {
-  const patternId = useId();
+  useLayoutEffect(() => {
+    if (litDelayMs === null || prefersReducedMotion()) {
+      return;
+    }
+    const animation = litRef.current?.animate?.(
+      [{ opacity: 0 }, { opacity: 1 }],
+      {
+        duration: SEA_LIT_MS,
+        delay: litDelayMs,
+        easing: MOTION_EASING.standard,
+        fill: "backwards",
+      },
+    );
+    return () => animation?.cancel();
+  }, [litDelayMs]);
+
+  useEffect(() => {
+    if (litDelayMs === null || prefersReducedMotion()) {
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setSettledDelayMs(litDelayMs),
+      litDelayMs + SEA_LIT_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [litDelayMs]);
+
   return (
-    <div className={cn("relative size-full", bridgesToneClassNames.sea)}>
+    <div
+      className={cn(
+        "relative size-full",
+        settled ? bridgesToneClassNames.seaLit : bridgesToneClassNames.sea,
+      )}
+    >
+      {litDelayMs !== null && !settled && (
+        <div
+          ref={litRef}
+          data-bridges-sea-lit=""
+          className={cn("absolute inset-0", bridgesToneClassNames.seaLit)}
+        />
+      )}
       <svg className="absolute inset-0 size-full" aria-hidden="true">
-        <defs>
-          <pattern
-            id={patternId}
-            width={WAVE_TILE.width}
-            height={WAVE_TILE.height}
-            patternUnits="userSpaceOnUse"
-          >
-            <g
-              fill="none"
-              strokeWidth={WAVE_STROKE_WIDTH}
-              strokeLinecap="round"
-              className={bridgesToneClassNames.seaWave}
-            >
-              <path d={wavePath(12, 18, WAVE_SIZE)} />
-              <path d={wavePath(62, 50, WAVE_SIZE)} />
-            </g>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill={`url(#${patternId})`} />
+        <SeaWaves unit={1} />
       </svg>
     </div>
   );

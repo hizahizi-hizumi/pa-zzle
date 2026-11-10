@@ -1,15 +1,13 @@
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { bridgesFigureParts } from "@/games/bridges/ui/board/BridgesFigure";
 import type { BoardPoint } from "@/games/bridges/ui/board/board-geometry";
+import { BRIDGE_LANDING_MS } from "@/games/bridges/ui/board/bridge-extend";
 import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 
-/**
- * 板が島から相手の島へ伸びる時間。架ける木の音（`assets/sounds/bridge-placed.flac` などは鳴り始めが最も強く、90ms ほどで消える）が
- * 鳴っている間に板が渡り切るよう、伸び始めを速くし、音の消えるころに着かせる。
- */
-const EXTEND_MS = 120;
 /** 外した2枚の板が、相手の島から押した島へ縮んで消える時間。外す音（80ms ほど）に合わせ、架けるより短くする。 */
 const RETRACT_MS = 100;
+/** 渡っている間の板の影の、着いた後の位置からのずれ（マス幅を 1 とした値）。板が浮いて見える分だけ影を遠くへ落とす。 */
+const LIFTED_SHADOW_SHIFT = { x: 0.03, y: 0.07 } as const;
 
 /**
  * 辺の向きに沿って、`origin` を起点に縮めた姿の `transform`。横の辺は横に、縦の辺は縦に縮める。
@@ -25,7 +23,8 @@ function toOrigin({ x, y }: BoardPoint): string {
 
 /**
  * 橋を回した瞬間の板の動き。
- * - 1本・2本になった: 新しく足した板を、`origin`（押した島、または押した所に近い島）から相手の島へ伸ばす。
+ * - 1本・2本になった: 新しく足した板を、`origin`（押した島、または押した所に近い島）から相手の島へ `extendMs` で伸ばす。
+ *   伸びる間は板を浮かせて影を遠くへ落とし、着いたら影を沈めて、置いた手応えにする。
  * - なしになった: 外した2枚の板を、相手の島から `origin` へ縮めて消す。
  * 動きを減らす設定では動かさない（板はすぐ置かれ、すぐ消える）。
  */
@@ -35,6 +34,7 @@ export function playBridgeMotion(
   count: BridgeCount,
   origin: BoardPoint,
   horizontal: boolean,
+  extendMs: number,
 ): void {
   if (!figure || prefersReducedMotion()) {
     return;
@@ -53,15 +53,29 @@ export function playBridgeMotion(
       );
     return;
   }
-  figure
-    .querySelector(
-      `[${bridgesFigureParts.bridgeEdge}="${edge}"] [${bridgesFigureParts.bridgePlank}="${count - 1}"]`,
-    )
-    ?.animate?.(
-      [
-        { transform: collapsed, transformOrigin },
-        { transform: "none", transformOrigin },
-      ],
-      { duration: EXTEND_MS, easing: MOTION_EASING.celebrate },
-    );
+  const plank = figure.querySelector(
+    `[${bridgesFigureParts.bridgeEdge}="${edge}"] [${bridgesFigureParts.bridgePlank}="${count - 1}"]`,
+  );
+  plank?.animate?.(
+    [
+      { transform: collapsed, transformOrigin },
+      { transform: "none", transformOrigin },
+    ],
+    { duration: extendMs, easing: MOTION_EASING.enter },
+  );
+  const lifted = `translate(${LIFTED_SHADOW_SHIFT.x}px, ${LIFTED_SHADOW_SHIFT.y}px)`;
+  plank?.querySelector(`[${bridgesFigureParts.plankShadow}]`)?.animate?.(
+    [
+      { transform: lifted },
+      {
+        transform: lifted,
+        offset: extendMs / (extendMs + BRIDGE_LANDING_MS),
+      },
+      { transform: "none" },
+    ],
+    {
+      duration: extendMs + BRIDGE_LANDING_MS,
+      easing: MOTION_EASING.standard,
+    },
+  );
 }

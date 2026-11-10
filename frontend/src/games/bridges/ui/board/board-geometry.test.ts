@@ -11,7 +11,6 @@ import {
   findDragEdge,
   findEdgeBetween,
   findIslandToward,
-  fitBoardView,
   getBridgeLineOffsets,
   getEdgeViewSegment,
   getIslandCenter,
@@ -45,33 +44,8 @@ describe("getEdgeViewSegment", () => {
   });
 });
 
-describe("fitBoardView", () => {
-  const viewWidth = board.width + 2 * BOARD_MARGIN;
-
-  describe("縦長の枠の場合", () => {
-    const frame = { width: viewWidth * 100, height: viewWidth * 100 + 250 };
-
-    test("枠の高さに合うまで行の間隔を広げること", () => {
-      const view = fitBoardView(board, frame);
-
-      expect(view.pitch).toBeCloseTo(1.5);
-      expect(view.height / view.width).toBeCloseTo(frame.height / frame.width);
-    });
-  });
-
-  describe("横長の枠の場合", () => {
-    const frame = { width: 800, height: 400 };
-
-    test("行の間隔を広げないこと", () => {
-      const view = fitBoardView(board, frame);
-
-      expect(view.pitch).toBe(1);
-    });
-  });
-});
-
 describe("toBoardPoint", () => {
-  const view = createBoardView(board, 1.5);
+  const view = createBoardView(board);
   const frame = {
     left: 10,
     top: 20,
@@ -79,12 +53,12 @@ describe("toBoardPoint", () => {
     height: view.height * 100,
   };
 
-  test("行の間隔を広げた絵の上の点を、盤面の座標へ戻すこと", () => {
+  test("絵の上の点を、周りの海の余白を除いた盤面の座標へ戻すこと", () => {
     const point = toBoardPoint(
       view,
       frame,
       10 + (2.5 + BOARD_MARGIN) * 100,
-      20 + (4.5 * 1.5 + BOARD_MARGIN) * 100,
+      20 + (4.5 + BOARD_MARGIN) * 100,
     );
 
     expect(point.x).toBeCloseTo(2.5);
@@ -96,7 +70,7 @@ describe("getBridgeLineOffsets", () => {
   test.each([
     [0, []],
     [1, [0]],
-    [2, [-0.135, 0.135]],
+    [2, [-0.15, 0.15]],
   ] as const)("%s本の橋の線のずれが %j であること", (count, expected) => {
     const offsets = getBridgeLineOffsets(count);
 
@@ -110,6 +84,11 @@ describe("findBoardTarget", () => {
     [
       "島の陸の外でも、中心から半マスの内",
       { x: 0.95, y: 0.6 },
+      { kind: "island", island: 0 },
+    ],
+    [
+      "島の周りの波打ち際の泡の上で、横の線の上",
+      { x: 1.04, y: 0.5 },
       { kind: "island", island: 0 },
     ],
     ["横の線の近く", { x: 1.5, y: 0.9 }, { kind: "edge", edge: 0 }],
@@ -271,14 +250,14 @@ describe("findEdgeBetween", () => {
 
 describe("findDragEdge", () => {
   test.each([
-    ["島の陸の中", 0, { x: 0.8, y: 0.5 }, null],
-    ["右へなぞり、相手の島に届く前", 0, { x: 1.4, y: 0.6 }, null],
-    ["下へなぞり、相手の島に届く前", 0, { x: 0.6, y: 1.4 }, null],
+    ["島の的の中", 0, { x: 0.9, y: 0.6 }, null],
+    ["右へなぞり、相手の島に届く前", 0, { x: 1.3, y: 0.6 }, 0],
+    ["下へなぞり、相手の島に届く前", 0, { x: 0.6, y: 1.3 }, 1],
     ["右の相手の島の陸の中", 0, { x: 2.3, y: 0.6 }, 0],
-    ["右の相手の島の陸の手前", 0, { x: 1.9, y: 0.7 }, 0],
-    ["右の相手の島を少し越えた所", 0, { x: 3.1, y: 0.5 }, 0],
-    ["下の相手の島の陸の手前", 0, { x: 0.6, y: 1.9 }, 1],
-    ["辺の無い島の陸の中", 0, { x: 2.5, y: 4.5 }, null],
+    ["右の相手の島を通り過ぎた所", 0, { x: 4.6, y: 0.9 }, 0],
+    ["右下へ斜めに、横に大きく動いた所", 0, { x: 2.2, y: 1.4 }, 0],
+    ["右下へ斜めに、縦に大きく動いた所", 0, { x: 1.4, y: 2.2 }, 1],
+    ["辺の無い向き", 1, { x: 3.6, y: 0.5 }, null],
   ] as const)(
     "%s（島 %s から %j）で離すと辺 %s を回すこと",
     (_, island, point, expected) => {

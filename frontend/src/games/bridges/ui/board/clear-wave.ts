@@ -1,6 +1,6 @@
 /**
- * 完成演出の、島0 から橋に沿って光を渡し、届いた島を順に灯して膨らませる波。
- * 盤面の動きとクリア音が同じ時間割で揃うよう、ここに置いて両方から使う。
+ * 完成演出の時間割。島0 から架かった橋をたどって、たどり着いた段ごとに島を灯し、最後の島が灯り切ったときに海全体を明るくする。
+ * 盤面の動き、プレイ画面の海、クリア音が同じ時間割で揃うよう、ここに置いてどれからも使う。
  */
 
 import {
@@ -9,25 +9,28 @@ import {
 } from "@/games/bridges/puzzle/board";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 
-/** 光が島0 から渡り始めるまでの間。最後に架けた板が伸び切り、全島がちょうどになった盤面を一瞬見せる。 */
-export const CLEAR_LIGHT_START_MS = 120;
+/** 海全体が明るくなり切るまでの時間。盤面の絵の海とプレイ画面の海を同じ時間で明るくする。 */
+export const SEA_LIT_MS = 600;
 
-/** 隣の島へ波が渡る間隔。島の数の多い盤面でも波全体が長くなりすぎないよう、全体の長さは下の上限に収める。 */
-const WAVE_STEP_MS = 90;
-const WAVE_MAX_SPREAD_MS = 900;
+/** 島0 が灯り始めるまでの間。最後に架けた板が着き、全島がちょうどになった盤面を一瞬見せる。 */
+export const CLEAR_LIGHT_START_MS = 160;
+
+/** 隣の段の島が灯るまでの間隔。島の数の多い盤面でも灯り切るまでが長くなりすぎないよう、全体の長さは下の上限に収める。 */
+const WAVE_STEP_MS = 110;
+const WAVE_MAX_SPREAD_MS = 1_000;
 /** 1つの島が灯って膨らみ、戻る時間。 */
-export const ISLAND_POP_MS = 320;
+export const ISLAND_POP_MS = 360;
 /** 島が最も膨らむ時点の、膨らみ始めからの割合。 */
-const ISLAND_POP_PEAK_OFFSET = 0.45;
+const ISLAND_POP_PEAK_OFFSET = 0.4;
 export const islandPopKeyframes: Keyframe[] = [
   { transform: "scale(1)" },
-  { transform: "scale(1.16)", offset: ISLAND_POP_PEAK_OFFSET },
+  { transform: "scale(1.14)", offset: ISLAND_POP_PEAK_OFFSET },
   { transform: "scale(1)" },
 ];
 
 /**
  * 島0 から架かった橋をたどったときの、島ごとの段数（島0 が 0）。たどれない島は `null`。
- * クリアした盤面では全島がつながっているので、波が全島に渡る。
+ * クリアした盤面では全島がつながっているので、灯りが全島に届く。
  */
 export function listClearWaveDepths(
   board: BridgesBoard,
@@ -51,30 +54,36 @@ export function listClearWaveDepths(
   return depths;
 }
 
-/** 隣の島へ波が渡る間隔。波全体が上限に収まるよう、段の多い盤面では縮める。 */
+/** 隣の段の島が灯るまでの間隔。灯り切るまでが上限に収まるよう、段の多い盤面では縮める。 */
 export function getClearWaveStepMs(deepest: number): number {
   return Math.min(WAVE_STEP_MS, WAVE_MAX_SPREAD_MS / Math.max(1, deepest));
 }
 
 /**
- * 波の時間の区切り。どれも演出の始まりからの時間。
- * - `lightStartMs`: 島0 が灯り、光が渡り始めるまでの時間。
- * - `lastPopStartMs`: 最も遠い島が灯り始めるまでの時間。
- * - `lastPopPeakMs`: 最も遠い島が最も膨らむまでの時間。全島がつながったことが見え切る時点で、海へ波紋を広げる。
+ * 演出の時間割。どれも演出の始まりからの時間。
+ * - `depthStartMs`: 段ごとの、その段の島が灯り始める時間。添字が段数。
+ * - `seaLitMs`: 最も遠い島が最も膨らみ、全島が灯り切ったと見える時間。海全体を明るくし始める。
  */
+export type ClearWaveTiming = {
+  depthStartMs: readonly number[];
+  seaLitMs: number;
+};
+
 export function getClearWaveTiming(
   board: BridgesBoard,
   bridges: readonly BridgeCount[],
-): { lightStartMs: number; lastPopStartMs: number; lastPopPeakMs: number } {
+): ClearWaveTiming {
   const deepest = Math.max(
     0,
     ...listClearWaveDepths(board, bridges).map((depth) => depth ?? 0),
   );
-  const lastPopStartMs =
-    CLEAR_LIGHT_START_MS + deepest * getClearWaveStepMs(deepest);
+  const stepMs = getClearWaveStepMs(deepest);
+  const depthStartMs = Array.from(
+    { length: deepest + 1 },
+    (_, depth) => CLEAR_LIGHT_START_MS + depth * stepMs,
+  );
   return {
-    lightStartMs: CLEAR_LIGHT_START_MS,
-    lastPopStartMs,
-    lastPopPeakMs: lastPopStartMs + ISLAND_POP_MS * ISLAND_POP_PEAK_OFFSET,
+    depthStartMs,
+    seaLitMs: depthStartMs[deepest]! + ISLAND_POP_MS * ISLAND_POP_PEAK_OFFSET,
   };
 }

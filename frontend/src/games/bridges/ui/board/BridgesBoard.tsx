@@ -39,13 +39,13 @@ import {
   findDragEdge,
   findEdgeBetween,
   findIslandToward,
-  fitBoardView,
   getIslandCenter,
   isPointInEdgeBand,
   isPointOnIsland,
   toBoardPoint,
   toViewPoint,
 } from "@/games/bridges/ui/board/board-geometry";
+import { getBridgeExtendMs } from "@/games/bridges/ui/board/bridge-extend";
 
 type BridgesBoardProps = {
   board: BridgesBoardState;
@@ -125,8 +125,11 @@ type IslandsOnBoard = { board: BridgesBoardState; islands: readonly number[] };
  * - 島の外を押すと、押した瞬間（pointerdown）にその辺の橋を回す。iOS のダブルタップ待ちや click の遅れを受けないため。
  *   交わる2本の線の交点の近くでも、押した位置・橋の有無・直前に触った島で必ず1つの辺に決め、空振りさせない。
  * - 島を押して動かさずに離すと、その島を選ぶ。選んでいる間に相手の島を押すと、その間の橋を回す（2段階の操作）。
- * - 島から押してなぞり、相手の島の近くで離すと、その間の橋を回す。相手の島に届く前に離したら回さない。
- * - 島を押している間と選んでいる間は、その島から架けられる相手への線を見せる。
+ * - 島から押してなぞり、指が島の的を出たら、大きく動いた向きの最初の島への辺に吸い付け、離すとその間の橋を回す。
+ *   相手の島を通り過ぎても、届く前に止めても同じ辺を回す。その向きに辺が無ければ回さない。
+ * - 島を押している間と選んでいる間は、その島から架けられる相手へのロープを見せる。なぞっている間は、離せば回す辺の
+ *   ロープと回した後の板の影を目立たせ、ほかのロープを淡くする。
+ * - マウスを乗せた所で押せば回る辺には、回した後の板の影を淡く予告する。
  * - 盤面はスクロール・拡大・長押しのメニューに指を奪わせず、なぞる間はポインターを捕捉する。
  * - キーボードでは、島ごとのボタン（見えない読み上げの一覧）の1つに止まり、矢印キーで隣の島へ移り、Shift と矢印キーで
  *   その向きの辺の橋を回す。
@@ -150,10 +153,6 @@ export function BridgesBoard({
   const figureRef = useRef<SVGSVGElement>(null);
   /** 最後に橋を回した辺と、板を伸ばし始める島。橋の変化が盤面に届いたときに板を動かすのに使う。 */
   const motionOriginRef = useRef<{ edge: number; island: number } | null>(null);
-  const [frameSize, setFrameSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
   const [drag, setDrag] = useState<IslandDrag | null>(null);
   const [selection, setSelection] = useState<IslandsOnBoard | null>(null);
   const [recentTouch, setRecentTouch] = useState<IslandsOnBoard | null>(null);
@@ -161,9 +160,11 @@ export function BridgesBoard({
   // 別の問題へ移ると島の数が減ることがあるので、描画のたびに今の盤面の島へ丸める。
   const focusedIsland = Math.min(focusTarget, board.islands.length - 1);
   const [keyboardFocused, setKeyboardFocused] = useState(false);
-  const view = frameSize
-    ? fitBoardView(board, frameSize)
-    : createBoardView(board);
+  const [hover, setHover] = useState<{
+    board: BridgesBoardState;
+    edge: number;
+  } | null>(null);
+  const view = createBoardView(board);
   const network = getBridgesNetwork(board);
   const selectedIsland =
     selection?.board === board && !interactionDisabled
@@ -184,26 +185,16 @@ export function BridgesBoard({
     guideIsland === null
       ? null
       : {
+          island: guideIsland,
           edges: network.islandEdges[guideIsland]!,
           previewEdge: drag?.previewEdge ?? null,
+          focusesPreview: drag !== null,
         };
-
-  useLayoutEffect(() => {
-    const element = boardRef.current;
-    if (!element || typeof ResizeObserver === "undefined") {
-      return;
-    }
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry) {
-        setFrameSize({
-          width: entry.contentRect.width,
-          height: entry.contentRect.height,
-        });
-      }
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
+  // チュートリアルで押させる辺にも、押せば架かる板の影を置く。
+  const hoverEdge =
+    hover?.board === board && drag === null && !interactionDisabled
+      ? hover.edge
+      : (guidedEdges[0] ?? null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: 板は操作の知らせのたびに1度だけ動かし、盤面の大きさが変わっただけでは動かさない。
   useLayoutEffect(() => {
@@ -225,8 +216,9 @@ export function BridgesBoard({
       figureRef.current,
       edge,
       count,
-      toViewPoint(view, getIslandCenter(board.islands[island]!)),
+      toViewPoint(getIslandCenter(board.islands[island]!)),
       orientation === "horizontal",
+      getBridgeExtendMs(board, edge),
     );
   }, [edgeNotice]);
 
@@ -244,12 +236,7 @@ export function BridgesBoard({
 
   function readBoardPoint(event: ReactPointerEvent<HTMLElement>): BoardPoint {
     const frame = event.currentTarget.getBoundingClientRect();
-    return toBoardPoint(
-      fitBoardView(board, frame),
-      frame,
-      event.clientX,
-      event.clientY,
-    );
+    return toBoardPoint(view, frame, event.clientX, event.clientY);
   }
 
   function cycleEdge(edge: number, originIsland: number) {
@@ -307,7 +294,30 @@ export function BridgesBoard({
     });
   }
 
+  /** マウスを乗せた所で押せば回る辺。選んだ島があれば、乗せた島との間の辺。 */
+  function findHoverEdge(point: BoardPoint): number | null {
+    const target = findBoardTarget(board, bridges, point, recentIslands);
+    if (target === null) {
+      return null;
+    }
+    if (target.kind === "edge") {
+      return target.edge;
+    }
+    return selectedIsland === null || selectedIsland === target.island
+      ? null
+      : findEdgeBetween(board, selectedIsland, target.island);
+  }
+
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (drag === null && event.pointerType === "mouse") {
+      const edge = interactionDisabled
+        ? null
+        : findHoverEdge(readBoardPoint(event));
+      if (edge !== hoverEdge) {
+        setHover(edge === null ? null : { board, edge });
+      }
+      return;
+    }
     if (drag?.pointerId !== event.pointerId) {
       return;
     }
@@ -383,6 +393,7 @@ export function BridgesBoard({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
+      onPointerLeave={() => setHover(null)}
       onLostPointerCapture={handlePointerCancel}
       onContextMenu={(event) => event.preventDefault()}
       onKeyDown={handleKeyDown}
@@ -395,6 +406,7 @@ export function BridgesBoard({
         islandStatuses={islandStatuses}
         showsSea={showsSea}
         guide={guide}
+        hoverEdge={hoverEdge}
         selectedIsland={selectedIsland}
         focusedIsland={keyboardFocused ? focusedIsland : null}
         blockingEdges={blockingEdges}
