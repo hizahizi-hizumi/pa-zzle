@@ -35,6 +35,21 @@ function parsePlayAttempts(stored: string | null): PlayAttempt[] {
   }
 }
 
+function readPlayAttemptsForUpdate(
+  storage: PlayRecordStorage,
+): PlayAttempt[] | null {
+  try {
+    const stored = storage.getItem(PLAY_ATTEMPTS_STORAGE_KEY);
+    if (stored === null) {
+      return [];
+    }
+    const parsed: unknown = JSON.parse(stored);
+    return Array.isArray(parsed) && parsed.every(isPlayAttempt) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export function readPlayAttempts(
   storage: PlayRecordStorage | null = getDefaultStorage(),
 ): PlayAttempt[] {
@@ -76,7 +91,11 @@ function updatePlayAttempts(
     return;
   }
 
-  const updated = update(readPlayAttempts(storage), storage);
+  const attempts = readPlayAttemptsForUpdate(storage);
+  if (attempts === null) {
+    return;
+  }
+  const updated = update(attempts, storage);
   if (!updated) {
     return;
   }
