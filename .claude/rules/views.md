@@ -1,63 +1,83 @@
 ---
 paths:
-  - "frontend/src/views/**/*.tsx"
+  - "frontend/src/views/**/*.{ts,tsx}"
+  - "!**/*.test.{ts,tsx}"
 ---
 
 # Views
 
-- Viewは、1つのUI描画ルートに対応し、その画面を成立させる責務を接続する合成境界とする。
-- Viewは `<画面の役割>View` と命名し、URLやルートファイル名ではなく画面の役割から名前を決める。
-- View自体を複数のルートから直接利用しない。
+## 名前
 
-```text
-pages/index.tsx
-→ views/PuzzleSelectionView.tsx
+- View は画面の役割から `<画面の役割>View` と名付ける
 
-pages/records.tsx
-→ views/PlayRecordsView.tsx
+  ```text
+  OK:
+  pages/index.tsx → views/PuzzleSelectionView.tsx
+  pages/records/index.tsx → views/PlayRecordsView.tsx
+  pages/puzzles/nanpure/index.tsx → views/NanpureHomeView.tsx
+  pages/puzzles/nanpure/play/[difficulty].tsx → views/NanpurePlayView.tsx
+  ```
 
-pages/games/nanpure/play/[difficulty].tsx
-→ views/NanpurePlayView.tsx
-```
+## View に置く処理
 
-## 責務
+- View には次の処理を置く
+  - URL パラメータやルーター状態の取得
+  - URL 由来の値の検証・変換の呼び出し
+  - その画面で使う hooks・ユースケース・画面遷移の接続と、その間の値の受け渡し
+  - 画面固有の状態
+  - 画面のレイアウトと UI の合成
+- View の処理は View のコンポーネントの中に直接書く
 
-- URLパラメータやルーター状態を取得する。
-- URL由来の値の検証・変換を、意味を所有する処理へ委譲して呼び出す。
-- 画面遷移を接続する。
-- その画面で利用するhooks・ユースケースを接続する。
-- 複数の責務間で値を受け渡す。
-- 画面固有の状態、レイアウト、UIの合成を持ってよい。
-- Viewを薄くすることだけを目的に、中継するだけのコンポーネントを作らない。
+  ```tsx
+  OK:
+  export function NanpureHomeView() {
+    const { screenProps } = useGameHome(nanpureCatalogEntry);
 
-## 所有しないもの
+    return <GameHomeScreen {...screenProps} />;
+  }
+  NG:
+  export function NanpureHomeView() {
+    return <NanpureHomeContent />;
+  }
 
-- ゲームやドメインのロジックを実装しない。
-- 保存、評価など、独立した機能固有の規則を実装しない。
-- 他のViewでも利用する処理や再利用可能なUIをViewの責務として所有しない。
-- 共有したい処理が生じても `views/common`、`views/hooks`、`views/utils` へ集約せず、その処理が属する責務を見直す。
-  - 例: ゲームのプレイ合成は、`game-catalog/<game>/Playable<Game>.tsx` に置く。
+  function NanpureHomeContent() {
+    const { screenProps } = useGameHome(nanpureCatalogEntry);
+
+    return <GameHomeScreen {...screenProps} />;
+  }
+  ```
+
+## View の外に置く処理
+
+- URL 由来の値の検証・変換は、その値の意味を所有する処理に置く
+- ゲームやドメインのロジックは、その処理が属する責務（`games/<game>/` など）に置く
+- 保存・評価など独立した機能に固有の規則は、その機能の責務（`records/` など）に置く
+- 他の View でも使う処理と UI は `views/` の外に置く
+
+## ゲームカタログの使い方
+
+- パズル選択・記録・結果の画面は、ゲームを `@/game-catalog/` 直下のモジュール（`game-catalog`・`play-timeline` など）から引く
+- ゲームのホームとプレイ画面へは `@/game-catalog/game-navigation` の `createGameNavigation`・`useGameNavigation`・`openRecordProblemPlay` で遷移する
 
 ## 配置
 
-- `views/` のディレクトリ構造をURL階層に合わせない。
-- 単一のViewを置くためだけにディレクトリを作らない。
-- 複数のViewに共通する意味上のまとまりが明確になった場合だけ、そのまとまりでディレクトリを分ける。
+- View ファイルは `views/` 直下に置き、複数の View に共通する意味上のまとまりがあるときだけ、そのまとまりのディレクトリに置く
 
-```text
-# OK: 画面の役割で配置する
-views/
-├── PuzzleSelectionView.tsx
-├── PlayRecordsView.tsx
-├── NanpurePlayView.tsx
-└── WaterSortPlayView.tsx
-```
-
-```text
-# NG: URL構造をそのまま複製する
-views/
-└── games/
-    └── nanpure/
-        └── play/
-            └── NanpurePlayView.tsx
-```
+  ```text
+  OK:
+  views/
+  ├── PuzzleSelectionView.tsx
+  ├── PlayRecordsView.tsx
+  ├── NanpurePlayView.tsx
+  └── WaterSortPlayView.tsx
+  NG:
+  views/
+  └── puzzles/
+      └── nanpure/
+          └── play/
+              └── NanpurePlayView.tsx
+  NG:
+  views/common/
+  views/hooks/
+  views/utils/
+  ```
