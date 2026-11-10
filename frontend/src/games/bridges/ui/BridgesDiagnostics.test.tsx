@@ -1,6 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 
 import { createBridgesDiagnosticSnapshot } from "@/games/bridges/diagnostics";
+import type { BridgesDifficultyAssessment } from "@/games/bridges/difficulty";
 import { selectBridgesProblemForDifficulty } from "@/games/bridges/problem-selection";
 import { BridgesDiagnostics } from "@/games/bridges/ui/BridgesDiagnostics";
 
@@ -51,7 +52,50 @@ describe("BridgesDiagnostics", () => {
 
       expect(values).toEqual([
         "レベル 4",
-        `${analysis.connectivityRoundCount}（条件 2以上）`,
+        `${analysis.connectivityRoundCount}（条件 3以上）`,
+      ]);
+    });
+
+    test("レベルが求める手筋に、本数を見る先読み・組を見る先読み・続けて要る先読みの条件と値を並べること", () => {
+      const section = getSection("レベルが求める手筋");
+      const { features } = snapshot.difficultyAssessment as Extract<
+        BridgesDifficultyAssessment,
+        { status: "classified" }
+      >;
+
+      const values = [
+        "本数を見る先読み",
+        "組を見る先読み",
+        "続けて要る先読み",
+      ].map((label) => getRowValue(label, section));
+
+      expect(values).toEqual([
+        `${features.countLookaheadRoundCount}（条件 1以上）`,
+        `${features.groupLookaheadRoundCount}（条件 1以上）`,
+        "0（条件 0）",
+      ]);
+    });
+
+    test("レベルが問わない手筋は並べないこと", () => {
+      const section = getSection("レベルが求める手筋");
+
+      expect(within(section).queryByText("唯一の通り道")).toBeNull();
+    });
+
+    test("数字と形の質に、島の割合と架ける行き先の割合の条件と値を並べること", () => {
+      const section = getSection("数字と形の質");
+      const { features } = snapshot.difficultyAssessment as Extract<
+        BridgesDifficultyAssessment,
+        { status: "classified" }
+      >;
+
+      const values = ["島の割合", "架ける行き先の割合"].map((label) =>
+        getRowValue(label, section),
+      );
+
+      expect(values).toEqual([
+        `${features.islandShare.toFixed(2)}（条件 0.22以上）`,
+        `${features.usedEdgeShare.toFixed(2)}（条件 0以上・0.85以下）`,
       ]);
     });
 

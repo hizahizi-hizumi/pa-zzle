@@ -7,7 +7,9 @@ import {
   type BridgesAssessedFeatures,
   type BridgesDifficultyAssessment,
   type BridgesLevelCombination,
+  type BridgesLevelReading,
   bridgesLevelCombinations,
+  bridgesLevelReadings,
 } from "@/games/bridges/difficulty";
 import type { BridgesDifficultyAnalysis } from "@/games/bridges/problem/difficulty-analysis";
 import type { BridgesGenerationConditions } from "@/games/bridges/problem/problem";
@@ -47,6 +49,50 @@ const levelConditionLabels = {
   countReasoningUndecidedRatio: "数字だけでは決まらない割合",
 } as const satisfies Record<keyof BridgesLevelCombination, string>;
 
+/** レベルが求める手筋の条件の名前。並びは手筋の定義の順。 */
+const readingConditionLabels = {
+  readingRoundCount: "ちょうど以外の読みの手詰まり",
+  openingSaturatedIslandCount: "決め打ちの島",
+  closureRoundCount: "閉じない読みの一か所の気づき",
+  groupClosureRoundCount: "3島以上の組の読み",
+  passageRoundCount: "唯一の通り道",
+  lookaheadRoundCount: "1手の先読み",
+  countLookaheadRoundCount: "本数を見る先読み",
+  groupLookaheadRoundCount: "組を見る先読み",
+  chainedLookaheadRoundCount: "続けて要る先読み",
+  crossingBlockCount: "交差で塞がる行き先",
+} as const satisfies Partial<Record<keyof BridgesLevelReading, string>>;
+
+/** レベルが求める数字と形の質の条件の名前。 */
+const qualityConditionLabels = {
+  islandShare: "島の割合",
+  clueMean: "数字の平均",
+  highClueCount: "5以上の数字の島",
+  veryHighClueCount: "6以上の数字の島",
+  dominantClueShare: "最も多い数字の割合",
+  twoClueShare: "数字2の割合",
+  doubleBridgeRatio: "2本の組の割合",
+  loopCount: "解の輪",
+  borderBridgeShare: "外周に沿う橋の割合",
+  usedEdgeShare: "架ける行き先の割合",
+} as const satisfies Record<
+  Exclude<keyof BridgesLevelReading, keyof typeof readingConditionLabels>,
+  string
+>;
+
+/** 割合で、小数2桁で示す特徴。ほかの特徴は回数・個数で整数。 */
+const fractionalFeatures: ReadonlySet<keyof BridgesAssessedFeatures> = new Set([
+  "openingEdgeRatio",
+  "countReasoningUndecidedRatio",
+  "islandShare",
+  "clueMean",
+  "dominantClueShare",
+  "twoClueShare",
+  "doubleBridgeRatio",
+  "borderBridgeShare",
+  "usedEdgeShare",
+]);
+
 function formatPercent(ratio: number): string {
   return `${(ratio * 100).toFixed(1)}%`;
 }
@@ -76,9 +122,13 @@ function formatRange({
 }
 
 function formatFeature(key: keyof BridgesAssessedFeatures, value: number) {
-  return key === "openingEdgeRatio" || key === "countReasoningUndecidedRatio"
-    ? value.toFixed(2)
-    : `${value}`;
+  return fractionalFeatures.has(key) ? value.toFixed(2) : `${value}`;
+}
+
+function isUnbounded({ minimum, maximum, excludesMinimum }: NumericRange) {
+  return (
+    minimum <= 0 && !excludesMinimum && maximum === Number.POSITIVE_INFINITY
+  );
 }
 
 function formatAssessment(assessment: BridgesDifficultyAssessment): string {
@@ -94,6 +144,22 @@ function formatAssessment(assessment: BridgesDifficultyAssessment): string {
   }
 }
 
+/** 条件の各項目に、この問題の値を並べる。`skipsUnbounded` なら、そのレベルが問わない（0以上で上限の無い）項目は除く。 */
+function listConditionItems<Key extends keyof BridgesAssessedFeatures>(
+  labels: Record<Key, string>,
+  ranges: Record<Key, NumericRange>,
+  features: BridgesAssessedFeatures,
+  skipsUnbounded: boolean,
+): DiagnosticItems {
+  return (Object.keys(labels) as Key[])
+    .filter((key) => !(skipsUnbounded && isUnbounded(ranges[key])))
+    .map((key) => ({
+      label: labels[key],
+      value: `${formatFeature(key, features[key])}（条件 ${formatRange(ranges[key])}）`,
+      mono: true,
+    }));
+}
+
 /** 分類したレベルの組み合わせの各条件に、この問題の値を並べる。 */
 function listLevelConditions(
   assessment: BridgesDifficultyAssessment,
@@ -103,13 +169,28 @@ function listLevelConditions(
   }
   const combination: BridgesLevelCombination =
     bridgesLevelCombinations[assessment.difficulty];
-  return (
-    Object.keys(levelConditionLabels) as (keyof BridgesLevelCombination)[]
-  ).map((key) => ({
-    label: levelConditionLabels[key],
-    value: `${formatFeature(key, assessment.features[key])}（条件 ${formatRange(combination[key])}）`,
-    mono: true,
-  }));
+  return listConditionItems(
+    levelConditionLabels,
+    combination,
+    assessment.features,
+    false,
+  );
+}
+
+/**
+ * 分類したレベルが求める手筋と数字・形の質のうち、そのレベルが問う条件だけに、この問題の値を並べる。
+ * 問わない項目まで並べると、どの読みでレベルが決まったかが埋もれる。
+ */
+function listReadingConditions<Key extends keyof BridgesLevelReading>(
+  assessment: BridgesDifficultyAssessment,
+  labels: Record<Key, string>,
+): DiagnosticItems {
+  if (assessment.status !== "classified") {
+    return [];
+  }
+  const readings: BridgesLevelReading =
+    bridgesLevelReadings[assessment.difficulty];
+  return listConditionItems(labels, readings, assessment.features, true);
 }
 
 function formatAnalysisStatus(analysis: BridgesDifficultyAnalysis): string {
@@ -232,6 +313,24 @@ function listSections(
         ...listLevelConditions(difficultyAssessment),
       ],
     },
+    ...(difficultyAssessment.status === "classified"
+      ? [
+          {
+            title: "レベルが求める手筋",
+            items: listReadingConditions(
+              difficultyAssessment,
+              readingConditionLabels,
+            ),
+          },
+          {
+            title: "数字と形の質",
+            items: listReadingConditions(
+              difficultyAssessment,
+              qualityConditionLabels,
+            ),
+          },
+        ]
+      : []),
     { title: "盤面", items: listBoardItems(snapshot) },
     { title: "一意解", items: listSolutionItems(snapshot) },
     {
