@@ -40,10 +40,13 @@ const bridgePlacedSound = defineSoundEffect(bridgePlacedSoundUrl);
 const bridgeDoubledSound = defineSoundEffect(bridgeDoubledSoundUrl);
 /** 橋を外す、架ける音より小さく下がる木の音。 */
 const bridgeRemovedSound = defineSoundEffect(bridgeRemovedSoundUrl);
-/** 交わる橋に阻まれた、板が突き当たる柔らかく低い音。 */
+/** 交わる橋に阻まれた、板が突き当たる鈍い木の音。重心を 1kHz 前後に置き、乾いた雑音に聞かせない。 */
 const blockedSound = defineSoundEffect(blockedSoundUrl);
 
-/** 島が灯る段ごとに、五音音階を1つずつ上がって鳴らす木琴の音。段の多い盤面でも、この数を上限に間引いて鳴らす。 */
+/**
+ * 島が灯る段ごとに、五音音階を1つずつ上がって鳴らすブイの鐘に、水面に落ちる水滴を重ねた音。段の多い盤面でも、この数を上限に間引いて鳴らす。
+ * ほかのゲームの完成の音と同じ大きさで鳴らす。
+ */
 const clearedLightSounds = [
   clearedLight1SoundUrl,
   clearedLight2SoundUrl,

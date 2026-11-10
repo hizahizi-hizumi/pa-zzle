@@ -23,9 +23,9 @@ describe("createClearedSoundLayers", () => {
       layers.map(({ sound, offsetMs }) => [readSoundName(sound.url), offsetMs]),
     ).toEqual([
       ["cleared-light-1.flac", 160],
-      ["cleared-light-2.flac", 270],
-      ["cleared-light-3.flac", 380],
-      ["cleared-sea.flac", 524],
+      ["cleared-light-2.flac", 260],
+      ["cleared-light-3.flac", 360],
+      ["cleared-sea.flac", 504],
     ]);
   });
 
@@ -37,7 +37,7 @@ describe("createClearedSoundLayers", () => {
 
     expect(layers).toHaveLength(8);
     expect(layers[0]?.offsetMs).toBe(160);
-    expect(layers[6]?.offsetMs).toBe(1160);
+    expect(layers[6]?.offsetMs).toBe(860);
     expect(readSoundName(layers[7]!.sound.url)).toBe("cleared-sea.flac");
   });
 });

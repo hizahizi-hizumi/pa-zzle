@@ -26,7 +26,7 @@ import {
   findBridgesEdgeToward,
   getBridgesNetwork,
 } from "@/games/bridges/puzzle/board";
-import { BOARD_MARGIN } from "@/games/bridges/ui/board/board-geometry";
+import { createBoardView } from "@/games/bridges/ui/board/board-geometry";
 import { createProblemId } from "@/games/problem-id";
 import { readPlayAttempts } from "@/records/play-attempt-storage";
 import { readPlayRecords } from "@/records/storage";
@@ -109,6 +109,7 @@ function openMenu(): void {
 const pooled = selectBridgesProblemForDifficulty("5", problemSeed);
 const { problem, identity } = pooled;
 const network = getBridgesNetwork(problem);
+const { margin: boardMargin } = createBoardView(problem);
 const solution = countBridgesSolutions(problem, {
   limit: 1,
   nodeLimit: 200_000,
@@ -142,13 +143,13 @@ function pointToward(from: CellPosition, to: CellPosition, reach: number) {
   const [toRow, toColumn] = to;
   return {
     clientX:
-      (BOARD_MARGIN +
+      (boardMargin +
         fromColumn +
         0.5 +
         Math.sign(toColumn - fromColumn) * reach) *
       cellPixels,
     clientY:
-      (BOARD_MARGIN + fromRow + 0.5 + Math.sign(toRow - fromRow) * reach) *
+      (boardMargin + fromRow + 0.5 + Math.sign(toRow - fromRow) * reach) *
       cellPixels,
   };
 }
@@ -221,8 +222,8 @@ function placeBoard(): void {
     new DOMRect(
       0,
       0,
-      (problem.width + 2 * BOARD_MARGIN) * cellPixels,
-      (problem.height + 2 * BOARD_MARGIN) * cellPixels,
+      (problem.width + 2 * boardMargin) * cellPixels,
+      (problem.height + 2 * boardMargin) * cellPixels,
     ),
   );
 }

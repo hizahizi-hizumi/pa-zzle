@@ -10,14 +10,14 @@ import {
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 
 /** 海全体が明るくなり切るまでの時間。盤面の絵の海とプレイ画面の海を同じ時間で明るくする。 */
-export const SEA_LIT_MS = 600;
+export const SEA_LIT_MS = 450;
 
 /** 島0 が灯り始めるまでの間。最後に架けた板が着き、全島がちょうどになった盤面を一瞬見せる。 */
 export const CLEAR_LIGHT_START_MS = 160;
 
 /** 隣の段の島が灯るまでの間隔。島の数の多い盤面でも灯り切るまでが長くなりすぎないよう、全体の長さは下の上限に収める。 */
-const WAVE_STEP_MS = 110;
-const WAVE_MAX_SPREAD_MS = 1_000;
+const WAVE_STEP_MS = 100;
+const WAVE_MAX_SPREAD_MS = 700;
 /** 1つの島が灯って膨らみ、戻る時間。 */
 export const ISLAND_POP_MS = 360;
 /** 島が最も膨らむ時点の、膨らみ始めからの割合。 */
