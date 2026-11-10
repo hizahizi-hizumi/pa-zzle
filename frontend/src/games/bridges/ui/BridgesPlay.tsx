@@ -15,7 +15,6 @@ import { useBridgesSoundEffects } from "@/games/bridges/ui/BridgesPlay/use-bridg
 import { BridgesSea } from "@/games/bridges/ui/BridgesSea";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
 import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
-import { getClearWaveTiming } from "@/games/bridges/ui/board/clear-wave";
 import { BridgesResultScreen } from "@/games/bridges/ui/result/BridgesResultScreen";
 import type {
   GamePlayScreenProps,
@@ -66,15 +65,7 @@ export function BridgesPlay({
       progress={progress}
       result={result}
       title={BRIDGES_DISPLAY_NAME}
-      background={
-        <BridgesSea
-          litDelayMs={
-            progress === "clearing"
-              ? getClearWaveTiming(board, bridges).seaLitMs
-              : null
-          }
-        />
-      }
+      background={<BridgesSea />}
       metrics={[
         { type: "elapsed-time", elapsedMs },
         { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },

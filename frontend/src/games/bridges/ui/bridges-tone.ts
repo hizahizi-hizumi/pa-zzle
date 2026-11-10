@@ -15,37 +15,36 @@ import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
  * - 交わる橋に阻まれたときは、阻んだ橋の板を多すぎの島の縁と同じ薔薇色で縁取る（規則に合わないものの色）。
  * - 島から架けられる相手へ張るロープ（なぞる間と、島を選んでいる間）は、海・板・どの島の状態とも紛れない紺（ダークは白）にし、
  *   板の上でも読めるよう反対の明るさの縁で囲む。離せば架かる辺には、架かった後の板の影を半透明で置く。
- * - 全島がつながった瞬間は、島が灯り、最後に海全体が一段明るく鮮やかな青緑になる（平常の海と明るさで 1.3〜1.5:1）。
- *   解く間に抑えていた彩度を、完成した盤面で解放する。
+ * - 全島がつながった瞬間は、島が灯り、島の周りの浅瀬が海と同じ色相のまま鮮やかに澄む。解く間に抑えていた彩度を、
+ *   完成した盤面の島ごとに解放する。画面全体の海の色は変えず、ブランドの帯と見出しの後ろの海とつないだままにする。
+ *   澄んだ浅瀬は陸と 1.5:1 以上離し、島を海に溶かさない。
  */
 export const bridgesToneClassNames = {
   sea: "bg-[#8cc3cb] dark:bg-[#18404f]",
   seaFill: "fill-[#8cc3cb] dark:fill-[#18404f]",
-  /** 全島がつながった後の、一段明るく鮮やかな海。平常時の海の上に重ねる。 */
-  seaLit: "bg-[#7febdc] dark:bg-[#1c5b6b]",
-  seaLitFill: "fill-[#7febdc] dark:fill-[#1c5b6b]",
   /** 海の上の、動かない波の印。 */
   seaWave: "stroke-white/45 dark:stroke-[#d9f3f2]/30",
   /** 島の周りの浅瀬。島から離れるほど透けて海の色に戻す。 */
   shallowsStop: "[stop-color:#a9d6d6] dark:[stop-color:#235566]",
-  /** 盤面の範囲に敷く、ごく淡い浅瀬。島を触っている間の同じ行と列にも使う。 */
+  /** 島を触っている間に示す、同じ行と列の淡い浅瀬。 */
   shallowsFill: "fill-[#a9d6d6] dark:fill-[#235566]",
+  /** 全島がつながった後の、灯った島の周りの澄んだ浅瀬。海と同じ色相で彩度だけを上げる。 */
+  litShallowsStop: "[stop-color:#5ecdde] dark:[stop-color:#266d82]",
+  litShallowsStroke: "stroke-[#5ecdde] dark:stroke-[#266d82]",
   /** 陸の縁の、濡れて色の濃い砂。 */
   wetSand: "stroke-[#d6b77c] dark:stroke-[#a8955f]",
-  /** 波打ち際の泡。 */
+  /** 波打ち際。途切れない細い白い線にし、途切れた縁（多すぎの島）と形で分ける。 */
   surf: "stroke-white/85 dark:stroke-[#d9f3f2]/70",
   bridgeShadow: "stroke-[#1f5a63]/30 dark:stroke-black/40",
   bridgeRail: "stroke-[#6e4523] dark:stroke-[#94663a]",
   bridgeDeck: "stroke-[#ba844c] dark:stroke-[#c99358]",
   bridgeSeam: "stroke-[#6e4523]/45 dark:stroke-[#6e4523]/45",
-  /** 橋の両端の杭と、盤面の四隅のブイの胴。 */
+  /** 橋の両端の杭。 */
   bridgePost: "fill-[#6e4523] dark:fill-[#94663a]",
-  /** ブイの頭。波打ち際の泡と同じ白。 */
-  buoyCap: "fill-white dark:fill-[#d9f3f2]",
   blockingBridge: "stroke-[#e0475e] dark:stroke-[#fb7185]",
   guideCasing: "stroke-white/90 dark:stroke-[#06202b]/90",
   guide: "stroke-[#0f4466] dark:stroke-white",
-  /** 離せば架かる板の影。 */
+  /** 離せば架かる板の影。阻まれた辺に架かるはずだった板は、板そのものを半透明にして見せる。 */
   guideGhost: "stroke-[#ba844c]/55 dark:stroke-[#c99358]/55",
   /** 離せば外れる板に重ねる、海の色の覆い。 */
   guideRemoval: "stroke-[#8cc3cb]/75 dark:stroke-[#18404f]/75",

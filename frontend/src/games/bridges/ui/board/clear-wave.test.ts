@@ -45,7 +45,7 @@ describe("getClearWaveTiming", () => {
 
     expect(timing).toEqual({
       depthStartMs: [160, 260, 360],
-      seaLitMs: 504,
+      allLitMs: 504,
     });
   });
 
@@ -54,6 +54,6 @@ describe("getClearWaveTiming", () => {
 
     expect(timing.depthStartMs).toHaveLength(11);
     expect(timing.depthStartMs.at(-1)).toBe(860);
-    expect(timing.seaLitMs).toBe(1004);
+    expect(timing.allLitMs).toBe(1004);
   });
 });
