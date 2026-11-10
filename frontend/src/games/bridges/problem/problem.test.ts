@@ -5,27 +5,29 @@ import {
 } from "@/games/bridges/problem/problem";
 
 describe("createBridgesProblemIdentity", () => {
-  test("生成条件を百分率の整数で seed に含めること", () => {
+  test("生成条件の割合を百分率の整数で、磨く回数をそのまま seed に含めること", () => {
     const identity = createBridgesProblemIdentity(
       {
         size: 10,
-        islandDensity: 0.3,
-        doubleBridgeRate: 0.1,
+        islandDensity: 0.36,
+        doubleBridgeRate: 0.5,
         extraBridgeRate: 0.15,
-        splitRate: 0.2,
+        splitRate: 0.45,
+        refinementSteps: 500,
       },
       3,
     );
 
     expect(identity).toEqual({
-      generatorVersion: "3",
-      seed: "br-10-d30-p10-e15-s20-3",
+      generatorVersion: "4",
+      seed: "br-10-d36-p50-e15-s45-r500-3",
       conditions: {
         size: 10,
-        islandDensity: 0.3,
-        doubleBridgeRate: 0.1,
+        islandDensity: 0.36,
+        doubleBridgeRate: 0.5,
         extraBridgeRate: 0.15,
-        splitRate: 0.2,
+        splitRate: 0.45,
+        refinementSteps: 500,
       },
     });
   });
@@ -35,10 +37,11 @@ describe("isBridgesProblemIdentity", () => {
   const identity = createBridgesProblemIdentity(
     {
       size: 7,
-      islandDensity: 0.24,
-      doubleBridgeRate: 0.2,
-      extraBridgeRate: 0,
-      splitRate: 0,
+      islandDensity: 0.26,
+      doubleBridgeRate: 0.35,
+      extraBridgeRate: 0.35,
+      splitRate: 0.2,
+      refinementSteps: 0,
     },
     0,
   );
@@ -54,7 +57,15 @@ describe("isBridgesProblemIdentity", () => {
       "扱わない2本の割合",
       {
         ...identity,
-        conditions: { ...identity.conditions, doubleBridgeRate: 0.5 },
+        conditions: { ...identity.conditions, doubleBridgeRate: 0.1 },
+      },
+      false,
+    ],
+    [
+      "扱わない磨く回数",
+      {
+        ...identity,
+        conditions: { ...identity.conditions, refinementSteps: 100 },
       },
       false,
     ],

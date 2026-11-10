@@ -45,19 +45,48 @@ describe("analyzeBridgesDifficulty", () => {
       "2.3.2.",
     ]);
 
-    test("規模・推論の段の回数・数字だけで決まらない割合を返すこと", () => {
+    test("規模・推論の段の回数・数字だけで決まらない割合・先読みの回数を返すこと", () => {
       const analysis = analyzeBridgesDifficulty(problem);
 
       expect(analysis).toMatchObject({
         status: "analyzed",
         requiresTrial: false,
-        scale: { size: 6, islandCount: 9 },
+        scale: {
+          size: 6,
+          islandCount: 9,
+          bridgeCount: 10,
+          highClueCount: 0,
+          loopCount: 0,
+        },
         reasoning: {
           maximumTier: "D",
           countRoundCount: 2,
           connectivityRoundCount: 1,
           countReasoningUndecidedRatio: 1,
+          lookaheadRoundCount: 1,
+          closureRoundCount: 0,
+          openingSaturatedIslandCount: 0,
         },
+      });
+    });
+
+    test("数字の平均・同じ数字の割合・2本の組の割合を、盤面と解から求めること", () => {
+      const analysis = analyzeBridgesDifficulty(problem);
+
+      expect(analysis).toMatchObject({
+        scale: {
+          clueMean: 20 / 9,
+          dominantClueShare: 4 / 9,
+          doubleBridgeRatio: 0.25,
+        },
+      });
+    });
+
+    test("1手の先読みの手詰まりで3組以上がまとめて決まるとき、一か所の気づきではなく掃く手詰まりに数えること", () => {
+      const analysis = analyzeBridgesDifficulty(problem);
+
+      expect(analysis).toMatchObject({
+        reasoning: { sweepRoundCount: 1 },
       });
     });
 

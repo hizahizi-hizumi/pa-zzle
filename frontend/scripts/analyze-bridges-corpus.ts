@@ -16,6 +16,7 @@ import {
   bridgesDoubleBridgeRates,
   bridgesExtraBridgeRates,
   bridgesIslandDensities,
+  bridgesRefinementSteps,
   bridgesSplitRates,
   createBridgesProblemIdentity,
 } from "@/games/bridges/problem/problem";
@@ -25,7 +26,7 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
 
 const usage = `Usage: bun run analyze:bridges -- [options]
 
-全生成条件（盤面の一辺 × 島の密度 × 2本の割合 × 輪の割合）で、候補番号 0 から決まった数の候補を作り、
+全生成条件（盤面の一辺 × 島の密度 × 2本の割合 × 輪の割合 × 分割の割合 × 磨く回数）で、候補番号 0 から決まった数の候補を作り、
 分析・分類して、生成条件ごとの収率と、レベルごとの特徴の分布（10 / 50 / 90 パーセンタイル）を出す。
 問題集の生成と同じ identity・分析・分類を使うので、問題集の候補空間を決める比較に使う。
 
@@ -55,13 +56,16 @@ function listAllConditions(): BridgesGenerationConditions[] {
     bridgesIslandDensities.flatMap((islandDensity) =>
       bridgesDoubleBridgeRates.flatMap((doubleBridgeRate) =>
         bridgesExtraBridgeRates.flatMap((extraBridgeRate) =>
-          bridgesSplitRates.map((splitRate) => ({
-            size,
-            islandDensity,
-            doubleBridgeRate,
-            extraBridgeRate,
-            splitRate,
-          })),
+          bridgesSplitRates.flatMap((splitRate) =>
+            bridgesRefinementSteps.map((refinementSteps) => ({
+              size,
+              islandDensity,
+              doubleBridgeRate,
+              extraBridgeRate,
+              splitRate,
+              refinementSteps,
+            })),
+          ),
         ),
       ),
     ),
@@ -74,8 +78,9 @@ function conditionKeyOf({
   doubleBridgeRate,
   extraBridgeRate,
   splitRate,
+  refinementSteps,
 }: BridgesGenerationConditions): string {
-  return `${size}×${size} d${islandDensity} p${doubleBridgeRate} e${extraBridgeRate} s${splitRate}`;
+  return `${size}×${size} d${islandDensity} p${doubleBridgeRate} e${extraBridgeRate} s${splitRate} r${refinementSteps}`;
 }
 
 function quantile(sorted: readonly number[], ratio: number): number {

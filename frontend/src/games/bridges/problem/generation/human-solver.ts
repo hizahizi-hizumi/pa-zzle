@@ -37,6 +37,12 @@ export const bridgesReasoningTiers = [
 
 export type BridgesReasoningTier = (typeof bridgesReasoningTiers)[number];
 
+/** 「決め打ち」に数える島の数字の下限。1 と 2 の島は行き先が1つなら決まるのが当たり前で、見せ場にならない。 */
+const OPENING_SATURATION_MINIMUM_CLUE = 3;
+
+/** 一か所の気づきとみなす手詰まりで決まる組の数の上限。これより多くまとめて決まる手詰まりは、盤面を同じ規則で掃く作業とみなす。 */
+export const BRIDGES_SHARP_ROUND_EDGE_LIMIT = 2;
+
 /** つながりを読む段。 */
 export const bridgesConnectivityTiers = [
   "C1p",
@@ -597,6 +603,23 @@ export function countBridgesOpeningEdges(board: BridgesBoard): number {
 }
 
 /**
+ * 解き始めの盤面で、行き先ごとの上限（2本と相手の数字の小さい方）を足すと数字と同じになる、数字3以上の島の数。
+ * 見ただけで全部の行き先の本数が決まる「決め打ち」（4 の島に行き先2つ、6 に3つ、8 に4つ、相手の数字で上限が下がる島など）。
+ */
+export function countBridgesOpeningSaturatedIslands(
+  board: BridgesBoard,
+): number {
+  const context = createBridgesSolverContext(board);
+  const { upper } = createInitialBridgeBounds(context);
+  return context.network.islandEdges.filter((edges, island) => {
+    const clue = context.clues[island]!;
+    return (
+      clue >= OPENING_SATURATION_MINIMUM_CLUE && sumOver(edges, upper) === clue
+    );
+  }).length;
+}
+
+/**
  * 数字の読み（A1・A2）だけで、決まるまで進める。止まったら `false`、範囲が成り立たなくなったら `BridgesContradiction` を投げる。
  * 素朴な解き方が1手ごとに使う。
  */
@@ -616,3 +639,13 @@ function traceWithSeparateClosingTiers(
 }
 
 export const _private = { failsAfterOneStep, traceWithSeparateClosingTiers };
+
+/**
+ * 解く手順の指紋。人間向け解法器が手詰まりごとに使った段と、その手詰まりで狭めた組の数を順に並べる。
+ * 指紋が同じ問題は、どこで止まりどう抜けるかの流れが同じなので、問題集で同じ指紋が並ばないようにするのに使う。
+ */
+export function describeBridgesSolveFingerprint(board: BridgesBoard): string {
+  return traceBridgesHumanSolve(board, "D")
+    .rounds.map(({ tier, edgeCount }) => `${tier}:${edgeCount}`)
+    .join(",");
+}

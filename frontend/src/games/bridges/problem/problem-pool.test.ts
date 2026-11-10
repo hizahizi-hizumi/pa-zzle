@@ -65,13 +65,14 @@ describe("decodeBridgesPoolProblem", () => {
 });
 
 describe("toBridgesPoolIdentity", () => {
-  test("生成条件（密度・2本・輪・分割）の百分率と候補番号から identity を作ること", () => {
+  test("生成条件（密度・2本・輪・分割）の百分率と磨く回数・候補番号から identity を作ること", () => {
     const identity = toBridgesPoolIdentity([
       9,
-      24,
-      20,
+      26,
+      35,
       15,
-      20,
+      45,
+      150,
       31,
       "0",
       "",
@@ -85,10 +86,11 @@ describe("toBridgesPoolIdentity", () => {
       createBridgesProblemIdentity(
         {
           size: 9,
-          islandDensity: 0.24,
-          doubleBridgeRate: 0.2,
+          islandDensity: 0.26,
+          doubleBridgeRate: 0.35,
           extraBridgeRate: 0.15,
-          splitRate: 0.2,
+          splitRate: 0.45,
+          refinementSteps: 150,
         },
         31,
       ),
@@ -97,7 +99,7 @@ describe("toBridgesPoolIdentity", () => {
 
   test("扱わない生成条件を拒むこと", () => {
     const act = () =>
-      toBridgesPoolIdentity([9, 50, 20, 15, 20, 31, "0", "", 1, 2, 3, 4]);
+      toBridgesPoolIdentity([9, 50, 35, 15, 45, 150, 31, "0", "", 1, 2, 3, 4]);
 
     expect(act).toThrow(RangeError);
   });
@@ -151,7 +153,7 @@ describe("同梱の問題集", () => {
     });
 
     test("seed が同じで生成条件が違う identity では引けないこと", () => {
-      const otherSplitRate = identity.conditions.splitRate === 0 ? 0.2 : 0;
+      const otherSplitRate = identity.conditions.splitRate === 0.2 ? 0.45 : 0.2;
       const found = findBridgesPoolEntry({
         ...identity,
         conditions: { ...identity.conditions, splitRate: otherSplitRate },

@@ -11,10 +11,11 @@ describe("generateBridgesProblem", () => {
   const identity = createBridgesProblemIdentity(
     {
       size: 10,
-      islandDensity: 0.3,
-      doubleBridgeRate: 0.1,
+      islandDensity: 0.36,
+      doubleBridgeRate: 0.5,
       extraBridgeRate: 0.15,
-      splitRate: 0.2,
+      splitRate: 0.45,
+      refinementSteps: 150,
     },
     12,
   );

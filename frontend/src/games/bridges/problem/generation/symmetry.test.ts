@@ -1,4 +1,7 @@
-import { getBridgesSymmetryKey } from "@/games/bridges/problem/generation/symmetry";
+import {
+  getBridgesLayoutKey,
+  getBridgesSymmetryKey,
+} from "@/games/bridges/problem/generation/symmetry";
 import { parseBridgesBoard } from "@/games/bridges/puzzle/board";
 
 describe("getBridgesSymmetryKey", () => {
@@ -30,5 +33,33 @@ describe("getBridgesSymmetryKey", () => {
 
       expect(key).not.toBe(getBridgesSymmetryKey(base));
     });
+  });
+});
+
+describe("getBridgesLayoutKey", () => {
+  const base = parseBridgesBoard(["2.3..", ".....", "1...2", ".....", "..4.1"]);
+
+  test("数字だけが違う盤面に同じキーを返すこと", () => {
+    const key = getBridgesLayoutKey(
+      parseBridgesBoard(["1.5..", ".....", "2...2", ".....", "..2.3"]),
+    );
+
+    expect(key).toBe(getBridgesLayoutKey(base));
+  });
+
+  test("回転した盤面に同じキーを返すこと", () => {
+    const key = getBridgesLayoutKey(
+      parseBridgesBoard(["..1.2", ".....", "4...3", ".....", "1.2.."]),
+    );
+
+    expect(key).toBe(getBridgesLayoutKey(base));
+  });
+
+  test("島の位置が1つ違う盤面に違うキーを返すこと", () => {
+    const key = getBridgesLayoutKey(
+      parseBridgesBoard(["2.3..", ".....", "1...2", ".....", ".4..1"]),
+    );
+
+    expect(key).not.toBe(getBridgesLayoutKey(base));
   });
 });

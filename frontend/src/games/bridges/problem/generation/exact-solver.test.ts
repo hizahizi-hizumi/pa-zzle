@@ -1,5 +1,5 @@
 import { countBridgesSolutions } from "@/games/bridges/problem/generation/exact-solver";
-import { growBridgesIslandTree } from "@/games/bridges/problem/generation/island-tree";
+import { spreadBridgesIslands } from "@/games/bridges/problem/generation/island-spread";
 import researchCases from "@/games/bridges/problem/generation/research-solver-cases.json";
 import {
   type BridgesBoard,
@@ -76,16 +76,17 @@ describe("countBridgesSolutions", () => {
   }
 
   describe("小さな盤面を総当たりで数えた場合", () => {
-    // 解のある盤面を作るため、生成器で木と輪の橋を置いてから、一部の島の数字を1つずらして解の無い盤面や複数ある盤面も混ぜる。
+    // 解のある盤面を作るため、生成器で島を広げて橋を張ってから、一部の島の数字を1つずらして解の無い盤面や複数ある盤面も混ぜる。
     const random = createProblemSeededRandom("bridges-exact-solver");
     const layouts = Array.from({ length: 2000 }, () =>
-      growBridgesIslandTree(
+      spreadBridgesIslands(
         {
           size: 6,
-          islandDensity: 0.24,
-          doubleBridgeRate: 0.3,
+          islandDensity: 0.26,
+          doubleBridgeRate: 0.35,
           extraBridgeRate: 0.15,
           splitRate: 0.2,
+          refinementSteps: 0,
         },
         random,
       ),

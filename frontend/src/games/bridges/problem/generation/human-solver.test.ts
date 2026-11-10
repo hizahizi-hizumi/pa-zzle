@@ -2,6 +2,8 @@ import {
   _private,
   type BridgesHumanSolveTrace,
   countBridgesOpeningEdges,
+  countBridgesOpeningSaturatedIslands,
+  describeBridgesSolveFingerprint,
   traceBridgesHumanSolve,
 } from "@/games/bridges/problem/generation/human-solver";
 import researchCases from "@/games/bridges/problem/generation/research-solver-cases.json";
@@ -174,5 +176,29 @@ describe("countBridgesOpeningEdges", () => {
         cases.map(({ openingEdgeCount }) => openingEdgeCount),
       );
     });
+  });
+});
+
+describe("countBridgesOpeningSaturatedIslands", () => {
+  test.each([
+    ["行き先2つの4", ["2.4.2"], 1],
+    ["行き先3つの6", ["..2..", ".....", "2.6.2"], 1],
+    ["相手が1なので上限まで出す3", ["1.3.2"], 1],
+    ["行き先が2つで上限4に届かない3", ["2.3.1", ".....", "..2.."], 0],
+    ["数字2で行き先が1つの島（決め打ちに数えない）", ["2.2"], 0],
+  ] as const)("%sの盤面で %s を返すこと", (_, rows, expected) => {
+    const count = countBridgesOpeningSaturatedIslands(parseBridgesBoard(rows));
+
+    expect(count).toBe(expected);
+  });
+});
+
+describe("describeBridgesSolveFingerprint", () => {
+  test("手詰まりごとの段と狭めた組の数を順に並べること", () => {
+    const fingerprint = describeBridgesSolveFingerprint(
+      parseBridgesBoard(["2.4.2"]),
+    );
+
+    expect(fingerprint).toBe("A1:2");
   });
 });

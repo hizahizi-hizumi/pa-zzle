@@ -42,3 +42,14 @@ export function getBridgesSymmetryKey(board: BridgesBoard): string {
     variant < smallest ? variant : smallest,
   );
 }
+
+/**
+ * 島の位置だけの正規化キー。数字を見ずに回転・反転（8通り）で同じ配置になる盤面に同じ値を返す。
+ * 配置が同じで数字だけが違う問題は、盤面を見た印象も解き始めの手がかりもほぼ同じなので、問題集から除くのに使う。
+ */
+export function getBridgesLayoutKey(board: BridgesBoard): string {
+  return getBridgesSymmetryKey({
+    ...board,
+    islands: board.islands.map((island) => ({ ...island, clue: 0 })),
+  });
+}

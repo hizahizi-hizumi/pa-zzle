@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import {
   assessBridgesDifficulty,
@@ -9,7 +9,11 @@ import {
   analyzeBridgesDifficulty,
   type BridgesDifficultyAnalysis,
 } from "@/games/bridges/problem/difficulty-analysis";
-import { getBridgesSymmetryKey } from "@/games/bridges/problem/generation/symmetry";
+import { describeBridgesSolveFingerprint } from "@/games/bridges/problem/generation/human-solver";
+import {
+  getBridgesLayoutKey,
+  getBridgesSymmetryKey,
+} from "@/games/bridges/problem/generation/symmetry";
 import { generateBridgesProblem } from "@/games/bridges/problem/generator";
 import {
   BRIDGES_GENERATOR_VERSION,
@@ -32,19 +36,32 @@ import {
 import { difficultyLevels } from "@/games/difficulty";
 
 const defaultPerLevel = 500;
+
+/**
+ * 1つのレベルで、同じ解く手順の指紋を持つ問題の数の上限（問題数に対する割合）。どこで止まりどう抜けるかの流れが同じ問題が
+ * 並ぶと、同じ手順の繰り返しになる。
+ */
+const MAXIMUM_FINGERPRINT_SHARE = 0.02;
+
+function getFingerprintLimit(perLevel: number): number {
+  return Math.max(1, Math.ceil(perLevel * MAXIMUM_FINGERPRINT_SHARE));
+}
+
 const defaultBudget = 20_000;
 
 const usage = `Usage: bun run generate:bridges-pool -- [options]
 
-レベルごとに、レベルの盤面の範囲に入る全生成条件（盤面の一辺 × 島の密度 × 2本の割合 × 輪の割合）で、
-決定的な seed の候補を番号順に生成・分析・分類する。そのレベルに分類された候補を、回転・反転（8通り）の
-同型の重複をレベルをまたいで除きながら、生成条件を巡回して1問ずつ問題集へ採る。
+レベルごとに、レベルの盤面の範囲に入る全生成条件（盤面の一辺 × 島の密度 × 2本の割合 × 輪の割合 × 分割の割合 ×
+レベルに当たりやすい磨く回数）で、決定的な seed の候補を番号順に生成・分析・分類する。そのレベルに分類された候補を、
+回転・反転（8通り）の同型と、数字を見ない島の配置の重複をレベルをまたいで除き、同じ解く手順の指紋はレベルの問題数の 2% までに
+しながら、生成条件を巡回して1問ずつ問題集へ採る。
 
 Options:
   --per-level <n>  レベルごとの問題数 (default: ${defaultPerLevel})
   --budget <n>     生成条件ごとに調べる候補数の上限 (default: ${defaultBudget})
+  --cache-dir <d>  レベルごとに選んだ結果を <d> に書き出し、あれば読んで続きから作る（途中で止まった生成を再開する）
   --verify         生成せず、同梱の問題集の全問を identity から作り直して盤面の一致を確かめ、一意性確認→分析→分類し、
-                   レベル・分析結果・同型と seed の重複・JSON の大きさ・選択時間を確かめる`;
+                   レベル・分析結果・同型と島の配置と seed の重複・指紋の上限・JSON の大きさ・選択時間を確かめる`;
 
 const outputPath = new URL(
   "../src/games/bridges/problem/problem-pool.json",
@@ -59,6 +76,8 @@ type Candidate = {
   difficulty: BridgesDifficulty | null;
   entry: BridgesProblemPoolEntry | null;
   symmetryKey: string;
+  layoutKey: string;
+  fingerprint: string;
   analysis: BridgesDifficultyAnalysis;
 };
 
@@ -81,8 +100,9 @@ function conditionKeyOf({
   doubleBridgeRate,
   extraBridgeRate,
   splitRate,
+  refinementSteps,
 }: BridgesGenerationConditions): string {
-  return `${size}×${size}/d${islandDensity}/p${doubleBridgeRate}/e${extraBridgeRate}/s${splitRate}`;
+  return `${size}×${size}/d${islandDensity}/p${doubleBridgeRate}/e${extraBridgeRate}/s${splitRate}/r${refinementSteps}`;
 }
 
 function toPercent(rate: number): number {
@@ -102,6 +122,7 @@ function toPoolEntry(
     toPercent(conditions.doubleBridgeRate),
     toPercent(conditions.extraBridgeRate),
     toPercent(conditions.splitRate),
+    conditions.refinementSteps,
     candidateIndex,
     encodeBridgesPoolIslands(board),
     encodeBridgesPoolClues(board),
@@ -140,6 +161,8 @@ function evaluateCandidate(
       ? toPoolEntry(conditions, candidateIndex, analysis, problem)
       : null,
     symmetryKey,
+    layoutKey: getBridgesLayoutKey(problem),
+    fingerprint: classified ? describeBridgesSolveFingerprint(problem) : "",
     analysis,
   };
 }
@@ -234,7 +257,10 @@ function selectLevel(
   perLevel: number,
   budget: number,
   takenKeys: Set<string>,
+  takenLayouts: Set<string>,
 ): LevelSelection {
+  const fingerprintCounts = new Map<string, number>();
+  const fingerprintLimit = getFingerprintLimit(perLevel);
   const conditions = listBridgesGenerationConditions(difficulty);
   const nextIndex = conditions.map(() => 0);
   const exhausted = conditions.map(() => false);
@@ -273,9 +299,16 @@ function selectLevel(
         if (
           candidate.difficulty === difficulty &&
           candidate.entry !== null &&
-          !takenKeys.has(candidate.symmetryKey)
+          !takenKeys.has(candidate.symmetryKey) &&
+          !takenLayouts.has(candidate.layoutKey) &&
+          (fingerprintCounts.get(candidate.fingerprint) ?? 0) < fingerprintLimit
         ) {
           takenKeys.add(candidate.symmetryKey);
+          takenLayouts.add(candidate.layoutKey);
+          fingerprintCounts.set(
+            candidate.fingerprint,
+            (fingerprintCounts.get(candidate.fingerprint) ?? 0) + 1,
+          );
           selection.entries.push(candidate.entry);
           break;
         }
@@ -293,14 +326,56 @@ function selectLevel(
   return selection;
 }
 
+/** 途中で止まっても選び終えたレベルから続けられるよう、レベルごとの選んだ結果を書き出す。 */
+function writeCachedSelection(path: string, selection: LevelSelection): void {
+  writeFileSync(
+    path,
+    JSON.stringify({ ...selection, outcomes: [...selection.outcomes] }),
+  );
+}
+
+/** 書き出したレベルの選んだ結果を読み、そのレベルの問題の同型と島の配置を、後のレベルで除くために覚える。 */
+function readCachedSelection(
+  path: string,
+  takenKeys: Set<string>,
+  takenLayouts: Set<string>,
+): LevelSelection {
+  const cached = JSON.parse(readFileSync(path, "utf8")) as Omit<
+    LevelSelection,
+    "outcomes"
+  > & { outcomes: [string, number][] };
+  for (const entry of cached.entries) {
+    const { problem } = toBridgesPooledProblem(entry);
+    takenKeys.add(getBridgesSymmetryKey(problem));
+    takenLayouts.add(getBridgesLayoutKey(problem));
+  }
+  console.log(`${path} から選んだ ${cached.entries.length} 問を読んだ`);
+  return { ...cached, outcomes: new Map(cached.outcomes) };
+}
+
 function runMain(): void {
   const perLevel = readPositiveInteger("per-level", defaultPerLevel);
   const budget = readPositiveInteger("budget", defaultBudget);
   const started = performance.now();
+  const cacheDirectory = readOption("cache-dir");
+  if (cacheDirectory !== undefined) {
+    mkdirSync(cacheDirectory, { recursive: true });
+  }
   const takenKeys = new Set<string>();
+  const takenLayouts = new Set<string>();
   const levels = {} as Record<BridgesDifficulty, BridgesProblemPoolEntry[]>;
   const selections = difficultyLevels.map(({ id }) => {
-    const selection = selectLevel(id, perLevel, budget, takenKeys);
+    const cachePath =
+      cacheDirectory === undefined
+        ? undefined
+        : `${cacheDirectory}/level-${id}-${perLevel}.json`;
+    const selection =
+      cachePath !== undefined && existsSync(cachePath)
+        ? readCachedSelection(cachePath, takenKeys, takenLayouts)
+        : selectLevel(id, perLevel, budget, takenKeys, takenLayouts);
+    if (cachePath !== undefined) {
+      writeCachedSelection(cachePath, selection);
+    }
     levels[id] = selection.entries;
     return { id, selection };
   });
@@ -358,7 +433,7 @@ function verifyEntry(
   }
   const expected = toPoolEntry(
     pooled.identity.conditions,
-    entry[5],
+    entry[6],
     analysis,
     pooled.problem,
   );
@@ -385,11 +460,32 @@ function runVerify(): void {
   const started = performance.now();
   const failures: VerifyFailure[] = [];
   const keys = new Map<string, string>();
+  const layouts = new Set<string>();
   const seeds = new Set<string>();
   let duplicateCount = 0;
+  let layoutDuplicateCount = 0;
   let seedDuplicateCount = 0;
+  let fingerprintExcessCount = 0;
   for (const { id } of difficultyLevels) {
-    for (const [index, entry] of listBridgesPoolEntries(id).entries()) {
+    const entries = listBridgesPoolEntries(id);
+    const fingerprintCounts = new Map<string, number>();
+    for (const entry of entries) {
+      const fingerprint = describeBridgesSolveFingerprint(
+        toBridgesPooledProblem(entry).problem,
+      );
+      fingerprintCounts.set(
+        fingerprint,
+        (fingerprintCounts.get(fingerprint) ?? 0) + 1,
+      );
+    }
+    const fingerprintLimit = getFingerprintLimit(entries.length);
+    fingerprintExcessCount += [...fingerprintCounts.values()].filter(
+      (count) => count > fingerprintLimit,
+    ).length;
+    console.log(
+      `L${id}: 解く手順の指紋 ${fingerprintCounts.size} 種類（最多 ${Math.max(...fingerprintCounts.values())} 問、上限 ${fingerprintLimit} 問）`,
+    );
+    for (const [index, entry] of entries.entries()) {
       const reason = verifyEntry(id, entry);
       if (reason !== null) {
         failures.push({ difficulty: id, index, reason });
@@ -400,6 +496,11 @@ function runVerify(): void {
         duplicateCount += 1;
       }
       keys.set(key, `L${id}#${index}`);
+      const layoutKey = getBridgesLayoutKey(pooled.problem);
+      if (layouts.has(layoutKey)) {
+        layoutDuplicateCount += 1;
+      }
+      layouts.add(layoutKey);
       if (seeds.has(pooled.identity.seed)) {
         seedDuplicateCount += 1;
       }
@@ -418,7 +519,7 @@ function runVerify(): void {
     console.log(`L${id}: ${listBridgesPoolEntries(id).length}問`);
   }
   console.log(
-    `同型の重複 ${duplicateCount}・seed の重複 ${seedDuplicateCount}`,
+    `同型の重複 ${duplicateCount}・島の配置の重複 ${layoutDuplicateCount}・seed の重複 ${seedDuplicateCount}・指紋の上限超え ${fingerprintExcessCount}`,
   );
   console.log(
     `問題集の大きさ（項目だけ）${describeSize(json)}・選択 ${measureSelection()}`,
@@ -427,14 +528,20 @@ function runVerify(): void {
   for (const { id } of difficultyLevels) {
     console.log(describeEntries(id, listBridgesPoolEntries(id)).join("\n"));
   }
-  if (failures.length > 0 || duplicateCount > 0 || seedDuplicateCount > 0) {
+  if (
+    failures.length > 0 ||
+    duplicateCount > 0 ||
+    layoutDuplicateCount > 0 ||
+    seedDuplicateCount > 0 ||
+    fingerprintExcessCount > 0
+  ) {
     for (const failure of failures.slice(0, 20)) {
       console.error(
         `L${failure.difficulty}#${failure.index}: ${failure.reason}`,
       );
     }
     throw new Error(
-      `Bridges problem pool verification failed: ${failures.length} entries, ${duplicateCount} symmetric duplicates, ${seedDuplicateCount} seed duplicates`,
+      `Bridges problem pool verification failed: ${failures.length} entries, ${duplicateCount} symmetric duplicates, ${layoutDuplicateCount} layout duplicates, ${seedDuplicateCount} seed duplicates, ${fingerprintExcessCount} fingerprints over the limit`,
     );
   }
   console.log("\n不一致 0");

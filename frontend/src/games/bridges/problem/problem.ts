@@ -20,28 +20,37 @@ export const bridgesBoardSizes = [6, 7, 8, 9, 10] as const;
 
 export type BridgesBoardSize = (typeof bridgesBoardSizes)[number];
 
-/** 島の数の目標（盤面のマスの数に対する割合）。島を伸ばせる所が尽きると目標に届かない。 */
-export const bridgesIslandDensities = [0.24, 0.3] as const;
+/** 島の数の目標（盤面のマスの数に対する割合）。島を置ける所が尽きると目標に届かない。 */
+export const bridgesIslandDensities = [0.26, 0.36] as const;
 
 export type BridgesIslandDensity = (typeof bridgesIslandDensities)[number];
 
-/** 作る橋を2本にする確率。小さいほど 1・2 の島が増え、つながりの読みが要る問題が出やすい。 */
-export const bridgesDoubleBridgeRates = [0.1, 0.2, 0.3] as const;
+/** 架ける橋を2本にする確率。大きいほど数字が大きくなり、2本と1本の配分を読む所が増える。 */
+export const bridgesDoubleBridgeRates = [0.35, 0.5] as const;
 
 export type BridgesDoubleBridgeRate = (typeof bridgesDoubleBridgeRates)[number];
 
-/** 木を作った後、まだ橋の無い島の組に輪を作る橋を足す確率。 */
-export const bridgesExtraBridgeRates = [0, 0.15] as const;
+/** 島を置いたとき、ほかの向きの島にも橋を足して輪を作る確率。 */
+export const bridgesExtraBridgeRates = [0.15, 0.35] as const;
 
 export type BridgesExtraBridgeRate = (typeof bridgesExtraBridgeRates)[number];
 
-/** 木を育てる途中で、既にある橋の途中に島を差して橋を2本に分ける確率（分割）。島の数を増やす。 */
-export const bridgesSplitRates = [0, 0.2] as const;
+/** 島を置く代わりに、架けた橋の途中に島を差して橋を2本に分ける確率（分割）。島の数を増やす。 */
+export const bridgesSplitRates = [0.2, 0.45] as const;
 
 export type BridgesSplitRate = (typeof bridgesSplitRates)[number];
 
+/**
+ * 広げた盤面の解を、人が読む量の多い盤面へ磨く山登りの回数（`refineBridgesLayout`）。0 なら磨かない。
+ * 磨くほど、数字の読みで止まり、つながりや1手の先読みを要る盤面に寄る。どのレベルに入るかは分析で決める。
+ * 1500 回は、10×10 で1手の先読みが2回以上要る盤面まで磨くための回数で、レベル5 の候補だけに使う。
+ */
+export const bridgesRefinementSteps = [0, 150, 500, 1500] as const;
+
+export type BridgesRefinementSteps = (typeof bridgesRefinementSteps)[number];
+
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
-export const BRIDGES_GENERATOR_VERSION = "3";
+export const BRIDGES_GENERATOR_VERSION = "4";
 
 /**
  * 候補を作る条件。どれも難易度の判定条件ではなく、候補の分布を寄せる生成条件。
@@ -53,6 +62,7 @@ export type BridgesGenerationConditions = {
   doubleBridgeRate: BridgesDoubleBridgeRate;
   extraBridgeRate: BridgesExtraBridgeRate;
   splitRate: BridgesSplitRate;
+  refinementSteps: BridgesRefinementSteps;
 };
 
 /** 同じ問題を再現するための情報。記録から同じ問題を引き直すときに使う。 */
@@ -77,23 +87,30 @@ function toPercent(rate: number): number {
 
 /**
  * 生成条件と候補番号から identity を作る。seed は条件ごとに別の系列になるよう条件を含め、割合は百分率の整数で書く。
- * 例: 10×10・密度0.3・2本0.1・輪0.15・分割0.2・候補番号 3 は `br-10-d30-p10-e15-s20-3`。
+ * 例: 10×10・密度0.36・2本0.5・輪0.15・分割0.45・磨く回数 500・候補番号 3 は `br-10-d36-p50-e15-s45-r500-3`。
  */
 export function createBridgesProblemIdentity(
   conditions: BridgesGenerationConditions,
   candidateIndex: number,
 ): BridgesProblemIdentity {
-  const { size, islandDensity, doubleBridgeRate, extraBridgeRate, splitRate } =
-    conditions;
+  const {
+    size,
+    islandDensity,
+    doubleBridgeRate,
+    extraBridgeRate,
+    splitRate,
+    refinementSteps,
+  } = conditions;
   return {
     generatorVersion: BRIDGES_GENERATOR_VERSION,
-    seed: `br-${size}-d${toPercent(islandDensity)}-p${toPercent(doubleBridgeRate)}-e${toPercent(extraBridgeRate)}-s${toPercent(splitRate)}-${candidateIndex}`,
+    seed: `br-${size}-d${toPercent(islandDensity)}-p${toPercent(doubleBridgeRate)}-e${toPercent(extraBridgeRate)}-s${toPercent(splitRate)}-r${refinementSteps}-${candidateIndex}`,
     conditions: {
       size,
       islandDensity,
       doubleBridgeRate,
       extraBridgeRate,
       splitRate,
+      refinementSteps,
     },
   };
 }
@@ -112,7 +129,8 @@ export function isBridgesGenerationConditions(
     isOneOf(bridgesIslandDensities, value.islandDensity) &&
     isOneOf(bridgesDoubleBridgeRates, value.doubleBridgeRate) &&
     isOneOf(bridgesExtraBridgeRates, value.extraBridgeRate) &&
-    isOneOf(bridgesSplitRates, value.splitRate)
+    isOneOf(bridgesSplitRates, value.splitRate) &&
+    isOneOf(bridgesRefinementSteps, value.refinementSteps)
   );
 }
 

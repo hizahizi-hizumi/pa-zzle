@@ -13,10 +13,11 @@ import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 const problemIdentity = createBridgesProblemIdentity(
   {
     size: 10,
-    islandDensity: 0.3,
-    doubleBridgeRate: 0.1,
+    islandDensity: 0.36,
+    doubleBridgeRate: 0.5,
     extraBridgeRate: 0.15,
-    splitRate: 0.2,
+    splitRate: 0.45,
+    refinementSteps: 500,
   },
   16,
 );
@@ -72,7 +73,7 @@ describe("createBridgesPlayRecord", () => {
     const { id, gameId, payloadVersion, payload } = record;
 
     expect({ id, gameId, payloadVersion }).toEqual({
-      id: "bridges:1000:129800:br-10-d30-p10-e15-s20-16",
+      id: "bridges:1000:129800:br-10-d36-p50-e15-s45-r500-16",
       gameId: "bridges",
       payloadVersion: 1,
     });
