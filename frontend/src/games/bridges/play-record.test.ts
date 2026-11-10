@@ -14,10 +14,11 @@ const problemIdentity = createBridgesProblemIdentity(
   {
     size: 10,
     islandDensity: 0.36,
-    doubleBridgeRate: 0.5,
-    extraBridgeRate: 0.15,
+    doubleBridgeRate: 0.65,
+    extraBridgeRate: 0.25,
     splitRate: 0.45,
     refinementSteps: 500,
+    refinementGoal: "lookahead",
   },
   16,
 );
@@ -60,7 +61,7 @@ const pastProblemIdentity = {
     size: 10,
     islandDensity: 0.3,
     doubleBridgeRate: 0.1,
-    extraBridgeRate: 0.15,
+    extraBridgeRate: 0.25,
   },
 };
 
@@ -73,7 +74,7 @@ describe("createBridgesPlayRecord", () => {
     const { id, gameId, payloadVersion, payload } = record;
 
     expect({ id, gameId, payloadVersion }).toEqual({
-      id: "bridges:1000:129800:br-10-d36-p50-e15-s45-r500-16",
+      id: "bridges:1000:129800:br-10-d36-p65-e25-s45-r500-lookahead-16",
       gameId: "bridges",
       payloadVersion: 1,
     });
@@ -130,6 +131,10 @@ describe("isBridgesPlayRecord", () => {
     [
       "待ったの回数が入力回数と同じ記録",
       withPayload({ performance: { ...performance, undoCount: 40 } }),
+    ],
+    [
+      "作業の量に1手の先読みの回数がある記録",
+      withPayload({ workload: { ...workload, lookaheadRoundCount: 1 } }),
     ],
   ] as const;
 

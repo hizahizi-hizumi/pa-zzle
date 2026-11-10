@@ -4,6 +4,7 @@ import {
   type BridgesReasoningTier,
   bridgesConnectivityTiers,
   bridgesReasoningTiers,
+  countBridgesCornerOpeningIslands,
   countBridgesOpeningEdges,
   countBridgesOpeningSaturatedIslands,
   traceBridgesHumanSolve,
@@ -21,9 +22,14 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
  * - `bridgeCount`: 解の橋の本数の合計（2本の組は2と数える）。
  * - `clueMean`: 島の数字の平均。1 と 2 ばかりの盤面は、1か所ずつの読みが「足りる・足りない」の確かめだけになる。
  * - `highClueCount`: 数字5以上の島の数。行き先の多くに2本ずつ要り、2本と1本の配分を読む所になる。
+ * - `veryHighClueCount`: 数字6以上の島の数。行き先が3つ以上の島に2本ずつ架かる見せ場。
+ * - `maximumClue`: 最も大きい数字。
  * - `dominantClueShare`: 最も多い数字の島の割合。同じ数字が並ぶ単調な盤面ほど大きい。
+ * - `twoClueShare`: 数字2の島の割合。2 は行き先1つに2本か2つに1本ずつで、多いと盤面が単調になる。
  * - `doubleBridgeRatio`: 解で橋を架ける組のうち、2本の組の割合。
  * - `loopCount`: 解の輪の数（架ける組の数 − 島の数 + 1）。輪が無い解は、伸ばした先から決まる木の読みだけになる。
+ * - `borderBridgeShare`: 解で橋を架ける組のうち、盤面の外周の行・列に沿う組の割合。多いと盤面の枠をなぞる問題になる。
+ * - `longBridgeShare`: 解で橋を架ける組のうち、盤面の一辺の半分以上の長さの組の割合。
  */
 export type BridgesScaleMetrics = {
   size: number;
@@ -32,9 +38,14 @@ export type BridgesScaleMetrics = {
   bridgeCount: number;
   clueMean: number;
   highClueCount: number;
+  veryHighClueCount: number;
+  maximumClue: number;
   dominantClueShare: number;
+  twoClueShare: number;
   doubleBridgeRatio: number;
   loopCount: number;
+  borderBridgeShare: number;
+  longBridgeShare: number;
 };
 
 /**
@@ -53,6 +64,14 @@ export type BridgesScaleMetrics = {
  * - `lookaheadRoundCount`: 1手の先読み（D）が要った手詰まりの回数。下の段で決まる所を全部決め切った（どの順に読んでも
  *   同じになる）盤面で、1手の先読みでしか進めない回数で、どの順に解いても、1手の先読みで止まる回数はこれより少なくならない。
  * - `passageRoundCount`: 唯一の通り道（C3）が要った手詰まりの回数。
+ * - `readingRoundCount`: 「ちょうど」（A1）だけでは止まり、ほかの読み（A2・つながり）が要った手詰まりの回数。
+ * - `groupLookaheadRoundCount`: 1手の先読みのうち、3島以上の組が閉じるか数島が孤立するのを見て退けた手詰まりの回数。
+ *   仮に決めた手の両端を埋め、組を端までたどって閉じるのを確かめる、人が2段に読む所。
+ * - `chainedLookaheadRoundCount`: 1手の先読みのうち、前の1手の先読みから、ほかの読みで狭めた組が
+ *   `BRIDGES_LOOKAHEAD_CHAIN_GAP` 以下のうちに続けて要った手詰まりの回数。先読みの結果からすぐ次の先読みが要る所。
+ * - `crossingBlockCount`: 架かると決まった橋と交わって0本になった行き先のうち、両端の島がまだ足りなかった行き先の数。
+ *   交差で行き先が消え、数字の読みが進む所。
+ * - `cornerOpeningIslandCount`: 解き始めの決め打ちの島のうち、盤面の四隅の島の数。
  */
 export type BridgesReasoningFeatures = {
   maximumTier: Exclude<BridgesReasoningTier, "T">;
@@ -67,7 +86,39 @@ export type BridgesReasoningFeatures = {
   groupClosureRoundCount: number;
   lookaheadRoundCount: number;
   passageRoundCount: number;
+  readingRoundCount: number;
+  groupLookaheadRoundCount: number;
+  chainedLookaheadRoundCount: number;
+  crossingBlockCount: number;
+  cornerOpeningIslandCount: number;
 };
+
+/**
+ * 1手の先読みが続けて要ったとみなす、前の1手の先読みからほかの読みで狭めた組の数の上限。
+ * 先読みの結果から数組だけ進めて、また先読みが要るなら、人は1つの局面で先読みを重ねて読む。
+ */
+export const BRIDGES_LOOKAHEAD_CHAIN_GAP = 3;
+
+function countChainedLookaheads(
+  rounds: readonly { tier: BridgesReasoningTier; edgeCount: number }[],
+): number {
+  let chained = 0;
+  let sinceLookahead: number | null = null;
+  for (const { tier, edgeCount } of rounds) {
+    if (tier === "D") {
+      if (
+        sinceLookahead !== null &&
+        sinceLookahead <= BRIDGES_LOOKAHEAD_CHAIN_GAP
+      ) {
+        chained += 1;
+      }
+      sinceLookahead = 0;
+    } else if (sinceLookahead !== null) {
+      sinceLookahead += edgeCount;
+    }
+  }
+  return chained;
+}
 
 /**
  * 素朴な解き方（数字の読みと試し置き）を問題ごとに決まった乱数で数回試した結果。
@@ -131,24 +182,56 @@ function measureScale(
     clueCounts.set(clue, (clueCounts.get(clue) ?? 0) + 1);
   }
   const usedEdgeCount = solution.filter((count) => count > 0).length;
+  const { edges } = getBridgesNetwork(problem);
+  const last = problem.width - 1;
+  let borderBridges = 0;
+  let longBridges = 0;
+  for (const [edge, { from, to }] of edges.entries()) {
+    if (solution[edge]! === 0) {
+      continue;
+    }
+    const start = problem.islands[from]!;
+    const end = problem.islands[to]!;
+    if (
+      (start.row === end.row && (start.row === 0 || start.row === last)) ||
+      (start.column === end.column &&
+        (start.column === 0 || start.column === last))
+    ) {
+      borderBridges += 1;
+    }
+    const length =
+      Math.abs(start.row - end.row) + Math.abs(start.column - end.column);
+    if (length * 2 >= problem.width) {
+      longBridges += 1;
+    }
+  }
   return {
     size: problem.width,
     islandCount: problem.islands.length,
-    edgeCount: getBridgesNetwork(problem).edges.length,
+    edgeCount: edges.length,
     bridgeCount: solution.reduce((total, count) => total + count, 0),
     clueMean: clues.reduce((total, clue) => total + clue, 0) / clues.length,
     highClueCount: clues.filter((clue) => clue >= HIGH_CLUE_MINIMUM).length,
+    veryHighClueCount: clues.filter((clue) => clue >= VERY_HIGH_CLUE_MINIMUM)
+      .length,
+    maximumClue: Math.max(...clues),
     dominantClueShare: Math.max(...clueCounts.values()) / clues.length,
+    twoClueShare: (clueCounts.get(2) ?? 0) / clues.length,
     doubleBridgeRatio:
       usedEdgeCount === 0
         ? 0
         : solution.filter((count) => count === 2).length / usedEdgeCount,
     loopCount: usedEdgeCount - problem.islands.length + 1,
+    borderBridgeShare: usedEdgeCount === 0 ? 0 : borderBridges / usedEdgeCount,
+    longBridgeShare: usedEdgeCount === 0 ? 0 : longBridges / usedEdgeCount,
   };
 }
 
 /** 大きい数字とみなす島の数字の下限。 */
 const HIGH_CLUE_MINIMUM = 5;
+
+/** とても大きい数字とみなす島の数字の下限。行き先が3つ以上要る。 */
+const VERY_HIGH_CLUE_MINIMUM = 6;
 
 const closureTiers: readonly BridgesReasoningTier[] = ["C1p", "C1g"];
 
@@ -263,6 +346,14 @@ export function analyzeBridgesDifficulty(
       groupClosureRoundCount: roundCountByTier.C1g,
       lookaheadRoundCount: roundCountByTier.D,
       passageRoundCount: roundCountByTier.C3,
+      readingRoundCount: trace.rounds.filter(({ tier }) => tier !== "A1")
+        .length,
+      groupLookaheadRoundCount: trace.rounds.filter(
+        ({ tier, readsGroup }) => tier === "D" && readsGroup,
+      ).length,
+      chainedLookaheadRoundCount: countChainedLookaheads(trace.rounds),
+      crossingBlockCount: trace.crossingBlockCount,
+      cornerOpeningIslandCount: countBridgesCornerOpeningIslands(problem),
     },
     trial: measureBridgesTrialFeatures(problem),
   };

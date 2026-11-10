@@ -32,10 +32,11 @@ describe("spreadBridgesIslands", () => {
       {
         size,
         islandDensity: 0.36,
-        doubleBridgeRate: 0.35,
-        extraBridgeRate: 0.35,
+        doubleBridgeRate: 0.5,
+        extraBridgeRate: 0.45,
         splitRate: 0.2,
         refinementSteps: 0,
+        refinementGoal: "lookahead",
       },
       `island-spread-${size}`,
       40,
@@ -103,10 +104,11 @@ describe("spreadBridgesIslands", () => {
     const conditions: BridgesGenerationConditions = {
       size: 8,
       islandDensity: 0.26,
-      doubleBridgeRate: 0.5,
-      extraBridgeRate: 0.15,
+      doubleBridgeRate: 0.65,
+      extraBridgeRate: 0.25,
       splitRate: 0.45,
       refinementSteps: 0,
+      refinementGoal: "lookahead",
     };
 
     test("同じ盤面と解を作ること", () => {
@@ -122,16 +124,17 @@ describe("spreadBridgesIslands", () => {
   });
 
   describe("2本の確率を上げた場合", () => {
-    const ratios = ([0.35, 0.5] as const).map((doubleBridgeRate) =>
+    const ratios = ([0.5, 0.65] as const).map((doubleBridgeRate) =>
       mean(
         listLayouts(
           {
             size: 9,
             islandDensity: 0.36,
             doubleBridgeRate,
-            extraBridgeRate: 0.15,
+            extraBridgeRate: 0.25,
             splitRate: 0.2,
             refinementSteps: 0,
+            refinementGoal: "lookahead",
           },
           `island-spread-double-${doubleBridgeRate}`,
           60,
@@ -157,10 +160,11 @@ describe("spreadBridgesIslands", () => {
           {
             size: 10,
             islandDensity: 0.36,
-            doubleBridgeRate: 0.35,
-            extraBridgeRate: 0.15,
+            doubleBridgeRate: 0.5,
+            extraBridgeRate: 0.25,
             splitRate,
             refinementSteps: 0,
+            refinementGoal: "lookahead",
           },
           `island-spread-split-${splitRate}`,
           60,

@@ -10,24 +10,26 @@ describe("createBridgesProblemIdentity", () => {
       {
         size: 10,
         islandDensity: 0.36,
-        doubleBridgeRate: 0.5,
-        extraBridgeRate: 0.15,
+        doubleBridgeRate: 0.65,
+        extraBridgeRate: 0.25,
         splitRate: 0.45,
         refinementSteps: 500,
+        refinementGoal: "lookahead",
       },
       3,
     );
 
     expect(identity).toEqual({
-      generatorVersion: "4",
-      seed: "br-10-d36-p50-e15-s45-r500-3",
+      generatorVersion: "5",
+      seed: "br-10-d36-p65-e25-s45-r500-lookahead-3",
       conditions: {
         size: 10,
         islandDensity: 0.36,
-        doubleBridgeRate: 0.5,
-        extraBridgeRate: 0.15,
+        doubleBridgeRate: 0.65,
+        extraBridgeRate: 0.25,
         splitRate: 0.45,
         refinementSteps: 500,
+        refinementGoal: "lookahead",
       },
     });
   });
@@ -38,10 +40,11 @@ describe("isBridgesProblemIdentity", () => {
     {
       size: 7,
       islandDensity: 0.26,
-      doubleBridgeRate: 0.35,
-      extraBridgeRate: 0.35,
+      doubleBridgeRate: 0.5,
+      extraBridgeRate: 0.45,
       splitRate: 0.2,
       refinementSteps: 0,
+      refinementGoal: "lookahead",
     },
     0,
   );

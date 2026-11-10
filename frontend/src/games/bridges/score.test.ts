@@ -43,6 +43,28 @@ describe("calculateBridgesSpeedFullScoreMs", () => {
     },
   );
 
+  describe("つながりの手詰まりのうち1手の先読みが要った回数がある場合", () => {
+    test("1回ごとに15秒を足すこと", () => {
+      const speedFullScoreMs = calculateBridgesSpeedFullScoreMs({
+        ...heavyWorkload,
+        lookaheadRoundCount: 2,
+      });
+
+      expect(speedFullScoreMs).toBe(heavyFullScoreMs + 30_000);
+    });
+
+    test("回数の無い作業の量は0回として扱うこと", () => {
+      const speedFullScoreMs = calculateBridgesSpeedFullScoreMs({
+        ...heavyWorkload,
+        lookaheadRoundCount: 0,
+      });
+
+      expect(speedFullScoreMs).toBe(
+        calculateBridgesSpeedFullScoreMs(heavyWorkload),
+      );
+    });
+  });
+
   describe("行き先の数だけが違う場合", () => {
     const moreEdges = { ...lightWorkload, edgeCount: 15 };
 

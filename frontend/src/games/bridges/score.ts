@@ -29,6 +29,11 @@ export const BRIDGES_SPEED_PER_BRIDGE_MS = 800;
 export const BRIDGES_SPEED_PER_COUNT_ROUND_MS = 3_000;
 /** 基準時間の係数（暫定）。数字の読みで止まり、つながりを読む所を探す手詰まり1回ごとの時間。 */
 export const BRIDGES_SPEED_PER_CONNECTIVITY_ROUND_MS = 6_000;
+/**
+ * 基準時間の係数（暫定）。つながりの手詰まりのうち、1手の先読みが要った1回ごとに足す時間。手を1つ仮に決め、両端の島を埋め、
+ * 組が閉じるか孤立するかを端までたどる2段の読みで、つながりの手詰まりを探す時間に加えてかかる。
+ */
+export const BRIDGES_SPEED_PER_LOOKAHEAD_ROUND_MS = 15_000;
 /** 基準時間の係数（暫定）。数字の読みだけでは決まらない行き先1つを、つながりを読んで決める時間。 */
 export const BRIDGES_SPEED_PER_UNDECIDED_EDGE_MS = 1_000;
 
@@ -48,7 +53,7 @@ type BridgesPlayScoreInput = {
 
 /**
  * 問題ごとの速さ満点の基準時間。盤面を見渡す時間に、島の数、橋の本数、「少なくとも1本」の読みとつながりの読みの手詰まりの回数、
- * 数字だけでは決まらない行き先の数に応じた時間を足す。問題を解き切る作業の量だけから決め、難易度そのものは使わない。
+ * そのうち1手の先読みの回数、数字だけでは決まらない行き先の数に応じた時間を足す。問題を解き切る作業の量だけから決め、難易度そのものは使わない。
  * 行き先の数は島の数と橋の本数に強く連動するので使わない。
  */
 export function calculateBridgesSpeedFullScoreMs({
@@ -57,6 +62,7 @@ export function calculateBridgesSpeedFullScoreMs({
   countRoundCount,
   connectivityRoundCount,
   countReasoningUndecidedEdgeCount,
+  lookaheadRoundCount = 0,
 }: BridgesSolveWorkload): number {
   return (
     BRIDGES_SPEED_INITIAL_RECOGNITION_MS +
@@ -65,6 +71,7 @@ export function calculateBridgesSpeedFullScoreMs({
     Math.max(0, countRoundCount) * BRIDGES_SPEED_PER_COUNT_ROUND_MS +
     Math.max(0, connectivityRoundCount) *
       BRIDGES_SPEED_PER_CONNECTIVITY_ROUND_MS +
+    Math.max(0, lookaheadRoundCount) * BRIDGES_SPEED_PER_LOOKAHEAD_ROUND_MS +
     Math.max(0, countReasoningUndecidedEdgeCount) *
       BRIDGES_SPEED_PER_UNDECIDED_EDGE_MS
   );

@@ -69,10 +69,11 @@ describe("toBridgesPoolIdentity", () => {
     const identity = toBridgesPoolIdentity([
       9,
       26,
-      35,
-      15,
+      50,
+      25,
       45,
       150,
+      "lookahead",
       31,
       "0",
       "",
@@ -80,6 +81,7 @@ describe("toBridgesPoolIdentity", () => {
       2,
       3,
       4,
+      1,
     ]);
 
     expect(identity).toEqual(
@@ -87,10 +89,11 @@ describe("toBridgesPoolIdentity", () => {
         {
           size: 9,
           islandDensity: 0.26,
-          doubleBridgeRate: 0.35,
-          extraBridgeRate: 0.15,
+          doubleBridgeRate: 0.5,
+          extraBridgeRate: 0.25,
           splitRate: 0.45,
           refinementSteps: 150,
+          refinementGoal: "lookahead",
         },
         31,
       ),
@@ -99,7 +102,23 @@ describe("toBridgesPoolIdentity", () => {
 
   test("扱わない生成条件を拒むこと", () => {
     const act = () =>
-      toBridgesPoolIdentity([9, 50, 35, 15, 45, 150, 31, "0", "", 1, 2, 3, 4]);
+      toBridgesPoolIdentity([
+        9,
+        50,
+        50,
+        25,
+        45,
+        150,
+        "lookahead",
+        31,
+        "0",
+        "",
+        1,
+        2,
+        3,
+        4,
+        1,
+      ]);
 
     expect(act).toThrow(RangeError);
   });

@@ -45,6 +45,12 @@ function pickWeighted<T>(
   return values.at(-1)!;
 }
 
+/**
+ * 外周のマスに島を置く重みの倍率。外周のマスは盤面の内側より多く、そのまま選ぶと外周に沿う橋が増えて、
+ * 盤面の枠をなぞる問題になる。
+ */
+const BORDER_PLACEMENT_WEIGHT = 0.35;
+
 /** 分割で島を差すときに、橋の両端の島から空けるマスの数。差した島が両端の島と隣り合わないようにする。 */
 const SPLIT_MARGIN = 2;
 
@@ -97,6 +103,11 @@ class SpreadLayout {
   private readonly bridgeCells = new Set<number>();
 
   constructor(readonly size: number) {}
+
+  isOnBorder({ row, column }: CellPosition): boolean {
+    const last = this.size - 1;
+    return row === 0 || row === last || column === 0 || column === last;
+  }
 
   isInside({ row, column }: CellPosition): boolean {
     return row >= 0 && row < this.size && column >= 0 && column < this.size;
@@ -215,8 +226,10 @@ function splitBridge(layout: SpreadLayout, random: ProblemRandom): void {
 /**
  * 盤面全体に島を広げながら、全島をつなぐ橋を張る。
  * 1. 島を1つ置く。以降、既にある島へ縦横にまっすぐ、架けた橋を横切らずに橋を架けられる空きマスを盤面全体から1つ選んで島を置き、
- *    その間に橋を架ける。伸ばす元の島ではなく置くマスを選ぶので外周に偏らず、架ける橋の間のマスの数の平方根に比べた重みで選ぶので、
- *    間が1マスの短い橋に偏らない（重みを長さそのものにすると、長い橋が盤面を塞いで島の数が減る）。
+ *    その間に橋を架ける。マスは、架けられる橋の間のマスの数の平方根と、架けられる向きの数に比べた重みで選び、外周のマスは
+ *    重みを下げる。伸ばす元の島ではなく置くマスを選ぶので外周に偏らず、短い橋と行き先の少ない島に偏らない
+ *    （マスの重みを長さそのものにすると、長い橋が盤面を塞いで島の数が減る）。選んだマスからどの島へ架けるかは、
+ *    間のマスの数に比べた重みで選び、長い橋を優先する。
  * 2. 島を置く代わりに、`splitRate` の確率で、架けた橋の途中に島を差して2本に分ける（同じ本数の橋が島を通り抜ける形）。
  *    置いた島から別の向きにも既にある島へ架けられるなら、その向きごとに `extraBridgeRate` の確率で橋を足して輪を作る。
  * 3. 島の数が目標（`islandDensity` × マスの数）に届くか、置ける所が尽きたら止める。
@@ -255,12 +268,15 @@ export function spreadBridgesIslands(
     if (placements.length === 0) {
       break;
     }
-    const anchors = pickWeighted(placements, random, (options) =>
-      Math.sqrt(Math.max(...options.map(({ path }) => path.length))),
+    const anchors = pickWeighted(
+      placements,
+      random,
+      (options) =>
+        Math.sqrt(Math.max(...options.map(({ path }) => path.length))) *
+        options.length *
+        (layout.isOnBorder(options[0]!.cell) ? BORDER_PLACEMENT_WEIGHT : 1),
     );
-    const first = pickWeighted(anchors, random, ({ path }) =>
-      Math.sqrt(path.length),
-    );
+    const first = pickWeighted(anchors, random, ({ path }) => path.length);
     const island = layout.addIsland(first.cell);
     layout.addBridge(first.anchor, island, [...first.path].reverse());
     for (const { anchor, path } of anchors) {

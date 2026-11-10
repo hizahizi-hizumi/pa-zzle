@@ -12,10 +12,11 @@ describe("generateBridgesProblem", () => {
     {
       size: 10,
       islandDensity: 0.36,
-      doubleBridgeRate: 0.5,
-      extraBridgeRate: 0.15,
+      doubleBridgeRate: 0.65,
+      extraBridgeRate: 0.25,
       splitRate: 0.45,
       refinementSteps: 150,
+      refinementGoal: "lookahead",
     },
     12,
   );

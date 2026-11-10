@@ -20,7 +20,7 @@ import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /**
  * 事前生成した問題集の1問。解の橋は持たない。
- * - `size`・`densityPercent`・`doubleBridgePercent`・`extraBridgePercent`・`splitPercent`・`refinementSteps`・`candidateIndex` から
+ * - `size`・`densityPercent`・`doubleBridgePercent`・`extraBridgePercent`・`splitPercent`・`refinementSteps`・`refinementGoal`・`candidateIndex` から
  *   `createBridgesProblemIdentity` で identity を再構成する。割合は百分率の整数。
  * - `encodedIslands`（`encodeBridgesPoolIslands`）と `clues`（島の数字を行優先に並べた数字の列）で盤面を表す。
  *   実行時に生成器・解法器を呼ばずに問題を復元するため、生成結果そのものを持つ。
@@ -33,6 +33,7 @@ export type BridgesProblemPoolEntry = readonly [
   extraBridgePercent: number,
   splitPercent: number,
   refinementSteps: number,
+  refinementGoal: string,
   candidateIndex: number,
   encodedIslands: string,
   clues: string,
@@ -40,6 +41,7 @@ export type BridgesProblemPoolEntry = readonly [
   connectivityRoundCount: number,
   countReasoningUndecidedEdgeCount: number,
   trialBacktrackCount: number,
+  lookaheadRoundCount: number,
 ];
 
 /**
@@ -51,6 +53,7 @@ export type BridgesPoolAnalysis = {
   connectivityRoundCount: number;
   countReasoningUndecidedEdgeCount: number;
   trialBacktrackCount: number;
+  lookaheadRoundCount: number;
 };
 
 /** 問題集から復元した1問。生成時の分析結果を伴う。 */
@@ -144,6 +147,7 @@ export function toBridgesPoolIdentity([
   extraBridgePercent,
   splitPercent,
   refinementSteps,
+  refinementGoal,
   candidateIndex,
 ]: BridgesProblemPoolEntry): BridgesProblemIdentity {
   const conditions = {
@@ -153,6 +157,7 @@ export function toBridgesPoolIdentity([
     extraBridgeRate: extraBridgePercent / 100,
     splitRate: splitPercent / 100,
     refinementSteps,
+    refinementGoal,
   };
   if (!isBridgesGenerationConditions(conditions)) {
     throw new RangeError(
@@ -175,23 +180,26 @@ export function toBridgesPoolAnalysis(
     ,
     ,
     ,
+    ,
     countRoundCount,
     connectivityRoundCount,
     countReasoningUndecidedEdgeCount,
     trialBacktrackCount,
+    lookaheadRoundCount,
   ] = entry;
   return {
     countRoundCount,
     connectivityRoundCount,
     countReasoningUndecidedEdgeCount,
     trialBacktrackCount,
+    lookaheadRoundCount,
   };
 }
 
 export function toBridgesPooledProblem(
   entry: BridgesProblemPoolEntry,
 ): BridgesPooledProblem {
-  const [size, , , , , , , encodedIslands, clues] = entry;
+  const [size, , , , , , , , encodedIslands, clues] = entry;
   return {
     problem: decodeBridgesPoolProblem(size, encodedIslands, clues),
     identity: toBridgesPoolIdentity(entry),
@@ -282,7 +290,7 @@ export function findBridgesPoolProblemFeatures(
   if (!entry) {
     return null;
   }
-  const [size, , , , , , , , clues] = entry;
+  const [size, , , , , , , , , clues] = entry;
   return { size, islandCount: clues.length };
 }
 

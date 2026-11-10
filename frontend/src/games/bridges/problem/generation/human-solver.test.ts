@@ -1,9 +1,15 @@
 import {
+  createBridgesSolverContext,
+  createInitialBridgeBounds,
+} from "@/games/bridges/problem/generation/bridge-bounds";
+import {
   _private,
   type BridgesHumanSolveTrace,
+  countBridgesCornerOpeningIslands,
   countBridgesOpeningEdges,
   countBridgesOpeningSaturatedIslands,
   describeBridgesSolveFingerprint,
+  describeBridgesSolveFlow,
   traceBridgesHumanSolve,
 } from "@/games/bridges/problem/generation/human-solver";
 import researchCases from "@/games/bridges/problem/generation/research-solver-cases.json";
@@ -16,7 +22,7 @@ const cases = researchCases.map((researchCase) => ({
   parsed: parseBridgesBoard(researchCase.board.split("/")),
 }));
 
-const { traceWithSeparateClosingTiers } = _private;
+const { failsAfterOneStep, traceWithSeparateClosingTiers } = _private;
 
 function countConnectivityRounds({ rounds }: BridgesHumanSolveTrace): number {
   return rounds.filter(({ tier }) => tier.startsWith("C") || tier === "D")
@@ -30,14 +36,27 @@ describe("traceWithSeparateClosingTiers", () => {
       traceWithSeparateClosingTiers(parsed, "T"),
     );
 
-    test("手詰まりごとの段と狭めた辺の数が一致すること", () => {
+    // 1手の先読み（D）は、1段進めた後の本数の破れも見て、孤立は数島のまとまりに限る点で研究用の解法器と違うので、
+    // 最初に D か T が要る手詰まりより前だけを比べる。
+    function untilLookahead(rounds: readonly string[]): string {
+      const first = rounds.findIndex(
+        (round) => round.startsWith("D:") || round.startsWith("T:"),
+      );
+      return (first < 0 ? rounds : rounds.slice(0, first)).join(" ");
+    }
+
+    test("1手の先読みより前の手詰まりの段と狭めた辺の数が一致すること", () => {
       const rounds = traces.map((trace) =>
-        trace.rounds
-          .map(({ tier, edgeCount }) => `${tier}:${edgeCount}`)
-          .join(" "),
+        untilLookahead(
+          trace.rounds.map(({ tier, edgeCount }) => `${tier}:${edgeCount}`),
+        ),
       );
 
-      expect(rounds).toEqual(cases.map((researchCase) => researchCase.rounds));
+      expect(rounds).toEqual(
+        cases.map((researchCase) =>
+          untilLookahead(researchCase.rounds.split(" ")),
+        ),
+      );
     });
 
     test("状態が一致し、つながらない解き終わりだけを矛盾として返すこと", () => {
@@ -129,6 +148,39 @@ describe("traceBridgesHumanSolve", () => {
     });
   });
 
+  describe("2島を閉じない読みを当てて数字の読みで進めれば、3島以上の組の読みと同じ所まで決まる盤面の場合", () => {
+    const board = parseBridgesBoard([
+      "2.3.2",
+      ".....",
+      "....2",
+      "..1..",
+      "2...2",
+    ]);
+
+    test("その手詰まりを2島で閉じない読みと数えること", () => {
+      const tiers = traceBridgesHumanSolve(board, "D").rounds.map(
+        ({ tier }) => tier,
+      );
+
+      expect(tiers).toEqual(["A1", "C1p", "A1", "A1"]);
+    });
+  });
+
+  describe("架かると決まった橋が、両端の島がまだ足りない行き先と交わる盤面の場合", () => {
+    // 上の 2 は行き先が下の 3 だけで2本と決まり、左の 1 と右の 2 の間の行き先を塞ぐ。
+    const board = parseBridgesBoard([
+      "..2..",
+      "1...2",
+      "..3..",
+      ".....",
+      "2.3.3",
+    ]);
+
+    test("交差で塞がった行き先を数えること", () => {
+      expect(traceBridgesHumanSolve(board, "D").crossingBlockCount).toBe(1);
+    });
+  });
+
   describe("数字の読みだけで決まる盤面の場合", () => {
     // 真ん中の 3 は行き先が3つで、どれにも1本ずつ要る。
     const board = parseBridgesBoard(["1.3.1", ".....", "..1.."]);
@@ -165,6 +217,80 @@ describe("traceBridgesHumanSolve", () => {
   });
 });
 
+describe("failsAfterOneStep", () => {
+  function findEdge(
+    board: ReturnType<typeof parseBridgesBoard>,
+    from: readonly [number, number],
+    to: readonly [number, number],
+  ): number {
+    const index = (cell: readonly [number, number]) =>
+      board.islands.findIndex(
+        ({ row, column }) => row === cell[0] && column === cell[1],
+      );
+    return createBridgesSolverContext(board).endpoints.findIndex(
+      ([start, end]) => start === index(from) && end === index(to),
+    );
+  }
+
+  function tryAssumption(
+    rows: readonly string[],
+    from: readonly [number, number],
+    to: readonly [number, number],
+    assumed: { lower?: number; upper?: number },
+  ) {
+    const board = parseBridgesBoard(rows);
+    const context = createBridgesSolverContext(board);
+    return failsAfterOneStep(
+      context,
+      createInitialBridgeBounds(context),
+      findEdge(board, from, to),
+      assumed,
+    );
+  }
+
+  test("両端の島を埋めて行き先が消え、隣の島の本数が足りなくなる手を退けること", () => {
+    // 左上の 1 を右の 3 へつなぐと 1 が足り、下の 3 は右の 4 への2本だけになる。
+    const failure = tryAssumption(
+      ["1.3.2", ".....", ".....", "....1", "3.4.."],
+      [0, 0],
+      [0, 2],
+      { lower: 1 },
+    );
+
+    expect(failure).toBe("count");
+  });
+
+  test("4島以下のまとまりが残りとつながらなくなる手を、孤立として退けること", () => {
+    const failure = tryAssumption(
+      [
+        ".2....4",
+        "2..4.2.",
+        ".......",
+        "......3",
+        "2..4.1.",
+        ".......",
+        ".1.4..3",
+      ],
+      [6, 1],
+      [6, 3],
+      { upper: 0 },
+    );
+
+    expect(failure).toBe("isolated");
+  });
+
+  test("5島以上のまとまりが残りとつながらなくなるだけの手は、1手の先読みでは退けないこと", () => {
+    const failure = tryAssumption(
+      ["4...2.", ".2.4.1", "......", "4..3.1", "......", "3...2."],
+      [3, 0],
+      [3, 3],
+      { upper: 0 },
+    );
+
+    expect(failure).toBeNull();
+  });
+});
+
 describe("countBridgesOpeningEdges", () => {
   describe("研究用の解法器で数えた盤面の場合", () => {
     test("解き始めに数字の読みで狭められる辺の数が一致すること", () => {
@@ -193,12 +319,40 @@ describe("countBridgesOpeningSaturatedIslands", () => {
   });
 });
 
-describe("describeBridgesSolveFingerprint", () => {
+describe("countBridgesCornerOpeningIslands", () => {
+  test.each([
+    ["四隅の 4 に行き先2つ", ["4.2", "...", "2.."], 1],
+    ["四隅でない 4 に行き先2つ", ["....", "2..4", "....", "...2"], 0],
+  ] as const)("%sの盤面で %s を返すこと", (_, rows, expected) => {
+    expect(countBridgesCornerOpeningIslands(parseBridgesBoard(rows))).toBe(
+      expected,
+    );
+  });
+});
+
+describe("describeBridgesSolveFlow", () => {
   test("手詰まりごとの段と狭めた組の数を順に並べること", () => {
+    const flow = describeBridgesSolveFlow(parseBridgesBoard(["2.4.2"]));
+
+    expect(flow).toBe("A1:2");
+  });
+});
+
+describe("describeBridgesSolveFingerprint", () => {
+  test("手詰まりごとに、狭めた組の両端の数字と外周に沿うかを並べること", () => {
     const fingerprint = describeBridgesSolveFingerprint(
       parseBridgesBoard(["2.4.2"]),
     );
 
-    expect(fingerprint).toBe("A1:2");
+    expect(fingerprint).toBe("A1:24b.24b");
+  });
+
+  test("流れが同じでも、読む数字の組が違えば別の指紋になること", () => {
+    const fingerprints = [
+      ["2.4.2", ".....", "....."],
+      [".....", "2.4.2", "....."],
+    ].map((rows) => describeBridgesSolveFingerprint(parseBridgesBoard(rows)));
+
+    expect(fingerprints[0]).not.toBe(fingerprints[1]);
   });
 });

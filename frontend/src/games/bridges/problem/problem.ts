@@ -21,17 +21,17 @@ export const bridgesBoardSizes = [6, 7, 8, 9, 10] as const;
 export type BridgesBoardSize = (typeof bridgesBoardSizes)[number];
 
 /** 島の数の目標（盤面のマスの数に対する割合）。島を置ける所が尽きると目標に届かない。 */
-export const bridgesIslandDensities = [0.26, 0.36] as const;
+export const bridgesIslandDensities = [0.26, 0.31, 0.36] as const;
 
 export type BridgesIslandDensity = (typeof bridgesIslandDensities)[number];
 
 /** 架ける橋を2本にする確率。大きいほど数字が大きくなり、2本と1本の配分を読む所が増える。 */
-export const bridgesDoubleBridgeRates = [0.35, 0.5] as const;
+export const bridgesDoubleBridgeRates = [0.5, 0.65] as const;
 
 export type BridgesDoubleBridgeRate = (typeof bridgesDoubleBridgeRates)[number];
 
 /** 島を置いたとき、ほかの向きの島にも橋を足して輪を作る確率。 */
-export const bridgesExtraBridgeRates = [0.15, 0.35] as const;
+export const bridgesExtraBridgeRates = [0.25, 0.45] as const;
 
 export type BridgesExtraBridgeRate = (typeof bridgesExtraBridgeRates)[number];
 
@@ -45,12 +45,26 @@ export type BridgesSplitRate = (typeof bridgesSplitRates)[number];
  * 磨くほど、数字の読みで止まり、つながりや1手の先読みを要る盤面に寄る。どのレベルに入るかは分析で決める。
  * 1500 回は、10×10 で1手の先読みが2回以上要る盤面まで磨くための回数で、レベル5 の候補だけに使う。
  */
-export const bridgesRefinementSteps = [0, 150, 500, 1500] as const;
+export const bridgesRefinementSteps = [0, 150, 500, 1500, 4000] as const;
 
 export type BridgesRefinementSteps = (typeof bridgesRefinementSteps)[number];
 
+/**
+ * 磨くときに読みの量を増やす向き（`refineBridgesLayout`）。どのレベルに入るかは分析で決める。
+ * - `count`: 配分（少なくとも1本）と2島を閉じない読みを増やし、組の読みと1手の先読みは減らす。
+ * - `closure`: つながりの読み（閉じない読み・唯一の通り道・交差）を増やし、1手の先読みは減らす。
+ * - `lookahead`: 1手の先読み、とくに組が閉じるのを見る先読みと続けて要る先読みを増やす。
+ */
+export const bridgesRefinementGoals = [
+  "count",
+  "closure",
+  "lookahead",
+] as const;
+
+export type BridgesRefinementGoal = (typeof bridgesRefinementGoals)[number];
+
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
-export const BRIDGES_GENERATOR_VERSION = "4";
+export const BRIDGES_GENERATOR_VERSION = "5";
 
 /**
  * 候補を作る条件。どれも難易度の判定条件ではなく、候補の分布を寄せる生成条件。
@@ -63,6 +77,7 @@ export type BridgesGenerationConditions = {
   extraBridgeRate: BridgesExtraBridgeRate;
   splitRate: BridgesSplitRate;
   refinementSteps: BridgesRefinementSteps;
+  refinementGoal: BridgesRefinementGoal;
 };
 
 /** 同じ問題を再現するための情報。記録から同じ問題を引き直すときに使う。 */
@@ -87,7 +102,8 @@ function toPercent(rate: number): number {
 
 /**
  * 生成条件と候補番号から identity を作る。seed は条件ごとに別の系列になるよう条件を含め、割合は百分率の整数で書く。
- * 例: 10×10・密度0.36・2本0.5・輪0.15・分割0.45・磨く回数 500・候補番号 3 は `br-10-d36-p50-e15-s45-r500-3`。
+ * 例: 10×10・密度0.36・2本0.65・輪0.25・分割0.45・磨く回数 500・磨く向き closure・候補番号 3 は
+ * `br-10-d36-p65-e25-s45-r500-closure-3`。
  */
 export function createBridgesProblemIdentity(
   conditions: BridgesGenerationConditions,
@@ -100,10 +116,11 @@ export function createBridgesProblemIdentity(
     extraBridgeRate,
     splitRate,
     refinementSteps,
+    refinementGoal,
   } = conditions;
   return {
     generatorVersion: BRIDGES_GENERATOR_VERSION,
-    seed: `br-${size}-d${toPercent(islandDensity)}-p${toPercent(doubleBridgeRate)}-e${toPercent(extraBridgeRate)}-s${toPercent(splitRate)}-r${refinementSteps}-${candidateIndex}`,
+    seed: `br-${size}-d${toPercent(islandDensity)}-p${toPercent(doubleBridgeRate)}-e${toPercent(extraBridgeRate)}-s${toPercent(splitRate)}-r${refinementSteps}-${refinementGoal}-${candidateIndex}`,
     conditions: {
       size,
       islandDensity,
@@ -111,6 +128,7 @@ export function createBridgesProblemIdentity(
       extraBridgeRate,
       splitRate,
       refinementSteps,
+      refinementGoal,
     },
   };
 }
@@ -130,7 +148,8 @@ export function isBridgesGenerationConditions(
     isOneOf(bridgesDoubleBridgeRates, value.doubleBridgeRate) &&
     isOneOf(bridgesExtraBridgeRates, value.extraBridgeRate) &&
     isOneOf(bridgesSplitRates, value.splitRate) &&
-    isOneOf(bridgesRefinementSteps, value.refinementSteps)
+    isOneOf(bridgesRefinementSteps, value.refinementSteps) &&
+    isOneOf(bridgesRefinementGoals, value.refinementGoal)
   );
 }
 

@@ -16,6 +16,7 @@ import {
   bridgesDoubleBridgeRates,
   bridgesExtraBridgeRates,
   bridgesIslandDensities,
+  bridgesRefinementGoals,
   bridgesRefinementSteps,
   bridgesSplitRates,
   createBridgesProblemIdentity,
@@ -57,14 +58,17 @@ function listAllConditions(): BridgesGenerationConditions[] {
       bridgesDoubleBridgeRates.flatMap((doubleBridgeRate) =>
         bridgesExtraBridgeRates.flatMap((extraBridgeRate) =>
           bridgesSplitRates.flatMap((splitRate) =>
-            bridgesRefinementSteps.map((refinementSteps) => ({
-              size,
-              islandDensity,
-              doubleBridgeRate,
-              extraBridgeRate,
-              splitRate,
-              refinementSteps,
-            })),
+            bridgesRefinementSteps.flatMap((refinementSteps) =>
+              bridgesRefinementGoals.map((refinementGoal) => ({
+                size,
+                islandDensity,
+                doubleBridgeRate,
+                extraBridgeRate,
+                splitRate,
+                refinementSteps,
+                refinementGoal,
+              })),
+            ),
           ),
         ),
       ),
@@ -79,8 +83,9 @@ function conditionKeyOf({
   extraBridgeRate,
   splitRate,
   refinementSteps,
+  refinementGoal,
 }: BridgesGenerationConditions): string {
-  return `${size}×${size} d${islandDensity} p${doubleBridgeRate} e${extraBridgeRate} s${splitRate} r${refinementSteps}`;
+  return `${size}×${size} d${islandDensity} p${doubleBridgeRate} e${extraBridgeRate} s${splitRate} r${refinementSteps}-${refinementGoal}`;
 }
 
 function quantile(sorted: readonly number[], ratio: number): number {

@@ -53,11 +53,11 @@ export function generateBridgesProblem(
   const random = createProblemSeededRandom(`bridges:${identity.seed}`);
   for (let attempt = 1; attempt <= MAXIMUM_GENERATION_ATTEMPTS; attempt += 1) {
     const spread = spreadBridgesIslands(identity.conditions, random);
-    const { refinementSteps } = identity.conditions;
+    const { refinementSteps, refinementGoal } = identity.conditions;
     const layout =
       spread === null || refinementSteps === 0
         ? spread
-        : refineBridgesLayout(spread, refinementSteps, random);
+        : refineBridgesLayout(spread, refinementSteps, refinementGoal, random);
     if (layout === null) {
       continue;
     }

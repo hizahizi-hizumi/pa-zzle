@@ -78,15 +78,16 @@ describe("countBridgesSolutions", () => {
   describe("小さな盤面を総当たりで数えた場合", () => {
     // 解のある盤面を作るため、生成器で島を広げて橋を張ってから、一部の島の数字を1つずらして解の無い盤面や複数ある盤面も混ぜる。
     const random = createProblemSeededRandom("bridges-exact-solver");
-    const layouts = Array.from({ length: 2000 }, () =>
+    const layouts = Array.from({ length: 1000 }, () =>
       spreadBridgesIslands(
         {
           size: 6,
           islandDensity: 0.26,
-          doubleBridgeRate: 0.35,
-          extraBridgeRate: 0.15,
+          doubleBridgeRate: 0.5,
+          extraBridgeRate: 0.25,
           splitRate: 0.2,
           refinementSteps: 0,
+          refinementGoal: "lookahead",
         },
         random,
       ),

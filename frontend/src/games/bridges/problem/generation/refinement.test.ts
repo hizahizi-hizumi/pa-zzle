@@ -10,10 +10,11 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
 const conditions: BridgesGenerationConditions = {
   size: 8,
   islandDensity: 0.36,
-  doubleBridgeRate: 0.5,
-  extraBridgeRate: 0.15,
+  doubleBridgeRate: 0.65,
+  extraBridgeRate: 0.25,
   splitRate: 0.2,
   refinementSteps: 150,
+  refinementGoal: "lookahead",
 };
 
 /** つながりの読みの手詰まりの回数。 */
@@ -30,7 +31,10 @@ describe("refineBridgesLayout", () => {
     const random = createProblemSeededRandom(`refinement-${index}`);
     const spread = spreadBridgesIslands(conditions, random);
     return spread
-      ? { spread, refined: refineBridgesLayout(spread, 150, random) }
+      ? {
+          spread,
+          refined: refineBridgesLayout(spread, 150, "lookahead", random),
+        }
       : null;
   }).flatMap((pair) => (pair?.refined ? [pair] : []));
 
@@ -84,6 +88,46 @@ describe("refineBridgesLayout", () => {
     expect(total(after)).toBeGreaterThan(total(before));
   });
 
+  describe("同じ盤面を、配分の読みを増やす向き（count）と1手の先読みを増やす向き（lookahead）で磨いた場合", () => {
+    const refinedPairs = Array.from({ length: 30 }, (_, index) => {
+      const spread = spreadBridgesIslands(
+        { ...conditions, size: 7 },
+        createProblemSeededRandom(`refinement-goal-${index}`),
+      );
+      if (spread === null) {
+        return null;
+      }
+      const [count, lookahead] = (["count", "lookahead"] as const).map((goal) =>
+        refineBridgesLayout(
+          spread,
+          150,
+          goal,
+          createProblemSeededRandom(`refinement-goal-steps-${index}`),
+        ),
+      );
+      return count && lookahead ? { count, lookahead } : null;
+    }).flatMap((pair) => (pair ? [pair] : []));
+
+    function countDeepRounds(
+      board: Parameters<typeof traceBridgesHumanSolve>[0],
+    ): number {
+      return traceBridgesHumanSolve(board, "D").rounds.filter(({ tier }) =>
+        ["C1g", "C3", "D"].includes(tier),
+      ).length;
+    }
+
+    test("count の向きの方が、組の読み・通り道・1手の先読みが少ないこと", () => {
+      const sum = (goal: "count" | "lookahead") =>
+        refinedPairs.reduce(
+          (total, pair) => total + countDeepRounds(pair[goal].board),
+          0,
+        );
+
+      expect(refinedPairs.length).toBeGreaterThan(6);
+      expect(sum("count")).toBeLessThan(sum("lookahead"));
+    });
+  });
+
   describe("同じ乱数列の場合", () => {
     test("同じ盤面と解に磨くこと", () => {
       const results = [0, 1].map(() => {
@@ -92,7 +136,7 @@ describe("refineBridgesLayout", () => {
         while (spread === null) {
           spread = spreadBridgesIslands(conditions, random);
         }
-        return refineBridgesLayout(spread, 80, random);
+        return refineBridgesLayout(spread, 80, "lookahead", random);
       });
 
       expect(results[0]).toEqual(results[1]);

@@ -123,6 +123,7 @@ function copyWorkload({
   countRoundCount,
   connectivityRoundCount,
   countReasoningUndecidedEdgeCount,
+  lookaheadRoundCount,
 }: BridgesSolveWorkload): BridgesSolveWorkload {
   return {
     islandCount,
@@ -131,6 +132,7 @@ function copyWorkload({
     countRoundCount,
     connectivityRoundCount,
     countReasoningUndecidedEdgeCount,
+    ...(lookaheadRoundCount === undefined ? {} : { lookaheadRoundCount }),
   };
 }
 

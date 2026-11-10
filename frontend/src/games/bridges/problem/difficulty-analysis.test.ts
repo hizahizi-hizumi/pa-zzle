@@ -82,6 +82,22 @@ describe("analyzeBridgesDifficulty", () => {
       });
     });
 
+    test("数字2の割合・最も大きい数字・6以上の数字の数を盤面から求めること", () => {
+      const analysis = analyzeBridgesDifficulty(problem);
+
+      expect(analysis).toMatchObject({
+        scale: { twoClueShare: 3 / 9, maximumClue: 3, veryHighClueCount: 0 },
+      });
+    });
+
+    test("ちょうど以外の読みの手詰まりと、続けて要った1手の先読みを数えること", () => {
+      const analysis = analyzeBridgesDifficulty(problem);
+
+      expect(analysis).toMatchObject({
+        reasoning: { readingRoundCount: 3, chainedLookaheadRoundCount: 0 },
+      });
+    });
+
     test("1手の先読みの手詰まりで3組以上がまとめて決まるとき、一か所の気づきではなく掃く手詰まりに数えること", () => {
       const analysis = analyzeBridgesDifficulty(problem);
 

@@ -9,7 +9,10 @@ import {
   analyzeBridgesDifficulty,
   type BridgesDifficultyAnalysis,
 } from "@/games/bridges/problem/difficulty-analysis";
-import { describeBridgesSolveFingerprint } from "@/games/bridges/problem/generation/human-solver";
+import {
+  describeBridgesSolveFingerprint,
+  describeBridgesSolveFlow,
+} from "@/games/bridges/problem/generation/human-solver";
 import {
   getBridgesLayoutKey,
   getBridgesSymmetryKey,
@@ -38,27 +41,153 @@ import { difficultyLevels } from "@/games/difficulty";
 const defaultPerLevel = 500;
 
 /**
- * 1つのレベルで、同じ解く手順の指紋を持つ問題の数の上限（問題数に対する割合）。どこで止まりどう抜けるかの流れが同じ問題が
- * 並ぶと、同じ手順の繰り返しになる。
+ * 1つのレベルで、同じ解く手順の流れ（手詰まりごとの段と狭めた組の数）を持つ問題の数の上限（問題数に対する割合）。
+ * どこで止まりどう抜けるかの流れが同じ問題が並ぶと、同じ手順の繰り返しになる。
  */
-const MAXIMUM_FINGERPRINT_SHARE = 0.02;
+const MAXIMUM_FLOW_SHARE = 0.02;
 
-function getFingerprintLimit(perLevel: number): number {
-  return Math.max(1, Math.ceil(perLevel * MAXIMUM_FINGERPRINT_SHARE));
+function getFlowLimit(perLevel: number): number {
+  return Math.max(1, Math.ceil(perLevel * MAXIMUM_FLOW_SHARE));
+}
+
+/** 1つのレベルで、同じ解く手順の指紋（流れに、読む数字の組と外周に沿うかを足したもの）を持つ問題の数の上限。 */
+const FINGERPRINT_LIMIT = 3;
+
+/**
+ * 問題の手筋と見せ場の札。レベルの中で、札のある問題の割合に下限・上限を置き、どのレベルにも同じ形の問題が並ばないようにする。
+ * - `corner-opening`: 盤面の四隅の島の決め打ちがある（どの盤面でも同じ始まりになりやすい）。レベル1 の 6×6 は、決め打ちの島の
+ *   多くが四隅になるので、上限を半分にする。
+ * - `passage`: 唯一の通り道の読みが要る。
+ * - `seven-plus`: 7 か 8 の島がある。
+ * - `loop`: 解に輪がある。
+ * - `chained-lookahead`: 1手の先読みの結果から、すぐ次の1手の先読みが要る。
+ * - `deep-lookahead`: 1手の先読みが3回以上要る。
+ */
+type BridgesProblemTag =
+  | "corner-opening"
+  | "passage"
+  | "seven-plus"
+  | "loop"
+  | "chained-lookahead"
+  | "deep-lookahead";
+
+type TagShareRule = {
+  tag: BridgesProblemTag;
+  minimum?: number;
+  maximum?: number;
+};
+
+/**
+ * レベル3 で、唯一の通り道の読みが要る問題の割合の下限。通り道はつながりの読みのうち盤面の広さを使う読みで、
+ * 札で選ばないと数%しか入らない。1手の先読みを求めるレベル4・5 では、通り道の要る候補がさらに少ないので、
+ * 当たる割合に近い下限を置く。
+ */
+const PASSAGE_MINIMUM_SHARE = 0.1;
+
+const tagShareRules = {
+  "1": [
+    { tag: "corner-opening", maximum: 0.5 },
+    { tag: "loop", minimum: 0.4 },
+  ],
+  "2": [{ tag: "corner-opening", maximum: 0.3 }],
+  "3": [
+    { tag: "corner-opening", maximum: 0.3 },
+    { tag: "passage", minimum: PASSAGE_MINIMUM_SHARE },
+  ],
+  "4": [
+    { tag: "corner-opening", maximum: 0.3 },
+    { tag: "passage", minimum: 0.03 },
+    { tag: "seven-plus", minimum: 0.15 },
+  ],
+  "5": [
+    { tag: "corner-opening", maximum: 0.3 },
+    { tag: "passage", minimum: 0.03 },
+    { tag: "seven-plus", minimum: 0.03 },
+    { tag: "chained-lookahead", minimum: 0.15 },
+    { tag: "deep-lookahead", minimum: 0.06 },
+  ],
+} as const satisfies Record<BridgesDifficulty, readonly TagShareRule[]>;
+
+function listTags(
+  analysis: Extract<BridgesDifficultyAnalysis, { requiresTrial: false }>,
+): BridgesProblemTag[] {
+  const { reasoning, scale } = analysis;
+  return [
+    ...(reasoning.cornerOpeningIslandCount > 0
+      ? (["corner-opening"] as const)
+      : []),
+    ...(reasoning.passageRoundCount > 0 ? (["passage"] as const) : []),
+    ...(scale.maximumClue >= 7 ? (["seven-plus"] as const) : []),
+    ...(scale.loopCount > 0 ? (["loop"] as const) : []),
+    ...(reasoning.chainedLookaheadRoundCount > 0
+      ? (["chained-lookahead"] as const)
+      : []),
+    ...(reasoning.lookaheadRoundCount >= 3
+      ? (["deep-lookahead"] as const)
+      : []),
+  ];
+}
+
+/**
+ * 札の割合の決まりを満たしたまま、`tags` の問題を採れるか。上限のある札は採ると上限を超えるなら採らない。下限のある札は、
+ * 採った後の残りの枠で、まだ足りない札の数を埋められるときだけ、その札の無い問題を採る。
+ */
+function fitsTagShares(
+  rules: readonly TagShareRule[],
+  counts: ReadonlyMap<BridgesProblemTag, number>,
+  taken: number,
+  perLevel: number,
+  tags: readonly BridgesProblemTag[],
+): boolean {
+  let shortage = 0;
+  for (const { tag, minimum, maximum } of rules) {
+    const after = (counts.get(tag) ?? 0) + (tags.includes(tag) ? 1 : 0);
+    if (maximum !== undefined && after > Math.floor(maximum * perLevel)) {
+      return false;
+    }
+    if (minimum !== undefined) {
+      shortage += Math.max(0, Math.ceil(minimum * perLevel) - after);
+    }
+  }
+  return shortage <= perLevel - (taken + 1);
+}
+
+function countTagShortage(
+  rules: readonly TagShareRule[],
+  counts: ReadonlyMap<BridgesProblemTag, number>,
+  perLevel: number,
+): string[] {
+  return rules.flatMap(({ tag, minimum, maximum }) => {
+    const count = counts.get(tag) ?? 0;
+    return (minimum !== undefined && count < Math.ceil(minimum * perLevel)) ||
+      (maximum !== undefined && count > Math.floor(maximum * perLevel))
+      ? [`${tag} ${count}`]
+      : [];
+  });
 }
 
 const defaultBudget = 20_000;
+
+const defaultJobCount = 1;
+
+/**
+ * 生成条件を巡回するとき、1つの条件で1問を探して調べる候補の数の上限。届いたら、その条件はその巡では採らずに次の条件へ移る。
+ * 札の割合や重複の決まりで当たりにくくなった条件が、ほかの条件で採れる問題を待たせないようにする。
+ */
+const MAXIMUM_TRIES_PER_TURN = 200;
 
 const usage = `Usage: bun run generate:bridges-pool -- [options]
 
 レベルごとに、レベルの盤面の範囲に入る全生成条件（盤面の一辺 × 島の密度 × 2本の割合 × 輪の割合 × 分割の割合 ×
 レベルに当たりやすい磨く回数）で、決定的な seed の候補を番号順に生成・分析・分類する。そのレベルに分類された候補を、
 回転・反転（8通り）の同型と、数字を見ない島の配置の重複をレベルをまたいで除き、同じ解く手順の指紋はレベルの問題数の 2% までに
-しながら、生成条件を巡回して1問ずつ問題集へ採る。
+しながら、生成条件を巡回して1問ずつ問題集へ採る。同じ解く手順の指紋は 3問まで、手筋と見せ場の札の割合は
+レベルごとの下限・上限を守る。
 
 Options:
   --per-level <n>  レベルごとの問題数 (default: ${defaultPerLevel})
   --budget <n>     生成条件ごとに調べる候補数の上限 (default: ${defaultBudget})
+  --jobs <n>       候補を調べる・問題を確かめる子プロセスの数。採る問題と確かめる結果は数に依らない (default: ${defaultJobCount})
   --cache-dir <d>  レベルごとに選んだ結果を <d> に書き出し、あれば読んで続きから作る（途中で止まった生成を再開する）
   --verify         生成せず、同梱の問題集の全問を identity から作り直して盤面の一致を確かめ、一意性確認→分析→分類し、
                    レベル・分析結果・同型と島の配置と seed の重複・指紋の上限・JSON の大きさ・選択時間を確かめる`;
@@ -77,8 +206,9 @@ type Candidate = {
   entry: BridgesProblemPoolEntry | null;
   symmetryKey: string;
   layoutKey: string;
+  flow: string;
   fingerprint: string;
-  analysis: BridgesDifficultyAnalysis;
+  tags: BridgesProblemTag[];
 };
 
 function readOption(name: string): string | undefined {
@@ -101,8 +231,9 @@ function conditionKeyOf({
   extraBridgeRate,
   splitRate,
   refinementSteps,
+  refinementGoal,
 }: BridgesGenerationConditions): string {
-  return `${size}×${size}/d${islandDensity}/p${doubleBridgeRate}/e${extraBridgeRate}/s${splitRate}/r${refinementSteps}`;
+  return `${size}×${size}/d${islandDensity}/p${doubleBridgeRate}/e${extraBridgeRate}/s${splitRate}/r${refinementSteps}-${refinementGoal}`;
 }
 
 function toPercent(rate: number): number {
@@ -123,6 +254,7 @@ function toPoolEntry(
     toPercent(conditions.extraBridgeRate),
     toPercent(conditions.splitRate),
     conditions.refinementSteps,
+    conditions.refinementGoal,
     candidateIndex,
     encodeBridgesPoolIslands(board),
     encodeBridgesPoolClues(board),
@@ -130,6 +262,7 @@ function toPoolEntry(
     reasoning.connectivityRoundCount,
     Math.round(reasoning.countReasoningUndecidedRatio * scale.edgeCount),
     trial.medianBacktrackCount,
+    reasoning.lookaheadRoundCount,
   ];
 }
 
@@ -162,9 +295,92 @@ function evaluateCandidate(
       : null,
     symmetryKey,
     layoutKey: getBridgesLayoutKey(problem),
+    flow: classified ? describeBridgesSolveFlow(problem) : "",
     fingerprint: classified ? describeBridgesSolveFingerprint(problem) : "",
-    analysis,
+    tags: classified ? listTags(analysis) : [],
   };
+}
+
+/** `--worker` で起動された子プロセス: 渡された生成条件と候補番号の範囲を順に調べ、1候補1行の JSON で書き出す。 */
+function runWorker(argument: string): void {
+  const jobs = JSON.parse(argument) as {
+    conditions: BridgesGenerationConditions;
+    start: number;
+    count: number;
+  }[];
+  for (const { conditions, start, count } of jobs) {
+    for (let index = start; index < start + count; index += 1) {
+      console.log(JSON.stringify(evaluateCandidate(conditions, index)));
+    }
+  }
+}
+
+type CandidateJob = {
+  conditionIndex: number;
+  conditions: BridgesGenerationConditions;
+  start: number;
+  count: number;
+};
+
+/** 候補の調べを `jobCount` 個の子プロセスに分けて走らせ、生成条件ごとに候補番号の順で返す。 */
+async function evaluateInParallel(
+  jobs: readonly CandidateJob[],
+  jobCount: number,
+): Promise<Map<number, Candidate[]>> {
+  const pieces = jobs.flatMap((job) =>
+    Array.from({ length: job.count }, (_, offset) => ({
+      ...job,
+      start: job.start + offset,
+      count: 1,
+    })),
+  );
+  const shards = Array.from({ length: jobCount }, (_, shard) =>
+    pieces.filter((_, index) => index % jobCount === shard),
+  ).filter((shard) => shard.length > 0);
+  const outputs = await Promise.all(
+    shards.map(async (shard) => {
+      const worker = Bun.spawn(
+        [
+          process.execPath,
+          Bun.fileURLToPath(import.meta.url),
+          "--worker",
+          JSON.stringify(
+            shard.map(({ conditions, start, count }) => ({
+              conditions,
+              start,
+              count,
+            })),
+          ),
+        ],
+        { stdout: "pipe", stderr: "inherit" },
+      );
+      const output = await new Response(worker.stdout).text();
+      if ((await worker.exited) !== 0) {
+        throw new Error("A candidate worker failed");
+      }
+      return output
+        .trim()
+        .split("\n")
+        .filter((line) => line.length > 0)
+        .map((line) => JSON.parse(line) as Candidate);
+    }),
+  );
+  const byCondition = new Map<number, Candidate[]>();
+  const conditionIndexOf = new Map(
+    jobs.map((job) => [conditionKeyOf(job.conditions), job.conditionIndex]),
+  );
+  for (const candidate of outputs.flat()) {
+    const conditionIndex = conditionIndexOf.get(
+      conditionKeyOf(candidate.conditions),
+    )!;
+    const list = byCondition.get(conditionIndex) ?? [];
+    list.push(candidate);
+    byCondition.set(conditionIndex, list);
+  }
+  for (const list of byCondition.values()) {
+    list.sort((left, right) => left.candidateIndex - right.candidateIndex);
+  }
+  return byCondition;
 }
 
 function quantile(sorted: readonly number[], ratio: number): number {
@@ -225,7 +441,7 @@ function describeEntries(
   return [
     `L${difficulty}: ${entries.length}問`,
     `  盤面の一辺 ${formatCounts(entries.map(([size]) => size))}`,
-    `  島の密度(%) ${formatCounts(entries.map((entry) => entry[1]))} / 2本(%) ${formatCounts(entries.map((entry) => entry[2]))} / 輪(%) ${formatCounts(entries.map((entry) => entry[3]))} / 分割(%) ${formatCounts(entries.map((entry) => entry[4]))}`,
+    `  島の密度(%) ${formatCounts(entries.map((entry) => entry[1]))} / 2本(%) ${formatCounts(entries.map((entry) => entry[2]))} / 輪(%) ${formatCounts(entries.map((entry) => entry[3]))} / 分割(%) ${formatCounts(entries.map((entry) => entry[4]))} / 磨く ${formatCounts(entries.map((entry) => `${entry[5]}-${entry[6]}`))}`,
     `  島の数 ${describeDistribution(pooled.map(({ problem }) => problem.islands.length))}`,
     `  行き先の数 ${describeDistribution(edgeCounts)}`,
     `  A2 の手詰まり ${describeDistribution(pooled.map(({ analysis }) => analysis.countRoundCount))}`,
@@ -249,20 +465,37 @@ type LevelSelection = {
 };
 
 /**
- * 1つのレベルの問題を採る。生成条件を巡回し、各条件で次に当たる候補（候補番号の順）を1問ずつ採る。
- * 回転・反転で同じ形の問題は、別のレベルで採ったものも含めて除く。
+ * 生成条件ごとに先に調べておく候補の数。どれかの条件の手持ちが尽きたら、手持ちがこの数に満たない条件をまとめて
+ * この数ずつ足して子プロセスに配る。磨く回数の多い条件は1候補が重いので少なくする。
  */
-function selectLevel(
+function getLookaheadBatchSize({
+  refinementSteps,
+}: BridgesGenerationConditions): number {
+  return refinementSteps >= 1500 ? 2 : 8;
+}
+
+/**
+ * 1つのレベルの問題を採る。生成条件を巡回し、各条件で次に当たる候補（候補番号の順）を1問ずつ採る。
+ * 回転・反転で同じ形の問題と、島の配置が同じ問題は、別のレベルで採ったものも含めて除く。同じ流れ・同じ指紋の問題の数と、
+ * 札の割合（`tagShareRules`）を守る。候補の調べは子プロセスに分けて先に走らせ、採る順は1プロセスで調べたときと同じにする。
+ */
+async function selectLevel(
   difficulty: BridgesDifficulty,
   perLevel: number,
   budget: number,
+  jobCount: number,
   takenKeys: Set<string>,
   takenLayouts: Set<string>,
-): LevelSelection {
+): Promise<LevelSelection> {
+  const flowCounts = new Map<string, number>();
   const fingerprintCounts = new Map<string, number>();
-  const fingerprintLimit = getFingerprintLimit(perLevel);
+  const tagCounts = new Map<BridgesProblemTag, number>();
+  const rules: readonly TagShareRule[] = tagShareRules[difficulty];
+  const flowLimit = getFlowLimit(perLevel);
   const conditions = listBridgesGenerationConditions(difficulty);
   const nextIndex = conditions.map(() => 0);
+  const evaluatedUntil = conditions.map(() => 0);
+  const buffers = conditions.map((): Candidate[] => []);
   const exhausted = conditions.map(() => false);
   const selection: LevelSelection = {
     entries: [],
@@ -270,25 +503,51 @@ function selectLevel(
     outcomes: new Map(),
     milliseconds: [],
   };
+  async function fillBuffers(): Promise<void> {
+    const jobs = conditions.flatMap((condition, conditionIndex) => {
+      const batchSize = getLookaheadBatchSize(condition);
+      if (
+        exhausted[conditionIndex] ||
+        buffers[conditionIndex]!.length >= batchSize
+      ) {
+        return [];
+      }
+      const start = evaluatedUntil[conditionIndex]!;
+      const count = Math.min(batchSize, budget - start);
+      return count > 0
+        ? [{ conditionIndex, conditions: condition, start, count }]
+        : [];
+    });
+    if (jobs.length === 0) {
+      return;
+    }
+    const results = await evaluateInParallel(jobs, jobCount);
+    for (const job of jobs) {
+      buffers[job.conditionIndex]!.push(
+        ...(results.get(job.conditionIndex) ?? []),
+      );
+      evaluatedUntil[job.conditionIndex]! += job.count;
+    }
+  }
   while (selection.entries.length < perLevel) {
     if (exhausted.every(Boolean)) {
       throw new Error(
-        `Level ${difficulty} ran out of candidates at ${selection.entries.length} problems`,
+        `Level ${difficulty} ran out of candidates at ${selection.entries.length} problems (${countTagShortage(rules, tagCounts, perLevel).join(", ")})`,
       );
     }
-    for (const [conditionIndex, condition] of conditions.entries()) {
+    for (const [conditionIndex] of conditions.entries()) {
       if (selection.entries.length >= perLevel || exhausted[conditionIndex]) {
         continue;
       }
-      for (;;) {
+      for (let tries = 0; tries < MAXIMUM_TRIES_PER_TURN; tries += 1) {
         if (nextIndex[conditionIndex]! >= budget) {
           exhausted[conditionIndex] = true;
           break;
         }
-        const candidate = evaluateCandidate(
-          condition,
-          nextIndex[conditionIndex]!,
-        );
+        if (buffers[conditionIndex]!.length === 0) {
+          await fillBuffers();
+        }
+        const candidate = buffers[conditionIndex]!.shift()!;
         nextIndex[conditionIndex]! += 1;
         selection.candidateCount += 1;
         selection.milliseconds.push(candidate.milliseconds);
@@ -301,15 +560,38 @@ function selectLevel(
           candidate.entry !== null &&
           !takenKeys.has(candidate.symmetryKey) &&
           !takenLayouts.has(candidate.layoutKey) &&
-          (fingerprintCounts.get(candidate.fingerprint) ?? 0) < fingerprintLimit
+          (flowCounts.get(candidate.flow) ?? 0) < flowLimit &&
+          (fingerprintCounts.get(candidate.fingerprint) ?? 0) <
+            FINGERPRINT_LIMIT &&
+          fitsTagShares(
+            rules,
+            tagCounts,
+            selection.entries.length,
+            perLevel,
+            candidate.tags,
+          )
         ) {
           takenKeys.add(candidate.symmetryKey);
           takenLayouts.add(candidate.layoutKey);
+          flowCounts.set(
+            candidate.flow,
+            (flowCounts.get(candidate.flow) ?? 0) + 1,
+          );
           fingerprintCounts.set(
             candidate.fingerprint,
             (fingerprintCounts.get(candidate.fingerprint) ?? 0) + 1,
           );
+          for (const tag of candidate.tags) {
+            tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+          }
           selection.entries.push(candidate.entry);
+          console.log(
+            `L${difficulty}: ${selection.entries.length}/${perLevel}（候補 ${selection.candidateCount}・札 ${[
+              ...tagCounts,
+            ]
+              .map(([tag, count]) => `${tag} ${count}`)
+              .join(" ")}）`,
+          );
           break;
         }
       }
@@ -353,9 +635,10 @@ function readCachedSelection(
   return { ...cached, outcomes: new Map(cached.outcomes) };
 }
 
-function runMain(): void {
+async function runMain(): Promise<void> {
   const perLevel = readPositiveInteger("per-level", defaultPerLevel);
   const budget = readPositiveInteger("budget", defaultBudget);
+  const jobCount = readPositiveInteger("jobs", defaultJobCount);
   const started = performance.now();
   const cacheDirectory = readOption("cache-dir");
   if (cacheDirectory !== undefined) {
@@ -364,7 +647,8 @@ function runMain(): void {
   const takenKeys = new Set<string>();
   const takenLayouts = new Set<string>();
   const levels = {} as Record<BridgesDifficulty, BridgesProblemPoolEntry[]>;
-  const selections = difficultyLevels.map(({ id }) => {
+  const selections: { id: BridgesDifficulty; selection: LevelSelection }[] = [];
+  for (const { id } of difficultyLevels) {
     const cachePath =
       cacheDirectory === undefined
         ? undefined
@@ -372,13 +656,20 @@ function runMain(): void {
     const selection =
       cachePath !== undefined && existsSync(cachePath)
         ? readCachedSelection(cachePath, takenKeys, takenLayouts)
-        : selectLevel(id, perLevel, budget, takenKeys, takenLayouts);
+        : await selectLevel(
+            id,
+            perLevel,
+            budget,
+            jobCount,
+            takenKeys,
+            takenLayouts,
+          );
     if (cachePath !== undefined) {
       writeCachedSelection(cachePath, selection);
     }
     levels[id] = selection.entries;
-    return { id, selection };
-  });
+    selections.push({ id, selection });
+  }
   const json = formatPoolJson(levels);
   writeFileSync(outputPath, json);
 
@@ -410,18 +701,18 @@ type VerifyFailure = {
 function verifyEntry(
   difficulty: BridgesDifficulty,
   entry: BridgesProblemPoolEntry,
-): string | null {
+): { reason: string | null; tags: BridgesProblemTag[] } {
   const pooled = toBridgesPooledProblem(entry);
   const regenerated = generateBridgesProblem(pooled.identity);
   if (
     formatBridgesBoard(regenerated.problem).join("/") !==
     formatBridgesBoard(pooled.problem).join("/")
   ) {
-    return "identity から作り直した盤面が違う";
+    return { reason: "identity から作り直した盤面が違う", tags: [] };
   }
   const analysis = analyzeBridgesDifficulty(pooled.problem);
   if (analysis.status !== "analyzed") {
-    return `分析の状態が ${analysis.status}`;
+    return { reason: `分析の状態が ${analysis.status}`, tags: [] };
   }
   const assessment = assessBridgesDifficulty(analysis);
   if (
@@ -429,11 +720,14 @@ function verifyEntry(
     assessment.difficulty !== difficulty ||
     analysis.requiresTrial
   ) {
-    return `分類が L${difficulty} でない（${assessment.status === "classified" ? `L${assessment.difficulty}` : assessment.status}）`;
+    return {
+      reason: `分類が L${difficulty} でない（${assessment.status === "classified" ? `L${assessment.difficulty}` : assessment.status}）`,
+      tags: [],
+    };
   }
   const expected = toPoolEntry(
     pooled.identity.conditions,
-    entry[6],
+    entry[7],
     analysis,
     pooled.problem,
   );
@@ -441,9 +735,9 @@ function verifyEntry(
     JSON.stringify(toBridgesPoolAnalysis(expected)) !==
     JSON.stringify(pooled.analysis)
   ) {
-    return "分析結果が問題集の値と違う";
+    return { reason: "分析結果が問題集の値と違う", tags: listTags(analysis) };
   }
-  return null;
+  return { reason: null, tags: listTags(analysis) };
 }
 
 function measureSelection(): string {
@@ -456,8 +750,72 @@ function measureSelection(): string {
   return `${((performance.now() - started) / count).toFixed(3)}ms/問`;
 }
 
-function runVerify(): void {
+type VerifiedEntry = { reason: string | null; tags: BridgesProblemTag[] };
+
+/** `--verify-worker` で起動された子プロセス: 渡された難易度と番号の問題を確かめ、1問1行の JSON で書き出す。 */
+function runVerifyWorker(argument: string): void {
+  const targets = JSON.parse(argument) as [BridgesDifficulty, number][];
+  for (const [difficulty, index] of targets) {
+    const entry = listBridgesPoolEntries(difficulty)[index]!;
+    console.log(
+      JSON.stringify([difficulty, index, verifyEntry(difficulty, entry)]),
+    );
+  }
+}
+
+/** 問題集の全問の確かめ（`verifyEntry`）を `jobCount` 個の子プロセスに分けて走らせる。 */
+async function verifyInParallel(
+  jobCount: number,
+): Promise<Map<string, VerifiedEntry>> {
+  const targets = difficultyLevels.flatMap(({ id }) =>
+    listBridgesPoolEntries(id).map((_, index): [BridgesDifficulty, number] => [
+      id,
+      index,
+    ]),
+  );
+  const shards = Array.from({ length: jobCount }, (_, shard) =>
+    targets.filter((_, index) => index % jobCount === shard),
+  ).filter((shard) => shard.length > 0);
+  const outputs = await Promise.all(
+    shards.map(async (shard) => {
+      const worker = Bun.spawn(
+        [
+          process.execPath,
+          Bun.fileURLToPath(import.meta.url),
+          "--verify-worker",
+          JSON.stringify(shard),
+        ],
+        { stdout: "pipe", stderr: "inherit" },
+      );
+      const output = await new Response(worker.stdout).text();
+      if ((await worker.exited) !== 0) {
+        throw new Error("A verify worker failed");
+      }
+      return output
+        .trim()
+        .split("\n")
+        .filter((line) => line.length > 0)
+        .map(
+          (line) =>
+            JSON.parse(line) as [BridgesDifficulty, number, VerifiedEntry],
+        );
+    }),
+  );
+  return new Map(
+    outputs
+      .flat()
+      .map(([difficulty, index, verified]) => [
+        `${difficulty}:${index}`,
+        verified,
+      ]),
+  );
+}
+
+async function runVerify(): Promise<void> {
   const started = performance.now();
+  const verified = await verifyInParallel(
+    readPositiveInteger("jobs", defaultJobCount),
+  );
   const failures: VerifyFailure[] = [];
   const keys = new Map<string, string>();
   const layouts = new Set<string>();
@@ -466,29 +824,38 @@ function runVerify(): void {
   let layoutDuplicateCount = 0;
   let seedDuplicateCount = 0;
   let fingerprintExcessCount = 0;
+  let tagShareViolationCount = 0;
   for (const { id } of difficultyLevels) {
     const entries = listBridgesPoolEntries(id);
+    const flowCounts = new Map<string, number>();
     const fingerprintCounts = new Map<string, number>();
     for (const entry of entries) {
-      const fingerprint = describeBridgesSolveFingerprint(
-        toBridgesPooledProblem(entry).problem,
-      );
+      const { problem } = toBridgesPooledProblem(entry);
+      const flow = describeBridgesSolveFlow(problem);
+      flowCounts.set(flow, (flowCounts.get(flow) ?? 0) + 1);
+      const fingerprint = describeBridgesSolveFingerprint(problem);
       fingerprintCounts.set(
         fingerprint,
         (fingerprintCounts.get(fingerprint) ?? 0) + 1,
       );
     }
-    const fingerprintLimit = getFingerprintLimit(entries.length);
-    fingerprintExcessCount += [...fingerprintCounts.values()].filter(
-      (count) => count > fingerprintLimit,
-    ).length;
+    const flowLimit = getFlowLimit(entries.length);
+    fingerprintExcessCount +=
+      [...flowCounts.values()].filter((count) => count > flowLimit).length +
+      [...fingerprintCounts.values()].filter(
+        (count) => count > FINGERPRINT_LIMIT,
+      ).length;
     console.log(
-      `L${id}: 解く手順の指紋 ${fingerprintCounts.size} 種類（最多 ${Math.max(...fingerprintCounts.values())} 問、上限 ${fingerprintLimit} 問）`,
+      `L${id}: 解く手順の流れ ${flowCounts.size} 種類（最多 ${Math.max(...flowCounts.values())} 問、上限 ${flowLimit} 問）・指紋 ${fingerprintCounts.size} 種類（最多 ${Math.max(...fingerprintCounts.values())} 問、上限 ${FINGERPRINT_LIMIT} 問）`,
     );
+    const tagCounts = new Map<BridgesProblemTag, number>();
     for (const [index, entry] of entries.entries()) {
-      const reason = verifyEntry(id, entry);
+      const { reason, tags } = verified.get(`${id}:${index}`)!;
       if (reason !== null) {
         failures.push({ difficulty: id, index, reason });
+      }
+      for (const tag of tags) {
+        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
       }
       const pooled = toBridgesPooledProblem(entry);
       const key = getBridgesSymmetryKey(pooled.problem);
@@ -506,6 +873,15 @@ function runVerify(): void {
       }
       seeds.add(pooled.identity.seed);
     }
+    const shortage = countTagShortage(
+      tagShareRules[id],
+      tagCounts,
+      entries.length,
+    );
+    tagShareViolationCount += shortage.length;
+    console.log(
+      `L${id}: 札 ${[...tagCounts].map(([tag, count]) => `${tag} ${count}`).join("・")}${shortage.length > 0 ? `（割合の決まりを外れた札: ${shortage.join("・")}）` : ""}`,
+    );
   }
   const json = JSON.stringify(
     Object.fromEntries(
@@ -519,7 +895,7 @@ function runVerify(): void {
     console.log(`L${id}: ${listBridgesPoolEntries(id).length}問`);
   }
   console.log(
-    `同型の重複 ${duplicateCount}・島の配置の重複 ${layoutDuplicateCount}・seed の重複 ${seedDuplicateCount}・指紋の上限超え ${fingerprintExcessCount}`,
+    `同型の重複 ${duplicateCount}・島の配置の重複 ${layoutDuplicateCount}・seed の重複 ${seedDuplicateCount}・流れと指紋の上限超え ${fingerprintExcessCount}・札の割合の外れ ${tagShareViolationCount}`,
   );
   console.log(
     `問題集の大きさ（項目だけ）${describeSize(json)}・選択 ${measureSelection()}`,
@@ -533,7 +909,8 @@ function runVerify(): void {
     duplicateCount > 0 ||
     layoutDuplicateCount > 0 ||
     seedDuplicateCount > 0 ||
-    fingerprintExcessCount > 0
+    fingerprintExcessCount > 0 ||
+    tagShareViolationCount > 0
   ) {
     for (const failure of failures.slice(0, 20)) {
       console.error(
@@ -541,7 +918,7 @@ function runVerify(): void {
       );
     }
     throw new Error(
-      `Bridges problem pool verification failed: ${failures.length} entries, ${duplicateCount} symmetric duplicates, ${layoutDuplicateCount} layout duplicates, ${seedDuplicateCount} seed duplicates, ${fingerprintExcessCount} fingerprints over the limit`,
+      `Bridges problem pool verification failed: ${failures.length} entries, ${duplicateCount} symmetric duplicates, ${layoutDuplicateCount} layout duplicates, ${seedDuplicateCount} seed duplicates, ${fingerprintExcessCount} flows or fingerprints over the limit, ${tagShareViolationCount} tag share violations`,
     );
   }
   console.log("\n不一致 0");
@@ -549,8 +926,12 @@ function runVerify(): void {
 
 if (Bun.argv.includes("--help")) {
   console.log(usage);
+} else if (Bun.argv.includes("--verify-worker")) {
+  runVerifyWorker(Bun.argv[Bun.argv.indexOf("--verify-worker") + 1]!);
+} else if (Bun.argv.includes("--worker")) {
+  runWorker(Bun.argv[Bun.argv.indexOf("--worker") + 1]!);
 } else if (Bun.argv.includes("--verify")) {
-  runVerify();
+  await runVerify();
 } else {
-  runMain();
+  await runMain();
 }
