@@ -1,0 +1,146 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #242729;
+  background: #f6f6f4;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 1500px;
+  margin: auto;
+  padding: 24px 32px 40px;
+}
+header {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  color: #6b7072;
+  font-size: 13px;
+}
+header a {
+  color: #242729;
+  text-decoration: none;
+  font-size: 22px;
+  letter-spacing: -0.06em;
+  font-weight: 700;
+}
+h1 {
+  font-size: clamp(24px, 3vw, 36px);
+  letter-spacing: -0.04em;
+  margin: 28px 0 10px;
+}
+.intro {
+  color: #5b6062;
+  margin: 0 0 24px;
+  line-height: 1.8;
+}
+form {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+label {
+  display: grid;
+  gap: 6px;
+  color: #656a6c;
+  font-size: 12px;
+}
+select,
+button {
+  font: inherit;
+  font-size: 14px;
+  border: 1px solid #ced0cd;
+  border-radius: 6px;
+  background: #fff;
+  color: #242729;
+  min-height: 40px;
+  padding: 8px 12px;
+}
+button {
+  cursor: pointer;
+}
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid #555;
+  outline-offset: 2px;
+}
+#description {
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 20px 0 4px;
+}
+.hint {
+  font-size: 12px;
+  color: #74797a;
+  margin: 0 0 24px;
+  line-height: 1.7;
+}
+#frames {
+  display: grid;
+  gap: 28px;
+  justify-content: center;
+}
+#frames.compare {
+  grid-template-columns: repeat(2, 390px);
+}
+#frames.single {
+  grid-template-columns: minmax(0, 100%);
+}
+article {
+  min-width: 0;
+}
+h2 {
+  font-size: 13px;
+  font-weight: 500;
+  color: #5b6062;
+  margin: 0 0 10px;
+}
+.viewport {
+  overflow: hidden;
+  background: white;
+  border: 1px solid #d5d8d5;
+}
+iframe {
+  border: 0;
+  display: block;
+  width: 100%;
+  height: 740px;
+}
+.overview {
+  grid-template-columns: repeat(auto-fit, 273px);
+}
+.overview .viewport {
+  width: 273px;
+  height: 518px;
+}
+.overview iframe {
+  width: 390px;
+  height: 740px;
+  transform: scale(0.7);
+  transform-origin: top left;
+}
+footer {
+  margin-top: 28px;
+  font-size: 12px;
+  color: #74797a;
+  line-height: 1.9;
+}
+@media (max-width: 880px) {
+  main {
+    padding: 20px 16px;
+  }
+  #frames.compare {
+    grid-template-columns: minmax(0, 390px);
+  }
+  #frames.single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .viewport {
+    max-width: 100%;
+  }
+}
