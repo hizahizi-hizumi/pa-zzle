@@ -26,20 +26,34 @@ export const ISLAND_RADIUS = 0.44;
 export const BOARD_MARGIN = 0.4;
 
 /**
- * 盤面を描く絵の座標。マス幅を 1 とした正方形のマスで、盤面の周りに `BOARD_MARGIN` の海を置く。
+ * 9×9 以上の盤面の海の幅。390px 幅のスマホでマスが小さくなる盤面では、余白を詰めて島を大きく描く。
+ * それでも外周の島の陸は、画面の左右の余白と合わせて画面端から 15px ほど離れる。
+ */
+export const WIDE_BOARD_MARGIN = 0.2;
+const WIDE_BOARD_SIDE = 9;
+
+/**
+ * 盤面を描く絵の座標。マス幅を 1 とした正方形のマスで、盤面の周りに `margin` の海を置く。
+ * - `margin`: 盤面の周りの海の幅。
  * - `width`・`height`: 絵の幅と高さ（`viewBox` の大きさ）。
  */
 export type BoardView = {
   board: BridgesBoard;
+  margin: number;
   width: number;
   height: number;
 };
 
 export function createBoardView(board: BridgesBoard): BoardView {
+  const margin =
+    Math.max(board.width, board.height) >= WIDE_BOARD_SIDE
+      ? WIDE_BOARD_MARGIN
+      : BOARD_MARGIN;
   return {
     board,
-    width: board.width + 2 * BOARD_MARGIN,
-    height: board.height + 2 * BOARD_MARGIN,
+    margin,
+    width: board.width + 2 * margin,
+    height: board.height + 2 * margin,
   };
 }
 
@@ -51,8 +65,11 @@ export type BoardFrame = {
   height: number;
 };
 
-export function toViewPoint({ x, y }: BoardPoint): BoardPoint {
-  return { x: x + BOARD_MARGIN, y: y + BOARD_MARGIN };
+export function toViewPoint(
+  { margin }: BoardView,
+  { x, y }: BoardPoint,
+): BoardPoint {
+  return { x: x + margin, y: y + margin };
 }
 
 /** 画面上の点（`clientX`・`clientY`）を盤面の座標へ写す。 */
@@ -65,8 +82,8 @@ export function toBoardPoint(
   const viewX = ((clientX - frame.left) / frame.width) * view.width;
   const viewY = ((clientY - frame.top) / frame.height) * view.height;
   return {
-    x: viewX - BOARD_MARGIN,
-    y: viewY - BOARD_MARGIN,
+    x: viewX - view.margin,
+    y: viewY - view.margin,
   };
 }
 
@@ -84,8 +101,8 @@ export function getEdgeViewSegment(
 ): BoardSegment {
   const { from, to } = getBridgesNetwork(view.board).edges[edge]!;
   return {
-    start: toViewPoint(getIslandCenter(view.board.islands[from]!)),
-    end: toViewPoint(getIslandCenter(view.board.islands[to]!)),
+    start: toViewPoint(view, getIslandCenter(view.board.islands[from]!)),
+    end: toViewPoint(view, getIslandCenter(view.board.islands[to]!)),
   };
 }
 
@@ -145,7 +162,10 @@ export function getEdgeViewBand(view: BoardView, edge: number): BoardRect {
 
 /** 島の陸を囲む四角を絵の座標で返す。 */
 export function getIslandViewRect(view: BoardView, island: number): BoardRect {
-  const { x, y } = toViewPoint(getIslandCenter(view.board.islands[island]!));
+  const { x, y } = toViewPoint(
+    view,
+    getIslandCenter(view.board.islands[island]!),
+  );
   return {
     x: x - ISLAND_RADIUS,
     y: y - ISLAND_RADIUS,
@@ -292,7 +312,7 @@ type EdgeSelectionContext = {
 /**
  * 押した点が指す辺。線が最も近い辺を選び、それと見分けにくい辺（交わる辺で線までの距離の差が `CROSSING_AMBIGUITY` 以下のもの、
  * または同じ距離の辺）があれば、次の順で1つに決める。押した所で何も起きない空振りを作らない。
- * 1. 交わる2辺の片方にだけ橋があれば、橋の無い方。架けようとすると阻まれるので、盤面を変えずに阻んだ橋を光らせて返し、
+ * 1. 交わる2辺の片方にだけ橋があれば、橋の無い方。架けようとすると阻まれるので、盤面を変えずに阻んだ橋を縁取って返し、
  *    狙いと違う橋を増やしたり外したりしない。
  * 2. 2辺の真ん中が重なっていれば短い辺、そうでなければ2島の間の真ん中にはっきり近い辺。
  * 3. 直前に触った島から伸びる辺。島の周りを続けて架けていく流れに沿わせる。
@@ -418,30 +438,64 @@ export function findEdgeBetween(
 }
 
 /**
- * 島 `island` からなぞって `point` まで指を動かしたときに、離せば橋を回す辺。指が島の的（`ISLAND_REACH`）を出たら、
- * 縦横のうち大きく動いた向きの最初の島への辺に吸い付ける。相手の島を通り過ぎても、相手の島に届く前に止めても、同じ辺を返す。
- * 指が島の的の内にあるか、その向きに辺が無ければ `null`。
+ * なぞりを縦横の向きとして受ける、縦横からの角度の幅。斜めのなぞりで、どちらの向きの橋か分からないまま架けない。
  */
-export function findDragEdge(
+const DRAG_ANGLE_TOLERANCE = (25 * Math.PI) / 180;
+
+/**
+ * なぞって離した所を相手の島に届いたとみなす、相手の島の中心からの縦横の幅。島を押したとみなす範囲より少し広くし、
+ * 指で隠れた島の縁で離しても届いたとする。相手の島を通り過ぎて離したときも、線から外れていなければ届いたとする。
+ */
+const DRAG_LANDING_REACH = 0.7;
+
+/**
+ * なぞっている指の狙い。
+ * - `edge`: 指の向きの最初の島への辺。
+ * - `landed`: 今離せば `edge` の橋を回すか。指が相手の島に届く前は `false`。
+ */
+export type DragAim = { edge: number; landed: boolean };
+
+/**
+ * 島 `island` からなぞって `point` まで指を動かしたときの狙い。指が島の的（`ISLAND_REACH`）を出て、縦横から
+ * `DRAG_ANGLE_TOLERANCE` の内へ動いたら、その向きの最初の島への辺を狙う。離して回すのは、指が相手の島に届いた
+ * （`DRAG_LANDING_REACH`）ときだけにし、海の上で止めたなぞりでは回さない。
+ * 指が島の的の内にあるか、斜めに動いたか、その向きに辺が無ければ `null`。
+ */
+export function findDragAim(
   board: BridgesBoard,
   island: number,
   point: BoardPoint,
-): number | null {
+): DragAim | null {
   const center = getIslandCenter(board.islands[island]!);
   const dx = point.x - center.x;
   const dy = point.y - center.y;
   if (Math.hypot(dx, dy) <= ISLAND_REACH) {
     return null;
   }
-  const direction: BridgesDirection =
-    Math.abs(dx) >= Math.abs(dy)
-      ? dx > 0
-        ? "right"
-        : "left"
-      : dy > 0
-        ? "down"
-        : "up";
-  return findBridgesEdgeToward(board, island, direction);
+  const horizontal = Math.abs(dx) >= Math.abs(dy);
+  const along = horizontal ? Math.abs(dx) : Math.abs(dy);
+  const across = horizontal ? Math.abs(dy) : Math.abs(dx);
+  if (Math.atan2(across, along) > DRAG_ANGLE_TOLERANCE) {
+    return null;
+  }
+  const direction: BridgesDirection = horizontal
+    ? dx > 0
+      ? "right"
+      : "left"
+    : dy > 0
+      ? "down"
+      : "up";
+  const edge = findBridgesEdgeToward(board, island, direction);
+  if (edge === null) {
+    return null;
+  }
+  const { from, to } = getBridgesNetwork(board).edges[edge]!;
+  const target = getIslandCenter(board.islands[from === island ? to : from]!);
+  const span = Math.hypot(target.x - center.x, target.y - center.y);
+  return {
+    edge,
+    landed: along >= span - DRAG_LANDING_REACH && across <= DRAG_LANDING_REACH,
+  };
 }
 
 const directionVectors = {

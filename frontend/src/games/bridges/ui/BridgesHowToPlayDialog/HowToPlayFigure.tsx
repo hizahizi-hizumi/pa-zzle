@@ -5,16 +5,18 @@ import { listBridgesIslandStatuses } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { BridgesFigure } from "@/games/bridges/ui/board/BridgesFigure";
 import {
-  BOARD_MARGIN,
   type BoardPoint,
   createBoardView,
+  toViewPoint,
 } from "@/games/bridges/ui/board/board-geometry";
 
 type HowToPlayFigureProps = {
   board: BridgesBoard;
   bridges: readonly BridgeCount[];
-  /** 交わる橋に阻まれたときに点ける、阻んだ橋の辺。 */
+  /** 交わる橋に阻まれたときに縁取る、阻んだ橋の辺。 */
   blockingEdges?: readonly number[];
+  /** 交わる橋に阻まれたときに、架かるはずだった板の影を置く、押した辺。 */
+  blockedEdge?: number;
   /** 指を置いている所（盤面の座標）。指の印を添える。 */
   finger?: BoardPoint;
 };
@@ -24,25 +26,29 @@ export function HowToPlayFigure({
   board,
   bridges,
   blockingEdges,
+  blockedEdge,
   finger,
 }: HowToPlayFigureProps) {
   const view = createBoardView(board);
+  const fingerPoint = finger && toViewPoint(view, finger);
   return (
-    <span aria-hidden="true" className="relative block size-24 shrink-0">
+    // 3×3 の盤面を 112px で描き、島の数字を本文に近い 15px ほどにする。
+    <span aria-hidden="true" className="relative block size-28 shrink-0">
       <BridgesFigure
         board={board}
         bridges={bridges}
         islandStatuses={listBridgesIslandStatuses(board, { bridges })}
         showsSea
         blockingEdges={blockingEdges}
+        blockedEdge={blockedEdge}
         showsBlockingEdges
       />
-      {finger && (
+      {fingerPoint && (
         <Pointer
           className="absolute size-5 fill-background text-foreground"
           style={{
-            left: `${((finger.x + BOARD_MARGIN) / view.width) * 100}%`,
-            top: `${((finger.y + BOARD_MARGIN) / view.height) * 100}%`,
+            left: `${(fingerPoint.x / view.width) * 100}%`,
+            top: `${(fingerPoint.y / view.height) * 100}%`,
           }}
         />
       )}

@@ -20,6 +20,7 @@ import {
   countBridgesIslandBridges,
 } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
+import { cycleBridgesEdge } from "@/games/bridges/puzzle/transitions";
 import { BridgesBoardCues } from "@/games/bridges/ui/board/BridgesBoard/BridgesBoardCues";
 import { flashBlockingBridges } from "@/games/bridges/ui/board/BridgesBoard/flash-blocking-bridges";
 import { playBridgeMotion } from "@/games/bridges/ui/board/BridgesBoard/play-bridge-motion";
@@ -35,8 +36,9 @@ import type {
 import {
   type BoardPoint,
   createBoardView,
+  type DragAim,
   findBoardTarget,
-  findDragEdge,
+  findDragAim,
   findEdgeBetween,
   findIslandToward,
   getIslandCenter,
@@ -77,8 +79,19 @@ type BridgesBoardProps = {
 type IslandDrag = {
   pointerId: number;
   island: number;
-  /** 今離せば橋を回す辺。 */
-  previewEdge: number | null;
+  /** 指の狙う辺と、今離せば橋を回すか。 */
+  aim: DragAim | null;
+};
+
+/**
+ * マウスを乗せている所。
+ * - `edge`: 押せば回る辺。島の間に乗せたときと、選んだ島の相手に乗せたとき。
+ * - `island`: 乗せている島。選んだ島が無いときに、その島から架けられる相手を示す。
+ */
+type Hover = {
+  board: BridgesBoardState;
+  edge: number | null;
+  island: number | null;
 };
 
 /** 島の状態の読み上げ。足りない間は何も添えない。 */
@@ -125,10 +138,11 @@ type IslandsOnBoard = { board: BridgesBoardState; islands: readonly number[] };
  * - 島の外を押すと、押した瞬間（pointerdown）にその辺の橋を回す。iOS のダブルタップ待ちや click の遅れを受けないため。
  *   交わる2本の線の交点の近くでも、押した位置・橋の有無・直前に触った島で必ず1つの辺に決め、空振りさせない。
  * - 島を押して動かさずに離すと、その島を選ぶ。選んでいる間に相手の島を押すと、その間の橋を回す（2段階の操作）。
- * - 島から押してなぞり、指が島の的を出たら、大きく動いた向きの最初の島への辺に吸い付け、離すとその間の橋を回す。
- *   相手の島を通り過ぎても、届く前に止めても同じ辺を回す。その向きに辺が無ければ回さない。
- * - 島を押している間と選んでいる間は、その島から架けられる相手へのロープを見せる。なぞっている間は、離せば回す辺の
- *   ロープと回した後の板の影を目立たせ、ほかのロープを淡くする。
+ * - 島から押してなぞり、指が島の的を出て縦横から 25° の内へ動いたら、その向きの最初の島への辺を狙う。指が相手の島に
+ *   届いてから離すとその間の橋を回す。相手の島を通り過ぎて離しても回す。斜めのなぞりと、海の上で止めたなぞりでは回さない。
+ * - 島を押している間・選んでいる間・マウスを乗せている間は、その島から今架けられる相手へのロープと、島と同じ行と列の淡い帯を
+ *   見せる。交わる橋に阻まれて今は架けられない相手にはロープを張らない。なぞっている間は、指の向いた辺のロープを目立たせて
+ *   ほかを淡くし、指が相手の島に届いたら回した後の板の影と相手の島の輪を見せる。
  * - マウスを乗せた所で押せば回る辺には、回した後の板の影を淡く予告する。
  * - 盤面はスクロール・拡大・長押しのメニューに指を奪わせず、なぞる間はポインターを捕捉する。
  * - キーボードでは、島ごとのボタン（見えない読み上げの一覧）の1つに止まり、矢印キーで隣の島へ移り、Shift と矢印キーで
@@ -160,10 +174,7 @@ export function BridgesBoard({
   // 別の問題へ移ると島の数が減ることがあるので、描画のたびに今の盤面の島へ丸める。
   const focusedIsland = Math.min(focusTarget, board.islands.length - 1);
   const [keyboardFocused, setKeyboardFocused] = useState(false);
-  const [hover, setHover] = useState<{
-    board: BridgesBoardState;
-    edge: number;
-  } | null>(null);
+  const [hover, setHover] = useState<Hover | null>(null);
   const view = createBoardView(board);
   const network = getBridgesNetwork(board);
   const selectedIsland =
@@ -174,27 +185,37 @@ export function BridgesBoard({
   const islandBridgeCounts = countBridgesIslandBridges(board, { bridges });
   const blockingEdges =
     edgeNotice?.change === "blocked" ? edgeNotice.crossingEdges : [];
+  const blockedEdge = edgeNotice?.change === "blocked" ? edgeNotice.edge : null;
   const retractingEdge =
     edgeNotice?.change === "changed" &&
     edgeNotice.count === 0 &&
     edgeNotice.edge < network.edges.length
       ? edgeNotice.edge
       : null;
-  const guideIsland = drag?.island ?? selectedIsland;
+  const currentHover =
+    hover?.board === board && drag === null && !interactionDisabled
+      ? hover
+      : null;
+  const isBlocked = (edge: number) =>
+    cycleBridgesEdge(board, { bridges }, edge).kind === "blocked";
+  const guideIsland =
+    drag?.island ?? selectedIsland ?? currentHover?.island ?? null;
+  const aim = drag?.aim ?? null;
   const guide: BridgesFigureGuide | null =
     guideIsland === null
       ? null
       : {
           island: guideIsland,
-          edges: network.islandEdges[guideIsland]!,
-          previewEdge: drag?.previewEdge ?? null,
-          focusesPreview: drag !== null,
+          edges: network.islandEdges[guideIsland]!.filter(
+            (edge) => !isBlocked(edge),
+          ),
+          aimEdge: aim?.edge ?? null,
+          previewEdge: aim?.landed && !isBlocked(aim.edge) ? aim.edge : null,
         };
   // チュートリアルで押させる辺にも、押せば架かる板の影を置く。
+  const pointedEdge = currentHover?.edge ?? guidedEdges[0] ?? null;
   const hoverEdge =
-    hover?.board === board && drag === null && !interactionDisabled
-      ? hover.edge
-      : (guidedEdges[0] ?? null);
+    pointedEdge !== null && !isBlocked(pointedEdge) ? pointedEdge : null;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: 板は操作の知らせのたびに1度だけ動かし、盤面の大きさが変わっただけでは動かさない。
   useLayoutEffect(() => {
@@ -216,7 +237,7 @@ export function BridgesBoard({
       figureRef.current,
       edge,
       count,
-      toViewPoint(getIslandCenter(board.islands[island]!)),
+      toViewPoint(view, getIslandCenter(board.islands[island]!)),
       orientation === "horizontal",
       getBridgeExtendMs(board, edge),
     );
@@ -290,40 +311,47 @@ export function BridgesBoard({
     setDrag({
       pointerId: event.pointerId,
       island: target.island,
-      previewEdge: null,
+      aim: null,
     });
   }
 
-  /** マウスを乗せた所で押せば回る辺。選んだ島があれば、乗せた島との間の辺。 */
-  function findHoverEdge(point: BoardPoint): number | null {
+  /**
+   * マウスを乗せた所。島の間なら押せば回る辺。島なら、選んだ島があればその島との間の辺、無ければ乗せた島そのもの。
+   */
+  function findHover(point: BoardPoint): Hover | null {
     const target = findBoardTarget(board, bridges, point, recentIslands);
     if (target === null) {
       return null;
     }
     if (target.kind === "edge") {
-      return target.edge;
+      return { board, edge: target.edge, island: null };
     }
-    return selectedIsland === null || selectedIsland === target.island
-      ? null
-      : findEdgeBetween(board, selectedIsland, target.island);
+    if (selectedIsland === null) {
+      return { board, edge: null, island: target.island };
+    }
+    const edge =
+      selectedIsland === target.island
+        ? null
+        : findEdgeBetween(board, selectedIsland, target.island);
+    return edge === null ? null : { board, edge, island: null };
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
     if (drag === null && event.pointerType === "mouse") {
-      const edge = interactionDisabled
+      const next = interactionDisabled
         ? null
-        : findHoverEdge(readBoardPoint(event));
-      if (edge !== hoverEdge) {
-        setHover(edge === null ? null : { board, edge });
+        : findHover(readBoardPoint(event));
+      if (next?.edge !== hover?.edge || next?.island !== hover?.island) {
+        setHover(next);
       }
       return;
     }
     if (drag?.pointerId !== event.pointerId) {
       return;
     }
-    const previewEdge = findDragEdge(board, drag.island, readBoardPoint(event));
-    if (previewEdge !== drag.previewEdge) {
-      setDrag({ ...drag, previewEdge });
+    const next = findDragAim(board, drag.island, readBoardPoint(event));
+    if (next?.edge !== drag.aim?.edge || next?.landed !== drag.aim?.landed) {
+      setDrag({ ...drag, aim: next });
     }
   }
 
@@ -336,9 +364,9 @@ export function BridgesBoard({
       return;
     }
     const point = readBoardPoint(event);
-    const edge = findDragEdge(board, drag.island, point);
-    if (edge !== null) {
-      cycleEdge(edge, drag.island);
+    const landing = findDragAim(board, drag.island, point);
+    if (landing?.landed) {
+      cycleEdge(landing.edge, drag.island);
       return;
     }
     if (isPointOnIsland(board, drag.island, point)) {
@@ -410,6 +438,7 @@ export function BridgesBoard({
         selectedIsland={selectedIsland}
         focusedIsland={keyboardFocused ? focusedIsland : null}
         blockingEdges={blockingEdges}
+        blockedEdge={blockedEdge}
         retractingEdge={retractingEdge}
         lit={clearing}
       />

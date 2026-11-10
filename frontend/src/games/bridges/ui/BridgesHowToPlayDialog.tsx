@@ -10,35 +10,19 @@ type BridgesHowToPlayDialogProps = {
 };
 
 /**
- * 図の島（5×5）
- * 3 . . . 3     辺0 = 左上-右上、辺1 = 左上-左下、辺2 = 右上-右下、辺3 = 左下-右下
- * . . . . .
- * . . . . .
- * . . . . .
- * 2 . . . 2
+ * 図の島（3×3）。図を小さな盤面にして、島の数字を読める大きさに描く。
+ * 3 . 3     辺0 = 左上-右上、辺1 = 左上-左下、辺2 = 右上-右下、辺3 = 左下-右下
+ * . . .
+ * 2 . 2
  */
-const squareBoard = parseBridgesBoard([
-  "3...3",
-  ".....",
-  ".....",
-  ".....",
-  "2...2",
-]);
+const squareBoard = parseBridgesBoard(["3.3", "...", "2.2"]);
 /**
  * 辺0 = 上-下（縦）、辺1 = 左-右（横）。2辺は真ん中で交わる。
- * . . 1 . .
- * . . . . .
- * 1 . . . 1
- * . . . . .
- * . . 1 . .
+ * . 1 .
+ * 1 . 1
+ * . 1 .
  */
-const crossBoard = parseBridgesBoard([
-  "..1..",
-  ".....",
-  "1...1",
-  ".....",
-  "..1..",
-]);
+const crossBoard = parseBridgesBoard([".1.", "1.1", ".1."]);
 
 /**
  * ルールと操作を、盤面と同じ見た目の小さな図と短い一文で示す。
@@ -72,20 +56,21 @@ export function BridgesHowToPlayDialog({
           <HowToPlayFigure
             board={squareBoard}
             bridges={[0, 0, 0, 0]}
-            finger={{ x: 2.5, y: 0.5 }}
+            finger={{ x: 1.5, y: 0.5 }}
           />
           <HowToPlayFigure board={squareBoard} bridges={[1, 0, 0, 0]} />
         </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>
-          橋どうしは交差しない。交わる所に架けようとすると、邪魔をしている橋が赤く光る。
+          橋どうしは交差しない。交わる所に架けようとすると、邪魔をしている橋が赤く縁取られて揺れる。
         </p>
         <HowToPlayFigure
           board={crossBoard}
           bridges={[0, 1]}
           blockingEdges={[1]}
-          finger={{ x: 2.5, y: 1.5 }}
+          blockedEdge={0}
+          finger={{ x: 1.5, y: 1.05 }}
         />
       </li>
       <li className="space-y-2">

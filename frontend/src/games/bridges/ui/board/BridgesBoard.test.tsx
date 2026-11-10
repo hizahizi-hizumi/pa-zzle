@@ -190,10 +190,17 @@ describe("BridgesBoard", () => {
       expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0);
     });
 
-    test("島からなぞって相手の島に届く前に離しても、なぞった向きの最初の島との間の橋を回すこと", () => {
+    test("島からなぞって相手の島に届く前の海の上で離すと、橋を回さず回さなかったことを知らせること", () => {
       drag([0.5, 0.5], [1.4, 0.6]);
 
-      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0);
+      expect(onCycleEdge).not.toHaveBeenCalled();
+      expect(onIneffectivePress).toHaveBeenCalledOnce();
+    });
+
+    test("島から斜めになぞって相手の島の行の近くで離しても、橋を回さないこと", () => {
+      drag([0.5, 0.5], [2.2, 1.4]);
+
+      expect(onCycleEdge).not.toHaveBeenCalled();
     });
 
     test("島からなぞって相手の島を通り過ぎて離しても、なぞった向きの最初の島との間の橋を回すこと", () => {
@@ -239,6 +246,54 @@ describe("BridgesBoard", () => {
       press([3, 2]);
 
       expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(3);
+    });
+  });
+
+  describe("ロープを張る相手", () => {
+    // 島: 0 (0,0)、1 (0,2)、2 (2,0)、3 (2,4)、4 (4,2)。辺2（島1-島4、縦）は辺3（島2-島3、横）と交わる。
+    const crossingBoard = parseBridgesBoard([
+      "1.1..",
+      ".....",
+      "1...1",
+      ".....",
+      "..1..",
+    ]);
+
+    function listRopeEdges(): number[] {
+      return [...document.querySelectorAll("[data-bridges-rope]")].map((rope) =>
+        Number(rope.getAttribute("data-bridges-rope")),
+      );
+    }
+
+    beforeEach(() => {
+      render(
+        <BridgesBoard
+          board={crossingBoard}
+          bridges={[0, 0, 0, 1]}
+          islandStatuses={crossingBoard.islands.map(() => "short")}
+          edgeNotice={null}
+          clearing={false}
+          interactionDisabled={false}
+          onCycleEdge={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+      placeBoard(crossingBoard);
+    });
+
+    test("島を選ぶと、交わる橋に阻まれて今は架けられない相手にはロープを張らないこと", () => {
+      press([2.5, 0.5]);
+
+      expect(listRopeEdges()).toEqual([0]);
+    });
+
+    test("マウスを島に乗せると、その島から架けられる相手へロープを張ること", () => {
+      fireEvent.pointerMove(readBoardSurface(), {
+        ...toPointer([0.5, 0.5]),
+        pointerType: "mouse",
+      });
+
+      expect(listRopeEdges()).toEqual([0, 1]);
     });
   });
 

@@ -8,13 +8,14 @@ import {
   BOARD_MARGIN,
   createBoardView,
   findBoardTarget,
-  findDragEdge,
+  findDragAim,
   findEdgeBetween,
   findIslandToward,
   getBridgeLineOffsets,
   getEdgeViewSegment,
   getIslandCenter,
   toBoardPoint,
+  WIDE_BOARD_MARGIN,
 } from "@/games/bridges/ui/board/board-geometry";
 
 // 島: 0 (0,0)、1 (0,2)、2 (2,0)、3 (2,4)、4 (4,2)。
@@ -40,6 +41,30 @@ describe("getEdgeViewSegment", () => {
     expect(segment).toEqual({
       start: { x: 2.5 + BOARD_MARGIN, y: 0.5 + BOARD_MARGIN },
       end: { x: 2.5 + BOARD_MARGIN, y: 4.5 + BOARD_MARGIN },
+    });
+  });
+});
+
+describe("createBoardView", () => {
+  test("9×9 より小さい盤面には、周りに広い海の余白を置くこと", () => {
+    const view = createBoardView(board);
+
+    expect(view).toMatchObject({
+      margin: BOARD_MARGIN,
+      width: 5 + 2 * BOARD_MARGIN,
+    });
+  });
+
+  test("9×9 以上の盤面では、海の余白を詰めて島を大きく描くこと", () => {
+    const wide = parseBridgesBoard(
+      Array.from({ length: 9 }, (_, row) =>
+        row % 2 === 0 ? "1.......1" : ".........",
+      ),
+    );
+
+    expect(createBoardView(wide)).toMatchObject({
+      margin: WIDE_BOARD_MARGIN,
+      width: 9 + 2 * WIDE_BOARD_MARGIN,
     });
   });
 });
@@ -248,22 +273,43 @@ describe("findEdgeBetween", () => {
   );
 });
 
-describe("findDragEdge", () => {
+describe("findDragAim", () => {
   test.each([
     ["島の的の中", 0, { x: 0.9, y: 0.6 }, null],
-    ["右へなぞり、相手の島に届く前", 0, { x: 1.3, y: 0.6 }, 0],
-    ["下へなぞり、相手の島に届く前", 0, { x: 0.6, y: 1.3 }, 1],
-    ["右の相手の島の陸の中", 0, { x: 2.3, y: 0.6 }, 0],
-    ["右の相手の島を通り過ぎた所", 0, { x: 4.6, y: 0.9 }, 0],
-    ["右下へ斜めに、横に大きく動いた所", 0, { x: 2.2, y: 1.4 }, 0],
-    ["右下へ斜めに、縦に大きく動いた所", 0, { x: 1.4, y: 2.2 }, 1],
+    [
+      "右へなぞり、相手の島に届く前",
+      0,
+      { x: 1.3, y: 0.6 },
+      { edge: 0, landed: false },
+    ],
+    [
+      "下へなぞり、相手の島に届く前",
+      0,
+      { x: 0.6, y: 1.3 },
+      { edge: 1, landed: false },
+    ],
+    ["右の相手の島の陸の中", 0, { x: 2.3, y: 0.6 }, { edge: 0, landed: true }],
+    [
+      "右の相手の島を通り過ぎた所",
+      0,
+      { x: 4.6, y: 0.9 },
+      { edge: 0, landed: true },
+    ],
+    [
+      "右へ 20° ほど傾けて相手の島の近くまで",
+      0,
+      { x: 1.9, y: 1.0 },
+      { edge: 0, landed: true },
+    ],
+    ["右下へ斜めに 28° ほど", 0, { x: 2.2, y: 1.4 }, null],
+    ["右下へ斜めに 45°", 0, { x: 1.4, y: 1.4 }, null],
     ["辺の無い向き", 1, { x: 3.6, y: 0.5 }, null],
   ] as const)(
-    "%s（島 %s から %j）で離すと辺 %s を回すこと",
+    "%s（島 %s から %j）では、狙いが %j であること",
     (_, island, point, expected) => {
-      const edge = findDragEdge(board, island, point);
+      const aim = findDragAim(board, island, point);
 
-      expect(edge).toBe(expected);
+      expect(aim).toEqual(expected);
     },
   );
 });
