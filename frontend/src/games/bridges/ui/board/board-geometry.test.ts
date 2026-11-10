@@ -5,12 +5,17 @@ import {
 } from "@/games/bridges/puzzle/board";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import {
+  BOARD_MARGIN,
+  createBoardView,
   findBoardTarget,
   findDragEdge,
+  findEdgeBetween,
   findIslandToward,
+  fitBoardView,
   getBridgeLineOffsets,
-  getEdgeSegment,
+  getEdgeViewSegment,
   getIslandCenter,
+  toBoardPoint,
 } from "@/games/bridges/ui/board/board-geometry";
 
 // 島: 0 (0,0)、1 (0,2)、2 (2,0)、3 (2,4)、4 (4,2)。
@@ -27,14 +32,63 @@ describe("getIslandCenter", () => {
   });
 });
 
-describe("getEdgeSegment", () => {
-  test("両端の島の丸の縁から縁までの線分を返すこと", () => {
-    const segment = getEdgeSegment(board, 2);
+describe("getEdgeViewSegment", () => {
+  const view = createBoardView(board);
+
+  test("両端の島の中心を、周りの海の余白だけずらして結ぶこと", () => {
+    const segment = getEdgeViewSegment(view, 2);
 
     expect(segment).toEqual({
-      start: { x: 2.5, y: 0.9 },
-      end: { x: 2.5, y: 4.1 },
+      start: { x: 2.5 + BOARD_MARGIN, y: 0.5 + BOARD_MARGIN },
+      end: { x: 2.5 + BOARD_MARGIN, y: 4.5 + BOARD_MARGIN },
     });
+  });
+});
+
+describe("fitBoardView", () => {
+  const viewWidth = board.width + 2 * BOARD_MARGIN;
+
+  describe("縦長の枠の場合", () => {
+    const frame = { width: viewWidth * 100, height: viewWidth * 100 + 250 };
+
+    test("枠の高さに合うまで行の間隔を広げること", () => {
+      const view = fitBoardView(board, frame);
+
+      expect(view.pitch).toBeCloseTo(1.5);
+      expect(view.height / view.width).toBeCloseTo(frame.height / frame.width);
+    });
+  });
+
+  describe("横長の枠の場合", () => {
+    const frame = { width: 800, height: 400 };
+
+    test("行の間隔を広げないこと", () => {
+      const view = fitBoardView(board, frame);
+
+      expect(view.pitch).toBe(1);
+    });
+  });
+});
+
+describe("toBoardPoint", () => {
+  const view = createBoardView(board, 1.5);
+  const frame = {
+    left: 10,
+    top: 20,
+    width: view.width * 100,
+    height: view.height * 100,
+  };
+
+  test("行の間隔を広げた絵の上の点を、盤面の座標へ戻すこと", () => {
+    const point = toBoardPoint(
+      view,
+      frame,
+      10 + (2.5 + BOARD_MARGIN) * 100,
+      20 + (4.5 * 1.5 + BOARD_MARGIN) * 100,
+    );
+
+    expect(point.x).toBeCloseTo(2.5);
+    expect(point.y).toBeCloseTo(4.5);
   });
 });
 
@@ -42,7 +96,7 @@ describe("getBridgeLineOffsets", () => {
   test.each([
     [0, []],
     [1, [0]],
-    [2, [-0.1, 0.1]],
+    [2, [-0.135, 0.135]],
   ] as const)("%s本の橋の線のずれが %j であること", (count, expected) => {
     const offsets = getBridgeLineOffsets(count);
 
@@ -52,7 +106,12 @@ describe("getBridgeLineOffsets", () => {
 
 describe("findBoardTarget", () => {
   test.each([
-    ["島の丸の中", { x: 0.7, y: 0.6 }, { kind: "island", island: 0 }],
+    ["島の陸の中", { x: 0.7, y: 0.6 }, { kind: "island", island: 0 }],
+    [
+      "島の陸の外でも、中心から半マスの内",
+      { x: 0.95, y: 0.6 },
+      { kind: "island", island: 0 },
+    ],
     ["横の線の近く", { x: 1.5, y: 0.9 }, { kind: "edge", edge: 0 }],
     ["縦の線の近く", { x: 0.1, y: 1.5 }, { kind: "edge", edge: 1 }],
     ["どの線からも半マスより遠い所", { x: 1.5, y: 1.5 }, null],
@@ -67,15 +126,32 @@ describe("findBoardTarget", () => {
       { x: 2.2, y: 2.6 },
       { kind: "edge", edge: 3 },
     ],
-    [
-      "2本の線からちょうど同じ距離の所",
-      { x: 3.0, y: 2.0 },
-      { kind: "ambiguous", edges: [2, 3] },
-    ],
   ] as const)("%sを押すと %j を指すこと", (_, point, expected) => {
     const target = findBoardTarget(board, noBridges, point);
 
     expect(target).toEqual(expected);
+  });
+
+  describe("交わる2本の線から同じ距離で、真ん中からのずれも同じ所を押した場合", () => {
+    const point = { x: 3.0, y: 2.0 };
+
+    test("直前に触った島が無ければ、番号の小さい辺に決めること", () => {
+      const target = findBoardTarget(board, noBridges, point);
+
+      expect(target).toEqual({ kind: "edge", edge: 2 });
+    });
+
+    test.each([
+      ["横の辺の端の島2", [2], 3],
+      ["縦の辺の端の島4", [4], 2],
+    ] as const)(
+      "直前に%sを触っていれば、その島から伸びる辺 %s に決めること",
+      (_, recentIslands, expected) => {
+        const target = findBoardTarget(board, noBridges, point, recentIslands);
+
+        expect(target).toEqual({ kind: "edge", edge: expected });
+      },
+    );
   });
 
   describe("交わる辺の横の方に橋がある場合", () => {
@@ -83,9 +159,10 @@ describe("findBoardTarget", () => {
 
     test.each([
       ["縦の線にはっきり近い所", { x: 2.6, y: 2.2 }, 2],
-      ["交点のすぐそばで、2本の線から見分けにくい所", { x: 2.55, y: 2.4 }, 3],
+      ["横の線にはっきり近い所", { x: 2.2, y: 2.6 }, 3],
+      ["交点のすぐそばで、2本の線から見分けにくい所", { x: 2.4, y: 2.45 }, 2],
     ] as const)("%sを押すと辺 %s を指すこと", (_, point, expected) => {
-      const target = findBoardTarget(board, horizontalBridged, point);
+      const target = findBoardTarget(board, horizontalBridged, point, [2, 3]);
 
       expect(target).toEqual({ kind: "edge", edge: expected });
     });
@@ -96,12 +173,15 @@ describe("findBoardTarget", () => {
 
     test.each([
       ["横の線にはっきり近い所", { x: 2.2, y: 2.6 }, 3],
-      ["2本の線からちょうど同じ距離の所", { x: 3.0, y: 2.0 }, 2],
-    ] as const)("%sを押すと辺 %s を指すこと", (_, point, expected) => {
-      const target = findBoardTarget(board, verticalBridged, point);
+      ["2本の線からちょうど同じ距離の所", { x: 3.0, y: 2.0 }, 3],
+    ] as const)(
+      "%sを押すと、橋を増やさず橋の無い辺 %s を指すこと",
+      (_, point, expected) => {
+        const target = findBoardTarget(board, verticalBridged, point, [1, 4]);
 
-      expect(target).toEqual({ kind: "edge", edge: expected });
-    });
+        expect(target).toEqual({ kind: "edge", edge: expected });
+      },
+    );
   });
 
   describe("短い辺の真ん中が長い辺の上に乗る盤面の場合", () => {
@@ -153,17 +233,7 @@ describe("findBoardTarget", () => {
     });
   });
 
-  describe("交わらない辺に橋がある場合", () => {
-    const bridges: readonly BridgeCount[] = [0, 1, 0, 0];
-
-    test("橋の有無によらず最も近い線の辺を指すこと", () => {
-      const target = findBoardTarget(board, bridges, { x: 0.95, y: 0.55 });
-
-      expect(target).toEqual({ kind: "edge", edge: 0 });
-    });
-  });
-
-  describe("交わらない平行な2線の片方に橋があり、両方の線から同じ距離の所を押した場合", () => {
+  describe("交わらない平行な2線から同じ距離の所を押した場合", () => {
     // 辺0 = 島0 (0,0)-島1 (0,3)（横 y=0.5）、辺1 = 島2 (1,1)-島3 (1,4)（横 y=1.5）。
     const parallelBoard = parseBridgesBoard([
       "1..1.",
@@ -174,39 +244,41 @@ describe("findBoardTarget", () => {
     const bridges: readonly BridgeCount[] = getBridgesNetwork(
       parallelBoard,
     ).edges.map((_, edge) => (edge === 0 ? 1 : 0));
+    const point = { x: 2.5, y: 1 };
 
-    test("橋のある方を選ばず、2つの辺を候補として返すこと", () => {
-      const target = findBoardTarget(parallelBoard, bridges, {
-        x: 2.5,
-        y: 1,
-      });
+    test("橋の有無では選ばず、直前に触った島から伸びる辺に決めること", () => {
+      const target = findBoardTarget(parallelBoard, bridges, point, [3]);
 
-      expect(target).toEqual({ kind: "ambiguous", edges: [0, 1] });
+      expect(target).toEqual({ kind: "edge", edge: 1 });
     });
   });
 });
 
+describe("findEdgeBetween", () => {
+  test.each([
+    [0, 1, 0],
+    [1, 0, 0],
+    [0, 4, null],
+  ] as const)(
+    "島 %s と島 %s の間の辺が %s であること",
+    (island, other, expected) => {
+      const edge = findEdgeBetween(board, island, other);
+
+      expect(edge).toBe(expected);
+    },
+  );
+});
+
 describe("findDragEdge", () => {
   test.each([
-    ["島の丸の中", 0, { x: 0.8, y: 0.5 }, null],
-    ["右へなぞった先", 0, { x: 1.4, y: 0.8 }, 0],
-    ["下へなぞった先", 0, { x: 0.8, y: 1.4 }, 1],
-    ["右下へ縦横同じだけなぞった先", 0, { x: 1.3, y: 1.3 }, null],
-    ["隣の島の丸の中", 0, { x: 2.3, y: 0.6 }, 0],
-    ["辺の無い島の丸の中", 0, { x: 2.5, y: 4.5 }, null],
-    ["辺の無い向きへなぞった先", 0, { x: -0.5, y: 0.5 }, null],
-    [
-      "左上へ斜めになぞった先（近い向きのうち辺は左だけ）",
-      3,
-      { x: 3.8, y: 1.8 },
-      3,
-    ],
-    [
-      "左下へ斜めになぞった先（近い向きの両方に辺がある）",
-      1,
-      { x: 1.8, y: 1.2 },
-      null,
-    ],
+    ["島の陸の中", 0, { x: 0.8, y: 0.5 }, null],
+    ["右へなぞり、相手の島に届く前", 0, { x: 1.4, y: 0.6 }, null],
+    ["下へなぞり、相手の島に届く前", 0, { x: 0.6, y: 1.4 }, null],
+    ["右の相手の島の陸の中", 0, { x: 2.3, y: 0.6 }, 0],
+    ["右の相手の島の陸の手前", 0, { x: 1.9, y: 0.7 }, 0],
+    ["右の相手の島を少し越えた所", 0, { x: 3.1, y: 0.5 }, 0],
+    ["下の相手の島の陸の手前", 0, { x: 0.6, y: 1.9 }, 1],
+    ["辺の無い島の陸の中", 0, { x: 2.5, y: 4.5 }, null],
   ] as const)(
     "%s（島 %s から %j）で離すと辺 %s を回すこと",
     (_, island, point, expected) => {

@@ -4,7 +4,11 @@ import type { BridgesBoard } from "@/games/bridges/puzzle/board";
 import { listBridgesIslandStatuses } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { BridgesFigure } from "@/games/bridges/ui/board/BridgesFigure";
-import type { BoardPoint } from "@/games/bridges/ui/board/board-geometry";
+import {
+  BOARD_MARGIN,
+  type BoardPoint,
+  createBoardView,
+} from "@/games/bridges/ui/board/board-geometry";
 
 type HowToPlayFigureProps = {
   board: BridgesBoard;
@@ -22,12 +26,14 @@ export function HowToPlayFigure({
   blockingEdges,
   finger,
 }: HowToPlayFigureProps) {
+  const view = createBoardView(board);
   return (
     <span aria-hidden="true" className="relative block size-24 shrink-0">
       <BridgesFigure
         board={board}
         bridges={bridges}
         islandStatuses={listBridgesIslandStatuses(board, { bridges })}
+        showsSea
         blockingEdges={blockingEdges}
         showsBlockingEdges
       />
@@ -35,8 +41,8 @@ export function HowToPlayFigure({
         <Pointer
           className="absolute size-5 fill-background text-foreground"
           style={{
-            left: `${(finger.x / board.width) * 100}%`,
-            top: `${(finger.y / board.height) * 100}%`,
+            left: `${((finger.x + BOARD_MARGIN) / view.width) * 100}%`,
+            top: `${((finger.y + BOARD_MARGIN) / view.height) * 100}%`,
           }}
         />
       )}

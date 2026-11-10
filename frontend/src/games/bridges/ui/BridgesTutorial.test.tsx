@@ -14,6 +14,7 @@ import {
   BRIDGES_TUTORIAL_BOARD,
 } from "@/games/bridges/tutorial/tutorial";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
+import { BOARD_MARGIN } from "@/games/bridges/ui/board/board-geometry";
 import { playLayeredSound, playSound } from "@/lib/sound-effects";
 
 vi.mock("@/lib/sound-effects", async (importOriginal) => ({
@@ -24,7 +25,7 @@ vi.mock("@/lib/sound-effects", async (importOriginal) => ({
 
 const { edgeBetween, islandAt } = _private;
 
-/** 盤面の1マスを 100px で置いたときの、押す所。マスの左上の角を原点にしたマス単位の座標。 */
+/** 盤面の1マスを 100px で置いたときの、押す所。左上のマスの左上の角を原点にしたマス単位の座標。 */
 type BoardPoint = readonly [x: number, y: number];
 
 /** 辺の線の上の、ほかの辺から離れた所。 */
@@ -96,33 +97,33 @@ function getBoard(): HTMLElement {
   return screen.getByRole("group", { name: "ブリッジパズル盤面 5行5列" });
 }
 
-function tap([x, y]: BoardPoint): void {
+/** 盤面の絵を、周りの海の余白も含めて1マス 100px で置き、押す所を画面の座標にする。 */
+function placeBoard([x, y]: BoardPoint) {
   const board = getBoard();
+  const size = (BRIDGES_TUTORIAL_BOARD.width + 2 * BOARD_MARGIN) * 100;
   vi.spyOn(board, "getBoundingClientRect").mockReturnValue(
-    new DOMRect(0, 0, 500, 500),
+    new DOMRect(0, 0, size, size),
   );
-  fireEvent.pointerDown(board, {
-    pointerId: 1,
-    pointerType: "touch",
-    isPrimary: true,
-    clientX: x * 100,
-    clientY: y * 100,
-  });
+  return {
+    board,
+    point: {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: (x + BOARD_MARGIN) * 100,
+      clientY: (y + BOARD_MARGIN) * 100,
+    },
+  };
 }
 
-/** 島の丸の中を押して、動かさずに離す。 */
-function pressIsland([x, y]: BoardPoint): void {
-  const board = getBoard();
-  vi.spyOn(board, "getBoundingClientRect").mockReturnValue(
-    new DOMRect(0, 0, 500, 500),
-  );
-  const point = {
-    pointerId: 1,
-    pointerType: "touch",
-    isPrimary: true,
-    clientX: x * 100,
-    clientY: y * 100,
-  };
+function tap(at: BoardPoint): void {
+  const { board, point } = placeBoard(at);
+  fireEvent.pointerDown(board, point);
+}
+
+/** 島を押して、動かさずに離す。 */
+function pressIsland(at: BoardPoint): void {
+  const { board, point } = placeBoard(at);
   fireEvent.pointerDown(board, point);
   fireEvent.pointerUp(board, point);
 }
@@ -233,13 +234,11 @@ describe("BridgesTutorial", () => {
         expect(getIslandLabel(4, 3)).toBe("4行3列の島 数字2 橋1本");
       });
 
-      test("島の丸を押して動かさずに離すと、橋を架けず、印の線を濃くし直すこと", () => {
-        pressIsland([0.5, 0.5]);
+      test("印の辺の両端の島を順に押すと、印の辺として橋を架けること", () => {
+        pressIsland([2.5, 0.5]);
+        pressIsland([2.5, 3.5]);
 
-        expect(getIslandLabel(1, 1)).toBe("1行1列の島 数字2 橋0本");
-        expect(getEdgesWithCue("recall")).toEqual([
-          edgeBetween([1, 3], [4, 3]),
-        ]);
+        expect(getIslandLabel(4, 3)).toBe("4行3列の島 数字2 橋1本");
       });
 
       test("印の辺を押すと、本番と同じ架ける音を鳴らして応え、もう一度押す手順へ進むこと", () => {

@@ -12,8 +12,10 @@ import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/BridgesStatusAnnouncement";
 import { useBridgesSoundEffects } from "@/games/bridges/ui/BridgesPlay/use-bridges-sound-effects";
+import { BridgesSea } from "@/games/bridges/ui/BridgesSea";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
 import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
+import { MAXIMUM_BOARD_HEIGHT_RATIO } from "@/games/bridges/ui/board/board-geometry";
 import { BridgesResultScreen } from "@/games/bridges/ui/result/BridgesResultScreen";
 import type {
   GamePlayScreenProps,
@@ -32,6 +34,11 @@ type BridgesPlayProps = GamePlayScreenProps<BridgesDifficulty, BridgesResult> &
     edgeNotice: BridgesEdgeNotice | null;
     onCycleEdge: (edge: number) => void;
   };
+
+/** 盤面の枠。幅は画面に収まる最大の正方形にし、縦長の画面では高さを幅の `MAXIMUM_BOARD_HEIGHT_RATIO` 倍まで伸ばす。 */
+const boardFrameStyle = {
+  height: `min(100cqh, calc(min(100cqw, 100cqh) * ${MAXIMUM_BOARD_HEIGHT_RATIO}))`,
+};
 
 /** 1問のプレイ画面。クリアの演出を終えると結果画面に替わる。 */
 export function BridgesPlay({
@@ -64,8 +71,7 @@ export function BridgesPlay({
       progress={progress}
       result={result}
       title={BRIDGES_DISPLAY_NAME}
-      // ライトは島の盤を囲む海に見立てたくすんだ青緑の地にする。ダークは盤面の暖色の地と色相をそろえ、盤面より一段暗い灰にする。
-      background={<div className="size-full bg-[#dfe7e6] dark:bg-[#1c1a18]" />}
+      background={<BridgesSea />}
       metrics={[
         { type: "elapsed-time", elapsedMs },
         { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },
@@ -95,9 +101,12 @@ export function BridgesPlay({
         />
       )}
     >
-      {/* 画面端から始まるタッチはブラウザの戻る操作に取られるので、盤面の左右に余白を残す。 */}
-      <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-2 [container-type:size] sm:px-6">
-        <div className="relative aspect-square w-[min(100cqw,100cqh,40rem)]">
+      {/* 盤面の絵は外周の島の周りに海の余白を持ち、画面端から始まるタッチ（ブラウザの戻る操作）から島を離すので、左右の余白は狭くてよい。 */}
+      <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-2 [container-type:size] sm:px-6">
+        <div
+          className="relative w-[min(100cqw,100cqh)]"
+          style={boardFrameStyle}
+        >
           <BridgesBoard
             board={board}
             bridges={bridges}

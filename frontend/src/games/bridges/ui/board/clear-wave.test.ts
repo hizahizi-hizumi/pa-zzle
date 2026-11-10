@@ -40,15 +40,23 @@ describe("getClearWaveTiming", () => {
     "2...2",
   ]);
 
-  test("段の少ない盤面では、1段ごとに90ミリ秒で波を渡すこと", () => {
+  test("段の少ない盤面では、光が渡り始めてから1段ごとに90ミリ秒で波を渡すこと", () => {
     const timing = getClearWaveTiming(square, [2, 1, 1, 0]);
 
-    expect(timing).toEqual({ lastPopStartMs: 180, lastPopPeakMs: 324 });
+    expect(timing).toEqual({
+      lightStartMs: 120,
+      lastPopStartMs: 300,
+      lastPopPeakMs: 444,
+    });
   });
 
   test("段の多い盤面では、波が渡り切るまでを900ミリ秒に収めること", () => {
     const timing = getClearWaveTiming(chain, chainBridges);
 
-    expect(timing).toEqual({ lastPopStartMs: 900, lastPopPeakMs: 1044 });
+    expect(timing).toEqual({
+      lightStartMs: 120,
+      lastPopStartMs: 1020,
+      lastPopPeakMs: 1164,
+    });
   });
 });

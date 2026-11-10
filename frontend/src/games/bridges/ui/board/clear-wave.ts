@@ -1,5 +1,5 @@
 /**
- * 完成演出の、島0 から橋をたどって島を順に膨らませる波。
+ * 完成演出の、島0 から橋に沿って光を渡し、届いた島を順に灯して膨らませる波。
  * 盤面の動きとクリア音が同じ時間割で揃うよう、ここに置いて両方から使う。
  */
 
@@ -9,16 +9,19 @@ import {
 } from "@/games/bridges/puzzle/board";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 
+/** 光が島0 から渡り始めるまでの間。最後に架けた板が伸び切り、全島がちょうどになった盤面を一瞬見せる。 */
+export const CLEAR_LIGHT_START_MS = 120;
+
 /** 隣の島へ波が渡る間隔。島の数の多い盤面でも波全体が長くなりすぎないよう、全体の長さは下の上限に収める。 */
 const WAVE_STEP_MS = 90;
 const WAVE_MAX_SPREAD_MS = 900;
-/** 1つの島が膨らんで戻る時間。 */
+/** 1つの島が灯って膨らみ、戻る時間。 */
 export const ISLAND_POP_MS = 320;
 /** 島が最も膨らむ時点の、膨らみ始めからの割合。 */
 const ISLAND_POP_PEAK_OFFSET = 0.45;
 export const islandPopKeyframes: Keyframe[] = [
   { transform: "scale(1)" },
-  { transform: "scale(1.22)", offset: ISLAND_POP_PEAK_OFFSET },
+  { transform: "scale(1.16)", offset: ISLAND_POP_PEAK_OFFSET },
   { transform: "scale(1)" },
 ];
 
@@ -54,20 +57,23 @@ export function getClearWaveStepMs(deepest: number): number {
 }
 
 /**
- * 波の時間の区切り。
- * - `lastPopStartMs`: 最も遠い島が膨らみ始めるまでの時間。
- * - `lastPopPeakMs`: 最も遠い島が最も膨らむまでの時間。全島がつながったことが見え切る時点。
+ * 波の時間の区切り。どれも演出の始まりからの時間。
+ * - `lightStartMs`: 島0 が灯り、光が渡り始めるまでの時間。
+ * - `lastPopStartMs`: 最も遠い島が灯り始めるまでの時間。
+ * - `lastPopPeakMs`: 最も遠い島が最も膨らむまでの時間。全島がつながったことが見え切る時点で、海へ波紋を広げる。
  */
 export function getClearWaveTiming(
   board: BridgesBoard,
   bridges: readonly BridgeCount[],
-): { lastPopStartMs: number; lastPopPeakMs: number } {
+): { lightStartMs: number; lastPopStartMs: number; lastPopPeakMs: number } {
   const deepest = Math.max(
     0,
     ...listClearWaveDepths(board, bridges).map((depth) => depth ?? 0),
   );
-  const lastPopStartMs = deepest * getClearWaveStepMs(deepest);
+  const lastPopStartMs =
+    CLEAR_LIGHT_START_MS + deepest * getClearWaveStepMs(deepest);
   return {
+    lightStartMs: CLEAR_LIGHT_START_MS,
     lastPopStartMs,
     lastPopPeakMs: lastPopStartMs + ISLAND_POP_MS * ISLAND_POP_PEAK_OFFSET,
   };
