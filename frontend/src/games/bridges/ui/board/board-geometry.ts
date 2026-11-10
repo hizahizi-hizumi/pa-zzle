@@ -203,8 +203,17 @@ export type BoardTarget =
  */
 export const ISLAND_REACH = 0.56;
 
-/** 島の外を押したとき、線からこの距離までを、その線の辺を押したとみなす。 */
-const TAP_REACH = 0.5;
+/**
+ * 島の外を押したとき、線からこの距離までを、その線の辺を押したとみなす。2本の橋の板の外側の縁（線から 0.24）に指のぶれを
+ * 少し足した幅にし、線から離れた海を押しても、近くの辺の橋を回さない。
+ */
+const TAP_REACH = 0.3;
+
+/**
+ * 架かっている橋の板の上とみなす、線からの距離。2本の橋の板の外側の縁まで。ここを押したら、交わる線がもっと近くても、
+ * 押した橋を回す。見えている橋を押して、見えない別の辺が阻まれたと返さない。
+ */
+const BRIDGE_DECK_REACH = 0.25;
 
 const pointTolerance = 1e-9;
 
@@ -316,19 +325,40 @@ type EdgeSelectionContext = {
   recentIslands: readonly number[];
 };
 
+/** `candidates` のうち `keep` に当たるものだけを残す。1つも当たらなければ、絞らずに返す。 */
+function narrow(
+  candidates: readonly EdgeCandidate[],
+  keep: (candidate: EdgeCandidate) => boolean,
+): readonly EdgeCandidate[] {
+  const kept = candidates.filter(keep);
+  return kept.length > 0 ? kept : candidates;
+}
+
 /**
- * 押した点が指す辺。線が最も近い辺を選び、それと見分けにくい辺（交わる辺で線までの距離の差が `CROSSING_AMBIGUITY` 以下のもの、
- * または同じ距離の辺）があれば、次の順で1つに決める。押した所で何も起きない空振りを作らない。
- * 1. 交わる2辺の片方にだけ橋があれば、橋の無い方。架けようとすると阻まれるので、盤面を変えずに阻んだ橋を縁取って返し、
- *    狙いと違う橋を増やしたり外したりしない。
- * 2. 2辺の真ん中が重なっていれば短い辺、そうでなければ2島の間の真ん中にはっきり近い辺。
- * 3. 直前に触った島から伸びる辺。島の周りを続けて架けていく流れに沿わせる。
- * 4. それでも決まらなければ `compareForFallback` の順。
+ * 押した点が指す辺。押しても何も起きない空振りを作らず、次の順で1つに決める。
+ * 1. 架かっている橋の板の上（線から `BRIDGE_DECK_REACH` の内）なら、その橋。見えている橋を押したのに、交わる別の辺が
+ *    対象になって阻まれることを起こさない。
+ * 2. 線が最も近い辺。交わる辺で線までの距離の差が `CROSSING_AMBIGUITY` 以下のもの（押した位置の縦横のずれで軸を
+ *    決められないもの）と同じ距離の辺が残れば、続けて絞る。
+ * 3. 交わる別の橋に阻まれずに架けられる辺。
+ * 4. 2辺の真ん中が重なっていれば短い辺、そうでなければ2島の間の真ん中にはっきり近い辺。
+ * 5. 直前に触った島から伸びる辺。島の周りを続けて架けていく流れに沿わせる。
+ * 6. それでも決まらなければ `compareForFallback` の順。
  */
 function selectEdge(
   candidates: readonly EdgeCandidate[],
   { crossingEdges, edgeIslands, bridges, recentIslands }: EdgeSelectionContext,
 ): number {
+  const onDeck = candidates.filter(
+    ({ edge, distance }) =>
+      bridges[edge] !== 0 && distance <= BRIDGE_DECK_REACH + pointTolerance,
+  );
+  if (onDeck.length > 0) {
+    return [...onDeck].sort(
+      (left, right) =>
+        left.distance - right.distance || compareForFallback(left, right),
+    )[0]!.edge;
+  }
   const nearestDistance = Math.min(
     ...candidates.map(({ distance }) => distance),
   );
@@ -343,18 +373,11 @@ function selectEdge(
           crossingEdges[edge]!.includes(candidate.edge),
         )),
   );
-  const blockedByContender = contenders.filter(
-    (candidate) =>
-      bridges[candidate.edge] === 0 &&
-      contenders.some(
-        (other) =>
-          bridges[other.edge] !== 0 &&
-          crossingEdges[candidate.edge]!.includes(other.edge),
-      ),
+  contenders = narrow(
+    contenders,
+    ({ edge }) =>
+      !crossingEdges[edge]!.some((crossing) => bridges[crossing] !== 0),
   );
-  if (blockedByContender.length > 0) {
-    contenders = blockedByContender;
-  }
   const atSharedMidpoint = contenders.filter(
     ({ midpointDistance }) => midpointDistance <= SHARED_MIDPOINT_RADIUS,
   );
@@ -372,12 +395,9 @@ function selectEdge(
         midpointOffset - nearestMidpoint <= MIDPOINT_MARGIN,
     );
   }
-  const fromRecentIslands = contenders.filter(({ edge }) =>
+  contenders = narrow(contenders, ({ edge }) =>
     edgeIslands[edge]!.some((island) => recentIslands.includes(island)),
   );
-  if (fromRecentIslands.length > 0) {
-    contenders = fromRecentIslands;
-  }
   return [...contenders].sort(compareForFallback)[0]!.edge;
 }
 

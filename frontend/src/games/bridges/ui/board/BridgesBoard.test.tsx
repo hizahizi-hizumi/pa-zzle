@@ -184,6 +184,30 @@ describe("BridgesBoard", () => {
       });
     });
 
+    describe("島を押して離してから、線から離れた海を押した場合", () => {
+      beforeEach(() => {
+        press([0.5, 0.5]);
+        press([1.5, 0.9]);
+      });
+
+      test("近くの辺の橋を回さず、回さなかったことを知らせること", () => {
+        expect(onCycleEdge).not.toHaveBeenCalled();
+        expect(onIneffectivePress).toHaveBeenCalledOnce();
+      });
+
+      test("選びを解き、次に相手の島を押しても橋を回さないこと", () => {
+        press([2.5, 0.5]);
+
+        expect(onCycleEdge).not.toHaveBeenCalled();
+      });
+    });
+
+    test("線から半マス離れた海から縦になぞっても、近くの辺の橋を回さないこと", () => {
+      drag([2.0, 1.5], [2.0, 3.5]);
+
+      expect(onCycleEdge).not.toHaveBeenCalled();
+    });
+
     test("島からなぞって相手の島の近くで離すと、その間の橋を回すこと", () => {
       drag([0.5, 0.5], [2.1, 0.6]);
 
@@ -218,7 +242,7 @@ describe("BridgesBoard", () => {
   });
 
   describe("交わる2本の線から同じ距離の所を押した場合", () => {
-    // 辺2（縦 x=2.5）と辺3（横 y=2.5）が (2.5, 2.5) で交わる。(3, 2) は2本の線から同じ距離で、真ん中からのずれも同じ。
+    // 辺2（縦 x=2.5）と辺3（横 y=2.5）が (2.5, 2.5) で交わる。(2.7, 2.3) は2本の線から同じ距離で、真ん中からのずれも同じ。
     const crossingBoard = parseBridgesBoard([
       "1.1..",
       ".....",
@@ -235,7 +259,7 @@ describe("BridgesBoard", () => {
     });
 
     test("空振りさせず、どちらか1つの辺の橋を回すこと", () => {
-      press([3, 2]);
+      press([2.7, 2.3]);
 
       expect(onCycleEdge).toHaveBeenCalledOnce();
     });
@@ -243,7 +267,7 @@ describe("BridgesBoard", () => {
     test("直前に島を押していれば、その島から伸びる辺の橋を回すこと", () => {
       press([0.5, 2.5]);
       press([0.5, 2.5]);
-      press([3, 2]);
+      press([2.7, 2.3]);
 
       expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(3);
     });
