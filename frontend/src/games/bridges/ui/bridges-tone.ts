@@ -22,8 +22,8 @@ export const bridgesToneClassNames = {
   sea: "bg-[#8cc3cb] dark:bg-[#18404f]",
   seaFill: "fill-[#8cc3cb] dark:fill-[#18404f]",
   /** 全島がつながった後の、一段明るく鮮やかな海。平常時の海の上に重ねる。 */
-  seaLit: "bg-[#94e8dc] dark:bg-[#1c5b6b]",
-  seaLitFill: "fill-[#94e8dc] dark:fill-[#1c5b6b]",
+  seaLit: "bg-[#7febdc] dark:bg-[#1c5b6b]",
+  seaLitFill: "fill-[#7febdc] dark:fill-[#1c5b6b]",
   /** 海の上の、動かない波の印。 */
   seaWave: "stroke-white/45 dark:stroke-[#d9f3f2]/30",
   /** 島の周りの浅瀬。島から離れるほど透けて海の色に戻す。 */
@@ -81,7 +81,7 @@ export const bridgesIslandTones: Readonly<
   },
   exact: {
     land: "fill-[#f7e8c6] dark:fill-[#c4b184]",
-    grass: "fill-[#7fca55] dark:fill-[#56a23a]",
+    grass: "fill-[#7fca55] dark:fill-[#4d9733]",
     clue: "fill-[#123a0e] dark:fill-[#0a2006]",
   },
   over: {
