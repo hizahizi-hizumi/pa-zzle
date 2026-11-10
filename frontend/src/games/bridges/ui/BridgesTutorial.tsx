@@ -286,6 +286,7 @@ export function BridgesTutorial({
                 edgeNotice={showsGoal ? null : edgeNotice}
                 clearing={!showsGoal && progress.phase === "solved"}
                 interactionDisabled={showsGoal || !solving}
+                showsSea
                 cues={
                   showsGoal || !cuesShown
                     ? []

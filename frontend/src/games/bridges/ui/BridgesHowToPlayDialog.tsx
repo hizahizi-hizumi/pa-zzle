@@ -66,7 +66,7 @@ export function BridgesHowToPlayDialog({
       <li className="space-y-2">
         <p>
           島と島の間を押すたびに、橋が 1本 → 2本 → なし
-          と変わる。島から相手の島へなぞっても同じに変わる。
+          と変わる。島を押してから相手の島を押しても、島から相手の島へなぞっても同じに変わる。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure
@@ -89,7 +89,7 @@ export function BridgesHowToPlayDialog({
         />
       </li>
       <li className="space-y-2">
-        <p>橋の本数が数字と同じになった島は灰色に、多すぎる島は赤くなる。</p>
+        <p>橋の本数が数字と同じになった島は緑に、多すぎる島は赤くなる。</p>
         <HowToPlayFigure board={squareBoard} bridges={[2, 2, 1, 0]} />
       </li>
       <li>{PLAY_OPERATION_LABELS.undo}は、橋を変えた操作を1つずつ取り消す。</li>

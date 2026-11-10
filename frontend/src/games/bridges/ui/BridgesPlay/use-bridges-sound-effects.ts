@@ -36,7 +36,7 @@ const bridgeRemovedSound = defineSoundEffect(bridgeRemovedSoundUrl);
 /** 交わる橋に阻まれた、板が突き当たる柔らかく低い音。 */
 const blockedSound = defineSoundEffect(blockedSoundUrl);
 
-/** 島から島へ渡る波に合わせて、順に鳴らす上がっていく木琴の音。 */
+/** 橋に沿って島から島へ渡る光に合わせて、順に鳴らす上がっていく木琴の音。 */
 const clearedWaveSounds = [
   clearedWave1SoundUrl,
   clearedWave2SoundUrl,
@@ -45,7 +45,7 @@ const clearedWaveSounds = [
   clearedWave5SoundUrl,
 ].map(defineSoundEffect);
 
-/** 波が最後の島に届いたときの和音。続けて鳴る結果の報酬の音と同じ調の音で鳴らす。 */
+/** 光が最後の島に届き、海へ波紋が広がるときの和音。続けて鳴る結果の報酬の音と同じ調の音で鳴らす。 */
 const clearedEndSound = defineSoundEffect(clearedEndSoundUrl);
 
 const bridgesSounds: readonly SoundEffect[] = [
@@ -63,17 +63,20 @@ const bridgeCountSounds = {
   2: bridgeDoubledSound,
 } as const satisfies Record<BridgeCount, SoundEffect>;
 
-/** 波が渡る時間は盤面の橋のつながりで変わるので、最後の島が膨らみ始めるまでを等分して音を並べ、最も膨らむ時に和音を鳴らす。 */
+/** 光が渡る時間は盤面の橋のつながりで変わるので、光が渡り始めてから最後の島が灯り始めるまでを等分して音を並べ、最も膨らむ時に和音を鳴らす。 */
 function createClearedSoundLayers(
   board: BridgesBoard,
   bridges: readonly BridgeCount[],
 ): SoundLayer[] {
-  const { lastPopStartMs, lastPopPeakMs } = getClearWaveTiming(board, bridges);
-  const stepMs = lastPopStartMs / clearedWaveSounds.length;
+  const { lightStartMs, lastPopStartMs, lastPopPeakMs } = getClearWaveTiming(
+    board,
+    bridges,
+  );
+  const stepMs = (lastPopStartMs - lightStartMs) / clearedWaveSounds.length;
   return [
     ...clearedWaveSounds.map(
       function createWaveLayer(sound, index): SoundLayer {
-        return { sound, offsetMs: index * stepMs };
+        return { sound, offsetMs: lightStartMs + index * stepMs };
       },
     ),
     { sound: clearedEndSound, offsetMs: lastPopPeakMs },
@@ -95,7 +98,7 @@ function playEdgeNoticeSound(notice: BridgesEdgeNotice) {
   }
 }
 
-/** 動きを減らす設定では、波を渡さず完成した盤面をそのまま見せるので、和音だけを鳴らす。 */
+/** 動きを減らす設定では、光を渡さず灯った盤面をそのまま見せるので、和音だけを鳴らす。 */
 function playReducedMotionClearSound() {
   playSound(clearedEndSound);
 }
