@@ -10,6 +10,7 @@ import type { BridgesDifficulty } from "@/games/bridges/difficulty";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import type { BridgesResult } from "@/games/bridges/play/use-bridges-play";
 import { BRIDGES_SCORE_MAXIMUMS } from "@/games/bridges/score";
+import { createBridgesOperationMetric } from "@/games/bridges/ui/result/BridgesResultScreen/operation-metric";
 import { getBridgesScoreCriteria } from "@/games/bridges/ui/result/BridgesResultScreen/score-criteria";
 import { getDifficultyLabel } from "@/games/difficulty";
 import type { GamePlayResultScreenProps } from "@/games/play";
@@ -47,10 +48,10 @@ export function BridgesResultScreen({
     <GameResultScreen
       gameName={BRIDGES_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      // 点は速さだけなので、主な成績は時間と、架けた・外した操作の回数（解に要る本数より多い分が架け直し）にする。
+      // 点は速さだけなので、主な成績は時間と、架けた・外した操作の回数を解に要る本数と比べたもの（差が架け直し）にする。
       metrics={[
         createElapsedTimeMetric(result),
-        createCountMetric("橋の操作", result.inputCount, "回"),
+        createBridgesOperationMetric(result),
       ]}
       score={result.score.total}
       scoreBreakdown={listScoreBreakdown(result)}
