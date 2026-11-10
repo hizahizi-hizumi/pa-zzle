@@ -180,14 +180,11 @@ describe("findBoardTarget", () => {
       ["横の線にはっきり近く、縦の橋の板の外", { x: 2.2, y: 2.6 }, 3],
       ["2本の線からちょうど同じ距離で、縦の橋の板の上", { x: 2.7, y: 2.3 }, 2],
       ["交点", { x: 2.5, y: 2.5 }, 2],
-    ] as const)(
-      "%s（%j）を押すと辺 %s を指すこと",
-      (_, point, expected) => {
-        const target = findBoardTarget(board, verticalBridged, point, [1, 4]);
+    ] as const)("%s（%j）を押すと辺 %s を指すこと", (_, point, expected) => {
+      const target = findBoardTarget(board, verticalBridged, point, [1, 4]);
 
-        expect(target).toEqual({ kind: "edge", edge: expected });
-      },
-    );
+      expect(target).toEqual({ kind: "edge", edge: expected });
+    });
   });
 
   describe("短い辺の真ん中が長い辺の上に乗る盤面の場合", () => {
