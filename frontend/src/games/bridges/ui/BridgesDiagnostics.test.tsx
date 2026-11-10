@@ -51,7 +51,7 @@ describe("BridgesDiagnostics", () => {
 
       expect(values).toEqual([
         "レベル 4",
-        `${analysis.connectivityRoundCount}（条件 2）`,
+        `${analysis.connectivityRoundCount}（条件 2以上）`,
       ]);
     });
 
