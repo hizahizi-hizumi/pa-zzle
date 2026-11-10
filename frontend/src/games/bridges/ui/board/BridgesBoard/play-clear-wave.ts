@@ -9,7 +9,6 @@ import {
   ISLAND_POP_MS,
   islandPopKeyframes,
   listClearWaveDepths,
-  SEA_LIT_MS,
 } from "@/games/bridges/ui/board/clear-wave";
 import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
@@ -18,6 +17,8 @@ const LANTERN_MS = 640;
 /** 杭の灯りが、島が灯り始めてから点くまでの間と、点き切るまでの時間。 */
 const LANTERN_POST_DELAY_MS = 90;
 const LANTERN_POST_MS = 220;
+/** 灯った島の周りの浅瀬が澄み切るまでの時間。 */
+const LIT_SHALLOWS_MS = 560;
 /** 1つの波紋が広がって消えるまでの時間と、続く波紋の間隔。 */
 const RIPPLE_MS = 800;
 const RIPPLE_STAGGER_MS = 200;
@@ -32,6 +33,11 @@ const lanternKeyframes: Keyframe[] = [
   { opacity: LANTERN_SETTLED_OPACITY, transform: "scale(1)" },
 ];
 const fadeInKeyframes: Keyframe[] = [{ opacity: 0 }, { opacity: 1 }];
+/** 澄んだ浅瀬は島の縁から海へ広がる。 */
+const litShallowsKeyframes: Keyframe[] = [
+  { opacity: 0, transform: "scale(0.7)" },
+  { opacity: 1, transform: "scale(1)" },
+];
 /** 波紋は島の周りに収まる大きさまでにし、島の多い盤面でも重なって盤面を白く霞ませない。 */
 const rippleKeyframes: Keyframe[] = [
   { opacity: 0.5, transform: "scale(1)" },
@@ -55,7 +61,7 @@ function readNumber(element: Element, attribute: string): number {
 
 /**
  * クリアした盤面で、島0 から架かった橋をたどった段ごとに島を灯す。灯った島は膨らみ、後ろに暖かい灯り、橋の杭に小さな灯りが点き、
- * 海へ波紋が2重に広がる。最後の島が灯り切ったら、海全体を一段明るい青緑にし、灯りを少し引いて澄んだ姿で止める。
+ * 島の周りの浅瀬と、その島へ架かった橋の下の水路が澄み、海へ波紋が2重に広がる。灯りは少し引いて、澄んだ浅瀬の姿で止める。画面全体の海の色は変えない。
  * 全島がちょうどなのにつながっていない盤面（クリアにならない）と見分けられるよう、灯りは橋のつながりの順に点ける。
  * 灯り切った盤面を見せてから `onFinished` を呼ぶ。戻り値は演出を取り消す関数。
  * 動きを減らす設定では、灯り切った盤面をそのまま見せる。
@@ -72,7 +78,7 @@ export function playClearWave(
         return [];
       }
       const depths = listClearWaveDepths(board, bridges);
-      const { depthStartMs, seaLitMs } = getClearWaveTiming(board, bridges);
+      const { depthStartMs } = getClearWaveTiming(board, bridges);
       const startAt = (element: Element, part: string) =>
         depthStartMs[readNumber(element, part)] ?? 0;
       const lanterns = animateAll(
@@ -120,17 +126,34 @@ export function playClearWave(
           easing: MOTION_EASING.celebrate,
         }),
       );
-      const sea = animateAll(
-        figure.querySelectorAll(`[${bridgesFigureParts.seaLit}]`),
-        fadeInKeyframes,
-        () => ({
-          duration: SEA_LIT_MS,
-          delay: seaLitMs,
-          easing: MOTION_EASING.standard,
+      const shallows = animateAll(
+        figure.querySelectorAll(`[${bridgesFigureParts.litShallows}]`),
+        litShallowsKeyframes,
+        (shallow) => ({
+          duration: LIT_SHALLOWS_MS,
+          delay: startAt(shallow, bridgesFigureParts.litShallows),
+          easing: MOTION_EASING.enter,
           fill: "backwards",
         }),
       );
-      return [...lanterns, ...posts, ...ripples, ...pops, ...sea];
+      const channels = animateAll(
+        figure.querySelectorAll(`[${bridgesFigureParts.litChannel}]`),
+        fadeInKeyframes,
+        (channel) => ({
+          duration: LIT_SHALLOWS_MS,
+          delay: startAt(channel, bridgesFigureParts.litChannel),
+          easing: MOTION_EASING.enter,
+          fill: "backwards",
+        }),
+      );
+      return [
+        ...channels,
+        ...shallows,
+        ...lanterns,
+        ...posts,
+        ...ripples,
+        ...pops,
+      ];
     },
     completion: { type: "after-animations", holdMs: CLEAR_HOLD_MS },
     reducedMotionHoldMs: REDUCED_MOTION_CLEAR_HOLD_MS,

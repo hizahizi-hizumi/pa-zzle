@@ -1,6 +1,6 @@
 /**
- * 完成演出の時間割。島0 から架かった橋をたどって、たどり着いた段ごとに島を灯し、最後の島が灯り切ったときに海全体を明るくする。
- * 盤面の動き、プレイ画面の海、クリア音が同じ時間割で揃うよう、ここに置いてどれからも使う。
+ * 完成演出の時間割。島0 から架かった橋をたどって、たどり着いた段ごとに島を灯し、最後の島が灯り切ったときに締めの音を鳴らす。
+ * 盤面の動きとクリア音が同じ時間割で揃うよう、ここに置いて両方から使う。
  */
 
 import {
@@ -8,9 +8,6 @@ import {
   getBridgesNetwork,
 } from "@/games/bridges/puzzle/board";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
-
-/** 海全体が明るくなり切るまでの時間。盤面の絵の海とプレイ画面の海を同じ時間で明るくする。 */
-export const SEA_LIT_MS = 450;
 
 /** 島0 が灯り始めるまでの間。最後に架けた板が着き、全島がちょうどになった盤面を一瞬見せる。 */
 export const CLEAR_LIGHT_START_MS = 160;
@@ -62,11 +59,11 @@ export function getClearWaveStepMs(deepest: number): number {
 /**
  * 演出の時間割。どれも演出の始まりからの時間。
  * - `depthStartMs`: 段ごとの、その段の島が灯り始める時間。添字が段数。
- * - `seaLitMs`: 最も遠い島が最も膨らみ、全島が灯り切ったと見える時間。海全体を明るくし始める。
+ * - `allLitMs`: 最も遠い島が最も膨らみ、全島が灯り切ったと見える時間。
  */
 export type ClearWaveTiming = {
   depthStartMs: readonly number[];
-  seaLitMs: number;
+  allLitMs: number;
 };
 
 export function getClearWaveTiming(
@@ -84,6 +81,6 @@ export function getClearWaveTiming(
   );
   return {
     depthStartMs,
-    seaLitMs: depthStartMs[deepest]! + ISLAND_POP_MS * ISLAND_POP_PEAK_OFFSET,
+    allLitMs: depthStartMs[deepest]! + ISLAND_POP_MS * ISLAND_POP_PEAK_OFFSET,
   };
 }

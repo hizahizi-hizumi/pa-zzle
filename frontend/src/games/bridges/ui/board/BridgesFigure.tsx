@@ -65,7 +65,7 @@ type BridgesFigureProps = {
   showsBlockingEdges?: boolean;
   /** 2本の橋を外したばかりの辺。外す動きで縮める2枚の板を、見えない姿で描いておく。 */
   retractingEdge?: number | null;
-  /** 全島がつながった盤面を灯すか。島の灯り、杭の灯り、波紋、明るい海を描く。 */
+  /** 全島がつながった盤面を灯すか。島の灯り、杭の灯り、波紋、島の周りの澄んだ浅瀬を描く。 */
   lit?: boolean;
   ref?: Ref<SVGSVGElement>;
 };
@@ -81,10 +81,11 @@ export const bridgesFigureParts = {
   blockingOutline: "data-bridges-blocking",
   blockedAttempt: "data-bridges-blocked-attempt",
   lantern: "data-bridges-lantern",
+  litShallows: "data-bridges-lit-shallows",
+  litChannel: "data-bridges-lit-channel",
   lanternPost: "data-bridges-lantern-post",
   ripple: "data-bridges-ripple",
   rope: "data-bridges-rope",
-  seaLit: "data-bridges-sea-lit",
 } as const;
 
 /** 図の寸法はマス幅を 1 とした値。 */
@@ -100,25 +101,27 @@ const POST_RADIUS = 0.065;
 const POST_DISTANCE = ISLAND_RADIUS + 0.1;
 /** 浅瀬が海の色へ消えるまでの、島の中心からの距離。陸の縁から波打ち際の外までの狭い帯にし、隣の島の浅瀬と重ねない。 */
 const SHALLOWS_RADIUS = 0.62;
-/** 盤面の範囲に敷く淡い浅瀬の濃さと角の丸み。 */
-const BOARD_SHALLOWS_OPACITY = 0.3;
-const BOARD_SHALLOWS_CORNER_RADIUS = 0.35;
-/** 盤面の四隅に立てる杭の胴と頭の半径。 */
-const CORNER_POST_RADIUS = 0.08;
-const CORNER_POST_CAP_RADIUS = 0.035;
+/** 灯った島の周りの澄んだ浅瀬が海の色へ消えるまでの、島の中心からの距離。波打ち際の外に、灯りより広く澄んだ水を見せる。 */
+const LIT_SHALLOWS_RADIUS = 0.82;
+/**
+ * 灯った盤面で、架かった橋の下に通す澄んだ水路の太さ。芯と、芯の外に淡く広げる縁の2重にし、つながった島と橋の全体を
+ * 1つの澄んだ水の形として平常の海から浮かせる。
+ */
+const LIT_CHANNEL_WIDTH = 0.6;
+const LIT_CHANNEL_GLOW_WIDTH = 0.92;
+const LIT_CHANNEL_GLOW_OPACITY = 0.45;
 /** 島を触っている間に示す、同じ行と列の帯の太さと濃さ。 */
 const LINE_BAND_WIDTH = 0.84;
 const LINE_BAND_OPACITY = 0.45;
-/** 波打ち際の泡の、陸の輪郭に対する倍率と、泡の切れ目。 */
+/** 波打ち際の白い線の、陸の輪郭に対する倍率と太さ。 */
 const SURF_SCALE = 1.14;
-const SURF_WIDTH = 0.032;
-const SURF_DASH = "0.08 0.055";
+const SURF_WIDTH = 0.03;
 /** 陸の縁の濡れた砂の太さ。 */
 const WET_SAND_WIDTH = 0.05;
 /** 多すぎの島の、途切れた縁の太さ。 */
 const OVER_RIM_WIDTH = 0.085;
-/** ちょうどの島の草地の、陸の輪郭に対する倍率。砂の縁を残して中に広げる。 */
-const GRASS_SCALE = 0.74;
+/** ちょうどの島の草地の、陸の輪郭に対する倍率。10×10 のスマホ（陸の直径 30px ほど）でも、草地の周りに砂の陸が見える幅を残す。 */
+const GRASS_SCALE = 0.62;
 /** 阻んだ橋の板の外側に見せる、薔薇色の縁取りの幅。 */
 const BLOCKING_OUTLINE_EXTRA = 0.2;
 /** ロープの太さと撚りの切れ目、縁の太さ。 */
@@ -134,13 +137,16 @@ const REMOVAL_EXTRA_WIDTH = 0.04;
 const UNFOCUSED_ROPE_OPACITY = 0.35;
 /** マウスを乗せた所の予告の濃さ。 */
 const HOVER_GHOST_OPACITY = 0.6;
+/** 島を囲む輪は、島の陸の揺らいだ輪郭をこの大きさまで広げた形にする。 */
 const SELECTION_RING_RADIUS = ISLAND_RADIUS + 0.1;
 /** 離せば回す辺の相手の島を囲む輪。指で隠れても輪の外側が見える大きさにする。 */
 const TARGET_RING_RADIUS = ISLAND_RADIUS + 0.16;
 const TARGET_RING_WIDTH = 0.09;
 const FOCUS_RING_RADIUS = ISLAND_RADIUS + 0.17;
 const FOCUS_RING_WIDTH = 0.05;
-/** 灯った島の後ろの光の広さと、灯り切った後に残す濃さ。灯り切ったら黄色を引き、明るい海の澄んだ姿で止める。 */
+/** 阻まれた辺に架かるはずだった板の濃さ。板そのものを透かし、下の海が見える濃さにする。 */
+const BLOCKED_ATTEMPT_OPACITY = 0.5;
+/** 灯った島の後ろの光の広さと、灯り切った後に残す濃さ。灯り切ったら黄色を引き、澄んだ浅瀬の姿で止める。 */
 const LANTERN_RADIUS = 0.78;
 export const LANTERN_SETTLED_OPACITY = 0.45;
 const LANTERN_POST_RADIUS = 0.075;
@@ -374,7 +380,10 @@ function GhostBridge({
   );
 }
 
-/** 交わる橋に阻まれた辺に、架かるはずだった1本の板の影。 */
+/**
+ * 交わる橋に阻まれた辺に、架かるはずだった1本の板。板そのものを半透明にし、橋と同じ木の姿で見せる。
+ * `opacity` は盤面の反応で一瞬だけ点けるための濃さで、点いたときも板は半透明のままにする。
+ */
 function BlockedAttempt({
   segment,
   opacity,
@@ -384,52 +393,10 @@ function BlockedAttempt({
 }) {
   return (
     <g {...{ [bridgesFigureParts.blockedAttempt]: "" }} opacity={opacity}>
-      <SegmentLine
-        segment={segment}
-        className={bridgesToneClassNames.guideGhost}
-        strokeWidth={getPlankWidth(1) + GHOST_EXTRA_WIDTH}
-      />
+      <g opacity={BLOCKED_ATTEMPT_OPACITY}>
+        <BridgePlank segment={segment} width={getPlankWidth(1)} />
+      </g>
     </g>
-  );
-}
-
-/** 盤面の範囲に敷く淡い浅瀬と、四隅の杭。島の並ぶ行と列の範囲を、題材の形で示す。 */
-function BoardShallows({ view }: { view: BoardView }) {
-  const { margin, board } = view;
-  const corners = [
-    { x: margin, y: margin },
-    { x: margin + board.width, y: margin },
-    { x: margin, y: margin + board.height },
-    { x: margin + board.width, y: margin + board.height },
-  ];
-  return (
-    <>
-      <rect
-        x={margin}
-        y={margin}
-        width={board.width}
-        height={board.height}
-        rx={BOARD_SHALLOWS_CORNER_RADIUS}
-        opacity={BOARD_SHALLOWS_OPACITY}
-        className={bridgesToneClassNames.shallowsFill}
-      />
-      {corners.map(({ x, y }) => (
-        <g key={`${x}:${y}`}>
-          <circle
-            cx={x}
-            cy={y}
-            r={CORNER_POST_RADIUS}
-            className={bridgesToneClassNames.bridgePost}
-          />
-          <circle
-            cx={x}
-            cy={y}
-            r={CORNER_POST_CAP_RADIUS}
-            className={bridgesToneClassNames.buoyCap}
-          />
-        </g>
-      ))}
-    </>
   );
 }
 
@@ -489,8 +456,8 @@ function Rope({
   );
 }
 
-/** 遊び方の図とチュートリアルで、絵の地に敷く海。灯った盤面では、明るい海を重ねる。 */
-function FigureSea({ view, lit }: { view: BoardView; lit: boolean }) {
+/** 遊び方の図とチュートリアルで、絵の地に敷く海。 */
+function FigureSea({ view }: { view: BoardView }) {
   return (
     <>
       <rect
@@ -499,15 +466,6 @@ function FigureSea({ view, lit }: { view: BoardView; lit: boolean }) {
         rx={SEA_CORNER_RADIUS}
         className={bridgesToneClassNames.seaFill}
       />
-      {lit && (
-        <rect
-          {...{ [bridgesFigureParts.seaLit]: "" }}
-          width={view.width}
-          height={view.height}
-          rx={SEA_CORNER_RADIUS}
-          className={bridgesToneClassNames.seaLitFill}
-        />
-      )}
       <svg width={view.width} height={view.height} overflow="hidden">
         <SeaWaves unit={FIGURE_WAVE_UNIT} />
       </svg>
@@ -545,7 +503,7 @@ const centerOrigin = {
 } as const;
 
 /**
- * 盤面の絵。下から、海・盤面の範囲の浅瀬と四隅の杭・島と同じ行と列の帯・浅瀬・波打ち際・灯りの光・波紋・板の予告・
+ * 盤面の絵。下から、海・島と同じ行と列の帯・浅瀬・灯った盤面の澄んだ水路と浅瀬・波打ち際・灯りの光・波紋・板の予告・
  * 阻まれた辺の板の影・橋（阻んだ橋の縁取り、板、杭）・外す板・杭の灯り・ロープ・島の陸と数字・選んだ島とキーボードの輪の順に重ねる。
  * 阻まれた辺の板の影は橋の下に置き、阻んだ橋がその上を渡って見えるようにする。
  * 橋は島の中心から中心へ描き、端を島の陸で覆う。
@@ -570,6 +528,7 @@ export function BridgesFigure({
   const gradientId = useId();
   const shallowsId = `${gradientId}-shallows`;
   const lanternId = `${gradientId}-lantern`;
+  const litShallowsId = `${gradientId}-lit-shallows`;
   const { edges } = getBridgesNetwork(board);
   const islandCenters = board.islands.map((island) =>
     toViewPoint(view, getIslandCenter(island)),
@@ -593,21 +552,21 @@ export function BridgesFigure({
     if (island === null) {
       return null;
     }
-    const { x, y } = islandCenters[island]!;
+    const outline = getIslandOutlinePath(
+      board.islands[island]!,
+      islandCenters[island]!,
+      radius,
+    );
     return (
       <>
-        <circle
-          cx={x}
-          cy={y}
-          r={radius}
+        <path
+          d={outline}
           fill="none"
           strokeWidth={width + ROPE_CASING_EXTRA}
           className={bridgesToneClassNames.guideCasing}
         />
-        <circle
-          cx={x}
-          cy={y}
-          r={radius}
+        <path
+          d={outline}
           fill="none"
           strokeWidth={width}
           className={className}
@@ -636,6 +595,15 @@ export function BridgesFigure({
           ]}
         />
         <RadialFade
+          id={litShallowsId}
+          className={bridgesToneClassNames.litShallowsStop}
+          stops={[
+            [0, 1],
+            [0.65, 1],
+            [1, 0],
+          ]}
+        />
+        <RadialFade
           id={lanternId}
           className={bridgesToneClassNames.lanternStop}
           stops={[
@@ -645,8 +613,7 @@ export function BridgesFigure({
           ]}
         />
       </defs>
-      {showsSea && <FigureSea view={view} lit={lit} />}
-      <BoardShallows view={view} />
+      {showsSea && <FigureSea view={view} />}
       {guide && <LineBands view={view} center={islandCenters[guide.island]!} />}
       <g>
         {islandCenters.map(({ x, y }) => (
@@ -659,11 +626,48 @@ export function BridgesFigure({
           />
         ))}
       </g>
+      {lit &&
+        edges.map(({ from, to }, edge) =>
+          bridges[edge] === 0 ? null : (
+            <g
+              key={`lit-channel-${from}-${to}`}
+              {...{
+                [bridgesFigureParts.litChannel]: Math.max(
+                  depths[from] ?? 0,
+                  depths[to] ?? 0,
+                ),
+              }}
+              strokeLinecap="round"
+            >
+              <SegmentLine
+                segment={getEdgeViewSegment(view, edge)}
+                className={bridgesToneClassNames.litShallowsStroke}
+                strokeWidth={LIT_CHANNEL_GLOW_WIDTH}
+                opacity={LIT_CHANNEL_GLOW_OPACITY}
+              />
+              <SegmentLine
+                segment={getEdgeViewSegment(view, edge)}
+                className={bridgesToneClassNames.litShallowsStroke}
+                strokeWidth={LIT_CHANNEL_WIDTH}
+              />
+            </g>
+          ),
+        )}
+      {lit &&
+        islandCenters.map(({ x, y }, island) => (
+          <circle
+            key={`lit-shallows-${x}:${y}`}
+            {...{ [bridgesFigureParts.litShallows]: depths[island] ?? 0 }}
+            cx={x}
+            cy={y}
+            r={LIT_SHALLOWS_RADIUS}
+            fill={`url(#${litShallowsId})`}
+            style={centerOrigin}
+          />
+        ))}
       <g
         fill="none"
         strokeWidth={SURF_WIDTH}
-        strokeDasharray={SURF_DASH}
-        strokeLinecap="round"
         className={bridgesToneClassNames.surf}
       >
         {board.islands.map((island, index) => (

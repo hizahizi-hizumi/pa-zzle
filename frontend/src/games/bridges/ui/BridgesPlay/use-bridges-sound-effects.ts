@@ -82,7 +82,7 @@ export function createClearedSoundLayers(
   board: BridgesBoard,
   bridges: readonly BridgeCount[],
 ): SoundLayer[] {
-  const { depthStartMs, seaLitMs } = getClearWaveTiming(board, bridges);
+  const { depthStartMs, allLitMs } = getClearWaveTiming(board, bridges);
   const noteCount = Math.min(depthStartMs.length, clearedLightSounds.length);
   const lastDepth = depthStartMs.length - 1;
   return [
@@ -95,7 +95,7 @@ export function createClearedSoundLayers(
             : Math.round((note * lastDepth) / (noteCount - 1));
         return { sound, offsetMs: depthStartMs[depth]! };
       }),
-    { sound: clearedChordSound, offsetMs: seaLitMs },
+    { sound: clearedChordSound, offsetMs: allLitMs },
   ];
 }
 
