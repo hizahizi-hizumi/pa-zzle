@@ -190,8 +190,20 @@ describe("BridgesBoard", () => {
       expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0);
     });
 
-    test("島からなぞって相手の島に届く前に離すと、橋を回さず回さなかったことを知らせること", () => {
+    test("島からなぞって相手の島に届く前に離しても、なぞった向きの最初の島との間の橋を回すこと", () => {
       drag([0.5, 0.5], [1.4, 0.6]);
+
+      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0);
+    });
+
+    test("島からなぞって相手の島を通り過ぎて離しても、なぞった向きの最初の島との間の橋を回すこと", () => {
+      drag([0.5, 0.5], [4.6, 0.8]);
+
+      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0);
+    });
+
+    test("島からなぞって辺の無い向きへ離すと、橋を回さず回さなかったことを知らせること", () => {
+      drag([0.5, 0.5], [-0.4, 0.5]);
 
       expect(onCycleEdge).not.toHaveBeenCalled();
       expect(onIneffectivePress).toHaveBeenCalledOnce();

@@ -270,7 +270,8 @@ export function BridgesTutorial({
     // 最初の手順の印は、導入の終わりに一言と同時に出す。
     const cuesShown = solving || (scene === null && messageShown);
     return (
-      <div className="relative aspect-square w-[min(100cqw,100cqh,28rem)]">
+      // 盤面の図を画面の幅いっぱいの正方形にし、一言の下の高さの中央に置く。
+      <div className="relative aspect-square w-[min(100cqw,100cqh,36rem)] self-center">
         <TutorialCrossFadeIntroScene
           scene={scene}
           playing={playing}

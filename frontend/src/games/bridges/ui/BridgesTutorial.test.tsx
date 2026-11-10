@@ -160,11 +160,24 @@ function hasFocusScrim(): boolean {
   return document.querySelector("[data-tutorial-focus-scrim]") !== null;
 }
 
-/** 鳴らした効果音の音声ファイル名。 */
+/** 鳴らした効果音の音声ファイル名。重ねて鳴らした効果音は、重ねた素材の順に並べる。 */
 function getPlayedSoundNames(): string[] {
-  return vi
-    .mocked(playSound)
-    .mock.calls.map(([sound]) => sound.url.split("/").at(-1) ?? "");
+  const single = vi.mocked(playSound).mock;
+  const layered = vi.mocked(playLayeredSound).mock;
+  return [
+    ...single.calls.map(([sound], index) => ({
+      order: single.invocationCallOrder[index]!,
+      sounds: [sound],
+    })),
+    ...layered.calls.map(([layers], index) => ({
+      order: layered.invocationCallOrder[index]!,
+      sounds: layers.map(({ sound }) => sound),
+    })),
+  ]
+    .sort((left, right) => left.order - right.order)
+    .flatMap(({ sounds }) =>
+      sounds.map((sound) => sound.url.split("/").at(-1) ?? ""),
+    );
 }
 
 function sorted(values: readonly number[]): number[] {
@@ -273,6 +286,7 @@ describe("BridgesTutorial", () => {
       test("交差の手順で、覆いから抜いた架けられない横の辺を押すと、盤面を変えずに本番と同じく阻んだ橋を点けて阻まれた音を鳴らし、印の線を濃くし直すこと", () => {
         tapAll(stepTaps.slice(0, 4));
         vi.mocked(playSound).mockClear();
+        vi.mocked(playLayeredSound).mockClear();
         tap(edgePoints.middle);
         const blockingLines = getBoard().querySelectorAll(
           "[data-bridges-blocking] line",
@@ -293,6 +307,7 @@ describe("BridgesTutorial", () => {
         beforeEach(() => {
           tapAll(stepTaps);
           vi.mocked(playSound).mockClear();
+          vi.mocked(playLayeredSound).mockClear();
         });
 
         test("覆いを外し、残りを架けさせる一言を出して、すぐには印を付けないこと", () => {
@@ -372,7 +387,7 @@ describe("BridgesTutorial", () => {
             );
 
             expect(buttonDuringAnimation).toBeNull();
-            expect(getPlayedSoundNames()).toContain("cleared-end.flac");
+            expect(getPlayedSoundNames()).toContain("cleared-sea.flac");
             expect(playStart.onStart).toHaveBeenCalledOnce();
           });
 

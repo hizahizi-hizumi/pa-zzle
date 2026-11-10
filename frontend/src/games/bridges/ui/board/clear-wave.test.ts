@@ -40,23 +40,20 @@ describe("getClearWaveTiming", () => {
     "2...2",
   ]);
 
-  test("段の少ない盤面では、光が渡り始めてから1段ごとに90ミリ秒で波を渡すこと", () => {
+  test("段の少ない盤面では、島0 が灯ってから1段ごとに110ミリ秒で次の段を灯すこと", () => {
     const timing = getClearWaveTiming(square, [2, 1, 1, 0]);
 
     expect(timing).toEqual({
-      lightStartMs: 120,
-      lastPopStartMs: 300,
-      lastPopPeakMs: 444,
+      depthStartMs: [160, 270, 380],
+      seaLitMs: 524,
     });
   });
 
-  test("段の多い盤面では、波が渡り切るまでを900ミリ秒に収めること", () => {
+  test("段の多い盤面では、最も遠い段が灯り始めるまでを1000ミリ秒に収めること", () => {
     const timing = getClearWaveTiming(chain, chainBridges);
 
-    expect(timing).toEqual({
-      lightStartMs: 120,
-      lastPopStartMs: 1020,
-      lastPopPeakMs: 1164,
-    });
+    expect(timing.depthStartMs).toHaveLength(11);
+    expect(timing.depthStartMs.at(-1)).toBe(1160);
+    expect(timing.seaLitMs).toBe(1304);
   });
 });
