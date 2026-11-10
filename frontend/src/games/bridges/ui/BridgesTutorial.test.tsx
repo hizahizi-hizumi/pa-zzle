@@ -447,7 +447,7 @@ describe("BridgesTutorial", () => {
             );
 
             expect(buttonDuringAnimation).toBeNull();
-            expect(getPlayedSoundNames()).toContain("cleared-sea.flac");
+            expect(getPlayedSoundNames()).toContain("cleared-chord.flac");
             expect(playStart.onStart).toHaveBeenCalledOnce();
           });
 
