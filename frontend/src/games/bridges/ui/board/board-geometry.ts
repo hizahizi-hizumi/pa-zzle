@@ -154,10 +154,17 @@ export function isPointInEdgeBand(
   );
 }
 
-/** 辺の帯を絵の座標で返す。チュートリアルの印と、覆いから抜く所を辺に沿わせるのに使う。 */
-export function getEdgeViewBand(view: BoardView, edge: number): BoardRect {
+/**
+ * 辺の帯を絵の座標で返す。覆いから抜く所と、チュートリアルの印を辺に沿わせるのに使う。
+ * `thickness` を渡すとその太さにし、渡さなければ2本の橋の2枚の板を収める太さにする。
+ */
+export function getEdgeViewBand(
+  view: BoardView,
+  edge: number,
+  thickness = EDGE_BAND_WIDTH,
+): BoardRect {
   const { start, end } = getEdgeViewSegment(view, edge);
-  return getBand(start, end, EDGE_BAND_WIDTH);
+  return getBand(start, end, thickness);
 }
 
 /** 島の陸を囲む四角を絵の座標で返す。 */

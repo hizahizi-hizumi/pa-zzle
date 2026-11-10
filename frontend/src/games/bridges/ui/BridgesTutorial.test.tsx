@@ -51,10 +51,13 @@ const stepTaps: readonly BoardPoint[] = [
   edgePoints.leftTop,
 ];
 
+/** 最後の手順で、左上の2から上の4へなぞる所。 */
+const topLeftIsland = [0.5, 0.5] as const satisfies BoardPoint;
+const topIsland = [2.5, 0.5] as const satisfies BoardPoint;
+
 /** 手順を終えた後に残る、解の橋。 */
 const remainingTaps: readonly BoardPoint[] = [
   edgePoints.bottom,
-  edgePoints.top,
   edgePoints.topRight,
 ];
 
@@ -132,6 +135,21 @@ function tapAll(points: readonly BoardPoint[]): void {
   for (const point of points) {
     tap(point);
   }
+}
+
+/** `from` の島から押してなぞり、`to` で離す。 */
+function drag(from: BoardPoint, to: BoardPoint): void {
+  const { board, point: start } = placeBoard(from);
+  const { point: end } = placeBoard(to);
+  fireEvent.pointerDown(board, start);
+  fireEvent.pointerMove(board, end);
+  fireEvent.pointerUp(board, end);
+}
+
+/** 手を引く手順をすべて終える。最後の手順は、島から相手の島へなぞって架ける。 */
+function finishGuidedSteps(): void {
+  tapAll(stepTaps);
+  drag(topLeftIsland, topIsland);
 }
 
 /** 1始まりの行・列の島の読み上げ。 */
@@ -303,9 +321,51 @@ describe("BridgesTutorial", () => {
         ).not.toBeNull();
       });
 
-      describe("手順を終えた場合", () => {
+      describe("島から架ける操作の手順の場合", () => {
         beforeEach(() => {
           tapAll(stepTaps);
+          vi.mocked(playSound).mockClear();
+          vi.mocked(playLayeredSound).mockClear();
+        });
+
+        test("島から相手の島へなぞる一言を出し、左上の2と上の4の間に印を付けること", () => {
+          expect(
+            screen.queryByText(/^島から相手の島へ\s*なぞっても架かります/),
+          ).not.toBeNull();
+          expect(getEdgesWithCue("mark")).toEqual([
+            edgeBetween([1, 1], [1, 3]),
+          ]);
+        });
+
+        test("島の間を押しても架けず、印の線を濃くし直すこと", () => {
+          tap(edgePoints.top);
+
+          expect(getIslandLabel(1, 1)).toBe("1行1列の島 数字2 橋1本");
+          expect(getEdgesWithCue("recall")).toEqual([
+            edgeBetween([1, 1], [1, 3]),
+          ]);
+        });
+
+        test("左上の2から上の4へなぞると架け、手を離すこと", () => {
+          drag(topLeftIsland, topIsland);
+
+          expect(getIslandLabel(1, 1)).toBe("1行1列の島 数字2 橋2本 ちょうど");
+          expect(
+            screen.queryByText(/^残りの橋を架ければ\s*完成です/),
+          ).not.toBeNull();
+        });
+
+        test("左上の2を押してから上の4を押しても架けること", () => {
+          pressIsland(topLeftIsland);
+          pressIsland(topIsland);
+
+          expect(getIslandLabel(1, 1)).toBe("1行1列の島 数字2 橋2本 ちょうど");
+        });
+      });
+
+      describe("手順を終えた場合", () => {
+        beforeEach(() => {
+          finishGuidedSteps();
           vi.mocked(playSound).mockClear();
           vi.mocked(playLayeredSound).mockClear();
         });
@@ -420,7 +480,8 @@ describe("BridgesTutorial", () => {
     });
 
     test("解き終えると、プレイ中の盤面も同じルールだと伝え、プレイに戻る操作を出すこと", () => {
-      tapAll([...stepTaps, ...remainingTaps]);
+      finishGuidedSteps();
+      tapAll(remainingTaps);
       advanceTime(2000);
       const detail = screen.queryByText(
         /プレイ中の盤面も\s*同じルールで解けます/,

@@ -36,11 +36,14 @@ export type BridgesTutorialAction = { type: "cycle"; edge: number };
  * - `bridgeCount`: この手順で `edge` に架ける本数。ここまで架けたら次の手順へ進む。
  * - `island`: `edge` の本数を、数字から決めさせる島。伝えたルールで、この島から見て `edge` が `bridgeCount` 本に決まる。
  *   操作を教える手順では `null`。
+ * - `gesture`: この手順で受け付ける架け方。`between` は島の間を押す（島を選んでから相手の島を押す、なぞるも受ける）。
+ *   `fromIsland` は島から架ける操作（なぞる、島を選んでから相手の島を押す）だけを受け、島の間を押しても架けない。
  */
 export type BridgesTutorialStep = TutorialStep<BridgesTutorialRuleId> & {
   edge: number;
   bridgeCount: BridgeCount;
   island: number | null;
+  gesture: "between" | "fromIsland";
 };
 
 /**
@@ -157,7 +160,9 @@ const solvedBridges: readonly BridgeCount[] = network.edges.map(
  * - 数字と同じ本数: 右下の3から、左の1へは1本しか出せないので、上の3へ2本架ける。
  * - 交差しない: 右の3は、あと1本要る。下は2本で上限、左は真ん中の縦の2本と交わるので、上の2へ架ける。
  * - 全部つなげる: 左の真ん中の1は、右へは交わって架けられず、下の1とつなぐと2島だけで閉じるので、上の2へ架ける。
- * 手順を終えると3本が残り、数字と同じ本数だけで1本ずつ決まる。
+ * - 操作: 左上の2から上の4へなぞって架ける。本番の、島から架ける操作（なぞる、島を選んでから相手の島を押す）を体験させる。
+ *   左上の2は下へ1本架かり、あと1本は右の4へしか出せないので、ゴールと同じ1本。
+ * 手順を終えると2本が残り、数字と同じ本数だけで1本ずつ決まる。
  */
 const steps: readonly BridgesTutorialStep[] = [
   {
@@ -166,6 +171,7 @@ const steps: readonly BridgesTutorialStep[] = [
     edge: centerEdge,
     bridgeCount: 1,
     island: null,
+    gesture: "between",
   },
   {
     message: {
@@ -176,16 +182,18 @@ const steps: readonly BridgesTutorialStep[] = [
     edge: centerEdge,
     bridgeCount: 2,
     island: null,
+    gesture: "between",
   },
   {
     message: {
       headline: "島から出す橋は\n数字と同じ本数にします",
-      detail: "左の1へは1本だけなので\n上の3へ2本架けます",
+      detail: "右下の3は、左の1へ1本だけなので\n上の3へ2本架けます",
     },
     introducedRuleId: "count",
     edge: rightBottomEdge,
     bridgeCount: 2,
     island: islandAt(5, 5),
+    gesture: "between",
   },
   {
     message: { headline: "橋どうしは\n交差できません", detail: null },
@@ -193,16 +201,29 @@ const steps: readonly BridgesTutorialStep[] = [
     edge: rightTopEdge,
     bridgeCount: 1,
     island: islandAt(3, 5),
+    gesture: "between",
   },
   {
     message: {
       headline: "全部の島を\n1つにつなげます",
-      detail: "1の島どうしをつなげると\nほかとつながりません",
+      detail: "左の1は、左下の1とつなぐと\n2島だけで閉じます",
     },
     introducedRuleId: "connect",
     edge: leftTopEdge,
     bridgeCount: 1,
     island: islandAt(3, 1),
+    gesture: "between",
+  },
+  {
+    message: {
+      headline: "島から相手の島へ\nなぞっても架かります",
+      detail: "島を押してから\n相手の島を押しても架かります",
+    },
+    introducedRuleId: null,
+    edge: topEdge,
+    bridgeCount: 1,
+    island: null,
+    gesture: "fromIsland",
   },
 ];
 
@@ -250,7 +271,8 @@ type BridgesRoom = { room: number; reason: BridgesTutorialReason };
 /**
  * 島 `island` から見て、辺 `edge` にあと何本架けられるか。手に入れたルールで盤面から分かる分だけ限る。
  * 最も強く限ったものを決め手に添える。同じだけ限るものが複数あれば、2本で上限の橋、行き先の島の数字、交わる橋の順に選ぶ。
- * 交わる橋で限ったときは、架けられない辺も決め手に添え、どこで交わるかを見せる。限った後に、閉じてしまう島の組でさらに限る。
+ * 交わる橋で限ったときは、架けられない辺も決め手に添え、どこで交わるかを見せる。限った後に、閉じてしまう島の組でさらに限り、
+ * 閉じる組の島と、架けると閉じる辺を決め手に添えて、閉じる所を見せる。
  */
 function findRoom(
   bridges: readonly BridgeCount[],
@@ -299,7 +321,7 @@ function findRoom(
         room: added - 1,
         reason: {
           islands: closed.filter((member) => member !== island),
-          edges: [],
+          edges: [edge],
         },
       };
     }

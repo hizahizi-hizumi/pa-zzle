@@ -128,6 +128,8 @@ const PREVIEW_ROPE_WIDTH = 0.12;
 /** 板の影を、板より少し太く描く分。ロープを上に重ねても、ロープの両脇に影が見える。 */
 const GHOST_EXTRA_WIDTH = 0.08;
 const ROPE_CASING_EXTRA = 0.07;
+/** 外れる板に重ねる海の色の覆いを、板より少し太く描く分。 */
+const REMOVAL_EXTRA_WIDTH = 0.04;
 /** なぞっている間、指の向いた辺のほかのロープの濃さ。 */
 const UNFOCUSED_ROPE_OPACITY = 0.35;
 /** マウスを乗せた所の予告の濃さ。 */
@@ -324,6 +326,17 @@ function BridgePosts({
 }
 
 /**
+ * 辺の橋を回した後の姿の予告が占める幅。チュートリアルの印を、予告の板の影に沿わせるのに使う。
+ * 1本・2本になるなら板の影の幅、なしになるなら今の板を覆う幅。
+ */
+export function getGhostBridgeWidth(current: BridgeCount): number {
+  const next = ((current + 1) % 3) as BridgeCount;
+  return next === 0
+    ? getFootprintHalfWidth(current) * 2 + REMOVAL_EXTRA_WIDTH
+    : getFootprintHalfWidth(next) * 2 + GHOST_EXTRA_WIDTH;
+}
+
+/**
  * 離せば・押せば回る辺の、回した後の姿の予告。
  * 1本・2本になるなら、その本数の板の影を半透明で置く。なしになるなら、今の板に海の色を重ねて薄める。
  */
@@ -342,7 +355,7 @@ function GhostBridge({
       <SegmentLine
         segment={segment}
         className={bridgesToneClassNames.guideRemoval}
-        strokeWidth={getFootprintHalfWidth(current) * 2 + 0.04}
+        strokeWidth={getFootprintHalfWidth(current) * 2 + REMOVAL_EXTRA_WIDTH}
         opacity={opacity}
       />
     );
