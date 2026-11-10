@@ -10,7 +10,6 @@ import type { BridgesDifficulty } from "@/games/bridges/difficulty";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import type { BridgesResult } from "@/games/bridges/play/use-bridges-play";
 import { BRIDGES_SCORE_MAXIMUMS } from "@/games/bridges/score";
-import { createBridgesOperationMetric } from "@/games/bridges/ui/result/BridgesResultScreen/operation-metric";
 import { getBridgesScoreCriteria } from "@/games/bridges/ui/result/BridgesResultScreen/score-criteria";
 import { getDifficultyLabel } from "@/games/difficulty";
 import type { GamePlayResultScreenProps } from "@/games/play";
@@ -21,7 +20,7 @@ type BridgesResultScreenProps = GamePlayResultScreenProps<
 >;
 
 /**
- * 内訳はこのプレイの点と操作の回数、基準時間だけにする。問題の作業の量（島・橋・読みの回数）は、
+ * 内訳はこのプレイの点と、点に入らない操作の回数だけにする。問題の作業の量（島・橋・読みの回数）は、
  * 成績と並べると自分の成績と読み違えられ、遊ぶ人が盤面から数えられない量も含むので示さない。
  * 基準時間が何から決まるかは採点基準の文で示す。
  */
@@ -31,7 +30,6 @@ function listScoreBreakdown(result: BridgesResult) {
     createOperationCountMetric("undo", result.undoCount),
     createOperationCountMetric("restart", result.restartCount),
     createCountMetric("交わる橋に阻まれた", result.blockedCount, "回"),
-    createSpeedFullScoreMetric(result.speedRule),
   ];
 }
 
@@ -48,10 +46,10 @@ export function BridgesResultScreen({
     <GameResultScreen
       gameName={BRIDGES_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      // 点は速さだけなので、主な成績は時間と、架けた・外した操作の回数を解に要る本数と比べたもの（差が架け直し）にする。
+      // 点は速さだけなので、主な成績は点を決める時間と基準時間だけにする。操作の回数を並べると、手数で採点するゲームと同じ形に見える。
       metrics={[
         createElapsedTimeMetric(result),
-        createBridgesOperationMetric(result),
+        createSpeedFullScoreMetric(result.speedRule),
       ]}
       score={result.score.total}
       scoreBreakdown={listScoreBreakdown(result)}

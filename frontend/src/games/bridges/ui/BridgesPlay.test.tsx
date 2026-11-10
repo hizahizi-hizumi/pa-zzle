@@ -172,19 +172,14 @@ describe("BridgesPlay", () => {
       expect(score.getByText("97点（100点満点）")).toBeTruthy();
     });
 
-    test("時間と基準時間との差・橋の操作と解に要る橋の本数との差を主な成績として表示すること", () => {
+    test("時間と基準時間との差・基準時間だけを主な成績として表示すること", () => {
       const terms = screen.getAllByRole("term").map((term) => term.textContent);
       const definitions = screen
         .getAllByRole("definition")
         .map((definition) => definition.textContent);
 
-      expect(terms).toEqual(["時間", "橋の操作"]);
-      expect(definitions).toEqual([
-        "03:26",
-        "基準差 +00:23",
-        "40回",
-        "最短差 +14",
-      ]);
+      expect(terms).toEqual(["時間", "基準時間"]);
+      expect(definitions).toEqual(["03:26", "基準差 +00:23", "03:03"]);
     });
 
     test("盤面を表示しないこと", () => {
@@ -213,7 +208,7 @@ describe("BridgesPlay", () => {
         fireEvent.click(screen.getByRole("button", { name: "採点内訳" }));
       });
 
-      test("速さの点と、待った・盤面を戻す・交わる橋に阻まれた回数・基準時間を内訳に表示すること", () => {
+      test("速さの点と、待った・盤面を戻す・交わる橋に阻まれた回数を内訳に表示すること", () => {
         const items = screen
           .getAllByRole("term")
           .map(
