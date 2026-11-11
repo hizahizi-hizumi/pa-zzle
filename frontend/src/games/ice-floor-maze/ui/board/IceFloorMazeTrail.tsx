@@ -3,7 +3,10 @@ import type { Ref } from "react";
 import type { IceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
 import { getIceFloorMazeCellCenter } from "@/games/ice-floor-maze/ui/board/board-geometry";
-import type { IceFloorMazeLook } from "@/games/ice-floor-maze/ui/board/ice-floor-maze-look";
+import {
+  hasKineticMotion,
+  type IceFloorMazeLook,
+} from "@/games/ice-floor-maze/ui/board/ice-floor-maze-look";
 import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 
 type IceFloorMazeTrailProps = {
@@ -58,48 +61,16 @@ export function IceFloorMazeTrail({
         rx={TRAIL_WIDTH / 2}
         className={iceFloorMazeToneClassNames.trail}
       />
-      {look === "penguin" ? (
-        <>
-          <line
-            data-penguin-slide-groove=""
-            x1={start.x}
-            y1={start.y}
-            x2={end.x}
-            y2={end.y}
-            strokeWidth="0.27"
-            strokeLinecap="round"
-          />
-          <line
-            data-penguin-slide-ridge=""
-            x1={start.x + (start.y === end.y ? 0 : 0.13)}
-            y1={start.y + (start.x === end.x ? 0 : 0.13)}
-            x2={end.x + (start.y === end.y ? 0 : 0.13)}
-            y2={end.y + (start.x === end.x ? 0 : 0.13)}
-            strokeWidth="0.028"
-            strokeLinecap="round"
-          />
-        </>
-      ) : look !== "current" ? (
-        <>
-          <line
-            data-ice-skate-mark=""
-            x1={start.x}
-            y1={start.y}
-            x2={end.x}
-            y2={end.y}
-            strokeWidth="0.046"
-            strokeLinecap="round"
-          />
-          <line
-            data-ice-skate-reflection=""
-            x1={start.x + (start.y === end.y ? 0 : 0.11)}
-            y1={start.y + (start.x === end.x ? 0 : 0.11)}
-            x2={end.x + (start.y === end.y ? 0 : 0.11)}
-            y2={end.y + (start.x === end.x ? 0 : 0.11)}
-            strokeWidth="0.018"
-            strokeLinecap="round"
-          />
-        </>
+      {hasKineticMotion(look) ? (
+        <line
+          data-glide-groove=""
+          x1={start.x}
+          y1={start.y}
+          x2={end.x}
+          y2={end.y}
+          strokeWidth=".027"
+          strokeLinecap="round"
+        />
       ) : null}
     </g>
   );

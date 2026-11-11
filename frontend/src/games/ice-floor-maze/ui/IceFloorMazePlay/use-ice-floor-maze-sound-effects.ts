@@ -18,6 +18,7 @@ import {
   getIceFloorMazeSlideDurationMs,
   getIceFloorMazeSlideProgressMs,
   getIceFloorMazeSnowPushDelayMs,
+  type IceFloorMazeSlideTempo,
 } from "@/games/ice-floor-maze/ui/board/slide-timing";
 import type { GameProgress } from "@/games/play";
 import {
@@ -95,12 +96,16 @@ const iceFloorMazeSounds: readonly SoundEffect[] = [
  * 動きを減らす設定では駒が終点へ飛び、変わったマスも変わった後の姿ですぐ描かれるので、
  * 滑る音とゴールの通過の音は鳴らさず、止まり方の音と、割れた薄い氷の音1つだけをすぐ鳴らす。
  */
-function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
+function playSlideSounds(
+  slide: IceFloorMazeLastSlide,
+  goal: number,
+  tempo: IceFloorMazeSlideTempo,
+) {
   const reducedMotion = prefersReducedMotion();
   const distance = slide.path.length;
   const stopDelayMs = reducedMotion
     ? 0
-    : getIceFloorMazeSlideDurationMs(distance);
+    : getIceFloorMazeSlideDurationMs(distance, tempo);
 
   if (!reducedMotion) {
     playSound(slidSound, { variation: REPEATED_SOUND_VARIATION });
@@ -109,6 +114,7 @@ function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
         delayMs: getIceFloorMazeSlideProgressMs(
           distance,
           slide.path.indexOf(goal) + 1,
+          tempo,
         ),
       });
     }
@@ -117,14 +123,14 @@ function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
     playSound(rockCrumbledSound, { delayMs: stopDelayMs });
   } else if (slide.pushedSnow) {
     playSound(snowPushedSound, {
-      delayMs: reducedMotion ? 0 : getIceFloorMazeSnowPushDelayMs(slide),
+      delayMs: reducedMotion ? 0 : getIceFloorMazeSnowPushDelayMs(slide, tempo),
     });
   } else if (slide.movedBlock) {
     playSound(blockStoppedSound, {
       delayMs: reducedMotion
         ? 0
         : Math.max(
-            getIceFloorMazeBlockContactMs(slide, slide.movedBlock.from),
+            getIceFloorMazeBlockContactMs(slide, slide.movedBlock.from, tempo),
             stopDelayMs - BLOCK_STOPPED_SOUND_LEAD_MS,
           ),
     });
@@ -138,7 +144,9 @@ function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
     ? slide.crackedIce.length > 0
       ? [0]
       : []
-    : slide.crackedIce.map((cell) => getIceFloorMazeCrackDelayMs(slide, cell));
+    : slide.crackedIce.map((cell) =>
+        getIceFloorMazeCrackDelayMs(slide, cell, tempo),
+      );
   for (const delayMs of crackDelaysMs) {
     playSound(iceCrackedSound, {
       delayMs,
@@ -164,10 +172,11 @@ export function useIceFloorMazeSoundEffects(
   blockedInput: IceFloorMazeBlockedInput | null,
   goal: number,
   progress: GameProgress,
+  tempo: IceFloorMazeSlideTempo = "standard",
 ) {
   usePrepareSoundEffects(iceFloorMazeSounds);
   useOperationSound(lastSlide, function playSlideOperationSounds(slide) {
-    playSlideSounds(slide, goal);
+    playSlideSounds(slide, goal, tempo);
   });
   useOperationSound(blockedInput, playBlockedSound);
   useClearSound(
@@ -176,7 +185,7 @@ export function useIceFloorMazeSoundEffects(
       // 完成演出の輪は、駒がゴールに滑り着いてから広がる。
       playSound(clearedSound, {
         delayMs: lastSlide?.isClearingMove
-          ? getIceFloorMazeSlideDurationMs(lastSlide.path.length)
+          ? getIceFloorMazeSlideDurationMs(lastSlide.path.length, tempo)
           : 0,
       });
     },

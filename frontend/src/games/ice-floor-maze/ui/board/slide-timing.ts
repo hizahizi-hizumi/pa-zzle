@@ -2,20 +2,32 @@
  * 滑りは距離に比例する時間で、等速で動かす。長い滑りでも途中のマスが描かれ、ゴールの通過が動きから読める。
  * 上限は12×14の盤面の最も長い滑り（13マス）が収まる長さに近く、それより長い滑りでもこれを超えない。
  */
+export type IceFloorMazeSlideTempo = "standard" | "flow";
+
+const FLOW_BASE_MS = 70;
+const FLOW_PER_CELL_MS = 45;
+const FLOW_MAX_MS = 540;
+
 const SLIDE_BASE_MS = 45;
 const SLIDE_PER_CELL_MS = 32;
 const SLIDE_MAX_MS = 400;
 
-export function getIceFloorMazeSlideDurationMs(distance: number): number {
-  return Math.min(SLIDE_MAX_MS, SLIDE_BASE_MS + SLIDE_PER_CELL_MS * distance);
+export function getIceFloorMazeSlideDurationMs(
+  distance: number,
+  tempo: IceFloorMazeSlideTempo = "standard",
+): number {
+  return tempo === "flow"
+    ? Math.min(FLOW_MAX_MS, FLOW_BASE_MS + FLOW_PER_CELL_MS * distance)
+    : Math.min(SLIDE_MAX_MS, SLIDE_BASE_MS + SLIDE_PER_CELL_MS * distance);
 }
 
 /** 滑り始めてから、駒が出発マスから `cells` マス進んだ位置に着くまでの時間。滑りは等速なので距離に比例する。 */
 export function getIceFloorMazeSlideProgressMs(
   distance: number,
   cells: number,
+  tempo: IceFloorMazeSlideTempo = "standard",
 ): number {
-  return (getIceFloorMazeSlideDurationMs(distance) * cells) / distance;
+  return (getIceFloorMazeSlideDurationMs(distance, tempo) * cells) / distance;
 }
 
 /**
@@ -25,18 +37,22 @@ export function getIceFloorMazeSlideProgressMs(
 export function getIceFloorMazeCrackDelayMs(
   { from, path }: { from: number; path: readonly number[] },
   cellIndex: number,
+  tempo: IceFloorMazeSlideTempo = "standard",
 ): number {
   const cellsFromStart = cellIndex === from ? 0 : path.indexOf(cellIndex) + 1;
-  return getIceFloorMazeSlideProgressMs(path.length, cellsFromStart + 0.5);
+  return getIceFloorMazeSlideProgressMs(
+    path.length,
+    cellsFromStart + 0.5,
+    tempo,
+  );
 }
 
 /** 滑りで雪を押し出し始める時刻。駒が雪のマスに入り始める、最後の1マスを進み始めた時刻とする。 */
-export function getIceFloorMazeSnowPushDelayMs({
-  path,
-}: {
-  path: readonly number[];
-}): number {
-  return getIceFloorMazeSlideProgressMs(path.length, path.length - 1);
+export function getIceFloorMazeSnowPushDelayMs(
+  { path }: { path: readonly number[] },
+  tempo: IceFloorMazeSlideTempo = "standard",
+): number {
+  return getIceFloorMazeSlideProgressMs(path.length, path.length - 1, tempo);
 }
 
 /**
@@ -46,6 +62,11 @@ export function getIceFloorMazeSnowPushDelayMs({
 export function getIceFloorMazeBlockContactMs(
   { path }: { path: readonly number[] },
   blockFrom: number,
+  tempo: IceFloorMazeSlideTempo = "standard",
 ): number {
-  return getIceFloorMazeSlideProgressMs(path.length, path.indexOf(blockFrom));
+  return getIceFloorMazeSlideProgressMs(
+    path.length,
+    path.indexOf(blockFrom),
+    tempo,
+  );
 }

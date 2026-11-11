@@ -8,6 +8,7 @@ import {
   getIceFloorMazeBlockContactMs,
   getIceFloorMazeSlideDurationMs,
   getIceFloorMazeSnowPushDelayMs,
+  type IceFloorMazeSlideTempo,
 } from "@/games/ice-floor-maze/ui/board/slide-timing";
 import { MOTION_EASING } from "@/lib/motion";
 
@@ -30,6 +31,7 @@ export function animateIceFloorMazeMovedElements(
   svg: SVGSVGElement | null,
   slide: IceFloorMazeLastSlide,
   board: IceFloorMazeBoard,
+  tempo: IceFloorMazeSlideTempo = "standard",
 ): Animation[] {
   if (!svg) {
     return [];
@@ -51,7 +53,9 @@ export function animateIceFloorMazeMovedElements(
           ],
           {
             duration: MOUND_RISE_DURATION_MS,
-            delay: getIceFloorMazeSnowPushDelayMs(slide) + MOUND_RISE_DELAY_MS,
+            delay:
+              getIceFloorMazeSnowPushDelayMs(slide, tempo) +
+              MOUND_RISE_DELAY_MS,
             easing: MOTION_EASING.enter,
             fill: "backwards",
           },
@@ -65,8 +69,12 @@ export function animateIceFloorMazeMovedElements(
     );
     const from = getIceFloorMazeCellCenter(board, movedBlock.from);
     const to = getIceFloorMazeCellCenter(board, movedBlock.to);
-    const contactMs = getIceFloorMazeBlockContactMs(slide, movedBlock.from);
-    const stopMs = getIceFloorMazeSlideDurationMs(slide.path.length);
+    const contactMs = getIceFloorMazeBlockContactMs(
+      slide,
+      movedBlock.from,
+      tempo,
+    );
+    const stopMs = getIceFloorMazeSlideDurationMs(slide.path.length, tempo);
     const vector = iceFloorMazeDirectionVectors[slide.direction];
     const squashX = vector.x === 0 ? BLOCK_STOP_STRETCH : BLOCK_STOP_SQUASH;
     const squashY = vector.y === 0 ? BLOCK_STOP_STRETCH : BLOCK_STOP_SQUASH;

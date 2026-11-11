@@ -15,7 +15,7 @@ import {
   useIceFloorMazeCellClipIds,
 } from "@/games/ice-floor-maze/ui/board/IceFloorMazeCellClipPaths";
 import { IceFloorMazeCellFace } from "@/games/ice-floor-maze/ui/board/IceFloorMazeCellFace";
-import type { IceFloorMazeLook } from "@/games/ice-floor-maze/ui/board/ice-floor-maze-look";
+import type { IceFloorMazeSlideTempo } from "@/games/ice-floor-maze/ui/board/slide-timing";
 import {
   getIceFloorMazeCrackDelayMs,
   getIceFloorMazeSlideDurationMs,
@@ -25,7 +25,7 @@ import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-
 import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 
 type IceFloorMazeCellChangesProps = {
-  look?: IceFloorMazeLook;
+  tempo?: IceFloorMazeSlideTempo;
   board: IceFloorMazeBoard;
   /** 直前の滑り。滑りごとに描き直す（`key` に滑りの `id` を渡す）。 */
   slide: IceFloorMazeLastSlide;
@@ -51,7 +51,7 @@ const SNOW_PUSH_DURATION_MS = 180;
 export function IceFloorMazeCellChanges({
   board,
   slide,
-  look = "current",
+  tempo = "standard",
 }: IceFloorMazeCellChangesProps) {
   const layerRef = useRef<SVGGElement>(null);
   const clipIds = useIceFloorMazeCellClipIds();
@@ -63,13 +63,13 @@ export function IceFloorMazeCellChanges({
       return;
     }
 
-    const animations = animateCellChanges(layer, slide);
+    const animations = animateCellChanges(layer, slide, tempo);
     return () => {
       for (const animation of animations) {
         animation.cancel();
       }
     };
-  }, [slide]);
+  }, [slide, tempo]);
 
   return (
     <g ref={layerRef}>
@@ -80,11 +80,7 @@ export function IceFloorMazeCellChanges({
           opacity={0}
           transform={formatCellTransform(board, crumbledRock)}
         >
-          <IceFloorMazeCellFace
-            kind="brittle-rock"
-            clipIds={clipIds}
-            look={look}
-          />
+          <IceFloorMazeCellFace kind="brittle-rock" clipIds={clipIds} />
         </g>
       )}
       {crackedIce.map((cellIndex) => (
@@ -104,7 +100,7 @@ export function IceFloorMazeCellChanges({
             className={iceFloorMazeToneClassNames.wave}
             style={{ transformBox: "fill-box", transformOrigin: "center" }}
           />
-          <IceFloorMazeCellFace kind="thin-ice" clipIds={clipIds} look={look} />
+          <IceFloorMazeCellFace kind="thin-ice" clipIds={clipIds} />
         </g>
       ))}
       {pushedSnow ? (
@@ -136,11 +132,12 @@ function formatCellTransform(
 function animateCellChanges(
   layer: SVGGElement,
   slide: IceFloorMazeLastSlide,
+  tempo: IceFloorMazeSlideTempo,
 ): Animation[] {
   const animations: (Animation | undefined)[] = [];
   const crumbling = layer.querySelector<SVGGElement>("[data-crumbling-rock]");
   if (crumbling) {
-    const delay = getIceFloorMazeSlideDurationMs(slide.path.length);
+    const delay = getIceFloorMazeSlideDurationMs(slide.path.length, tempo);
     const push = iceFloorMazeDirectionVectors[slide.direction];
     animations.push(keepVisible(crumbling, delay + CRUMBLE_DURATION_MS));
     for (const half of crumbling.querySelectorAll<SVGGElement>(
@@ -182,6 +179,7 @@ function animateCellChanges(
     const delay = getIceFloorMazeCrackDelayMs(
       slide,
       Number(cracking.dataset.crackingIce),
+      tempo,
     );
     animations.push(
       keepVisible(cracking, delay + RIPPLE_DELAY_MS + RIPPLE_DURATION_MS),
@@ -234,7 +232,7 @@ function animateCellChanges(
 
   const pushedSnow = layer.querySelector<SVGGElement>("[data-pushed-snow]");
   if (pushedSnow) {
-    const delay = getIceFloorMazeSnowPushDelayMs(slide);
+    const delay = getIceFloorMazeSnowPushDelayMs(slide, tempo);
     const push = iceFloorMazeDirectionVectors[slide.direction];
     // 押す向きには縮め、横にはわずかに広げて、押し寄せられた雪に見せる。
     const squeezeX = push.x === 0 ? 1.05 : 0.6;

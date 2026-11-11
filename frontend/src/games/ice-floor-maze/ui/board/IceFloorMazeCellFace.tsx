@@ -17,7 +17,6 @@ import {
   iceFloorMazeSnowMoundPath,
 } from "@/games/ice-floor-maze/ui/board/cell-shapes";
 import type { IceFloorMazeCellClipIds } from "@/games/ice-floor-maze/ui/board/IceFloorMazeCellClipPaths";
-import type { IceFloorMazeLook } from "@/games/ice-floor-maze/ui/board/ice-floor-maze-look";
 import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 
 /**
@@ -41,7 +40,6 @@ const brittleRockTones = {
 type IceFloorMazeCellFaceProps = {
   kind: IceFloorMazeCellFaceKind;
   clipIds: IceFloorMazeCellClipIds;
-  look?: IceFloorMazeLook;
 };
 
 const slidingBlockTones = {
@@ -66,11 +64,10 @@ const SLIDING_BLOCK_EDGE_WIDTH = 0.045;
 export function IceFloorMazeCellFace({
   kind,
   clipIds,
-  look = "current",
 }: IceFloorMazeCellFaceProps) {
   switch (kind) {
     case "rock":
-      return renderRockBlock(rockTones, iceFloorMazeRockShape, look);
+      return renderRockBlock(rockTones, iceFloorMazeRockShape);
     case "brittle-rock":
       return (
         <>
@@ -81,7 +78,7 @@ export function IceFloorMazeCellFace({
               clipPath={`url(#${clipId})`}
               style={{ transformBox: "fill-box", transformOrigin: "center" }}
             >
-              {renderRockBlock(brittleRockTones, iceFloorMazeRockShape, look)}
+              {renderRockBlock(brittleRockTones, iceFloorMazeRockShape)}
             </g>
           ))}
         </>
@@ -179,11 +176,7 @@ export function IceFloorMazeCellFace({
     case "sliding-block":
       return (
         <>
-          {renderRockBlock(
-            slidingBlockTones,
-            iceFloorMazeSlidingBlockShape,
-            look,
-          )}
+          {renderRockBlock(slidingBlockTones, iceFloorMazeSlidingBlockShape)}
           <path
             d={iceFloorMazeSlidingBlockEdgePath}
             fill="none"
@@ -213,38 +206,7 @@ function renderRockBlock(
     shadowDepth,
     cornerRadius,
   }: typeof iceFloorMazeRockShape | typeof iceFloorMazeSlidingBlockShape,
-  look: IceFloorMazeLook,
 ) {
-  if (look !== "current" && tones !== slidingBlockTones) {
-    return (
-      <>
-        <path
-          data-stone-shadow=""
-          d="M .19 .15 L .78 .15 Q .9 .15 .9 .29 L .89 .78 L .76 .95 L .2 .94 L .08 .79 L .08 .29 Q .08 .15 .19 .15 Z"
-        />
-        <path
-          data-stone-body=""
-          d="M .18 .085 L .77 .085 L .91 .205 L .91 .73 L .77 .87 L .2 .87 L .075 .73 L .075 .225 Z"
-        />
-        <path
-          data-stone-top=""
-          d="M .18 .085 L .77 .085 L .91 .205 L .80 .285 L .22 .285 L .075 .225 Z"
-        />
-        <path
-          data-stone-right=""
-          d="M .80 .285 L .91 .205 L .91 .73 L .77 .87 L .78 .35 Z"
-        />
-        <path
-          data-stone-chisel=""
-          d="M .16 .37 L .2 .77 L .69 .79"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth=".025"
-        />
-      </>
-    );
-  }
   return (
     <>
       <rect

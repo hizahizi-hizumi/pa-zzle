@@ -8,7 +8,7 @@ Biome、Tailwind CSS、shadcn/ui の設定と既存 UI 部品は、後続実装�
 
 ## セットアップ
 
-Bun はリポジトリルートの `.bun-version` に固定している。
+Bun のバージョンは `package.json` の `packageManager` に固定している。GitHub Actions・Cloudflare Workers Builds・オフライン依存生成は同じ値を使う。
 Node はリポジトリルートの `.node-version` にメジャーバージョンを固定している。ChatGPT実行環境の Node に合わせるため、その環境が上がるまで変えない。
 
 ```sh
@@ -33,6 +33,7 @@ Cloudflare 側では GitHub リポジトリを接続し、次のビルド設定�
 - Deploy command: `npx wrangler@4.132.0 deploy`
 - Non-production branch deploy command: `npx wrangler@4.132.0 versions upload`
 - Non-production branch builds: 有効
+- Build Variables and Secrets に `BUN_VERSION` を設定しない（`packageManager` を唯一の指定元とする）。本番とプレビューの両方で確認する。
 
 非本番ブランチのビルドでは、Cloudflare の GitHub 連携がPRへプレビューURLを投稿する。プレビューURLは `wrangler.jsonc` で明示的に有効化している。
 

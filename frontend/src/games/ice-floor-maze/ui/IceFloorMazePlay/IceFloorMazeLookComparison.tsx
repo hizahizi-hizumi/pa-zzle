@@ -4,23 +4,26 @@ import type { IceFloorMazeLook } from "@/games/ice-floor-maze/ui/board/ice-floor
 type IceFloorMazeLookComparisonProps = {
   value: IceFloorMazeLook;
   onChange: (value: IceFloorMazeLook) => void;
+  disabled?: boolean;
 };
 
-/** 比較中も盤面・手数・経過時間は引き継ぎ、表現の違いだけを確かめる。 */
+/** 同じ盤面と手数を維持して、動き・衝突・一体化の違いを遊びながら比べる。 */
 export function IceFloorMazeLookComparison({
   value,
   onChange,
+  disabled = false,
 }: IceFloorMazeLookComparisonProps) {
   return (
     <ToggleGroup
       type="single"
+      disabled={disabled}
       value={value}
       onValueChange={(nextValue) => {
         if (
           nextValue === "current" ||
-          nextValue === "glacier" ||
-          nextValue === "aurora" ||
-          nextValue === "penguin"
+          nextValue === "kinetic" ||
+          nextValue === "terrain" ||
+          nextValue === "unified"
         ) {
           onChange(nextValue);
         }
@@ -33,14 +36,14 @@ export function IceFloorMazeLookComparison({
       <ToggleGroupItem value="current" aria-label="現行の盤面">
         現行
       </ToggleGroupItem>
-      <ToggleGroupItem value="glacier" aria-label="氷晶の盤面">
-        氷晶
-      </ToggleGroupItem>
-      <ToggleGroupItem value="aurora" aria-label="滑走の盤面">
+      <ToggleGroupItem value="kinetic" aria-label="滑走の手触り">
         滑走
       </ToggleGroupItem>
-      <ToggleGroupItem value="penguin" aria-label="ペンギンの氷原">
-        氷原
+      <ToggleGroupItem value="terrain" aria-label="地形の反応">
+        接触
+      </ToggleGroupItem>
+      <ToggleGroupItem value="unified" aria-label="滑走と接触の統合">
+        統合
       </ToggleGroupItem>
     </ToggleGroup>
   );

@@ -14,7 +14,10 @@ import type { IceFloorMazeBoard as IceFloorMazeBoardState } from "@/games/ice-fl
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
 import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
-import type { IceFloorMazeLook } from "@/games/ice-floor-maze/ui/board/ice-floor-maze-look";
+import {
+  getIceFloorMazeSlideTempo,
+  type IceFloorMazeLook,
+} from "@/games/ice-floor-maze/ui/board/ice-floor-maze-look";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
 import { IceFloorMazeLookComparison } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeLookComparison";
 import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeSwipeArea";
@@ -89,7 +92,13 @@ export function IceFloorMazePlay({
   const playAreaRef = useRef<HTMLElement>(null);
   const [slideAnimating, setSlideAnimating] = useState(false);
   const playing = progress === "playing";
-  useIceFloorMazeSoundEffects(lastSlide, blockedInput, goal, progress);
+  useIceFloorMazeSoundEffects(
+    lastSlide,
+    blockedInput,
+    goal,
+    progress,
+    getIceFloorMazeSlideTempo(comparingLooks ? look : "current"),
+  );
   // 知らせ始める滑りでは、駒が滑り着いてから知らせる。知らせた後の滑りでは知らせを出したままにする。
   const showTrappedNotice =
     isTrapped && !(slideAnimating && lastSlide?.entersTrap === true);
@@ -135,19 +144,7 @@ export function IceFloorMazePlay({
       progress={progress}
       result={result}
       title={ICE_FLOOR_MAZE_DISPLAY_NAME}
-      background={
-        <div
-          className={
-            comparingLooks && look === "glacier"
-              ? "size-full bg-[#dcecf0] dark:bg-[#183745]"
-              : comparingLooks && look === "aurora"
-                ? "size-full bg-[#d3e1e9] dark:bg-[#112838]"
-                : comparingLooks && look === "penguin"
-                  ? "size-full bg-[#e0f1ef] dark:bg-[#143443]"
-                  : "size-full bg-[#e7eef3] dark:bg-[#202c35]"
-          }
-        />
-      }
+      background={<div className="size-full bg-[#e7eef3] dark:bg-[#202c35]" />}
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },
@@ -192,7 +189,11 @@ export function IceFloorMazePlay({
         </main>
         <footer className="grid h-28 shrink-0 content-end justify-items-center gap-2 px-4 pb-2">
           {comparingLooks && playing ? (
-            <IceFloorMazeLookComparison value={look} onChange={setLook} />
+            <IceFloorMazeLookComparison
+              value={look}
+              onChange={setLook}
+              disabled={slideAnimating}
+            />
           ) : null}
           {showTrappedNotice ? (
             <IceFloorMazeTrappedNotice

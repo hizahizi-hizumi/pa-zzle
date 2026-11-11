@@ -17,9 +17,11 @@ from pathlib import Path
 from typing import Final, Self
 
 ARTIFACT_PREFIX: Final = "offline-dependencies-"
+BUN_PACKAGE_PATH: Final = "frontend/package.json"
+BUN_VERSION_INPUT: Final = "frontend/package.json#packageManager"
 INPUT_PATHS: Final = (
     ".github/actions/offline-dependencies/inputs.env",
-    ".bun-version",
+    BUN_VERSION_INPUT,
     ".node-version",
     "frontend/bun.lock",
 )
@@ -42,8 +44,33 @@ def compute_key(contents: dict[str, bytes]) -> str:
     return digest.hexdigest()
 
 
+def declared_bun_version(package_json: bytes) -> str | None:
+    try:
+        package = json.loads(package_json)
+    except (ValueError, UnicodeError) as error:
+        raise StateError("frontend/package.json is invalid") from error
+    if not isinstance(package, dict):
+        raise StateError("frontend/package.json must be an object")
+    manager = package.get("packageManager")
+    if manager is None:
+        return None
+    if not isinstance(manager, str) or not re.fullmatch(r"bun@[0-9]+\.[0-9]+\.[0-9]+", manager):
+        raise StateError("frontend/package.json must specify an exact bun@x.y.z packageManager")
+    return manager.removeprefix("bun@")
+
+
+def bun_version_bytes(package_json: bytes) -> bytes | None:
+    version = declared_bun_version(package_json)
+    return None if version is None else f"{version}\n".encode()
+
+
 def read_repository_inputs(repo_root: Path) -> dict[str, bytes]:
-    return {path: (repo_root / path).read_bytes() for path in INPUT_PATHS}
+    inputs = {path: (repo_root / path).read_bytes() for path in INPUT_PATHS if path != BUN_VERSION_INPUT}
+    version = bun_version_bytes((repo_root / BUN_PACKAGE_PATH).read_bytes())
+    if version is None:
+        raise StateError("frontend/package.json has no packageManager")
+    inputs[BUN_VERSION_INPUT] = version
+    return inputs
 
 
 def compute_repository_key(repo_root: Path) -> str:
@@ -281,23 +308,33 @@ class GitHubClient:
                 return pull_requests
             page += 1
 
+    def ref_file_contents(self, ref: str, path: str) -> bytes | None:
+        encoded_path = urllib.parse.quote(path, safe="/")
+        encoded_ref = urllib.parse.quote(ref, safe="")
+        try:
+            data = self._request_json(f"/repos/{self.repository}/contents/{encoded_path}?ref={encoded_ref}")
+        except urllib.error.HTTPError as error:
+            if error.code == HTTP_NOT_FOUND:
+                return None
+            raise
+        if not isinstance(data, dict) or data.get("encoding") != "base64":
+            raise StateError(f"unexpected content response for {path} at {ref}")
+        raw = data.get("content")
+        if not isinstance(raw, str):
+            raise StateError(f"content is missing for {path} at {ref}")
+        return base64.b64decode(raw)
+
     def ref_key(self, ref: str) -> str | None:
         contents: dict[str, bytes] = {}
         for path in INPUT_PATHS:
-            encoded_path = urllib.parse.quote(path, safe="/")
-            encoded_ref = urllib.parse.quote(ref, safe="")
-            try:
-                data = self._request_json(f"/repos/{self.repository}/contents/{encoded_path}?ref={encoded_ref}")
-            except urllib.error.HTTPError as error:
-                if error.code == HTTP_NOT_FOUND:
-                    return None
-                raise
-            if not isinstance(data, dict) or data.get("encoding") != "base64":
-                raise StateError(f"unexpected content response for {path} at {ref}")
-            raw_content = data.get("content")
-            if not isinstance(raw_content, str):
-                raise StateError(f"content is missing for {path} at {ref}")
-            contents[path] = base64.b64decode(raw_content)
+            if path == BUN_VERSION_INPUT:
+                package_json = self.ref_file_contents(ref, BUN_PACKAGE_PATH)
+                raw = bun_version_bytes(package_json) if package_json is not None else None
+            else:
+                raw = self.ref_file_contents(ref, path)
+            if raw is None:
+                return None
+            contents[path] = raw
         return compute_key(contents)
 
     def artifacts(self) -> list[Artifact]:
@@ -428,16 +465,17 @@ def command_replace_current(repo_root: Path) -> None:
             client.delete_artifact(artifact.artifact_id)
 
 
-def command_prune(repo_root: Path, *, inactive_only: bool) -> None:
+def command_prune(repo_root: Path, *, inactive_only: bool, planned_keys: str | None) -> None:
     client = client_from_environment()
-    current_pr_raw = os.environ.get("PR_NUMBER", "")
-    current_pr_number = int(current_pr_raw) if current_pr_raw else None
-    current_key = compute_repository_key(repo_root) if current_pr_number is not None else None
-    keys = active_keys(
-        client,
-        current_pr_number=current_pr_number,
-        current_key=current_key,
-    )
+    if planned_keys is None:
+        current_pr_raw = os.environ.get("PR_NUMBER", "")
+        current_pr_number = int(current_pr_raw) if current_pr_raw else None
+        current_key = compute_repository_key(repo_root) if current_pr_number is not None else None
+        keys = active_keys(client, current_pr_number=current_pr_number, current_key=current_key)
+    else:
+        keys = set(planned_keys.split(","))
+        if any(not re.fullmatch(r"[0-9a-f]{64}", key) for key in keys):
+            raise StateError("invalid planned active dependency keys")
     artifacts = client.artifacts()
     ids = deletion_ids(artifacts, keys, inactive_only=inactive_only)
     for artifact_id in ids:
@@ -448,14 +486,20 @@ def command_prune(repo_root: Path, *, inactive_only: bool) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("key", "plan", "prune", "replace-current", "resolve"))
+    parser.add_argument("command", choices=("bun-version", "key", "plan", "prune", "replace-current", "resolve"))
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--inactive-only", action="store_true")
+    parser.add_argument("--planned-keys")
     args = parser.parse_args()
 
     try:
         repo_root = args.repo_root.resolve()
-        if args.command == "key":
+        if args.command == "bun-version":
+            version = declared_bun_version((repo_root / BUN_PACKAGE_PATH).read_bytes())
+            if version is None:
+                raise StateError("frontend/package.json has no packageManager")
+            print(version)
+        elif args.command == "key":
             print(compute_repository_key(repo_root))
         elif args.command == "plan":
             command_plan(repo_root)
@@ -464,7 +508,7 @@ def main() -> None:
         elif args.command == "resolve":
             command_resolve(repo_root)
         else:
-            command_prune(repo_root, inactive_only=args.inactive_only)
+            command_prune(repo_root, inactive_only=args.inactive_only, planned_keys=args.planned_keys)
     except (StateError, OSError, urllib.error.HTTPError, urllib.error.URLError) as error:
         print(f"offline-dependencies: {error}", file=sys.stderr)
         raise SystemExit(1) from error

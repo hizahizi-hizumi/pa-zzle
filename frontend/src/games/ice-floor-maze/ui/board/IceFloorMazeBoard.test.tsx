@@ -711,8 +711,403 @@ describe("IceFloorMazeBoard", () => {
     });
   });
 
-  describe("現行・氷晶・滑走・氷原の表現を比較する場合", () => {
-    function renderLook(look: "current" | "glacier" | "aurora" | "penguin") {
+  describe("止め石と外壁で止まる滑走の比較", () => {
+    const contactBoard = parseIceFloorMazeBoard(["....#", "....."]);
+    const slideIntoRock: IceFloorMazeLastSlide = {
+      ...lastSlide,
+      from: 0,
+      to: 3,
+      path: [1, 2, 3],
+    };
+    let animate: Mock;
+
+    beforeEach(() => {
+      animate = vi.fn(
+        () =>
+          ({
+            finished: new Promise<void>(() => {}),
+            cancel: vi.fn(),
+          }) as unknown as Animation,
+      );
+      Object.defineProperty(Element.prototype, "animate", {
+        configurable: true,
+        value: animate,
+      });
+    });
+
+    function drawLook(look: "current" | "kinetic" | "terrain" | "unified") {
+      render(
+        <IceFloorMazeBoard
+          look={look}
+          board={contactBoard}
+          cells={listInitialCells(contactBoard)}
+          blocks={[]}
+          goal={9}
+          position={3}
+          lastSlide={slideIntoRock}
+          blockedInput={null}
+          clearing={false}
+          onSlideAnimationActivityChange={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+    }
+
+    test("現行案では止め石の移動を演出しないこと", () => {
+      drawLook("current");
+
+      const animatedRocks = animate.mock.contexts.filter((element) =>
+        (element as Element).closest('[data-rock-cell="4"]'),
+      );
+
+      expect(animatedRocks).toHaveLength(0);
+    });
+
+    test("滑走案では駒が滑っている間だけ伸び、止め石は揺らさないこと", () => {
+      drawLook("kinetic");
+
+      const puck = screen
+        .getByRole("img", { name: "盤面" })
+        .querySelector("[data-glide-puck]");
+      const stretched = animate.mock.contexts.includes(puck);
+      const rockAnimations = animate.mock.contexts.filter((element) =>
+        (element as Element).closest('[data-rock-cell="4"]'),
+      );
+
+      expect(stretched).toBe(true);
+      expect(rockAnimations).toHaveLength(0);
+    });
+
+    const stretchCases = [
+      {
+        distance: 1,
+        from: 2,
+        path: [3],
+        expected: "scale(1.047, 0.979)",
+      },
+      {
+        distance: 3,
+        from: 0,
+        path: [1, 2, 3],
+        expected: "scale(1.071, 0.967)",
+      },
+    ] as const;
+
+    test.each(stretchCases)(
+      "$distanceマス滑走中の伸縮は距離に応じて変わること",
+      ({ from, path, expected }) => {
+        render(
+          <IceFloorMazeBoard
+            look="kinetic"
+            board={contactBoard}
+            cells={listInitialCells(contactBoard)}
+            blocks={[]}
+            goal={9}
+            position={3}
+            lastSlide={{ ...slideIntoRock, from, path }}
+            blockedInput={null}
+            clearing={false}
+            onSlideAnimationActivityChange={vi.fn()}
+            onClearAnimationComplete={vi.fn()}
+          />,
+        );
+        const puck = screen
+          .getByRole("img", { name: "盤面" })
+          .querySelector("[data-glide-puck]");
+        const index = animate.mock.contexts.indexOf(puck);
+        const frames = animate.mock.calls[index]?.[0] as Keyframe[];
+
+        expect(frames[1]?.transform).toBe(expected);
+      },
+    );
+
+    test("長距離の滑走でも駒の伸縮と余光が40ms以内に立ち上がり停止直前に収まること", () => {
+      const longBoard = parseIceFloorMazeBoard([
+        "............",
+        "............",
+      ]);
+      render(
+        <IceFloorMazeBoard
+          look="kinetic"
+          board={longBoard}
+          cells={listInitialCells(longBoard)}
+          blocks={[]}
+          goal={23}
+          position={11}
+          lastSlide={{
+            ...slideIntoRock,
+            to: 11,
+            path: Array.from({ length: 11 }, (_, i) => i + 1),
+          }}
+          blockedInput={null}
+          clearing={false}
+          onSlideAnimationActivityChange={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+
+      const puck = screen
+        .getByRole("img", { name: "盤面" })
+        .querySelector("[data-glide-puck]");
+      const wake = screen
+        .getByRole("img", { name: "盤面" })
+        .querySelector("[data-slide-wake]");
+      const puckAnimationIndex = animate.mock.contexts.indexOf(puck);
+      const wakeAnimationIndex = animate.mock.contexts.indexOf(wake);
+      const frames = animate.mock.calls[puckAnimationIndex]?.[0] as Keyframe[];
+      const wakeFrames = animate.mock.calls[
+        wakeAnimationIndex
+      ]?.[0] as Keyframe[];
+      const options = animate.mock.calls[
+        puckAnimationIndex
+      ]?.[1] as KeyframeAnimationOptions;
+      const duration = options.duration as number;
+
+      expect(duration).toBe(540);
+      expect((frames[1]?.offset ?? 1) * duration).toBeLessThanOrEqual(40);
+      expect((1 - (frames[2]?.offset ?? 0)) * duration).toBeLessThanOrEqual(
+        40.01,
+      );
+      expect(wakeFrames[1]?.offset).toBe(frames[1]?.offset);
+      expect(wakeFrames[2]?.offset).toBe(frames[2]?.offset);
+    });
+
+    test("接触案では止め石を動かさず、当たった面にだけ光が走ること", () => {
+      drawLook("terrain");
+
+      const image = screen.getByRole("img", { name: "盤面" });
+      const contact = image.querySelector("[data-stop-contact]");
+      const contactIndex = animate.mock.contexts.indexOf(contact);
+      const options = animate.mock.calls[
+        contactIndex
+      ]?.[1] as KeyframeAnimationOptions;
+      const movedRocks = animate.mock.contexts.filter((element) =>
+        (element as Element).closest('[data-rock-cell="4"]'),
+      );
+
+      expect(contact).not.toBeNull();
+      expect(contact?.getAttribute("opacity")).toBe("0");
+      expect(contact?.parentElement?.getAttribute("transform")).toContain(
+        "rotate(0)",
+      );
+      expect(options.delay).toBe(141);
+      expect(movedRocks).toHaveLength(0);
+    });
+
+    test("外壁で止まる滑走は壁の境界面だけが反応すること", () => {
+      const outerWallBoard = parseIceFloorMazeBoard(["....", "...."]);
+      render(
+        <IceFloorMazeBoard
+          look="unified"
+          board={outerWallBoard}
+          cells={listInitialCells(outerWallBoard)}
+          blocks={[]}
+          goal={7}
+          position={3}
+          lastSlide={slideIntoRock}
+          blockedInput={null}
+          clearing={false}
+          onSlideAnimationActivityChange={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+
+      const image = screen.getByRole("img", { name: "盤面" });
+      const contact = image.querySelector('[data-stop-contact="wall"]');
+      const arc = image.querySelector("[data-ice-impact]");
+      const options = animate.mock.calls[
+        animate.mock.contexts.indexOf(contact)
+      ]?.[1] as KeyframeAnimationOptions;
+
+      expect(contact?.getAttribute("d")).toBe("M 0 -.19 L 0 .19");
+      expect(contact?.parentElement?.getAttribute("transform")).toBe(
+        "translate(4 0.5) rotate(0)",
+      );
+      expect(options.delay).toBe(205);
+      expect(animate.mock.contexts).not.toContain(arc);
+    });
+
+    test("盤面内の外側マスにぶつかる滑走も境界面だけが反応すること", () => {
+      const innerWallBoard = parseIceFloorMazeBoard(["..x.", "...."]);
+      render(
+        <IceFloorMazeBoard
+          look="terrain"
+          board={innerWallBoard}
+          cells={listInitialCells(innerWallBoard)}
+          blocks={[]}
+          goal={7}
+          position={1}
+          lastSlide={{ ...slideIntoRock, to: 1, path: [1] }}
+          blockedInput={null}
+          clearing={false}
+          onSlideAnimationActivityChange={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+
+      const image = screen.getByRole("img", { name: "盤面" });
+      const contact = image.querySelector('[data-stop-contact="wall"]');
+
+      expect(contact?.parentElement?.getAttribute("transform")).toBe(
+        "translate(2 0.5) rotate(0)",
+      );
+      expect(contact?.getAttribute("d")).toBe("M 0 -.19 L 0 .19");
+    });
+
+    test("統合案では滑走と岩の接触面の反射を同じ時間軸に揃えること", () => {
+      drawLook("unified");
+
+      const image = screen.getByRole("img", { name: "盤面" });
+      const puck = image.querySelector("[data-glide-puck]");
+      const contact = image.querySelector("[data-stop-contact]");
+      const contactIndex = animate.mock.contexts.indexOf(contact);
+      const options = animate.mock.calls[
+        contactIndex
+      ]?.[1] as KeyframeAnimationOptions;
+
+      expect(animate.mock.contexts).toContain(puck);
+      expect(options.delay).toBe(205);
+    });
+
+    const noContactCases = [
+      { state: { stoppedOnFloor: true }, name: "床で止まる" },
+      { state: { isClearingMove: true }, name: "ゴールで止まる" },
+      { state: { pushedSnow: { from: 3, to: 4 } }, name: "雪を押す" },
+    ] as const;
+
+    test.each(noContactCases)(
+      "$name滑走では岩の接触反射を表示しないこと",
+      ({ state }) => {
+        render(
+          <IceFloorMazeBoard
+            look="unified"
+            board={contactBoard}
+            cells={listInitialCells(contactBoard)}
+            blocks={[]}
+            goal={9}
+            position={3}
+            lastSlide={{ ...slideIntoRock, ...state }}
+            blockedInput={null}
+            clearing={false}
+            onSlideAnimationActivityChange={vi.fn()}
+            onClearAnimationComplete={vi.fn()}
+          />,
+        );
+
+        const image = screen.getByRole("img", { name: "盤面" });
+        expect(image.querySelector("[data-stop-contact]")).toBeNull();
+      },
+    );
+  });
+
+  describe("止め石に隣接して押した入力の比較", () => {
+    const blockedBoard = parseIceFloorMazeBoard(["...#", "...."]);
+    const blocked: IceFloorMazeBlockedInput = {
+      id: 15,
+      direction: "right",
+      from: 2,
+      stopper: 3,
+    };
+    let animate: Mock;
+
+    beforeEach(() => {
+      animate = vi.fn(
+        () =>
+          ({
+            finished: new Promise<void>(() => {}),
+            cancel: vi.fn(),
+          }) as unknown as Animation,
+      );
+      Object.defineProperty(Element.prototype, "animate", {
+        configurable: true,
+        value: animate,
+      });
+    });
+
+    test.each([
+      ["current", 340],
+      ["terrain", 220],
+      ["unified", 220],
+    ] as const)(
+      "%s案では押し戻しが%sミリ秒で終わること",
+      (look, durationMs) => {
+        render(
+          <IceFloorMazeBoard
+            look={look}
+            board={blockedBoard}
+            cells={listInitialCells(blockedBoard)}
+            blocks={[]}
+            goal={7}
+            position={2}
+            lastSlide={null}
+            blockedInput={blocked}
+            clearing={false}
+            onSlideAnimationActivityChange={vi.fn()}
+            onClearAnimationComplete={vi.fn()}
+          />,
+        );
+
+        const durations = animate.mock.calls.map(
+          (call) => (call[1] as KeyframeAnimationOptions)?.duration,
+        );
+        expect(durations).toContain(durationMs);
+      },
+    );
+  });
+
+  describe("ゴールで止まる瞬間の比較", () => {
+    const goalBoard = parseIceFloorMazeBoard(["....", "...."]);
+    let animate: Mock;
+
+    beforeEach(() => {
+      animate = vi.fn(
+        () =>
+          ({
+            finished: new Promise<void>(() => {}),
+            cancel: vi.fn(),
+          }) as unknown as Animation,
+      );
+      Object.defineProperty(Element.prototype, "animate", {
+        configurable: true,
+        value: animate,
+      });
+    });
+
+    test.each([
+      ["current", false],
+      ["unified", true],
+    ] as const)(
+      "%s案でのゴールの収まり方が設定どおりになること",
+      (look, hasLock) => {
+        render(
+          <IceFloorMazeBoard
+            look={look}
+            board={goalBoard}
+            cells={listInitialCells(goalBoard)}
+            blocks={[]}
+            goal={3}
+            position={3}
+            lastSlide={{
+              ...lastSlide,
+              isClearingMove: true,
+            }}
+            blockedInput={null}
+            clearing={true}
+            onSlideAnimationActivityChange={vi.fn()}
+            onClearAnimationComplete={vi.fn()}
+          />,
+        );
+
+        const goalLock = screen
+          .getByRole("img", { name: "盤面" })
+          .querySelector("[data-goal-lock]");
+        expect(animate.mock.contexts.includes(goalLock)).toBe(hasLock);
+      },
+    );
+  });
+
+  describe("現行と動き・接触の比較案", () => {
+    function renderLook(look: "current" | "kinetic" | "terrain" | "unified") {
       render(
         <IceFloorMazeBoard
           look={look}
@@ -731,37 +1126,38 @@ describe("IceFloorMazeBoard", () => {
       return screen.getByRole("img", { name: "盤面" });
     }
 
-    test("現行版は比較案の造形や演出を持ち込まないこと", () => {
+    test("現行の駒と地形は比較案の造形を持ち込まないこと", () => {
       const image = renderLook("current");
-      expect(image.querySelector("[data-piece-mark]")).not.toBeNull();
-      expect(image.querySelector("[data-piece-shell]")).toBeNull();
-      expect(image.querySelector("[data-slide-wake]")).toBeNull();
-      expect(image.querySelector("[data-ice-refraction]")).toBeNull();
-    });
 
-    test("氷晶案は氷の素材感を持つ一方、動的な光の残像を描かないこと", () => {
-      const image = renderLook("glacier");
-      expect(image.querySelector("[data-piece-shell]")).not.toBeNull();
-      expect(image.querySelector("[data-ice-refraction]")).not.toBeNull();
+      expect(image.querySelector("[data-piece-mark]")).not.toBeNull();
+      expect(image.querySelector("[data-glide-puck]")).toBeNull();
       expect(image.querySelector("[data-slide-wake]")).toBeNull();
       expect(image.querySelector("[data-ice-impact]")).toBeNull();
     });
 
-    test("滑走案は光の残像と衝突時の余韻を備え、着地点の先読みを表示しないこと", () => {
-      const image = renderLook("aurora");
+    test("滑走案は独自の円盤と移動の気流を持ち着地点は表示しないこと", () => {
+      const image = renderLook("kinetic");
+
+      expect(image.querySelector("[data-glide-puck]")).not.toBeNull();
       expect(image.querySelector("[data-slide-wake]")).not.toBeNull();
-      expect(image.querySelector("[data-ice-impact]")).not.toBeNull();
+      expect(image.querySelector("[data-ice-impact]")).toBeNull();
       expect(image.querySelector("[data-landing-preview]")).toBeNull();
     });
 
-    test("氷原案はペンギンと魚を描き、氷晶の駒とゴールの造形を再利用しないこと", () => {
-      const image = renderLook("penguin");
+    test("接触案は現行の駒を維持して衝突の反応を追加すること", () => {
+      const image = renderLook("terrain");
 
-      expect(image.querySelector("[data-penguin]")).not.toBeNull();
-      expect(image.querySelector("[data-goal-fish]")).not.toBeNull();
-      expect(image.querySelector("[data-piece-shell]")).toBeNull();
-      expect(image.querySelector("[data-clear-fish-bubbles]")).not.toBeNull();
-      expect(image.querySelector("[data-clear-crystals]")).toBeNull();
+      expect(image.querySelector("[data-piece-mark]")).not.toBeNull();
+      expect(image.querySelector("[data-ice-impact]")).not.toBeNull();
+      expect(image.querySelector("[data-slide-wake]")).toBeNull();
+    });
+
+    test("統合案は滑走と地形の反応を併せ持つこと", () => {
+      const image = renderLook("unified");
+
+      expect(image.querySelector("[data-glide-puck]")).not.toBeNull();
+      expect(image.querySelector("[data-ice-impact]")).not.toBeNull();
+      expect(image.querySelector("[data-slide-wake]")).not.toBeNull();
       expect(image.querySelector("[data-landing-preview]")).toBeNull();
     });
   });

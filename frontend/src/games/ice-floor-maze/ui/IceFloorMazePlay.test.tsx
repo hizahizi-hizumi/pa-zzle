@@ -119,40 +119,82 @@ describe("IceFloorMazePlay", () => {
       render(createPlay(), "/?experience=compare");
     });
 
-    test("問題と手数を保って現行・氷晶・滑走・氷原を切り替えられること", () => {
+    test("問題と手数を保って現行・滑走・接触・統合を切り替えられること", () => {
       const boardImage = screen.getByRole("img", { name: "盤面" });
       const comparison = screen.getByRole("radiogroup", {
         name: "盤面の表現を比較",
       });
-      const glacier = within(comparison).getByRole("radio", {
-        name: "氷晶の盤面",
+      const kinetic = within(comparison).getByRole("radio", {
+        name: "滑走の手触り",
       });
-      const aurora = within(comparison).getByRole("radio", {
-        name: "滑走の盤面",
+      const terrain = within(comparison).getByRole("radio", {
+        name: "地形の反応",
       });
-      const penguin = within(comparison).getByRole("radio", {
-        name: "ペンギンの氷原",
+      const unified = within(comparison).getByRole("radio", {
+        name: "滑走と接触の統合",
       });
       const originalPosition = boardImage
         .querySelector("[data-piece-cell]")
         ?.getAttribute("data-piece-cell");
 
-      fireEvent.click(glacier);
-      const glacierLook = boardImage.getAttribute("data-ice-look");
-      fireEvent.click(aurora);
-      const auroraLook = boardImage.getAttribute("data-ice-look");
-      fireEvent.click(penguin);
-      const penguinLook = boardImage.getAttribute("data-ice-look");
+      fireEvent.click(kinetic);
+      const kineticLook = boardImage.getAttribute("data-ice-look");
+      fireEvent.click(terrain);
+      const terrainLook = boardImage.getAttribute("data-ice-look");
+      fireEvent.click(unified);
+      const unifiedLook = boardImage.getAttribute("data-ice-look");
 
-      expect(glacierLook).toBe("glacier");
-      expect(auroraLook).toBe("aurora");
-      expect(penguinLook).toBe("penguin");
+      expect(kineticLook).toBe("kinetic");
+      expect(terrainLook).toBe("terrain");
+      expect(unifiedLook).toBe("unified");
       expect(
         boardImage
           .querySelector("[data-piece-cell]")
           ?.getAttribute("data-piece-cell"),
       ).toBe(originalPosition);
       expect(screen.getByText("手数").parentElement?.textContent).toBe("手数7");
+    });
+  });
+
+  describe("比較中に駒が滑っている場合", () => {
+    const slide: IceFloorMazeLastSlide = {
+      id: 11,
+      direction: "right",
+      from: 15,
+      to: 17,
+      path: [16, 17],
+      crumbledRock: null,
+      crackedIce: [],
+      pushedSnow: null,
+      movedBlock: null,
+      stoppedOnFloor: false,
+      passedGoal: false,
+      isClearingMove: false,
+      entersTrap: false,
+    };
+
+    beforeEach(() => {
+      Object.defineProperty(Element.prototype, "animate", {
+        configurable: true,
+        value: vi.fn(
+          () =>
+            ({
+              finished: new Promise<void>(() => {}),
+              cancel: vi.fn(),
+            }) as unknown as Animation,
+        ),
+      });
+      render(createPlay({ lastSlide: slide }), "/?experience=compare");
+    });
+
+    test("駒の滑走中は比較案を切り替えず、移動が終わるまで待つこと", () => {
+      const kinetic = screen.getByRole("radio", { name: "滑走の手触り" });
+      const boardImage = screen.getByRole("img", { name: "盤面" });
+
+      fireEvent.click(kinetic);
+
+      expect((kinetic as HTMLButtonElement).disabled).toBe(true);
+      expect(boardImage.getAttribute("data-ice-look")).toBe("current");
     });
   });
 

@@ -57,3 +57,19 @@ describe("getIceFloorMazeBlockContactMs", () => {
     expect(result).toBe(82);
   });
 });
+
+describe("流れるテンポ", () => {
+  test("滑走時間を現行より長くしつつ上限を持つこと", () => {
+    const short = getIceFloorMazeSlideDurationMs(3, "flow");
+    const long = getIceFloorMazeSlideDurationMs(50, "flow");
+
+    expect(short).toBe(205);
+    expect(long).toBe(540);
+  });
+
+  test("ゴール通過の時刻を同じ滑走テンポから計算すること", () => {
+    const progress = getIceFloorMazeSlideProgressMs(3, 2, "flow");
+
+    expect(progress).toBeCloseTo((205 * 2) / 3);
+  });
+});
