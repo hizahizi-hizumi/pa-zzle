@@ -1,25 +1,35 @@
-import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
+import { iceFloorMazeTone } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 
-/** ゴールの輪の半径と線の太さ。広がる輪も同じ大きさから広げる。 */
-export const iceFloorMazeGoalRing = { radius: 0.4, width: 0.08 } as const;
-const GOAL_DOT_RADIUS = 0.11;
+/** 四隅の印が囲む枠の1辺と、角から伸びる線の長さ。枠は駒より外にあり、駒が止まっても見える。 */
+const GOAL_BAY = 0.74;
+const GOAL_BAY_ARM = 0.2;
+const GOAL_BAY_WIDTH = 0.085;
+const GOAL_DOT_RADIUS = 0.07;
 
 /**
- * ゴールの輪と中心の点。親がゴールのマスの中心へ置く。駒が止まっても輪は駒の外側に見える。
- * 床に描いた印なので、ゴールへ押し出した雪山やゴールに載った滑る氷の塊はこの上に描く。
+ * ゴールの印。氷の上に描いた、駒を止める枠の四隅の印と中心の点。親がゴールのマスの中心へ置く。
+ * ゴールは地形ではなく、通り過ぎることもできる印なので、沈めも立ち上げもしない。線で囲まないので、選択の輪郭にも見えない。
+ * 氷に描いた印なので、ゴールへ押し出した雪山やゴールに載った滑る氷の塊はこの上に描く。
  */
 export function IceFloorMazeGoalMark() {
+  const half = GOAL_BAY / 2;
+  const arm = GOAL_BAY_ARM;
   return (
     <g data-goal="">
-      <circle
-        r={iceFloorMazeGoalRing.radius}
-        strokeWidth={iceFloorMazeGoalRing.width}
-        className={iceFloorMazeToneClassNames.goalMark}
+      <path
+        d={[
+          `M${-half} ${-half + arm}V${-half}H${-half + arm}`,
+          `M${half - arm} ${-half}H${half}V${-half + arm}`,
+          `M${half} ${half - arm}V${half}H${half - arm}`,
+          `M${-half + arm} ${half}H${-half}V${half - arm}`,
+        ].join("")}
+        fill="none"
+        stroke={iceFloorMazeTone.goal}
+        strokeWidth={GOAL_BAY_WIDTH}
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
-      <circle
-        r={GOAL_DOT_RADIUS}
-        className={iceFloorMazeToneClassNames.goalDot}
-      />
+      <circle r={GOAL_DOT_RADIUS} fill={iceFloorMazeTone.goal} />
     </g>
   );
 }

@@ -435,7 +435,7 @@ export const iceFloorMazeTutorial: Tutorial<
 > = {
   intro: {
     purpose: "駒を氷の上で滑らせて、\nゴールでぴたりと止めるパズルです",
-    goalCaption: "駒がゴールの輪で止まれば完成です",
+    goalCaption: "駒がゴールの印で止まれば完成です",
     startCaption: "この盤面から始めます",
   },
   rules: [

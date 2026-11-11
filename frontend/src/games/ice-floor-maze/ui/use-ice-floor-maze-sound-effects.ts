@@ -2,6 +2,8 @@ import blockStoppedSoundUrl from "@/games/ice-floor-maze/assets/sounds/block-sto
 import blockedSoundUrl from "@/games/ice-floor-maze/assets/sounds/blocked.flac";
 import clearedSoundUrl from "@/games/ice-floor-maze/assets/sounds/cleared.flac";
 import floorStoppedSoundUrl from "@/games/ice-floor-maze/assets/sounds/floor-stopped.flac";
+import glidedLongSoundUrl from "@/games/ice-floor-maze/assets/sounds/glided-long.flac";
+import glidedShortSoundUrl from "@/games/ice-floor-maze/assets/sounds/glided-short.flac";
 import goalPassedSoundUrl from "@/games/ice-floor-maze/assets/sounds/goal-passed.flac";
 import iceCrackedSoundUrl from "@/games/ice-floor-maze/assets/sounds/ice-cracked.flac";
 import rockCrumbledSoundUrl from "@/games/ice-floor-maze/assets/sounds/rock-crumbled.flac";
@@ -35,6 +37,18 @@ import {
 
 /** 駒が氷の上を滑り出す、軽いこすれの音。1プレイで何十回も鳴るので短く小さくし、滑る距離によらず同じ音にする。 */
 const slidSound = defineSoundEffect(slidSoundUrl);
+
+/**
+ * 駒が氷の上を滑り続ける、乾いた擦れの音。滑り出しの音は短いので、長く滑る手ではこれを重ね、滑っている間じゅう音が続くようにする。
+ * 滑る時間に近い長さの方を選び、再生の速さで滑りが止まる時刻のあたりに鳴り終わらせる（揺らぎの分だけ前後する）。
+ * 滑り出しの音より小さくする。`durationMs` は音声ファイルの長さで、`scripts/assets/ice_floor_maze_glide_sounds.py` の `duration` と同じ値。
+ */
+const glideSounds = [
+  { sound: defineSoundEffect(glidedShortSoundUrl), durationMs: 170 },
+  { sound: defineSoundEffect(glidedLongSoundUrl), durationMs: 300 },
+] as const;
+/** これより短い滑りは、滑り出しの音だけで足りる。 */
+const GLIDE_SOUND_MIN_DISTANCE = 3;
 
 /** 駒が止め役にぶつかって止まる、小さなこつんという音。駒がつぶれて戻る時刻に鳴らす。 */
 const stoppedSound = defineSoundEffect(stoppedSoundUrl);
@@ -76,6 +90,7 @@ const clearedSound = defineSoundEffect(clearedSoundUrl);
 
 const iceFloorMazeSounds: readonly SoundEffect[] = [
   slidSound,
+  ...glideSounds.map(({ sound }) => sound),
   stoppedSound,
   floorStoppedSound,
   blockedSound,
@@ -88,12 +103,12 @@ const iceFloorMazeSounds: readonly SoundEffect[] = [
 ];
 
 /**
- * 滑りの音。滑り出しに滑る音、通り過ぎたゴールと割れた薄い氷はその時刻に鳴らす。止まり方の音は1つだけ鳴らし、
+ * 滑りの音。滑り出しに滑る音、3マス以上滑る手ではそこから止まるまで続く擦れの音、通り過ぎたゴールと割れた薄い氷はその時刻に鳴らす。止まり方の音は1つだけ鳴らし、
  * もろい岩を崩したら止まった時刻に崩れる音、雪を押し出したら押し出し始める時刻に雪の音、滑る氷の塊を押したら塊が止まる時刻に
  * 塊の音、ほかは止まった時刻に止まる音（床で止まったら床の音）を鳴らす。
  * ゴールで止まった滑りは完成演出のクリア音が止まりを返すので、止まる音を鳴らさない。
  * 動きを減らす設定では駒が終点へ飛び、変わったマスも変わった後の姿ですぐ描かれるので、
- * 滑る音とゴールの通過の音は鳴らさず、止まり方の音と、割れた薄い氷の音1つだけをすぐ鳴らす。
+ * 滑る音・擦れの音とゴールの通過の音は鳴らさず、止まり方の音と、割れた薄い氷の音1つだけをすぐ鳴らす。
  */
 function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
   const reducedMotion = prefersReducedMotion();
@@ -104,6 +119,9 @@ function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
 
   if (!reducedMotion) {
     playSound(slidSound, { variation: REPEATED_SOUND_VARIATION });
+    if (distance >= GLIDE_SOUND_MIN_DISTANCE) {
+      playGlideSound(stopDelayMs);
+    }
     if (slide.passedGoal) {
       playSound(goalPassedSound, {
         delayMs: getIceFloorMazeSlideProgressMs(
@@ -145,6 +163,20 @@ function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
       variation: REPEATED_SOUND_VARIATION,
     });
   }
+}
+
+/** 滑る時間 `slideMs` に長さのいちばん近い擦れの音を、滑りが止まる時刻に鳴り終わる速さで鳴らす。 */
+function playGlideSound(slideMs: number) {
+  const { sound, durationMs } = glideSounds.reduce((nearest, candidate) =>
+    Math.abs(candidate.durationMs - slideMs) <
+    Math.abs(nearest.durationMs - slideMs)
+      ? candidate
+      : nearest,
+  );
+  playSound(sound, {
+    variation: REPEATED_SOUND_VARIATION,
+    playbackRate: durationMs / slideMs,
+  });
 }
 
 /** 動きを減らす設定では駒を押し戻さず、画面が何も変わらないので鳴らさない。 */

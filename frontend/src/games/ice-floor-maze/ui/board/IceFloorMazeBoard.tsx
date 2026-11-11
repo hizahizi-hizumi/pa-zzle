@@ -13,7 +13,12 @@ import {
 } from "@/games/ice-floor-maze/ui/board/board-geometry";
 import type { IceFloorMazeCellCue } from "@/games/ice-floor-maze/ui/board/cell-cue";
 import { IceFloorMazeCellChanges } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/IceFloorMazeCellChanges";
+import {
+  animateIceFloorMazeClear,
+  IceFloorMazeClearEffects,
+} from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/IceFloorMazeClearEffects";
 import { IceFloorMazeGoalBurst } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/IceFloorMazeGoalBurst";
+import { IceFloorMazeImpactSpray } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/IceFloorMazeImpactSpray";
 import { IceFloorMazeTutorialLayer } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/IceFloorMazeTutorialLayer";
 import { animateIceFloorMazeMovedElements } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard/moved-element-motion";
 import { IceFloorMazeGoalMark } from "@/games/ice-floor-maze/ui/board/IceFloorMazeGoalMark";
@@ -111,6 +116,15 @@ const goalPassKeyframes: Keyframe[] = [
   { transform: "scale(1.5)", opacity: 0 },
 ];
 
+/** 滑っている間、駒が1マスにつきこの角度だけ回る。 */
+const SPIN_DEGREES_PER_CELL = 26;
+
+/** 滑っている間、駒が進む向きへ1マスにつきこの割合だけ伸びる。上限あり。 */
+const GLIDE_STRETCH_PER_CELL = 0.035;
+const GLIDE_STRETCH_MAX = 0.16;
+/** 回転と伸びは、等速の滑りと同じ進み方にする。 */
+const GLIDE_EASING = "linear";
+
 const CLEAR_BURST_DURATION_MS = 560;
 const CLEAR_POP_DURATION_MS = 360;
 const CLEAR_HOLD_MS = 280;
@@ -153,13 +167,14 @@ export function IceFloorMazeBoard({
   const piecePushRef = useRef<SVGGElement>(null);
   const pieceImpactRef = useRef<SVGGElement>(null);
   const piecePopRef = useRef<SVGGElement>(null);
-  const trailRef = useRef<SVGRectElement>(null);
+  const trailRef = useRef<SVGGElement>(null);
   const goalBurstRef = useRef<SVGCircleElement>(null);
+  const clearEffectsRef = useRef<SVGGElement>(null);
   const viewBox = getIceFloorMazeBoardViewBox(board);
   const aspectRatio = viewBox.width / viewBox.height;
   const piece = getIceFloorMazeCellCenter(board, position);
   const goalCenter = getIceFloorMazeCellCenter(board, goal);
-  // 雪山は動かないので、ゴールに載ったら二度と止まれない。輪がはみ出すと「まだ入れる」と読めるので描かない。
+  // 雪山は動かないので、ゴールに載ったら二度と止まれない。ゴールの印が雪山の外に見えると「まだ入れる」と読めるので描かない。
   const isGoalBuried = cells[goal] === "snow-mound";
 
   // 次の滑りが来たら、表示中の滑りを止めて駒を終点（次の滑りの始点）へ飛ばしてから次の滑りを始める。
@@ -187,6 +202,11 @@ export function IceFloorMazeBoard({
         goal,
       ),
       ...animateIceFloorMazeMovedElements(svgRef.current, lastSlide, board),
+      ...animateGlideReactions(
+        pieceSlideRef.current,
+        piecePopRef.current,
+        lastSlide,
+      ),
     ];
     onSlideAnimationActivityChange(true);
     const stopWaiting = waitForAnimations(animations, () =>
@@ -271,13 +291,14 @@ export function IceFloorMazeBoard({
             delay,
             easing: MOTION_EASING.celebrate,
           }),
+          ...animateIceFloorMazeClear(clearEffectsRef.current, delay, board),
         ].filter((animation) => animation !== undefined),
       completion: { type: "after-animations", holdMs: CLEAR_HOLD_MS },
       reducedMotionHoldMs: CLEAR_REDUCED_MOTION_HOLD_MS,
       unanimatedHoldMs: 0,
       onFinished: onClearAnimationComplete,
     });
-  }, [clearing, clearingSlideDistance, onClearAnimationComplete]);
+  }, [board, clearing, clearingSlideDistance, onClearAnimationComplete]);
 
   return (
     <div className="flex size-full items-center justify-center [container-type:size]">
@@ -299,7 +320,6 @@ export function IceFloorMazeBoard({
           <IceFloorMazeTerrain
             board={board}
             state={{ cells, blocks }}
-            goal={goal}
             beneathCellFaces={
               <>
                 {lastSlide ? (
@@ -327,9 +347,21 @@ export function IceFloorMazeBoard({
               slide={lastSlide}
             />
           ) : null}
+          {lastSlide ? (
+            <IceFloorMazeImpactSpray
+              key={`impact-spray-${lastSlide.id}`}
+              board={board}
+              slide={lastSlide}
+            />
+          ) : null}
           <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
             <IceFloorMazeGoalBurst ref={goalBurstRef} />
           </g>
+          <IceFloorMazeClearEffects
+            ref={clearEffectsRef}
+            board={board}
+            goal={goal}
+          />
           <g
             data-piece-cell={position}
             transform={`translate(${piece.x} ${piece.y})`}
@@ -375,7 +407,7 @@ export function IceFloorMazeBoard({
  */
 function animateSlide(
   piece: SVGGElement | null,
-  trail: SVGRectElement | null,
+  trail: SVGGElement | null,
   slide: IceFloorMazeLastSlide,
   board: IceFloorMazeBoardState,
 ): Animation[] {
@@ -448,6 +480,63 @@ function animateSlideReactions(
         })
       : undefined,
   ].filter((animation) => animation !== undefined);
+}
+
+/**
+ * 滑りに合わせた駒の反応。駒は滑っている間、進む向きに合わせて回り、止まると回転も止まる。
+ */
+function animateGlideReactions(
+  piece: SVGGElement | null,
+  pieceBody: SVGGElement | null,
+  slide: IceFloorMazeLastSlide,
+): Animation[] {
+  const distance = slide.path.length;
+  const durationMs = getIceFloorMazeSlideDurationMs(distance);
+  const vector = iceFloorMazeDirectionVectors[slide.direction];
+  const turn = (vector.x + vector.y) * distance * SPIN_DEGREES_PER_CELL;
+  const horizontal = vector.y === 0;
+
+  const spinner = piece?.querySelector("[data-piece-spin]");
+  if (!spinner) {
+    return [];
+  }
+  const timing = { duration: durationMs, easing: GLIDE_EASING };
+
+  return [
+    spinner.animate?.(
+      [{ transform: `rotate(${-turn}deg)` }, { transform: "rotate(0deg)" }],
+      timing,
+    ),
+    pieceBody?.animate?.(
+      createGlideStretchKeyframes(horizontal, distance),
+      timing,
+    ),
+  ].filter((animation) => animation !== undefined);
+}
+
+/**
+ * 滑っている間、駒が進む向きへ伸びて横に細くなり、止まる手前で元に戻る。長く滑るほど大きく伸び、勢いの差が見える。
+ * 滑り出してすぐに伸びきるので、短い滑りでも勢いよく出たと読める。
+ */
+function createGlideStretchKeyframes(
+  horizontal: boolean,
+  distance: number,
+): Keyframe[] {
+  const stretch = Math.min(
+    GLIDE_STRETCH_MAX,
+    GLIDE_STRETCH_PER_CELL * distance,
+  );
+  const along = 1 + stretch;
+  const across = 1 - stretch * 0.6;
+  const stretched = horizontal
+    ? `scale(${along}, ${across})`
+    : `scale(${across}, ${along})`;
+  return [
+    { transform: "scale(1, 1)" },
+    { transform: stretched, offset: 0.2 },
+    { transform: stretched, offset: 0.85 },
+    { transform: "scale(1, 1)" },
+  ];
 }
 
 /** 押された向きへ少し傾いて揺れ戻る。駒の押し戻しが届くまでは動かさない。 */

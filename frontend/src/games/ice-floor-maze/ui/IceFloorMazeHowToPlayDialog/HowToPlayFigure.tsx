@@ -83,7 +83,6 @@ export function HowToPlayFigure({
       <IceFloorMazeTerrain
         board={board}
         state={{ cells, blocks: initialState.blocks }}
-        goal={goal}
         beneathCellFaces={
           <>
             {trail ? (

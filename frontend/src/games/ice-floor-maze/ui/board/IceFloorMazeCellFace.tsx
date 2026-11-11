@@ -1,160 +1,232 @@
-import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
+import type { IceFloorMazeCellFaceKind } from "@/games/ice-floor-maze/ui/board/cell-face-kind";
 import {
   createIceFloorMazeCrackPath,
-  createIceFloorMazeSnowPatchPath,
-  createIceFloorMazeWaterHollowPath,
-  createIceFloorMazeWavePath,
-  formatIceFloorMazePolygon,
-  ICE_FLOOR_MAZE_SNOW_MOUND_SHADOW_DEPTH,
-  iceFloorMazeFloorDots,
-  iceFloorMazePaneShape,
-  iceFloorMazeRockShape,
-  iceFloorMazeRubbleChipPolygons,
-  iceFloorMazeSlidingBlockEdgePath,
-  iceFloorMazeSlidingBlockGlintPath,
-  iceFloorMazeSlidingBlockShape,
-  iceFloorMazeSnowDots,
-  iceFloorMazeSnowMoundPath,
+  ICE_FLOOR_MAZE_RAISED,
+  iceFloorMazeRubbleChips,
+  iceFloorMazeSnowDrift,
+  iceFloorMazeSnowGrains,
+  iceFloorMazeWaves,
 } from "@/games/ice-floor-maze/ui/board/cell-shapes";
 import type { IceFloorMazeCellClipIds } from "@/games/ice-floor-maze/ui/board/IceFloorMazeCellClipPaths";
-import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
-
-/**
- * 氷の地の上に載せて描くマス。氷と盤面の外は地形の地で描く。
- * `rubble` は、もろい岩が崩れてできた氷のマスに残す石くずの跡。`sliding-block` はマスではなく、マスの上に載る滑る氷の塊。
- */
-export type IceFloorMazeCellFaceKind =
-  | Exclude<IceFloorMazeStateCell, "ice" | "outside">
-  | "rubble"
-  | "sliding-block";
-
-const rockTones = {
-  face: iceFloorMazeToneClassNames.stoneFace,
-  shadow: iceFloorMazeToneClassNames.stoneShadow,
-};
-const brittleRockTones = {
-  face: iceFloorMazeToneClassNames.brittleFace,
-  shadow: iceFloorMazeToneClassNames.brittleShadow,
-};
+import { iceFloorMazeTone } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 
 type IceFloorMazeCellFaceProps = {
   kind: IceFloorMazeCellFaceKind;
   clipIds: IceFloorMazeCellClipIds;
-};
-
-const slidingBlockTones = {
-  face: iceFloorMazeToneClassNames.slidingBlock,
-  shadow: iceFloorMazeToneClassNames.slidingBlockShadow,
+  /** 薄い氷のひびの向きをマスごとに変えるのに使う、マスの番号。渡さなければ向きを変えない。 */
+  cellIndex?: number;
 };
 
 const crackPath = createIceFloorMazeCrackPath();
-const snowPatchPath = createIceFloorMazeSnowPatchPath();
-const waterHollowPath = createIceFloorMazeWaterHollowPath();
-const wavePath = createIceFloorMazeWavePath();
-const CRACK_WIDTH = 0.055;
-const WAVE_WIDTH = 0.06;
-const SNOW_EDGE_WIDTH = 0.045;
-const SLIDING_BLOCK_GLINT_WIDTH = 0.07;
-const SLIDING_BLOCK_EDGE_WIDTH = 0.045;
+const splitPieceStyle = {
+  transformBox: "fill-box",
+  transformOrigin: "center",
+} as const;
+
+const { left, top, size, radius, bevel, shadow } = ICE_FLOOR_MAZE_RAISED;
+const right = left + size;
+const bottom = top + size;
 
 /**
- * マスの左上を原点に、1マスの姿を描く。親がマスの位置へ置く。
- * もろい岩の左右の塊（`data-brittle-half`）と薄い氷の破片（`data-thin-ice-shard`）は、崩れる・割れる動きで1つずつ動かせる。
+ * もろい岩を、角から角へ通るひびで分けた左右の塊。輪郭は岩と同じで、上の面の色だけが違う。
+ * ひびのすき間から下の氷が見える。
+ */
+const brittleHalves = [
+  `${left},${top} ${left + size * 0.52},${top} ${left + size * 0.4},${top + size * 0.34} ${left + size * 0.56},${top + size * 0.56} ${left + size * 0.42},${bottom} ${left},${bottom}`,
+  `${left + size * 0.62},${top} ${right},${top} ${right},${bottom} ${left + size * 0.52},${bottom} ${left + size * 0.66},${top + size * 0.56} ${left + size * 0.5},${top + size * 0.34}`,
+] as const;
+const BRITTLE_ROUNDING = 0.06;
+/** 割れ目から左右へ伸びる、細いひび。岩と同じ石が割れかけていると読ませる。 */
+const brittleCrack = `M${left + size * 0.42} ${top + size * 0.3}L${left + size * 0.2} ${top + size * 0.38}M${left + size * 0.6} ${top + size * 0.52}L${left + size * 0.82} ${top + size * 0.46}M${left + size * 0.46} ${top + size * 0.76}L${left + size * 0.26} ${top + size * 0.82}`;
+
+/**
+ * 薄い氷と水面は、氷より低い面。真上から見て、立ち上がるものとは逆に、上と左の内側の縁が陰になり、
+ * 下と右の内側の縁が光る。縁の幅が深さで、薄い氷は浅く、割れてできた水面は深い。どちらも氷から何も立ち上げない。
+ */
+const THIN_ICE_DEPTH = 0.05;
+const WATER_DEPTH = 0.13;
+const NEAR_EDGE = 0.04;
+
+/** 床のざらつき。滑らない面だと読ませる、向きのそろった短い擦り傷。`[x, y, 長さ]`。 */
+const floorGrit = [
+  [0.18, 0.32, 0.12],
+  [0.46, 0.28, 0.1],
+  [0.7, 0.36, 0.12],
+  [0.3, 0.56, 0.1],
+  [0.56, 0.58, 0.13],
+  [0.18, 0.8, 0.11],
+  [0.44, 0.82, 0.1],
+  [0.7, 0.78, 0.12],
+] as const;
+const FLOOR_INSET = 0.05;
+
+/**
+ * 雪山。押し寄せた雪が、岩や氷の塊と同じ大きさに盛り上がった止め役。角を大きく丸めて硬い塊と見分ける。
+ * 押せる雪（高さの無い、粒の載った面）と一目で分かれるよう、粒は載せず、下と右に幅のある陰と影を付ける。
+ */
+const MOUND_ROUNDING = 0.3;
+const MOUND_SHADE = 0.13;
+/** 薄い氷を裏返す向き。 */
+const thinIceTurns = [
+  { mirrorX: false, mirrorY: false },
+  { mirrorX: true, mirrorY: false },
+  { mirrorX: false, mirrorY: true },
+  { mirrorX: true, mirrorY: true },
+] as const;
+
+/** 滑る氷の塊の上の面は少し透かし、下のゴールが塊越しに見えるようにする。 */
+const ICE_BLOCK_FACE_OPACITY = 0.9;
+
+/**
+ * 1マスの姿。マスの左上を原点に描き、親がマスの位置へ置く。
+ * 盤面と同じく真上から見た絵にし、手前の側面は描かない。滑っていった先で何が起きるかを、高さで読ませる。
+ * 氷から立ち上がるもの（もろい岩・雪山・滑る氷の塊）は、下と右の縁が暗く、右下へ影を落とす。硬い塊（もろい岩・滑る氷の塊）は上と左の縁も明るい。
+ * 入って止まるもの（床・雪）は縁取りも影も持たない。薄い氷と水面は、縁取りの明暗が逆の、氷より低い面。
+ * もろい岩の左右の塊（`data-brittle-half`）と薄い氷の破片（`data-thin-ice-shard`）は、1つずつ動かせる。
  */
 export function IceFloorMazeCellFace({
   kind,
   clipIds,
+  cellIndex = 0,
 }: IceFloorMazeCellFaceProps) {
+  const palette = iceFloorMazeTone;
+
   switch (kind) {
-    case "rock":
-      return renderRockBlock(rockTones, iceFloorMazeRockShape);
-    case "brittle-rock":
+    case "brittle-rock": {
+      const face = palette.brittleRock;
       return (
         <>
-          {clipIds.brittleHalves.map((clipId, index) => (
-            <g
-              key={clipId}
-              data-brittle-half={index}
-              clipPath={`url(#${clipId})`}
-              style={{ transformBox: "fill-box", transformOrigin: "center" }}
-            >
-              {renderRockBlock(brittleRockTones, iceFloorMazeRockShape)}
+          {renderRaisedShadow()}
+          {brittleHalves.map((points, index) => (
+            <g key={points} data-brittle-half={index} style={splitPieceStyle}>
+              <polygon
+                points={points}
+                transform={`translate(${bevel / 2} ${bevel / 2})`}
+                fill={palette.brittleRockShade}
+                stroke={palette.brittleRockShade}
+                strokeWidth={BRITTLE_ROUNDING}
+                strokeLinejoin="round"
+              />
+              <polygon
+                points={points}
+                transform={`translate(${-bevel / 2} ${-bevel / 2})`}
+                fill={palette.brittleRockLit}
+                stroke={palette.brittleRockLit}
+                strokeWidth={BRITTLE_ROUNDING}
+                strokeLinejoin="round"
+              />
+              <polygon
+                points={points}
+                fill={face}
+                stroke={face}
+                strokeWidth={BRITTLE_ROUNDING - bevel / 2}
+                strokeLinejoin="round"
+              />
             </g>
           ))}
+          <path
+            d={brittleCrack}
+            fill="none"
+            stroke={palette.brittleRockShade}
+            strokeWidth={0.035}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </>
       );
-    case "thin-ice":
+    }
+    case "thin-ice": {
+      // ひびの形が並んで同じに見えないよう、マスごとに左右・上下を裏返す。縁の明暗は、裏返した後も光の向きに合うよう逆に描く。
+      const turn = thinIceTurns[cellIndex % thinIceTurns.length]!;
       return (
-        <>
+        <g
+          transform={`translate(${turn.mirrorX ? 1 : 0} ${turn.mirrorY ? 1 : 0}) scale(${turn.mirrorX ? -1 : 1} ${turn.mirrorY ? -1 : 1})`}
+        >
           {clipIds.thinIceShards.map((clipId, index) => (
             <g
               key={clipId}
               data-thin-ice-shard={index}
               clipPath={`url(#${clipId})`}
-              style={{ transformBox: "fill-box", transformOrigin: "center" }}
+              style={splitPieceStyle}
             >
-              {renderThinIcePane()}
+              {renderSunken(
+                palette.thinIce,
+                palette.iceEdgeShade,
+                palette.iceEdgeLit,
+                THIN_ICE_DEPTH,
+                turn,
+              )}
+              <path
+                d={crackPath}
+                fill="none"
+                stroke={palette.thinIceCrack}
+                strokeWidth={0.04}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </g>
           ))}
-        </>
+        </g>
       );
+    }
     case "floor":
       return (
         <>
-          {renderPane(iceFloorMazeToneClassNames.floor)}
-          {iceFloorMazeFloorDots.centers.map(({ x, y }) => (
-            <circle
+          <rect
+            x={FLOOR_INSET}
+            y={FLOOR_INSET}
+            width={1 - FLOOR_INSET * 2}
+            height={1 - FLOOR_INSET * 2}
+            rx={0.08}
+            fill={palette.floor}
+          />
+          {floorGrit.map(([x, y, length]) => (
+            <line
               key={`${x}-${y}`}
-              cx={x}
-              cy={y}
-              r={iceFloorMazeFloorDots.radius}
-              className={iceFloorMazeToneClassNames.floorDot}
+              x1={x}
+              y1={y}
+              x2={x + length}
+              y2={y - length * 0.6}
+              stroke={palette.floorGrit}
+              strokeWidth={0.045}
+              strokeLinecap="round"
             />
           ))}
         </>
       );
     case "rubble":
-      return iceFloorMazeRubbleChipPolygons.map((polygon) => (
-        <polygon
-          key={formatIceFloorMazePolygon(polygon)}
-          points={formatIceFloorMazePolygon(polygon)}
-          strokeLinejoin="round"
-          className={iceFloorMazeToneClassNames.rubble}
-        />
+      return iceFloorMazeRubbleChips.map((chip) => (
+        <path key={chip} d={chip} fill={palette.rubble} />
       ));
     case "water":
       return (
         <>
-          {renderPane(iceFloorMazeToneClassNames.water)}
+          {renderSunken(
+            palette.water,
+            palette.waterEdgeShade,
+            palette.iceEdgeLit,
+            WATER_DEPTH,
+          )}
           <path
-            d={waterHollowPath}
-            className={iceFloorMazeToneClassNames.waterHollow}
-          />
-          <path
-            d={wavePath}
+            d={iceFloorMazeWaves}
             fill="none"
-            strokeWidth={WAVE_WIDTH}
+            stroke={palette.wave}
+            strokeWidth={0.05}
             strokeLinecap="round"
-            className={iceFloorMazeToneClassNames.wave}
           />
         </>
       );
     case "snow":
       return (
         <>
-          <path
-            d={snowPatchPath}
-            strokeWidth={SNOW_EDGE_WIDTH}
-            strokeLinejoin="round"
-            className={iceFloorMazeToneClassNames.snow}
-          />
-          {iceFloorMazeSnowDots.centers.map(({ x, y }) => (
+          <path d={iceFloorMazeSnowDrift} fill={palette.snow} />
+          {iceFloorMazeSnowGrains.map(([x, y]) => (
             <circle
               key={`${x}-${y}`}
               cx={x}
               cy={y}
-              r={iceFloorMazeSnowDots.radius}
-              className={iceFloorMazeToneClassNames.snowDot}
+              r={0.02}
+              fill={palette.snowGrain}
             />
           ))}
         </>
@@ -162,99 +234,131 @@ export function IceFloorMazeCellFace({
     case "snow-mound":
       return (
         <>
-          <path
-            d={iceFloorMazeSnowMoundPath}
-            transform={`translate(0 ${ICE_FLOOR_MAZE_SNOW_MOUND_SHADOW_DEPTH})`}
-            className={iceFloorMazeToneClassNames.snowMoundShadow}
+          <rect
+            x={left + shadow}
+            y={top + shadow}
+            width={size}
+            height={size}
+            rx={MOUND_ROUNDING}
+            fill={palette.shadow}
           />
-          <path
-            d={iceFloorMazeSnowMoundPath}
-            className={iceFloorMazeToneClassNames.snowMound}
+          <rect
+            x={left}
+            y={top}
+            width={size}
+            height={size}
+            rx={MOUND_ROUNDING}
+            fill={palette.snowShade}
+          />
+          <rect
+            x={left}
+            y={top}
+            width={size - MOUND_SHADE}
+            height={size - MOUND_SHADE}
+            rx={MOUND_ROUNDING}
+            fill={palette.snow}
           />
         </>
       );
     case "sliding-block":
       return (
         <>
-          {renderRockBlock(slidingBlockTones, iceFloorMazeSlidingBlockShape)}
-          <path
-            d={iceFloorMazeSlidingBlockEdgePath}
-            fill="none"
-            strokeWidth={SLIDING_BLOCK_EDGE_WIDTH}
-            strokeLinecap="round"
-            className={iceFloorMazeToneClassNames.slidingBlockEdge}
-          />
-          <path
-            d={iceFloorMazeSlidingBlockGlintPath}
-            fill="none"
-            strokeWidth={SLIDING_BLOCK_GLINT_WIDTH}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={iceFloorMazeToneClassNames.slidingBlockGlint}
-          />
+          {renderRaisedShadow()}
+          {renderRaisedBlock(
+            palette.iceBlock,
+            palette.iceBlockLit,
+            palette.iceBlockShade,
+            ICE_BLOCK_FACE_OPACITY,
+          )}
         </>
       );
   }
 }
 
-function renderRockBlock(
-  tones: { face: string; shadow: string },
-  {
-    inset,
-    width,
-    height,
-    shadowDepth,
-    cornerRadius,
-  }: typeof iceFloorMazeRockShape | typeof iceFloorMazeSlidingBlockShape,
+/** 氷から立ち上がる塊が、右下の氷へ落とす影。 */
+function renderRaisedShadow() {
+  return (
+    <rect
+      x={left + shadow}
+      y={top + shadow}
+      width={size}
+      height={size}
+      rx={radius}
+      fill={iceFloorMazeTone.shadow}
+    />
+  );
+}
+
+/** 真上から見た、氷から立ち上がる角丸の塊。上と左の縁が明るく、下と右の縁が暗く、その内側が上の面。 */
+function renderRaisedBlock(
+  face: string,
+  lit: string,
+  shaded: string,
+  faceOpacity: number,
 ) {
   return (
     <>
       <rect
-        x={inset}
-        y={inset + shadowDepth}
-        width={width}
-        height={height}
-        rx={cornerRadius}
-        className={tones.shadow}
+        x={left}
+        y={top}
+        width={size}
+        height={size}
+        rx={radius}
+        fill={shaded}
       />
       <rect
-        x={inset}
-        y={inset}
-        width={width}
-        height={height}
-        rx={cornerRadius}
-        className={tones.face}
+        x={left}
+        y={top}
+        width={size - bevel}
+        height={size - bevel}
+        rx={radius}
+        fill={lit}
+      />
+      <rect
+        x={left + bevel}
+        y={top + bevel}
+        width={size - bevel * 2}
+        height={size - bevel * 2}
+        rx={radius * 0.6}
+        fill={face}
+        fillOpacity={faceOpacity}
       />
     </>
   );
 }
 
-function renderThinIcePane() {
+/**
+ * 真上から見た、氷より低いマスいっぱいの面。上と左の内側の縁が陰になり、下と右の内側の縁が光る。
+ * 親が裏返して置くときは `turn` を渡し、裏返した後に陰が上と左へ来るよう、逆の縁に描く。
+ */
+function renderSunken(
+  surface: string,
+  shaded: string,
+  lit: string,
+  depth: number,
+  turn: { mirrorX: boolean; mirrorY: boolean } = {
+    mirrorX: false,
+    mirrorY: false,
+  },
+) {
+  const span = 1 - depth - NEAR_EDGE;
   return (
     <>
-      {renderPane(iceFloorMazeToneClassNames.thinIce)}
-      <path
-        d={crackPath}
-        fill="none"
-        strokeWidth={CRACK_WIDTH}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={iceFloorMazeToneClassNames.thinIceCrack}
+      <rect width={1} height={1} fill={lit} />
+      <rect
+        x={turn.mirrorX ? NEAR_EDGE : 0}
+        y={turn.mirrorY ? NEAR_EDGE : 0}
+        width={1 - NEAR_EDGE}
+        height={1 - NEAR_EDGE}
+        fill={shaded}
+      />
+      <rect
+        x={turn.mirrorX ? NEAR_EDGE : depth}
+        y={turn.mirrorY ? NEAR_EDGE : depth}
+        width={span}
+        height={span}
+        fill={surface}
       />
     </>
-  );
-}
-
-function renderPane(className: string) {
-  const { inset, size, cornerRadius } = iceFloorMazePaneShape;
-  return (
-    <rect
-      x={inset}
-      y={inset}
-      width={size}
-      height={size}
-      rx={cornerRadius}
-      className={className}
-    />
   );
 }

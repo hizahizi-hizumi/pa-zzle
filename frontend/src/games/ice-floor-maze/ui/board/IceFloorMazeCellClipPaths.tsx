@@ -2,13 +2,11 @@ import { useId } from "react";
 
 import {
   formatIceFloorMazePolygon,
-  iceFloorMazeBrittleHalfPolygons,
   iceFloorMazeThinIceShardPolygons,
 } from "@/games/ice-floor-maze/ui/board/cell-shapes";
 
-/** もろい岩の左右の塊と、薄い氷の3つの破片を切り出す `clipPath` の ID。 */
+/** 薄い氷の3つの破片を切り出す `clipPath` の ID。 */
 export type IceFloorMazeCellClipIds = {
-  brittleHalves: readonly string[];
   thinIceShards: readonly string[];
 };
 
@@ -19,9 +17,6 @@ export type IceFloorMazeCellClipIds = {
 export function useIceFloorMazeCellClipIds(): IceFloorMazeCellClipIds {
   const prefix = `ifm${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   return {
-    brittleHalves: iceFloorMazeBrittleHalfPolygons.map(
-      (_, index) => `${prefix}-brittle-${index}`,
-    ),
     thinIceShards: iceFloorMazeThinIceShardPolygons.map(
       (_, index) => `${prefix}-shard-${index}`,
     ),
@@ -38,15 +33,6 @@ export function IceFloorMazeCellClipPaths({
 }: IceFloorMazeCellClipPathsProps) {
   return (
     <defs>
-      {iceFloorMazeBrittleHalfPolygons.map((polygon, index) => (
-        <clipPath
-          key={ids.brittleHalves[index]}
-          id={ids.brittleHalves[index]}
-          clipPathUnits="objectBoundingBox"
-        >
-          <polygon points={formatIceFloorMazePolygon(polygon)} />
-        </clipPath>
-      ))}
       {iceFloorMazeThinIceShardPolygons.map((polygon, index) => (
         <clipPath
           key={ids.thinIceShards[index]}

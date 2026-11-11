@@ -331,7 +331,7 @@ describe("IceFloorMazeTutorial", () => {
     });
 
     test("最初の画面で、何をするパズルかとゴールの盤面を、ゴールの一言と一緒に見せること", () => {
-      const caption = screen.getByText("駒がゴールの輪で止まれば完成です");
+      const caption = screen.getByText("駒がゴールの印で止まれば完成です");
       const position = getPiecePosition();
 
       expect(caption).toBeTruthy();
