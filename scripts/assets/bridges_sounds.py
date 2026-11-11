@@ -171,7 +171,7 @@ def main() -> None:
     write("bridge-removed", finish(water_plop(rng), Finish(rms50_db=-38.5)))
     write("blocked", finish(dull_thud(rng), Finish(rms50_db=-35.5)))
 
-    duration = 1.3
+    duration = 1.0
     length = int(SAMPLE_RATE * duration)
     chord = (
         0.55 * bell(523.25, duration, 0.5)
@@ -179,7 +179,7 @@ def main() -> None:
         + 0.8 * bell(1318.5, duration, 0.36)
         + 0.7 * bell(1567.98, duration, 0.32)
     )
-    waves = delayed(wave_wash(1.1, rng), 0.05, length)
+    waves = delayed(wave_wash(0.85, rng), 0.05, length)
     chord = chord / np.abs(chord).max() + 0.32 * waves / np.abs(waves).max()
     write("cleared-chord", finish(chord, Finish(rms50_db=-28.3, fade_ms=60)))
 

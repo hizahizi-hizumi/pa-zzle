@@ -23,7 +23,7 @@ import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
  *   離せば架かる辺には、架かった後の板の影を半透明で置く。
  * - 全島がつながった瞬間は、島が灯り、島の周りの浅瀬が海と同じ色相のまま明るく澄み、橋は杭の灯りが順に点いて板が一瞬
  *   明るい木の色になる。光らせるのは島の周りだけにし、橋に沿って光らせない。画面全体の海の色は変えず、ブランドの帯と
- *   見出しの後ろの海とつないだままにする。澄んだ浅瀬は海と明るさで 1.3:1 以上離し、陸とも 1.3:1 以上離して島を溶かさない。
+ *   見出しの後ろの海とつないだままにする。澄んだ浅瀬は海と明るさで 1.6:1 以上離し、陸とも 1.3:1 以上離して島を溶かさない。
  */
 export const bridgesToneClassNames = {
   sea: "bg-[#72aebb] dark:bg-[#18404f]",
@@ -38,7 +38,7 @@ export const bridgesToneClassNames = {
   /** 島の周りの浅瀬。島から離れるほど透けて海の色に戻す。 */
   shallowsStop: "[stop-color:#8fc3cb] dark:[stop-color:#235566]",
   /** 全島がつながった後の、灯った島の周りの澄んだ浅瀬。海と同じ色相で、明るさも上げる。 */
-  litShallowsStop: "[stop-color:#90d2da] dark:[stop-color:#276676]",
+  litShallowsStop: "[stop-color:#a6dfe4] dark:[stop-color:#2f7686]",
   /** 陸の縁の、濡れて色の濃い砂。 */
   wetSand: "stroke-[#c9a35e] dark:stroke-[#a8955f]",
   /** 波打ち際。途切れない細い白い線にし、途切れた縁（多すぎの島）と形で分ける。 */

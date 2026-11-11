@@ -1,5 +1,6 @@
 /**
- * 完成演出の時間割。島0 から架かった橋をたどって、たどり着いた段ごとに島を灯し、最後の島が灯り切ったときに締めの音を鳴らす。
+ * 完成演出の時間割。最後に架けた橋の両端の島から架かった橋をたどって、たどり着いた段ごとに島を灯し、最後の島が灯り切ったときに
+ * 締めの音を鳴らす。
  * 盤面の動きとクリア音が同じ時間割で揃うよう、ここに置いて両方から使う。
  */
 
@@ -9,12 +10,15 @@ import {
 } from "@/games/bridges/puzzle/board";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 
-/** 島0 が灯り始めるまでの間。最後に架けた板が着き、全島がちょうどになった盤面を一瞬見せる。 */
-export const CLEAR_LIGHT_START_MS = 160;
+/** 最後に架けた橋の両端の島が灯り始めるまでの間。最後に架けた板が着いた盤面を一瞬見せる。 */
+export const CLEAR_LIGHT_START_MS = 80;
 
-/** 隣の段の島が灯るまでの間隔。島の数の多い盤面でも灯り切るまでが長くなりすぎないよう、全体の長さは下の上限に収める。 */
-const WAVE_STEP_MS = 100;
-const WAVE_MAX_SPREAD_MS = 700;
+/**
+ * 隣の段の島が灯るまでの間隔。最後の手から結果へ移るまでを、ほかのゲームの完成演出の長さに近づけるよう、灯りが渡り切るまでを
+ * 下の上限に収める。
+ */
+const WAVE_STEP_MS = 70;
+const WAVE_MAX_SPREAD_MS = 380;
 /** 1つの島が灯って膨らみ、戻る時間。 */
 export const ISLAND_POP_MS = 360;
 /** 島が最も膨らむ時点の、膨らみ始めからの割合。 */
@@ -26,17 +30,21 @@ export const islandPopKeyframes: Keyframe[] = [
 ];
 
 /**
- * 島0 から架かった橋をたどったときの、島ごとの段数（島0 が 0）。たどれない島は `null`。
- * クリアした盤面では全島がつながっているので、灯りが全島に届く。
+ * 最後に架けた橋 `originEdge` の両端の島から、架かった橋をたどったときの、島ごとの段数（両端の島が 0）。たどれない島は `null`。
+ * `originEdge` が無ければ島0 から数える。クリアした盤面では全島がつながっているので、灯りが全島に届く。
  */
 export function listClearWaveDepths(
   board: BridgesBoard,
   bridges: readonly BridgeCount[],
+  originEdge: number | null = null,
 ): (number | null)[] {
   const { edges, islandEdges } = getBridgesNetwork(board);
+  const origin = originEdge === null ? undefined : edges[originEdge];
+  const queue = origin === undefined ? [0] : [origin.from, origin.to];
   const depths: (number | null)[] = board.islands.map(() => null);
-  depths[0] = 0;
-  const queue = [0];
+  for (const island of queue) {
+    depths[island] = 0;
+  }
   for (let head = 0; head < queue.length; head += 1) {
     const island = queue[head]!;
     for (const edge of islandEdges[island]!) {
@@ -69,10 +77,13 @@ export type ClearWaveTiming = {
 export function getClearWaveTiming(
   board: BridgesBoard,
   bridges: readonly BridgeCount[],
+  originEdge: number | null = null,
 ): ClearWaveTiming {
   const deepest = Math.max(
     0,
-    ...listClearWaveDepths(board, bridges).map((depth) => depth ?? 0),
+    ...listClearWaveDepths(board, bridges, originEdge).map(
+      (depth) => depth ?? 0,
+    ),
   );
   const stepMs = getClearWaveStepMs(deepest);
   const depthStartMs = Array.from(

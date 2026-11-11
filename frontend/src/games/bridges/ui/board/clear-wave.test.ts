@@ -21,6 +21,12 @@ describe("listClearWaveDepths", () => {
     expect(depths).toEqual([0, 1, 1, 2]);
   });
 
+  test("最後に架けた橋を渡すと、その両端の島から数えた段数を返すこと", () => {
+    const depths = listClearWaveDepths(board, [2, 1, 1, 1], 3);
+
+    expect(depths).toEqual([1, 1, 0, 0]);
+  });
+
   test("橋でたどれない島には null を返すこと", () => {
     const depths = listClearWaveDepths(board, [1, 0, 0, 0]);
 
@@ -40,20 +46,26 @@ describe("getClearWaveTiming", () => {
     "2...2",
   ]);
 
-  test("段の少ない盤面では、島0 が灯ってから1段ごとに100ミリ秒で次の段を灯すこと", () => {
+  test("段の少ない盤面では、最初の段が灯ってから1段ごとに70ミリ秒で次の段を灯すこと", () => {
     const timing = getClearWaveTiming(square, [2, 1, 1, 0]);
 
     expect(timing).toEqual({
-      depthStartMs: [160, 260, 360],
-      allLitMs: 504,
+      depthStartMs: [80, 150, 220],
+      allLitMs: 364,
     });
   });
 
-  test("段の多い盤面では、最も遠い段が灯り始めるまでを700ミリ秒に収めること", () => {
+  test("段の多い盤面では、最も遠い段が灯り始めるまでを380ミリ秒の広がりに収めること", () => {
     const timing = getClearWaveTiming(chain, chainBridges);
 
     expect(timing.depthStartMs).toHaveLength(11);
-    expect(timing.depthStartMs.at(-1)).toBe(860);
-    expect(timing.allLitMs).toBe(1004);
+    expect(timing.depthStartMs.at(-1)).toBe(460);
+    expect(timing.allLitMs).toBe(604);
+  });
+
+  test("最後に架けた橋を渡すと、その両端から数えて段の数を少なくすること", () => {
+    const timing = getClearWaveTiming(chain, chainBridges, 4);
+
+    expect(timing.depthStartMs).toHaveLength(6);
   });
 });

@@ -251,6 +251,11 @@ export function BridgesBoard({
               : network.edges[edgeNotice.edge]!.from,
         }
       : null;
+  // 灯りは最後に架けた橋から広げる。
+  const clearOriginEdge =
+    edgeNotice?.change === "changed" && edgeNotice.edge < network.edges.length
+      ? edgeNotice.edge
+      : null;
   const retractingEdge =
     edgeNotice?.change === "changed" &&
     edgeNotice.count === 0 &&
@@ -402,9 +407,10 @@ export function BridgesBoard({
       figureRef.current,
       board,
       bridges,
+      clearOriginEdge,
       onClearAnimationComplete,
     );
-  }, [board, bridges, clearing, onClearAnimationComplete]);
+  }, [board, bridges, clearing, clearOriginEdge, onClearAnimationComplete]);
 
   function readBoardPoint(event: {
     currentTarget: HTMLElement;
@@ -701,6 +707,7 @@ export function BridgesBoard({
         blockedAttempt={blockedAttempt}
         retractingEdge={retractingEdge}
         lit={clearing}
+        clearOriginEdge={clearOriginEdge}
         compact={compact}
       />
       {(cues.length > 0 || spotlight !== null) && (

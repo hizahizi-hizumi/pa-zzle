@@ -86,6 +86,8 @@ type BridgesFigureProps = {
   retractingEdge?: number | null;
   /** 全島がつながった盤面を灯すか。島の灯り、杭の灯り、明るい木の色の板、波紋、島の周りの澄んだ浅瀬を描く。 */
   lit?: boolean;
+  /** 灯りを広げ始める、最後に架けた橋の辺。無ければ島0 から広げる。 */
+  clearOriginEdge?: number | null;
   /**
    * マスが小さい盤面か（スマホの 9×9 以上ほど）。板の横木の刻みを省いて板を太くし、2本の板の間を広げて、
    * 1本と2本を形で見分けられる幅を保つ。
@@ -147,7 +149,7 @@ const POST_DISTANCE = ISLAND_RADIUS + 0.1;
 /** 浅瀬が海の色へ消えるまでの、島の中心からの距離。陸の縁から波打ち際の外までの狭い帯にし、隣の島の浅瀬と重ねない。 */
 const SHALLOWS_RADIUS = 0.62;
 /** 灯った島の周りの澄んだ浅瀬が海の色へ消えるまでの、島の中心からの距離。波打ち際の外に、灯りより広く澄んだ水を見せる。 */
-const LIT_SHALLOWS_RADIUS = 0.78;
+const LIT_SHALLOWS_RADIUS = 0.82;
 /** 島を触っている間に、架けられる相手までの区間に敷く帯の太さ。 */
 const GUIDE_BAND_WIDTH = 0.56;
 /** マスの中心の、島の無い所に打つ点の半径。 */
@@ -190,7 +192,7 @@ const FOCUS_RING_WIDTH = 0.05;
 /** 阻まれた辺に架かるはずだった板の濃さ。板そのものを透かし、下の海が見える濃さにする。 */
 const BLOCKED_ATTEMPT_OPACITY = 0.5;
 /** 灯った島の後ろの光の広さと、灯り切った後に残す濃さ。灯り切った姿を結果へ進むまで保つ。 */
-const LANTERN_RADIUS = 0.78;
+const LANTERN_RADIUS = 1;
 export const LANTERN_SETTLED_OPACITY = 0.7;
 const LANTERN_POST_RADIUS = 0.075;
 /** 灯った島から広がる波紋の、広がり始めの半径と線の太さ。広がると太さも同じ倍率で太る。 */
@@ -695,6 +697,7 @@ export function BridgesFigure({
   showsBlockingEdges = false,
   retractingEdge = null,
   lit = false,
+  clearOriginEdge = null,
   compact = false,
   ref,
 }: BridgesFigureProps) {
@@ -707,7 +710,9 @@ export function BridgesFigure({
   const islandCenters = board.islands.map((island) =>
     toViewPoint(view, getIslandCenter(island)),
   );
-  const depths = lit ? listClearWaveDepths(board, bridges) : [];
+  const depths = lit
+    ? listClearWaveDepths(board, bridges, clearOriginEdge)
+    : [];
   const previewEdge = guide?.previewEdge ?? null;
   // 阻まれる辺には架かった後の姿を見せず、ロープだけで押した辺を示す。
   const pressedGhostEdge =
@@ -860,20 +865,23 @@ export function BridgesFigure({
           />
         ))}
       {lit &&
-        islandCenters.map(({ x, y }, island) => (
-          <circle
-            key={`ripple-${x}:${y}`}
-            {...{ [bridgesFigureParts.ripple]: depths[island] ?? 0 }}
-            cx={x}
-            cy={y}
-            r={RIPPLE_RADIUS}
-            fill="none"
-            strokeWidth={RIPPLE_WIDTH}
-            className={bridgesToneClassNames.ripple}
-            opacity={0}
-            style={centerOrigin}
-          />
-        ))}
+        islandCenters.flatMap(({ x, y }, island) =>
+          [false, true].map((second) => (
+            <circle
+              key={`ripple-${x}:${y}:${second}`}
+              {...{ [bridgesFigureParts.ripple]: depths[island] ?? 0 }}
+              data-second={second || undefined}
+              cx={x}
+              cy={y}
+              r={RIPPLE_RADIUS}
+              fill="none"
+              strokeWidth={RIPPLE_WIDTH}
+              className={bridgesToneClassNames.ripple}
+              opacity={0}
+              style={centerOrigin}
+            />
+          )),
+        )}
       {ghostEdge !== null && bridges[ghostEdge] !== 2 && (
         <GhostBridge
           segment={getEdgeViewSegment(view, ghostEdge)}

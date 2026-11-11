@@ -82,8 +82,13 @@ const bridgeLandingSounds = {
 export function createClearedSoundLayers(
   board: BridgesBoard,
   bridges: readonly BridgeCount[],
+  originEdge: number | null = null,
 ): SoundLayer[] {
-  const { depthStartMs, allLitMs } = getClearWaveTiming(board, bridges);
+  const { depthStartMs, allLitMs } = getClearWaveTiming(
+    board,
+    bridges,
+    originEdge,
+  );
   const noteCount = Math.min(depthStartMs.length, clearedLightSounds.length);
   const lastDepth = depthStartMs.length - 1;
   return [
@@ -154,7 +159,13 @@ export function useBridgesSoundEffects(
   useClearSound(
     progress,
     function playClearSound() {
-      playLayeredSound(createClearedSoundLayers(board, bridges));
+      playLayeredSound(
+        createClearedSoundLayers(
+          board,
+          bridges,
+          edgeNotice?.change === "changed" ? edgeNotice.edge : null,
+        ),
+      );
     },
     { playReducedMotionClearSound },
   );
