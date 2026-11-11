@@ -24,7 +24,9 @@ export type BridgesBoardSize = (typeof bridgesBoardSizes)[number];
  * 置く島の数（盤面のマスの数に対する割合。島の数はこれを掛けて切り上げた数ちょうど）。届く前に置けなくなった盤面は作り直す。
  * 0.3 は 7×7 以上で、広げた盤面が島の数に届く割合が 1% に満たず、作り直す回数の上限に届くので置かない。
  */
-export const bridgesIslandDensities = [0.2, 0.22, 0.24, 0.26, 0.28] as const;
+export const bridgesIslandDensities = [
+  0.2, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28,
+] as const;
 
 export type BridgesIslandDensity = (typeof bridgesIslandDensities)[number];
 
@@ -77,7 +79,7 @@ export const bridgesRefinementGoals = [
 export type BridgesRefinementGoal = (typeof bridgesRefinementGoals)[number];
 
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
-export const BRIDGES_GENERATOR_VERSION = "7";
+export const BRIDGES_GENERATOR_VERSION = "8";
 
 /**
  * 候補を作る条件。どれも難易度の判定条件ではなく、候補の分布を寄せる生成条件。

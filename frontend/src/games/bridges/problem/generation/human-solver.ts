@@ -60,9 +60,12 @@ export const bridgesConnectivityTiers = [
  * - `readsCount`: 1手の先読みで、本数が破れるのを見て退けた手があったか。ほかの段では `false`。
  * - `lowersUpper`: 1手の先読みで、架けすぎる手（本数を多く仮に決める手）を退けて上限を下げたか。ほかの段では `false`。
  * - `readsIsolation`: 1手の先読みで、数島のまとまりが孤立するのを見て退けた手があったか。ほかの段では `false`。
+ * - `readsClosure`: 1手の先読みで、2島か3島以上の組が閉じるのを見て退けた手があったか。ほかの段では `false`。
  * - `lowersUpperByReading`: 1手の先読みで、架けすぎる手を本数の破れか組の閉じるので退けて上限を下げたか（孤立だけで退けた
  *   ものは含まない）。ほかの段では `false`。
  * - `decidedRatio`: この手詰まりの前に、本数が決まっていた行き先の割合。読みが解き進みのどこで要ったか。
+ * - `separated`: 1手の先読みで、同じ手詰まりに狭めた辺のうち、前の記録の辺から離れた所（両端の島もその隣の島も重ならない所）。
+ *   同じ手詰まりでも、離れた所の先読みは人には別の場所の読みなので、別の記録にする。ほかの段では `false`。
  */
 export type BridgesReasoningRound = {
   tier: BridgesReasoningTier;
@@ -72,8 +75,10 @@ export type BridgesReasoningRound = {
   readsCount: boolean;
   lowersUpper: boolean;
   readsIsolation: boolean;
+  readsClosure: boolean;
   lowersUpperByReading: boolean;
   decidedRatio: number;
+  separated: boolean;
 };
 
 /**
@@ -487,6 +492,7 @@ function classifyLookahead(
   | "readsCount"
   | "lowersUpper"
   | "readsIsolation"
+  | "readsClosure"
   | "lowersUpperByReading"
 > {
   const failures: LookaheadFailure[] = [];
@@ -519,6 +525,9 @@ function classifyLookahead(
     readsCount: failures.includes("count"),
     lowersUpper,
     readsIsolation: failures.includes("isolated"),
+    readsClosure: failures.some(
+      (failure) => failure === "closed-group" || failure === "closed-pair",
+    ),
     lowersUpperByReading,
   };
 }
@@ -528,8 +537,53 @@ const noLookahead = {
   readsCount: false,
   lowersUpper: false,
   readsIsolation: false,
+  readsClosure: false,
   lowersUpperByReading: false,
 } as const;
+
+/**
+ * 狭めた辺を、離れた所ごとに分ける。2辺は、一方の両端の島か、その島から行き先の線でつながる隣の島が、もう一方の両端の島に
+ * 重なれば同じ所とする。
+ */
+function splitIntoSpots(
+  { network, endpoints }: BridgesSolverContext,
+  deductions: readonly [number, readonly [number, number]][],
+): [number, readonly [number, number]][][] {
+  const neighborhoods = deductions.map(([edge]) => {
+    const islands = new Set<number>(endpoints[edge]);
+    for (const island of endpoints[edge]!) {
+      for (const other of network.islandEdges[island]!) {
+        for (const neighbor of endpoints[other]!) {
+          islands.add(neighbor);
+        }
+      }
+    }
+    return islands;
+  });
+  const parents = deductions.map((_, index) => index);
+  const find = (index: number): number => {
+    while (parents[index] !== index) {
+      index = parents[index]!;
+    }
+    return index;
+  };
+  for (let left = 0; left < deductions.length; left += 1) {
+    for (let right = left + 1; right < deductions.length; right += 1) {
+      const [rightEdge] = deductions[right]!;
+      if (
+        endpoints[rightEdge]!.some((island) => neighborhoods[left]!.has(island))
+      ) {
+        parents[find(right)] = find(left);
+      }
+    }
+  }
+  const spots = new Map<number, [number, readonly [number, number]][]>();
+  for (const [index, deduction] of deductions.entries()) {
+    const root = find(index);
+    spots.set(root, [...(spots.get(root) ?? []), [...deduction]]);
+  }
+  return [...spots.values()];
+}
 
 /** 本数が決まった行き先の割合。 */
 function countDecidedRatio({ lower, upper }: BridgeBounds): number {
@@ -764,11 +818,19 @@ function runTiers(
         tier === "C1p" &&
         !isReachedByCountReasoning(context, bounds, effective, merged);
       const applied = tier === "C1p" && !needsGroups ? effective : merged;
-      const lookahead =
-        log !== null && tier === "D"
-          ? classifyLookahead(context, bounds, applied)
-          : noLookahead;
       const decidedRatio = countDecidedRatio(bounds);
+      const spots =
+        log !== null && tier === "D"
+          ? splitIntoSpots(context, applied).map((spot) => ({
+              spot,
+              ...classifyLookahead(context, bounds, spot),
+            }))
+          : [
+              {
+                spot: applied,
+                ...noLookahead,
+              },
+            ];
       for (const [edge, [atLeast, atMost]] of applied) {
         if (atLeast > atMost) {
           throw new BridgesContradiction();
@@ -776,13 +838,16 @@ function runTiers(
         bounds.lower[edge] = atLeast;
         bounds.upper[edge] = atMost;
       }
-      log?.rounds.push({
-        tier: needsGroups ? "C1g" : tier,
-        edgeCount: applied.length,
-        edges: applied.map(([edge]) => edge),
-        ...lookahead,
-        decidedRatio,
-      });
+      for (const [index, { spot, ...kinds }] of spots.entries()) {
+        log?.rounds.push({
+          tier: needsGroups ? "C1g" : tier,
+          edgeCount: spot.length,
+          edges: spot.map(([edge]) => edge),
+          ...kinds,
+          decidedRatio,
+          separated: index > 0,
+        });
+      }
       progressed = true;
       break;
     }
@@ -807,6 +872,7 @@ function runTiers(
       edges: [...trialDeductions.keys()],
       ...noLookahead,
       decidedRatio,
+      separated: false,
     });
   }
 }
@@ -818,11 +884,35 @@ function runTiers(
 export const BRIDGES_LOOKAHEAD_CHAIN_GAP = 3;
 
 /**
+ * 数字の読み（A1・A2）を1つの読みとみなし、続けて当てた数字の読みのうち、「少なくとも・多くとも」（A2）が要ったまとまりの数。
+ * 解法器は A1 で止まるたびに A2 を当てるが、人は数字の読みを行き来しながら続けて読むので、つながりの読みで区切られる
+ * まとまりごとに1回と数える。
+ */
+export function countBridgesCountReadingPhases(
+  rounds: readonly Pick<BridgesReasoningRound, "tier">[],
+): number {
+  let phases = 0;
+  let inPhaseWithCount = false;
+  for (const { tier } of rounds) {
+    if (tier === "A1" || tier === "A2") {
+      if (tier === "A2" && !inPhaseWithCount) {
+        phases += 1;
+        inPhaseWithCount = true;
+      }
+      continue;
+    }
+    inPhaseWithCount = false;
+  }
+  return phases;
+}
+
+/**
  * 1手の先読み（D）の手詰まりを、人が読む先読みの単位にまとめたもの。
  * - `lookaheads`: 先読みごとの、見た破れの種類と上限を下げたか。前の先読みから続けて要った手詰まりが、前の先読みと同じ行き先を
  *   狭めるなら、同じ手を読み進めた1つの先読みとしてまとめる（手詰まりの区切りは解法器の当て方で、人の読みは1つ）。
  * - `mergedRoundCount`: 前の先読みにまとめた D の手詰まりの数。
- * - `spotCount`: 先読みの場所の数。前の先読みから `BRIDGES_LOOKAHEAD_CHAIN_GAP` を超える組を狭めた後の先読みは、別の場所とする。
+ * - `spotCount`: 先読みの場所の数。前の先読みから `BRIDGES_LOOKAHEAD_CHAIN_GAP` を超える組を狭めた後の先読みと、同じ手詰まりで
+ *   離れた所の先読み（`separated`）は、別の場所とする。
  * - `longestChain`: 1つの場所で続けて要った先読みの数の最大。
  */
 export type BridgesLookaheadSummary = {
@@ -832,6 +922,7 @@ export type BridgesLookaheadSummary = {
     | "readsCount"
     | "lowersUpper"
     | "readsIsolation"
+    | "readsClosure"
     | "lowersUpperByReading"
   >[];
   mergedRoundCount: number;
@@ -847,6 +938,7 @@ export function summarizeBridgesLookaheads(
     readsCount: boolean;
     lowersUpper: boolean;
     readsIsolation: boolean;
+    readsClosure: boolean;
     lowersUpperByReading: boolean;
   }[] = [];
   let mergedRoundCount = 0;
@@ -863,7 +955,9 @@ export function summarizeBridgesLookaheads(
       continue;
     }
     const continues =
-      sinceLookahead !== null && sinceLookahead <= BRIDGES_LOOKAHEAD_CHAIN_GAP;
+      !round.separated &&
+      sinceLookahead !== null &&
+      sinceLookahead <= BRIDGES_LOOKAHEAD_CHAIN_GAP;
     const current = lookaheads.at(-1);
     if (
       continues &&
@@ -875,6 +969,7 @@ export function summarizeBridgesLookaheads(
       current.readsCount ||= round.readsCount;
       current.lowersUpper ||= round.lowersUpper;
       current.readsIsolation ||= round.readsIsolation;
+      current.readsClosure ||= round.readsClosure;
       current.lowersUpperByReading ||= round.lowersUpperByReading;
       previousEdges = new Set([...previousEdges, ...round.edges]);
     } else {
@@ -883,6 +978,7 @@ export function summarizeBridgesLookaheads(
         readsCount: round.readsCount,
         lowersUpper: round.lowersUpper,
         readsIsolation: round.readsIsolation,
+        readsClosure: round.readsClosure,
         lowersUpperByReading: round.lowersUpperByReading,
       });
       chain = continues ? chain + 1 : 1;

@@ -1,6 +1,7 @@
 import {
   BRIDGES_SHARP_ROUND_EDGE_LIMIT,
   type BridgesReasoningRound,
+  countBridgesCountReadingPhases,
   summarizeBridgesLookaheads,
   traceBridgesHumanSolve,
 } from "@/games/bridges/problem/generation/human-solver";
@@ -22,10 +23,13 @@ type Target = { minimum?: number; maximum?: number };
 
 /**
  * 磨くときに数える読みと盤面の量。
- * - `countRounds`: 配分の読み（A2）の手詰まり。`closures`: 閉じない読みの一か所の気づき。`otherConnectivity`: それ以外の
+ * - `countRounds`: 配分の読み（A2）が要った数字の読みのまとまり（`countBridgesCountReadingPhases`）。
+ *   `closures`: 閉じない読みの一か所の気づき。`otherConnectivity`: それ以外の
  *   つながりの読み（3島以上の組・唯一の通り道・掃く手詰まり）。`connectivity`: つながりの読みの手詰まり（先読みはまとめて数える）。
  * - `readings`: ちょうど以外の読みの手詰まり。`passages`: 唯一の通り道。`crossings`: 交差で塞がる行き先。
  * - `lookaheads`・`groupLookaheads`・`spots`: 1手の先読みの数、組を見る先読みの数、場所の数（`summarizeBridgesLookaheads`）。
+ * - `reasonKinds`: 1手の先読みで手を退けた理由（組が閉じる・孤立・本数の破れ・上限を下げる）の種類の数。
+ * - `firstLookaheadLateness`: 最初の1手の先読みの前に決まっていた行き先の割合。
  * - `lateClimax`: 最後のつながりの読みの前に決まっていた行き先の割合。
  * - `loops`・`highClues`・`veryHighClues`: 解の輪、5以上・6以上の数字の島。
  */
@@ -40,6 +44,8 @@ type Metrics = Record<
   | "lookaheads"
   | "groupLookaheads"
   | "spots"
+  | "reasonKinds"
+  | "firstLookaheadLateness"
   | "lateClimax"
   | "loops"
   | "highClues"
@@ -49,13 +55,12 @@ type Metrics = Record<
 
 /**
  * 磨く向きごとの目標。
- * - `entry`（L1）: 配分の読みは1回まで、つながりの読みと先読みは無し、交差で塞がる行き先は2つまで、輪を1つ。
- * - `count`（L2）: 配分の読み2回、2島を閉じない読みちょうど1回、ほかのつながりの読みは無し、輪を1つ。
- * - `closure`（L3）: 配分の読み2回、つながりの読み3回、閉じない読み1回、交差1つ、5以上の数字1つ、輪1つ、先読みは無し。
- * - `lookahead`（L4）: 配分2回、つながり3回、読み6回、1手の先読みちょうど1つ、5以上の数字2つ、
- *   輪2つ、交差1つ。
- * - `spots`（L5）: 配分3回、つながり3回、読み6回、1手の先読みを2か所以上で、組を見る先読み、5以上の数字3つ、6以上の数字1つ、
- *   輪2つ、交差2つ。
+ * - `entry`（L1）: 配分の読みのまとまりちょうど1つ、つながりの読みと先読みは無し、交差で塞がる行き先は2つまで、輪を1つ。
+ * - `count`（L2）: 配分の読みのまとまり1つ、2島を閉じない読みちょうど1回、ほかのつながりの読みは無し、輪を1つ。
+ * - `closure`（L3）: 配分1つ、つながりの読み3回、閉じない読み1回、交差1つ、5以上の数字1つ、輪1つ、先読みは無し。
+ * - `lookahead`（L4）: 配分2つ、つながり3回、読み5回、1手の先読みちょうど1つ、5以上の数字2つ、輪2つ、交差1つ。
+ * - `spots`（L5）: 配分2つ、つながり4回、読み6回、1手の先読みを2か所以上で、閉じない読み2回、組を見る先読み、先読みで退けた
+ *   理由2種類、最初の先読みが行き先の半分が決まった後、5以上の数字3つ、6以上の数字1つ、輪2つ、交差2つ。
  * つながりの読みを求める向きでは、唯一の通り道を1つと、最後のつながりの読みが解き進みの6割より後にあることも目標にする。
  */
 const targetsByGoal: Record<
@@ -63,20 +68,20 @@ const targetsByGoal: Record<
   Partial<Record<keyof Metrics, Target>>
 > = {
   entry: {
-    countRounds: { maximum: 1 },
+    countRounds: { minimum: 1, maximum: 1 },
     connectivity: { maximum: 0 },
     crossings: { maximum: 2 },
     loops: { minimum: 1 },
   },
   count: {
-    countRounds: { minimum: 2 },
+    countRounds: { minimum: 1 },
     closures: { minimum: 1, maximum: 1 },
     otherConnectivity: { maximum: 0 },
     lookaheads: { maximum: 0 },
     loops: { minimum: 1 },
   },
   closure: {
-    countRounds: { minimum: 2 },
+    countRounds: { minimum: 1 },
     connectivity: { minimum: 3 },
     closures: { minimum: 1 },
     passages: { minimum: 1 },
@@ -89,7 +94,7 @@ const targetsByGoal: Record<
   lookahead: {
     countRounds: { minimum: 2 },
     connectivity: { minimum: 3 },
-    readings: { minimum: 6 },
+    readings: { minimum: 5 },
     lookaheads: { minimum: 1, maximum: 1 },
     passages: { minimum: 1 },
     crossings: { minimum: 1 },
@@ -98,12 +103,15 @@ const targetsByGoal: Record<
     lateClimax: { minimum: 0.6 },
   },
   spots: {
-    countRounds: { minimum: 3 },
-    connectivity: { minimum: 3 },
+    countRounds: { minimum: 2 },
+    connectivity: { minimum: 4 },
     readings: { minimum: 6 },
     lookaheads: { minimum: 2 },
     spots: { minimum: 2 },
+    closures: { minimum: 2 },
     groupLookaheads: { minimum: 1 },
+    reasonKinds: { minimum: 2 },
+    firstLookaheadLateness: { minimum: 0.5 },
     passages: { minimum: 1 },
     crossings: { minimum: 2 },
     highClues: { minimum: 3 },
@@ -123,13 +131,18 @@ const SURPLUS_SCORE = 1;
 const EXCESS_PENALTY = 10;
 
 /** 上限も超えた分も点にしない、割合の目標（`lateClimax`）。 */
-const ratioMetrics: ReadonlySet<keyof Metrics> = new Set(["lateClimax"]);
+const ratioMetrics: ReadonlySet<keyof Metrics> = new Set([
+  "lateClimax",
+  "firstLookaheadLateness",
+]);
 
 /**
  * 磨くときに保つ数字と形の質。数字の平均・2本の割合は下限、数字2・最も多い数字・外周に沿う橋・間が1マスの橋・架ける行き先の
  * 割合は上限。外れた分を `QUALITY_SHORTFALL_WEIGHT` 倍して引く。長い橋の無い盤面も引く。
  */
 const MINIMUM_CLUE_MEAN = 2.8;
+/** 5以上の数字を目標にする向き（L3〜L5）の数字の平均の下限。L3〜L5 の分類と同じ。 */
+const MINIMUM_UPPER_CLUE_MEAN = 3.0;
 const MINIMUM_DOUBLE_BRIDGE_RATIO = 0.3;
 const MAXIMUM_TWO_CLUE_SHARE = 0.3;
 const MAXIMUM_DOMINANT_CLUE_SHARE = 0.35;
@@ -217,6 +230,7 @@ function measure(
   loops: number,
 ): Metrics {
   const lookahead = summarizeBridgesLookaheads(rounds);
+  const countRounds = countBridgesCountReadingPhases(rounds);
   const connectivityRounds = rounds.filter(
     ({ tier }) => tier !== "A1" && tier !== "A2",
   );
@@ -227,20 +241,25 @@ function measure(
   ).length;
   const nonLookahead = connectivityRounds.filter(({ tier }) => tier !== "D");
   return {
-    countRounds: rounds.filter(({ tier }) => tier === "A2").length,
+    countRounds,
     closures,
     otherConnectivity: nonLookahead.length - closures,
     connectivity: nonLookahead.length + lookahead.lookaheads.length,
-    readings:
-      rounds.filter(({ tier }) => tier === "A2").length +
-      nonLookahead.length +
-      lookahead.lookaheads.length,
+    readings: countRounds + nonLookahead.length + lookahead.lookaheads.length,
     passages: rounds.filter(({ tier }) => tier === "C3").length,
     crossings,
     lookaheads: lookahead.lookaheads.length,
     groupLookaheads: lookahead.lookaheads.filter(({ readsGroup }) => readsGroup)
       .length,
     spots: lookahead.spotCount,
+    reasonKinds: [
+      lookahead.lookaheads.some(({ readsClosure }) => readsClosure),
+      lookahead.lookaheads.some(({ readsIsolation }) => readsIsolation),
+      lookahead.lookaheads.some(({ readsCount }) => readsCount),
+      lookahead.lookaheads.some(({ lowersUpper }) => lowersUpper),
+    ].filter(Boolean).length,
+    firstLookaheadLateness:
+      rounds.find(({ tier }) => tier === "D")?.decidedRatio ?? 0,
     lateClimax: connectivityRounds.at(-1)?.decidedRatio ?? 0,
     loops,
     highClues: clues.filter((clue) => clue >= 5).length,
@@ -337,7 +356,12 @@ function scoreLayout(
       0,
       borderBridges / Math.max(1, used) - MAXIMUM_BORDER_BRIDGE_SHARE,
     ) +
-    Math.max(0, MINIMUM_CLUE_MEAN - clueMean) +
+    Math.max(
+      0,
+      (targetsByGoal[goal].highClues === undefined
+        ? MINIMUM_CLUE_MEAN
+        : MINIMUM_UPPER_CLUE_MEAN) - clueMean,
+    ) +
     Math.max(0, MINIMUM_DOUBLE_BRIDGE_RATIO - doubleRatio) +
     Math.max(0, twoShare - MAXIMUM_TWO_CLUE_SHARE) +
     Math.max(0, dominantShare - MAXIMUM_DOMINANT_CLUE_SHARE);

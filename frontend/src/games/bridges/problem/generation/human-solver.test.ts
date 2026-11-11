@@ -358,8 +358,10 @@ describe("summarizeBridgesLookaheads", () => {
       readsCount: false,
       lowersUpper: false,
       readsIsolation: false,
+      readsClosure: false,
       lowersUpperByReading: false,
       decidedRatio: 0,
+      separated: false,
       ...flags,
     };
   }
@@ -394,6 +396,20 @@ describe("summarizeBridgesLookaheads", () => {
       longestChain: 2,
     });
     expect(summary.lookaheads).toHaveLength(3);
+  });
+
+  test("同じ手詰まりで離れた所の先読みは、続けて要っても別の場所と数えること", () => {
+    const summary = summarizeBridgesLookaheads([
+      round("D", [1]),
+      round("D", [7], { separated: true }),
+    ]);
+
+    expect(summary).toMatchObject({
+      mergedRoundCount: 0,
+      spotCount: 2,
+      longestChain: 1,
+    });
+    expect(summary.lookaheads).toHaveLength(2);
   });
 });
 

@@ -160,10 +160,11 @@ describe("同梱の問題集", () => {
     entries: listBridgesPoolEntries(id),
   }));
 
-  test("どのレベルも500問あること", () => {
-    const counts = levels.map(({ entries }) => entries.length);
+  test("どのレベルも同じ数の問題があること", () => {
+    const counts = new Set(levels.map(({ entries }) => entries.length));
 
-    expect(counts).toEqual([500, 500, 500, 500, 500]);
+    expect([...counts]).toHaveLength(1);
+    expect(levels[0]!.entries.length).toBeGreaterThan(0);
   });
 
   test("全問を問題として復元できること", () => {

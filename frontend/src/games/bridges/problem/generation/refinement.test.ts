@@ -47,7 +47,7 @@ describe("refineBridgesLayout", () => {
     return spread
       ? {
           spread,
-          refined: refineBridgesLayout(spread, 150, "lookahead", random),
+          refined: refineBridgesLayout(spread, 500, "lookahead", random),
         }
       : null;
   }).flatMap((pair) => (pair?.refined ? [pair] : []));
@@ -141,7 +141,7 @@ describe("refineBridgesLayout", () => {
   describe("同じ盤面を、配分の読みを増やす向き（count）と1手の先読みを増やす向き（lookahead）で磨いた場合", () => {
     const refinedPairs = Array.from({ length: 30 }, (_, index) => {
       const spread = spreadUntil(
-        { ...conditions, size: 7 },
+        { ...conditions, size: 9, islandDensity: 0.22 },
         createProblemSeededRandom(`refinement-goal-${index}`),
       );
       if (spread === null) {
@@ -150,7 +150,7 @@ describe("refineBridgesLayout", () => {
       const [count, lookahead] = (["count", "lookahead"] as const).map((goal) =>
         refineBridgesLayout(
           spread,
-          150,
+          500,
           goal,
           createProblemSeededRandom(`refinement-goal-steps-${index}`),
         ),

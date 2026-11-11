@@ -5,6 +5,7 @@ import {
   bridgesConnectivityTiers,
   bridgesReasoningTiers,
   countBridgesCornerOpeningIslands,
+  countBridgesCountReadingPhases,
   countBridgesOpeningEdges,
   countBridgesOpeningSaturatedIslands,
   summarizeBridgesLookaheads,
@@ -37,6 +38,9 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
  * - `shortBridgeShare`: 解で橋を架ける組のうち、間が1マスの組の割合。
  * - `longBridgeCount`: 解で橋を架ける組のうち、盤面の一辺の半分以上の長さの組の数。
  * - `pointSymmetric`: 島の配置が盤面の中心について点対称なら 1、そうでなければ 0。
+ * - `borderIslandShare`: 盤面の外周の行・列にある島の割合。多いと枠に島が並び、内側が空く。
+ * - `gridAlignmentShare`: 島の行と列の偶奇（4組）のうち、最も多い組の島の割合。大きいと島が1マスおきの格子にそろう
+ *   （無作為なら 0.3 前後）。
  */
 export type BridgesScaleMetrics = {
   size: number;
@@ -59,12 +63,15 @@ export type BridgesScaleMetrics = {
   shortBridgeShare: number;
   longBridgeCount: number;
   pointSymmetric: number;
+  borderIslandShare: number;
+  gridAlignmentShare: number;
 };
 
 /**
  * 人間向け解法器（段 A1〜D）で、数字と盤面だけから橋を決め切った経過から求めた特徴。
  * - `maximumTier`: 使った最も高い段。
- * - `countRoundCount`: 「ちょうど」で止まり、「少なくとも・多くとも」（A2）が要った手詰まりの回数。
+ * - `countRoundCount`: 「少なくとも・多くとも」（A2）が要った数字の読みのまとまりの数。数字の読み（A1・A2）を続けて当てた
+ *   まとまりを1つと数え、つながりの読みで区切る（`countBridgesCountReadingPhases`）。
  * - `connectivityRoundCount`: 数字の読みで止まり、つながりの読み（C1p・C1g・C3・D）が要った手詰まりの回数。
  * - `roundCountByTier`: 段ごとの手詰まりの回数。
  * - `countReasoningUndecidedRatio`: 数字の読み（A1・A2）だけでは本数が決まらない行き先の割合。
@@ -78,7 +85,8 @@ export type BridgesScaleMetrics = {
  *   盤面で、1手の先読みでしか進めない手詰まりの回数で、前の先読みと同じ行き先を続けて狭めた手詰まりは前の先読みにまとめる
  *   （`summarizeBridgesLookaheads`）。
  * - `passageRoundCount`: 唯一の通り道（C3）が要った手詰まりの回数。
- * - `readingRoundCount`: 「ちょうど」（A1）だけでは止まり、ほかの読み（A2・つながり）が要った手詰まりの回数。
+ * - `readingRoundCount`: 「ちょうど」だけでは進めない読みの回数。A2 が要った数字の読みのまとまり（`countRoundCount`）と、
+ *   つながりの読みの手詰まり（`connectivityRoundCount`）の和。
  * - `groupLookaheadRoundCount`: 1手の先読みのうち、3島以上の組が閉じるか数島が孤立するのを見て退けた手詰まりの回数。
  *   仮に決めた手の両端を埋め、組を端までたどって閉じるのを確かめる、人が2段に読む所。
  * - `chainedLookaheadRoundCount`: 1手の先読みのうち、前の1手の先読みから、ほかの読みで狭めた組が
@@ -94,6 +102,8 @@ export type BridgesScaleMetrics = {
  * - `readingCappingLookaheadRoundCount`: 1手の先読みのうち、架けすぎる手を本数の破れか組の閉じるので退けて上限を下げた回数。
  * - `lastConnectivityDecidedRatio`: 最後のつながりの読み（C1p・C1g・C3・D）の前に、本数が決まっていた行き先の割合。
  *   大きいほど、解き進みの後の方まで読みの山場が残る。つながりの読みが無ければ 0。
+ * - `firstLookaheadDecidedRatio`: 最初の1手の先読みの前に、本数が決まっていた行き先の割合。先読みが無ければ 0。
+ * - `lookaheadReasonKindCount`: 1手の先読みで手を退けた理由の種類（組が閉じる・孤立する・本数が破れる・上限を下げる）の数。
  */
 export type BridgesReasoningFeatures = {
   maximumTier: Exclude<BridgesReasoningTier, "T">;
@@ -120,6 +130,8 @@ export type BridgesReasoningFeatures = {
   longestLookaheadChain: number;
   readingCappingLookaheadRoundCount: number;
   lastConnectivityDecidedRatio: number;
+  firstLookaheadDecidedRatio: number;
+  lookaheadReasonKindCount: number;
 };
 
 /**
@@ -252,6 +264,20 @@ function measureScale(
     shortBridgeShare: usedEdgeCount === 0 ? 0 : shortBridges / usedEdgeCount,
     longBridgeCount: longBridges,
     pointSymmetric: pointSymmetric ? 1 : 0,
+    borderIslandShare:
+      problem.islands.filter(
+        ({ row, column }) =>
+          row === 0 || row === last || column === 0 || column === last,
+      ).length / problem.islands.length,
+    gridAlignmentShare:
+      Math.max(
+        ...[0, 1, 2, 3].map(
+          (parity) =>
+            problem.islands.filter(
+              ({ row, column }) => (row % 2) * 2 + (column % 2) === parity,
+            ).length,
+        ),
+      ) / problem.islands.length,
   };
 }
 
@@ -347,14 +373,16 @@ export function analyzeBridgesDifficulty(
   );
   const { lookaheads, mergedRoundCount, spotCount, longestChain } =
     summarizeBridgesLookaheads(trace.rounds);
+  const countRoundCount = countBridgesCountReadingPhases(trace.rounds);
+  const connectivityRoundCount = connectivityRounds.length - mergedRoundCount;
   return {
     status: "analyzed",
     requiresTrial: false,
     scale,
     reasoning: {
       maximumTier,
-      countRoundCount: roundCountByTier.A2,
-      connectivityRoundCount: connectivityRounds.length - mergedRoundCount,
+      countRoundCount,
+      connectivityRoundCount,
       roundCountByTier,
       countReasoningUndecidedRatio: countTrace.undecidedEdgeRatio,
       openingEdgeRatio:
@@ -373,9 +401,7 @@ export function analyzeBridgesDifficulty(
       groupClosureRoundCount: roundCountByTier.C1g,
       lookaheadRoundCount: lookaheads.length,
       passageRoundCount: roundCountByTier.C3,
-      readingRoundCount:
-        trace.rounds.filter(({ tier }) => tier !== "A1").length -
-        mergedRoundCount,
+      readingRoundCount: countRoundCount + connectivityRoundCount,
       groupLookaheadRoundCount: lookaheads.filter(
         ({ readsGroup }) => readsGroup,
       ).length,
@@ -398,6 +424,14 @@ export function analyzeBridgesDifficulty(
       ).length,
       lastConnectivityDecidedRatio:
         connectivityRounds.at(-1)?.decidedRatio ?? 0,
+      firstLookaheadDecidedRatio:
+        trace.rounds.find(({ tier }) => tier === "D")?.decidedRatio ?? 0,
+      lookaheadReasonKindCount: [
+        lookaheads.some(({ readsClosure }) => readsClosure),
+        lookaheads.some(({ readsIsolation }) => readsIsolation),
+        lookaheads.some(({ readsCount }) => readsCount),
+        lookaheads.some(({ lowersUpper }) => lowersUpper),
+      ].filter(Boolean).length,
     },
     trial: measureBridgesTrialFeatures(problem),
   };

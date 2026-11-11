@@ -23,8 +23,8 @@ export type BridgesGeneratedProblem = BridgesIdentifiedProblem & {
 };
 
 /**
- * 作り直す回数の上限。島の数に届き、上下左右の端の行・列のどれにも島がある盤面になり、磨くなら磨いた盤面が一意解になるまで
- * 作り直す。島の数の多い条件では広げた盤面の1割ほどしか島の数に届かないので、余裕を持たせる。届けば生成器の不具合とみなす。
+ * 作り直す回数の上限。島の数に届き、上下左右の端の行・列のどれにも島があり、盤面の形の上限に収まる盤面になり、磨くなら
+ * 磨いた盤面が一意解になるまで作り直す。島の数の多い条件では広げた盤面の数%しか届かないので、余裕を持たせる。
  */
 const MAXIMUM_GENERATION_ATTEMPTS = 2000;
 
@@ -75,7 +75,18 @@ export function generateBridgesProblem(
       generationAttemptCount: attempt,
     };
   }
-  throw new Error(
-    `Could not generate a Bridges problem for seed ${identity.seed} within ${MAXIMUM_GENERATION_ATTEMPTS} attempts`,
-  );
+  throw new BridgesGenerationExhaustedError(identity.seed);
+}
+
+/**
+ * 作り直す回数の上限までに盤面を作れなかった。島の数の多い条件では、盤面の形の上限に収まる広げ方がまれにしか見つからない。
+ * 問題集の問題はどれも作れた identity なので、作り直すときには起きない。
+ */
+export class BridgesGenerationExhaustedError extends Error {
+  constructor(seed: string) {
+    super(
+      `Could not generate a Bridges problem for seed ${seed} within ${MAXIMUM_GENERATION_ATTEMPTS} attempts`,
+    );
+    this.name = "BridgesGenerationExhaustedError";
+  }
 }

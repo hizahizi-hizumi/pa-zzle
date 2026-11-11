@@ -35,7 +35,8 @@ function listOrientations(board: BridgesBoard): BridgesBoard[] {
 
 describe("analyzeBridgesDifficulty", () => {
   describe("つながりの1手の先読みが要る一意解の問題の場合", () => {
-    // 研究用の解法器では A2:2 A1:2 A2:2 A1:1 D:3 A1:6 A1:1（research-solver-cases.json の先頭）。
+    // 研究用の解法器では A2:2 A1:2 A2:2 A1:1 D:3 A1:6 A1:1（research-solver-cases.json の先頭）。D の前の数字の読みは、
+    // A2 を2回当てても1つのまとまり。
     const problem = parseBridgesBoard([
       "3.3.1.",
       "......",
@@ -60,7 +61,7 @@ describe("analyzeBridgesDifficulty", () => {
         },
         reasoning: {
           maximumTier: "D",
-          countRoundCount: 2,
+          countRoundCount: 1,
           connectivityRoundCount: 1,
           countReasoningUndecidedRatio: 1,
           lookaheadRoundCount: 1,
@@ -94,7 +95,7 @@ describe("analyzeBridgesDifficulty", () => {
       const analysis = analyzeBridgesDifficulty(problem);
 
       expect(analysis).toMatchObject({
-        reasoning: { readingRoundCount: 3, chainedLookaheadRoundCount: 0 },
+        reasoning: { readingRoundCount: 2, chainedLookaheadRoundCount: 0 },
       });
     });
 
@@ -145,17 +146,19 @@ describe("analyzeBridgesDifficulty", () => {
       "3.....5.4",
     ]);
 
-    test("上限を下げる先読みと、本数・組・孤立を見る先読みの手詰まりを数えること", () => {
+    test("同じ手詰まりで離れた2か所の先読みを別の場所と数え、上限を下げる先読みと、本数・組・孤立を見る先読みを数えること", () => {
       const analysis = analyzeBridgesDifficulty(problem);
 
       expect(analysis).toMatchObject({
         status: "analyzed",
         reasoning: {
-          lookaheadRoundCount: 1,
+          lookaheadRoundCount: 2,
+          lookaheadSpotCount: 2,
           cappingLookaheadRoundCount: 1,
           countLookaheadRoundCount: 1,
-          groupLookaheadRoundCount: 1,
+          groupLookaheadRoundCount: 2,
           isolatingLookaheadRoundCount: 1,
+          lookaheadReasonKindCount: 4,
         },
       });
     });

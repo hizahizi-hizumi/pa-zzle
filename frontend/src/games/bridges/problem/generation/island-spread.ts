@@ -62,13 +62,13 @@ function pickWeighted<T>(
  * 外周のマスに島を置く重みの倍率。外周のマスは盤面の内側より多く、そのまま選ぶと外周に沿う橋が増えて、
  * 盤面の枠をなぞる問題になる。
  */
-const BORDER_PLACEMENT_WEIGHT = 0.35;
+const BORDER_PLACEMENT_WEIGHT = 0.25;
 
 /**
  * 島の多い偶奇の組（行と列の偶奇が同じマス）に島を置く重みの倍率。間が1マスの橋で島を広げると、島が1マスおきの格子に
  * 並びやすいので、多い組のマスを選びにくくして、間が偶数マスの橋も混ぜる。
  */
-const CROWDED_PARITY_PLACEMENT_WEIGHT = 0.5;
+const CROWDED_PARITY_PLACEMENT_WEIGHT = 0.3;
 
 /**
  * 斜め隣に島のあるマスに島を置く重みの倍率。間が1マスの橋で広げると、島が斜めに並んで市松に固まり、行き先が隣の島ばかりの
@@ -80,7 +80,27 @@ const DIAGONAL_PLACEMENT_WEIGHT = 0.1;
 const MAXIMUM_DIAGONAL_NEIGHBOR_SHARE = 0.5;
 
 const CELL_LENGTH_EXPONENT = 0.5;
+
+/**
+ * 間が1マスの橋でしか既にある島へ架けられないマスに島を置く重みと、間が1マスの辺を輪の橋として足す確率の倍率。間が1マスの
+ * 橋ばかりの盤面は、隣の島をつなぐだけの読みになるので、長い橋で広げる。
+ */
+const SHORT_BRIDGE_WEIGHT = 0.6;
 const ANCHOR_LENGTH_EXPONENT = 2;
+
+/**
+ * 島の割合 `islandDensity` で広げるときの島の数の目標。マスの数に掛けて切り上げる（0.28 × 100 が 28.000000000000004 になる
+ * ような小数の誤差では切り上げない）。
+ */
+export function countBridgesTargetIslands(
+  size: number,
+  islandDensity: number,
+): number {
+  return Math.max(
+    2,
+    Math.ceil(Math.round(islandDensity * size * size * 1_000_000) / 1_000_000),
+  );
+}
 
 /** 分割で島を差すときに、橋の両端の島から空けるマスの数。差した島が両端の島と隣り合わないようにする。 */
 const SPLIT_MARGIN = 2;
@@ -435,7 +455,7 @@ export function spreadBridgesIslands(
   }: BridgesSpreadConditions,
   random: ProblemRandom,
 ): BridgesCompletedLayout | null {
-  const targetIslandCount = Math.max(2, Math.ceil(islandDensity * size * size));
+  const targetIslandCount = countBridgesTargetIslands(size, islandDensity);
   const layout = new SpreadLayout(size);
   const start = {
     row: Math.floor(random() * size),
@@ -476,6 +496,9 @@ export function spreadBridgesIslands(
         Math.max(...options.map(({ path }) => path.length)) **
           CELL_LENGTH_EXPONENT *
         options.length *
+        (options.every(({ path }) => path.length === 1)
+          ? SHORT_BRIDGE_WEIGHT
+          : 1) *
         (layout.isOnBorder(options[0]!.cell) ? BORDER_PLACEMENT_WEIGHT : 1) *
         (layout.isParityCrowded(options[0]!.cell)
           ? CROWDED_PARITY_PLACEMENT_WEIGHT
@@ -498,7 +521,8 @@ export function spreadBridgesIslands(
     for (const { anchor, path } of anchors) {
       if (
         anchor === first.anchor ||
-        random() >= extraBridgeRate ||
+        random() >=
+          extraBridgeRate * (path.length === 1 ? SHORT_BRIDGE_WEIGHT : 1) ||
         path.some((cell) => layout.isBridgeCell(cell))
       ) {
         continue;
@@ -563,8 +587,19 @@ export function spreadBridgesIslands(
   if (!connectChosenEdges(board.islands.length, edges, chosen, canAdd)) {
     return null;
   }
+  const isShort = (edge: number) => {
+    const { from, to } = edges[edge]!;
+    const start = board.islands[from]!;
+    const end = board.islands[to]!;
+    return (
+      Math.abs(start.row - end.row) + Math.abs(start.column - end.column) === 2
+    );
+  };
   for (const edge of edges.keys()) {
-    if (canAdd(edge) && random() < extraBridgeRate) {
+    if (
+      canAdd(edge) &&
+      random() < extraBridgeRate * (isShort(edge) ? SHORT_BRIDGE_WEIGHT : 1)
+    ) {
       chosen.add(edge);
     }
   }

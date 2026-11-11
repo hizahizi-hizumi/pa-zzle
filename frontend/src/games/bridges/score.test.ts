@@ -30,7 +30,7 @@ const heavyWorkload: BridgesSolveWorkload = {
 // 見渡す10秒・島11個・橋12本。
 const lightFullScoreMs = 10_000 + 11_000 + 18_000;
 // 見渡す10秒・島24個・橋26本に、読みの項（配分3回・つながり3回・交差2つ・決まらない行き先26）を足す。
-const heavyReadingMs = 24_000 + 60_000 + 8_000 + 26_000;
+const heavyReadingMs = 45_000 + 120_000 + 8_000 + 26_000;
 const heavyFullScoreMs = 10_000 + 24_000 + 39_000 + heavyReadingMs;
 
 describe("calculateBridgesSpeedFullScoreMs", () => {
@@ -40,7 +40,7 @@ describe("calculateBridgesSpeedFullScoreMs", () => {
   ] as const;
 
   test.each(cases)(
-    "%sで、見渡す10秒に島1つ1秒・橋1本1.5秒・配分の手詰まり1回8秒・つながりの手詰まり1回20秒・交差で塞がる行き先1つ4秒・決まらない行き先1つ1秒を足すこと",
+    "%sで、見渡す10秒に島1つ1秒・橋1本1.5秒・配分の読みのまとまり1つ15秒・つながりの手詰まり1回40秒・交差で塞がる行き先1つ4秒・決まらない行き先1つ1秒を足すこと",
     (_, workload, expected) => {
       const speedFullScoreMs = calculateBridgesSpeedFullScoreMs(workload);
 
@@ -49,13 +49,13 @@ describe("calculateBridgesSpeedFullScoreMs", () => {
   );
 
   describe("つながりの手詰まりのうち1手の先読みが要った回数がある場合", () => {
-    test("1回ごとに45秒を足すこと", () => {
+    test("1回ごとに110秒を足すこと", () => {
       const speedFullScoreMs = calculateBridgesSpeedFullScoreMs({
         ...heavyWorkload,
         lookaheadRoundCount: 2,
       });
 
-      expect(speedFullScoreMs).toBe(heavyFullScoreMs + 90_000);
+      expect(speedFullScoreMs).toBe(heavyFullScoreMs + 220_000);
     });
   });
 
@@ -90,7 +90,7 @@ describe("calculateBridgesZeroScoreRatio", () => {
       Math.round((3 + (3 * heavyReadingMs) / heavyFullScoreMs) * 10) / 10;
 
     expect(calculateBridgesZeroScoreRatio(heavyWorkload)).toBe(expected);
-    expect(expected).toBe(4.9);
+    expect(expected).toBe(5.2);
   });
 });
 
@@ -100,7 +100,7 @@ describe("calculateBridgesSpeedScoreRule", () => {
 
     expect(rule).toEqual({
       fullScoreMs: heavyFullScoreMs,
-      zeroScoreMs: heavyFullScoreMs * 4.9,
+      zeroScoreMs: heavyFullScoreMs * 5.2,
     });
   });
 });
