@@ -3,6 +3,8 @@ paths:
   - "frontend/src/games/**/*.{ts,tsx}"
   - "frontend/src/game-catalog/**/*.{ts,tsx}"
   - "frontend/src/views/*HomeView.tsx"
+  - "frontend/src/components/HowToPlay*.{ts,tsx}"
+  - "frontend/src/components/how-to-play-*.ts"
 ---
 
 # ゲーム実装の標準構造
@@ -52,7 +54,7 @@ frontend/src/games/
 - `session/session.ts`: 1問に対する1回のプレイ状態、操作、経過事実を置く。
 - `play/`: 問題供給、session、評価を組み合わせ、UIへプレイ状態と操作を提供する。
 - `ui/`: ゲーム固有の表示とユーザー操作を扱う。結果画面はプレイ画面と記録の結果画面の両方から使うので、プレイ画面の内部実装ではなく `ui/result/` に置く。
-- `display-name.ts`: 利用者に見せるゲーム名 `<GAME>_DISPLAY_NAME` を置く。カタログ・ゲームのホーム・プレイ画面・盤面の読み上げ名・チュートリアル・結果画面はこれを参照し、ゲーム名を直書きしない。
+- `display-name.ts`: 利用者に見せるゲーム名 `<GAME>_DISPLAY_NAME` を置く。カタログ・ゲームのホーム・プレイ画面・盤面の読み上げ名・チュートリアル・遊び方・結果画面はこれを参照し、ゲーム名を直書きしない。
 - `difficulty.ts`: ゲームとしての難易度の分類方針を置く。難易度レベルの一覧・表示名は `games/difficulty.ts` の共通契約を使う。
 - `score.ts`: 完了したプレイの事実をゲーム固有の評価へ変換する。
 - `problem-selection.ts`: 開始条件に合う問題を問題供給元と難易度方針から選ぶ。
@@ -158,14 +160,35 @@ frontend/src/games/
 ## チュートリアル
 
 - `tutorial/tutorial.ts` に、`games/tutorial.ts` の `Tutorial` を満たす `<game>Tutorial`（例: `takuzuTutorial`）を置く。
-- 盤面は `puzzle/` の遷移で進める。
-- 本番と同じ盤面の反応と見え方が要るときは `session/` の関数で求め、経過時間と回数は使わない。
-- 画面は `ui/<Game>Tutorial.tsx` に置き、`<game>Tutorial` を `games/tutorial.ts` の進行関数で進めて `@/components/TutorialOverlay` に渡す。
+- 盤面の遷移は `puzzle/` の関数で求める。
+- 本番と同じ盤面の反応と見え方が要るときは、`session/` の関数で求める。
+- 経過時間と回数を使わない。
+- 画面は `ui/<Game>Tutorial.tsx` に置く。
+- `<game>Tutorial` は `games/tutorial.ts` の進行関数で進め、`@/components/TutorialOverlay` に渡す。
 - 盤面操作の音とクリア音は、プレイ画面と同じゲームの効果音のフックで鳴らす。
-- 解き終えたら本番と同じクリア演出を見せ、その完了で `completeTutorial` を呼ぶ。
+- 解き終えたら本番と同じクリア演出を見せる。
+- クリア演出の完了で `completeTutorial` を呼ぶ。
 - 印と合図は `@/components/TutorialCue`、覆いから抜く所は `@/components/TutorialSpotlight` だけで描く。
 - 盤面部品は印・合図・抜く所を任意の props で受け取り、受け取らないときは本番と同じに描く。
-- ゲームのホームへは `views/<Game>HomeView.tsx` から `GameHomeScreen` の `renderTutorial` で、プレイ中のメニューへは `ui/<Game>Play.tsx` から `GamePlayFrame` の `renderTutorial` で渡す。
+- ゲームのホームへは `views/<Game>HomeView.tsx` から `GameHomeScreen` の `renderTutorial` で、プレイ画面へは `ui/<Game>Play.tsx` から `GamePlayFrame` の `renderTutorial` で渡す。
+
+## 遊び方
+
+- 遊び方は `@/components/HowToPlayOverlay` で作る。
+- `@/components/HowToPlayDialog` で作った遊び方は、SPEC-016 に合わせて作り直すときに `HowToPlayOverlay` へ移す。
+- 画面は `ui/<Game>HowToPlayDialog.tsx` に置く。
+- 遊び方の中だけで使う図・盤面のデータ・例の状態は `ui/<Game>HowToPlayDialog/` に置く。
+- 図のマス・駒・知らせの印は、本番の盤面部品の見た目を使う。
+- 押す所の手がかりなど遊び方だけの見せ方は、図の props で受け取る。
+- 例の遷移と判定は `puzzle/` の関数で求める。
+- 例に本番と同じ盤面の反応と見え方が要るときは、`session/` の関数で求める。
+- 例では経過時間と回数を使わない。
+- 例の盤面操作の音は、プレイ画面と同じゲームの効果音のフックで鳴らす。
+- ゴールの盤面のクリア演出は、本番のクリア演出の部品を使う。
+- 採点の満点は `score.ts` の `<GAME>_SCORE_MAXIMUMS` から出す。
+- 2つ以上のゲームが使う遊び方の並べ方と見せ方は、`frontend/src/components/` の `HowToPlay` で始まる共通の部品と `how-to-play-` で始まるモジュールに置く。
+- 共通の部品に足す props は任意で受け取る。
+- ゲームのホームへは `views/<Game>HomeView.tsx` から `GameHomeScreen` の `renderHowToPlayDialog` で、プレイ画面へは `ui/<Game>Play.tsx` から `GamePlayFrame` の `renderHowToPlayDialog` で渡す。
 
 ## 依存方向
 
@@ -180,7 +203,7 @@ frontend/src/games/
 - `score.ts` は評価に必要な事実の契約とゲーム共通契約へ依存できるが、`play/`、`ui/` を知らない。
 - `play/` は下位のゲーム責務を調停するが、`ui/` と `tutorial/` を import しない。
 - `tutorial/` は `problem/`、`puzzle/`、`session/` とゲーム共通契約へ依存できるが、生成内部、難易度分類、採点、`play/`、保存、React、UIを知らない。
-- `ui/` は `play/`・`tutorial/` と表示に必要な読み取り専用の契約へ依存できる。問題生成、session更新、採点規則を実装しない。
+- `ui/` は `play/`・`tutorial/` と表示に必要な読み取り専用の契約へ依存できる。遊び方の例は `puzzle/`・`session/` の関数を使える。問題生成、session更新、採点規則を実装しない。
 - `play-record.ts`、`play-attempt.ts`、`diagnostics.ts` は接続先と必要なゲーム内部契約へ依存できるが、通常プレイから逆依存させない。
 - `ui/play-record-display.ts` は記録 UI の表示契約（`@/records/ui/play-record-display`）へ接続できる。記録表示は記録定義の全指標を網羅する。
 - ゲームカタログ（`frontend/src/game-catalog/`）へ依存しない。
