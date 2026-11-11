@@ -142,5 +142,5 @@ export function getZukanPiecePath(shape: ZukanPieceShape): string {
  */
 export const ZUKAN_PIECE_VIEW_BOX = "-0.5 -0.5 2 2";
 
-/** ピースの間の溝の太さ（ピースの1辺に対する比）。ピースの面を背景の色の線で縁取って溝にする。 */
-export const ZUKAN_PIECE_GROOVE_WIDTH = 0.078;
+/** ピースの間の溝の太さ（ピースの1辺に対する比）。ピースの面を台紙の面の色の線で縁取って溝にする。 */
+export const ZUKAN_PIECE_GROOVE_WIDTH = 0.032;

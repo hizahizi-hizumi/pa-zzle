@@ -26,7 +26,11 @@ type TsumeShogiBoardGroupProps = {
   ref?: Ref<HTMLDivElement>;
 };
 
-/** 玉方の駒箱の札・盤・攻方の駒台・直前の手の行を、盤の幅の中に縦に並べる。プレイ画面とチュートリアルで同じ並びにする。 */
+/**
+ * 玉方の駒箱の札・盤・攻方の駒台・直前の手の行を、盤の幅の中に縦に並べる。プレイ画面とチュートリアルで同じ並びにする。
+ * 盤の欄の `data-play-entry-board` は、ゲームのホームから入るとき、広がった盤面が重なって着地する先。
+ * 駒台などの行の高さは盤の幅に連れて縮まず、並び全体の縦横比は画面ごとに変わるので、縦横比の決まった盤の欄に付ける。
+ */
 export function TsumeShogiBoardGroup({
   board,
   hand,
@@ -38,7 +42,10 @@ export function TsumeShogiBoardGroup({
       <div className="h-(--piece-box-height)">
         <TsumeShogiPieceBox />
       </div>
-      <div className="relative h-[calc((var(--board-width)-2*var(--board-frame))*386/352+2*var(--board-frame))]">
+      <div
+        data-play-entry-board=""
+        className="relative h-[calc((var(--board-width)-2*var(--board-frame))*386/352+2*var(--board-frame))]"
+      >
         {board}
       </div>
       <div className="h-(--komadai-height)">{hand}</div>

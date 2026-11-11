@@ -3,8 +3,8 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   memo,
+  type ReactNode,
   type RefObject,
-  type UIEvent,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -13,18 +13,26 @@ import {
 
 import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
 import type { ProblemId } from "@/games/problem-id";
-import {
-  MOTION_DURATION_MS,
-  MOTION_EASING,
-  prefersReducedMotion,
-} from "@/lib/motion";
 import { ZukanProblemSquare } from "@/zukan/ui/GameHomeScreen/ZukanProblemSheet/ZukanProblemSquare";
-import type { ZukanChangeStage } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
+import {
+  snapZukanScrollTopToRows,
+  type ZukanChangeStage,
+} from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 import { findZukanPieceShape } from "@/zukan/ui/GameHomeScreen/zukan-piece-shape";
+import {
+  findZukanPieceLayout,
+  type ZukanPieceLayout,
+} from "@/zukan/ui/GameHomeScreen/zukan-piece-size";
+import {
+  ZUKAN_PIECE_RECESS_ID,
+  ZUKAN_PIECE_SHEEN_ID,
+} from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
 import type { ZukanProblem } from "@/zukan/zukan-collection";
 import type { ZukanProblemChange } from "@/zukan/zukan-last-viewed";
 
 type ZukanProblemSheetProps = {
+  /** 台紙の頭に置く、その台紙の問題の数え方。マスと一緒にスクロールさせない。 */
+  header: ReactNode;
   difficulty: DifficultyLevel;
   /** そのレベルの全問。番号の順。マスはこの順に置き、絞り込んでも置き直さない。 */
   problems: readonly ZukanProblem[];
@@ -35,14 +43,14 @@ type ZukanProblemSheetProps = {
   numberDigitCount: number;
   /** 選んでいる問題。選んでいなければ `null`。 */
   selectedProblemId: ProblemId | null;
+  /** ジグソーの下端に重ねて見せているものの高さ（px）。その分だけ余計にスクロールできるようにし、選んだピースを隠れない所へ寄せる。重ねていなければ 0。 */
+  coveredBottomHeight: number;
   /** 前回図鑑を見たときから変化した問題と、その変化。見せる変化が無ければ `undefined`。 */
   changes: ReadonlyMap<ProblemId, ZukanProblemChange> | undefined;
   /** 変化した問題ごとの、変化を今どこまで見せたか。見せる変化が無ければ `undefined`。 */
   changeStages: ReadonlyMap<ProblemId, ZukanChangeStage> | undefined;
   /** 台紙のスクロール領域。マスは `data-index` に番号の順の位置を持つ。変化を見せるときに、変化したマスが見えるようスクロールするのに使う。 */
   scrollerRef: RefObject<HTMLDivElement | null>;
-  /** スクロール領域の下端に重なって覆っている高さ（px）。覆われたところのマスも、その上へスクロールして見られるようにする。 */
-  coveredBottomHeight: number;
   /** 選んでいないマスを押したときと、矢印キーなどで動いたとき。 */
   onSelect: (problem: ZukanProblem) => void;
   /** 選んでいるマスをもう一度押したとき。 */
@@ -133,6 +141,9 @@ function findSquare(
   return grid?.querySelector<HTMLElement>(`[data-index="${index}"]`) ?? null;
 }
 
+/** 中身がスクロールすると見なす、はみ出しの下限（px）。端数の丸めで 1px はみ出すだけの中身を、スクロールすると見なさない。 */
+const SCROLLABLE_SLACK = 1;
+
 function listPositions(
   problems: readonly ZukanProblem[],
 ): ReadonlyMap<ProblemId, number> {
@@ -140,33 +151,57 @@ function listPositions(
 }
 
 /**
- * 1つの難易度の全問をマス目で並べた台紙。難易度の名前と解いた数は、台紙を切り替えるレベルのカードが示す。
+ * 選んだピースへ寄せた台紙を、行の上端が見える範囲の上端に揃う所へ寄せ直す。台紙の上端の行が、頭の帯の下で半端に切れて見えないようにする。
+ * 寄せ直す幅は行の間隔の半分までなので、ピースの周りに取った余白の中に収まり、選んだピースは隠れない。
+ */
+function alignSheetToRows(scroller: HTMLElement, piece: HTMLElement) {
+  if (scroller.scrollTop === 0) {
+    return;
+  }
+  const pieceBox = piece.getBoundingClientRect();
+  scroller.scrollTop = snapZukanScrollTopToRows(
+    scroller.scrollTop,
+    {
+      alignedScrollTop:
+        scroller.scrollTop +
+        pieceBox.top -
+        scroller.getBoundingClientRect().top,
+      pitch: pieceBox.height,
+    },
+    scroller.scrollHeight - scroller.clientHeight,
+  );
+}
+
+/**
+ * 1つの難易度の全問をピースにしたジグソー。ゲーム固有の地の上に置いた台として描き、空きは台の凹み、解いた問題は台に置いたピースとして見せる。難易度の名前と解いた数は、台紙を切り替えるレベルのカードが示す。
+ * ピースは幅いっぱいに組み、収まらない分は台紙の中で縦にスクロールさせる。
  * 絞り込んでいるときは、当たった問題を前に、当たらなかった問題を薄くして区切りの線の後ろに、それぞれ番号の順で並べる。当たった問題が無ければ、その旨を前に示す。
  * 条件を変えるたびに多くのマスを置き直さないよう、マスは番号の順に置いたまま、当たらなかったマスを CSS の `order` で区切りの後ろへ並べて見せる。
- * 台紙は与えられた高さの中で自分だけスクロールし、選んだマスを、下端を覆うものに隠れない見える範囲へ寄せる。条件を変えても選んだマスへは寄せ直さない。
+ * 台紙は与えられた高さの中で自分だけスクロールし、選んだマスを見える範囲へ寄せる。条件を変えても選んだマスへは寄せ直さない。
  * マスは台紙ごとに1つだけ Tab で止まり、台紙の中は見えている並びに沿って矢印キーで動く。動いた先のマスを選ぶ。選んでいるマスをもう一度押すと選択を解く。
  * Tab で止まるマスは問題で持ち、選んでいるマスがあればそのマス、無ければ最後に選んだマス、それも台紙に無ければ並びの最初のマスにする。
  */
 function ZukanProblemSheetContent({
+  header,
   difficulty,
   problems,
   arrangedProblems,
   matchedCount,
   numberDigitCount,
   selectedProblemId,
+  coveredBottomHeight,
   changes,
   changeStages,
   scrollerRef,
-  coveredBottomHeight,
   onSelect,
   onDeselect,
 }: ZukanProblemSheetProps) {
   const [lastSelectedProblemId, setLastSelectedProblemId] =
     useState<ProblemId | null>(null);
   const [columnCount, setColumnCount] = useState(1);
+  const [layout, setLayout] = useState<ZukanPieceLayout | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const shownScrollTopRef = useRef(0);
-  const previousCoveredBottomHeightRef = useRef(coveredBottomHeight);
+  const areaRef = useRef<HTMLDivElement>(null);
   const indices = useMemo(() => listPositions(problems), [problems]);
   const positions = useMemo(
     () => listPositions(arrangedProblems),
@@ -182,6 +217,39 @@ function ZukanProblemSheetContent({
       : lastSelectedProblemId !== null && indices.has(lastSelectedProblemId)
         ? lastSelectedProblemId
         : (arrangedProblems[0]?.problemId ?? null);
+
+  useLayoutEffect(() => {
+    const area = areaRef.current;
+    const scroller = scrollerRef.current;
+    if (area === null || scroller === null) {
+      return;
+    }
+    function updateLayout() {
+      if (area === null || scroller === null) {
+        return;
+      }
+      const { paddingLeft, paddingRight } = getComputedStyle(scroller);
+      const next = findZukanPieceLayout(
+        problems.length,
+        area.getBoundingClientRect().width -
+          parseFloat(paddingLeft) -
+          parseFloat(paddingRight),
+      );
+      setLayout((current) =>
+        current?.pieceSize === next?.pieceSize &&
+        current?.columnCount === next?.columnCount
+          ? current
+          : next,
+      );
+    }
+    updateLayout();
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const observer = new ResizeObserver(updateLayout);
+    observer.observe(area);
+    return () => observer.disconnect();
+  }, [scrollerRef, problems.length]);
 
   // ピースの形は並べた位置で決まり、列の数は画面幅で変わるので、台紙の幅を見張って数え直す。
   useLayoutEffect(() => {
@@ -201,47 +269,54 @@ function ZukanProblemSheetContent({
     return () => observer.disconnect();
   }, []);
 
-  // 覆うものが退いて末尾の余白が減ると、末尾まで送っていた台紙はスクロール位置が詰められて跳ぶので、元の位置から滑らせて下ろす。
+  // 下端の薄れは、実際にスクロールできるときだけ出す。
+  const [canScroll, setCanScroll] = useState(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 下端に足す余白の高さが変わると、スクロール領域の大きさは同じまま中身の高さが変わるため。
   useLayoutEffect(() => {
-    const isUncovered =
-      coveredBottomHeight < previousCoveredBottomHeightRef.current;
-    previousCoveredBottomHeightRef.current = coveredBottomHeight;
     const scroller = scrollerRef.current;
     const grid = gridRef.current;
-    if (!isUncovered || scroller === null || grid === null) {
+    if (scroller === null || grid === null) {
       return;
     }
-    const clampedBy = shownScrollTopRef.current - scroller.scrollTop;
-    if (clampedBy > 0 && !prefersReducedMotion()) {
-      grid.animate(
-        [{ transform: `translateY(${-clampedBy}px)` }, { transform: "none" }],
-        {
-          duration: MOTION_DURATION_MS.normal,
-          easing: MOTION_EASING.standard,
-        },
-      );
+    function updateCanScroll() {
+      if (scroller !== null) {
+        setCanScroll(
+          scroller.scrollHeight - scroller.clientHeight > SCROLLABLE_SLACK,
+        );
+      }
     }
-  }, [coveredBottomHeight, scrollerRef]);
+    updateCanScroll();
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const observer = new ResizeObserver(updateCanScroll);
+    observer.observe(scroller);
+    observer.observe(grid);
+    return () => observer.disconnect();
+  }, [scrollerRef, coveredBottomHeight]);
 
-  // 下端を覆う高さは描いたあとに分かるので、選んだマスだけでなく覆う高さが変わったときも寄せ直す。
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 覆う高さはスクロールの余白として描かれ、寄せる先を変える。
+  // 下端に重ねたものに選んだピースが隠れないよう、その高さを除いた範囲へ寄せる。高さと、ピースの並びが決まったら寄せ直す。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: ピースの並びが変わると、選んだピースの位置が変わるため。
   useLayoutEffect(() => {
-    if (selectedIndex === null) {
+    const scroller = scrollerRef.current;
+    if (scroller === null) {
       return;
     }
-    findSquare(gridRef.current, selectedIndex)?.scrollIntoView({
-      block: "nearest",
-      inline: "nearest",
-    });
-  }, [selectedIndex, coveredBottomHeight]);
+    scroller.style.scrollPaddingBottom = `${coveredBottomHeight}px`;
+    const piece =
+      selectedIndex === null
+        ? null
+        : findSquare(gridRef.current, selectedIndex);
+    if (piece === null) {
+      return;
+    }
+    piece.scrollIntoView({ block: "nearest", inline: "nearest" });
+    alignSheetToRows(scroller, piece);
+  }, [scrollerRef, selectedIndex, coveredBottomHeight, layout]);
 
   function selectSquare(problem: ZukanProblem) {
     setLastSelectedProblemId(problem.problemId);
     onSelect(problem);
-  }
-
-  function handleScroll(event: UIEvent<HTMLDivElement>) {
-    shownScrollTopRef.current = event.currentTarget.scrollTop;
   }
 
   function handleClick(event: MouseEvent<HTMLDivElement>) {
@@ -286,73 +361,118 @@ function ZukanProblemSheetContent({
     findSquare(gridRef.current, nextIndex)?.focus({ preventScroll: true });
   }
 
+  const shownColumnCount = layout?.columnCount ?? columnCount;
+
   const hasFilteredOut =
     matchedCount !== null && matchedCount < arrangedProblems.length;
 
-  // 押すときに大きく浮くマスが、台紙の端のマスでもスクロール領域で切れないよう、領域をページの余白へ広げ、内側に浮いたマスが収まる余白を取る。
-  // 覆われたところの余白は、領域の余白ではなく末尾の要素で取る。画面が低く、覆う高さが領域より高いときも、領域が縮めずにページをはみ出さないようにする。
-  // スクロールした行が台紙の上の数の真下で途切れて見えないよう、上端の余白の中で背景の色を重ねて薄れさせる。選んだマスはこの余白より内側へ寄せる。
+  // 押すときに大きく浮くマスが、台紙の端のマスでもスクロール領域で切れないよう、内側に浮いたマスが収まる余白を取る。
+  // スクロールした行が台紙の頭の数の真下で途切れて見えないよう、上端の余白の中で台紙の面の色を重ねて薄れさせる。選んだマスはこの余白より内側へ寄せる。
   // 薄れは `mask-image` で作らない。iOS の Safari は mask をかけた要素の中身を低い解像度で描き、ピースの輪郭がぼやけるため。
   return (
-    <div
-      ref={scrollerRef}
-      onScroll={handleScroll}
-      style={
-        { "--covered-bottom": `${coveredBottomHeight}px` } as CSSProperties
-      }
-      className="-mx-4 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-4 pt-4 pb-4"
-    >
-      {/* 画面の地は、背景の色に `muted` を薄く重ねた色なので、薄れも同じ2層で重ねる。 */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none sticky -top-4 z-10 -mt-4 mb-1 h-3 bg-linear-to-b from-background"
-      >
-        <div className="size-full bg-linear-to-b from-muted/30" />
-      </div>
-      <div
-        ref={gridRef}
-        role="group"
-        aria-label={`${getDifficultyLabel(difficulty)}の問題`}
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
-        className="isolate grid grid-cols-[repeat(auto-fill,--spacing(6))] sm:grid-cols-[repeat(auto-fill,--spacing(6.5))] [&>[data-filtered-out]]:order-2"
-      >
-        {matchedCount === 0 && (
-          <p className="col-span-full text-supporting text-muted-foreground">
-            条件に当たる問題はありません
-          </p>
-        )}
-        {problems.map((problem, index) => (
-          <ZukanProblemSquare
-            key={problem.problemId}
-            problem={problem}
-            index={index}
-            pieceShape={findZukanPieceShape(
-              positions.get(problem.problemId) ?? index,
-              matchedCount ?? arrangedProblems.length,
-              arrangedProblems.length,
-              columnCount,
-            )}
-            numberDigitCount={numberDigitCount}
-            isTabStop={problem.problemId === tabStopProblemId}
-            isSelected={index === selectedIndex}
-            isFilteredOut={
-              matchedCount !== null &&
-              (positions.get(problem.problemId) ?? 0) >= matchedCount
-            }
-            change={changes?.get(problem.problemId) ?? null}
-            changeStage={changeStages?.get(problem.problemId) ?? null}
-          />
-        ))}
-        {hasFilteredOut && (
+    <div ref={areaRef} className="isolate flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-col overflow-hidden rounded-lg bg-(--zukan-tray) shadow-[inset_0_1px_0_rgb(255_255_255/0.5),0_1px_2px_rgb(0_0_0/0.12),0_6px_16px_-6px_rgb(0_0_0/0.22)] [--zukan-groove:color-mix(in_oklab,var(--browser-surface,var(--card))_64%,var(--foreground))] [--zukan-recess:color-mix(in_oklab,var(--browser-surface,var(--card))_80%,var(--foreground))] [--zukan-tray:color-mix(in_oklab,var(--browser-surface,var(--card))_94%,var(--foreground))]">
+        <svg aria-hidden="true" className="absolute size-0">
+          <defs>
+            <linearGradient
+              id={ZUKAN_PIECE_SHEEN_ID}
+              x1="0"
+              y1="0"
+              x2="1"
+              y2="1"
+            >
+              <stop offset="0" stopColor="#fff" stopOpacity="0.28" />
+              <stop offset="0.5" stopColor="#fff" stopOpacity="0" />
+              <stop offset="1" stopColor="#000" stopOpacity="0.12" />
+            </linearGradient>
+            <linearGradient
+              id={ZUKAN_PIECE_RECESS_ID}
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="1"
+            >
+              <stop offset="0" stopColor="#000" stopOpacity="0.12" />
+              <stop offset="0.3" stopColor="#000" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div className="px-4 pt-3">{header}</div>
+        <div
+          ref={scrollerRef}
+          style={
+            {
+              ...(layout !== null && {
+                "--zukan-piece-size": `${layout.pieceSize}px`,
+                "--zukan-columns": `repeat(${layout.columnCount}, ${layout.pieceSize}px)`,
+              }),
+            } as CSSProperties
+          }
+          className="min-h-0 overflow-y-auto overscroll-contain px-4 pt-4 pb-4"
+        >
           <div
             aria-hidden="true"
-            data-filter-boundary=""
-            className="order-1 col-span-full my-1.5 border-t-(length:--border-width-normal) border-border"
+            className="pointer-events-none sticky -top-4 z-10 -mt-4 mb-1 h-3 bg-linear-to-b from-(--zukan-tray)"
           />
-        )}
+          {/* 押していく演出の層は、この囲みにマスと重ねて置く。マスと演出の層の重ね順をこの中に閉じ、スクロール領域の端の薄れより手前に出さない。 */}
+          <div className="relative isolate mx-auto w-fit">
+            <div
+              ref={gridRef}
+              role="group"
+              aria-label={`${getDifficultyLabel(difficulty)}の問題`}
+              onClick={handleClick}
+              onKeyDown={handleKeyDown}
+              className="grid grid-cols-(--zukan-columns,repeat(auto-fill,--spacing(16))) justify-center [&>[data-filtered-out]]:order-2"
+            >
+              {matchedCount === 0 && (
+                <p className="col-span-full text-supporting text-muted-foreground">
+                  条件に当たる問題はありません
+                </p>
+              )}
+              {problems.map((problem, index) => (
+                <ZukanProblemSquare
+                  key={problem.problemId}
+                  problem={problem}
+                  index={index}
+                  pieceShape={findZukanPieceShape(
+                    positions.get(problem.problemId) ?? index,
+                    matchedCount ?? arrangedProblems.length,
+                    arrangedProblems.length,
+                    shownColumnCount,
+                  )}
+                  numberDigitCount={numberDigitCount}
+                  isTabStop={problem.problemId === tabStopProblemId}
+                  isSelected={index === selectedIndex}
+                  isFilteredOut={
+                    matchedCount !== null &&
+                    (positions.get(problem.problemId) ?? 0) >= matchedCount
+                  }
+                  change={changes?.get(problem.problemId) ?? null}
+                  changeStage={changeStages?.get(problem.problemId) ?? null}
+                />
+              ))}
+              {hasFilteredOut && (
+                <div
+                  aria-hidden="true"
+                  data-filter-boundary=""
+                  className="order-1 col-span-full my-1.5 border-t-(length:--border-width-normal) border-border"
+                />
+              )}
+            </div>
+          </div>
+          {coveredBottomHeight > 0 && (
+            <div aria-hidden="true" style={{ height: coveredBottomHeight }} />
+          )}
+          {canScroll && (
+            <div
+              aria-hidden="true"
+              data-zukan-bottom-fade=""
+              // 薄れが場所を取ると、収まっていた中身がスクロールするようになり、薄れの出し入れが繰り返される。上下の余白で高さを打ち消す。
+              className="pointer-events-none sticky -bottom-4 z-10 -mt-1 -mb-4 h-5 bg-linear-to-t from-(--zukan-tray)"
+            />
+          )}
+        </div>
       </div>
-      <div aria-hidden="true" className="h-(--covered-bottom)" />
     </div>
   );
 }

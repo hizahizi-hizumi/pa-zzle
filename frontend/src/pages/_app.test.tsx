@@ -17,7 +17,6 @@ type AppRouter = ReturnType<typeof createMemoryRouter>;
 // jsdom はレイアウトを計算しないため、見つからない画面の盤面を描ける寸法を返させる。
 const area = { width: 390, height: 796 };
 const notFoundHeading = "ページが見つかりません";
-const viewportClassName = "h-[calc(100dvh-3.75rem-env(safe-area-inset-top))]";
 const containedClassName = "max-w-5xl";
 
 let router: AppRouter;
@@ -83,12 +82,13 @@ describe("AppPage", () => {
       renderAppAt(waterSortCatalogEntry.homePath);
     });
 
-    test("ゲームのホームを画面の高さに収める領域へ出すこと", () => {
+    test("ゲームのホームを、ほかの画面と同じ既定の領域に置くこと", () => {
       const main = screen.getByRole("main");
       const heading = screen.getByRole("heading", { level: 1 });
 
       expect(heading.textContent).toBe(waterSortCatalogEntry.name);
-      expect(main.className).toContain(viewportClassName);
+      expect(main.contains(heading)).toBe(true);
+      expect(main.className).toContain(containedClassName);
     });
   });
 
@@ -101,7 +101,6 @@ describe("AppPage", () => {
       const main = screen.getByRole("main");
 
       expect(main.className).toContain(containedClassName);
-      expect(main.className).not.toContain(viewportClassName);
     });
   });
 });

@@ -18,18 +18,26 @@ import {
   listWaterSortPoolProblemIds,
   waterSortProblemFeatureAxes,
 } from "@/games/water-sort/problem/problem-pool";
-import { canSelectWaterSortProblemById } from "@/games/water-sort/problem-selection";
+import {
+  canSelectWaterSortProblemById,
+  selectWaterSortProblemById,
+} from "@/games/water-sort/problem-selection";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import {
   formatWaterSortProblemFeatures,
   waterSortProblemFeatureAxisDisplays,
 } from "@/games/water-sort/ui/problem-features";
+import { WaterSortGround } from "@/games/water-sort/ui/WaterSortGround";
+import { WaterSortProblemPreview } from "@/games/water-sort/ui/WaterSortProblemPreview";
 
 export const waterSortCatalogEntry = {
   id: waterSortPlayRecordDefinition.gameId,
   name: WATER_SORT_DISPLAY_NAME,
   pictogramSvg,
   pictogramShowcaseSvg,
+  renderGround() {
+    return <WaterSortGround />;
+  },
   homePath: "/puzzles/water-sort",
   playPath: "/puzzles/water-sort/play/:difficulty",
   playRecordDisplay: waterSortPlayRecordDisplay,
@@ -62,6 +70,12 @@ export const waterSortCatalogEntry = {
   describePoolProblem(difficulty, problemId) {
     const features = findWaterSortPoolProblemFeatures(difficulty, problemId);
     return features ? formatWaterSortProblemFeatures(features) : null;
+  },
+  renderPoolProblemPreview(difficulty, problemId) {
+    const selected = selectWaterSortProblemById(difficulty, problemId);
+    return selected ? (
+      <WaterSortProblemPreview problem={selected.problem} />
+    ) : null;
   },
   problemFeatureFilter: createProblemFeatureFilter(
     findWaterSortPoolProblemFeatures,

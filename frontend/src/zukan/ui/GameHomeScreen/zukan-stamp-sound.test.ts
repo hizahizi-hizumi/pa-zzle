@@ -4,9 +4,11 @@ import resultRewardPerfectSoundUrl from "@/assets/sounds/result-reward-perfect.f
 import { playSound, REPEATED_SOUND_VARIATION } from "@/lib/sound-effects";
 import type { ZukanStamp } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 import {
-  listZukanStampSoundCues,
+  _private,
   playZukanStampSound,
 } from "@/zukan/ui/GameHomeScreen/zukan-stamp-sound";
+
+const { listZukanStampSoundCues } = _private;
 
 vi.mock("@/lib/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),

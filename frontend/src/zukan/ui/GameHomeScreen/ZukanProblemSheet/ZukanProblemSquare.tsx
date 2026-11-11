@@ -13,6 +13,9 @@ import {
 import {
   describeZukanProblem,
   getZukanProblemStatusColorClassName,
+  isZukanPlacedStatus,
+  ZUKAN_PIECE_RECESS_ID,
+  ZUKAN_PIECE_SHEEN_ID,
 } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
 import {
   getZukanProblemStatus,
@@ -38,17 +41,38 @@ type ZukanProblemSquareProps = {
   changeStage: ZukanChangeStage | null;
 };
 
-/** 選んだピースの周りを空ける幅と、その外を囲む線の太さ。ホバーとフォーカスの線の太さ。どれもピースの1辺に対する比。 */
-const SELECTION_HALO_WIDTH = 0.2;
-const SELECTION_LINE_WIDTH = 0.083;
-const HOVER_LINE_WIDTH = 0.11;
+/** 選んだピースを囲む線と、ホバーとフォーカスの線の太さ。どれもピースの1辺に対する比。 */
+const SELECTION_LINE_WIDTH = 0.04;
+const HOVER_LINE_WIDTH = 0.05;
+
+/** 置いたピースの縁の線と、その内側に沿わせる照りの線の太さ。ピースの1辺に対する比。 */
+const PLACED_EDGE_WIDTH = 0.022;
+const PLACED_HIGHLIGHT_WIDTH = 0.03;
+
+/** 凹みの輪郭の、彫った線の下に沿わせる明るい線のずれ。ピースの1辺に対する比。 */
+const ENGRAVING_OFFSET = "translate(0.02 0.035)";
+/** 置いたピースの照りの線を、左上の縁の内側へ寄せるずれ。右下の縁では隣のピースが覆う。 */
+const HIGHLIGHT_OFFSET = "translate(0.025 0.035)";
+
+/** 選んだ、置いたピースを台から持ち上げる動き。影は持ち上げた1枚にだけ付ける。全ピースに付けると、スクロールが重くなる。 */
+const LIFT_CLASS_NAME =
+  "origin-center transition-[transform,filter] duration-(--duration-fast) ease-standard [transform-box:fill-box]";
+const LIFTED_CLASS_NAME =
+  "-translate-y-[6%] scale-[1.08] [filter:drop-shadow(0_0.1em_0.08em_rgb(0_0_0/0.35))]";
+
+/** ピースの中央に載せる問題の番号。置いたピースでは塗りを濃くした色で刷り、空きでは台に彫る。 */
+const NUMBER_CLASS_NAME =
+  "text-[0.2px] font-semibold tabular-nums [dominant-baseline:central] [text-anchor:middle]";
+const PLACED_NUMBER_CLASS_NAME =
+  "fill-[color-mix(in_oklab,currentColor_45%,black)] opacity-70";
+const EMPTY_NUMBER_CLASS_NAME = "fill-(--zukan-groove,var(--border))";
 
 /** ピースを描く SVG を、マスの2倍の大きさでマスと中心を揃えて置く。 */
 const PIECE_LAYER_CLASS_NAME =
   "pointer-events-none absolute -top-1/2 -left-1/2 size-[200%] overflow-visible";
 
 /**
- * 台紙の1問のマス。台紙が並べた位置で決めたジグソーのピースの形に描き、状態を塗りだけで示し、文字は読み上げ名に持たせる。
+ * 台紙の1問のマス。台紙が並べた位置で決めたジグソーのピースの形に描き、状態を塗りで示し、問題の番号を載せる。ほかの文字は読み上げ名に持たせる。
  * ピースは SVG の図形で描く。画像で切り抜くと、画素の細かい画面でも等倍で描かれてぼやけるため。
  * 押す・矢印キーの操作は台紙がまとめて受けるので、マス自身はイベントを持たない。
  * 前回からの変化は、マスに着くまで前回の姿で描く。押していく演出が動かす押す姿・浮いた影を、押し終えるまで重ねておく。
@@ -56,7 +80,7 @@ const PIECE_LAYER_CLASS_NAME =
  * 押していく演出が押し方を決められるよう、変化したマスに今の段階と段階が上がったか、ピースの形を持たせる。
  * 動きを減らす設定では今の姿に印を載せる。
  * 絞り込みの条件に当たらなかったマスは、色を変えずに薄くする。選んでいる間は、選んだことが分かるよう薄くしない。
- * 選んだピースは、周りを背景の色で空けて前景色の線で囲む。`ring` の明るさの線は、小さなピースでは塗りに紛れるため。
+ * 選んだピースは前景色の線で囲む。置いたピースは台から持ち上げて影を落とし、抜けた跡に凹みを見せる。空きには持ち上げるピースが無いので、囲むだけにする。
  */
 function ZukanProblemSquareContent({
   problem,
@@ -72,16 +96,16 @@ function ZukanProblemSquareContent({
   const status = getZukanProblemStatus(problem);
   const isPending = changeStage === "waiting" || changeStage === "stamping";
   const hasStamp = isPending || changeStage === "landed";
-  const isLifted = changeStage === "stamping" || changeStage === "landed";
   const shownStatus =
     change !== null && isPending ? change.previousStatus : status;
   const path = getZukanPiecePath(pieceShape);
+  const isPlaced = isZukanPlacedStatus(shownStatus);
 
   // 選んだピースの囲みとホバー・フォーカスの線は隣のピースへはみ出すので、そのピースを手前に重ねる。選んだピースは、隣のホバーより手前に置く。
-  // 重ね順は台紙の中に閉じ（台紙が `isolate`）、台紙の外の詳細やレベルのカードより手前には出ない。
+  // 重ね順は台紙の中に閉じ（台紙が `isolate`）、台紙の外の選んだ問題の欄やレベルのカードより手前には出ない。
   const layerClassName = isSelected ? "z-20" : "hover:z-10 focus-visible:z-10";
-  // 押す姿はマスより大きく浮くので、選んだマスも含めて周りのマスより手前に重ねる。
-  const stampClassName = isLifted ? "z-30" : "";
+  // 押す姿はマスより大きく浮くので、選んだマスも含めて周りのマスより手前に重ねる。着いたあとは重なりを戻す。
+  const stampClassName = changeStage === "stamping" ? "z-30" : "";
   const filteredOutClassName = isFilteredOut && !isSelected ? "opacity-30" : "";
   const description = describeZukanProblem(problem, numberDigitCount, change);
   const stamp = change === null ? null : getZukanStamp(problem, change);
@@ -100,46 +124,93 @@ function ZukanProblemSquareContent({
         isFilteredOut ? `${description} 絞り込みの条件外` : description
       }
       aria-current={isSelected ? "true" : undefined}
-      className={`group relative size-6 scroll-m-3 outline-none sm:size-6.5 ${layerClassName} ${stampClassName} ${filteredOutClassName}`}
+      className={`group relative size-[var(--zukan-piece-size,--spacing(16))] scroll-m-3 text-[length:var(--zukan-piece-size,--spacing(16))] outline-none ${layerClassName} ${stampClassName} ${filteredOutClassName}`}
     >
       <svg
         aria-hidden="true"
         viewBox={ZUKAN_PIECE_VIEW_BOX}
         className={`${PIECE_LAYER_CLASS_NAME} ${getZukanProblemStatusColorClassName(shownStatus)}`}
       >
-        {isSelected && (
+        {isSelected && isPlaced && (
+          <path d={path} className="fill-(--zukan-recess,var(--muted))" />
+        )}
+        <g
+          className={`${LIFT_CLASS_NAME} ${isSelected && isPlaced ? LIFTED_CLASS_NAME : ""}`}
+        >
+          <path d={path} fill="currentColor" />
+          {isPlaced ? (
+            <>
+              <path
+                d={path}
+                fill={`url(#${ZUKAN_PIECE_SHEEN_ID})`}
+                stroke="none"
+              />
+              <path
+                d={path}
+                fill="none"
+                transform={HIGHLIGHT_OFFSET}
+                className="stroke-white/45"
+                strokeWidth={PLACED_HIGHLIGHT_WIDTH}
+                strokeLinejoin="round"
+              />
+              <path
+                d={path}
+                fill="none"
+                className="stroke-[color-mix(in_oklab,currentColor_62%,black)]"
+                strokeWidth={PLACED_EDGE_WIDTH}
+                strokeLinejoin="round"
+              />
+            </>
+          ) : (
+            <>
+              <path
+                d={path}
+                fill={`url(#${ZUKAN_PIECE_RECESS_ID})`}
+                stroke="none"
+              />
+              <path
+                d={path}
+                fill="none"
+                transform={ENGRAVING_OFFSET}
+                className="stroke-white/50"
+                strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
+                strokeLinejoin="round"
+              />
+              <path
+                d={path}
+                fill="none"
+                className="stroke-(--zukan-groove,var(--border))"
+                strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
+                strokeLinejoin="round"
+              />
+            </>
+          )}
+          <text
+            x="0.5"
+            y="0.5"
+            className={`${NUMBER_CLASS_NAME} ${isPlaced ? PLACED_NUMBER_CLASS_NAME : EMPTY_NUMBER_CLASS_NAME}`}
+          >
+            {problem.number}
+          </text>
           <path
             d={path}
-            className="fill-background stroke-background"
-            strokeWidth={SELECTION_HALO_WIDTH}
+            fill="none"
+            className={
+              isSelected
+                ? "stroke-foreground"
+                : "stroke-ring opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+            }
+            strokeWidth={isSelected ? SELECTION_LINE_WIDTH : HOVER_LINE_WIDTH}
             strokeLinejoin="round"
           />
-        )}
-        <path
-          d={path}
-          fill="currentColor"
-          className="stroke-background"
-          strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
-          strokeLinejoin="round"
-        />
-        <path
-          d={path}
-          fill="none"
-          className={
-            isSelected
-              ? "stroke-foreground"
-              : "stroke-ring opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
-          }
-          strokeWidth={isSelected ? SELECTION_LINE_WIDTH : HOVER_LINE_WIDTH}
-          strokeLinejoin="round"
-        />
+        </g>
       </svg>
       {hasStamp && (
         <svg
           aria-hidden="true"
           data-stamp-part="shadow"
           viewBox={ZUKAN_PIECE_VIEW_BOX}
-          className={`${PIECE_LAYER_CLASS_NAME} translate-y-[3px] text-black/35 opacity-0 blur-[2px]`}
+          className={`${PIECE_LAYER_CLASS_NAME} text-black opacity-0 blur-[3px]`}
         >
           <path d={path} fill="currentColor" />
         </svg>
@@ -151,13 +222,7 @@ function ZukanProblemSquareContent({
           className={`${PIECE_LAYER_CLASS_NAME} opacity-0 ${getZukanProblemStatusColorClassName(status)}`}
         >
           <svg viewBox={ZUKAN_PIECE_VIEW_BOX} className="size-full">
-            <path
-              d={path}
-              fill="currentColor"
-              className="stroke-background"
-              strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
-              strokeLinejoin="round"
-            />
+            <path d={path} fill="currentColor" />
             {change?.kind === "raised" && (
               <path
                 data-stamp-part="previous"
@@ -168,6 +233,33 @@ function ZukanProblemSquareContent({
                 )}
               />
             )}
+            <path
+              d={path}
+              fill={`url(#${ZUKAN_PIECE_SHEEN_ID})`}
+              stroke="none"
+            />
+            <path
+              d={path}
+              fill="none"
+              transform={HIGHLIGHT_OFFSET}
+              className="stroke-white/45"
+              strokeWidth={PLACED_HIGHLIGHT_WIDTH}
+              strokeLinejoin="round"
+            />
+            <path
+              d={path}
+              fill="none"
+              className="stroke-[color-mix(in_oklab,currentColor_62%,black)]"
+              strokeWidth={PLACED_EDGE_WIDTH}
+              strokeLinejoin="round"
+            />
+            <text
+              x="0.5"
+              y="0.5"
+              className={`${NUMBER_CLASS_NAME} ${PLACED_NUMBER_CLASS_NAME}`}
+            >
+              {problem.number}
+            </text>
           </svg>
         </span>
       )}
@@ -175,7 +267,7 @@ function ZukanProblemSquareContent({
         <span
           aria-hidden="true"
           data-change-mark=""
-          className="absolute inset-0 m-auto size-1.5 rounded-full bg-background"
+          className="absolute inset-0 m-auto size-1.5 rounded-full bg-(--zukan-tray,var(--card))"
         />
       )}
     </button>

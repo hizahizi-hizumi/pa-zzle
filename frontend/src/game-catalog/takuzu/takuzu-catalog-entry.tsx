@@ -18,18 +18,26 @@ import {
   listTakuzuPoolProblemIds,
   takuzuProblemFeatureAxes,
 } from "@/games/takuzu/problem/problem-pool";
-import { canSelectTakuzuProblemById } from "@/games/takuzu/problem-selection";
+import {
+  canSelectTakuzuProblemById,
+  selectTakuzuProblemById,
+} from "@/games/takuzu/problem-selection";
 import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
 import {
   formatTakuzuProblemFeatures,
   takuzuProblemFeatureAxisDisplays,
 } from "@/games/takuzu/ui/problem-features";
+import { TakuzuGround } from "@/games/takuzu/ui/TakuzuGround";
+import { TakuzuProblemPreview } from "@/games/takuzu/ui/TakuzuProblemPreview";
 
 export const takuzuCatalogEntry = {
   id: takuzuPlayRecordDefinition.gameId,
   name: TAKUZU_DISPLAY_NAME,
   pictogramSvg,
   pictogramShowcaseSvg,
+  renderGround() {
+    return <TakuzuGround />;
+  },
   homePath: "/puzzles/takuzu",
   playPath: "/puzzles/takuzu/play/:difficulty",
   playRecordDisplay: takuzuPlayRecordDisplay,
@@ -62,6 +70,10 @@ export const takuzuCatalogEntry = {
   describePoolProblem(difficulty, problemId) {
     const features = findTakuzuPoolProblemFeatures(difficulty, problemId);
     return features ? formatTakuzuProblemFeatures(features) : null;
+  },
+  renderPoolProblemPreview(difficulty, problemId) {
+    const pooled = selectTakuzuProblemById(difficulty, problemId);
+    return pooled ? <TakuzuProblemPreview problem={pooled.problem} /> : null;
   },
   problemFeatureFilter: createProblemFeatureFilter(
     findTakuzuPoolProblemFeatures,

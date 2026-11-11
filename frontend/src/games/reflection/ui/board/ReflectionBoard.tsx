@@ -193,7 +193,9 @@ export function ReflectionBoard({
   }
 
   return (
+    // data-play-entry-board: ゲームのホームから入るとき、広がった盤面が重なって着地する先。
     <div
+      data-play-entry-board=""
       className="relative isolate grid size-full [container-type:inline-size]"
       style={
         {

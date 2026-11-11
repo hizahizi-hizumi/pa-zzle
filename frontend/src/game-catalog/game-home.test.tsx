@@ -23,6 +23,11 @@ import { listNanpurePoolProblemIds } from "@/games/nanpure/problem/problem-pool"
 import { selectNanpureProblemById } from "@/games/nanpure/problem-selection";
 import { createProblemId } from "@/games/problem-id";
 import {
+  randomProblemSettings,
+  _private as randomProblemSettingsPrivate,
+} from "@/lib/random-problem-settings";
+import { randomProblemUnavailable } from "@/lib/random-problem-unavailable";
+import {
   abandonPlayAttempt,
   startPlayAttempt,
 } from "@/records/play-attempt-storage";
@@ -96,8 +101,38 @@ function chooseLevel(label: string) {
   );
 }
 
-function getDetail(): HTMLElement {
+/** ピースを選んでいる間だけ出る、選んだ問題の盤面と遊ぶ操作。 */
+function getSelectedProblem(): HTMLElement {
   return screen.getByRole("complementary", { name: "選んだ問題" });
+}
+
+function querySelectedProblem(): HTMLElement | null {
+  return screen.queryByRole("complementary", { name: "選んだ問題" });
+}
+
+function play() {
+  fireEvent.click(
+    within(getSelectedProblem()).getByRole("button", { name: "遊ぶ" }),
+  );
+}
+
+function playRandom() {
+  fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+}
+
+/** 選んだ問題に名前と値の組で示した、問題の特徴と解いた問題の値。 */
+function listSelectedFacts(): (string | null | undefined)[][] {
+  return within(getSelectedProblem())
+    .queryAllByRole("term")
+    .map((term) => [term.textContent, term.nextSibling?.textContent]);
+}
+
+/** 台紙で、選んだ姿のマスの番号。 */
+function readCurrentSquareNumber(sheetName: string): string | undefined {
+  return within(getSheet(sheetName))
+    .getByRole("button", { current: true })
+    .getAttribute("aria-label")
+    ?.split(" ")[0];
 }
 
 type GameHomeProps = {
@@ -257,11 +292,8 @@ describe("useGameHome", () => {
         );
       });
 
-      test("ゲームが求めたその問題の特徴に続けて、同じ問題の記録の中で最も良い最高スコア・最速タイム・最少ミスを詳細に示し、ナンプレでは最少手数を示さないこと", () => {
-        const facts = within(getDetail())
-          .getAllByRole("term")
-          .slice(0, -1)
-          .map((term) => [term.textContent, term.nextSibling?.textContent]);
+      test("ゲームが求めたその問題の特徴に続けて、同じ問題の記録の中で最も良い最高スコア・最速タイム・最少ミスを示し、ナンプレでは最少手数を示さないこと", () => {
+        const facts = listSelectedFacts().slice(0, -1);
 
         expect(facts).toEqual([
           ["初期数字", `${countClues(solvedProblem)}個`],
@@ -271,10 +303,16 @@ describe("useGameHome", () => {
         ]);
       });
 
-      test("遊ぶを押すと、その問題の問題 ID を載せたプレイ画面を開くこと", () => {
-        fireEvent.click(
-          within(getDetail()).getByRole("button", { name: "遊ぶ" }),
+      test("同じ問題の記録の中で最も良い最高スコアを示すこと", () => {
+        const bestScoreLabel = within(getSelectedProblem()).getByText(
+          `${bestScore}点`,
         );
+
+        expect(bestScoreLabel).toBeTruthy();
+      });
+
+      test("遊ぶを押すと、その問題の問題 ID を載せたプレイ画面を開くこと", () => {
+        play();
 
         expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/2");
         expect(router.state.location.search).toBe(
@@ -295,10 +333,8 @@ describe("useGameHome", () => {
         );
       });
 
-      test("ゲームが求めたその問題の特徴を詳細に示すこと", () => {
-        const facts = within(getDetail())
-          .getAllByRole("term")
-          .map((term) => [term.textContent, term.nextSibling?.textContent]);
+      test("ゲームが求めたその問題の特徴を示すこと", () => {
+        const facts = listSelectedFacts();
 
         expect(facts).toEqual([
           ["初期数字", `${countClues(untouchedProblem)}個`],
@@ -306,9 +342,7 @@ describe("useGameHome", () => {
       });
 
       test("遊ぶを押すと、その問題を引けるプレイ画面を開くこと", () => {
-        fireEvent.click(
-          within(getDetail()).getByRole("button", { name: "遊ぶ" }),
-        );
+        play();
         const problemId = new URLSearchParams(router.state.location.search).get(
           "problem",
         );
@@ -318,8 +352,8 @@ describe("useGameHome", () => {
       });
     });
 
-    test("ランダムに遊ぶを押すと、開いているレベルのプレイ画面を開くこと", () => {
-      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+    test("ランダムに遊ぶを押すと、開いているレベルからゲームが選んだ問題のプレイ画面を開くこと", () => {
+      playRandom();
 
       expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/4");
       const problemId = new URLSearchParams(router.state.location.search).get(
@@ -347,17 +381,19 @@ describe("useGameHome", () => {
       expect(historyAction).toBe("REPLACE");
     });
 
-    test("その問題のレベルを開き、その問題を選んで詳細を出すこと", () => {
+    test("その問題のレベルを開き、その問題を選んで、選んだ問題として示すこと", () => {
       const selectedTab = screen.getByRole("tab", { selected: true });
       const selectedSquare = within(getSheet("レベル 2の問題")).getByRole(
         "button",
         { current: true },
       );
-      const detail = getDetail();
+      const selectedNumber = within(getSelectedProblem()).getByText(
+        readCurrentSquareNumber("レベル 2の問題") ?? "",
+      );
 
       expect(selectedTab.textContent).toMatch(/^レベル 2/);
       expect(selectedSquare.getAttribute("data-index")).toBe("0");
-      expect(detail).toBeTruthy();
+      expect(selectedNumber).toBeTruthy();
     });
   });
 
@@ -366,14 +402,17 @@ describe("useGameHome", () => {
       renderAt("/puzzles/nanpure?problem=unknown-problem");
     });
 
-    test("最も低いレベルを開き、詳細を出さないこと", () => {
+    test("最も低いレベルを開き、どの問題も選ばず、問題の盤面を出さないこと", () => {
       const selectedTab = screen.getByRole("tab", { selected: true });
-      const detail = screen.queryByRole("complementary", {
-        name: "選んだ問題",
-      });
+      const currentSquares = within(getSheet("レベル 1の問題")).queryAllByRole(
+        "button",
+        { current: true },
+      );
+      const selectedProblem = querySelectedProblem();
 
       expect(selectedTab.textContent).toMatch(/^レベル 1/);
-      expect(detail).toBeNull();
+      expect(currentSquares).toEqual([]);
+      expect(selectedProblem).toBeNull();
     });
   });
 
@@ -568,10 +607,67 @@ describe("useGameHome", () => {
       );
     });
 
+    test("マスを選ぶと、その問題の始めたときの盤面を、読み上げない枠の中に描くこと", () => {
+      fireEvent.click(
+        within(getSheet("レベル 1の問題")).getAllByRole(
+          "button",
+        )[0] as HTMLElement,
+      );
+      const previewFrame = getSelectedProblem().querySelector("[inert]");
+
+      expect(previewFrame?.getAttribute("aria-hidden")).toBe("true");
+      expect(
+        previewFrame?.querySelector("[data-play-entry-board]"),
+      ).not.toBeNull();
+    });
+
     test("ランダムに遊ぶを押すと、最も低いレベルのプレイ画面を開くこと", () => {
-      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+      playRandom();
 
       expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/1");
+    });
+
+    describe("ランダム出題の状態に当たる問題が無い場合", () => {
+      beforeEach(() => {
+        randomProblemSettings.setGame("nanpure", ["perfect"]);
+      });
+
+      afterEach(() => {
+        randomProblemUnavailable.dismiss();
+        randomProblemSettingsPrivate.reset();
+      });
+
+      test("ランダムに遊ぶを押すと、プレイ画面を開かず、そのゲームに出せる問題が無いと知らせること", () => {
+        playRandom();
+        const notice = randomProblemUnavailable.getSnapshot();
+
+        expect(router.state.location.pathname).toBe("/puzzles/nanpure");
+        expect(notice).toEqual({
+          gameId: "nanpure",
+          gameName: "ナンプレ",
+          onPlayAny: expect.any(Function),
+        });
+      });
+
+      describe("ランダムに遊ぶを押して、出せる問題が無いと知らせている場合", () => {
+        beforeEach(() => {
+          playRandom();
+        });
+
+        test("知らせから今回だけ全問から遊ぶと、開いているレベルの問題集の問題でプレイ画面を開くこと", () => {
+          act(() => {
+            randomProblemUnavailable.getSnapshot()?.onPlayAny?.();
+          });
+          const problemId = new URLSearchParams(
+            router.state.location.search,
+          ).get("problem");
+
+          expect(router.state.location.pathname).toBe(
+            "/puzzles/nanpure/play/1",
+          );
+          expect(nanpureGame.listPoolProblemIds("1")).toContain(problemId);
+        });
+      });
     });
   });
 });

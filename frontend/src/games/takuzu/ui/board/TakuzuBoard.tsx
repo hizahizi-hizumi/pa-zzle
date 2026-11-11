@@ -164,7 +164,9 @@ export function TakuzuBoard({
   return (
     // 行・列の違反の印を盤面の縁の外に置くため、盤面の周りに余白を取る。
     <div className="size-full p-3">
+      {/* ゲームのホームから入るとき、広がった盤面が重なって着地する先。違反の印の余白は盤面の大きさに連れて縮まないので、余白の内側に付ける。 */}
       <div
+        data-play-entry-board=""
         role="group"
         aria-label={`${TAKUZU_DISPLAY_NAME}盤面`}
         className="relative grid size-full border-2 border-foreground/55 bg-background"

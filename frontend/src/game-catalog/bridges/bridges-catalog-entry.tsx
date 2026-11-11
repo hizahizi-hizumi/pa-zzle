@@ -17,7 +17,12 @@ import {
   findBridgesPoolProblemFeatures,
   listBridgesPoolProblemIds,
 } from "@/games/bridges/problem/problem-pool";
-import { canSelectBridgesProblemById } from "@/games/bridges/problem-selection";
+import {
+  canSelectBridgesProblemById,
+  selectBridgesProblemById,
+} from "@/games/bridges/problem-selection";
+import { BridgesGround } from "@/games/bridges/ui/BridgesGround";
+import { BridgesProblemPreview } from "@/games/bridges/ui/BridgesProblemPreview";
 import { bridgesPlayRecordDisplay } from "@/games/bridges/ui/play-record-display";
 import {
   bridgesProblemFeatureAxisDisplays,
@@ -30,6 +35,9 @@ export const bridgesCatalogEntry = {
   name: BRIDGES_DISPLAY_NAME,
   pictogramSvg,
   pictogramShowcaseSvg,
+  renderGround() {
+    return <BridgesGround />;
+  },
   homePath: "/puzzles/bridges",
   playPath: "/puzzles/bridges/play/:difficulty",
   playRecordDisplay: bridgesPlayRecordDisplay,
@@ -62,6 +70,10 @@ export const bridgesCatalogEntry = {
   describePoolProblem(difficulty, problemId) {
     const features = findBridgesPoolProblemFeatures(difficulty, problemId);
     return features ? formatBridgesProblemFeatures(features) : null;
+  },
+  renderPoolProblemPreview(difficulty, problemId) {
+    const pooled = selectBridgesProblemById(difficulty, problemId);
+    return pooled ? <BridgesProblemPreview problem={pooled.problem} /> : null;
   },
   problemFeatureFilter: createProblemFeatureFilter(
     findBridgesPoolProblemFeatures,

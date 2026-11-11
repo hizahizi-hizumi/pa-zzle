@@ -16,11 +16,6 @@ function isPagelessMatch(match: UIMatch | undefined): boolean {
   return match !== undefined && /^\d+(-\d+)*$/.test(match.id);
 }
 
-// ゲームのホーム（`puzzles/<game>/index`）は図鑑の台紙だけをスクロールさせるので、画面の高さに収める。
-function isViewportRoute(match: UIMatch | undefined): boolean {
-  return match?.id !== undefined && /^puzzles\/[^/]+\/index$/.test(match.id);
-}
-
 export default function AppPage() {
   const location = useLocation();
   const matches = useMatches();
@@ -28,11 +23,9 @@ export default function AppPage() {
   const contentLayout =
     isNotFoundMatch(matches.at(-1)) || isPageless
       ? "fill"
-      : isViewportRoute(matches.at(-1))
-        ? "viewport"
-        : location.pathname === "/"
-          ? "full"
-          : "contained";
+      : location.pathname === "/"
+        ? "full"
+        : "contained";
 
   return (
     <AppShell contentLayout={contentLayout}>

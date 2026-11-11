@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-
+import { leavePlayBoard } from "@/components/play-board-return";
 import type {
   GameCatalogEntry,
   GameNavigation,
-  RecordProblemPlayDestination,
+  GamePlayPath,
 } from "@/game-catalog/game-catalog-entry";
 import { createRandomPlayLocationState } from "@/game-catalog/play-location-state";
 import { createProblemIdSearch } from "@/game-catalog/problem-id-query";
@@ -26,6 +26,7 @@ export function createGameNavigation(
 ): GameNavigation {
   return {
     openGameHome(selectedProblemId, options) {
+      leavePlayBoard();
       navigate(
         {
           pathname: game.homePath,
@@ -75,10 +76,20 @@ export function useGameNavigation(game: GameNavigationTarget): GameNavigation {
   return useMemo(() => createGameNavigation(navigate, game), [navigate, game]);
 }
 
-/** 完了記録や離脱した試行の問題を、その問題 ID を URL に載せたプレイ画面で開く。 */
-export function openRecordProblemPlay(
+/** 問題集で引ける1問を始めるプレイ画面の、パス・難易度・問題 ID。 */
+export type ProblemPlayDestination = {
+  playPath: GamePlayPath;
+  difficulty: string;
+  problemId: ProblemId;
+};
+
+/**
+ * 問題集で引ける1問を、その問題 ID を URL に載せたプレイ画面で開く。
+ * 完了記録や離脱した試行の問題を遊び直すときと、ゲームのホームで始める問題を開くときに使う。
+ */
+export function openProblemPlay(
   navigate: Navigate,
-  destination: RecordProblemPlayDestination,
+  destination: ProblemPlayDestination,
 ): void {
   navigate(
     {

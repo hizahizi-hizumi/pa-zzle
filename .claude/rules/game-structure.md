@@ -31,6 +31,8 @@ frontend/src/games/
     ├── tutorial/
     │   └── tutorial.ts
     ├── ui/
+    │   ├── <Game>Ground.tsx
+    │   ├── <Game>ProblemPreview.tsx
     │   └── result/
     │       └── <Game>ResultScreen.tsx
     ├── assets/
@@ -129,6 +131,13 @@ frontend/src/games/
 ## プレイ画面と結果画面の共通契約
 
 - `ui/<Game>Play.tsx` の props は `games/play.ts` の `GamePlayScreenProps<Difficulty, Result>` に、盤面を戻せるなら `RestartableGamePlayScreenProps`、待ったがあるなら `UndoableGamePlayScreenProps` と、ゲーム固有の値・操作を足して作る。`ui/result/<Game>ResultScreen.tsx` の props は `GamePlayResultScreenProps<Difficulty, Result>` で作る。難易度は値で受け取り、表示名は UI が決める。
+- ゲーム固有の地は `ui/<Game>Ground.tsx` に置き、プレイ画面の `background` とカタログ項目の `renderGround` はこれを描く。
+- 1問の始めたときの盤面は `ui/<Game>ProblemPreview.tsx` に置く。
+- `<Game>ProblemPreview` は、プレイ画面の盤面のコンポーネントで、プレイを始めた直後と同じ姿を描く。
+- `<Game>ProblemPreview` は、置かれた枠（`container-type: size`）に、縦横比を保って収まる最大の大きさで中央に描く。
+- `<Game>ProblemPreview` は、問題の盤面と、それが無いと問題として見えないもの（持駒、手持ちのピース）だけを描く。
+- `<Game>ProblemPreview` が描く盤面と、プレイ画面でそれと同じ盤面を囲む要素に、`data-play-entry-board` を付ける。
+- `data-play-entry-board` を持つ要素は、`<Game>ProblemPreview` の中と、プレイ画面の外枠（`GamePlayFrame`）の中で、それぞれ1つにする。
 - プレイ画面は `components/GamePlayFrame.tsx` にゲーム固有の地（`background`）、盤面（`main`）、ゲーム固有の操作（`footer`）を渡して作り、外枠・ブランドの帯・見出し・遊び方とチュートリアルの開閉・結果画面への切り替えを各ゲームで書かない。結果画面は `progress` が `result` で評価があるときだけ出る。
 - 見出しの計測値は `PlayHeaderMetric` の回数（`count`）と経過時間（`elapsed-time`）で渡し、書式・行の分け方は共通部品に任せる。プレイで変わらない問題そのものの条件（例: 詰将棋の「5手詰」）は、数え上げる回数と混同しないよう `problem-fact` の文言で渡す。回数の桁の確保は共通部品の既定に任せ、変えるときは `reservedDigits` で渡す。
 - 盤面は `progress` が `playing` の間だけ操作を受け付け、受け付けないことを `interactionDisabled` で受け取る。
@@ -148,7 +157,7 @@ frontend/src/games/
 - プレイ画面は、盤面操作の音を `games/play-sound-effects.ts` の `useOperationSound` で、プレイフックが返す `id` 付きの操作の知らせから鳴らす。クリア音は `useClearSound` で完成演出の始まりに鳴らす。
 - 動きを減らす設定では、不成立の動きが出ず画面が何も変わらない操作の音と、完成演出が無くすぐ結果へ進むときのクリア音を鳴らさない。完成した盤面を保持して見せるゲームだけ、その姿に合わせたクリア音を `useClearSound` へ渡す。
 - 結果を受け取る瞬間の報酬の音はアプリが `usePlayableGame` で鳴らすので、ゲームは鳴らさない。
-- ゲームを選ぶ・プレイを始める音はアプリの共通部品（ゲームのホームの「ランダムに遊ぶ」と図鑑の「遊ぶ」、ゲームのホームから開いたチュートリアルを終えて遊び始める操作、結果画面、プレイ中のメニュー）が `@/components/app-decision-sound` で鳴らすので、ゲームは鳴らさない。
+- ゲームを選ぶ・プレイを始める音はアプリの共通部品（ゲームのホームでプレイを始める操作、ゲームのホームから開いたチュートリアルを終えて遊び始める操作、結果画面、プレイ中のメニュー）が `@/components/app-decision-sound` で鳴らすので、ゲームは鳴らさない。
 - BGM はプレイ中の曲も含めてアプリが画面ごとに `@/components/app-background-music` で流すので、ゲームは BGM を流さない。
 
 ## チュートリアル
@@ -212,13 +221,14 @@ frontend/src/game-catalog/
 ├── result-reward-sound.ts
 └── <game>/
     ├── <game>-catalog-entry.tsx
+    ├── <Game>PoolProblemPreview.tsx
     ├── Playable<Game>.tsx
     └── Recorded<Game>Result.tsx
 ```
 
 - `game-catalog-entry.ts`: 1ゲーム分のカタログ項目 `GameCatalogEntry` と、記録や離脱したプレイの問題を遊び直すプレイ画面・記録から描く結果画面（`RecordResultContext`）の契約を置く。
 - `game-catalog.ts`: 全ゲームを表示順に並べた `gameCatalog` を置く。パズル選択・記録・結果の画面は、ゲームを列挙せずこれを回す。
-- `game-navigation.ts`: ゲームのホーム（問題を選んだ状態でも開ける。プレイから戻るときは履歴を置き換える `replacesHistory`）・ホーム・同じゲームの次の問題へ移る `GameNavigation` と、記録の問題を遊び直すプレイ画面を開く `openRecordProblemPlay` を置く。ゲームの画面からの遷移はこれを使い、パスを直書きしない。ゲームのホームとプレイ画面のパスはカタログ項目の `homePath`・`playPath` を正とする。
+- `game-navigation.ts`: ゲームのホーム（問題を選んだ状態でも開ける。プレイから戻るときは履歴を置き換える `replacesHistory`）・ホーム・同じゲームの次の問題へ移る `GameNavigation` と、問題集の1問をプレイ画面で開く `openProblemPlay`（記録の問題の遊び直しと、ゲームのホームで始める問題に使う）を置く。ゲームの画面からの遷移はこれを使い、パスを直書きしない。ゲームのホームとプレイ画面のパスはカタログ項目の `homePath`・`playPath` を正とする。
 - `app-home.ts`: アプリのホームで選んでおくゲームと選んでいるゲームの続きを、記録と離脱したプレイへつなぐ `useAppHome` を置く。続きは図鑑と同じ導出（`zukan/zukan-collection.ts`）から求め、要るゲームの分だけ求める。
 - `game-home.tsx`: ゲームのホームを、そのゲームの図鑑・前回からの変化・URL の `problem` クエリで選ぶ問題・プレイ画面への遷移へつなぐ `useGameHome` を置く。返す `screenProps` をゲームのホームの画面へそのまま渡す。
 - `play-timeline.ts`: 記録画面の時間の流れに並べる、今のアプリにあるゲームの完了記録と離脱したプレイ、1件に示すゲーム・レベル・図鑑の番号・評価点、1件を押して開く画面（結果画面か、その問題を選んだゲームのホーム）を置く。
@@ -230,7 +240,8 @@ frontend/src/game-catalog/
 - `record-result-location-state.ts`: 結果画面へ渡す location state（記録の保存結果）の作成と、形を確かめた読み取りを置く。
 - `record-result-navigation.ts`: クリアして記録を保存できたプレイを、記録の結果画面 `/puzzles/<game>/result/<記録ID>` へ履歴を置き換えて移す共通フックを置く。
 - `result-reward-sound.ts`: プレイを終えて結果を受け取る瞬間に、評価段階に応じた報酬の音を鳴らす共通フックを置く。記録から開いた結果画面では鳴らさない。
-- `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、ホームで選んでいるときに見せる色と動きのあるピクトグラム（任意。`games/<game>/assets/pictogram-showcase.svg`）、ゲームのホームのパス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面と描けるかを持つ。遊び直し先は記録の一覧の行ごとに求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。
+- `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、ホームで選んでいるときに見せる色と動きのあるピクトグラム（任意。`games/<game>/assets/pictogram-showcase.svg`）、ゲームのホームに敷く地（`games/<game>/ui/<Game>Ground.tsx` を描く）、問題集の1問の始めたときの盤面（`games/<game>/ui/<Game>ProblemPreview.tsx` を描く。問題集を後から読み込むゲームは `<Game>PoolProblemPreview.tsx` を描く。問題集に無い ID には `null` を返す）、ゲームのホームのパス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面と描けるかを持つ。遊び直し先は記録の一覧の行ごとに求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。
+- `<Game>PoolProblemPreview.tsx`: 問題集を後から読み込むゲームにだけ置く。問題集を読み込むまでは何も描かず、読み込んだら問題集の1問を `games/<game>/ui/<Game>ProblemPreview.tsx` で描く。
 - `Playable<Game>.tsx`: URL の問題 ID で最初の問題を引いて `play/` を始め、`usePlayableGame` に完了記録・離脱の進み具合・診断スナップショットの作り方を渡し、`ui/<Game>Play.tsx` と診断ダイアログを描く。記録を保存できたクリアは記録の結果画面へ移し、その場の結果画面は記録の保存に失敗したプレイでだけ出す。
 - `Recorded<Game>Result.tsx`: `useRecordedGameResult` に診断スナップショットの作り方を渡し、記録から作り直した結果を `ui/result/<Game>ResultScreen.tsx` と診断ダイアログで描く。
 

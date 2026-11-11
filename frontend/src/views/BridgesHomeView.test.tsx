@@ -51,10 +51,7 @@ describe("BridgesHomeView", () => {
   beforeEach(() => {
     router = createMemoryRouter(
       [
-        {
-          path: "/puzzles/bridges",
-          element: <BridgesHomeView />,
-        },
+        { path: "/puzzles/bridges", element: <BridgesHomeView /> },
         {
           path: "/puzzles/bridges/play/:difficulty",
           element: <p>プレイ画面</p>,
@@ -87,6 +84,21 @@ describe("BridgesHomeView", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
     const dialog = await screen.findByRole("dialog", { name: "遊び方" });
+
+    expect(dialog).toBeTruthy();
+  });
+
+  test("見出しのメニューからチュートリアルを開けること", async () => {
+    fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "ブリッジパズル",
+      description: "チュートリアル",
+    });
 
     expect(dialog).toBeTruthy();
   });

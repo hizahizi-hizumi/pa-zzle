@@ -41,7 +41,7 @@ const PERFECT_REWARD_RATE = 1.25;
 const PERFECT_REWARD_VOLUME = 0.45;
 
 /** 1マスを押したときに鳴らす音の1つ。 */
-export type ZukanStampSoundCue = {
+type ZukanStampSoundCue = {
   sound: SoundEffect;
   delayMs: number;
   playbackRate: number;
@@ -69,7 +69,7 @@ function cue(
  * - 新しく great で解いた: 始める音を少し高くする。
  * - 新しく good・clear で解いた: 選ぶ音を小さく鳴らす。回数が多いので揺らす。
  */
-export function listZukanStampSoundCues({
+function listZukanStampSoundCues({
   level,
   isRaised,
 }: ZukanStamp): ZukanStampSoundCue[] {
@@ -116,3 +116,5 @@ export function playZukanStampSound(stamp: ZukanStamp): void {
     });
   }
 }
+
+export const _private = { listZukanStampSoundCues };

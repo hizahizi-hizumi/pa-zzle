@@ -18,7 +18,12 @@ import {
   listMinesweeperPoolProblemIds,
   minesweeperProblemFeatureAxes,
 } from "@/games/minesweeper/problem/problem-pool";
-import { canSelectMinesweeperProblemById } from "@/games/minesweeper/problem-selection";
+import {
+  canSelectMinesweeperProblemById,
+  selectMinesweeperProblemById,
+} from "@/games/minesweeper/problem-selection";
+import { MinesweeperGround } from "@/games/minesweeper/ui/MinesweeperGround";
+import { MinesweeperProblemPreview } from "@/games/minesweeper/ui/MinesweeperProblemPreview";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
 import {
   formatMinesweeperProblemFeatures,
@@ -30,6 +35,9 @@ export const minesweeperCatalogEntry = {
   name: MINESWEEPER_DISPLAY_NAME,
   pictogramSvg,
   pictogramShowcaseSvg,
+  renderGround() {
+    return <MinesweeperGround />;
+  },
   homePath: "/puzzles/minesweeper",
   playPath: "/puzzles/minesweeper/play/:difficulty",
   playRecordDisplay: minesweeperPlayRecordDisplay,
@@ -62,6 +70,12 @@ export const minesweeperCatalogEntry = {
   describePoolProblem(difficulty, problemId) {
     const features = findMinesweeperPoolProblemFeatures(difficulty, problemId);
     return features ? formatMinesweeperProblemFeatures(features) : null;
+  },
+  renderPoolProblemPreview(difficulty, problemId) {
+    const selected = selectMinesweeperProblemById(difficulty, problemId);
+    return selected ? (
+      <MinesweeperProblemPreview problem={selected.problem} />
+    ) : null;
   },
   problemFeatureFilter: createProblemFeatureFilter(
     findMinesweeperPoolProblemFeatures,

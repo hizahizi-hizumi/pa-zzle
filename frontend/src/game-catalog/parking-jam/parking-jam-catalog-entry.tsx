@@ -18,7 +18,12 @@ import {
   listParkingJamPoolProblemIds,
   parkingJamProblemFeatureAxes,
 } from "@/games/parking-jam/problem/problem-pool";
-import { canSelectParkingJamProblemById } from "@/games/parking-jam/problem-selection";
+import {
+  canSelectParkingJamProblemById,
+  selectParkingJamProblemById,
+} from "@/games/parking-jam/problem-selection";
+import { ParkingJamGround } from "@/games/parking-jam/ui/ParkingJamGround";
+import { ParkingJamProblemPreview } from "@/games/parking-jam/ui/ParkingJamProblemPreview";
 import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
 import {
   formatParkingJamProblemFeatures,
@@ -30,6 +35,9 @@ export const parkingJamCatalogEntry = {
   name: PARKING_JAM_DISPLAY_NAME,
   pictogramSvg,
   pictogramShowcaseSvg,
+  renderGround() {
+    return <ParkingJamGround />;
+  },
   homePath: "/puzzles/parking-jam",
   playPath: "/puzzles/parking-jam/play/:difficulty",
   playRecordDisplay: parkingJamPlayRecordDisplay,
@@ -62,6 +70,12 @@ export const parkingJamCatalogEntry = {
   describePoolProblem(difficulty, problemId) {
     const features = findParkingJamPoolProblemFeatures(difficulty, problemId);
     return features ? formatParkingJamProblemFeatures(features) : null;
+  },
+  renderPoolProblemPreview(difficulty, problemId) {
+    const identified = selectParkingJamProblemById(difficulty, problemId);
+    return identified ? (
+      <ParkingJamProblemPreview problem={identified.problem} />
+    ) : null;
   },
   problemFeatureFilter: createProblemFeatureFilter(
     findParkingJamPoolProblemFeatures,

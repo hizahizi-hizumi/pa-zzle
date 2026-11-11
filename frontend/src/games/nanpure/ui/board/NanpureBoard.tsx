@@ -54,7 +54,9 @@ export function NanpureBoard({
 
   return (
     // マスの数字の大きさを盤面の幅で抑え、狭く置いた盤面でも数字がマスに収まるようにする。
+    // data-play-entry-board: ゲームのホームから入るとき、広がった盤面が重なって着地する先。
     <div
+      data-play-entry-board=""
       className={cn(
         "relative grid aspect-square grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background [container-type:inline-size]",
         sizeClassName,

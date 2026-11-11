@@ -133,6 +133,7 @@ const clearPopKeyframes: Keyframe[] = [
  * 滑り・ぶつかって止まる反応・ゴールの通過・崩れる・割れる・雪を押し出す・塊を押す・押し戻し・完成演出を動かす。入力は受けない。
  * 雪山と滑る氷の塊はゴールの印の上に描き、ゴールをふさいでいると読ませる。
  * チュートリアルでは、駒を止めるマスの印と、画面全体の覆いから抜くマスを盤面の上に重ねる。
+ * 盤面の縦横比の枠の `data-play-entry-board` は、ゲームのホームから入るとき、広がった盤面が重なって着地する先。
  */
 export function IceFloorMazeBoard({
   board,
@@ -282,6 +283,7 @@ export function IceFloorMazeBoard({
   return (
     <div className="flex size-full items-center justify-center [container-type:size]">
       <div
+        data-play-entry-board=""
         className="relative max-h-full max-w-full"
         style={{
           aspectRatio,

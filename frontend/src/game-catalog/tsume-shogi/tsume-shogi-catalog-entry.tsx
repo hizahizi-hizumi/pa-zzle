@@ -4,6 +4,7 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import { RecordedTsumeShogiResult } from "@/game-catalog/tsume-shogi/RecordedTsumeShogiResult";
+import { TsumeShogiPoolProblemPreview } from "@/game-catalog/tsume-shogi/TsumeShogiPoolProblemPreview";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/tsume-shogi/assets/pictogram.svg?raw";
 import pictogramShowcaseSvg from "@/games/tsume-shogi/assets/pictogram-showcase.svg?raw";
@@ -24,12 +25,16 @@ import {
   formatTsumeShogiProblemFeatures,
   tsumeShogiProblemFeatureAxisDisplays,
 } from "@/games/tsume-shogi/ui/problem-features";
+import { TsumeShogiGround } from "@/games/tsume-shogi/ui/TsumeShogiGround";
 
 export const tsumeShogiCatalogEntry = {
   id: tsumeShogiPlayRecordDefinition.gameId,
   name: TSUME_SHOGI_DISPLAY_NAME,
   pictogramSvg,
   pictogramShowcaseSvg,
+  renderGround() {
+    return <TsumeShogiGround />;
+  },
   homePath: "/puzzles/tsume-shogi",
   playPath: "/puzzles/tsume-shogi/play/:difficulty",
   playRecordDisplay: tsumeShogiPlayRecordDisplay,
@@ -62,6 +67,14 @@ export const tsumeShogiCatalogEntry = {
   describePoolProblem(difficulty, problemId) {
     const features = findTsumeShogiPoolProblemFeatures(difficulty, problemId);
     return features ? formatTsumeShogiProblemFeatures(features) : null;
+  },
+  renderPoolProblemPreview(difficulty, problemId) {
+    return canSelectTsumeShogiProblemById(difficulty, problemId) ? (
+      <TsumeShogiPoolProblemPreview
+        difficulty={difficulty}
+        problemId={problemId}
+      />
+    ) : null;
   },
   problemFeatureFilter: createProblemFeatureFilter(
     findTsumeShogiPoolProblemFeatures,

@@ -78,6 +78,22 @@ describe("gameCatalog", () => {
       expect(unknown).toBeNull();
     },
   );
+
+  test.each(gameCatalog.map((game) => [game.id, game] as const))(
+    "%s が、各難易度の問題集の問題に始めたときの盤面を返し、問題集に無い問題 ID には null を返すこと",
+    (_, game) => {
+      const previews = difficultyLevels.map(({ id }) => {
+        const [problemId] = game.listPoolProblemIds(id);
+        return problemId === undefined
+          ? null
+          : game.renderPoolProblemPreview(id, problemId);
+      });
+      const unknown = game.renderPoolProblemPreview("1", "unknown");
+
+      expect(previews.every((preview) => preview != null)).toBe(true);
+      expect(unknown).toBeNull();
+    },
+  );
 });
 
 describe("problemFeatureFilter", () => {

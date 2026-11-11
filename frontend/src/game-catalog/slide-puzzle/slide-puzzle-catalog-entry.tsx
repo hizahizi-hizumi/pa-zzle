@@ -18,18 +18,26 @@ import {
   listSlidePuzzlePoolProblemIds,
   slidePuzzleProblemFeatureAxes,
 } from "@/games/slide-puzzle/problem/problem-pool";
-import { canSelectSlidePuzzleProblemById } from "@/games/slide-puzzle/problem-selection";
+import {
+  canSelectSlidePuzzleProblemById,
+  selectSlidePuzzleProblemById,
+} from "@/games/slide-puzzle/problem-selection";
 import { slidePuzzlePlayRecordDisplay } from "@/games/slide-puzzle/ui/play-record-display";
 import {
   formatSlidePuzzleProblemFeatures,
   slidePuzzleProblemFeatureAxisDisplays,
 } from "@/games/slide-puzzle/ui/problem-features";
+import { SlidePuzzleGround } from "@/games/slide-puzzle/ui/SlidePuzzleGround";
+import { SlidePuzzleProblemPreview } from "@/games/slide-puzzle/ui/SlidePuzzleProblemPreview";
 
 export const slidePuzzleCatalogEntry = {
   id: slidePuzzlePlayRecordDefinition.gameId,
   name: SLIDE_PUZZLE_DISPLAY_NAME,
   pictogramSvg,
   pictogramShowcaseSvg,
+  renderGround() {
+    return <SlidePuzzleGround />;
+  },
   homePath: "/puzzles/slide-puzzle",
   playPath: "/puzzles/slide-puzzle/play/:difficulty",
   playRecordDisplay: slidePuzzlePlayRecordDisplay,
@@ -62,6 +70,12 @@ export const slidePuzzleCatalogEntry = {
   describePoolProblem(difficulty, problemId) {
     const features = findSlidePuzzlePoolProblemFeatures(difficulty, problemId);
     return features ? formatSlidePuzzleProblemFeatures(features) : null;
+  },
+  renderPoolProblemPreview(difficulty, problemId) {
+    const pooled = selectSlidePuzzleProblemById(difficulty, problemId);
+    return pooled ? (
+      <SlidePuzzleProblemPreview problem={pooled.problem} />
+    ) : null;
   },
   problemFeatureFilter: createProblemFeatureFilter(
     findSlidePuzzlePoolProblemFeatures,

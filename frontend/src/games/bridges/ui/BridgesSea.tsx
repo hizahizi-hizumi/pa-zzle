@@ -1,6 +1,5 @@
-import { bridgesToneClassNames } from "@/games/bridges/ui/bridges-tone";
-import { SeaWaves, SeaWideWaves } from "@/games/bridges/ui/SeaWaves";
-import { cn } from "@/lib/utils";
+import { BridgesGround } from "@/games/bridges/ui/BridgesGround";
+import { SeaWideWaves } from "@/games/bridges/ui/SeaWaves";
 
 /**
  * PC の広い画面で、盤面の外の海にだけ波の印を足す範囲。盤面は画面の中央に高さいっぱいの正方形で置かれるので、
@@ -17,15 +16,13 @@ const TALL_WAVES_CLASS_NAME =
   "absolute inset-0 size-full lg:hidden landscape:hidden [mask-image:linear-gradient(to_bottom,transparent_0,transparent_6rem,black_9rem,black_calc(50%-50vw-1.5rem),transparent_calc(50%-50vw+1rem),transparent_calc(50%+50vw-1rem),black_calc(50%+50vw+1.5rem))]";
 
 /**
- * プレイ画面の盤面の周りから、ブランドの帯と見出しの後ろまでを満たす海。クリアしても色を変えず、ブランドの帯とブラウザの色と
- * いつも同じ色でつなぐ。完成の演出は盤面の島ごとに見せる。
+ * プレイ画面の盤面の周りから、ブランドの帯と見出しの後ろまでを満たす海。地（`BridgesGround`）に、盤面の外の広い海にだけ
+ * 波の印を足す。クリアしても色を変えず、ブランドの帯とブラウザの色といつも同じ色でつなぐ。完成の演出は盤面の島ごとに見せる。
  */
 export function BridgesSea() {
   return (
-    <div className={cn("relative size-full", bridgesToneClassNames.sea)}>
-      <svg className="absolute inset-0 size-full" aria-hidden="true">
-        <SeaWaves unit={1} />
-      </svg>
+    <div className="relative size-full">
+      <BridgesGround />
       <svg className={WIDE_WAVES_CLASS_NAME} aria-hidden="true">
         <SeaWideWaves />
       </svg>

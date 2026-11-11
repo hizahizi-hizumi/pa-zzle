@@ -18,7 +18,12 @@ import {
   findIceFloorMazePoolProblemFeatures,
   iceFloorMazeProblemFeatureAxes,
 } from "@/games/ice-floor-maze/problem-features";
-import { canSelectIceFloorMazeProblemById } from "@/games/ice-floor-maze/problem-selection";
+import {
+  canSelectIceFloorMazeProblemById,
+  selectIceFloorMazeProblemById,
+} from "@/games/ice-floor-maze/problem-selection";
+import { IceFloorMazeGround } from "@/games/ice-floor-maze/ui/IceFloorMazeGround";
+import { IceFloorMazeProblemPreview } from "@/games/ice-floor-maze/ui/IceFloorMazeProblemPreview";
 import { iceFloorMazePlayRecordDisplay } from "@/games/ice-floor-maze/ui/play-record-display";
 import {
   formatIceFloorMazeProblemFeatures,
@@ -30,6 +35,9 @@ export const iceFloorMazeCatalogEntry = {
   name: ICE_FLOOR_MAZE_DISPLAY_NAME,
   pictogramSvg,
   pictogramShowcaseSvg,
+  renderGround() {
+    return <IceFloorMazeGround />;
+  },
   homePath: "/puzzles/ice-floor-maze",
   playPath: "/puzzles/ice-floor-maze/play/:difficulty",
   playRecordDisplay: iceFloorMazePlayRecordDisplay,
@@ -62,6 +70,12 @@ export const iceFloorMazeCatalogEntry = {
   describePoolProblem(difficulty, problemId) {
     const features = findIceFloorMazePoolProblemFeatures(difficulty, problemId);
     return features ? formatIceFloorMazeProblemFeatures(features) : null;
+  },
+  renderPoolProblemPreview(difficulty, problemId) {
+    const selected = selectIceFloorMazeProblemById(difficulty, problemId);
+    return selected ? (
+      <IceFloorMazeProblemPreview problem={selected.problem} />
+    ) : null;
   },
   problemFeatureFilter: createProblemFeatureFilter(
     findIceFloorMazePoolProblemFeatures,
