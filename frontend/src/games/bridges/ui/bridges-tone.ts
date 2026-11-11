@@ -66,8 +66,8 @@ export const bridgesToneClassNames = {
 
 /**
  * 島の状態ごとの、平らな塗りと輪郭線と数字の色。色だけに頼らず、塗りの明るさと形でも分ける。数字は塗りと 6.5:1 以上離す。
- * - `short`（足りない）: 最も明るい無地の塗りに濃い数字。ライトは白に濃い紺緑の数字と輪郭線（12:1）。
- * - `exact`（ちょうど）: 達成で色を解放する考え方で、明るい緑の塗りに深い緑の数字。足りない島より一段暗く（2.2:1）、色でも整った表情にする。
+ * - `short`（足りない）: 砂浜の色の無地の塗りに濃い数字（ライト 10:1）。
+ * - `exact`（ちょうど）: 達成で色を解放する考え方で、砂浜の色から緑豊かな濃い緑の塗りに変わり、白い数字（ライト 5:1）。足りない島より暗く（2.3:1 以上）、色でも整った表情にする。
  * - `over`（多すぎ）: 濃い薔薇色の塗りに白い数字と、輪郭線の内側の淡い途切れた輪。続く状態として最も暗い塗りにし、輪の形でも分ける。
  * - `outline`: 島の縁を切る輪郭線。ライトは海と 5:1 の濃い線、ダークは海より暗い線で、明るい塗りの縁を締める。
  * - `rim`: 多すぎの島の途切れた輪の色。輪の無い状態は持たない。
@@ -85,14 +85,14 @@ export const bridgesIslandTones: Readonly<
   Record<BridgesIslandStatus, BridgesIslandTone>
 > = {
   short: {
-    land: "fill-white dark:fill-[#c9d9dc]",
+    land: "fill-[#f7e8c6] dark:fill-[#d8c49a]",
     outline: islandOutline,
     clue: "fill-[#163843] dark:fill-[#10262d]",
   },
   exact: {
-    land: "fill-[#5cc26a] dark:fill-[#6cc477]",
+    land: "fill-[#2a7f26] dark:fill-[#5aac45]",
     outline: islandOutline,
-    clue: "fill-[#0b2e13] dark:fill-[#08260d]",
+    clue: "fill-white dark:fill-[#0b2e13]",
   },
   over: {
     land: "fill-[#a8243e] dark:fill-[#a8324c]",
