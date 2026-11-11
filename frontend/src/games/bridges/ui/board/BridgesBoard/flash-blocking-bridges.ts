@@ -2,27 +2,42 @@ import { bridgesFigureParts } from "@/games/bridges/ui/board/BridgesFigure";
 import { prefersReducedMotion } from "@/lib/motion";
 
 /**
- * 阻んだ橋の縁取りの点灯。すぐ点け、目を向けてから読める間を置いてゆっくり消す。次の操作の邪魔にならないよう、0.9秒で消し切る。
+ * 阻んだ橋の縁取りの点灯。板が突き当たるときに点け、0.6秒で消し切る。続く状態の多すぎの縁より細く短くし、一瞬の知らせにとどめる。
  * 動かない点灯なので、動きを減らす設定でも返す。
  */
-const OUTLINE_MS = 900;
+const OUTLINE_MS = 600;
 const outlineKeyframes: Keyframe[] = [
   { opacity: 0 },
-  { opacity: 1, offset: 0.06 },
-  { opacity: 1, offset: 0.6 },
+  { opacity: 0, offset: 0.3 },
+  { opacity: 1, offset: 0.36 },
   { opacity: 0 },
 ];
 
-/** 押した辺に一瞬だけ見せる、架かるはずだった板の影。 */
-const ATTEMPT_MS = 520;
-const attemptKeyframes: Keyframe[] = [
+/**
+ * 押した島から伸びて阻んだ橋に突き当たり、弾かれて縮む板。伸び切った所で阻んだ橋に当たり、少し押し戻されてから引っ込む。
+ * 動きを減らす設定では伸ばさず、伸び切った姿を一瞬だけ見せる。
+ */
+const ATTEMPT_MS = 620;
+function createAttemptKeyframes(axis: string | null): Keyframe[] {
+  const scale = (value: number) =>
+    axis === "y" ? `scale(1, ${value})` : `scale(${value}, 1)`;
+  return [
+    { opacity: 0.9, transform: scale(0) },
+    { opacity: 0.9, transform: scale(1), offset: 0.3 },
+    { opacity: 0.9, transform: scale(0.82), offset: 0.45 },
+    { opacity: 0.9, transform: scale(0.94), offset: 0.58 },
+    { opacity: 0, transform: scale(0.4) },
+  ];
+}
+const reducedAttemptKeyframes: Keyframe[] = [
   { opacity: 0 },
   { opacity: 0.8, offset: 0.15 },
   { opacity: 0 },
 ];
 
-/** 阻んだ橋の板を、板の幅の向きへ短く揺らす時間と、揺れの幅の並び（マス幅を 1 とした値）。 */
+/** 阻んだ橋の板を、板の幅の向きへ短く揺らす時間と、揺れの幅の並び（マス幅を 1 とした値）。板が突き当たったときに揺らす。 */
 const SHAKE_MS = 300;
+const SHAKE_DELAY_MS = ATTEMPT_MS * 0.3;
 const SHAKE_OFFSETS = [0, 0.05, -0.04, 0.025, 0] as const;
 
 function createShakeKeyframes(axis: string | null): Keyframe[] {
@@ -36,13 +51,14 @@ function createShakeKeyframes(axis: string | null): Keyframe[] {
 
 /**
  * 交わる橋に阻まれて架けられなかったことを、盤面だけで返す。文字は出さない。
- * 阻んだ橋の板を規則に合わない色で縁取って短く揺らし、押した辺には架かるはずだった板の影を一瞬だけ見せて、
- * どこを押してどの橋に阻まれたかを形で知らせる。動きを減らす設定では揺らさない。
+ * 押した島から板を伸ばして阻んだ橋に突き当て、弾き返す動きを主にし、突き当たったときに阻んだ橋を短く揺らして細く縁取り、
+ * どこを押してどの橋に阻まれたかを形で知らせる。動きを減らす設定では伸ばさず揺らさない。
  */
 export function flashBlockingBridges(figure: SVGSVGElement | null): void {
   if (!figure) {
     return;
   }
+  const reduced = prefersReducedMotion();
   for (const outline of figure.querySelectorAll(
     `[${bridgesFigureParts.blockingOutline}]`,
   )) {
@@ -51,16 +67,22 @@ export function flashBlockingBridges(figure: SVGSVGElement | null): void {
       easing: "ease-out",
     });
     const bridge = outline.closest(`[${bridgesFigureParts.bridgeEdge}]`);
-    if (bridge && !prefersReducedMotion()) {
+    if (bridge && !reduced) {
       bridge.animate?.(
         createShakeKeyframes(
           bridge.getAttribute(bridgesFigureParts.bridgeAxis),
         ),
-        { duration: SHAKE_MS, easing: "ease-out" },
+        { duration: SHAKE_MS, delay: SHAKE_DELAY_MS, easing: "ease-out" },
       );
     }
   }
-  figure
-    .querySelector(`[${bridgesFigureParts.blockedAttempt}]`)
-    ?.animate?.(attemptKeyframes, { duration: ATTEMPT_MS, easing: "ease-out" });
+  const attempt = figure.querySelector(
+    `[${bridgesFigureParts.blockedAttempt}]`,
+  );
+  attempt?.animate?.(
+    reduced
+      ? reducedAttemptKeyframes
+      : createAttemptKeyframes(attempt.getAttribute("data-axis")),
+    { duration: ATTEMPT_MS, easing: "ease-out" },
+  );
 }

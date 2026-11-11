@@ -30,6 +30,8 @@ type BridgesBoardCuesProps = {
   bridges: readonly BridgeCount[];
   cues: readonly BridgesBoardCue[];
   spotlight: BridgesBoardSpotlight | null;
+  /** マスが小さい盤面か。印の太さを、その盤面で押せば架かる板の影にそろえる。 */
+  compact: boolean;
 };
 
 /**
@@ -42,6 +44,7 @@ export function BridgesBoardCues({
   bridges,
   cues,
   spotlight,
+  compact,
 }: BridgesBoardCuesProps) {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0">
@@ -59,10 +62,10 @@ export function BridgesBoardCues({
         <span
           key={`spotlit-edge-${edge}`}
           data-spotlit-edge={edge}
-          className="absolute rounded-sm"
+          className="absolute rounded-full"
           style={toPlacementStyle(view, getEdgeViewBand(view, edge))}
         >
-          <TutorialSpotlight active className="inset-0 rounded-sm" />
+          <TutorialSpotlight active className="inset-0 rounded-full" />
         </span>
       ))}
       {cues.map((cue) => (
@@ -75,7 +78,7 @@ export function BridgesBoardCues({
             getEdgeViewBand(
               view,
               cue.edge,
-              getGhostBridgeWidth(bridges[cue.edge]!),
+              getGhostBridgeWidth(bridges[cue.edge]!, compact),
             ),
           )}
         >

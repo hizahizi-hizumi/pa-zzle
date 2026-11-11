@@ -3,7 +3,10 @@ import { Pointer } from "lucide-react";
 import type { BridgesBoard } from "@/games/bridges/puzzle/board";
 import { listBridgesIslandStatuses } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
-import { BridgesFigure } from "@/games/bridges/ui/board/BridgesFigure";
+import {
+  type BridgesBlockedAttempt,
+  BridgesFigure,
+} from "@/games/bridges/ui/board/BridgesFigure";
 import {
   type BoardPoint,
   createBoardView,
@@ -15,8 +18,8 @@ type HowToPlayFigureProps = {
   bridges: readonly BridgeCount[];
   /** 交わる橋に阻まれたときに縁取る、阻んだ橋の辺。 */
   blockingEdges?: readonly number[];
-  /** 交わる橋に阻まれたときに、架かるはずだった板の影を置く、押した辺。 */
-  blockedEdge?: number;
+  /** 交わる橋に阻まれたときに、押した端の島から阻んだ橋の手前まで板の影を置く、押した辺と端の島。 */
+  blockedAttempt?: BridgesBlockedAttempt;
   /** 指を置いている所（盤面の座標）。指の印を添える。 */
   finger?: BoardPoint;
 };
@@ -26,7 +29,7 @@ export function HowToPlayFigure({
   board,
   bridges,
   blockingEdges,
-  blockedEdge,
+  blockedAttempt,
   finger,
 }: HowToPlayFigureProps) {
   const view = createBoardView(board);
@@ -40,8 +43,9 @@ export function HowToPlayFigure({
         islandStatuses={listBridgesIslandStatuses(board, { bridges })}
         showsSea
         blockingEdges={blockingEdges}
-        blockedEdge={blockedEdge}
+        blockedAttempt={blockedAttempt}
         showsBlockingEdges
+        compact
       />
       {fingerPoint && (
         <Pointer
