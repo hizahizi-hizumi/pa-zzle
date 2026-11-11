@@ -33,6 +33,7 @@ import {
 } from "@/games/bridges/problem/generator";
 import {
   BRIDGES_GENERATOR_VERSION,
+  type BridgesBoardSize,
   type BridgesGenerationConditions,
   createBridgesProblemIdentity,
 } from "@/games/bridges/problem/problem";
@@ -90,12 +91,15 @@ function getOpeningShapeLimit(perLevel: number): number {
 
 /**
  * 島の配置が近いとみなす、回転・反転をそろえて位置の違う島の数（どちらか一方にだけある島の数）の上限の、島の数に対する割合。
- * 島20前後の盤面では2島、島30近い盤面では3島。
+ * 島40以上の盤面で下限を超える。
  */
 const NEAR_LAYOUT_SHARE = 0.1;
 
-/** 近いとみなす位置の違う島の数の下限。島10前後の盤面でも、島を1つ動かしただけの配置を別の問題にしない。 */
-const MINIMUM_NEAR_LAYOUT_DIFFERENCE = 2;
+/**
+ * 近いとみなす位置の違う島の数の下限。島を2つ動かしただけの配置を別の問題にしない。2島違いまでにすると、L1（島10前後）の
+ * 60問で4島しか違わない組が30組並び、同じ盤面に見えた。
+ */
+const MINIMUM_NEAR_LAYOUT_DIFFERENCE = 4;
 
 function getNearLayoutDifference(islandCount: number): number {
   return Math.max(
@@ -199,11 +203,60 @@ const tagShareRules = {
 const PASSAGE_SCORE = 5;
 
 /**
+ * 先読みの山場が解き進みの後ろにある候補に足す点。先読みの場所の最も少ない解き順で最後の先読みが、行き先の
+ * `LATE_LOOKAHEAD_DECIDED_RATIO` 以上が決まった後にあるか、1手の先読みの結果からすぐ次の先読みが要るなら足す。
+ * L5 に当たった候補の半分ほどにしか無いので、下限にはせず、ほかの手筋より重い点で先に採る。
+ */
+const LATE_LOOKAHEAD_SCORE = 6;
+const LATE_LOOKAHEAD_DECIDED_RATIO = 0.7;
+
+/** 素朴な解き方（数字の読みと試し置き）で戻した回数の中央値1回ごとに足す点と、点にする回数の上限。 */
+const BACKTRACK_SCORE = 1;
+const BACKTRACK_SCORE_LIMIT = 4;
+
+/**
+ * 盤面の枠をなぞる形を引く点。解の橋が通る外周の線の割合のうち `BORDER_COVERAGE_ALLOWANCE` を超えた分に
+ * `BORDER_COVERAGE_PENALTY` を掛けて引き、四隅の島が2つを超えた1つごとに `EXTRA_CORNER_PENALTY` を引く。
+ */
+const BORDER_COVERAGE_ALLOWANCE = 0.6;
+const BORDER_COVERAGE_PENALTY = 15;
+const EXTRA_CORNER_PENALTY = 1.5;
+
+/**
+ * 隣のレベルと共有する盤面の大きさのうち、問題数のこの割合以上を採る大きさ。共有する大きさが名ばかりにならないよう、下の
+ * レベルと共有する小さい方の大きさに下限を置く。L4 の 9×9 に置く。L3 の 8×8 は、島17以上だと島の半分以上が外周に並び
+ * （外周の島 5割以下を満たさない）、調べた候補 19,592 のどれも L3 に当たらず、L2 の 7×7 は島13以上だと配置がほとんど
+ * 無い（当たった候補 57 から、近い配置を除くと3問）ので置かない。L1 の 7×7・L2 の 8×8 は既に大半。
+ */
+const MINIMUM_SHARED_SIZE_SHARE = 0.25;
+const sharedSizesWithMinimum = {
+  "1": [],
+  "2": [],
+  "3": [],
+  "4": [9],
+  "5": [],
+} as const satisfies Record<BridgesDifficulty, readonly BridgesBoardSize[]>;
+
+/** レベルの盤面の大きさごとの、採る問題の数の下限（`sharedSizesWithMinimum`）。 */
+function listSizeQuotas(
+  difficulty: BridgesDifficulty,
+  perLevel: number,
+): [size: number, quota: number][] {
+  return sharedSizesWithMinimum[difficulty].map((size) => [
+    size,
+    Math.ceil(MINIMUM_SHARED_SIZE_SHARE * perLevel),
+  ]);
+}
+
+/**
  * 同じレベルに当たった候補を並べる、問題の質の点。下限を満たしただけの候補より、次の候補を先に採る。
  * - 読みの余裕: そのレベルが求める読み（配分・つながり・閉じない読み・先読みと場所）が下限を超えた分。
  * - 手筋の種類: 唯一の通り道、3島以上の組、先読みで手を退けた理由の種類、孤立を見る先読み、交差で塞がる行き先。
- * - 山場の遅さ: 最後のつながりの読みと最初の先読みの前に、本数が決まっていた行き先の割合。
- * - 盤面の美しさ: 数字の平均、7・8 の島、長い橋、輪、点対称は足し、間が1マスの橋・外周の島・斜め隣の島・格子にそろう配置は引く。
+ * - 山場の遅さ: 最後のつながりの読みと最初の先読みの前に、本数が決まっていた行き先の割合。先読みが解き進みの後ろで要るか、
+ *   続けて要る候補は大きく上げる（`LATE_LOOKAHEAD_SCORE`）。
+ * - 戻しの多さ: 素朴な解き方で戻した回数。
+ * - 盤面の美しさ: 数字の平均、7・8 の島、長い橋、輪、点対称は足し、間が1マスの橋・外周の島・斜め隣の島・格子にそろう配置・
+ *   外周の線をなぞる橋・3つ以上の四隅の島は引く。
  * L1 は読みを求めないので、配分の読みが1回あることと盤面の美しさで並べる。L5 は閉じない読みの一か所の気づきが2回以上の
  * 候補を上げ、L4 より組の読みの少ない問題を後に回す。
  */
@@ -212,6 +265,7 @@ function scoreCandidate(
   {
     reasoning,
     scale,
+    trial,
   }: Extract<BridgesDifficultyAnalysis, { requiresTrial: false }>,
 ): number {
   const surplus = (amount: number, minimum: number, cap: number) =>
@@ -247,6 +301,12 @@ function scoreCandidate(
         structure.lookaheadSpotCount.minimum,
         1,
       );
+  const climax =
+    lookaheadLevel &&
+    (reasoning.lastLookaheadDecidedRatio >= LATE_LOOKAHEAD_DECIDED_RATIO ||
+      reasoning.chainedLookaheadRoundCount > 0)
+      ? LATE_LOOKAHEAD_SCORE
+      : 0;
   const variety =
     (reasoning.passageRoundCount > 0 ? PASSAGE_SCORE : 0) +
     (reasoning.groupClosureRoundCount > 0 ? 0.5 : 0) +
@@ -264,14 +324,29 @@ function scoreCandidate(
     0.5 * Math.min(4, scale.longBridgeCount) +
     0.5 * Math.min(3, scale.loopCount) +
     (scale.pointSymmetric === 1 ? 1.5 : 0) -
-    4 * scale.shortBridgeShare -
+    6 * scale.shortBridgeShare -
     3 * scale.borderIslandShare -
-    2 * scale.diagonalNeighborShare -
-    4 * Math.max(0, scale.gridAlignmentShare - 0.3);
+    4 * scale.diagonalNeighborShare -
+    4 * Math.max(0, scale.gridAlignmentShare - 0.3) -
+    BORDER_COVERAGE_PENALTY *
+      Math.max(0, scale.borderCoverageShare - BORDER_COVERAGE_ALLOWANCE) -
+    EXTRA_CORNER_PENALTY * Math.max(0, scale.cornerIslandCount - 2);
   const entry = difficulty === "1" && reasoning.countRoundCount > 0 ? 2 : 0;
   const groupReading =
     difficulty === "5" && reasoning.closureRoundCount >= 2 ? 3 : 0;
-  return margin + variety + lateness + beauty + entry + groupReading;
+  const backtrack =
+    BACKTRACK_SCORE *
+    Math.min(BACKTRACK_SCORE_LIMIT, trial.medianBacktrackCount);
+  return (
+    margin +
+    variety +
+    climax +
+    lateness +
+    beauty +
+    entry +
+    groupReading +
+    backtrack
+  );
 }
 
 function listTags(
@@ -336,9 +411,9 @@ const usage = `Usage: bun run generate:bridges-pool -- [options]
 レベルごとに、レベルの盤面の範囲に入る全生成条件（盤面の一辺 × 島の数 × 2本の割合 × 輪の割合 × 分割の割合 ×
 レベルに当たりやすい磨く回数と向き × L3〜L5 は点対称の配置）で、決定的な seed の候補を番号順に生成・分析・分類し、
 そのレベルに当たった候補を採る数の数倍集める。集めた候補を問題の質の点の高い順に並べ、回転・反転（8通り）の同型と、
-島の配置が近い問題（位置の違う島が2つか島の数の1割まで）をレベルをまたいで除き、同じ解く手順の流れは問題数の 2%、
+島の配置が近い問題（位置の違う島が4つか島の数の1割まで）をレベルをまたいで除き、同じ解く手順の流れは問題数の 2%、
 始まり（最初の3回の手詰まり）は 5%、始まりの形（最初の3回の指紋）は 2%、指紋は3問までにし、札の割合の上限と下限、
-L4 と L5 の作業の量の境を守って採る。
+下のレベルと共有する盤面の大きさの下限（L4 の 9×9 を 25% 以上）、L4 と L5 の作業の量の境を守って採る。
 
 Options:
   --per-level <n>  レベルごとの問題数 (default: ${defaultPerLevel})
@@ -690,7 +765,9 @@ const STALE_CONDITION_MINIMUM_HITS = 20;
 
 /**
  * 当たりが少ない生成条件を調べるのをやめる、調べた候補の数の下限と、レベル全体の当たりの割合に対する比。L3 の 8×8 のように、
- * 磨いても求める読みに届かない条件は、ほかの条件の何倍もの候補を使う。
+ * 磨いても求める読みに届かない条件は、ほかの条件の何倍もの候補を使う。ただし、盤面の大きさごとの下限（`listSizeQuotas`）の
+ * `GATHER_FACTOR` 倍に、その大きさの当たった候補が届かないうちは、その大きさの条件は新しい配置の割合と当たりの少なさでは
+ * やめない。
  */
 const LOW_YIELD_MINIMUM_CANDIDATES = 60;
 const LOW_YIELD_RELATIVE_RATE = 0.25;
@@ -820,7 +897,8 @@ type LevelProgress = {
 
 /**
  * 集めた候補を質の点の高い順に並べ、重複と流れ・始まり・指紋の上限、札の上限、作業の量の境を守って採る。下限のある札は、
- * 下限の数までその札の候補を点の高い順に先に採ってから、残りを点の高い順に採る。採る数に届かなければ `null`。
+ * 下限の数までその札の候補を点の高い順に先に採り、盤面の大きさごとの下限（`listSizeQuotas`）も同じく先に採ってから、残りを
+ * 点の高い順に採る。採る数か下限に届かなければ `null`。
  */
 function rankAndSelect(
   difficulty: BridgesDifficulty,
@@ -901,6 +979,19 @@ function rankAndSelect(
       }
     }
   }
+  const countSize = (size: number) =>
+    picked.filter((candidate) => candidate.entry![0] === size).length;
+  const sizeQuotas = listSizeQuotas(difficulty, perLevel);
+  for (const [size, quota] of sizeQuotas) {
+    for (const candidate of ranked) {
+      if (countSize(size) >= quota || picked.length >= perLevel) {
+        break;
+      }
+      if (candidate.entry![0] === size && canTake(candidate)) {
+        take(candidate);
+      }
+    }
+  }
   for (const candidate of ranked) {
     if (picked.length >= perLevel) {
       break;
@@ -911,7 +1002,8 @@ function rankAndSelect(
   }
   if (
     picked.length < perLevel ||
-    countTagShortage(rules, tagCounts, perLevel).length > 0
+    countTagShortage(rules, tagCounts, perLevel).length > 0 ||
+    sizeQuotas.some(([size, quota]) => countSize(size) < quota)
   ) {
     return null;
   }
@@ -937,6 +1029,7 @@ async function selectLevel(
   progressPath: string | undefined,
 ): Promise<LevelSelection> {
   const rules: readonly TagShareRule[] = tagShareRules[difficulty];
+  const sizeQuotas = listSizeQuotas(difficulty, perLevel);
   const conditions = listBridgesGenerationConditions(difficulty);
   const saved =
     progressPath !== undefined && existsSync(progressPath)
@@ -1021,10 +1114,15 @@ async function selectLevel(
           hitCounts[conditionIndex]! / nextIndex[conditionIndex]! <
             (LOW_YIELD_RELATIVE_RATE * hits.length) /
               Math.max(1, candidateCount);
+        const sizeShort = sizeQuotas.some(
+          ([size, quota]) =>
+            size === condition.size &&
+            hits.filter((hit) => hit.entry![0] === size).length <
+              GATHER_FACTOR * quota,
+        );
         return count > 0 &&
           !rarelyGenerated &&
-          !stale &&
-          !lowYield &&
+          (sizeShort || (!stale && !lowYield)) &&
           !isConditionGathered(condition)
           ? [{ conditionIndex, conditions: condition, start, count }]
           : [];
