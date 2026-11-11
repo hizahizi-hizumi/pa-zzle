@@ -472,6 +472,19 @@ describe("TsumeShogiPlayView", () => {
       );
     });
 
+    describe("攻方が指し、玉方が応手した場合", () => {
+      beforeEach(() => {
+        playAttackerMove(firstMove);
+        waitForDefenderReply();
+      });
+
+      test("見出しに、指した手数を示すこと", () => {
+        const playedPlies = screen.getByText("手数").parentElement?.textContent;
+
+        expect(playedPlies).toBe("手数2");
+      });
+    });
+
     test("詰まない王手には玉方の反証を指し、待ったで判断地点へ戻れること", () => {
       const sourceLabel = getMoveSource(wrongCheck).getAttribute("aria-label");
       playAttackerMove(wrongCheck);

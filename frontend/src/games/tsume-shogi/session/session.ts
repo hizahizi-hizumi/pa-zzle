@@ -216,11 +216,19 @@ export function isTsumeShogiSessionOnWrongLine(
 export function getTsumeShogiSessionRemainingPlies(
   session: TsumeShogiSession,
 ): number {
-  return Math.max(0, session.problem.plies - countPlayedPlies(session));
+  return Math.max(
+    0,
+    session.problem.plies - countTsumeShogiSessionPlayedPlies(session),
+  );
 }
 
-/** 盤面に指した手の数。玉方の応手を待っている手と、詰めた手には玉方の手が無い。 */
-function countPlayedPlies(session: TsumeShogiSession): number {
+/**
+ * 盤面に指した手の数。玉方の応手を待っている手と、詰めた手には玉方の手が無い。
+ * 誤王手の筋で最後の手に王手を続けると、玉方の応手の分だけ問題の手数を超える。
+ */
+export function countTsumeShogiSessionPlayedPlies(
+  session: TsumeShogiSession,
+): number {
   const lastTurn = session.turns.at(-1);
   const lastTurnHasNoReply =
     lastTurn !== undefined &&

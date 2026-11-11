@@ -81,6 +81,7 @@ export function PlayableTsumeShogi({
         {...screenProps}
         plies={play.plies}
         phase={play.phase}
+        playedPlies={play.playedPlies}
         boardPieces={play.boardPieces}
         attackerHand={play.attackerHand}
         shownMoves={play.shownMoves}

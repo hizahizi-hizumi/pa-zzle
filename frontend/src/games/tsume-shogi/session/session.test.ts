@@ -8,6 +8,7 @@ import {
   cancelTsumeShogiSessionPromotion,
   canUndoTsumeShogiSession,
   chooseTsumeShogiSessionPromotion,
+  countTsumeShogiSessionPlayedPlies,
   createTsumeShogiSession,
   getTsumeShogiSessionPhase,
   getTsumeShogiSessionRemainingPlies,
@@ -366,6 +367,36 @@ describe("playTsumeShogiSessionDefenderReply", () => {
       expect(getTsumeShogiSessionPhase(session)).toBe("attacker");
     });
   });
+});
+
+describe("countTsumeShogiSessionPlayedPlies", () => {
+  const overPlies = moveOnBoard(
+    afterRefutation,
+    square(4, 1),
+    square(4, 2),
+    3_000,
+  );
+  const cases = [
+    ["初期局面", initial, 0],
+    ["玉方の応手を待つ間", afterCorrectCheck, 1],
+    ["玉方が応手を指した後", afterCorrectReply, 2],
+    ["待ったで判断地点へ戻った後", undoTsumeShogiSession(afterRefutation), 0],
+    ["誤王手の筋で最後の王手を指した後", overPlies, 3],
+    [
+      "誤王手の筋の最後の王手に玉方が応じた後",
+      playTsumeShogiSessionDefenderReply(overPlies),
+      4,
+    ],
+  ] as const;
+
+  test.each(cases)(
+    "盤面に指した手を数えること: %s",
+    (_name, session, expected) => {
+      const playedPlies = countTsumeShogiSessionPlayedPlies(session);
+
+      expect(playedPlies).toBe(expected);
+    },
+  );
 });
 
 describe("undoTsumeShogiSession", () => {

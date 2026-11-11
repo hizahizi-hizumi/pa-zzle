@@ -56,6 +56,7 @@ import {
   canUndoTsumeShogiSession,
   chooseTsumeShogiSessionPromotion,
   clearTsumeShogiSessionSelection,
+  countTsumeShogiSessionPlayedPlies,
   createTsumeShogiSession,
   getTsumeShogiSessionPhase,
   getTsumeShogiSessionResult,
@@ -221,6 +222,8 @@ export type TsumeShogiPlay = GamePlay<
     poolReference: TsumeShogiProblemPoolReference;
     plies: number;
     phase: TsumeShogiSessionPhase;
+    /** 盤面に指した手の数。攻方と玉方の手を合わせて数える。 */
+    playedPlies: number;
     boardPieces: readonly TsumeShogiBoardPiece[];
     attackerHand: TsumeShogiHand;
     shownMoves: readonly TsumeShogiPlayedMove[];
@@ -514,6 +517,7 @@ export function useTsumeShogiPlay(
     poolReference: play.poolReference,
     plies: session.problem.plies,
     phase: getTsumeShogiSessionPhase(session),
+    playedPlies: countTsumeShogiSessionPlayedPlies(session),
     boardPieces,
     attackerHand,
     shownMoves,
