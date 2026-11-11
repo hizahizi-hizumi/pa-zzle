@@ -30,7 +30,7 @@ function canAnimate(): boolean {
  * 導入で、ゴールの盤面を見せ、始めの盤面へ替える。
  * ゴールの場面は動かさずに見せる。始めの場面では、始まりの一言と同時に、ゴールの盤面を薄くしながら始めの盤面を浮かび上がらせる。
  * 動きを減らす設定では、替えるだけですぐ終える。
- * 盤面の動きで場面を見せないゲームが、`TutorialBoardIntro` を受けて盤面を包むのに使う。
+ * 盤面の動きで場面を見せないゲームが、枠から受けた入口の場面（`TutorialBoardIntro`・`TutorialStageBoardIntro`）で盤面を包むのに使う。
  */
 export function TutorialCrossFadeIntroScene({
   scene,

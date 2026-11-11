@@ -565,7 +565,7 @@ export function TutorialScreen({
     stageView.captionScene === "goal"
       ? intro.goalCaption
       : stageView.captionScene === "start"
-        ? intro.startCaption
+        ? (intro.startCaption ?? null)
         : null;
   return (
     // 導入の間は、「次へ」のほかはどこを押しても、どのキーでも、今の段の動きを終えて見せる。

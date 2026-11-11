@@ -8,6 +8,10 @@ import {
 } from "@testing-library/react";
 
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
+import {
+  type WaterSortTutorialRejection,
+  waterSortTutorial,
+} from "@/games/water-sort/tutorial/tutorial";
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
 import { playLayeredSound, playSound } from "@/lib/sound-effects";
 
@@ -19,22 +23,22 @@ vi.mock("@/lib/sound-effects", () => ({
   REPEATED_SOUND_VARIATION: {},
 }));
 
-/** 手順ごとに、注ぎ元、注ぎ先の順に印を付けるボトル（1始まり）。満杯のボトルへ注ごうとさせる手順は、印の注ぎ元だけ。 */
-const stepBottles = [[1, 4], [3, 4], [2, 5], [5, 3], [5], [3, 5]] as const;
+const { intro, steps, freePlay, completion } = waterSortTutorial;
 
-/** 手順を終えた後、同じ色を重ねていってそろえるボトル（1始まり）。 */
-const remainingBottles = [2, 1, 3, 4, 2, 4] as const;
+/** 手順ごとに、注ぎ元、注ぎ先の順に印を付けるボトル（1始まり）。 */
+const stepBottles = steps.map(({ move }) => [
+  move.sourceBottleIndex + 1,
+  move.destinationBottleIndex + 1,
+]);
+
+/** 手を離した後、青を空のボトルへよけて、最短の5手でそろえるボトル（1始まり）。 */
+const solvingBottles = [3, 5, 3, 4, 3, 5, 1, 5, 2, 1] as const;
 
 /** 手を離した後、手が止まってから次のボトルを示すまでの間。 */
 const idleHintDelayMs = 4000;
 
-const hiddenRule = "まだ出ていないルール";
-
-/** ゴールの盤面の、1本目のボトル。 */
 const goalFirstBottle = "ボトル 1: 赤、赤、赤、赤";
-
-/** 導入の場面の動きを見せ終えるのに十分な間。 */
-const introEnoughMs = 8000;
+const startFirstBottle = "ボトル 1: 赤、赤、赤、青";
 
 afterEach(() => {
   cleanup();
@@ -43,6 +47,25 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
+
+/** 一言は改行（`\n`）で折り返して見せるので、画面の文字としては空白に読む。 */
+function toShownText(text: string): string {
+  return text.replaceAll("\n", " ");
+}
+
+function queryShownText(text: string): HTMLElement | null {
+  return within(getScreen()).queryByText(toShownText(text));
+}
+
+function getViolationHeadline(rejection: WaterSortTutorialRejection): string {
+  return waterSortTutorial.describeViolation(
+    { step: null, earnedRuleIds: [] },
+    {
+      ...waterSortTutorial.start(),
+      lastMove: { type: "rejected", bottleIndex: 0, rejection },
+    },
+  ).headline;
+}
 
 function advanceTime(ms: number): void {
   act(() => {
@@ -60,10 +83,20 @@ function getBottle(bottleNumber: number): HTMLElement {
   });
 }
 
+function getBottleLabel(bottleNumber: number): string | null {
+  return getBottle(bottleNumber).getAttribute("aria-label");
+}
+
 function tapBottles(bottleNumbers: readonly number[]): void {
   for (const bottleNumber of bottleNumbers) {
     fireEvent.click(getBottle(bottleNumber));
   }
+}
+
+function pressStart(): void {
+  fireEvent.click(
+    within(getScreen()).getByRole("button", { name: "はじめる" }),
+  );
 }
 
 function stubReducedMotion(): void {
@@ -73,50 +106,22 @@ function stubReducedMotion(): void {
   );
 }
 
-/** 場面の動きを待たずに「次へ」を続けて押し、ゴールと始まりの盤面を通って最初の手順から始める。 */
-function pressNextThroughIntro(): void {
-  for (
-    let next = screen.queryByRole("button", { name: "次へ" });
-    next;
-    next = screen.queryByRole("button", { name: "次へ" })
-  ) {
-    fireEvent.click(next);
-  }
-}
-
-/** 導入の「次へ」を押す。導入は自動では先へ進まない。 */
-function pressNext(): void {
-  fireEvent.click(screen.getByRole("button", { name: "次へ" }));
-}
-
-/** 印の線を短く濃くしている合図。 */
+const pointerSelector =
+  '[data-bottle-cue="hint"] [data-tutorial-cue="pointer"]';
 const recallSelector = '[data-tutorial-cue="recall"]';
+const completedSelector = '[data-bottle-cue="completed"]';
 
 /** 合図を重ねているボトル（1始まり）。 */
-function getCuedBottles(
-  kind: "hint" | "recall" | "completed" = "hint",
-): number[] {
-  const selector =
-    kind === "recall" ? recallSelector : `[data-bottle-cue="${kind}"]`;
+function getCuedBottles(selector: string = pointerSelector): number[] {
   return [1, 2, 3, 4, 5].filter((bottleNumber) =>
     getBottle(bottleNumber).querySelector(selector),
   );
 }
 
-/** 画面全体の覆いから抜いて、元の明るさで見せているボトル（1始まり）。 */
-function getSpotlitBottles(): number[] {
-  return [1, 2, 3, 4, 5].filter((bottleNumber) =>
-    getBottle(bottleNumber).querySelector("[data-tutorial-spotlight]"),
-  );
-}
-
-/** 画面全体の覆いから抜いている所の数。ボトルのほか、一言の面を含む。 */
-function getSpotlightCount(): number {
-  return document.querySelectorAll("[data-tutorial-spotlight]").length;
-}
-
-function getScrim(): Element | null {
-  return document.querySelector("[data-tutorial-focus-scrim]");
+function getProgressValue(): string | null {
+  return within(getScreen())
+    .getByRole("progressbar", { name: "チュートリアルの進み具合" })
+    .getAttribute("aria-valuenow");
 }
 
 /** 鳴らした効果音の音声ファイル名。 */
@@ -129,10 +134,26 @@ function getPlayedSoundNames(): string[] {
   );
 }
 
-function getRuleTexts(): string[] {
-  return within(screen.getByRole("list", { name: "ルール" }))
-    .getAllByRole("listitem")
-    .map((item) => item.textContent ?? "");
+/** 注ぐ動きを、`finishAnimations` を呼ぶまで終えない。 */
+function installPendingAnimations(): () => void {
+  const resolvers: (() => void)[] = [];
+  Object.defineProperty(HTMLElement.prototype, "animate", {
+    configurable: true,
+    value: vi.fn(
+      () =>
+        ({
+          cancel: vi.fn(),
+          finished: new Promise<void>((resolve) => {
+            resolvers.push(resolve);
+          }),
+        }) as unknown as Animation,
+    ),
+  });
+  return () => {
+    for (const resolve of resolvers.splice(0)) {
+      resolve();
+    }
+  };
 }
 
 describe("WaterSortTutorial", () => {
@@ -145,7 +166,95 @@ describe("WaterSortTutorial", () => {
     playStart = { difficulty: "2", onStart: vi.fn<() => void>() };
   });
 
-  describe("ゲームのホームから開いた場合", () => {
+  describe("開いた場合", () => {
+    let rerender: ReturnType<typeof render>["rerender"];
+
+    beforeEach(() => {
+      ({ rerender } = render(
+        <WaterSortTutorial
+          open={true}
+          playStart={playStart}
+          onClose={onClose}
+        />,
+      ));
+    });
+
+    test("入口で、名前と、何をするパズルかとゴールの一言を、ゴールの盤面と一緒に見せること", () => {
+      const title = within(getScreen()).getByRole("heading", {
+        name: "ウォーターソート",
+      });
+      const purpose = queryShownText(intro.purpose);
+      const caption = queryShownText(intro.goalCaption);
+      const progress = getProgressValue();
+
+      expect(title).toBeTruthy();
+      expect(purpose).not.toBeNull();
+      expect(caption).not.toBeNull();
+      expect(getBottleLabel(1)).toBe(goalFirstBottle);
+      expect(progress).toBe("0");
+    });
+
+    test("入口でボトルを押しても、ゴールの盤面を見せたまま、はじめるを待つこと", () => {
+      tapBottles([1]);
+
+      const startButton = within(getScreen()).queryByRole("button", {
+        name: "はじめる",
+      });
+
+      expect(getBottleLabel(1)).toBe(goalFirstBottle);
+      expect(startButton).not.toBeNull();
+    });
+
+    test("はじめるを押すと、始めの盤面に替え、すぐ最初の手順の一言と指さしを出すこと", () => {
+      pressStart();
+
+      const headline = queryShownText(steps[0]?.message.headline ?? "");
+      const startButton = within(getScreen()).queryByRole("button", {
+        name: "はじめる",
+      });
+
+      expect(getBottleLabel(1)).toBe(startFirstBottle);
+      expect(headline).not.toBeNull();
+      expect(getCuedBottles()).toEqual([3]);
+      expect(startButton).toBeNull();
+    });
+
+    describe("閉じて開き直した場合", () => {
+      beforeEach(() => {
+        pressStart();
+        tapBottles(stepBottles[0] ?? []);
+        fireEvent.click(
+          within(getScreen()).getByRole("button", { name: "閉じる" }),
+        );
+        rerender(
+          <WaterSortTutorial
+            open={false}
+            playStart={playStart}
+            onClose={onClose}
+          />,
+        );
+      });
+
+      test("閉じる操作を知らせ、開き直すと入口から始めること", () => {
+        rerender(
+          <WaterSortTutorial
+            open={true}
+            playStart={playStart}
+            onClose={onClose}
+          />,
+        );
+
+        const purpose = queryShownText(intro.purpose);
+
+        expect(onClose).toHaveBeenCalledOnce();
+        expect(purpose).not.toBeNull();
+        expect(getBottleLabel(1)).toBe(goalFirstBottle);
+        expect(getProgressValue()).toBe("0");
+      });
+    });
+  });
+
+  describe("ゲームのホームから開いて始めた場合", () => {
     beforeEach(() => {
       render(
         <WaterSortTutorial
@@ -154,207 +263,75 @@ describe("WaterSortTutorial", () => {
           onClose={onClose}
         />,
       );
-      pressNextThroughIntro();
+      pressStart();
     });
 
-    test("色がばらばらの始めの盤面で、注ぎ元に印を付け、まだ示していないルールを伏せておくこと", () => {
-      const headline = screen.getByText(
-        "注ぐボトルをタップしてから 注ぎ先をタップします",
-      );
-      const firstBottle = getBottle(1).getAttribute("aria-label");
-      const hinted = getCuedBottles();
-      const rules = getRuleTexts();
-
-      expect(headline).toBeTruthy();
-      expect(firstBottle).toBe("ボトル 1: 赤、赤、赤、青");
-      expect(hinted).toEqual([1]);
-      expect(rules).toEqual([hiddenRule, hiddenRule, hiddenRule, hiddenRule]);
-    });
-
-    test("画面全体に覆いを重ね、印の注ぎ元と、注ぎ先と、一言の面だけを覆いから抜くこと", () => {
-      const scrim = getScrim();
-      const spotlit = getSpotlitBottles();
-      const spotlightCount = getSpotlightCount();
-
-      expect(scrim).not.toBeNull();
-      expect(spotlit).toEqual([1, 4]);
-      expect(spotlightCount).toBe(3);
-    });
-
-    test("印の無いボトルを押しても、選ばずに、一言を変えず、揺らしも鳴らしもせずに印の線を濃くし直すこと", () => {
+    test("印の無いボトルを押すたびに、選ばず、一言を変えず、鳴らさずに、印の線を濃くし直すこと", () => {
+      tapBottles([1]);
+      const firstRecall = getBottle(3).querySelector(recallSelector);
       tapBottles([2]);
 
-      const pressed = getBottle(2).getAttribute("aria-pressed");
-      const headline = screen.getByText(
-        "注ぐボトルをタップしてから 注ぎ先をタップします",
-      );
-      const hinted = getCuedBottles();
-      const recalled = getCuedBottles("recall");
+      const secondRecall = getBottle(3).querySelector(recallSelector);
+      const headline = queryShownText(steps[0]?.message.headline ?? "");
 
-      expect(pressed).toBe("false");
-      expect(headline).toBeTruthy();
-      expect(hinted).toEqual([1]);
-      expect(recalled).toEqual([1]);
+      expect(getBottle(1).getAttribute("aria-pressed")).toBe("false");
+      expect(headline).not.toBeNull();
+      expect(firstRecall).not.toBeNull();
+      expect(secondRecall).not.toBeNull();
+      expect(secondRecall).not.toBe(firstRecall);
       expect(playSound).not.toHaveBeenCalled();
     });
 
-    test("印の無いボトルを続けて押すたびに、印の線を濃くし直すこと", () => {
-      tapBottles([2]);
-      const firstFlash = getBottle(1).querySelector(recallSelector);
+    test("印のボトルを選ぶと、注ぎ先を指さし、注ぎ先の一言に替えること", () => {
       tapBottles([3]);
 
-      const secondFlash = getBottle(1).querySelector(recallSelector);
-
-      expect(firstFlash).not.toBeNull();
-      expect(secondFlash).not.toBeNull();
-      expect(secondFlash).not.toBe(firstFlash);
-    });
-
-    test("印のボトルを選ぶと、注ぎ先に印を移し、印のボトルへ注ぐと言うこと", () => {
-      tapBottles([1]);
-
-      const pressed = getBottle(1).getAttribute("aria-pressed");
-      const hinted = getCuedBottles();
-      const detail = screen.getByText("印のボトルへ注ぎます");
-
-      expect(pressed).toBe("true");
-      expect(hinted).toEqual([4]);
-      expect(detail).toBeTruthy();
-    });
-
-    test("印のとおりに注ぐと、注いで音を鳴らし、注げる先のルールを示す手順へ進むこと", () => {
-      tapBottles(stepBottles[0]);
-
-      const destination = getBottle(4).getAttribute("aria-label");
-      const headline = screen.getByText(
-        "注げるのは 空のボトルか同じ色の上だけです",
+      const headline = queryShownText(
+        steps[0]?.destinationMessage?.headline ?? "",
       );
-      const hinted = getCuedBottles();
-      const rules = getRuleTexts();
 
-      expect(destination).toBe("ボトル 4: 青");
-      expect(playLayeredSound).toHaveBeenCalledTimes(1);
-      expect(headline).toBeTruthy();
-      expect(hinted).toEqual([3]);
-      expect(rules).toEqual([
-        "空か同じ色へ",
-        hiddenRule,
-        hiddenRule,
-        hiddenRule,
-      ]);
+      expect(getBottle(3).getAttribute("aria-pressed")).toBe("true");
+      expect(getCuedBottles()).toEqual([4]);
+      expect(headline).not.toBeNull();
     });
 
-    describe("注げる先のルールを示す手順で注ぎ元を選んだ場合", () => {
+    test("印のとおりに注ぐと、注いで鳴らし、進み具合を進めて次の手順の一言と指さしを出すこと", () => {
+      tapBottles(stepBottles[0] ?? []);
+
+      const headline = queryShownText(steps[1]?.message.headline ?? "");
+
+      expect(getBottleLabel(4)).toBe("ボトル 4: 緑");
+      expect(playLayeredSound).toHaveBeenCalledOnce();
+      expect(Number(getProgressValue())).toBeGreaterThan(0);
+      expect(headline).not.toBeNull();
+      expect(getCuedBottles()).toEqual([2]);
+    });
+
+    describe("注げる先のルールを示した手順で注ぎ元を選んだ場合", () => {
       beforeEach(() => {
-        tapBottles([...stepBottles[0], stepBottles[1][0]]);
+        tapBottles([...(stepBottles[0] ?? []), stepBottles[1]?.[0] ?? 0]);
       });
 
-      test("注ぎ元と、印の注ぎ先を覆いから抜くこと", () => {
-        const spotlit = getSpotlitBottles();
+      test("違う色の上を押すと、注がずに鳴らし、注ぎ元を選んだまま注げないわけを言うこと", () => {
+        tapBottles([4]);
 
-        expect(spotlit).toEqual([3, 4]);
-      });
-
-      test("違う色の上を押すと、本番と同じく注がずに音を鳴らし、注ぎ元を選んだまま、注げないわけを言い、押したボトルも覆いから抜くこと", () => {
-        tapBottles([2]);
-
-        const source = getBottle(3).getAttribute("aria-label");
-        const pressed = getBottle(3).getAttribute("aria-pressed");
-        const headline = screen.getByText("違う色の上には注げません");
-        const sounds = getPlayedSoundNames();
-        const hinted = getCuedBottles();
-        const recalled = getCuedBottles("recall");
-        const spotlit = getSpotlitBottles();
-
-        expect(source).toBe("ボトル 3: 青、緑、緑、青");
-        expect(pressed).toBe("true");
-        expect(headline).toBeTruthy();
-        expect(sounds).toEqual(["invalid.flac"]);
-        expect(hinted).toEqual([4]);
-        expect(recalled).toEqual([]);
-        expect(spotlit).toEqual([2, 3, 4]);
-      });
-
-      test("わけを言った後に印の無い注げる先を押すと、印の線を濃くし直して、手順の一言に戻し、はじいたボトルを覆いに戻すこと", () => {
-        tapBottles([2, 5]);
-
-        const headline = screen.getByText(
-          "注げるのは 空のボトルか同じ色の上だけです",
+        const violation = queryShownText(
+          getViolationHeadline("different-color"),
         );
-        const recalled = getCuedBottles("recall");
-        const spotlit = getSpotlitBottles();
 
-        expect(headline).toBeTruthy();
-        expect(recalled).toEqual([4]);
-        expect(spotlit).toEqual([3, 4]);
-      });
-    });
-
-    describe("入るぶんだけ移るルールを示す手順に進んだ場合", () => {
-      beforeEach(() => {
-        tapBottles(stepBottles.slice(0, 3).flat());
+        expect(getBottleLabel(2)).toBe("ボトル 2: 赤、緑、緑、青");
+        expect(getBottle(2).getAttribute("aria-pressed")).toBe("true");
+        expect(violation).not.toBeNull();
+        expect(getPlayedSoundNames()).toEqual(["invalid.flac"]);
+        expect(getCuedBottles()).toEqual([3]);
       });
 
-      test("ルールを示し、入るぶんだけ移って満杯になる注ぎに印を付け、満杯に注げないことはまだ言わないこと", () => {
-        const headline = screen.getByText("入るぶんだけ移ります");
-        const fullNotice = screen.queryByText("満杯のボトルには注げません");
-        const hinted = getCuedBottles();
-        const rules = getRuleTexts();
+      test("わけを言った後に印の無い注げる先を押すと、印の線を濃くし直して手順の一言に戻すこと", () => {
+        tapBottles([4, 5]);
 
-        expect(headline).toBeTruthy();
-        expect(fullNotice).toBeNull();
-        expect(hinted).toEqual([5]);
-        expect(rules).toEqual([
-          "空か同じ色へ",
-          "まとめて移る",
-          "入るぶんだけ移る",
-          hiddenRule,
-        ]);
-      });
-    });
+        const headline = queryShownText(steps[1]?.message.headline ?? "");
 
-    describe("満杯のルールを示す手順に進んだ場合", () => {
-      beforeEach(() => {
-        tapBottles(stepBottles.slice(0, 4).flat());
-      });
-
-      test("緑が1つだけ移って満杯になったボトルへ、残った緑1つを注ごうとさせる印を付け、満杯に注げないことを言うこと", () => {
-        const full = getBottle(3).getAttribute("aria-label");
-        const rest = getBottle(5).getAttribute("aria-label");
-        const headline = screen.getByText("満杯のボトルには 注げません");
-        const detail = screen.getByText("印のボトルから注いでみてください");
-        const hinted = getCuedBottles();
-        const spotlit = getSpotlitBottles();
-        const rules = getRuleTexts();
-
-        expect(full).toBe("ボトル 3: 青、緑、緑、緑");
-        expect(rest).toBe("ボトル 5: 緑");
-        expect(headline).toBeTruthy();
-        expect(detail).toBeTruthy();
-        expect(hinted).toEqual([5]);
-        expect(spotlit).toEqual([3, 5]);
-        expect(rules).toEqual([
-          "空か同じ色へ",
-          "まとめて移る",
-          "入るぶんだけ移る",
-          "満杯には注げない",
-        ]);
-      });
-
-      test("印のボトルを押すと、本番と同じく選ばずに音を鳴らし、注げる先が無いと言って、満杯のボトルから注ぐ印に替えること", () => {
-        tapBottles(stepBottles[4]);
-
-        const pressed = getBottle(5).getAttribute("aria-pressed");
-        const sounds = getPlayedSoundNames();
-        const headline = screen.getByText("注げる先が無いボトルは 選べません");
-        const hinted = getCuedBottles();
-        const spotlit = getSpotlitBottles();
-
-        expect(pressed).toBe("false");
-        expect(sounds).toEqual(["invalid.flac"]);
-        expect(headline).toBeTruthy();
-        expect(hinted).toEqual([3]);
-        expect(spotlit).toEqual([3, 5]);
+        expect(headline).not.toBeNull();
+        expect(getCuedBottles(recallSelector)).toEqual([3]);
       });
     });
 
@@ -363,137 +340,156 @@ describe("WaterSortTutorial", () => {
         tapBottles(stepBottles.flat());
       });
 
-      test("覆いを重ねず、手が止まって印が出ても覆いを重ねないこと", () => {
-        const scrim = getScrim();
-        advanceTime(idleHintDelayMs);
+      test("手を離して残りを自分でそろえる一言にし、指さしを出さないこと", () => {
+        const headline = queryShownText(freePlay.headline);
 
-        const scrimWithHint = getScrim();
-        const spotlit = getSpotlitBottles();
-
-        expect(scrim).toBeNull();
-        expect(scrimWithHint).toBeNull();
-        expect(spotlit).toEqual([]);
+        expect(headline).not.toBeNull();
+        expect(getCuedBottles()).toEqual([]);
       });
 
-      test("緑をそろえて手を離し、そろったボトルに応えて、そろったボトルから注げないことを言うこと", () => {
-        const green = getBottle(5).getAttribute("aria-label");
-        const completed = getCuedBottles("completed");
-        const headline = screen.getByText("1色そろいました");
-        const detail = screen.getByText("そろったボトルからは注げません");
-        const hinted = getCuedBottles();
+      test("手が止まると、最も早くそろう注ぎの注ぎ元を指さすこと", () => {
+        advanceTime(idleHintDelayMs - 1);
+        const beforeIdle = getCuedBottles();
+        advanceTime(1);
 
-        expect(green).toBe("ボトル 5: 緑、緑、緑、緑");
-        expect(completed).toEqual([5]);
-        expect(headline).toBeTruthy();
-        expect(detail).toBeTruthy();
-        expect(hinted).toEqual([]);
+        const afterIdle = getCuedBottles();
+
+        expect(beforeIdle).toEqual([]);
+        expect(afterIdle).toEqual([1]);
       });
 
-      test("注ぎ元を選んでも、そろったことの一言と応えを残すこと", () => {
-        tapBottles([2]);
+      test("1色そろうと、そのボトルにだけ応え、そろった数と残りの数を言うこと", () => {
+        tapBottles(solvingBottles.slice(0, 4));
 
-        const headline = screen.getByText("1色そろいました");
-        const completed = getCuedBottles("completed");
+        const headline = queryShownText("1色そろいました\nあと2色です");
 
-        expect(headline).toBeTruthy();
-        expect(completed).toEqual([5]);
+        expect(getBottleLabel(4)).toBe("ボトル 4: 緑、緑、緑、緑");
+        expect(getCuedBottles(completedSelector)).toEqual([4]);
+        expect(headline).not.toBeNull();
       });
 
-      test("次に注ぐと、そろったことの一言を下げ、残りをそろえる一言にすること", () => {
-        tapBottles([4, 3]);
+      const rejectionCases = [
+        ["注げる先が無いボトル", [3, 5, 2], "no-destination"],
+        [
+          "同じ色が上にあるボトルが満杯で、ほかに注げる先も無いボトル",
+          [3, 5, 4, 3, 4],
+          "no-room",
+        ],
+        ["そろったボトル", [3, 5, 3, 4, 4], "complete"],
+        ["空のボトル", [5], "empty"],
+        ["違う色の上", [1, 4], "different-color"],
+        ["満杯のボトル", [3, 1], "full"],
+      ] as const;
 
-        const completedNotice = screen.queryByText("1色そろいました");
-        const headline = screen.getByText("残りもそろえたら完成です");
-
-        expect(completedNotice).toBeNull();
-        expect(headline).toBeTruthy();
-      });
-
-      test.each([
-        ["そろったボトル", [5], "そろったボトルからは注げません"],
-        ["空のボトル", [2, 1, 3, 4, 3], "空のボトルからは注げません"],
-        ["違う色の上", [2, 4], "違う色の上には注げません"],
-        ["注ぎ先が無いボトル", [1, 2, 1], "今は注ぎ先がありません"],
-      ] as const)(
-        "本番で通らない手に、わけを言うこと: %s",
-        (_name, bottleNumbers, expected) => {
+      test.each(rejectionCases)(
+        "本番で通らない手に、鳴らしてわけを言うこと: %s",
+        (_name, bottleNumbers, rejection) => {
           tapBottles(bottleNumbers);
 
-          const headline = screen.getByText(expected);
+          const violation = queryShownText(getViolationHeadline(rejection));
 
-          expect(headline).toBeTruthy();
+          expect(violation).not.toBeNull();
+          expect(getPlayedSoundNames().at(-1)).toBe("invalid.flac");
         },
       );
 
-      test("注ぎ元を選んだまま手が止まると、そこから注ぐ注ぎ先に印を付け、残りをそろえる一言に戻すこと", () => {
+      test("注ぎ元を選んだまま手が止まると、そこから注ぐ注ぎ先を指さし、違反の一言を下げること", () => {
         tapBottles([2, 4]);
         advanceTime(idleHintDelayMs);
 
-        const hinted = getCuedBottles();
-        const headline = screen.getByText("残りもそろえたら完成です");
+        const violation = queryShownText(
+          getViolationHeadline("different-color"),
+        );
+        const headline = queryShownText(freePlay.headline);
 
-        expect(hinted).toEqual([1]);
-        expect(headline).toBeTruthy();
+        expect(getCuedBottles()).toEqual([5]);
+        expect(violation).toBeNull();
+        expect(headline).not.toBeNull();
       });
 
       describe("残りをそろえた場合", () => {
         beforeEach(() => {
-          tapBottles(remainingBottles);
+          tapBottles(solvingBottles);
         });
 
-        test("完成を伝え、どのレベルも同じルールだと言い、本番の完成の動きのほかに合図を重ねないこと", () => {
-          const headline = screen.getByText("完成です");
-          const detail = screen.getByText("どのレベルも同じルールです");
-          const completed = getCuedBottles("completed");
+        test("完成を伝え、覚えたルールを並べ、進み具合を満たすこと", () => {
+          const headline = queryShownText(completion.home.headline);
+          const detail = queryShownText(completion.home.detail ?? "");
+          const recap = within(
+            within(getScreen()).getByRole("list", { name: "覚えたルール" }),
+          )
+            .getAllByRole("listitem")
+            .map((item) => item.textContent);
 
-          expect(headline).toBeTruthy();
-          expect(detail).toBeTruthy();
-          expect(completed).toEqual([]);
+          expect(headline).not.toBeNull();
+          expect(detail).not.toBeNull();
+          expect(recap).toEqual(
+            waterSortTutorial.rules.map(({ label }) => label),
+          );
+          expect(getProgressValue()).toBe("100");
         });
 
-        test("本番と同じ完成の音を鳴らすこと", () => {
-          const clearedSoundCalls = vi
-            .mocked(playSound)
-            .mock.calls.filter(([sound]) =>
-              String((sound as { url?: string }).url).includes("cleared"),
-            );
+        test("本番と同じ完成の音を1回鳴らすこと", () => {
+          const clearedSounds = getPlayedSoundNames().filter(
+            (name) => name === "cleared.flac",
+          );
 
-          expect(clearedSoundCalls).toHaveLength(1);
+          expect(clearedSounds).toHaveLength(1);
         });
 
         test("ゲームのホームで開いているレベルを始められること", () => {
           fireEvent.click(
-            screen.getByRole("button", { name: "レベル 2を遊ぶ" }),
+            within(getScreen()).getByRole("button", {
+              name: "レベル 2を遊ぶ",
+            }),
           );
 
-          expect(playStart.onStart).toHaveBeenCalledTimes(1);
+          expect(playStart.onStart).toHaveBeenCalledOnce();
+        });
+
+        test("もう一度を押すと、入口を通さずに、始めの盤面で最初の手順から始めること", () => {
+          fireEvent.click(
+            within(getScreen()).getByRole("button", { name: "もう一度" }),
+          );
+
+          const headline = queryShownText(steps[0]?.message.headline ?? "");
+          const startButton = within(getScreen()).queryByRole("button", {
+            name: "はじめる",
+          });
+
+          expect(getBottleLabel(1)).toBe(startFirstBottle);
+          expect(headline).not.toBeNull();
+          expect(getCuedBottles()).toEqual([3]);
+          expect(startButton).toBeNull();
+          expect(getProgressValue()).toBe("0");
         });
       });
+    });
+  });
+
+  describe("プレイ中に開いて解き終えた場合", () => {
+    beforeEach(() => {
+      render(<WaterSortTutorial open={true} onClose={onClose} />);
+      pressStart();
+      tapBottles([...stepBottles.flat(), ...solvingBottles]);
+    });
+
+    test("いまの問題も同じルールだと伝え、プレイに戻れること", () => {
+      const detail = queryShownText(completion.play.detail ?? "");
+      fireEvent.click(
+        within(getScreen()).getByRole("button", { name: "プレイに戻る" }),
+      );
+
+      expect(detail).not.toBeNull();
+      expect(onClose).toHaveBeenCalledOnce();
     });
   });
 
   describe("注ぐ動きを見せる場合", () => {
     let finishAnimations: () => void;
 
-    beforeEach(() => {
-      const resolvers: (() => void)[] = [];
-      Object.defineProperty(HTMLElement.prototype, "animate", {
-        configurable: true,
-        value: vi.fn(
-          () =>
-            ({
-              cancel: vi.fn(),
-              finished: new Promise<void>((resolve) => {
-                resolvers.push(resolve);
-              }),
-            }) as unknown as Animation,
-        ),
-      });
-      finishAnimations = () => {
-        for (const resolve of resolvers.splice(0)) {
-          resolve();
-        }
-      };
+    beforeEach(async () => {
+      finishAnimations = installPendingAnimations();
       render(
         <WaterSortTutorial
           open={true}
@@ -501,49 +497,35 @@ describe("WaterSortTutorial", () => {
           onClose={onClose}
         />,
       );
-      pressNextThroughIntro();
-      advanceTime(introEnoughMs);
-      tapBottles(stepBottles[0]);
+      pressStart();
+      await act(async () => {
+        finishAnimations();
+      });
+      tapBottles(stepBottles[0] ?? []);
     });
 
-    test("注ぐ動きを見せる間は、覆いを外すこと", () => {
-      const scrim = getScrim();
+    test("注ぎ終えるまでは、一言と進み具合を替えず、指さしを出さず、次の手順の手を受け付けないこと", () => {
+      tapBottles(stepBottles[1] ?? []);
 
-      expect(scrim).toBeNull();
+      const headline = queryShownText(
+        steps[0]?.destinationMessage?.headline ?? "",
+      );
+
+      expect(headline).not.toBeNull();
+      expect(getProgressValue()).toBe("0");
+      expect(getCuedBottles()).toEqual([]);
+      expect(getBottle(2).getAttribute("aria-pressed")).toBe("false");
     });
 
-    test("注ぎ終えると、次の手順の注ぎ元と注ぎ先を抜いて覆いを戻すこと", async () => {
+    test("注ぎ終えると、次の手順の一言と指さしを出すこと", async () => {
       await act(async () => {
         finishAnimations();
       });
 
-      const scrim = getScrim();
-      const spotlit = getSpotlitBottles();
+      const headline = queryShownText(steps[1]?.message.headline ?? "");
 
-      expect(scrim).not.toBeNull();
-      expect(spotlit).toEqual([3, 4]);
-    });
-
-    test("注ぎ終えるまでは、一言とルールの並びを替えず、次の印も付けないこと", () => {
-      const headline = screen.getByText(
-        "注ぐボトルをタップしてから 注ぎ先をタップします",
-      );
-      const rules = getRuleTexts();
-      const hinted = getCuedBottles();
-
-      expect(headline).toBeTruthy();
-      expect(rules).toEqual([hiddenRule, hiddenRule, hiddenRule, hiddenRule]);
-      expect(hinted).toEqual([]);
-    });
-
-    test("注ぎ終えるまでは、次の手順の手を受け付けないこと", () => {
-      tapBottles(stepBottles[1]);
-
-      const source = getBottle(3).getAttribute("aria-label");
-      const pressed = getBottle(3).getAttribute("aria-pressed");
-
-      expect(source).toBe("ボトル 3: 青、緑、緑、青");
-      expect(pressed).toBe("false");
+      expect(headline).not.toBeNull();
+      expect(getCuedBottles()).toEqual([2]);
     });
 
     describe("ルールに合わない手の後に、印のとおりに注いだ場合", () => {
@@ -551,120 +533,25 @@ describe("WaterSortTutorial", () => {
         await act(async () => {
           finishAnimations();
         });
-        tapBottles([3, 2, 4]);
+        tapBottles([2, 4, 3]);
       });
 
       test("注ぐ動きの間、前の違反の一言を残さず、手順の一言を出すこと", () => {
-        const violation = screen.queryByText("違う色の上には注げません");
-        const headline = screen.getByText(
-          "注げるのは 空のボトルか同じ色の上だけです",
+        const violation = queryShownText(
+          getViolationHeadline("different-color"),
         );
+        const headline = queryShownText(steps[1]?.message.headline ?? "");
 
         expect(violation).toBeNull();
-        expect(headline).toBeTruthy();
+        expect(headline).not.toBeNull();
       });
-    });
-
-    describe("手を離した後、そろう注ぎの動きの間に次のボトルを選んだ場合", () => {
-      beforeEach(async () => {
-        for (const bottles of stepBottles.slice(1)) {
-          await act(async () => {
-            finishAnimations();
-          });
-          tapBottles(bottles);
-        }
-        await act(async () => {
-          finishAnimations();
-        });
-        tapBottles([2, 1, 3]);
-        await act(async () => {
-          finishAnimations();
-        });
-      });
-
-      test("注ぎ終えてから、そろったボトルに応えること", () => {
-        const red = getBottle(1).getAttribute("aria-label");
-        const pressed = getBottle(3).getAttribute("aria-pressed");
-        const completed = getCuedBottles("completed");
-
-        expect(red).toBe("ボトル 1: 赤、赤、赤、赤");
-        expect(pressed).toBe("true");
-        expect(completed).toEqual([1]);
-      });
-    });
-
-    test("注ぎ終えると、次の手順の一言とルールに替え、次の印を付けること", async () => {
-      await act(async () => {
-        finishAnimations();
-      });
-
-      const headline = screen.getByText(
-        "注げるのは 空のボトルか同じ色の上だけです",
-      );
-      const rules = getRuleTexts();
-      const hinted = getCuedBottles();
-
-      expect(headline).toBeTruthy();
-      expect(rules).toEqual([
-        "空か同じ色へ",
-        hiddenRule,
-        hiddenRule,
-        hiddenRule,
-      ]);
-      expect(hinted).toEqual([3]);
-    });
-  });
-
-  describe("導入を見せる場合", () => {
-    beforeEach(() => {
-      Object.defineProperty(HTMLElement.prototype, "animate", {
-        configurable: true,
-        value: vi.fn(
-          () =>
-            ({
-              cancel: vi.fn(),
-              finished: Promise.resolve(),
-            }) as unknown as Animation,
-        ),
-      });
-      render(
-        <WaterSortTutorial
-          open={true}
-          playStart={playStart}
-          onClose={onClose}
-        />,
-      );
-    });
-
-    test("開くと、名前と何をするパズルか、ゴールの盤面を見せること", () => {
-      const title = screen.getByRole("heading", { name: "ウォーターソート" });
-      const purpose = screen.getByText(
-        "ボトルの水を注ぎ分けて 色をそろえるパズルです",
-      );
-      const firstBottle = getBottle(1).getAttribute("aria-label");
-
-      expect(title).toBeTruthy();
-      expect(purpose).toBeTruthy();
-      expect(firstBottle).toBe(goalFirstBottle);
-    });
-
-    test("ボトルを押しても、手順へ飛ばずに、ゴールの盤面を見せたまま次へを待つこと", () => {
-      fireEvent.pointerDown(getBottle(1));
-      advanceTime(introEnoughMs);
-
-      const caption = screen.getByText("どの色も1本にそろったらゴールです");
-      const nextButton = screen.queryByRole("button", { name: "次へ" });
-      const firstBottle = getBottle(1).getAttribute("aria-label");
-
-      expect(caption).toBeTruthy();
-      expect(nextButton).not.toBeNull();
-      expect(firstBottle).toBe(goalFirstBottle);
     });
   });
 
   describe("動きを減らす設定で開いた場合", () => {
     beforeEach(() => {
       stubReducedMotion();
+      installPendingAnimations();
       render(
         <WaterSortTutorial
           open={true}
@@ -672,80 +559,30 @@ describe("WaterSortTutorial", () => {
           onClose={onClose}
         />,
       );
+      pressStart();
     });
 
-    test("最初の画面で、何をするパズルかとゴールの盤面を、ゴールの一言と一緒に見せること", () => {
-      const purpose = screen.getByText(
-        "ボトルの水を注ぎ分けて 色をそろえるパズルです",
-      );
-      const caption = screen.getByText("どの色も1本にそろったらゴールです");
-      const firstBottle = getBottle(1).getAttribute("aria-label");
+    test("はじめるを押すと、動きを待たずに始めの盤面で最初の手順を指さすこと", () => {
+      const headline = queryShownText(steps[0]?.message.headline ?? "");
 
-      expect(purpose).toBeTruthy();
-      expect(caption).toBeTruthy();
-      expect(firstBottle).toBe(goalFirstBottle);
+      expect(getBottleLabel(1)).toBe(startFirstBottle);
+      expect(headline).not.toBeNull();
+      expect(getCuedBottles()).toEqual([3]);
     });
 
-    test("ゴールで次へを押すと、始まりの一言を添えて色がばらばらの始めの盤面を見せること", () => {
-      pressNext();
+    test("印の無いボトルを押すと、印の線を濃くし直すこと", () => {
+      tapBottles([1]);
 
-      const caption = screen.getByText("最初は色がばらばらです");
-      const firstBottle = getBottle(1).getAttribute("aria-label");
-
-      expect(caption).toBeTruthy();
-      expect(firstBottle).toBe("ボトル 1: 赤、赤、赤、青");
+      expect(getCuedBottles(recallSelector)).toEqual([3]);
     });
 
-    test("次へで最後まで進めると、最初の手順の一言と印を出すこと", () => {
-      pressNextThroughIntro();
+    test("印のとおりに注ぐと、注ぐ動きを待たずに次の手順を指さすこと", () => {
+      tapBottles(stepBottles[0] ?? []);
 
-      const headline = screen.getByText(
-        "注ぐボトルをタップしてから 注ぎ先をタップします",
-      );
-      const hinted = getCuedBottles();
+      const headline = queryShownText(steps[1]?.message.headline ?? "");
 
-      expect(headline).toBeTruthy();
-      expect(hinted).toEqual([1]);
-    });
-
-    test("印の無いボトルを押すと、動きを減らす設定でも印の線を濃くし直すこと", () => {
-      pressNextThroughIntro();
-      tapBottles([2]);
-
-      const recalled = getCuedBottles("recall");
-
-      expect(recalled).toEqual([1]);
-    });
-
-    test("印のとおりに注ぐと、注ぐ動きを見せずに、覆いを重ねたまま次の手順の注ぎ元と注ぎ先を抜くこと", () => {
-      pressNextThroughIntro();
-      tapBottles(stepBottles[0]);
-
-      const scrim = getScrim();
-      const spotlit = getSpotlitBottles();
-
-      expect(scrim).not.toBeNull();
-      expect(spotlit).toEqual([3, 4]);
-    });
-  });
-
-  describe("プレイ中に開いた場合", () => {
-    beforeEach(() => {
-      render(<WaterSortTutorial open={true} onClose={onClose} />);
-      pressNextThroughIntro();
-      tapBottles([...stepBottles.flat(), ...remainingBottles]);
-    });
-
-    test("解き終えると、プレイ中の盤面も同じルールで解けると伝えること", () => {
-      const detail = screen.getByText("プレイ中の盤面も同じルールです");
-
-      expect(detail).toBeTruthy();
-    });
-
-    test("解き終えると、プレイに戻れること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
-
-      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(headline).not.toBeNull();
+      expect(getCuedBottles()).toEqual([2]);
     });
   });
 });

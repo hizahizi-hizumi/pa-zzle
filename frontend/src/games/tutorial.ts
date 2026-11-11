@@ -64,12 +64,12 @@ export type TutorialMoveOutcome =
  * 操作より先に見せる、パズルの入口。
  * - `purpose`: 何をするパズルかの一文。名前の下に出す。
  * - `goalCaption`: 解き終えた盤面に添える一言。
- * - `startCaption`: 始めの盤面に添える一言。
+ * - `startCaption`: 始めの盤面に添える一言。ゴールの盤面から始めの盤面へ替わる動きだけで始まりを見せる画面では持たない。
  */
 export type TutorialIntro = {
   purpose: string;
   goalCaption: string;
-  startCaption: string;
+  startCaption?: string;
 };
 
 /**
