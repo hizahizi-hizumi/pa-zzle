@@ -154,14 +154,17 @@ frontend/src/games/
 ## チュートリアル
 
 - `tutorial/tutorial.ts` に、`games/tutorial.ts` の `Tutorial` を満たす `<game>Tutorial`（例: `takuzuTutorial`）を置く。
-- 盤面は `puzzle/` の遷移で進める。
+- `<game>Tutorial` の盤面は `puzzle/` の遷移で進める。
 - 本番と同じ盤面の反応と見え方が要るときは `session/` の関数で求め、経過時間と回数は使わない。
-- 画面は `ui/<Game>Tutorial.tsx` に置き、`<game>Tutorial` を `games/tutorial.ts` の進行関数で進めて、共通の枠に渡す。枠は、プレイ画面と同じ地の上で画面を覆わずに指さしで手を引く `@/components/TutorialStage` か、画面全体に覆いを重ねて次に押す所を抜く `@/components/TutorialOverlay` のどちらかにする。
-- 盤面操作の音とクリア音は、プレイ画面と同じゲームの効果音のフックで鳴らす。
+- 画面は `ui/<Game>Tutorial.tsx` に置き、`<game>Tutorial` を `games/tutorial.ts` の進行関数で進める。
+- 新しく作る画面と作り直す画面は `@/components/TutorialStage` に渡す。`@/components/TutorialOverlay` は、まだ作り直していない画面だけが使う。
+- `<Game>Tutorial` は、ゲームのホームへは `views/<Game>HomeView.tsx` から `GameHomeScreen` の `renderTutorial` で、プレイ中のメニューへは `ui/<Game>Play.tsx` から `GamePlayFrame` の `renderTutorial` で渡す。
+- `TutorialStage` に渡す地は、プレイ画面の `GamePlayFrame` に渡す地と同じ部品にする。
+- 盤面操作の音とクリア音は、プレイ画面と同じ `ui/use-<game>-sound-effects.ts` のフックで鳴らす。
 - 解き終えたら本番と同じクリア演出を見せ、その完了で `completeTutorial` を呼ぶ。
-- 印・指さし・合図は `@/components/TutorialCue`、`TutorialOverlay` の覆いから抜く所は `@/components/TutorialSpotlight` だけで描く。
-- 盤面部品は印・合図・抜く所を任意の props で受け取り、受け取らないときは本番と同じに描く。
-- ゲームのホームへは `views/<Game>HomeView.tsx` から `GameHomeScreen` の `renderTutorial` で、プレイ中のメニューへは `ui/<Game>Play.tsx` から `GamePlayFrame` の `renderTutorial` で渡す。
+- 印・指さし・合図は `@/components/TutorialCue` だけで描く。
+- `TutorialOverlay` の覆いから抜く所は `@/components/TutorialSpotlight` で示す。
+- 盤面部品は印・指さし・合図・抜く所を任意の props で受け取り、受け取らないときは本番と同じに描く。
 
 ## 依存方向
 
