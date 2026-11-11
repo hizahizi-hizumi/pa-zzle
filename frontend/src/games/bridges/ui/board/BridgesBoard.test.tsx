@@ -554,7 +554,7 @@ describe("BridgesBoard", () => {
     }
 
     function readRingCount(): number {
-      return document.querySelectorAll("svg > path[fill=none]").length;
+      return document.querySelectorAll("svg > circle[fill=none]").length;
     }
 
     beforeEach(() => {

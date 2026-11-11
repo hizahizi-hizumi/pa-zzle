@@ -9,10 +9,9 @@ import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
  *   波打ち際の線に頼らず島を海から浮かせる。ダークの海はページの地と 1.8:1 ほど離し、黒い地に沈ませない。
  * - 海には、深さの差の弱い明暗のむらと、まばらな波の印を動かさずに置く。盤面のマスの中心には、島の無い所にだけ
  *   ごく薄い点を打ち、島が縦横に並んでいることを読めるようにする。
- * - 島の周りの浅瀬は、陸と海の間の狭い帯にする。陸より明るさを 1.3:1 以上落とし、平常時の島を光って見せない。
- * - 島は砂浜の陸にし、陸の縁の太い濡れた砂、波打ち際の白い泡、浅瀬の順に海へつなげる。影は落とさず、輪郭を揺らして、円盤や
- *   ボタンに見せない。
- *   ダークの陸は海と 5:1 ほどにとどめ、まぶしくしない。
+ * - 島はほかのゲームの盤面の記号と同じ平らな記号にする。揺らぎの無い真円に平らな塗り1色と輪郭線だけを置き、影・グラデーション・
+ *   砂や草の質感・浅瀬の輪は描かない。島は立体に見せず、塗りと輪郭線の色と明るさの差だけで海と橋の中で際立たせる。
+ *   ライトは明るい塗りを海の 2.4:1 以上にし、濃い輪郭線（海と 5:1）で縁を切る。ダークは明るい塗りを海の 7:1 ほどにする。
  * - 橋は木の板にする。欄干の濃い茶で縁取った板に淡い横木を間引いて刻み、両端の浅瀬に杭を立てる。
  *   ライトの板の面は海と 2:1 以上、ダークでも欄干と海を 2:1 以上離す。
  * - 交わる橋に阻まれたときは、押した所から伸びた板が阻んだ橋に突き当たって弾かれる動きで返し、阻んだ橋の板を
@@ -21,9 +20,9 @@ import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
  * - 島から架けられる相手へ張るロープ（なぞる間と、島を選んでいる間）は、海・板・どの島の状態とも紛れない紺（ダークは白）にし、
  *   板の上でも読めるよう反対の明るさの縁で囲む。ロープの下には、相手の島までの区間だけ同じ色の半透明の帯を敷く。
  *   離せば架かる辺には、架かった後の板の影を半透明で置く。
- * - 全島がつながった瞬間は、島が灯り、島の周りの浅瀬が海と同じ色相のまま明るく澄み、橋は杭の灯りが順に点いて板が一瞬
+ * - 全島がつながった瞬間は、島が灯り、島の周りの水が海と同じ色相のまま明るく澄み、橋は杭の灯りが順に点いて板が一瞬
  *   明るい木の色になる。光らせるのは島の周りだけにし、橋に沿って光らせない。画面全体の海の色は変えず、ブランドの帯と
- *   見出しの後ろの海とつないだままにする。澄んだ浅瀬は海と明るさで 1.6:1 以上離し、陸とも 1.3:1 以上離して島を溶かさない。
+ *   見出しの後ろの海とつないだままにする。澄んだ水は海と明るさで 1.6:1 以上離し、島の輪郭線で島を溶かさない。
  */
 export const bridgesToneClassNames = {
   sea: "bg-[#72aebb] dark:bg-[#18404f]",
@@ -37,14 +36,8 @@ export const bridgesToneClassNames = {
   gridDot: "fill-white/35 dark:fill-[#d9f3f2]/20",
   /** チュートリアルで見る所を絞っている間に、海に重ねる深い海の色。灰色の覆いの代わりに、海の色のまま暗くする。 */
   focusVeil: "fill-[#0e3d4a] dark:fill-[#03141b]",
-  /** 島の周りの浅瀬。島から離れるほど透けて海の色に戻す。 */
-  shallowsStop: "[stop-color:#8fc3cb] dark:[stop-color:#235566]",
-  /** 全島がつながった後の、灯った島の周りの澄んだ浅瀬。海と同じ色相で、明るさも上げる。 */
+  /** 全島がつながった後の、灯った島の周りの澄んだ水。海と同じ色相で、明るさも上げる。 */
   litShallowsStop: "[stop-color:#a6dfe4] dark:[stop-color:#2f7686]",
-  /** 陸の縁の、濡れて色の濃い砂。 */
-  wetSand: "stroke-[#c9a35e] dark:stroke-[#a8955f]",
-  /** 波打ち際。途切れない細い白い線にし、途切れた縁（多すぎの島）と形で分ける。 */
-  surf: "stroke-white/85 dark:stroke-[#d9f3f2]/70",
   bridgeShadow: "stroke-[#1f5a63]/30 dark:stroke-black/40",
   bridgeRail: "stroke-[#5a361a] dark:stroke-[#94663a]",
   bridgeDeck: "stroke-[#9e6a3a] dark:stroke-[#c99358]",
@@ -72,39 +65,39 @@ export const bridgesToneClassNames = {
 } as const;
 
 /**
- * 島の状態ごとの陸の姿。色だけに頼らず、形でも分ける。
- * - `short`（足りない）: 砂の陸だけ。
- * - `exact`（ちょうど）: 海岸線と同じ輪郭の草地が、砂の縁を細く残して陸に広がる。陸の輪郭は変えず、草地の有無で見分ける。草地は陸と 2:1 以上離し、
- *   ダークでは暗い草地に明るい数字を置く。
- * - `over`（多すぎ）: 濃い薔薇色の陸に明るい数字と、淡い途切れた太い縁。陸は海と 1.8:1 以上離し、通常の陸より目立たせる。
- *   色だけでなく、陸の明るさの逆転（ライトでは陸が海より暗い）と縁の形でも分ける。
- * - `grass`: 草地の色。草地の無い状態は持たない。
- * - `rimDash`: 陸の縁を途切れさせる間隔（マス幅を 1 とした値）。途切れない縁は持たない。
+ * 島の状態ごとの、平らな塗りと輪郭線と数字の色。色だけに頼らず、塗りの明るさと形でも分ける。数字は塗りと 6.5:1 以上離す。
+ * - `short`（足りない）: 最も明るい無地の塗りに濃い数字。ライトは白に濃い紺緑の数字と輪郭線（12:1）。
+ * - `exact`（ちょうど）: 達成で色を解放する考え方で、明るい緑の塗りに深い緑の数字。足りない島より一段暗く（2.2:1）、色でも整った表情にする。
+ * - `over`（多すぎ）: 濃い薔薇色の塗りに白い数字と、輪郭線の内側の淡い途切れた輪。続く状態として最も暗い塗りにし、輪の形でも分ける。
+ * - `outline`: 島の縁を切る輪郭線。ライトは海と 5:1 の濃い線、ダークは海より暗い線で、明るい塗りの縁を締める。
+ * - `rim`: 多すぎの島の途切れた輪の色。輪の無い状態は持たない。
  */
 export type BridgesIslandTone = {
   land: string;
+  outline: string;
   clue: string;
-  grass?: string;
   rim?: string;
-  rimDash?: string;
 };
+
+const islandOutline = "stroke-[#163843] dark:stroke-[#0b1d24]";
 
 export const bridgesIslandTones: Readonly<
   Record<BridgesIslandStatus, BridgesIslandTone>
 > = {
   short: {
-    land: "fill-[#fff4d8] dark:fill-[#c4b184]",
-    clue: "fill-[#4a3218]",
+    land: "fill-white dark:fill-[#c9d9dc]",
+    outline: islandOutline,
+    clue: "fill-[#163843] dark:fill-[#10262d]",
   },
   exact: {
-    land: "fill-[#fff4d8] dark:fill-[#c4b184]",
-    grass: "fill-[#68b040] dark:fill-[#347024]",
-    clue: "fill-[#123a0e] dark:fill-[#ecfccb]",
+    land: "fill-[#5cc26a] dark:fill-[#6cc477]",
+    outline: islandOutline,
+    clue: "fill-[#0b2e13] dark:fill-[#08260d]",
   },
   over: {
-    land: "fill-[#c2405a] dark:fill-[#ec6f83]",
-    rim: "stroke-[#ffd6dc] dark:stroke-[#ffd6dc]",
-    rimDash: "0.14 0.08",
-    clue: "fill-white dark:fill-[#4c0519]",
+    land: "fill-[#a8243e] dark:fill-[#a8324c]",
+    outline: islandOutline,
+    rim: "stroke-[#ffd6dc]",
+    clue: "fill-white",
   },
 };

@@ -19,7 +19,6 @@ import {
   toViewPoint,
 } from "@/games/bridges/ui/board/board-geometry";
 import { listClearWaveDepths } from "@/games/bridges/ui/board/clear-wave";
-import { getIslandOutlinePath } from "@/games/bridges/ui/board/island-shape";
 import {
   bridgesIslandTones,
   bridgesToneClassNames,
@@ -149,29 +148,23 @@ const PLANK_RAIL_WIDTH = 0.035;
 const PLANK_SEAM_DASH = "0.025 0.155";
 /** 板の影を落とす向き。光を左上から当て、右下へ落とす。 */
 const SHADOW_OFFSET = { x: 0.02, y: 0.045 } as const;
-/** 杭の半径と、島の中心から杭までの距離。杭は陸の縁の外の浅瀬に立て、10×10 のスマホでも点でなく杭に見える太さにする。 */
+/** 杭の半径と、島の中心から杭までの距離。杭は島の輪郭線のすぐ外に立て、10×10 のスマホでも点でなく杭に見える太さにする。 */
 const POST_RADIUS = 0.065;
 const POST_DISTANCE = ISLAND_RADIUS + 0.1;
-/** 浅瀬が海の色へ消えるまでの、島の中心からの距離。陸の縁から波打ち際の外までの狭い帯にし、隣の島の浅瀬と重ねない。 */
-const SHALLOWS_RADIUS = 0.62;
-/** 灯った島の周りの澄んだ浅瀬が海の色へ消えるまでの、島の中心からの距離。波打ち際の外に、灯りより広く澄んだ水を見せる。 */
+/** 灯った島の周りの澄んだ浅瀬が海の色へ消えるまでの、島の中心からの距離。島の外に、灯りより広く澄んだ水を見せる。 */
 const LIT_SHALLOWS_RADIUS = 0.82;
 /** 島を触っている間に、架けられる相手までの区間に敷く帯の太さ。 */
 const GUIDE_BAND_WIDTH = 0.56;
 /** マスの中心の、島の無い所に打つ点の半径。 */
 const GRID_DOT_RADIUS = 0.03;
-/** 波打ち際の白い線の、陸の輪郭に対する倍率と太さ。 */
-const SURF_SCALE = 1.14;
-const SURF_WIDTH = 0.03;
-/** 陸の縁の濡れた砂の太さ。浜の縁を帯として見せ、陸を円盤の縁取りに見せない太さにする。 */
-const WET_SAND_WIDTH = 0.08;
-/** 多すぎの島の、途切れた縁の太さ。 */
-const OVER_RIM_WIDTH = 0.11;
 /**
- * ちょうどの島の草地の、陸の輪郭に対する倍率。海岸線と同じ揺らいだ輪郭で縁の近くまで広げ、濡れた砂の内側に乾いた砂を細く残す。
- * 中に丸い印を置いたバッジに見せず、草に覆われた島に見せる。
+ * 島の輪郭線の太さ。10×10 のスマホでも 2px ほどの線にし、塗りが海や橋と近い明るさになる状態でも島の縁を切り出す。
  */
-const GRASS_SCALE = 0.86;
+const ISLAND_OUTLINE_WIDTH = 0.06;
+/** 多すぎの島の、輪郭線の内側に重ねる途切れた輪の半径・太さ・途切れの間隔。 */
+const OVER_RIM_RADIUS = ISLAND_RADIUS - 0.07;
+const OVER_RIM_WIDTH = 0.07;
+const OVER_RIM_DASH = "0.12 0.07";
 /** 阻んだ橋の板の外側に、片側に見せる薔薇色の縁取りの幅と、その外の白い縁の幅。 */
 const BLOCKING_OUTLINE_SIDE = 0.12;
 const BLOCKING_CASING_SIDE = 0.03;
@@ -188,7 +181,7 @@ const REMOVAL_EXTRA_WIDTH = 0.04;
 const UNFOCUSED_ROPE_OPACITY = 0.35;
 /** マウスを乗せた所の予告の濃さ。 */
 const HOVER_GHOST_OPACITY = 0.6;
-/** 島を囲む輪は、島の陸の揺らいだ輪郭をこの大きさまで広げた形にする。 */
+/** 島を囲む輪の半径。島と同じ中心の真円にする。 */
 const SELECTION_RING_RADIUS = ISLAND_RADIUS + 0.1;
 /** 離せば回す辺の相手の島を囲む輪。指で隠れても輪の外側が見える大きさにする。 */
 const TARGET_RING_RADIUS = ISLAND_RADIUS + 0.16;
@@ -208,8 +201,10 @@ const LANTERN_POST_RADIUS = 0.075;
 const RIPPLE_RADIUS = 0.5;
 const RIPPLE_WIDTH = 0.07;
 
-/** 数字の字の大きさ。島の陸の直径の6割ほどにする。 */
-const CLUE_FONT_SIZE = 0.52;
+/**
+ * 数字の字の大きさ。島の直径の6割ほどにし、10×10 のスマホで 20px ほど（ナンプレの盤面の数字と同じ大きさ）にする。
+ */
+const CLUE_FONT_SIZE = 0.55;
 /** 絵の中の海の波の印の、区画の寸法に掛ける倍率。マス幅の 1/40 を 1 とする。 */
 const FIGURE_WAVE_UNIT = 1 / 40;
 
@@ -395,7 +390,7 @@ function BridgePlanks({
   ));
 }
 
-/** 橋の両端の浅瀬に立てる杭。 */
+/** 橋の両端の、島の外に立てる杭。 */
 function BridgePosts({
   segment,
   count,
@@ -681,11 +676,11 @@ const centerOrigin = {
 } as const;
 
 /**
- * 盤面の絵。下から、海・マスの中心の点・架けられる相手までの帯・浅瀬・灯った島の澄んだ浅瀬・波打ち際・灯りの光・波紋・板の予告・
- * 阻まれた辺の板・橋（阻んだ橋の縁取り、板、灯った板、杭）・外す板・杭の灯り・ロープ・交点の候補のロープ・島の陸と数字・
+ * 盤面の絵。下から、海・マスの中心の点・架けられる相手までの帯・灯った島の澄んだ浅瀬・灯りの光・波紋・板の予告・
+ * 阻まれた辺の板・橋（阻んだ橋の縁取り、板、灯った板、杭）・外す板・杭の灯り・ロープ・交点の候補のロープ・島（平らな真円の塗りと輪郭線）と数字・
  * 選んだ島とキーボードの輪の順に重ねる。
  * 阻まれた辺の板の影は橋の下に置き、阻んだ橋がその上を渡って見えるようにする。
- * 橋は島の中心から中心へ描き、端を島の陸で覆う。
+ * 橋は島の中心から中心へ描き、端を島で覆う。
  */
 export function BridgesFigure({
   board,
@@ -713,7 +708,6 @@ export function BridgesFigure({
 }: BridgesFigureProps) {
   const layout = compact ? plankLayouts.compact : plankLayouts.regular;
   const gradientId = useId();
-  const shallowsId = `${gradientId}-shallows`;
   const lanternId = `${gradientId}-lantern`;
   const litShallowsId = `${gradientId}-lit-shallows`;
   const { edges } = getBridgesNetwork(board);
@@ -753,21 +747,21 @@ export function BridgesFigure({
     if (island === null) {
       return null;
     }
-    const outline = getIslandOutlinePath(
-      board.islands[island]!,
-      islandCenters[island]!,
-      radius,
-    );
+    const { x, y } = islandCenters[island]!;
     return (
       <>
-        <path
-          d={outline}
+        <circle
+          cx={x}
+          cy={y}
+          r={radius}
           fill="none"
           strokeWidth={width + ROPE_CASING_EXTRA}
           className={bridgesToneClassNames.guideCasing}
         />
-        <path
-          d={outline}
+        <circle
+          cx={x}
+          cy={y}
+          r={radius}
           fill="none"
           strokeWidth={width}
           className={className}
@@ -786,15 +780,6 @@ export function BridgesFigure({
       aria-hidden="true"
     >
       <defs>
-        <RadialFade
-          id={shallowsId}
-          className={bridgesToneClassNames.shallowsStop}
-          stops={[
-            [0, 1],
-            [0.8, 1],
-            [1, 0],
-          ]}
-        />
         <RadialFade
           id={litShallowsId}
           className={bridgesToneClassNames.litShallowsStop}
@@ -830,17 +815,6 @@ export function BridgesFigure({
           edges={[...new Set([...(guide?.edges ?? []), ...bandEdges])]}
         />
       )}
-      <g>
-        {islandCenters.map(({ x, y }) => (
-          <circle
-            key={`${x}:${y}`}
-            cx={x}
-            cy={y}
-            r={SHALLOWS_RADIUS}
-            fill={`url(#${shallowsId})`}
-          />
-        ))}
-      </g>
       {lit &&
         islandCenters.map(({ x, y }, island) => (
           <circle
@@ -853,22 +827,6 @@ export function BridgesFigure({
             style={centerOrigin}
           />
         ))}
-      <g
-        fill="none"
-        strokeWidth={SURF_WIDTH}
-        className={bridgesToneClassNames.surf}
-      >
-        {board.islands.map((island, index) => (
-          <path
-            key={`${island.row}:${island.column}`}
-            d={getIslandOutlinePath(
-              island,
-              islandCenters[index]!,
-              ISLAND_RADIUS * SURF_SCALE,
-            )}
-          />
-        ))}
-      </g>
       {lit &&
         islandCenters.map(({ x, y }, island) => (
           <circle
@@ -1089,23 +1047,22 @@ export function BridgesFigure({
                 : undefined
             }
           >
-            <path
-              d={getIslandOutlinePath(island, center, ISLAND_RADIUS)}
-              strokeWidth={tone.rim ? OVER_RIM_WIDTH : WET_SAND_WIDTH}
-              strokeDasharray={tone.rimDash}
-              className={cn(
-                tone.land,
-                tone.rim ?? bridgesToneClassNames.wetSand,
-              )}
+            <circle
+              cx={center.x}
+              cy={center.y}
+              r={ISLAND_RADIUS}
+              strokeWidth={ISLAND_OUTLINE_WIDTH}
+              className={cn(tone.land, tone.outline)}
             />
-            {tone.grass && (
-              <path
-                d={getIslandOutlinePath(
-                  island,
-                  center,
-                  ISLAND_RADIUS * GRASS_SCALE,
-                )}
-                className={tone.grass}
+            {tone.rim && (
+              <circle
+                cx={center.x}
+                cy={center.y}
+                r={OVER_RIM_RADIUS}
+                fill="none"
+                strokeWidth={OVER_RIM_WIDTH}
+                strokeDasharray={OVER_RIM_DASH}
+                className={tone.rim}
               />
             )}
             <text
@@ -1115,7 +1072,7 @@ export function BridgesFigure({
               dominantBaseline="central"
               fontSize={CLUE_FONT_SIZE}
               fontWeight={700}
-              className={cn("select-none font-sans", tone.clue)}
+              className={cn("select-none font-sans tabular-nums", tone.clue)}
             >
               {island.clue}
             </text>
