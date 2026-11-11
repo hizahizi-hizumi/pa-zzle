@@ -54,6 +54,7 @@ type TsumeShogiPlayProps = GamePlayScreenProps<
   UndoableGamePlayScreenProps & {
     plies: number;
     phase: TsumeShogiSessionPhase;
+    playedPlies: number;
     boardPieces: readonly TsumeShogiBoardPiece[];
     attackerHand: TsumeShogiHandCounts;
     shownMoves: readonly TsumeShogiPlayedMove[];
@@ -94,6 +95,7 @@ export function TsumeShogiPlay({
   recordFeedback,
   plies,
   phase,
+  playedPlies,
   boardPieces,
   attackerHand,
   shownMoves,
@@ -179,6 +181,7 @@ export function TsumeShogiPlay({
       }
       metrics={[
         { type: "problem-fact", text: `${plies}手詰` },
+        { type: "count", label: "手数", count: playedPlies, reservedDigits: 1 },
         { type: "elapsed-time", elapsedMs },
       ]}
       canRestart={canRestart}
