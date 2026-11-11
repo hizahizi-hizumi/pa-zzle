@@ -154,11 +154,14 @@ function pointToward(from: CellPosition, to: CellPosition, reach: number) {
   };
 }
 
-/** 2島の間の、島の丸のすぐ外の線の上を押す。 */
+/**
+ * 2島の間の、島の的のすぐ外の線の上を押す。交わる線は島から1マス以上離れるので、交点のそばの押し（どちらの橋も回さない）に
+ * ならない。
+ */
 function tapBetween([from, to]: EdgeEnds): void {
   const board = getBoard();
-  fireEvent.pointerDown(board, { ...touch, ...pointToward(from, to, 0.75) });
-  fireEvent.pointerUp(board, { ...touch, ...pointToward(from, to, 0.75) });
+  fireEvent.pointerDown(board, { ...touch, ...pointToward(from, to, 0.65) });
+  fireEvent.pointerUp(board, { ...touch, ...pointToward(from, to, 0.65) });
 }
 
 /** `from` の島から押し、`to` の島の上までなぞって離す。 */
