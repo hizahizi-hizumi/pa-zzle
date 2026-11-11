@@ -26,6 +26,40 @@ vi.mock("@/lib/internal-diagnostics", () => ({
 const { resetAppLaunch } = _private;
 const nanpureHomeText = "ナンプレのホーム";
 
+beforeAll(() => {
+  HTMLElement.prototype.scrollTo = vi.fn();
+});
+
+function selectGameByName(name: string) {
+  const carousel = screen.getByRole("group", {
+    name: "左右にスライドしてパズルを切り替え",
+  });
+  const links = Array.from(carousel.children);
+  const centerLapStart = links.length / 3;
+  const index = links
+    .slice(centerLapStart, centerLapStart * 2)
+    .findIndex((item) => item.getAttribute("aria-label")?.startsWith(name));
+  if (index < 0) throw new Error(`Missing game: ${name}`);
+  Object.defineProperty(carousel, "clientWidth", {
+    configurable: true,
+    value: 390,
+  });
+  for (const [position, item] of links.entries()) {
+    Object.defineProperty(item, "offsetLeft", {
+      configurable: true,
+      value: 75 + position * 240,
+    });
+    Object.defineProperty(item, "offsetWidth", {
+      configurable: true,
+      value: 240,
+    });
+  }
+  fireEvent.click(links[centerLapStart + index]!);
+  carousel.scrollLeft = (centerLapStart + index) * 240;
+  fireEvent.scroll(carousel);
+  fireEvent(carousel, new Event("scrollend", { bubbles: true }));
+}
+
 function renderAtHome() {
   render(
     <MemoryRouter>
@@ -71,27 +105,28 @@ describe("PuzzleSelectionView", () => {
     });
 
     test("パズルを決まった順に並べること", () => {
-      const selectButtons = screen.getAllByRole("button", {
-        name: /を選択$/,
+      const carousel = screen.getByRole("group", {
+        name: "左右にスライドしてパズルを切り替え",
       });
+      const gameLinks = Array.from(carousel.children).slice(
+        games.length,
+        games.length * 2,
+      );
 
-      expect(
-        selectButtons.map((button) => button.getAttribute("aria-label")),
-      ).toEqual(games.map(([name]) => `${name}を選択`));
+      expect(gameLinks.map((link) => link.getAttribute("aria-label"))).toEqual(
+        games.map(
+          ([name], index) => `${name}${index === 0 ? "を開く" : "を選択"}`,
+        ),
+      );
     });
 
     test.each(games)(
       "%sを選択してそのゲームのホームへ進めること",
       (name, homePath) => {
-        const selectButton = screen.getByRole("button", {
-          name: `${name}を選択`,
-        });
+        if (name !== games[0][0]) selectGameByName(name);
 
-        fireEvent.click(selectButton);
-
-        const heroLink = screen.getByRole("link", { name: `${name}を遊ぶ` });
+        const heroLink = screen.getByRole("link", { name: `${name}を開く` });
         expect(heroLink.getAttribute("href")).toBe(homePath);
-        expect(selectButton.getAttribute("aria-pressed")).toBe("true");
       },
     );
   });
@@ -156,44 +191,37 @@ describe("保存されたホームの並び順", () => {
     renderAtHome();
   });
 
-  test("下部一覧を設定順にし、履歴がなければ先頭のゲームを選んでおくこと", () => {
-    const selectButtons = screen.getAllByRole("button", { name: /を選択$/ });
-    const selected = screen.getByRole("link", {
-      name: "ナンプレを遊ぶ",
+  test("保存された並び順で表示し、履歴がなければ先頭を選んでおくこと", () => {
+    const carousel = screen.getByRole("group", {
+      name: "左右にスライドしてパズルを切り替え",
     });
+    const count = carousel.children.length / 3;
+    const links = Array.from(carousel.children).slice(count, count * 2);
 
-    expect(selectButtons[0]?.getAttribute("aria-label")).toBe("ナンプレを選択");
-    expect(selectButtons[1]?.getAttribute("aria-label")).toBe(
-      "ウォーターソートを選択",
-    );
-    expect(selected.getAttribute("href")).toBe("/puzzles/nanpure");
+    expect(links[0]?.getAttribute("aria-label")).toBe("ナンプレを開く");
+    expect(links[1]?.getAttribute("aria-label")).toBe("ウォーターソートを選択");
+    expect(links[0]?.getAttribute("href")).toBe("/puzzles/nanpure");
   });
 
   test("並び替えた2番目を選んでも対応するゲームへ進めること", () => {
-    fireEvent.click(
-      screen.getByRole("button", { name: "ウォーターソートを選択" }),
-    );
+    selectGameByName("ウォーターソート");
     const selected = screen.getByRole("link", {
-      name: "ウォーターソートを遊ぶ",
+      name: "ウォーターソートを開く",
     });
 
     expect(selected.getAttribute("href")).toBe("/puzzles/water-sort");
   });
 
   test("並び替えによる位置の変更で選択中のゲームが切り替わらないこと", () => {
-    fireEvent.click(
-      screen.getByRole("button", { name: "ウォーターソートを選択" }),
-    );
+    selectGameByName("ウォーターソート");
     act(() => gameSelectionOrderSetting.restoreDefault());
     const selected = screen.getByRole("link", {
-      name: "ウォーターソートを遊ぶ",
+      name: "ウォーターソートを開く",
     });
 
     expect(selected.getAttribute("href")).toBe("/puzzles/water-sort");
     expect(
-      screen
-        .getByRole("button", { name: "ウォーターソートを選択" })
-        .getAttribute("aria-pressed"),
-    ).toBe("true");
+      screen.getByRole("link", { name: "ウォーターソートを開く" }),
+    ).toBeTruthy();
   });
 });

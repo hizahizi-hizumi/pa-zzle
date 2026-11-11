@@ -105,7 +105,34 @@ function renderAtHome() {
 }
 
 function getHeroLink(): HTMLElement {
-  return screen.getByRole("link", { name: /を遊ぶ$/ });
+  return screen.getByRole("link", { name: /を開く$/ });
+}
+function selectGame(name: string) {
+  const carousel = screen.getByRole("group", {
+    name: "左右にスライドしてパズルを切り替え",
+  });
+  const games = Array.from(carousel.children);
+  const count = games.length / 3;
+  const index = games.findIndex(
+    (element, position) =>
+      position >= count &&
+      position < count * 2 &&
+      element.getAttribute("aria-label")?.startsWith(name),
+  );
+  if (index < 0) throw new Error(`Unknown game: ${name}`);
+  Object.defineProperty(carousel, "clientWidth", {
+    configurable: true,
+    value: 390,
+  });
+  for (const [position, element] of games.entries()) {
+    Object.defineProperties(element, {
+      offsetLeft: { configurable: true, value: 75 + position * 240 },
+      offsetWidth: { configurable: true, value: 240 },
+    });
+  }
+  carousel.scrollLeft = index * 240;
+  fireEvent.scroll(carousel);
+  fireEvent(carousel, new Event("scrollend", { bubbles: true }));
 }
 
 function getContinuationText(): string | null {
@@ -117,6 +144,7 @@ function getContinuationText(): string | null {
 
 beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
+  HTMLElement.prototype.scrollTo = vi.fn();
   window.ResizeObserver = vi.fn(function ResizeObserver() {
     return { observe() {}, unobserve() {}, disconnect() {} };
   }) as unknown as typeof ResizeObserver;
@@ -128,6 +156,7 @@ afterEach(() => {
   window.localStorage.clear();
   orderPrivate.resetCache();
   Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+  Reflect.deleteProperty(HTMLElement.prototype, "scrollTo");
   Reflect.deleteProperty(window, "ResizeObserver");
 });
 
@@ -141,7 +170,7 @@ describe("useAppHome", () => {
       const heroLink = getHeroLink();
 
       expect(heroLink.getAttribute("aria-label")).toBe(
-        "ウォーターソートを遊ぶ",
+        "ウォーターソートを開く",
       );
       expect(getContinuationText()).toBeNull();
     });
@@ -157,7 +186,7 @@ describe("useAppHome", () => {
     test("並びの先頭よりも最後に遊んだゲームを選んでおくこと", () => {
       const selected = getHeroLink();
 
-      expect(selected.getAttribute("aria-label")).toBe("ナンプレを遊ぶ");
+      expect(selected.getAttribute("aria-label")).toBe("ナンプレを開く");
     });
   });
 
@@ -176,7 +205,7 @@ describe("useAppHome", () => {
     test("最後に遊んだ詰将棋を選んでおき、開くレベルと挑戦中の問題の数を続きとして示すこと", () => {
       const heroLink = getHeroLink();
 
-      expect(heroLink.getAttribute("aria-label")).toBe("詰将棋を遊ぶ");
+      expect(heroLink.getAttribute("aria-label")).toBe("詰将棋を開く");
       expect(getContinuationText()).toBe("レベル 3 ・ 挑戦中 1問");
     });
   });
@@ -210,7 +239,7 @@ describe("useAppHome", () => {
     test("最後に遊んだナンプレを選んでおき、開くレベルと挑戦中の問題の数を続きとして示すこと", () => {
       const heroLink = getHeroLink();
 
-      expect(heroLink.getAttribute("aria-label")).toBe("ナンプレを遊ぶ");
+      expect(heroLink.getAttribute("aria-label")).toBe("ナンプレを開く");
       expect(getContinuationText()).toBe("レベル 4 ・ 挑戦中 1問");
     });
 
@@ -228,20 +257,16 @@ describe("useAppHome", () => {
     });
 
     test("ほかのゲームを選ぶと、そのゲームの続きを示すこと", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "スライドパズルを選択" }),
-      );
+      selectGame("スライドパズル");
 
       expect(getHeroLink().getAttribute("aria-label")).toBe(
-        "スライドパズルを遊ぶ",
+        "スライドパズルを開く",
       );
       expect(getContinuationText()).toBe("レベル 1 ・ 挑戦中 1問");
     });
 
     test("遊んだことの無いゲームを選ぶと、続きを示さないこと", () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "ウォーターソートを選択" }),
-      );
+      selectGame("ウォーターソート");
 
       expect(getContinuationText()).toBeNull();
     });
@@ -262,14 +287,14 @@ describe("useAppHome", () => {
         const heroLink = getHeroLink();
 
         expect(heroLink.getAttribute("aria-label")).toBe(
-          "スライドパズルを遊ぶ",
+          "スライドパズルを開く",
         );
       });
     });
 
     describe("ゲームを選んだあとに、ほかのゲームの離脱が保存された場合", () => {
       beforeEach(() => {
-        fireEvent.click(screen.getByRole("button", { name: "ナンプレを選択" }));
+        selectGame("ウォーターソート");
         act(() => {
           saveAbandonedPlay(
             "slide-puzzle",
@@ -283,7 +308,9 @@ describe("useAppHome", () => {
       test("選んだゲームを選んだままにすること", () => {
         const heroLink = getHeroLink();
 
-        expect(heroLink.getAttribute("aria-label")).toBe("ナンプレを遊ぶ");
+        expect(heroLink.getAttribute("aria-label")).toBe(
+          "ウォーターソートを開く",
+        );
       });
     });
 
@@ -301,10 +328,10 @@ describe("useAppHome", () => {
       test("タイトルを描いたあとに、最後に遊んだゲームを選んで続きを示すこと", () => {
         const title = screen.getByRole("dialog", { name: "pa-zzle" });
         const heroLink = screen
-          .getAllByRole("link", { name: /を遊ぶ$/, hidden: true })
+          .getAllByRole("link", { name: /を開く$/, hidden: true })
           .find((link) => !title.contains(link));
 
-        expect(heroLink?.getAttribute("aria-label")).toBe("ナンプレを遊ぶ");
+        expect(heroLink?.getAttribute("aria-label")).toBe("ナンプレを開く");
       });
     });
   });

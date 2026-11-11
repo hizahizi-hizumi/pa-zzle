@@ -1,18 +1,24 @@
 /**
- * アプリの画面で、遊ぶゲームを選ぶ・プレイを始める決定の操作に鳴らす音。決定の操作のイベントハンドラで鳴らす。
+ * アプリの画面で、ゲームを選んで移動する操作と、プレイを始める決定の操作に返す効果音。
  * 効果音の音量を選んだときに、選んだ音量を確かめる音としても鳴らす。
  */
 
+import carouselMoveSoundUrl from "@/assets/sounds/carousel-move.flac";
 import gameSelectSoundUrl from "@/assets/sounds/game-select.flac";
 import playStartSoundUrl from "@/assets/sounds/play-start.flac";
 import { usePrepareSoundEffects } from "@/games/play-sound-effects";
-import { defineSoundEffect, playSound } from "@/lib/sound-effects";
+import {
+  defineSoundEffect,
+  playSound,
+  REPEATED_SOUND_VARIATION,
+} from "@/lib/sound-effects";
 
 const gameSelectSound = defineSoundEffect(gameSelectSoundUrl);
 
 const playStartSound = defineSoundEffect(playStartSoundUrl);
+const carouselMoveSound = defineSoundEffect(carouselMoveSoundUrl);
 
-const appDecisionSounds = [gameSelectSound, playStartSound];
+const appDecisionSounds = [gameSelectSound, playStartSound, carouselMoveSound];
 
 /** 決定の操作の音を鳴らしうる画面すべてを包む部品で一度呼び、アプリを開いたときに音の読み込みを始める。 */
 export function usePrepareAppDecisionSounds(): void {
@@ -22,6 +28,14 @@ export function usePrepareAppDecisionSounds(): void {
 /** 遊ぶゲームを選んだときの音を鳴らす。 */
 export function playGameSelectSound(): void {
   playSound(gameSelectSound);
+}
+
+/** ホームで選ぶゲームが切り替わるときの軽い操作音を鳴らす。 */
+export function playCarouselMoveSound(): void {
+  playSound(carouselMoveSound, {
+    variation: REPEATED_SOUND_VARIATION,
+    volume: 0.48,
+  });
 }
 
 /** プレイを始めるときの音を鳴らす。 */
@@ -45,4 +59,4 @@ export function withPlayStartSound(startPlay: () => void): () => void {
   };
 }
 
-export const _private = { gameSelectSound, playStartSound };
+export const _private = { gameSelectSound, playStartSound, carouselMoveSound };
