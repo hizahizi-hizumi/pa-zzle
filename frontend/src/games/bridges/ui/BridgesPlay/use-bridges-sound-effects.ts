@@ -31,15 +31,16 @@ import {
 
 /**
  * 架ける・外す音は、盤面で最も回数の多い操作の音なので、ほかのゲームの最も回数の多い操作の音（一筆の道を伸ばす、ナンプレの数字を入れる、
- * マインスイーパーの旗を立てる）と同じ小ささと短さ（50ms 窓の最大 RMS −37dB 前後、−40dB までの長さ 0.03〜0.04 秒）にそろえる。
+ * マインスイーパーの旗を立てる）と同じ小ささ（50ms 窓の最大 RMS −37dB 前後）にそろえ、短くする。
+ * 音は `scripts/assets/bridges_sounds.py` で合成する。
  */
-/** 1本目の板が相手の島に着く、乾いた木の音。 */
+/** 1本目の板が相手の島に着く、木の1打。一筆の道を伸ばす高い音と紛れないよう、低い板の鳴り（G4）にする。 */
 const bridgePlacedSound = defineSoundEffect(bridgePlacedSoundUrl);
-/** 2本目の板が着く、1本目より少し高く2枚続けて置く木の音。明るさ（音の重心）は1本目の 1.2 倍ほどに抑える。 */
+/** 2本目の板が着く、木の2打。2打目を1打目より5半音高くし、1本目と打つ数でも高さでも聞き分けられるようにする。 */
 const bridgeDoubledSound = defineSoundEffect(bridgeDoubledSoundUrl);
-/** 橋を外す、架ける音より小さく下がる木の音。 */
+/** 橋を外す、外した板が水に落ちる小さな水の音。架ける木の音と素材で分ける。 */
 const bridgeRemovedSound = defineSoundEffect(bridgeRemovedSoundUrl);
-/** 交わる橋に阻まれた、板が突き当たる鈍い木の音。ほかのゲームの阻まれた音と同じ小ささにする。 */
+/** 交わる橋に阻まれた、板が阻んだ橋に当たる鈍い木の音。ほかのゲームの阻まれた音と同じ小ささにする。 */
 const blockedSound = defineSoundEffect(blockedSoundUrl);
 
 /**
@@ -55,7 +56,7 @@ const clearedLightSounds = [
 ].map(defineSoundEffect);
 
 /**
- * 全島が灯り切ったときの、ド・ミ・ソの鐘の和音に水面のきらめきを重ねた音。続けて鳴る結果の報酬の音と同じ調で鳴らす。
+ * 全島が灯り切ったときの、ド・ミ・ソの鐘の和音に、浜に寄せて返す波の層を重ねた音。続けて鳴る結果の報酬の音と同じ調で鳴らす。
  * 灯りの音と合わせた長さと大きさを、ほかのゲームの完成の音（重ねた全体で 1.3〜1.8 秒、ピーク −18.5〜−19.5dBFS）にそろえる。
  */
 const clearedChordSound = defineSoundEffect(clearedChordSoundUrl);
