@@ -4,7 +4,6 @@ import {
   calculateBridgesSpeedFullScoreMs,
   calculateBridgesSpeedScoreRule,
   calculateBridgesTimeDeltaMs,
-  calculateBridgesZeroScoreRatio,
 } from "@/games/bridges/score";
 import { getGameResultLevel } from "@/games/result";
 
@@ -27,11 +26,11 @@ const heavyWorkload: BridgesSolveWorkload = {
   crossingBlockCount: 2,
 };
 
-// 見渡す10秒・島11個・橋12本。
-const lightFullScoreMs = 10_000 + 11_000 + 18_000;
-// 見渡す10秒・島24個・橋26本に、読みの項（配分3回・つながり3回・交差2つ・決まらない行き先26）を足す。
+// 見渡す15秒・島11個・橋12本。
+const lightFullScoreMs = 15_000 + 16_500 + 18_000;
+// 見渡す15秒・島24個・橋26本に、読みの項（配分3回・つながり3回・交差2つ・決まらない行き先26）を足す。
 const heavyReadingMs = 45_000 + 120_000 + 8_000 + 26_000;
-const heavyFullScoreMs = 10_000 + 24_000 + 39_000 + heavyReadingMs;
+const heavyFullScoreMs = 15_000 + 36_000 + 39_000 + heavyReadingMs;
 
 describe("calculateBridgesSpeedFullScoreMs", () => {
   const cases = [
@@ -40,7 +39,7 @@ describe("calculateBridgesSpeedFullScoreMs", () => {
   ] as const;
 
   test.each(cases)(
-    "%sで、見渡す10秒に島1つ1秒・橋1本1.5秒・配分の読みのまとまり1つ15秒・つながりの手詰まり1回40秒・交差で塞がる行き先1つ4秒・決まらない行き先1つ1秒を足すこと",
+    "%sで、見渡す15秒に島1つ1.5秒・橋1本1.5秒・配分の読みのまとまり1つ15秒・つながりの手詰まり1回40秒・交差で塞がる行き先1つ4秒・決まらない行き先1つ1秒を足すこと",
     (_, workload, expected) => {
       const speedFullScoreMs = calculateBridgesSpeedFullScoreMs(workload);
 
@@ -80,29 +79,18 @@ describe("calculateBridgesSpeedFullScoreMs", () => {
   });
 });
 
-describe("calculateBridgesZeroScoreRatio", () => {
-  test("読みの無い問題は3倍にすること", () => {
-    expect(calculateBridgesZeroScoreRatio(lightWorkload)).toBe(3);
-  });
-
-  test("読みの項の割合の3倍を3に足し、0.1単位に丸めること", () => {
-    const expected =
-      Math.round((3 + (3 * heavyReadingMs) / heavyFullScoreMs) * 10) / 10;
-
-    expect(calculateBridgesZeroScoreRatio(heavyWorkload)).toBe(expected);
-    expect(expected).toBe(5.2);
-  });
-});
-
 describe("calculateBridgesSpeedScoreRule", () => {
-  test("基準時間と、その倍率で0点になる時間を返すこと", () => {
-    const rule = calculateBridgesSpeedScoreRule(heavyWorkload);
+  test.each([
+    ["数字の読みだけで決まる小さな盤面", lightWorkload, lightFullScoreMs],
+    ["つながりを何度も読む大きな盤面", heavyWorkload, heavyFullScoreMs],
+  ] as const)(
+    "%sで、基準時間と、読みの量に依らずその4倍で0点になる時間を返すこと",
+    (_, workload, fullScoreMs) => {
+      const rule = calculateBridgesSpeedScoreRule(workload);
 
-    expect(rule).toEqual({
-      fullScoreMs: heavyFullScoreMs,
-      zeroScoreMs: heavyFullScoreMs * 5.2,
-    });
-  });
+      expect(rule).toEqual({ fullScoreMs, zeroScoreMs: fullScoreMs * 4 });
+    },
+  );
 });
 
 describe("calculateBridgesTimeDeltaMs", () => {
@@ -119,10 +107,10 @@ describe("calculateBridgesTimeDeltaMs", () => {
 describe("calculateBridgesPlayScore", () => {
   const cases = [
     ["基準時間ちょうど", 1, 100, "perfect"],
-    ["基準時間の1.2倍", 1.2, 90, "great"],
-    ["基準時間の1.4倍", 1.4, 80, "good"],
-    ["基準時間の2倍", 2, 50, "clear"],
-    ["基準時間の3倍", 3, 0, "clear"],
+    ["基準時間の1.3倍", 1.3, 90, "great"],
+    ["基準時間の1.6倍", 1.6, 80, "good"],
+    ["基準時間の2.5倍", 2.5, 50, "clear"],
+    ["基準時間の4倍", 4, 0, "clear"],
   ] as const;
 
   test.each(cases)(

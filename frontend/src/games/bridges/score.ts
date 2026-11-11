@@ -25,9 +25,9 @@ export const BRIDGES_SCORE_MAXIMUMS = {
  * ので、数字の読みより重い。
  */
 /** 盤面を見渡して始める時間。 */
-export const BRIDGES_SPEED_INITIAL_RECOGNITION_MS = 10_000;
+export const BRIDGES_SPEED_INITIAL_RECOGNITION_MS = 15_000;
 /** 島1つの数字と行き先を見比べる時間。 */
-export const BRIDGES_SPEED_PER_ISLAND_MS = 1_000;
+export const BRIDGES_SPEED_PER_ISLAND_MS = 1_500;
 /** 橋1本を架ける操作の時間（2本の組は2回押す）。押す所を目で追い、押して、本数の知らせを確かめる。 */
 export const BRIDGES_SPEED_PER_BRIDGE_MS = 1_500;
 /** 「少なくとも1本」の配分を探して読む、数字の読みのまとまり1つごとの時間。 */
@@ -45,12 +45,11 @@ export const BRIDGES_SPEED_PER_LOOKAHEAD_ROUND_MS = 110_000;
 export const BRIDGES_SPEED_PER_UNDECIDED_EDGE_MS = 1_000;
 
 /**
- * 0点になる時間の、基準時間に対する倍率（暫定）。読みにかかる時間の割合が大きい問題ほど、人による時間のぶれが大きいので、
- * 0点の線を広げる。倍率は 3 に、基準時間のうち読みの項（配分・つながり・交差・先読み・決まらない行き先）の割合の3倍を足し、
- * 0.1 単位に丸める。読みの無い問題は3倍、読みが基準時間の半分なら 4.5倍になる。
+ * 0点になる時間の、基準時間に対する倍率（暫定）。どの問題も同じ倍率にし、基準時間に対する遅れの割合が同じなら同じ点にする。
+ * 読みの割合で倍率を変えると、読みの少ない低いレベルほど遅れの減点がきつくなった（レベル1 は58%遅れて70点、レベル4 は
+ * 41%遅れて91点）。4倍なら、基準時間の5割遅れで83点、2倍かかって67点。
  */
-export const BRIDGES_SPEED_BASE_ZERO_SCORE_RATIO = 3;
-export const BRIDGES_SPEED_READING_ZERO_SCORE_RATIO = 3;
+export const BRIDGES_SPEED_ZERO_SCORE_RATIO = 4;
 
 export type BridgesPlayScore = PlayScore<keyof typeof BRIDGES_SCORE_MAXIMUMS>;
 
@@ -93,27 +92,12 @@ export function calculateBridgesSpeedFullScoreMs(
   );
 }
 
-/** 0点になる時間の、基準時間に対する倍率。 */
-export function calculateBridgesZeroScoreRatio(
-  workload: BridgesSolveWorkload,
-): number {
-  const readingShare =
-    calculateReadingMs(workload) / calculateBridgesSpeedFullScoreMs(workload);
-  return (
-    Math.round(
-      (BRIDGES_SPEED_BASE_ZERO_SCORE_RATIO +
-        BRIDGES_SPEED_READING_ZERO_SCORE_RATIO * readingShare) *
-        10,
-    ) / 10
-  );
-}
-
 export function calculateBridgesSpeedScoreRule(
   workload: BridgesSolveWorkload,
 ): SpeedScoreRule {
   return createSpeedScoreRule(
     calculateBridgesSpeedFullScoreMs(workload),
-    calculateBridgesZeroScoreRatio(workload),
+    BRIDGES_SPEED_ZERO_SCORE_RATIO,
   );
 }
 

@@ -24,7 +24,7 @@ const problemIdentity = createBridgesProblemIdentity(
   16,
 );
 
-// 基準時間は 10 + 24×1 + 26×1.5 + 3×15 + 3×40 + 26×1 = 264秒。0点は読みの割合 191/264 から 5.2倍の 1,372.8秒。
+// 基準時間は 15 + 24×1.5 + 26×1.5 + 3×15 + 3×40 + 26×1 = 281秒。0点はその4倍の 1,124秒。
 const workload = {
   islandCount: 24,
   edgeCount: 32,
@@ -34,16 +34,16 @@ const workload = {
   countReasoningUndecidedEdgeCount: 26,
 };
 
-// 速さは 100 × (1 − 23秒 / 1,108.8秒) ≒ 98点。
+// 速さは 100 × (1 − 84.3秒 / 843秒) = 90点。
 const performance = {
-  elapsedMs: 287_000,
+  elapsedMs: 365_300,
   undoCount: 2,
   restartCount: 1,
   inputCount: 40,
   blockedCount: 3,
 };
-const expectedScore = 98;
-const expectedTimeDeltaMs = 23_000;
+const expectedScore = 90;
+const expectedTimeDeltaMs = 84_300;
 
 const record = createBridgesPlayRecord({
   difficulty: "5",
@@ -284,7 +284,7 @@ describe("restoreBridgesRecordedResult", () => {
         result: {
           ...performance,
           workload,
-          speedRule: { fullScoreMs: 264_000, zeroScoreMs: 1_372_800 },
+          speedRule: { fullScoreMs: 281_000, zeroScoreMs: 1_124_000 },
           timeDeltaMs: expectedTimeDeltaMs,
           score: { total: expectedScore, breakdown: { speed: expectedScore } },
         },
