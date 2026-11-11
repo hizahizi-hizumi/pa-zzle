@@ -7,7 +7,10 @@ import {
   type BridgesPuzzleState,
   createInitialBridgesState,
 } from "@/games/bridges/puzzle/state";
-import { cycleBridgesEdge } from "@/games/bridges/puzzle/transitions";
+import {
+  type BridgesCycleDirection,
+  cycleBridgesEdge,
+} from "@/games/bridges/puzzle/transitions";
 import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
 export type BridgesSession = GameSession<BridgesProblem, BridgesPuzzleState> & {
@@ -61,17 +64,23 @@ export function createBridgesSession(
   };
 }
 
-/** 辺の橋を 1本 → 2本 → なし と回す。全部の島がちょうどでつながったら、その時刻でクリアにする。 */
+/** 辺の橋の本数を `direction` の向きに回す。全部の島がちょうどでつながったら、その時刻でクリアにする。 */
 export function cycleBridgesSessionEdge(
   session: BridgesSession,
   edge: number,
   operatedAt: number,
+  direction: BridgesCycleDirection = "forward",
 ): BridgesSessionEdgeChange {
   if (session.status !== "playing") {
     return { session, crossingEdges: null };
   }
 
-  const change = cycleBridgesEdge(session.problem, session.puzzleState, edge);
+  const change = cycleBridgesEdge(
+    session.problem,
+    session.puzzleState,
+    edge,
+    direction,
+  );
   if (change.kind === "blocked") {
     return {
       session: { ...session, blockedCount: session.blockedCount + 1 },

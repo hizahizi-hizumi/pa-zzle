@@ -47,6 +47,36 @@ describe("cycleBridgesEdge", () => {
     expect(state.bridges).toEqual(expected);
   });
 
+  test.each([
+    [1, [0, 2, 0, 0]],
+    [2, [0, 1, 0, 0]],
+    [3, [0, 0, 0, 0]],
+  ])(
+    "逆の向きで同じ辺を %s 回回すと なし → 2本 → 1本 → なし と回ること",
+    (times, expected) => {
+      const state = Array.from({ length: times }).reduce<BridgesPuzzleState>(
+        (current) => {
+          const change = cycleBridgesEdge(board, current, 1, "backward");
+          return change.kind === "changed" ? change.state : current;
+        },
+        initial,
+      );
+
+      expect(state.bridges).toEqual(expected);
+    },
+  );
+
+  test("交わる辺に橋があると、逆の向きでも架けないこと", () => {
+    const change = cycleBridgesEdge(
+      board,
+      applyCycles(initial, [3]),
+      2,
+      "backward",
+    );
+
+    expect(change).toEqual({ kind: "blocked", crossingEdges: [3] });
+  });
+
   describe("交わる辺に橋がある場合", () => {
     const crossed = applyCycles(initial, [3]);
 

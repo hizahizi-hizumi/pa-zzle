@@ -9,6 +9,7 @@ import type {
 import type { BridgesBoard as BridgesBoardState } from "@/games/bridges/puzzle/board";
 import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
+import type { BridgesCycleDirection } from "@/games/bridges/puzzle/transitions";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/BridgesStatusAnnouncement";
 import { useBridgesSoundEffects } from "@/games/bridges/ui/BridgesPlay/use-bridges-sound-effects";
@@ -31,7 +32,7 @@ type BridgesPlayProps = GamePlayScreenProps<BridgesDifficulty, BridgesResult> &
     islandStatuses: readonly BridgesIslandStatus[];
     undoCount: number;
     edgeNotice: BridgesEdgeNotice | null;
-    onCycleEdge: (edge: number) => void;
+    onCycleEdge: (edge: number, direction?: BridgesCycleDirection) => void;
   };
 
 /** 1問のプレイ画面。クリアの演出を終えると結果画面に替わる。 */
@@ -107,6 +108,7 @@ export function BridgesPlay({
             clearing={progress === "clearing"}
             interactionDisabled={progress !== "playing"}
             onCycleEdge={onCycleEdge}
+            onCycleEdgeBackward={(edge) => onCycleEdge(edge, "backward")}
             onClearAnimationComplete={onClearAnimationComplete}
           />
         </div>

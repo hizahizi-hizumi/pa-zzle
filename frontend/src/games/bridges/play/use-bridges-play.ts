@@ -16,6 +16,7 @@ import {
   listBridgesIslandStatuses,
 } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
+import type { BridgesCycleDirection } from "@/games/bridges/puzzle/transitions";
 import {
   type BridgesPlayScore,
   calculateBridgesPlayScore,
@@ -84,8 +85,8 @@ export type BridgesPlay = GamePlay<
     undoCount: number;
     /** 最後の盤面操作（橋を回す・待った）で橋に起きた変化。盤面を戻す・リセットの後は `null`。 */
     edgeNotice: BridgesEdgeNotice | null;
-    /** 辺の橋を 1本 → 2本 → なし と回す。交わる橋に阻まれたら架けない。 */
-    cycleEdge: (edge: number) => void;
+    /** 辺の橋を `direction` の向き（省くと 1本 → 2本 → なし）に回す。交わる橋に阻まれたら架けない。 */
+    cycleEdge: (edge: number, direction?: BridgesCycleDirection) => void;
   };
 
 type BridgesPlayState = {
@@ -160,36 +161,40 @@ export function useBridgesPlay(
 
   const nextOperationId = useRef(0);
 
-  const cycleEdge = useCallback((edge: number) => {
-    const operatedAt = Date.now();
-    const id = nextOperationId.current++;
-    setPlay((current) => {
-      const { session, crossingEdges } = cycleBridgesSessionEdge(
-        current.session,
-        edge,
-        operatedAt,
-      );
-      if (crossingEdges !== null) {
-        return {
-          ...current,
-          session,
-          edgeNotice: { id, change: "blocked", edge, crossingEdges },
-        };
-      }
-      const next = applyPlaySession(current, session);
-      return next === current
-        ? current
-        : {
-            ...next,
-            edgeNotice: {
-              id,
-              change: "changed",
-              edge,
-              count: session.puzzleState.bridges[edge]!,
-            },
+  const cycleEdge = useCallback(
+    (edge: number, direction: BridgesCycleDirection = "forward") => {
+      const operatedAt = Date.now();
+      const id = nextOperationId.current++;
+      setPlay((current) => {
+        const { session, crossingEdges } = cycleBridgesSessionEdge(
+          current.session,
+          edge,
+          operatedAt,
+          direction,
+        );
+        if (crossingEdges !== null) {
+          return {
+            ...current,
+            session,
+            edgeNotice: { id, change: "blocked", edge, crossingEdges },
           };
-    });
-  }, []);
+        }
+        const next = applyPlaySession(current, session);
+        return next === current
+          ? current
+          : {
+              ...next,
+              edgeNotice: {
+                id,
+                change: "changed",
+                edge,
+                count: session.puzzleState.bridges[edge]!,
+              },
+            };
+      });
+    },
+    [],
+  );
 
   const undo = useCallback(() => {
     const id = nextOperationId.current++;
