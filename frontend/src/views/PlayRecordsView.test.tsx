@@ -8,6 +8,7 @@ import {
 } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import { gameCatalog } from "@/game-catalog/game-catalog";
 import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import { createProblemId } from "@/games/problem-id";
@@ -174,7 +175,7 @@ describe("PlayRecordsView", () => {
       expect(orderedTimeline[0]?.getAttribute("aria-label")).toContain(
         "ナンプレ",
       );
-      expect(orderedTowers).toHaveLength(10);
+      expect(orderedTowers).toHaveLength(gameCatalog.length);
     });
     test("実際のパズルを選ぶと近くの内訳とゲームへの導線が変わること", () => {
       const towers = screen.getByRole("group", { name: "パズルの積み上げ" });
