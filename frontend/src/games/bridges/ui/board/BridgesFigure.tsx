@@ -150,7 +150,7 @@ const POST_DISTANCE = ISLAND_RADIUS + 0.1;
 /** 島を触っている間に、架けられる相手までの区間に敷く帯の太さ。 */
 const GUIDE_BAND_WIDTH = 0.56;
 /** マスの中心の、島の無い所に打つ点の半径。 */
-const GRID_DOT_RADIUS = 0.03;
+const GRID_DOT_RADIUS = 0.05;
 /**
  * 島の輪郭線の太さ。10×10 のスマホでも 2px ほどの線にし、塗りが海や橋と近い明るさになる状態でも島の縁を切り出す。
  */
