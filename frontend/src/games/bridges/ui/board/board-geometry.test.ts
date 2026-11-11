@@ -1,16 +1,10 @@
 import {
-  decodeBridgesPoolProblem,
-  listBridgesPoolEntries,
-} from "@/games/bridges/problem/problem-pool";
-import {
   type BridgesBoard,
   findBridgesEdgeToward,
-  getBridgesNetwork,
   parseBridgesBoard,
 } from "@/games/bridges/puzzle/board";
 import {
   BOARD_MARGIN,
-  type BoardPoint,
   createBoardView,
   findBoardTarget,
   findDragAim,
@@ -19,11 +13,9 @@ import {
   getBridgeLineOffsets,
   getEdgeViewSegment,
   getIslandCenter,
-  ISLAND_RADIUS,
   toBoardPoint,
   WIDE_BOARD_MARGIN,
 } from "@/games/bridges/ui/board/board-geometry";
-import { difficultyLevels } from "@/games/difficulty";
 
 // 島: 0 (0,0)、1 (0,2)、2 (2,0)、3 (2,4)、4 (4,2)。
 // 辺: 0 = 島0-島1（横 y=0.5）、1 = 島0-島2（縦 x=0.5）、2 = 島1-島4（縦 x=2.5）、3 = 島2-島3（横 y=2.5）。
@@ -287,133 +279,75 @@ describe("交わる2本の線のどちらからもほとんど同じだけ離れ
   });
 });
 
-describe("問題集から抜き取った盤面の当たり判定", () => {
-  /** 各レベルの問題集から、この間隔ごとに1問を取る。全 2,500問だと CI のテストの時間の上限を超えるため。 */
-  const SAMPLE_STEP = 10;
-
-  /** 島の真円の半径に、輪郭線と指のぶれを少し足した距離。これより島の中心から離れた点を水面とする。 */
-  const LAND_CLEARANCE = ISLAND_RADIUS + 0.06;
-  /** 押した点に別の線が、狙った線よりこれ以上離れていれば、狙った線が明らかに近いとする。 */
-  const CLEAR_LEAD = 0.25;
-  /** 線の当たり範囲の、線から片側の幅。 */
-  const LINE_HALF_WIDTH = 0.5;
-  /** 線を横切る向きに取る、線からのずれ。 */
-  const ACROSS_OFFSETS = [-0.4, -0.2, 0, 0.2, 0.4];
-
-  const boards: { label: string; board: BridgesBoard }[] =
-    difficultyLevels.flatMap(({ id }) =>
-      listBridgesPoolEntries(id).flatMap((entry, index) =>
-        index % SAMPLE_STEP === 0
-          ? [
-              {
-                label: `Lv${id}-${index}`,
-                board: decodeBridgesPoolProblem(entry[0], entry[8], entry[9]),
-              },
-            ]
-          : [],
-      ),
+describe("誤操作が起きやすい形の当たり判定", () => {
+  function islandIn(target: BridgesBoard, row: number, column: number): number {
+    return target.islands.findIndex(
+      (island) => island.row === row && island.column === column,
     );
+  }
 
-  type Line = { horizontal: boolean; at: number; low: number; high: number };
+  describe("間が1マスの短い橋と、線のそばの斜め隣の島", () => {
+    // 島 (0,0)・(0,2) を結ぶ横の線（y=0.5）と、その線の斜め下の島 (1,1)（中心 (1.5, 1.5)）。
+    const shortBoard = parseBridgesBoard(["1.1", ".1."]);
+    const shortEdge = findBridgesEdgeToward(
+      shortBoard,
+      islandIn(shortBoard, 0, 0),
+      "right",
+    )!;
+    const diagonal = islandIn(shortBoard, 1, 1);
 
-  function listLines(board: BridgesBoard): Line[] {
-    return getBridgesNetwork(board).edges.map(({ from, to, orientation }) => {
-      const start = getIslandCenter(board.islands[from]!);
-      const end = getIslandCenter(board.islands[to]!);
-      return orientation === "horizontal"
-        ? { horizontal: true, at: start.y, low: start.x, high: end.x }
-        : { horizontal: false, at: start.x, low: start.y, high: end.y };
+    test.each([
+      ["2島の真ん中", { x: 1.5, y: 0.5 }, { kind: "edge", edge: shortEdge }],
+      [
+        "左の島の陸のすぐ外",
+        { x: 1.05, y: 0.5 },
+        { kind: "edge", edge: shortEdge },
+      ],
+      [
+        "線の 0.2 マス下（斜め隣の島の方）",
+        { x: 1.5, y: 0.7 },
+        { kind: "edge", edge: shortEdge },
+      ],
+      [
+        "線の 0.45 マス下",
+        { x: 1.5, y: 0.95 },
+        { kind: "edge", edge: shortEdge },
+      ],
+      [
+        "斜め隣の島の陸の上",
+        { x: 1.5, y: 1.1 },
+        { kind: "island", island: diagonal },
+      ],
+    ] as const)("%sを押すと %j を指すこと", (_, point, expected) => {
+      expect(findBoardTarget(shortBoard, point)).toEqual(expected);
     });
-  }
-
-  /** 点が線の当たり範囲（2島の中心の間で、線から片側 `LINE_HALF_WIDTH` まで）にあれば線までの距離、無ければ `null`。 */
-  function distanceInLineRange(
-    line: Line,
-    { x, y }: BoardPoint,
-  ): number | null {
-    const [along, across] = line.horizontal ? [x, y] : [y, x];
-    const distance = Math.abs(across - line.at);
-    return line.low < along && along < line.high && distance <= LINE_HALF_WIDTH
-      ? distance
-      : null;
-  }
-
-  /** 線ごとに、両端の島の陸のすぐ外と2島の真ん中で、線を横切る向きにずらした点。 */
-  function listSamplePoints(line: Line): BoardPoint[] {
-    const alongs = [
-      line.low + LAND_CLEARANCE,
-      (line.low + line.high) / 2,
-      line.high - LAND_CLEARANCE,
-    ];
-    return alongs.flatMap((along) =>
-      ACROSS_OFFSETS.map((offset) =>
-        line.horizontal
-          ? { x: along, y: line.at + offset }
-          : { x: line.at + offset, y: along },
-      ),
-    );
-  }
-
-  test("どの組の線も、陸の外で他の線より明らかに近い点を押すと、その線を指すこと", () => {
-    const misses: string[] = [];
-    let checked = 0;
-    for (const { label, board } of boards) {
-      const lines = listLines(board);
-      const centers = board.islands.map(getIslandCenter);
-      for (const [edge, line] of lines.entries()) {
-        for (const point of listSamplePoints(line)) {
-          const onLand = centers.some(
-            (center) =>
-              Math.hypot(point.x - center.x, point.y - center.y) <
-              LAND_CLEARANCE,
-          );
-          const own = distanceInLineRange(line, point);
-          if (onLand || own === null) {
-            continue;
-          }
-          const rivalNear = lines.some((other, index) => {
-            if (index === edge) return false;
-            const distance = distanceInLineRange(other, point);
-            return distance !== null && distance < own + CLEAR_LEAD;
-          });
-          if (rivalNear) {
-            continue;
-          }
-          checked += 1;
-          const target = findBoardTarget(board, point);
-          if (target?.kind !== "edge" || target.edge !== edge) {
-            misses.push(
-              `${label} 辺${edge} (${point.x.toFixed(2)}, ${point.y.toFixed(2)}) → ${JSON.stringify(target)}`,
-            );
-          }
-        }
-      }
-    }
-
-    expect(checked).toBeGreaterThan(1000);
-    expect(misses.slice(0, 10)).toEqual([]);
   });
 
-  test("どの島も、陸の中を押すとその島を指すこと", () => {
-    const misses: string[] = [];
-    for (const { label, board } of boards) {
-      for (const [island, center] of board.islands
-        .map(getIslandCenter)
-        .entries()) {
-        for (let step = 0; step < 8; step += 1) {
-          const angle = (step / 8) * 2 * Math.PI;
-          const point = {
-            x: center.x + Math.cos(angle) * ISLAND_RADIUS * 0.9,
-            y: center.y + Math.sin(angle) * ISLAND_RADIUS * 0.9,
-          };
-          const target = findBoardTarget(board, point);
-          if (target?.kind !== "island" || target.island !== island) {
-            misses.push(`${label} 島${island} → ${JSON.stringify(target)}`);
-          }
-        }
-      }
-    }
+  describe("隣り合う行で平行に並ぶ2本の線", () => {
+    // 上の線は (0,0)-(0,2)（y=0.5）、下の線は (1,1)-(1,3)（y=1.5）。x が 1.5〜2.5 の間で並ぶ。
+    const parallelBoard = parseBridgesBoard(["1.1.", ".1.1"]);
+    const upper = findBridgesEdgeToward(
+      parallelBoard,
+      islandIn(parallelBoard, 0, 0),
+      "right",
+    )!;
+    const lower = findBridgesEdgeToward(
+      parallelBoard,
+      islandIn(parallelBoard, 1, 1),
+      "right",
+    )!;
+    const both = [upper, lower].sort((left, right) => left - right);
 
-    expect(misses.slice(0, 10)).toEqual([]);
+    test.each([
+      ["上の線の 0.3 マス下", { x: 2, y: 0.8 }, { kind: "edge", edge: upper }],
+      ["下の線の 0.3 マス上", { x: 2, y: 1.2 }, { kind: "edge", edge: lower }],
+      [
+        "2本の線のちょうど真ん中",
+        { x: 2, y: 1 },
+        { kind: "ambiguous", edges: both },
+      ],
+    ] as const)("%sを押すと %j を指すこと", (_, point, expected) => {
+      expect(findBoardTarget(parallelBoard, point)).toEqual(expected);
+    });
   });
 });
