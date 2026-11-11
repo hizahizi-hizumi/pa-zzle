@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ブリッジパズル">
+  <rect x="18" y="18" width="84" height="84" rx="7" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <rect x="53.06" y="34.00" width="14.06" height="6" fill="var(--game-pictogram-soft)"/>
+  <path d="M53.06 34.00H67.11M53.06 40.00H67.11" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <rect x="53.00" y="43.00" width="14.60" height="6" fill="var(--game-pictogram-soft)"/>
+  <path d="M53.00 43.00H67.61M53.00 49.00H67.61" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <rect x="76.00" y="54.09" width="8" height="12.77" fill="var(--game-pictogram-soft)"/>
+  <path d="M76.00 54.09V66.87M84.00 54.09V66.87" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <path d="M28 72q4.0 -4.0 8.0 0t8.0 0" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M38 86q4.0 -4.0 8.0 0t8.0 0" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="41.5" cy="41.5" r="13.25" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <circle cx="80.0" cy="41.5" r="13.25" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <circle cx="80.0" cy="80.0" r="13.25" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+</svg>
