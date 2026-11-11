@@ -47,6 +47,7 @@ const stepTaps: readonly BoardPoint[] = [
   edgePoints.center,
   edgePoints.rightBottom,
   edgePoints.rightBottom,
+  edgePoints.middle,
   edgePoints.rightTop,
   edgePoints.leftTop,
 ];
@@ -286,22 +287,21 @@ describe("BridgesTutorial", () => {
         ).not.toBeNull();
       });
 
-      test("交差の手順で、右の3と、交わる真ん中の縦の橋と左へ架けられない辺、2本架かった下の橋を覆いから抜くこと", () => {
+      test("交差の手順では、先に真ん中の縦の2本に阻まれる右の3と左の1の間に印を付け、そこと交わる縦の橋と、直前に架けた橋を覆いから抜くこと", () => {
         tapAll(stepTaps.slice(0, 4));
 
         expect(screen.queryByText(/交差できません/)).not.toBeNull();
-        expect(getEdgesWithCue("mark")).toEqual([edgeBetween([1, 5], [3, 5])]);
+        expect(getEdgesWithCue("mark")).toEqual([edgeBetween([3, 1], [3, 5])]);
         expect(getSpotlit("edge")).toEqual(
           sorted([
-            edgeBetween([1, 5], [3, 5]),
-            edgeBetween([1, 3], [4, 3]),
             edgeBetween([3, 1], [3, 5]),
+            edgeBetween([1, 3], [4, 3]),
             edgeBetween([3, 5], [5, 5]),
           ]),
         );
       });
 
-      test("交差の手順で、覆いから抜いた架けられない横の辺を押すと、盤面を変えずに本番と同じく阻んだ橋を点けて阻まれた音を鳴らし、印の線を濃くし直すこと", () => {
+      test("交差の手順で印の辺を押すと、盤面を変えずに本番と同じく阻んだ橋を点けて阻まれた音を鳴らし、印を右の3と上の2の間へ移すこと", () => {
         tapAll(stepTaps.slice(0, 4));
         vi.mocked(playSound).mockClear();
         vi.mocked(playLayeredSound).mockClear();
@@ -319,6 +319,20 @@ describe("BridgesTutorial", () => {
         expect(
           screen.queryByText(/橋どうしは\s*交差できません/),
         ).not.toBeNull();
+      });
+
+      test("交差の手順で阻まれるのを見せた後は、右の3と、交わる真ん中の縦の橋と左へ架けられない辺、2本架かった下の橋を覆いから抜くこと", () => {
+        tapAll(stepTaps.slice(0, 5));
+
+        expect(getEdgesWithCue("mark")).toEqual([edgeBetween([1, 5], [3, 5])]);
+        expect(getSpotlit("edge")).toEqual(
+          sorted([
+            edgeBetween([1, 5], [3, 5]),
+            edgeBetween([1, 3], [4, 3]),
+            edgeBetween([3, 1], [3, 5]),
+            edgeBetween([3, 5], [5, 5]),
+          ]),
+        );
       });
 
       describe("島から架ける操作の手順の場合", () => {

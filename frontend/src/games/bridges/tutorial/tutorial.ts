@@ -38,12 +38,15 @@ export type BridgesTutorialAction = { type: "cycle"; edge: number };
  *   操作を教える手順では `null`。
  * - `gesture`: この手順で受け付ける架け方。`between` は島の間を押す（島を選んでから相手の島を押す、なぞるも受ける）。
  *   `fromIsland` は島から架ける操作（なぞる、島を選んでから相手の島を押す）だけを受け、島の間を押しても架けない。
+ * - `blockedEdge`: `edge` より先に印を付けて押させ、交わる橋に阻まれる盤面の反応を見せる辺。阻まれるのを見せたら、
+ *   印を `edge` へ移す。見せない手順では `null`。
  */
 export type BridgesTutorialStep = TutorialStep<BridgesTutorialRuleId> & {
   edge: number;
   bridgeCount: BridgeCount;
   island: number | null;
   gesture: "between" | "fromIsland";
+  blockedEdge: number | null;
 };
 
 /**
@@ -66,11 +69,15 @@ export type BridgesTutorialMove =
   | { kind: "changed"; edge: number; fitsStep: boolean; removing: boolean }
   | { kind: "blocked"; edge: number; crossingEdges: readonly number[] };
 
-/** `moveCount`: 操作した手の数。同じ辺への合図をやり直す目印に使う。 */
+/**
+ * - `moveCount`: 操作した手の数。同じ辺への合図をやり直す目印に使う。
+ * - `shownBlockedEdges`: 手順で押させて、交わる橋に阻まれるのを見せ終えた辺。
+ */
 export type BridgesTutorialBoardState = {
   bridges: readonly BridgeCount[];
   moveCount: number;
   lastMove: BridgesTutorialMove | null;
+  shownBlockedEdges: readonly number[];
 };
 
 export type BridgesTutorialSituation = TutorialSituation<
@@ -135,6 +142,7 @@ const topRightEdge = edgeBetween([1, 3], [1, 5]);
 const centerEdge = edgeBetween([1, 3], [4, 3]);
 const rightTopEdge = edgeBetween([1, 5], [3, 5]);
 const rightBottomEdge = edgeBetween([3, 5], [5, 5]);
+const middleRowEdge = edgeBetween([3, 1], [3, 5]);
 const bottomEdge = edgeBetween([5, 1], [5, 5]);
 
 const emptyBridges: readonly BridgeCount[] = network.edges.map(() => 0);
@@ -158,7 +166,8 @@ const solvedBridges: readonly BridgeCount[] = network.edges.map(
  * - 操作: 上の4と真ん中の2の間に1本、続けて2本目を架ける。真ん中の2は行き先が上の4だけなので、ゴールと同じ2本。
  * - 2本まで: もう一度押した2本目で、同じ2島の間は2本までと伝える。この上限は、交差の手順で右の3の下の橋を2本で止める決め手になる。
  * - 数字と同じ本数: 右下の3から、左の1へは1本しか出せないので、上の3へ2本架ける。
- * - 交差しない: 右の3は、あと1本要る。下は2本で上限、左は真ん中の縦の2本と交わるので、上の2へ架ける。
+ * - 交差しない: 先に右の3から左の1へ架けさせ、真ん中の縦の2本に阻まれる盤面の反応（板が突き当たって弾かれ、阻んだ橋が
+ *   赤く揺れる）を見せる。右の3は、あと1本要る。下は2本で上限、左は真ん中の縦の2本と交わるので、上の2へ架ける。
  * - 全部つなげる: 左の真ん中の1は、右へは交わって架けられず、下の1とつなぐと2島だけで閉じるので、上の2へ架ける。
  * - 操作: 左上の2から上の4へなぞって架ける。本番の、島から架ける操作（なぞる、島を選んでから相手の島を押す）を体験させる。
  *   左上の2は下へ1本架かり、あと1本は右の4へしか出せないので、ゴールと同じ1本。
@@ -172,6 +181,7 @@ const steps: readonly BridgesTutorialStep[] = [
     bridgeCount: 1,
     island: null,
     gesture: "between",
+    blockedEdge: null,
   },
   {
     message: {
@@ -183,6 +193,7 @@ const steps: readonly BridgesTutorialStep[] = [
     bridgeCount: 2,
     island: null,
     gesture: "between",
+    blockedEdge: null,
   },
   {
     message: {
@@ -194,6 +205,7 @@ const steps: readonly BridgesTutorialStep[] = [
     bridgeCount: 2,
     island: islandAt(5, 5),
     gesture: "between",
+    blockedEdge: null,
   },
   {
     message: { headline: "橋どうしは\n交差できません", detail: null },
@@ -202,6 +214,7 @@ const steps: readonly BridgesTutorialStep[] = [
     bridgeCount: 1,
     island: islandAt(3, 5),
     gesture: "between",
+    blockedEdge: middleRowEdge,
   },
   {
     message: {
@@ -213,6 +226,7 @@ const steps: readonly BridgesTutorialStep[] = [
     bridgeCount: 1,
     island: islandAt(3, 1),
     gesture: "between",
+    blockedEdge: null,
   },
   {
     message: {
@@ -224,6 +238,7 @@ const steps: readonly BridgesTutorialStep[] = [
     bridgeCount: 1,
     island: null,
     gesture: "fromIsland",
+    blockedEdge: null,
   },
 ];
 
@@ -420,12 +435,32 @@ function hasVisibleViolation({
   return overIslands.length > 0 || closedGroups.length > 0;
 }
 
+/** 手順の `blockedEdge` を押して阻まれるのを見せ終えたか。見せる辺の無い手順では、いつも見せ終えている。 */
+function hasShownBlockedEdge(
+  step: BridgesTutorialStep,
+  { shownBlockedEdges }: BridgesTutorialBoardState,
+): boolean {
+  return (
+    step.blockedEdge === null || shownBlockedEdges.includes(step.blockedEdge)
+  );
+}
+
 function startBridgesTutorial(): BridgesTutorialBoardState {
-  return { bridges: emptyBridges, moveCount: 0, lastMove: null };
+  return {
+    bridges: emptyBridges,
+    moveCount: 0,
+    lastMove: null,
+    shownBlockedEdges: [],
+  };
 }
 
 function getBridgesTutorialGoal(): BridgesTutorialBoardState {
-  return { bridges: solvedBridges, moveCount: 0, lastMove: null };
+  return {
+    bridges: solvedBridges,
+    moveCount: 0,
+    lastMove: null,
+    shownBlockedEdges: [],
+  };
 }
 
 /**
@@ -456,11 +491,20 @@ function performBridgesTutorialAction(
           edge,
           crossingEdges: change.crossingEdges,
         },
+        shownBlockedEdges:
+          step?.blockedEdge === edge
+            ? [...state.shownBlockedEdges, edge]
+            : state.shownBlockedEdges,
       },
       outcome: step === null ? "violated" : "continued",
     };
   }
-  if (step !== null && (step.edge !== edge || current >= step.bridgeCount)) {
+  if (
+    step !== null &&
+    (step.edge !== edge ||
+      current >= step.bridgeCount ||
+      !hasShownBlockedEdge(step, state))
+  ) {
     return { state, outcome: "ignored" };
   }
 
@@ -471,6 +515,7 @@ function performBridgesTutorialAction(
     isRemovalHint({ step, earnedRuleIds }, state, edge) &&
     bridges[edge]! > solvedBridges[edge]!;
   const next: BridgesTutorialBoardState = {
+    ...state,
     bridges,
     moveCount: state.moveCount + 1,
     lastMove: { kind: "changed", edge, fitsStep, removing },
@@ -561,24 +606,43 @@ export function getBridgesTutorialIslandStatuses({
   return listBridgesIslandStatuses(board, { bridges });
 }
 
-/** 手順で印を付ける辺。手順の本数まで架けたら、次の手順へ進むまで `null`。手を離した後も `null`。 */
+/**
+ * 手順で印を付ける辺。阻まれるのを見せる辺があれば、見せ終えるまでその辺。手順の本数まで架けたら、次の手順へ進むまで `null`。
+ * 手を離した後も `null`。
+ */
 export function getBridgesTutorialStepEdge(
   { step }: BridgesTutorialSituation,
   state: BridgesTutorialBoardState,
 ): number | null {
-  return step !== null && state.bridges[step.edge]! < step.bridgeCount
-    ? step.edge
-    : null;
+  if (step === null) {
+    return null;
+  }
+  if (!hasShownBlockedEdge(step, state)) {
+    return step.blockedEdge;
+  }
+  return state.bridges[step.edge]! < step.bridgeCount ? step.edge : null;
 }
 
 /**
  * 手順の辺の本数を決めるもの（決め手）。手順で伝えたルールまでで、手順の辺が手順の本数に決まる島と橋。
- * 操作を教える手順と、手を離した後は空。
+ * 阻まれるのを見せている間は、押させる辺に交わる、架かった橋。操作を教える手順と、手を離した後は空。
  */
 export function getBridgesTutorialStepReason(
   { step, earnedRuleIds }: BridgesTutorialSituation,
   state: BridgesTutorialBoardState,
 ): BridgesTutorialReason {
+  if (
+    step !== null &&
+    step.blockedEdge !== null &&
+    !hasShownBlockedEdge(step, state)
+  ) {
+    return {
+      islands: [],
+      edges: network.crossingEdges[step.blockedEdge]!.filter(
+        (crossing) => state.bridges[crossing]! > 0,
+      ),
+    };
+  }
   if (step?.island == null) {
     return noReason;
   }
