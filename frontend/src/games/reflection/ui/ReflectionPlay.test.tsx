@@ -91,6 +91,7 @@ describe("ReflectionPlay", () => {
 
   const callbacks = {
     onSelectCell: vi.fn(),
+    onDragPiece: vi.fn(),
     onSelectStockPiece: vi.fn(),
     onSelectClue: vi.fn(),
     onRemovePiece: vi.fn(),
@@ -132,6 +133,191 @@ describe("ReflectionPlay", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  test("光学表現を切り替えても盤面の操作状態を維持すること", () => {
+    renderPlay({});
+    const board = getBoardGroup();
+    const options = within(
+      screen.getByRole("group", { name: "光の表現を比較" }),
+    );
+    const original = options.getByRole("button", { name: "現行" });
+    const luminous = options.getByRole("button", { name: "夜光" });
+    const atelier = options.getByRole("button", { name: "光学台" });
+    const radiance = options.getByRole("button", { name: "光彩" });
+
+    expect(radiance.getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(luminous);
+
+    expect(luminous.getAttribute("aria-pressed")).toBe("true");
+    expect(radiance.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(atelier);
+    expect(atelier.getAttribute("aria-pressed")).toBe("true");
+    expect(luminous.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(radiance);
+    expect(radiance.getAttribute("aria-pressed")).toBe("true");
+    expect(atelier.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(original);
+    expect(original.getAttribute("aria-pressed")).toBe("true");
+    expect(radiance.getAttribute("aria-pressed")).toBe("false");
+    expect(getBoardGroup()).toBe(board);
+    expect(board.querySelectorAll("button")).toHaveLength(9);
+    expect(callbacks.onRestart).not.toHaveBeenCalled();
+    expect(callbacks.onSelectCell).not.toHaveBeenCalled();
+  });
+
+  test("光彩案では盤面を広げても光の反射位置と操作対象が変わらないこと", () => {
+    const entry = { side: "top", index: 0 } as const;
+    renderPlay({
+      board: solution,
+      laser: { entry, trace: traceReflectionLaser(solution, entry) },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "光彩" }));
+    const board = document.querySelector<HTMLElement>(".reflection-board");
+    const glint = getBoardGroup().querySelector("[data-laser-hit]");
+
+    expect(board?.style.gridTemplateColumns).toContain("0.48fr");
+    expect(glint).toBeTruthy();
+    expect(callbacks.onSelectCell).not.toHaveBeenCalled();
+  });
+
+  test("吸収された光の終点は鏡の反射発光と区別されること", () => {
+    const entry = { side: "top", index: 2 } as const;
+    renderPlay({
+      board: solution,
+      laser: { entry, trace: traceReflectionLaser(solution, entry) },
+    });
+    const blackHole = within(getBoardGroup()).getByRole("button", {
+      name: "3行3列 ブラックホール",
+    });
+
+    expect(blackHole.hasAttribute("data-laser-absorbed")).toBe(true);
+    expect(blackHole.hasAttribute("data-laser-hit")).toBe(false);
+  });
+
+  test("完成演出中に光路を反射した鏡だけが光を受けること", () => {
+    renderPlay({ progress: "clearing", board: solution });
+
+    fireEvent.click(screen.getByRole("button", { name: "光彩" }));
+    const mirror = within(getBoardGroup()).getByRole("button", {
+      name: "1行1列 右上がりの鏡",
+    });
+    const unoccupied = within(getBoardGroup()).getByRole("button", {
+      name: "1行2列 空き",
+    });
+
+    expect(mirror.hasAttribute("data-laser-hit")).toBe(true);
+    expect(unoccupied.hasAttribute("data-laser-hit")).toBe(false);
+  });
+
+  test("ピースをドラッグすると一度だけ配置操作になりタップ選択を起こさないこと", () => {
+    renderPlay({});
+    const piece = screen.getByRole("button", { name: "右上がりの鏡 残り1" });
+    const cell = within(getBoardGroup()).getByRole("button", {
+      name: "1行1列 空き",
+    });
+    const oldElementFromPoint = document.elementFromPoint;
+    Object.defineProperty(document, "elementFromPoint", {
+      configurable: true,
+      value: () => cell,
+    });
+    try {
+      fireEvent.pointerDown(piece, {
+        pointerId: 1,
+        isPrimary: true,
+        button: 0,
+        clientX: 20,
+        clientY: 200,
+      });
+      fireEvent.pointerMove(piece, {
+        pointerId: 1,
+        isPrimary: true,
+        clientX: 100,
+        clientY: 120,
+      });
+      expect(document.querySelector(".reflection-drag-ghost")).not.toBeNull();
+      expect(cell.hasAttribute("data-drag-target")).toBe(true);
+
+      fireEvent.pointerUp(piece, {
+        pointerId: 1,
+        isPrimary: true,
+        button: 0,
+        pointerType: "mouse",
+        clientX: 100,
+        clientY: 120,
+      });
+      fireEvent.click(piece, { detail: 1, clientX: 100, clientY: 120 });
+
+      expect(callbacks.onDragPiece).toHaveBeenCalledExactlyOnceWith(
+        { type: "stock", piece: "slash" },
+        { type: "cell", cellIndex: 0 },
+      );
+      expect(callbacks.onSelectStockPiece).not.toHaveBeenCalled();
+      expect(document.querySelector(".reflection-drag-ghost")).toBeNull();
+    } finally {
+      if (oldElementFromPoint) {
+        Object.defineProperty(document, "elementFromPoint", {
+          configurable: true,
+          value: oldElementFromPoint,
+        });
+      } else {
+        Reflect.deleteProperty(document, "elementFromPoint");
+      }
+    }
+  });
+
+  test("盤上のピースをストックへドラッグすると戻し先が光り、一度の操作で戻ること", () => {
+    renderPlay({ board: placedBoard });
+    const source = getBoardGroup().querySelector<HTMLButtonElement>(
+      '[data-reflection-cell-index="4"]',
+    );
+    const stockZone = screen.getByRole("group", { name: "ストック" });
+    expect(source).not.toBeNull();
+    const oldElementFromPoint = document.elementFromPoint;
+    Object.defineProperty(document, "elementFromPoint", {
+      configurable: true,
+      value: () => stockZone,
+    });
+    try {
+      fireEvent.pointerDown(source!, {
+        pointerId: 3,
+        isPrimary: true,
+        button: 0,
+        clientX: 80,
+        clientY: 120,
+      });
+      fireEvent.pointerMove(source!, {
+        pointerId: 3,
+        isPrimary: true,
+        clientX: 80,
+        clientY: 450,
+      });
+      expect(stockZone.hasAttribute("data-drag-target")).toBe(true);
+      fireEvent.pointerUp(source!, {
+        pointerId: 3,
+        isPrimary: true,
+        button: 0,
+        pointerType: "touch",
+        clientX: 80,
+        clientY: 450,
+      });
+      expect(callbacks.onDragPiece).toHaveBeenCalledExactlyOnceWith(
+        { type: "cell", cellIndex: 4 },
+        { type: "stock" },
+      );
+      expect(callbacks.onSelectCell).not.toHaveBeenCalled();
+      expect(document.querySelector(".reflection-drag-ghost")).toBeNull();
+    } finally {
+      if (oldElementFromPoint) {
+        Object.defineProperty(document, "elementFromPoint", {
+          configurable: true,
+          value: oldElementFromPoint,
+        });
+      } else {
+        Reflect.deleteProperty(document, "elementFromPoint");
+      }
+    }
   });
 
   describe("メニューから遊び方を開いた場合", () => {

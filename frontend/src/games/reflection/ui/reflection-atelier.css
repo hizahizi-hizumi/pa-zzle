@@ -1,0 +1,425 @@
+/* 光学台: 金属フレーム内の読み取り器と交換式の鏡を備えた光学装置。 */
+.reflection-play-background[data-reflection-background="atelier"] {
+  background:
+    radial-gradient(ellipse 83% 58% at 50% 48%, #fdf9f0 0%, transparent 83%),
+    #e9e1d3;
+}
+
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="atelier"]) {
+  background: #e9e1d3;
+}
+
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="atelier"])
+  > header {
+  background: #f3eddf;
+  color: #373e47;
+}
+
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="atelier"])
+  > header
+  :is(button, svg) {
+  color: #46515b;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"] {
+  --reflection-beam: #dd8547;
+  --reflection-grid: #d8dbd9;
+  --reflection-port: #8b9eaa;
+  --reflection-port-active: #f4ab6e;
+  --reflection-socket: #ced7d9;
+  --reflection-bezel: #758d9b;
+  --reflection-rim: #dfe3dd;
+  --reflection-matched-port: #8be0bd;
+}
+
+/* 目盛りは金属製の縁に直接載せ、20枚のカードに分断しない。 */
+.reflection-play-stage[data-reflection-experience="atelier"]
+.reflection-board::before {
+  content: "";
+  position: absolute;
+  inset: -1%;
+  border-radius: 13px;
+  border: 1px solid #627382;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 13%) 0%, transparent 29%),
+    linear-gradient(154deg, #3d4d59, #253541 88%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 23%),
+    inset 0 -1px 0 rgb(0 0 0 / 20%),
+    0 15px 28px -17px rgb(47 53 52 / 40%);
+  pointer-events: none;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-board-surface {
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 70%), transparent 32%),
+    linear-gradient(158deg, #fcfcf7, #eef3ef 100%);
+  outline: 1px solid #899ba6;
+  box-shadow:
+    0 0 0 4px #536674,
+    0 0 0 5px #a2b3b8,
+    inset 0 1px 0 #fff,
+    0 7px 11px -8px rgb(0 0 0 / 51%);
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-board-surface::after {
+  border-color: rgb(255 255 255 / 78%);
+}
+
+/* 四隅には固定金具。セルの読み取りを邪魔する装飾は置かない。 */
+.reflection-play-stage[data-reflection-experience="atelier"]
+.reflection-board-surface::before {
+  inset: -8px;
+  background:
+    radial-gradient(
+      circle,
+      #a7b8c0 0 1.1px,
+      #4b5e6a 1.5px 3px,
+      transparent 3.3px
+    )
+    top left / 7px 7px no-repeat,
+    radial-gradient(
+      circle,
+      #a7b8c0 0 1.1px,
+      #4b5e6a 1.5px 3px,
+      transparent 3.3px
+    )
+    top right / 7px 7px no-repeat,
+    radial-gradient(
+      circle,
+      #a7b8c0 0 1.1px,
+      #4b5e6a 1.5px 3px,
+      transparent 3.3px
+    )
+    bottom left / 7px 7px no-repeat,
+    radial-gradient(
+      circle,
+      #a7b8c0 0 1.1px,
+      #4b5e6a 1.5px 3px,
+      transparent 3.3px
+    )
+    bottom right / 7px 7px no-repeat;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-board-light {
+  color: var(--reflection-beam);
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-board-light
+  > g:first-child {
+  stroke: var(--reflection-grid);
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-cell:enabled:is(:hover, :active),
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-cell[data-drag-target] {
+  background: rgb(87 139 151 / 14%);
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"] .reflection-clue {
+  color: #edf3f4;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 高密度でも二桁の距離と結果記号を判別できる寸法を確保する。 */
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-clue
+  > span.font-semibold {
+  font-size: clamp(0.75rem, calc(var(--reflection-unit) * 0.44), 1.375rem);
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-clue
+  > span.flex {
+  height: clamp(0.5625rem, calc(var(--reflection-unit) * 0.32), 1rem);
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-clue
+  > span.flex
+  svg {
+  width: clamp(0.5625rem, calc(var(--reflection-unit) * 0.32), 1rem);
+  height: clamp(0.5625rem, calc(var(--reflection-unit) * 0.32), 1rem);
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-clue[aria-pressed="true"] {
+  color: #fff;
+  background: rgb(230 168 107 / 17%);
+  box-shadow: inset 0 0 0 1px rgb(243 171 109 / 45%);
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-clue[data-matched="true"] {
+  color: #c2f0df;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-clue[data-matched="true"]
+  .reflection-clue-match {
+  background: rgb(63 127 112 / 12%);
+  box-shadow: inset 0 -2px 0 rgb(135 217 185 / 70%);
+  border-radius: 3px;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-clue[data-matched="true"]
+  [class~="text-emerald-900"] {
+  color: #c2f0df;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-clue[aria-pressed="true"]::before {
+  box-shadow: 0 0 0 3px rgb(244 171 109 / 23%);
+}
+
+/* 交換式の光学部品: 符号の意味と色は維持しながら、持ち上げる物体として描く。 */
+.reflection-play-stage[data-reflection-experience="atelier"]
+:is(
+  .reflection-piece-cartridge,
+  .reflection-piece-cartridge-blade,
+  .reflection-piece-blackhole-aperture
+),
+.reflection-play-footer[data-reflection-experience="atelier"]
+  :is(
+    .reflection-piece-cartridge,
+    .reflection-piece-cartridge-blade,
+    .reflection-piece-blackhole-aperture
+  ) {
+  display: block;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-piece-cartridge,
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-piece-cartridge {
+  fill: #f9f9f5;
+  stroke: #85949f;
+  filter: drop-shadow(0 2px 2px rgb(33 48 56 / 24%));
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-piece-cartridge
+  > path,
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-piece-cartridge
+  > path {
+  stroke: white;
+  stroke-width: 3;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-piece-cartridge-blade,
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-piece-cartridge-blade {
+  stroke: #71818c;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-piece-blackhole-aperture,
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-piece-blackhole-aperture {
+  stroke: #665e80;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-piece-specular,
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-piece-specular {
+  display: block;
+  stroke: color-mix(in srgb, currentColor 24%, white);
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-cell
+  svg
+  g.fill-background {
+  fill: #f3f5f0;
+  stroke: #f3f5f0;
+}
+
+/* 数字とピースの結果色は、暗い金属と明るい光学面の両方で読み取れる濃さにする。 */
+.reflection-play-stage[data-reflection-experience="atelier"]
+[class~="text-blue-600"] {
+  color: #92c8ff;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  [class~="text-pink-600"] {
+  color: #ffafd0;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  [class~="text-violet-600"] {
+  color: #c5b2ff;
+}
+
+.reflection-play-footer[data-reflection-experience="atelier"]
+  [class~="text-blue-600"],
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-cell
+  [class~="text-blue-600"] {
+  color: #287dc1;
+}
+
+.reflection-play-footer[data-reflection-experience="atelier"]
+  [class~="text-pink-600"],
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-cell
+  [class~="text-pink-600"] {
+  color: #cd4e7e;
+}
+
+.reflection-play-footer[data-reflection-experience="atelier"]
+  [class~="text-violet-600"],
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-cell
+  [class~="text-violet-600"] {
+  color: #7558ad;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  [data-laser-count] {
+  color: #ffbe8e;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"] [data-laser-aura] {
+  stroke-opacity: 0.25;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"] [data-laser-core] {
+  stroke: #fff8e7;
+  stroke-opacity: 0.68;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-board[data-reflection-phase="playing"]
+  :is([data-laser-line], [data-laser-aura], [data-laser-core]) {
+  stroke-dasharray: 1;
+  animation: reflection-ray-trace 470ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* 手持ちの部品は盤面と同じ機器素材のドックに置く。 */
+.reflection-play-footer[data-reflection-experience="atelier"]
+.reflection-stock {
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.9rem;
+  border: 1px solid #576a77;
+  background: linear-gradient(160deg, #41535f, #2e404c);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 18%),
+    0 5px 11px -9px rgb(38 49 51 / 46%);
+}
+
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-stock::after {
+  display: none;
+}
+
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-stock
+  > button {
+  border-radius: 0.6rem;
+  color: #edf2f4;
+}
+
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-stock
+  > button:enabled:hover,
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-stock
+  > button[aria-pressed="true"] {
+  background: rgb(255 255 255 / 10%);
+}
+
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-stock
+  > button
+  > span.font-mono {
+  color: #d9e2e8;
+}
+
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-experience-picker {
+  background: #f9f6ed;
+  border: 1px solid #d5c6b2;
+}
+
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-experience-option {
+  color: #6a7179;
+}
+
+.reflection-play-footer[data-reflection-experience="atelier"]
+  .reflection-experience-option[aria-pressed="true"] {
+  background: #384c5d;
+  color: #f4f8f8;
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-board[data-reflection-phase="clearing"]::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: -1%;
+  border: 2px solid #b7c8cc;
+  border-radius: 13px;
+  pointer-events: none;
+  animation: reflection-atelier-rim-complete 1760ms ease-out both;
+}
+
+@keyframes reflection-atelier-rim-complete {
+  0%,
+  30% {
+    opacity: 0;
+    box-shadow: 0 0 0 transparent;
+  }
+  63% {
+    opacity: 1;
+    box-shadow:
+      0 0 0 2px rgb(248 189 131 / 58%),
+      0 0 18px 2px rgb(247 180 111 / 39%);
+  }
+  100% {
+    opacity: 0.45;
+    box-shadow: 0 0 7px rgb(247 180 111 / 18%);
+  }
+}
+
+.reflection-play-stage[data-reflection-experience="atelier"]
+  .reflection-board[data-reflection-phase="clearing"]
+  .reflection-board-surface {
+  animation: reflection-atelier-complete 790ms ease-out both;
+}
+
+@keyframes reflection-atelier-complete {
+  50% {
+    box-shadow:
+      0 0 0 4px #bdc7c7,
+      0 0 0 5px #ecaa76,
+      0 0 30px 6px rgb(243 172 101 / 34%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reflection-play-stage[data-reflection-experience="atelier"]
+    .reflection-board[data-reflection-phase="playing"]
+    :is([data-laser-line], [data-laser-aura], [data-laser-core]),
+  .reflection-play-stage[data-reflection-experience="atelier"]
+    .reflection-board[data-reflection-phase="clearing"]::after,
+  .reflection-play-stage[data-reflection-experience="atelier"]
+    .reflection-board[data-reflection-phase="clearing"]
+    .reflection-board-surface {
+    animation: none;
+  }
+}

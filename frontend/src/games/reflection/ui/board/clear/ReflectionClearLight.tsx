@@ -64,20 +64,27 @@ export function ReflectionClearLight({
         const staggerMs = lastStep > 0 ? CLEAR_LIGHT_SPREAD_MS / lastStep : 0;
         return steps.flatMap(function animateStep(element) {
           const delay = getStep(element) * staggerMs;
-          const line = element.querySelector("[data-laser-line]");
+          const paths = element.querySelectorAll(
+            "[data-laser-line], [data-laser-aura], [data-laser-core]",
+          );
           const arrow = element.querySelector("[data-laser-arrow]");
+          const entry = element.querySelector("[data-laser-entry]");
           return [
-            line?.animate?.(lineKeyframes, {
-              duration: CLEAR_LIGHT_DRAW_MS,
-              delay,
-              easing: MOTION_EASING.celebrate,
-              fill: "backwards",
-            }),
-            arrow?.animate?.(arrowKeyframes, {
-              duration: CLEAR_LIGHT_DRAW_MS / 2,
-              delay: delay + CLEAR_LIGHT_DRAW_MS / 2,
-              fill: "backwards",
-            }),
+            ...Array.from(paths, (path) =>
+              path.animate?.(lineKeyframes, {
+                duration: CLEAR_LIGHT_DRAW_MS,
+                delay,
+                easing: MOTION_EASING.celebrate,
+                fill: "backwards",
+              }),
+            ),
+            ...[entry, arrow].map((mark) =>
+              mark?.animate?.(arrowKeyframes, {
+                duration: CLEAR_LIGHT_DRAW_MS / 2,
+                delay: delay + CLEAR_LIGHT_DRAW_MS / 2,
+                fill: "backwards",
+              }),
+            ),
           ].filter((animation) => animation !== undefined);
         });
       },

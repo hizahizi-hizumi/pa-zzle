@@ -1,0 +1,737 @@
+/* 比較対象の現行表現には手を加えない。 */
+.reflection-play-background[data-reflection-background="original"] {
+  background: #eae7ef;
+}
+
+/* 白光: 数字と光学素子を読み取る、乳白色の精密な実験盤。 */
+.reflection-play-background[data-reflection-background="glass"] {
+  background:
+    radial-gradient(
+      ellipse 66% 48% at 50% 50%,
+      #fffefa 0%,
+      #f4f6f1 60%,
+      transparent 100%
+    ),
+    #e9eeea;
+}
+
+/* 夜光: 光を確認するときだけ光路が現れる、暗室の実験盤。 */
+.reflection-play-background[data-reflection-background="nocturne"] {
+  background:
+    radial-gradient(
+      ellipse 73% 53% at 50% 48%,
+      #173a4b 0%,
+      #0c2838 60%,
+      transparent 100%
+    ),
+    #071a27;
+}
+
+/* 共通UIを盤面と同じ環境光に合わせ、盤面だけ浮いた島にしない。 */
+#root:has(.reflection-play-stage[data-reflection-experience="nocturne"]) {
+  --foreground: #e7f3f3;
+  --muted-foreground: #9dbcc4;
+  --background: #0a2737;
+  --accent: #244a5b;
+  --border: #3e6172;
+  --brand-inverse-foreground: #e7f2f4;
+}
+
+#root section:has(.reflection-play-stage[data-reflection-experience="glass"]) {
+  background: #e9eeea;
+}
+
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="nocturne"]) {
+  background: #071a27;
+  color: #e7f3f3;
+}
+
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="glass"])
+  > header {
+  background: #f2f4ef;
+}
+
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="nocturne"])
+  > header {
+  background: #071a27;
+  color: #d9eaee;
+}
+
+/* プレイ見出しは共通フレームの内側にある。暗室ではブランドと操作アイコンも読める色にする。 */
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="nocturne"])
+  > header
+  [role="img"] {
+  color: #e1eef2;
+}
+
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="nocturne"])
+  > div
+  > header
+  button {
+  color: #d8ebed;
+}
+
+.reflection-play-stage[data-reflection-experience="glass"] {
+  --reflection-beam: #078caa;
+  --reflection-grid: #cbd5d0;
+  --reflection-port: #819d9a;
+  --reflection-port-active: #078caa;
+  --reflection-socket: #c3d4d0;
+  --reflection-bezel: #809d99;
+  --reflection-rim: #d6e0da;
+  --reflection-matched-port: #65a489;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"] {
+  --reflection-beam: #80ecf7;
+  --reflection-grid: #315365;
+  --reflection-port: #477384;
+  --reflection-port-active: #80ecf7;
+  --reflection-socket: #325769;
+  --reflection-bezel: #6795a4;
+  --reflection-rim: #254a5d;
+  --reflection-matched-port: #7fd7bf;
+}
+
+/* 盤面はカードではなく、光学素子をはめる一枚のプレートとして描く。 */
+.reflection-play-stage[data-reflection-experience="glass"]
+.reflection-board-surface {
+  background: linear-gradient(155deg, #fffefa 0%, #f9faf6 57%, #eef3ed 100%);
+  outline: 1.5px solid var(--reflection-bezel);
+  box-shadow:
+    0 0 0 4px rgb(211 224 214 / 52%),
+    0 7px 0 -4px rgb(71 103 96 / 22%),
+    0 15px 27px -21px rgb(48 85 80 / 32%);
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  .reflection-board-surface {
+  background: linear-gradient(155deg, #163749 0%, #102d3f 58%, #0c2738 100%);
+  outline: 1.5px solid var(--reflection-bezel);
+  box-shadow:
+    0 0 0 5px rgb(55 99 116 / 29%),
+    0 0 0 6px rgb(134 196 207 / 12%),
+    0 15px 25px -13px rgb(2 12 20 / 43%);
+}
+
+/* 外枠を二重にして縁の厚みを伝え、光路と重なる盤内には装飾を置かない。 */
+.reflection-play-stage:not([data-reflection-experience="original"])
+.reflection-board-surface::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--reflection-rim);
+  pointer-events: none;
+}
+
+/* 外周の4隅だけに位置合わせの短い印を置く。考える対象であるマスを覆わない。 */
+.reflection-play-stage:not([data-reflection-experience="original"])
+.reflection-board-surface::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  background:
+    linear-gradient(var(--reflection-bezel), var(--reflection-bezel)) top left /
+    15px 1px no-repeat,
+    linear-gradient(var(--reflection-bezel), var(--reflection-bezel)) top left /
+    1px 15px no-repeat,
+    linear-gradient(var(--reflection-bezel), var(--reflection-bezel)) top right
+    / 15px 1px no-repeat,
+    linear-gradient(var(--reflection-bezel), var(--reflection-bezel)) top right
+    / 1px 15px no-repeat,
+    linear-gradient(var(--reflection-bezel), var(--reflection-bezel)) bottom
+    left / 15px 1px no-repeat,
+    linear-gradient(var(--reflection-bezel), var(--reflection-bezel)) bottom
+    left / 1px 15px no-repeat,
+    linear-gradient(var(--reflection-bezel), var(--reflection-bezel)) bottom
+    right / 15px 1px no-repeat,
+    linear-gradient(var(--reflection-bezel), var(--reflection-bezel)) bottom
+    right / 1px 15px no-repeat;
+  pointer-events: none;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-board-light
+  > g:first-child {
+  stroke: var(--reflection-grid);
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-board-light {
+  color: var(--reflection-beam);
+}
+
+/* 空マスには薄い受け座だけが見える。次の答えや光路を示すものではない。 */
+.reflection-play-stage:not([data-reflection-experience="original"])
+.reflection-cell:not(:has(svg))::after {
+  content: "";
+  position: absolute;
+  width: min(9%, 5px);
+  aspect-ratio: 1;
+  border: 1px solid var(--reflection-socket);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.reflection-play-stage[data-reflection-experience="glass"]
+  .reflection-cell:enabled:is(:hover, :active) {
+  background: rgb(39 128 132 / 9%);
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  .reflection-cell:enabled:is(:hover, :active) {
+  background: rgb(117 217 235 / 9%);
+}
+
+/* 外周ヒントは数字と結果を主にし、選択された光路の入口のみ光る。 */
+.reflection-play-stage:not([data-reflection-experience="original"])
+.reflection-clue::before {
+  content: "";
+  position: absolute;
+  width: max(4px, calc(var(--reflection-unit) * 0.095));
+  height: max(4px, calc(var(--reflection-unit) * 0.095));
+  border: 1px solid var(--reflection-port);
+  border-radius: 50%;
+  background: var(--reflection-port);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue::after {
+  content: "";
+  position: absolute;
+  width: 1px;
+  height: 25%;
+  background: var(--reflection-port);
+  pointer-events: none;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="top"]::after,
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="bottom"]::after {
+  left: calc(50% - 0.5px);
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="top"]::after {
+  bottom: -25%;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="bottom"]::after {
+  top: -25%;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="left"]::after,
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="right"]::after {
+  height: 1px;
+  width: 25%;
+  top: calc(50% - 0.5px);
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="left"]::after {
+  right: -25%;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="right"]::after {
+  left: -25%;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="top"]::before {
+  bottom: -4px;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="bottom"]::before {
+  top: -4px;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="left"]::before {
+  right: -4px;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="right"]::before {
+  left: -4px;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="top"]::before,
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="bottom"]::before {
+  left: calc(50% - 2px);
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="left"]::before,
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-clue-side="right"]::before {
+  top: calc(50% - 2px);
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[aria-pressed="true"]::before {
+  background: var(--reflection-port-active);
+  border-color: var(--reflection-port-active);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--reflection-port-active) 20%, transparent);
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[aria-pressed="true"]::after {
+  background: var(--reflection-port-active);
+}
+
+/* 一致した経路の入口は小さなセンサーとして明るくなる。選択中の入口は光路色を優先する。 */
+.reflection-play-stage:not([data-reflection-experience="original"])
+.reflection-clue[data-matched="true"]:not([aria-pressed="true"])::before {
+  background: var(--reflection-matched-port);
+  border-color: var(--reflection-matched-port);
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-matched="true"]:not([aria-pressed="true"])::after {
+  background: var(--reflection-matched-port);
+}
+
+/* 一致の地は既存の読み方を残し、外周全体が点灯し過ぎない濃さに抑える。 */
+.reflection-play-stage[data-reflection-experience="glass"]
+  .reflection-clue[data-matched="true"]
+  .reflection-clue-match {
+  background: rgb(205 231 215 / 23%);
+  box-shadow: inset 0 -2px 0 rgb(69 151 127 / 65%);
+  border-radius: 3px;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  .reflection-clue[data-matched="true"]
+  .reflection-clue-match {
+  background: rgb(41 89 94 / 17%);
+  box-shadow: inset 0 -2px 0 rgb(127 215 191 / 64%);
+  border-radius: 3px;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-clue[data-matched="true"] {
+  color: #24594d;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  .reflection-clue[data-matched="true"] {
+  color: #d2f1e7;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  .reflection-clue[data-matched="true"]
+  [class~="text-emerald-900"] {
+  color: #d2f1e7;
+}
+
+/* 色で区別する3種類の結果は、明暗の変化後も同じ色と形の対応を守る。 */
+.reflection-play-stage[data-reflection-experience="glass"]
+[class~="text-blue-600"],
+.reflection-play-footer[data-reflection-experience="glass"]
+  [class~="text-blue-600"] {
+  color: #1f72c9;
+}
+
+.reflection-play-stage[data-reflection-experience="glass"]
+  [class~="text-pink-600"],
+.reflection-play-footer[data-reflection-experience="glass"]
+  [class~="text-pink-600"] {
+  color: #cf4385;
+}
+
+.reflection-play-stage[data-reflection-experience="glass"]
+  [class~="text-violet-600"],
+.reflection-play-footer[data-reflection-experience="glass"]
+  [class~="text-violet-600"] {
+  color: #8554c7;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  [class~="text-blue-600"],
+.reflection-play-footer[data-reflection-experience="nocturne"]
+  [class~="text-blue-600"] {
+  color: #8abdfc;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  [class~="text-pink-600"],
+.reflection-play-footer[data-reflection-experience="nocturne"]
+  [class~="text-pink-600"] {
+  color: #ffa0c6;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  [class~="text-violet-600"],
+.reflection-play-footer[data-reflection-experience="nocturne"]
+  [class~="text-violet-600"] {
+  color: #c1aafa;
+}
+
+.reflection-drag-ghost svg {
+  width: 70%;
+  height: 70%;
+}
+
+.reflection-cell[data-drag-origin] svg,
+.reflection-stock [data-drag-origin] svg {
+  opacity: 0.35;
+}
+
+/* 鏡の反射面には片側だけ光が差す。図形そのものを変えずに素材感を与える。 */
+.reflection-piece-specular {
+  display: none;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-piece-specular,
+.reflection-play-footer:not([data-reflection-experience="original"])
+  .reflection-piece-specular {
+  display: block;
+  stroke: color-mix(in srgb, currentColor 22%, white);
+}
+
+.reflection-play-stage[data-reflection-experience="glass"]
+  .reflection-cell
+  svg
+  g.fill-background {
+  fill: #f8faf6;
+  stroke: #f8faf6;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  .reflection-cell
+  svg
+  g.fill-background {
+  fill: #102d3f;
+  stroke: #102d3f;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  .reflection-cell
+  svg {
+  filter: drop-shadow(0 0 1px currentColor);
+}
+
+/* 光線は透ける光量と細い白芯を重ね、鏡の形より前に出しすぎない。 */
+.reflection-play-stage[data-reflection-experience="original"]
+[data-laser-core] {
+  display: none;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  [data-laser-core] {
+  stroke: rgb(255 255 255 / 71%);
+  stroke-opacity: 0.7;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  [data-laser-core] {
+  stroke-opacity: 0.94;
+}
+
+.reflection-play-stage[data-reflection-experience="original"] [data-laser-aura],
+.reflection-play-stage[data-reflection-experience="original"]
+  [data-laser-terminus] {
+  display: none;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  [data-laser-aura] {
+  stroke-opacity: 0.17;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  [data-laser-aura] {
+  stroke-opacity: 0.29;
+  filter: drop-shadow(0 0 0.16px #a4faff);
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  [data-laser-line] {
+  filter: drop-shadow(0 0 0.14px #b8faff);
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  [data-laser-count] {
+  color: #087a94;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  [data-laser-count] {
+  color: #a5f2fd;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-board[data-reflection-phase="playing"]
+  :is([data-laser-line], [data-laser-aura], [data-laser-core]) {
+  stroke-dasharray: 1;
+  animation: reflection-ray-trace 500ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-board[data-reflection-phase="playing"]
+  :is([data-laser-entry], [data-laser-arrow]) {
+  animation: reflection-ray-fade 180ms ease-out 320ms backwards;
+}
+
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-board[data-reflection-phase="playing"]
+  [data-laser-terminus] {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: reflection-ray-arrive 360ms ease-out 350ms both;
+}
+
+@keyframes reflection-ray-trace {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes reflection-ray-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes reflection-ray-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  60% {
+    opacity: 0.8;
+    transform: scale(1.45);
+  }
+  to {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+}
+
+/* 手持ちは平らな器具台としてまとめる。ボタン自体には地や枠を増やさない。 */
+.reflection-play-footer:not([data-reflection-experience="original"])
+.reflection-stock {
+  padding-top: 9px;
+}
+
+.reflection-play-footer:not([data-reflection-experience="original"])
+  .reflection-stock::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(60%, 14rem);
+  height: 1px;
+  background: rgb(77 119 119 / 25%);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.reflection-play-footer[data-reflection-experience="nocturne"]
+  .reflection-stock::after {
+  background: rgb(155 219 232 / 24%);
+}
+
+.reflection-experience-picker {
+  background: rgb(255 255 255 / 54%);
+  border: 1px solid rgb(61 97 115 / 13%);
+}
+
+.reflection-experience-option {
+  color: #617581;
+}
+
+.reflection-experience-option[aria-pressed="true"] {
+  background: #fff;
+  color: #1d4256;
+  box-shadow: 0 1px 4px rgb(37 75 84 / 13%);
+}
+
+.reflection-play-footer[data-reflection-experience="glass"]
+  .reflection-experience-picker {
+  background: rgb(250 252 247 / 72%);
+  border-color: rgb(79 116 112 / 15%);
+}
+
+.reflection-play-footer[data-reflection-experience="nocturne"]
+  .reflection-experience-picker {
+  background: rgb(171 218 230 / 11%);
+  border-color: rgb(171 218 230 / 18%);
+}
+
+.reflection-play-footer[data-reflection-experience="nocturne"]
+  .reflection-experience-option {
+  color: #bdd6de;
+}
+
+.reflection-play-footer[data-reflection-experience="nocturne"]
+  .reflection-experience-option[aria-pressed="true"] {
+  background: #d8eff1;
+  color: #183746;
+  box-shadow: 0 1px 8px rgb(0 0 0 / 25%);
+}
+
+/* 配置中の印は、盤面と同じ色に揃える。 */
+.reflection-drag-ghost {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  box-shadow: 0 3px 16px rgb(0 0 0 / 18%);
+  transform: translate(-50%, -110%);
+}
+
+.reflection-cell[data-drag-target] {
+  background: rgb(0 142 165 / 15%);
+  box-shadow: inset 0 0 0 2px rgb(0 142 165 / 65%);
+}
+
+.reflection-stock[data-drag-target]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px dashed rgb(0 142 165 / 65%);
+  border-radius: 0.875rem;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reflection-play-stage:not([data-reflection-experience="original"])
+    .reflection-board[data-reflection-phase="playing"]
+    :is(
+      [data-laser-line],
+      [data-laser-aura],
+      [data-laser-core],
+      [data-laser-entry],
+      [data-laser-arrow],
+      [data-laser-terminus]
+    ) {
+    animation: none;
+  }
+
+  .reflection-drag-ghost,
+  .reflection-cell[data-drag-target] {
+    transition: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .reflection-play-background[data-reflection-background="original"] {
+    background: #272431;
+  }
+}
+
+/* 全光路が伸び切るタイミングで端子が応答する。線の意味を変えず、完成だけを伝える。 */
+.reflection-play-stage:not([data-reflection-experience="original"])
+  .reflection-board[data-reflection-phase="clearing"]
+  .reflection-clue[data-matched="true"]::before {
+  animation: reflection-sensors-complete 750ms ease-out 780ms both;
+}
+
+@keyframes reflection-sensors-complete {
+  0% {
+    filter: brightness(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+  45% {
+    filter: brightness(1.65);
+    box-shadow: 0 0 0 4px
+      color-mix(in srgb, var(--reflection-matched-port) 28%, transparent);
+  }
+  100% {
+    filter: brightness(1.12);
+    box-shadow: 0 0 0 1px
+      color-mix(in srgb, var(--reflection-matched-port) 13%, transparent);
+  }
+}
+
+/* 完成直前は盤面の縁に光が通る。解法の内容は示さず、完成した事実だけを祝う。 */
+.reflection-play-stage[data-reflection-experience="glass"]
+  .reflection-board[data-reflection-phase="clearing"]
+  .reflection-board-surface {
+  animation: reflection-glass-complete 800ms ease-out both;
+}
+
+.reflection-play-stage[data-reflection-experience="nocturne"]
+  .reflection-board[data-reflection-phase="clearing"]
+  .reflection-board-surface {
+  animation: reflection-nocturne-complete 800ms ease-out both;
+}
+
+@keyframes reflection-glass-complete {
+  0% {
+    box-shadow: 0 0 0 4px rgb(211 224 214 / 52%);
+  }
+  45% {
+    box-shadow:
+      0 0 0 5px rgb(71 181 164 / 60%),
+      0 0 24px rgb(65 158 145 / 25%);
+  }
+  100% {
+    box-shadow:
+      0 0 0 4px rgb(211 224 214 / 52%),
+      0 7px 0 -4px rgb(71 103 96 / 22%);
+  }
+}
+
+@keyframes reflection-nocturne-complete {
+  0% {
+    box-shadow: 0 0 0 5px rgb(55 99 116 / 29%);
+  }
+  45% {
+    box-shadow:
+      0 0 0 5px rgb(118 227 233 / 70%),
+      0 0 28px rgb(106 221 232 / 38%);
+  }
+  100% {
+    box-shadow:
+      0 0 0 5px rgb(55 99 116 / 29%),
+      0 0 0 6px rgb(134 196 207 / 12%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reflection-play-stage:not([data-reflection-experience="original"])
+    .reflection-board[data-reflection-phase="clearing"]
+    .reflection-clue[data-matched="true"]::before,
+  .reflection-play-stage:not([data-reflection-experience="original"])
+    .reflection-board[data-reflection-phase="clearing"]
+    .reflection-board-surface {
+    animation: none;
+  }
+}
+
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="nocturne"])
+  > div
+  > header,
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="nocturne"])
+  > div
+  > header
+  button {
+  color: #d9eaee;
+}

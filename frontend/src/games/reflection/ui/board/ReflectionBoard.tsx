@@ -10,18 +10,25 @@ import { useTouchTap } from "@/components/touch-tap";
 import type { GameProgress } from "@/games/play";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import type { ReflectionLaserView } from "@/games/reflection/play/use-reflection-play";
-import type { ReflectionBoard as ReflectionBoardState } from "@/games/reflection/puzzle/board";
+import type {
+  ReflectionBoard as ReflectionBoardState,
+  ReflectionPiece,
+} from "@/games/reflection/puzzle/board";
 import {
   isSameReflectionEntry,
   listReflectionEntries,
   type ReflectionClue,
   type ReflectionEntry,
 } from "@/games/reflection/puzzle/laser";
-import type { ReflectionSelection } from "@/games/reflection/session/session";
+import type {
+  ReflectionDragSource,
+  ReflectionSelection,
+} from "@/games/reflection/session/session";
 import {
   getReflectionBoardGridArea,
   getReflectionFigureExtent,
   getReflectionFigureTracks,
+  listDistinctReflectionLaserTraces,
   listReflectionGridLines,
 } from "@/games/reflection/ui/board/board-geometry";
 import { ReflectionClearLight } from "@/games/reflection/ui/board/clear/ReflectionClearLight";
@@ -33,6 +40,10 @@ import { ReflectionCell } from "@/games/reflection/ui/board/ReflectionBoard/Refl
 import { ReflectionClueButton } from "@/games/reflection/ui/board/ReflectionBoard/ReflectionClueButton";
 import { ReflectionLaserPath } from "@/games/reflection/ui/board/ReflectionLaserPath";
 import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone";
+import type {
+  ReflectionDragHandlers,
+  ReflectionDragPreview,
+} from "@/games/reflection/ui/use-reflection-drag";
 import { cn } from "@/lib/utils";
 
 type ReflectionBoardProps = {
@@ -43,6 +54,13 @@ type ReflectionBoardProps = {
   selection: ReflectionSelection | null;
   laser: ReflectionLaserView | null;
   interactionDisabled: boolean;
+  dragHandlers?: (
+    source: ReflectionDragSource,
+    piece: ReflectionPiece | null,
+  ) => ReflectionDragHandlers;
+  dragPreview?: ReflectionDragPreview | null;
+  /** 外周ヒントを薄くして盤面の占める面積を増やす光彩案。 */
+  compactClues?: boolean;
   /** 盤面が揃った後の完成演出に使う。 */
   progress: GameProgress;
   onSelectCell: (cellIndex: number) => void;
@@ -135,7 +153,10 @@ export function ReflectionBoard({
   selection,
   laser,
   interactionDisabled,
+  dragHandlers,
+  dragPreview,
   progress,
+  compactClues = false,
   onSelectCell,
   onSelectClue,
   onRemovePiece,
@@ -149,10 +170,38 @@ export function ReflectionBoard({
   const { getTapHandlers } = useTouchTap();
   const entries = listReflectionEntries(size);
   const extent = getReflectionFigureExtent(size);
-  const tracks = getReflectionFigureTracks(size);
+  // 盤面外周にはヒントと0.2マス分の操作間隔がある。座標系の余白も同じ比率で切り詰める。
+  const clueTrack = size >= 9 ? 0.7 : size >= 7 ? 0.56 : 0.48;
+  const tracks = compactClues
+    ? `${clueTrack}fr 0.2fr repeat(${size}, minmax(0, 1fr)) 0.2fr ${clueTrack}fr`
+    : getReflectionFigureTracks(size);
+  const inset = compactClues ? 0.8 - clueTrack : 0;
+  const viewExtent = extent - inset * 2;
   const gridLines = listReflectionGridLines(size);
   const selectedCellIndex =
     selection?.type === "cell" ? selection.cellIndex : null;
+  const traces =
+    progress === "clearing"
+      ? listDistinctReflectionLaserTraces(board).map(({ trace }) => trace)
+      : laser
+        ? [laser.trace]
+        : [];
+  const reflectingCells = new Set(
+    traces.flatMap(({ path }) =>
+      path
+        .filter(
+          (step) => step.leaving !== null && step.leaving !== step.entering,
+        )
+        .map((step) => step.cellIndex),
+    ),
+  );
+  const absorbedCells = new Set(
+    traces.flatMap(({ path }) =>
+      path
+        .filter((step) => step.leaving === null)
+        .map((step) => step.cellIndex),
+    ),
+  );
 
   const handleElementChange = useCallback(
     (key: string, element: HTMLButtonElement | null) => {
@@ -194,12 +243,14 @@ export function ReflectionBoard({
 
   return (
     <div
-      className="relative isolate grid size-full [container-type:inline-size]"
+      data-reflection-board=""
+      data-reflection-phase={progress}
+      className="reflection-board relative isolate grid size-full [container-type:inline-size]"
       style={
         {
           gridTemplateColumns: tracks,
           gridTemplateRows: tracks,
-          "--reflection-unit": `calc(100cqw / ${extent})`,
+          "--reflection-unit": `calc(100cqw / ${viewExtent})`,
         } as CSSProperties
       }
       onKeyDown={handleKeyDown}
@@ -211,7 +262,7 @@ export function ReflectionBoard({
       */}
       <div
         aria-hidden="true"
-        className="pointer-events-none relative z-0 bg-background outline-2 outline-foreground/55 outline-solid"
+        className="reflection-board-surface pointer-events-none relative z-0 bg-background outline-2 outline-foreground/55 outline-solid"
         style={getReflectionBoardGridArea(size)}
       />
       {/*
@@ -220,9 +271,9 @@ export function ReflectionBoard({
       */}
       <svg
         aria-hidden="true"
-        viewBox={`0 0 ${extent} ${extent}`}
+        viewBox={`${inset} ${inset} ${viewExtent} ${viewExtent}`}
         className={cn(
-          "pointer-events-none absolute inset-0 z-1 size-full",
+          "reflection-board-light pointer-events-none absolute inset-0 z-1 size-full",
           reflectionToneClassNames.laserText,
         )}
       >
@@ -243,6 +294,7 @@ export function ReflectionBoard({
         </g>
         {laser ? (
           <ReflectionLaserPath
+            key={`${laser.entry.side}:${laser.entry.index}`}
             size={size}
             entry={laser.entry}
             trace={laser.trace}
@@ -277,6 +329,17 @@ export function ReflectionBoard({
               cell={cell}
               selected={selectedCellIndex === cellIndex}
               disabled={interactionDisabled}
+              dragHandlers={dragHandlers?.({ type: "cell", cellIndex }, cell)}
+              dragTarget={
+                dragPreview?.target?.type === "cell" &&
+                dragPreview.target.cellIndex === cellIndex
+              }
+              illuminated={reflectingCells.has(cellIndex)}
+              absorbing={absorbedCells.has(cellIndex)}
+              dragging={
+                dragPreview?.source.type === "cell" &&
+                dragPreview.source.cellIndex === cellIndex
+              }
               focusable={focusKey === focusableKey}
               focusKey={focusKey}
               onElementChange={handleElementChange}

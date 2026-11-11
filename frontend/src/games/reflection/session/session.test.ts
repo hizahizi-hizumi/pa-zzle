@@ -9,6 +9,7 @@ import {
   canRestartReflectionSession,
   clearReflectionSessionSelection,
   createReflectionSession,
+  dragReflectionSessionPiece,
   getReflectionSessionResult,
   getReflectionSessionStock,
   type ReflectionSession,
@@ -419,5 +420,116 @@ describe("clearReflectionSessionSelection", () => {
     const next = clearReflectionSessionSelection(initial);
 
     expect(next).toBe(initial);
+  });
+});
+
+describe("dragReflectionSessionPiece", () => {
+  test("ストックから空きマスへ一度の操作で置き、手持ちを減らすこと", () => {
+    const next = dragReflectionSessionPiece(
+      initial,
+      { type: "stock", piece: "slash" },
+      { type: "cell", cellIndex: 4 },
+      startedAt,
+    );
+
+    expect(next.puzzleState.cells[4]).toBe("slash");
+    expect(next.inputCount).toBe(1);
+    expect(next.relocationCount).toBe(0);
+    expect(getReflectionSessionStock(next).slash).toBe(0);
+  });
+
+  test("ストックを既存のピースに重ねると置き換えとして記録すること", () => {
+    const next = dragReflectionSessionPiece(
+      slashAtCenter,
+      { type: "stock", piece: "black-hole" },
+      { type: "cell", cellIndex: 4 },
+      startedAt,
+    );
+
+    expect(next.puzzleState.cells[4]).toBe("black-hole");
+    expect(getReflectionSessionStock(next).slash).toBe(1);
+    expect(next.relocationCount).toBe(slashAtCenter.relocationCount + 1);
+  });
+
+  test("盤面のピースを別のマスへ移動すること", () => {
+    const next = dragReflectionSessionPiece(
+      slashAtCenter,
+      { type: "cell", cellIndex: 4 },
+      { type: "cell", cellIndex: 5 },
+      startedAt,
+    );
+
+    expect(next.puzzleState.cells[4]).toBeNull();
+    expect(next.puzzleState.cells[5]).toBe("slash");
+    expect(next.relocationCount).toBe(slashAtCenter.relocationCount + 1);
+  });
+
+  test("2つのピースを入れ替え、1回の置き直しとして記録すること", () => {
+    const source = placeFromStock(slashAtCenter, "black-hole", 1);
+    const next = dragReflectionSessionPiece(
+      source,
+      { type: "cell", cellIndex: 4 },
+      { type: "cell", cellIndex: 1 },
+      startedAt,
+    );
+
+    expect(next.puzzleState.cells[4]).toBe("black-hole");
+    expect(next.puzzleState.cells[1]).toBe("slash");
+    expect(next.inputCount).toBe(source.inputCount + 1);
+    expect(next.relocationCount).toBe(source.relocationCount + 1);
+  });
+
+  test("ドラッグで最後のピースを正しく置くと、既存の完成判定へ進むこと", () => {
+    const source = dragReflectionSessionPiece(
+      initial,
+      { type: "stock", piece: "slash" },
+      { type: "cell", cellIndex: 0 },
+      startedAt,
+    );
+    const next = dragReflectionSessionPiece(
+      source,
+      { type: "stock", piece: "black-hole" },
+      { type: "cell", cellIndex: 8 },
+      9_000,
+    );
+
+    expect(next.status).toBe("cleared");
+    expect(next.finishedAt).toBe(9_000);
+    expect(next.relocationCount).toBe(0);
+  });
+
+  test("ピースをストックへ戻すと盤面から取り除くこと", () => {
+    const next = dragReflectionSessionPiece(
+      slashAtCenter,
+      { type: "cell", cellIndex: 4 },
+      { type: "stock" },
+      startedAt,
+    );
+
+    expect(next.puzzleState.cells[4]).toBeNull();
+    expect(getReflectionSessionStock(next).slash).toBe(1);
+    expect(next.relocationCount).toBe(slashAtCenter.relocationCount + 1);
+  });
+
+  test("同じマスへのドロップでは記録も盤面も変えないこと", () => {
+    const next = dragReflectionSessionPiece(
+      slashAtCenter,
+      { type: "cell", cellIndex: 4 },
+      { type: "cell", cellIndex: 4 },
+      startedAt,
+    );
+
+    expect(next).toBe(slashAtCenter);
+  });
+
+  test("手持ちがない種類からは配置できないこと", () => {
+    const next = dragReflectionSessionPiece(
+      slashAtCenter,
+      { type: "stock", piece: "slash" },
+      { type: "cell", cellIndex: 5 },
+      startedAt,
+    );
+
+    expect(next).toBe(slashAtCenter);
   });
 });

@@ -19,6 +19,8 @@ type ReflectionLaserPathProps = {
 };
 
 const LASER_WIDTH = 0.075;
+const MANUAL_LIGHT_AURA_WIDTH = LASER_WIDTH * 3.4;
+const COMPLETE_LIGHT_AURA_WIDTH = LASER_WIDTH * 2.1;
 /** 入口の印（光路に直交する短い太線）の半分の長さと太さ。 */
 const ENTRY_MARK_HALF_LENGTH = 0.2;
 const ENTRY_MARK_WIDTH = 0.1;
@@ -81,9 +83,24 @@ export function ReflectionLaserPath({
 }: ReflectionLaserPathProps) {
   const points = getReflectionLaserPoints(size, entry, trace, LASER_END_INSETS);
   const { exit } = trace;
+  const end = points.at(-1);
 
   return (
     <g data-clear-light-step={clearStep}>
+      <polyline
+        data-laser-aura=""
+        points={formatPoints(points)}
+        pathLength={1}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={
+          clearStep === undefined
+            ? MANUAL_LIGHT_AURA_WIDTH
+            : COMPLETE_LIGHT_AURA_WIDTH
+        }
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <polyline
         data-laser-line=""
         points={formatPoints(points)}
@@ -94,6 +111,29 @@ export function ReflectionLaserPath({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      <polyline
+        data-laser-core=""
+        points={formatPoints(points)}
+        pathLength={1}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={LASER_WIDTH * 0.28}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {clearStep === undefined ? (
+        <polyline
+          data-laser-comet=""
+          points={formatPoints(points)}
+          pathLength={1}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={LASER_WIDTH * 1.4}
+          strokeDasharray="0.022 0.978"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : null}
       {trace.outcome === "reflect" ? null : (
         <polyline
           data-laser-entry=""
@@ -114,6 +154,15 @@ export function ReflectionLaserPath({
             getReflectionLaserEnd(size, exit, 0),
             getReflectionOutwardVector(exit.side),
           )}
+          fill="currentColor"
+        />
+      ) : null}
+      {clearStep === undefined && end ? (
+        <circle
+          data-laser-terminus=""
+          cx={end.x}
+          cy={end.y}
+          r={0.125}
           fill="currentColor"
         />
       ) : null}
