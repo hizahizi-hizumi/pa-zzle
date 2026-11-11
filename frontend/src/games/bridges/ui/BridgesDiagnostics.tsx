@@ -8,8 +8,10 @@ import {
   type BridgesDifficultyAssessment,
   type BridgesLevelCombination,
   type BridgesLevelReading,
+  type BridgesLevelStructure,
   bridgesLevelCombinations,
   bridgesLevelReadings,
+  bridgesLevelStructures,
 } from "@/games/bridges/difficulty";
 import type { BridgesDifficultyAnalysis } from "@/games/bridges/problem/difficulty-analysis";
 import type { BridgesGenerationConditions } from "@/games/bridges/problem/problem";
@@ -49,7 +51,9 @@ const levelConditionLabels = {
   countReasoningUndecidedRatio: "数字だけでは決まらない割合",
 } as const satisfies Record<keyof BridgesLevelCombination, string>;
 
-/** レベルが求める手筋の条件の名前。並びは手筋の定義の順。 */
+type BridgesLevelRequirement = BridgesLevelReading & BridgesLevelStructure;
+
+/** レベルが求める手筋の条件の名前。並びは手筋の定義の順で、先読みの場所と山場の置き所を後に足す。 */
 const readingConditionLabels = {
   readingRoundCount: "ちょうど以外の読みの手詰まり",
   openingSaturatedIslandCount: "決め打ちの島",
@@ -61,7 +65,10 @@ const readingConditionLabels = {
   groupLookaheadRoundCount: "組を見る先読み",
   chainedLookaheadRoundCount: "続けて要る先読み",
   crossingBlockCount: "交差で塞がる行き先",
-} as const satisfies Partial<Record<keyof BridgesLevelReading, string>>;
+  lookaheadSpotCount: "先読みの場所",
+  longestLookaheadChain: "先読みの続く長さ",
+  lastConnectivityDecidedRatio: "最後のつながりの読みの置き所",
+} as const satisfies Partial<Record<keyof BridgesLevelRequirement, string>>;
 
 /** レベルが求める数字と形の質の条件の名前。 */
 const qualityConditionLabels = {
@@ -75,8 +82,11 @@ const qualityConditionLabels = {
   loopCount: "解の輪",
   borderBridgeShare: "外周に沿う橋の割合",
   usedEdgeShare: "架ける行き先の割合",
+  diagonalNeighborShare: "斜め隣に島がある島の割合",
+  shortBridgeShare: "間が1マスの橋の割合",
+  longBridgeCount: "長い橋",
 } as const satisfies Record<
-  Exclude<keyof BridgesLevelReading, keyof typeof readingConditionLabels>,
+  Exclude<keyof BridgesLevelRequirement, keyof typeof readingConditionLabels>,
   string
 >;
 
@@ -91,6 +101,9 @@ const fractionalFeatures: ReadonlySet<keyof BridgesAssessedFeatures> = new Set([
   "doubleBridgeRatio",
   "borderBridgeShare",
   "usedEdgeShare",
+  "lastConnectivityDecidedRatio",
+  "diagonalNeighborShare",
+  "shortBridgeShare",
 ]);
 
 function formatPercent(ratio: number): string {
@@ -178,19 +191,21 @@ function listLevelConditions(
 }
 
 /**
- * 分類したレベルが求める手筋と数字・形の質のうち、そのレベルが問う条件だけに、この問題の値を並べる。
+ * 分類したレベルが求める手筋・盤面の形と数字・形の質のうち、そのレベルが問う条件だけに、この問題の値を並べる。
  * 問わない項目まで並べると、どの読みでレベルが決まったかが埋もれる。
  */
-function listReadingConditions<Key extends keyof BridgesLevelReading>(
+function listReadingConditions<Key extends keyof BridgesLevelRequirement>(
   assessment: BridgesDifficultyAssessment,
   labels: Record<Key, string>,
 ): DiagnosticItems {
   if (assessment.status !== "classified") {
     return [];
   }
-  const readings: BridgesLevelReading =
-    bridgesLevelReadings[assessment.difficulty];
-  return listConditionItems(labels, readings, assessment.features, true);
+  const requirement: BridgesLevelRequirement = {
+    ...bridgesLevelReadings[assessment.difficulty],
+    ...bridgesLevelStructures[assessment.difficulty],
+  };
+  return listConditionItems(labels, requirement, assessment.features, true);
 }
 
 function formatAnalysisStatus(analysis: BridgesDifficultyAnalysis): string {

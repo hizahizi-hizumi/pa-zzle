@@ -56,7 +56,7 @@ describe("BridgesDiagnostics", () => {
       ]);
     });
 
-    test("レベルが求める手筋に、本数を見る先読み・組を見る先読み・続けて要る先読みの条件と値を並べること", () => {
+    test("レベルが求める手筋に、1手の先読みと先読みの場所・続く長さ・最後のつながりの読みの置き所の条件と値を並べること", () => {
       const section = getSection("レベルが求める手筋");
       const { features } = snapshot.difficultyAssessment as Extract<
         BridgesDifficultyAssessment,
@@ -64,39 +64,58 @@ describe("BridgesDiagnostics", () => {
       >;
 
       const values = [
-        "本数を見る先読み",
-        "組を見る先読み",
+        "1手の先読み",
         "続けて要る先読み",
+        "先読みの場所",
+        "先読みの続く長さ",
+        "最後のつながりの読みの置き所",
       ].map((label) => getRowValue(label, section));
 
       expect(values).toEqual([
-        `${features.countLookaheadRoundCount}（条件 1以上）`,
-        `${features.groupLookaheadRoundCount}（条件 1以上）`,
+        `${features.lookaheadRoundCount}（条件 1以上）`,
         "0（条件 0）",
+        "1（条件 1）",
+        "1（条件 1）",
+        `${features.lastConnectivityDecidedRatio.toFixed(2)}（条件 0.5以上）`,
       ]);
     });
 
     test("レベルが問わない手筋は並べないこと", () => {
       const section = getSection("レベルが求める手筋");
 
-      expect(within(section).queryByText("唯一の通り道")).toBeNull();
+      expect(
+        ["唯一の通り道", "本数を見る先読み", "組を見る先読み"].map((label) =>
+          within(section).queryByText(label),
+        ),
+      ).toEqual([null, null, null]);
     });
 
-    test("数字と形の質に、島の割合と架ける行き先の割合の条件と値を並べること", () => {
+    test("数字と形の質に、架ける行き先と盤面の形の条件と値を並べること", () => {
       const section = getSection("数字と形の質");
       const { features } = snapshot.difficultyAssessment as Extract<
         BridgesDifficultyAssessment,
         { status: "classified" }
       >;
 
-      const values = ["島の割合", "架ける行き先の割合"].map((label) =>
-        getRowValue(label, section),
-      );
+      const values = [
+        "架ける行き先の割合",
+        "斜め隣に島がある島の割合",
+        "間が1マスの橋の割合",
+        "長い橋",
+      ].map((label) => getRowValue(label, section));
 
       expect(values).toEqual([
-        `${features.islandShare.toFixed(2)}（条件 0.22以上）`,
         `${features.usedEdgeShare.toFixed(2)}（条件 0以上・0.85以下）`,
+        `${features.diagonalNeighborShare.toFixed(2)}（条件 0以上・0.5以下）`,
+        `${features.shortBridgeShare.toFixed(2)}（条件 0以上・0.6以下）`,
+        `${features.longBridgeCount}（条件 1以上）`,
       ]);
+    });
+
+    test("数字と形の質に、レベルが範囲を置かない島の割合は並べないこと", () => {
+      const section = getSection("数字と形の質");
+
+      expect(within(section).queryByText("島の割合")).toBeNull();
     });
 
     test("一意解を示すこと", () => {
