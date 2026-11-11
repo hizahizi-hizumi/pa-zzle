@@ -193,6 +193,12 @@ const tagShareRules = {
 } as const satisfies Record<BridgesDifficulty, readonly TagShareRule[]>;
 
 /**
+ * 唯一の通り道が要る候補に足す点。通り道は当たった候補の1割前後にしか出ず、ほかの手筋の点と同じ重さでは L5 で 3% まで
+ * 減ったので、ほかの手筋より重くする。
+ */
+const PASSAGE_SCORE = 5;
+
+/**
  * 同じレベルに当たった候補を並べる、問題の質の点。下限を満たしただけの候補より、次の候補を先に採る。
  * - 読みの余裕: そのレベルが求める読み（配分・つながり・閉じない読み・先読みと場所）が下限を超えた分。
  * - 手筋の種類: 唯一の通り道、3島以上の組、先読みで手を退けた理由の種類、孤立を見る先読み、交差で塞がる行き先。
@@ -242,7 +248,7 @@ function scoreCandidate(
         1,
       );
   const variety =
-    (reasoning.passageRoundCount > 0 ? 2 : 0) +
+    (reasoning.passageRoundCount > 0 ? PASSAGE_SCORE : 0) +
     (reasoning.groupClosureRoundCount > 0 ? 0.5 : 0) +
     (reasoning.isolatingLookaheadRoundCount > 0 ? 1 : 0) +
     reasoning.lookaheadReasonKindCount +
