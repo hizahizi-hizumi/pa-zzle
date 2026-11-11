@@ -35,6 +35,8 @@ export const bridgesToneClassNames = {
   seaDeep: "[stop-color:#1d5a68] dark:[stop-color:#06202b]",
   /** 盤面のマスの中心の、島の無い所に打つ点。 */
   gridDot: "fill-white/35 dark:fill-[#d9f3f2]/20",
+  /** チュートリアルで見る所を絞っている間に、海に重ねる深い海の色。灰色の覆いの代わりに、海の色のまま暗くする。 */
+  focusVeil: "fill-[#0e3d4a] dark:fill-[#03141b]",
   /** 島の周りの浅瀬。島から離れるほど透けて海の色に戻す。 */
   shallowsStop: "[stop-color:#8fc3cb] dark:[stop-color:#235566]",
   /** 全島がつながった後の、灯った島の周りの澄んだ浅瀬。海と同じ色相で、明るさも上げる。 */

@@ -75,7 +75,10 @@ type BridgesBoardProps = {
    * 体験させる間だけ `false` にし、島の間の押しは回さなかった押しとして知らせる。通常のプレイでは渡さない。
    */
   acceptsEdgePress?: boolean;
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せる島と辺。通常のプレイでは渡さない。 */
+  /**
+   * チュートリアルで手を引いている間、元の明るさで見せる島と辺。盤面の海は画面全体の覆いから抜いて海の色のまま残し、
+   * 盤面の中でほかの島と橋を深い海に沈めて見せる。通常のプレイでは渡さない。
+   */
   spotlight?: BridgesBoardSpotlight | null;
   /** 辺の橋を 1本 → 2本 → なし と回す。 */
   onCycleEdge: (edge: number) => void;
@@ -698,9 +701,10 @@ export function BridgesBoard({
         guide={guide}
         hoverEdge={hoverEdge}
         candidateEdges={candidateEdges}
-        pressedEdge={pressedEdge}
+        pressedEdge={pressedEdge ?? guidedEdges[0] ?? null}
         pressedIsland={pressedIsland}
-        bandEdges={spotlight?.edges ?? []}
+        bandEdges={guidedEdges}
+        focus={spotlight}
         selectedIsland={selectedIsland}
         focusedIsland={keyboardFocused ? focusedIsland : null}
         blockingEdges={blockingEdges}

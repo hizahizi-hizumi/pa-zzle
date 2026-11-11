@@ -186,7 +186,7 @@ const steps: readonly BridgesTutorialStep[] = [
   {
     message: {
       headline: "もう一度押すと\n2本になります",
-      detail: "2本までで、もう一度押すと\n外れます",
+      detail: "2本までです。もう一度押すと外れます",
     },
     introducedRuleId: "double",
     edge: centerEdge,
@@ -198,7 +198,7 @@ const steps: readonly BridgesTutorialStep[] = [
   {
     message: {
       headline: "島から出す橋は\n数字と同じ本数にします",
-      detail: "右下の3は、左の1へ1本だけなので\n上の3へ2本架けます",
+      detail: "右下の3は、左の1へは1本までです",
     },
     introducedRuleId: "count",
     edge: rightBottomEdge,
@@ -219,7 +219,7 @@ const steps: readonly BridgesTutorialStep[] = [
   {
     message: {
       headline: "全部の島を\n1つにつなげます",
-      detail: "左の1は、左下の1とつなぐと\n2島だけで閉じます",
+      detail: "左の1を左下の1とつなぐと2島で閉じます",
     },
     introducedRuleId: "connect",
     edge: leftTopEdge,
@@ -231,7 +231,7 @@ const steps: readonly BridgesTutorialStep[] = [
   {
     message: {
       headline: "島から相手の島へ\nなぞっても架かります",
-      detail: "島を押してから\n相手の島を押しても架かります",
+      detail: "島を押し、相手の島を押しても架かります",
     },
     introducedRuleId: null,
     edge: topEdge,
@@ -740,11 +740,11 @@ export const bridgesTutorial: Tutorial<
   completion: {
     home: {
       headline: "完成です",
-      detail: "本番はもっと大きな盤面で\n遊べます",
+      detail: "本番はもっと大きな盤面で遊べます",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も\n同じルールで解けます",
+      detail: "プレイ中の盤面も同じルールで解けます",
     },
   },
   start: startBridgesTutorial,

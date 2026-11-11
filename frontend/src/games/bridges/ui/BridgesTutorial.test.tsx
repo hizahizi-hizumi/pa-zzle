@@ -285,7 +285,7 @@ describe("BridgesTutorial", () => {
         ]);
         expect(screen.queryByText(/^もう一度押すと/)).not.toBeNull();
         expect(
-          screen.queryByText(/2本までで、もう一度押すと\s*外れます/),
+          screen.queryByText(/2本までです。もう一度押すと外れます/),
         ).not.toBeNull();
       });
 
@@ -470,7 +470,7 @@ describe("BridgesTutorial", () => {
           test("どのレベルの盤面もチュートリアルより大きいので、本番はもっと大きな盤面だと伝えること", () => {
             expect(smallestSize).toBeGreaterThan(BRIDGES_TUTORIAL_BOARD.width);
             expect(
-              screen.queryByText(/本番はもっと大きな盤面で\s*遊べます/),
+              screen.queryByText(/本番はもっと大きな盤面で遊べます/),
             ).not.toBeNull();
           });
 
@@ -499,9 +499,7 @@ describe("BridgesTutorial", () => {
       finishGuidedSteps();
       tapAll(remainingTaps);
       advanceTime(2000);
-      const detail = screen.queryByText(
-        /プレイ中の盤面も\s*同じルールで解けます/,
-      );
+      const detail = screen.queryByText(/プレイ中の盤面も同じルールで解けます/);
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
       expect(detail).not.toBeNull();
