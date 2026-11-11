@@ -1,0 +1,503 @@
+/* 光彩: 通常時の光学面は静かに、光路を確かめた瞬間だけ反射面を輝かせる。 */
+.reflection-play-background[data-reflection-background="radiance"] {
+  background:
+    radial-gradient(
+      ellipse 72% 50% at 50% 46%,
+      rgb(250 255 252 / 85%),
+      transparent 90%
+    ),
+    #e8eeed;
+}
+
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="radiance"]) {
+  background: #e8eeed;
+}
+
+#root
+  section:has(.reflection-play-stage[data-reflection-experience="radiance"])
+  > header {
+  background: #edf2f1;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"] {
+  --reflection-beam: #168eb5;
+  --reflection-grid: #d1dcda;
+  --reflection-port: #91a7ac;
+  --reflection-port-active: #16a3c8;
+  --reflection-socket: #c5d7d5;
+  --reflection-bezel: #95b6b6;
+  --reflection-rim: #fff;
+  --reflection-matched-port: #40a48e;
+}
+
+/* ヒントと格子を別々のカードにせず、一枚の透過性のある光学面にする。 */
+.reflection-play-stage[data-reflection-experience="radiance"]
+.reflection-board::before {
+  content: "";
+  position: absolute;
+  inset: -0.75%;
+  border: 1px solid rgb(142 181 180 / 54%);
+  border-radius: 14px;
+  background: linear-gradient(
+    155deg,
+    rgb(255 255 255 / 88%),
+    rgb(242 250 248 / 58%)
+  );
+  box-shadow: 0 14px 29px -23px rgb(44 80 87 / 32%);
+  pointer-events: none;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-board-surface {
+  background:
+    linear-gradient(140deg, rgb(255 255 255 / 66%) 0%, transparent 36%),
+    linear-gradient(160deg, #f9fcfa, #edf5f4);
+  outline: 1px solid #95b6b6;
+  box-shadow:
+    0 0 0 3px rgb(255 255 255 / 80%),
+    0 0 0 4px rgb(130 179 175 / 35%),
+    inset 0 1px 0 #fff;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-board-surface::after {
+  inset: 3px;
+  border-color: rgb(255 255 255 / 78%);
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-board-surface::before {
+  inset: -6px;
+  background:
+    linear-gradient(#86a9a9, #86a9a9) top left / 9px 1px no-repeat,
+    linear-gradient(#86a9a9, #86a9a9) top left / 1px 9px no-repeat,
+    linear-gradient(#86a9a9, #86a9a9) top right / 9px 1px no-repeat,
+    linear-gradient(#86a9a9, #86a9a9) top right / 1px 9px no-repeat,
+    linear-gradient(#86a9a9, #86a9a9) bottom left / 9px 1px no-repeat,
+    linear-gradient(#86a9a9, #86a9a9) bottom left / 1px 9px no-repeat,
+    linear-gradient(#86a9a9, #86a9a9) bottom right / 9px 1px no-repeat,
+    linear-gradient(#86a9a9, #86a9a9) bottom right / 1px 9px no-repeat;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-board-light {
+  color: var(--reflection-beam);
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-board-light
+  > g:first-child {
+  stroke: var(--reflection-grid);
+  stroke-opacity: 0.68;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-cell:not(:has(svg))::after {
+  width: min(8%, 4px);
+  background: rgb(255 255 255 / 40%);
+  border-color: #bdd3cf;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-cell:enabled:is(:hover, :active),
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-cell[data-drag-target] {
+  background: rgb(73 164 171 / 11%);
+}
+
+/* 一致は周縁の光学端子で伝え、全ヒントを緑の下線で囲わない。 */
+.reflection-play-stage[data-reflection-experience="radiance"] .reflection-clue {
+  color: #2f454c;
+  background: transparent;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-clue[data-matched="true"] {
+  color: #30645d;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-clue[data-matched="true"]
+  .reflection-clue-match {
+  background: transparent;
+  box-shadow: none;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-clue[data-matched="true"]
+  [class~="text-emerald-900"] {
+  color: #30645d;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-clue[aria-pressed="true"] {
+  color: #164f64;
+  background: rgb(125 213 221 / 15%);
+  box-shadow: inset 0 0 0 1px rgb(61 163 176 / 36%);
+}
+
+/* 反射で方向が変わったマスのみ光る。通過だけのマスは経路に視線を譲る。 */
+.reflection-play-stage[data-reflection-experience="radiance"]
+.reflection-cell[data-laser-hit]::before {
+  content: "";
+  position: absolute;
+  inset: -10%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(51 210 226 / 30%),
+    rgb(105 225 232 / 9%) 46%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-cell[data-laser-hit]
+  svg {
+  filter: drop-shadow(0 0 4px rgb(50 186 205 / 72%));
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-cell[data-laser-hit]::after {
+  content: "";
+  position: absolute;
+  width: 72%;
+  height: 72%;
+  border: 1px solid rgb(107 229 230 / 53%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: reflection-radiance-hit 540ms ease-out both;
+}
+
+@keyframes reflection-radiance-hit {
+  from {
+    transform: scale(0.45);
+    opacity: 0;
+  }
+  34% {
+    opacity: 0.85;
+  }
+  to {
+    transform: scale(1.22);
+    opacity: 0;
+  }
+}
+
+/* 光を吸収する素子には反射光を付けず、光が内側へ消える短い応答を描く。 */
+.reflection-play-stage[data-reflection-experience="radiance"]
+.reflection-cell[data-laser-absorbed]::before {
+  content: "";
+  position: absolute;
+  inset: -5%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(74 39 112 / 19%),
+    rgb(88 57 139 / 10%) 38%,
+    transparent 71%
+  );
+  pointer-events: none;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-cell[data-laser-absorbed]::after {
+  content: "";
+  position: absolute;
+  width: 76%;
+  height: 76%;
+  border: 1px solid rgb(113 87 157 / 52%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: reflection-radiance-absorb 480ms ease-in both;
+}
+
+@keyframes reflection-radiance-absorb {
+  from {
+    transform: scale(1.15);
+    opacity: 0.75;
+  }
+  to {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* 完成時は経路が届いた後に吸収反応を返す。 */
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-board[data-reflection-phase="clearing"]
+  .reflection-cell[data-laser-absorbed]::before {
+  animation: reflection-radiance-complete-reflector 400ms ease-out 560ms both;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-board[data-reflection-phase="clearing"]
+  .reflection-cell[data-laser-absorbed]::after {
+  animation-delay: 560ms;
+}
+
+/* 全光路が広がった後に反射素子が追従して光る。正解の先読みは行わない。 */
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-board[data-reflection-phase="clearing"]
+  .reflection-cell[data-laser-hit]::before {
+  animation: reflection-radiance-complete-reflector 400ms ease-out 560ms both;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-board[data-reflection-phase="clearing"]
+  .reflection-cell[data-laser-hit]::after {
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes reflection-radiance-complete-reflector {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 比較案以外の光路描画には一切影響させない。 */
+[data-laser-comet] {
+  display: none;
+}
+
+/* 光路を読み解く瞬間にだけ光点が経路を進む。常時動く飾りにはしない。 */
+.reflection-play-stage[data-reflection-experience="radiance"]
+[data-laser-comet] {
+  display: inline;
+  stroke: #fff;
+  filter: drop-shadow(0 0 0.06px #4ce8f4);
+  opacity: 0;
+  animation: reflection-radiance-travel 460ms cubic-bezier(0.12, 0.08, 0.25, 1)
+    both;
+}
+
+@keyframes reflection-radiance-travel {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.95;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+/* ライトガイドは金属の支持部・色付きの反射膜・透明なハウジングの順で描く。 */
+.reflection-piece-radiant-housing,
+.reflection-piece-radiant-reflector {
+  display: none;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-piece-radiant-housing,
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-piece-radiant-housing {
+  display: block;
+  fill: #edf8f5;
+  stroke: #8cacb2;
+  filter: drop-shadow(0 2px 1px rgb(43 80 86 / 16%));
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-piece-radiant-housing
+  > path,
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-piece-radiant-housing
+  > path {
+  stroke: #fff;
+  stroke-width: 2.5;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-piece-radiant-reflector,
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-piece-radiant-reflector {
+  display: block;
+  stroke: #74969e;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 1px rgb(52 79 89 / 18%));
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-piece-blackhole-aperture,
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-piece-blackhole-aperture {
+  display: block;
+  stroke: #a4b5c3;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-piece-specular,
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-piece-specular {
+  display: block;
+  stroke: #fff;
+  stroke-width: 2.8;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-cell:has(> svg) {
+  background: radial-gradient(circle, rgb(146 203 202 / 13%), transparent 72%);
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-cell
+  svg[data-appearing] {
+  animation: reflection-radiance-insert 310ms cubic-bezier(0.18, 0.8, 0.24, 1)
+    both;
+}
+
+@keyframes reflection-radiance-insert {
+  0% {
+    opacity: 0.65;
+    transform: translateY(-7%) scale(0.89);
+  }
+  70% {
+    transform: translateY(1%) scale(1.035);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-cell
+  svg
+  g.fill-background {
+  fill: #f3f9f7;
+  stroke: #f3f9f7;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  [data-laser-line] {
+  stroke: #167da3;
+}
+.reflection-play-stage[data-reflection-experience="radiance"]
+  [data-laser-aura] {
+  stroke: #24c5d4;
+  stroke-opacity: 0.16;
+}
+.reflection-play-stage[data-reflection-experience="radiance"]
+  [data-laser-core] {
+  stroke: #f7ffff;
+  stroke-opacity: 0.95;
+}
+.reflection-play-stage[data-reflection-experience="radiance"]
+  [data-laser-count] {
+  color: #176c89;
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-board[data-reflection-phase="playing"]
+  :is([data-laser-line], [data-laser-aura], [data-laser-core]) {
+  stroke-dasharray: 1;
+  animation: reflection-ray-trace 440ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-stock {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgb(150 184 178 / 48%);
+  border-radius: 0.9rem;
+  background: rgb(251 254 252 / 78%);
+  box-shadow: 0 6px 18px -14px rgb(44 91 96 / 35%);
+}
+
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-stock::after {
+  display: none;
+}
+
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-stock
+  > button {
+  border-radius: 0.65rem;
+}
+
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-stock:has(> button:nth-child(-n + 3):last-child)
+  > button
+  > svg {
+  width: 2.125rem;
+  height: 2.125rem;
+}
+
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-stock
+  > button[aria-pressed="true"],
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-stock
+  > button:enabled:is(:hover, :active) {
+  background: rgb(95 190 195 / 11%);
+}
+
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-experience-picker {
+  border: 1px solid rgb(142 175 173 / 28%);
+  background: rgb(255 255 255 / 46%);
+}
+
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-experience-option {
+  color: #587371;
+}
+
+.reflection-play-footer[data-reflection-experience="radiance"]
+  .reflection-experience-option[aria-pressed="true"] {
+  color: #1a585b;
+  background: #fff;
+  box-shadow: 0 1px 5px rgb(49 108 110 / 11%);
+}
+
+.reflection-play-stage[data-reflection-experience="radiance"]
+  .reflection-board[data-reflection-phase="clearing"]
+  .reflection-board-surface {
+  animation: reflection-radiance-complete 950ms ease-out both;
+}
+
+@keyframes reflection-radiance-complete {
+  50% {
+    box-shadow:
+      0 0 0 3px #d7f6f1,
+      0 0 0 4px #4fbba8,
+      0 0 28px 7px rgb(62 195 195 / 29%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reflection-play-stage[data-reflection-experience="radiance"]
+    .reflection-board[data-reflection-phase="playing"]
+    :is([data-laser-line], [data-laser-aura], [data-laser-core]),
+  .reflection-play-stage[data-reflection-experience="radiance"]
+    .reflection-board[data-reflection-phase="clearing"]
+    .reflection-board-surface,
+  .reflection-play-stage[data-reflection-experience="radiance"]
+    .reflection-cell[data-laser-hit]::after,
+  .reflection-play-stage[data-reflection-experience="radiance"]
+    .reflection-cell[data-laser-absorbed]::after,
+  .reflection-play-stage[data-reflection-experience="radiance"]
+    [data-laser-comet] {
+    animation: none;
+    opacity: 0;
+  }
+
+  .reflection-play-stage[data-reflection-experience="radiance"]
+    .reflection-cell
+    svg[data-appearing] {
+    animation: none;
+  }
+}

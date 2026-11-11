@@ -106,13 +106,14 @@ export function ReflectionClueButton({
       }
       aria-pressed={selected}
       data-matched={matched}
+      data-clue-side={entry.side}
       disabled={disabled}
       tabIndex={focusable ? 0 : -1}
       onPointerUp={selectHandlers.onPointerUp}
       onClick={selectHandlers.onClick}
       onFocus={() => onFocus(focusKey)}
       style={{ gridRow: row, gridColumn: column }}
-      className="group relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.05)] leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"
+      className="reflection-clue group relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.05)] leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"
     >
       {/*
         一致の地・数字・結果の形の行は、一致や光路の表示が変わっても要素を出し入れせず、色と見え方だけを切り替える。
@@ -122,7 +123,7 @@ export function ReflectionClueButton({
         aria-hidden="true"
         data-clue-match-surface=""
         className={cn(
-          "pointer-events-none absolute",
+          "reflection-clue-match pointer-events-none absolute",
           clueMatchSurfaceInsetClassNames[entry.side],
           reflectionToneClassNames.clueMatchSurface,
           reflectionToneClassNames.clueMatchSurfaceInteractive,

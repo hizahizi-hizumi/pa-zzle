@@ -81,6 +81,7 @@ export function PlayableReflection({
         operation={play.operation}
         canRestart={play.canRestart}
         onSelectCell={play.selectCell}
+        onDragPiece={play.dragPiece}
         onSelectStockPiece={play.selectStockPiece}
         onSelectClue={play.selectClue}
         onRemovePiece={play.removePiece}

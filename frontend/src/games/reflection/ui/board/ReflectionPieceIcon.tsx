@@ -16,7 +16,7 @@ type ReflectionPieceIconProps = {
 
 const sizeClassNames = {
   cell: "size-[80%]",
-  stock: "size-6",
+  stock: "size-7",
   figure: "size-7",
 } as const satisfies Record<ReflectionPieceIconSize, string>;
 
@@ -77,6 +77,7 @@ export function ReflectionPieceIcon({
   return (
     <svg
       aria-hidden="true"
+      data-appearing={appearing ? "" : undefined}
       viewBox="0 0 100 100"
       className={cn(
         "pointer-events-none shrink-0 overflow-visible",
@@ -90,6 +91,29 @@ export function ReflectionPieceIcon({
       strokeLinecap="round"
       strokeLinejoin="round"
     >
+      <g className="reflection-piece-cartridge" strokeWidth={1.5}>
+        <rect x="9" y="9" width="82" height="82" rx="12" />
+        <path d="M16 34V20Q16 16 20 16H36" fill="none" />
+        <path d="M84 66V80Q84 84 80 84H64" fill="none" />
+      </g>
+      <g className="reflection-piece-radiant-housing" strokeWidth={1.4}>
+        <rect x="10" y="10" width="80" height="80" rx="17" />
+        <path d="M19 39V25Q19 19 25 19H40" fill="none" />
+        <path d="M81 61V75Q81 81 75 81H60" fill="none" />
+      </g>
+      {piece === "black-hole" ? (
+        <circle
+          className="reflection-piece-blackhole-aperture"
+          cx="50"
+          cy="50"
+          r="32"
+          strokeWidth={4}
+        />
+      ) : (
+        <g className="reflection-piece-cartridge-blade" strokeWidth={20}>
+          {renderReflectionPieceShape(piece)}
+        </g>
+      )}
       {size === "stock" ? null : (
         <g
           className="fill-background stroke-background"
@@ -100,7 +124,21 @@ export function ReflectionPieceIcon({
           {renderReflectionPieceShape(piece, REFLECTION_PIECE_HALO_WIDTH)}
         </g>
       )}
+      {piece === "black-hole" ? null : (
+        <g className="reflection-piece-radiant-reflector" strokeWidth={22}>
+          {renderReflectionPieceShape(piece)}
+        </g>
+      )}
       {renderReflectionPieceShape(piece)}
+      {piece !== "black-hole" ? (
+        <g
+          className="reflection-piece-specular"
+          strokeWidth={2.5}
+          transform="translate(-2.5 -2.5)"
+        >
+          {renderReflectionPieceShape(piece)}
+        </g>
+      ) : null}
     </svg>
   );
 }

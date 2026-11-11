@@ -41,8 +41,11 @@ import {
   canRestartReflectionSession,
   clearReflectionSessionSelection,
   createReflectionSession,
+  dragReflectionSessionPiece,
   getReflectionSessionResult,
   getReflectionSessionStock,
+  type ReflectionDragSource,
+  type ReflectionDropTarget,
   type ReflectionSelection,
   type ReflectionSession,
   type ReflectionSessionResult,
@@ -92,6 +95,10 @@ export type ReflectionPlay = GamePlay<
     operation: ReflectionOperation | null;
     selectStockPiece: (piece: ReflectionPiece) => void;
     selectCell: (cellIndex: number) => void;
+    dragPiece: (
+      source: ReflectionDragSource,
+      target: ReflectionDropTarget,
+    ) => void;
     selectClue: (entry: ReflectionEntry) => void;
     removePiece: (cellIndex: number) => void;
     clearSelection: () => void;
@@ -229,6 +236,16 @@ export function useReflectionPlay(
     [updateSession],
   );
 
+  const dragPiece = useCallback(
+    (source: ReflectionDragSource, target: ReflectionDropTarget) => {
+      const operatedAt = Date.now();
+      updateSession((current) =>
+        dragReflectionSessionPiece(current, source, target, operatedAt),
+      );
+    },
+    [updateSession],
+  );
+
   const selectClue = useCallback(
     (entry: ReflectionEntry) => {
       updateSession((current) => tapReflectionSessionClue(current, entry));
@@ -319,6 +336,7 @@ export function useReflectionPlay(
     canRestart: canRestartReflectionSession(session),
     selectStockPiece,
     selectCell,
+    dragPiece,
     selectClue,
     removePiece,
     clearSelection,

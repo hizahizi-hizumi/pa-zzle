@@ -4,7 +4,10 @@ import {
   type ReflectionPiece,
   reflectionPieces,
 } from "@/games/reflection/puzzle/board";
-import type { ReflectionSelection } from "@/games/reflection/session/session";
+import type {
+  ReflectionDragSource,
+  ReflectionSelection,
+} from "@/games/reflection/session/session";
 import {
   filterReflectionCues,
   type ReflectionCue,
@@ -13,6 +16,10 @@ import { ReflectionCueLayer } from "@/games/reflection/ui/board/ReflectionCueLay
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { reflectionPieceBarClassNames } from "@/games/reflection/ui/reflection-tone";
+import type {
+  ReflectionDragHandlers,
+  ReflectionDragPreview,
+} from "@/games/reflection/ui/use-reflection-drag";
 import { cn } from "@/lib/utils";
 
 type ReflectionStockProps = {
@@ -22,6 +29,11 @@ type ReflectionStockProps = {
   /** 盤面で選んでいるマスのピース。盤面のピースを選んでいないときは `null`。 */
   selectedCell: ReflectionPiece | null;
   disabled: boolean;
+  dragHandlers?: (
+    source: ReflectionDragSource,
+    piece: ReflectionPiece | null,
+  ) => ReflectionDragHandlers;
+  dragPreview?: ReflectionDragPreview | null;
   onSelectStockPiece: (piece: ReflectionPiece) => void;
   /** 種類ごとのボタンに重ねる、チュートリアルの印と覆いから抜く所。 */
   cues?: readonly ReflectionCue[];
@@ -44,6 +56,8 @@ export function ReflectionStock({
   selection,
   selectedCell,
   disabled,
+  dragHandlers,
+  dragPreview,
   onSelectStockPiece,
   cues = [],
 }: ReflectionStockProps) {
@@ -56,29 +70,56 @@ export function ReflectionStock({
   return (
     <div
       role="group"
+      data-reflection-stock-zone=""
+      data-drag-target={
+        dragPreview?.source.type === "cell" &&
+        dragPreview.target?.type === "stock"
+          ? ""
+          : undefined
+      }
       aria-label={
         returning
           ? "ストック（同じ種類を押すと戻す・別の種類を押すと置き換える）"
           : "ストック"
       }
-      className="relative mx-auto flex w-full max-w-md justify-center gap-1 p-1 sm:gap-1.5"
+      className="reflection-stock relative mx-auto flex w-full max-w-md justify-center gap-1 p-1 sm:gap-1.5"
     >
       {pieces.map(function renderPiece(piece) {
         const remaining = stock[piece];
         const selected =
           selection?.type === "stock" && selection.piece === piece;
+        const pointer = dragHandlers?.(
+          { type: "stock", piece },
+          remaining > 0 ? piece : null,
+        );
+        const tap = getTapHandlers(() => onSelectStockPiece(piece));
         return (
           <button
             key={piece}
             type="button"
             aria-label={`${reflectionPieceLabels[piece]} 残り${remaining}`}
             aria-pressed={selected}
+            data-drag-origin={
+              dragPreview?.source.type === "stock" &&
+              dragPreview.source.piece === piece
+                ? ""
+                : undefined
+            }
             disabled={
               disabled || (remaining === 0 && piece !== selectedCellPiece)
             }
-            {...getTapHandlers(() => onSelectStockPiece(piece))}
+            onPointerDown={pointer?.onPointerDown}
+            onPointerMove={pointer?.onPointerMove}
+            onPointerUp={(event) => {
+              if (!pointer?.onPointerUp(event)) tap.onPointerUp(event);
+            }}
+            onPointerCancel={pointer?.onPointerCancel}
+            onClick={(event) => {
+              if (!pointer?.onClick(event)) tap.onClick(event);
+            }}
             className={cn(
-              "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40",
+              "relative flex h-11 min-w-0 max-w-16 flex-1 select-none items-center justify-center text-foreground outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40",
+              dragHandlers ? "touch-none" : "touch-manipulation",
             )}
           >
             <ReflectionCueLayer

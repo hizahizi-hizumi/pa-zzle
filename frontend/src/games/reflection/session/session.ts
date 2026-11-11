@@ -24,6 +24,14 @@ import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
  * - `stock`: 手持ちのピースの種類。空きマスを押すとその種類を置く。
  * - `cell`: 盤面に置いたピース。別のマスやストックを押すと動かす。
  */
+export type ReflectionDragSource =
+  | { type: "stock"; piece: ReflectionPiece }
+  | { type: "cell"; cellIndex: number };
+
+export type ReflectionDropTarget =
+  | { type: "stock" }
+  | { type: "cell"; cellIndex: number };
+
 export type ReflectionSelection =
   | { type: "stock"; piece: ReflectionPiece }
   | { type: "cell"; cellIndex: number };
@@ -266,6 +274,59 @@ export function tapReflectionSessionCell(
 
   if (tappedCell === null) return session;
   return changeSelection(session, { type: "cell", cellIndex });
+}
+
+/** ドラッグを一度の盤面操作として適用する。無効なドロップでは選択・記録を変えない。 */
+export function dragReflectionSessionPiece(
+  session: ReflectionSession,
+  source: ReflectionDragSource,
+  target: ReflectionDropTarget,
+  operatedAt: number,
+): ReflectionSession {
+  if (session.status !== "playing") return session;
+  const { puzzleState: board } = session;
+  if (source.type === "stock") {
+    if (target.type !== "cell") return session;
+    const oldCell = board.cells[target.cellIndex];
+    if (
+      oldCell === undefined ||
+      oldCell === source.piece ||
+      getReflectionSessionStock(session)[source.piece] <= 0
+    )
+      return session;
+    return applyBoardChange(
+      session,
+      withCell(board, target.cellIndex, source.piece),
+      null,
+      oldCell !== null,
+      operatedAt,
+    );
+  }
+
+  const selectedCell = board.cells[source.cellIndex];
+  if (selectedCell === null || selectedCell === undefined) return session;
+  if (target.type === "stock") {
+    return applyBoardChange(
+      session,
+      withCell(board, source.cellIndex, null),
+      null,
+      true,
+      operatedAt,
+    );
+  }
+  const targetCell = board.cells[target.cellIndex];
+  if (
+    targetCell === undefined ||
+    source.cellIndex === target.cellIndex ||
+    selectedCell === targetCell
+  )
+    return session;
+  const nextBoard = withCell(
+    withCell(board, target.cellIndex, selectedCell),
+    source.cellIndex,
+    targetCell,
+  );
+  return applyBoardChange(session, nextBoard, null, true, operatedAt);
 }
 
 /**
