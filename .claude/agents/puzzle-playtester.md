@@ -1,7 +1,7 @@
 ---
 name: puzzle-playtester
 description: 起動済みアプリの URL と入口パスを受け、Playwright でプレイヤーとして遊び、画面・操作・流れの分かりやすさとつまずき、点数の出方を指摘と人間に確かめてほしい点として報告する Agent。`/add-puzzle` Skill の山場・作り込み・最終レビューの反映で起動される。
-tools: Read, Bash(node .claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(node */.claude/skills/add-puzzle/scripts/playtest-driver.mjs *)
+tools: Read, Bash(node .claude/skills/share/playtest-driver.mjs *), Bash(node */.claude/skills/share/playtest-driver.mjs *)
 model: opus
 ---
 
@@ -32,7 +32,7 @@ model: opus
 ## 参照する正本
 
 - 正本はアプリの画面だけ。遊び方はアプリ内の遊び方表示と画面の見た目から理解する
-- 読むファイルは、入力で渡されたものと、driver が出力先に書いたもの（画像・ログ）だけ。driver（`.claude/skills/add-puzzle/scripts/playtest-driver.mjs`）は実行するだけで、中身を読む必要はない
+- 読むファイルは、入力で渡されたものと、driver が出力先に書いたもの（画像・ログ）だけ。driver（`.claude/skills/share/playtest-driver.mjs`）は実行するだけで、中身を読む必要はない
 - 体験の拠り所（判断の物差しとして持っておく。引用より、プレイヤーとして感じたことを書くのが主）: 盤面が主役で、盤面の状態・操作が通ったか・合っているか・クリアしたかは形・色・動きで分かり、プレイ中に説明文で知らせない。スマートフォンでは盤面と操作がスクロールせずに一つの視野に収まる。ゲームのホームでレベルを選び、図鑑で解いた問題を見返せる。結果では今回の評価が最も強く、次の問題へすぐ進める
 
 ## 手順
@@ -41,9 +41,9 @@ model: opus
 
    ```sh
    # 起動（Bash の run_in_background で。端末ごとに入力のポートと別の出力先）
-   node .claude/skills/add-puzzle/scripts/playtest-driver.mjs serve --url <アプリの URL> --device <iphone|pc> --out <出力先>/<端末> --port <ポート>
+   node .claude/skills/share/playtest-driver.mjs serve --url <アプリの URL> --device <iphone|pc> --out <出力先>/<端末> --port <ポート>
    # 操作（起動直後の send は、つながるまで待つ）
-   node .claude/skills/add-puzzle/scripts/playtest-driver.mjs send --port <ポート> <操作> [引数...]
+   node .claude/skills/share/playtest-driver.mjs send --port <ポート> <操作> [引数...]
    ```
 
    | 操作 | 意味 |

@@ -6,8 +6,8 @@
 // pc は 1280×800。画像は scale: 'css'（画像の1px = CSS の1px）なので、画像から読んだ座標をそのまま tap に使える。
 //
 // 使い方:
-//   起動（背景で）: node playtest-driver.mjs serve --url <アプリの URL> --device <iphone|pc> --out <画像の出力先> --port <ポート>
-//   操作:           node playtest-driver.mjs send --port <ポート> <操作> [引数...]
+//   起動（背景で。リポジトリのルートから）: node .claude/skills/share/playtest-driver.mjs serve --url <アプリの URL> --device <iphone|pc> --out <画像の出力先> --port <ポート>
+//   操作:           node .claude/skills/share/playtest-driver.mjs send --port <ポート> <操作> [引数...]
 //   （serve の起動直後の send は、つながるまで最長30秒待つ）
 // 操作:
 //   goto <パス>                 アプリの URL からのパスを開く
@@ -429,7 +429,7 @@ const [command, ...rest] = process.argv.slice(2);
 if (command === "serve") await serve(rest);
 else if (command === "send") await send(rest);
 else {
-  console.error("使い方: node playtest-driver.mjs serve --url <URL> --device <iphone|pc> --out <出力先> --port <ポート>");
-  console.error("        node playtest-driver.mjs send --port <ポート> <goto|tap|swipe|path|key|trace|frames|scroll|wait|shot|zoom|rect|save-storage|load-storage|quit> [引数...]");
+  console.error("使い方: node .claude/skills/share/playtest-driver.mjs serve --url <URL> --device <iphone|pc> --out <出力先> --port <ポート>");
+  console.error("        node .claude/skills/share/playtest-driver.mjs send --port <ポート> <goto|tap|swipe|path|key|trace|frames|scroll|wait|shot|zoom|rect|save-storage|load-storage|quit> [引数...]");
   process.exit(2);
 }
