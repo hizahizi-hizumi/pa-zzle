@@ -79,7 +79,7 @@ export const bridgesRefinementGoals = [
 export type BridgesRefinementGoal = (typeof bridgesRefinementGoals)[number];
 
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
-export const BRIDGES_GENERATOR_VERSION = "8";
+export const BRIDGES_GENERATOR_VERSION = "9";
 
 /**
  * 候補を作る条件。どれも難易度の判定条件ではなく、候補の分布を寄せる生成条件。

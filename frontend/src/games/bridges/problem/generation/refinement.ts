@@ -2,6 +2,8 @@ import {
   BRIDGES_SHARP_ROUND_EDGE_LIMIT,
   type BridgesReasoningRound,
   countBridgesCountReadingPhases,
+  findBridgesFewestLookaheadSpots,
+  listBridgesIslandsUndecidedByOpening,
   summarizeBridgesLookaheads,
   traceBridgesHumanSolve,
 } from "@/games/bridges/problem/generation/human-solver";
@@ -27,11 +29,15 @@ type Target = { minimum?: number; maximum?: number };
  *   `closures`: 閉じない読みの一か所の気づき。`otherConnectivity`: それ以外の
  *   つながりの読み（3島以上の組・唯一の通り道・掃く手詰まり）。`connectivity`: つながりの読みの手詰まり（先読みはまとめて数える）。
  * - `readings`: ちょうど以外の読みの手詰まり。`passages`: 唯一の通り道。`crossings`: 交差で塞がる行き先。
- * - `lookaheads`・`groupLookaheads`・`spots`: 1手の先読みの数、組を見る先読みの数、場所の数（`summarizeBridgesLookaheads`）。
+ * - `lookaheads`・`groupLookaheads`: 1手の先読みの数、組を見る先読みの数（`summarizeBridgesLookaheads`）。
+ * - `spots`・`lastLookaheadLateness`: 先読みの場所の最少数と、その解き順で最後の先読みの前に決まっていた行き先の割合
+ *   （`findBridgesFewestLookaheadSpots`）。解き進めた経過で場所が1つ以下なら、最少数も経過と同じなので探さない。
  * - `reasonKinds`: 1手の先読みで手を退けた理由（組が閉じる・孤立・本数の破れ・上限を下げる）の種類の数。
  * - `firstLookaheadLateness`: 最初の1手の先読みの前に決まっていた行き先の割合。
  * - `lateClimax`: 最後のつながりの読みの前に決まっていた行き先の割合。
- * - `loops`・`highClues`・`veryHighClues`: 解の輪、5以上・6以上の数字の島。
+ * - `loops`: 解の輪。
+ * - `highClues`・`veryHighClues`: 5以上・6以上の数字の島のうち、解き始めの数字の読みのまとまりで決まらない島。
+ * - `longBridges`: 解で橋を架ける組のうち、盤面の一辺の半分以上の長さの組。
  */
 type Metrics = Record<
   | "countRounds"
@@ -44,12 +50,14 @@ type Metrics = Record<
   | "lookaheads"
   | "groupLookaheads"
   | "spots"
+  | "lastLookaheadLateness"
   | "reasonKinds"
   | "firstLookaheadLateness"
   | "lateClimax"
   | "loops"
   | "highClues"
-  | "veryHighClues",
+  | "veryHighClues"
+  | "longBridges",
   number
 >;
 
@@ -60,7 +68,8 @@ type Metrics = Record<
  * - `closure`（L3）: 配分1つ、つながりの読み3回、閉じない読み1回、交差1つ、5以上の数字1つ、輪1つ、先読みは無し。
  * - `lookahead`（L4）: 配分2つ、つながり3回、読み5回、1手の先読みちょうど1つ、5以上の数字2つ、輪2つ、交差1つ。
  * - `spots`（L5）: 配分2つ、つながり4回、読み6回、1手の先読みを2か所以上で、閉じない読み2回、組を見る先読み、先読みで退けた
- *   理由2種類、最初の先読みが行き先の半分が決まった後、5以上の数字3つ、6以上の数字1つ、輪2つ、交差2つ。
+ *   理由2種類、最初の先読みが行き先の半分が決まった後、最後の先読みが7割が決まった後、5以上の数字3つ、6以上の数字1つ、
+ *   輪2つ、交差2つ。
  * つながりの読みを求める向きでは、唯一の通り道を1つと、最後のつながりの読みが解き進みの6割より後にあることも目標にする。
  */
 const targetsByGoal: Record<
@@ -112,11 +121,13 @@ const targetsByGoal: Record<
     groupLookaheads: { minimum: 1 },
     reasonKinds: { minimum: 2 },
     firstLookaheadLateness: { minimum: 0.5 },
+    lastLookaheadLateness: { minimum: 0.7 },
     passages: { minimum: 1 },
     crossings: { minimum: 2 },
     highClues: { minimum: 3 },
     veryHighClues: { minimum: 1 },
     loops: { minimum: 2 },
+    longBridges: { minimum: 2 },
     lateClimax: { minimum: 0.6 },
   },
 };
@@ -134,6 +145,7 @@ const EXCESS_PENALTY = 10;
 const ratioMetrics: ReadonlySet<keyof Metrics> = new Set([
   "lateClimax",
   "firstLookaheadLateness",
+  "lastLookaheadLateness",
 ]);
 
 /**
@@ -154,6 +166,13 @@ const MISSING_LONG_BRIDGE_PENALTY = 10;
 
 /** 間が1マスの橋の割合が上限を超えた分に掛ける重み。ほかの質より強く引き、隣の島をつなぐだけの盤面を避ける。 */
 const SHORT_BRIDGE_WEIGHT = 200;
+
+/**
+ * 解の橋が通る外周の線の割合の上限と、超えた分に掛ける重み。外周に沿う橋の本数が少なくても、長い橋が外周を通ると盤面の枠を
+ * なぞる解になるので、通る線の長さで引く。
+ */
+const MAXIMUM_BORDER_COVERAGE = 0.85;
+const BORDER_COVERAGE_WEIGHT = 100;
 
 /**
  * 7 か 8 の島があるときに足す点。上のレベルの札（7 か 8・8）を満たせるよう、大きい数字の島を作る変形を選ぶ。5以上の数字を
@@ -224,12 +243,25 @@ function isConnected(
 
 /** 解き進めた経過と解から、磨くときに数える読みと盤面の量を求める。 */
 function measure(
+  board: BridgesBoard,
   rounds: readonly BridgesReasoningRound[],
   crossings: number,
-  clues: readonly number[],
   loops: number,
+  longBridges: number,
 ): Metrics {
   const lookahead = summarizeBridgesLookaheads(rounds);
+  const lookaheadRounds = rounds.filter(({ tier }) => tier === "D");
+  const fewest =
+    lookahead.spotCount >= 2
+      ? findBridgesFewestLookaheadSpots(board)
+      : {
+          spotCount: lookahead.spotCount,
+          lastLookaheadDecidedRatio: lookaheadRounds.at(-1)?.decidedRatio ?? 0,
+        };
+  const undecided = listBridgesIslandsUndecidedByOpening(board);
+  const lateClues = board.islands.flatMap(({ clue }, island) =>
+    undecided[island] ? [clue] : [],
+  );
   const countRounds = countBridgesCountReadingPhases(rounds);
   const connectivityRounds = rounds.filter(
     ({ tier }) => tier !== "A1" && tier !== "A2",
@@ -251,19 +283,20 @@ function measure(
     lookaheads: lookahead.lookaheads.length,
     groupLookaheads: lookahead.lookaheads.filter(({ readsGroup }) => readsGroup)
       .length,
-    spots: lookahead.spotCount,
+    spots: fewest.spotCount,
+    lastLookaheadLateness: fewest.lastLookaheadDecidedRatio,
     reasonKinds: [
       lookahead.lookaheads.some(({ readsClosure }) => readsClosure),
       lookahead.lookaheads.some(({ readsIsolation }) => readsIsolation),
       lookahead.lookaheads.some(({ readsCount }) => readsCount),
       lookahead.lookaheads.some(({ lowersUpper }) => lowersUpper),
     ].filter(Boolean).length,
-    firstLookaheadLateness:
-      rounds.find(({ tier }) => tier === "D")?.decidedRatio ?? 0,
+    firstLookaheadLateness: lookaheadRounds[0]?.decidedRatio ?? 0,
     lateClimax: connectivityRounds.at(-1)?.decidedRatio ?? 0,
     loops,
-    highClues: clues.filter((clue) => clue >= 5).length,
-    veryHighClues: clues.filter((clue) => clue >= 6).length,
+    highClues: lateClues.filter((clue) => clue >= 5).length,
+    veryHighClues: lateClues.filter((clue) => clue >= 6).length,
+    longBridges,
   };
 }
 
@@ -305,19 +338,6 @@ function scoreLayout(
   }
   const clues = board.islands.map(({ clue }) => clue);
   const used = solution.filter((bridges) => bridges > 0).length;
-  let value = scoreTargets(
-    measure(
-      trace.rounds,
-      trace.crossingBlockCount,
-      clues,
-      used - board.islands.length + 1,
-    ),
-    goal,
-  );
-  if (targetsByGoal[goal].highClues !== undefined) {
-    value += clues.some((clue) => clue >= 7) ? SEVEN_SCORE : 0;
-    value += clues.some((clue) => clue >= 8) ? EIGHT_SCORE : 0;
-  }
   const clueMean =
     clues.reduce((total, clue) => total + clue, 0) / clues.length;
   const doubleRatio =
@@ -333,6 +353,7 @@ function scoreLayout(
   let shortBridges = 0;
   let longBridges = 0;
   let borderBridges = 0;
+  let borderCoverage = 0;
   for (const [edge, { from, to }] of edges.entries()) {
     if (solution[edge] === 0) {
       continue;
@@ -343,12 +364,26 @@ function scoreLayout(
       Math.abs(start.row - end.row) + Math.abs(start.column - end.column);
     shortBridges += length === 2 ? 1 : 0;
     longBridges += length * 2 >= board.width ? 1 : 0;
-    borderBridges +=
+    const alongBorder =
       (start.row === end.row && (start.row === 0 || start.row === last)) ||
       (start.column === end.column &&
-        (start.column === 0 || start.column === last))
-        ? 1
-        : 0;
+        (start.column === 0 || start.column === last));
+    borderBridges += alongBorder ? 1 : 0;
+    borderCoverage += alongBorder ? length : 0;
+  }
+  let value = scoreTargets(
+    measure(
+      board,
+      trace.rounds,
+      trace.crossingBlockCount,
+      used - board.islands.length + 1,
+      longBridges,
+    ),
+    goal,
+  );
+  if (targetsByGoal[goal].highClues !== undefined) {
+    value += clues.some((clue) => clue >= 7) ? SEVEN_SCORE : 0;
+    value += clues.some((clue) => clue >= 8) ? EIGHT_SCORE : 0;
   }
   const shortfall =
     Math.max(0, used / Math.max(1, edges.length) - MAXIMUM_USED_EDGE_SHARE) +
@@ -374,6 +409,8 @@ function scoreLayout(
           0,
           shortBridges / Math.max(1, used) - MAXIMUM_SHORT_BRIDGE_SHARE,
         ) -
+      BORDER_COVERAGE_WEIGHT *
+        Math.max(0, borderCoverage / (4 * last) - MAXIMUM_BORDER_COVERAGE) -
       (longBridges === 0 ? MISSING_LONG_BRIDGE_PENALTY : 0),
   };
 }

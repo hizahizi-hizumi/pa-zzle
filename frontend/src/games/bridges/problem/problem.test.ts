@@ -21,7 +21,7 @@ describe("createBridgesProblemIdentity", () => {
     );
 
     expect(identity).toEqual({
-      generatorVersion: "8",
+      generatorVersion: "9",
       seed: "br-10-d26-p65-e25-s45-r500-lookahead-3",
       conditions: {
         size: 10,

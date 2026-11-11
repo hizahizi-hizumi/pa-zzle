@@ -79,6 +79,12 @@ const DIAGONAL_PLACEMENT_WEIGHT = 0.1;
 /** 斜め隣に島のある島の割合の上限。超える配置は、磨く前に作り直す（どのレベルもこの上限を求める）。 */
 const MAXIMUM_DIAGONAL_NEIGHBOR_SHARE = 0.5;
 
+/**
+ * 盤面の四隅のマスに置く島の数の上限（どのレベルもこの上限を求める）。四隅すべてに島があると、外周を回る橋で盤面の枠が
+ * できやすい。上限に届いたら、残りの隅には置かない。
+ */
+const MAXIMUM_CORNER_ISLANDS = 3;
+
 const CELL_LENGTH_EXPONENT = 0.5;
 
 /**
@@ -233,6 +239,15 @@ class SpreadLayout {
         (bridge.from === from && bridge.to === to) ||
         (bridge.from === to && bridge.to === from),
     );
+  }
+
+  isCorner({ row, column }: CellPosition): boolean {
+    const last = this.size - 1;
+    return (row === 0 || row === last) && (column === 0 || column === last);
+  }
+
+  countCornerIslands(): number {
+    return this.cells.filter((cell) => this.isCorner(cell)).length;
   }
 
   isOnBorder({ row, column }: CellPosition): boolean {
@@ -431,7 +446,7 @@ function connectChosenEdges(
  * 盤面全体に島を広げながら、全島をつなぐ橋を張る。
  * 1. 島を1つ置く。以降、既にある島へ縦横にまっすぐ、架けた橋を横切らずに橋を架けられる空きマスを盤面全体から1つ選んで島を置き、
  *    その間に橋を架ける。マスは、架けられる橋の間のマスの数の平方根と、架けられる向きの数に比べた重みで選び、外周のマス・
- *    島の多い偶奇の組のマス・斜め隣に島のあるマスは重みを下げる。伸ばす元の島ではなく置くマスを選ぶので外周に偏らず、
+ *    島の多い偶奇の組のマス・斜め隣に島のあるマスは重みを下げ、四隅の島が `MAXIMUM_CORNER_ISLANDS` に届いたら残りの隅には置かない。伸ばす元の島ではなく置くマスを選ぶので外周に偏らず、
  *    短い橋と行き先の少ない島に偏らない（マスの重みを長さそのものにすると、長い橋が盤面を塞いで島の数が減る）。選んだマスから
  *    どの島へ架けるかは、間のマスの数に比べた重みで選び、長い橋を優先する。
  * 2. 島を置く代わりに、`splitRate` の確率で、架けた橋の途中に島を差して2本に分ける（同じ本数の橋が島を通り抜ける形）。
@@ -478,7 +493,14 @@ export function spreadBridgesIslands(
         continue;
       }
     }
+    const cornerRoom =
+      MAXIMUM_CORNER_ISLANDS -
+      layout.countCornerIslands() -
+      (pointSymmetric ? 1 : 0);
     const placements = layout.listPlacements().flatMap((anchors) => {
+      if (cornerRoom <= 0 && layout.isCorner(anchors[0]!.cell)) {
+        return [];
+      }
       const usable = pointSymmetric
         ? anchors.filter(
             (placement) => layout.mirrorPlacement(placement) !== null,
