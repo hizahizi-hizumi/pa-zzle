@@ -146,14 +146,14 @@ describe("analyzeBridgesDifficulty", () => {
       "3.....5.4",
     ]);
 
-    test("同じ手詰まりで離れた2か所の先読みを別の場所と数え、上限を下げる先読みと、本数・組・孤立を見る先読みを数えること", () => {
+    test("同じ手詰まりで離れた2か所に先読みが見えても、1か所を当てれば残りが下の段で決まるなら場所を1つと数え、上限を下げる先読みと、本数・組・孤立を見る先読みを数えること", () => {
       const analysis = analyzeBridgesDifficulty(problem);
 
       expect(analysis).toMatchObject({
         status: "analyzed",
         reasoning: {
           lookaheadRoundCount: 2,
-          lookaheadSpotCount: 2,
+          lookaheadSpotCount: 1,
           cappingLookaheadRoundCount: 1,
           countLookaheadRoundCount: 1,
           groupLookaheadRoundCount: 2,

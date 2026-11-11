@@ -266,18 +266,27 @@ function deduceUnclosedGroups(
   return deductions;
 }
 
+/**
+ * 唯一の通り道: この行き先が無いと架けられる橋だけでは全島がつながらず、切り離される側（小さい方のまとまり）か残る側を
+ * 見渡せる（`isVisibleGroup`）なら1本は要る。どちらも見渡せない大きさなら、盤面全体をたどる探索になるので使わない。
+ */
 function deduceOnlyPassages(
   context: BridgesSolverContext,
   bounds: BridgeBounds,
 ): Deductions {
   const deductions: Deductions = new Map();
   const { lower, upper } = bounds;
+  const islandCount = context.board.islands.length;
   for (const edge of upper.keys()) {
     if (
-      lower[edge] === 0 &&
-      upper[edge]! > 0 &&
-      !canBridgesStillConnect(context, upper, edge)
+      lower[edge] !== 0 ||
+      upper[edge] === 0 ||
+      canBridgesStillConnect(context, upper, edge)
     ) {
+      continue;
+    }
+    const piece = findSmallestSeparatedPiece(context, upper.with(edge, 0));
+    if (piece !== null && isVisibleGroup(piece, islandCount)) {
       tighten(deductions, bounds, edge, 1, upper[edge]!);
     }
   }
@@ -991,6 +1000,92 @@ export function summarizeBridgesLookaheads(
   return { lookaheads, mergedRoundCount, spotCount, longestChain };
 }
 
+/**
+ * 1手の先読みを1か所ずつ当てて解く順のうち、先読みの場所の最も少ない順。
+ * - `spotCount`: 先読みの場所の最少数。下の段（A1〜C3）で止まるたびに、その盤面で先読みが効く場所（`splitIntoSpots`）を1つだけ
+ *   当てて下の段で進め直し、解き切るまでに当てた場所の数を、当てる場所の選び方すべてで比べた最小。どの順に解いても、これより
+ *   少ない場所の先読みでは解けない。同時に見える離れた先読みも、1つを当てれば残りが下の段で決まるなら1か所と数える。
+ * - `lastLookaheadDecidedRatio`: 場所の最も少ない順のうち、最後の先読みの前に本数が決まっていた行き先の割合の最小。どの最少の
+ *   順で解いても、最後の先読みは解き進みのこの割合より後にある。先読みが要らなければ 0。
+ */
+export type BridgesFewestLookaheadSpots = {
+  spotCount: number;
+  lastLookaheadDecidedRatio: number;
+};
+
+/** 先読みが要らない盤面の `BridgesFewestLookaheadSpots`。 */
+const noLookaheadSpots: BridgesFewestLookaheadSpots = {
+  spotCount: 0,
+  lastLookaheadDecidedRatio: 0,
+};
+
+function searchFewestLookaheadSpots(
+  context: BridgesSolverContext,
+  entry: BridgeBounds,
+  memo: Map<string, BridgesFewestLookaheadSpots>,
+): BridgesFewestLookaheadSpots {
+  const key = `${entry.lower.join(",")}|${entry.upper.join(",")}`;
+  const known = memo.get(key);
+  if (known !== undefined) {
+    return known;
+  }
+  const bounds = copyBridgeBounds(entry);
+  if (runTiers(context, bounds, "C3", null)) {
+    memo.set(key, noLookaheadSpots);
+    return noLookaheadSpots;
+  }
+  const decidedRatio = countDecidedRatio(bounds);
+  const spots = splitIntoSpots(
+    context,
+    listEffectiveDeductions(deduceByLookahead(context, bounds), bounds),
+  );
+  if (spots.length === 0) {
+    throw new BridgesContradiction();
+  }
+  let fewest: BridgesFewestLookaheadSpots | null = null;
+  for (const spot of spots) {
+    const next = copyBridgeBounds(bounds);
+    for (const [edge, [atLeast, atMost]] of spot) {
+      next.lower[edge] = atLeast;
+      next.upper[edge] = atMost;
+    }
+    const rest = searchFewestLookaheadSpots(context, next, memo);
+    const candidate = {
+      spotCount: rest.spotCount + 1,
+      lastLookaheadDecidedRatio:
+        rest.spotCount === 0 ? decidedRatio : rest.lastLookaheadDecidedRatio,
+    };
+    if (fewest === null || candidate.spotCount < fewest.spotCount) {
+      fewest = candidate;
+    } else if (candidate.spotCount === fewest.spotCount) {
+      fewest = {
+        spotCount: fewest.spotCount,
+        lastLookaheadDecidedRatio: Math.min(
+          fewest.lastLookaheadDecidedRatio,
+          candidate.lastLookaheadDecidedRatio,
+        ),
+      };
+    }
+  }
+  memo.set(key, fewest!);
+  return fewest!;
+}
+
+/**
+ * 1手の先読みまでの推理（A1〜D）で、先読みの場所の最も少ない解き順を探す（`BridgesFewestLookaheadSpots`）。
+ * 推理で解き切れない盤面では `BridgesContradiction` を投げる。
+ */
+export function findBridgesFewestLookaheadSpots(
+  board: BridgesBoard,
+): BridgesFewestLookaheadSpots {
+  const context = createBridgesSolverContext(board);
+  return searchFewestLookaheadSpots(
+    context,
+    createInitialBridgeBounds(context),
+    new Map(),
+  );
+}
+
 /** 島の数字と盤面だけから（解を見ずに）、`maximumTier` までの段で解き進めた経過。 */
 export function traceBridgesHumanSolve(
   board: BridgesBoard,
@@ -1060,6 +1155,21 @@ export function countBridgesOpeningEdges(board: BridgesBoard): number {
     ].map(([edge]) => edge),
   );
   return edges.size;
+}
+
+/**
+ * 解き始めから数字の読み（A1・A2）だけで止まるまで進めた（最初の数字の読みのまとまりの）後に、行き先の本数がまだ決まらない
+ * 島。島の番号ごとに、決まらない行き先が残れば `true`。
+ */
+export function listBridgesIslandsUndecidedByOpening(
+  board: BridgesBoard,
+): boolean[] {
+  const context = createBridgesSolverContext(board);
+  const bounds = createInitialBridgeBounds(context);
+  runTiers(context, bounds, "A2", null);
+  return context.network.islandEdges.map((edges) =>
+    edges.some((edge) => bounds.lower[edge] !== bounds.upper[edge]),
+  );
 }
 
 /**

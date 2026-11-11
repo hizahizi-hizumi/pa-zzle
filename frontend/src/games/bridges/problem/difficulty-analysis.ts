@@ -8,6 +8,8 @@ import {
   countBridgesCountReadingPhases,
   countBridgesOpeningEdges,
   countBridgesOpeningSaturatedIslands,
+  findBridgesFewestLookaheadSpots,
+  listBridgesIslandsUndecidedByOpening,
   summarizeBridgesLookaheads,
   traceBridgesHumanSolve,
 } from "@/games/bridges/problem/generation/human-solver";
@@ -41,6 +43,9 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
  * - `borderIslandShare`: 盤面の外周の行・列にある島の割合。多いと枠に島が並び、内側が空く。
  * - `gridAlignmentShare`: 島の行と列の偶奇（4組）のうち、最も多い組の島の割合。大きいと島が1マスおきの格子にそろう
  *   （無作為なら 0.3 前後）。
+ * - `borderCoverageShare`: 盤面の外周の線（隣り合う外周のマスの間、一辺の長さ − 1 の4倍）のうち、解の橋が通る割合。
+ *   大きいと解の橋が盤面の枠をなぞる。
+ * - `cornerIslandCount`: 盤面の四隅のマスにある島の数。
  */
 export type BridgesScaleMetrics = {
   size: number;
@@ -65,6 +70,8 @@ export type BridgesScaleMetrics = {
   pointSymmetric: number;
   borderIslandShare: number;
   gridAlignmentShare: number;
+  borderCoverageShare: number;
+  cornerIslandCount: number;
 };
 
 /**
@@ -91,7 +98,10 @@ export type BridgesScaleMetrics = {
  *   仮に決めた手の両端を埋め、組を端までたどって閉じるのを確かめる、人が2段に読む所。
  * - `chainedLookaheadRoundCount`: 1手の先読みのうち、前の1手の先読みから、ほかの読みで狭めた組が
  *   `BRIDGES_LOOKAHEAD_CHAIN_GAP` 以下のうちに、別の行き先で続けて要った回数。先読みの結果からすぐ次の先読みが要る所。
- * - `lookaheadSpotCount`: 1手の先読みが要った場所の数（続けて要った先読みは1つの場所）。
+ * - `lookaheadSpotCount`: 1手の先読みの場所の最少数。1か所ずつ当てて解く順のうち、場所の最も少ない順の数
+ *   （`findBridgesFewestLookaheadSpots`）。どの順に解いても、これより少ない場所の先読みでは解けない。
+ * - `lastLookaheadDecidedRatio`: 先読みの場所の最も少ない解き順で、最後の先読みの前に本数が決まっていた行き先の割合（最少の順
+ *   のうちの最小）。先読みが無ければ 0。
  * - `longestLookaheadChain`: 1つの場所で続けて要った1手の先読みの数の最大。
  * - `crossingBlockCount`: 架かると決まった橋と交わって0本になった行き先のうち、両端の島がまだ足りなかった行き先の数。
  *   交差で行き先が消え、数字の読みが進む所。
@@ -104,6 +114,8 @@ export type BridgesScaleMetrics = {
  *   大きいほど、解き進みの後の方まで読みの山場が残る。つながりの読みが無ければ 0。
  * - `firstLookaheadDecidedRatio`: 最初の1手の先読みの前に、本数が決まっていた行き先の割合。先読みが無ければ 0。
  * - `lookaheadReasonKindCount`: 1手の先読みで手を退けた理由の種類（組が閉じる・孤立する・本数が破れる・上限を下げる）の数。
+ * - `lateHighClueCount`・`lateVeryHighClueCount`: 数字5以上・6以上の島のうち、解き始めの数字の読みのまとまり（数字の読みだけで
+ *   止まるまで）では行き先の本数が決まらない島の数。解き始めに見ただけで決まる大きい数字は、配分を読む所にならない。
  */
 export type BridgesReasoningFeatures = {
   maximumTier: Exclude<BridgesReasoningTier, "T">;
@@ -132,6 +144,9 @@ export type BridgesReasoningFeatures = {
   lastConnectivityDecidedRatio: number;
   firstLookaheadDecidedRatio: number;
   lookaheadReasonKindCount: number;
+  lastLookaheadDecidedRatio: number;
+  lateHighClueCount: number;
+  lateVeryHighClueCount: number;
 };
 
 /**
@@ -201,6 +216,7 @@ function measureScale(
   let borderBridges = 0;
   let longBridges = 0;
   let shortBridges = 0;
+  const borderSegments = new Set<string>();
   for (const [edge, { from, to }] of edges.entries()) {
     if (solution[edge]! === 0) {
       continue;
@@ -213,6 +229,18 @@ function measureScale(
         (start.column === 0 || start.column === last))
     ) {
       borderBridges += 1;
+      const along = start.row === end.row ? "row" : "column";
+      const line = along === "row" ? start.row : start.column;
+      const [low, high] =
+        along === "row"
+          ? [
+              Math.min(start.column, end.column),
+              Math.max(start.column, end.column),
+            ]
+          : [Math.min(start.row, end.row), Math.max(start.row, end.row)];
+      for (let position = low; position < high; position += 1) {
+        borderSegments.add(`${along}:${line}:${position}`);
+      }
     }
     const length =
       Math.abs(start.row - end.row) + Math.abs(start.column - end.column);
@@ -278,6 +306,11 @@ function measureScale(
             ).length,
         ),
       ) / problem.islands.length,
+    borderCoverageShare: borderSegments.size / (4 * last),
+    cornerIslandCount: problem.islands.filter(
+      ({ row, column }) =>
+        (row === 0 || row === last) && (column === 0 || column === last),
+    ).length,
   };
 }
 
@@ -374,6 +407,14 @@ export function analyzeBridgesDifficulty(
   const { lookaheads, mergedRoundCount, spotCount, longestChain } =
     summarizeBridgesLookaheads(trace.rounds);
   const countRoundCount = countBridgesCountReadingPhases(trace.rounds);
+  const fewestSpots =
+    roundCountByTier.D > 0
+      ? findBridgesFewestLookaheadSpots(problem)
+      : { spotCount: 0, lastLookaheadDecidedRatio: 0 };
+  const undecidedByOpening = listBridgesIslandsUndecidedByOpening(problem);
+  const lateClues = problem.islands.flatMap(({ clue }, island) =>
+    undecidedByOpening[island] ? [clue] : [],
+  );
   const connectivityRoundCount = connectivityRounds.length - mergedRoundCount;
   return {
     status: "analyzed",
@@ -417,7 +458,7 @@ export function analyzeBridgesDifficulty(
       isolatingLookaheadRoundCount: lookaheads.filter(
         ({ readsIsolation }) => readsIsolation,
       ).length,
-      lookaheadSpotCount: spotCount,
+      lookaheadSpotCount: fewestSpots.spotCount,
       longestLookaheadChain: longestChain,
       readingCappingLookaheadRoundCount: lookaheads.filter(
         ({ lowersUpperByReading }) => lowersUpperByReading,
@@ -432,6 +473,12 @@ export function analyzeBridgesDifficulty(
         lookaheads.some(({ readsCount }) => readsCount),
         lookaheads.some(({ lowersUpper }) => lowersUpper),
       ].filter(Boolean).length,
+      lastLookaheadDecidedRatio: fewestSpots.lastLookaheadDecidedRatio,
+      lateHighClueCount: lateClues.filter((clue) => clue >= HIGH_CLUE_MINIMUM)
+        .length,
+      lateVeryHighClueCount: lateClues.filter(
+        (clue) => clue >= VERY_HIGH_CLUE_MINIMUM,
+      ).length,
     },
     trial: measureBridgesTrialFeatures(problem),
   };

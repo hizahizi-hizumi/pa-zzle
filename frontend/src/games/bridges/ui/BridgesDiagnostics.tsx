@@ -65,7 +65,7 @@ const readingConditionLabels = {
   groupLookaheadRoundCount: "組を見る先読み",
   chainedLookaheadRoundCount: "続けて要る先読み",
   crossingBlockCount: "交差で塞がる行き先",
-  lookaheadSpotCount: "先読みの場所",
+  lookaheadSpotCount: "先読みの場所の最少数",
   longestLookaheadChain: "先読みの続く長さ",
   lastConnectivityDecidedRatio: "最後のつながりの読みの置き所",
 } as const satisfies Partial<Record<keyof BridgesLevelRequirement, string>>;
@@ -74,8 +74,8 @@ const readingConditionLabels = {
 const qualityConditionLabels = {
   islandShare: "島の割合",
   clueMean: "数字の平均",
-  highClueCount: "5以上の数字の島",
-  veryHighClueCount: "6以上の数字の島",
+  lateHighClueCount: "解き始めに決まらない5以上の数字の島",
+  lateVeryHighClueCount: "解き始めに決まらない6以上の数字の島",
   dominantClueShare: "最も多い数字の割合",
   twoClueShare: "数字2の割合",
   doubleBridgeRatio: "2本の組の割合",
@@ -84,6 +84,7 @@ const qualityConditionLabels = {
   usedEdgeShare: "架ける行き先の割合",
   diagonalNeighborShare: "斜め隣に島がある島の割合",
   borderIslandShare: "外周の島の割合",
+  gridAlignmentShare: "格子にそろう島の割合",
   shortBridgeShare: "間が1マスの橋の割合",
   longBridgeCount: "長い橋",
 } as const satisfies Record<
@@ -105,6 +106,7 @@ const fractionalFeatures: ReadonlySet<keyof BridgesAssessedFeatures> = new Set([
   "lastConnectivityDecidedRatio",
   "diagonalNeighborShare",
   "borderIslandShare",
+  "gridAlignmentShare",
   "shortBridgeShare",
 ]);
 

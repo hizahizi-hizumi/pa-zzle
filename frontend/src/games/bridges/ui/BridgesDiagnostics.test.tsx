@@ -56,7 +56,7 @@ describe("BridgesDiagnostics", () => {
       ]);
     });
 
-    test("レベルが求める手筋に、1手の先読みと先読みの場所・続く長さ・最後のつながりの読みの置き所の条件と値を並べること", () => {
+    test("レベルが求める手筋に、1手の先読みと先読みの場所の最少数・続く長さ・最後のつながりの読みの置き所の条件と値を並べること", () => {
       const section = getSection("レベルが求める手筋");
       const { features } = snapshot.difficultyAssessment as Extract<
         BridgesDifficultyAssessment,
@@ -66,7 +66,7 @@ describe("BridgesDiagnostics", () => {
       const values = [
         "1手の先読み",
         "続けて要る先読み",
-        "先読みの場所",
+        "先読みの場所の最少数",
         "先読みの続く長さ",
         "最後のつながりの読みの置き所",
       ].map((label) => getRowValue(label, section));
@@ -90,7 +90,7 @@ describe("BridgesDiagnostics", () => {
       ).toEqual([null, null, null]);
     });
 
-    test("数字と形の質に、架ける行き先と、外周の島を含む盤面の形の条件と値を並べること", () => {
+    test("数字と形の質に、架ける行き先と、外周の島・格子を含む盤面の形と、解き始めに決まらない大きい数字の条件と値を並べること", () => {
       const section = getSection("数字と形の質");
       const { features } = snapshot.difficultyAssessment as Extract<
         BridgesDifficultyAssessment,
@@ -101,16 +101,20 @@ describe("BridgesDiagnostics", () => {
         "架ける行き先の割合",
         "斜め隣に島がある島の割合",
         "外周の島の割合",
+        "格子にそろう島の割合",
         "間が1マスの橋の割合",
         "長い橋",
+        "解き始めに決まらない5以上の数字の島",
       ].map((label) => getRowValue(label, section));
 
       expect(values).toEqual([
         `${features.usedEdgeShare.toFixed(2)}（条件 0以上・0.85以下）`,
         `${features.diagonalNeighborShare.toFixed(2)}（条件 0以上・0.5以下）`,
         `${features.borderIslandShare.toFixed(2)}（条件 0以上・0.5以下）`,
+        `${features.gridAlignmentShare.toFixed(2)}（条件 0以上・0.5以下）`,
         `${features.shortBridgeShare.toFixed(2)}（条件 0以上・0.5以下）`,
         `${features.longBridgeCount}（条件 1以上）`,
+        `${features.lateHighClueCount}（条件 2以上）`,
       ]);
     });
 

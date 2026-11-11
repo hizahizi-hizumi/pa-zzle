@@ -30,8 +30,8 @@ function createAnalysis(
       edgeCount: 30,
       bridgeCount: 25,
       clueMean: features.clueMean,
-      highClueCount: features.highClueCount,
-      veryHighClueCount: features.veryHighClueCount,
+      highClueCount: features.lateHighClueCount,
+      veryHighClueCount: features.lateVeryHighClueCount,
       maximumClue: 6,
       dominantClueShare: features.dominantClueShare,
       twoClueShare: features.twoClueShare,
@@ -46,7 +46,9 @@ function createAnalysis(
       longBridgeCount: features.longBridgeCount,
       pointSymmetric: 0,
       borderIslandShare: features.borderIslandShare,
-      gridAlignmentShare: 0.3,
+      gridAlignmentShare: features.gridAlignmentShare,
+      borderCoverageShare: 0.6,
+      cornerIslandCount: 2,
     },
     reasoning: {
       maximumTier:
@@ -90,6 +92,9 @@ function createAnalysis(
       lastConnectivityDecidedRatio: features.lastConnectivityDecidedRatio,
       firstLookaheadDecidedRatio: 0.5,
       lookaheadReasonKindCount: 1,
+      lastLookaheadDecidedRatio: 0.5,
+      lateHighClueCount: features.lateHighClueCount,
+      lateVeryHighClueCount: features.lateVeryHighClueCount,
     },
     trial: {
       medianBacktrackCount: 0,
@@ -117,8 +122,8 @@ const level1: BridgesAssessedFeatures = {
   chainedLookaheadRoundCount: 0,
   crossingBlockCount: 0,
   clueMean: 3,
-  highClueCount: 2,
-  veryHighClueCount: 1,
+  lateHighClueCount: 2,
+  lateVeryHighClueCount: 1,
   dominantClueShare: 0.3,
   twoClueShare: 0.25,
   doubleBridgeRatio: 0.45,
@@ -128,6 +133,7 @@ const level1: BridgesAssessedFeatures = {
   islandShare: 10 / 36,
   diagonalNeighborShare: 0.3,
   borderIslandShare: 0.6,
+  gridAlignmentShare: 0.4,
   shortBridgeShare: 0.4,
   longBridgeCount: 2,
   lookaheadSpotCount: 0,
@@ -174,7 +180,7 @@ const level4: BridgesAssessedFeatures = {
   lookaheadRoundCount: 1,
   countLookaheadRoundCount: 1,
   groupLookaheadRoundCount: 1,
-  highClueCount: 2,
+  lateHighClueCount: 2,
   loopCount: 2,
   lookaheadSpotCount: 1,
   longestLookaheadChain: 1,
@@ -191,7 +197,7 @@ const level5: BridgesAssessedFeatures = {
   lookaheadRoundCount: 2,
   lookaheadSpotCount: 2,
   crossingBlockCount: 2,
-  highClueCount: 3,
+  lateHighClueCount: 3,
   longBridgeCount: 3,
 };
 
@@ -239,7 +245,11 @@ describe("assessBridgesDifficulty", () => {
       "斜め隣に島のある島が6割の 6×6",
       { ...level1, diagonalNeighborShare: 0.6 },
     ],
-    ["間が1マスの橋が65%の 6×6", { ...level1, shortBridgeShare: 0.65 }],
+    ["間が1マスの橋が55%の 6×6", { ...level1, shortBridgeShare: 0.55 }],
+    [
+      "島の55%が同じ偶奇の組に並ぶ 7×7",
+      { ...level2, gridAlignmentShare: 0.55 },
+    ],
     ["長い橋の無い 6×6", { ...level1, longBridgeCount: 0 }],
     ["行き先の9割に橋を架ける 6×6", { ...level1, usedEdgeShare: 0.9 }],
     [
@@ -264,7 +274,10 @@ describe("assessBridgesDifficulty", () => {
     ["外周の島が55%の 8×8", { ...level3, borderIslandShare: 0.55 }],
     ["間が1マスの橋が55%の 8×8", { ...level3, shortBridgeShare: 0.55 }],
     ["1手の先読みが要る 8×8", { ...level3, lookaheadRoundCount: 1 }],
-    ["5以上の数字の島が1つの 10×10", { ...level4, highClueCount: 1 }],
+    [
+      "解き始めに決まらない5以上の数字の島が1つの 10×10",
+      { ...level4, lateHighClueCount: 1 },
+    ],
     ["読みが4回の 10×10", { ...level4, readingRoundCount: 4 }],
     [
       "最後のつながりの読みが解き進みの4割の所にある 10×10",
@@ -279,7 +292,10 @@ describe("assessBridgesDifficulty", () => {
         longestLookaheadChain: 2,
       },
     ],
-    ["6以上の数字の島が無い島25の 10×10", { ...level5, veryHighClueCount: 0 }],
+    [
+      "解き始めに決まらない6以上の数字の島が無い島25の 10×10",
+      { ...level5, lateVeryHighClueCount: 0 },
+    ],
     [
       "閉じない読みの気づきが無い島25の 10×10",
       { ...level5, closureRoundCount: 0 },
@@ -321,6 +337,8 @@ describe("assessBridgesDifficulty", () => {
     pointSymmetric: 0,
     borderIslandShare: 0.4,
     gridAlignmentShare: 0.3,
+    borderCoverageShare: 0.6,
+    cornerIslandCount: 2,
   };
 
   test.each([
@@ -410,8 +428,8 @@ describe("bridgesLevelReadings", () => {
           "groupLookaheadRoundCount",
           "chainedLookaheadRoundCount",
           "crossingBlockCount",
-          "highClueCount",
-          "veryHighClueCount",
+          "lateHighClueCount",
+          "lateVeryHighClueCount",
         ] as const
       ).filter((key) => upper![key].minimum < lower![key].minimum),
     );

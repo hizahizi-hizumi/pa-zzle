@@ -11,6 +11,8 @@ import {
   countBridgesOpeningSaturatedIslands,
   describeBridgesSolveFingerprint,
   describeBridgesSolveFlow,
+  findBridgesFewestLookaheadSpots,
+  listBridgesIslandsUndecidedByOpening,
   summarizeBridgesLookaheads,
   traceBridgesHumanSolve,
 } from "@/games/bridges/problem/generation/human-solver";
@@ -183,6 +185,27 @@ describe("traceBridgesHumanSolve", () => {
 
     test("交差で塞がった行き先を数えること", () => {
       expect(traceBridgesHumanSolve(board, "D").crossingBlockCount).toBe(1);
+    });
+  });
+
+  describe("唯一の通り道で切り離される側も残る側も、見渡せる大きさ（7島以下か、外に5島以下）を超える盤面の場合", () => {
+    const board = parseBridgesBoard([
+      ".2......3",
+      "2..3..2..",
+      ".1...4..5",
+      ".........",
+      "3..3.4..5",
+      ".........",
+      "3..4...2.",
+      "..2..4..3",
+      "3......2.",
+    ]);
+
+    test("唯一の通り道として読まず、つながりの読みで止まること", () => {
+      const trace = traceBridgesHumanSolve(board, "C3");
+
+      expect(trace.status).toBe("stuck");
+      expect(trace.rounds.map(({ tier }) => tier)).not.toContain("C3");
     });
   });
 
@@ -410,6 +433,94 @@ describe("summarizeBridgesLookaheads", () => {
       longestChain: 1,
     });
     expect(summary.lookaheads).toHaveLength(2);
+  });
+});
+
+describe("findBridgesFewestLookaheadSpots", () => {
+  test("同時に見える離れた先読みも、1か所を当てれば残りが下の段で決まるなら、場所を1つと数えること", () => {
+    const board = parseBridgesBoard([
+      ".2......3",
+      "1..3..2..",
+      ".1......3",
+      "....2.3..",
+      ".2......4",
+      "2...1....",
+      ".2.4..5.6",
+      ".........",
+      "3.....5.4",
+    ]);
+
+    expect(findBridgesFewestLookaheadSpots(board).spotCount).toBe(1);
+  });
+
+  describe("解き進めた経過では5か所に先読みが見え、1か所ずつ当てると2か所で解ける盤面の場合", () => {
+    const board = parseBridgesBoard([
+      "3...4.3..2",
+      ".......2..",
+      "...2.2....",
+      "5.4....6.4",
+      "...3.3....",
+      "....3.2...",
+      "6.6....4.4",
+      "....2.1...",
+      "..2.......",
+      "4..4.3...2",
+    ]);
+
+    test("場所の最少数と、その順で最後の先読みの前に決まっていた行き先の割合を返すこと", () => {
+      const fewest = findBridgesFewestLookaheadSpots(board);
+
+      expect(
+        summarizeBridgesLookaheads(traceBridgesHumanSolve(board, "D").rounds)
+          .spotCount,
+      ).toBe(5);
+      expect(fewest.spotCount).toBe(2);
+      expect(fewest.lastLookaheadDecidedRatio).toBeCloseTo(10 / 17);
+    });
+  });
+
+  test("先読みの要らない盤面では、場所を0と数えること", () => {
+    const board = parseBridgesBoard(["1.3.1", ".....", "..1.."]);
+
+    expect(findBridgesFewestLookaheadSpots(board)).toEqual({
+      spotCount: 0,
+      lastLookaheadDecidedRatio: 0,
+    });
+  });
+});
+
+describe("listBridgesIslandsUndecidedByOpening", () => {
+  test("解き始めの数字の読みで行き先の本数が決まる島を外し、決まらない島を挙げること", () => {
+    const board = parseBridgesBoard([
+      ".2......3",
+      "1..3..2..",
+      ".1......3",
+      "....2.3..",
+      ".2......4",
+      "2...1....",
+      ".2.4..5.6",
+      ".........",
+      "3.....5.4",
+    ]);
+    const undecided = listBridgesIslandsUndecidedByOpening(board);
+
+    expect(
+      board.islands
+        .filter(({ clue }) => clue >= 5)
+        .map(({ row, column }) => [
+          row,
+          column,
+          undecided[
+            board.islands.findIndex(
+              (island) => island.row === row && island.column === column,
+            )
+          ],
+        ]),
+    ).toEqual([
+      [6, 6, true],
+      [6, 8, false],
+      [8, 6, true],
+    ]);
   });
 });
 
