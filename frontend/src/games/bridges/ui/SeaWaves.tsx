@@ -31,7 +31,7 @@ const waveTiles = [
   },
 ] as const;
 
-/** PC の広い画面で、盤面の外の海に足す波の印の区画。盤面の外の広い面が空き地に見えないよう、印の密度を上げる。 */
+/** 盤面の外の広い海（PC の左右、スマホの上下）に足す波の印の区画。盤面の外の広い面が空き地に見えないよう、印の密度を上げる。 */
 const wideWaveTile = {
   width: 233,
   height: 181,
@@ -44,7 +44,7 @@ const wideWaveTile = {
 
 /** 印の大きさ（横幅）と線の太さ。大きい印は小さい印の 1.6 倍ほどにする。 */
 const WAVE_SIZES = { small: 12, large: 20 } as const;
-const WAVE_STROKE_WIDTH = 1.5;
+const WAVE_STROKE_WIDTH = 2;
 
 type WaveTile = {
   width: number;
@@ -106,8 +106,8 @@ const depthPatches = [
   { shoal: true, x: 0.7, y: 0.82, r: 0.38 },
   { shoal: false, x: 0.15, y: 0.78, r: 0.4 },
 ] as const;
-/** むらの濃さ。平常の海の静けさを崩さないよう、ごく薄く重ねる。 */
-const DEPTH_OPACITY = { shoal: 0.12, deep: 0.1 } as const;
+/** むらの濃さ。平常の海の静けさを崩さない薄さで、深さの差が面のむらとして見える濃さにする。 */
+const DEPTH_OPACITY = { shoal: 0.2, deep: 0.18 } as const;
 
 /** 画面の上の端で、むらを消しておく高さ（px）。ブランドの帯の海の無地と、継ぎ目なくつなぐ。 */
 const DEPTH_TOP_FADE_PX = 120;
@@ -204,7 +204,7 @@ export function SeaWaves({
   );
 }
 
-/** SVG の中に、PC の広い画面で盤面の外の海に足す波の印を描く。見せる範囲は置く側で決める。 */
+/** SVG の中に、盤面の外の広い海に足す波の印を描く。見せる範囲は置く側で決める。 */
 export function SeaWideWaves() {
   const id = useId();
   return (

@@ -27,9 +27,9 @@ export const BOARD_MARGIN = 0.4;
 
 /**
  * 9×9 以上の盤面の海の幅。390px 幅のスマホでマスが小さくなる盤面では、余白を詰めて島を大きく描く。
- * 外周の島の陸は、画面の左右の余白と陸の周りのマスの残りと合わせて、画面端から 12px ほど離れる。
+ * 外周の島の陸は、画面の左右の余白と陸の周りのマスの残りと合わせて、画面端から 16px 以上離れる。
  */
-export const WIDE_BOARD_MARGIN = 0.12;
+export const WIDE_BOARD_MARGIN = 0.2;
 const WIDE_BOARD_SIDE = 9;
 
 /**

@@ -29,7 +29,7 @@ export const bridgesToneClassNames = {
   sea: "bg-[#72aebb] dark:bg-[#18404f]",
   seaFill: "fill-[#72aebb] dark:fill-[#18404f]",
   /** 海の上の、動かない波の印。 */
-  seaWave: "stroke-white/45 dark:stroke-[#d9f3f2]/30",
+  seaWave: "stroke-white/55 dark:stroke-[#d9f3f2]/35",
   /** 海の深さの差の、弱い明暗のむら。浅い所は明るく、深い所は暗く、どちらも海の色の上に薄く重ねる。 */
   seaShoal: "[stop-color:#ffffff] dark:[stop-color:#3f7f8c]",
   seaDeep: "[stop-color:#1d5a68] dark:[stop-color:#06202b]",
