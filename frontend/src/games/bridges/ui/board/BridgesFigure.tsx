@@ -205,6 +205,11 @@ const RIPPLE_WIDTH = 0.07;
  * 数字の字の大きさ。島の直径の6割ほどにし、10×10 のスマホで 20px ほど（ナンプレの盤面の数字と同じ大きさ）にする。
  */
 const CLUE_FONT_SIZE = 0.55;
+/**
+ * 数字を島の中心にそろえる、文字の大きさに対する基線の下げ幅。iOS の Safari は小さな文字の
+ * dominant-baseline="central" を上へずらして描くので使わず、数字の高さ（約 0.72em）の半分だけ基線を下げる。
+ */
+const CLUE_BASELINE_OFFSET = 0.36;
 /** 絵の中の海の波の印の、区画の寸法に掛ける倍率。マス幅の 1/40 を 1 とする。 */
 const FIGURE_WAVE_UNIT = 1 / 40;
 
@@ -1067,9 +1072,8 @@ export function BridgesFigure({
             )}
             <text
               x={center.x}
-              y={center.y}
+              y={center.y + CLUE_FONT_SIZE * CLUE_BASELINE_OFFSET}
               textAnchor="middle"
-              dominantBaseline="central"
               fontSize={CLUE_FONT_SIZE}
               fontWeight={700}
               className={cn("select-none font-sans tabular-nums", tone.clue)}
