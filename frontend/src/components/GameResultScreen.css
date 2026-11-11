@@ -7,13 +7,31 @@
   flex-direction: column;
   isolation: isolate;
   width: 100%;
-  max-width: 650px;
   min-height: 0;
-  margin: 0 auto;
   overflow: hidden;
-  padding: 9px max(22px, env(safe-area-inset-right))
-    max(12px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left));
+  padding: 9px var(--result-inset-right) max(12px, env(safe-area-inset-bottom))
+    var(--result-inset-left);
   color: var(--foreground);
+
+  /* 背景の光を内容の幅で切らないよう、面は画面幅いっぱいに取り、内容の幅は左右の余白で保つ。 */
+  --result-content-width: 650px;
+  --result-gutter: 22px;
+  --result-centering-inset: calc(
+    50% -
+    var(--result-content-width) /
+    2 +
+    var(--result-gutter)
+  );
+  --result-inset-left: max(
+    var(--result-gutter),
+    env(safe-area-inset-left),
+    var(--result-centering-inset)
+  );
+  --result-inset-right: max(
+    var(--result-gutter),
+    env(safe-area-inset-right),
+    var(--result-centering-inset)
+  );
 
   --result-motion-score-progress: 1250ms 400ms var(--ease-celebrate);
   --result-motion-atmosphere: 2600ms cubic-bezier(0.16, 0.68, 0.18, 1);
@@ -127,9 +145,10 @@
   content: "";
   position: fixed;
   z-index: -1;
-  inset: 0;
+  /* 広がる途中で箱の端が見えないよう、光が端へ届かない大きさの箱に描く。 */
+  inset: -25%;
   background: radial-gradient(
-    ellipse 75% 58% at 50% 45%,
+    ellipse 50% 38.67% at 50% 46.67%,
     color-mix(in srgb, var(--result-award-soft) 24%, var(--background)),
     transparent 92%
   );
@@ -292,7 +311,13 @@
 .result-ambient-veil {
   position: absolute;
   z-index: -1;
-  inset: 6% -12%;
+  top: 6%;
+  bottom: 6%;
+  left: 50%;
+  width: var(--result-veil-width);
+  margin-left: calc(var(--result-veil-width) / -2);
+
+  --result-veil-width: min(124%, 960px);
   background: linear-gradient(
     115deg,
     transparent 12%,
@@ -300,6 +325,13 @@
     transparent 74%
   );
   filter: blur(16px);
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 28%,
+    black 72%,
+    transparent
+  );
   animation: result-06-veil var(--result-motion-veil) both;
 }
 
@@ -350,8 +382,16 @@
   position: absolute;
   z-index: 2;
   top: calc(50% + clamp(112px, 15svh, 145px));
-  left: max(22px, env(safe-area-inset-left));
-  right: max(22px, env(safe-area-inset-right));
+  left: max(
+    22px,
+    env(safe-area-inset-left),
+    calc(50% - var(--result-content-width) / 2 + 22px)
+  );
+  right: max(
+    22px,
+    env(safe-area-inset-right),
+    calc(50% - var(--result-content-width) / 2 + 22px)
+  );
   text-align: center;
 }
 
@@ -580,8 +620,10 @@
     top: calc(50% + 160px);
   }
   .result-screen {
-    max-width: 780px;
-    padding: 24px 46px 20px;
+    --result-content-width: 780px;
+    --result-gutter: 46px;
+    padding-top: 24px;
+    padding-bottom: 20px;
   }
 }
 
