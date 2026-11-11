@@ -24,7 +24,7 @@ export function BridgesSea() {
   return (
     <div className={cn("relative size-full", bridgesToneClassNames.sea)}>
       <svg className="absolute inset-0 size-full" aria-hidden="true">
-        <SeaWaves unit={1} fadesTop />
+        <SeaWaves unit={1} />
       </svg>
       <svg className={WIDE_WAVES_CLASS_NAME} aria-hidden="true">
         <SeaWideWaves />

@@ -96,83 +96,15 @@ function WavePattern({
 }
 
 /**
- * 海の深さの差の、弱い明暗のむら。描く面に対する割合で、浅い所（明るい）と深い所（暗い）を大きくぼかして置く。
- * - `shoal`: 浅い所か。
- * - `x`・`y`・`r`: 面に対する中心の位置と広がり。
+ * SVG の中に、海に散らす動かない波の印を描く。区画の繰り返しを崩し、印の大きさを2段にする。
+ * 海の地は無地にし、ブランドの帯・ブラウザの上下の面（同じ無地の色）と継ぎ目なくつなぐ。
+ * `unit` は区画の寸法に掛ける倍率。
  */
-const depthPatches = [
-  { shoal: true, x: 0.18, y: 0.22, r: 0.42 },
-  { shoal: false, x: 0.82, y: 0.35, r: 0.5 },
-  { shoal: true, x: 0.7, y: 0.82, r: 0.38 },
-  { shoal: false, x: 0.15, y: 0.78, r: 0.4 },
-] as const;
-/** むらの濃さ。平常の海の静けさを崩さない薄さで、深さの差が面のむらとして見える濃さにする。 */
-const DEPTH_OPACITY = { shoal: 0.2, deep: 0.18 } as const;
-
-/** 画面の上の端で、むらを消しておく高さ（px）。ブランドの帯の海の無地と、継ぎ目なくつなぐ。 */
-const DEPTH_TOP_FADE_PX = 120;
-
-/**
- * SVG の中に、海の深さの差のむらと、海に散らす動かない波の印を描く。区画の繰り返しを崩し、印の大きさを2段にする。
- * `unit` は区画の寸法に掛ける倍率。`fadesTop` なら、むらを上の端で消し、上に続く無地の海とつなぐ。
- */
-export function SeaWaves({
-  unit,
-  fadesTop = false,
-}: {
-  unit: number;
-  fadesTop?: boolean;
-}) {
+export function SeaWaves({ unit }: { unit: number }) {
   const id = useId();
   return (
     <>
       <defs>
-        {fadesTop && (
-          <>
-            <linearGradient
-              id={`${id}-top-fade`}
-              gradientUnits="userSpaceOnUse"
-              x1={0}
-              y1={0}
-              x2={0}
-              y2={DEPTH_TOP_FADE_PX}
-            >
-              <stop offset={0} stopColor="black" />
-              <stop offset={1} stopColor="white" />
-            </linearGradient>
-            <mask id={`${id}-top-mask`}>
-              <rect width="100%" height="100%" fill={`url(#${id}-top-fade)`} />
-            </mask>
-          </>
-        )}
-        {depthPatches.map(({ shoal, x, y, r }, index) => (
-          <radialGradient
-            key={`${x}:${y}`}
-            id={`${id}-depth-${index}`}
-            cx={x}
-            cy={y}
-            r={r}
-          >
-            <stop
-              offset={0}
-              stopOpacity={shoal ? DEPTH_OPACITY.shoal : DEPTH_OPACITY.deep}
-              className={
-                shoal
-                  ? bridgesToneClassNames.seaShoal
-                  : bridgesToneClassNames.seaDeep
-              }
-            />
-            <stop
-              offset={1}
-              stopOpacity={0}
-              className={
-                shoal
-                  ? bridgesToneClassNames.seaShoal
-                  : bridgesToneClassNames.seaDeep
-              }
-            />
-          </radialGradient>
-        ))}
         {waveTiles.map((tile, index) => (
           <WavePattern
             key={`${tile.width}x${tile.height}`}
@@ -182,16 +114,6 @@ export function SeaWaves({
           />
         ))}
       </defs>
-      <g mask={fadesTop ? `url(#${id}-top-mask)` : undefined}>
-        {depthPatches.map(({ x, y }, index) => (
-          <rect
-            key={`${x}:${y}`}
-            width="100%"
-            height="100%"
-            fill={`url(#${id}-depth-${index})`}
-          />
-        ))}
-      </g>
       {waveTiles.map((tile, index) => (
         <rect
           key={`${tile.width}x${tile.height}`}
