@@ -36,11 +36,10 @@ import type {
 } from "@/games/tutorial";
 
 /**
+ * - `check`: 攻方は毎回、王手をかける。王手にならない手は指せない。
  * - `drop`: 持駒は、空いた升に打てる。
- * - `check`: 攻方は毎手、王手をかける。王手にならない手は指せない。
- * - `escape`: 王手をかけても、玉に逃げ道があると詰まない。逃げ道をふさぐ王手で詰ませる。
  */
-export type TsumeShogiTutorialRuleId = "drop" | "check" | "escape";
+export type TsumeShogiTutorialRuleId = "check" | "drop";
 
 /**
  * 利用者の1回の操作と、盤面に玉方の応手を指すこと。
@@ -57,23 +56,12 @@ export type TsumeShogiTutorialAction =
   | { type: "defender-reply" };
 
 /**
- * 手順で指させる手、または押させる操作。
- * - `move`: 攻方の手。駒（持駒）と行き先の升の両方に印を付ける。
- * - `undo`: 待った。
- */
-export type TsumeShogiTutorialTarget =
-  | { type: "move"; move: TsumeShogiMove }
-  | { type: "undo" };
-
-/**
- * - `target`: 印を付け、手順の間だけ受け付ける手。手の後に玉方が応じたら次の手順へ進む。待ったは押したら進む。
- * - `reason`: その手を決めるもの（決め手）。`king` は王手をかける玉、`status` は盤の下の、この手数では詰まないという知らせ。
- * - `keySquares`: 決め手として玉と一緒に見せる升。逃げ道を伝える手順で、飛が守っていて、飛を動かすと玉が逃げる升。
+ * `move` の駒（持駒）、行き先の升の順に指で指して押させ、指した手に玉方が応じたら次の手順へ進む。
+ * - `destinationMessage`: 駒を選んだ後の一言。選んでから行き先を押すまでが別の操作だと教える手順だけが持ち、無ければ `message` のままにする。
  */
 export type TsumeShogiTutorialStep = TutorialStep<TsumeShogiTutorialRuleId> & {
-  target: TsumeShogiTutorialTarget;
-  reason: "king" | "status";
-  keySquares: readonly TsumeShogiSquare[];
+  move: TsumeShogiMove;
+  destinationMessage: TutorialMessage | null;
 };
 
 /**
@@ -89,104 +77,70 @@ export type TsumeShogiTutorialSituation = TutorialSituation<
 >;
 
 /**
- * 印を付ける所。
+ * 指で指す所。
  * - `square`: 盤の升。指す駒の升か、選んだ駒の行き先。
  * - `hand`: 攻方の持駒。
  * - `undo`: 待った。
  */
-export type TsumeShogiTutorialMark =
+export type TsumeShogiTutorialCue =
   | { type: "square"; square: TsumeShogiSquare }
   | { type: "hand"; pieceType: TsumeShogiHandPieceType }
   | { type: "undo" };
 
 /**
- * 盤の右の端で、飛と持駒の金1枚で玉を追う5手詰。攻方の手は、どれも玉の左隣に金を置く王手になる。
- * 金を打って王手し（▲2三金打）、玉が下へ逃げるたびに金を1升ずつ下げて追い（▲2四金・▲2五金）、
- * 盤の端と飛に逃げ道をふさがれた玉を詰ませる。玉方の応手はどれも1つに決まる。
+ * 盤の右上で、金と、1筋と五段を守る飛で玉を囲う7手詰。玉方の応手はどれも玉の移動で、駒を取らず、合駒も出ない。
+ * 手順の2手（▲1二金・▲4三金打）は、どちらもその局面でただ1つの詰みへ向かう王手で、玉の横から王手する。
+ * 指で指す行き先の下の升は空いていて、指が王手をかける玉を隠さない。
+ * 手を離した後の▲2五金打は、玉の上から押さえる王手（▲2三金打など）では玉が逃げるので、
+ * 下から打って玉を2三へ戻す手を盤面を読んで見つけさせる。最後は8通りの王手のうち3通りだけが詰む。
  *
  * ```text
- * 始まり            ゴール（詰み）
- *   2  1              2  1
- *   .  玉v 三          .  .  三
- *   .  .   四          .  .  四
- *   .  .   五          金 玉v 五
- *   飛 .   六          飛 .  六
- * 持駒: 金          持駒: なし
+ * 始まり                  詰み
+ *   4  3  2  1              4  3  2  1
+ *   .  .  .  金  一          .  .  .  .  一
+ *   金 .  玉v .  二          金 .  .  .  二
+ *   .  .  .  .  三          金 .  玉v 金  三
+ *   .  .  .  .  四          .  .  .  .  四
+ *   .  .  .  飛  五          .  .  金 飛  五
+ * 持駒: 金2               持駒: なし
  * ```
  */
 const problem: TsumeShogiProblem = {
-  initialPosition: createTsumeShogiPosition("9/9/8k/9/9/7R1/9/9/9", {
-    gold: 1,
+  initialPosition: createTsumeShogiPosition("8G/5G1k1/9/9/8R/9/9/9/9", {
+    gold: 2,
   }),
-  plies: 5,
-  mainLine: ["G*2c", "1c1d", "2c2d", "1d1e", "2d2e"].map(
+  plies: 7,
+  mainLine: ["1a1b", "2b3c", "G*4c", "3c2d", "G*2e", "2d2c", "1b1c"].map(
     parseTsumeShogiMoveUsi,
   ),
 };
 
-const [firstMove, , secondMove, , matingMove] = problem.mainLine as [
-  TsumeShogiMove,
-  TsumeShogiMove,
-  TsumeShogiMove,
-  TsumeShogiMove,
-  TsumeShogiMove,
-];
+const attackerMainLine = problem.mainLine.filter((_, index) => index % 2 === 0);
 
 /**
- * 詰ませる手の前で、飛を金と同じ升へ上げて王手する。飛が離れた升へ玉が逃げ、この手数では詰まなくなる。
- * 同じ升へ金を下げれば詰むことと見比べられるよう、詰ませる手と同じ行き先にする。
- */
-const escapingCheck = parseTsumeShogiMoveUsi("2f2e");
-
-/** 飛が守っていて、逃げ道のある王手で飛を動かすと、玉が逃げる升。 */
-const escapeSquare: TsumeShogiSquare = { file: 1, rank: 6 };
-
-/**
- * 金を打つ・金を下げる2手で操作と王手を、詰まない王手と待ったで逃げ道を伝えてから、詰ませる手を自分で指させる。
+ * 盤上の金を動かして王手する操作を教えてから、持駒の金を打って王手する。
+ * 王手にならない手が指せないことは、手を離した後にそうなったときに、盤面の反応に一言を添えて伝える。
  */
 const steps: readonly TsumeShogiTutorialStep[] = [
   {
-    message: {
-      headline: "持駒は、空いた升に打てます",
-      detail: "印の付いた金を押してから、印の升を押してください",
-    },
-    introducedRuleId: "drop",
-    target: { type: "move", move: firstMove },
-    reason: "king",
-    keySquares: [],
-  },
-  {
-    message: {
-      headline: "金を打った手は、王手でした\n自分の番では、必ず王手をかけます",
-      detail: "次の手で玉を取れるようにする手を、王手と言います",
-    },
-    introducedRuleId: "check",
-    target: { type: "move", move: secondMove },
-    reason: "king",
-    keySquares: [],
-  },
-  {
-    message: {
-      headline: "逃げ道があると、玉は逃げます",
-      detail:
-        "空いた升と、守られていない駒の升が逃げ道です\n飛車を動かして、逃げ道を開けてみてください",
-    },
-    introducedRuleId: "escape",
-    target: { type: "move", move: escapingCheck },
-    reason: "king",
-    keySquares: [escapeSquare],
-  },
-  {
-    message: {
-      headline: "「5手では詰みません」と出たら\n待ったを押して戻しましょう",
+    message: { headline: "この金を押します", detail: null },
+    destinationMessage: {
+      headline: "印の升を押して\n王手をかけます",
       detail: null,
     },
-    introducedRuleId: null,
-    target: { type: "undo" },
-    reason: "status",
-    keySquares: [],
+    introducedRuleId: "check",
+    move: attackerMainLine[0]!,
+  },
+  {
+    message: { headline: "持駒は空いた升に打てます", detail: null },
+    destinationMessage: null,
+    introducedRuleId: "drop",
+    move: attackerMainLine[1]!,
   },
 ];
+
+/** 入口から完成までの段の数。攻方の手の数で、手順の手と、手を離した後に自分で指す手を合わせたもの。 */
+export const TSUME_SHOGI_TUTORIAL_PROGRESS_STEP_COUNT = attackerMainLine.length;
 
 function startTsumeShogiTutorial(): TsumeShogiTutorialBoardState {
   return createTsumeShogiSession(problem, 0);
@@ -194,7 +148,7 @@ function startTsumeShogiTutorial(): TsumeShogiTutorialBoardState {
 
 /** 作意を最後まで指した、詰み上がりの盤面。 */
 function getTsumeShogiTutorialGoal(): TsumeShogiTutorialBoardState {
-  return [firstMove, secondMove, matingMove].reduce(
+  return attackerMainLine.reduce(
     (session, move) =>
       playTsumeShogiSessionDefenderReply(playMove(session, move)),
     startTsumeShogiTutorial(),
@@ -223,9 +177,9 @@ function playMove(
 /** 手を選ぶ操作を、本番と同じ遷移で盤面に返す。 */
 function applyInput(
   state: TsumeShogiTutorialBoardState,
-  action: Exclude<
+  action: Extract<
     TsumeShogiTutorialAction,
-    { type: "undo" } | { type: "defender-reply" }
+    { type: "square" | "hand" | "promotion" }
   >,
 ): TsumeShogiTutorialBoardState {
   switch (action.type) {
@@ -236,14 +190,6 @@ function applyInput(
     case "promotion":
       return chooseTsumeShogiSessionPromotion(state, action.promote, 0);
   }
-}
-
-/** 直前の入力を、着手させなかった。 */
-function isNewlyRejected(
-  before: TsumeShogiTutorialBoardState,
-  after: TsumeShogiTutorialBoardState,
-): boolean {
-  return after.rejection !== null && after.rejection !== before.rejection;
 }
 
 /** 手の駒（持駒）を選んでいるか。 */
@@ -262,20 +208,16 @@ function isSourceSelected(
 }
 
 /**
- * 手に印を付ける所。駒（持駒）を選ぶまでは駒に、選んだら行き先の升に付ける。
- * 玉方の応手を待つ間と、詰んだ後は付けない。
+ * 手を指すために次に押す所。駒（持駒）を選ぶまでは駒を、選んだら行き先の升を指す。
+ * 玉方の応手を待つ間と、詰んだ後は `null`。
  */
-export function getTsumeShogiTutorialMark(
-  target: TsumeShogiTutorialTarget,
+function getMoveCue(
+  move: TsumeShogiMove,
   state: TsumeShogiTutorialBoardState,
-): TsumeShogiTutorialMark | null {
-  if (target.type === "undo") {
-    return canUndoTsumeShogiSession(state) ? { type: "undo" } : null;
-  }
+): TsumeShogiTutorialCue | null {
   if (getTsumeShogiSessionPhase(state) !== "attacker") {
     return null;
   }
-  const { move } = target;
   if (isSourceSelected(state, move)) {
     return { type: "square", square: move.to };
   }
@@ -284,21 +226,61 @@ export function getTsumeShogiTutorialMark(
     : { type: "square", square: move.from };
 }
 
+/** 手順で指で指す所。 */
+export function getTsumeShogiTutorialStepCue(
+  step: TsumeShogiTutorialStep,
+  state: TsumeShogiTutorialBoardState,
+): TsumeShogiTutorialCue | null {
+  return getMoveCue(step.move, state);
+}
+
+/**
+ * 手順の一言。駒を選んだ後は、その手順が行き先の一言を持っていれば替える。
+ * 指した後、玉方が応じて次の手順へ進むまでも行き先の一言のままにし、駒を選ぶ前の一言へ戻さない。
+ */
+export function describeTsumeShogiTutorialStep(
+  step: TsumeShogiTutorialStep,
+  state: TsumeShogiTutorialBoardState,
+): TutorialMessage {
+  return isSourceSelected(state, step.move) || state.defenderReplyPending
+    ? (step.destinationMessage ?? step.message)
+    : step.message;
+}
+
+/**
+ * 待ったを受け付けるか。手を離した後に指した手だけを戻せる。手順の手は、指した盤面から手を離すので戻さない。
+ */
+export function canUndoTsumeShogiTutorial(
+  state: TsumeShogiTutorialBoardState,
+): boolean {
+  if (!canUndoTsumeShogiSession(state)) {
+    return false;
+  }
+  return (
+    isTsumeShogiSessionOnWrongLine(state) || state.turns.length > steps.length
+  );
+}
+
+/** 玉方が誤王手に逃れた後か。待ったで戻すまで、詰まない筋にいる。 */
+function isEscaped(state: TsumeShogiTutorialBoardState): boolean {
+  return isTsumeShogiSessionOnWrongLine(state) && !state.defenderReplyPending;
+}
+
 /** 手順の手のための入力か。駒（持駒）を選ぶ操作と、選んだ後に行き先の升を押す操作。 */
 function isTowardStepMove(
   state: TsumeShogiTutorialBoardState,
   move: TsumeShogiMove,
   action: TsumeShogiTutorialAction,
 ): boolean {
-  const mark = getTsumeShogiTutorialMark({ type: "move", move }, state);
+  const cue = getMoveCue(move, state);
   switch (action.type) {
     case "square":
       return (
-        mark?.type === "square" &&
-        isSameTsumeShogiSquare(mark.square, action.square)
+        cue?.type === "square" &&
+        isSameTsumeShogiSquare(cue.square, action.square)
       );
     case "hand":
-      return mark?.type === "hand" && mark.pieceType === action.pieceType;
+      return cue?.type === "hand" && cue.pieceType === action.pieceType;
     case "promotion":
     case "undo":
     case "defender-reply":
@@ -307,65 +289,47 @@ function isTowardStepMove(
 }
 
 /**
- * 手を引いている間は、印の駒を選び、印の升へ指す操作と、待ったの手順の待ったを受け付ける。
- * 印の手の後に玉方が応じたら次の手順へ進む。王手を伝えた後は、王手にならない手を本番と同じく着手させず、違反として返す。
- * それ以外の操作は盤面を変えない。
+ * 手を引いている間は、指で指した駒を選び、指した升へ指す操作だけを受け付ける。
+ * 指した手に玉方が応じたら次の手順へ進む。それ以外の操作は盤面を変えない。
  */
 function performGuided(
   step: TsumeShogiTutorialStep,
-  earnedRuleIds: readonly TsumeShogiTutorialRuleId[],
   state: TsumeShogiTutorialBoardState,
   action: TsumeShogiTutorialAction,
 ): { state: TsumeShogiTutorialBoardState; outcome: TutorialMoveOutcome } {
-  const { target } = step;
   if (action.type === "defender-reply") {
     return state.defenderReplyPending
       ? { state: playTsumeShogiSessionDefenderReply(state), outcome: "stepped" }
       : { state, outcome: "ignored" };
   }
-  if (action.type === "undo") {
-    return target.type === "undo" && canUndoTsumeShogiSession(state)
-      ? { state: undoTsumeShogiSession(state), outcome: "stepped" }
-      : { state, outcome: "ignored" };
-  }
-  if (target.type === "undo") {
+  if (
+    action.type === "undo" ||
+    action.type === "promotion" ||
+    !isTowardStepMove(state, step.move, action)
+  ) {
     return { state, outcome: "ignored" };
   }
-  const next = applyInput(state, action);
-  if (isTowardStepMove(state, target.move, action)) {
-    return { state: next, outcome: "continued" };
-  }
-  if (
-    earnedRuleIds.includes("check") &&
-    isNewlyRejected(state, next) &&
-    next.rejection?.reason === "not-check" &&
-    isSourceSelected(state, target.move)
-  ) {
-    return { state: next, outcome: "violated" };
-  }
-  return { state, outcome: "ignored" };
+  return { state: applyInput(state, action), outcome: "continued" };
 }
 
 /**
- * 手を離した後は、本番と同じく盤面が応える。着手させなかった手と、玉方に逃げられた王手には、そのわけの一言を添える。
+ * 手を離した後は、本番と同じく盤面が応える。着手させなかった手は、ルールに合わない手として返す。
+ * 玉方が誤王手に逃れたことは、手の結果ではなく盤面の状態として一言を替える（`describeTsumeShogiTutorialFreePlay`）。
  */
 function performFree(
   state: TsumeShogiTutorialBoardState,
   action: TsumeShogiTutorialAction,
 ): { state: TsumeShogiTutorialBoardState; outcome: TutorialMoveOutcome } {
   switch (action.type) {
-    case "defender-reply": {
-      if (!state.defenderReplyPending) {
-        return { state, outcome: "ignored" };
-      }
-      const next = playTsumeShogiSessionDefenderReply(state);
-      return {
-        state: next,
-        outcome: next.turns.at(-1)?.line === "wrong" ? "violated" : "continued",
-      };
-    }
+    case "defender-reply":
+      return state.defenderReplyPending
+        ? {
+            state: playTsumeShogiSessionDefenderReply(state),
+            outcome: "continued",
+          }
+        : { state, outcome: "ignored" };
     case "undo":
-      return canUndoTsumeShogiSession(state)
+      return canUndoTsumeShogiTutorial(state)
         ? { state: undoTsumeShogiSession(state), outcome: "continued" }
         : { state, outcome: "ignored" };
     case "square":
@@ -375,7 +339,7 @@ function performFree(
       if (next === state) {
         return { state, outcome: "ignored" };
       }
-      if (isNewlyRejected(state, next)) {
+      if (next.rejection !== null && next.rejection !== state.rejection) {
         return { state: next, outcome: "violated" };
       }
       return {
@@ -387,59 +351,95 @@ function performFree(
 }
 
 function performTsumeShogiTutorialAction(
-  { step, earnedRuleIds }: TsumeShogiTutorialSituation,
+  { step }: TsumeShogiTutorialSituation,
   state: TsumeShogiTutorialBoardState,
   action: TsumeShogiTutorialAction,
 ): { state: TsumeShogiTutorialBoardState; outcome: TutorialMoveOutcome } {
-  return step
-    ? performGuided(step, earnedRuleIds, state, action)
-    : performFree(state, action);
+  return step ? performGuided(step, state, action) : performFree(state, action);
 }
 
-/** 着手させなかった手と、玉方に逃げられた王手のわけ。玉が王手した駒を取って逃れたときは、駒が守られていなかったことを言う。 */
+/** 着手させなかった手のわけ。 */
 function describeTsumeShogiTutorialViolation(
   _situation: TsumeShogiTutorialSituation,
-  state: TsumeShogiTutorialBoardState,
+  { rejection, selection }: TsumeShogiTutorialBoardState,
 ): TutorialMessage {
-  const { rejection, selection } = state;
   if (rejection?.reason === "not-check") {
     return { headline: "王手にならない手は指せません", detail: null };
   }
-  if (rejection?.reason === "illegal") {
-    return selection?.type === "hand"
-      ? { headline: "持駒は、空いた升にしか打てません", detail: null }
-      : { headline: "その駒は、そこへは動けません", detail: null };
-  }
+  return selection?.type === "hand"
+    ? { headline: "そこには打てません", detail: null }
+    : { headline: "その駒はそこには動けません", detail: null };
+}
+
+const escapedMessage: TutorialMessage = {
+  headline: "玉に逃げられました\n待ったを押して戻しましょう",
+  detail: null,
+};
+
+const capturedMessage: TutorialMessage = {
+  headline: "玉に駒を取られました\n待ったを押して戻しましょう",
+  detail: null,
+};
+
+/** 玉方の最後の応手が、攻方の駒を取る手だったか。盤面から駒が1つ消えるので、逃げたとだけは言わない。 */
+function isLastReplyCapture(state: TsumeShogiTutorialBoardState): boolean {
   const lastTurn = state.turns.at(-1);
   const reply = lastTurn?.defenderMove;
-  const captured =
-    reply !== undefined &&
+  return (
+    lastTurn !== undefined &&
     reply !== null &&
-    getTsumeShogiPieceAt(lastTurn!.positionAfterAttack, reply.to) !== null;
+    reply !== undefined &&
+    getTsumeShogiPieceAt(lastTurn.positionAfterAttack, reply.to) !== null
+  );
+}
+
+/** 詰みへ向かって指した攻方の手の数。誤王手とその筋の手は数えない。 */
+function countMatingTurns(state: TsumeShogiTutorialBoardState): number {
+  return state.turns.filter((turn) => turn.line !== "wrong").length;
+}
+
+/** 詰ませるまでに残っている攻方の手の数。 */
+function countRemainingAttackerMoves(
+  state: TsumeShogiTutorialBoardState,
+): number {
+  return TSUME_SHOGI_TUTORIAL_PROGRESS_STEP_COUNT - countMatingTurns(state);
+}
+
+/**
+ * 手を離した後の一言。詰ませるまでに残っている王手の数で応える。
+ * 玉方が誤王手に逃れたら、逃げたか駒を取ったかを言い、待ったで戻すことを言う。
+ */
+export function describeTsumeShogiTutorialFreePlay(
+  state: TsumeShogiTutorialBoardState,
+): TutorialMessage {
+  if (!isEscaped(state)) {
+    return describeRemainingChecks(countRemainingAttackerMoves(state));
+  }
+  return isLastReplyCapture(state) ? capturedMessage : escapedMessage;
+}
+
+function describeRemainingChecks(count: number): TutorialMessage {
   return {
-    headline: captured
-      ? "守られていない駒を\n玉に取られました"
-      : "逃げ道が残っていました",
-    detail: "待ったを押すと、その王手の前に戻せます",
+    headline: `あと${count}回王手をかけて\n詰ませてみましょう`,
+    detail: null,
   };
 }
 
 /**
- * 手を離した後、手が止まったときに示す次の手。玉方に逃げられてこの手数では詰まないときは待った、
- * そうでなければ残りの手数以内に詰む王手。応手を待つ間と、詰んだ後は `null`。
+ * 手を離した後に指で指す所。玉方が誤王手に逃れたら、すぐに待ったを指す。
+ * `idle` のとき（手が止まったとき）は、残りの手数以内に詰む王手を、作意を先に探して指す。
+ * 応手を待つ間と、詰んだ後は `null`。
  */
 export function findTsumeShogiTutorialHint(
   state: TsumeShogiTutorialBoardState,
-): TsumeShogiTutorialTarget | null {
+  idle: boolean,
+): TsumeShogiTutorialCue | null {
   const phase = getTsumeShogiSessionPhase(state);
-  if (phase === "refuted") {
+  if (phase === "refuted" || (phase === "attacker" && isEscaped(state))) {
     return { type: "undo" };
   }
-  if (phase !== "attacker") {
+  if (phase !== "attacker" || !idle) {
     return null;
-  }
-  if (isTsumeShogiSessionOnWrongLine(state)) {
-    return { type: "undo" };
   }
   const position = state.puzzleState;
   const remainingPlies = getTsumeShogiSessionRemainingPlies(state);
@@ -456,7 +456,17 @@ export function findTsumeShogiTutorialHint(
         remainingPlies - 1,
       ),
     );
-  return mating ? { type: "move", move: mating } : null;
+  return mating ? getMoveCue(mating, state) : null;
+}
+
+/**
+ * 入口から完成までの進み具合（0〜1）。詰みへ向かう攻方の手を1つ指すたびに同じだけ進む。
+ * 誤王手とその筋の手は数えないので、待ったで戻しても後戻りしない。
+ */
+export function getTsumeShogiTutorialProgressRatio(
+  state: TsumeShogiTutorialBoardState,
+): number {
+  return countMatingTurns(state) / TSUME_SHOGI_TUTORIAL_PROGRESS_STEP_COUNT;
 }
 
 export const tsumeShogiTutorial: Tutorial<
@@ -467,28 +477,22 @@ export const tsumeShogiTutorial: Tutorial<
 > = {
   intro: {
     purpose: "相手の玉を詰ませるパズルです",
-    goalCaption:
-      "逆向きの駒が相手の駒です\n相手の玉が逃げられない形がゴールです",
-    startCaption: "相手の手も入れて\n5手で詰ませます",
+    goalCaption: "逆さの駒は相手の駒です\n玉が逃げられなくなったら詰みです",
   },
   rules: [
-    { id: "drop", label: "持駒を打つ" },
-    { id: "check", label: "必ず王手" },
-    { id: "escape", label: "逃げ道をふさぐ" },
+    { id: "check", label: "自分の番では毎回王手をかけます" },
+    { id: "drop", label: "持駒は空いた升に打てます" },
   ],
   steps,
-  freePlay: {
-    headline: "逃げ道をふさぐ王手で\n詰ませてください",
-    detail: null,
-  },
+  freePlay: describeRemainingChecks(attackerMainLine.length - steps.length),
   completion: {
     home: {
       headline: "詰みです",
-      detail: "どのレベルも、3手か5手で詰む問題です",
+      detail: "どのレベルも同じルールです",
     },
     play: {
       headline: "詰みです",
-      detail: "プレイ中の問題も、同じルールです",
+      detail: "プレイ中の問題も同じルールです",
     },
   },
   start: startTsumeShogiTutorial,
@@ -499,8 +503,6 @@ export const tsumeShogiTutorial: Tutorial<
 
 export const _private = {
   problem,
-  escapeSquare,
-  escapingCheck,
-  matingMove,
+  attackerMainLine,
   playMove,
 };

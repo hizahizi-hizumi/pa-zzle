@@ -43,12 +43,13 @@ type TsumeShogiBoardProps = {
   mated: boolean;
   interactionDisabled: boolean;
   /**
-   * チュートリアルで次に押す升の印。`recallId` は印の無い所が押されるたびに変え、印の線を短く濃くして戻す。
+   * チュートリアルで次に押す升を、印と指で指す。`recallId` は印の無い所が押されるたびに変え、印の線を短く濃くして指を出し直す。
    * 本番では渡さない。
    */
-  tutorialMark?: { square: TsumeShogiSquare; recallId: number | null } | null;
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜く升。本番では渡さない。 */
-  spotlitSquares?: readonly TsumeShogiSquare[];
+  tutorialPointer?: {
+    square: TsumeShogiSquare;
+    recallId: number | null;
+  } | null;
   onSelectSquare: (square: TsumeShogiSquare) => void;
   onChoosePromotion: (promote: boolean) => void;
 };
@@ -107,8 +108,7 @@ export function TsumeShogiBoard({
   rejection,
   mated,
   interactionDisabled,
-  tutorialMark = null,
-  spotlitSquares = [],
+  tutorialPointer = null,
   onSelectSquare,
   onChoosePromotion,
 }: TsumeShogiBoardProps) {
@@ -188,15 +188,12 @@ export function TsumeShogiBoard({
                 clearGlow={mated}
                 arrivedMove={arrivedMove}
                 highlight={getHighlight(square)}
-                tutorialMarkRecallId={
-                  tutorialMark &&
-                  isSameTsumeShogiSquare(tutorialMark.square, square)
-                    ? tutorialMark.recallId
+                tutorialPointerRecallId={
+                  tutorialPointer &&
+                  isSameTsumeShogiSquare(tutorialPointer.square, square)
+                    ? tutorialPointer.recallId
                     : undefined
                 }
-                spotlit={spotlitSquares.some((spotlit) =>
-                  isSameTsumeShogiSquare(spotlit, square),
-                )}
                 disabled={interactionDisabled}
                 tapHandlers={getTapHandlers(() => onSelectSquare(square))}
                 isLastFile={file === 1}

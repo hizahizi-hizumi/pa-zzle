@@ -5,14 +5,16 @@ import {
   useRef,
   useState,
 } from "react";
+import { TutorialCrossFadeIntroScene } from "@/components/TutorialCrossFadeIntroScene";
 import { TutorialCue } from "@/components/TutorialCue";
-import {
-  type TutorialBoardIntro,
-  type TutorialFinish,
-  TutorialOverlay,
-  type TutorialPlayStart,
+import type {
+  TutorialFinish,
+  TutorialPlayStart,
 } from "@/components/TutorialOverlay";
-import { TutorialSpotlight } from "@/components/TutorialSpotlight";
+import {
+  TutorialStage,
+  type TutorialStageBoardIntro,
+} from "@/components/TutorialStage";
 import { UndoButton } from "@/components/UndoButton";
 import type { GameProgress } from "@/games/play";
 import pictogramSvg from "@/games/tsume-shogi/assets/pictogram.svg?raw";
@@ -30,27 +32,29 @@ import {
   findTsumeShogiDefenderKing,
   getTsumeShogiHand,
   listTsumeShogiBoardPieces,
-  type TsumeShogiHandPieceType,
-  type TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
 import {
-  canUndoTsumeShogiSession,
   getTsumeShogiSessionPhase,
   type TsumeShogiSessionTurn,
 } from "@/games/tsume-shogi/session/session";
 import {
+  canUndoTsumeShogiTutorial,
+  describeTsumeShogiTutorialFreePlay,
+  describeTsumeShogiTutorialStep,
   findTsumeShogiTutorialHint,
-  getTsumeShogiTutorialMark,
+  getTsumeShogiTutorialProgressRatio,
+  getTsumeShogiTutorialStepCue,
+  TSUME_SHOGI_TUTORIAL_PROGRESS_STEP_COUNT,
   type TsumeShogiTutorialAction,
   type TsumeShogiTutorialBoardState,
-  type TsumeShogiTutorialMark,
+  type TsumeShogiTutorialCue,
   type TsumeShogiTutorialRuleId,
-  type TsumeShogiTutorialSituation,
   tsumeShogiTutorial,
 } from "@/games/tsume-shogi/tutorial/tutorial";
 import { TsumeShogiClearAnimation } from "@/games/tsume-shogi/ui/board/clear/TsumeShogiClearAnimation";
 import { TsumeShogiBoard } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
 import { TsumeShogiPieceDefs } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs";
+import { TsumeShogiBackground } from "@/games/tsume-shogi/ui/TsumeShogiBackground";
 import {
   TsumeShogiBoardGroup,
   tsumeShogiBoardGroupSizeStyle,
@@ -85,22 +89,22 @@ type TsumeShogiTutorialProgress = TutorialProgress<
   TsumeShogiTutorialBoardState
 >;
 
-/** 盤の欄の左右の余白はチュートリアルの画面が取っているので、盤を卓に置いて見せる左右の余白は重ねない。 */
+/**
+ * 盤の左右の余白は `TutorialStage` の盤面の欄が取っているので重ねない。
+ * 指は升・持駒・待ったのすぐ下に出て、盤・駒台・直前の手の行の中に収まるので、指のための余白は取らない。
+ */
 const tutorialBoardGroupSizeStyle = {
   ...tsumeShogiBoardGroupSizeStyle,
   "--board-gutter": "0px",
 } as CSSProperties;
 
-/** 玉方が応じて次の手順へ進んでから、次の印を付けるまでの間。玉が動き終えるのを見届けてから、次の印に替える。 */
+/** 玉方が応じて次の手順へ進んでから、次の所を指すまでの間。玉が動き終えるのを見届けてから指す。 */
 const NEXT_STEP_CUE_DELAY_MS = 450;
 
-/** 手を離した後、手が止まってから次の手を示すまでの間。 */
+/** 手を離した後、手が止まってから次の手を指すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
-const goalState = tsumeShogiTutorial.goal();
-const startState = tsumeShogiTutorial.start();
-
-/** 本番と同じ効果音を、本番のプレイの進行に当てはめて鳴らす。導入でゴールを見せる波は完成ではないので、解いたときだけ完成演出として鳴らす。 */
+/** 本番と同じ効果音を、本番のプレイの進行に当てはめて鳴らす。解けた盤面の演出の間を完成演出として、完成の音を鳴らす。 */
 const soundProgressByPhase = {
   intro: "playing",
   playing: "playing",
@@ -109,46 +113,10 @@ const soundProgressByPhase = {
 } as const satisfies Record<TutorialPhase, GameProgress>;
 
 /**
- * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
- * 手を引いている間は、玉方が応じて手順が進んだら少し待って付ける。手を離した後は手が止まったときだけ付ける。
- */
-function getCueDelayMs(
-  progress: TsumeShogiTutorialProgress,
-  guiding: boolean,
-  steppedProgress: TsumeShogiTutorialProgress | null,
-): number | null {
-  if (progress.phase !== "playing") {
-    return null;
-  }
-  if (!guiding) {
-    return IDLE_HINT_DELAY_MS;
-  }
-  return progress === steppedProgress ? NEXT_STEP_CUE_DELAY_MS : 0;
-}
-
-/**
- * 手を引いている間に覆いから抜く盤の升。次に押す升、選んでいる駒、王手をかける玉と手順の決め手の升。
- * 印を付ける前は、直前に指した駒と玉を残して、その手で起きたことを見せる。
- */
-function getSpotlitSquares(
-  state: TsumeShogiTutorialBoardState,
-  mark: TsumeShogiTutorialMark | null,
-  keySquares: readonly TsumeShogiSquare[],
-): TsumeShogiSquare[] {
-  const king = findTsumeShogiDefenderKing(state.puzzleState);
-  const lastAttackerMove = state.turns.at(-1)?.attackerMove;
-  return [
-    king,
-    ...keySquares,
-    ...(mark?.type === "square" ? [mark.square] : []),
-    ...(state.selection?.type === "board" ? [state.selection.square] : []),
-    ...(mark === null && lastAttackerMove ? [lastAttackerMove.to] : []),
-  ];
-}
-
-/**
- * 盤の右の端で玉を追う5手詰を、一言と印に沿って1手ずつ指し、持駒・王手・逃げ道と待ったを身につけさせる。
- * 手順を終えたら手を離し、詰ませる手を自分で指させる。盤・駒台・駒の動き・玉方の応手・詰みの演出は本番と同じ部品を使う。
+ * 盤の右上で玉を囲う7手詰を、プレイ画面と同じ地の上で、一言と指さしに沿って2手指し、
+ * 動かして王手することと持駒を打つことを身につけさせる。手順を終えたら手を離し、残りの2手を自分で読んで詰ませる。
+ * 入口では、詰み上がりが解き方そのものになるので、詰み上がりではなく始めの盤面を見せる。
+ * 盤・駒台・駒の動き・玉方の応手・詰みの演出は本番と同じ部品を使う。
  */
 export function TsumeShogiTutorial({
   open,
@@ -166,30 +134,36 @@ export function TsumeShogiTutorial({
     useState<TsumeShogiSessionTurn | null>(null);
   const [steppedProgress, setSteppedProgress] =
     useState<TsumeShogiTutorialProgress | null>(null);
-  const [idleProgress, setIdleProgress] =
+  const [waitedProgress, setWaitedProgress] =
     useState<TsumeShogiTutorialProgress | null>(null);
-  // 手を引いている間に印の無い所を押されたら、押されるたびに印の線を短く濃くして戻す。
+  // 手を引いている間に指していない所を押されたら、押されるたびに印の線を短く濃くして、指を出し直す。
   const [recall, setRecall] = useState<{
     progress: TsumeShogiTutorialProgress;
     id: number;
   } | null>(null);
-  const situation: TsumeShogiTutorialSituation = getTutorialSituation(
-    tsumeShogiTutorial,
-    progress,
-  );
-  const guiding = situation.step !== null;
+  const situation = getTutorialSituation(tsumeShogiTutorial, progress);
+  const { step } = situation;
+  const guiding = step !== null;
   const session = progress.boardState;
   const sessionPhase = getTsumeShogiSessionPhase(session);
+  const playing = progress.phase === "playing";
   const recallId = recall?.progress === progress ? recall.id : null;
-  const cueDelayMs = getCueDelayMs(progress, guiding, steppedProgress);
-  const cueShown =
-    cueDelayMs === 0 ||
-    recallId !== null ||
-    (cueDelayMs !== null && idleProgress === progress);
-  const target = !cueShown
+  // 手を引いている間は、玉方が応じて手順が進んだら少し待って指す。手を離した後は、手が止まったら指す。
+  const cueDelayMs = !playing
     ? null
-    : (situation.step?.target ?? findTsumeShogiTutorialHint(session));
-  const mark = target ? getTsumeShogiTutorialMark(target, session) : null;
+    : guiding
+      ? progress === steppedProgress
+        ? NEXT_STEP_CUE_DELAY_MS
+        : 0
+      : IDLE_HINT_DELAY_MS;
+  const waited = waitedProgress === progress;
+  const cue: TsumeShogiTutorialCue | null = !playing
+    ? null
+    : step
+      ? cueDelayMs === 0 || waited || recallId !== null
+        ? getTsumeShogiTutorialStepCue(step, session)
+        : null
+      : findTsumeShogiTutorialHint(session, waited);
   const kingSquare = findTsumeShogiDefenderKing(session.puzzleState);
 
   useTsumeShogiSoundEffects(
@@ -203,7 +177,7 @@ export function TsumeShogiTutorial({
       return;
     }
     const timer = window.setTimeout(
-      () => setIdleProgress(progress),
+      () => setWaitedProgress(progress),
       cueDelayMs,
     );
     return () => window.clearTimeout(timer);
@@ -264,8 +238,8 @@ export function TsumeShogiTutorial({
     setProgress(finishTutorialIntro);
   }
 
-  function restart(): void {
-    setIdleProgress(null);
+  function reset(): void {
+    setWaitedProgress(null);
     setSteppedProgress(null);
     setRecall(null);
     setOperation(null);
@@ -273,14 +247,20 @@ export function TsumeShogiTutorial({
     setProgress(startTutorial(tsumeShogiTutorial));
   }
 
-  // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
+  // 始めの盤面はもう見せたので、入口を通さずに最初の手順から始める。
+  function handleRestart(): void {
+    reset();
+    setProgress(finishTutorialIntro);
+  }
+
+  // 終えたかどうかは残さないので、閉じたら次に開いたとき入口から始まるようにする。
   function handleClose(): void {
-    restart();
+    reset();
     onClose();
   }
 
   function handleStartPlay(): void {
-    restart();
+    reset();
     playStart?.onStart();
   }
 
@@ -293,15 +273,15 @@ export function TsumeShogiTutorial({
     : { entry: "play", onReturnToPlay: handleClose };
 
   /**
-   * 印の線を濃くし直したときは、前の違反の一言を下げて、印へ向かう手順の一言に戻す。
-   * 手を離した後に止まって次の王手を示したときも、着手させなかった手の一言を下げて、詰ませる一言に戻す。
+   * 手順の間は、駒を選んだら行き先の一言に替える。手を離した後は、残りの王手の数と、玉に逃げられたことで応える。
+   * 着手させなかった手のわけは、手が止まって次の手を指したら下げる。
    */
   function getMessage(): TutorialMessage {
-    if (recallId !== null && situation.step) {
-      return situation.step.message;
+    if (playing && step) {
+      return describeTsumeShogiTutorialStep(step, session);
     }
-    if (!guiding && mark !== null && session.rejection !== null) {
-      return tsumeShogiTutorial.freePlay;
+    if (playing && (!progress.violated || (waited && cue !== null))) {
+      return describeTsumeShogiTutorialFreePlay(session);
     }
     return getTutorialMessage(tsumeShogiTutorial, progress, {
       entry: finish.entry,
@@ -310,254 +290,164 @@ export function TsumeShogiTutorial({
     });
   }
 
+  const shownMovesTurn = session.turns.at(-1);
+  const positionBeforeLastTurn =
+    session.turns.at(-2)?.positionAfterDefense ??
+    session.problem.initialPosition;
+  const shownMoves = listTsumeShogiShownMoves(
+    shownMovesTurn,
+    positionBeforeLastTurn,
+    session.defenderReplyPending,
+  );
+  const acceptsInput = playing && sessionPhase === "attacker";
+  const handAvailability: TsumeShogiHandAvailability = acceptsInput
+    ? "available"
+    : playing && sessionPhase === "defender"
+      ? "waiting"
+      : "unavailable";
+  const pointer = cue && { recallId };
+  const selectedHandPieceType =
+    session.selection?.type === "hand" ? session.selection.pieceType : null;
+
   /**
-   * 導入の間はゴールの盤面を、始まりの場面では始めの盤面を見せる。
-   * 最初の手順の印は、導入の終わりに一言と同時に出す。
+   * 入口でも、詰み上がりではなく始めの盤面を見せる。詰み上がりの形がそのまま解き方になるので見せない。
+   * 入口の場面は共通の部品で受けるが、どちらの場面でも始めの盤面を描くので、始めるときに盤面は替わらない。
    */
   function renderBoard({
     scene,
-    playing,
+    playing: scenePlaying,
     onSceneEnd,
-    messageShown,
-  }: TutorialBoardIntro) {
-    const introMark =
-      progress.phase === "intro" && messageShown && situation.step
-        ? getTsumeShogiTutorialMark(situation.step.target, session)
-        : null;
+  }: TutorialStageBoardIntro) {
     return (
-      <TsumeShogiTutorialBoard
-        state={
-          scene === "goal"
-            ? goalState
-            : scene === "start"
-              ? startState
-              : session
-        }
+      <TutorialCrossFadeIntroScene
         scene={scene}
-        scenePlaying={playing}
+        playing={scenePlaying}
         onSceneEnd={onSceneEnd}
-        progress={progress}
-        guiding={guiding}
-        mark={progress.phase === "intro" ? introMark : mark}
-        recallId={recallId}
-        restoredTurn={restoredTurn}
-        statusSpotlit={guiding && situation.step?.reason === "status"}
-        keySquares={situation.step?.keySquares ?? []}
-        acceptsInput={
-          progress.phase === "playing" && sessionPhase === "attacker"
-        }
-        onAction={dispatch}
-        onClearAnimationComplete={handleClearAnimationComplete}
-      />
+      >
+        {() => renderBoardGroup(scene === "goal")}
+      </TutorialCrossFadeIntroScene>
+    );
+  }
+
+  function renderBoardGroup(showsIntro: boolean) {
+    return (
+      <TsumeShogiPieceDefs>
+        <div
+          className="flex size-full items-end justify-center"
+          style={tutorialBoardGroupSizeStyle}
+        >
+          <TsumeShogiBoardGroup
+            board={
+              <TsumeShogiClearAnimation
+                active={progress.phase === "solved"}
+                onClearAnimationComplete={handleClearAnimationComplete}
+              >
+                <TsumeShogiBoard
+                  boardPieces={listTsumeShogiBoardPieces(session.puzzleState)}
+                  boardPieceIds={listTsumeShogiBoardPieceIds(
+                    session.problem.initialPosition,
+                    session.turns,
+                    session.defenderReplyPending,
+                  )}
+                  selection={session.selection}
+                  shownMoves={shownMoves}
+                  shownMovesRestored={
+                    shownMovesTurn !== undefined &&
+                    shownMovesTurn === restoredTurn
+                  }
+                  promotionChoice={session.promotionChoice}
+                  rejection={session.rejection}
+                  mated={
+                    progress.phase === "solved" ||
+                    progress.phase === "completed"
+                  }
+                  interactionDisabled={showsIntro || !acceptsInput}
+                  tutorialPointer={
+                    pointer && cue?.type === "square"
+                      ? { square: cue.square, ...pointer }
+                      : null
+                  }
+                  onSelectSquare={(square) =>
+                    dispatch({ type: "square", square })
+                  }
+                  onChoosePromotion={(promote) =>
+                    dispatch({ type: "promotion", promote })
+                  }
+                />
+              </TsumeShogiClearAnimation>
+            }
+            hand={
+              <TsumeShogiHand
+                hand={getTsumeShogiHand(session.puzzleState, "attacker")}
+                selectedPieceType={selectedHandPieceType}
+                availability={showsIntro ? "waiting" : handAvailability}
+                rejection={session.rejection}
+                // 本番の背の低い画面と同じく、待ったを駒台の左に置く。
+                leadingAction={
+                  <span className="relative flex rounded-full">
+                    <UndoButton
+                      disabled={
+                        !playing ||
+                        sessionPhase === "defender" ||
+                        !canUndoTsumeShogiTutorial(session)
+                      }
+                      onUndo={() => dispatch({ type: "undo" })}
+                    />
+                    {pointer && cue?.type === "undo" && (
+                      <TutorialCue kind="pointer" recallId={recallId} />
+                    )}
+                  </span>
+                }
+                tutorialPointer={
+                  pointer && cue?.type === "hand"
+                    ? { pieceType: cue.pieceType, ...pointer }
+                    : null
+                }
+                onSelectHandPiece={(pieceType) =>
+                  dispatch({ type: "hand", pieceType })
+                }
+              />
+            }
+            status={
+              // 待ったを指す指は待ったのすぐ下、直前の手の行の左端に出るので、行の文字を待ったの幅だけ右から始めて、指に隠させない。
+              <div className="pl-12">
+                <TsumeShogiPlayStatus
+                  plies={session.problem.plies}
+                  phase={sessionPhase}
+                  shownMoves={shownMoves}
+                  precedingMoveTo={
+                    session.turns.at(-2)?.defenderMove?.to ?? null
+                  }
+                />
+              </div>
+            }
+          />
+        </div>
+      </TsumeShogiPieceDefs>
     );
   }
 
   return (
-    <TutorialOverlay
+    <TutorialStage
       open={open}
       title={TSUME_SHOGI_DISPLAY_NAME}
       pictogramSvg={pictogramSvg}
+      background={<TsumeShogiBackground />}
       intro={tsumeShogiTutorial.intro}
-      rules={tsumeShogiTutorial.rules.map((rule) => ({
-        ...rule,
-        earned: progress.earnedRuleIds.includes(rule.id),
-        current: situation.step?.introducedRuleId === rule.id,
-      }))}
+      recap={tsumeShogiTutorial.rules.map((rule) => rule.label)}
       message={getMessage()}
       phase={progress.phase}
-      guiding={progress.phase === "playing" && guiding}
+      progress={
+        progress.phase === "solved" || progress.phase === "completed"
+          ? 1
+          : getTsumeShogiTutorialProgressRatio(session)
+      }
+      progressStepCount={TSUME_SHOGI_TUTORIAL_PROGRESS_STEP_COUNT}
       finish={finish}
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
-      onRestart={restart}
+      onRestart={handleRestart}
       onClose={handleClose}
     />
-  );
-}
-
-type TsumeShogiTutorialBoardProps = {
-  /** 盤に見せる状態。導入の場面ではゴールか始めの盤面。 */
-  state: TsumeShogiTutorialBoardState;
-  scene: TutorialBoardIntro["scene"];
-  scenePlaying: boolean;
-  onSceneEnd: () => void;
-  progress: TsumeShogiTutorialProgress;
-  guiding: boolean;
-  mark: TsumeShogiTutorialMark | null;
-  recallId: number | null;
-  restoredTurn: TsumeShogiSessionTurn | null;
-  /** 盤の下の、この手数では詰まないという知らせを、覆いから抜く。 */
-  statusSpotlit: boolean;
-  /** 手順の決め手として、玉と一緒に覆いから抜く升。 */
-  keySquares: readonly TsumeShogiSquare[];
-  acceptsInput: boolean;
-  onAction: (action: TsumeShogiTutorialAction) => void;
-  onClearAnimationComplete: () => void;
-};
-
-/** 本番と同じ盤・駒台・直前の手の行に、チュートリアルの印と覆いから抜く所を重ねる。待ったは駒台の左に置く。 */
-function TsumeShogiTutorialBoard({
-  state,
-  scene,
-  scenePlaying,
-  onSceneEnd,
-  progress,
-  guiding,
-  mark,
-  recallId,
-  restoredTurn,
-  statusSpotlit,
-  keySquares,
-  acceptsInput,
-  onAction,
-  onClearAnimationComplete,
-}: TsumeShogiTutorialBoardProps) {
-  const sessionPhase = getTsumeShogiSessionPhase(state);
-  const lastTurn = state.turns.at(-1);
-  const positionBeforeLastTurn =
-    state.turns.at(-2)?.positionAfterDefense ?? state.problem.initialPosition;
-  const shownMoves = listTsumeShogiShownMoves(
-    lastTurn,
-    positionBeforeLastTurn,
-    state.defenderReplyPending,
-  );
-  const mated =
-    scene === "goal" ||
-    (scene === null &&
-      (progress.phase === "solved" || progress.phase === "completed"));
-  const handAvailability: TsumeShogiHandAvailability =
-    scene !== null
-      ? "waiting"
-      : acceptsInput
-        ? "available"
-        : progress.phase === "playing" && sessionPhase === "defender"
-          ? "waiting"
-          : "unavailable";
-  const focusing = guiding && scene === null;
-  const handMarkPieceType: TsumeShogiHandPieceType | null =
-    mark?.type === "hand" ? mark.pieceType : null;
-  const selectedHandPieceType =
-    state.selection?.type === "hand" ? state.selection.pieceType : null;
-
-  // 始まりの盤面は動かさずに見せる。
-  useEffect(() => {
-    if (scene === "start" && scenePlaying) {
-      onSceneEnd();
-    }
-  }, [scene, scenePlaying, onSceneEnd]);
-
-  return (
-    <TsumeShogiPieceDefs>
-      <div
-        className="flex size-full items-start justify-center"
-        style={tutorialBoardGroupSizeStyle}
-      >
-        <TsumeShogiBoardGroup
-          board={
-            <TsumeShogiClearAnimation
-              active={
-                scene === "goal" ? scenePlaying : progress.phase === "solved"
-              }
-              onClearAnimationComplete={
-                scene === "goal" ? onSceneEnd : onClearAnimationComplete
-              }
-            >
-              <TsumeShogiBoard
-                boardPieces={listTsumeShogiBoardPieces(state.puzzleState)}
-                boardPieceIds={listTsumeShogiBoardPieceIds(
-                  state.problem.initialPosition,
-                  state.turns,
-                  state.defenderReplyPending,
-                )}
-                selection={state.selection}
-                shownMoves={shownMoves}
-                shownMovesRestored={
-                  scene !== null ||
-                  (lastTurn !== undefined && lastTurn === restoredTurn)
-                }
-                promotionChoice={state.promotionChoice}
-                rejection={state.rejection}
-                mated={mated}
-                interactionDisabled={scene !== null || !acceptsInput}
-                tutorialMark={
-                  scene === null && mark?.type === "square"
-                    ? { square: mark.square, recallId }
-                    : null
-                }
-                spotlitSquares={
-                  focusing
-                    ? getSpotlitSquares(state, mark, keySquares)
-                    : undefined
-                }
-                onSelectSquare={(square) =>
-                  onAction({ type: "square", square })
-                }
-                onChoosePromotion={(promote) =>
-                  onAction({ type: "promotion", promote })
-                }
-              />
-            </TsumeShogiClearAnimation>
-          }
-          hand={
-            <TsumeShogiHand
-              hand={getTsumeShogiHand(state.puzzleState, "attacker")}
-              selectedPieceType={selectedHandPieceType}
-              availability={handAvailability}
-              rejection={state.rejection}
-              // 本番の背の低い画面と同じく、待ったを駒台の左に置く。導入の盤面には出さない。
-              leadingAction={
-                scene === null && (
-                  <span className="relative flex rounded-full">
-                    <UndoButton
-                      disabled={
-                        progress.phase !== "playing" ||
-                        !canUndoTsumeShogiSession(state)
-                      }
-                      onUndo={() => onAction({ type: "undo" })}
-                    />
-                    <TutorialSpotlight
-                      active={focusing && mark?.type === "undo"}
-                      className="inset-0 rounded-full"
-                    />
-                    {mark?.type === "undo" && (
-                      <TutorialCue kind="mark" recallId={recallId} />
-                    )}
-                  </span>
-                )
-              }
-              tutorialMark={
-                scene === null && handMarkPieceType
-                  ? { pieceType: handMarkPieceType, recallId }
-                  : null
-              }
-              spotlitPieceTypes={
-                focusing
-                  ? [handMarkPieceType, selectedHandPieceType].filter(
-                      (type) => type !== null,
-                    )
-                  : undefined
-              }
-              onSelectHandPiece={(pieceType) =>
-                onAction({ type: "hand", pieceType })
-              }
-            />
-          }
-          status={
-            <>
-              <TsumeShogiPlayStatus
-                plies={state.problem.plies}
-                phase={sessionPhase}
-                shownMoves={shownMoves}
-                precedingMoveTo={state.turns.at(-2)?.defenderMove?.to ?? null}
-              />
-              <TutorialSpotlight
-                active={focusing && statusSpotlit}
-                className="inset-0"
-              />
-            </>
-          }
-        />
-      </div>
-    </TsumeShogiPieceDefs>
   );
 }
