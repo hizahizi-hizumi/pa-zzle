@@ -120,9 +120,11 @@ function placeBoard([x, y]: BoardPoint) {
   };
 }
 
+/** 押して、動かさずに離す。 */
 function tap(at: BoardPoint): void {
   const { board, point } = placeBoard(at);
   fireEvent.pointerDown(board, point);
+  fireEvent.pointerUp(board, point);
 }
 
 /** 島を押して、動かさずに離す。 */

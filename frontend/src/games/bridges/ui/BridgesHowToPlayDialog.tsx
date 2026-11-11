@@ -49,8 +49,8 @@ export function BridgesHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          島と島の間を押すたびに、橋が 1本 → 2本 → なし
-          と変わる。島を押してから相手の島を押しても、島から相手の島へなぞっても同じに変わる。
+          島と島の間を押して離すたびに、橋が 1本 → 2本 → なし
+          と変わる。押している間は変わる橋が光り、指をずらして離すと取り消せる。島を押してから相手の島を押しても、島から相手の島へなぞっても同じに変わる。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure
@@ -63,7 +63,7 @@ export function BridgesHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          橋どうしは交差しない。架かった橋をまたいで架けようとすると、邪魔をしている橋が赤く縁取られて揺れる。交わる所のすぐそばを押すと、どちらの橋も変えずに2つの組を示すので、島から選んで架ける。
+          橋どうしは交差しない。架かった橋をまたいで架けようとすると、邪魔をしている橋が赤く縁取られて揺れる。交わる所のすぐそばのように、2本の線から同じくらい離れた所を押すと、どちらの橋も変えずに2つの組を示すので、島から選んで架ける。
         </p>
         <HowToPlayFigure
           board={crossBoard}
@@ -80,7 +80,9 @@ export function BridgesHowToPlayDialog({
       <li>{PLAY_OPERATION_LABELS.undo}は、橋を変えた操作を1つずつ取り消す。</li>
       <li className="hidden pointer-fine:list-item">
         <p className="text-muted-foreground">
-          キーボード: 盤面の島を選び、矢印キーで隣の島へ移る。Shift
+          マウス: 右クリックで、橋を逆に なし → 2本 → 1本 と変える。Esc
+          で島の選びを解く。キーボード:
+          盤面の島を選び、矢印キーで隣の島へ移る。Shift
           と矢印キーで、その向きの橋を 1本 → 2本 → なしと変える。
         </p>
       </li>

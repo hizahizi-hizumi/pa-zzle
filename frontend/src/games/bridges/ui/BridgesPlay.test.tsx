@@ -99,13 +99,15 @@ describe("BridgesPlay", () => {
 
   /** 島0 と島1 の間（辺0）の線の上を押す。 */
   function tapBetweenFirstIslands(): void {
-    fireEvent.pointerDown(getBoardGroup(), {
+    const point = {
       pointerId: 1,
       pointerType: "touch",
       isPrimary: true,
       clientX: (1.5 + BOARD_MARGIN) * 100,
       clientY: (0.5 + BOARD_MARGIN) * 100,
-    });
+    };
+    fireEvent.pointerDown(getBoardGroup(), point);
+    fireEvent.pointerUp(getBoardGroup(), point);
   }
 
   beforeEach(() => {

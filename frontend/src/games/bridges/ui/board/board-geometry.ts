@@ -134,7 +134,9 @@ function getBand(
       };
 }
 
-/** 押した点が、辺の両端の島の陸の間で橋の線に沿った帯の中にあるか。チュートリアルで押させる辺の押しの範囲に使う。 */
+/**
+ * 押した点が、辺の両端の島の陸の間で、線の当たり範囲と同じ幅の帯の中にあるか。チュートリアルで押させる辺の押しの範囲に使う。
+ */
 export function isPointInEdgeBand(
   board: BridgesBoard,
   edge: number,
@@ -144,7 +146,7 @@ export function isPointInEdgeBand(
   const band = getBand(
     getIslandCenter(board.islands[from]!),
     getIslandCenter(board.islands[to]!),
-    EDGE_BAND_WIDTH,
+    LINE_HIT_HALF_WIDTH * 2,
   );
   return (
     x >= band.x &&
@@ -198,28 +200,31 @@ export function getBridgeLineOffsets(
 
 /**
  * 押した位置が指すもの。
- * - `island`: 島の近く。
- * - `edge`: 島の外で、1本の線だけに近い所。その辺の橋を回す。
- * - `crossing`: 島の外で、交わる2本の線のどちらにも近い所。どちらの辺を狙ったかを位置で決められないので、
- *   どちらの橋も回さず、2辺を候補として示す。`edges` は辺の番号の小さい順。
+ * - `island`: 島の陸の上。
+ * - `edge`: 島の外で、その辺の線の当たり範囲にあり、ほかの線より明らかに近い所。その辺の橋を回す。
+ * - `ambiguous`: 島の外で、最も近い2本の線までの距離がほとんど同じ所（交点のそばや、1つの島から出る縦と横の線の間）。
+ *   どちらを狙ったかを位置で決められないので、どちらの橋も回さず、2辺を候補として示す。`edges` は辺の番号の小さい順。
  */
 export type BoardTarget =
   | { kind: "island"; island: number }
   | { kind: "edge"; edge: number }
-  | { kind: "crossing"; edges: readonly [number, number] };
+  | { kind: "ambiguous"; edges: readonly [number, number] };
 
 /**
- * 島を押したとみなす、島の中心からの距離。陸の周りの波打ち際の泡と浅瀬までを含め、斜めに隣り合う島（中心の間 1.41）との
- * 真ん中の手前まで広げる。島のマスの中（`isPointInIslandCell`）もこれとは別に島の的に含める。
+ * 島を押したとみなす、島の中心からの距離。陸の半径（輪郭の揺らぎで最大 `ISLAND_RADIUS × 1.08`）に波打ち際の泡の幅を足した所までにし、
+ * 陸の外の水面は島の的にしない。斜めに隣り合う島（中心の間 1.41）の的は、2島の間の線から半マス離れた所で止まり、線の当たり範囲と
+ * 重ならない。
  */
-export const ISLAND_REACH = 0.6;
+export const ISLAND_HIT_RADIUS = 0.5;
 
 /**
- * 島の外を押したとき、線からこの距離までを、その線の辺を押したとみなす。2本の橋の板の外側の縁（線から 0.24）に指のぶれを
- * 少し足した幅にし、線から離れた海を押しても、近くの辺の橋を回さない。交わる2本の線のどちらからもこの距離の内なら、
- * どちらの辺も選ばない。
+ * 線の当たり範囲の、線から片側の幅。2島の中心の間で、線から両側にこの幅までの長方形を、その辺の線の当たり範囲にする。
+ * 隣の行・列の平行な線の範囲と、真ん中で接する。
  */
-const TAP_REACH = 0.3;
+export const LINE_HIT_HALF_WIDTH = 0.5;
+
+/** 最も近い2本の線までの距離の差がこれより小さいと、どちらの線かを位置で決めない。交点の中心から片側 0.1 マスほどの帯になる。 */
+export const AMBIGUOUS_DISTANCE_GAP = 0.2;
 
 const pointTolerance = 1e-9;
 
@@ -233,23 +238,7 @@ function distanceToIsland(
   return Math.hypot(point.x - center.x, point.y - center.y);
 }
 
-/** 押した点が、島のマスの中（マスの縁を含む）にあるか。 */
-function isPointInIslandCell(
-  board: BridgesBoard,
-  island: number,
-  { x, y }: BoardPoint,
-): boolean {
-  const center = getIslandCenter(board.islands[island]!);
-  return (
-    Math.max(Math.abs(x - center.x), Math.abs(y - center.y)) <=
-    0.5 + pointTolerance
-  );
-}
-
-/**
- * `islands` のうち、`point` を島の的に含む島。島のマスの中か、中心から `ISLAND_REACH` の内。
- * 2つの島の的に入るときは中心の近い島。
- */
+/** `islands` のうち、`point` を陸の上に含む島（中心から `ISLAND_HIT_RADIUS` の内）。2つの島に入るときは中心の近い島。 */
 function findIslandNear(
   board: BridgesBoard,
   point: BoardPoint,
@@ -259,10 +248,10 @@ function findIslandNear(
   let nearestDistance = Number.POSITIVE_INFINITY;
   for (const index of islands) {
     const distance = distanceToIsland(board, index, point);
-    const reached =
-      distance <= ISLAND_REACH + pointTolerance ||
-      isPointInIslandCell(board, index, point);
-    if (reached && distance < nearestDistance) {
+    if (
+      distance <= ISLAND_HIT_RADIUS + pointTolerance &&
+      distance < nearestDistance
+    ) {
       nearest = index;
       nearestDistance = distance;
     }
@@ -270,13 +259,13 @@ function findIslandNear(
   return nearest;
 }
 
-/** 両端の島の中心の間にあり、線から `TAP_REACH` までの辺と、線までの距離。 */
-function listReachableEdges(
+/** 押した点を当たり範囲に含む線の辺と、線までの垂直な距離。距離の近い順。 */
+function listLinesInRange(
   board: BridgesBoard,
   point: BoardPoint,
 ): { edge: number; distance: number }[] {
-  return getBridgesNetwork(board).edges.flatMap(
-    ({ from, to, orientation }, edge) => {
+  return getBridgesNetwork(board)
+    .edges.flatMap(({ from, to, orientation }, edge) => {
       const start = getIslandCenter(board.islands[from]!);
       const end = getIslandCenter(board.islands[to]!);
       const [along, across, low, high, line] =
@@ -284,21 +273,25 @@ function listReachableEdges(
           ? [point.x, point.y, start.x, end.x, start.y]
           : [point.y, point.x, start.y, end.y, start.x];
       const distance = Math.abs(across - line);
-      return low < along && along < high && distance <= TAP_REACH
+      return low < along &&
+        along < high &&
+        distance <= LINE_HIT_HALF_WIDTH + pointTolerance
         ? [{ edge, distance }]
         : [];
-    },
-  );
+    })
+    .sort(
+      (left, right) => left.distance - right.distance || left.edge - right.edge,
+    );
 }
 
 /**
  * 押した位置が指す島か辺。
- * - 島の的（島のマスの中か、中心から `ISLAND_REACH` の内）なら島。
- * - 島の外で、線から `TAP_REACH` の内に交わる2本の線があれば、どちらの辺にも決めない（`crossing`）。2本の橋の真ん中が
- *   重なる所や、架かった橋の板の上を別の組の通り道が通る所で、狙っていない辺の橋を架けたり外したりしない。
- * - 島の外で1本の線だけに近ければ、その辺。架かった橋もそこを押せば回る。交わる別の橋に阻まれていても、そのまま返す
+ * - 島の陸の上（中心から `ISLAND_HIT_RADIUS` の内）なら島。
+ * - 島の外では、押した点を当たり範囲（2島の中心の間で、線から両側に `LINE_HIT_HALF_WIDTH` までの長方形）に含む線のうち、
+ *   線までの垂直な距離が最も近い線の辺。架かった橋もそこを押せば回る。交わる別の橋に阻まれていても、そのまま返す
  *   （架けようとして阻まれたことを盤面で返す）。
- * - どの線からも遠ければ `null`。
+ * - 最も近い2本の線までの距離の差が `AMBIGUOUS_DISTANCE_GAP` より小さければ、どちらの辺にも決めない（`ambiguous`）。
+ * - どの線の当たり範囲にも入らなければ `null`。
  */
 export function findBoardTarget(
   board: BridgesBoard,
@@ -308,27 +301,23 @@ export function findBoardTarget(
   if (island !== null) {
     return { kind: "island", island };
   }
-  const candidates = listReachableEdges(board, point).sort(
-    (left, right) => left.distance - right.distance || left.edge - right.edge,
-  );
-  const nearest = candidates[0];
+  const [nearest, second] = listLinesInRange(board, point);
   if (nearest === undefined) {
     return null;
   }
-  const { crossingEdges } = getBridgesNetwork(board);
-  const crossing = candidates.find(({ edge }) =>
-    crossingEdges[nearest.edge]!.includes(edge),
-  );
-  if (crossing !== undefined) {
-    const [first, second] = [nearest.edge, crossing.edge].sort(
+  if (
+    second !== undefined &&
+    second.distance - nearest.distance < AMBIGUOUS_DISTANCE_GAP
+  ) {
+    const [first, last] = [nearest.edge, second.edge].sort(
       (left, right) => left - right,
     );
-    return { kind: "crossing", edges: [first!, second!] };
+    return { kind: "ambiguous", edges: [first!, last!] };
   }
   return { kind: "edge", edge: nearest.edge };
 }
 
-/** 押した点が、島 `island` を押したとみなす範囲にあるか。 */
+/** 押した点が、島 `island` の陸の上にあるか。 */
 export function isPointOnIsland(
   board: BridgesBoard,
   island: number,
@@ -380,7 +369,7 @@ const DRAG_LANDING_REACH = 0.7;
 export type DragAim = { edge: number; landed: boolean };
 
 /**
- * 島 `island` からなぞって `point` まで指を動かしたときの狙い。指が島の的（`ISLAND_REACH`）を出て、縦横から
+ * 島 `island` からなぞって `point` まで指を動かしたときの狙い。指が島の陸（`ISLAND_HIT_RADIUS`）を出て、縦横から
  * `DRAG_ANGLE_TOLERANCE` の内へ動いたら、その向きの最初の島への辺を狙う。離して回すのは、指が相手の島に届いた
  * （`DRAG_LANDING_REACH`）ときだけにし、海の上で止めたなぞりでは回さない。
  * 指が島の的の内にあるか、斜めに動いたか、その向きに辺が無ければ `null`。
@@ -393,7 +382,7 @@ export function findDragAim(
   const center = getIslandCenter(board.islands[island]!);
   const dx = point.x - center.x;
   const dy = point.y - center.y;
-  if (Math.hypot(dx, dy) <= ISLAND_REACH) {
+  if (Math.hypot(dx, dy) <= ISLAND_HIT_RADIUS) {
     return null;
   }
   const horizontal = Math.abs(dx) >= Math.abs(dy);

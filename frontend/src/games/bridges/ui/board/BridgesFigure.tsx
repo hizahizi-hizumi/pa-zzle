@@ -57,10 +57,14 @@ type BridgesFigureProps = {
   /** マウスを乗せた所で押せば回る辺。架かった後の板の影を淡く予告する。 */
   hoverEdge?: number | null;
   /**
-   * 交わる2本の線のどちらにも近い所を押した（マウスを乗せた）ときの、候補の2辺。どちらの辺かを位置で決めないので、
+   * 最も近い2本の線までの距離がほとんど同じ所を押した（マウスを乗せた）ときの、候補の2辺。どちらの辺かを位置で決めないので、
    * 2辺にロープを張って、島から架ければどちらも選べることを示す。
    */
-  crossingEdges?: readonly number[] | null;
+  candidateEdges?: readonly number[] | null;
+  /** 押している指が今離せば回す辺。回した後の板の影と、張ったロープで光らせる。 */
+  pressedEdge?: number | null;
+  /** 押している島。選んだ島と同じ輪で囲む。 */
+  pressedIsland?: number | null;
   /**
    * 島を触っていなくても、架けられる相手までの帯を敷く辺。チュートリアルで覆いから抜いた辺に敷き、本番の案内と同じ表し方で見せる。
    */
@@ -106,7 +110,8 @@ export const bridgesFigureParts = {
   lanternPost: "data-bridges-lantern-post",
   ripple: "data-bridges-ripple",
   rope: "data-bridges-rope",
-  crossingHint: "data-bridges-crossing-hint",
+  candidateHint: "data-bridges-candidate-hint",
+  pressedEdge: "data-bridges-pressed-edge",
 } as const;
 
 /**
@@ -678,7 +683,9 @@ export function BridgesFigure({
   showsSea = false,
   guide = null,
   hoverEdge = null,
-  crossingEdges = null,
+  candidateEdges = null,
+  pressedEdge = null,
+  pressedIsland = null,
   bandEdges = [],
   selectedIsland = null,
   focusedIsland = null,
@@ -701,7 +708,19 @@ export function BridgesFigure({
   );
   const depths = lit ? listClearWaveDepths(board, bridges) : [];
   const previewEdge = guide?.previewEdge ?? null;
-  const ghostEdge = previewEdge ?? hoverEdge;
+  // 阻まれる辺には架かった後の姿を見せず、ロープだけで押した辺を示す。
+  const pressedGhostEdge =
+    pressedEdge !== null &&
+    (bridges[pressedEdge] !== 0 ||
+      !getBridgesNetwork(board).crossingEdges[pressedEdge]!.some(
+        (crossing) => bridges[crossing] !== 0,
+      ))
+      ? pressedEdge
+      : null;
+  const ghostEdge =
+    previewEdge ?? (pressedEdge === null ? hoverEdge : pressedGhostEdge);
+  const ghostOpacity =
+    previewEdge === null && pressedEdge === null ? HOVER_GHOST_OPACITY : 1;
   const targetIsland =
     guide === null || previewEdge === null
       ? null
@@ -859,7 +878,7 @@ export function BridgesFigure({
           segment={getEdgeViewSegment(view, ghostEdge)}
           current={bridges[ghostEdge]!}
           layout={layout}
-          opacity={previewEdge === null ? HOVER_GHOST_OPACITY : 1}
+          opacity={ghostOpacity}
         />
       )}
       {blockedAttempt !== null && bridges[blockedAttempt.edge] === 0 && (
@@ -935,7 +954,7 @@ export function BridgesFigure({
           segment={getEdgeViewSegment(view, ghostEdge)}
           current={2}
           layout={layout}
-          opacity={previewEdge === null ? HOVER_GHOST_OPACITY : 1}
+          opacity={ghostOpacity}
         />
       )}
       {lit &&
@@ -981,9 +1000,26 @@ export function BridgesFigure({
           })}
         </g>
       )}
-      {crossingEdges && (
-        <g strokeLinecap="round" {...{ [bridgesFigureParts.crossingHint]: "" }}>
-          {crossingEdges.map((edge) => (
+      {pressedEdge !== null && (
+        <g
+          strokeLinecap="round"
+          {...{ [bridgesFigureParts.pressedEdge]: pressedEdge }}
+        >
+          <Rope
+            edge={pressedEdge}
+            segment={getEdgeViewSegment(view, pressedEdge)}
+            strokeWidth={PREVIEW_ROPE_WIDTH}
+            dashed={false}
+            opacity={1}
+          />
+        </g>
+      )}
+      {candidateEdges && (
+        <g
+          strokeLinecap="round"
+          {...{ [bridgesFigureParts.candidateHint]: "" }}
+        >
+          {candidateEdges.map((edge) => (
             <Rope
               key={`crossing-${edge}`}
               edge={edge}
@@ -1043,6 +1079,13 @@ export function BridgesFigure({
         PREVIEW_ROPE_WIDTH,
         bridgesToneClassNames.guide,
       )}
+      {pressedIsland !== selectedIsland &&
+        renderRing(
+          pressedIsland,
+          SELECTION_RING_RADIUS,
+          PREVIEW_ROPE_WIDTH,
+          bridgesToneClassNames.guide,
+        )}
       {renderRing(
         targetIsland,
         TARGET_RING_RADIUS,
