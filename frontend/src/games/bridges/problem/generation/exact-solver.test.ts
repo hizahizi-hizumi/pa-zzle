@@ -82,7 +82,7 @@ describe("countBridgesSolutions", () => {
       spreadBridgesIslands(
         {
           size: 5,
-          islandDensity: 0,
+          islandDensity: 0.24,
           doubleBridgeRate: 0.5,
           extraBridgeRate: 0.25,
           splitRate: 0.2,

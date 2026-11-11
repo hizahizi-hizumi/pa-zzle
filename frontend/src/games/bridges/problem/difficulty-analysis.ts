@@ -7,6 +7,7 @@ import {
   countBridgesCornerOpeningIslands,
   countBridgesOpeningEdges,
   countBridgesOpeningSaturatedIslands,
+  summarizeBridgesLookaheads,
   traceBridgesHumanSolve,
 } from "@/games/bridges/problem/generation/human-solver";
 import { tryBridgesNaively } from "@/games/bridges/problem/generation/naive-solver";
@@ -32,6 +33,10 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
  * - `longBridgeShare`: 解で橋を架ける組のうち、盤面の一辺の半分以上の長さの組の割合。
  * - `usedEdgeShare`: 行き先（橋を架けられる組）のうち、解で橋を架ける組の割合。1 に近いと、どこへ架けるかを選ぶ所が無い。
  * - `islandShare`: 盤面のマスに対する島の数の割合。
+ * - `diagonalNeighborShare`: 斜め隣のマスに島がある島の割合。大きいと島が市松に固まり、行き先が隣の島ばかりになる。
+ * - `shortBridgeShare`: 解で橋を架ける組のうち、間が1マスの組の割合。
+ * - `longBridgeCount`: 解で橋を架ける組のうち、盤面の一辺の半分以上の長さの組の数。
+ * - `pointSymmetric`: 島の配置が盤面の中心について点対称なら 1、そうでなければ 0。
  */
 export type BridgesScaleMetrics = {
   size: number;
@@ -50,6 +55,10 @@ export type BridgesScaleMetrics = {
   longBridgeShare: number;
   usedEdgeShare: number;
   islandShare: number;
+  diagonalNeighborShare: number;
+  shortBridgeShare: number;
+  longBridgeCount: number;
+  pointSymmetric: number;
 };
 
 /**
@@ -65,20 +74,26 @@ export type BridgesScaleMetrics = {
  * - `closureRoundCount`: 閉じない読み（C1p・C1g）で、1〜2組だけが決まった手詰まり（一か所の気づき）の回数。
  * - `sweepRoundCount`: つながりの読みで、3組以上がまとめて決まった手詰まり（同じ規則で盤面を掃く作業）の回数。分類には使わない。
  * - `groupClosureRoundCount`: 3島以上の組を閉じない読み（C1g）が要った手詰まりの回数。
- * - `lookaheadRoundCount`: 1手の先読み（D）が要った手詰まりの回数。下の段で決まる所を全部決め切った（どの順に読んでも
- *   同じになる）盤面で、1手の先読みでしか進めない回数で、どの順に解いても、1手の先読みで止まる回数はこれより少なくならない。
+ * - `lookaheadRoundCount`: 1手の先読み（D）が要った回数。下の段で決まる所を全部決め切った（どの順に読んでも同じになる）
+ *   盤面で、1手の先読みでしか進めない手詰まりの回数で、前の先読みと同じ行き先を続けて狭めた手詰まりは前の先読みにまとめる
+ *   （`summarizeBridgesLookaheads`）。
  * - `passageRoundCount`: 唯一の通り道（C3）が要った手詰まりの回数。
  * - `readingRoundCount`: 「ちょうど」（A1）だけでは止まり、ほかの読み（A2・つながり）が要った手詰まりの回数。
  * - `groupLookaheadRoundCount`: 1手の先読みのうち、3島以上の組が閉じるか数島が孤立するのを見て退けた手詰まりの回数。
  *   仮に決めた手の両端を埋め、組を端までたどって閉じるのを確かめる、人が2段に読む所。
  * - `chainedLookaheadRoundCount`: 1手の先読みのうち、前の1手の先読みから、ほかの読みで狭めた組が
- *   `BRIDGES_LOOKAHEAD_CHAIN_GAP` 以下のうちに続けて要った手詰まりの回数。先読みの結果からすぐ次の先読みが要る所。
+ *   `BRIDGES_LOOKAHEAD_CHAIN_GAP` 以下のうちに、別の行き先で続けて要った回数。先読みの結果からすぐ次の先読みが要る所。
+ * - `lookaheadSpotCount`: 1手の先読みが要った場所の数（続けて要った先読みは1つの場所）。
+ * - `longestLookaheadChain`: 1つの場所で続けて要った1手の先読みの数の最大。
  * - `crossingBlockCount`: 架かると決まった橋と交わって0本になった行き先のうち、両端の島がまだ足りなかった行き先の数。
  *   交差で行き先が消え、数字の読みが進む所。
  * - `cornerOpeningIslandCount`: 解き始めの決め打ちの島のうち、盤面の四隅の島の数。
  * - `countLookaheadRoundCount`: 1手の先読みのうち、本数が破れるのを見て退けた手詰まりの回数。
  * - `cappingLookaheadRoundCount`: 1手の先読みのうち、架けすぎる手を退けて上限を下げた手詰まりの回数。
  * - `isolatingLookaheadRoundCount`: 1手の先読みのうち、数島のまとまりが孤立するのを見て退けた手詰まりの回数。
+ * - `readingCappingLookaheadRoundCount`: 1手の先読みのうち、架けすぎる手を本数の破れか組の閉じるので退けて上限を下げた回数。
+ * - `lastConnectivityDecidedRatio`: 最後のつながりの読み（C1p・C1g・C3・D）の前に、本数が決まっていた行き先の割合。
+ *   大きいほど、解き進みの後の方まで読みの山場が残る。つながりの読みが無ければ 0。
  */
 export type BridgesReasoningFeatures = {
   maximumTier: Exclude<BridgesReasoningTier, "T">;
@@ -101,34 +116,11 @@ export type BridgesReasoningFeatures = {
   countLookaheadRoundCount: number;
   cappingLookaheadRoundCount: number;
   isolatingLookaheadRoundCount: number;
+  lookaheadSpotCount: number;
+  longestLookaheadChain: number;
+  readingCappingLookaheadRoundCount: number;
+  lastConnectivityDecidedRatio: number;
 };
-
-/**
- * 1手の先読みが続けて要ったとみなす、前の1手の先読みからほかの読みで狭めた組の数の上限。
- * 先読みの結果から数組だけ進めて、また先読みが要るなら、人は1つの局面で先読みを重ねて読む。
- */
-export const BRIDGES_LOOKAHEAD_CHAIN_GAP = 3;
-
-function countChainedLookaheads(
-  rounds: readonly { tier: BridgesReasoningTier; edgeCount: number }[],
-): number {
-  let chained = 0;
-  let sinceLookahead: number | null = null;
-  for (const { tier, edgeCount } of rounds) {
-    if (tier === "D") {
-      if (
-        sinceLookahead !== null &&
-        sinceLookahead <= BRIDGES_LOOKAHEAD_CHAIN_GAP
-      ) {
-        chained += 1;
-      }
-      sinceLookahead = 0;
-    } else if (sinceLookahead !== null) {
-      sinceLookahead += edgeCount;
-    }
-  }
-  return chained;
-}
 
 /**
  * 素朴な解き方（数字の読みと試し置き）を問題ごとに決まった乱数で数回試した結果。
@@ -196,6 +188,7 @@ function measureScale(
   const last = problem.width - 1;
   let borderBridges = 0;
   let longBridges = 0;
+  let shortBridges = 0;
   for (const [edge, { from, to }] of edges.entries()) {
     if (solution[edge]! === 0) {
       continue;
@@ -214,7 +207,26 @@ function measureScale(
     if (length * 2 >= problem.width) {
       longBridges += 1;
     }
+    if (length === 2) {
+      shortBridges += 1;
+    }
   }
+  const occupied = new Set(
+    problem.islands.map(({ row, column }) => `${row}:${column}`),
+  );
+  const diagonalNeighbors = problem.islands.filter(({ row, column }) =>
+    [
+      [-1, -1],
+      [-1, 1],
+      [1, -1],
+      [1, 1],
+    ].some(([rowStep, columnStep]) =>
+      occupied.has(`${row + rowStep!}:${column + columnStep!}`),
+    ),
+  ).length;
+  const pointSymmetric = problem.islands.every(({ row, column }) =>
+    occupied.has(`${problem.height - 1 - row}:${problem.width - 1 - column}`),
+  );
   return {
     size: problem.width,
     islandCount: problem.islands.length,
@@ -236,6 +248,10 @@ function measureScale(
     longBridgeShare: usedEdgeCount === 0 ? 0 : longBridges / usedEdgeCount,
     usedEdgeShare: edges.length === 0 ? 0 : usedEdgeCount / edges.length,
     islandShare: problem.islands.length / (problem.width * problem.height),
+    diagonalNeighborShare: diagonalNeighbors / problem.islands.length,
+    shortBridgeShare: usedEdgeCount === 0 ? 0 : shortBridges / usedEdgeCount,
+    longBridgeCount: longBridges,
+    pointSymmetric: pointSymmetric ? 1 : 0,
   };
 }
 
@@ -329,6 +345,8 @@ export function analyzeBridgesDifficulty(
       tier,
     ),
   );
+  const { lookaheads, mergedRoundCount, spotCount, longestChain } =
+    summarizeBridgesLookaheads(trace.rounds);
   return {
     status: "analyzed",
     requiresTrial: false,
@@ -336,10 +354,7 @@ export function analyzeBridgesDifficulty(
     reasoning: {
       maximumTier,
       countRoundCount: roundCountByTier.A2,
-      connectivityRoundCount: bridgesConnectivityTiers.reduce(
-        (total, tier) => total + roundCountByTier[tier],
-        0,
-      ),
+      connectivityRoundCount: connectivityRounds.length - mergedRoundCount,
       roundCountByTier,
       countReasoningUndecidedRatio: countTrace.undecidedEdgeRatio,
       openingEdgeRatio:
@@ -356,25 +371,33 @@ export function analyzeBridgesDifficulty(
         ({ edgeCount }) => edgeCount > BRIDGES_SHARP_ROUND_EDGE_LIMIT,
       ).length,
       groupClosureRoundCount: roundCountByTier.C1g,
-      lookaheadRoundCount: roundCountByTier.D,
+      lookaheadRoundCount: lookaheads.length,
       passageRoundCount: roundCountByTier.C3,
-      readingRoundCount: trace.rounds.filter(({ tier }) => tier !== "A1")
-        .length,
-      groupLookaheadRoundCount: trace.rounds.filter(
-        ({ tier, readsGroup }) => tier === "D" && readsGroup,
+      readingRoundCount:
+        trace.rounds.filter(({ tier }) => tier !== "A1").length -
+        mergedRoundCount,
+      groupLookaheadRoundCount: lookaheads.filter(
+        ({ readsGroup }) => readsGroup,
       ).length,
-      chainedLookaheadRoundCount: countChainedLookaheads(trace.rounds),
+      chainedLookaheadRoundCount: lookaheads.length - spotCount,
       crossingBlockCount: trace.crossingBlockCount,
       cornerOpeningIslandCount: countBridgesCornerOpeningIslands(problem),
-      countLookaheadRoundCount: trace.rounds.filter(
-        ({ tier, readsCount }) => tier === "D" && readsCount,
+      countLookaheadRoundCount: lookaheads.filter(
+        ({ readsCount }) => readsCount,
       ).length,
-      cappingLookaheadRoundCount: trace.rounds.filter(
-        ({ tier, lowersUpper }) => tier === "D" && lowersUpper,
+      cappingLookaheadRoundCount: lookaheads.filter(
+        ({ lowersUpper }) => lowersUpper,
       ).length,
-      isolatingLookaheadRoundCount: trace.rounds.filter(
-        ({ tier, readsIsolation }) => tier === "D" && readsIsolation,
+      isolatingLookaheadRoundCount: lookaheads.filter(
+        ({ readsIsolation }) => readsIsolation,
       ).length,
+      lookaheadSpotCount: spotCount,
+      longestLookaheadChain: longestChain,
+      readingCappingLookaheadRoundCount: lookaheads.filter(
+        ({ lowersUpperByReading }) => lowersUpperByReading,
+      ).length,
+      lastConnectivityDecidedRatio:
+        connectivityRounds.at(-1)?.decidedRatio ?? 0,
     },
     trial: measureBridgesTrialFeatures(problem),
   };

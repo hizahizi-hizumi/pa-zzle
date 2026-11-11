@@ -2,12 +2,13 @@ import type { BridgesDifficultyAnalysis } from "@/games/bridges/problem/difficul
 import {
   type BridgesBoardSize,
   type BridgesGenerationConditions,
-  type BridgesIslandDensity,
   type BridgesRefinementGoal,
   type BridgesRefinementSteps,
   bridgesBoardSizes,
   bridgesDoubleBridgeRates,
   bridgesExtraBridgeRates,
+  bridgesIslandDensities,
+  bridgesLayoutSymmetries,
   bridgesSplitRates,
 } from "@/games/bridges/problem/problem";
 import {
@@ -97,31 +98,6 @@ function atMost(maximum: number): NumericRange {
 }
 
 /**
- * レベルごとの、盤面のマスに対する島の数の割合の下限。同じレベルの中では、盤面の大きさによらず島の込み具合をそろえる。
- * 下のレベルほど疎だと、行き先が少なく交わる行き先も少ないので、盤面が広くても見渡すだけで決まる。レベル4 は 10×10 で 22、
- * レベル5 は 26（10×10 に広げられる島の数の上の方）にする。
- */
-const minimumIslandShareByLevel = {
-  "1": 0.24,
-  "2": 0.24,
-  "3": 0.24,
-  "4": 0.22,
-  "5": 0.26,
-} as const satisfies Record<BridgesDifficulty, number>;
-
-/** そのレベルの最も小さい盤面での島の数の下限。 */
-function islandLowerBound(
-  difficulty: BridgesDifficulty,
-  boardSize: NumericRange<BridgesBoardSize>,
-): number {
-  return Math.ceil(
-    boardSize.minimum *
-      boardSize.minimum *
-      minimumIslandShareByLevel[difficulty],
-  );
-}
-
-/**
  * どのレベルにも求める数字と形の質。手作りの良問に近い所に置く。数字の平均が低い盤面、同じ数字か 2 が並ぶ単調な盤面、
  * 2本の組が3割に満たない盤面は、1か所ずつの読みが「足りる・足りない」の確かめだけになる。外周に沿う橋が半分を超える盤面は、
  * 盤面の枠をなぞる問題になる。架ける行き先が 85% を超える盤面は、どこへ架けるかを選ぶ所が無い。数字2 と最も多い数字と
@@ -138,14 +114,14 @@ const clueQuality = {
 } as const satisfies Partial<BridgesLevelReading>;
 
 /**
- * レベル1（6×6・7×7、島10前後）の数字と形の質。島が少ないので1島で割合が1割近く動き、外周のマスも盤面の半分を超える。
- * 同じ割合を求めると候補がほとんど残らないので、最も多い数字・数字2・外周に沿う橋の上限を1段緩める。
+ * レベル1（6×6・7×7、島10前後）の数字と形の質。島が少ないので1島で割合が1割近く動くので、最も多い数字・数字2の上限を
+ * 1段緩める。外周に沿う橋は、一本道で枠をなぞる問題に戻さないよう、ほかのレベルより厳しくする。
  */
 const smallBoardClueQuality = {
   ...clueQuality,
   dominantClueShare: atMost(0.4),
   twoClueShare: atMost(0.35),
-  borderBridgeShare: atMost(0.55),
+  borderBridgeShare: atMost(0.45),
 } as const satisfies Partial<BridgesLevelReading>;
 
 /**
@@ -156,7 +132,7 @@ const smallBoardClueQuality = {
 export const bridgesLevelCombinations = {
   "1": {
     boardSize: { minimum: 6, maximum: 7 },
-    islandCount: atLeast(islandLowerBound("1", { minimum: 6, maximum: 7 })),
+    islandCount: { minimum: 9, maximum: 12 },
     openingEdgeRatio: { minimum: 0.3, maximum: 0.95 },
     countRoundCount: atMost(1),
     connectivityRoundCount: none,
@@ -164,7 +140,7 @@ export const bridgesLevelCombinations = {
   },
   "2": {
     boardSize: { minimum: 7, maximum: 8 },
-    islandCount: atLeast(islandLowerBound("2", { minimum: 7, maximum: 8 })),
+    islandCount: { minimum: 13, maximum: 17 },
     openingEdgeRatio: atMost(0.6),
     countRoundCount: atLeast(2),
     connectivityRoundCount: { minimum: 1, maximum: 1 },
@@ -172,7 +148,7 @@ export const bridgesLevelCombinations = {
   },
   "3": {
     boardSize: { minimum: 8, maximum: 9 },
-    islandCount: atLeast(islandLowerBound("3", { minimum: 8, maximum: 9 })),
+    islandCount: { minimum: 17, maximum: 22 },
     openingEdgeRatio: atMost(0.6),
     countRoundCount: atLeast(2),
     connectivityRoundCount: atLeast(2),
@@ -180,7 +156,7 @@ export const bridgesLevelCombinations = {
   },
   "4": {
     boardSize: { minimum: 9, maximum: 10 },
-    islandCount: atLeast(islandLowerBound("4", { minimum: 9, maximum: 10 })),
+    islandCount: { minimum: 20, maximum: 22 },
     openingEdgeRatio: atMost(0.6),
     countRoundCount: atLeast(2),
     connectivityRoundCount: atLeast(3),
@@ -188,7 +164,7 @@ export const bridgesLevelCombinations = {
   },
   "5": {
     boardSize: { minimum: 10, maximum: 10 },
-    islandCount: atLeast(islandLowerBound("5", { minimum: 10, maximum: 10 })),
+    islandCount: { minimum: 24, maximum: 28 },
     openingEdgeRatio: atMost(0.6),
     countRoundCount: atLeast(3),
     connectivityRoundCount: atLeast(3),
@@ -198,11 +174,13 @@ export const bridgesLevelCombinations = {
 
 /**
  * 各レベルが求める手筋。下から順に、新しい読みを1つずつ足す。
- * - レベル1: 最大の本数で決まる島（決め打ち）と行き先が1つの島から決まる。「少なくとも1本」の配分は1か所まで。
+ * - レベル1: 最大の本数で決まる島（決め打ち）と行き先が1つの島から決まる。「少なくとも1本」の配分は1か所まで、交差で塞がる
+ *   行き先は2つまで。外周に沿う橋はほかのレベルより少なくする。
  * - レベル2: 「少なくとも1本」の配分を2回以上と、2島を閉じない読みを1回。
- * - レベル3: 閉じない読みを含むつながりの読みを2回以上と、交差で行き先が消える読み。
- * - レベル4: 1手の先読み。本数が破れるのを見る先読みと、組が閉じるか孤立するのを見る先読みの両方が要り、読みの手詰まりが6回以上。
- * - レベル5: 先読みが2回以上要り、先読みの結果からすぐ次の先読みが要る（先読みの連鎖）。島が多く、大きい数字が並ぶ。
+ * - レベル3: 閉じない読みを含むつながりの読みを2回以上と、交差で行き先が消える読み。5以上の数字の島がある。
+ * - レベル4: 1か所の1手の先読みと、読みの手詰まり6回以上。5以上の数字の島が2つ以上。
+ * - レベル5: 先読みが2か所以上で要り、組が閉じるか孤立するのを見る先読みを含む。島が多く、5以上の数字が3つ以上、6以上も並ぶ。
+ *   先読みの場所の数は `bridgesLevelStructures`。
  */
 export const bridgesLevelReadings = {
   "1": {
@@ -216,11 +194,11 @@ export const bridgesLevelReadings = {
     countLookaheadRoundCount: none,
     groupLookaheadRoundCount: none,
     chainedLookaheadRoundCount: none,
-    crossingBlockCount: unbounded,
+    crossingBlockCount: atMost(2),
     highClueCount: unbounded,
     veryHighClueCount: unbounded,
     loopCount: unbounded,
-    islandShare: atLeast(minimumIslandShareByLevel["1"]),
+    islandShare: unbounded,
   },
   "2": {
     ...clueQuality,
@@ -237,7 +215,7 @@ export const bridgesLevelReadings = {
     highClueCount: unbounded,
     veryHighClueCount: unbounded,
     loopCount: atLeast(1),
-    islandShare: atLeast(minimumIslandShareByLevel["2"]),
+    islandShare: unbounded,
   },
   "3": {
     ...clueQuality,
@@ -251,10 +229,10 @@ export const bridgesLevelReadings = {
     groupLookaheadRoundCount: none,
     chainedLookaheadRoundCount: none,
     crossingBlockCount: atLeast(1),
-    highClueCount: unbounded,
+    highClueCount: atLeast(1),
     veryHighClueCount: unbounded,
     loopCount: atLeast(1),
-    islandShare: atLeast(minimumIslandShareByLevel["3"]),
+    islandShare: unbounded,
   },
   "4": {
     ...clueQuality,
@@ -264,14 +242,14 @@ export const bridgesLevelReadings = {
     groupClosureRoundCount: unbounded,
     passageRoundCount: unbounded,
     lookaheadRoundCount: atLeast(1),
-    countLookaheadRoundCount: atLeast(1),
-    groupLookaheadRoundCount: atLeast(1),
+    countLookaheadRoundCount: unbounded,
+    groupLookaheadRoundCount: unbounded,
     chainedLookaheadRoundCount: none,
     crossingBlockCount: atLeast(1),
-    highClueCount: atLeast(1),
+    highClueCount: atLeast(2),
     veryHighClueCount: unbounded,
     loopCount: atLeast(2),
-    islandShare: atLeast(minimumIslandShareByLevel["4"]),
+    islandShare: unbounded,
   },
   "5": {
     ...clueQuality,
@@ -283,18 +261,87 @@ export const bridgesLevelReadings = {
     lookaheadRoundCount: atLeast(2),
     countLookaheadRoundCount: unbounded,
     groupLookaheadRoundCount: atLeast(1),
-    chainedLookaheadRoundCount: atLeast(1),
+    chainedLookaheadRoundCount: unbounded,
     crossingBlockCount: atLeast(2),
-    highClueCount: atLeast(2),
+    highClueCount: atLeast(3),
     veryHighClueCount: atLeast(1),
     loopCount: atLeast(2),
-    islandShare: atLeast(minimumIslandShareByLevel["5"]),
+    islandShare: unbounded,
   },
 } as const satisfies Record<BridgesDifficulty, BridgesLevelReading>;
 
+/**
+ * 1つのレベルが求める、盤面の形と読みの山場の置き所。
+ * - `diagonalNeighborShare`: 斜め隣に島がある島の割合。島が市松に固まり、行き先が隣の島ばかりの盤面を除く。
+ * - `shortBridgeShare`・`longBridgeCount`: 間が1マスの橋の割合と、盤面の一辺の半分以上の橋の数。隣をつなぐだけの盤面を除く。
+ * - `lookaheadSpotCount`・`longestLookaheadChain`: 1手の先読みが要った場所の数と、1つの場所で続けて要った先読みの数の最大。
+ * - `lastConnectivityDecidedRatio`: 最後のつながりの読みの前に本数が決まっていた行き先の割合。読みの山場が解き始めに偏り、
+ *   残りが決め打ちの連鎖だけになる問題を除く。
+ */
+export type BridgesLevelStructure = {
+  diagonalNeighborShare: NumericRange;
+  shortBridgeShare: NumericRange;
+  longBridgeCount: NumericRange;
+  lookaheadSpotCount: NumericRange;
+  longestLookaheadChain: NumericRange;
+  lastConnectivityDecidedRatio: NumericRange;
+};
+
+/**
+ * どのレベルにも求める盤面の形。斜め隣の島は半分まで、間が1マスの橋は 60% まで、長い橋は1本以上。間が1マスの橋は、磨く処理で
+ * 45% を目標にし、分類では 60% まで許す。L4・L5 に当たる候補の大半が 45% を超え、45% までにすると各500問を作れない。
+ */
+const layoutShape = {
+  diagonalNeighborShare: atMost(0.5),
+  shortBridgeShare: atMost(0.6),
+  longBridgeCount: atLeast(1),
+} as const satisfies Partial<BridgesLevelStructure>;
+
+/** 1手の先読みを求めるレベルで、最後のつながりの読みの置き所の下限。 */
+const LATE_CLIMAX_MINIMUM = 0.5;
+
+/**
+ * 各レベルが求める盤面の形と、先読みの場所と読みの山場。L4 は1つの場所で1つの先読み（同じ辺を続けて狭める先読みは1つと
+ * 数える）、L5 は2か所以上で先読みが要る。L4 と L5 は先読みの場所の数で分かれ、重ならない。
+ */
+export const bridgesLevelStructures = {
+  "1": {
+    ...layoutShape,
+    lookaheadSpotCount: none,
+    longestLookaheadChain: none,
+    lastConnectivityDecidedRatio: unbounded,
+  },
+  "2": {
+    ...layoutShape,
+    lookaheadSpotCount: none,
+    longestLookaheadChain: none,
+    lastConnectivityDecidedRatio: unbounded,
+  },
+  "3": {
+    ...layoutShape,
+    lookaheadSpotCount: none,
+    longestLookaheadChain: none,
+    lastConnectivityDecidedRatio: unbounded,
+  },
+  "4": {
+    ...layoutShape,
+    lookaheadSpotCount: { minimum: 1, maximum: 1 },
+    longestLookaheadChain: { minimum: 1, maximum: 1 },
+    lastConnectivityDecidedRatio: atLeast(LATE_CLIMAX_MINIMUM),
+  },
+  "5": {
+    ...layoutShape,
+    lookaheadSpotCount: atLeast(2),
+    longestLookaheadChain: atLeast(1),
+    lastConnectivityDecidedRatio: atLeast(LATE_CLIMAX_MINIMUM),
+  },
+} as const satisfies Record<BridgesDifficulty, BridgesLevelStructure>;
+
 /** 分類に使った特徴。 */
 export type BridgesAssessedFeatures = Record<
-  keyof BridgesLevelCombination | keyof BridgesLevelReading,
+  | keyof BridgesLevelCombination
+  | keyof BridgesLevelReading
+  | keyof BridgesLevelStructure,
   number
 >;
 
@@ -369,11 +416,18 @@ export function assessBridgesDifficulty(
         borderBridgeShare: scale.borderBridgeShare,
         usedEdgeShare: scale.usedEdgeShare,
         islandShare: scale.islandShare,
+        diagonalNeighborShare: scale.diagonalNeighborShare,
+        shortBridgeShare: scale.shortBridgeShare,
+        longBridgeCount: scale.longBridgeCount,
+        lookaheadSpotCount: reasoning.lookaheadSpotCount,
+        longestLookaheadChain: reasoning.longestLookaheadChain,
+        lastConnectivityDecidedRatio: reasoning.lastConnectivityDecidedRatio,
       };
       const difficulty = difficultyLevels.find(
         ({ id }) =>
           matchesRanges(features, bridgesLevelCombinations[id]) &&
-          matchesRanges(features, bridgesLevelReadings[id]),
+          matchesRanges(features, bridgesLevelReadings[id]) &&
+          matchesRanges(features, bridgesLevelStructures[id]),
       )?.id;
       return difficulty
         ? { status: "classified", difficulty, features }
@@ -390,7 +444,7 @@ const refinementGoalByLevel = {
   "2": "count",
   "3": "closure",
   "4": "lookahead",
-  "5": "lookahead",
+  "5": "spots",
 } as const satisfies Record<BridgesDifficulty, BridgesRefinementGoal>;
 
 /**
@@ -408,46 +462,52 @@ const refinementStepsByLevel = {
   readonly BridgesRefinementSteps[]
 >;
 
-/**
- * レベルごとに、候補を作るときの島の数の下限（盤面のマスに対する割合）。レベルの島の数の下限と同じにして、届かない盤面は
- * 磨く前に作り直す（磨くのは重いので、当たらない盤面を磨かない）。
- */
-const islandDensitiesByLevel = {
-  "1": [0.24],
-  "2": [0.24],
-  "3": [0.24],
-  "4": [0.22, 0.24],
-  "5": [0.26],
-} as const satisfies Record<BridgesDifficulty, readonly BridgesIslandDensity[]>;
+/** 点対称の配置の候補も作るレベル。札の割合で、そのレベルの一部を点対称の配置にする。 */
+const symmetricLevels: ReadonlySet<BridgesDifficulty> = new Set([
+  "3",
+  "4",
+  "5",
+]);
 
 /**
  * レベルの盤面の範囲に入る生成条件をすべて挙げる。問題の候補を作る範囲に使う。
  * 2本の割合・輪の割合・分割の割合はレベルの判定条件ではなく、候補の分布を寄せる生成条件なので、どのレベルにも全ての値を挙げる。
- * 島の割合の下限・磨く回数・磨く向きは、レベルに当たりやすい値に絞る。
+ * 島の割合は、盤面の大きさごとに、置く島の数がレベルの島の数の範囲に入る値だけを挙げる。磨く回数・磨く向きは、レベルに
+ * 当たりやすい値に絞る。L3〜L5 は点対称の配置の条件も挙げる。
  */
 export function listBridgesGenerationConditions(
   difficulty: BridgesDifficulty,
 ): BridgesGenerationConditions[] {
-  const { boardSize } = bridgesLevelCombinations[difficulty];
+  const { boardSize, islandCount } = bridgesLevelCombinations[difficulty];
+  const symmetries = symmetricLevels.has(difficulty)
+    ? bridgesLayoutSymmetries
+    : (["none"] as const);
   return bridgesBoardSizes
     .filter((size) => isInNumericRange(size, boardSize))
     .flatMap((size) =>
-      islandDensitiesByLevel[difficulty].flatMap((islandDensity) =>
-        bridgesDoubleBridgeRates.flatMap((doubleBridgeRate) =>
-          bridgesExtraBridgeRates.flatMap((extraBridgeRate) =>
-            bridgesSplitRates.flatMap((splitRate) =>
-              refinementStepsByLevel[difficulty].map((refinementSteps) => ({
-                size,
-                islandDensity,
-                doubleBridgeRate,
-                extraBridgeRate,
-                splitRate,
-                refinementSteps,
-                refinementGoal: refinementGoalByLevel[difficulty],
-              })),
+      bridgesIslandDensities
+        .filter((islandDensity) =>
+          isInNumericRange(Math.ceil(islandDensity * size * size), islandCount),
+        )
+        .flatMap((islandDensity) =>
+          bridgesDoubleBridgeRates.flatMap((doubleBridgeRate) =>
+            bridgesExtraBridgeRates.flatMap((extraBridgeRate) =>
+              bridgesSplitRates.flatMap((splitRate) =>
+                refinementStepsByLevel[difficulty].flatMap((refinementSteps) =>
+                  symmetries.map((layoutSymmetry) => ({
+                    size,
+                    islandDensity,
+                    doubleBridgeRate,
+                    extraBridgeRate,
+                    splitRate,
+                    refinementSteps,
+                    refinementGoal: refinementGoalByLevel[difficulty],
+                    layoutSymmetry,
+                  })),
+                ),
+              ),
             ),
           ),
         ),
-      ),
     );
 }

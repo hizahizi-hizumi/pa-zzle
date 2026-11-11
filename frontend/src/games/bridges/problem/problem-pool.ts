@@ -24,7 +24,9 @@ import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
  *   `createBridgesProblemIdentity` で identity を再構成する。割合は百分率の整数。
  * - `encodedIslands`（`encodeBridgesPoolIslands`）と `clues`（島の数字を行優先に並べた数字の列）で盤面を表す。
  *   実行時に生成器・解法器を呼ばずに問題を復元するため、生成結果そのものを持つ。
- * - 残りは生成時の分析結果（`BridgesPoolAnalysis`）。プレイ時に解法器を動かさずに済むよう、問題集に持たせる。
+ * - `countRoundCount` から `crossingBlockCount` までは生成時の分析結果（`BridgesPoolAnalysis`）。プレイ時に解法器を動かさずに
+ *   済むよう、問題集に持たせる。
+ * - `pointSymmetric`: 島の配置を点対称に置いた条件なら 1（生成条件の `layoutSymmetry`）。後から足したので末尾に置く。
  */
 export type BridgesProblemPoolEntry = readonly [
   size: number,
@@ -43,6 +45,7 @@ export type BridgesProblemPoolEntry = readonly [
   trialBacktrackCount: number,
   lookaheadRoundCount: number,
   crossingBlockCount: number,
+  pointSymmetric: number,
 ];
 
 /**
@@ -142,16 +145,19 @@ export function decodeBridgesPoolProblem(
   return problem;
 }
 
-export function toBridgesPoolIdentity([
-  size,
-  densityPercent,
-  doubleBridgePercent,
-  extraBridgePercent,
-  splitPercent,
-  refinementSteps,
-  refinementGoal,
-  candidateIndex,
-]: BridgesProblemPoolEntry): BridgesProblemIdentity {
+export function toBridgesPoolIdentity(
+  entry: BridgesProblemPoolEntry,
+): BridgesProblemIdentity {
+  const [
+    size,
+    densityPercent,
+    doubleBridgePercent,
+    extraBridgePercent,
+    splitPercent,
+    refinementSteps,
+    refinementGoal,
+    candidateIndex,
+  ] = entry;
   const conditions = {
     size,
     islandDensity: densityPercent / 100,
@@ -160,6 +166,7 @@ export function toBridgesPoolIdentity([
     splitRate: splitPercent / 100,
     refinementSteps,
     refinementGoal,
+    layoutSymmetry: entry[16] === 1 ? "point" : "none",
   };
   if (!isBridgesGenerationConditions(conditions)) {
     throw new RangeError(
@@ -251,7 +258,8 @@ function isSameGenerationConditions(
     left.doubleBridgeRate === right.doubleBridgeRate &&
     left.extraBridgeRate === right.extraBridgeRate &&
     left.splitRate === right.splitRate &&
-    left.refinementSteps === right.refinementSteps
+    left.refinementSteps === right.refinementSteps &&
+    left.layoutSymmetry === right.layoutSymmetry
   );
 }
 

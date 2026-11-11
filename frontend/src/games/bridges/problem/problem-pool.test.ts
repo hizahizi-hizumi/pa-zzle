@@ -83,6 +83,7 @@ describe("toBridgesPoolIdentity", () => {
       4,
       1,
       2,
+      0,
     ]);
 
     expect(identity).toEqual(
@@ -95,10 +96,36 @@ describe("toBridgesPoolIdentity", () => {
           splitRate: 0.45,
           refinementSteps: 150,
           refinementGoal: "lookahead",
+          layoutSymmetry: "none",
         },
         31,
       ),
     );
+  });
+
+  test("末尾の点対称の印が 1 なら、点対称の配置の identity を作ること", () => {
+    const identity = toBridgesPoolIdentity([
+      10,
+      22,
+      50,
+      25,
+      20,
+      2000,
+      "spots",
+      4,
+      "0",
+      "",
+      1,
+      2,
+      3,
+      4,
+      1,
+      2,
+      1,
+    ]);
+
+    expect(identity.conditions.layoutSymmetry).toBe("point");
+    expect(identity.seed).toBe("br-10-d22-p50-e25-s20-r2000-spots-pt-4");
   });
 
   test("扱わない生成条件を拒むこと", () => {
@@ -120,6 +147,7 @@ describe("toBridgesPoolIdentity", () => {
         4,
         1,
         2,
+        0,
       ]);
 
     expect(act).toThrow(RangeError);

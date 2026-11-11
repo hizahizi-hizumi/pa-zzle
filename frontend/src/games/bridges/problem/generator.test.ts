@@ -17,6 +17,7 @@ describe("generateBridgesProblem", () => {
       splitRate: 0.45,
       refinementSteps: 150,
       refinementGoal: "lookahead",
+      layoutSymmetry: "none",
     },
     12,
   );

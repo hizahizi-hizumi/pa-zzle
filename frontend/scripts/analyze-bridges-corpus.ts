@@ -67,6 +67,7 @@ function listAllConditions(): BridgesGenerationConditions[] {
                 splitRate,
                 refinementSteps,
                 refinementGoal,
+                layoutSymmetry: "none" as const,
               })),
             ),
           ),

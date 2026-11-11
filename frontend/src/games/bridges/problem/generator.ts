@@ -13,7 +13,7 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
  * 生成器が返す1つの候補。一意解かどうか・レベルは、問題集の生成で分析・分類して決める。
  * - `solution`: 作ったときの橋（辺ごとの本数）。一意解の問題では唯一の解。問題集の分析と検証に使い、プレイには渡さない。
  * - `symmetryKey`: 回転・反転の同型を問題集から除くための正規化キー。
- * - `generationAttemptCount`: 島を2つ以上置き、上下左右の端の行・列のどれにも島がある盤面になり、磨くなら磨いた盤面が
+ * - `generationAttemptCount`: 島の数に届き、上下左右の端の行・列のどれにも島がある盤面になり、磨くなら磨いた盤面が
  *   一意解になるまで作り直した回数。
  */
 export type BridgesGeneratedProblem = BridgesIdentifiedProblem & {
@@ -23,10 +23,10 @@ export type BridgesGeneratedProblem = BridgesIdentifiedProblem & {
 };
 
 /**
- * 作り直す回数の上限。上下左右の端の行・列のどれにも島がある盤面になり、磨くなら磨いた盤面が一意解になるまで作り直す。
- * 届けば生成器の不具合とみなす。
+ * 作り直す回数の上限。島の数に届き、上下左右の端の行・列のどれにも島がある盤面になり、磨くなら磨いた盤面が一意解になるまで
+ * 作り直す。島の数の多い条件では広げた盤面の1割ほどしか島の数に届かないので、余裕を持たせる。届けば生成器の不具合とみなす。
  */
-const MAXIMUM_GENERATION_ATTEMPTS = 200;
+const MAXIMUM_GENERATION_ATTEMPTS = 2000;
 
 function validateIdentity(identity: BridgesProblemIdentity): void {
   if (identity.generatorVersion !== BRIDGES_GENERATOR_VERSION) {
@@ -52,7 +52,13 @@ export function generateBridgesProblem(
   validateIdentity(identity);
   const random = createProblemSeededRandom(`bridges:${identity.seed}`);
   for (let attempt = 1; attempt <= MAXIMUM_GENERATION_ATTEMPTS; attempt += 1) {
-    const spread = spreadBridgesIslands(identity.conditions, random);
+    const spread = spreadBridgesIslands(
+      {
+        ...identity.conditions,
+        pointSymmetric: identity.conditions.layoutSymmetry === "point",
+      },
+      random,
+    );
     const { refinementSteps, refinementGoal } = identity.conditions;
     const layout =
       spread === null || refinementSteps === 0

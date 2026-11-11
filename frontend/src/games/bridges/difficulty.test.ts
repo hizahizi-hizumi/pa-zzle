@@ -3,6 +3,7 @@ import {
   type BridgesAssessedFeatures,
   bridgesLevelCombinations,
   bridgesLevelReadings,
+  bridgesLevelStructures,
   listBridgesGenerationConditions,
 } from "@/games/bridges/difficulty";
 import type { BridgesDifficultyAnalysis } from "@/games/bridges/problem/difficulty-analysis";
@@ -40,6 +41,10 @@ function createAnalysis(
       longBridgeShare: 0.2,
       usedEdgeShare: features.usedEdgeShare,
       islandShare: features.islandShare,
+      diagonalNeighborShare: features.diagonalNeighborShare,
+      shortBridgeShare: features.shortBridgeShare,
+      longBridgeCount: features.longBridgeCount,
+      pointSymmetric: 0,
     },
     reasoning: {
       maximumTier:
@@ -77,6 +82,10 @@ function createAnalysis(
       countLookaheadRoundCount: features.countLookaheadRoundCount,
       cappingLookaheadRoundCount: 0,
       isolatingLookaheadRoundCount: 0,
+      lookaheadSpotCount: features.lookaheadSpotCount,
+      longestLookaheadChain: features.longestLookaheadChain,
+      readingCappingLookaheadRoundCount: 0,
+      lastConnectivityDecidedRatio: features.lastConnectivityDecidedRatio,
     },
     trial: {
       medianBacktrackCount: 0,
@@ -113,6 +122,12 @@ const level1: BridgesAssessedFeatures = {
   borderBridgeShare: 0.4,
   usedEdgeShare: 0.8,
   islandShare: 10 / 36,
+  diagonalNeighborShare: 0.3,
+  shortBridgeShare: 0.4,
+  longBridgeCount: 2,
+  lookaheadSpotCount: 0,
+  longestLookaheadChain: 0,
+  lastConnectivityDecidedRatio: 0,
 };
 
 const level2: BridgesAssessedFeatures = {
@@ -144,26 +159,31 @@ const level3: BridgesAssessedFeatures = {
 const level4: BridgesAssessedFeatures = {
   ...level3,
   boardSize: 10,
-  islandCount: 23,
-  islandShare: 0.23,
+  islandCount: 22,
+  islandShare: 0.22,
   connectivityRoundCount: 3,
   readingRoundCount: 6,
   lookaheadRoundCount: 1,
   countLookaheadRoundCount: 1,
   groupLookaheadRoundCount: 1,
+  highClueCount: 2,
   loopCount: 2,
+  lookaheadSpotCount: 1,
+  longestLookaheadChain: 1,
+  lastConnectivityDecidedRatio: 0.6,
 };
 
 const level5: BridgesAssessedFeatures = {
   ...level4,
-  islandCount: 27,
-  islandShare: 0.27,
+  islandCount: 26,
+  islandShare: 0.26,
   countRoundCount: 3,
   connectivityRoundCount: 4,
   readingRoundCount: 8,
   lookaheadRoundCount: 2,
-  chainedLookaheadRoundCount: 1,
+  lookaheadSpotCount: 2,
   crossingBlockCount: 2,
+  highClueCount: 3,
 };
 
 describe("assessBridgesDifficulty", () => {
@@ -171,16 +191,17 @@ describe("assessBridgesDifficulty", () => {
     ["決め打ちの後、少なくとも1本の読みが1回だけ要る 6×6", level1, "1"],
     ["少なくとも1本の読みが2回と、2島を閉じない読みが1回要る 7×7", level2, "2"],
     ["閉じない読みが2回要り、交差で行き先が塞がる 8×8", level3, "3"],
+    ["1手の先読みが1か所で1つ要る島22の 10×10", level4, "4"],
+    ["1手の先読みが2か所で要る島26の 10×10", level5, "5"],
     [
-      "本数の破れと組が閉じるのを見る1手の先読みが要る島23の 10×10",
-      level4,
-      "4",
-    ],
-    ["1手の先読みが続けて2回要る島27の 10×10", level5, "5"],
-    [
-      "1手の先読みが2回でも続けて要る所の無い島27の 10×10",
-      { ...level5, chainedLookaheadRoundCount: 0 },
-      "4",
+      "1手の先読みが2か所で要り、1か所で続けて2つ要る島26の 10×10",
+      {
+        ...level5,
+        lookaheadRoundCount: 3,
+        chainedLookaheadRoundCount: 1,
+        longestLookaheadChain: 2,
+      },
+      "5",
     ],
   ] as const)("%sをレベル %s にすること", (_, features, expected) => {
     const assessment = assessBridgesDifficulty(createAnalysis(features));
@@ -203,7 +224,14 @@ describe("assessBridgesDifficulty", () => {
     ["45%の島が同じ数字の 6×6", { ...level1, dominantClueShare: 0.45 }],
     ["数字2の島が4割の 6×6", { ...level1, twoClueShare: 0.4 }],
     ["2本の組が2割の 6×6", { ...level1, doubleBridgeRatio: 0.2 }],
-    ["外周に沿う橋が6割の 6×6", { ...level1, borderBridgeShare: 0.6 }],
+    ["外周に沿う橋が5割の 6×6", { ...level1, borderBridgeShare: 0.5 }],
+    ["交差で塞がる行き先が3つの 6×6", { ...level1, crossingBlockCount: 3 }],
+    [
+      "斜め隣に島のある島が6割の 6×6",
+      { ...level1, diagonalNeighborShare: 0.6 },
+    ],
+    ["間が1マスの橋が65%の 6×6", { ...level1, shortBridgeShare: 0.65 }],
+    ["長い橋の無い 6×6", { ...level1, longBridgeCount: 0 }],
     ["行き先の9割に橋を架ける 6×6", { ...level1, usedEdgeShare: 0.9 }],
     [
       "少なくとも1本の読みが1回だけの 8×8",
@@ -224,29 +252,25 @@ describe("assessBridgesDifficulty", () => {
     ],
     ["交差で塞がる行き先の無い 8×8", { ...level3, crossingBlockCount: 0 }],
     ["1手の先読みが要る 8×8", { ...level3, lookaheadRoundCount: 1 }],
-    ["5以上の数字の島が無い 10×10", { ...level4, highClueCount: 0 }],
-    [
-      "1手の先読みが組の閉じるのだけを見る 10×10",
-      { ...level4, countLookaheadRoundCount: 0 },
-    ],
-    [
-      "1手の先読みが本数の破れだけを見る 10×10",
-      { ...level4, groupLookaheadRoundCount: 0 },
-    ],
+    ["5以上の数字の島が1つの 10×10", { ...level4, highClueCount: 1 }],
     ["読みの手詰まりが5回の 10×10", { ...level4, readingRoundCount: 5 }],
-    ["6以上の数字の島が無い島27の 10×10", { ...level5, veryHighClueCount: 0 }],
     [
-      "先読みが続けて要る所が無く、島が21の 10×10",
+      "最後のつながりの読みが解き進みの4割の所にある 10×10",
+      { ...level4, lastConnectivityDecidedRatio: 0.4 },
+    ],
+    [
+      "1手の先読みが1か所で続けて2つ要る 10×10",
       {
-        ...level5,
-        chainedLookaheadRoundCount: 0,
-        islandCount: 21,
-        islandShare: 0.21,
+        ...level4,
+        lookaheadRoundCount: 2,
+        chainedLookaheadRoundCount: 1,
+        longestLookaheadChain: 2,
       },
     ],
+    ["6以上の数字の島が無い島26の 10×10", { ...level5, veryHighClueCount: 0 }],
     [
-      "先読みが続けて要るが、島が25の 10×10",
-      { ...level5, islandCount: 25, islandShare: 0.25 },
+      "1手の先読みが2か所で要るが、島が22の 10×10",
+      { ...level5, islandCount: 22, islandShare: 0.22 },
     ],
   ] as const)("%sを組み合わせ外にすること", (_, features) => {
     const assessment = assessBridgesDifficulty(createAnalysis(features));
@@ -274,6 +298,10 @@ describe("assessBridgesDifficulty", () => {
     longBridgeShare: 0.2,
     usedEdgeShare: 0.8,
     islandShare: 0.2,
+    diagonalNeighborShare: 0.3,
+    shortBridgeShare: 0.4,
+    longBridgeCount: 2,
+    pointSymmetric: 0,
   };
 
   test.each([
@@ -340,12 +368,10 @@ describe("bridgesLevelCombinations", () => {
     expect(shared).toEqual([true, true, true, true]);
   });
 
-  test("レベル4 と 5 の島の数の下限を、10×10 で 22 と 26 にすること", () => {
-    const minimums = (["4", "5"] as const).map((id) =>
-      Math.ceil(100 * bridgesLevelReadings[id].islandShare.minimum),
+  test("レベル4 と 5 の島の数の範囲が重ならないこと", () => {
+    expect(bridgesLevelCombinations["4"].islandCount.maximum).toBeLessThan(
+      bridgesLevelCombinations["5"].islandCount.minimum,
     );
-
-    expect(minimums).toEqual([22, 26]);
   });
 });
 
@@ -374,25 +400,18 @@ describe("bridgesLevelReadings", () => {
     expect(lowered).toEqual([]);
   });
 
-  test("レベル3〜5 で、1手の先読み・本数を見る先読み・続けて要る先読みを1つずつ足すこと", () => {
-    const minimums = (["3", "4", "5"] as const).map((id) => [
-      bridgesLevelReadings[id].lookaheadRoundCount.minimum,
-      bridgesLevelReadings[id].countLookaheadRoundCount.minimum,
-      bridgesLevelReadings[id].groupLookaheadRoundCount.minimum,
-      bridgesLevelReadings[id].chainedLookaheadRoundCount.minimum,
+  test("レベル3 は先読みを求めず、レベル4 は1か所で1つ、レベル5 は2か所以上で求め、レベル4 と 5 が重ならないこと", () => {
+    const places = (["3", "4", "5"] as const).map((id) => [
+      bridgesLevelStructures[id].lookaheadSpotCount.minimum,
+      bridgesLevelStructures[id].lookaheadSpotCount.maximum,
+      bridgesLevelStructures[id].longestLookaheadChain.maximum,
     ]);
 
-    expect(minimums).toEqual([
-      [0, 0, 0, 0],
-      [1, 1, 1, 0],
-      [2, 0, 1, 1],
+    expect(places).toEqual([
+      [0, 0, 0],
+      [1, 1, 1],
+      [2, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY],
     ]);
-  });
-
-  test("レベル4 は先読みが続けて要る問題を含まず、レベル5 と重ならないこと", () => {
-    expect(bridgesLevelReadings["4"].chainedLookaheadRoundCount.maximum).toBe(
-      0,
-    );
   });
 
   test("レベル1 と 2 には、解き始めの決め打ちを必ず求めること", () => {
@@ -417,17 +436,29 @@ describe("listBridgesGenerationConditions", () => {
     expect(sizes).toEqual([[6, 7], [7, 8], [8, 9], [9, 10], [10]]);
   });
 
-  test("2本の割合・輪の割合・分割の全ての組を、レベルに当たりやすい密度と磨く回数で挙げること", () => {
+  test("2本の割合・輪の割合・分割の全ての組を、島の数がレベルの範囲に入る割合と、点対称の配置で挙げること", () => {
     const conditions = listBridgesGenerationConditions("5");
-    const refinements = [
-      ...new Set(conditions.map(({ refinementSteps }) => refinementSteps)),
-    ];
     const densities = [
       ...new Set(conditions.map(({ islandDensity }) => islandDensity)),
     ];
+    const symmetries = [
+      ...new Set(conditions.map(({ layoutSymmetry }) => layoutSymmetry)),
+    ];
 
-    expect(conditions).toHaveLength(8);
-    expect(refinements).toEqual([2000]);
-    expect(densities).toEqual([0.26]);
+    expect(conditions).toHaveLength(32);
+    expect(densities).toEqual([0.24, 0.26]);
+    expect(symmetries).toEqual(["none", "point"]);
+  });
+
+  test("レベル1・2 は点対称の配置の条件を挙げないこと", () => {
+    const symmetries = (["1", "2"] as const).map((id) => [
+      ...new Set(
+        listBridgesGenerationConditions(id).map(
+          ({ layoutSymmetry }) => layoutSymmetry,
+        ),
+      ),
+    ]);
+
+    expect(symmetries).toEqual([["none"], ["none"]]);
   });
 });

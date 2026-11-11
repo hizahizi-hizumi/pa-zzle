@@ -19,6 +19,7 @@ const problemIdentity = createBridgesProblemIdentity(
     splitRate: 0.45,
     refinementSteps: 500,
     refinementGoal: "lookahead",
+    layoutSymmetry: "none",
   },
   16,
 );

@@ -15,12 +15,13 @@ describe("createBridgesProblemIdentity", () => {
         splitRate: 0.45,
         refinementSteps: 500,
         refinementGoal: "lookahead",
+        layoutSymmetry: "none",
       },
       3,
     );
 
     expect(identity).toEqual({
-      generatorVersion: "6",
+      generatorVersion: "7",
       seed: "br-10-d26-p65-e25-s45-r500-lookahead-3",
       conditions: {
         size: 10,
@@ -30,6 +31,7 @@ describe("createBridgesProblemIdentity", () => {
         splitRate: 0.45,
         refinementSteps: 500,
         refinementGoal: "lookahead",
+        layoutSymmetry: "none",
       },
     });
   });
@@ -45,6 +47,7 @@ describe("isBridgesProblemIdentity", () => {
       splitRate: 0.2,
       refinementSteps: 0,
       refinementGoal: "lookahead",
+      layoutSymmetry: "none",
     },
     0,
   );

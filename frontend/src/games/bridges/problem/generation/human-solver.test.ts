@@ -5,11 +5,13 @@ import {
 import {
   _private,
   type BridgesHumanSolveTrace,
+  type BridgesReasoningRound,
   countBridgesCornerOpeningIslands,
   countBridgesOpeningEdges,
   countBridgesOpeningSaturatedIslands,
   describeBridgesSolveFingerprint,
   describeBridgesSolveFlow,
+  summarizeBridgesLookaheads,
   traceBridgesHumanSolve,
 } from "@/games/bridges/problem/generation/human-solver";
 import researchCases from "@/games/bridges/problem/generation/research-solver-cases.json";
@@ -36,16 +38,19 @@ describe("traceWithSeparateClosingTiers", () => {
       traceWithSeparateClosingTiers(parsed, "T"),
     );
 
-    // 1手の先読み（D）は、1段進めた後の本数の破れも見て、孤立は数島のまとまりに限る点で研究用の解法器と違うので、
-    // 最初に D か T が要る手詰まりより前だけを比べる。
+    // 1手の先読み（D）は、1段進めた後の本数の破れも見て、孤立は数島のまとまりに限る点で、3島以上の組の読み（C1g）は
+    // 閉じる組を見渡せる大きさに限る点で研究用の解法器と違うので、最初に C1g・D・T が要る手詰まりより前だけを比べる。
     function untilLookahead(rounds: readonly string[]): string {
       const first = rounds.findIndex(
-        (round) => round.startsWith("D:") || round.startsWith("T:"),
+        (round) =>
+          round.startsWith("C1g:") ||
+          round.startsWith("D:") ||
+          round.startsWith("T:"),
       );
       return (first < 0 ? rounds : rounds.slice(0, first)).join(" ");
     }
 
-    test("1手の先読みより前の手詰まりの段と狭めた辺の数が一致すること", () => {
+    test("3島以上の組の読みと1手の先読みより前の手詰まりの段と狭めた辺の数が一致すること", () => {
       const rounds = traces.map((trace) =>
         untilLookahead(
           trace.rounds.map(({ tier, edgeCount }) => `${tier}:${edgeCount}`),
@@ -132,7 +137,7 @@ describe("traceBridgesHumanSolve", () => {
         countConnectivityRounds(traceBridgesHumanSolve(board, "D")),
       ];
 
-      expect(counts).toEqual([3, 2]);
+      expect(counts).toEqual([4, 3]);
     });
   });
 
@@ -337,6 +342,59 @@ describe("failsAfterOneStep で閉じる組の大きさ", () => {
       expect(tryClosingChain(chained, others)).toBe(expected);
     },
   );
+});
+
+describe("summarizeBridgesLookaheads", () => {
+  function round(
+    tier: BridgesReasoningRound["tier"],
+    edges: readonly number[],
+    flags: Partial<BridgesReasoningRound> = {},
+  ): BridgesReasoningRound {
+    return {
+      tier,
+      edgeCount: edges.length,
+      edges,
+      readsGroup: false,
+      readsCount: false,
+      lowersUpper: false,
+      readsIsolation: false,
+      lowersUpperByReading: false,
+      decidedRatio: 0,
+      ...flags,
+    };
+  }
+
+  test("続けて同じ行き先を狭めた先読みは1つにまとめ、見た破れを合わせること", () => {
+    const summary = summarizeBridgesLookaheads([
+      round("D", [3], { readsGroup: true }),
+      round("A1", [1, 2]),
+      round("D", [3, 4], { readsCount: true }),
+    ]);
+
+    expect(summary).toMatchObject({
+      lookaheads: [{ readsGroup: true, readsCount: true }],
+      mergedRoundCount: 1,
+      spotCount: 1,
+      longestChain: 1,
+    });
+  });
+
+  test("続けて別の行き先で要った先読みは同じ場所で続く先読み、間が空いた先読みは別の場所と数えること", () => {
+    const summary = summarizeBridgesLookaheads([
+      round("D", [1]),
+      round("A1", [2]),
+      round("D", [5]),
+      round("A1", [6, 7, 8, 9]),
+      round("D", [10]),
+    ]);
+
+    expect(summary).toMatchObject({
+      mergedRoundCount: 0,
+      spotCount: 2,
+      longestChain: 2,
+    });
+    expect(summary.lookaheads).toHaveLength(3);
+  });
 });
 
 describe("countBridgesOpeningEdges", () => {

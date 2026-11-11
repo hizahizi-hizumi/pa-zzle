@@ -5,6 +5,7 @@ import {
 import { bridgesBoardSizes } from "@/games/bridges/problem/problem";
 import {
   assertBridgesBoard,
+  type BridgesBoard,
   getBridgesNetwork,
 } from "@/games/bridges/puzzle/board";
 import { isBridgesSolved } from "@/games/bridges/puzzle/rules";
@@ -22,6 +23,51 @@ function listLayouts(
   ).flatMap((layout) => (layout ? [layout] : []));
 }
 
+function countDiagonalNeighbors({ islands }: BridgesBoard): number {
+  const occupied = new Set(
+    islands.map(({ row, column }) => `${row}:${column}`),
+  );
+  return islands.filter(({ row, column }) =>
+    [-1, 1].some((rowStep) =>
+      [-1, 1].some((columnStep) =>
+        occupied.has(`${row + rowStep}:${column + columnStep}`),
+      ),
+    ),
+  ).length;
+}
+
+/** 左右か上下の両側に橋が出ている島（橋が島を通り抜ける形）の数。 */
+function countPassThroughIslands({
+  board,
+  solution,
+}: {
+  board: BridgesBoard;
+  solution: readonly number[];
+}): number {
+  const { edges } = getBridgesNetwork(board);
+  return board.islands.filter((island, index) => {
+    const sides = edges.flatMap(({ from, to }, edge) => {
+      if (solution[edge] === 0 || (from !== index && to !== index)) {
+        return [];
+      }
+      const other = board.islands[from === index ? to : from]!;
+      return [
+        other.row === island.row
+          ? other.column < island.column
+            ? "left"
+            : "right"
+          : other.row < island.row
+            ? "up"
+            : "down",
+      ];
+    });
+    return (
+      (sides.includes("left") && sides.includes("right")) ||
+      (sides.includes("up") && sides.includes("down"))
+    );
+  }).length;
+}
+
 function mean(values: readonly number[]): number {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
@@ -31,13 +77,13 @@ describe("spreadBridgesIslands", () => {
     listLayouts(
       {
         size,
-        islandDensity: 0.22,
+        islandDensity: 0.2,
         doubleBridgeRate: 0.5,
         extraBridgeRate: 0.45,
         splitRate: 0.2,
       },
       `island-spread-${size}`,
-      60,
+      150,
     ),
   );
 
@@ -59,12 +105,20 @@ describe("spreadBridgesIslands", () => {
     });
   });
 
-  test("島の数が、盤面のマスの数に島の割合の下限を掛けた数を下回らないこと", () => {
-    const short = layouts.filter(
-      ({ board }) => board.islands.length < Math.ceil(0.22 * board.width ** 2),
+  test("島の数が、盤面のマスの数に島の割合を掛けて切り上げた数ちょうどであること", () => {
+    const counts = layouts.filter(
+      ({ board }) => board.islands.length !== Math.ceil(0.2 * board.width ** 2),
     );
 
-    expect(short).toEqual([]);
+    expect(counts).toEqual([]);
+  });
+
+  test("斜め隣に島のある島が半分を超えないこと", () => {
+    const crowded = layouts.filter(
+      ({ board }) => countDiagonalNeighbors(board) * 2 > board.islands.length,
+    );
+
+    expect(crowded).toEqual([]);
   });
 
   test("島が上下左右に隣り合わない、形の正しい盤面を作ること", () => {
@@ -133,13 +187,13 @@ describe("spreadBridgesIslands", () => {
         listLayouts(
           {
             size: 9,
-            islandDensity: 0.26,
+            islandDensity: 0.2,
             doubleBridgeRate,
             extraBridgeRate: 0.25,
             splitRate: 0.2,
           },
           `island-spread-double-${doubleBridgeRate}`,
-          60,
+          200,
         ).map(
           ({ solution }) =>
             solution.filter((count) => count === 2).length /
@@ -156,26 +210,65 @@ describe("spreadBridgesIslands", () => {
   });
 
   describe("分割の確率を上げた場合", () => {
-    const islandCounts = ([0.2, 0.45] as const).map((splitRate) =>
+    const passThroughCounts = ([0.2, 0.45] as const).map((splitRate) =>
       mean(
         listLayouts(
           {
             size: 10,
-            islandDensity: 0,
+            islandDensity: 0.2,
             doubleBridgeRate: 0.5,
             extraBridgeRate: 0.25,
             splitRate,
           },
           `island-spread-split-${splitRate}`,
-          120,
-        ).map(({ board }) => board.islands.length),
+          300,
+        ).map(countPassThroughIslands),
       ),
     );
 
-    test("島の数の平均が増えること", () => {
-      const [withLess, withMore] = islandCounts;
+    test("橋が島を通り抜ける形の島が増えること", () => {
+      const [withLess, withMore] = passThroughCounts;
 
       expect(withMore!).toBeGreaterThan(withLess!);
+    });
+  });
+
+  describe("点対称の配置の場合", () => {
+    const symmetric = listLayouts(
+      {
+        size: 10,
+        islandDensity: 0.2,
+        doubleBridgeRate: 0.5,
+        extraBridgeRate: 0.25,
+        splitRate: 0.2,
+        pointSymmetric: true,
+      },
+      "island-spread-symmetric",
+      300,
+    );
+
+    test("どの島も、盤面の中心について点対称の位置に島があること", () => {
+      const broken = symmetric.filter(({ board }) => {
+        const occupied = new Set(
+          board.islands.map(({ row, column }) => `${row}:${column}`),
+        );
+        return board.islands.some(
+          ({ row, column }) => !occupied.has(`${9 - row}:${9 - column}`),
+        );
+      });
+
+      expect({ built: symmetric.length > 10, broken }).toEqual({
+        built: true,
+        broken: [],
+      });
+    });
+
+    test("作った橋が、交わらず全島がつながり、数字とちょうど合う解であること", () => {
+      const solved = symmetric.map(({ board, solution }) =>
+        isBridgesSolved(board, { bridges: solution as BridgeCount[] }),
+      );
+
+      expect(solved).toEqual(symmetric.map(() => true));
     });
   });
 });

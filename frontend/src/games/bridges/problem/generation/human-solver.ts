@@ -60,6 +60,9 @@ export const bridgesConnectivityTiers = [
  * - `readsCount`: 1手の先読みで、本数が破れるのを見て退けた手があったか。ほかの段では `false`。
  * - `lowersUpper`: 1手の先読みで、架けすぎる手（本数を多く仮に決める手）を退けて上限を下げたか。ほかの段では `false`。
  * - `readsIsolation`: 1手の先読みで、数島のまとまりが孤立するのを見て退けた手があったか。ほかの段では `false`。
+ * - `lowersUpperByReading`: 1手の先読みで、架けすぎる手を本数の破れか組の閉じるので退けて上限を下げたか（孤立だけで退けた
+ *   ものは含まない）。ほかの段では `false`。
+ * - `decidedRatio`: この手詰まりの前に、本数が決まっていた行き先の割合。読みが解き進みのどこで要ったか。
  */
 export type BridgesReasoningRound = {
   tier: BridgesReasoningTier;
@@ -69,6 +72,8 @@ export type BridgesReasoningRound = {
   readsCount: boolean;
   lowersUpper: boolean;
   readsIsolation: boolean;
+  lowersUpperByReading: boolean;
+  decidedRatio: number;
 };
 
 /**
@@ -79,12 +84,20 @@ export type BridgesReasoningRound = {
 export const BRIDGES_LOOKAHEAD_ISOLATION_LIMIT = 4;
 
 /**
- * 1手の先読みで、閉じるのを見て退ける組の大きさの上限と、そのとき組の外に残る島の数の上限。組がこの数以下の島か、
- * 外に残る島がこの数以下なら、閉じた側か残った側のどちらかを見渡せば閉じたと分かる。どちらも超える組が閉じるのを
- * 確かめるには、十数島をたどる探索になり、試し置きと変わらないので、1手の先読みでは使わない。
+ * 閉じるのを見る組（3島以上の組で閉じない読みと、1手の先読み）の大きさの上限と、そのとき組の外に残る島の数の上限。
+ * 組がこの数以下の島か、外に残る島がこの数以下なら、閉じた側か残った側のどちらかを見渡せば閉じたと分かる。どちらも超える
+ * 組が閉じるのを確かめるには、十数島をたどる探索になり、試し置きと変わらないので、推理では使わない。
  */
 export const BRIDGES_LOOKAHEAD_CLOSED_GROUP_LIMIT = 7;
 export const BRIDGES_LOOKAHEAD_REMAINING_LIMIT = 5;
+
+/** `groupSize` 島の組が、全 `islandCount` 島の盤面で見渡せる大きさか。 */
+function isVisibleGroup(groupSize: number, islandCount: number): boolean {
+  return (
+    groupSize <= BRIDGES_LOOKAHEAD_CLOSED_GROUP_LIMIT ||
+    islandCount - groupSize <= BRIDGES_LOOKAHEAD_REMAINING_LIMIT
+  );
+}
 
 /**
  * - `solved`: 全辺の本数が決まった。
@@ -229,7 +242,11 @@ function deduceUnclosedGroups(
     const joined = fromRoot !== toRoot;
     const groupSize =
       memberCounts.get(fromRoot)! + (joined ? memberCounts.get(toRoot)! : 0);
-    if (groupSize >= islandCount || pairOnly !== (groupSize === 2)) {
+    if (
+      groupSize >= islandCount ||
+      pairOnly !== (groupSize === 2) ||
+      !isVisibleGroup(groupSize, islandCount)
+    ) {
       continue;
     }
     const groupRemaining =
@@ -318,10 +335,11 @@ function findSmallestClosedGroup(
   }
   let smallest: number | null = null;
   for (const [root, size] of sizes) {
-    const visible =
-      size <= BRIDGES_LOOKAHEAD_CLOSED_GROUP_LIMIT ||
-      components.length - size <= BRIDGES_LOOKAHEAD_REMAINING_LIMIT;
-    if (size < components.length && remaining.get(root) === 0 && visible) {
+    if (
+      size < components.length &&
+      remaining.get(root) === 0 &&
+      isVisibleGroup(size, components.length)
+    ) {
       smallest = Math.min(smallest ?? size, size);
     }
   }
@@ -465,10 +483,15 @@ function classifyLookahead(
   deductions: readonly [number, readonly [number, number]][],
 ): Pick<
   BridgesReasoningRound,
-  "readsGroup" | "readsCount" | "lowersUpper" | "readsIsolation"
+  | "readsGroup"
+  | "readsCount"
+  | "lowersUpper"
+  | "readsIsolation"
+  | "lowersUpperByReading"
 > {
   const failures: LookaheadFailure[] = [];
   let lowersUpper = false;
+  let lowersUpperByReading = false;
   for (const [edge, [atLeast, atMost]] of deductions) {
     if (atLeast > bounds.lower[edge]!) {
       const failure = failsAfterOneStep(context, bounds, edge, {
@@ -485,6 +508,7 @@ function classifyLookahead(
       });
       if (failure !== null) {
         failures.push(failure);
+        lowersUpperByReading ||= failure !== "isolated";
       }
     }
   }
@@ -495,7 +519,24 @@ function classifyLookahead(
     readsCount: failures.includes("count"),
     lowersUpper,
     readsIsolation: failures.includes("isolated"),
+    lowersUpperByReading,
   };
+}
+
+const noLookahead = {
+  readsGroup: false,
+  readsCount: false,
+  lowersUpper: false,
+  readsIsolation: false,
+  lowersUpperByReading: false,
+} as const;
+
+/** 本数が決まった行き先の割合。 */
+function countDecidedRatio({ lower, upper }: BridgeBounds): number {
+  return (
+    lower.filter((atLeast, edge) => atLeast === upper[edge]).length /
+    Math.max(1, lower.length)
+  );
 }
 
 /** 解き進めた記録。`traceBridgesHumanSolve` の `rounds` と `crossingBlockCount` になる。 */
@@ -726,12 +767,8 @@ function runTiers(
       const lookahead =
         log !== null && tier === "D"
           ? classifyLookahead(context, bounds, applied)
-          : {
-              readsGroup: false,
-              readsCount: false,
-              lowersUpper: false,
-              readsIsolation: false,
-            };
+          : noLookahead;
+      const decidedRatio = countDecidedRatio(bounds);
       for (const [edge, [atLeast, atMost]] of applied) {
         if (atLeast > atMost) {
           throw new BridgesContradiction();
@@ -744,6 +781,7 @@ function runTiers(
         edgeCount: applied.length,
         edges: applied.map(([edge]) => edge),
         ...lookahead,
+        decidedRatio,
       });
       progressed = true;
       break;
@@ -758,6 +796,7 @@ function runTiers(
     if (trialDeductions.size === 0) {
       return false;
     }
+    const decidedRatio = countDecidedRatio(bounds);
     for (const [edge, [atLeast, atMost]] of trialDeductions) {
       bounds.lower[edge] = atLeast;
       bounds.upper[edge] = atMost;
@@ -766,12 +805,94 @@ function runTiers(
       tier: "T",
       edgeCount: trialDeductions.size,
       edges: [...trialDeductions.keys()],
-      readsGroup: false,
-      readsCount: false,
-      lowersUpper: false,
-      readsIsolation: false,
+      ...noLookahead,
+      decidedRatio,
     });
   }
+}
+
+/**
+ * 1手の先読みが続けて要ったとみなす、前の1手の先読みからほかの読みで狭めた組の数の上限。
+ * 先読みの結果から数組だけ進めて、また先読みが要るなら、人は1つの局面で先読みを重ねて読む。
+ */
+export const BRIDGES_LOOKAHEAD_CHAIN_GAP = 3;
+
+/**
+ * 1手の先読み（D）の手詰まりを、人が読む先読みの単位にまとめたもの。
+ * - `lookaheads`: 先読みごとの、見た破れの種類と上限を下げたか。前の先読みから続けて要った手詰まりが、前の先読みと同じ行き先を
+ *   狭めるなら、同じ手を読み進めた1つの先読みとしてまとめる（手詰まりの区切りは解法器の当て方で、人の読みは1つ）。
+ * - `mergedRoundCount`: 前の先読みにまとめた D の手詰まりの数。
+ * - `spotCount`: 先読みの場所の数。前の先読みから `BRIDGES_LOOKAHEAD_CHAIN_GAP` を超える組を狭めた後の先読みは、別の場所とする。
+ * - `longestChain`: 1つの場所で続けて要った先読みの数の最大。
+ */
+export type BridgesLookaheadSummary = {
+  lookaheads: readonly Pick<
+    BridgesReasoningRound,
+    | "readsGroup"
+    | "readsCount"
+    | "lowersUpper"
+    | "readsIsolation"
+    | "lowersUpperByReading"
+  >[];
+  mergedRoundCount: number;
+  spotCount: number;
+  longestChain: number;
+};
+
+export function summarizeBridgesLookaheads(
+  rounds: readonly BridgesReasoningRound[],
+): BridgesLookaheadSummary {
+  const lookaheads: {
+    readsGroup: boolean;
+    readsCount: boolean;
+    lowersUpper: boolean;
+    readsIsolation: boolean;
+    lowersUpperByReading: boolean;
+  }[] = [];
+  let mergedRoundCount = 0;
+  let spotCount = 0;
+  let chain = 0;
+  let longestChain = 0;
+  let sinceLookahead: number | null = null;
+  let previousEdges = new Set<number>();
+  for (const round of rounds) {
+    if (round.tier !== "D") {
+      if (sinceLookahead !== null) {
+        sinceLookahead += round.edgeCount;
+      }
+      continue;
+    }
+    const continues =
+      sinceLookahead !== null && sinceLookahead <= BRIDGES_LOOKAHEAD_CHAIN_GAP;
+    const current = lookaheads.at(-1);
+    if (
+      continues &&
+      current !== undefined &&
+      round.edges.some((edge) => previousEdges.has(edge))
+    ) {
+      mergedRoundCount += 1;
+      current.readsGroup ||= round.readsGroup;
+      current.readsCount ||= round.readsCount;
+      current.lowersUpper ||= round.lowersUpper;
+      current.readsIsolation ||= round.readsIsolation;
+      current.lowersUpperByReading ||= round.lowersUpperByReading;
+      previousEdges = new Set([...previousEdges, ...round.edges]);
+    } else {
+      lookaheads.push({
+        readsGroup: round.readsGroup,
+        readsCount: round.readsCount,
+        lowersUpper: round.lowersUpper,
+        readsIsolation: round.readsIsolation,
+        lowersUpperByReading: round.lowersUpperByReading,
+      });
+      chain = continues ? chain + 1 : 1;
+      spotCount += continues ? 0 : 1;
+      previousEdges = new Set(round.edges);
+    }
+    longestChain = Math.max(longestChain, chain);
+    sinceLookahead = 0;
+  }
+  return { lookaheads, mergedRoundCount, spotCount, longestChain };
 }
 
 /** 島の数字と盤面だけから（解を見ずに）、`maximumTier` までの段で解き進めた経過。 */

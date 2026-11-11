@@ -17,6 +17,20 @@ const conditions: BridgesSpreadConditions = {
   splitRate: 0.2,
 };
 
+/** 広げた盤面が島の数に届くまで、同じ乱数列で作り直す（生成器と同じ）。 */
+function spreadUntil(
+  spreadConditions: BridgesSpreadConditions,
+  random: ReturnType<typeof createProblemSeededRandom>,
+) {
+  for (let attempt = 0; attempt < 2000; attempt += 1) {
+    const spread = spreadBridgesIslands(spreadConditions, random);
+    if (spread !== null) {
+      return spread;
+    }
+  }
+  return null;
+}
+
 /** つながりの読みの手詰まりの回数。 */
 function countConnectivityRounds(
   board: Parameters<typeof traceBridgesHumanSolve>[0],
@@ -29,7 +43,7 @@ function countConnectivityRounds(
 describe("refineBridgesLayout", () => {
   const pairs = Array.from({ length: 16 }, (_, index) => {
     const random = createProblemSeededRandom(`refinement-${index}`);
-    const spread = spreadBridgesIslands(conditions, random);
+    const spread = spreadUntil(conditions, random);
     return spread
       ? {
           spread,
@@ -90,7 +104,7 @@ describe("refineBridgesLayout", () => {
 
   describe("同じ盤面を、決め打ちで入れる向き（entry）と配分の読みを増やす向き（count）で磨いた場合", () => {
     const refinedPairs = Array.from({ length: 30 }, (_, index) => {
-      const spread = spreadBridgesIslands(
+      const spread = spreadUntil(
         { ...conditions, size: 7 },
         createProblemSeededRandom(`refinement-entry-${index}`),
       );
@@ -126,7 +140,7 @@ describe("refineBridgesLayout", () => {
 
   describe("同じ盤面を、配分の読みを増やす向き（count）と1手の先読みを増やす向き（lookahead）で磨いた場合", () => {
     const refinedPairs = Array.from({ length: 30 }, (_, index) => {
-      const spread = spreadBridgesIslands(
+      const spread = spreadUntil(
         { ...conditions, size: 7 },
         createProblemSeededRandom(`refinement-goal-${index}`),
       );
@@ -168,10 +182,7 @@ describe("refineBridgesLayout", () => {
     test("同じ盤面と解に磨くこと", () => {
       const results = [0, 1].map(() => {
         const random = createProblemSeededRandom("refinement-repeat");
-        let spread = spreadBridgesIslands(conditions, random);
-        while (spread === null) {
-          spread = spreadBridgesIslands(conditions, random);
-        }
+        const spread = spreadUntil(conditions, random)!;
         return refineBridgesLayout(spread, 80, "lookahead", random);
       });
 
