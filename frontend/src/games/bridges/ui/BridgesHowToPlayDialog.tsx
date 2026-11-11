@@ -69,7 +69,7 @@ export function BridgesHowToPlayDialog({
           board={crossBoard}
           bridges={[0, 1]}
           blockingEdges={[1]}
-          blockedEdge={0}
+          blockedAttempt={{ edge: 0, island: 0 }}
           finger={{ x: 1.5, y: 1.15 }}
         />
       </li>

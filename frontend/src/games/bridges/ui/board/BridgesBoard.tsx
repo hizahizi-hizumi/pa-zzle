@@ -26,6 +26,7 @@ import { flashBlockingBridges } from "@/games/bridges/ui/board/BridgesBoard/flas
 import { playBridgeMotion } from "@/games/bridges/ui/board/BridgesBoard/play-bridge-motion";
 import { playClearWave } from "@/games/bridges/ui/board/BridgesBoard/play-clear-wave";
 import {
+  type BridgesBlockedAttempt,
   BridgesFigure,
   type BridgesFigureGuide,
 } from "@/games/bridges/ui/board/BridgesFigure";
@@ -107,6 +108,9 @@ type CrossingPress = {
   edges: readonly [number, number];
 };
 
+/** 板の横木を省いて板を太くする、マスの幅（px）。スマホの 9×9 以上の盤面がこれを下回る。 */
+const COMPACT_CELL_PX = 37;
+
 /** 交点の近くを押したときに、候補の2辺を示しておく時間。 */
 const CROSSING_HINT_MS = 1_200;
 
@@ -184,8 +188,11 @@ export function BridgesBoard({
 }: BridgesBoardProps) {
   const boardRef = useRef<HTMLDivElement>(null);
   const figureRef = useRef<SVGSVGElement>(null);
-  /** 最後に橋を回した辺と、板を伸ばし始める島。橋の変化が盤面に届いたときに板を動かすのに使う。 */
-  const motionOriginRef = useRef<{ edge: number; island: number } | null>(null);
+  /** 最後に橋を回した辺と、板を伸ばし始める島。橋の変化や阻まれたことが盤面に届いたときに板を動かすのに使う。 */
+  const [motionOrigin, setMotionOrigin] = useState<{
+    edge: number;
+    island: number;
+  } | null>(null);
   const [drag, setDrag] = useState<IslandDrag | null>(null);
   const [selection, setSelection] = useState<IslandsOnBoard | null>(null);
   const [crossingPress, setCrossingPress] = useState<CrossingPress | null>(
@@ -196,7 +203,10 @@ export function BridgesBoard({
   const focusedIsland = Math.min(focusTarget, board.islands.length - 1);
   const [keyboardFocused, setKeyboardFocused] = useState(false);
   const [hover, setHover] = useState<Hover | null>(null);
+  const [boardWidth, setBoardWidth] = useState<number | null>(null);
   const view = createBoardView(board);
+  const compact =
+    boardWidth !== null && boardWidth / view.width < COMPACT_CELL_PX;
   const network = getBridgesNetwork(board);
   const selectedIsland =
     selection?.board === board && !interactionDisabled
@@ -205,7 +215,16 @@ export function BridgesBoard({
   const islandBridgeCounts = countBridgesIslandBridges(board, { bridges });
   const blockingEdges =
     edgeNotice?.change === "blocked" ? edgeNotice.crossingEdges : [];
-  const blockedEdge = edgeNotice?.change === "blocked" ? edgeNotice.edge : null;
+  const blockedAttempt: BridgesBlockedAttempt | null =
+    edgeNotice?.change === "blocked"
+      ? {
+          edge: edgeNotice.edge,
+          island:
+            motionOrigin?.edge === edgeNotice.edge
+              ? motionOrigin.island
+              : network.edges[edgeNotice.edge]!.from,
+        }
+      : null;
   const retractingEdge =
     edgeNotice?.change === "changed" &&
     edgeNotice.count === 0 &&
@@ -256,7 +275,7 @@ export function BridgesBoard({
     }
     const { edge, count } = edgeNotice;
     const { from, orientation } = network.edges[edge]!;
-    const origin = motionOriginRef.current;
+    const origin = motionOrigin;
     const island = origin?.edge === edge ? origin.island : from;
     playBridgeMotion(
       figureRef.current,
@@ -267,6 +286,20 @@ export function BridgesBoard({
       getBridgeExtendMs(board, edge),
     );
   }, [edgeNotice]);
+
+  useLayoutEffect(() => {
+    const element = boardRef.current;
+    if (!element || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) {
+        setBoardWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (crossingPress === null) {
@@ -297,7 +330,7 @@ export function BridgesBoard({
   }
 
   function cycleEdge(edge: number, originIsland: number) {
-    motionOriginRef.current = { edge, island: originIsland };
+    setMotionOrigin({ edge, island: originIsland });
     setCrossingPress(null);
     setSelection(null);
     onCycleEdge(edge);
@@ -487,12 +520,14 @@ export function BridgesBoard({
         guide={guide}
         hoverEdge={hoverEdge}
         crossingEdges={crossingEdges}
+        bandEdges={spotlight?.edges ?? []}
         selectedIsland={selectedIsland}
         focusedIsland={keyboardFocused ? focusedIsland : null}
         blockingEdges={blockingEdges}
-        blockedEdge={blockedEdge}
+        blockedAttempt={blockedAttempt}
         retractingEdge={retractingEdge}
         lit={clearing}
+        compact={compact}
       />
       {(cues.length > 0 || spotlight !== null) && (
         <BridgesBoardCues
@@ -500,6 +535,7 @@ export function BridgesBoard({
           bridges={bridges}
           cues={cues}
           spotlight={spotlight}
+          compact={compact}
         />
       )}
       <ul className="sr-only">

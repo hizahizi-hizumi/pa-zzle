@@ -40,6 +40,9 @@ export type BridgesFigureGuide = {
   previewEdge: number | null;
 };
 
+/** 交わる橋に阻まれた操作。`edge` は押した辺、`island` は板を伸ばし始める端の島。 */
+export type BridgesBlockedAttempt = { edge: number; island: number };
+
 type BridgesFigureProps = {
   board: BridgesBoard;
   /** 絵の座標。省略すると、盤面から作る。 */
@@ -58,20 +61,32 @@ type BridgesFigureProps = {
    * 2辺にロープを張って、島から架ければどちらも選べることを示す。
    */
   crossingEdges?: readonly number[] | null;
+  /**
+   * 島を触っていなくても、架けられる相手までの帯を敷く辺。チュートリアルで覆いから抜いた辺に敷き、本番の案内と同じ表し方で見せる。
+   */
+  bandEdges?: readonly number[];
   /** 2段階の操作で選んでいる島。 */
   selectedIsland?: number | null;
   /** キーボードで選んでいる島。輪で囲む。 */
   focusedIsland?: number | null;
   /** 交わる橋に阻まれたとき、阻んだ橋の辺。板の薔薇色の縁取りを描いておき、盤面の反応で短く点けて揺らす。 */
   blockingEdges?: readonly number[];
-  /** 交わる橋に阻まれたとき、押した辺。架かるはずだった板の影を描いておき、盤面の反応で一瞬だけ見せる。 */
-  blockedEdge?: number | null;
+  /**
+   * 交わる橋に阻まれたとき、押した辺と、板を伸ばし始める島。押した島から阻んだ橋の手前までの板を描いておき、盤面の反応で
+   * 伸ばして突き当て、弾き返す。
+   */
+  blockedAttempt?: BridgesBlockedAttempt | null;
   /** 阻んだ橋の縁取りと押した辺の板の影を点けたまま描くか。遊び方の図で、阻まれたときの盤面の反応を見せるときに使う。 */
   showsBlockingEdges?: boolean;
   /** 2本の橋を外したばかりの辺。外す動きで縮める2枚の板を、見えない姿で描いておく。 */
   retractingEdge?: number | null;
-  /** 全島がつながった盤面を灯すか。島の灯り、杭の灯り、波紋、島の周りの澄んだ浅瀬を描く。 */
+  /** 全島がつながった盤面を灯すか。島の灯り、杭の灯り、明るい木の色の板、波紋、島の周りの澄んだ浅瀬を描く。 */
   lit?: boolean;
+  /**
+   * マスが小さい盤面か（スマホの 9×9 以上ほど）。板の横木の刻みを省いて板を太くし、2本の板の間を広げて、
+   * 1本と2本を形で見分けられる幅を保つ。
+   */
+  compact?: boolean;
   ref?: Ref<SVGSVGElement>;
 };
 
@@ -87,16 +102,35 @@ export const bridgesFigureParts = {
   blockedAttempt: "data-bridges-blocked-attempt",
   lantern: "data-bridges-lantern",
   litShallows: "data-bridges-lit-shallows",
-  litChannel: "data-bridges-lit-channel",
+  litDeck: "data-bridges-lit-deck",
   lanternPost: "data-bridges-lantern-post",
   ripple: "data-bridges-ripple",
   rope: "data-bridges-rope",
   crossingHint: "data-bridges-crossing-hint",
 } as const;
 
-/** 図の寸法はマス幅を 1 とした値。 */
-const SINGLE_PLANK_WIDTH = 0.26;
-const DOUBLE_PLANK_WIDTH = 0.18;
+/**
+ * 板の寸法。図の寸法はマス幅を 1 とした値。
+ * - `single`・`double`: 1本・2本の橋の板1枚の幅。
+ * - `spacing`: 2本の橋の2枚の板の中心どうしの間隔。
+ * - `seams`: 板に横木を刻むか。
+ */
+type PlankLayout = {
+  single: number;
+  double: number;
+  spacing: number;
+  seams: boolean;
+};
+
+/**
+ * マスの大きい盤面の板と、マスの小さい盤面（`compact`）の板。マスの小さい盤面では横木が点の並びにつぶれるので刻まず、
+ * その分だけ板を太くし、2本の板の間の海も広げる。どちらも寸法はマス幅に比例する。
+ */
+const plankLayouts = {
+  regular: { single: 0.26, double: 0.18, spacing: 0.3, seams: true },
+  compact: { single: 0.3, double: 0.2, spacing: 0.34, seams: false },
+} as const satisfies Record<string, PlankLayout>;
+
 const PLANK_RAIL_WIDTH = 0.035;
 /** 板の横木の太さと間隔。板の幅ほどの間を空けて間引き、梯子や線路の枕木に見せない。 */
 const PLANK_SEAM_DASH = "0.025 0.155";
@@ -108,17 +142,11 @@ const POST_DISTANCE = ISLAND_RADIUS + 0.1;
 /** 浅瀬が海の色へ消えるまでの、島の中心からの距離。陸の縁から波打ち際の外までの狭い帯にし、隣の島の浅瀬と重ねない。 */
 const SHALLOWS_RADIUS = 0.62;
 /** 灯った島の周りの澄んだ浅瀬が海の色へ消えるまでの、島の中心からの距離。波打ち際の外に、灯りより広く澄んだ水を見せる。 */
-const LIT_SHALLOWS_RADIUS = 0.82;
-/**
- * 灯った盤面で、架かった橋の下に通す澄んだ水路の太さ。芯と、芯の外に淡く広げる縁の2重にし、つながった島と橋の全体を
- * 1つの澄んだ水の形として平常の海から浮かせる。
- */
-const LIT_CHANNEL_WIDTH = 0.6;
-const LIT_CHANNEL_GLOW_WIDTH = 0.92;
-const LIT_CHANNEL_GLOW_OPACITY = 0.45;
-/** 島を触っている間に示す、同じ行と列の帯の太さと濃さ。 */
-const LINE_BAND_WIDTH = 0.84;
-const LINE_BAND_OPACITY = 0.45;
+const LIT_SHALLOWS_RADIUS = 0.78;
+/** 島を触っている間に、架けられる相手までの区間に敷く帯の太さ。 */
+const GUIDE_BAND_WIDTH = 0.56;
+/** マスの中心の、島の無い所に打つ点の半径。 */
+const GRID_DOT_RADIUS = 0.03;
 /** 波打ち際の白い線の、陸の輪郭に対する倍率と太さ。 */
 const SURF_SCALE = 1.14;
 const SURF_WIDTH = 0.03;
@@ -126,10 +154,13 @@ const SURF_WIDTH = 0.03;
 const WET_SAND_WIDTH = 0.05;
 /** 多すぎの島の、途切れた縁の太さ。 */
 const OVER_RIM_WIDTH = 0.085;
-/** ちょうどの島の草地の、陸の輪郭に対する倍率。10×10 のスマホ（陸の直径 30px ほど）でも、草地の周りに砂の陸が見える幅を残す。 */
-const GRASS_SCALE = 0.62;
-/** 阻んだ橋の板の外側に見せる、薔薇色の縁取りの幅。 */
-const BLOCKING_OUTLINE_EXTRA = 0.2;
+/**
+ * ちょうどの島の草地の、陸の輪郭に対する倍率。10×10 のスマホ（陸の直径 32px ほど）で草地を直径 22px ほどにし、数字を草地の中に
+ * 収めながら、草地の周りに砂の陸が見える幅を残す。
+ */
+const GRASS_SCALE = 0.68;
+/** 阻んだ橋の板の外側に見せる、薔薇色の縁取りの幅。多すぎの島の縁より細くする。 */
+const BLOCKING_OUTLINE_EXTRA = 0.08;
 /** ロープの太さと撚りの切れ目、縁の太さ。 */
 const ROPE_WIDTH = 0.12;
 const ROPE_DASH = "0.15 0.07";
@@ -152,19 +183,16 @@ const FOCUS_RING_RADIUS = ISLAND_RADIUS + 0.17;
 const FOCUS_RING_WIDTH = 0.05;
 /** 阻まれた辺に架かるはずだった板の濃さ。板そのものを透かし、下の海が見える濃さにする。 */
 const BLOCKED_ATTEMPT_OPACITY = 0.5;
-/** 灯った島の後ろの光の広さと、灯り切った後に残す濃さ。灯り切ったら黄色を引き、澄んだ浅瀬の姿で止める。 */
+/** 灯った島の後ろの光の広さと、灯り切った後に残す濃さ。灯り切った姿を結果へ進むまで保つ。 */
 const LANTERN_RADIUS = 0.78;
-export const LANTERN_SETTLED_OPACITY = 0.45;
+export const LANTERN_SETTLED_OPACITY = 0.7;
 const LANTERN_POST_RADIUS = 0.075;
 /** 灯った島から広がる波紋の、広がり始めの半径と線の太さ。広がると太さも同じ倍率で太る。 */
 const RIPPLE_RADIUS = 0.5;
 const RIPPLE_WIDTH = 0.07;
-/** 1つの島から広がる波紋の番号。2重に広げる。 */
-const RIPPLE_RINGS = [0, 1] as const;
+
 /** 数字の字の大きさ。島の陸の直径の6割ほどにする。 */
 const CLUE_FONT_SIZE = 0.52;
-/** 遊び方の図とチュートリアルで描く海の角の丸み。 */
-const SEA_CORNER_RADIUS = 0.3;
 /** 絵の中の海の波の印の、区画の寸法に掛ける倍率。マス幅の 1/40 を 1 とする。 */
 const FIGURE_WAVE_UNIT = 1 / 40;
 
@@ -208,14 +236,24 @@ function SegmentLine({
   );
 }
 
-function getPlankWidth(count: BridgeCount): number {
-  return count === 2 ? DOUBLE_PLANK_WIDTH : SINGLE_PLANK_WIDTH;
+function getPlankWidth(count: BridgeCount, layout: PlankLayout): number {
+  return count === 2 ? layout.double : layout.single;
+}
+
+function getPlankOffsets(
+  count: BridgeCount,
+  layout: PlankLayout,
+): readonly number[] {
+  return getBridgeLineOffsets(count, layout.spacing);
 }
 
 /** 橋の本数ぶんの板が占める幅の半分。杭を板の外側に立てる位置に使う。 */
-function getFootprintHalfWidth(count: BridgeCount): number {
-  const offsets = getBridgeLineOffsets(count);
-  return Math.max(...offsets.map(Math.abs)) + getPlankWidth(count) / 2;
+function getFootprintHalfWidth(
+  count: BridgeCount,
+  layout: PlankLayout,
+): number {
+  const offsets = getPlankOffsets(count, layout);
+  return Math.max(...offsets.map(Math.abs)) + getPlankWidth(count, layout) / 2;
 }
 
 /**
@@ -225,6 +263,7 @@ function getFootprintHalfWidth(count: BridgeCount): number {
 function listPostPoints(
   { start, end }: BoardSegment,
   count: BridgeCount,
+  layout: PlankLayout,
 ): { point: BoardPoint; end: 0 | 1 }[] {
   const length = Math.hypot(end.x - start.x, end.y - start.y);
   const along = {
@@ -232,7 +271,7 @@ function listPostPoints(
     y: (end.y - start.y) / length,
   };
   const across = { x: -along.y, y: along.x };
-  const side = getFootprintHalfWidth(count) + POST_RADIUS * 0.4;
+  const side = getFootprintHalfWidth(count, layout) + POST_RADIUS * 0.4;
   return ([0, 1] as const).flatMap((endIndex) => {
     const [origin, direction] = endIndex === 0 ? [start, 1] : [end, -1];
     const base = {
@@ -249,13 +288,20 @@ function listPostPoints(
   });
 }
 
-/** 1枚の木の板。影、欄干の縁、板の面、横木の順に重ねる。 */
+/**
+ * 1枚の木の板。影、欄干の縁、板の面、横木の順に重ねる。`seams` が無ければ横木を刻まない。
+ * `litDepth` を渡すと、灯った盤面で一瞬なる明るい木の色の面を、見えない姿で重ねておく（値はその板が灯る段数）。
+ */
 function BridgePlank({
   segment,
   width,
+  seams,
+  litDepth = null,
 }: {
   segment: BoardSegment;
   width: number;
+  seams: boolean;
+  litDepth?: number | null;
 }) {
   const shadow = {
     start: {
@@ -287,12 +333,23 @@ function BridgePlank({
         className={bridgesToneClassNames.bridgeDeck}
         strokeWidth={deckWidth}
       />
-      <SegmentLine
-        segment={segment}
-        className={bridgesToneClassNames.bridgeSeam}
-        strokeWidth={deckWidth}
-        strokeDasharray={PLANK_SEAM_DASH}
-      />
+      {litDepth !== null && (
+        <g {...{ [bridgesFigureParts.litDeck]: litDepth }} opacity={0}>
+          <SegmentLine
+            segment={segment}
+            className={bridgesToneClassNames.bridgeDeckLit}
+            strokeWidth={deckWidth}
+          />
+        </g>
+      )}
+      {seams && (
+        <SegmentLine
+          segment={segment}
+          className={bridgesToneClassNames.bridgeSeam}
+          strokeWidth={deckWidth}
+          strokeDasharray={PLANK_SEAM_DASH}
+        />
+      )}
     </>
   );
 }
@@ -301,15 +358,21 @@ function BridgePlank({
 function BridgePlanks({
   segment,
   count,
+  layout,
+  litDepth = null,
 }: {
   segment: BoardSegment;
   count: BridgeCount;
+  layout: PlankLayout;
+  litDepth?: number | null;
 }) {
-  return getBridgeLineOffsets(count).map((offset, plank) => (
+  return getPlankOffsets(count, layout).map((offset, plank) => (
     <g key={offset} {...{ [bridgesFigureParts.bridgePlank]: plank }}>
       <BridgePlank
         segment={offsetSegment(segment, offset)}
-        width={getPlankWidth(count)}
+        width={getPlankWidth(count, layout)}
+        seams={layout.seams}
+        litDepth={litDepth}
       />
     </g>
   ));
@@ -319,13 +382,15 @@ function BridgePlanks({
 function BridgePosts({
   segment,
   count,
+  layout,
 }: {
   segment: BoardSegment;
   count: BridgeCount;
+  layout: PlankLayout;
 }) {
   return (
     <g className={bridgesToneClassNames.bridgePost}>
-      {listPostPoints(segment, count).map(({ point }) => (
+      {listPostPoints(segment, count, layout).map(({ point }) => (
         <circle
           key={`${point.x}:${point.y}`}
           cx={point.x}
@@ -341,11 +406,15 @@ function BridgePosts({
  * 辺の橋を回した後の姿の予告が占める幅。チュートリアルの印を、予告の板の影に沿わせるのに使う。
  * 1本・2本になるなら板の影の幅、なしになるなら今の板を覆う幅。
  */
-export function getGhostBridgeWidth(current: BridgeCount): number {
+export function getGhostBridgeWidth(
+  current: BridgeCount,
+  compact = false,
+): number {
+  const layout = compact ? plankLayouts.compact : plankLayouts.regular;
   const next = ((current + 1) % 3) as BridgeCount;
   return next === 0
-    ? getFootprintHalfWidth(current) * 2 + REMOVAL_EXTRA_WIDTH
-    : getFootprintHalfWidth(next) * 2 + GHOST_EXTRA_WIDTH;
+    ? getFootprintHalfWidth(current, layout) * 2 + REMOVAL_EXTRA_WIDTH
+    : getFootprintHalfWidth(next, layout) * 2 + GHOST_EXTRA_WIDTH;
 }
 
 /**
@@ -355,10 +424,12 @@ export function getGhostBridgeWidth(current: BridgeCount): number {
 function GhostBridge({
   segment,
   current,
+  layout,
   opacity = 1,
 }: {
   segment: BoardSegment;
   current: BridgeCount;
+  layout: PlankLayout;
   opacity?: number;
 }) {
   const next = ((current + 1) % 3) as BridgeCount;
@@ -367,19 +438,21 @@ function GhostBridge({
       <SegmentLine
         segment={segment}
         className={bridgesToneClassNames.guideRemoval}
-        strokeWidth={getFootprintHalfWidth(current) * 2 + REMOVAL_EXTRA_WIDTH}
+        strokeWidth={
+          getFootprintHalfWidth(current, layout) * 2 + REMOVAL_EXTRA_WIDTH
+        }
         opacity={opacity}
       />
     );
   }
   return (
     <g opacity={opacity}>
-      {getBridgeLineOffsets(next).map((offset) => (
+      {getPlankOffsets(next, layout).map((offset) => (
         <SegmentLine
           key={offset}
           segment={offsetSegment(segment, offset)}
           className={bridgesToneClassNames.guideGhost}
-          strokeWidth={getPlankWidth(next) + GHOST_EXTRA_WIDTH}
+          strokeWidth={getPlankWidth(next, layout) + GHOST_EXTRA_WIDTH}
         />
       ))}
     </g>
@@ -387,47 +460,130 @@ function GhostBridge({
 }
 
 /**
- * 交わる橋に阻まれた辺に、架かるはずだった1本の板。板そのものを半透明にし、橋と同じ木の姿で見せる。
+ * 交わる橋に阻まれた辺で、押した端の島から阻んだ橋の手前まで伸びる1本の板。板そのものを半透明にし、橋と同じ木の姿で見せる。
  * `opacity` は盤面の反応で一瞬だけ点けるための濃さで、点いたときも板は半透明のままにする。
+ * 伸ばす動きのために、板を伸ばし始める点（`data-origin-x`・`data-origin-y`）と向き（`data-axis`）を持つ。
  */
 function BlockedAttempt({
   segment,
+  layout,
   opacity,
 }: {
   segment: BoardSegment;
+  layout: PlankLayout;
   opacity: number;
 }) {
+  const horizontal = segment.start.y === segment.end.y;
   return (
-    <g {...{ [bridgesFigureParts.blockedAttempt]: "" }} opacity={opacity}>
+    <g
+      {...{ [bridgesFigureParts.blockedAttempt]: "" }}
+      data-axis={horizontal ? "x" : "y"}
+      opacity={opacity}
+      style={{
+        transformBox: "view-box",
+        transformOrigin: `${segment.start.x}px ${segment.start.y}px`,
+      }}
+    >
       <g opacity={BLOCKED_ATTEMPT_OPACITY}>
-        <BridgePlank segment={segment} width={getPlankWidth(1)} />
+        <BridgePlank
+          segment={segment}
+          width={getPlankWidth(1, layout)}
+          seams={layout.seams}
+        />
       </g>
     </g>
   );
 }
 
-/** 島と同じ行と列に、盤面の端から端まで敷く淡い帯。並んだ島を目で揃えやすくする。 */
-function LineBands({ view, center }: { view: BoardView; center: BoardPoint }) {
-  const { margin, board } = view;
+/**
+ * 阻まれた辺の、押した端の島の中心から、その島に最も近い阻んだ橋の板の手前までの線分。
+ * 阻んだ橋が無ければ、辺の全体。
+ */
+function getBlockedAttemptSegment(
+  view: BoardView,
+  { edge, island }: BridgesBlockedAttempt,
+  blockingEdges: readonly number[],
+  bridges: readonly BridgeCount[],
+  layout: PlankLayout,
+): BoardSegment {
+  const whole = getEdgeViewSegment(view, edge);
+  const { from } = getBridgesNetwork(view.board).edges[edge]!;
+  const [start, far] =
+    island === from ? [whole.start, whole.end] : [whole.end, whole.start];
+  const horizontal = start.y === far.y;
+  const direction = Math.sign(horizontal ? far.x - start.x : far.y - start.y);
+  const stops = blockingEdges.map((blocking) => {
+    const line = getEdgeViewSegment(view, blocking).start;
+    const position = horizontal ? line.x : line.y;
+    return (
+      position -
+      direction * getFootprintHalfWidth(bridges[blocking] || 1, layout)
+    );
+  });
+  const origin = horizontal ? start.x : start.y;
+  const stop =
+    stops.length === 0
+      ? horizontal
+        ? far.x
+        : far.y
+      : stops.reduce((nearest, position) =>
+          Math.abs(position - origin) < Math.abs(nearest - origin)
+            ? position
+            : nearest,
+        );
+  return {
+    start,
+    end: horizontal ? { x: stop, y: start.y } : { x: start.x, y: stop },
+  };
+}
+
+/** 島から架けられる相手までの区間に敷く帯。どの相手へ架けられるかを、ロープより広い面で示す。 */
+function GuideBands({
+  view,
+  edges,
+}: {
+  view: BoardView;
+  edges: readonly number[];
+}) {
   return (
-    <g
-      opacity={LINE_BAND_OPACITY}
-      className={bridgesToneClassNames.shallowsFill}
-    >
-      <rect
-        x={margin}
-        y={center.y - LINE_BAND_WIDTH / 2}
-        width={board.width}
-        height={LINE_BAND_WIDTH}
-        rx={LINE_BAND_WIDTH / 2}
-      />
-      <rect
-        x={center.x - LINE_BAND_WIDTH / 2}
-        y={margin}
-        width={LINE_BAND_WIDTH}
-        height={board.height}
-        rx={LINE_BAND_WIDTH / 2}
-      />
+    <g className={bridgesToneClassNames.guideBand}>
+      {edges.map((edge) => {
+        const { start, end } = getEdgeViewSegment(view, edge);
+        const half = GUIDE_BAND_WIDTH / 2;
+        return (
+          <rect
+            key={edge}
+            x={Math.min(start.x, end.x) - half}
+            y={Math.min(start.y, end.y) - half}
+            width={Math.abs(end.x - start.x) + GUIDE_BAND_WIDTH}
+            height={Math.abs(end.y - start.y) + GUIDE_BAND_WIDTH}
+            rx={half}
+          />
+        );
+      })}
+    </g>
+  );
+}
+
+/** マスの中心のうち、島の無い所に打つごく薄い点。島が縦横に並んでいることを、海の上の静かな手がかりで読めるようにする。 */
+function GridDots({ view }: { view: BoardView }) {
+  const { board } = view;
+  const occupied = new Set(
+    board.islands.map(({ row, column }) => row * board.width + column),
+  );
+  const dots: BoardPoint[] = [];
+  for (let row = 0; row < board.height; row += 1) {
+    for (let column = 0; column < board.width; column += 1) {
+      if (!occupied.has(row * board.width + column)) {
+        dots.push(toViewPoint(view, { x: column + 0.5, y: row + 0.5 }));
+      }
+    }
+  }
+  return (
+    <g className={bridgesToneClassNames.gridDot}>
+      {dots.map(({ x, y }) => (
+        <circle key={`${x}:${y}`} cx={x} cy={y} r={GRID_DOT_RADIUS} />
+      ))}
     </g>
   );
 }
@@ -462,14 +618,13 @@ function Rope({
   );
 }
 
-/** 遊び方の図とチュートリアルで、絵の地に敷く海。 */
+/** 遊び方の図とチュートリアルで、絵の地に敷く海。絵の枠いっぱいに敷き、角は絵を置く枠に合わせる。 */
 function FigureSea({ view }: { view: BoardView }) {
   return (
     <>
       <rect
         width={view.width}
         height={view.height}
-        rx={SEA_CORNER_RADIUS}
         className={bridgesToneClassNames.seaFill}
       />
       <svg width={view.width} height={view.height} overflow="hidden">
@@ -509,8 +664,9 @@ const centerOrigin = {
 } as const;
 
 /**
- * 盤面の絵。下から、海・島と同じ行と列の帯・浅瀬・灯った盤面の澄んだ水路と浅瀬・波打ち際・灯りの光・波紋・板の予告・
- * 阻まれた辺の板の影・橋（阻んだ橋の縁取り、板、杭）・外す板・杭の灯り・ロープ・島の陸と数字・選んだ島とキーボードの輪の順に重ねる。
+ * 盤面の絵。下から、海・マスの中心の点・架けられる相手までの帯・浅瀬・灯った島の澄んだ浅瀬・波打ち際・灯りの光・波紋・板の予告・
+ * 阻まれた辺の板・橋（阻んだ橋の縁取り、板、灯った板、杭）・外す板・杭の灯り・ロープ・交点の候補のロープ・島の陸と数字・
+ * 選んだ島とキーボードの輪の順に重ねる。
  * 阻まれた辺の板の影は橋の下に置き、阻んだ橋がその上を渡って見えるようにする。
  * 橋は島の中心から中心へ描き、端を島の陸で覆う。
  */
@@ -523,15 +679,18 @@ export function BridgesFigure({
   guide = null,
   hoverEdge = null,
   crossingEdges = null,
+  bandEdges = [],
   selectedIsland = null,
   focusedIsland = null,
   blockingEdges = [],
-  blockedEdge = null,
+  blockedAttempt = null,
   showsBlockingEdges = false,
   retractingEdge = null,
   lit = false,
+  compact = false,
   ref,
 }: BridgesFigureProps) {
+  const layout = compact ? plankLayouts.compact : plankLayouts.regular;
   const gradientId = useId();
   const shallowsId = `${gradientId}-shallows`;
   const lanternId = `${gradientId}-lantern`;
@@ -621,7 +780,13 @@ export function BridgesFigure({
         />
       </defs>
       {showsSea && <FigureSea view={view} />}
-      {guide && <LineBands view={view} center={islandCenters[guide.island]!} />}
+      <GridDots view={view} />
+      {(guide || bandEdges.length > 0) && (
+        <GuideBands
+          view={view}
+          edges={[...new Set([...(guide?.edges ?? []), ...bandEdges])]}
+        />
+      )}
       <g>
         {islandCenters.map(({ x, y }) => (
           <circle
@@ -633,33 +798,6 @@ export function BridgesFigure({
           />
         ))}
       </g>
-      {lit &&
-        edges.map(({ from, to }, edge) =>
-          bridges[edge] === 0 ? null : (
-            <g
-              key={`lit-channel-${from}-${to}`}
-              {...{
-                [bridgesFigureParts.litChannel]: Math.max(
-                  depths[from] ?? 0,
-                  depths[to] ?? 0,
-                ),
-              }}
-              strokeLinecap="round"
-            >
-              <SegmentLine
-                segment={getEdgeViewSegment(view, edge)}
-                className={bridgesToneClassNames.litShallowsStroke}
-                strokeWidth={LIT_CHANNEL_GLOW_WIDTH}
-                opacity={LIT_CHANNEL_GLOW_OPACITY}
-              />
-              <SegmentLine
-                segment={getEdgeViewSegment(view, edge)}
-                className={bridgesToneClassNames.litShallowsStroke}
-                strokeWidth={LIT_CHANNEL_WIDTH}
-              />
-            </g>
-          ),
-        )}
       {lit &&
         islandCenters.map(({ x, y }, island) => (
           <circle
@@ -702,33 +840,38 @@ export function BridgesFigure({
           />
         ))}
       {lit &&
-        islandCenters.flatMap(({ x, y }, island) =>
-          RIPPLE_RINGS.map((ring) => (
-            <circle
-              key={`ripple-${x}:${y}:${ring}`}
-              {...{ [bridgesFigureParts.ripple]: depths[island] ?? 0 }}
-              data-ring={ring}
-              cx={x}
-              cy={y}
-              r={RIPPLE_RADIUS}
-              fill="none"
-              strokeWidth={RIPPLE_WIDTH}
-              className={bridgesToneClassNames.ripple}
-              opacity={0}
-              style={centerOrigin}
-            />
-          )),
-        )}
+        islandCenters.map(({ x, y }, island) => (
+          <circle
+            key={`ripple-${x}:${y}`}
+            {...{ [bridgesFigureParts.ripple]: depths[island] ?? 0 }}
+            cx={x}
+            cy={y}
+            r={RIPPLE_RADIUS}
+            fill="none"
+            strokeWidth={RIPPLE_WIDTH}
+            className={bridgesToneClassNames.ripple}
+            opacity={0}
+            style={centerOrigin}
+          />
+        ))}
       {ghostEdge !== null && bridges[ghostEdge] !== 2 && (
         <GhostBridge
           segment={getEdgeViewSegment(view, ghostEdge)}
           current={bridges[ghostEdge]!}
+          layout={layout}
           opacity={previewEdge === null ? HOVER_GHOST_OPACITY : 1}
         />
       )}
-      {blockedEdge !== null && bridges[blockedEdge] === 0 && (
+      {blockedAttempt !== null && bridges[blockedAttempt.edge] === 0 && (
         <BlockedAttempt
-          segment={getEdgeViewSegment(view, blockedEdge)}
+          segment={getBlockedAttemptSegment(
+            view,
+            blockedAttempt,
+            blockingEdges,
+            bridges,
+            layout,
+          )}
+          layout={layout}
           opacity={showsBlockingEdges ? 1 : 0}
         />
       )}
@@ -756,13 +899,21 @@ export function BridgesFigure({
                   segment={segment}
                   className={bridgesToneClassNames.blockingBridge}
                   strokeWidth={
-                    getFootprintHalfWidth(count) * 2 + BLOCKING_OUTLINE_EXTRA
+                    getFootprintHalfWidth(count, layout) * 2 +
+                    BLOCKING_OUTLINE_EXTRA
                   }
                 />
               </g>
             )}
-            <BridgePlanks segment={segment} count={count} />
-            <BridgePosts segment={segment} count={count} />
+            <BridgePlanks
+              segment={segment}
+              count={count}
+              layout={layout}
+              litDepth={
+                lit ? Math.max(depths[from] ?? 0, depths[to] ?? 0) : null
+              }
+            />
+            <BridgePosts segment={segment} count={count} layout={layout} />
           </g>
         );
       })}
@@ -775,6 +926,7 @@ export function BridgesFigure({
           <BridgePlanks
             segment={getEdgeViewSegment(view, retractingEdge)}
             count={2}
+            layout={layout}
           />
         </g>
       )}
@@ -782,6 +934,7 @@ export function BridgesFigure({
         <GhostBridge
           segment={getEdgeViewSegment(view, ghostEdge)}
           current={2}
+          layout={layout}
           opacity={previewEdge === null ? HOVER_GHOST_OPACITY : 1}
         />
       )}
@@ -792,6 +945,7 @@ export function BridgesFigure({
             : listPostPoints(
                 getEdgeViewSegment(view, edge),
                 bridges[edge]!,
+                layout,
               ).map(({ point, end }) => (
                 <circle
                   key={`lantern-post-${from}-${to}:${point.x}:${point.y}`}
