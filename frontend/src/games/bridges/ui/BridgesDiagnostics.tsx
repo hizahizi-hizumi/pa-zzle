@@ -83,6 +83,7 @@ const qualityConditionLabels = {
   borderBridgeShare: "外周に沿う橋の割合",
   usedEdgeShare: "架ける行き先の割合",
   diagonalNeighborShare: "斜め隣に島がある島の割合",
+  borderIslandShare: "外周の島の割合",
   shortBridgeShare: "間が1マスの橋の割合",
   longBridgeCount: "長い橋",
 } as const satisfies Record<
@@ -103,6 +104,7 @@ const fractionalFeatures: ReadonlySet<keyof BridgesAssessedFeatures> = new Set([
   "usedEdgeShare",
   "lastConnectivityDecidedRatio",
   "diagonalNeighborShare",
+  "borderIslandShare",
   "shortBridgeShare",
 ]);
 

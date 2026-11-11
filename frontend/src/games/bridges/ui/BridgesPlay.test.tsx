@@ -24,7 +24,7 @@ afterEach(() => {
   cleanup();
 });
 
-// 基準時間は 10 + 24×1 + 26×1.5 + 3×8 + 3×20 + 26×1 = 183秒。0点になる時間は、読みの割合 110/183 から 4.8倍の 878.4秒。
+// 基準時間は 10 + 24×1 + 26×1.5 + 3×15 + 3×40 + 26×1 = 264秒。0点になる時間は、読みの割合 191/264 から 5.2倍の 1,372.8秒。
 const workload = {
   islandCount: 24,
   edgeCount: 32,
@@ -34,9 +34,9 @@ const workload = {
   countReasoningUndecidedEdgeCount: 26,
 };
 
-// 23秒超過で速さ97点。待った・盤面を戻す・阻まれた回数は点に入らない。
+// 23秒超過で速さ98点。待った・盤面を戻す・阻まれた回数は点に入らない。
 const performance: BridgesSessionResult = {
-  elapsedMs: 206_000,
+  elapsedMs: 287_000,
   undoCount: 2,
   restartCount: 1,
   inputCount: 40,
@@ -155,7 +155,7 @@ describe("BridgesPlay", () => {
           (label) => `${label.textContent} ${label.nextSibling?.textContent}`,
         );
 
-      expect(metrics).toEqual(["時間 03:26", "待った 2"]);
+      expect(metrics).toEqual(["時間 04:47", "待った 2"]);
     });
   });
 
@@ -169,7 +169,7 @@ describe("BridgesPlay", () => {
 
       expect(screen.getByText(BRIDGES_DISPLAY_NAME)).toBeTruthy();
       expect(screen.getByText("レベル 5")).toBeTruthy();
-      expect(score.getByText("97点（100点満点）")).toBeTruthy();
+      expect(score.getByText("98点（100点満点）")).toBeTruthy();
     });
 
     test("時間と基準時間との差・基準時間だけを主な成績として表示すること", () => {
@@ -179,7 +179,7 @@ describe("BridgesPlay", () => {
         .map((definition) => definition.textContent);
 
       expect(terms).toEqual(["時間", "基準時間"]);
-      expect(definitions).toEqual(["03:26", "基準差 +00:23", "03:03"]);
+      expect(definitions).toEqual(["04:47", "基準差 +00:23", "04:24"]);
     });
 
     test("盤面を表示しないこと", () => {
@@ -217,7 +217,7 @@ describe("BridgesPlay", () => {
 
         expect(items).toEqual(
           expect.arrayContaining([
-            "速さ 97 / 100",
+            "速さ 98 / 100",
             "待った 2回",
             "盤面を戻す 1回",
             "交わる橋に阻まれた 3回",
@@ -229,7 +229,7 @@ describe("BridgesPlay", () => {
         const criteria = screen.getByText(/^基準時間\d\d:\d\d(\.\d)?以内/);
 
         expect(criteria.textContent).toBe(
-          "基準時間03:03以内で100点、14:38.4以上で0点、その間は時間に応じて減らす。基準時間は、この問題の島と橋の数と、考える所（数字だけでは決まらない所）の多さで決まる。「待った」・「盤面を戻す」・架け直し・交わる橋に阻まれた回数では減点しない。",
+          "基準時間04:24以内で100点、22:52.8以上で0点、その間は時間に応じて減らす。基準時間は、この問題の島と橋の数と、考える所（数字だけでは決まらない所）の多さで決まる。「待った」・「盤面を戻す」・架け直し・交わる橋に阻まれた回数では減点しない。",
         );
       });
     });

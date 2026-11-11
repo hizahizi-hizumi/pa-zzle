@@ -90,7 +90,7 @@ describe("BridgesDiagnostics", () => {
       ).toEqual([null, null, null]);
     });
 
-    test("数字と形の質に、架ける行き先と盤面の形の条件と値を並べること", () => {
+    test("数字と形の質に、架ける行き先と、外周の島を含む盤面の形の条件と値を並べること", () => {
       const section = getSection("数字と形の質");
       const { features } = snapshot.difficultyAssessment as Extract<
         BridgesDifficultyAssessment,
@@ -100,6 +100,7 @@ describe("BridgesDiagnostics", () => {
       const values = [
         "架ける行き先の割合",
         "斜め隣に島がある島の割合",
+        "外周の島の割合",
         "間が1マスの橋の割合",
         "長い橋",
       ].map((label) => getRowValue(label, section));
@@ -107,7 +108,8 @@ describe("BridgesDiagnostics", () => {
       expect(values).toEqual([
         `${features.usedEdgeShare.toFixed(2)}（条件 0以上・0.85以下）`,
         `${features.diagonalNeighborShare.toFixed(2)}（条件 0以上・0.5以下）`,
-        `${features.shortBridgeShare.toFixed(2)}（条件 0以上・0.6以下）`,
+        `${features.borderIslandShare.toFixed(2)}（条件 0以上・0.5以下）`,
+        `${features.shortBridgeShare.toFixed(2)}（条件 0以上・0.5以下）`,
         `${features.longBridgeCount}（条件 1以上）`,
       ]);
     });
