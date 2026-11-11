@@ -30,6 +30,7 @@ import { TsumeShogiClearAnimation } from "@/games/tsume-shogi/ui/board/clear/Tsu
 import { TsumeShogiBoard } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
 import { TsumeShogiPieceDefs } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs";
 import { TsumeShogiResultScreen } from "@/games/tsume-shogi/ui/result/TsumeShogiResultScreen";
+import { TsumeShogiBackground } from "@/games/tsume-shogi/ui/TsumeShogiBackground";
 import {
   TsumeShogiBoardGroup,
   tsumeShogiBoardGroupSizeStyle,
@@ -172,11 +173,7 @@ export function TsumeShogiPlay({
       progress={progress}
       result={result}
       title={TSUME_SHOGI_DISPLAY_NAME}
-      background={
-        <div
-          className={cn("size-full", tsumeShogiToneClassNames.tableSurface)}
-        />
-      }
+      background={<TsumeShogiBackground />}
       metrics={[
         { type: "problem-fact", text: `${plies}手詰` },
         { type: "elapsed-time", elapsedMs },
