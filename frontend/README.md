@@ -35,7 +35,7 @@ Cloudflare 側では GitHub リポジトリを接続し、次のビルド設定�
 - Non-production branch builds: 有効
 - Build Variables and Secrets に `BUN_VERSION` を設定しない（`packageManager` を唯一の指定元とする）。本番とプレビューの両方で確認する。
 
-非本番ブランチのビルドでは、Cloudflare の GitHub 連携がPRへプレビューURLを投稿する。プレビューURLは `wrangler.jsonc` で明示的に有効化している。
+非本番ブランチのビルドでは、Cloudflare の GitHub 連携が、PRのコメントと、コミットのチェック `Workers Builds: pa-zzle` の結果にプレビューURLを出す。ブランチごとに変わらないURL（Branch Preview URL）は、チェックの結果では Preview Alias URL と表示される。プレビューURLは `wrangler.jsonc` で明示的に有効化している。
 
 プレビューURLはそのままでは公開されるため、運用開始前に Cloudflare Access でこの Worker の **Preview URLs** を保護し、許可した利用者だけが認証後に閲覧できる状態にする。本番公開の設定はこのプレビュー環境とは分けて扱う。
 
