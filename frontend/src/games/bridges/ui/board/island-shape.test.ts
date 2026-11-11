@@ -1,6 +1,7 @@
 import {
   getIslandOutlinePath,
   ISLAND_OUTLINE_WOBBLE,
+  listIslandOutlinePoints,
   listIslandOutlineScales,
 } from "@/games/bridges/ui/board/island-shape";
 
@@ -40,5 +41,37 @@ describe("getIslandOutlinePath", () => {
     );
 
     expect(first).toBe(second);
+  });
+});
+
+describe("listIslandOutlinePoints", () => {
+  test("どの島の輪郭も、点の囲む形の重心が島の中心に重なること", () => {
+    const centroids = Array.from({ length: 10 }, (_, row) =>
+      Array.from({ length: 10 }, (_, column) => {
+        const points = listIslandOutlinePoints(
+          { row, column, clue: 1 },
+          { x: column + 0.5, y: row + 0.5 },
+          0.44,
+        );
+        let area = 0;
+        let sumX = 0;
+        let sumY = 0;
+        for (const [index, point] of points.entries()) {
+          const next = points[(index + 1) % points.length]!;
+          const cross = point.x * next.y - next.x * point.y;
+          area += cross / 2;
+          sumX += (point.x + next.x) * cross;
+          sumY += (point.y + next.y) * cross;
+        }
+        return {
+          dx: sumX / (6 * area) - (column + 0.5),
+          dy: sumY / (6 * area) - (row + 0.5),
+        };
+      }),
+    ).flat();
+
+    for (const { dx, dy } of centroids) {
+      expect(Math.hypot(dx, dy)).toBeLessThan(1e-9);
+    }
   });
 });

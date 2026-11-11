@@ -98,6 +98,12 @@ describe("getBridgeLineOffsets", () => {
 
     expect(offsets).toEqual(expected);
   });
+
+  test("2枚の板の間隔を渡すと、その間隔で中心線を挟むこと", () => {
+    const offsets = getBridgeLineOffsets(2, 0.34);
+
+    expect(offsets).toEqual([-0.17, 0.17]);
+  });
 });
 
 describe("findBoardTarget", () => {
