@@ -77,11 +77,15 @@ const BOTTLE_GAPS = `${WATER_SORT_SINGLE_ROW_GAP_PX * (BOTTLE_COUNT - 1)}px`;
  * ボトルの幅を `--bottle` とし、上に2.1倍の余白を取って、注ぐ動きと選んだボトルの持ち上げを上の見出しにかけない。
  * ボトルの高さは幅の 1/0.36 倍（約2.78倍）。
  */
+/** ボトルの下から指す指の場所。 */
+const POINTER_ROOM = "3rem";
+
 const boardFrameStyle = {
-  "--bottle": `min(calc((100cqw - ${BOTTLE_GAPS}) / ${BOTTLE_COUNT}), calc(100cqh / 4.9), 6rem)`,
+  "--bottle": `min(calc((100cqw - ${BOTTLE_GAPS}) / ${BOTTLE_COUNT}), calc((100cqh - ${POINTER_ROOM}) / 4.9), 6rem)`,
   width: `calc(var(--bottle) * ${BOTTLE_COUNT} + ${BOTTLE_GAPS})`,
   boxSizing: "content-box",
   paddingTop: "calc(var(--bottle) * 2.1)",
+  paddingBottom: POINTER_ROOM,
 } as CSSProperties;
 
 /** 本番の盤面と同じく、注ぐ動きを見せられるか。見せられないときは、注いだ結果をすぐ見せる。 */

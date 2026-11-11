@@ -88,8 +88,8 @@ const appearClassName =
   "animate-in fade-in-0 slide-in-from-bottom-1 duration-(--duration-slow) ease-enter motion-reduce:animate-none";
 
 /**
- * 上から、名前と進み具合、盤面、一言、入口と完成の操作を、どの場面でも同じ位置に並べる。
- * 一言は、指さしと操作のそばで読めるよう盤面のすぐ下に置き、盤面の上は盤面の動きに空けておく。
+ * 上から、名前と進み具合、盤面、盤面の下の欄（一言と、入口・完成の操作）を、どの場面でも同じ位置と大きさで並べる。
+ * 盤面の領域は、横に長い盤面にも縦に長い盤面にも同じだけ渡し、場面が替わっても変えない。
  * 入口はゴールの盤面に、何をするパズルかの一文を一言として添えるだけにし、「はじめる」で始めの盤面へ替えて、すぐ最初の手順に入る。
  */
 export function TutorialStageScreen({
@@ -185,7 +185,7 @@ export function TutorialStageScreen({
       <BrandIdentityHeader surface="game" pinned />
       <div className="flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         <header className="flex h-11 shrink-0 items-center gap-2 pr-3 pl-4">
-          {/* 入口では名前を盤面の上に大きく見せるので、上部の名前は伏せておき、始めるときに大きな名前の位置から動かして見せる。 */}
+          {/* 入口では名前を盤面の下の欄に大きく見せるので、上部の名前は伏せておき、始めるときに大きな名前の位置から動かして見せる。 */}
           <span
             ref={pictogramRef}
             className={cn("size-8 shrink-0", showsGoal && "opacity-0")}
@@ -236,22 +236,33 @@ export function TutorialStageScreen({
           </span>
         </div>
 
-        {/* 下の余白は、盤面の下から指す指の場所。 */}
         <main
           inert={showsGoal}
-          className="relative flex min-h-0 flex-1 items-end justify-center px-4 pb-12 [container-type:size]"
+          className="flex min-h-0 flex-1 items-end justify-center px-4 [container-type:size]"
         >
+          {renderBoard({
+            scene: introScene,
+            playing: introScene === "start",
+            onSceneEnd: handleSceneEnd,
+          })}
+        </main>
+
+        {/*
+          盤面の下の欄。入口の名前と操作、一言、完成の振り返りと操作を上から詰めて並べる。
+          どの場面でも同じ高さにして、入口から完成まで盤面の位置と大きさを動かさない。
+        */}
+        <footer className="flex h-48 shrink-0 flex-col items-center justify-start gap-3 px-4 pt-2">
           {showsGoal && (
-            // 初めての人に名前を覚えてもらえるよう、入口では、盤面の上の空きにピクトグラムと名前を大きく見せる。
+            // 初めての人に名前を覚えてもらえるよう、入口ではピクトグラムと名前を大きく見せる。
             // 上部と同じ並びを同じ比で大きくし、上部へ移すときにピクトグラムと名前が交差しないようにする。
             <div
               aria-hidden="true"
               className={cn(
-                "pointer-events-none absolute inset-x-0 top-8 flex items-center justify-center gap-3.5",
+                "pointer-events-none flex items-center justify-center gap-3",
                 appearClassName,
               )}
             >
-              <span ref={introPictogramRef} className="size-14 shrink-0">
+              <span ref={introPictogramRef} className="size-10 shrink-0">
                 <GamePictogram svg={pictogramSvg} />
               </span>
               {/* 上部の名前へ移すときに字の太さが変わって見えないよう、上部と同じ太さで大きくする。 */}
@@ -263,51 +274,37 @@ export function TutorialStageScreen({
               </span>
             </div>
           )}
-          {renderBoard({
-            scene: introScene,
-            playing: introScene === "start",
-            onSceneEnd: handleSceneEnd,
-          })}
-        </main>
-
-        {/* 一言が替わっても盤面が動かないよう、2行の見出しと1行の補足が収まる高さに固定し、盤面の側へ詰める。 */}
-        <div
-          aria-live="polite"
-          className="relative flex h-24 shrink-0 flex-col items-center justify-start px-4 pt-2"
-        >
-          {celebrating && (
-            // 完成の一言の後ろで、輪を2つ続けて広げる。結果の場面の祝い方と同じ、広がって消える輪で返す。
-            <span
-              aria-hidden="true"
-              data-tutorial-celebration=""
-              className="pointer-events-none absolute -top-2.5 left-1/2 -ml-8 size-16 motion-reduce:hidden"
-            >
-              <span className="absolute inset-0 animate-tutorial-complete-pulse rounded-full border-(length:--border-width-strong) border-foreground" />
-              <span className="absolute inset-0 animate-tutorial-complete-pulse rounded-full border-(length:--border-width-normal) border-foreground delay-300" />
-            </span>
-          )}
-          <p
-            key={`${shownMessage.headline}\n${shownMessage.detail ?? ""}`}
-            className={cn(
-              "relative flex flex-col items-center gap-1 text-balance text-center whitespace-pre-line [word-break:auto-phrase]",
-              celebrating ? celebrateClassName : appearClassName,
-            )}
-          >
-            <span
-              className={celebrating ? "text-screen-title" : "text-heading"}
-            >
-              {shownMessage.headline}
-            </span>
-            {shownMessage.detail && (
-              <span className="text-muted-foreground text-supporting">
-                {shownMessage.detail}
+          <div aria-live="polite" className="relative flex justify-center">
+            {celebrating && (
+              // 完成の一言の後ろで、輪を2つ続けて広げる。結果の場面の祝い方と同じ、広がって消える輪で返す。
+              <span
+                aria-hidden="true"
+                data-tutorial-celebration=""
+                className="pointer-events-none absolute -top-4 left-1/2 -ml-8 size-16 motion-reduce:hidden"
+              >
+                <span className="absolute inset-0 animate-tutorial-complete-pulse rounded-full border-(length:--border-width-strong) border-foreground" />
+                <span className="absolute inset-0 animate-tutorial-complete-pulse rounded-full border-(length:--border-width-normal) border-foreground delay-300" />
               </span>
             )}
-          </p>
-        </div>
-
-        {/* 高さを固定し、入口の操作が消えても、完成の操作が出ても盤面を動かさない。 */}
-        <footer className="flex h-32 shrink-0 flex-col items-center justify-start gap-4 px-4">
+            <p
+              key={`${shownMessage.headline}\n${shownMessage.detail ?? ""}`}
+              className={cn(
+                "relative flex flex-col items-center gap-1 text-balance text-center whitespace-pre-line [word-break:auto-phrase]",
+                celebrating ? celebrateClassName : appearClassName,
+              )}
+            >
+              <span
+                className={celebrating ? "text-screen-title" : "text-heading"}
+              >
+                {shownMessage.headline}
+              </span>
+              {shownMessage.detail && (
+                <span className="text-muted-foreground text-supporting">
+                  {shownMessage.detail}
+                </span>
+              )}
+            </p>
+          </div>
           {showsGoal && (
             <Button type="button" size="lg" onClick={handleStart}>
               はじめる
@@ -315,7 +312,7 @@ export function TutorialStageScreen({
           )}
           {completed && (
             // 覚えたルールを1つずつ確かめるように出してから、次の操作を出す。
-            <div className="flex flex-col items-center gap-4">
+            <>
               <ul aria-label="覚えたルール" className="flex flex-col gap-1">
                 {recap.map((rule, index) => (
                   <li
@@ -352,7 +349,7 @@ export function TutorialStageScreen({
                   もう一度
                 </Button>
               </div>
-            </div>
+            </>
           )}
         </footer>
       </div>
