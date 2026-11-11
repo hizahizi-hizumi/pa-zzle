@@ -99,7 +99,7 @@ export function SlidePuzzlePlay({
       progress={progress}
       result={result}
       title={SLIDE_PUZZLE_DISPLAY_NAME}
-      background={<div className="size-full bg-[#e8e2d8] dark:bg-[#2b2722]" />}
+      background={<div className="slide-woodwork-scene size-full" />}
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },
@@ -129,7 +129,7 @@ export function SlidePuzzlePlay({
         />
       )}
     >
-      <main className="flex min-h-0 flex-1 items-center justify-center px-3 pt-2 pb-6 [container-type:size] sm:px-6 sm:pb-8">
+      <main className="relative flex min-h-0 flex-1 items-center justify-center px-3 pt-2 pb-6 [container-type:size] sm:px-6 sm:pb-8">
         <div className="relative aspect-square w-[min(100cqw,100cqh,40rem)]">
           <SlidePuzzleBoard
             board={board}

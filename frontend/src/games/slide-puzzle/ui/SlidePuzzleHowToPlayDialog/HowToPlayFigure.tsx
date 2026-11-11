@@ -8,6 +8,7 @@ import {
   type SlidePuzzleTile,
 } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleTileFace } from "@/games/slide-puzzle/ui/board/SlidePuzzleTileFace";
+import "@/games/slide-puzzle/ui/board/slide-puzzle-visual.css";
 
 /** 盤面と同じく、一辺のマス数で縦横を等分する。 */
 const gridClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
@@ -29,16 +30,21 @@ export function HowToPlayFigure({ board, pressedTile }: HowToPlayFigureProps) {
   return (
     <span
       aria-hidden="true"
-      className="@container block size-28 shrink-0 rounded-md bg-muted p-[1%]"
+      data-slide-size={boardSize}
+      className="slide-board @container block size-28 shrink-0"
     >
-      <span className={`grid size-full ${gridClassByBoardSize[boardSize]}`}>
+      <span
+        className={`slide-track grid size-full ${gridClassByBoardSize[boardSize]}`}
+      >
         {board.map((tile) => (
-          <span key={tile} className="relative p-[1cqw]">
-            {tile === SLIDE_PUZZLE_BLANK ? null : (
-              <SlidePuzzleTileFace tile={tile} boardSize={boardSize} />
+          <span key={tile} className="slide-tile relative">
+            {tile === SLIDE_PUZZLE_BLANK ? (
+              <span className="slide-blank block size-full" />
+            ) : (
+              <SlidePuzzleTileFace tile={tile} />
             )}
             {tile === pressedTile ? (
-              <Pointer className="absolute -right-0.5 -bottom-1 size-4 fill-background text-foreground" />
+              <Pointer className="absolute -right-0.5 -bottom-1 z-10 size-4 fill-background text-foreground" />
             ) : null}
           </span>
         ))}

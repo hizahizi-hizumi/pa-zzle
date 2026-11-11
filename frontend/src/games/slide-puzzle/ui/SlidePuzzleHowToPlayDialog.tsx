@@ -49,7 +49,7 @@ export function SlidePuzzleHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          空白と同じ行・列のタイルをタップすると、間のタイルごとまとめてスライドする。手数は動いたタイルの枚数で数える。
+          空白と同じ行・列のタイルは、タップするか空白へドラッグすると、間のタイルごとスライドする。手数は動いたタイルの枚数で数える。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure

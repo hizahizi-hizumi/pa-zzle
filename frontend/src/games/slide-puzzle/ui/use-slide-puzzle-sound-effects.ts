@@ -31,7 +31,7 @@ const slidSound = defineSoundEffect(slidSoundUrl);
 
 const invalidSound = defineSoundEffect(invalidSoundUrl);
 
-/** 完成演出の波でタイルが持ち上がるたびに鳴らす1音。低い順に並べ、盤面の大きさによらず最初から最後まで駆け上がる。 */
+/** 木片の沈み込みに合わせて鳴らす音。盤面の枚数が増えても音数を増やさない。 */
 const clearScaleSounds = [
   clearNoteC5SoundUrl,
   clearNoteD5SoundUrl,
@@ -49,22 +49,18 @@ const slidePuzzleSounds: readonly SoundEffect[] = [
   ...clearScaleSounds,
 ];
 
-/** 1番から順にタイルが持ち上がるのに合わせて、音を1枚ずつ上げていくクリア音。 */
+/** 波の中から8か所を拾い、木片の動きと音の位置を揃える。 */
 function createClearedSoundLayers(tileCount: number): SoundLayer[] {
   const lastScaleIndex = clearScaleSounds.length - 1;
-  const firstTileDelayMs = getClearWaveTileDelayMs(0);
-  return Array.from({ length: tileCount }, function createTileNote(_, order) {
-    const scaleIndex = Math.round(
-      (order * lastScaleIndex) / Math.max(tileCount - 1, 1),
-    );
-    const sound = clearScaleSounds[scaleIndex];
-    return (
-      sound && {
-        sound,
-        offsetMs: getClearWaveTileDelayMs(order) - firstTileDelayMs,
-      }
-    );
-  }).filter((layer) => layer !== undefined);
+  const firstTileDelayMs = getClearWaveTileDelayMs(0, tileCount);
+  return clearScaleSounds.map((sound, index) => {
+    const tileOrder = Math.round((index * (tileCount - 1)) / lastScaleIndex);
+    return {
+      sound,
+      offsetMs:
+        getClearWaveTileDelayMs(tileOrder, tileCount) - firstTileDelayMs,
+    };
+  });
 }
 
 function playOperationSound(operation: SlidePuzzleOperation) {
@@ -93,9 +89,11 @@ export function useSlidePuzzleSoundEffects(
   usePrepareSoundEffects(slidePuzzleSounds);
   useOperationSound(operation, playOperationSound);
   useClearSound(progress, function playClearSound() {
-    // 波は最後のタイルが滑り終えてから始まる。
+    if (prefersReducedMotion()) {
+      return;
+    }
     playLayeredSound(createClearedSoundLayers(tileCount), {
-      delayMs: getClearWaveTileDelayMs(0),
+      delayMs: getClearWaveTileDelayMs(0, tileCount),
     });
   });
 }

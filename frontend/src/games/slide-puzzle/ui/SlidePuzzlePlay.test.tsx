@@ -85,6 +85,18 @@ describe("SlidePuzzlePlay", () => {
       expect(elapsedTime?.textContent).toBe("時間01:05");
     });
 
+    test("通常のプレイで木製の盤面が表示されること", () => {
+      const board = screen.getByRole("group", { name: "盤面" });
+
+      expect(board.classList.contains("slide-board")).toBe(true);
+      expect(
+        screen.queryByRole("navigation", { name: "盤面デザインの比較" }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole("navigation", { name: "体験の比較" }),
+      ).toBeNull();
+    });
+
     test("タイルのタップでそのタイルのマスを通知すること", () => {
       fireEvent.click(
         within(screen.getByRole("group", { name: "盤面" })).getByText("15"),
