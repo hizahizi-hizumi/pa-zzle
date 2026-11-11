@@ -155,17 +155,18 @@ const GRID_DOT_RADIUS = 0.03;
 /** 波打ち際の白い線の、陸の輪郭に対する倍率と太さ。 */
 const SURF_SCALE = 1.14;
 const SURF_WIDTH = 0.03;
-/** 陸の縁の濡れた砂の太さ。 */
-const WET_SAND_WIDTH = 0.05;
+/** 陸の縁の濡れた砂の太さ。浜の縁を帯として見せ、陸を円盤の縁取りに見せない太さにする。 */
+const WET_SAND_WIDTH = 0.08;
 /** 多すぎの島の、途切れた縁の太さ。 */
-const OVER_RIM_WIDTH = 0.085;
+const OVER_RIM_WIDTH = 0.11;
 /**
- * ちょうどの島の草地の、陸の輪郭に対する倍率。10×10 のスマホ（陸の直径 32px ほど）で草地を直径 22px ほどにし、数字を草地の中に
- * 収めながら、草地の周りに砂の陸が見える幅を残す。
+ * ちょうどの島の草地の、陸の輪郭に対する倍率。海岸線と同じ揺らいだ輪郭で縁の近くまで広げ、濡れた砂の内側に乾いた砂を細く残す。
+ * 中に丸い印を置いたバッジに見せず、草に覆われた島に見せる。
  */
-const GRASS_SCALE = 0.68;
-/** 阻んだ橋の板の外側に見せる、薔薇色の縁取りの幅。多すぎの島の縁より細くする。 */
-const BLOCKING_OUTLINE_EXTRA = 0.08;
+const GRASS_SCALE = 0.86;
+/** 阻んだ橋の板の外側に、片側に見せる薔薇色の縁取りの幅と、その外の白い縁の幅。 */
+const BLOCKING_OUTLINE_SIDE = 0.12;
+const BLOCKING_CASING_SIDE = 0.03;
 /** ロープの太さと撚りの切れ目、縁の太さ。 */
 const ROPE_WIDTH = 0.12;
 const ROPE_DASH = "0.15 0.07";
@@ -913,13 +914,25 @@ export function BridgesFigure({
               <g
                 {...{ [bridgesFigureParts.blockingOutline]: edge }}
                 opacity={showsBlockingEdges ? 1 : 0}
+                strokeLinecap="round"
               >
+                <SegmentLine
+                  segment={segment}
+                  className={bridgesToneClassNames.blockingCasing}
+                  strokeWidth={
+                    (getFootprintHalfWidth(count, layout) +
+                      BLOCKING_OUTLINE_SIDE +
+                      BLOCKING_CASING_SIDE) *
+                    2
+                  }
+                />
                 <SegmentLine
                   segment={segment}
                   className={bridgesToneClassNames.blockingBridge}
                   strokeWidth={
-                    getFootprintHalfWidth(count, layout) * 2 +
-                    BLOCKING_OUTLINE_EXTRA
+                    (getFootprintHalfWidth(count, layout) +
+                      BLOCKING_OUTLINE_SIDE) *
+                    2
                   }
                 />
               </g>

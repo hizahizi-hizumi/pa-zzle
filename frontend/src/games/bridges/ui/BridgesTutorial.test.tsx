@@ -309,7 +309,7 @@ describe("BridgesTutorial", () => {
         vi.mocked(playLayeredSound).mockClear();
         tap(edgePoints.middle);
         const blockingLines = getBoard().querySelectorAll(
-          "[data-bridges-blocking] line",
+          "[data-bridges-blocking]",
         );
 
         expect(getIslandLabel(3, 1)).toBe("3行1列の島 数字1 橋0本");
@@ -410,7 +410,7 @@ describe("BridgesTutorial", () => {
         test("交わる橋に阻まれる所を押すと、本番と同じく阻んだ橋を点けて阻まれた音を鳴らし、続くと交差の一言を出すこと", () => {
           tap(edgePoints.middle);
           const blockingLines = getBoard().querySelectorAll(
-            "[data-bridges-blocking] line",
+            "[data-bridges-blocking]",
           );
           const messageBeforeSettled = screen.queryByText(/交差するので/);
           advanceTime(violationReactionDelayMs);

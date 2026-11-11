@@ -2,14 +2,15 @@ import { bridgesFigureParts } from "@/games/bridges/ui/board/BridgesFigure";
 import { prefersReducedMotion } from "@/lib/motion";
 
 /**
- * 阻んだ橋の縁取りの点灯。板が突き当たるときに点け、0.6秒で消し切る。続く状態の多すぎの縁より細く短くし、一瞬の知らせにとどめる。
- * 動かない点灯なので、動きを減らす設定でも返す。
+ * 阻んだ橋の縁取りの点灯。板が突き当たるときに点け、しばらく点けたまま 0.8 秒で消し切る。続く状態の多すぎ（消えない陸の色）とは、
+ * 点いて消える動きで分ける。動かない点灯なので、動きを減らす設定でも返す。
  */
-const OUTLINE_MS = 600;
+const OUTLINE_MS = 800;
 const outlineKeyframes: Keyframe[] = [
   { opacity: 0 },
-  { opacity: 0, offset: 0.3 },
-  { opacity: 1, offset: 0.36 },
+  { opacity: 0, offset: 0.22 },
+  { opacity: 1, offset: 0.27 },
+  { opacity: 1, offset: 0.6 },
   { opacity: 0 },
 ];
 
@@ -36,9 +37,9 @@ const reducedAttemptKeyframes: Keyframe[] = [
 ];
 
 /** 阻んだ橋の板を、板の幅の向きへ短く揺らす時間と、揺れの幅の並び（マス幅を 1 とした値）。板が突き当たったときに揺らす。 */
-const SHAKE_MS = 300;
+const SHAKE_MS = 360;
 const SHAKE_DELAY_MS = ATTEMPT_MS * 0.3;
-const SHAKE_OFFSETS = [0, 0.05, -0.04, 0.025, 0] as const;
+const SHAKE_OFFSETS = [0, 0.08, -0.07, 0.05, -0.025, 0] as const;
 
 function createShakeKeyframes(axis: string | null): Keyframe[] {
   return SHAKE_OFFSETS.map((offset) => ({
@@ -51,7 +52,7 @@ function createShakeKeyframes(axis: string | null): Keyframe[] {
 
 /**
  * 交わる橋に阻まれて架けられなかったことを、盤面だけで返す。文字は出さない。
- * 押した島から板を伸ばして阻んだ橋に突き当て、弾き返す動きを主にし、突き当たったときに阻んだ橋を短く揺らして細く縁取り、
+ * 押した島から板を伸ばして阻んだ橋に突き当て、弾き返す動きを主にし、突き当たったときに阻んだ橋を揺らして明るく縁取り、
  * どこを押してどの橋に阻まれたかを形で知らせる。動きを減らす設定では伸ばさず揺らさない。
  */
 export function flashBlockingBridges(figure: SVGSVGElement | null): void {
