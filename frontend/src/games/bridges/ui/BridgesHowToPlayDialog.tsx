@@ -63,14 +63,14 @@ export function BridgesHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          橋どうしは交差しない。交わる所に架けようとすると、邪魔をしている橋が赤く縁取られて揺れる。
+          橋どうしは交差しない。架かった橋をまたいで架けようとすると、邪魔をしている橋が赤く縁取られて揺れる。交わる所のすぐそばを押すと、どちらの橋も変えずに2つの組を示すので、島から選んで架ける。
         </p>
         <HowToPlayFigure
           board={crossBoard}
           bridges={[0, 1]}
           blockingEdges={[1]}
           blockedEdge={0}
-          finger={{ x: 1.5, y: 1.05 }}
+          finger={{ x: 1.5, y: 1.15 }}
         />
       </li>
       <li className="space-y-2">

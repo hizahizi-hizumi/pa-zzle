@@ -241,35 +241,92 @@ describe("BridgesBoard", () => {
     });
   });
 
-  describe("交わる2本の線から同じ距離の所を押した場合", () => {
-    // 辺2（縦 x=2.5）と辺3（横 y=2.5）が (2.5, 2.5) で交わる。(2.7, 2.3) は2本の線から同じ距離で、真ん中からのずれも同じ。
-    const crossingBoard = parseBridgesBoard([
-      "1.1..",
-      ".....",
-      "1...1",
-      ".....",
-      "..1..",
+  describe("交わる2本の線のどちらにも近い所を押した場合", () => {
+    // 8×8 の盤面。縦の 1–4（(1,1)-(5,1)）と横の 2–2（(3,0)-(3,2)）が、横の2島の真ん中 (1.5, 3.5) で交わる。
+    const crossBoard = parseBridgesBoard([
+      "3.3....2",
+      ".1..1...",
+      ".....4.5",
+      "2.2.3...",
+      ".....2..",
+      ".4..4..4",
+      "........",
+      ".4..3.1.",
     ]);
+    const network = getBridgesNetwork(crossBoard);
+    const vertical = network.edges.findIndex(
+      ({ from, to }) =>
+        crossBoard.islands[from]!.column === 1 &&
+        crossBoard.islands[from]!.row === 1 &&
+        crossBoard.islands[to]!.row === 5,
+    );
+    const horizontal = network.edges.findIndex(
+      ({ from, to }) =>
+        crossBoard.islands[from]!.row === 3 &&
+        crossBoard.islands[from]!.column === 0 &&
+        crossBoard.islands[to]!.column === 2,
+    );
     let onCycleEdge: ReturnType<typeof vi.fn<(edge: number) => void>>;
+    let onIneffectivePress: ReturnType<typeof vi.fn<() => void>>;
 
-    beforeEach(() => {
+    function renderWithBridges(counts: Readonly<Record<number, 0 | 1 | 2>>) {
       onCycleEdge = vi.fn<(edge: number) => void>();
-      render(renderBoard(crossingBoard, onCycleEdge));
-      placeBoard(crossingBoard);
+      onIneffectivePress = vi.fn<() => void>();
+      render(
+        <BridgesBoard
+          board={crossBoard}
+          bridges={network.edges.map((_, edge) => counts[edge] ?? 0)}
+          islandStatuses={crossBoard.islands.map(() => "short")}
+          edgeNotice={null}
+          clearing={false}
+          interactionDisabled={false}
+          onCycleEdge={onCycleEdge}
+          onIneffectivePress={onIneffectivePress}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+      placeBoard(crossBoard);
+    }
+
+    function listHintEdges(): number[] {
+      return [
+        ...document.querySelectorAll(
+          "[data-bridges-crossing-hint] [data-bridges-rope]",
+        ),
+      ].map((rope) => Number(rope.getAttribute("data-bridges-rope")));
+    }
+
+    test.each([
+      ["橋の無い交点", {}, [1.5, 3.5]],
+      ["橋の無い交点から右へ 0.15 マス", {}, [1.65, 3.5]],
+      ["縦に橋が1本ある交点", { [vertical]: 1 }, [1.5, 3.5]],
+      ["縦に橋が2本ある交点", { [vertical]: 2 }, [1.5, 3.5]],
+    ] as const)(
+      "%sを押すと、どちらの橋も回さず、2辺にロープを張って候補を示すこと",
+      (_, counts, point) => {
+        renderWithBridges(counts);
+        press(point);
+
+        expect(onCycleEdge).not.toHaveBeenCalled();
+        expect(onIneffectivePress).toHaveBeenCalledOnce();
+        expect(listHintEdges().sort()).toEqual([vertical, horizontal].sort());
+      },
+    );
+
+    test("縦の橋の上でも、横の線から離れた所を押せば縦の橋を回すこと", () => {
+      renderWithBridges({ [vertical]: 1 });
+      press([1.5, 2.4]);
+
+      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(vertical);
     });
 
-    test("空振りさせず、どちらか1つの辺の橋を回すこと", () => {
-      press([2.7, 2.3]);
+    test("候補を示した後で島を押して相手の島を押すと、その間の橋を回すこと", () => {
+      renderWithBridges({});
+      press([1.5, 3.5]);
+      press([0.5, 3.5]);
+      press([2.5, 3.5]);
 
-      expect(onCycleEdge).toHaveBeenCalledOnce();
-    });
-
-    test("直前に島を押していれば、その島から伸びる辺の橋を回すこと", () => {
-      press([0.5, 2.5]);
-      press([0.5, 2.5]);
-      press([2.7, 2.3]);
-
-      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(3);
+      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(horizontal);
     });
   });
 
@@ -360,12 +417,12 @@ describe("BridgesBoard", () => {
       expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(3);
     });
 
-    test("印があっても押させる辺が無ければ、本番と同じく押した位置から1つの辺を選んで回すこと", () => {
+    test("印があっても押させる辺が無ければ、本番と同じくどちらの辺の橋も回さないこと", () => {
       const onCycleEdge = vi.fn<(edge: number) => void>();
       renderWith({ onCycleEdge });
       press([2.5, 2.5]);
 
-      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(2);
+      expect(onCycleEdge).not.toHaveBeenCalled();
     });
   });
 });
