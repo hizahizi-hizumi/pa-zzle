@@ -2,8 +2,8 @@ import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
 
 /**
  * ブリッジパズル固有の色。題材の海・島・木の橋から選び、共通UIの意味色（`primary`・`error` など）は流用しない。
- * 色は役割ごとに1つにし、同じ色を別の部品で使い回す（杭と横木は欄干の色、ロープの輪はロープの色、灯りの杭は灯りの色、
- * 阻んだ橋は多すぎの縁の色、波紋は波打ち際の泡の色、予告の板の影は板の色）。
+ * 色は役割ごとに1つにし、同じ色を別の部品で使い回す（杭と横木は欄干の色、ロープの輪はロープの色、阻んだ橋は多すぎの縁の色、
+ * 予告の板の影は板の色）。
  * - 海は盤面の周りから盤面の地まで、ブランドの帯と見出しの後ろまで同じ色でつなげる。解く間は彩度を抑えた青緑
  *   （ダークは深い青緑）にし、ほかのゲームの低彩度の地と並べても盤面より前に出さない。ライトの海は陸と 2.2:1 以上離し、
  *   波打ち際の線に頼らず島を海から浮かせる。ダークの海はページの地と 1.8:1 ほど離し、黒い地に沈ませない。
@@ -20,9 +20,8 @@ import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
  * - 島から架けられる相手へ張るロープ（なぞる間と、島を選んでいる間）は、海・板・どの島の状態とも紛れない紺（ダークは白）にし、
  *   板の上でも読めるよう反対の明るさの縁で囲む。ロープの下には、相手の島までの区間だけ同じ色の半透明の帯を敷く。
  *   離せば架かる辺には、架かった後の板の影を半透明で置く。
- * - 全島がつながった瞬間は、島が灯り、島の周りの水が海と同じ色相のまま明るく澄み、橋は杭の灯りが順に点いて板が一瞬
- *   明るい木の色になる。光らせるのは島の周りだけにし、橋に沿って光らせない。画面全体の海の色は変えず、ブランドの帯と
- *   見出しの後ろの海とつないだままにする。澄んだ水は海と明るさで 1.6:1 以上離し、島の輪郭線で島を溶かさない。
+ * - 全島がつながった瞬間は、最後に架けた橋から橋のつながりをたどって、板が明るい木の色に変わる光を島から島へ渡し、
+ *   光が着いた島を弾ませる。足す色は明るい木の色だけにし、島の状態の色と海の色は変えない。
  */
 export const bridgesToneClassNames = {
   sea: "bg-[#72aebb] dark:bg-[#18404f]",
@@ -36,13 +35,11 @@ export const bridgesToneClassNames = {
   gridDot: "fill-white/35 dark:fill-[#d9f3f2]/20",
   /** チュートリアルで見る所を絞っている間に、海に重ねる深い海の色。灰色の覆いの代わりに、海の色のまま暗くする。 */
   focusVeil: "fill-[#0e3d4a] dark:fill-[#03141b]",
-  /** 全島がつながった後の、灯った島の周りの澄んだ水。海と同じ色相で、明るさも上げる。 */
-  litShallowsStop: "[stop-color:#a6dfe4] dark:[stop-color:#2f7686]",
   bridgeShadow: "stroke-[#1f5a63]/30 dark:stroke-black/40",
   bridgeRail: "stroke-[#5a361a] dark:stroke-[#94663a]",
   bridgeDeck: "stroke-[#9e6a3a] dark:stroke-[#c99358]",
   bridgeSeam: "stroke-[#5a361a]/45 dark:stroke-[#6e4523]/45",
-  /** 全島がつながったときに、板が一瞬なる明るい木の色。 */
+  /** 全島がつながったときに、光が渡った板がなる明るい木の色。 */
   bridgeDeckLit: "stroke-[#e2b277] dark:stroke-[#eec48a]",
   /** 橋の両端の杭。 */
   bridgePost: "fill-[#5a361a] dark:fill-[#94663a]",
@@ -57,11 +54,6 @@ export const bridgesToneClassNames = {
   guideGhost: "stroke-[#9e6a3a]/55 dark:stroke-[#c99358]/55",
   /** 離せば外れる板に重ねる、海の色の覆い。 */
   guideRemoval: "stroke-[#72aebb]/75 dark:stroke-[#18404f]/75",
-  /** 灯った島の、陸の後ろの暖かい光と杭の灯り。 */
-  lanternStop: "[stop-color:#f5b82e]",
-  lanternPost: "fill-[#f5b82e]",
-  /** 灯った島から海へ広がる波紋。 */
-  ripple: "stroke-white dark:stroke-[#d9f3f2]",
 } as const;
 
 /**

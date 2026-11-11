@@ -44,7 +44,7 @@ const bridgeRemovedSound = defineSoundEffect(bridgeRemovedSoundUrl);
 const blockedSound = defineSoundEffect(blockedSoundUrl);
 
 /**
- * 島が灯る段ごとに、五音音階を1つずつ上がって鳴らす短いブイの鐘に、水面に落ちる水滴を重ねた音。段の多い盤面でも、この数を上限に間引いて鳴らす。
+ * 完成の光が島に着く段ごとに、五音音階を1つずつ上がって鳴らす短いブイの鐘に、水面に落ちる水滴を重ねた音。段の多い盤面でも、この数を上限に間引いて鳴らす。
  * 続く鐘と重なって濁らないよう、次の鐘が鳴る頃には減り切る短さにする。
  */
 const clearedLightSounds = [
@@ -56,8 +56,8 @@ const clearedLightSounds = [
 ].map(defineSoundEffect);
 
 /**
- * 全島が灯り切ったときの、ド・ミ・ソの鐘の和音に、浜に寄せて返す波の層を重ねた音。続けて鳴る結果の報酬の音と同じ調で鳴らす。
- * 灯りの音と合わせた長さと大きさを、ほかのゲームの完成の音（重ねた全体で 1.3〜1.8 秒、ピーク −18.5〜−19.5dBFS）にそろえる。
+ * 全部の島に光が届いたときの、ド・ミ・ソの鐘の和音に、浜に寄せて返す波の層を重ねた音。続けて鳴る結果の報酬の音と同じ調で鳴らす。
+ * 段ごとの鐘と合わせた長さと大きさを、ほかのゲームの完成の音（重ねた全体で 1.3〜1.8 秒、ピーク −18.5〜−19.5dBFS）にそろえる。
  */
 const clearedChordSound = defineSoundEffect(clearedChordSoundUrl);
 
@@ -76,8 +76,8 @@ const bridgeLandingSounds = {
 } as const satisfies Record<Exclude<BridgeCount, 0>, SoundEffect>;
 
 /**
- * 島が灯る段の時間に、上がっていく音を並べる。段が音の数より多ければ、最初と最後の段を含めて等間隔に選んだ段で鳴らす。
- * 最後の島が灯り切る時に和音を鳴らす。
+ * 光が島に着いて島が弾む段の時間に、上がっていく音を並べる。段が音の数より多ければ、最初と最後の段を含めて等間隔に選んだ段で鳴らす。
+ * 最も遠い島が最も膨らみ、全部の島に光が届いた時（演出の山）に和音を鳴らす。
  */
 export function createClearedSoundLayers(
   board: BridgesBoard,
@@ -125,7 +125,7 @@ export function createBridgeSoundLayers(
   return [{ sound: landing, offsetMs: getBridgeExtendMs(board, edge) }];
 }
 
-/** 動きを減らす設定では、灯りを渡さず灯った盤面をそのまま見せるので、和音だけを鳴らす。 */
+/** 動きを減らす設定では、光を渡さず渡り切った盤面をそのまま見せるので、和音だけを鳴らす。 */
 function playReducedMotionClearSound() {
   playSound(clearedChordSound);
 }

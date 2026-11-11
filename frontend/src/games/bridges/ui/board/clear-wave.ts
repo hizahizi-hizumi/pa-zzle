@@ -1,6 +1,6 @@
 /**
- * 完成演出の時間割。最後に架けた橋の両端の島から架かった橋をたどって、たどり着いた段ごとに島を灯し、最後の島が灯り切ったときに
- * 締めの音を鳴らす。
+ * 完成演出の時間割。最後に架けた橋が着いたら、その両端の島から架かった橋をたどって、板が明るい木の色に変わる光を相手の島へ渡し、
+ * 光が着いた島を弾ませる。全部の島に光が届いたときに締めの音を鳴らす。
  * 盤面の動きとクリア音が同じ時間割で揃うよう、ここに置いて両方から使う。
  */
 
@@ -9,17 +9,20 @@ import {
   getBridgesNetwork,
 } from "@/games/bridges/puzzle/board";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
+import { getBridgeExtendMs } from "@/games/bridges/ui/board/bridge-extend";
 
-/** 最後に架けた橋の両端の島が灯り始めるまでの間。最後に架けた板が着いた盤面を一瞬見せる。 */
-export const CLEAR_LIGHT_START_MS = 80;
+/** 最後に架けた板が相手の島に着いてから、その両端の島が弾み始めるまでの間。着いた音と最初の鐘を聞き分けられるだけ離す。 */
+const CLEAR_START_AFTER_LANDING_MS = 40;
+/** 最後に架けた橋が分からない（盤面を戻した後など）ときの、島0 が弾み始めるまでの間。 */
+const CLEAR_START_WITHOUT_ORIGIN_MS = 80;
 
 /**
- * 隣の段の島が灯るまでの間隔。最後の手から結果へ移るまでを、ほかのゲームの完成演出の長さに近づけるよう、灯りが渡り切るまでを
- * 下の上限に収める。
+ * 光が1本の橋を渡り、隣の段の島に着くまでの時間。島から島へ順に渡るのが目で追える遅さにし、段の多い盤面では、
+ * 光が全部の島に届くまでを下の上限に収めて、最後の手から結果へ移るまでをほかのゲームの完成演出の長さに収める。
  */
-const WAVE_STEP_MS = 70;
-const WAVE_MAX_SPREAD_MS = 380;
-/** 1つの島が灯って膨らみ、戻る時間。 */
+const WAVE_STEP_MS = 120;
+const WAVE_MAX_SPREAD_MS = 720;
+/** 1つの島が弾んで（膨らんで）戻る時間。 */
 export const ISLAND_POP_MS = 360;
 /** 島が最も膨らむ時点の、膨らみ始めからの割合。 */
 const ISLAND_POP_PEAK_OFFSET = 0.4;
@@ -31,7 +34,7 @@ export const islandPopKeyframes: Keyframe[] = [
 
 /**
  * 最後に架けた橋 `originEdge` の両端の島から、架かった橋をたどったときの、島ごとの段数（両端の島が 0）。たどれない島は `null`。
- * `originEdge` が無ければ島0 から数える。クリアした盤面では全島がつながっているので、灯りが全島に届く。
+ * `originEdge` が無ければ島0 から数える。クリアした盤面では全島がつながっているので、光が全島に届く。
  */
 export function listClearWaveDepths(
   board: BridgesBoard,
@@ -59,18 +62,21 @@ export function listClearWaveDepths(
   return depths;
 }
 
-/** 隣の段の島が灯るまでの間隔。灯り切るまでが上限に収まるよう、段の多い盤面では縮める。 */
+/** 光が1本の橋を渡る時間。全部の島に届くまでが上限に収まるよう、段の多い盤面では縮める。 */
 export function getClearWaveStepMs(deepest: number): number {
   return Math.min(WAVE_STEP_MS, WAVE_MAX_SPREAD_MS / Math.max(1, deepest));
 }
 
 /**
- * 演出の時間割。どれも演出の始まりからの時間。
- * - `depthStartMs`: 段ごとの、その段の島が灯り始める時間。添字が段数。
- * - `allLitMs`: 最も遠い島が最も膨らみ、全島が灯り切ったと見える時間。
+ * 演出の時間割。どれも演出の始まり（最後の手）からの時間。
+ * - `depthStartMs`: 段ごとの、その段の島に光が着いて島が弾み始める時間。添字が段数。段 d から段 d+1 への橋は、
+ *   `depthStartMs[d]` から `depthStartMs[d + 1]` までの `stepMs` で光が渡る。
+ * - `stepMs`: 光が1本の橋を渡る時間。
+ * - `allLitMs`: 最も遠い島が最も膨らみ、全部の島に光が届いたと見える時間。演出の山で、締めの音をここで鳴らす。
  */
 export type ClearWaveTiming = {
   depthStartMs: readonly number[];
+  stepMs: number;
   allLitMs: number;
 };
 
@@ -86,12 +92,17 @@ export function getClearWaveTiming(
     ),
   );
   const stepMs = getClearWaveStepMs(deepest);
+  const startMs =
+    originEdge === null
+      ? CLEAR_START_WITHOUT_ORIGIN_MS
+      : getBridgeExtendMs(board, originEdge) + CLEAR_START_AFTER_LANDING_MS;
   const depthStartMs = Array.from(
     { length: deepest + 1 },
-    (_, depth) => CLEAR_LIGHT_START_MS + depth * stepMs,
+    (_, depth) => startMs + depth * stepMs,
   );
   return {
     depthStartMs,
+    stepMs,
     allLitMs: depthStartMs[deepest]! + ISLAND_POP_MS * ISLAND_POP_PEAK_OFFSET,
   };
 }

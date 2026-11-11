@@ -60,6 +60,11 @@ type BridgesBoardProps = {
   edgeNotice: BridgesEdgeNotice | null;
   /** クリアしてから演出を終えるまで `true`。 */
   clearing: boolean;
+  /**
+   * 全部の島がつながった後か。完成演出を終えて結果へ移る間も、明るい木の色の橋で完成した姿のまま描く。
+   * 省略すると `clearing` の間だけ明るい橋で描く。
+   */
+  solved?: boolean;
   interactionDisabled: boolean;
   /** 盤面の絵の地に海を描くか。画面全体の海の上に置くプレイ画面では描かない。 */
   showsSea?: boolean;
@@ -202,6 +207,7 @@ export function BridgesBoard({
   islandStatuses,
   edgeNotice,
   clearing,
+  solved = clearing,
   interactionDisabled,
   showsSea = false,
   cues = [],
@@ -254,7 +260,7 @@ export function BridgesBoard({
               : network.edges[edgeNotice.edge]!.from,
         }
       : null;
-  // 灯りは最後に架けた橋から広げる。
+  // 完成の光は最後に架けた橋から渡す。
   const clearOriginEdge =
     edgeNotice?.change === "changed" && edgeNotice.edge < network.edges.length
       ? edgeNotice.edge
@@ -402,7 +408,8 @@ export function BridgesBoard({
     };
   }, [hasSelection, candidatePress]);
 
-  useEffect(() => {
+  // 光が渡る前の、明るい木の色の板を1コマも見せないよう、描いた直後に演出を始める。
+  useLayoutEffect(() => {
     if (!clearing) {
       return;
     }
@@ -710,7 +717,7 @@ export function BridgesBoard({
         blockingEdges={blockingEdges}
         blockedAttempt={blockedAttempt}
         retractingEdge={retractingEdge}
-        lit={clearing}
+        lit={clearing || solved}
         clearOriginEdge={clearOriginEdge}
         compact={compact}
       />

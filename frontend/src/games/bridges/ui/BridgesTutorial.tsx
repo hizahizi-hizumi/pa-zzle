@@ -286,6 +286,11 @@ export function BridgesTutorial({
                 islandStatuses={getBridgesTutorialIslandStatuses(shownState)}
                 edgeNotice={showsGoal ? null : edgeNotice}
                 clearing={!showsGoal && progress.phase === "solved"}
+                solved={
+                  !showsGoal &&
+                  (progress.phase === "solved" ||
+                    progress.phase === "completed")
+                }
                 interactionDisabled={showsGoal || !solving}
                 showsSea
                 cues={

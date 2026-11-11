@@ -106,6 +106,7 @@ export function BridgesPlay({
             islandStatuses={islandStatuses}
             edgeNotice={edgeNotice}
             clearing={progress === "clearing"}
+            solved={progress !== "playing"}
             interactionDisabled={progress !== "playing"}
             onCycleEdge={onCycleEdge}
             onCycleEdgeBackward={(edge) => onCycleEdge(edge, "backward")}

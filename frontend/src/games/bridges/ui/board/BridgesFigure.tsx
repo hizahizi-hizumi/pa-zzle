@@ -1,4 +1,4 @@
-import { type Ref, useId } from "react";
+import type { Ref } from "react";
 
 import {
   type BridgesBoard,
@@ -89,9 +89,9 @@ type BridgesFigureProps = {
   showsBlockingEdges?: boolean;
   /** 2本の橋を外したばかりの辺。外す動きで縮める2枚の板を、見えない姿で描いておく。 */
   retractingEdge?: number | null;
-  /** 全島がつながった盤面を灯すか。島の灯り、杭の灯り、明るい木の色の板、波紋、島の周りの澄んだ浅瀬を描く。 */
+  /** 全島がつながった盤面か。架かった橋の板に、明るい木の色の面を重ねて描く。 */
   lit?: boolean;
-  /** 灯りを広げ始める、最後に架けた橋の辺。無ければ島0 から広げる。 */
+  /** 明るい木の色を渡し始める、最後に架けた橋の辺。無ければ島0 から渡す。 */
   clearOriginEdge?: number | null;
   /**
    * マスが小さい盤面か（スマホの 9×9 以上ほど）。板の横木の刻みを省いて板を太くし、2本の板の間を広げて、
@@ -101,7 +101,7 @@ type BridgesFigureProps = {
   ref?: Ref<SVGSVGElement>;
 };
 
-/** 演出が図の部品を探すための属性。灯りの部品の値は、その島が灯る段数。 */
+/** 演出が図の部品を探すための属性。明るい木の色の板の値は、その板へ光が渡り始める段数。 */
 export const bridgesFigureParts = {
   island: "data-bridges-island",
   bridgeEdge: "data-bridges-edge",
@@ -111,11 +111,7 @@ export const bridgesFigureParts = {
   bridgeAxis: "data-bridges-edge-axis",
   blockingOutline: "data-bridges-blocking",
   blockedAttempt: "data-bridges-blocked-attempt",
-  lantern: "data-bridges-lantern",
-  litShallows: "data-bridges-lit-shallows",
   litDeck: "data-bridges-lit-deck",
-  lanternPost: "data-bridges-lantern-post",
-  ripple: "data-bridges-ripple",
   rope: "data-bridges-rope",
   candidateHint: "data-bridges-candidate-hint",
   pressedEdge: "data-bridges-pressed-edge",
@@ -151,8 +147,6 @@ const SHADOW_OFFSET = { x: 0.02, y: 0.045 } as const;
 /** 杭の半径と、島の中心から杭までの距離。杭は島の輪郭線のすぐ外に立て、10×10 のスマホでも点でなく杭に見える太さにする。 */
 const POST_RADIUS = 0.065;
 const POST_DISTANCE = ISLAND_RADIUS + 0.1;
-/** 灯った島の周りの澄んだ浅瀬が海の色へ消えるまでの、島の中心からの距離。島の外に、灯りより広く澄んだ水を見せる。 */
-const LIT_SHALLOWS_RADIUS = 0.82;
 /** 島を触っている間に、架けられる相手までの区間に敷く帯の太さ。 */
 const GUIDE_BAND_WIDTH = 0.56;
 /** マスの中心の、島の無い所に打つ点の半径。 */
@@ -193,13 +187,6 @@ const FOCUS_VEIL_OPACITY = 0.38;
 const UNFOCUSED_OPACITY = 0.4;
 /** 阻まれた辺に架かるはずだった板の濃さ。板そのものを透かし、下の海が見える濃さにする。 */
 const BLOCKED_ATTEMPT_OPACITY = 0.5;
-/** 灯った島の後ろの光の広さと、灯り切った後に残す濃さ。灯り切った姿を結果へ進むまで保つ。 */
-const LANTERN_RADIUS = 1;
-export const LANTERN_SETTLED_OPACITY = 0.7;
-const LANTERN_POST_RADIUS = 0.075;
-/** 灯った島から広がる波紋の、広がり始めの半径と線の太さ。広がると太さも同じ倍率で太る。 */
-const RIPPLE_RADIUS = 0.5;
-const RIPPLE_WIDTH = 0.07;
 
 /**
  * 数字の字の大きさ。島の直径の6割ほどにし、10×10 のスマホで 20px ほど（ナンプレの盤面の数字と同じ大きさ）にする。
@@ -275,13 +262,12 @@ function getFootprintHalfWidth(
 
 /**
  * 橋の両端の杭の位置。両端の島ごとに、板の外側の左右に1本ずつ立てる。
- * - `end`: 0 は線分の始めの島、1 は終わりの島。
  */
 function listPostPoints(
   { start, end }: BoardSegment,
   count: BridgeCount,
   layout: PlankLayout,
-): { point: BoardPoint; end: 0 | 1 }[] {
+): BoardPoint[] {
   const length = Math.hypot(end.x - start.x, end.y - start.y);
   const along = {
     x: (end.x - start.x) / length,
@@ -296,29 +282,38 @@ function listPostPoints(
       y: origin.y + along.y * POST_DISTANCE * direction,
     };
     return [-1, 1].map((sign) => ({
-      point: {
-        x: base.x + across.x * side * sign,
-        y: base.y + across.y * side * sign,
-      },
-      end: endIndex,
+      x: base.x + across.x * side * sign,
+      y: base.y + across.y * side * sign,
     }));
   });
 }
 
 /**
+ * 全島がつながった盤面で、板に重ねる明るい木の色の面の渡り方。
+ * - `depth`: その板へ光が渡り始める段数。
+ * - `origin`: 光が渡り始める島の中心。段の違う島を結ぶ板は、段の浅い島から相手の島へ伸ばす。
+ *   同じ段の島を結ぶ板（最後に架けた橋など）は `null` にし、伸ばさずに浮かび上がらせる。
+ */
+type LitDeckWave = {
+  depth: number;
+  origin: BoardPoint | null;
+};
+
+/**
  * 1枚の木の板。影、欄干の縁、板の面、横木の順に重ねる。`seams` が無ければ横木を刻まない。
- * `litDepth` を渡すと、灯った盤面で一瞬なる明るい木の色の面を、見えない姿で重ねておく（値はその板が灯る段数）。
+ * `litWave` を渡すと、全島がつながった盤面の明るい木の色の面を、板の面と横木の間に重ねる。渡り切った姿で描き、
+ * 演出がその姿へ向けて光を渡す。
  */
 function BridgePlank({
   segment,
   width,
   seams,
-  litDepth = null,
+  litWave = null,
 }: {
   segment: BoardSegment;
   width: number;
   seams: boolean;
-  litDepth?: number | null;
+  litWave?: LitDeckWave | null;
 }) {
   const shadow = {
     start: {
@@ -350,8 +345,20 @@ function BridgePlank({
         className={bridgesToneClassNames.bridgeDeck}
         strokeWidth={deckWidth}
       />
-      {litDepth !== null && (
-        <g {...{ [bridgesFigureParts.litDeck]: litDepth }} opacity={0}>
+      {litWave !== null && (
+        <g
+          {...{ [bridgesFigureParts.litDeck]: litWave.depth }}
+          data-axis={segment.start.y === segment.end.y ? "x" : "y"}
+          data-spread={litWave.origin === null ? "fade" : "travel"}
+          style={
+            litWave.origin === null
+              ? undefined
+              : {
+                  transformBox: "view-box",
+                  transformOrigin: `${litWave.origin.x}px ${litWave.origin.y}px`,
+                }
+          }
+        >
           <SegmentLine
             segment={segment}
             className={bridgesToneClassNames.bridgeDeckLit}
@@ -376,12 +383,12 @@ function BridgePlanks({
   segment,
   count,
   layout,
-  litDepth = null,
+  litWave = null,
 }: {
   segment: BoardSegment;
   count: BridgeCount;
   layout: PlankLayout;
-  litDepth?: number | null;
+  litWave?: LitDeckWave | null;
 }) {
   return getPlankOffsets(count, layout).map((offset, plank) => (
     <g key={offset} {...{ [bridgesFigureParts.bridgePlank]: plank }}>
@@ -389,7 +396,7 @@ function BridgePlanks({
         segment={offsetSegment(segment, offset)}
         width={getPlankWidth(count, layout)}
         seams={layout.seams}
-        litDepth={litDepth}
+        litWave={litWave}
       />
     </g>
   ));
@@ -407,7 +414,7 @@ function BridgePosts({
 }) {
   return (
     <g className={bridgesToneClassNames.bridgePost}>
-      {listPostPoints(segment, count, layout).map(({ point }) => (
+      {listPostPoints(segment, count, layout).map((point) => (
         <circle
           key={`${point.x}:${point.y}`}
           cx={point.x}
@@ -651,38 +658,14 @@ function FigureSea({ view }: { view: BoardView }) {
   );
 }
 
-/** 中心から外へ透けていく、円の塗りの色の移り。`stops` は [位置, 濃さ] の組。 */
-function RadialFade({
-  id,
-  className,
-  stops,
-}: {
-  id: string;
-  className: string;
-  stops: readonly (readonly [number, number])[];
-}) {
-  return (
-    <radialGradient id={id}>
-      {stops.map(([offset, opacity]) => (
-        <stop
-          key={offset}
-          offset={offset}
-          stopOpacity={opacity}
-          className={className}
-        />
-      ))}
-    </radialGradient>
-  );
-}
-
 const centerOrigin = {
   transformBox: "fill-box",
   transformOrigin: "center",
 } as const;
 
 /**
- * 盤面の絵。下から、海・マスの中心の点・架けられる相手までの帯・灯った島の澄んだ浅瀬・灯りの光・波紋・板の予告・
- * 阻まれた辺の板・橋（阻んだ橋の縁取り、板、灯った板、杭）・外す板・杭の灯り・ロープ・交点の候補のロープ・島（平らな真円の塗りと輪郭線）と数字・
+ * 盤面の絵。下から、海・マスの中心の点・架けられる相手までの帯・板の予告・
+ * 阻まれた辺の板・橋（阻んだ橋の縁取り、板、明るい木の色の板、杭）・外す板・ロープ・交点の候補のロープ・島（平らな真円の塗りと輪郭線）と数字・
  * 選んだ島とキーボードの輪の順に重ねる。
  * 阻まれた辺の板の影は橋の下に置き、阻んだ橋がその上を渡って見えるようにする。
  * 橋は島の中心から中心へ描き、端を島で覆う。
@@ -712,9 +695,6 @@ export function BridgesFigure({
   ref,
 }: BridgesFigureProps) {
   const layout = compact ? plankLayouts.compact : plankLayouts.regular;
-  const gradientId = useId();
-  const lanternId = `${gradientId}-lantern`;
-  const litShallowsId = `${gradientId}-lit-shallows`;
   const { edges } = getBridgesNetwork(board);
   const islandCenters = board.islands.map((island) =>
     toViewPoint(view, getIslandCenter(island)),
@@ -722,6 +702,19 @@ export function BridgesFigure({
   const depths = lit
     ? listClearWaveDepths(board, bridges, clearOriginEdge)
     : [];
+  function getLitDeckWave(from: number, to: number): LitDeckWave | null {
+    const fromDepth = depths[from] ?? null;
+    const toDepth = depths[to] ?? null;
+    if (fromDepth === null || toDepth === null) {
+      return null;
+    }
+    if (fromDepth === toDepth) {
+      return { depth: fromDepth, origin: null };
+    }
+    return fromDepth < toDepth
+      ? { depth: fromDepth, origin: islandCenters[from]! }
+      : { depth: toDepth, origin: islandCenters[to]! };
+  }
   const previewEdge = guide?.previewEdge ?? null;
   // 阻まれる辺には架かった後の姿を見せず、ロープだけで押した辺を示す。
   const pressedGhostEdge =
@@ -780,30 +773,10 @@ export function BridgesFigure({
       ref={ref}
       viewBox={`0 0 ${view.width} ${view.height}`}
       className="absolute inset-0 size-full"
-      // 海を描かない絵は画面全体の海の上に置くので、灯りと波紋を絵の外の海まで広げる。
+      // 海を描かない絵は画面全体の海の上に置くので、弾んだ島を絵の外まで描く。
       overflow={showsSea ? "hidden" : "visible"}
       aria-hidden="true"
     >
-      <defs>
-        <RadialFade
-          id={litShallowsId}
-          className={bridgesToneClassNames.litShallowsStop}
-          stops={[
-            [0, 1],
-            [0.65, 1],
-            [1, 0],
-          ]}
-        />
-        <RadialFade
-          id={lanternId}
-          className={bridgesToneClassNames.lanternStop}
-          stops={[
-            [0, 1],
-            [0.5, 0.75],
-            [1, 0],
-          ]}
-        />
-      </defs>
       {showsSea && <FigureSea view={view} />}
       {focus && (
         <rect
@@ -820,49 +793,6 @@ export function BridgesFigure({
           edges={[...new Set([...(guide?.edges ?? []), ...bandEdges])]}
         />
       )}
-      {lit &&
-        islandCenters.map(({ x, y }, island) => (
-          <circle
-            key={`lit-shallows-${x}:${y}`}
-            {...{ [bridgesFigureParts.litShallows]: depths[island] ?? 0 }}
-            cx={x}
-            cy={y}
-            r={LIT_SHALLOWS_RADIUS}
-            fill={`url(#${litShallowsId})`}
-            style={centerOrigin}
-          />
-        ))}
-      {lit &&
-        islandCenters.map(({ x, y }, island) => (
-          <circle
-            key={`lantern-${x}:${y}`}
-            {...{ [bridgesFigureParts.lantern]: depths[island] ?? 0 }}
-            cx={x}
-            cy={y}
-            r={LANTERN_RADIUS}
-            fill={`url(#${lanternId})`}
-            opacity={LANTERN_SETTLED_OPACITY}
-            style={centerOrigin}
-          />
-        ))}
-      {lit &&
-        islandCenters.flatMap(({ x, y }, island) =>
-          [false, true].map((second) => (
-            <circle
-              key={`ripple-${x}:${y}:${second}`}
-              {...{ [bridgesFigureParts.ripple]: depths[island] ?? 0 }}
-              data-second={second || undefined}
-              cx={x}
-              cy={y}
-              r={RIPPLE_RADIUS}
-              fill="none"
-              strokeWidth={RIPPLE_WIDTH}
-              className={bridgesToneClassNames.ripple}
-              opacity={0}
-              style={centerOrigin}
-            />
-          )),
-        )}
       {ghostEdge !== null && bridges[ghostEdge] !== 2 && (
         <GhostBridge
           segment={getEdgeViewSegment(view, ghostEdge)}
@@ -935,9 +865,7 @@ export function BridgesFigure({
               segment={segment}
               count={count}
               layout={layout}
-              litDepth={
-                lit ? Math.max(depths[from] ?? 0, depths[to] ?? 0) : null
-              }
+              litWave={lit ? getLitDeckWave(from, to) : null}
             />
             <BridgePosts segment={segment} count={count} layout={layout} />
           </g>
@@ -964,28 +892,6 @@ export function BridgesFigure({
           opacity={ghostOpacity}
         />
       )}
-      {lit &&
-        edges.flatMap(({ from, to }, edge) =>
-          bridges[edge] === 0
-            ? []
-            : listPostPoints(
-                getEdgeViewSegment(view, edge),
-                bridges[edge]!,
-                layout,
-              ).map(({ point, end }) => (
-                <circle
-                  key={`lantern-post-${from}-${to}:${point.x}:${point.y}`}
-                  {...{
-                    [bridgesFigureParts.lanternPost]:
-                      depths[end === 0 ? from : to] ?? 0,
-                  }}
-                  cx={point.x}
-                  cy={point.y}
-                  r={LANTERN_POST_RADIUS}
-                  className={bridgesToneClassNames.lanternPost}
-                />
-              )),
-        )}
       {guide && (
         <g strokeLinecap="round">
           {guide.edges.map((edge) => {
