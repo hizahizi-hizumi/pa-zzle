@@ -287,7 +287,10 @@ describe("交わる2本の線のどちらからもほとんど同じだけ離れ
   });
 });
 
-describe("問題集の全問の当たり判定", () => {
+describe("問題集から抜き取った盤面の当たり判定", () => {
+  /** 各レベルの問題集から、この間隔ごとに1問を取る。全 2,500問だと CI のテストの時間の上限を超えるため。 */
+  const SAMPLE_STEP = 10;
+
   /** 島の真円の半径に、輪郭線と指のぶれを少し足した距離。これより島の中心から離れた点を水面とする。 */
   const LAND_CLEARANCE = ISLAND_RADIUS + 0.06;
   /** 押した点に別の線が、狙った線よりこれ以上離れていれば、狙った線が明らかに近いとする。 */
@@ -299,10 +302,16 @@ describe("問題集の全問の当たり判定", () => {
 
   const boards: { label: string; board: BridgesBoard }[] =
     difficultyLevels.flatMap(({ id }) =>
-      listBridgesPoolEntries(id).map((entry, index) => ({
-        label: `Lv${id}-${index}`,
-        board: decodeBridgesPoolProblem(entry[0], entry[8], entry[9]),
-      })),
+      listBridgesPoolEntries(id).flatMap((entry, index) =>
+        index % SAMPLE_STEP === 0
+          ? [
+              {
+                label: `Lv${id}-${index}`,
+                board: decodeBridgesPoolProblem(entry[0], entry[8], entry[9]),
+              },
+            ]
+          : [],
+      ),
     );
 
   type Line = { horizontal: boolean; at: number; low: number; high: number };
