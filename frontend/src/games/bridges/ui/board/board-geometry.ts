@@ -192,44 +192,73 @@ export function getBridgeLineOffsets(count: BridgeCount): readonly number[] {
     : [-DOUBLE_BRIDGE_SPACING / 2, DOUBLE_BRIDGE_SPACING / 2];
 }
 
-/** 押した位置が指すもの。島の近くなら島、島の外で線に近ければ辺。 */
+/**
+ * 押した位置が指すもの。
+ * - `island`: 島の近く。
+ * - `edge`: 島の外で、1本の線だけに近い所。その辺の橋を回す。
+ * - `crossing`: 島の外で、交わる2本の線のどちらにも近い所。どちらの辺を狙ったかを位置で決められないので、
+ *   どちらの橋も回さず、2辺を候補として示す。`edges` は辺の番号の小さい順。
+ */
 export type BoardTarget =
   | { kind: "island"; island: number }
-  | { kind: "edge"; edge: number };
+  | { kind: "edge"; edge: number }
+  | { kind: "crossing"; edges: readonly [number, number] };
 
 /**
- * 島を押したとみなす、島の中心からの距離。陸の周りの波打ち際の泡（`BridgesFigure` の浅瀬）までを含め、島の周りの淡い所を押せば
- * いつも島を選ぶ。斜めに隣り合う島（中心の間 1.41）とも的は重ならない。
+ * 島を押したとみなす、島の中心からの距離。陸の周りの波打ち際の泡と浅瀬までを含め、斜めに隣り合う島（中心の間 1.41）との
+ * 真ん中の手前まで広げる。島のマスの中（`isPointInIslandCell`）もこれとは別に島の的に含める。
  */
-export const ISLAND_REACH = 0.56;
+export const ISLAND_REACH = 0.6;
 
 /**
  * 島の外を押したとき、線からこの距離までを、その線の辺を押したとみなす。2本の橋の板の外側の縁（線から 0.24）に指のぶれを
- * 少し足した幅にし、線から離れた海を押しても、近くの辺の橋を回さない。
+ * 少し足した幅にし、線から離れた海を押しても、近くの辺の橋を回さない。交わる2本の線のどちらからもこの距離の内なら、
+ * どちらの辺も選ばない。
  */
 const TAP_REACH = 0.3;
 
-/**
- * 架かっている橋の板の上とみなす、線からの距離。2本の橋の板の外側の縁まで。ここを押したら、交わる線がもっと近くても、
- * 押した橋を回す。見えている橋を押して、見えない別の辺が阻まれたと返さない。
- */
-const BRIDGE_DECK_REACH = 0.25;
-
 const pointTolerance = 1e-9;
 
-/** `islands` のうち、`point` から `reach` の内で最も近い島。 */
+/** 島の中心からの距離。 */
+function distanceToIsland(
+  board: BridgesBoard,
+  island: number,
+  point: BoardPoint,
+): number {
+  const center = getIslandCenter(board.islands[island]!);
+  return Math.hypot(point.x - center.x, point.y - center.y);
+}
+
+/** 押した点が、島のマスの中（マスの縁を含む）にあるか。 */
+function isPointInIslandCell(
+  board: BridgesBoard,
+  island: number,
+  { x, y }: BoardPoint,
+): boolean {
+  const center = getIslandCenter(board.islands[island]!);
+  return (
+    Math.max(Math.abs(x - center.x), Math.abs(y - center.y)) <=
+    0.5 + pointTolerance
+  );
+}
+
+/**
+ * `islands` のうち、`point` を島の的に含む島。島のマスの中か、中心から `ISLAND_REACH` の内。
+ * 2つの島の的に入るときは中心の近い島。
+ */
 function findIslandNear(
   board: BridgesBoard,
   point: BoardPoint,
-  reach: number,
   islands: readonly number[] = board.islands.map((_, index) => index),
 ): number | null {
   let nearest: number | null = null;
-  let nearestDistance = reach + pointTolerance;
+  let nearestDistance = Number.POSITIVE_INFINITY;
   for (const index of islands) {
-    const center = getIslandCenter(board.islands[index]!);
-    const distance = Math.hypot(point.x - center.x, point.y - center.y);
-    if (distance <= nearestDistance) {
+    const distance = distanceToIsland(board, index, point);
+    const reached =
+      distance <= ISLAND_REACH + pointTolerance ||
+      isPointInIslandCell(board, index, point);
+    if (reached && distance < nearestDistance) {
       nearest = index;
       nearestDistance = distance;
     }
@@ -237,47 +266,11 @@ function findIslandNear(
   return nearest;
 }
 
-/**
- * 島の外を押した点から見た、1つの候補の辺。
- * - `distance`: 線（2島の中心を結ぶ線）までの距離。
- * - `midpointOffset`: 2島の間の真ん中からの、線に沿ったずれを、真ん中から島の中心までの長さで割った値（真ん中で 0、島の中心で 1）。
- * - `midpointDistance`: 2島の間の真ん中までの距離。
- * - `span`: 2島の中心の間の長さ。
- */
-type EdgeCandidate = {
-  edge: number;
-  distance: number;
-  midpointOffset: number;
-  midpointDistance: number;
-  span: number;
-};
-
-/**
- * 交わる2辺の交点の近くで、線までの距離の差がこれ以下なら、人はどちらの線を狙ったか距離では分からないとみなし、
- * 距離のほかの手がかりで選ぶ。人は「つなぎたい2島の間の真ん中」を押すので、短い辺の真ん中が長い辺の上に乗る所で、
- * 最も近い線だけでは狙いと違う辺を選ぶ。値は、問題集の盤面で真ん中を狙う押し方と、交点を避けて線を狙う押し方を
- * 指のぶれ付きで模した比較で、前者の当たりが上がり、後者の当たりがほとんど落ちない所に置いた。
- */
-const CROSSING_AMBIGUITY = 0.15;
-
-/**
- * 交わる2辺の真ん中がどちらもこの距離の内にあれば、真ん中が重なっているとみなし、短い辺を選ぶ。
- * 真ん中が重なる所では、真ん中からのずれは指のぶれでしか決まらないので、いつも同じ辺を選んで予測できるようにする。
- * 長い辺は、交点を避けた所を押すかなぞって架ける。
- */
-const SHARED_MIDPOINT_RADIUS = 0.15;
-
-/**
- * 真ん中からのずれ（`midpointOffset`）の差がこれ以下なら、どちらの2島の間の真ん中を押したかでは選べないとみなし、
- * 直前に触った島で選ぶ。
- */
-const MIDPOINT_MARGIN = 0.1;
-
-/** 両端の島の中心の間にあり、線から `TAP_REACH` までの辺。 */
+/** 両端の島の中心の間にあり、線から `TAP_REACH` までの辺と、線までの距離。 */
 function listReachableEdges(
   board: BridgesBoard,
   point: BoardPoint,
-): EdgeCandidate[] {
+): { edge: number; distance: number }[] {
   return getBridgesNetwork(board).edges.flatMap(
     ({ from, to, orientation }, edge) => {
       const start = getIslandCenter(board.islands[from]!);
@@ -287,148 +280,48 @@ function listReachableEdges(
           ? [point.x, point.y, start.x, end.x, start.y]
           : [point.y, point.x, start.y, end.y, start.x];
       const distance = Math.abs(across - line);
-      const halfSpan = (high - low) / 2;
-      const alongOffset = Math.abs(along - (low + halfSpan));
       return low < along && along < high && distance <= TAP_REACH
-        ? [
-            {
-              edge,
-              distance,
-              midpointOffset: alongOffset / halfSpan,
-              midpointDistance: Math.hypot(alongOffset, distance),
-              span: high - low,
-            },
-          ]
+        ? [{ edge, distance }]
         : [];
     },
   );
 }
 
-/** 最後の決め手。真ん中に近い、短い、線に近い、番号の小さい順。 */
-function compareForFallback(left: EdgeCandidate, right: EdgeCandidate) {
-  return (
-    left.midpointOffset - right.midpointOffset ||
-    left.span - right.span ||
-    left.distance - right.distance ||
-    left.edge - right.edge
-  );
-}
-
 /**
- * 押した点の近くの辺から1つを選ぶための、盤面の手がかり。
- * - `recentIslands`: 直前に触った島。直前に押した島と、直前に橋を回した辺の両端。
- */
-type EdgeSelectionContext = {
-  crossingEdges: readonly (readonly number[])[];
-  edgeIslands: readonly (readonly [number, number])[];
-  bridges: readonly BridgeCount[];
-  recentIslands: readonly number[];
-};
-
-/** `candidates` のうち `keep` に当たるものだけを残す。1つも当たらなければ、絞らずに返す。 */
-function narrow(
-  candidates: readonly EdgeCandidate[],
-  keep: (candidate: EdgeCandidate) => boolean,
-): readonly EdgeCandidate[] {
-  const kept = candidates.filter(keep);
-  return kept.length > 0 ? kept : candidates;
-}
-
-/**
- * 押した点が指す辺。押しても何も起きない空振りを作らず、次の順で1つに決める。
- * 1. 架かっている橋の板の上（線から `BRIDGE_DECK_REACH` の内）なら、その橋。見えている橋を押したのに、交わる別の辺が
- *    対象になって阻まれることを起こさない。
- * 2. 線が最も近い辺。交わる辺で線までの距離の差が `CROSSING_AMBIGUITY` 以下のもの（押した位置の縦横のずれで軸を
- *    決められないもの）と同じ距離の辺が残れば、続けて絞る。
- * 3. 交わる別の橋に阻まれずに架けられる辺。
- * 4. 2辺の真ん中が重なっていれば短い辺、そうでなければ2島の間の真ん中にはっきり近い辺。
- * 5. 直前に触った島から伸びる辺。島の周りを続けて架けていく流れに沿わせる。
- * 6. それでも決まらなければ `compareForFallback` の順。
- */
-function selectEdge(
-  candidates: readonly EdgeCandidate[],
-  { crossingEdges, edgeIslands, bridges, recentIslands }: EdgeSelectionContext,
-): number {
-  const onDeck = candidates.filter(
-    ({ edge, distance }) =>
-      bridges[edge] !== 0 && distance <= BRIDGE_DECK_REACH + pointTolerance,
-  );
-  if (onDeck.length > 0) {
-    return [...onDeck].sort(
-      (left, right) =>
-        left.distance - right.distance || compareForFallback(left, right),
-    )[0]!.edge;
-  }
-  const nearestDistance = Math.min(
-    ...candidates.map(({ distance }) => distance),
-  );
-  const closest = candidates.filter(
-    ({ distance }) => distance - nearestDistance <= pointTolerance,
-  );
-  let contenders: readonly EdgeCandidate[] = candidates.filter(
-    (candidate) =>
-      closest.includes(candidate) ||
-      (candidate.distance - nearestDistance <= CROSSING_AMBIGUITY &&
-        closest.some(({ edge }) =>
-          crossingEdges[edge]!.includes(candidate.edge),
-        )),
-  );
-  contenders = narrow(
-    contenders,
-    ({ edge }) =>
-      !crossingEdges[edge]!.some((crossing) => bridges[crossing] !== 0),
-  );
-  const atSharedMidpoint = contenders.filter(
-    ({ midpointDistance }) => midpointDistance <= SHARED_MIDPOINT_RADIUS,
-  );
-  if (atSharedMidpoint.length >= 2) {
-    const shortest = Math.min(...atSharedMidpoint.map(({ span }) => span));
-    contenders = atSharedMidpoint.filter(
-      ({ span }) => span - shortest <= pointTolerance,
-    );
-  } else {
-    const nearestMidpoint = Math.min(
-      ...contenders.map(({ midpointOffset }) => midpointOffset),
-    );
-    contenders = contenders.filter(
-      ({ midpointOffset }) =>
-        midpointOffset - nearestMidpoint <= MIDPOINT_MARGIN,
-    );
-  }
-  contenders = narrow(contenders, ({ edge }) =>
-    edgeIslands[edge]!.some((island) => recentIslands.includes(island)),
-  );
-  return [...contenders].sort(compareForFallback)[0]!.edge;
-}
-
-/**
- * 押した位置が指す島か辺。島の中心から `ISLAND_REACH` の内なら島。島の外なら、線から `TAP_REACH` までの辺から `selectEdge` で選ぶ。
- * 選んだ辺が交わる橋に阻まれていても、そのまま返す（架けようとして阻まれたことを盤面で返す）。どの線からも遠ければ `null`。
+ * 押した位置が指す島か辺。
+ * - 島の的（島のマスの中か、中心から `ISLAND_REACH` の内）なら島。
+ * - 島の外で、線から `TAP_REACH` の内に交わる2本の線があれば、どちらの辺にも決めない（`crossing`）。2本の橋の真ん中が
+ *   重なる所や、架かった橋の板の上を別の組の通り道が通る所で、狙っていない辺の橋を架けたり外したりしない。
+ * - 島の外で1本の線だけに近ければ、その辺。架かった橋もそこを押せば回る。交わる別の橋に阻まれていても、そのまま返す
+ *   （架けようとして阻まれたことを盤面で返す）。
+ * - どの線からも遠ければ `null`。
  */
 export function findBoardTarget(
   board: BridgesBoard,
-  bridges: readonly BridgeCount[],
   point: BoardPoint,
-  recentIslands: readonly number[] = [],
 ): BoardTarget | null {
-  const island = findIslandNear(board, point, ISLAND_REACH);
+  const island = findIslandNear(board, point);
   if (island !== null) {
     return { kind: "island", island };
   }
-  const candidates = listReachableEdges(board, point);
-  if (candidates.length === 0) {
+  const candidates = listReachableEdges(board, point).sort(
+    (left, right) => left.distance - right.distance || left.edge - right.edge,
+  );
+  const nearest = candidates[0];
+  if (nearest === undefined) {
     return null;
   }
-  const { edges, crossingEdges } = getBridgesNetwork(board);
-  return {
-    kind: "edge",
-    edge: selectEdge(candidates, {
-      crossingEdges,
-      edgeIslands: edges.map(({ from, to }) => [from, to] as const),
-      bridges,
-      recentIslands,
-    }),
-  };
+  const { crossingEdges } = getBridgesNetwork(board);
+  const crossing = candidates.find(({ edge }) =>
+    crossingEdges[nearest.edge]!.includes(edge),
+  );
+  if (crossing !== undefined) {
+    const [first, second] = [nearest.edge, crossing.edge].sort(
+      (left, right) => left - right,
+    );
+    return { kind: "crossing", edges: [first!, second!] };
+  }
+  return { kind: "edge", edge: nearest.edge };
 }
 
 /** 押した点が、島 `island` を押したとみなす範囲にあるか。 */
@@ -437,7 +330,7 @@ export function isPointOnIsland(
   island: number,
   point: BoardPoint,
 ): boolean {
-  return findIslandNear(board, point, ISLAND_REACH, [island]) !== null;
+  return findIslandNear(board, point, [island]) !== null;
 }
 
 /** 島 `island` から辺の伸びる相手の島と、その辺。 */

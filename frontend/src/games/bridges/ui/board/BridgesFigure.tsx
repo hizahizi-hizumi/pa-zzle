@@ -53,6 +53,11 @@ type BridgesFigureProps = {
   guide?: BridgesFigureGuide | null;
   /** マウスを乗せた所で押せば回る辺。架かった後の板の影を淡く予告する。 */
   hoverEdge?: number | null;
+  /**
+   * 交わる2本の線のどちらにも近い所を押した（マウスを乗せた）ときの、候補の2辺。どちらの辺かを位置で決めないので、
+   * 2辺にロープを張って、島から架ければどちらも選べることを示す。
+   */
+  crossingEdges?: readonly number[] | null;
   /** 2段階の操作で選んでいる島。 */
   selectedIsland?: number | null;
   /** キーボードで選んでいる島。輪で囲む。 */
@@ -86,6 +91,7 @@ export const bridgesFigureParts = {
   lanternPost: "data-bridges-lantern-post",
   ripple: "data-bridges-ripple",
   rope: "data-bridges-rope",
+  crossingHint: "data-bridges-crossing-hint",
 } as const;
 
 /** 図の寸法はマス幅を 1 とした値。 */
@@ -516,6 +522,7 @@ export function BridgesFigure({
   showsSea = false,
   guide = null,
   hoverEdge = null,
+  crossingEdges = null,
   selectedIsland = null,
   focusedIsland = null,
   blockingEdges = [],
@@ -818,6 +825,20 @@ export function BridgesFigure({
               />
             );
           })}
+        </g>
+      )}
+      {crossingEdges && (
+        <g strokeLinecap="round" {...{ [bridgesFigureParts.crossingHint]: "" }}>
+          {crossingEdges.map((edge) => (
+            <Rope
+              key={`crossing-${edge}`}
+              edge={edge}
+              segment={getEdgeViewSegment(view, edge)}
+              strokeWidth={ROPE_WIDTH}
+              dashed
+              opacity={1}
+            />
+          ))}
         </g>
       )}
       {board.islands.map((island, index) => {
