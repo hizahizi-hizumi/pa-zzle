@@ -1,8 +1,9 @@
 import { Bomb, Flag } from "lucide-react";
 
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
-import { RaisedFlag } from "@/games/minesweeper/ui/board/MinesweeperCellFace/RaisedFlag";
 import { RaisedMine } from "@/games/minesweeper/ui/board/MinesweeperCellFace/RaisedMine";
+import { MINESWEEPER_FLAG_COLOR_CLASS_NAME } from "@/games/minesweeper/ui/minesweeper-tone";
+import { RaisedFlag } from "@/games/minesweeper/ui/RaisedFlag";
 
 /** `board` は盤面のマス、`preview` はゲームのホームのレベルのカードの小さな盤面、`figure` は遊び方の図のマス。 */
 export type MinesweeperCellFaceSize = "board" | "preview" | "figure";
@@ -47,7 +48,7 @@ function getClassicStateClassName(view: MinesweeperVisibleCell): string {
     return `bg-background ${NUMBER_CLASS_NAMES[view.adjacentMineCount] ?? ""}`;
   }
   if (view.state === "flagged") {
-    return "bg-slate-200 text-red-600 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.7)] dark:bg-slate-700 dark:text-red-400 dark:shadow-none";
+    return `bg-slate-200 ${MINESWEEPER_FLAG_COLOR_CLASS_NAME} shadow-[inset_0_1px_0_rgb(255_255_255_/_0.7)] dark:bg-slate-700 dark:shadow-none`;
   }
   if (view.state === "mine") {
     return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200";
@@ -82,7 +83,7 @@ function getBoardStateClassName(view: MinesweeperVisibleCell): string {
     return `bg-[#cbd5df] shadow-[inset_0_1px_2px_#53657b42,inset_0_-1px_0_#ffffff8a] dark:bg-[#2d3947] dark:shadow-[inset_0_2px_4px_#070d1688,inset_0_-1px_0_#74869b2e] ${BOARD_NUMBER_CLASS_NAMES[view.adjacentMineCount] ?? ""}`;
   }
   if (view.state === "flagged") {
-    return `${BOARD_TILE_SURFACE_CLASS_NAME} text-red-600 dark:text-red-400`;
+    return `${BOARD_TILE_SURFACE_CLASS_NAME} ${MINESWEEPER_FLAG_COLOR_CLASS_NAME}`;
   }
   if (view.state === "mine") {
     return "bg-[#e5e9ef] text-slate-700 shadow-[inset_0_2px_3px_#64748b30] dark:bg-[#303c4b] dark:text-slate-200";
@@ -108,7 +109,7 @@ type MinesweeperCellFaceProps = {
 
 export function MinesweeperCellFace({ view, size }: MinesweeperCellFaceProps) {
   if (view.state === "flagged") {
-    if (size === "board") return <RaisedFlag />;
+    if (size === "board") return <RaisedFlag size="cell" />;
     return <Flag className="size-[52%] fill-current" aria-hidden />;
   }
   if (view.state === "mine" || view.state === "steppedMine") {

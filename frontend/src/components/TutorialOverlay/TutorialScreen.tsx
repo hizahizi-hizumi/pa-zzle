@@ -97,6 +97,8 @@ type TutorialScreenProps = {
   finish: TutorialFinish;
   /** ゲーム固有の盤面。盤面の大きさは盤面の側が、この領域の大きさから決める。 */
   renderBoard: (intro: TutorialBoardIntro) => ReactNode;
+  /** 解いている間だけ盤面の下に置く、ゲーム固有の操作。本番のプレイ画面と同じく、下の帯の下端に揃えて置く。 */
+  controls?: ReactNode;
   /** 導入を終えた。 */
   onIntroEnd: () => void;
   onRestart: () => void;
@@ -305,6 +307,7 @@ export function TutorialScreen({
   guiding,
   finish,
   renderBoard,
+  controls,
   onIntroEnd,
   onRestart,
   ref,
@@ -774,6 +777,12 @@ export function TutorialScreen({
               次へ
             </Button>
           </span>
+        )}
+        {/* 本番のプレイ画面の下の帯（下端に揃え、下に pb-2 の間）と同じ位置に置く。 */}
+        {!introPlaying && !completed && controls !== undefined && (
+          <div className="flex w-full max-w-xl flex-1 flex-col justify-end pb-2">
+            {controls}
+          </div>
         )}
         {completed && (
           <div className="flex gap-2">

@@ -145,7 +145,7 @@ function getCellLabel(position: CellPosition): string | null {
 }
 
 function getModeToggle(): HTMLElement {
-  return screen.getByRole("button", { name: "旗モード" });
+  return screen.getByRole("button", { name: "旗" });
 }
 
 function setMode(mode: "reveal" | "flag"): void {
@@ -260,6 +260,24 @@ describe("MinesweeperTutorial", () => {
     playStart = { difficulty: "2", onStart: vi.fn<() => void>() };
   });
 
+  describe("導入の間の場合", () => {
+    beforeEach(() => {
+      render(
+        <MinesweeperTutorial
+          open={true}
+          playStart={playStart}
+          onClose={onClose}
+        />,
+      );
+    });
+
+    test("旗の切り替えを出さないこと", () => {
+      const toggle = screen.queryByRole("button", { name: "旗" });
+
+      expect(toggle).toBeNull();
+    });
+  });
+
   describe("ゲームのホームから開いた場合", () => {
     beforeEach(() => {
       render(
@@ -276,7 +294,7 @@ describe("MinesweeperTutorial", () => {
       const cells = within(getBoard()).getAllByRole("button");
       const headline = screen.getByText(/数字は、周りの8マスにある/);
       const detail = screen.getByText(
-        "旗に切り替えて、印のマスを押してください",
+        "旗をオンにして、印のマスを押してください",
       );
       const mineMetric = screen.getByText("地雷").parentElement?.textContent;
       const hinted = getCuedCellNumbers("hint");
@@ -304,7 +322,7 @@ describe("MinesweeperTutorial", () => {
       expect(mineCountSpotlit).toBe(false);
     });
 
-    test("旗に切り替えると、切り替えの印を外して覆いに戻し、旗を置く一言に替えること", () => {
+    test("旗ボタンをオンにすると、旗ボタンの印を外して覆いに戻し、旗を置く一言に替えること", () => {
       fireEvent.click(getModeToggle());
 
       const toggleCued = hasToggleCue();
@@ -431,9 +449,9 @@ describe("MinesweeperTutorial", () => {
         finishSteps(1);
       });
 
-      test("旗のままなら、旗から戻すことを一言と印で示し、切り替えを覆いから抜くこと", () => {
+      test("旗ボタンがオンのままなら、オフにすることを一言と印で示し、旗ボタンを覆いから抜くこと", () => {
         const detail = screen.queryByText(
-          "旗から戻して、印のマスを押してください",
+          "旗をオフにして、印のマスを押してください",
         );
         const toggleCued = hasToggleCue();
         const toggleSpotlit = isToggleSpotlit();
@@ -678,24 +696,37 @@ describe("MinesweeperTutorial", () => {
 
         expect(sizeMessage).not.toBeNull();
       });
+
+      test("旗の切り替えを出さないこと", () => {
+        const toggle = screen.queryByRole("button", { name: "旗" });
+
+        expect(toggle).toBeNull();
+      });
     });
 
-    describe("解き終えて旗に切り替えた場合", () => {
-      beforeEach(async () => {
+    describe("解き終えた直後の場合", () => {
+      beforeEach(() => {
         installAnimate();
         solveAll();
-        setMode("flag");
-        await advanceTimeInSlices(1000);
       });
 
-      test("もう一度を押すと、始めの盤面と開く切り替えに戻すこと", () => {
-        fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-        pressNextThroughIntro();
+      test("旗の切り替えを押せないこと", () => {
+        const toggle = getModeToggle();
 
-        const label = getCellLabel([4, 3]);
+        expect(toggle).toHaveProperty("disabled", true);
+      });
+    });
+
+    describe("手順の途中で旗をオンにして閉じた場合", () => {
+      beforeEach(() => {
+        setMode("flag");
+        fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+        pressNextThroughIntro();
+      });
+
+      test("次に始めると、開く切り替えに戻っていること", () => {
         const flagMode = getModeToggle().getAttribute("aria-pressed");
 
-        expect(label).toBe("マス 18 未開示");
         expect(flagMode).toBe("false");
       });
     });

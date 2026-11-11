@@ -1,8 +1,7 @@
-import { Flag, Pointer } from "lucide-react";
-
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
 import { HowToPlayTransition } from "@/components/HowToPlayTransition";
 import { HowToPlayFigure } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog/HowToPlayFigure";
+import { RaisedFlag } from "@/games/minesweeper/ui/RaisedFlag";
 
 type MinesweeperHowToPlayDialogProps = {
   open: boolean;
@@ -40,17 +39,9 @@ export function MinesweeperHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          マスを押すと開く。上のボタン
-          <Pointer
-            className="mx-0.5 inline size-4 align-text-bottom"
-            aria-hidden
-          />
-          を押して旗
-          <Flag
-            className="mx-0.5 inline size-4 align-text-bottom"
-            aria-hidden
-          />
-          に切り替えると、押したマスに旗を置く・外す。長押しと右クリックは、いつでも旗を置く・外す。
+          マスを押すと開く。盤の下の
+          <RaisedFlag size="inline" />
+          旗ボタンをオンにしている間は、押したマスに旗を置く・外す。長押しと右クリックは、いつでも旗を置く・外す。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure rows={["."]} pressed={[0, 0]} />
@@ -64,7 +55,7 @@ export function MinesweeperHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          旗に切り替えていないときに開いた数字を押すと、周りの旗と踏んだ地雷の合計が数字と同じなら、残りのマスをまとめて開く。旗が間違っていると地雷を踏む。
+          旗ボタンがオフのときに開いた数字を押すと、周りの旗と踏んだ地雷の合計が数字と同じなら、残りのマスをまとめて開く。旗が間違っていると地雷を踏む。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure rows={["F..", ".1.", "..."]} pressed={[1, 1]} />

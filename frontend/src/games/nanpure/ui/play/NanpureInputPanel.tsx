@@ -1,8 +1,12 @@
 import { Eraser, Pencil, Undo2 } from "lucide-react";
+import { PlayActionButton } from "@/components/PlayActionButton";
 import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
 import { NanpureDigitPad } from "@/games/nanpure/ui/play/NanpureDigitPad";
-import { PlayActionButton } from "@/games/nanpure/ui/play/NanpureInputPanel/PlayActionButton";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
+
+/** メモを入れている間の地と文字の色。メモの数字と同じ紫で示す。 */
+const NOTES_MODE_ACTIVE_CLASS_NAME =
+  "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300";
 
 type NanpureInputPanelProps = {
   notesMode: boolean;
@@ -60,6 +64,7 @@ export function NanpureInputPanel({
             icon={<Pencil />}
             label="メモ"
             active={notesMode}
+            activeClassName={NOTES_MODE_ACTIVE_CLASS_NAME}
             onClick={onToggleNotesMode}
             disabled={!interactionEnabled}
           />

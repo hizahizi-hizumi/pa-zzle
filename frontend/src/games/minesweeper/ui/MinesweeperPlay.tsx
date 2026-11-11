@@ -85,11 +85,6 @@ export function MinesweeperPlay({
         { type: "count", label: "ミス", count: mistakeCount },
         { type: "elapsed-time", elapsedMs },
       ]}
-      trailingAction={
-        interactionEnabled ? (
-          <InputModeToggle mode={mode} onChange={setMode} />
-        ) : null
-      }
       onReplay={handleReplay}
       onStartNewProblem={handleStartNewProblem}
       onOpenGameHome={onOpenGameHome}
@@ -113,8 +108,13 @@ export function MinesweeperPlay({
         />
       )}
     >
-      <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-3 sm:px-6">
-        <div className="w-full max-w-[32rem]">
+      <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-3 [container-type:size] sm:px-6">
+        {/* 盤の下の帯の分だけ高さが減っても見出しや帯に重ならないよう、盤の縦横の比から、高さに収まる幅に抑える。枠の余白とマスの間の分（1rem）を高さから引いておく。 */}
+        <div
+          style={{
+            width: `min(100cqw, 32rem, calc((100cqh - 1rem) * ${columns} / ${rows}))`,
+          }}
+        >
           <MinesweeperClearAnimation
             active={progress === "clearing"}
             onComplete={onClearAnimationComplete}
@@ -132,6 +132,17 @@ export function MinesweeperPlay({
           </MinesweeperClearAnimation>
         </div>
       </main>
+      <footer className="grid h-28 shrink-0 items-end px-3 pb-2">
+        <div className="mx-auto grid w-full max-w-xl grid-cols-3">
+          <div className="col-start-2 grid">
+            <InputModeToggle
+              mode={mode}
+              disabled={!interactionEnabled}
+              onChange={setMode}
+            />
+          </div>
+        </div>
+      </footer>
     </GamePlayFrame>
   );
 }

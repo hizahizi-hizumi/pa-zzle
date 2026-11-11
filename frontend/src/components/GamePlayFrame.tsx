@@ -26,8 +26,6 @@ type GamePlayFrameProps<Result> = Pick<
     /** ゲーム固有の地。見出しから盤面まで、プレイ画面全体の背景として敷く。 */
     background?: ReactNode;
     metrics: readonly PlayHeaderMetric[];
-    /** 見出しのメニューの手前に置くゲーム固有の操作。 */
-    trailingAction?: ReactNode;
     /** 結果表示へ進み、評価があるときに盤面の代わりに描く結果画面。 */
     renderResultScreen: (result: Result) => ReactNode;
     /** ゲーム固有の遊び方ダイアログを描く。開閉の状態は外枠が持ち、引数で渡す。 */
@@ -53,7 +51,6 @@ export function GamePlayFrame<Result>({
   title,
   background,
   metrics,
-  trailingAction,
   canRestart,
   onRestart,
   onReplay,
@@ -91,7 +88,6 @@ export function GamePlayFrame<Result>({
         <PlayHeader
           title={title}
           metrics={metrics}
-          trailingAction={trailingAction}
           canRestart={canRestart}
           onRestart={onRestart}
           onReplay={onReplay}
