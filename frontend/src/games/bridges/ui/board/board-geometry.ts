@@ -27,9 +27,9 @@ export const BOARD_MARGIN = 0.4;
 
 /**
  * 9×9 以上の盤面の海の幅。390px 幅のスマホでマスが小さくなる盤面では、余白を詰めて島を大きく描く。
- * それでも外周の島の陸は、画面の左右の余白と合わせて画面端から 15px ほど離れる。
+ * 外周の島の陸は、画面の左右の余白と陸の周りのマスの残りと合わせて、画面端から 12px ほど離れる。
  */
-export const WIDE_BOARD_MARGIN = 0.2;
+export const WIDE_BOARD_MARGIN = 0.12;
 const WIDE_BOARD_SIDE = 9;
 
 /**
@@ -182,14 +182,18 @@ export function getIslandViewRect(view: BoardView, island: number): BoardRect {
 }
 
 /** 2本の橋の、平行な2枚の板の中心どうしの間隔。2枚の間に海が見え、1本と2本を形で見分けられる幅にする。 */
-const DOUBLE_BRIDGE_SPACING = 0.3;
+export const DOUBLE_BRIDGE_SPACING = 0.3;
 
-/** 橋の本数ぶんの板を、辺の中心線から横へずらす量。1本は中心線の上、2本は中心線を挟んだ平行な2枚。 */
-export function getBridgeLineOffsets(count: BridgeCount): readonly number[] {
+/**
+ * 橋の本数ぶんの板を、辺の中心線から横へずらす量。1本は中心線の上、2本は中心線を挟んだ平行な2枚。
+ * `spacing` は2枚の板の中心どうしの間隔（マス幅を 1 とした値）。
+ */
+export function getBridgeLineOffsets(
+  count: BridgeCount,
+  spacing = DOUBLE_BRIDGE_SPACING,
+): readonly number[] {
   if (count === 0) return [];
-  return count === 1
-    ? [0]
-    : [-DOUBLE_BRIDGE_SPACING / 2, DOUBLE_BRIDGE_SPACING / 2];
+  return count === 1 ? [0] : [-spacing / 2, spacing / 2];
 }
 
 /**
