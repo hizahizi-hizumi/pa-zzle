@@ -57,7 +57,11 @@ gh actions-lock # 全ワークフローを走査して actions.lock を更新
 - 恒久的な検証には、既存のテスト基盤・静的解析・ビルドツールなどの汎用的な検証手段を用いること。
   - 特定の変更や不具合だけを対象とする検証を、再発防止だけを理由に追加しない。
 - 画面変更の確認は、`docs/開発/画面レビュー手順.md` に従って、実際の描画・操作・途中状態・画面遷移・エラーを確認する。
-- 人間の動作確認は、PRに Cloudflare が投稿するプレビューURLで行う。確認を頼むときは、そのURLを渡す。仕組みと設定は `frontend/README.md` の「PRプレビュー」を参照。
+- 人間の動作確認は、Cloudflare のプレビューURLで行う。仕組みと設定は `frontend/README.md` の「PRプレビュー」を参照。
+  - 確認を頼むときは、スキルの手順が別のURLを決めていなければ、Branch Preview URL を渡す。
+  - Branch Preview URL は、PR の最新コミットのチェック `Workers Builds: pa-zzle` の結果に Preview Alias URL として出ているものをそのまま使う。
+  - PR があるブランチへ push した後は、PO への返信ごとに、末尾へ PR ごとに1行ずつ `Preview #<PR番号>: <URL>` を書く。
+  - チェックが成功していないときは、URLの代わりにチェックの状態を書く。
 
 ## 文書
 
