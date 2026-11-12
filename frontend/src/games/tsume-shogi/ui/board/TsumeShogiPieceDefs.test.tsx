@@ -12,13 +12,15 @@ afterEach(cleanup);
 describe("selectTsugeFace", () => {
   const ids = {
     faces: ["a", "b", "c", "d", "e", "f", "g", "h"],
-    edge: "edge",
+    chamfer: "chamfer",
     shade: "shade",
     specular: "specular",
-    liftedShadowBlur: "liftedShadowBlur",
+    side: "side",
+    liftedShadowBlurs: { ambient: "ambient", core: "core" },
     ink: "ink",
     vermilion: "vermilion",
     glyphs: {} as TsumeShogiPieceDefIds["glyphs"],
+    glyphClips: {} as TsumeShogiPieceDefIds["glyphClips"],
   } satisfies TsumeShogiPieceDefIds;
   const seeds = Array.from({ length: 40 }, (_, index) => `piece-${index}`);
 
@@ -57,20 +59,22 @@ describe("TsumeShogiPieceDefs", () => {
   test("内側の駒が参照する id の塗りと字形を置くこと", () => {
     const referenced = [
       ...(receivedIds?.faces ?? []),
-      receivedIds?.edge,
+      receivedIds?.chamfer,
       receivedIds?.shade,
       receivedIds?.specular,
-      receivedIds?.liftedShadowBlur,
+      receivedIds?.side,
+      ...Object.values(receivedIds?.liftedShadowBlurs ?? {}),
       receivedIds?.ink,
       receivedIds?.vermilion,
       ...Object.values(receivedIds?.glyphs ?? {}),
+      ...Object.values(receivedIds?.glyphClips ?? {}),
     ];
 
     const missing = referenced.filter(
       (id) => !id || !container.ownerDocument.getElementById(id),
     );
 
-    expect(referenced).toHaveLength(8 + 6 + 14);
+    expect(referenced).toHaveLength(8 + 8 + 14 + 14);
     expect(missing).toEqual([]);
   });
 });

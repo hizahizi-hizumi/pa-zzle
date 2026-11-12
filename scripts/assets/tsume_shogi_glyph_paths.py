@@ -1,14 +1,13 @@
 """詰将棋の駒の字と、盤の筋・段・札の字の輪郭を、書体から SVG のパスとして書き出す。
 
-駒は Zen Antique Regular（400）、筋・段・札は Zen Old Mincho Medium（500）。どちらも @fontsource の
-npm パッケージ（5.3.0）の woff2 から読む。パッケージは次のように取り出して、そのディレクトリを渡す。
+駒は Zen Old Mincho Black（900）、筋・段・札は同じ書体の Medium（500）。@fontsource/zen-old-mincho（5.3.0）の
+woff2 から読む。パッケージは次のように取り出して、そのディレクトリを渡す。
 
-    npm pack @fontsource/zen-antique@5.3.0 @fontsource/zen-old-mincho@5.3.0
-    mkdir -p zen-antique zen-old-mincho
-    tar -xzf fontsource-zen-antique-5.3.0.tgz -C zen-antique
+    npm pack @fontsource/zen-old-mincho@5.3.0
+    mkdir -p zen-old-mincho
     tar -xzf fontsource-zen-old-mincho-5.3.0.tgz -C zen-old-mincho
     uv run --with 'fonttools[woff]' python scripts/assets/tsume_shogi_glyph_paths.py \\
-        --zen-antique zen-antique/package --zen-old-mincho zen-old-mincho/package
+        --zen-old-mincho zen-old-mincho/package
 
 字形を見ても書体を見分けられないことがある（Yuji Syuku・Yuji Boku・Yuji Mai は配布元の TTF でも漢字の字形が同一で、
 違うのは「と」だけ）。そのため書き出した字形からは、どの書体のファイルを読んだかを確かめられない。読み込んだ woff2 ごとに、
@@ -41,7 +40,7 @@ class FontSource:
     file_prefix: str
 
 
-PIECE_FONT = FontSource("@fontsource/zen-antique", "5.3.0", 400, "ZenAntique-Regular", "zen-antique")
+PIECE_FONT = FontSource("@fontsource/zen-old-mincho", "5.3.0", 900, "ZenOldMincho-Black", "zen-old-mincho")
 LETTERING_FONT = FontSource(
     "@fontsource/zen-old-mincho", "5.3.0", 500, "ZenOldMincho-Medium", "zen-old-mincho"
 )
@@ -65,7 +64,7 @@ PIECE_CHARACTERS = {
 # 筋・段と、玉方の持駒の札に書く字。
 LETTERING_CHARACTERS = "123456789一二三四五六七八九玉方の持駒残り全部"
 
-# 駒の高さと底辺の幅、字の外接矩形の中心の頂点からの高さ（0.1mm）。`piece-shape.ts` と同じ値。
+# 駒の高さと底辺の幅（0.1mm）。`piece-shape.ts` と同じ値。
 PIECE_BODIES = {
     "king": (315, 280),
     "rook": (305, 270),
@@ -82,24 +81,13 @@ PIECE_BODIES = {
     "pawn": (270, 225),
     "promPawn": (270, 225),
 }
-GLYPH_CENTER_Y = {
-    "king": 194.9,
-    "rook": 184,
-    "bishop": 178.2,
-    "gold": 180.7,
-    "silver": 177,
-    "knight": 174.6,
-    "lance": 178.5,
-    "pawn": 167.1,
-    "dragon": 186.8,
-    "horse": 179.2,
-    "promSilver": 180.7,
-    "promKnight": 169.2,
-    "promLance": 178.5,
-    "promPawn": 140.1,
-}
-GLYPH_EM_RATIO = 0.72
-HORIZONTAL_SQUEEZE = 0.88
+# 字の中心の、頂点からの高さの、駒の高さに対する比。`piece-shape.ts` の `GLYPH_CENTER_RATIO` と同じ値。
+GLYPH_CENTER_RATIO = 0.55
+# 駒の字の座標の丸め（0.1 単位の数）。0.1mm より細かい差は画面で見えないので、丸めてパスを短くする。
+PIECE_COORDINATE_STEP = 10
+# 字の大きさ（1em の、駒の高さに対する比）と、横の詰め。
+GLYPH_EM_RATIO = 0.66
+HORIZONTAL_SQUEEZE = 0.9
 # 面取り 0.9mm と、その内側の余白 1mm。
 FACE_MARGIN = 19
 SHRINK_STEP = 0.98
@@ -188,11 +176,12 @@ def join_numbers(numbers: list[int]) -> str:
 
 
 class RelativePathPen(BasePen):
-    """座標を 0.1 単位に丸め、丸めた点からの相対座標でパスを書く。同じ命令が続くときは命令の文字を省く。"""
+    """座標を `step`（0.1 単位の数）に丸め、丸めた点からの相対座標でパスを書く。同じ命令が続くときは命令の文字を省く。"""
 
-    def __init__(self, transform: Callable[[tuple[float, float]], tuple[float, float]]):
+    def __init__(self, transform: Callable[[tuple[float, float]], tuple[float, float]], step: int = 1):
         super().__init__(None)
         self.transform = transform
+        self.step = step
         self.parts: list[str] = []
         self.current = (0, 0)
         self.start = (0, 0)
@@ -200,7 +189,7 @@ class RelativePathPen(BasePen):
 
     def tenths(self, point: tuple[float, float]) -> tuple[int, int]:
         x, y = self.transform(point)
-        return round(x * 10), round(y * 10)
+        return round(x * 10 / self.step) * self.step, round(y * 10 / self.step) * self.step
 
     def emit(self, command: str, points: list[tuple[float, float]]) -> None:
         numbers: list[int] = []
@@ -250,25 +239,33 @@ def pentagon_half_width(height: float, width: float, y: float) -> float:
     return shoulder_x + (width / 2 - shoulder_x) * (y - shoulder_y) / (height - shoulder_y)
 
 
+def fits_face(height: float, width: float, left: float, right: float, top: float, bottom: float) -> bool:
+    """頂点を原点にした駒の座標で、矩形が面取りの内側の余白に収まるか。"""
+    half_width = max(-left, right)
+    return bottom <= height - FACE_MARGIN and all(
+        half_width <= pentagon_half_width(height, width, y) - FACE_MARGIN for y in (top, bottom)
+    )
+
+
 def piece_glyph_path(glyph: Glyph, piece_type: str) -> str:
     """字の大きさは駒の高さに比例させ、面取りの内側の余白に入らない字だけを縮める。字の外接矩形の中心を原点に置く。"""
     height, width = PIECE_BODIES[piece_type]
-    center_y = GLYPH_CENTER_Y[piece_type]
+    center_y = height * GLYPH_CENTER_RATIO
     x0, y0, x1, y1 = glyph.bounds
     scale = height * GLYPH_EM_RATIO / glyph.units_per_em
     while True:
         half_width = (x1 - x0) / 2 * scale * HORIZONTAL_SQUEEZE
         half_height = (y1 - y0) / 2 * scale
-        fits = all(
-            half_width <= pentagon_half_width(height, width, y) - FACE_MARGIN
-            for y in (center_y - half_height, center_y + half_height)
-        ) and center_y + half_height <= height - FACE_MARGIN
-        if fits:
+        if fits_face(height, width, -half_width, half_width, center_y - half_height, center_y + half_height):
             break
         scale *= SHRINK_STEP
     middle_x, middle_y = (x0 + x1) / 2, (y0 + y1) / 2
     pen = RelativePathPen(
-        lambda point: ((point[0] - middle_x) * scale * HORIZONTAL_SQUEEZE, -(point[1] - middle_y) * scale)
+        lambda point: (
+            (point[0] - middle_x) * scale * HORIZONTAL_SQUEEZE,
+            -(point[1] - middle_y) * scale,
+        ),
+        PIECE_COORDINATE_STEP,
     )
     glyph.draw(pen)
     return pen.path()
@@ -288,10 +285,10 @@ PIECE_HEADER = """import type { TsumeShogiPieceType } from "@/games/tsume-shogi/
 
 /**
  * 駒に書く1文字の字形。0.1mm 単位の相対座標で、字の外接矩形の中心を原点に置く。駒の上の位置は `piece-shape.ts` が持つ。
- * 書体は Zen Antique Regular（Copyright 2021 The Zen Antique Project Authors、SIL Open Font License 1.1、
- * `@fontsource/zen-antique` 5.3.0 の 400）。fontTools で輪郭を読み、字形の横だけを 0.88 倍に詰め、線を足して太らせない。
- * 字の大きさは駒の高さに比例させ（1em ＝ 駒の高さ × 0.72）、面取りの内側から 1mm の余白に入らない字だけを縮めた。
- * 座標は 0.1 に丸めた。`scripts/assets/tsume_shogi_glyph_paths.py` が書き出す。
+ * 書体は Zen Old Mincho Black（Copyright 2021 The Zen Old Mincho Project Authors、SIL Open Font License 1.1、
+ * `@fontsource/zen-old-mincho` 5.3.0 の 900）。fontTools で輪郭を読み、字形の横だけを 0.9 倍に詰める。
+ * 字の大きさは駒の高さに比例させ（1em ＝ 駒の高さ × 0.66）、面取りの内側から 1mm の余白に入らない字だけを縮めた。
+ * 座標は 1（0.1mm）に丸めた。`scripts/assets/tsume_shogi_glyph_paths.py` が書き出す。
  * 実行時に書体を読み込まず、どの端末でも同じ字形で描くため、書体ではなく輪郭で持つ。
  * 書体の使用許諾は同じ階層の `piece-glyph-paths.OFL.txt` にある。
  */
@@ -328,11 +325,10 @@ def write_license(path: Path, package_directory: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--zen-antique", type=Path, required=True, help="@fontsource/zen-antique の package ディレクトリ")
     parser.add_argument("--zen-old-mincho", type=Path, required=True, help="@fontsource/zen-old-mincho の package ディレクトリ")
     arguments = parser.parse_args()
 
-    piece_glyphs = load_glyphs(arguments.zen_antique, PIECE_FONT, "".join(PIECE_CHARACTERS.values()))
+    piece_glyphs = load_glyphs(arguments.zen_old_mincho, PIECE_FONT, "".join(PIECE_CHARACTERS.values()))
     lettering_glyphs = load_glyphs(arguments.zen_old_mincho, LETTERING_FONT, LETTERING_CHARACTERS)
     pieces = {
         piece_type: piece_glyph_path(piece_glyphs[character], piece_type)
@@ -341,7 +337,7 @@ def main() -> None:
     lettering = {character: lettering_glyph_path(lettering_glyphs[character]) for character in LETTERING_CHARACTERS}
 
     write_typescript(BOARD_DIRECTORY / "piece-glyph-paths.ts", PIECE_HEADER, pieces, PIECE_FOOTER)
-    write_license(BOARD_DIRECTORY / "piece-glyph-paths.OFL.txt", arguments.zen_antique)
+    write_license(BOARD_DIRECTORY / "piece-glyph-paths.OFL.txt", arguments.zen_old_mincho)
     write_typescript(BOARD_DIRECTORY / "lettering-glyph-paths.ts", LETTERING_HEADER, lettering, LETTERING_FOOTER)
     write_license(BOARD_DIRECTORY / "lettering-glyph-paths.OFL.txt", arguments.zen_old_mincho)
 

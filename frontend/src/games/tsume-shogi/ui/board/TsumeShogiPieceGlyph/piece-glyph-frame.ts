@@ -35,11 +35,19 @@ export const PIECE_SCALE = 1.1;
  */
 export const glyphSizeClassNames = {
   board: "size-full",
-  choice: "mb-2 aspect-[352/386] h-[88%]",
+  choice: "mb-2 aspect-[352/386] h-[78%]",
   hand: "aspect-[352/386] h-10",
   figure: "aspect-[352/386] h-7",
   movement: "aspect-[352/386] h-3.5",
 } as const;
+
+/**
+ * 駒の絵の中の、動かす対象の要素。指した駒の移動や、着手させなかったときの揺れは、駒を囲む HTML の要素ではなくこの要素を動かす。
+ * HTML の要素を動かすと、動いている間だけ別の層で描かれ、動き終えた瞬間に画素の丸めの分だけ位置が飛ぶ端末がある。
+ * 座標は駒の絵の単位（升の幅が `TSUME_SHOGI_SQUARE_WIDTH`、高さが `TSUME_SHOGI_SQUARE_HEIGHT`）で、原点は升の中心。
+ */
+export const pieceMotionAttribute = "data-piece-motion";
+export const pieceMotionSelector = `[${pieceMotionAttribute}]`;
 
 export type TsumeShogiPieceGlyphSize = keyof typeof glyphSizeClassNames;
 
@@ -63,7 +71,7 @@ export type TsumeShogiPieceGlyphProps = {
   grainSeed?: string;
 };
 
-/** 駒の外形・字の置き方。玉方の駒は頂点を下にし、字を 180° 回す。 */
+/** 駒の外形・字の置き方。玉方の駒は頂点を下にし、字を 180° 回す。`solid` は手前の側面まで含めた形。 */
 export function getPieceGlyphLayout(
   shape: TsumeShogiPieceShape,
   side: TsumeShogiSide,
@@ -75,6 +83,7 @@ export function getPieceGlyphLayout(
   return {
     outline: defender ? shape.defenderOutline : shape.outline,
     face: defender ? shape.defenderFace : shape.face,
+    solid: defender ? shape.defenderSolid : shape.solid,
     bodyTransform: `scale(${PIECE_SCALE}) translate(0 ${-shape.height / 2})`,
     glyphTransform: `translate(0 ${glyphY})${defender ? " rotate(180)" : ""}`,
   };

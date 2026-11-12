@@ -1,15 +1,17 @@
 // 詰将棋の盤・駒台・駒の木目の画像（frontend/src/games/tsume-shogi/assets/wood/*.webp）を作り直す。
 //
-// 木目は SVG の feTurbulence で手続き生成し、Chromium で画素にして PNG に書き出し、Pillow で WebP にする。
+// 木目は SVG の feTurbulence で、駒の虎斑は canvas で手続き生成し、Chromium で画素にして PNG に書き出し、Pillow で WebP にする。
 // 外部の画像素材は使わない。実行時に生成の描画を走らせないよう、表示の約2倍の大きさで画像に焼き込む。
 //
 //   PLAYWRIGHT_CORE=<playwright-core のディレクトリ> CHROMIUM=<chrome の実行ファイル> \
-//     node scripts/assets/tsume_shogi_wood_textures.mjs
+//     node scripts/assets/tsume_shogi_wood_textures.mjs [作り直す画像の名前...]
+//
+// 名前を渡さなければ全部を作り直す。Chromium の版で画素がわずかに変わるので、変えたい画像だけを名前で作り直せる。
 //
 // Pillow（WebP に対応したもの）を入れた python3 が要る。柾目は、年輪を1本ずつ早材から晩材へ濃くなって細い線で終わる輪郭で描き、
 // 年輪の間隔は幅の中でゆっくり変える。
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -183,12 +185,72 @@ const textures = [
   },
 ];
 
+/**
+ * 柘植の駒の虎斑（虎杢）。斜めの帯を低い周波数でうねらせ、帯ごとに濃さを変える。暗い帯は焦げ茶、その間の照りは淡い色で、
+ * どちらも不透明度に濃さを持たせ、駒の面の色に重ねて使う。縦横とも整数回で繰り返すので、並べても継ぎ目が出ない。
+ */
+const tora = {
+  name: "tsuge-tora",
+  // 帯はなめらかなので小さく描いて引き伸ばす。
+  quality: 70,
+  width: 120,
+  height: 132,
+  bands: 13,
+  slant: 3,
+  dark: [150, 88, 18],
+  light: [255, 248, 214],
+  lightAlpha: 0.7,
+};
+
+function drawTora({ width, height, bands, slant, dark, light, lightAlpha }) {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  const image = context.createImageData(width, height);
+  const turn = Math.PI * 2;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const u = x / width;
+      const v = y / height;
+      const warp =
+        0.9 * Math.sin(turn * (2 * u + v)) +
+        0.6 * Math.sin(turn * (3 * v - u) + 1.3) +
+        0.35 * Math.sin(turn * (5 * u + 2 * v) + 0.4);
+      const band = Math.sin(turn * (bands * v + slant * u) + warp);
+      const strength = 0.6 + 0.4 * Math.sin(turn * (2 * v + u) + 2.1) * Math.sin(turn * 3 * u + 0.7);
+      const darkAlpha = Math.max(0, band) ** 1.5 * strength;
+      const sheenAlpha = Math.max(0, -band) ** 2 * strength * lightAlpha;
+      const [color, alpha] = darkAlpha >= sheenAlpha ? [dark, darkAlpha] : [light, sheenAlpha];
+      image.data.set([...color, Math.round(alpha * 255)], (y * width + x) * 4);
+    }
+  }
+  context.putImageData(image, 0, 0);
+  return canvas.toDataURL("image/png");
+}
+
 const CONVERT_TO_WEBP = `
 import sys
 from PIL import Image
-source, target, quality = sys.argv[1], sys.argv[2], int(sys.argv[3])
-Image.open(source).convert("RGB").save(target, "WEBP", quality=quality, method=6)
+source, target, quality, mode = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4]
+Image.open(source).convert(mode).save(target, "WEBP", quality=quality, alpha_quality=quality, method=6)
 `;
+
+const requestedNames = process.argv.slice(2);
+
+function isRequested(name) {
+  return requestedNames.length === 0 || requestedNames.includes(name);
+}
+
+function convertToWebp(png, name, quality, mode) {
+  const converted = spawnSync(
+    "python3",
+    ["-c", CONVERT_TO_WEBP, png, join(OUTPUT_DIRECTORY, `${name}.webp`), String(quality), mode],
+    { stdio: "inherit" },
+  );
+  if (converted.status !== 0) throw new Error(`${name} を WebP にできない`);
+  console.log(name);
+}
 
 const workDirectory = mkdtempSync(join(tmpdir(), "tsume-shogi-wood-"));
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM });
@@ -198,7 +260,7 @@ try {
     deviceScaleFactor: 1,
   });
   const page = await context.newPage();
-  for (const texture of textures) {
+  for (const texture of textures.filter(({ name }) => isRequested(name))) {
     const source = `data:image/svg+xml,${encodeURIComponent(woodSvg(texture))}`;
     await page.setContent(
       `<body style="margin:0"><img id="wood" src="${source}" width="${texture.width}" height="${texture.height}"></body>`,
@@ -206,13 +268,13 @@ try {
     await page.waitForTimeout(400);
     const png = join(workDirectory, `${texture.name}.png`);
     await page.locator("#wood").screenshot({ path: png });
-    const converted = spawnSync(
-      "python3",
-      ["-c", CONVERT_TO_WEBP, png, join(OUTPUT_DIRECTORY, `${texture.name}.webp`), String(texture.quality)],
-      { stdio: "inherit" },
-    );
-    if (converted.status !== 0) throw new Error(`${texture.name} を WebP にできない`);
-    console.log(texture.name);
+    convertToWebp(png, texture.name, texture.quality, "RGB");
+  }
+  if (isRequested(tora.name)) {
+    const dataUrl = await page.evaluate(drawTora, tora);
+    const png = join(workDirectory, `${tora.name}.png`);
+    writeFileSync(png, Buffer.from(dataUrl.split(",")[1], "base64"));
+    convertToWebp(png, tora.name, tora.quality, "RGBA");
   }
 } finally {
   await browser.close();

@@ -12,7 +12,7 @@ type TsumeShogiKomadaiProps = {
 
 /**
  * 攻方の駒台。盤から `--komadai-gap` だけ離した別の小さな台で、盤の右下に置き、幅は盤の半分ほど（持駒の種類が多いときだけ広がる）。
- * 四角い天板に盤と同じ材を一段暗く使い、真上から見るので厚みは自分の落ち影だけで表す。
+ * 四角い天板に盤と同じ材を一段暗く使い、盤と同じく手前に薄い側面を見せる。
  */
 export function TsumeShogiKomadai({
   leadingAction,
@@ -27,6 +27,7 @@ export function TsumeShogiKomadai({
         className={cn(
           "ml-auto flex h-full min-w-1/2 max-w-full items-center gap-2 bg-size-[100%_100%] px-2",
           tone.komadaiSurface,
+          tone.komadaiSide,
           tone.komadaiShadow,
         )}
         style={{

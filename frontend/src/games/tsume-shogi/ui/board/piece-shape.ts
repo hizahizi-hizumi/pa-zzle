@@ -14,6 +14,15 @@ const APEX_ANGLE_DEGREES = 144;
 /** 面取りの幅。輪郭からこれだけ内側を平らな面にする。 */
 const CHAMFER = 9;
 
+/**
+ * 手前に見える側面の高さ。盤と同じ、手前へわずかに傾けた向きから見える分で、駒は底が厚く頭が薄いので、
+ * 底を手前に向けた攻方の駒は厚く、頭を手前に向けた玉方の駒は薄く見える。
+ */
+export const TSUME_SHOGI_PIECE_SIDE_DEPTH = {
+  attacker: 9,
+  defender: 6,
+} as const;
+
 type PieceBody = { height: number; width: number };
 
 const kingBody = { height: 315, width: 280 };
@@ -41,24 +50,10 @@ const pieceBodies = {
 } as const satisfies Record<TsumeShogiPieceType, PieceBody>;
 
 /**
- * 字の外接矩形の中心の、頂点からの高さ。字は面の内側に余白を取って収まる位置に置く（字形は `piece-glyph-paths.ts`）。
+ * 字の中心の、頂点からの高さの、駒の高さに対する比。頂点の側は幅が狭いので、中央より少し底へ寄せる
+ * （字形は `piece-glyph-paths.ts`。書き出しの `scripts/assets/tsume_shogi_glyph_paths.py` と同じ値）。
  */
-const glyphCenterYs = {
-  king: 194.9,
-  rook: 184,
-  bishop: 178.2,
-  gold: 180.7,
-  silver: 177,
-  knight: 174.6,
-  lance: 178.5,
-  pawn: 167.1,
-  dragon: 186.8,
-  horse: 179.2,
-  promSilver: 180.7,
-  promKnight: 169.2,
-  promLance: 178.5,
-  promPawn: 140.1,
-} as const satisfies Record<TsumeShogiPieceType, number>;
+const GLYPH_CENTER_RATIO = 0.55;
 
 type Point = readonly [x: number, y: number];
 
@@ -104,6 +99,39 @@ function insetPolygon(points: readonly Point[], distance: number): Point[] {
   });
 }
 
+function cross(origin: Point, a: Point, b: Point): number {
+  return (
+    (a[0] - origin[0]) * (b[1] - origin[1]) -
+    (a[1] - origin[1]) * (b[0] - origin[0])
+  );
+}
+
+function convexHull(points: readonly Point[]): Point[] {
+  const sorted = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  function buildChain(ordered: readonly Point[]): Point[] {
+    const chain: Point[] = [];
+    for (const point of ordered) {
+      while (
+        chain.length >= 2 &&
+        cross(chain.at(-2)!, chain.at(-1)!, point) <= 0
+      ) {
+        chain.pop();
+      }
+      chain.push(point);
+    }
+    return chain.slice(0, -1);
+  }
+  return [...buildChain(sorted), ...buildChain(sorted.toReversed())];
+}
+
+/** 外形を手前（下）へ `depth` だけ押し出した、面と側面を合わせた形。 */
+function extrudeTowardViewer(points: readonly Point[], depth: number): Point[] {
+  return convexHull([
+    ...points,
+    ...points.map(([x, y]): Point => [x, y + depth]),
+  ]);
+}
+
 function toPath(points: readonly Point[]): string {
   return `M${points.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join("L")}Z`;
 }
@@ -114,15 +142,17 @@ function flip(points: readonly Point[], height: number): Point[] {
 }
 
 /**
- * 駒の形。`outline` は外形、`face` は面取りの内側の面、`glyphCenterY` は字の中心の高さ。
+ * 駒の形。`outline` は外形、`face` は面取りの内側の面、`solid` は手前の側面まで含めた形、`glyphCenterY` は字の中心の高さ。
  * `defender*` は玉方の向き（頂点を下）にした形。
  */
 export type TsumeShogiPieceShape = {
   height: number;
   outline: string;
   face: string;
+  solid: string;
   defenderOutline: string;
   defenderFace: string;
+  defenderSolid: string;
   glyphCenterY: number;
 };
 
@@ -130,13 +160,23 @@ function createPieceShape(type: TsumeShogiPieceType): TsumeShogiPieceShape {
   const body = pieceBodies[type];
   const outline = createOutline(body);
   const face = insetPolygon(outline, CHAMFER);
+  const defenderOutline = flip(outline, body.height);
   return {
     height: body.height,
     outline: toPath(outline),
     face: toPath(face),
-    defenderOutline: toPath(flip(outline, body.height)),
+    solid: toPath(
+      extrudeTowardViewer(outline, TSUME_SHOGI_PIECE_SIDE_DEPTH.attacker),
+    ),
+    defenderOutline: toPath(defenderOutline),
     defenderFace: toPath(flip(face, body.height)),
-    glyphCenterY: glyphCenterYs[type],
+    defenderSolid: toPath(
+      extrudeTowardViewer(
+        defenderOutline,
+        TSUME_SHOGI_PIECE_SIDE_DEPTH.defender,
+      ),
+    ),
+    glyphCenterY: body.height * GLYPH_CENTER_RATIO,
   };
 }
 
