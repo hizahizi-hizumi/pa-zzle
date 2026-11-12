@@ -76,6 +76,7 @@ const TOWARD_STEP_VIOLATION_REVEAL_DELAY_MS = 1000;
 /** 置いたマスへの応えと決め手を残して見せてから、次の印とその決め手に替える。 */
 const NEXT_STEP_CUE_DELAY_MS = 900;
 
+/** 2マスを自分で埋める手順で、手が止まってから指を出すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
 const goalBoardState = takuzuTutorial.goal();
@@ -96,16 +97,12 @@ const soundProgressByPhase = {
   completed: "result",
 } as const satisfies Record<TutorialPhase, GameProgress>;
 
-/**
- * 手を離した後に、手がかりの印を付けるまでの間。`null` なら付けない。
- * 手が止まったときだけ付け、違反がある間は直すことに向かわせるため付けない。
- */
-function getIdleHintDelayMs(progress: TakuzuTutorialProgress): number | null {
-  if (progress.phase !== "playing") {
-    return null;
-  }
+/** 手を離した後に手がかりを求められるか。違反がある間は、直すことに向かわせるため求めさせない。 */
+function canRequestHint(progress: TakuzuTutorialProgress): boolean {
   const { lastMove } = progress.boardState;
-  return progress.violated || lastMove?.violated ? null : IDLE_HINT_DELAY_MS;
+  return (
+    progress.phase === "playing" && !progress.violated && !lastMove?.violated
+  );
 }
 
 /** 印は手を置くたびには付け直さず、押し直すとき（`recallId`）だけ線を濃くする。 */
@@ -169,6 +166,8 @@ export function TakuzuTutorial({
     useState<TakuzuTutorialProgress | null>(null);
   const [settledTowardStepProgress, setSettledTowardStepProgress] =
     useState<TakuzuTutorialProgress | null>(null);
+  const [hintRequestedProgress, setHintRequestedProgress] =
+    useState<TakuzuTutorialProgress | null>(null);
   const [recall, setRecall] = useState<TakuzuTutorialRecall | null>(null);
   const [lingerEndedProgress, setLingerEndedProgress] =
     useState<TakuzuTutorialProgress | null>(null);
@@ -210,16 +209,18 @@ export function TakuzuTutorial({
   // 2マスを自分で埋める手順は、手が止まったら指を出して、最初の1手を助ける。
   const choosingStepCells =
     guiding && (situation.step?.cellIndices.length ?? 0) > 1;
-  const idleHintDelayMs = lingeringStep
-    ? null
-    : guiding
-      ? choosingStepCells && progress.phase === "playing"
-        ? IDLE_HINT_DELAY_MS
-        : null
-      : getIdleHintDelayMs(progress);
+  const idleHintDelayMs =
+    lingeringStep === null && choosingStepCells && progress.phase === "playing"
+      ? IDLE_HINT_DELAY_MS
+      : null;
   const idle = idleHintDelayMs !== null && idleProgress === progress;
+  // 手を離した後は、自分で解いている間に割り込まないよう、手がかりは求められたときだけ見せる。
+  const hintRequestable =
+    !guiding && lingeringStep === null && canRequestHint(progress);
   const idleHint =
-    idle && !guiding ? findTakuzuTutorialHint(situation, boardState) : null;
+    hintRequestable && hintRequestedProgress === progress
+      ? findTakuzuTutorialHint(situation, boardState)
+      : null;
   const stepCueShown =
     progress.phase === "playing" && guiding && lingeringStep === null;
   // 手を離した後に違反が続いたら、直す所を迷わせないよう、置き直すマスに印を付ける。
@@ -371,6 +372,7 @@ export function TakuzuTutorial({
   function restart(): void {
     cancelPendingReaction();
     setIdleProgress(null);
+    setHintRequestedProgress(null);
     setSettledViolationProgress(null);
     setSettledTowardStepProgress(null);
     setRecall(null);
@@ -540,6 +542,11 @@ export function TakuzuTutorial({
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
       onRestart={handleRestart}
+      onRequestHint={
+        hintRequestable && idleHint === null
+          ? () => setHintRequestedProgress(progress)
+          : null
+      }
       onClose={handleClose}
     />
   );

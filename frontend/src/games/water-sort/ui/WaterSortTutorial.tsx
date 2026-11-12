@@ -60,8 +60,6 @@ type WaterSortTutorialProgress = TutorialProgress<
   WaterSortTutorialBoardState
 >;
 
-const IDLE_HINT_DELAY_MS = 4000;
-
 const goalBottles = waterSortTutorial.goal().bottles;
 
 const BOTTLE_COUNT = waterSortTutorial.start().bottles.length;
@@ -184,7 +182,7 @@ export function WaterSortTutorial({
   // 一言と進み具合が実際の動きより先に替わらないよう、注ぎ終えてから替える。
   const [progressBeforePour, setProgressBeforePour] =
     useState<WaterSortTutorialProgress | null>(null);
-  const [idleProgress, setIdleProgress] =
+  const [hintRequestedProgress, setHintRequestedProgress] =
     useState<WaterSortTutorialProgress | null>(null);
   // 操作の `id` は、もう一度始めても本番の効果音が同じ知らせとみなさないよう、開いている間ずっと増やす。
   const nextOperationIdRef = useRef(1);
@@ -198,7 +196,7 @@ export function WaterSortTutorial({
   const guiding = situation.step !== null;
   const { boardState } = progress;
   const solving = progress.phase === "playing";
-  const idleHintShown = !guiding && idleProgress === progress;
+  const requestedHintShown = !guiding && hintRequestedProgress === progress;
   const recallId = recall?.progress === progress ? recall.id : null;
   const shownProgress = progressBeforePour ?? progress;
   // 手を引いている間は、注ぐ動きを終えるまで次の手を受け付けず、どの手順の一言も必ず見せる。
@@ -210,7 +208,7 @@ export function WaterSortTutorial({
       ? null
       : guiding
         ? getWaterSortTutorialStepBottleIndex(situation, boardState)
-        : idleHintShown
+        : requestedHintShown
           ? findWaterSortTutorialHintBottleIndex(boardState)
           : null;
 
@@ -219,20 +217,14 @@ export function WaterSortTutorial({
   const violationShown =
     progress.violated &&
     recallId === null &&
-    !(idleHintShown && hintBottleIndex !== null);
+    !(requestedHintShown && hintBottleIndex !== null);
 
   useWaterSortSoundEffects(operation, gameProgressByPhase[progress.phase]);
 
-  useEffect(() => {
-    if (!open || !solving || guiding) {
-      return;
-    }
-    const timer = window.setTimeout(
-      () => setIdleProgress(progress),
-      IDLE_HINT_DELAY_MS,
-    );
-    return () => window.clearTimeout(timer);
-  }, [open, progress, solving, guiding]);
+  // 手を離した後は、自分で解いている間に割り込まないよう、手がかりは求められたときだけ見せる。
+  function handleRequestHint(): void {
+    setHintRequestedProgress(progress);
+  }
 
   const handleClearAnimationComplete = useCallback(() => {
     setProgress(completeTutorial);
@@ -271,7 +263,7 @@ export function WaterSortTutorial({
   }
 
   function reset(): void {
-    setIdleProgress(null);
+    setHintRequestedProgress(null);
     setProgressBeforePour(null);
     setRecall(null);
     setOperation(null);
@@ -401,6 +393,9 @@ export function WaterSortTutorial({
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
       onRestart={handleRestart}
+      onRequestHint={
+        solving && !guiding && !requestedHintShown ? handleRequestHint : null
+      }
       onClose={handleClose}
     />
   );

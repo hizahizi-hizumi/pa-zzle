@@ -62,6 +62,8 @@ type TutorialStageScreenProps = {
   renderBoard: (intro: TutorialStageBoardIntro) => ReactNode;
   onIntroEnd: () => void;
   onRestart: () => void;
+  /** 渡している間だけ、解いている間の一言の下に「ヒント」を出す。 */
+  onRequestHint: (() => void) | null;
   /** 画面そのもの。開いたときのフォーカスを置く。 */
   ref?: Ref<HTMLDivElement>;
 };
@@ -142,6 +144,7 @@ export function TutorialStageScreen({
   renderBoard,
   onIntroEnd,
   onRestart,
+  onRequestHint,
   ref,
 }: TutorialStageScreenProps) {
   const [introScene, setIntroScene] = useState<TutorialIntroScene | null>(
@@ -387,6 +390,17 @@ export function TutorialStageScreen({
           {showsGoal && (
             <Button type="button" size="lg" onClick={handleStart}>
               はじめる
+            </Button>
+          )}
+          {onRequestHint && introScene === null && phase === "playing" && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={appearClassName}
+              onClick={onRequestHint}
+            >
+              ヒント
             </Button>
           )}
           {completed && (
