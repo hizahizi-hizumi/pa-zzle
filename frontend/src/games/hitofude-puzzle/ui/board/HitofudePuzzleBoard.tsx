@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 
+import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import type { HitofudePuzzleBlockedMove } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import {
@@ -44,8 +45,8 @@ type HitofudePuzzleBoardProps = {
   interactionDisabled: boolean;
   /** マスに重ねる合図。1マスに1つまで。 */
   cues?: readonly HitofudePuzzleCellCue[];
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜くマス。通常のプレイでは渡さない。 */
-  spotlitCells?: readonly number[];
+  /** チュートリアルで、盤面の中だけを薄く覆い、元の明るさで残すマス。`null` なら覆わない。通常のプレイでは渡さない。 */
+  spotlitCells?: readonly number[] | null;
   onBeginStroke: (cell: number) => void;
   onTraceStroke: (step: HitofudePuzzleTraceStep) => void;
   onEndStroke: () => void;
@@ -87,7 +88,7 @@ export function HitofudePuzzleBoard({
   clearing,
   interactionDisabled,
   cues = [],
-  spotlitCells = [],
+  spotlitCells = null,
   onBeginStroke,
   onTraceStroke,
   onEndStroke,
@@ -234,6 +235,9 @@ export function HitofudePuzzleBoard({
       ref={boardRef}
       role="group"
       aria-label={`${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面 ${size}行${size}列`}
+      {...(spotlitCells !== null && {
+        [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "",
+      })}
       className="relative size-full touch-none select-none [-webkit-touch-callout:none]"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -270,7 +274,7 @@ export function HitofudePuzzleBoard({
             disabled={interactionDisabled}
             isTabStop={cell === focusableCell}
             cue={cues.find((cue) => cue.cell === cell)}
-            spotlit={spotlitCells.includes(cell)}
+            spotlit={spotlitCells?.includes(cell) ?? false}
             onPress={pressCell}
             onFocus={(focusedCell) =>
               setKeyboardFocus({ head, cell: focusedCell })

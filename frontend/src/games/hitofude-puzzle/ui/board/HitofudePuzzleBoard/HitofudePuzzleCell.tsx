@@ -16,7 +16,7 @@ type HitofudePuzzleCellProps = {
   disabled: boolean;
   isTabStop: boolean;
   cue: HitofudePuzzleCellCue | undefined;
-  /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜く。 */
+  /** チュートリアルで、盤面の覆いからこのマスを抜く。 */
   spotlit: boolean;
   onPress: (cell: number) => void;
   onFocus: (cell: number) => void;
@@ -110,16 +110,22 @@ export function HitofudePuzzleCell({
           <TutorialCue kind="acknowledgement" id={cue.id} />
         </span>
       )}
-      {(cue?.kind === "hint" || cue?.kind === "recall") && (
+      {cue?.kind === "mark" && (
         <span
           aria-hidden="true"
-          data-cell-cue="hint"
+          data-cell-cue="mark"
           className={cuePlacementClassName}
         >
-          <TutorialCue
-            kind="mark"
-            recallId={cue.kind === "recall" ? cue.id : null}
-          />
+          {/* 下の縁から指すと、下の段の印では盤面の下の一言に指が重なるので、まだ何も無いマスの中を指す。 */}
+          {cue.pointed ? (
+            <TutorialCue
+              kind="pointer"
+              recallId={cue.recallId}
+              placement="center"
+            />
+          ) : (
+            <TutorialCue kind="mark" recallId={cue.recallId} />
+          )}
         </span>
       )}
     </button>
