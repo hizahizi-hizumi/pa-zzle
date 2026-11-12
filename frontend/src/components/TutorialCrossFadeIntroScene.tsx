@@ -22,7 +22,7 @@ function canAnimate(): boolean {
   );
 }
 
-/** 盤面の動きで場面を見せないゲームが、`TutorialBoardIntro` を受けて盤面を包むのに使う。 */
+/** 盤面の動きで場面を見せないゲームが、`TutorialBoardIntro`・`TutorialStageBoardIntro` を受けて盤面を包むのに使う。 */
 export function TutorialCrossFadeIntroScene({
   scene,
   playing,
