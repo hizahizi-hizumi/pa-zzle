@@ -56,11 +56,13 @@ describe("TutorialStage", () => {
     open = true,
     phase = "intro",
     progress = 0,
+    spotlighting = false,
     finish = { entry: "play", onReturnToPlay: vi.fn() },
   }: {
     open?: boolean;
     phase?: TutorialPhase;
     progress?: number;
+    spotlighting?: boolean;
     finish?: TutorialFinish;
   } = {}): (nextPhase: TutorialPhase) => void {
     function createStage(shownPhase: TutorialPhase) {
@@ -74,6 +76,7 @@ describe("TutorialStage", () => {
           recap={recap}
           message={defaultMessage}
           phase={shownPhase}
+          spotlighting={spotlighting}
           progress={progress}
           progressStepCount={6}
           finish={finish}
@@ -198,6 +201,58 @@ describe("TutorialStage", () => {
       );
 
       expect(onClose).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("盤面が決め手を示している場合", () => {
+    function getScrim(): Element | null {
+      return document.querySelector("[data-tutorial-focus-scrim]");
+    }
+
+    describe("盤面を解いている間", () => {
+      beforeEach(() => {
+        renderStage({ phase: "playing", spotlighting: true });
+      });
+
+      test("盤面の中を覆うこと", () => {
+        const scrim = getScrim();
+
+        expect(scrim).not.toBeNull();
+      });
+    });
+
+    const hiddenCases = [
+      ["入口を見せている", "intro"],
+      ["解き終えて完成演出を見せている", "solved"],
+      ["終えたときの操作を待っている", "completed"],
+    ] as const;
+
+    test.each(hiddenCases)("%s間は、覆わないこと", (_, phase) => {
+      renderStage({ phase, spotlighting: true });
+
+      const scrim = getScrim();
+
+      expect(scrim).toBeNull();
+    });
+
+    describe("はじめるを押して、始めの盤面へ替える場面を見せている間", () => {
+      beforeEach(() => {
+        const rerenderStage = renderStage({ spotlighting: true });
+        fireEvent.click(
+          within(getScreen()).getByRole("button", { name: "はじめる" }),
+        );
+        rerenderStage("playing");
+      });
+
+      test("覆わず、場面を終えると覆うこと", () => {
+        const scrimDuringScene = getScrim();
+        act(() => boardIntro?.onSceneEnd());
+
+        const scrim = getScrim();
+
+        expect(scrimDuringScene).toBeNull();
+        expect(scrim).not.toBeNull();
+      });
     });
   });
 

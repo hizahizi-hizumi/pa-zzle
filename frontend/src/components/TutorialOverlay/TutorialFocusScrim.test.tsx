@@ -1,7 +1,10 @@
 import { act, cleanup, render } from "@testing-library/react";
 
 import { TutorialFocusScrim } from "@/components/TutorialOverlay/TutorialFocusScrim";
-import { TUTORIAL_SPOTLIGHT_ATTRIBUTE } from "@/components/TutorialSpotlight";
+import {
+  TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE,
+  TUTORIAL_SPOTLIGHT_ATTRIBUTE,
+} from "@/components/TutorialSpotlight";
 
 type SpotlightBox = {
   left: number;
@@ -24,9 +27,13 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function addSpotlight(box: SpotlightBox): HTMLElement {
+/** 覆いから抜く所の印を付けた要素を、画面の中の位置・大きさ・角丸で置く。 */
+function addSpotlight(
+  box: SpotlightBox,
+  attribute = TUTORIAL_SPOTLIGHT_ATTRIBUTE,
+): HTMLElement {
   const element = document.createElement("span");
-  element.setAttribute(TUTORIAL_SPOTLIGHT_ATTRIBUTE, "");
+  element.setAttribute(attribute, "");
   if (box.radius !== undefined) {
     element.style.borderTopLeftRadius = box.radius;
     element.style.borderTopRightRadius = box.radius;
@@ -50,6 +57,12 @@ function renderScrim(active: boolean) {
       containerRef={{ current: container }}
     />,
   );
+}
+
+function getMaskPaths(fill: "white" | "black"): string[] {
+  return Array.from(
+    document.querySelectorAll(`svg mask path[fill="${fill}"]`),
+  ).map((path) => path.getAttribute("d") ?? "");
 }
 
 function getScrim(): SVGSVGElement | null {
@@ -147,6 +160,60 @@ describe("TutorialFocusScrim", () => {
 
       expect(holes).toHaveLength(1);
       expect(holes[0]).toMatch(/^M30,0 /);
+    });
+  });
+
+  describe("覆う範囲を印の付いた範囲に限った場合", () => {
+    beforeEach(() => {
+      addSpotlight(
+        { left: 0, top: 0, width: 100, height: 100, radius: "8px" },
+        TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE,
+      );
+      addSpotlight({ left: 10, top: 10, width: 20, height: 20 });
+      render(
+        <TutorialFocusScrim
+          active={true}
+          containerRef={{ current: container }}
+          scope="area"
+        />,
+      );
+    });
+
+    test("画面全体ではなく、範囲の印の付いた要素の形だけを覆い、その中の抜く所を抜くこと", () => {
+      const scrim = getScrim();
+      const screenRects = document.querySelectorAll("svg mask rect");
+      const areas = getMaskPaths("white");
+      const holes = getMaskPaths("black");
+
+      expect(scrim).not.toBeNull();
+      expect(screenRects).toHaveLength(0);
+      expect(areas).toEqual([
+        "M8,0 H92 A8,8 0 0 1 100,8 V92 A8,8 0 0 1 92,100 H8 A8,8 0 0 1 0,92 V8 A8,8 0 0 1 8,0 Z",
+      ]);
+      expect(holes).toEqual([
+        "M10,10 H30 A0,0 0 0 1 30,10 V30 A0,0 0 0 1 30,30 H10 A0,0 0 0 1 10,30 V10 A0,0 0 0 1 10,10 Z",
+      ]);
+    });
+  });
+
+  describe("覆う範囲を指定しない場合", () => {
+    beforeEach(() => {
+      addSpotlight(
+        { left: 0, top: 0, width: 100, height: 100 },
+        TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE,
+      );
+      addSpotlight({ left: 10, top: 10, width: 20, height: 20 });
+      renderScrim(true);
+    });
+
+    test("範囲の印を読まず、画面全体を覆って抜く所だけを抜くこと", () => {
+      const screenRects = document.querySelectorAll("svg mask rect");
+      const areas = getMaskPaths("white");
+      const holes = getMaskPaths("black");
+
+      expect(screenRects).toHaveLength(1);
+      expect(areas).toEqual([]);
+      expect(holes).toHaveLength(1);
     });
   });
 
