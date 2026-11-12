@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  type TutorialBoardIntro,
   type TutorialFinish,
   TutorialOverlay,
   type TutorialPlayStart,
+  type TutorialStageBoardIntro,
 } from "@/components/TutorialOverlay";
 import pictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
 import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
@@ -12,30 +12,35 @@ import {
   createNanpureDigitOperation,
   type NanpureOperation,
 } from "@/games/nanpure/play/use-nanpure-play";
-import {
-  NANPURE_DIGITS,
-  type NanpureDigit,
-} from "@/games/nanpure/puzzle/board";
+import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 import {
-  findNanpureTutorialHintCellIndex,
+  describeNanpureTutorialMistake,
+  describeNanpureTutorialStep,
+  findNanpureTutorialHint,
   findNanpureTutorialWrongCellIndex,
   getNanpureTutorialCompletedDigits,
   getNanpureTutorialConflictCellIndices,
+  getNanpureTutorialCuedDigit,
   getNanpureTutorialMistakeCellIndices,
+  getNanpureTutorialProgressRatio,
   getNanpureTutorialStepCellIndex,
+  getNanpureTutorialStepFocus,
   getNanpureTutorialUnitCellIndices,
   isNanpureTutorialCellSelectable,
   NANPURE_TUTORIAL_GIVENS,
+  NANPURE_TUTORIAL_PROGRESS_STEP_COUNT,
   type NanpureTutorialBoardState,
+  type NanpureTutorialFocus,
+  type NanpureTutorialHint,
   type NanpureTutorialRuleId,
-  type NanpureTutorialSituation,
   nanpureTutorial,
 } from "@/games/nanpure/tutorial/tutorial";
 import type { NanpureBoardSpotlight } from "@/games/nanpure/ui/board/board-spotlight";
 import type { NanpureCellCue } from "@/games/nanpure/ui/board/cell-cue";
 import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureClearAnimation";
 import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
+import { NanpureGround } from "@/games/nanpure/ui/NanpureGround";
 import { NanpureTutorialRewind } from "@/games/nanpure/ui/NanpureTutorial/NanpureTutorialRewind";
 import { NanpureDigitPad } from "@/games/nanpure/ui/play/NanpureDigitPad";
 import { useNanpureSoundEffects } from "@/games/nanpure/ui/use-nanpure-sound-effects";
@@ -47,6 +52,7 @@ import {
   getTutorialSituation,
   performTutorialAction,
   startTutorial,
+  type TutorialMessage,
   type TutorialPhase,
   type TutorialProgress,
 } from "@/games/tutorial";
@@ -74,9 +80,6 @@ type NanpureTutorialRecall = {
 /** 入れたマスと決め手を残して見せてから、次の印とその決め手に替える。 */
 const NEXT_STEP_CUE_DELAY_MS = 900;
 
-/** 行・列・ブロックを見比べて考えている間は先回りしないよう、長めに待つ。 */
-const IDLE_HINT_DELAY_MS = 10_000;
-
 /** チュートリアルではメモを使わないので、どのマスにもメモは無い。 */
 const noNotes: NanpureNotes = Array.from(
   { length: NANPURE_TUTORIAL_GIVENS.length },
@@ -93,7 +96,11 @@ const gameProgressByPhase = {
   completed: "result",
 } as const satisfies Record<TutorialPhase, GameProgress>;
 
-/** 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。 */
+/**
+ * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
+ * 手を引いている間は、手順を終えた手に決め手があれば、それを見せてから付ける。
+ * 手を離した後は付けない。手がかりは、求められたときだけ見せる。
+ */
 function getCueDelayMs(
   progress: NanpureTutorialProgress,
   guiding: boolean,
@@ -102,7 +109,7 @@ function getCueDelayMs(
     return null;
   }
   if (!guiding) {
-    return IDLE_HINT_DELAY_MS;
+    return null;
   }
   const { lastMove } = progress.boardState;
   return lastMove?.fitsStep && lastMove.reasonUnits.length > 0
@@ -128,37 +135,65 @@ function getHintCue(
     : { cellIndex, kind: "recall", id: recallId };
 }
 
+const noFocus: NanpureTutorialFocus = { cellIndices: [], units: [] };
+
+/** 手を離した後、手が止まったときに示す手がかりで、目を向けさせる所。答えと違う数字は印だけで示し、覆わない。 */
+function getHintFocus(hint: NanpureTutorialHint | null): NanpureTutorialFocus {
+  switch (hint?.kind) {
+    case undefined:
+    case "wrong-digit":
+      return noFocus;
+    case "last-empty":
+      return { cellIndices: [], units: [hint.unit] };
+    case "placement":
+      return {
+        cellIndices: hint.placement.eliminatingCellIndices,
+        units: [hint.placement.block],
+      };
+  }
+}
+
+/** 手がかりで印を付けるマス。置き場所はマスを自分で決めさせるので、印を付けない。 */
+function getHintCellIndex(hint: NanpureTutorialHint | null): number | null {
+  return hint?.kind === "wrong-digit" || hint?.kind === "last-empty"
+    ? hint.cellIndex
+    : null;
+}
+
+function getHintMessage(
+  hint: NanpureTutorialHint | null,
+): TutorialMessage | null {
+  return hint === null || hint.kind === "wrong-digit" ? null : hint.message;
+}
+
 /**
- * - 入れてから次の印を出すまでの間は、入れたマスとその決め手を抜く。前の手の決め手を、次の印の決め手と読み違えさせないため、印と一緒に替える。
- * - 重なりを示しているマスは、何と重なったかを読めるよう抜く。
+ * 盤面の覆いから抜いて元の明るさで見せる所。目を向けさせる所に、重なりを示しているマスを加える。重なったマスは、何と重なったかを読めるよう抜く。
  * 抜く行・列・ブロックに含まれるマスは、まとまりの形で抜けるので、マスとしては重ねて抜かない。
+ * 行・列・ブロックも重なりも無ければ（操作を教える手順など）覆わない。
  */
 function getBoardSpotlight(
-  situation: NanpureTutorialSituation,
-  state: NanpureTutorialBoardState,
-  cueShown: boolean,
-): NanpureBoardSpotlight {
-  const { step } = situation;
-  const { lastMove } = state;
-  const focus =
-    cueShown && step !== null
-      ? { cellIndices: [step.cuedCellIndex], units: step.reasonUnits }
-      : {
-          cellIndices: lastMove ? [lastMove.cellIndex] : [],
-          units: lastMove?.reasonUnits ?? [],
-        };
+  focus: NanpureTutorialFocus,
+  conflictCellIndices: readonly number[],
+): NanpureBoardSpotlight | null {
+  if (focus.units.length === 0 && conflictCellIndices.length === 0) {
+    return null;
+  }
   const unitCellIndices = new Set(
     focus.units.flatMap(getNanpureTutorialUnitCellIndices),
   );
   return {
-    cellIndices: [
-      ...focus.cellIndices,
-      ...getNanpureTutorialConflictCellIndices(situation, state),
-    ].filter((cellIndex) => !unitCellIndices.has(cellIndex)),
+    cellIndices: [...focus.cellIndices, ...conflictCellIndices].filter(
+      (cellIndex) => !unitCellIndices.has(cellIndex),
+    ),
     units: focus.units,
   };
 }
 
+/**
+ * 本物の 9×9 の盤面の空きマスを、一言と印に沿って1マスずつ一緒に埋め、行・列・ブロックのルールを1つずつ使って身につけさせ、
+ * 最後にブロックの中で数字の置き場所を探させる。
+ * 手順を終えたら手を離し、残りを自分で埋めさせる。盤面・数字のボタン・ミスと重なりの色・解けたときの演出は本番と同じ部品を使う。
+ */
 export function NanpureTutorial({
   open,
   playStart,
@@ -170,6 +205,8 @@ export function NanpureTutorial({
   const [selectedCellIndex, setSelectedCellIndex] = useState<number | null>(
     null,
   );
+  const [hintRequestedProgress, setHintRequestedProgress] =
+    useState<NanpureTutorialProgress | null>(null);
   const [idleProgress, setIdleProgress] =
     useState<NanpureTutorialProgress | null>(null);
   // `id` は、もう一度始めても本番の効果音が同じ知らせとみなさないよう、開いている間ずっと増やす。
@@ -183,7 +220,9 @@ export function NanpureTutorial({
   const playing = progress.phase === "playing";
   const recallId = recall?.progress === progress ? recall.id : null;
   const stepCellSelected =
-    step !== null && selectedCellIndex === step.cuedCellIndex;
+    guiding &&
+    selectedCellIndex !== null &&
+    isNanpureTutorialCellSelectable(situation, boardState, selectedCellIndex);
   const cueDelayMs = getCueDelayMs(progress, guiding);
   // 印の無いマスを押されたときと、印を待たずに手順のマスを選んだときは、すぐ印を付ける。
   const cueShown =
@@ -195,11 +234,36 @@ export function NanpureTutorial({
     playing && progress.violated && !boardState.lastMove?.violated
       ? findNanpureTutorialWrongCellIndex(situation, boardState)
       : null;
-  const freePlayHintCellIndex =
-    wrongCellIndex ??
-    (playing && !guiding && cueShown
-      ? findNanpureTutorialHintCellIndex(situation, boardState)
-      : null);
+  // 手を離した後は、自分で解いている間に割り込まないよう、手がかりは求められたときだけ見せる。
+  const hintRequestable = wrongCellIndex === null && playing && !guiding;
+  const idleHint =
+    hintRequestable && hintRequestedProgress === progress
+      ? findNanpureTutorialHint(situation, boardState)
+      : null;
+  const freePlayHintCellIndex = wrongCellIndex ?? getHintCellIndex(idleHint);
+  const boardSpotlight = playing
+    ? getBoardSpotlight(
+        getShownFocus(),
+        getNanpureTutorialConflictCellIndices(situation, boardState),
+      )
+    : null;
+
+  /**
+   * 盤面で目を向けさせる所。手を引いている間は、手順の印が出ている間は手順の決め手、入れてから次の印を出すまでの間は入れたマスとその決め手。
+   * 前の手の決め手を、次の手順の決め手と読み違えさせないため、印と一緒に替える。手を離した後は、手がかりの決め手。
+   */
+  function getShownFocus(): NanpureTutorialFocus {
+    if (!guiding) {
+      return getHintFocus(idleHint);
+    }
+    const { lastMove } = boardState;
+    return cueShown
+      ? (getNanpureTutorialStepFocus(situation, boardState) ?? noFocus)
+      : {
+          cellIndices: lastMove ? [lastMove.cellIndex] : [],
+          units: lastMove?.reasonUnits ?? [],
+        };
+  }
   // 手順を終えた手の決め手を残して見せる間は、一言とルールの並びも終えた手順のままにし、次の印と一緒に替える。
   const heldStep =
     playing && guiding && !cueShown
@@ -240,7 +304,7 @@ export function NanpureTutorial({
       return;
     }
     // 印の無いマスを押されたら、赤は使わず、印の線を短く濃くして目を向けさせる。
-    if (!isNanpureTutorialCellSelectable(situation, cellIndex)) {
+    if (!isNanpureTutorialCellSelectable(situation, boardState, cellIndex)) {
       recallCue();
       return;
     }
@@ -281,12 +345,20 @@ export function NanpureTutorial({
 
   function restart(): void {
     setIdleProgress(null);
+    setHintRequestedProgress(null);
     setRecall(null);
     setOperation(null);
     setSelectedCellIndex(null);
     setProgress(startTutorial(nanpureTutorial));
   }
 
+  // ゴールはもう見せたので、入口を通さずに最初の手順から始める。
+  function handleRestart(): void {
+    restart();
+    setProgress(finishTutorialIntro);
+  }
+
+  // 終えたかどうかは残さないので、閉じたら次に開いたとき入口から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();
@@ -297,24 +369,27 @@ export function NanpureTutorial({
     playStart?.onStart();
   }
 
+  /**
+   * 始めの盤面の場面では、解き終えた盤面から入れた数字を消していき、消し終えたら始めの盤面に替える。
+   * 最初の手順の印は、始めの盤面に替え終えてから出す。
+   */
   function renderBoard({
     scene,
     playing: scenePlaying,
     onSceneEnd,
-    messageShown,
-  }: TutorialBoardIntro) {
-    // 始めの盤面の場面では、解き終えた盤面から入れた数字を消していき、消し終えたら始めの盤面に替える。
+  }: TutorialStageBoardIntro) {
     const goalShown = scene === "goal" || (scene === "start" && scenePlaying);
     const shownBoardState = goalShown ? goalBoardState : boardState;
     // 最初の手順の印は、導入の終わりに一言と同時に出す。
     const stepMarkShown = playing
       ? guiding && cueShown
-      : step !== null && scene === null && messageShown;
+      : step !== null && scene === null;
     const stepCellIndex = stepMarkShown
       ? getNanpureTutorialStepCellIndex(situation, boardState)
       : null;
     const hintCellIndex = stepCellIndex ?? freePlayHintCellIndex;
     // 完成の演出と完成した盤面に、最後の手の合図を残さない。
+    // マスの印には指を添えない。指が、決め手になる隣の数字を隠すため。
     const cellCues: NanpureCellCue[] = playing
       ? [
           ...getMoveCues(boardState),
@@ -325,16 +400,9 @@ export function NanpureTutorial({
       : stepCellIndex === null
         ? []
         : [{ cellIndex: stepCellIndex, kind: "hint", id: 0 }];
-    const spotlit = playing && guiding;
-    // マスを選んだ後は、次に押すのは数字のボタンなので、押させたい数字か、押せる数字をすべて覆いから抜く。
-    const stepDigit = step?.cuedDigit ?? null;
-    const spotlitDigits =
-      spotlit && cueShown && stepCellSelected
-        ? stepDigit !== null
-          ? [stepDigit]
-          : NANPURE_DIGITS.filter((digit) => !completedDigits.includes(digit))
-        : [];
-    const cuedDigit = stepMarkShown && stepCellSelected ? stepDigit : null;
+    const cuedDigit = stepMarkShown
+      ? getNanpureTutorialCuedDigit(situation, selectedCellIndex)
+      : null;
 
     return (
       <div className="flex w-[min(100cqw,calc(100cqh-3.25rem),28rem)] flex-col gap-2">
@@ -365,11 +433,7 @@ export function NanpureTutorial({
               interactionDisabled={!playing}
               sizeClassName="w-full"
               cues={goalShown ? [] : cellCues}
-              spotlight={
-                spotlit
-                  ? getBoardSpotlight(situation, boardState, cueShown)
-                  : null
-              }
+              spotlight={goalShown ? null : boardSpotlight}
               onSelectCell={handleSelectCell}
             />
           </NanpureTutorialRewind>
@@ -380,7 +444,6 @@ export function NanpureTutorial({
           completedDigits={completedDigits}
           cuedDigit={cuedDigit}
           cuedDigitRecallId={recallId}
-          spotlitDigits={spotlitDigits}
           size="compact"
           onInputDigit={handleInputDigit}
         />
@@ -398,30 +461,49 @@ export function NanpureTutorial({
 
   return (
     <TutorialOverlay
+      presentation="stage"
       open={open}
       title={NANPURE_DISPLAY_NAME}
       pictogramSvg={pictogramSvg}
+      background={<NanpureGround />}
       intro={nanpureTutorial.intro}
-      rules={nanpureTutorial.rules.map((rule) => ({
-        ...rule,
-        earned:
-          progress.earnedRuleIds.includes(rule.id) &&
-          !(heldStep !== null && step?.introducedRuleId === rule.id),
-        current: (heldStep ?? step)?.introducedRuleId === rule.id,
-      }))}
+      recap={nanpureTutorial.rules.map((rule) => rule.label)}
       message={
         heldStep?.message ??
+        (playing && !progress.violated
+          ? describeNanpureTutorialMistake(boardState)
+          : null) ??
+        // 手がかりには、そのマスを決める見方の一言を添える。
+        getHintMessage(idleHint) ??
+        (progress.violated
+          ? null
+          : describeNanpureTutorialStep(
+              situation,
+              boardState,
+              selectedCellIndex,
+            )) ??
         getTutorialMessage(nanpureTutorial, progress, {
           entry: finish.entry,
           violationSettled: true,
         })
       }
       phase={progress.phase}
-      guiding={playing && guiding}
+      spotlighting={boardSpotlight !== null}
+      progress={
+        progress.phase === "solved" || progress.phase === "completed"
+          ? 1
+          : getNanpureTutorialProgressRatio(boardState)
+      }
+      progressStepCount={NANPURE_TUTORIAL_PROGRESS_STEP_COUNT}
       finish={finish}
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
-      onRestart={restart}
+      onRestart={handleRestart}
+      onRequestHint={
+        hintRequestable && idleHint === null
+          ? () => setHintRequestedProgress(progress)
+          : null
+      }
       onClose={handleClose}
     />
   );
