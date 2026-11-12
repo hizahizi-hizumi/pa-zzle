@@ -72,6 +72,12 @@ describe("GamePlayFrame", () => {
       expect(board).not.toBeNull();
       expect(resultScreen).toBeNull();
     });
+
+    test("ゲームのホームから広げた盤面が着く先を探せるよう、盤面をプレイ画面の外枠の印の中に描くこと", () => {
+      const frame = screen.getByText("盤面").closest("[data-play-frame]");
+
+      expect(frame).not.toBeNull();
+    });
   });
 
   describe("チュートリアルを渡さない場合", () => {

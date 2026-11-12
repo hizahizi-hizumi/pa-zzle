@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { tsumeShogiCatalogEntry } from "@/game-catalog/tsume-shogi/tsume-shogi-catalog-entry";
@@ -29,10 +35,6 @@ vi.mock(
 let fetchProblemPool: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-  Element.prototype.scrollIntoView = vi.fn();
-  window.ResizeObserver = vi.fn(function ResizeObserver() {
-    return { observe() {}, unobserve() {}, disconnect() {} };
-  }) as unknown as typeof ResizeObserver;
   fetchProblemPool = vi.fn(async () => new Response(null, { status: 503 }));
   vi.stubGlobal("fetch", fetchProblemPool);
 });
@@ -41,8 +43,6 @@ afterEach(() => {
   cleanup();
   window.localStorage.clear();
   vi.unstubAllGlobals();
-  Reflect.deleteProperty(Element.prototype, "scrollIntoView");
-  Reflect.deleteProperty(window, "ResizeObserver");
 });
 
 function chooseLevel(label: string) {
@@ -80,7 +80,7 @@ describe("TsumeShogiHomeView", () => {
 
   const levelLabels = difficultyLevels.map(({ label }) => label);
 
-  test("レベルのカードを5つ並べること", () => {
+  test("レベルを5つ並べること", () => {
     const cards = screen.getAllByRole("tab");
 
     expect(cards).toHaveLength(levelLabels.length);
@@ -127,9 +127,13 @@ describe("TsumeShogiHomeView", () => {
     expect(requests).toBe(1);
   });
 
-  test("レベルを選んでランダムに遊ぶを押すと、そのレベルのプレイ画面へ進むこと", () => {
+  test("レベルを選んで遊ぶを押すと、そのレベルのプレイ画面へ進むこと", () => {
     chooseLevel("レベル 3");
-    fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+    fireEvent.click(
+      within(
+        screen.getByRole("region", { name: "これから遊ぶ問題" }),
+      ).getByRole("button", { name: "遊ぶ" }),
+    );
 
     const { pathname } = router.state.location;
 

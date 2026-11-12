@@ -107,7 +107,9 @@ export function WaterSortBoard({
   const widthForAvailableHeight = `calc((100cqh - var(--selected-bottle-lift) - ${layout.rowGap * (rowCount - 1)}px) * ${(bottleAspectRatio * layout.columnCount) / rowCount} + ${layout.columnGap * (layout.columnCount - 1)}px)`;
 
   const bottles = (
+    // data-play-entry-board: ゲームのホームから入るとき、広がった盤面が重なって着地する先。
     <fieldset
+      data-play-entry-board=""
       className={cn(
         "grid w-full items-end justify-center border-0 p-0 [--selected-bottle-lift:--spacing(3.5)]",
         layoutKind === "rows" && "pt-(--selected-bottle-lift)",

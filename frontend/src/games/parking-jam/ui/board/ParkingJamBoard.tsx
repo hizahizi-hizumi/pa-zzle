@@ -202,88 +202,99 @@ export function ParkingJamBoard({
       viewBox={`${-PARKING_JAM_MARGIN} ${-PARKING_JAM_MARGIN} ${width + PARKING_JAM_MARGIN * 2} ${height + PARKING_JAM_MARGIN * 2}`}
       className="parking-jam-board"
     >
-      <ParkingJamBoardDefs board={board} paint={paint} />
-      <ParkingJamLot board={board} paint={paint} />
-      <g clipPath={paint.vehicleSpaceClipPath}>
-        {board.vehicles.map((vehicle) => {
-          const isRemaining = remaining.has(vehicle.id);
-          const targeted = operation?.vehicleId === vehicle.id;
-          const exiting = targeted && operation?.type === "exited";
-          const departure = isRemaining
-            ? undefined
-            : departures.find(({ vehicleId }) => vehicleId === vehicle.id);
-          if (!isRemaining && !exiting && !departure) return null;
-          const selected = selectedVehicleId === vehicle.id;
-          const exitDirection = exiting
-            ? operation?.direction
-            : departure?.direction;
-          const feedbackClass = exitDirection
-            ? ` parking-jam-car--exit-${exitDirection}`
-            : targeted && operation
-              ? ` parking-jam-car--blocked-${operation.direction}`
-              : "";
-          const exitTranslation = exitDirection
-            ? parkingJamBoardGeometry.getVehicleExitTranslation(
-                board,
-                vehicle,
-                exitDirection,
-              )
-            : null;
-          const exitStyle = exitTranslation
-            ? ({
-                "--parking-jam-exit-x": `${exitTranslation.x}px`,
-                "--parking-jam-exit-y": `${exitTranslation.y}px`,
-                ...(departure && {
-                  animationDelay: `${departure.delayMs}ms`,
-                  animationFillMode: "both",
-                }),
-              } as CSSProperties)
-            : undefined;
-          return (
-            <g
-              key={targeted ? `${vehicle.id}-${operation?.id}` : vehicle.id}
-              ref={exiting ? exitingCarRef : undefined}
-              role="button"
-              tabIndex={interactionDisabled || !isRemaining ? -1 : 0}
-              aria-label={getVehicleLabel(vehicle)}
-              aria-pressed={selected}
-              className={`parking-jam-car${selected ? " parking-jam-car--selected" : ""}${feedbackClass}`}
-              style={exitStyle}
-              onPointerDown={(event) => handlePointerDown(event, vehicle)}
-              onPointerUp={(event) => handlePointerUp(event, vehicle)}
-              onKeyDown={(event) => handleKeyDown(event, vehicle)}
-            >
-              <ParkingJamCar vehicle={vehicle} glassFill={paint.glassFill} />
-            </g>
-          );
-        })}
+      {/* ゲームのホームから入るとき、広がった盤面が重なって着地する先。着くまで隠せるよう、描くもの全体を包む。 */}
+      <g data-play-entry-board="">
+        {/* svg の箱は置かれた欄いっぱいに広がるので、着地する先の範囲を、描く範囲の矩形で決める。 */}
+        <rect
+          x={-PARKING_JAM_MARGIN}
+          y={-PARKING_JAM_MARGIN}
+          width={width + PARKING_JAM_MARGIN * 2}
+          height={height + PARKING_JAM_MARGIN * 2}
+          fill="none"
+        />
+        <ParkingJamBoardDefs board={board} paint={paint} />
+        <ParkingJamLot board={board} paint={paint} />
+        <g clipPath={paint.vehicleSpaceClipPath}>
+          {board.vehicles.map((vehicle) => {
+            const isRemaining = remaining.has(vehicle.id);
+            const targeted = operation?.vehicleId === vehicle.id;
+            const exiting = targeted && operation?.type === "exited";
+            const departure = isRemaining
+              ? undefined
+              : departures.find(({ vehicleId }) => vehicleId === vehicle.id);
+            if (!isRemaining && !exiting && !departure) return null;
+            const selected = selectedVehicleId === vehicle.id;
+            const exitDirection = exiting
+              ? operation?.direction
+              : departure?.direction;
+            const feedbackClass = exitDirection
+              ? ` parking-jam-car--exit-${exitDirection}`
+              : targeted && operation
+                ? ` parking-jam-car--blocked-${operation.direction}`
+                : "";
+            const exitTranslation = exitDirection
+              ? parkingJamBoardGeometry.getVehicleExitTranslation(
+                  board,
+                  vehicle,
+                  exitDirection,
+                )
+              : null;
+            const exitStyle = exitTranslation
+              ? ({
+                  "--parking-jam-exit-x": `${exitTranslation.x}px`,
+                  "--parking-jam-exit-y": `${exitTranslation.y}px`,
+                  ...(departure && {
+                    animationDelay: `${departure.delayMs}ms`,
+                    animationFillMode: "both",
+                  }),
+                } as CSSProperties)
+              : undefined;
+            return (
+              <g
+                key={targeted ? `${vehicle.id}-${operation?.id}` : vehicle.id}
+                ref={exiting ? exitingCarRef : undefined}
+                role="button"
+                tabIndex={interactionDisabled || !isRemaining ? -1 : 0}
+                aria-label={getVehicleLabel(vehicle)}
+                aria-pressed={selected}
+                className={`parking-jam-car${selected ? " parking-jam-car--selected" : ""}${feedbackClass}`}
+                style={exitStyle}
+                onPointerDown={(event) => handlePointerDown(event, vehicle)}
+                onPointerUp={(event) => handlePointerUp(event, vehicle)}
+                onKeyDown={(event) => handleKeyDown(event, vehicle)}
+              >
+                <ParkingJamCar vehicle={vehicle} glassFill={paint.glassFill} />
+              </g>
+            );
+          })}
+        </g>
+        {selectedVehicle && !interactionDisabled
+          ? getParkingJamDirectionControls(selectedVehicle).map((control) => (
+              <g
+                key={`direction-${selectedVehicle.id}-${control.direction}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`${getDirectionLabel(control.direction)}へ出庫`}
+                className="parking-jam-direction-control"
+                onClick={() => onMove(selectedVehicle.id, control.direction)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onMove(selectedVehicle.id, control.direction);
+                  }
+                }}
+              >
+                <circle
+                  cx={control.cx}
+                  cy={control.cy}
+                  r="30"
+                  className="parking-jam-direction-control__hit"
+                />
+                <ParkingJamDirectionMark control={control} />
+              </g>
+            ))
+          : null}
       </g>
-      {selectedVehicle && !interactionDisabled
-        ? getParkingJamDirectionControls(selectedVehicle).map((control) => (
-            <g
-              key={`direction-${selectedVehicle.id}-${control.direction}`}
-              role="button"
-              tabIndex={0}
-              aria-label={`${getDirectionLabel(control.direction)}へ出庫`}
-              className="parking-jam-direction-control"
-              onClick={() => onMove(selectedVehicle.id, control.direction)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onMove(selectedVehicle.id, control.direction);
-                }
-              }}
-            >
-              <circle
-                cx={control.cx}
-                cy={control.cy}
-                r="30"
-                className="parking-jam-direction-control__hit"
-              />
-              <ParkingJamDirectionMark control={control} />
-            </g>
-          ))
-        : null}
     </svg>
   );
 }

@@ -13,6 +13,7 @@ import type { IceFloorMazeBoard as IceFloorMazeBoardState } from "@/games/ice-fl
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
 import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
+import { IceFloorMazeGround } from "@/games/ice-floor-maze/ui/IceFloorMazeGround";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
 import { IceFloorMazeTrappedNotice } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeTrappedNotice";
 import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazeSwipeArea";
@@ -129,7 +130,7 @@ export function IceFloorMazePlay({
       progress={progress}
       result={result}
       title={ICE_FLOOR_MAZE_DISPLAY_NAME}
-      background={<div className="size-full bg-[#e7eef3] dark:bg-[#202c35]" />}
+      background={<IceFloorMazeGround />}
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },

@@ -15,6 +15,7 @@ import type { SlidePuzzleDirection } from "@/games/slide-puzzle/puzzle/rules";
 import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
 import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen";
+import { SlidePuzzleGround } from "@/games/slide-puzzle/ui/SlidePuzzleGround";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
 import { SlidePuzzleTutorial } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial";
 import { useSlidePuzzleSoundEffects } from "@/games/slide-puzzle/ui/use-slide-puzzle-sound-effects";
@@ -99,7 +100,7 @@ export function SlidePuzzlePlay({
       progress={progress}
       result={result}
       title={SLIDE_PUZZLE_DISPLAY_NAME}
-      background={<div className="size-full bg-[#e8e2d8] dark:bg-[#2b2722]" />}
+      background={<SlidePuzzleGround />}
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },

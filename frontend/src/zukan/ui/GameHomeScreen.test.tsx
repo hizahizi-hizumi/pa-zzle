@@ -8,7 +8,10 @@ import {
   within,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-
+import {
+  leavePlayBoard,
+  _private as playBoardReturnPrivate,
+} from "@/components/play-board-return";
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
@@ -19,6 +22,7 @@ import {
   type GameHomeScreenProps,
   type ZukanFeatureAxis,
 } from "@/zukan/ui/GameHomeScreen";
+import { _private as playEntryPrivate } from "@/zukan/ui/GameHomeScreen/zukan-play-entry";
 import type {
   GameZukan,
   ZukanDifficultySection,
@@ -110,7 +114,19 @@ const zukan: GameZukan = {
 };
 
 const onPlayProblem = vi.fn();
-const onPlayRandom = vi.fn();
+/** 開いているレベルの、図鑑で前に置いた問題から、避ける問題を除いた最初の問題を選ぶ。 */
+function selectFirstProblemId(
+  difficulty: DifficultyLevel,
+  avoidedProblemId?: ProblemId,
+): ProblemId | null {
+  return (
+    problemsByDifficulty[difficulty].find(
+      ({ problemId }) => problemId !== avoidedProblemId,
+    )?.problemId ?? null
+  );
+}
+const selectRandomProblemId = vi.fn(selectFirstProblemId);
+const onRandomProblemUnavailable = vi.fn();
 const onLevelChangesShown = vi.fn();
 /** 特徴を求められない問題を除き、問題ごとに違う特徴を返す。 */
 const describeProblem = vi.fn(({ problemId }: ZukanProblem) =>
@@ -136,6 +152,11 @@ const clueCounts: Record<string, number> = {
   "p-c": 24,
   "p-d": 26,
 };
+/** 問題ごとに、始めたときの盤面の代わりに問題 ID を描く。プレイ画面の盤面と同じ目印を持たせる。 */
+function renderMarkedProblemPreview({ problemId }: ZukanProblem) {
+  return <p data-play-entry-board="">{`${problemId}の盤面`}</p>;
+}
+const renderProblemPreview = vi.fn(renderMarkedProblemPreview);
 const findProblemFeatureValues = vi.fn(
   ({ problemId }: ZukanProblem) =>
     new Map([
@@ -174,10 +195,13 @@ function createScreen(
         zukan={shownZukan}
         changes={changes}
         initialSelectedProblemId={initialSelectedProblemId}
-        onPlayRandom={onPlayRandom}
+        ground={<div data-testid="ground" />}
+        selectRandomProblemId={selectRandomProblemId}
+        onRandomProblemUnavailable={onRandomProblemUnavailable}
         onPlayProblem={onPlayProblem}
         onLevelChangesShown={onLevelChangesShown}
         describeProblem={describeProblem}
+        renderProblemPreview={renderProblemPreview}
         featureAxes={featureAxes}
         findProblemFeatureValues={findProblemFeatureValues}
         renderHowToPlayDialog={({ open }) =>
@@ -212,19 +236,61 @@ function getSquare(sheetName: string, numberLabel: string): HTMLElement {
   });
 }
 
-function getDetail(): HTMLElement {
-  return screen.getByRole("complementary", { name: "選んだ問題" });
+/** ゲームの名前と解いた数を示す、ゲームのホームの見出しの領域。 */
+function getGameHeading(): HTMLElement {
+  const heading = screen
+    .getByRole("heading", { level: 1, name: "ナンプレ" })
+    .closest("header");
+  if (heading === null) {
+    throw new Error("ゲームのホームの見出しの領域が無い");
+  }
+  return heading;
 }
 
-/** 詳細に名前と値の組で示した、問題の特徴と成績。 */
-function listDetailFacts(detail: HTMLElement) {
-  return within(detail)
-    .queryAllByRole("term")
-    .map((term) => [term.textContent, term.nextSibling?.textContent]);
+/** これから遊ぶ1問の盤面と、始める操作。 */
+function getStage(): HTMLElement {
+  return screen.getByRole("region", { name: "これから遊ぶ問題" });
 }
 
-function queryDetail(): HTMLElement | null {
-  return screen.queryByRole("complementary", { name: "選んだ問題" });
+/** これから遊ぶ問題に示した番号。出題できる問題が無ければ `null`。 */
+function readStageNumber(): string | null {
+  return within(getStage()).queryByText(/^No\.\d+$/)?.textContent ?? null;
+}
+
+/** これから遊ぶ問題の盤面を描く、読み上げず操作も受けない枠。 */
+function getPreviewFrame(): HTMLElement {
+  const frame = getStage().querySelector<HTMLElement>("[inert]");
+  if (frame === null) {
+    throw new Error("盤面を描く枠が無い");
+  }
+  return frame;
+}
+
+function getPlayButton(): HTMLElement {
+  return within(getStage()).getByRole("button", { name: "遊ぶ" });
+}
+
+function play() {
+  fireEvent.click(getPlayButton());
+}
+
+function getShuffleButton(): HTMLElement {
+  return within(getStage()).getByRole("button", { name: "別の問題" });
+}
+
+function shuffle() {
+  fireEvent.click(getShuffleButton());
+}
+
+function selectSquare(sheetName: string, numberLabel: string) {
+  fireEvent.click(getSquare(sheetName, numberLabel));
+}
+
+/** 台紙で、選んだ姿のマスの番号。 */
+function listCurrentSquareNumbers(): (string | undefined)[] {
+  return screen
+    .queryAllByRole("button", { current: true })
+    .map((square) => square.getAttribute("aria-label")?.split(" ")[0]);
 }
 
 /**
@@ -328,19 +394,11 @@ function describeElementStructure(element: Element): string {
   return `<${element.tagName} ${attributeNames}>${children}</${element.tagName}>`;
 }
 
-function getSheetScroller(name: string): HTMLElement {
-  const scroller = getSheet(name).parentElement;
-  if (scroller === null) {
-    throw new Error("台紙のスクロール領域が無い");
-  }
-  return scroller;
-}
-
 function getLevelTab(label: string): HTMLElement {
   return screen.getByRole("tab", { name: new RegExp(`^${label}`) });
 }
 
-/** 読み上げる名前と同じく、見せるだけの要素を除いたカードの文字。 */
+/** 読み上げる名前と同じく、見せるだけの要素を除いたレベルの文字。 */
 function readLevelCardName(tab: Element): string | null {
   const shown = tab.cloneNode(true) as Element;
   for (const hidden of shown.querySelectorAll('[aria-hidden="true"]')) {
@@ -349,7 +407,7 @@ function readLevelCardName(tab: Element): string | null {
   return shown.textContent;
 }
 
-/** カードに示した「解いた数 / 全問の数」。 */
+/** レベルに示した「解いた数 / 全問の数」。 */
 function readLevelCardCount(tab: Element): string | undefined {
   const [, problemCount, solvedCount] =
     readLevelCardName(tab)?.match(/(\d+)問中(\d+)問を解いた/) ?? [];
@@ -363,15 +421,20 @@ function chooseLevel(label: string) {
 }
 
 function getShownSheetNames(): (string | null)[] {
-  return within(screen.getByRole("tabpanel"))
-    .getAllByRole("group")
+  return screen
+    .getAllByRole("group", { name: /の問題$/ })
     .map((sheet) => sheet.getAttribute("aria-label"));
 }
 
+/** 開いているレベルの名前。 */
+function readOpenLevel(): string | undefined {
+  return readLevelCardName(screen.getByRole("tab", { selected: true }))?.split(
+    "、",
+  )[0];
+}
+
 function getStatusCounts(): HTMLElement {
-  return within(screen.getByRole("tabpanel")).getByRole("list", {
-    name: "状態ごとの問題の数",
-  });
+  return screen.getByRole("list", { name: "状態ごとの問題の数" });
 }
 
 function getStatusCountNames(): (string | null)[] {
@@ -380,57 +443,20 @@ function getStatusCountNames(): (string | null)[] {
     .map((item) => item.getAttribute("aria-label"));
 }
 
-let scrollIntoView: ReturnType<typeof vi.fn>;
-let scrollTo: ReturnType<typeof vi.fn>;
-let resizeCallbacks: Set<ResizeObserverCallback>;
-
-/** 見ている要素の大きさが変わったと、ResizeObserver の購読者へ知らせる。 */
-function resizeObservedElements(blockSize: number) {
-  const entry = {
-    borderBoxSize: [{ blockSize, inlineSize: 0 }],
-  } as unknown as ResizeObserverEntry;
-  act(() => {
-    for (const callback of resizeCallbacks) {
-      callback([entry], {} as ResizeObserver);
-    }
-  });
-}
-
-function createResizeObserver(callback: ResizeObserverCallback) {
-  return {
-    observe: () => resizeCallbacks.add(callback),
-    unobserve: () => resizeCallbacks.delete(callback),
-    disconnect: () => resizeCallbacks.delete(callback),
-  };
-}
-
-beforeEach(() => {
-  scrollIntoView = vi.fn();
-  scrollTo = vi.fn();
-  resizeCallbacks = new Set();
-  Element.prototype.scrollIntoView =
-    scrollIntoView as unknown as Element["scrollIntoView"];
-  Element.prototype.scrollTo = scrollTo as unknown as Element["scrollTo"];
-  window.ResizeObserver = vi.fn(function ResizeObserver(
-    callback: ResizeObserverCallback,
-  ) {
-    return createResizeObserver(callback);
-  }) as unknown as typeof ResizeObserver;
-});
-
 afterEach(() => {
   cleanup();
-  Reflect.deleteProperty(Element.prototype, "scrollIntoView");
-  Reflect.deleteProperty(Element.prototype, "scrollTo");
-  Reflect.deleteProperty(window, "ResizeObserver");
 });
 
 describe("GameHomeScreen", () => {
   beforeEach(() => {
     onPlayProblem.mockClear();
-    onPlayRandom.mockClear();
+    selectRandomProblemId.mockReset();
+    onRandomProblemUnavailable.mockClear();
+    selectRandomProblemId.mockImplementation(selectFirstProblemId);
     onLevelChangesShown.mockClear();
     findProblemFeatureValues.mockClear();
+    describeProblem.mockClear();
+    renderProblemPreview.mockClear();
   });
 
   describe("最後に遊んだレベルがある場合", () => {
@@ -446,7 +472,15 @@ describe("GameHomeScreen", () => {
       expect(solvedCount).toBeTruthy();
     });
 
-    test("レベルごとのカードを並べ、それぞれにそのレベルの解いた問題の数を添えること", () => {
+    test("解いた問題の数を、全問の数と並べた読み上げ名で見出しに置くこと", () => {
+      const spokenCount = within(getGameHeading()).getByText(
+        "1200問中2問を解いた",
+      );
+
+      expect(spokenCount).toBeTruthy();
+    });
+
+    test("問題のあるレベルを並べ、それぞれにそのレベルの解いた問題の数を添えること", () => {
       const tabNames = within(screen.getByRole("tablist", { name: "レベル" }))
         .getAllByRole("tab")
         .map(readLevelCardName);
@@ -460,22 +494,22 @@ describe("GameHomeScreen", () => {
       ]);
     });
 
-    test("最後に遊んだレベルのカードを選び、そのレベルの台紙だけを示すこと", () => {
-      const selectedTab = screen.getByRole("tab", { selected: true });
+    test("最後に遊んだレベルを開き、そのレベルの台紙だけを示すこと", () => {
+      const openLevel = readOpenLevel();
       const sheetNames = getShownSheetNames();
 
-      expect(selectedTab.textContent).toMatch(/^レベル 3/);
+      expect(openLevel).toBe("レベル 3");
       expect(sheetNames).toEqual(["レベル 3の問題"]);
     });
 
-    test("カードを選ぶと、そのレベルの台紙に切り替えること", () => {
+    test("レベルを選ぶと、そのレベルの台紙に切り替えること", () => {
       chooseLevel("レベル 1");
       const sheetNames = getShownSheetNames();
 
       expect(sheetNames).toEqual(["レベル 1の問題"]);
     });
 
-    test("カードで右矢印キーを押すと、次のレベルのカードへフォーカスだけを移し、台紙を切り替えないこと", async () => {
+    test("レベルで右矢印キーを押すと、次のレベルへフォーカスだけを移し、台紙を切り替えないこと", async () => {
       const tab = getLevelTab("レベル 3");
       tab.focus();
 
@@ -490,7 +524,7 @@ describe("GameHomeScreen", () => {
       expect(selectedTab).toBe(getLevelTab("レベル 3"));
     });
 
-    test("フォーカスのあるカードで Enter を押すと、そのレベルの台紙に切り替えること", () => {
+    test("フォーカスのあるレベルで Enter を押すと、そのレベルの台紙に切り替えること", () => {
       const tab = getLevelTab("レベル 4");
       tab.focus();
 
@@ -500,28 +534,34 @@ describe("GameHomeScreen", () => {
       expect(sheetNames).toEqual(["レベル 4の問題"]);
     });
 
-    test("台紙の囲みを Tab の止まり先にしないこと", () => {
-      const tabPanel = screen.getByRole("tabpanel");
-
-      expect(tabPanel.getAttribute("tabindex")).toBe("-1");
-    });
-
     test("開いたときに、ゲーム名の見出しへフォーカスを置くこと", () => {
       const focused = document.activeElement;
 
       expect(focused).toBe(screen.getByRole("heading", { level: 1 }));
     });
 
-    test("レベルを切り替えると、選んでいたマスの選択を解くこと", () => {
-      fireEvent.click(getSquare("レベル 3の問題", "No.0005"));
+    test("開いたときに、開いたレベルの問題をゲームに一度だけ選ばせ、選んだ1問の特徴と盤面だけを求めること", () => {
+      const selectCalls = selectRandomProblemId.mock.calls;
+      const describedProblemIds = new Set(
+        describeProblem.mock.calls.map(([{ problemId }]) => problemId),
+      );
+      const renderedProblemIds = new Set(
+        renderProblemPreview.mock.calls.map(([{ problemId }]) => problemId),
+      );
 
-      chooseLevel("レベル 1");
-      const detailAfterSwitch = queryDetail();
-      chooseLevel("レベル 3");
-      const currentSquares = screen.queryAllByRole("button", { current: true });
+      expect(selectCalls).toEqual([["3"]]);
+      expect(describedProblemIds).toEqual(new Set(["p-a"]));
+      expect(renderedProblemIds).toEqual(new Set(["p-a"]));
+    });
 
-      expect(detailAfterSwitch).toBeNull();
-      expect(currentSquares).toEqual([]);
+    test("ゲームが選んだ問題を、これから遊ぶ問題として番号と始めたときの盤面で示し、台紙のそのマスだけを選んだ姿にすること", () => {
+      const stageNumber = readStageNumber();
+      const board = within(getPreviewFrame()).getByText("p-aの盤面");
+      const currentSquares = listCurrentSquareNumbers();
+
+      expect(stageNumber).toBe("No.0005");
+      expect(board).toBeTruthy();
+      expect(currentSquares).toEqual(["No.0005"]);
     });
 
     test("台紙のマスを番号の順に並べ、それぞれの状態を読み上げ名で示すこと", () => {
@@ -537,7 +577,7 @@ describe("GameHomeScreen", () => {
       ]);
     });
 
-    test("台紙の最初のマスだけを Tab で止まるマスにすること", () => {
+    test("台紙で、これから遊ぶ問題のマスだけを Tab で止まるマスにすること", () => {
       const tabStops = within(getSheet("レベル 3の問題"))
         .getAllByRole("button")
         .filter((square) => square.tabIndex === 0)
@@ -635,291 +675,64 @@ describe("GameHomeScreen", () => {
       expect(changedSquares).toEqual([]);
     });
 
-    test("マスを選ぶまで、詳細を出さないこと", () => {
-      const detail = queryDetail();
+    test("マスを選ぶと、ゲームに選ばせ直さずに、その問題をこれから遊ぶ問題にし、そのマスを選んだ姿にすること", () => {
+      selectSquare("レベル 3の問題", "No.0007");
+      const stageNumber = readStageNumber();
+      const board = within(getPreviewFrame()).getByText("p-cの盤面");
+      const currentSquares = listCurrentSquareNumbers();
 
-      expect(detail).toBeNull();
+      expect(stageNumber).toBe("No.0007");
+      expect(board).toBeTruthy();
+      expect(currentSquares).toEqual(["No.0007"]);
+      expect(selectRandomProblemId.mock.calls).toEqual([["3"]]);
     });
 
-    test("解いた問題のマスを選ぶと、番号・難易度と、その問題の特徴に続けて、最高スコア・最速タイム・最短手数を添えた最少手数・最少ミス・初めてクリアした日を詳細に示すこと", () => {
-      fireEvent.click(getSquare("レベル 3の問題", "No.0005"));
-      const detail = getDetail();
-      const facts = within(detail)
-        .getAllByRole("term")
-        .map((term) => [term.textContent, term.nextSibling?.textContent]);
+    test("遊ぶを押すと、これから遊ぶ問題を始め、ゲームに選ばせ直さないこと", () => {
+      play();
 
-      expect(within(detail).getByText("No.0005")).toBeTruthy();
-      expect(within(detail).getByText("レベル 3")).toBeTruthy();
-      expect(facts).toEqual([
-        ["盤面", "9×9"],
-        ["地雷", "97個"],
-        ["最高スコア", "92点"],
-        ["最速タイム", "01:23"],
-        ["最少手数", "21手（最短 20手）"],
-        ["最少ミス", "0回"],
-        ["初クリア", "10/30"],
-      ]);
+      expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[0]]]);
+      expect(selectRandomProblemId.mock.calls).toEqual([["3"]]);
     });
 
-    test("手数もミスも数えないゲームの解いた問題には、問題の特徴と、最高スコア・最速タイム・初めてクリアした日だけを示すこと", () => {
-      fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
-      const facts = within(getDetail())
-        .getAllByRole("term")
-        .map((term) => [term.textContent, term.nextSibling?.textContent]);
+    test("盤面を押すと、遊ぶと同じくこれから遊ぶ問題を始めること", () => {
+      fireEvent.click(within(getPreviewFrame()).getByText("p-aの盤面"));
 
-      expect(facts).toEqual([
-        ["盤面", "9×9"],
-        ["地雷", "99個"],
-        ["最高スコア", "70点"],
-        ["最速タイム", "1:02:05"],
-        ["初クリア", "10/31"],
-      ]);
+      expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[0]]]);
     });
 
-    test("途中でやめた問題のマスを選ぶと、その問題の特徴と、挑戦中であることを詳細に示すこと", () => {
-      fireEvent.click(getSquare("レベル 3の問題", "No.0006"));
-      const detail = getDetail();
+    test("別の問題を押すと、プレイを始めずに、今の問題を除いてゲームに選ばせた問題をこれから遊ぶ問題にすること", () => {
+      shuffle();
+      const stageNumber = readStageNumber();
+      const currentSquares = listCurrentSquareNumbers();
 
-      expect(listDetailFacts(detail)).toEqual([
-        ["盤面", "9×9"],
-        ["地雷", "98個"],
-      ]);
-      expect(within(detail).getByText("挑戦中")).toBeTruthy();
+      expect(selectRandomProblemId.mock.calls).toEqual([["3"], ["3", "p-a"]]);
+      expect(stageNumber).toBe("No.0006");
+      expect(currentSquares).toEqual(["No.0006"]);
+      expect(onPlayProblem).not.toHaveBeenCalled();
     });
 
-    test("まだ挑んでいない問題のマスを選ぶと、その問題の特徴と、未挑戦であることを詳細に示すこと", () => {
-      fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
-      const detail = getDetail();
-
-      expect(listDetailFacts(detail)).toEqual([
-        ["盤面", "9×9"],
-        ["地雷", "100個"],
-      ]);
-      expect(within(detail).getByText("未挑戦")).toBeTruthy();
-    });
-
-    describe("特徴を求めた問題を数え始めた場合", () => {
-      beforeEach(() => {
-        describeProblem.mockClear();
-      });
-
-      test("マスを選ぶと、選んだ問題の特徴だけを求めること", () => {
-        fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
-        const describedProblemIds = new Set(
-          describeProblem.mock.calls.map(([{ problemId }]) => problemId),
-        );
-
-        expect(describedProblemIds).toEqual(new Set(["p-d"]));
-      });
-    });
-
-    test("特徴を求められない問題では、特徴を示さないこと", () => {
+    test("まだ開いていないレベルを開くと、そのレベルの問題をゲームに選ばせ、これから遊ぶ問題にすること", () => {
       chooseLevel("レベル 1");
-      fireEvent.click(getSquare("レベル 1の問題", "No.0001"));
-      const detail = getDetail();
+      const stageNumber = readStageNumber();
 
-      expect(listDetailFacts(detail)).toEqual([]);
-      expect(within(detail).getByText("未挑戦")).toBeTruthy();
+      expect(selectRandomProblemId.mock.calls).toEqual([["3"], ["1"]]);
+      expect(stageNumber).toBe("No.0001");
     });
 
-    test("選んだマスを、選んでいることが分かる状態にすること", () => {
-      fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
-      const currentSquares = screen
-        .getAllByRole("button", { current: true })
-        .map((square) => square.getAttribute("aria-label"));
-
-      expect(currentSquares).toEqual(["No.0007 レベル 3 最高スコア70点"]);
-    });
-
-    test("詳細の遊ぶを押すと、選んだ問題を始めること", () => {
-      fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
-      fireEvent.click(
-        within(getDetail()).getByRole("button", { name: "遊ぶ" }),
-      );
-
-      expect(onPlayProblem).toHaveBeenCalledWith(levelThreeProblems[3]);
-    });
-
-    test("マスで右矢印キーを押すと、次のマスへフォーカスを移して選び、Tab で止まるマスにすること", () => {
-      const square = getSquare("レベル 3の問題", "No.0005");
-      square.focus();
-
-      fireEvent.keyDown(square, { key: "ArrowRight" });
-      const focused = document.activeElement;
-      const detailNumber = within(getDetail()).getByText("No.0006");
-
-      expect(focused?.getAttribute("aria-label")).toBe(
-        "No.0006 レベル 3 挑戦中",
-      );
-      expect(focused?.getAttribute("tabindex")).toBe("0");
-      expect(square.getAttribute("tabindex")).toBe("-1");
-      expect(detailNumber).toBeTruthy();
-    });
-
-    test("マスを矢印キーで移ると、移った先のマスを台紙のスクロール領域の見える範囲へ寄せること", () => {
-      const square = getSquare("レベル 3の問題", "No.0005");
-      square.focus();
-
-      fireEvent.keyDown(square, { key: "ArrowRight" });
-      const scrolledSquares = scrollIntoView.mock.contexts
-        .filter((context) => getSheet("レベル 3の問題").contains(context))
-        .map((context) => (context as Element).getAttribute("aria-label"));
-
-      expect(scrolledSquares).toEqual(["No.0006 レベル 3 挑戦中"]);
-      expect(scrollIntoView).toHaveBeenCalledWith({
-        block: "nearest",
-        inline: "nearest",
-      });
-    });
-
-    describe("マスを選んでいる場合", () => {
+    describe("マスを選んでから、ほかのレベルを開いて戻った場合", () => {
       beforeEach(() => {
-        fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
+        selectSquare("レベル 3の問題", "No.0007");
+        chooseLevel("レベル 1");
+        chooseLevel("レベル 3");
       });
 
-      test("選んでいるマスをもう一度押すと、詳細を閉じて選択を解くこと", () => {
-        fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
-        const detail = queryDetail();
-        const currentSquares = screen.queryAllByRole("button", {
-          current: true,
-        });
+      test("選んだ問題をこれから遊ぶ問題として保ち、ゲームに選ばせ直さないこと", () => {
+        const stageNumber = readStageNumber();
+        const currentSquares = listCurrentSquareNumbers();
 
-        expect(detail).toBeNull();
-        expect(currentSquares).toEqual([]);
-      });
-
-      test("閉じるボタンを押すと、詳細を閉じること", () => {
-        fireEvent.click(
-          within(getDetail()).getByRole("button", { name: "閉じる" }),
-        );
-        const detail = queryDetail();
-
-        expect(detail).toBeNull();
-      });
-
-      test("Escape を押すと、詳細を閉じること", () => {
-        fireEvent.keyDown(document.body, { key: "Escape" });
-        const detail = queryDetail();
-
-        expect(detail).toBeNull();
-      });
-
-      test("別のマスを押すと、詳細をそのマスの問題に切り替えること", () => {
-        fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
-        const detail = getDetail();
-
-        expect(within(detail).getByText("No.0008")).toBeTruthy();
-        expect(within(detail).queryByText("No.0007")).toBeNull();
-      });
-
-      describe("閉じるボタンにフォーカスがある場合", () => {
-        beforeEach(() => {
-          within(getDetail()).getByRole("button", { name: "閉じる" }).focus();
-        });
-
-        test("閉じるボタンで閉じると、フォーカスを選んでいたマスへ戻すこと", () => {
-          fireEvent.click(
-            within(getDetail()).getByRole("button", { name: "閉じる" }),
-          );
-          const focused = document.activeElement;
-
-          expect(focused).toBe(getSquare("レベル 3の問題", "No.0007"));
-        });
-      });
-
-      describe("見方を開いている場合", () => {
-        beforeEach(async () => {
-          openFromMenu("見方");
-          await screen.findByRole("list", { name: "マスの見方" });
-        });
-
-        test("Escape では見方だけを閉じ、詳細を閉じないこと", async () => {
-          fireEvent.keyDown(screen.getByRole("list", { name: "マスの見方" }), {
-            key: "Escape",
-          });
-          await waitFor(() => {
-            expect(
-              screen.queryByRole("list", { name: "マスの見方" }),
-            ).toBeNull();
-          });
-          const detailNumber = within(getDetail()).getByText("No.0007");
-
-          expect(detailNumber).toBeTruthy();
-        });
-      });
-    });
-
-    describe("詳細を台紙に重ねる幅で、マスを選んだ場合", () => {
-      const detailHeight = 140;
-
-      beforeEach(() => {
-        vi.stubGlobal(
-          "matchMedia",
-          vi.fn(
-            (query: string) =>
-              ({
-                matches: query === "(width < 64rem)",
-                addEventListener: () => {},
-                removeEventListener: () => {},
-              }) as unknown as MediaQueryList,
-          ),
-        );
-        fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
-        scrollIntoView.mockClear();
-      });
-
-      afterEach(() => {
-        vi.unstubAllGlobals();
-      });
-
-      test("詳細の高さが分かると、台紙の下端に詳細の高さのスクロール余白を取り、選んだマスを見える範囲へ寄せ直すこと", () => {
-        resizeObservedElements(detailHeight);
-        const coveredBottom =
-          getSheetScroller("レベル 3の問題").style.getPropertyValue(
-            "--covered-bottom",
-          );
-        const scrolledSquares = scrollIntoView.mock.contexts.map((context) =>
-          (context as Element).getAttribute("aria-label"),
-        );
-
-        expect(coveredBottom).toBe(`${detailHeight}px`);
-        expect(scrolledSquares).toEqual(["No.0008 レベル 3 未挑戦"]);
-        expect(scrollIntoView).toHaveBeenCalledWith({
-          block: "nearest",
-          inline: "nearest",
-        });
-      });
-
-      describe("詳細の高さが分かったあと", () => {
-        beforeEach(() => {
-          resizeObservedElements(detailHeight);
-        });
-
-        test("詳細を閉じると、台紙の下端のスクロール余白を無くすこと", () => {
-          fireEvent.keyDown(document.body, { key: "Escape" });
-          const coveredBottom =
-            getSheetScroller("レベル 3の問題").style.getPropertyValue(
-              "--covered-bottom",
-            );
-
-          expect(coveredBottom).toBe("0px");
-        });
-      });
-    });
-
-    describe("詳細を台紙の横に置く幅で、マスを選んだ場合", () => {
-      beforeEach(() => {
-        fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
-      });
-
-      test("詳細の高さが分かっても、台紙の下端にスクロール余白を取らないこと", () => {
-        resizeObservedElements(140);
-        const coveredBottom =
-          getSheetScroller("レベル 3の問題").style.getPropertyValue(
-            "--covered-bottom",
-          );
-
-        expect(coveredBottom).toBe("0px");
+        expect(stageNumber).toBe("No.0007");
+        expect(currentSquares).toEqual(["No.0007"]);
+        expect(selectRandomProblemId.mock.calls).toEqual([["3"], ["1"]]);
       });
     });
 
@@ -927,12 +740,6 @@ describe("GameHomeScreen", () => {
       const backLink = screen.getByRole("link", { name: "戻る" });
 
       expect(backLink.getAttribute("href")).toBe("/");
-    });
-
-    test("ランダムに遊ぶを押すと、開いているレベルでプレイを始めること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
-
-      expect(onPlayRandom.mock.calls).toEqual([["3"]]);
     });
 
     test("メニューから遊び方を開くと、ゲームの遊び方を開くこと", async () => {
@@ -965,6 +772,100 @@ describe("GameHomeScreen", () => {
       expect(order).toEqual(["No.0005", "No.0006", "No.0007", "No.0008"]);
       expect(menuButton.getAttribute("aria-label")).toBe("メニュー");
       expect(matchedCount).toBeNull();
+    });
+  });
+
+  describe("台紙の場所の大きさが分かり、マスにフォーカスがある場合", () => {
+    let square: HTMLElement;
+
+    beforeEach(() => {
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(
+        new DOMRect(0, 0, 320, 200),
+      );
+      renderScreen();
+      square = getSquare("レベル 3の問題", "No.0005");
+      square.focus();
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    test("右矢印キーを押すと、次のマスへフォーカスを移し、その問題をこれから遊ぶ問題にすること", () => {
+      fireEvent.keyDown(square, { key: "ArrowRight" });
+      const focused = document.activeElement;
+
+      expect(focused?.getAttribute("aria-label")).toBe(
+        "No.0006 レベル 3 挑戦中",
+      );
+      expect(focused?.getAttribute("tabindex")).toBe("0");
+      expect(square.getAttribute("tabindex")).toBe("-1");
+      expect(readStageNumber()).toBe("No.0006");
+    });
+  });
+
+  describe("ゲームが問題を選べない場合", () => {
+    beforeEach(() => {
+      selectRandomProblemId.mockReturnValue(null);
+      renderScreen();
+    });
+
+    test("盤面と番号の代わりに出題の条件に合う問題が無いことを示し、どのマスも選んだ姿にしないこと", () => {
+      const notice = within(getStage()).getByText(
+        "出題の条件に合う問題がありません",
+      );
+      const stageNumber = readStageNumber();
+      const currentSquares = listCurrentSquareNumbers();
+
+      expect(notice).toBeTruthy();
+      expect(stageNumber).toBeNull();
+      expect(currentSquares).toEqual([]);
+    });
+
+    test("遊ぶを押すと、プレイを始めず、開いているレベルで始められる問題が無かったと知らせること", () => {
+      play();
+
+      expect(onPlayProblem).not.toHaveBeenCalled();
+      expect(onRandomProblemUnavailable.mock.calls).toEqual([["3"]]);
+    });
+
+    test("別の問題を押すと、開いているレベルで始められる問題が無かったと知らせること", () => {
+      shuffle();
+
+      expect(onRandomProblemUnavailable.mock.calls).toEqual([["3"]]);
+    });
+
+    describe("台紙でマスを選んだ場合", () => {
+      beforeEach(() => {
+        selectSquare("レベル 3の問題", "No.0006");
+      });
+
+      test("遊ぶを押すと、選んだ問題を始めること", () => {
+        play();
+
+        expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[1]]]);
+        expect(onRandomProblemUnavailable).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("ゲームが今の問題のほかに問題を選べない場合", () => {
+    beforeEach(() => {
+      selectRandomProblemId.mockImplementation(
+        (difficulty, avoidedProblemId) =>
+          avoidedProblemId === undefined
+            ? selectFirstProblemId(difficulty)
+            : null,
+      );
+      renderScreen();
+    });
+
+    test("別の問題を押すと、今の問題を残し、替えられる問題が無かったと知らせること", () => {
+      shuffle();
+      const stageNumber = readStageNumber();
+
+      expect(stageNumber).toBe("No.0005");
+      expect(onRandomProblemUnavailable.mock.calls).toEqual([["3"]]);
     });
   });
 
@@ -1023,12 +924,18 @@ describe("GameHomeScreen", () => {
       });
     });
 
-    test("チュートリアルから遊び始めると、開いているレベルでプレイを始めること", async () => {
-      openFromMenu("チュートリアル");
+    describe("チュートリアルを開いている場合", () => {
+      beforeEach(async () => {
+        openFromMenu("チュートリアル");
+        await screen.findByRole("dialog", { name: "チュートリアル" });
+      });
 
-      fireEvent.click(await screen.findByRole("button", { name: "3を遊ぶ" }));
+      test("チュートリアルから遊び始めると、遊ぶと同じく、開いているレベルのこれから遊ぶ問題を始めること", () => {
+        fireEvent.click(screen.getByRole("button", { name: "3を遊ぶ" }));
 
-      expect(onPlayRandom.mock.calls).toEqual([["3"]]);
+        expect(selectRandomProblemId.mock.calls).toEqual([["3"]]);
+        expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[0]]]);
+      });
     });
   });
 
@@ -1110,8 +1017,8 @@ describe("GameHomeScreen", () => {
       expect(findProblemFeatureValues).toHaveBeenCalledTimes(callCount);
     });
 
-    test("条件を付け外ししても、見出し・カード・台紙の上の並びの要素を足し引きしないこと", () => {
-      const header = screen.getByRole("banner");
+    test("条件を付け外ししても、見出し・レベル・状態ごとの数の並びの要素を足し引きしないこと", () => {
+      const header = getGameHeading();
       const tabList = screen.getByRole("tablist", { name: "レベル" });
       const statusRow = getStatusCounts().parentElement as HTMLElement;
       const before = [header, tabList, statusRow].map(describeElementStructure);
@@ -1140,23 +1047,13 @@ describe("GameHomeScreen", () => {
       expect(mark?.textContent).toContain("1");
     });
 
-    test("条件を変えると、台紙を先頭までスクロールすること", () => {
-      const scroller = getSheetScroller("レベル 3の問題");
-      scroller.scrollTop = 120;
-
-      chooseFilterOption(panel, "状態", "未挑戦");
-
-      expect(scroller.scrollTop).toBe(0);
-    });
-
     describe("マスを選んでから並びを変えた場合", () => {
       beforeEach(() => {
         fireEvent.click(getSquare("レベル 3の問題", "No.0006"));
-        scrollIntoView.mockClear();
         chooseFilterOption(panel, "状態", "未挑戦");
       });
 
-      test("選んでいるマスを Tab で止まるマスにし、選んでいるマスへ寄せ直さないこと", () => {
+      test("条件外になった選んでいるマスを、Tab で止まるマスのまま保つこと", () => {
         const tabStops = within(getSheet("レベル 3の問題"))
           .getAllByRole("button")
           .filter((square) => square.tabIndex === 0);
@@ -1169,36 +1066,7 @@ describe("GameHomeScreen", () => {
         expect(
           tabStops.map((square) => square.getAttribute("aria-label")),
         ).toEqual(["No.0006 レベル 3 挑戦中 絞り込みの条件外"]);
-        expect(scrollIntoView).not.toHaveBeenCalled();
       });
-
-      test("Tab で止まるマスから右矢印キーを押すと、見えている並びで選んでいるマスの次へ移って選ぶこと", () => {
-        const tabStop = within(getSheet("レベル 3の問題"))
-          .getAllByRole("button")
-          .find((square) => square.tabIndex === 0);
-        tabStop?.focus();
-
-        fireEvent.keyDown(document.activeElement ?? document.body, {
-          key: "ArrowRight",
-        });
-        const focusedName = document.activeElement?.getAttribute("aria-label");
-        const detail = getDetail();
-
-        expect(focusedName).toBe(
-          "No.0007 レベル 3 最高スコア70点 絞り込みの条件外",
-        );
-        expect(within(detail).getByText("No.0007")).toBeTruthy();
-      });
-    });
-
-    test("マスを選ばずに並びを変えると、見えている並びの最初のマスを Tab で止まるマスにすること", () => {
-      chooseFilterOption(panel, "状態", "未挑戦");
-      const tabStops = within(getSheet("レベル 3の問題"))
-        .getAllByRole("button")
-        .filter((square) => square.tabIndex === 0)
-        .map((square) => square.getAttribute("aria-label"));
-
-      expect(tabStops).toEqual(["No.0008 レベル 3 未挑戦"]);
     });
 
     test("条件が無い間は、解除を押せないことを示し、押しても何もしないこと", () => {
@@ -1245,7 +1113,7 @@ describe("GameHomeScreen", () => {
         ]);
       });
 
-      test("台紙の上と絞り込みに当たった数を、メニューのボタンに条件の数を示し、カードは変えないこと", () => {
+      test("台紙の上と絞り込みに当たった数を、メニューのボタンに条件の数を示し、レベルの数は変えないこと", () => {
         const openTab = screen.getByRole("tab", { selected: true });
         const panelCount = within(panel).getByText(/^該当/).textContent;
         const menuButton = getMenuButton();
@@ -1322,23 +1190,9 @@ describe("GameHomeScreen", () => {
         expect(menuButton.getAttribute("aria-label")).toBe("メニュー");
       });
 
-      test("マスで右矢印キーを押すと、並べた順の次のマスへ移って選ぶこと", () => {
-        const first = getSquare("レベル 3の問題", "No.0006");
-        first.focus();
-
-        fireEvent.keyDown(first, { key: "ArrowRight" });
-        const focusedName = document.activeElement?.getAttribute("aria-label");
-        const detail = getDetail();
-
-        expect(focusedName).toBe("No.0008 レベル 3 未挑戦");
-        expect(within(detail).getByText("No.0008")).toBeTruthy();
-      });
-
-      test("当たらなかったマスも選んで詳細を出し、遊ぶでその問題を始められること", () => {
+      test("当たらなかったマスも選べ、遊ぶでその問題を始められること", () => {
         fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
-        fireEvent.click(
-          within(getDetail()).getByRole("button", { name: "遊ぶ" }),
-        );
+        play();
         const startedProblemIds = onPlayProblem.mock.calls.map(
           ([problem]) => problem.problemId,
         );
@@ -1630,7 +1484,7 @@ describe("GameHomeScreen", () => {
     }
 
     async function finishStamps() {
-      await advanceStamps(1600);
+      await advanceStamps(2600);
     }
 
     function tap(target: Element, { x, y }: { x: number; y: number }) {
@@ -1662,6 +1516,10 @@ describe("GameHomeScreen", () => {
 
     let reducedMotionListeners: Set<() => void>;
     let prefersReduced: boolean;
+    const SCROLLER_WIDTH_PX = 320;
+    const SCROLLER_HEIGHT_PX = 600;
+    const SQUARE_TOP_PX = 100;
+    const SQUARE_SIZE_PX = 28;
 
     /** 渡された長さが経つと終わる Animation を作る。取り消すと終わらない。 */
     function createTimedAnimation(
@@ -1712,11 +1570,24 @@ describe("GameHomeScreen", () => {
       );
       // 押す姿の影と前の色の面は SVG の要素なので、HTML の要素に限らず動きを差し替える。
       Element.prototype.animate = animate as unknown as Element["animate"];
+      // jsdom はレイアウトしないので、台紙のスクロール領域に高さを持たせ、マスをその見える範囲の中に置く。
+      // 見えていないマスは押さずに着いたものとし、見えるまで台紙を寄せて待つため。
+      vi.spyOn(Element.prototype, "clientHeight", "get").mockReturnValue(
+        SCROLLER_HEIGHT_PX,
+      );
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+        function measure(this: Element) {
+          return this.hasAttribute("data-index")
+            ? new DOMRect(0, SQUARE_TOP_PX, SQUARE_SIZE_PX, SQUARE_SIZE_PX)
+            : new DOMRect(0, 0, SCROLLER_WIDTH_PX, SCROLLER_HEIGHT_PX);
+        },
+      );
     });
 
     afterEach(() => {
       vi.useRealTimers();
       vi.unstubAllGlobals();
+      vi.restoreAllMocks();
       Reflect.deleteProperty(Element.prototype, "animate");
     });
 
@@ -1732,7 +1603,7 @@ describe("GameHomeScreen", () => {
           expect(stages).toEqual(["waiting", null, "waiting", null]);
         });
 
-        test("開いているレベルの状態ごとの数とカードの数を前回の数から始め、画面全体の解いた数をカードの数の合計にすること", () => {
+        test("開いているレベルの状態ごとの数とレベルの数を前回の数から始め、画面全体の解いた数をレベルの数の合計にすること", () => {
           const levelCounts = getStatusCountNames();
           const tabCounts = getTabCounts();
           const solvedCount = getSolvedCountText();
@@ -1775,7 +1646,7 @@ describe("GameHomeScreen", () => {
           ]);
         });
 
-        test("開いていないレベルのうち、変化のあるレベルのカードにだけ印を付けること", () => {
+        test("開いていないレベルのうち、変化のあるレベルにだけ印を付けること", () => {
           const markedTabs = getMarkedTabNames();
 
           expect(markedTabs).toEqual(["レベル 1"]);
@@ -1838,7 +1709,7 @@ describe("GameHomeScreen", () => {
           expect(stages).toEqual([null, null, null, null]);
         });
 
-        test("開いているレベルの数を今の数まで数え上げて未挑戦の数を減らし、まだ開いていないレベルのカードは前回の数のまま印を残すこと", () => {
+        test("開いているレベルの数を今の数まで数え上げて未挑戦の数を減らし、まだ開いていないレベルは前回の数のまま印を残すこと", () => {
           const levelCounts = getStatusCountNames();
           const tabCounts = getTabCounts();
           const markedTabs = getMarkedTabNames();
@@ -1861,7 +1732,7 @@ describe("GameHomeScreen", () => {
           expect(markedTabs).toEqual(["レベル 1"]);
         });
 
-        test("画面全体の解いた数を、カードの数の合計に合わせること", () => {
+        test("画面全体の解いた数を、レベルの数の合計に合わせること", () => {
           const solvedCount = getShownSolvedCount();
 
           expect(solvedCount).toBe(sumTabSolvedCounts());
@@ -1874,10 +1745,10 @@ describe("GameHomeScreen", () => {
         });
 
         test("マスを選べること", () => {
-          fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
-          const detailNumber = within(getDetail()).getByText("No.0007");
+          selectSquare("レベル 3の問題", "No.0007");
+          const selectedNumber = readStageNumber();
 
-          expect(detailNumber).toBeTruthy();
+          expect(selectedNumber).toBe("No.0007");
         });
       });
 
@@ -1909,16 +1780,74 @@ describe("GameHomeScreen", () => {
         });
 
         test("飛ばしたタップに続くクリックではマスを選ばず、次のタップから選べること", () => {
-          fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
-          const detailAfterSkip = queryDetail();
+          selectSquare("レベル 3の問題", "No.0007");
+          const selectedAfterSkip = readStageNumber();
           fireEvent.pointerDown(getSquare("レベル 3の問題", "No.0007"), {
             pointerId: 1,
           });
-          fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
-          const detailNumber = within(getDetail()).queryByText("No.0007");
+          selectSquare("レベル 3の問題", "No.0007");
+          const selectedAfterTap = readStageNumber();
 
-          expect(detailAfterSkip).toBeNull();
-          expect(detailNumber).toBeTruthy();
+          expect(selectedAfterSkip).toBe("No.0005");
+          expect(selectedAfterTap).toBe("No.0007");
+        });
+      });
+
+      describe("押している途中で別の問題をタップした場合", () => {
+        beforeEach(async () => {
+          await advanceStamps(400);
+        });
+
+        test("1回のタップで、最後の姿まで飛ばして、ゲームが選んだ別の問題に替えること", () => {
+          const button = getShuffleButton();
+
+          tap(button, { x: 10, y: 10 });
+          fireEvent.click(button);
+          const stages = getChangeStages("レベル 3の問題");
+
+          expect(stages).toEqual([null, null, null, null]);
+          expect(readStageNumber()).toBe("No.0006");
+        });
+      });
+
+      describe("押している途中で遊ぶをタップした場合", () => {
+        beforeEach(async () => {
+          await advanceStamps(400);
+        });
+
+        test("最後の姿まで飛ばすだけで、プレイを始めないこと", async () => {
+          const button = getPlayButton();
+
+          tap(button, { x: 10, y: 10 });
+          fireEvent.click(button);
+          await advanceStamps(400);
+          const stages = getChangeStages("レベル 3の問題");
+
+          expect(stages).toEqual([null, null, null, null]);
+          expect(onPlayProblem).not.toHaveBeenCalled();
+        });
+      });
+
+      describe("押している途中で、指の下にあるマスを押さえた場合", () => {
+        beforeEach(async () => {
+          await advanceStamps(400);
+          document.elementFromPoint = () =>
+            getSquare("レベル 3の問題", "No.0008");
+        });
+
+        afterEach(() => {
+          Reflect.deleteProperty(document, "elementFromPoint");
+        });
+
+        test("最後の姿まで飛ばすだけで、そのマスを選ばないこと", () => {
+          const square = getSquare("レベル 3の問題", "No.0008");
+
+          tap(square, { x: 10, y: 10 });
+          fireEvent.click(square);
+          const stages = getChangeStages("レベル 3の問題");
+
+          expect(stages).toEqual([null, null, null, null]);
+          expect(readStageNumber()).toBe("No.0005");
         });
       });
 
@@ -2178,6 +2107,130 @@ describe("GameHomeScreen", () => {
       });
     });
 
+    describe("変化の無い図鑑で、盤面を広げて動かせる環境の場合", () => {
+      const { SCENE_FADE_MS } = playEntryPrivate;
+
+      /** ゲームのホームの外の body の直下に置いた、動かす写しの中に描いた盤面の文字。 */
+      function listCopiedBoards(): (string | null)[] {
+        return [...document.body.children]
+          .filter((child) => !child.contains(getGameHeading()))
+          .flatMap((child) => [
+            ...child.querySelectorAll("[data-play-entry-board]"),
+          ])
+          .map((board) => board.textContent);
+      }
+
+      beforeEach(() => {
+        renderScreen();
+      });
+
+      afterEach(async () => {
+        // 広げた盤面の写しを body に残さないよう、動きを終えさせる。
+        await advanceStamps(1000);
+      });
+
+      test("遊ぶを押すと、盤面が広がるまでプレイを始めず、広がったらこれから遊ぶ問題で始めること", async () => {
+        play();
+        await advanceStamps(SCENE_FADE_MS - 20);
+        const startedBeforeArrive = onPlayProblem.mock.calls.length;
+        await advanceStamps(20);
+
+        expect(startedBeforeArrive).toBe(0);
+        expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[0]]]);
+      });
+
+      test("遊ぶを押すと、これから遊ぶ問題の盤面を広げる写しを画面に重ねること", () => {
+        play();
+        const boards = listCopiedBoards();
+
+        expect(boards).toEqual(["p-aの盤面"]);
+      });
+
+      test("広がり終えたら、広げた写しを画面に残さないこと", async () => {
+        play();
+        await advanceStamps(1000);
+        const boards = listCopiedBoards();
+
+        expect(boards).toEqual([]);
+      });
+
+      describe("別の問題に替えた直後の場合", () => {
+        beforeEach(() => {
+          shuffle();
+        });
+
+        test("遊ぶを押すと、広げる写しの中に、替えた問題の盤面だけを描くこと", () => {
+          play();
+          const boards = listCopiedBoards();
+
+          expect(boards).toEqual(["p-bの盤面"]);
+        });
+      });
+
+      describe("遊ぶを押して、盤面が広がっている場合", () => {
+        beforeEach(async () => {
+          play();
+          await advanceStamps(SCENE_FADE_MS - 20);
+        });
+
+        test("遊ぶを押し直しても、プレイを二重に始めないこと", async () => {
+          play();
+          await advanceStamps(400);
+
+          expect(onPlayProblem).toHaveBeenCalledTimes(1);
+        });
+
+        test("別の問題を押しても、ゲームに選ばせ直さず、始める問題を替えないこと", async () => {
+          shuffle();
+          await advanceStamps(400);
+
+          expect(selectRandomProblemId).toHaveBeenCalledTimes(1);
+          expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[0]]]);
+        });
+      });
+    });
+
+    describe("盤面を広げて動かせる環境で、盤面をまだ描けていない場合", () => {
+      /** 問題集を読み込んでいる途中のように、盤面の目印を持たない姿を描く。 */
+      function renderLoadingProblemPreview({ problemId }: ZukanProblem) {
+        return <p>{`${problemId}を読み込み中`}</p>;
+      }
+
+      beforeEach(() => {
+        renderProblemPreview.mockImplementation(renderLoadingProblemPreview);
+        renderScreen();
+      });
+
+      afterEach(() => {
+        renderProblemPreview.mockImplementation(renderMarkedProblemPreview);
+      });
+
+      test("遊ぶを押すと、盤面を広げずにすぐこれから遊ぶ問題を始めること", () => {
+        play();
+        const copies = screen
+          .queryAllByText("p-aを読み込み中")
+          .filter((board) => !getStage().contains(board));
+
+        expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[0]]]);
+        expect(copies).toEqual([]);
+      });
+
+      describe("遊ぶを押したあと、プレイ画面へ移らずに残った場合", () => {
+        beforeEach(() => {
+          play();
+        });
+
+        test("遊ぶを押し直すと、もう一度始めること", () => {
+          play();
+
+          expect(onPlayProblem.mock.calls).toEqual([
+            [levelThreeProblems[0]],
+            [levelThreeProblems[0]],
+          ]);
+        });
+      });
+    });
+
     describe("変化したマスが13個以上ある場合", () => {
       const manyProblems = createUntouchedProblems("2", 4, 15).map(
         (problem): ZukanProblem => ({
@@ -2213,7 +2266,7 @@ describe("GameHomeScreen", () => {
       };
       type CountSample = { untouched: number; solved: number; total: number };
 
-      /** 押していく途中に数を示す、見出し・レベルのカード・状態ごとの数の領域。 */
+      /** 押していく途中に数を示す、見出し・レベル・状態ごとの数の領域。 */
       type CountRegions = {
         heading: HTMLElement;
         tabList: HTMLElement;
@@ -2256,12 +2309,12 @@ describe("GameHomeScreen", () => {
         }
         renderScreen(manyZukan, manyChanges);
         const regions: CountRegions = {
-          heading: screen.getByRole("banner"),
+          heading: getGameHeading(),
           tabList: screen.getByRole("tablist", { name: "レベル" }),
           statusCounts: getStatusCounts(),
         };
         const readSamples: CountSample[] = [];
-        for (let elapsedMs = 0; elapsedMs < 1800; elapsedMs += 20) {
+        for (let elapsedMs = 0; elapsedMs < 2500; elapsedMs += 20) {
           readSamples.push(readCounts(regions));
           await advanceStamps(20);
         }
@@ -2289,7 +2342,7 @@ describe("GameHomeScreen", () => {
         ]);
       });
 
-      test("画面全体の解いた数を、常にカードの数の合計に合わせること", () => {
+      test("画面全体の解いた数を、常にレベルの数の合計に合わせること", () => {
         const mismatches = samples.filter(
           ({ solved, total }) => total !== solved + 2,
         );
@@ -2315,7 +2368,7 @@ describe("GameHomeScreen", () => {
         expect(animatedCount).toBe(0);
       });
 
-      test("数え上げずに、画面全体の解いた数・カードの数を今の数で示すこと", () => {
+      test("数え上げずに、画面全体の解いた数・レベルの数を今の数で示すこと", () => {
         const solvedCount = getSolvedCountText();
         const tabCounts = getTabCounts();
 
@@ -2335,71 +2388,53 @@ describe("GameHomeScreen", () => {
         expect(shownDifficulties).toEqual([["3"]]);
       });
 
-      test("まだ見せていない変化のあるレベルのカードに印を付けること", () => {
+      test("まだ見せていない変化のあるレベルに印を付けること", () => {
         const markedTabs = getMarkedTabNames();
 
         expect(markedTabs).toEqual(["レベル 1"]);
       });
     });
 
-    describe("動きを減らす設定で、選んでおく問題を渡した場合", () => {
+    describe("動きを減らす設定で、見せる変化のある問題を選んでおく問題として渡した場合", () => {
       beforeEach(() => {
         prefersReduced = true;
         renderScreen(changedZukan, changes, "p-c");
       });
 
-      test("印を載せた台紙とともに、選んでおいた問題の詳細を出すこと", () => {
+      test("そのレベルを開いて印を載せた台紙を見せ、選んでおいた問題をこれから遊ぶ問題として示すこと", () => {
         const stages = getChangeStages("レベル 3の問題");
+        const openLevel = readOpenLevel();
+        const square = getSquare("レベル 3の問題", "No.0007");
+        const stageNumber = readStageNumber();
 
         expect(stages).toEqual(["marked", null, "marked", null]);
-        expect(getDetail().textContent).toMatch(/^No\.0007/);
+        expect(openLevel).toBe("レベル 3");
+        expect(square.getAttribute("aria-current")).toBe("true");
+        expect(stageNumber).toBe("No.0007");
       });
     });
 
-    describe("選んでおく問題を渡し、押している途中の場合", () => {
+    describe("見せる変化のある問題を選んでおく問題として渡し、押している途中の場合", () => {
       beforeEach(async () => {
         renderScreen(changedZukan, changes, "p-c");
         await advanceStamps(400);
       });
 
-      test("選んでおいた問題のマスを選び、詳細を出さないこと", () => {
+      test("そのレベルを開き、押している間も、選んでおいた問題をこれから遊ぶ問題として示すこと", () => {
+        const openLevel = readOpenLevel();
         const square = getSquare("レベル 3の問題", "No.0007");
+        const stageNumber = readStageNumber();
 
+        expect(openLevel).toBe("レベル 3");
         expect(square.getAttribute("aria-current")).toBe("true");
-        expect(queryDetail()).toBeNull();
+        expect(stageNumber).toBe("No.0007");
       });
 
-      test("押し終えると、選んでおいた問題の詳細を出すこと", async () => {
-        await finishStamps();
-
-        expect(getDetail().textContent).toMatch(/^No\.0007/);
-      });
-
-      test("別のマスをタップして飛ばすと、そのマスを選ばずに、選んでおいた問題の詳細を出すこと", () => {
-        const otherSquare = getSquare("レベル 3の問題", "No.0005");
-
-        tap(otherSquare, { x: 10, y: 10 });
-        fireEvent.click(otherSquare);
-
-        expect(getDetail().textContent).toMatch(/^No\.0007/);
-        expect(otherSquare.getAttribute("aria-current")).toBeNull();
-      });
-
-      test("Escape で飛ばしても、選んでおいた問題の選択を解かずに詳細を出すこと", () => {
+      test("Escape で飛ばしても、選んでおいた問題をこれから遊ぶ問題として保つこと", () => {
         fireEvent.keyDown(document, { key: "Escape" });
+        const stageNumber = readStageNumber();
 
-        expect(getDetail().textContent).toMatch(/^No\.0007/);
-      });
-
-      test("ランダムに遊ぶを1回タップすると、最後の姿まで飛ばして開いているレベルで始めること", () => {
-        const playRandom = screen.getByRole("button", {
-          name: "ランダムに遊ぶ",
-        });
-
-        tap(playRandom, { x: 10, y: 10 });
-        fireEvent.click(playRandom);
-
-        expect(onPlayRandom.mock.calls).toEqual([["3"]]);
+        expect(stageNumber).toBe("No.0007");
       });
     });
 
@@ -2428,43 +2463,18 @@ describe("GameHomeScreen", () => {
   });
 
   describe("開いたあとに最後に遊んだレベルが変わった場合", () => {
-    let rerender: ReturnType<typeof render>["rerender"];
-
     beforeEach(() => {
-      ({ rerender } = renderScreen());
-      scrollIntoView.mockClear();
-    });
-
-    test("新しく開いたレベルのカードを見える位置へ送ること", () => {
+      const { rerender } = renderScreen();
       rerender(createScreen({ ...zukan, latestPlayedDifficulty: "5" }));
-      const scrolled = scrollIntoView.mock.contexts;
-
-      expect(scrolled).toEqual([getLevelTab("レベル 5")]);
     });
 
-    test("カードを触ったあとは、開いたレベルのカードへ送らないこと", () => {
-      fireEvent.pointerDown(screen.getByRole("tablist", { name: "レベル" }));
-      rerender(createScreen({ ...zukan, latestPlayedDifficulty: "5" }));
-      const scrolled = scrollIntoView.mock.contexts;
+    test("新しく開いたレベルの台紙を示し、そのレベルからゲームが選んだ問題をこれから遊ぶ問題にすること", () => {
+      const openLevel = readOpenLevel();
+      const stageNumber = readStageNumber();
 
-      expect(scrolled).toEqual([]);
-    });
-  });
-
-  describe("端で切れたカードを押した場合", () => {
-    beforeEach(() => {
-      renderScreen();
-      scrollIntoView.mockClear();
-    });
-
-    test("押したカードを見える位置へ送ること", () => {
-      fireEvent.click(getLevelTab("レベル 5"));
-      const scrolled = scrollIntoView.mock.contexts;
-
-      expect(scrolled).toEqual([getLevelTab("レベル 5")]);
-      expect(scrollIntoView).toHaveBeenCalledWith(
-        expect.objectContaining({ block: "nearest", inline: "nearest" }),
-      );
+      expect(openLevel).toBe("レベル 5");
+      expect(selectRandomProblemId.mock.calls).toEqual([["3"], ["5"]]);
+      expect(stageNumber).toBe("No.0010");
     });
   });
 
@@ -2473,37 +2483,37 @@ describe("GameHomeScreen", () => {
       renderScreen({ ...zukan, latestPlayedDifficulty: null });
     });
 
-    test("最も低いレベルのカードを選び、そのレベルの台紙を示すこと", () => {
-      const selectedTab = screen.getByRole("tab", { selected: true });
+    test("最も低いレベルを選び、そのレベルの台紙を示すこと", () => {
+      const openLevel = readOpenLevel();
       const sheetNames = getShownSheetNames();
 
-      expect(selectedTab).toBe(getLevelTab("レベル 1"));
+      expect(openLevel).toBe("レベル 1");
       expect(sheetNames).toEqual(["レベル 1の問題"]);
     });
 
-    test("最も低いレベルのカードに、ほかのカードに無い印や要素を足さないこと", () => {
-      const cardStructures = within(
+    test("最も低いレベルに、ほかのレベルに無い印や要素を足さないこと", () => {
+      const levelStructures = within(
         screen.getByRole("tablist", { name: "レベル" }),
       )
         .getAllByRole("tab")
         .map(describeElementStructure);
 
-      expect(new Set(cardStructures).size).toBe(1);
+      expect(new Set(levelStructures).size).toBe(1);
     });
 
-    test("ランダムに遊ぶを押すと、最も低いレベルでプレイを始めること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+    test("遊ぶを押すと、最も低いレベルからゲームが選んだ問題を始めること", () => {
+      play();
 
-      expect(onPlayRandom.mock.calls).toEqual([["1"]]);
+      expect(onPlayProblem.mock.calls).toEqual([[levelOneProblems[0]]]);
     });
 
-    test("Tab でカードに入っても、別のレベルを選ばないこと", () => {
+    test("Tab でレベルに入っても、別のレベルを選ばないこと", () => {
       const tab = getLevelTab("レベル 2");
 
       fireEvent.focus(tab);
-      const selectedTab = screen.getByRole("tab", { selected: true });
+      const openLevel = readOpenLevel();
 
-      expect(selectedTab).toBe(getLevelTab("レベル 1"));
+      expect(openLevel).toBe("レベル 1");
     });
   });
 
@@ -2519,9 +2529,9 @@ describe("GameHomeScreen", () => {
     });
 
     test("問題のある最も低いレベルを開くこと", () => {
-      const selectedTab = screen.getByRole("tab", { selected: true });
+      const openLevel = readOpenLevel();
 
-      expect(selectedTab).toBe(getLevelTab("レベル 2"));
+      expect(openLevel).toBe("レベル 2");
     });
   });
 
@@ -2531,25 +2541,35 @@ describe("GameHomeScreen", () => {
     });
 
     test("その問題のレベルを、最後に遊んだレベルより優先して開くこと", () => {
-      const selectedTab = screen.getByRole("tab", { selected: true });
+      const openLevel = readOpenLevel();
       const sheetNames = getShownSheetNames();
 
-      expect(selectedTab.textContent).toMatch(/^レベル 1/);
+      expect(openLevel).toBe("レベル 1");
       expect(sheetNames).toEqual(["レベル 1の問題"]);
     });
 
-    test("その問題のマスへフォーカスを置くこと", () => {
-      const focused = document.activeElement;
+    test("ゲームに選ばせず、その問題をこれから遊ぶ問題として、そのマスと盤面で示すこと", () => {
+      const square = getSquare("レベル 1の問題", "No.0002");
+      const stageNumber = readStageNumber();
+      const preview = within(getPreviewFrame()).getByText("p-1-1の盤面");
 
-      expect(focused).toBe(getSquare("レベル 1の問題", "No.0002"));
+      expect(selectRandomProblemId).not.toHaveBeenCalled();
+      expect(square.getAttribute("aria-current")).toBe("true");
+      expect(stageNumber).toBe("No.0002");
+      expect(preview).toBeTruthy();
     });
 
-    test("その問題のマスを選び、詳細を出すこと", () => {
-      const square = getSquare("レベル 1の問題", "No.0002");
-      const detail = getDetail();
+    test("遊ぶを押すと、選んでおいた問題を始めること", () => {
+      play();
 
-      expect(square.getAttribute("aria-current")).toBe("true");
-      expect(within(detail).getByText("No.0002")).toBeTruthy();
+      expect(onPlayProblem.mock.calls).toEqual([[levelOneProblems[1]]]);
+    });
+
+    test("別の問題を押すと、選んでおいた問題を除いてゲームに選ばせること", () => {
+      shuffle();
+
+      expect(selectRandomProblemId.mock.calls).toEqual([["1", "p-1-1"]]);
+      expect(readStageNumber()).toBe("No.0001");
     });
   });
 
@@ -2558,12 +2578,110 @@ describe("GameHomeScreen", () => {
       renderScreen(zukan, noZukanChanges, "unknown-problem");
     });
 
-    test("最後に遊んだレベルを開き、どのマスも選ばないこと", () => {
-      const selectedTab = screen.getByRole("tab", { selected: true });
-      const detail = queryDetail();
+    test("最後に遊んだレベルを開き、そのレベルからゲームが選んだ問題をこれから遊ぶ問題にすること", () => {
+      const openLevel = readOpenLevel();
+      const stageNumber = readStageNumber();
 
-      expect(selectedTab.textContent).toMatch(/^レベル 3/);
-      expect(detail).toBeNull();
+      expect(openLevel).toBe("レベル 3");
+      expect(selectRandomProblemId.mock.calls).toEqual([["3"]]);
+      expect(stageNumber).toBe("No.0005");
+    });
+  });
+
+  describe("プレイ画面から戻ってきた場合", () => {
+    let animate: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      // 収める動きを止めて、時点ごとに盤面と重なる要素を測れるようにする。
+      animate = vi.fn(() => ({
+        currentTime: 0,
+        finished: new Promise(() => {}),
+        cancel: vi.fn(),
+        pause: vi.fn(),
+        play: vi.fn(),
+      }));
+      Element.prototype.animate = animate as unknown as Element["animate"];
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(
+        new DOMRect(0, 0, 100, 100),
+      );
+      // プレイ画面の盤面の位置を控えてから、プレイ画面を離れる。
+      const playBoard = document.createElement("div");
+      playBoard.dataset.playEntryBoard = "";
+      const playFrame = document.createElement("section");
+      playFrame.dataset.playFrame = "";
+      playFrame.append(playBoard);
+      document.body.append(playFrame);
+      leavePlayBoard();
+      playFrame.remove();
+      renderProblemPreview.mockImplementation(({ problemId }: ZukanProblem) => (
+        <p data-play-entry-board="">{`${problemId}の盤面`}</p>
+      ));
+    });
+
+    afterEach(() => {
+      playBoardReturnPrivate.reset();
+      vi.restoreAllMocks();
+      renderProblemPreview.mockReset();
+      Reflect.deleteProperty(Element.prototype, "animate");
+    });
+
+    describe("選んでおく問題を渡した場合", () => {
+      beforeEach(() => {
+        renderScreen(zukan, noZukanChanges, "p-1-1");
+      });
+
+      test("選んだ問題の盤面の写しを画面の手前に重ね、プレイ画面で盤面があった所から収めること", () => {
+        const settledBoards = animate.mock.contexts.filter(
+          (element): element is HTMLElement =>
+            element instanceof HTMLElement &&
+            element.parentElement === document.body &&
+            element.getAttribute("aria-hidden") === "true",
+        );
+
+        expect(settledBoards).toHaveLength(1);
+        expect(
+          within(settledBoards[0] as HTMLElement).getByText("p-1-1の盤面"),
+        ).toBeTruthy();
+      });
+
+      test("写しが収まるまで、選んだ問題の盤面を見せずに置くこと", () => {
+        const opacity = getPreviewFrame().style.opacity;
+
+        expect(opacity).toBe("0");
+      });
+    });
+
+    describe("選んでおく問題が無い場合", () => {
+      beforeEach(() => {
+        renderScreen();
+      });
+
+      test("ゲームが選んだ問題の盤面の写しを、プレイ画面で盤面があった所から収めること", () => {
+        const settledBoards = animate.mock.contexts.filter(
+          (element): element is HTMLElement =>
+            element instanceof HTMLElement &&
+            element.parentElement === document.body &&
+            element.getAttribute("aria-hidden") === "true",
+        );
+
+        expect(settledBoards).toHaveLength(1);
+        expect(
+          within(settledBoards[0] as HTMLElement).getByText("p-aの盤面"),
+        ).toBeTruthy();
+      });
+    });
+
+    describe("出題できる問題が無い場合", () => {
+      beforeEach(() => {
+        selectRandomProblemId.mockReturnValue(null);
+        renderScreen();
+      });
+
+      test("盤面を収める動きをしないこと", () => {
+        const animatedCount = animate.mock.calls.length;
+
+        expect(animatedCount).toBe(0);
+      });
     });
   });
 });

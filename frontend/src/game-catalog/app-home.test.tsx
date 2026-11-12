@@ -247,9 +247,10 @@ describe("useAppHome", () => {
       fireEvent.click(getHeroLink());
 
       const openLevel = screen.getByRole("tab", { selected: true });
-      const statusCounts = screen.getByRole("list", {
+      // 状態ごとの数は、狭い画面用と広い画面用の2つを描き、どちらも同じ数を示す。
+      const statusCounts = screen.getAllByRole("list", {
         name: "状態ごとの問題の数",
-      });
+      })[0] as HTMLElement;
       expect(openLevel.textContent).toMatch(/^レベル 4/);
       expect(
         within(statusCounts).getByRole("listitem", { name: "挑戦中 1問" }),

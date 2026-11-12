@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { bridgesCatalogEntry } from "@/game-catalog/bridges/bridges-catalog-entry";
@@ -24,18 +30,9 @@ vi.mock(
   },
 );
 
-beforeEach(() => {
-  Element.prototype.scrollIntoView = vi.fn();
-  window.ResizeObserver = vi.fn(function ResizeObserver() {
-    return { observe() {}, unobserve() {}, disconnect() {} };
-  }) as unknown as typeof ResizeObserver;
-});
-
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
-  Reflect.deleteProperty(Element.prototype, "scrollIntoView");
-  Reflect.deleteProperty(window, "ResizeObserver");
 });
 
 function chooseLevel(label: string) {
@@ -51,10 +48,7 @@ describe("BridgesHomeView", () => {
   beforeEach(() => {
     router = createMemoryRouter(
       [
-        {
-          path: "/puzzles/bridges",
-          element: <BridgesHomeView />,
-        },
+        { path: "/puzzles/bridges", element: <BridgesHomeView /> },
         {
           path: "/puzzles/bridges/play/:difficulty",
           element: <p>プレイ画面</p>,
@@ -73,7 +67,7 @@ describe("BridgesHomeView", () => {
 
   const levelLabels = difficultyLevels.map(({ label }) => label);
 
-  test("レベルのカードを5つ並べること", () => {
+  test("レベルを5つ並べること", () => {
     const cards = screen.getAllByRole("tab");
 
     expect(cards).toHaveLength(levelLabels.length);
@@ -91,6 +85,21 @@ describe("BridgesHomeView", () => {
     expect(dialog).toBeTruthy();
   });
 
+  test("見出しのメニューからチュートリアルを開けること", async () => {
+    fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "ブリッジパズル",
+      description: "チュートリアル",
+    });
+
+    expect(dialog).toBeTruthy();
+  });
+
   test("戻るリンクでホームへ戻れること", () => {
     const backLink = screen.getByRole("link", { name: "戻る" });
 
@@ -99,9 +108,13 @@ describe("BridgesHomeView", () => {
     expect(href).toBe("/");
   });
 
-  test("レベルを選んでランダムに遊ぶを押すと、そのレベルのプレイ画面へ進むこと", () => {
+  test("レベルを選んで遊ぶを押すと、そのレベルのプレイ画面へ進むこと", () => {
     chooseLevel("レベル 3");
-    fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+    fireEvent.click(
+      within(
+        screen.getByRole("region", { name: "これから遊ぶ問題" }),
+      ).getByRole("button", { name: "遊ぶ" }),
+    );
 
     const { pathname } = router.state.location;
 

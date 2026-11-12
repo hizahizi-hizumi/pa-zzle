@@ -18,7 +18,12 @@ import {
   listNanpurePoolProblemIds,
   nanpureProblemFeatureAxes,
 } from "@/games/nanpure/problem/problem-pool";
-import { canSelectNanpureProblemById } from "@/games/nanpure/problem-selection";
+import {
+  canSelectNanpureProblemById,
+  selectNanpureProblemById,
+} from "@/games/nanpure/problem-selection";
+import { NanpureGround } from "@/games/nanpure/ui/NanpureGround";
+import { NanpureProblemPreview } from "@/games/nanpure/ui/NanpureProblemPreview";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import {
   formatNanpureProblemFeatures,
@@ -30,6 +35,9 @@ export const nanpureCatalogEntry = {
   name: NANPURE_DISPLAY_NAME,
   pictogramSvg,
   pictogramShowcaseSvg,
+  renderGround() {
+    return <NanpureGround />;
+  },
   homePath: "/puzzles/nanpure",
   playPath: "/puzzles/nanpure/play/:difficulty",
   playRecordDisplay: nanpurePlayRecordDisplay,
@@ -62,6 +70,10 @@ export const nanpureCatalogEntry = {
   describePoolProblem(difficulty, problemId) {
     const features = findNanpurePoolProblemFeatures(difficulty, problemId);
     return features ? formatNanpureProblemFeatures(features) : null;
+  },
+  renderPoolProblemPreview(difficulty, problemId) {
+    const pooled = selectNanpureProblemById(difficulty, problemId);
+    return pooled ? <NanpureProblemPreview problem={pooled.problem} /> : null;
   },
   problemFeatureFilter: createProblemFeatureFilter(
     findNanpurePoolProblemFeatures,

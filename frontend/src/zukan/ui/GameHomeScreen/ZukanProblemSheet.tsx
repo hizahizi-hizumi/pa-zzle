@@ -3,8 +3,8 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   memo,
+  type PointerEvent,
   type RefObject,
-  type UIEvent,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -13,14 +13,13 @@ import {
 
 import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
 import type { ProblemId } from "@/games/problem-id";
-import {
-  MOTION_DURATION_MS,
-  MOTION_EASING,
-  prefersReducedMotion,
-} from "@/lib/motion";
 import { ZukanProblemSquare } from "@/zukan/ui/GameHomeScreen/ZukanProblemSheet/ZukanProblemSquare";
 import type { ZukanChangeStage } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 import { findZukanPieceShape } from "@/zukan/ui/GameHomeScreen/zukan-piece-shape";
+import {
+  fitZukanSheet,
+  type ZukanSheetFit,
+} from "@/zukan/ui/GameHomeScreen/zukan-sheet-fit";
 import type { ZukanProblem } from "@/zukan/zukan-collection";
 import type { ZukanProblemChange } from "@/zukan/zukan-last-viewed";
 
@@ -39,14 +38,12 @@ type ZukanProblemSheetProps = {
   changes: ReadonlyMap<ProblemId, ZukanProblemChange> | undefined;
   /** 変化した問題ごとの、変化を今どこまで見せたか。見せる変化が無ければ `undefined`。 */
   changeStages: ReadonlyMap<ProblemId, ZukanChangeStage> | undefined;
-  /** 台紙のスクロール領域。マスは `data-index` に番号の順の位置を持つ。変化を見せるときに、変化したマスが見えるようスクロールするのに使う。 */
+  /** 台紙の領域。マスは `data-index` に番号の順の位置を持つ。変化を見せるときに、変化したマスを探すのに使う。 */
   scrollerRef: RefObject<HTMLDivElement | null>;
-  /** スクロール領域の下端に重なって覆っている高さ（px）。覆われたところのマスも、その上へスクロールして見られるようにする。 */
-  coveredBottomHeight: number;
-  /** 選んでいないマスを押したときと、矢印キーなどで動いたとき。 */
+  /** マスを押す・なぞる操作を受けないか。変化を見せている間は、飛ばすタップでマスを選ばないようにする。 */
+  selectionDisabled: boolean;
+  /** マスを押したとき・なぞって通ったときと、矢印キーなどで動いたとき。 */
   onSelect: (problem: ZukanProblem) => void;
-  /** 選んでいるマスをもう一度押したとき。 */
-  onDeselect: () => void;
 };
 
 type SquareRow = { start: number; length: number };
@@ -107,15 +104,13 @@ function findNextSquareIndex(
   }
 }
 
-/** 列の数は画面幅に合わせて決まるので、描かれた台紙の列から数える。 */
-function countGridColumns(grid: HTMLElement | null): number {
-  if (grid === null) {
-    return 1;
-  }
-  const columns = getComputedStyle(grid)
-    .gridTemplateColumns.split(" ")
-    .filter((column) => column !== "");
-  return Math.max(columns.length, 1);
+/** 絞り込みで当たった問題と当たらなかった問題を分ける区切りの高さ（px）。区切りの上下の余白と線を合わせたもの。 */
+const FILTER_BOUNDARY_HEIGHT = 13;
+
+/** 画面の点にあるマスの、番号の順の位置。マスの外なら `null`。指を押さえたまま動かしている間は、イベントの的ではなく指の下のマスを引く。 */
+function findSquareIndexAt(x: number, y: number): number | null {
+  const element = document.elementFromPoint?.(x, y);
+  return element ? findSquareIndex(element) : null;
 }
 
 function findSquareIndex(target: EventTarget): number | null {
@@ -140,11 +135,12 @@ function listPositions(
 }
 
 /**
- * 1つの難易度の全問をマス目で並べた台紙。難易度の名前と解いた数は、台紙を切り替えるレベルのカードが示す。
+ * 1つの難易度の全問をジグソーのピースで並べた台紙。難易度の名前と解いた数は、台紙を切り替えるレベルの帯が示す。
+ * 全問を送らずに一度に見渡せるよう、与えられた場所の幅と高さに全部が収まる最も大きいピースで並べる。場所の大きさが変わったら並べ直す。
  * 絞り込んでいるときは、当たった問題を前に、当たらなかった問題を薄くして区切りの線の後ろに、それぞれ番号の順で並べる。当たった問題が無ければ、その旨を前に示す。
  * 条件を変えるたびに多くのマスを置き直さないよう、マスは番号の順に置いたまま、当たらなかったマスを CSS の `order` で区切りの後ろへ並べて見せる。
- * 台紙は与えられた高さの中で自分だけスクロールし、選んだマスを、下端を覆うものに隠れない見える範囲へ寄せる。条件を変えても選んだマスへは寄せ直さない。
- * マスは台紙ごとに1つだけ Tab で止まり、台紙の中は見えている並びに沿って矢印キーで動く。動いた先のマスを選ぶ。選んでいるマスをもう一度押すと選択を解く。
+ * マスは、押すか、押さえたままなぞると選ぶ。ピースが指より小さくても狙った1問へ寄せられるよう、なぞっている間は指の下のマスを選び続ける。
+ * マスは台紙ごとに1つだけ Tab で止まり、台紙の中は見えている並びに沿って矢印キーで動く。動いた先のマスを選ぶ。
  * Tab で止まるマスは問題で持ち、選んでいるマスがあればそのマス、無ければ最後に選んだマス、それも台紙に無ければ並びの最初のマスにする。
  */
 function ZukanProblemSheetContent({
@@ -157,16 +153,14 @@ function ZukanProblemSheetContent({
   changes,
   changeStages,
   scrollerRef,
-  coveredBottomHeight,
+  selectionDisabled,
   onSelect,
-  onDeselect,
 }: ZukanProblemSheetProps) {
   const [lastSelectedProblemId, setLastSelectedProblemId] =
     useState<ProblemId | null>(null);
-  const [columnCount, setColumnCount] = useState(1);
+  const [fit, setFit] = useState<ZukanSheetFit | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const shownScrollTopRef = useRef(0);
-  const previousCoveredBottomHeightRef = useRef(coveredBottomHeight);
+  const scrubbedIndexRef = useRef<number | null>(null);
   const indices = useMemo(() => listPositions(problems), [problems]);
   const positions = useMemo(
     () => listPositions(arrangedProblems),
@@ -182,77 +176,87 @@ function ZukanProblemSheetContent({
       : lastSelectedProblemId !== null && indices.has(lastSelectedProblemId)
         ? lastSelectedProblemId
         : (arrangedProblems[0]?.problemId ?? null);
+  const hasFilteredOut =
+    matchedCount !== null && matchedCount < arrangedProblems.length;
+  const problemCount = problems.length;
+  // 区切りで行が分かれると、当たった問題の最後の行と当たらなかった問題の最後の行がどちらも欠けうるので、1行分と区切りの高さを空けて収める。
+  const isSplit = matchedCount !== null;
 
-  // ピースの形は並べた位置で決まり、列の数は画面幅で変わるので、台紙の幅を見張って数え直す。
+  // ピースの大きさと列の数は、台紙の場所の大きさと問題の数で決まるので、場所の大きさを見張って決め直す。
   useLayoutEffect(() => {
-    const grid = gridRef.current;
-    if (grid === null) {
+    const area = scrollerRef.current;
+    if (area === null) {
       return;
     }
-    function updateColumnCount() {
-      setColumnCount(countGridColumns(grid));
+    function updateFit() {
+      if (area === null) {
+        return;
+      }
+      const { width, height } = area.getBoundingClientRect();
+      const next = isSplit
+        ? fitSplitSheet(width, height, problemCount)
+        : fitZukanSheet(width, height, problemCount);
+      setFit((current) =>
+        current?.columnCount === next?.columnCount &&
+        current?.pieceSize === next?.pieceSize
+          ? current
+          : next,
+      );
     }
-    updateColumnCount();
+    updateFit();
     if (typeof ResizeObserver === "undefined") {
       return;
     }
-    const observer = new ResizeObserver(updateColumnCount);
-    observer.observe(grid);
+    const observer = new ResizeObserver(updateFit);
+    observer.observe(area);
     return () => observer.disconnect();
-  }, []);
-
-  // 覆うものが退いて末尾の余白が減ると、末尾まで送っていた台紙はスクロール位置が詰められて跳ぶので、元の位置から滑らせて下ろす。
-  useLayoutEffect(() => {
-    const isUncovered =
-      coveredBottomHeight < previousCoveredBottomHeightRef.current;
-    previousCoveredBottomHeightRef.current = coveredBottomHeight;
-    const scroller = scrollerRef.current;
-    const grid = gridRef.current;
-    if (!isUncovered || scroller === null || grid === null) {
-      return;
-    }
-    const clampedBy = shownScrollTopRef.current - scroller.scrollTop;
-    if (clampedBy > 0 && !prefersReducedMotion()) {
-      grid.animate(
-        [{ transform: `translateY(${-clampedBy}px)` }, { transform: "none" }],
-        {
-          duration: MOTION_DURATION_MS.normal,
-          easing: MOTION_EASING.standard,
-        },
-      );
-    }
-  }, [coveredBottomHeight, scrollerRef]);
-
-  // 下端を覆う高さは描いたあとに分かるので、選んだマスだけでなく覆う高さが変わったときも寄せ直す。
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 覆う高さはスクロールの余白として描かれ、寄せる先を変える。
-  useLayoutEffect(() => {
-    if (selectedIndex === null) {
-      return;
-    }
-    findSquare(gridRef.current, selectedIndex)?.scrollIntoView({
-      block: "nearest",
-      inline: "nearest",
-    });
-  }, [selectedIndex, coveredBottomHeight]);
+  }, [scrollerRef, problemCount, isSplit]);
 
   function selectSquare(problem: ZukanProblem) {
     setLastSelectedProblemId(problem.problemId);
     onSelect(problem);
   }
 
-  function handleScroll(event: UIEvent<HTMLDivElement>) {
-    shownScrollTopRef.current = event.currentTarget.scrollTop;
+  function selectSquareAt(index: number | null) {
+    const problem = index === null ? undefined : problems[index];
+    if (problem === undefined || index === scrubbedIndexRef.current) {
+      return;
+    }
+    scrubbedIndexRef.current = index;
+    if (problem.problemId !== selectedProblemId) {
+      selectSquare(problem);
+    }
   }
 
+  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (selectionDisabled || (event.pointerType === "mouse" && event.button !== 0)) {
+      return;
+    }
+    scrubbedIndexRef.current = null;
+    // 指がピースの外へ出ても、押さえている間は台紙がなぞる操作を受け続ける。
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    selectSquareAt(findSquareIndexAt(event.clientX, event.clientY));
+  }
+
+  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
+    if (
+      selectionDisabled ||
+      !event.currentTarget.hasPointerCapture?.(event.pointerId)
+    ) {
+      return;
+    }
+    selectSquareAt(findSquareIndexAt(event.clientX, event.clientY));
+  }
+
+  /** キーで押したとき（Enter・Space）。指とマウスは、押さえた時点で選び終えている。 */
   function handleClick(event: MouseEvent<HTMLDivElement>) {
     const index = findSquareIndex(event.target);
     const problem = index === null ? undefined : problems[index];
-    if (problem === undefined) {
-      return;
-    }
-    if (problem.problemId === selectedProblemId) {
-      onDeselect();
-    } else {
+    if (
+      !selectionDisabled &&
+      problem !== undefined &&
+      problem.problemId !== selectedProblemId
+    ) {
       selectSquare(problem);
     }
   }
@@ -262,14 +266,14 @@ function ZukanProblemSheetContent({
     const problem = index === null ? undefined : problems[index];
     const position =
       problem === undefined ? undefined : positions.get(problem.problemId);
-    if (position === undefined) {
+    if (position === undefined || fit === null) {
       return;
     }
     const nextPosition = findNextSquareIndex(
       event.key,
       position,
       arrangedProblems.length,
-      countGridColumns(gridRef.current),
+      fit.columnCount,
       matchedCount ?? arrangedProblems.length,
     );
     const nextProblem =
@@ -286,36 +290,25 @@ function ZukanProblemSheetContent({
     findSquare(gridRef.current, nextIndex)?.focus({ preventScroll: true });
   }
 
-  const hasFilteredOut =
-    matchedCount !== null && matchedCount < arrangedProblems.length;
-
-  // 押すときに大きく浮くマスが、台紙の端のマスでもスクロール領域で切れないよう、領域をページの余白へ広げ、内側に浮いたマスが収まる余白を取る。
-  // 覆われたところの余白は、領域の余白ではなく末尾の要素で取る。画面が低く、覆う高さが領域より高いときも、領域が縮めずにページをはみ出さないようにする。
-  // スクロールした行が台紙の上の数の真下で途切れて見えないよう、上端の余白の中で背景の色を重ねて薄れさせる。選んだマスはこの余白より内側へ寄せる。
-  // 薄れは `mask-image` で作らない。iOS の Safari は mask をかけた要素の中身を低い解像度で描き、ピースの輪郭がぼやけるため。
+  const columnCount = fit?.columnCount ?? 1;
   return (
-    <div
-      ref={scrollerRef}
-      onScroll={handleScroll}
-      style={
-        { "--covered-bottom": `${coveredBottomHeight}px` } as CSSProperties
-      }
-      className="-mx-4 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-4 pt-4 pb-4"
-    >
-      {/* 画面の地は、背景の色に `muted` を薄く重ねた色なので、薄れも同じ2層で重ねる。 */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none sticky -top-4 z-10 -mt-4 mb-1 h-3 bg-linear-to-b from-background"
-      >
-        <div className="size-full bg-linear-to-b from-muted/30" />
-      </div>
+    <div ref={scrollerRef} className="flex min-h-0 flex-1 flex-col justify-center">
       <div
         ref={gridRef}
         role="group"
         aria-label={`${getDifficultyLabel(difficulty)}の問題`}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-        className="isolate grid grid-cols-[repeat(auto-fill,--spacing(6))] sm:grid-cols-[repeat(auto-fill,--spacing(6.5))] [&>[data-filtered-out]]:order-2"
+        style={
+          {
+            "--piece": `${fit?.pieceSize ?? 0}px`,
+            gridTemplateColumns: `repeat(${columnCount}, var(--piece))`,
+          } as CSSProperties
+        }
+        // 場所の大きさが分かるまでは、ピースを描かずに場所だけを取る。
+        className={`isolate grid touch-none select-none [&>[data-filtered-out]]:order-2 ${fit === null ? "invisible" : ""}`}
       >
         {matchedCount === 0 && (
           <p className="col-span-full text-supporting text-muted-foreground">
@@ -352,9 +345,24 @@ function ZukanProblemSheetContent({
           />
         )}
       </div>
-      <div aria-hidden="true" className="h-(--covered-bottom)" />
     </div>
   );
+}
+
+/** 絞り込みの区切りで2つに分かれた台紙の並べ方。区切りの高さと、分かれて増える1行分を空けて収める。 */
+function fitSplitSheet(
+  width: number,
+  height: number,
+  pieceCount: number,
+): ZukanSheetFit | null {
+  const fit = fitZukanSheet(width, height - FILTER_BOUNDARY_HEIGHT, pieceCount);
+  return fit === null
+    ? null
+    : (fitZukanSheet(
+        width,
+        height - FILTER_BOUNDARY_HEIGHT - fit.pieceSize,
+        pieceCount,
+      ) ?? fit);
 }
 
 export const ZukanProblemSheet = memo(ZukanProblemSheetContent);

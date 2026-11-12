@@ -99,7 +99,9 @@ export function MinesweeperBoard({
   }
 
   return (
+    // data-play-entry-board: ゲームのホームから入るとき、広がった盤面が重なって着地する先。
     <div
+      data-play-entry-board=""
       role="group"
       aria-label={`${MINESWEEPER_DISPLAY_NAME}盤面`}
       className={BOARD_CLASS_NAME}

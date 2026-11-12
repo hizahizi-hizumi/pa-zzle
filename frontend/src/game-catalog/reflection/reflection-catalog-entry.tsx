@@ -18,18 +18,26 @@ import {
   listReflectionPoolProblemIds,
   reflectionProblemFeatureAxes,
 } from "@/games/reflection/problem/problem-pool";
-import { canSelectReflectionProblemById } from "@/games/reflection/problem-selection";
+import {
+  canSelectReflectionProblemById,
+  selectReflectionProblemById,
+} from "@/games/reflection/problem-selection";
 import { reflectionPlayRecordDisplay } from "@/games/reflection/ui/play-record-display";
 import {
   formatReflectionProblemFeatures,
   reflectionProblemFeatureAxisDisplays,
 } from "@/games/reflection/ui/problem-features";
+import { ReflectionGround } from "@/games/reflection/ui/ReflectionGround";
+import { ReflectionProblemPreview } from "@/games/reflection/ui/ReflectionProblemPreview";
 
 export const reflectionCatalogEntry = {
   id: reflectionPlayRecordDefinition.gameId,
   name: REFLECTION_DISPLAY_NAME,
   pictogramSvg,
   pictogramShowcaseSvg,
+  renderGround() {
+    return <ReflectionGround />;
+  },
   homePath: "/puzzles/reflection",
   playPath: "/puzzles/reflection/play/:difficulty",
   playRecordDisplay: reflectionPlayRecordDisplay,
@@ -62,6 +70,12 @@ export const reflectionCatalogEntry = {
   describePoolProblem(difficulty, problemId) {
     const features = findReflectionPoolProblemFeatures(difficulty, problemId);
     return features ? formatReflectionProblemFeatures(features) : null;
+  },
+  renderPoolProblemPreview(difficulty, problemId) {
+    const selected = selectReflectionProblemById(difficulty, problemId);
+    return selected ? (
+      <ReflectionProblemPreview problem={selected.problem} />
+    ) : null;
   },
   problemFeatureFilter: createProblemFeatureFilter(
     findReflectionPoolProblemFeatures,

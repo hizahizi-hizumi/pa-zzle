@@ -94,6 +94,7 @@ export const hitofudePuzzleFigureParts = {
  * 道が全マスを通り終えたら、先端の輪に代えて終点の印を置き、始点から終点へなぞる光を重ねる。
  * 穴は描かず、盤面の外と同じ地を見せる。外形が、外周の穴を盤面の欠けとして、内側の穴を盤面に開いた穴として縁取る。
  * 道とマスの塗りは、通った順に色を移す（`getPathColor`）。
+ * 根の `data-play-entry-board` は、ゲームのホームから入るとき、広がった盤面が重なって着地する先。
  */
 export function HitofudePuzzleFigure({
   board,
@@ -122,6 +123,7 @@ export function HitofudePuzzleFigure({
   return (
     <svg
       ref={ref}
+      data-play-entry-board=""
       viewBox={`0 0 ${size} ${size}`}
       aria-hidden="true"
       className={cn(

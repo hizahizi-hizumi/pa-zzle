@@ -100,7 +100,7 @@ function ZukanProblemSquareContent({
         isFilteredOut ? `${description} 絞り込みの条件外` : description
       }
       aria-current={isSelected ? "true" : undefined}
-      className={`group relative size-6 scroll-m-3 outline-none sm:size-6.5 ${layerClassName} ${stampClassName} ${filteredOutClassName}`}
+      className={`group relative size-(--piece) outline-none ${layerClassName} ${stampClassName} ${filteredOutClassName}`}
     >
       <svg
         aria-hidden="true"
@@ -170,6 +170,13 @@ function ZukanProblemSquareContent({
             )}
           </svg>
         </span>
+      )}
+      {isSelected && (
+        <span
+          aria-hidden="true"
+          data-selection-locator=""
+          className="pointer-events-none absolute top-1/2 left-1/2 size-[max(180%,--spacing(6))] -translate-1/2 rounded-full shadow-[0_0_0_2px_var(--foreground),0_0_0_3.5px_var(--card)]"
+        />
       )}
       {changeStage === "marked" && (
         <span

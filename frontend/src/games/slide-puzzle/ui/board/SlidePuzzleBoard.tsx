@@ -102,7 +102,9 @@ export function SlidePuzzleBoard({
   }, [clearing, onClearAnimationComplete, tileCount]);
 
   return (
+    // data-play-entry-board: ゲームのホームから入るとき、広がった盤面が重なって着地する先。
     <div
+      data-play-entry-board=""
       role="group"
       aria-label="盤面"
       className="@container size-full rounded-[1rem] bg-muted p-[1%]"

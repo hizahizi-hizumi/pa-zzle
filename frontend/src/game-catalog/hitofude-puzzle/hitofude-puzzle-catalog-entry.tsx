@@ -18,7 +18,12 @@ import {
   hitofudePuzzleProblemFeatureAxes,
   listHitofudePuzzlePoolProblemIds,
 } from "@/games/hitofude-puzzle/problem/problem-pool";
-import { canSelectHitofudePuzzleProblemById } from "@/games/hitofude-puzzle/problem-selection";
+import {
+  canSelectHitofudePuzzleProblemById,
+  selectHitofudePuzzleProblemById,
+} from "@/games/hitofude-puzzle/problem-selection";
+import { HitofudePuzzleGround } from "@/games/hitofude-puzzle/ui/HitofudePuzzleGround";
+import { HitofudePuzzleProblemPreview } from "@/games/hitofude-puzzle/ui/HitofudePuzzleProblemPreview";
 import { hitofudePuzzlePlayRecordDisplay } from "@/games/hitofude-puzzle/ui/play-record-display";
 import {
   formatHitofudePuzzleProblemFeatures,
@@ -30,6 +35,9 @@ export const hitofudePuzzleCatalogEntry = {
   name: HITOFUDE_PUZZLE_DISPLAY_NAME,
   pictogramSvg,
   pictogramShowcaseSvg,
+  renderGround() {
+    return <HitofudePuzzleGround />;
+  },
   homePath: "/puzzles/hitofude-puzzle",
   playPath: "/puzzles/hitofude-puzzle/play/:difficulty",
   playRecordDisplay: hitofudePuzzlePlayRecordDisplay,
@@ -65,6 +73,12 @@ export const hitofudePuzzleCatalogEntry = {
       problemId,
     );
     return features ? formatHitofudePuzzleProblemFeatures(features) : null;
+  },
+  renderPoolProblemPreview(difficulty, problemId) {
+    const pooled = selectHitofudePuzzleProblemById(difficulty, problemId);
+    return pooled ? (
+      <HitofudePuzzleProblemPreview problem={pooled.problem} />
+    ) : null;
   },
   problemFeatureFilter: createProblemFeatureFilter(
     findHitofudePuzzlePoolProblemFeatures,

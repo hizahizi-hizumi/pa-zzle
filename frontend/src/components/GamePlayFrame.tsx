@@ -77,6 +77,7 @@ export function GamePlayFrame<Result>({
   return (
     <section
       ref={ref}
+      data-play-frame=""
       className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-[var(--browser-surface,var(--background))]"
     >
       <div
@@ -87,7 +88,8 @@ export function GamePlayFrame<Result>({
         {background ?? <div className="size-full bg-background" />}
       </div>
       <BrandIdentityHeader surface="game" pinned />
-      <div className="flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+      {/* ゲームのホームから入ってきたときは、広がった盤面が飛んでいる間に見出しと操作を現し、盤面だけは、広がった盤面が重なって着くまで見せずに置く。重なる盤面がずれないよう、動かさずに現す。 */}
+      <div className="flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] in-data-play-entry:animate-in in-data-play-entry:duration-(--duration-normal) in-data-play-entry:ease-enter in-data-play-entry:fade-in in-data-[play-entry=arriving]:[&_[data-play-entry-board]]:opacity-0 motion-reduce:animate-none">
         <PlayHeader
           title={title}
           metrics={metrics}

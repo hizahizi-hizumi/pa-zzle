@@ -34,6 +34,7 @@ import {
   TsumeShogiBoardGroup,
   tsumeShogiBoardGroupSizeStyle,
 } from "@/games/tsume-shogi/ui/TsumeShogiBoardGroup";
+import { TsumeShogiGround } from "@/games/tsume-shogi/ui/TsumeShogiGround";
 import {
   TsumeShogiHand,
   type TsumeShogiHandAvailability,
@@ -174,11 +175,7 @@ export function TsumeShogiPlay({
       progress={progress}
       result={result}
       title={TSUME_SHOGI_DISPLAY_NAME}
-      background={
-        <div
-          className={cn("size-full", tsumeShogiToneClassNames.tableSurface)}
-        />
-      }
+      background={<TsumeShogiGround />}
       metrics={[
         { type: "problem-fact", text: `${plies}手詰` },
         { type: "count", label: "手数", count: playedPlies, reservedDigits: 1 },

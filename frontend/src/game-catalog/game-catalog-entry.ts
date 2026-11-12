@@ -99,6 +99,8 @@ export type GameCatalogEntry = {
   pictogramSvg: string;
   /** パズル選択で選んでいるときに見せる、プレイ画面の色と動きを持つピクトグラム。持たないゲームは `pictogramSvg` を見せる。 */
   pictogramShowcaseSvg?: string;
+  /** ゲーム固有の地を描く。プレイ画面の地の元になるもので、ゲームのホームの全体に敷く。 */
+  renderGround: () => ReactNode;
   homePath: GameHomePath;
   playPath: GamePlayPath;
   playRecordDisplay: PlayRecordDisplayDefinition;
@@ -128,6 +130,14 @@ export type GameCatalogEntry = {
   ) => readonly ProblemFeature[] | null;
   /** 図鑑の絞り込みに使う、問題の特徴の軸と値。 */
   problemFeatureFilter: ProblemFeatureFilter;
+  /**
+   * 難易度の問題集の1問の、始めたときの盤面を描く。プレイ画面と同じ姿で、置かれた枠に収まる大きさに描き、操作は受けない。
+   * 問題集に無い ID・別の難易度の ID には `null` を返す。ゲームのホームで選んでいる1問について描く。
+   */
+  renderPoolProblemPreview: (
+    difficulty: DifficultyLevel,
+    problemId: ProblemId,
+  ) => ReactNode | null;
   /** 記録から結果画面を描けるか。`renderRecordResult` が結果画面を返すときだけ `true`。 */
   hasRecordResult: (record: PlayRecord) => boolean;
   /**

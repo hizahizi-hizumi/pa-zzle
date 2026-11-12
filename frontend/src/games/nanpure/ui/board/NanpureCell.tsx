@@ -98,14 +98,15 @@ export function NanpureCell({
       disabled={disabled}
       className={cn(
         "relative flex aspect-square min-h-0 items-center justify-center font-sans text-[min(clamp(1rem,5vw,2rem),6.5cqw)] outline-none transition-colors focus-visible:bg-violet-200 dark:focus-visible:bg-violet-900/55",
-        row !== NANPURE_SIZE - 1 && "border-b border-b-border",
-        column !== NANPURE_SIZE - 1 && "border-r border-r-border",
+        // 罫線はマスの右と下に引くので、同じ幅の余白を左と上に取り、数字をマスの中心に置く。小さく描いた盤面では、罫線の分のずれが目立つ。
+        row !== NANPURE_SIZE - 1 && "border-b border-b-border pt-px",
+        column !== NANPURE_SIZE - 1 && "border-r border-r-border pl-px",
         row % 3 === 2 &&
           row !== NANPURE_SIZE - 1 &&
-          "border-b-2 border-b-foreground/55",
+          "border-b-2 border-b-foreground/55 pt-0.5",
         column % 3 === 2 &&
           column !== NANPURE_SIZE - 1 &&
-          "border-r-2 border-r-foreground/55",
+          "border-r-2 border-r-foreground/55 pl-0.5",
         related && nanpureCellToneClassNames.related,
         matching && nanpureCellToneClassNames.matching,
         selected && nanpureCellToneClassNames.selected,
@@ -140,7 +141,13 @@ export function NanpureCell({
         </span>
       )}
       {value !== null ? (
-        <span data-nanpure-digit={clue ? "clue" : "entered"}>{value}</span>
+        // 行の高さではなく数字の字面の高さで上下の中心に置く。字面は行の中で上に寄るため。
+        <span
+          data-nanpure-digit={clue ? "clue" : "entered"}
+          className="[text-box:trim-both_cap_alphabetic]"
+        >
+          {value}
+        </span>
       ) : (
         <NanpureCellNotes
           notes={notes}

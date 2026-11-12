@@ -6,7 +6,7 @@ import {
 } from "@/game-catalog/game-catalog";
 import {
   createGameNavigation,
-  openRecordProblemPlay,
+  openProblemPlay,
 } from "@/game-catalog/game-navigation";
 import { readRecordSaveOutcome } from "@/game-catalog/record-result-location-state";
 import { findPlayRecord } from "@/records/storage";
@@ -33,7 +33,7 @@ export function PlayResultView() {
             game.playRecordDisplay,
           ),
           onReplay: replayDestination
-            ? () => openRecordProblemPlay(navigate, replayDestination)
+            ? () => openProblemPlay(navigate, replayDestination)
             : undefined,
           navigation: createGameNavigation(navigate, game),
         })

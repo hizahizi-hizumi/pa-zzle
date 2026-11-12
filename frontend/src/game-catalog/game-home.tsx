@@ -10,11 +10,8 @@ import {
   type GameCatalogEntry,
   toZukanGameSource,
 } from "@/game-catalog/game-catalog-entry";
-import { openRecordProblemPlay } from "@/game-catalog/game-navigation";
-import {
-  createProblemIdSearch,
-  useRequestedProblemId,
-} from "@/game-catalog/problem-id-query";
+import { openProblemPlay } from "@/game-catalog/game-navigation";
+import { useRequestedProblemId } from "@/game-catalog/problem-id-query";
 import {
   selectAnyRandomProblemId,
   selectRandomProblemId,
@@ -105,51 +102,58 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
     [game],
   );
 
+  const renderProblemPreview = useCallback(
+    ({ difficulty, problemId }: ZukanProblem) =>
+      game.renderPoolProblemPreview(difficulty, problemId),
+    [game],
+  );
+
   const findProblemFeatureValues = useCallback(
     ({ difficulty, problemId }: ZukanProblem) =>
       game.problemFeatureFilter.findPoolProblemValues(difficulty, problemId),
     [game],
   );
 
+  /** 開いているゲームの問題集の1問を、プレイ画面で始める。 */
+  function openPoolProblemPlay(
+    difficulty: DifficultyLevel,
+    problemId: ProblemId,
+  ) {
+    openProblemPlay(navigate, {
+      playPath: game.playPath,
+      difficulty,
+      problemId,
+    });
+  }
+
   return {
     screenProps: {
       gameId: game.id,
       gameTitle: game.name,
       pictogramSvg: game.pictogramSvg,
+      ground: game.renderGround(),
       zukan,
       changes,
       onLevelChangesShown: handleLevelChangesShown,
       initialSelectedProblemId: requestedProblemId,
-      onPlayRandom(difficulty) {
-        function openProblem(problemId: ProblemId) {
-          navigate(
-            {
-              pathname: game.playPath,
-              search: createProblemIdSearch(problemId),
-            },
-            { params: { difficulty } },
-          );
-        }
-        const problemId = selectRandomProblemId(game, difficulty);
-        if (problemId === null) {
-          const anyProblemId = selectAnyRandomProblemId(game, difficulty);
-          randomProblemUnavailable.show(
-            game.id,
-            game.name,
-            anyProblemId === null ? undefined : () => openProblem(anyProblemId),
-          );
-          return;
-        }
-        openProblem(problemId);
+      selectRandomProblemId(difficulty, avoidedProblemId) {
+        return selectRandomProblemId(game, difficulty, avoidedProblemId);
+      },
+      onRandomProblemUnavailable(difficulty) {
+        const anyProblemId = selectAnyRandomProblemId(game, difficulty);
+        randomProblemUnavailable.show(
+          game.id,
+          game.name,
+          anyProblemId === null
+            ? undefined
+            : () => openPoolProblemPlay(difficulty, anyProblemId),
+        );
       },
       onPlayProblem({ difficulty, problemId }) {
-        openRecordProblemPlay(navigate, {
-          playPath: game.playPath,
-          difficulty,
-          problemId,
-        });
+        openPoolProblemPlay(difficulty, problemId);
       },
       describeProblem,
+      renderProblemPreview,
       featureAxes: game.problemFeatureFilter.axes,
       findProblemFeatureValues,
       records,

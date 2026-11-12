@@ -3,7 +3,11 @@ import type { ReactNode } from "react";
 import { MemoryRouter, useLocation, useNavigationType } from "react-router";
 
 import {
-  openRecordProblemPlay,
+  _private as playBoardReturnPrivate,
+  settlePlayBoard,
+} from "@/components/play-board-return";
+import {
+  openProblemPlay,
   useGameNavigation,
 } from "@/game-catalog/game-navigation";
 import { minesweeperCatalogEntry } from "@/game-catalog/minesweeper/minesweeper-catalog-entry";
@@ -84,6 +88,51 @@ describe("useGameNavigation", () => {
     expect(navigationType).toBe("REPLACE");
   });
 
+  describe("プレイ画面の盤面がある場合", () => {
+    let animate: ReturnType<typeof vi.fn>;
+    let preview: HTMLElement;
+
+    beforeEach(() => {
+      const playFrame = document.createElement("section");
+      playFrame.dataset.playFrame = "";
+      const playBoard = document.createElement("div");
+      playBoard.dataset.playEntryBoard = "";
+      playFrame.append(playBoard);
+      preview = document.createElement("div");
+      const homeBoard = document.createElement("div");
+      homeBoard.dataset.playEntryBoard = "";
+      const moved = document.createElement("div");
+      moved.append(homeBoard);
+      preview.append(moved);
+      document.body.append(playFrame, preview);
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(
+        new DOMRect(0, 0, 100, 100),
+      );
+      animate = vi.fn(
+        () =>
+          ({
+            finished: new Promise(() => {}),
+            cancel: vi.fn(),
+          }) as unknown as Animation,
+      );
+      Element.prototype.animate = animate as unknown as Element["animate"];
+    });
+
+    afterEach(() => {
+      playBoardReturnPrivate.reset();
+      document.body.replaceChildren();
+      vi.restoreAllMocks();
+      Reflect.deleteProperty(Element.prototype, "animate");
+    });
+
+    test("openGameHome は、プレイ画面の盤面の位置を控え、移った先のゲームのホームの盤面をそこから収められるようにすること", () => {
+      act(() => result.current.navigation.openGameHome("problem-1"));
+      settlePlayBoard(preview);
+
+      expect(animate).toHaveBeenCalledTimes(1);
+    });
+  });
+
   test("startNewProblem で難易度のプレイ画面を開き、別の問題の ID を URL に載せること", () => {
     act(() => result.current.navigation.startNewProblem("3", "problem-1"));
 
@@ -106,7 +155,7 @@ describe("useGameNavigation", () => {
   });
 });
 
-describe("openRecordProblemPlay", () => {
+describe("openProblemPlay", () => {
   let result: { current: ReturnType<typeof useNavigationWithLocation> };
 
   beforeEach(() => {
@@ -115,9 +164,9 @@ describe("openRecordProblemPlay", () => {
     }));
   });
 
-  test("記録の難易度のプレイ画面を、問題 ID を URL に載せて開くこと", () => {
+  test("渡した難易度のプレイ画面を、問題 ID を URL に載せて開くこと", () => {
     act(() =>
-      openRecordProblemPlay(result.current.navigate, {
+      openProblemPlay(result.current.navigate, {
         playPath: game.playPath,
         difficulty: "2",
         problemId: "problem-1",

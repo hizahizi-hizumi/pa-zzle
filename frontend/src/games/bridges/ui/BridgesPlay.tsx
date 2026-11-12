@@ -99,7 +99,10 @@ export function BridgesPlay({
       {/* 盤面の絵は外周の島の周りに海の余白を持ち、画面端から始まるタッチ（ブラウザの戻る操作）から島を離すので、左右の余白は狭くてよい。 */}
       <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-2 [container-type:size] sm:px-6">
         {/* マスを正方形に保ち、画面に収まる最大の正方形を上下の中央に置く。 */}
-        <div className="relative aspect-square w-[min(100cqw,100cqh)]">
+        <div
+          data-play-entry-board=""
+          className="relative aspect-square w-[min(100cqw,100cqh)]"
+        >
           <BridgesBoard
             board={board}
             bridges={bridges}
