@@ -3,6 +3,12 @@ import { cn } from "@/lib/utils";
 /** 覆いから抜く所に置く要素の印。`TutorialFocusScrim` がこの印の付いた要素を探して、その形に覆いを抜く。 */
 export const TUTORIAL_SPOTLIGHT_ATTRIBUTE = "data-tutorial-spotlight";
 
+/**
+ * 覆う範囲にする要素の印。盤面部品が、抜く所を受け取っている間だけ盤面の要素に付ける。
+ * `TutorialFocusScrim` がこの印の付いた要素の形だけを覆う。
+ */
+export const TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE = "data-tutorial-spotlight-area";
+
 type TutorialSpotlightProps = {
   active: boolean;
   /**
@@ -14,7 +20,7 @@ type TutorialSpotlightProps = {
 
 /**
  * 次に押す所と、その手を決める物（決め手）に置き、元の明るさで見せる。覆いは別の要素に描くので、この要素は見えない。位置・大きさ・角丸だけを `TutorialFocusScrim` が読む。
- * 覆いは `TutorialOverlay` が手を引いている間（`guiding`）だけ描くので、盤面部品は抜く所をこの部品で示すだけにする。
+ * 覆いは `TutorialOverlay` が描くので、盤面部品は抜く所をこの部品で示すだけにする。
  *
  * ```tsx
  * <button type="button" className="relative rounded-md">

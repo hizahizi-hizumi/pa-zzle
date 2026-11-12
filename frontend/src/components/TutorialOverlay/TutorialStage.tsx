@@ -32,6 +32,11 @@ export type TutorialStageProps = {
   recap: readonly string[];
   message: TutorialMessage;
   phase: TutorialPhase;
+  /**
+   * 盤面が `TutorialSpotlight` で決め手を示している間、盤面の中だけを薄く覆い、示した所だけを元の明るさで見せる。
+   * 押す所のほかに、その手を決める物（決め手）を盤面で見せたいゲームだけが渡す。渡さなければ覆わない。
+   */
+  spotlighting?: boolean;
   /** 入口から完成までの進み具合（0〜1）。 */
   progress: number;
   /** 入口から完成までの段の数。進み具合を「済んだ段 / 段の数」でも示す。 */
@@ -73,6 +78,7 @@ export function TutorialStage({
   recap,
   message,
   phase,
+  spotlighting = false,
   progress,
   progressStepCount,
   finish,
@@ -115,6 +121,7 @@ export function TutorialStage({
             recap={recap}
             message={message}
             phase={phase}
+            spotlighting={spotlighting}
             progress={progress}
             progressStepCount={progressStepCount}
             finish={finish}
