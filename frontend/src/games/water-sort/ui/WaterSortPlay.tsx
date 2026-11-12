@@ -17,6 +17,7 @@ import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { WaterSortResultScreen } from "@/games/water-sort/ui/result/WaterSortResultScreen";
 import { useWaterSortSoundEffects } from "@/games/water-sort/ui/use-water-sort-sound-effects";
+import { WaterSortGround } from "@/games/water-sort/ui/WaterSortGround";
 import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
@@ -69,7 +70,7 @@ export function WaterSortPlay({
       progress={progress}
       result={result}
       title={WATER_SORT_DISPLAY_NAME}
-      background={<div className="size-full bg-[#e5eef0] dark:bg-[#1c292d]" />}
+      background={<WaterSortGround />}
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },

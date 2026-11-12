@@ -13,11 +13,11 @@ import type { IceFloorMazeBoard as IceFloorMazeBoardState } from "@/games/ice-fl
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
 import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
+import { IceFloorMazeGround } from "@/games/ice-floor-maze/ui/IceFloorMazeGround";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
 import { IceFloorMazeTrappedNotice } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeTrappedNotice";
 import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazeSwipeArea";
 import { IceFloorMazeTutorial } from "@/games/ice-floor-maze/ui/IceFloorMazeTutorial";
-import { iceFloorMazeTone } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 import { IceFloorMazeResultScreen } from "@/games/ice-floor-maze/ui/result/IceFloorMazeResultScreen";
 import { useIceFloorMazeSoundEffects } from "@/games/ice-floor-maze/ui/use-ice-floor-maze-sound-effects";
 import type {
@@ -130,13 +130,7 @@ export function IceFloorMazePlay({
       progress={progress}
       result={result}
       title={ICE_FLOOR_MAZE_DISPLAY_NAME}
-      // 盤の周囲は湖を囲む雪原。模様は置かず、盤面を背景から浮いた板に見せない。
-      background={
-        <div
-          className="size-full"
-          style={{ backgroundColor: iceFloorMazeTone.snowfield }}
-        />
-      }
+      background={<IceFloorMazeGround />}
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },

@@ -21,6 +21,7 @@ import type {
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 import { TakuzuResultScreen } from "@/games/takuzu/ui/result/TakuzuResultScreen";
+import { TakuzuGround } from "@/games/takuzu/ui/TakuzuGround";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
 import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
 import { useTakuzuSoundEffects } from "@/games/takuzu/ui/use-takuzu-sound-effects";
@@ -70,7 +71,7 @@ export function TakuzuPlay({
       progress={progress}
       result={result}
       title={TAKUZU_DISPLAY_NAME}
-      background={<div className="size-full bg-[#e4e8ed] dark:bg-[#22272d]" />}
+      background={<TakuzuGround />}
       metrics={[
         { type: "count", label: "置き直し", count: correctionCount },
         { type: "elapsed-time", elapsedMs },

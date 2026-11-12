@@ -1,9 +1,7 @@
-import { type MouseEvent, useLayoutEffect, useRef } from "react";
-
-import { DifficultyLevelPieces } from "@/components/DifficultyLevelPieces";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
-import { prefersReducedMotion } from "@/lib/motion";
+import { ZukanLevelMosaic } from "@/zukan/ui/GameHomeScreen/GameLevelCards/ZukanLevelMosaic";
+import type { ZukanProblemStatus } from "@/zukan/zukan-collection";
 
 /** カードに示す、1つのレベルの台紙の進み具合。 */
 export type GameLevelCard = {
@@ -11,6 +9,10 @@ export type GameLevelCard = {
   problemCount: number;
   /** 今示す解いた数。変化をまだ見せていないレベルでは前回の数を示す。 */
   solvedCount: number;
+  /** そのレベルの全問の、今示す状態。番号の順。変化をまだ見せていない問題は前回の状態を示す。 */
+  statuses: readonly ZukanProblemStatus[];
+  /** そのレベルの台紙の列の数。縮図を台紙と同じ並びで描くのに使う。 */
+  columnCount: number;
   /** 前回図鑑を見たときからの変化を、まだ見せていないか。 */
   hasUnseenChanges: boolean;
 };
@@ -18,85 +20,51 @@ export type GameLevelCard = {
 type GameLevelCardsProps = {
   /** 問題のある難易度のカード。難易度の昇順。 */
   levels: readonly GameLevelCard[];
-  /** 開いているレベル。 */
-  openDifficulty: DifficultyLevel;
 };
-
-function scrollCardIntoView(card: Element, behavior: ScrollBehavior) {
-  card.scrollIntoView({ behavior, block: "nearest", inline: "nearest" });
-}
 
 /**
  * ゲームのホームで、遊ぶレベルを選び、その台紙を開くカード。
- * 各カードに、5段階の中の位置、レベルの名前、解いた数を示し、切り替えずに全レベルを比べられるようにする。
- * 台紙を広く見せるよう、カードは5段階の位置の帯と、名前と解いた数の行の2行に収める。スマートフォンでも3枚が並んで見える幅にし、1行に並べ、収まらない幅では横に送る。
+ * 各カードに、そのレベルの台紙を同じ並びのまま縮めた縮図、レベルの名前、解いた数を示し、切り替えずに全レベルの跡を比べられるようにする。
+ * どの画面幅でも全レベルを1行に等分して並べ、横に送らせない。台紙を広く見せるよう、カードは縮図と、名前と解いた数だけに収める。
+ * 名前と解いた数は、狭いカードでは2行に、収まる幅では1行に並べる。全問の数は、ごく狭い画面では省く。
  * 矢印キーはカードの間でフォーカスを動かすだけにし、選ぶのは押したときと Enter・Space にする。通り過ぎたレベルの台紙を開いて描き直したり、変化を見せ終えたりしない。
- * 開いているカードが送った先にあれば、見える位置へ送る。開くレベルはこの画面を描いたあとに決まり直すことがあるので、利用者がカードを触るまでは決まり直すたびに送る。
- * 端で切れたカードを押したときも、押したカードを見える位置へ送る。
  * まだ見せていない変化のあるレベルには、カードの右上に小さな点を付ける。
  */
-export function GameLevelCards({
-  levels,
-  openDifficulty,
-}: GameLevelCardsProps) {
-  const listRef = useRef<HTMLDivElement>(null);
-  const isTouchedRef = useRef(false);
-
-  useLayoutEffect(() => {
-    const openCard = listRef.current?.querySelector(
-      `[data-difficulty="${openDifficulty}"]`,
-    );
-    if (!openCard || isTouchedRef.current) {
-      return;
-    }
-    scrollCardIntoView(openCard, "instant");
-  }, [openDifficulty]);
-
-  function markTouched() {
-    isTouchedRef.current = true;
-  }
-
-  function handleCardClick(event: MouseEvent<HTMLButtonElement>) {
-    scrollCardIntoView(
-      event.currentTarget,
-      prefersReducedMotion() ? "instant" : "smooth",
-    );
-  }
-
+export function GameLevelCards({ levels }: GameLevelCardsProps) {
   return (
-    <TabsList
-      ref={listRef}
-      layout="card"
-      aria-label="レベル"
-      onPointerDown={markTouched}
-      onWheel={markTouched}
-      onKeyDown={markTouched}
-    >
+    <TabsList layout="card" aria-label="レベル">
       {levels.map(
-        ({ difficulty, problemCount, solvedCount, hasUnseenChanges }) => (
+        ({
+          difficulty,
+          problemCount,
+          solvedCount,
+          statuses,
+          columnCount,
+          hasUnseenChanges,
+        }) => (
           <TabsTrigger
             key={difficulty}
             value={difficulty}
             data-difficulty={difficulty}
-            onClick={handleCardClick}
           >
-            <span className="flex items-start justify-between gap-1">
-              <DifficultyLevelPieces level={difficulty} />
+            <span className="relative block">
+              <ZukanLevelMosaic statuses={statuses} columnCount={columnCount} />
               {hasUnseenChanges && (
                 <span
                   aria-hidden="true"
                   data-unseen-change-mark=""
-                  className="size-1.5 shrink-0 rounded-full bg-foreground"
+                  className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-foreground ring-2 ring-background"
                 />
               )}
             </span>
-            <span className="flex items-baseline justify-between gap-1 text-meta">
+            <span className="flex flex-col text-meta whitespace-nowrap md:flex-row md:items-baseline md:justify-between md:gap-1">
               <span className="font-medium">
                 {getDifficultyLabel(difficulty)}
               </span>
               <span className="font-normal text-muted-foreground tabular-nums">
                 <span aria-hidden="true">
-                  {solvedCount} / {problemCount}
+                  {solvedCount}
+                  <span className="max-[359px]:hidden">/{problemCount}</span>
                 </span>
                 <span className="sr-only">
                   、{problemCount}問中{solvedCount}問を解いた

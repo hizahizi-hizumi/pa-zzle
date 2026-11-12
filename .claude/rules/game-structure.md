@@ -2,6 +2,7 @@
 paths:
   - "frontend/src/games/**/*.{ts,tsx}"
   - "frontend/src/game-catalog/**/*.{ts,tsx}"
+  - "frontend/src/views/*HomeView.tsx"
 ---
 
 # ゲーム実装の標準構造
@@ -31,6 +32,7 @@ frontend/src/games/
     ├── tutorial/
     │   └── tutorial.ts
     ├── ui/
+    │   ├── <Game>Ground.tsx
     │   └── result/
     │       └── <Game>ResultScreen.tsx
     ├── assets/
@@ -129,7 +131,9 @@ frontend/src/games/
 ## プレイ画面と結果画面の共通契約
 
 - `ui/<Game>Play.tsx` の props は `games/play.ts` の `GamePlayScreenProps<Difficulty, Result>` に、盤面を戻せるなら `RestartableGamePlayScreenProps`、待ったがあるなら `UndoableGamePlayScreenProps` と、ゲーム固有の値・操作を足して作る。`ui/result/<Game>ResultScreen.tsx` の props は `GamePlayResultScreenProps<Difficulty, Result>` で作る。難易度は値で受け取り、表示名は UI が決める。
-- プレイ画面は `components/GamePlayFrame.tsx` にゲーム固有の地（`background`）、盤面（`main`）、ゲーム固有の操作（`footer`）を渡して作り、外枠・ブランドの帯・見出し・遊び方とチュートリアルの開閉・結果画面への切り替えを各ゲームで書かない。結果画面は `progress` が `result` で評価があるときだけ出る。
+- ゲーム固有の地は `ui/<Game>Ground.tsx` の `<Game>Ground` に置く。
+- ゲームのホームへは `views/<Game>HomeView.tsx` から `GameHomeScreen` の `ground` で `<Game>Ground` を渡す。
+- プレイ画面は `components/GamePlayFrame.tsx` にゲーム固有の地（`background` に `<Game>Ground`）、盤面（`main`）、ゲーム固有の操作（`footer`）を渡して作り、外枠・ブランドの帯・見出し・遊び方とチュートリアルの開閉・結果画面への切り替えを各ゲームで書かない。結果画面は `progress` が `result` で評価があるときだけ出る。
 - 見出しの計測値は `PlayHeaderMetric` の回数（`count`）と経過時間（`elapsed-time`）で渡し、書式・行の分け方は共通部品に任せる。プレイで変わらない問題そのものの条件（例: 詰将棋の「5手詰」）は、数え上げる回数と混同しないよう `problem-fact` の文言で渡す。回数の桁の確保は共通部品の既定に任せ、変えるときは `reservedDigits` で渡す。
 - 盤面は `progress` が `playing` の間だけ操作を受け付け、受け付けないことを `interactionDisabled` で受け取る。
 - 操作の callback props は、タップ・キーボードなどの入力手段ではなく操作の意味で名付ける。
@@ -230,7 +234,7 @@ frontend/src/game-catalog/
 - `record-result-location-state.ts`: 結果画面へ渡す location state（記録の保存結果）の作成と、形を確かめた読み取りを置く。
 - `record-result-navigation.ts`: クリアして記録を保存できたプレイを、記録の結果画面 `/puzzles/<game>/result/<記録ID>` へ履歴を置き換えて移す共通フックを置く。
 - `result-reward-sound.ts`: プレイを終えて結果を受け取る瞬間に、評価段階に応じた報酬の音を鳴らす共通フックを置く。記録から開いた結果画面では鳴らさない。
-- `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、ホームで選んでいるときに見せる色と動きのあるピクトグラム（任意。`games/<game>/assets/pictogram-showcase.svg`）、ゲームのホームのパス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面と描けるかを持つ。遊び直し先は記録の一覧の行ごとに求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。
+- `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、ホームで選んでいるときとゲームのホームの見出しに見せる色と動きのあるピクトグラム（任意。`games/<game>/assets/pictogram-showcase.svg`）、ゲームのホームのパス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面と描けるかを持つ。遊び直し先は記録の一覧の行ごとに求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。
 - `Playable<Game>.tsx`: URL の問題 ID で最初の問題を引いて `play/` を始め、`usePlayableGame` に完了記録・離脱の進み具合・診断スナップショットの作り方を渡し、`ui/<Game>Play.tsx` と診断ダイアログを描く。記録を保存できたクリアは記録の結果画面へ移し、その場の結果画面は記録の保存に失敗したプレイでだけ出す。
 - `Recorded<Game>Result.tsx`: `useRecordedGameResult` に診断スナップショットの作り方を渡し、記録から作り直した結果を `ui/result/<Game>ResultScreen.tsx` と診断ダイアログで描く。
 

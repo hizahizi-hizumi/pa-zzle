@@ -87,7 +87,8 @@ export function GamePlayFrame<Result>({
         {background ?? <div className="size-full bg-background" />}
       </div>
       <BrandIdentityHeader surface="game" pinned />
-      <div className="flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+      {/* ゲームのホームと同じ地の上に、見出しと盤面を短く浮かび上がらせて入る。地は動かさない。 */}
+      <div className="flex min-h-0 flex-1 animate-in flex-col pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] duration-(--duration-slow) ease-enter fade-in motion-reduce:animate-none">
         <PlayHeader
           title={title}
           metrics={metrics}

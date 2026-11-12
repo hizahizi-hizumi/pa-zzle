@@ -3,11 +3,12 @@ import {
   cleanup,
   fireEvent,
   render,
+  renderHook,
   screen,
   within,
 } from "@testing-library/react";
-import { StrictMode } from "react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { type ReactNode, StrictMode } from "react";
+import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
 import { GameCatalogProvider } from "@/components/GameCatalogContext";
 import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
@@ -22,6 +23,11 @@ import {
 import { listNanpurePoolProblemIds } from "@/games/nanpure/problem/problem-pool";
 import { selectNanpureProblemById } from "@/games/nanpure/problem-selection";
 import { createProblemId } from "@/games/problem-id";
+import {
+  randomProblemSettings,
+  _private as randomProblemSettingsPrivate,
+} from "@/lib/random-problem-settings";
+import { randomProblemUnavailable } from "@/lib/random-problem-unavailable";
 import {
   abandonPlayAttempt,
   startPlayAttempt,
@@ -77,6 +83,8 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  randomProblemSettingsPrivate.reset();
+  randomProblemUnavailable.dismiss();
   Reflect.deleteProperty(Element.prototype, "scrollIntoView");
   Reflect.deleteProperty(window, "ResizeObserver");
 });
@@ -110,6 +118,7 @@ function GameHome({ game }: GameHomeProps) {
     <GameHomeScreen
       key={game.id}
       {...screenProps}
+      ground={null}
       renderHowToPlayDialog={() => null}
     />
   );
@@ -572,6 +581,86 @@ describe("useGameHome", () => {
       fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
 
       expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/1");
+    });
+  });
+  describe("pickRandomProblemId", () => {
+    function renderGameHome() {
+      return renderHook(() => useGameHome(nanpureGame), {
+        wrapper: MemoryRouter,
+      }).result;
+    }
+
+    describe("出題条件に合う問題がある場合", () => {
+      let result: ReturnType<typeof renderGameHome>;
+
+      beforeEach(() => {
+        result = renderGameHome();
+      });
+
+      test("そのレベルの問題集から問題 ID を返し、知らせを出さないこと", () => {
+        const problemId = result.current.screenProps.pickRandomProblemId("3");
+
+        expect(nanpureGame.listPoolProblemIds("3")).toContain(problemId);
+        expect(randomProblemUnavailable.getSnapshot()).toBeNull();
+      });
+    });
+
+    describe("出題条件に合う問題が無い場合", () => {
+      let result: ReturnType<typeof renderGameHome>;
+
+      beforeEach(() => {
+        randomProblemSettings.setGame("nanpure", ["perfect"]);
+        result = renderGameHome();
+      });
+
+      test("条件に合う問題が無いことを、全問から遊ぶ操作を添えて知らせ、null を返すこと", () => {
+        const problemId = result.current.screenProps.pickRandomProblemId("3");
+        const notice = randomProblemUnavailable.getSnapshot();
+
+        expect(problemId).toBeNull();
+        expect(notice).toEqual({
+          gameId: "nanpure",
+          gameName: "ナンプレ",
+          onPlayAny: expect.any(Function),
+        });
+      });
+    });
+  });
+
+  describe("出題条件に合う問題が無い場合", () => {
+    let router: ReturnType<typeof renderAt>;
+
+    function pressPlayRandom() {
+      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+    }
+
+    beforeEach(() => {
+      randomProblemSettings.setGame("nanpure", ["perfect"]);
+      router = renderAt("/puzzles/nanpure");
+    });
+
+    test("ランダムに遊ぶを押しても、プレイ画面を開かないこと", () => {
+      pressPlayRandom();
+      const { pathname } = router.state.location;
+
+      expect(pathname).toBe("/puzzles/nanpure");
+    });
+
+    describe("ランダムに遊ぶを押して、条件に合う問題が無いと知らされた場合", () => {
+      beforeEach(() => {
+        pressPlayRandom();
+      });
+
+      test("知らせから今回だけ全問から遊ぶと、開いているレベルの問題でプレイ画面を開くこと", async () => {
+        await act(async () => {
+          randomProblemUnavailable.getSnapshot()?.onPlayAny?.();
+        });
+        const { pathname, search } = router.state.location;
+        const problemId = new URLSearchParams(search).get("problem");
+
+        expect(pathname).toBe("/puzzles/nanpure/play/1");
+        expect(nanpureGame.listPoolProblemIds("1")).toContain(problemId);
+      });
     });
   });
 });

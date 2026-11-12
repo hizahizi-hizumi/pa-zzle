@@ -17,7 +17,7 @@ type AppRouter = ReturnType<typeof createMemoryRouter>;
 // jsdom はレイアウトを計算しないため、見つからない画面の盤面を描ける寸法を返させる。
 const area = { width: 390, height: 796 };
 const notFoundHeading = "ページが見つかりません";
-const viewportClassName = "h-[calc(100dvh-3.75rem-env(safe-area-inset-top))]";
+const viewportClassName = "h-[calc(100dvh-2.5rem-env(safe-area-inset-top))]";
 const containedClassName = "max-w-5xl";
 
 let router: AppRouter;

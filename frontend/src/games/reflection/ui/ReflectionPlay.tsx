@@ -24,6 +24,7 @@ import type {
 import { listReflectionClueMatches } from "@/games/reflection/puzzle/rules";
 import type { ReflectionSelection } from "@/games/reflection/session/session";
 import { ReflectionBoard } from "@/games/reflection/ui/board/ReflectionBoard";
+import { ReflectionGround } from "@/games/reflection/ui/ReflectionGround";
 import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowToPlayDialog";
 import {
   listReflectionStockPieces,
@@ -140,7 +141,7 @@ export function ReflectionPlay({
       progress={progress}
       result={result}
       title={REFLECTION_DISPLAY_NAME}
-      background={<div className="size-full bg-[#eae7ef] dark:bg-[#272431]" />}
+      background={<ReflectionGround />}
       // 置き直しは点に入らないので、プレイ中は時間だけを示す。置き直しの回数は結果と記録に出す。
       metrics={[{ type: "elapsed-time", elapsedMs }]}
       canRestart={canRestart}
