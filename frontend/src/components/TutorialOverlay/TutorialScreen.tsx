@@ -546,7 +546,7 @@ export function TutorialScreen({
     stageView.captionScene === "goal"
       ? intro.goalCaption
       : stageView.captionScene === "start"
-        ? intro.startCaption
+        ? (intro.startCaption ?? null)
         : null;
   return (
     <div

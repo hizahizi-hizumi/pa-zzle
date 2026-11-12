@@ -1,21 +1,21 @@
 /**
  * チュートリアルの、ゲームに依存しない契約。
- * 手順の進行、手に入れたルール、盤面の上に出す一言を扱い、盤面と判定はゲームが持つ。
+ * 手順の進行、手に入れたルール、手順ごとの一言を扱い、盤面と判定はゲームが持つ。
  * - `RuleId`: ゲームのルールの識別子。
  * - `BoardState`: 盤面を解いている途中の状態。
  * - `Action`: 利用者の1回の操作。
  */
 
 /**
- * 盤面の上に出す一言。`detail` は見出しを補う短い一文。
- * 一言と導入の文の改行（`\n`）は、狭い画面でも意味の切れ目で折り返すために置き、そこで改行して見せる。
+ * 手順ごとに出す一言。`detail` は見出しを補う短い一文。
+ * 一言と導入の文は、`\n` の所で改行して見せ、それ以外は画面が文節の切れ目で折り返す。
  */
 export type TutorialMessage = {
   headline: string;
   detail: string | null;
 };
 
-/** 手に入れると、チュートリアルの上部に並ぶルール。 */
+/** 手順で手に入れるルール。`label` は、そのルールを言う一文。 */
 export type TutorialRule<RuleId extends string> = {
   id: RuleId;
   label: string;
@@ -63,12 +63,12 @@ export type TutorialMoveOutcome =
  * 操作より先に見せる、パズルの入口。
  * - `purpose`: 何をするパズルかの一文。名前の下に出す。
  * - `goalCaption`: 解き終えた盤面に添える一言。
- * - `startCaption`: 始めの盤面に添える一言。
+ * - `startCaption`: 始めの盤面に添える一言。`TutorialOverlay` の `scrim` でだけ使う。
  */
 export type TutorialIntro = {
   purpose: string;
   goalCaption: string;
-  startCaption: string;
+  startCaption?: string;
 };
 
 /**
@@ -85,7 +85,7 @@ export type Tutorial<
   Action,
 > = {
   intro: TutorialIntro;
-  /** 上部に並べる順。 */
+  /** ルールの並び。解き終えたときの振り返りにこの並びを使うゲームは、この順に見せる。 */
   rules: readonly TutorialRule<RuleId>[];
   /** 手を引く順。最後の手順を終えると手を離す。 */
   steps: readonly Step[];
