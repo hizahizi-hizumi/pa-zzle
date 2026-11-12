@@ -64,6 +64,22 @@ describe("playClearTrace", () => {
     expect(onFinished).not.toHaveBeenCalled();
   });
 
+  test("完成後は光が一本の線を通過し、線の太さが変わらないこと", () => {
+    const trace = figure.querySelector(
+      `[${hitofudePuzzleFigureParts.clearTrace}]`,
+    );
+    const pathTrack = figure.querySelector("[data-continuous-track]");
+    expect(trace?.getAttribute("stroke-width")).toBe(
+      pathTrack?.getAttribute("stroke-width"),
+    );
+    playClearTrace(figure, path.length, onFinished);
+    expect(animatedElements).toEqual([
+      trace,
+      figure.querySelector(`[${hitofudePuzzleFigureParts.endMark}]`),
+    ]);
+    expect(figure.querySelectorAll("[data-path-node]")).toHaveLength(0);
+  });
+
   test("なぞり終えた後、完成した道を見せる間を置いてから一度だけ完了を知らせること", async () => {
     playClearTrace(figure, path.length, onFinished);
     finishTrace();
