@@ -55,6 +55,7 @@ export function PlayableWaterSort({
         sourceBottleIndex={play.sourceBottleIndex}
         operation={play.operation}
         onSelectBottle={play.selectBottle}
+        onPourBottle={play.pourBottle}
         onUndo={play.undo}
         canRestart={play.canRestart}
         onRestart={play.restart}

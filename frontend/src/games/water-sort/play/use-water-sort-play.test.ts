@@ -96,6 +96,40 @@ describe("useWaterSortPlay", () => {
     expect(result.current.operation?.type).toBe("poured");
   });
 
+  test("ドラッグで指定した注ぎ元と注ぎ先へ同じルールの注水を適用すること", () => {
+    const { result } = renderHook(() => useWaterSortPlay("1"));
+    const move = listWaterSortLegalMoves(result.current.state)[0];
+    if (!move) throw new Error("合法な注水手がありません");
+    const expected = applyWaterSortMove(result.current.state, move);
+
+    act(() =>
+      result.current.pourBottle(
+        move.sourceBottleIndex,
+        move.destinationBottleIndex,
+      ),
+    );
+
+    expect(result.current.state).toEqual(expected);
+    expect(result.current.moveCount).toBe(1);
+    expect(result.current.sourceBottleIndex).toBeNull();
+  });
+
+  test("ドラッグで不成立の注水を指定しても盤面と手数を変えないこと", () => {
+    const { result } = renderHook(() => useWaterSortPlay("1"));
+    const initialState = result.current.state;
+    const impossible = { sourceBottleIndex: 0, destinationBottleIndex: 1 };
+
+    act(() =>
+      result.current.pourBottle(
+        impossible.sourceBottleIndex,
+        impossible.destinationBottleIndex,
+      ),
+    );
+
+    expect(result.current.state).toEqual(initialState);
+    expect(result.current.moveCount).toBe(0);
+  });
+
   test("パズルのルールが拒否する注ぎ先では盤面と手数を変更しないこと", () => {
     const { result } = renderHook(() => useWaterSortPlay("1"));
     const legalMove = listWaterSortLegalMoves(result.current.state)[0];
