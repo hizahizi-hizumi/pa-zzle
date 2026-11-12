@@ -46,7 +46,8 @@ type ZukanProblemDetailProps = {
 /** 詳細を台紙の下端に重ねて出す画面幅。クラスの `lg:` で台紙の横へ移すのと同じ境目にする。 */
 const OVERLAY_MEDIA_QUERY = "(width < 64rem)";
 
-function isOverlayingSheet(): boolean {
+/** 今の画面幅で、詳細を台紙の下端に重ねて出すか。 */
+export function isZukanDetailOverlayingSheet(): boolean {
   return window.matchMedia?.(OVERLAY_MEDIA_QUERY).matches ?? false;
 }
 
@@ -61,7 +62,7 @@ function limitOverlayHeight(
   element: HTMLElement,
   coverLimit: HTMLElement | null,
 ) {
-  if (!isOverlayingSheet() || coverLimit === null) {
+  if (!isZukanDetailOverlayingSheet() || coverLimit === null) {
     element.style.maxHeight = "";
     element.style.minHeight = "";
     return;
@@ -193,7 +194,7 @@ export function ZukanProblemDetail({
       return;
     }
     function reportHeight(height: number) {
-      reportOverlayHeight(isOverlayingSheet() ? height : 0);
+      reportOverlayHeight(isZukanDetailOverlayingSheet() ? height : 0);
     }
     function limitHeight() {
       if (element !== null) {
@@ -229,7 +230,7 @@ export function ZukanProblemDetail({
       ref={ref}
       aria-label="選んだ問題"
       onAnimationEnd={handleAnimationEnd}
-      className={`absolute -inset-x-4 bottom-0 z-10 overflow-y-auto overscroll-contain border-t-(length:--border-width-normal) bg-background px-4 pt-3 pb-[max(--spacing(3),env(safe-area-inset-bottom))] duration-(--duration-normal) motion-reduce:animate-none sm:-inset-x-6 sm:px-6 lg:static lg:min-h-0 lg:animate-none lg:self-start lg:overflow-visible lg:rounded-lg lg:border-(length:--border-width-normal) lg:p-4 ${isClosing ? "pointer-events-none animate-out ease-exit fill-mode-forwards slide-out-to-bottom" : entersWithMotion ? "animate-in ease-enter slide-in-from-bottom" : ""}`}
+      className={`absolute -inset-x-4 bottom-0 z-10 overflow-y-auto overscroll-contain border-t-(length:--border-width-normal) bg-background px-4 pt-3 pb-[max(--spacing(3),env(safe-area-inset-bottom))] duration-(--duration-normal) motion-reduce:animate-none sm:-inset-x-6 sm:px-6 lg:static lg:col-start-2 lg:row-start-3 lg:mt-4 lg:min-h-0 lg:animate-none lg:self-start lg:overflow-visible lg:rounded-lg lg:border-0 lg:p-4 ${isClosing ? "pointer-events-none animate-out ease-exit fill-mode-forwards slide-out-to-bottom" : entersWithMotion ? "animate-in ease-enter slide-in-from-bottom" : ""}`}
     >
       <div className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 gap-y-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-y-4">
         <div className="min-w-0 lg:col-span-full">

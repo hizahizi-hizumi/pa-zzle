@@ -100,7 +100,7 @@ function ZukanProblemSquareContent({
         isFilteredOut ? `${description} 絞り込みの条件外` : description
       }
       aria-current={isSelected ? "true" : undefined}
-      className={`group relative size-6 scroll-m-3 outline-none sm:size-6.5 ${layerClassName} ${stampClassName} ${filteredOutClassName}`}
+      className={`group relative aspect-square w-full scroll-m-3 outline-none ${layerClassName} ${stampClassName} ${filteredOutClassName}`}
     >
       <svg
         aria-hidden="true"

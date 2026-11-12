@@ -8,25 +8,29 @@ type GameHomeHeadingProps = {
   gameId: string;
   gameTitle: string;
   pictogramSvg: string;
+  /** 色と動きのあるピクトグラム。無ければ `pictogramSvg` を見せる。 */
+  pictogramShowcaseSvg: string | undefined;
   /** 今示す解いた問題の数。各レベルのカードに示す数の合計。 */
   solvedCount: number;
   problemCount: number;
   /** ゲーム名の見出し。ほかの画面から移ってきたときにフォーカスを置くのに使う。 */
   titleRef: Ref<HTMLHeadingElement>;
-  /** 見出しの並び（解いた数と、層を開くメニューと、設定のボタン）の範囲。変化を見せている間に押されたときに、そのまま開くのに使う。 */
+  /** 層を開くメニューと設定のボタンの範囲。変化を見せている間に押されたときに、そのまま開くのに使う。 */
   actionsRef: Ref<HTMLDivElement>;
-  /** 解いた数に並べる、台紙を見る助けになる層を開くメニュー。 */
+  /** 台紙を見る助けになる層を開くメニュー。 */
   children: ReactNode;
 };
 
 /**
  * ゲームのホームの見出し。ホームへ戻るアイコンを頭に置いたピクトグラムとゲーム名に、解いた問題の数を全問の数と並べた静かな計数と、遊び方などの層を開くメニューと、アプリの設定を開くボタンを添える。
- * 台紙を広く見せるよう、PC では1行に並べ、それより狭い画面では計数とメニューと設定をゲーム名の下の1行に並べる。
+ * ピクトグラムは、ホームで選んでいたときと同じ、ゲーム固有色でそのゲームの遊びを見せる姿にする。持たないゲームは濃淡2色の姿を見せる。
+ * 台紙を広く見せるよう、どの画面幅でも1行に収める。計数はゲーム名の下に小さく添える。ごく狭い画面では、ゲーム名を折り返さずに収めるよう、ピクトグラムを省く。
  */
 export function GameHomeHeading({
   gameId,
   gameTitle,
   pictogramSvg,
+  pictogramShowcaseSvg,
   solvedCount,
   problemCount,
   titleRef,
@@ -34,27 +38,27 @@ export function GameHomeHeading({
   children,
 }: GameHomeHeadingProps) {
   return (
-    <header className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1 lg:grid-cols-[auto_auto_minmax(0,1fr)_auto] lg:gap-x-3">
-      {/* アイコンの線をゲーム名の下の計数と同じ左端にそろえるよう、ボタンの内側の余白の分だけ外へ出す。 */}
+    <header className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-x-1.5 min-[390px]:gap-x-2 lg:gap-x-3">
+      {/* アイコンの線を台紙の左端にそろえるよう、ボタンの内側の余白の分だけ外へ出す。 */}
       <span className="-ms-2 flex">
         <HomeBackLink iconOnly />
       </span>
-      <span className="size-8 lg:size-10">
-        <GamePictogram svg={pictogramSvg} />
+      <span className="size-10 max-[359px]:hidden min-[390px]:size-14 lg:size-20">
+        {pictogramShowcaseSvg === undefined ? (
+          <GamePictogram svg={pictogramSvg} />
+        ) : (
+          <GamePictogram svg={pictogramShowcaseSvg} motion="play" />
+        )}
       </span>
-      <h1
-        ref={titleRef}
-        tabIndex={-1}
-        className="text-screen-title outline-none"
-      >
-        {gameTitle}
-      </h1>
-      <div
-        ref={actionsRef}
-        className="col-span-3 flex flex-wrap items-center justify-between gap-x-1 lg:col-span-1 lg:gap-x-4"
-      >
-        {/* 狭い画面でも計数とメニューと設定を1行に収めるよう、計数を小さくする。 */}
-        <p className="text-meta whitespace-nowrap text-muted-foreground tabular-nums sm:text-supporting">
+      <div className="min-w-0">
+        <h1
+          ref={titleRef}
+          tabIndex={-1}
+          className="text-heading outline-none sm:text-screen-title"
+        >
+          {gameTitle}
+        </h1>
+        <p className="text-meta whitespace-nowrap tabular-nums">
           <span aria-hidden="true">
             解いた問題 {solvedCount} / {problemCount}
           </span>
@@ -62,11 +66,11 @@ export function GameHomeHeading({
             {problemCount}問中{solvedCount}問を解いた
           </span>
         </p>
-        {/* 設定のアイコンの線を台紙の右端にそろえるよう、ボタンの内側の余白の分だけ外へ出す。 */}
-        <div className="-me-2.25 flex items-center">
-          {children}
-          <SettingsButton initialGameId={gameId} />
-        </div>
+      </div>
+      {/* 設定のアイコンの線を台紙の右端にそろえるよう、ボタンの内側の余白の分だけ外へ出す。 */}
+      <div ref={actionsRef} className="-me-2.25 flex items-center">
+        {children}
+        <SettingsButton initialGameId={gameId} />
       </div>
     </header>
   );

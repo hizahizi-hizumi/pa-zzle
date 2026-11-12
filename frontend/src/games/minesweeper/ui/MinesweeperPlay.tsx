@@ -14,6 +14,7 @@ import {
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
+import { MinesweeperGround } from "@/games/minesweeper/ui/MinesweeperGround";
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
 import { MinesweeperTutorial } from "@/games/minesweeper/ui/MinesweeperTutorial";
 import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
@@ -78,7 +79,7 @@ export function MinesweeperPlay({
       progress={progress}
       result={result}
       title={MINESWEEPER_DISPLAY_NAME}
-      background={<div className="size-full bg-[#dfe6f0] dark:bg-[#1f2732]" />}
+      background={<MinesweeperGround />}
       metrics={[
         { type: "count", label: "地雷", count: mineCount },
         { type: "count", label: "旗", count: flagCount },

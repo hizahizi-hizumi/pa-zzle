@@ -10,10 +10,10 @@ import type { BridgesBoard as BridgesBoardState } from "@/games/bridges/puzzle/b
 import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import type { BridgesCycleDirection } from "@/games/bridges/puzzle/transitions";
+import { BridgesGround } from "@/games/bridges/ui/BridgesGround";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/BridgesStatusAnnouncement";
 import { useBridgesSoundEffects } from "@/games/bridges/ui/BridgesPlay/use-bridges-sound-effects";
-import { BridgesSea } from "@/games/bridges/ui/BridgesSea";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
 import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
 import { BridgesResultScreen } from "@/games/bridges/ui/result/BridgesResultScreen";
@@ -66,7 +66,7 @@ export function BridgesPlay({
       progress={progress}
       result={result}
       title={BRIDGES_DISPLAY_NAME}
-      background={<BridgesSea />}
+      background={<BridgesGround />}
       metrics={[
         { type: "elapsed-time", elapsedMs },
         { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },

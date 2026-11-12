@@ -12,6 +12,7 @@ import type {
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureClearAnimation";
 import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
+import { NanpureGround } from "@/games/nanpure/ui/NanpureGround";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
 import { NanpureTutorial } from "@/games/nanpure/ui/NanpureTutorial";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
@@ -91,7 +92,7 @@ export function NanpurePlay({
       progress={progress}
       result={result}
       title={NANPURE_DISPLAY_NAME}
-      background={<div className="size-full bg-[#eae3ef] dark:bg-[#28251f]" />}
+      background={<NanpureGround />}
       metrics={[
         { type: "count", label: "ミス", count: mistakeCount },
         { type: "elapsed-time", elapsedMs },

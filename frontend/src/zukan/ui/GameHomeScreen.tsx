@@ -9,8 +9,9 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { flushSync } from "react-dom";
 
-import { withPlayStartSound } from "@/components/app-decision-sound";
+import { playPlayStartSound } from "@/components/app-decision-sound";
 import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
 import type {
   ProblemFeature,
@@ -50,8 +51,14 @@ import {
 import { ZukanFilter } from "@/zukan/ui/GameHomeScreen/ZukanFilter";
 import { ZukanLegend } from "@/zukan/ui/GameHomeScreen/ZukanLegend";
 import { ZukanMatchedCount } from "@/zukan/ui/GameHomeScreen/ZukanMatchedCount";
-import { ZukanProblemDetail } from "@/zukan/ui/GameHomeScreen/ZukanProblemDetail";
-import { ZukanProblemSheet } from "@/zukan/ui/GameHomeScreen/ZukanProblemSheet";
+import {
+  isZukanDetailOverlayingSheet,
+  ZukanProblemDetail,
+} from "@/zukan/ui/GameHomeScreen/ZukanProblemDetail";
+import {
+  countZukanSheetColumns,
+  ZukanProblemSheet,
+} from "@/zukan/ui/GameHomeScreen/ZukanProblemSheet";
 import { ZukanProblemStatusCounts } from "@/zukan/ui/GameHomeScreen/ZukanProblemStatusCounts";
 import {
   countZukanNewlySolved,
@@ -61,12 +68,15 @@ import {
   type ZukanChangeStage,
 } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 import type { ZukanFilterFeatureAxis } from "@/zukan/ui/GameHomeScreen/zukan-filter-appearance";
+import { getZukanPiecePath } from "@/zukan/ui/GameHomeScreen/zukan-piece-shape";
+import { playZukanPlayEntry } from "@/zukan/ui/GameHomeScreen/zukan-play-entry";
 import { getZukanNumberDigitCount } from "@/zukan/ui/zukan-number-format";
 import {
   countZukanProblemsByStatus,
   type GameZukan,
   type ZukanDifficultySection,
   type ZukanProblem,
+  type ZukanProblemStatus,
 } from "@/zukan/zukan-collection";
 import {
   arrangeZukanProblems,
@@ -98,6 +108,10 @@ export type GameHomeScreenProps = {
   gameTitle: string;
   /** 見出しに添えるゲームのピクトグラム。 */
   pictogramSvg: string;
+  /** 見出しに見せる、色と動きのあるピクトグラム。無ければ `pictogramSvg` を見せる。 */
+  pictogramShowcaseSvg?: string;
+  /** ゲーム固有の地。プレイ画面と同じものを、画面全体の背景として敷く。 */
+  ground: ReactNode;
   zukan: GameZukan;
   /** 前回図鑑を見たときから、この図鑑までの変化。 */
   changes: ZukanChanges;
@@ -108,8 +122,11 @@ export type GameHomeScreenProps = {
   onLevelChangesShown: (difficulty: DifficultyLevel) => void;
   /** 開いたときに選んでおく問題。その問題のレベルを開いて詳細を出す。図鑑に無い問題なら選ばない。 */
   initialSelectedProblemId: ProblemId | null;
-  /** 開いているレベルの問題から、ゲームが選ぶ問題で新しいプレイを始める。 */
-  onPlayRandom: (difficulty: DifficultyLevel) => void;
+  /**
+   * レベルの問題から、新しいプレイを始める問題をゲームが選ぶ。出題条件に合う問題が無ければ、そのことを知らせて `null` を返す。
+   * 選んだ問題は `onPlayProblem` で始める。
+   */
+  pickRandomProblemId: (difficulty: DifficultyLevel) => ProblemId | null;
   /** 図鑑の問題を、新しいプレイとして始める。 */
   onPlayProblem: (problem: ZukanProblem) => void;
   /** 問題の、始めたときの盤面を見れば分かる特徴。詳細を出す1問についてだけ求める。求められなければ `null`。 */
@@ -177,6 +194,33 @@ function findSelectedProblem(
 }
 
 const noProblems: readonly ZukanProblem[] = [];
+
+const noStatuses: readonly ZukanProblemStatus[] = [];
+
+/** 台紙の全問の、今示す状態。まだ見せていない変化のある問題は、前回の状態を示す。 */
+function listShownStatuses(
+  problems: readonly ZukanProblem[],
+  pendingChanges: ReadonlyMap<ProblemId, ZukanProblemChange> | undefined,
+): ZukanProblemStatus[] {
+  return problems.map((problem) =>
+    getZukanShownProblemStatus(problem, pendingChanges?.get(problem.problemId)),
+  );
+}
+
+const INITIAL_SHEET_WIDTH_PX = 320;
+
+/**
+ * 高さが分かる前の詳細が台紙を覆う高さの見込み（px）。
+ * 重ねる詳細の最低の高さ（`ZukanProblemDetail` の 8rem）から、詳細が一緒に覆う「ランダムに遊ぶ」の行の高さ（`size="lg"` のボタンの 2.5rem と、上の余白の `mt-2`）を引いた値。
+ */
+const PENDING_DETAIL_COVER_HEIGHT_PX = 80;
+
+/** 「ランダムに遊ぶ」の行が、上の余白を含めて取っている高さ（px）。 */
+function getOuterHeight(row: HTMLElement | null): number {
+  return row === null
+    ? 0
+    : row.offsetHeight + Number.parseFloat(getComputedStyle(row).marginTop);
+}
 
 function findSquareElement(
   scroller: HTMLElement | null,
@@ -312,17 +356,19 @@ function listPendingChanges(
 
 /**
  * 1ゲームのホーム。遊ぶレベルを選んでプレイを始める操作と、そのゲームの図鑑を1画面にまとめる。
- * 上から、ホームへ戻る導線を頭に置いたゲーム名の見出し、レベルのカード、開いているレベルで遊ぶ「ランダムに遊ぶ」、開いているレベルの台紙を置く。
+ * 画面全体にプレイ画面と同じゲーム固有の地を敷き、その上に、ホームへ戻る導線を頭に置いたゲーム名の見出し、レベルのカード、開いているレベルの台紙を載せた盤、開いているレベルで遊ぶ「ランダムに遊ぶ」を置く。
+ * 「ランダムに遊ぶ」は、スマートフォンでは盤の下に、PC では盤の横の列に置き、選んだ問題の詳細と始める操作を同じ場所に出す。
  * 開いたときは、選んでおく問題があればそのレベル、無ければそのゲームで最後にクリアまたは離脱したレベル、そのゲームを遊んだことが無ければ最も低いレベルを開く。
  * 最も低いレベルのカードもほかのカードと同じ姿で示し、推奨として強調しない。
  * 開いたときは、ほかの画面から移ってきてもフォーカスを見失わないよう、選んでおいた問題のマス、無ければゲーム名の見出しへフォーカスを置く。
  *
- * 図鑑は、難易度ごとの全問をマス目の台紙にし、レベルのカードで1枚ずつ切り替えて見せる。カードには各レベルの解いた数を添え、全レベルの進み具合を切り替えずに分かるようにする。
- * 画面の高さに収め、台紙だけをスクロールさせる。台紙の上には、そのレベルの問題の数を評価段階ごとと挑戦中・未挑戦に分けて示す。
- * マスを選んでいる間だけ、その問題の詳細と始める操作を出す。スマートフォンでは台紙の高さを変えずに下端へ重ね、PC では台紙の幅を変えないよう横の列を空けておく。
+ * 図鑑は、難易度ごとの全問をマス目の台紙にし、レベルのカードで1枚ずつ切り替えて見せる。カードには各レベルの台紙を同じ並びのまま縮めた縮図と解いた数を添え、全レベルの跡を切り替えずに見比べられるようにする。
+ * 画面の高さに収め、台紙だけをスクロールさせる。そのレベルの問題の数を評価段階ごとと挑戦中・未挑戦に分け、スマートフォンでは台紙の上に、PC では横の列に示す。
+ * マスを選んでいる間だけ、その問題の詳細と始める操作を出す。スマートフォンでは台紙の高さを変えずに下端へ重ねて「ランダムに遊ぶ」も覆い、PC では横の列の状態ごとの数の下に置く。
  * 詳細は、閉じるボタン・選んでいるマスをもう一度押す・Escape で閉じる。解いた問題の数は全問の数と並べた静かな計数で示し、カードに示す数の合計と常に一致させる。
+ * 台紙の見えているところから問題を始めるときは、そのピースを台紙から抜いて画面の中央へ運びながらゲームのピクトグラムを浮かべ、ほかの表示を引いてからプレイへ移る。チュートリアルを終えて始めるときは、台紙が見えていないので、動かさずに始める。ゲームが選んだ問題は、台紙を送ってそのピースを見せてから抜く。動きの間に画面を押すと、すぐに始める。
  * 前回図鑑を見たときからの変化は、変化をまだ見せていないレベルのカードの点で示し、各レベルの台紙を初めて開いたときに一度だけ見せる。
- * 見せるときは、台紙と数を前回の姿で描き始め、変化したマスを1つずつ押していき、押してマスに着くたびに、そのレベルのカードの数・状態ごとの数・解いた数を今の数へ数え上げる。
+ * 見せるときは、台紙と数と縮図を前回の姿で描き始め、変化したマスを1つずつ押していき、押してマスに着くたびに、そのレベルのカードの数と縮図・状態ごとの数・解いた数を今の姿へ進める。
  * ページが見えるまでは見せ始めない。画面を押すかキーを押すと最後の姿まで飛ばす。
  * 選んでおいた問題があっても、そのレベルの変化を見せ終えるまで詳細を出さず、見せ終えてから出す。マスが詳細に隠れるなら、台紙を寄せる。
  * 絞り込みは開いているレベルの台紙にかけ、当たった問題を前に詰め、当たらなかった問題を薄くして後ろに並べる。条件は保存せず、開いたときは条件なしで始め、レベルを切り替えると外す。
@@ -336,10 +382,12 @@ export function GameHomeScreen({
   gameId,
   gameTitle,
   pictogramSvg,
+  pictogramShowcaseSvg,
   zukan,
   changes,
+  ground,
   initialSelectedProblemId,
-  onPlayRandom,
+  pickRandomProblemId,
   onPlayProblem,
   describeProblem,
   onLevelChangesShown,
@@ -376,7 +424,16 @@ export function GameHomeScreen({
     subscribeDocumentVisibility,
     readDocumentVisible,
   );
-  const [detailOverlayHeight, setDetailOverlayHeight] = useState(0);
+  // 詳細が台紙を覆う高さ。開いてから一度も詳細の高さが分かっていない間は `null`。
+  const [detailOverlayHeight, setDetailOverlayHeight] = useState<number | null>(
+    null,
+  );
+  const [isEnteringPlay, setIsEnteringPlay] = useState(false);
+  // 台紙を描いて幅が分かるまでは、狭い画面の台紙に近い幅で縮図を並べる。
+  const [sheetWidthPx, setSheetWidthPx] = useState(INITIAL_SHEET_WIDTH_PX);
+  const screenRef = useRef<HTMLDivElement>(null);
+  const cancelPlayEntryRef = useRef<(() => void) | null>(null);
+  const playRandomRowRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLElement>(null);
   const headerActionsRef = useRef<HTMLDivElement>(null);
@@ -496,6 +553,30 @@ export function GameHomeScreen({
   );
   const pendingChanges = listPendingChanges(openChanges, changeStages);
 
+  // 開いていないレベルの縮図は、押していく演出のたびに作り直さないよう、変わるときだけ求める。
+  const restingLevelStatuses = useMemo(
+    () =>
+      new Map(
+        zukan.sections.map(({ difficulty, problems }) => {
+          const unseenChanges =
+            revealStatuses.get(difficulty) === undefined &&
+            !prefersReducedMotion
+              ? changes.byDifficulty[difficulty]
+              : undefined;
+          return [
+            difficulty,
+            listShownStatuses(problems, unseenChanges),
+          ] as const;
+        }),
+      ),
+    [zukan, changes, revealStatuses, prefersReducedMotion],
+  );
+  // 押していく演出が進んだときだけ求め直し、マスを選ぶなどの描き直しでは縮図を作り直さない。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: まだ着いていない変化は、見せる変化と今の段階から決まる。
+  const openShownStatuses = useMemo(
+    () => listShownStatuses(openProblems, pendingChanges),
+    [openProblems, openChanges, changeStages],
+  );
   const levelCards: GameLevelCard[] = sections.map((section) => {
     const { difficulty, problems, solvedCount } = section;
     const levelChanges = changes.byDifficulty[difficulty];
@@ -514,6 +595,10 @@ export function GameHomeScreen({
       difficulty,
       problemCount: problems.length,
       solvedCount: solvedCount - unshownNewlySolved,
+      statuses: isOpen
+        ? openShownStatuses
+        : (restingLevelStatuses.get(difficulty) ?? noStatuses),
+      columnCount: countZukanSheetColumns(sheetWidthPx, problems.length),
       hasUnseenChanges,
     };
   });
@@ -534,6 +619,14 @@ export function GameHomeScreen({
     openChanges !== undefined && openRevealStatus === undefined
       ? null
       : (selected?.problem ?? null);
+  // 変化を見せ終えると選んでおいた問題の詳細が台紙の下端に重なるので、見せている間から、詳細が覆う高さを空けておく。
+  // 空けておかないと、詳細が出たときに、色が入ったばかりのマスごと台紙が動く。
+  // 詳細を描いてから高さが分かるまでの間も、空けた高さを一度も詰めないよう、見込みの高さを保つ。
+  const awaitsDetailHeight = selected !== null && detailOverlayHeight === null;
+  const sheetCoveredBottomHeight =
+    awaitsDetailHeight && isZukanDetailOverlayingSheet()
+      ? PENDING_DETAIL_COVER_HEIGHT_PX
+      : (detailOverlayHeight ?? 0);
   const numberDigitCount = getZukanNumberDigitCount(zukan.problemCount);
 
   const handleSelect = useCallback(
@@ -633,104 +726,187 @@ export function GameHomeScreen({
     }
   }
 
-  const handlePlayRandom = withPlayStartSound(() =>
-    onPlayRandom(openDifficulty),
-  );
+  // プレイへ入る動きの途中でほかの画面へ移ったら、離れた先でプレイを始めないよう、動きをやめる。
+  useEffect(() => {
+    return () => cancelPlayEntryRef.current?.();
+  }, []);
+
+  /**
+   * 台紙の問題を始める。そのピースを台紙から抜いてプレイへ入る動きを見せてから始め、動きの間に画面を押すと、すぐに始める。
+   * ゲームが選んだ問題は、台紙のどこから抜いたかが分かるよう、台紙を送ってから抜く。
+   */
+  function enterPlay(problem: ZukanProblem, spinsToPiece: boolean) {
+    const square = findSquareElement(
+      scrollerRef.current,
+      openProblems.indexOf(problem),
+    );
+    const scroller = scrollerRef.current;
+    const screen = screenRef.current;
+    if (square === null || scroller === null || screen === null) {
+      onPlayProblem(problem);
+      return;
+    }
+    setIsEnteringPlay(true);
+    cancelPlayEntryRef.current = playZukanPlayEntry({
+      square,
+      scroller,
+      screen,
+      piecePath: getZukanPiecePath(square.dataset.pieceShape ?? ""),
+      pictogramSvg,
+      spinsToPiece,
+      onEnter() {
+        onPlayProblem(problem);
+      },
+    }).cancel;
+  }
+
+  function findRandomProblem(): ZukanProblem | null {
+    const problemId = pickRandomProblemId(openDifficulty);
+    return (
+      openProblems.find((problem) => problem.problemId === problemId) ?? null
+    );
+  }
+
+  function handlePlayRandom() {
+    const problem = findRandomProblem();
+    if (problem === null) {
+      return;
+    }
+    playPlayStartSound();
+    // 条件に当たらなかった問題は後ろへ並べ替えて薄くしているので、抜くピースを今の姿で見せるよう、絞り込みを外す。
+    // 抜くピースの位置は外したあとの並びで測るので、外した台紙を先に描き切る。
+    flushSync(() => {
+      finishOpenLevelReveal();
+      setLevelFilter(noLevelFilter);
+      setSelectedKey(null);
+    });
+    enterPlay(problem, true);
+  }
+
+  function handlePlayProblem(problem: ZukanProblem) {
+    enterPlay(problem, false);
+  }
 
   // 特定のレベルを勧めないよう、チュートリアルを終えたら、「ランダムに遊ぶ」と同じく開いているレベルを始める。
   const tutorialPlayStart: TutorialPlayStart = {
     difficulty: openDifficulty,
-    onStart: handlePlayRandom,
+    onStart() {
+      const problem = findRandomProblem();
+      if (problem !== null) {
+        playPlayStartSound();
+        onPlayProblem(problem);
+      }
+    },
   };
 
+  function handleDetailOverlayHeightChange(height: number) {
+    // 重ねた詳細は「ランダムに遊ぶ」の行も覆うので、台紙を覆う高さからその行の分を除く。
+    setDetailOverlayHeight(
+      Math.max(height - getOuterHeight(playRandomRowRef.current), 0),
+    );
+  }
+
   return (
-    <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 pt-4 sm:px-6 sm:pt-6 lg:pb-8">
-      <GameHomeHeading
-        gameId={gameId}
-        gameTitle={gameTitle}
-        pictogramSvg={pictogramSvg}
-        solvedCount={shownSolvedCount}
-        problemCount={zukan.problemCount}
-        titleRef={titleRef}
-        actionsRef={headerActionsRef}
+    <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col">
+      <div
+        aria-hidden="true"
+        data-browser-surface="child"
+        className="pointer-events-none fixed inset-0 -z-10"
       >
-        <GameHomeMenu
-          buttonRef={menuButtonRef}
-          filterConditionCount={filterConditionCount}
-          hasTutorial={renderTutorial !== undefined}
-          onOpenLayer={handleOpenLayer}
+        {ground}
+      </div>
+      {/* 開いたときは、地の上に表示を短く浮かび上がらせる。プレイへ入る動きでは、地を残してこの中の表示だけを引く。動きの間は、動きを飛ばす操作だけを受け、画面の操作は受けない。 */}
+      <div
+        ref={screenRef}
+        inert={isEnteringPlay}
+        className="flex min-h-0 flex-1 animate-in flex-col px-4 pt-1 duration-(--duration-slow) ease-enter fade-in motion-reduce:animate-none sm:px-6 sm:pt-3 lg:pb-6"
+      >
+        <GameHomeHeading
+          gameId={gameId}
+          gameTitle={gameTitle}
+          pictogramSvg={pictogramSvg}
+          pictogramShowcaseSvg={pictogramShowcaseSvg}
+          solvedCount={shownSolvedCount}
+          problemCount={zukan.problemCount}
+          titleRef={titleRef}
+          actionsRef={headerActionsRef}
+        >
+          <GameHomeMenu
+            buttonRef={menuButtonRef}
+            filterConditionCount={filterConditionCount}
+            hasTutorial={renderTutorial !== undefined}
+            onOpenLayer={handleOpenLayer}
+          />
+        </GameHomeHeading>
+        {renderHowToPlayDialog({
+          open: openLayer === "howToPlay",
+          onClose() {
+            changeLayerOpen("howToPlay", false);
+          },
+        })}
+        {renderTutorial?.({
+          open: openLayer === "tutorial",
+          onClose() {
+            changeLayerOpen("tutorial", false);
+          },
+          playStart: tutorialPlayStart,
+        })}
+        <ZukanLegend
+          open={openLayer === "legend"}
+          onOpenChange={(open) => changeLayerOpen("legend", open)}
+          anchorRef={menuButtonRef}
         />
-      </GameHomeHeading>
-      {renderHowToPlayDialog({
-        open: openLayer === "howToPlay",
-        onClose() {
-          changeLayerOpen("howToPlay", false);
-        },
-      })}
-      {renderTutorial?.({
-        open: openLayer === "tutorial",
-        onClose() {
-          changeLayerOpen("tutorial", false);
-        },
-        playStart: tutorialPlayStart,
-      })}
-      <ZukanLegend
-        open={openLayer === "legend"}
-        onOpenChange={(open) => changeLayerOpen("legend", open)}
-        anchorRef={menuButtonRef}
-      />
-      <ZukanFilter
-        conditions={filterConditions}
-        matchedCount={arrangement.matchedCount}
-        featureAxes={listFilterFeatureAxes(levelFeatures, featureAxes)}
-        performanceAxes={performanceAxes}
-        optionCounts={filterOptionCounts}
-        optionCountLimits={filterOptionCountLimits}
-        open={isFilterOpen}
-        onOpenChange={handleFilterOpenChange}
-        anchorRef={menuButtonRef}
-        onConditionsChange={handleFilterConditionsChange}
-      />
-      <GameHomePerformance
-        records={records}
-        playRecordDisplay={playRecordDisplay}
-        difficulty={openDifficulty}
-        open={openLayer === "performance"}
-        onOpenChange={(open) => changeLayerOpen("performance", open)}
-        anchorRef={menuButtonRef}
-      />
+        <ZukanFilter
+          conditions={filterConditions}
+          matchedCount={arrangement.matchedCount}
+          featureAxes={listFilterFeatureAxes(levelFeatures, featureAxes)}
+          performanceAxes={performanceAxes}
+          optionCounts={filterOptionCounts}
+          optionCountLimits={filterOptionCountLimits}
+          open={isFilterOpen}
+          onOpenChange={handleFilterOpenChange}
+          anchorRef={menuButtonRef}
+          onConditionsChange={handleFilterConditionsChange}
+        />
+        <GameHomePerformance
+          records={records}
+          playRecordDisplay={playRecordDisplay}
+          difficulty={openDifficulty}
+          open={openLayer === "performance"}
+          onOpenChange={(open) => changeLayerOpen("performance", open)}
+          anchorRef={menuButtonRef}
+        />
 
-      <Tabs
-        value={openDifficulty}
-        onValueChange={handleLevelChange}
-        activationMode="manual"
-        className="mt-3 min-h-0 flex-1"
-      >
-        <GameLevelCards levels={levelCards} openDifficulty={openDifficulty} />
-        <div className="grid sm:grid-cols-[--spacing(64)]">
-          <Button ref={playRandomRef} size="lg" onClick={handlePlayRandom}>
-            <Shuffle aria-hidden="true" />
-            ランダムに遊ぶ
-          </Button>
-        </div>
+        <Tabs
+          value={openDifficulty}
+          onValueChange={handleLevelChange}
+          activationMode="manual"
+          className="mt-2 min-h-0 flex-1 sm:mt-3"
+        >
+          <GameLevelCards levels={levelCards} />
 
-        <div className="relative flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_--spacing(64)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
-          <div className="flex min-h-0 flex-1 flex-col">
+          {/* スマートフォンでは、状態ごとの数と台紙を1枚の盤に載せ、その下に「ランダムに遊ぶ」を置く。
+            PC では、盤に台紙だけを載せ、横の列に「ランダムに遊ぶ」・状態ごとの数・選んだ問題の詳細を上から並べる。 */}
+          <div className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_--spacing(64)] lg:grid-rows-[auto_auto_minmax(0,1fr)] lg:gap-x-8">
+            <div
+              aria-hidden="true"
+              className="col-start-1 row-span-2 row-start-1 rounded-lg bg-background lg:row-span-3 lg:row-start-1"
+            />
+            {/* 当たった数は条件が無い間も場所を取っておくので、条件を付け外ししても状態ごとの数の折り返し方は変わらない。
+              状態ごとの数がレベルによって2行に折り返す狭い画面では、レベルを切り替えても台紙が動かないよう、常に2行分を取っておく。 */}
+            <div className="col-start-1 row-start-1 flex items-start justify-between gap-x-3 px-2 pt-2 max-[359px]:min-h-11 sm:px-3 sm:pt-3 lg:col-start-2 lg:row-start-2 lg:mt-4 lg:flex-col lg:gap-y-3 lg:rounded-lg lg:bg-background lg:p-4">
+              <ZukanProblemStatusCounts counts={openStatusCounts} />
+              <ZukanMatchedCount
+                matchedCount={isFiltering ? arrangement.matchedCount : null}
+                problemCount={openProblems.length}
+              />
+            </div>
             <TabsContent
               value={openDifficulty}
               // 台紙のマスへ Tab で入れるので、見えない囲みを Tab の止まり先にしない。
               tabIndex={-1}
-              className="flex min-h-0 flex-col"
+              className="col-start-1 row-start-2 flex min-h-0 flex-col px-2 sm:px-3 lg:row-span-3 lg:row-start-1"
             >
-              {/* 当たった数は条件が無い間も場所を取っておくので、条件を付け外ししても状態ごとの数の折り返し方は変わらない。
-                  状態ごとの数がレベルによって2行に折り返す狭い画面では、レベルを切り替えても台紙が動かないよう、常に2行分を取っておく。 */}
-              <div className="flex items-start justify-between gap-x-3 max-[359px]:min-h-9">
-                <ZukanProblemStatusCounts counts={openStatusCounts} />
-                <ZukanMatchedCount
-                  matchedCount={isFiltering ? arrangement.matchedCount : null}
-                  problemCount={openProblems.length}
-                />
-              </div>
               <ZukanProblemSheet
                 difficulty={openDifficulty}
                 problems={openProblems}
@@ -741,24 +917,34 @@ export function GameHomeScreen({
                 changes={openChanges}
                 changeStages={changeStages}
                 scrollerRef={scrollerRef}
-                coveredBottomHeight={detailOverlayHeight}
+                coveredBottomHeight={sheetCoveredBottomHeight}
+                onWidthChange={setSheetWidthPx}
                 onSelect={handleSelect}
                 onDeselect={handleDeselect}
               />
             </TabsContent>
+            <div
+              ref={playRandomRowRef}
+              className="col-start-1 row-start-3 mt-2 grid lg:col-start-2 lg:row-start-1 lg:mt-0"
+            >
+              <Button ref={playRandomRef} size="lg" onClick={handlePlayRandom}>
+                <Shuffle aria-hidden="true" />
+                ランダムに遊ぶ
+              </Button>
+            </div>
+            <ZukanProblemDetail
+              ref={detailRef}
+              coverLimitRef={scrollerRef}
+              problem={detailProblem}
+              numberDigitCount={numberDigitCount}
+              describeProblem={describeProblem}
+              onPlay={handlePlayProblem}
+              onClose={closeDetail}
+              onOverlayHeightChange={handleDetailOverlayHeightChange}
+            />
           </div>
-          <ZukanProblemDetail
-            ref={detailRef}
-            coverLimitRef={scrollerRef}
-            problem={detailProblem}
-            numberDigitCount={numberDigitCount}
-            describeProblem={describeProblem}
-            onPlay={onPlayProblem}
-            onClose={closeDetail}
-            onOverlayHeightChange={setDetailOverlayHeight}
-          />
-        </div>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }

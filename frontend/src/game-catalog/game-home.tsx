@@ -11,16 +11,12 @@ import {
   toZukanGameSource,
 } from "@/game-catalog/game-catalog-entry";
 import { openRecordProblemPlay } from "@/game-catalog/game-navigation";
-import {
-  createProblemIdSearch,
-  useRequestedProblemId,
-} from "@/game-catalog/problem-id-query";
+import { useRequestedProblemId } from "@/game-catalog/problem-id-query";
 import {
   selectAnyRandomProblemId,
   selectRandomProblemId,
 } from "@/game-catalog/random-problem-selection";
 import type { DifficultyLevel } from "@/games/difficulty";
-import type { ProblemId } from "@/games/problem-id";
 import { randomProblemUnavailable } from "@/lib/random-problem-unavailable";
 import {
   readPlayAttemptsSnapshot,
@@ -44,7 +40,7 @@ export type GameHome = {
   /** ゲームのホーム `GameHomeScreen` へそのまま渡す、図鑑・選んでおく問題・プレイを始める操作。遊び方とチュートリアルはゲームの View が描く。 */
   screenProps: Omit<
     GameHomeScreenProps,
-    "renderHowToPlayDialog" | "renderTutorial"
+    "ground" | "renderHowToPlayDialog" | "renderTutorial"
   >;
 };
 
@@ -116,31 +112,29 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
       gameId: game.id,
       gameTitle: game.name,
       pictogramSvg: game.pictogramSvg,
+      pictogramShowcaseSvg: game.pictogramShowcaseSvg,
       zukan,
       changes,
       onLevelChangesShown: handleLevelChangesShown,
       initialSelectedProblemId: requestedProblemId,
-      onPlayRandom(difficulty) {
-        function openProblem(problemId: ProblemId) {
-          navigate(
-            {
-              pathname: game.playPath,
-              search: createProblemIdSearch(problemId),
-            },
-            { params: { difficulty } },
-          );
-        }
+      pickRandomProblemId(difficulty) {
         const problemId = selectRandomProblemId(game, difficulty);
         if (problemId === null) {
           const anyProblemId = selectAnyRandomProblemId(game, difficulty);
           randomProblemUnavailable.show(
             game.id,
             game.name,
-            anyProblemId === null ? undefined : () => openProblem(anyProblemId),
+            anyProblemId === null
+              ? undefined
+              : () =>
+                  openRecordProblemPlay(navigate, {
+                    playPath: game.playPath,
+                    difficulty,
+                    problemId: anyProblemId,
+                  }),
           );
-          return;
         }
-        openProblem(problemId);
+        return problemId;
       },
       onPlayProblem({ difficulty, problemId }) {
         openRecordProblemPlay(navigate, {

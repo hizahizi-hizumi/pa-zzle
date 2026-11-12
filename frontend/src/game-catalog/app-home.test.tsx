@@ -90,7 +90,13 @@ type GameHomeProps = {
 
 function GameHome({ game }: GameHomeProps) {
   const { screenProps } = useGameHome(game);
-  return <GameHomeScreen {...screenProps} renderHowToPlayDialog={() => null} />;
+  return (
+    <GameHomeScreen
+      {...screenProps}
+      ground={null}
+      renderHowToPlayDialog={() => null}
+    />
+  );
 }
 
 function renderAtHome() {

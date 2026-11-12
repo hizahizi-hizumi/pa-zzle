@@ -1,5 +1,4 @@
 import { type RefObject, useEffect, useRef, useState } from "react";
-
 import type { DifficultyLevel } from "@/games/difficulty";
 import { prepareSoundEffects } from "@/lib/sound-effects";
 import {
@@ -15,6 +14,7 @@ import {
   type ZukanChangeAppearance,
   type ZukanVerticalSpan,
 } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
+import { readZukanSheetView } from "@/zukan/ui/GameHomeScreen/zukan-sheet-view";
 import {
   createZukanStampEffectLayer,
   findZukanStampParts,
@@ -151,7 +151,11 @@ function findChangesScrollTop(
   ]);
   return span === null
     ? null
-    : findZukanRevealScrollTop(readSpan(scroller), scroller.scrollTop, span);
+    : findZukanRevealScrollTop(
+        readZukanSheetView(scroller),
+        scroller.scrollTop,
+        span,
+      );
 }
 
 type StampRunCallbacks = {
@@ -255,7 +259,7 @@ function runZukanStamps(
     if (stopped) {
       return;
     }
-    const view = readSpan(scroller);
+    const view = readZukanSheetView(scroller);
     const targets = (slots[slot] ?? []).flatMap((index): ZukanStampTarget[] => {
       const square = findSquare(scroller, index);
       if (square === null || !isZukanSpanInView(view, readSpan(square))) {
@@ -308,7 +312,7 @@ function runZukanStamps(
     const top =
       followsScroll && next && rest
         ? findZukanFollowScrollTop(
-            readSpan(scroller),
+            readZukanSheetView(scroller),
             scroller.scrollTop,
             next,
             rest,
@@ -322,7 +326,7 @@ function runZukanStamps(
         const nextNow = findSquaresSpan(scroller, slotIndices);
         return (
           nextNow !== null &&
-          isZukanStampTargetVisible(readSpan(scroller), nextNow)
+          isZukanStampTargetVisible(readZukanSheetView(scroller), nextNow)
         );
       },
     );

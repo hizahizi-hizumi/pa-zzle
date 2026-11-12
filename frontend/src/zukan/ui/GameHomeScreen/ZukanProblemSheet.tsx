@@ -5,6 +5,7 @@ import {
   memo,
   type RefObject,
   type UIEvent,
+  useEffectEvent,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -43,11 +44,72 @@ type ZukanProblemSheetProps = {
   scrollerRef: RefObject<HTMLDivElement | null>;
   /** スクロール領域の下端に重なって覆っている高さ（px）。覆われたところのマスも、その上へスクロールして見られるようにする。 */
   coveredBottomHeight: number;
+  /** マスを並べる幅（px）が分かったときと、変わったとき。 */
+  onWidthChange: (widthPx: number) => void;
   /** 選んでいないマスを押したときと、矢印キーなどで動いたとき。 */
   onSelect: (problem: ZukanProblem) => void;
   /** 選んでいるマスをもう一度押したとき。 */
   onDeselect: () => void;
 };
+
+/**
+ * PC の幅で、マスの1辺を最低この大きさ（px）にする。問題の少ないレベルでも盤が空いて見えないよう、問題が少ないほど大きくする。
+ * 並びは問題の数の昇順。
+ */
+const WIDE_SQUARE_SIZES = [
+  { maxProblemCount: 250, sizePx: 40 },
+  { maxProblemCount: 500, sizePx: 32 },
+] as const;
+const DEFAULT_WIDE_SQUARE_SIZE_PX = 26;
+
+/** PC より狭い幅で、マスの1辺を最低この大きさ（px）にする。考え方は `WIDE_SQUARE_SIZES` と同じ。 */
+const NARROW_SQUARE_SIZES = [{ maxProblemCount: 250, sizePx: 30 }] as const;
+const DEFAULT_NARROW_SQUARE_SIZE_PX = 24;
+
+function findSquareSizePx(
+  sizes: readonly { maxProblemCount: number; sizePx: number }[],
+  defaultSizePx: number,
+  problemCount: number,
+): number {
+  return (
+    sizes.find(({ maxProblemCount }) => problemCount <= maxProblemCount)
+      ?.sizePx ?? defaultSizePx
+  );
+}
+
+function getWideSquareSizePx(problemCount: number): number {
+  return findSquareSizePx(
+    WIDE_SQUARE_SIZES,
+    DEFAULT_WIDE_SQUARE_SIZE_PX,
+    problemCount,
+  );
+}
+
+function getNarrowSquareSizePx(problemCount: number): number {
+  return findSquareSizePx(
+    NARROW_SQUARE_SIZES,
+    DEFAULT_NARROW_SQUARE_SIZE_PX,
+    problemCount,
+  );
+}
+
+/** PC の幅のマスの大きさを使う画面幅。台紙のクラスの `lg:` と同じ境目にする。 */
+const WIDE_MEDIA_QUERY = "(width >= 64rem)";
+
+/**
+ * 幅 `widthPx` に `problemCount` 問の台紙を並べたときの列の数。台紙は、マスを最低の大きさ以上で、幅を等分して並べる。
+ * 開いていないレベルの台紙の並びを、描かずに求めるのに使う。
+ */
+export function countZukanSheetColumns(
+  widthPx: number,
+  problemCount: number,
+): number {
+  const isWide = window.matchMedia?.(WIDE_MEDIA_QUERY).matches ?? false;
+  const squareSizePx = isWide
+    ? getWideSquareSizePx(problemCount)
+    : getNarrowSquareSizePx(problemCount);
+  return Math.max(1, Math.floor(widthPx / squareSizePx));
+}
 
 type SquareRow = { start: number; length: number };
 
@@ -158,6 +220,7 @@ function ZukanProblemSheetContent({
   changeStages,
   scrollerRef,
   coveredBottomHeight,
+  onWidthChange,
   onSelect,
   onDeselect,
 }: ZukanProblemSheetProps) {
@@ -165,6 +228,7 @@ function ZukanProblemSheetContent({
     useState<ProblemId | null>(null);
   const [columnCount, setColumnCount] = useState(1);
   const gridRef = useRef<HTMLDivElement>(null);
+  const reportWidth = useEffectEvent(onWidthChange);
   const shownScrollTopRef = useRef(0);
   const previousCoveredBottomHeightRef = useRef(coveredBottomHeight);
   const indices = useMemo(() => listPositions(problems), [problems]);
@@ -191,6 +255,9 @@ function ZukanProblemSheetContent({
     }
     function updateColumnCount() {
       setColumnCount(countGridColumns(grid));
+      if (grid !== null) {
+        reportWidth(grid.clientWidth);
+      }
     }
     updateColumnCount();
     if (typeof ResizeObserver === "undefined") {
@@ -289,9 +356,10 @@ function ZukanProblemSheetContent({
   const hasFilteredOut =
     matchedCount !== null && matchedCount < arrangedProblems.length;
 
-  // 押すときに大きく浮くマスが、台紙の端のマスでもスクロール領域で切れないよう、領域をページの余白へ広げ、内側に浮いたマスが収まる余白を取る。
+  // 押すときに大きく浮くマスが、台紙の端のマスでもスクロール領域で切れないよう、領域を盤の余白とページの余白へ広げ、内側に浮いたマスが収まる余白を取る。
+  // 盤の幅をマスで埋め切るよう、マスは決めた大きさ以上で、列を等分して並べる。
   // 覆われたところの余白は、領域の余白ではなく末尾の要素で取る。画面が低く、覆う高さが領域より高いときも、領域が縮めずにページをはみ出さないようにする。
-  // スクロールした行が台紙の上の数の真下で途切れて見えないよう、上端の余白の中で背景の色を重ねて薄れさせる。選んだマスはこの余白より内側へ寄せる。
+  // スクロールした行が台紙の上の数の真下で途切れて見えないよう、上端の余白の中で盤の色を重ねて薄れさせる。選んだマスはこの余白より内側へ寄せる。
   // 薄れは `mask-image` で作らない。iOS の Safari は mask をかけた要素の中身を低い解像度で描き、ピースの輪郭がぼやけるため。
   return (
     <div
@@ -300,22 +368,25 @@ function ZukanProblemSheetContent({
       style={
         { "--covered-bottom": `${coveredBottomHeight}px` } as CSSProperties
       }
-      className="-mx-4 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-4 pt-4 pb-4"
+      className="-mx-6 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-6 pt-4 pb-2 sm:-mx-7 sm:px-7 sm:pb-3 lg:pt-3 [scrollbar-width:none] lg:[scrollbar-width:thin]"
     >
-      {/* 画面の地は、背景の色に `muted` を薄く重ねた色なので、薄れも同じ2層で重ねる。 */}
       <div
         aria-hidden="true"
         className="pointer-events-none sticky -top-4 z-10 -mt-4 mb-1 h-3 bg-linear-to-b from-background"
-      >
-        <div className="size-full bg-linear-to-b from-muted/30" />
-      </div>
+      />
       <div
         ref={gridRef}
         role="group"
         aria-label={`${getDifficultyLabel(difficulty)}の問題`}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-        className="isolate grid grid-cols-[repeat(auto-fill,--spacing(6))] sm:grid-cols-[repeat(auto-fill,--spacing(6.5))] [&>[data-filtered-out]]:order-2"
+        style={
+          {
+            "--wide-square-size": `${getWideSquareSizePx(problems.length)}px`,
+            "--narrow-square-size": `${getNarrowSquareSizePx(problems.length)}px`,
+          } as CSSProperties
+        }
+        className="isolate grid grid-cols-[repeat(auto-fill,minmax(var(--narrow-square-size),1fr))] lg:grid-cols-[repeat(auto-fill,minmax(var(--wide-square-size),1fr))] [&>[data-filtered-out]]:order-2"
       >
         {matchedCount === 0 && (
           <p className="col-span-full text-supporting text-muted-foreground">
@@ -353,10 +424,19 @@ function ZukanProblemSheetContent({
         )}
       </div>
       <div aria-hidden="true" className="h-(--covered-bottom)" />
+      {/* 盤の下端で途切れた行が、まだ続くと分かるよう、下端でも盤の色を重ねて薄れさせる。 */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none sticky -bottom-2 z-10 -mt-3 h-3 bg-linear-to-t from-background sm:-bottom-3"
+      />
     </div>
   );
 }
 
 export const ZukanProblemSheet = memo(ZukanProblemSheetContent);
 
-export const _private = { findNextSquareIndex };
+export const _private = {
+  findNextSquareIndex,
+  getWideSquareSizePx,
+  getNarrowSquareSizePx,
+};
