@@ -1,7 +1,4 @@
-import { ArrowRight } from "lucide-react";
-import { Fragment } from "react";
-import { HowToPlayExamplePanel } from "@/components/HowToPlayExamplePanel";
-import { HowToPlayPhrases } from "@/components/HowToPlayPhrases";
+import { HowToPlayFlowFigures } from "@/components/HowToPlayFlowFigures";
 import { createTakuzuExampleBoard } from "@/games/takuzu/ui/TakuzuHowToPlayDialog/example-board";
 import type { TakuzuHowToPlayReplacementCountFigure } from "@/games/takuzu/ui/TakuzuHowToPlayDialog/figure-boards";
 import { HowToPlayFigure } from "@/games/takuzu/ui/TakuzuHowToPlayDialog/HowToPlayFigure";
@@ -28,59 +25,31 @@ const figureCellSizeClassName =
 const pressWord = "押す";
 
 /**
- * 置き直しに数える押し方と数えない押し方を、ルールの例と同じ面に並べる。押せない図なので、押す所の手がかりや指のアイコンは付けない。
+ * 置き直しに数える押し方と数えない押し方を、ルールの例と同じ面に、押す前から押した後までの姿の流れで並べる。
  * 2つ目からの姿では、その前に押したマスを、本番のキーボードで選んだマスと同じ地と輪郭で示す。
- * どの押し方も、押す前から押した後までの姿を左から順に並べ、間に「押す」の言葉を添えた矢印を、盤面の高さの中央にそろえて置く。
- * 2つの押し方の姿は同じ列にそろえ、最初の姿の左端を合わせる。
- * 図の下に、押し方と、本番の数え方で数える置き直しの回数を「→ 置き直し 1回」の形で添える。回数は採点の項目名と同じ太字の本文にする。
+ * 図の下に、押し方と、本番の数え方で数える置き直しの回数を「→ 置き直し 1回」の形で添える。
  */
 export function ReplacementCountExamples({
   examples,
 }: ReplacementCountExamplesProps) {
   return (
-    <HowToPlayExamplePanel arrangement="stacked">
-      <div
-        className={`grid grid-cols-[repeat(5,auto)] justify-center gap-x-1 gap-y-10 ${figureCellSizeClassName}`}
-      >
-        {examples.map(({ figure, howToPress }) => (
-          <figure
-            key={howToPress}
-            className="col-span-5 grid grid-cols-subgrid items-center gap-y-3"
-          >
-            {figure.frames.map((board, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: 押す順の姿は、並び順そのものが識別になる
-              <Fragment key={index}>
-                {index > 0 ? (
-                  <span
-                    aria-hidden="true"
-                    className="flex w-7 flex-col items-center text-muted-foreground text-supporting"
-                  >
-                    {pressWord}
-                    <ArrowRight className="size-5 shrink-0" strokeWidth={2.5} />
-                  </span>
-                ) : null}
-                <span aria-hidden="true" className="flex">
-                  <HowToPlayFigure
-                    example={createTakuzuExampleBoard(board)}
-                    size="inherited"
-                    currentCells={figure.frames[index - 1]?.pressedCells}
-                  />
-                </span>
-              </Fragment>
-            ))}
-            <figcaption className="col-span-5 text-center text-supporting">
-              <HowToPlayPhrases text={howToPress} />{" "}
-              {/* 狭い幅でも「置き直し」の途中で折らず、矢印から回数までを1つにまとめて次の行へ送る。 */}
-              <span className="inline-block">
-                → 置き直し{" "}
-                <span className="font-semibold text-body">
-                  {figure.correctionCount}回
-                </span>
-              </span>
-            </figcaption>
-          </figure>
-        ))}
-      </div>
-    </HowToPlayExamplePanel>
+    // 図のマスの大きさを CSS 変数で渡す。自分では箱を作らず、図の並びを変えない。
+    <div className={`contents ${figureCellSizeClassName}`}>
+      <HowToPlayFlowFigures
+        renderFrame={(board, previous) => (
+          <HowToPlayFigure
+            example={createTakuzuExampleBoard(board)}
+            size="inherited"
+            currentCells={previous?.pressedCells}
+          />
+        )}
+        figures={examples.map(({ figure, howToPress }) => ({
+          frames: figure.frames,
+          steps: figure.frames.slice(1).map(() => pressWord),
+          caption: howToPress,
+          count: { label: "置き直し", value: `${figure.correctionCount}回` },
+        }))}
+      />
+    </div>
   );
 }

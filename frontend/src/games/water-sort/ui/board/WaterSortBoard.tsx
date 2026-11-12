@@ -29,6 +29,12 @@ type WaterSortBoardProps = {
   spotlitBottleIndices?: readonly number[] | null;
   /** `single-row` は、注ぐ動きと、選んだボトルの持ち上げが盤面の外へはみ出さない余白を、置く側が上に取るときに使う。 */
   layout?: "rows" | "single-row";
+  /**
+   * 1段に並べるときのボトルの間。
+   * - `play`: チュートリアルの盤面。`WATER_SORT_SINGLE_ROW_GAP_PX` の間にする。
+   * - `howToPlay`: 遊び方の図。置き場所が CSS 変数 `WATER_SORT_HOW_TO_PLAY_GAP_PROPERTY` で渡す、遊び方の図と同じ間にする。
+   */
+  spacing?: "play" | "howToPlay";
 };
 
 const invalidBottleShakeKeyframes: Keyframe[] = [
@@ -44,7 +50,8 @@ const invalidBottleShakeTiming: RejectionShakeTiming = {
   easing: "ease-out",
 };
 
-const bottleAspectRatio = 0.36;
+/** ボトルの幅と高さの比。遊び方の図も、この比で本番と同じ形に描く。 */
+export const WATER_SORT_BOTTLE_ASPECT_RATIO = 0.36;
 
 export function WaterSortBoard({
   state,
@@ -57,6 +64,7 @@ export function WaterSortBoard({
   cues = [],
   spotlitBottleIndices = null,
   layout: layoutKind = "rows",
+  spacing = "play",
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const { animations, finishAnimation, interruptForBottleInteraction } =
@@ -97,10 +105,14 @@ export function WaterSortBoard({
     layoutKind === "single-row"
       ? getSingleRowLayout(state.length)
       : getBoardLayout(state.length);
+  const columnGap =
+    layoutKind === "single-row" && spacing === "howToPlay"
+      ? `var(${WATER_SORT_HOW_TO_PLAY_GAP_PROPERTY})`
+      : `${layout.columnGap}px`;
   const rowCount = Math.ceil(state.length / layout.columnCount);
   // ボトルの縦横比と隙間を保ったまま、見出し・下端を除いた高さにも収める。
   // 上の段のボトルを選ぶと持ち上げるので、その分の高さは盤面の上に取っておく。
-  const widthForAvailableHeight = `calc((100cqh - var(--selected-bottle-lift) - ${layout.rowGap * (rowCount - 1)}px) * ${(bottleAspectRatio * layout.columnCount) / rowCount} + ${layout.columnGap * (layout.columnCount - 1)}px)`;
+  const widthForAvailableHeight = `calc((100cqh - var(--selected-bottle-lift) - ${layout.rowGap * (rowCount - 1)}px) * ${(WATER_SORT_BOTTLE_ASPECT_RATIO * layout.columnCount) / rowCount} + ${layout.columnGap * (layout.columnCount - 1)}px)`;
 
   const bottles = (
     <fieldset
@@ -110,7 +122,7 @@ export function WaterSortBoard({
       )}
       style={{
         gridTemplateColumns: `repeat(${layout.columnCount}, minmax(0, 1fr))`,
-        columnGap: layout.columnGap,
+        columnGap,
         rowGap: layout.rowGap,
         width:
           layoutKind === "single-row"
@@ -140,8 +152,8 @@ export function WaterSortBoard({
             aria-label={`${bottleLabel}: ${contents}`}
             aria-pressed={isSource}
             onClick={() => selectBottle(bottleIndex)}
-            className="relative w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-(--duration-normal) ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 aria-pressed:-translate-y-(--selected-bottle-lift) motion-reduce:transition-none"
-            style={{ aspectRatio: bottleAspectRatio }}
+            className="relative w-full origin-top cursor-pointer touch-manipulation disabled:cursor-default rounded-b-[1.45rem] transition-transform duration-(--duration-normal) ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 aria-pressed:-translate-y-(--selected-bottle-lift) motion-reduce:transition-none"
+            style={{ aspectRatio: WATER_SORT_BOTTLE_ASPECT_RATIO }}
             disabled={interactionDisabled}
           >
             <span
@@ -177,7 +189,11 @@ export function WaterSortBoard({
   );
 }
 
-/** 1段に並べるときのボトルの間。`WaterSortTutorial` の盤面の余白は、この間を前提に取る。 */
+/** 遊び方の図が、1段に並べるボトルの間を渡す CSS 変数。 */
+export const WATER_SORT_HOW_TO_PLAY_GAP_PROPERTY =
+  "--water-sort-how-to-play-gap";
+
+/** 1段に並べるときの、既定のボトルの間。`WaterSortTutorial` の盤面の余白は、この間を前提に取る。 */
 export const WATER_SORT_SINGLE_ROW_GAP_PX = 8;
 
 function getSingleRowLayout(bottleCount: number) {

@@ -1,6 +1,12 @@
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
 
+/** 注ぐ動き1回の長さ。盤面の外で、注ぐ動きに合わせて間合いを取るときもこの値を使う。 */
+export const POUR_ANIMATION_DURATION_MS = 1600;
+/** 注ぐ動きの中で、水が移り始める所と移り終える所（動きの長さに対する割合）。注ぐ音もこの間に鳴らす。 */
+export const POUR_TRANSFER_START_OFFSET = 0.38;
+export const POUR_TRANSFER_END_OFFSET = 0.72;
+
 export type BottleRect = {
   left: number;
   top: number;

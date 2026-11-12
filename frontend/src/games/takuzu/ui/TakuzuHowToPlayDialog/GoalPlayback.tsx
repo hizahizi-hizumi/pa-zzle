@@ -1,6 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type CSSProperties,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-import { HowToPlayExampleResetButton } from "@/components/HowToPlayExampleResetButton";
+import {
+  HOW_TO_PLAY_GOAL_REPLAY_ROW_HEIGHT_PX,
+  HowToPlayGoalFrame,
+} from "@/components/HowToPlayGoalFrame";
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
 import {
   createTakuzuExampleBoard,
@@ -121,13 +130,17 @@ export function GoalPlayback({ goal }: GoalPlaybackProps) {
     setPlayCount((count) => count + 1);
   }
 
-  // 本番のクリア演出の包みは要素を1つ置くので、盤面を押して飛ばす所は、盤面に重ねた透明な面にする。
-  // 飛ばすのは見ている途中の短い演出なので、指とマウスだけで受け、読み上げとキーボードには見せ直すボタンだけを出す。
   // 広い画面では、置き場所の幅と高さの小さい方に盤面を合わせるので、見せ直すボタンの段の高さを盤面の高さから除く。
   return (
-    <div className="[--takuzu-goal-reserved-block:--spacing(11)]">
-      <div className="flex w-fit flex-col items-end gap-2">
-        <div className="relative">
+    <div
+      style={
+        {
+          "--takuzu-goal-reserved-block": `${HOW_TO_PLAY_GOAL_REPLAY_ROW_HEIGHT_PX}px`,
+        } as CSSProperties
+      }
+    >
+      <HowToPlayGoalFrame
+        board={
           <TakuzuClearAnimation
             active={celebrating}
             onComplete={finishCelebration}
@@ -142,27 +155,13 @@ export function GoalPlayback({ goal }: GoalPlaybackProps) {
               label="ゴールの盤面"
             />
           </TakuzuClearAnimation>
-          {settled ? null : (
-            <button
-              type="button"
-              aria-hidden="true"
-              aria-label="埋め終えた姿まで飛ばす"
-              tabIndex={-1}
-              onClick={skipToGoal}
-              className="absolute inset-0 cursor-pointer rounded-sm transition-colors duration-(--duration-fast) active:bg-foreground/5"
-            />
-          )}
-        </div>
-        {/* ボタンの右端を、盤面の右端にそろえる。 */}
-        <span className="flex">
-          <HowToPlayExampleResetButton
-            action="replay"
-            changed={filled}
-            label="始まりの盤面から見せ直す"
-            onPress={replay}
-          />
-        </span>
-      </div>
+        }
+        skippable={!settled}
+        skipLabel="埋め終えた姿まで飛ばす"
+        onSkip={skipToGoal}
+        replayable={filled}
+        onReplay={replay}
+      />
     </div>
   );
 }
