@@ -8,6 +8,8 @@ import {
 } from "@testing-library/react";
 
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
+import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
+import { reflectionTutorial } from "@/games/reflection/tutorial/tutorial";
 import { ReflectionTutorial } from "@/games/reflection/ui/ReflectionTutorial";
 import { playLayeredSound, playSound } from "@/lib/sound-effects";
 
@@ -22,33 +24,29 @@ type Press =
   | { stock: string }
   | { cell: readonly [row: number, column: number] };
 
-/** 数字のルールの手順で押す所。最初の光と、その光が出た先。 */
-const numberPresses: readonly Press[] = [{ clue: "左2行" }, { clue: "右2行" }];
-
-/** 手順ごとに押す所。外周ヒントは名前の先頭、ストックは種類の名前、マスは行と列。 */
-const guidedPresses: readonly Press[] = [
-  ...numberPresses,
-  { stock: "ブラックホール" },
-  { cell: [3, 3] },
-  { stock: "右上がりの鏡" },
-  { cell: [4, 5] },
-  { stock: "反射体" },
-  { cell: [4, 4] },
-  { stock: "横の両面鏡" },
-  { cell: [2, 4] },
+/** 手順ごとに押す所。ストックは種類の名前、マスは行と列。 */
+const guidedPresses: readonly (readonly Press[])[] = [
+  [{ stock: "ブラックホール" }, { cell: [4, 5] }],
+  [{ cell: [2, 1] }],
+  [{ stock: "右下がりの鏡" }, { cell: [1, 2] }],
+  [{ stock: "反射鏡" }, { cell: [3, 4] }],
+  [{ stock: "横の両面鏡" }, { cell: [1, 5] }],
+  [{ stock: "右上がりの鏡" }, { cell: [3, 3] }],
 ];
 
 /** 手を離した後に置く所。 */
 const freePresses: readonly Press[] = [
+  { stock: "ブラックホール" },
+  { cell: [4, 2] },
   { stock: "右下がりの鏡" },
-  { cell: [3, 1] },
-  { stock: "縦の両面鏡" },
-  { cell: [5, 1] },
+  { cell: [5, 2] },
 ];
 
-const idleHintDelayMs = 10_000;
+/** 手順を終えてから次の手順の一言と印に替わるまでに十分な間。 */
+const nextStepEnoughMs = 1500;
 
-const introEnoughMs = 8000;
+/** 入口の場面の動きを見せ終えるのに十分な間。 */
+const introEnoughMs = 3000;
 
 const clearEnoughMs = 3000;
 
@@ -115,7 +113,7 @@ function getCell(row: number, column: number): HTMLElement {
   });
 }
 
-/** 印（`mark`）・印の押し直し（`recall`）・応え（`acknowledgement`）のうち、重ねているもの。 */
+/** 印（`mark`）・指（`pointer`）・印の押し直し（`recall`）・応え（`acknowledgement`）のうち、重ねているもの。 */
 function getCueKinds(element: HTMLElement): string[] {
   return Array.from(
     element.querySelectorAll<HTMLElement>("[data-tutorial-cue]"),
@@ -123,10 +121,12 @@ function getCueKinds(element: HTMLElement): string[] {
   );
 }
 
+/** 盤面の覆いから抜いて、元の明るさで見せているか。 */
 function isSpotlit(element: HTMLElement): boolean {
   return element.querySelector("[data-tutorial-spotlight]") !== null;
 }
 
+/** 盤面の中だけを薄く覆う覆い。 */
 function getFocusScrim(): Element | null {
   return document.querySelector("[data-tutorial-focus-scrim]");
 }
@@ -156,25 +156,55 @@ function pressAll(targets: readonly Press[]): void {
   }
 }
 
-/** 場面の動きを待たずに「次へ」を続けて押し、ゴールと始まりの盤面を通って最初の手順から始める。 */
-function pressNextThroughIntro(): void {
-  for (
-    let next = screen.queryByRole("button", { name: "次へ" });
-    next;
-    next = screen.queryByRole("button", { name: "次へ" })
-  ) {
-    fireEvent.click(next);
+/** 最初の `count` 個の手順を、手順ごとに置いた結果を見せ終えるまで待ちながら終える。 */
+function finishSteps(count: number): void {
+  for (const presses of guidedPresses.slice(0, count)) {
+    pressAll(presses);
+    advanceTime(nextStepEnoughMs);
   }
 }
 
-/** 一言の見出し。盤面の上の、一言を読み上げる欄にある。 */
+function getScreen(): HTMLElement {
+  return screen.getByRole("dialog", { name: REFLECTION_DISPLAY_NAME });
+}
+
+function queryStartButton(): HTMLElement | null {
+  return within(getScreen()).queryByRole("button", { name: "はじめる" });
+}
+
+function queryHintButton(): HTMLElement | null {
+  return within(getScreen()).queryByRole("button", { name: "ヒント" });
+}
+
+/** 入口の「はじめる」を押し、始めの盤面へ替える場面を終えて、最初の手順から始める。 */
+async function pressStart(): Promise<void> {
+  fireEvent.click(
+    within(getScreen()).getByRole("button", { name: "はじめる" }),
+  );
+  await advanceTimeInSlices(introEnoughMs);
+}
+
+function getProgressValue(): string | null {
+  return within(getScreen())
+    .getByRole("progressbar", { name: "チュートリアルの進み具合" })
+    .getAttribute("aria-valuenow");
+}
+
+/** 完成のときに並べる、覚えたルール。 */
+function listRecap(): (string | null)[] {
+  return within(within(getScreen()).getByRole("list", { name: "覚えたルール" }))
+    .getAllByRole("listitem")
+    .map((item) => item.textContent);
+}
+
+/** 一言。盤面の下の、一言を読み上げる欄にある。 */
 function getMessage(): string {
   const live = document.querySelector("[aria-live='polite']");
   return live?.textContent ?? "";
 }
 
 describe("ReflectionTutorial", () => {
-  const playStart: TutorialPlayStart = { difficulty: "3", onStart: vi.fn() };
+  const playStart: TutorialPlayStart = { difficulty: "1", onStart: vi.fn() };
   const onClose = vi.fn();
 
   beforeEach(() => {
@@ -193,208 +223,209 @@ describe("ReflectionTutorial", () => {
       );
     });
 
-    describe("導入", () => {
-      test("何をするパズルかと、6つのピースを置き終えたゴールの盤面を見せること", async () => {
+    describe("入口", () => {
+      test("何をするパズルかと全光路を伸ばしたゴールの盤面を見せ進み具合を空にしておくこと", async () => {
         await advanceTimeInSlices(introEnoughMs);
-        const purpose = screen.queryByText(/外周の数字どおりに光が進むよう/);
-        const caption = screen.queryByText("この盤面がゴールです");
+        const purpose = screen.queryByText(/数字と記号に合わせ光が進むように/);
+        const caption = screen.queryByText(
+          reflectionTutorial.intro.goalCaption,
+        );
         const placed = listPlacedCellLabels();
+        const lightPaths = screen
+          .getByRole("main")
+          .querySelectorAll("[data-clear-light-step]");
 
         expect(purpose).not.toBeNull();
         expect(caption).not.toBeNull();
-        expect(placed).toHaveLength(6);
+        expect(placed).toHaveLength(8);
+        expect(lightPaths.length).toBeGreaterThan(0);
+        expect(getProgressValue()).toBe("0");
       });
 
-      test("「次へ」で、ピースを1つも置いていない始めの盤面と、ストックに並んだピースを見せること", async () => {
-        await advanceTimeInSlices(introEnoughMs);
-        fireEvent.click(screen.getByRole("button", { name: "次へ" }));
-        await advanceTimeInSlices(introEnoughMs);
-        const caption = screen.queryByText(/最初は盤面が空です/);
+      test("はじめるでピースを1つも置いていない始めの盤面に替えること", async () => {
+        await pressStart();
         const placed = listPlacedCellLabels();
         const blackHole = getStock("ブラックホール").getAttribute("aria-label");
 
-        expect(caption).not.toBeNull();
         expect(placed).toEqual([]);
-        expect(blackHole).toBe("ブラックホール 残り1");
+        expect(blackHole).toBe("ブラックホール 残り3");
+        expect(queryStartButton()).toBeNull();
       });
     });
 
     describe("手を引く間", () => {
-      beforeEach(() => {
-        pressNextThroughIntro();
+      beforeEach(async () => {
+        await pressStart();
       });
 
-      test("数字のルールを示し、光を出す外周ヒントに印を付けること", () => {
+      test("操作を教える手順は置くピースを指で指し置くマスを輪郭で示して盤面を覆わないこと", () => {
         const message = getMessage();
-        const currentRule = screen
-          .getByRole("list", { name: "ルール" })
-          .querySelector("[aria-current='step']")?.textContent;
-        const cues = getCueKinds(getClue("左2行"));
+        const stockCues = getCueKinds(getStock("ブラックホール"));
+        const cellCues = getCueKinds(getCell(4, 5));
 
-        expect(message).toContain("通るマスの数");
-        expect(currentRule).toBe("数字");
-        expect(cues).toEqual(["mark"]);
+        expect(message).toContain("置くピースをタップして選択します");
+        expect(stockCues).toEqual(["mark", "pointer"]);
+        expect(cellCues).toEqual(["mark"]);
+        expect(getFocusScrim()).toBeNull();
       });
 
-      test("画面全体を覆い、印を付けた外周ヒントだけを覆いから抜くこと", () => {
-        const scrim = getFocusScrim();
-        const spotlit = Array.from(
-          getBoard().parentElement?.querySelectorAll<HTMLElement>(
-            "button:has([data-tutorial-spotlight])",
-          ) ?? [],
-          (button) => button.getAttribute("aria-label") ?? "",
-        );
+      test("印の無い所を押すと押した所に何も出さず印の線を濃くし直して置かないこと", () => {
+        fireEvent.click(getStock("反射鏡"));
+        const markCues = getCueKinds(getStock("ブラックホール"));
+        const cues = getCueKinds(getStock("反射鏡"));
+        const pressed = getStock("反射鏡").getAttribute("aria-pressed");
 
-        expect(scrim).not.toBeNull();
-        expect(spotlit).toHaveLength(1);
-        expect(spotlit[0]).toMatch(/^左2行 /);
-      });
-
-      test("印の無い外周ヒントを押すと、押した所に何も出さず、印の線を濃くし直して光を出さないこと", () => {
-        fireEvent.click(getClue("上1列"));
-        const markCues = getCueKinds(getClue("左2行"));
-        const cues = getCueKinds(getClue("上1列"));
-        const pressed = getClue("上1列").getAttribute("aria-pressed");
-        const message = getMessage();
-
-        expect(markCues).toEqual(["mark", "recall"]);
+        expect(markCues).toEqual(["mark", "recall", "pointer"]);
         expect(cues).toEqual([]);
         expect(pressed).toBe("false");
-        expect(message).toContain("通るマスの数");
       });
 
-      test("印の外周ヒントを押すと光を出し、光が出た先の外周ヒントに印を移して、出した光の外周ヒントと光の通るマスを覆いから抜いたまま見せること", () => {
-        fireEvent.click(getClue("左2行"));
-        const pressed = getClue("左2行").getAttribute("aria-pressed");
-        const message = getMessage();
-        const currentRule = screen
-          .getByRole("list", { name: "ルール" })
-          .querySelector("[aria-current='step']")?.textContent;
-        const exitCues = getCueKinds(getClue("右2行"));
-        const entrySpotlit = isSpotlit(getClue("左2行"));
-        const litRowSpotlit = [1, 2, 3, 4, 5].map((column) =>
-          isSpotlit(getCell(2, column)),
-        );
-
-        expect(pressed).toBe("true");
-        expect(message).toContain("出た先にも同じ数字があります");
-        expect(currentRule).toBe("数字");
-        expect(exitCues).toEqual(["mark"]);
-        expect(entrySpotlit).toBe(true);
-        expect(litRowSpotlit).toEqual([true, true, true, true, true]);
-      });
-
-      test("光が出た先の外周ヒントを押すとそこから光を出し、ブラックホールのルールと、選ぶ種類の印を示して、選ぶ種類と置く場所を決める外周ヒントだけを覆いから抜くこと", () => {
-        pressAll(numberPresses);
-        const pressed = getClue("右2行").getAttribute("aria-pressed");
-        const message = getMessage();
+      test("ピースを選ぶと置く操作の一言に替え置くマスは指で隠さず輪郭だけで示すこと", () => {
+        press({ stock: "ブラックホール" });
         const stockCues = getCueKinds(getStock("ブラックホール"));
-        const reasonCues = getCueKinds(getClue("上3列"));
-        const stockSpotlit = isSpotlit(getStock("ブラックホール"));
-        const reasonSpotlit = isSpotlit(getClue("上3列"));
-        const litRowSpotlit = [1, 2, 3, 4, 5].map((column) =>
-          isSpotlit(getCell(2, column)),
-        );
-        const otherCellSpotlit = isSpotlit(getCell(3, 3));
-
-        expect(pressed).toBe("true");
-        expect(message).toContain("ブラックホールは光を吸い込みます");
-        expect(stockCues).toEqual(["mark"]);
-        expect(reasonCues).toEqual([]);
-        expect(stockSpotlit).toBe(true);
-        expect(reasonSpotlit).toBe(true);
-        expect(litRowSpotlit).toEqual([false, false, false, false, false]);
-        expect(otherCellSpotlit).toBe(false);
-      });
-
-      test("種類を選ぶと、置くマスに印を移し、置く場所を決める外周ヒントの光を出すこと", () => {
-        pressAll([...numberPresses, { stock: "ブラックホール" }]);
-        const stockCues = getCueKinds(getStock("ブラックホール"));
-        const cellCues = getCueKinds(getCell(3, 3));
-        const pressed = getClue("上3列").getAttribute("aria-pressed");
+        const cellCues = getCueKinds(getCell(4, 5));
+        const message = getMessage();
 
         expect(stockCues).toEqual([]);
         expect(cellCues).toEqual(["mark"]);
-        expect(pressed).toBe("true");
+        expect(message).toContain("印のマスをタップして置きます");
       });
 
-      test("印の無いマスを押すと、押したマスに何も出さず、印の線を濃くし直して置かないこと", () => {
-        pressAll([...numberPresses, { stock: "ブラックホール" }]);
-        fireEvent.click(getCell(1, 3));
-        const markCues = getCueKinds(getCell(3, 3));
-        const label = getCell(1, 3).getAttribute("aria-label");
-        const cues = getCueKinds(getCell(1, 3));
-
-        expect(markCues).toEqual(["mark", "recall"]);
-        expect(label).toBe("1行3列 空き");
-        expect(cues).toEqual([]);
-      });
-
-      test("本番と同じく、種類を選んでも音を鳴らさず、置くと置いた音を鳴らすこと", () => {
-        pressAll([...numberPresses, { stock: "ブラックホール" }]);
+      test("本番と同じく種類を選んでも音を鳴らさず置くと置いた音を鳴らすこと", () => {
+        press({ stock: "ブラックホール" });
         const callsAfterSelect = vi.mocked(playSound).mock.calls.length;
-        press({ cell: [3, 3] });
+        press({ cell: [4, 5] });
         const callsAfterPlace = vi.mocked(playSound).mock.calls.length;
 
         expect(callsAfterSelect).toBe(0);
         expect(callsAfterPlace).toBe(1);
       });
 
-      test("印のマスに置くと、そのマスに応え、外周ヒントが合ったことを光と地で返して、次の手順へ進むこと", () => {
-        pressAll([
-          ...numberPresses,
-          { stock: "ブラックホール" },
-          { cell: [3, 3] },
-        ]);
-        const label = getCell(3, 3).getAttribute("aria-label");
-        const cues = getCueKinds(getCell(3, 3));
-        const clue = getClue("上3列");
-        const message = getMessage();
+      test("印のマスに置くとそのマスに応え置いた結果の光と緑の地を見せ進み具合を進めること", () => {
+        pressAll([{ stock: "ブラックホール" }, { cell: [4, 5] }]);
+        const cues = getCueKinds(getCell(4, 5));
+        const clue = getClue("下5列");
 
-        expect(label).toBe("3行3列 ブラックホール");
         expect(cues).toEqual(["acknowledgement"]);
         expect(clue.getAttribute("data-matched")).toBe("true");
         expect(clue.getAttribute("aria-pressed")).toBe("true");
+        expect(getProgressValue()).toBe("13");
+      });
+
+      test("置いた結果を見せた後に数字のルールの一言と決め手の光に替え決め手と光の通るマスだけを覆いから抜くこと", () => {
+        finishSteps(1);
+        const message = getMessage();
+        const reasonClue = getClue("下1列");
+        const litRowSpotlit = [1, 2, 3, 4, 5].map((row) =>
+          isSpotlit(getCell(row, 1)),
+        );
+        const otherCellSpotlit = isSpotlit(getCell(3, 3));
+
+        expect(message).toContain("光が通るマスの数が");
+        expect(reasonClue.getAttribute("aria-pressed")).toBe("true");
+        expect(isSpotlit(reasonClue)).toBe(true);
+        expect(litRowSpotlit).toEqual([true, true, true, true, true]);
+        expect(otherCellSpotlit).toBe(false);
+        expect(getFocusScrim()).not.toBeNull();
+      });
+
+      test("置くマスを選ばせる手順ではマスに印を付けないこと", () => {
+        finishSteps(1);
+        const cues = [1, 2, 3, 4, 5].flatMap((row) =>
+          getCueKinds(getCell(row, 1)),
+        );
+
+        expect(cues).toEqual([]);
+      });
+
+      test("違うマスに置くと光が今どう進むかと直し方を言い置いたピースを直す所として示すこと", () => {
+        finishSteps(1);
+        press({ cell: [3, 1] });
+        const message = getMessage();
+        const cues = getCueKinds(getCell(3, 1));
+
+        expect(message).toContain("光が3マス目で止まります");
+        expect(message).toContain("別のマスをタップします");
+        expect(cues).toEqual(["mark"]);
+      });
+
+      test("違うマスに置いたピースを正しいマスへ動かすと次の手順へ進むこと", () => {
+        finishSteps(1);
+        pressAll([{ cell: [3, 1] }, { cell: [3, 1] }, { cell: [2, 1] }]);
+        advanceTime(nextStepEnoughMs);
+        const message = getMessage();
+
         expect(message).toContain("斜め鏡は光を直角に曲げます");
+      });
+
+      test("前の手順で置いたピースは押しても選べないこと", () => {
+        finishSteps(2);
+        press({ cell: [4, 5] });
+        const pressed = getCell(4, 5).getAttribute("aria-pressed");
+
+        expect(pressed).not.toBe("true");
+      });
+
+      test("手を引く間はヒントを出さないこと", () => {
+        finishSteps(3);
+
+        expect(queryHintButton()).toBeNull();
       });
     });
 
     describe("手を離した後", () => {
-      beforeEach(() => {
-        pressNextThroughIntro();
-        pressAll(guidedPresses);
+      beforeEach(async () => {
+        await pressStart();
+        finishSteps(guidedPresses.length);
       });
 
-      test("残りを置かせる一言を出し、画面全体の覆いを消して、考えている間は印を付けないこと", () => {
-        advanceTime(idleHintDelayMs - 1);
+      test("残りを置かせる一言を出し盤面の覆いを消して求められるまで印を付けないこと", () => {
+        advanceTime(60_000);
         const message = getMessage();
-        const scrim = getFocusScrim();
-        const cues = getCueKinds(getStock("右下がりの鏡"));
+        const cues = getCueKinds(getStock("ブラックホール"));
 
-        expect(message).toContain("すべての数字が緑になれば完成です");
-        expect(scrim).toBeNull();
+        expect(message).toContain(reflectionTutorial.freePlay.headline);
+        expect(getFocusScrim()).toBeNull();
         expect(cues).toEqual([]);
+        expect(queryHintButton()).not.toBeNull();
       });
 
-      test("長く手が止まると、次に選ぶ種類だけに印を付けること", () => {
-        advanceTime(idleHintDelayMs);
-        const stockCues = getCueKinds(getStock("右下がりの鏡"));
-        const reasonCues = getCueKinds(getClue("左3行"));
+      test("ヒントを押すと残りのピースに印を付け決め手の数字と光の通るマスを覆いから抜くこと", () => {
+        fireEvent.click(queryHintButton() as HTMLElement);
+        const stockCues = getCueKinds(getStock("ブラックホール"));
+        const reasonClue = getClue("左4行");
+        const message = getMessage();
 
         expect(stockCues).toEqual(["mark"]);
-        expect(reasonCues).toEqual([]);
+        expect(isSpotlit(reasonClue)).toBe(true);
+        expect(reasonClue.getAttribute("aria-pressed")).toBe("true");
+        expect(message).toContain("光を止めます");
+        expect(queryHintButton()).toBeNull();
       });
 
-      test("最後の手順の結果として、最初に出した光が両面鏡に沿って通る様子を見せ、押すと本番と同じく閉じること", () => {
-        const shownBefore = getClue("左2行").getAttribute("aria-pressed");
-        fireEvent.click(getClue("左2行"));
-        const shownAfter = getClue("左2行").getAttribute("aria-pressed");
+      test("次の手で手がかりを消し1回で答えのマスまでは見せないこと", () => {
+        fireEvent.click(queryHintButton() as HTMLElement);
+        press({ stock: "ブラックホール" });
+        const cellCues = getCueKinds(getCell(4, 2));
 
-        expect(shownBefore).toBe("true");
-        expect(shownAfter).toBe("false");
+        expect(cellCues).toEqual([]);
+        expect(getFocusScrim()).toBeNull();
+        expect(queryHintButton()).not.toBeNull();
       });
 
-      test("本番と同じく、数字キーでストックの種類を選び、Esc で選んだものを解除すること", () => {
+      test("手持ちをすべて置いても揃わなければ緑でない数字があることを言うこと", () => {
+        pressAll([
+          { stock: "ブラックホール" },
+          { cell: [4, 4] },
+          { stock: "右下がりの鏡" },
+          { cell: [5, 2] },
+        ]);
+        const message = getMessage();
+
+        expect(message).toContain("緑でない数字があります");
+      });
+
+      test("本番と同じく数字キーでストックの種類を選びEscで選んだものを解除すること", () => {
         fireEvent.keyDown(window, { key: "2" });
         const selected = getStock("右下がりの鏡").getAttribute("aria-pressed");
         fireEvent.keyDown(window, { key: "Escape" });
@@ -405,31 +436,45 @@ describe("ReflectionTutorial", () => {
         expect(onClose).not.toHaveBeenCalled();
       });
 
-      test("印の無い所を押しても縁取らず、本番と同じく置けること", () => {
-        pressAll([{ stock: "右下がりの鏡" }, { cell: [1, 1] }]);
-        const label = getCell(1, 1).getAttribute("aria-label");
-        const cues = getCueKinds(getCell(1, 1));
-
-        expect(label).toBe("1行1列 右下がりの鏡");
-        expect(cues).toEqual([]);
-      });
-
-      test("残りを置いて解くと、完成演出の後に、ゲームのホームで開いているレベルを遊ぶ操作を出すこと", async () => {
+      test("残りを置いて解くと完成演出の後に覚えたルールを並べゲームのホームで開いているレベルを遊ぶ操作を出すこと", async () => {
         pressAll(freePresses);
         const message = getMessage();
         await advanceTimeInSlices(clearEnoughMs);
-        fireEvent.click(screen.getByRole("button", { name: "レベル 3を遊ぶ" }));
+        const recap = listRecap();
+        const progress = getProgressValue();
+        fireEvent.click(screen.getByRole("button", { name: "レベル 1を遊ぶ" }));
 
         expect(message).toContain("完成です");
+        expect(recap).toEqual(
+          reflectionTutorial.rules.map(({ label }) => label),
+        );
+        expect(progress).toBe("100");
         expect(playLayeredSound).toHaveBeenCalledOnce();
         expect(playStart.onStart).toHaveBeenCalledOnce();
+      });
+
+      test("解いた後にもう一度を押すと入口を通さずに始めの盤面で最初の手順から始めること", async () => {
+        pressAll(freePresses);
+        await advanceTimeInSlices(clearEnoughMs);
+        fireEvent.click(
+          within(getScreen()).getByRole("button", { name: "もう一度" }),
+        );
+        const message = getMessage();
+        const placed = listPlacedCellLabels();
+        const cues = getCueKinds(getStock("ブラックホール"));
+
+        expect(queryStartButton()).toBeNull();
+        expect(message).toContain("置くピースをタップして選択します");
+        expect(placed).toEqual([]);
+        expect(cues).toEqual(["mark", "pointer"]);
+        expect(getProgressValue()).toBe("0");
       });
     });
   });
 
-  describe("導入を見せる場合", () => {
+  describe("入口の動きを見せる場合", () => {
     beforeEach(() => {
-      // 場面の動きを終えないままにして、押したときに今の段の動きを終えて見せることを確かめる。
+      // 場面の動きを終えないままにして、動きの途中で押しても入口に留まることを確かめる。
       // 光路は SVG に描くので、SVG の要素も動かせる環境にする。
       Object.defineProperty(Element.prototype, "animate", {
         configurable: true,
@@ -450,20 +495,25 @@ describe("ReflectionTutorial", () => {
       Reflect.deleteProperty(Element.prototype, "animate");
     });
 
-    test("ゴールの全光路を伸ばす間に盤面を押すと、手順へ飛ばずに、全光路を出したゴールの盤面で次へを待つこと", async () => {
+    test("ゴールの全光路を伸ばす間に盤面を押しても手順へ飛ばずにはじめるを待つこと", async () => {
       await advanceTimeInSlices(800);
       fireEvent.pointerDown(getBoard());
-      const caption = screen.queryByText("この盤面がゴールです");
-      const nextButton = screen.queryByRole("button", { name: "次へ" });
-      const lightPaths = screen
-        .getByRole("main")
-        .querySelectorAll("[data-clear-light-step]");
+      const caption = screen.queryByText(reflectionTutorial.intro.goalCaption);
       const placed = listPlacedCellLabels();
 
       expect(caption).not.toBeNull();
-      expect(nextButton).not.toBeNull();
-      expect(lightPaths.length).toBeGreaterThan(0);
-      expect(placed).toHaveLength(6);
+      expect(queryStartButton()).not.toBeNull();
+      expect(placed).toHaveLength(8);
+    });
+
+    test("はじめるを押すとゴールのピースを消し終えるまでは最初の手順の印を出さないこと", async () => {
+      fireEvent.click(
+        within(getScreen()).getByRole("button", { name: "はじめる" }),
+      );
+      await advanceTimeInSlices(500);
+      const cues = getCueKinds(getStock("ブラックホール"));
+
+      expect(cues).toEqual([]);
     });
   });
 
@@ -476,41 +526,40 @@ describe("ReflectionTutorial", () => {
       );
     });
 
-    test("ゴールと始めの盤面を「次へ」で順に見せて、最初の手順を始めること", async () => {
+    test("ゴールの盤面を見せはじめるを押すと始めの盤面で最初の手順を始めること", async () => {
       await advanceTimeInSlices(2000);
-      const goalCaption = screen.queryByText("この盤面がゴールです");
-      fireEvent.click(screen.getByRole("button", { name: "次へ" }));
-      await advanceTimeInSlices(500);
-      const startCaption = screen.queryByText(/最初は盤面が空です/);
-      fireEvent.click(screen.getByRole("button", { name: "次へ" }));
-      await advanceTimeInSlices(500);
+      const goalCaption = screen.queryByText(
+        reflectionTutorial.intro.goalCaption,
+      );
+      await pressStart();
       const message = getMessage();
-      const cues = getCueKinds(getClue("左2行"));
+      const placed = listPlacedCellLabels();
+      const cues = getCueKinds(getStock("ブラックホール"));
 
       expect(goalCaption).not.toBeNull();
-      expect(startCaption).not.toBeNull();
-      expect(message).toContain("通るマスの数");
-      expect(cues).toEqual(["mark"]);
+      expect(message).toContain("置くピースをタップして選択します");
+      expect(placed).toEqual([]);
+      expect(cues).toEqual(["mark", "pointer"]);
     });
   });
 
   describe("プレイ中に開いた場合", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       installAnimate();
       render(<ReflectionTutorial open onClose={onClose} />);
-      pressNextThroughIntro();
-      pressAll(guidedPresses);
+      await pressStart();
+      finishSteps(guidedPresses.length);
     });
 
-    test("解き終えると、プレイ中の盤面も同じルールだと伝えること", async () => {
+    test("解き終えるとプレイ中の盤面と同じルールだと伝えること", async () => {
       pressAll(freePresses);
       await advanceTimeInSlices(clearEnoughMs);
-      const detail = screen.queryByText("プレイ中の盤面も同じルールです");
+      const detail = screen.queryByText("プレイ中の盤面と同じルールです");
 
       expect(detail).not.toBeNull();
     });
 
-    test("解き終えると、プレイに戻る操作を出すこと", async () => {
+    test("解き終えるとプレイに戻る操作を出すこと", async () => {
       pressAll(freePresses);
       await advanceTimeInSlices(clearEnoughMs);
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));

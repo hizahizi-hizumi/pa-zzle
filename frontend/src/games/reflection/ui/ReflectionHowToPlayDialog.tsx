@@ -31,7 +31,7 @@ const pieceGroups: readonly {
     name: "両面鏡",
     effect: "鏡に沿う光は通し、当たる光ははね返す",
   },
-  { pieces: ["reflector"], name: "反射体", effect: "どの向きの光もはね返す" },
+  { pieces: ["reflector"], name: "反射鏡", effect: "どの向きの光もはね返す" },
   { pieces: ["black-hole"], name: "ブラックホール", effect: "光を吸い込む" },
 ];
 
