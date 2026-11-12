@@ -26,6 +26,7 @@ type NanpureCellProps = {
   mistake: boolean;
   disabled: boolean;
   cue: NanpureCellCue | undefined;
+  /** チュートリアルで、盤面の覆いからこのマスを抜き、元の明るさで見せる。 */
   spotlit: boolean;
   onSelect: (cellIndex: number) => void;
 };
