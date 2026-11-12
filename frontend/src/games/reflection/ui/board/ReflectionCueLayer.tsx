@@ -31,6 +31,17 @@ const spotlightClassNames = {
   stock: "inset-0",
 } as const satisfies Record<ReflectionCuePlace, string>;
 
+/**
+ * 指を置く所。マス目では、下のマスや外周ヒント（決め手の光が通る所）を指で隠さないよう、押すマスの中を指す。
+ * ストックは下に一言しかないので、押す物のすぐ下から指す。
+ */
+const pointerPlacements = {
+  cell: "center",
+  "row-clue": "center",
+  "column-clue": "center",
+  stock: "below",
+} as const satisfies Record<ReflectionCuePlace, "below" | "center">;
+
 type ReflectionCueLayerProps = {
   cues: readonly ReflectionCue[];
   place: ReflectionCuePlace;
@@ -57,7 +68,15 @@ export function ReflectionCueLayer({ cues, place }: ReflectionCueLayerProps) {
         )}
       >
         {cue.kind === "mark" ? (
-          <TutorialCue kind="mark" recallId={cue.recallId} />
+          cue.pointed ? (
+            <TutorialCue
+              kind="pointer"
+              recallId={cue.recallId}
+              placement={pointerPlacements[place]}
+            />
+          ) : (
+            <TutorialCue kind="mark" recallId={cue.recallId} />
+          )
         ) : (
           <TutorialCue kind="acknowledgement" id={cue.id} />
         )}
