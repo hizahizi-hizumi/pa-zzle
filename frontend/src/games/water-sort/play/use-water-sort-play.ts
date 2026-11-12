@@ -118,6 +118,10 @@ export type WaterSortPlay = GamePlay<
     sourceBottleIndex: number | null;
     operation: WaterSortOperation | null;
     selectBottle: (bottleIndex: number) => void;
+    pourBottle: (
+      sourceBottleIndex: number,
+      destinationBottleIndex: number,
+    ) => void;
   };
 
 type WaterSortPlayState = {
@@ -245,6 +249,48 @@ export function useWaterSortPlay(
     });
   }, []);
 
+  const pourBottle = useCallback(
+    (sourceBottleIndex: number, destinationBottleIndex: number) => {
+      const selectedAt = Date.now();
+      const operationId = nextOperationId.current++;
+      setPlay((current) => {
+        if (current.progress !== "playing") return current;
+        const { session } = current;
+        const source = session.puzzleState[sourceBottleIndex];
+        if (!source || isCompleteWaterSortBottle(source)) return current;
+        const nextSession = applyWaterSortSessionMove(
+          session,
+          { sourceBottleIndex, destinationBottleIndex },
+          selectedAt,
+        );
+        if (nextSession === session) {
+          return {
+            ...current,
+            operation: {
+              id: operationId,
+              type: "invalid",
+              bottleIndex: destinationBottleIndex,
+            },
+          };
+        }
+        return {
+          ...applyPlaySession(current, nextSession),
+          sourceBottleIndex: null,
+          operation: {
+            id: operationId,
+            type: "poured",
+            sourceBottleIndex,
+            destinationBottleIndex,
+            stateBefore: session.puzzleState,
+            stateAfter: nextSession.puzzleState,
+            isClearingMove: nextSession.status === "cleared",
+          },
+        };
+      });
+    },
+    [],
+  );
+
   const undo = useCallback(() => {
     setPlay((current) => {
       const next = applyPlaySession(
@@ -332,6 +378,7 @@ export function useWaterSortPlay(
     sourceBottleIndex: play.sourceBottleIndex,
     operation: play.operation,
     selectBottle,
+    pourBottle,
     undo,
     restart,
     replay,

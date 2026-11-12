@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router";
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
 import type {
@@ -19,6 +20,10 @@ import { WaterSortResultScreen } from "@/games/water-sort/ui/result/WaterSortRes
 import { useWaterSortSoundEffects } from "@/games/water-sort/ui/use-water-sort-sound-effects";
 import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
+import { WaterSortExperimentBoard } from "@/games/water-sort/ui/WaterSortPlay/WaterSortExperimentBoard";
+import { WaterSortLabControls } from "@/games/water-sort/ui/WaterSortPlay/WaterSortLabControls";
+import type { WaterSortExperience } from "@/games/water-sort/ui/WaterSortPlay/water-sort-experience";
+import { WATER_SORT_EXPERIENCES } from "@/games/water-sort/ui/WaterSortPlay/water-sort-experience";
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
 
 type WaterSortPlayProps = GamePlayScreenProps<
@@ -34,6 +39,10 @@ type WaterSortPlayProps = GamePlayScreenProps<
     sourceBottleIndex: number | null;
     operation: WaterSortOperation | null;
     onSelectBottle: (bottleIndex: number) => void;
+    onPourBottle?: (
+      sourceBottleIndex: number,
+      destinationBottleIndex: number,
+    ) => void;
   };
 
 export function WaterSortPlay({
@@ -50,6 +59,7 @@ export function WaterSortPlay({
   sourceBottleIndex,
   operation,
   onSelectBottle,
+  onPourBottle,
   onUndo,
   canRestart,
   onRestart,
@@ -61,8 +71,26 @@ export function WaterSortPlay({
   onOpenDiagnostics,
 }: WaterSortPlayProps) {
   const [hasActivePourAnimation, setHasActivePourAnimation] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const labEnabled = searchParams.get("waterSortLab") === "1";
+  const requestedExperience = searchParams.get("waterSortExperience");
+  const experience: WaterSortExperience =
+    labEnabled &&
+    WATER_SORT_EXPERIENCES.some((value) => value === requestedExperience)
+      ? (requestedExperience as WaterSortExperience)
+      : "classic";
+  function changeExperience(next: WaterSortExperience) {
+    setSearchParams(
+      (previous) => {
+        const updated = new URLSearchParams(previous);
+        updated.set("waterSortExperience", next);
+        return updated;
+      },
+      { replace: true },
+    );
+  }
   const showDeadlockNotice = isDeadlocked && !hasActivePourAnimation;
-  useWaterSortSoundEffects(operation, progress);
+  useWaterSortSoundEffects(operation, progress, experience);
 
   return (
     <GamePlayFrame
@@ -100,16 +128,39 @@ export function WaterSortPlay({
         />
       )}
     >
-      <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
-        <WaterSortBoard
-          state={state}
-          sourceBottleIndex={sourceBottleIndex}
-          operation={operation}
-          onSelectBottle={onSelectBottle}
-          interactionDisabled={progress !== "playing"}
-          onPourAnimationActivityChange={setHasActivePourAnimation}
-          onClearAnimationComplete={onClearAnimationComplete}
-        />
+      <main className="flex min-h-0 flex-1 flex-col items-center justify-center px-3 py-2 sm:px-6">
+        {labEnabled && (
+          <WaterSortLabControls
+            experience={experience}
+            onChange={changeExperience}
+            disabled={progress !== "playing"}
+          />
+        )}
+        <div className="min-h-0 w-full flex-1">
+          {experience === "classic" ? (
+            <WaterSortBoard
+              state={state}
+              sourceBottleIndex={sourceBottleIndex}
+              operation={operation}
+              onSelectBottle={onSelectBottle}
+              interactionDisabled={progress !== "playing"}
+              onPourAnimationActivityChange={setHasActivePourAnimation}
+              onClearAnimationComplete={onClearAnimationComplete}
+            />
+          ) : (
+            <WaterSortExperimentBoard
+              experience={experience}
+              state={state}
+              sourceBottleIndex={sourceBottleIndex}
+              operation={operation}
+              onSelectBottle={onSelectBottle}
+              onPourBottle={onPourBottle}
+              interactionDisabled={progress !== "playing"}
+              onPourAnimationActivityChange={setHasActivePourAnimation}
+              onClearAnimationComplete={onClearAnimationComplete}
+            />
+          )}
+        </div>
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
         {showDeadlockNotice ? (

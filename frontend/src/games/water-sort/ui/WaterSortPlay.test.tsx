@@ -18,6 +18,12 @@ function render(ui: ReactElement) {
   return renderWithoutRouter(ui, { wrapper: MemoryRouter });
 }
 
+function renderAt(ui: ReactElement, path: string) {
+  return renderWithoutRouter(
+    <MemoryRouter initialEntries={[path]}>{ui}</MemoryRouter>,
+  );
+}
+
 afterEach(() => {
   cleanup();
   delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
@@ -70,6 +76,47 @@ function createResult(
     ...overrides,
   };
 }
+
+describe("WaterSortPlay の比較試作", () => {
+  test("通常のプレイでは比較UIを表示せず現行盤面を維持すること", () => {
+    render(<WaterSortPlay {...baseProps} />);
+
+    expect(screen.queryByRole("group", { name: "体験比較" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "ボトル 1: 赤、青" }),
+    ).toBeTruthy();
+  });
+
+  test("最後の一手の演出中は比較方法を切り替えられないこと", () => {
+    renderAt(
+      <WaterSortPlay {...baseProps} progress="clearing" />,
+      "/puzzles/water-sort/play/1?waterSortLab=1",
+    );
+    expect(
+      (screen.getByRole("button", { name: "つかむ" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+  });
+
+  test("比較画面の方式を変更しても盤面と手数を維持すること", () => {
+    renderAt(
+      <WaterSortPlay {...baseProps} />,
+      "/puzzles/water-sort/play/1?waterSortLab=1",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "つかむ" }));
+
+    expect(
+      screen
+        .getByRole("button", { name: "つかむ" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      screen.getByRole("button", { name: "ボトル 1: 赤、青" }),
+    ).toBeTruthy();
+    expect(screen.getByText("7")).toBeTruthy();
+  });
+});
 
 describe("WaterSortPlay", () => {
   test("プレイ中はゲーム名と主要な計測値をミニマルに表示すること", () => {

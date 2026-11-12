@@ -1,6 +1,7 @@
 import {
   applyWaterSortMove,
   getWaterSortPourAmount,
+  getWaterSortTopColorUnits,
   listWaterSortLegalMoves,
 } from "@/games/water-sort/puzzle/rules";
 import {
@@ -9,6 +10,23 @@ import {
   isWaterSortCleared,
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
+
+describe("getWaterSortTopColorUnits", () => {
+  const cases = [
+    { bottle: [] as const, count: 0 },
+    { bottle: [0, 1, 1] as const, count: 2 },
+    { bottle: [2, 2, 2, 2] as const, count: 4 },
+  ];
+
+  test.each(cases)(
+    "上端の連続した色を容量単位で数えられること: $count",
+    ({ bottle, count }) => {
+      const result = getWaterSortTopColorUnits(bottle);
+
+      expect(result).toBe(count);
+    },
+  );
+});
 
 describe("getWaterSortPourAmount", () => {
   test("最上段の連続した同色を空き容量までまとめて移せること", () => {

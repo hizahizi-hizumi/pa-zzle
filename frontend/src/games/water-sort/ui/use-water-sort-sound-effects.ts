@@ -18,6 +18,10 @@ import {
   POUR_TRANSFER_END_OFFSET,
   POUR_TRANSFER_START_OFFSET,
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
+import {
+  getWaterSortTransferDurationMs,
+  type WaterSortExperience,
+} from "@/games/water-sort/ui/WaterSortPlay/water-sort-experience";
 import { prefersReducedMotion } from "@/lib/motion";
 import {
   defineSoundEffect,
@@ -49,6 +53,25 @@ const pouredSoundLayers = [
   };
 });
 
+function shortPouredSoundLayers(durationMs: number): readonly SoundLayer[] {
+  const bubbleIndexes = [0, 2, 4] as const;
+  const progress = [0, 0.28, 0.62] as const;
+  return bubbleIndexes.map((index, position) => ({
+    sound: pouredSoundLayers[index]!.sound,
+    offsetMs: durationMs * (progress[position] ?? 0),
+  }));
+}
+
+function shortPourDurationMs(
+  operation: Extract<WaterSortOperation, { type: "poured" }>,
+) {
+  const source = operation.sourceBottleIndex;
+  return getWaterSortTransferDurationMs(
+    (operation.stateBefore[source]?.length ?? 0) -
+      (operation.stateAfter[source]?.length ?? 0),
+  );
+}
+
 const clearedSound = defineSoundEffect(clearedSoundUrl);
 
 const waterSortSounds: readonly SoundEffect[] = [
@@ -64,7 +87,10 @@ function getPourTransferDelayMs(transferOffset: number): number {
     : POUR_ANIMATION_DURATION_MS * transferOffset;
 }
 
-function playOperationSound(operation: WaterSortOperation) {
+function playOperationSound(
+  operation: WaterSortOperation,
+  experience: WaterSortExperience,
+) {
   switch (operation.type) {
     case "invalid":
       // 動きを減らす設定ではボトルを揺らさず、画面が何も変わらないので鳴らさない。
@@ -73,18 +99,34 @@ function playOperationSound(operation: WaterSortOperation) {
       }
       return;
     case "poured":
-      playLayeredSound(pouredSoundLayers, {
-        delayMs: getPourTransferDelayMs(POUR_TRANSFER_START_OFFSET),
-        variation: REPEATED_SOUND_VARIATION,
-      });
+      playLayeredSound(
+        experience === "classic"
+          ? pouredSoundLayers
+          : shortPouredSoundLayers(shortPourDurationMs(operation)),
+        {
+          delayMs:
+            experience === "classic"
+              ? getPourTransferDelayMs(POUR_TRANSFER_START_OFFSET)
+              : 75,
+          variation: REPEATED_SOUND_VARIATION,
+        },
+      );
       return;
   }
 }
 
 /** 最後の注水で水が流れ込み終わるのに合わせて、クリア音を鳴らす。 */
-function playClearSound() {
+function playClearSound(
+  experience: WaterSortExperience,
+  operation: WaterSortOperation | null,
+) {
   playSound(clearedSound, {
-    delayMs: getPourTransferDelayMs(POUR_TRANSFER_END_OFFSET),
+    delayMs:
+      experience === "classic"
+        ? getPourTransferDelayMs(POUR_TRANSFER_END_OFFSET)
+        : operation?.type === "poured"
+          ? shortPourDurationMs(operation)
+          : 410,
   });
 }
 
@@ -96,8 +138,9 @@ function playClearSound() {
 export function useWaterSortSoundEffects(
   operation: WaterSortOperation | null,
   progress: GameProgress,
+  experience: WaterSortExperience = "classic",
 ) {
   usePrepareSoundEffects(waterSortSounds);
-  useOperationSound(operation, playOperationSound);
-  useClearSound(progress, playClearSound);
+  useOperationSound(operation, (next) => playOperationSound(next, experience));
+  useClearSound(progress, () => playClearSound(experience, operation));
 }
