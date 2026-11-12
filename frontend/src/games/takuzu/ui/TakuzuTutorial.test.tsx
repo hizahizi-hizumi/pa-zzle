@@ -57,7 +57,11 @@ const towardStepRevealDelayMs = 1000;
 /** ルールの手順を終えてから、置いたマスと決め手を残して見せ、次の印を付けるまでの間。 */
 const nextStepCueDelayMs = 900;
 
-const idleHintDelayMs = 4000;
+/** 2マスを自分で埋める手順で、手が止まってから指を出すまでの間。 */
+const idlePointerDelayMs = 4000;
+
+/** 手を離した後に止まっていても、手がかりを勝手に出さないことを確かめる長さ。 */
+const longIdleMs = 60_000;
 
 /** 入口の動きを見せ終えるのに十分な間。 */
 const introEnoughMs = 2000;
@@ -130,6 +134,14 @@ function pressStart(): void {
     within(getScreen()).getByRole("button", { name: "はじめる" }),
   );
   advanceTime(0);
+}
+
+function queryHintButton(): HTMLElement | null {
+  return within(getScreen()).queryByRole("button", { name: "ヒント" });
+}
+
+function pressHint(): void {
+  fireEvent.click(within(getScreen()).getByRole("button", { name: "ヒント" }));
 }
 
 function getBoard(): HTMLElement {
@@ -304,6 +316,12 @@ describe("TakuzuTutorial", () => {
       expect(getScrim()).toBeNull();
     });
 
+    test("入口では、ヒントを出さないこと", () => {
+      const hintButton = queryHintButton();
+
+      expect(hintButton).toBeNull();
+    });
+
     test("閉じてから開き直すと、入口から始まること", () => {
       pressStart();
       finishSteps(2);
@@ -338,6 +356,12 @@ describe("TakuzuTutorial", () => {
       expect(label).toBe("4行1列 四角");
       expect(midway).not.toBeNull();
       expect(getHintedCellPositions()).toEqual(["4行1列"]);
+    });
+
+    test("手を引いている間は、ヒントを出さないこと", () => {
+      const hintButton = queryHintButton();
+
+      expect(hintButton).toBeNull();
     });
 
     test("1回タップした四角のまま手が止まっても、ルールに合わないところが無ければ途中の一言のままにすること", () => {
@@ -545,6 +569,19 @@ describe("TakuzuTutorial", () => {
         expect(getSpotlitCellPositions()).toEqual(comparedCells);
       });
 
+      test("手が止まると、最初に埋める印のマスを指で指し、ヒントは出さないこと", () => {
+        advanceTime(idlePointerDelayMs - 1);
+        const pointedBeforeIdle = getPointedCellPositions();
+        advanceTime(1);
+
+        const pointed = getPointedCellPositions();
+        const hintButton = queryHintButton();
+
+        expect(pointedBeforeIdle).toEqual([]);
+        expect(pointed).toEqual(["3行1列"]);
+        expect(hintButton).toBeNull();
+      });
+
       test("1マス置いても、覆いから抜くマスを替えないこと", () => {
         tapCell(3, 4);
 
@@ -637,6 +674,23 @@ describe("TakuzuTutorial", () => {
       });
     });
 
+    describe("最後の手順を終えた直後", () => {
+      beforeEach(() => {
+        finishSteps(stepPlacements.length);
+      });
+
+      test("終えた手順を残して見せる間はヒントを出さず、その間を終えると出すこと", () => {
+        advanceTime(nextStepCueDelayMs - 1);
+        const hintButtonWhileLingering = queryHintButton();
+        advanceTime(1);
+
+        const hintButton = queryHintButton();
+
+        expect(hintButtonWhileLingering).toBeNull();
+        expect(hintButton).not.toBeNull();
+      });
+    });
+
     describe("手順を終えた場合", () => {
       beforeEach(() => {
         finishSteps(stepPlacements.length);
@@ -653,17 +707,28 @@ describe("TakuzuTutorial", () => {
         expect(getScrim()).toBeNull();
       });
 
-      test("手が止まったときだけ、並んだ2つの隣で決まるマスに指の無い印を付け、そのマスと決め手を覆いから抜き、そのルールの一言に替えること", () => {
-        advanceTime(idleHintDelayMs - 1);
-        const hintedBeforeIdle = getHintedCellPositions();
-        advanceTime(1);
+      test("手が止まっても、印を付けず、覆わずに、ヒントを出しておくこと", () => {
+        advanceTime(longIdleMs);
+
+        const freePlayMessage = queryMessage(freePlay);
+        const hintButton = queryHintButton();
+
+        expect(freePlayMessage).not.toBeNull();
+        expect(getHintedCellPositions()).toEqual([]);
+        expect(getScrim()).toBeNull();
+        expect(hintButton).not.toBeNull();
+      });
+
+      test("ヒントを押すと、並んだ2つの隣で決まるマスに指の無い印を付け、そのマスと決め手を覆いから抜き、そのルールの一言に替え、ヒントを下げること", () => {
+        pressHint();
 
         const ruleMessage = queryMessage(
           describeTakuzuTutorialRule("run") ?? undefined,
         );
         const freePlayMessage = queryMessage(freePlay);
+        const hintButton = queryHintButton();
 
-        expect(hintedBeforeIdle).toEqual([]);
+        expect(hintButton).toBeNull();
         expect(getHintedCellPositions()).toEqual(["1行2列"]);
         expect(getPointedCellPositions()).toEqual([]);
         expect(getScrim()).not.toBeNull();
@@ -674,6 +739,30 @@ describe("TakuzuTutorial", () => {
         ]);
         expect(ruleMessage).not.toBeNull();
         expect(freePlayMessage).toBeNull();
+      });
+
+      test("ヒントで示した後に次の手を入れると、印と覆いを消して残りを埋める一言に戻し、またヒントを出すこと", () => {
+        pressHint();
+        tapCell(4, 2);
+
+        const freePlayMessage = queryMessage(freePlay);
+        const hintButton = queryHintButton();
+
+        expect(freePlayMessage).not.toBeNull();
+        expect(getHintedCellPositions()).toEqual([]);
+        expect(getScrim()).toBeNull();
+        expect(hintButton).not.toBeNull();
+      });
+
+      test("ルールに合わない手を置くと、違反がある間はヒントを出さないこと", () => {
+        pressKeyOnCell(1, 1, "2");
+        const hintButtonBeforeSettled = queryHintButton();
+        advanceTime(violationReactionDelayMs);
+
+        const hintButton = queryHintButton();
+
+        expect(hintButtonBeforeSettled).toBeNull();
+        expect(hintButton).toBeNull();
       });
 
       test("どのマスにも置け、正しく置いても応えないこと", () => {
@@ -726,6 +815,12 @@ describe("TakuzuTutorial", () => {
         expect(detail).not.toBeNull();
         expect(recap).toEqual(rules.map(({ label }) => label));
         expect(getProgressValue()).toBe("100");
+      });
+
+      test("ヒントを出さないこと", () => {
+        const hintButton = queryHintButton();
+
+        expect(hintButton).toBeNull();
       });
 
       test("本番と同じクリア音を鳴らすこと", () => {

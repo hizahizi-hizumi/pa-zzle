@@ -46,6 +46,11 @@ export type TutorialStageProps = {
   renderBoard: (intro: TutorialStageBoardIntro) => ReactNode;
   onIntroEnd: () => void;
   onRestart: () => void;
+  /**
+   * 手を離した後、遊ぶ人が自分で手がかりを求める操作。渡している間だけ、一言の下に「ヒント」を出す。
+   * 自分で解いている間に手がかりを勝手に出して割り込まないよう、手がかりは求められたときだけ見せる。
+   */
+  onRequestHint?: (() => void) | null;
   onClose: () => void;
 };
 
@@ -85,6 +90,7 @@ export function TutorialStage({
   renderBoard,
   onIntroEnd,
   onRestart,
+  onRequestHint = null,
   onClose,
 }: TutorialStageProps) {
   useTutorialMusicState(getMusicState(open, phase));
@@ -128,6 +134,7 @@ export function TutorialStage({
             renderBoard={renderBoard}
             onIntroEnd={onIntroEnd}
             onRestart={onRestart}
+            onRequestHint={onRequestHint}
           />
         </DialogPrimitive.Content>
       </DialogPortal>
