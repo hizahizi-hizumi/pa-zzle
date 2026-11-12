@@ -38,7 +38,10 @@ type HowToPlayOverlayProps = {
   /** 採点のタブの中身。効く点ごとの `HowToPlaySection` に `HowToPlayScoreRow` を並べる。 */
   scoring: ReactNode;
   onClose: () => void;
-  /** 渡すと、ゴールの盤面の下に、盤面と同じ幅でチュートリアルを始めるボタンを置く。 */
+  /**
+   * 渡すと、ゴールの盤面の下に、チュートリアルを始めるボタンを置く。
+   * 1列のときは本文の幅いっぱいに置き、2列のときは盤面と同じ幅に置く。
+   */
   onOpenTutorial?: () => void;
 };
 
@@ -55,7 +58,7 @@ function isHowToPlayTab(value: string): value is HowToPlayTab {
 }
 
 const tabContentClassName =
-  "@container isolate data-[state=inactive]:hidden px-4 pt-6 pb-12 lg:col-start-2 lg:row-start-2 lg:min-h-0 lg:overflow-y-auto lg:px-0 lg:pt-8";
+  "@container isolate data-[state=inactive]:hidden px-4 pt-6 pb-12 lg:col-start-2 lg:row-start-2 lg:min-h-0 lg:overflow-x-hidden lg:overflow-y-auto lg:px-0 lg:pt-8 lg:[clip-path:inset(0)]";
 
 /**
  * 遊び方の全画面の層。チュートリアルと同じく、上の帯にピクトグラムと名前、閉じるを置く。
@@ -65,9 +68,13 @@ const tabContentClassName =
  * 狭い画面では1列にし、それらをルールのタブの先頭に置く。どちらの画面でも1つだけ描き、置き場所を格子で替える。
  * 狭い画面では、タブの列を上に留めたまま中身全体を1つの領域で送り、タブを替えたら先頭から見せる。
  * チュートリアルのあるゲームでは、帯ではなくゴールの盤面の下に、チュートリアルを始めるボタンを置く。
+ * 1列のときは、盤面とボタンの列を本文の幅いっぱいにして盤面を中央に置き、ボタンを本文の幅いっぱいにする。
+ * 2列のときは、列を盤面の幅にして、ボタンを盤面と同じ幅にする。
  * 広い画面では、左の列を送らずに、一文・ゴールの盤面・ボタンを列の高さに収める。
  * 開くたびにルールのタブから始める。触った例は、開いている間だけ保つ。
  * 図が置き場所の幅に合わせて大きさを決められるよう、中身の領域をコンテナにする。
+ * 中身を送る領域は、送る範囲の外へ描く物を切る。画面の座標で描く動き（`position: fixed`）は送る領域の overflow で切られないので、
+ * `clip-path` で切り、帯とタブの上に描かれないようにする。
  */
 export function HowToPlayOverlay({
   open,
@@ -124,15 +131,17 @@ export function HowToPlayOverlay({
         <HowToPlayPhrases text={description} />
       </p>
       {/* 盤面の縁を本文と面の端にそろえるよう、盤面の置き場所を盤面に渡す。広い画面では残りの高さも渡す。 */}
-      {/* チュートリアルのボタンは盤面と同じ幅にする。 */}
+      {/* 1列のときは列を本文の幅いっぱいにして盤面を中央に置き、2列のときは列を盤面の幅にする。ボタンは列の幅いっぱいに置く。 */}
       <div
         className={cn(
           "@container lg:min-h-0 lg:flex-1 lg:[container-type:size]",
+          // 1列のときは、開いた画面に最初のルールの見出しがのぞくよう、盤面の縦横の大きさの上限を渡す。小さい画面でも幅の7割より小さくしない。
+          "max-lg:[--how-to-play-goal-board-max:max(calc(100svh-24rem),70vw)]",
           onOpenTutorial && "[--how-to-play-goal-below:--spacing(14)]",
         )}
       >
-        <div className="flex w-fit max-w-full flex-col gap-3">
-          {goal}
+        <div className="flex w-full flex-col gap-3 lg:w-fit lg:max-w-full">
+          <div className="flex justify-center">{goal}</div>
           {onOpenTutorial ? (
             <HowToPlayTutorialButton onOpenTutorial={onOpenTutorial} />
           ) : null}
@@ -183,7 +192,7 @@ export function HowToPlayOverlay({
           >
             <div
               ref={scrollerRef}
-              className="mx-auto grid min-h-0 w-full max-w-7xl flex-1 grid-cols-1 content-start overflow-y-auto lg:grid-cols-[minmax(0,1fr)_--spacing(160)] lg:grid-rows-[auto_minmax(0,1fr)] lg:content-stretch lg:gap-x-12 lg:overflow-hidden lg:px-8"
+              className="mx-auto grid min-h-0 w-full max-w-7xl flex-1 grid-cols-1 content-start overflow-x-hidden overflow-y-auto [clip-path:inset(0)] lg:grid-cols-[minmax(0,1fr)_--spacing(160)] lg:grid-rows-[auto_minmax(0,1fr)] lg:content-stretch lg:gap-x-12 lg:overflow-hidden lg:px-8"
             >
               {/* 左の列の一文の上端を、右の最初のルールの一文の上端にそろえるため、タブの列の高さを決めておく。 */}
               {/* タブを列の下端に寄せ、選んだタブの下線（2px）の下端を区切り線（1px）の下端にそろえて、区切り線に重ねる。 */}

@@ -1,19 +1,17 @@
 import { HowToPlayExample } from "@/components/HowToPlayExample";
+import type { HowToPlayVerdictLabels } from "@/components/HowToPlayVerdict";
 import type { TakuzuHowToPlayFigureBoard } from "@/games/takuzu/ui/TakuzuHowToPlayDialog/figure-boards";
 import { HowToPlayFigure } from "@/games/takuzu/ui/TakuzuHowToPlayDialog/HowToPlayFigure";
 import { TileLegend } from "@/games/takuzu/ui/TakuzuHowToPlayDialog/TouchableGivenTileExample/TileLegend";
 import { useTouchableExample } from "@/games/takuzu/ui/TakuzuHowToPlayDialog/use-touchable-example";
-import {
-  VerdictCaption,
-  type VerdictLabels,
-} from "@/games/takuzu/ui/TakuzuHowToPlayDialog/VerdictCaption";
+import { VerdictCaption } from "@/games/takuzu/ui/TakuzuHowToPlayDialog/VerdictCaption";
 
 type TouchableGivenTileExampleProps = {
   /** 最初からあるタイルと置いたタイルを混ぜた盤面。押す所の手がかりは、最初からあるタイルに付ける。 */
   board: TakuzuHowToPlayFigureBoard;
 };
 
-const changeLabels: VerdictLabels = {
+const changeLabels: HowToPlayVerdictLabels = {
   allowed: "変えられる",
   disallowed: "変えられない",
 };
