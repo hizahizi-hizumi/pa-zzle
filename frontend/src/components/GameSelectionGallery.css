@@ -1,0 +1,254 @@
+.game-selection {
+  /* ロゴヘッダー (3rem) と下端の採色用余白 (0.75rem) まで含めて、額縁の上下を同じ高さにする。 */
+  --selection-header-height: 56px;
+  --selection-frame-height: calc(
+    clamp(108px, 14dvh, 132px) +
+    env(safe-area-inset-top)
+  );
+  --selection-frame-top: calc(
+    var(--selection-frame-height) -
+    3rem -
+    env(safe-area-inset-top) -
+    var(--selection-header-height)
+  );
+  --selection-frame-bottom: calc(var(--selection-frame-height) - 0.75rem);
+  --selection-stage: #26313a;
+  --selection-ink: #f7f8fa;
+  --selection-muted-ink: #a7b2bb;
+  --selection-detail-ink: #202a2d;
+  display: flex;
+  height: calc(100dvh - 3.75rem - env(safe-area-inset-top));
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--selection-stage);
+  color: var(--selection-ink);
+}
+
+.game-selection__header {
+  --foreground: var(--selection-ink);
+  --muted-foreground: var(--selection-muted-ink);
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: var(--selection-header-height);
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 16px 0 24px;
+}
+.game-selection__actions {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  gap: 2px;
+}
+.game-selection__records {
+  display: flex;
+  height: 44px;
+  align-items: center;
+  padding: 0 10px;
+  color: var(--selection-muted-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.game-selection__records:hover {
+  color: var(--selection-ink);
+}
+
+.game-selection__carousel-region {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.game-selection__carousel-region::before {
+  content: "";
+  position: absolute;
+  top: var(--selection-frame-top);
+  right: 0;
+  bottom: var(--selection-frame-bottom);
+  left: 0;
+  background: linear-gradient(165deg, #f6f7f5, #fbfbfa 55%, #edf0ec);
+  pointer-events: none;
+}
+.game-selection__carousel {
+  --slide-width: min(39vw, 360px);
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  gap: clamp(7px, 2vw, 28px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  padding: var(--selection-frame-top) calc((100% - var(--slide-width)) / 2)
+    var(--selection-frame-bottom);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.game-selection__carousel::-webkit-scrollbar {
+  display: none;
+}
+.game-selection__slide {
+  display: flex;
+  width: var(--slide-width);
+  flex: none;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: clamp(4px, 1vh, 10px);
+  color: inherit;
+  opacity: calc(0.82 + var(--proximity, 0) * 0.18);
+  scroll-snap-align: center;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.game-selection__slide[data-active="true"] {
+  z-index: 1;
+}
+.game-selection__figure {
+  --foreground: color-mix(
+    in srgb,
+    #738087 calc((1 - var(--proximity, 0)) * 100%),
+    #1c2327
+  );
+  --muted-foreground: color-mix(
+    in srgb,
+    #9eaaac calc((1 - var(--proximity, 0)) * 100%),
+    #929b9e
+  );
+  display: block;
+  width: clamp(224px, 67vw, 400px);
+  height: clamp(224px, 67vw, 400px);
+  flex: none;
+  padding: clamp(12px, 4vw, 25px);
+  transform: scale(calc(0.28 + var(--proximity, 0) * 0.72));
+}
+.game-selection__details {
+  display: flex;
+  width: max-content;
+  max-width: min(92vw, 520px);
+  min-height: 96px;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  padding-top: clamp(16px, 3vh, 26px);
+  opacity: clamp(0, calc(var(--proximity, 0) * 2 - 1), 1);
+}
+.game-selection__slide:not([data-active="true"]) .game-selection__details {
+  pointer-events: none;
+}
+.game-selection__position {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin-bottom: 5px;
+  color: #778286;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.15em;
+}
+.game-selection__position > span:first-child {
+  color: var(--selection-detail-ink);
+}
+.game-selection__name {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--selection-detail-ink);
+  font-size: clamp(27px, 7.1vw, 40px);
+  font-weight: 690;
+  letter-spacing: -0.045em;
+  line-height: 1.32;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.game-selection__meta {
+  display: flex;
+  height: 32px;
+  flex: none;
+  align-items: center;
+}
+.game-selection__meta > * {
+  color: var(--selection-detail-ink);
+  border-color: color-mix(in srgb, var(--selection-muted-ink) 40%, transparent);
+}
+.game-selection__carousel[data-mouse-dragging="true"] {
+  scroll-snap-type: none;
+  cursor: grabbing;
+}
+.game-selection__slide:focus-visible {
+  outline: none;
+}
+.game-selection__slide:focus-visible .game-selection__figure,
+.game-selection__carousel:focus-visible,
+.game-selection__records:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 5px;
+}
+.game-selection__slide[data-active="true"]:active .game-selection__figure {
+  transform: scale(calc(0.27 + var(--proximity, 0) * 0.72));
+}
+@media (pointer: fine) {
+  .game-selection__carousel {
+    cursor: grab;
+  }
+  .game-selection__slide:not([data-active="true"]):hover {
+    opacity: 1;
+  }
+}
+@media (max-width: 359px) {
+  .game-selection__carousel {
+    --slide-width: 41vw;
+    gap: 8px;
+  }
+  .game-selection__figure {
+    width: 70vw;
+    height: 70vw;
+  }
+}
+@media (min-width: 768px) {
+  .game-selection {
+    --selection-header-height: 76px;
+    --selection-frame-height: calc(
+      clamp(128px, 16dvh, 148px) +
+      env(safe-area-inset-top)
+    );
+  }
+  .game-selection__header {
+    padding-inline: max(36px, calc((100vw - 1200px) / 2));
+  }
+}
+@media (max-height: 700px) {
+  .game-selection {
+    --selection-header-height: 44px;
+    --selection-frame-height: calc(
+      clamp(108px, 14dvh, 132px) +
+      env(safe-area-inset-top)
+    );
+  }
+  .game-selection__figure {
+    width: min(
+      44vh,
+      260px,
+      calc(100dvh - 2 * var(--selection-frame-height) - 110px)
+    );
+    height: min(
+      44vh,
+      260px,
+      calc(100dvh - 2 * var(--selection-frame-height) - 110px)
+    );
+  }
+  .game-selection__details {
+    min-height: 96px;
+    padding-top: 14px;
+  }
+  .game-selection__name {
+    font-size: 23px;
+  }
+}

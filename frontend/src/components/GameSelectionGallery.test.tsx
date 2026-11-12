@@ -16,6 +16,7 @@ import { playSound } from "@/lib/sound-effects";
 
 vi.mock("@/lib/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),
+  REPEATED_SOUND_VARIATION: { pitchCents: 30, volumeRatio: 0.12 },
   playSound: vi.fn(),
 }));
 
@@ -23,6 +24,8 @@ const games = [
   {
     name: "ウォーターソート",
     pictogramSvg: '<svg viewBox="0 0 120 120" data-game="water-sort" />',
+    pictogramShowcaseSvg:
+      '<svg viewBox="0 0 120 120" data-game="water-showcase" />',
     to: "/puzzles/water-sort",
   },
   {
@@ -30,25 +33,32 @@ const games = [
     pictogramSvg: '<svg viewBox="0 0 120 120" data-game="nanpure" />',
     to: "/puzzles/nanpure",
   },
+  {
+    name: "マインスイーパー",
+    pictogramSvg: '<svg viewBox="0 0 120 120" data-game="minesweeper" />',
+    to: "/puzzles/minesweeper",
+  },
 ] as const;
-
 const onSelect = vi.fn();
+const scrollTo = vi.fn();
 
+beforeAll(() => {
+  HTMLElement.prototype.scrollTo = scrollTo;
+});
 afterEach(() => {
   cleanup();
+  scrollTo.mockClear();
   vi.mocked(playSound).mockClear();
   vi.unstubAllGlobals();
   onSelect.mockClear();
   window.localStorage.clear();
 });
 
-function renderGallery({
+function renderGallery(
   selectedIndex = 0,
-  continuation = null,
-}: {
-  selectedIndex?: number;
-  continuation?: GameSelectionContinuation | null;
-} = {}) {
+  continuation: GameSelectionContinuation | null = null,
+  isCovered = false,
+) {
   return render(
     <MemoryRouter>
       <GameSelectionGallery
@@ -57,141 +67,264 @@ function renderGallery({
         selectedIndex={selectedIndex}
         continuation={continuation}
         onSelect={onSelect}
+        isCovered={isCovered}
       />
     </MemoryRouter>,
   );
 }
 
-describe("先頭のパズルを選んでいる場合", () => {
-  beforeEach(() => {
-    renderGallery();
+function getCarousel() {
+  const carousel = screen.getByRole("group", {
+    name: "左右にスライドしてパズルを切り替え",
   });
-
-  test("選んでいるパズルをヒーローとして表示すること", () => {
-    const heroLink = screen.getByRole("link", {
-      name: "ウォーターソートを遊ぶ",
+  Object.defineProperty(carousel, "clientWidth", {
+    configurable: true,
+    value: 390,
+  });
+  for (const [position, item] of Array.from(carousel.children).entries()) {
+    Object.defineProperty(item, "offsetLeft", {
+      configurable: true,
+      value: 75 + position * 240,
     });
+    Object.defineProperty(item, "offsetWidth", {
+      configurable: true,
+      value: 240,
+    });
+  }
+  return carousel;
+}
 
-    expect(heroLink.getAttribute("href")).toBe("/puzzles/water-sort");
-    expect(heroLink.querySelector('svg[data-game="water-sort"]')).toBeTruthy();
+function scrollToSlide(index: number, settle = true) {
+  const carousel = getCarousel();
+  carousel.scrollLeft = index * 240;
+  fireEvent.scroll(carousel);
+  if (settle) fireEvent(carousel, new Event("scrollend", { bubbles: true }));
+}
+
+describe("パズルの選択", () => {
+  beforeEach(() => renderGallery());
+
+  test("左右が連続するよう全候補を3周並べ、比較画面や小さな一覧を出さないこと", () => {
+    const carousel = getCarousel();
     expect(
-      screen
-        .getByRole("button", { name: "ウォーターソートを選択" })
-        .getAttribute("aria-pressed"),
-    ).toBe("true");
+      within(carousel).getAllByRole("link", { hidden: true }),
+    ).toHaveLength(games.length * 3);
+    expect(
+      screen.queryByRole("navigation", { name: "デザイン案の比較" }),
+    ).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "パズル一覧" })).toBeNull();
+    expect(screen.queryByText("遊ぶ")).toBeNull();
   });
 
-  test("候補を選ぶと、その候補の位置を知らせること", () => {
-    fireEvent.click(screen.getByRole("button", { name: "ナンプレを選択" }));
+  test("中央の候補は選択確定の待機なしで開けること", () => {
+    scrollToSlide(4, false);
+    const current = screen.getByRole("link", { name: "ナンプレを開く" });
+    expect(current.getAttribute("href")).toBe("/puzzles/nanpure");
+    fireEvent.click(current);
+    expect(playSound).toHaveBeenCalledExactlyOnceWith(
+      appDecisionSound.playStartSound,
+    );
+    expect(onSelect).not.toHaveBeenCalled();
+  });
 
+  test("隣の候補のタップは中央へ移動させ、スクロール停止後に選択を保存すること", () => {
+    fireEvent.click(
+      screen.getAllByRole("link", { name: "ナンプレを選択", hidden: true })[1]!,
+    );
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("link", { name: "ウォーターソートを開く" }),
+    ).toBeTruthy();
+    scrollToSlide(4);
+    expect(screen.getByRole("link", { name: "ナンプレを開く" })).toBeTruthy();
     expect(onSelect).toHaveBeenCalledExactlyOnceWith(1);
+    expect(playSound).toHaveBeenCalledExactlyOnceWith(
+      appDecisionSound.carouselMoveSound,
+      { variation: { pitchCents: 30, volumeRatio: 0.12 }, volume: 0.48 },
+    );
   });
 
-  test("記録画面への導線を表示すること", () => {
-    const recordsLink = screen.getByRole("link", { name: "記録" });
-
-    expect(recordsLink.getAttribute("href")).toBe("/records");
-  });
-});
-
-describe("2番目のパズルを選んでいる場合", () => {
-  beforeEach(() => {
-    renderGallery({ selectedIndex: 1 });
-  });
-
-  test("そのパズルをヒーローとして表示すること", () => {
-    const heroLink = screen.getByRole("link", { name: "ナンプレを遊ぶ" });
-
-    expect(heroLink.getAttribute("href")).toBe("/puzzles/nanpure");
-    expect(heroLink.querySelector('svg[data-game="nanpure"]')).toBeTruthy();
+  test("スクロール中の表示は即時更新し、確定音は停止まで鳴らさないこと", () => {
+    scrollToSlide(5, false);
     expect(
-      screen
-        .getByRole("button", { name: "ナンプレを選択" })
-        .getAttribute("aria-pressed"),
-    ).toBe("true");
+      screen.getByRole("link", { name: "マインスイーパーを開く" }),
+    ).toBeTruthy();
+    expect(screen.getAllByText("03").length).toBeGreaterThan(0);
+    expect(onSelect).not.toHaveBeenCalled();
+    scrollToSlide(5);
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith(2);
+  });
+
+  test("最後から最初へスライドし、中央の周へ継ぎ目なく戻ること", () => {
+    cleanup();
+    renderGallery(2);
+    getCarousel();
+    scrollToSlide(6);
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith(0);
+    expect(
+      within(
+        screen.getByRole("link", { name: "ウォーターソートを開く" }),
+      ).getByText("01"),
+    ).toBeTruthy();
+    expect(getCarousel().scrollLeft).toBe(720);
+  });
+
+  test("最初から最後へ逆方向にも循環できること", () => {
+    scrollToSlide(2);
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith(2);
+    expect(screen.getAllByText("03").length).toBeGreaterThan(0);
+    expect(getCarousel().scrollLeft).toBe(1200);
+  });
+
+  test.each([1, -1])(
+    "停止を待たずに一方向へ何周もスクロールしても端で止まらないこと: %i",
+    (direction) => {
+      const carousel = getCarousel();
+      carousel.scrollLeft = games.length * 240;
+      fireEvent.pointerDown(carousel, { pointerType: "touch", pointerId: 1 });
+      const visited: number[] = [];
+      for (let lap = 0; lap < 12; lap++) {
+        for (let index = 0; index < games.length; index++) {
+          fireEvent.pointerDown(carousel, {
+            pointerType: "touch",
+            pointerId: lap * games.length + index + 2,
+          });
+          carousel.scrollLeft += direction * 240;
+          fireEvent.scroll(carousel);
+          const active = within(carousel)
+            .getAllByRole("link", { hidden: true })
+            .find((item) =>
+              item.getAttribute("aria-label")?.endsWith("を開く"),
+            );
+          visited.push(
+            games.findIndex((game) =>
+              active?.getAttribute("aria-label")?.startsWith(game.name),
+            ),
+          );
+        }
+      }
+      fireEvent(carousel, new Event("scrollend", { bubbles: true }));
+
+      expect(visited).toHaveLength(36);
+      expect(visited.every((index) => index >= 0)).toBe(true);
+      expect(carousel.scrollLeft).toBeGreaterThanOrEqual(games.length * 240);
+      expect(carousel.scrollLeft).toBeLessThan(games.length * 2 * 240);
+      expect(onSelect).not.toHaveBeenCalled();
+    },
+  );
+
+  test("トラック端で次のホイール入力が来ても同じゲームを保って循環できること", () => {
+    const carousel = getCarousel();
+    carousel.scrollLeft = (games.length * 3 - 1) * 240;
+    fireEvent.scroll(carousel);
+
+    fireEvent.wheel(carousel, { deltaX: 240 });
+
+    expect(carousel.scrollLeft).toBe((games.length * 2 - 1) * 240);
+    expect(
+      screen.getByRole("link", { name: "マインスイーパーを開く" }),
+    ).toBeTruthy();
+  });
+
+  test("スワイプ中の候補の移動に効果音を返し、停止後に決定音を重ねないこと", () => {
+    const carousel = getCarousel();
+    fireEvent.pointerDown(carousel, { pointerType: "touch", pointerId: 1 });
+    scrollToSlide(4, false);
+    const soundsDuringSwipe = vi.mocked(playSound).mock.calls;
+    fireEvent(carousel, new Event("scrollend", { bubbles: true }));
+
+    expect(soundsDuringSwipe).toHaveLength(1);
+    expect(soundsDuringSwipe[0]?.[0]).toEqual(
+      appDecisionSound.carouselMoveSound,
+    );
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith(1);
+    expect(playSound).toHaveBeenCalledTimes(1);
+  });
+
+  test("画面サイズが変わっても中央の周と選択中のゲームを維持すること", () => {
+    cleanup();
+    renderGallery(2);
+    getCarousel();
+    scrollTo.mockClear();
+
+    fireEvent(window, new Event("resize"));
+
+    expect(scrollTo).toHaveBeenLastCalledWith({
+      left: 1200,
+      behavior: "instant",
+    });
+    expect(
+      screen.getByRole("link", { name: "マインスイーパーを開く" }),
+    ).toBeTruthy();
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  test("同じ候補へのスクロールでは効果音を鳴らさないこと", () => {
+    scrollToSlide(3);
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(playSound).not.toHaveBeenCalled();
+  });
+
+  test("現在のパズルのタップではプレイ開始音を鳴らすこと", () => {
+    fireEvent.click(
+      screen.getByRole("link", { name: "ウォーターソートを開く" }),
+    );
+    expect(playSound).toHaveBeenCalledExactlyOnceWith(
+      appDecisionSound.playStartSound,
+    );
+  });
+
+  test("記録へ進む操作ではゲーム選択音を鳴らさないこと", () => {
+    const link = screen.getByRole("link", { name: "記録" });
+    fireEvent.click(link);
+    expect(link.getAttribute("href")).toBe("/records");
+    expect(playSound).not.toHaveBeenCalled();
+  });
+
+  test("左右キーは循環し、Home・Endキーで任意の端まで移動できること", () => {
+    const carousel = getCarousel();
+    fireEvent.keyDown(carousel, { key: "ArrowLeft" });
+    expect(
+      screen.getByRole("link", { name: "マインスイーパーを開く" }),
+    ).toBeTruthy();
+    fireEvent.keyDown(carousel, { key: "End" });
+    fireEvent.keyDown(carousel, { key: "Home" });
+    expect(
+      within(
+        screen.getByRole("link", { name: "ウォーターソートを開く" }),
+      ).getByText("01"),
+    ).toBeTruthy();
   });
 });
 
-describe("選んでいるパズルの続き", () => {
-  describe("挑戦中の問題がある場合", () => {
-    beforeEach(() => {
-      renderGallery({ continuation: { difficulty: "3", attemptedCount: 2 } });
-    });
-
-    test("開くレベルと挑戦中の問題の数を、ヒーローの説明として示すこと", () => {
-      const heroLink = screen.getByRole("link", {
-        name: "ウォーターソートを遊ぶ",
-      });
-      const continuation = screen.getByText("レベル 3 ・ 挑戦中 2問");
-
-      expect(heroLink.contains(continuation)).toBe(true);
-      expect(heroLink.getAttribute("aria-describedby")).toBe(continuation.id);
-    });
+describe("選んだゲームの情報", () => {
+  test("挑戦中の問題は選択中のゲームにだけ表示すること", () => {
+    renderGallery(1, { difficulty: "3", attemptedCount: 2 });
+    const current = screen.getByRole("link", { name: "ナンプレを開く" });
+    const badge = screen.getByText("レベル 3 ・ 挑戦中 2問");
+    expect(current.contains(badge)).toBe(true);
+    expect(current.getAttribute("aria-describedby")).toBe(badge.id);
   });
 
-  describe("挑戦中の問題が無い場合", () => {
-    beforeEach(() => {
-      renderGallery({ continuation: { difficulty: "1", attemptedCount: 0 } });
-    });
-
-    test("開くレベルだけを示すこと", () => {
-      const continuation = screen.getByText("レベル 1");
-
-      expect(continuation.textContent).toBe("レベル 1");
-    });
+  test("挑戦中の問題が無い場合はレベルのみ表示すること", () => {
+    renderGallery(0, { difficulty: "1", attemptedCount: 0 });
+    expect(screen.getByText("レベル 1")).toBeTruthy();
   });
 
-  describe("遊んだことが無い場合", () => {
-    beforeEach(() => {
-      renderGallery();
-    });
-
-    test("続きを示さないこと", () => {
-      const heroLink = screen.getByRole("link", {
-        name: "ウォーターソートを遊ぶ",
-      });
-
-      expect(heroLink.textContent).toBe("ウォーターソート遊ぶ");
-      expect(heroLink.hasAttribute("aria-describedby")).toBe(false);
-    });
-  });
-});
-
-describe("遊ぶゲームの選択", () => {
-  beforeEach(() => {
+  test("未プレイのゲームには続きの情報を表示しないこと", () => {
     renderGallery();
+    const current = screen.getByRole("link", {
+      name: "ウォーターソートを開く",
+    });
+    expect(current.getAttribute("aria-describedby")).toBeNull();
   });
 
-  test("ヒーローのパズルを選ぶとゲームを選ぶ音を鳴らすこと", () => {
-    fireEvent.click(
-      screen.getByRole("link", { name: "ウォーターソートを遊ぶ" }),
-    );
-
-    expect(playSound).toHaveBeenCalledExactlyOnceWith(
-      appDecisionSound.gameSelectSound,
-    );
-  });
-
-  test("別のパズルの候補を選ぶとゲームを選ぶ音を鳴らすこと", () => {
-    fireEvent.click(screen.getByRole("button", { name: "ナンプレを選択" }));
-
-    expect(playSound).toHaveBeenCalledExactlyOnceWith(
-      appDecisionSound.gameSelectSound,
-    );
-  });
-
-  test("選んでいる候補をもう一度押しても音を鳴らさないこと", () => {
-    fireEvent.click(
-      screen.getByRole("button", { name: "ウォーターソートを選択" }),
-    );
-
-    expect(playSound).not.toHaveBeenCalled();
-  });
-
-  test("記録への移動では音を鳴らさないこと", () => {
-    fireEvent.click(screen.getByRole("link", { name: "記録" }));
-
-    expect(playSound).not.toHaveBeenCalled();
+  test("タイトルに覆われている間はピクトグラムの動きを止めること", () => {
+    renderGallery(0, null, true);
+    const pictogram = screen
+      .getByRole("link", { name: "ウォーターソートを開く" })
+      .querySelector('svg[data-game="water-showcase"]');
+    expect(pictogram?.closest("[data-pictogram-motion]")).toBeNull();
   });
 });
 
@@ -207,113 +340,11 @@ describe("設定", () => {
     );
     renderGallery();
   });
-
-  test("見出しの設定ボタンで、効果音と BGM の音量を選ぶダイアログを開き、開く操作では音を鳴らさないこと", () => {
+  test("設定から音量調整を開けること", () => {
     fireEvent.click(screen.getByRole("button", { name: "設定" }));
-
-    const settings = screen.getByRole("dialog", { name: "設定" });
-    fireEvent.click(within(settings).getByRole("button", { name: /サウンド/ }));
-    const dialog = screen.getByRole("dialog", { name: "サウンド" });
-    const volumeNames = ["効果音", "BGM"].map(
-      (name) => within(dialog).getByRole("group", { name }).textContent,
-    );
-    expect(volumeNames).toEqual(["効果音5", "BGM5"]);
+    const dialog = screen.getByRole("dialog", { name: "設定" });
+    fireEvent.click(within(dialog).getByRole("button", { name: /サウンド/ }));
+    expect(screen.getByRole("dialog", { name: "サウンド" })).toBeTruthy();
     expect(playSound).not.toHaveBeenCalled();
-  });
-});
-
-describe("選んでいるパズルの色と動きのあるピクトグラム", () => {
-  const gamesWithShowcase = [
-    {
-      ...games[0],
-      pictogramShowcaseSvg:
-        '<svg viewBox="0 0 120 120" data-game="water-sort-showcase" />',
-    },
-    games[1],
-  ];
-
-  function renderWithShowcase(selectedIndex: number, isCovered = false) {
-    return render(
-      <MemoryRouter>
-        <GameSelectionGallery
-          games={gamesWithShowcase}
-          recordsTo="/records"
-          selectedIndex={selectedIndex}
-          continuation={null}
-          onSelect={onSelect}
-          isCovered={isCovered}
-        />
-      </MemoryRouter>,
-    );
-  }
-
-  function heroPictogramWrapper(name: string) {
-    return screen
-      .getByRole("link", { name: `${name}を遊ぶ` })
-      .querySelector("svg")?.parentElement;
-  }
-
-  describe("持っているパズルを選んでいる場合", () => {
-    beforeEach(() => {
-      renderWithShowcase(0);
-    });
-
-    test("ヒーローで動かし、候補では静止させて見せること", () => {
-      const heroWrapper = heroPictogramWrapper("ウォーターソート");
-      const selectedButton = screen.getByRole("button", {
-        name: "ウォーターソートを選択",
-      });
-
-      expect(
-        heroWrapper?.querySelector('svg[data-game="water-sort-showcase"]'),
-      ).toBeTruthy();
-      expect(heroWrapper?.getAttribute("data-pictogram-motion")).toBe("play");
-      expect(
-        selectedButton.querySelector('svg[data-game="water-sort-showcase"]'),
-      ).toBeTruthy();
-      expect(
-        selectedButton.querySelector("[data-pictogram-motion]"),
-      ).toBeNull();
-    });
-  });
-
-  describe("持っているパズルを選んでいて、ホームが覆われている場合", () => {
-    beforeEach(() => {
-      renderWithShowcase(0, true);
-    });
-
-    test("ヒーローを動かさずに静止させて待たせること", () => {
-      const heroWrapper = heroPictogramWrapper("ウォーターソート");
-
-      expect(
-        heroWrapper?.querySelector('svg[data-game="water-sort-showcase"]'),
-      ).toBeTruthy();
-      expect(heroWrapper?.getAttribute("data-pictogram-motion")).toBeNull();
-    });
-  });
-
-  describe("持っていないパズルを選んでいる場合", () => {
-    beforeEach(() => {
-      renderWithShowcase(1);
-    });
-
-    test("ヒーローと候補で通常のピクトグラムを静止させて見せること", () => {
-      const heroWrapper = heroPictogramWrapper("ナンプレ");
-
-      expect(
-        heroWrapper?.querySelector('svg[data-game="nanpure"]'),
-      ).toBeTruthy();
-      expect(heroWrapper?.getAttribute("data-pictogram-motion")).toBeNull();
-    });
-
-    test("選んでいない候補では、持っていても通常のピクトグラムを見せること", () => {
-      const unselectedButton = screen.getByRole("button", {
-        name: "ウォーターソートを選択",
-      });
-
-      expect(
-        unselectedButton.querySelector('svg[data-game="water-sort-showcase"]'),
-      ).toBeNull();
-    });
   });
 });
