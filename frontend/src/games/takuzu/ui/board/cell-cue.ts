@@ -11,4 +11,6 @@ export type TakuzuCellCue = {
   kind: TakuzuCellCueKind;
   /** `id` が変わると、同じマスの同じ合図でもやり直す。 */
   id: number;
+  /** `hint`・`recall` の印に、押すしぐさをする指を添える。 */
+  pointed?: boolean;
 };

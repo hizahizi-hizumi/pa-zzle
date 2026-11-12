@@ -24,6 +24,7 @@ type TakuzuCellProps = {
   disabled: boolean;
   /** 揺れの合図は盤面が掛けるので、マスは印と応えだけを描く。 */
   cue: TakuzuCellCue | undefined;
+  /** チュートリアルで、盤面の覆いからこのマスを抜き、元の明るさで見せる。 */
   spotlit: boolean;
   focusable: boolean;
   onElementChange: (
@@ -132,10 +133,18 @@ export function TakuzuCell({
           data-cell-cue="hint"
           className={cueOutlinePlacementClassName}
         >
-          <TutorialCue
-            kind="mark"
-            recallId={cue.kind === "recall" ? cue.id : null}
-          />
+          {cue.pointed ? (
+            <TutorialCue
+              kind="pointer"
+              placement="center"
+              recallId={cue.kind === "recall" ? cue.id : null}
+            />
+          ) : (
+            <TutorialCue
+              kind="mark"
+              recallId={cue.kind === "recall" ? cue.id : null}
+            />
+          )}
         </span>
       )}
       {/*

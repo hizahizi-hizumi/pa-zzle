@@ -7,6 +7,10 @@ import {
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 
+import {
+  TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE,
+  TUTORIAL_SPOTLIGHT_ATTRIBUTE,
+} from "@/components/TutorialSpotlight";
 import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
@@ -14,6 +18,7 @@ import type {
   TakuzuCellView,
   TakuzuLineViolationView,
 } from "@/games/takuzu/session/session";
+import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 
 const cells: TakuzuCellView[] = [
@@ -30,6 +35,14 @@ const lineViolations: TakuzuLineViolationView[] = [
 afterEach(() => {
   cleanup();
 });
+
+/** `selector` に当たる要素を中に持つマスの位置。 */
+function getCellPositions(board: HTMLElement, selector: string): string[] {
+  return within(board)
+    .getAllByRole("button")
+    .filter((cell) => cell.querySelector(selector))
+    .map((cell) => cell.getAttribute("aria-label")?.split(" ")[0] ?? "");
+}
 
 describe("TakuzuBoard", () => {
   let onCycleCell: ReturnType<
@@ -81,6 +94,20 @@ describe("TakuzuBoard", () => {
         .map((cell) => cell.tabIndex);
 
       expect(result).toEqual([0, -1, -1, -1]);
+    });
+
+    test("印も指も描かず、覆う範囲も覆いから抜くマスも示さないこと", () => {
+      const marked = getCellPositions(board, '[data-tutorial-cue="mark"]');
+      const pointed = getCellPositions(board, '[data-tutorial-cue="pointer"]');
+      const spotlit = getCellPositions(
+        board,
+        `[${TUTORIAL_SPOTLIGHT_ATTRIBUTE}]`,
+      );
+
+      expect(marked).toEqual([]);
+      expect(pointed).toEqual([]);
+      expect(spotlit).toEqual([]);
+      expect(board.hasAttribute(TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE)).toBe(false);
     });
 
     test("タップで順方向の巡回を通知すること", () => {
@@ -195,6 +222,58 @@ describe("TakuzuBoard", () => {
 
         expect(onPlaceCell).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe("チュートリアルの印と、元の明るさで見せるマスを渡した場合", () => {
+    const cues: TakuzuCellCue[] = [
+      { cellIndex: 1, kind: "hint", id: 0, pointed: true },
+      { cellIndex: 3, kind: "recall", id: 1, pointed: false },
+    ];
+
+    beforeEach(() => {
+      render(
+        <TakuzuBoard
+          size={2}
+          cells={cells}
+          lineViolations={lineViolations}
+          operation={null}
+          interactionDisabled={false}
+          cues={cues}
+          spotlitCellIndices={[1, 2]}
+          onCycleCell={onCycleCell}
+          onPlaceCell={onPlaceCell}
+        />,
+      );
+      board = screen.getByRole("group", { name: "バイナリパズル盤面" });
+    });
+
+    test("印のマスすべてに印を付け、指は指すと渡したマスにだけ添えること", () => {
+      const marked = getCellPositions(board, '[data-tutorial-cue="mark"]');
+      const pointed = getCellPositions(board, '[data-tutorial-cue="pointer"]');
+
+      expect(marked).toEqual(["1行2列", "2行2列"]);
+      expect(pointed).toEqual(["1行2列"]);
+    });
+
+    test("盤面を覆う範囲として示し、元の明るさで見せるマスだけを覆いから抜くこと", () => {
+      const spotlit = getCellPositions(
+        board,
+        `[${TUTORIAL_SPOTLIGHT_ATTRIBUTE}]`,
+      );
+      const area = board.hasAttribute(TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE);
+
+      expect(spotlit).toEqual(["1行2列", "2行1列"]);
+      expect(area).toBe(true);
+    });
+
+    test("覆ったマスも名前を変えず、押すと巡回を通知すること", () => {
+      const dimmedCell = within(board).getByRole("button", {
+        name: "1行1列 四角 固定",
+      });
+      fireEvent.click(dimmedCell);
+
+      expect(onCycleCell).toHaveBeenCalledWith(0, "forward");
     });
   });
 
