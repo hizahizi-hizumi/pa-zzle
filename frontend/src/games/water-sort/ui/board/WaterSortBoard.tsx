@@ -1,15 +1,11 @@
 import { useLayoutEffect, useRef } from "react";
 
-import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import type { WaterSortBottleCue } from "@/games/water-sort/ui/board/bottle-cue";
 import { PourAnimationLayer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer";
 import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-animations";
-import {
-  BottleCue,
-  bottleShapeClassName,
-} from "@/games/water-sort/ui/board/WaterSortBoard/BottleCue";
+import { BottleCue } from "@/games/water-sort/ui/board/WaterSortBoard/BottleCue";
 import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
 import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
@@ -25,9 +21,11 @@ type WaterSortBoardProps = {
   onClearAnimationComplete?: () => void;
   /** チュートリアルだけが渡す。 */
   cues?: readonly WaterSortBottleCue[];
-  /** 画面全体の覆いから抜くボトル。`null` なら抜かない。通常のプレイでは渡さない。 */
-  spotlitBottleIndices?: readonly number[] | null;
-  /** `single-row` は、注ぐ動きと、選んだボトルの持ち上げが盤面の外へはみ出さない余白を、置く側が上に取るときに使う。 */
+  /**
+   * ボトルの並べ方。
+   * - `rows`: 本数に応じて段に分け、画面の幅に応じた幅にする。
+   * - `single-row`: 全部を1段に並べ、置いた場所の幅いっぱいにする。注ぐ動きと、選んだボトルの持ち上げが盤面の外へはみ出さない余白を、置く側が上に取るときに使う。
+   */
   layout?: "rows" | "single-row";
 };
 
@@ -55,7 +53,6 @@ export function WaterSortBoard({
   onPourAnimationActivityChange,
   onClearAnimationComplete,
   cues = [],
-  spotlitBottleIndices = null,
   layout: layoutKind = "rows",
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -149,10 +146,6 @@ export function WaterSortBoard({
             >
               <WaterBottle contents={bottle} selected={isSource} />
             </span>
-            <TutorialSpotlight
-              active={spotlitBottleIndices?.includes(bottleIndex) ?? false}
-              className={bottleShapeClassName}
-            />
             {cue && <BottleCue cue={cue} />}
           </button>
         );
