@@ -7,7 +7,12 @@ import type {
   TsumeShogiPiece,
   TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
+import {
+  TSUME_SHOGI_SQUARE_HEIGHT,
+  TSUME_SHOGI_SQUARE_WIDTH,
+} from "@/games/tsume-shogi/ui/board/piece-shape";
 import { TsumeShogiPieceGlyph } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph";
+import { pieceMotionSelector } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph/piece-glyph-frame";
 import {
   formatTsumeShogiSquare,
   tsumeShogiPieceNames,
@@ -63,15 +68,16 @@ type TsumeShogiSquareButtonProps = {
   /** 押しても何もしない。応手を待つ間などに押せなくしても、フォーカスは升に残す。 */
   disabled: boolean;
   tapHandlers: TapHandlers;
-  isLastFile: boolean;
-  isLastRank: boolean;
+  /** 盤の左端・上端の升。外枠の線を足す。 */
+  onLeftEdge: boolean;
+  onTopEdge: boolean;
 };
 
 function useArrivalAnimation(arrivedMove: TsumeShogiPlayedMove | null) {
   const pieceRef = useRef<HTMLSpanElement>(null);
 
   useLayoutEffect(() => {
-    const element = pieceRef.current;
+    const element = pieceRef.current?.querySelector(pieceMotionSelector);
     if (
       !arrivedMove ||
       !element ||
@@ -87,9 +93,9 @@ function useArrivalAnimation(arrivedMove: TsumeShogiPlayedMove | null) {
       move.kind === "board"
         ? [
             {
-              transform: `translate(${(move.to.file - move.from.file) * 100}%, ${(move.from.rank - move.to.rank) * 100}%)`,
+              transform: `translate(${(move.to.file - move.from.file) * TSUME_SHOGI_SQUARE_WIDTH}px, ${(move.from.rank - move.to.rank) * TSUME_SHOGI_SQUARE_HEIGHT}px)`,
             },
-            { transform: "translate(0, 0)" },
+            { transform: "translate(0px, 0px)" },
           ]
         : [
             { opacity: 0, transform: "scale(0.8)" },
@@ -116,8 +122,8 @@ export function TsumeShogiSquareButton({
   spotlit,
   disabled,
   tapHandlers,
-  isLastFile,
-  isLastRank,
+  onLeftEdge,
+  onTopEdge,
 }: TsumeShogiSquareButtonProps) {
   const pieceRef = useArrivalAnimation(arrivedMove);
   const pieceLabel = piece
@@ -141,8 +147,10 @@ export function TsumeShogiSquareButton({
       className={cn(
         "relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 aria-disabled:cursor-default",
         tsumeShogiToneClassNames.boardLine,
-        !isLastFile && "border-r",
-        !isLastRank && "border-b",
+        // 外枠も升の線で描く。盤に別の枠線を重ねると、枠と升の線の間が画素の丸めで途切れて見える。
+        "border-r border-b",
+        onLeftEdge && "border-l",
+        onTopEdge && "border-t",
         tsumeShogiToneClassNames.focusRing,
         highlight && highlightClassNames[highlight],
       )}
@@ -166,7 +174,8 @@ export function TsumeShogiSquareButton({
           data-selected-piece={selected ? "" : undefined}
           className={cn(
             "absolute inset-0 flex items-center justify-center transition-transform duration-(--duration-fast)",
-            selected && tsumeShogiToneClassNames.pieceLift,
+            // 持ち上げた駒と影は隣の升へはみ出すので、後ろの升の地に切られないよう前に出す。
+            selected && "z-1",
             highlight === "mated" && tsumeShogiToneClassNames.matedPieceTilt,
           )}
         >

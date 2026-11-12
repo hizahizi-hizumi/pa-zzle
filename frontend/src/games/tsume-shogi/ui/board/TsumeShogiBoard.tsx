@@ -22,6 +22,7 @@ import {
   TsumeShogiSquareButton,
   type TsumeShogiSquareHighlight,
 } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiSquareButton";
+import { pieceMotionSelector } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph/piece-glyph-frame";
 import { formatTsumeShogiRank } from "@/games/tsume-shogi/ui/piece-label";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { useRejectedPieceFeedback } from "@/games/tsume-shogi/ui/use-rejected-piece-feedback";
@@ -62,17 +63,19 @@ const ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
  * 四辺が同じ幅なので、盤の木そのものが左右の中央に来る。幅の広い画面ほど縁を太くする。
  * 320px でも盤を画面の縁に付けず、卓に置いた盤に見える余白を左右に残す（`--board-gutter`）。
  * 盤を置く画面は、この寸法を含めて盤の大きさを決める。
+ * `--board-thickness` は盤の手前に見える側面の高さ。升を歪めず、天面の下に足す。
  * `--piece-box-height`・`--komadai-height` は盤の上下の駒箱の札・駒台の欄の高さ、`--komadai-gap` は盤と駒台の間。
  */
 export const tsumeShogiBoardFrameStyle = {
   "--board-gutter": "clamp(6px, calc(6px + (100cqw - 320px) / 7), 14px)",
   "--board-frame": "clamp(16px, calc(16px + (100cqw - 320px) / 14), 21px)",
+  "--board-thickness": "clamp(5px, calc(5px + (100cqw - 320px) / 40), 8px)",
   "--piece-box-height": "1.5rem",
   "--komadai-height": "3.75rem",
   "--komadai-gap": "10px",
 } as CSSProperties;
 
-const selectedPieceGlyphSelector = "[data-selected-piece] > svg";
+const selectedPieceGlyphSelector = `[data-selected-piece] ${pieceMotionSelector}`;
 
 /** 星。3筋と4筋・6筋と7筋の境、三段と四段・六段と七段の境が交わる4点。 */
 const starPoints = [
@@ -94,7 +97,7 @@ function findPiece(
 }
 
 /**
- * 9×9 の盤。真上から見た榧の盤で、木の縁の上に筋、右に段を書き、星を打つ。升全体を押せる。
+ * 9×9 の盤。升を歪めずに描いた天面の手前に側面を見せた榧の盤で、木の縁の上に筋、右に段を書き、星を打つ。升全体を押せる。
  * 移動先の候補は示さない（どの手が王手になるかを読むことがこのゲームの考えどころなので、合法手を盤に出さない）。
  */
 export function TsumeShogiBoard({
@@ -145,7 +148,7 @@ export function TsumeShogiBoard({
   }
 
   return (
-    <div className="grid size-full grid-cols-[var(--board-frame)_minmax(0,1fr)_var(--board-frame)] grid-rows-[var(--board-frame)_minmax(0,1fr)_var(--board-frame)]">
+    <div className="grid size-full grid-cols-[var(--board-frame)_minmax(0,1fr)_var(--board-frame)] grid-rows-[var(--board-frame)_minmax(0,1fr)_var(--board-frame)_var(--board-thickness)]">
       <TsumeShogiBoardWood />
       <div
         aria-hidden="true"
@@ -164,8 +167,7 @@ export function TsumeShogiBoard({
         role="group"
         aria-label="盤"
         className={cn(
-          "relative col-start-2 row-start-2 grid grid-cols-9 grid-rows-9 outline-1 outline-solid",
-          tsumeShogiToneClassNames.boardOutline,
+          "relative col-start-2 row-start-2 grid grid-cols-9 grid-rows-9",
         )}
       >
         {ranks.map((rank) =>
@@ -199,8 +201,8 @@ export function TsumeShogiBoard({
                 )}
                 disabled={interactionDisabled}
                 tapHandlers={getTapHandlers(() => onSelectSquare(square))}
-                isLastFile={file === 1}
-                isLastRank={rank === 9}
+                onLeftEdge={file === files[0]}
+                onTopEdge={rank === ranks[0]}
               />
             );
           }),

@@ -9,6 +9,7 @@ import {
 } from "@/games/tsume-shogi/puzzle/position";
 import type { TsumeShogiRejection } from "@/games/tsume-shogi/session/session";
 import { TsumeShogiPieceGlyph } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph";
+import { pieceMotionSelector } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph/piece-glyph-frame";
 import { tsumeShogiHandPieceNames } from "@/games/tsume-shogi/ui/piece-label";
 import { TsumeShogiKomadai } from "@/games/tsume-shogi/ui/TsumeShogiHand/TsumeShogiKomadai";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
@@ -44,7 +45,7 @@ type TsumeShogiHandProps = {
   onSelectHandPiece: (pieceType: TsumeShogiHandPieceType) => void;
 };
 
-const selectedHandPieceGlyphSelector = '[aria-pressed="true"] svg';
+const selectedHandPieceGlyphSelector = `[aria-pressed="true"] ${pieceMotionSelector}`;
 
 /**
  * 攻方の持駒。盤の下の駒台（`TsumeShogiKomadai`）に並べ、押して選んでから空いた升を押して打つ。2枚以上は枚数を添える。
@@ -105,19 +106,12 @@ export function TsumeShogiHand({
                     : tsumeShogiToneClassNames.handSelected),
               )}
             >
-              <span
-                className={cn(
-                  "flex transition-transform duration-(--duration-fast)",
-                  selected && tsumeShogiToneClassNames.pieceLift,
-                )}
-              >
-                <TsumeShogiPieceGlyph
-                  type={type}
-                  side="attacker"
-                  size="hand"
-                  lifted={selected}
-                />
-              </span>
+              <TsumeShogiPieceGlyph
+                type={type}
+                side="attacker"
+                size="hand"
+                lifted={selected}
+              />
               {/* 枚数は駒に重ねず、駒の右下の外に添える。1枚でも欄の幅を取り、枚数が変わっても並びをずらさない。 */}
               <span
                 className={cn(
