@@ -30,6 +30,7 @@ import {
   type HitofudePuzzleCellState,
 } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/HitofudePuzzleCell";
 import { playClearTrace } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/play-clear-trace";
+import { updateDragFeedback } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/update-drag-feedback";
 import { HitofudePuzzleFigure } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
 
 type HitofudePuzzleBoardProps = {
@@ -43,9 +44,7 @@ type HitofudePuzzleBoardProps = {
   /** クリアしてから演出を終えるまで `true`。 */
   clearing: boolean;
   interactionDisabled: boolean;
-  /** マスに重ねる合図。1マスに1つまで。 */
   cues?: readonly HitofudePuzzleCellCue[];
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜くマス。通常のプレイでは渡さない。 */
   spotlitCells?: readonly number[];
   onBeginStroke: (cell: number) => void;
   onTraceStroke: (step: HitofudePuzzleTraceStep) => void;
@@ -117,6 +116,15 @@ export function HitofudePuzzleBoard({
   }, [head]);
 
   useLayoutEffect(() => {
+    updateDragFeedback(
+      figureRef.current,
+      board,
+      path,
+      !interactionDisabled ? (dragRef.current?.point ?? null) : null,
+    );
+  }, [board, interactionDisabled, path]);
+
+  useLayoutEffect(() => {
     if (blockedMove !== null) {
       animateBlockedMove(figureRef.current, blockedMove);
     }
@@ -171,6 +179,7 @@ export function HitofudePuzzleBoard({
     event.preventDefault();
     event.currentTarget.setPointerCapture?.(event.pointerId);
     dragRef.current = { pointerId: event.pointerId, point, cell };
+    updateDragFeedback(figureRef.current, board, path, point);
     onBeginStroke(cell);
   }
 
@@ -182,6 +191,7 @@ export function HitofudePuzzleBoard({
     const point = toBoardPoint(event);
     const { steps, cell } = listFingerSteps(size, drag.point, point, drag.cell);
     dragRef.current = { ...drag, point, cell };
+    updateDragFeedback(figureRef.current, board, path, point);
     for (const step of steps) {
       onTraceStroke(step);
     }
@@ -192,6 +202,7 @@ export function HitofudePuzzleBoard({
       return;
     }
     dragRef.current = null;
+    updateDragFeedback(figureRef.current, board, path, null);
     onEndStroke();
   }
 

@@ -5,13 +5,9 @@ import { MOTION_EASING, playAnimations } from "@/lib/motion";
 const CLEAR_TRACE_MS_PER_CELL = 28;
 const CLEAR_TRACE_MIN_MS = 640;
 const CLEAR_TRACE_MAX_MS = 1_400;
-/** なぞる光が終点に着いたときに、終点の印を膨らませて置く時間。 */
-const END_MARK_POP_MS = 360;
-const endMarkPopKeyframes: Keyframe[] = [
-  { transform: "scale(0)" },
-  { transform: "scale(1.5)", offset: 0.6 },
-  { transform: "scale(1)" },
-];
+/** なぞる光が終点に着いたときに、終点の印を浮かび上がらせる時間。 */
+const END_MARK_APPEAR_MS = 240;
+const endMarkAppearKeyframes: Keyframe[] = [{ opacity: 0 }, { opacity: 1 }];
 /**
  * なぞり終えた道を、結果へ進める前に見せておく時間。完成した道の形がこのゲームの報酬なので、
  * 道全体を見渡せる間を置く。
@@ -24,9 +20,11 @@ const CLEAR_TRACE_HOLD_MS = 1_000;
  */
 const REDUCED_MOTION_CLEAR_HOLD_MS = 2_000;
 
-const clearTraceKeyframes: Keyframe[] = [
-  { strokeDashoffset: 1 },
-  { strokeDashoffset: 0 },
+const travelingSparkKeyframes: Keyframe[] = [
+  { strokeDashoffset: 0, opacity: 0 },
+  { strokeDashoffset: -0.06, opacity: 0.9, offset: 0.06 },
+  { strokeDashoffset: -0.94, opacity: 0.9, offset: 0.94 },
+  { strokeDashoffset: -1, opacity: 0 },
 ];
 
 /** 道を始点から終点まで光でなぞる時間。なぞり終えたときに終点の印を置く。 */
@@ -38,7 +36,7 @@ export function getClearTraceDurationMs(cellCount: number): number {
 }
 
 /**
- * クリアした道を、始点から終点へ光でなぞり、着いた所で終点の印を膨らませて置いてから `onFinished` を呼ぶ。
+ * クリアした道を、始点から終点へ光でなぞり、着いた所で終点の印を表示してから `onFinished` を呼ぶ。
  * 戻り値は演出を取り消す関数。動きを減らす設定では、なぞり終えた光と終点の印を出したまま見せる。
  */
 export function playClearTrace(
@@ -51,15 +49,15 @@ export function playClearTrace(
       const traceDurationMs = getClearTraceDurationMs(cellCount);
       const trace = figure
         ?.querySelector(`[${hitofudePuzzleFigureParts.clearTrace}]`)
-        ?.animate?.(clearTraceKeyframes, {
+        ?.animate?.(travelingSparkKeyframes, {
           duration: traceDurationMs,
-          easing: MOTION_EASING.celebrate,
-          fill: "backwards",
+          easing: "linear",
+          fill: "forwards",
         });
       const endMark = figure
         ?.querySelector(`[${hitofudePuzzleFigureParts.endMark}]`)
-        ?.animate?.(endMarkPopKeyframes, {
-          duration: END_MARK_POP_MS,
+        ?.animate?.(endMarkAppearKeyframes, {
+          duration: END_MARK_APPEAR_MS,
           delay: traceDurationMs,
           easing: MOTION_EASING.celebrate,
           fill: "backwards",

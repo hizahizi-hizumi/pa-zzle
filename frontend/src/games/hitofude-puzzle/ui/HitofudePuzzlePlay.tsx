@@ -19,6 +19,7 @@ import { HitofudePuzzleBoard } from "@/games/hitofude-puzzle/ui/board/HitofudePu
 import { HitofudePuzzleHowToPlayDialog } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog";
 import { HitofudePuzzleStatusAnnouncement } from "@/games/hitofude-puzzle/ui/HitofudePuzzlePlay/HitofudePuzzleStatusAnnouncement";
 import { HitofudePuzzleTutorial } from "@/games/hitofude-puzzle/ui/HitofudePuzzleTutorial";
+import { hitofudePuzzleSceneClassName } from "@/games/hitofude-puzzle/ui/hitofude-puzzle-tone";
 import { HitofudePuzzleResultScreen } from "@/games/hitofude-puzzle/ui/result/HitofudePuzzleResultScreen";
 import { useHitofudePuzzleSoundEffects } from "@/games/hitofude-puzzle/ui/use-hitofude-puzzle-sound-effects";
 import type {
@@ -119,7 +120,7 @@ export function HitofudePuzzlePlay({
       progress={progress}
       result={result}
       title={HITOFUDE_PUZZLE_DISPLAY_NAME}
-      background={<div className="size-full bg-[#e8e6de] dark:bg-[#1a1916]" />}
+      background={<div className={hitofudePuzzleSceneClassName} />}
       // 引き直しは正確さの元なので、バイナリパズルの置き直しと同じく見出しの先頭に置き、待ったを添える。
       metrics={[
         { type: "count", label: "引き直し", count: backtrackCount },

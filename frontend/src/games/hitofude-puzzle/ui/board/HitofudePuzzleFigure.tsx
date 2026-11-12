@@ -10,54 +10,30 @@ import {
   listHitofudePuzzleOutlineEdges,
 } from "@/games/hitofude-puzzle/ui/board/board-outline";
 import {
-  getPathColor,
-  getVisitedCellColor,
+  HITOFUDE_PUZZLE_PATH_WIDTH,
   hitofudePuzzleToneClassNames,
 } from "@/games/hitofude-puzzle/ui/hitofude-puzzle-tone";
 import { cn } from "@/lib/utils";
 
 type HitofudePuzzleFigureProps = {
   board: HitofudePuzzleBoard;
-  /** 始点から先端までに通ったマスの番号。 */
   path: readonly number[];
-  /** 全マスを通る前に、先端から延ばせるマスが無くなったか。 */
   isDeadEnd: boolean;
-  /** 道が全マスを通り終えたか。始点から終点へ道をなぞる光を描く。 */
   solved: boolean;
-  /** 最後に道を延ばせなかった操作が進もうとしたマス。×の印を置き、阻まれたときだけ盤面の反応で点ける。 */
   blockedCell?: number | null;
-  /** ×の印を点けたまま描くか。遊び方の図で、阻まれたときの盤面の反応を見せるときに使う。 */
   showsBlockedMark?: boolean;
   ref?: Ref<SVGSVGElement>;
 };
 
-/** 図の寸法はマス幅を 1 とした値。 */
-const PATH_LINE_WIDTH = 0.3;
-const START_MARK_RADIUS = 0.2;
-const START_MARK_OUTLINE_WIDTH = 0.07;
-/** 先端は指に隠れるので、マス幅に対して大きめの輪にする。道が始点だけのときも、輪の内に始点の印が見える。 */
-const HEAD_RING_RADIUS = 0.37;
-const HEAD_RING_WIDTH = 0.09;
-/**
- * 行き止まりの先端は、通れないものと同じ色で塗った円に、マスの地の色の横棒を通す（進入禁止の標識の形）。
- * 欠けた輪や回る形は読み込み中に見えるので使わない。
- */
-const DEAD_END_HEAD_RADIUS = HEAD_RING_RADIUS + HEAD_RING_WIDTH / 2;
-const DEAD_END_BAR_HALF_LENGTH = 0.24;
-const DEAD_END_BAR_WIDTH = 0.12;
-/** クリアしたとき道をなぞる光の太さ。道の線の半分ほどにし、道の色の上で光として読める太さにする。 */
-const CLEAR_TRACE_WIDTH = 0.15;
-/** クリアしたとき、先端の輪に代えて終点に置く印の半径。始点の印より一回り大きくし、道の両端を結ぶ。 */
-const END_MARK_RADIUS = 0.26;
-/**
- * 阻まれたマスの×の、中心から端までの長さと太さ。マスの半分ほどに広げ、短く点いても見落とされない大きさにする。
- * 下に敷くマスの地の色の縁で、道の上でも読めるようにする。
- */
+const PATH_HALF_WIDTH = HITOFUDE_PUZZLE_PATH_WIDTH / 2;
+const UNVISITED_RADIUS = 0.11;
+const START_MARK_RADIUS = PATH_HALF_WIDTH;
+const END_MARK_RADIUS = PATH_HALF_WIDTH;
+const DEAD_END_BAR_WIDTH = 0.055;
 const BLOCKED_MARK_REACH = 0.26;
 const BLOCKED_MARK_WIDTH = 0.13;
 const BLOCKED_MARK_OUTLINE_WIDTH = 0.25;
 
-/** 阻まれたマスの×の2本の線。マスの中心を原点に描く。 */
 const blockedMarkStrokes = (
   <>
     <line
@@ -80,7 +56,6 @@ function getCellCenter(size: number, cell: number): { x: number; y: number } {
   return { x: column + 0.5, y: row + 0.5 };
 }
 
-/** 盤面の要素を、盤面の反応や演出から探すための印。 */
 export const hitofudePuzzleFigureParts = {
   outline: "data-outline",
   head: "data-head",
@@ -89,12 +64,7 @@ export const hitofudePuzzleFigureParts = {
   blockedMark: "data-blocked-mark",
 } as const;
 
-/**
- * 盤面の絵。マスの塗り・盤面の外形・道・始点・先端を、下から順にこの層で描く。
- * 道が全マスを通り終えたら、先端の輪に代えて終点の印を置き、始点から終点へなぞる光を重ねる。
- * 穴は描かず、盤面の外と同じ地を見せる。外形が、外周の穴を盤面の欠けとして、内側の穴を盤面に開いた穴として縁取る。
- * 道とマスの塗りは、通った順に色を移す（`getPathColor`）。
- */
+/** 通った場所は線だけを残し、まだ通っていないマスを格子と点で示す。 */
 export function HitofudePuzzleFigure({
   board,
   path,
@@ -105,17 +75,19 @@ export function HitofudePuzzleFigure({
   ref,
 }: HitofudePuzzleFigureProps) {
   const { size } = board;
-  const lastProgressIndex = Math.max(
-    1,
-    listHitofudePuzzleOpenCells(board).length - 1,
-  );
-  const progressAt = (index: number) => index / lastProgressIndex;
-  const visitedOrder = new Map(path.map((cell, index) => [cell, index]));
+  const openCells = listHitofudePuzzleOpenCells(board);
+  const visited = new Set(path);
+  const remainingCount = openCells.length - visited.size;
+  const closingIn =
+    !solved && !isDeadEnd && remainingCount > 0 && remainingCount <= 3;
   const start = getCellCenter(size, board.start);
-  const headIndex = path.length - 1;
-  const head = getCellCenter(size, path[headIndex] ?? board.start);
-  const headColor = getPathColor(progressAt(headIndex));
-  const centers = path.map((cell) => getCellCenter(size, cell));
+  const head = getCellCenter(size, path.at(-1) ?? board.start);
+  const pathPoints = path
+    .map((cell) => {
+      const { x, y } = getCellCenter(size, cell);
+      return `${x},${y}`;
+    })
+    .join(" ");
   const blockedMarkCenter =
     blockedCell === null ? null : getCellCenter(size, blockedCell);
 
@@ -126,68 +98,82 @@ export function HitofudePuzzleFigure({
       aria-hidden="true"
       className={cn(
         "pointer-events-none absolute inset-0 size-full overflow-visible",
-        hitofudePuzzleToneClassNames.pathColorVariables,
+        hitofudePuzzleToneClassNames.colors,
       )}
     >
-      {listHitofudePuzzleOpenCells(board).map((cell) => {
-        const { row, column } = getHitofudePuzzleCellPosition(size, cell);
-        const order = visitedOrder.get(cell);
-        return (
-          <rect
-            key={cell}
-            x={column}
-            y={row}
-            width={1}
-            height={1}
-            vectorEffect="non-scaling-stroke"
-            className={cn(
-              hitofudePuzzleToneClassNames.gridLine,
-              order === undefined && hitofudePuzzleToneClassNames.unvisitedCell,
-            )}
-            style={
-              order === undefined
-                ? undefined
-                : { fill: getVisitedCellColor(progressAt(order)) }
-            }
-          />
-        );
-      })}
+      <g data-cell-surfaces="">
+        {openCells.map((cell) => {
+          const { row, column } = getHitofudePuzzleCellPosition(size, cell);
+          const unvisited = !visited.has(cell);
+          return (
+            <rect
+              key={cell}
+              data-unvisited-cell={unvisited ? "" : undefined}
+              x={column}
+              y={row}
+              width={1}
+              height={1}
+              vectorEffect="non-scaling-stroke"
+              className={cn(
+                hitofudePuzzleToneClassNames.cell,
+                "stroke-(length:--border-width-normal) transition-[stroke] duration-150",
+                unvisited
+                  ? hitofudePuzzleToneClassNames.grid
+                  : "stroke-transparent",
+              )}
+            />
+          );
+        })}
+      </g>
       <path
         {...{ [hitofudePuzzleFigureParts.outline]: "" }}
         d={formatHitofudePuzzleOutlinePath(
           listHitofudePuzzleOutlineEdges(board),
         )}
         fill="none"
-        // 外形は辺ごとの線分なので、線端を四角く伸ばして角の継ぎ目を埋める。
         strokeLinecap="square"
         vectorEffect="non-scaling-stroke"
-        className={hitofudePuzzleToneClassNames.outline}
+        className={cn(
+          hitofudePuzzleToneClassNames.outline,
+          "stroke-(length:--border-width-strong)",
+        )}
       />
-      {centers.slice(1).map((to, index) => {
-        const from = centers[index]!;
-        return (
-          <line
-            // 道の何本目の線かで、通った順の色が決まる。
-            // biome-ignore lint/suspicious/noArrayIndexKey: 道の線は並び順そのものが識別になる
-            key={index}
-            x1={from.x}
-            y1={from.y}
-            x2={to.x}
-            y2={to.y}
-            strokeWidth={PATH_LINE_WIDTH}
-            strokeLinecap="round"
-            style={{ stroke: getPathColor(progressAt(index + 0.5)) }}
-          />
-        );
-      })}
+      <g data-target-nodes="">
+        {openCells
+          .filter((cell) => !visited.has(cell))
+          .map((cell) => {
+            const { x, y } = getCellCenter(size, cell);
+            return (
+              <circle
+                key={cell}
+                data-unvisited-node=""
+                cx={x}
+                cy={y}
+                r={closingIn && remainingCount === 1 ? 0.155 : UNVISITED_RADIUS}
+                fill="var(--hitofude-puzzle-target)"
+              />
+            );
+          })}
+      </g>
+      <polyline
+        data-continuous-track=""
+        data-track-points={pathPoints}
+        points={pathPoints}
+        fill="none"
+        stroke="var(--hitofude-puzzle-from)"
+        strokeWidth={HITOFUDE_PUZZLE_PATH_WIDTH}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       {solved ? (
         <polyline
           {...{ [hitofudePuzzleFigureParts.clearTrace]: "" }}
-          points={centers.map(({ x, y }) => `${x},${y}`).join(" ")}
+          points={pathPoints}
           pathLength={1}
-          strokeDasharray="1 1"
+          strokeDasharray="0.065 0.935"
           fill="none"
-          strokeWidth={CLEAR_TRACE_WIDTH}
+          opacity={0}
+          strokeWidth={HITOFUDE_PUZZLE_PATH_WIDTH}
           strokeLinecap="round"
           strokeLinejoin="round"
           className={hitofudePuzzleToneClassNames.clearTrace}
@@ -197,45 +183,41 @@ export function HitofudePuzzleFigure({
         cx={start.x}
         cy={start.y}
         r={START_MARK_RADIUS}
-        strokeWidth={START_MARK_OUTLINE_WIDTH}
-        className={hitofudePuzzleToneClassNames.startMarkOutline}
-        style={{ fill: getPathColor(0) }}
+        fill="var(--hitofude-puzzle-from)"
+      />
+      <circle
+        cx={start.x}
+        cy={start.y}
+        r={0.055}
+        fill="var(--hitofude-puzzle-cell)"
       />
       {solved ? (
-        <g transform={`translate(${head.x} ${head.y})`}>
-          <circle
-            {...{ [hitofudePuzzleFigureParts.endMark]: "" }}
-            r={END_MARK_RADIUS}
-            strokeWidth={START_MARK_OUTLINE_WIDTH}
-            className={hitofudePuzzleToneClassNames.startMarkOutline}
-            style={{ fill: headColor }}
-          />
-        </g>
+        <circle
+          {...{ [hitofudePuzzleFigureParts.endMark]: "" }}
+          cx={head.x}
+          cy={head.y}
+          r={END_MARK_RADIUS}
+          fill="var(--hitofude-puzzle-from)"
+        />
       ) : (
         <g transform={`translate(${head.x} ${head.y})`}>
-          {/* 揺れは CSS の transform で動かすので、位置の transform 属性とは別の要素に置く。 */}
           <g {...{ [hitofudePuzzleFigureParts.head]: "" }}>
             {isDeadEnd ? (
               <>
                 <circle
-                  r={DEAD_END_HEAD_RADIUS}
-                  className={hitofudePuzzleToneClassNames.deadEndHead}
+                  r={PATH_HALF_WIDTH}
+                  fill="var(--hitofude-puzzle-from)"
                 />
                 <rect
-                  x={-DEAD_END_BAR_HALF_LENGTH}
+                  x={-0.08}
                   y={-DEAD_END_BAR_WIDTH / 2}
-                  width={DEAD_END_BAR_HALF_LENGTH * 2}
+                  width={0.16}
                   height={DEAD_END_BAR_WIDTH}
                   className={hitofudePuzzleToneClassNames.deadEndBar}
                 />
               </>
             ) : (
-              <circle
-                r={HEAD_RING_RADIUS}
-                fill="none"
-                strokeWidth={HEAD_RING_WIDTH}
-                style={{ stroke: headColor }}
-              />
+              <circle r={PATH_HALF_WIDTH} fill="var(--hitofude-puzzle-from)" />
             )}
           </g>
         </g>
@@ -253,7 +235,10 @@ export function HitofudePuzzleFigure({
           >
             {blockedMarkStrokes}
           </g>
-          <g strokeWidth={BLOCKED_MARK_WIDTH} style={{ stroke: headColor }}>
+          <g
+            strokeWidth={BLOCKED_MARK_WIDTH}
+            stroke="var(--hitofude-puzzle-from)"
+          >
             {blockedMarkStrokes}
           </g>
         </g>

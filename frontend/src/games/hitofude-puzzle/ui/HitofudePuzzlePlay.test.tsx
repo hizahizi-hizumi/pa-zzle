@@ -90,6 +90,37 @@ describe("HitofudePuzzlePlay", () => {
     vi.clearAllMocks();
   });
 
+  test("通常のプレイ画面には結びの一本線があり、比較用操作がないこと", () => {
+    renderResult({ progress: "playing", result: null, path: [0, 1] });
+    const figure = screen
+      .getByRole("group", {
+        name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面 3行3列`,
+      })
+      .querySelector("svg");
+    expect(figure?.querySelector("[data-continuous-track]")).not.toBeNull();
+    expect(screen.queryByRole("radiogroup")).toBeNull();
+  });
+
+  test("比較用クエリが残っていても通常の画面を表示すること", () => {
+    renderWithoutRouter(
+      <HitofudePuzzlePlay
+        {...baseProps}
+        progress="playing"
+        result={null}
+        path={[0, 1]}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <MemoryRouter initialEntries={["/?hitofude-compare"]}>
+            {children}
+          </MemoryRouter>
+        ),
+      },
+    );
+    expect(document.querySelector("[data-continuous-track]")).not.toBeNull();
+    expect(screen.queryByRole("radiogroup")).toBeNull();
+  });
+
   describe("完成演出中の場合", () => {
     beforeEach(() => {
       renderResult({ progress: "clearing" });
