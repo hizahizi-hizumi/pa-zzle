@@ -14,6 +14,7 @@ import {
   type IceFloorMazeStateCell,
 } from "@/games/ice-floor-maze/puzzle/state";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
+import { getIceFloorMazeSlideDurationMs } from "@/games/ice-floor-maze/ui/board/slide-timing";
 
 /** 要素がまだ変わっていない盤面のマス。 */
 function listInitialCells(
@@ -98,6 +99,164 @@ describe("IceFloorMazeBoard", () => {
       expect(trails).toHaveLength(1);
       expect(cancelAnimation).not.toHaveBeenCalled();
       expect(onSlideAnimationActivityChange).toHaveBeenLastCalledWith(true);
+    });
+  });
+
+  describe("直前の滑りがある場合", () => {
+    // 0 から右へ滑り、3 の岩の手前の 2 で止まる。
+    const rockBoard = parseIceFloorMazeBoard(["...#", "....", "....", "...."]);
+    const rockSlide: IceFloorMazeLastSlide = {
+      ...lastSlide,
+      to: 2,
+      path: [1, 2],
+    };
+    const stopsWithoutImpact = [
+      ["床に入って止まった", { stoppedOnFloor: true }],
+      ["雪を押し出した", { pushedSnow: { from: 2, to: 3 } }],
+      ["滑る氷の塊を押した", { movedBlock: { from: 2, to: 3 } }],
+      ["ゴールで止まった", { isClearingMove: true }],
+    ] as const;
+
+    let onSlideAnimationActivityChange: Mock<(active: boolean) => void>;
+    let onClearAnimationComplete: Mock<() => void>;
+
+    beforeEach(() => {
+      onSlideAnimationActivityChange = vi.fn();
+      onClearAnimationComplete = vi.fn();
+    });
+
+    function createRockBoard(slide: IceFloorMazeLastSlide, clearing = false) {
+      return (
+        <IceFloorMazeBoard
+          board={rockBoard}
+          cells={listInitialCells(rockBoard)}
+          blocks={[]}
+          goal={15}
+          position={slide.to}
+          lastSlide={slide}
+          blockedInput={null}
+          clearing={clearing}
+          onSlideAnimationActivityChange={onSlideAnimationActivityChange}
+          onClearAnimationComplete={onClearAnimationComplete}
+        />
+      );
+    }
+
+    describe("岩にぶつかって止まった滑りの場合", () => {
+      beforeEach(() => {
+        render(createRockBoard(rockSlide));
+      });
+
+      test("ぶつかった面に当たりの光と氷のかけらを置くこと", () => {
+        const boardImage = screen.getByRole("img", { name: "盤面" });
+
+        const drawn = {
+          chips: boardImage.querySelectorAll("[data-impact-spray] [data-chip]"),
+          flash: boardImage.querySelectorAll(
+            "[data-impact-spray] [data-impact-flash]",
+          ),
+        };
+
+        expect(drawn.chips.length).toBeGreaterThan(0);
+        expect(drawn.flash).toHaveLength(1);
+      });
+    });
+
+    describe("動かせる環境の場合", () => {
+      const slideMs = getIceFloorMazeSlideDurationMs(rockSlide.path.length);
+      let animate: Mock;
+
+      /** 再生した動きのうち、`selector` に当たる要素のものの、遅れと長さ。 */
+      function listAnimationTimings(selector: string) {
+        return animate.mock.contexts.flatMap((element, call) => {
+          const options = animate.mock.calls[call]?.[1] as
+            | KeyframeAnimationOptions
+            | undefined;
+          return (element as Element).matches(selector)
+            ? [{ delay: options?.delay, duration: options?.duration }]
+            : [];
+        });
+      }
+
+      beforeEach(() => {
+        vi.stubGlobal(
+          "matchMedia",
+          vi.fn(() => ({ matches: false }) as MediaQueryList),
+        );
+        animate = vi.fn(
+          () =>
+            ({
+              finished: new Promise<void>(() => {}),
+              cancel: vi.fn(),
+            }) as unknown as Animation,
+        );
+        Object.defineProperty(Element.prototype, "animate", {
+          configurable: true,
+          value: animate,
+        });
+      });
+
+      afterEach(() => {
+        vi.unstubAllGlobals();
+      });
+
+      describe("岩にぶつかって止まった滑りの場合", () => {
+        beforeEach(() => {
+          render(createRockBoard(rockSlide));
+        });
+
+        test("滑っている間だけ駒を回すこと", () => {
+          const spins = listAnimationTimings("[data-piece-spin]");
+
+          expect(spins).toEqual([{ delay: undefined, duration: slideMs }]);
+        });
+
+        test("止まった時刻に当たりの光と氷のかけらを動かすこと", () => {
+          const delays = [
+            ...listAnimationTimings("[data-impact-flash]"),
+            ...listAnimationTimings("[data-chip]"),
+          ].map(({ delay }) => delay);
+
+          expect(delays.length).toBeGreaterThan(1);
+          expect(new Set(delays)).toEqual(new Set([slideMs]));
+        });
+      });
+
+      describe("ゴールで止まって完成した場合", () => {
+        beforeEach(() => {
+          render(createRockBoard({ ...rockSlide, isClearingMove: true }, true));
+        });
+
+        test("止まった時刻から、明かりに続けて輪を1つずつ遅らせて広げること", () => {
+          const delays = {
+            glow: listAnimationTimings("[data-clear-glow]").map(
+              ({ delay }) => delay,
+            ),
+            rings: listAnimationTimings("[data-clear-ring]").map(
+              ({ delay }) => delay,
+            ),
+          };
+
+          expect(delays).toEqual({
+            glow: [slideMs],
+            rings: [slideMs, slideMs + 80, slideMs + 160],
+          });
+        });
+      });
+    });
+
+    describe.each(stopsWithoutImpact)("%s滑りの場合", (_, change) => {
+      beforeEach(() => {
+        render(createRockBoard({ ...rockSlide, ...change }));
+      });
+
+      test("氷のかけらを置かないこと", () => {
+        const boardImage = screen.getByRole("img", { name: "盤面" });
+
+        const spray = boardImage.querySelector("[data-impact-spray]");
+
+        expect(spray).toBeNull();
+      });
     });
   });
 

@@ -20,7 +20,7 @@ import {
   getIceFloorMazeSlideDurationMs,
   getIceFloorMazeSnowPushDelayMs,
 } from "@/games/ice-floor-maze/ui/board/slide-timing";
-import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
+import { iceFloorMazeTone } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 
 type IceFloorMazeCellChangesProps = {
@@ -94,10 +94,14 @@ export function IceFloorMazeCellChanges({
             r={RIPPLE_RADIUS}
             fill="none"
             strokeWidth={RIPPLE_WIDTH}
-            className={iceFloorMazeToneClassNames.wave}
+            stroke={iceFloorMazeTone.wave}
             style={{ transformBox: "fill-box", transformOrigin: "center" }}
           />
-          <IceFloorMazeCellFace kind="thin-ice" clipIds={clipIds} />
+          <IceFloorMazeCellFace
+            kind="thin-ice"
+            clipIds={clipIds}
+            cellIndex={cellIndex}
+          />
         </g>
       ))}
       {pushedSnow ? (

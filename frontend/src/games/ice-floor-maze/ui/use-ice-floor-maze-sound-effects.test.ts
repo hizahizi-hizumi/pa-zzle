@@ -33,6 +33,13 @@ const plainSlide: IceFloorMazeLastSlide = {
   entersTrap: false,
 };
 
+// 0 から右へ2マス滑って 2 で止まる、短い滑り。
+const shortSlide: IceFloorMazeLastSlide = {
+  ...plainSlide,
+  to: 2,
+  path: [1, 2],
+};
+
 // 3マス目の雪 3 を 4 へ押し出し、3 で止まった。
 const snowSlide: IceFloorMazeLastSlide = {
   ...plainSlide,
@@ -48,7 +55,7 @@ const blockSlide: IceFloorMazeLastSlide = {
 };
 
 // 0 から右へ10マス滑る。9マス進んで塊 10 に触れ（328.5 ミリ秒）、塊を 11 まで1マス押して 10 で止まる（365 ミリ秒）。
-const shortBlockSlide: IceFloorMazeLastSlide = {
+const lateBlockSlide: IceFloorMazeLastSlide = {
   ...plainSlide,
   to: 10,
   path: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -95,8 +102,29 @@ describe("useIceFloorMazeSoundEffects", () => {
 
       expect(sounds).toEqual([
         { name: "slid", delayMs: undefined },
+        { name: "glided-short", delayMs: undefined },
         { name: "stopped", delayMs: 141 },
       ]);
+    });
+
+    test("2マスまでの短い滑りでは、滑り続ける擦れの音を重ねないこと", () => {
+      rerender({ lastSlide: shortSlide });
+
+      const sounds = listPlayedSounds();
+
+      expect(sounds.map(({ name }) => name)).toEqual(["slid", "stopped"]);
+    });
+
+    test("長い滑りでは、長い方の擦れの音を、滑りが止まる時刻に鳴り終わる速さで鳴らすこと", () => {
+      rerender({ lastSlide: lateBlockSlide });
+
+      const glide = vi
+        .mocked(playSound)
+        .mock.calls.find(([sound]) =>
+          (sound as SoundEffect).url.includes("glided-long"),
+        );
+
+      expect(glide?.[1]?.playbackRate).toBeCloseTo(300 / 365);
     });
 
     test("雪を押し出した滑りでは、止まる音の代わりに、雪を押し出し始める時刻に雪の音を鳴らすこと", () => {
@@ -106,6 +134,7 @@ describe("useIceFloorMazeSoundEffects", () => {
 
       expect(sounds).toEqual([
         { name: "slid", delayMs: undefined },
+        { name: "glided-short", delayMs: undefined },
         { name: "snow-pushed", delayMs: 94 },
       ]);
     });
@@ -117,12 +146,13 @@ describe("useIceFloorMazeSoundEffects", () => {
 
       expect(sounds).toEqual([
         { name: "slid", delayMs: undefined },
+        { name: "glided-short", delayMs: undefined },
         { name: "block-stopped", delayMs: 165 },
       ]);
     });
 
     test("長い滑りの終わりに塊を1マスだけ押した滑りでは、駒が塊に触れる前に塊の音を鳴らし始めないこと", () => {
-      rerender({ lastSlide: shortBlockSlide });
+      rerender({ lastSlide: lateBlockSlide });
 
       const sounds = listPlayedSounds();
 

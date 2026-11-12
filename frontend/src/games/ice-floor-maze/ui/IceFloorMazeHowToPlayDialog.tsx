@@ -142,7 +142,7 @@ export function IceFloorMazeHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          点の並んだ灰緑の板は床。滑ってきた駒は床に入るとそこで止まる。ゴールと違い、通り過ぎずに止まる。床の上からは氷と同じく滑り出せる。
+          擦り傷の入った緑の板は床。滑ってきた駒は床に入るとそこで止まる。ゴールと違い、通り過ぎずに止まる。床の上からは氷と同じく滑り出せる。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure rows={floorRows} piece={5} />
