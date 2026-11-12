@@ -3,7 +3,6 @@ import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
 import { ZukanLevelMosaic } from "@/zukan/ui/GameHomeScreen/GameLevelCards/ZukanLevelMosaic";
 import type { ZukanProblemStatus } from "@/zukan/zukan-collection";
 
-/** カードに示す、1つのレベルの台紙の進み具合。 */
 export type GameLevelCard = {
   difficulty: DifficultyLevel;
   problemCount: number;
@@ -11,25 +10,17 @@ export type GameLevelCard = {
   solvedCount: number;
   /** そのレベルの全問の、今示す状態。番号の順。変化をまだ見せていない問題は前回の状態を示す。 */
   statuses: readonly ZukanProblemStatus[];
-  /** そのレベルの台紙の列の数。縮図を台紙と同じ並びで描くのに使う。 */
   columnCount: number;
-  /** 前回図鑑を見たときからの変化を、まだ見せていないか。 */
+  /** 変化は、前回図鑑を見たときからのもの。 */
   hasUnseenChanges: boolean;
 };
 
 type GameLevelCardsProps = {
-  /** 問題のある難易度のカード。難易度の昇順。 */
+  /** 問題のある難易度だけを、難易度の昇順に並べる。 */
   levels: readonly GameLevelCard[];
 };
 
-/**
- * ゲームのホームで、遊ぶレベルを選び、その台紙を開くカード。
- * 各カードに、そのレベルの台紙を同じ並びのまま縮めた縮図、レベルの名前、解いた数を示し、切り替えずに全レベルの跡を比べられるようにする。
- * どの画面幅でも全レベルを1行に等分して並べ、横に送らせない。台紙を広く見せるよう、カードは縮図と、名前と解いた数だけに収める。
- * 名前と解いた数は、狭いカードでは2行に、収まる幅では1行に並べる。全問の数は、ごく狭い画面では省く。
- * 矢印キーはカードの間でフォーカスを動かすだけにし、選ぶのは押したときと Enter・Space にする。通り過ぎたレベルの台紙を開いて描き直したり、変化を見せ終えたりしない。
- * まだ見せていない変化のあるレベルには、カードの右上に小さな点を付ける。
- */
+/** 矢印キーで選ぶと通り過ぎたレベルの台紙を開いて変化を見せ終えるので、矢印キーではフォーカスだけを動かし、押したときと Enter・Space で選ぶ。 */
 export function GameLevelCards({ levels }: GameLevelCardsProps) {
   return (
     <TabsList layout="card" aria-label="レベル">

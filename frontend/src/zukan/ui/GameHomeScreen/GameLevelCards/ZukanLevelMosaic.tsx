@@ -10,15 +10,9 @@ import type { ZukanProblemStatus } from "@/zukan/zukan-collection";
 type ZukanLevelMosaicProps = {
   /** そのレベルの全問の、今示す状態。番号の順。 */
   statuses: readonly ZukanProblemStatus[];
-  /** 台紙の列の数。台紙と同じ並びで描く。 */
   columnCount: number;
 };
 
-/**
- * 1つのレベルの台紙を遠くから見た縮図。全問を台紙と同じ列の数で1問1マスに並べ、台紙のマスと同じ色で塗って、カードの形に縮める。
- * 台紙を開かなくても、そのレベルのどこをどの出来で解いてきたかの分布が、台紙と同じ位置に見える。文字と数は持たない。
- * 数千のマスを要素にせず、状態ごとに1つのパスで塗る。
- */
 function ZukanLevelMosaicContent({
   statuses,
   columnCount,
