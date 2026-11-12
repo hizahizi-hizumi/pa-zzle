@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  type TutorialBoardIntro,
   type TutorialFinish,
   TutorialOverlay,
   type TutorialPlayStart,
+  type TutorialStageBoardIntro,
 } from "@/components/TutorialOverlay";
 import type { GameProgress } from "@/games/play";
 import pictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
@@ -19,23 +19,26 @@ import {
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
 import {
-  findTakuzuTutorialHintCellIndex,
+  describeTakuzuTutorialMidwayViolation,
+  describeTakuzuTutorialRule,
+  describeTakuzuTutorialStep,
+  findTakuzuTutorialHint,
+  findTakuzuTutorialViolationFixCellIndex,
   getTakuzuTutorialCellViews,
   getTakuzuTutorialLineViolations,
+  getTakuzuTutorialProgressRatio,
   getTakuzuTutorialStepCellIndices,
   getTakuzuTutorialStepReasonCellIndices,
+  TAKUZU_TUTORIAL_PROGRESS_STEP_COUNT,
   type TakuzuTutorialAction,
   type TakuzuTutorialBoardState,
   type TakuzuTutorialRuleId,
-  type TakuzuTutorialSituation,
   takuzuTutorial,
 } from "@/games/takuzu/tutorial/tutorial";
 import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
-import {
-  TakuzuBoard,
-  type TakuzuBoardSpotlight,
-} from "@/games/takuzu/ui/board/TakuzuBoard";
+import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
+import { TakuzuGround } from "@/games/takuzu/ui/TakuzuGround";
 import { TakuzuTutorialRewind } from "@/games/takuzu/ui/TakuzuTutorial/TakuzuTutorialRewind";
 import { useTakuzuSoundEffects } from "@/games/takuzu/ui/use-takuzu-sound-effects";
 import {
@@ -94,24 +97,15 @@ const soundProgressByPhase = {
 } as const satisfies Record<TutorialPhase, GameProgress>;
 
 /**
- * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
- * 手を引いている間は、印のマスにしか置けないので、違反があっても付け続ける。
+ * 手を離した後に、手がかりの印を付けるまでの間。`null` なら付けない。
+ * 手が止まったときだけ付け、違反がある間は直すことに向かわせるため付けない。
  */
-function getCueDelayMs(
-  progress: TakuzuTutorialProgress,
-  guiding: boolean,
-): number | null {
+function getIdleHintDelayMs(progress: TakuzuTutorialProgress): number | null {
   if (progress.phase !== "playing") {
     return null;
   }
   const { lastMove } = progress.boardState;
-  if (!guiding) {
-    return progress.violated || lastMove?.violated ? null : IDLE_HINT_DELAY_MS;
-  }
-  // 手順のマスを正しく置いた手は、置いたマスへの応えと決め手を覆いから抜いて見せてから、次の印へ替える。
-  // ルールに合わないところが残る手では、待たずにすぐ印へ戻す。
-  const fitted = !lastMove?.violated && (lastMove?.fitsStep ?? false);
-  return fitted ? NEXT_STEP_CUE_DELAY_MS : 0;
+  return progress.violated || lastMove?.violated ? null : IDLE_HINT_DELAY_MS;
 }
 
 /** 印は手を置くたびには付け直さず、押し直すとき（`recallId`）だけ線を濃くする。 */
@@ -119,14 +113,18 @@ function getCellCues(
   state: TakuzuTutorialBoardState,
   hintCellIndices: readonly number[],
   recallId: number | null,
+  pointed: boolean,
 ): TakuzuCellCue[] {
   return [
     ...getMoveCues(state),
     ...hintCellIndices.map(
-      (cellIndex): TakuzuCellCue =>
-        recallId === null
-          ? { cellIndex, kind: "hint", id: 0 }
-          : { cellIndex, kind: "recall", id: recallId },
+      (cellIndex, order): TakuzuCellCue => ({
+        cellIndex,
+        kind: recallId === null ? "hint" : "recall",
+        id: recallId ?? 0,
+        // 指は1本だけにして、置く順を迷わせない。
+        pointed: pointed && order === 0,
+      }),
     ),
   ];
 }
@@ -143,43 +141,18 @@ function getMoveCues({
     : [];
 }
 
-/**
- * 手を引いていなければ `null` で、覆いを出さない。
- * - 置いてから次の印を出すまでの間は、置いたマスとその決め手を抜く。前の手の決め手を、次の印の決め手と読み違えさせないため、印と一緒に替える。
- * - ルールに合わない3連続のマスと、個数超過・重複の行・列のマスは、どこがルールに当たっているかを読めるよう抜く。
- */
-function getSpotlitCellIndices(
-  situation: TakuzuTutorialSituation,
-  state: TakuzuTutorialBoardState,
-  hintShown: boolean,
+/** ルールに合わないところのマス。3連続のマスと、個数超過・重複の行・列のマス。 */
+function listViolatingCellIndices(
+  size: number,
   cellViews: readonly TakuzuCellView[],
   lineViolations: readonly TakuzuLine[],
-): number[] | null {
-  if (situation.step === null) {
-    return null;
-  }
-  const { lastMove } = state;
-  const focused = hintShown
-    ? [
-        ...situation.step.cellIndices,
-        ...getTakuzuTutorialStepReasonCellIndices(situation, state),
-      ]
-    : lastMove
-      ? [lastMove.cellIndex, ...lastMove.reasonCellIndices]
-      : [];
-  const runCellIndices = cellViews.flatMap((view, cellIndex) =>
-    view.inViolatingRun ? [cellIndex] : [],
-  );
-  const lineCellIndices = lineViolations.flatMap((line) =>
-    getTakuzuLineCellIndices(state.board.size, line),
-  );
-  return [...new Set([...focused, ...runCellIndices, ...lineCellIndices])];
-}
-
-function getBoardSpotlight(
-  cellIndices: readonly number[] | null,
-): TakuzuBoardSpotlight | null {
-  return cellIndices === null ? null : { cellIndices, lineViolations: true };
+): number[] {
+  return [
+    ...cellViews.flatMap((view, cellIndex) =>
+      view.inViolatingRun ? [cellIndex] : [],
+    ),
+    ...lineViolations.flatMap((line) => getTakuzuLineCellIndices(size, line)),
+  ];
 }
 
 export function TakuzuTutorial({
@@ -197,7 +170,9 @@ export function TakuzuTutorial({
   const [settledTowardStepProgress, setSettledTowardStepProgress] =
     useState<TakuzuTutorialProgress | null>(null);
   const [recall, setRecall] = useState<TakuzuTutorialRecall | null>(null);
-  // 手順を終えた手の進行と、その手の前の進行。
+  const [lingerEndedProgress, setLingerEndedProgress] =
+    useState<TakuzuTutorialProgress | null>(null);
+  // 手順を終えた手の進行と、その手の前の進行。置いたマスと決め手を残して見せる間は、一言も終えた手順のままにする。
   const [finishedStep, setFinishedStep] = useState<{
     progress: TakuzuTutorialProgress;
     previous: TakuzuTutorialProgress;
@@ -217,39 +192,78 @@ export function TakuzuTutorial({
   );
   const violationSettled = settledViolationProgress === progress;
   const recallId = recall?.progress === progress ? recall.id : null;
-  const cueDelayMs = getCueDelayMs(progress, guiding);
-  const cueShown =
-    (guiding && recallId !== null) ||
-    cueDelayMs === 0 ||
-    (cueDelayMs !== null && idleProgress === progress);
+  const lineViolations = getTakuzuTutorialLineViolations(
+    situation,
+    boardState,
+    towardStepSettled,
+  );
+
+  // ルールを教える手順を終えたら、置いたマスと決め手を少し残して見せてから、次の手順か手を離した後へ替える。
+  const finishedSituation =
+    progress.phase === "playing" && finishedStep?.progress === progress
+      ? getTutorialSituation(takuzuTutorial, finishedStep.previous)
+      : null;
+  const lingeringStep =
+    finishedSituation?.step?.lesson && lingerEndedProgress !== progress
+      ? finishedSituation.step
+      : null;
+  // 2マスを自分で埋める手順は、手が止まったら指を出して、最初の1手を助ける。
+  const choosingStepCells =
+    guiding && (situation.step?.cellIndices.length ?? 0) > 1;
+  const idleHintDelayMs = lingeringStep
+    ? null
+    : guiding
+      ? choosingStepCells && progress.phase === "playing"
+        ? IDLE_HINT_DELAY_MS
+        : null
+      : getIdleHintDelayMs(progress);
+  const idle = idleHintDelayMs !== null && idleProgress === progress;
+  const idleHint =
+    idle && !guiding ? findTakuzuTutorialHint(situation, boardState) : null;
+  const stepCueShown =
+    progress.phase === "playing" && guiding && lingeringStep === null;
+  // 手を離した後に違反が続いたら、直す所を迷わせないよう、置き直すマスに印を付ける。
+  const violationFixCellIndex =
+    !guiding && violationSettled
+      ? findTakuzuTutorialViolationFixCellIndex(situation, boardState)
+      : null;
+  const hintCellIndices = stepCueShown
+    ? getTakuzuTutorialStepCellIndices(situation, boardState)
+    : idleHint
+      ? [idleHint.cellIndex]
+      : violationFixCellIndex !== null
+        ? [violationFixCellIndex]
+        : [];
+  // 押すマスが1つに決まる手順だけ指で指す。2マスを自分で選んで埋める手順は、印だけにして順番と形を決めさせる。
+  const pointed = stepCueShown && (!choosingStepCells || idle);
 
   useTakuzuSoundEffects(
     operation,
     soundProgressByPhase[progress.phase],
     boardState.board.size,
   );
-  const idleHintCellIndex =
-    cueShown && !guiding
-      ? findTakuzuTutorialHintCellIndex(situation, boardState)
-      : null;
-  const hintCellIndices = !cueShown
-    ? []
-    : guiding
-      ? getTakuzuTutorialStepCellIndices(situation, boardState)
-      : idleHintCellIndex === null
-        ? []
-        : [idleHintCellIndex];
 
   useEffect(() => {
-    if (!open || cueDelayMs === null || cueDelayMs === 0) {
+    if (!open || lingeringStep === null) {
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setLingerEndedProgress(progress),
+      NEXT_STEP_CUE_DELAY_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [open, progress, lingeringStep]);
+
+  useEffect(() => {
+    if (!open || idleHintDelayMs === null) {
       return;
     }
     const timer = window.setTimeout(
       () => setIdleProgress(progress),
-      cueDelayMs,
+      idleHintDelayMs,
     );
     return () => window.clearTimeout(timer);
-  }, [open, progress, cueDelayMs]);
+  }, [open, progress, idleHintDelayMs]);
 
   useEffect(() => {
     return () => {
@@ -360,11 +374,19 @@ export function TakuzuTutorial({
     setSettledViolationProgress(null);
     setSettledTowardStepProgress(null);
     setRecall(null);
+    setLingerEndedProgress(null);
     setFinishedStep(null);
     setOperation(null);
     setProgress(startTutorial(takuzuTutorial));
   }
 
+  // ゴールはもう見せたので、入口を通さずに最初の手順から始める。
+  function handleRestart(): void {
+    restart();
+    setProgress(finishTutorialIntro);
+  }
+
+  // 終えたかどうかは残さないので、閉じたら次に開いたとき入口から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();
@@ -375,8 +397,53 @@ export function TakuzuTutorial({
     playStart?.onStart();
   }
 
+  const spotlitCellIndices = getSpotlitCellIndices();
+
+  /**
+   * 盤面の覆いから抜いて元の明るさで見せるマス。見せる物が無ければ `null` で、覆わない。
+   * - 手順の間は、手順のマスとその決め手。操作を教える手順には決め手が無いので覆わない。
+   * - 手順を終えた直後は、終えた手順のマスとその決め手を残す。
+   * - 手を離した後は、手がかりのマスとその決め手。
+   * - ルールに合わないところのマスは、どこがルールに当たっているかを読めるよう抜く。手を離した後は、巡回の途中で瞬かないよう、違反が続いたときだけ抜く。
+   */
+  function getSpotlitCellIndices(): number[] | null {
+    if (progress.phase !== "playing") {
+      return null;
+    }
+    const shownStepSituation = lingeringStep ? finishedSituation : situation;
+    const shownStep = lingeringStep ?? situation.step;
+    const reasonCellIndices =
+      shownStep && shownStepSituation
+        ? getTakuzuTutorialStepReasonCellIndices(shownStepSituation, boardState)
+        : (idleHint?.reasonCellIndices ?? []);
+    const focusedCellIndices =
+      reasonCellIndices.length === 0
+        ? []
+        : [
+            ...(shownStep?.cellIndices ??
+              (idleHint ? [idleHint.cellIndex] : [])),
+            ...reasonCellIndices,
+          ];
+    const violatingCellIndices =
+      guiding || violationSettled
+        ? listViolatingCellIndices(
+            boardState.board.size,
+            cellViews,
+            lineViolations,
+          )
+        : [];
+    const cellIndices = [
+      ...new Set([...focusedCellIndices, ...violatingCellIndices]),
+    ];
+    return cellIndices.length === 0 ? null : cellIndices;
+  }
+
   /** 始めの盤面の場面では、解き終えた盤面から置いたタイルを消し、消し終えたら始めの盤面に替える。 */
-  function renderBoard({ scene, playing, onSceneEnd }: TutorialBoardIntro) {
+  function renderBoard({
+    scene,
+    playing,
+    onSceneEnd,
+  }: TutorialStageBoardIntro) {
     const goalShown = scene === "goal" || (scene === "start" && playing);
     const shownBoardState = goalShown ? goalBoardState : boardState;
     return (
@@ -393,39 +460,19 @@ export function TakuzuTutorial({
           >
             <TakuzuBoard
               size={shownBoardState.board.size}
-              cells={getTakuzuTutorialCellViews(
-                situation,
-                shownBoardState,
-                towardStepSettled,
-              )}
-              lineViolations={getTakuzuTutorialLineViolations(
-                situation,
-                shownBoardState,
-                towardStepSettled,
-              )}
+              cells={
+                goalShown
+                  ? getTakuzuTutorialCellViews(situation, shownBoardState)
+                  : cellViews
+              }
+              lineViolations={goalShown ? [] : lineViolations}
               operation={operation}
               interactionDisabled={progress.phase !== "playing"}
-              spotlight={
-                progress.phase === "playing" && !goalShown
-                  ? getBoardSpotlight(
-                      getSpotlitCellIndices(
-                        situation,
-                        boardState,
-                        cueShown,
-                        cellViews,
-                        getTakuzuTutorialLineViolations(
-                          situation,
-                          boardState,
-                          towardStepSettled,
-                        ),
-                      ),
-                    )
-                  : null
-              }
+              spotlitCellIndices={scene === null ? spotlitCellIndices : null}
               cues={
                 // 完成の波と完成した盤面に、最後の手の合図を残さない。
-                progress.phase === "playing"
-                  ? getCellCues(boardState, hintCellIndices, recallId)
+                progress.phase === "playing" && scene === null
+                  ? getCellCues(boardState, hintCellIndices, recallId, pointed)
                   : []
               }
               onCycleCell={handleCycleCell}
@@ -437,11 +484,9 @@ export function TakuzuTutorial({
     );
   }
 
-  // 次の印を付けるまでは、覆いから抜いた置いたマスと決め手に合わせて、一言とルールの並びも終えた手順のまま見せる。
+  // 終えた手順を残して見せる間は、置いたマスと決め手に合わせて、一言も終えた手順のままにする。
   const shownProgress =
-    guiding && !cueShown && finishedStep?.progress === progress
-      ? finishedStep.previous
-      : progress;
+    lingeringStep && finishedStep ? finishedStep.previous : progress;
   const shownSituation = getTutorialSituation(takuzuTutorial, shownProgress);
 
   const finish: TutorialFinish = playStart
@@ -452,27 +497,49 @@ export function TakuzuTutorial({
       }
     : { entry: "play", onReturnToPlay: handleClose };
 
+  const baseMessage = getTutorialMessage(takuzuTutorial, shownProgress, {
+    entry: finish.entry,
+    violationSettled: shownProgress === progress && violationSettled,
+  });
+  const shownStep = shownSituation.step;
+  // 考えずに1回押した四角がルールに当たったまま手が止まったら、そのルールの違反として言う。
+  const midwayViolationMessage =
+    guiding && towardStepSettled
+      ? describeTakuzuTutorialMidwayViolation(situation, boardState)
+      : null;
+  // 手がかりには、そのマスを決めるルールの一言を添える。
+  const hintMessage =
+    idleHint?.ruleId && baseMessage === takuzuTutorial.freePlay
+      ? describeTakuzuTutorialRule(idleHint.ruleId)
+      : null;
+  const message =
+    midwayViolationMessage ??
+    (shownStep !== null && baseMessage === shownStep.message
+      ? describeTakuzuTutorialStep(shownStep, shownProgress.boardState)
+      : (hintMessage ?? baseMessage));
+
   return (
     <TutorialOverlay
+      presentation="stage"
       open={open}
       title={TAKUZU_DISPLAY_NAME}
       pictogramSvg={pictogramSvg}
+      background={<TakuzuGround />}
       intro={takuzuTutorial.intro}
-      rules={takuzuTutorial.rules.map((rule) => ({
-        ...rule,
-        earned: shownProgress.earnedRuleIds.includes(rule.id),
-        current: shownSituation.step?.introducedRuleId === rule.id,
-      }))}
-      message={getTutorialMessage(takuzuTutorial, shownProgress, {
-        entry: finish.entry,
-        violationSettled: shownProgress === progress && violationSettled,
-      })}
+      recap={takuzuTutorial.rules.map((rule) => rule.label)}
+      message={message}
       phase={progress.phase}
-      guiding={progress.phase === "playing" && guiding}
+      spotlighting={spotlitCellIndices !== null}
+      progress={
+        progress.phase === "playing" || progress.phase === "intro"
+          ? getTakuzuTutorialProgressRatio(boardState)
+          : 1
+      }
+      progressStepCount={TAKUZU_TUTORIAL_PROGRESS_STEP_COUNT}
       finish={finish}
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
-      onRestart={restart}
+      onRestart={handleRestart}
       onClose={handleClose}
     />
   );
