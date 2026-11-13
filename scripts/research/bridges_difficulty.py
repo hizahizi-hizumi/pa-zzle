@@ -883,7 +883,6 @@ def cmd_report(a) -> None:
     st = Counter(r["status"] for r in rows)
     print("状態:", dict(st))
     uniq = [r for r in rows if r["status"] == "unique"]
-    # 盤面ごと
     print("\n## 盤面ごとの一意解の割合と最高段")
     by_size = defaultdict(list)
     for r in rows:

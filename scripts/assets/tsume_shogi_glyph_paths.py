@@ -61,7 +61,6 @@ PIECE_CHARACTERS = {
     "promLance": "杏",
     "promPawn": "と",
 }
-# 筋・段と、玉方の持駒の札に書く字。
 LETTERING_CHARACTERS = "123456789一二三四五六七八九玉方の持駒残り全部"
 
 # 駒の高さと底辺の幅（0.1mm）。`piece-shape.ts` と同じ値。

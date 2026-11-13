@@ -8,8 +8,7 @@
 //
 // 名前を渡さなければ全部を作り直す。Chromium の版で画素がわずかに変わるので、変えたい画像だけを名前で作り直せる。
 //
-// Pillow（WebP に対応したもの）を入れた python3 が要る。柾目は、年輪を1本ずつ早材から晩材へ濃くなって細い線で終わる輪郭で描き、
-// 年輪の間隔は幅の中でゆっくり変える。
+// Pillow（WebP に対応したもの）を入れた python3 が要る。
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";

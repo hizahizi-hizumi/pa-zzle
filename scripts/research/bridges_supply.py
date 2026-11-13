@@ -174,7 +174,6 @@ def generate(
 
     puzzle = Puzzle(width, height, islands, [0] * len(islands))
     puzzle.build()
-    # 生成した橋を、辺の番号で引けるようにする
     pair_to_edge = {}
     for e, (a, b, _, _) in enumerate(puzzle.edges):
         pair_to_edge[(min(a, b), max(a, b))] = e
@@ -477,7 +476,6 @@ def brute_count(p: Puzzle, limit: int = 10) -> int:
         a, b, _, _ = p.edges[k]
         for v in range(3):
             value[k] = v
-            # 島の数字を超えたら打ち切る
             if sum(value[e] for e in p.incident[a] if e <= k) > p.numbers[a]:
                 continue
             if sum(value[e] for e in p.incident[b] if e <= k) > p.numbers[b]:
