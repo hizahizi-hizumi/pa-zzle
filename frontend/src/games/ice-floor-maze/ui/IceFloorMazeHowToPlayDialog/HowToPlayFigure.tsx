@@ -19,11 +19,9 @@ type HowToPlayFigureProps = {
    * `x` が盤面の外、`w` が薄い氷の割れた後の水面、`r` がもろい岩の崩れた後の跡、`h` が雪を押し出してできた雪山。
    */
   rows: readonly string[];
-  /** ゴールのマス。要素の働きだけを示す図では渡さない。 */
+  /** 要素の働きだけを示す図では、ゴールを渡さない。 */
   goal?: number;
-  /** 駒のいるマス。 */
   piece: number;
-  /** 駒がここまで滑ってきた跡。 */
   trail?: { direction: IceFloorMazeDirection; from: number };
 };
 
@@ -45,7 +43,6 @@ function findChangedNotation(notation: string) {
     : null;
 }
 
-/** 盤面と同じ見た目で描く、遊び方の小さな盤面。 */
 export function HowToPlayFigure({
   rows,
   goal,

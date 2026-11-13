@@ -44,9 +44,8 @@ const iceSheenBands = [
 ] as const;
 
 /**
- * 盤面の地。雪原に開いた湖として、氷の面と、湖を囲む外壁（雪の土手）を描く。
+ * 雪原に開いた湖として、氷の面と、湖を囲む外壁（雪の土手）を描く。
  * 氷は、真ん中へ向かって深くなる青の上に、磨かれた面の淡い光が渡る。どちらも、マス目の線と要素の邪魔をしない薄さに留める。
- * 外壁は盤面として描くマスの形に沿い、岩場と同じ向きの縁の明暗を持ち、上と左の外壁は氷へ影を落とす。
  */
 export function IceFloorMazeGround({ board }: IceFloorMazeGroundProps) {
   const idPrefix = `ifm${useId().replace(/[^a-zA-Z0-9]/g, "")}`;

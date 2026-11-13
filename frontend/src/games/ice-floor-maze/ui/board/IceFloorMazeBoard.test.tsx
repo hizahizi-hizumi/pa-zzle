@@ -16,7 +16,6 @@ import {
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
 import { getIceFloorMazeSlideDurationMs } from "@/games/ice-floor-maze/ui/board/slide-timing";
 
-/** 要素がまだ変わっていない盤面のマス。 */
 function listInitialCells(
   board: IceFloorMazeBoardState,
 ): readonly IceFloorMazeStateCell[] {
@@ -166,7 +165,6 @@ describe("IceFloorMazeBoard", () => {
       const slideMs = getIceFloorMazeSlideDurationMs(rockSlide.path.length);
       let animate: Mock;
 
-      /** 再生した動きのうち、`selector` に当たる要素のものの、遅れと長さ。 */
       function listAnimationTimings(selector: string) {
         return animate.mock.contexts.flatMap((element, call) => {
           const options = animate.mock.calls[call]?.[1] as
@@ -461,7 +459,6 @@ describe("IceFloorMazeBoard", () => {
       );
     }
 
-    /** 再生した動きのうち、`selector` に当たる要素の中のものと、その遅れ。 */
     function listAnimatedWithin(selector: string) {
       return animate.mock.contexts.flatMap((element, call) => {
         const container = (element as Element).closest(selector);
@@ -721,7 +718,6 @@ describe("IceFloorMazeBoard", () => {
       );
     }
 
-    /** `selector` に当たる要素の動きの、遅れ・長さ・埋め方。 */
     function listAnimationTimings(selector: string) {
       return animate.mock.contexts.flatMap((element, call) => {
         const options = animate.mock.calls[call]?.[1] as

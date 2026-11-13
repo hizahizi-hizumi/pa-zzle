@@ -25,7 +25,7 @@ import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 
 type IceFloorMazeCellChangesProps = {
   board: IceFloorMazeBoard;
-  /** 直前の滑り。滑りごとに描き直す（`key` に滑りの `id` を渡す）。 */
+  /** 滑りごとに描き直す（`key` に滑りの `id` を渡す）。 */
   slide: IceFloorMazeLastSlide;
 };
 
@@ -41,10 +41,7 @@ const SNOW_PUSH_DURATION_MS = 180;
 
 /**
  * 直前の滑りで崩れたもろい岩・割れた薄い氷・押し出した雪の、変わる前の姿を盤面の上に重ね、崩れる・割れる・押し出される動きで消す。
- * 下の地形には変わった後の姿（氷・水面）が描いてある。もろい岩は駒が止まった時刻に、割れ目で2つに分かれて
- * ぶつかった向きへ傾きながら沈む。薄い氷は駒がそのマスを離れる時刻に、ひびの線で3つに割れて沈み、水面に波紋が広がる。
- * 雪は駒が雪のマスに入り始める時刻に、進む向きへ先のマスの手前まですべりながら縮んで消える。
- * 重ねた姿はふだん透明で、動いている間だけ見える。動きを減らす設定と動かせない環境では何も見せず、変わった後の姿だけが残る。
+ * 下の地形には変わった後の姿（氷・水面）が描いてある。
  */
 export function IceFloorMazeCellChanges({
   board,
@@ -136,6 +133,7 @@ function animateCellChanges(
 ): Animation[] {
   const animations: (Animation | undefined)[] = [];
   const crumbling = layer.querySelector<SVGGElement>("[data-crumbling-rock]");
+  // もろい岩は、割れ目で2つに分かれてぶつかった向きへ傾きながら沈む。
   if (crumbling) {
     const delay = getIceFloorMazeSlideDurationMs(slide.path.length);
     const push = iceFloorMazeDirectionVectors[slide.direction];
@@ -173,6 +171,7 @@ function animateCellChanges(
     }
   }
 
+  // 薄い氷は、ひびの線で3つに割れて沈み、水面に波紋が広がる。
   for (const cracking of layer.querySelectorAll<SVGGElement>(
     "[data-cracking-ice]",
   )) {

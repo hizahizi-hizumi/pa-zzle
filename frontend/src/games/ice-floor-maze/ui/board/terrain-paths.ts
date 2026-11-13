@@ -22,7 +22,7 @@ function formatCellSquare(x: number, y: number): string {
   return `M${x} ${y}h1v1h-1Z`;
 }
 
-/** 盤面として描くマスを1マスずつ並べた形。外壁はこの形の縁を太く描いて、マスの外側へはみ出させる。 */
+/** 外壁はこの形の縁を太く描いて、マスの外側へはみ出させる。 */
 export function createIceFloorMazeDrawnCellPath(
   board: IceFloorMazeBoard,
 ): string {
@@ -38,7 +38,7 @@ export function createIceFloorMazeDrawnCellPath(
 }
 
 /**
- * 盤面に囲まれた内側の盤面の外のマスの番号。盤面の外のマスを、外接の長方形の縁から上下左右にたどって届かないものを選ぶ。
+ * 盤面の外のマスを、外接の長方形の縁から上下左右にたどって届かないものを選ぶ。
  * 縁から届く盤面の外は盤面の形の切り欠きなので、含めない。
  */
 export function listIceFloorMazeEnclosedOutsideCells(
@@ -89,7 +89,6 @@ export function listIceFloorMazeEnclosedOutsideCells(
   );
 }
 
-/** 盤面に囲まれた内側の盤面の外のマスを、1マスずつ並べた形。 */
 export function createIceFloorMazeEnclosedOutsidePath(
   board: IceFloorMazeBoard,
   enclosed: ReadonlySet<number>,
@@ -100,7 +99,6 @@ export function createIceFloorMazeEnclosedOutsidePath(
   }).join("");
 }
 
-/** 盤面として描くマス同士の境目の目地。外壁に接する辺には引かない。 */
 export function createIceFloorMazeJointPath(board: IceFloorMazeBoard): string {
   return board.cells
     .flatMap((cell, cellIndex) => {
@@ -116,7 +114,7 @@ export function createIceFloorMazeJointPath(board: IceFloorMazeBoard): string {
     .join("");
 }
 
-/** 盤面として描くマスと、外壁との境目の辺。外壁が氷の縁に落とす影を、この辺に沿って描く。盤面に囲まれた盤面の外 `enclosed` との境目は含めない。 */
+/** 盤面として描くマスと、外壁との境目の辺。 */
 export function createIceFloorMazeBoundaryPath(
   board: IceFloorMazeBoard,
   enclosed: ReadonlySet<number>,

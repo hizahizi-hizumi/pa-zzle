@@ -2,7 +2,7 @@ import type { Ref } from "react";
 
 import { iceFloorMazeTone } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 
-/** 広がる輪の、広がる前の半径と線の太さ。完成演出で続けて広がる輪も同じ大きさから広げる。 */
+/** 完成演出で続けて広がる輪も、同じ大きさから広げる。 */
 export const iceFloorMazeGoalRing = { radius: 0.4, width: 0.08 } as const;
 
 type IceFloorMazeGoalBurstProps = {
@@ -10,7 +10,7 @@ type IceFloorMazeGoalBurstProps = {
 };
 
 /**
- * ゴールを通り過ぎたときとクリア演出で広がる、ゴールの色の輪。ふだんは見せない。親がゴールのマスの中心へ置く。
+ * 親がゴールのマスの中心へ置く。
  * 広がる輪は周りのマスの要素の上に重ねて見せるので、ゴールの印とは別に、マスに載る要素より上の層に描く。
  */
 export function IceFloorMazeGoalBurst({ ref }: IceFloorMazeGoalBurstProps) {

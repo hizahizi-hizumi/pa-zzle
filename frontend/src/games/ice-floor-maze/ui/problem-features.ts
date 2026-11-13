@@ -31,7 +31,6 @@ export const iceFloorMazeProblemFeatureAxisDisplays = {
   ProblemFeatureAxisDisplay
 >;
 
-/** 要素の数の軸ごとの、その数を持つ特徴。 */
 const elementCountFeatureByAxis = {
   "floor-count": "floorCount",
   "brittle-rock-count": "brittleRockCount",
@@ -48,7 +47,6 @@ function isElementCountAxis(
   return Object.hasOwn(elementCountFeatureByAxis, id);
 }
 
-/** 床・もろい岩・薄い氷・雪・滑る氷の塊は、無い問題では示さない。 */
 export function formatIceFloorMazeProblemFeatures(
   features: IceFloorMazeProblemFeatures,
 ): ProblemFeature[] {
