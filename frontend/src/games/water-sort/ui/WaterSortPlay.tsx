@@ -20,6 +20,8 @@ import { useWaterSortSoundEffects } from "@/games/water-sort/ui/use-water-sort-s
 import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
+import { useWaterSortLook } from "@/games/water-sort/ui/prototypes/use-water-sort-look";
+import { WaterSortLookSelect } from "@/games/water-sort/ui/prototypes/WaterSortLookSelect";
 
 type WaterSortPlayProps = GamePlayScreenProps<
   WaterSortDifficulty,
@@ -62,14 +64,27 @@ export function WaterSortPlay({
 }: WaterSortPlayProps) {
   const [hasActivePourAnimation, setHasActivePourAnimation] = useState(false);
   const showDeadlockNotice = isDeadlocked && !hasActivePourAnimation;
-  useWaterSortSoundEffects(operation, progress);
+  const look = useWaterSortLook();
+  const muteDefaultSounds = look?.muteDefaultSounds ?? false;
+  useWaterSortSoundEffects(
+    muteDefaultSounds ? null : operation,
+    muteDefaultSounds ? "playing" : progress,
+  );
+  const Board = look?.Board ?? WaterSortBoard;
+  const Background = look?.Background;
 
   return (
     <GamePlayFrame
       progress={progress}
       result={result}
       title={WATER_SORT_DISPLAY_NAME}
-      background={<div className="size-full bg-[#e5eef0] dark:bg-[#1c292d]" />}
+      background={
+        Background ? (
+          <Background />
+        ) : (
+          <div className="size-full bg-[#e5eef0] dark:bg-[#1c292d]" />
+        )
+      }
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },
@@ -101,7 +116,7 @@ export function WaterSortPlay({
       )}
     >
       <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
-        <WaterSortBoard
+        <Board
           state={state}
           sourceBottleIndex={sourceBottleIndex}
           operation={operation}
@@ -123,6 +138,7 @@ export function WaterSortPlay({
             <UndoButton disabled={!canUndo} onUndo={onUndo} />
           </div>
         )}
+        <WaterSortLookSelect />
       </footer>
     </GamePlayFrame>
   );
