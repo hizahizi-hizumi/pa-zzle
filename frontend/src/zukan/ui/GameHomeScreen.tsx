@@ -649,7 +649,7 @@ export function GameHomeScreen({
       ? PENDING_DETAIL_COVER_HEIGHT_PX
       : (detailOverlayHeight ?? 0);
   const numberDigitCount = getZukanNumberDigitCount(zukan.problemCount);
-  // 遊び方を知らないまま本番の盤面に放り込まないよう、まだ1問もクリアしていない人は、始める前にチュートリアルを通す。
+  // SPEC-029
   const startsWithTutorial =
     renderTutorial !== undefined &&
     !records.some((record) => record.gameId === gameId);

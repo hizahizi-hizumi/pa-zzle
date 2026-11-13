@@ -5,10 +5,7 @@ import {
 } from "@/games/result";
 import { findZukanMilestoneAtLeast } from "@/zukan/zukan-milestone";
 
-/**
- * 塔の上端に当たる問題の数。最も多いゲームの数以上の、図鑑と同じ節目にする。
- * 最も多いゲームに合わせると、1問でも塔が満杯に見えて、積み上がりが見えないため。
- */
+/** 塔の上端に当たる問題の数（SPEC-027）。 */
 export function getCollectionTowerScale(maxCount: number): number {
   return findZukanMilestoneAtLeast(maxCount);
 }

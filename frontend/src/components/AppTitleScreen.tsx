@@ -50,7 +50,6 @@ export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
     }
   }
 
-  // キーボードでも、面を選んだまま決定のキーを押せば入れるようにする。
   function enterByKey(event: KeyboardEvent) {
     if (
       event.target === event.currentTarget &&

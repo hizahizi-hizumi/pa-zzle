@@ -69,7 +69,6 @@ export function GameSelectionGallery({
         isCovered={isCovered}
         onSelect={selectGame}
       />
-      {/* カードを押して入れることに気づかなくても入れるよう、空いている下の帯に入る操作を置く。帯のほかの所は、カルーセルを送る操作に残す。 */}
       {selectedGame && (
         <div className="game-selection__play">
           <Button asChild size="lg">
