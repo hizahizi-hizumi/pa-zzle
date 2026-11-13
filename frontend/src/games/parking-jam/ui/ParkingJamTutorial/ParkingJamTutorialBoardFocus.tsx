@@ -25,15 +25,14 @@ export type ParkingJamTutorialFocusTarget =
   | { kind: "fixed-area"; cell: ParkingJamCell }
   | { kind: "curb"; move: ParkingJamMove };
 
-/** 次に動かす車の印。`recallId` は印の無い車を触られるたびに変え、印の線を短く濃くして戻す。 */
 export type ParkingJamTutorialMark = {
   vehicleId: ParkingJamVehicleId;
+  // 印の無い車を触られるたびに変え、印の線を短く濃くして戻す。
   recallId: number | null;
 };
 
 type ParkingJamTutorialBoardFocusProps = {
   board: ParkingJamBoard;
-  /** 手を引いている間、画面全体の覆いから抜いて元の明るさで見せる物。 */
   spotlights: readonly ParkingJamTutorialFocusTarget[];
   mark: ParkingJamTutorialMark | null;
   /** 盤面。この枠いっぱいに描く。 */
@@ -168,7 +167,6 @@ function getTargetShape(
   }
 }
 
-/** 示す物の名前。車は車の ID、植え込みはマス、縁石は当たる手の向き。 */
 function getTargetName(target: ParkingJamTutorialFocusTarget): string {
   switch (target.kind) {
     case "vehicle":
@@ -202,10 +200,6 @@ function listSpotlightPlacements(
   return [...placements.values()];
 }
 
-/**
- * 物の外形を、盤面と同じ大きさの枠に対する割合で置く。
- * 角丸は盤面の幅に比例させ、覆いが読む値を描いた大きさの角丸と揃える。
- */
 function getPlacementStyle(
   board: ParkingJamBoard,
   { x, y, width, height, radius }: Shape,
@@ -216,6 +210,7 @@ function getPlacementStyle(
     top: `${((y + PARKING_JAM_MARGIN) / viewBox.height) * 100}%`,
     width: `${(width / viewBox.width) * 100}%`,
     height: `${(height / viewBox.height) * 100}%`,
+    // 角丸は盤面の幅に比例させ、覆いが読む値を描いた大きさの角丸と揃える。
     borderRadius: `${(radius / viewBox.width) * 100}cqw`,
   };
 }

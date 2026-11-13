@@ -21,45 +21,23 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-/**
- * - `straight`: 車は向きに沿って前か後ろへまっすぐ進み、道路まで一度で出る。
- * - `road`: 進む先の外周が、その車線で道路につながっていないと出られない。
- * - `planter`: 途中に植え込みがあると出られない。
- * - `car`: 途中にほかの車があると出られない。先にその車を出すと通れる。
- */
 export type ParkingJamTutorialRuleId = "straight" | "road" | "planter" | "car";
 
-/** 盤面と同じく、車をどちらへ出そうとしたか。 */
 export type ParkingJamTutorialAction = ParkingJamMove;
 
-/**
- * 出られなかったわけ。
- * - `road`: 進む先の外周が、その車線で道路につながっていない。途中に何があっても、これを先に言う（本番の判定と同じ優先）。
- * - `planter`: 植え込みに当たる。
- * - `car`: ほかの車に当たる。
- */
 export type ParkingJamTutorialBlocker = "road" | "planter" | "car";
 
-/**
- * 手順で印を付けて出させる車。印の車を出したところで次の手順へ進む。
- * - `ruledOutMove`: 手順で示すルールで出られない手。その手の車と当たるものが、印の車をどう出すかを決める（決め手）。操作を見せる手順では `null`。
- */
 export type ParkingJamTutorialStep = TutorialStep<ParkingJamTutorialRuleId> & {
   vehicleId: ParkingJamVehicleId;
+  // 手順で示すルールで出られない手。その手の車と当たるものが、印の車をどう出すかを決める（決め手）。操作を見せる手順では `null`。
   ruledOutMove: ParkingJamMove | null;
 };
 
-/** 出られない手と、その手で当たるもの。 */
 export type ParkingJamTutorialContactedMove = {
   move: ParkingJamMove;
   contact: ParkingJamExitContact;
 };
 
-/**
- * 直前の手。盤面の動きに使う。
- * - `exited`: 車を出した。
- * - `blocked`: 車が `contact` に当たって出られなかった。
- */
 export type ParkingJamTutorialMove = ParkingJamMove &
   (
     | { type: "exited" }
@@ -70,9 +48,9 @@ export type ParkingJamTutorialMove = ParkingJamMove &
       }
   );
 
-/** `moveCount` は盤面に反応した手の数。同じ車への動きをやり直す目印に使う。 */
 export type ParkingJamTutorialBoardState = {
   puzzle: ParkingJamState;
+  // 盤面に反応した手の数。同じ車への動きをやり直す目印に使う。
   moveCount: number;
   lastMove: ParkingJamTutorialMove | null;
 };
@@ -177,7 +155,6 @@ function startParkingJamTutorial(): ParkingJamTutorialBoardState {
   };
 }
 
-/** すべての車を出し終えた、空の駐車場。 */
 function getParkingJamTutorialGoal(): ParkingJamTutorialBoardState {
   return {
     puzzle: { remainingVehicleIds: [] },
@@ -195,7 +172,6 @@ const contactBlockers = {
   ParkingJamTutorialBlocker
 >;
 
-/** 出られない手で、出られないわけとして示すもの。本番の判定と同じ優先で選ぶ。出られる手と、車の向きに沿わない手は `null`。 */
 export function findParkingJamTutorialContact(
   puzzle: ParkingJamState,
   move: ParkingJamMove,
@@ -203,7 +179,6 @@ export function findParkingJamTutorialContact(
   return findParkingJamExitContact(board, puzzle, move);
 }
 
-/** 出られなかったわけ。出られる手と、車の向きに沿わない手は `null`。 */
 export function findParkingJamTutorialBlocker(
   puzzle: ParkingJamState,
   move: ParkingJamMove,
@@ -220,10 +195,6 @@ function withMove(
   return { puzzle, moveCount: state.moveCount + 1, lastMove };
 }
 
-/**
- * 手を引いている間は、印の車だけを受け付ける。印の車が出られない向きへ進もうとしたら、本番と同じく当たって止まる。
- * 手を離した後は本番と同じく、どの車も受け付ける。出られない手は、手に入れたルールに合わない手として返す。
- */
 function performParkingJamTutorialAction(
   { step }: ParkingJamTutorialSituation,
   state: ParkingJamTutorialBoardState,
@@ -272,7 +243,8 @@ const directionNames = {
   left: "左",
 } as const satisfies Record<ParkingJamDirection, string>;
 
-/** 出られない手で、動かした向きと当たったものを言う一言。 */
+// 手を引く間の見出しはルールを言うので、違反の一言はその手に当てはめ、動かした向きと当たったものを言う。
+// 道路は、同じ側でもほかの車線にはあることがあるので、その車の進む先の車線に道路がないと言う（本番の判定と同じく車線で決まる）。
 const violationMessages = {
   road: (direction) => `${direction}へ進む先に道路がないので\n出られません`,
   planter: (direction) => `${direction}に植え込みがあるので\n通れません`,
@@ -282,11 +254,7 @@ const violationMessages = {
   (direction: string) => string
 >;
 
-/**
- * 出られない手をしたとき。手を引く間の見出しはルールを言うので、違反の一言はその手に当てはめ、動かした向きと当たったものを言う。
- * 道路は、同じ側でもほかの車線にはあることがあるので、その車の進む先の車線に道路がないと言う（本番の判定と同じく車線で決まる）。
- * 動きを減らす設定で当たって揺れる動きが見えなくても、一言が替わることで手が届いたことが分かる。
- */
+// 動きを減らす設定で当たって揺れる動きが見えなくても、一言が替わることで手が届いたことが分かる。
 function describeParkingJamTutorialViolation(
   situation: ParkingJamTutorialSituation,
   { lastMove }: ParkingJamTutorialBoardState,
@@ -302,10 +270,6 @@ function describeParkingJamTutorialViolation(
   };
 }
 
-/**
- * 手を引いている間の決め手。手順で示すルールで出られない手と、その手で当たるもの。
- * 操作を見せる手順と、手を離した後は `null`。
- */
 export function findParkingJamTutorialDecider(
   { step }: ParkingJamTutorialSituation,
   { puzzle }: ParkingJamTutorialBoardState,
@@ -315,23 +279,18 @@ export function findParkingJamTutorialDecider(
   return move && contact ? { move, contact } : null;
 }
 
-/** 手順で印を付ける車。手を離した後は `null`。 */
 export function getParkingJamTutorialStepVehicle({
   step,
 }: ParkingJamTutorialSituation): ParkingJamVehicleId | null {
   return step?.vehicleId ?? null;
 }
 
-/** 手を離した後、手が止まったときに示す、今出せる車。出し終えていれば `null`。 */
 export function findParkingJamTutorialHintVehicle({
   puzzle,
 }: ParkingJamTutorialBoardState): ParkingJamVehicleId | null {
   return listParkingJamLegalMoves(board, puzzle)[0]?.vehicleId ?? null;
 }
 
-/**
- * 始めの盤面から、すべての車を出し終えるまでの1通りの出し方。導入で、車が出ていって空になる駐車場をゴールとして見せるのに使う。
- */
 export function listParkingJamTutorialSolution(): ParkingJamMove[] {
   const moves: ParkingJamMove[] = [];
   let puzzle = createParkingJamInitialState(board);

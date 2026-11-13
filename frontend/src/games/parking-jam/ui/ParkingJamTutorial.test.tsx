@@ -10,7 +10,6 @@ import {
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
 import { ParkingJamTutorial } from "@/games/parking-jam/ui/ParkingJamTutorial";
 
-/** 盤面の車の読み上げ名。 */
 const vehicleLabels = {
   a: "横向きの車 行2 列4",
   b: "横向きの車 行3 列1",
@@ -25,7 +24,6 @@ type VehicleId = keyof typeof vehicleLabels;
 
 type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 
-/** 手順ごとに出す車と向き。 */
 const stepMoves = [
   ["e", "ArrowUp"],
   ["g", "ArrowRight"],
@@ -33,20 +31,16 @@ const stepMoves = [
   ["c", "ArrowUp"],
 ] as const satisfies readonly (readonly [VehicleId, ArrowKey])[];
 
-/** 手順を終えた後、残りを出し切る手。 */
 const remainingMoves = [
   ["a", "ArrowLeft"],
   ["f", "ArrowRight"],
   ["d", "ArrowRight"],
 ] as const satisfies readonly (readonly [VehicleId, ArrowKey])[];
 
-/** 車が出ていき終えて盤面から消えてから、次の手順の一言と印を出すまでの間。 */
 const exitStepHoldMs = 700;
 
-/** 手を離した後、手が止まってから今出せる車を示すまでの間。 */
 const idleHintDelayMs = 4000;
 
-/** 導入の場面の動きを見せ終えるのに十分な間。 */
 const introEnoughMs = 8000;
 
 const firstHeadline = "車を出したい向きへ スワイプします";
@@ -79,7 +73,6 @@ function pressNext(): void {
   fireEvent.click(screen.getByRole("button", { name: "次へ" }));
 }
 
-/** 場面の動きを待っては「次へ」を押し、導入を最後まで進める。 */
 function goThroughIntroSync(): void {
   for (let press = 0; press < 3; press += 1) {
     advanceTime(introEnoughMs);
@@ -92,7 +85,6 @@ function goThroughIntroSync(): void {
   advanceTime(introEnoughMs);
 }
 
-/** 場面の動きを待たずに「次へ」を続けて押し、ゴールと始まりの盤面を通って最初の手順から始める。 */
 function pressNextThroughIntro(): void {
   for (
     let next = screen.queryByRole("button", { name: "次へ" });
@@ -109,7 +101,6 @@ function queryVehicle(vehicleId: VehicleId): HTMLElement | null {
   });
 }
 
-/** 盤面と同じく、車の向きに沿う矢印キーで動かす。 */
 function moveVehicles(
   moves: readonly (readonly [VehicleId, ArrowKey])[],
   holdMs = 0,
@@ -124,7 +115,6 @@ function moveVehicles(
   }
 }
 
-/** 次に動かす車の印を付けた車。 */
 function getCuedVehicles(): string[] {
   return Array.from(
     screen.getByRole("main").querySelectorAll("[data-vehicle-mark]"),
@@ -137,7 +127,6 @@ function queryRecall(): Element | null {
   return screen.getByRole("main").querySelector('[data-tutorial-cue="recall"]');
 }
 
-/** 盤面のうち、画面全体の覆いから抜いて元の明るさで見せている物。 */
 function getSpotlitTargets(): string[] {
   return Array.from(
     screen.getByRole("main").querySelectorAll("[data-spotlight-target]"),
