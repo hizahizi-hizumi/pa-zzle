@@ -1,21 +1,11 @@
-import { type ReactNode, useRef } from "react";
-
 import {
-  type TutorialMusicState,
-  useTutorialMusicState,
-} from "@/components/app-background-music";
+  TutorialScrimFrame,
+  type TutorialScrimFrameProps,
+} from "@/components/TutorialOverlay/TutorialScrimFrame";
 import {
-  type TutorialBoardIntro,
-  type TutorialFinish,
-  type TutorialRuleListItem,
-  TutorialScreen,
-} from "@/components/TutorialOverlay/TutorialScreen";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import type {
-  TutorialIntro,
-  TutorialMessage,
-  TutorialPhase,
-} from "@/games/tutorial";
+  TutorialStage,
+  type TutorialStageProps,
+} from "@/components/TutorialOverlay/TutorialStage";
 
 export type {
   TutorialBoardIntro,
@@ -24,93 +14,28 @@ export type {
   TutorialPlayStart,
   TutorialRuleListItem,
 } from "@/components/TutorialOverlay/TutorialScreen";
+export type { TutorialStageBoardIntro } from "@/components/TutorialOverlay/TutorialStage";
 
-type TutorialOverlayProps = {
-  open: boolean;
-  title: string;
-  pictogramSvg: string;
-  intro: TutorialIntro;
-  rules: readonly TutorialRuleListItem[];
-  message: TutorialMessage;
-  phase: TutorialPhase;
-  guiding: boolean;
-  finish: TutorialFinish;
-  renderBoard: (intro: TutorialBoardIntro) => ReactNode;
-  onIntroEnd: () => void;
-  onRestart: () => void;
-  onClose: () => void;
-};
-
-function getMusicState(
-  open: boolean,
-  phase: TutorialPhase,
-): TutorialMusicState {
-  if (!open) {
-    return "closed";
-  }
-  return phase === "solved" || phase === "completed" ? "solved" : "solving";
-}
+/**
+ * 見せ方ごとの props。
+ * - `scrim`（既定）: 手を引く間に画面全体へ覆いを重ね、次に押す所・決め手・一言を抜いて見せる。
+ * - `stage`: プレイ画面と同じ地の上で、画面を覆わずに、指さしと短い一言で手を引く。
+ */
+type TutorialOverlayProps =
+  | (TutorialScrimFrameProps & { presentation?: "scrim" })
+  | (TutorialStageProps & { presentation: "stage" });
 
 /**
  * ゲームのチュートリアルの画面（`games/<game>/ui/<Game>Tutorial.tsx`）は、次のようにこの枠へつなぐ。
  * - 進行は `games/tutorial.ts` の `startTutorial`・`performTutorialAction`・`finishTutorialIntro`・`completeTutorial` で進め、`phase` と、一言（`getTutorialMessage`）を渡す。
- * - `guiding` は、`phase` が `playing` で、`getTutorialSituation` の `step` があるときに `true` にする。
- * - `renderBoard` で本番の盤面部品を描く。導入の場面（`TutorialBoardIntro`）は盤面が受け持つ。
+ * - 見せ方は `presentation` で選ぶ。
+ * - `scrim` では、`guiding` を、`phase` が `playing` で `getTutorialSituation` の `step` があるときに `true` にする。`renderBoard` で本番の盤面部品を描き、次に押す所と決め手に `TutorialSpotlight`、印と合図に `TutorialCue` を置く。導入の場面（`TutorialBoardIntro`）は盤面が受け持つ。
+ * - `stage` では、プレイ画面と同じ地を `background` に渡す。`renderBoard` で本番の盤面部品を描き、次に押す所に `TutorialCue` の `pointer` を置く。入口の場面（`TutorialStageBoardIntro`）は盤面が受け持つ。
  * - `finish` は、ゲームのホームから開いたとき（`GameHomeTutorialControl` の `playStart` があるとき）は `home`、プレイ中のメニューから開いたときは `play` にする。
  */
-export function TutorialOverlay({
-  open,
-  title,
-  pictogramSvg,
-  intro,
-  rules,
-  message,
-  phase,
-  guiding,
-  finish,
-  renderBoard,
-  onIntroEnd,
-  onRestart,
-  onClose,
-}: TutorialOverlayProps) {
-  useTutorialMusicState(getMusicState(open, phase));
-  const screenRef = useRef<HTMLDivElement>(null);
-
-  // 閉じるボタンに最初のフォーカスを置くと、導入の間ずっと枠が出るので、画面そのものに置く。
-  function handleOpenAutoFocus(event: Event) {
-    event.preventDefault();
-    screenRef.current?.focus();
+export function TutorialOverlay(props: TutorialOverlayProps) {
+  if (props.presentation === "stage") {
+    return <TutorialStage {...props} />;
   }
-
-  function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen) {
-      onClose();
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        onOpenAutoFocus={handleOpenAutoFocus}
-        className="top-0 left-0 flex h-svh max-h-none w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 pb-[env(safe-area-inset-bottom)] shadow-none sm:max-w-none"
-      >
-        <TutorialScreen
-          ref={screenRef}
-          title={title}
-          pictogramSvg={pictogramSvg}
-          intro={intro}
-          rules={rules}
-          message={message}
-          introducing={phase === "intro"}
-          completed={phase === "completed"}
-          guiding={guiding}
-          finish={finish}
-          renderBoard={renderBoard}
-          onIntroEnd={onIntroEnd}
-          onRestart={onRestart}
-        />
-      </DialogContent>
-    </Dialog>
-  );
+  return <TutorialScrimFrame {...props} />;
 }

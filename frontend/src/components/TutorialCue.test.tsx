@@ -19,10 +19,12 @@ describe("TutorialCue", () => {
     test("押す物に沿う印だけを描き、印を戻す線を描かないこと", () => {
       const marks = queryCues("mark");
       const recalls = queryCues("recall");
+      const pointers = queryCues("pointer");
 
       expect(marks).toHaveLength(1);
       expect(marks[0]?.getAttribute("aria-hidden")).toBe("true");
       expect(recalls).toHaveLength(0);
+      expect(pointers).toHaveLength(0);
     });
   });
 
@@ -57,6 +59,48 @@ describe("TutorialCue", () => {
       const recalls = queryCues("recall");
 
       expect(recalls).toEqual([firstRecall]);
+    });
+  });
+
+  describe("指さしの場合", () => {
+    let rerender: ReturnType<typeof render>["rerender"];
+
+    beforeEach(() => {
+      ({ rerender } = render(<TutorialCue kind="pointer" recallId={null} />));
+    });
+
+    test("押す物に沿う印に加えて、読み上げない指を描くこと", () => {
+      const marks = queryCues("mark");
+      const pointers = queryCues("pointer");
+
+      expect(marks).toHaveLength(1);
+      expect(pointers).toHaveLength(1);
+      expect(pointers[0]?.getAttribute("aria-hidden")).toBe("true");
+    });
+
+    test("印の無い所が押されると、指を残したまま印を戻す線を描くこと", () => {
+      rerender(<TutorialCue kind="pointer" recallId={1} />);
+
+      const pointers = queryCues("pointer");
+      const recalls = queryCues("recall");
+
+      expect(pointers).toHaveLength(1);
+      expect(recalls).toHaveLength(1);
+    });
+  });
+
+  describe("仕上げたことへの応えの場合", () => {
+    beforeEach(() => {
+      render(<TutorialCue kind="achievement" />);
+    });
+
+    test("次に押す所の印を描かず、読み上げない仕上げた印を描くこと", () => {
+      const achievements = queryCues("achievement");
+      const marks = queryCues("mark");
+
+      expect(achievements).toHaveLength(1);
+      expect(achievements[0]?.getAttribute("aria-hidden")).toBe("true");
+      expect(marks).toHaveLength(0);
     });
   });
 
