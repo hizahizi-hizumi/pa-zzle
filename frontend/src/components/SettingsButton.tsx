@@ -7,7 +7,6 @@ type SettingsButtonProps = {
   initialGameId?: string;
 };
 
-/** 設定のダイアログを開く小さなアイコンのボタン。開く操作には音を鳴らさない。 */
 export function SettingsButton({ initialGameId }: SettingsButtonProps) {
   const [open, setOpen] = useState(false);
 

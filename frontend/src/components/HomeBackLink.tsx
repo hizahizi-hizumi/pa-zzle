@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/router";
 
 type HomeBackLinkProps = {
-  /** 名前を読み上げにだけ持たせ、アイコンのボタンで示す。見出しの行の頭に置くときに使う。 */
+  /** 見出しの行の頭に置くときに使う。 */
   iconOnly?: boolean;
 };
 

@@ -13,7 +13,6 @@ type PlayUnavailableNoticeProps = {
   backTo: GameHomePath;
 };
 
-/** URLで指定されたプレイを始められないことを示し、ゲームのホームへ戻す。 */
 export function PlayUnavailableNotice({
   title,
   description,

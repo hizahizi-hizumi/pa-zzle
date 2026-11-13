@@ -14,7 +14,6 @@ type PlayHeaderSummaryProps = {
   metrics: readonly PlayHeaderMetric[];
 };
 
-/** 狭い幅で行を分けるとき、計測値を前から2つずつ同じ行に残す。 */
 const metricsPerGroup = 2;
 
 /** ゲームが桁数を渡さない回数は2桁分の幅を取り、10回目で周りの計測値が横へ動かないようにする。 */

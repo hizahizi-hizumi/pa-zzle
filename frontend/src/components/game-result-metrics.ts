@@ -23,7 +23,7 @@ import {
 /** 結果画面で数を示すときの単位。数には必ず単位を付ける。 */
 export type GameResultCountUnit = "回" | "手" | "個" | "本" | "台" | "マス";
 
-/** 採点基準の時間。基準時間は秒未満を含む式から求まるので、全ゲームで1/10秒まで示す。 */
+/** 基準時間は秒未満を含む式から求まるので、全ゲームで1/10秒まで示す。 */
 export function formatScoreReferenceTime(milliseconds: number): string {
   return formatElapsedTimeWithTenths(milliseconds);
 }
@@ -37,7 +37,6 @@ export function createCountMetric(
   return { label, value: `${count}${unit}`, recordMetricId };
 }
 
-/** プレイ中の操作を使った回数。呼び名は操作の共通の呼び名に揃える。 */
 export function createOperationCountMetric(
   operation: PlayOperation,
   count: number,
@@ -45,7 +44,6 @@ export function createOperationCountMetric(
   return createCountMetric(PLAY_OPERATION_LABELS[operation], count, "回");
 }
 
-/** クリアまでの時間と、基準時間との差。 */
 export function createElapsedTimeMetric({
   elapsedMs,
   timeDeltaMs,
@@ -65,7 +63,6 @@ export function createElapsedTimeMetric({
   };
 }
 
-/** クリアまでの手数と、最短手数との差。 */
 export function createMoveCountMetric({
   moveCount,
   moveDelta,
@@ -90,7 +87,7 @@ export function createSpeedFullScoreMetric({
   return { label: "基準時間", value: formatScoreReferenceTime(fullScoreMs) };
 }
 
-/** 評価項目ごとの点と満点。満点の並び順に並べる。 */
+/** 満点の並び順に並べる。 */
 export function listScoreBreakdownMetrics<Item extends ScoreItem>(
   score: PlayScore<Item>,
   maximums: ScoreMaximums<Item>,

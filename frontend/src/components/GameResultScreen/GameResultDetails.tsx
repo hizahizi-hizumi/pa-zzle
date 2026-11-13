@@ -17,7 +17,6 @@ export type GameResultScoreCriterion = {
 
 export type GameResultScoreCriteria = readonly GameResultScoreCriterion[];
 
-/** 全ゲームの全項目に共通する点の丸め方。 */
 const SCORE_ROUNDING_NOTE = "各項目は1点単位に四捨五入し、0点を下限とする。";
 
 type GameResultDetailsProps = {

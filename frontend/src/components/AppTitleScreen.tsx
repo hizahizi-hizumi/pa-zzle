@@ -20,7 +20,6 @@ type AppTitleScreenGame = {
 type AppTitleScreenProps = {
   title: AppLaunchTitle;
   games: readonly AppTitleScreenGame[];
-  /** 利用者がタイトルから入った。ゲームのピクトグラムで入ったときは、続けてそのゲームのホームへ移る。 */
   onEnter: () => void;
 };
 
@@ -28,10 +27,6 @@ function stopPropagation(event: MouseEvent) {
   event.stopPropagation();
 }
 
-/**
- * アプリを開いたときにホームの上へ重ねる、全面のタイトル。効果音を読み込む間は進みを見せ、読み込み終えたら入れる。
- * どこを押しても入り、ゲームのピクトグラムを押すとそのゲームのホームへ直接入る。
- */
 export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const ready = title.status === "ready";
