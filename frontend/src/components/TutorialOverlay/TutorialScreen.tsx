@@ -114,8 +114,7 @@ type IntroStage =
   | "reveal"
   | "done";
 
-/** 名前が現れてから盤面を出すまで。 */
-const BOARD_APPEAR_DELAY_MS = 300;
+const BOARD_APPEAR_AFTER_NAME_DELAY_MS = 300;
 /** 盤面の領域を出す間。盤面を出す段の見せ方と同じ値。 */
 const BOARD_APPEAR_MS = MOTION_DURATION_MS.slow;
 /** 名前を上部へ移す間。ピクトグラムと名前は並んだまま一緒に動く。 */
@@ -309,8 +308,7 @@ export function TutorialScreen({
   // 場面の終わりを一度だけ受け取るため、受け取った段を覚える。
   const endedStageRef = useRef<IntroStage | null>(null);
   const [sceneEnded, setSceneEnded] = useState(false);
-  // 名前を上部へ移す段で、ルールと一言を出し始めた。
-  const [headerMessageShown, setHeaderMessageShown] = useState(false);
+  const [headerStageMessageShown, setHeaderStageMessageShown] = useState(false);
   const timersRef = useRef<number[]>([]);
   const animationsRef = useRef<Animation[]>([]);
   const onIntroEndRef = useRef(onIntroEnd);
@@ -342,7 +340,7 @@ export function TutorialScreen({
     stageRef.current = next;
     endedStageRef.current = null;
     setSceneEnded(false);
-    setHeaderMessageShown(false);
+    setHeaderStageMessageShown(false);
     setStage(next);
   }, []);
 
@@ -369,10 +367,13 @@ export function TutorialScreen({
       changeStage("goal");
       return;
     }
-    schedule(() => changeStage("goalAppearing"), BOARD_APPEAR_DELAY_MS);
+    schedule(
+      () => changeStage("goalAppearing"),
+      BOARD_APPEAR_AFTER_NAME_DELAY_MS,
+    );
     schedule(
       () => changeStage("goal"),
-      BOARD_APPEAR_DELAY_MS + BOARD_APPEAR_MS,
+      BOARD_APPEAR_AFTER_NAME_DELAY_MS + BOARD_APPEAR_MS,
     );
   });
 
@@ -403,7 +404,10 @@ export function TutorialScreen({
         : [],
     );
     changeStage("header");
-    schedule(() => setHeaderMessageShown(true), REVEAL_AFTER_NAME_DELAY_MS);
+    schedule(
+      () => setHeaderStageMessageShown(true),
+      REVEAL_AFTER_NAME_DELAY_MS,
+    );
     for (const [element, transform] of moves) {
       element.style.transformOrigin = "0 0";
       animationsRef.current.push(
@@ -712,7 +716,7 @@ export function TutorialScreen({
           messageShown:
             stage === "done" ||
             stage === "reveal" ||
-            (stage === "header" && headerMessageShown),
+            (stage === "header" && headerStageMessageShown),
         })}
       </main>
 

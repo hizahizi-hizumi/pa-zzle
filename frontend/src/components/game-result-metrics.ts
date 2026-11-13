@@ -86,14 +86,13 @@ export function createSpeedFullScoreMetric({
   return { label: "基準時間", value: formatScoreReferenceTime(fullScoreMs) };
 }
 
-/** 満点の並び順に並べる。 */
 export function listScoreBreakdownMetrics<Item extends ScoreItem>(
   score: PlayScore<Item>,
-  maximums: ScoreMaximums<Item>,
+  maximumsInDisplayOrder: ScoreMaximums<Item>,
 ): GameResultDetailMetric[] {
-  const items = Object.keys(maximums) as Item[];
+  const items = Object.keys(maximumsInDisplayOrder) as Item[];
   return items.map((item) => ({
     label: SCORE_ITEM_LABELS[item],
-    value: `${score.breakdown[item]} / ${maximums[item]}`,
+    value: `${score.breakdown[item]} / ${maximumsInDisplayOrder[item]}`,
   }));
 }
