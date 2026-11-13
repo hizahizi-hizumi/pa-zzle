@@ -15,7 +15,6 @@ type RecordedNanpureResultProps = RecordedGameResultProps<
   NanpureResult
 >;
 
-/** 記録から作り直したナンプレの結果画面。 */
 export function RecordedNanpureResult(props: RecordedNanpureResultProps) {
   const { screenProps, diagnostics } = useRecordedGameResult(
     props,

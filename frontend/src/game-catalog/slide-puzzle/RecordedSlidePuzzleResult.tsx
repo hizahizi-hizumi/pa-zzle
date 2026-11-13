@@ -15,7 +15,6 @@ type RecordedSlidePuzzleResultProps = RecordedGameResultProps<
   SlidePuzzleResult
 >;
 
-/** 記録から作り直したスライドパズルの結果画面。 */
 export function RecordedSlidePuzzleResult(
   props: RecordedSlidePuzzleResultProps,
 ) {
