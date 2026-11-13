@@ -11,7 +11,7 @@ export type HowToPlayFigureCell = {
   digit?: NanpureDigit;
   given?: boolean;
   notes?: readonly NanpureDigit[];
-  highlight?: "selected" | "related";
+  highlight?: "selected" | "sameUnitAsSelected";
   error?: "mistake" | "conflict";
 };
 

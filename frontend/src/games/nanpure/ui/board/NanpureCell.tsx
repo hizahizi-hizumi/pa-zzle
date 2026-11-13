@@ -20,8 +20,8 @@ type NanpureCellProps = {
   notes: NanpureNotes[number];
   selectedValue: NanpureDigit | null;
   selected: boolean;
-  related: boolean;
-  matching: boolean;
+  sameUnitAsSelected: boolean;
+  sameDigitAsSelected: boolean;
   conflict: boolean;
   mistake: boolean;
   disabled: boolean;
@@ -68,8 +68,8 @@ export function NanpureCell({
   notes,
   selectedValue,
   selected,
-  related,
-  matching,
+  sameUnitAsSelected,
+  sameDigitAsSelected,
   conflict,
   mistake,
   disabled,
@@ -104,8 +104,8 @@ export function NanpureCell({
         column % 3 === 2 &&
           column !== NANPURE_SIZE - 1 &&
           "border-r-2 border-r-foreground/55",
-        related && nanpureCellToneClassNames.related,
-        matching && nanpureCellToneClassNames.matching,
+        sameUnitAsSelected && nanpureCellToneClassNames.sameUnitAsSelected,
+        sameDigitAsSelected && nanpureCellToneClassNames.sameDigitAsSelected,
         selected && nanpureCellToneClassNames.selected,
         clue && nanpureCellToneClassNames.clue,
         !clue && value !== null && nanpureCellToneClassNames.entered,

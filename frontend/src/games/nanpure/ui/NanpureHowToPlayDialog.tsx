@@ -77,8 +77,8 @@ export function NanpureHowToPlayDialog({
           <HowToPlayFigure
             rows={[
               [
-                { highlight: "related", notes: [2, 5] },
-                { highlight: "related", notes: [5, 8] },
+                { highlight: "sameUnitAsSelected", notes: [2, 5] },
+                { highlight: "sameUnitAsSelected", notes: [5, 8] },
                 { highlight: "selected" },
               ],
             ]}
@@ -86,8 +86,8 @@ export function NanpureHowToPlayDialog({
           <HowToPlayFigure
             rows={[
               [
-                { highlight: "related", notes: [2] },
-                { highlight: "related", notes: [8] },
+                { highlight: "sameUnitAsSelected", notes: [2] },
+                { highlight: "sameUnitAsSelected", notes: [8] },
                 { highlight: "selected", digit: 5 },
               ],
             ]}

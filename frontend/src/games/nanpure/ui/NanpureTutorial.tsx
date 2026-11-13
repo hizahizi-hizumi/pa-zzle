@@ -142,7 +142,7 @@ function getBoardSpotlight(
   const { lastMove } = state;
   const focus =
     cueShown && step !== null
-      ? { cellIndices: [step.cellIndex], units: step.reasonUnits }
+      ? { cellIndices: [step.cuedCellIndex], units: step.reasonUnits }
       : {
           cellIndices: lastMove ? [lastMove.cellIndex] : [],
           units: lastMove?.reasonUnits ?? [],
@@ -183,7 +183,7 @@ export function NanpureTutorial({
   const playing = progress.phase === "playing";
   const recallId = recall?.progress === progress ? recall.id : null;
   const stepCellSelected =
-    step !== null && selectedCellIndex === step.cellIndex;
+    step !== null && selectedCellIndex === step.cuedCellIndex;
   const cueDelayMs = getCueDelayMs(progress, guiding);
   // 印の無いマスを押されたときと、印を待たずに手順のマスを選んだときは、すぐ印を付ける。
   const cueShown =
