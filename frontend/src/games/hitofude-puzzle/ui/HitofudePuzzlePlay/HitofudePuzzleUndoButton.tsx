@@ -1,4 +1,5 @@
 import {
+  type MouseEvent,
   type PointerEvent,
   useCallback,
   useEffect,
@@ -63,6 +64,13 @@ export function HitofudePuzzleUndoButton({
     }, REPEAT_DELAY_MS);
   }
 
+  function handleClickCapture(event: MouseEvent<HTMLSpanElement>): void {
+    // キーボードのクリック（detail が 0）は、押し続けた指を離して届く1回ではない。
+    if (event.detail === 0) {
+      repeatedRef.current = false;
+    }
+  }
+
   function handleUndo(): void {
     if (repeatedRef.current) {
       repeatedRef.current = false;
@@ -79,6 +87,7 @@ export function HitofudePuzzleUndoButton({
       onPointerUp={stopRepeating}
       onPointerCancel={stopRepeating}
       onPointerLeave={stopRepeating}
+      onClickCapture={handleClickCapture}
       onContextMenu={(event) => event.preventDefault()}
     >
       <UndoButton disabled={disabled} onUndo={handleUndo} />

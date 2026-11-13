@@ -36,6 +36,7 @@ type HitofudePuzzleFigureProps = {
 const STRANDED_MARK_INSET = 0.1;
 const STRANDED_MARK_WIDTH = 0.06;
 const STRANDED_MARK_DASH = "0.12 0.09";
+const STRANDED_MARKS_FADE_IN_MS = 300;
 const PATH_LINE_WIDTH = 0.3;
 const START_MARK_RADIUS = 0.2;
 const START_MARK_OUTLINE_WIDTH = 0.07;
@@ -165,9 +166,10 @@ export function HitofudePuzzleFigure({
           strokeWidth={STRANDED_MARK_WIDTH}
           strokeDasharray={STRANDED_MARK_DASH}
           className={cn(
-            "animate-in fade-in-0 duration-300 motion-reduce:animate-none",
+            "animate-in fade-in-0 motion-reduce:animate-none",
             hitofudePuzzleToneClassNames.strandedMark,
           )}
+          style={{ animationDuration: `${STRANDED_MARKS_FADE_IN_MS}ms` }}
         >
           {strandedCells.map((cell) => {
             const { row, column } = getHitofudePuzzleCellPosition(size, cell);

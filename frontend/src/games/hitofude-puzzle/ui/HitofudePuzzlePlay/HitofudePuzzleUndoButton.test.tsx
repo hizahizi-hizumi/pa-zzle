@@ -30,7 +30,7 @@ describe("HitofudePuzzleUndoButton", () => {
     const button = getUndoButton();
     fireEvent.pointerDown(button);
     fireEvent.pointerUp(button);
-    fireEvent.click(button);
+    fireEvent.click(button, { detail: 1 });
     act(() => {
       vi.advanceTimersByTime(1_000);
     });
@@ -46,12 +46,24 @@ describe("HitofudePuzzleUndoButton", () => {
     });
     const whileHeld = onUndo.mock.calls.length;
     fireEvent.pointerUp(button);
-    fireEvent.click(button);
+    fireEvent.click(button, { detail: 1 });
     act(() => {
       vi.advanceTimersByTime(1_000);
     });
 
     expect(whileHeld).toBe(3);
     expect(onUndo).toHaveBeenCalledTimes(3);
+  });
+
+  test("押し続けた指をボタンの外で離した後も、キーボードで押すと戻すこと", () => {
+    const button = getUndoButton();
+    fireEvent.pointerDown(button);
+    act(() => {
+      vi.advanceTimersByTime(380);
+    });
+    fireEvent.pointerLeave(button);
+    fireEvent.click(button, { detail: 0 });
+
+    expect(onUndo).toHaveBeenCalledTimes(2);
   });
 });
