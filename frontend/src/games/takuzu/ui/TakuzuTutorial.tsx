@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import {
   type TutorialFinish,
   TutorialOverlay,
@@ -39,6 +38,7 @@ import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 import { TakuzuGround } from "@/games/takuzu/ui/TakuzuGround";
+import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
 import { TakuzuTutorialRewind } from "@/games/takuzu/ui/TakuzuTutorial/TakuzuTutorialRewind";
 import { useTakuzuSoundEffects } from "@/games/takuzu/ui/use-takuzu-sound-effects";
 import {
@@ -138,7 +138,6 @@ function getMoveCues({
     : [];
 }
 
-/** ルールに合わないところのマス。3連続のマスと、個数超過・重複の行・列のマス。 */
 function listViolatingCellIndices(
   size: number,
   cellViews: readonly TakuzuCellView[],
@@ -402,10 +401,7 @@ export function TakuzuTutorial({
   const spotlitCellIndices = getSpotlitCellIndices();
 
   /**
-   * 盤面の覆いから抜いて元の明るさで見せるマス。見せる物が無ければ `null` で、覆わない。
-   * - 手順の間は、手順のマスとその決め手。操作を教える手順には決め手が無いので覆わない。
-   * - 手順を終えた直後は、終えた手順のマスとその決め手を残す。
-   * - 手を離した後は、手がかりのマスとその決め手。
+   * 見せる物が無ければ `null` で、覆わない。
    * - ルールに合わないところのマスは、どこがルールに当たっているかを読めるよう抜く。手を離した後は、巡回の途中で瞬かないよう、違反が続いたときだけ抜く。
    */
   function getSpotlitCellIndices(): number[] | null {
@@ -542,6 +538,9 @@ export function TakuzuTutorial({
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
       onRestart={handleRestart}
+      renderHowToPlayDialog={(control) => (
+        <TakuzuHowToPlayDialog {...control} />
+      )}
       onRequestHint={
         hintRequestable && idleHint === null
           ? () => setHintRequestedProgress(progress)
