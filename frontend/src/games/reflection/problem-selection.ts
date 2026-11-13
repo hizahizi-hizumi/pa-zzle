@@ -15,7 +15,6 @@ import {
 } from "@/games/reflection/problem/problem-pool";
 
 /**
- * 難易度の問題集から seed で1問を選ぶ。
  * 問題集は生成時に難易度を判定済みで、解と基準時間に使う作業の量も持つため、
  * プレイ時には生成・解探索・難易度分析を走らせない。
  */
@@ -32,10 +31,7 @@ export function selectReflectionProblemForDifficulty(
   return toReflectionPooledProblem(difficulty, entryIndex);
 }
 
-/**
- * 記録に残した identity から同じ問題を復元する。
- * 問題集に無い identity（生成器の版が今と違う記録など）は復元できないので `null` を返す。
- */
+/** 問題集に無い identity（生成器の版が今と違う記録など）は復元できないので `null` を返す。 */
 export function restoreReflectionProblem(
   identity: ReflectionRecordedProblemIdentity,
 ): ReflectionPooledProblem | null {
@@ -44,7 +40,6 @@ export function restoreReflectionProblem(
     : null;
 }
 
-/** 難易度の問題集から問題 ID で1問を引く。引けない ID には `null` を返す。 */
 export function selectReflectionProblemById(
   difficulty: ReflectionDifficulty,
   problemId: string,

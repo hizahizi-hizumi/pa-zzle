@@ -11,27 +11,22 @@ import {
   traceReflectionLaser,
 } from "@/games/reflection/puzzle/laser";
 
-/**
- * 盤面の図の寸法。マス1辺を1とし、外周ヒントの帯・盤面との隙間・盤面を並べる。
- * 隙間は、外周ヒントと端のマスを押し分けられるように取る。
- */
+/** 盤面の図の寸法。マス1辺を1とし、外周ヒントの帯・盤面との隙間・盤面を並べる。 */
 const CLUE_TRACK = 0.8;
+/** 隙間は、外周ヒントと端のマスを押し分けられるように取る。 */
 const GAP_TRACK = 0.2;
 const BOARD_OFFSET = CLUE_TRACK + GAP_TRACK;
 
 export type ReflectionPoint = { x: number; y: number };
 
-/** 図全体の1辺の長さ（マス単位）。 */
 export function getReflectionFigureExtent(size: number): number {
   return size + BOARD_OFFSET * 2;
 }
 
-/** CSS grid の行・列の並び。外周ヒント・隙間・盤面・隙間・外周ヒントの順。 */
 export function getReflectionFigureTracks(size: number): string {
   return `${CLUE_TRACK}fr ${GAP_TRACK}fr repeat(${size}, minmax(0, 1fr)) ${GAP_TRACK}fr ${CLUE_TRACK}fr`;
 }
 
-/** 盤面を置く grid の位置（1始まりの線番号）。 */
 export function getReflectionBoardGridArea(size: number): {
   gridRow: string;
   gridColumn: string;
@@ -41,7 +36,6 @@ export function getReflectionBoardGridArea(size: number): {
 
 export type ReflectionLine = { x1: number; y1: number; x2: number; y2: number };
 
-/** 盤面の内側の罫線（外枠を除く）。座標は図の単位。 */
 export function listReflectionGridLines(size: number): ReflectionLine[] {
   const start = BOARD_OFFSET;
   const end = BOARD_OFFSET + size;
@@ -54,7 +48,6 @@ export function listReflectionGridLines(size: number): ReflectionLine[] {
   ]);
 }
 
-/** 外周ヒントを置く grid の位置（1始まり）。 */
 export function getReflectionClueGridPosition(
   size: number,
   { side, index }: ReflectionEntry,
@@ -72,7 +65,6 @@ export function getReflectionClueGridPosition(
   }
 }
 
-/** 盤面の外へ向かう向き。 */
 export function getReflectionOutwardVector(side: ReflectionSide): {
   dx: number;
   dy: number;
@@ -112,7 +104,6 @@ export function getReflectionClueAnchor(
   }
 }
 
-/** 外周ヒントの中心。 */
 export function getReflectionClueCenter(
   size: number,
   entry: ReflectionEntry,
@@ -125,7 +116,6 @@ export function getReflectionClueCenter(
   };
 }
 
-/** 盤面の左上の角の位置。 */
 export function getReflectionBoardOrigin(): ReflectionPoint {
   return { x: BOARD_OFFSET, y: BOARD_OFFSET };
 }

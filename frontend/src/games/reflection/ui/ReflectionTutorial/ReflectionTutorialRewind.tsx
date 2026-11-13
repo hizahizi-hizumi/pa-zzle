@@ -9,15 +9,12 @@ import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPiece
 import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
 type ReflectionTutorialRewindProps = {
-  /** `true` の間、解き終えた盤面のピースを重ねて、1つずつ消していく。`false` に戻ると重ねたピースを外す。 */
   active: boolean;
-  /** 解き終えた盤面。ここに置かれたピースを、盤面の同じマスに重ねる。 */
   goal: ReflectionBoard;
   onComplete: () => void;
   children: ReactNode;
 };
 
-/** 上の行から順に消していく。 */
 const REWIND_STAGGER_MS = 90;
 const REWIND_DURATION_MS = 240;
 const REWIND_SETTLE_MS = 120;

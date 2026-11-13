@@ -20,7 +20,6 @@ type ReflectionFigurePieceProps = {
 const PIECE_SCALE = 0.008;
 const PIECE_INSET = 0.1;
 
-/** 図のマスに、盤面と同じ形・線・縁取りでピースを描く。 */
 export function ReflectionFigurePiece({
   size,
   cellIndex,

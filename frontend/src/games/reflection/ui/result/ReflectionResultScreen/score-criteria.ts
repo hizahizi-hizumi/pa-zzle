@@ -31,7 +31,6 @@ function createClueTerm({ clueCount }: ReflectionWorkload): SpeedFormulaTerm {
   };
 }
 
-/** 読んで解く時間の式。その問題で0回の項は省く。仮に置いて確かめる回数は上限で打ち切った値を示す。 */
 function listReadingFormula(workload: ReflectionWorkload): SpeedFormulaTerm[] {
   const { pieceCount, propagationRoundCount, assumptionTestCount } = workload;
   return [
@@ -68,7 +67,6 @@ function listReadingFormula(workload: ReflectionWorkload): SpeedFormulaTerm[] {
   ];
 }
 
-/** 基準時間の決め方。試し置きの方が速い問題では、読む時間と試し置きの時間の中間になる。 */
 function describeSpeedFullScoreRule(workload: ReflectionWorkload): string {
   const readingMs = calculateReflectionReadingMs(workload);
   const reading = `読んで解く時間${formatScoreReferenceTime(readingMs)}（${formatSpeedFormula(listReadingFormula(workload))}）`;

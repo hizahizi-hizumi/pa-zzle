@@ -1,23 +1,22 @@
 import type { ReflectionPiece } from "@/games/reflection/puzzle/board";
 import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
 
-/**
- * リフレクション固有の色。共通UIの意味色（`primary`・`ring`・`success` など）は流用しない。
- * - 選んでいるピース・ストックの種類は、地や枠を変えず、ピースの色の印で示す（盤面のマスは四隅の鉤形、ストックは下の短い線。
- *   `reflectionPieceBarClassNames`）。2026-09-29 の人間判断で、無彩色の地と太枠をやめた。
- * - 盤面のピースを選んでいる間の戻し先（同じ種類のストック）は、ストックの選択の線を薄くした印で示す（文字や帯は出さない）。
- * - `laser`: 光路と、光路を表示している外周ヒント。線や記号は `laserText`、外周ヒントに添える今の光の通るマスの数は、
- *   白地でも文字として読める濃さの `laserLabel` を使う。外周ヒントには枠や地を足さない。
- * - `clueMatch`: 今の配置での光が外周ヒントの数字・行き先と一致している外周ヒントの地と数字。
- *   外周ヒントの内側に余白を残した控えめな緑の地にし、隣り合う一致の地が帯としてつながらないようにする。
- *   一致の切り替えでは地と数字の色だけを瞬時に変える（大きさ・位置・枠・太さは変えない）。
- *   押せる外周ヒントでは、ホバー・押下・フォーカスで一致の地を一段濃くする（`clueMatchSurfaceInteractive`、外周ヒントのボタンを `group` にする）。
- *   ゲームの中の状態を示す色で、アプリ共通の `success`（クリア・完了）とは分ける。
- */
+/** リフレクション固有の色。共通UIの意味色（`primary`・`ring`・`success` など）は流用しない。 */
 export const reflectionToneClassNames = {
+  /**
+   * 光路と、光路を表示している外周ヒント。線や記号は `laserText`、外周ヒントに添える今の光の通るマスの数は、
+   * 白地でも文字として読める濃さの `laserLabel` を使う。外周ヒントには枠や地を足さない。
+   */
   laserText: "text-orange-600 dark:text-amber-400",
   laserLabel: "text-orange-700 dark:text-amber-400",
+  /**
+   * 今の配置での光が外周ヒントの数字・行き先と一致している外周ヒントの地と数字。
+   * 外周ヒントの内側に余白を残した控えめな緑の地にし、隣り合う一致の地が帯としてつながらないようにする。
+   * 一致の切り替えでは地と数字の色だけを瞬時に変える（大きさ・位置・枠・太さは変えない）。
+   * ゲームの中の状態を示す色で、アプリ共通の `success`（クリア・完了）とは分ける。
+   */
   clueMatchSurface: "bg-emerald-100 dark:bg-emerald-950",
+  /** 押せる外周ヒントでは、ホバー・押下・フォーカスで一致の地を一段濃くする（外周ヒントのボタンを `group` にする）。 */
   clueMatchSurfaceInteractive:
     "group-focus-visible:bg-emerald-200 group-enabled:group-hover:bg-emerald-200 group-enabled:group-active:bg-emerald-200 dark:group-focus-visible:bg-emerald-900 dark:group-enabled:group-hover:bg-emerald-900 dark:group-enabled:group-active:bg-emerald-900",
   clueMatchLabel: "text-emerald-900 dark:text-emerald-200",
@@ -53,7 +52,12 @@ export const reflectionPieceToneClassNames = {
   "black-hole": reflectionOutcomeToneClassNames.absorb,
 } as const satisfies Record<ReflectionPiece, string>;
 
-/** ストックで選んでいる種類の下に引く短い線の色。ピースの色と同じ色相の塗り。 */
+/**
+ * ストックで選んでいる種類の下に引く短い線の色。ピースの色と同じ色相の塗り。
+ * 選んでいるピース・ストックの種類は、地や枠を変えず、ピースの色の印で示す（盤面のマスは四隅の鉤形、ストックは下の短い線）。
+ * 2026-09-29 の人間判断で、無彩色の地と太枠をやめた。
+ * 盤面のピースを選んでいる間の戻し先（同じ種類のストック）は、ストックの選択の線を薄くした印で示す（文字や帯は出さない）。
+ */
 export const reflectionPieceBarClassNames = {
   slash: outcomeBarClassNames.exit,
   backslash: outcomeBarClassNames.exit,

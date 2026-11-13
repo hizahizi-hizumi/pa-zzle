@@ -20,12 +20,12 @@ const difficulty = "3";
 const seed = "use-reflection-play-a";
 const pooled = selectReflectionProblemForDifficulty(difficulty, seed);
 
-/** ストックから種類を選び、解のマスへ置く。同じ種類が続くときは選択が残るので選び直さない。 */
 function placeSolution(result: HookResult, problem: ReflectionProblem): void {
   problem.solution.cells.forEach((piece, cellIndex) => {
     if (piece === null) return;
 
     const { selection } = result.current;
+    // 同じ種類が続くときは選択が残るので選び直さない。
     if (selection?.type !== "stock" || selection.piece !== piece) {
       act(() => result.current.selectStockPiece(piece));
     }

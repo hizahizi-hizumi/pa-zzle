@@ -1,10 +1,7 @@
 import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
 import { cn } from "@/lib/utils";
 
-/**
- * `clue` は外周ヒントの中で盤面の大きさに合わせる。`inline` は文中、`figure` は遊び方の図。
- * 色は周りの文字色を使う。結果の色（`reflectionOutcomeToneClassNames`）は使う側が与える。
- */
+/** `clue` は外周ヒントの中で盤面の大きさに合わせる。`inline` は文中、`figure` は遊び方の図。 */
 type ReflectionOutcomeMarkSize = "clue" | "inline" | "figure";
 
 type ReflectionOutcomeMarkProps = {
@@ -19,7 +16,7 @@ const sizeClassNames = {
 } as const satisfies Record<ReflectionOutcomeMarkSize, string>;
 
 /**
- * 外周ヒントの結果の形。結果ごとに色も付けるが、色を見なくても、退出は斜めの矢印、反射は折り返す矢印、吸収は塗りの点で見分ける。
+ * 結果ごとに色も付けるが、色を見なくても、退出は斜めの矢印、反射は折り返す矢印、吸収は塗りの点で見分ける。
  * 辺によって向きを変えず、遊び方の説明と同じ形で読めるようにする。
  */
 export function ReflectionOutcomeMark({
@@ -32,6 +29,7 @@ export function ReflectionOutcomeMark({
       viewBox="0 0 12 12"
       className={cn("shrink-0", sizeClassNames[size])}
       fill="none"
+      // 色は周りの文字色を使う。結果の色（`reflectionOutcomeToneClassNames`）は使う側が与える。
       stroke="currentColor"
       strokeWidth="1.6"
       strokeLinecap="round"
@@ -42,7 +40,7 @@ export function ReflectionOutcomeMark({
   );
 }
 
-/** 結果の形。12×12 の座標で描く。 */
+/** 12×12 の座標で描く。 */
 export function renderReflectionOutcomeShape(outcome: ReflectionOutcome) {
   switch (outcome) {
     case "exit":

@@ -7,7 +7,6 @@ const sideLabels = {
   left: "左",
 } as const satisfies Record<ReflectionEntry["side"], string>;
 
-/** 外周の位置の読み方。例: 上の辺の左から2列目は「上2列」。 */
 export function formatReflectionEntry({
   side,
   index,

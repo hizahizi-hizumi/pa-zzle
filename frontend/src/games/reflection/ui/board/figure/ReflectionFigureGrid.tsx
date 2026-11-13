@@ -2,7 +2,6 @@ import { getReflectionBoardOrigin } from "@/games/reflection/ui/board/board-geom
 
 type ReflectionFigureGridProps = {
   size: number;
-  /** 描く行の範囲。省略すると盤面全体を描く。 */
   rows?: { first: number; count: number };
 };
 
@@ -10,7 +9,6 @@ const GRID_LINE_WIDTH = 0.02;
 const FRAME_WIDTH = 0.06;
 
 /**
- * 図の盤面の地・格子線・外枠。座標はマス1辺を1とする図の単位で、`board-geometry` と同じ置き方をする。
  * 外枠はプレイ画面と同じく盤面の外側に描き、盤面の縁で止める光路の端の印と重ねない。
  * 行を切り出したときは、盤面の端ではない上下の縁を格子線で描き、盤面が上下へ続いて見えるようにする。
  */

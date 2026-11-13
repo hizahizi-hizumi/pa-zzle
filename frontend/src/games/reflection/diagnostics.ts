@@ -48,10 +48,6 @@ function assessPooledProblem(
   };
 }
 
-/**
- * - `problemPool`: 出題した問題の問題集の版と番号。
- * - `difficultyAssessment`: 問題集のレベルと、そのレベルの最高推論レベル。
- */
 export type ReflectionDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "reflection",
   ReflectionDifficulty,
@@ -96,7 +92,6 @@ const reflectionDiagnosticFormat: InternalDiagnosticFormat<ReflectionDiagnosticS
     },
   };
 
-/** 検証情報としてコピーする値。問題の再現に要る identity と、出題した難易度・ビルド、問題集の位置と分類を持つ。 */
 export function createReflectionDiagnosticSnapshot({
   poolReference,
   ...input
@@ -122,7 +117,6 @@ function parseReflectionDiagnosticSnapshot(
   );
 }
 
-/** 問題集に無い identity は `null` を返す。 */
 function restoreReflectionProblemFromDiagnosticSnapshot(
   snapshot: ReflectionDiagnosticSnapshot,
 ): ReflectionPooledProblem | null {
