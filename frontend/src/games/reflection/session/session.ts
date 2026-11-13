@@ -339,11 +339,7 @@ export function restartReflectionSession(
   return {
     ...session,
     puzzleState: emptyBoard,
-    selection: selectRemainingStockPiece(
-      session.problem,
-      emptyBoard,
-      session.selection?.type === "stock" ? session.selection.piece : null,
-    ),
+    selection: selectRemainingStockPiece(session.problem, emptyBoard, null),
     laserEntry: null,
     restartCount: session.restartCount + 1,
   };

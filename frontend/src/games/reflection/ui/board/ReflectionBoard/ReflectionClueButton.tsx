@@ -67,23 +67,35 @@ const clueMatchSurfaceInsetClassNames = {
  * 盤面が変わって一致に変わった外周ヒントは、拡大して戻る動きで知らせ、一致が崩れた外周ヒントは小さく沈ませる。
  * 一致の地と数字の色は瞬時に切り替え、動きは外周ヒント全体の見た目だけに付ける（格子の位置と大きさは変えない）。
  */
+const CLUE_MATCH_DURATION_MS = 170;
+const CLUE_MATCH_EASING = "cubic-bezier(0.2, 0.8, 0.2, 1)";
 const CLUE_MATCH_MOTION = {
   keyframes: [
     { transform: "scale(1)" },
-    { transform: "scale(1.38)", offset: 0.4 },
+    { transform: "scale(1.25)", offset: 0.4 },
     { transform: "scale(1)" },
   ],
-  options: { duration: 170, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+  options: { duration: CLUE_MATCH_DURATION_MS, easing: CLUE_MATCH_EASING },
 } as const;
 
+const CLUE_UNMATCH_DURATION_MS = 160;
+const CLUE_UNMATCH_EASING = "cubic-bezier(0.4, 0, 0.2, 1)";
 const CLUE_UNMATCH_MOTION = {
   keyframes: [
     { transform: "scale(1)", opacity: 1 },
     { transform: "scale(0.8)", opacity: 0.55, offset: 0.4 },
     { transform: "scale(1)", opacity: 1 },
   ],
-  options: { duration: 160, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
+  options: { duration: CLUE_UNMATCH_DURATION_MS, easing: CLUE_UNMATCH_EASING },
 } as const;
+
+/** 拡大しても盤の端の線へかからないよう、盤に接する辺を軸に外へ向けて大きくする。 */
+const clueMotionOrigins = {
+  top: "bottom",
+  bottom: "top",
+  left: "right",
+  right: "left",
+} as const satisfies Record<ReflectionSide, string>;
 
 /** 同じ外周ヒントのまま一致が変わったときだけ動かす。初めから一致しているものや、別の問題に替わったときは動かさない。 */
 function useClueMatchMotion(
@@ -165,7 +177,11 @@ export function ReflectionClueButton({
       onPointerUp={selectHandlers.onPointerUp}
       onClick={selectHandlers.onClick}
       onFocus={() => onFocus(focusKey)}
-      style={{ gridRow: row, gridColumn: column }}
+      style={{
+        gridRow: row,
+        gridColumn: column,
+        transformOrigin: clueMotionOrigins[entry.side],
+      }}
       className="group relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.05)] leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"
     >
       {/*

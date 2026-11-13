@@ -341,10 +341,14 @@ describe("restartReflectionSession", () => {
     expect(next.startedAt).toBe(startedAt);
   });
 
-  test("戻した盤面でも、手持ちの種類を選んでおくこと", () => {
+  test("それまで選んでいた種類によらず、ストックの並びで最初の種類を選んでおくこと", () => {
     const next = restartReflectionSession(slashAtCenter);
 
-    expect(next.selection).toEqual({ type: "stock", piece: "black-hole" });
+    expect(slashAtCenter.selection).toEqual({
+      type: "stock",
+      piece: "black-hole",
+    });
+    expect(next.selection).toEqual({ type: "stock", piece: "slash" });
   });
 
   test("盤面が空なら何もしないこと", () => {
