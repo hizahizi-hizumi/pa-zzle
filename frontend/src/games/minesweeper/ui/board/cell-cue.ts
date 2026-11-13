@@ -6,9 +6,13 @@
  */
 export type MinesweeperCellCueKind = "fitted" | "hint" | "recall";
 
-/** `id` が変わると、同じマスの同じ合図でもやり直す。 */
+/**
+ * `id` が変わると、同じマスの同じ合図でもやり直す。
+ * `pointed` は `hint`・`recall` で、輪郭に加えて押すしぐさをする指で指す。
+ */
 export type MinesweeperCellCue = {
   cellIndex: number;
   kind: MinesweeperCellCueKind;
   id: number;
+  pointed?: boolean;
 };

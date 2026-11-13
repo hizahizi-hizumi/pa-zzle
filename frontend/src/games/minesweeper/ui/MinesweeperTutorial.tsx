@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-
+import { useCallback, useRef, useState } from "react";
 import {
-  type TutorialBoardIntro,
   type TutorialFinish,
   TutorialOverlay,
   type TutorialPlayStart,
+  type TutorialStageBoardIntro,
 } from "@/components/TutorialOverlay";
 import pictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
 import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
@@ -14,18 +13,21 @@ import {
   type MinesweeperOperation,
 } from "@/games/minesweeper/play/use-minesweeper-play";
 import {
-  findMinesweeperTutorialHintCellIndex,
+  describeMinesweeperTutorialHint,
+  findMinesweeperTutorialHint,
+  getMinesweeperTutorialProgressRatio,
   getMinesweeperTutorialStepCellIndices,
+  getMinesweeperTutorialStepSpotlitCellIndices,
   getMinesweeperTutorialVisibleCells,
-  isMinesweeperTutorialCellFlagged,
   MINESWEEPER_TUTORIAL_COLUMNS,
   MINESWEEPER_TUTORIAL_MINE_COUNT,
+  MINESWEEPER_TUTORIAL_PROGRESS_STEP_COUNT,
+  MINESWEEPER_TUTORIAL_RECAP,
   MINESWEEPER_TUTORIAL_ROWS,
   type MinesweeperTutorialAction,
   type MinesweeperTutorialBoardState,
-  type MinesweeperTutorialOperation,
+  type MinesweeperTutorialHint,
   type MinesweeperTutorialRuleId,
-  type MinesweeperTutorialStep,
   minesweeperTutorial,
   minesweeperTutorialModeSwitchDetails,
 } from "@/games/minesweeper/tutorial/tutorial";
@@ -35,6 +37,8 @@ import {
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
+import { MinesweeperGround } from "@/games/minesweeper/ui/MinesweeperGround";
+import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
 import { MinesweeperTutorialCover } from "@/games/minesweeper/ui/MinesweeperTutorial/MinesweeperTutorialCover";
 import {
   MinesweeperTutorialStatus,
@@ -49,6 +53,7 @@ import {
   getTutorialSituation,
   performTutorialAction,
   startTutorial,
+  type TutorialMessage,
   type TutorialProgress,
 } from "@/games/tutorial";
 
@@ -62,12 +67,6 @@ type MinesweeperTutorialProgress = TutorialProgress<
   MinesweeperTutorialRuleId,
   MinesweeperTutorialBoardState
 >;
-
-/**
- * 手を離した後、手が止まってから地雷でないと決まるマスを示すまでの間。
- * 数字を見比べて考えている間は先回りしないよう、ほかのチュートリアル（4秒）より長く待つ。
- */
-const IDLE_HINT_DELAY_MS = 10_000;
 
 type MinesweeperTutorialRecall = {
   id: number;
@@ -83,11 +82,6 @@ const startCoveredCellIndices = Array.from(
   { length: MINESWEEPER_TUTORIAL_ROWS * MINESWEEPER_TUTORIAL_COLUMNS },
   (_, cellIndex) => cellIndex,
 ).filter((cellIndex) => !startRevealedCellIndices.includes(cellIndex));
-
-const stepOperationModes = {
-  reveal: "reveal",
-  flag: "flag",
-} as const satisfies Record<MinesweeperTutorialOperation, MinesweeperInputMode>;
 
 /** 解けた盤面の演出の間を完成演出として、完成の音を鳴らす。 */
 const gameProgressByPhase = {
@@ -114,24 +108,11 @@ function createOperation(
       );
 }
 
-/**
- * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
- * 手を引いている間は、印のマスしか受け付けないので付け続ける。手を離した後は、手が止まったときだけ付ける。
- */
-function getCueDelayMs(
-  progress: MinesweeperTutorialProgress,
-  guiding: boolean,
-): number | null {
-  if (progress.phase !== "playing") {
-    return null;
-  }
-  return guiding ? 0 : IDLE_HINT_DELAY_MS;
-}
-
 function getCellCues(
   { lastMove, moveCount }: MinesweeperTutorialBoardState,
-  hintCellIndices: readonly number[],
+  markedCellIndices: readonly number[],
   recallId: number | null,
+  pointed: boolean,
 ): MinesweeperCellCue[] {
   return [
     ...(lastMove?.fittedCellIndices ?? []).map(
@@ -141,25 +122,14 @@ function getCellCues(
         id: moveCount,
       }),
     ),
-    ...hintCellIndices.map(
-      (cellIndex): MinesweeperCellCue =>
-        recallId === null
-          ? { cellIndex, kind: "hint", id: 0 }
-          : { cellIndex, kind: "recall", id: recallId },
+    ...markedCellIndices.map(
+      (cellIndex, order): MinesweeperCellCue => ({
+        cellIndex,
+        kind: recallId === null ? "hint" : "recall",
+        id: recallId ?? 0,
+        pointed: pointed && order === 0,
+      }),
     ),
-  ];
-}
-
-/** 印のマスと決め手に加えて、直前に手順どおりにしたマスも抜き、その手への応えを見せる。 */
-function getSpotlitCellIndices(
-  step: MinesweeperTutorialStep,
-  state: MinesweeperTutorialBoardState,
-  stepCellIndices: readonly number[],
-): number[] {
-  return [
-    ...stepCellIndices,
-    ...step.reasonCellIndices,
-    ...(state.lastMove?.fittedCellIndices ?? []),
   ];
 }
 
@@ -175,60 +145,79 @@ export function MinesweeperTutorial({
   const [operation, setOperation] = useState<MinesweeperOperation | null>(null);
   // `id` は、もう一度始めても本番の効果音が同じ知らせとみなさないよう、開いている間ずっと増やす。
   const nextOperationIdRef = useRef(1);
-  const [idleProgress, setIdleProgress] =
+  const [hintRequestedProgress, setHintRequestedProgress] =
     useState<MinesweeperTutorialProgress | null>(null);
   const [recall, setRecall] = useState<MinesweeperTutorialRecall | null>(null);
+  const [helpedStepIndex, setHelpedStepIndex] = useState<number | null>(null);
   const situation = getTutorialSituation(minesweeperTutorial, progress);
   const { step } = situation;
-  const guiding = step !== null;
+  const playing = progress.phase === "playing";
+  const guiding = playing && step !== null;
   const recallId = recall?.progress === progress ? recall.id : null;
   const { boardState } = progress;
-  const cueDelayMs = getCueDelayMs(progress, guiding);
-  const cueShown =
-    cueDelayMs === 0 || (cueDelayMs !== null && idleProgress === progress);
-  const idleHintCellIndex =
-    cueShown && !guiding
-      ? findMinesweeperTutorialHintCellIndex(situation, boardState)
+  // 手を離した後は、自分で解いている間に割り込まないよう、手がかりは求められたときだけ見せる。
+  const hintRequestable = playing && step === null;
+  const hint: MinesweeperTutorialHint | null =
+    hintRequestable && hintRequestedProgress === progress
+      ? findMinesweeperTutorialHint(situation, boardState)
       : null;
-  const stepCellIndices = getMinesweeperTutorialStepCellIndices(
-    situation,
-    boardState,
-  );
-  const modeMismatched =
-    step !== null && stepOperationModes[step.operation] !== mode;
-  // 手がかりの印のマスを今の切り替えで押しても進めないときは、切り替えにも印を付ける。
-  // 旗のマスは旗にして押すと旗を外せ、旗の無いマスは開くにして押すと開ける。
-  const idleHintMode: MinesweeperInputMode | null =
-    idleHintCellIndex === null
-      ? null
-      : isMinesweeperTutorialCellFlagged(boardState, idleHintCellIndex)
-        ? "flag"
-        : "reveal";
-  const idleHintNeedsSwitch = idleHintMode !== null && idleHintMode !== mode;
-  const tutorialMessage = getTutorialMessage(minesweeperTutorial, progress, {
-    entry: playStart ? "home" : "play",
-    violationSettled: true,
-  });
-  const message =
-    step !== null && modeMismatched && tutorialMessage === step.message
-      ? {
-          ...step.message,
-          detail: minesweeperTutorialModeSwitchDetails[step.operation],
-        }
-      : tutorialMessage;
+  // 決め手を見せる手順では、押す所と操作を自分で選ばせるため、助けるまで印を付けない。
+  const choosing = guiding && step.reasonCellIndices.length > 0;
+  const stepMarked =
+    guiding && (!choosing || helpedStepIndex === progress.stepIndex);
+  const markedCellIndices = stepMarked
+    ? getMinesweeperTutorialStepCellIndices(situation, boardState)
+    : hint
+      ? [hint.cellIndex]
+      : [];
+  const requiredMode: MinesweeperInputMode | null = stepMarked
+    ? step.operation
+    : (hint?.operation ?? null);
+  const modeMismatched = requiredMode !== null && requiredMode !== mode;
+  // 切り替えが要るときは、次に押す所は切り替えなので、指は切り替えを指す。
+  const toggleCue: MinesweeperTutorialToggleCue | null = modeMismatched
+    ? { recallId, pointed: true }
+    : null;
+  const spotlitCellIndices = getSpotlitCellIndices();
+  const message = getMessage();
 
   useMinesweeperSoundEffects(operation, gameProgressByPhase[progress.phase]);
 
-  useEffect(() => {
-    if (!open || cueDelayMs === null || cueDelayMs === 0) {
-      return;
+  /**
+   * 盤面の覆いから抜いて元の明るさで見せるマス。見せる決め手が無ければ `null` で、覆わない。
+   * - 手順の間は、決めた数字とその周りの8マス。直前に手順どおりにしたマスと踏んだ地雷も抜き、その手への盤面の反応を見せる。操作を教える手順には決め手が無いので覆わない。
+   * - 手を離した後は、「ヒント」で示したマスとその決め手。
+   */
+  function getSpotlitCellIndices(): number[] | null {
+    if (choosing) {
+      const { lastMove } = boardState;
+      return [
+        ...getMinesweeperTutorialStepSpotlitCellIndices(step, boardState),
+        ...markedCellIndices,
+        ...(lastMove?.fittedCellIndices ?? []),
+        ...(lastMove?.steppedMine ? [lastMove.cellIndex] : []),
+      ];
     }
-    const timer = window.setTimeout(
-      () => setIdleProgress(progress),
-      cueDelayMs,
-    );
-    return () => window.clearTimeout(timer);
-  }, [open, progress, cueDelayMs]);
+    return hint ? [hint.cellIndex, ...hint.reasonCellIndices] : null;
+  }
+
+  function getMessage(): TutorialMessage {
+    const tutorialMessage = getTutorialMessage(minesweeperTutorial, progress, {
+      entry: playStart ? "home" : "play",
+      violationSettled: true,
+    });
+    if (hint) {
+      return describeMinesweeperTutorialHint(boardState, hint);
+    }
+    // 印を付けた手順の操作に切り替えが合っていなければ、地雷を踏んだ後も含めて、補足で切り替えさせる。
+    if (step !== null && stepMarked && modeMismatched) {
+      return {
+        ...tutorialMessage,
+        detail: minesweeperTutorialModeSwitchDetails[step.operation],
+      };
+    }
+    return tutorialMessage;
+  }
 
   const handleClearAnimationComplete = useCallback(() => {
     setProgress(completeTutorial);
@@ -238,13 +227,10 @@ export function MinesweeperTutorial({
     setProgress(finishTutorialIntro);
   }
 
-  function recallHint(): void {
-    setRecall((current) => ({ id: (current?.id ?? 0) + 1, progress }));
-  }
-
   function handleIgnoredAction(): void {
-    if (guiding && progress.phase === "playing") {
-      recallHint();
+    if (guiding) {
+      setHelpedStepIndex(progress.stepIndex);
+      setRecall((current) => ({ id: (current?.id ?? 0) + 1, progress }));
     }
   }
 
@@ -253,6 +239,9 @@ export function MinesweeperTutorial({
     if (next === progress) {
       handleIgnoredAction();
       return;
+    }
+    if (guiding && next.violated) {
+      setHelpedStepIndex(progress.stepIndex);
     }
     setProgress(next);
     setOperation(
@@ -278,11 +267,18 @@ export function MinesweeperTutorial({
   }
 
   function restart(): void {
-    setIdleProgress(null);
+    setHintRequestedProgress(null);
+    setHelpedStepIndex(null);
     setRecall(null);
     setOperation(null);
     setMode("reveal");
     setProgress(startTutorial(minesweeperTutorial));
+  }
+
+  // ゴールはもう見せたので、入口を通さずに最初の手順から始める。
+  function handleRestart(): void {
+    restart();
+    setProgress(finishTutorialIntro);
   }
 
   function handleClose(): void {
@@ -297,52 +293,33 @@ export function MinesweeperTutorial({
 
   function renderBoard({
     scene,
-    playing,
+    playing: scenePlaying,
     onSceneEnd,
-    messageShown,
-  }: TutorialBoardIntro) {
+  }: TutorialStageBoardIntro) {
     // 始めの盤面の場面では、解き終えた盤面に開いていないマスを閉じていき、閉じ終えたら始めの盤面に替える。
-    const goalShown = scene === "goal" || (scene === "start" && playing);
+    const goalShown = scene === "goal" || (scene === "start" && scenePlaying);
     const shownBoardState = goalShown ? goalBoardState : boardState;
-    // 最初の手順の印と決め手は、導入の終わりに一言と同時に出す。
-    const stepMarksShown =
-      step !== null &&
-      (progress.phase === "playing" || (scene === null && messageShown));
-    const hintCellIndices = stepMarksShown
-      ? stepCellIndices
-      : idleHintCellIndex === null
-        ? []
-        : [idleHintCellIndex];
     // 完成の演出と完成した盤面には、最後の手の応えを残さない。
-    const cuesShown =
-      !goalShown &&
-      (progress.phase === "intro" || progress.phase === "playing");
-    const stepSpotlit = step !== null && progress.phase === "playing";
-    const toggleCue: MinesweeperTutorialToggleCue | null =
-      stepMarksShown && modeMismatched
-        ? { recallId }
-        : idleHintNeedsSwitch
-          ? { recallId: null }
-          : null;
+    const cuesShown = scene === null && playing;
     return (
       <div className="flex w-[min(100cqw,calc(100cqh-3.25rem),28rem)] flex-col gap-2">
         <MinesweeperTutorialStatus
           mineCount={MINESWEEPER_TUTORIAL_MINE_COUNT}
           flagCount={shownBoardState.puzzle.flaggedCellIndices.length}
-          mineCountSpotlit={stepSpotlit && step.reasonMineCount}
           mode={mode}
-          toggleCue={toggleCue}
-          toggleSpotlit={stepSpotlit && modeMismatched}
+          toggleCue={cuesShown ? toggleCue : null}
           onModeChange={setMode}
         />
         <MinesweeperClearAnimation
-          active={progress.phase === "solved" || (scene === "goal" && playing)}
+          active={
+            progress.phase === "solved" || (scene === "goal" && scenePlaying)
+          }
           onComplete={
             scene === "goal" ? onSceneEnd : handleClearAnimationComplete
           }
         >
           <MinesweeperTutorialCover
-            active={scene === "start" && playing}
+            active={scene === "start" && scenePlaying}
             rows={MINESWEEPER_TUTORIAL_ROWS}
             columns={MINESWEEPER_TUTORIAL_COLUMNS}
             startCoveredCellIndices={startCoveredCellIndices}
@@ -358,17 +335,18 @@ export function MinesweeperTutorial({
               columns={MINESWEEPER_TUTORIAL_COLUMNS}
               cells={getMinesweeperTutorialVisibleCells(shownBoardState)}
               mode={mode}
-              interactionDisabled={progress.phase !== "playing"}
+              interactionDisabled={!playing}
               cues={
                 cuesShown
-                  ? getCellCues(boardState, hintCellIndices, recallId)
+                  ? getCellCues(
+                      boardState,
+                      markedCellIndices,
+                      recallId,
+                      !modeMismatched,
+                    )
                   : []
               }
-              spotlitCellIndices={
-                stepSpotlit
-                  ? getSpotlitCellIndices(step, boardState, stepCellIndices)
-                  : []
-              }
+              spotlitCellIndices={cuesShown ? spotlitCellIndices : null}
               onRevealCell={handleRevealCell}
               onToggleFlag={handleToggleFlag}
               onChordCell={handleChordCell}
@@ -390,22 +368,34 @@ export function MinesweeperTutorial({
 
   return (
     <TutorialOverlay
+      presentation="stage"
       open={open}
       title={MINESWEEPER_DISPLAY_NAME}
       pictogramSvg={pictogramSvg}
+      background={<MinesweeperGround />}
       intro={minesweeperTutorial.intro}
-      rules={minesweeperTutorial.rules.map((rule) => ({
-        ...rule,
-        earned: progress.earnedRuleIds.includes(rule.id),
-        current: step?.introducedRuleId === rule.id,
-      }))}
+      recap={MINESWEEPER_TUTORIAL_RECAP}
       message={message}
       phase={progress.phase}
-      guiding={progress.phase === "playing" && guiding}
+      spotlighting={spotlitCellIndices !== null}
+      progress={
+        progress.phase === "solved" || progress.phase === "completed"
+          ? 1
+          : getMinesweeperTutorialProgressRatio(progress.stepIndex, boardState)
+      }
+      progressStepCount={MINESWEEPER_TUTORIAL_PROGRESS_STEP_COUNT}
       finish={finish}
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
-      onRestart={restart}
+      onRestart={handleRestart}
+      renderHowToPlayDialog={(control) => (
+        <MinesweeperHowToPlayDialog {...control} />
+      )}
+      onRequestHint={
+        hintRequestable && hint === null
+          ? () => setHintRequestedProgress(progress)
+          : null
+      }
       onClose={handleClose}
     />
   );
