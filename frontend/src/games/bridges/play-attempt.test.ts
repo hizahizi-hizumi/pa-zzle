@@ -5,12 +5,7 @@ import {
   cycleBridgesSessionEdge,
 } from "@/games/bridges/session/session";
 
-/**
- * 6×6 の左上の3島。解は上の2島に2本、左の2島に1本で、要る橋は3本。
- * 3.2...
- * ......
- * 1.....
- */
+// 解は上の2島に2本、左の2島に1本で、要る橋は3本。
 const problem = parseBridgesBoard([
   "3.2...",
   "......",

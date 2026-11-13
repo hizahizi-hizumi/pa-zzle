@@ -1,27 +1,18 @@
-/**
- * 島。`clue` は島の数字で、その島から出る橋の本数。
- */
 export type BridgesIsland = {
   row: number;
   column: number;
   clue: number;
 };
 
-/**
- * 幅 `width`・高さ `height` のマス目に島を置いた盤面。
- * 島は行優先（上の行から、同じ行は左から）に並べ、島の番号はこの並びの位置。
- * 島どうしは上下左右に隣り合わない。隣り合う2島の間には線を引くすき間が無く、押し分けられないため。
- */
 export type BridgesBoard = {
   width: number;
   height: number;
+  /** 行優先（上の行から、同じ行は左から）に並べ、島の番号はこの並びの位置。 */
   islands: readonly BridgesIsland[];
 };
 
-/** 同じ2島の間に架けられる橋の本数の上限。 */
 export const BRIDGES_MAXIMUM_BRIDGE_COUNT = 2;
 
-/** 島の数字の上限。上下左右の4方向に2本ずつ。 */
 export const BRIDGES_MAXIMUM_CLUE = 4 * BRIDGES_MAXIMUM_BRIDGE_COUNT;
 
 export const bridgesDirections = ["up", "right", "down", "left"] as const;
@@ -30,23 +21,16 @@ export type BridgesDirection = (typeof bridgesDirections)[number];
 
 export type BridgesOrientation = "horizontal" | "vertical";
 
-/**
- * 同じ行か列にあり、間に島の無い2島の組。橋を架けられる候補で、橋の本数は辺の番号ごとに持つ。
- * `from` は左（縦なら上）の島、`to` は右（縦なら下）の島の番号。
- */
+/** 同じ行か列にあり、間に島の無い2島の組。橋を架けられる候補。 */
 export type BridgesEdge = {
+  /** `from` は左（縦なら上）の島、`to` は右（縦なら下）の島の番号。 */
   from: number;
   to: number;
   orientation: BridgesOrientation;
 };
 
-/**
- * 盤面から決まる、辺とその関係。
- * - `edges`: 辺。島の番号の順に、各島から右・下へ伸びる辺を並べる。
- * - `islandEdges`: 島ごとの、その島を端に持つ辺の番号。
- * - `crossingEdges`: 辺ごとの、途中で交わる辺の番号。交わる2辺には同時に橋を架けられない。
- */
 export type BridgesNetwork = {
+  /** 島の番号の順に、各島から右・下へ伸びる辺を並べる。 */
   edges: readonly BridgesEdge[];
   islandEdges: readonly (readonly number[])[];
   crossingEdges: readonly (readonly number[])[];
@@ -68,7 +52,6 @@ function createIslandIndex(board: BridgesBoard): Map<number, number> {
   );
 }
 
-/** `island` から `direction` の向きにまっすぐ進んで最初に出会う島の番号。盤面の端まで島が無ければ `null`。 */
 function findFacingIsland(
   board: BridgesBoard,
   islandIndex: ReadonlyMap<number, number>,
@@ -105,7 +88,6 @@ function listEdges(board: BridgesBoard): BridgesEdge[] {
   });
 }
 
-/** 横の辺と縦の辺が、どちらの端でもない所で交わるか。 */
 function doEdgesCross(
   board: BridgesBoard,
   left: BridgesEdge,
@@ -143,7 +125,6 @@ function createNetwork(board: BridgesBoard): BridgesNetwork {
 
 const networks = new WeakMap<BridgesBoard, BridgesNetwork>();
 
-/** 盤面の辺とその関係。同じ盤面の値には同じ結果を返す。 */
 export function getBridgesNetwork(board: BridgesBoard): BridgesNetwork {
   const cached = networks.get(board);
   if (cached) {
@@ -154,7 +135,6 @@ export function getBridgesNetwork(board: BridgesBoard): BridgesNetwork {
   return network;
 }
 
-/** `island` の島から `direction` の向きへ伸びる辺の番号。その向きに島が無ければ `null`。 */
 export function findBridgesEdgeToward(
   board: BridgesBoard,
   island: number,
@@ -249,11 +229,7 @@ export function assertBridgesBoard(board: BridgesBoard): void {
 
 const emptyCellNotation = ".";
 
-/**
- * 盤面を記法の行で表す。固定問題・テストで盤面を読みやすく書くための記法。
- * 1行がマス目の1行で、1マスを1文字で書く（`.` 島の無いマス、`1`〜`8` その数字の島）。
- * 例: 3×3 で左上と右上が2の島 → `["2.2", "...", "..."]`。
- */
+/** 固定問題・テストで盤面を読みやすく書くための記法。 */
 export function formatBridgesBoard(board: BridgesBoard): string[] {
   const rows = Array.from({ length: board.height }, () =>
     Array.from({ length: board.width }, () => emptyCellNotation),
@@ -264,7 +240,6 @@ export function formatBridgesBoard(board: BridgesBoard): string[] {
   return rows.map((cells) => cells.join(""));
 }
 
-/** `formatBridgesBoard` の記法から盤面を作る。 */
 export function parseBridgesBoard(rows: readonly string[]): BridgesBoard {
   const width = rows[0]?.length ?? 0;
   const islands: BridgesIsland[] = [];

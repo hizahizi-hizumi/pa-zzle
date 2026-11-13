@@ -7,20 +7,11 @@ import type {
   BridgesPuzzleState,
 } from "@/games/bridges/puzzle/state";
 
-/**
- * 辺の橋の本数を変えた結果。
- * - `changed`: 本数を変えた。
- * - `blocked`: 交わる辺に橋があるので架けなかった。`crossingEdges` はその橋のある辺の番号。
- */
 export type BridgesEdgeChange =
   | { kind: "changed"; state: BridgesPuzzleState }
+  // 交わる辺に橋があるので架けなかった。`crossingEdges` はその橋のある辺の番号。
   | { kind: "blocked"; crossingEdges: readonly number[] };
 
-/**
- * 橋の本数を回す向き。
- * - `forward`: 1本 → 2本 → なし。タップでも、島から島へなぞったときも同じに回す。
- * - `backward`: なし → 2本 → 1本 → なし。マウスの右クリックで回す。
- */
 export type BridgesCycleDirection = "forward" | "backward";
 
 const nextBridgeCounts = {
@@ -31,10 +22,6 @@ const nextBridgeCounts = {
   Record<BridgeCount, BridgeCount>
 >;
 
-/**
- * 辺の橋の本数を `direction` の向きに回す。
- * 橋の無い辺に架けるとき、交わる辺に橋があれば架けない。
- */
 export function cycleBridgesEdge(
   board: BridgesBoard,
   state: BridgesPuzzleState,

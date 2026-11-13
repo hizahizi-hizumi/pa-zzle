@@ -31,7 +31,6 @@ function createRandomBoard(random: ProblemRandom): BridgesBoard {
   return { width, height, islands };
 }
 
-/** 全部の島の組から、同じ行か列で間に島の無い組を「左（上）の島-右（下）の島」で挙げる。 */
 function listPairsNaively(board: BridgesBoard): string[] {
   const { islands } = board;
   return islands.flatMap((a, from) =>

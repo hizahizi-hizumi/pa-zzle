@@ -14,19 +14,16 @@ import {
 import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
 export type BridgesSession = GameSession<BridgesProblem, BridgesPuzzleState> & {
-  /** 待ったで盤面操作を取り消した回数。 */
   undoCount: number;
   /** 盤面を戻した回数。 */
   restartCount: number;
   /** 橋の本数を変えた入力（タップ・なぞり）の回数。待った・盤面を戻すは含まない。 */
   inputCount: number;
-  /** 交わる橋に阻まれて架けられなかった入力の回数。 */
   blockedCount: number;
-  /** 待ったで戻せる、各盤面操作の前の状態。古い順。盤面を戻すと空にする。 */
+  /** 待ったで戻せる、各盤面操作の前の状態。古い順。 */
   history: readonly BridgesPuzzleState[];
 };
 
-/** 評価と記録に使うプレイ事実。採点はしない。 */
 export type BridgesSessionResult = {
   elapsedMs: number;
   undoCount: number;
@@ -35,10 +32,6 @@ export type BridgesSessionResult = {
   blockedCount: number;
 };
 
-/**
- * 辺の橋を回す操作の結果。交わる橋に阻まれたときは `crossingEdges` にその橋のある辺を添え、盤面は変えない。
- * プレイ中でない session への操作は受け付けず、阻まれた辺も添えない。
- */
 export type BridgesSessionEdgeChange = {
   session: BridgesSession;
   crossingEdges: readonly number[] | null;
@@ -64,7 +57,6 @@ export function createBridgesSession(
   };
 }
 
-/** 辺の橋の本数を `direction` の向きに回す。全部の島がちょうどでつながったら、その時刻でクリアにする。 */
 export function cycleBridgesSessionEdge(
   session: BridgesSession,
   edge: number,
@@ -102,7 +94,7 @@ export function cycleBridgesSessionEdge(
   };
 }
 
-/** 直前の盤面操作を1つ取り消す（待った）。盤面を戻す前の操作は戻せない。 */
+/** 盤面を戻す前の操作は戻せない。 */
 export function undoBridgesSession(session: BridgesSession): BridgesSession {
   if (!canUndoBridgesSession(session)) {
     return session;
@@ -120,7 +112,6 @@ export function canUndoBridgesSession(session: BridgesSession): boolean {
   return session.status === "playing" && session.history.length > 0;
 }
 
-/** 同じプレイのまま橋を全部外す（盤面を戻す）。経過時間は引き継ぎ、待ったの履歴は消す。 */
 export function restartBridgesSession(session: BridgesSession): BridgesSession {
   if (!canRestartBridgesSession(session)) {
     return session;
@@ -134,7 +125,6 @@ export function restartBridgesSession(session: BridgesSession): BridgesSession {
   };
 }
 
-/** 橋が1本でも架かっているプレイ中だけ、盤面を戻せる。 */
 export function canRestartBridgesSession(session: BridgesSession): boolean {
   return (
     session.status === "playing" &&

@@ -26,7 +26,6 @@ const solution = countBridgesSolutions(initial.problem, {
 }).firstSolution!;
 const firstEdge = solution.findIndex((count) => count > 0);
 
-/** 解の橋を辺ごとに、本数の回数だけ回す。`skipLast` なら最後の1回を残す。 */
 function placeSolution(result: HookResult, skipLast = false): void {
   const steps = solution.flatMap((count, edge) =>
     Array.from({ length: count }, () => edge),
