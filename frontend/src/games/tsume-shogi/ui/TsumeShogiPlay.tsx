@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
@@ -45,6 +45,7 @@ import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlayStatu
 import { TsumeShogiTutorial } from "@/games/tsume-shogi/ui/TsumeShogiTutorial";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { useTsumeShogiSoundEffects } from "@/games/tsume-shogi/ui/use-tsume-shogi-sound-effects";
+import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 type TsumeShogiPlayProps = GamePlayScreenProps<
@@ -87,6 +88,33 @@ function getRejectionAnnouncementKey(rejection: TsumeShogiRejection): number {
   }
   return key;
 }
+
+/** この手数では詰まなくなった直後に、待ったへ目を向けさせる一度だけの弾み。 */
+const undoAttentionKeyframes: Keyframe[] = [
+  { transform: "scale(1)" },
+  { transform: "scale(1.25)", offset: 0.35 },
+  { transform: "scale(0.95)", offset: 0.7 },
+  { transform: "scale(1)" },
+];
+const undoAttentionTiming: RejectionShakeTiming = {
+  durationMs: 420,
+  easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+};
+
+/** 詰まなくなった後に盤を押したとき、指せる操作は待っただけだと返す揺れ。待ったの大きさに対して大きく振る。 */
+const undoNudgeKeyframes: Keyframe[] = [
+  { transform: "translateX(0)" },
+  { transform: "translateX(-9px) rotate(-8deg)" },
+  { transform: "translateX(9px) rotate(8deg)" },
+  { transform: "translateX(-7px) rotate(-6deg)" },
+  { transform: "translateX(7px) rotate(6deg)" },
+  { transform: "translateX(-3px)" },
+  { transform: "translateX(0)" },
+];
+const undoNudgeTiming: RejectionShakeTiming = {
+  durationMs: 420,
+  easing: "ease-in-out",
+};
 
 export function TsumeShogiPlay({
   difficulty,
@@ -139,7 +167,38 @@ export function TsumeShogiPlay({
   const boardAreaRef = useRef<HTMLElement>(null);
   const boardGroupRef = useRef<HTMLDivElement>(null);
   const shortPlayArea = useShortPlayArea(boardAreaRef, boardGroupRef);
-  const undoButton = <UndoButton disabled={!canUndo} onUndo={onUndo} />;
+  const refuted = playing && phase === "refuted";
+  const undoEmphasisRef = useRef<HTMLSpanElement>(null);
+  // 背の低い画面では待ったを駒台の行に置き、そうでなければ画面の下に置く。どちらか一方だけを描く。
+  const undoButton = (
+    <span
+      ref={undoEmphasisRef}
+      data-undo-emphasis={refuted ? "" : undefined}
+      className={cn(
+        "inline-flex rounded-full",
+        refuted && tsumeShogiToneClassNames.undoEmphasis,
+      )}
+    >
+      <UndoButton disabled={!canUndo} onUndo={onUndo} />
+    </span>
+  );
+
+  useLayoutEffect(() => {
+    if (!refuted) return;
+    playRejectionShake(
+      undoEmphasisRef.current,
+      undoAttentionKeyframes,
+      undoAttentionTiming,
+    );
+  }, [refuted]);
+
+  function nudgeUndo(): void {
+    playRejectionShake(
+      undoEmphasisRef.current,
+      undoNudgeKeyframes,
+      undoNudgeTiming,
+    );
+  }
 
   useEffect(() => {
     if (!playing) return;
@@ -237,6 +296,17 @@ export function TsumeShogiPlay({
                   onChoosePromotion={onChoosePromotion}
                 />
               </TsumeShogiClearAnimation>
+            }
+            boardOverlay={
+              refuted ? (
+                // 詰まなくなった盤は指せない。押されたら待ったを揺らして、続けるには待ったで戻すと返す。
+                <button
+                  type="button"
+                  aria-label="盤（この手数では詰みません。待ったで戻せます）"
+                  className="absolute inset-0 z-30 cursor-default touch-manipulation outline-none"
+                  onClick={nudgeUndo}
+                />
+              ) : null
             }
             hand={
               <TsumeShogiHand

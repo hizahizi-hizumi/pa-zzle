@@ -1,36 +1,33 @@
 import { type RefObject, useLayoutEffect, useState } from "react";
 
 import type { TsumeShogiRejection } from "@/games/tsume-shogi/session/session";
-import {
-  playRejectionShake,
-  prefersReducedMotion,
-  type RejectionShakeTiming,
-} from "@/lib/motion";
+import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
 
 const rejectedPieceShakeTiming: RejectionShakeTiming = {
-  durationMs: 520,
+  durationMs: 440,
   easing: "ease-in-out",
 };
 
 /**
- * 升の幅に対する揺れ幅。駒が隣の升へかからない最大の振れ幅（升と駒の幅の差の半分ほど）にとどめ、
- * 往復の回数を増やして時間で見えやすさを補う。
+ * 駒の幅に対する揺れ幅。王手にならない手を拒んだことが、指先の下でもはっきり見える大きさにする。
+ * 駒は隣の升へ少しかかるが、揺れは短く、升の地も同時に変えるので、どの駒を拒んだかは紛れない。
  */
 const rejectedPieceShakeKeyframes: Keyframe[] = [
   { transform: "translateX(0)" },
-  { transform: "translateX(-6%)" },
-  { transform: "translateX(6%)" },
-  { transform: "translateX(-6%)" },
-  { transform: "translateX(6%)" },
-  { transform: "translateX(-3%)" },
+  { transform: "translateX(-22%) rotate(-7deg)" },
+  { transform: "translateX(20%) rotate(6deg)" },
+  { transform: "translateX(-14%) rotate(-4deg)" },
+  { transform: "translateX(9%) rotate(2deg)" },
+  { transform: "translateX(-4%)" },
   { transform: "translateX(0)" },
 ];
 
-/** 動きを減らす設定で、選んでいた駒の地を変えておく時間。揺れと同じくらいの短さにする。 */
-const REJECTED_PIECE_FLASH_MS = 240;
+/** 拒んだ間、選んでいた駒の地を変えておく時間。揺れとほぼ同じ長さにする。動きを減らす設定でも同じに変える。 */
+const REJECTED_PIECE_FLASH_MS = 420;
 
 /**
  * `container` の中の `selectedPieceSelector` が揺らす駒。戻り値は駒の地を変えている間 `true`。
+ * 動きを減らす設定では揺らさず、地だけを変える。
  */
 export function useRejectedPieceFeedback(
   rejection: TsumeShogiRejection | null,
@@ -41,14 +38,11 @@ export function useRejectedPieceFeedback(
 
   useLayoutEffect(() => {
     if (!rejection) return;
-    if (!prefersReducedMotion()) {
-      playRejectionShake(
-        container.current?.querySelector(selectedPieceSelector),
-        rejectedPieceShakeKeyframes,
-        rejectedPieceShakeTiming,
-      );
-      return;
-    }
+    playRejectionShake(
+      container.current?.querySelector(selectedPieceSelector),
+      rejectedPieceShakeKeyframes,
+      rejectedPieceShakeTiming,
+    );
 
     setFlashing(true);
     const timer = window.setTimeout(

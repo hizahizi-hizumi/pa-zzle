@@ -109,11 +109,15 @@ describe("TsumeShogiHand", () => {
       rerender(renderHand("available", rejection));
     });
 
-    test("選んでいる持駒を揺らすこと", () => {
+    test("選んでいる持駒を揺らし、地も短く変えること", () => {
       const shaken = animate.mock.contexts[0] as Element | undefined;
+      const flashed = getHandPiece("金 1枚").className.includes(
+        tsumeShogiToneClassNames.handRejected,
+      );
 
       expect(animate).toHaveBeenCalledOnce();
       expect(getHandPiece("金 1枚").contains(shaken ?? null)).toBe(true);
+      expect(flashed).toBe(true);
     });
   });
 

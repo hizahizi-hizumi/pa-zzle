@@ -55,6 +55,13 @@ describe("TsumeShogiPlayStatus", () => {
       expect(status).toContain("△同玉");
       expect(status).toContain("3手では詰みません");
     });
+
+    test("その手数では詰まないことを、待ったで戻せることと合わせて大きな札で知らせること", () => {
+      const notice = document.querySelector("[data-refutation-notice]");
+
+      expect(notice?.textContent).toContain("3手では詰みません");
+      expect(notice?.textContent).toContain("待った");
+    });
   });
 
   describe("誤王手の筋でまだ指せる場合", () => {
@@ -67,6 +74,7 @@ describe("TsumeShogiPlayStatus", () => {
 
       expect(status).toContain("△同玉で逃れる");
       expect(status).not.toContain("詰みません");
+      expect(document.querySelector("[data-refutation-notice]")).toBeNull();
     });
   });
 });

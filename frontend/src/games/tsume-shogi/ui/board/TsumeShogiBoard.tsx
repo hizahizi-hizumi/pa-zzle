@@ -173,15 +173,23 @@ export function TsumeShogiBoard({
               isSameTsumeShogiSquare(lastMove.move.to, square)
                 ? lastMove
                 : null;
+            const piece = findPiece(boardPieces, square);
+            // 詰みの輪は、詰めた駒と詰んだ玉の升に出す。
+            const clearRing =
+              mated &&
+              ((piece?.side === "defender" && piece.type === "king") ||
+                (lastMove?.side === "attacker" &&
+                  isSameTsumeShogiSquare(lastMove.move.to, square)));
             return (
               <TsumeShogiSquareButton
                 key={`${file}-${rank}`}
                 square={square}
-                piece={findPiece(boardPieces, square)}
+                piece={piece}
                 pieceId={
                   boardPieceIds.get(formatTsumeShogiSquareKey(square)) ?? null
                 }
                 clearGlow={mated}
+                clearRing={clearRing}
                 arrivedMove={arrivedMove}
                 highlight={getHighlight(square)}
                 tutorialMarkRecallId={

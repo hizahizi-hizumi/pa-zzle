@@ -20,6 +20,8 @@ export const tsumeShogiBoardGroupSizeStyle = {
 
 type TsumeShogiBoardGroupProps = {
   board: ReactNode;
+  /** 盤の上に重ねる層。盤の位置と大きさは変えない。 */
+  boardOverlay?: ReactNode;
   hand: ReactNode;
   status: ReactNode;
   ref?: Ref<HTMLDivElement>;
@@ -28,6 +30,7 @@ type TsumeShogiBoardGroupProps = {
 /** プレイ画面とチュートリアルで同じ並びにする。 */
 export function TsumeShogiBoardGroup({
   board,
+  boardOverlay,
   hand,
   status,
   ref,
@@ -39,6 +42,7 @@ export function TsumeShogiBoardGroup({
       </div>
       <div className="relative h-[calc((var(--board-width)-2*var(--board-frame))*386/352+2*var(--board-frame)+var(--board-thickness))]">
         {board}
+        {boardOverlay}
       </div>
       <div className="h-(--komadai-height)">{hand}</div>
       <div className="relative h-5">{status}</div>

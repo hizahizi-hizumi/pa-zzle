@@ -32,6 +32,7 @@ function Squares() {
     <div data-board-squares="">
       <button type="button" data-file={2} data-rank={3} data-mated-king="">
         <span data-clear-glow="" />
+        <span data-clear-ring="" data-testid="king-ring" />
         <span data-piece="" data-testid="king" />
       </button>
       <button type="button" data-file={4} data-rank={3}>
@@ -59,10 +60,16 @@ describe("TsumeShogiClearAnimation", () => {
 
     test("玉の升からの升の距離で、駒と照りの層の動きを遅らせること", () => {
       const delays = Object.fromEntries(
-        calls.map(({ target, delay }) => [
-          `${(target.closest("button") as HTMLElement).dataset.file}-${target.hasAttribute("data-piece") ? "piece" : "glow"}`,
-          delay,
-        ]),
+        calls
+          .filter(
+            ({ target }) =>
+              target.hasAttribute("data-piece") ||
+              target.hasAttribute("data-clear-glow"),
+          )
+          .map(({ target, delay }) => [
+            `${(target.closest("button") as HTMLElement).dataset.file}-${target.hasAttribute("data-piece") ? "piece" : "glow"}`,
+            delay,
+          ]),
       );
 
       expect(delays).toEqual({
@@ -73,6 +80,19 @@ describe("TsumeShogiClearAnimation", () => {
         "5-glow": CLEAR_START_DELAY_MS + 3 * CLEAR_WAVE_STAGGER_MS,
       });
       expect(container.querySelector("[data-board-squares]")).not.toBeNull();
+    });
+
+    test("詰めた駒と玉の升の輪をすぐに出し、「詰み」の字を波と同時に打ち出すこと", () => {
+      const ring = calls.find(({ target }) =>
+        target.hasAttribute("data-clear-ring"),
+      );
+      const stamp = calls.find(({ target }) =>
+        target.hasAttribute("data-clear-stamp"),
+      );
+
+      expect(ring).toBeDefined();
+      expect(stamp?.delay).toBe(CLEAR_START_DELAY_MS);
+      expect(stamp?.target.textContent).toBe("詰み");
     });
   });
 });

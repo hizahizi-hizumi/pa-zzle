@@ -2,7 +2,8 @@ import type { TsumeShogiSquare } from "@/games/tsume-shogi/puzzle/position";
 
 /**
  * 詰みを盤の上で見せる時間の組み立て。詰めた手の駒が着いてから、玉が傾き、玉の升から盤の照りの波が広がり、
- * 詰み上がりを少し見せて結果へ移る。盤の端まで波が届いても、詰めた手から結果までが 1.4 秒ほどに収まるようにする。
+ * 詰み上がりを少し見せて結果へ移る。詰めた手が着いた瞬間に詰めた駒と玉の升へ輪を出し、波が立つのと同時に「詰み」の字を
+ * 打ち出す。輪と字は波の間に収め、全体の長さは延ばさない。盤の端まで波が届いても、詰めた手から結果までが 1.4 秒ほどに収まる。
  */
 /** 詰めた手の駒が着いてから、詰みの波が立つまで。 */
 export const CLEAR_START_DELAY_MS = 200;
@@ -10,6 +11,10 @@ export const CLEAR_START_DELAY_MS = 200;
 export const CLEAR_WAVE_STAGGER_MS = 60;
 export const CLEAR_WAVE_DURATION_MS = 420;
 export const CLEAR_KING_DURATION_MS = 620;
+/** 詰めた駒と玉の升に出す輪。詰めた手が着いた瞬間に出す。 */
+export const CLEAR_RING_DURATION_MS = 520;
+/** 「詰み」の字を打ち出して見せる時間。波が立つのと同時に打ち出し、詰み上がりを見せ終える前に消す。 */
+export const CLEAR_STAMP_DURATION_MS = 560;
 /** 波が収まった詰み上がりの盤を見せる時間。 */
 export const CLEAR_SETTLE_MS = 300;
 

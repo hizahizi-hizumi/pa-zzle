@@ -80,22 +80,38 @@ export const tsumeShogiToneClassNames = {
   inkGroove: "fill-[#080402] stroke-[#20150d]",
   vermilionGroove: "fill-[#6a1c0c] stroke-[#bd4024]",
   glyphRim: "fill-[#fff8e6] stroke-[#fff8e6]",
-  /** 選んだ駒の升に付ける木の焼け色の軽い印。駒は持ち上げて示す。 */
-  squareSelected: "bg-[#8a5a24]/14",
+  /**
+   * 選んだ駒の升。木の焼け色の濃い地と、升の内側の墨の縁で、指先の下でも選んだ升と分かるようにし、駒も持ち上げる。
+   */
+  squareSelected: "bg-[#6e4214]/34 shadow-[inset_0_0_0_2px_rgb(42_27_16/0.8)]",
   /** 直前の手の移動先。低い濃さの暖色の焼け色。 */
   squareLastMove: "bg-[#c8742a]/22",
   /** 誤王手への玉方の反証。直前の手より濃い焦げ茶の焼け色を升の縁へ向けて濃くし、直前の手と見分ける。 */
   squareRefutation:
     "bg-[radial-gradient(circle_at_50%_50%,rgb(110_60_20/0.18),rgb(80_40_10/0.42)_95%)]",
-  /** 動きを減らす設定で、着手させなかった入力を返す間だけ、選んだ駒の地を変える色。 */
-  squareRejected: "bg-[#8a3a18]/25",
-  handSelected: "bg-[#8a5a24]/14",
-  /** 動きを減らす設定で着手させなかった入力を返す間の、選んだ持駒の地。`squareRejected` と同じ色。 */
-  handRejected: "bg-[#8a3a18]/25",
+  /** 着手させなかった入力を返す間だけ、選んだ駒の升を変える朱の焦げ色。選んだ升の地より赤く濃くし、縁も朱にする。 */
+  squareRejected: "bg-[#a8340f]/45 shadow-[inset_0_0_0_2px_rgb(150_40_10/0.9)]",
+  handSelected: "bg-[#6e4214]/30 shadow-[inset_0_0_0_2px_rgb(42_27_16/0.75)]",
+  /** 着手させなかった入力を返す間の、選んだ持駒の地。`squareRejected` と同じ色。 */
+  handRejected: "bg-[#a8340f]/45 shadow-[inset_0_0_0_2px_rgb(150_40_10/0.9)]",
   /** 駒台の持駒を指したときの地。選んだ持駒の地（`handSelected`）は上書きしない。 */
   handHover: "not-aria-disabled:not-aria-pressed:hover:bg-[#3b230b]/10",
   /** 棋譜の行は木の外の地に書く。反証は赤字にせず、墨の淡い色で示す。 */
   refutationText: "text-[#6b5a48] dark:text-[#b8a690]",
+  /**
+   * この手数では詰まないことの知らせ。墨の札に淡い柘植色の字で書き、明るい卓でも暗い卓でも、木の上でも面として読める
+   * ように、札の外へ淡い縁と落ち影を付ける。
+   */
+  refutationNotice:
+    "bg-[#20150d]/92 text-[#fff4d8] shadow-[0_0_0_1.5px_rgb(255_244_216/0.55),0_6px_14px_-4px_rgb(20_10_2/0.6)]",
+  /** 知らせの添え書き（待ったで戻ること）。札の上で一段淡くする。 */
+  refutationNoticeHint: "text-[#e8d2a8]",
+  /**
+   * この手数では詰まなくなった間の待ったの縁取り。朱漆の色の太い輪で、卓の地から間を空けて囲む。
+   * 卓の地はライトとダークで明度が違うので、間の色（offset）も卓の地にそろえる。
+   */
+  undoEmphasis:
+    "ring-4 ring-[#bd4024] ring-offset-2 ring-offset-[#bbc09e] dark:ring-[#e87a55] dark:ring-offset-[#2b2b20]",
   /** キーボード操作の枠。暗い線と明るい線の二重線にし、どの木目の上でも見えるようにする。升の地は上書きしない。 */
   focusRing:
     "focus-visible:outline-[#1a1410] focus-visible:shadow-[0_0_0_2px_rgb(255_248_232)]",
@@ -107,9 +123,18 @@ export const tsumeShogiToneClassNames = {
     "bg-[#e5b86a] shadow-[0_6px_14px_-4px_rgb(45_22_5/0.45),0_1px_2px_rgb(45_22_5/0.3)]",
   promotionLabel:
     "font-medium text-[#2a1b10] [text-shadow:0_0_2px_rgb(255_240_210),0_0_2px_rgb(255_240_210)]",
-  /** 詰みの波で、升に一度だけ差す盤の照り。 */
+  /**
+   * 詰みの波で、升に一度だけ差す盤の照り。明るい照りだけでは木目の上で見分けにくいので、照りの外側に焦げ茶の縁を混ぜ、
+   * 明暗の対比で波の先頭を見せる。
+   */
   clearGlow:
-    "bg-[radial-gradient(circle_at_45%_40%,rgb(255_246_214/0.75),rgb(255_236_180/0)_80%)]",
+    "bg-[radial-gradient(circle_at_50%_50%,rgb(255_250_228/0.95)_0%,rgb(255_238_186/0.75)_40%,rgb(84_42_8/0.55)_68%,rgb(84_42_8/0)_92%)]",
+  /** 詰めた駒と詰んだ玉の升に一瞬出す輪。白い内輪と墨の外輪の二重にする。 */
+  clearRing:
+    "shadow-[0_0_0_3px_rgb(255_250_236),0_0_0_6px_rgb(32_20_10),inset_0_0_0_2px_rgb(32_20_10/0.6)]",
+  /** 詰んだ瞬間に盤の上へ打ち出す「詰み」の字。淡い字に墨の太い縁を付け、木目の上でも卓の上でも読めるようにする。 */
+  clearStamp:
+    "text-[#fff6dc] [paint-order:stroke_fill] [-webkit-text-stroke:0.14em_#20150d] [text-shadow:0_0.06em_0.18em_rgb(20_10_2/0.6)]",
   /** 詰んだ玉は傾いたまま残す。 */
   matedPieceTilt: "-rotate-[9deg]",
 } as const;

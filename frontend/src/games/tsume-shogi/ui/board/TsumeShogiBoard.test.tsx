@@ -115,11 +115,15 @@ describe("TsumeShogiBoard", () => {
       rerender(renderBoard({ rejection }));
     });
 
-    test("選んでいる駒を揺らすこと", () => {
+    test("選んでいる駒を揺らし、升の地も短く変えること", () => {
       const shaken = animate.mock.contexts[0] as Element | undefined;
+      const flashed = getSelectedSquare().className.includes(
+        tsumeShogiToneClassNames.squareRejected,
+      );
 
       expect(animate).toHaveBeenCalledOnce();
       expect(getSelectedSquare().contains(shaken ?? null)).toBe(true);
+      expect(flashed).toBe(true);
     });
   });
 

@@ -530,18 +530,13 @@ function TsumeShogiTutorialBoard({
             />
           }
           status={
-            <>
-              <TsumeShogiPlayStatus
-                plies={state.problem.plies}
-                phase={sessionPhase}
-                shownMoves={shownMoves}
-                precedingMoveTo={state.turns.at(-2)?.defenderMove?.to ?? null}
-              />
-              <TutorialSpotlight
-                active={focusing && statusSpotlit}
-                className="inset-0"
-              />
-            </>
+            <TsumeShogiPlayStatus
+              plies={state.problem.plies}
+              phase={sessionPhase}
+              shownMoves={shownMoves}
+              precedingMoveTo={state.turns.at(-2)?.defenderMove?.to ?? null}
+              spotlit={focusing && statusSpotlit}
+            />
           }
         />
       </div>

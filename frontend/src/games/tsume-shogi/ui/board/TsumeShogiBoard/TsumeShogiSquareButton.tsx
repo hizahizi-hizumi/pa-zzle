@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 /**
  * 升の地が示す状態。
  * - `selected`: 選んでいる攻方の駒。
- * - `rejected`: 選んでいる攻方の駒で、直前の入力を着手させなかったことを返している間（動きを減らす設定）。
+ * - `rejected`: 選んでいる攻方の駒で、直前の入力を着手させなかったことを返している間。
  * - `last-move`: 最後に指した手の移動先。
  * - `refutation`: 誤王手への玉方の反証の移動先。
  * - `mated`: 詰んだ玉。
@@ -55,6 +55,8 @@ type TsumeShogiSquareButtonProps = {
   /** 駒の、指し手で変わらない識別。駒ごとの木目の位置を決める。 */
   pieceId: string | null;
   clearGlow: boolean;
+  /** 詰みの瞬間に、明暗の輪を一度だけ出す升（詰めた駒と詰んだ玉）。 */
+  clearRing: boolean;
   arrivedMove: TsumeShogiPlayedMove | null;
   highlight: TsumeShogiSquareHighlight | null;
   /**
@@ -113,6 +115,7 @@ export function TsumeShogiSquareButton({
   piece,
   pieceId,
   clearGlow,
+  clearRing,
   arrivedMove,
   highlight,
   tutorialMarkRecallId,
@@ -159,6 +162,16 @@ export function TsumeShogiSquareButton({
           className={cn(
             "pointer-events-none absolute inset-0 opacity-0",
             tsumeShogiToneClassNames.clearGlow,
+          )}
+        />
+      )}
+      {clearRing && (
+        // 詰みの輪。ふだんは見えない。明るい内側の輪と暗い外側の輪で、木目の上でも卓の上でも見えるようにする。
+        <span
+          data-clear-ring=""
+          className={cn(
+            "pointer-events-none absolute inset-[4%] z-2 rounded-[22%] opacity-0",
+            tsumeShogiToneClassNames.clearRing,
           )}
         />
       )}
