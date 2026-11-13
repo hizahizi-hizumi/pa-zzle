@@ -30,10 +30,22 @@ export const reflectionOutcomeToneClassNames = {
   absorb: "text-violet-600 dark:text-violet-400",
 } as const satisfies Record<ReflectionOutcome, string>;
 
-const outcomeBarClassNames = {
-  exit: "bg-blue-600 dark:bg-blue-400",
-  reflect: "bg-pink-600 dark:bg-pink-400",
-  absorb: "bg-violet-600 dark:bg-violet-400",
+/**
+ * ストックで選んでいる種類の地と縁。ピースの色と同じ色相で、地は淡く、縁は図形として読める濃さにする。
+ * 明るい地でも暗い地でも面として見えるよう、地と縁の明暗を分ける。
+ */
+const outcomeSelectionSurfaceClassNames = {
+  exit: "bg-blue-100 ring-blue-600 dark:bg-blue-950 dark:ring-blue-400",
+  reflect: "bg-pink-100 ring-pink-600 dark:bg-pink-950 dark:ring-pink-400",
+  absorb:
+    "bg-violet-100 ring-violet-600 dark:bg-violet-950 dark:ring-violet-400",
+} as const satisfies Record<ReflectionOutcome, string>;
+
+/** 盤面のピースを選んでいる間の戻し先（同じ種類のストック）の縁。選んでいる種類の縁を点線にして薄くする。 */
+const outcomeReturnTargetClassNames = {
+  exit: "border-blue-600/60 dark:border-blue-400/60",
+  reflect: "border-pink-600/60 dark:border-pink-400/60",
+  absorb: "border-violet-600/60 dark:border-violet-400/60",
 } as const satisfies Record<ReflectionOutcome, string>;
 
 /**
@@ -51,15 +63,24 @@ export const reflectionPieceToneClassNames = {
 } as const satisfies Record<ReflectionPiece, string>;
 
 /**
- * ストックで選んでいる種類の下に引く短い線の色。ピースの色と同じ色相の塗り。
- * 選んでいるピース・ストックの種類は、地や枠を変えず、ピースの色の印で示す（盤面のマスは四隅の鉤形、ストックは下の短い線）。
- * 盤面のピースを選んでいる間の戻し先（同じ種類のストック）は、ストックの選択の線を薄くした印で示す（文字や帯は出さない）。
+ * ストックで選んでいる種類は、ピースの色の地と縁で面として囲み、ピースを少し大きくして示す。
+ * 盤面のマスで選んでいるピースは、マスの四隅の鉤形で示す。
+ * 盤面のピースを選んでいる間の戻し先（同じ種類のストック）は、点線の縁で示す（文字や帯は出さない）。
  */
-export const reflectionPieceBarClassNames = {
-  slash: outcomeBarClassNames.exit,
-  backslash: outcomeBarClassNames.exit,
-  "vertical-double": outcomeBarClassNames.reflect,
-  "horizontal-double": outcomeBarClassNames.reflect,
-  reflector: outcomeBarClassNames.reflect,
-  "black-hole": outcomeBarClassNames.absorb,
+export const reflectionPieceSelectionSurfaceClassNames = {
+  slash: outcomeSelectionSurfaceClassNames.exit,
+  backslash: outcomeSelectionSurfaceClassNames.exit,
+  "vertical-double": outcomeSelectionSurfaceClassNames.reflect,
+  "horizontal-double": outcomeSelectionSurfaceClassNames.reflect,
+  reflector: outcomeSelectionSurfaceClassNames.reflect,
+  "black-hole": outcomeSelectionSurfaceClassNames.absorb,
+} as const satisfies Record<ReflectionPiece, string>;
+
+export const reflectionPieceReturnTargetClassNames = {
+  slash: outcomeReturnTargetClassNames.exit,
+  backslash: outcomeReturnTargetClassNames.exit,
+  "vertical-double": outcomeReturnTargetClassNames.reflect,
+  "horizontal-double": outcomeReturnTargetClassNames.reflect,
+  reflector: outcomeReturnTargetClassNames.reflect,
+  "black-hole": outcomeReturnTargetClassNames.absorb,
 } as const satisfies Record<ReflectionPiece, string>;

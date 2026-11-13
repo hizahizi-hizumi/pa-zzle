@@ -376,12 +376,14 @@ describe("ReflectionTutorial", () => {
         expect(cues).toEqual([]);
       });
 
-      test("長く手が止まると、次に選ぶ種類だけに印を付けること", () => {
+      test("長く手が止まると、選ばれている次の種類を置くマスだけに印を付けること", () => {
         advanceTime(idleHintDelayMs);
+        const cellCues = getCueKinds(getCell(3, 1));
         const stockCues = getCueKinds(getStock("右下がりの鏡"));
         const reasonCues = getCueKinds(getClue("左3行"));
 
-        expect(stockCues).toEqual(["mark"]);
+        expect(cellCues).toEqual(["mark"]);
+        expect(stockCues).toEqual([]);
         expect(reasonCues).toEqual([]);
       });
 
@@ -394,14 +396,17 @@ describe("ReflectionTutorial", () => {
         expect(shownAfter).toBe("false");
       });
 
-      test("本番と同じく、数字キーでストックの種類を選び、Esc で選んだものを解除すること", () => {
-        fireEvent.keyDown(window, { key: "2" });
-        const selected = getStock("右下がりの鏡").getAttribute("aria-pressed");
+      test("本番と同じく、数字キーでストックの種類を選び、Esc で盤面のピースの選択を解いて種類の選択へ戻すこと", () => {
+        fireEvent.keyDown(window, { key: "3" });
+        const switched = getStock("縦の両面鏡").getAttribute("aria-pressed");
+        fireEvent.click(getCell(3, 3));
+        const cellSelected = getCell(3, 3).getAttribute("aria-pressed");
         fireEvent.keyDown(window, { key: "Escape" });
-        const released = getStock("右下がりの鏡").getAttribute("aria-pressed");
+        const cellReleased = getCell(3, 3).getAttribute("aria-pressed");
 
-        expect(selected).toBe("true");
-        expect(released).toBe("false");
+        expect(switched).toBe("true");
+        expect(cellSelected).toBe("true");
+        expect(cellReleased).toBe("false");
         expect(onClose).not.toHaveBeenCalled();
       });
 

@@ -71,13 +71,20 @@ function isEmptyBoard(session: ReflectionSession): boolean {
 const slashAtCenter = placeFromStock(initial, "slash", 4);
 
 describe("createReflectionSession", () => {
-  test("空の盤面・全ピースがストックにある状態で始めること", () => {
+  test("空の盤面・全ピースがストックにある状態で、ストックの並びで最初の種類を選んで始めること", () => {
     const session = createReflectionSession(problem, startedAt);
 
     expect(session.status).toBe("playing");
     expect(isEmptyBoard(session)).toBe(true);
     expect(getReflectionSessionStock(session)).toEqual(problem.inventory);
-    expect(session.selection).toBeNull();
+    expect(session.selection).toEqual({ type: "stock", piece: "slash" });
+    expect(session.inputCount).toBe(0);
+  });
+
+  test("空きマスを押すだけで、選んである種類を置けること", () => {
+    const next = tapReflectionSessionCell(initial, 4, startedAt);
+
+    expect(next.puzzleState.cells[4]).toBe("slash");
   });
 
   describe("外周ヒントが解と合わない問題の場合", () => {
@@ -92,11 +99,11 @@ describe("createReflectionSession", () => {
 });
 
 describe("tapReflectionSessionStock", () => {
-  describe("何も選んでいない場合", () => {
-    test("押した種類を選ぶこと", () => {
-      const next = tapReflectionSessionStock(initial, "slash", startedAt);
+  describe("ストックの種類を選んでいる場合", () => {
+    test("押した別の種類を選ぶこと", () => {
+      const next = tapReflectionSessionStock(initial, "black-hole", startedAt);
 
-      expect(next.selection).toEqual({ type: "stock", piece: "slash" });
+      expect(next.selection).toEqual({ type: "stock", piece: "black-hole" });
       expect(next.inputCount).toBe(1);
     });
 
@@ -108,13 +115,10 @@ describe("tapReflectionSessionStock", () => {
   });
 
   describe("同じ種類を選んでいる場合", () => {
-    const selected = tapReflectionSessionStock(initial, "slash", startedAt);
+    test("選んだままにすること", () => {
+      const next = tapReflectionSessionStock(initial, "slash", startedAt);
 
-    test("選択を解除すること", () => {
-      const next = tapReflectionSessionStock(selected, "slash", startedAt);
-
-      expect(next.selection).toBeNull();
-      expect(next.inputCount).toBe(2);
+      expect(next).toBe(initial);
     });
   });
 
@@ -126,7 +130,7 @@ describe("tapReflectionSessionStock", () => {
 
       expect(next.puzzleState.cells[4]).toBeNull();
       expect(getReflectionSessionStock(next).slash).toBe(1);
-      expect(next.selection).toBeNull();
+      expect(next.selection).toEqual({ type: "stock", piece: "slash" });
       expect(next.relocationCount).toBe(1);
     });
 
@@ -138,7 +142,7 @@ describe("tapReflectionSessionStock", () => {
         slash: 1,
         "black-hole": 0,
       });
-      expect(next.selection).toBeNull();
+      expect(next.selection).toEqual({ type: "stock", piece: "slash" });
       expect(next.relocationCount).toBe(1);
     });
 
@@ -172,13 +176,28 @@ describe("tapReflectionSessionCell", () => {
       startedAt,
     );
 
-    test("空きマスへ置き、残りが無くなれば選択を解除すること", () => {
+    test("空きマスへ置き、残りが無くなれば手持ちに残っている次の種類を選ぶこと", () => {
       const next = tapReflectionSessionCell(selectedSlash, 4, startedAt);
 
       expect(next.puzzleState.cells[4]).toBe("slash");
       expect(getReflectionSessionStock(next).slash).toBe(0);
-      expect(next.selection).toBeNull();
+      expect(next.selection).toEqual({ type: "stock", piece: "black-hole" });
       expect(next.relocationCount).toBe(0);
+    });
+
+    test("ストックの並びの後ろに残りが無ければ、先頭へ戻って残っている種類を選ぶこと", () => {
+      const blackHoleFirst = placeFromStock(initial, "black-hole", 8);
+
+      expect(blackHoleFirst.selection).toEqual({
+        type: "stock",
+        piece: "slash",
+      });
+    });
+
+    test("手持ちを置き切れば何も選ばないこと", () => {
+      const next = placeFromStock(slashAtCenter, "black-hole", 0);
+
+      expect(next.selection).toBeNull();
     });
 
     test("同じ種類が残っていれば選択を保つこと", () => {
@@ -200,11 +219,13 @@ describe("tapReflectionSessionCell", () => {
     });
   });
 
-  describe("何も選んでいない場合", () => {
-    test("空きマスを押しても何もしないこと", () => {
-      const next = tapReflectionSessionCell(initial, 4, startedAt);
+  describe("手持ちを置き切って何も選んでいない場合", () => {
+    const allPlaced = placeFromStock(slashAtCenter, "black-hole", 0);
 
-      expect(next).toBe(initial);
+    test("空きマスを押しても何もしないこと", () => {
+      const next = tapReflectionSessionCell(allPlaced, 8, startedAt);
+
+      expect(next).toBe(allPlaced);
     });
 
     test("ピースのあるマスを選ぶこと", () => {
@@ -227,7 +248,7 @@ describe("tapReflectionSessionCell", () => {
 
       expect(next.puzzleState.cells[4]).toBeNull();
       expect(next.puzzleState.cells[1]).toBe("slash");
-      expect(next.selection).toBeNull();
+      expect(next.selection).toEqual({ type: "stock", piece: "black-hole" });
       expect(next.relocationCount).toBe(1);
     });
 
@@ -243,10 +264,10 @@ describe("tapReflectionSessionCell", () => {
       expect(next.relocationCount).toBe(1);
     });
 
-    test("同じマスを押すと盤面を変えずに選択を解除すること", () => {
+    test("同じマスを押すと盤面を変えずに、手持ちに残っている種類の選択へ戻すこと", () => {
       const next = tapReflectionSessionCell(selectedSlash, 4, startedAt);
 
-      expect(next.selection).toBeNull();
+      expect(next.selection).toEqual({ type: "stock", piece: "black-hole" });
       expect(next.puzzleState).toBe(slashAtCenter.puzzleState);
     });
   });
@@ -299,7 +320,7 @@ describe("getReflectionSessionResult", () => {
       relocationCount: 1,
       restartCount: 0,
       laserCheckCount: 0,
-      inputCount: 6,
+      inputCount: 4,
     });
   });
 
@@ -318,6 +339,12 @@ describe("restartReflectionSession", () => {
     expect(next.restartCount).toBe(1);
     expect(next.relocationCount).toBe(0);
     expect(next.startedAt).toBe(startedAt);
+  });
+
+  test("戻した盤面でも、手持ちの種類を選んでおくこと", () => {
+    const next = restartReflectionSession(slashAtCenter);
+
+    expect(next.selection).toEqual({ type: "stock", piece: "black-hole" });
   });
 
   test("盤面が空なら何もしないこと", () => {
@@ -391,10 +418,10 @@ describe("removeReflectionSessionPiece", () => {
     expect(next.relocationCount).toBe(1);
   });
 
-  test("選んでいた盤面のピースの選択を解除すること", () => {
+  test("選んでいた盤面のピースの選択を解き、戻した種類を選ぶこと", () => {
     const next = removeReflectionSessionPiece(selectingPlaced, 4, startedAt);
 
-    expect(next.selection).toBeNull();
+    expect(next.selection).toEqual({ type: "stock", piece: "slash" });
   });
 
   test("空きマスでは何もしないこと", () => {
@@ -405,16 +432,16 @@ describe("removeReflectionSessionPiece", () => {
 });
 
 describe("clearReflectionSessionSelection", () => {
-  const selecting = tapReflectionSessionStock(initial, "slash", startedAt);
+  const selectingPlaced = tapReflectionSessionCell(slashAtCenter, 4, startedAt);
 
-  test("選択を解除し、操作として数えること", () => {
-    const next = clearReflectionSessionSelection(selecting);
+  test("盤面のピースの選択を解き、手持ちに残っている種類の選択へ戻して、操作として数えること", () => {
+    const next = clearReflectionSessionSelection(selectingPlaced);
 
-    expect(next.selection).toBeNull();
-    expect(next.inputCount).toBe(selecting.inputCount + 1);
+    expect(next.selection).toEqual({ type: "stock", piece: "black-hole" });
+    expect(next.inputCount).toBe(selectingPlaced.inputCount + 1);
   });
 
-  test("何も選んでいなければ何もしないこと", () => {
+  test("ストックの種類を選んでいれば選んだままにすること", () => {
     const next = clearReflectionSessionSelection(initial);
 
     expect(next).toBe(initial);

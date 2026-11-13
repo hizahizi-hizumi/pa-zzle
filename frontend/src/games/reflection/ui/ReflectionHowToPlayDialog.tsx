@@ -84,7 +84,7 @@ export function ReflectionHowToPlayDialog({
       </li>
       <li>
         <p>
-          ストックでピースを選び、空いたマスを押して置く。置いたピースを押して選ぶと、マスを押して移す・入れ替える、ストックの別の種類を押して置き換える、同じ種類を押してストックへ戻すができる。
+          ストックで選んでいる種類を、空いたマスを押して置く。選んでいる種類は面で囲まれ、使い切ると手持ちに残る次の種類に替わる。置いたピースを押して選ぶと、マスを押して移す・入れ替える、ストックの別の種類を押して置き換える、同じ種類を押してストックへ戻すができる。
         </p>
       </li>
       <li className="space-y-2">
@@ -115,7 +115,7 @@ export function ReflectionHowToPlayDialog({
         <p className="text-muted-foreground">
           キーボード: 矢印キーで移動、Enter
           で押す、数字キーでストックを押す、Delete でストックへ戻す、Esc
-          で選択を解除。
+          で盤面のピースの選択を解除。
         </p>
       </li>
     </HowToPlayDialog>

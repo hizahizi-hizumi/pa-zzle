@@ -50,11 +50,12 @@ export function createReflectionSession(
 ): ReflectionSession {
   assertReflectionProblem(problem);
 
+  const puzzleState = createEmptyReflectionBoard(problem.size);
   return {
     status: "playing",
     problem,
-    puzzleState: createEmptyReflectionBoard(problem.size),
-    selection: null,
+    puzzleState,
+    selection: selectRemainingStockPiece(problem, puzzleState, null),
     startedAt,
     clearedAt: null,
     inputCount: 0,
@@ -68,12 +69,7 @@ export function createReflectionSession(
 export function getReflectionSessionStock(
   session: ReflectionSession,
 ): ReflectionInventory {
-  const placed = countReflectionBoardPieces(session.puzzleState);
-  const stock = createEmptyReflectionInventory();
-  for (const piece of reflectionPieces) {
-    stock[piece] = session.problem.inventory[piece] - placed[piece];
-  }
-  return stock;
+  return countRemainingPieces(session.problem, session.puzzleState);
 }
 
 function isSameSelection(
@@ -135,17 +131,38 @@ function applyBoardChange(
   };
 }
 
-/** 置いた後も同じ種類が手持ちに残っていれば、続けて置けるよう選択を保つ。 */
-function selectionAfterPlacing(
-  session: ReflectionSession,
+function countRemainingPieces(
+  problem: ReflectionProblem,
   board: ReflectionBoard,
-  piece: ReflectionPiece,
+): ReflectionInventory {
+  const placed = countReflectionBoardPieces(board);
+  const stock = createEmptyReflectionInventory();
+  for (const piece of reflectionPieces) {
+    stock[piece] = problem.inventory[piece] - placed[piece];
+  }
+  return stock;
+}
+
+/**
+ * 次に置く種類を、手持ちに残っている種類から選んでおく。空きマスを押せば、いつも置ける状態にするため。
+ * `preferred` が残っていればそれを、使い切っていればストックの並びでその次に残っている種類を選ぶ。
+ * 手持ちを置き切っていれば何も選ばない。
+ */
+function selectRemainingStockPiece(
+  problem: ReflectionProblem,
+  board: ReflectionBoard,
+  preferred: ReflectionPiece | null,
 ): ReflectionSelection | null {
-  const remaining = getReflectionSessionStock({
-    ...session,
-    puzzleState: board,
-  })[piece];
-  return remaining > 0 ? { type: "stock", piece } : null;
+  const stock = countRemainingPieces(problem, board);
+  const start = preferred === null ? 0 : reflectionPieces.indexOf(preferred);
+  for (let offset = 0; offset < reflectionPieces.length; offset += 1) {
+    const piece =
+      reflectionPieces[(start + offset) % reflectionPieces.length] ?? null;
+    if (piece !== null && stock[piece] > 0) {
+      return { type: "stock", piece };
+    }
+  }
+  return null;
 }
 
 export function tapReflectionSessionStock(
@@ -164,21 +181,27 @@ export function tapReflectionSessionStock(
     ) {
       return session;
     }
+    const nextBoard = withCell(
+      session.puzzleState,
+      selection.cellIndex,
+      selectedCell === piece ? null : piece,
+    );
     return applyBoardChange(
       session,
-      withCell(
-        session.puzzleState,
-        selection.cellIndex,
-        selectedCell === piece ? null : piece,
+      nextBoard,
+      selectRemainingStockPiece(
+        session.problem,
+        nextBoard,
+        selectedCell ?? piece,
       ),
-      null,
       true,
       operatedAt,
     );
   }
 
+  // 選んでいる種類を押し直しても選んだままにする。何も選んでいない状態に戻すと、空きマスを押しても何も起きなくなる。
   if (selection?.type === "stock" && selection.piece === piece) {
-    return changeSelection(session, null);
+    return session;
   }
   if (getReflectionSessionStock(session)[piece] <= 0) return session;
 
@@ -206,7 +229,7 @@ export function tapReflectionSessionCell(
     return applyBoardChange(
       session,
       nextBoard,
-      selectionAfterPlacing(session, nextBoard, selection.piece),
+      selectRemainingStockPiece(session.problem, nextBoard, selection.piece),
       false,
       operatedAt,
     );
@@ -214,7 +237,14 @@ export function tapReflectionSessionCell(
 
   if (selection?.type === "cell") {
     if (selection.cellIndex === cellIndex) {
-      return changeSelection(session, null);
+      return changeSelection(
+        session,
+        selectRemainingStockPiece(
+          session.problem,
+          board,
+          board.cells[cellIndex] ?? null,
+        ),
+      );
     }
 
     const selectedCell = board.cells[selection.cellIndex] ?? null;
@@ -228,9 +258,16 @@ export function tapReflectionSessionCell(
       selection.cellIndex,
       tappedCell,
     );
-    return applyBoardChange(session, nextBoard, null, true, operatedAt);
+    return applyBoardChange(
+      session,
+      nextBoard,
+      selectRemainingStockPiece(session.problem, nextBoard, selectedCell),
+      true,
+      operatedAt,
+    );
   }
 
+  // 手持ちを置き切ると何も選んでいない。空きマスには置く物が無い。
   if (tappedCell === null) return session;
   return changeSelection(session, { type: "cell", cellIndex });
 }
@@ -246,21 +283,34 @@ export function removeReflectionSessionPiece(
   if (cell === undefined || cell === null) return session;
 
   const { selection } = session;
+  const nextBoard = withCell(session.puzzleState, cellIndex, null);
   return applyBoardChange(
     session,
-    withCell(session.puzzleState, cellIndex, null),
-    selection?.type === "cell" ? null : selection,
+    nextBoard,
+    selection?.type === "stock"
+      ? selection
+      : selectRemainingStockPiece(session.problem, nextBoard, cell),
     true,
     operatedAt,
   );
 }
 
+/** 盤面のピースの選択を解き、次に置く種類の選択へ戻す。ストックの種類を選んでいるときは、選んだままにする。 */
 export function clearReflectionSessionSelection(
   session: ReflectionSession,
 ): ReflectionSession {
   if (session.status !== "playing") return session;
+  if (session.selection?.type !== "cell") return session;
 
-  return changeSelection(session, null);
+  const { cellIndex } = session.selection;
+  return changeSelection(
+    session,
+    selectRemainingStockPiece(
+      session.problem,
+      session.puzzleState,
+      session.puzzleState.cells[cellIndex] ?? null,
+    ),
+  );
 }
 
 export function tapReflectionSessionClue(
@@ -285,10 +335,15 @@ export function restartReflectionSession(
 ): ReflectionSession {
   if (!canRestartReflectionSession(session)) return session;
 
+  const emptyBoard = createEmptyReflectionBoard(session.problem.size);
   return {
     ...session,
-    puzzleState: createEmptyReflectionBoard(session.problem.size),
-    selection: null,
+    puzzleState: emptyBoard,
+    selection: selectRemainingStockPiece(
+      session.problem,
+      emptyBoard,
+      session.selection?.type === "stock" ? session.selection.piece : null,
+    ),
     laserEntry: null,
     restartCount: session.restartCount + 1,
   };

@@ -676,14 +676,18 @@ describe("reflectionTutorial の進行", () => {
     ]);
   });
 
-  test("置いて次の手順へ進むと、置いた手の結果の光ではなく、次の手順の選ぶ種類と決め手だけを覆いから抜くこと", () => {
+  test("置いて次の手順へ進むと、置いた種類を使い切ったので次の手順の種類が選ばれ、置いた手の結果の光ではなく、次の手順の置くマスと決め手だけを覆いから抜くこと", () => {
     const result = listReflectionTutorialSpotlitTargets(
       getTutorialSituation(reflectionTutorial, placed),
       placed.boardState,
     );
 
+    expect(placed.boardState.session.selection).toEqual({
+      type: "stock",
+      piece: "slash",
+    });
     expect(result).toEqual([
-      { type: "stock", piece: "slash" },
+      { type: "cell", cellIndex: cellAt(4, 5) },
       { type: "clue", entry: { side: "bottom", index: 4 } },
       { type: "clue", entry: { side: "right", index: 3 } },
     ]);
@@ -836,10 +840,32 @@ describe("findReflectionTutorialHint", () => {
   ])[];
   const goal = reflectionTutorial.goal();
 
-  test("手を離した直後は、次に置く種類を示すこと", () => {
+  test("手を離した直後は、選ばれている次の種類を置くマスを示すこと", () => {
     const result = findReflectionTutorialHint(released.boardState);
 
-    expect(result).toEqual({ type: "stock", piece: freePlacements[0]?.piece });
+    expect(released.boardState.session.selection).toEqual({
+      type: "stock",
+      piece: freePlacements[0]?.piece,
+    });
+    expect(result).toEqual({
+      type: "cell",
+      cellIndex: freePlacements[0]?.cellIndex,
+    });
+  });
+
+  test("選んでいる種類の正解のマスが別のピースでふさがれていれば、選び直させずにふさいだピースを示すこと", () => {
+    const occupied = performAll(released, [
+      { type: "stock", piece: "vertical-double" },
+      { type: "cell", cellIndex: cellAt(3, 1) },
+    ]);
+
+    const result = findReflectionTutorialHint(occupied.boardState);
+
+    expect(occupied.boardState.session.selection).toEqual({
+      type: "stock",
+      piece: "backslash",
+    });
+    expect(result).toEqual({ type: "cell", cellIndex: cellAt(3, 1) });
   });
 
   describe("解と違う所に置いたピースがある場合", () => {
@@ -852,10 +878,14 @@ describe("findReflectionTutorialHint", () => {
       { type: "cell", cellIndex: cellAt(5, 1) },
     ]);
 
-    test("ストックに残るピースを空いている正解のマスへ置ける間は、違うことを明かさず、置く種類を示すこと", () => {
+    test("ストックに残るピースを空いている正解のマスへ置ける間は、違うことを明かさず、選ばれている次の種類を置くマスを示すこと", () => {
       const result = findReflectionTutorialHint(strayed.boardState);
 
-      expect(result).toEqual({ type: "stock", piece: "vertical-double" });
+      expect(strayed.boardState.session.selection).toEqual({
+        type: "stock",
+        piece: "vertical-double",
+      });
+      expect(result).toEqual({ type: "cell", cellIndex: cellAt(5, 1) });
     });
 
     test("そう置ける手が無くなったら、違う所に置いたピースを示すこと", () => {

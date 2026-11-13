@@ -84,11 +84,11 @@ describe("useReflectionPlay", () => {
         expect(result.current.operation?.id).not.toBe(placed?.id);
       });
 
-      test("選択を解く・盤面のピースを選ぶ操作は知らせないこと", () => {
-        act(() => result.current.clearSelection());
+      test("盤面のピースを選ぶ・その選択を解く操作は知らせないこと", () => {
+        act(() => result.current.selectCell(placedCellIndex));
         expect(result.current.operation).toBeNull();
 
-        act(() => result.current.selectCell(placedCellIndex));
+        act(() => result.current.clearSelection());
         expect(result.current.operation).toBeNull();
       });
 

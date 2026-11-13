@@ -12,7 +12,10 @@ import {
 import { ReflectionCueLayer } from "@/games/reflection/ui/board/ReflectionCueLayer";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
-import { reflectionPieceBarClassNames } from "@/games/reflection/ui/reflection-tone";
+import {
+  reflectionPieceReturnTargetClassNames,
+  reflectionPieceSelectionSurfaceClassNames,
+} from "@/games/reflection/ui/reflection-tone";
 import { cn } from "@/lib/utils";
 
 type ReflectionStockProps = {
@@ -78,20 +81,35 @@ export function ReflectionStock({
               cues={filterReflectionCues(cues, { type: "stock", piece })}
               place="stock"
             />
-            {selected || piece === returnTargetPiece ? (
+            {selected ? (
               <span
                 aria-hidden="true"
-                data-selection-mark={selected ? "" : undefined}
-                data-return-target={selected ? undefined : ""}
+                data-selection-mark=""
                 className={cn(
-                  "pointer-events-none absolute inset-x-[25%] bottom-0 h-[3px]",
-                  reflectionPieceBarClassNames[piece],
-                  !selected && "opacity-35",
+                  "pointer-events-none absolute inset-0.5 rounded-md ring-2 ring-inset",
+                  reflectionPieceSelectionSurfaceClassNames[piece],
+                )}
+              />
+            ) : piece === returnTargetPiece ? (
+              <span
+                aria-hidden="true"
+                data-return-target=""
+                className={cn(
+                  "pointer-events-none absolute inset-0.5 rounded-md border-2 border-dashed",
+                  reflectionPieceReturnTargetClassNames[piece],
                 )}
               />
             ) : null}
-            <ReflectionPieceIcon piece={piece} size="stock" />
-            <span className="absolute right-1 bottom-0.5 font-mono text-[0.6875rem] leading-none font-semibold tabular-nums text-muted-foreground">
+            {/* 選んだ種類は面で囲むのに合わせてピースを少し大きくし、押した瞬間に受け付けたと分かるようにする。 */}
+            <span
+              className={cn(
+                "relative flex transition-transform duration-(--duration-fast) ease-(--ease-enter) motion-reduce:transition-none",
+                selected && "scale-[1.18]",
+              )}
+            >
+              <ReflectionPieceIcon piece={piece} size="stock" />
+            </span>
+            <span className="absolute right-1 bottom-0.5 z-1 font-mono text-[0.6875rem] leading-none font-semibold tabular-nums text-muted-foreground">
               {remaining}
             </span>
           </button>

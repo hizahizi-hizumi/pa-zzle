@@ -341,6 +341,7 @@ function getReflectionTutorialGoal(): ReflectionTutorialBoardState {
     session: {
       ...session,
       puzzleState: solution,
+      selection: null,
       status: "cleared",
       clearedAt: 0,
     },
@@ -500,9 +501,10 @@ function findUnselectedHintTarget(
 }
 
 /**
- * - ストックの種類を選んでいる: その種類の正解のマスが空いていればそこを、ふさがれていれば選んだ種類を押して選ぶのをやめさせる。
+ * - ストックの種類を選んでいる: その種類の正解のマスが空いていればそこを示す。ふさがれていれば、何も選んでいないときと同じく、
+ *   ストックの別の種類か、示すピースを選ばせる（ストックの種類は押し直しても選んだままなので、選び替えさせる）。
  * - 盤面のピースを選んでいる: 示すピースがそれなら、その正解のマスを示す。そうでなければ、押して選ぶのをやめさせる。
- * - 何も選んでいない: ストックの種類か、示すピースを選ばせる。
+ * - 何も選んでいない（手持ちを置き切った）: 示すピースを選ばせる。
  */
 export function findReflectionTutorialHint(
   state: ReflectionTutorialBoardState,
@@ -513,9 +515,9 @@ export function findReflectionTutorialHint(
     const placement = placements.find(
       (candidate) => candidate.piece === selection.piece,
     );
-    return placement && board.cells[placement.cellIndex] === null
-      ? { type: "cell", cellIndex: placement.cellIndex }
-      : { type: "stock", piece: selection.piece };
+    if (placement && board.cells[placement.cellIndex] === null) {
+      return { type: "cell", cellIndex: placement.cellIndex };
+    }
   }
   const unselected = findUnselectedHintTarget({ ...session, selection: null });
   if (selection?.type !== "cell") {
