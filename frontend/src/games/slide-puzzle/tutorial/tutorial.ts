@@ -21,40 +21,27 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-/**
- * - `slide`: 空白の隣のタイルは、空白にスライドする。
- * - `line`: 空白と同じ行・列のタイルは、離れていても間のタイルとまとめてスライドする。同じ行・列にないタイルはスライドしない。
- */
 export type SlidePuzzleTutorialRuleId = "slide" | "line";
 
-/** 盤面と同じく、タイルのあるマスをタップする。 */
 export type SlidePuzzleTutorialAction = { cellIndex: number };
 
-/**
- * - `tile`: 印を付け、手順の間だけタップを受け付けるタイル。スライドさせると次の手順へ進む。
- *   どの手順のタイルも、スライドさせると動いたタイルがすべて自分の場所に収まる。
- */
 export type SlidePuzzleTutorialStep =
   TutorialStep<SlidePuzzleTutorialRuleId> & {
     tile: SlidePuzzleTile;
   };
 
-/**
- * 直前の手。盤面の上の合図に使う。
- * - `slid`: スライドした。`landedTiles` は、この手で自分の場所に収まったタイル。
- * - `rejected`: 同じ行・列のルールを示した後に、空白と同じ行・列にないタイルをタップし、スライドしなかった。
- */
 export type SlidePuzzleTutorialMove =
   | {
       type: "slid";
       slide: SlidePuzzleSlide;
+      /** この手で自分の場所に収まったタイル。 */
       landedTiles: readonly SlidePuzzleTile[];
     }
   | { type: "rejected"; tile: SlidePuzzleTile; cellIndex: number };
 
-/** `moveCount`: 盤面に反応した手の数。同じタイルへの合図をやり直す目印に使う。 */
 export type SlidePuzzleTutorialBoardState = {
   board: SlidePuzzleBoard;
+  /** 盤面に反応した手の数。同じタイルへの合図をやり直す目印に使う。 */
   moveCount: number;
   lastMove: SlidePuzzleTutorialMove | null;
 };
@@ -109,7 +96,6 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
 ];
 
-/** 空白を自分の場所とするタイル。空白が右下にあるときは無い。 */
 function getTileForBlank(board: SlidePuzzleBoard): SlidePuzzleTile | null {
   const blankIndex = findSlidePuzzleBlankIndex(board);
   return blankIndex === board.length - 1 ? null : blankIndex + 1;
@@ -281,17 +267,12 @@ function describeSlidePuzzleTutorialViolation(
   };
 }
 
-/** 手順で印を付けるタイル。手を離した後は `null`。 */
 export function getSlidePuzzleTutorialStepTile({
   step,
 }: SlidePuzzleTutorialSituation): SlidePuzzleTile | null {
   return step?.tile ?? null;
 }
 
-/**
- * 手順で印を付けるタイルをタップしたときに、一緒にスライドするタイル。印のタイルは含めない。
- * 空白の隣なら空。手を離した後も空。
- */
 export function getSlidePuzzleTutorialStepCarriedTiles(
   situation: SlidePuzzleTutorialSituation,
   state: SlidePuzzleTutorialBoardState,
@@ -307,7 +288,6 @@ export function getSlidePuzzleTutorialStepCarriedTiles(
   });
 }
 
-/** 手を離した後、手が止まったときに示す、最短で完成させるために次にスライドさせるタイル。完成していれば `null`。 */
 export function findSlidePuzzleTutorialHintTile(
   state: SlidePuzzleTutorialBoardState,
 ): SlidePuzzleTile | null {
@@ -315,7 +295,6 @@ export function findSlidePuzzleTutorialHintTile(
   return cellIndex === null ? null : (state.board[cellIndex] ?? null);
 }
 
-/** 導入で、ゴールの盤面から始めの盤面へ崩していく途中の盤面。ゴールから始まり、始めの盤面で終わる。 */
 export const slidePuzzleTutorialScrambleBoards: readonly SlidePuzzleBoard[] = [
   ...listBoardsByReading(startBoard),
 ].reverse();

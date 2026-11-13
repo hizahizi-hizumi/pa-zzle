@@ -9,7 +9,6 @@ import {
 } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleTileFace } from "@/games/slide-puzzle/ui/board/SlidePuzzleTileFace";
 
-/** 盤面と同じく、一辺のマス数で縦横を等分する。 */
 const gridClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
   3: "grid-cols-3 grid-rows-3",
   4: "grid-cols-4 grid-rows-4",
@@ -18,11 +17,9 @@ const gridClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
 
 type HowToPlayFigureProps = {
   board: SlidePuzzleBoard;
-  /** タップするタイルの番号。指の印を添える。 */
   pressedTile?: SlidePuzzleTile;
 };
 
-/** 盤面と同じタイルの見た目で描く、遊び方の小さな図。 */
 export function HowToPlayFigure({ board, pressedTile }: HowToPlayFigureProps) {
   const boardSize = getSlidePuzzleBoardSize(board);
 

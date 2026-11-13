@@ -51,7 +51,6 @@ function slideTile(board: SlidePuzzleBoard, tile: SlidePuzzleTile) {
   return slide ? applySlidePuzzleSlide(board, slide) : null;
 }
 
-/** 盤面を、手順のタイルを順にスライドさせて進める。 */
 function playSteps(count: number): SlidePuzzleBoard {
   return steps
     .slice(0, count)
@@ -79,7 +78,6 @@ function countShortestPaths(board: SlidePuzzleBoard): number {
 /** 盤面は `toBoardKey` の形で持つ。 */
 type ReachableBoards = {
   keys: ReadonlySet<string>;
-  /** 盤面ごとの、1手でその盤面へ移ってくる元の盤面。 */
   previousKeysByKey: ReadonlyMap<string, readonly string[]>;
 };
 
@@ -87,10 +85,6 @@ function toBoardKey(board: SlidePuzzleBoard): string {
   return board.join(",");
 }
 
-/**
- * 手を離した後のチュートリアルが受け付ける手（どのマスのタップも含む）で、`start` から届く盤面すべて。
- * 完成した盤面では解き終えるので、その先へは進めない。
- */
 function exploreReachableBoards(start: SlidePuzzleBoard): ReachableBoards {
   const situation: TutorialSituation<
     SlidePuzzleTutorialRuleId,
@@ -102,6 +96,7 @@ function exploreReachableBoards(start: SlidePuzzleBoard): ReachableBoards {
   for (let index = 0; index < queue.length; index += 1) {
     const board = queue[index] ?? [];
     const key = toBoardKey(board);
+    // 完成した盤面では解き終えるので、その先へは進めない。
     if (isSlidePuzzleSolved(board)) {
       continue;
     }
@@ -127,7 +122,6 @@ function exploreReachableBoards(start: SlidePuzzleBoard): ReachableBoards {
   return { keys, previousKeysByKey };
 }
 
-/** 届いた盤面のうち、完成した盤面へたどり着ける盤面。完成した盤面から、移ってくる元を逆にたどる。 */
 function listBoardsReachingGoal({
   previousKeysByKey,
 }: ReachableBoards): ReadonlySet<string> {
@@ -438,7 +432,6 @@ describe("getSlidePuzzleTutorialStepTile", () => {
 
 describe("findSlidePuzzleTutorialHintTile", () => {
   const releasedBoard = playSteps(steps.length);
-  // 空白を左上から右へ1つ動かし、1 を遠ざけた盤面。
   const detouredBoard = slideTile(releasedBoard, 1) ?? releasedBoard;
   const strayedBoard = slideTile(detouredBoard, 5) ?? detouredBoard;
 

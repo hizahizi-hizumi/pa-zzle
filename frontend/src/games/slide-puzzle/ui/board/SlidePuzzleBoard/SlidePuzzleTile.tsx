@@ -11,14 +11,12 @@ import {
 import { SlidePuzzleTileFace } from "@/games/slide-puzzle/ui/board/SlidePuzzleTileFace";
 import type { SlidePuzzleTileCue } from "@/games/slide-puzzle/ui/board/tile-cue";
 
-/** 盤面の幅を一辺のマス数で等分する。 */
 export const tileSizeClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
   3: "size-1/3",
   4: "size-1/4",
   5: "size-1/5",
 };
 
-/** タイルの面の位置と角丸。印と応えはこの形で囲み、手を引く間はこの形のまま覆いから抜く。 */
 export const tileFaceShapeClassName = "inset-[1cqw] rounded-[1.6cqw]";
 
 const cuePlacementClassName = `pointer-events-none absolute ${tileFaceShapeClassName}`;
@@ -29,7 +27,6 @@ type SlidePuzzleTileProps = {
   boardSize: SlidePuzzleBoardSize;
   disabled: boolean;
   cue: SlidePuzzleTileCue | undefined;
-  /** チュートリアルで手を引いている間、画面全体の覆いからこのタイルを抜き、元の明るさで見せる。 */
   spotlit: boolean;
   slideAnimated: boolean;
   faceRef: Ref<HTMLSpanElement>;

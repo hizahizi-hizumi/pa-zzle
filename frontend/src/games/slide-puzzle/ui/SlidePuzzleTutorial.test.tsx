@@ -17,16 +17,13 @@ vi.mock("@/lib/sound-effects", async (importOriginal) => ({
   playLayeredSound: vi.fn(),
 }));
 
-/** 手順ごとに印を付けるタイル。 */
 const stepTiles = [5, 8, 4] as const;
 
 /** 手順を終えた後、行と列をまとめてスライドさせて完成させるタイル。 */
 const remainingTiles = [2, 6] as const;
 
-/** 手順どおりにスライドさせてから、次の印を付けるまでの間。 */
 const nextStepCueDelayMs = 450;
 
-/** 手を離した後、手が止まってから次のタイルを示すまでの間。 */
 const idleHintDelayMs = 4000;
 
 /** 導入の場面の動きを見せ終えるのに十分な間。 */
@@ -67,7 +64,7 @@ function advanceTime(ms: number): void {
   });
 }
 
-/** 導入の「次へ」を押す。導入は自動では先へ進まない。 */
+/** 導入は自動では先へ進まない。 */
 function pressNext(): void {
   fireEvent.click(screen.getByRole("button", { name: "次へ" }));
 }
@@ -120,14 +117,12 @@ function pressNextThroughIntro(): void {
   }
 }
 
-/** 鳴らした効果音の音声ファイル名。 */
 function getPlayedSoundNames(): string[] {
   return vi
     .mocked(playSound)
     .mock.calls.map(([sound]) => sound.url.split("/").at(-1) ?? "");
 }
 
-/** 盤面の上の、行・列（1始まり）。 */
 function getTilePosition(tile: number): string {
   const match = /translate\((\d+)%, (\d+)%\)/.exec(
     getTile(tile).style.transform,
@@ -137,7 +132,6 @@ function getTilePosition(tile: number): string {
     : "";
 }
 
-/** 印の線を短く濃くしている合図。 */
 const recallSelector = '[data-tutorial-cue="recall"]';
 
 function getCuedTiles(kind: "hint" | "landed" | "recall"): string[] {
@@ -149,7 +143,6 @@ function getCuedTiles(kind: "hint" | "landed" | "recall"): string[] {
     .map((tile) => tile.textContent ?? "");
 }
 
-/** 画面全体の覆いから抜いて、元の明るさで見せているタイル。 */
 function getSpotlitTiles(): string[] {
   return within(getBoard())
     .getAllByRole("button")

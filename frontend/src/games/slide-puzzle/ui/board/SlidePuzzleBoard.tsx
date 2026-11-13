@@ -29,10 +29,7 @@ type SlidePuzzleBoardProps = {
   clearing: boolean;
   /** タイルに重ねる合図。1枚に1つまで。 */
   cues?: readonly SlidePuzzleTileCue[];
-  /**
-   * チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せるタイル。`null` なら抜かない。通常のプレイでは渡さない。
-   * 抜くときは、タイルが収まる空白も決め手として抜く。
-   */
+  /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せるタイル。通常のプレイでは渡さない。 */
   spotlitTiles?: readonly SlidePuzzleTileNumber[] | null;
   onSlideTile: (tileIndex: number) => void;
   onClearAnimationComplete: () => void;
@@ -140,7 +137,6 @@ export function SlidePuzzleBoard({
   );
 }
 
-/** 1 から順にタイルを小さく持ち上げ、数字が並んだことを確かめる波を送る。 */
 function animateClearWave(
   elements: readonly (HTMLElement | undefined)[],
 ): Animation[] {
