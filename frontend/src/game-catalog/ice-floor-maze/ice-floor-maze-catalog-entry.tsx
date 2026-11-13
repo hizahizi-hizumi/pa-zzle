@@ -4,9 +4,15 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import { RecordedIceFloorMazeResult } from "@/game-catalog/ice-floor-maze/RecordedIceFloorMazeResult";
+import {
+  formatRange,
+  mergeRanges,
+  summarizeLevels,
+} from "@/game-catalog/level-summary";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/ice-floor-maze/assets/pictogram.svg?raw";
 import pictogramShowcaseSvg from "@/games/ice-floor-maze/assets/pictogram-showcase.svg?raw";
+import { iceFloorMazeLevelCriteria } from "@/games/ice-floor-maze/difficulty";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
 import {
   iceFloorMazePlayRecordDefinition,
@@ -33,14 +39,21 @@ export const iceFloorMazeCatalogEntry = {
   homePath: "/puzzles/ice-floor-maze",
   playPath: "/puzzles/ice-floor-maze/play/:difficulty",
   playRecordDisplay: iceFloorMazePlayRecordDisplay,
-  // 難易度の定義に遊ぶ人が一目で分かる数が無いので、問題集の中身を短く言い表す。
-  levelSummaries: {
-    "1": "7〜10手",
-    "2": "10〜16手",
-    "3": "地形2〜3",
-    "4": "地形3〜6",
-    "5": "地形4〜8",
-  },
+  levelSummaries: summarizeLevels((difficulty) => {
+    const criteria = iceFloorMazeLevelCriteria[difficulty];
+    return criteria.kind === "tactics"
+      ? formatRange(
+          mergeRanges(
+            criteria.patterns.map(({ optimalMoveCount }) => optimalMoveCount),
+          ),
+          "手",
+        )
+      : `地形${formatRange(
+          mergeRanges(
+            criteria.patterns.map(({ elementCount }) => elementCount),
+          ),
+        )}`;
+  }),
   recordProblemPlayTarget(record) {
     return isIceFloorMazePlayRecord(record)
       ? resolveRecordProblemPlayTarget(

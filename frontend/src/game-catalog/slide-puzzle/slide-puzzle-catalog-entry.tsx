@@ -3,7 +3,10 @@ import {
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
-import { summarizeLevels } from "@/game-catalog/level-summary";
+import {
+  formatRange,
+  summarizeLevelsDistinctly,
+} from "@/game-catalog/level-summary";
 import { RecordedSlidePuzzleResult } from "@/game-catalog/slide-puzzle/RecordedSlidePuzzleResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
@@ -35,10 +38,14 @@ export const slidePuzzleCatalogEntry = {
   homePath: "/puzzles/slide-puzzle",
   playPath: "/puzzles/slide-puzzle/play/:difficulty",
   playRecordDisplay: slidePuzzlePlayRecordDisplay,
-  levelSummaries: summarizeLevels((difficulty) => {
-    const { boardSize } = slidePuzzleDifficultyCriteria[difficulty];
-    return `${boardSize}×${boardSize}`;
-  }),
+  levelSummaries: summarizeLevelsDistinctly(
+    (difficulty) => {
+      const { boardSize } = slidePuzzleDifficultyCriteria[difficulty];
+      return `${boardSize}×${boardSize}`;
+    },
+    (difficulty) =>
+      `遠回り${formatRange(slidePuzzleDifficultyCriteria[difficulty].detourMoveCount)}`,
+  ),
   recordProblemPlayTarget(record) {
     return isSlidePuzzlePlayRecord(record)
       ? resolveRecordProblemPlayTarget(

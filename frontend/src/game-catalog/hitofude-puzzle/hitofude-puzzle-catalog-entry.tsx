@@ -5,8 +5,9 @@ import {
 } from "@/game-catalog/game-catalog-entry";
 import { RecordedHitofudePuzzleResult } from "@/game-catalog/hitofude-puzzle/RecordedHitofudePuzzleResult";
 import {
+  formatRange,
   formatSquareBoardRange,
-  summarizeLevels,
+  summarizeLevelsDistinctly,
 } from "@/game-catalog/level-summary";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/hitofude-puzzle/assets/pictogram.svg?raw";
@@ -38,10 +39,13 @@ export const hitofudePuzzleCatalogEntry = {
   homePath: "/puzzles/hitofude-puzzle",
   playPath: "/puzzles/hitofude-puzzle/play/:difficulty",
   playRecordDisplay: hitofudePuzzlePlayRecordDisplay,
-  levelSummaries: summarizeLevels((difficulty) =>
-    formatSquareBoardRange(
-      hitofudePuzzleLevelCombinations[difficulty].boardSize,
-    ),
+  levelSummaries: summarizeLevelsDistinctly(
+    (difficulty) =>
+      formatSquareBoardRange(
+        hitofudePuzzleLevelCombinations[difficulty].boardSize,
+      ),
+    (difficulty) =>
+      `先読み${formatRange(hitofudePuzzleLevelCombinations[difficulty].lookaheadLoad)}`,
   ),
   recordProblemPlayTarget(record) {
     return isHitofudePuzzlePlayRecord(record)

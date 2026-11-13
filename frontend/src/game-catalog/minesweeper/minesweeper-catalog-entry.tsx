@@ -3,10 +3,16 @@ import {
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
+import {
+  formatRange,
+  summarizeLevels,
+  toNumericRange,
+} from "@/game-catalog/level-summary";
 import { RecordedMinesweeperResult } from "@/game-catalog/minesweeper/RecordedMinesweeperResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
 import pictogramShowcaseSvg from "@/games/minesweeper/assets/pictogram-showcase.svg?raw";
+import { listMinesweeperDifficultyBoardConditions } from "@/games/minesweeper/difficulty";
 import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import {
   isMinesweeperPlayRecord,
@@ -33,14 +39,16 @@ export const minesweeperCatalogEntry = {
   homePath: "/puzzles/minesweeper",
   playPath: "/puzzles/minesweeper/play/:difficulty",
   playRecordDisplay: minesweeperPlayRecordDisplay,
-  // 難易度の定義に遊ぶ人が一目で分かる数が無いので、問題集の中身を短く言い表す。
-  levelSummaries: {
-    "1": "9〜13個",
-    "2": "11〜18個",
-    "3": "15〜23個",
-    "4": "20〜34個",
-    "5": "26〜38個",
-  },
+  levelSummaries: summarizeLevels(
+    (difficulty) =>
+      `地雷${formatRange(
+        toNumericRange(
+          listMinesweeperDifficultyBoardConditions(difficulty).map(
+            ({ mineCount }) => mineCount,
+          ),
+        ),
+      )}`,
+  ),
   recordProblemPlayTarget(record) {
     return isMinesweeperPlayRecord(record)
       ? resolveRecordProblemPlayTarget(

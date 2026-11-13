@@ -3,10 +3,15 @@ import {
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
+import {
+  formatRange,
+  summarizeLevelsDistinctly,
+} from "@/game-catalog/level-summary";
 import { RecordedTsumeShogiResult } from "@/game-catalog/tsume-shogi/RecordedTsumeShogiResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/tsume-shogi/assets/pictogram.svg?raw";
 import pictogramShowcaseSvg from "@/games/tsume-shogi/assets/pictogram-showcase.svg?raw";
+import { tsumeShogiLevelCombinations } from "@/games/tsume-shogi/difficulty";
 import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 import {
   isTsumeShogiPlayRecord,
@@ -16,6 +21,8 @@ import {
 import {
   findTsumeShogiPoolProblemFeatures,
   listTsumeShogiPoolProblemIds,
+  listTsumeShogiPoolSeeds,
+  parseTsumeShogiPoolSeed,
   tsumeShogiProblemFeatureAxes,
 } from "@/games/tsume-shogi/problem/problem-pool";
 import { canSelectTsumeShogiProblemById } from "@/games/tsume-shogi/problem-selection";
@@ -33,14 +40,25 @@ export const tsumeShogiCatalogEntry = {
   homePath: "/puzzles/tsume-shogi",
   playPath: "/puzzles/tsume-shogi/play/:difficulty",
   playRecordDisplay: tsumeShogiPlayRecordDisplay,
-  // 難易度の定義に遊ぶ人が一目で分かる数が無いので、問題集の中身を短く言い表す。
-  levelSummaries: {
-    "1": "3手詰",
-    "2": "3・5手詰",
-    "3": "5手詰",
-    "4": "5手詰",
-    "5": "5手詰",
-  },
+  levelSummaries: summarizeLevelsDistinctly(
+    (difficulty) =>
+      `${[
+        ...new Set(
+          listTsumeShogiPoolSeeds(difficulty).map(
+            (seed) => parseTsumeShogiPoolSeed(seed).conditions.plies,
+          ),
+        ),
+      ]
+        .sort((left, right) => left - right)
+        .join("・")}手詰`,
+    (difficulty) => {
+      const { plausibleWrong, deepDecoyCount } =
+        tsumeShogiLevelCombinations[difficulty];
+      return deepDecoyCount.maximum === 0
+        ? `誤王手${formatRange(plausibleWrong)}`
+        : `紛れ${formatRange(deepDecoyCount)}`;
+    },
+  ),
   recordProblemPlayTarget(record) {
     return isTsumeShogiPlayRecord(record)
       ? resolveRecordProblemPlayTarget(

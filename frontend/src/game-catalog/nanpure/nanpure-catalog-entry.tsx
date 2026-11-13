@@ -33,7 +33,7 @@ export const nanpureCatalogEntry = {
   homePath: "/puzzles/nanpure",
   playPath: "/puzzles/nanpure/play/:difficulty",
   playRecordDisplay: nanpurePlayRecordDisplay,
-  // 難易度の定義に遊ぶ人が一目で分かる数が無いので、問題集の中身を短く言い表す。
+  // 難易度の定義に、レベルの違いを表す数が無いので、違いを文言で書く。
   levelSummaries: {
     "1": "入門",
     "2": "単独候補",

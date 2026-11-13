@@ -53,6 +53,17 @@ describe("gameCatalog", () => {
   });
 
   test.each(gameCatalog.map((game) => [game.id, game] as const))(
+    "%s のレベルの一言が、レベルごとに違うこと",
+    (_, game) => {
+      const summaries = difficultyLevels.map(
+        ({ id }) => game.levelSummaries[id],
+      );
+
+      expect(new Set(summaries).size).toBe(summaries.length);
+    },
+  );
+
+  test.each(gameCatalog.map((game) => [game.id, game] as const))(
     "%s が、全難易度の問題集の問題IDを重複なく返すこと",
     (_, game) => {
       const problemIds = difficultyLevels.flatMap(({ id }) =>
