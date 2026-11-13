@@ -1,6 +1,5 @@
 import { type RefObject, useEffect, useRef, useState } from "react";
 
-/** ゲームのホームの見出しのメニューから開く層。 */
 export type GameHomeLayer =
   | "howToPlay"
   | "tutorial"
@@ -8,7 +7,6 @@ export type GameHomeLayer =
   | "filter"
   | "performance";
 
-/** 見出しのメニューから開く層の開閉と、層を寄せて出すメニューのボタン。 */
 export type GameHomeLayerControl = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -17,9 +15,7 @@ export type GameHomeLayerControl = {
 };
 
 type GameHomeLayers = {
-  /** 開いている層。開いていなければ `null`。 */
   openLayer: GameHomeLayer | null;
-  /** 層を開いたメニューのボタン。層を閉じたらフォーカスを戻す。 */
   menuButtonRef: RefObject<HTMLButtonElement | null>;
   changeLayerOpen: (layer: GameHomeLayer, open: boolean) => void;
 };

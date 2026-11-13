@@ -9,7 +9,6 @@ import type {
 } from "@/zukan/zukan-last-viewed";
 
 /**
- * ゲームの ID ごとに、そのゲームの図鑑を前回見たときの `ZukanViewedStatuses` を持つ。
  * 挑戦中の問題を残す前の保存は解いた問題の評価段階だけを持ち、同じ形のまま挑戦中の問題が無いものとして読める。
  */
 const ZUKAN_LAST_VIEWED_STORAGE_KEY = "pa-zzle.zukan-last-viewed.v1";
@@ -20,7 +19,6 @@ function isZukanViewedStatus(value: unknown): value is ZukanViewedStatus {
   );
 }
 
-/** 読めない問題だけを飛ばし、ほかの問題の状態は残す。 */
 function parseViewedSection(
   value: unknown,
 ): Record<ProblemId, ZukanViewedStatus> | null {
@@ -36,7 +34,6 @@ function parseViewedSection(
   return section;
 }
 
-/** 読めない難易度だけを飛ばし、ほかの難易度の状態は残す。 */
 function parseViewedStatuses(value: unknown): ZukanViewedStatuses | null {
   if (!isRecordObject(value)) {
     return null;
@@ -73,10 +70,6 @@ function readStoredGame(
     : null;
 }
 
-/**
- * そのゲームの図鑑を前回見たときの状態を読む。
- * 一度も見ていないとき、保存を読めないとき、そのゲームの保存が壊れているときは `null` を返す。
- */
 export function readZukanLastViewed(
   gameId: string,
   storage: PlayRecordStorage | null = getDefaultStorage(),
@@ -84,10 +77,6 @@ export function readZukanLastViewed(
   return readStoredGame(storage ? readStoredGames(storage) : null, gameId);
 }
 
-/**
- * そのゲームの図鑑の難易度を今見た状態として保存する。`statuses` に無い難易度と、ほかのゲームの状態は保つ。
- * 保存できなくても図鑑を見るのを妨げないよう、失敗は無視する。
- */
 export function writeZukanLastViewed(
   gameId: string,
   statuses: ZukanViewedStatuses,
@@ -98,6 +87,7 @@ export function writeZukanLastViewed(
   }
   const games = readStoredGames(storage) ?? {};
   const game = { ...readStoredGame(games, gameId), ...statuses };
+  // 保存できなくても図鑑を見るのを妨げないよう、失敗は無視する。
   try {
     storage.setItem(
       ZUKAN_LAST_VIEWED_STORAGE_KEY,
