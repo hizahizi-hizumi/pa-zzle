@@ -54,7 +54,7 @@ import {
 
 type HitofudePuzzleTutorialProps = {
   open: boolean;
-  /** ゲームのホームから開いたときに渡す。終えたときに、ゲームのホームで開いているレベルを始める操作を出す。渡さなければプレイ中に開いたとして、閉じてプレイに戻る操作を出す。 */
+  /** ゲームのホームから開いたときに渡す。渡さなければプレイ中に開いたとみなす。 */
   playStart?: TutorialPlayStart;
   onClose: () => void;
 };
@@ -93,7 +93,7 @@ const VIOLATION_MESSAGE_DELAY_MS = 500;
 const { steps } = hitofudePuzzleTutorial;
 const goalPath = hitofudePuzzleTutorial.goal().path;
 
-/** 本番と同じ効果音を、本番のプレイの進行に当てはめて鳴らす。解けた盤面の演出の間が、本番の完成演出の間に当たる。 */
+/** 解けた盤面の演出の間が、本番の完成演出の間に当たる。 */
 const soundProgressByPhase = {
   intro: "playing",
   playing: "playing",
@@ -397,7 +397,6 @@ export function HitofudePuzzleTutorial({
     changeProgress(startTutorial(hitofudePuzzleTutorial));
   }
 
-  // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();

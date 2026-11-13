@@ -19,7 +19,7 @@ export type HitofudePuzzleBranchRefutationStage =
 export type HitofudePuzzleDrawingBranches = {
   /** 先端から進める手のうち、取り残し（`findHitofudePuzzleStranding`）がすぐには見えない手が2つ以上ある地点の数。 */
   branchCount: number;
-  /** そのうち、全マスを通れなくなる手を含む地点の数。一意解の問題では、解の道以外の手はすべてそう。 */
+  /** そのうち、全マスを通れなくなる手を含む地点（迷う分岐）の数。 */
   fatalBranchCount: number;
   /** 致命的な分岐を、そこで最も見抜きにくい誤った手を退けるのに要る段階で数えたもの。 */
   fatalBranchCountByStage: Readonly<

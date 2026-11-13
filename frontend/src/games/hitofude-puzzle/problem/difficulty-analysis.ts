@@ -238,7 +238,6 @@ export function analyzeHitofudePuzzleDifficulty(
   if (!Array.isArray(readings)) {
     return { status: "unsupported", reason: readings, scale };
   }
-  // 推論の特徴は最も上手に読めた向きの読み方から求め、「最も上手な読み順でも、少なくともこれだけ先読みが要る」を表す。
   const [best] = readings.toSorted((left, right) =>
     compareReasoning(left.reasoning, right.reasoning),
   ) as [OrientedReasoning];
