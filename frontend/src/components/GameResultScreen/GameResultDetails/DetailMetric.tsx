@@ -1,9 +1,11 @@
+import type { PlayOperation } from "@/games/play-vocabulary";
 import type { ScoreItem } from "@/games/score";
 
 export type GameResultDetailMetric = {
   label: string;
   value: string;
   scoreItem?: { item: ScoreItem; points: number; maximum: number };
+  operationCount?: { operation: PlayOperation; count: number };
 };
 
 type DetailMetricProps = GameResultDetailMetric;

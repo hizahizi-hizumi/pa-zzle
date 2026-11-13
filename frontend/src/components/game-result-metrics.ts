@@ -40,7 +40,10 @@ export function createOperationCountMetric(
   operation: PlayOperation,
   count: number,
 ): GameResultMetric & GameResultDetailMetric {
-  return createCountMetric(PLAY_OPERATION_LABELS[operation], count, "回");
+  return {
+    ...createCountMetric(PLAY_OPERATION_LABELS[operation], count, "回"),
+    operationCount: { operation, count },
+  };
 }
 
 export function createElapsedTimeMetric({

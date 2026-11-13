@@ -1,6 +1,7 @@
 import type { GameResultDetailMetric } from "@/components/GameResultScreen/GameResultDetails/DetailMetric";
 import type { GameResultMetric } from "@/components/GameResultScreen/ResultMetric";
 import { listGameResultFeats } from "@/components/game-result-feats";
+import type { PlayOperation } from "@/games/play-vocabulary";
 import type { ScoreItem } from "@/games/score";
 
 function scoreItem(
@@ -12,6 +13,17 @@ function scoreItem(
     label: item,
     value: `${points} / ${maximum}`,
     scoreItem: { item, points, maximum },
+  };
+}
+
+function operationCount(
+  operation: PlayOperation,
+  count: number,
+): GameResultDetailMetric {
+  return {
+    label: operation,
+    value: `${count}回`,
+    operationCount: { operation, count },
   };
 }
 
@@ -76,6 +88,69 @@ describe("listGameResultFeats", () => {
       const feats = listGameResultFeats({ metrics: [], scoreBreakdown });
 
       expect(feats).toEqual([]);
+    });
+  });
+
+  describe("安定性を採点せず、待ったも盤面を戻すも使わなかった場合", () => {
+    const scoreBreakdown = [
+      scoreItem("accuracy", 40, 40),
+      operationCount("undo", 0),
+      operationCount("restart", 0),
+    ];
+
+    test("ノーミスに続けて待ったなしの称号を出すこと", () => {
+      const feats = listGameResultFeats({ metrics: [], scoreBreakdown });
+
+      expect(feats).toEqual(["ノーミス！", "待ったなし！"]);
+    });
+  });
+
+  describe("安定性を採点せず、待ったを使った場合", () => {
+    const scoreBreakdown = [
+      operationCount("undo", 2),
+      operationCount("restart", 0),
+    ];
+
+    test("待ったなしの称号を出さないこと", () => {
+      const feats = listGameResultFeats({ metrics: [], scoreBreakdown });
+
+      expect(feats).toEqual([]);
+    });
+  });
+
+  describe("安定性を採点せず、盤面を戻した場合", () => {
+    const scoreBreakdown = [
+      operationCount("undo", 0),
+      operationCount("restart", 1),
+    ];
+
+    test("待ったなしの称号を出さないこと", () => {
+      const feats = listGameResultFeats({ metrics: [], scoreBreakdown });
+
+      expect(feats).toEqual([]);
+    });
+  });
+
+  describe("待ったの無いゲームの場合", () => {
+    const scoreBreakdown = [operationCount("restart", 0)];
+
+    test("待ったなしの称号を出さないこと", () => {
+      const feats = listGameResultFeats({ metrics: [], scoreBreakdown });
+
+      expect(feats).toEqual([]);
+    });
+  });
+
+  describe("安定性が満点で、待ったの数も0の場合", () => {
+    const scoreBreakdown = [
+      scoreItem("stability", 20, 20),
+      operationCount("undo", 0),
+    ];
+
+    test("待ったなしの称号を1つだけ出すこと", () => {
+      const feats = listGameResultFeats({ metrics: [], scoreBreakdown });
+
+      expect(feats).toEqual(["待ったなし！"]);
     });
   });
 });
