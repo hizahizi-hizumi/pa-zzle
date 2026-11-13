@@ -20,9 +20,7 @@ type HitofudePuzzleFigureProps = {
   board: HitofudePuzzleBoard;
   /** 始点から先端までに通ったマスの番号。 */
   path: readonly number[];
-  /** 全マスを通る前に、先端から延ばせるマスが無くなったか。 */
   isDeadEnd: boolean;
-  /** 道が全マスを通り終えたか。始点から終点へ道をなぞる光を描く。 */
   solved: boolean;
   /** 最後に道を延ばせなかった操作が進もうとしたマス。×の印を置き、阻まれたときだけ盤面の反応で点ける。 */
   blockedCell?: number | null;

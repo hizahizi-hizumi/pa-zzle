@@ -16,13 +16,8 @@ type HitofudePuzzleHowToPlayDialogProps = {
  * 6 7 8
  */
 const openBoard = parseHitofudePuzzleBoard(["S . .", ". . .", ". . ."]);
-/** 真ん中に穴が開き、右下の角が欠けた盤面。 */
 const holedBoard = parseHitofudePuzzleBoard(["S . .", ". # .", ". . #"]);
 
-/**
- * ルールと操作を、盤面と同じ見た目の小さな図と短い一文で示す。
- * 最初に、なぞって全マスを1回ずつ通ること、穴は通らないことを置き、戻す操作は1か所にまとめる。
- */
 export function HitofudePuzzleHowToPlayDialog({
   open,
   onClose,

@@ -39,10 +39,8 @@ const remainingCells = [9, 5, 4, 0] as const;
 /** 手順の最後のマスまで延ばしてから、次の印を付けるまでの間。 */
 const nextStepCueDelayMs = 700;
 
-/** 手を離した後、手が止まってから手がかりの印を付けるまでの間。 */
 const idleHintDelayMs = 4000;
 
-/** ルールに合わない道に、違反の一言で応えるまでの間。 */
 const violationMessageDelayMs = 500;
 
 /** 導入の場面の動きを見せ終えるのに十分な間。 */
@@ -111,7 +109,6 @@ function getCell(cell: number): HTMLElement {
   });
 }
 
-/** マスを押す。先端の隣なら道が延び、道のマスならそこまで戻る。 */
 function pressCells(cells: readonly number[]): void {
   for (const cell of cells) {
     fireEvent.click(getCell(cell));
@@ -146,7 +143,6 @@ function getCuedCells(kind: "hint" | "extended" | "recall"): number[] {
     .map(getCellNumber);
 }
 
-/** 画面全体の覆いから抜くマス。 */
 function getSpotlitCells(): number[] {
   return within(getBoard())
     .getAllByRole("button")
@@ -160,14 +156,12 @@ function getRuleTexts(): string[] {
     .map((item) => item.textContent ?? "");
 }
 
-/** 鳴らした効果音の音声ファイル名。 */
 function getPlayedSoundNames(): string[] {
   return vi
     .mocked(playSound)
     .mock.calls.map(([sound]) => sound.url.split("/").at(-1) ?? "");
 }
 
-/** 手順を `count` 個、印のマスを順に押して終える。手順のたびに次の印が出るまで待つ。 */
 function playSteps(count: number): void {
   for (const cells of stepCells.slice(0, count)) {
     pressCells(cells);

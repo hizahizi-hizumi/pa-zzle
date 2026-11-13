@@ -5,7 +5,6 @@ import { MOTION_EASING, playAnimations } from "@/lib/motion";
 const CLEAR_TRACE_MS_PER_CELL = 28;
 const CLEAR_TRACE_MIN_MS = 640;
 const CLEAR_TRACE_MAX_MS = 1_400;
-/** なぞる光が終点に着いたときに、終点の印を膨らませて置く時間。 */
 const END_MARK_POP_MS = 360;
 const endMarkPopKeyframes: Keyframe[] = [
   { transform: "scale(0)" },
@@ -29,7 +28,6 @@ const clearTraceKeyframes: Keyframe[] = [
   { strokeDashoffset: 0 },
 ];
 
-/** 道を始点から終点まで光でなぞる時間。なぞり終えたときに終点の印を置く。 */
 export function getClearTraceDurationMs(cellCount: number): number {
   return Math.min(
     CLEAR_TRACE_MAX_MS,

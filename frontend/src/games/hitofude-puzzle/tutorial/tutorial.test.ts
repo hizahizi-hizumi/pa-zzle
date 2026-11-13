@@ -40,7 +40,6 @@ const allRuleIds: readonly HitofudePuzzleTutorialRuleId[] = [
   "all",
 ];
 
-/** 始点から全マスを通る道をすべて挙げる。 */
 function listSolutions(): number[][] {
   const adjacency = createHitofudePuzzleAdjacency(board);
   const openCount = listHitofudePuzzleOpenCells(board).length;
@@ -60,7 +59,6 @@ function listSolutions(): number[][] {
   return solutions;
 }
 
-/** 先端から延ばす手の候補のうち、ゴールの手でないもの。来たマスへ戻る手は含めない。 */
 function listOtherCandidates(path: readonly number[], next: number): number[] {
   const head = path.at(-1) ?? board.start;
   return listHitofudePuzzleGridNeighbors(board.size, head).filter(
@@ -68,7 +66,6 @@ function listOtherCandidates(path: readonly number[], next: number): number[] {
   );
 }
 
-/** その手を、どのルールで除けるか。どのルールでも除けなければ `null`。 */
 function findExcludingRule(
   path: readonly number[],
   cell: number,
@@ -85,7 +82,6 @@ function findExcludingRule(
   return null;
 }
 
-/** ゴールの道の `index` 番目のマスへ延ばす手。`before` はその手の前の道。 */
 type SolutionMove = { before: readonly number[]; next: number };
 
 function listSolutionMoves(from: number, to: number): SolutionMove[] {
@@ -136,7 +132,6 @@ function perform(
 
 const playing = finishTutorialIntro(startTutorial(hitofudePuzzleTutorial));
 
-/** `count` 個の手順を、印のマスを順に押して終えた進行。 */
 function playSteps(count: number): Progress {
   return perform(
     playing,

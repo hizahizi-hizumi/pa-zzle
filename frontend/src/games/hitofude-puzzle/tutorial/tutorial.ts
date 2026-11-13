@@ -25,17 +25,11 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-/**
- * - `once`: 同じマスは2回通れない。
- * - `hole`: 穴は通れない。
- * - `all`: 穴でないすべてのマスを通る。道の終わりは1か所なので、入ると出られないマスが2つ残る道は引けない。
- */
+/** `all`: 穴でないすべてのマスを通る。道の終わりは1か所なので、入ると出られないマスが2つ残る道は引けない。 */
 export type HitofudePuzzleTutorialRuleId = "once" | "hole" | "all";
 
 /**
- * 盤面と同じ操作。
  * - `press`: マスを押す（なぞり始め）。
- * - `trace`: なぞる指が隣のマスへ移った。
  * - `move`: 矢印キーで先端をその向きへ動かす。
  */
 export type HitofudePuzzleTutorialAction =
@@ -54,8 +48,6 @@ export type HitofudePuzzleTutorialStep =
   };
 
 /**
- * 直前の手。盤面の反応と効果音に使う。
- * - `extended`: 道が延びた。`cells` は延びたマス。
  * - `shortened`: 道が縮んだ。手を離した後にだけ起きる。
  * - `blocked`: 道を延ばせなかった。`cell` は進もうとしたマス（盤面の外なら `null`）、`direction` は先端から進もうとした向き（隣でなければ `null`）。
  */
@@ -69,9 +61,9 @@ export type HitofudePuzzleTutorialMove =
       reason: HitofudePuzzleExtensionRejection;
     };
 
-/** `moveCount`: 盤面が反応した手の数。同じマスへの反応をやり直す目印に使う。 */
 export type HitofudePuzzleTutorialBoardState = {
   path: readonly number[];
+  /** 盤面が反応した手の数。同じマスへの反応をやり直す目印に使う。 */
   moveCount: number;
   lastMove: HitofudePuzzleTutorialMove | null;
 };
@@ -156,18 +148,12 @@ function isSolutionPrefix(path: readonly number[]): boolean {
   return path.every((cell, index) => solution[index] === cell);
 }
 
-/** 道のうち、解と同じ所までのマスの数。 */
 function countSolutionPrefix(path: readonly number[]): number {
   const deviation = path.findIndex((cell, index) => solution[index] !== cell);
   return deviation < 0 ? path.length : deviation;
 }
 
-/**
- * 本番と同じ操作の結果。
- * - `changed`: 道が変わった。
- * - `blocked`: 道を延ばせなかった。
- * - `unchanged`: 何も起きなかった（先端を押した、道から外れた指が動いた、など）。
- */
+/** `unchanged`: 何も起きなかった（先端を押した、道から外れた指が動いた、など）。 */
 type PlayedAction =
   | { kind: "changed"; path: readonly number[] }
   | {
@@ -196,7 +182,6 @@ function blockedAt(
   };
 }
 
-/** 盤面を押した・なぞった・矢印キーの操作を、本番のプレイと同じ規則で道に当てはめる。 */
 function playAction(
   path: readonly number[],
   action: HitofudePuzzleTutorialAction,
@@ -277,7 +262,6 @@ function findBrokenRule(
   }
 }
 
-/** 手順の最後のマスまで延ばしたときの道の長さ。 */
 function getStepEndLength(step: HitofudePuzzleTutorialStep): number {
   return solution.indexOf(step.cells.at(-1) ?? board.start) + 1;
 }
@@ -376,7 +360,6 @@ function performHitofudePuzzleTutorialAction(
     : performGuided(step, earnedRuleIds, state, played);
 }
 
-/** 穴や通ったマスへ進もうとしたときと、解から外れて全マスを通れなくなったとき。 */
 function describeHitofudePuzzleTutorialViolation(
   _situation: HitofudePuzzleTutorialSituation,
   { path, lastMove }: HitofudePuzzleTutorialBoardState,
@@ -407,17 +390,14 @@ function getHitofudePuzzleTutorialGoal(): HitofudePuzzleTutorialBoardState {
   return { path: solution, moveCount: 0, lastMove: null };
 }
 
-/** チュートリアルで解く盤面。 */
 export const hitofudePuzzleTutorialBoard = board;
 
-/** 全マスを通る前に、先端から延ばせるマスが無くなったか。本番と同じく、先端を行き止まりの印に変える。 */
 export function isHitofudePuzzleTutorialDeadEnd({
   path,
 }: HitofudePuzzleTutorialBoardState): boolean {
   return isHitofudePuzzleDeadEnd(board, path);
 }
 
-/** 手順で印を付ける、まだ延ばしていないマス。手を離した後は空。 */
 export function getHitofudePuzzleTutorialStepCells(
   { step }: HitofudePuzzleTutorialSituation,
   { path }: HitofudePuzzleTutorialBoardState,
@@ -425,17 +405,12 @@ export function getHitofudePuzzleTutorialStepCells(
   return (step?.cells ?? []).filter((cell) => !path.includes(cell));
 }
 
-/** 手順で伝えたルールで、手順のマスを決める盤面のマス（決め手）。手を離した後は空。 */
 export function getHitofudePuzzleTutorialStepReasonCells({
   step,
 }: HitofudePuzzleTutorialSituation): readonly number[] {
   return step?.reasonCells ?? [];
 }
 
-/**
- * 手を離した後、手が止まったときの手がかり。道が解の途中なら次に延ばすマス、解から外れていれば外れる前のマス。
- * 解き終えていれば `null`。
- */
 export function findHitofudePuzzleTutorialHint({
   path,
 }: HitofudePuzzleTutorialBoardState): HitofudePuzzleTutorialHint | null {
