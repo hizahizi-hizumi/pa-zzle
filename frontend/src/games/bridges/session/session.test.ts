@@ -50,7 +50,7 @@ describe("createBridgesSession", () => {
       status: "playing",
       puzzleState: { bridges: [0, 0] },
       startedAt,
-      finishedAt: null,
+      clearedAt: null,
       inputCount: 0,
       blockedCount: 0,
     });
@@ -107,7 +107,7 @@ describe("cycleBridgesSessionEdge", () => {
   test("全部の島がちょうどでつながったら、その時刻でクリアにすること", () => {
     const { session } = cycleBridgesSessionEdge(halfway, 1, clearedAt);
 
-    expect(session).toMatchObject({ status: "cleared", finishedAt: clearedAt });
+    expect(session).toMatchObject({ status: "cleared", clearedAt });
   });
 
   describe("クリアした後の場合", () => {

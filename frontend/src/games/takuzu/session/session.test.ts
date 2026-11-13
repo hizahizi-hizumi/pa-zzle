@@ -81,7 +81,7 @@ describe("cycleTakuzuSessionCell", () => {
       const result = pressCells(session, solvingPresses, 5_100);
 
       expect(result.status).toBe("cleared");
-      expect(result.finishedAt).toBe(5_100);
+      expect(result.clearedAt).toBe(5_100);
     });
   });
 

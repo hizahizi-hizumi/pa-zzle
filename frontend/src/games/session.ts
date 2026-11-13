@@ -5,26 +5,25 @@ export type GameSession<Problem, PuzzleState> = {
   problem: Problem;
   puzzleState: PuzzleState;
   startedAt: number;
-  /** クリアした時刻。プレイ中は `null`。 */
-  finishedAt: number | null;
+  clearedAt: number | null;
 };
 
 type SessionTiming = Pick<
   GameSession<unknown, unknown>,
-  "startedAt" | "finishedAt"
+  "startedAt" | "clearedAt"
 >;
 
 export function getSessionElapsedMs(
   session: SessionTiming,
   now: number,
 ): number {
-  return Math.max(0, (session.finishedAt ?? now) - session.startedAt);
+  return Math.max(0, (session.clearedAt ?? now) - session.startedAt);
 }
 
 export function getClearedSessionElapsedMs(
   session: SessionTiming & Pick<GameSession<unknown, unknown>, "status">,
 ): number | null {
-  return session.status === "cleared" && session.finishedAt !== null
-    ? getSessionElapsedMs(session, session.finishedAt)
+  return session.status === "cleared" && session.clearedAt !== null
+    ? getSessionElapsedMs(session, session.clearedAt)
     : null;
 }

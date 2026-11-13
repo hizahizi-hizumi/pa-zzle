@@ -343,7 +343,7 @@ function getReflectionTutorialGoal(): ReflectionTutorialBoardState {
       ...session,
       puzzleState: solution,
       status: "cleared",
-      finishedAt: 0,
+      clearedAt: 0,
     },
     moveCount: 0,
     lastMove: null,

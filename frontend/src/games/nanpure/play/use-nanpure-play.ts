@@ -306,7 +306,7 @@ export function useNanpurePlay(
     status: session.status,
     progress: play.progress,
     startedAt: session.startedAt,
-    completedAt: session.finishedAt,
+    completedAt: session.clearedAt,
     elapsedMs,
     result,
     clues: session.problem.clues,

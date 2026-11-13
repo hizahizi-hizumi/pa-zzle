@@ -264,7 +264,7 @@ export function useTakuzuPlay(
     status: session.status,
     progress,
     startedAt: session.startedAt,
-    completedAt: session.finishedAt,
+    completedAt: session.clearedAt,
     elapsedMs,
     result,
     size: session.puzzleState.size,

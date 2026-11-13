@@ -73,7 +73,7 @@ export function createNanpureSession(
     notes: createEmptyNanpureNotes(),
     history: [],
     startedAt,
-    finishedAt: null,
+    clearedAt: null,
     mistakeCount: 0,
     undoCount: 0,
     restartCount: 0,
@@ -108,7 +108,7 @@ export function enterNanpureSessionDigit(
     ...session,
     ...withHistory(session, board, notes),
     status: cleared ? "cleared" : "playing",
-    finishedAt: cleared ? enteredAt : null,
+    clearedAt: cleared ? enteredAt : null,
     mistakeCount: session.mistakeCount + (isCorrect ? 0 : 1),
   };
 }

@@ -102,7 +102,7 @@ export function createTakuzuSession(
     problem,
     puzzleState: problem.givens,
     startedAt,
-    finishedAt: null,
+    clearedAt: null,
     inputCount: 0,
     restartCount: 0,
     undoCount: 0,
@@ -152,7 +152,7 @@ export function placeTakuzuSessionCell(
   return {
     ...settleEditingCell(next),
     status: "cleared",
-    finishedAt: operatedAt,
+    clearedAt: operatedAt,
   };
 }
 

@@ -62,7 +62,7 @@ const elapsedTimeTickMs = 1_000;
 export function useSessionElapsedMs(
   session: Pick<
     GameSession<unknown, unknown>,
-    "status" | "startedAt" | "finishedAt"
+    "status" | "startedAt" | "clearedAt"
   >,
 ): number {
   const [now, setNow] = useState(() => Date.now());

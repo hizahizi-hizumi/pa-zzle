@@ -391,7 +391,7 @@ export function useHitofudePuzzlePlay(
     status: session.status,
     progress,
     startedAt: session.startedAt,
-    completedAt: session.finishedAt,
+    completedAt: session.clearedAt,
     elapsedMs,
     result,
     board: problem,

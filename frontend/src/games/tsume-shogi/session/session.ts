@@ -124,7 +124,7 @@ export function createTsumeShogiSession(
     promotionChoice: null,
     rejection: null,
     startedAt,
-    finishedAt: null,
+    clearedAt: null,
     inputCount: 0,
     wrongCheckCount: 0,
     countedWrongChecks: [],
@@ -306,7 +306,7 @@ function playAttackerCheck(
         false,
       ),
       status: "cleared",
-      finishedAt: operatedAt,
+      clearedAt: operatedAt,
     };
   }
 

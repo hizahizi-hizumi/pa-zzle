@@ -112,7 +112,7 @@ describe("enterNanpureSessionDigit", () => {
     const cleared = enterNanpureSessionDigit(session, 1, 3, 2_500);
 
     expect(cleared.status).toBe("cleared");
-    expect(cleared.finishedAt).toBe(2_500);
+    expect(cleared.clearedAt).toBe(2_500);
   });
 });
 

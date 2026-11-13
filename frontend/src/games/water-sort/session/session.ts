@@ -40,7 +40,7 @@ export function createWaterSortSession(
     puzzleState: problem.initialState,
     history: [],
     startedAt,
-    finishedAt: null,
+    clearedAt: null,
     moveCount: 0,
     undoCount: 0,
     restartCount: 0,
@@ -75,7 +75,7 @@ export function applyWaterSortSessionMove(
     status: cleared ? "cleared" : "playing",
     puzzleState,
     history: [...session.history, session.puzzleState],
-    finishedAt: cleared ? movedAt : null,
+    clearedAt: cleared ? movedAt : null,
     moveCount: session.moveCount + 1,
   };
 }

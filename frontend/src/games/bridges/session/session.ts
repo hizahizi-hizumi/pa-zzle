@@ -48,7 +48,7 @@ export function createBridgesSession(
     problem,
     puzzleState: createInitialBridgesState(problem),
     startedAt,
-    finishedAt: null,
+    clearedAt: null,
     undoCount: 0,
     restartCount: 0,
     inputCount: 0,
@@ -88,7 +88,7 @@ export function cycleBridgesSessionEdge(
   };
   return {
     session: isBridgesSolved(session.problem, change.state)
-      ? { ...changed, status: "cleared", finishedAt: operatedAt }
+      ? { ...changed, status: "cleared", clearedAt: operatedAt }
       : changed,
     crossingEdges: null,
   };
