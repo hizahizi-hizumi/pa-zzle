@@ -174,13 +174,13 @@ function playGlideSound(slideMs: number) {
 }
 
 function playBlockedSound() {
-  // 動きを減らす設定では駒を押し戻さず、画面が何も変わらないので鳴らさない。
+  // 動きを減らす設定では駒を押し戻さない。
   if (!prefersReducedMotion()) {
     playSound(blockedSound);
   }
 }
 
-/** 結果の報酬の音はアプリが鳴らす。もうゴールに止まれないことの知らせ、待った・盤面を戻すでは鳴らさない。 */
+/** もうゴールに止まれないことの知らせでは鳴らさない。 */
 export function useIceFloorMazeSoundEffects(
   lastSlide: IceFloorMazeLastSlide | null,
   blockedInput: IceFloorMazeBlockedInput | null,

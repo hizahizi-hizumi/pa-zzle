@@ -55,7 +55,7 @@ import { cn } from "@/lib/utils";
 
 type IceFloorMazeTutorialProps = {
   open: boolean;
-  /** ゲームのホームから開いたときに渡す。終えたときに、ゲームのホームで開いているレベルを始める操作を出す。渡さなければプレイ中に開いたとして、閉じてプレイに戻る操作を出す。 */
+  /** ゲームのホームから開いたときに渡す。渡さなければプレイ中のメニューから開いたとする。 */
   playStart?: TutorialPlayStart;
   onClose: () => void;
 };
@@ -155,10 +155,6 @@ function getSpotlitCells(
     : [];
 }
 
-/**
- * 6×6 の盤面を、一言と印に沿って1回ずつ滑らせ、止め役と要素のルールを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分でゴールに止めさせる。盤面・滑りと要素の動き・効果音・完成演出は本番と同じものを使う。
- */
 export function IceFloorMazeTutorial({
   open,
   playStart,
@@ -327,7 +323,6 @@ export function IceFloorMazeTutorial({
     setProgress(startTutorial(iceFloorMazeTutorial));
   }
 
-  // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();

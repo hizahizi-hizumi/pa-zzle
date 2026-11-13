@@ -291,7 +291,7 @@ function measureGlobalLayers(
   return toGoal;
 }
 
-/** 閉じ込め: 今の位置から滑って行けるどの位置からも今の位置へ戻れる。詰みに入ったと気づきやすい。 */
+/** 閉じ込め: 今の位置から滑って行けるどの位置からも今の位置へ戻れる。 */
 function isConfined(graph: StaticBoardGraph, state: number): boolean {
   const ahead = new Set([state]);
   const queue = [state];
@@ -343,7 +343,6 @@ export type StaticTactics = {
   longestChoicelessStair: number;
 };
 
-/** もっともらしい手は、滑った先がゴールへ近づく、ゴールと見通しで揃う、滑りがゴールを通過する、のどれかに当たる手。 */
 function createStaticPlausibility(graph: StaticBoardGraph, goal: number) {
   const { width, tables } = graph;
   const goalX = goal % width;
@@ -891,7 +890,6 @@ export function countUnusedStaticCells(graph: StaticBoardGraph): number {
  * - `repeatCount` / `nearRepeatCount`: 最短の道筋で同じ向きが続く2手と、最少手数+2手以内の道筋に乗る同じ向きが続く2手。
  *   床で止まった後でなければ同じ向きへはもう滑れないので、床の無い盤面ではどちらも0。
  * - `tapCount`: 止まれるどこかから床に入って止まり、同じ向きへもう一度滑ると1マスだけ進むか別の床で止まる手（同じ向きの連打）。
- *   床で止まった後に同じ向きへ続けて滑れること自体は床の働きなので数えず、刻むように止まる手だけを数える。
  * - `splitReadingDepth`: 最短の道筋を、止まる床で区切った区間ごとの読み深さの最大。床を中間の目標と見抜いた人の読み深さで、
  *   止まる床が無ければ0（呼び出し側で元の読み深さを使う）。読み深さの上限まで読めなければ上限+1。
  */
