@@ -10,7 +10,7 @@ import type {
   ParkingJamDifficultyFeatures,
 } from "@/games/parking-jam/problem/difficulty-analysis";
 
-// 8×8・8台・固定物なしで、段数2・重なりなし・読み違いを誘う車なし（全レバー1）。
+// 全レバーが1になる特徴。
 const baseFeatures: ParkingJamDifficultyFeatures = {
   vehicleCount: 8,
   boardCellCount: 64,

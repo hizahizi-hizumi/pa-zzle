@@ -59,7 +59,7 @@ export type ParkingJamResult = ParkingJamSessionResult & {
   score: ParkingJamPlayScore;
 };
 
-/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+/** プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createParkingJamResult(
   sessionResult: ParkingJamSessionResult,
   speedReference: ParkingJamSpeedReference,
@@ -150,7 +150,6 @@ function selectProblem(
   ).problem;
 }
 
-/** `initialProblem` を渡すと、指定された問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
 export function useParkingJamPlay(
   difficulty: ParkingJamDifficulty,
   initialProblem?: ParkingJamIdentifiedProblem,

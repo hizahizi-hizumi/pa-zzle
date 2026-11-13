@@ -64,10 +64,7 @@ const parkingJamDiagnosticFormat: InternalDiagnosticFormat<ParkingJamDiagnosticS
     },
   };
 
-/**
- * 遊んでいる問題を identity から解析し直して内部診断の snapshot を作る。
- * プレイ時には解析しないため、診断を開いたときだけ呼ぶ。
- */
+/** プレイ時には問題を解析しないため、診断を開いたときだけ呼ぶ。 */
 export function createParkingJamDiagnosticSnapshot(input: {
   difficulty: ParkingJamDifficulty;
   problemIdentity: ParkingJamProblemIdentity;

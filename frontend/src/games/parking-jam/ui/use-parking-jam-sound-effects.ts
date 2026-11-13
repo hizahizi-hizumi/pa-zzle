@@ -36,7 +36,7 @@ const parkingJamSounds: readonly SoundEffect[] = [
   clearedSound,
 ];
 
-/** 演出に合わせて遅らせる時間。動きを減らす設定では車がすぐ止まり・すぐ出ていくので待たない。 */
+/** 動きを減らす設定では車がすぐ止まり・すぐ出ていくので待たない。 */
 function getMotionDelayMs(delayMs: number): number {
   return prefersReducedMotion() ? 0 : delayMs;
 }
@@ -60,10 +60,7 @@ function playClearSound() {
   });
 }
 
-/**
- * 車を動かす操作と、最後の車が出ていく瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
- * 車の選択とその解除では鳴らさない。
- */
+/** 結果の報酬の音はアプリが鳴らす。車の選択とその解除では鳴らさない。 */
 export function useParkingJamSoundEffects(
   operation: ParkingJamOperation | null,
   progress: GameProgress,

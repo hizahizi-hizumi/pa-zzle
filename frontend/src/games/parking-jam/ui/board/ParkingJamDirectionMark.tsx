@@ -11,7 +11,6 @@ export type ParkingJamDirectionControl = {
   path: string;
 };
 
-/** 選んだ車の両端に出す、出庫方向の矢印の位置と形。 */
 export function getParkingJamDirectionControls(
   vehicle: ParkingJamVehicle,
 ): ParkingJamDirectionControl[] {
@@ -66,7 +65,7 @@ type ParkingJamDirectionMarkProps = {
   control: ParkingJamDirectionControl;
 };
 
-/** 出庫方向の矢印の見た目。押せる範囲は描かない。 */
+/** 押せる範囲は描かない。 */
 export function ParkingJamDirectionMark({
   control,
 }: ParkingJamDirectionMarkProps) {
