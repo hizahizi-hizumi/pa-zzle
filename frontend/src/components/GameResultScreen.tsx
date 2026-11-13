@@ -70,12 +70,15 @@ export function GameResultScreen({
       ref={screenRef}
       tabIndex={-1}
       aria-label="プレイ結果"
+      // 上端と下端を結果の面と同じ色にし、解いた画面から帯を挟まずに続ける。
+      data-browser-surface="self"
       className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background outline-none"
     >
-      <BrandIdentityHeader linkToHome pinned />
+      <BrandIdentityHeader linkToHome surface="game" pinned />
       <h1 className="sr-only">プレイ結果</h1>
       <div
         className="result-screen"
+        data-screen-frame=""
         data-level={level}
         onPointerDown={(event) => finishReveal(event.currentTarget)}
         onKeyDown={(event) => {
@@ -128,7 +131,7 @@ export function GameResultScreen({
           />
         </footer>
       </div>
-      <BrowserBottomSurface surface="brand" />
+      <BrowserBottomSurface surface="game" />
     </section>
   );
 }

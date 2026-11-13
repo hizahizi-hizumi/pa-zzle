@@ -75,15 +75,15 @@ describe("GameResultScreen", () => {
     expect(grade).toBeTruthy();
   });
 
-  test("結果画面の下端をブランドヘッダーと同じ背景色にすること", () => {
+  test("結果画面の上端と下端を、結果の面と同じ背景色にすること", () => {
     const resultScreen = screen.getByRole("region", { name: "プレイ結果" });
-    const brandHeader = resultScreen.querySelector(
-      "header[data-browser-surface]",
-    );
+    const brandHeader = resultScreen.querySelector("header");
     const bottomSurface = resultScreen.lastElementChild;
+    const surfaceClassName = "bg-[var(--browser-surface,var(--background))]";
 
-    expect(brandHeader?.classList.contains("bg-brand-inverse")).toBe(true);
-    expect(bottomSurface?.classList.contains("bg-brand-inverse")).toBe(true);
+    expect(resultScreen.dataset.browserSurface).toBe("self");
+    expect(brandHeader?.classList.contains(surfaceClassName)).toBe(true);
+    expect(bottomSurface?.classList.contains(surfaceClassName)).toBe(true);
   });
 
   test("チェックを上部に重ねず、スコアを主役に表示すること", () => {

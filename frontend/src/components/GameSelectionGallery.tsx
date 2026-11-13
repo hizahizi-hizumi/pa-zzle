@@ -1,7 +1,10 @@
 import { useId, useState } from "react";
 import { Link } from "react-router";
 
-import { GameSelectionCarousel } from "@/components/GameSelectionGallery/GameSelectionCarousel";
+import {
+  GameSelectionCarousel,
+  type GameSelectionSheetPreview,
+} from "@/components/GameSelectionGallery/GameSelectionCarousel";
 import { SettingsButton } from "@/components/SettingsButton";
 import type { DifficultyLevel } from "@/games/difficulty";
 import type { Path } from "@/router";
@@ -17,6 +20,7 @@ type GameSelectionGalleryProps = {
     name: string;
     pictogramSvg: string;
     pictogramShowcaseSvg?: string;
+    sheetPreview?: GameSelectionSheetPreview;
     to: Path;
   }[];
   recordsTo: Path;

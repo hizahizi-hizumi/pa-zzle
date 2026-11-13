@@ -10,10 +10,13 @@ import {
   type GameCatalogEntry,
   toZukanGameSource,
 } from "@/game-catalog/game-catalog-entry";
+import { scheduleIdleTask } from "@/lib/idle-task";
+import type { PlayAttempt } from "@/records/play-attempt";
 import {
   readPlayAttemptsSnapshot,
   subscribePlayAttempts,
 } from "@/records/play-attempt-storage";
+import type { PlayRecord } from "@/records/play-record";
 import { readPlayRecords } from "@/records/storage";
 import type { ZukanContinuation } from "@/zukan/zukan-collection";
 import {
@@ -27,6 +30,9 @@ export type AppHome = {
   /** 選んでいるゲームの続き。そのゲームを遊んだことが無ければ `null`。 */
   selectedGameContinuation: ZukanContinuation | null;
   selectGame: (index: number) => void;
+  /** ホームを開いたときの完了記録と、離脱したプレイ。 */
+  records: readonly PlayRecord[];
+  attempts: readonly PlayAttempt[];
 };
 
 type AppHomeOptions = {
@@ -35,16 +41,6 @@ type AppHomeOptions = {
   /** 遊んだ履歴がないとき、選んでおくゲームの ID。 */
   firstGameId?: string;
 };
-
-/** 空いている時間に `task` を呼ぶ。`requestIdleCallback` の無いブラウザでは次のタスクで呼ぶ。 */
-function scheduleIdleTask(task: () => void): () => void {
-  if (typeof window.requestIdleCallback === "function") {
-    const handle = window.requestIdleCallback(task);
-    return () => window.cancelIdleCallback(handle);
-  }
-  const handle = window.setTimeout(task, 0);
-  return () => window.clearTimeout(handle);
-}
 
 /** 選んだときに待たせないよう、ゲームの続きを空いている時間に1ゲームずつ求めておく。 */
 function prefetchContinuations(
@@ -126,5 +122,7 @@ export function useAppHome(
         ? continuations.find(selectedGame.id)
         : null,
     selectGame: setChosenIndex,
+    records,
+    attempts,
   };
 }

@@ -6,9 +6,16 @@ import { RouterProvider } from "react-router/dom";
 import "@/index.css";
 import { GameCatalogProvider } from "@/components/GameCatalogContext";
 import { RandomProblemUnavailableDialog } from "@/components/RandomProblemUnavailableDialog";
+import { installScreenTransitions } from "@/components/screen-transitions";
 import { gameCatalog } from "@/game-catalog/game-catalog";
 import { startAppLaunch } from "@/lib/app-launch";
 import { defineSoundEffect } from "@/lib/sound-effects";
+import {
+  zukanPieceHomeCarrier,
+  zukanPieceNextCarrier,
+  zukanPieceReturnCarrier,
+  zukanPieceSettleCarrier,
+} from "@/zukan/ui/zukan-piece-transit";
 
 const root = document.getElementById("root");
 if (!root) {
@@ -44,6 +51,12 @@ startAppLaunch({
 
 // 遷移の `flushSync` を使えるよう、generouted の `<Routes />` ではなく react-router/dom の `RouterProvider` で描く。
 const router = createBrowserRouter(routes);
+installScreenTransitions(router, {
+  settle: zukanPieceSettleCarrier,
+  return: zukanPieceReturnCarrier,
+  close: zukanPieceHomeCarrier,
+  open: zukanPieceNextCarrier,
+});
 
 createRoot(root).render(
   <StrictMode>

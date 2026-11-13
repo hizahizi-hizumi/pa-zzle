@@ -4,13 +4,17 @@ import {
   type MouseEvent,
   memo,
   type RefObject,
+  startTransition,
   type UIEvent,
+  useEffect,
   useEffectEvent,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+
+import { useLocation } from "react-router";
 
 import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
 import type { ProblemId } from "@/games/problem-id";
@@ -19,9 +23,14 @@ import {
   MOTION_EASING,
   prefersReducedMotion,
 } from "@/lib/motion";
+import { isScreenTransitionRunning } from "@/lib/screen-transition";
 import { ZukanProblemSquare } from "@/zukan/ui/GameHomeScreen/ZukanProblemSheet/ZukanProblemSquare";
 import type { ZukanChangeStage } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 import { findZukanPieceShape } from "@/zukan/ui/GameHomeScreen/zukan-piece-shape";
+import {
+  getNarrowZukanSquareSizePx,
+  getWideZukanSquareSizePx,
+} from "@/zukan/ui/zukan-sheet-layout";
 import type { ZukanProblem } from "@/zukan/zukan-collection";
 import type { ZukanProblemChange } from "@/zukan/zukan-last-viewed";
 
@@ -51,65 +60,6 @@ type ZukanProblemSheetProps = {
   /** 選んでいるマスをもう一度押したとき。 */
   onDeselect: () => void;
 };
-
-/**
- * PC の幅で、マスの1辺を最低この大きさ（px）にする。問題の少ないレベルでも盤が空いて見えないよう、問題が少ないほど大きくする。
- * 並びは問題の数の昇順。
- */
-const WIDE_SQUARE_SIZES = [
-  { maxProblemCount: 250, sizePx: 40 },
-  { maxProblemCount: 500, sizePx: 32 },
-] as const;
-const DEFAULT_WIDE_SQUARE_SIZE_PX = 26;
-
-/** PC より狭い幅で、マスの1辺を最低この大きさ（px）にする。考え方は `WIDE_SQUARE_SIZES` と同じ。 */
-const NARROW_SQUARE_SIZES = [{ maxProblemCount: 250, sizePx: 30 }] as const;
-const DEFAULT_NARROW_SQUARE_SIZE_PX = 24;
-
-function findSquareSizePx(
-  sizes: readonly { maxProblemCount: number; sizePx: number }[],
-  defaultSizePx: number,
-  problemCount: number,
-): number {
-  return (
-    sizes.find(({ maxProblemCount }) => problemCount <= maxProblemCount)
-      ?.sizePx ?? defaultSizePx
-  );
-}
-
-function getWideSquareSizePx(problemCount: number): number {
-  return findSquareSizePx(
-    WIDE_SQUARE_SIZES,
-    DEFAULT_WIDE_SQUARE_SIZE_PX,
-    problemCount,
-  );
-}
-
-function getNarrowSquareSizePx(problemCount: number): number {
-  return findSquareSizePx(
-    NARROW_SQUARE_SIZES,
-    DEFAULT_NARROW_SQUARE_SIZE_PX,
-    problemCount,
-  );
-}
-
-/** PC の幅のマスの大きさを使う画面幅。台紙のクラスの `lg:` と同じ境目にする。 */
-const WIDE_MEDIA_QUERY = "(width >= 64rem)";
-
-/**
- * 幅 `widthPx` に `problemCount` 問の台紙を並べたときの列の数。台紙は、マスを最低の大きさ以上で、幅を等分して並べる。
- * 開いていないレベルの台紙の並びを、描かずに求めるのに使う。
- */
-export function countZukanSheetColumns(
-  widthPx: number,
-  problemCount: number,
-): number {
-  const isWide = window.matchMedia?.(WIDE_MEDIA_QUERY).matches ?? false;
-  const squareSizePx = isWide
-    ? getWideSquareSizePx(problemCount)
-    : getNarrowSquareSizePx(problemCount);
-  return Math.max(1, Math.floor(widthPx / squareSizePx));
-}
 
 type SquareRow = { start: number; length: number };
 
@@ -195,6 +145,17 @@ function findSquare(
   return grid?.querySelector<HTMLElement>(`[data-index="${index}"]`) ?? null;
 }
 
+const NO_PROBLEMS: readonly ZukanProblem[] = [];
+
+/** この画面を開いた行き来が渡した、台紙を見せ始める行。渡されていなければ 0。 */
+function readOpeningFirstRow(locationState: unknown): number {
+  const row =
+    typeof locationState === "object" && locationState !== null
+      ? (locationState as { sheetFirstRow?: unknown }).sheetFirstRow
+      : undefined;
+  return typeof row === "number" && Number.isInteger(row) && row > 0 ? row : 0;
+}
+
 function listPositions(
   problems: readonly ZukanProblem[],
 ): ReadonlyMap<ProblemId, number> {
@@ -227,7 +188,17 @@ function ZukanProblemSheetContent({
   const [lastSelectedProblemId, setLastSelectedProblemId] =
     useState<ProblemId | null>(null);
   const [columnCount, setColumnCount] = useState(1);
+  // 画面の行き来の動きの中で開いたときは、マスの描画が動き出しを止めないよう、マスを動きの後ろで描く。
+  const [drawsSquares, setDrawsSquares] = useState(
+    () => !isScreenTransitionRunning(),
+  );
+  useEffect(() => {
+    if (!drawsSquares) {
+      startTransition(() => setDrawsSquares(true));
+    }
+  }, [drawsSquares]);
   const gridRef = useRef<HTMLDivElement>(null);
+  const openingFirstRowRef = useRef(readOpeningFirstRow(useLocation().state));
   const reportWidth = useEffectEvent(onWidthChange);
   const shownScrollTopRef = useRef(0);
   const previousCoveredBottomHeightRef = useRef(coveredBottomHeight);
@@ -267,6 +238,25 @@ function ZukanProblemSheetContent({
     observer.observe(grid);
     return () => observer.disconnect();
   }, []);
+
+  // パズル選択の額は、台紙の最後に解いた問題のあたりを見せている。額から入ったときは、台紙を同じ行から見せて開く。
+  // マスを描くまで台紙に高さが無いので、描いてから送る。問題を選んで開いたときは、選んだマスへ寄せるので送らない。
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current;
+    const grid = gridRef.current;
+    const firstRow = openingFirstRowRef.current;
+    if (!drawsSquares || firstRow === 0 || scroller === null || grid === null) {
+      return;
+    }
+    openingFirstRowRef.current = 0;
+    // 行の高さから求めると端数がずれるので、その行の最初のマスの位置へ送る。
+    const firstSquare = findSquare(grid, firstRow * countGridColumns(grid));
+    if (selectedIndex === null && firstSquare !== null) {
+      scroller.scrollTop +=
+        firstSquare.getBoundingClientRect().top -
+        grid.getBoundingClientRect().top;
+    }
+  }, [drawsSquares, selectedIndex, scrollerRef]);
 
   // 覆うものが退いて末尾の余白が減ると、末尾まで送っていた台紙はスクロール位置が詰められて跳ぶので、元の位置から滑らせて下ろす。
   useLayoutEffect(() => {
@@ -376,14 +366,15 @@ function ZukanProblemSheetContent({
       />
       <div
         ref={gridRef}
+        data-screen-shared="sheet"
         role="group"
         aria-label={`${getDifficultyLabel(difficulty)}の問題`}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         style={
           {
-            "--wide-square-size": `${getWideSquareSizePx(problems.length)}px`,
-            "--narrow-square-size": `${getNarrowSquareSizePx(problems.length)}px`,
+            "--wide-square-size": `${getWideZukanSquareSizePx(problems.length)}px`,
+            "--narrow-square-size": `${getNarrowZukanSquareSizePx(problems.length)}px`,
           } as CSSProperties
         }
         className="isolate grid grid-cols-[repeat(auto-fill,minmax(var(--narrow-square-size),1fr))] lg:grid-cols-[repeat(auto-fill,minmax(var(--wide-square-size),1fr))] [&>[data-filtered-out]]:order-2"
@@ -393,7 +384,7 @@ function ZukanProblemSheetContent({
             条件に当たる問題はありません
           </p>
         )}
-        {problems.map((problem, index) => (
+        {(drawsSquares ? problems : NO_PROBLEMS).map((problem, index) => (
           <ZukanProblemSquare
             key={problem.problemId}
             problem={problem}
@@ -437,6 +428,4 @@ export const ZukanProblemSheet = memo(ZukanProblemSheetContent);
 
 export const _private = {
   findNextSquareIndex,
-  getWideSquareSizePx,
-  getNarrowSquareSizePx,
 };

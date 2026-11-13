@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useLocation } from "react-router";
+import { ResultEmblemContext } from "@/components/GameResultScreen/result-emblem";
 import {
   findGameCatalogEntry,
   findRecordProblemPlayDestination,
@@ -9,9 +10,11 @@ import {
   openRecordProblemPlay,
 } from "@/game-catalog/game-navigation";
 import { readRecordSaveOutcome } from "@/game-catalog/record-result-location-state";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import { findPlayRecord } from "@/records/storage";
 import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
 import { Link, useNavigate, useParams } from "@/router";
+import { ZukanResultPiece } from "@/zukan/ui/ZukanResultPiece";
 
 export function PlayResultView() {
   const { game: gameId, recordId } = useParams(
@@ -24,6 +27,13 @@ export function PlayResultView() {
   const game = findGameCatalogEntry(gameId);
   const replayDestination = record && findRecordProblemPlayDestination(record);
   const noticeOutcome = recordSaveOutcome ?? null;
+  const sheetPlace = useMemo(() => {
+    const target = game && record ? game.recordProblemPlayTarget(record) : null;
+    const difficulty = parseDifficultyLevel(target?.difficulty);
+    if (!game || !target || difficulty === undefined) return null;
+    const index = game.listPoolProblemIds(difficulty).indexOf(target.problemId);
+    return index === -1 ? null : { difficulty, index };
+  }, [game, record]);
 
   const resultScreen =
     game && record?.gameId === game.id
@@ -56,5 +66,18 @@ export function PlayResultView() {
     );
   }
 
-  return resultScreen;
+  return (
+    <ResultEmblemContext
+      value={
+        game && (
+          <ZukanResultPiece
+            pictogramSvg={game.pictogramSvg}
+            sheetPlace={sheetPlace}
+          />
+        )
+      }
+    >
+      {resultScreen}
+    </ResultEmblemContext>
+  );
 }

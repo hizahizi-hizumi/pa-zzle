@@ -5,6 +5,7 @@ import { GameSelectionGallery } from "@/components/GameSelectionGallery";
 import { useAppHome } from "@/game-catalog/app-home";
 import { gameCatalog } from "@/game-catalog/game-catalog";
 import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
+import { useGameSheetPreviews } from "@/game-catalog/game-sheet-previews";
 import {
   enterApp,
   getAppLaunchTitle,
@@ -43,13 +44,24 @@ export function PuzzleSelectionView() {
     gameCatalog.map(({ id }) => id),
     preferredOrder,
   );
-  const { selectedGameIndex, selectedGameContinuation, selectGame } =
-    useAppHome(gameCatalog, { isCovered, firstGameId: orderedIds[0] });
+  const {
+    selectedGameIndex,
+    selectedGameContinuation,
+    selectGame,
+    records,
+    attempts,
+  } = useAppHome(gameCatalog, { isCovered, firstGameId: orderedIds[0] });
+  const selectedId = gameCatalog[selectedGameIndex]?.id;
+  const sheetPreviews = useGameSheetPreviews(
+    gameCatalog,
+    selectedId,
+    records,
+    attempts,
+  );
   const orderedGames = orderedIds.flatMap((id) => {
     const game = games.find((item) => item.id === id);
-    return game ? [game] : [];
+    return game ? [{ ...game, sheetPreview: sheetPreviews.get(id) }] : [];
   });
-  const selectedId = gameCatalog[selectedGameIndex]?.id;
   const orderedSelectedIndex = orderedGames.findIndex(
     ({ id }) => id === selectedId,
   );

@@ -40,10 +40,13 @@ export function GameHomeHeading({
   return (
     <header className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-x-1.5 min-[390px]:gap-x-2 lg:gap-x-3">
       {/* アイコンの線を台紙の左端にそろえるよう、ボタンの内側の余白の分だけ外へ出す。 */}
-      <span className="-ms-2 flex">
+      <span className="-ms-2 flex" data-screen-content="">
         <HomeBackLink iconOnly />
       </span>
-      <span className="size-10 max-[359px]:hidden min-[390px]:size-14 lg:size-20">
+      <span
+        className="size-10 max-[359px]:hidden min-[390px]:size-14 lg:size-20"
+        data-screen-shared="pictogram"
+      >
         {pictogramShowcaseSvg === undefined ? (
           <GamePictogram svg={pictogramSvg} />
         ) : (
@@ -54,11 +57,15 @@ export function GameHomeHeading({
         <h1
           ref={titleRef}
           tabIndex={-1}
-          className="text-heading outline-none sm:text-screen-title"
+          data-screen-shared="title"
+          className="w-fit max-w-full text-heading outline-none sm:text-screen-title"
         >
           {gameTitle}
         </h1>
-        <p className="text-meta whitespace-nowrap tabular-nums">
+        <p
+          className="text-meta whitespace-nowrap tabular-nums"
+          data-screen-content=""
+        >
           <span aria-hidden="true">
             解いた問題 {solvedCount} / {problemCount}
           </span>
@@ -68,7 +75,11 @@ export function GameHomeHeading({
         </p>
       </div>
       {/* 設定のアイコンの線を台紙の右端にそろえるよう、ボタンの内側の余白の分だけ外へ出す。 */}
-      <div ref={actionsRef} className="-me-2.25 flex items-center">
+      <div
+        ref={actionsRef}
+        className="-me-2.25 flex items-center"
+        data-screen-content=""
+      >
         {children}
         <SettingsButton initialGameId={gameId} />
       </div>

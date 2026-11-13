@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { GameResultGrade } from "@/components/GameResultScreen/GameResultGrade";
+import { ResultEmblemContext } from "@/components/GameResultScreen/result-emblem";
 import { getGameResultLevel } from "@/games/result";
 
 const grade = {
@@ -58,5 +59,41 @@ describe("GameResultGrade の動きを減らす設定", () => {
 
     expect(score).toBeTruthy();
     expect(screen.queryByText("0")).toBeNull();
+  });
+});
+
+describe("GameResultGrade に添える姿", () => {
+  describe("解いた問題の姿が渡されている場合", () => {
+    beforeEach(() => {
+      render(
+        <ResultEmblemContext value={<span>解いた問題の姿</span>}>
+          <GameResultGrade {...grade} />
+        </ResultEmblemContext>,
+      );
+    });
+
+    test("評価の言葉の前に、渡された姿を添えること", () => {
+      const emblem = screen.getByText("解いた問題の姿");
+      const gradeName = screen.getByText("すばらしい！");
+
+      expect(
+        emblem.compareDocumentPosition(gradeName) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+  });
+
+  describe("解いた問題の姿が渡されていない場合", () => {
+    let container: HTMLElement;
+
+    beforeEach(() => {
+      ({ container } = render(<GameResultGrade {...grade} />));
+    });
+
+    test("姿を置く場所を作らないこと", () => {
+      const emblem = container.querySelector("[data-result-emblem]");
+
+      expect(emblem).toBeNull();
+    });
   });
 });

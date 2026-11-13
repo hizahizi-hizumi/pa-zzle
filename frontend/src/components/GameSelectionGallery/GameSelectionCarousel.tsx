@@ -1,4 +1,4 @@
-import type { PointerEvent } from "react";
+import type { CSSProperties, PointerEvent } from "react";
 import {
   useCallback,
   useEffect,
@@ -19,11 +19,27 @@ import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
 import { prefersReducedMotion } from "@/lib/motion";
 import type { Path } from "@/router";
 
+/** 額の中に敷く、そのゲームの白紙の台紙の絵。上から `rowCount` 行を、`columnCount` 列で描いたもの。 */
+export type GameSelectionSheetPreview = {
+  imageUrl: string;
+  columnCount: number;
+  /** 描いてある最初の行。台紙の上から数えた 0 始まりの位置。 */
+  firstRow: number;
+  /** ゲームのホームが台紙を見せ始める行。 */
+  openingRow: number;
+  rowCount: number;
+  /** 台紙の全問の数。 */
+  problemCount: number;
+  /** 台紙の難易度。結果から運んだピースが、同じ台紙のピースかを見分けるのに使う。 */
+  difficulty: string;
+};
+
 type GameSelectionCarouselProps = {
   games: readonly {
     name: string;
     pictogramSvg: string;
     pictogramShowcaseSvg?: string;
+    sheetPreview?: GameSelectionSheetPreview;
     to: Path;
   }[];
   selectedIndex: number;
@@ -338,8 +354,14 @@ export function GameSelectionCarousel({
               <Link
                 key={`${lap}-${game.to}`}
                 to={game.to}
+                state={
+                  game.sheetPreview
+                    ? { sheetFirstRow: game.sheetPreview.openingRow }
+                    : undefined
+                }
                 className="game-selection__slide"
                 data-active={active}
+                data-screen-content={active ? undefined : ""}
                 aria-label={`${game.name}${active ? "を開く" : "を選択"}`}
                 aria-describedby={
                   active && selectedIndex === index && continuation
@@ -358,29 +380,68 @@ export function GameSelectionCarousel({
                   scrollToSlide(physicalIndex, "smooth");
                 }}
               >
-                <span className="game-selection__figure">
-                  {active ? (
-                    <SelectedGamePictogram
-                      pictogramSvg={game.pictogramSvg}
-                      pictogramShowcaseSvg={game.pictogramShowcaseSvg}
-                      size="hero"
-                      motion={isCovered ? "rest" : "play"}
-                      colorsIn={
-                        colorsInGame === game.to && selectedIndex === index
-                      }
-                    />
-                  ) : (
-                    <GamePictogram svg={game.pictogramSvg} />
-                  )}
+                <span
+                  className="game-selection__figure"
+                  data-screen-frame={active ? "" : undefined}
+                >
+                  <span className="game-selection__paper">
+                    {game.sheetPreview && (
+                      <span
+                        className="game-selection__sheet"
+                        data-screen-shared={active ? "surface" : undefined}
+                        data-sheet-columns={game.sheetPreview.columnCount}
+                        data-sheet-first-row={game.sheetPreview.firstRow}
+                        data-sheet-opening-row={game.sheetPreview.openingRow}
+                        data-sheet-difficulty={game.sheetPreview.difficulty}
+                        data-sheet-problem-count={
+                          game.sheetPreview.problemCount
+                        }
+                        style={
+                          {
+                            "--sheet-image": `url("${game.sheetPreview.imageUrl}")`,
+                            "--sheet-columns": game.sheetPreview.columnCount,
+                            "--sheet-rows": game.sheetPreview.rowCount,
+                          } as CSSProperties
+                        }
+                      />
+                    )}
+                    <span
+                      className="game-selection__picture"
+                      data-screen-shared={active ? "pictogram" : undefined}
+                    >
+                      {active ? (
+                        <SelectedGamePictogram
+                          pictogramSvg={game.pictogramSvg}
+                          pictogramShowcaseSvg={game.pictogramShowcaseSvg}
+                          size="hero"
+                          motion={isCovered ? "rest" : "play"}
+                          colorsIn={
+                            colorsInGame === game.to && selectedIndex === index
+                          }
+                        />
+                      ) : (
+                        <GamePictogram svg={game.pictogramSvg} />
+                      )}
+                    </span>
+                  </span>
                 </span>
                 <span className="game-selection__details">
-                  <span className="game-selection__position" aria-hidden="true">
+                  <span
+                    className="game-selection__position"
+                    aria-hidden="true"
+                    data-screen-content=""
+                  >
                     <span>{String(index + 1).padStart(2, "0")}</span>
                     <span>/</span>
                     <span>{String(count).padStart(2, "0")}</span>
                   </span>
-                  <span className="game-selection__name">{game.name}</span>
-                  <span className="game-selection__meta">
+                  <span
+                    className="game-selection__name"
+                    data-screen-shared={active ? "title" : undefined}
+                  >
+                    {game.name}
+                  </span>
+                  <span className="game-selection__meta" data-screen-content="">
                     {active && selectedIndex === index && continuation && (
                       <Badge id={continuationId} variant="outline">
                         {getDifficultyLabel(continuation.difficulty)}

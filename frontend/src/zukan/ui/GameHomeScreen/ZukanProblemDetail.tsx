@@ -227,6 +227,7 @@ export function ZukanProblemDetail({
 
   return (
     <aside
+      data-screen-content=""
       ref={ref}
       aria-label="選んだ問題"
       onAnimationEnd={handleAnimationEnd}

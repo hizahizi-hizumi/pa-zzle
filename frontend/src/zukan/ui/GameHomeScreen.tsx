@@ -55,10 +55,7 @@ import {
   isZukanDetailOverlayingSheet,
   ZukanProblemDetail,
 } from "@/zukan/ui/GameHomeScreen/ZukanProblemDetail";
-import {
-  countZukanSheetColumns,
-  ZukanProblemSheet,
-} from "@/zukan/ui/GameHomeScreen/ZukanProblemSheet";
+import { ZukanProblemSheet } from "@/zukan/ui/GameHomeScreen/ZukanProblemSheet";
 import { ZukanProblemStatusCounts } from "@/zukan/ui/GameHomeScreen/ZukanProblemStatusCounts";
 import {
   countZukanNewlySolved,
@@ -71,6 +68,7 @@ import type { ZukanFilterFeatureAxis } from "@/zukan/ui/GameHomeScreen/zukan-fil
 import { getZukanPiecePath } from "@/zukan/ui/GameHomeScreen/zukan-piece-shape";
 import { playZukanPlayEntry } from "@/zukan/ui/GameHomeScreen/zukan-play-entry";
 import { getZukanNumberDigitCount } from "@/zukan/ui/zukan-number-format";
+import { countZukanSheetColumns } from "@/zukan/ui/zukan-sheet-layout";
 import {
   countZukanProblemsByStatus,
   type GameZukan,
@@ -894,7 +892,10 @@ export function GameHomeScreen({
             />
             {/* 当たった数は条件が無い間も場所を取っておくので、条件を付け外ししても状態ごとの数の折り返し方は変わらない。
               状態ごとの数がレベルによって2行に折り返す狭い画面では、レベルを切り替えても台紙が動かないよう、常に2行分を取っておく。 */}
-            <div className="col-start-1 row-start-1 flex items-start justify-between gap-x-3 px-2 pt-2 max-[359px]:min-h-11 sm:px-3 sm:pt-3 lg:col-start-2 lg:row-start-2 lg:mt-4 lg:flex-col lg:gap-y-3 lg:rounded-lg lg:bg-background lg:p-4">
+            <div
+              data-screen-content=""
+              className="col-start-1 row-start-1 flex items-start justify-between gap-x-3 px-2 pt-2 max-[359px]:min-h-11 sm:px-3 sm:pt-3 lg:col-start-2 lg:row-start-2 lg:mt-4 lg:flex-col lg:gap-y-3 lg:rounded-lg lg:bg-background lg:p-4"
+            >
               <ZukanProblemStatusCounts counts={openStatusCounts} />
               <ZukanMatchedCount
                 matchedCount={isFiltering ? arrangement.matchedCount : null}
@@ -925,6 +926,7 @@ export function GameHomeScreen({
             </TabsContent>
             <div
               ref={playRandomRowRef}
+              data-screen-content=""
               className="col-start-1 row-start-3 mt-2 grid lg:col-start-2 lg:row-start-1 lg:mt-0"
             >
               <Button ref={playRandomRef} size="lg" onClick={handlePlayRandom}>

@@ -1,0 +1,349 @@
+/*
+ * 画面の行き来の動き。種類と意味は screen-transition.ts を参照。
+ * 入っていく・収まるところが見える長さにし、共通UIの遷移時間に合わせて縮めない。
+ */
+:root {
+  /* 押した直後から動きが見えるよう、初めを速く、終わりをゆっくりにする。 */
+  --screen-transition-ease: cubic-bezier(0.25, 0.1, 0.1, 1);
+  --screen-transition-enter-game: 640ms;
+  --screen-transition-leave-game: 520ms;
+  --screen-transition-open: 320ms;
+  --screen-transition-settle: 760ms;
+  --screen-transition-return: 260ms;
+  --screen-transition-close: 480ms;
+  /* 行き来の奥行きの中心。額のある画面では、額の中の面の中央にする。 */
+  --screen-frame-center: calc(
+    (var(--screen-frame-top, 0px) + 100vh - var(--screen-frame-bottom, 0px)) /
+    2
+  );
+  /* 額に寄り切る時点と、額と壁を遷移先の画面へ替え始める時点（どちらも動きの長さに対する比）。寄り切る時点は keyframes の 75% と合わせる。 */
+  --screen-zoom-end: 0.75;
+  --screen-frame-fade-from: 0.15;
+  --screen-frame-fade-to: 0.6;
+  /* 引く動きで、台紙を額の中の台紙へ替え終えて、引き始める時点。keyframes の 25% と合わせる。 */
+  --screen-zoom-out-from: 0.25;
+  /* 解き終えた画面をピースへ絞り始めるときの、ピースの大きさ。ピースの辺が画面のすぐ外にある大きさにし、辺が画面の端から入ってくるように見せる。 */
+  --screen-piece-iris-from: 400vmax;
+}
+
+:root[data-screen-transition]::view-transition-group(root),
+:root[data-screen-transition]::view-transition-old(root),
+:root[data-screen-transition]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+:root[data-screen-transition]::view-transition-old(root),
+:root[data-screen-transition]::view-transition-new(root) {
+  transform-origin: 50% var(--screen-frame-center);
+}
+
+/*
+ * ホームからゲームのホームへ。額に寄る。額の縁と壁は大きくなりながら外へ出ていき、額の中の台紙がゲームのホームの台紙に重なる。
+ * 額の中の台紙は、ゲームのホームの台紙と同じ列の数・同じピースの形で描いてあり、寄り切った所でピースどうしが重なってから替わる。
+ * 台紙に載っていたピクトグラムと、額の下の題名は、台紙から離れて見出しへ移る。
+ * ゲームのホームからホームへは、その逆に引く。
+ * 寄り方（位置と倍率）と台紙の見せる範囲は、台紙どうしが重なる所として、画面を持つ側が変数で渡す。
+ */
+:root[data-screen-transition="enter-game"]::view-transition-old(root) {
+  transform-origin: 0 0;
+  animation: screen-frame-zoom var(--screen-transition-enter-game)
+    var(--screen-transition-ease) both;
+}
+:root[data-screen-transition="enter-game"]::view-transition-new(root) {
+  animation: screen-fade-in
+    calc(
+      var(--screen-transition-enter-game) *
+      (var(--screen-frame-fade-to) - var(--screen-frame-fade-from))
+    )
+    var(--ease-standard)
+    calc(var(--screen-transition-enter-game) * var(--screen-frame-fade-from))
+    both;
+}
+:root[data-screen-transition="leave-game"]::view-transition-new(root) {
+  transform-origin: 0 0;
+  animation:
+    screen-frame-zoom-out var(--screen-transition-leave-game) both,
+    screen-fade-in calc(var(--screen-transition-leave-game) * 0.2)
+    var(--ease-standard)
+    calc(var(--screen-transition-leave-game) * var(--screen-zoom-out-from)) both;
+}
+/* 寄り切ってから終わりまでは止めておき、その間に台紙を替える。 */
+@keyframes screen-frame-zoom {
+  75%,
+  to {
+    transform: translate(var(--screen-zoom-dx, 0px), var(--screen-zoom-dy, 0px))
+      scale(var(--screen-zoom-scale, 1.2));
+  }
+}
+/* 引くときは、寄り切った所で台紙を替えてから引く。 */
+@keyframes screen-frame-zoom-out {
+  from,
+  25% {
+    transform: translate(var(--screen-zoom-dx, 0px), var(--screen-zoom-dy, 0px))
+      scale(var(--screen-zoom-scale, 1.2));
+    animation-timing-function: var(--screen-transition-ease);
+  }
+}
+
+:root[data-screen-transition="enter-game"] [data-screen-shared="surface"],
+:root[data-screen-transition="leave-game"] [data-screen-shared="surface"] {
+  view-transition-name: screen-surface;
+}
+:root[data-screen-transition="enter-game"] [data-screen-shared="pictogram"],
+:root[data-screen-transition="leave-game"] [data-screen-shared="pictogram"] {
+  view-transition-name: screen-pictogram;
+}
+:root[data-screen-transition="enter-game"] [data-screen-shared="title"],
+:root[data-screen-transition="leave-game"] [data-screen-shared="title"] {
+  view-transition-name: screen-title;
+}
+/* ピクトグラムと題名は、額と同じ間に運ぶ。 */
+:root[data-screen-transition="enter-game"]::view-transition-group(*) {
+  animation-duration: calc(
+    var(--screen-transition-enter-game) *
+    var(--screen-zoom-end)
+  );
+  animation-timing-function: var(--screen-transition-ease);
+}
+:root[data-screen-transition="leave-game"]::view-transition-group(*) {
+  animation-duration: calc(
+    var(--screen-transition-leave-game) *
+    (1 - var(--screen-zoom-out-from))
+  );
+  animation-delay: calc(
+    var(--screen-transition-leave-game) *
+    var(--screen-zoom-out-from)
+  );
+  animation-timing-function: var(--screen-transition-ease);
+}
+:root[data-screen-transition]::view-transition-group(screen-surface) {
+  z-index: 2;
+}
+:root[data-screen-transition]::view-transition-group(screen-pictogram),
+:root[data-screen-transition]::view-transition-group(screen-title) {
+  z-index: 3;
+}
+/* 運ぶものは、大きい側の絵だけを運ぶ。小さい側の絵を引き伸ばすと、運んでいる間ぼやける。 */
+:root[data-screen-transition]::view-transition-old(screen-pictogram),
+:root[data-screen-transition]::view-transition-new(screen-pictogram),
+:root[data-screen-transition]::view-transition-old(screen-title),
+:root[data-screen-transition]::view-transition-new(screen-title) {
+  width: 100%;
+  height: 100%;
+  animation: none;
+  mix-blend-mode: normal;
+  object-fit: contain;
+  object-position: left center;
+}
+:root[data-screen-transition="enter-game"]::view-transition-new(
+  screen-pictogram
+),
+:root[data-screen-transition="enter-game"]::view-transition-new(screen-title),
+:root[data-screen-transition="leave-game"]::view-transition-old(
+  screen-pictogram
+),
+:root[data-screen-transition="leave-game"]::view-transition-old(screen-title) {
+  opacity: 0;
+}
+/*
+ * 額の中の台紙は、額と壁と同じ寄り方で動かす。額の外へ続く行は、寄るにつれて、ゲームのホームの台紙が見せる範囲まで見せる。
+ * 画面と同じ原点で大きくするため、原点を画面の左上に置く。
+ */
+:root[data-screen-transition="enter-game"]::view-transition-old(screen-surface),
+:root[data-screen-transition="leave-game"]::view-transition-new(
+  screen-surface
+) {
+  transform-origin: calc(-1 * var(--screen-sheet-left, 0px))
+    calc(-1 * var(--screen-sheet-top, 0px));
+  mix-blend-mode: normal;
+}
+:root[data-screen-transition="enter-game"]::view-transition-old(
+  screen-surface
+) {
+  animation: screen-sheet-zoom var(--screen-transition-enter-game)
+    var(--screen-transition-ease) both;
+}
+:root[data-screen-transition="leave-game"]::view-transition-new(
+  screen-surface
+) {
+  animation: screen-sheet-zoom-out var(--screen-transition-leave-game) linear
+    both;
+}
+/* 額の外へ続く行は、額と壁が遷移先の画面に替わってから見せ、額が見えている間は額の外へはみ出させない。 */
+@keyframes screen-sheet-zoom {
+  from,
+  45% {
+    clip-path: inset(0 0 var(--screen-sheet-clip-framed, 0px) 0);
+  }
+  75% {
+    transform: translate(var(--screen-zoom-dx, 0px), var(--screen-zoom-dy, 0px))
+      scale(var(--screen-zoom-scale, 1.2));
+    opacity: 1;
+    clip-path: inset(0 0 var(--screen-sheet-clip-open, 0px) 0);
+  }
+  to {
+    transform: translate(var(--screen-zoom-dx, 0px), var(--screen-zoom-dy, 0px))
+      scale(var(--screen-zoom-scale, 1.2));
+    opacity: 0;
+    clip-path: inset(0 0 var(--screen-sheet-clip-open, 0px) 0);
+  }
+}
+@keyframes screen-sheet-zoom-out {
+  from {
+    transform: translate(var(--screen-zoom-dx, 0px), var(--screen-zoom-dy, 0px))
+      scale(var(--screen-zoom-scale, 1.2));
+    opacity: 0;
+    clip-path: inset(0 0 var(--screen-sheet-clip-open, 0px) 0);
+  }
+  25% {
+    transform: translate(var(--screen-zoom-dx, 0px), var(--screen-zoom-dy, 0px))
+      scale(var(--screen-zoom-scale, 1.2));
+    opacity: 1;
+    clip-path: inset(0 0 var(--screen-sheet-clip-open, 0px) 0);
+    animation-timing-function: var(--screen-transition-ease);
+  }
+  45%,
+  to {
+    clip-path: inset(0 0 var(--screen-sheet-clip-framed, 0px) 0);
+  }
+}
+/* 見出しにピクトグラムを出さない幅では、運ぶ先や運ぶ元が無い。その場に残さず、引いて、着く頃に浮かべる。 */
+:root[data-screen-transition]::view-transition-old(
+  screen-pictogram
+):only-child {
+  animation: screen-fade-out var(--duration-normal) var(--ease-exit) both;
+  opacity: 1;
+}
+:root[data-screen-transition]::view-transition-new(
+  screen-pictogram
+):only-child {
+  animation: screen-fade-in var(--duration-normal) var(--ease-enter)
+    calc(var(--screen-transition-leave-game) - var(--duration-normal)) both;
+  opacity: 1;
+}
+/* 台紙のほかの表示は、題名が見出しへ着く頃に浮かべる。 */
+:root[data-screen-transition="enter-game"][data-screen-arrived]
+[data-screen-content] {
+  animation: screen-fade-in var(--duration-normal) var(--ease-enter)
+    calc(var(--screen-transition-enter-game) - var(--duration-normal)) both;
+}
+
+/*
+ * 解き終えて結果へ。解いた画面そのものがピースになり、小さくなりながら、結果に添えたピースの所へ収まる。
+ * プレイへ入るときにピースの中へ入った動きの逆。止めた画面を窓で切り抜くのではなく、画面を物として運ぶ。
+ * ピースの形と、収まる先の位置・大きさは、ピースを持つ側が変数で渡す。渡されなければ、少し退いて消える。
+ */
+:root[data-screen-transition="settle"]::view-transition-old(root) {
+  z-index: 1;
+  transform-origin: 50% 50%;
+  animation: screen-piece-gather var(--screen-transition-settle) both;
+  mask-image: var(--screen-piece-mask, none);
+  mask-position: center;
+  mask-repeat: no-repeat;
+}
+@keyframes screen-piece-gather {
+  /* 初めに、画面の縁がピースの辺になる。 */
+  from {
+    transform: none;
+    opacity: 1;
+    mask-size: var(--screen-piece-iris-from);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  /* 続けて、ピースになった画面が、収まる先へ運ばれる。 */
+  40% {
+    transform: scale(0.84);
+    mask-size: 200vmin;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.1, 1);
+  }
+  90% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(
+        var(--screen-piece-dx, 0px),
+        var(--screen-piece-dy, 0px)
+      )
+      scale(var(--screen-piece-scale, 0.8));
+    opacity: 0;
+    mask-size: 200vmin;
+  }
+}
+
+/* 結果からゲームのホームへ。結果のピースが台紙へ運ぶので、画面はピースの下で短く入れ替える。 */
+:root[data-screen-transition="return"]::view-transition-new(root) {
+  animation: screen-fade-in var(--screen-transition-return) var(--ease-standard)
+    both;
+}
+
+/* 結果から次のプレイへ。結果がこちらへ迫って通り抜け、その奥から盤面が現れる。 */
+:root[data-screen-transition="open"]::view-transition-old(root) {
+  z-index: 1;
+  animation: screen-pass-forward var(--screen-transition-open)
+    var(--screen-transition-ease) both;
+}
+:root[data-screen-transition="open"]::view-transition-new(root) {
+  animation: screen-arrive-forward var(--screen-transition-open)
+    var(--screen-transition-ease) both;
+}
+@keyframes screen-pass-forward {
+  55% {
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+@keyframes screen-arrive-forward {
+  from {
+    transform: scale(0.94);
+  }
+}
+
+/*
+ * 結果・プレイからホームへ。遷移元を先に引いてから、壁と額が手前の少し大きい姿から退いてきて収まる。
+ * 遷移元と額の絵を重ねて透かさない。
+ */
+:root[data-screen-transition="close"]::view-transition-old(root) {
+  animation: screen-fade-out calc(var(--screen-transition-close) * 0.4)
+    var(--ease-exit) both;
+}
+:root[data-screen-transition="close"]::view-transition-new(root) {
+  animation: screen-arrive-back var(--screen-transition-close)
+    var(--screen-transition-ease) both;
+}
+/* 結果のピースを額の台紙へ運ぶ間は、額と壁を動かさず、ピースの下で短く入れ替える。 */
+:root[data-screen-transition="close"][data-screen-carries-piece]::view-transition-old(
+  root
+) {
+  animation: none;
+}
+:root[data-screen-transition="close"][data-screen-carries-piece]::view-transition-new(
+  root
+) {
+  animation: screen-fade-in var(--screen-transition-return) var(--ease-standard)
+    both;
+}
+@keyframes screen-arrive-back {
+  from {
+    transform: scale(1.16);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 1;
+  }
+}
+
+@keyframes screen-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes screen-fade-out {
+  to {
+    opacity: 0;
+  }
+}

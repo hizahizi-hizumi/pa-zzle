@@ -43,6 +43,9 @@ export function AppShell({
     >
       {hasContentGround ? (
         <BrandIdentityHeader linkToHome surface="game" />
+      ) : contentLayout === "full" ? (
+        // ホームは、壁の色をブランドの帯までつなげる。
+        <BrandIdentityHeader linkToHome size="regular" surface="game" />
       ) : (
         <BrandIdentityHeader linkToHome size="regular" />
       )}
