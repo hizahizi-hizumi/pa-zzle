@@ -68,7 +68,6 @@ function performAll(
   );
 }
 
-/** 最初の `count` 個の手順を、印のマスへ解の数字を入れて終える。 */
 function finishSteps(count: number): Progress {
   return nanpureTutorial.steps
     .slice(0, count)
@@ -85,7 +84,6 @@ function getEmptyCellIndices(board: NanpureBoard): number[] {
   return board.flatMap((cell, index) => (cell === null ? [index] : []));
 }
 
-/** 空きマスを入り得る数字で埋めていき、ルールに合う埋め方の数を数える。 */
 function countSolutions(board: NanpureBoard): number {
   const [cellIndex] = getEmptyCellIndices(board);
   if (cellIndex === undefined) {
@@ -98,7 +96,6 @@ function countSolutions(board: NanpureBoard): number {
   }, 0);
 }
 
-/** 決まるマスを、決まらなくなるまで1つずつ埋める。 */
 function fillByDeduction(
   board: NanpureBoard,
   ruleIds: readonly NanpureTutorialRuleId[],
@@ -124,7 +121,6 @@ const operationStepCount = nanpureTutorial.steps.findIndex(
   (step) => step.introducedRuleId !== null,
 );
 
-/** 手順ごとの、始めた盤面と手に入れたルール、印のマスの解。 */
 const stepCases = nanpureTutorial.steps.map(
   function createStepCase(step, stepIndex) {
     const progress = finishSteps(stepIndex);
@@ -520,7 +516,6 @@ describe("3つのルールを手に入れた場合", () => {
   const released = finishSteps(nanpureTutorial.steps.length);
   const situation = getTutorialSituation(nanpureTutorial, released);
   const releasedBoard = released.boardState.board;
-  /** 手を離した盤面の空きマスに、1〜9のどれかを1つ入れた盤面。 */
   const enteredBoards = getEmptyCellIndices(releasedBoard).flatMap(
     (cellIndex) =>
       NANPURE_DIGITS.map((digit) => {

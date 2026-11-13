@@ -25,9 +25,7 @@ type NanpureCellProps = {
   conflict: boolean;
   mistake: boolean;
   disabled: boolean;
-  /** チュートリアルで、このマスに重ねる印か応え。 */
   cue: NanpureCellCue | undefined;
-  /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜き、元の明るさで見せる。 */
   spotlit: boolean;
   onSelect: (cellIndex: number) => void;
 };

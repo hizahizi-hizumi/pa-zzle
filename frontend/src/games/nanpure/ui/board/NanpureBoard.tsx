@@ -25,9 +25,7 @@ type NanpureBoardProps = {
   interactionDisabled?: boolean;
   /** 盤面の幅。渡さなければ、プレイ画面に合わせて画面の幅と高さから決める。 */
   sizeClassName?: string;
-  /** チュートリアルで、マスに重ねる印と応え。 */
   cues?: readonly NanpureCellCue[];
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜く所。`null` なら抜かない。 */
   spotlight?: NanpureBoardSpotlight | null;
   onSelectCell: (cellIndex: number) => void;
 };

@@ -43,7 +43,7 @@ import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 /**
- * 数字の入力と、メモの書き込み・削除の知らせ。効果音を鳴らすため、操作ごとに増える `id` を付ける。
+ * 効果音を鳴らすため、操作ごとに増える `id` を付ける。
  * `mistake-entered` は完成解と異なる数字を入れてミスに数えた入力、`digit-entered` はそれ以外の数字の入力。
  */
 export type NanpureOperation = {
@@ -57,7 +57,7 @@ export type NanpureResult = NanpureSessionResult & {
   score: NanpurePlayScore;
 };
 
-/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+/** プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createNanpureResult(
   sessionResult: NanpureSessionResult,
 ): NanpureResult {
@@ -129,7 +129,6 @@ function applyOperatedSession(
   return next === state ? state : { ...next, operation };
 }
 
-/** 数字を入れた操作の知らせ。`mistaken` ならミスとして返す入力として、`mistake-entered` にする。 */
 export function createNanpureDigitOperation(
   id: number,
   mistaken: boolean,
@@ -155,10 +154,6 @@ function selectProblem(
   ).problem;
 }
 
-/**
- * `initialProblem` を渡すと、その問題で始める。渡さなければ難易度の問題集から `avoidedProblemId` の問題を避けて選ぶ。
- * `startNewProblem` は問題集から別の問題を選び直す。
- */
 export function useNanpurePlay(
   difficulty: NanpureDifficulty,
   initialProblem?: NanpureIdentifiedProblem,
