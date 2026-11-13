@@ -16,17 +16,13 @@ import {
 import type { ProblemSeed } from "@/games/problem-seed";
 import { isPositiveInteger, isRecordObject } from "@/lib/type-guards";
 
-/**
- * 1問を遊ぶためのデータ。駒は `start` から動き出し、`goal` で止まればクリア。
- * 盤面は盤面の外を切り落とした外接の長方形で、開始位置とゴールは氷のマス（薄い氷・床・雪・滑る氷の塊ではない）。
- */
+/** 盤面は盤面の外を切り落とした外接の長方形。 */
 export type IceFloorMazeProblem = {
   board: IceFloorMazeBoard;
   start: number;
   goal: number;
 };
 
-/** 盤面の形。`width` は列数、`height` は行数。 */
 export type IceFloorMazeBoardShape = {
   width: number;
   height: number;
@@ -42,10 +38,7 @@ const maximumBoardShape = {
   height: 14,
 } as const satisfies IceFloorMazeBoardShape;
 
-/**
- * 盤面の中身（マスの種類・開始位置・ゴール）の符号化が変わり、同じ identity から別の問題ができるようになったら上げる。
- * 版 `"3"` は床を足すため、マスの符号を1マス3ビットにした（版 `"2"` は2マスを base32 の1桁にしていた）。
- */
+/** 盤面の中身（マスの種類・開始位置・ゴール）の符号化が変わり、同じ identity から別の問題ができるようになったら上げる。 */
 export const ICE_FLOOR_MAZE_GENERATOR_VERSION = "3";
 
 /**
@@ -66,7 +59,6 @@ export type IceFloorMazeProblemIdentity = {
 export type IceFloorMazeRecordedProblemIdentity =
   RecordedProblemIdentity<IceFloorMazeBoardShape>;
 
-/** 問題と、それを再現するための情報。 */
 export type IceFloorMazeIdentifiedProblem = {
   problem: IceFloorMazeProblem;
   identity: IceFloorMazeProblemIdentity;
@@ -131,7 +123,6 @@ export function assertIceFloorMazeProblem(problem: IceFloorMazeProblem): void {
   }
 }
 
-/** 外周の4辺のどれにも、盤面として描くマスがある。 */
 function isCroppedToDrawnCells(board: IceFloorMazeBoard): boolean {
   const { width, height, cells } = board;
   function hasDrawnCell(cellIndices: readonly number[]): boolean {
@@ -330,7 +321,6 @@ export function isIceFloorMazeProblemIdentity(
   );
 }
 
-/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
 export function isIceFloorMazeRecordedProblemIdentity(
   value: unknown,
 ): value is IceFloorMazeRecordedProblemIdentity {

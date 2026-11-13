@@ -3,7 +3,6 @@ import type { IceFloorMazeCell } from "@/games/ice-floor-maze/puzzle/board";
 
 type Point = { x: number; y: number };
 
-/** 盤面の形を変えずに、元のマスの位置を移した先の位置へ写す。 */
 type ShapePreservingTransform = (
   point: Point,
   width: number,
@@ -36,7 +35,7 @@ function compose(
 
 const identity: ShapePreservingTransform = compose();
 
-/** 恒等・左右反転・上下反転・180度回転。90度回転は縦横が入れ替わるので、長方形では含めない。 */
+/** 90度回転は縦横が入れ替わるので、長方形では含めない。 */
 const rectangleTransforms: readonly ShapePreservingTransform[] = [
   identity,
   mirrorLeftRight,
@@ -44,7 +43,6 @@ const rectangleTransforms: readonly ShapePreservingTransform[] = [
   compose(mirrorLeftRight, mirrorUpDown),
 ];
 
-/** 回転4通りと、それぞれを左右反転した4通り。 */
 const squareTransforms: readonly ShapePreservingTransform[] = [
   identity,
   mirrorLeftRight,
@@ -82,7 +80,7 @@ function transformProblem(
   };
 }
 
-/** 盤面の形を保つ回転・反転で移した問題。正方形は8通り、長方形は4通り。先頭は元の問題と同じ。 */
+/** 先頭は元の問題と同じ。 */
 export function listIceFloorMazeSymmetries(
   problem: IceFloorMazeProblem,
 ): IceFloorMazeProblem[] {
@@ -115,10 +113,7 @@ function formatSymmetryKey(problem: IceFloorMazeProblem): string {
   ].join(":");
 }
 
-/**
- * 回転・反転で重なる問題に共通の正規化キー。移した問題それぞれのキーのうち辞書順で最小のもの。
- * キーは盤面の形・マスの種類の並び（`.` 氷、`#` 岩、`b` もろい岩、`c` 薄い氷、`x` 盤面の外）・開始位置・ゴールをつなぐ。
- */
+/** 回転・反転で重なる問題に共通の正規化キー。 */
 export function getIceFloorMazeSymmetryKey(
   problem: IceFloorMazeProblem,
 ): string {

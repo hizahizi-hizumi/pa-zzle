@@ -60,7 +60,7 @@ export function getBehavior(kind: number): number {
   return behaviorByKind[kind]!;
 }
 
-/** 生成で扱う盤面。`cells` はマスの種類の番号。 */
+/** `cells` はマスの種類の番号。 */
 export type GenerationBoard = {
   width: number;
   height: number;
@@ -90,7 +90,6 @@ export function fromGenerationBoard(board: GenerationBoard): IceFloorMazeBoard {
 
 const notationByCode = [".", "#", "b", "c", "x", "o", "s", "m"] as const;
 
-/** 1行を1文字列とした記法（`.` `#` `b` `c` `x` `o` `s` `m`）。 */
 function formatGenerationBoardRows(board: GenerationBoard): string[] {
   return Array.from({ length: board.height }, (_, y) =>
     Array.from(
@@ -276,7 +275,7 @@ function describeLayout({
     : `${mask}:${snowDirections}:${blocks.join(",")}`;
 }
 
-/** 押し出した雪の向き。押し出していなければ -1。 */
+/** 押し出していなければ -1。 */
 export function getSnowDirection(
   rules: ElementRules,
   layout: Layout,
@@ -477,7 +476,6 @@ export type StateSpace = {
   targets: Int32Array;
 };
 
-/** 状態の配置。 */
 export function getLayout(space: StateSpace, state: number): Layout {
   return space.layouts.layouts[space.layoutIds[state]!]!;
 }
@@ -634,7 +632,6 @@ export function withGoal(free: StateSpace, goal: number): StateSpace {
   };
 }
 
-/** 状態から1手で移れる状態。手の向きの順。 */
 export function getTarget(
   space: StateSpace,
   state: number,

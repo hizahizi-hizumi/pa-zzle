@@ -40,7 +40,6 @@ const { defaultTacticWeights, evaluateTacticBoard, scoreTactics } =
 // 期待値は scripts/research/ice_floor_generation_port_reference.py が研究用の生成 v2・v4 から書き出した値。
 // 研究用に無い特徴量（手触りなど）は比べない。
 
-/** `expected` にある項目だけを `measured` から取り出す。 */
 function pickReferenceKeys<T extends object>(
   measured: T,
   expected: object,

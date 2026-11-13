@@ -49,7 +49,6 @@ export function createReadingGraph(
   return { nodeCount, offsets, directions, ends };
 }
 
-/** 状態のグラフを、状態を番号にした読みのグラフにする。 */
 function createStateReadingGraph(space: StateSpace): ReadingGraph {
   const edges: [number, number, number][] = [];
   for (let state = 0; state < space.count; state += 1) {
@@ -170,7 +169,7 @@ export function lookaheadSolves(
   return false;
 }
 
-/** 読みで解けたとみなす手数の上限。最短の1.5倍＋2まで（研究用の `tight_give_up`）。 */
+/** 研究用の `tight_give_up` に当たる。 */
 export function getReadingMoveLimit(shortest: number): number {
   return shortest + Math.floor((shortest + 1) / 2) + 2;
 }

@@ -137,7 +137,6 @@ export function createStaticStopper(board: GenerationBoard): Uint8Array {
   );
 }
 
-/** 床のマス。床が無ければ `null`。 */
 export function createStaticFloor(board: GenerationBoard): Uint8Array | null {
   return board.cells.includes(CELL_FLOOR)
     ? board.cells.map((code) => (code === CELL_FLOOR ? 1 : 0))
@@ -311,8 +310,7 @@ function isConfined(graph: StaticBoardGraph, state: number): boolean {
 }
 
 /**
- * 最短の道筋（方向番号の小さい手を優先）と盤面から測る手筋。
- * 「もっともらしい手」は、滑った先がゴールへ近づく、ゴールと見通しで揃う、滑りがゴールを通過する、のどれかに当たる手。
+ * 最短の道筋（方向番号の小さい手を優先）と盤面から測る手筋。「もっともらしい手」は `createStaticPlausibility` の定義による。
  * `shortSlideCount`・`averageSlideLength`・`longestChoicelessStair` は最短の道筋の滑りの手触り（1マスだけの滑りの数、滑りの長さの平均、
  * もっともらしい別の手が無い手だけで直交する2つの向きを交互に続けた最も長い連なり）。研究用 v2 には無い。
  */
@@ -345,10 +343,7 @@ export type StaticTactics = {
   longestChoicelessStair: number;
 };
 
-/**
- * 「もっともらしい手」の判定と、その元になる量。もっともらしい手は、滑った先がゴールへ近づく、ゴールと見通しで揃う、
- * 滑りがゴールを通過する、のどれかに当たる手。
- */
+/** もっともらしい手は、滑った先がゴールへ近づく、ゴールと見通しで揃う、滑りがゴールを通過する、のどれかに当たる手。 */
 function createStaticPlausibility(graph: StaticBoardGraph, goal: number) {
   const { width, tables } = graph;
   const goalX = goal % width;

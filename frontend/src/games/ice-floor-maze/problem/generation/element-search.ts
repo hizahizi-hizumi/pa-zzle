@@ -30,7 +30,6 @@ import type { ProblemRandom } from "@/games/problem-seed";
 
 /**
  * 山登りの止め方。採用は、生成条件の採用条件をすべて満たすこと。
- * - `iterations`: 山登りの回数。
  * - `stopWhenAccepted`: 採用できる盤面になった時点で止める。止めないときは、採用できた盤面のうち点の最もよいもの
  *   （無ければ点の最もよい盤面）を返す。
  * - `giveUpAfter`: 打ち切る方式で、この回数までに採用できなければ諦める。
@@ -112,7 +111,6 @@ function listCells(
   return found;
 }
 
-/** 山登りの1回の状態。 */
 type Searcher = {
   recipe: ElementRecipe;
   random: ProblemRandom;
