@@ -1,9 +1,10 @@
 import { Dialog as DialogPrimitive } from "radix-ui";
-import { type ReactNode, useRef } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import {
   type TutorialMusicState,
   useTutorialMusicState,
 } from "@/components/app-background-music";
+import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
 import type { TutorialFinish } from "@/components/TutorialOverlay/TutorialScreen";
 import {
   type TutorialStageBoardIntro,
@@ -24,37 +25,31 @@ export type TutorialStageProps = {
   title: string;
   /** パズル選択と同じピクトグラム。上部で名前に添える。 */
   pictogramSvg: string;
-  /** 盤の周囲の地。プレイ画面と同じ地を渡し、本番と同じ場所で遊んでいると分かるようにする。 */
+  /** 盤の周囲の地。プレイ画面と同じ地を渡す。 */
   background: ReactNode;
-  /** 操作より先に、ゴールの盤面と一緒に見せる、何をするパズルかの一文とゴールの一言。 */
   intro: TutorialIntro;
-  /** 解き終えたときに振り返る、身につけたルール。 */
+  /** 解き終えたときに振り返るルール。 */
   recap: readonly string[];
   message: TutorialMessage;
   phase: TutorialPhase;
-  /**
-   * 盤面が `TutorialSpotlight` で決め手を示している間、盤面の中だけを薄く覆い、示した所だけを元の明るさで見せる。
-   * 押す所のほかに、その手を決める物（決め手）を盤面で見せたいゲームだけが渡す。渡さなければ覆わない。
-   */
+  /** 盤面が `TutorialSpotlight` で決め手を示している間 `true`。決め手を見せないゲームは渡さず、盤面を覆わない。 */
   spotlighting?: boolean;
   /** 入口から完成までの進み具合（0〜1）。 */
   progress: number;
-  /** 入口から完成までの段の数。進み具合を「済んだ段 / 段の数」でも示す。 */
+  /** 入口から完成までの段の数。 */
   progressStepCount: number;
   finish: TutorialFinish;
-  /** ゲーム固有の盤面。盤面の大きさは盤面の側が、この領域の大きさから決める。 */
+  /** 盤面の大きさは盤面の側が、この領域の大きさから決める。 */
   renderBoard: (intro: TutorialStageBoardIntro) => ReactNode;
   onIntroEnd: () => void;
   onRestart: () => void;
-  /**
-   * 手を離した後、遊ぶ人が自分で手がかりを求める操作。渡している間だけ、一言の下に「ヒント」を出す。
-   * 自分で解いている間に手がかりを勝手に出して割り込まないよう、手がかりは求められたときだけ見せる。
-   */
+  /** 手を離した後に手がかりを求める操作。渡している間だけ「ヒント」を出す。 */
   onRequestHint?: (() => void) | null;
+  /** 渡すと上部に「遊び方」を出し、押したときにこの説明をチュートリアルの上に開く。 */
+  renderHowToPlayDialog?: (control: HowToPlayDialogControl) => ReactNode;
   onClose: () => void;
 };
 
-/** チュートリアルは盤面を解く場面なので、開いている間は解く場面の曲を流し、解き終えたら曲を引いてクリア音を前に出す。 */
 function getMusicState(
   open: boolean,
   phase: TutorialPhase,
@@ -66,9 +61,6 @@ function getMusicState(
 }
 
 /**
- * プレイ画面と同じ地の上で、本物の盤面を1枚、指さしと短い一言に沿って解かせる全画面の枠。
- * 画面を覆わず、盤面の色と形を本番のまま見せる。開くたびに中の画面を作り直し、ゴールの盤面を見せる入口から始める。
- *
  * ゲームのチュートリアルの画面（`games/<game>/ui/<Game>Tutorial.tsx`）は、次のようにこの枠へつなぐ。
  * - 進行は `games/tutorial.ts` の `startTutorial`・`performTutorialAction`・`finishTutorialIntro`・`completeTutorial` で進め、`phase` と一言を渡す。
  * - `renderBoard` で本番の盤面部品を描き、次に押す所に `TutorialCue` の `pointer` を置く。入口の場面（`TutorialStageBoardIntro`）は盤面が受け持つ。
@@ -91,10 +83,12 @@ export function TutorialStage({
   onIntroEnd,
   onRestart,
   onRequestHint = null,
+  renderHowToPlayDialog,
   onClose,
 }: TutorialStageProps) {
   useTutorialMusicState(getMusicState(open, phase));
   const screenRef = useRef<HTMLDivElement>(null);
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
 
   // 閉じるボタンに最初のフォーカスを置くと、開いた直後から枠が出るので、画面そのものに置く。
   function handleOpenAutoFocus(event: Event) {
@@ -135,7 +129,14 @@ export function TutorialStage({
             onIntroEnd={onIntroEnd}
             onRestart={onRestart}
             onRequestHint={onRequestHint}
+            onOpenHowToPlay={
+              renderHowToPlayDialog ? () => setHowToPlayOpen(true) : null
+            }
           />
+          {renderHowToPlayDialog?.({
+            open: howToPlayOpen,
+            onClose: () => setHowToPlayOpen(false),
+          })}
         </DialogPrimitive.Content>
       </DialogPortal>
     </Dialog>

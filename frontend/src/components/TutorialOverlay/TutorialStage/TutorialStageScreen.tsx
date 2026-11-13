@@ -8,10 +8,10 @@ import {
   useRef,
   useState,
 } from "react";
-
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { BrowserBottomSurface } from "@/components/BrowserBottomSurface";
 import { GamePictogram } from "@/components/GamePictogram";
+import { PhrasedText } from "@/components/PhrasedText";
 import { TutorialFocusScrim } from "@/components/TutorialOverlay/TutorialFocusScrim";
 import type {
   TutorialFinish,
@@ -52,9 +52,8 @@ type TutorialStageScreenProps = {
   intro: TutorialIntro;
   recap: readonly string[];
   message: TutorialMessage;
-  /** 作ったときに `intro` なら入口を見せる。もう一度始めたときは入口を見せずに最初の手順から始める。 */
+  /** 作ったときの値が `intro` のときだけ入口を見せる。 */
   phase: TutorialPhase;
-  /** 盤面が決め手を示している間、盤面の中だけを薄く覆う。 */
   spotlighting: boolean;
   progress: number;
   progressStepCount: number;
@@ -62,8 +61,8 @@ type TutorialStageScreenProps = {
   renderBoard: (intro: TutorialStageBoardIntro) => ReactNode;
   onIntroEnd: () => void;
   onRestart: () => void;
-  /** 渡している間だけ、解いている間の一言の下に「ヒント」を出す。 */
   onRequestHint: (() => void) | null;
+  onOpenHowToPlay: (() => void) | null;
   /** 画面そのもの。開いたときのフォーカスを置く。 */
   ref?: Ref<HTMLDivElement>;
 };
@@ -77,15 +76,12 @@ function getFinishLabel(finish: TutorialFinish): string {
   }
 }
 
-/** 達成の一言は、抑えていた強さを解いて、少し大きく弾んで出す。 */
 const celebrateClassName =
   "animate-in fade-in-0 zoom-in-75 duration-(--duration-slow) ease-celebrate motion-reduce:animate-none";
 
-/** 覚えたルールを1つ出してから、次を出すまでの間。 */
 const RECAP_STAGGER_MS = 220;
 
-/** 入口で大きく見せた名前を、上部の名前の位置へ移す間。 */
-const NAME_MOVE_MS = 400;
+const INTRO_NAME_TO_HEADER_MS = 400;
 
 /**
  * 入口で大きく見せた名前の位置と大きさから、上部の名前へ移す変形。
@@ -98,15 +94,13 @@ function getMoveFromIntroName(target: HTMLElement, source: HTMLElement) {
   return `translate(${sourceRect.left - targetRect.left}px, ${sourceRect.top - targetRect.top}px) scale(${scale})`;
 }
 
-/** 完成で盤面の下の欄が伸びたとき、盤面を新しい位置と大きさへ移す間。 */
-const BOARD_SETTLE_MS = 400;
+const BOARD_SETTLE_ON_COMPLETE_MS = 400;
 
 /** 前の位置と大きさから、今の位置と大きさへ移す変形（FLIP）。 */
 function getMoveFromPreviousRect(current: DOMRect, previous: DOMRect): string {
   return `translate(${previous.left - current.left}px, ${previous.top - current.top}px) scale(${previous.width / current.width}, ${previous.height / current.height})`;
 }
 
-/** 画面の中で使う参照と、開いた側へ渡す参照の両方に、同じ要素を渡す。 */
 function mergeRefs(
   inner: RefObject<HTMLDivElement | null>,
   outer: Ref<HTMLDivElement> | undefined,
@@ -124,11 +118,6 @@ function mergeRefs(
 const appearClassName =
   "animate-in fade-in-0 slide-in-from-bottom-1 duration-(--duration-slow) ease-enter motion-reduce:animate-none";
 
-/**
- * 上から、名前と進み具合、盤面、盤面の下の欄（一言と、入口・完成の操作）を、どの場面でも同じ位置と大きさで並べる。
- * 盤面の領域は、横に長い盤面にも縦に長い盤面にも同じだけ渡し、場面が替わっても変えない。
- * 入口はゴールの盤面に、何をするパズルかの一文を一言として添えるだけにし、「はじめる」で始めの盤面へ替えて、すぐ最初の手順に入る。
- */
 export function TutorialStageScreen({
   title,
   pictogramSvg,
@@ -145,13 +134,13 @@ export function TutorialStageScreen({
   onIntroEnd,
   onRestart,
   onRequestHint,
+  onOpenHowToPlay,
   ref,
 }: TutorialStageScreenProps) {
   const [introScene, setIntroScene] = useState<TutorialIntroScene | null>(
     phase === "intro" ? "goal" : null,
   );
   const completed = phase === "completed";
-  // 解けた盤面の演出の間から、達成として一言を強める。
   const celebrating = phase === "solved" || completed;
   const showsGoal = introScene === "goal";
   const rootRef = useRef<HTMLDivElement>(null);
@@ -201,7 +190,7 @@ export function TutorialStageScreen({
         },
         { transform: "none", transformOrigin: "0 0" },
       ],
-      { duration: BOARD_SETTLE_MS, easing: MOTION_EASING.standard },
+      { duration: BOARD_SETTLE_ON_COMPLETE_MS, easing: MOTION_EASING.standard },
     );
   });
 
@@ -226,7 +215,7 @@ export function TutorialStageScreen({
           },
           { transform: "none", transformOrigin: "0 0" },
         ],
-        { duration: NAME_MOVE_MS, easing: MOTION_EASING.standard },
+        { duration: INTRO_NAME_TO_HEADER_MS, easing: MOTION_EASING.standard },
       );
     }
   }
@@ -279,7 +268,17 @@ export function TutorialStageScreen({
           >
             {title}
           </DialogTitle>
-          <div className="ml-auto flex shrink-0">
+          <div className="ml-auto flex shrink-0 items-center">
+            {onOpenHowToPlay && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onOpenHowToPlay}
+              >
+                遊び方
+              </Button>
+            )}
             <DialogClose asChild>
               <Button
                 type="button"
@@ -314,7 +313,6 @@ export function TutorialStageScreen({
           </span>
         </div>
 
-        {/* ゴールを見せる間と、始めの盤面へ替える動きの間は、盤面を押せないようにする。 */}
         <main
           ref={boardAreaRef}
           inert={introScene !== null}
@@ -327,14 +325,9 @@ export function TutorialStageScreen({
           })}
         </main>
 
-        {/*
-          盤面の下の欄。入口の名前と操作、一言、完成の振り返りと操作を上から詰めて並べる。
-          解いている間は同じ高さにして盤面を動かさない。完成で振り返るルールが多く、この高さに収まらないゲームでは、
-          操作が画面の外へ出ないよう、欄を伸ばして盤面の側を縮める。
-        */}
+        {/* 振り返るルールが多いと最低の高さに収まらないので、操作が画面の外へ出ないよう、欄を伸ばして盤面の側を縮める。 */}
         <footer className="flex min-h-52 shrink-0 flex-col items-center justify-start gap-3 px-4 pt-2 pb-3">
           {showsGoal && (
-            // 初めての人に名前を覚えてもらえるよう、入口ではピクトグラムと名前を大きく見せる。
             // 上部と同じ並びを同じ比で大きくし、上部へ移すときにピクトグラムと名前が交差しないようにする。
             <div
               aria-hidden="true"
@@ -357,7 +350,6 @@ export function TutorialStageScreen({
           )}
           <div aria-live="polite" className="relative flex justify-center">
             {celebrating && (
-              // 完成の一言の後ろで、輪を2つ続けて広げる。結果の場面の祝い方と同じ、広がって消える輪で返す。
               <span
                 aria-hidden="true"
                 data-tutorial-celebration=""
@@ -371,18 +363,18 @@ export function TutorialStageScreen({
               key={`${shownMessage.headline}\n${shownMessage.detail ?? ""}`}
               {...{ [TUTORIAL_SPOTLIGHT_ATTRIBUTE]: "" }}
               className={cn(
-                "relative flex flex-col items-center gap-1 rounded-md px-3 py-1 text-balance text-center whitespace-pre-line [word-break:auto-phrase]",
+                "relative flex flex-col items-center gap-1 rounded-md px-3 py-1 text-balance text-center whitespace-pre-line [overflow-wrap:anywhere] [word-break:keep-all]",
                 celebrating ? celebrateClassName : appearClassName,
               )}
             >
               <span
                 className={celebrating ? "text-screen-title" : "text-heading"}
               >
-                {shownMessage.headline}
+                <PhrasedText text={shownMessage.headline} />
               </span>
               {shownMessage.detail && (
                 <span className="text-muted-foreground text-supporting">
-                  {shownMessage.detail}
+                  <PhrasedText text={shownMessage.detail} />
                 </span>
               )}
             </p>
@@ -404,7 +396,6 @@ export function TutorialStageScreen({
             </Button>
           )}
           {completed && (
-            // 覚えたルールを1つずつ確かめるように出してから、次の操作を出す。
             <>
               <ul aria-label="覚えたルール" className="flex flex-col gap-1">
                 {recap.map((rule, index) => (
@@ -417,7 +408,9 @@ export function TutorialStageScreen({
                     style={{ animationDelay: `${index * RECAP_STAGGER_MS}ms` }}
                   >
                     <Check aria-hidden="true" className="size-4 shrink-0" />
-                    {rule}
+                    <span className="[overflow-wrap:anywhere] [word-break:keep-all]">
+                      <PhrasedText text={rule} />
+                    </span>
                   </li>
                 ))}
               </ul>

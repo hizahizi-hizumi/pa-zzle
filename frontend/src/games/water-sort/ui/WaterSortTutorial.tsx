@@ -1,11 +1,4 @@
-import {
-  type CSSProperties,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-
+import { type CSSProperties, useCallback, useRef, useState } from "react";
 import { TutorialCrossFadeIntroScene } from "@/components/TutorialCrossFadeIntroScene";
 import {
   type TutorialFinish,
@@ -46,6 +39,7 @@ import {
 } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { useWaterSortSoundEffects } from "@/games/water-sort/ui/use-water-sort-sound-effects";
 import { WaterSortGround } from "@/games/water-sort/ui/WaterSortGround";
+import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
 import { prefersReducedMotion } from "@/lib/motion";
 
 type WaterSortTutorialProps = {
@@ -137,10 +131,7 @@ function createOperation(
   }
 }
 
-/**
- * ボトルに重ねる合図。1色そろったボトルの印と、次にタップするボトルの印。
- * `recallId` があれば、次にタップするボトルの印の線を短く濃くして戻し、指を出し直す。
- */
+/** `recallId` があれば、次にタップするボトルの印の線を短く濃くして戻し、指を出し直す。 */
 function getBottleCues(
   completedBottleIndices: readonly number[],
   hintBottleIndex: number | null,
@@ -164,10 +155,6 @@ function getBottleCues(
   ];
 }
 
-/**
- * プレイ画面と同じ地の上で、3色の盤面を、一言と指さしに沿って3手注ぎ、操作とルールを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分でそろえさせる。盤面・注ぐ動き・最後に注いでそろう動きは本番と同じ部品を使う。
- */
 export function WaterSortTutorial({
   open,
   playStart,
@@ -212,7 +199,7 @@ export function WaterSortTutorial({
           ? findWaterSortTutorialHintBottleIndex(boardState)
           : null;
 
-  // ルールに合わない手のわけの一言を出しているか。印の線を濃くし直したときと、手を離した後に止まって印が出たときは、
+  // ルールに合わない手のわけの一言を出しているか。印の線を濃くし直したときと、手を離した後に「ヒント」で印を出したときは、
   // 違反の一言を下げて、印のボトルへ向かう手順の一言か、残りをそろえる一言に戻す。
   const violationShown =
     progress.violated &&
@@ -295,7 +282,7 @@ export function WaterSortTutorial({
       }
     : { entry: "play", onReturnToPlay: handleClose };
 
-  /** `shown` の進行で出す一言。手を離した後は、そろった色の数で応える。 */
+  /** `shown` の進行で出す一言。 */
   function describeProgress(
     shown: WaterSortTutorialProgress,
     violationOnScreen: boolean,
@@ -393,6 +380,9 @@ export function WaterSortTutorial({
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
       onRestart={handleRestart}
+      renderHowToPlayDialog={(control) => (
+        <WaterSortHowToPlayDialog {...control} />
+      )}
       onRequestHint={
         solving && !guiding && !requestedHintShown ? handleRequestHint : null
       }
