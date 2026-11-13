@@ -32,20 +32,13 @@ const SLIDE_PUZZLE_PLAY_RECORD_PAYLOAD_VERSION = 1;
 
 type SlidePuzzlePlayPerformance = {
   elapsedMs: number;
-  /** 動いたタイルの総枚数。盤面を戻す前の手も含む。 */
   moveCount: number;
-  /** 最後に盤面を戻してから完成までに動いたタイルの枚数。 */
   completionMoveCount: number;
-  /** 入力としてのスライド操作の回数。評価には使わない。 */
   slideCount: number;
   restartCount: number;
   optimalMoveCount: number;
 };
 
-/**
- * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
- * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準との差は保存せず、現在の評価規則で導出する。
- */
 type SlidePuzzlePlayRecordPayload = {
   difficulty: SlidePuzzleDifficulty;
   problemIdentity: SlidePuzzleRecordedProblemIdentity;
@@ -153,17 +146,12 @@ export function createSlidePuzzlePlayRecord({
   };
 }
 
-/** 記録から作り直した、結果画面に出す内容。 */
 export type SlidePuzzleRecordedResult = {
   difficulty: SlidePuzzleDifficulty;
   problemIdentity: SlidePuzzleProblemIdentity;
   result: SlidePuzzleResult;
 };
 
-/**
- * 記録から結果画面に出す内容を作り直す。
- * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
- */
 export function restoreSlidePuzzleRecordedResult(
   record: PlayRecord,
 ): SlidePuzzleRecordedResult | null {

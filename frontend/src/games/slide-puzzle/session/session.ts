@@ -52,7 +52,6 @@ export function createSlidePuzzleSession(
   };
 }
 
-/** `tileIndex` のタイルを空白へ向けて滑らせる。滑らせられないタイルなら何もしない。 */
 export function slideSlidePuzzleSessionTile(
   session: SlidePuzzleSession,
   tileIndex: number,
@@ -81,7 +80,6 @@ export function slideSlidePuzzleSessionTile(
   };
 }
 
-/** 同じプレイのまま初期盤面へ戻す（盤面を戻す）。経過時間と総手数は引き継ぐ。 */
 export function restartSlidePuzzleSession(
   session: SlidePuzzleSession,
 ): SlidePuzzleSession {

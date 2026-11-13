@@ -59,7 +59,7 @@ describe("問題集", () => {
     },
   );
 
-  // 最短手数の保存値を solver で確かめる。重い盤面はテストで解かず、3×3 と 4×4 の短い問題だけを見る。
+  // 重い盤面はテストで解かず、3×3 と 4×4 の短い問題だけを見る。
   const shortCases = [
     ...listSlidePuzzlePoolEntries("1").slice(0, 10),
     ...[...listSlidePuzzlePoolEntries("2")]

@@ -25,7 +25,6 @@ const slideDirections: readonly SlidePuzzleDirection[] = [
   "right",
 ];
 
-/** タイルが動く向きへ 1 マス進んだときのマス index の差。 */
 function getCellOffset(
   direction: SlidePuzzleDirection,
   boardSize: SlidePuzzleBoardSize,
@@ -73,10 +72,6 @@ function getSlideDirection(
   return null;
 }
 
-/**
- * 空白と同じ行・列にあるタイルから空白までのタイルを、まとめて空白側へ 1 マスずつ滑らせる。
- * 空白と同じ行・列にないマスや空白自体では成立しない。
- */
 export function getSlidePuzzleSlide(
   board: SlidePuzzleBoard,
   tileIndex: number,
@@ -124,7 +119,6 @@ export function applySlidePuzzleSlide(
   return nextBoard;
 }
 
-/** 空白に隣接し、1 枚だけで滑らせられるタイルのマス index。 */
 export function listSlidePuzzleSingleMoves(board: SlidePuzzleBoard): number[] {
   const blankIndex = findSlidePuzzleBlankIndex(board);
   const boardSize = getSlidePuzzleBoardSize(board);

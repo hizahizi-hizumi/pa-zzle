@@ -13,7 +13,6 @@ import {
  * IDA* が使う許容的な下界。探索中は盤面を書き換えながら差分で更新する。
  */
 export type SlidePuzzleHeuristic = {
-  /** 下界を求められる盤面の一辺のマス数。 */
   boardSize: SlidePuzzleBoardSize;
   /** 盤面全体から下界を求め、差分更新の内部状態を作り直す。 */
   reset(cells: Uint8Array): number;
@@ -35,7 +34,6 @@ type SlidePuzzleSolveResult =
     }
   | { status: "limit-exceeded"; expandedNodeCount: number };
 
-/** 探索で繰り返し引く、盤面サイズごとの表。 */
 type SolverTables = {
   cellCount: number;
   neighborCells: readonly (readonly number[])[];
@@ -148,7 +146,6 @@ function getSolverTables(boardSize: SlidePuzzleBoardSize): SolverTables {
   return tables;
 }
 
-/** 各マスから空白が 1 手で動けるマス。生成・検証の探索で共有する。 */
 export function getSlidePuzzleNeighborCells(
   boardSize: SlidePuzzleBoardSize,
 ): readonly (readonly number[])[] {

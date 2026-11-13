@@ -99,7 +99,6 @@ export function calculateSlidePuzzleManhattanDistance(
   return distance;
 }
 
-/** 遊べるサイズのマス数で、空白とタイル番号を 1 つずつ並べた盤面かを確かめる。 */
 export function isStandardSlidePuzzleBoard(
   board: unknown,
 ): board is SlidePuzzleBoard {

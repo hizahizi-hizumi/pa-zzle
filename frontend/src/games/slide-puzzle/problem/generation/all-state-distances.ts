@@ -9,10 +9,6 @@ const ALL_STATE_BOARD_SIZE = 3;
 const CELL_COUNT = ALL_STATE_BOARD_SIZE * ALL_STATE_BOARD_SIZE;
 const UNREACHABLE = 0xff;
 
-/**
- * 3×3 の全配置について、完成盤面からの最短手数を持つ表。
- * 配置は辞書順の順位で引き、完成盤面へ到達できない配置は `null` になる。
- */
 export type SlidePuzzleAllStateDistances = {
   distanceOf(board: SlidePuzzleBoard): number | null;
   /** 最短手数ごとの配置数。添字が最短手数。 */

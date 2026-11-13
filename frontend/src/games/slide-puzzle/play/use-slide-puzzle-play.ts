@@ -61,7 +61,7 @@ export type SlidePuzzleResult = SlidePuzzleSessionResult & {
   score: SlidePuzzlePlayScore;
 };
 
-/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+/** プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createSlidePuzzleResult(
   sessionResult: SlidePuzzleSessionResult,
   boardSize: SlidePuzzleBoardSize,
@@ -173,7 +173,6 @@ function slideTileInPlay(
   };
 }
 
-/** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
 export function useSlidePuzzlePlay(
   difficulty: SlidePuzzleDifficulty,
   initialProblem?: SlidePuzzlePooledProblem,
