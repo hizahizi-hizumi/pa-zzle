@@ -150,8 +150,8 @@ export function IceFloorMazeCellFace({
             >
               {renderSunken(
                 palette.thinIce,
-                palette.iceEdgeShade,
-                palette.iceEdgeLit,
+                palette.sunkenEdgeShade,
+                palette.sunkenEdgeLit,
                 THIN_ICE_DEPTH,
                 turn,
               )}
@@ -203,7 +203,7 @@ export function IceFloorMazeCellFace({
           {renderSunken(
             palette.water,
             palette.waterEdgeShade,
-            palette.iceEdgeLit,
+            palette.sunkenEdgeLit,
             WATER_DEPTH,
           )}
           <path

@@ -23,12 +23,10 @@ import {
 const DX = [0, 1, 0, -1] as const;
 const DY = [-1, 0, 1, 0] as const;
 
-/** 近い道筋とみなす、最短手数からの遠回りの手数。 */
-const NEAR_SLACK = 2;
+const NEAR_PATH_EXTRA_MOVES = 2;
 /** 逆算の1段で候補がこの数以下なら「止め石を探す段」とみなす。 */
 const FUNNEL_WIDTH = 2;
-/** 偽の道とみなす、最短からの遠回りの手数。 */
-const FALSE_LEAD_COST = 3;
+const FALSE_LEAD_EXTRA_MOVES = 3;
 /** 人のモデルが読む手数の上限。 */
 export const MAXIMUM_READING_DEPTH = 12;
 /** 近い別解を数える上限。 */
@@ -427,7 +425,10 @@ export function measureStaticTactics(
   for (const state of order) {
     if (toGoal[state]! < 0) {
       deadStateCount += 1;
-    } else if (distances[state]! + toGoal[state]! <= shortest + NEAR_SLACK) {
+    } else if (
+      distances[state]! + toGoal[state]! <=
+      shortest + NEAR_PATH_EXTRA_MOVES
+    ) {
       near.push(state);
     }
   }
@@ -518,7 +519,7 @@ export function measureStaticTactics(
         }
       }
       if (
-        (after < 0 || after + 1 - remaining >= FALSE_LEAD_COST) &&
+        (after < 0 || after + 1 - remaining >= FALSE_LEAD_EXTRA_MOVES) &&
         isPlausible
       ) {
         falseLeadCount += 1;
@@ -793,14 +794,14 @@ export function measureStaticReadingDepth(
   return maximumDepth + 1;
 }
 
-/** 最少手数+`NEAR_SLACK` 手以内で、同じ停止点を二度通らない道筋の数（v1 の `near_path_count`。上限 `NEAR_PATH_CAP`）。 */
+/** 最少手数+`NEAR_PATH_EXTRA_MOVES` 手以内で、同じ停止点を二度通らない道筋の数（v1 の `near_path_count`。上限 `NEAR_PATH_CAP`）。 */
 export function countNearPaths(
   graph: StaticBoardGraph,
   start: number,
   goal: number,
 ): number {
   const toGoal = measureBackwardLayers(graph, goal);
-  const budget = graph.distances[goal]! + NEAR_SLACK;
+  const budget = graph.distances[goal]! + NEAR_PATH_EXTRA_MOVES;
   const onPath = new Uint8Array(graph.cellCount);
   let count = 0;
   function visit(state: number, used: number): void {
@@ -1071,7 +1072,8 @@ export function measureStaticFloors(
       }
       if (
         toGoal[after]! >= 0 &&
-        graph.distances[state]! + 2 + toGoal[after]! <= shortest + NEAR_SLACK
+        graph.distances[state]! + 2 + toGoal[after]! <=
+          shortest + NEAR_PATH_EXTRA_MOVES
       ) {
         nearRepeatCount += 1;
       }

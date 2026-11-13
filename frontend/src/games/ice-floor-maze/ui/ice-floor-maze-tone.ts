@@ -12,9 +12,8 @@ export const iceFloorMazeTone = {
   iceShallow: "#ffffff",
   iceSheen: "#ffffff",
   iceJoint: "rgba(52,120,172,0.2)",
-  /** 氷より低い面の、光る縁と陰になる縁。 */
-  iceEdgeLit: "#e8f7fd",
-  iceEdgeShade: "#74aed6",
+  sunkenEdgeLit: "#e8f7fd",
+  sunkenEdgeShade: "#74aed6",
   /** 氷から立ち上がるものが氷へ落とす影。 */
   shadow: "rgba(28,72,124,0.19)",
   /** 外壁（雪の土手）。 */

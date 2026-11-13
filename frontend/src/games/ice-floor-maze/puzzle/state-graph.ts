@@ -14,10 +14,9 @@ import type { IceFloorMazeState } from "@/games/ice-floor-maze/puzzle/state";
  */
 export const ICE_FLOOR_MAZE_STATE_LIMIT = 20_000;
 
-/** `to` は `IceFloorMazeStateGraph` の `states` の番号。 */
 export type IceFloorMazeStateMove = {
   direction: IceFloorMazeDirection;
-  to: number;
+  toStateIndex: number;
 };
 
 /**
@@ -86,18 +85,18 @@ export function exploreIceFloorMazeStates(
         layoutByKey.set(layoutKey, layout);
       }
       const key = layout * cellCount + slide.to;
-      let to = indexByKey.get(key);
-      if (to === undefined) {
-        to = states.length;
-        if (to >= limit) {
+      let toStateIndex = indexByKey.get(key);
+      if (toStateIndex === undefined) {
+        toStateIndex = states.length;
+        if (toStateIndex >= limit) {
           return null;
         }
-        indexByKey.set(key, to);
+        indexByKey.set(key, toStateIndex);
         states.push(next ?? applyIceFloorMazeSlide(state, slide));
         layouts.push(layout);
         moveCounts.push(moveCounts[order]! + 1);
       }
-      stateMoves.push({ direction, to });
+      stateMoves.push({ direction, toStateIndex });
     }
   }
 

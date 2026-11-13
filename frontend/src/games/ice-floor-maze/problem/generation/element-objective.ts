@@ -86,8 +86,7 @@ const challengeWeights = {
  */
 const SOLUTION_REPEAT_FACTOR = 2;
 
-/** 盤面として描くマスのうち、これを超える岩の割合を減点する。 */
-const ROCK_SHARE_TARGET = 0.22;
+const MAXIMUM_UNPENALIZED_ROCK_SHARE = 0.22;
 
 /** 山登りで比べる状態の読み深さの上限より、候補を比べるときの上限を深くする。 */
 export const STATE_READING_DEPTH_CAP = 8;
@@ -391,7 +390,7 @@ function scoreElementChallenge(
     w.looks[classifyLooksReading(metrics)] +
     w.decoy * Math.min(countRoles(metrics, "decoy"), w.decoyCap) +
     w.slide * Math.min(metrics.texture.averageSlideLength, w.slideCap) -
-    w.rock * Math.max(0, metrics.rockShare - ROCK_SHARE_TARGET)
+    w.rock * Math.max(0, metrics.rockShare - MAXIMUM_UNPENALIZED_ROCK_SHARE)
   );
 }
 
