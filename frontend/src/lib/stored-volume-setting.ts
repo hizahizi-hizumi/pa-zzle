@@ -7,7 +7,7 @@ type SettingStorage = Pick<Storage, "getItem" | "setItem">;
 
 type StoredVolumeSetting = {
   volume: number;
-  // 消音して 0 にしても、消音を戻したときに元の音量で鳴らせるよう、0 にする前に決めた音量を覚えておく。
+  // 0 にする前に決めた音量。
   unmutedVolume: number;
 };
 

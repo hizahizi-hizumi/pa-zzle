@@ -20,7 +20,6 @@ import {
   formatElapsedTimeDelta,
 } from "@/lib/format-performance-delta";
 
-/** 結果画面で数を示すときの単位。数には必ず単位を付ける。 */
 export type GameResultCountUnit = "回" | "手" | "個" | "本" | "台" | "マス";
 
 /** 基準時間は秒未満を含む式から求まるので、全ゲームで1/10秒まで示す。 */

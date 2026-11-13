@@ -5,7 +5,6 @@ import type {
 
 export type ProblemFeature = { label: string; value: string };
 
-/** 特徴の数を示すときの単位。数には必ず単位を付ける。 */
 export type ProblemFeatureCountUnit =
   | "個"
   | "本"

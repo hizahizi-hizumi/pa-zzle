@@ -153,7 +153,6 @@ function loadSoundEffect(url: string): Promise<void> | null {
     },
     function forgetFailedRequest(error: unknown) {
       requestedSoundLoads.delete(url);
-      // 効果音は操作に添えるものなので、失敗を利用者に知らせず、遊ぶのを妨げない。
       if (import.meta.env.DEV) {
         console.warn(`効果音を読み込めない: ${url}`, error);
       }
@@ -220,7 +219,6 @@ export function playLayeredSound(
   requestSoundEffects(layers.map(({ sound }) => sound));
 
   const loadedLayers = getLoadedLayers(layers);
-  // まだ読み込めていない効果音は鳴らさない。読み込みを待ってから鳴らすと、操作や演出とずれた時に鳴るため待たない。
   if (!loadedLayers) {
     return null;
   }

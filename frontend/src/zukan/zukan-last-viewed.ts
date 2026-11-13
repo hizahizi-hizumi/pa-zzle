@@ -73,7 +73,6 @@ function findProblemChange(
       previousStatus: previousStatus ?? "untouched",
     };
   }
-  // 評価規則が変わって段階が下がった問題は変化に数えない。
   return isHigherGameResultLevel(level, previousStatus)
     ? { kind: "raised", previousStatus }
     : null;

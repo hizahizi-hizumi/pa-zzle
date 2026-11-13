@@ -35,10 +35,6 @@ export function playPlayStartSound(): void {
   playSound(playStartSound);
 }
 
-/**
- * 効果音の音量を選び終えたときに、選んだ音量で鳴らす。
- * 設定の操作には音を鳴らさないが、効果音の音量は聞かないと合わせられないので、アプリの画面の音で確かめられるようにする。
- */
 export function playSoundEffectsVolumePreview(): void {
   playSound(playStartSound);
 }
