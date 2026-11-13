@@ -1,0 +1,327 @@
+/* A single phosphor-display language for the binary puzzle: squared cells,
+   a compact bezel, and distinct inks for fixed and placed digits. */
+.takuzu-background {
+  background:
+    radial-gradient(
+      ellipse 68% 44% at 50% 48%,
+      rgb(249 255 251 / 84%),
+      transparent 82%
+    ),
+    linear-gradient(180deg, #e0ebe5 0%, #d5e3db 48%, #c9d9d0 100%);
+}
+
+.takuzu-background {
+  position: relative;
+  overflow: hidden;
+}
+
+.takuzu-board-shell {
+  position: relative;
+  --takuzu-fixed: #d4e7e1;
+  --takuzu-placed: #a3dfc9;
+  --takuzu-finish: #82c7ad;
+}
+
+.takuzu-board-grid {
+  gap: 1px;
+  padding: 6px;
+  border-color: #4b766b;
+  border-radius: 2px;
+  background: linear-gradient(145deg, #426d61, #294e43 52%, #23453d);
+  box-shadow:
+    inset 0 1px 0 rgb(211 255 239 / 22%),
+    inset 0 -1px 0 rgb(2 31 23 / 38%),
+    0 0 0 3px #193a32,
+    0 13px 27px rgb(18 53 46 / 20%);
+}
+
+.takuzu-cell {
+  border: 0;
+  background-color: #0d2522;
+}
+
+.takuzu-cell[data-given] {
+  background-color: #2c5043;
+}
+
+.takuzu-cell:not([data-given], [data-reading], [data-selected]):is(
+  [data-cell="a"],
+  [data-cell="b"]
+) {
+  background-color: #1b3d32;
+}
+
+.takuzu-cell[data-reading]:not([data-selected]) {
+  background-color: #1b3c31;
+}
+
+.takuzu-cell:not([data-given], [data-selected])[data-reading]:is(
+  [data-cell="a"],
+  [data-cell="b"]
+) {
+  background-color: #2d5546;
+}
+
+.takuzu-cell[data-given][data-reading]:not([data-selected]) {
+  background-color: #3e6253;
+}
+
+.takuzu-cell[data-selected] {
+  background-color: #315c4c;
+  box-shadow: inset 0 0 0 2px rgb(217 252 232 / 90%);
+}
+
+.takuzu-cell[data-selected]:is(:hover, :active) {
+  background-color: #315c4c;
+}
+
+.takuzu-cell:not([data-given], [data-selected], [data-reading]):hover {
+  background-color: #1a3b33;
+}
+
+.takuzu-cell:focus-visible {
+  z-index: 3;
+  outline: 2px solid #c1ffe9;
+  outline-offset: -4px;
+}
+
+.takuzu-cell[data-selected]:focus-visible {
+  box-shadow: none;
+}
+
+.takuzu-digit {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  font-family:
+    "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", ui-sans-serif,
+    sans-serif;
+  font-size: clamp(19px, 7.6vw, 42px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--takuzu-placed);
+  text-shadow: none;
+}
+
+.takuzu-cell[data-given] .takuzu-digit {
+  color: var(--takuzu-fixed);
+  text-shadow: none;
+}
+
+.takuzu-cell [data-takuzu-run-warning] {
+  background: rgb(168 74 62 / 17%);
+  box-shadow:
+    inset 0 -2px 0 #f4a08d,
+    inset 0 0 12px rgb(236 114 97 / 10%);
+}
+
+.takuzu-board-shell [data-takuzu-line-warning] {
+  background: #eca08d;
+  box-shadow: 0 0 6px rgb(232 139 124 / 36%);
+}
+
+.takuzu-line-indicator {
+  position: absolute;
+  z-index: 1;
+  --indicator-anchor: translateY(-50%);
+  --indicator-start: scaleY(0.18);
+  width: 2px;
+  height: 12px;
+  border-radius: 0;
+  background: #5c897b;
+  opacity: 0;
+  transform: var(--indicator-anchor);
+
+  pointer-events: none;
+}
+
+.takuzu-line-indicator--row {
+  right: 12px;
+}
+
+.takuzu-line-indicator--column {
+  --indicator-anchor: translateX(-50%);
+  --indicator-start: scaleX(0.18);
+  top: 12px;
+  width: 10px;
+  height: 2px;
+}
+
+.takuzu-line-indicator[data-reading]:not([data-completed]) {
+  background: #adc4b9;
+  opacity: 0.58;
+}
+
+.takuzu-line-indicator[data-completed] {
+  background: var(--takuzu-finish);
+  opacity: 0.46;
+}
+
+.takuzu-line-indicator[data-reading][data-completed] {
+  opacity: 0.72;
+}
+
+.takuzu-completion-trace {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.takuzu-completion-trace--row {
+  --signal-start: translateX(-100%);
+  --signal-end: translateX(100%);
+}
+
+.takuzu-completion-trace--column {
+  --signal-start: translateY(-100%);
+  --signal-end: translateY(100%);
+}
+
+.takuzu-completion-trace::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  opacity: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(141 255 215 / 14%) 50%,
+    transparent 100%
+  );
+}
+
+.takuzu-completion-trace--column::after {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgb(141 255 215 / 14%) 50%,
+    transparent 100%
+  );
+}
+
+@keyframes takuzu-completion-signal {
+  0% {
+    transform: var(--signal-start);
+    opacity: 0;
+  }
+  24% {
+    opacity: 1;
+  }
+  76% {
+    opacity: 1;
+  }
+  100% {
+    transform: var(--signal-end);
+    opacity: 0;
+  }
+}
+
+.takuzu-board-shell [data-clear-aura] {
+  position: absolute;
+  inset: -2px;
+  z-index: 5;
+  border: 2px solid #89f6d0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 24px rgb(99 246 189 / 17%),
+    0 0 24px rgb(99 246 189 / 25%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.takuzu-howto-figure {
+  padding: 2px;
+  border-color: #4b796f;
+  border-radius: 2px;
+  background: #294e47;
+  box-shadow: 0 2px 5px rgb(18 53 46 / 12%);
+}
+
+.takuzu-howto-cell {
+  background: #0d2522;
+}
+
+.takuzu-howto-cell[data-given] {
+  background: #2c5043;
+}
+
+.takuzu-howto-cell:not([data-given]):is([data-cell="a"], [data-cell="b"]) {
+  background: #1b3d32;
+}
+
+.takuzu-howto-digit {
+  font-family:
+    "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", ui-sans-serif,
+    sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--takuzu-placed, #a3dfc9);
+}
+
+.takuzu-howto-cell[data-given] .takuzu-howto-digit {
+  color: #d4e7e1;
+}
+
+.takuzu-howto-cell[data-run-warning] {
+  background: #382e2d;
+  box-shadow: inset 0 -2px 0 #f4a08d;
+}
+
+.takuzu-howto-figure [data-takuzu-line-warning] {
+  background: #eca08d;
+}
+
+@keyframes takuzu-line-confirm {
+  0% {
+    opacity: 0.12;
+    transform: var(--indicator-anchor) var(--indicator-start);
+    filter: brightness(1.5);
+  }
+  55% {
+    opacity: 0.94;
+    filter: brightness(1.4);
+  }
+  100% {
+    opacity: 0.46;
+    transform: var(--indicator-anchor);
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .takuzu-completion-trace[data-completed]::after {
+    animation: takuzu-completion-signal 500ms ease-out both;
+  }
+
+  .takuzu-board-shell[data-interaction-disabled] .takuzu-completion-trace--row {
+    --signal-start: translateX(-100%);
+    --signal-end: translateX(100%);
+  }
+
+  .takuzu-completion-trace--column {
+    --signal-start: translateY(-100%);
+    --signal-end: translateY(100%);
+  }
+
+  .takuzu-completion-trace::after {
+    animation: none;
+  }
+
+  .takuzu-line-indicator[data-completed] {
+    animation: takuzu-line-confirm 280ms ease-out both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .takuzu-cell,
+  .takuzu-line-indicator {
+    animation: none;
+    transition: none;
+  }
+}
