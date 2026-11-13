@@ -60,7 +60,7 @@ function playClearSound() {
   });
 }
 
-/** 結果の報酬の音はアプリが鳴らす。車の選択とその解除では鳴らさない。 */
+/** 結果の報酬の音はアプリが鳴らす。 */
 export function useParkingJamSoundEffects(
   operation: ParkingJamOperation | null,
   progress: GameProgress,

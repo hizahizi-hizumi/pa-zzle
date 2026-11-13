@@ -61,8 +61,7 @@ type ParkingJamTutorialSituation = TutorialSituation<
 >;
 
 /**
- * 5×5の駐車場に7台。手順の車を順に出しながら、出られない向きのわけを1つずつ示し、最後にほかの車を塞いでいる車を先に出す。
- * 手順を終えると、道が空いた右上の車・中段右の車と、その車に塞がれた中段左の車が残る。
+ * 5×5の駐車場に7台。
  *
  * ```text
  *        上の道路: 2〜4列
@@ -109,11 +108,6 @@ const blockerMessages = {
   car: "ほかの車があると\n通れません",
 } as const satisfies Record<ParkingJamTutorialBlocker, string>;
 
-/**
- * どちらへも出られる車を出させて、操作と、前か後ろへまっすぐ出ていくことを見せる。
- * 次に、進む先に道路がない向き・植え込みのある向きを避けて出させる。
- * 最後に、ほかの車を塞いでいる車を先に出させる。塞がれた車は、手を離してから自分で出させる。
- */
 const steps: readonly ParkingJamTutorialStep[] = [
   {
     message: {
@@ -243,8 +237,6 @@ const directionNames = {
   left: "左",
 } as const satisfies Record<ParkingJamDirection, string>;
 
-// 手を引く間の見出しはルールを言うので、違反の一言はその手に当てはめ、動かした向きと当たったものを言う。
-// 道路は、同じ側でもほかの車線にはあることがあるので、その車の進む先の車線に道路がないと言う（本番の判定と同じく車線で決まる）。
 const violationMessages = {
   road: (direction) => `${direction}へ進む先に道路がないので\n出られません`,
   planter: (direction) => `${direction}に植え込みがあるので\n通れません`,
@@ -254,7 +246,6 @@ const violationMessages = {
   (direction: string) => string
 >;
 
-// 動きを減らす設定で当たって揺れる動きが見えなくても、一言が替わることで手が届いたことが分かる。
 function describeParkingJamTutorialViolation(
   situation: ParkingJamTutorialSituation,
   { lastMove }: ParkingJamTutorialBoardState,
