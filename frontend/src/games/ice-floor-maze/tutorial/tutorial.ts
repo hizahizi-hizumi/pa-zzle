@@ -24,15 +24,6 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-/**
- * - `slide`: 選んだ向きへ、駒は岩か壁にぶつかるまで止まらずに滑る。
- * - `floor`: 床に入ると、駒はそこで止まる。
- * - `brittle-rock`: もろい岩は岩と同じく駒を止め、ぶつかると止まった後に崩れて氷になる。
- * - `thin-ice`: 薄い氷は上を滑れ、駒が離れると割れて水面になる。水面は駒を止める。
- * - `snow`: 雪に入ると、雪を1マス先へ押し出して雪のマスで止まる。押し出した雪は雪山になり、駒を止める。
- * - `sliding-block`: 滑る氷の塊にぶつかると、塊を押しながら一緒に滑り、塊が止まるとその手前で止まる。
- * - `goal`: ゴールで止まると完成する。通り過ぎただけでは完成しない。
- */
 export type IceFloorMazeTutorialRuleId =
   | "slide"
   | "floor"
@@ -42,7 +33,6 @@ export type IceFloorMazeTutorialRuleId =
   | "sliding-block"
   | "goal";
 
-/** 本番と同じく、駒を滑らせる向きを選ぶ。 */
 export type IceFloorMazeTutorialAction = { direction: IceFloorMazeDirection };
 
 /**
@@ -66,9 +56,7 @@ export type IceFloorMazeTutorialSlideReading = {
   reasonCellIndices: readonly number[];
 };
 
-/**
- * 直前の滑り。盤面の跡・動き・合図に使う。`reasonCellIndices` は滑る前の盤面で読んだ決め手。
- */
+/** 直前の滑り。`reasonCellIndices` は滑る前の盤面で読んだ決め手。 */
 export type IceFloorMazeTutorialMove = {
   slide: IceFloorMazeSlid;
   reasonCellIndices: readonly number[];
@@ -185,7 +173,6 @@ const steps: readonly IceFloorMazeTutorialStep[] = [
   },
 ];
 
-/** 止め役のマスで止まった滑りが、そのマスのために頼るルール。岩・盤面の外は滑るルールだけで読める。 */
 function getStopperRuleId(
   state: IceFloorMazeState,
   stopper: number,
@@ -201,12 +188,13 @@ function getStopperRuleId(
     case "snow":
     case "snow-mound":
       return "snow";
+    // 岩・盤面の外は滑るルールだけで読める。
     default:
       return null;
   }
 }
 
-/** 滑りを、どのルールで読めば止まる位置と盤面の変わり方が分かるか。`state` は滑る前の状態。 */
+/** `state` は滑る前の状態。 */
 export function readIceFloorMazeTutorialSlide(
   state: IceFloorMazeState,
   slide: IceFloorMazeSlid,
@@ -295,7 +283,6 @@ function slideTutorialState(
   return slide.status === "slid" ? applyIceFloorMazeSlide(state, slide) : state;
 }
 
-/** 手順の印のマスへ止まる滑り。印のマスへ止まる向きが無ければ `null`。 */
 function findStepSlide(
   state: IceFloorMazeState,
   target: number,

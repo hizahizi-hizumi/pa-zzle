@@ -16,7 +16,6 @@ vi.mock("@/lib/sound-effects", async (importOriginal) => ({
   playSound: vi.fn(),
 }));
 
-/** 6列の盤面の、左上を (0, 0) とする列 `x`・行 `y` のマス。 */
 function cellAt(x: number, y: number): number {
   return y * 6 + x;
 }
@@ -108,7 +107,6 @@ function getPiecePosition(): number {
   );
 }
 
-/** 印を付けたマス。印が無ければ `null`。 */
 function getCuedCell(): number | null {
   const cue = document.querySelector("[data-cell-cue]");
   return cue ? Number(cue.getAttribute("data-cell-cue")) : null;

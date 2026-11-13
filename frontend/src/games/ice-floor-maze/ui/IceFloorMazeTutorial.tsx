@@ -111,7 +111,6 @@ function getStepSettleDelayMs(
     : null;
 }
 
-/** 本番の盤面が跡を描き、滑り・変化・音を動かすための、直前の滑り。 */
 function createLastSlide(
   id: number,
   { slide }: IceFloorMazeTutorialMove,

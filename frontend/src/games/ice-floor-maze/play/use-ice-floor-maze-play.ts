@@ -56,12 +56,11 @@ import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 /**
- * 直前の成立した滑り。盤面はこれで跡を描き、滑りを動かす。`id` は滑りごとに変わる。
- * `from` から `path` のマスを順に通り、最後のマス `to` で止まった。`passedGoal` はゴールを止まらずに通り過ぎたか。
+ * 直前の成立した滑り。`id` は滑りごとに変わる。
+ * `from` から `path` のマスを順に通り、最後のマス `to` で止まった。
  * `crumbledRock` はこの滑りで崩れたもろい岩、`crackedIce` は割れて水面になった薄い氷のマス。
  * `pushedSnow` は押し出した雪（雪のマスから雪山になったマスへ）で、駒は雪のマスで止まった。
  * `movedBlock` は押して動かした滑る氷の塊で、駒は塊の元のマスに入ってから塊と一緒に進み、塊の止まったマスの手前で止まった。
- * `stoppedOnFloor` は止め役にぶつからず、床に入って止まったか。
  * `entersTrap` はもうゴールに止まれないことを知らせていない状態から、知らせる状態へ入ったか。知らせた後の滑りでは `false`。
  * 成立しない向きの入力では変わらず、待った・盤面を戻す・リセット・別の問題で消える。
  */
@@ -82,9 +81,8 @@ export type IceFloorMazeLastSlide = {
 };
 
 /**
- * 直前の入力が、すぐ隣が止め役か外壁で1マスも動けなかったこと。盤面はこれで押し戻しを動かす。盤面と直前の滑りは変わらない。
+ * 直前の入力が、すぐ隣が止め役か外壁で1マスも動けなかったこと。盤面と直前の滑りは変わらない。
  * `stopper` は駒を阻んだ隣のマス（岩・もろい岩・水面・雪山・盤面の外・押し出せない雪・滑る氷の塊のあるマス）で、外周の外壁なら `null`。
- * 隣のもろい岩はこの入力では崩れず、隣の滑る氷の塊は動かない。
  * `id` は入力ごとに変わり、同じ向きを続けて選んでも別の入力として見分けられる。
  */
 export type IceFloorMazeBlockedInput = {
@@ -103,7 +101,6 @@ export type IceFloorMazeResult = IceFloorMazeSessionResult & {
   score: IceFloorMazePlayScore;
 };
 
-/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createIceFloorMazeResult(
   sessionResult: IceFloorMazeSessionResult,
   problemIdentity: IceFloorMazeRecordedProblemIdentity,
@@ -154,12 +151,7 @@ export type IceFloorMazePlay = GamePlay<
     undoCount: number;
     restartCount: number;
     optimalMoveCount: number;
-    /**
-     * もうゴールに止まれないことを知らせるプレイ中だけ `true`。詰み（どう滑ってもゴールで止まれない）のまま、
-     * 待った・盤面を戻すを使わずに `deadlockNoticeSlideCount` 回滑ったら知らせる。詰みの中で移れる状態が
-     * `confinedDeadlockStateCount` 以下なら、その状態へ滑った時点で知らせる。そこから待った・盤面を戻すで戻っても、
-     * ゴールで止まれる状態に戻るまで知らせ続ける。
-     */
+    /** もうゴールに止まれないことを知らせるプレイ中だけ `true`。 */
     isTrapped: boolean;
     lastSlide: IceFloorMazeLastSlide | null;
     /** 直前の入力が成立しなかったときだけ値を持つ。次に滑ったときや盤面が戻ったときに消える。 */
@@ -184,19 +176,12 @@ type IceFloorMazePlayState = {
   blockedInput: IceFloorMazeBlockedInput | null;
 };
 
-/**
- * 詰みに入ってから、気づいていなさそうと見なして知らせるまでの滑りの数。詰みに入った滑りは数えない。
- * 詰みに入ってすぐ知らせると試行錯誤を遮るので、詰みのまま滑り続けて気づいていなさそうなときだけ知らせる。
- */
+/** 詰みに入ってから、気づいていなさそうと見なして知らせるまでの滑りの数。詰みに入った滑りは数えない。 */
 const deadlockNoticeSlideCount = 10;
 
-/**
- * 詰みの中で移れる状態（今の状態を含む）がこの数以下なら、滑りを数えずにすぐ知らせる。
- * 数種類の状態を行き来するだけなら試行錯誤の余地が無く、知らせを遅らせても待たせるだけになる。
- */
+/** 詰みの中で移れる状態（今の状態を含む）がこの数以下なら、滑りを数えずにすぐ知らせる。 */
 const confinedDeadlockStateCount = 3;
 
-/** 詰みでない状態の、知らせまでの数と知らせ。 */
 const notDeadlocked = {
   deadlockedSlideCount: null,
   trapNoticed: false,
@@ -205,7 +190,6 @@ const notDeadlocked = {
   "deadlockedSlideCount" | "trapNoticed"
 >;
 
-/** プレイを始めたときと待った・盤面を戻すの後の、直前の滑りも成立しなかった入力も無い状態。 */
 const clearedInputs = {
   lastSlide: null,
   blockedInput: null,
@@ -337,11 +321,6 @@ function findDeadlock(
   return deadlock;
 }
 
-/**
- * 滑った後に、もうゴールに止まれないことを知らせるか。詰みの状態から滑るたびに数え、
- * `deadlockNoticeSlideCount` 回に達したら知らせる。移れる状態が `confinedDeadlockStateCount` 以下の詰みへ
- * 滑ったら、数えずに知らせる。詰みの状態からどう滑っても詰みのままなので、一度知らせたら滑っても消えない。
- */
 function noticeDeadlockAfterSlide(
   { deadlockedSlideCount, trapNoticed }: IceFloorMazePlayState,
   deadlock: IceFloorMazeDeadlock | null,
@@ -353,6 +332,7 @@ function noticeDeadlockAfterSlide(
     deadlockedSlideCount === null ? 0 : deadlockedSlideCount + 1;
   return {
     deadlockedSlideCount: nextCount,
+    // 詰みの状態からどう滑っても詰みのままなので、一度知らせたら滑っても消えない。
     trapNoticed:
       trapNoticed ||
       nextCount >= deadlockNoticeSlideCount ||

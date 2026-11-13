@@ -47,9 +47,7 @@ type IceFloorMazeBoardProps = {
   goal: number;
   /** 駒のいるマス。 */
   position: number;
-  /** 直前の成立した滑り。跡を描き、滑りを動かす。 */
   lastSlide: IceFloorMazeLastSlide | null;
-  /** 直前の成立しなかった入力。押し戻しと、阻んだもろい岩・滑る氷の塊の揺れを動かす。跡には関わらない。 */
   blockedInput: IceFloorMazeBlockedInput | null;
   /** ゴールで止まってから完成演出を終えるまでの間だけ `true`。 */
   clearing: boolean;
@@ -142,12 +140,7 @@ const clearPopKeyframes: Keyframe[] = [
   { transform: "scale(1)" },
 ];
 
-/**
- * 盤面の外壁・氷・床・岩・もろい岩・崩れた跡・薄い氷・水面・雪・雪山・滑る氷の塊・ゴール・駒と直前の滑りの跡を描き、
- * 滑り・ぶつかって止まる反応・ゴールの通過・崩れる・割れる・雪を押し出す・塊を押す・押し戻し・完成演出を動かす。入力は受けない。
- * 雪山と滑る氷の塊はゴールの印の上に描き、ゴールをふさいでいると読ませる。
- * チュートリアルでは、駒を止めるマスの印と、画面全体の覆いから抜くマスを盤面の上に重ねる。
- */
+/** 入力は受けない。 */
 export function IceFloorMazeBoard({
   board,
   cells,
@@ -332,6 +325,7 @@ export function IceFloorMazeBoard({
                     to={lastSlide.to}
                   />
                 ) : null}
+                {/* 雪山と滑る氷の塊はゴールの印の上に描き、ゴールをふさいでいると読ませる。 */}
                 {isGoalBuried ? null : (
                   <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
                     <IceFloorMazeGoalMark />
