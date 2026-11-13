@@ -57,7 +57,7 @@ export function SlidePuzzlePlay({
   onStartNewProblem,
   onClearAnimationComplete,
   onOpenGameHome,
-  onBackToHome,
+  onBackToAppHome,
   onOpenDiagnostics,
 }: SlidePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
@@ -111,7 +111,7 @@ export function SlidePuzzlePlay({
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
-      onBackToHome={onBackToHome}
+      onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <SlidePuzzleHowToPlayDialog open={open} onClose={onClose} />

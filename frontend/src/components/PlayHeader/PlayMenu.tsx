@@ -30,7 +30,7 @@ type PlayMenuProps = {
   onReplay?: () => void;
   onStartNewProblem: () => void;
   onOpenGameHome: () => void;
-  onBackToHome: () => void;
+  onBackToAppHome: () => void;
   onOpenHowToPlay?: () => void;
   onOpenTutorial?: () => void;
   onOpenDiagnostics?: () => void;
@@ -42,7 +42,7 @@ export function PlayMenu({
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
-  onBackToHome,
+  onBackToAppHome,
   onOpenHowToPlay,
   onOpenTutorial,
   onOpenDiagnostics,
@@ -88,7 +88,7 @@ export function PlayMenu({
             <Grid2x2 />
             問題選択
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={onBackToHome}>
+          <DropdownMenuItem onSelect={onBackToAppHome}>
             <Home />
             パズル選択
           </DropdownMenuItem>

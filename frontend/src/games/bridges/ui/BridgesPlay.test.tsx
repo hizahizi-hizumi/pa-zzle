@@ -63,7 +63,7 @@ describe("BridgesPlay", () => {
     onClearAnimationComplete: vi.fn(),
     onStartNewProblem: vi.fn(),
     onOpenGameHome: vi.fn(),
-    onBackToHome: vi.fn(),
+    onBackToAppHome: vi.fn(),
   };
   const baseProps: ComponentProps<typeof BridgesPlay> = {
     difficulty: "5",

@@ -142,8 +142,7 @@ export type GamePlayScreenProps<Difficulty, Result> = Omit<
   GamePlayResultScreenProps<Difficulty, Result>,
   "result" | "onReplay"
 > & {
-  /** アプリのホームへ移る。 */
-  onBackToHome: () => void;
+  onBackToAppHome: () => void;
   progress: GameProgress;
   elapsedMs: number;
   result: Result | null;

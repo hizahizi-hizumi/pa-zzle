@@ -120,7 +120,7 @@ export function TsumeShogiPlay({
   onClearAnimationComplete,
   onStartNewProblem,
   onOpenGameHome,
-  onBackToHome,
+  onBackToAppHome,
   onOpenDiagnostics,
 }: TsumeShogiPlayProps) {
   const playing = progress === "playing";
@@ -186,7 +186,7 @@ export function TsumeShogiPlay({
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
-      onBackToHome={onBackToHome}
+      onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <TsumeShogiHowToPlayDialog open={open} onClose={onClose} />

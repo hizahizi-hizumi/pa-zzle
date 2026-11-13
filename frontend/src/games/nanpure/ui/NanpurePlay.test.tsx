@@ -55,7 +55,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
     onOpenGameHome: vi.fn(),
-    onBackToHome: vi.fn(),
+    onBackToAppHome: vi.fn(),
     onClearAnimationComplete: vi.fn(),
   };
 }

@@ -81,7 +81,7 @@ export function ReflectionPlay({
   onClearAnimationComplete,
   onStartNewProblem,
   onOpenGameHome,
-  onBackToHome,
+  onBackToAppHome,
   onOpenDiagnostics,
 }: ReflectionPlayProps) {
   const playing = progress === "playing";
@@ -148,7 +148,7 @@ export function ReflectionPlay({
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
-      onBackToHome={onBackToHome}
+      onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <ReflectionHowToPlayDialog open={open} onClose={onClose} />

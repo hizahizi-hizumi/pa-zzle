@@ -62,7 +62,7 @@ describe("TakuzuPlay", () => {
     onClearAnimationComplete: vi.fn(),
     onStartNewProblem: vi.fn(),
     onOpenGameHome: vi.fn(),
-    onBackToHome: vi.fn(),
+    onBackToAppHome: vi.fn(),
   };
 
   function renderPlay(
@@ -153,7 +153,7 @@ describe("TakuzuPlay", () => {
       fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
       expect(callbacks.onOpenGameHome).toHaveBeenCalledOnce();
-      expect(callbacks.onBackToHome).not.toHaveBeenCalled();
+      expect(callbacks.onBackToAppHome).not.toHaveBeenCalled();
     });
 
     describe("メニューを開いた場合", () => {
@@ -166,7 +166,7 @@ describe("TakuzuPlay", () => {
         ["リセット", "onReplay"],
         ["別の問題", "onStartNewProblem"],
         ["問題選択", "onOpenGameHome"],
-        ["パズル選択", "onBackToHome"],
+        ["パズル選択", "onBackToAppHome"],
       ] as const;
 
       test.each(menuCases)(

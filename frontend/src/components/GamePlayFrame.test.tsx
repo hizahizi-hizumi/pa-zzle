@@ -28,7 +28,7 @@ function renderFrame(
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
     onOpenGameHome: vi.fn(),
-    onBackToHome: vi.fn(),
+    onBackToAppHome: vi.fn(),
     renderResultScreen: (clearedResult) => <p>結果 {clearedResult}</p>,
     renderHowToPlayDialog: () => null,
     renderTutorial,

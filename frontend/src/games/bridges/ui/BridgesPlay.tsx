@@ -55,7 +55,7 @@ export function BridgesPlay({
   onClearAnimationComplete,
   onStartNewProblem,
   onOpenGameHome,
-  onBackToHome,
+  onBackToAppHome,
   onOpenDiagnostics,
 }: BridgesPlayProps) {
   useBridgesSoundEffects(edgeNotice, progress, board, bridges);
@@ -75,7 +75,7 @@ export function BridgesPlay({
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
-      onBackToHome={onBackToHome}
+      onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <BridgesHowToPlayDialog open={open} onClose={onClose} />
