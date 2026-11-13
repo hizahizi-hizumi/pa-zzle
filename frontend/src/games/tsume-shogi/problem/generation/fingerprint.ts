@@ -31,7 +31,6 @@ export type TsumeShogiProblemFingerprint = {
   attack: string;
 };
 
-/** 左右反転して見るか。 */
 type Orientation = "original" | "mirrored";
 
 const orientations: readonly Orientation[] = ["original", "mirrored"];
@@ -109,13 +108,11 @@ function formatAttackKey(
   return parts.join(" ");
 }
 
-/** 向きごとの値のうち小さい方。左右反転した問題が同じ値になる。 */
 function canonicalize(format: (orientation: Orientation) => string): string {
   const [original, mirrored] = orientations.map(format) as [string, string];
   return original < mirrored ? original : mirrored;
 }
 
-/** 攻方の手の手筋。打・成・取・捨（次の玉方の手で取られる）を並べる。 */
 function describeAttackerMotif(
   position: TsumeShogiPosition,
   move: TsumeShogiMove,
@@ -138,7 +135,6 @@ function describeAttackerMotif(
   return tags.join("");
 }
 
-/** 玉方の手の手筋。玉が逃げるか、駒を取るか。 */
 function describeDefenderMotif(
   position: TsumeShogiPosition,
   move: TsumeShogiMove,

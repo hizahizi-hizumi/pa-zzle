@@ -18,15 +18,12 @@ import {
  * 攻方の手は、最短で詰む王手のうち詰め上がりの持駒が少ない方を、並べば列挙の順で最初の手を選ぶ。
  */
 
-/** 作意の攻方の手番ごとの記録。 */
 export type TsumeShogiAttackerTurn = {
   /** 残りの手数以内に詰む王手の数。1 なら攻方の正解は一意、2 以上は余詰。 */
   matingCheckCount: number;
 };
 
-/** 作意の玉方の手番ごとの記録。 */
 export type TsumeShogiDefenderTurn = {
-  /** 王手を受ける合法手の数。 */
   responseCount: number;
   /** 詰むまでの手数が最も長くなる応手の数。2 以上は変化同手数。 */
   longestResponseCount: number;
@@ -39,9 +36,7 @@ export type TsumeShogiMainLine = {
   moves: TsumeShogiMove[];
   attackerTurns: TsumeShogiAttackerTurn[];
   defenderTurns: TsumeShogiDefenderTurn[];
-  /** 詰め上がりで攻方に残った持駒の枚数。 */
   leftoverAttackerPieceCount: number;
-  /** 作意の玉方の手に合駒があるか。 */
   hasDefenderInterposition: boolean;
 };
 
@@ -52,7 +47,7 @@ type Evaluation = {
   leftoverAttackerPieceCount: number;
 };
 
-/** 攻方の手番の局面から、`maximumPlies` 手以内で最短の詰み手数。詰まなければ `null`。 */
+/** 攻方の手番の局面から、`maximumPlies` 手以内で最短の詰み手数。 */
 export function findTsumeShogiShortestMate(
   position: TsumeShogiPosition,
   maximumPlies: number,

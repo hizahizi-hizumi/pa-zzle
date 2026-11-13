@@ -7,7 +7,6 @@ const problem = parseTsumeShogiProblemText({
   mainLine: ["S*3c", "3b3a", "2d2b"],
 });
 
-/** 同じ問題を左右反転したもの。 */
 const mirrored = parseTsumeShogiProblemText({
   sfen: "3s5/2k6/9/1+R1P5/9/9/9/9/9 b Sr2b4g2s4n4l17p 1",
   mainLine: ["S*7c", "7b7a", "8d8b"],

@@ -32,7 +32,6 @@ import {
 } from "@/games/tsume-shogi/puzzle/position";
 
 /**
- * 事前生成した問題集の1問。
  * - `seed`: 生成器の identity の seed（例: `ts-5-c6-99-12`、`ts-3-c1-4-move-7`）。手数と生成条件（初手の王手の数の範囲、
  *   起点の詰め手の種類）を含むので、ここから identity を再構成する。
  * - `position`: 初期局面の盤面（SFEN の盤面の部分）と攻方の持駒（SFEN の持駒の書き方、無ければ `-`）を空白で区切ったもの。
@@ -52,7 +51,6 @@ export type TsumeShogiProblemPoolEntry = readonly [
 ];
 
 /**
- * 問題集の中の1問を指す識別情報。
  * - `poolVersion`: 問題集を作り直して問題の並びが変わったら上げる。
  * - `problemId`: `<レベル>-<番号>`（番号はレベルの中の1始まりの並び順）。例: `4-17`。
  * 生成器の identity（`TsumeShogiProblemIdentity`）とは相互に引ける。
@@ -62,7 +60,6 @@ export type TsumeShogiProblemPoolReference = {
   problemId: string;
 };
 
-/** 問題集から復元した1問と、その作業の量、問題集の中の位置。 */
 export type TsumeShogiPooledProblem = TsumeShogiIdentifiedProblem & {
   workload: TsumeShogiSolveWorkload;
   poolReference: TsumeShogiProblemPoolReference;
@@ -137,7 +134,7 @@ export function storeTsumeShogiProblemPool(json: unknown): void {
   loadedProblemPool = json as TsumeShogiProblemPool;
 }
 
-/** 問題集の本体を読み込み終えたか。問題を復元する関数は、読み込み終えてから呼ぶ。 */
+/** 問題を復元する関数は、読み込み終えてから呼ぶ。 */
 export function isTsumeShogiProblemPoolLoaded(): boolean {
   return loadedProblemPool !== undefined;
 }
@@ -149,7 +146,6 @@ function getProblemPool(): TsumeShogiProblemPool {
   return loadedProblemPool;
 }
 
-/** 初期局面を問題集の形（盤面と攻方の持駒）にする。 */
 export function formatTsumeShogiPoolPosition(
   position: TsumeShogiPosition,
 ): string {
@@ -161,7 +157,7 @@ export function formatTsumeShogiPoolPosition(
   return `${board} ${attackerHand === "" ? "-" : attackerHand}`;
 }
 
-/** 問題集の形の初期局面を読む。駒箱は盤面と攻方の持駒から求める。読めなければ `RangeError` を投げる。 */
+/** 駒箱は盤面と攻方の持駒から求める。 */
 export function parseTsumeShogiPoolPosition(text: string): TsumeShogiPosition {
   const [board, hand, ...rest] = text.split(" ");
   if (
@@ -191,7 +187,6 @@ const handPieceTypeByLetter: Record<string, TsumeShogiHandPieceType> = {
   P: "pawn",
 };
 
-/** 問題集の seed から identity を作る。問題集で使う形でなければ `RangeError` を投げる。 */
 export function parseTsumeShogiPoolSeed(
   seed: string,
 ): TsumeShogiProblemIdentity {
@@ -238,7 +233,6 @@ function toProblem(position: string, mainLine: string): TsumeShogiProblem {
   };
 }
 
-/** 問題集の1問の identity。seed から再構成する。 */
 export function toTsumeShogiPoolIdentity([
   seed,
 ]: TsumeShogiProblemPoolEntry): TsumeShogiProblemIdentity {
@@ -252,7 +246,6 @@ export function formatTsumeShogiPoolProblemId(
   return `${difficulty}-${entryIndex + 1}`;
 }
 
-/** 問題集の1問を、問題集の中の位置 `poolReference` を添えて復元する。 */
 export function restoreTsumeShogiPoolEntry(
   [
     seed,
@@ -310,7 +303,6 @@ export function listTsumeShogiPoolEntries(
   return getProblemPool().levels[difficulty];
 }
 
-/** 問題集の1問の索引の項目。始めたときの局面の駒を数える。 */
 export function toTsumeShogiPoolIndexEntry([
   seed,
   position,
@@ -360,7 +352,6 @@ export function hasTsumeShogiPoolProblemId(
   return problemIdIndex.findPositionById(difficulty, problemId) !== null;
 }
 
-/** 難易度の問題集から問題 ID で1問を探して復元する。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findTsumeShogiPooledProblemByProblemId(
   difficulty: TsumeShogiDifficulty,
   problemId: string,
@@ -386,7 +377,6 @@ function getPositionsBySeed(): ReadonlyMap<string, PoolPosition> {
   return positionsBySeed;
 }
 
-/** identity に一致する問題集の1問を復元する。生成器の版や条件が違う identity・問題集に無い identity には `null` を返す。 */
 export function findTsumeShogiPooledProblem(
   identity: TsumeShogiProblemIdentity,
 ): TsumeShogiPooledProblem | null {
@@ -416,7 +406,7 @@ export type TsumeShogiProblemFeatures = {
   boardPieceCount: number;
 };
 
-/** 難易度の問題集の1問の特徴を、問題集の本体を読み込まずに索引から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+/** 難易度の問題集の1問の特徴を、問題集の本体を読み込まずに索引から求める。 */
 export function findTsumeShogiPoolProblemFeatures(
   difficulty: TsumeShogiDifficulty,
   problemId: string,

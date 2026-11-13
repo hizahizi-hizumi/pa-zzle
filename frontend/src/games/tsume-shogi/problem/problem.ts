@@ -28,7 +28,6 @@ import {
 } from "@/lib/type-guards";
 
 /**
- * 1問を遊ぶためのデータ。
  * - `initialPosition`: 攻方の手番の初期局面。玉方の持駒は駒箱。
  * - `plies`: 詰むまでの手数（奇数）。
  * - `mainLine`: 作意。攻方・玉方の順に交互に並び、最後は詰めた攻方の手。攻方の手はどの手番でも、残りの手数以内に
@@ -69,7 +68,6 @@ export const tsumeShogiBaseMates = ["board-move"] as const;
 
 export type TsumeShogiBaseMate = (typeof tsumeShogiBaseMates)[number];
 
-/** seed の中で起点の詰め手の種類を表す語。 */
 const baseMateSeedLabels = {
   "board-move": "move",
 } as const satisfies Record<TsumeShogiBaseMate, string>;
@@ -82,14 +80,11 @@ export const tsumeShogiBaseKingAreas = ["middle"] as const;
 
 export type TsumeShogiBaseKingArea = (typeof tsumeShogiBaseKingAreas)[number];
 
-/** seed の中で起点の玉の範囲を表す語。 */
 const baseKingAreaSeedLabels = {
   middle: "mid",
 } as const satisfies Record<TsumeShogiBaseKingArea, string>;
 
 /**
- * 問題を作る条件。
- * - `plies`: 手数。
  * - `rootChecks`: 初手の合法な王手の数をこの範囲に絞る。難易度のレベルごとに候補の領域を寄せるために使う。省略すると絞らない。
  * - `baseMate`: 逆算の起点にする1手詰の詰め手の種類。省略すると絞らない。
  * - `baseKingArea`: 逆算の起点にする1手詰で玉を置く範囲。省略すると盤の上の端（1〜3段目）に置く。
@@ -111,7 +106,6 @@ export type TsumeShogiProblemIdentity = {
 /** 記録に残した問題の識別情報。生成器の版が今と違う記録も読み込む。 */
 export type TsumeShogiRecordedProblemIdentity = RecordedProblemIdentity;
 
-/** 問題と、それを再現するための情報。 */
 export type TsumeShogiIdentifiedProblem = {
   problem: TsumeShogiProblem;
   identity: TsumeShogiProblemIdentity;
@@ -205,7 +199,6 @@ export function formatTsumeShogiGenerationConditionsText({
   ].join(":");
 }
 
-/** `formatTsumeShogiGenerationConditionsText` の文字列を読む。読めなければ `RangeError` を投げる。 */
 export function parseTsumeShogiGenerationConditionsText(
   text: string,
 ): TsumeShogiGenerationConditions {
@@ -236,7 +229,6 @@ export function parseTsumeShogiGenerationConditionsText(
   });
 }
 
-/** 2つの生成条件が同じか。 */
 export function isSameTsumeShogiGenerationConditions(
   left: TsumeShogiGenerationConditions,
   right: TsumeShogiGenerationConditions,
@@ -250,7 +242,6 @@ export function isSameTsumeShogiGenerationConditions(
   );
 }
 
-/** seed の中の起点の詰め手の種類を表す語から、種類を引く。 */
 export function parseTsumeShogiBaseMateSeedLabel(
   label: string,
 ): TsumeShogiBaseMate | undefined {
@@ -259,7 +250,6 @@ export function parseTsumeShogiBaseMateSeedLabel(
   );
 }
 
-/** seed の中の起点の玉の範囲を表す語から、範囲を引く。 */
 export function parseTsumeShogiBaseKingAreaSeedLabel(
   label: string,
 ): TsumeShogiBaseKingArea | undefined {
@@ -339,7 +329,6 @@ export function isTsumeShogiSolveWorkload(
   );
 }
 
-/** 作業の量が、識別情報の生成条件（手数と初手の王手の数の範囲）と食い違わないか。 */
 export function isTsumeShogiWorkloadOfIdentity(
   workload: TsumeShogiSolveWorkload,
   identity: TsumeShogiProblemIdentity,
@@ -364,8 +353,7 @@ export function isTsumeShogiRootCheckRange(
 }
 
 /**
- * 問題として遊べるかを確かめる。成り立たなければ `RangeError` を投げる。
- * 作意が合法で、攻方が毎手王手をかけ、作意の通りに `plies` 手で詰み、各攻方の手が残りの手数以内に詰む手であること。
+ * 問題として遊べるかを確かめる。
  * 攻方の正解が一意かなどの品質は生成時の strict validator が確かめる。
  */
 export function assertTsumeShogiProblem(problem: TsumeShogiProblem): void {
@@ -416,7 +404,7 @@ export function formatTsumeShogiProblemText(
   };
 }
 
-/** 文字列の形から問題を読む。局面・着手として読めなければ `RangeError` を投げる。問題として成り立つかは見ない。 */
+/** 局面・着手として読めなければ `RangeError` を投げる。問題として成り立つかは見ない。 */
 export function parseTsumeShogiProblemText(
   text: TsumeShogiProblemText,
 ): TsumeShogiProblem {
