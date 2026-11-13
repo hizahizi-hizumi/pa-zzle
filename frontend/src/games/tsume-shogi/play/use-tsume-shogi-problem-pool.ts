@@ -5,13 +5,9 @@ import {
   loadTsumeShogiProblemPool,
 } from "@/games/tsume-shogi/problem/problem-pool";
 
-/** 問題集の本体の読み込み。`failed` は読み込めなかった（通信が切れたなど）。 */
 export type TsumeShogiProblemPoolStatus = "loading" | "loaded" | "failed";
 
-/**
- * 詰将棋の画面を開いたときに問題集の本体を読み込み、その状態を返す。読み込み済みなら最初から `loaded` を返す。
- * 問題を選ぶ・復元するのは `loaded` になってから。
- */
+/** 問題を選ぶ・復元するのは `loaded` になってから。 */
 export function useTsumeShogiProblemPool(): TsumeShogiProblemPoolStatus {
   const [status, setStatus] = useState<TsumeShogiProblemPoolStatus>(() =>
     isTsumeShogiProblemPoolLoaded() ? "loaded" : "loading",
@@ -37,12 +33,9 @@ export function useTsumeShogiProblemPool(): TsumeShogiProblemPoolStatus {
   return status;
 }
 
-/**
- * 詰将棋のプレイ画面へ進む前の画面（ゲームのホーム）を開いたときに、問題集の本体を先に読み込み始める。
- * 読み込めなくても知らせず、プレイ画面を開いたときに読み込み直す。
- */
 export function usePreloadTsumeShogiProblemPool(): void {
   useEffect(() => {
+    // 読み込めなくても知らせず、プレイ画面を開いたときに読み込み直す。
     loadTsumeShogiProblemPool().catch(function ignorePreloadFailure() {});
   }, []);
 }

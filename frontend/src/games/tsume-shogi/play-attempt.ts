@@ -2,7 +2,6 @@ import { getSessionElapsedMs } from "@/games/session";
 import type { TsumeShogiSession } from "@/games/tsume-shogi/session/session";
 import type { PlayAttemptProgress } from "@/records/play-attempt";
 
-/** 離れた時点までの実測値。評価値は保存しない。 */
 export function createTsumeShogiPlayAttemptProgress(
   session: TsumeShogiSession,
   abandonedAt: number,

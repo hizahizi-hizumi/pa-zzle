@@ -27,61 +27,38 @@ import {
 } from "@/games/tsume-shogi/puzzle/position";
 
 /**
- * 攻方の1手がどの筋か。
- * - `main`: 作意どおりの王手。玉方は作意の応手を指す。
  * - `alternative`: 作意ではないが、残りの手数以内に詰む王手。strict validator が採用した問題（攻方の正解が一意）では
  *   起きないが、安全側に詰みへ向かう手として受け、玉方は最も長く逃れる応手を指す。
  * - `wrong`: 残りの手数以内に詰まない王手（誤王手）と、その筋を続けた王手。玉方は詰まなくなる応手（反証）を指す。
  */
 export type TsumeShogiTurnLine = "main" | "alternative" | "wrong";
 
-/**
- * 攻方の1手と玉方の応手。
- * - `defenderMove`: 玉方の応手。攻方の手で詰んだときは `null`。
- * - `positionAfterDefense`: 玉方の応手の後の局面。詰んだときは `positionAfterAttack` と同じ。
- * - `canContinue`: 応手の後に、攻方がこの筋を続けられるか。誤王手の筋で、残りの手数が尽きたか王手が無ければ `false`。
- */
 export type TsumeShogiSessionTurn = {
   line: TsumeShogiTurnLine;
   attackerMove: TsumeShogiMove;
   positionAfterAttack: TsumeShogiPosition;
+  /** 攻方の手で詰んだときは `null`。 */
   defenderMove: TsumeShogiMove | null;
+  /** 詰んだときは `positionAfterAttack` と同じ。 */
   positionAfterDefense: TsumeShogiPosition;
+  /** 応手の後に、攻方がこの筋を続けられるか。誤王手の筋で、残りの手数が尽きたか王手が無ければ `false`。 */
   canContinue: boolean;
 };
 
-/**
- * 選んでいる攻方の駒。
- * - `board`: 盤上の駒。移動先の升を押すと指す。
- * - `hand`: 持駒の種類。空いた升を押すと打つ。
- */
 export type TsumeShogiSelection =
   | { type: "board"; square: TsumeShogiSquare }
   | { type: "hand"; pieceType: TsumeShogiHandPieceType };
 
-/** 成と不成のどちらもルール上指せる移動で、どちらにするかを選んでいる途中。 */
 export type TsumeShogiPromotionChoice = {
   from: TsumeShogiSquare;
   to: TsumeShogiSquare;
 };
 
-/**
- * 着手させなかった入力。
- * - `illegal`: 将棋のルールで指せない手（動けない升・二歩・打歩詰・行き所のない駒など）。
- * - `not-check`: 指せるが王手にならない手。
- */
 export type TsumeShogiRejection = {
   reason: "illegal" | "not-check";
   to: TsumeShogiSquare;
 };
 
-/**
- * 画面の手番。
- * - `attacker`: 攻方の着手を待っている。
- * - `defender`: 攻方が指し、玉方の応手を盤面に指す前。
- * - `refuted`: 誤王手の筋で、残りの手数が尽きたか王手が無く、これ以上続けられない。待ったで判断地点へ戻る。
- * - `cleared`: 詰んだ。
- */
 export type TsumeShogiSessionPhase =
   | "attacker"
   | "defender"
@@ -105,10 +82,6 @@ export type TsumeShogiSession = GameSession<
   rejection: TsumeShogiRejection | null;
   /** 盤面・持駒を押して状態が変わった回数。 */
   inputCount: number;
-  /**
-   * 作意・詰み筋の上の判断地点から、残りの手数以内に詰まない合法な王手を指した回数。同じ判断地点で同じ誤王手を
-   * 待った・盤面を戻すで戻して指し直しても、1回だけ数える。
-   */
   wrongCheckCount: number;
   /** 誤王手に数えた手。判断地点までの手順と誤王手を USI で並べたもの（`formatWrongCheckKey`）。 */
   countedWrongChecks: readonly string[];
@@ -116,7 +89,6 @@ export type TsumeShogiSession = GameSession<
   refutationViewCount: number;
   /** 待ったで誤王手の筋から判断地点へ戻った回数。待った（`undoCount`）の内数。 */
   returnCount: number;
-  /** 待ったの回数。誤王手の筋から判断地点へ戻った回数も含む。 */
   undoCount: number;
   /** 盤面を初期局面へ戻した回数。 */
   restartCount: number;
@@ -164,7 +136,6 @@ export function createTsumeShogiSession(
   };
 }
 
-/** 指した手の組と、最後の組の玉方の応手を待っているかから、盤面に見せる局面を決める。 */
 function getShownPosition(
   problem: TsumeShogiProblem,
   turns: readonly TsumeShogiSessionTurn[],
@@ -178,7 +149,6 @@ function getShownPosition(
     : lastTurn.positionAfterDefense;
 }
 
-/** 指した手の組と、玉方の応手を待っているかを変え、盤面に見せる局面をそれに合わせる。 */
 function withTurns(
   session: TsumeShogiSession,
   turns: readonly TsumeShogiSessionTurn[],
@@ -202,7 +172,6 @@ export function getTsumeShogiSessionPhase(
   return lastTurn && !lastTurn.canContinue ? "refuted" : "attacker";
 }
 
-/** 誤王手の筋にいるか。待ったは判断地点まで戻す。 */
 export function isTsumeShogiSessionOnWrongLine(
   session: TsumeShogiSession,
 ): boolean {
@@ -275,7 +244,6 @@ function changeSelection(
   };
 }
 
-/** 王手になる合法手なら指した後の局面、ならなければ着手させない理由。 */
 function tryAttackerCheck(
   position: TsumeShogiPosition,
   move: TsumeShogiMove,
@@ -439,7 +407,6 @@ function decideDefenderReply(
   return { line: "alternative", defenderMove: resistance };
 }
 
-/** 攻方の駒を選ぶ・移動先へ指す・打つ。王手にならない手とルールで指せない手は着手させない。 */
 function moveSelectedPiece(
   session: TsumeShogiSession,
   selection: TsumeShogiSelection,
@@ -501,13 +468,6 @@ function moveSelectedPiece(
   return reject(session, "illegal", to);
 }
 
-/**
- * 盤の升を押す。
- * - 攻方の駒を選んでいなければ、攻方の駒の升で選ぶ。
- * - 盤上の駒を選んでいれば、同じ升で選択を解除し、別の攻方の駒で選び直し、それ以外の升へ指す。
- * - 持駒を選んでいれば、攻方の駒の升で選び直し、それ以外の升へ打つ。
- * - 成・不成を選んでいる途中なら、選ぶのをやめる（駒の選択は残す）。
- */
 export function tapTsumeShogiSessionSquare(
   session: TsumeShogiSession,
   square: TsumeShogiSquare,
@@ -536,7 +496,6 @@ export function tapTsumeShogiSessionSquare(
   return moveSelectedPiece(session, selection, square, operatedAt);
 }
 
-/** 攻方の持駒を押す。選んでいる種類をもう一度押すと選択を解除する。持っていない種類は選べない。 */
 export function tapTsumeShogiSessionHand(
   session: TsumeShogiSession,
   pieceType: TsumeShogiHandPieceType,
@@ -555,7 +514,6 @@ export function tapTsumeShogiSessionHand(
   );
 }
 
-/** 成・不成を選んで指す。選んだ手が王手にならなければ、ほかの王手にならない手と同じく着手させない。 */
 export function chooseTsumeShogiSessionPromotion(
   session: TsumeShogiSession,
   promote: boolean,
@@ -576,7 +534,6 @@ export function chooseTsumeShogiSessionPromotion(
   return playAttackerCheck(session, move, result, operatedAt);
 }
 
-/** 成・不成を選ぶのをやめる。駒の選択は残す。 */
 export function cancelTsumeShogiSessionPromotion(
   session: TsumeShogiSession,
 ): TsumeShogiSession {
@@ -589,7 +546,6 @@ export function cancelTsumeShogiSessionPromotion(
   };
 }
 
-/** 選択を解除する。 */
 export function clearTsumeShogiSessionSelection(
   session: TsumeShogiSession,
 ): TsumeShogiSession {
@@ -598,7 +554,6 @@ export function clearTsumeShogiSessionSelection(
   return changeSelection(session, null);
 }
 
-/** 決めてある玉方の応手を盤面に指す。誤王手の筋なら反証を見た回数を数える。 */
 export function playTsumeShogiSessionDefenderReply(
   session: TsumeShogiSession,
 ): TsumeShogiSession {
@@ -624,10 +579,6 @@ function resetBoardState(
   };
 }
 
-/**
- * 待った。誤王手の筋にいれば、最初の誤王手を指す前の判断地点まで戻る（判断地点へ戻った回数も数える）。
- * それ以外は、攻方の1手（と玉方の応手）を取り消し、その手を指す前の局面へ戻る。
- */
 export function undoTsumeShogiSession(
   session: TsumeShogiSession,
 ): TsumeShogiSession {

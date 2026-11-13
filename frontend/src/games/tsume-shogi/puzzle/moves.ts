@@ -25,10 +25,7 @@ import {
   wrapEnginePosition,
 } from "@/games/tsume-shogi/puzzle/position";
 
-/**
- * 詰将棋の着手と合法手。
- * 合法性（二歩・打歩詰・行き所のない駒・自玉への王手放置）は `tsshogi` の判定に任せる。
- */
+/** 合法性（二歩・打歩詰・行き所のない駒・自玉への王手放置）は `tsshogi` の判定に任せる。 */
 
 export type TsumeShogiMove =
   | {
@@ -56,10 +53,7 @@ function isInPromotionZone(side: TsumeShogiSide, rank: number): boolean {
   return side === "attacker" ? rank <= 3 : rank >= 7;
 }
 
-/**
- * 盤上の駒の移動で成ることを選べるか。成れる駒（`pieceType` は動かす前の駒）が、相手の陣（相手側の3段）へ入る・
- * その中で動く・そこから出る移動なら成れる。打つ手は成れない。
- */
+/** `pieceType` は動かす前の駒。 */
 export function canTsumeShogiMovePromote(
   side: TsumeShogiSide,
   pieceType: TsumeShogiPieceType,
@@ -82,7 +76,7 @@ export function formatTsumeShogiMoveUsi(move: TsumeShogiMove): string {
   return `${toEngineSquare(move.from).usi}${to}${move.promote ? "+" : ""}`;
 }
 
-/** USI 形式の着手を読む。読めなければ `RangeError` を投げる。局面での合法性は見ない。 */
+/** 局面での合法性は見ない。 */
 export function parseTsumeShogiMoveUsi(usi: string): TsumeShogiMove {
   const parsed = parseUSIMove(usi);
   const move =
@@ -109,7 +103,7 @@ export function isSameTsumeShogiMove(
   return formatTsumeShogiMoveUsi(a) === formatTsumeShogiMoveUsi(b);
 }
 
-/** 手番側の合法手。盤上の駒の移動（成・不成を別の手とする）のあと、持駒の打ちを並べる。 */
+/** 盤上の駒の移動（成・不成を別の手とする）のあと、持駒の打ちを並べる。 */
 export function listTsumeShogiLegalMoves(
   position: TsumeShogiPosition,
 ): TsumeShogiMove[] {
@@ -128,7 +122,6 @@ export function isTsumeShogiLegalMove(
   return engineMove !== null && engine.isValidMove(engineMove);
 }
 
-/** 着手した後の局面。合法手でなければ `RangeError` を投げる。 */
 export function applyTsumeShogiMove(
   position: TsumeShogiPosition,
   move: TsumeShogiMove,
@@ -143,7 +136,6 @@ export function applyTsumeShogiMove(
   return wrapEnginePosition(next);
 }
 
-/** 攻方の手番で、玉方の玉に王手をかける合法手。攻方の手番でなければ `RangeError` を投げる。 */
 export function listTsumeShogiAttackerChecks(
   position: TsumeShogiPosition,
 ): TsumeShogiMove[] {
@@ -162,10 +154,6 @@ export function listTsumeShogiAttackerChecks(
   return checks;
 }
 
-/**
- * 玉方の手番での合法手（王手を受ける応手）。玉の逃げ・王手した駒を取る手・合駒（駒箱からの打ちを含む）。
- * 玉方の手番でなければ `RangeError` を投げる。
- */
 export function listTsumeShogiDefenderResponses(
   position: TsumeShogiPosition,
 ): TsumeShogiMove[] {
@@ -179,7 +167,6 @@ export function isTsumeShogiDefenderInCheck(
   return unwrapEnginePosition(position).board.isChecked(Color.WHITE);
 }
 
-/** 玉方の手番で、玉方の玉に王手がかかり、合法手が無い。 */
 export function isTsumeShogiCheckmate(position: TsumeShogiPosition): boolean {
   if (
     getTsumeShogiSideToMove(position) !== "defender" ||
