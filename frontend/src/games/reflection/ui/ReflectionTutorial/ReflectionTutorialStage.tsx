@@ -33,8 +33,7 @@ type ReflectionTutorialStageProps = {
   inventory: ReflectionInventory;
   /** 解き終えた盤面。導入でゴールとして見せ、始めの盤面へ戻すときにピースを消していく。 */
   goal: ReflectionTutorialView;
-  /** 解いている盤面。 */
-  current: ReflectionTutorialView;
+  solvingView: ReflectionTutorialView;
   /** 解いている盤面の完成演出の進み。 */
   progress: GameProgress;
   interactionDisabled: boolean;
@@ -54,7 +53,7 @@ export function ReflectionTutorialStage({
   clues,
   inventory,
   goal,
-  current,
+  solvingView,
   progress,
   interactionDisabled,
   onSelectCell,
@@ -70,7 +69,7 @@ export function ReflectionTutorialStage({
   if (goalShown && playing && !goalLightShown) {
     setGoalLightShown(true);
   }
-  const view = goalShown ? goal : current;
+  const view = goalShown ? goal : solvingView;
   const boardProgress: GameProgress = goalShown
     ? playing
       ? "clearing"
@@ -109,7 +108,7 @@ export function ReflectionTutorialStage({
         inventory={inventory}
         stock={view.stock}
         selection={view.selection}
-        selectedCell={
+        selectedBoardPiece={
           view.selection?.type === "cell"
             ? (view.board.cells[view.selection.cellIndex] ?? null)
             : null

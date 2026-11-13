@@ -281,7 +281,7 @@ export function ReflectionTutorial({
     // 最初の手順の印と光は、導入の終わりに一言と同時に出す。
     const marksShown = playing || (intro.scene === null && intro.messageShown);
     const { session } = boardState;
-    const current: ReflectionTutorialView = {
+    const solvingView: ReflectionTutorialView = {
       board: session.puzzleState,
       stock: getReflectionSessionStock(session),
       selection: session.selection,
@@ -299,7 +299,7 @@ export function ReflectionTutorial({
         clues={problem.clues}
         inventory={problem.inventory}
         goal={goalView}
-        current={current}
+        solvingView={solvingView}
         progress={boardProgress}
         interactionDisabled={!playing}
         onSelectCell={handleSelectCell}

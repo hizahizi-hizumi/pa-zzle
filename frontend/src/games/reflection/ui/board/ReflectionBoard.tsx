@@ -289,7 +289,7 @@ export function ReflectionBoard({
             size={size}
             entry={entry}
             clue={clue}
-            selected={
+            laserPathShown={
               laser !== null && isSameReflectionEntry(laser.entry, entry)
             }
             matched={clueMatches[clueIndex] ?? false}

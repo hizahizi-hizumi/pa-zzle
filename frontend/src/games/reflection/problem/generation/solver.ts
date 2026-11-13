@@ -25,15 +25,14 @@ import {
 } from "@/games/reflection/puzzle/laser";
 
 /**
- * 手持ちと外周ヒントに合う配置の数。`2` は「2つ以上」を表す。
- * 一意性の確認には 0 / 1 / 2以上 の区別で足りるので、2つ目を見つけた時点で探索を打ち切る。
+ * 一意性の確認には 0 / 1 / 2以上 の区別で足りるので、2つ目を見つけた時点で探索を打ち切り、`2` で2つ以上を表す。
  */
-export type ReflectionSolutionCount = 0 | 1 | 2;
+export type ReflectionCappedSolutionCount = 0 | 1 | 2;
 
 export type ReflectionSolutionSearchResult = {
   /** `search-limit-reached` なら探索量の上限で打ち切ったため、`solutionCount` は下限にすぎない。 */
   status: "complete" | "search-limit-reached";
-  solutionCount: ReflectionSolutionCount;
+  solutionCount: ReflectionCappedSolutionCount;
   firstSolution: ReflectionBoard | null;
 };
 
@@ -546,7 +545,7 @@ export function countReflectionSolutions(
     solutionCount: Math.min(
       search.solutions.length,
       2,
-    ) as ReflectionSolutionCount,
+    ) as ReflectionCappedSolutionCount,
     firstSolution: search.solutions[0] ?? null,
   };
 }

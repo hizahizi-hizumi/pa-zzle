@@ -190,7 +190,7 @@ export function ReflectionPlay({
           inventory={inventory}
           stock={stock}
           selection={selection}
-          selectedCell={
+          selectedBoardPiece={
             selection?.type === "cell"
               ? (board.cells[selection.cellIndex] ?? null)
               : null
