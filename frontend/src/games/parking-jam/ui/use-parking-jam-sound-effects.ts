@@ -60,7 +60,6 @@ function playClearSound() {
   });
 }
 
-/** 結果の報酬の音はアプリが鳴らす。 */
 export function useParkingJamSoundEffects(
   operation: ParkingJamOperation | null,
   progress: GameProgress,
