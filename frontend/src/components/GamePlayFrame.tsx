@@ -17,7 +17,7 @@ type GamePlayFrameProps<Result> = Pick<
   | "onReplay"
   | "onStartNewProblem"
   | "onOpenGameHome"
-  | "onBackToHome"
+  | "onBackToAppHome"
   | "onOpenDiagnostics"
 > &
   Partial<RestartableGamePlayScreenProps> & {
@@ -45,7 +45,7 @@ export function GamePlayFrame<Result>({
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
-  onBackToHome,
+  onBackToAppHome,
   onOpenDiagnostics,
   renderResultScreen,
   renderHowToPlayDialog,
@@ -84,7 +84,7 @@ export function GamePlayFrame<Result>({
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}
-          onBackToHome={onBackToHome}
+          onBackToAppHome={onBackToAppHome}
           onOpenHowToPlay={() => setHowToPlayOpen(true)}
           onOpenTutorial={renderTutorial && (() => setTutorialOpen(true))}
           onOpenDiagnostics={onOpenDiagnostics}

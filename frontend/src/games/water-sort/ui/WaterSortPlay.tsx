@@ -58,7 +58,7 @@ export function WaterSortPlay({
   onStartNewProblem,
   onClearAnimationComplete,
   onOpenGameHome,
-  onBackToHome,
+  onBackToAppHome,
   onOpenDiagnostics,
 }: WaterSortPlayProps) {
   const [hasActivePourAnimation, setHasActivePourAnimation] = useState(false);
@@ -81,7 +81,7 @@ export function WaterSortPlay({
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
-      onBackToHome={onBackToHome}
+      onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <WaterSortHowToPlayDialog open={open} onClose={onClose} />

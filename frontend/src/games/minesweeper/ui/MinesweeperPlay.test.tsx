@@ -38,7 +38,7 @@ describe("MinesweeperPlay", () => {
     let onReplay: () => void;
     let onStartNewProblem: () => void;
     let onOpenGameHome: () => void;
-    let onBackToHome: () => void;
+    let onBackToAppHome: () => void;
 
     beforeEach(() => {
       onToggleFlag = vi.fn();
@@ -46,7 +46,7 @@ describe("MinesweeperPlay", () => {
       onReplay = vi.fn();
       onStartNewProblem = vi.fn();
       onOpenGameHome = vi.fn();
-      onBackToHome = vi.fn();
+      onBackToAppHome = vi.fn();
       render(
         <MinesweeperPlay
           difficulty="1"
@@ -67,7 +67,7 @@ describe("MinesweeperPlay", () => {
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}
-          onBackToHome={onBackToHome}
+          onBackToAppHome={onBackToAppHome}
           onClearAnimationComplete={vi.fn()}
         />,
       );
@@ -87,7 +87,7 @@ describe("MinesweeperPlay", () => {
       fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
 
       expect(onOpenGameHome).toHaveBeenCalledOnce();
-      expect(onBackToHome).not.toHaveBeenCalled();
+      expect(onBackToAppHome).not.toHaveBeenCalled();
     });
 
     test("メニューの問題選択でゲームのホームへの移動を通知すること", () => {
@@ -98,7 +98,7 @@ describe("MinesweeperPlay", () => {
       fireEvent.click(screen.getByRole("menuitem", { name: "問題選択" }));
 
       expect(onOpenGameHome).toHaveBeenCalledOnce();
-      expect(onBackToHome).not.toHaveBeenCalled();
+      expect(onBackToAppHome).not.toHaveBeenCalled();
     });
 
     test("メニューのリセットで同じ問題の新しいプレイの開始を通知すること", () => {
@@ -233,7 +233,7 @@ describe("MinesweeperPlay", () => {
           onReplay={vi.fn()}
           onStartNewProblem={vi.fn()}
           onOpenGameHome={vi.fn()}
-          onBackToHome={vi.fn()}
+          onBackToAppHome={vi.fn()}
           onClearAnimationComplete={vi.fn()}
           onOpenDiagnostics={onOpenDiagnostics}
         />,
@@ -281,7 +281,7 @@ describe("MinesweeperPlay", () => {
           onReplay={vi.fn()}
           onStartNewProblem={vi.fn()}
           onOpenGameHome={vi.fn()}
-          onBackToHome={vi.fn()}
+          onBackToAppHome={vi.fn()}
           onClearAnimationComplete={vi.fn()}
         />,
       );
@@ -362,20 +362,20 @@ describe("MinesweeperPlay", () => {
     let onReplay: () => void;
     let onStartNewProblem: () => void;
     let onOpenGameHome: () => void;
-    let onBackToHome: () => void;
+    let onBackToAppHome: () => void;
 
     beforeEach(() => {
       onReplay = vi.fn();
       onStartNewProblem = vi.fn();
       onOpenGameHome = vi.fn();
-      onBackToHome = vi.fn();
+      onBackToAppHome = vi.fn();
       render(
         <MinesweeperPlay
           {...createResultProps()}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}
-          onBackToHome={onBackToHome}
+          onBackToAppHome={onBackToAppHome}
         />,
       );
     });
@@ -424,7 +424,7 @@ describe("MinesweeperPlay", () => {
         onStartNewProblem,
         onReplay,
         onOpenGameHome,
-        onBackToHome,
+        onBackToAppHome,
       };
 
       fireEvent.click(screen.getByRole("button", { name }));
@@ -526,7 +526,7 @@ function createResultProps(): ComponentProps<typeof MinesweeperPlay> {
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
     onOpenGameHome: vi.fn(),
-    onBackToHome: vi.fn(),
+    onBackToAppHome: vi.fn(),
     onClearAnimationComplete: vi.fn(),
   };
 }

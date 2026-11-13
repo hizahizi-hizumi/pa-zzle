@@ -45,7 +45,7 @@ const baseProps = {
   onStartNewProblem: vi.fn(),
   onClearAnimationComplete: vi.fn(),
   onOpenGameHome: vi.fn(),
-  onBackToHome: vi.fn(),
+  onBackToAppHome: vi.fn(),
 };
 
 function createResult(
@@ -261,7 +261,7 @@ describe("WaterSortPlay", () => {
     const replay = vi.fn();
     const startNewProblem = vi.fn();
     const onOpenGameHome = vi.fn();
-    const onBackToHome = vi.fn();
+    const onBackToAppHome = vi.fn();
     const onOpenDiagnostics = vi.fn();
     render(
       <WaterSortPlay
@@ -270,7 +270,7 @@ describe("WaterSortPlay", () => {
         onReplay={replay}
         onStartNewProblem={startNewProblem}
         onOpenGameHome={onOpenGameHome}
-        onBackToHome={onBackToHome}
+        onBackToAppHome={onBackToAppHome}
         onOpenDiagnostics={onOpenDiagnostics}
       />,
     );
@@ -308,7 +308,7 @@ describe("WaterSortPlay", () => {
     expect(replay).toHaveBeenCalledOnce();
     expect(startNewProblem).toHaveBeenCalledOnce();
     expect(onOpenGameHome).toHaveBeenCalledOnce();
-    expect(onBackToHome).toHaveBeenCalledOnce();
+    expect(onBackToAppHome).toHaveBeenCalledOnce();
     expect(onOpenDiagnostics).toHaveBeenCalledOnce();
   });
 

@@ -73,7 +73,7 @@ export function HitofudePuzzlePlay({
   onClearAnimationComplete,
   onStartNewProblem,
   onOpenGameHome,
-  onBackToHome,
+  onBackToAppHome,
   onOpenDiagnostics,
 }: HitofudePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
@@ -132,7 +132,7 @@ export function HitofudePuzzlePlay({
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
-      onBackToHome={onBackToHome}
+      onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <HitofudePuzzleHowToPlayDialog open={open} onClose={onClose} />

@@ -17,7 +17,7 @@ type PlayHeaderProps = {
   onReplay?: () => void;
   onStartNewProblem: () => void;
   onOpenGameHome: () => void;
-  onBackToHome: () => void;
+  onBackToAppHome: () => void;
   onOpenHowToPlay?: () => void;
   onOpenTutorial?: () => void;
   onOpenDiagnostics?: () => void;
@@ -32,7 +32,7 @@ export function PlayHeader({
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
-  onBackToHome,
+  onBackToAppHome,
   onOpenHowToPlay,
   onOpenTutorial,
   onOpenDiagnostics,
@@ -45,7 +45,7 @@ export function PlayHeader({
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
-      onBackToHome={onBackToHome}
+      onBackToAppHome={onBackToAppHome}
       onOpenHowToPlay={onOpenHowToPlay}
       onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}

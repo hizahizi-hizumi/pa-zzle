@@ -40,7 +40,7 @@ function createProps(): ComponentProps<typeof PlayHeader> {
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
     onOpenGameHome: vi.fn(),
-    onBackToHome: vi.fn(),
+    onBackToAppHome: vi.fn(),
     onOpenHowToPlay: vi.fn(),
     onOpenTutorial: vi.fn(),
     onOpenDiagnostics: vi.fn(),
@@ -95,7 +95,7 @@ describe("PlayHeader", () => {
       ["リセット", "onReplay"],
       ["別の問題", "onStartNewProblem"],
       ["問題選択", "onOpenGameHome"],
-      ["パズル選択", "onBackToHome"],
+      ["パズル選択", "onBackToAppHome"],
       ["遊び方", "onOpenHowToPlay"],
       ["チュートリアル", "onOpenTutorial"],
       ["検証情報", "onOpenDiagnostics"],
@@ -175,7 +175,7 @@ describe("PlayHeader", () => {
         (name) => within(dialog).getByRole("group", { name }).textContent,
       );
       expect(volumeNames).toEqual(["効果音5", "BGM5"]);
-      expect(props.onBackToHome).not.toHaveBeenCalled();
+      expect(props.onBackToAppHome).not.toHaveBeenCalled();
       expect(props.onOpenGameHome).not.toHaveBeenCalled();
       expect(playSound).not.toHaveBeenCalled();
     });

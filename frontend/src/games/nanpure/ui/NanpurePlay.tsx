@@ -73,7 +73,7 @@ export function NanpurePlay({
   onReplay,
   onStartNewProblem,
   onOpenGameHome,
-  onBackToHome,
+  onBackToAppHome,
   onClearAnimationComplete,
   onOpenDiagnostics,
 }: NanpurePlayProps) {
@@ -103,7 +103,7 @@ export function NanpurePlay({
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
-      onBackToHome={onBackToHome}
+      onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <NanpureHowToPlayDialog open={open} onClose={onClose} />

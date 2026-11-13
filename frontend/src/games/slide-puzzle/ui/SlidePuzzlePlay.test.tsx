@@ -46,7 +46,7 @@ describe("SlidePuzzlePlay", () => {
     onStartNewProblem: vi.fn(),
     onClearAnimationComplete: vi.fn(),
     onOpenGameHome: vi.fn(),
-    onBackToHome: vi.fn(),
+    onBackToAppHome: vi.fn(),
   };
 
   function renderPlay(progress: GameProgress, board: readonly number[]) {
@@ -112,7 +112,7 @@ describe("SlidePuzzlePlay", () => {
       ["リセット", "onReplay"],
       ["別の問題", "onStartNewProblem"],
       ["問題選択", "onOpenGameHome"],
-      ["パズル選択", "onBackToHome"],
+      ["パズル選択", "onBackToAppHome"],
     ] as const;
 
     test.each(menuCases)(

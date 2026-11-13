@@ -78,7 +78,7 @@ export function IceFloorMazePlay({
   onStartNewProblem,
   onClearAnimationComplete,
   onOpenGameHome,
-  onBackToHome,
+  onBackToAppHome,
   onOpenDiagnostics,
 }: IceFloorMazePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
@@ -140,7 +140,7 @@ export function IceFloorMazePlay({
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
-      onBackToHome={onBackToHome}
+      onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <IceFloorMazeHowToPlayDialog open={open} onClose={onClose} />

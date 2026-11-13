@@ -46,7 +46,7 @@ function createProps(): ComponentProps<typeof ParkingJamPlay> {
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
     onOpenGameHome: vi.fn(),
-    onBackToHome: vi.fn(),
+    onBackToAppHome: vi.fn(),
     onClearAnimationComplete: vi.fn(),
     onOpenDiagnostics: vi.fn(),
   };
