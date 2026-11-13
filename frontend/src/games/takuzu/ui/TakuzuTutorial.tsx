@@ -67,11 +67,8 @@ type TakuzuTutorialProgress = TutorialProgress<
  */
 const VIOLATION_REACTION_DELAY_MS = 500;
 
-/**
- * 手順のマスを正しい手へ向かう途中にしたまま手が止まってから、盤面にルールに合わないところを見せるまでの間。
- * 教わったばかりの2回タップを、確かめながらゆっくり押す間隔でも出ないよう、違反の一言と揺れより長く取る。
- */
-const TOWARD_STEP_REVEAL_DELAY_MS = 1000;
+// 教わったばかりの2回タップを、確かめながらゆっくり押す間隔でも出ないよう、違反の一言と揺れより長く取る。
+const TOWARD_STEP_VIOLATION_REVEAL_DELAY_MS = 1000;
 
 /** 置いたマスへの応えと決め手を残して見せてから、次の印とその決め手に替える。 */
 const NEXT_STEP_CUE_DELAY_MS = 900;
@@ -340,7 +337,7 @@ export function TakuzuTutorial({
     } else if (next.boardState.lastMove?.towardStep) {
       scheduleReaction(
         next,
-        TOWARD_STEP_REVEAL_DELAY_MS,
+        TOWARD_STEP_VIOLATION_REVEAL_DELAY_MS,
         setSettledTowardStepProgress,
       );
     }

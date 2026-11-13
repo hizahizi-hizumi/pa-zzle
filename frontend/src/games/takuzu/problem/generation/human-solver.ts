@@ -180,8 +180,7 @@ function listCompletedLinePatterns(
   return completedPatterns;
 }
 
-/** 候補の並びすべてで同じタイルになる空きマスを返す。 */
-function intersectCandidates(
+function findTilesFixedByAllCandidates(
   candidates: readonly TakuzuLinePattern[],
   cells: readonly TakuzuCell[],
 ): Map<number, TakuzuTile> | null {
@@ -234,7 +233,7 @@ function findLineReading(
     const candidates = excludesCompletedLines
       ? consistentPatterns.filter((pattern) => !completedPatterns.has(pattern))
       : consistentPatterns;
-    const tileByPosition = intersectCandidates(candidates, cells);
+    const tileByPosition = findTilesFixedByAllCandidates(candidates, cells);
     if (tileByPosition === null) {
       return { status: "contradiction" };
     }
@@ -250,7 +249,7 @@ function findLineReading(
     findings.sourceCount += 1;
     if (
       excludesCompletedLines &&
-      intersectCandidates(consistentPatterns, cells)?.size !==
+      findTilesFixedByAllCandidates(consistentPatterns, cells)?.size !==
         tileByPosition.size
     ) {
       findings.requiresDuplicateAvoidance = true;
@@ -303,8 +302,7 @@ function createSolveState(givens: TakuzuBoard): SolveState {
   };
 }
 
-/** ルールを満たす並びが1つも入らない行・列か、同じ並びで完成した行どうし・列どうしがある。 */
-function hasBrokenLine(state: SolveState): boolean {
+function hasUnsatisfiableOrDuplicatedLine(state: SolveState): boolean {
   const legalPatterns = listLegalTakuzuLinePatterns(state.size);
   const completedPatternKeys = new Set<string>();
   for (const [lineIndex, line] of state.lines.entries()) {
@@ -354,7 +352,7 @@ export function traceTakuzuHumanSolve(
   }
 
   for (;;) {
-    if (hasBrokenLine(state)) {
+    if (hasUnsatisfiableOrDuplicatedLine(state)) {
       return finish("contradiction");
     }
     if (countEmptyCells(state.cells) === 0) {
