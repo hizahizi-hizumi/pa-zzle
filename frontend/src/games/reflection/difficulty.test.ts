@@ -13,7 +13,7 @@ import type {
   ReflectionTrialFeatures,
 } from "@/games/reflection/problem/difficulty-analysis";
 
-/** 試し置きで解き切れない問題。どのレベルの試し置きの条件も満たす。 */
+/** どのレベルの試し置きの条件も満たす。 */
 const trialUnsolved: ReflectionTrialFeatures = {
   solved: false,
   moveCount: 240,

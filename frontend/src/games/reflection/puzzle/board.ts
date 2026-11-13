@@ -1,10 +1,3 @@
-/**
- * 盤面に置くピースの種類。
- * - `slash` / `backslash`: 片面の斜め鏡。光を90度曲げる。
- * - `vertical-double` / `horizontal-double`: 縦・横向きの両面鏡。鏡面に沿う光は素通りし、鏡面に当たる光は来た方向へ返す。
- * - `reflector`: 全方向反射体。どの方向から来た光も来た方向へ返す。
- * - `black-hole`: 光を吸収する。
- */
 export const reflectionPieces = [
   "slash",
   "backslash",
@@ -16,16 +9,14 @@ export const reflectionPieces = [
 
 export type ReflectionPiece = (typeof reflectionPieces)[number];
 
-/** `null` はピースの無いマス。光は直進する。 */
 export type ReflectionCell = ReflectionPiece | null;
 
-/** 一辺 `size` の正方形盤面。`cells` は行優先で並べる。 */
 export type ReflectionBoard = {
   size: number;
+  /** 行優先で並べる。 */
   cells: readonly ReflectionCell[];
 };
 
-/** 手持ちのピースの種類ごとの個数。 */
 export type ReflectionInventory = Readonly<Record<ReflectionPiece, number>>;
 
 const cellByNotation = {
@@ -58,7 +49,6 @@ export function assertReflectionBoard(board: ReflectionBoard): void {
 
 /**
  * 1行を1文字列とした記法から盤面を作る。
- * `/` `\` が斜め鏡、`|` `=` が縦・横の両面鏡、`o` が全方向反射体、`@` がブラックホール、`.` が空きマス。
  * 固定問題やテストで盤面を読みやすく書くための記法。
  */
 export function parseReflectionBoard(rows: readonly string[]): ReflectionBoard {
@@ -103,7 +93,6 @@ export function createEmptyReflectionInventory(): Record<
   };
 }
 
-/** 盤面に置かれているピースを種類ごとに数える。 */
 export function countReflectionBoardPieces(
   board: ReflectionBoard,
 ): ReflectionInventory {

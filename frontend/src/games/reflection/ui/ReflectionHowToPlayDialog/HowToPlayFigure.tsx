@@ -11,13 +11,10 @@ import { ReflectionLaserPath } from "@/games/reflection/ui/board/ReflectionLaser
 import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone";
 
 type HowToPlayFigureProps = {
-  /** 盤面の記法（`/ \ | = o @ .`）。 */
   rows: readonly string[];
-  /** 光を入れる外周の位置。この位置の外周ヒントと光路だけを描く。 */
   entry: ReflectionEntry;
 };
 
-/** 盤面と同じ形・線で、1本の光路と外周ヒントを小さく描く。 */
 export function HowToPlayFigure({ rows, entry }: HowToPlayFigureProps) {
   const board = parseReflectionBoard(rows);
   const { size } = board;

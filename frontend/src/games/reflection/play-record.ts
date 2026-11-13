@@ -29,17 +29,17 @@ import type { PlayRecordDefinition } from "@/records/play-record-definition";
 const REFLECTION_GAME_ID = "reflection";
 const REFLECTION_PLAY_RECORD_PAYLOAD_VERSION = 2;
 
-/**
- * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。問題集の版と番号は問題集を作り直すと変わるので保存せず、必要なら identity の seed から引く。
- *   生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
- * - `workload`: 遊んだ問題を解き切る作業の量。問題集から問題を引けない記録でも基準時間を求め直せるよう、問題の事実として残す。
- * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準時間との差は保存せず、現在の評価規則で導出する。
- *   置き直し・盤面を戻した回数・光路を確かめた回数・入力回数は評価に使わないが、結果・記録画面に出し、評価規則を見直すときの材料として残す。
- */
 type ReflectionPlayRecordPayload = {
   difficulty: ReflectionDifficulty;
+  /**
+   * 問題集の版と番号は問題集を作り直すと変わるので保存せず、必要なら identity の seed から引く。
+   * 生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
+   */
   problemIdentity: ReflectionRecordedProblemIdentity;
   workload: ReflectionSolveWorkload;
+  /**
+   * 置き直し・盤面を戻した回数・光路を確かめた回数・入力回数は評価に使わないが、結果・記録画面に出し、評価規則を見直すときの材料として残す。
+   */
   performance: ReflectionSessionResult;
 };
 
@@ -58,10 +58,7 @@ type CreateReflectionPlayRecordInput = {
   result: ReflectionSessionResult;
 };
 
-/**
- * 置き直しは盤面を変える入力で起きるので、入力回数を超えない。
- * 以前の記録にある `undoCount` のような評価に使わない項目は、読み込みで無視する。
- */
+/** 以前の記録にある `undoCount` のような評価に使わない項目は、読み込みで無視する。 */
 function isReflectionPerformance(
   value: unknown,
 ): value is ReflectionSessionResult {
@@ -72,6 +69,7 @@ function isReflectionPerformance(
     isNonNegativeInteger(value.restartCount) &&
     isNonNegativeInteger(value.laserCheckCount) &&
     isNonNegativeInteger(value.inputCount) &&
+    // 置き直しは盤面を変える入力で起きるので、入力回数を超えない。
     value.relocationCount <= value.inputCount
   );
 }
@@ -108,17 +106,12 @@ export function isReflectionPlayRecord(
   );
 }
 
-/** 記録から作り直した、結果画面に出す内容。 */
 export type ReflectionRecordedResult = {
   difficulty: ReflectionDifficulty;
   problemIdentity: ReflectionProblemIdentity;
   result: ReflectionResult;
 };
 
-/**
- * 記録から結果画面に出す内容を作り直す。
- * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
- */
 export function restoreReflectionRecordedResult(
   record: PlayRecord,
 ): ReflectionRecordedResult | null {

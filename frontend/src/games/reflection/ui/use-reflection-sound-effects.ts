@@ -28,7 +28,6 @@ import {
 /** ピースを盤面に置く音。移す・入れ替える・置き換えるときも、ピースが現れるので同じ音で鳴らす。 */
 const piecePlacedSound = defineSoundEffect(piecePlacedSoundUrl);
 
-/** 光路が入口から順に伸びていくのに合わせて、順に鳴らす音。 */
 const clearedSpreadSounds = [
   clearedSpread1SoundUrl,
   clearedSpread2SoundUrl,
@@ -39,7 +38,6 @@ const clearedSpreadSounds = [
 const CLEAR_SPREAD_STEP_MS =
   CLEAR_LIGHT_SPREAD_MS / (clearedSpreadSounds.length - 1);
 
-/** 全光路が点ききったときの音。 */
 const clearedChordSound = defineSoundEffect(clearedChordSoundUrl);
 
 const clearedSoundLayers: readonly SoundLayer[] = [
@@ -73,10 +71,6 @@ function playReducedMotionClearSound() {
   playSound(clearedChordSound);
 }
 
-/**
- * ピースを盤面に置いた操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
- * 選択とその解除、手持ちへ戻す操作、光路の表示では鳴らさない。
- */
 export function useReflectionSoundEffects(
   operation: ReflectionOperation | null,
   progress: GameProgress,
