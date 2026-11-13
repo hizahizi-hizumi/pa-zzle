@@ -12,6 +12,7 @@ import {
 import {
   CLEAR_LAST_PIECE_DELAY_MS,
   CLEAR_LAST_PIECE_DURATION_MS,
+  CLEAR_LAST_PIECE_EASING,
   CLEAR_WAVE_DURATION_MS,
   clearLastPieceKeyframes,
   clearWaveKeyframes,
@@ -225,7 +226,7 @@ function animateLastPiece(element: HTMLElement | null): Animation[] {
   const animation = element?.animate?.(clearLastPieceKeyframes, {
     duration: CLEAR_LAST_PIECE_DURATION_MS,
     delay: CLEAR_LAST_PIECE_DELAY_MS,
-    easing: "cubic-bezier(0.45, 0, 0.6, 1)",
+    easing: CLEAR_LAST_PIECE_EASING,
     fill: "backwards",
   });
   return animation ? [animation] : [];

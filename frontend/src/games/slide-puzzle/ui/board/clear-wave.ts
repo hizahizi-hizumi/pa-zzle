@@ -8,6 +8,7 @@ import { MOTION_DURATION_MS } from "@/lib/motion";
 /** タイルの滑りは `--duration-normal` で終わる。最後の1枚は、最後のタイルが収まってから空白へ落とす。 */
 export const CLEAR_LAST_PIECE_DELAY_MS = MOTION_DURATION_MS.normal;
 export const CLEAR_LAST_PIECE_DURATION_MS = 260;
+export const CLEAR_LAST_PIECE_EASING = "cubic-bezier(0.45, 0, 0.6, 1)";
 /** 最後の1枚が空白に当たって止まる時刻（落とし始めからの割合）。 */
 const CLEAR_LAST_PIECE_LANDING_OFFSET = 0.6;
 

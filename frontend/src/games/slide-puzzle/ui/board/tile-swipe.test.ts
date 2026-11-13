@@ -43,7 +43,7 @@ describe("isSlidePuzzleSwipeTowardBlank", () => {
   ] as const;
 
   test.each(cases)(
-    "%sスワイプしたときの判定を返すこと",
+    "%sスワイプすると、空白へ向かう操作かを判定すること",
     (_, cellIndex, direction, expected) => {
       const toward = isSlidePuzzleSwipeTowardBlank(board, cellIndex, direction);
 
