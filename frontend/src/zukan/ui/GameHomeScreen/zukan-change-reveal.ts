@@ -93,8 +93,7 @@ export const ZUKAN_STAMP_DURATION_MS = {
   perfectImpactTail: 520,
 } as const;
 
-/** 1マスを押し始めてから、その動きが終わるまで。 */
-export function getZukanStampTailMs({ level }: ZukanStamp): number {
+export function getZukanStampDurationMs({ level }: ZukanStamp): number {
   return level === "perfect"
     ? ZUKAN_STAMP_DURATION_MS.perfectDrop +
         ZUKAN_STAMP_DURATION_MS.perfectImpactTail
@@ -143,7 +142,7 @@ export type ZukanStampPlan = {
   endMs: number;
 };
 
-const typicalStampTailMs = getZukanStampTailMs({
+const typicalStampDurationMs = getZukanStampDurationMs({
   level: "clear",
   isRaised: false,
 });
@@ -172,7 +171,7 @@ export function planZukanStamps(
           Math.min(
             STAMP_INTERVAL_MAX_MS,
             (REVEAL_DURATION_MAX_MS -
-              typicalStampTailMs -
+              typicalStampDurationMs -
               PREVIOUS_STATE_HOLD_MS -
               totalPauseMs) /
               (slots.length - 1),
@@ -188,7 +187,7 @@ export function planZukanStamps(
     0,
     ...slots.flatMap((stamps, slot) =>
       stamps.map(
-        (stamp) => (slotStartMs[slot] ?? 0) + getZukanStampTailMs(stamp),
+        (stamp) => (slotStartMs[slot] ?? 0) + getZukanStampDurationMs(stamp),
       ),
     ),
   );

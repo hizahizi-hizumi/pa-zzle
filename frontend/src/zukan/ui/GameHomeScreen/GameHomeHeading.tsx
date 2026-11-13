@@ -9,8 +9,8 @@ type GameHomeHeadingProps = {
   gameTitle: string;
   pictogramSvg: string;
   pictogramShowcaseSvg: string | undefined;
-  /** 今示す解いた問題の数。各レベルのカードに示す数の合計。 */
-  solvedCount: number;
+  /** 各レベルのカードに示す数の合計。 */
+  shownSolvedCount: number;
   problemCount: number;
   titleRef: Ref<HTMLHeadingElement>;
   /** 層を開くメニューと設定のボタンの範囲。変化を見せている間に押されたときに、そのまま開くのに使う。 */
@@ -23,7 +23,7 @@ export function GameHomeHeading({
   gameTitle,
   pictogramSvg,
   pictogramShowcaseSvg,
-  solvedCount,
+  shownSolvedCount,
   problemCount,
   titleRef,
   actionsRef,
@@ -54,10 +54,10 @@ export function GameHomeHeading({
         </h1>
         <p className="text-meta whitespace-nowrap tabular-nums">
           <span aria-hidden="true">
-            解いた問題 {solvedCount} / {problemCount}
+            解いた問題 {shownSolvedCount} / {problemCount}
           </span>
           <span className="sr-only">
-            {problemCount}問中{solvedCount}問を解いた
+            {problemCount}問中{shownSolvedCount}問を解いた
           </span>
         </p>
       </div>

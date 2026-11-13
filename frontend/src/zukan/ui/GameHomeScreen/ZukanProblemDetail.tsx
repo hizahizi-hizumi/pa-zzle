@@ -29,8 +29,7 @@ import {
 type ZukanProblemDetailProps = {
   /** 詳細を描いている間の要素。閉じる動きの間も描き、閉じ終えると `null` になる。 */
   ref: RefObject<HTMLElement | null>;
-  /** 重ねて覆う台紙のスクロール領域。 */
-  coverLimitRef: RefObject<HTMLElement | null>;
+  coveredSheetScrollerRef: RefObject<HTMLElement | null>;
   /** 選んでいなければ `null` で、詳細を閉じる。 */
   problem: ZukanProblem | null;
   numberDigitCount: number;
@@ -134,13 +133,13 @@ function listSolvedProblemFacts(
             ),
           },
         ]),
-    { label: "初クリア", value: formatPlayedDate(problem.firstClearedAt) },
+    { label: "初クリア", value: formatPlayedDate(problem.firstCompletedAt) },
   ];
 }
 
 export function ZukanProblemDetail({
   ref,
-  coverLimitRef,
+  coveredSheetScrollerRef,
   problem,
   numberDigitCount,
   describeProblem,
@@ -185,7 +184,7 @@ export function ZukanProblemDetail({
     }
     function limitHeight() {
       if (element !== null) {
-        limitOverlayHeight(element, coverLimitRef.current);
+        limitOverlayHeight(element, coveredSheetScrollerRef.current);
       }
     }
     limitHeight();
@@ -200,7 +199,7 @@ export function ZukanProblemDetail({
       window.removeEventListener("resize", limitHeight);
       reportOverlayHeight(0);
     };
-  }, [isClosing, ref, coverLimitRef]);
+  }, [isClosing, ref, coveredSheetScrollerRef]);
 
   function handleAnimationEnd(event: AnimationEvent<HTMLElement>) {
     if (isClosing && event.target === event.currentTarget) {

@@ -23,14 +23,14 @@ import type { GameHomeLayerControl } from "@/zukan/ui/GameHomeScreen/use-game-ho
 import { useHeaderLayerSheet } from "@/zukan/ui/GameHomeScreen/use-header-layer-sheet";
 
 type GameHomePerformanceProps = GameHomeLayerControl & {
-  /** 全記録。開いているレベルの記録は、成績を開いたときにこの中から選ぶ。 */
-  records: readonly PlayRecord[];
+  /** 開いているレベルの記録は、成績を開いたときにこの中から選ぶ。 */
+  allRecords: readonly PlayRecord[];
   playRecordDisplay: PlayRecordDisplayDefinition;
   difficulty: DifficultyLevel;
 };
 
 export function GameHomePerformance({
-  records,
+  allRecords,
   playRecordDisplay,
   difficulty,
   open,
@@ -43,7 +43,7 @@ export function GameHomePerformance({
   // 中身は開いたときだけ描き、ゲームのホームを開くまでの時間を延ばさない。
   const performance = (
     <PlayRecordsPerformance
-      records={records}
+      records={allRecords}
       display={playRecordDisplay}
       comparisonKey={difficulty}
     />

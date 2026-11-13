@@ -27,8 +27,8 @@ import type { ZukanProblemChange } from "@/zukan/zukan-last-viewed";
 
 type ZukanProblemSheetProps = {
   difficulty: DifficultyLevel;
-  /** そのレベルの全問。番号の順。マスはこの順に置き、絞り込んでも置き直さない。 */
-  problems: readonly ZukanProblem[];
+  /** そのレベルの全問。マスはこの順に置き、絞り込んでも置き直さない。 */
+  problemsInNumberOrder: readonly ZukanProblem[];
   /** 台紙に並べて見せる順の全問。絞り込んでいなければ番号の順、絞り込んでいれば当たった問題が前。 */
   arrangedProblems: readonly ZukanProblem[];
   /** 絞り込んでいるとき、前に並べた当たった問題の数。絞り込んでいなければ `null`。 */
@@ -200,7 +200,7 @@ function listPositions(
  */
 function ZukanProblemSheetContent({
   difficulty,
-  problems,
+  problemsInNumberOrder,
   arrangedProblems,
   matchedCount,
   numberDigitCount,
@@ -220,7 +220,10 @@ function ZukanProblemSheetContent({
   const reportWidth = useEffectEvent(onWidthChange);
   const shownScrollTopRef = useRef(0);
   const previousCoveredBottomHeightRef = useRef(coveredBottomHeight);
-  const indices = useMemo(() => listPositions(problems), [problems]);
+  const indices = useMemo(
+    () => listPositions(problemsInNumberOrder),
+    [problemsInNumberOrder],
+  );
   const positions = useMemo(
     () => listPositions(arrangedProblems),
     [arrangedProblems],
@@ -303,7 +306,7 @@ function ZukanProblemSheetContent({
 
   function handleClick(event: MouseEvent<HTMLDivElement>) {
     const index = findSquareIndex(event.target);
-    const problem = index === null ? undefined : problems[index];
+    const problem = index === null ? undefined : problemsInNumberOrder[index];
     if (problem === undefined) {
       return;
     }
@@ -316,7 +319,7 @@ function ZukanProblemSheetContent({
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const index = findSquareIndex(event.target);
-    const problem = index === null ? undefined : problems[index];
+    const problem = index === null ? undefined : problemsInNumberOrder[index];
     const position =
       problem === undefined ? undefined : positions.get(problem.problemId);
     if (position === undefined) {
@@ -370,8 +373,8 @@ function ZukanProblemSheetContent({
         onKeyDown={handleKeyDown}
         style={
           {
-            "--wide-square-size": `${getWideSquareSizePx(problems.length)}px`,
-            "--narrow-square-size": `${getNarrowSquareSizePx(problems.length)}px`,
+            "--wide-square-size": `${getWideSquareSizePx(problemsInNumberOrder.length)}px`,
+            "--narrow-square-size": `${getNarrowSquareSizePx(problemsInNumberOrder.length)}px`,
           } as CSSProperties
         }
         // 盤の幅をマスで埋め切るよう、マスは決めた大きさ以上で、列を等分して並べる。
@@ -383,7 +386,7 @@ function ZukanProblemSheetContent({
             条件に当たる問題はありません
           </p>
         )}
-        {problems.map((problem, index) => (
+        {problemsInNumberOrder.map((problem, index) => (
           <ZukanProblemSquare
             key={problem.problemId}
             problem={problem}

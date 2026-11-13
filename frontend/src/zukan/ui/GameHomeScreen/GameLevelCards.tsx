@@ -6,10 +6,10 @@ import type { ZukanProblemStatus } from "@/zukan/zukan-collection";
 export type GameLevelCard = {
   difficulty: DifficultyLevel;
   problemCount: number;
-  /** 今示す解いた数。変化をまだ見せていないレベルでは前回の数を示す。 */
-  solvedCount: number;
-  /** そのレベルの全問の、今示す状態。番号の順。変化をまだ見せていない問題は前回の状態を示す。 */
-  statuses: readonly ZukanProblemStatus[];
+  /** 変化をまだ見せていないレベルでは前回の数。 */
+  shownSolvedCount: number;
+  /** そのレベルの全問を番号の順に並べる。変化をまだ見せていない問題は前回の状態。 */
+  shownStatuses: readonly ZukanProblemStatus[];
   columnCount: number;
   hasUnseenChanges: boolean;
 };
@@ -26,8 +26,8 @@ export function GameLevelCards({ levels }: GameLevelCardsProps) {
         ({
           difficulty,
           problemCount,
-          solvedCount,
-          statuses,
+          shownSolvedCount,
+          shownStatuses,
           columnCount,
           hasUnseenChanges,
         }) => (
@@ -37,7 +37,10 @@ export function GameLevelCards({ levels }: GameLevelCardsProps) {
             data-difficulty={difficulty}
           >
             <span className="relative block">
-              <ZukanLevelMosaic statuses={statuses} columnCount={columnCount} />
+              <ZukanLevelMosaic
+                shownStatuses={shownStatuses}
+                columnCount={columnCount}
+              />
               {hasUnseenChanges && (
                 <span
                   aria-hidden="true"
@@ -52,11 +55,11 @@ export function GameLevelCards({ levels }: GameLevelCardsProps) {
               </span>
               <span className="font-normal text-muted-foreground tabular-nums">
                 <span aria-hidden="true">
-                  {solvedCount}
+                  {shownSolvedCount}
                   <span className="max-[359px]:hidden">/{problemCount}</span>
                 </span>
                 <span className="sr-only">
-                  、{problemCount}問中{solvedCount}問を解いた
+                  、{problemCount}問中{shownSolvedCount}問を解いた
                 </span>
                 {hasUnseenChanges && (
                   <span className="sr-only">、前回から変化あり</span>

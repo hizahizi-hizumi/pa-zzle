@@ -32,7 +32,7 @@ function createSolvedProblem(
     fastestElapsedMs: 60_000,
     fewestMoves: null,
     fewestMistakes: null,
-    firstClearedAt: 0,
+    firstCompletedAt: 0,
     ...overrides,
   };
 }

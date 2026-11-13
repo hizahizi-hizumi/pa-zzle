@@ -236,7 +236,7 @@ describe("deriveGameZukan", () => {
           fastestElapsedMs: 60_000,
           fewestMoves: { completionMoveCount: 11, optimalMoveCount: 10 },
           fewestMistakes: 0,
-          firstClearedAt: 3_000,
+          firstCompletedAt: 3_000,
         },
         {
           kind: "solved",
@@ -247,7 +247,7 @@ describe("deriveGameZukan", () => {
           fastestElapsedMs: 90_000,
           fewestMoves: null,
           fewestMistakes: null,
-          firstClearedAt: 5_000,
+          firstCompletedAt: 5_000,
         },
       ]);
     });
@@ -456,7 +456,7 @@ describe("getZukanProblemStatus", () => {
     fastestElapsedMs: 60_000,
     fewestMoves: null,
     fewestMistakes: null,
-    firstClearedAt: 1_000,
+    firstCompletedAt: 1_000,
   } as const;
   const unsolvedProblem = {
     kind: "unsolved",

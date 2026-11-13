@@ -443,7 +443,7 @@ export function GameHomeScreen({
       countZukanFilterOptions(countedProblems, filterConditions, levelFeatures),
     [countedProblems, filterConditions, levelFeatures],
   );
-  const filterOptionCountLimits = useMemo(
+  const unfilteredOptionCounts = useMemo(
     () =>
       countZukanFilterOptions(
         countedProblems,
@@ -552,8 +552,8 @@ export function GameHomeScreen({
     return {
       difficulty,
       problemCount: problems.length,
-      solvedCount: solvedCount - unshownNewlySolved,
-      statuses: isOpen
+      shownSolvedCount: solvedCount - unshownNewlySolved,
+      shownStatuses: isOpen
         ? openShownStatuses
         : (restingLevelStatuses.get(difficulty) ?? noStatuses),
       columnCount: countZukanSheetColumns(sheetWidthPx, problems.length),
@@ -561,7 +561,7 @@ export function GameHomeScreen({
     };
   });
   const shownSolvedCount = levelCards.reduce(
-    (total, { solvedCount }) => total + solvedCount,
+    (total, level) => total + level.shownSolvedCount,
     0,
   );
   const openStatusCounts = countZukanProblemsByStatus(openProblems, (problem) =>
@@ -784,7 +784,7 @@ export function GameHomeScreen({
           gameTitle={gameTitle}
           pictogramSvg={pictogramSvg}
           pictogramShowcaseSvg={pictogramShowcaseSvg}
-          solvedCount={shownSolvedCount}
+          shownSolvedCount={shownSolvedCount}
           problemCount={zukan.problemCount}
           titleRef={titleRef}
           actionsRef={headerActionsRef}
@@ -820,14 +820,14 @@ export function GameHomeScreen({
           featureAxes={listFilterFeatureAxes(levelFeatures, featureAxes)}
           performanceAxes={performanceAxes}
           optionCounts={filterOptionCounts}
-          optionCountLimits={filterOptionCountLimits}
+          unfilteredOptionCounts={unfilteredOptionCounts}
           open={isFilterOpen}
           onOpenChange={handleFilterOpenChange}
           anchorRef={menuButtonRef}
           onConditionsChange={handleFilterConditionsChange}
         />
         <GameHomePerformance
-          records={records}
+          allRecords={records}
           playRecordDisplay={playRecordDisplay}
           difficulty={openDifficulty}
           open={openLayer === "performance"}
@@ -868,7 +868,7 @@ export function GameHomeScreen({
             >
               <ZukanProblemSheet
                 difficulty={openDifficulty}
-                problems={openProblems}
+                problemsInNumberOrder={openProblems}
                 arrangedProblems={arrangement.problems}
                 matchedCount={isFiltering ? arrangement.matchedCount : null}
                 numberDigitCount={numberDigitCount}
@@ -893,7 +893,7 @@ export function GameHomeScreen({
             </div>
             <ZukanProblemDetail
               ref={detailRef}
-              coverLimitRef={scrollerRef}
+              coveredSheetScrollerRef={scrollerRef}
               problem={detailProblem}
               numberDigitCount={numberDigitCount}
               describeProblem={describeProblem}

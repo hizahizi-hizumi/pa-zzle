@@ -57,7 +57,7 @@ const levelThreeProblems: ZukanProblem[] = [
     fastestElapsedMs: 83_000,
     fewestMoves: { completionMoveCount: 21, optimalMoveCount: 20 },
     fewestMistakes: 0,
-    firstClearedAt: new Date(2026, 9, 30, 12).getTime(),
+    firstCompletedAt: new Date(2026, 9, 30, 12).getTime(),
   },
   {
     kind: "unsolved",
@@ -75,7 +75,7 @@ const levelThreeProblems: ZukanProblem[] = [
     fastestElapsedMs: 3_725_000,
     fewestMoves: null,
     fewestMistakes: null,
-    firstClearedAt: new Date(2026, 9, 31, 12).getTime(),
+    firstCompletedAt: new Date(2026, 9, 31, 12).getTime(),
   },
   {
     kind: "unsolved",
@@ -1630,7 +1630,7 @@ describe("GameHomeScreen", () => {
         optimalMoveCount: 20,
       },
       fewestMistakes: Number(fewestMistakes),
-      firstClearedAt: 0,
+      firstCompletedAt: 0,
     }));
 
     beforeEach(async () => {
@@ -1689,7 +1689,7 @@ describe("GameHomeScreen", () => {
       fastestElapsedMs: 120_000,
       fewestMoves: null,
       fewestMistakes: 1,
-      firstClearedAt: new Date(2026, 9, 31, 18).getTime(),
+      firstCompletedAt: new Date(2026, 9, 31, 18).getTime(),
     };
     const changedZukan: GameZukan = {
       ...zukan,
@@ -2400,7 +2400,7 @@ describe("GameHomeScreen", () => {
           fastestElapsedMs: 60_000,
           fewestMoves: null,
           fewestMistakes: null,
-          firstClearedAt: 0,
+          firstCompletedAt: 0,
         }),
       );
       const manyZukan: GameZukan = {
