@@ -200,7 +200,6 @@ export type TacticFloorRecipe = {
 /** 床の採用条件を満たさない1つあたりの減点を、手触りの条件の何倍にするか。手筋の点で埋め合わせられないようにする。 */
 const FLOOR_SHORTFALL_FACTOR = 3;
 
-/** 床の採用条件を満たさない分の数。満たせば0。 */
 function countFloorShortfalls(
   graph: ReturnType<typeof createStaticBoardGraph>,
   start: number,
@@ -334,7 +333,7 @@ function evaluateTacticBoard(
 const INITIAL_ROCK_DENSITY = 0.2;
 const MINIMUM_ROCK_DENSITY = 0.08;
 
-/** 山登りの条件。`floors` は床を置くときの条件で、`null` なら氷と岩だけ。 */
+/** `floors` は床を置くときの条件で、`null` なら氷と岩だけ。 */
 export type TacticRecipe = {
   width: number;
   height: number;

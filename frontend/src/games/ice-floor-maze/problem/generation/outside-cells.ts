@@ -10,7 +10,6 @@ import {
   type GenerationBoard,
 } from "@/games/ice-floor-maze/problem/generation/state-space";
 
-/** 生成した盤面と開始位置・ゴール。 */
 export type GenerationProblem = {
   board: GenerationBoard;
   start: number;

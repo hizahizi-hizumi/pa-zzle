@@ -137,7 +137,6 @@ export type SelfMadeTerrainUse = {
  * 最短解の1手の様子。
  * - `slideLength`: 滑ったマスの数。
  * - `changedCells`: この手の後でふるまいが変わるマス（崩れる・割れる・雪をどける・雪山ができる・塊が動く）。
- * - `selfMadeUses`: 前の自分の手が作った地形を使うこと。
  * - `useEventCount`: 要素を使う出来事（崩す・雪を押し出す・塊を動かす、と自分で作った地形を使うこと）の数。
  * - `freshAlternativeCount` / `temptingAlternativeCount`: 解の手のほかに、まだ訪れていない状態へ移る手の数と、
  *   そのうちもっともらしい手の数。前者が0の手が一本道。
@@ -399,7 +398,7 @@ type SolutionOption = {
 
 type SolutionStep = { state: number; options: readonly SolutionOption[] };
 
-/** 最短解の各手の前の状態とそこでの全選択肢。`solution` がこのグラフで通らなければ `null`。 */
+/** `solution` がこのグラフで通らなければ `null`。 */
 function listSolutionOptions(
   space: StateSpace,
   toGoal: Int32Array,
@@ -545,7 +544,6 @@ function traceSelfMadeUses(
   });
 }
 
-/** 2つの状態の間でふるまいが変わるマス。 */
 function listChangedCells(
   space: StateSpace,
   source: number,
@@ -565,7 +563,6 @@ function listChangedCells(
   return changed;
 }
 
-/** 1手で要素に働きかける出来事（もろい岩を崩す・雪を押し出す・塊を動かす）の数。 */
 function countElementActions(
   space: StateSpace,
   source: number,
@@ -743,7 +740,6 @@ export function scoreSelfMadeDependence(
 /** 自作依存の点を比べる最短解の数の上限。最短解が一意の問題（問題集の問題）では1本だけを測る。 */
 const DEPENDENCE_SOLUTION_CAP = 32;
 
-/** 最短解（`DEPENDENCE_SOLUTION_CAP` 本まで）のうち、自作依存の点が最も低い解の点。 */
 function measureLeastSelfMadeDependence(
   space: StateSpace,
   toGoal: Int32Array,
@@ -788,7 +784,6 @@ function measureLeastSelfMadeDependence(
   return least;
 }
 
-/** 最短解の手の様子を集計する。`width` は盤面の幅。 */
 export function summarizeSolutionMoves(
   moves: readonly SolutionMove[],
   width: number,
@@ -849,7 +844,7 @@ const ACTION_CRUMBLE = 1;
 const ACTION_SNOW = 2;
 const ACTION_PUSH = 3;
 
-/** 1手が要素を働かせたか（研究用 v5 の `trigger`）。雪を押し出す・塊を動かす・もろい岩を崩す・どれでもない。 */
+/** 研究用 v5 の `trigger` に当たる。 */
 function classifyAction(
   space: StateSpace,
   source: number,
@@ -1062,9 +1057,7 @@ function solveStatic(
   return { shortest, passingMoveCount };
 }
 
-/**
- * `goal` の問題の特徴量。`space` は `goal` で止まった状態を終わりにした状態のグラフ。解けなければ `null`。
- */
+/** `space` は `goal` で止まった状態を終わりにした状態のグラフ。解けなければ `null`。 */
 export function measureElementMetrics(
   context: ElementContext,
   goal: number,

@@ -8,12 +8,7 @@ import {
 import problemPoolJson from "@/games/ice-floor-maze/problem/problem-pool.json";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
-/**
- * 事前生成した問題集の1問。
- * - `seed` / `width` / `height`: 問題の identity（`IceFloorMazeProblemIdentity`）の `seed` と盤面の形。`seed` は盤面そのものの
- *   符号なので、実行時に生成器・難易度分析を走らせずに問題を復元できる。
- * - `optimalMoveCount`: 開始位置からゴールで止まるまでの最少手数。評価の基準に使う。
- */
+/** `seed` は盤面そのものの符号なので、実行時に生成器・難易度分析を走らせずに問題を復元できる。 */
 export type IceFloorMazeProblemPoolEntry = readonly [
   seed: string,
   width: number,
@@ -29,13 +24,12 @@ export type IceFloorMazeProblemPool = {
   >;
 };
 
-/** 問題集の1項目を読み解いた値。問題は identity から復号する。 */
 type IceFloorMazeDecodedPoolEntry = {
   identity: IceFloorMazeProblemIdentity;
   optimalMoveCount: number;
 };
 
-/** 問題集から復元した1問。評価の基準になる最少手数を伴う。 */
+/** `optimalMoveCount` は評価の基準に使う。 */
 export type IceFloorMazePooledProblem = IceFloorMazeIdentifiedProblem & {
   optimalMoveCount: number;
 };
@@ -58,7 +52,6 @@ export function decodeIceFloorMazePoolEntry([
   };
 }
 
-/** 問題集の1項目から問題を復元する。 */
 export function restoreIceFloorMazePoolEntry(
   entry: IceFloorMazeProblemPoolEntry,
 ): IceFloorMazePooledProblem {
@@ -77,14 +70,14 @@ const poolIndex = createProblemPoolIndex(
   (entry) => decodeIceFloorMazePoolEntry(entry).identity,
 );
 
-/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+/** 問題集の並び順で返す。 */
 export function listIceFloorMazePoolProblemIds(
   difficulty: IceFloorMazeDifficulty,
 ): readonly ProblemId[] {
   return poolIndex.listProblemIds(difficulty);
 }
 
-/** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+/** 問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findIceFloorMazePoolEntryByProblemId(
   difficulty: IceFloorMazeDifficulty,
   problemId: string,

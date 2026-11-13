@@ -41,10 +41,7 @@ import type {
   IceFloorMazeProblem,
 } from "@/games/ice-floor-maze/problem/problem";
 
-/**
- * 盤面に置かれた要素の組み合わせ。`none` は要素が無く、氷と岩（と床）だけ。`mixed` はもろい岩と薄い氷、`snow-thin-ice` は雪と
- * 薄い氷、`sliding-block-thin-ice` は滑る氷の塊と薄い氷。`other` はそれ以外の組み合わせ（どのレベルにも当たらない）。
- */
+/** `other` は `compositionByTiles` に無い要素の組み合わせで、どのレベルにも当たらない。 */
 export type IceFloorMazeElementComposition =
   | "none"
   | "brittle-rock"
@@ -56,13 +53,9 @@ export type IceFloorMazeElementComposition =
   | "sliding-block-thin-ice"
   | "other";
 
-/** 氷と岩だけの盤面の手筋のタグ（`StaticTacticTag` の定義を参照）。 */
 export type IceFloorMazeTacticTag = StaticTacticTag;
 
-/**
- * 床の働き。`StaticFloorFeatures` の定義を参照。`splitReadingDepth` は、止まる床が無ければ元の読み深さと同じ値で、
- * 上限まで読めなければ `null`。
- */
+/** `splitReadingDepth` は、止まる床が無ければ元の読み深さと同じ値で、上限まで読めなければ `null`。 */
 export type IceFloorMazeFloorFeatures = Omit<
   StaticFloorFeatures,
   "splitReadingDepth"
@@ -73,12 +66,10 @@ export type IceFloorMazeFloorFeatures = Omit<
  * - `optimalMoveCount` / `optimalSolutionCount`: 最少手数と、最少手数で止まる向きの並びの数。
  * - `forcedMoveCount`: 最短の道筋のうち、戻らない選択肢が1つしかない手（一本道）。
  * - `reachableStopCount` / `deadStopCount`: 開始位置から止まれる停止点の数と、そのうちゴールへ止まれない停止点（詰み）の数。
- * - `tags`: 手筋のタグ。
  * - `readingDepth`: 前向き・逆向き・両方向の先読みのうち最も楽な方向で解ける読み手数。上限まで読めなければ `null`。
  * - `nearPathCount`: 最少手数+2手以内で、同じ停止点を二度通らない道筋の数（近い別解）。
  * - `shortSlideCount` / `averageSlideLength` / `longestChoicelessStair`: 最短の道筋の1マスだけの滑りの数、滑りの長さの平均、
  *   もっともらしい別の手が無い手だけで直交する2つの向きを交互に続けた最も長い連なり（選択肢の無い階段）。
- * - `floors`: 床の働き。
  * - そのほかは手筋のタグの元になった数。
  */
 export type IceFloorMazeTacticFeatures = {
@@ -164,11 +155,7 @@ export type IceFloorMazeElementFeatures = {
   floorCount: number;
 };
 
-/**
- * - `analyzed`: 解けて、特徴を求めた。氷と岩だけの盤面は手筋の特徴、要素のある盤面は要素の特徴。
- * - `unsupported`: 状態の数が上限を超え、特徴を求められない。
- * - `invalid`: ゴールが開始位置と同じか、ゴールへ止まれない（問題として成立しない）。
- */
+/** `invalid` は、ゴールが開始位置と同じか、ゴールへ止まれない（問題として成立しない）。 */
 export type IceFloorMazeDifficultyAnalysis =
   | {
       status: "analyzed";
@@ -320,7 +307,6 @@ function findComposition(
   return compositionByTiles.get(String(tiles)) ?? "other";
 }
 
-/** 問題の難易度の特徴を求める。氷と岩だけの盤面は手筋、要素のある盤面は要素の特徴を求める。 */
 export function analyzeIceFloorMazeDifficulty(
   problem: IceFloorMazeProblem,
 ): IceFloorMazeDifficultyAnalysis {

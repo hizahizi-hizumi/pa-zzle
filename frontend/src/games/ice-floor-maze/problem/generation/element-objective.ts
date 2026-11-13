@@ -19,10 +19,6 @@ import {
  * 要素のある問題の目的関数と採用条件（研究用の生成 v4 の `Weights`・`violations`・`hardness`・`evaluate`）。
  */
 
-/**
- * 盤面に置く要素の組み合わせ。`mixed` はもろい岩と薄い氷、`snow-thin-ice` は雪と薄い氷、`sliding-block-thin-ice` は
- * 滑る氷の塊と薄い氷。
- */
 export type ElementVariant =
   | "brittle-rock"
   | "thin-ice"
@@ -32,7 +28,6 @@ export type ElementVariant =
   | "sliding-block"
   | "sliding-block-thin-ice";
 
-/** 難しさの点の重みと上限。 */
 const elementWeights = {
   looks: {
     unsolvable: 5,
@@ -98,7 +93,6 @@ const ROCK_SHARE_TARGET = 0.22;
 export const STATE_READING_DEPTH_CAP = 8;
 
 /**
- * 1つの生成条件。最短手数・要素の数の範囲と、採用条件に効く値。
  * - `minimumEach`: 2種類を置く組み合わせで、それぞれの種類の下限。
  * - `minimumUses`: 最短解で要素を使う（崩す・押し出す・動かす・自分で作った地形を使う）回数の下限。
  * - `decoyShare`: おとりを要素の数のこの割合（切り上げ、最低1）以上置く。
@@ -124,7 +118,6 @@ export type ElementRecipe = {
  * - `minimumDistantStops`: 2手以上前に作った止め役で止まる回数の下限。
  * - `maximumUsedElements`: 最短解で変化させる要素の数の上限。
  * - `maximumLingeringDecoys`: 変化させた直後が閉じ込めにならないおとりの数の上限。
- * - `texture`: 最短解の手触りの条件。
  */
 export type ElementPoolConditions = {
   selfMadeDependence: { minimum: number; maximum: number };
@@ -149,7 +142,6 @@ export type ElementTextureLimits = {
   maximumIdleRun: number;
 };
 
-/** 盤面の種類ごとの要素の数。 */
 const tileCounts = {
   "brittle-rock": (metrics) => [metrics.brittleCount],
   "thin-ice": (metrics) => [metrics.thinCount],
