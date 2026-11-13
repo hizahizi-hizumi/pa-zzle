@@ -9,6 +9,9 @@ export type Path =
   | `/puzzles/:game/zukan`
   | `/puzzles/bridges`
   | `/puzzles/bridges/play/:difficulty`
+  | `/puzzles/hakoiri-musume`
+  | `/puzzles/hakoiri-musume/play/:difficulty`
+  | `/puzzles/hakoiri-musume/playtest/:problem`
   | `/puzzles/hitofude-puzzle`
   | `/puzzles/hitofude-puzzle/play/:difficulty`
   | `/puzzles/ice-floor-maze`
@@ -35,6 +38,8 @@ export type Params = {
   '/puzzles/:game/result/:recordId': { game: string; recordId: string }
   '/puzzles/:game/zukan': { game: string }
   '/puzzles/bridges/play/:difficulty': { difficulty: string }
+  '/puzzles/hakoiri-musume/play/:difficulty': { difficulty: string }
+  '/puzzles/hakoiri-musume/playtest/:problem': { problem: string }
   '/puzzles/hitofude-puzzle/play/:difficulty': { difficulty: string }
   '/puzzles/ice-floor-maze/play/:difficulty': { difficulty: string }
   '/puzzles/minesweeper/play/:difficulty': { difficulty: string }
