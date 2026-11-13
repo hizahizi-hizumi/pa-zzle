@@ -36,18 +36,14 @@ import {
   type SoundLayer,
 } from "@/lib/sound-effects";
 
-/** 攻方が駒を指す・打つ音。 */
-const pieceMovedSounds = defineSoundTakes([
+const attackerMoveSounds = defineSoundTakes([
   defineSoundEffect(pieceMovedSoundUrl),
   defineSoundEffect(pieceMoved2SoundUrl),
   defineSoundEffect(pieceMoved3SoundUrl),
 ]);
 
-/**
- * 玉方の応手の音。
- * 盤面で駒が動く同じ知らせなので同じ駒音の系統にし、利用者の操作ではないので一段控えめにする。
- */
-const pieceRepliedSounds = defineSoundTakes([
+/** 盤面で駒が動く同じ知らせなので同じ駒音の系統にし、利用者の操作ではないので一段控えめにする。 */
+const defenderReplySounds = defineSoundTakes([
   defineSoundEffect(pieceRepliedSoundUrl),
   defineSoundEffect(pieceReplied2SoundUrl),
 ]);
@@ -72,8 +68,8 @@ const clearedWaveSounds = [
 const clearedResonanceSound = defineSoundEffect(clearedResonanceSoundUrl);
 
 const tsumeShogiSounds: readonly SoundEffect[] = [
-  ...pieceMovedSounds.takes,
-  ...pieceRepliedSounds.takes,
+  ...attackerMoveSounds.takes,
+  ...defenderReplySounds.takes,
   refutedSound,
   rejectedSound,
   clearedStrikeSound,
@@ -112,12 +108,12 @@ const heldClearedSoundLayers: readonly SoundLayer[] = [
 function playOperationSound(operation: TsumeShogiOperation) {
   switch (operation.type) {
     case "moved":
-      playSound(pieceMovedSounds.pick(), {
+      playSound(attackerMoveSounds.pick(), {
         variation: REPEATED_SOUND_VARIATION,
       });
       return;
     case "replied":
-      playSound(pieceRepliedSounds.pick(), {
+      playSound(defenderReplySounds.pick(), {
         variation: REPEATED_SOUND_VARIATION,
       });
       return;

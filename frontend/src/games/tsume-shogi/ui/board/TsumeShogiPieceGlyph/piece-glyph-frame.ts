@@ -19,8 +19,8 @@ export const promotedTypes: ReadonlySet<TsumeShogiPieceType> =
     "promPawn",
   ]);
 
-/** 駒を描く範囲は盤の1升。中心を原点にし、升に対する駒の大きさを実物のままにする。 */
-export const squareViewBox = `${-TSUME_SHOGI_SQUARE_WIDTH / 2} ${-TSUME_SHOGI_SQUARE_HEIGHT / 2} ${TSUME_SHOGI_SQUARE_WIDTH} ${TSUME_SHOGI_SQUARE_HEIGHT}`;
+/** 駒を描く範囲を盤の1升にし、升に対する駒の大きさを実物のままにする。 */
+export const centeredSquareViewBox = `${-TSUME_SHOGI_SQUARE_WIDTH / 2} ${-TSUME_SHOGI_SQUARE_HEIGHT / 2} ${TSUME_SHOGI_SQUARE_WIDTH} ${TSUME_SHOGI_SQUARE_HEIGHT}`;
 
 /**
  * 駒の大きさの倍率。駒種ごとの実寸の比を保ったまま、升に対する比を実物の盤駒（玉で升幅の約 0.88）へ寄せる。

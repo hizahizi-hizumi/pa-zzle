@@ -28,8 +28,7 @@ type TsumeShogiPromotionPickerProps = {
   optionTapHandlers: { promote: TapHandlers; keep: TapHandlers };
 };
 
-/** 盤の幅に対する1升の割合。 */
-const squareRatio = 100 / 9;
+const squarePercentOfBoard = 100 / 9;
 
 /** 移動先の升の真上（一段目なら真下）の升2つにちょうど重ね、移動先を隠さない（`promotion-picker-placement.ts`）。 */
 export function TsumeShogiPromotionPicker({
@@ -60,8 +59,8 @@ export function TsumeShogiPromotionPicker({
   }, []);
 
   const placement = placeTsumeShogiPromotionPicker(to);
-  const left = placement.column * squareRatio;
-  const top = placement.row * squareRatio;
+  const left = placement.column * squarePercentOfBoard;
+  const top = placement.row * squarePercentOfBoard;
   const options = [
     {
       type: promotedPieceTypes[pieceType] ?? pieceType,

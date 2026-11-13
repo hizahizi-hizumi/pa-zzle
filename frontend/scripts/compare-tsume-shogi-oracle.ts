@@ -291,7 +291,7 @@ function compare(
     return "解釈差: oracle が駒余りとした参考手順";
   }
   const hasTiedDefense = mainLine.defenderTurns.some(
-    (turn) => turn.tiedResponseCount > 1,
+    (turn) => turn.leftoverTiedResponseCount > 1,
   );
   return hasTiedDefense &&
     ours.length === oracle.length &&

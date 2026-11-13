@@ -97,8 +97,7 @@ export type TsumeShogiDifficultyAnalysis =
       issues: TsumeShogiQualityIssue[];
     };
 
-/** 王手の後（玉方の手番）、残り `plies` 手以内に詰むか。 */
-function isMatedWithin(
+function isMatedAfterCheckWithin(
   state: TsumeShogiSearchPosition,
   plies: number,
   search: TsumeShogiMateSearch,
@@ -123,7 +122,7 @@ class DecoyReader {
         continue;
       }
       state.play(response);
-      const mated = isMatedWithin(state, plies - 1, this.#search);
+      const mated = isMatedAfterCheckWithin(state, plies - 1, this.#search);
       state.undo(response);
       if (mated) {
         return true;
@@ -144,7 +143,7 @@ class DecoyReader {
     let shortest = Number.POSITIVE_INFINITY;
     for (const response of state.listDefenderResponses()) {
       state.play(response);
-      const length = isMatedWithin(state, plies - 1, this.#search)
+      const length = isMatedAfterCheckWithin(state, plies - 1, this.#search)
         ? Number.POSITIVE_INFINITY
         : 1 + this.attackerLength(plies - 1);
       state.undo(response);
@@ -194,7 +193,7 @@ function readDecision(
       continue;
     }
     state.play(check);
-    const isWrong = !isMatedWithin(state, remainingPlies - 1, search);
+    const isWrong = !isMatedAfterCheckWithin(state, remainingPlies - 1, search);
     const isDeep =
       isWrong &&
       1 + reader.defenderLength(remainingPlies - 1) >= DEEP_DECOY_LENGTH;

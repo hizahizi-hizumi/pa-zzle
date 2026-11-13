@@ -8,11 +8,11 @@ import {
   useTsumeShogiPieceDefIds,
 } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs";
 import {
+  centeredSquareViewBox,
   getPieceGlyphLayout,
   glyphSizeClassNames,
   pieceMotionAttribute,
   promotedTypes,
-  squareViewBox,
   type TsumeShogiPieceGlyphProps,
 } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph/piece-glyph-frame";
 import { tsumeShogiToneClassNames as tone } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
@@ -85,7 +85,7 @@ export function DetailedPieceGlyph({
 
   return (
     <svg
-      viewBox={squareViewBox}
+      viewBox={centeredSquareViewBox}
       aria-hidden="true"
       className={cn(
         "pointer-events-none shrink-0 overflow-visible",
