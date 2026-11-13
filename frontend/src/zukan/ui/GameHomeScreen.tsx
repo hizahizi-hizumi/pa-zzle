@@ -932,6 +932,13 @@ export function GameHomeScreen({
           className="mt-2 min-h-0 flex-1 sm:mt-3"
         >
           <GameLevelCards levels={levelCards} />
+          {/* スマートフォンのカードは一言が収まる幅が無いので、開いているレベルの一言をカードの下に1行で出す。 */}
+          <p
+            aria-hidden="true"
+            className="mt-1 truncate px-1 text-meta text-foreground md:hidden"
+          >
+            {levelSummaries[openDifficulty]}
+          </p>
 
           {/* スマートフォンでは、状態ごとの数と台紙を1枚の盤に載せ、その下に「ランダムに遊ぶ」を置く。
             PC では、盤に台紙だけを載せ、横の列に「ランダムに遊ぶ」・状態ごとの数・選んだ問題の詳細を上から並べる。 */}

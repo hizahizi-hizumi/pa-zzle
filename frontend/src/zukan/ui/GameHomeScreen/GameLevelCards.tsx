@@ -69,7 +69,7 @@ export function GameLevelCards({ levels }: GameLevelCardsProps) {
                 <span className="font-medium">
                   {getDifficultyLabel(difficulty)}
                 </span>
-                <span className="font-normal whitespace-normal text-muted-foreground">
+                <span className="font-normal text-muted-foreground max-md:sr-only">
                   <span className="sr-only">、</span>
                   {summary}
                 </span>
