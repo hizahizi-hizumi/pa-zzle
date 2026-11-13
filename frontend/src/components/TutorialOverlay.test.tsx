@@ -313,6 +313,37 @@ describe("TutorialOverlay", () => {
     });
   });
 
+  describe("ゲームのホームから開いた場合", () => {
+    let onStartPlay: ReturnType<typeof vi.fn<() => void>>;
+
+    beforeEach(() => {
+      installAnimate();
+      onStartPlay = vi.fn<() => void>();
+      renderOverlay({ finish: { entry: "home", difficulty: "4", onStartPlay } });
+    });
+
+    test("最初の画面でとばして遊ぶを押すと、導入を進めずにそのプレイを始めること", () => {
+      const skipButton = screen.getByRole("button", { name: "とばして遊ぶ" });
+      fireEvent.pointerDown(skipButton);
+      fireEvent.click(skipButton);
+
+      expect(onStartPlay).toHaveBeenCalledOnce();
+      expect(onIntroEnd).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("プレイ中のメニューから開いた場合", () => {
+    beforeEach(() => {
+      renderOverlay();
+    });
+
+    test("とばして遊ぶを出さないこと", () => {
+      const skipButton = screen.queryByRole("button", { name: "とばして遊ぶ" });
+
+      expect(skipButton).toBeNull();
+    });
+  });
+
   describe("ゲームのホームから開いて解き終えた場合", () => {
     let onStartPlay: ReturnType<typeof vi.fn<() => void>>;
 

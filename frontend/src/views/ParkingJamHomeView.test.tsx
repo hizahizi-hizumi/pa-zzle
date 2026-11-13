@@ -113,9 +113,12 @@ describe("ParkingJamHomeView", () => {
     expect(href).toBe("/");
   });
 
-  test("レベルを選んでランダムに遊ぶを押すと、そのレベルのプレイ画面へ進むこと", () => {
+  test("まだクリアしていなければ、ランダムに遊ぶでチュートリアルを開き、とばして遊ぶを押すと選んだレベルのプレイ画面へ進むこと", async () => {
     chooseLevel("レベル 3");
     fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "とばして遊ぶ" }),
+    );
 
     const { pathname } = router.state.location;
 

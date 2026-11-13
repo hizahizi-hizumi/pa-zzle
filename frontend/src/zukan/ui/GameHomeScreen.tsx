@@ -134,8 +134,9 @@ export type GameHomeScreenProps = {
     problem: ZukanProblem,
   ) => ReadonlyMap<string, ProblemFeatureValue> | null;
   renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
+  /** 渡したゲームでは、まだ1問もクリアしていない人が始める操作をすると、プレイの前にチュートリアルを開く。 */
   renderTutorial?: (control: GameHomeTutorialControl) => ReactNode;
-  /** 全記録。開いているレベルの成績（自己ベスト・推移）を、成績を開いたときにこの中から求める。 */
+  /** 全記録。開いているレベルの成績（自己ベスト・推移）と、このゲームをクリアしたことがあるかを、この中から求める。 */
   records: readonly PlayRecord[];
   playRecordDisplay: PlayRecordDisplayDefinition;
 };
@@ -147,6 +148,17 @@ export type GameHomeTutorialControl = HowToPlayDialogControl & {
 type SelectedProblemKey = { difficulty: DifficultyLevel; problemId: ProblemId };
 
 type SelectedProblem = { problem: ZukanProblem; index: number };
+
+/**
+ * チュートリアルを終えて始めるプレイ。
+ * - `random`: 開いているレベルからゲームが選んだ問題。メニューから開いたときと、「ランダムに遊ぶ」から開いたとき。
+ * - `problem`: 詳細から始めようとした問題。
+ */
+type TutorialPlayTarget =
+  | { kind: "random" }
+  | { kind: "problem"; problem: ZukanProblem };
+
+const randomTutorialPlayTarget: TutorialPlayTarget = { kind: "random" };
 
 type LevelFilter = {
   difficulty: DifficultyLevel | null;
@@ -387,6 +399,8 @@ export function GameHomeScreen({
     null,
   );
   const [isEnteringPlay, setIsEnteringPlay] = useState(false);
+  const [tutorialPlayTarget, setTutorialPlayTarget] =
+    useState<TutorialPlayTarget>(randomTutorialPlayTarget);
   // 台紙を描いて幅が分かるまでは、狭い画面の台紙に近い幅で縮図を並べる。
   const [sheetWidthPx, setSheetWidthPx] = useState(INITIAL_SHEET_WIDTH_PX);
   const screenRef = useRef<HTMLDivElement>(null);
@@ -586,6 +600,10 @@ export function GameHomeScreen({
       ? PENDING_DETAIL_COVER_HEIGHT_PX
       : (detailOverlayHeight ?? 0);
   const numberDigitCount = getZukanNumberDigitCount(zukan.problemCount);
+  // 遊び方を知らないまま本番の盤面に放り込まないよう、まだ1問もクリアしていない人は、始める前にチュートリアルを通す。
+  const startsWithTutorial =
+    renderTutorial !== undefined &&
+    !records.some((record) => record.gameId === gameId);
 
   const handleSelect = useCallback(
     ({ difficulty, problemId }: ZukanProblem) => {
@@ -672,7 +690,16 @@ export function GameHomeScreen({
       handleFilterOpenChange(true);
       return;
     }
+    if (layer === "tutorial") {
+      setTutorialPlayTarget(randomTutorialPlayTarget);
+    }
     changeLayerOpen(layer, true);
+  }
+
+  function openTutorialBeforePlay(target: TutorialPlayTarget) {
+    finishOpenLevelReveal();
+    setTutorialPlayTarget(target);
+    changeLayerOpen("tutorial", true);
   }
 
   function handleFilterConditionsChange(conditions: ZukanFilterConditions) {
@@ -726,6 +753,10 @@ export function GameHomeScreen({
   }
 
   function handlePlayRandom() {
+    if (startsWithTutorial) {
+      openTutorialBeforePlay(randomTutorialPlayTarget);
+      return;
+    }
     const problem = findRandomProblem();
     if (problem === null) {
       return;
@@ -742,6 +773,10 @@ export function GameHomeScreen({
   }
 
   function handlePlayProblem(problem: ZukanProblem) {
+    if (startsWithTutorial) {
+      openTutorialBeforePlay({ kind: "problem", problem });
+      return;
+    }
     enterPlay(problem, false);
   }
 
@@ -749,7 +784,10 @@ export function GameHomeScreen({
     difficulty: openDifficulty,
     // チュートリアルを終えて始めるときは、台紙が見えていないので、動かさずに始める。
     onStart() {
-      const problem = findRandomProblem();
+      const problem =
+        tutorialPlayTarget.kind === "problem"
+          ? tutorialPlayTarget.problem
+          : findRandomProblem();
       if (problem !== null) {
         playPlayStartSound();
         onPlayProblem(problem);

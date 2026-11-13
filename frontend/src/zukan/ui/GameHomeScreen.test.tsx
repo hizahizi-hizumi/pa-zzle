@@ -14,9 +14,11 @@ import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import type { ProblemId } from "@/games/problem-id";
+import type { PlayRecord } from "@/records/play-record";
 import {
   GameHomeScreen,
   type GameHomeScreenProps,
+  type GameHomeTutorialControl,
   type ZukanFeatureAxis,
 } from "@/zukan/ui/GameHomeScreen";
 import {
@@ -170,6 +172,7 @@ function createScreen(
   changes: ZukanChanges = noZukanChanges,
   initialSelectedProblemId: ProblemId | null = null,
   renderTutorial?: GameHomeScreenProps["renderTutorial"],
+  records: readonly PlayRecord[] = playRecords,
 ) {
   return (
     <MemoryRouter>
@@ -191,7 +194,7 @@ function createScreen(
           open ? <p>遊び方のダイアログ</p> : null
         }
         renderTutorial={renderTutorial}
-        records={playRecords}
+        records={records}
         playRecordDisplay={nanpurePlayRecordDisplay}
       />
     </MemoryRouter>
@@ -203,10 +206,34 @@ function renderScreen(
   changes: ZukanChanges = noZukanChanges,
   initialSelectedProblemId: ProblemId | null = null,
   renderTutorial?: GameHomeScreenProps["renderTutorial"],
+  records: readonly PlayRecord[] = playRecords,
 ) {
   return render(
-    createScreen(shownZukan, changes, initialSelectedProblemId, renderTutorial),
+    createScreen(
+      shownZukan,
+      changes,
+      initialSelectedProblemId,
+      renderTutorial,
+      records,
+    ),
   );
+}
+
+function renderTestTutorial({
+  open,
+  onClose,
+  playStart,
+}: GameHomeTutorialControl) {
+  return open ? (
+    <div role="dialog" aria-label="チュートリアル">
+      <button type="button" onClick={playStart.onStart}>
+        {`${playStart.difficulty}を遊ぶ`}
+      </button>
+      <button type="button" onClick={onClose}>
+        閉じる
+      </button>
+    </div>
+  ) : null;
 }
 
 function getSheet(name: string): HTMLElement {
@@ -1082,22 +1109,13 @@ describe("GameHomeScreen", () => {
 
   describe("チュートリアルを渡した場合", () => {
     beforeEach(() => {
-      renderScreen(
-        zukan,
-        noZukanChanges,
-        null,
-        ({ open, onClose, playStart }) =>
-          open ? (
-            <div role="dialog" aria-label="チュートリアル">
-              <button type="button" onClick={playStart.onStart}>
-                {`${playStart.difficulty}を遊ぶ`}
-              </button>
-              <button type="button" onClick={onClose}>
-                閉じる
-              </button>
-            </div>
-          ) : null,
-      );
+      renderScreen(zukan, noZukanChanges, null, renderTestTutorial);
+    });
+
+    test("クリアしたことがあれば、ランダムに遊ぶを押すとチュートリアルを開かずにプレイへ入ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+
+      expect(screen.queryByRole("dialog", { name: "チュートリアル" })).toBeNull();
     });
 
     test("チュートリアルを最初は開かないこと", () => {
@@ -1141,6 +1159,41 @@ describe("GameHomeScreen", () => {
       fireEvent.click(await screen.findByRole("button", { name: "3を遊ぶ" }));
 
       expect(pickRandomProblemId.mock.calls).toEqual([["3"]]);
+      expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[3]]]);
+    });
+  });
+
+  describe("チュートリアルを渡し、このゲームをまだクリアしたことがない場合", () => {
+    beforeEach(() => {
+      renderScreen(zukan, noZukanChanges, null, renderTestTutorial, []);
+    });
+
+    test("ランダムに遊ぶを押すと、プレイを始めずにチュートリアルを開くこと", async () => {
+      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+
+      const dialog = await screen.findByRole("dialog", {
+        name: "チュートリアル",
+      });
+
+      expect(dialog).toBeTruthy();
+      expect(onPlayProblem).not.toHaveBeenCalled();
+    });
+
+    test("ランダムに遊ぶから開いたチュートリアルを終えると、開いているレベルでプレイを始めること", async () => {
+      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+      fireEvent.click(await screen.findByRole("button", { name: "3を遊ぶ" }));
+
+      expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[3]]]);
+    });
+
+    test("詳細の遊ぶから開いたチュートリアルを終えると、選んだ問題でプレイを始めること", async () => {
+      fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
+      fireEvent.click(
+        within(getDetail()).getByRole("button", { name: "遊ぶ" }),
+      );
+      fireEvent.click(await screen.findByRole("button", { name: "3を遊ぶ" }));
+
+      expect(pickRandomProblemId).not.toHaveBeenCalled();
       expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[3]]]);
     });
   });

@@ -302,6 +302,7 @@ export function TutorialScreen({
   const introPictogramRef = useRef<HTMLSpanElement>(null);
   const introTitleRef = useRef<HTMLSpanElement>(null);
   const nextButtonRef = useRef<HTMLButtonElement>(null);
+  const skipButtonRef = useRef<HTMLButtonElement>(null);
   const animatedRef = useRef(false);
   const nameCenteredRef = useRef(nameCentered);
   const stageRef = useRef(stage);
@@ -463,6 +464,10 @@ export function TutorialScreen({
     return target instanceof Node && !!nextButtonRef.current?.contains(target);
   }
 
+  function isOnSkipButton(target: EventTarget): boolean {
+    return target instanceof Node && !!skipButtonRef.current?.contains(target);
+  }
+
   /**
    * 今の段の動きを終えて、その段の終わりの画面を見せる。終える動きが無ければ何もせず `false` を返す。
    */
@@ -497,7 +502,11 @@ export function TutorialScreen({
   }
 
   function handlePointerDownCapture(event: ReactPointerEvent): void {
-    if (introPlaying && !isOnNextButton(event.target)) {
+    if (
+      introPlaying &&
+      !isOnNextButton(event.target) &&
+      !isOnSkipButton(event.target)
+    ) {
       finishStageMotion();
     }
   }
@@ -506,9 +515,9 @@ export function TutorialScreen({
     if (!introPlaying || event.key === "Escape" || event.key === "Tab") {
       return;
     }
-    // 「次へ」を押すキーは、今の段の動きを終えさせずに「次へ」に任せる。
+    // 「次へ」と「とばして遊ぶ」を押すキーは、今の段の動きを終えさせずにそのボタンに任せる。
     if (
-      isOnNextButton(event.target) &&
+      (isOnNextButton(event.target) || isOnSkipButton(event.target)) &&
       (event.key === "Enter" || event.key === " ")
     ) {
       return;
@@ -575,7 +584,18 @@ export function TutorialScreen({
             {title}
           </DialogTitle>
           {/* 名前の箱を文字の幅に保ち、導入で名前だけを動かせるようにするため、閉じるボタンを右端へ寄せる。 */}
-          <div className="ml-auto flex shrink-0">
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            {finish.entry === "home" && !completed && (
+              <Button
+                ref={skipButtonRef}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={finish.onStartPlay}
+              >
+                とばして遊ぶ
+              </Button>
+            )}
             <DialogClose asChild>
               <Button
                 type="button"
