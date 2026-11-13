@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render as renderWithoutRouter,
@@ -74,6 +75,7 @@ describe("BridgesPlay", () => {
     board,
     bridges: [0, 0, 0, 0],
     islandStatuses: ["short", "short", "short", "short", "short"],
+    separatedGroupCount: null,
     undoCount: performance.undoCount,
     edgeNotice: null,
     canUndo: false,
@@ -276,6 +278,212 @@ describe("BridgesPlay", () => {
 
       test("完成を読み上げの領域に出すこと", () => {
         expect(screen.getByRole("status").textContent).toBe("完成");
+      });
+    });
+  });
+
+  describe("全部の島がちょうどのまま分かれた盤面", () => {
+    const separatedBridges = [1, 0, 0, 0] as const;
+    const otherSeparatedBridges = [2, 0, 0, 0] as const;
+    const threeGroupsText = "島が3組に分かれています全部の島を1つにつなげます";
+    const separationAnnouncement =
+      "島が3組に分かれています 全部の島を1つにつなげます";
+
+    function findSeparationNotice(): HTMLElement | null {
+      return screen.queryByText(
+        (_, element) =>
+          element?.tagName === "P" && element.textContent === threeGroupsText,
+      );
+    }
+
+    function advance(ms: number): void {
+      act(() => {
+        vi.advanceTimersByTime(ms);
+      });
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    describe("プレイ中にその盤面になった場合", () => {
+      let rerender: (ui: ReactElement) => void;
+
+      function renderWith(
+        props: Partial<ComponentProps<typeof BridgesPlay>>,
+      ): ReactElement {
+        return (
+          <BridgesPlay
+            {...baseProps}
+            progress="playing"
+            result={null}
+            bridges={separatedBridges}
+            separatedGroupCount={3}
+            {...props}
+          />
+        );
+      }
+
+      beforeEach(() => {
+        ({ rerender } = render(renderWith({})));
+      });
+
+      describe("その盤面が続いていない場合", () => {
+        beforeEach(() => {
+          advance(499);
+        });
+
+        test("まだ知らせないこと", () => {
+          const notice = findSeparationNotice();
+          const status = screen.getByRole("status").textContent;
+
+          expect({ notice, status }).toEqual({ notice: null, status: "" });
+        });
+      });
+
+      describe("その盤面が続いた場合", () => {
+        beforeEach(() => {
+          advance(500);
+        });
+
+        test("一言と読み上げで知らせること", () => {
+          const notice = findSeparationNotice();
+          const status = screen.getByRole("status").textContent;
+
+          expect({ shown: notice !== null, status }).toEqual({
+            shown: true,
+            status: separationAnnouncement,
+          });
+        });
+
+        describe("知らせたまま、交わる橋に阻まれた場合", () => {
+          let separationAnnouncementElement: Element | null;
+
+          beforeEach(() => {
+            separationAnnouncementElement = within(
+              screen.getByRole("status"),
+            ).getByText(separationAnnouncement);
+            rerender(
+              renderWith({
+                edgeNotice: {
+                  id: 8,
+                  change: "blocked",
+                  edge: 2,
+                  crossingEdges: [3],
+                },
+              }),
+            );
+          });
+
+          test("阻まれた理由を読み上げ、分かれている文は読み直さないこと", () => {
+            const status = within(screen.getByRole("status"));
+            const blocked = status.queryByText(
+              "1行3列と5行3列の間 交わる橋があって架けられない",
+            );
+            const separation = status.getByText(separationAnnouncement);
+
+            expect({
+              blockedRead: blocked !== null,
+              separationKept: separation === separationAnnouncementElement,
+            }).toEqual({ blockedRead: true, separationKept: true });
+          });
+        });
+
+        describe("知らせた後に盤面が変わって分かれなくなった場合", () => {
+          beforeEach(() => {
+            rerender(
+              renderWith({
+                separatedGroupCount: null,
+                edgeNotice: { id: 7, change: "changed", edge: 0, count: 0 },
+              }),
+            );
+          });
+
+          test("すぐに知らせを消すこと", () => {
+            const notice = findSeparationNotice();
+            const status = screen.getByRole("status").textContent;
+
+            expect({ notice, status }).toEqual({
+              notice: null,
+              status: "1行1列と1行3列の間 橋なし",
+            });
+          });
+
+          describe("待ったで知らせた盤面へ戻った場合", () => {
+            beforeEach(() => {
+              rerender(renderWith({}));
+              advance(499);
+            });
+
+            test("戻ってから続いた時間が足りないうちは知らせないこと", () => {
+              const notice = findSeparationNotice();
+
+              expect(notice).toBeNull();
+            });
+
+            describe("戻った盤面が続いた場合", () => {
+              beforeEach(() => {
+                advance(1);
+              });
+
+              test("知らせること", () => {
+                const notice = findSeparationNotice();
+
+                expect(notice).not.toBeNull();
+              });
+            });
+          });
+        });
+      });
+
+      describe("知らせる前に、組の数が同じ別の分かれた盤面へ移った場合", () => {
+        beforeEach(() => {
+          advance(400);
+          rerender(renderWith({ bridges: otherSeparatedBridges }));
+          advance(400);
+        });
+
+        test("移ってから続いた時間が足りないうちは知らせないこと", () => {
+          const notice = findSeparationNotice();
+
+          expect(notice).toBeNull();
+        });
+
+        describe("移った盤面が続いた場合", () => {
+          beforeEach(() => {
+            advance(100);
+          });
+
+          test("知らせること", () => {
+            const notice = findSeparationNotice();
+
+            expect(notice).not.toBeNull();
+          });
+        });
+      });
+    });
+
+    describe("完成演出中の場合", () => {
+      beforeEach(() => {
+        render(
+          <BridgesPlay
+            {...baseProps}
+            progress="clearing"
+            bridges={separatedBridges}
+            separatedGroupCount={3}
+          />,
+        );
+        advance(500);
+      });
+
+      test("分かれていることを知らせないこと", () => {
+        const notice = findSeparationNotice();
+
+        expect(notice).toBeNull();
       });
     });
   });

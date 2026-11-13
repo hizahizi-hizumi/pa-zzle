@@ -30,28 +30,56 @@ export function listBridgesIslandStatuses(
   );
 }
 
+export function listBridgesIslandGroups(
+  board: BridgesBoard,
+  state: BridgesPuzzleState,
+): number[][] {
+  const { edges, islandEdges } = getBridgesNetwork(board);
+  const grouped = new Set<number>();
+  const groups: number[][] = [];
+  for (const [start] of board.islands.entries()) {
+    if (grouped.has(start)) {
+      continue;
+    }
+    const group = [start];
+    grouped.add(start);
+    for (let index = 0; index < group.length; index += 1) {
+      const island = group[index]!;
+      for (const edgeIndex of islandEdges[island]!) {
+        const { from, to } = edges[edgeIndex]!;
+        const other = from === island ? to : from;
+        if (state.bridges[edgeIndex] !== 0 && !grouped.has(other)) {
+          grouped.add(other);
+          group.push(other);
+        }
+      }
+    }
+    groups.push(group.sort((left, right) => left - right));
+  }
+  return groups;
+}
+
 export function areBridgesIslandsConnected(
   board: BridgesBoard,
   state: BridgesPuzzleState,
 ): boolean {
-  const { edges, islandEdges } = getBridgesNetwork(board);
-  const reached = new Set([0]);
-  const pending = [0];
-  for (
-    let island = pending.pop();
-    island !== undefined;
-    island = pending.pop()
-  ) {
-    for (const edgeIndex of islandEdges[island]!) {
-      const edge = edges[edgeIndex]!;
-      const other = edge.from === island ? edge.to : edge.from;
-      if (state.bridges[edgeIndex] !== 0 && !reached.has(other)) {
-        reached.add(other);
-        pending.push(other);
-      }
-    }
+  return listBridgesIslandGroups(board, state).length <= 1;
+}
+
+/**
+ * どの島も数字とちょうどなのに、全部の島が1つにつながっていない盤面の、島の組（`listBridgesIslandGroups`）の数。
+ * そうでない盤面では `null`。
+ */
+export function countBridgesSeparatedIslandGroups(
+  board: BridgesBoard,
+  state: BridgesPuzzleState,
+  islandStatuses: readonly BridgesIslandStatus[],
+): number | null {
+  if (!islandStatuses.every((status) => status === "exact")) {
+    return null;
   }
-  return reached.size === board.islands.length;
+  const groupCount = listBridgesIslandGroups(board, state).length;
+  return groupCount > 1 ? groupCount : null;
 }
 
 function areBridgesPlacementsValid(

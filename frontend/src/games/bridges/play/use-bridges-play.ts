@@ -13,6 +13,7 @@ import {
 import { selectBridgesProblemForDifficulty } from "@/games/bridges/problem-selection";
 import {
   type BridgesIslandStatus,
+  countBridgesSeparatedIslandGroups,
   listBridgesIslandStatuses,
 } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
@@ -75,6 +76,8 @@ export type BridgesPlay = GamePlay<
     board: BridgesProblem;
     bridges: readonly BridgeCount[];
     islandStatuses: readonly BridgesIslandStatus[];
+    /** どの島も数字とちょうどなのに全部の島がつながっていない間の、島の組の数。そうでない間は `null`。 */
+    separatedGroupCount: number | null;
     undoCount: number;
     /** 盤面を戻す・リセットの後は `null`。 */
     edgeNotice: BridgesEdgeNotice | null;
@@ -231,6 +234,16 @@ export function useBridgesPlay(
     setPlay(completePlayClearAnimation);
   }, []);
 
+  const islandStatuses = useMemo(
+    () => listBridgesIslandStatuses(problem, puzzleState),
+    [problem, puzzleState],
+  );
+  const separatedGroupCount = useMemo(
+    () =>
+      countBridgesSeparatedIslandGroups(problem, puzzleState, islandStatuses),
+    [problem, puzzleState, islandStatuses],
+  );
+
   const result = useMemo(() => {
     const sessionResult = getBridgesSessionResult(session);
     return sessionResult ? createBridgesResult(sessionResult, workload) : null;
@@ -248,7 +261,8 @@ export function useBridgesPlay(
     result,
     board: problem,
     bridges: puzzleState.bridges,
-    islandStatuses: listBridgesIslandStatuses(problem, puzzleState),
+    islandStatuses,
+    separatedGroupCount,
     undoCount: session.undoCount,
     edgeNotice: play.edgeNotice,
     canUndo: canUndoBridgesSession(session),
