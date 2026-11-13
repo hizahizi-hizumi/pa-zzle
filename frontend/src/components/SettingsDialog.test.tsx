@@ -28,7 +28,6 @@ vi.mock("@/lib/sound-effects", () => ({
   playSound: vi.fn(),
 }));
 
-/** 音量の行を、その名前の付いたまとまりとして取得する。 */
 function getVolumeRow(name: string): HTMLElement {
   return screen.getByRole("group", { name });
 }

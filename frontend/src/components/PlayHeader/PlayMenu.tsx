@@ -32,7 +32,6 @@ type PlayMenuProps = {
   onOpenGameHome: () => void;
   onBackToHome: () => void;
   onOpenHowToPlay?: () => void;
-  /** 省略するとメニューに「チュートリアル」を出さない。 */
   onOpenTutorial?: () => void;
   onOpenDiagnostics?: () => void;
 };

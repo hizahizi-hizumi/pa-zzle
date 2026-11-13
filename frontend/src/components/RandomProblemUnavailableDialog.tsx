@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { randomProblemUnavailable } from "@/lib/random-problem-unavailable";
 
-/** 出題条件に該当する別問が無いとき、条件を変えずに設定へ誘導する。 */
 export function RandomProblemUnavailableDialog() {
   const notice = useSyncExternalStore(
     randomProblemUnavailable.subscribe,

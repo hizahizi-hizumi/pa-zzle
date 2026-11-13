@@ -10,22 +10,15 @@ type PlayHeaderProps = {
   title: string;
   /** 2つまでは常に1行に並べる。3つ以上は、1行に収まらない幅で前から2つずつ行を分ける。 */
   metrics: readonly PlayHeaderMetric[];
-  /**
-   * メニューの手前に置くゲーム固有の操作。
-   * 渡すと、`null` で一時的に隠す間も見出しが動かないよう、両端の幅を広げて確保する。
-   */
+  /** 渡すと、`null` で一時的に隠す間も見出しが動かないよう、両端の幅を広げて確保する。 */
   trailingAction?: ReactNode;
-  /** 省略するとメニューに「盤面を戻す」を出さない。 */
   onRestart?: () => void;
   canRestart?: boolean;
-  /** 省略するとメニューに「リセット」を出さない。 */
   onReplay?: () => void;
   onStartNewProblem: () => void;
-  /** ゲームのホームへ移る。見出しの戻るとメニューから。 */
   onOpenGameHome: () => void;
   onBackToHome: () => void;
   onOpenHowToPlay?: () => void;
-  /** 省略するとメニューに「チュートリアル」を出さない。 */
   onOpenTutorial?: () => void;
   onOpenDiagnostics?: () => void;
 };

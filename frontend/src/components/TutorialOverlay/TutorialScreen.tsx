@@ -42,20 +42,14 @@ export type TutorialRuleListItem = {
 };
 
 /**
- * ゲームのホームから開いたときの、終えて遊び始める操作。特定のレベルを勧めないよう、ゲームのホームで開いているレベルを始める。
+ * ゲームのホームから開いたときの、終えて遊び始める操作。
  * - `difficulty`: 始めるレベル。終えたときの操作の名前に出す。
- * - `onStart`: そのレベルのプレイを始める。
  */
 export type TutorialPlayStart = {
   difficulty: DifficultyLevel;
   onStart: () => void;
 };
 
-/**
- * 終えたときの主な操作。開いた場所ごとに行き先が決まる。
- * - `home`: ゲームのホームから開いた。ゲームのホームで開いているレベル（`difficulty`）を始める。
- * - `play`: プレイ中に開いた。閉じてプレイに戻る。
- */
 export type TutorialFinish =
   | { entry: "home"; difficulty: DifficultyLevel; onStartPlay: () => void }
   | { entry: "play"; onReturnToPlay: () => void };
@@ -82,9 +76,9 @@ export type TutorialBoardIntro = {
 };
 
 type TutorialScreenProps = {
-  /** パズルの名前。チュートリアルはパズルの入口の1つなので、何のパズルかを盤面と一緒に見せる。 */
+  /** チュートリアルはパズルの入口の1つなので、何のパズルかを盤面と一緒に見せる。 */
   title: string;
-  /** パズル選択と同じピクトグラム。名前と一緒に見せる。 */
+  /** パズル選択と同じピクトグラム。 */
   pictogramSvg: string;
   intro: TutorialIntro;
   rules: readonly TutorialRuleListItem[];
@@ -95,9 +89,8 @@ type TutorialScreenProps = {
   /** 手を引いている間。導入を終えてから完成までのうち、手を離すまでの間だけ、画面全体に覆いを重ねる。 */
   guiding: boolean;
   finish: TutorialFinish;
-  /** ゲーム固有の盤面。盤面の大きさは盤面の側が、この領域の大きさから決める。 */
+  /** 盤面の大きさは盤面の側が、この領域の大きさから決める。 */
   renderBoard: (intro: TutorialBoardIntro) => ReactNode;
-  /** 導入を終えた。 */
   onIntroEnd: () => void;
   onRestart: () => void;
   /** 画面そのもの。開いたときのフォーカスを置く。 */
@@ -260,7 +253,6 @@ function canAnimateIntro(elements: readonly (HTMLElement | null)[]): boolean {
   );
 }
 
-/** 画面の中で使う参照と、開いた側へ渡す参照の両方に、同じ要素を渡す。 */
 function mergeRefs(
   inner: RefObject<HTMLDivElement | null>,
   outer: Ref<HTMLDivElement> | undefined,
@@ -292,7 +284,7 @@ function getMoveFromIntroName(
 /**
  * 開いたときに、パズルの名前と何をするパズルか、ゴールの盤面、始めの盤面を順に見せてから、1つの盤面を埋めながらルールを1つずつ身につけていく画面。
  * 盤面を主役にし、上部にパズルの名前と手に入れたルール、盤面の直上に短い一言だけを出す。
- * 導入は自分のペースで進められるよう、ゴールと始まりの盤面は「次へ」で進める。ほかのどこを押しても、どのキーでも、今の段の動きを終えて見せられる。
+ * 導入は自分のペースで進められるよう、ゴールと始まりの盤面は「次へ」で進める。
  */
 export function TutorialScreen({
   title,
@@ -435,10 +427,7 @@ export function TutorialScreen({
     );
   }, [changeStage, finishIntro, schedule]);
 
-  /**
-   * 盤面が場面の動きを終えたら、終わりの盤面を見せたまま「次へ」を待つ。
-   * 盤面を見る速さは人によって違うので、ゴールと始まりの盤面は自動では先へ進めない。
-   */
+  /** 盤面を見る速さは人によって違うので、ゴールと始まりの盤面は自動では先へ進めない。 */
   const handleSceneEnd = useCallback(() => {
     const current = stageRef.current;
     if (
@@ -451,7 +440,6 @@ export function TutorialScreen({
     setSceneEnded(true);
   }, []);
 
-  // 「次へ」で次の場面へ進める。最後の場面では、名前を上部へ戻してから最初の手順を始める。
   function showNextScene(): void {
     const current = stageRef.current;
     stopIntroMotion();
@@ -508,7 +496,6 @@ export function TutorialScreen({
     }
   }
 
-  /** 盤面の場面の動きを止め、場面の終わりの盤面を見せて「次へ」を待つ。 */
   function endScene(scene: IntroStage): void {
     endedStageRef.current = scene;
     setSceneEnded(true);
@@ -554,7 +541,6 @@ export function TutorialScreen({
   }
 
   const stageView = introStageViews[stage];
-  // 名前を上部へ移す段では、ルールと一言を名前が通り過ぎてから出す。
   const rulesStyle =
     stage === "header"
       ? { animationDelay: `${REVEAL_AFTER_NAME_DELAY_MS}ms` }

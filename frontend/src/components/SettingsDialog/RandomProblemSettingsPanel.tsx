@@ -16,7 +16,6 @@ type RandomProblemSettingsPanelProps = {
   initialGameId?: string;
 };
 
-/** 全パズル向けの設定を基本とし、対象のパズルがあれば最初からその適用先を示す。 */
 export function RandomProblemSettingsPanel({
   initialGameId,
 }: RandomProblemSettingsPanelProps) {

@@ -12,7 +12,7 @@ type TutorialCueProps =
 const fillPlacementClassName =
   "pointer-events-none absolute inset-0 rounded-[inherit]";
 
-/** 出してから少し保ち、線を消す。動きを減らす設定でも、位置や大きさを変えないので同じに見せる。 */
+/** 動きを減らす設定でも、位置や大きさを変えないので同じに見せる。 */
 const fadeAwayClassName =
   "fill-mode-forwards animate-out fade-out-0 delay-(--duration-slow) duration-(--duration-slow) ease-standard";
 
@@ -22,7 +22,6 @@ const fadeAwayClassName =
  * どこまで囲むかと角丸は押す物の形からゲームが決め、置き場所の要素に持たせる。
  *
  * 盤面部品は、押す物（マス・タイルなど）の中に `relative` で角丸を持つ置き場所を置き、その中にこの部品を描く。
- * 盤面部品は本番では合図を受け取らないので、合図を任意の props（例: `cues`）で受け取り、本番の見た目を変えない。
  *
  * ```tsx
  * <button type="button" className="relative rounded-md">
