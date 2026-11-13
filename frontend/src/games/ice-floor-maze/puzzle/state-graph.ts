@@ -14,7 +14,7 @@ import type { IceFloorMazeState } from "@/games/ice-floor-maze/puzzle/state";
  */
 export const ICE_FLOOR_MAZE_STATE_LIMIT = 20_000;
 
-/** 状態から1回の滑りで移れる状態。`to` は `IceFloorMazeStateGraph` の `states` の番号。 */
+/** `to` は `IceFloorMazeStateGraph` の `states` の番号。 */
 export type IceFloorMazeStateMove = {
   direction: IceFloorMazeDirection;
   to: number;

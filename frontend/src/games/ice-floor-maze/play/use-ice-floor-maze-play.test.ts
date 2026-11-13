@@ -49,7 +49,6 @@ vi.mock("@/games/ice-floor-maze/problem-selection", async () => {
 });
 
 const solution: readonly IceFloorMazeDirection[] = ["down", "right", "up"];
-/** 開始位置から詰みに入る滑り。 */
 const intoDeadlock: readonly IceFloorMazeDirection[] = ["right"];
 /** 詰みに入った 19 から、詰みの中を一巡りして 19 へ戻る滑り（19 → 15 → 5 → 7 → 5 → 15 → 19）。 */
 const deadlockLoop: readonly IceFloorMazeDirection[] = [
@@ -70,9 +69,7 @@ function deadlockSlides(count: number, slidCount = 0): IceFloorMazeDirection[] {
     .slice(slidCount, slidCount + count);
 }
 
-/** 詰みに入った後、知らせるまで詰みの中で続ける滑り。 */
 const withinDeadlock = deadlockSlides(deadlockNoticeSlideCount);
-/** 知らせる1回手前までの滑り。 */
 const untilNotice = withinDeadlock.slice(0, -1);
 
 afterEach(() => {

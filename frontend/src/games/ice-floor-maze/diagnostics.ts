@@ -23,10 +23,6 @@ import {
 } from "@/games/ice-floor-maze/problem/problem";
 import { isRecordObject } from "@/lib/type-guards";
 
-/**
- * - `difficultyAssessment`: 診断を開いたときの分類方針での、その問題の分類。
- * - `difficultyAnalysis`: 分類の元にした問題の特徴（計画深さ・最少手数・試行手数・到達できる停止点など）。
- */
 export type IceFloorMazeDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "ice-floor-maze",
   IceFloorMazeDifficulty,
@@ -64,10 +60,7 @@ const iceFloorMazeDiagnosticFormat: InternalDiagnosticFormat<IceFloorMazeDiagnos
     },
   };
 
-/**
- * 遊んでいる問題を identity から分析し直して内部診断の snapshot を作る。
- * プレイ時には分析しないため、診断を開いたときだけ呼ぶ。
- */
+/** プレイ時には分析しないため、診断を開いたときだけ呼ぶ。 */
 export function createIceFloorMazeDiagnosticSnapshot(input: {
   difficulty: IceFloorMazeDifficulty;
   problemIdentity: IceFloorMazeProblemIdentity;

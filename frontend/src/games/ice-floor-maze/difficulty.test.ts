@@ -99,7 +99,6 @@ const baseElements: IceFloorMazeElementFeatures = {
   floorCount: 0,
 };
 
-/** 床の無い盤面の、床で区切った読み深さは元の読み深さと同じ。 */
 function tactics(
   shape: IceFloorMazeBoardShape,
   features: Partial<IceFloorMazeTacticFeatures>,
@@ -115,6 +114,7 @@ function tactics(
     features: {
       ...baseTactics,
       ...features,
+      // 床の無い盤面の、床で区切った読み深さは元の読み深さと同じ。
       floors: features.floors ?? {
         ...baseTactics.floors,
         splitReadingDepth: readingDepth,

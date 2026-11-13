@@ -21,11 +21,8 @@ export type IceFloorMazeDifficulty = DifficultyLevel;
 
 /**
  * 氷と岩（と床）だけのレベルの、挑戦の型（研究用の生成 v2 の手筋の組み合わせ）。
- * - `required` / `forbidden`: 含む手筋のタグ / 含まない手筋のタグ。
- * - `readingDepth`: 先読みのモデルで解ける読み手数の範囲。床で止まる問題は、最短解を止まる床で区切った読み深さ
- *   （床を中間の目標と見抜いた人の読み深さ）も下限以上にする。
+ * - `readingDepth`: 先読みのモデルで解ける読み手数の範囲。
  * - `nearPathCount`: 最少手数+2手以内の近い別解の数の範囲。どこからでも何となく着く問題を外す。
- * - `floorCount`: 床の数の範囲。
  */
 export type IceFloorMazeTacticPattern = {
   optimalMoveCount: NumericRange;
@@ -36,7 +33,6 @@ export type IceFloorMazeTacticPattern = {
   floorCount: NumericRange;
 };
 
-/** 要素のあるレベルで出す要素の組み合わせ。 */
 export type IceFloorMazeLevelComposition = Exclude<
   IceFloorMazeElementComposition,
   "none" | "other"
@@ -45,12 +41,10 @@ export type IceFloorMazeLevelComposition = Exclude<
 /**
  * 要素のあるレベルの、挑戦の型。段は自作依存の点（`IceFloorMazeElementFeatures` の `selfMadeDependence`。前の自分の手が作った
  * 止め役・通り道にどれだけ頼るか）で分け、要素の種類・数・手数は作業の量として範囲を置く。
- * - `composition` / `elementCount`: 置く要素の種類と数。
  * - `usedElementCount`: 最短解で変化させる要素の数の範囲。
  * - `lingeringDecoyCount`: 変化させた直後が閉じ込めにならないおとりの数の範囲。
- * - `selfMadeDependence`: 自作依存の点の範囲。
  * - `distantStopCount`: 2手以上前に作った止め役で止まる回数の範囲。
- * - `floorCount`: 床の数の範囲。要素のあるレベルには床を置かない（床で止まる手が前の手で作った水面で止まる手の代わりになり、
+ * - `floorCount`: 要素のあるレベルには床を置かない（床で止まる手が前の手で作った水面で止まる手の代わりになり、
  *   自作依存の点の帯と、要素の盤面の床の働き（目印にならないか）を確かめていないため）。
  */
 export type IceFloorMazeElementPattern = {
@@ -84,7 +78,6 @@ const unbounded = Number.POSITIVE_INFINITY;
 const anyCount = { minimum: 0, maximum: unbounded } as const;
 const noFloors = { minimum: 0, maximum: 0 } as const;
 
-/** 氷と岩のレベルで置く床の数。0 は床の無い問題で、床のある問題と混ぜて出す。 */
 const tacticFloorCount = { minimum: 0, maximum: 4 } as const;
 
 /**
@@ -101,7 +94,6 @@ const introductionPattern = {
   floorCount: noFloors,
 } as const;
 
-/** L4。自作依存の点を L3 と L5 の間の帯に置く。 */
 const dependencePattern = {
   optimalMoveCount: { minimum: 12, maximum: 19 },
   elementCount: { minimum: 4, maximum: 6 },
@@ -229,12 +221,9 @@ export const iceFloorMazeLevelCriteria = {
 } as const satisfies Record<IceFloorMazeDifficulty, IceFloorMazeLevelCriteria>;
 
 /**
- * 全レベルに共通の採用条件。
  * - `forcedShare`: 一本道（戻らない選択肢が1つしかない手）を最少手数のこの割合まで。
  * - `maximumShortSlideShare`: 最短解の1マスだけの滑りを最少手数のこの割合（切り捨て）まで。
  * - `maximumChoicelessStair`: 最短解で、もっともらしい別の手が無い手だけで直交する2つの向きを交互に続ける連なり（選択肢の無い階段）の長さの上限。
- * 床のある盤面の条件（`listIceFloorMazeTacticUnmetConditions`）: 最短解で止まる床とおとりの床を両方置き、効かない床を置かず、
- * 最短解に同じ向きが続く手を作らず、止まれるどこからでも、床で止まった後に同じ向きへ1マスだけ進むか別の床で止まる手（連打）を作らない。
  * 要素のある盤面だけの条件:
  * - `minimumUses`: 最短解で要素を使う回数の下限。
  * - `decoyShare`: おとりを要素の数のこの割合（切り上げ、最低1）以上。
@@ -256,8 +245,6 @@ export const iceFloorMazeCommonConditions = {
 } as const;
 
 /**
- * 採用条件のうち満たさないもの。
- * - `multiple-solutions`: 最短解が一意でない。
  * - `forced`: 一本道が多い。
  * - `unreadable`: 先読みのモデルが上限まで読んでも解けない（氷と岩だけ）。
  * - `repeated-direction` / `element-chain`: 同じ向きが続く手がある（条件1）。`element-chain` は要素を働かせた直後に同じ向きで
@@ -294,12 +281,9 @@ export type IceFloorMazeUnmetCondition =
   | "idle-run";
 
 /**
- * 分析結果を難易度へ分類した結果。
  * - `classified`: 採用条件を満たし、いずれかのレベルの挑戦の型に当たった。
  * - `out-of-range`: 評価できるが提供しない。`unmet-conditions` は採用条件を満たさない。
  *   `unlisted-combination` は要素・手数・手筋・盤面の形の組がどのレベルにも当たらない。
- * - `unsupported`: 状態の数が上限を超え、評価できない。
- * - `invalid`: ゴールへ止まれず、問題として成立しない。
  */
 export type IceFloorMazeDifficultyAssessment = DifficultyAssessment<{
   classified: { composition: IceFloorMazeElementComposition };
@@ -387,7 +371,6 @@ export function listIceFloorMazeTacticUnmetConditions(
   return checks.flatMap(([condition, unmet]) => (unmet ? [condition] : []));
 }
 
-/** 盤面の要素の組み合わせごとの、種類ごとの数。 */
 const elementCountsByComposition = {
   "brittle-rock": (features) => [features.brittleRockCount],
   "thin-ice": (features) => [features.thinIceCount],
@@ -405,7 +388,6 @@ const elementCountsByComposition = {
   (features: IceFloorMazeElementFeatures) => readonly number[]
 >;
 
-/** 2種類を置く盤面で、少ない方の種類の数。1種類（とそれ以外の組み合わせ）は `Infinity`。 */
 function countScarceElements(
   composition: Exclude<IceFloorMazeElementComposition, "none">,
   features: IceFloorMazeElementFeatures,
@@ -461,7 +443,6 @@ export function listIceFloorMazeElementUnmetConditions(
   return checks.flatMap(([condition, unmet]) => (unmet ? [condition] : []));
 }
 
-/** 盤面の形が、そのレベルで出す最も広い形に収まるか。 */
 export function isIceFloorMazeBoardShapeOfDifficulty(
   shape: IceFloorMazeBoardShape,
   difficulty: IceFloorMazeDifficulty,

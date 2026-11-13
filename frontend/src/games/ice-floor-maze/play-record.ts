@@ -33,7 +33,6 @@ const ICE_FLOOR_MAZE_PLAY_RECORD_PAYLOAD_VERSION = 1;
 
 type IceFloorMazePlayPerformance = {
   elapsedMs: number;
-  /** 成立した滑りの総数。待ったで取り消した手と、盤面を戻す前の手も含む。 */
   moveCount: number;
   undoCount: number;
   restartCount: number;
@@ -151,17 +150,13 @@ export function createIceFloorMazePlayRecord({
   };
 }
 
-/** 記録から作り直した、結果画面に出す内容。 */
 export type IceFloorMazeRecordedResult = {
   difficulty: IceFloorMazeDifficulty;
   problemIdentity: IceFloorMazeProblemIdentity;
   result: IceFloorMazeResult;
 };
 
-/**
- * 記録から結果画面に出す内容を作り直す。
- * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
- */
+/** 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。 */
 export function restoreIceFloorMazeRecordedResult(
   record: PlayRecord,
 ): IceFloorMazeRecordedResult | null {

@@ -16,14 +16,12 @@ import {
 } from "@/games/ice-floor-maze/puzzle/state";
 import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
-/** 今の盤面は、駒の位置と変化した要素を合わせた状態。 */
 export type IceFloorMazeSession = GameSession<
   IceFloorMazeProblem,
   IceFloorMazeState
 > & {
   /** 待ったで戻れる、これまでの状態。最後が直前の状態。盤面を戻すと空になる。 */
   history: readonly IceFloorMazeState[];
-  /** 成立した滑りの回数。待ったで取り消した手と、盤面を戻す前の手も含む。 */
   moveCount: number;
   undoCount: number;
   restartCount: number;
@@ -67,7 +65,6 @@ export function createIceFloorMazeSession(
   };
 }
 
-/** 駒を `direction` へ、止め役か外壁にぶつかるまで滑らせる。ゴールで止まればクリアになる。 */
 export function slideIceFloorMazeSessionPiece(
   session: IceFloorMazeSession,
   direction: IceFloorMazeDirection,
@@ -98,7 +95,6 @@ export function slideIceFloorMazeSessionPiece(
   };
 }
 
-/** 駒と要素を直前の状態へ戻す。崩れたもろい岩・割れた薄い氷も戻る。総手数は減らさない。 */
 export function undoIceFloorMazeSession(
   session: IceFloorMazeSession,
 ): IceFloorMazeSession {
@@ -140,7 +136,6 @@ export function canUndoIceFloorMazeSession(
   return session.status === "playing" && session.history.length > 0;
 }
 
-/** 盤面が初期状態でない（駒が開始位置にいないか、要素が変わった）プレイ中だけ、盤面を戻せる。 */
 export function canRestartIceFloorMazeSession(
   session: IceFloorMazeSession,
 ): boolean {

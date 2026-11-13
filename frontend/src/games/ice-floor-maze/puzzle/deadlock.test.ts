@@ -14,7 +14,6 @@ import {
 } from "@/games/ice-floor-maze/puzzle/state";
 import { exploreIceFloorMazeStops } from "@/games/ice-floor-maze/puzzle/stop-graph";
 
-/** どの要素もまだ変わっていない盤面で、駒を `start` に置いて滑りを重ねた状態。 */
 function slideInOrder(
   board: IceFloorMazeBoard,
   start: number,
