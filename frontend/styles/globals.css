@@ -105,6 +105,8 @@
     var(--ease-celebrate) forwards;
   --animate-tutorial-complete-pulse: tutorial-complete-pulse 1200ms
     var(--ease-celebrate) both;
+  --animate-tutorial-recall-ring: tutorial-recall-ring 450ms var(--ease-enter)
+    both;
 
   @keyframes tutorial-achieve-ring {
     from {
@@ -114,6 +116,20 @@
     to {
       opacity: 0;
       transform: scale(1.18);
+    }
+  }
+
+  @keyframes tutorial-recall-ring {
+    from {
+      opacity: 0;
+      transform: scale(1.6);
+    }
+    60% {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+      transform: scale(1);
     }
   }
 

@@ -53,7 +53,8 @@ export function TutorialCue(props: TutorialCueProps) {
             data-tutorial-cue="mark"
             className={cn(
               fillPlacementClassName,
-              "border-(length:--border-width-strong) border-ring",
+              // 暗い地の上でも輪郭が沈まないよう、外側に地の色の縁を添える。
+              "border-(length:--border-width-strong) border-ring ring-2 ring-background",
             )}
           />
           {props.recallId !== null && (
@@ -65,6 +66,17 @@ export function TutorialCue(props: TutorialCueProps) {
                 fillPlacementClassName,
                 "border-(length:--border-width-strong) border-foreground",
                 fadeAwayClassName,
+              )}
+            />
+          )}
+          {props.recallId !== null && (
+            // 印の無い所を押したことへの応えが見落とされないよう、外から印へ輪を寄せて、目を印へ連れていく。
+            <span
+              key={`ring-${props.recallId}`}
+              aria-hidden="true"
+              className={cn(
+                fillPlacementClassName,
+                "animate-tutorial-recall-ring border-(length:--border-width-strong) border-foreground motion-reduce:hidden",
               )}
             />
           )}
