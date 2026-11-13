@@ -8,7 +8,6 @@ import {
   type BridgesIslandStatus,
   countBridgesIslandBridges,
   isBridgesSolved,
-  listBridgesIslandGroups,
   listBridgesIslandStatuses,
 } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
@@ -21,48 +20,50 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-export type BridgesTutorialRuleId = "double" | "count" | "cross" | "connect";
+export type BridgesTutorialRuleId = "count" | "double" | "cross";
 
 /** 本番と同じく、島の間を押すか島からなぞって、辺の橋を 1本 → 2本 → なし と回す。 */
 export type BridgesTutorialAction = { type: "cycle"; edge: number };
 
+/** 手順で架ける辺と、その辺に架かる本数。 */
+export type BridgesTutorialTarget = { edge: number; count: BridgeCount };
+
+/**
+ * - `targets`: この手順で架ける辺と本数。手順の間は、この辺を、この本数まで架ける手だけを受け付ける。すべて架けたら次の手順へ進む。
+ * - `island`: 手を決めさせる島。伝えたルールで、この島から見て `targets` の本数が決まる。操作を教える手順では `null`。
+ * - `pointed`: `targets` に印と指を付けるか。操作を教える手順だけが付ける。ルールを伝える手順と読みの手順は、
+ *   どの辺に何本架けるかを自分で決めさせるため付けない。
+ * - `midwayMessage`: `targets` の辺を1本にしたが、まだ2本に届いていない間の一言。2回押して2本にする操作を初めて使う手順だけが持つ。
+ * - `offStepMessage`: 手順に無い辺を押したときの一言。今の手順で何をするかを言う。
+ * - `blockedDetail`: 交差のルールを伝えた後に、交わる橋に阻まれたときの一言に添える、今の手順で何をするか。
+ *   交差のルールを伝える前の手順では、阻まれた手を違反とせず `offStepMessage` で返すので持たない。
+ */
 export type BridgesTutorialStep = TutorialStep<BridgesTutorialRuleId> & {
-  /** 印を付け、手順の間だけ操作を受け付ける辺。 */
-  edge: number;
-  /** この手順で `edge` に架ける本数。ここまで架けたら次の手順へ進む。 */
-  bridgeCount: BridgeCount;
-  /**
-   * `edge` の本数を、数字から決めさせる島。伝えたルールで、この島から見て `edge` が `bridgeCount` 本に決まる。
-   * 操作を教える手順では `null`。
-   */
+  targets: readonly BridgesTutorialTarget[];
   island: number | null;
-  /**
-   * この手順で受け付ける架け方。`between` は島の間を押す（島を選んでから相手の島を押す、なぞるも受ける）。
-   * `fromIsland` は島から架ける操作（なぞる、島を選んでから相手の島を押す）だけを受け、島の間を押しても架けない。
-   */
-  gesture: "between" | "fromIsland";
-  /**
-   * `edge` より先に印を付けて押させ、交わる橋に阻まれる盤面の反応を見せる辺。阻まれるのを見せたら、
-   * 印を `edge` へ移す。見せない手順では `null`。
-   */
-  blockedEdge: number | null;
+  pointed: boolean;
+  midwayMessage: TutorialMessage | null;
+  offStepMessage: TutorialMessage;
+  blockedDetail: string | null;
 };
 
-/** 決め手。手を決めるときに見る島と橋。 */
+/**
+ * 決め手。手を決めるときに見る島と橋。
+ * - `islands`: 数字を見る島。手を決めさせる島と、その行き先の島。
+ * - `edges`: 手を決めさせる島から出る辺と、その辺を阻む、架かった橋の辺。
+ */
 export type BridgesTutorialReason = {
-  /** 数字を見る島。 */
   islands: readonly number[];
-  /** 架かっている橋のうち、手を決めるもの（2本で上限の橋、交わる橋）。 */
   edges: readonly number[];
 };
 
-/** 直前の手。盤面の反応と合図に使う。 */
+/**
+ * 直前の手。盤面の反応と合図に使う。
+ * - `changed`: 辺 `edge` の橋の本数を `previous` 本から変えた。`fitsStep` は、手を引いている手順の辺を、手順の本数まで架けたか。
+ * - `blocked`: 辺 `edge` に架けようとしたが、交わる辺 `crossingEdges` の橋に阻まれた。本番と同じく盤面は変えない。
+ */
 export type BridgesTutorialMove =
-  /**
-   * `fitsStep` は、手を引いている手順の辺を、手順の本数まで架けたか。
-   * `removing` は、手がかりで外させている解と違う橋を、1本 → 2本 → なし と回して外す途中の2本にしたか。
-   */
-  | { kind: "changed"; edge: number; fitsStep: boolean; removing: boolean }
+  | { kind: "changed"; edge: number; previous: BridgeCount; fitsStep: boolean }
   | { kind: "blocked"; edge: number; crossingEdges: readonly number[] };
 
 export type BridgesTutorialBoardState = {
@@ -70,8 +71,6 @@ export type BridgesTutorialBoardState = {
   /** 同じ辺への合図をやり直す目印に使う。 */
   moveCount: number;
   lastMove: BridgesTutorialMove | null;
-  /** 手順で押させて、交わる橋に阻まれるのを見せ終えた辺。 */
-  shownBlockedEdges: readonly number[];
 };
 
 export type BridgesTutorialSituation = TutorialSituation<
@@ -80,23 +79,25 @@ export type BridgesTutorialSituation = TutorialSituation<
 >;
 
 /**
- * 5×5 の盤面に島が8つ。ルールの下で、解はこの1つに決まる。
+ * 6×6 の盤面に島が11。
  *
  * ```text
  * 盤面      解
- * 2.4.2    2---4---2
- * .....    |   H   |
- * 1...3    1   H   3
- * ..2..        2   H
- * 1...3    1-------3
+ * 4.5..1    4=5--1
+ * ....1.    H.H.1.
+ * 3....2    3.H.|2
+ * ..6.3.    |.6=3H
+ * ......    |.H..H
+ * 1.3..3    1.3--3
  * ```
  */
 const board: BridgesBoard = parseBridgesBoard([
-  "2.4.2",
-  ".....",
-  "1...3",
-  "..2..",
-  "1...3",
+  "4.5..1",
+  "....1.",
+  "3....2",
+  "..6.3.",
+  "......",
+  "1.3..3",
 ]);
 
 const network = getBridgesNetwork(board);
@@ -132,318 +133,285 @@ function edgeBetween(
   return edge;
 }
 
-const topEdge = edgeBetween([1, 1], [1, 3]);
-const leftTopEdge = edgeBetween([1, 1], [3, 1]);
-const topRightEdge = edgeBetween([1, 3], [1, 5]);
-const centerEdge = edgeBetween([1, 3], [4, 3]);
-const rightTopEdge = edgeBetween([1, 5], [3, 5]);
-const rightBottomEdge = edgeBetween([3, 5], [5, 5]);
-const middleRowEdge = edgeBetween([3, 1], [3, 5]);
-const bottomEdge = edgeBetween([5, 1], [5, 5]);
+const solvedBridgeCounts: readonly (readonly [
+  readonly [number, number],
+  readonly [number, number],
+  BridgeCount,
+])[] = [
+  [[1, 1], [1, 3], 2],
+  [[1, 1], [3, 1], 2],
+  [[1, 3], [1, 6], 1],
+  [[1, 3], [4, 3], 2],
+  [[2, 5], [4, 5], 1],
+  [[3, 1], [6, 1], 1],
+  [[3, 6], [6, 6], 2],
+  [[4, 3], [4, 5], 2],
+  [[4, 3], [6, 3], 2],
+  [[6, 3], [6, 6], 1],
+];
+
+const solvedBridges: readonly BridgeCount[] = network.edges.map((_, edge) => {
+  const solved = solvedBridgeCounts.find(
+    ([from, to]) => edgeBetween(from, to) === edge,
+  );
+  return solved?.[2] ?? 0;
+});
 
 const emptyBridges: readonly BridgeCount[] = network.edges.map(() => 0);
 
-const solvedBridgeCounts = new Map<number, BridgeCount>([
-  [topEdge, 1],
-  [leftTopEdge, 1],
-  [topRightEdge, 1],
-  [centerEdge, 2],
-  [rightTopEdge, 1],
-  [rightBottomEdge, 2],
-  [bottomEdge, 1],
-]);
-
-const solvedBridges: readonly BridgeCount[] = network.edges.map(
-  (_, edge) => solvedBridgeCounts.get(edge) ?? 0,
-);
-
 /**
- * 真ん中の縦の辺で、押して1本、もう一度押して2本と架け、ルールを1つずつ使って1本ずつ決めていく。
- * - 操作: 上の4と真ん中の2の間に1本、続けて2本目を架ける。真ん中の2は行き先が上の4だけなので、ゴールと同じ2本。
- * - 2本まで: もう一度押した2本目で、同じ2島の間は2本までと伝える。この上限は、交差の手順で右の3の下の橋を2本で止める決め手になる。
- * - 数字と同じ本数: 右下の3から、左の1へは1本しか出せないので、上の3へ2本架ける。
- * - 交差しない: 先に右の3から左の1へ架けさせ、真ん中の縦の2本に阻まれる盤面の反応（板が突き当たって弾かれ、阻んだ橋が
- *   赤く揺れる）を見せる。右の3は、あと1本要る。下は2本で上限、左は真ん中の縦の2本と交わるので、上の2へ架ける。
- * - 全部つなげる: 左の真ん中の1は、右へは交わって架けられず、下の1とつなぐと2島だけで閉じるので、上の2へ架ける。
- * - 操作: 左上の2から上の4へなぞって架ける。本番の、島から架ける操作（なぞる、島を選んでから相手の島を押す）を体験させる。
- *   左上の2は下へ1本架かり、あと1本は右の4へしか出せないので、ゴールと同じ1本。
- * 手順を終えると2本が残り、数字と同じ本数だけで1本ずつ決まる。
+ * - 操作: 右の1から下の3へ1本架ける。右の1は行き先がここだけなので、ゴールと同じ1本。
+ * - 数字と同じ本数: 下の3は上の1から1本。上の1は足りたので、残りの2本は左の6へ架ける。2回押して2本にする操作もここで使う。
+ * - 2本まで: 左上の4は行き先が2つなので、どちらにも2本ずつ架ける。
+ * - 交差しない: 左の3は上から2本。右へは操作の手順で架けた縦の橋と交わるので、残りの1本は下の1へ架ける。
+ *   考えずに右へ押すと、本番と同じく板が突き当たって弾かれ、阻んだ橋が赤く揺れる。
+ * - 読み: 右下の3は、どちらの行き先も2本までなので、片方だけでは足りない。どちらにも1本ずつ架ける。
+ * 手を離した後は、上の5が同じ読み（右の1へは1本まで、下へは2本までで、足りない分を架ける）で決まり、
+ * 右の2は右上の1が足りて下だけに決まり、残りも数字と同じ本数で決まる。
  */
 const steps: readonly BridgesTutorialStep[] = [
   {
-    message: { headline: "島と島の間を押すと\n橋が架かります", detail: null },
-    introducedRuleId: null,
-    edge: centerEdge,
-    bridgeCount: 1,
-    island: null,
-    gesture: "between",
-    blockedEdge: null,
-  },
-  {
     message: {
-      headline: "もう一度押すと\n2本になります",
-      detail: "2本までです。もう一度押すと外れます",
+      headline: "島と島の間をタップして橋を架けます",
+      detail: null,
     },
-    introducedRuleId: "double",
-    edge: centerEdge,
-    bridgeCount: 2,
+    introducedRuleId: null,
+    targets: [{ edge: edgeBetween([2, 5], [4, 5]), count: 1 }],
     island: null,
-    gesture: "between",
-    blockedEdge: null,
+    pointed: true,
+    midwayMessage: null,
+    offStepMessage: {
+      headline: "島と島の間をタップして橋を架けます",
+      detail: null,
+    },
+    blockedDetail: null,
   },
   {
     message: {
-      headline: "島から出す橋は\n数字と同じ本数にします",
-      detail: "右下の3は、左の1へは1本までです",
+      headline: "島からは数字と同じ本数\n橋が出ます",
+      detail: "緑の島は本数がそろっています",
     },
     introducedRuleId: "count",
-    edge: rightBottomEdge,
-    bridgeCount: 2,
-    island: islandAt(5, 5),
-    gesture: "between",
-    blockedEdge: null,
-  },
-  {
-    message: { headline: "橋どうしは\n交差できません", detail: null },
-    introducedRuleId: "cross",
-    edge: rightTopEdge,
-    bridgeCount: 1,
-    island: islandAt(3, 5),
-    gesture: "between",
-    blockedEdge: middleRowEdge,
-  },
-  {
-    message: {
-      headline: "全部の島を\n1つにつなげます",
-      detail: "左の1を左下の1とつなぐと2島で閉じます",
+    targets: [{ edge: edgeBetween([4, 3], [4, 5]), count: 2 }],
+    island: islandAt(4, 5),
+    pointed: false,
+    midwayMessage: {
+      headline: "もう一度タップして橋を2本にします",
+      detail: "上の1の島はもう足りています",
     },
-    introducedRuleId: "connect",
-    edge: leftTopEdge,
-    bridgeCount: 1,
-    island: islandAt(3, 1),
-    gesture: "between",
-    blockedEdge: null,
+    offStepMessage: {
+      headline: "上の1の島とつないだ3の島に残りの橋を架けます",
+      detail: "緑の島は本数がそろっています",
+    },
+    blockedDetail: null,
   },
   {
     message: {
-      headline: "島から相手の島へ\nなぞっても架かります",
-      detail: "島を押し、相手の島を押しても架かります",
+      headline: "島と島の間には\n橋を2本まで架けられます",
+      detail: "左上の4の島から橋を架けられる島は2つです",
+    },
+    introducedRuleId: "double",
+    targets: [
+      { edge: edgeBetween([1, 1], [1, 3]), count: 2 },
+      { edge: edgeBetween([1, 1], [3, 1]), count: 2 },
+    ],
+    island: islandAt(1, 1),
+    pointed: false,
+    midwayMessage: null,
+    offStepMessage: {
+      headline: "左上の4の島から橋を架けます",
+      detail: "左上の4の島から橋を架けられる島は2つです",
+    },
+    blockedDetail: null,
+  },
+  {
+    message: {
+      headline: "橋どうしが交差しないように架けます",
+      detail: "左の3の島にあと1本架けます",
+    },
+    introducedRuleId: "cross",
+    targets: [{ edge: edgeBetween([3, 1], [6, 1]), count: 1 }],
+    island: islandAt(3, 1),
+    pointed: false,
+    midwayMessage: null,
+    offStepMessage: {
+      headline: "左の3の島にあと1本架けます",
+      detail: "右へ架けると縦の橋と交差します",
+    },
+    blockedDetail: "左の3の島からはほかの島へ架けます",
+  },
+  {
+    message: {
+      headline: "右下の3の島は片方の島へ架けるだけでは本数が足りません",
+      detail: "両方の島に1本ずつ架けます",
     },
     introducedRuleId: null,
-    edge: topEdge,
-    bridgeCount: 1,
-    island: null,
-    gesture: "fromIsland",
-    blockedEdge: null,
+    targets: [
+      { edge: edgeBetween([3, 6], [6, 6]), count: 1 },
+      { edge: edgeBetween([6, 3], [6, 6]), count: 1 },
+    ],
+    island: islandAt(6, 6),
+    pointed: false,
+    midwayMessage: null,
+    offStepMessage: {
+      headline: "右下の3の島から両方の島へ1本ずつ架けます",
+      detail: null,
+    },
+    blockedDetail: "右下の3の島から両方の島へ架けます",
   },
 ];
-
-const noReason: BridgesTutorialReason = { islands: [], edges: [] };
 
 function getOtherIsland(edge: number, island: number): number {
   const { from, to } = network.edges[edge]!;
   return from === island ? to : from;
 }
 
-/** 橋でたどれる島の組のうち、どの島も数字とちょうどで、全部の島ではないもの。ほかの島へ橋を架けられないまま閉じている。 */
-function findClosedGroups(bridges: readonly BridgeCount[]): number[][] {
-  const statuses = listBridgesIslandStatuses(board, { bridges });
-  return listBridgesIslandGroups(board, { bridges }).filter(
-    (group) =>
-      group.length < board.islands.length &&
-      group.every((island) => statuses[island] === "exact"),
+/** 架かった橋に阻まれて、今は架けられない辺か。 */
+function isBlocked(bridges: readonly BridgeCount[], edge: number): boolean {
+  return (
+    bridges[edge] === 0 &&
+    network.crossingEdges[edge]!.some((crossing) => bridges[crossing]! > 0)
   );
 }
 
-/** 辺に架けられる残りの本数と、それを限った決め手。 */
-type BridgesRoom = { room: number; reason: BridgesTutorialReason };
-
 /**
  * 島 `island` から見て、辺 `edge` にあと何本架けられるか。手に入れたルールで盤面から分かる分だけ限る。
- * 最も強く限ったものを決め手に添える。同じだけ限るものが複数あれば、2本で上限の橋、行き先の島の数字、交わる橋の順に選ぶ。
- * 交わる橋で限ったときは、架けられない辺も決め手に添え、どこで交わるかを見せる。限った後に、閉じてしまう島の組でさらに限り、
- * 閉じる組の島と、架けると閉じる辺を決め手に添えて、閉じる所を見せる。
+ * 自分の数字と行き先の数字の残り、2本まで、交わる橋で限る。
  */
 function findRoom(
   bridges: readonly BridgeCount[],
   ruleIds: readonly BridgesTutorialRuleId[],
+  counts: readonly number[],
   island: number,
   edge: number,
-): BridgesRoom {
-  const current = bridges[edge]!;
-  const counts = countBridgesIslandBridges(board, { bridges });
+): number {
   const other = getOtherIsland(edge, island);
-  const own = Math.max(0, board.islands[island]!.clue - counts[island]!);
-  const crossing = network.crossingEdges[edge]!.filter(
-    (crossingEdge) => bridges[crossingEdge] !== 0,
-  );
-  const limits: BridgesRoom[] = [
-    { room: own, reason: noReason },
+  const limits = [
+    board.islands[island]!.clue - counts[island]!,
+    board.islands[other]!.clue - counts[other]!,
     ...(ruleIds.includes("double")
-      ? [
-          {
-            room: BRIDGES_MAXIMUM_BRIDGE_COUNT - current,
-            reason: { islands: [], edges: current > 0 ? [edge] : [] },
-          },
-        ]
+      ? [BRIDGES_MAXIMUM_BRIDGE_COUNT - bridges[edge]!]
       : []),
-    {
-      room: Math.max(0, board.islands[other]!.clue - counts[other]!),
-      reason: { islands: [other], edges: [] },
-    },
-    ...(ruleIds.includes("cross") && current === 0 && crossing.length > 0
-      ? [{ room: 0, reason: { islands: [], edges: [edge, ...crossing] } }]
-      : []),
+    ...(ruleIds.includes("cross") && isBlocked(bridges, edge) ? [0] : []),
   ];
-  const limit = limits.reduce((tightest, candidate) =>
-    candidate.room < tightest.room ? candidate : tightest,
-  );
-  if (!ruleIds.includes("connect")) {
-    return limit;
-  }
-  for (let added = 1; added <= limit.room; added += 1) {
-    const next = bridges.with(edge, (current + added) as BridgeCount);
-    const closed = findClosedGroups(next).find((group) =>
-      group.includes(island),
-    );
-    if (closed) {
-      return {
-        room: added - 1,
-        reason: {
-          islands: closed.filter((member) => member !== island),
-          edges: [edge],
-        },
-      };
-    }
-  }
-  return limit;
-}
-
-/** 辺に架かる橋の本数が、今の盤面と手に入れたルールだけで少なくとも何本と決まるか。 */
-type BridgesDeduction = { minimum: number; reason: BridgesTutorialReason };
-
-function mergeReasons(
-  reasons: readonly BridgesTutorialReason[],
-): BridgesTutorialReason {
-  return {
-    islands: [...new Set(reasons.flatMap(({ islands }) => islands))],
-    edges: [...new Set(reasons.flatMap(({ edges }) => edges))],
-  };
+  return Math.max(0, Math.min(...limits));
 }
 
 /**
- * 島 `island` の数字の残りから、ほかの辺に架けられる分を引いて足りない分を、辺 `edge` に要る本数とみなす。
- * 数字と同じ本数のルールを手に入れるまでは、何も決まらない。決まらなければ `null`。
+ * 手を決める読み。
+ * - `single`: 架けられる行き先が1つしかない。
+ * - `shortfall`: ほかの行き先に架けられるだけ架けても足りない分を、この行き先に架ける。
  */
-function deduceEdgeFromIsland(
+export type BridgesTutorialRead = "single" | "shortfall";
+
+/** 辺に、今の盤面と手に入れたルールだけで、少なくとも何本架かると決まるか。 */
+type BridgesDeduction = {
+  edge: number;
+  island: number;
+  minimum: number;
+  read: BridgesTutorialRead;
+};
+
+/**
+ * 島 `island` の数字の残りから、ほかの辺に架けられる分を引いて足りない分を、それぞれの辺に要る本数とみなす。
+ * 数字と同じ本数のルールを手に入れるまでは、何も決まらない。
+ */
+function deduceFromIsland(
   bridges: readonly BridgeCount[],
   ruleIds: readonly BridgesTutorialRuleId[],
   island: number,
-  edge: number,
-): BridgesDeduction | null {
+): BridgesDeduction[] {
   if (!ruleIds.includes("count")) {
-    return null;
+    return [];
   }
-  const current = bridges[edge]!;
   const counts = countBridgesIslandBridges(board, { bridges });
   const need = board.islands[island]!.clue - counts[island]!;
-  const rooms = network.islandEdges[island]!.flatMap((otherEdge) =>
-    otherEdge === edge ? [] : [findRoom(bridges, ruleIds, island, otherEdge)],
-  );
-  const shortage = need - rooms.reduce((total, { room }) => total + room, 0);
-  const added = Math.min(
-    shortage,
-    findRoom(bridges, ruleIds, island, edge).room,
-  );
-  if (added <= 0) {
-    return null;
+  if (need <= 0) {
+    return [];
   }
-  return {
-    minimum: current + added,
-    reason: mergeReasons([
-      { islands: [island], edges: [] },
-      ...rooms.map(({ reason }) => reason),
-    ]),
-  };
+  const edges = network.islandEdges[island]!;
+  const rooms = edges.map((edge) =>
+    findRoom(bridges, ruleIds, counts, island, edge),
+  );
+  const total = rooms.reduce((sum, room) => sum + room, 0);
+  const openCount = rooms.filter((room) => room > 0).length;
+  return edges.flatMap((edge, index) => {
+    const added = Math.min(need - (total - rooms[index]!), rooms[index]!);
+    return added > 0
+      ? [
+          {
+            edge,
+            island,
+            minimum: bridges[edge]! + added,
+            read: openCount === 1 ? "single" : "shortfall",
+          },
+        ]
+      : [];
+  });
 }
 
-/** 辺の両端の島のうち、より多くの本数が決まる方から見た、辺に要る本数。決まらなければ `null`。 */
-function deduceEdge(
+/** 盤面のどこかの辺に、今の盤面と手に入れたルールだけで決まる手。 */
+function listDeductions(
   bridges: readonly BridgeCount[],
   ruleIds: readonly BridgesTutorialRuleId[],
-  edge: number,
-): BridgesDeduction | null {
-  const { from, to } = network.edges[edge]!;
-  return [from, to].reduce<BridgesDeduction | null>((best, island) => {
-    const deduction = deduceEdgeFromIsland(bridges, ruleIds, island, edge);
-    return deduction && deduction.minimum > (best?.minimum ?? 0)
-      ? deduction
-      : best;
-  }, null);
+): BridgesDeduction[] {
+  return board.islands.flatMap((_, island) =>
+    deduceFromIsland(bridges, ruleIds, island),
+  );
 }
 
-/** 手に入れたルールに合わないところ。 */
-type BridgesVisibleViolations = {
-  overIslands: readonly number[];
-  closedGroups: readonly (readonly number[])[];
-};
-
-function findVisibleViolations(
+/** 島 `island` から手を決めるときに見る島と橋。その島と行き先の島、出る辺と、その辺を阻む架かった橋。 */
+function getIslandReason(
   bridges: readonly BridgeCount[],
-  ruleIds: readonly BridgesTutorialRuleId[],
-): BridgesVisibleViolations {
-  const statuses = listBridgesIslandStatuses(board, { bridges });
-  return {
-    overIslands: ruleIds.includes("count")
-      ? statuses.flatMap((status, island) =>
-          status === "over" ? [island] : [],
+  island: number,
+): BridgesTutorialReason {
+  const edges = network.islandEdges[island]!;
+  const blockingEdges = edges.flatMap((edge) =>
+    isBlocked(bridges, edge)
+      ? network.crossingEdges[edge]!.filter(
+          (crossing) => bridges[crossing]! > 0,
         )
       : [],
-    closedGroups: ruleIds.includes("connect") ? findClosedGroups(bridges) : [],
+  );
+  return {
+    islands: [island, ...edges.map((edge) => getOtherIsland(edge, island))],
+    edges: [...new Set([...edges, ...blockingEdges])],
   };
 }
 
-function hasVisibleViolation({
-  overIslands,
-  closedGroups,
-}: BridgesVisibleViolations): boolean {
-  return overIslands.length > 0 || closedGroups.length > 0;
+function findTarget(
+  step: BridgesTutorialStep,
+  edge: number,
+): BridgesTutorialTarget | undefined {
+  return step.targets.find((target) => target.edge === edge);
 }
 
-function hasShownBlockedEdge(
+function isStepDone(
   step: BridgesTutorialStep,
-  { shownBlockedEdges }: BridgesTutorialBoardState,
+  bridges: readonly BridgeCount[],
 ): boolean {
-  return (
-    step.blockedEdge === null || shownBlockedEdges.includes(step.blockedEdge)
+  return step.targets.every(({ edge, count }) => bridges[edge]! >= count);
+}
+
+function listOverIslands(bridges: readonly BridgeCount[]): number[] {
+  return listBridgesIslandStatuses(board, { bridges }).flatMap(
+    (status, island) => (status === "over" ? [island] : []),
   );
 }
 
 function startBridgesTutorial(): BridgesTutorialBoardState {
-  return {
-    bridges: emptyBridges,
-    moveCount: 0,
-    lastMove: null,
-    shownBlockedEdges: [],
-  };
+  return { bridges: emptyBridges, moveCount: 0, lastMove: null };
 }
 
 function getBridgesTutorialGoal(): BridgesTutorialBoardState {
-  return {
-    bridges: solvedBridges,
-    moveCount: 0,
-    lastMove: null,
-    shownBlockedEdges: [],
-  };
+  return { bridges: solvedBridges, moveCount: 0, lastMove: null };
 }
 
 /**
- * 手を引いている間は、手順の辺を手順の本数まで架ける手だけを受け付ける。架けるほど本数が手順の本数へ近づくので、通り過ぎない。
- * 交わる橋に阻まれた手は、本番と同じく盤面を変えずに阻まれたことを残す。手を引いている間は、手順の一言を保つため
- * ルールに合わない手とはせず、手を離した後はルールに合わない手とする。
- * 手を離した後は、本番と同じく回し、数字より多い島・閉じた島の組ができた手もルールに合わない手とする。
- * ただし、手がかりで外させている橋を外す途中の2本は、手がかりに従った手なので、ルールに合わない手とはしない。
- * 島の色は本番と同じく多すぎになる。
+ * 交わる橋に阻まれた手は、本番と同じく盤面を変えずに阻まれたことを残し、交差のルールを伝えた後はルールに合わない手とする。
+ * 手を引いている間は、手順の辺を手順の本数まで架ける手だけを受け付け、それ以外は盤面を変えない。
+ * 手順の辺は解と同じ本数を超えないので、手を引いている間に数字より多い島はできない。
+ * 手を離した後は、本番と同じく回し、数字より多い島ができた手をルールに合わない手とする。
  */
 function performBridgesTutorialAction(
   { step, earnedRuleIds }: BridgesTutorialSituation,
@@ -465,111 +433,125 @@ function performBridgesTutorialAction(
           edge,
           crossingEdges: change.crossingEdges,
         },
-        shownBlockedEdges:
-          step?.blockedEdge === edge
-            ? [...state.shownBlockedEdges, edge]
-            : state.shownBlockedEdges,
       },
-      outcome: step === null ? "violated" : "continued",
+      // まだ伝えていない交差のルールは、違反として言わない。盤面の反応だけ本番と同じに見せる。
+      outcome: earnedRuleIds.includes("cross") ? "violated" : "continued",
     };
   }
-  if (
-    step !== null &&
-    (step.edge !== edge ||
-      current >= step.bridgeCount ||
-      !hasShownBlockedEdge(step, state))
-  ) {
+  const target = step === null ? undefined : findTarget(step, edge);
+  if (step !== null && (target === undefined || current >= target.count)) {
     return { state, outcome: "ignored" };
   }
 
   const { bridges } = change.state;
-  const fitsStep = step !== null && bridges[edge] === step.bridgeCount;
-  const removing =
-    step === null &&
-    isRemovalHint({ step, earnedRuleIds }, state, edge) &&
-    bridges[edge]! > solvedBridges[edge]!;
+  const fitsStep = target !== undefined && bridges[edge] === target.count;
   const next: BridgesTutorialBoardState = {
-    ...state,
     bridges,
     moveCount: state.moveCount + 1,
-    lastMove: { kind: "changed", edge, fitsStep, removing },
+    lastMove: { kind: "changed", edge, previous: current, fitsStep },
   };
   if (isBridgesSolved(board, { bridges })) {
     return { state: next, outcome: "solved" };
   }
-  if (
-    !removing &&
-    hasVisibleViolation(findVisibleViolations(bridges, earnedRuleIds))
-  ) {
+  if (listOverIslands(bridges).length > 0) {
     return { state: next, outcome: "violated" };
   }
-  return { state: next, outcome: fitsStep ? "stepped" : "continued" };
+  return {
+    state: next,
+    outcome:
+      step !== null && isStepDone(step, bridges) ? "stepped" : "continued",
+  };
 }
 
-const crossingViolation: TutorialMessage = {
-  headline: "ほかの橋と交差するので\n架けられません",
-  detail: null,
+/**
+ * 数字より多くなった島を直すために押す辺と、押す回数で戻る本数。
+ * 直前の手で多くなったなら、その手の前の本数へ戻す。そうでなければ、多い島から出る、解より多く架けた辺を、解の本数へ戻す。
+ */
+export type BridgesTutorialFix = {
+  edge: number;
+  count: BridgeCount;
+  tapCount: number;
 };
 
-const overViolation: TutorialMessage = {
-  headline: "橋が数字より\n多く出ています",
-  detail: null,
-};
-
-const closedViolation: TutorialMessage = {
-  headline: "ほかとつながらない島が\nできています",
-  detail: null,
-};
-
-/** 直前の手が当たったルールを先に言う。古い違反が残っていても、今の手の結果を返すため。 */
-function describeBridgesTutorialViolation(
-  { earnedRuleIds }: BridgesTutorialSituation,
-  { bridges, lastMove }: BridgesTutorialBoardState,
-): TutorialMessage {
-  if (lastMove?.kind === "blocked") {
-    return crossingViolation;
-  }
-  const { overIslands, closedGroups } = findVisibleViolations(
-    bridges,
-    earnedRuleIds,
+function getTapCount(from: BridgeCount, to: BridgeCount): number {
+  return (
+    (to - from + BRIDGES_MAXIMUM_BRIDGE_COUNT + 1) %
+    (BRIDGES_MAXIMUM_BRIDGE_COUNT + 1)
   );
+}
+
+/** 数字より多い島があるときの、直す辺。無ければ `null`。画面はこの辺に印を付ける。 */
+export function findBridgesTutorialFix({
+  bridges,
+  lastMove,
+}: BridgesTutorialBoardState): BridgesTutorialFix | null {
+  const overIslands = listOverIslands(bridges);
+  if (overIslands.length === 0) {
+    return null;
+  }
+  if (lastMove?.kind === "changed") {
+    const { from, to } = network.edges[lastMove.edge]!;
+    if (overIslands.includes(from) || overIslands.includes(to)) {
+      // 解より多く架けた辺は、手の前の本数ではなく、解の本数まで外す。
+      const count = Math.min(
+        lastMove.previous,
+        solvedBridges[lastMove.edge]!,
+      ) as BridgeCount;
+      return {
+        edge: lastMove.edge,
+        count,
+        tapCount: getTapCount(bridges[lastMove.edge]!, count),
+      };
+    }
+  }
+  const mistakenEdge = overIslands
+    .flatMap((island) => network.islandEdges[island]!)
+    .find((edge) => bridges[edge]! > solvedBridges[edge]!);
+  if (mistakenEdge === undefined) {
+    return null;
+  }
+  return {
+    edge: mistakenEdge,
+    count: solvedBridges[mistakenEdge]!,
+    tapCount: getTapCount(bridges[mistakenEdge]!, solvedBridges[mistakenEdge]!),
+  };
+}
+
+function describeFix({ count, tapCount }: BridgesTutorialFix): string {
+  const result = count === 0 ? "外れます" : `${count}本に戻ります`;
+  return tapCount === 1
+    ? `あと1回タップで${result}`
+    : `あと${tapCount}回タップで${result}`;
+}
+
+/** 直前の手が当たったルールを言う。阻まれた手は交差、それ以外は数字より多い島。 */
+function describeBridgesTutorialViolation(
+  { step }: BridgesTutorialSituation,
+  state: BridgesTutorialBoardState,
+): TutorialMessage {
+  const { bridges, lastMove } = state;
+  if (lastMove?.kind === "blocked") {
+    return {
+      headline: "ここに架けるとほかの橋と交差します",
+      detail: step?.blockedDetail ?? null,
+    };
+  }
+  const overIslands = listOverIslands(bridges);
   const touched =
     lastMove === null
       ? []
       : [network.edges[lastMove.edge]!.from, network.edges[lastMove.edge]!.to];
-  const touchesOver = overIslands.some((island) => touched.includes(island));
-  const touchesClosed = closedGroups.some((group) =>
-    group.some((island) => touched.includes(island)),
-  );
-  if (touchesOver || (!touchesClosed && overIslands.length > 0)) {
-    return overViolation;
-  }
-  return closedViolation;
-}
-
-function isRemovalHint(
-  situation: BridgesTutorialSituation,
-  state: BridgesTutorialBoardState,
-  edge: number,
-): boolean {
-  return (
-    findBridgesTutorialHintEdge(situation, state) === edge &&
-    state.bridges[edge]! > solvedBridges[edge]!
-  );
-}
-
-/**
- * 盤面に、手に入れたルールに合わないところ（数字より多い島、閉じた島の組）があるか。阻まれた手は盤面を変えないので含まない。
- * 手がかりで外させている橋を外す途中の盤面も、手がかりに従っている途中なので含まない。
- */
-export function hasBridgesTutorialBoardViolation(
-  { earnedRuleIds }: BridgesTutorialSituation,
-  { bridges, lastMove }: BridgesTutorialBoardState,
-): boolean {
-  if (lastMove?.kind === "changed" && lastMove.removing) {
-    return false;
-  }
-  return hasVisibleViolation(findVisibleViolations(bridges, earnedRuleIds));
+  const island =
+    overIslands.find((candidate) => touched.includes(candidate)) ??
+    overIslands[0];
+  const fix = findBridgesTutorialFix(state);
+  return {
+    headline:
+      island === undefined
+        ? "橋が数字より\n多く出ています"
+        : `${board.islands[island]!.clue}の島から橋が\n数字より多く出ています`,
+    detail: fix === null ? null : describeFix(fix),
+  };
 }
 
 export function getBridgesTutorialIslandStatuses({
@@ -578,103 +560,173 @@ export function getBridgesTutorialIslandStatuses({
   return listBridgesIslandStatuses(board, { bridges });
 }
 
-/** 手順で印を付ける辺。 */
-export function getBridgesTutorialStepEdge(
-  { step }: BridgesTutorialSituation,
-  state: BridgesTutorialBoardState,
-): number | null {
-  if (step === null) {
-    return null;
-  }
-  if (!hasShownBlockedEdge(step, state)) {
-    return step.blockedEdge;
-  }
-  return state.bridges[step.edge]! < step.bridgeCount ? step.edge : null;
+/** 手順の一言。手順の辺を1本にして、まだ2本に届いていない間は、その手順が途中の一言を持っていれば替える。 */
+export function describeBridgesTutorialStep(
+  step: BridgesTutorialStep,
+  { bridges }: BridgesTutorialBoardState,
+): TutorialMessage {
+  const midway = step.targets.some(
+    ({ edge, count }) => bridges[edge]! > 0 && bridges[edge]! < count,
+  );
+  return midway ? (step.midwayMessage ?? step.message) : step.message;
 }
 
-/** 手順の辺の本数を決めるもの（決め手）。手順で伝えたルールまでで、手順の辺が手順の本数に決まる島と橋。 */
-export function getBridgesTutorialStepReason(
-  { step, earnedRuleIds }: BridgesTutorialSituation,
-  state: BridgesTutorialBoardState,
-): BridgesTutorialReason {
-  if (
-    step !== null &&
-    step.blockedEdge !== null &&
-    !hasShownBlockedEdge(step, state)
-  ) {
-    return {
-      islands: [],
-      edges: network.crossingEdges[step.blockedEdge]!.filter(
-        (crossing) => state.bridges[crossing]! > 0,
-      ),
-    };
+/** 手順で印と指を付ける辺のうち、まだ手順の本数に届いていないもの。印を付けない手順と、手を離した後は空。 */
+export function getBridgesTutorialStepEdges(
+  { step }: BridgesTutorialSituation,
+  { bridges }: BridgesTutorialBoardState,
+): readonly number[] {
+  if (step === null || !step.pointed) {
+    return [];
   }
-  if (step?.island == null) {
-    return noReason;
-  }
-  return (
-    deduceEdgeFromIsland(state.bridges, earnedRuleIds, step.island, step.edge)
-      ?.reason ?? noReason
+  return step.targets.flatMap(({ edge, count }) =>
+    bridges[edge]! < count ? [edge] : [],
   );
 }
 
 /**
- * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せる島と辺。
- * 次に押す辺とその両端の島、その本数を決める島と橋（決め手）に加えて、直前に手順どおりに架けた辺も抜き、その手への応えを見せる。
+ * 手順の手を決めるもの（決め手）。手を決めさせる島と、その行き先の島、出る辺と、その辺を阻む架かった橋。
+ * 手順の辺を架け終えた後も、同じ決め手を返す。操作を教える手順と、手を離した後は `null`。
  */
-export function getBridgesTutorialSpotlight(
-  situation: BridgesTutorialSituation,
-  state: BridgesTutorialBoardState,
-): BridgesTutorialReason {
-  const stepEdge = getBridgesTutorialStepEdge(situation, state);
-  const { lastMove } = state;
-  const shownEdges = [
-    ...(stepEdge === null ? [] : [stepEdge]),
-    ...(lastMove?.kind === "changed" && lastMove.fitsStep
-      ? [lastMove.edge]
-      : []),
-  ];
-  return mergeReasons([
-    {
-      islands: shownEdges.flatMap((edge) => [
-        network.edges[edge]!.from,
-        network.edges[edge]!.to,
-      ]),
-      edges: shownEdges,
-    },
-    getBridgesTutorialStepReason(situation, state),
-  ]);
+export function getBridgesTutorialStepReason(
+  { step }: BridgesTutorialSituation,
+  { bridges }: BridgesTutorialBoardState,
+): BridgesTutorialReason | null {
+  if (step?.island == null) {
+    return null;
+  }
+  // 手順の辺を空けた盤面で求め、架けた後も、架ける前と同じ島と橋を見せ続ける。
+  const cleared = step.targets.reduce<readonly BridgeCount[]>(
+    (current, { edge }) => current.with(edge, 0),
+    bridges,
+  );
+  return getIslandReason(cleared, step.island);
 }
 
 /**
- * 手を離した後、手が止まったときに示す辺。無ければ `null`。
- * 解と違う橋の辺を示した後、その橋を外す途中の2本にしたら、外し終えるまで同じ辺を示す。
+ * 手を離した後、求められたときに示す手がかり。
+ * - `edge`: 示す辺。
+ * - `read`: その辺を決める読み。解と違う橋を示すときは `mistake`。
+ * - `island`: その辺を決める島。解と違う橋を示すときは `null`。
+ * - `reason`: 決め手。解と違う橋を示すときは `null`。
+ * - `count`: その辺に架かると決まる本数。解と違う橋を示すときは、外して戻す解の本数。
+ * - `tapCount`: `count` 本にするまでに押す回数。
  */
-export function findBridgesTutorialHintEdge(
-  { step, earnedRuleIds }: BridgesTutorialSituation,
-  { bridges, lastMove }: BridgesTutorialBoardState,
-): number | null {
-  if (step !== null) {
-    return null;
-  }
-  if (lastMove?.kind === "changed" && lastMove.removing) {
-    return lastMove.edge;
-  }
-  const deducibleEdge = bridges.findIndex((current, edge) => {
-    const deduction = deduceEdge(bridges, earnedRuleIds, edge);
-    return (
-      deduction !== null &&
-      current < solvedBridges[edge]! &&
-      deduction.minimum <= solvedBridges[edge]!
-    );
-  });
-  if (deducibleEdge >= 0) {
-    return deducibleEdge;
-  }
+export type BridgesTutorialHint = {
+  edge: number;
+  read: BridgesTutorialRead | "mistake";
+  island: number | null;
+  reason: BridgesTutorialReason | null;
+  count: BridgeCount;
+  tapCount: number;
+};
+
+/**
+ * 手を離した後に求められたとき示す手がかり。無ければ `null`。
+ * 解より多く架けた橋があれば、行き止まりへ導かないよう、その橋を外す手がかりを先に示す。
+ * 無ければ、今の盤面と手に入れたルールだけで橋が要ると決まる辺を、行き先が1つしかない島から先に示す。
+ */
+export function findBridgesTutorialHint(
+  { earnedRuleIds }: BridgesTutorialSituation,
+  { bridges }: BridgesTutorialBoardState,
+): BridgesTutorialHint | null {
+  // 解は1つなので、解より多く架けた橋が1本でもあれば、ルールで決まる手を続けても解けない。先にその橋を示す。
   const mistakenEdge = bridges.findIndex(
     (current, edge) => current > solvedBridges[edge]!,
   );
-  return mistakenEdge >= 0 ? mistakenEdge : null;
+  if (mistakenEdge >= 0) {
+    return {
+      edge: mistakenEdge,
+      read: "mistake",
+      island: null,
+      reason: null,
+      count: solvedBridges[mistakenEdge]!,
+      tapCount: getTapCount(
+        bridges[mistakenEdge]!,
+        solvedBridges[mistakenEdge]!,
+      ),
+    };
+  }
+  const deductions = listDeductions(bridges, earnedRuleIds);
+  const deduction =
+    deductions.find(({ read }) => read === "single") ?? deductions[0];
+  return deduction
+    ? {
+        edge: deduction.edge,
+        read: deduction.read,
+        island: deduction.island,
+        reason: getIslandReason(bridges, deduction.island),
+        count: deduction.minimum as BridgeCount,
+        tapCount: getTapCount(
+          bridges[deduction.edge]!,
+          deduction.minimum as BridgeCount,
+        ),
+      }
+    : null;
+}
+
+/** 手がかりに添える一言。どの読みで決まるかを、決め手の島の数字で言う。 */
+export function describeBridgesTutorialHint({
+  read,
+  island,
+  count,
+  tapCount,
+}: BridgesTutorialHint): TutorialMessage {
+  const clue = island === null ? null : board.islands[island]!.clue;
+  switch (read) {
+    case "single":
+      return {
+        headline: `${clue}の島から橋を架けられるのはもうここだけです`,
+        detail: `ここに${count}本架けます`,
+      };
+    case "shortfall":
+      return {
+        headline: `${clue}の島はほかの島へ架けるだけでは本数が足りません`,
+        detail: `ここに${count}本は架けます`,
+      };
+    case "mistake":
+      return {
+        headline: "この橋を外すと\n続きが解けます",
+        detail: describeFix({ edge: -1, count, tapCount }),
+      };
+  }
+}
+
+/**
+ * 手を引いている間に、手順に無い辺を押したときの一言。
+ * 手順で2本まで架け終えた辺をもう一度押したときは、2本までのルールで返す。それ以外は、今の手順で何をするかを言う。
+ */
+export function describeBridgesTutorialOffStep(
+  step: BridgesTutorialStep,
+  { bridges }: BridgesTutorialBoardState,
+  edge: number | null,
+): TutorialMessage {
+  const target = edge === null ? undefined : findTarget(step, edge);
+  if (
+    target !== undefined &&
+    bridges[target.edge]! >= BRIDGES_MAXIMUM_BRIDGE_COUNT
+  ) {
+    return {
+      headline: "島と島の間には\n橋を2本まで架けられます",
+      detail: step.offStepMessage.detail,
+    };
+  }
+  return step.offStepMessage;
+}
+
+/** 解の橋の本数の合計。入口から完成までの段の数にする。 */
+export const BRIDGES_TUTORIAL_PROGRESS_STEP_COUNT =
+  solvedBridges.reduce<number>((total, count) => total + count, 0);
+
+/** 入口から完成までの進み具合（0〜1）。解と同じ所に架けた橋の割合。解より多く架けた分では進めない。 */
+export function getBridgesTutorialProgressRatio({
+  bridges,
+}: BridgesTutorialBoardState): number {
+  const fitted = bridges.reduce<number>(
+    (total, count, edge) => total + Math.min(count, solvedBridges[edge]!),
+    0,
+  );
+  return fitted / BRIDGES_TUTORIAL_PROGRESS_STEP_COUNT;
 }
 
 export const BRIDGES_TUTORIAL_BOARD = board;
@@ -686,29 +738,27 @@ export const bridgesTutorial: Tutorial<
   BridgesTutorialAction
 > = {
   intro: {
-    purpose: "橋を架けて\n全部の島を1つにつなげるパズルです",
-    goalCaption: "完成するとこうなります",
-    startCaption: "まだ橋は1本もありません",
+    purpose: "島と島の間に橋を架けて全部の島を1つにつなぐパズルです",
+    goalCaption: "島の数字の数だけ\n橋を架けます",
   },
   rules: [
-    { id: "double", label: "2本まで" },
-    { id: "count", label: "数字と同じ本数" },
-    { id: "cross", label: "交差しない" },
-    { id: "connect", label: "全部つなげる" },
+    { id: "count", label: "島からは数字と同じ本数の橋が出ます" },
+    { id: "double", label: "島と島の間には橋を2本まで架けられます" },
+    { id: "cross", label: "橋どうしが交差しないように架けます" },
   ],
   steps,
   freePlay: {
-    headline: "残りの橋を架ければ\n完成です",
+    headline: "残りの橋も\n架けてみましょう",
     detail: null,
   },
   completion: {
     home: {
       headline: "完成です",
-      detail: "本番はもっと大きな盤面で遊べます",
+      detail: "本番はもっと大きな盤面です",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も同じルールで解けます",
+      detail: "プレイ中の盤面と同じルールです",
     },
   },
   start: startBridgesTutorial,
@@ -720,9 +770,8 @@ export const bridgesTutorial: Tutorial<
 export const _private = {
   board,
   solvedBridges,
+  steps,
   edgeBetween,
   islandAt,
-  deduceEdge,
-  deduceEdgeFromIsland,
-  findVisibleViolations,
+  listDeductions,
 };
