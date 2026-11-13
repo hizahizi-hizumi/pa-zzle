@@ -15,7 +15,7 @@ import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottl
 import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
-type WaterSortBoardProps = {
+export type WaterSortBoardProps = {
   state: WaterSortState;
   sourceBottleIndex: number | null;
   operation: WaterSortOperation | null;
