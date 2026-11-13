@@ -102,7 +102,7 @@ export function WaterSortHowToPlayDialog({
               {figures.map(({ key, bottles }) => (
                 <div key={key} className="flex items-center gap-2">
                   <HowToPlayFigure bottles={bottles} selectedBottleIndex={0} />
-                  <HowToPlayRuleMark allowed={pourable} />
+                  <HowToPlayRuleMark figureAllowed={pourable} />
                 </div>
               ))}
             </div>

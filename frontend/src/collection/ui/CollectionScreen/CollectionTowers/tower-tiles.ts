@@ -1,5 +1,8 @@
 import type { CollectionGame } from "@/collection/collection";
-import { type GameResultLevel, gameResultLevels } from "@/games/result";
+import {
+  type GameResultLevel,
+  gameResultLevelsAscending,
+} from "@/games/result";
 
 /** 各ゲームの実数を一定数の小片に縮約して、異なる問題数を比較できる高さにする。 */
 export function getCollectionTowerTiles(
@@ -14,7 +17,7 @@ export function getCollectionTowerTiles(
           1,
           Math.round((game.total / Math.max(1, maxCount)) * tileCount),
         );
-  const byLevel = gameResultLevels.map((level) => ({
+  const byLevel = gameResultLevelsAscending.map((level) => ({
     level,
     ideal: (game.counts[level] / Math.max(1, game.total)) * filled,
   }));
@@ -28,7 +31,7 @@ export function getCollectionTowerTiles(
     allocated[index] = (allocated[index] ?? 0) + 1;
     leftover--;
   }
-  const levels = gameResultLevels.flatMap((level, index) =>
+  const levels = gameResultLevelsAscending.flatMap((level, index) =>
     Array.from({ length: allocated[index] ?? 0 }, () => level),
   );
   return Array.from({ length: tileCount }, (_, index) => ({

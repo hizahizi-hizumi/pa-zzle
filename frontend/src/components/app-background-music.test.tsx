@@ -270,7 +270,7 @@ describe("selectAppBackgroundMusicTransition", () => {
 describe("useAppBackgroundMusic", () => {
   describe("ホームをタイトルで覆って開いた場合", () => {
     beforeEach(() => {
-      startAppLaunch({ showTitle: true, sounds: [] });
+      startAppLaunch({ showTitle: true, allSounds: [] });
       renderAppBackgroundMusic("/");
     });
 

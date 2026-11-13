@@ -5,10 +5,10 @@ import { GamePictogram } from "@/components/GamePictogram";
 import { getGameResultStyle } from "@/components/game-result-style";
 import { Button } from "@/components/ui/button";
 import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
-import { gameResultLevels } from "@/games/result";
+import { gameResultLevelsAscending } from "@/games/result";
 import { Link } from "@/router";
 
-const levels = [...gameResultLevels].reverse();
+const levels = [...gameResultLevelsAscending].reverse();
 
 type CollectionBreakdownProps = {
   game: CollectionGame;

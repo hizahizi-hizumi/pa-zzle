@@ -1,7 +1,11 @@
-/** 評価段階を、低い段階から高い段階の順に並べたもの。 */
-export const gameResultLevels = ["clear", "good", "great", "perfect"] as const;
+export const gameResultLevelsAscending = [
+  "clear",
+  "good",
+  "great",
+  "perfect",
+] as const;
 
-export type GameResultLevel = (typeof gameResultLevels)[number];
+export type GameResultLevel = (typeof gameResultLevelsAscending)[number];
 
 export function getGameResultLevel(score: number): GameResultLevel {
   if (score >= 100) {
@@ -20,5 +24,8 @@ export function isHigherGameResultLevel(
   level: GameResultLevel,
   other: GameResultLevel,
 ): boolean {
-  return gameResultLevels.indexOf(level) > gameResultLevels.indexOf(other);
+  return (
+    gameResultLevelsAscending.indexOf(level) >
+    gameResultLevelsAscending.indexOf(other)
+  );
 }

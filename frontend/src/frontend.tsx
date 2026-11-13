@@ -38,7 +38,7 @@ const bundledSoundEffects = Object.values(
 
 startAppLaunch({
   showTitle: window.location.pathname === "/",
-  sounds: bundledSoundEffects,
+  allSounds: bundledSoundEffects,
 });
 
 // 遷移の `flushSync` を使えるよう、generouted の `<Routes />` ではなく react-router/dom の `RouterProvider` で描く。

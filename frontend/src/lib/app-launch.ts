@@ -6,14 +6,12 @@ import {
 
 export type AppLaunchTitle =
   | { status: "hidden" }
-  // `progress` は済んだ割合（0〜1）。
-  | { status: "loading"; progress: number }
+  | { status: "loading"; progressRatio: number }
   | { status: "ready" };
 
 type AppLaunchOptions = {
   showTitle: boolean;
-  /** アプリが鳴らしうる効果音すべて。 */
-  sounds: readonly SoundEffect[];
+  allSounds: readonly SoundEffect[];
 };
 
 const SOUND_LOADING_LIMIT_MS = 4000;
@@ -26,20 +24,23 @@ let title: AppLaunchTitle = HIDDEN_TITLE;
 const listeners = new Set<() => void>();
 let stopWaitingForSounds: (() => void) | null = null;
 
-export function startAppLaunch({ showTitle, sounds }: AppLaunchOptions): void {
+export function startAppLaunch({
+  showTitle,
+  allSounds,
+}: AppLaunchOptions): void {
   if (launched) {
     return;
   }
   launched = true;
 
   if (!showTitle || !isSoundEffectsEnabled()) {
-    void loadSoundEffects(sounds);
+    void loadSoundEffects(allSounds);
     setTitle(showTitle ? READY_TITLE : HIDDEN_TITLE);
     return;
   }
 
-  setTitle({ status: "loading", progress: 0 });
-  waitForSounds(sounds);
+  setTitle({ status: "loading", progressRatio: 0 });
+  waitForSounds(allSounds);
 }
 
 function waitForSounds(sounds: readonly SoundEffect[]) {
@@ -69,7 +70,7 @@ function waitForSounds(sounds: readonly SoundEffect[]) {
   stopWaitingForSounds = finishWaiting;
   void loadSoundEffects(sounds, function showProgress(progress) {
     if (waiting) {
-      setTitle({ status: "loading", progress });
+      setTitle({ status: "loading", progressRatio: progress });
     }
   }).then(finishWaiting);
 }

@@ -1,7 +1,10 @@
 import { getGameResultStyle } from "@/components/game-result-style";
-import { type GameResultLevel, gameResultLevels } from "@/games/result";
+import {
+  type GameResultLevel,
+  gameResultLevelsAscending,
+} from "@/games/result";
 
-const levels = [...gameResultLevels].reverse();
+const levels = [...gameResultLevelsAscending].reverse();
 
 type CollectionLegendProps = {
   counts: Readonly<Record<GameResultLevel, number>>;
