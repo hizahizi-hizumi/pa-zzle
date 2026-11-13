@@ -53,7 +53,6 @@ function createFakeGain() {
   };
 }
 
-/** 再生を許すかをテストごとに決められ、要素の出来事をテストから起こせる `<audio>` 要素。 */
 class FakeAudio {
   static instances: FakeAudio[] = [];
   static allowsPlay = true;
@@ -138,7 +137,6 @@ class FakeAudioContext {
 }
 
 /**
- * 音声ファイルの中身として、取得した URL をそのまま持つ音のデータを返す。中身の前後の空白は取り除く。
  * `paddingLength` を決めると、MP3 の詰め物を取り除かないブラウザのように、1ループよりその分だけ長くし、
  * 先頭の `leadingPaddingLength` を無音、それより後を音のあるサンプルにする。
  */
@@ -185,7 +183,6 @@ function stubFetch() {
   return fetch;
 }
 
-/** 曲のファイルを、テストから決めた分ずつ届ける取得。 */
 function stubStreamingFetch() {
   const controllers = new Map<
     string,
@@ -233,7 +230,6 @@ async function settle(ms = 0): Promise<void> {
   await new Promise((resolve) => realSetTimeout(resolve, 0));
 }
 
-/** 利用者が操作し、AudioContext が動き出すのを待つ。 */
 async function unlockByUserGesture(): Promise<void> {
   window.dispatchEvent(new Event("pointerdown"));
   await settle();
@@ -308,7 +304,6 @@ function getVoiceFaders() {
   );
 }
 
-/** ループ再生を止めるよう頼んだ時刻を、曲ごとに返す。 */
 function getLoopStops() {
   return (
     getAudioContext()
@@ -324,7 +319,6 @@ function findAudio(src: string): FakeAudio | undefined {
   return FakeAudio.instances.find((audio) => audio.src === src);
 }
 
-/** 画面が見えるかを変え、変わったことを知らせる。 */
 function changeVisibility(visibilityState: DocumentVisibilityState): void {
   Object.defineProperty(document, "visibilityState", {
     configurable: true,

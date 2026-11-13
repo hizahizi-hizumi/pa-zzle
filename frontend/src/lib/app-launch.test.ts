@@ -9,7 +9,6 @@ type SoundLoading = {
   finish: () => void;
 };
 
-/** 読み込みを始めたら、その進みと終わりをテストから進められるようにする。 */
 const { soundLoadings, loadSoundEffects } = vi.hoisted(() => {
   const soundLoadings: SoundLoading[] = [];
   const loadSoundEffects = vi.fn(

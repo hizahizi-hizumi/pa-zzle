@@ -1,19 +1,7 @@
 /**
- * 同梱した曲を BGM として流す。効果音と同じ AudioContext（`@/lib/audio-context`）から鳴らし、
- * BGM 用の出口を効果音より小さくして、効果音が前に聞こえるようにする。
- *
  * 曲のファイルは一度だけ取得する。取得し終える前に流すときは、届いた分を `<audio>` 要素で流し始め、取得し終えたら読み解いて、
  * 読み解いた曲の継ぎ目のないループ再生へ短いクロスフェードで渡す。要素のループは継ぎ目に隙間が出るブラウザがあるので、渡すまでのつなぎにだけ使う。
  * 要素の音も AudioContext へ通し、音量は BGM の出口で掛ける。モバイルのブラウザには、要素の `volume` をプログラムから変えられないものがある。
- *
- * 曲は Vite のアセット import で URL として受け取り、1ループのサンプル数と合わせて `defineBackgroundMusicTrack` に渡して作る。
- * 流しうる曲は `prepareBackgroundMusic` で渡し、今の画面で流す曲は `playBackgroundMusic` で決める。
- * 読み込みは今の画面で流す曲を先にし、流しうる曲はそのあとで1曲ずつ取得しておく。
- * 曲を切り替えるとクロスフェードし、同じ曲を流したまま別の画面に移っても頭から流し直さない。
- * 場面の区切りを聞かせたいときは、`playBackgroundMusic` の `transition` で、前の曲を引き切って間を空けてから次の曲を立ち上げる。
- * 場面に合わせて曲を奥へ下げるときは、`playBackgroundMusic` の `gain` で曲に掛ける大きさを決める。
- * 音量は `@/lib/background-music-setting` の設定に従い、流している曲も音量を変えるとすぐに変わる。音量が 0 の間は、読み込みも再生もしない。
- * 画面が見えない間（タブを切り替えた・アプリを裏に回したなど）はフェードアウトして止め、見えるようになったら止めた位置から流し直す。
  */
 
 import {
@@ -43,7 +31,7 @@ import {
 } from "@/lib/background-music-setting";
 import { getVolumeGain } from "@/lib/stored-volume-setting";
 
-/** 同梱した、ループする曲1つ。曲は頭から終わりまでで1ループになるよう作り、継ぎ目に無音を入れない。 */
+/** 曲は頭から終わりまでで1ループになるよう作り、継ぎ目に無音を入れない。 */
 export type BackgroundMusicTrack = {
   readonly url: string;
   /**
@@ -53,14 +41,6 @@ export type BackgroundMusicTrack = {
   readonly loopLength: number;
 };
 
-/**
- * 別の曲へ切り替えるときの流し方。
- *
- * - `crossfade`: 次の曲が鳴り始めてから、前の曲をフェードアウトしながら次の曲をフェードインする。
- * - `break`: 前の曲をすぐ `fadeOutSec` かけてフェードアウトし、引き切ってから `silenceSec` の無音を空けて、
- *   次の曲を `fadeInSec` かけてフェードインする。前の曲と次の曲を重ねない。
- *   無音を空け終える前にまた別の曲へ切り替えても、空けた無音は守り、前の曲と次の曲を重ねない。
- */
 export type BackgroundMusicTransition =
   | { kind: "crossfade" }
   | {
@@ -70,11 +50,8 @@ export type BackgroundMusicTransition =
       fadeInSec: number;
     };
 
-/** `playBackgroundMusic` で、流す曲の流し方を決める。 */
 export type PlayBackgroundMusicOptions = {
-  /** 曲に掛ける大きさ（倍）。音量の設定で決まる BGM の大きさに、さらに掛ける。省くと 1。 */
   gain?: number;
-  /** 流している曲から別の曲へ切り替えるときの流し方。省くとクロスフェード。同じ曲を流し続けるときは使わない。 */
   transition?: BackgroundMusicTransition;
 };
 
@@ -85,7 +62,6 @@ type DecodedTrack = {
   loopDuration: number;
 };
 
-/** 取得中の曲のファイルの、届いた分。 */
 type ReceivedPart = {
   url: string;
   type: string;
@@ -95,7 +71,6 @@ type ReceivedPart = {
 
 type MusicOutput = {
   context: AudioContext;
-  /** BGM すべてが通る出口。 */
   volume: GainNode;
 };
 
@@ -112,10 +87,6 @@ type LoopSource = VoiceSource<AudioBufferSourceNode> & {
   position: number;
 };
 
-/**
- * 流している1曲。切り替えるときは、切り替え方（`BackgroundMusicTransition`）に従って前の曲をフェードアウトし、次の曲をフェードインする。
- * 読み解くまでは要素でストリーミング再生し（`stream`）、読み解いたらループ再生（`loop`）へ渡す。
- */
 type MusicVoice = {
   url: string;
   fader: GainNode;
@@ -123,7 +94,6 @@ type MusicVoice = {
   level: GainNode;
   /** `level` を近づけている大きさ。 */
   levelGain: number;
-  /** 鳴り始めるときにフェードインする長さ。 */
   fadeInSec: number;
   /** 鳴り始める時刻（AudioContext の時刻）。ループ再生を後の時刻に始めるよう頼んであれば、その時刻。まだなら `null`。 */
   soundingFrom: number | null;
@@ -140,9 +110,9 @@ type MusicVoice = {
  * 音量が最大では -28 LUFS 前後になり、曲のピークに最後の出口の圧縮は掛からない。
  */
 const BACKGROUND_MUSIC_MAX_GAIN = 0.198;
-/** 音量を変えたとき、出口の大きさが新しい音量に近づく速さ。急に変えて音にノイズが乗らないよう、わずかに時間を掛ける。 */
+/** 急に変えて音にノイズが乗らないよう、音量を変えたときにわずかに時間を掛ける。 */
 const VOLUME_CHANGE_TIME_CONSTANT_SEC = 0.02;
-/** 流している曲に掛ける大きさを変えたとき、新しい大きさに近づく速さ。曲を切り替えるフェードと同じくらいの時間で変える。 */
+/** 流している曲に掛ける大きさは、曲を切り替えるフェードと同じくらいの時間で変える。 */
 const LEVEL_CHANGE_TIME_CONSTANT_SEC = 0.3;
 const FADE_IN_SEC = 1.2;
 const FADE_OUT_SEC = 0.8;
@@ -151,7 +121,7 @@ const FADE_OUT_SEC = 0.8;
  * 短く重ねて、つなぎ目に隙間も段差も作らない。重ねる長さを伸ばすと、誤差の分ずれた同じ音が重なって聞こえる時間が延びる。
  */
 const LOOP_HANDOFF_SEC = 0.05;
-/** ループ再生へ渡し始めるまでの余裕。渡す時刻より前に、音源の開始を AudioContext へ確実に頼んでおく。 */
+/** 渡す時刻より前に、音源の開始を AudioContext へ確実に頼んでおく。 */
 const LOOP_HANDOFF_LEAD_SEC = 0.1;
 /**
  * MP3 を読み解いても詰め物を取り除かないブラウザで、読み解いた曲の先頭の詰め物と見なす無音の大きさの上限（約 -60 dBFS）。
@@ -171,28 +141,19 @@ const RELEASE_MARGIN_MS = 100;
 let musicOutput: MusicOutput | null = null;
 /** 今の画面で流したい曲の音。まだ鳴り始めていないことがある。 */
 let currentVoice: MusicVoice | null = null;
-/** 前の曲の音。クロスフェードなら今の曲が鳴り始めるまでは流し続け、鳴り始めたらフェードアウトする。区切るならすぐフェードアウトする。 */
 const previousVoices = new Set<MusicVoice>();
-/** 今の画面で流したい曲の URL。音量を 0 から上げたときや、AudioContext を待ってから流すときに使う。 */
 let wantedUrl: string | null = null;
-/** 今の画面で流したい曲に掛ける大きさ。 */
 let wantedGain = 1;
-/** 今の画面で流したい曲を、鳴り始めるときにフェードインする長さ。曲を切り替えたときの流し方で決まる。 */
 let wantedFadeInSec = FADE_IN_SEC;
 /** 画面が見えなくなって止めた曲と、止めたときの1ループの中の位置（秒）。見えるようになったら、ここから流し直す。 */
 let resumePosition: { url: string; position: number } | null = null;
-/** 先に取得しておく曲の URL。これと流したい曲・流している曲のほかは、取得したファイルを捨てる。 */
 let preparedUrls = new Set<string>();
-/** 取得した曲のファイル。読み込みは一度に1曲ずつにし、今の画面で流す曲の到着を遅らせない。 */
 const trackFiles = new Map<string, Blob>();
 let fetchingUrl: string | null = null;
-/** 取得中の曲の、届いた分。 */
 let receivedPart: ReceivedPart | null = null;
 let trackFileFetchScheduled = false;
 const failedUrls = new Set<string>();
-/** 流したい曲を読み解いたもの。1分で 20 MB 以上あるので、流したい曲のほかは持ち続けない。 */
 const decodedTracks = new Map<string, DecodedTrack>();
-/** 渡された曲。読み解いた曲のループする区間を、曲の1ループのサンプル数から決める。 */
 const knownTracks = new Map<string, BackgroundMusicTrack>();
 let decodingUrl: string | null = null;
 /** これから流し始める曲を、この時刻（`performance.now()`）まで流し始めない。 */
@@ -201,18 +162,13 @@ let heldStartTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubscribeUserGesture: (() => void) | null = null;
 let listening = false;
 
-/** 音声ファイルの URL と1ループのサンプル数から曲を作る。 */
 export function defineBackgroundMusicTrack(
   track: BackgroundMusicTrack,
 ): BackgroundMusicTrack {
   return track;
 }
 
-/**
- * 流しうる曲を渡し、流すときに待たせないよう取得しておく。何度呼んでもよい。
- * 取得は今の画面で流す曲を読み込んだあとにする。前に渡した曲のうち今回渡さず、流してもいない曲は、取得したファイルを捨てる。
- * 音量が 0 の間は取得しない。
- */
+/** 流しうる曲を渡し、流すときに待たせないよう取得しておく。何度呼んでもよい。 */
 export function prepareBackgroundMusic(
   tracks: readonly BackgroundMusicTrack[],
 ): void {
@@ -227,14 +183,6 @@ export function prepareBackgroundMusic(
   syncBackgroundMusic();
 }
 
-/**
- * 今の画面で流す曲を決める。`null` ならフェードアウトして止める。
- *
- * - 流している曲と同じ曲なら、頭から流し直さない。`gain` だけが違えば、流したまま大きさを変える。
- * - 別の曲なら、`transition` で切り替える。クロスフェードなら、次の曲が鳴り始めるまでは今の曲を流し続ける。
- * - 利用者がまだ操作しておらず音を出せないときは、曲の読み込みだけを始め、操作の中で流し始める。
- * - 音量が 0 の間は流さず、音量を 0 から上げたときに流し始める。
- */
 export function playBackgroundMusic(
   track: BackgroundMusicTrack | null,
   {
@@ -258,18 +206,11 @@ export function playBackgroundMusic(
   syncBackgroundMusic();
 }
 
-/**
- * これから流し始める曲を、`durationMs` 後まで流し始めないようにする。流している曲はそのまま流す。
- * 結果の報酬の音のように、BGM と重ねずに聞かせたい音を鳴らしたときに、その音の長さを渡す。
- */
+/** 結果の報酬の音のように、BGM と重ねずに聞かせたい音を鳴らしたときに、その音の長さを渡す。 */
 export function holdBackgroundMusicStart(durationMs: number): void {
   startHeldUntilMs = Math.max(startHeldUntilMs, performance.now() + durationMs);
 }
 
-/**
- * 別の曲へ切り替え始める。区切るなら、今の曲をすぐフェードアウトし、
- * 前の曲がすべて引き切ってから無音を空け終えるまで、次の曲を流し始めない。
- */
 function beginTransition(transition: BackgroundMusicTransition) {
   if (transition.kind === "crossfade") {
     wantedFadeInSec = FADE_IN_SEC;
@@ -281,7 +222,6 @@ function beginTransition(transition: BackgroundMusicTransition) {
   holdStartUntilSilence(transition.silenceSec);
 }
 
-/** 前の曲がすべてフェードアウトし終えてから `silenceSec` 後まで、次の曲を流し始めない。前の曲が無ければ待たない。 */
 function holdStartUntilSilence(silenceSec: number) {
   if (!musicOutput) {
     return;
@@ -331,7 +271,6 @@ function getBackgroundMusicGain(): number {
   );
 }
 
-/** 音量を変えたら、流している曲も含めて出口の大きさを変える。 */
 function applyBackgroundMusicVolume() {
   if (!musicOutput) {
     return;
@@ -346,17 +285,15 @@ function applyBackgroundMusicVolume() {
   );
 }
 
-/** 今、曲を流したいか。画面が見えない間は流さない。 */
 function wantsMusic(): boolean {
   return getLoadingUrl() !== null && isPageVisible();
 }
 
-/** 読み込んで読み解いておく、流したい曲の URL。画面が見えない間も、見えるようになったときに待たせないよう読み込む。 */
+/** 画面が見えない間も、見えるようになったときに待たせないよう読み込む。 */
 function getLoadingUrl(): string | null {
   return isBackgroundMusicEnabled() ? wantedUrl : null;
 }
 
-/** 設定・流したい曲・読み込み・AudioContext・要素の状態に合わせて、流す曲と読み込みを揃える。 */
 function syncBackgroundMusic() {
   if (!wantsMusic()) {
     retireCurrentVoice();
@@ -375,10 +312,6 @@ function syncBackgroundMusic() {
   updateUserGestureSubscription();
 }
 
-/**
- * 利用者の操作の中で、流したい曲を流し始め、使い回す要素をこの先いつでも再生できるようにする。
- * iOS Safari は、操作の外で要素を再生させないことがある。
- */
 function handleUserGesture(context: AudioContext) {
   if (!wantsMusic()) {
     return;
@@ -434,7 +367,6 @@ function switchToWantedTrack(output: MusicOutput | null) {
   currentVoice = startVoice(output, url);
 }
 
-/** 流したい曲を流していて、掛ける大きさだけが違えば、流したまま大きさを変える。 */
 function applyWantedGain() {
   const voice = currentVoice;
   if (
@@ -452,14 +384,11 @@ function applyWantedGain() {
   gain.setTargetAtTime(wantedGain, now, LEVEL_CHANGE_TIME_CONSTANT_SEC);
 }
 
-/**
- * 今の曲を前の曲へ回す。まだ鳴り始めていなければ、そのまま止める。
- * 後の時刻に鳴り始めるよう頼んだだけの曲も、聞こえる前に止め、切り替えた後の画面で鳴らさない。
- */
 function retireCurrentVoice() {
   if (!currentVoice) {
     return;
   }
+  // 後の時刻に鳴り始めるよう頼んだだけの曲も、聞こえる前に止め、切り替えた後の画面で鳴らさない。
   if (isAudible(currentVoice)) {
     previousVoices.add(currentVoice);
   } else {
@@ -477,7 +406,6 @@ function isAudible({ soundingFrom }: MusicVoice): boolean {
   );
 }
 
-/** 前の曲のうち、フェードアウトを始めていない `url` の曲を、今の曲へ戻すために取り出す。 */
 function takePreviousVoice(url: string): MusicVoice | null {
   for (const voice of previousVoices) {
     if (voice.url === url && voice.fadedAt === null) {
@@ -587,10 +515,6 @@ function startLoopSource(
   return { source, gain, track, startTime, position };
 }
 
-/**
- * 読み解いた曲のうち、ループする区間を決める。読み解いた曲が1ループより長ければ、
- * 先頭に続く無音を詰め物として除いたところから、1ループの長さだけをループする。長さが同じなら、曲全体をループする。
- */
 function toDecodedTrack(
   buffer: AudioBuffer,
   { loopLength }: BackgroundMusicTrack,
@@ -607,7 +531,6 @@ function toDecodedTrack(
   };
 }
 
-/** 曲の先頭から、どのチャンネルも無音のまま続くサンプル数を、`limit` を上限に数える。 */
 function countLeadingSilence(buffer: AudioBuffer, limit: number): number {
   const channels = Array.from({ length: buffer.numberOfChannels }, (_, index) =>
     buffer.getChannelData(index),
@@ -628,7 +551,6 @@ function isPadded({ buffer, loopDuration }: DecodedTrack): boolean {
   return loopDuration < buffer.duration;
 }
 
-/** 曲が鳴り始めたら、フェードインし、前の曲をフェードアウトする。 */
 function beginSounding(voice: MusicVoice, startTime: number) {
   voice.soundingFrom = startTime;
   const { gain } = voice.fader;
@@ -637,7 +559,6 @@ function beginSounding(voice: MusicVoice, startTime: number) {
   fadeOutPreviousVoices();
 }
 
-/** ストリーミング再生が鳴り始めたらフェードインし、曲を読み解いたらループ再生へ渡す。 */
 function advanceCurrentVoice() {
   const voice = currentVoice;
   if (!voice?.stream || !musicOutput) {
@@ -652,10 +573,6 @@ function advanceCurrentVoice() {
   }
 }
 
-/**
- * ストリーミング再生をループ再生へ渡す。鳴っていれば要素の再生位置からループを始めて短く重ね、
- * まだ鳴っていなければ（要素の読み込みや再生の許可を待っていれば）、頭からループを始める。
- */
 function handOffToLoop(
   output: MusicOutput,
   voice: MusicVoice,
@@ -667,6 +584,7 @@ function handOffToLoop(
   }
   voice.stream = null;
   const now = output.context.currentTime;
+  // まだ鳴っていなければ（要素の読み込みや再生の許可を待っていれば）、頭からループを始める。
   if (voice.soundingFrom === null) {
     disposeStream(stream);
     voice.loop = startLoopSource(output, voice.fader, track, now, 0);
@@ -696,20 +614,16 @@ function handOffToLoop(
   );
 }
 
-/**
- * 要素が流している、曲の中の位置（秒）。要素の曲の長さが1ループより長ければ、
- * 要素も読み解いた曲と同じ先頭の詰め物を流しているので、その分を差し引く。
- */
 function getStreamPosition(
   element: HTMLAudioElement,
   { loopStart, loopDuration }: DecodedTrack,
 ): number {
+  // 要素の曲の長さが1ループより長ければ、要素も読み解いた曲と同じ先頭の詰め物を流しているので、その分を差し引く。
   const padded =
     element.duration > loopDuration + PADDED_DURATION_TOLERANCE_SEC;
   return element.currentTime - (padded ? loopStart : 0);
 }
 
-/** 曲の中の位置を、1ループの中の位置に直す。 */
 function getLoopPosition(
   { loopDuration }: DecodedTrack,
   seconds: number,
@@ -718,7 +632,6 @@ function getLoopPosition(
   return position < 0 ? position + loopDuration : position;
 }
 
-/** 流している曲をループ再生していれば、流している1ループの中の位置を、見えるようになったときのために覚えておく。 */
 function rememberResumePosition() {
   const voice = currentVoice;
   const loop = voice && voice.soundingFrom !== null ? voice.loop : null;
@@ -736,7 +649,6 @@ function rememberResumePosition() {
   };
 }
 
-/** 覚えておいた `url` の曲の位置を返して忘れる。覚えていなければ、曲の頭から流す。 */
 function takeResumePosition(url: string): number {
   const position = resumePosition?.url === url ? resumePosition.position : 0;
   resumePosition = null;
@@ -762,7 +674,6 @@ function fadeOutPreviousVoices(fadeOutSec = FADE_OUT_SEC) {
   }
 }
 
-/** 曲をフェードアウトして止める。フェードアウトを始めている曲は、始めたときの長さのまま引き切る。 */
 function fadeOutVoice(voice: MusicVoice, fadeOutSec: number) {
   if (voice.fadedAt !== null || !musicOutput) {
     return;
@@ -809,10 +720,7 @@ function disposeLoop({ source, gain }: LoopSource) {
   gain.disconnect();
 }
 
-/**
- * 流したい曲がまだ流れておらず、取得し終えて読み解いている間なら、要素に読み込ませておき、流し始めるときに待たせない。
- * 使っていない要素のうち、流したい曲でない曲を読み込ませている要素は止める。
- */
+/** 流したい曲がまだ流れておらず、取得し終えて読み解いている間なら、要素に読み込ませておき、流し始めるときに待たせない。 */
 function preloadWantedTrack() {
   const url = getLoadingUrl();
   releaseIdleStreamPlayers(function isWantedStream(playerUrl) {
@@ -828,9 +736,6 @@ function preloadWantedTrack() {
 }
 
 /**
- * 曲のファイルを1曲ずつ取得する。流したい曲を先にし、流しうる曲はそのあとにする。
- * 流したい曲を要素がネットワークから読み込んでいる間は、要素が続けて再生できるだけ読み込むまで、何も取得しない。
- *
  * 画面を描くと流しうる曲と流す曲が続けて決まるので、取得する曲は今の処理を終えてから選び、
  * 流す曲が決まる前に流しうる曲の取得を始めない。
  */
@@ -848,6 +753,7 @@ function scheduleTrackFileFetch() {
 }
 
 function fetchNextTrackFile() {
+  // 読み込みは一度に1曲ずつにし、今の画面で流す曲の到着を遅らせない。
   if (fetchingUrl !== null) {
     return;
   }
@@ -887,7 +793,6 @@ function findTrackFileToFetch(): string | null {
   );
 }
 
-/** 曲のファイルを取得する。届いた分は、取得し終える前に流し始められるよう `receivedPart` に溜める。 */
 async function fetchTrackFile(url: string): Promise<Blob> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -902,6 +807,7 @@ async function fetchTrackFile(url: string): Promise<Blob> {
     chunks: [],
     size: 0,
   };
+  // 届いた分は、取得し終える前に流し始められるよう `receivedPart` に溜める。
   receivedPart = part;
   try {
     const reader = response.body.getReader();
@@ -918,7 +824,6 @@ async function fetchTrackFile(url: string): Promise<Blob> {
   return new Blob(part.chunks, { type: part.type });
 }
 
-/** 届いた分が流し始められる大きさになったら、待っている曲を流し始める。 */
 function receiveChunk(part: ReceivedPart, chunk: Uint8Array<ArrayBuffer>) {
   const wasEnough = part.size >= RECEIVED_PART_MIN_BYTES;
   part.chunks.push(chunk);
@@ -928,7 +833,6 @@ function receiveChunk(part: ReceivedPart, chunk: Uint8Array<ArrayBuffer>) {
   }
 }
 
-/** 取得中の `url` の曲の届いた分。流し始められる大きさに届いていなければ `null`。 */
 function getReceivedPart(url: string): Blob | null {
   if (
     receivedPart?.url !== url ||
@@ -939,7 +843,6 @@ function getReceivedPart(url: string): Blob | null {
   return new Blob(receivedPart.chunks, { type: receivedPart.type });
 }
 
-/** 流したい曲のファイルを取得したら読み解く。 */
 function decodeWantedTrack() {
   const url = getLoadingUrl();
   if (url === null || decodingUrl !== null || decodedTracks.has(url)) {
@@ -977,13 +880,13 @@ function isWantedTrack(url: string): boolean {
   );
 }
 
-/** 流しうる曲のほかは取得したファイルを持ち続けず、読み解いたものは流したい曲のほかは持ち続けない。 */
 function forgetUnwantedTracks() {
   for (const url of trackFiles.keys()) {
     if (!isWantedTrack(url)) {
       trackFiles.delete(url);
     }
   }
+  // 読み解いた曲は1分で 20 MB 以上あるので、流したい曲のほかは持ち続けない。
   for (const url of decodedTracks.keys()) {
     if (url !== getLoadingUrl()) {
       decodedTracks.delete(url);

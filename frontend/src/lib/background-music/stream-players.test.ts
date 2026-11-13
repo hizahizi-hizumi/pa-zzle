@@ -1,6 +1,5 @@
 type StreamPlayers = typeof import("@/lib/background-music/stream-players");
 
-/** 再生を許すかを、テストごとに決められる `<audio>` 要素。 */
 class FakeAudio {
   static instances: FakeAudio[] = [];
   static allowsPlay = true;
