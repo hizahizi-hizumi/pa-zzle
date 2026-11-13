@@ -150,10 +150,7 @@ function getCellCues(
   ];
 }
 
-/**
- * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せるマス。
- * 次に操作する印のマスと、それを決めるマス（決め手）に加えて、直前に手順どおりにしたマスも抜き、その手への応えを見せる。
- */
+/** 印のマスと決め手に加えて、直前に手順どおりにしたマスも抜き、その手への応えを見せる。 */
 function getSpotlitCellIndices(
   step: MinesweeperTutorialStep,
   state: MinesweeperTutorialBoardState,
@@ -166,7 +163,6 @@ function getSpotlitCellIndices(
   ];
 }
 
-/** 手順を終えたら手を離し、残りを自分で開かせる。 */
 export function MinesweeperTutorial({
   open,
   playStart,
@@ -289,7 +285,6 @@ export function MinesweeperTutorial({
     setProgress(startTutorial(minesweeperTutorial));
   }
 
-  // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();

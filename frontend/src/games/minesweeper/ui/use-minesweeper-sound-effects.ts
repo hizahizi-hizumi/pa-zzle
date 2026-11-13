@@ -84,10 +84,6 @@ function playClearSound() {
   playSound(clearedSound);
 }
 
-/**
- * 結果の報酬の音はアプリが鳴らす。
- * チュートリアルも本番と同じ音を鳴らすため、プレイ画面とチュートリアルの両方が使う。
- */
 export function useMinesweeperSoundEffects(
   operation: MinesweeperOperation | null,
   progress: GameProgress,

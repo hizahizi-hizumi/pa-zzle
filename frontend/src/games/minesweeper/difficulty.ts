@@ -110,14 +110,7 @@ export function isInMinesweeperDifficultyBoardRange(
   );
 }
 
-/**
- * 分析結果を難易度へ分類した結果。
- * - `classified`: 提供範囲内で、難易度が決まった。
- * - `out-of-range`: 推測なしで解けるが提供しない。挑戦が薄すぎる（`too-light`）か重すぎる（`too-heavy`）か、
- *   推論で決まる難易度 `inferenceDifficulty` の盤面範囲に盤面サイズ・地雷数が入らない（`outside-board-range`）。
- * - `unsupported`: 分析で難易度を評価できない。
- * - `invalid`: 推測が必要で、問題として成立しない。
- */
+/** `unsupported` は、分析で難易度を評価できないもの。 */
 export type MinesweeperDifficultyAssessment = DifficultyAssessment<{
   classified: NoAssessmentDetail;
   outOfRange:
