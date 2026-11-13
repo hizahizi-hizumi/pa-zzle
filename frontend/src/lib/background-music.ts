@@ -55,11 +55,10 @@ export type PlayBackgroundMusicOptions = {
   transition?: BackgroundMusicTransition;
 };
 
-/** 読み解いた曲と、その中でループする区間（秒）。 */
 type DecodedTrack = {
   buffer: AudioBuffer;
-  loopStart: number;
-  loopDuration: number;
+  loopStartSec: number;
+  loopDurationSec: number;
 };
 
 type ReceivedPart = {
@@ -92,8 +91,7 @@ type MusicVoice = {
   fader: GainNode;
   /** 曲に掛ける大きさ（`PlayBackgroundMusicOptions` の `gain`）を、フェードとは別に掛ける。 */
   level: GainNode;
-  /** `level` を近づけている大きさ。 */
-  levelGain: number;
+  targetLevelGain: number;
   fadeInSec: number;
   /** 鳴り始める時刻（AudioContext の時刻）。ループ再生を後の時刻に始めるよう頼んであれば、その時刻。まだなら `null`。 */
   soundingFrom: number | null;
@@ -373,11 +371,11 @@ function applyWantedGain() {
     !voice ||
     !musicOutput ||
     voice.url !== wantedUrl ||
-    voice.levelGain === wantedGain
+    voice.targetLevelGain === wantedGain
   ) {
     return;
   }
-  voice.levelGain = wantedGain;
+  voice.targetLevelGain = wantedGain;
   const now = musicOutput.context.currentTime;
   const { gain } = voice.level;
   gain.cancelScheduledValues(now);
@@ -483,7 +481,7 @@ function createVoice(
     url,
     fader,
     level,
-    levelGain: wantedGain,
+    targetLevelGain: wantedGain,
     fadeInSec: wantedFadeInSec,
     soundingFrom: null,
     fadedAt: null,
@@ -503,15 +501,15 @@ function startLoopSource(
   const gain = context.createGain();
   gain.connect(destination);
   const source = context.createBufferSource();
-  const { buffer, loopStart, loopDuration } = track;
+  const { buffer, loopStartSec, loopDurationSec } = track;
   source.buffer = buffer;
   source.loop = true;
   if (isPadded(track)) {
-    source.loopStart = loopStart;
-    source.loopEnd = loopStart + loopDuration;
+    source.loopStart = loopStartSec;
+    source.loopEnd = loopStartSec + loopDurationSec;
   }
   source.connect(gain);
-  source.start(startTime, loopStart + position);
+  source.start(startTime, loopStartSec + position);
   return { source, gain, track, startTime, position };
 }
 
@@ -521,13 +519,13 @@ function toDecodedTrack(
 ): DecodedTrack {
   const paddingLength = buffer.length - loopLength;
   if (paddingLength <= 0) {
-    return { buffer, loopStart: 0, loopDuration: buffer.duration };
+    return { buffer, loopStartSec: 0, loopDurationSec: buffer.duration };
   }
   const leadingPaddingLength = countLeadingSilence(buffer, paddingLength);
   return {
     buffer,
-    loopStart: leadingPaddingLength / buffer.sampleRate,
-    loopDuration: loopLength / buffer.sampleRate,
+    loopStartSec: leadingPaddingLength / buffer.sampleRate,
+    loopDurationSec: loopLength / buffer.sampleRate,
   };
 }
 
@@ -547,8 +545,8 @@ function countLeadingSilence(buffer: AudioBuffer, limit: number): number {
   return limit;
 }
 
-function isPadded({ buffer, loopDuration }: DecodedTrack): boolean {
-  return loopDuration < buffer.duration;
+function isPadded({ buffer, loopDurationSec }: DecodedTrack): boolean {
+  return loopDurationSec < buffer.duration;
 }
 
 function beginSounding(voice: MusicVoice, startTime: number) {
@@ -616,20 +614,20 @@ function handOffToLoop(
 
 function getStreamPosition(
   element: HTMLAudioElement,
-  { loopStart, loopDuration }: DecodedTrack,
+  { loopStartSec, loopDurationSec }: DecodedTrack,
 ): number {
   // 要素の曲の長さが1ループより長ければ、要素も読み解いた曲と同じ先頭の詰め物を流しているので、その分を差し引く。
   const padded =
-    element.duration > loopDuration + PADDED_DURATION_TOLERANCE_SEC;
-  return element.currentTime - (padded ? loopStart : 0);
+    element.duration > loopDurationSec + PADDED_DURATION_TOLERANCE_SEC;
+  return element.currentTime - (padded ? loopStartSec : 0);
 }
 
 function getLoopPosition(
-  { loopDuration }: DecodedTrack,
+  { loopDurationSec }: DecodedTrack,
   seconds: number,
 ): number {
-  const position = seconds % loopDuration;
-  return position < 0 ? position + loopDuration : position;
+  const position = seconds % loopDurationSec;
+  return position < 0 ? position + loopDurationSec : position;
 }
 
 function rememberResumePosition() {
