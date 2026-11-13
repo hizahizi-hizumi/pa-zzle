@@ -5,7 +5,6 @@ type PuzzleListLinkPieceProps = {
   height: number;
   path: string;
   tabExtent: number;
-  /** ラベルを等倍から拡大する比率。 */
   textScale: number;
   /** セル部分の幅。 */
   width: number;
@@ -16,10 +15,6 @@ type PuzzleListLinkPieceProps = {
 // フォーカスリングが要素の外へはみ出さない余白。
 const ringAllowance = 4;
 
-/**
- * 盤面に噛み合った1枚のピースとして描く、パズル一覧へ戻るリンク。画面の目的を前へ進める主要操作として、ピースを主要操作の色で塗る。
- * 押せる範囲をピースの形に合わせるため、リンク自体はポインタを受けずピースの塗りだけが受ける。
- */
 export function PuzzleListLinkPiece({
   height,
   path,
@@ -36,6 +31,7 @@ export function PuzzleListLinkPiece({
   return (
     <Link
       to="/"
+      // 押せる範囲をピースの形に合わせるため、リンク自体はポインタを受けずピースの塗りだけが受ける。
       className="group pointer-events-none absolute z-10 flex items-center justify-center outline-none"
       style={{
         height: boxHeight,

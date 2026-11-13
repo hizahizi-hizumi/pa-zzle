@@ -31,10 +31,10 @@ export function NotFoundView() {
     setPieceStatuses((current) => ({ ...current, [id]: status }));
   }
 
-  // 領域の高さは利用可能な高さとして測るため、盤面は領域を押し広げない絶対配置にし、足りない分は縦スクロールで見せる。
   return (
     <section ref={areaRef} className="relative flex-1 overflow-x-clip">
       {layout && (
+        // 領域の高さは利用可能な高さとして測るため、盤面は領域を押し広げない絶対配置にし、足りない分は縦スクロールで見せる。
         <div
           className="absolute inset-x-0 top-0 bg-background"
           style={{ height: layout.height }}

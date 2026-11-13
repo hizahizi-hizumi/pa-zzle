@@ -160,7 +160,6 @@ const bottomMarginInPieces = 0.45;
 const looseGapInPieces = 0.9;
 const snapRadiusInPieces = 0.55;
 
-/** 凸凹の配置を決める乱数のシードを作る。ページを開くたびに盤面の模様を変えるために使う。 */
 export function createJigsawSeed(): number {
   return Math.floor(Math.random() * 0x1_0000_0000);
 }
@@ -289,7 +288,6 @@ function arrangeBoard({
   function stackHeight(rowsToLink: number) {
     return topMargin + pieceSize * (rowsToLink + 2) + tabExtent + bottomMargin;
   }
-  // 高さに余裕があれば1行ぶん間隔を広げる。
   const rowsToLink =
     stackHeight(tightRowsToLink + 1) <= availableHeight
       ? tightRowsToLink + 1
@@ -618,7 +616,6 @@ function pieceCells(grid: Grid, piece: Piece): Cell[] {
   }));
 }
 
-/** 辺を挟んで、その辺を持つピースの反対側にあるセル。 */
 function cellAcross({ axis, row, column, sign }: PieceSide): Cell {
   const isOwnedByUpperLeft = sign === 1;
   if (axis === "horizontal") {

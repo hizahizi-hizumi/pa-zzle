@@ -114,7 +114,6 @@ const solution = countBridgesSolutions(problem, {
   limit: 1,
   nodeLimit: 200_000,
 }).firstSolution!;
-/** 盤面を、周りの海の余白も含めて1マス 100px で置く。 */
 const cellPixels = 100;
 const touch = { pointerId: 1, pointerType: "touch", isPrimary: true };
 
@@ -137,7 +136,6 @@ function getBoard(): HTMLElement {
   });
 }
 
-/** `from` の島の中心から `to` の島へ向かって `reach` マス進んだ所の画面座標。 */
 function pointToward(from: CellPosition, to: CellPosition, reach: number) {
   const [fromRow, fromColumn] = from;
   const [toRow, toColumn] = to;
@@ -154,17 +152,13 @@ function pointToward(from: CellPosition, to: CellPosition, reach: number) {
   };
 }
 
-/**
- * 2島の間の、島の的のすぐ外の線の上を押す。交わる線は島から1マス以上離れるので、交点のそばの押し（どちらの橋も回さない）に
- * ならない。
- */
 function tapBetween([from, to]: EdgeEnds): void {
   const board = getBoard();
+  // 島の的のすぐ外の線の上を押す。交わる線は島から1マス以上離れるので、交点のそばの押し（どちらの橋も回さない）にならない。
   fireEvent.pointerDown(board, { ...touch, ...pointToward(from, to, 0.65) });
   fireEvent.pointerUp(board, { ...touch, ...pointToward(from, to, 0.65) });
 }
 
-/** `from` の島から押し、`to` の島の上までなぞって離す。 */
 function dragBetween([from, to]: EdgeEnds): void {
   fireEvent.pointerDown(getBoard(), { ...touch, ...pointToward(from, to, 0) });
   fireEvent.pointerUp(getBoard(), { ...touch, ...pointToward(to, from, 0) });
@@ -177,16 +171,15 @@ function readIslands(): string[] {
     .map((item) => item.textContent ?? "");
 }
 
-/** 盤面の読み上げから、全島の橋の本数の合計を求める。橋1本を両端の島で2回数える。 */
 function countPlacedBridges(): number {
   const total = readIslands().reduce(
     (sum, text) => sum + Number(/橋(\d+)本/.exec(text)?.[1]),
     0,
   );
+  // 島ごとの橋の本数の合計は、橋1本を両端の島で2回数える。
   return total / 2;
 }
 
-/** 盤面の読み上げの、その島の行。 */
 function readIsland([row, column]: CellPosition): string {
   return readIslands().find((text) =>
     text.startsWith(`${row + 1}行${column + 1}列の島`),
@@ -204,7 +197,6 @@ const crossedEdge = network.crossingEdges[crossingEdge]![0]!;
 const lastEdge = solutionEdges.at(-1)!;
 const solutionLineCount = solution.reduce((total, count) => total + count, 0);
 
-/** 解の橋を、最後の辺の最後の1本を除いて架ける。2本の辺の2本目は、なぞりで架ける。 */
 function solveAllButLast(): void {
   for (const edge of solutionEdges) {
     const ends = getEdgeEnds(edge);
@@ -219,7 +211,6 @@ function solveAllButLast(): void {
   }
 }
 
-/** 盤面を1マス `cellPixels` の大きさで置く。 */
 function placeBoard(): void {
   vi.spyOn(getBoard(), "getBoundingClientRect").mockReturnValue(
     new DOMRect(

@@ -159,7 +159,6 @@ describe("TakuzuPlayView", () => {
       }
     }
 
-    /** 空きマスを順に、解のタイルになるまで押す（A は1回、B は2回）。 */
     function solve(): void {
       const cells = boardCells();
       for (const cellIndex of emptyCellIndices) {
@@ -171,7 +170,6 @@ describe("TakuzuPlayView", () => {
       }
     }
 
-    /** A が入る最初の空きマスに B を置いて先へ進み、最後に A へ直して解き終える。 */
     function solveWithOneCorrection(): void {
       const cells = boardCells();
       for (const cellIndex of emptyCellIndices) {

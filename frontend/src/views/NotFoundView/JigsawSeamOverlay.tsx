@@ -6,7 +6,6 @@ type JigsawSeamOverlayProps = {
   width: number;
 };
 
-/** 盤面に印刷された文字の上を通る継ぎ目。 */
 export function JigsawSeamOverlay({
   height,
   outlinePath,
