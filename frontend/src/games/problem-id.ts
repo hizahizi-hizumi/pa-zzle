@@ -1,10 +1,7 @@
 import type { ProblemSeed } from "@/games/problem-seed";
 import { isNonEmptyString, isRecordObject } from "@/lib/type-guards";
 
-/**
- * 問題を指す短い ID。生成器の版・生成条件・seed・生成試行など、問題を作るのに要る identity 全体から求める。
- * 一方向のハッシュなので、ID から問題へは問題集の索引（`createProblemPoolIndex`）で引く。
- */
+/** 一方向のハッシュなので、ID から問題へは問題集の索引（`createProblemPoolIndex`）で引く。 */
 export type ProblemId = string;
 
 /** 各ゲームの `<Game>ProblemIdentity` と、記録に残した identity の共通の形。 */
@@ -22,16 +19,11 @@ export type RecordedProblemIdentity<
   conditions: Readonly<Record<string, unknown>> & Readonly<RecordedConditions>;
 };
 
-/** 今の生成器の版と、その版の identity を確かめる型ガード。 */
 export type CurrentProblemIdentity<Identity extends ProblemIdentity> = {
   generatorVersion: string;
   isProblemIdentity: (value: unknown) => value is Identity;
 };
 
-/**
- * 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。
- * 今の生成器の版なら今の生成器で扱える識別情報であることまで、別の版なら版と seed と生成条件の形だけを確かめる。
- */
 export function isRecordedProblemIdentity<Identity extends ProblemIdentity>(
   value: unknown,
   current: CurrentProblemIdentity<Identity>,
@@ -109,7 +101,7 @@ function formatLane(lane: number): string {
     .padStart(problemIdDigitsPerLane, "0");
 }
 
-/** identity から問題 ID（`0-9a-v` の10桁）を求める。同じ identity からは常に同じ ID になる。 */
+/** identity から問題 ID（`0-9a-v` の10桁）を求める。 */
 export function createProblemId(identity: ProblemIdentity): ProblemId {
   const [high, low] = hashProblemIdentityText(
     canonicalizeProblemIdentity(identity),
@@ -117,16 +109,14 @@ export function createProblemId(identity: ProblemIdentity): ProblemId {
   return formatLane(high) + formatLane(low);
 }
 
-/** 問題集の中の1問の位置。 */
 export type ProblemPoolPosition<Entry> = {
   entry: Entry;
   /** 難易度の問題集の中の0始まりの並び順。 */
   entryIndex: number;
 };
 
-/** 問題集の全項目の問題 ID の索引。 */
 export type ProblemPoolIndex<Difficulty extends string, Entry> = {
-  /** 難易度と問題 ID から問題集の中の位置を引く。別の難易度の問題集にある ID や、問題集に無い ID には `null` を返す。 */
+  /** 別の難易度の問題集にある ID や、問題集に無い ID には `null` を返す。 */
   findPositionById: (
     difficulty: Difficulty,
     problemId: string,
@@ -135,7 +125,6 @@ export type ProblemPoolIndex<Difficulty extends string, Entry> = {
   listProblemIds: (difficulty: Difficulty) => readonly ProblemId[];
 };
 
-/** 問題集の全項目の問題 ID の索引を作る。索引は最初に使うときに作る。 */
 export function createProblemPoolIndex<Difficulty extends string, Entry>(
   levels: Readonly<Record<Difficulty, readonly Entry[]>>,
   toIdentity: (entry: Entry, difficulty: Difficulty) => ProblemIdentity,

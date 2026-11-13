@@ -1,4 +1,3 @@
-/** 1問のプレイが続いているか、クリアしたか。 */
 export type GameSessionStatus = "playing" | "cleared";
 
 /**
@@ -19,7 +18,6 @@ type SessionTiming = Pick<
   "startedAt" | "finishedAt"
 >;
 
-/** 始めてから `now` まで、クリアしていればクリアまでの経過時間。 */
 export function getSessionElapsedMs(
   session: SessionTiming,
   now: number,
@@ -27,7 +25,6 @@ export function getSessionElapsedMs(
   return Math.max(0, (session.finishedAt ?? now) - session.startedAt);
 }
 
-/** クリアまでの経過時間。プレイ中は `null`。 */
 export function getClearedSessionElapsedMs(
   session: SessionTiming & Pick<GameSession<unknown, unknown>, "status">,
 ): number | null {
