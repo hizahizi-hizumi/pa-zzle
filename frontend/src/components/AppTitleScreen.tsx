@@ -1,5 +1,5 @@
 import { Dialog as DialogPrimitive } from "radix-ui";
-import { type MouseEvent, useRef } from "react";
+import { type KeyboardEvent, type MouseEvent, useRef } from "react";
 import { Link } from "react-router";
 
 import { playGameSelectSound } from "@/components/app-decision-sound";
@@ -50,6 +50,24 @@ export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
     }
   }
 
+  // キーボードでも、面を選んだまま決定のキーを押せば入れるようにする。
+  function enterByKey(event: KeyboardEvent) {
+    if (
+      event.target === event.currentTarget &&
+      (event.key === "Enter" || event.key === " ")
+    ) {
+      event.preventDefault();
+      if (ready) {
+        onEnter();
+      }
+    }
+  }
+
+  // 入った先のホームが選んでいるゲームへフォーカスを置くので、閉じたときに開く前のフォーカスへ戻さない。
+  function keepFocusOnClose(event: Event) {
+    event.preventDefault();
+  }
+
   // 開いた直後に最初の操作部品へ枠を出さないよう、面そのものを選んでおく。Tab で面の中の操作へ進める。
   function focusSurface(event: Event) {
     event.preventDefault();
@@ -64,7 +82,9 @@ export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
           aria-describedby={undefined}
           data-browser-surface="self"
           onOpenAutoFocus={focusSurface}
+          onCloseAutoFocus={keepFocusOnClose}
           onClick={enter}
+          onKeyDown={enterByKey}
           className="fixed inset-0 z-(--layer-overlay) flex flex-col bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] font-ui outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-(--duration-normal) data-[state=closed]:ease-exit motion-reduce:animate-none"
         >
           {/* 設定のボタンと、開いた設定のダイアログの中の操作で入らないよう、押した操作を面へ伝えない。 */}

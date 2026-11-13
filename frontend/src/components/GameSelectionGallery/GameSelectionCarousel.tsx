@@ -79,6 +79,18 @@ function updateVisualProximity(scroller: HTMLDivElement) {
   }
 }
 
+/** マウスなどで細かく指せる端末。キーボードで選ぶ人が使う、選択画面を開いたときのフォーカスを、ここでだけ置く。 */
+function hasFinePointer(): boolean {
+  return window.matchMedia?.("(pointer: fine)").matches ?? false;
+}
+
+function focusSlideElement(scroller: HTMLDivElement | null, index: number) {
+  const slide = scroller?.children[index];
+  if (slide instanceof HTMLElement) {
+    slide.focus({ preventScroll: true });
+  }
+}
+
 function closestCopy(index: number, reference: number, count: number): number {
   if (count < 2) return index;
   return [index, index + count, index + 2 * count].reduce(
@@ -190,6 +202,13 @@ export function GameSelectionCarousel({
       scrollToSlide(nearest, "smooth");
     }
   }, [selectedIndex, count, orderKey, scrollToSlide, focusSlide]);
+
+  // 開いたときに中央のカードへフォーカスを置き、←→ で選んで Enter で入れるようにする。
+  // タッチの端末では、フォーカスの輪郭が出たままになるので置かない。
+  useEffect(() => {
+    if (isCovered || !hasFinePointer()) return;
+    focusSlideElement(scrollerRef.current, focusedSlide.current);
+  }, [isCovered]);
 
   useEffect(() => {
     function handleResize() {
@@ -328,6 +347,10 @@ export function GameSelectionCarousel({
                   );
           focusSlide(next, true);
           scrollToSlide(next, "smooth");
+          // カードにフォーカスがあるときは、選んだカードへフォーカスを移し、Enter でそのまま入れるようにする。
+          if (event.target !== event.currentTarget) {
+            focusSlideElement(event.currentTarget, next);
+          }
         }}
       >
         {laps.flatMap((lap, lapIndex) =>

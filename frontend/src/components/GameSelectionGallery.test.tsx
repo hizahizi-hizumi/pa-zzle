@@ -113,7 +113,6 @@ describe("パズルの選択", () => {
       screen.queryByRole("navigation", { name: "デザイン案の比較" }),
     ).toBeNull();
     expect(screen.queryByRole("navigation", { name: "パズル一覧" })).toBeNull();
-    expect(screen.queryByText("遊ぶ")).toBeNull();
   });
 
   test("中央の候補は選択確定の待機なしで開けること", () => {
@@ -294,6 +293,68 @@ describe("パズルの選択", () => {
         screen.getByRole("link", { name: "ウォーターソートを開く" }),
       ).getByText("01"),
     ).toBeTruthy();
+  });
+});
+
+describe("下の帯の遊ぶ操作", () => {
+  beforeEach(() => {
+    renderGallery(1);
+  });
+
+  test("選んでいるゲームへ入る操作を置き、押すとプレイ開始音を鳴らすこと", () => {
+    const link = screen.getByRole("link", { name: "ナンプレを遊ぶ" });
+    fireEvent.click(link);
+
+    expect(link.getAttribute("href")).toBe("/puzzles/nanpure");
+    expect(playSound).toHaveBeenCalledExactlyOnceWith(
+      appDecisionSound.playStartSound,
+    );
+  });
+});
+
+describe("キーボードで選ぶ操作", () => {
+  describe("細かく指せる端末で開いた場合", () => {
+    beforeEach(() => {
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn((query: string) => ({ matches: query === "(pointer: fine)" })),
+      );
+      renderGallery();
+    });
+
+    test("中央のカードにフォーカスを置くこと", () => {
+      const focused = document.activeElement;
+
+      expect(focused?.getAttribute("aria-label")).toBe(
+        "ウォーターソートを開く",
+      );
+    });
+
+    test("カードで右キーを押すと、次のカードを中央にしてフォーカスを移すこと", () => {
+      getCarousel();
+      fireEvent.keyDown(document.activeElement as Element, {
+        key: "ArrowRight",
+      });
+      const focused = document.activeElement;
+
+      expect(focused?.getAttribute("aria-label")).toBe("ナンプレを開く");
+    });
+  });
+
+  describe("タッチの端末で開いた場合", () => {
+    beforeEach(() => {
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn(() => ({ matches: false })),
+      );
+      renderGallery();
+    });
+
+    test("カードにフォーカスを置かないこと", () => {
+      const focused = document.activeElement;
+
+      expect(focused).toBe(document.body);
+    });
   });
 });
 

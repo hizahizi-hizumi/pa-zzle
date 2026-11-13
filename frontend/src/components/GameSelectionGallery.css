@@ -22,8 +22,29 @@
   flex-direction: column;
   overflow: hidden;
   isolation: isolate;
+  position: relative;
   background: var(--selection-stage);
   color: var(--selection-ink);
+}
+
+/* 暗い下の帯の上で主要操作に見えるよう、帯の中でだけ主要操作の色を明るい面に置き換える。 */
+.game-selection__play {
+  --primary: var(--selection-ink);
+  --primary-foreground: var(--selection-stage);
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  height: var(--selection-frame-bottom);
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+/* 帯のほかの所を押してもカルーセルへ届くよう、帯は押せないようにし、操作だけを押せるようにする。 */
+.game-selection__play > * {
+  pointer-events: auto;
 }
 
 .game-selection__header {

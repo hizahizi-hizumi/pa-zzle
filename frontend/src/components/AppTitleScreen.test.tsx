@@ -82,6 +82,12 @@ describe("AppTitleScreen", () => {
 
       expect(onEnter).not.toHaveBeenCalled();
     });
+
+    test("Enter でも入らないこと", () => {
+      fireEvent.keyDown(screen.getByRole("dialog"), { key: "Enter" });
+
+      expect(onEnter).not.toHaveBeenCalled();
+    });
   });
 
   describe("入れる場合", () => {
@@ -112,6 +118,12 @@ describe("AppTitleScreen", () => {
 
     test("Escape で入ること", () => {
       fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+      expect(onEnter).toHaveBeenCalledOnce();
+    });
+
+    test("画面を選んだまま Enter を押すと入ること", () => {
+      fireEvent.keyDown(screen.getByRole("dialog"), { key: "Enter" });
 
       expect(onEnter).toHaveBeenCalledOnce();
     });

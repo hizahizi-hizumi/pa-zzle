@@ -1,8 +1,11 @@
+import { Play } from "lucide-react";
 import { useId, useState } from "react";
 import { Link } from "react-router";
 
+import { playPlayStartSound } from "@/components/app-decision-sound";
 import { GameSelectionCarousel } from "@/components/GameSelectionGallery/GameSelectionCarousel";
 import { SettingsButton } from "@/components/SettingsButton";
+import { Button } from "@/components/ui/button";
 import type { DifficultyLevel } from "@/games/difficulty";
 import type { Path } from "@/router";
 import "@/components/GameSelectionGallery.css";
@@ -44,6 +47,7 @@ export function GameSelectionGallery({
   }
 
   if (games.length === 0) return null;
+  const selectedGame = games[selectedIndex];
 
   return (
     <section className="game-selection" data-browser-surface="self">
@@ -65,6 +69,21 @@ export function GameSelectionGallery({
         isCovered={isCovered}
         onSelect={selectGame}
       />
+      {/* カードを押して入れることに気づかなくても入れるよう、空いている下の帯に入る操作を置く。帯のほかの所は、カルーセルを送る操作に残す。 */}
+      {selectedGame && (
+        <div className="game-selection__play">
+          <Button asChild size="lg">
+            <Link
+              to={selectedGame.to}
+              aria-label={`${selectedGame.name}を遊ぶ`}
+              onClick={playPlayStartSound}
+            >
+              <Play aria-hidden="true" />
+              遊ぶ
+            </Link>
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
