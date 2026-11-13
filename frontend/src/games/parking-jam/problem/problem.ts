@@ -44,7 +44,7 @@ export type ParkingJamProblemIdentity = {
   generationAttempt: number;
 };
 
-/** 問題と、それを再現するための情報。可解性と難易度の解析を伴わない。 */
+/** 可解性と難易度の解析を伴わない。 */
 export type ParkingJamIdentifiedProblem = {
   problem: ParkingJamProblem;
   identity: ParkingJamProblemIdentity;
@@ -59,7 +59,6 @@ function isUnitInterval(value: unknown): value is number {
   );
 }
 
-/** 記録・診断など外部から読み戻した値が、現在の生成器で復元できる識別情報かを確かめる。 */
 export function isParkingJamProblemIdentity(
   value: unknown,
 ): value is ParkingJamProblemIdentity {
@@ -83,12 +82,11 @@ export function isParkingJamProblemIdentity(
   );
 }
 
-/** 記録に残した問題の識別情報。生成器の版が今と違う記録も、採点に使う車両数が読めれば読み込む。 */
+/** 生成器の版が今と違う記録も、採点に使う車両数が読めれば読み込む。 */
 export type ParkingJamRecordedProblemIdentity = RecordedProblemIdentity<{
   vehicleCount: number;
 }>;
 
-/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
 export function isParkingJamRecordedProblemIdentity(
   value: unknown,
 ): value is ParkingJamRecordedProblemIdentity {

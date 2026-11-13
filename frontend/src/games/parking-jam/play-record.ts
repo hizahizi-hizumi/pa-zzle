@@ -219,17 +219,13 @@ export function createParkingJamPlayRecord({
   };
 }
 
-/** 記録から作り直した、結果画面に出す内容。 */
 export type ParkingJamRecordedResult = {
   difficulty: ParkingJamDifficulty;
   problemIdentity: ParkingJamProblemIdentity;
   result: ParkingJamResult;
 };
 
-/**
- * 記録から結果画面に出す内容を作り直す。
- * 今の版（レベル1〜5の難易度）の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
- */
+/** 今の版（レベル1〜5の難易度）の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。 */
 export function restoreParkingJamRecordedResult(
   record: PlayRecord,
 ): ParkingJamRecordedResult | null {
@@ -310,7 +306,7 @@ export const parkingJamPlayRecordDefinition = {
   getComparisonKey(record) {
     return isParkingJamPlayRecord(record) ? record.payload.difficulty : null;
   },
-  // 車は1回ずつ出すので、完成までの手数は問題の車の数で決まり、手数は持たない。出せなかった出庫をミスとする。
+  // 車は1回ずつ出すので、完成までの手数は問題の車の数で決まり、手数は持たない。
   getClearPerformance(record) {
     if (!isParkingJamPlayRecord(record)) {
       return null;

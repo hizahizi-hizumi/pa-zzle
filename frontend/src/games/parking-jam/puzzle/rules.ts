@@ -42,7 +42,7 @@ function openingContainsOffset(
   );
 }
 
-/** 車が向きに沿って出庫するときに通るマスを、車に近い順に返す。 */
+/** 通るマスを、車に近い順に返す。 */
 export function listParkingJamExitPathCells(
   board: ParkingJamBoard,
   vehicle: ParkingJamVehicle,
@@ -154,7 +154,7 @@ export function applyParkingJamMove(
 }
 
 /**
- * 出られない手で、出られないわけとして示すもの。`listParkingJamMoveBlockers` と同じ優先で選ぶ。
+ * 出られない手で、出られないわけとして示すもの。
  * - `wall`: 進む先の外周が、その車線で道路につながっていない。途中に何があっても、これを先に示す。
  * - `fixed-area` / `vehicle`: 車線は道路につながっているが、途中で最初に当たる植え込みのマスか車。
  */
@@ -167,10 +167,7 @@ export type ParkingJamExitContact = {
   freeCellCount: number;
 };
 
-/**
- * 出られない手で、出られないわけとして示すものと、そこまでのマスの数。
- * 出られる手と、車の向きに沿わない手は `null`。判定と優先は `listParkingJamMoveBlockers` と同じにする。
- */
+/** 判定と優先は `listParkingJamMoveBlockers` と同じにする。 */
 export function findParkingJamExitContact(
   board: ParkingJamBoard,
   state: ParkingJamState,

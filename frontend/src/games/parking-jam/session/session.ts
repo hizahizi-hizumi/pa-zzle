@@ -27,7 +27,7 @@ export type ParkingJamSession = GameSession<
   restartCount: number;
 };
 
-/** 車を動かそうとした結果。`ignored` は受け付けなかった操作で、session は変わらない。 */
+/** `ignored` は受け付けなかった操作で、session は変わらない。 */
 export type ParkingJamSessionMoveAttempt =
   | {
       outcome: "ignored";
@@ -144,7 +144,6 @@ export function undoParkingJamSession(
   };
 }
 
-/** 同じプレイのまま盤面を初期状態へ戻す（盤面を戻す）。経過時間と記録は引き継ぐ。 */
 export function restartParkingJamSession(
   session: ParkingJamSession,
 ): ParkingJamSession {
@@ -162,7 +161,7 @@ export function canUndoParkingJamSession(session: ParkingJamSession): boolean {
   return session.status === "playing" && session.history.length > 0;
 }
 
-/** 車が出た後のプレイ中だけ、盤面を戻せる。車は戻らないので、履歴があれば初期状態ではない。 */
+/** 車は戻らないので、履歴があれば初期状態ではない。 */
 export function canRestartParkingJamSession(
   session: ParkingJamSession,
 ): boolean {

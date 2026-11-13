@@ -12,7 +12,7 @@ import {
 } from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
-/** 問題集が参照する生成条件。`ParkingJamGenerationConditions` の各値を定義順に並べる。 */
+/** `ParkingJamGenerationConditions` の各値を定義順に並べる。 */
 export type ParkingJamProblemPoolConditions = readonly [
   width: number,
   height: number,
@@ -24,10 +24,7 @@ export type ParkingJamProblemPoolConditions = readonly [
   blockingPlacementProbability: number,
 ];
 
-/**
- * 事前生成した問題集の1問。生成条件は問題集の条件表の番号で持ち、
- * seed は候補番号から `createParkingJamPoolSeed` で再構成する。
- */
+/** 生成条件は問題集の条件表の番号で持ち、seed は候補番号から `createParkingJamPoolSeed` で再構成する。 */
 export type ParkingJamProblemPoolEntry = readonly [
   conditionIndex: number,
   candidateIndex: number,
@@ -124,17 +121,13 @@ const poolIndex = createProblemPoolIndex(problemPool.levels, (entry) =>
   toParkingJamPoolIdentity(entry),
 );
 
-/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
 export function listParkingJamPoolProblemIds(
   difficulty: ParkingJamDifficulty,
 ): readonly ProblemId[] {
   return poolIndex.listProblemIds(difficulty);
 }
 
-/**
- * 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。
- * seed（`pj-pool-<候補番号>`）は生成条件ごとの系列なので問題集の中で一意でなく、問題 ID は生成条件も含む identity 全体から求める。
- */
+/** seed（`pj-pool-<候補番号>`）は生成条件ごとの系列なので問題集の中で一意でなく、問題 ID は生成条件も含む identity 全体から求める。 */
 export function findParkingJamPoolEntryByProblemId(
   difficulty: ParkingJamDifficulty,
   problemId: string,
@@ -146,7 +139,7 @@ export function getParkingJamProblemPoolDifficultyModelVersion(): string {
   return problemPool.difficultyModelVersion;
 }
 
-/** 始めたときの盤面を見れば分かる、問題の特徴。固定物（植え込み）は、つながった1か所を1つと数える。 */
+/** 固定物（植え込み）は、つながった1か所を1つと数える。 */
 export type ParkingJamProblemFeatures = {
   rows: number;
   columns: number;
@@ -154,7 +147,6 @@ export type ParkingJamProblemFeatures = {
   fixedAreaCount: number;
 };
 
-/** 難易度の問題集の1問の特徴を、盤面を生成し直さずに問題集の生成条件から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findParkingJamPoolProblemFeatures(
   difficulty: ParkingJamDifficulty,
   problemId: string,
@@ -168,7 +160,6 @@ export function findParkingJamPoolProblemFeatures(
   return { rows: height, columns: width, vehicleCount, fixedAreaCount };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
 export const parkingJamProblemFeatureAxes = [
   {
     id: "parking-lot-size",

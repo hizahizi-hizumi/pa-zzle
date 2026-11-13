@@ -461,7 +461,7 @@ export function restoreParkingJamProblem(
 }
 
 /**
- * identity から盤面だけを復元する。可解性と難易度の解析は生成時に済んでいるため、
+ * 可解性と難易度の解析は生成時に済んでいるため、
  * 問題集から選んだ問題や記録の問題を遊ぶときはこちらを使い、プレイ時に重い解析を走らせない。
  */
 export function restoreParkingJamProblemWithoutAnalysis(

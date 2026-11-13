@@ -6,11 +6,9 @@ import {
 } from "@/games/parking-jam/ui/board/parking-jam-board-notation";
 
 type HowToPlayFigureProps = ParkingJamBoardNotation & {
-  /** 選んだときの縁取りと出庫方向の矢印を付ける車の文字。 */
   selectedVehicleId?: ParkingJamVehicleId;
 };
 
-/** 盤面と同じ見た目で描く、遊び方の小さな駐車場。 */
 export function HowToPlayFigure({
   rows,
   roadOpenings,

@@ -27,14 +27,10 @@ function getFigureMargin(board: ParkingJamBoard, side: ParkingJamSide) {
 
 type ParkingJamBoardFigureProps = {
   board: ParkingJamBoard;
-  /** 盤面と同じ選択の縁取りと、両端の出庫方向の矢印を付ける車。 */
   selectedVehicleId?: ParkingJamVehicleId;
 };
 
-/**
- * 盤面と同じ見た目で、操作できない小さな駐車場を描く。
- * 高さいっぱいに広がるので、大きさは置き場所の高さで決める。
- */
+/** 高さいっぱいに広がるので、大きさは置き場所の高さで決める。 */
 export function ParkingJamBoardFigure({
   board,
   selectedVehicleId,
