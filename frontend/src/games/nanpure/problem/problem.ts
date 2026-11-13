@@ -74,8 +74,8 @@ export function createNanpureProblemIdentity(
   };
 }
 
-/** 記録など外部から読み戻した値が、現在の生成器で扱える識別情報かを確かめる。 */
-export function isNanpureProblemIdentity(
+/** 記録など外部から読み戻した値を確かめる。 */
+export function isCurrentNanpureProblemIdentity(
   value: unknown,
 ): value is NanpureProblemIdentity {
   if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
@@ -97,6 +97,6 @@ export function isNanpureRecordedProblemIdentity(
 ): value is NanpureRecordedProblemIdentity {
   return isRecordedProblemIdentity(value, {
     generatorVersion: NANPURE_GENERATOR_VERSION,
-    isProblemIdentity: isNanpureProblemIdentity,
+    isProblemIdentity: isCurrentNanpureProblemIdentity,
   });
 }

@@ -54,7 +54,7 @@ export type SlidePuzzleIdentifiedProblem = {
   identity: SlidePuzzleProblemIdentity;
 };
 
-export function isSlidePuzzleProblemIdentity(
+export function isCurrentSlidePuzzleProblemIdentity(
   value: unknown,
 ): value is SlidePuzzleProblemIdentity {
   if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
@@ -79,7 +79,7 @@ export function isSlidePuzzleRecordedProblemIdentity(
   return (
     isRecordedProblemIdentity(value, {
       generatorVersion: SLIDE_PUZZLE_GENERATOR_VERSION,
-      isProblemIdentity: isSlidePuzzleProblemIdentity,
+      isProblemIdentity: isCurrentSlidePuzzleProblemIdentity,
     }) && isSlidePuzzleBoardSize(value.conditions.size)
   );
 }

@@ -21,7 +21,7 @@ import { getHitofudePuzzleSymmetryKey } from "@/games/hitofude-puzzle/problem/ge
 import {
   type HitofudePuzzleProblem,
   type HitofudePuzzleProblemIdentity,
-  isHitofudePuzzleProblemIdentity,
+  isCurrentHitofudePuzzleProblemIdentity,
 } from "@/games/hitofude-puzzle/problem/problem";
 import type { HitofudePuzzlePooledProblem } from "@/games/hitofude-puzzle/problem/problem-pool";
 import { restoreHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem-selection";
@@ -79,7 +79,7 @@ const hitofudePuzzleDiagnosticFormat: InternalDiagnosticFormat<HitofudePuzzleDia
   {
     game: "hitofude-puzzle",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isHitofudePuzzleProblemIdentity,
+    isProblemIdentity: isCurrentHitofudePuzzleProblemIdentity,
     // 解・分析・分類は診断を開いたときの写しで、問題の再現には identity だけを使う。読み戻しでは形の大枠だけを確かめる。
     readDetails({
       symmetryKey,

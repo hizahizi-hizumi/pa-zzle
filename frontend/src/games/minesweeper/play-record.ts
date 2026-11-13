@@ -5,7 +5,7 @@ import {
   type MinesweeperResult,
 } from "@/games/minesweeper/play/use-minesweeper-play";
 import {
-  isMinesweeperProblemIdentity,
+  isCurrentMinesweeperProblemIdentity,
   isMinesweeperRecordedProblemIdentity,
   type MinesweeperProblemIdentity,
   type MinesweeperRecordedProblemIdentity,
@@ -132,7 +132,7 @@ export function restoreMinesweeperRecordedResult(
 ): MinesweeperRecordedResult | null {
   if (
     !isMinesweeperPlayRecord(record) ||
-    !isMinesweeperProblemIdentity(record.payload.problemIdentity)
+    !isCurrentMinesweeperProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

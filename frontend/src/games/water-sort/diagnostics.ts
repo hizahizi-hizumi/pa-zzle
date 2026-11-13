@@ -11,7 +11,7 @@ import {
   type WaterSortGeneratedProblem,
 } from "@/games/water-sort/problem/generator";
 import {
-  isWaterSortProblemIdentity,
+  isCurrentWaterSortProblemIdentity,
   type WaterSortProblemIdentity,
 } from "@/games/water-sort/problem/problem";
 
@@ -25,7 +25,7 @@ const waterSortDiagnosticFormat: InternalDiagnosticFormat<WaterSortDiagnosticSna
   {
     game: "water-sort",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isWaterSortProblemIdentity,
+    isProblemIdentity: isCurrentWaterSortProblemIdentity,
   };
 
 export function createWaterSortDiagnosticSnapshot(input: {

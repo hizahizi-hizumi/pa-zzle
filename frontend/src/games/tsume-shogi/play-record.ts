@@ -6,7 +6,7 @@ import {
 } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import {
   copyTsumeShogiGenerationConditions,
-  isTsumeShogiProblemIdentity,
+  isCurrentTsumeShogiProblemIdentity,
   isTsumeShogiRecordedProblemIdentity,
   isTsumeShogiSolveWorkload,
   isTsumeShogiWorkloadOfIdentity,
@@ -103,7 +103,7 @@ function isWorkloadOfRecordedIdentity(
   identity: TsumeShogiRecordedProblemIdentity,
 ): boolean {
   return (
-    !isTsumeShogiProblemIdentity(identity) ||
+    !isCurrentTsumeShogiProblemIdentity(identity) ||
     isTsumeShogiWorkloadOfIdentity(workload, identity)
   );
 }
@@ -144,7 +144,7 @@ export function restoreTsumeShogiRecordedResult(
 ): TsumeShogiRecordedResult | null {
   if (
     !isTsumeShogiPlayRecord(record) ||
-    !isTsumeShogiProblemIdentity(record.payload.problemIdentity)
+    !isCurrentTsumeShogiProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

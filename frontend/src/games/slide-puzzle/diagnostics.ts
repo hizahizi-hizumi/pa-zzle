@@ -10,7 +10,7 @@ import {
   type SlidePuzzleDifficulty,
 } from "@/games/slide-puzzle/difficulty";
 import {
-  isSlidePuzzleProblemIdentity,
+  isCurrentSlidePuzzleProblemIdentity,
   type SlidePuzzleProblemIdentity,
 } from "@/games/slide-puzzle/problem/problem";
 import type { SlidePuzzlePooledProblem } from "@/games/slide-puzzle/problem/problem-pool";
@@ -26,7 +26,7 @@ const slidePuzzleDiagnosticFormat: InternalDiagnosticFormat<SlidePuzzleDiagnosti
   {
     game: "slide-puzzle",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isSlidePuzzleProblemIdentity,
+    isProblemIdentity: isCurrentSlidePuzzleProblemIdentity,
     readDetails(_, { difficulty, problemIdentity }) {
       return isSlidePuzzleProblemIdentityOfDifficulty(
         problemIdentity,

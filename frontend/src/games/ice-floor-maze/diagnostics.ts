@@ -18,7 +18,7 @@ import {
 import {
   type IceFloorMazeIdentifiedProblem,
   type IceFloorMazeProblemIdentity,
-  isIceFloorMazeProblemIdentity,
+  isCurrentIceFloorMazeProblemIdentity,
   restoreIceFloorMazeProblem,
 } from "@/games/ice-floor-maze/problem/problem";
 import { isRecordObject } from "@/lib/type-guards";
@@ -36,7 +36,7 @@ const iceFloorMazeDiagnosticFormat: InternalDiagnosticFormat<IceFloorMazeDiagnos
   {
     game: "ice-floor-maze",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isIceFloorMazeProblemIdentity,
+    isProblemIdentity: isCurrentIceFloorMazeProblemIdentity,
     // 分類と特徴は診断を開いたときの写しで、問題の再現には identity だけを使う。読み戻しでは形の大枠だけを確かめる。
     readDetails(
       { difficultyAssessment, difficultyAnalysis },

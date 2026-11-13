@@ -4,7 +4,7 @@ import {
   HITOFUDE_PUZZLE_GENERATOR_VERSION,
   type HitofudePuzzleProblem,
   type HitofudePuzzleSolveWorkload,
-  isHitofudePuzzleProblemIdentity,
+  isCurrentHitofudePuzzleProblemIdentity,
   isHitofudePuzzleRecordedProblemIdentity,
   isHitofudePuzzleSolveWorkload,
   isHitofudePuzzleWorkloadOfIdentity,
@@ -23,7 +23,7 @@ describe("createHitofudePuzzleProblemIdentity", () => {
   });
 });
 
-describe("isHitofudePuzzleProblemIdentity", () => {
+describe("isCurrentHitofudePuzzleProblemIdentity", () => {
   const identity = createHitofudePuzzleProblemIdentity(6, 0, 1);
   const invalidValues: readonly [string, unknown][] = [
     ["オブジェクトでない値", "hp-6-t0-1"],
@@ -42,13 +42,13 @@ describe("isHitofudePuzzleProblemIdentity", () => {
   ];
 
   test("今の生成器の identity を受け入れること", () => {
-    const result = isHitofudePuzzleProblemIdentity(identity);
+    const result = isCurrentHitofudePuzzleProblemIdentity(identity);
 
     expect(result).toBe(true);
   });
 
   test.each(invalidValues)("%s値を拒否すること", (_, value) => {
-    const result = isHitofudePuzzleProblemIdentity(value);
+    const result = isCurrentHitofudePuzzleProblemIdentity(value);
 
     expect(result).toBe(false);
   });

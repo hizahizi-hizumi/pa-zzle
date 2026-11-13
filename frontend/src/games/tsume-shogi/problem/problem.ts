@@ -276,8 +276,8 @@ export function isTsumeShogiGenerationPlies(
   return tsumeShogiGenerationPlies.some((plies) => plies === value);
 }
 
-/** 記録など外部から読み戻した値が、現在の生成器で扱える識別情報かを確かめる。 */
-export function isTsumeShogiProblemIdentity(
+/** 記録など外部から読み戻した値を確かめる。 */
+export function isCurrentTsumeShogiProblemIdentity(
   value: unknown,
 ): value is TsumeShogiProblemIdentity {
   return (
@@ -301,7 +301,7 @@ export function isTsumeShogiRecordedProblemIdentity(
 ): value is TsumeShogiRecordedProblemIdentity {
   return isRecordedProblemIdentity(value, {
     generatorVersion: TSUME_SHOGI_GENERATOR_VERSION,
-    isProblemIdentity: isTsumeShogiProblemIdentity,
+    isProblemIdentity: isCurrentTsumeShogiProblemIdentity,
   });
 }
 

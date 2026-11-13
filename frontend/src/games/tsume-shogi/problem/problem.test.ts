@@ -3,7 +3,7 @@ import {
   createTsumeShogiProblemIdentity,
   formatTsumeShogiGenerationConditionsText,
   formatTsumeShogiProblemText,
-  isTsumeShogiProblemIdentity,
+  isCurrentTsumeShogiProblemIdentity,
   isTsumeShogiRecordedProblemIdentity,
   isTsumeShogiSolveWorkload,
   isTsumeShogiWorkloadOfIdentity,
@@ -128,7 +128,7 @@ describe("parseTsumeShogiGenerationConditionsText", () => {
   );
 });
 
-describe("isTsumeShogiProblemIdentity", () => {
+describe("isCurrentTsumeShogiProblemIdentity", () => {
   const cases = [
     ["今の生成器の identity", createTsumeShogiProblemIdentity(3, 0), true],
     [
@@ -219,7 +219,7 @@ describe("isTsumeShogiProblemIdentity", () => {
   ] as const;
 
   test.each(cases)("%sを判定すること", (_, value, expected) => {
-    const result = isTsumeShogiProblemIdentity(value);
+    const result = isCurrentTsumeShogiProblemIdentity(value);
 
     expect(result).toBe(expected);
   });

@@ -172,8 +172,8 @@ export function isBridgesGenerationConditions(
   );
 }
 
-/** 記録など外部から読み戻した値が、今の生成器で扱える識別情報かを確かめる。 */
-export function isBridgesProblemIdentity(
+/** 記録など外部から読み戻した値を確かめる。 */
+export function isCurrentBridgesProblemIdentity(
   value: unknown,
 ): value is BridgesProblemIdentity {
   return (
@@ -189,7 +189,7 @@ export function isBridgesRecordedProblemIdentity(
 ): value is BridgesRecordedProblemIdentity {
   return isRecordedProblemIdentity(value, {
     generatorVersion: BRIDGES_GENERATOR_VERSION,
-    isProblemIdentity: isBridgesProblemIdentity,
+    isProblemIdentity: isCurrentBridgesProblemIdentity,
   });
 }
 

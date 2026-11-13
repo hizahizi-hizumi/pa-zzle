@@ -2,7 +2,7 @@ import type { ProblemSeed } from "@/games/problem-seed";
 import { selectProblemPoolEntry } from "@/games/problem-selection";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import {
-  isTakuzuProblemIdentity,
+  isCurrentTakuzuProblemIdentity,
   type TakuzuRecordedProblemIdentity,
 } from "@/games/takuzu/problem/problem";
 import {
@@ -33,7 +33,7 @@ export function selectTakuzuProblemForDifficulty(
 export function restoreTakuzuProblem(
   identity: TakuzuRecordedProblemIdentity,
 ): TakuzuPooledProblem | null {
-  const entry = isTakuzuProblemIdentity(identity)
+  const entry = isCurrentTakuzuProblemIdentity(identity)
     ? findTakuzuPoolEntry(identity)
     : null;
   return entry ? toTakuzuPooledProblem(entry) : null;

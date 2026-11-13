@@ -9,7 +9,7 @@ import {
   type NanpureResult,
 } from "@/games/nanpure/play/use-nanpure-play";
 import {
-  isNanpureProblemIdentity,
+  isCurrentNanpureProblemIdentity,
   isNanpureRecordedProblemIdentity,
   type NanpureProblemIdentity,
   type NanpureRecordedProblemIdentity,
@@ -145,7 +145,7 @@ export function restoreNanpureRecordedResult(
   if (
     !isNanpurePlayRecord(record) ||
     record.payloadVersion !== NANPURE_PLAY_RECORD_PAYLOAD_VERSION ||
-    !isNanpureProblemIdentity(record.payload.problemIdentity)
+    !isCurrentNanpureProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

@@ -85,7 +85,7 @@ frontend/src/games/
   - `<Game>IdentifiedProblem`（`problem/problem.ts`）: `problem` と `identity` だけを持つ。
   - `<Game>GeneratedProblem`（`problem/generator.ts`）: 生成器が返す問題。生成時の解析結果や下流で必要な派生情報を添える。
   - `<Game>PooledProblem`（`problem/problem-pool.ts`）: 問題集から復元した問題。問題集が持つ派生情報（作業の量、最短手数など）を添える。問題を含まない問題集項目の読み解き結果は `<Game>DecodedPoolEntry` と呼ぶ。図鑑に渡す問題の特徴（`<Game>ProblemFeatures` と、それを求める関数・軸）も、問題集の項目から求める派生情報としてここに置く。名前と値の書き方は表示なので `ui/problem-features.ts` に置く。
-- `problem/problem.ts` は、今の生成器で扱える identity かを確かめる `is<Game>ProblemIdentity`、記録の identity として読めるかを確かめる `is<Game>RecordedProblemIdentity`、問題の形を確かめる `assert<Game>Problem` を置く。`session/` は問題を受け取るときに `assert<Game>Problem` で確かめる。
+- `problem/problem.ts` は、今の生成器で扱える identity かを確かめる `isCurrent<Game>ProblemIdentity`、記録の identity として読めるかを確かめる `is<Game>RecordedProblemIdentity`、問題の形を確かめる `assert<Game>Problem` を置く。`session/` は問題を受け取るときに `assert<Game>Problem` で確かめる。
 - 問題生成の乱数は `games/problem-seed.ts` の `ProblemRandom` で受け、並べ替えは `shuffleProblemValues` を使う。
 - 解探索の手順や探索履歴は生成内部に閉じる。下流で必要なら `optimalMoveCount` のような意味のある派生値へ縮約する。
 - `session/` は `<Game>Problem` に依存し、生成・診断専用情報を保持しない。

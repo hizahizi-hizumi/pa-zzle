@@ -16,7 +16,7 @@ import {
 } from "@/games/tsume-shogi/problem/difficulty-analysis";
 import {
   formatTsumeShogiProblemText,
-  isTsumeShogiProblemIdentity,
+  isCurrentTsumeShogiProblemIdentity,
   type TsumeShogiProblem,
   type TsumeShogiProblemIdentity,
   type TsumeShogiProblemText,
@@ -104,7 +104,7 @@ const tsumeShogiDiagnosticFormat: InternalDiagnosticFormat<TsumeShogiDiagnosticS
   {
     game: "tsume-shogi",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isTsumeShogiProblemIdentity,
+    isProblemIdentity: isCurrentTsumeShogiProblemIdentity,
     readDetails({
       problemPool,
       problem,

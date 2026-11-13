@@ -121,7 +121,7 @@ export function assertReflectionProblem(problem: ReflectionProblem): void {
   }
 }
 
-export function isReflectionProblemIdentity(
+export function isCurrentReflectionProblemIdentity(
   value: unknown,
 ): value is ReflectionProblemIdentity {
   if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
@@ -184,6 +184,6 @@ export function isReflectionRecordedProblemIdentity(
 ): value is ReflectionRecordedProblemIdentity {
   return isRecordedProblemIdentity(value, {
     generatorVersion: REFLECTION_GENERATOR_VERSION,
-    isProblemIdentity: isReflectionProblemIdentity,
+    isProblemIdentity: isCurrentReflectionProblemIdentity,
   });
 }

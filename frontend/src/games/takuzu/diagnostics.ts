@@ -7,7 +7,7 @@ import {
 import { parseDifficultyLevel } from "@/games/difficulty";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import {
-  isTakuzuProblemIdentity,
+  isCurrentTakuzuProblemIdentity,
   type TakuzuIdentifiedProblem,
   type TakuzuProblemIdentity,
 } from "@/games/takuzu/problem/problem";
@@ -23,7 +23,7 @@ const takuzuDiagnosticFormat: InternalDiagnosticFormat<TakuzuDiagnosticSnapshot>
   {
     game: "takuzu",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isTakuzuProblemIdentity,
+    isProblemIdentity: isCurrentTakuzuProblemIdentity,
   };
 
 export function createTakuzuDiagnosticSnapshot(input: {

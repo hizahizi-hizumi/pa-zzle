@@ -2,7 +2,7 @@ import type { ProblemSeed } from "@/games/problem-seed";
 import { selectProblemPoolEntry } from "@/games/problem-selection";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import {
-  isReflectionProblemIdentity,
+  isCurrentReflectionProblemIdentity,
   type ReflectionRecordedProblemIdentity,
 } from "@/games/reflection/problem/problem";
 import {
@@ -35,7 +35,7 @@ export function selectReflectionProblemForDifficulty(
 export function restoreReflectionProblem(
   identity: ReflectionRecordedProblemIdentity,
 ): ReflectionPooledProblem | null {
-  return isReflectionProblemIdentity(identity)
+  return isCurrentReflectionProblemIdentity(identity)
     ? findReflectionPooledProblem(identity)
     : null;
 }

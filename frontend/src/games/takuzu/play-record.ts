@@ -5,7 +5,7 @@ import {
   type TakuzuResult,
 } from "@/games/takuzu/play/use-takuzu-play";
 import {
-  isTakuzuProblemIdentity,
+  isCurrentTakuzuProblemIdentity,
   isTakuzuRecordedProblemIdentity,
   isTakuzuSolveWorkload,
   type TakuzuProblemIdentity,
@@ -110,7 +110,7 @@ export function restoreTakuzuRecordedResult(
 ): TakuzuRecordedResult | null {
   if (
     !isTakuzuPlayRecord(record) ||
-    !isTakuzuProblemIdentity(record.payload.problemIdentity)
+    !isCurrentTakuzuProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

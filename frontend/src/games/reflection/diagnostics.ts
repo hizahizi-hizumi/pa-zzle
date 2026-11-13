@@ -11,7 +11,7 @@ import {
   reflectionLevelCombinations,
 } from "@/games/reflection/difficulty";
 import {
-  isReflectionProblemIdentity,
+  isCurrentReflectionProblemIdentity,
   type ReflectionProblemIdentity,
 } from "@/games/reflection/problem/problem";
 import type {
@@ -83,7 +83,7 @@ const reflectionDiagnosticFormat: InternalDiagnosticFormat<ReflectionDiagnosticS
   {
     game: "reflection",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isReflectionProblemIdentity,
+    isProblemIdentity: isCurrentReflectionProblemIdentity,
     readDetails({ problemPool, difficultyAssessment }) {
       return isProblemPoolReference(problemPool) &&
         isDifficultyAssessment(difficultyAssessment)

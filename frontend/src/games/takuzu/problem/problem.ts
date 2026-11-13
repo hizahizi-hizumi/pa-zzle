@@ -114,8 +114,8 @@ function isRemovalTechniqueLimit(
   );
 }
 
-/** 記録など外部から読み戻した値が、現在の生成器で扱える識別情報かを確かめる。 */
-export function isTakuzuProblemIdentity(
+/** 記録など外部から読み戻した値を確かめる。 */
+export function isCurrentTakuzuProblemIdentity(
   value: unknown,
 ): value is TakuzuProblemIdentity {
   if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
@@ -138,7 +138,7 @@ export function isTakuzuRecordedProblemIdentity(
 ): value is TakuzuRecordedProblemIdentity {
   return isRecordedProblemIdentity(value, {
     generatorVersion: TAKUZU_GENERATOR_VERSION,
-    isProblemIdentity: isTakuzuProblemIdentity,
+    isProblemIdentity: isCurrentTakuzuProblemIdentity,
   });
 }
 
