@@ -19,14 +19,11 @@ export type TakuzuScaleMetrics = {
 };
 
 /**
- * 人間向け解法器で解き切った経過から求めた特徴。
  * 「行・列を読む手筋」は C 残り1個・D 重複の回避・E 一般の行候補を指す。
  * - `deepestTechnique`: 使わざるを得なかった最も深い手筋。初期配置だけで埋まっている問題では `null`。
- * - `lineReadingRoundCount`: 行・列を読む手筋が要ったラウンド数。
  * - `duplicateAvoidanceRoundCount`: 完成済みの行・列との比較が要ったラウンド数（D と、重複の除外が要った E）。
  * - `longestLineReadingStreak`: 行・列を読む手筋が要るラウンドが続いた最長の回数。深い読みの直後にまた深い読みが要る連続を表す。
  * - `meanSourceCount` / `minimumSourceCount`: ラウンドごとの、確定を与える場所の数の平均・最小。次の一手の見つけやすさを表す。
- * - `singleSourceRoundCount`: 確定を与える場所が盤面に1か所しかないラウンド数。
  * - `firstLineReadingEmptyCellRatio`: 最初に行・列を読む手筋が要った時点の空きマスの割合。深い読みが序盤に要るほど大きい。
  */
 export type TakuzuHumanSolveFeatures = {
@@ -42,11 +39,6 @@ export type TakuzuHumanSolveFeatures = {
   firstLineReadingEmptyCellRatio: number | null;
 };
 
-/**
- * - `analyzed`: 一意解で、人間向け解法器で推測なしに解き切れた。
- * - `unsupported`: 一意解だが、1本の行・列を読む手筋だけでは解き切れない（評価不能）。
- * - `invalid`: 解が無い、または2つ以上ある（成立しない）。
- */
 export type TakuzuDifficultyAnalysis =
   | {
       status: "analyzed";
@@ -129,7 +121,6 @@ function summarizeRounds(
   };
 }
 
-/** 初期配置の一意性を確かめたうえで、人間向け解法器の経過を特徴へまとめる。 */
 export function analyzeTakuzuDifficulty(
   { givens }: TakuzuProblem,
   options: TakuzuHumanSolverOptions = {},

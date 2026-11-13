@@ -30,7 +30,7 @@ import {
   type SoundLayer,
 } from "@/lib/sound-effects";
 
-/** タイルを置く音。A と B で見た目が違うので音も分ける。 */
+/** A と B で見た目が違うので音も分ける。 */
 const tilePlacedSounds: Record<TakuzuTile, SoundEffect> = {
   a: defineSoundEffect(tileAPlacedSoundUrl),
   b: defineSoundEffect(tileBPlacedSoundUrl),
@@ -44,7 +44,6 @@ function getWaveStepOffsetMs(step: number): number {
   return step * CLEAR_WAVE_STAGGER_MS;
 }
 
-/** 膨らむタイルの波に乗せて、順に鳴らす音。 */
 const clearedWaveSounds = [
   clearedWave1SoundUrl,
   clearedWave2SoundUrl,
@@ -53,11 +52,10 @@ const clearedWaveSounds = [
   clearedWave5SoundUrl,
 ].map(defineSoundEffect);
 
-/** 波が右下の角に届いたところで鳴らす音。 */
 const clearedChordSound = defineSoundEffect(clearedChordSoundUrl);
 
-/** 一辺 `boardSize` の盤面で、完成の波に合わせて鳴らす音の並び。波の順番はマスの「行 + 列」。 */
 function getClearedSoundLayers(boardSize: number): readonly SoundLayer[] {
+  // 波の順番はマスの「行 + 列」。
   const lastWaveStep = (boardSize - 1) * 2;
   return [
     ...clearedWaveSounds.map(
@@ -102,7 +100,6 @@ function playOperationSound(operation: TakuzuOperation) {
 
 /**
  * マスへの操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
- * プレイ画面とチュートリアルで同じ音を鳴らす。クリア音は、一辺 `boardSize` の盤面を渡る完成の波に合わせる。
  */
 export function useTakuzuSoundEffects(
   operation: TakuzuOperation | null,

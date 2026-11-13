@@ -50,14 +50,12 @@ import {
 
 /**
  * マスへの操作の知らせ。効果音と盤面の反応のため、操作ごとに増える `id` を付ける。
- * `placed` はマスにタイルを置いた操作、`emptied` はマスを空きに戻した操作、`invalid` は固定マスを変えようとした操作。
  */
 export type TakuzuOperation =
   | { id: number; type: "placed"; tile: TakuzuTile }
   | { id: number; type: "emptied" }
   | { id: number; type: "invalid"; cellIndex: number };
 
-/** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type TakuzuResult = TakuzuSessionResult & {
   workload: TakuzuSolveWorkload;
   speedRule: SpeedScoreRule;
@@ -65,7 +63,6 @@ export type TakuzuResult = TakuzuSessionResult & {
   score: TakuzuPlayScore;
 };
 
-/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createTakuzuResult(
   sessionResult: TakuzuSessionResult,
   workload: TakuzuSolveWorkload,
@@ -119,10 +116,6 @@ function createPlayState(
   };
 }
 
-/**
- * マスへの操作で session を進め、操作の知らせを添える。固定マスへの操作は盤面を変えず、通らない操作として知らせる。
- * 盤面が変わらない操作（同じ中身を置く、プレイ中でない）は何も知らせない。
- */
 function applyCellOperation(
   state: TakuzuPlayState,
   cellIndex: number,
@@ -163,7 +156,6 @@ function selectProblem(
   ).problem;
 }
 
-/** 待ったや盤面を戻すで盤面が変わったら、前の操作の知らせを消す。 */
 function clearOperationIfChanged(
   current: TakuzuPlayState,
   next: TakuzuPlayState,
@@ -172,8 +164,6 @@ function clearOperationIfChanged(
 }
 
 /**
- * 難易度の問題集から選んだ問題を遊ぶ。
- * `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。
  * 問題集から引けない記録を再プレイできないものとして呼び出し側で扱えるよう、identity ではなく引いた問題を受け取る。
  */
 export function useTakuzuPlay(

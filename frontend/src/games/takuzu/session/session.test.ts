@@ -31,7 +31,6 @@ function pressCells(
   );
 }
 
-/** 解のタイルになるまで各空きマスを押す手順。A は1回、B は2回押す。 */
 function listSolvingPresses(target: TakuzuProblem): number[] {
   return target.givens.cells.flatMap((cell, cellIndex) => {
     if (cell !== null) {

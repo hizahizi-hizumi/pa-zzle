@@ -30,7 +30,6 @@ export type TakuzuGeneratedProblem = TakuzuIdentifiedProblem & {
 
 type GivensAcceptance = (givens: TakuzuBoard) => boolean;
 
-/** 手筋はどれも健全なので、上限までの手筋で解き切れる初期配置は一意解になる。 */
 function createGivensAcceptance(
   removalTechniqueLimit: TakuzuTechnique | null,
 ): GivensAcceptance {
@@ -43,6 +42,7 @@ function createGivensAcceptance(
     0,
     takuzuTechniques.indexOf(removalTechniqueLimit) + 1,
   );
+  // 手筋はどれも健全なので、上限までの手筋で解き切れる初期配置は一意解になる。
   return function isSolvableByTechniques(givens) {
     return traceTakuzuHumanSolve(givens, { techniques }).status === "solved";
   };
@@ -52,7 +52,6 @@ function createEmptyBoard(size: number): TakuzuBoard {
   return { size, cells: new Array<TakuzuCell>(size * size).fill(null) };
 }
 
-/** 解の全マスを初期配置として始め、乱数で決まる順にマスを1つずつ消す。消すと条件を満たさなくなるマスは残す。 */
 function removeGivens(
   solution: TakuzuBoard,
   acceptsGivens: GivensAcceptance,
@@ -106,7 +105,6 @@ function validateIdentity(identity: TakuzuProblemIdentity): void {
 }
 
 /**
- * identity の seed から 8×8 の完成盤を作り、初期配置を減らして問題にし、難易度を分析する。
  * 同じ identity からは同じ問題を作る。難易度を指定して作る機能は持たず、
  * 問題集の生成スクリプトが、できた問題を分類して各難易度へ振り分ける。
  */

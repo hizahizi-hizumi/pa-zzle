@@ -40,7 +40,6 @@ function parseTakuzuDiagnosticSnapshot(
   return parseInternalDiagnosticSnapshot(serialized, takuzuDiagnosticFormat);
 }
 
-/** 問題集に無い identity は復元できないので `null` を返す。 */
 function restoreTakuzuProblemFromDiagnosticSnapshot(
   snapshot: TakuzuDiagnosticSnapshot,
 ): TakuzuIdentifiedProblem | null {

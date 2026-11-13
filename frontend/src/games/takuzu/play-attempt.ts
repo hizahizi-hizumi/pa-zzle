@@ -5,7 +5,6 @@ import {
 } from "@/games/takuzu/session/session";
 import type { PlayAttemptProgress } from "@/records/play-attempt";
 
-/** 離れた時点までの実測値。評価値は保存しない。 */
 export function createTakuzuPlayAttemptProgress(
   session: TakuzuSession,
   abandonedAt: number,

@@ -23,7 +23,6 @@ export type TakuzuDeduction = {
 };
 
 /**
- * 1ラウンドで同時に確定・適用したマスの記録。
  * ラウンドは、その局面で確定を与える最も浅い手筋を探し、その手筋で確定するマスをまとめて置く。
  * - `sourceCount`: 確定を与えた場所の数。隣接・挟みでは3マスの並び、それ以外では行・列を1か所と数える。
  *   局面のどこに次の一手があるかの多さで、見つけやすさを表す。
@@ -40,7 +39,6 @@ export type TakuzuHumanSolveRound = {
 
 /**
  * - `solved`: 許した手筋だけで全マスを埋めた。手筋はどれも健全なので、解は唯一で推測も要らない。
- * - `stalled`: 許した手筋では確定できるマスが無くなった。
  * - `contradiction`: ルールを満たす並びが入らない行・列か、同じ並びで完成した行どうし・列どうしが現れた。初期配置に解が無い。
  */
 export type TakuzuHumanSolveResult = {
@@ -50,7 +48,6 @@ export type TakuzuHumanSolveResult = {
 };
 
 export type TakuzuHumanSolverOptions = {
-  /** 使ってよい手筋。省略するとすべての手筋を使う。問題生成で手筋の上限を決めるときに使う。 */
   techniques?: readonly TakuzuTechnique[];
 };
 
@@ -154,11 +151,6 @@ function findCountCompletion(state: SolveState): TechniqueFindings {
   return findings;
 }
 
-/**
- * 行・列を読む手筋（C・D・E）の読み方。
- * - `targetLines`: 読む行・列。`single-remaining` は片方のタイルが残り1個、`multiple-remaining` は両方のタイルが残り2個以上。
- * - `excludesCompletedLines`: 完成済みの行（列）と同じ並びになる置き方も除くか。
- */
 type LineReading = {
   targetLines: "single-remaining" | "multiple-remaining";
   excludesCompletedLines: boolean;
@@ -188,7 +180,7 @@ function listCompletedLinePatterns(
   return completedPatterns;
 }
 
-/** 候補の並びすべてで同じタイルになる空きマスを返す。候補が無ければ `null`。 */
+/** 候補の並びすべてで同じタイルになる空きマスを返す。 */
 function intersectCandidates(
   candidates: readonly TakuzuLinePattern[],
   cells: readonly TakuzuCell[],

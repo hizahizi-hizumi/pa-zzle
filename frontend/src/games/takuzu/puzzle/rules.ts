@@ -8,14 +8,12 @@ import {
   type TakuzuTile,
 } from "@/games/takuzu/puzzle/board";
 
-/** 同じタイルを続けて置ける最大数。これを超えて続くとルール違反になる。 */
 const maximumTakuzuRunLength = 2;
 
 const takuzuTiles = ["a", "b"] as const satisfies readonly TakuzuTile[];
 
 /**
  * 今の盤面だけから分かるルール違反。解答との照合は含めない。
- * - `runCellIndices`: 同じタイルが3つ以上続いているマス。
  * - `overfilledLines`: どちらかのタイルが一辺の半分を超えた行・列。
  * - `duplicateLines`: すべて埋まり、並びが別の行（列）と一致した行・列。
  */
@@ -107,10 +105,7 @@ export function hasTakuzuRuleViolation(
   );
 }
 
-/**
- * 全マスが埋まり、ルール違反が無い。
- * 各行・各列が半分を超えずに全マス埋まっていれば、2種類のタイルはちょうど半分ずつになる。
- */
+/** 各行・各列が半分を超えずに全マス埋まっていれば、2種類のタイルはちょうど半分ずつになる。 */
 export function isTakuzuSolved(board: TakuzuBoard): boolean {
   return (
     isEveryCellFilled(board.cells) &&

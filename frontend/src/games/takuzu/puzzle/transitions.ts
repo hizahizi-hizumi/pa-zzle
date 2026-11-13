@@ -1,6 +1,5 @@
 import type { TakuzuBoard, TakuzuCell } from "@/games/takuzu/puzzle/board";
 
-/** `forward` は `空 → A → B → 空`、`backward` は `空 → B → A → 空` の順に巡回する。 */
 export type TakuzuCycleDirection = "forward" | "backward";
 
 const cycleOrder = [null, "a", "b"] as const satisfies readonly TakuzuCell[];
@@ -14,7 +13,6 @@ export function getNextTakuzuCell(
   return cycleOrder[nextPosition] ?? null;
 }
 
-/** 初期配置でタイルが置かれているマスは固定マスで、利用者は変更できない。 */
 export function isTakuzuGivenCell(
   givens: TakuzuBoard,
   cellIndex: number,
@@ -22,7 +20,6 @@ export function isTakuzuGivenCell(
   return (givens.cells[cellIndex] ?? null) !== null;
 }
 
-/** 固定マスや盤面外のマス、すでに同じ中身のマスは変えず、同じ盤面をそのまま返す。 */
 export function placeTakuzuCell(
   givens: TakuzuBoard,
   board: TakuzuBoard,
