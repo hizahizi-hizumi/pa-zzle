@@ -31,10 +31,8 @@ const noteAddedSound = defineSoundEffect(noteAddedSoundUrl);
 
 const noteRemovedSound = defineSoundEffect(noteRemovedSoundUrl);
 
-/** 盤面が脈打っていちばん膨らむ時。 */
 const CLEAR_PULSE_PEAK_MS = CLEAR_PULSE_MS / 2;
 
-/** 盤面が膨らむまでに、順に鳴らす音。 */
 const clearedRisingSounds = [
   clearedRising1SoundUrl,
   clearedRising2SoundUrl,
@@ -42,7 +40,6 @@ const clearedRisingSounds = [
 ].map(defineSoundEffect);
 const CLEAR_RISING_STEP_MS = CLEAR_PULSE_PEAK_MS / clearedRisingSounds.length;
 
-/** 盤面が膨らみきったところで着地する音。 */
 const clearedChordSound = defineSoundEffect(clearedChordSoundUrl);
 
 const clearedSoundLayers: readonly SoundLayer[] = [
@@ -86,8 +83,7 @@ function playClearSound() {
 }
 
 /**
- * 数字の入力、メモの書き込み・削除と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
- * マスの選択と、数字やメモを消すボタンでは鳴らさない。
+ * 結果の報酬の音はアプリが鳴らす。
  * チュートリアルも本番と同じ音を鳴らすため、プレイ画面とチュートリアルの両方が使う。
  */
 export function useNanpureSoundEffects(

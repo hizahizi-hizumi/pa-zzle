@@ -34,7 +34,6 @@ export type NanpureGeneratedProblem = NanpureIdentifiedProblem & {
 
 type CluesAcceptance = (clues: NanpureBoard) => boolean;
 
-/** 手筋はどれも健全なので、上限までの手筋で解き切れるヒントは一意解になる。 */
 function createCluesAcceptance(
   removalTechniqueLimit: NanpureTechnique | null,
 ): CluesAcceptance {
@@ -44,12 +43,12 @@ function createCluesAcceptance(
     };
   }
   const techniques = listNanpureTechniquesUpTo(removalTechniqueLimit);
+  // 手筋はどれも健全なので、上限までの手筋で解き切れるヒントは一意解になる。
   return function isSolvableByTechniques(clues) {
     return traceNanpureHumanSolve(clues, { techniques }).status === "solved";
   };
 }
 
-/** 解の全マスをヒントとして始め、乱数で決まる順にマスを1つずつ消す。消すと条件を満たさなくなるマスは残す。 */
 function removeClues(
   solution: NanpureSolution,
   acceptsClues: CluesAcceptance,
@@ -79,7 +78,6 @@ function validateIdentity(identity: NanpureProblemIdentity): void {
 }
 
 /**
- * identity の seed から完成盤を作り、ヒントを減らして問題にし、難易度を分析する。
  * 同じ identity からは同じ問題を作る。難易度を指定して作る機能は持たず、
  * 問題集の生成スクリプトが、できた問題を分類して各難易度へ振り分ける。
  */

@@ -31,10 +31,6 @@ import type { PlayRecordDefinition } from "@/records/play-record-definition";
 const NANPURE_PLAY_RECORD_PAYLOAD_VERSION = 2;
 const NANPURE_GAME_ID = "nanpure";
 
-/**
- * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
- * - `performance`: そのプレイで起きた事実。評価点・評価段階は保存せず、現在の評価規則で導出する。
- */
 type NanpurePlayRecordPayload = {
   difficulty: NanpureDifficulty;
   problemIdentity: NanpureRecordedProblemIdentity;
@@ -42,7 +38,6 @@ type NanpurePlayRecordPayload = {
 };
 
 // payloadVersion 1 は3段階（easy / normal / hard）の難易度と、ヒント数を指定した生成器（版 "1"）の問題で記録した。
-// レベル1〜5へ読み替えず旧区分のまま扱い、自己ベストもレベルとは別の比較単位にする。
 type NanpurePlayRecordPayloadV1 = Omit<
   NanpurePlayRecordPayload,
   "difficulty"
@@ -138,17 +133,12 @@ export function createNanpurePlayRecord({
   };
 }
 
-/** 記録から作り直した、結果画面に出す内容。 */
 export type NanpureRecordedResult = {
   difficulty: NanpureDifficulty;
   problemIdentity: NanpureProblemIdentity;
   result: NanpureResult;
 };
 
-/**
- * 記録から結果画面に出す内容を作り直す。
- * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
- */
 export function restoreNanpureRecordedResult(
   record: PlayRecord,
 ): NanpureRecordedResult | null {

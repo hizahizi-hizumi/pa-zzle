@@ -21,15 +21,10 @@ import {
 } from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
-/**
- * 事前生成した問題集の1問。
- * - 生成条件（手筋の上限。`null` は一意解だけを保つ条件）と候補番号から `createNanpureProblemIdentity` で identity を再構成する。
- * - `encodedProblem` は解の81桁とヒントの位置の16進21桁を並べた102文字（`encodeNanpurePoolProblem`）。
- *   実行時に生成器・解探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
- */
 export type NanpureProblemPoolEntry = readonly [
   removalTechniqueLimit: NanpureTechnique | null,
   candidateIndex: number,
+  // 実行時に生成器・解探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
   encodedProblem: string,
 ];
 
@@ -141,7 +136,6 @@ export function listNanpurePoolProblemIds(
   return poolIndex.listProblemIds(difficulty);
 }
 
-/** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findNanpurePoolEntryByProblemId(
   difficulty: NanpureDifficulty,
   problemId: string,
@@ -160,7 +154,6 @@ function getEntriesBySeed(): ReadonlyMap<string, NanpureProblemPoolEntry> {
   return entriesBySeed;
 }
 
-/** identity に一致する問題集の1問を探す。生成器の版や条件が違う identity には `null` を返す。 */
 export function findNanpurePoolEntry(
   identity: NanpureProblemIdentity,
 ): NanpureProblemPoolEntry | null {
@@ -184,7 +177,6 @@ export type NanpureProblemFeatures = {
 };
 
 /**
- * 難易度の問題集の1問の特徴を、問題を復元せずにヒントの位置から求める。問題集に無い ID・別の難易度の ID には `null` を返す。
  * 図鑑の絞り込みでレベルの全問について求めるので、解の読み解きと問題の検査をしない。
  */
 export function findNanpurePoolProblemFeatures(
@@ -199,7 +191,6 @@ export function findNanpurePoolProblemFeatures(
   return { clueCount: clueMask.filter(Boolean).length };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
 export const nanpureProblemFeatureAxes = [
   {
     id: "clue-count",

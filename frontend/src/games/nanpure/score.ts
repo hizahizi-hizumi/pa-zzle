@@ -23,7 +23,6 @@ export const NANPURE_SPEED_FULL_SCORE_MS = 15 * 60 * 1_000;
 /** 速さを減らす超過時間の刻み。超過時間をこの幅で切り上げ、1刻みごとに1点減らす。 */
 export const NANPURE_SPEED_PENALTY_INTERVAL_MS = 60 * 1_000;
 
-/** 速さの採点規則。基準時間を過ぎてから満点分の刻みを数えると0点になる。 */
 const NANPURE_SPEED_SCORE_RULE: SpeedScoreRule = {
   fullScoreMs: NANPURE_SPEED_FULL_SCORE_MS,
   zeroScoreMs:

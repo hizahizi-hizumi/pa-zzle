@@ -40,7 +40,6 @@ function parseNanpureDiagnosticSnapshot(
   return parseInternalDiagnosticSnapshot(serialized, nanpureDiagnosticFormat);
 }
 
-/** 問題集に無い identity は復元できないので `null` を返す。 */
 function restoreNanpureProblemFromDiagnosticSnapshot(
   snapshot: NanpureDiagnosticSnapshot,
 ): NanpureIdentifiedProblem | null {
