@@ -21,7 +21,7 @@ type GameLevelCardsProps = {
 
 export function GameLevelCards({ levels }: GameLevelCardsProps) {
   return (
-    <TabsList layout="card" aria-label="レベル">
+    <TabsList layout="card" aria-label="レベル" data-screen-content="">
       {levels.map(
         ({
           difficulty,

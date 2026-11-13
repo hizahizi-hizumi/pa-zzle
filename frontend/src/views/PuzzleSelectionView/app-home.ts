@@ -10,6 +10,8 @@ import {
   type GameCatalogEntry,
   toZukanGameSource,
 } from "@/app/game-integration/game-catalog-entry";
+import type { PlayAttempt } from "@/features/records/play-attempt";
+import type { PlayRecord } from "@/features/records/play-record";
 import {
   readPlayAttemptsSnapshot,
   readPlayRecords,
@@ -20,26 +22,23 @@ import {
   createZukanContinuations,
   type ZukanContinuations,
 } from "@/features/zukan/zukan-continuation";
+import { scheduleIdleTask } from "@/lib/idle-task";
 
 export type AppHome = {
   selectedGameIndex: number;
   selectedGameContinuation: ZukanContinuation | null;
   selectGame: (index: number) => void;
+  /** ホームを開いたときの完了記録と、離脱したプレイ。 */
+  records: readonly PlayRecord[];
+  attempts: readonly PlayAttempt[];
 };
 
 type AppHomeOptions = {
   opensCovered: boolean;
+  /** ゲームの画面からホームへ来たときの、そのゲーム。 */
+  originGameId?: string | null;
   fallbackGameId?: string;
 };
-
-function scheduleIdleTask(task: () => void): () => void {
-  if (typeof window.requestIdleCallback === "function") {
-    const handle = window.requestIdleCallback(task);
-    return () => window.cancelIdleCallback(handle);
-  }
-  const handle = window.setTimeout(task, 0);
-  return () => window.clearTimeout(handle);
-}
 
 /** 選んだときに待たせないよう、ゲームの続きを先に求めておく。 */
 function prefetchContinuations(
@@ -62,7 +61,7 @@ function prefetchContinuations(
 
 export function useAppHome(
   games: readonly GameCatalogEntry[],
-  { opensCovered, fallbackGameId }: AppHomeOptions,
+  { opensCovered, originGameId, fallbackGameId }: AppHomeOptions,
 ): AppHome {
   const [records] = useState(() => readPlayRecords());
   const attempts = useSyncExternalStore(
@@ -94,10 +93,11 @@ export function useAppHome(
     );
   }, [games, continuations]);
 
+  const originGameIndex = games.findIndex(({ id }) => id === originGameId);
   // 離脱はこの画面を描いたあとに保存されることがあるので、選ぶまでは求め直す。
   const chosenIndex = games.findIndex(({ id }) => id === chosenGameId);
   const latestPlayedGameId =
-    chosenIndex === -1
+    chosenIndex === -1 && originGameIndex === -1
       ? (continuations?.findLatestPlayedGameId() ?? null)
       : null;
   const latestPlayedIndex = games.findIndex(
@@ -105,11 +105,9 @@ export function useAppHome(
   );
   const fallbackGameIndex = games.findIndex(({ id }) => id === fallbackGameId);
   const selectedGameIndex =
-    chosenIndex !== -1
-      ? chosenIndex
-      : latestPlayedIndex === -1
-        ? Math.max(fallbackGameIndex, 0)
-        : latestPlayedIndex;
+    [chosenIndex, originGameIndex, latestPlayedIndex].find(
+      (index) => index !== -1,
+    ) ?? Math.max(fallbackGameIndex, 0);
   const selectedGame = games[selectedGameIndex];
 
   return {
@@ -122,5 +120,7 @@ export function useAppHome(
       const game = games[index];
       if (game) setChosenGameId(game.id);
     },
+    records,
+    attempts,
   };
 }

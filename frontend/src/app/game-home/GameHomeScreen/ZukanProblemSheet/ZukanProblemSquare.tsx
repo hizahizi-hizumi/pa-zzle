@@ -5,15 +5,15 @@ import {
   type ZukanChangeStage,
 } from "@/app/game-home/GameHomeScreen/zukan-change-reveal";
 import {
+  describeZukanProblem,
+  getZukanProblemStatusColorClassName,
+} from "@/app/game-home/GameHomeScreen/zukan-problem-appearance";
+import {
   getZukanPiecePath,
   ZUKAN_PIECE_GROOVE_WIDTH,
   ZUKAN_PIECE_VIEW_BOX,
   type ZukanPieceShape,
-} from "@/app/game-home/GameHomeScreen/zukan-piece-shape";
-import {
-  describeZukanProblem,
-  getZukanProblemStatusColorClassName,
-} from "@/app/game-home/GameHomeScreen/zukan-problem-appearance";
+} from "@/features/zukan/ui/zukan-piece-shape";
 import {
   getZukanProblemStatus,
   type ZukanProblem,
@@ -61,9 +61,11 @@ function ZukanProblemSquareContent({
     change !== null && isPending ? change.previousStatus : status;
   const path = getZukanPiecePath(pieceShape);
 
-  // 選んだピースの囲みとホバー・フォーカスの線は隣のピースへはみ出すので、そのピースを手前に重ねる。選んだピースは、隣のホバーより手前に置く。
+  // 選んだピースの囲みと、ホバー・フォーカス・入るピースの線は隣のピースへはみ出すので、そのピースを手前に重ねる。選んだピースと入るピースは、隣のホバーより手前に置く。
   // 重ね順は台紙の中に閉じ（台紙が `isolate`）、台紙の外の詳細やレベルのカードより手前には出ない。
-  const layerClassName = isSelected ? "z-20" : "hover:z-10 focus-visible:z-10";
+  const layerClassName = isSelected
+    ? "z-20"
+    : "hover:z-10 focus-visible:z-10 data-zukan-play-entry-piece:z-20";
   // 押す姿はマスより大きく浮くので、選んだマスも含めて周りのマスより手前に重ねる。
   const stampClassName = isLifted ? "z-30" : "";
   // 絞り込みの条件に当たらなかったマスは、色を変えずに薄くする。選んでいる間は、選んだことが分かるよう薄くしない。
@@ -118,7 +120,7 @@ function ZukanProblemSquareContent({
           className={
             isSelected
               ? "stroke-foreground"
-              : "stroke-ring opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+              : "stroke-ring opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-data-zukan-play-entry-piece:stroke-foreground group-data-zukan-play-entry-piece:opacity-100"
           }
           strokeWidth={isSelected ? SELECTION_LINE_WIDTH : HOVER_LINE_WIDTH}
           strokeLinejoin="round"

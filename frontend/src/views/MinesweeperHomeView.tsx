@@ -1,7 +1,6 @@
 import { GameHomeScreen } from "@/app/game-home/GameHomeScreen";
 import { useGameHome } from "@/app/game-home/game-home";
 import { minesweeperCatalogEntry } from "@/app/game-integration/minesweeper/minesweeper-catalog-entry";
-import { MinesweeperGround } from "@/games/minesweeper/ui/MinesweeperGround";
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
 import { MinesweeperTutorial } from "@/games/minesweeper/ui/MinesweeperTutorial";
 
@@ -11,7 +10,6 @@ export function MinesweeperHomeView() {
   return (
     <GameHomeScreen
       {...screenProps}
-      ground={<MinesweeperGround />}
       renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
         <MinesweeperHowToPlayDialog
           open={open}

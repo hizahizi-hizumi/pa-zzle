@@ -190,7 +190,6 @@ function createScreen(
               pictogramSvg="<svg></svg>"
               zukan={shownZukan}
               changes={changes}
-              ground={<div data-testid="ground" />}
               initialSelectedProblemId={initialSelectedProblemId}
               pickRandomProblemId={pickRandomProblemId}
               onPlayProblem={onPlayProblem}
@@ -534,15 +533,6 @@ describe("GameHomeScreen", () => {
         clear: "M0,2h1v1h-1z",
         untouched: "M0,3h1v1h-1z",
       });
-    });
-
-    test("ゲームの地を、画面全体の背景の層に敷くこと", () => {
-      const groundLayer = screen
-        .getByTestId("ground")
-        .closest('[data-browser-surface="child"]');
-
-      expect(groundLayer).not.toBeNull();
-      expect(groundLayer?.getAttribute("aria-hidden")).toBe("true");
     });
 
     test("最後に遊んだレベルのカードを選び、そのレベルの台紙だけを示すこと", () => {
@@ -1852,30 +1842,19 @@ describe("GameHomeScreen", () => {
       Reflect.deleteProperty(Element.prototype, "animate");
     });
 
-    describe("ランダムに遊ぶを押し、ピースを運んでいる途中の場合", () => {
-      let unmount: () => void;
-
+    describe("ランダムに遊ぶを押した場合", () => {
       beforeEach(() => {
-        ({ unmount } = renderScreen());
+        renderScreen();
         fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
       });
 
-      test("運び終えるまで、画面の操作を受けないこと", () => {
+      test("画面の操作を受けなくし、ゲームが選んだ問題を始めること", () => {
         const inertScreen = screen
           .getByRole("tablist", { name: "レベル" })
           .closest("[inert]");
 
         expect(inertScreen).not.toBeNull();
-        expect(onPlayProblem).not.toHaveBeenCalled();
-      });
-
-      test("画面を離れると、プレイを始めず、ピースの層を残さないこと", async () => {
-        unmount();
-        await advanceStamps(1000);
-        const layer = document.querySelector("[data-zukan-play-entry-piece]");
-
-        expect(onPlayProblem).not.toHaveBeenCalled();
-        expect(layer).toBeNull();
+        expect(onPlayProblem).toHaveBeenCalledTimes(1);
       });
     });
 
@@ -1888,11 +1867,7 @@ describe("GameHomeScreen", () => {
         );
       });
 
-      test("ピースを運び終えてから、選んだ問題を始めること", async () => {
-        const startedOnClick = onPlayProblem.mock.calls.length;
-        await advanceStamps(1000);
-
-        expect(startedOnClick).toBe(0);
+      test("選んだ問題を始めること", () => {
         expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[0]]]);
       });
     });
@@ -2607,18 +2582,16 @@ describe("GameHomeScreen", () => {
         expect(getDetail().textContent).toMatch(/^No\.0007/);
       });
 
-      test("ランダムに遊ぶを1回タップすると、最後の姿まで飛ばして見せ終えたと知らせ、ピースを運び終えてから開いているレベルからゲームが選んだ問題を始めること", async () => {
+      test("ランダムに遊ぶを1回タップすると、最後の姿まで飛ばして見せ終えたと知らせ、開いているレベルからゲームが選んだ問題を始めること", async () => {
         const playRandom = screen.getByRole("button", {
           name: "ランダムに遊ぶ",
         });
 
         tap(playRandom, { x: 10, y: 10 });
         fireEvent.click(playRandom);
-        const startedOnTap = onPlayProblem.mock.calls.length;
         await advanceStamps(400);
 
         expect(onLevelChangesShown.mock.calls).toEqual([["3"]]);
-        expect(startedOnTap).toBe(0);
         expect(pickRandomProblemId.mock.calls).toEqual([["3"]]);
         expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[3]]]);
       });

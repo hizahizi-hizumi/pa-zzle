@@ -5,7 +5,20 @@ import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import "@/index.css";
 import { gameCatalog } from "@/app/game-integration/game-catalog";
+import { followHomeOrigin } from "@/app/navigation/home-origin";
 import { RandomProblemUnavailableDialog } from "@/app/RandomProblemUnavailableDialog";
+import {
+  gameFrameEnterCarrier,
+  gameFrameLeaveCarrier,
+} from "@/app/shell/game-frame-transit";
+import { installScreenTransitions } from "@/app/shell/screen-transitions";
+import {
+  zukanPieceEnterCarrier,
+  zukanPieceHomeCarrier,
+  zukanPieceReturnCarrier,
+  zukanPieceSettleCarrier,
+  zukanPieceStowCarrier,
+} from "@/app/shell/zukan-piece-transit";
 import { GameCatalogProvider } from "@/features/settings/GameCatalogContext";
 import { startAppLaunch } from "@/lib/app-launch";
 import { defineSoundEffect } from "@/lib/audio/sound-effects";
@@ -43,6 +56,16 @@ startAppLaunch({
 
 // 遷移の `flushSync` を使えるよう、generouted の `<Routes />` ではなく react-router/dom の `RouterProvider` で描く。
 const router = createBrowserRouter(routes);
+followHomeOrigin(router);
+installScreenTransitions(router, {
+  "enter-game": gameFrameEnterCarrier,
+  "leave-game": gameFrameLeaveCarrier,
+  settle: zukanPieceSettleCarrier,
+  return: zukanPieceReturnCarrier,
+  close: zukanPieceHomeCarrier,
+  "enter-piece": zukanPieceEnterCarrier,
+  open: zukanPieceStowCarrier,
+});
 
 createRoot(root).render(
   <StrictMode>

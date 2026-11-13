@@ -1,6 +1,7 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { gameCatalog } from "@/app/game-integration/game-catalog";
 import type { GameCatalogEntry } from "@/app/game-integration/game-catalog-entry";
+import { readHomeOriginGameId } from "@/app/navigation/home-origin";
 import { gameSelectionOrderSetting } from "@/features/settings/game-selection-order-setting";
 import {
   enterApp,
@@ -10,6 +11,7 @@ import {
 import { AppTitleScreen } from "@/views/PuzzleSelectionView/AppTitleScreen";
 import { useAppHome } from "@/views/PuzzleSelectionView/app-home";
 import { GameSelectionGallery } from "@/views/PuzzleSelectionView/GameSelectionGallery";
+import { useGameSheetPreviews } from "@/views/PuzzleSelectionView/game-sheet-previews";
 
 const games = gameCatalog.map(
   ({
@@ -33,6 +35,7 @@ export function PuzzleSelectionView() {
     getAppLaunchTitle,
   );
   const isCovered = title.status !== "hidden";
+  const [originGameId] = useState(readHomeOriginGameId);
   const preferredOrder = useSyncExternalStore(
     gameSelectionOrderSetting.subscribe,
     gameSelectionOrderSetting.getSnapshot,
@@ -54,16 +57,28 @@ export function PuzzleSelectionView() {
     () => gameCatalog.filter(({ id }) => visibleIds.includes(id)),
     [visibleIds],
   );
-  const { selectedGameIndex, selectedGameContinuation, selectGame } =
-    useAppHome(visibleCatalog, {
-      opensCovered: isCovered,
-      fallbackGameId: visibleIds[0],
-    });
-  const orderedGames = visibleIds.flatMap((id) => {
-    const game = games.find((item) => item.id === id);
-    return game ? [game] : [];
+  const {
+    selectedGameIndex,
+    selectedGameContinuation,
+    selectGame,
+    records,
+    attempts,
+  } = useAppHome(visibleCatalog, {
+    opensCovered: isCovered,
+    originGameId,
+    fallbackGameId: visibleIds[0],
   });
   const selectedId = visibleCatalog[selectedGameIndex]?.id;
+  const sheetPreviews = useGameSheetPreviews(
+    visibleCatalog,
+    selectedId,
+    records,
+    attempts,
+  );
+  const orderedGames = visibleIds.flatMap((id) => {
+    const game = games.find((item) => item.id === id);
+    return game ? [{ ...game, sheetPreview: sheetPreviews.get(id) }] : [];
+  });
   const orderedSelectedIndex = orderedGames.findIndex(
     ({ id }) => id === selectedId,
   );

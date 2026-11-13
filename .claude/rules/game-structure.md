@@ -134,8 +134,7 @@ frontend/src/games/
 ## プレイ画面と結果画面の共通契約
 
 - `ui/<Game>Play.tsx` の props は `games/play.ts` の `GamePlayScreenProps<Difficulty, Result>` に、盤面を戻せるなら `RestartableGamePlayScreenProps`、待ったがあるなら `UndoableGamePlayScreenProps` と、ゲーム固有の値・操作を足して作る。`ui/result/<Game>ResultScreen.tsx` の props は `GamePlayResultScreenProps<Difficulty, Result>` で作る。難易度は値で受け取り、表示名は UI が決める。
-- ゲーム固有の地は `ui/<Game>Ground.tsx` の `<Game>Ground` に置く。
-- ゲームのホームへは `views/<Game>HomeView.tsx` から `GameHomeScreen` の `ground` で `<Game>Ground` を渡す。
+- ゲーム固有の地は `ui/<Game>Ground.tsx` の `<Game>Ground` に置き、プレイ画面とチュートリアルにだけ渡す。
 - プレイ画面は `components/GamePlayFrame.tsx` にゲーム固有の地（`background` に `<Game>Ground`）、盤面（`main`）、ゲーム固有の操作（`footer`）を渡して作り、外枠・ブランドの帯・見出し・遊び方とチュートリアルの開閉・結果画面への切り替えを各ゲームで書かない。結果画面は `progress` が `result` で評価があるときだけ出る。
 - 見出しの計測値は `PlayHeaderMetric` の回数（`count`）と経過時間（`elapsed-time`）で渡し、書式・行の分け方は共通部品に任せる。プレイで変わらない問題そのものの条件（例: 詰将棋の「5手詰」）は、数え上げる回数と混同しないよう `problem-fact` の文言で渡す。回数の桁の確保は共通部品の既定に任せ、変えるときは `reservedDigits` で渡す。
 - 盤面は `progress` が `playing` の間だけ操作を受け付け、受け付けないことを `interactionDisabled` で受け取る。
@@ -244,10 +243,12 @@ frontend/src/app/
 │   ├── game-home.tsx
 │   └── GameHomeScreen.tsx
 └── navigation/
+    ├── game-guide-navigation.ts
+    ├── home-origin.ts
     ├── problem-id-query.ts
-    ├── play-location-state.ts
     ├── record-result-location-state.ts
-    └── record-result-navigation.ts
+    ├── record-result-navigation.ts
+    └── screen-transition-kind.ts
 ```
 
 - `game-catalog-entry.ts` はゲームごとの表示・遷移・問題供給・記録の再プレイ・記録から作る結果画面の接続契約 `GameCatalogEntry` を持つ。
@@ -261,9 +262,9 @@ frontend/src/app/
 - `Playable<Game>.tsx` は問題IDから初期問題を選び、ゲームのプレイを共通の完了・離脱記録と接続し、ゲーム固有のプレイUIを表示する。
 - `Recorded<Game>Result.tsx` は記録の復元結果をゲーム固有の結果UIと内部診断へ渡す。
 
-共通ゲームホームの `useGameHome` と `GameHomeScreen` は `app/game-home/` に置き、ゲーム固有の盤面・遊び方はそれぞれのゲームから受け取る。パズル選択画面でだけ使う `useAppHome`・`AppTitleScreen`・`GameSelectionGallery` は `views/PuzzleSelectionView/` が持つ。
+共通ゲームホームの `useGameHome` と `GameHomeScreen` は `app/game-home/` に置き、ゲーム固有の盤面・遊び方はそれぞれのゲームから受け取る。パズル選択画面でだけ使う `useAppHome`・`useGameSheetPreviews`（額に敷くゲームごとの台紙の絵）・`AppTitleScreen`・`GameSelectionGallery` は `views/PuzzleSelectionView/` が持つ。
 
-カタログを必要としない問題IDクエリ・プレイ/結果の location state・記録結果への遷移は `app/navigation/` に置く。ゲームカタログの情報を必要とする導線は `app/game-integration/` に置き、`app/navigation/` からゲーム統合へ逆依存させない。
+カタログを必要としない問題IDクエリ・結果の location state・記録結果への遷移・ホームへ来る前にいたゲーム・画面の行き来の動きの種類は `app/navigation/` に置く。ゲームカタログの情報を必要とする導線は `app/game-integration/` に置き、`app/navigation/` からゲーム統合へ逆依存させない。
 
 ## ゲームを追加するとき
 

@@ -22,6 +22,7 @@ import {
 import { zukanStampSounds } from "@/app/game-home/GameHomeScreen/zukan-stamp-sound";
 import type { DifficultyLevel } from "@/games/difficulty";
 import { prepareSoundEffects } from "@/lib/audio/sound-effects";
+import { afterScreenTransition } from "@/lib/screen-transition";
 
 export type ZukanStampProgress = {
   startedSlotCount: number;
@@ -461,24 +462,36 @@ export function useZukanChangeReveal(
       return;
     }
 
-    const stop = runZukanStamps(scroller, indices, {
-      onProgress(next) {
-        setProgress({ ...next, difficulty: revealingDifficulty });
-      },
-      onEnd: notifyShown,
-      onSkippedByTap(target) {
-        stopSuppressingClick.current();
-        stopSuppressingClick.current = latest.current.isClickThroughTarget(
-          target,
-        )
-          ? cancelNothing
-          : suppressNextClick();
-      },
+    // 画面の行き来の動きと重ねると、どちらも読み取れなくなるので、行き来の動きが終わってから押し始める。
+    let stop = cancelNothing;
+    const cancelWaiting = afterScreenTransition(function startStamps() {
+      stop = runStamps(scroller, indices);
     });
     return function stopStamps() {
+      cancelWaiting();
       stop();
       setProgress(null);
     };
+
+    function runStamps(
+      target: HTMLElement,
+      stampIndices: typeof indices,
+    ): () => void {
+      return runZukanStamps(target, stampIndices, {
+        onProgress(next) {
+          setProgress({ ...next, difficulty: revealingDifficulty });
+        },
+        onEnd: notifyShown,
+        onSkippedByTap(target) {
+          stopSuppressingClick.current();
+          stopSuppressingClick.current = latest.current.isClickThroughTarget(
+            target,
+          )
+            ? cancelNothing
+            : suppressNextClick();
+        },
+      });
+    }
   }, [difficulty, appearance, changeCount, scrollerRef]);
 
   return progress !== null && progress.difficulty === difficulty
