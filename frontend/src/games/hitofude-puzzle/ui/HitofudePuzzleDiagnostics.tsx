@@ -55,7 +55,6 @@ function formatGenerationConditions({
   return `${size}×${size} / 先読みの重さの目標 ${targetLookaheadLoad}`;
 }
 
-/** 段階ごとの数を「段階: 数」で並べる。 */
 function formatStageCounts(counts: Readonly<Record<number, number>>): string {
   return Object.entries(counts)
     .map(([stage, count]) => `${stage}: ${count}`)
@@ -75,7 +74,6 @@ function formatRange({ minimum, maximum }: NumericRange, unit: string) {
     : `${minimum}〜${maximum}${unit}`;
 }
 
-/** 正解の道を、始点から進む向きの矢印で表す。 */
 function formatSolution(size: number, solution: readonly number[]): string {
   return solution
     .slice(1)
@@ -129,7 +127,6 @@ function formatAssessment(
   }
 }
 
-/** 分類したレベルの組み合わせの各条件に、この問題の値を並べる。 */
 function listLevelConditions(
   assessment: HitofudePuzzleDifficultyAssessment,
   analysis: HitofudePuzzleDifficultyAnalysis,

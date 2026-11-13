@@ -10,13 +10,11 @@ type HowToPlayFigureProps = {
   board: HitofudePuzzleBoard;
   path: readonly number[];
   isDeadEnd?: boolean;
-  /** 進もうとして阻まれたマス。盤面と同じ×の印を点けたまま描く。 */
+  /** 盤面と同じ×の印を点けたまま描く。 */
   blockedCell?: number;
-  /** 指を置いているマス。指の印を添える。 */
   fingerCell?: number;
 };
 
-/** 盤面と同じ見た目で描く、遊び方の小さな図。 */
 export function HowToPlayFigure({
   board,
   path,

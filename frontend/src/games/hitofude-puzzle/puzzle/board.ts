@@ -1,15 +1,11 @@
-/**
- * 一辺 `size` の正方形の枠に置いた盤面。マス番号は枠の行優先（`row * size + column`）。
- * - `holes`: 穴の番号。穴は盤面に無いマスで、道は通れず、通らなくてよい。外周の穴は盤面の外形を欠く。昇順で重複しない。
- * - `start`: 道の始点のマス。
- */
+/** 一辺 `size` の正方形の枠に置いた盤面。マス番号は枠の行優先（`row * size + column`）。 */
 export type HitofudePuzzleBoard = {
   size: number;
   holes: readonly number[];
   start: number;
 };
 
-/** 矢印キーなどで先端から進む向き。並びは隣のマスを列挙する順でもある。 */
+/** 並びは隣のマスを列挙する順でもある。 */
 export const hitofudePuzzleDirections = [
   "up",
   "right",
@@ -38,7 +34,7 @@ export function getHitofudePuzzleCellPosition(
   return { row: Math.floor(cell / size), column: cell % size };
 }
 
-/** 枠の中のマス番号か。穴も枠の中にある。 */
+/** 穴も枠の中にある。 */
 export function isHitofudePuzzleCellOnBoard(
   size: number,
   cell: number,
@@ -46,7 +42,6 @@ export function isHitofudePuzzleCellOnBoard(
   return Number.isInteger(cell) && cell >= 0 && cell < size * size;
 }
 
-/** `cell` から `direction` の向きに隣り合うマス。枠の外なら `null`。 */
 export function getHitofudePuzzleNeighborCell(
   size: number,
   cell: number,
@@ -62,7 +57,7 @@ export function getHitofudePuzzleNeighborCell(
   return nextRow * size + nextColumn;
 }
 
-/** 穴を考えない、枠の中で上下左右に隣り合うマス。並びは `hitofudePuzzleDirections` に従う。 */
+/** 穴を考えない、枠の中で上下左右に隣り合うマス。 */
 export function listHitofudePuzzleGridNeighbors(
   size: number,
   cell: number,
@@ -73,7 +68,6 @@ export function listHitofudePuzzleGridNeighbors(
   });
 }
 
-/** `from` から見て、上下左右に隣り合う `to` がある向き。隣り合わなければ `null`。 */
 export function findHitofudePuzzleDirection(
   size: number,
   from: number,
@@ -102,12 +96,11 @@ export function isHitofudePuzzleHole(
   return board.holes.includes(cell);
 }
 
-/** 枠の全マスの番号。穴を含む。 */
+/** 穴を含む。 */
 export function listHitofudePuzzleCells(size: number): number[] {
   return Array.from({ length: size * size }, (_, cell) => cell);
 }
 
-/** 穴でない、道が通るマスの番号。 */
 export function listHitofudePuzzleOpenCells(
   board: HitofudePuzzleBoard,
 ): number[] {
@@ -115,10 +108,6 @@ export function listHitofudePuzzleOpenCells(
   return listHitofudePuzzleCells(board.size).filter((cell) => !holes.has(cell));
 }
 
-/**
- * マスごとの、道が次に進める隣のマス（上下左右に隣り合う、穴でないマス）。
- * 穴の項は空。隣の並びは `hitofudePuzzleDirections` に従う。
- */
 export function createHitofudePuzzleAdjacency(
   board: HitofudePuzzleBoard,
 ): readonly (readonly number[])[] {
@@ -166,8 +155,7 @@ const cellNotation = { open: ".", hole: "#", start: "S" } as const;
 const cellSeparator = " ";
 
 /**
- * 盤面を記法の行で表す。固定問題・テスト・同型の正規化キーで盤面を読みやすく書くための記法。
- * 1行が枠の1行で、マスを空白で区切って書く（`.` 道が通るマス、`#` 穴、`S` 始点）。
+ * 固定問題・テスト・同型の正規化キーで盤面を読みやすく書くための記法。
  * 例: 2×2 で左上が始点、右下が穴 → `["S .", ". #"]`。
  */
 export function formatHitofudePuzzleBoard(
@@ -187,7 +175,6 @@ export function formatHitofudePuzzleBoard(
   );
 }
 
-/** `formatHitofudePuzzleBoard` の記法から盤面を作る。 */
 export function parseHitofudePuzzleBoard(
   rows: readonly string[],
 ): HitofudePuzzleBoard {

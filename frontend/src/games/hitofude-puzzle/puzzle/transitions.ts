@@ -10,13 +10,7 @@ import {
   type HitofudePuzzlePuzzleState,
 } from "@/games/hitofude-puzzle/puzzle/state";
 
-/**
- * 道を延ばせなかった理由。
- * - `outside-board`: 枠の外のマス。
- * - `not-adjacent`: 先端の上下左右に隣り合わないマス（先端そのものを含む）。
- * - `hole`: 穴。
- * - `visited`: 道がもう通ったマス。
- */
+/** `not-adjacent`: 先端の上下左右に隣り合わないマス（先端そのものを含む）。 */
 export type HitofudePuzzleExtensionRejection =
   | "outside-board"
   | "not-adjacent"
@@ -27,10 +21,6 @@ export type HitofudePuzzleExtension =
   | { kind: "extended"; state: HitofudePuzzlePuzzleState }
   | { kind: "rejected"; reason: HitofudePuzzleExtensionRejection };
 
-/**
- * 先端を隣のマスへ動かした結果。`retracted` は直前のマスへ戻って道が1マス縮んだこと。
- * `rejected` の理由は `HitofudePuzzleExtension` と同じ。
- */
 export type HitofudePuzzleHeadMove =
   | { kind: "extended"; state: HitofudePuzzlePuzzleState }
   | { kind: "retracted"; state: HitofudePuzzlePuzzleState }
@@ -57,7 +47,6 @@ function findExtensionRejection(
   return null;
 }
 
-/** 先端から隣のマスへ道を1マス延ばす。 */
 export function extendHitofudePuzzle(
   board: HitofudePuzzleBoard,
   state: HitofudePuzzlePuzzleState,
@@ -70,7 +59,6 @@ export function extendHitofudePuzzle(
   return { kind: "extended", state: { path: [...state.path, cell] } };
 }
 
-/** 先端を1マス戻す。道が始点だけなら同じ状態を返す。 */
 export function retractHitofudePuzzle(
   state: HitofudePuzzlePuzzleState,
 ): HitofudePuzzlePuzzleState {
@@ -80,7 +68,6 @@ export function retractHitofudePuzzle(
   return { path: state.path.slice(0, -1) };
 }
 
-/** 道の途中のマス（始点を含む）まで巻き戻し、そのマスを先端にする。道に無いマスや先端なら同じ状態を返す。 */
 export function rewindHitofudePuzzle(
   state: HitofudePuzzlePuzzleState,
   cell: number,
@@ -92,10 +79,7 @@ export function rewindHitofudePuzzle(
   return { path: state.path.slice(0, position + 1) };
 }
 
-/**
- * 先端を隣のマスへ動かす。直前のマスへ動かすと道が1マス縮み、それ以外は道を延ばす。
- * ドラッグと矢印キーで道を引くときの1マスぶんの操作。道の途中のマスへの移動は巻き戻さない。
- */
+/** ドラッグと矢印キーで道を引くときの1マスぶんの操作。道の途中のマスへの移動は巻き戻さない。 */
 export function moveHitofudePuzzleHead(
   board: HitofudePuzzleBoard,
   state: HitofudePuzzlePuzzleState,
@@ -108,9 +92,7 @@ export function moveHitofudePuzzleHead(
 }
 
 /**
- * なぞる指が隣のマスへ移ったときの道の変化。
  * - `extended`: 道が1マス以上延びた。
- * - `retracted`: 来た道を戻って道が縮んだ。
  * - `unchanged`: 道を変えない（先端・道の途中のマスに入った、道から外れた指が動いた、など）。
  * - `rejected`: 先端から進もうとした指が穴に阻まれた。
  */

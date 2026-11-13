@@ -11,7 +11,6 @@ type HitofudePuzzleStatusAnnouncementProps = {
   board: HitofudePuzzleBoard;
   notice: HitofudePuzzlePathNotice | null;
   isDeadEnd: boolean;
-  /** 道が全マスを通り終えたか。 */
   solved: boolean;
   /**
    * 盤面のマスにフォーカスがあるか。あれば先端が動くとフォーカスが先端のマスへ移り、マスの読み上げ名が先端の位置を伝えるので、
@@ -42,7 +41,6 @@ function describeUndoneLength(lengthChange: number): string {
   return "待ったで道を戻した";
 }
 
-/** 道が変わった操作で、何が起きたかを伝える文。先端の位置は `headPosition` が `null` でなければ添える。 */
 function describePathChange(
   notice: Exclude<HitofudePuzzlePathNotice, { change: "blocked" }>,
   headPosition: string | null,
@@ -65,7 +63,6 @@ function describePathChange(
   }
 }
 
-/** 盤面の変化を読み上げる文。知らせる変化が無ければ空文字。 */
 function describeNotice(
   { size }: HitofudePuzzleBoard,
   notice: HitofudePuzzlePathNotice | null,
@@ -92,7 +89,6 @@ function describeNotice(
 }
 
 /**
- * 盤面の操作で起きた変化（延ばした・縮めた・待った・阻まれた・行き止まり・完成）を、画面には出さずに読み上げで知らせる。
  * 盤面の印や動きで知らせていることを、見えない人にも同じ時に伝える。
  * マスの読み上げ名はマスの位置と状態を、この欄は操作で何が起きたかを伝える。
  */

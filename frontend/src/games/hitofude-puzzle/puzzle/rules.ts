@@ -6,8 +6,7 @@ import {
 } from "@/games/hitofude-puzzle/puzzle/board";
 
 /**
- * 道が規則を満たして全有効マスを通ったか。道を作った入力処理を信頼せず、規則だけで確かめる。
- * 先頭が始点で、続く2マスが上下左右に隣り合い、穴と同じマスを通らず、穴でない全マスを含むこと。
+ * 道を作った入力処理を信頼せず、規則だけで確かめる。
  * 問題は一意解なので、保存した解との一致は要らない。
  */
 export function isHitofudePuzzleSolved(
@@ -45,7 +44,6 @@ function listUnvisitedNeighbors(
   return adjacency[cell]!.filter((neighbor) => !visited.has(neighbor));
 }
 
-/** 全有効マスを通る前に、先端から延ばせる未通過マスが無くなったか。 */
 export function isHitofudePuzzleDeadEnd(
   board: HitofudePuzzleBoard,
   path: readonly number[],
@@ -63,9 +61,7 @@ export function isHitofudePuzzleDeadEnd(
 
 /**
  * 今の道のまま延ばしても全マスを通れないと、盤面から機械的に分かる未通過マス。
- * - `isolatedCells`: 先端からも他の未通過マスからも入れないマス。
- * - `deadEndCells`: 入れる隣が1つだけで、道の終点にしかなれないマス。終点は1つなので、2つ以上あるときだけ挙げる。
- * - `separatedCells`: 先端から未通過マスだけをたどって届かないマス。
+ * - `deadEndCells`: 入れる隣が1つだけで、道の終点にしかなれないマス。
  */
 export type HitofudePuzzleStranding = {
   isolatedCells: readonly number[];
@@ -91,10 +87,6 @@ function listCellsReachableThroughUnvisited(
   return reached;
 }
 
-/**
- * 取り残し（孤立マス・余分な袋小路・道で切り離された領域）を見つける。何も無ければ `null`。
- * 先の手詰まりを示す情報なので、通常のプレイ画面には出さない。
- */
 export function findHitofudePuzzleStranding(
   board: HitofudePuzzleBoard,
   path: readonly number[],
@@ -128,6 +120,7 @@ export function findHitofudePuzzleStranding(
   const separatedCells = unvisitedCells.filter((cell) => !reachable.has(cell));
   const stranding = {
     isolatedCells,
+    // 終点は1つなので、2つ以上あるときだけ挙げる。
     deadEndCells: deadEndCells.length >= 2 ? deadEndCells : [],
     separatedCells,
   };
@@ -136,7 +129,6 @@ export function findHitofudePuzzleStranding(
     : null;
 }
 
-/** 穴でないマスが、上下左右の隣接で1つにつながっているか。 */
 export function areHitofudePuzzleOpenCellsConnected(
   board: HitofudePuzzleBoard,
 ): boolean {

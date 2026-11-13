@@ -7,7 +7,7 @@ import {
   listHitofudePuzzleOpenCells,
 } from "@/games/hitofude-puzzle/puzzle/board";
 
-/** 盤面の外形の1辺。図の座標（マス幅 1、枠の左上が原点）の線分。 */
+/** 図の座標（マス幅 1、枠の左上が原点）の線分。 */
 export type HitofudePuzzleOutlineEdge = {
   x1: number;
   y1: number;
@@ -24,7 +24,7 @@ const cellSides = {
 } as const satisfies Record<HitofudePuzzleDirection, HitofudePuzzleOutlineEdge>;
 
 /**
- * 盤面の外形。道が通るマスの辺のうち、穴か枠の外に接する辺。
+ * 道が通るマスの辺のうち、穴か枠の外に接する辺。
  * 外周の穴は外形の欠けとして、内側の穴は盤面に開いた穴の縁として、同じ規則で表れる。
  */
 export function listHitofudePuzzleOutlineEdges(
@@ -56,7 +56,6 @@ export function listHitofudePuzzleOutlineEdges(
   );
 }
 
-/** 外形の辺を、SVG の `path` の `d` にする。 */
 export function formatHitofudePuzzleOutlinePath(
   edges: readonly HitofudePuzzleOutlineEdge[],
 ): string {

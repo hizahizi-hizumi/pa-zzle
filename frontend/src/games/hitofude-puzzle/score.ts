@@ -11,7 +11,6 @@ import {
 } from "@/games/score";
 
 /**
- * 先を読んで道筋を決め、引き直しを少なく、迷わず速く引き切ることを称える。
  * 上位レベルは解法器でも先読みを要し、引いて確かめること自体を強く罰すると遊び方を罰するので、速さを主にし、引き直しは軽く数える。
  * 配点・減点幅・基準時間の係数はすべて暫定値で、実プレイで校正する（`ハミルトン路成績評価.md`）。
  */
@@ -65,11 +64,6 @@ type HitofudePuzzlePlayScoreInput = HitofudePuzzleTimeDeltaInput & {
   backtrackCount: number;
 };
 
-/**
- * 問題ごとの速さ満点の基準時間。
- * 盤面を見渡す時間に、なぞるマスの数、迷う分岐の数、先を読む回数、先読みの手数の合計（上限あり）に応じた時間を足す。
- * 問題を解き切る作業の量だけから決め、難易度そのものは使わない。
- */
 export function calculateHitofudePuzzleSpeedFullScoreMs({
   openCellCount,
   fatalBranchCount,
@@ -109,7 +103,6 @@ export function calculateHitofudePuzzleTimeDeltaMs({
   );
 }
 
-/** 正確さは引き直しの回数だけで減点する。解の道との照合は使わない。 */
 export function calculateHitofudePuzzlePlayScore({
   elapsedMs,
   backtrackCount,
@@ -120,6 +113,7 @@ export function calculateHitofudePuzzlePlayScore({
     elapsedMs,
     calculateHitofudePuzzleSpeedScoreRule(workload),
   );
+  // 正確さは引き直しの回数だけで減点する。解の道との照合は使わない。
   const accuracy = subtractWithFloor(
     HITOFUDE_PUZZLE_SCORE_MAXIMUMS.accuracy,
     backtrackCount * HITOFUDE_PUZZLE_BACKTRACK_PENALTY,

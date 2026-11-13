@@ -28,25 +28,18 @@ export type HitofudePuzzleSession = GameSession<
   HitofudePuzzleProblem,
   HitofudePuzzlePuzzleState
 > & {
-  /** 待ったで盤面操作を取り消した回数。 */
   undoCount: number;
-  /** 盤面を戻した回数。 */
   restartCount: number;
   /** 道を変えた入力（なぞり・矢印キー）の回数。待った・盤面を戻すは含まない。 */
   inputCount: number;
-  /**
-   * 引き直しの回数。道を戻した後、戻した位置から前と別のマスへ引いたときに1回と数える。
-   * 前と同じマスへ引き直したとき（手ぶれ・確かめ）は数えない。どの操作で戻したかは問わない。
-   */
   backtrackCount: number;
-  /** 戻したマスの数の合計。 */
   retractedCellCount: number;
   /**
    * 今の道を先頭に含む、これまでに引いた最も先までの道。引き直しを数える基準。
    * 道を戻しても残り、ここから外れたマスへ引くと、引いた道に置き換わる。
    */
   furthestPath: readonly number[];
-  /** 待ったで戻せる、各盤面操作の前の道。古い順。盤面を戻すと空にする。 */
+  /** 待ったで戻せる、各盤面操作の前の道。古い順。 */
   history: readonly HitofudePuzzlePuzzleState[];
   /**
    * 道をなぞっている間（押してから離すまで）だけ、押す前の道。
@@ -55,10 +48,6 @@ export type HitofudePuzzleSession = GameSession<
   strokeOrigin: HitofudePuzzlePuzzleState | null;
 };
 
-/**
- * 評価に使うプレイ事実。採点はしない。
- * 引き直しの回数を正確さに使い、戻したマスの数・待った・盤面を戻した回数・入力回数は記録にだけ残す。
- */
 export type HitofudePuzzleSessionResult = {
   elapsedMs: number;
   backtrackCount: number;
@@ -68,10 +57,7 @@ export type HitofudePuzzleSessionResult = {
   inputCount: number;
 };
 
-/**
- * 道を延ばす・先端を動かす操作の結果。延ばせなかったときは `rejection` に理由を添え、道は変えない。
- * プレイ中でない session への操作は受け付けず、理由も添えない。
- */
+/** プレイ中でない session への操作は受け付けず、理由も添えない。 */
 export type HitofudePuzzleSessionPathChange = {
   session: HitofudePuzzleSession;
   rejection: HitofudePuzzleExtensionRejection | null;
@@ -147,7 +133,6 @@ function countPathTransition(
   };
 }
 
-/** 入力1回ぶんの道の変化を、`before` を待ったの1単位として記録し、引き直しを数える。 */
 function commitInput(
   session: HitofudePuzzleSession,
   before: HitofudePuzzlePuzzleState,
@@ -160,7 +145,6 @@ function commitInput(
   };
 }
 
-/** 道を変える盤面操作を記録する。なぞっている間は、離したときにまとめて記録する。 */
 function recordPathChange(
   session: HitofudePuzzleSession,
   puzzleState: HitofudePuzzlePuzzleState,
@@ -181,7 +165,6 @@ function haveSamePath(
   );
 }
 
-/** なぞりを終え、道が変わっていれば押す前の道を待ったの1単位として記録し、引き直しを数える。 */
 function closeStroke(session: HitofudePuzzleSession): HitofudePuzzleSession {
   const { strokeOrigin } = session;
   if (strokeOrigin === null) {
@@ -193,7 +176,6 @@ function closeStroke(session: HitofudePuzzleSession): HitofudePuzzleSession {
     : commitInput(closed, strokeOrigin);
 }
 
-/** 延ばした道が全有効マスを通ったら、その時刻でクリアにする。クリアしたらなぞりも終える。 */
 function applyPathMove(
   session: HitofudePuzzleSession,
   move: HitofudePuzzleExtension | HitofudePuzzleHeadMove,
@@ -212,7 +194,6 @@ function applyPathMove(
   };
 }
 
-/** 道の先端から隣のマスへ道を1マス延ばす。 */
 export function extendHitofudePuzzleSessionPath(
   session: HitofudePuzzleSession,
   cell: number,
@@ -229,10 +210,6 @@ export function extendHitofudePuzzleSessionPath(
   );
 }
 
-/**
- * 道の先端を隣のマスへ動かす。直前のマスへ動かすと道が1マス縮み、それ以外は道を延ばす。
- * ドラッグと矢印キーで道を引くときの1マスぶんの操作。
- */
 export function moveHitofudePuzzleSessionHead(
   session: HitofudePuzzleSession,
   cell: number,
@@ -249,7 +226,6 @@ export function moveHitofudePuzzleSessionHead(
   );
 }
 
-/** 先端から `direction` の向きの隣のマスへ先端を動かす。矢印キーの1回の操作。 */
 export function moveHitofudePuzzleSessionHeadToward(
   session: HitofudePuzzleSession,
   direction: HitofudePuzzleDirection,
@@ -270,8 +246,6 @@ export function moveHitofudePuzzleSessionHeadToward(
 }
 
 /**
- * 盤面のマスを押して、道をなぞり始める。
- * 道のマスを押すとそこまで巻き戻し（先端なら変えない）、先端に隣り合うマスを押すとそこへ延ばす。
  * 延ばせないマスを押したときも押す前の道からなぞり始め、延ばせなかった理由を返す。
  * 道から外れた指でも、先端の隣へ戻ればそこから延ばせる。
  */
@@ -295,7 +269,6 @@ export function beginHitofudePuzzleSessionStroke(
   return extendHitofudePuzzleSessionPath(stroking, cell, operatedAt);
 }
 
-/** なぞっている指が隣のマスへ移ったときに道を変える。なぞっていなければ何もしない。 */
 export function traceHitofudePuzzleSessionStroke(
   session: HitofudePuzzleSession,
   step: HitofudePuzzleTraceStep,
@@ -311,14 +284,12 @@ export function traceHitofudePuzzleSessionStroke(
     : applyPathMove(session, trace, operatedAt);
 }
 
-/** 指を離してなぞりを終える。なぞる間に変えた道を、待ったの1単位にする。 */
 export function endHitofudePuzzleSessionStroke(
   session: HitofudePuzzleSession,
 ): HitofudePuzzleSession {
   return closeStroke(session);
 }
 
-/** 道の途中のマス（始点を含む）まで道を巻き戻す。道に無いマスや先端なら何もしない。 */
 export function rewindHitofudePuzzleSessionPath(
   session: HitofudePuzzleSession,
   cell: number,
@@ -333,10 +304,7 @@ export function rewindHitofudePuzzleSessionPath(
     : recordPathChange(session, puzzleState);
 }
 
-/**
- * 直前の盤面操作を1つ取り消す（待った）。巻き戻しも取り消せる。
- * 盤面を戻す前の操作は待ったで戻せない。別の道筋へ引き直した後に、待ったで元の道筋へ戻したときも、別のマスへ引いたのと同じに引き直しを数える。
- */
+/** 巻き戻しも取り消せる。盤面を戻す前の操作は待ったで戻せない。 */
 export function undoHitofudePuzzleSession(
   session: HitofudePuzzleSession,
 ): HitofudePuzzleSession {
@@ -363,7 +331,6 @@ export function canUndoHitofudePuzzleSession(
   );
 }
 
-/** 同じプレイのまま道を始点だけに戻す（盤面を戻す）。経過時間は引き継ぎ、待ったの履歴は消す。 */
 export function restartHitofudePuzzleSession(
   session: HitofudePuzzleSession,
 ): HitofudePuzzleSession {
@@ -382,7 +349,6 @@ export function restartHitofudePuzzleSession(
   };
 }
 
-/** 道が始点から延びているプレイ中だけ、盤面を戻せる。 */
 export function canRestartHitofudePuzzleSession(
   session: HitofudePuzzleSession,
 ): boolean {
