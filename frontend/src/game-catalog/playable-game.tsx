@@ -116,6 +116,7 @@ export function usePlayableGame<
     startedAt,
     start: { difficulty, problemIdentity },
     finished: completedAt !== null,
+    session: play.session,
     getProgress(abandonedAt) {
       return createPlayAttemptProgress(play.session, abandonedAt);
     },

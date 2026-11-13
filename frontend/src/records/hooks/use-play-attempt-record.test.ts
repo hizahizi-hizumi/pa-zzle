@@ -26,6 +26,7 @@ function renderAttemptHook(initialProps: HookProps) {
         startedAt,
         start,
         finished,
+        session: moveCount,
         getProgress(abandonedAt) {
           return { moveCount, elapsedMs: abandonedAt - startedAt };
         },
@@ -95,6 +96,38 @@ describe("プレイを進めた場合", () => {
       elapsedMs: 8_000,
     });
     expect(next).toEqual(createAttempt(2_000));
+  });
+});
+
+describe("一度も操作しないまま離れた場合", () => {
+  let hook: AttemptHook;
+
+  beforeEach(() => {
+    hook = renderAttemptHook({
+      startedAt: 1_000,
+      finished: false,
+      moveCount: 0,
+    });
+  });
+
+  test("プレイ画面を離れると、始めた記録ごと除くこと", async () => {
+    hook.unmount();
+    await flushAbandonment();
+
+    expect(readPlayAttempts()).toEqual([]);
+  });
+
+  test("ページを離れると、始めた記録ごと除くこと", () => {
+    window.dispatchEvent(new PageTransitionEvent("pagehide"));
+
+    expect(readPlayAttempts()).toEqual([]);
+  });
+
+  test("別のプレイに置き換えると、前のプレイを除いて次のプレイを始めること", async () => {
+    hook.rerender({ startedAt: 2_000, finished: false, moveCount: 0 });
+    await flushAbandonment();
+
+    expect(readPlayAttempts()).toEqual([createAttempt(2_000)]);
   });
 });
 

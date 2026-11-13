@@ -1,6 +1,7 @@
 import type { PlayAttempt } from "@/records/play-attempt";
 import {
   abandonPlayAttempt,
+  discardPlayAttempt,
   readPlayAttempts,
   removeClearedPlayAttempts,
   startPlayAttempt,
@@ -94,6 +95,23 @@ describe("abandonPlayAttempt", () => {
 
       expect(stored).toBeNull();
     });
+  });
+});
+
+describe("discardPlayAttempt", () => {
+  test("離脱していない試行を除くこと", () => {
+    startPlayAttempt(attempt, storage);
+    discardPlayAttempt(attempt, storage);
+
+    expect(readPlayAttempts(storage)).toEqual([]);
+  });
+
+  test("離脱を記録済みの試行は残すこと", () => {
+    startPlayAttempt(attempt, storage);
+    abandonPlayAttempt(attempt, abandonment, storage);
+    discardPlayAttempt(attempt, storage);
+
+    expect(readPlayAttempts(storage)).toEqual([{ ...attempt, abandonment }]);
   });
 });
 

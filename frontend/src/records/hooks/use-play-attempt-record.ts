@@ -9,12 +9,15 @@ import {
 } from "@/records/play-attempt";
 import {
   abandonPlayAttempt,
+  discardPlayAttempt,
   startPlayAttempt,
 } from "@/records/play-attempt-storage";
 
 type PlayAttemptSource = Pick<PlayAttempt, "gameId" | "startedAt"> & {
   start: PlayAttemptStart;
   finished: boolean;
+  /** 盤面を操作するたびに置き換わる値。始めたときから一度も置き換わっていなければ、操作していないプレイとする。 */
+  session: unknown;
   getProgress: (abandonedAt: number) => PlayAttemptProgress;
 };
 
@@ -23,19 +26,41 @@ type PendingAbandonment = {
   cancelled: boolean;
 };
 
+/** 離れたときに残すもの。操作しないまま離れたプレイは、始めた記録ごと除く。 */
+type Departure =
+  | { kind: "abandoned"; abandonment: PlayAttemptAbandonment }
+  | { kind: "untouched" };
+
+function saveDeparture(
+  play: Pick<PlayAttempt, "gameId" | "startedAt">,
+  departure: Departure,
+): void {
+  if (departure.kind === "abandoned") {
+    abandonPlayAttempt(play, departure.abandonment);
+  } else {
+    discardPlayAttempt(play);
+  }
+}
+
 /**
  * プレイを始めたことを保存し、解き終える前に離れたら進み具合を離脱として保存する。
+ * 一度も盤面を操作しないまま離れたときは、離脱として残さず、始めた記録も除く。
  * `gameId`・`startedAt` が変わると別のプレイとして扱う。
  */
 export function usePlayAttemptRecord(source: PlayAttemptSource): void {
   const latest = useRef(source);
   const pendingAbandonment = useRef<PendingAbandonment | null>(null);
+  const startSession = useRef<unknown>(source.session);
+  const operated = useRef(false);
 
   // 別のプレイへ置き換えたときのクリーンアップは、前のプレイの最後に確定した状態で離脱を保存する。
   // useEffectEvent はクリーンアップより前に置き換え後の値へ切り替わるため使わず、確定後の effect で更新する。
   // 後続の effect より先に宣言し、新しいプレイの開始時にはそのプレイの状態を読めるようにする。
   useEffect(() => {
     latest.current = source;
+    if (source.session !== startSession.current) {
+      operated.current = true;
+    }
   });
 
   const { gameId, startedAt } = source;
@@ -46,23 +71,33 @@ export function usePlayAttemptRecord(source: PlayAttemptSource): void {
       pending.cancelled = true;
       pendingAbandonment.current = null;
     }
+    // StrictMode の張り直しでは、張り直す前に操作していないので、数え直しても変わらない。
+    startSession.current = latest.current.session;
+    operated.current = false;
     startPlayAttempt({
       ...play,
       start: latest.current.start,
       abandonment: null,
     });
 
-    function captureAbandonment(): PlayAttemptAbandonment | null {
+    function captureDeparture(): Departure | null {
       const { finished, getProgress } = latest.current;
+      if (finished) {
+        return null;
+      }
+      if (!operated.current) {
+        return { kind: "untouched" };
+      }
       const abandonedAt = Date.now();
-      return finished
-        ? null
-        : { abandonedAt, progress: getProgress(abandonedAt) };
+      return {
+        kind: "abandoned",
+        abandonment: { abandonedAt, progress: getProgress(abandonedAt) },
+      };
     }
     function handlePageHide() {
-      const abandonment = captureAbandonment();
-      if (abandonment) {
-        abandonPlayAttempt(play, abandonment);
+      const departure = captureDeparture();
+      if (departure) {
+        saveDeparture(play, departure);
       }
     }
     window.addEventListener("pagehide", handlePageHide);
@@ -70,8 +105,8 @@ export function usePlayAttemptRecord(source: PlayAttemptSource): void {
     return () => {
       window.removeEventListener("pagehide", handlePageHide);
 
-      const abandonment = captureAbandonment();
-      if (!abandonment) {
+      const departure = captureDeparture();
+      if (!departure) {
         return;
       }
 
@@ -83,7 +118,7 @@ export function usePlayAttemptRecord(source: PlayAttemptSource): void {
           pendingAbandonment.current = null;
         }
         if (!pending.cancelled) {
-          abandonPlayAttempt(play, abandonment);
+          saveDeparture(play, departure);
         }
       });
     };

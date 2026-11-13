@@ -120,6 +120,22 @@ export function abandonPlayAttempt(
 }
 
 /**
+ * まだ離脱も完了もしていない試行を、記録から除く。始めただけで操作しないまま離れたプレイを残さないために使う。
+ */
+export function discardPlayAttempt(
+  play: Pick<PlayAttempt, "gameId" | "startedAt">,
+  storage: PlayRecordStorage | null = getDefaultStorage(),
+): void {
+  updatePlayAttempts(storage, (attempts) => {
+    const remaining = attempts.filter(
+      (existing) =>
+        !isSamePlayStart(existing, play) || existing.abandonment !== null,
+    );
+    return remaining.length === attempts.length ? null : remaining;
+  });
+}
+
+/**
  * クリアした試行は完了記録から導出できるので保持しない。
  * 完了記録を保存したあとに呼ぶ。
  */
