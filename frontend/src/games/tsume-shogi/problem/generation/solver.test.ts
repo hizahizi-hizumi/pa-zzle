@@ -89,7 +89,11 @@ describe("solveTsumeShogiMainLine", () => {
         "S*1b",
       ]);
       expect(mainLine.defenderTurns).toEqual([
-        { responseCount: 8, longestResponseCount: 8, tiedResponseCount: 1 },
+        {
+          responseCount: 8,
+          longestResponseCount: 8,
+          leftoverTiedResponseCount: 1,
+        },
       ]);
       expect(mainLine.leftoverAttackerPieceCount).toBe(0);
     });

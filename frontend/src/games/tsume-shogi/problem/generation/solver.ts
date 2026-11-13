@@ -27,8 +27,8 @@ export type TsumeShogiDefenderTurn = {
   responseCount: number;
   /** 詰むまでの手数が最も長くなる応手の数。2 以上は変化同手数。 */
   longestResponseCount: number;
-  /** 最長の応手のうち、詰め上がりの持駒の数でも並んだ応手の数。 */
-  tiedResponseCount: number;
+  /** `longestResponseCount` の応手のうちで数える。 */
+  leftoverTiedResponseCount: number;
 };
 
 export type TsumeShogiMainLine = {
@@ -179,7 +179,7 @@ class MainLineSolver {
         {
           responseCount: responses.length,
           longestResponseCount: longest.length,
-          tiedResponseCount: tied.length,
+          leftoverTiedResponseCount: tied.length,
         },
         ...chosen.evaluation.defenderTurns,
       ],

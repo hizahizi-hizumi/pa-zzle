@@ -38,22 +38,18 @@ import {
 } from "@/games/tsume-shogi/puzzle/position";
 import { TsumeShogiSearchPosition } from "@/games/tsume-shogi/puzzle/search-position";
 
-/**
- * - `validation`: 採用した問題の strict validator の結果（`verdict` は必ず `accepted`）。
- * - `baseCount`: 逆算の起点にした1手詰の数。
- */
+/** `validation` は採用した問題の strict validator の結果（`verdict` は必ず `accepted`）。 */
 export type TsumeShogiGeneratedProblem = TsumeShogiIdentifiedProblem & {
   fingerprint: TsumeShogiProblemFingerprint;
   validation: TsumeShogiValidation;
-  baseCount: number;
+  mateInOneBaseCount: number;
   validatedCandidateCount: number;
 };
 
 /** 試行の上限までに条件を満たす問題を作れなかった。問題集の生成では、その seed を飛ばす。 */
 export class TsumeShogiGenerationExhaustedError extends Error {}
 
-/** 逆算の起点にする1手詰の数の上限。 */
-const MAXIMUM_BASE_COUNT = 12;
+const MAXIMUM_MATE_IN_ONE_BASE_COUNT = 12;
 /** 逆算の起点の1手詰を探すときの、乱数局面の作り方。 */
 type BaseSampling = { maximumHandCount: number; maximumSamples: number };
 
@@ -331,7 +327,11 @@ export function generateTsumeShogiProblem(
   const random = createProblemSeededRandom(`tsume-shogi:${seed}`);
   const generation = new RetroGeneration(random, conditions);
 
-  for (let baseCount = 1; baseCount <= MAXIMUM_BASE_COUNT; baseCount += 1) {
+  for (
+    let mateInOneBaseCount = 1;
+    mateInOneBaseCount <= MAXIMUM_MATE_IN_ONE_BASE_COUNT;
+    mateInOneBaseCount += 1
+  ) {
     const base = findMateInOneBase(random, generation);
     if (base === null) {
       break;
@@ -351,7 +351,7 @@ export function generateTsumeShogiProblem(
       identity,
       fingerprint: createTsumeShogiProblemFingerprint(problem),
       validation,
-      baseCount,
+      mateInOneBaseCount,
       validatedCandidateCount: generation.validatedCandidateCount,
     };
   }

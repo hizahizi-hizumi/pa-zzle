@@ -1,10 +1,10 @@
 import { tsumeShogiPieceGlyphPaths } from "@/games/tsume-shogi/ui/board/piece-glyph-paths";
 import { tsumeShogiPieceShapes } from "@/games/tsume-shogi/ui/board/piece-shape";
 import {
+  centeredSquareViewBox,
   getPieceGlyphLayout,
   glyphSizeClassNames,
   promotedTypes,
-  squareViewBox,
   type TsumeShogiPieceGlyphProps,
 } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph/piece-glyph-frame";
 import { tsumeShogiToneClassNames as tone } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
@@ -29,7 +29,7 @@ export function MiniaturePieceGlyph({
 
   return (
     <svg
-      viewBox={squareViewBox}
+      viewBox={centeredSquareViewBox}
       aria-hidden="true"
       className={cn(
         "pointer-events-none shrink-0 overflow-visible",
