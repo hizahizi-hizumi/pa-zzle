@@ -132,7 +132,6 @@ export function listSlidePuzzleSingleMoves(board: SlidePuzzleBoard): number[] {
     );
 }
 
-/** 押した方向へ、空白の隣のタイルを 1 枚滑らせる。 */
 export function getSlidePuzzleKeyboardSlide(
   board: SlidePuzzleBoard,
   direction: SlidePuzzleDirection,

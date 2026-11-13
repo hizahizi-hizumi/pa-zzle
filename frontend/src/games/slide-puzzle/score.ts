@@ -88,10 +88,6 @@ export function calculateSlidePuzzleMoveDelta({
   return moveCount - optimalMoveCount;
 }
 
-/**
- * 効率は「最短手数 ÷ 総手数」の比で評価する。人の手数は最短の数倍になりやすく、
- * 超過分で線形に減らすと中位の上達差が 0 点に潰れるため。
- */
 export function calculateSlidePuzzlePlayScore({
   elapsedMs,
   moveCount,
