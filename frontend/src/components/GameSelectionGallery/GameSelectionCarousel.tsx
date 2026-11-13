@@ -1,4 +1,4 @@
-import type { PointerEvent } from "react";
+import type { PointerEvent, TouchEvent } from "react";
 import {
   useCallback,
   useEffect,
@@ -6,16 +6,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { Link } from "react-router";
-
-import {
-  playCarouselMoveSound,
-  playPlayStartSound,
-} from "@/components/app-decision-sound";
-import { GamePictogram } from "@/components/GamePictogram";
-import { SelectedGamePictogram } from "@/components/GameSelectionGallery/SelectedGamePictogram";
-import { Badge } from "@/components/ui/badge";
-import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
+import { playCarouselMoveSound } from "@/components/app-decision-sound";
+import { GameSelectionSlide } from "@/components/GameSelectionGallery/GameSelectionCarousel/GameSelectionSlide";
+import type { DifficultyLevel } from "@/games/difficulty";
 import { prefersReducedMotion } from "@/lib/motion";
 import type { Path } from "@/router";
 
@@ -41,14 +34,29 @@ type MouseGesture = {
   dragged: boolean;
 };
 
+// iOS は指が触れている間に書き換えたスクロール位置を、指を離すと元へ戻す。周を移すのは指を離して止まってからにするので、ひと続きの操作で端に着かないだけの周を並べ、中央の周から始める。
+const LAP_COUNT = 15;
+const MIDDLE_LAP = Math.floor(LAP_COUNT / 2);
+/** スクロールの終わりの知らせが来ないときに、止まったとみなすまでの時間。 */
+const SCROLL_SETTLE_MS = 140;
+/** 指で触れてから、スクロールの終わりの知らせを「前のスクロールを指で止めた知らせ」とみなす時間。 */
+const TOUCH_INTERRUPT_MS = 300;
+
+// offsetLeft は整数に丸められる。隣どうしの差を間隔にすると、周の数だけ並んだ先で丸めの誤差が積み重なるので、両端の差を枚数で割る。
+function slideStep(scroller: HTMLDivElement): number {
+  const first = scroller.firstElementChild as HTMLElement | null;
+  const last = scroller.lastElementChild as HTMLElement | null;
+  if (!first || !last || first === last) return 0;
+  return (last.offsetLeft - first.offsetLeft) / (scroller.children.length - 1);
+}
+
 function centeredSlide(
   scroller: HTMLDivElement,
   scrollLeft = scroller.scrollLeft,
 ): number {
   const first = scroller.firstElementChild as HTMLElement | null;
-  const second = first?.nextElementSibling as HTMLElement | null;
-  if (!first || !second) return 0;
-  const step = second.offsetLeft - first.offsetLeft;
+  if (!first) return 0;
+  const step = slideStep(scroller);
   if (step <= 0) return 0;
   const center = scrollLeft + scroller.clientWidth / 2;
   const firstCenter = first.offsetLeft + first.offsetWidth / 2;
@@ -61,32 +69,75 @@ function centeredSlide(
   );
 }
 
+const slidesNearFocus = new WeakMap<HTMLDivElement, Set<number>>();
+
+// 並び順が変わるとスライドの要素が別の位置へ移るので、前の位置で付けた近さを残さない。
+function clearVisualProximity(scroller: HTMLDivElement) {
+  for (const index of slidesNearFocus.get(scroller) ?? []) {
+    (scroller.children[index] as HTMLElement | undefined)?.style.removeProperty(
+      "--proximity",
+    );
+  }
+  slidesNearFocus.delete(scroller);
+}
+
 function updateVisualProximity(scroller: HTMLDivElement) {
-  const children = Array.from(scroller.children) as HTMLElement[];
-  const first = children[0];
-  const second = children[1];
-  if (!first || !second) return;
-  const step = second.offsetLeft - first.offsetLeft;
+  const children = scroller.children;
+  const first = children[0] as HTMLElement | undefined;
+  if (!first) return;
+  const step = slideStep(scroller);
   if (step <= 0) return;
   const firstCenter = first.offsetLeft + first.offsetWidth / 2;
   const focus =
     (scroller.scrollLeft + scroller.clientWidth / 2 - firstCenter) / step;
-  for (const [index, child] of children.entries()) {
-    const proximity = Math.max(0, 1 - Math.abs(index - focus)).toFixed(3);
+  // 周を移す前後で見た目が変わらないよう、移す先になる中央の周の同じ位置にも同じ近さを付ける。
+  const middleLapFocus =
+    focus + middleLapShift(Math.round(focus), children.length / LAP_COUNT);
+  // 周の数だけ複製が並ぶので、中央に近いスライドと、前に近かったスライドだけを書き換える。
+  const near = new Set<number>();
+  for (const center of [focus, middleLapFocus]) {
+    for (let index = Math.floor(center); index <= Math.ceil(center); index++) {
+      near.add(index);
+    }
+  }
+  for (const index of new Set([
+    ...near,
+    ...(slidesNearFocus.get(scroller) ?? []),
+  ])) {
+    const child = children[index] as HTMLElement | undefined;
+    if (!child) continue;
+    const proximity = Math.max(
+      0,
+      1 - Math.abs(index - focus),
+      1 - Math.abs(index - middleLapFocus),
+    ).toFixed(3);
     if (child.style.getPropertyValue("--proximity") !== proximity) {
       child.style.setProperty("--proximity", proximity);
     }
   }
+  slidesNearFocus.set(scroller, near);
 }
 
 function closestCopy(index: number, reference: number, count: number): number {
   if (count < 2) return index;
-  return [index, index + count, index + 2 * count].reduce(
-    (closest, candidate) =>
-      Math.abs(candidate - reference) < Math.abs(closest - reference)
-        ? candidate
-        : closest,
+  return Array.from(
+    { length: LAP_COUNT },
+    (_, lap) => index + lap * count,
+  ).reduce((closest, candidate) =>
+    Math.abs(candidate - reference) < Math.abs(closest - reference)
+      ? candidate
+      : closest,
   );
+}
+
+function middleLapSlide(index: number, count: number): number {
+  return count > 1 ? MIDDLE_LAP * count + index : index;
+}
+
+function middleLapShift(physicalIndex: number, count: number): number {
+  return count > 1
+    ? (MIDDLE_LAP - Math.floor(physicalIndex / count)) * count
+    : 0;
 }
 
 export function GameSelectionCarousel({
@@ -102,11 +153,16 @@ export function GameSelectionCarousel({
   const mouseGesture = useRef<MouseGesture | null>(null);
   const suppressClick = useRef(false);
   const initializedOrder = useRef("");
-  const focusedSlide = useRef(games.length + selectedIndex);
+  const focusedSlide = useRef(middleLapSlide(selectedIndex, games.length));
   const selectedGameIndex = useRef(selectedIndex);
   const isNavigating = useRef(false);
+  const isTouching = useRef(false);
+  const touchStartedAt = useRef(0);
+  const settleTimer = useRef<number | undefined>(undefined);
   const lastMoveSoundAt = useRef(-Infinity);
-  const [activeSlide, setActiveSlide] = useState(games.length + selectedIndex);
+  const [activeSlide, setActiveSlide] = useState(
+    middleLapSlide(selectedIndex, games.length),
+  );
   const [mouseDragging, setMouseDragging] = useState(false);
   const count = games.length;
   const orderKey = games.map(({ to }) => to).join("|");
@@ -125,6 +181,14 @@ export function GameSelectionCarousel({
       if (behavior === "instant") updateVisualProximity(scroller);
     },
     [],
+  );
+
+  const slideTo = useCallback(
+    function slideTo(physicalIndex: number) {
+      isNavigating.current = true;
+      scrollToSlide(physicalIndex, "smooth");
+    },
+    [scrollToSlide],
   );
 
   const focusSlide = useCallback(
@@ -147,12 +211,11 @@ export function GameSelectionCarousel({
   function recenterScroll(scroller: HTMLDivElement): number {
     const physicalIndex = centeredSlide(scroller);
     if (count < 2) return physicalIndex;
-    const lapShift =
-      physicalIndex < count ? count : physicalIndex >= count * 2 ? -count : 0;
+    const lapShift = middleLapShift(physicalIndex, count);
     if (!lapShift) return physicalIndex;
-    const first = scroller.firstElementChild as HTMLElement;
-    const second = first.nextElementSibling as HTMLElement;
-    const offset = lapShift * (second.offsetLeft - first.offsetLeft);
+    const from = scroller.children[physicalIndex] as HTMLElement;
+    const to = scroller.children[physicalIndex + lapShift] as HTMLElement;
+    const offset = to.offsetLeft - from.offsetLeft;
     scroller.scrollLeft += offset;
     if (mouseGesture.current?.dragged) {
       mouseGesture.current.startScroll += offset;
@@ -178,9 +241,10 @@ export function GameSelectionCarousel({
     const orderChanged = initializedOrder.current !== orderKey;
     initializedOrder.current = orderKey;
     if (orderChanged) {
-      const initial = count > 1 ? count + selectedIndex : selectedIndex;
+      const initial = middleLapSlide(selectedIndex, count);
       focusedSlide.current = initial;
       setActiveSlide(initial);
+      if (scrollerRef.current) clearVisualProximity(scrollerRef.current);
       scrollToSlide(initial, "instant");
       return;
     }
@@ -190,6 +254,22 @@ export function GameSelectionCarousel({
       scrollToSlide(nearest, "smooth");
     }
   }, [selectedIndex, count, orderKey, scrollToSlide, focusSlide]);
+
+  // iOS は指を離して端から戻ったときにスクロールの終わりを知らせないので、動きが止んだことでも止まったとみなす。
+  function settleAfterScroll(scroller: HTMLDivElement) {
+    window.clearTimeout(settleTimer.current);
+    settleTimer.current = window.setTimeout(() => {
+      if (!isTouching.current) commitSlide(scroller);
+    }, SCROLL_SETTLE_MS);
+  }
+
+  useEffect(() => () => window.clearTimeout(settleTimer.current), []);
+
+  function handleTouchRelease(event: TouchEvent<HTMLDivElement>) {
+    if (event.touches.length > 0) return;
+    isTouching.current = false;
+    settleAfterScroll(event.currentTarget);
+  }
 
   useEffect(() => {
     function handleResize() {
@@ -210,10 +290,12 @@ export function GameSelectionCarousel({
     mouseGesture.current = null;
     suppressClick.current = false;
     isNavigating.current = true;
+    // 指が触れている間は周を移せない。
+    if (event.pointerType !== "mouse") return;
     const physicalIndex = recenterScroll(event.currentTarget);
     focusSlide(physicalIndex);
     updateVisualProximity(event.currentTarget);
-    if (event.pointerType !== "mouse" || event.button !== 0) return;
+    if (event.button !== 0) return;
     mouseGesture.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -245,10 +327,7 @@ export function GameSelectionCarousel({
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
     const nearest = centeredSlide(event.currentTarget);
-    const first = event.currentTarget.firstElementChild as HTMLElement | null;
-    const step = first?.nextElementSibling
-      ? (first.nextElementSibling as HTMLElement).offsetLeft - first.offsetLeft
-      : 0;
+    const step = slideStep(event.currentTarget);
     const distance = event.clientX - gesture.startX;
     const direction = Math.sign(-distance);
     const start = centeredSlide(event.currentTarget, gesture.startScroll);
@@ -267,10 +346,7 @@ export function GameSelectionCarousel({
   }
 
   if (!count) return null;
-  const laps =
-    count > 1
-      ? (["previous", "current", "next"] as const)
-      : (["current"] as const);
+  const lapCount = count > 1 ? LAP_COUNT : 1;
 
   return (
     <div className="game-selection__carousel-region">
@@ -286,8 +362,26 @@ export function GameSelectionCarousel({
           const physicalIndex = centeredSlide(event.currentTarget);
           updateVisualProximity(event.currentTarget);
           focusSlide(physicalIndex, isNavigating.current);
+          settleAfterScroll(event.currentTarget);
         }}
-        onScrollEnd={(event) => commitSlide(event.currentTarget)}
+        onScrollEnd={(event) => {
+          if (isTouching.current) {
+            // iOS は動いている最中に指で触れると、触れた直後にスクロールの終わりを知らせる。指が触れている間は周を移せないので、止まった扱いにしない。
+            const interruptedByTouch =
+              performance.now() - touchStartedAt.current < TOUCH_INTERRUPT_MS;
+            if (interruptedByTouch) return;
+            // Chromium の端末エミュレーションのタッチは、スクロールが始まると指を離した知らせを届けない。そこでは、スクロールの終わりで指が離れたとみなす。
+            isTouching.current = false;
+          }
+          commitSlide(event.currentTarget);
+        }}
+        onTouchStart={() => {
+          isTouching.current = true;
+          touchStartedAt.current = performance.now();
+          window.clearTimeout(settleTimer.current);
+        }}
+        onTouchEnd={handleTouchRelease}
+        onTouchCancel={handleTouchRelease}
         onWheel={(event) => {
           isNavigating.current = true;
           const physicalIndex = recenterScroll(event.currentTarget);
@@ -321,7 +415,7 @@ export function GameSelectionCarousel({
                 : Math.max(
                     0,
                     Math.min(
-                      count * laps.length - 1,
+                      count * lapCount - 1,
                       focusedSlide.current +
                         (event.key === "ArrowRight" ? 1 : -1),
                     ),
@@ -330,67 +424,34 @@ export function GameSelectionCarousel({
           scrollToSlide(next, "smooth");
         }}
       >
-        {laps.flatMap((lap, lapIndex) =>
+        {Array.from({ length: lapCount }, (_, lap) => lap).flatMap((lap) =>
           games.map((game, index) => {
-            const physicalIndex = lapIndex * count + index;
+            const physicalIndex = lap * count + index;
             const active = activeSlide === physicalIndex;
+            // 周を移す前後で描き替えが要らないよう、移す先になる中央の周の複製も選んでいる姿で描く。
+            const selected =
+              active ||
+              physicalIndex ===
+                activeSlide + middleLapShift(activeSlide, count);
+            const showsContinuation = selected && selectedIndex === index;
             return (
-              <Link
+              <GameSelectionSlide
                 key={`${lap}-${game.to}`}
+                name={game.name}
+                pictogramSvg={game.pictogramSvg}
+                pictogramShowcaseSvg={game.pictogramShowcaseSvg}
                 to={game.to}
-                className="game-selection__slide"
-                data-active={active}
-                aria-label={`${game.name}${active ? "を開く" : "を選択"}`}
-                aria-describedby={
-                  active && selectedIndex === index && continuation
-                    ? continuationId
-                    : undefined
-                }
-                tabIndex={active ? 0 : -1}
-                draggable={false}
-                onClick={(event) => {
-                  if (active) {
-                    playPlayStartSound();
-                    return;
-                  }
-                  event.preventDefault();
-                  isNavigating.current = true;
-                  scrollToSlide(physicalIndex, "smooth");
-                }}
-              >
-                <span className="game-selection__figure">
-                  {active ? (
-                    <SelectedGamePictogram
-                      pictogramSvg={game.pictogramSvg}
-                      pictogramShowcaseSvg={game.pictogramShowcaseSvg}
-                      size="hero"
-                      motion={isCovered ? "rest" : "play"}
-                      colorsIn={
-                        colorsInGame === game.to && selectedIndex === index
-                      }
-                    />
-                  ) : (
-                    <GamePictogram svg={game.pictogramSvg} />
-                  )}
-                </span>
-                <span className="game-selection__details">
-                  <span className="game-selection__position" aria-hidden="true">
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <span>/</span>
-                    <span>{String(count).padStart(2, "0")}</span>
-                  </span>
-                  <span className="game-selection__name">{game.name}</span>
-                  <span className="game-selection__meta">
-                    {active && selectedIndex === index && continuation && (
-                      <Badge id={continuationId} variant="outline">
-                        {getDifficultyLabel(continuation.difficulty)}
-                        {continuation.attemptedCount > 0 &&
-                          ` ・ 挑戦中 ${continuation.attemptedCount}問`}
-                      </Badge>
-                    )}
-                  </span>
-                </span>
-              </Link>
+                physicalIndex={physicalIndex}
+                position={index + 1}
+                count={count}
+                active={active}
+                selected={selected}
+                isCovered={isCovered}
+                colorsIn={colorsInGame === game.to && selectedIndex === index}
+                continuation={showsContinuation ? continuation : null}
+                continuationId={continuationId}
+                onChoose={slideTo}
+              />
             );
           }),
         )}

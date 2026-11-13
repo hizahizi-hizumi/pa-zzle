@@ -109,7 +109,7 @@
   -webkit-user-select: none;
   user-select: none;
 }
-.game-selection__slide[data-active="true"] {
+.game-selection__slide[data-selected="true"] {
   z-index: 1;
 }
 .game-selection__figure {
@@ -141,7 +141,7 @@
   padding-top: clamp(16px, 3vh, 26px);
   opacity: clamp(0, calc(var(--proximity, 0) * 2 - 1), 1);
 }
-.game-selection__slide:not([data-active="true"]) .game-selection__details {
+.game-selection__slide:not([data-selected="true"]) .game-selection__details {
   pointer-events: none;
 }
 .game-selection__position {
@@ -191,14 +191,14 @@
   outline: 2px solid var(--ring);
   outline-offset: 5px;
 }
-.game-selection__slide[data-active="true"]:active .game-selection__figure {
+.game-selection__slide[data-selected="true"]:active .game-selection__figure {
   transform: scale(calc(0.27 + var(--proximity, 0) * 0.72));
 }
 @media (pointer: fine) {
   .game-selection__carousel {
     cursor: grab;
   }
-  .game-selection__slide:not([data-active="true"]):hover {
+  .game-selection__slide:not([data-selected="true"]):hover {
     opacity: 1;
   }
 }
