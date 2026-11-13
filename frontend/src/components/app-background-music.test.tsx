@@ -48,8 +48,8 @@ function renderTutorial(initialState: TutorialMusicState) {
 
 function renderPlayScreen(initialProps: PlayScreenMusicState) {
   return renderHook(
-    ({ progress, resultShown }: PlayScreenMusicState) =>
-      usePlayScreenMusicState(progress, resultShown),
+    ({ progress, unsavedResultShown }: PlayScreenMusicState) =>
+      usePlayScreenMusicState(progress, unsavedResultShown),
     { initialProps },
   );
 }
@@ -84,7 +84,7 @@ afterEach(() => {
 describe("getAppBackgroundMusicScene", () => {
   const solving: PlayScreenMusicState = {
     progress: "playing",
-    resultShown: false,
+    unsavedResultShown: false,
   };
   const cases = [
     ["ホーム", "/", "home"],
@@ -106,35 +106,35 @@ describe("getAppBackgroundMusicScene", () => {
       {
         situation: "盤面を解いている",
         progress: "playing",
-        resultShown: false,
+        unsavedResultShown: false,
         expected: "play",
       },
       {
         situation: "完成演出を見せている",
         progress: "clearing",
-        resultShown: false,
+        unsavedResultShown: false,
         expected: "silent",
       },
       {
         situation: "記録の結果画面へ移るのを待っている",
         progress: "result",
-        resultShown: false,
+        unsavedResultShown: false,
         expected: "silent",
       },
       {
         situation: "その場で結果画面を出している",
         progress: "result",
-        resultShown: true,
+        unsavedResultShown: true,
         expected: "result",
       },
     ] as const;
 
     test.each(playScreenCases)(
       "$situation間は $expected の場面を返すこと",
-      ({ progress, resultShown, expected }) => {
+      ({ progress, unsavedResultShown, expected }) => {
         const scene = getAppBackgroundMusicScene(
           playPath,
-          { progress, resultShown },
+          { progress, unsavedResultShown },
           "closed",
         );
 
@@ -341,7 +341,7 @@ describe("useAppBackgroundMusic", () => {
       renderHook(useAppBackgroundMusic, { wrapper: createWrapper(playPath) });
       playScreen = renderPlayScreen({
         progress: "playing",
-        resultShown: false,
+        unsavedResultShown: false,
       });
     });
 
@@ -356,24 +356,27 @@ describe("useAppBackgroundMusic", () => {
       vi.mocked(playBackgroundMusic).mockClear();
 
       playScreen.unmount();
-      renderPlayScreen({ progress: "playing", resultShown: false });
+      renderPlayScreen({ progress: "playing", unsavedResultShown: false });
 
       expect(playBackgroundMusic).not.toHaveBeenCalled();
     });
 
     test("クリアして完成演出が始まったら、曲を止めること", () => {
-      playScreen.rerender({ progress: "clearing", resultShown: false });
+      playScreen.rerender({ progress: "clearing", unsavedResultShown: false });
 
       expect(getLastPlayedMusic().url).toBeNull();
     });
 
     describe("クリアしてその場で結果画面を出した場合", () => {
       beforeEach(() => {
-        playScreen.rerender({ progress: "clearing", resultShown: false });
+        playScreen.rerender({
+          progress: "clearing",
+          unsavedResultShown: false,
+        });
       });
 
       test("結果の曲を流すこと", () => {
-        playScreen.rerender({ progress: "result", resultShown: true });
+        playScreen.rerender({ progress: "result", unsavedResultShown: true });
 
         expect(getLastPlayedMusic()).toEqual({
           url: expect.stringMatching(/result\.mp3$/),

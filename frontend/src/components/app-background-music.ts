@@ -1,16 +1,3 @@
-/**
- * アプリの画面ごとに流す BGM を決める。曲を流す仕組みは `@/lib/background-music` が持つ。
- *
- * - ホーム・ゲームのホーム・記録と、それ以外の案内の画面（ページが見つからないなど）: ホームの曲
- * - プレイ画面: 盤面を解いている間はプレイ中の曲。クリアして完成演出が始まったらフェードアウトし、クリア音と報酬の音を前に出す
- * - チュートリアル: 開いた画面によらず、盤面を解く場面としてプレイ中の曲。解き終えて完成演出が始まったらフェードアウトし、クリア音を前に出す
- * - 結果画面: 結果の曲
- * - アプリを開いたときのタイトル: 流さない。入ったら、入った先の画面の曲を流し始める
- *
- * プレイに入るときは、流れている曲を引いて間を空けてからプレイ中の曲を立ち上げ、ここから解くという区切りを聞かせる。
- * そのほかの曲の切り替えはクロスフェードにする。
- */
-
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { matchPath, useLocation } from "react-router";
 
@@ -27,7 +14,6 @@ import {
   prepareBackgroundMusic,
 } from "@/lib/background-music";
 
-/** アプリが流す曲の組。 */
 export type AppBackgroundMusicTracks = {
   home: BackgroundMusicTrack;
   play: BackgroundMusicTrack;
@@ -36,17 +22,14 @@ export type AppBackgroundMusicTracks = {
 
 export type AppBackgroundMusicScene = "home" | "play" | "result" | "silent";
 
-/** 場面で流す曲と、その曲に掛ける大きさ（倍）。 */
 export type AppBackgroundMusic = {
   track: BackgroundMusicTrack;
   gain: number;
 };
 
-/** プレイ画面が知らせる、BGM の場面を決めるためのプレイの状態。 */
 export type PlayScreenMusicState = {
   progress: GameProgress;
-  /** 記録を保存できず、その場で結果画面を出しているか。 */
-  resultShown: boolean;
+  unsavedResultShown: boolean;
 };
 
 const appBackgroundMusicTracks: AppBackgroundMusicTracks = {
@@ -64,31 +47,21 @@ const appBackgroundMusicTracks: AppBackgroundMusicTracks = {
   }),
 };
 
-/**
- * 場面ごとに曲へ掛ける大きさ。プレイ中は操作の効果音が頻繁に鳴るので、プレイ中の曲を効果音よりさらに奥へ下げる（-6 dB）。
- * 下げた分で、プレイ中の操作の効果音の多くが、曲の大きい箇所でも自分の鳴る帯域で曲より 10 dB 以上大きく聞こえる。
- * ホームの曲に対する、遊ぶゲームを選ぶ・プレイを始める音と同じ聞こえ方である。
- */
 const sceneGains = {
   home: 1,
+  // プレイ中は操作の効果音が頻繁に鳴るので、曲を -6 dB 下げる。下げた分で、操作の効果音の多くが曲の大きい箇所でも
+  // 自分の鳴る帯域で曲より 10 dB 以上大きく聞こえ、ホームの曲に対する遊ぶゲームを選ぶ・プレイを始める音と同じ聞こえ方になる。
   play: 0.5,
   result: 1,
 } as const satisfies Record<Exclude<AppBackgroundMusicScene, "silent">, number>;
 
-/**
- * プレイに入るとき、流れている曲を引く長さ。選んだ直後に素早く引き、選ぶ場面が終わったことをすぐ伝える。
- * 短すぎると曲が途切れたように聞こえるので、引いていると分かる長さは残す。
- */
+// 選んだ直後に素早く引き、選ぶ場面が終わったことをすぐ伝える。短すぎると曲が途切れたように聞こえるので、引いていると分かる長さは残す。
 const ENTER_PLAY_FADE_OUT_SEC = 0.7;
-/** 曲を引き切ってから、プレイ中の曲を立ち上げるまでの無音。前の曲の余韻を残さず、ここから解くという区切りを作る。 */
+// 前の曲の余韻を残さず、ここから解くという区切りを作る。
 const ENTER_PLAY_SILENCE_SEC = 0.5;
-/**
- * プレイ中の曲を立ち上げる長さ。盤面を見て解き始める間に、いつ鳴り始めたか気づかないほどゆっくり入れ、
- * 曲で注意を引かずに集中する場をつくる。
- */
+// 盤面を見て解き始める間に、いつ鳴り始めたか気づかないほどゆっくり入れ、曲で注意を引かずに集中する場をつくる。
 const ENTER_PLAY_FADE_IN_SEC = 3;
 
-/** プレイに入るときの切り替え。前の曲とプレイ中の曲を重ねない。 */
 const enterPlayTransition: BackgroundMusicTransition = {
   kind: "break",
   fadeOutSec: ENTER_PLAY_FADE_OUT_SEC,
@@ -98,21 +71,15 @@ const enterPlayTransition: BackgroundMusicTransition = {
 
 const crossfadeTransition: BackgroundMusicTransition = { kind: "crossfade" };
 
-/**
- * チュートリアルが知らせる、BGM の場面を決めるための状態。チュートリアルは開いた画面の上に重ねる、盤面を解く場面として扱う。
- * - `closed`: 開いていない。
- * - `solving`: 開いて、導入を見せているか、盤面を解いている。
- * - `solved`: 盤面を解き終えて、完成演出か完成した盤面を見せている。
- */
+/** `solving` は導入を見せている間も含む。 */
 export type TutorialMusicState = "closed" | "solving" | "solved";
 
 const PLAY_PATH_PATTERN = "/puzzles/:game/play/:difficulty";
 const RESULT_PATH_PATTERN = "/puzzles/:game/result/:recordId";
 
-/** プレイ画面がまだ何も知らせていないときの状態。盤面を解いている間として扱う。 */
 const initialPlayScreenMusicState: PlayScreenMusicState = {
   progress: "playing",
-  resultShown: false,
+  unsavedResultShown: false,
 };
 
 let playScreenMusicState = initialPlayScreenMusicState;
@@ -121,17 +88,12 @@ const playScreenMusicStateListeners = new Set<() => void>();
 let tutorialMusicState: TutorialMusicState = "closed";
 const tutorialMusicStateListeners = new Set<() => void>();
 
-/**
- * 画面で流す BGM の場面を決める。
- * チュートリアルを開いている間は、開いた画面によらず、盤面を解いている間だけプレイ中の場面にし、解き終えてからは流さない。
- * プレイ画面のパスでは、盤面を解いている間だけプレイ中の場面にし、クリアしてからは流さない。
- * 記録を保存できずその場で結果画面を出している間は結果の場面にする。
- */
 export function getAppBackgroundMusicScene(
   pathname: string,
-  { progress, resultShown }: PlayScreenMusicState,
+  { progress, unsavedResultShown }: PlayScreenMusicState,
   tutorial: TutorialMusicState,
 ): AppBackgroundMusicScene {
+  // チュートリアルは開いた画面の上に重ねる、盤面を解く場面として扱うので、開いた画面によらず決める。
   if (tutorial !== "closed") {
     return tutorial === "solving" ? "play" : "silent";
   }
@@ -139,7 +101,7 @@ export function getAppBackgroundMusicScene(
     return "result";
   }
   if (matchPath(PLAY_PATH_PATTERN, pathname)) {
-    if (resultShown) {
+    if (unsavedResultShown) {
       return "result";
     }
     return progress === "playing" ? "play" : "silent";
@@ -147,7 +109,6 @@ export function getAppBackgroundMusicScene(
   return "home";
 }
 
-/** 場面で流す曲と、その曲に掛ける大きさ。流さない場面では `null`。 */
 export function selectAppBackgroundMusic(
   scene: AppBackgroundMusicScene,
   tracks: AppBackgroundMusicTracks,
@@ -158,10 +119,7 @@ export function selectAppBackgroundMusic(
   return { track: tracks[scene], gain: sceneGains[scene] };
 }
 
-/**
- * 場面が移るときの曲の切り替え方。ほかの場面からプレイの場面に入るときは区切り、そのほかはクロスフェードにする。
- * 初めて流すとき（`previousScene` が `null`）にプレイの場面なら、区切りと同じくゆっくり立ち上げる。
- */
+/** `previousScene` は、まだ何も流していなければ `null`。 */
 export function selectAppBackgroundMusicTransition(
   previousScene: AppBackgroundMusicScene | null,
   scene: AppBackgroundMusicScene,
@@ -171,11 +129,7 @@ export function selectAppBackgroundMusicTransition(
     : crossfadeTransition;
 }
 
-/**
- * 今の画面に合わせて BGM を流す。アプリの全画面を包む部品で一度呼ぶ。
- * 流しうる曲は先に読み込み、画面を移ったときに待たせない。読み込みは今の画面の曲を先にし、そのあとは
- * ホームから難易度を選んでプレイに入るときに間に合うようプレイ中の曲を、最後にプレイを終えるまでに要る結果の曲を読み込む。
- */
+/** アプリの全画面を包む部品で一度呼ぶ。 */
 export function useAppBackgroundMusic(): void {
   const { pathname } = useLocation();
   const playScreen = useSyncExternalStore(
@@ -199,6 +153,8 @@ export function useAppBackgroundMusic(): void {
   const gain = music?.gain;
   const previousScene = useRef<AppBackgroundMusicScene | null>(null);
 
+  // 流しうる曲は先に読み込み、画面を移ったときに待たせない。今の画面の曲のあとは、ホームから難易度を選んでプレイに入るときに
+  // 間に合うようプレイ中の曲を、最後にプレイを終えるまでに要る結果の曲を読み込む。
   useEffect(() => {
     const { home, play, result } = appBackgroundMusicTracks;
     prepareBackgroundMusic([home, play, result]);
@@ -215,25 +171,22 @@ export function useAppBackgroundMusic(): void {
 }
 
 /**
- * プレイ画面のプレイの状態を、画面で流す BGM の場面に知らせる。プレイ画面を描く間、描くたびに呼ぶ。
- * 記録を保存できたプレイは記録の結果画面へ移り、そのパスで結果の曲を流すので、`resultShown` を真にしない。
+ * プレイ画面を描く間、描くたびに呼ぶ。記録を保存できたプレイは記録の結果画面へ移り、そのパスで結果の曲を流すので、
+ * `unsavedResultShown` を真にしない。
  */
 export function usePlayScreenMusicState(
   progress: GameProgress,
-  resultShown: boolean,
+  unsavedResultShown: boolean,
 ): void {
   useEffect(() => {
-    setPlayScreenMusicState({ progress, resultShown });
+    setPlayScreenMusicState({ progress, unsavedResultShown });
     return function leavePlayScreen() {
       setPlayScreenMusicState(initialPlayScreenMusicState);
     };
-  }, [progress, resultShown]);
+  }, [progress, unsavedResultShown]);
 }
 
-/**
- * チュートリアルの状態を、画面で流す BGM の場面に知らせる。チュートリアルの枠を描く間、描くたびに呼ぶ。
- * 閉じたか、枠を描かなくなったら、開いた画面の曲へ戻す。
- */
+/** チュートリアルの枠を描く間、描くたびに呼ぶ。 */
 export function useTutorialMusicState(state: TutorialMusicState): void {
   useEffect(() => {
     setTutorialMusicState(state);
