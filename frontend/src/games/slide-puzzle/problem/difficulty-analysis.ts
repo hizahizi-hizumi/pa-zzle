@@ -9,16 +9,11 @@ import {
 } from "@/games/slide-puzzle/puzzle/state";
 
 export type SlidePuzzleDifficultyFeatures = {
-  /** 盤面の一辺のマス数。盤面の把握と読みの深さを強めるレバーとして難易度に使う。 */
   boardSize: SlidePuzzleBoardSize;
-  /** タイル 1 枚の移動を 1 手とした最短手数。作業量の対照。 */
+  /** 作業量の対照。 */
   optimalMoveCount: number;
-  /** 各タイルを他と無関係に運べた場合の手数。盤面から見える距離。 */
   manhattanDistance: number;
-  /**
-   * 最短解のうち、タイルをゴールから遠ざける手の数。
-   * 1 手でマンハッタン距離総和は必ず ±1 変わるので、(最短手数 − マンハッタン距離総和) / 2 に等しい。
-   */
+  /** 1 手でマンハッタン距離総和は必ず ±1 変わるので、(最短手数 − マンハッタン距離総和) / 2 に等しい。 */
   detourMoveCount: number;
   /** ゴール位置にないタイルの枚数。撹拌の広がりの対照。 */
   misplacedTileCount: number;

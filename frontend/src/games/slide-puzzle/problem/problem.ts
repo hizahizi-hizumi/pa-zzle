@@ -69,7 +69,6 @@ export function isSlidePuzzleProblemIdentity(
   );
 }
 
-/** 生成器の版が今と違う記録も、採点に使う盤面サイズが読めれば読み込む。 */
 export type SlidePuzzleRecordedProblemIdentity = RecordedProblemIdentity<{
   size: SlidePuzzleBoardSize;
 }>;
