@@ -46,7 +46,8 @@ describe("exploreStateSpace", () => {
         graph!.moves.flatMap((moves) =>
           iceFloorMazeDirections.map(
             (direction) =>
-              moves.find((move) => move.direction === direction)?.to ?? -1,
+              moves.find((move) => move.direction === direction)
+                ?.toStateIndex ?? -1,
           ),
         ),
       );

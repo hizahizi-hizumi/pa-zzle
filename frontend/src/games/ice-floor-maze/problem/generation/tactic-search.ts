@@ -90,8 +90,7 @@ const defaultTacticWeights = {
   constraint: 6,
 } as const satisfies TacticWeights;
 
-/** 関係する岩の目安の割合。超えた岩を減点する。 */
-const ROCK_TARGET = 0.22;
+const MAXIMUM_UNPENALIZED_RELEVANT_ROCK_SHARE = 0.22;
 
 type TacticWeightName = Exclude<
   keyof TacticWeights,
@@ -152,7 +151,8 @@ function scoreTactics(
   const w = weights;
   const excess = Math.max(
     0,
-    tactics.relevantRockCount - ROCK_TARGET * cellCount,
+    tactics.relevantRockCount -
+      MAXIMUM_UNPENALIZED_RELEVANT_ROCK_SHARE * cellCount,
   );
   return (
     w.stopper * Number(hasStaticTacticTag(tactics, "stopper")) +

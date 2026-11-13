@@ -39,12 +39,11 @@ import {
  * 氷と岩だけの盤面にも当てられる（要素が無いだけ）。
  */
 
-/** 最短+この手数以内の道筋を「近い道筋」とみなす。 */
-const NEAR_SLACK = 2;
+const NEAR_PATH_EXTRA_MOVES = 2;
 /** 見た目どおりの読みの解が元の規則でも通るとき、元の規則での手数が最短よりこれ以上長ければ大きな遠回り。 */
 const DETOUR = 4;
 /** 選択肢の後の最短が、分かれた状態からの最短よりこの手数以上長ければ遠回り。 */
-export const FALSE_LEAD_COST = 3;
+export const FALSE_LEAD_EXTRA_MOVES = 3;
 
 /**
  * 要素の役割。
@@ -64,7 +63,7 @@ export type ElementRole =
 /**
  * 見た目どおり（もろい岩→岩、薄い氷→氷、雪→入ると止まる床、滑る氷の塊→岩）に読んだ盤面の結果。
  * - `unsolvable`: 解が無い。
- * - `misleading`: その盤面の最短+`NEAR_SLACK` 手以内のどの解も、元の規則では通らない。
+ * - `misleading`: その盤面の最短+`NEAR_PATH_EXTRA_MOVES` 手以内のどの解も、元の規則では通らない。
  * - `detour`: 通る解はあるが、元の規則での手数が大きな遠回り。
  * - `shortcut`: 通り、遠回りでもない（静的な近道）。
  */
@@ -73,7 +72,7 @@ export type LooksReading = "unsolvable" | "misleading" | "detour" | "shortcut";
 /**
  * 要素を変化しないマスに置き換えた盤面（静的な盤面）の解を、元の規則で試した結果。
  * - `shortest`: 静的な盤面の最少手数。`null` なら解なし。
- * - `passingMoveCount`: 静的な盤面の最短+`NEAR_SLACK` 手以内の解（同じ停止点を二度通らない）を元の規則で入力したとき、
+ * - `passingMoveCount`: 静的な盤面の最短+`NEAR_PATH_EXTRA_MOVES` 手以内の解（同じ停止点を二度通らない）を元の規則で入力したとき、
  *   ゴールで止まるものの元の規則での最少手数。途中でゴールに止まればそこで数え、動かない入力は数えない。通るものが無ければ `null`。
  */
 export type StaticSolution = {
@@ -213,7 +212,7 @@ export function hasStaticShortcut(metrics: ElementMetrics): boolean {
   return (
     classifyLooksReading(metrics) === "shortcut" ||
     (other.passingMoveCount !== null &&
-      other.passingMoveCount <= metrics.shortest + NEAR_SLACK)
+      other.passingMoveCount <= metrics.shortest + NEAR_PATH_EXTRA_MOVES)
   );
 }
 
@@ -416,7 +415,11 @@ function listSolutionOptions(
   ): SolutionOption {
     const after = toGoal[target]!;
     const kind =
-      after < 0 ? 2 : after + spent - remaining >= FALSE_LEAD_COST ? 1 : 0;
+      after < 0
+        ? 2
+        : after + spent - remaining >= FALSE_LEAD_EXTRA_MOVES
+          ? 1
+          : 0;
     return {
       direction,
       source,
@@ -960,7 +963,7 @@ function measurePrecedence(
       }
       if (reached < 0) {
         strict.push([a, b]);
-      } else if (reached >= shortest + FALSE_LEAD_COST) {
+      } else if (reached >= shortest + FALSE_LEAD_EXTRA_MOVES) {
         soft += 1;
       }
     }
@@ -986,7 +989,7 @@ function measurePrecedence(
 }
 
 /**
- * 静的な盤面の近い解（最短+`NEAR_SLACK` 手以内）を、元の規則で入力して試す。静的な盤面の状態と元の規則の状態の組を
+ * 静的な盤面の近い解（最短+`NEAR_PATH_EXTRA_MOVES` 手以内）を、元の規則で入力して試す。静的な盤面の状態と元の規則の状態の組を
  * 手数の層ごとにたどり、組ごとに元の規則での最少手数を持つ。近い解は、すぐ前の停止点へ戻る手を除けば同じ停止点を二度通らない
  * （二度通る解は最短より3手以上長い）。
  */
@@ -1004,7 +1007,7 @@ function solveStatic(
   if (shortest < 0) {
     return { shortest: null, passingMoveCount: null };
   }
-  const budget = shortest + NEAR_SLACK;
+  const budget = shortest + NEAR_PATH_EXTRA_MOVES;
   const staticCount = statics.count;
   const realCount = space.count;
   function encode(previous: number, current: number, real: number): number {
@@ -1222,7 +1225,7 @@ export function measureElementMetrics(
       continue;
     }
     const total = space.distances[index]! + remaining;
-    if (shortest < total && total <= shortest + NEAR_SLACK) {
+    if (shortest < total && total <= shortest + NEAR_PATH_EXTRA_MOVES) {
       nearExtraStateCount += 1;
     }
   }

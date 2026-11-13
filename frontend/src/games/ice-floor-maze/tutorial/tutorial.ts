@@ -259,7 +259,7 @@ function findShortestDirections(
     { from: number; direction: IceFloorMazeDirection }
   >();
   graph.moves.forEach((moves, from) => {
-    for (const { to, direction } of moves) {
+    for (const { toStateIndex: to, direction } of moves) {
       if (to !== 0 && !previous.has(to)) {
         previous.set(to, { from, direction });
       }

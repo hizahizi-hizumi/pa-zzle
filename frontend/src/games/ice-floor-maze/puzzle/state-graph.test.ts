@@ -24,7 +24,7 @@ function findFirstShortestSolution(
 ): IceFloorMazeDirection[] {
   const predecessors = graph.states.map((): number[] => []);
   for (const [from, stateMoves] of graph.moves.entries()) {
-    for (const { to } of stateMoves) {
+    for (const { toStateIndex: to } of stateMoves) {
       predecessors[to]!.push(from);
     }
   }
@@ -48,10 +48,11 @@ function findFirstShortestSolution(
   let current = 0;
   while (movesToGoal[current]! > 0) {
     const next = graph.moves[current]!.find(
-      ({ to }) => movesToGoal[to] === movesToGoal[current]! - 1,
+      ({ toStateIndex }) =>
+        movesToGoal[toStateIndex] === movesToGoal[current]! - 1,
     )!;
     solution.push(next.direction);
-    current = next.to;
+    current = next.toStateIndex;
   }
   return solution;
 }
@@ -62,7 +63,7 @@ function countShortestSolutions(
 ): number {
   const ways = graph.states.map((_, index) => (index === 0 ? 1 : 0));
   for (const [from, stateMoves] of graph.moves.entries()) {
-    for (const { to } of stateMoves) {
+    for (const { toStateIndex: to } of stateMoves) {
       if (graph.moveCounts[to] === graph.moveCounts[from]! + 1) {
         ways[to]! += ways[from]!;
       }

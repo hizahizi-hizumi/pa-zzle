@@ -7,7 +7,7 @@ import {
 } from "@/games/ice-floor-maze/puzzle/board";
 import { iceFloorMazeDirectionVectors } from "@/games/ice-floor-maze/ui/board/board-geometry";
 import {
-  iceFloorMazeBrittleHalfSides,
+  iceFloorMazeBrittleHalfTiltSigns,
   iceFloorMazeThinIceShardDirections,
 } from "@/games/ice-floor-maze/ui/board/cell-shapes";
 import {
@@ -142,7 +142,7 @@ function animateCellChanges(
       "[data-brittle-half]",
     )) {
       const side =
-        iceFloorMazeBrittleHalfSides[Number(half.dataset.brittleHalf)] ?? 1;
+        iceFloorMazeBrittleHalfTiltSigns[Number(half.dataset.brittleHalf)] ?? 1;
       animations.push(
         half.animate?.(
           [

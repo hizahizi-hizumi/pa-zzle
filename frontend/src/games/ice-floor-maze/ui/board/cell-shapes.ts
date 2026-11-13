@@ -6,8 +6,8 @@ import { roundIceFloorMazeCoordinate } from "@/games/ice-floor-maze/ui/board/pat
  * 盤面は真上から見た絵で、光は左上から当たる。形ごとの高さの読ませ方は `IceFloorMazeCellFace` に書く。
  */
 
-/** 崩れるときに、左右の塊がそれぞれ傾く向き。 */
-export const iceFloorMazeBrittleHalfSides = [-1, 1] as const;
+/** 左の塊、右の塊の順。 */
+export const iceFloorMazeBrittleHalfTiltSigns = [-1, 1] as const;
 
 const crackCenter = [0.44, 0.54] as const;
 

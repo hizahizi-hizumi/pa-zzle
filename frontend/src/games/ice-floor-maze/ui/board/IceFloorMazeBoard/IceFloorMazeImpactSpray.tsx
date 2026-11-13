@@ -24,8 +24,7 @@ const CHIP_EDGE_WIDTH = 0.022;
 const FLASH_DURATION_MS = 180;
 const FLASH_HALF_LENGTH = 0.34;
 const FLASH_WIDTH = 0.1;
-/** 駒の中心から、ぶつかった面までの距離。 */
-const CONTACT_DISTANCE = 0.44;
+const PIECE_CENTER_TO_IMPACT_FACE = 0.44;
 
 /**
  * 削れた氷のかけら。`side` はぶつかった面に沿って左右へ飛ぶ量、`back` は来た向きへ跳ね返る量（どちらもマスの単位）。
@@ -109,7 +108,7 @@ export function IceFloorMazeImpactSpray({
     <g
       ref={layerRef}
       data-impact-spray=""
-      transform={`translate(${center.x + vector.x * CONTACT_DISTANCE} ${center.y + vector.y * CONTACT_DISTANCE})`}
+      transform={`translate(${center.x + vector.x * PIECE_CENTER_TO_IMPACT_FACE} ${center.y + vector.y * PIECE_CENTER_TO_IMPACT_FACE})`}
     >
       <line
         data-impact-flash=""
