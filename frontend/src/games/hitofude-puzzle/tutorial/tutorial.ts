@@ -266,10 +266,7 @@ function getStepEndLength(step: HitofudePuzzleTutorialStep): number {
   return solution.indexOf(step.cells.at(-1) ?? board.start) + 1;
 }
 
-/**
- * 手を引いている間は、印のマスへ順に延ばす手だけを受け付ける。ほかの手は道を変えない。
- * 伝えたルールで阻まれる手（穴へ進む・通ったマスへ進む）だけは、本番と同じく阻まれたとして返す。
- */
+/** 手を引いている間は、印のマスへ順に延ばす手だけを受け付ける。ほかの手は道を変えない。 */
 function performGuided(
   step: HitofudePuzzleTutorialStep,
   earnedRuleIds: readonly HitofudePuzzleTutorialRuleId[],
@@ -308,10 +305,7 @@ function performGuided(
   };
 }
 
-/**
- * 手を離した後は、本番と同じく道を延ばし、縮め、穴や離れたマスで阻む。
- * 穴や通ったマスへ進もうとした手と、解から外れて全マスを通れなくなった道は、ルールに合わない手として返す。
- */
+/** 手を離した後は、本番と同じく道を延ばし、縮め、穴や離れたマスで阻む。 */
 function performFree(
   state: HitofudePuzzleTutorialBoardState,
   played: PlayedAction,

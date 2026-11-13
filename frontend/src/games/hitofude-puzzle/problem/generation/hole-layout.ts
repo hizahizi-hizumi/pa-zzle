@@ -15,7 +15,6 @@ export type HitofudePuzzleHoleLayout = {
   openBlockRatio: number;
 };
 
-/** 見た目の基準。穴が少なすぎて長方形の盤面に近づくこと、大きな空白・片寄り、通路だらけの盤面を避ける。 */
 export const hitofudePuzzleHoleLayoutCriteria = {
   // 枠のマスのうち穴の割合の範囲（5×5 は 2〜6、8×8 は 6〜16 個）。
   holeRatio: { minimum: 0.08, maximum: 0.25 },

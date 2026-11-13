@@ -11,7 +11,6 @@ import {
 } from "@/games/score";
 
 /**
- * 上位レベルは解法器でも先読みを要し、引いて確かめること自体を強く罰すると遊び方を罰するので、速さを主にし、引き直しは軽く数える。
  * 配点・減点幅・基準時間の係数はすべて暫定値で、実プレイで校正する（`ハミルトン路成績評価.md`）。
  */
 export const HITOFUDE_PUZZLE_SCORE_MAXIMUMS = {
@@ -22,8 +21,6 @@ export const HITOFUDE_PUZZLE_SCORE_MAXIMUMS = {
 /**
  * 引き直し1回ごとの正確さの減点（暫定値）。
  * 押し間違いを直した程度（3回まで）なら、ほかが満点で great に残る。
- * 待った・盤面を戻すの回数と戻したマスの数は減点しない。どの操作で戻した後に別の向きへ引いても、別の道筋へ引き直した後に、
- * 待ったで元の道筋へ戻したときも、引き直しとして数えて減点するため。
  */
 export const HITOFUDE_PUZZLE_BACKTRACK_PENALTY = 3;
 

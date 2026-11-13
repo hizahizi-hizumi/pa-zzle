@@ -61,7 +61,6 @@ function createHeadShakeKeyframes(
 
 /**
  * 道を延ばせなかったことを盤面で返す。進もうとしたマスに×を短く点け、先端を進もうとした向きへ小さく揺らす。
- * 指で隠れやすい先端だけでなく、押した・なぞった先でも拒まれたと分かるようにする。
  * 先端の揺れは動きを減らす設定では出さず（`playRejectionShake`）、×だけを返す。
  */
 export function animateBlockedMove(
