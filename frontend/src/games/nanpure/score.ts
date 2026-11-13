@@ -18,7 +18,6 @@ export const NANPURE_MISTAKE_PENALTY = 5;
 export const NANPURE_UNDO_PENALTY = 2;
 export const NANPURE_RESTART_PENALTY = 5;
 
-/** 速さの基準時間。問題の作業量によらず全問で共通にする。 */
 export const NANPURE_SPEED_FULL_SCORE_MS = 15 * 60 * 1_000;
 /** 速さを減らす超過時間の刻み。超過時間をこの幅で切り上げ、1刻みごとに1点減らす。 */
 export const NANPURE_SPEED_PENALTY_INTERVAL_MS = 60 * 1_000;

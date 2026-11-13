@@ -15,9 +15,6 @@ export type NanpureDifficulty = DifficultyLevel;
 // 3段階（dependency-v1）時代の記録を、旧区分のまま読み込み表示するためだけに残す。
 export type NanpureRecordedDifficulty = RecordedDifficulty;
 
-/**
- * - `out-of-range`: 分析できるが提供しない。`too-light` は、行・列・ブロックの最後の1マスを埋めるだけで解き終わり、数字の置き場所を探す挑戦が無い。
- */
 export type NanpureDifficultyAssessment = DifficultyAssessment<{
   classified: NoAssessmentDetail;
   outOfRange: { reason: "too-light" };

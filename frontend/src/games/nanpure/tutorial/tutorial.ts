@@ -165,10 +165,7 @@ export function getNanpureTutorialUnitCellIndices({
   return unitCellIndices[kind][index] ?? [];
 }
 
-/**
- * 操作を教えた後、行・列・ブロックのルールを1つずつ示し、示したまとまりで最後に空いたマスを埋めさせる。
- * 操作で入れる6行3列の9で、6行目の空きは6行9列だけになる。
- */
+/** 操作で入れる6行3列の9で、6行目の空きは6行9列だけになる。 */
 const steps: readonly NanpureTutorialStep[] = [
   {
     message: {
@@ -365,7 +362,6 @@ const unitNames = {
 } as const satisfies Record<NanpureTutorialRuleId, string>;
 
 /**
- * 直前に入れた数字が違って重なったなら、重なったまとまりをすべてと、その数字を言う。盤面で赤く示すまとまりと食い違わせないため。
  * 直前の手は正しく、前に入れた違う数字との重なりが残っているなら、その違う数字のマスを直させる。マスには印を付ける。
  */
 function describeNanpureTutorialViolation(
