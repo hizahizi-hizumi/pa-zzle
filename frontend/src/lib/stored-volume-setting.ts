@@ -11,8 +11,7 @@ type StoredVolumeSetting = {
   unmutedVolume: number;
 };
 
-/** 音量を選べるようにする前の、鳴らすかどうかだけの設定。 */
-type StoredEnabledSetting = {
+type LegacyStoredEnabledSetting = {
   enabled: boolean;
 };
 
@@ -89,7 +88,7 @@ function readLegacyEnabledSetting(
   }
 
   const parsed: unknown = JSON.parse(stored);
-  if (isStoredEnabledSetting(parsed) && !parsed.enabled) {
+  if (isLegacyStoredEnabledSetting(parsed) && !parsed.enabled) {
     return { volume: 0, unmutedVolume: DEFAULT_VOLUME };
   }
   return DEFAULT_SETTING;
@@ -113,7 +112,9 @@ function isVolume(value: unknown): value is number {
   );
 }
 
-function isStoredEnabledSetting(value: unknown): value is StoredEnabledSetting {
+function isLegacyStoredEnabledSetting(
+  value: unknown,
+): value is LegacyStoredEnabledSetting {
   return isRecordObject(value) && typeof value.enabled === "boolean";
 }
 
