@@ -4,7 +4,6 @@ import {
   computeReflectionClues,
 } from "@/games/reflection/puzzle/laser";
 
-/** 取り除いてもヒントが変わらないピースは推理の手掛かりに現れず、置き場所を決められない。 */
 export function doAllReflectionPiecesInfluenceClues(
   board: ReflectionBoard,
 ): boolean {

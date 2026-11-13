@@ -79,7 +79,6 @@ export function ReflectionClueButton({
   cues = [],
 }: ReflectionClueButtonProps) {
   const { row, column } = getReflectionClueGridPosition(size, entry);
-  // 一致しているときは緑の地で目標と同じと分かるので、今のマスの数は出さない。
   const laserCount = laserResult && !matched ? laserResult.distance : null;
   const outsideCountClassName =
     entry.side === "top" || entry.side === "bottom"

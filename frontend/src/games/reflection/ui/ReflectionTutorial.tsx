@@ -66,7 +66,6 @@ const RUN_OPERATION_ID_STRIDE = 100_000;
 
 /**
  * 手を引いている間に印の無い所を押されたときの、印の押し直し。印の線を短く濃くして戻す。
- * 押した所に赤を出すと、ルールに当たった手だと覚え違えるので出さない。
  * - `id`: 押されるたびに増やし、続けて押されても押し直す。
  * - `progress`: 押されたときの進行。手が進んだら押し直しを終える。
  */
@@ -106,10 +105,6 @@ function getBoardProgress(progress: ReflectionTutorialProgress): GameProgress {
   }
 }
 
-/**
- * 5×5 の盤面を、一言と印に沿って一緒に解き、数字の意味と4種類のピースの働きを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りのピースを自分で置かせる。盤面・ストック・完成演出は本番と同じ部品を使う。
- */
 export function ReflectionTutorial({
   open,
   playStart,

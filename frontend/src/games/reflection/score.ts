@@ -9,10 +9,6 @@ import {
   sumPlayScore,
 } from "@/games/score";
 
-/**
- * 置き直し・盤面を戻した回数・光路を確かめた回数は減点しない。一致表示を見ながら置いて確かめ、動かして直すことが
- * このゲームの中心の操作で、それを減点すると遊び方そのもの（押し間違いも含む）を罰するため。
- */
 export const REFLECTION_SCORE_MAXIMUMS = {
   speed: 100,
 } as const satisfies ScoreMaximums<"speed">;
