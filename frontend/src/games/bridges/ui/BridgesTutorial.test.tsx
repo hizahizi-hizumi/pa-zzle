@@ -8,13 +8,15 @@ import {
 } from "@testing-library/react";
 
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
-import { bridgesLevelCombinations } from "@/games/bridges/difficulty";
+import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import {
   _private,
   BRIDGES_TUTORIAL_BOARD,
+  bridgesTutorial,
 } from "@/games/bridges/tutorial/tutorial";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
 import { BOARD_MARGIN } from "@/games/bridges/ui/board/board-geometry";
+import type { TutorialMessage } from "@/games/tutorial";
 import { playLayeredSound, playSound } from "@/lib/sound-effects";
 
 vi.mock("@/lib/sound-effects", async (importOriginal) => ({
@@ -23,47 +25,44 @@ vi.mock("@/lib/sound-effects", async (importOriginal) => ({
   playLayeredSound: vi.fn(),
 }));
 
-const { edgeBetween, islandAt } = _private;
+const { edgeBetween, islandAt, steps } = _private;
+const { intro, freePlay, completion } = bridgesTutorial;
 
-/** 盤面の1マスを 100px で置いたときの、押す所。左上のマスの左上の角を原点にしたマス単位の座標。 */
-type BoardPoint = readonly [x: number, y: number];
+/** 1始まりの行・列で書いた島。 */
+type IslandAt = readonly [row: number, column: number];
 
-/** 辺の線の上の、ほかの辺から離れた所。 */
-const edgePoints = {
-  center: [2.5, 1.5],
-  rightBottom: [4.5, 3.5],
-  rightTop: [4.5, 1.5],
-  leftTop: [0.5, 1.5],
-  leftBottom: [0.5, 3.5],
-  bottom: [2.5, 4.5],
-  top: [1.5, 0.5],
-  topRight: [3.5, 0.5],
-  middle: [1.5, 2.5],
-} as const satisfies Record<string, BoardPoint>;
-
-/** 2本架ける手順は2回押す。 */
-const stepTaps: readonly BoardPoint[] = [
-  edgePoints.center,
-  edgePoints.center,
-  edgePoints.rightBottom,
-  edgePoints.rightBottom,
-  edgePoints.middle,
-  edgePoints.rightTop,
-  edgePoints.leftTop,
+/** 手順ごとに架ける2島と、押す回数。 */
+const stepTaps: readonly (readonly (readonly [
+  IslandAt,
+  IslandAt,
+  number,
+])[])[] = [
+  [[[2, 5], [4, 5], 1]],
+  [[[4, 3], [4, 5], 2]],
+  [
+    [[1, 1], [1, 3], 2],
+    [[1, 1], [3, 1], 2],
+  ],
+  [[[3, 1], [6, 1], 1]],
+  [
+    [[3, 6], [6, 6], 1],
+    [[6, 3], [6, 6], 1],
+  ],
 ];
 
-/** 最後の手順で、左上の2から上の4へなぞる所。 */
-const topLeftIsland = [0.5, 0.5] as const satisfies BoardPoint;
-const topIsland = [2.5, 0.5] as const satisfies BoardPoint;
-
-/** 手順を終えた後に残る、解の橋。 */
-const remainingTaps: readonly BoardPoint[] = [
-  edgePoints.bottom,
-  edgePoints.topRight,
+/** 手順を終えた後に残る橋。 */
+const remainingTaps: readonly (readonly [IslandAt, IslandAt, number])[] = [
+  [[1, 3], [1, 6], 1],
+  [[1, 3], [4, 3], 2],
+  [[3, 6], [6, 6], 1],
+  [[4, 3], [6, 3], 2],
 ];
 
 const violationReactionDelayMs = 500;
-const idleHintDelayMs = 4000;
+const nextStepDelayMs = 900;
+
+/** 手を離した後に止まっていても、手がかりを勝手に出さないことを確かめる長さ。 */
+const longIdleMs = 60_000;
 
 afterEach(() => {
   cleanup();
@@ -79,28 +78,38 @@ function advanceTime(ms: number): void {
   });
 }
 
-function stubReducedMotion(): void {
-  vi.stubGlobal(
-    "matchMedia",
-    vi.fn(() => ({ matches: true }) as MediaQueryList),
-  );
+function getScreen(): HTMLElement {
+  return screen.getByRole("dialog", { name: BRIDGES_DISPLAY_NAME });
 }
 
-function pressNextThroughIntro(): void {
-  for (
-    let next = screen.queryByRole("button", { name: "次へ" });
-    next;
-    next = screen.queryByRole("button", { name: "次へ" })
-  ) {
-    fireEvent.click(next);
-  }
+/** 一言は改行（`\n`）で折り返して見せるので、画面の文字としては空白に読む。 */
+function queryShownText(text: string): HTMLElement | null {
+  return within(getScreen()).queryByText(text.replaceAll("\n", " "));
+}
+
+function queryMessage(message: TutorialMessage | null | undefined) {
+  return queryShownText(message?.headline ?? "");
+}
+
+function pressStart(): void {
+  fireEvent.click(
+    within(getScreen()).getByRole("button", { name: "はじめる" }),
+  );
+  advanceTime(0);
+}
+
+function queryHintButton(): HTMLElement | null {
+  return within(getScreen()).queryByRole("button", { name: "ヒント" });
 }
 
 function getBoard(): HTMLElement {
-  return screen.getByRole("group", { name: "ブリッジパズル盤面 5行5列" });
+  return within(getScreen()).getByRole("group", {
+    name: `${BRIDGES_DISPLAY_NAME}盤面 6行6列`,
+  });
 }
 
-function placeBoard([x, y]: BoardPoint) {
+/** 盤面の絵を、周りの海の余白も含めて1マス 100px で置き、マス単位の点を画面の座標にする。 */
+function toPointer(x: number, y: number) {
   const board = getBoard();
   const size = (BRIDGES_TUTORIAL_BOARD.width + 2 * BOARD_MARGIN) * 100;
   vi.spyOn(board, "getBoundingClientRect").mockReturnValue(
@@ -118,38 +127,43 @@ function placeBoard([x, y]: BoardPoint) {
   };
 }
 
-function tap(at: BoardPoint): void {
-  const { board, point } = placeBoard(at);
+/**
+ * 2島の間を押して離す。押す所は、交わる線と島の陸から離れた、2島の中心の間の 3/10 の所にする。
+ * 盤面の点は、左上のマスの左上の角を原点にしたマス単位。
+ */
+function tapBetween(
+  [fromRow, fromColumn]: IslandAt,
+  [toRow, toColumn]: IslandAt,
+): void {
+  const { board, point } = toPointer(
+    fromColumn - 0.5 + (toColumn - fromColumn) * 0.3,
+    fromRow - 0.5 + (toRow - fromRow) * 0.3,
+  );
   fireEvent.pointerDown(board, point);
   fireEvent.pointerUp(board, point);
 }
 
-function pressIsland(at: BoardPoint): void {
-  const { board, point } = placeBoard(at);
-  fireEvent.pointerDown(board, point);
-  fireEvent.pointerUp(board, point);
-}
-
-function tapAll(points: readonly BoardPoint[]): void {
-  for (const point of points) {
-    tap(point);
+function tapAll(
+  taps: readonly (readonly [IslandAt, IslandAt, number])[],
+): void {
+  for (const [from, to, count] of taps) {
+    for (let index = 0; index < count; index += 1) {
+      tapBetween(from, to);
+    }
   }
 }
 
-function drag(from: BoardPoint, to: BoardPoint): void {
-  const { board, point: start } = placeBoard(from);
-  const { point: end } = placeBoard(to);
-  fireEvent.pointerDown(board, start);
-  fireEvent.pointerMove(board, end);
-  fireEvent.pointerUp(board, end);
+/** 最初の `count` 個の手順を終える。手順の間は、終えた手順を残して見せる間を待ってから次へ進める。 */
+function finishSteps(count: number): void {
+  stepTaps.slice(0, count).forEach((taps, index) => {
+    if (index > 0) {
+      advanceTime(nextStepDelayMs);
+    }
+    tapAll(taps);
+  });
+  advanceTime(nextStepDelayMs);
 }
 
-function finishGuidedSteps(): void {
-  tapAll(stepTaps);
-  drag(topLeftIsland, topIsland);
-}
-
-/** 1始まりの行・列の島の読み上げ。 */
 function getIslandLabel(row: number, column: number): string {
   return (
     within(getBoard()).getByRole("button", {
@@ -158,44 +172,21 @@ function getIslandLabel(row: number, column: number): string {
   );
 }
 
-function getEdgesWithCue(cue: "mark" | "recall" | "acknowledgement"): number[] {
+function getCuedEdges(cue: "mark" | "pointer" | "recall" | "acknowledgement") {
   return [...getBoard().querySelectorAll(`[data-tutorial-cue="${cue}"]`)].map(
     (element) =>
       Number(element.closest("[data-cue-edge]")?.getAttribute("data-cue-edge")),
   );
 }
 
-function getSpotlit(kind: "island" | "edge"): number[] {
-  return [...getBoard().querySelectorAll(`[data-spotlit-${kind}]`)]
-    .map((element) => Number(element.getAttribute(`data-spotlit-${kind}`)))
+function getSpotlitIslands(): number[] {
+  return [...getBoard().querySelectorAll("[data-spotlit-island]")]
+    .map((element) => Number(element.getAttribute("data-spotlit-island")))
     .sort((left, right) => left - right);
 }
 
-function hasFocusScrim(): boolean {
-  return document.querySelector("[data-tutorial-focus-scrim]") !== null;
-}
-
-function getPlayedSoundNames(): string[] {
-  const single = vi.mocked(playSound).mock;
-  const layered = vi.mocked(playLayeredSound).mock;
-  return [
-    ...single.calls.map(([sound], index) => ({
-      order: single.invocationCallOrder[index]!,
-      sounds: [sound],
-    })),
-    ...layered.calls.map(([layers], index) => ({
-      order: layered.invocationCallOrder[index]!,
-      sounds: layers.map(({ sound }) => sound),
-    })),
-  ]
-    .sort((left, right) => left.order - right.order)
-    .flatMap(({ sounds }) =>
-      sounds.map((sound) => sound.url.split("/").at(-1) ?? ""),
-    );
-}
-
-function sorted(values: readonly number[]): number[] {
-  return [...values].sort((left, right) => left - right);
+function getScrim(): Element | null {
+  return document.querySelector("[data-tutorial-focus-scrim]");
 }
 
 describe("BridgesTutorial", () => {
@@ -204,299 +195,276 @@ describe("BridgesTutorial", () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
-    stubReducedMotion();
     onClose = vi.fn<() => void>();
     playStart = { difficulty: "1", onStart: vi.fn<() => void>() };
+    render(
+      <BridgesTutorial open={true} playStart={playStart} onClose={onClose} />,
+    );
   });
 
-  describe("ゲームのホームから開いた場合", () => {
+  test("入口で、何をするパズルかとゴールの一言を、印の無い解き終えた盤面と一緒に見せ、覆わないこと", () => {
+    const purpose = queryShownText(intro.purpose);
+    const caption = queryShownText(intro.goalCaption);
+    const label = getIslandLabel(1, 1);
+
+    expect(purpose).not.toBeNull();
+    expect(caption).not.toBeNull();
+    expect(label).toContain("橋4本");
+    expect(getCuedEdges("pointer")).toEqual([]);
+    expect(getScrim()).toBeNull();
+    expect(queryHintButton()).toBeNull();
+  });
+
+  describe("始めた場合", () => {
     beforeEach(() => {
-      render(
-        <BridgesTutorial open={true} playStart={playStart} onClose={onClose} />,
+      pressStart();
+    });
+
+    test("橋の無い始めの盤面で、最初の手順の一言と、押す辺を指で指す印を見せ、決め手が無いので覆わないこと", () => {
+      const headline = queryMessage(steps[0]!.message);
+      const pointed = getCuedEdges("pointer");
+
+      expect(headline).not.toBeNull();
+      expect(getIslandLabel(1, 1)).toContain("橋0本");
+      expect(pointed).toEqual([edgeBetween([2, 5], [4, 5])]);
+      expect(getScrim()).toBeNull();
+      expect(queryHintButton()).toBeNull();
+    });
+
+    test("印の無い辺を押すと、盤面を変えず、印の線を濃くし直すこと", () => {
+      tapBetween([1, 1], [1, 3]);
+
+      const recalled = getCuedEdges("recall");
+
+      expect(getIslandLabel(1, 1)).toContain("橋0本");
+      expect(recalled).toEqual([edgeBetween([2, 5], [4, 5])]);
+    });
+
+    test("印の辺を押すと1本架かり、架けた辺に応えて一言を保ち、その後で数字の手順の一言と決め手に替えること", () => {
+      tapBetween([2, 5], [4, 5]);
+
+      const acknowledged = getCuedEdges("acknowledgement");
+      const keptHeadline = queryMessage(steps[0]!.message);
+
+      expect(getIslandLabel(2, 5)).toContain("橋1本");
+      expect(acknowledged).toEqual([edgeBetween([2, 5], [4, 5])]);
+      expect(keptHeadline).not.toBeNull();
+
+      advanceTime(nextStepDelayMs);
+
+      expect(queryMessage(steps[1]!.message)).not.toBeNull();
+      expect(getCuedEdges("pointer")).toEqual([]);
+      expect(getSpotlitIslands()).toEqual(
+        [islandAt(2, 5), islandAt(4, 3), islandAt(4, 5)].sort(
+          (left, right) => left - right,
+        ),
       );
+      expect(getScrim()).not.toBeNull();
     });
 
-    test("導入でゴールの盤面を見せ、次へで橋の無い始まりの盤面へ替えること", () => {
-      const goalLabel = getIslandLabel(1, 3);
-      fireEvent.click(screen.getByRole("button", { name: "次へ" }));
-      const startLabel = getIslandLabel(1, 3);
-
-      expect(goalLabel).toBe("1行3列の島 数字4 橋4本 ちょうど");
-      expect(startLabel).toBe("1行3列の島 数字4 橋0本");
-    });
-
-    describe("導入を終えた場合", () => {
+    describe("数字の手順に進んだ場合", () => {
       beforeEach(() => {
-        pressNextThroughIntro();
+        finishSteps(1);
       });
 
-      test("操作の一言を出し、上の4と真ん中の2の間に印を付け、そこと両端の島だけを覆いから抜くこと", () => {
-        const headline = screen.queryByText(/島と島の間を押すと/);
-        const marked = getEdgesWithCue("mark");
-        const spotlitIslands = getSpotlit("island");
-        const spotlitEdges = getSpotlit("edge");
+      test("手順に無い辺を押すと、盤面を変えず、今の手順で何をするかを言うこと", () => {
+        tapBetween([2, 5], [4, 5]);
+
+        const headline = queryMessage(steps[1]!.offStepMessage);
+
+        expect(getIslandLabel(2, 5)).toContain("橋1本");
+        expect(headline).not.toBeNull();
+      });
+
+      test("交差に阻まれる辺を押すと、本番と同じく盤面を変えず、まだ伝えていない交差を違反と言わずに、今の手順で何をするかを言うこと", () => {
+        const { board, point } = toPointer(3.5, 2.5);
+        fireEvent.pointerDown(board, point);
+        fireEvent.pointerUp(board, point);
+
+        const headline = queryMessage(steps[1]!.offStepMessage);
 
         expect(headline).not.toBeNull();
-        expect(marked).toEqual([edgeBetween([1, 3], [4, 3])]);
-        expect(hasFocusScrim()).toBe(true);
-        expect(spotlitIslands).toEqual(
-          sorted([islandAt(1, 3), islandAt(4, 3)]),
-        );
-        expect(spotlitEdges).toEqual([edgeBetween([1, 3], [4, 3])]);
+        expect(queryShownText("ここに架けるとほかの橋と交差します")).toBeNull();
       });
 
-      test("印の無い所を押すと、橋を架けず音も鳴らさず、印の線を濃くし直すこと", () => {
-        tap(edgePoints.bottom);
+      test("左の6への辺を1回押した途中で手順に無い辺を押しても、盤面と食い違わない、今の手順で何をするかの一言を返すこと", () => {
+        tapBetween([4, 3], [4, 5]);
+        tapBetween([1, 1], [1, 3]);
 
-        expect(getIslandLabel(5, 1)).toBe("5行1列の島 数字1 橋0本");
-        expect(getPlayedSoundNames()).toEqual([]);
-        expect(getEdgesWithCue("recall")).toEqual([
-          edgeBetween([1, 3], [4, 3]),
-        ]);
+        const headline = queryMessage(steps[1]!.offStepMessage);
+
+        expect(headline).not.toBeNull();
+        expect(getIslandLabel(4, 5)).toContain("橋2本");
       });
 
-      test("印の縦の帯が横の辺と交わる所を押しても、印の辺として橋を架けること", () => {
-        tap([2.5, 2.5]);
+      test("左の6への辺を1回押すと、もう一度押すよう途中の一言に替え、2回目で次の手順へ進むこと", () => {
+        tapBetween([4, 3], [4, 5]);
 
-        expect(getIslandLabel(4, 3)).toBe("4行3列の島 数字2 橋1本");
-      });
+        expect(queryMessage(steps[1]!.midwayMessage)).not.toBeNull();
 
-      test("印の辺の両端の島を順に押すと、印の辺として橋を架けること", () => {
-        pressIsland([2.5, 0.5]);
-        pressIsland([2.5, 3.5]);
+        tapBetween([4, 3], [4, 5]);
+        advanceTime(nextStepDelayMs);
 
-        expect(getIslandLabel(4, 3)).toBe("4行3列の島 数字2 橋1本");
-      });
-
-      test("印の辺を押すと、本番と同じ架ける音を鳴らして応え、もう一度押す手順へ進むこと", () => {
-        tap(edgePoints.center);
-
-        expect(getIslandLabel(4, 3)).toBe("4行3列の島 数字2 橋1本");
-        expect(getPlayedSoundNames()).toEqual(["bridge-placed.flac"]);
-        expect(getEdgesWithCue("acknowledgement")).toEqual([
-          edgeBetween([1, 3], [4, 3]),
-        ]);
-        expect(screen.queryByText(/^もう一度押すと/)).not.toBeNull();
-        expect(
-          screen.queryByText(/2本までです。もう一度押すと外れます/),
-        ).not.toBeNull();
-      });
-
-      test("交差の手順では、先に真ん中の縦の2本に阻まれる右の3と左の1の間に印を付け、そこと交わる縦の橋と、直前に架けた橋を覆いから抜くこと", () => {
-        tapAll(stepTaps.slice(0, 4));
-
-        expect(screen.queryByText(/交差できません/)).not.toBeNull();
-        expect(getEdgesWithCue("mark")).toEqual([edgeBetween([3, 1], [3, 5])]);
-        expect(getSpotlit("edge")).toEqual(
-          sorted([
-            edgeBetween([3, 1], [3, 5]),
-            edgeBetween([1, 3], [4, 3]),
-            edgeBetween([3, 5], [5, 5]),
-          ]),
-        );
-      });
-
-      test("交差の手順で印の辺を押すと、盤面を変えずに本番と同じく阻んだ橋を点けて阻まれた音を鳴らし、印を右の3と上の2の間へ移すこと", () => {
-        tapAll(stepTaps.slice(0, 4));
-        vi.mocked(playSound).mockClear();
-        vi.mocked(playLayeredSound).mockClear();
-        tap(edgePoints.middle);
-        const blockingLines = getBoard().querySelectorAll(
-          "[data-bridges-blocking]",
-        );
-
-        expect(getIslandLabel(3, 1)).toBe("3行1列の島 数字1 橋0本");
-        expect(blockingLines).toHaveLength(1);
-        expect(getPlayedSoundNames()).toEqual(["blocked.flac"]);
-        expect(getEdgesWithCue("recall")).toEqual([
-          edgeBetween([1, 5], [3, 5]),
-        ]);
-        expect(
-          screen.queryByText(/橋どうしは\s*交差できません/),
-        ).not.toBeNull();
-      });
-
-      test("交差の手順で阻まれるのを見せた後は、右の3と、交わる真ん中の縦の橋と左へ架けられない辺、2本架かった下の橋を覆いから抜くこと", () => {
-        tapAll(stepTaps.slice(0, 5));
-
-        expect(getEdgesWithCue("mark")).toEqual([edgeBetween([1, 5], [3, 5])]);
-        expect(getSpotlit("edge")).toEqual(
-          sorted([
-            edgeBetween([1, 5], [3, 5]),
-            edgeBetween([1, 3], [4, 3]),
-            edgeBetween([3, 1], [3, 5]),
-            edgeBetween([3, 5], [5, 5]),
-          ]),
-        );
-      });
-
-      describe("島から架ける操作の手順の場合", () => {
-        beforeEach(() => {
-          tapAll(stepTaps);
-          vi.mocked(playSound).mockClear();
-          vi.mocked(playLayeredSound).mockClear();
-        });
-
-        test("島から相手の島へなぞる一言を出し、左上の2と上の4の間に印を付けること", () => {
-          expect(
-            screen.queryByText(/^島から相手の島へ\s*なぞっても架かります/),
-          ).not.toBeNull();
-          expect(getEdgesWithCue("mark")).toEqual([
-            edgeBetween([1, 1], [1, 3]),
-          ]);
-        });
-
-        test("島の間を押しても架けず、印の線を濃くし直すこと", () => {
-          tap(edgePoints.top);
-
-          expect(getIslandLabel(1, 1)).toBe("1行1列の島 数字2 橋1本");
-          expect(getEdgesWithCue("recall")).toEqual([
-            edgeBetween([1, 1], [1, 3]),
-          ]);
-        });
-
-        test("左上の2から上の4へなぞると架け、手を離すこと", () => {
-          drag(topLeftIsland, topIsland);
-
-          expect(getIslandLabel(1, 1)).toBe("1行1列の島 数字2 橋2本 ちょうど");
-          expect(
-            screen.queryByText(/^残りの橋を架ければ\s*完成です/),
-          ).not.toBeNull();
-        });
-
-        test("左上の2を押してから上の4を押しても架けること", () => {
-          pressIsland(topLeftIsland);
-          pressIsland(topIsland);
-
-          expect(getIslandLabel(1, 1)).toBe("1行1列の島 数字2 橋2本 ちょうど");
-        });
-      });
-
-      describe("手順を終えた場合", () => {
-        beforeEach(() => {
-          finishGuidedSteps();
-          vi.mocked(playSound).mockClear();
-          vi.mocked(playLayeredSound).mockClear();
-        });
-
-        test("覆いを外し、残りを架けさせる一言を出して、すぐには印を付けないこと", () => {
-          expect(hasFocusScrim()).toBe(false);
-          expect(
-            screen.queryByText(/^残りの橋を架ければ\s*完成です/),
-          ).not.toBeNull();
-          expect(getEdgesWithCue("mark")).toEqual([]);
-        });
-
-        test("手が止まると、橋が要ると決まる辺に印を付けること", () => {
-          advanceTime(idleHintDelayMs);
-
-          expect(getEdgesWithCue("mark")).toHaveLength(1);
-        });
-
-        test("交わる橋に阻まれた後に手が止まると、盤面は変わっていないので手がかりの印を付けること", () => {
-          tap(edgePoints.middle);
-          advanceTime(idleHintDelayMs);
-
-          expect(getEdgesWithCue("mark")).toHaveLength(1);
-        });
-
-        test("交わる橋に阻まれる所を押すと、本番と同じく阻んだ橋を点けて阻まれた音を鳴らし、続くと交差の一言を出すこと", () => {
-          tap(edgePoints.middle);
-          const blockingLines = getBoard().querySelectorAll(
-            "[data-bridges-blocking]",
-          );
-          const messageBeforeSettled = screen.queryByText(/交差するので/);
-          advanceTime(violationReactionDelayMs);
-
-          expect(blockingLines).toHaveLength(1);
-          expect(getPlayedSoundNames()).toEqual(["blocked.flac"]);
-          expect(messageBeforeSettled).toBeNull();
-          expect(screen.queryByText(/交差するので/)).not.toBeNull();
-        });
-
-        test("数字より多く架けると、本番と同じく島を多すぎにし、続くと多すぎの一言を出すこと", () => {
-          tap(edgePoints.leftTop);
-          advanceTime(violationReactionDelayMs);
-
-          expect(getIslandLabel(3, 1)).toBe("3行1列の島 数字1 橋2本 多すぎ");
-          expect(screen.queryByText(/多く出ています/)).not.toBeNull();
-        });
-
-        test("1と1をつないで閉じると、続くとつながらない島ができたと伝えること", () => {
-          tapAll([
-            edgePoints.leftTop,
-            edgePoints.leftTop,
-            edgePoints.leftBottom,
-          ]);
-          advanceTime(violationReactionDelayMs);
-
-          expect(
-            screen.queryByText(/ほかとつながらない島が\s*できています/),
-          ).not.toBeNull();
-        });
-
-        describe("残りを架けて解き終えた場合", () => {
-          const smallestSize = Math.min(
-            ...Object.values(bridgesLevelCombinations).map(
-              ({ boardSize }) => boardSize.minimum,
-            ),
-          );
-
-          beforeEach(() => {
-            tapAll(remainingTaps);
-          });
-
-          test("本番と同じ完成の音を鳴らし、演出を終えてからゲームのホームで開いているレベルを遊ぶ操作を出すこと", () => {
-            const buttonDuringAnimation = screen.queryByRole("button", {
-              name: "レベル 1を遊ぶ",
-            });
-            advanceTime(2000);
-            fireEvent.click(
-              screen.getByRole("button", { name: "レベル 1を遊ぶ" }),
-            );
-
-            expect(buttonDuringAnimation).toBeNull();
-            expect(getPlayedSoundNames()).toContain("cleared-chord.flac");
-            expect(playStart.onStart).toHaveBeenCalledOnce();
-          });
-
-          test("どのレベルの盤面もチュートリアルより大きいので、本番はもっと大きな盤面だと伝えること", () => {
-            expect(smallestSize).toBeGreaterThan(BRIDGES_TUTORIAL_BOARD.width);
-            expect(
-              screen.queryByText(/本番はもっと大きな盤面で遊べます/),
-            ).not.toBeNull();
-          });
-
-          test("もう一度を押すと、橋の無い始めの盤面から始め直すこと", () => {
-            advanceTime(2000);
-            fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-            pressNextThroughIntro();
-
-            expect(getIslandLabel(1, 3)).toBe("1行3列の島 数字4 橋0本");
-            expect(getEdgesWithCue("mark")).toEqual([
-              edgeBetween([1, 3], [4, 3]),
-            ]);
-          });
-        });
+        expect(getIslandLabel(4, 5)).toContain("橋3本");
+        expect(queryMessage(steps[2]!.message)).not.toBeNull();
       });
     });
-  });
 
-  describe("プレイ中に開いた場合", () => {
-    beforeEach(() => {
-      render(<BridgesTutorial open={true} onClose={onClose} />);
-      pressNextThroughIntro();
+    describe("数字の手順で2本目を架けた直後の場合", () => {
+      beforeEach(() => {
+        finishSteps(1);
+        tapBetween([4, 3], [4, 5]);
+        tapBetween([4, 3], [4, 5]);
+      });
+
+      test("もう一度押しても、架け終えた手順の一言を保ち、その後で次の手順のルールの一言に替えること", () => {
+        tapBetween([4, 3], [4, 5]);
+
+        const keptHeadline = queryMessage(steps[1]!.message);
+
+        expect(keptHeadline).not.toBeNull();
+        expect(queryMessage(steps[1]!.midwayMessage)).toBeNull();
+
+        advanceTime(nextStepDelayMs);
+
+        expect(queryMessage(steps[2]!.message)).not.toBeNull();
+      });
     });
 
-    test("解き終えると、プレイ中の盤面も同じルールだと伝え、プレイに戻る操作を出すこと", () => {
-      finishGuidedSteps();
-      tapAll(remainingTaps);
-      advanceTime(2000);
-      const detail = screen.queryByText(/プレイ中の盤面も同じルールで解けます/);
-      fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
+    describe("読みの手順で交差に阻まれた場合", () => {
+      beforeEach(() => {
+        finishSteps(4);
+        const { board, point } = toPointer(3.5, 2.5);
+        fireEvent.pointerDown(board, point);
+        fireEvent.pointerUp(board, point);
+      });
 
-      expect(detail).not.toBeNull();
-      expect(onClose).toHaveBeenCalledOnce();
+      test("交差の一言に、今の手順で何をするかを添えること", () => {
+        const detail = queryShownText(steps[4]!.blockedDetail ?? "");
+
+        expect(
+          queryShownText("ここに架けるとほかの橋と交差します"),
+        ).not.toBeNull();
+        expect(detail).not.toBeNull();
+      });
+
+      test("続けて手順に無い辺を押すと、交差の一言から、今の手順で何をするかの一言に替えること", () => {
+        tapBetween([1, 3], [1, 6]);
+
+        const headline = queryMessage(steps[4]!.offStepMessage);
+
+        expect(headline).not.toBeNull();
+        expect(queryShownText("ここに架けるとほかの橋と交差します")).toBeNull();
+      });
+    });
+
+    describe("交差の手順に進んだ場合", () => {
+      beforeEach(() => {
+        finishSteps(3);
+      });
+
+      test("右へ架けようとすると、本番と同じく盤面を変えずに、交差の一言と今の手順で何をするかを言うこと", () => {
+        const { board, point } = toPointer(3.5, 2.5);
+        fireEvent.pointerDown(board, point);
+        fireEvent.pointerUp(board, point);
+
+        const headline = queryShownText("ここに架けるとほかの橋と交差します");
+        const detail = queryShownText(steps[3]!.blockedDetail ?? "");
+
+        expect(headline).not.toBeNull();
+        expect(detail).not.toBeNull();
+        expect(getIslandLabel(3, 6)).toContain("橋0本");
+      });
+    });
+
+    describe("手順を終えた場合", () => {
+      beforeEach(() => {
+        finishSteps(stepTaps.length);
+      });
+
+      test("残りを架けることを伝え、印も覆いも出さずに、ヒントを出しておくこと", () => {
+        advanceTime(longIdleMs);
+
+        const headline = queryMessage(freePlay);
+
+        expect(headline).not.toBeNull();
+        expect(getCuedEdges("pointer")).toEqual([]);
+        expect(getScrim()).toBeNull();
+        expect(queryHintButton()).not.toBeNull();
+      });
+
+      test("ヒントを押すと、架ける辺に指の無い印を付け、決め手を覆いから抜いて、手がかりの一言に替え、次の手で消すこと", () => {
+        fireEvent.click(queryHintButton()!);
+
+        const marked = getCuedEdges("mark");
+
+        expect(marked).toHaveLength(1);
+        expect(getCuedEdges("pointer")).toEqual([]);
+        expect(getScrim()).not.toBeNull();
+        expect(queryMessage(freePlay)).toBeNull();
+        expect(queryHintButton()).toBeNull();
+
+        tapBetween([1, 3], [1, 6]);
+
+        expect(getCuedEdges("mark")).toEqual([]);
+        expect(queryMessage(freePlay)).not.toBeNull();
+      });
+
+      test("数字より多い島を作って違反が続くと、多い島と直し方を言い、直す辺に印を付けること", () => {
+        tapBetween([1, 3], [1, 6]);
+        tapBetween([1, 3], [1, 6]);
+        advanceTime(violationReactionDelayMs);
+
+        const headline = queryShownText(
+          "1の島から橋が\n数字より多く出ています",
+        );
+        const detail = queryShownText("あと2回タップで1本に戻ります");
+
+        expect(headline).not.toBeNull();
+        expect(detail).not.toBeNull();
+        expect(getCuedEdges("mark")).toEqual([edgeBetween([1, 3], [1, 6])]);
+        expect(queryHintButton()).toBeNull();
+      });
+
+      describe("解き終えた場合", () => {
+        beforeEach(() => {
+          tapAll(remainingTaps);
+          advanceTime(5000);
+        });
+
+        test("完成を伝え、覚えたルールを並べ、レベルを遊ぶ操作で本番を始めること", () => {
+          const headline = queryMessage(completion.home);
+          const recap = within(
+            within(getScreen()).getByRole("list", { name: "覚えたルール" }),
+          )
+            .getAllByRole("listitem")
+            .map((item) => item.textContent);
+
+          expect(headline).not.toBeNull();
+          expect(recap).toEqual([
+            ...bridgesTutorial.rules.map(({ label }) => label),
+            "全部の島を1つにつなぐと完成です",
+          ]);
+
+          fireEvent.click(
+            within(getScreen()).getByRole("button", { name: "レベル 1を遊ぶ" }),
+          );
+
+          expect(playStart.onStart).toHaveBeenCalledOnce();
+        });
+
+        test("もう一度を押すと、入口を通さずに、橋の無い盤面で最初の手順から始めること", () => {
+          fireEvent.click(
+            within(getScreen()).getByRole("button", { name: "もう一度" }),
+          );
+
+          expect(queryMessage(steps[0]!.message)).not.toBeNull();
+          expect(getIslandLabel(1, 1)).toContain("橋0本");
+          expect(
+            within(getScreen()).queryByRole("button", { name: "はじめる" }),
+          ).toBeNull();
+        });
+      });
     });
   });
 });

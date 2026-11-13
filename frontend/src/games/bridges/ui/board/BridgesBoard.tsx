@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
 
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import type { BridgesEdgeNotice } from "@/games/bridges/play/use-bridges-play";
@@ -74,13 +75,8 @@ type BridgesBoardProps = {
    */
   guidedEdges?: readonly number[];
   /**
-   * 島の間を押して橋を回すのを受け付けるか。チュートリアルで、島から架ける操作（なぞる、島を選んでから相手の島を押す）を
-   * 体験させる間だけ `false` にし、島の間の押しは回さなかった押しとして知らせる。通常のプレイでは渡さない。
-   */
-  acceptsEdgePress?: boolean;
-  /**
-   * チュートリアルで手を引いている間、元の明るさで見せる島と辺。盤面の海は画面全体の覆いから抜いて海の色のまま残し、
-   * 盤面の中でほかの島と橋を深い海に沈めて見せる。通常のプレイでは渡さない。
+   * チュートリアルで決め手を見せている間、盤面の覆いから抜いて元の明るさで見せる島と辺。渡している間は盤面を覆う範囲にする。
+   * 通常のプレイでは渡さない。
    */
   spotlight?: BridgesBoardSpotlight | null;
   onCycleEdge: (edge: number) => void;
@@ -188,7 +184,6 @@ export function BridgesBoard({
   showsSea = false,
   cues = [],
   guidedEdges = [],
-  acceptsEdgePress = true,
   spotlight = null,
   onCycleEdge,
   onCycleEdgeBackward,
@@ -282,8 +277,7 @@ export function BridgesBoard({
           previewEdge:
             aim?.cyclesOnRelease && !isBlocked(aim.edge) ? aim.edge : null,
         };
-  // チュートリアルで押させる辺にも、押せば架かる板の影を置く。
-  const pointedEdge = currentHover?.edge ?? guidedEdges[0] ?? null;
+  const pointedEdge = currentHover?.edge ?? null;
   const candidateEdges =
     currentHover?.candidates ??
     (candidatePress?.board === board && !interactionDisabled
@@ -450,7 +444,7 @@ export function BridgesBoard({
     const point = readBoardPoint(event);
     const target = findPressTarget(point);
     setCandidatePress(null);
-    if (target === null || (target.kind === "edge" && !acceptsEdgePress)) {
+    if (target === null) {
       rejectPress();
       return;
     }
@@ -663,6 +657,7 @@ export function BridgesBoard({
       role="group"
       aria-label={`${BRIDGES_DISPLAY_NAME}盤面 ${board.height}行${board.width}列`}
       className="relative size-full touch-none select-none [-webkit-touch-callout:none]"
+      {...(spotlight !== null && { [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "" })}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -682,10 +677,8 @@ export function BridgesBoard({
         guide={guide}
         hoverEdge={hoverEdge}
         candidateEdges={candidateEdges}
-        pressedEdge={pressedEdge ?? guidedEdges[0] ?? null}
+        pressedEdge={pressedEdge}
         pressedIsland={pressedIsland}
-        bandEdges={guidedEdges}
-        focus={spotlight}
         selectedIsland={selectedIsland}
         focusedIsland={keyboardFocused ? focusedIsland : null}
         blockingEdges={blockingEdges}
