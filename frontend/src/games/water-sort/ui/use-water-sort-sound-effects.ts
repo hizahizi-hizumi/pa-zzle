@@ -67,7 +67,6 @@ function getPourTransferDelayMs(transferOffset: number): number {
 function playOperationSound(operation: WaterSortOperation) {
   switch (operation.type) {
     case "invalid":
-      // 動きを減らす設定ではボトルを揺らさず、画面が何も変わらないので鳴らさない。
       if (!prefersReducedMotion()) {
         playSound(invalidSound);
       }

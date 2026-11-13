@@ -279,7 +279,6 @@ export function WaterSortTutorial({
     setProgress(startTutorial(waterSortTutorial));
   }
 
-  // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();
