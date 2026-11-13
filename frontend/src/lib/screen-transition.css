@@ -1,0 +1,371 @@
+/*
+ * 画面の行き来で、額の外と内をまたぐ動き。種類と意味は screen-transition.ts を参照。
+ * 入っていく・収まるところが見える長さにし、共通UIの遷移時間に合わせて縮めない。
+ */
+:root {
+  --screen-transition-ease: cubic-bezier(0.3, 0, 0.1, 1);
+  --screen-transition-enter-game: 560ms;
+  --screen-transition-leave-game: 400ms;
+  --screen-transition-open: 300ms;
+  --screen-transition-settle: 440ms;
+  --screen-transition-close: 360ms;
+}
+
+:root[data-screen-transition]::view-transition-group(root),
+:root[data-screen-transition]::view-transition-old(root),
+:root[data-screen-transition]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* 開く: 遷移先の画面を、額の中の面の位置から画面いっぱいへ広げる。暗い帯は上下へ開いて見える。 */
+:root[data-screen-transition="enter-game"]::view-transition-new(root) {
+  animation: screen-frame-open var(--screen-transition-enter-game)
+    var(--screen-transition-ease) both;
+}
+:root[data-screen-transition="open"]::view-transition-new(root) {
+  animation: screen-frame-open var(--screen-transition-open)
+    var(--screen-transition-ease) both;
+}
+
+/* 収まる: 遷移元の画面を、遷移先の額の中の面の位置へ狭める。暗い帯は上下から閉じて見える。 */
+:root[data-screen-transition="leave-game"]::view-transition-old(root),
+:root[data-screen-transition="settle"]::view-transition-old(root),
+:root[data-screen-transition="close"]::view-transition-old(root) {
+  z-index: 1;
+}
+:root[data-screen-transition="leave-game"]::view-transition-old(root) {
+  animation: screen-frame-close var(--screen-transition-leave-game)
+    var(--screen-transition-ease) both;
+}
+:root[data-screen-transition="settle"]::view-transition-old(root) {
+  animation:
+    screen-frame-close var(--screen-transition-settle)
+    var(--screen-transition-ease) both,
+    screen-settle-recede var(--screen-transition-settle)
+    var(--screen-transition-ease) both;
+}
+:root[data-screen-transition="close"]::view-transition-old(root) {
+  animation: screen-frame-close var(--screen-transition-close)
+    var(--screen-transition-ease) both;
+}
+
+@keyframes screen-frame-open {
+  from {
+    clip-path: inset(
+      var(--screen-frame-top, 0px) 0 var(--screen-frame-bottom, 0px) 0
+    );
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    clip-path: inset(0);
+    opacity: 1;
+  }
+}
+@keyframes screen-frame-close {
+  from {
+    clip-path: inset(0);
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    clip-path: inset(
+      var(--screen-frame-top, 0px) 0 var(--screen-frame-bottom, 0px) 0
+    );
+    opacity: 0;
+  }
+}
+
+/* 解き終えた盤面は、額に収まりながら少し退く。 */
+@keyframes screen-settle-recede {
+  to {
+    transform: scale(0.94);
+  }
+}
+
+/* ホームとゲームのホームの間では、選んでいるゲームのピクトグラムとゲーム名を、一つのものとして運ぶ。 */
+:root[data-screen-transition="enter-game"] [data-screen-shared="pictogram"],
+:root[data-screen-transition="leave-game"] [data-screen-shared="pictogram"] {
+  view-transition-name: screen-pictogram;
+}
+:root[data-screen-transition="enter-game"] [data-screen-shared="title"],
+:root[data-screen-transition="leave-game"] [data-screen-shared="title"] {
+  view-transition-name: screen-title;
+}
+:root[data-screen-transition="enter-game"]::view-transition-group(*) {
+  animation-duration: var(--screen-transition-enter-game);
+  animation-timing-function: var(--screen-transition-ease);
+}
+:root[data-screen-transition="leave-game"]::view-transition-group(*) {
+  animation-duration: var(--screen-transition-leave-game);
+  animation-timing-function: var(--screen-transition-ease);
+}
+/* 大きい側の絵だけを運ぶ。小さい側の絵を引き伸ばすと、運んでいる間ぼやける。 */
+:root[data-screen-transition]::view-transition-old(screen-pictogram),
+:root[data-screen-transition]::view-transition-new(screen-pictogram),
+:root[data-screen-transition]::view-transition-old(screen-title),
+:root[data-screen-transition]::view-transition-new(screen-title) {
+  width: 100%;
+  height: 100%;
+  animation: none;
+  mix-blend-mode: normal;
+  object-fit: contain;
+  object-position: left center;
+}
+:root[data-screen-transition="enter-game"]::view-transition-new(
+  screen-pictogram
+),
+:root[data-screen-transition="enter-game"]::view-transition-new(screen-title),
+:root[data-screen-transition="leave-game"]::view-transition-old(
+  screen-pictogram
+),
+:root[data-screen-transition="leave-game"]::view-transition-old(screen-title) {
+  opacity: 0;
+}
+/* 見出しにピクトグラムを出さない幅では、運ぶ先や運ぶ元が無い。その場に残さず、額が動き出すときに引き、着く頃に浮かべる。 */
+:root[data-screen-transition]::view-transition-old(
+  screen-pictogram
+):only-child {
+  animation: screen-fade-out var(--duration-normal) var(--ease-exit) both;
+  opacity: 1;
+}
+:root[data-screen-transition]::view-transition-new(
+  screen-pictogram
+):only-child {
+  animation: screen-fade-in var(--duration-normal) var(--ease-enter)
+    calc(var(--screen-transition-leave-game) - var(--duration-normal)) both;
+  opacity: 1;
+}
+
+/* 運ばない表示は、額が動く前に引き（screen-transition.ts）、運ぶものが着く頃に浮かべる。運ぶものが、ほかの表示の上を横切らないようにする。 */
+:root[data-screen-transition="enter-game"][data-screen-arrived]
+[data-screen-content] {
+  animation: screen-fade-in var(--duration-normal) var(--ease-enter)
+    calc(var(--screen-transition-enter-game) - var(--duration-normal)) both;
+}
+@keyframes screen-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes screen-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/*
+ * 結果とプレイの間、結果・プレイからホームへの行き来には奥行きを付ける。進むときは遷移元がこちらへ迫って通り抜け、
+ * 戻るときは遷移先が手前から退いてきて額に収まる。
+ * ホームとゲームのホームの間は、額の中の面を台紙として運ぶので、奥行きを付けず、面をその場に保つ。
+ * 比べるために、奥行きの無い見せ方（data-screen-style="flat"）も残している。
+ */
+:root:not([data-screen-style="flat"]) {
+  --screen-transition-ease: cubic-bezier(0.5, 0, 0.15, 1);
+  --screen-transition-enter-game: 640ms;
+  --screen-transition-leave-game: 520ms;
+  --screen-transition-open: 420ms;
+  --screen-transition-settle: 560ms;
+  --screen-transition-close: 480ms;
+  --screen-frame-center: calc(
+    (var(--screen-frame-top, 0px) + 100vh - var(--screen-frame-bottom, 0px)) /
+    2
+  );
+}
+
+:root:not(
+  [data-screen-style="flat"]
+)[data-screen-transition]::view-transition-old(root),
+:root:not(
+  [data-screen-style="flat"]
+)[data-screen-transition]::view-transition-new(root) {
+  transform-origin: 50% var(--screen-frame-center);
+}
+
+:root:not(
+  [data-screen-style="flat"]
+)[data-screen-transition="open"]::view-transition-old(root) {
+  --screen-pass-forward-scale: 1.4;
+  z-index: 1;
+  animation: screen-pass-forward var(--screen-transition-open)
+    var(--screen-transition-ease) both;
+}
+:root:not(
+  [data-screen-style="flat"]
+)[data-screen-transition="open"]::view-transition-new(root) {
+  animation: screen-arrive-forward var(--screen-transition-open)
+    var(--screen-transition-ease) both;
+}
+:root:not(
+  [data-screen-style="flat"]
+)[data-screen-transition="close"]::view-transition-old(root) {
+  z-index: 0;
+  animation: screen-pass-back var(--screen-transition-close)
+    var(--screen-transition-ease) both;
+}
+:root:not(
+  [data-screen-style="flat"]
+)[data-screen-transition="close"]::view-transition-new(root) {
+  z-index: 1;
+  animation: screen-arrive-back var(--screen-transition-close)
+    var(--screen-transition-ease) both;
+}
+
+/* 解き終えた盤面は、額に収まりながら奥へ退く。 */
+:root:not(
+  [data-screen-style="flat"]
+)[data-screen-transition="settle"]::view-transition-old(root) {
+  animation:
+    screen-frame-close var(--screen-transition-settle)
+    var(--screen-transition-ease) both,
+    screen-settle-recede-deep var(--screen-transition-settle)
+    var(--screen-transition-ease) both;
+}
+:root:not(
+  [data-screen-style="flat"]
+)[data-screen-transition="settle"]::view-transition-new(root) {
+  animation: screen-settle-arrive var(--screen-transition-settle)
+    var(--screen-transition-ease) both;
+}
+
+@keyframes screen-pass-forward {
+  55% {
+    opacity: 1;
+  }
+  to {
+    transform: scale(var(--screen-pass-forward-scale, 1.9));
+    opacity: 0;
+  }
+}
+@keyframes screen-arrive-forward {
+  from {
+    transform: scale(0.94);
+  }
+}
+@keyframes screen-pass-back {
+  to {
+    transform: scale(0.94);
+  }
+}
+@keyframes screen-arrive-back {
+  from {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+}
+@keyframes screen-settle-recede-deep {
+  to {
+    transform: scale(0.8);
+  }
+}
+@keyframes screen-settle-arrive {
+  from {
+    transform: scale(1.08);
+  }
+}
+
+/*
+ * 額の中の明るい面は、白紙のジグソーの台紙そのもの。ホームとゲームのホームの間では、額の中の面を台紙の位置へ運び、
+ * 着いてからピースの並びを浮かべる。面を写した絵だけを運び、着いたら実物の台紙へ替える。
+ */
+:root[data-screen-transition="enter-game"] [data-screen-shared="surface"],
+:root[data-screen-transition="leave-game"] [data-screen-shared="surface"] {
+  view-transition-name: screen-surface;
+}
+:root[data-screen-transition]::view-transition-group(screen-surface) {
+  z-index: 2;
+}
+:root[data-screen-transition]::view-transition-group(screen-pictogram),
+:root[data-screen-transition]::view-transition-group(screen-title) {
+  z-index: 3;
+}
+:root[data-screen-transition]::view-transition-old(screen-surface),
+:root[data-screen-transition]::view-transition-new(screen-surface) {
+  width: 100%;
+  height: 100%;
+  animation: none;
+  mix-blend-mode: normal;
+  object-fit: fill;
+}
+:root[data-screen-transition="enter-game"]::view-transition-new(screen-surface),
+:root[data-screen-transition="leave-game"]::view-transition-old(
+  screen-surface
+) {
+  opacity: 0;
+}
+:root[data-screen-transition="enter-game"]::view-transition-old(
+  screen-surface
+) {
+  animation: screen-fade-out var(--duration-normal) var(--ease-exit)
+    calc(var(--screen-transition-enter-game) - var(--duration-normal)) both;
+}
+:root[data-screen-transition="leave-game"]::view-transition-new(
+  screen-surface
+) {
+  animation: screen-fade-in var(--duration-normal) var(--ease-enter) both;
+}
+
+/*
+ * 解き終えて結果になる行き来は、解いた画面を、結果に添えたピースの形と位置へ絞る。プレイへ入るときにピースの中へ入った動きの逆。
+ * ピースの形・位置・大きさは、ピースを持つ側（zukan-piece-transit.ts）が変数で渡す。渡されなければ、短く入れ替える。
+ */
+:root {
+  --screen-transition-piece-iris: 620ms;
+  --screen-transition-piece-swap: 260ms;
+  --screen-piece-iris-from: 340vmax;
+}
+:root:root[data-screen-transition="settle"]::view-transition-new(root) {
+  z-index: 0;
+  animation: none;
+}
+:root:root[data-screen-transition="settle"]::view-transition-old(root) {
+  z-index: 1;
+  animation: screen-piece-iris var(--screen-transition-piece-iris)
+    cubic-bezier(0.6, 0, 0.25, 1) both;
+  mask-image: var(--screen-piece-mask, none);
+  mask-repeat: no-repeat;
+}
+@keyframes screen-piece-iris {
+  from {
+    opacity: 1;
+    mask-position: calc(
+        var(--screen-piece-x, 50vw) -
+        var(--screen-piece-iris-from) /
+        2
+      )
+      calc(var(--screen-piece-y, 50vh) - var(--screen-piece-iris-from) / 2);
+    mask-size: var(--screen-piece-iris-from);
+  }
+  82% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    mask-position: calc(
+        var(--screen-piece-x, 50vw) -
+        var(--screen-piece-size, 0px) /
+        2
+      )
+      calc(var(--screen-piece-y, 50vh) - var(--screen-piece-size, 0px) / 2);
+    mask-size: var(--screen-piece-size, 0px);
+  }
+}
+
+/* 結果からゲームのホームへ戻る行き来は、結果のピースが運ぶ。画面は、ピースの下で短く入れ替える。 */
+:root:root[data-screen-transition="return"]::view-transition-old(root) {
+  z-index: 0;
+  animation: none;
+}
+:root:root[data-screen-transition="return"]::view-transition-new(root) {
+  z-index: 1;
+  animation: screen-fade-in var(--screen-transition-piece-swap)
+    var(--ease-standard) both;
+}

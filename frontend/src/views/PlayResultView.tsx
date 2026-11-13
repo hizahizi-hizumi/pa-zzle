@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useLocation } from "react-router";
+import { ResultEmblemContext } from "@/components/GameResultScreen/result-emblem";
 import {
   findGameCatalogEntry,
   findRecordProblemPlayDestination,
@@ -12,6 +13,7 @@ import { readRecordSaveOutcome } from "@/game-catalog/record-result-location-sta
 import { findPlayRecord } from "@/records/storage";
 import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
 import { Link, useNavigate, useParams } from "@/router";
+import { ZukanResultPiece } from "@/zukan/ui/ZukanResultPiece";
 
 export function PlayResultView() {
   const { game: gameId, recordId } = useParams(
@@ -56,5 +58,11 @@ export function PlayResultView() {
     );
   }
 
-  return resultScreen;
+  return (
+    <ResultEmblemContext
+      value={game && <ZukanResultPiece pictogramSvg={game.pictogramSvg} />}
+    >
+      {resultScreen}
+    </ResultEmblemContext>
+  );
 }

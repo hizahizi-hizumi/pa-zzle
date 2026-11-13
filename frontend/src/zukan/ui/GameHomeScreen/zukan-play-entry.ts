@@ -1,6 +1,7 @@
 import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 import { ZUKAN_PIECE_VIEW_BOX } from "@/zukan/ui/GameHomeScreen/zukan-piece-shape";
 import { readZukanSheetView } from "@/zukan/ui/GameHomeScreen/zukan-sheet-view";
+import { rememberZukanPlayPiece } from "@/zukan/ui/zukan-piece-transit";
 
 /** 台紙から抜いたピースがプレイへ入るまでの、それぞれの動きの長さ（ms）。 */
 const ZUKAN_PLAY_ENTRY_DURATION_MS = {
@@ -154,6 +155,7 @@ export function playZukanPlayEntry({
   spinsToPiece,
   onEnter,
 }: ZukanPlayEntry): ZukanPlayEntryControl {
+  rememberZukanPlayPiece({ piecePath, pictogramSvg });
   if (!canAnimate(square)) {
     onEnter();
     return { skip() {}, cancel() {} };

@@ -64,8 +64,7 @@
   min-width: 0;
   min-height: 0;
 }
-.game-selection__carousel-region::before {
-  content: "";
+.game-selection__surface {
   position: absolute;
   top: var(--selection-frame-top);
   right: 0;

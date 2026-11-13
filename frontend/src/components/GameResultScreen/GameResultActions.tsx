@@ -26,7 +26,12 @@ export function GameResultActions({
         <CircleArrowRight aria-hidden="true" />
         <span>次の問題</span>
       </button>
-      <button type="button" className="result-action" onClick={onOpenGameHome}>
+      <button
+        type="button"
+        className="result-action"
+        data-result-collection=""
+        onClick={onOpenGameHome}
+      >
         <Grid2X2 aria-hidden="true" />
         <span>問題選択</span>
       </button>
