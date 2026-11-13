@@ -28,7 +28,6 @@ export type MinesweeperProblem = {
 };
 
 /**
- * 開始マスの決め方。
  * `random` は seed から盤面の全マスを一様に、`center` は盤面中央（偶数辺では中央寄りの左上）を選ぶ。
  */
 export type MinesweeperStartCellPlacement = "random" | "center";
@@ -84,7 +83,6 @@ export type MinesweeperRecordedProblemIdentity = RecordedProblemIdentity<{
   mineCount: number;
 }>;
 
-/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
 export function isMinesweeperRecordedProblemIdentity(
   value: unknown,
 ): value is MinesweeperRecordedProblemIdentity {

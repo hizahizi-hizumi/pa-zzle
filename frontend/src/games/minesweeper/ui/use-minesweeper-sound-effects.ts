@@ -29,7 +29,6 @@ const openingTickSounds = [
   openingTick3SoundUrl,
   openingTick4SoundUrl,
 ].map(defineSoundEffect);
-/** 続く粒を鳴らし始める間隔。 */
 const OPENING_TICK_STEP_MS = 28;
 
 /** 粒を1つずつ足す、一度に開いたマスの数の下限。同じ瞬間に盤面で多く開いて見える分だけ音を豊かにする。 */
@@ -86,7 +85,7 @@ function playClearSound() {
 }
 
 /**
- * 盤面への操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
+ * 結果の報酬の音はアプリが鳴らす。
  * チュートリアルも本番と同じ音を鳴らすため、プレイ画面とチュートリアルの両方が使う。
  */
 export function useMinesweeperSoundEffects(

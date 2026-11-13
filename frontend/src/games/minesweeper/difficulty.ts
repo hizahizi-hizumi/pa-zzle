@@ -15,7 +15,7 @@ export type MinesweeperDifficulty = DifficultyLevel;
 
 export type MinesweeperBoardSize = { rows: number; columns: number };
 
-/** 地雷密度の範囲。浮動小数の誤差を避けるため百分率の整数で持つ。 */
+/** 浮動小数の誤差を避けるため百分率の整数で持つ。 */
 type MinesweeperMineDensityPercentRange = NumericRange;
 
 export type MinesweeperDifficultyBoardRange = {
@@ -30,8 +30,6 @@ function boardSizes(
 }
 
 /**
- * 難易度ごとに提供する盤面サイズと地雷密度。
- * 上の難易度ほど盤面・地雷密度を上げ、どの数字が効くかを見抜く負担も推論と一緒に上げる。
  * 隣り合う難易度はサイズが一部重なってよいが、離れた難易度同士はサイズと密度の組が重ならない。
  * 盤面は正方形か縦長（行数 ≥ 列数）で、最大 16行×12列。
  */
@@ -91,7 +89,7 @@ export type MinesweeperDifficultyBoardCondition = MinesweeperBoardSize & {
   mineCount: number;
 };
 
-/** 難易度の盤面範囲に入る盤面サイズと地雷数の組を、盤面サイズの定義順・地雷数の昇順で返す。 */
+/** 盤面サイズの定義順・地雷数の昇順で返す。 */
 export function listMinesweeperDifficultyBoardConditions(
   difficulty: MinesweeperDifficulty,
 ): MinesweeperDifficultyBoardCondition[] {
@@ -206,7 +204,6 @@ function assessAnalyzedChallenge(
   return { status: "classified", difficulty };
 }
 
-/** 分析結果と盤面サイズから、推論で決まる難易度とその盤面範囲に入るかを判定する。 */
 export function assessMinesweeperDifficulty(
   analysis: MinesweeperDifficultyAnalysis,
   boardSize: MinesweeperBoardSize,

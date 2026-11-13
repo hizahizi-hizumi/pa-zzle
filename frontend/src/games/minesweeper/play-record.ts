@@ -27,7 +27,7 @@ import type { PlayRecordDefinition } from "@/records/play-record-definition";
 const MINESWEEPER_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const MINESWEEPER_GAME_ID = "minesweeper";
 
-/** 記録するプレイの事実。速さの基準に使う問題の `minimumOpenCount` も一緒に残す。 */
+/** 速さの基準に使う問題の `minimumOpenCount` も一緒に残す。 */
 type MinesweeperRecordedPerformance = MinesweeperSessionResult & {
   minimumOpenCount: number;
 };
@@ -121,17 +121,13 @@ export function createMinesweeperPlayRecord({
   };
 }
 
-/** 記録から作り直した、結果画面に出す内容。 */
 export type MinesweeperRecordedResult = {
   difficulty: MinesweeperDifficulty;
   problemIdentity: MinesweeperProblemIdentity;
   result: MinesweeperResult;
 };
 
-/**
- * 記録から結果画面に出す内容を作り直す。
- * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
- */
+/** 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。 */
 export function restoreMinesweeperRecordedResult(
   record: PlayRecord,
 ): MinesweeperRecordedResult | null {

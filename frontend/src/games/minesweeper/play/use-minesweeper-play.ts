@@ -40,7 +40,6 @@ import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
  * 盤面が変わった操作の知らせ。`cellIndex` は押したマス。
  * - `cells-opened`: 安全なマスを開いた。数字マスを押して周りをまとめて開いたときも含む。`openedCellCount` は連鎖して開いた数も含む。
  * - `mine-stepped`: 地雷を踏んだ。同じ操作で安全なマスも開いたときは `openedCellCount` に数える。
- * - `flag-placed`・`flag-removed`: 旗を立てた・外した。
  */
 export type MinesweeperOperation =
   | {
@@ -58,7 +57,6 @@ export type MinesweeperOperation =
     }
   | { id: number; type: "flag-placed" | "flag-removed"; cellIndex: number };
 
-/** 評価に使う、問題の事実。 */
 export type MinesweeperResultProblemFacts = {
   mineCount: number;
   // 問題の初期開示状態から安全なマスをすべて開くのに要る、開く操作の最小回数。速さの基準時間に使う。
@@ -72,7 +70,7 @@ export type MinesweeperResult = MinesweeperSessionResult &
     score: MinesweeperPlayScore;
   };
 
-/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+/** プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createMinesweeperResult(
   sessionResult: MinesweeperSessionResult,
   problemFacts: MinesweeperResultProblemFacts,
@@ -130,7 +128,6 @@ function createPlayState(
   };
 }
 
-/** マスを開いた操作の知らせ。開いたマスの数と、踏んだ地雷の数を、操作の前後の盤面から求める。 */
 export function createMinesweeperOpeningOperation(
   id: number,
   cellIndex: number,
@@ -152,7 +149,6 @@ export function createMinesweeperOpeningOperation(
     : { id, type: "cells-opened", cellIndex, openedCellCount };
 }
 
-/** 旗を置いたか外した操作の知らせ。 */
 export function createMinesweeperFlagOperation(
   id: number,
   cellIndex: number,
@@ -167,7 +163,6 @@ export function createMinesweeperFlagOperation(
   };
 }
 
-/** 操作で盤面が変わったときだけ、session と操作の知らせを反映する。 */
 function applyOperation(
   current: MinesweeperPlayState,
   session: MinesweeperSession,
@@ -198,10 +193,6 @@ function selectProblem(
   ).problem;
 }
 
-/**
- * 難易度の問題集から seed で選んだ問題を遊ぶ。
- * `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。
- */
 export function useMinesweeperPlay(
   difficulty: MinesweeperDifficulty,
   initialProblem?: MinesweeperIdentifiedProblem,
