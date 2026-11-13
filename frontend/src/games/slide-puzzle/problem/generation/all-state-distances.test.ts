@@ -6,7 +6,7 @@ describe("buildSlidePuzzleAllStateDistances", () => {
   const table = buildSlidePuzzleAllStateDistances();
 
   test("3×3 の可解な 181,440 配置をすべてたどること", () => {
-    const reachableCount = table.countsByDistance.reduce(
+    const reachableCount = table.boardCountsByDistance.reduce(
       (total, count) => total + count,
       0,
     );
@@ -15,7 +15,7 @@ describe("buildSlidePuzzleAllStateDistances", () => {
   });
 
   test("最短手数の最大を 31 手とすること", () => {
-    const maximumDistance = table.countsByDistance.length - 1;
+    const maximumDistance = table.boardCountsByDistance.length - 1;
 
     expect(maximumDistance).toBe(31);
   });

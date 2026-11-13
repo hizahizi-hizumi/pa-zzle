@@ -4,7 +4,7 @@ import {
   getSlidePuzzleSlide,
   isSolvableSlidePuzzleBoard,
   listSlidePuzzleSingleMoves,
-  type SlidePuzzleDirection,
+  type SlidePuzzleTileDirection,
 } from "@/games/slide-puzzle/puzzle/rules";
 
 // 空白が 2 行 2 列目にある盤面
@@ -190,7 +190,7 @@ describe("getSlidePuzzleKeyboardSlide", () => {
   const cases: readonly [
     string,
     readonly number[],
-    SlidePuzzleDirection,
+    SlidePuzzleTileDirection,
     ReturnType<typeof getSlidePuzzleKeyboardSlide>,
   ][] = [
     ["上", board, "up", { direction: "up", movedTileIndices: [9] }],
@@ -213,7 +213,7 @@ describe("getSlidePuzzleKeyboardSlide", () => {
     const sizedCases: readonly [
       string,
       readonly number[],
-      SlidePuzzleDirection,
+      SlidePuzzleTileDirection,
       ReturnType<typeof getSlidePuzzleKeyboardSlide>,
     ][] = [
       [
