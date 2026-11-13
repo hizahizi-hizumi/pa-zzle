@@ -138,7 +138,6 @@ function earnRule<RuleId extends string>(
     : [...earnedRuleIds, ruleId];
 }
 
-/** 手順を始め、その手順で示すルールを手に入れる。 */
 function enterStep<
   RuleId extends string,
   Step extends TutorialStep<RuleId>,
@@ -181,10 +180,6 @@ export function startTutorial<
   );
 }
 
-/**
- * 手を引いている手順。導入の間は、導入を終えたら手を引く手順を返す。
- * 手を離した後と、解き終えた後は `null`。
- */
 export function getCurrentTutorialStep<
   RuleId extends string,
   Step extends TutorialStep<RuleId>,
@@ -214,11 +209,6 @@ export function getTutorialSituation<
   };
 }
 
-/**
- * 盤面の上に出す一言。
- * - `entry`: 開いた場所。解き終えたときの一言を選ぶ。
- * - `violationSettled`: 違反が続いたか。切り替えの途中で一瞬だけ違反になる手で文言がちらつかないよう、出す側が確かめる。一瞬の違反が起きないゲームは常に `true` を渡す。
- */
 export function getTutorialMessage<
   RuleId extends string,
   Step extends TutorialStep<RuleId>,
@@ -229,6 +219,7 @@ export function getTutorialMessage<
   progress: TutorialProgress<RuleId, BoardState>,
   {
     entry,
+    // 違反が続いたか。切り替えの途中で一瞬だけ違反になる手で文言がちらつかないよう、出す側が確かめる。一瞬の違反が起きないゲームは常に `true` を渡す。
     violationSettled,
   }: { entry: TutorialEntry; violationSettled: boolean },
 ): TutorialMessage {
@@ -242,7 +233,6 @@ export function getTutorialMessage<
   return situation.step?.message ?? tutorial.freePlay;
 }
 
-/** 解いている間だけ操作を受け付ける。それ以外と、盤面が変わらない手では、同じ進行をそのまま返す。 */
 export function performTutorialAction<
   RuleId extends string,
   Step extends TutorialStep<RuleId>,
@@ -281,7 +271,6 @@ export function performTutorialAction<
   }
 }
 
-/** 導入を終えて、最初の手順から手を引く。 */
 export function finishTutorialIntro<RuleId extends string, BoardState>(
   progress: TutorialProgress<RuleId, BoardState>,
 ): TutorialProgress<RuleId, BoardState> {
@@ -290,7 +279,6 @@ export function finishTutorialIntro<RuleId extends string, BoardState>(
     : progress;
 }
 
-/** 解けた盤面の演出を終えて、終えたときの操作を出す。 */
 export function completeTutorial<RuleId extends string, BoardState>(
   progress: TutorialProgress<RuleId, BoardState>,
 ): TutorialProgress<RuleId, BoardState> {
