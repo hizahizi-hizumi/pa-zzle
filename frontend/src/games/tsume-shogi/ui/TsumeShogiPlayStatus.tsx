@@ -6,7 +6,11 @@ import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-ton
 import { cn } from "@/lib/utils";
 
 type TsumeShogiPlayStatusProps = {
-  plies: number;
+  /**
+   * 問題の手数。渡すと、誤王手の筋で手数が尽きたとき、その手数では詰まないことを示す。
+   * 渡さなければ知らせを出さず、棋譜だけを見せる（チュートリアルは一言でわけを伝える）。
+   */
+  plies?: number;
   phase: TsumeShogiSessionPhase;
   shownMoves: readonly TsumeShogiPlayedMove[];
   /** `shownMoves` の最初の手の1つ前の手の移動先。棋譜の「同」に使う。 */
@@ -47,7 +51,7 @@ export function TsumeShogiPlayStatus({
           </span>
         );
       })}
-      {phase === "refuted" && (
+      {phase === "refuted" && plies !== undefined && (
         <span
           className={cn("shrink-0", tsumeShogiToneClassNames.refutationText)}
         >
