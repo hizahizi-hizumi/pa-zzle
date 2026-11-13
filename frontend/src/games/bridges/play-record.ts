@@ -32,7 +32,7 @@ const BRIDGES_PLAY_RECORD_PAYLOAD_VERSION = 1;
 
 type BridgesPlayRecordPayload = {
   difficulty: BridgesDifficulty;
-  /** 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。 */
+  /** 再プレイで問題集から同じ問題を引くのに使う。 */
   problemIdentity: BridgesRecordedProblemIdentity;
   workload: BridgesSolveWorkload;
   /** 待った・盤面を戻した回数・入力回数・交差に阻まれた回数は評価に使わないが、評価規則を見直すときの材料として残す。 */

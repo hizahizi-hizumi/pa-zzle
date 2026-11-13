@@ -73,7 +73,7 @@ export type BridgesScaleMetrics = {
  * - `connectivityRoundCount`: 数字の読みで止まり、つながりの読み（C1p・C1g・C3・D）が要った手詰まりの回数。
  * - `countReasoningUndecidedRatio`: 数字の読み（A1・A2）だけでは本数が決まらない行き先の割合。
  *   数字の読みで止まり、つながりを読み始めなければならない範囲の広さ。
- * - `openingEdgeRatio`: 解き始めの盤面で、数字の読みだけで範囲を狭められる行き先の割合（入口の広さ）。
+ * - `openingEdgeRatio`: 入口の広さ。
  * - `openingSaturatedIslandCount`: 解き始めに、見ただけで全部の行き先の本数が決まる数字3以上の島（決め打ち）の数。
  * - `closureRoundCount`: 閉じない読み（C1p・C1g）で、1〜2組だけが決まった手詰まり（一か所の気づき）の回数。
  * - `sweepRoundCount`: つながりの読みで、3組以上がまとめて決まった手詰まり（同じ規則で盤面を掃く作業）の回数。分類には使わない。
@@ -90,8 +90,7 @@ export type BridgesScaleMetrics = {
  *   `BRIDGES_LOOKAHEAD_CHAIN_GAP` 以下のうちに、別の行き先で続けて要った回数。先読みの結果からすぐ次の先読みが要る所。
  * - `lookaheadSpotCount`: 1手の先読みが要った場所の数（続けて要った先読みは1つの場所）。
  * - `longestLookaheadChain`: 1つの場所で続けて要った1手の先読みの数の最大。
- * - `crossingBlockCount`: 架かると決まった橋と交わって0本になった行き先のうち、両端の島がまだ足りなかった行き先の数。
- *   交差で行き先が消え、数字の読みが進む所。
+ * - `crossingBlockCount`: 交差で行き先が消えた所の数。
  * - `cornerOpeningIslandCount`: 解き始めの決め打ちの島のうち、盤面の四隅の島の数。
  * - `countLookaheadRoundCount`: 1手の先読みのうち、本数が破れるのを見て退けた手詰まりの回数。
  * - `cappingLookaheadRoundCount`: 1手の先読みのうち、架けすぎる手を退けて上限を下げた手詰まりの回数。

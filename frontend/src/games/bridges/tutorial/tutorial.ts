@@ -666,9 +666,7 @@ export function getBridgesTutorialSpotlight(
 
 /**
  * 手を離した後、手が止まったときに示す辺。無ければ `null`。
- * 本番と同じく、架けた橋が解と合うかは明かさず、今の盤面と手に入れたルールだけで橋が要ると決まる辺を示す。
- * 解と違う橋のせいで、ルールだけで決まる辺が無くなったときに限り、手詰まりのままにしないよう、その橋の辺を示す。
- * その橋を外す途中の2本にした後は、外し終えるまで同じ辺を示す。
+ * 解と違う橋の辺を示した後、その橋を外す途中の2本にしたら、外し終えるまで同じ辺を示す。
  */
 export function findBridgesTutorialHintEdge(
   { step, earnedRuleIds }: BridgesTutorialSituation,

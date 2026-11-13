@@ -63,7 +63,7 @@ export const bridgesConnectivityTiers = [
  *   ものは含まない）。ほかの段では `false`。
  * - `decidedRatio`: この手詰まりの前に、本数が決まっていた行き先の割合。読みが解き進みのどこで要ったか。
  * - `separated`: 1手の先読みで、同じ手詰まりに狭めた辺のうち、前の記録の辺から離れた所（両端の島もその隣の島も重ならない所）。
- *   同じ手詰まりでも、離れた所の先読みは人には別の場所の読みなので、別の記録にする。ほかの段では `false`。
+ *   別の記録にする。ほかの段では `false`。
  */
 export type BridgesReasoningRound = {
   tier: BridgesReasoningTier;
@@ -100,8 +100,7 @@ export type BridgesHumanSolveStatus = "solved" | "stuck" | "contradiction";
 
 /**
  * - `rounds`: 手詰まりごとに使った段の記録。順に並ぶ。
- * - `crossingBlockCount`: 架かると決まった橋と交わって0本になった辺のうち、両端の島がまだ足りなかった辺の数。
- *   数字の読みでは塞がらない行き先を、交差が塞いだ回数。
+ * - `crossingBlockCount`: 交差で行き先が消えた所の数。
  * - `bridges`: 解き終えた（止まった）ときの、辺ごとの決まった本数の下限。`solved` なら解。
  * - `decidedEdgeRatio`・`undecidedEdgeRatio`: 本数が決まった辺・決まらない辺の割合。辺が無ければ 1・0。
  *   割り算の丸めを境界の比べに持ち込まないよう、両方を数から求める。
@@ -697,8 +696,8 @@ function mergeDeductions(
 /**
  * 解き方の選び方。
  * - `closingTiersTogether`: 2島で閉じない読み（C1p）で進める手詰まりでは、3島以上の組で閉じない読み（C1g）も同じ手詰まりで一緒に当てる。
- *   どちらも「架けると組が閉じる」同じ読みで、人は同じ局面で両方を見る。分けて当てると、低い段だけを当てる規則のせいで
- *   C1g で決まる所が次の手詰まりへ回り、つながりの読みの回数が増える。研究用の解法器との突き合わせでだけ `false` にする。
+ *   分けて当てると、低い段だけを当てる規則のせいで C1g で決まる所が次の手詰まりへ回り、つながりの読みの回数が増える。
+ *   研究用の解法器との突き合わせでだけ `false` にする。
  */
 type BridgesHumanSolveOptions = {
   closingTiersTogether: boolean;
@@ -1086,19 +1085,13 @@ function traceWithSeparateClosingTiers(
 
 export const _private = { failsAfterOneStep, traceWithSeparateClosingTiers };
 
-/**
- * 解く手順の流れ。人間向け解法器が手詰まりごとに使った段と、その手詰まりで狭めた組の数を順に並べる。
- */
 export function describeBridgesSolveFlow(board: BridgesBoard): string {
   return traceBridgesHumanSolve(board, "D")
     .rounds.map(({ tier, edgeCount }) => `${tier}:${edgeCount}`)
     .join(",");
 }
 
-/**
- * 解く手順の指紋。流れ（`describeBridgesSolveFlow`）に、手詰まりごとに狭めた組の形（両端の島の数字の組と、
- * 外周に沿う組かどうか）を足す。
- */
+/** 読む数字の並びまで含めた、解く手順の流れ。 */
 export function describeBridgesSolveFingerprint(board: BridgesBoard): string {
   const { edges } = getBridgesNetwork(board);
   const last = board.width - 1;

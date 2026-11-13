@@ -22,7 +22,6 @@ type BridgesResultScreenProps = GamePlayResultScreenProps<
 /**
  * 内訳はこのプレイの点と、点に入らない操作の回数だけにする。問題の作業の量（島・橋・読みの回数）は、
  * 成績と並べると自分の成績と読み違えられ、遊ぶ人が盤面から数えられない量も含むので示さない。
- * 基準時間が何から決まるかは採点基準の文で示す。
  */
 function listScoreBreakdown(result: BridgesResult) {
   return [
