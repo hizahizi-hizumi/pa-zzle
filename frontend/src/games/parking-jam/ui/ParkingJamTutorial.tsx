@@ -61,7 +61,6 @@ type ParkingJamTutorialProgress = TutorialProgress<
   ParkingJamTutorialBoardState
 >;
 
-/** 盤面に重ねる、覆いから抜く物と印。 */
 type BoardFocus = {
   spotlights: ParkingJamTutorialFocusTarget[];
   mark: ParkingJamTutorialMark | null;
@@ -72,25 +71,20 @@ const noFocus: BoardFocus = { spotlights: [], mark: null };
 /** `parking-jam-board.css` の出ていく動き（`pj-exit`）の長さ。 */
 const EXIT_ANIMATION_MS = 520;
 
-/** 車が出ていき終えて盤面から消えてから、次の手順の一言と印を出すまでの間。 */
 const EXIT_STEP_HOLD_MS = EXIT_ANIMATION_MS + 180;
 
-/** 手を離した後、手が止まってから今出せる車を示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
-/** 導入のゴールの場面で、盤面を描き始めてから最初の車が出ていき始めるまでの間。盤面が見えきってから動かす。 */
+// 導入のゴールの場面で、盤面が見えきってから車を動かす。
 const DEPARTURE_START_MS = 900;
-/** 導入のゴールの場面で、車を1台ずつ出していく間隔。 */
 const DEPARTURE_INTERVAL_MS = 300;
 
-/** 導入のゴールの場面で、始めの盤面の車を解き方の順に1台ずつ出していき、空の駐車場にする。 */
 const goalDepartures: readonly ParkingJamDeparture[] =
   listParkingJamTutorialSolution().map((move, index) => ({
     ...move,
     delayMs: DEPARTURE_START_MS + index * DEPARTURE_INTERVAL_MS,
   }));
 
-/** 導入のゴールの場面で、盤面を描き始めてから、最後の車が出ていき終えるまでの間。 */
 const GOAL_SCENE_MS =
   DEPARTURE_START_MS +
   (goalDepartures.length - 1) * DEPARTURE_INTERVAL_MS +
@@ -98,18 +92,14 @@ const GOAL_SCENE_MS =
 
 const goalState = parkingJamTutorial.goal().puzzle;
 
-/** 本番のプレイ画面と同じ効果音を鳴らすための進行。最後の車が出ていく間を完成演出とする。 */
 const soundProgresses = {
   intro: "playing",
   playing: "playing",
+  // 最後の車が出ていく間を完成演出とする。
   solved: "clearing",
   completed: "result",
 } as const satisfies Record<TutorialPhase, GameProgress>;
 
-/**
- * 直前の手を、本番の盤面と同じ出ていく動きや、当たって揺れる動きにする。
- * `id` は、もう一度始めても前の手と重ならないよう、開いている間通して数える。
- */
 function createOperation(
   { lastMove }: ParkingJamTutorialBoardState,
   id: number,
@@ -124,7 +114,6 @@ function createOperation(
     : null;
 }
 
-/** 出られない手の車と、その手で当たったもの（ほかの車・植え込み・道路につながっていない外周の縁石）。 */
 function listContactedMoveTargets({
   move,
   contact,
@@ -144,10 +133,6 @@ function listContactedMoveTargets({
   }
 }
 
-/**
- * 7台の駐車場で、一言と印に沿って1台ずつ出させ、出られない向きのわけを1つずつ示す。
- * 手順を終えたら手を離し、残りを自分で出させる。盤面・出ていく動き・当たって揺れる動きは本番と同じ部品を使う。
- */
 export function ParkingJamTutorial({
   open,
   playStart,
@@ -156,7 +141,6 @@ export function ParkingJamTutorial({
   const [progress, setProgress] = useState<ParkingJamTutorialProgress>(() =>
     startTutorial(parkingJamTutorial),
   );
-  // 盤面の動き。手のたびにイベントハンドラで作り、盤面が出ていく動きや当たる動きで応える。
   const [operation, setOperation] = useState<ParkingJamOperation | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] =
     useState<ParkingJamVehicleId | null>(null);
@@ -168,6 +152,7 @@ export function ParkingJamTutorial({
     progress: ParkingJamTutorialProgress;
     id: number;
   } | null>(null);
+  // 操作の `id` は、もう一度始めても前の手と重ならないよう、開いている間通して数える。
   const operationIdRef = useRef(0);
   // 手順どおりの手で次の手順へ進んだときの、進む前の進行。車が出ていき終えて次の印を付けるまで、一言とルールの並びをこちらで見せる。
   const [steppedHold, setSteppedHold] = useState<{
@@ -228,7 +213,6 @@ export function ParkingJamTutorial({
     setProgress(finishTutorialIntro);
   }
 
-  /** 手を引いている間に印の無い車を触ったら、受け付けずに印の線を濃くし直す。 */
   function rejectsOffStepVehicle(vehicleId: ParkingJamVehicleId): boolean {
     if (!guiding || vehicleId === stepVehicleId) {
       return false;
@@ -361,8 +345,8 @@ export function ParkingJamTutorial({
     ];
   }
 
-  /** 印と、覆いから抜く物。導入の終わりは、最初の手順の一言を出すのと同時に、最初の印を付ける。 */
   function getBoardFocus(messageShown: boolean): BoardFocus {
+    // 導入の終わりは、最初の手順の一言を出すのと同時に、最初の印を付ける。
     const markVehicleId =
       progress.phase === "intro"
         ? messageShown
@@ -409,11 +393,6 @@ export function ParkingJamTutorial({
     );
   }
 
-  /**
-   * 導入のゴールの場面では、始めの盤面の車を1台ずつ出していって空の駐車場を見せる。
-   * 動きを減らす設定や、場面の動きを終えたときは、空の駐車場をすぐ見せる。
-   * 始めの盤面の場面で、空の駐車場を薄くしながら、車の停まった始めの盤面を浮かび上がらせる。
-   */
   function renderBoard({
     scene,
     playing: scenePlaying,

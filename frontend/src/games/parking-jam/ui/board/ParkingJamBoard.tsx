@@ -47,10 +47,7 @@ type ParkingJamBoardProps = {
     direction: ParkingJamDirection,
   ) => void;
   onClearAnimationComplete: () => void;
-  /**
-   * 盤面に残っていない車を、`delayMs` だけ待ってからそれぞれの向きへ出ていかせる。
-   * チュートリアルの導入で、車が出ていって空になる駐車場をゴールとして見せるのに使う。
-   */
+  /** 盤面に残っていない車を、`delayMs` だけ待ってからそれぞれの向きへ出ていかせる。 */
   departures?: readonly ParkingJamDeparture[];
 };
 

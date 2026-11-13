@@ -40,7 +40,6 @@ type Progress = TutorialProgress<
 const board = PARKING_JAM_TUTORIAL_BOARD;
 const { steps } = parkingJamTutorial;
 
-/** 出られない手で当たったものと、それを示すルール。 */
 const blockerRules = {
   road: "road",
   planter: "planter",
@@ -60,7 +59,6 @@ function getVehicle(vehicleId: ParkingJamVehicleId) {
   return vehicle;
 }
 
-/** 車の向きに沿う2つの向き。 */
 function listDirections(vehicleId: ParkingJamVehicleId): ParkingJamDirection[] {
   return getVehicle(vehicleId).orientation === "horizontal"
     ? ["left", "right"]
@@ -87,7 +85,6 @@ function perform(
   });
 }
 
-/** 手順の車を出られる向きへ出して、`count` 個目の手順まで終える。 */
 function playSteps(count: number): Progress {
   return steps.slice(0, count).reduce((progress, step) => {
     const direction = listDirections(step.vehicleId).find(
@@ -104,8 +101,8 @@ function playSteps(count: number): Progress {
   }, started);
 }
 
-/** 今の盤面から、どの順に出してもたどり着く盤面。出庫は車を減らすだけなので、残る車の組で表す。 */
 function listReachableStates(from: ParkingJamState): ParkingJamState[] {
+  // 出庫は車を減らすだけなので、盤面を残る車の組で表す。
   const reached = new Map([[from.remainingVehicleIds.join(), from]]);
   const pending = [from];
   for (let current = pending.pop(); current; current = pending.pop()) {
@@ -121,7 +118,6 @@ function listReachableStates(from: ParkingJamState): ParkingJamState[] {
   return [...reached.values()];
 }
 
-/** 今出せる車を同時に出していったときの段数。出し切れなければ `null`。 */
 function countRemovalLayers(from: ParkingJamState): number | null {
   let current = from;
   let layers = 0;
@@ -144,12 +140,10 @@ function countRemovalLayers(from: ParkingJamState): number | null {
   return layers;
 }
 
-/** 指定した見出しの手順。 */
 function findStepIndex(ruleId: ParkingJamTutorialRuleId): number {
   return steps.findIndex(({ introducedRuleId }) => introducedRuleId === ruleId);
 }
 
-/** 出庫を続けてたどり着く盤面すべてで、車の向きに沿う手のうち出られない手。 */
 function listBlockedMovesOnReachableStates(): {
   puzzle: ParkingJamState;
   move: { vehicleId: ParkingJamVehicleId; direction: ParkingJamDirection };
