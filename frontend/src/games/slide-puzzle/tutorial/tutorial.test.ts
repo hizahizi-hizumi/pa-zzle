@@ -5,8 +5,6 @@ import {
   listSlidePuzzleSingleMoves,
 } from "@/games/slide-puzzle/puzzle/rules";
 import {
-  calculateSlidePuzzleManhattanDistance,
-  findSlidePuzzleBlankIndex,
   isSlidePuzzleSolved,
   type SlidePuzzleBoard,
   type SlidePuzzleTile,
@@ -14,30 +12,23 @@ import {
 import {
   _private,
   findSlidePuzzleTutorialHintTile,
+  getSlidePuzzleTutorialProgressRatio,
   getSlidePuzzleTutorialStepTile,
   type SlidePuzzleTutorialBoardState,
   type SlidePuzzleTutorialRuleId,
-  type SlidePuzzleTutorialStep,
+  type SlidePuzzleTutorialSituation,
   slidePuzzleTutorial,
-  slidePuzzleTutorialScrambleBoards,
 } from "@/games/slide-puzzle/tutorial/tutorial";
 import {
   finishTutorialIntro,
-  getTutorialMessage,
   getTutorialSituation,
   performTutorialAction,
   startTutorial,
+  type TutorialMessage,
   type TutorialProgress,
-  type TutorialSituation,
 } from "@/games/tutorial";
 
-const {
-  startBoard,
-  goalBoard,
-  getTileForBlank,
-  listBoardsByReading,
-  findNextShortestMoveCellIndex,
-} = _private;
+const { startBoard, goalBoard, guidedTiles, guidedBoards } = _private;
 
 type Progress = TutorialProgress<
   SlidePuzzleTutorialRuleId,
@@ -46,416 +37,533 @@ type Progress = TutorialProgress<
 
 const { steps } = slidePuzzleTutorial;
 
-function slideTile(board: SlidePuzzleBoard, tile: SlidePuzzleTile) {
-  const slide = getSlidePuzzleSlide(board, board.indexOf(tile));
-  return slide ? applySlidePuzzleSlide(board, slide) : null;
-}
+const topRowTiles = [1, 2, 3] as const;
+const leftColumnTiles = [4, 7] as const;
 
-function playSteps(count: number): SlidePuzzleBoard {
-  return steps
-    .slice(0, count)
-    .reduce(
-      (board, step) => slideTile(board, step.tile) ?? board,
-      startBoard as SlidePuzzleBoard,
-    );
-}
-
-/** 距離を1つずつ縮める手だけで完成までたどる道の数。最短手数が距離と同じなら、最短の解き方の数になる。 */
-function countShortestPaths(board: SlidePuzzleBoard): number {
-  if (isSlidePuzzleSolved(board)) {
-    return 1;
-  }
-  const distance = calculateSlidePuzzleManhattanDistance(board);
-  return listSlidePuzzleSingleMoves(board).reduce((count, cellIndex) => {
-    const slide = getSlidePuzzleSlide(board, cellIndex);
-    const next = slide ? applySlidePuzzleSlide(board, slide) : board;
-    return calculateSlidePuzzleManhattanDistance(next) < distance
-      ? count + countShortestPaths(next)
-      : count;
-  }, 0);
-}
-
-/** 盤面は `toBoardKey` の形で持つ。 */
-type ReachableBoards = {
-  keys: ReadonlySet<string>;
-  previousKeysByKey: ReadonlyMap<string, readonly string[]>;
-};
+/** 上の行が揃った、手を離した後の盤面。 */
+const releasedBoard = guidedBoards.at(-1) ?? startBoard;
 
 function toBoardKey(board: SlidePuzzleBoard): string {
   return board.join(",");
 }
 
-function exploreReachableBoards(start: SlidePuzzleBoard): ReachableBoards {
-  const situation: TutorialSituation<
-    SlidePuzzleTutorialRuleId,
-    SlidePuzzleTutorialStep
-  > = { step: null, earnedRuleIds: ["slide", "line"] };
-  const keys = new Set([toBoardKey(start)]);
-  const previousKeysByKey = new Map<string, string[]>();
-  const queue: SlidePuzzleBoard[] = [start];
-  for (let index = 0; index < queue.length; index += 1) {
-    const board = queue[index] ?? [];
-    const key = toBoardKey(board);
-    // 完成した盤面では解き終えるので、その先へは進めない。
-    if (isSlidePuzzleSolved(board)) {
-      continue;
+function isAtGoal(board: SlidePuzzleBoard, tile: SlidePuzzleTile): boolean {
+  return board[tile - 1] === tile;
+}
+
+/** 空白の隣のタイルを1枚スライドさせた盤面と、そのタイル。`fixedTiles` は動かさない。 */
+function listSingleSlides(
+  board: SlidePuzzleBoard,
+  fixedTiles: readonly SlidePuzzleTile[],
+): { tile: SlidePuzzleTile; board: SlidePuzzleBoard }[] {
+  return listSlidePuzzleSingleMoves(board).flatMap((cellIndex) => {
+    const tile = board[cellIndex];
+    const slide = getSlidePuzzleSlide(board, cellIndex);
+    return tile === undefined || !slide || fixedTiles.includes(tile)
+      ? []
+      : [{ tile, board: applySlidePuzzleSlide(board, slide) }];
+  });
+}
+
+/**
+ * `start` から `fixedTiles` を動かさずに、`isTarget` の盤面へ1枚ずつ最短でスライドさせる道すべて。道はスライドさせたタイルの並び。
+ * 届かなければ空。3×3 の盤面なので、届く盤面をすべてたどる。
+ */
+function listShortestPaths(
+  start: SlidePuzzleBoard,
+  isTarget: (board: SlidePuzzleBoard) => boolean,
+  fixedTiles: readonly SlidePuzzleTile[],
+): SlidePuzzleTile[][] {
+  const reachable: SlidePuzzleBoard[] = [start];
+  const seen = new Set([toBoardKey(start)]);
+  for (let index = 0; index < reachable.length; index += 1) {
+    for (const next of listSingleSlides(reachable[index] ?? [], fixedTiles)) {
+      const key = toBoardKey(next.board);
+      if (!seen.has(key)) {
+        seen.add(key);
+        reachable.push(next.board);
+      }
     }
-    for (const cellIndex of board.keys()) {
-      const { state, outcome } = slidePuzzleTutorial.perform(
-        situation,
-        { board, moveCount: 0, lastMove: null },
-        { cellIndex },
+  }
+  const distanceByKey = new Map<string, number>();
+  let frontier = reachable.filter(isTarget);
+  for (const board of frontier) {
+    distanceByKey.set(toBoardKey(board), 0);
+  }
+  for (let distance = 1; frontier.length > 0; distance += 1) {
+    const next: SlidePuzzleBoard[] = [];
+    for (const board of frontier) {
+      for (const previous of listSingleSlides(board, fixedTiles)) {
+        const key = toBoardKey(previous.board);
+        if (!distanceByKey.has(key)) {
+          distanceByKey.set(key, distance);
+          next.push(previous.board);
+        }
+      }
+    }
+    frontier = next;
+  }
+
+  function follow(board: SlidePuzzleBoard): SlidePuzzleTile[][] {
+    const distance = distanceByKey.get(toBoardKey(board));
+    if (distance === undefined) {
+      return [];
+    }
+    if (distance === 0) {
+      return [[]];
+    }
+    return listSingleSlides(board, fixedTiles)
+      .filter(
+        (next) => distanceByKey.get(toBoardKey(next.board)) === distance - 1,
+      )
+      .flatMap((next) =>
+        follow(next.board).map((rest) => [next.tile, ...rest]),
       );
-      if (outcome !== "continued" && outcome !== "solved") {
-        continue;
-      }
-      const nextKey = toBoardKey(state.board);
-      const previousKeys = previousKeysByKey.get(nextKey) ?? [];
-      previousKeys.push(key);
-      previousKeysByKey.set(nextKey, previousKeys);
-      if (!keys.has(nextKey)) {
-        keys.add(nextKey);
-        queue.push(state.board);
-      }
-    }
   }
-  return { keys, previousKeysByKey };
+  return follow(start);
 }
 
-function listBoardsReachingGoal({
-  previousKeysByKey,
-}: ReachableBoards): ReadonlySet<string> {
-  const goalKey = toBoardKey(goalBoard);
-  const reaching = new Set([goalKey]);
-  const queue = [goalKey];
-  for (let index = 0; index < queue.length; index += 1) {
-    for (const previousKey of previousKeysByKey.get(queue[index] ?? "") ?? []) {
-      if (!reaching.has(previousKey)) {
-        reaching.add(previousKey);
-        queue.push(previousKey);
-      }
-    }
-  }
-  return reaching;
+function hasTopRow(board: SlidePuzzleBoard): boolean {
+  return topRowTiles.every((tile) => isAtGoal(board, tile));
 }
 
-function getProgressAfter(
-  progress: Progress,
-  cellIndices: readonly number[],
-): Progress {
-  return cellIndices.reduce(
-    (current, cellIndex) =>
-      performTutorialAction(slidePuzzleTutorial, current, { cellIndex }),
-    progress,
+function hasLeftColumn(board: SlidePuzzleBoard): boolean {
+  return (
+    hasTopRow(board) && leftColumnTiles.every((tile) => isAtGoal(board, tile))
   );
 }
 
-function tapTiles(progress: Progress, tiles: readonly SlidePuzzleTile[]) {
-  return tiles.reduce(
-    (current, tile) =>
-      performTutorialAction(slidePuzzleTutorial, current, {
-        cellIndex: current.boardState.board.indexOf(tile),
-      }),
-    progress,
+function endsWithPair(
+  path: readonly SlidePuzzleTile[],
+  pair: readonly [SlidePuzzleTile, SlidePuzzleTile],
+): boolean {
+  return [...path.slice(-2)].sort().join(",") === [...pair].sort().join(",");
+}
+
+function isInLineWithBlank(board: SlidePuzzleBoard, tile: SlidePuzzleTile) {
+  return getSlidePuzzleSlide(board, board.indexOf(tile)) !== null;
+}
+
+function boardState(board: SlidePuzzleBoard): SlidePuzzleTutorialBoardState {
+  return { ...slidePuzzleTutorial.start(), board };
+}
+
+function startPlaying(): Progress {
+  return finishTutorialIntro(startTutorial(slidePuzzleTutorial));
+}
+
+function tap(progress: Progress, tile: SlidePuzzleTile): Progress {
+  return performTutorialAction(slidePuzzleTutorial, progress, {
+    cellIndex: progress.boardState.board.indexOf(tile),
+  });
+}
+
+function tapAll(progress: Progress, tiles: readonly SlidePuzzleTile[]) {
+  return tiles.reduce(tap, progress);
+}
+
+function listMessages(): TutorialMessage[] {
+  const violation = slidePuzzleTutorial.describeViolation(
+    { step: null, earnedRuleIds: ["line", "pair"] },
+    {
+      ...boardState(releasedBoard),
+      lastMove: { type: "rejected", tile: 8, cellIndex: 6 },
+    },
   );
+  return [
+    ...steps.map((step) => step.message),
+    slidePuzzleTutorial.freePlay,
+    slidePuzzleTutorial.completion.home,
+    slidePuzzleTutorial.completion.play,
+    violation,
+    { headline: slidePuzzleTutorial.intro.purpose, detail: null },
+    { headline: slidePuzzleTutorial.intro.goalCaption, detail: null },
+  ];
 }
 
 describe("盤面", () => {
-  test("始めの盤面が、崩れていて、ゴールへたどり着けること", () => {
+  test("始めの盤面が、ゴールへ届く 3×3 の盤面であること", () => {
     const solvable = isSolvableSlidePuzzleBoard(startBoard);
-    const solved = isSlidePuzzleSolved(startBoard);
 
     expect(solvable).toBe(true);
-    expect(solved).toBe(false);
+    expect(isSlidePuzzleSolved(goalBoard)).toBe(true);
   });
 
-  test("最短で完成させる解き方が1通りだけで、8手で完成すること", () => {
-    const distance = calculateSlidePuzzleManhattanDistance(startBoard);
-    const pathCount = countShortestPaths(startBoard);
+  test("手を引く道が、空白の隣のタイルを1枚ずつスライドさせた盤面の並びで、上の行が揃って終わること", () => {
+    const lastBoard = guidedBoards.at(-1) ?? startBoard;
 
-    expect(distance).toBe(8);
-    expect(pathCount).toBe(1);
+    expect(guidedBoards).toHaveLength(guidedTiles.length + 1);
+    expect(hasTopRow(lastBoard)).toBe(true);
   });
 
-  test("導入で崩していく盤面が、ゴールから1手ずつ始めの盤面へ進むこと", () => {
-    const boards = slidePuzzleTutorialScrambleBoards;
-    const reachable = boards.slice(1).every((board, index) => {
-      const before = boards[index] ?? [];
-      return listSlidePuzzleSingleMoves(before).some((cellIndex) => {
-        const slide = getSlidePuzzleSlide(before, cellIndex);
-        return (
-          slide !== null &&
-          applySlidePuzzleSlide(before, slide).join() === board.join()
-        );
-      });
-    });
+  test("手順が手を引く道を隙間なく区切り、道の終わりで手を離すこと", () => {
+    const ranges = steps.map((step) => [
+      step.startMoveIndex,
+      step.endMoveIndex,
+    ]);
 
-    expect(boards[0]).toEqual(goalBoard);
-    expect(boards.at(-1)).toEqual(startBoard);
-    expect(reachable).toBe(true);
+    expect(ranges[0]?.[0]).toBe(0);
+    for (const [index, [start]] of ranges.entries()) {
+      expect(start).toBe(index === 0 ? 0 : ranges[index - 1]?.[1]);
+    }
+    expect(ranges.at(-1)?.[1]).toBe(guidedTiles.length);
   });
 });
 
-describe("手順", () => {
-  const ruleCases = steps.map(
-    (step, index) => [index + 1, step, playSteps(index)] as const,
-  );
+describe("手を引く間の場合", () => {
+  const [operationStep, lineStep, pairStep, pairFinishStep] = steps;
 
-  test.each(ruleCases)(
-    "%i 手目のタイルをスライドさせると、動いたタイルがすべて自分の場所に収まり、その1枚目が空白を自分の場所とするタイルであること",
-    (_, step, board) => {
-      const slide = getSlidePuzzleSlide(board, board.indexOf(step.tile));
-      const next = slide ? applySlidePuzzleSlide(board, slide) : board;
-      const movedTiles = (slide?.movedTileIndices ?? []).map(
-        (cellIndex) => board[cellIndex],
-      );
-      const landed = movedTiles.every(
-        (tile) => tile !== undefined && next.indexOf(tile) === tile - 1,
-      );
+  test("操作を教える手が、空白の隣のタイルを、ゴールでそのタイルがある場所へスライドさせること", () => {
+    const tile = guidedTiles[0] ?? 0;
+    const after = guidedBoards[1] ?? [];
 
-      expect(movedTiles[0]).toBe(getTileForBlank(board));
-      expect(landed).toBe(true);
-    },
-  );
-
-  const introducingCases: readonly (readonly [
-    SlidePuzzleTutorialRuleId,
-    number,
-  ])[] = [
-    ["slide", 1],
-    ["line", 2],
-  ];
-
-  test.each(introducingCases)(
-    "%s を示す手順では、そのルールでスライドする枚数だけタイルが動くこと",
-    (ruleId, movedCount) => {
-      const index = steps.findIndex((step) => step.introducedRuleId === ruleId);
-      const step = steps[index] as SlidePuzzleTutorialStep;
-      const board = playSteps(index);
-      const slide = getSlidePuzzleSlide(board, board.indexOf(step.tile));
-
-      expect(slide?.movedTileIndices).toHaveLength(movedCount);
-    },
-  );
-
-  const stepMoveCases = steps.map((step, index) => {
-    const board = playSteps(index);
-    const lineEarned = steps
-      .slice(0, index + 1)
-      .some((earlier) => earlier.introducedRuleId === "line");
-    return [index + 1, step, board, lineEarned ? 2 : 1] as const;
+    expect(operationStep?.introducedRuleId).toBeNull();
+    expect(after.indexOf(tile)).toBe(goalBoard.indexOf(tile));
   });
 
-  test.each(stepMoveCases)(
-    "%i 手目は、まとめてスライドを示すまでは1枚だけ、示した後もそのルールで動く枚数までしか動かないこと",
-    (_, step, board, maxMovedCount) => {
-      const slide = getSlidePuzzleSlide(board, board.indexOf(step.tile));
+  test("行・列のルールを示す手順で、印のタイルを考えずに1回押すと、空白と同じ行・列にないのでルールの違反になること", () => {
+    const board = guidedBoards[lineStep?.startMoveIndex ?? 0] ?? [];
+    const lure = lineStep?.lureTile ?? 0;
 
-      const movedCount = slide?.movedTileIndices.length ?? 0;
+    const inLine = isInLineWithBlank(board, lure);
 
-      expect(movedCount).toBeGreaterThan(0);
-      expect(movedCount).toBeLessThanOrEqual(maxMovedCount);
-    },
-  );
+    expect(lineStep?.introducedRuleId).toBe("line");
+    expect(inLine).toBe(false);
+  });
 
-  test("書き出したルールのそれぞれを、いずれかの手順で示すこと", () => {
-    const introduced = steps.flatMap((step) => step.introducedRuleId ?? []);
+  test("行・列のルールを示す手順の手が、空白を印のタイルと同じ行へ動かしてから、印のタイルを自分の場所へ入れる手であること", () => {
+    const start = lineStep?.startMoveIndex ?? 0;
+    const lure = lineStep?.lureTile ?? 0;
+    const beforeLastMove = guidedBoards[start + 1] ?? [];
+    const after = guidedBoards[lineStep?.endMoveIndex ?? 0] ?? [];
 
-    expect(introduced).toEqual(
-      slidePuzzleTutorial.rules.map((rule) => rule.id),
+    const inLine = isInLineWithBlank(beforeLastMove, lure);
+
+    expect(guidedTiles.slice(start + 1, lineStep?.endMoveIndex)).toEqual([
+      lure,
+    ]);
+    expect(inLine).toBe(true);
+    expect(isAtGoal(after, lure)).toBe(true);
+  });
+
+  test("行・列のルールを示す手順の手が、1を崩さずに2を自分の場所へ入れる最短の道の1通りであること", () => {
+    const start = guidedBoards[lineStep?.startMoveIndex ?? 0] ?? [];
+
+    const paths = listShortestPaths(start, (board) => isAtGoal(board, 2), [1]);
+
+    expect(paths).toEqual([
+      guidedTiles.slice(lineStep?.startMoveIndex, lineStep?.endMoveIndex),
+    ]);
+  });
+
+  describe("組にして入れる読みの手順", () => {
+    const start = guidedBoards[pairStep?.startMoveIndex ?? 0] ?? [];
+    const guidedReading = guidedTiles.slice(
+      pairStep?.startMoveIndex,
+      pairFinishStep?.endMoveIndex,
     );
-  });
 
-  test("手順を終えた後の残りを、空白を自分の場所とするタイルを収め続けるだけで完成させられること", () => {
-    const boards = listBoardsByReading(playSteps(steps.length));
+    test("1と2が入っていて、上の行を崩さずには3が入らない盤面から始めること", () => {
+      const pathsKeepingTwo = listShortestPaths(start, hasTopRow, [1, 2]);
 
-    const last = boards.at(-1) ?? [];
-
-    expect(isSlidePuzzleSolved(last)).toBe(true);
-    expect(boards.length - 1).toBe(4);
-  });
-
-  describe("手を離した後にどう進めても", () => {
-    const reachable = exploreReachableBoards(playSteps(steps.length));
-
-    test("届くどの盤面からも、完成した盤面へたどり着けること", () => {
-      const reaching = listBoardsReachingGoal(reachable);
-      const stuckKeys = [...reachable.keys].filter((key) => !reaching.has(key));
-
-      expect(reachable.keys.has(toBoardKey(goalBoard))).toBe(true);
-      expect(stuckKeys).toEqual([]);
+      expect(isAtGoal(start, 1)).toBe(true);
+      expect(isAtGoal(start, 2)).toBe(true);
+      expect(pathsKeepingTwo).toEqual([]);
     });
-  });
 
-  test("手順を終えた後の残りに、行と列それぞれでまとめてスライドさせられる所があること", () => {
-    const board = playSteps(steps.length);
-    const blankIndex = findSlidePuzzleBlankIndex(board);
-    const rowSlide = getSlidePuzzleSlide(board, 2);
-    const afterRow = rowSlide ? applySlidePuzzleSlide(board, rowSlide) : board;
-    const columnSlide = getSlidePuzzleSlide(afterRow, 8);
-    const afterColumn = columnSlide
-      ? applySlidePuzzleSlide(afterRow, columnSlide)
-      : afterRow;
+    test("1を崩さずに上の行を揃える最短の道が1通りで、手を引く道と同じく、最後に2と3を続けて入れること", () => {
+      const paths = listShortestPaths(start, hasTopRow, [1]);
 
-    expect(blankIndex).toBe(0);
-    expect(rowSlide?.movedTileIndices).toHaveLength(2);
-    expect(columnSlide?.movedTileIndices).toHaveLength(2);
-    expect(isSlidePuzzleSolved(afterColumn)).toBe(true);
+      expect(paths).toEqual([guidedReading]);
+      expect(endsWithPair(guidedReading, [2, 3])).toBe(true);
+      expect(pairStep?.introducedRuleId).toBe("pair");
+    });
+
+    test("2と3を組に並べたところで、空白を回して入れる手順に替わること", () => {
+      const arranged = guidedBoards[pairStep?.endMoveIndex ?? 0] ?? [];
+
+      expect(arranged.indexOf(2)).toBe(goalBoard.indexOf(3));
+      expect(arranged.indexOf(3)).toBe(goalBoard.indexOf(3) + 3);
+    });
+
+    test("自分で探させる手順の始まりに、スライドできるタイルが2枚以上あること", () => {
+      const choices = listSingleSlides(start, [1]);
+
+      expect(pairStep?.cue).toBe("search");
+      expect(choices.length).toBeGreaterThanOrEqual(2);
+    });
   });
 });
 
-describe("performTutorialAction", () => {
-  const started = finishTutorialIntro(startTutorial(slidePuzzleTutorial));
-  const firstStepCellIndex = startBoard.indexOf(steps[0]?.tile ?? 0);
-  // 1手目の 5 の隣にあり、空白と同じ行にあるタイル。
-  const otherSlidableCellIndex = startBoard.indexOf(7);
-  const released = tapTiles(
-    started,
-    steps.map((step) => step.tile),
-  );
+describe("手を離した後の場合", () => {
+  describe("スライドの戻し方", () => {
+    const slides = listSingleSlides(releasedBoard, []);
 
-  // 1手目の空白は真ん中にあり、4 は同じ行・列にない。
-  const offLineCellIndex = startBoard.indexOf(4);
+    test("どのスライドも、動いたタイルをもう一度タップすると元の盤面へ戻るので、どう進めても手を離した盤面から完成へ届くこと", () => {
+      const restored = slides.map(({ tile, board }) => {
+        const slide = getSlidePuzzleSlide(board, board.indexOf(tile));
+        return slide ? applySlidePuzzleSlide(board, slide) : board;
+      });
+      const paths = listShortestPaths(
+        releasedBoard,
+        isSlidePuzzleSolved,
+        topRowTiles,
+      );
 
-  test("手を引いている間は、印のタイルだけをスライドさせて次の手順へ進むこと", () => {
-    const ignored = getProgressAfter(started, [otherSlidableCellIndex]);
-    const stepped = getProgressAfter(started, [firstStepCellIndex]);
-
-    expect(ignored).toBe(started);
-    expect(stepped.stepIndex).toBe(1);
-    expect(stepped.boardState.lastMove).toMatchObject({
-      type: "slid",
-      landedTiles: [5],
+      expect(restored).toEqual(slides.map(() => releasedBoard));
+      expect(paths.length).toBeGreaterThan(0);
     });
   });
 
-  test("同じ行・列のルールを示す前は、空白と同じ行・列にないタイルをタップしても、ルールに合わない手にしないこと", () => {
-    const tapped = getProgressAfter(started, [offLineCellIndex]);
+  test("4は入っているが、4を崩さずには7が入らない、組にして入れる読みがもう一度要る盤面であること", () => {
+    const pathsKeepingFour = listShortestPaths(releasedBoard, hasLeftColumn, [
+      ...topRowTiles,
+      4,
+    ]);
+    const paths = listShortestPaths(releasedBoard, hasLeftColumn, topRowTiles);
 
-    expect(tapped).toBe(started);
+    expect(isAtGoal(releasedBoard, 4)).toBe(true);
+    expect(isAtGoal(releasedBoard, 7)).toBe(false);
+    expect(pathsKeepingFour).toEqual([]);
+    expect(paths.length).toBeGreaterThan(0);
+    expect(paths.every((path) => endsWithPair(path, [4, 7]))).toBe(true);
+  });
+});
+
+describe("slidePuzzleTutorial.perform", () => {
+  describe("操作を教える手順の場合", () => {
+    const progress = startPlaying();
+
+    test("印のタイルをタップすると、スライドして次の手順へ進み、行・列のルールを伝えること", () => {
+      const next = tap(progress, guidedTiles[0] ?? 0);
+
+      expect(next.stepIndex).toBe(1);
+      expect(next.earnedRuleIds).toEqual(["line"]);
+    });
+
+    test("空白の隣でも手順に無いタイルや、空白と同じ行・列にないタイルを押しても、何も起きないこと", () => {
+      const results = [8, 6].map((tile) => tap(progress, tile));
+
+      expect(results).toEqual([progress, progress]);
+    });
   });
 
-  describe("同じ行・列のルールを示した手順の場合", () => {
-    const lineStep = tapTiles(started, [5, 8]);
-    // 空白は左下。5 は同じ行・列になく、7 と 6 は同じ行・列にあるが印が無い。
-    const unmarkedSlidableTiles = [7, 6];
+  describe("行・列のルールを示す手順の場合", () => {
+    const progress = tap(startPlaying(), guidedTiles[0] ?? 0);
 
-    test("空白と同じ行・列にないタイルをタップすると、手を離した後と同じく、盤面を変えずにルールに合わない手として応えること", () => {
-      const rejected = tapTiles(lineStep, [5]);
-      const message = getTutorialMessage(slidePuzzleTutorial, rejected, {
-        entry: "home",
-        violationSettled: true,
-      });
+    test("空白と同じ行・列にない印のタイルをタップすると、ルールに合わない手として返し、盤面を変えないこと", () => {
+      const next = tap(progress, 2);
 
-      expect(rejected.stepIndex).toBe(2);
-      expect(rejected.violated).toBe(true);
-      expect(rejected.boardState.board).toEqual(lineStep.boardState.board);
-      expect(rejected.boardState.lastMove).toMatchObject({
+      expect(next.violated).toBe(true);
+      expect(next.boardState.board).toEqual(progress.boardState.board);
+      expect(next.boardState.lastMove).toEqual({
         type: "rejected",
-        tile: 5,
-      });
-      expect(message).toEqual({
-        headline: "5 は空白と同じ行にも列にもありません",
-        detail: null,
+        tile: 2,
+        cellIndex: progress.boardState.board.indexOf(2),
       });
     });
 
-    test.each(unmarkedSlidableTiles)(
-      "空白と同じ行・列にある印の無い %i をタップしても、スライドさせないこと",
-      (tile) => {
-        const tapped = tapTiles(lineStep, [tile]);
+    test("空白と同じ行・列でも、手を引く道に無いタイルは、スライドさせないこと", () => {
+      const next = tap(progress, 5);
 
-        expect(tapped).toBe(lineStep);
-      },
-    );
+      expect(next).toBe(progress);
+    });
+
+    test("空白を動かしてから印のタイルをタップすると、自分の場所へ入れて次の手順へ進むこと", () => {
+      const next = tapAll(progress, [2, 7, 2]);
+
+      expect(next.stepIndex).toBe(2);
+      expect(isAtGoal(next.boardState.board, 2)).toBe(true);
+      expect(next.earnedRuleIds).toEqual(["line", "pair"]);
+    });
   });
 
-  test("手順を進めるたびに、示したルールを手に入れること", () => {
-    const earned = released.earnedRuleIds;
+  describe("組にして入れる読みの手順の場合", () => {
+    const progress = tapAll(startPlaying(), guidedTiles.slice(0, 7));
 
-    expect(earned).toEqual(["slide", "line"]);
+    test("離れたタイルをタップして手を引く道の2手分をまとめて進めても、道に沿っていれば受け付けること", () => {
+      const next = tapAll(progress, [6, 7]);
+
+      expect(next.boardState.board).toEqual(guidedBoards[10]);
+      expect(next.boardState.guidedMoveIndex).toBe(10);
+    });
+
+    test("手を引く道を最後まで進めると、上の行が揃って手を離すこと", () => {
+      const next = tapAll(progress, guidedTiles.slice(7));
+      const situation = getTutorialSituation(slidePuzzleTutorial, next);
+
+      expect(situation.step).toBeNull();
+      expect(next.boardState.board).toEqual(releasedBoard);
+    });
   });
 
   describe("手を離した後の場合", () => {
-    // 空白は左上。3 は同じ行・列にない。
-    const rejected = tapTiles(released, [3]);
-    const slidAfterRejection = tapTiles(rejected, [1]);
+    const progress = tapAll(startPlaying(), guidedTiles);
 
-    test("空白と同じ行・列にないタイルをタップすると、盤面を変えずにルールに合わない手として応えること", () => {
-      const situation = getTutorialSituation(slidePuzzleTutorial, rejected);
-      const message = getTutorialMessage(slidePuzzleTutorial, rejected, {
-        entry: "home",
-        violationSettled: true,
-      });
+    test("本番と同じく、空白と同じ行・列の離れたタイルは、間のタイルとまとめてスライドすること", () => {
+      const next = tap(progress, 4);
 
-      expect(situation.step).toBeNull();
-      expect(rejected.violated).toBe(true);
-      expect(rejected.boardState.board).toEqual(released.boardState.board);
-      expect(message).toEqual({
-        headline: "3 は空白と同じ行にも列にもありません",
-        detail: null,
-      });
+      expect(next.boardState.board).toEqual([1, 2, 3, 0, 4, 7, 8, 5, 6]);
     });
 
-    test("次にスライドさせると、違反の一言を下げて残りを収める一言に戻すこと", () => {
-      const message = getTutorialMessage(
-        slidePuzzleTutorial,
-        slidAfterRejection,
-        { entry: "home", violationSettled: true },
-      );
+    test("空白と同じ行・列にないタイルは、ルールに合わない手として返すこと", () => {
+      const next = tap(progress, 8);
 
-      expect(slidAfterRejection.violated).toBe(false);
-      expect(message).toBe(slidePuzzleTutorial.freePlay);
-    });
-
-    test("行と列をまとめてスライドさせると完成すること", () => {
-      const solved = tapTiles(released, [2, 6]);
-
-      expect(solved.phase).toBe("solved");
+      expect(next.violated).toBe(true);
+      expect(next.boardState.board).toEqual(progress.boardState.board);
     });
   });
 });
 
 describe("getSlidePuzzleTutorialStepTile", () => {
-  const started = finishTutorialIntro(startTutorial(slidePuzzleTutorial));
-  const situation: TutorialSituation<
-    SlidePuzzleTutorialRuleId,
-    SlidePuzzleTutorialStep
-  > = getTutorialSituation(slidePuzzleTutorial, started);
+  const lineStepProgress = tap(startPlaying(), guidedTiles[0] ?? 0);
+  const violated = tap(lineStepProgress, 2);
 
-  test("今の手順で印を付けるタイルを返すこと", () => {
-    const tile = getSlidePuzzleTutorialStepTile(situation);
+  function getStepTile(progress: Progress): SlidePuzzleTile | null {
+    return getSlidePuzzleTutorialStepTile(
+      getTutorialSituation(slidePuzzleTutorial, progress),
+      progress.boardState,
+    );
+  }
 
-    expect(tile).toBe(5);
+  test("行・列のルールを示す手順では、違反を見せるまで印のタイルを、見せた後は空白を動かすタイルを返すこと", () => {
+    const before = getStepTile(lineStepProgress);
+    const after = getStepTile(violated);
+    const fixed = getStepTile(tap(violated, 7));
+
+    expect(before).toBe(2);
+    expect(after).toBe(7);
+    expect(fixed).toBe(2);
+  });
+
+  test("空白を回して入れる手順では、道の2手を1回でまとめて進められる離れたタイルに印を付けること", () => {
+    const progress = tapAll(startPlaying(), guidedTiles.slice(0, 8));
+
+    const tile = getStepTile(progress);
+    const next = tap(progress, tile ?? 0);
+
+    expect(tile).toBe(7);
+    expect(next.boardState.board).toEqual(guidedBoards[10]);
+  });
+
+  test("手を離した後は印を付けないこと", () => {
+    const tile = getStepTile(tapAll(startPlaying(), guidedTiles));
+
+    expect(tile).toBeNull();
   });
 });
 
 describe("findSlidePuzzleTutorialHintTile", () => {
-  const releasedBoard = playSteps(steps.length);
-  const detouredBoard = slideTile(releasedBoard, 1) ?? releasedBoard;
-  const strayedBoard = slideTile(detouredBoard, 5) ?? detouredBoard;
+  function followHints(board: SlidePuzzleBoard): SlidePuzzleTile[] {
+    const tiles: SlidePuzzleTile[] = [];
+    let current = board;
+    for (
+      let tile = findSlidePuzzleTutorialHintTile(boardState(current));
+      tile !== null;
+      tile = findSlidePuzzleTutorialHintTile(boardState(current))
+    ) {
+      tiles.push(tile);
+      const slide = getSlidePuzzleSlide(current, current.indexOf(tile));
+      if (!slide || tiles.length > 40) {
+        break;
+      }
+      current = applySlidePuzzleSlide(current, slide);
+    }
+    return tiles;
+  }
 
-  const cases = [
-    ["手順を終えた盤面", releasedBoard, 1],
-    ["1 を入れた後に 5 を動かして遠回りした盤面", strayedBoard, 5],
-  ] as const;
+  test("手を離した後の盤面から手がかりをたどると、上の行を崩さずに最短の13手で完成すること", () => {
+    const tiles = followHints(releasedBoard);
 
-  test.each(cases)(
-    "%sで、最短で完成させるために次にスライドさせるタイルを返すこと",
-    (_, board, expected) => {
-      const tile = findSlidePuzzleTutorialHintTile({
-        board,
-        moveCount: 0,
-        lastMove: null,
-      });
+    expect(tiles).toHaveLength(13);
+    expect(tiles.some((tile) => topRowTiles.includes(tile as 1 | 2 | 3))).toBe(
+      false,
+    );
+  });
 
-      expect(tile).toBe(expected);
-    },
-  );
+  test("完成した盤面では、手がかりを示さないこと", () => {
+    const tile = findSlidePuzzleTutorialHintTile(boardState(goalBoard));
 
-  test("完成した盤面では何も示さないこと", () => {
-    const cellIndex = findNextShortestMoveCellIndex(goalBoard);
+    expect(tile).toBeNull();
+  });
+});
 
-    expect(cellIndex).toBeNull();
+describe("getSlidePuzzleTutorialProgressRatio", () => {
+  const solvingTiles = followSolution();
+
+  function followSolution(): SlidePuzzleTile[] {
+    const [path = []] = listShortestPaths(
+      releasedBoard,
+      isSlidePuzzleSolved,
+      topRowTiles,
+    );
+    return [...guidedTiles, ...path];
+  }
+
+  test("始めは0で、手順どおりに解く間に後戻りせず、解き終える直前は1未満で、解き終えると1になること", () => {
+    const ratios = solvingTiles.reduce<{
+      progress: Progress;
+      ratios: number[];
+    }>(
+      ({ progress, ratios }, tile) => {
+        const next = tap(progress, tile);
+        return {
+          progress: next,
+          ratios: [
+            ...ratios,
+            getSlidePuzzleTutorialProgressRatio(
+              next.stepIndex,
+              next.boardState,
+            ),
+          ],
+        };
+      },
+      { progress: startPlaying(), ratios: [] },
+    ).ratios;
+
+    expect(
+      getSlidePuzzleTutorialProgressRatio(0, slidePuzzleTutorial.start()),
+    ).toBe(0);
+    for (const [index, ratio] of ratios.entries()) {
+      expect(ratio).toBeGreaterThanOrEqual(ratios[index - 1] ?? 0);
+    }
+    expect(ratios.at(-2)).toBeLessThan(1);
+    expect(ratios.at(-1)).toBe(1);
+  });
+});
+
+describe("slidePuzzleTutorial.describeViolation", () => {
+  const situation: SlidePuzzleTutorialSituation = {
+    step: null,
+    earnedRuleIds: ["line"],
+  };
+  const state: SlidePuzzleTutorialBoardState = {
+    ...boardState(releasedBoard),
+    lastMove: { type: "rejected", tile: 8, cellIndex: 6 },
+  };
+
+  test("押したタイルが空白と同じ行にも列にもないことと、空白を先に動かすことを言うこと", () => {
+    const message = slidePuzzleTutorial.describeViolation(situation, state);
+
+    expect(message).toEqual({
+      headline: "8は空白と同じ行にも\n列にもありません",
+      detail: "空白を8と同じ行か列へ動かします",
+    });
+  });
+});
+
+describe("一言", () => {
+  const messages = listMessages();
+
+  test("どの一言も、全角45字まで3行までで、読点と句点を打たないこと", () => {
+    const lines = messages.flatMap(({ headline, detail }) =>
+      [headline, detail].flatMap((text) => (text === null ? [] : [text])),
+    );
+
+    for (const text of lines) {
+      expect(text.split("\n").length).toBeLessThanOrEqual(3);
+      expect(text.replaceAll("\n", "").length).toBeLessThanOrEqual(45);
+      expect(text).not.toMatch(/[、。]/);
+    }
   });
 });
