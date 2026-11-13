@@ -1,5 +1,5 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 import { TutorialCue } from "@/components/TutorialCue";
 import { TutorialSpotlight } from "@/components/TutorialSpotlight";
@@ -54,12 +54,23 @@ function getAccessibleName(
 function getCellClassName(view: MinesweeperVisibleCell): string {
   const faceClassName = getMinesweeperCellFaceClassName(view, "board");
   const interactionClassName =
-    "relative min-w-0 touch-manipulation select-none outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
+    "relative min-w-0 touch-manipulation select-none outline-none [-webkit-touch-callout:none] focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
+  // 押している閉じたマスは、指に隠れても周りに見えるよう、沈めて縁に濃い輪を回す。
+  const pressedClassName =
+    "data-pressed:z-10 data-pressed:translate-y-px data-pressed:brightness-[0.88] data-pressed:outline-solid data-pressed:outline-3 data-pressed:outline-offset-[-2px] data-pressed:outline-blue-600 dark:data-pressed:outline-sky-300";
 
   if (view.state === "hidden") {
-    return `${faceClassName} ${interactionClassName} transition-[filter] duration-75 hover:brightness-[1.015] active:brightness-[0.95]`;
+    return `${faceClassName} ${interactionClassName} ${pressedClassName} transition-[filter] duration-75 hover:brightness-[1.015]`;
+  }
+  if (view.state === "flagged") {
+    return `${faceClassName} ${interactionClassName} ${pressedClassName}`;
   }
   return `${faceClassName} ${interactionClassName}`;
+}
+
+function isPointInside(element: Element, x: number, y: number): boolean {
+  const { left, right, top, bottom } = element.getBoundingClientRect();
+  return x >= left && x <= right && y >= top && y <= bottom;
 }
 
 export function MinesweeperCell({
@@ -73,6 +84,10 @@ export function MinesweeperCell({
 }: MinesweeperCellProps) {
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggeredRef = useRef(false);
+  // 押している間の見た目と、指をずらして取り消したかを持つ。取り消した押下では、離したときのクリックを受けない。
+  const [pressed, setPressed] = useState(false);
+  const pressingRef = useRef(false);
+  const pressCancelledRef = useRef(false);
 
   function clearLongPressTimer(): void {
     if (longPressTimerRef.current !== null) {
@@ -89,24 +104,54 @@ export function MinesweeperCell({
     }
 
     longPressTriggeredRef.current = false;
+    pressCancelledRef.current = false;
     clearLongPressTimer();
     if (event.button !== 0) {
       return;
     }
+    pressingRef.current = true;
+    setPressed(true);
     longPressTimerRef.current = setTimeout(function handleLongPress() {
       longPressTriggeredRef.current = true;
+      pressingRef.current = false;
+      setPressed(false);
       onFlagPress(cellIndex);
       longPressTimerRef.current = null;
     }, LONG_PRESS_DELAY_MS);
   }
 
-  function handlePointerEnd(): void {
+  function cancelPress(): void {
+    if (!pressingRef.current) {
+      return;
+    }
+    pressingRef.current = false;
+    pressCancelledRef.current = true;
+    setPressed(false);
+    clearLongPressTimer();
+  }
+
+  function handlePointerMove(
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ): void {
+    // タッチは押したマスに捕まえられたまま指の動きが届くので、マスの外へ出たかを位置で確かめる。
+    if (
+      pressingRef.current &&
+      !isPointInside(event.currentTarget, event.clientX, event.clientY)
+    ) {
+      cancelPress();
+    }
+  }
+
+  function handlePointerUp(): void {
+    pressingRef.current = false;
+    setPressed(false);
     clearLongPressTimer();
   }
 
   function handleClick(): void {
-    if (longPressTriggeredRef.current) {
+    if (longPressTriggeredRef.current || pressCancelledRef.current) {
       longPressTriggeredRef.current = false;
+      pressCancelledRef.current = false;
       return;
     }
     onPress(cellIndex);
@@ -118,6 +163,8 @@ export function MinesweeperCell({
       return;
     }
     clearLongPressTimer();
+    pressingRef.current = false;
+    setPressed(false);
     longPressTriggeredRef.current = true;
     onFlagPress(cellIndex);
   }
@@ -130,10 +177,12 @@ export function MinesweeperCell({
       onClick={handleClick}
       onContextMenu={handleContextMenu}
       onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerEnd}
-      onPointerCancel={handlePointerEnd}
-      onPointerLeave={handlePointerEnd}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={cancelPress}
+      onPointerLeave={cancelPress}
       data-cell-index={cellIndex}
+      data-pressed={pressed || undefined}
       data-cell-state={view.state}
       className={getCellClassName(view)}
     >
