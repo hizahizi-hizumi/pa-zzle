@@ -1,4 +1,5 @@
 import {
+  createHitofudePuzzleAdjacency,
   findHitofudePuzzleDirection,
   getHitofudePuzzleNeighborCell,
   type HitofudePuzzleBoard,
@@ -6,6 +7,7 @@ import {
   parseHitofudePuzzleBoard,
 } from "@/games/hitofude-puzzle/puzzle/board";
 import {
+  findHitofudePuzzleStranding,
   isHitofudePuzzleDeadEnd,
   isHitofudePuzzleSolved,
 } from "@/games/hitofude-puzzle/puzzle/rules";
@@ -25,8 +27,13 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-/** `all`: 穴でないすべてのマスを通る。道の終わりは1か所なので、入ると出られないマスが2つ残る道は引けない。 */
-export type HitofudePuzzleTutorialRuleId = "once" | "hole" | "all";
+export type HitofudePuzzleTutorialRuleId = "hole" | "all" | "narrow";
+
+const allRuleIds: readonly HitofudePuzzleTutorialRuleId[] = [
+  "hole",
+  "all",
+  "narrow",
+];
 
 /**
  * - `press`: マスを押す（なぞり始め）。
@@ -38,19 +45,18 @@ export type HitofudePuzzleTutorialAction =
   | { type: "move"; direction: HitofudePuzzleDirection };
 
 /**
- * - `cells`: 印を付け、手順の間だけ道を延ばせるマス。延ばす順に並べ、最後のマスまで延ばすと次の手順へ進む。
- * - `reasonCells`: この手順で伝えたルールで、手を決める盤面のマス（決め手）。操作を教える手順では空。
+ * - `route`: この手順で延ばす、解の道のマス。延ばす順に並べ、最後のマスまで解のとおりに延ばすと次の手順へ進む。
+ * - `marks`: 印を付ける行き先のマス。2つあれば、どちらへ進むかを選ばせる。
+ * - `reasonCells`: この手順で伝えたルールで、行き先を決める盤面のマス（決め手）。
  */
 export type HitofudePuzzleTutorialStep =
   TutorialStep<HitofudePuzzleTutorialRuleId> & {
-    cells: readonly number[];
+    route: readonly number[];
+    marks: readonly number[];
     reasonCells: readonly number[];
   };
 
-/**
- * - `shortened`: 道が縮んだ。手を離した後にだけ起きる。
- * - `blocked`: 道を延ばせなかった。`cell` は進もうとしたマス（盤面の外なら `null`）、`direction` は先端から進もうとした向き（隣でなければ `null`）。
- */
+/** `blocked` の `cell` は盤面の外なら `null`、`direction` は進もうとしたマスが先端の隣でなければ `null`。 */
 export type HitofudePuzzleTutorialMove =
   | { type: "extended"; cells: readonly number[] }
   | { type: "shortened" }
@@ -74,73 +80,90 @@ export type HitofudePuzzleTutorialSituation = TutorialSituation<
 >;
 
 /**
- * 手が止まったときの手がかり。
- * - `extend`: 道が解の途中にあり、`cell` へ延ばせる。
- * - `rewind`: 道が解から外れたので、解から外れる前の `cell` まで戻す。
+ * 今の道のままでは全マスを通れないと盤面から分かること。
+ * - `stranded`: 先端からたどり着けないマスが残った。
+ * - `two-ends`: 通れる隣が1つだけのマス（道の終わりにしかなれないマス）が2つ以上できた。
  */
-export type HitofudePuzzleTutorialHint = {
-  kind: "extend" | "rewind";
-  cell: number;
-};
+export type HitofudePuzzleTutorialStranding =
+  | { kind: "dead-end" }
+  | { kind: "stranded" | "two-ends"; cells: readonly number[] };
 
 /**
- * 真ん中より右下に開いた穴と、上の縁の欠けがある 4×4。始点から全マスを通る道はゴールの1本だけ。
- *
+ * - `extend`: `ruleId` はほかの向きを退けるルール、`reasonCells` はほかへ進むと入れなくなる・道の終わりになるマス。伝えたルールで決まらなければ `null` と空。
+ * - `rewind`: 道が解から外れたので、外れる前の `cell` まで戻す。
+ */
+export type HitofudePuzzleTutorialHint =
+  | {
+      kind: "extend";
+      cell: number;
+      ruleId: Extract<HitofudePuzzleTutorialRuleId, "all" | "narrow"> | null;
+      reasonCells: readonly number[];
+    }
+  | { kind: "rewind"; cell: number };
+
+/**
  * ```text
- * 盤面      ゴール（通る順）
- * . # . .   13  #  1  2
- * . . S .   12 11  0  3
- * . . # .    9 10  #  4
- * . . . .    8  7  6  5
+ * 盤面          ゴール（通る順）
+ * S . . . .     0  1  2 19 20
+ * # # . . #     #  #  3 18  #
+ * . . . . .     6  5  4 17 16
+ * . . . . .     7  8 11 12 15
+ * # . . . .     #  9 10 13 14
  * ```
  */
 const board: HitofudePuzzleBoard = parseHitofudePuzzleBoard([
-  ". # . .",
-  ". . S .",
-  ". . # .",
-  ". . . .",
+  "S . . . .",
+  "# # . . #",
+  ". . . . .",
+  ". . . . .",
+  "# . . . .",
 ]);
 const solution: readonly number[] = [
-  6, 2, 3, 7, 11, 15, 14, 13, 12, 8, 9, 5, 4, 0,
+  0, 1, 2, 7, 12, 11, 10, 15, 16, 21, 22, 17, 18, 23, 24, 19, 14, 13, 8, 3, 4,
 ];
 
-/**
- * 先端から延ばすことを覚え、同じマス・穴・すべてのマスのルールを1つずつ、そのルールで決まる手に使う。
- * - 同じマス: 右の列を下りる途中、左の始点へは戻れない。
- * - 穴: 右下の角から下の段を左へ進む間、上の穴へは進めない。
- * - すべてのマス: 入ると出られない左上の角が道の終わりになる。左下の角も後から入ると出られず、終わりが2か所になるので、上へ曲がらずに今通る。
- * 手順を終えると左の列にいて、真ん中の穴の左を上がり、上の縁の欠けをよけて左上の角で終わる残りの4マスが、3つのルールで決まる。
- */
+const narrowMessage: TutorialMessage = {
+  headline: "マスが2つ隣接するマスをなぞっていきます",
+  detail: "マスが1つのみ隣接するマスがゴールになります",
+};
+
 const steps: readonly HitofudePuzzleTutorialStep[] = [
   {
     message: {
-      headline: "印のマスを順になぞります",
+      headline: "丸のマスから\n印のマスまでなぞります",
       detail: null,
     },
     introducedRuleId: null,
-    cells: [2, 3],
+    route: [1],
+    marks: [1],
     reasonCells: [],
   },
   {
-    message: { headline: "同じマスは2回通れません", detail: null },
-    introducedRuleId: "once",
-    cells: [7, 11],
-    reasonCells: [6],
-  },
-  {
-    message: { headline: "穴は通れません", detail: null },
+    message: {
+      headline: "マスのない所をよけて印のマスまでなぞります",
+      detail: null,
+    },
     introducedRuleId: "hole",
-    cells: [15, 14, 13],
-    reasonCells: [10],
+    route: [2, 7, 12, 11],
+    marks: [11],
+    reasonCells: [],
   },
   {
     message: {
-      headline: "すべてのマスを通ります\n左下の角は、今のうちに通ります",
-      detail: "後回しにすると、左上の角まで行けません",
+      headline: "マスを残さないように\n印のマスまでなぞります",
+      detail: "残したマスには入れなくなります",
     },
     introducedRuleId: "all",
-    cells: [12, 8],
-    reasonCells: [12, 0],
+    route: [10, 15, 16, 21],
+    marks: [21],
+    reasonCells: [10, 15],
+  },
+  {
+    message: narrowMessage,
+    introducedRuleId: "narrow",
+    route: [22, 17],
+    marks: [17, 23],
+    reasonCells: [18, 4],
   },
 ];
 
@@ -153,7 +176,32 @@ function countSolutionPrefix(path: readonly number[]): number {
   return deviation < 0 ? path.length : deviation;
 }
 
-/** `unchanged`: 何も起きなかった（先端を押した、道から外れた指が動いた、など）。 */
+function findVisibleStranding(
+  path: readonly number[],
+  earnedRuleIds: readonly HitofudePuzzleTutorialRuleId[],
+): HitofudePuzzleTutorialStranding | null {
+  if (!earnedRuleIds.includes("all")) {
+    return null;
+  }
+  if (isHitofudePuzzleDeadEnd(board, path)) {
+    return { kind: "dead-end" };
+  }
+  const stranding = findHitofudePuzzleStranding(board, path);
+  if (stranding === null) {
+    return null;
+  }
+  const unreachableCells = [
+    ...new Set([...stranding.isolatedCells, ...stranding.separatedCells]),
+  ];
+  if (unreachableCells.length > 0) {
+    return { kind: "stranded", cells: unreachableCells };
+  }
+  return earnedRuleIds.includes("narrow") && stranding.deadEndCells.length > 0
+    ? { kind: "two-ends", cells: stranding.deadEndCells }
+    : null;
+}
+
+/** `unchanged` は、先端を押した・道から外れた指が動いたなど、何も起きなかった手。 */
 type PlayedAction =
   | { kind: "changed"; path: readonly number[] }
   | {
@@ -244,29 +292,26 @@ function toPathMove(
     : { type: "shortened" };
 }
 
-/**
- * 阻まれた理由のうち、ルールに合わない手に当たるもの。離れたマスや盤面の外へ進もうとした手は、ルールではなく操作の外れなので当たらない。
- * なぞる指が通ったマスへ入っても本番は阻まず道を変えないので、通ったマスで阻まれるのは押した・矢印キーの手だけ。
- */
-function findBrokenRule(
-  reason: HitofudePuzzleExtensionRejection,
-): Extract<HitofudePuzzleTutorialRuleId, "hole" | "once"> | null {
-  switch (reason) {
-    case "hole":
-      return "hole";
-    case "visited":
-      return "once";
-    case "not-adjacent":
-    case "outside-board":
-      return null;
-  }
+function getStepStartLength(step: HitofudePuzzleTutorialStep): number {
+  return solution.indexOf(step.route[0] ?? board.start);
 }
 
 function getStepEndLength(step: HitofudePuzzleTutorialStep): number {
-  return solution.indexOf(step.cells.at(-1) ?? board.start) + 1;
+  return solution.indexOf(step.route.at(-1) ?? board.start) + 1;
 }
 
-/** 手を引いている間は、印のマスへ順に延ばす手だけを受け付ける。ほかの手は道を変えない。 */
+function judgeChangedPath(
+  path: readonly number[],
+  earnedRuleIds: readonly HitofudePuzzleTutorialRuleId[],
+): TutorialMoveOutcome {
+  if (isHitofudePuzzleSolved(board, path)) {
+    return "solved";
+  }
+  return findVisibleStranding(path, earnedRuleIds) === null
+    ? "continued"
+    : "violated";
+}
+
 function performGuided(
   step: HitofudePuzzleTutorialStep,
   earnedRuleIds: readonly HitofudePuzzleTutorialRuleId[],
@@ -274,8 +319,7 @@ function performGuided(
   played: PlayedAction,
 ): { state: HitofudePuzzleTutorialBoardState; outcome: TutorialMoveOutcome } {
   if (played.kind === "blocked") {
-    const brokenRule = findBrokenRule(played.move.reason);
-    return brokenRule !== null && earnedRuleIds.includes(brokenRule)
+    return played.move.reason === "hole" && earnedRuleIds.includes("hole")
       ? {
           state: {
             ...state,
@@ -286,27 +330,34 @@ function performGuided(
         }
       : { state, outcome: "ignored" };
   }
-  const stepEndLength = getStepEndLength(step);
-  if (
-    played.kind === "unchanged" ||
-    played.path.length <= state.path.length ||
-    played.path.length > stepEndLength ||
-    !isSolutionPrefix(played.path)
-  ) {
+  if (played.kind === "unchanged") {
     return { state, outcome: "ignored" };
   }
+  const { path } = played;
+  const stepCells = new Set([...step.route, ...step.marks]);
+  const added = path.slice(state.path.length);
+  const accepted =
+    path.length > state.path.length
+      ? added.every((cell) => stepCells.has(cell))
+      : path.length >= getStepStartLength(step);
+  if (!accepted) {
+    return { state, outcome: "ignored" };
+  }
+  const next: HitofudePuzzleTutorialBoardState = {
+    path,
+    moveCount: state.moveCount + 1,
+    lastMove: toPathMove(state.path, path),
+  };
+  const finishesStep =
+    path.length === getStepEndLength(step) && isSolutionPrefix(path);
   return {
-    state: {
-      path: played.path,
-      moveCount: state.moveCount + 1,
-      lastMove: toPathMove(state.path, played.path),
-    },
-    outcome: played.path.length === stepEndLength ? "stepped" : "continued",
+    state: next,
+    outcome: finishesStep ? "stepped" : judgeChangedPath(path, earnedRuleIds),
   };
 }
 
-/** 手を離した後は、本番と同じく道を延ばし、縮め、穴や離れたマスで阻む。 */
 function performFree(
+  earnedRuleIds: readonly HitofudePuzzleTutorialRuleId[],
   state: HitofudePuzzleTutorialBoardState,
   played: PlayedAction,
 ): { state: HitofudePuzzleTutorialBoardState; outcome: TutorialMoveOutcome } {
@@ -321,25 +372,20 @@ function performFree(
           lastMove: played.move,
         },
         outcome:
-          findBrokenRule(played.move.reason) !== null ||
-          !isSolutionPrefix(state.path)
+          played.move.reason === "hole" ||
+          findVisibleStranding(state.path, earnedRuleIds) !== null
             ? "violated"
             : "continued",
       };
-    case "changed": {
-      const next: HitofudePuzzleTutorialBoardState = {
-        path: played.path,
-        moveCount: state.moveCount + 1,
-        lastMove: toPathMove(state.path, played.path),
-      };
-      if (isHitofudePuzzleSolved(board, played.path)) {
-        return { state: next, outcome: "solved" };
-      }
+    case "changed":
       return {
-        state: next,
-        outcome: isSolutionPrefix(played.path) ? "continued" : "violated",
+        state: {
+          path: played.path,
+          moveCount: state.moveCount + 1,
+          lastMove: toPathMove(state.path, played.path),
+        },
+        outcome: judgeChangedPath(played.path, earnedRuleIds),
       };
-    }
   }
 }
 
@@ -350,30 +396,39 @@ function performHitofudePuzzleTutorialAction(
 ): { state: HitofudePuzzleTutorialBoardState; outcome: TutorialMoveOutcome } {
   const played = playAction(state.path, action);
   return step === null
-    ? performFree(state, played)
+    ? performFree(earnedRuleIds, state, played)
     : performGuided(step, earnedRuleIds, state, played);
 }
 
+const backToMarkDetail = "印のマスを押してそこまで戻します";
+
+const strandingMessages = {
+  "dead-end": {
+    headline: "行き止まりです\n通っていないマスが残っています",
+    detail: backToMarkDetail,
+  },
+  stranded: {
+    headline: "入れなくなったマスがあります",
+    detail: backToMarkDetail,
+  },
+  "two-ends": {
+    headline: "ゴールになるマスが2つできました",
+    detail: backToMarkDetail,
+  },
+} as const satisfies Record<
+  HitofudePuzzleTutorialStranding["kind"],
+  TutorialMessage
+>;
+
 function describeHitofudePuzzleTutorialViolation(
-  _situation: HitofudePuzzleTutorialSituation,
-  { path, lastMove }: HitofudePuzzleTutorialBoardState,
+  { earnedRuleIds }: HitofudePuzzleTutorialSituation,
+  { path }: HitofudePuzzleTutorialBoardState,
 ): TutorialMessage {
-  if (lastMove?.type === "blocked") {
-    switch (findBrokenRule(lastMove.reason)) {
-      case "hole":
-        return { headline: "穴は通れません", detail: null };
-      case "once":
-        return { headline: "同じマスは2回通れません", detail: null };
-      case null:
-        break;
-    }
-  }
-  return {
-    headline: isHitofudePuzzleDeadEnd(board, path)
-      ? "行き止まりです\n通っていないマスが残っています"
-      : "このままでは\nたどり着けないマスが残ります",
-    detail: "来た道をなぞって戻れば、やり直せます",
-  };
+  const stranding = findVisibleStranding(path, earnedRuleIds);
+  // 違反になるのは、全マスを通れなくなったと分かる道と、穴へ進もうとした手だけ。
+  return stranding === null
+    ? { headline: "そこは通れません", detail: "マスのない所をよけてなぞります" }
+    : strandingMessages[stranding.kind];
 }
 
 function startHitofudePuzzleTutorial(): HitofudePuzzleTutorialBoardState {
@@ -384,6 +439,17 @@ function getHitofudePuzzleTutorialGoal(): HitofudePuzzleTutorialBoardState {
   return { path: solution, moveCount: 0, lastMove: null };
 }
 
+export const HITOFUDE_PUZZLE_TUTORIAL_PROGRESS_STEP_COUNT = solution.length - 1;
+
+export function getHitofudePuzzleTutorialProgressRatio({
+  path,
+}: HitofudePuzzleTutorialBoardState): number {
+  return (
+    Math.max(countSolutionPrefix(path) - 1, 0) /
+    HITOFUDE_PUZZLE_TUTORIAL_PROGRESS_STEP_COUNT
+  );
+}
+
 export const hitofudePuzzleTutorialBoard = board;
 
 export function isHitofudePuzzleTutorialDeadEnd({
@@ -392,19 +458,41 @@ export function isHitofudePuzzleTutorialDeadEnd({
   return isHitofudePuzzleDeadEnd(board, path);
 }
 
-export function getHitofudePuzzleTutorialStepCells(
+/** まだ通っていないマスだけを返す。手を離した後は空。 */
+export function getHitofudePuzzleTutorialStepMarks(
   { step }: HitofudePuzzleTutorialSituation,
   { path }: HitofudePuzzleTutorialBoardState,
 ): number[] {
-  return (step?.cells ?? []).filter((cell) => !path.includes(cell));
+  return (step?.marks ?? []).filter((cell) => !path.includes(cell));
 }
 
+/** 手を離した後は空。 */
 export function getHitofudePuzzleTutorialStepReasonCells({
   step,
 }: HitofudePuzzleTutorialSituation): readonly number[] {
   return step?.reasonCells ?? [];
 }
 
+/**
+ * 違反が無ければ `null`。
+ * `fixCell` は道が解から外れる前の最後のマス。穴に阻まれただけで道が変わっていなければ `null`。
+ */
+export function findHitofudePuzzleTutorialViolation(
+  { earnedRuleIds }: HitofudePuzzleTutorialSituation,
+  { path }: HitofudePuzzleTutorialBoardState,
+): { fixCell: number | null; cells: readonly number[] } | null {
+  const stranding = findVisibleStranding(path, earnedRuleIds);
+  if (stranding === null) {
+    return null;
+  }
+  const fixCell = solution[countSolutionPrefix(path) - 1] ?? null;
+  return {
+    fixCell: fixCell === path.at(-1) ? null : fixCell,
+    cells: stranding.kind === "dead-end" ? [] : stranding.cells,
+  };
+}
+
+/** 解き終えていれば `null`。 */
 export function findHitofudePuzzleTutorialHint({
   path,
 }: HitofudePuzzleTutorialBoardState): HitofudePuzzleTutorialHint | null {
@@ -414,8 +502,71 @@ export function findHitofudePuzzleTutorialHint({
     return cell === undefined ? null : { kind: "rewind", cell };
   }
   const next = solution[path.length];
-  return next === undefined ? null : { kind: "extend", cell: next };
+  if (next === undefined) {
+    return null;
+  }
+  return { kind: "extend", cell: next, ...findForkReason(path, next) };
 }
+
+/**
+ * 先端からほかへ進む手を、どのルールが退けるか。すべてのルールを伝えた後に出す手がかりなので、すべてのルールで見る。
+ * ほかの手がすべて退けられるときだけ、退けたルールと、そのとき入れなくなる・道の終わりになるマスを返す。
+ * 一本道と、ルールでは決まらない分かれ道（手順の道筋まで戻したときに出る）では、決め手を添えない。
+ */
+function findForkReason(
+  path: readonly number[],
+  next: number,
+): Pick<
+  Extract<HitofudePuzzleTutorialHint, { kind: "extend" }>,
+  "ruleId" | "reasonCells"
+> {
+  const head = path.at(-1) ?? board.start;
+  const others = createHitofudePuzzleAdjacency(board)[head]!.filter(
+    (cell) => cell !== next && !path.includes(cell),
+  );
+  const strandings = others.map((cell) =>
+    findVisibleStranding([...path, cell], allRuleIds),
+  );
+  if (
+    others.length === 0 ||
+    strandings.some((stranding) => stranding === null)
+  ) {
+    return { ruleId: null, reasonCells: [] };
+  }
+  const reasonCells = [
+    ...new Set(
+      strandings.flatMap((stranding) =>
+        stranding === null || stranding.kind === "dead-end"
+          ? []
+          : stranding.cells,
+      ),
+    ),
+  ].filter((cell) => cell !== next);
+  const ruleId = strandings.every((stranding) => stranding?.kind === "two-ends")
+    ? "narrow"
+    : "all";
+  return { ruleId, reasonCells };
+}
+
+/** 伝えたルールで決まらない手なら `null`。 */
+export function describeHitofudePuzzleTutorialHint(
+  hint: HitofudePuzzleTutorialHint,
+): TutorialMessage | null {
+  if (hint.kind === "rewind") {
+    return { headline: backToMarkDetail, detail: null };
+  }
+  return hint.ruleId === null
+    ? null
+    : (steps.find((step) => step.introducedRuleId === hint.ruleId)?.message ??
+        null);
+}
+
+export const HITOFUDE_PUZZLE_TUTORIAL_RECAP: readonly string[] = [
+  "マスのない所をよけてなぞります",
+  "全てのマスを1回ずつなぞります",
+  "マスが2つ隣接するマスをなぞっていきます",
+  "マスが1つのみ隣接するマスがゴールになります",
+];
 
 export const hitofudePuzzleTutorial: Tutorial<
   HitofudePuzzleTutorialRuleId,
@@ -424,28 +575,27 @@ export const hitofudePuzzleTutorial: Tutorial<
   HitofudePuzzleTutorialAction
 > = {
   intro: {
-    purpose: "穴以外のすべてのマスを1回ずつ通る\n1本の道を引くパズルです",
-    goalCaption: "この形になれば完成です",
-    startCaption: "輪の付いたマスから\n道を引きます",
+    purpose: "全てのマスを一筆書きでなぞるパズルです",
+    goalCaption: "全てのマスをなぞると完成です",
   },
   rules: [
-    { id: "once", label: "1回ずつ通る" },
-    { id: "hole", label: "穴を通らない" },
-    { id: "all", label: "全マスを通る" },
+    { id: "hole", label: "マスのない所をよけてなぞります" },
+    { id: "all", label: "全てのマスを1回ずつなぞります" },
+    { id: "narrow", label: "マスが2つ隣接するマスをなぞっていきます" },
   ],
   steps,
   freePlay: {
-    headline: "残りのマスも通れば完成です",
+    headline: "残りのマスもなぞってみましょう",
     detail: null,
   },
   completion: {
     home: {
       headline: "完成です",
-      detail: "どのレベルも、もっと広い盤面です",
+      detail: "隣接するマスが少ないマスから先になぞると解きやすくなります",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も同じルールです",
+      detail: "プレイ中の盤面と同じルールです",
     },
   },
   start: startHitofudePuzzleTutorial,
@@ -457,5 +607,5 @@ export const hitofudePuzzleTutorial: Tutorial<
 export const _private = {
   board,
   solution,
-  isSolutionPrefix,
+  findVisibleStranding,
 };

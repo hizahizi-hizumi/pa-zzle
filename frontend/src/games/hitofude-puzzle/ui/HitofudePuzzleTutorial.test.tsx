@@ -8,6 +8,12 @@ import {
 } from "@testing-library/react";
 
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
+import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
+import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
+import {
+  HITOFUDE_PUZZLE_TUTORIAL_RECAP,
+  hitofudePuzzleTutorial,
+} from "@/games/hitofude-puzzle/tutorial/tutorial";
 import { HitofudePuzzleTutorial } from "@/games/hitofude-puzzle/ui/HitofudePuzzleTutorial";
 import { playLayeredSound, playSound } from "@/lib/sound-effects";
 
@@ -17,33 +23,32 @@ vi.mock("@/lib/sound-effects", async (importOriginal) => ({
   playLayeredSound: vi.fn(),
 }));
 
+const { intro, steps, freePlay } = hitofudePuzzleTutorial;
+
+const BOARD_SIZE = 5;
+
 /**
- * 盤面のマス番号（4×4、`#` は穴、S は始点）
+ * 盤面のマス番号（5×5、`#` は穴、S は始点）
  * ```text
- *  0  #  2  3
- *  4  5  S  7
- *  8  9  # 11
- * 12 13 14 15
+ *  S  1  2  3  4
+ *  #  #  7  8  #
+ * 10 11 12 13 14
+ * 15 16 17 18 19
+ *  # 21 22 23 24
  * ```
  */
-const stepCells = [
-  [2, 3],
-  [7, 11],
-  [15, 14, 13],
-  [12, 8],
-] as const;
+const stepRoutes = steps.map((step) => step.route);
 
 /** 手順を終えた後、自分で延ばして完成させるマス。 */
-const remainingCells = [9, 5, 4, 0] as const;
+const remainingCells = [18, 23, 24, 19, 14, 13, 8, 3, 4] as const;
 
 /** 手順の最後のマスまで延ばしてから、次の印を付けるまでの間。 */
 const nextStepCueDelayMs = 700;
 
-const idleHintDelayMs = 4000;
-
+/** ルールに合わない道に、違反の一言と直す所の印で応えるまでの間。 */
 const violationMessageDelayMs = 500;
 
-/** 導入の場面の動きを見せ終えるのに十分な間。 */
+/** 入口の場面の動き（ゴールの道を始点まで巻き戻す動き）と完成の演出を見せ終えるのに十分な間。 */
 const introEnoughMs = 8000;
 
 afterEach(() => {
@@ -67,39 +72,41 @@ function advanceTime(ms: number): void {
   });
 }
 
-function pressNext(): void {
-  fireEvent.click(screen.getByRole("button", { name: "次へ" }));
+function getScreen(): HTMLElement {
+  return screen.getByRole("dialog", { name: HITOFUDE_PUZZLE_DISPLAY_NAME });
 }
 
-function pressNextThroughIntroWaitingForScenes(): void {
-  for (let press = 0; press < 3; press += 1) {
-    advanceTime(introEnoughMs);
-    const next = screen.queryByRole("button", { name: "次へ" });
-    if (!next) {
-      return;
-    }
-    fireEvent.click(next);
-  }
+/** 一言は改行（`\n`）で折り返して見せるので、画面の文字としては空白に読む。 */
+function queryShownText(text: string): HTMLElement | null {
+  return within(getScreen()).queryByText(text.replaceAll("\n", " "));
+}
+
+function queryStartButton(): HTMLElement | null {
+  return within(getScreen()).queryByRole("button", { name: "はじめる" });
+}
+
+/** 入口の「はじめる」を押し、ゴールの道を始点まで巻き戻す場面を終える。 */
+function pressStart(): void {
+  fireEvent.click(
+    within(getScreen()).getByRole("button", { name: "はじめる" }),
+  );
   advanceTime(introEnoughMs);
 }
 
-/** 場面の動きを待たずに「次へ」を続けて押し、ゴールと始まりの盤面を通って最初の手順から始める。 */
-function pressNextThroughIntro(): void {
-  for (
-    let next = screen.queryByRole("button", { name: "次へ" });
-    next;
-    next = screen.queryByRole("button", { name: "次へ" })
-  ) {
-    fireEvent.click(next);
-  }
+function getProgressValue(): string | null {
+  return within(getScreen())
+    .getByRole("progressbar", { name: "チュートリアルの進み具合" })
+    .getAttribute("aria-valuenow");
 }
 
 function getBoard(): HTMLElement {
-  return screen.getByRole("group", { name: "一筆パズル盤面 4行4列" });
+  return within(getScreen()).getByRole("group", {
+    name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面 ${BOARD_SIZE}行${BOARD_SIZE}列`,
+  });
 }
 
 function getCellName(cell: number): string {
-  return `${Math.floor(cell / 4) + 1}行${(cell % 4) + 1}列`;
+  return `${Math.floor(cell / BOARD_SIZE) + 1}行${(cell % BOARD_SIZE) + 1}列`;
 }
 
 function getCell(cell: number): HTMLElement {
@@ -117,7 +124,7 @@ function pressCells(cells: readonly number[]): void {
 function getCellNumber(button: HTMLElement): number {
   const [, row, column] =
     /^(\d+)行(\d+)列/.exec(button.getAttribute("aria-label") ?? "") ?? [];
-  return (Number(row) - 1) * 4 + (Number(column) - 1);
+  return (Number(row) - 1) * BOARD_SIZE + (Number(column) - 1);
 }
 
 /** 道が通ったマス。始点と先端を含む。 */
@@ -131,28 +138,30 @@ function getVisitedCells(): number[] {
     .map(getCellNumber);
 }
 
-function getCuedCells(kind: "hint" | "extended" | "recall"): number[] {
-  const selector =
-    kind === "recall"
-      ? '[data-tutorial-cue="recall"]'
-      : `[data-cell-cue="${kind}"]`;
+function getCuedCells(
+  kind: "mark" | "pointer" | "extended" | "recall",
+): number[] {
+  const selector = {
+    mark: '[data-cell-cue="mark"]',
+    pointer: '[data-tutorial-cue="pointer"]',
+    extended: '[data-cell-cue="extended"]',
+    recall: '[data-tutorial-cue="recall"]',
+  }[kind];
   return within(getBoard())
     .getAllByRole("button")
     .filter((button) => button.querySelector(selector))
     .map(getCellNumber);
 }
 
-function getSpotlitCells(): number[] {
+/** 盤面の覆いから抜くマス。盤面を覆っていなければ `null`。 */
+function getSpotlitCells(): number[] | null {
+  if (!getBoard().hasAttribute(TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE)) {
+    return null;
+  }
   return within(getBoard())
     .getAllByRole("button")
     .filter((button) => button.querySelector("[data-tutorial-spotlight]"))
     .map(getCellNumber);
-}
-
-function getRuleTexts(): string[] {
-  return within(screen.getByRole("list", { name: "ルール" }))
-    .getAllByRole("listitem")
-    .map((item) => item.textContent ?? "");
 }
 
 function getPlayedSoundNames(): string[] {
@@ -161,11 +170,16 @@ function getPlayedSoundNames(): string[] {
     .mock.calls.map(([sound]) => sound.url.split("/").at(-1) ?? "");
 }
 
+/** 手順を `count` 個、道筋のマスを順に押して終える。手順のたびに次の印が出るまで待つ。 */
 function playSteps(count: number): void {
-  for (const cells of stepCells.slice(0, count)) {
-    pressCells(cells);
+  for (const route of stepRoutes.slice(0, count)) {
+    pressCells(route);
     advanceTime(nextStepCueDelayMs);
   }
+}
+
+function getHintButton(): HTMLElement | null {
+  return within(getScreen()).queryByRole("button", { name: "ヒント" });
 }
 
 describe("HitofudePuzzleTutorial", () => {
@@ -175,10 +189,83 @@ describe("HitofudePuzzleTutorial", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     onClose = vi.fn<() => void>();
-    playStart = { difficulty: "3", onStart: vi.fn<() => void>() };
+    playStart = { difficulty: "1", onStart: vi.fn<() => void>() };
   });
 
-  describe("ゲームのホームから開いた場合", () => {
+  describe("開いた場合", () => {
+    let rerenderTutorial: (open: boolean) => void;
+
+    beforeEach(() => {
+      const { rerender } = render(
+        <HitofudePuzzleTutorial
+          open={true}
+          playStart={playStart}
+          onClose={onClose}
+        />,
+      );
+      rerenderTutorial = (open) =>
+        rerender(
+          <HitofudePuzzleTutorial
+            open={open}
+            playStart={playStart}
+            onClose={onClose}
+          />,
+        );
+    });
+
+    test("入口で、名前と、何をするパズルかとゴールの一言を、全マスを通ったゴールの道と一緒に見せること", () => {
+      const title = within(getScreen()).getByRole("heading", {
+        name: HITOFUDE_PUZZLE_DISPLAY_NAME,
+      });
+      const purpose = queryShownText(intro.purpose);
+      const caption = queryShownText(intro.goalCaption);
+      const visitedCount = getVisitedCells().length;
+
+      expect(title).toBeTruthy();
+      expect(purpose).not.toBeNull();
+      expect(caption).not.toBeNull();
+      expect(visitedCount).toBe(21);
+      expect(getCuedCells("mark")).toEqual([]);
+      expect(getProgressValue()).toBe("0");
+    });
+
+    test("はじめるを押すと、ゴールの道を始点まで巻き戻してから、最初の手順の一言と印を出すこと", () => {
+      fireEvent.click(
+        within(getScreen()).getByRole("button", { name: "はじめる" }),
+      );
+      const markedWhileRewinding = getCuedCells("mark");
+      advanceTime(introEnoughMs);
+
+      const headline = queryShownText(steps[0]!.message.headline);
+      const visited = getVisitedCells();
+      const marked = getCuedCells("mark");
+
+      expect(markedWhileRewinding).toEqual([]);
+      expect(headline).not.toBeNull();
+      expect(visited).toEqual([0]);
+      expect(marked).toEqual([1]);
+    });
+
+    test("閉じてから開き直すと、入口から始まること", () => {
+      pressStart();
+      playSteps(2);
+      fireEvent.click(
+        within(getScreen()).getByRole("button", { name: "閉じる" }),
+      );
+      rerenderTutorial(false);
+      rerenderTutorial(true);
+
+      const purpose = queryShownText(intro.purpose);
+      const startButton = queryStartButton();
+
+      expect(onClose).toHaveBeenCalledOnce();
+      expect(purpose).not.toBeNull();
+      expect(startButton).not.toBeNull();
+      expect(getProgressValue()).toBe("0");
+    });
+  });
+
+  describe("ゲームのホームから開いて始めた場合", () => {
     beforeEach(() => {
       render(
         <HitofudePuzzleTutorial
@@ -187,284 +274,290 @@ describe("HitofudePuzzleTutorial", () => {
           onClose={onClose}
         />,
       );
-      pressNextThroughIntro();
+      pressStart();
     });
 
-    test("始点だけの道で、輪の付いたマスから印のマスまでなぞることを示し、ルールを伏せておくこと", () => {
-      const headline = screen.getByText("印のマスを順になぞります");
-      const visited = getVisitedCells();
-      const hinted = getCuedCells("hint");
-      const rules = getRuleTexts();
-
-      expect(headline).toBeTruthy();
-      expect(visited).toEqual([6]);
-      expect(hinted).toEqual([2, 3]);
-      expect(rules).toEqual([
-        "まだ出ていないルール",
-        "まだ出ていないルール",
-        "まだ出ていないルール",
-      ]);
-    });
-
-    test("なぞり始める先端と印のマスを、画面全体の覆いから抜くこと", () => {
+    test("操作を教える手順では、印のマスを指で指し、盤面を覆わないこと", () => {
+      const pointed = getCuedCells("pointer");
       const spotlit = getSpotlitCells();
 
-      expect(spotlit).toEqual([2, 3, 6]);
+      expect(pointed).toEqual([1]);
+      expect(spotlit).toBeNull();
+      expect(getHintButton()).toBeNull();
     });
 
     test("印の無いマスを押すと、道を延ばさず音も鳴らさずに、印のマスの線を濃くし直すこと", () => {
-      pressCells([7]);
+      pressCells([5]);
 
       const visited = getVisitedCells();
       const recalled = getCuedCells("recall");
 
-      expect(visited).toEqual([6]);
-      expect(recalled).toEqual([2, 3]);
+      expect(visited).toEqual([0]);
+      expect(recalled).toEqual([1]);
       expect(playSound).not.toHaveBeenCalled();
     });
 
     test("先端を押しても、印のマスの線を濃くし直さないこと", () => {
-      pressCells([6]);
+      pressCells([0]);
 
       const recalled = getCuedCells("recall");
 
       expect(recalled).toEqual([]);
     });
 
-    test("印のマスを順に延ばすと、本番と同じ音を鳴らし、延ばしたマスに応えてから次の印を付けること", () => {
-      pressCells(stepCells[0]);
+    test("印のマスまで延ばすと、本番と同じ音を鳴らし、延ばしたマスに応えて一言を残してから次の一言と印に替え、進み具合を延ばしたマスの分だけ進めること", () => {
+      pressCells([1]);
       const sounds = getPlayedSoundNames();
       const acknowledged = getCuedCells("extended");
-      const hintedBeforeDelay = getCuedCells("hint");
-      const headline = screen.getByText("同じマスは2回通れません");
+      const markedBeforeDelay = getCuedCells("mark");
+      const headlineBeforeDelay = queryShownText(steps[0]!.message.headline);
       advanceTime(nextStepCueDelayMs);
 
-      const hinted = getCuedCells("hint");
+      const marked = getCuedCells("mark");
+      const headline = queryShownText(steps[1]!.message.headline);
 
-      expect(sounds).toEqual(["path-extended.flac", "path-extended.flac"]);
-      expect(acknowledged).toEqual([2, 3]);
-      expect(hintedBeforeDelay).toEqual([]);
-      expect(headline).toBeTruthy();
-      expect(hinted).toEqual([7, 11]);
+      expect(sounds).toEqual(["path-extended.flac"]);
+      expect(acknowledged).toEqual([1]);
+      expect(markedBeforeDelay).toEqual([]);
+      expect(headlineBeforeDelay).not.toBeNull();
+      expect(headline).not.toBeNull();
+      expect(marked).toEqual([11]);
+      // 始点の後に通る20マスのうち1マス。
+      expect(getProgressValue()).toBe("5");
     });
 
-    describe("同じマスのルールを伝える手順に進んだ場合", () => {
+    describe("穴を伝える手順に進んだ場合", () => {
       beforeEach(() => {
         playSteps(1);
       });
 
-      test("ルールの並びに加え、先端と印のマスと、もう通った始点を覆いから抜くこと", () => {
-        const rules = getRuleTexts();
+      test("穴を通れるマスと紛れさせないよう、盤面を覆わないこと", () => {
         const spotlit = getSpotlitCells();
 
-        expect(rules).toEqual([
-          "1回ずつ通る",
-          "まだ出ていないルール",
-          "まだ出ていないルール",
-        ]);
-        expect(spotlit).toEqual([3, 6, 7, 11]);
+        expect(spotlit).toBeNull();
       });
 
-      test("通った道のマスを押しても、巻き戻さずに印のマスの線を濃くし直すこと", () => {
-        pressCells([2]);
-
-        const visited = getVisitedCells();
-        const recalled = getCuedCells("recall");
-
-        expect(visited).toEqual([2, 3, 6]);
-        expect(recalled).toEqual([7, 11]);
-      });
-
-      test("矢印キーで通った始点へ進もうとすると、本番と同じく阻まれた音を鳴らし、阻んだ始点を覆いから抜いたまま同じマスを通れないと言うこと", () => {
-        pressCells([7]);
-        fireEvent.keyDown(getBoard(), { key: "ArrowLeft" });
+      test("穴へ進もうとすると、本番と同じく阻まれた音を鳴らし、道を延ばさず、穴だと言うこと", () => {
+        fireEvent.keyDown(getBoard(), { key: "ArrowDown" });
         advanceTime(violationMessageDelayMs);
 
-        const lastSound = getPlayedSoundNames().at(-1);
         const visited = getVisitedCells();
-        const spotlit = getSpotlitCells();
-        const headline = screen.getByText("同じマスは2回通れません");
+        const lastSound = getPlayedSoundNames().at(-1);
+        const headline = queryShownText("そこは通れません");
 
+        expect(visited).toEqual([0, 1]);
         expect(lastSound).toBe("blocked.flac");
-        expect(visited).toEqual([2, 3, 6, 7]);
-        expect(spotlit).toContain(6);
-        expect(headline).toBeTruthy();
+        expect(headline).not.toBeNull();
+      });
+
+      test("穴をよけて印のマスまで回り込むと、次の手順へ進むこと", () => {
+        pressCells([2, 7, 12, 11]);
+        advanceTime(nextStepCueDelayMs);
+
+        const headline = queryShownText(steps[2]!.message.headline);
+
+        expect(headline).not.toBeNull();
       });
     });
 
-    describe("穴のルールを伝える手順に進んだ場合", () => {
+    describe("すべてのマスを伝える手順に進んだ場合", () => {
       beforeEach(() => {
         playSteps(2);
       });
 
-      test("穴を決め手として覆いから抜くこと", () => {
-        const headline = screen.getByText("穴は通れません");
+      test("印のマスとそこまでの道筋と、通らずに残してはいけない左の2マスを、盤面の覆いから抜くこと", () => {
         const spotlit = getSpotlitCells();
 
-        expect(headline).toBeTruthy();
-        expect(spotlit).toEqual([10, 11, 13, 14, 15]);
+        expect(spotlit).toEqual([10, 11, 15, 16, 21]);
       });
 
-      test("穴へ進もうとすると、本番と同じく阻まれた音を鳴らし、道を延ばさないこと", () => {
-        pressCells([10]);
-
+      test("印へまっすぐ進むと、本番と同じく道を延ばし、少し置いてから入れなくなったマスと戻り先の印を示すこと", () => {
+        pressCells([16, 21]);
         const visited = getVisitedCells();
-        const lastSound = getPlayedSoundNames().at(-1);
+        advanceTime(violationMessageDelayMs);
 
-        expect(visited).toEqual([2, 3, 6, 7, 11]);
-        expect(lastSound).toBe("blocked.flac");
+        const headline = queryShownText("入れなくなったマスがあります");
+        const marked = getCuedCells("mark");
+        const spotlit = getSpotlitCells();
+
+        expect(visited).toContain(21);
+        expect(headline).not.toBeNull();
+        expect(marked).toEqual([11]);
+        expect(spotlit).toEqual(expect.arrayContaining([10, 11, 15]));
+      });
+
+      test("戻り先の印まで戻すと、手順の一言と印に戻ること", () => {
+        pressCells([16, 21]);
+        advanceTime(violationMessageDelayMs);
+        pressCells([11]);
+
+        const headline = queryShownText(steps[2]!.message.headline);
+        const marked = getCuedCells("mark");
+
+        expect(headline).not.toBeNull();
+        expect(marked).toEqual([21]);
       });
     });
 
-    describe("すべてのマスのルールを伝える手順に進んだ場合", () => {
+    describe("通れる隣が少ないマスを伝える手順に進んだ場合", () => {
       beforeEach(() => {
         playSteps(3);
       });
 
-      test("左下の角を今通ることを、行き先の無くなる左上の角と一緒に決め手にして伝えること", () => {
-        const headline = screen.getByText(
-          "すべてのマスを通ります 左下の角は、今のうちに通ります",
-        );
-        const detail = screen.getByText(
-          "後回しにすると、左上の角まで行けません",
-        );
+      test("2つの行き先に指を出さずに印を付け、そこまでの道筋と、通れる隣の残りのマスと道の終わりのマスを決め手として覆いから抜くこと", () => {
+        const marked = getCuedCells("mark");
+        const pointed = getCuedCells("pointer");
         const spotlit = getSpotlitCells();
 
-        expect(headline).toBeTruthy();
-        expect(detail).toBeTruthy();
-        expect(spotlit).toEqual([0, 8, 12, 13]);
+        expect(marked).toEqual([17, 23]);
+        expect(pointed).toEqual([]);
+        expect(spotlit).toEqual([4, 17, 18, 21, 22, 23]);
       });
 
-      test("角を通らずに上へ曲がろうとしても、道を延ばさないこと", () => {
-        pressCells([9]);
+      test("通れる隣が1つのマスを増やす向きへ進むと、そのことと戻り先の印を示すこと", () => {
+        pressCells([22, 23]);
+        advanceTime(violationMessageDelayMs);
 
-        const visited = getVisitedCells();
+        const headline = queryShownText("ゴールになるマスが2つできました");
+        const marked = getCuedCells("mark");
 
-        expect(visited).not.toContain(9);
+        expect(headline).not.toBeNull();
+        expect(marked).toEqual([22]);
       });
     });
 
     describe("手順を終えた場合", () => {
       beforeEach(() => {
-        playSteps(stepCells.length);
+        playSteps(steps.length);
       });
 
-      test("覆いを外し、残りを通すことを伝え、手が止まったときだけ、一言は替えずに次に延ばすマスへ印を付けること", () => {
+      test("覆いを外し、残りを通すことを伝え、ヒントを押すまで印を付けないこと", () => {
         const spotlit = getSpotlitCells();
-        const hintedBeforeIdle = getCuedCells("hint");
-        advanceTime(idleHintDelayMs);
+        const marked = getCuedCells("mark");
+        const headline = queryShownText(freePlay.headline);
 
-        const hinted = getCuedCells("hint");
-        const headline = screen.getByText("残りのマスも通れば完成です");
-
-        expect(spotlit).toEqual([]);
-        expect(hintedBeforeIdle).toEqual([]);
-        expect(hinted).toEqual([9]);
-        expect(headline).toBeTruthy();
+        expect(spotlit).toBeNull();
+        expect(marked).toEqual([]);
+        expect(headline).not.toBeNull();
+        expect(getHintButton()).not.toBeNull();
       });
 
-      test("解から外れてたどり着けないマスが残ると、本番と同じく道を延ばし、少し置いてからわけと戻し方を伝えること", () => {
-        pressCells([4]);
-        const visited = getVisitedCells();
+      test("一本道でヒントを押すと、一言は替えずに、手を引く間と同じく次に延ばすマスを印と指で示すこと", () => {
+        fireEvent.click(getHintButton()!);
+
+        const marked = getCuedCells("mark");
+        const headline = queryShownText(freePlay.headline);
+
+        expect(marked).toEqual([18]);
+        expect(getCuedCells("pointer")).toEqual([18]);
+        expect(headline).not.toBeNull();
+      });
+
+      test("分かれ道でヒントを押すと、次に延ばすマスと道の終わりのマスを覆いから抜き、通れる隣が少ないマスの読みを伝えること", () => {
+        pressCells([18]);
+        fireEvent.click(getHintButton()!);
+
+        const marked = getCuedCells("mark");
+        const spotlit = getSpotlitCells();
+        const headline = queryShownText(steps[3]!.message.headline);
+
+        expect(marked).toEqual([23]);
+        expect(spotlit).toEqual([4, 18, 23]);
+        expect(headline).not.toBeNull();
+      });
+
+      test("ヒントの印は、次の手で消えること", () => {
+        fireEvent.click(getHintButton()!);
+        pressCells([18]);
+
+        const marked = getCuedCells("mark");
+
+        expect(marked).toEqual([]);
+      });
+
+      test("通れる隣が1つのマスを増やす向きへ進むと、本番と同じく道を延ばし、少し置いてからわけと戻り先の印を示し、進み具合を外れる前の所に留めること", () => {
+        pressCells([18]);
+        const progressBefore = getProgressValue();
+        pressCells([13]);
         advanceTime(violationMessageDelayMs);
 
-        const headline = screen.getByText(
-          "このままでは たどり着けないマスが残ります",
-        );
-        const detail = screen.getByText("来た道をなぞって戻れば、やり直せます");
-
-        expect(visited).toContain(4);
-        expect(headline).toBeTruthy();
-        expect(detail).toBeTruthy();
-      });
-
-      test("解から外れたまま止まると、違反の一言を残したまま、外れる前のマスに印を付けること", () => {
-        pressCells([4]);
-        advanceTime(idleHintDelayMs);
-
-        const hinted = getCuedCells("hint");
-        const headline = screen.getByText(
-          "このままでは たどり着けないマスが残ります",
-        );
-
-        expect(hinted).toEqual([8]);
-        expect(headline).toBeTruthy();
-      });
-
-      test("印のマスを押すと、本番と同じくそこまで戻すこと", () => {
-        pressCells([4, 8]);
-
         const visited = getVisitedCells();
+        const headline = queryShownText("ゴールになるマスが2つできました");
+        const marked = getCuedCells("mark");
 
-        expect(visited).not.toContain(4);
+        expect(visited).toContain(13);
+        expect(headline).not.toBeNull();
+        expect(marked).toEqual([18]);
+        expect(getProgressValue()).toBe(progressBefore);
+        expect(getHintButton()).toBeNull();
       });
 
       test("手順の道を戻して引き直しても、手順を終えたときの応えを出さないこと", () => {
-        pressCells([13, 12, 8]);
+        pressCells([22, 17]);
 
         const acknowledged = getCuedCells("extended");
 
         expect(acknowledged).toEqual([]);
       });
+    });
 
-      test("残りを通し終えると、本番と同じ完成の音を鳴らし、ゲームのホームで開いているレベルを遊ぶ操作でそのレベルを始めること", () => {
+    describe("解き終えた場合", () => {
+      beforeEach(() => {
+        playSteps(steps.length);
         pressCells(remainingCells);
+      });
+
+      test("本番と同じ完成の音を鳴らし、完成を伝え、覚えたルールと読みを並べ、進み具合を満たすこと", () => {
         const clearSounds = vi.mocked(playLayeredSound).mock.calls.length;
         advanceTime(introEnoughMs);
-        const detail = screen.getByText("どのレベルも、もっと広い盤面です");
-        fireEvent.click(screen.getByRole("button", { name: "レベル 3を遊ぶ" }));
+
+        const detail = queryShownText(
+          hitofudePuzzleTutorial.completion.home.detail ?? "",
+        );
+        const recap = within(
+          within(getScreen()).getByRole("list", { name: "覚えたルール" }),
+        )
+          .getAllByRole("listitem")
+          .map((item) => item.textContent);
 
         expect(clearSounds).toBe(1);
-        expect(detail).toBeTruthy();
+        expect(detail).not.toBeNull();
+        expect(recap).toEqual(HITOFUDE_PUZZLE_TUTORIAL_RECAP);
+        expect(getProgressValue()).toBe("100");
+      });
+
+      test("ゲームのホームで開いているレベルを遊ぶ操作で、そのレベルを始めること", () => {
+        advanceTime(introEnoughMs);
+        fireEvent.click(
+          within(getScreen()).getByRole("button", { name: "レベル 1を遊ぶ" }),
+        );
+
         expect(playStart.onStart).toHaveBeenCalledOnce();
       });
 
-      test("通し終えた後のもう一度で、始まりの盤面を見せてから最初の手順を始めること", () => {
-        pressCells(remainingCells);
+      test("もう一度を押すと、入口を通さずに、始点だけの道で最初の手順から始めること", () => {
         advanceTime(introEnoughMs);
-        fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-        const caption = screen.getByText("輪の付いたマスから 道を引きます");
-        pressNextThroughIntroWaitingForScenes();
+        fireEvent.click(
+          within(getScreen()).getByRole("button", { name: "もう一度" }),
+        );
 
+        const startButton = queryStartButton();
         const visited = getVisitedCells();
-        const hinted = getCuedCells("hint");
+        const marked = getCuedCells("mark");
 
-        expect(caption).toBeTruthy();
-        expect(visited).toEqual([6]);
-        expect(hinted).toEqual([2, 3]);
+        expect(startButton).toBeNull();
+        expect(visited).toEqual([0]);
+        expect(marked).toEqual([1]);
+        expect(getProgressValue()).toBe("0");
       });
     });
 
     test("矢印キーでも、印のマスへ先端を動かせること", () => {
-      fireEvent.keyDown(getBoard(), { key: "ArrowUp" });
+      fireEvent.keyDown(getBoard(), { key: "ArrowRight" });
 
       const visited = getVisitedCells();
 
-      expect(visited).toEqual([2, 6]);
-    });
-  });
-
-  describe("導入を見せる場合", () => {
-    beforeEach(() => {
-      render(
-        <HitofudePuzzleTutorial
-          open={true}
-          playStart={playStart}
-          onClose={onClose}
-        />,
-      );
-    });
-
-    test("開くと、名前と何をするパズルか、全マスを通ったゴールの道を見せること", () => {
-      const title = screen.getByRole("heading", { name: "一筆パズル" });
-      const purpose = screen.getByText(
-        "穴以外のすべてのマスを1回ずつ通る 1本の道を引くパズルです",
-      );
-      const visitedCount = getVisitedCells().length;
-
-      expect(title).toBeTruthy();
-      expect(purpose).toBeTruthy();
-      expect(visitedCount).toBe(14);
+      expect(visited).toEqual([0, 1]);
     });
   });
 
@@ -475,48 +568,47 @@ describe("HitofudePuzzleTutorial", () => {
     });
 
     test("最初の画面で、ゴールの道をゴールの一言と一緒に見せること", () => {
-      const caption = screen.getByText("この形になれば完成です");
+      const caption = queryShownText(intro.goalCaption);
       const visitedCount = getVisitedCells().length;
 
-      expect(caption).toBeTruthy();
-      expect(visitedCount).toBe(14);
+      expect(caption).not.toBeNull();
+      expect(visitedCount).toBe(21);
     });
 
-    test("ゴールで次へを押すと、始まりの一言を添えて始点だけの道を見せること", () => {
-      pressNext();
+    test("はじめるを押すと、動きを待たずに始点だけの道で最初の手順の一言と印を出すこと", () => {
+      fireEvent.click(
+        within(getScreen()).getByRole("button", { name: "はじめる" }),
+      );
+      advanceTime(0);
 
-      const caption = screen.getByText("輪の付いたマスから 道を引きます");
+      const headline = queryShownText(steps[0]!.message.headline);
       const visited = getVisitedCells();
+      const marked = getCuedCells("mark");
 
-      expect(caption).toBeTruthy();
-      expect(visited).toEqual([6]);
-    });
-
-    test("次へで最後まで進めると、最初の手順の一言と印を出すこと", () => {
-      pressNext();
-      pressNextThroughIntroWaitingForScenes();
-
-      const headline = screen.getByText("印のマスを順になぞります");
-      const hinted = getCuedCells("hint");
-
-      expect(headline).toBeTruthy();
-      expect(hinted).toEqual([2, 3]);
+      expect(headline).not.toBeNull();
+      expect(visited).toEqual([0]);
+      expect(marked).toEqual([1]);
     });
   });
 
   describe("プレイ中に開いた場合", () => {
     beforeEach(() => {
       render(<HitofudePuzzleTutorial open={true} onClose={onClose} />);
-      pressNextThroughIntro();
+      pressStart();
     });
 
     test("通し終えると、プレイに戻ることを伝え、プレイに戻る操作で閉じること", () => {
-      pressCells([...stepCells.flat(), ...remainingCells]);
+      playSteps(steps.length);
+      pressCells(remainingCells);
       advanceTime(introEnoughMs);
-      const detail = screen.getByText("プレイ中の盤面も同じルールです");
-      fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
+      const detail = queryShownText(
+        hitofudePuzzleTutorial.completion.play.detail ?? "",
+      );
+      fireEvent.click(
+        within(getScreen()).getByRole("button", { name: "プレイに戻る" }),
+      );
 
-      expect(detail).toBeTruthy();
+      expect(detail).not.toBeNull();
       expect(onClose).toHaveBeenCalledOnce();
     });
   });
