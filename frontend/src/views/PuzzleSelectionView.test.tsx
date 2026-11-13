@@ -31,14 +31,18 @@ beforeAll(() => {
   HTMLElement.prototype.scrollTo = vi.fn();
 });
 
+const lapCount = 15;
+const middleLap = Math.floor(lapCount / 2);
+
 function selectGameByName(name: string) {
   const carousel = screen.getByRole("group", {
     name: "左右にスライドしてパズルを切り替え",
   });
   const links = Array.from(carousel.children);
-  const centerLapStart = links.length / 3;
+  const gameCount = links.length / lapCount;
+  const centerLapStart = gameCount * middleLap;
   const index = links
-    .slice(centerLapStart, centerLapStart * 2)
+    .slice(centerLapStart, centerLapStart + gameCount)
     .findIndex((item) => item.getAttribute("aria-label")?.startsWith(name));
   if (index < 0) throw new Error(`Missing game: ${name}`);
   Object.defineProperty(carousel, "clientWidth", {
@@ -111,8 +115,8 @@ describe("PuzzleSelectionView", () => {
         name: "左右にスライドしてパズルを切り替え",
       });
       const gameLinks = Array.from(carousel.children).slice(
-        games.length,
-        games.length * 2,
+        games.length * middleLap,
+        games.length * (middleLap + 1),
       );
 
       expect(gameLinks.map((link) => link.getAttribute("aria-label"))).toEqual(
@@ -197,8 +201,11 @@ describe("保存されたホームの並び順", () => {
     const carousel = screen.getByRole("group", {
       name: "左右にスライドしてパズルを切り替え",
     });
-    const count = carousel.children.length / 3;
-    const links = Array.from(carousel.children).slice(count, count * 2);
+    const count = carousel.children.length / lapCount;
+    const links = Array.from(carousel.children).slice(
+      count * middleLap,
+      count * (middleLap + 1),
+    );
 
     expect(links[0]?.getAttribute("aria-label")).toBe("ナンプレを開く");
     expect(links[1]?.getAttribute("aria-label")).toBe("ウォーターソートを選択");
