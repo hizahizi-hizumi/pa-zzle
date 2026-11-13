@@ -39,7 +39,7 @@ export function MinesweeperHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          マスを押すと開く。上のボタン
+          マスを押すと開く。押したまま指をマスの外へずらして離すと、開かない。下のボタン
           <Pointer
             className="mx-0.5 inline size-4 align-text-bottom"
             aria-hidden

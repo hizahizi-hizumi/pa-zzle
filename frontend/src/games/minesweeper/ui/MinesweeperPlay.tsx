@@ -9,17 +9,19 @@ import type {
 } from "@/games/minesweeper/play/use-minesweeper-play";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import { MinesweeperClearAnimation } from "@/games/minesweeper/ui/board/clear/MinesweeperClearAnimation";
-import { InputModeToggle } from "@/games/minesweeper/ui/board/InputModeToggle";
 import {
+  getMinesweeperBoardFittingWidth,
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
 import { MinesweeperGround } from "@/games/minesweeper/ui/MinesweeperGround";
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
+import { InputModeSwitch } from "@/games/minesweeper/ui/MinesweeperPlay/InputModeSwitch";
 import { MinesweeperTutorial } from "@/games/minesweeper/ui/MinesweeperTutorial";
 import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
 import { useMinesweeperSoundEffects } from "@/games/minesweeper/ui/use-minesweeper-sound-effects";
 import type { GamePlayScreenProps } from "@/games/play";
+import { cn } from "@/lib/utils";
 
 type MinesweeperPlayProps = GamePlayScreenProps<
   MinesweeperDifficulty,
@@ -62,7 +64,7 @@ export function MinesweeperPlay({
 }: MinesweeperPlayProps) {
   const [mode, setMode] = useState<MinesweeperInputMode>("reveal");
   const interactionEnabled = progress === "playing";
-  useMinesweeperSoundEffects(operation, progress);
+  useMinesweeperSoundEffects(operation, progress, columns);
 
   function handleReplay(): void {
     setMode("reveal");
@@ -86,11 +88,6 @@ export function MinesweeperPlay({
         { type: "count", label: "ミス", count: mistakeCount },
         { type: "elapsed-time", elapsedMs },
       ]}
-      trailingAction={
-        interactionEnabled ? (
-          <InputModeToggle mode={mode} onChange={setMode} />
-        ) : null
-      }
       onReplay={handleReplay}
       onStartNewProblem={handleStartNewProblem}
       onOpenGameHome={onOpenGameHome}
@@ -114,10 +111,17 @@ export function MinesweeperPlay({
         />
       )}
     >
-      <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-3 sm:px-6">
-        <div className="w-full max-w-[32rem]">
+      {/* 縦に長い盤面でも見出しと切り替えに重ならないよう、盤面を置き場所の高さにも収める。 */}
+      <main className="flex min-h-0 flex-1 items-center justify-center px-2 sm:px-6 [container-type:size]">
+        <div
+          style={{
+            width: getMinesweeperBoardFittingWidth(rows, columns, "32rem"),
+          }}
+        >
           <MinesweeperClearAnimation
             active={progress === "clearing"}
+            columns={columns}
+            originCellIndex={operation?.cellIndex ?? null}
             onComplete={onClearAnimationComplete}
           >
             <MinesweeperBoard
@@ -125,6 +129,7 @@ export function MinesweeperPlay({
               columns={columns}
               cells={visibleCells}
               mode={mode}
+              operation={operation}
               interactionDisabled={!interactionEnabled}
               onRevealCell={onRevealCell}
               onToggleFlag={onToggleFlag}
@@ -133,6 +138,17 @@ export function MinesweeperPlay({
           </MinesweeperClearAnimation>
         </div>
       </main>
+      {/* 解き終えた後も高さを残し、盤面の位置を動かさない。 */}
+      <footer
+        aria-hidden={!interactionEnabled || undefined}
+        inert={!interactionEnabled}
+        className={cn(
+          "flex shrink-0 justify-center px-4 pt-1",
+          !interactionEnabled && "invisible",
+        )}
+      >
+        <InputModeSwitch mode={mode} onChange={setMode} />
+      </footer>
     </GamePlayFrame>
   );
 }

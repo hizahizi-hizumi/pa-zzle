@@ -217,7 +217,11 @@ export function MinesweeperTutorial({
         }
       : tutorialMessage;
 
-  useMinesweeperSoundEffects(operation, gameProgressByPhase[progress.phase]);
+  useMinesweeperSoundEffects(
+    operation,
+    gameProgressByPhase[progress.phase],
+    MINESWEEPER_TUTORIAL_COLUMNS,
+  );
 
   useEffect(() => {
     if (!open || cueDelayMs === null || cueDelayMs === 0) {
@@ -336,6 +340,8 @@ export function MinesweeperTutorial({
           onModeChange={setMode}
         />
         <MinesweeperClearAnimation
+          columns={MINESWEEPER_TUTORIAL_COLUMNS}
+          originCellIndex={operation?.cellIndex ?? null}
           active={progress.phase === "solved" || (scene === "goal" && playing)}
           onComplete={
             scene === "goal" ? onSceneEnd : handleClearAnimationComplete

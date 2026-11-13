@@ -38,22 +38,22 @@ import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 /**
  * 盤面が変わった操作の知らせ。`cellIndex` は押したマス。
- * - `cells-opened`: 安全なマスを開いた。数字マスを押して周りをまとめて開いたときも含む。`openedCellCount` は連鎖して開いた数も含む。
- * - `mine-stepped`: 地雷を踏んだ。同じ操作で安全なマスも開いたときは `openedCellCount` に数える。
+ * - `cells-opened`: 安全なマスを開いた。数字マスを押して周りをまとめて開いたときも含む。`openedCellIndices` は連鎖して開いたマスも含む。
+ * - `mine-stepped`: 地雷を踏んだ。同じ操作で安全なマスも開いたときは `openedCellIndices` に含める。
  */
 export type MinesweeperOperation =
   | {
       id: number;
       type: "cells-opened";
       cellIndex: number;
-      openedCellCount: number;
+      openedCellIndices: readonly number[];
     }
   | {
       id: number;
       type: "mine-stepped";
       cellIndex: number;
       steppedMineCount: number;
-      openedCellCount: number;
+      openedCellIndices: readonly number[];
     }
   | { id: number; type: "flag-placed" | "flag-removed"; cellIndex: number };
 
@@ -134,8 +134,10 @@ export function createMinesweeperOpeningOperation(
   previous: MinesweeperPuzzleState,
   next: MinesweeperPuzzleState,
 ): MinesweeperOperation {
-  const openedCellCount =
-    next.revealedCellIndices.length - previous.revealedCellIndices.length;
+  const previouslyRevealed = new Set(previous.revealedCellIndices);
+  const openedCellIndices = next.revealedCellIndices.filter(
+    (revealedCellIndex) => !previouslyRevealed.has(revealedCellIndex),
+  );
   const steppedMineCount =
     next.steppedMineCellIndices.length - previous.steppedMineCellIndices.length;
   return steppedMineCount > 0
@@ -144,9 +146,9 @@ export function createMinesweeperOpeningOperation(
         type: "mine-stepped",
         cellIndex,
         steppedMineCount,
-        openedCellCount,
+        openedCellIndices,
       }
-    : { id, type: "cells-opened", cellIndex, openedCellCount };
+    : { id, type: "cells-opened", cellIndex, openedCellIndices };
 }
 
 export function createMinesweeperFlagOperation(

@@ -92,19 +92,25 @@ describe("useMinesweeperPlay", () => {
         act(() => hook.result.current.revealCell(hiddenSafeCellIndex));
       });
 
-      test("開いたマスの数を操作の知らせとして返すこと", () => {
+      test("開いたマスを操作の知らせとして返すこと", () => {
         const play = hook.result.current;
-        const openedCellCount = play.visibleCells.filter(
+        const openedCellIndices = play.visibleCells.flatMap(
           (cell, cellIndex) =>
             cell.state === "revealed" &&
-            initialVisibleCells[cellIndex]?.state !== "revealed",
-        ).length;
+            initialVisibleCells[cellIndex]?.state !== "revealed"
+              ? [cellIndex]
+              : [],
+        );
 
         expect(play.operation).toMatchObject({
           type: "cells-opened",
           cellIndex: hiddenSafeCellIndex,
-          openedCellCount,
         });
+        expect(
+          play.operation?.type === "cells-opened"
+            ? [...play.operation.openedCellIndices].sort((a, b) => a - b)
+            : null,
+        ).toEqual(openedCellIndices);
       });
 
       test("リセットで同じ問題を初期状態の新しいプレイとして始めること", () => {
@@ -171,7 +177,7 @@ describe("useMinesweeperPlay", () => {
           type: "mine-stepped",
           cellIndex: hiddenMineCellIndex,
           steppedMineCount: 1,
-          openedCellCount: 0,
+          openedCellIndices: [],
         });
       });
 

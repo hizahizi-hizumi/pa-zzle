@@ -7,6 +7,7 @@ import openingTick2SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick
 import openingTick3SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-3.flac";
 import openingTick4SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-4.flac";
 import type { MinesweeperOperation } from "@/games/minesweeper/play/use-minesweeper-play";
+import { getOpeningRipple } from "@/games/minesweeper/ui/board/opening-ripple";
 import type { GameProgress } from "@/games/play";
 import {
   useClearSound,
@@ -22,7 +23,7 @@ import {
   type SoundLayer,
 } from "@/lib/sound-effects";
 
-/** マスを開く音の粒。1粒目が押したマスで、一度に多く開くほど続く粒を足す。 */
+/** マスを開く音の粒。1粒目が押したマスで、一度に多く開くほど続く粒を足す。続く粒は、盤面で開く動きが広がる間に並べる。 */
 const openingTickSounds = [
   openingTick1SoundUrl,
   openingTick2SoundUrl,
@@ -34,14 +35,23 @@ const OPENING_TICK_STEP_MS = 28;
 /** 粒を1つずつ足す、一度に開いたマスの数の下限。同じ瞬間に盤面で多く開いて見える分だけ音を豊かにする。 */
 const OPENING_TICK_THRESHOLDS = [1, 2, 6, 16] as const;
 
-function getOpeningSoundLayers(openedCellCount: number): SoundLayer[] {
-  const tickCount = OPENING_TICK_THRESHOLDS.filter(
-    (threshold) => openedCellCount >= threshold,
-  ).length;
+function getOpeningSoundLayers(
+  openedCellCount: number,
+  rippleSpreadMs: number,
+): SoundLayer[] {
+  const tickCount = Math.max(
+    1,
+    OPENING_TICK_THRESHOLDS.filter((threshold) => openedCellCount >= threshold)
+      .length,
+  );
+  const tickStepMs =
+    tickCount === 1
+      ? 0
+      : Math.max(OPENING_TICK_STEP_MS, rippleSpreadMs / (tickCount - 1));
   return openingTickSounds
-    .slice(0, Math.max(1, tickCount))
+    .slice(0, tickCount)
     .map(function createTickLayer(sound, index) {
-      return { sound, offsetMs: index * OPENING_TICK_STEP_MS };
+      return { sound, offsetMs: index * tickStepMs };
     });
 }
 
@@ -61,13 +71,21 @@ const minesweeperSounds: readonly SoundEffect[] = [
   clearedSound,
 ];
 
-function playOperationSound(operation: MinesweeperOperation) {
+function playOperationSound(operation: MinesweeperOperation, columns: number) {
   switch (operation.type) {
-    case "cells-opened":
-      playLayeredSound(getOpeningSoundLayers(operation.openedCellCount), {
-        variation: REPEATED_SOUND_VARIATION,
-      });
+    case "cells-opened": {
+      const { openedCellIndices, cellIndex } = operation;
+      const { spreadMs } = getOpeningRipple(
+        columns,
+        cellIndex,
+        openedCellIndices,
+      );
+      playLayeredSound(
+        getOpeningSoundLayers(openedCellIndices.length, spreadMs),
+        { variation: REPEATED_SOUND_VARIATION },
+      );
       return;
+    }
     case "mine-stepped":
       playSound(mineSteppedSound);
       return;
@@ -87,8 +105,9 @@ function playClearSound() {
 export function useMinesweeperSoundEffects(
   operation: MinesweeperOperation | null,
   progress: GameProgress,
+  columns: number,
 ) {
   usePrepareSoundEffects(minesweeperSounds);
-  useOperationSound(operation, playOperationSound);
+  useOperationSound(operation, (played) => playOperationSound(played, columns));
   useClearSound(progress, playClearSound);
 }

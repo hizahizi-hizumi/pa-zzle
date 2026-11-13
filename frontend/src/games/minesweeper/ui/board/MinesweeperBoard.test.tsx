@@ -148,3 +148,58 @@ describe("立体盤面の駒", () => {
     expect(flagCell.className).not.toContain("active:brightness");
   });
 });
+
+describe("盤面の操作の知らせ", () => {
+  const cells: readonly MinesweeperVisibleCell[] = [
+    { state: "steppedMine" },
+    { state: "revealed", adjacentMineCount: 1 },
+    { state: "revealed", adjacentMineCount: 0 },
+    { state: "hidden" },
+  ];
+  const animatedElements: Element[] = [];
+
+  beforeEach(() => {
+    animatedElements.length = 0;
+    Object.defineProperty(HTMLElement.prototype, "animate", {
+      configurable: true,
+      value: function recordAnimation(this: Element) {
+        animatedElements.push(this);
+        return { cancel: vi.fn() };
+      },
+    });
+    render(
+      <MinesweeperBoard
+        rows={2}
+        columns={2}
+        cells={cells}
+        mode="reveal"
+        operation={{
+          id: 1,
+          type: "mine-stepped",
+          cellIndex: 0,
+          steppedMineCount: 1,
+          openedCellIndices: [1, 2],
+        }}
+        interactionDisabled={false}
+        onRevealCell={vi.fn()}
+        onToggleFlag={vi.fn()}
+        onChordCell={vi.fn()}
+      />,
+    );
+  });
+
+  afterEach(() => {
+    Reflect.deleteProperty(HTMLElement.prototype, "animate");
+  });
+
+  test("地雷を踏むと、開いたマスと踏んだマスと盤面全体を動かすこと", () => {
+    const board = screen.getByRole("group", { name: "マインスイーパー盤面" });
+
+    expect(animatedElements).toEqual([
+      screen.getByLabelText("マス 2 開示済み 1"),
+      screen.getByLabelText("マス 3 開示済み 空白"),
+      screen.getByLabelText("マス 1 踏んだ地雷"),
+      board,
+    ]);
+  });
+});

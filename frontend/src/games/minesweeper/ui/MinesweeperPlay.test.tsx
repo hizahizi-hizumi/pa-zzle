@@ -151,7 +151,7 @@ describe("MinesweeperPlay", () => {
       });
     });
 
-    test("ヘッダーの旗モード切替が初期状態で押されていないこと", () => {
+    test("盤面の下の旗モード切替が初期状態で押されていないこと", () => {
       const toggle = screen.getByRole("button", { name: "旗モード" });
 
       expect(toggle.getAttribute("aria-pressed")).toBe("false");
