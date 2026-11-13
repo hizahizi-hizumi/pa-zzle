@@ -1,3 +1,4 @@
+import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import { findIceFloorMazeDeadlock } from "@/games/ice-floor-maze/puzzle/deadlock";
 import {
   applyIceFloorMazeSlide,
@@ -16,6 +17,7 @@ import {
   type IceFloorMazeTutorialRuleId,
   iceFloorMazeTutorial,
   iceFloorMazeTutorialPuzzle,
+  listIceFloorMazeElementIntroductions,
   listIceFloorMazeTutorialMoveCellIndices,
   readIceFloorMazeTutorialSlide,
 } from "@/games/ice-floor-maze/tutorial/tutorial";
@@ -476,5 +478,32 @@ describe("findIceFloorMazeTutorialHintCellIndex", () => {
 
       expect(hint).toBeNull();
     });
+  });
+});
+
+describe("listIceFloorMazeElementIntroductions", () => {
+  // もろい岩（b）と雪（s）のある盤面。
+  const elementBoard = parseIceFloorMazeBoard(["..b", "s..", "..."]);
+  const plainBoard = parseIceFloorMazeBoard(["...", ".#.", "..."]);
+
+  test("盤面にある要素ごとに、チュートリアルで伝える順に、その見出しの文を返すこと", () => {
+    const result = listIceFloorMazeElementIntroductions(elementBoard);
+
+    expect(result).toEqual([
+      {
+        ruleId: "brittle-rock",
+        headline: "もろい岩は、一度駒を止めると\n崩れます",
+      },
+      {
+        ruleId: "snow",
+        headline: "駒は雪に入ると止まり\n雪を1マス先へ押し出します",
+      },
+    ]);
+  });
+
+  test("氷と岩だけの盤面では何も返さないこと", () => {
+    const result = listIceFloorMazeElementIntroductions(plainBoard);
+
+    expect(result).toEqual([]);
   });
 });

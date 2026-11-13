@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
@@ -12,10 +12,16 @@ import type {
 import type { IceFloorMazeBoard as IceFloorMazeBoardState } from "@/games/ice-floor-maze/puzzle/board";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
 import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
+import { listIceFloorMazeElementIntroductions } from "@/games/ice-floor-maze/tutorial/tutorial";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
 import { IceFloorMazeGround } from "@/games/ice-floor-maze/ui/IceFloorMazeGround";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
+import { IceFloorMazeElementNotice } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeElementNotice";
 import { IceFloorMazeTrappedNotice } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeTrappedNotice";
+import {
+  markIceFloorMazeElementsSeen,
+  readIceFloorMazeSeenElements,
+} from "@/games/ice-floor-maze/ui/IceFloorMazePlay/seen-element-storage";
 import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazeSwipeArea";
 import { IceFloorMazeTutorial } from "@/games/ice-floor-maze/ui/IceFloorMazeTutorial";
 import { IceFloorMazeResultScreen } from "@/games/ice-floor-maze/ui/result/IceFloorMazeResultScreen";
@@ -86,6 +92,29 @@ export function IceFloorMazePlay({
   const playing = progress === "playing";
   useIceFloorMazeSoundEffects(lastSlide, blockedInput, goal, progress);
   // 知らせ始める滑りでは、駒が滑り着いてから知らせる。知らせた後の滑りでは知らせを出したままにする。
+  // 初めて見る要素のある問題では、1手目を指すまで、その要素のルールを一言で添える。
+  // 1手指したら見たと残し、同じ問題を遊び直しても出さない。
+  const beforeFirstMove = moveCount === 0;
+  const unseenIntroductions = useMemo(() => {
+    if (!beforeFirstMove) return [];
+    const seen = readIceFloorMazeSeenElements();
+    return listIceFloorMazeElementIntroductions(board).filter(
+      ({ ruleId }) => !seen.has(ruleId),
+    );
+  }, [board, beforeFirstMove]);
+  const shownIntroductionsRef = useRef(unseenIntroductions);
+
+  useEffect(() => {
+    if (beforeFirstMove) {
+      shownIntroductionsRef.current = unseenIntroductions;
+      return;
+    }
+    markIceFloorMazeElementsSeen(
+      shownIntroductionsRef.current.map(({ ruleId }) => ruleId),
+    );
+    shownIntroductionsRef.current = [];
+  }, [beforeFirstMove, unseenIntroductions]);
+
   const showTrappedNotice =
     isTrapped && !(slideAnimating && lastSlide?.entersTrap === true);
 
@@ -161,7 +190,10 @@ export function IceFloorMazePlay({
       )}
     >
       <IceFloorMazeSwipeArea disabled={!playing} onSwipe={onSlide}>
-        <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
+        <main className="relative flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
+          {playing && beforeFirstMove && unseenIntroductions.length > 0 ? (
+            <IceFloorMazeElementNotice introductions={unseenIntroductions} />
+          ) : null}
           <IceFloorMazeBoard
             board={board}
             cells={cells}

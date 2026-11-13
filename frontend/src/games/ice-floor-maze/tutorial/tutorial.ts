@@ -451,6 +451,60 @@ export const iceFloorMazeTutorial: Tutorial<
   describeViolation: describeIceFloorMazeTutorialViolation,
 };
 
+/** 盤面の要素（床ともろい岩などの変わる・動く要素）と、それを伝えるチュートリアルのルール。 */
+const elementRuleIdByCell = {
+  floor: "floor",
+  "brittle-rock": "brittle-rock",
+  "thin-ice": "thin-ice",
+  snow: "snow",
+  "sliding-block": "sliding-block",
+} as const satisfies Partial<
+  Record<IceFloorMazeBoard["cells"][number], IceFloorMazeTutorialRuleId>
+>;
+
+export type IceFloorMazeElementRuleId =
+  (typeof elementRuleIdByCell)[keyof typeof elementRuleIdByCell];
+
+export type IceFloorMazeElementIntroduction = {
+  ruleId: IceFloorMazeElementRuleId;
+  headline: string;
+};
+
+const elementRuleIds: ReadonlySet<IceFloorMazeTutorialRuleId> = new Set(
+  Object.values(elementRuleIdByCell),
+);
+
+function isElementRuleId(
+  ruleId: IceFloorMazeTutorialRuleId,
+): ruleId is IceFloorMazeElementRuleId {
+  return elementRuleIds.has(ruleId);
+}
+
+function isElementCell(
+  cell: IceFloorMazeBoard["cells"][number],
+): cell is keyof typeof elementRuleIdByCell {
+  return cell in elementRuleIdByCell;
+}
+
+/**
+ * 盤面にある要素ごとに、チュートリアルでその要素のルールを伝える見出しの文。チュートリアルで伝える順に並べる。
+ * 本番でその要素を初めて見る問題で、同じ文を一言として出すのに使う。
+ */
+export function listIceFloorMazeElementIntroductions(
+  board: IceFloorMazeBoard,
+): IceFloorMazeElementIntroduction[] {
+  const ruleIds = new Set<IceFloorMazeTutorialRuleId>(
+    board.cells.filter(isElementCell).map((cell) => elementRuleIdByCell[cell]),
+  );
+  return steps.flatMap((step) =>
+    step.introducedRuleId !== null &&
+    isElementRuleId(step.introducedRuleId) &&
+    ruleIds.has(step.introducedRuleId)
+      ? [{ ruleId: step.introducedRuleId, headline: step.message.headline }]
+      : [],
+  );
+}
+
 export const _private = {
   startState,
   freePlayState,

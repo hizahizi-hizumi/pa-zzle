@@ -556,4 +556,69 @@ describe("IceFloorMazePlay", () => {
       expect(speedCriteria).toBeTruthy();
     });
   });
+
+  describe("初めて見る要素のある問題の場合", () => {
+    // もろい岩（b）のある盤面。
+    const brittleBoard = parseIceFloorMazeBoard([
+      "#.#..",
+      "...##",
+      "..###",
+      "....b",
+      "#...#",
+    ]);
+    const headline = "もろい岩は、一度駒を止めると崩れます";
+    const ignoreSpaces = (text: string) => text.replace(/\s+/g, "");
+
+    function createElementPlay(moveCount: number) {
+      return (
+        <IceFloorMazePlay
+          difficulty="3"
+          progress="playing"
+          result={null}
+          recordFeedback={{ kind: "none" }}
+          elapsedMs={0}
+          board={brittleBoard}
+          cells={createIceFloorMazeInitialState(brittleBoard, 17).cells}
+          blocks={[]}
+          goal={18}
+          position={17}
+          moveCount={moveCount}
+          isTrapped={false}
+          lastSlide={null}
+          blockedInput={null}
+          canUndo={moveCount > 0}
+          canRestart={moveCount > 0}
+          {...callbacks}
+        />
+      );
+    }
+
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    test("1手目を指すまで、その要素のルールを一言で出すこと", () => {
+      render(createElementPlay(0));
+
+      const notice = screen.queryByText(headline, { normalizer: ignoreSpaces });
+
+      expect(notice).not.toBeNull();
+    });
+
+    test("1手指すと一言を消し、次に同じ要素の問題を始めても出さないこと", () => {
+      const { rerender, unmount } = render(createElementPlay(0));
+      rerender(createElementPlay(1));
+      const afterFirstMove = screen.queryByText(headline, {
+        normalizer: ignoreSpaces,
+      });
+      unmount();
+      render(createElementPlay(0));
+      const nextProblem = screen.queryByText(headline, {
+        normalizer: ignoreSpaces,
+      });
+
+      expect(afterFirstMove).toBeNull();
+      expect(nextProblem).toBeNull();
+    });
+  });
 });
