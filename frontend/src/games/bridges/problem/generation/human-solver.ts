@@ -9,7 +9,7 @@ import {
   copyBridgeBounds,
   createBridgesSolverContext,
   createInitialBridgeBounds,
-  findBridgeComponents,
+  findBridgeComponentRoots,
   isEveryEdgeDecided,
 } from "@/games/bridges/problem/generation/bridge-bounds";
 import {
@@ -211,7 +211,7 @@ function deduceUnclosedGroups(
   const deductions: Deductions = new Map();
   const { network, endpoints, clues } = context;
   const { lower, upper } = bounds;
-  const components = findBridgeComponents(context, lower);
+  const components = findBridgeComponentRoots(context, lower);
   const islandCount = components.length;
   const memberCounts = new Map<number, number>();
   const remaining = new Map<number, number>();
@@ -270,8 +270,7 @@ function deduceOnlyPassages(
   return deductions;
 }
 
-/** 交わる辺に架かると決まっていれば `false`。 */
-function blockCrossings(
+function tryBlockCrossings(
   { network }: BridgesSolverContext,
   { lower, upper }: BridgeBounds,
   edge: number,
@@ -312,7 +311,7 @@ function findSmallestClosedGroup(
   lower: readonly number[],
 ): number | null {
   const { network, clues } = context;
-  const components = findBridgeComponents(context, lower);
+  const components = findBridgeComponentRoots(context, lower);
   const sizes = new Map<number, number>();
   const remaining = new Map<number, number>();
   for (const [island, root] of components.entries()) {
@@ -392,7 +391,7 @@ function failsAfterOneStep(
     }
   };
   const blockAndTouch = (decided: number): boolean => {
-    if (!blockCrossings(context, trial, decided)) {
+    if (!tryBlockCrossings(context, trial, decided)) {
       return false;
     }
     for (const crossing of network.crossingEdges[decided]!) {

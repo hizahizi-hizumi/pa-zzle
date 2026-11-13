@@ -279,7 +279,8 @@ export function BridgesBoard({
             (edge) => !isBlocked(edge),
           ),
           aimEdge: aim?.edge ?? null,
-          previewEdge: aim?.landed && !isBlocked(aim.edge) ? aim.edge : null,
+          previewEdge:
+            aim?.cyclesOnRelease && !isBlocked(aim.edge) ? aim.edge : null,
         };
   // チュートリアルで押させる辺にも、押せば架かる板の影を置く。
   const pointedEdge = currentHover?.edge ?? guidedEdges[0] ?? null;
@@ -456,7 +457,7 @@ export function BridgesBoard({
     // 見えない島のボタンへ focus を移さず、マウスの選択やドラッグも始めない。
     event.preventDefault();
     if (target.kind === "ambiguous") {
-      showCandidates(target.edges);
+      showCandidates(target.ascendingEdges);
       return;
     }
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -489,7 +490,12 @@ export function BridgesBoard({
       return null;
     }
     if (target.kind === "ambiguous") {
-      return { board, edge: null, island: null, candidates: target.edges };
+      return {
+        board,
+        edge: null,
+        island: null,
+        candidates: target.ascendingEdges,
+      };
     }
     if (target.kind === "edge") {
       return { board, edge: target.edge, island: null, candidates: null };
@@ -540,7 +546,7 @@ export function BridgesBoard({
     if (
       left !== press.left ||
       next?.edge !== press.aim?.edge ||
-      next?.landed !== press.aim?.landed
+      next?.cyclesOnRelease !== press.aim?.cyclesOnRelease
     ) {
       setPress({ ...press, left, aim: next });
     }
@@ -566,7 +572,7 @@ export function BridgesBoard({
     }
     if (press.left || !isPointOnIsland(board, press.island, point)) {
       const landing = findDragAim(board, press.island, point);
-      if (landing?.landed) {
+      if (landing?.cyclesOnRelease) {
         cycleEdge(landing.edge, press.island);
       } else {
         rejectPress();
@@ -606,7 +612,7 @@ export function BridgesBoard({
       return;
     }
     if (target.kind === "ambiguous") {
-      showCandidates(target.edges);
+      showCandidates(target.ascendingEdges);
       return;
     }
     if (target.kind === "edge") {

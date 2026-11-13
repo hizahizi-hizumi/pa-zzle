@@ -186,11 +186,10 @@ export function getBridgeLineOffsets(
   return count === 1 ? [0] : [-spacing / 2, spacing / 2];
 }
 
-/** `ambiguous` の `edges` は辺の番号の小さい順。 */
 export type BoardTarget =
   | { kind: "island"; island: number }
   | { kind: "edge"; edge: number }
-  | { kind: "ambiguous"; edges: readonly [number, number] };
+  | { kind: "ambiguous"; ascendingEdges: readonly [number, number] };
 
 /**
  * 描いた島の半径（`ISLAND_RADIUS` に輪郭線の外側の半分を足した所）とほぼ同じにする。斜めに隣り合う島（中心の間 1.41）の的は、2島の間の線から半マス離れた所で止まり、線の当たり範囲と
@@ -279,7 +278,7 @@ export function findBoardTarget(
     const [first, last] = [nearest.edge, second.edge].sort(
       (left, right) => left - right,
     );
-    return { kind: "ambiguous", edges: [first!, last!] };
+    return { kind: "ambiguous", ascendingEdges: [first!, last!] };
   }
   return { kind: "edge", edge: nearest.edge };
 }
@@ -322,8 +321,8 @@ const DRAG_ANGLE_TOLERANCE = (25 * Math.PI) / 180;
  */
 const DRAG_LANDING_REACH = 0.7;
 
-/** `landed` は、今離せば `edge` の橋を回すか。指が相手の島に届く前は `false`。 */
-export type DragAim = { edge: number; landed: boolean };
+/** `cyclesOnRelease` は、指が相手の島に届く前は `false`。 */
+export type DragAim = { edge: number; cyclesOnRelease: boolean };
 
 export function findDragAim(
   board: BridgesBoard,
@@ -358,7 +357,8 @@ export function findDragAim(
   const span = Math.hypot(target.x - center.x, target.y - center.y);
   return {
     edge,
-    landed: along >= span - DRAG_LANDING_REACH && across <= DRAG_LANDING_REACH,
+    cyclesOnRelease:
+      along >= span - DRAG_LANDING_REACH && across <= DRAG_LANDING_REACH,
   };
 }
 

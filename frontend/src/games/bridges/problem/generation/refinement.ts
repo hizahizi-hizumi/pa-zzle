@@ -118,8 +118,8 @@ const SURPLUS_SCORE = 1;
 
 const EXCESS_PENALTY = 10;
 
-/** 上限も超えた分も点にしない、割合の目標（`lateClimax`）。 */
-const ratioMetrics: ReadonlySet<keyof Metrics> = new Set([
+/** どちらも割合の目標。 */
+const metricsWithoutSurplusScore: ReadonlySet<keyof Metrics> = new Set([
   "lateClimax",
   "firstLookaheadLateness",
 ]);
@@ -259,7 +259,9 @@ function scoreTargets(metrics: Metrics, goal: BridgesRefinementGoal): number {
       value +=
         amount >= minimum
           ? TARGET_SCORE +
-            (ratioMetrics.has(key) ? 0 : SURPLUS_SCORE * (amount - minimum))
+            (metricsWithoutSurplusScore.has(key)
+              ? 0
+              : SURPLUS_SCORE * (amount - minimum))
           : (TARGET_SCORE * amount) / minimum;
     }
     if (maximum !== undefined && amount > maximum) {

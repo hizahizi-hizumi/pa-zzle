@@ -98,8 +98,7 @@ export function checkBridgeCounts(
   }
 }
 
-/** 島ごとの、架かると決まった橋でつながった組の代表の島。 */
-export function findBridgeComponents(
+export function findBridgeComponentRoots(
   { board, endpoints }: BridgesSolverContext,
   lower: readonly number[],
 ): number[] {
@@ -128,7 +127,7 @@ export function areAllBridgeComponentsJoined(
   context: BridgesSolverContext,
   lower: readonly number[],
 ): boolean {
-  return new Set(findBridgeComponents(context, lower)).size === 1;
+  return new Set(findBridgeComponentRoots(context, lower)).size === 1;
 }
 
 /** 架けうる辺（上限が1以上）だけで全島がつながりうるか。`skippedEdge` の辺は無いものとする。 */
@@ -165,7 +164,7 @@ export function hasClosedBridgeComponent(
   lower: readonly number[],
 ): boolean {
   const { network, clues } = context;
-  const components = findBridgeComponents(context, lower);
+  const components = findBridgeComponentRoots(context, lower);
   const sizes = new Map<number, number>();
   const remaining = new Map<number, number>();
   for (const [island, root] of components.entries()) {
