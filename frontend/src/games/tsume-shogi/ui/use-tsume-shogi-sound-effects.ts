@@ -136,7 +136,6 @@ function playHeldClearSound() {
 }
 
 /**
- * 結果の報酬の音はアプリが鳴らす。
  * `kingSquare` は玉方の玉の升。照りの波が盤の端へ届くまでの長さを決める。
  */
 export function useTsumeShogiSoundEffects(

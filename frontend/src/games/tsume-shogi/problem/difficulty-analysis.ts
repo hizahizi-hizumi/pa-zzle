@@ -17,22 +17,9 @@ import {
 } from "@/games/tsume-shogi/puzzle/search-position";
 
 /**
- * 人間が詰将棋を解くときの挑戦を、作意の各判断地点の特徴として観測する。
- *
- * 用語（操作的な定義）:
- * - 判断地点: 作意の攻方の手番。残りの手数（この攻方の手を含む）を `remainingPlies` とする。
- * - 誤王手: 判断地点の合法な王手のうち、残りの手数以内に詰まない手。採用した問題では作意の手以外のすべての王手。
- * - 自然な応手: 玉方の応手のうち合駒でない手（玉が逃げる・王手した駒を取る）。採用した問題では合駒の数え方で答えが変わらない
- *   （strict validator の `interpositionSensitive` が無い）ので、合駒は読みの候補に数えない。
- * - 逃れ: 王手の後の玉方の応手のうち、残りの手数以内に詰まなくなる手（合駒も含む）。
- * - 脅しのある王手: 自然な応手の少なくとも1つが、残りの手数以内に詰む王手。玉がどこへ逃げても詰まない王手（読まなくても
- *   崩れると分かる）と区別する。
- * - 紛れの長さ: 誤王手から、玉方が最も早く「詰まない」と見せる逃れを選び、攻方が脅しのある王手で最も長く続けたとき、
- *   脅しのある王手が尽きるまでの手数（誤王手を含む）。逃れの後に脅しのある王手が無ければ 2。
- * - 深い紛れ: 紛れの長さが4以上の誤王手。玉方がどう逃れても次に脅しのある王手が続き、反証が4手目以降まで見えない。
- *   残りの手数が5以上の判断地点でだけ起きる。
- * - もっともらしい誤王手（すぐには崩れない誤王手）: 脅しのある誤王手か、深い紛れ。どの自然な応手でも詰まず、逃れた後にも
- *   脅しが続かない誤王手は、その局面を見ただけで崩れると分かるので数えない。
+ * 人間が詰将棋を解くときの挑戦を、作意の各判断地点の特徴として観測する。用語と数え方は SPEC-021 の「難易度」。
+ * 名前とコメントの plausibleWrong（もっともらしい誤王手）は仕様の効いていそうな誤王手、deepDecoy（深い紛れ）は数手先まで続く紛れ。
+ * `remainingPlies` は判断地点の残りの手数（この攻方の手を含む）。
  */
 
 export type TsumeShogiDecisionFeatures = {
@@ -42,13 +29,7 @@ export type TsumeShogiDecisionFeatures = {
   deepDecoyCount: number;
 };
 
-/**
- * 作意の攻方の手に現れた手筋の数。1手が複数の手筋を持てば、それぞれに数える。
- * - `nonPromotion`: 成れるのに成らない。
- * - `sacrifice`: 次の玉方の手で取られる（捨駒）。
- * - `discoveredCheck`: 動かした駒以外の駒の利きで王手になる（開き王手・両王手）。
- * - `distantCheck`: 2マス以上離れた位置から、飛・角・香・龍・馬の利きで王手する（非局所的な利き）。
- */
+/** 作意の攻方の手に現れた手筋の数。1手が複数の手筋を持てば、それぞれに数える。 */
 export type TsumeShogiMotifCounts = {
   drop: number;
   promotion: number;
@@ -59,7 +40,6 @@ export type TsumeShogiMotifCounts = {
   distantCheck: number;
 };
 
-/** 駒打ちは詰将棋の基本の手なので、手筋の種類に数えない。 */
 export const tsumeShogiTesujiKinds = [
   "promotion",
   "nonPromotion",
@@ -70,14 +50,8 @@ export const tsumeShogiTesujiKinds = [
 ] as const satisfies readonly (keyof TsumeShogiMotifCounts)[];
 
 /**
- * 難易度の特徴。
- * - `rootChecks`: 初手の合法な王手の数。読み始めの候補の広さ。
- * - `plausibleWrong`: すべての判断地点のもっともらしい誤王手の数の和。
- * - `deepDecoyCount`: すべての判断地点の深い紛れの数の和。
- * - `defenseBranching`: 作意の玉方の手番ごとの、作意以外の自然な応手の数の和。正解の後に「どう応じても詰む」を確かめる変化の幅。
- * - `tesujiKindCount`: 作意に現れた手筋の種類の数（`tsumeShogiTesujiKinds` のうち1回以上現れたもの）。
- * - `decisions`: 判断地点ごとの特徴。作意の順。
- * - `motifs`: 作意の手筋の数。
+ * 難易度の特徴。`rootChecks` は初手の王手の数、`defenseBranching` は変化の幅、`tesujiKindCount` は作意の手筋の種類。
+ * `decisions` は判断地点ごとの特徴で、作意の順。
  */
 export type TsumeShogiDifficultyFeatures = {
   rootChecks: number;

@@ -115,9 +115,9 @@ export type TsumeShogiIdentifiedProblem = {
  * 問題を読み切る作業の量。速さの基準時間を問題ごとに決めるために使い、難易度そのものは表さない。
  * 値は生成時の難易度分析（`analyzeTsumeShogiDifficulty`）の特徴で、問題集に持たせる。
  * - `plies`: 手数。攻方が指す手の数は `(plies + 1) / 2`。
- * - `rootChecks`: 初手の合法な王手の数（読み始めの候補）。
- * - `plausibleWrong`: すべての判断地点の、もっともらしい誤王手（すぐには崩れない誤王手）の数の和。
- * - `deepDecoyCount`: すべての判断地点の、深い紛れ（反証が4手目以降まで見えない誤王手）の数の和。
+ * - `rootChecks`: 初手の王手の数。
+ * - `plausibleWrong`: 効いていそうな誤王手の数。
+ * - `deepDecoyCount`: 数手先まで続く紛れの数。
  */
 export type TsumeShogiSolveWorkload = {
   plies: number;

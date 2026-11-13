@@ -40,10 +40,7 @@ export type TsumeShogiLevelCombination = {
   generationRootChecks: TsumeShogiRootCheckRange;
 };
 
-/**
- * 手数は条件にしない（深い紛れは残りの手数が5以上の判断地点でだけ起きるので、結果としてレベル3以上は5手詰になる）。
- * 境界は人間の実プレイで確かめる前の暫定値。
- */
+/** 境界は人間の実プレイで確かめる前の暫定値。 */
 export const tsumeShogiLevelCombinations = {
   "1": {
     rootChecks: { minimum: 1, maximum: 4 },
