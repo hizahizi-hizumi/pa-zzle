@@ -39,7 +39,7 @@ export const bridgesReasoningTiers = [
 
 export type BridgesReasoningTier = (typeof bridgesReasoningTiers)[number];
 
-/** 「決め打ち」に数える島の数字の下限。1 と 2 の島は行き先が1つなら決まるのが当たり前で、見せ場にならない。 */
+/** 「決め打ち」に数える島の数字の下限。 */
 const OPENING_SATURATION_MINIMUM_CLUE = 3;
 
 export const BRIDGES_SHARP_ROUND_EDGE_LIMIT = 2;
@@ -1049,7 +1049,6 @@ export function countBridgesOpeningSaturatedIslands(
 
 /**
  * 解き始めの決め打ちの島（`countBridgesOpeningSaturatedIslands`）のうち、盤面の四隅の島の数。
- * 四隅の島は行き先が2つしかなく、4 なら見ただけで決まるので、どの盤面でも同じ始まりになりやすい。
  */
 export function countBridgesCornerOpeningIslands(board: BridgesBoard): number {
   const context = createBridgesSolverContext(board);
@@ -1089,7 +1088,6 @@ export const _private = { failsAfterOneStep, traceWithSeparateClosingTiers };
 
 /**
  * 解く手順の流れ。人間向け解法器が手詰まりごとに使った段と、その手詰まりで狭めた組の数を順に並べる。
- * 流れが同じ問題は、どこで止まりどう抜けるかが同じなので、問題集で同じ流れが並ばないようにするのに使う。
  */
 export function describeBridgesSolveFlow(board: BridgesBoard): string {
   return traceBridgesHumanSolve(board, "D")
@@ -1099,7 +1097,7 @@ export function describeBridgesSolveFlow(board: BridgesBoard): string {
 
 /**
  * 解く手順の指紋。流れ（`describeBridgesSolveFlow`）に、手詰まりごとに狭めた組の形（両端の島の数字の組と、
- * 外周に沿う組かどうか）を足す。指紋が同じ問題は、同じ数字の並びを同じ順に読んで解けるので、ほぼ同じ問題になる。
+ * 外周に沿う組かどうか）を足す。
  */
 export function describeBridgesSolveFingerprint(board: BridgesBoard): string {
   const { edges } = getBridgesNetwork(board);

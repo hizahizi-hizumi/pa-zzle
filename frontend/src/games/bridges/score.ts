@@ -63,7 +63,6 @@ function calculateReadingMs({
   );
 }
 
-/** 行き先の数は島の数と橋の本数に強く連動するので使わない。 */
 export function calculateBridgesSpeedFullScoreMs(
   workload: BridgesSolveWorkload,
 ): number {

@@ -175,8 +175,7 @@ type IslandsOnBoard = { board: BridgesBoardState; islands: readonly number[] };
 /**
  * 盤面全体の1要素で押した位置を受け、座標から島か辺を決める（`findBoardTarget`）。
  * - 盤面はスクロール・拡大・長押しのメニューに指を奪わせず、押している間はポインターを捕捉する。
- * - キーボードでは、島ごとのボタン（見えない読み上げの一覧）の1つに止まり、矢印キーで隣の島へ移り、Shift と矢印キーで
- *   その向きの辺の橋を回す。
+ * - キーボードで止まる島は、島ごとのボタン（見えない読み上げの一覧）にする。
  */
 export function BridgesBoard({
   board,

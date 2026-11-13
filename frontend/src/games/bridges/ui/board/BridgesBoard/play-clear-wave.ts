@@ -38,10 +38,7 @@ function readNumber(element: Element, attribute: string): number {
   return Number(element.getAttribute(attribute));
 }
 
-/**
- * 戻り値は演出を取り消す関数。
- * 全島がちょうどなのにつながっていない盤面（クリアにならない）と見分けられるよう、光は橋のつながりの順に渡す。
- */
+/** 戻り値は演出を取り消す関数。 */
 export function playClearWave(
   figure: SVGSVGElement | null,
   board: BridgesBoard,
