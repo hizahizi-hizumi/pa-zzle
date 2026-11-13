@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
-
+import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import { useTouchTap } from "@/components/touch-tap";
 import type { GameProgress } from "@/games/play";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
@@ -188,6 +188,10 @@ export function ReflectionBoard({
 
   return (
     <div
+      // 覆いから抜く所を受け取っている間は、外周ヒントを含む盤面の中だけを薄く覆わせる。
+      {...(cues.some((cue) => cue.kind === "spotlight") && {
+        [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "",
+      })}
       className="relative isolate grid size-full [container-type:inline-size]"
       style={
         {
