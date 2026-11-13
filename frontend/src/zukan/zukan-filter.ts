@@ -58,7 +58,6 @@ function listCountOptions(
     const group = Math.floor(count / rangeWidth);
     groups.set(group, [...(groups.get(group) ?? []), count]);
   }
-  // 範囲は、問題集にある値の最小から最大までで示す。
   return [...groups.values()].map((group) => ({
     kind: "count",
     min: group[0] ?? 0,

@@ -11,7 +11,6 @@ type PersonalBestsProps = {
   display: PlayRecordDisplayDefinition;
 };
 
-/** 自己ベストであることは見出しで示し、指標名に「ベスト」を重ねない。 */
 export function PersonalBests({ personalBests, display }: PersonalBestsProps) {
   const headingId = useId();
 

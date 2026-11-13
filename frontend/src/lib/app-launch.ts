@@ -39,7 +39,6 @@ export function startAppLaunch({ showTitle, sounds }: AppLaunchOptions): void {
   }
 
   setTitle({ status: "loading", progress: 0 });
-  // 待つのは効果音だけで、BGM の曲は待たない。BGM は取得中も届いた分から流れる。
   waitForSounds(sounds);
 }
 

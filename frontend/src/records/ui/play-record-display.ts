@@ -69,7 +69,6 @@ export function getPlayRecordMetricDisplay(
   return display.metrics.find((metric) => metric.id === metricId);
 }
 
-/** 数には必ず単位を付ける。 */
 type PlayRecordCountUnit = "回" | "手" | "本" | "マス";
 
 export const playScoreMetricPresentation: PlayRecordMetricPresentation = {

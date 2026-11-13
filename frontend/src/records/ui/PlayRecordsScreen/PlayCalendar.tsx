@@ -7,9 +7,6 @@ type PlayCalendarProps = {
   label: string;
 };
 
-/**
- * マスは押せず、その日のプレイは下の一覧で見る。
- */
 export function PlayCalendar({ weeks, label }: PlayCalendarProps) {
   return (
     <div

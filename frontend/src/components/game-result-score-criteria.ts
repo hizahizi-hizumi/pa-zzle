@@ -46,10 +46,6 @@ type LinearScoreCriterionInput = {
 type SpeedScoreCriterionInput = {
   maximum: number;
   rule: SpeedScoreRule;
-  /**
-   * 基準時間の式。基準時間が全問で共通なとき、または式の項が遊ぶ人が盤面から数えられない量だけのときは省き、
-   * 後者では基準時間が何から決まるかを `notes` で示す。
-   */
   formula?: readonly SpeedFormulaTerm[];
   notes?: readonly string[];
 };

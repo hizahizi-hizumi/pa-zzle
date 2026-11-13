@@ -86,7 +86,6 @@ type SolvedProblemFact = { label: string; value: ReactNode };
 const factValueClassName =
   "font-ui tabular-nums text-supporting text-foreground";
 
-/** 解いた問題の、次に挑むときの目標になる最も良い値と、初めてクリアした日。そのゲームで数えない値は並べない。 */
 function listSolvedProblemFacts(
   problem: ZukanSolvedProblem,
 ): SolvedProblemFact[] {

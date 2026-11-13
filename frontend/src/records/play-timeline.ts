@@ -31,9 +31,6 @@ export const PLAY_CALENDAR_WEEK_COUNT = 13;
 
 const DAYS_PER_WEEK = 7;
 
-/**
- * 段階は日ごとに独立して決め、ほかの日の多さに引きずられないようにする。
- */
 const playAmountLevelMinimums = [
   { level: 3, minimum: 6 },
   { level: 2, minimum: 3 },

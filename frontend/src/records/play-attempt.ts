@@ -42,7 +42,6 @@ export function isSamePlayStart(left: PlayStartKey, right: PlayStartKey) {
   return left.gameId === right.gameId && left.startedAt === right.startedAt;
 }
 
-/** 完了記録がある試行はクリアとし、離脱を記録していても完了を優先する。 */
 export function isPlayAttemptCleared(
   attempt: PlayAttempt,
   records: readonly PlayRecord[],

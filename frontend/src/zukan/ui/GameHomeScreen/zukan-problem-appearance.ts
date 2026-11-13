@@ -17,7 +17,6 @@ export const zukanProblemStatusOrder = [
   "untouched",
 ] as const satisfies readonly ZukanProblemStatus[];
 
-/** 評価段階は仕様の名前のまま示し、結果画面の称賛の言葉は使わない。 */
 export const zukanProblemStatusLabels: Record<ZukanProblemStatus, string> = {
   perfect: "perfect",
   great: "great",
