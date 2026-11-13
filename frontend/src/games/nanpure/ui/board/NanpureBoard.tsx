@@ -61,7 +61,7 @@ export function NanpureBoard({
       {NANPURE_CELL_INDICES.map((cellIndex) => {
         const value = board[cellIndex] ?? null;
         const selected = selectedCellIndex === cellIndex;
-        const related =
+        const sameUnitAsSelected =
           selectedCellIndex !== null &&
           !selected &&
           areNanpureCellsRelated(selectedCellIndex, cellIndex);
@@ -75,8 +75,8 @@ export function NanpureBoard({
             notes={notes[cellIndex] ?? []}
             selectedValue={selectedValue}
             selected={selected}
-            related={related}
-            matching={
+            sameUnitAsSelected={sameUnitAsSelected}
+            sameDigitAsSelected={
               selectedValue !== null && !selected && value === selectedValue
             }
             conflict={conflictCells.has(cellIndex)}

@@ -40,12 +40,12 @@ export type NanpureTutorialAction = {
 };
 
 /**
- * - `cellIndex`: 印を付け、手順の間だけ選べるマス。
+ * - `cuedCellIndex`: 手順の間はこのマスだけを選べる。
  * - `reasonUnits`: 印のマスの数字を決める行・列・ブロック（決め手）。
  * - `cuedDigit`: 押させる数字。操作を教える手順でだけ、数字のボタンにも印を付ける。
  */
 export type NanpureTutorialStep = TutorialStep<NanpureTutorialRuleId> & {
-  cellIndex: number;
+  cuedCellIndex: number;
   reasonUnits: readonly NanpureTutorialUnit[];
   cuedDigit: NanpureDigit | null;
 };
@@ -173,7 +173,7 @@ const steps: readonly NanpureTutorialStep[] = [
       detail: `印の付いたマスに${getSolutionDigit(cellAt(6, 3))}を入れてください`,
     },
     introducedRuleId: null,
-    cellIndex: cellAt(6, 3),
+    cuedCellIndex: cellAt(6, 3),
     reasonUnits: [],
     cuedDigit: getSolutionDigit(cellAt(6, 3)),
   },
@@ -183,7 +183,7 @@ const steps: readonly NanpureTutorialStep[] = [
       detail: "この行にない数字を入れてください",
     },
     introducedRuleId: "row",
-    cellIndex: cellAt(6, 9),
+    cuedCellIndex: cellAt(6, 9),
     reasonUnits: [getCellUnit(cellAt(6, 9), "row")],
     cuedDigit: null,
   },
@@ -193,7 +193,7 @@ const steps: readonly NanpureTutorialStep[] = [
       detail: "この列にない数字を入れてください",
     },
     introducedRuleId: "column",
-    cellIndex: cellAt(7, 1),
+    cuedCellIndex: cellAt(7, 1),
     reasonUnits: [getCellUnit(cellAt(7, 1), "column")],
     cuedDigit: null,
   },
@@ -203,7 +203,7 @@ const steps: readonly NanpureTutorialStep[] = [
       detail: "このブロックにない数字を入れてください",
     },
     introducedRuleId: "block",
-    cellIndex: cellAt(4, 9),
+    cuedCellIndex: cellAt(4, 9),
     reasonUnits: [getCellUnit(cellAt(4, 9), "block")],
     cuedDigit: null,
   },
@@ -213,7 +213,7 @@ const steps: readonly NanpureTutorialStep[] = [
       detail: "3つのどこにもない数字を入れてください",
     },
     introducedRuleId: null,
-    cellIndex: cellAt(3, 6),
+    cuedCellIndex: cellAt(3, 6),
     reasonUnits: ruleIds.map((kind) => getCellUnit(cellAt(3, 6), kind)),
     cuedDigit: null,
   },
@@ -310,7 +310,7 @@ function performNanpureTutorialAction(
   const current = state.board[cellIndex];
   const outsideStep =
     step !== null &&
-    (step.cellIndex !== cellIndex ||
+    (step.cuedCellIndex !== cellIndex ||
       (step.cuedDigit !== null && step.cuedDigit !== digit));
   if (
     current === undefined ||
@@ -390,7 +390,7 @@ export function isNanpureTutorialCellSelectable(
   { step }: NanpureTutorialSituation,
   cellIndex: number,
 ): boolean {
-  return step === null || step.cellIndex === cellIndex;
+  return step === null || step.cuedCellIndex === cellIndex;
 }
 
 export function getNanpureTutorialConflictCellIndices(
@@ -425,8 +425,8 @@ export function getNanpureTutorialStepCellIndex(
   state: NanpureTutorialBoardState,
 ): number | null {
   return step !== null &&
-    state.board[step.cellIndex] !== solution[step.cellIndex]
-    ? step.cellIndex
+    state.board[step.cuedCellIndex] !== solution[step.cuedCellIndex]
+    ? step.cuedCellIndex
     : null;
 }
 

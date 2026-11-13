@@ -1,9 +1,7 @@
 /** マスの地と数字の色。盤面と遊び方の図で同じ見え方にする。 */
 export const nanpureCellToneClassNames = {
-  /** 選んだマスと同じ行・列・ブロックのマス。 */
-  related: "bg-violet-100/70 dark:bg-violet-950/35",
-  /** 選んだマスと同じ数字のマス。 */
-  matching: "bg-violet-200/75 dark:bg-violet-900/50",
+  sameUnitAsSelected: "bg-violet-100/70 dark:bg-violet-950/35",
+  sameDigitAsSelected: "bg-violet-200/75 dark:bg-violet-900/50",
   selected: "bg-violet-300/80 dark:bg-violet-800/60",
   clue: "font-semibold text-foreground",
   entered: "font-medium text-violet-600 dark:text-violet-300",

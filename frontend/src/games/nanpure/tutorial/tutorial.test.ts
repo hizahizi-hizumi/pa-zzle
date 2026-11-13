@@ -74,7 +74,7 @@ function finishSteps(count: number): Progress {
     .reduce(
       (progress, step) =>
         performAll(progress, [
-          enter(step.cellIndex, solutionDigit(step.cellIndex)),
+          enter(step.cuedCellIndex, solutionDigit(step.cuedCellIndex)),
         ]),
       finishTutorialIntro(startTutorial(nanpureTutorial)),
     );
@@ -130,7 +130,7 @@ const stepCases = nanpureTutorial.steps.map(
         step,
         board: progress.boardState.board,
         earnedRuleIds: progress.earnedRuleIds,
-        expected: solutionDigit(step.cellIndex),
+        expected: solutionDigit(step.cuedCellIndex),
       },
     ] as const;
   },
@@ -183,7 +183,7 @@ describe("nanpureTutorial の盤面", () => {
   test("操作の手順は、印のマスに入れる解の数字を押させること", () => {
     const result = nanpureTutorial.steps
       .slice(0, operationStepCount)
-      .map((step) => step.cuedDigit === solutionDigit(step.cellIndex));
+      .map((step) => step.cuedDigit === solutionDigit(step.cuedCellIndex));
 
     expect(result).toEqual([true]);
   });
@@ -191,7 +191,7 @@ describe("nanpureTutorial の盤面", () => {
   test.each(ruleStepCases)(
     "手順 %i の印のマスは、始めた盤面で、手に入れたルールだけで解の数字に決まり、示すまとまりが決め手であること",
     (_, { step, board, earnedRuleIds, expected }) => {
-      const result = deduceCell(board, earnedRuleIds, step.cellIndex);
+      const result = deduceCell(board, earnedRuleIds, step.cuedCellIndex);
 
       expect(result).toEqual({
         digit: expected,
@@ -209,9 +209,9 @@ describe("nanpureTutorial の盤面", () => {
       const introduced = deduceCell(
         board,
         step.introducedRuleId ? [step.introducedRuleId] : [],
-        step.cellIndex,
+        step.cuedCellIndex,
       );
-      const earlier = deduceCell(board, earlierRuleIds, step.cellIndex);
+      const earlier = deduceCell(board, earlierRuleIds, step.cuedCellIndex);
 
       expect(introduced?.digit).toBe(expected);
       expect(earlier).toBeNull();
@@ -227,7 +227,7 @@ describe("nanpureTutorial の盤面", () => {
       ]);
 
       const result = partialRuleSets.map((ruleIds) =>
-        deduceCell(board, ruleIds, step.cellIndex),
+        deduceCell(board, ruleIds, step.cuedCellIndex),
       );
 
       expect(result).toEqual(partialRuleSets.map(() => null));
@@ -238,7 +238,7 @@ describe("nanpureTutorial の盤面", () => {
     "手順 %i を始めた盤面（マスを選んだだけの途中も同じ盤面）と、印のマスに解の数字を入れた盤面は、まだ示していないルールを含めてどのルールにも反しないこと",
     (_, { step, board, expected }) => {
       const entered = [...board];
-      entered[step.cellIndex] = expected;
+      entered[step.cuedCellIndex] = expected;
 
       const result = [board, entered].map((cells) =>
         findNanpureConflictCellIndices(cells),
@@ -264,11 +264,11 @@ describe("nanpureTutorial の盤面", () => {
       const result = NANPURE_DIGITS.filter((digit) => digit !== expected).map(
         (digit) => {
           const next = [...board];
-          next[step.cellIndex] = digit;
+          next[step.cuedCellIndex] = digit;
           return getNanpureTutorialConflictCellIndices(
             { step, earnedRuleIds },
             { board: next, moveCount: 0, lastMove: null },
-          ).includes(step.cellIndex);
+          ).includes(step.cuedCellIndex);
         },
       );
 
@@ -306,7 +306,7 @@ describe("nanpureTutorial の進行", () => {
     const [step] = nanpureTutorial.steps;
 
     expect(
-      isNanpureTutorialCellSelectable(situation, step?.cellIndex ?? -1),
+      isNanpureTutorialCellSelectable(situation, step?.cuedCellIndex ?? -1),
     ).toBe(true);
     expect(isNanpureTutorialCellSelectable(situation, cellAt(1, 1))).toBe(
       false,
@@ -340,7 +340,7 @@ describe("nanpureTutorial の進行", () => {
   test("操作の手順では、印のマスに押させたい数字のほかを入れても何も起きないこと", () => {
     const progress = finishSteps(0);
     const [step] = nanpureTutorial.steps;
-    const cellIndex = step?.cellIndex ?? -1;
+    const cellIndex = step?.cuedCellIndex ?? -1;
 
     const result = performTutorialAction(
       nanpureTutorial,
@@ -362,7 +362,7 @@ describe("nanpureTutorial の進行", () => {
     const result = performTutorialAction(
       nanpureTutorial,
       progress,
-      enter(step?.cellIndex ?? -1, 9),
+      enter(step?.cuedCellIndex ?? -1, 9),
     );
     const message = getTutorialMessage(nanpureTutorial, result, {
       entry: "home",
@@ -431,7 +431,7 @@ describe("nanpureTutorial の進行", () => {
   test("重なった数字を正しい数字に入れ替えると、次の手順へ進むこと", () => {
     const progress = finishSteps(1);
     const step = nanpureTutorial.steps[1];
-    const cellIndex = step?.cellIndex ?? -1;
+    const cellIndex = step?.cuedCellIndex ?? -1;
 
     const result = performAll(progress, [
       enter(cellIndex, 9),
