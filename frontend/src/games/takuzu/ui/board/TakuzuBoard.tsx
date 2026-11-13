@@ -153,6 +153,8 @@ export function TakuzuBoard({
     }
   }, [operation]);
 
+  // 光らせている途中で次のタイルを置いても光を切らず、次の行・列が埋まったときだけ光らせ直す。
+  const flashAnimationsRef = useRef<Animation[]>([]);
   useEffect(() => {
     const board = boardRef.current;
     if (
@@ -162,17 +164,22 @@ export function TakuzuBoard({
     ) {
       return;
     }
-    const animations = playLineCompletionFlash(
+    for (const animation of flashAnimationsRef.current) {
+      animation.cancel();
+    }
+    flashAnimationsRef.current = playLineCompletionFlash(
       board,
       size,
       operation.completedLines,
     );
+  }, [operation, size]);
+  useEffect(() => {
     return function stopFlash() {
-      for (const animation of animations) {
+      for (const animation of flashAnimationsRef.current) {
         animation.cancel();
       }
     };
-  }, [operation, size]);
+  }, []);
 
   function handleCellCycle(
     cellIndex: number,

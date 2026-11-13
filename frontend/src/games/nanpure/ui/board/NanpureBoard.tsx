@@ -60,17 +60,24 @@ export function NanpureBoard({
       : [];
   });
 
+  // 光らせている途中で次の数字を入れても光を切らず、次のまとまりが完成したときだけ光らせ直す。
+  const flashAnimationsRef = useRef<Animation[]>([]);
   useEffect(() => {
     if (flashId === null) {
       return;
     }
-    const animations = playFlash();
-    return function finishFlash() {
-      for (const animation of animations) {
+    for (const animation of flashAnimationsRef.current) {
+      animation.cancel();
+    }
+    flashAnimationsRef.current = playFlash();
+  }, [flashId]);
+  useEffect(() => {
+    return function stopFlash() {
+      for (const animation of flashAnimationsRef.current) {
         animation.cancel();
       }
     };
-  }, [flashId]);
+  }, []);
 
   const cueByCellIndex = new Map(cues.map((cue) => [cue.cellIndex, cue]));
   const spotlitCells = new Set(spotlight?.cellIndices);
