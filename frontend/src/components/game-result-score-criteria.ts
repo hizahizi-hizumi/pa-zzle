@@ -5,7 +5,11 @@ import {
   type PlayOperation,
   SCORE_ITEM_LABELS,
 } from "@/games/play-vocabulary";
-import type { ScoreItem, SpeedScoreRule } from "@/games/score";
+import {
+  calculateSpeedFloorScore,
+  type ScoreItem,
+  type SpeedScoreRule,
+} from "@/games/score";
 import { formatDurationInWords } from "@/lib/format-elapsed-time";
 
 type ScoreCriterionUnit =
@@ -115,18 +119,11 @@ export function describeSpeedScoreCriterion({
     rule.overtimeStepMs === undefined
       ? "時間"
       : `超過時間を${formatDurationInWords(rule.overtimeStepMs)}単位で切り上げた時間`;
-  return describeLinearScoreCriterion(
-    {
-      maximum,
-      fullScoreCondition: `基準時間${formatScoreReferenceTime(rule.fullScoreMs)}以内`,
-      zeroScoreCondition: `${formatScoreReferenceTime(rule.zeroScoreMs)}以上`,
-      basis,
-    },
-    [
-      ...(formula === undefined
-        ? []
-        : [`基準時間は${formatSpeedFormula(formula)}。`]),
-      ...notes,
-    ],
-  );
+  return [
+    `基準時間${formatScoreReferenceTime(rule.fullScoreMs)}以内で${maximum}点。超えると${basis}に応じて減らし、長くかかるほど減り方を緩やかにして、${calculateSpeedFloorScore(maximum)}点より下げない。`,
+    ...(formula === undefined
+      ? []
+      : [`基準時間は${formatSpeedFormula(formula)}。`]),
+    ...notes,
+  ].join("");
 }

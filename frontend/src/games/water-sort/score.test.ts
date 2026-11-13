@@ -42,7 +42,7 @@ describe("calculateWaterSortMoveDelta", () => {
 });
 
 describe("calculateWaterSortSpeedScoreRule", () => {
-  test("基準時間の2倍で0点になる規則を返すこと", () => {
+  test("直線で0点になる時間を基準時間の2倍とする規則を返すこと", () => {
     const rule = calculateWaterSortSpeedScoreRule({
       colorCount: 6,
       optimalMoveCount: 10,
@@ -96,7 +96,7 @@ describe("calculateWaterSortPlayScore", () => {
     expect(score.breakdown.efficiency).toBe(0);
   });
 
-  test("基準時間の1.5倍なら速さを半分にすること", () => {
+  test("基準時間の1.5倍なら速さを直線より緩やかに減らすこと", () => {
     const score = calculateWaterSortPlayScore({
       elapsedMs: 96_000,
       moveCount: 10,
@@ -105,10 +105,10 @@ describe("calculateWaterSortPlayScore", () => {
       colorCount: 6,
     });
 
-    expect(score.breakdown.speed).toBe(20);
+    expect(score.breakdown.speed).toBe(22);
   });
 
-  test("基準時間の2倍以上なら速さを0点にすること", () => {
+  test("基準時間の2倍でも速さの下限より上に残すこと", () => {
     const score = calculateWaterSortPlayScore({
       elapsedMs: 128_000,
       moveCount: 10,
@@ -117,7 +117,7 @@ describe("calculateWaterSortPlayScore", () => {
       colorCount: 6,
     });
 
-    expect(score.breakdown.speed).toBe(0);
+    expect(score.breakdown.speed).toBe(16);
   });
 
   test("手戻りが最短手数の半分なら正確さを半分にすること", () => {

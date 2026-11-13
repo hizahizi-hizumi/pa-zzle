@@ -42,7 +42,7 @@ export const HITOFUDE_PUZZLE_SPEED_PER_REFUTATION_STEP_MS = 1_000;
 export const HITOFUDE_PUZZLE_SPEED_REFUTATION_STEP_LIMIT = 45;
 
 /**
- * 0点になる時間の、基準時間に対する倍率（暫定値）。
+ * 速さの減り始めの直線を延ばすと0点になる時間の、基準時間に対する倍率（暫定値）。曲線の傾きを決める（`calculateSpeedScore`）。
  * 先読みを要する問題は読みの当たり外れで時間がぶれるので、バイナリパズル（2倍）より緩くし、
  * 基準時間の1.2倍で速さ −6点、1.5倍で −15点にとどめる。
  */

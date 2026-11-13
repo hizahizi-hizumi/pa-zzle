@@ -27,7 +27,7 @@ export const TAKUZU_SPEED_PER_EMPTY_CELL_MS = 2_000;
 export const TAKUZU_SPEED_PER_ROUND_MS = 3_000;
 export const TAKUZU_SPEED_PER_LINE_READING_ROUND_MS = 10_000;
 
-/** 速さが0点になる時間の、基準時間に対する倍率。 */
+/** 速さの減り始めの直線を延ばすと0点になる時間の、基準時間に対する倍率。曲線の傾きを決める（`calculateSpeedScore`）。 */
 export const TAKUZU_SPEED_ZERO_SCORE_RATIO = 2;
 
 export type TakuzuPlayScore = PlayScore<keyof typeof TAKUZU_SCORE_MAXIMUMS>;

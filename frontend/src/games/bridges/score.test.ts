@@ -94,7 +94,7 @@ describe("calculateBridgesZeroScoreRatio", () => {
 });
 
 describe("calculateBridgesSpeedScoreRule", () => {
-  test("基準時間と、その倍率で0点になる時間を返すこと", () => {
+  test("基準時間と、その倍率で直線なら0点になる時間を返すこと", () => {
     const rule = calculateBridgesSpeedScoreRule(heavyWorkload);
 
     expect(rule).toEqual({
@@ -120,8 +120,9 @@ describe("calculateBridgesPlayScore", () => {
     ["基準時間ちょうど", 1, 100, "perfect"],
     ["基準時間の1.2倍", 1.2, 90, "great"],
     ["基準時間の1.4倍", 1.4, 80, "good"],
-    ["基準時間の2倍", 2, 50, "clear"],
-    ["基準時間の3倍", 3, 0, "clear"],
+    ["基準時間の2倍", 2, 55, "clear"],
+    ["基準時間の3倍", 3, 40, "clear"],
+    ["基準時間の10倍", 10, 35, "clear"],
   ] as const;
 
   test.each(cases)(

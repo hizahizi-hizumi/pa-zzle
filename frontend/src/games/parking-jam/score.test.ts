@@ -87,21 +87,21 @@ describe("calculateParkingJamPlayScore", () => {
           ...perfectInput,
           elapsedMs: speedFullScoreMs * 1.5,
         },
-        20,
+        22,
       ],
       [
         {
           ...perfectInput,
           elapsedMs: speedFullScoreMs * 2,
         },
-        0,
+        16,
       ],
       [
         {
           ...perfectInput,
           elapsedMs: speedFullScoreMs * 3,
         },
-        0,
+        14,
       ],
     ] as const satisfies readonly (readonly [
       ParkingJamPlayScoreInput,
@@ -109,7 +109,7 @@ describe("calculateParkingJamPlayScore", () => {
     ])[];
 
     test.each(cases)(
-      "超過時間に応じて速さを線形に減点すること",
+      "超過時間に応じて速さを減らし、長くかかっても下限を残すこと",
       (input, expectedSpeed) => {
         const score = calculateParkingJamPlayScore(input);
 
@@ -126,7 +126,7 @@ describe("calculateParkingJamPlayScore", () => {
           speedReference: { vehicleCount: 8, initialBlockedVehicleCount: 2 },
           elapsedMs: 52_500,
         },
-        20,
+        22,
       ],
       [
         {
@@ -134,7 +134,7 @@ describe("calculateParkingJamPlayScore", () => {
           speedReference: { vehicleCount: 11, initialBlockedVehicleCount: 5 },
           elapsedMs: 79_500,
         },
-        20,
+        22,
       ],
       [
         {
@@ -142,7 +142,7 @@ describe("calculateParkingJamPlayScore", () => {
           speedReference: { vehicleCount: 14, initialBlockedVehicleCount: 8 },
           elapsedMs: 106_500,
         },
-        20,
+        22,
       ],
     ] as const satisfies readonly (readonly [
       ParkingJamPlayScoreInput,
@@ -187,8 +187,8 @@ describe("calculateParkingJamPlayScore", () => {
       const score = calculateParkingJamPlayScore(input);
 
       expect(score).toEqual({
-        total: 0,
-        breakdown: { accuracy: 0, speed: 0, stability: 0 },
+        total: 14,
+        breakdown: { accuracy: 0, speed: 14, stability: 0 },
       });
     });
   });

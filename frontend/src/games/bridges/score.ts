@@ -34,7 +34,7 @@ export const BRIDGES_SPEED_PER_LOOKAHEAD_ROUND_MS = 110_000;
 /** 数字の読みだけでは決まらない行き先1つを、つながりを読んで決める時間。 */
 export const BRIDGES_SPEED_PER_UNDECIDED_EDGE_MS = 1_000;
 
-// 0点になる時間の、基準時間に対する倍率（暫定）。
+// 速さの減り始めの直線を延ばすと0点になる時間の、基準時間に対する倍率（暫定）。曲線の傾きを決める（`calculateSpeedScore`）。
 export const BRIDGES_SPEED_BASE_ZERO_SCORE_RATIO = 3;
 export const BRIDGES_SPEED_READING_ZERO_SCORE_RATIO = 3;
 

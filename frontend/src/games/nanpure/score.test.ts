@@ -60,7 +60,7 @@ describe("calculateNanpurePlayScore", () => {
     expect(score.total).toBe(89);
   });
 
-  test("各評価軸を0点未満にしないこと", () => {
+  test("正確さと安定性を0点未満にせず、速さは下限を残すこと", () => {
     const score = calculateNanpurePlayScore({
       elapsedMs: NANPURE_SPEED_FULL_SCORE_MS + 10_000_000,
       mistakeCount: 100,
@@ -69,8 +69,8 @@ describe("calculateNanpurePlayScore", () => {
     });
 
     expect(score).toEqual({
-      total: 0,
-      breakdown: { accuracy: 0, speed: 0, stability: 0 },
+      total: 14,
+      breakdown: { accuracy: 0, speed: 14, stability: 0 },
     });
   });
 });

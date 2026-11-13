@@ -65,7 +65,7 @@ describe("calculateSlidePuzzleMoveDelta", () => {
 });
 
 describe("calculateSlidePuzzleSpeedScoreRule", () => {
-  test("基準時間の2倍で0点になる規則を返すこと", () => {
+  test("直線で0点になる時間を基準時間の2倍とする規則を返すこと", () => {
     const rule = calculateSlidePuzzleSpeedScoreRule({
       boardSize,
       optimalMoveCount,
@@ -119,9 +119,9 @@ describe("calculateSlidePuzzlePlayScore", () => {
   test.each([
     [70_000, 40],
     [87_500, 30],
-    [105_000, 20],
-    [140_000, 0],
-    [200_000, 0],
+    [105_000, 22],
+    [140_000, 16],
+    [200_000, 14],
   ])(
     "経過時間 %i ミリ秒では速さを基準時間の超過に応じて %i 点にすること",
     (elapsedMs, expected) => {

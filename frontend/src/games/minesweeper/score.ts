@@ -19,7 +19,7 @@ export const MINESWEEPER_MISTAKE_PENALTY = 15;
 export const MINESWEEPER_SPEED_INITIAL_RECOGNITION_MS = 5_000;
 export const MINESWEEPER_SPEED_PER_MINIMUM_OPEN_MS = 2_000;
 export const MINESWEEPER_SPEED_PER_MINE_MS = 4_000;
-/** 速さが0点になる時間の、基準時間に対する倍率。 */
+/** 速さの減り始めの直線を延ばすと0点になる時間の、基準時間に対する倍率。曲線の傾きを決める（`calculateSpeedScore`）。 */
 export const MINESWEEPER_SPEED_ZERO_SCORE_RATIO = 2;
 
 export type MinesweeperPlayScore = PlayScore<

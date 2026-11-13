@@ -112,7 +112,7 @@ describe("calculateTsumeShogiSpeedFullScoreMs", () => {
 });
 
 describe("calculateTsumeShogiSpeedScoreRule", () => {
-  test("基準時間で満点、基準時間の3倍で0点にすること", () => {
+  test("基準時間で満点、直線なら基準時間の3倍で0点になる規則にすること", () => {
     const rule = calculateTsumeShogiSpeedScoreRule(lightWorkload);
 
     expect(rule).toEqual({
@@ -150,9 +150,10 @@ describe("calculateTsumeShogiPlayScore", () => {
       [1.25, 90, "great"],
       [1.4, 84, "good"],
       [1.5, 80, "good"],
-      [2, 60, "clear"],
-      [3, 20, "clear"],
-      [4, 20, "clear"],
+      [2, 64, "clear"],
+      [3, 52, "clear"],
+      [4, 49, "clear"],
+      [10, 48, "clear"],
     ] as const;
 
     test.each(cases)(

@@ -101,7 +101,7 @@ describe("calculateReflectionSpeedFullScoreMs", () => {
 });
 
 describe("calculateReflectionSpeedScoreRule", () => {
-  test("基準時間の3倍で0点になる規則を返すこと", () => {
+  test("直線で0点になる時間を基準時間の3倍とする規則を返すこと", () => {
     const rule = calculateReflectionSpeedScoreRule(lightWorkload);
 
     expect(rule).toEqual({
@@ -136,9 +136,10 @@ describe("calculateReflectionPlayScore", () => {
     [1, 100],
     [1.2, 90],
     [1.4, 80],
-    [2, 50],
-    [3, 0],
-    [4, 0],
+    [2, 55],
+    [3, 40],
+    [4, 36],
+    [10, 35],
   ] as const;
 
   test.each(speedCases)(

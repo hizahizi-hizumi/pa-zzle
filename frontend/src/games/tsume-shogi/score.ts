@@ -36,7 +36,7 @@ export const TSUME_SHOGI_SPEED_PLAUSIBLE_WRONG_LIMIT = 20;
 export const TSUME_SHOGI_SPEED_DEEP_DECOY_LIMIT = 10;
 
 /**
- * 0点になる時間の、基準時間に対する倍率（仮置き）。リフレクションと同じく、基準時間の1.2倍以内で速さ72点・1.4倍以内で64点に残る傾き。
+ * 速さの減り始めの直線を延ばすと0点になる時間の、基準時間に対する倍率（仮置き）。曲線の傾きを決める（`calculateSpeedScore`）。リフレクションと同じく、基準時間の1.2倍以内で速さ72点・1.4倍以内で64点に残る傾き。
  */
 export const TSUME_SHOGI_SPEED_ZERO_SCORE_RATIO = 3;
 

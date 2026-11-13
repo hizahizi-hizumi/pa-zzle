@@ -24,7 +24,7 @@ export const PARKING_JAM_RESTART_PENALTY = 5;
 export const PARKING_JAM_SPEED_BOARD_READING_MS = 5_000;
 export const PARKING_JAM_SPEED_PER_VEHICLE_MS = 3_000;
 export const PARKING_JAM_SPEED_PER_INITIALLY_BLOCKED_VEHICLE_MS = 3_000;
-/** 速さが0点になる時間の、基準時間に対する倍率。 */
+/** 速さの減り始めの直線を延ばすと0点になる時間の、基準時間に対する倍率。曲線の傾きを決める（`calculateSpeedScore`）。 */
 export const PARKING_JAM_SPEED_ZERO_SCORE_RATIO = 2;
 
 export type ParkingJamSpeedReference = {

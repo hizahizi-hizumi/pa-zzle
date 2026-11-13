@@ -70,7 +70,7 @@ describe("calculateHitofudePuzzleSpeedFullScoreMs", () => {
 });
 
 describe("calculateHitofudePuzzleSpeedScoreRule", () => {
-  test("基準時間の3倍で0点になる規則を返すこと", () => {
+  test("直線で0点になる時間を基準時間の3倍とする規則を返すこと", () => {
     const rule = calculateHitofudePuzzleSpeedScoreRule(lightWorkload);
 
     expect(rule).toEqual({
@@ -124,12 +124,12 @@ describe("calculateHitofudePuzzlePlayScore", () => {
       workload: heavyWorkload,
     };
 
-    test("速さを超過時間に比例して減らし、正確さを引き直し1回3点ずつ減らすこと", () => {
+    test("速さを超過時間に応じて減らし、正確さを引き直し1回3点ずつ減らすこと", () => {
       const score = calculateHitofudePuzzlePlayScore(play);
 
       expect(score).toEqual({
-        total: 55,
-        breakdown: { speed: 30, accuracy: 25 },
+        total: 58,
+        breakdown: { speed: 33, accuracy: 25 },
       });
     });
   });
@@ -141,10 +141,13 @@ describe("calculateHitofudePuzzlePlayScore", () => {
       workload: heavyWorkload,
     };
 
-    test("どちらも0点を下回らないこと", () => {
+    test("正確さは0点を下回らず、速さは下限を残すこと", () => {
       const score = calculateHitofudePuzzlePlayScore(play);
 
-      expect(score).toEqual({ total: 0, breakdown: { speed: 0, accuracy: 0 } });
+      expect(score).toEqual({
+        total: 22,
+        breakdown: { speed: 22, accuracy: 0 },
+      });
     });
   });
 

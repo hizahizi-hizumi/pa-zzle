@@ -48,9 +48,11 @@ describe("calculateMinesweeperPlayScore", () => {
   test.each([
     { ratio: 0.5, speed: 40 },
     { ratio: 1, speed: 40 },
-    { ratio: 1.5, speed: 20 },
-    { ratio: 2, speed: 0 },
-    { ratio: 3, speed: 0 },
+    { ratio: 1.25, speed: 30 },
+    { ratio: 1.5, speed: 22 },
+    { ratio: 2, speed: 16 },
+    { ratio: 3, speed: 14 },
+    { ratio: 10, speed: 14 },
   ])(
     "基準時間の $ratio 倍では速さを $speed 点とすること",
     ({ ratio, speed }) => {
@@ -93,13 +95,16 @@ describe("calculateMinesweeperPlayScore", () => {
     expect(getGameResultLevel(fastWithMistake.total)).toBe("good");
   });
 
-  test("ミスが多く遅いプレイでも0点を下回らないこと", () => {
+  test("ミスが多く遅いプレイでも速さの下限を残すこと", () => {
     const result = calculateMinesweeperPlayScore({
       ...workload,
       elapsedMs: speedFullScoreMs * 10,
       mistakeCount: 10,
     });
 
-    expect(result).toEqual({ total: 0, breakdown: { accuracy: 0, speed: 0 } });
+    expect(result).toEqual({
+      total: 14,
+      breakdown: { accuracy: 0, speed: 14 },
+    });
   });
 });

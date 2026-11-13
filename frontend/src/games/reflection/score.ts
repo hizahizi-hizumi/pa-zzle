@@ -14,7 +14,7 @@ export const REFLECTION_SCORE_MAXIMUMS = {
 } as const satisfies ScoreMaximums<"speed">;
 
 // 基準時間の係数は人間の実測（レベル5 の問題を熟練者が読んで3分8秒、同じ人のレベル5 の記録6件）で水準を合わせた暫定値で、
-// 0点になる倍率は仮置き。
+// 速さの減り方の倍率は仮置き。
 // どちらも実プレイを重ねて校正する（`リフレクション成績評価.md` §15）。
 /** 基準時間の係数（暫定）。外周ヒント1本ごとの盤面把握の時間。 */
 export const REFLECTION_SPEED_PER_CLUE_MS = 500;
@@ -33,7 +33,7 @@ export const REFLECTION_SPEED_ASSUMPTION_TEST_LIMIT = 10;
 export const REFLECTION_SPEED_PER_TRIAL_MOVE_MS = 5_000;
 
 /**
- * 0点になる時間の、基準時間に対する倍率（仮置き）。
+ * 速さの減り始めの直線を延ばすと0点になる時間の、基準時間に対する倍率（仮置き）。曲線の傾きを決める（`calculateSpeedScore`）。
  * 基準時間の1.2倍以内で great、1.4倍以内で good に残る傾きにする。
  */
 export const REFLECTION_SPEED_ZERO_SCORE_RATIO = 3;

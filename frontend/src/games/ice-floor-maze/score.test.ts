@@ -85,7 +85,7 @@ describe("calculateIceFloorMazeSpeedFullScoreMs", () => {
 });
 
 describe("calculateIceFloorMazeSpeedScoreRule", () => {
-  test("基準時間の2倍で0点になる規則を返すこと", () => {
+  test("直線で0点になる時間を基準時間の2倍とする規則を返すこと", () => {
     const rule = calculateIceFloorMazeSpeedScoreRule({
       speedReference,
       optimalMoveCount,
@@ -185,9 +185,9 @@ describe("calculateIceFloorMazePlayScore", () => {
   const speedCases = [
     [41_000, 40],
     [51_250, 30],
-    [61_500, 20],
-    [82_000, 0],
-    [120_000, 0],
+    [61_500, 22],
+    [82_000, 16],
+    [120_000, 14],
   ] as const;
 
   test.each(speedCases)(

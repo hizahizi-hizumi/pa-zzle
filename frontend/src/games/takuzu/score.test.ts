@@ -74,7 +74,7 @@ describe("calculateTakuzuSpeedFullScoreMs", () => {
 });
 
 describe("calculateTakuzuSpeedScoreRule", () => {
-  test("基準時間の2倍で0点になる規則を返すこと", () => {
+  test("直線で0点になる時間を基準時間の2倍とする規則を返すこと", () => {
     const rule = calculateTakuzuSpeedScoreRule(lightWorkload);
 
     expect(rule).toEqual({
@@ -146,9 +146,10 @@ describe("calculateTakuzuPlayScore", () => {
   const speedCases = [
     [0.5, 40],
     [1.25, 30],
-    [1.5, 20],
-    [2, 0],
-    [3, 0],
+    [1.5, 22],
+    [2, 16],
+    [3, 14],
+    [10, 14],
   ] as const;
 
   test.each(speedCases)(
