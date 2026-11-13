@@ -110,10 +110,17 @@ export function calculateWaterSortPlayScore({
   );
 
   const backtrackMoveCount = Math.max(0, moveCount - completionMoveCount);
-  const accuracy = calculateLinearScore(
-    WATER_SORT_SCORE_MAXIMUMS.accuracy,
-    1 - backtrackMoveCount / optimalMoveCount,
-  );
+  // 手戻りが1手でもあれば、最短手数が長くて減点が丸めで消える問題でも満点にしない。
+  const accuracy =
+    backtrackMoveCount === 0
+      ? WATER_SORT_SCORE_MAXIMUMS.accuracy
+      : Math.min(
+          WATER_SORT_SCORE_MAXIMUMS.accuracy - 1,
+          calculateLinearScore(
+            WATER_SORT_SCORE_MAXIMUMS.accuracy,
+            1 - backtrackMoveCount / optimalMoveCount,
+          ),
+        );
 
   return sumPlayScore({ efficiency, speed, accuracy });
 }

@@ -162,4 +162,16 @@ describe("calculateWaterSortPlayScore", () => {
       },
     });
   });
+
+  test("最短手数が長くても、手戻りが1手あれば正確さを満点にしないこと", () => {
+    const score = calculateWaterSortPlayScore({
+      elapsedMs: 1_000,
+      moveCount: 51,
+      completionMoveCount: 50,
+      optimalMoveCount: 50,
+      colorCount: 6,
+    });
+
+    expect(score.breakdown.accuracy).toBe(19);
+  });
 });
