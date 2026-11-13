@@ -20,7 +20,6 @@ import {
   TSUME_SHOGI_WRONG_CHECK_PENALTY,
 } from "@/games/tsume-shogi/score";
 
-/** 基準時間の式。その問題で0の項は省き、誤王手と紛れの数は上限で打ち切った値を示す。 */
 function listSpeedFormula({
   plies,
   rootChecks,

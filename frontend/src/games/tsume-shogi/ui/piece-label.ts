@@ -4,7 +4,6 @@ import type {
   TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
 
-/** 盤上の駒に書く1文字。 */
 export const tsumeShogiPieceCharacters = {
   king: "玉",
   rook: "飛",
@@ -43,7 +42,7 @@ export const tsumeShogiPieceNames = {
 export const tsumeShogiHandPieceNames: Record<TsumeShogiHandPieceType, string> =
   tsumeShogiPieceNames;
 
-/** 成った駒の元の駒。棋譜で「成」と書くときに元の駒の名前を使う。 */
+/** 棋譜で「成」と書くときに元の駒の名前を使う。 */
 export const tsumeShogiUnpromotedPieceTypes = {
   dragon: "rook",
   horse: "bishop",
@@ -55,12 +54,10 @@ export const tsumeShogiUnpromotedPieceTypes = {
 
 const rankKanji = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
 
-/** 段の漢数字。 */
 export function formatTsumeShogiRank(rank: number): string {
   return rankKanji[rank - 1] ?? String(rank);
 }
 
-/** 升の名前（例: 2二）。 */
 export function formatTsumeShogiSquare(square: TsumeShogiSquare): string {
   return `${square.file}${formatTsumeShogiRank(square.rank)}`;
 }

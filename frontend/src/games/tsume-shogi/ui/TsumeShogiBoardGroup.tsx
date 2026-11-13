@@ -20,14 +20,12 @@ export const tsumeShogiBoardGroupSizeStyle = {
 
 type TsumeShogiBoardGroupProps = {
   board: ReactNode;
-  /** 攻方の駒台（`TsumeShogiHand`）。 */
   hand: ReactNode;
-  /** 盤の下の1行（`TsumeShogiPlayStatus`）。 */
   status: ReactNode;
   ref?: Ref<HTMLDivElement>;
 };
 
-/** 玉方の駒箱の札・盤・攻方の駒台・直前の手の行を、盤の幅の中に縦に並べる。プレイ画面とチュートリアルで同じ並びにする。 */
+/** プレイ画面とチュートリアルで同じ並びにする。 */
 export function TsumeShogiBoardGroup({
   board,
   hand,

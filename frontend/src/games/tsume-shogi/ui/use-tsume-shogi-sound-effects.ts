@@ -36,7 +36,7 @@ import {
   type SoundLayer,
 } from "@/lib/sound-effects";
 
-/** 攻方が駒を指す・打つ音。打音の違う3本から選ぶ。 */
+/** 攻方が駒を指す・打つ音。 */
 const pieceMovedSounds = defineSoundTakes([
   defineSoundEffect(pieceMovedSoundUrl),
   defineSoundEffect(pieceMoved2SoundUrl),
@@ -44,7 +44,7 @@ const pieceMovedSounds = defineSoundTakes([
 ]);
 
 /**
- * 玉方の応手の音。打音の違う2本から選ぶ。
+ * 玉方の応手の音。
  * 盤面で駒が動く同じ知らせなので同じ駒音の系統にし、利用者の操作ではないので一段控えめにする。
  */
 const pieceRepliedSounds = defineSoundTakes([
@@ -52,7 +52,6 @@ const pieceRepliedSounds = defineSoundTakes([
   defineSoundEffect(pieceReplied2SoundUrl),
 ]);
 
-/** 誤王手に玉方が反証で逃れた音。誤王手は誤りとして数えるので、着手させなかった音より一段重くする。 */
 const refutedSound = defineSoundEffect(refutedSoundUrl);
 
 const rejectedSound = defineSoundEffect(rejectedSoundUrl);
@@ -137,8 +136,7 @@ function playHeldClearSound() {
 }
 
 /**
- * 攻方の着手、玉方の応手と反証、着手させなかった入力と、玉を詰ませた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
- * 駒の選択とその解除、成 / 不成を選ぶ途中、待った・盤面を戻すでは鳴らさない。
+ * 結果の報酬の音はアプリが鳴らす。
  * `kingSquare` は玉方の玉の升。照りの波が盤の端へ届くまでの長さを決める。
  */
 export function useTsumeShogiSoundEffects(

@@ -7,12 +7,10 @@ import {
 
 const { getSquareWidthWithUndoFooter, shouldMoveUndoToHand } = _private;
 
-/** 升の縦横比（横 35.2 : 縦 38.6）。 */
 const squareAspect = 386 / 352;
-/** 盤の升の外（駒台・直前の手の行・盤の縁）の高さ。 */
 const fixedHeight = 150;
 
-/** 盤が欄の幅と高さに収まる大きさ（幅で決まる升の幅は 34px）。 */
+/** 盤が欄の幅と高さに収まる大きさ。 */
 function layOut(areaHeight: number) {
   const heightLimitedSquareWidth =
     (areaHeight - fixedHeight) / 9 / squareAspect;

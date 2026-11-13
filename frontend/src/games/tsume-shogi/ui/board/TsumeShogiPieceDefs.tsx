@@ -51,7 +51,6 @@ const liftedShadowBlurs = {
   core: 6,
 } as const satisfies Record<LiftedShadowKind, number>;
 
-/** 駒が参照する塗りと字形の id。 */
 export type TsumeShogiPieceDefIds = {
   /** 柘植の面の木目（柾目と虎斑）。向きと位置の違う数組の模様で、駒ごとにどれかを選ぶ（`selectTsugeFace`）。駒ごとに画像を置かない。 */
   faces: readonly string[];
@@ -60,9 +59,7 @@ export type TsumeShogiPieceDefIds = {
    * 駒の向きによらず画面の左上から光を当てる。
    */
   chamfer: string;
-  /** 面のわずかな明暗。左上から右下へ、ごく弱く暗くする。 */
   shade: string;
-  /** 面の左上に乗るつや。 */
   specular: string;
   /** 手前の側面の明暗。光から遠い右へ向かって暗くする。 */
   side: string;
@@ -70,9 +67,9 @@ export type TsumeShogiPieceDefIds = {
   liftedShadowBlurs: Record<LiftedShadowKind, string>;
   ink: string;
   vermilion: string;
-  /** 駒種ごとの字形。駒ごとに輪郭を書き写さず、`<use>` で参照する。 */
+  /** 駒ごとに輪郭を書き写さず、`<use>` で参照する。 */
   glyphs: Record<TsumeShogiPieceType, string>;
-  /** 駒種ごとの字形の切り抜き。彫った溝の底の漆を、溝の内側にだけ描く。 */
+  /** 彫った溝の底の漆を、溝の内側にだけ描く。 */
   glyphClips: Record<TsumeShogiPieceType, string>;
 };
 
@@ -114,7 +111,7 @@ const TsumeShogiPieceDefsContext = createContext<TsumeShogiPieceDefIds | null>(
   null,
 );
 
-/** 内側の駒が参照する塗りの id。`TsumeShogiPieceDefs` の外では `null`。 */
+/** `TsumeShogiPieceDefs` の外では `null`。 */
 export function useTsumeShogiPieceDefIds(): TsumeShogiPieceDefIds | null {
   return useContext(TsumeShogiPieceDefsContext);
 }

@@ -4,7 +4,7 @@ const BOARD_SIZE = 9;
 /** 成・不成の選択肢は、横に升2つ分、縦に升1つ分を覆う。 */
 const PICKER_COLUMNS = 2;
 
-/** 選択肢の左上の升。左端の列（0 が9筋）と上端の段（0 が一段目）。選択肢は升の境界にそろい、ちょうど升2つを覆う。 */
+/** 選択肢の左上の升。左端の列（0 が9筋）と上端の段（0 が一段目）。 */
 export type TsumeShogiPromotionPickerPlacement = {
   column: number;
   row: number;

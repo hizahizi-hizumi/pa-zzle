@@ -28,7 +28,7 @@ const diagonal: [number, number][] = [
 ];
 const goldSteps = steps([-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [0, 1]);
 
-/** 遊び方で動きを示す駒。成った銀・桂・香・歩は金と同じ動きなので、文で添える。 */
+/** 成った銀・桂・香・歩は金と同じ動きなので、ここに含めず文で添える。 */
 export const pieceMovementFigureTypes = [
   "king",
   "rook",
@@ -69,7 +69,6 @@ type PieceMovementFigureProps = {
   type: (typeof pieceMovementFigureTypes)[number];
 };
 
-/** 5×5 の升の中央に盤と同じ柘植の駒を置き、1升だけ動ける先に点、何升でも進める向きに矢印を描く。 */
 export function PieceMovementFigure({ type }: PieceMovementFigureProps) {
   const extent = gridSize * cellSize;
   return (
