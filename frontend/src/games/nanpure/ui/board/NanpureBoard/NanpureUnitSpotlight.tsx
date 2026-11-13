@@ -8,7 +8,7 @@ type NanpureUnitSpotlightProps = {
   unit: NanpureBoardUnit;
 };
 
-/** 盤面の格子の中で、まとまりのマスが占める領域。絶対配置のグリッドの子は終わりの線を省くと端まで広がるため、範囲を明示する。 */
+/** 絶対配置のグリッドの子は終わりの線を省くと端まで広がるため、範囲を明示する。 */
 function getUnitArea({ kind, index }: NanpureBoardUnit): CSSProperties {
   switch (kind) {
     case "row":

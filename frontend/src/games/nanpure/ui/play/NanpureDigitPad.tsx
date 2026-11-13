@@ -8,22 +8,17 @@ import { cn } from "@/lib/utils";
 
 type NanpureDigitPadProps = {
   notesMode: boolean;
-  /** 選んだマスに数字を入れられる。偽なら、どの数字も押せない。 */
   canEnterDigit: boolean;
-  /** 解の位置に9つそろった数字。押せなくする。 */
   completedDigits: readonly NanpureDigit[];
-  /** 押させたい数字。チュートリアルで、次に押す数字に印を付ける。 */
   cuedDigit?: NanpureDigit | null;
   /** 押させたい数字の印の線を短く濃くして戻す目印。変わるたびに戻し直す。`null` なら戻さない。 */
   cuedDigitRecallId?: number | null;
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せる数字。 */
   spotlitDigits?: readonly NanpureDigit[];
-  /** ボタンの高さ。`compact` は、盤面に高さを譲るチュートリアルで使う。 */
+  /** `compact` は、盤面に高さを譲るチュートリアルで使う。 */
   size?: "play" | "compact";
   onInputDigit: (digit: NanpureDigit) => void;
 };
 
-/** 選んだマスへ入れる1〜9の数字のボタン。 */
 export function NanpureDigitPad({
   notesMode,
   canEnterDigit,

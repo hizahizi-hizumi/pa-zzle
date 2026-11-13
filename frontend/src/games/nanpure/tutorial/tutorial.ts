@@ -25,28 +25,22 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-/**
- * 1〜9が1つずつ入るまとまり。ルールは、まとまりの種類ごとに1つずつ示す。
- * - `row`: どの行にも1〜9が1つずつ入る。
- * - `column`: どの列にも1〜9が1つずつ入る。
- * - `block`: どの3×3ブロックにも1〜9が1つずつ入る。
- */
 export type NanpureTutorialRuleId = NanpureUnitKind;
 
-/** 1つの行・列・ブロック。`index` は0始まりで、ブロックは左上から行優先に数える。 */
+/** `index` は0始まりで、ブロックは左上から行優先に数える。 */
 export type NanpureTutorialUnit = {
   kind: NanpureTutorialRuleId;
   index: number;
 };
 
-/** 盤面と同じく、選んだマスに数字を入れる。マスを選ぶだけの操作は盤面を変えないので、ここでは扱わない。 */
+/** マスを選ぶだけの操作は盤面を変えないので、ここでは扱わない。 */
 export type NanpureTutorialAction = {
   cellIndex: number;
   digit: NanpureDigit;
 };
 
 /**
- * - `cellIndex`: 印を付け、手順の間だけ選べるマス。解の数字が入ったら次の手順へ進む。
+ * - `cellIndex`: 印を付け、手順の間だけ選べるマス。
  * - `reasonUnits`: 印のマスの数字を決める行・列・ブロック（決め手）。手順の始まりから覆いから抜いて見せ、どこを見れば決まるかを盤面で分からせる。
  * - `cuedDigit`: 押させる数字。操作を教える手順でだけ、数字のボタンにも印を付ける。
  */
@@ -56,12 +50,6 @@ export type NanpureTutorialStep = TutorialStep<NanpureTutorialRuleId> & {
   cuedDigit: NanpureDigit | null;
 };
 
-/**
- * 直前の手。盤面の上の合図と、手順を終えた手の決め手を次の印まで見せるのに使う。
- * - `violated`: 入れた数字が、手に入れたルールのまとまりで、ほかの数字と重なった。
- * - `fitsStep`: 手を引いている手順のマスに、解の数字を入れた。手を離した後は常に `false`。
- * - `reasonUnits`: 入れた数字が手前の盤面だけで決まっていたときの、決め手の行・列・ブロック。決まっていなければ空。
- */
 export type NanpureTutorialMove = {
   cellIndex: number;
   digit: NanpureDigit;
@@ -70,7 +58,7 @@ export type NanpureTutorialMove = {
   reasonUnits: readonly NanpureTutorialUnit[];
 };
 
-/** `moveCount`: 盤面を変えた手の数。同じマスへの合図をやり直す目印に使う。 */
+/** `moveCount` は、同じマスへの合図をやり直す目印に使う。 */
 export type NanpureTutorialBoardState = {
   board: NanpureBoard;
   moveCount: number;
@@ -82,7 +70,6 @@ export type NanpureTutorialSituation = TutorialSituation<
   NanpureTutorialStep
 >;
 
-/** 空きマスの数字が、今の盤面と手に入れたルールだけで決まるときの、その数字と決め手。 */
 type NanpureDeduction = {
   digit: NanpureDigit;
   reasonUnits: readonly NanpureTutorialUnit[];
@@ -97,23 +84,7 @@ function parseRows(rows: readonly string[]): NanpureCell[] {
   );
 }
 
-/**
- * 本番の問題集の解を使い、空きマスは12個にする。空きマスの解には1〜9がすべてあり、最初から押せない数字のボタンは無い。
- * 最初の盤面だけで、行・列・ブロックのルールの下で解はこの1つに決まる。
- *
- * ```text
- * 最初          解
- * 658 729 314   658 729 314
- * 3.1 45. 278   391 456 278
- * 724 3.. 96.   724 381 965
- * 467 21. 89.   467 215 893
- * 582 937 641   582 937 641
- * 13. 864 52.   139 864 527
- * .4. 193 786   245 193 786
- * 873 6.2 159   873 642 159
- * 916 578 432   916 578 432
- * ```
- */
+/** 本番の問題集の解を使う。 */
 const givens: NanpureBoard = parseRows([
   "658729314",
   "3.145.278",
@@ -181,7 +152,6 @@ function listUnitCellIndices(kind: NanpureTutorialRuleId): number[][] {
   );
 }
 
-/** まとまりの種類ごとの、0〜8番目のまとまりのマス。 */
 const unitCellIndices = {
   row: listUnitCellIndices("row"),
   column: listUnitCellIndices("column"),
@@ -198,9 +168,6 @@ export function getNanpureTutorialUnitCellIndices({
 /**
  * 操作を教えた後、行・列・ブロックのルールを1つずつ示し、示したまとまりで最後に空いたマスを埋めさせる。
  * 操作で入れる6行3列の9で、6行目の空きは6行9列だけになる。
- * 列・ブロックの手順のマスは、それまでのまとまりでは決まらず、示したまとまりでだけ決まる。
- * 最後の手順の3行6列は、行・列・ブロックのどれか1つや2つでは決まらず、3つを合わせて初めて1に決まる。
- * 手順を終えると7マスが残り、どれも行・列・ブロックを合わせれば1つの数字に決まる。
  */
 const steps: readonly NanpureTutorialStep[] = [
   {
@@ -259,7 +226,6 @@ function isGiven(cellIndex: number): boolean {
   return (givens[cellIndex] ?? null) !== null;
 }
 
-/** 手に入れたルールの種類を、行・列・ブロックの順に並べる。 */
 function listEarnedKinds(
   earnedRuleIds: readonly NanpureTutorialRuleId[],
 ): NanpureTutorialRuleId[] {
@@ -293,7 +259,7 @@ function deduceCell(
     : null;
 }
 
-/** 手に入れたルールのまとまりで、ほかの数字と重なったマス。本番と同じ求め方で、まだ示していないまとまりの重なりは見せない。 */
+/** まだ示していないまとまりの重なりは見せない。 */
 function findVisibleConflictCellIndices(
   board: NanpureBoard,
   earnedRuleIds: readonly NanpureTutorialRuleId[],
@@ -301,7 +267,6 @@ function findVisibleConflictCellIndices(
   return findNanpureConflictCellIndices(board, listEarnedKinds(earnedRuleIds));
 }
 
-/** マスの数字が重なった、手に入れたルールのまとまり。行・列・ブロックの順に並べる。 */
 function findConflictingUnits(
   board: NanpureBoard,
   earnedRuleIds: readonly NanpureTutorialRuleId[],
@@ -314,7 +279,6 @@ function findConflictingUnits(
     .map((kind) => getCellUnit(cellIndex, kind));
 }
 
-/** 答えと違う数字を除いた盤面。決め手は、正しく入れた数字と最初の数字だけから読む。 */
 function keepCorrectDigits(board: NanpureBoard): NanpureCell[] {
   return board.map((digit, cellIndex) =>
     digit === solution[cellIndex] ? digit : null,
@@ -326,6 +290,7 @@ function getMoveReasonUnits(
   earnedRuleIds: readonly NanpureTutorialRuleId[],
   { cellIndex, digit }: NanpureTutorialAction,
 ): readonly NanpureTutorialUnit[] {
+  // 決め手は、正しく入れた数字と最初の数字だけから読む。
   const board = keepCorrectDigits(before);
   board[cellIndex] = null;
   const deduction = deduceCell(board, earnedRuleIds, cellIndex);
@@ -340,10 +305,6 @@ function getNanpureTutorialGoal(): NanpureTutorialBoardState {
   return { board: solution, moveCount: 0, lastMove: null };
 }
 
-/**
- * 手を引いている間は、印のマスにだけ数字を入れられる。押させたい数字のある手順では、その数字だけを受け付ける。
- * 最初の数字は変えられない。
- */
 function performNanpureTutorialAction(
   { step, earnedRuleIds }: NanpureTutorialSituation,
   state: NanpureTutorialBoardState,
@@ -430,7 +391,6 @@ function describeNanpureTutorialViolation(
 
 export const NANPURE_TUTORIAL_GIVENS = givens;
 
-/** 手を引いている間は、印のマスだけを選べる。手を離した後は、本番と同じくどのマスも選べる。 */
 export function isNanpureTutorialCellSelectable(
   { step }: NanpureTutorialSituation,
   cellIndex: number,
@@ -445,7 +405,6 @@ export function getNanpureTutorialConflictCellIndices(
   return findVisibleConflictCellIndices(state.board, earnedRuleIds);
 }
 
-/** 本番と同じく、解と違う数字のマス。本番と同じミスの色で示し、入れたときに本番と同じミスの音を鳴らす。 */
 export function getNanpureTutorialMistakeCellIndices(
   state: NanpureTutorialBoardState,
 ): number[] {
@@ -455,7 +414,6 @@ export function getNanpureTutorialMistakeCellIndices(
   });
 }
 
-/** 本番と同じく、解の位置に9つそろった数字。数字のボタンを押せなくする。 */
 export function getNanpureTutorialCompletedDigits(
   state: NanpureTutorialBoardState,
 ): NanpureDigit[] {
@@ -467,7 +425,6 @@ export function getNanpureTutorialCompletedDigits(
   );
 }
 
-/** 手順で印を付けるマス。解の数字が入るまで付ける。手を離した後は `null`。 */
 export function getNanpureTutorialStepCellIndex(
   { step }: NanpureTutorialSituation,
   state: NanpureTutorialBoardState,
@@ -478,10 +435,7 @@ export function getNanpureTutorialStepCellIndex(
     : null;
 }
 
-/**
- * 直さなければならない、答えと違う数字のマス。重なりが見えているマスを先に返す。無ければ `null`。
- * 重なった2つのマスのどちらが違うかは盤面だけでは分からないので、違反の一言と一緒に印で示す。
- */
+/** 重なった2つのマスのどちらが違うかは盤面だけでは分からないので、違反の一言と一緒に印で示す。 */
 export function findNanpureTutorialWrongCellIndex(
   { earnedRuleIds }: NanpureTutorialSituation,
   state: NanpureTutorialBoardState,

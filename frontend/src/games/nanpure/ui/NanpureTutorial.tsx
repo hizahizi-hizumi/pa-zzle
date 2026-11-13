@@ -53,7 +53,6 @@ import {
 
 type NanpureTutorialProps = {
   open: boolean;
-  /** ゲームのホームから開いたときに渡す。終えたときに、ゲームのホームで開いているレベルを始める操作を出す。渡さなければプレイ中に開いたとして、閉じてプレイに戻る操作を出す。 */
   playStart?: TutorialPlayStart;
   onClose: () => void;
 };
@@ -64,22 +63,18 @@ type NanpureTutorialProgress = TutorialProgress<
 >;
 
 /**
- * 手を引いている間に印の無いマスを押されたときの、印の押し直し。印の線を短く濃くして戻す。
- * - `id`: 押されるたびに増やし、続けて押されても押し直す。
- * - `progress`: 押されたときの進行。手が進んだら押し直しを終える。
+ * 手を引いている間に印の無いマスを押されたときの、印の押し直し。
+ * `id` は押されるたびに増やし、続けて押されても押し直す。
  */
 type NanpureTutorialRecall = {
   id: number;
   progress: NanpureTutorialProgress;
 };
 
-/** 手順どおりに入れてから次の印を付けるまでの間。入れたマスと決め手を残して見せてから、次の印とその決め手に替える。 */
+/** 入れたマスと決め手を残して見せてから、次の印とその決め手に替える。 */
 const NEXT_STEP_CUE_DELAY_MS = 900;
 
-/**
- * 手を離した後、手が止まってから決まるマスを示すまでの間。
- * 行・列・ブロックを見比べて考えている間は先回りしないよう、長めに待つ。
- */
+/** 行・列・ブロックを見比べて考えている間は先回りしないよう、長めに待つ。 */
 const IDLE_HINT_DELAY_MS = 10_000;
 
 /** チュートリアルではメモを使わないので、どのマスにもメモは無い。 */
@@ -90,7 +85,7 @@ const noNotes: NanpureNotes = Array.from(
 
 const goalBoardState = nanpureTutorial.goal();
 
-/** 本番の効果音のフックへ渡す、プレイの進行。解けた盤面の演出の間を完成演出として、完成の音を鳴らす。 */
+/** 解けた盤面の演出の間を完成演出として、完成の音を鳴らす。 */
 const gameProgressByPhase = {
   intro: "playing",
   playing: "playing",
@@ -98,11 +93,7 @@ const gameProgressByPhase = {
   completed: "result",
 } as const satisfies Record<TutorialPhase, GameProgress>;
 
-/**
- * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
- * 手を引いている間は、手順を終えた手に決め手があれば、それを見せてから付ける。
- * 手を離した後は、手が止まったときだけ付ける。
- */
+/** 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。 */
 function getCueDelayMs(
   progress: NanpureTutorialProgress,
   guiding: boolean,
@@ -119,7 +110,6 @@ function getCueDelayMs(
     : 0;
 }
 
-/** 直前の手への合図。手順のマスに解の数字を入れた応え。 */
 function getMoveCues({
   lastMove,
   moveCount,
@@ -129,7 +119,6 @@ function getMoveCues({
     : [];
 }
 
-/** 次に数字を入れるマスの印。印の無いマスを押されたら（`recallId`）、印の線を短く濃くして戻す。 */
 function getHintCue(
   cellIndex: number,
   recallId: number | null,
@@ -174,7 +163,7 @@ function getBoardSpotlight(
 
 /**
  * 本物の 9×9 の盤面の空いた12マスを、一言と印に沿って1マスずつ一緒に埋め、行・列・ブロックのルールを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分で埋めさせる。盤面・数字のボタン・ミスと重なりの色・解けたときの演出は本番と同じ部品を使う。
+ * 手順を終えたら手を離し、残りを自分で埋めさせる。
  */
 export function NanpureTutorial({
   open,
@@ -189,7 +178,6 @@ export function NanpureTutorial({
   );
   const [idleProgress, setIdleProgress] =
     useState<NanpureTutorialProgress | null>(null);
-  // 本番の効果音のフックへ渡す、盤面を変えた手の知らせ。
   // `id` は、もう一度始めても本番の効果音が同じ知らせとみなさないよう、開いている間ずっと増やす。
   const [operation, setOperation] = useState<NanpureOperation | null>(null);
   const nextOperationIdRef = useRef(1);
@@ -316,18 +304,16 @@ export function NanpureTutorial({
     playStart?.onStart();
   }
 
-  /**
-   * 始めの盤面の場面では、解き終えた盤面から入れた数字を消していき、消し終えたら始めの盤面に替える。
-   * 最初の手順の印は、導入の終わりに一言と同時に出す。
-   */
   function renderBoard({
     scene,
     playing: scenePlaying,
     onSceneEnd,
     messageShown,
   }: TutorialBoardIntro) {
+    // 始めの盤面の場面では、解き終えた盤面から入れた数字を消していき、消し終えたら始めの盤面に替える。
     const goalShown = scene === "goal" || (scene === "start" && scenePlaying);
     const shownBoardState = goalShown ? goalBoardState : boardState;
+    // 最初の手順の印は、導入の終わりに一言と同時に出す。
     const stepMarkShown = playing
       ? guiding && cueShown
       : step !== null && scene === null && messageShown;

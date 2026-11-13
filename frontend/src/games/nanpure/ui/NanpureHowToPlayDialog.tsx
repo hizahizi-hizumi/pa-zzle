@@ -21,7 +21,6 @@ const clueAndEntered = [
   { caption: "入れた", cell: { digit: 6 } },
 ] as const;
 
-/** ルールと操作を、盤面と同じ見え方の小さな図と短い一文で示す。 */
 export function NanpureHowToPlayDialog({
   open,
   onClose,

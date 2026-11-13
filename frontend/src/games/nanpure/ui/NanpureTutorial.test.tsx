@@ -19,7 +19,6 @@ vi.mock("@/lib/sound-effects", async (importOriginal) => ({
 
 type CellEntry = readonly [row: number, column: number, digit: number];
 
-/** 手順ごとに印を付けるマスと、入れる解の数字。 */
 const stepEntries: readonly CellEntry[] = [
   [6, 3, 9],
   [6, 9, 7],
@@ -28,7 +27,6 @@ const stepEntries: readonly CellEntry[] = [
   [3, 6, 1],
 ];
 
-/** 手順を終えた後に残るマスと、その解の数字。 */
 const remainingEntries: readonly CellEntry[] = [
   [2, 2, 9],
   [2, 6, 6],
@@ -39,10 +37,8 @@ const remainingEntries: readonly CellEntry[] = [
   [8, 5, 4],
 ];
 
-/** 手順どおりに入れてから次の印を付けるまでの間。 */
 const nextStepCueDelayMs = 900;
 
-/** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
 const idleHintDelayMs = 10_000;
 
 /** 導入の場面の動きを見せ終えるのに十分な間。 */
@@ -102,7 +98,6 @@ async function goThroughIntro(): Promise<void> {
   await advanceTimeInSlices(introEnoughMs);
 }
 
-/** 鳴らした効果音の音声ファイル名。 */
 function getPlayedSoundNames(): string[] {
   return vi
     .mocked(playSound)
@@ -116,7 +111,7 @@ function stubReducedMotion(): void {
   );
 }
 
-/** 盤面のマス。81マスの名前を毎回すべて計算しないよう、名前の頭で引く。 */
+/** 81マスの名前を毎回すべて計算しないよう、名前の頭で引く。 */
 function getCell(row: number, column: number): HTMLElement {
   const cell = document.querySelector<HTMLElement>(
     `button[aria-label^="${row}行${column}列、"]`,
@@ -146,7 +141,7 @@ function pressNextThroughIntro(): void {
   }
 }
 
-/** 導入の「次へ」を押す。導入は自動では先へ進まない。 */
+/** 導入は自動では先へ進まない。 */
 function pressNext(): void {
   fireEvent.click(screen.getByRole("button", { name: "次へ" }));
 }
@@ -192,29 +187,24 @@ function getCellIndicesContaining(selector: string): number[] {
   });
 }
 
-/** 合図を重ねているマスの番号。印は `hint`、手順のマスに解の数字を入れた応えは `fitted`。 */
 function getCuedCellIndices(kind: "hint" | "fitted"): number[] {
   return getCellIndicesContaining(`[data-cell-cue="${kind}"]`);
 }
 
-/** 印の線を短く濃くして戻しているマスの番号。 */
 function getRecalledCellIndices(): number[] {
   return getCellIndicesContaining('[data-tutorial-cue="recall"]');
 }
 
-/** 画面全体の覆いから抜いているマスの番号。 */
 function getSpotlitCellIndices(): number[] {
   return getCellIndicesContaining("[data-tutorial-spotlight]");
 }
 
-/** 画面全体の覆いから抜いている行・列・ブロック。 */
 function getSpotlitUnits(): string[] {
   return Array.from(
     document.querySelectorAll<HTMLElement>("[data-spotlit-unit]"),
   ).map((element) => element.dataset.spotlitUnit ?? "");
 }
 
-/** 画面全体の覆いから抜いている数字のボタンの数字。 */
 function getSpotlitDigits(): number[] {
   return Array.from(
     document.querySelectorAll<HTMLElement>("fieldset button"),
@@ -229,7 +219,6 @@ function isScrimShown(): boolean {
   return document.querySelector("[data-tutorial-focus-scrim]") !== null;
 }
 
-/** 盤面の中で、ルールに当たったときの赤を使っているか。 */
 function usesRuleViolationColor(): boolean {
   return (
     document.querySelector(
