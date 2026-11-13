@@ -26,7 +26,7 @@ function renderAttemptHook(initialProps: HookProps) {
         startedAt,
         start,
         finished,
-        session: moveCount,
+        boardState: moveCount,
         getProgress(abandonedAt) {
           return { moveCount, elapsedMs: abandonedAt - startedAt };
         },
@@ -123,11 +123,45 @@ describe("一度も操作しないまま離れた場合", () => {
     expect(readPlayAttempts()).toEqual([]);
   });
 
+  test("ページが bfcache に入っても、始めた記録を残すこと", () => {
+    window.dispatchEvent(
+      new PageTransitionEvent("pagehide", { persisted: true }),
+    );
+
+    expect(readPlayAttempts()).toEqual([createAttempt(1_000)]);
+  });
+
   test("別のプレイに置き換えると、前のプレイを除いて次のプレイを始めること", async () => {
     hook.rerender({ startedAt: 2_000, finished: false, moveCount: 0 });
     await flushAbandonment();
 
     expect(readPlayAttempts()).toEqual([createAttempt(2_000)]);
+  });
+});
+
+describe("bfcache から戻って操作した場合", () => {
+  let hook: AttemptHook;
+
+  beforeEach(() => {
+    hook = renderAttemptHook({
+      startedAt: 1_000,
+      finished: false,
+      moveCount: 0,
+    });
+    window.dispatchEvent(
+      new PageTransitionEvent("pagehide", { persisted: true }),
+    );
+    window.dispatchEvent(
+      new PageTransitionEvent("pageshow", { persisted: true }),
+    );
+    hook.rerender({ startedAt: 1_000, finished: false, moveCount: 2 });
+  });
+
+  test("ページを離れると、その時点の進み具合を離脱として記録すること", () => {
+    window.dispatchEvent(new PageTransitionEvent("pagehide"));
+    const abandonment = readPlayAttempts()[0]?.abandonment;
+
+    expect(abandonment?.progress).toEqual({ moveCount: 2, elapsedMs: 8_000 });
   });
 });
 

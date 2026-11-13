@@ -16,8 +16,8 @@ import {
 type PlayAttemptSource = Pick<PlayAttempt, "gameId" | "startedAt"> & {
   start: PlayAttemptStart;
   finished: boolean;
-  /** 盤面を操作するたびに置き換わる値。始めたときから一度も置き換わっていなければ、操作していないプレイとする。 */
-  session: unknown;
+  /** 盤面の状態。始めたときから一度も置き換わっていなければ、盤面を操作していないプレイとする。 */
+  boardState: unknown;
   getProgress: (abandonedAt: number) => PlayAttemptProgress;
 };
 
@@ -50,7 +50,7 @@ function saveDeparture(
 export function usePlayAttemptRecord(source: PlayAttemptSource): void {
   const latest = useRef(source);
   const pendingAbandonment = useRef<PendingAbandonment | null>(null);
-  const startSession = useRef<unknown>(source.session);
+  const startBoardState = useRef<unknown>(source.boardState);
   const operated = useRef(false);
 
   // 別のプレイへ置き換えたときのクリーンアップは、前のプレイの最後に確定した状態で離脱を保存する。
@@ -58,7 +58,7 @@ export function usePlayAttemptRecord(source: PlayAttemptSource): void {
   // 後続の effect より先に宣言し、新しいプレイの開始時にはそのプレイの状態を読めるようにする。
   useEffect(() => {
     latest.current = source;
-    if (source.session !== startSession.current) {
+    if (source.boardState !== startBoardState.current) {
       operated.current = true;
     }
   });
@@ -72,7 +72,7 @@ export function usePlayAttemptRecord(source: PlayAttemptSource): void {
       pendingAbandonment.current = null;
     }
     // StrictMode の張り直しでは、張り直す前に操作していないので、数え直しても変わらない。
-    startSession.current = latest.current.session;
+    startBoardState.current = latest.current.boardState;
     operated.current = false;
     startPlayAttempt({
       ...play,
@@ -94,11 +94,13 @@ export function usePlayAttemptRecord(source: PlayAttemptSource): void {
         abandonment: { abandonedAt, progress: getProgress(abandonedAt) },
       };
     }
-    function handlePageHide() {
+    function handlePageHide(event: PageTransitionEvent) {
       const departure = captureDeparture();
-      if (departure) {
-        saveDeparture(play, departure);
+      // bfcache に入ったページは、戻ると effect を張り直さずにこのプレイを続けるので、始めた記録を残す。
+      if (!departure || (departure.kind === "untouched" && event.persisted)) {
+        return;
       }
+      saveDeparture(play, departure);
     }
     window.addEventListener("pagehide", handlePageHide);
 

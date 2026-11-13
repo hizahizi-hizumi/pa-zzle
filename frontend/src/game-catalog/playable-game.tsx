@@ -12,6 +12,7 @@ import { useResultRewardSound } from "@/game-catalog/result-reward-sound";
 import type { GamePlay, GamePlayScreenProps } from "@/games/play";
 import { createProblemId, type ProblemIdentity } from "@/games/problem-id";
 import type { PlayScore, ScoreItem } from "@/games/score";
+import type { GameSession } from "@/games/session";
 import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import type { PlayAttemptProgress } from "@/records/play-attempt";
@@ -24,6 +25,8 @@ type ScoredResult = {
   score: Pick<PlayScore<ScoreItem>, "total">;
 };
 
+type PlaySession = Pick<GameSession<unknown, unknown>, "puzzleState">;
+
 export type CompletedGamePlay<Difficulty, Identity, Result> = {
   difficulty: Difficulty;
   problemIdentity: Identity;
@@ -35,7 +38,7 @@ export type CompletedGamePlay<Difficulty, Identity, Result> = {
 type PlayableGameSource<
   Difficulty extends string,
   Identity extends ProblemIdentity,
-  Session,
+  Session extends PlaySession,
   Result extends ScoredResult,
   Snapshot,
 > = {
@@ -61,7 +64,7 @@ export type PlayableGame<Difficulty, Result, Snapshot> = {
 export function usePlayableGame<
   Difficulty extends string,
   Identity extends ProblemIdentity,
-  Session,
+  Session extends PlaySession,
   Result extends ScoredResult,
   Snapshot,
 >({
@@ -116,7 +119,7 @@ export function usePlayableGame<
     startedAt,
     start: { difficulty, problemIdentity },
     finished: completedAt !== null,
-    session: play.session,
+    boardState: play.session.puzzleState,
     getProgress(abandonedAt) {
       return createPlayAttemptProgress(play.session, abandonedAt);
     },
