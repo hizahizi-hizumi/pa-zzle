@@ -18,7 +18,6 @@ type MinesweeperTutorialCoverProps = {
   children: ReactNode;
 };
 
-/** 左上から右下へ、行と列の和の順に閉じていく。 */
 const COVER_STAGGER_MS = 40;
 const COVER_DURATION_MS = 220;
 const COVER_SETTLE_MS = 80;
@@ -84,7 +83,6 @@ export function MinesweeperTutorialCover({
     <div className="relative">
       {children}
       {active && (
-        // 盤面と同じ格子に並べ、重ねる面をマスにぴったり合わせる。
         <div
           ref={coverRef}
           aria-hidden="true"

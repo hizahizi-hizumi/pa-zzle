@@ -15,7 +15,6 @@ import {
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /**
- * 事前生成した問題集の1問。
  * seed は難易度・盤面条件・候補番号から `createMinesweeperPoolSeed` で再構成し、
  * 生成は各 seed の最初の候補だけを使うため、試行回数と開始マスの決め方は持たない。
  */
@@ -88,7 +87,7 @@ export function listMinesweeperPoolProblemIds(
   return poolIndex.listProblemIds(difficulty);
 }
 
-/** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+/** 問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findMinesweeperPoolEntryByProblemId(
   difficulty: MinesweeperDifficulty,
   problemId: string,

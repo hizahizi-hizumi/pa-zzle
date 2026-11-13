@@ -195,7 +195,7 @@ function findCandidateAtAttempt(
   return problem;
 }
 
-/** 再現用情報から盤面だけを復元する。難易度分析を走らせないため、分類済みの問題を遊ぶときに使う。 */
+/** 難易度分析を走らせないため、分類済みの問題を遊ぶときに使う。 */
 export function restoreMinesweeperProblemWithoutAnalysis(
   identity: MinesweeperProblemIdentity,
 ): MinesweeperIdentifiedProblem {

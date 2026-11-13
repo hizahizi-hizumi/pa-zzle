@@ -30,7 +30,6 @@ function isOpenableCell(
   );
 }
 
-// 指定したマスをまとめて開く。地雷のマスは踏んだ地雷として残し、安全なマスは連鎖開示する。
 function openMinesweeperCells(
   board: MinesweeperBoard,
   state: MinesweeperPuzzleState,

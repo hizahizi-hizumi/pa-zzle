@@ -38,7 +38,7 @@ export type MinesweeperSession = GameSession<
   mistakeCount: number;
 };
 
-/** クリアしたプレイで記録する事実。評価は保存した事実から導出するため、評価値は持たない。 */
+/** クリアしたプレイで記録する事実。 */
 export type MinesweeperSessionResult = {
   elapsedMs: number;
   mistakeCount: number;
@@ -101,7 +101,6 @@ function getVisibleCell(
   return { state: "hidden" };
 }
 
-/** 盤面の見え方。地雷の配置は、解き終えた盤面でだけ明かす。 */
 export function getMinesweeperVisibleCells(
   board: MinesweeperBoard,
   puzzleState: MinesweeperPuzzleState,
