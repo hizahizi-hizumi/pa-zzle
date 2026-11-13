@@ -158,10 +158,19 @@ export function MinesweeperCell({
           data-cell-cue="hint"
           className={cueOutlinePlacementClassName}
         >
-          <TutorialCue
-            kind="mark"
-            recallId={cue.kind === "recall" ? cue.id : null}
-          />
+          {cue.pointed ? (
+            // 下のマスに決め手の数字があることが多いので、指はマスの中を指す。
+            <TutorialCue
+              kind="pointer"
+              placement="center"
+              recallId={cue.kind === "recall" ? cue.id : null}
+            />
+          ) : (
+            <TutorialCue
+              kind="mark"
+              recallId={cue.kind === "recall" ? cue.id : null}
+            />
+          )}
         </span>
       )}
     </button>

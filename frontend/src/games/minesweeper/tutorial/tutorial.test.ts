@@ -1,3 +1,4 @@
+import { minesweeperDifficultyBoardRanges } from "@/games/minesweeper/difficulty";
 import { getMinesweeperNeighborCellIndices } from "@/games/minesweeper/puzzle/board";
 import {
   collectMinesweeperRevealCellIndices,
@@ -5,15 +6,18 @@ import {
   isMinesweeperCleared,
 } from "@/games/minesweeper/puzzle/rules";
 import type { MinesweeperPuzzleState } from "@/games/minesweeper/puzzle/state";
-import { revealMinesweeperCell } from "@/games/minesweeper/puzzle/transitions";
 import {
   _private,
-  findMinesweeperTutorialHintCellIndex,
+  describeMinesweeperTutorialHint,
+  findMinesweeperTutorialHint,
+  getMinesweeperTutorialProgressRatio,
   getMinesweeperTutorialStepCellIndices,
+  getMinesweeperTutorialStepSpotlitCellIndices,
   getMinesweeperTutorialVisibleCells,
   type MinesweeperTutorialAction,
   type MinesweeperTutorialBoardState,
   type MinesweeperTutorialRuleId,
+  type MinesweeperTutorialStep,
   minesweeperTutorial,
 } from "@/games/minesweeper/tutorial/tutorial";
 import {
@@ -25,23 +29,16 @@ import {
   type TutorialProgress,
 } from "@/games/tutorial";
 
-const {
-  board,
-  initialRevealedCellIndices,
-  safeCellIndices,
-  cellAt,
-  deduceCells,
-} = _private;
+const { board, safeCellIndices, cellAt, deduceCells } = _private;
+
+const { steps, rules } = minesweeperTutorial;
 
 type Progress = TutorialProgress<
   MinesweeperTutorialRuleId,
   MinesweeperTutorialBoardState
 >;
 
-const allRuleIds = [
-  "number",
-  "total",
-] as const satisfies readonly MinesweeperTutorialRuleId[];
+const allRuleIds = rules.map(({ id }) => id);
 
 function reveal(cellIndex: number): MinesweeperTutorialAction {
   return { type: "reveal", cellIndex };
@@ -55,9 +52,9 @@ function chord(cellIndex: number): MinesweeperTutorialAction {
   return { type: "chord", cellIndex };
 }
 
-function performAll(
+function perform(
   progress: Progress,
-  actions: readonly MinesweeperTutorialAction[],
+  ...actions: readonly MinesweeperTutorialAction[]
 ): Progress {
   return actions.reduce(
     (current, action) =>
@@ -66,90 +63,27 @@ function performAll(
   );
 }
 
+function stepActions(
+  step: MinesweeperTutorialStep,
+): MinesweeperTutorialAction[] {
+  return step.cellIndices.map((cellIndex) => ({
+    type: step.operation,
+    cellIndex,
+  }));
+}
+
+const startedProgress = finishTutorialIntro(startTutorial(minesweeperTutorial));
+
 function finishSteps(count: number): Progress {
-  return minesweeperTutorial.steps.slice(0, count).reduce(
-    (progress, step) =>
-      performAll(
-        progress,
-        step.cellIndices.map((cellIndex) => ({
-          type: step.operation,
-          cellIndex,
-        })),
-      ),
-    finishTutorialIntro(startTutorial(minesweeperTutorial)),
-  );
-}
-
-/** 開いていないマスに地雷の総数だけ地雷を置く置き方のうち、開いた数字すべてに合うもの。 */
-function listMinePlacements(revealedCellIndices: readonly number[]): string[] {
-  const hidden = Array.from(
-    { length: board.rows * board.columns },
-    (_, cellIndex) => cellIndex,
-  ).filter((cellIndex) => !revealedCellIndices.includes(cellIndex));
-  const mineCount = board.mineCellIndices.length;
-  const placements: number[][] = [];
-  function choose(start: number, chosen: number[]): void {
-    if (chosen.length === mineCount) {
-      placements.push([...chosen]);
-      return;
-    }
-    for (let index = start; index < hidden.length; index += 1) {
-      choose(index + 1, [...chosen, hidden[index] ?? -1]);
-    }
-  }
-  choose(0, []);
-  return placements
-    .filter((mines) =>
-      revealedCellIndices.every(
-        (cellIndex) =>
-          getMinesweeperNeighborCellIndices(board, cellIndex).filter(
-            (neighbor) => mines.includes(neighbor),
-          ).length === getAdjacentMinesweeperMineCount(board, cellIndex),
-      ),
-    )
-    .map((mines) => mines.join(","));
-}
-
-function revealByDeduction(
-  puzzle: MinesweeperPuzzleState,
-  ruleIds: readonly MinesweeperTutorialRuleId[],
-): MinesweeperPuzzleState {
-  let current = puzzle;
-  for (;;) {
-    const safe = [...deduceCells(current, ruleIds)]
-      .filter(
-        ([cellIndex, deduction]) =>
-          !deduction.mine && !current.revealedCellIndices.includes(cellIndex),
-      )
-      .map(([cellIndex]) => cellIndex);
-    if (safe.length === 0) {
-      return current;
-    }
-    current = safe.reduce(
-      (state, cellIndex) => revealMinesweeperCell(board, state, cellIndex),
-      current,
+  return steps
+    .slice(0, count)
+    .reduce(
+      (progress, step) => perform(progress, ...stepActions(step)),
+      startedProgress,
     );
-  }
 }
 
-const ruleStepCases = minesweeperTutorial.steps.map(
-  function createStepCase(step, stepIndex) {
-    const progress = finishSteps(stepIndex);
-    return [
-      stepIndex,
-      {
-        step,
-        progress,
-        puzzle: progress.boardState.puzzle,
-        earnedRuleIds: progress.earnedRuleIds,
-      },
-    ] as const;
-  },
-);
-const introducingStepCases = ruleStepCases.filter(
-  ([, { step }]) => step.introducedRuleId !== null,
-);
-const ruleCases = minesweeperTutorial.rules.map(({ id }) => id);
+const releasedProgress = finishSteps(steps.length);
 
 function listOrders(cellIndices: readonly number[]): number[][] {
   if (cellIndices.length <= 1) {
@@ -162,433 +96,535 @@ function listOrders(cellIndices: readonly number[]): number[][] {
   );
 }
 
-function listIntermediateProgresses(
-  progress: Progress,
-  operation: "reveal" | "flag",
-  order: readonly number[],
-): Progress[] {
-  const progresses: Progress[] = [];
-  let current = progress;
-  for (const cellIndex of order.slice(0, -1)) {
-    current = performTutorialAction(minesweeperTutorial, current, {
-      type: operation,
-      cellIndex,
-    });
-    progresses.push(current);
-  }
-  return progresses;
+function solveByDeduction(
+  puzzle: MinesweeperPuzzleState,
+  ruleIds: readonly MinesweeperTutorialRuleId[],
+): MinesweeperPuzzleState {
+  const deductions = deduceCells(puzzle, ruleIds);
+  const safe = [...deductions]
+    .filter(([, deduction]) => !deduction.mine)
+    .map(([cellIndex]) => cellIndex);
+  return {
+    ...puzzle,
+    revealedCellIndices: [
+      ...new Set([
+        ...puzzle.revealedCellIndices,
+        ...collectMinesweeperRevealCellIndices(board, safe),
+      ]),
+    ],
+  };
 }
 
-const otherOperations = {
-  reveal: "flag",
-  flag: "reveal",
-} as const;
+/** 盤面の数字1つが、`cellIndex` を `mine` のとおりに、`knownMines` を使って決めるか。 */
+function decides(
+  puzzle: MinesweeperPuzzleState,
+  numberCellIndex: number,
+  cellIndex: number,
+  mine: boolean,
+  knownMines: readonly number[],
+): boolean {
+  const closed = getMinesweeperNeighborCellIndices(
+    board,
+    numberCellIndex,
+  ).filter((neighbor) => !puzzle.revealedCellIndices.includes(neighbor));
+  const mineCount = getAdjacentMinesweeperMineCount(board, numberCellIndex);
+  if (!closed.includes(cellIndex)) {
+    return false;
+  }
+  return mine
+    ? closed.length === mineCount
+    : closed.filter((neighbor) => knownMines.includes(neighbor)).length ===
+        mineCount;
+}
+
+const stepCases = steps.map(
+  (step, stepIndex) => [stepIndex, step, finishSteps(stepIndex)] as const,
+);
+const ruleStepCases = stepCases.filter(
+  ([, step]) => step.introducedRuleId !== null,
+);
+
+/** ルールを伝える手順と、その手順を始めたときの切り替え（前の手順の操作）。 */
+const thoughtlessCases = ruleStepCases.map(
+  ([stepIndex, step, progress]) =>
+    [
+      stepIndex,
+      step,
+      progress,
+      steps[stepIndex - 1]?.operation ?? "reveal",
+    ] as const,
+);
+
+/** 手順を終えるまでに受け付ける道筋ごとの、手を離した盤面。 */
+const releasedCases = [
+  ["2つの旗を置き、3マスを1つずつ開いた", releasedProgress],
+  [
+    "1つ目の地雷を踏んでから旗を置いた",
+    perform(
+      finishSteps(1),
+      reveal(cellAt(2, 5)),
+      flag(cellAt(4, 5)),
+      ...stepActions(steps[2] as MinesweeperTutorialStep),
+    ),
+  ],
+  [
+    "2つ目の地雷を踏んでから旗を置いた",
+    perform(
+      finishSteps(1),
+      reveal(cellAt(4, 5)),
+      flag(cellAt(2, 5)),
+      ...stepActions(steps[2] as MinesweeperTutorialStep),
+    ),
+  ],
+  [
+    "地雷がそろった1を押してまとめて開いた",
+    perform(finishSteps(2), chord(cellAt(4, 4))),
+  ],
+] as const;
 
 describe("minesweeperTutorial の盤面", () => {
-  const releasedPuzzle = finishSteps(minesweeperTutorial.steps.length)
-    .boardState.puzzle;
-  const startPuzzle = minesweeperTutorial.start().puzzle;
-  const revealedFromCorner = collectMinesweeperRevealCellIndices(board, [
-    cellAt(1, 1),
-  ]);
-  const goalRevealed = minesweeperTutorial.goal().puzzle.revealedCellIndices;
-  const deductionCases = [
-    ...ruleStepCases.map(
-      ([stepIndex, { puzzle, earnedRuleIds }]) =>
-        [`手順 ${stepIndex} を始めた盤面`, puzzle, earnedRuleIds] as const,
-    ),
-    ["手を離した盤面", releasedPuzzle, allRuleIds] as const,
-  ];
+  test("始まりの盤面は、本番と同じく、周りに地雷の無い1マスから続けて開いた形であること", () => {
+    const startPuzzle = minesweeperTutorial.start().puzzle;
+    const firstCellAround = getMinesweeperNeighborCellIndices(
+      board,
+      cellAt(1, 3),
+    ).filter((cellIndex) => board.mineCellIndices.includes(cellIndex));
 
-  test("始まりの盤面は、本番と同じく1マスから続けて開いた形であること", () => {
-    const result = minesweeperTutorial.start().puzzle.revealedCellIndices;
-
-    expect(result).toEqual(revealedFromCorner);
+    expect(firstCellAround).toEqual([]);
+    expect(startPuzzle.revealedCellIndices).toEqual(
+      collectMinesweeperRevealCellIndices(board, [cellAt(1, 3)]),
+    );
   });
 
-  test("どの置き方でも地雷でないマスを開いていくと、推測せずに地雷の置き方が1つに決まること", () => {
-    let revealed = [...initialRevealedCellIndices];
-    let placements = listMinePlacements(revealed);
-    for (;;) {
-      const candidates = placements.map((placement) =>
-        placement.split(",").map(Number),
-      );
-      const safe = Array.from(
-        { length: board.rows * board.columns },
-        (_, cellIndex) => cellIndex,
-      ).filter(
-        (cellIndex) =>
-          !revealed.includes(cellIndex) &&
-          candidates.every((mines) => !mines.includes(cellIndex)),
-      );
-      if (safe.length === 0) {
-        break;
-      }
-      revealed = [...revealed, ...safe];
-      placements = listMinePlacements(revealed);
-    }
-
-    expect(placements).toEqual([board.mineCellIndices.join(",")]);
-    expect(revealed).toHaveLength(safeCellIndices.length);
-  });
-
-  test("開いていない地雷でないマスは、開いても周りが続けて開かないこと", () => {
-    const result = safeCellIndices
-      .filter((cellIndex) => !initialRevealedCellIndices.includes(cellIndex))
-      .map((cellIndex) => getAdjacentMinesweeperMineCount(board, cellIndex));
-
-    expect(result.every((count) => count > 0)).toBe(true);
-  });
-
-  test("導入で見せる解き終えた盤面は、地雷でないマスがすべて開き、地雷を明かしていること", () => {
+  test("入口で見せる解き終えた盤面は、地雷でないマスがすべて開き、地雷を明かしていること", () => {
     const goal = minesweeperTutorial.goal();
-    const cleared = isMinesweeperCleared(board, goal.puzzle);
     const visibleCells = getMinesweeperTutorialVisibleCells(goal);
-    const mineStates = board.mineCellIndices.map(
-      (cellIndex) => visibleCells[cellIndex]?.state,
+
+    expect(isMinesweeperCleared(board, goal.puzzle)).toBe(true);
+    expect(
+      board.mineCellIndices.map((cellIndex) => visibleCells[cellIndex]?.state),
+    ).toEqual(board.mineCellIndices.map(() => "mine"));
+  });
+
+  test("操作を教える手順で開いた後は、数字1つを見るだけの読みで、推測せずに地雷の総数を使わずに解き切れること", () => {
+    const result = solveByDeduction(
+      finishSteps(1).boardState.puzzle,
+      allRuleIds,
     );
 
-    expect(cleared).toBe(true);
-    expect(mineStates).toEqual(["mine", "mine", "mine"]);
+    expect(isMinesweeperCleared(board, result)).toBe(true);
   });
 
-  test("数字の決まりだけでは解き切れず、地雷の総数の決まりも使うと解き切れること", () => {
-    const byNumber = revealByDeduction(startPuzzle, ["number"]);
-    const byAll = revealByDeduction(startPuzzle, allRuleIds);
+  test("操作を教える最初の手順は、決め手もルールも持たず、ゴールの盤面で開いているマスを開かせること", () => {
+    const [first] = steps;
 
-    expect(isMinesweeperCleared(board, byNumber)).toBe(false);
-    expect(byNumber.steppedMineCellIndices).toEqual([]);
-    expect(isMinesweeperCleared(board, byAll)).toBe(true);
-    expect(byAll.steppedMineCellIndices).toEqual([]);
+    expect(first?.introducedRuleId).toBeNull();
+    expect(first?.reasonCellIndices).toEqual([]);
+    expect(first?.operation).toBe("reveal");
+    expect(
+      first?.cellIndices.every((cellIndex) =>
+        safeCellIndices.includes(cellIndex),
+      ),
+    ).toBe(true);
+  });
+
+  test("ルールを伝える手順は、2つの読みをこの順に1つずつ伝えること", () => {
+    const result = ruleStepCases.map(([, step]) => step.introducedRuleId);
+
+    expect(result).toEqual(allRuleIds);
   });
 
   test.each(ruleStepCases)(
-    "手順 %i の印のマスは、始めた盤面で、手に入れたルールだけで手順の操作どおりに決まること",
-    (_, { step, puzzle, earnedRuleIds }) => {
-      const deductions = deduceCells(puzzle, earnedRuleIds);
+    "手順 %i の印のマスは、始めた盤面で、それまでに伝えた読みだけで手順の操作どおりに決まり、伝えたばかりの読みが要ること",
+    (_, step, progress) => {
+      const { puzzle } = progress.boardState;
+      const earned = progress.earnedRuleIds;
+      const before = earned.filter((id) => id !== step.introducedRuleId);
+      const withEarned = deduceCells(puzzle, earned);
+      const withoutIntroduced = deduceCells(puzzle, before);
 
       const result = step.cellIndices.map(
-        (cellIndex) => deductions.get(cellIndex)?.mine ?? null,
+        (cellIndex) => withEarned.get(cellIndex)?.mine ?? null,
+      );
+      const decidedWithout = step.cellIndices.filter((cellIndex) =>
+        withoutIntroduced.has(cellIndex),
       );
 
       expect(result).toEqual(
         step.cellIndices.map(() => step.operation === "flag"),
       );
+      expect(decidedWithout).toEqual([]);
     },
   );
 
   test.each(ruleStepCases)(
-    "手順 %i の始まりから示す決め手は、印のマスを決めた数字と、その読みに使った地雷のマスと同じであること",
-    (_, { step, puzzle, earnedRuleIds }) => {
-      const deductions = deduceCells(puzzle, earnedRuleIds);
+    "手順 %i の決め手は、印のマスをすべて決める数字と、その読みに使う、手順で地雷と分かったマスであること",
+    (_, step, progress) => {
+      const { puzzle } = progress.boardState;
+      const [numberCellIndex, ...knownMines] = step.reasonCellIndices;
+      const minesSoFar = [
+        ...puzzle.flaggedCellIndices,
+        ...puzzle.steppedMineCellIndices,
+      ];
 
-      const result = [
-        ...new Set(
-          step.cellIndices.flatMap(
-            (cellIndex) => deductions.get(cellIndex)?.reasonCellIndices ?? [],
-          ),
+      const result = step.cellIndices.every((cellIndex) =>
+        decides(
+          puzzle,
+          numberCellIndex ?? -1,
+          cellIndex,
+          step.operation === "flag",
+          knownMines,
         ),
-      ].sort((left, right) => left - right);
-
-      expect(result).toEqual(step.reasonCellIndices);
-    },
-  );
-
-  test.each(ruleStepCases)(
-    "手順 %i の印のマスへの操作は、ゴールの盤面と一致すること",
-    (_, { step }) => {
-      const result = step.cellIndices.map((cellIndex) =>
-        goalRevealed.includes(cellIndex) ? "reveal" : "flag",
       );
 
-      expect(result).toEqual(step.cellIndices.map(() => step.operation));
+      expect(result).toBe(true);
+      expect(
+        knownMines.every((cellIndex) => minesSoFar.includes(cellIndex)),
+      ).toBe(true);
+    },
+  );
+
+  test.each(stepCases)(
+    "手順 %i の印のマスをどの順で手順どおりに打っても、途中で地雷を踏まず、旗は地雷のマスにだけあること",
+    (_, step, progress) => {
+      const result = listOrders(step.cellIndices).flatMap((order) => {
+        const progresses: Progress[] = [];
+        let current = progress;
+        for (const cellIndex of order) {
+          current = perform(current, { type: step.operation, cellIndex });
+          progresses.push(current);
+        }
+        return progresses.map(({ violated, boardState: { puzzle } }) => ({
+          violated,
+          stepped: puzzle.steppedMineCellIndices,
+          wrongFlags: puzzle.flaggedCellIndices.filter(
+            (cellIndex) => !board.mineCellIndices.includes(cellIndex),
+          ),
+        }));
+      });
+
+      expect(result).toEqual(
+        result.map(() => ({ violated: false, stepped: [], wrongFlags: [] })),
+      );
     },
   );
 
   test.each(ruleStepCases)(
-    "手順 %i の印のマスをどの順で打っても、打ち終えるまでの途中の盤面で地雷を踏まず、旗は地雷のマスにだけあること",
-    (_, { step, progress }) => {
-      const result = listOrders(step.cellIndices).flatMap((order) =>
-        listIntermediateProgresses(progress, step.operation, order).map(
-          ({ stepIndex, violated, boardState: { puzzle } }) => ({
-            stepIndex,
-            violated,
-            steppedMineCellIndices: puzzle.steppedMineCellIndices,
-            wrongFlagCellIndices: puzzle.flaggedCellIndices.filter(
-              (cellIndex) => !board.mineCellIndices.includes(cellIndex),
-            ),
-          }),
-        ),
+    "手順 %i で覆いから抜くマスは、決めた数字と、手順のマスを含むその周りの閉じたマスであること",
+    (_, step, progress) => {
+      const [numberCellIndex] = step.reasonCellIndices;
+      const closedAround = getMinesweeperNeighborCellIndices(
+        board,
+        numberCellIndex ?? -1,
+      ).filter(
+        (cellIndex) =>
+          !progress.boardState.puzzle.revealedCellIndices.includes(cellIndex),
+      );
+
+      const result = getMinesweeperTutorialStepSpotlitCellIndices(
+        step,
+        progress.boardState,
       );
 
       expect(result).toEqual(
-        result.map(() => ({
-          stepIndex: progress.stepIndex,
-          violated: false,
-          steppedMineCellIndices: [],
-          wrongFlagCellIndices: [],
-        })),
+        [...new Set([...step.reasonCellIndices, ...closedAround])].sort(
+          (left, right) => left - right,
+        ),
       );
+      expect(
+        step.cellIndices.every((cellIndex) => result.includes(cellIndex)),
+      ).toBe(true);
     },
   );
 
-  test.each(ruleStepCases)(
-    "手順 %i の印のマスに手順と違う操作をしても、盤面を変えないこと",
-    (_, { step, progress }) => {
-      const result = step.cellIndices.map((cellIndex) =>
-        performTutorialAction(minesweeperTutorial, progress, {
-          type: otherOperations[step.operation],
-          cellIndex,
-        }),
-      );
+  test.each(thoughtlessCases)(
+    "手順 %i で、前の手順の操作のまま考えずに手順のマスを押すと、ルールに合わない手になるか、受け付けられないこと",
+    (_, step, progress, previousOperation) => {
+      const target = step.cellIndices[0] ?? -1;
 
-      expect(result).toEqual(step.cellIndices.map(() => progress));
+      const result = perform(progress, {
+        type: previousOperation,
+        cellIndex: target,
+      });
+
+      expect(previousOperation).not.toBe(step.operation);
+      expect(result.violated || result === progress).toBe(true);
     },
   );
 
-  test.each(ruleCases)(
-    "ルール %s は、1つ以上の手順で印のマスを決める決め手になること",
-    (ruleId) => {
-      const result = ruleStepCases.filter(
-        ([, { step, puzzle, earnedRuleIds }]) => {
-          const withoutRule = deduceCells(
-            puzzle,
-            earnedRuleIds.filter((earned) => earned !== ruleId),
-          );
-          return step.cellIndices.some(
-            (cellIndex) => !withoutRule.has(cellIndex),
-          );
-        },
+  test.each(releasedCases)(
+    "手順を終えると、伝えた読みだけで残りが解き切れ、どちらの読みも手を離した後にもう一度要ること: %s",
+    (_, progress) => {
+      const { puzzle } = progress.boardState;
+      const deductions = [...deduceCells(puzzle, allRuleIds).values()];
+      const solved = solveByDeduction(puzzle, allRuleIds);
+      const unsolvedWithOne = allRuleIds.map(
+        (ruleId) =>
+          !isMinesweeperCleared(board, solveByDeduction(puzzle, [ruleId])),
       );
 
-      expect(result.length).toBeGreaterThan(0);
+      expect(progress.stepIndex).toBe(steps.length);
+      expect(isMinesweeperCleared(board, solved)).toBe(true);
+      expect(new Set(deductions.map(({ ruleId }) => ruleId))).toEqual(
+        new Set(allRuleIds),
+      );
+      expect(unsolvedWithOne).toEqual(allRuleIds.map(() => true));
     },
   );
-
-  test("地雷の総数を示すのは、地雷の総数のルールを示す手順だけであること", () => {
-    const result = minesweeperTutorial.steps.map(
-      (step) => step.reasonMineCount,
-    );
-
-    expect(result).toEqual(
-      minesweeperTutorial.steps.map(
-        (step) => step.introducedRuleId === "total",
-      ),
-    );
-  });
-
-  test.each(introducingStepCases)(
-    "手順 %i の印のマスは、それまでのルールでは決まらないこと",
-    (_, { step, puzzle, earnedRuleIds }) => {
-      const earlierRuleIds = earnedRuleIds.filter(
-        (ruleId) => ruleId !== step.introducedRuleId,
-      );
-      const deductions = deduceCells(puzzle, earlierRuleIds);
-
-      const result = step.cellIndices.filter((cellIndex) =>
-        deductions.has(cellIndex),
-      );
-
-      expect(result).toEqual([]);
-    },
-  );
-
-  test.each(deductionCases)(
-    "%sで、手に入れたルールで決まるとしたマスは、開いた数字と地雷の総数に合うどの置き方でも、そのとおりであること",
-    (_, puzzle, ruleIds) => {
-      const placements = listMinePlacements(puzzle.revealedCellIndices).map(
-        (placement) => placement.split(",").map(Number),
-      );
-
-      const result = [...deduceCells(puzzle, ruleIds)]
-        .filter(([cellIndex, { mine }]) =>
-          placements.some((mines) => mines.includes(cellIndex) !== mine),
-        )
-        .map(([cellIndex]) => cellIndex);
-
-      expect(placements.length).toBeGreaterThan(0);
-      expect(result).toEqual([]);
-    },
-  );
-
-  test("手順を終えると開いていない地雷でないマスが残り、2つのルールで決まるマスを順に開いて解き切れること", () => {
-    const remaining = safeCellIndices.filter(
-      (cellIndex) => !releasedPuzzle.revealedCellIndices.includes(cellIndex),
-    );
-
-    const result = revealByDeduction(releasedPuzzle, allRuleIds);
-
-    expect(remaining.length).toBeGreaterThan(1);
-    expect(isMinesweeperCleared(board, result)).toBe(true);
-    expect(result.steppedMineCellIndices).toEqual([]);
-  });
 });
 
 describe("minesweeperTutorial.perform", () => {
-  const started = finishTutorialIntro(startTutorial(minesweeperTutorial));
-  const afterFirstStep = finishSteps(1);
-  const afterSecondStep = finishSteps(2);
-  const released = finishSteps(minesweeperTutorial.steps.length);
+  const flagStepProgress = finishSteps(1);
+  const revealStepProgress = finishSteps(2);
 
   test("手を引いている間は、印の無いマスへの操作で盤面を変えないこと", () => {
-    const result = performAll(started, [
-      reveal(cellAt(4, 3)),
-      flag(cellAt(5, 2)),
-    ]);
+    const result = perform(startedProgress, reveal(cellAt(5, 5)));
 
-    expect(result).toBe(started);
+    expect(result).toBe(startedProgress);
   });
 
-  test("旗を置かせる印のマスは、開く操作を受け付けず、地雷を踏ませないこと", () => {
-    const result = performAll(started, [reveal(cellAt(3, 3))]);
+  test("開かせる印のマスに旗を置く手は受け付けないこと", () => {
+    const result = perform(revealStepProgress, flag(cellAt(5, 3)));
 
-    expect(result).toBe(started);
+    expect(result).toBe(revealStepProgress);
   });
 
-  test("旗を置かせる印のマスに旗を置くと、次の手順へ進み、置いたマスを手順どおりになったマスとして返すこと", () => {
-    const result = performAll(started, [flag(cellAt(3, 3))]);
+  test("旗で地雷がそろった数字を押して、印のマスだけをまとめて開くと、次へ進むこと", () => {
+    const result = perform(revealStepProgress, chord(cellAt(4, 4)));
 
-    expect(result.stepIndex).toBe(1);
-    expect(result.boardState.puzzle.flaggedCellIndices).toEqual([cellAt(3, 3)]);
-    expect(result.boardState.lastMove).toEqual({
-      cellIndex: cellAt(3, 3),
-      steppedMine: false,
-      fittedCellIndices: [cellAt(3, 3)],
-    });
-  });
-
-  test("開かせる印のマスは、旗を置く操作を受け付けないこと", () => {
-    const result = performAll(afterFirstStep, [flag(cellAt(4, 3))]);
-
-    expect(result).toBe(afterFirstStep);
-  });
-
-  test("旗で数がそろった1を押して、印のマスをまとめて開いても次の手順へ進み、手順どおりになったのは押した1ではなく開いた印のマスとすること", () => {
-    const result = performAll(afterFirstStep, [chord(cellAt(3, 2))]);
-
-    expect(result.stepIndex).toBe(2);
-    expect(result.boardState.puzzle.revealedCellIndices).toContain(
-      cellAt(4, 3),
-    );
+    expect(result.stepIndex).toBe(steps.length);
     expect(result.boardState.lastMove?.fittedCellIndices).toEqual([
-      cellAt(4, 3),
-    ]);
-  });
-
-  test("旗の数がそろっていない数字を押しても、盤面を変えないこと", () => {
-    const result = performAll(afterFirstStep, [chord(cellAt(3, 4))]);
-
-    expect(result).toBe(afterFirstStep);
-  });
-
-  test("開かせる印のマスを開くと、次の手順へ進み、地雷の総数のルールを手に入れること", () => {
-    const result = performAll(afterFirstStep, [reveal(cellAt(4, 3))]);
-
-    expect(result.stepIndex).toBe(2);
-    expect(result.earnedRuleIds).toEqual(["number", "total"]);
-  });
-
-  test("地雷の総数で決まる3マスは、3つとも開くまで手順を進めないこと", () => {
-    const once = performAll(afterSecondStep, [reveal(cellAt(4, 5))]);
-    const all = performAll(once, [reveal(cellAt(5, 1)), reveal(cellAt(5, 5))]);
-
-    expect(once.stepIndex).toBe(2);
-    expect(all.stepIndex).toBe(minesweeperTutorial.steps.length);
-  });
-
-  test("手を離した後は、旗の正誤を判定せず、旗を外せること", () => {
-    const placed = performAll(released, [flag(cellAt(5, 3))]);
-    const removed = performAll(placed, [flag(cellAt(5, 3))]);
-
-    expect(placed.violated).toBe(false);
-    expect(placed.boardState.puzzle.flaggedCellIndices).toContain(cellAt(5, 3));
-    expect(removed.boardState.puzzle.flaggedCellIndices).not.toContain(
       cellAt(5, 3),
-    );
+      cellAt(5, 4),
+      cellAt(5, 5),
+    ]);
   });
 
-  test("手を離した後に地雷を踏むと、違反として盤面に残し、続けて解き切れること", () => {
-    const stepped = performAll(released, [reveal(cellAt(4, 4))]);
-    const message = getTutorialMessage(minesweeperTutorial, stepped, {
-      entry: "home",
-      violationSettled: true,
-    });
-    const solved = performAll(stepped, [
-      reveal(cellAt(5, 3)),
-      reveal(cellAt(5, 4)),
+  test("考えずに旗を置かせる印のマスを開くと、本番と同じく地雷を踏んで、ルールに合わない手になること", () => {
+    const result = perform(flagStepProgress, reveal(cellAt(2, 5)));
+
+    expect(result.violated).toBe(true);
+    expect(result.stepIndex).toBe(1);
+    expect(result.boardState.puzzle.steppedMineCellIndices).toEqual([
+      cellAt(2, 5),
     ]);
+  });
+
+  test("旗を置かせるマスを一度踏んだら、もう1つは踏ませず、旗を置くと地雷と分かったとして次へ進むこと", () => {
+    const stepped = perform(flagStepProgress, reveal(cellAt(2, 5)));
+    const secondStep = perform(stepped, reveal(cellAt(4, 5)));
+    const flagged = perform(stepped, flag(cellAt(4, 5)));
+
+    expect(secondStep).toBe(stepped);
+    expect(flagged.stepIndex).toBe(2);
+  });
+
+  test("手を離した後は、本番と同じく旗の正誤を判定しないこと", () => {
+    const result = perform(releasedProgress, flag(cellAt(1, 5)));
+
+    expect(result.violated).toBe(false);
+    expect(result.boardState.puzzle.flaggedCellIndices).toContain(cellAt(1, 5));
+  });
+
+  test("手を離した後は、地雷を踏むとルールに合わない手になり、そのまま解き切れること", () => {
+    const stepped = perform(releasedProgress, reveal(cellAt(1, 1)));
+    const continued = perform(
+      stepped,
+      reveal(cellAt(1, 5)),
+      reveal(cellAt(5, 1)),
+    );
 
     expect(stepped.violated).toBe(true);
-    expect(stepped.boardState.puzzle.steppedMineCellIndices).toEqual([
-      cellAt(4, 4),
-    ]);
-    expect(message.headline).toBe("地雷を踏みました");
-    expect(solved.phase).toBe("solved");
-  });
-
-  test("手を離した後は、旗で数がそろった数字を押すと周りをまとめて開けること", () => {
-    const result = performAll(released, [
-      flag(cellAt(5, 2)),
-      chord(cellAt(4, 2)),
-    ]);
-
-    expect(result.boardState.puzzle.revealedCellIndices).toContain(
-      cellAt(5, 3),
-    );
-  });
-
-  test("残りの地雷でないマスをすべて開くと解けること", () => {
-    const result = performAll(released, [
-      reveal(cellAt(5, 3)),
-      reveal(cellAt(5, 4)),
-    ]);
-
-    expect(result.phase).toBe("solved");
+    expect(continued.phase).toBe("solved");
   });
 });
 
-describe("findMinesweeperTutorialHintCellIndex", () => {
-  const released = finishSteps(minesweeperTutorial.steps.length);
-  const flaggedSafe = performAll(released, [flag(cellAt(5, 3))]);
-  const flaggedAllSafe = performAll(flaggedSafe, [flag(cellAt(5, 4))]);
+describe("minesweeperTutorial の一言", () => {
+  const options = { entry: "home", violationSettled: true } as const;
+  const guidedSteppedProgress = perform(finishSteps(1), reveal(cellAt(2, 5)));
+  const releasedSteppedProgress = perform(
+    releasedProgress,
+    reveal(cellAt(1, 1)),
+  );
+  const levelBoardSizes = Object.values(
+    minesweeperDifficultyBoardRanges,
+  ).flatMap(({ sizes }) => sizes);
+  const texts = [
+    minesweeperTutorial.intro.purpose,
+    minesweeperTutorial.intro.goalCaption,
+    ...steps.flatMap(({ message }) => [message.headline, message.detail]),
+    minesweeperTutorial.freePlay.headline,
+    minesweeperTutorial.freePlay.detail,
+    ...Object.values(minesweeperTutorial.completion).flatMap((message) => [
+      message.headline,
+      message.detail,
+    ]),
+  ].filter((text) => text !== null);
 
-  test("手を離した盤面では、数字で決まる地雷でないマスを返すこと", () => {
-    const result = findMinesweeperTutorialHintCellIndex(
-      getTutorialSituation(minesweeperTutorial, released),
-      released.boardState,
+  test("地雷を踏むと、本番ではミスになることを言い、旗を置かせる手順では残りの地雷への手を添えること", () => {
+    const guided = getTutorialMessage(
+      minesweeperTutorial,
+      guidedSteppedProgress,
+      options,
+    );
+    const released = getTutorialMessage(
+      minesweeperTutorial,
+      releasedSteppedProgress,
+      options,
     );
 
-    expect([cellAt(5, 3), cellAt(5, 4)]).toContain(result);
+    expect(guided.headline).toContain("ミスになります");
+    expect(guided.detail).toContain("旗");
+    expect(released.headline).toBe(guided.headline);
+    expect(released.detail).toBeNull();
   });
 
-  test("地雷でないマスに旗を置いても、ほかに決まるマスがあればそちらを返すこと", () => {
-    const result = findMinesweeperTutorialHintCellIndex(
-      getTutorialSituation(minesweeperTutorial, flaggedSafe),
-      flaggedSafe.boardState,
+  test("ゲームのホームから開いたときの完成の一言で、本番の盤面が大きいと言うことが、どのレベルにも当てはまること", () => {
+    const result = levelBoardSizes.filter(
+      (size) => size.rows <= board.rows || size.columns <= board.columns,
     );
 
-    expect(result).toBe(cellAt(5, 4));
+    expect(result).toEqual([]);
+    expect(minesweeperTutorial.completion.home.detail).toContain(
+      "もっと大きな盤面",
+    );
   });
 
-  test("決まるマスがすべて旗の下にあれば、旗のマスを返すこと", () => {
-    const result = findMinesweeperTutorialHintCellIndex(
-      getTutorialSituation(minesweeperTutorial, flaggedAllSafe),
-      flaggedAllSafe.boardState,
+  test("一言は、全角45字まで・3行までで、読点と句点を打たないこと", () => {
+    const tooLong = texts.filter(
+      (text) =>
+        text.replaceAll("\n", "").length > 45 || text.split("\n").length > 3,
+    );
+    const punctuated = texts.filter((text) => /[、。]/.test(text));
+
+    expect(tooLong).toEqual([]);
+    expect(punctuated).toEqual([]);
+  });
+});
+
+describe("findMinesweeperTutorialHint", () => {
+  const releasedSituation = getTutorialSituation(
+    minesweeperTutorial,
+    releasedProgress,
+  );
+  const wronglyFlaggedProgress = perform(
+    releasedProgress,
+    flag(cellAt(1, 1)),
+    flag(cellAt(5, 2)),
+    flag(cellAt(1, 5)),
+  );
+  const wronglyFlaggedSituation = getTutorialSituation(
+    minesweeperTutorial,
+    wronglyFlaggedProgress,
+  );
+
+  function followHints(progress: Progress): Progress {
+    const hint = findMinesweeperTutorialHint(
+      getTutorialSituation(minesweeperTutorial, progress),
+      progress.boardState,
+    );
+    if (!hint || progress.phase !== "playing") {
+      return progress;
+    }
+    const action =
+      hint.operation === "flag" ? flag(hint.cellIndex) : reveal(hint.cellIndex);
+    return followHints(perform(progress, action));
+  }
+
+  test("手を離した盤面では、前に決まったマスを使わずに決まるマスを、決めた数字とともに示すこと", () => {
+    const result = findMinesweeperTutorialHint(
+      releasedSituation,
+      releasedProgress.boardState,
     );
 
-    expect([cellAt(5, 3), cellAt(5, 4)]).toContain(result);
+    expect(result).toEqual({
+      cellIndex: cellAt(1, 1),
+      deduction: expect.objectContaining({ mine: true, round: 1 }),
+      operation: "flag",
+      reasonCellIndices: [expect.any(Number)],
+    });
+    expect(
+      decides(
+        releasedProgress.boardState.puzzle,
+        result?.reasonCellIndices[0] ?? -1,
+        cellAt(1, 1),
+        true,
+        [],
+      ),
+    ).toBe(true);
+  });
+
+  test("地雷でないと決まるマスに旗を置いていたら、旗を外させること", () => {
+    const result = findMinesweeperTutorialHint(
+      wronglyFlaggedSituation,
+      wronglyFlaggedProgress.boardState,
+    );
+    const message = result
+      ? describeMinesweeperTutorialHint(
+          wronglyFlaggedProgress.boardState,
+          result,
+        )
+      : null;
+
+    expect(result?.cellIndex).toBe(cellAt(1, 5));
+    expect(result?.operation).toBe("flag");
+    expect(message?.detail).toBe("旗を外して開きます");
+  });
+
+  test("示されたとおりに打ち続けると、地雷を踏まずに解き切れること", () => {
+    const result = followHints(releasedProgress);
+
+    expect(result.phase).toBe("solved");
+    expect(result.boardState.puzzle.steppedMineCellIndices).toEqual([]);
   });
 });
 
 describe("getMinesweeperTutorialStepCellIndices", () => {
-  const partlyOpened = performAll(finishSteps(2), [reveal(cellAt(5, 1))]);
+  const halfFlaggedProgress = perform(finishSteps(1), flag(cellAt(2, 5)));
+  const cases = [
+    ["旗を1つ置いた手順の途中", halfFlaggedProgress, [cellAt(4, 5)]],
+    ["手を離した後", releasedProgress, []],
+  ] as const;
 
-  test("手順の印のうち、まだ手順どおりになっていないマスを返すこと", () => {
-    const result = getMinesweeperTutorialStepCellIndices(
-      getTutorialSituation(minesweeperTutorial, partlyOpened),
-      partlyOpened.boardState,
-    );
+  test.each(cases)(
+    "手順の印のマスのうち、まだ手順どおりにしていないものを返すこと: %s",
+    (_, progress, expected) => {
+      const result = getMinesweeperTutorialStepCellIndices(
+        getTutorialSituation(minesweeperTutorial, progress),
+        progress.boardState,
+      );
 
-    expect(result).toEqual([cellAt(4, 5), cellAt(5, 5)]);
-  });
+      expect(result).toEqual(expected);
+    },
+  );
+});
+
+describe("getMinesweeperTutorialProgressRatio", () => {
+  const solvedProgress = perform(
+    releasedProgress,
+    reveal(cellAt(1, 5)),
+    reveal(cellAt(5, 1)),
+  );
+  const cases = [
+    ["始めた盤面", 0, startedProgress, 0],
+    [
+      "手を離した盤面",
+      steps.length,
+      releasedProgress,
+      steps.length / (steps.length + 1),
+    ],
+    ["解き終えた盤面", steps.length, solvedProgress, 1],
+  ] as const;
+
+  test.each(cases)(
+    "済んだ手順の数で進み、解き終えると満ちること: %s",
+    (_, stepIndex, progress, expected) => {
+      const result = getMinesweeperTutorialProgressRatio(
+        stepIndex,
+        progress.boardState,
+      );
+
+      expect(result).toBe(expected);
+    },
+  );
 });

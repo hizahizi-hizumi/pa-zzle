@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import type { MinesweeperCellCue } from "@/games/minesweeper/ui/board/cell-cue";
@@ -17,7 +18,8 @@ export type MinesweeperBoardProps = {
   onToggleFlag: (cellIndex: number) => void;
   onChordCell: (cellIndex: number) => void;
   cues?: readonly MinesweeperCellCue[];
-  spotlitCellIndices?: readonly number[];
+  /** `null` でない間だけ、盤面を覆う範囲にする。 */
+  spotlitCellIndices?: readonly number[] | null;
   onIneffectiveCellPress?: (cellIndex: number) => void;
 };
 
@@ -47,7 +49,7 @@ export function MinesweeperBoard({
   onToggleFlag,
   onChordCell,
   cues = [],
-  spotlitCellIndices = [],
+  spotlitCellIndices = null,
   onIneffectiveCellPress,
 }: MinesweeperBoardProps) {
   if (cells.length !== rows * columns) {
@@ -101,6 +103,9 @@ export function MinesweeperBoard({
       aria-label={`${MINESWEEPER_DISPLAY_NAME}盤面`}
       className={BOARD_CLASS_NAME}
       style={getMinesweeperBoardGridStyle(columns)}
+      {...(spotlitCellIndices !== null && {
+        [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "",
+      })}
     >
       {cells.map(function renderCell(cell, cellIndex) {
         return (
@@ -109,7 +114,7 @@ export function MinesweeperBoard({
             cellIndex={cellIndex}
             view={cell}
             cue={cueByCellIndex.get(cellIndex)}
-            spotlit={spotlitCellIndices.includes(cellIndex)}
+            spotlit={spotlitCellIndices?.includes(cellIndex) ?? false}
             disabled={interactionDisabled}
             onPress={handleCellPress}
             onFlagPress={handleCellFlagPress}
