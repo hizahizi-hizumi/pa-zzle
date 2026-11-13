@@ -17,8 +17,7 @@ const fadeAwayClassName =
   "fill-mode-forwards animate-out fade-out-0 delay-(--duration-slow) duration-(--duration-slow) ease-standard";
 
 /**
- * チュートリアルの印と合図。全ゲームで同じ見せ方にするため、印と合図はこの部品だけで描き、ゲームごとの点線・発光・矢印・バッジ・独自の色を足さない。
- * 決め手には印を付けず、手を引く間に画面全体の覆いから抜いて元の明るさで見せることで示す（`TutorialSpotlight`）。
+ * チュートリアルの印と合図。ゲームは印と合図をこの部品だけで描く。決め手は印ではなく `TutorialSpotlight` で示す。
  * どこまで囲むかと角丸は押す物の形からゲームが決め、置き場所の要素に持たせる。
  *
  * 盤面部品は、押す物（マス・タイルなど）の中に `relative` で角丸を持つ置き場所を置き、その中にこの部品を描く。

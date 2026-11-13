@@ -34,7 +34,6 @@ const cornerRadiusProperties = [
 ] as const;
 
 /**
- * 覆いの色と濃さ。盤面の状態はまだ読めるが、抜いた所だけが明らかに明るく見える程度にする。
  * 暗い配色では `foreground` が明るい色になるので、`background` を濃く重ねる。
  */
 const scrimFillClassName = "fill-foreground/55 dark:fill-background/75";
@@ -103,8 +102,7 @@ function getHolesKey(holes: readonly Hole[]): string {
 }
 
 /**
- * チュートリアルで手を引いている間、画面全体に暗い覆いを重ね、次に押す所・決め手・一言だけを抜いて元の明るさで見せる。
- * 全ゲームで同じ見せ方にするため、各ゲームは抜く所に `TutorialSpotlight` を置くか `TUTORIAL_SPOTLIGHT_ATTRIBUTE` を付けるだけにし、覆いを描かない。
+ * チュートリアルで手を引いている間の覆い。各ゲームは抜く所に `TutorialSpotlight` を置くか `TUTORIAL_SPOTLIGHT_ATTRIBUTE` を付けるだけにし、覆いを描かない。
  *
  * 覆いは画面の一番上に置いた1枚の SVG に描き、抜く所は `<mask>` の四角で空ける。四角の角丸は抜く物の角丸に合わせる。
  * - 盤面の物は transform・will-change・アニメーションで重なりの文脈が分かれているので、物を z-index で覆いの上へ持ち上げる作りは文脈を越えられない。
