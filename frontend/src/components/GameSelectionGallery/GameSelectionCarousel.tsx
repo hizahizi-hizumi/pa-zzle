@@ -275,6 +275,12 @@ export function GameSelectionCarousel({
   return (
     <div className="game-selection__carousel-region">
       <div
+        className="game-selection__surface"
+        data-screen-frame=""
+        data-screen-shared="surface"
+        aria-hidden="true"
+      />
+      <div
         className="game-selection__carousel"
         role="group"
         aria-roledescription="カルーセル"
@@ -340,6 +346,7 @@ export function GameSelectionCarousel({
                 to={game.to}
                 className="game-selection__slide"
                 data-active={active}
+                data-screen-content={active ? undefined : ""}
                 aria-label={`${game.name}${active ? "を開く" : "を選択"}`}
                 aria-describedby={
                   active && selectedIndex === index && continuation
@@ -358,7 +365,10 @@ export function GameSelectionCarousel({
                   scrollToSlide(physicalIndex, "smooth");
                 }}
               >
-                <span className="game-selection__figure">
+                <span
+                  className="game-selection__figure"
+                  data-screen-shared={active ? "pictogram" : undefined}
+                >
                   {active ? (
                     <SelectedGamePictogram
                       pictogramSvg={game.pictogramSvg}
@@ -374,13 +384,22 @@ export function GameSelectionCarousel({
                   )}
                 </span>
                 <span className="game-selection__details">
-                  <span className="game-selection__position" aria-hidden="true">
+                  <span
+                    className="game-selection__position"
+                    aria-hidden="true"
+                    data-screen-content=""
+                  >
                     <span>{String(index + 1).padStart(2, "0")}</span>
                     <span>/</span>
                     <span>{String(count).padStart(2, "0")}</span>
                   </span>
-                  <span className="game-selection__name">{game.name}</span>
-                  <span className="game-selection__meta">
+                  <span
+                    className="game-selection__name"
+                    data-screen-shared={active ? "title" : undefined}
+                  >
+                    {game.name}
+                  </span>
+                  <span className="game-selection__meta" data-screen-content="">
                     {active && selectedIndex === index && continuation && (
                       <Badge id={continuationId} variant="outline">
                         {getDifficultyLabel(continuation.difficulty)}

@@ -881,6 +881,7 @@ export function GameHomeScreen({
           value={openDifficulty}
           onValueChange={handleLevelChange}
           activationMode="manual"
+          data-screen-content=""
           className="mt-2 min-h-0 flex-1 sm:mt-3"
         >
           <GameLevelCards levels={levelCards} />
@@ -890,6 +891,7 @@ export function GameHomeScreen({
           <div className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_--spacing(64)] lg:grid-rows-[auto_auto_minmax(0,1fr)] lg:gap-x-8">
             <div
               aria-hidden="true"
+              data-screen-shared="surface"
               className="col-start-1 row-span-2 row-start-1 rounded-lg bg-background lg:row-span-3 lg:row-start-1"
             />
             {/* 当たった数は条件が無い間も場所を取っておくので、条件を付け外ししても状態ごとの数の折り返し方は変わらない。

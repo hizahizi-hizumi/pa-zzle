@@ -78,6 +78,19 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 解いた問題そのものの姿。評価の言葉と点の上に置き、評価の色で塗る。 */
+.result-grade-emblem {
+  display: block;
+  width: clamp(56px, 15vw, 76px);
+  aspect-ratio: 1;
+  margin: 0 auto clamp(14px, 3.6vw, 20px);
+}
+.result-grade-emblem > svg {
+  width: 200%;
+  height: 200%;
+  margin: -50%;
+}
+
 .result-grade-name {
   display: block;
   color: var(--result-award);
