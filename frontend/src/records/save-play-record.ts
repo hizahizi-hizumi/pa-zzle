@@ -116,7 +116,6 @@ function isPersonalBestUpdate(value: unknown): value is PersonalBestUpdate {
   );
 }
 
-/** 履歴の state など外部から読み戻した値が、保存結果の形をしているかを確かめる。 */
 export function isPlayRecordSaveOutcome(
   value: unknown,
 ): value is PlayRecordSaveOutcome {

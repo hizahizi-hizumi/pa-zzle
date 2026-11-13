@@ -14,9 +14,7 @@ import {
 
 type PlayAttemptSource = Pick<PlayAttempt, "gameId" | "startedAt"> & {
   start: PlayAttemptStart;
-  /** そのプレイを解き終えたか。解き終えたプレイは完了記録で扱うので、離脱を保存しない。 */
   finished: boolean;
-  /** 離れた時刻までの進み具合を返す。 */
   getProgress: (abandonedAt: number) => PlayAttemptProgress;
 };
 
@@ -27,7 +25,6 @@ type PendingAbandonment = {
 
 /**
  * プレイを始めたことを保存し、解き終える前に離れたら進み具合を離脱として保存する。
- * 離脱として扱うのは、プレイ画面を離れたとき・別のプレイに置き換えたとき・ページを離れたとき。
  * `gameId`・`startedAt` が変わると別のプレイとして扱う。
  */
 export function usePlayAttemptRecord(source: PlayAttemptSource): void {

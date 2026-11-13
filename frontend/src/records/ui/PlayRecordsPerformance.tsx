@@ -15,13 +15,9 @@ type PlayRecordsPerformanceProps = {
   /** ゲームをまたいだ全記録。比較単位の記録はこの中から選ぶ。 */
   records: readonly PlayRecord[];
   display: PlayRecordDisplayDefinition;
-  /** 比較単位（SPEC-002）の開始条件。 */
   comparisonKey: string;
 };
 
-/**
- * 1つの比較単位（同じゲームの同じ難易度）の成績。自己ベストと、一度に1つの指標の推移を示す。内部診断が有効なビルドでは、その比較単位の記録を JSON でコピーできる。
- */
 export function PlayRecordsPerformance({
   records,
   display,

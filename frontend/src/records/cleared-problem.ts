@@ -8,7 +8,6 @@ import {
   type PlayRecordDefinition,
 } from "@/records/play-record-definition";
 
-/** 図鑑・コレクションが共用する、現在の問題集で再生できるクリア記録の条件。 */
 export type ClearedProblemSource = {
   id: string;
   recordProblemPlayTarget: (
@@ -24,7 +23,6 @@ export type ClearedProblem = {
   performance: PlayRecordClearPerformance;
 };
 
-/** クリアと評価点を、両画面で同じ規則により対象問題へ対応付ける。 */
 export function toClearedProblem(
   record: PlayRecord,
   source: ClearedProblemSource,
