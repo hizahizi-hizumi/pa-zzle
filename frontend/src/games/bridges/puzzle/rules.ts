@@ -90,3 +90,61 @@ export function isBridgesSolved(
     areBridgesIslandsConnected(board, state)
   );
 }
+
+/** 架かった橋でつながった島の組。島の番号の小さい順に組を並べる。 */
+function listBridgesIslandGroups(
+  board: BridgesBoard,
+  state: BridgesPuzzleState,
+): number[][] {
+  const { edges, islandEdges } = getBridgesNetwork(board);
+  const grouped = new Set<number>();
+  const groups: number[][] = [];
+  for (let start = 0; start < board.islands.length; start += 1) {
+    if (grouped.has(start)) {
+      continue;
+    }
+    const group = [start];
+    grouped.add(start);
+    for (let index = 0; index < group.length; index += 1) {
+      const island = group[index]!;
+      for (const edgeIndex of islandEdges[island]!) {
+        const edge = edges[edgeIndex]!;
+        const other = edge.from === island ? edge.to : edge.from;
+        if (state.bridges[edgeIndex] !== 0 && !grouped.has(other)) {
+          grouped.add(other);
+          group.push(other);
+        }
+      }
+    }
+    groups.push(group);
+  }
+  return groups;
+}
+
+/**
+ * 全部の島が数字どおりなのにクリアにならないとき、いちばん大きな組から離れている島。
+ * それ以外のとき（数字の合わない島がある、全部つながっている）は空にする。
+ * いちばん大きな組が複数あるときは、島の番号の小さい島を含む組を残す。
+ */
+export function listBridgesIsolatedIslands(
+  board: BridgesBoard,
+  state: BridgesPuzzleState,
+): number[] {
+  if (
+    !areBridgesPlacementsValid(board, state) ||
+    listBridgesIslandStatuses(board, state).some((status) => status !== "exact")
+  ) {
+    return [];
+  }
+  const groups = listBridgesIslandGroups(board, state);
+  if (groups.length < 2) {
+    return [];
+  }
+  const largest = groups.reduce((current, group) =>
+    group.length > current.length ? group : current,
+  );
+  return groups
+    .filter((group) => group !== largest)
+    .flat()
+    .sort((left, right) => left - right);
+}

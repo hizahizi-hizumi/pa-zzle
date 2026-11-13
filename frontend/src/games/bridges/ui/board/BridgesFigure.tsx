@@ -79,6 +79,11 @@ type BridgesFigureProps = {
   showsBlockingEdges?: boolean;
   /** 2本の橋を外したばかりの辺。外す動きで縮める2枚の板を、見えない姿で描いておく。 */
   retractingEdge?: number | null;
+  /**
+   * 全島が数字どおりなのにつながっていないとき、いちばん大きな組から離れている島。途切れた輪で囲み、手が止まってから見えるよう
+   * 少し遅れて浮かび上がらせる。
+   */
+  isolatedIslands?: readonly number[];
   /** 全島がつながった盤面か。架かった橋の板に、明るい木の色の面を重ねて描く。 */
   lit?: boolean;
   /** 明るい木の色を渡し始める、最後に架けた橋の辺。無ければ島0 から渡す。 */
@@ -105,6 +110,7 @@ export const bridgesFigureParts = {
   rope: "data-bridges-rope",
   candidateHint: "data-bridges-candidate-hint",
   pressedEdge: "data-bridges-pressed-edge",
+  isolatedIslands: "data-bridges-isolated-islands",
 } as const;
 
 /**
@@ -165,6 +171,9 @@ const TARGET_RING_WIDTH = 0.09;
 const FOCUS_RING_RADIUS = ISLAND_RADIUS + 0.17;
 const FOCUS_RING_WIDTH = 0.05;
 const FOCUS_VEIL_OPACITY = 0.38;
+const ISOLATED_RING_RADIUS = ISLAND_RADIUS + 0.13;
+const ISOLATED_RING_WIDTH = 0.08;
+const ISOLATED_RING_DASH = "0.16 0.1";
 const UNFOCUSED_OPACITY = 0.4;
 /** 阻まれた辺に架かるはずだった板の濃さ。板そのものを透かし、下の海が見える濃さにする。 */
 const BLOCKED_ATTEMPT_OPACITY = 0.5;
@@ -650,6 +659,7 @@ export function BridgesFigure({
   blockedAttempt = null,
   showsBlockingEdges = false,
   retractingEdge = null,
+  isolatedIslands = [],
   lit = false,
   clearOriginEdge = null,
   compact = false,
@@ -950,6 +960,38 @@ export function BridgesFigure({
           </g>
         );
       })}
+      {isolatedIslands.length > 0 && (
+        <g
+          key={isolatedIslands.join(",")}
+          {...{ [bridgesFigureParts.isolatedIslands]: "" }}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={ISOLATED_RING_DASH}
+          className="animate-in fade-in-0 duration-500 [animation-delay:400ms] [animation-fill-mode:backwards] motion-reduce:animate-none"
+        >
+          {isolatedIslands.map((island) => {
+            const { x, y } = islandCenters[island]!;
+            return (
+              <g key={island}>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={ISOLATED_RING_RADIUS}
+                  strokeWidth={ISOLATED_RING_WIDTH + ROPE_CASING_EXTRA}
+                  className={bridgesToneClassNames.isolatedCasing}
+                />
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={ISOLATED_RING_RADIUS}
+                  strokeWidth={ISOLATED_RING_WIDTH}
+                  className={bridgesToneClassNames.isolatedRing}
+                />
+              </g>
+            );
+          })}
+        </g>
+      )}
       {renderRing(
         selectedIsland,
         SELECTION_RING_RADIUS,

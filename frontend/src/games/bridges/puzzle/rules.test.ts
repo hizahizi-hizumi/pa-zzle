@@ -9,6 +9,7 @@ import {
   type BridgesIslandStatus,
   isBridgesSolved,
   listBridgesIslandStatuses,
+  listBridgesIsolatedIslands,
 } from "@/games/bridges/puzzle/rules";
 import type {
   BridgeCount,
@@ -344,6 +345,37 @@ describe("数字はちょうどでも全部の島がつながらない場合", (
     const statuses = listBridgesIslandStatuses(board, state);
 
     expect(statuses).toEqual(["exact", "exact", "exact", "exact"]);
+  });
+
+  test("同じ大きさの組のうち、番号の小さい島を含まない組を離れた島として返すこと", () => {
+    const isolated = listBridgesIsolatedIslands(board, state);
+
+    expect(isolated).toEqual([2, 3]);
+  });
+});
+
+describe("listBridgesIsolatedIslands", () => {
+  const board = parseBridgesBoard(["1.2.1", ".....", "1...1"]);
+  const exactButSplit = createState(board, [
+    [[0, 0], [0, 2], 1],
+    [[0, 2], [0, 4], 1],
+    [[2, 0], [2, 4], 1],
+  ]);
+  const unfinished = createState(board, [
+    [[0, 0], [0, 2], 1],
+    [[2, 0], [2, 4], 1],
+  ]);
+
+  test("全部の島が数字どおりで組に分かれると、小さい組の島を返すこと", () => {
+    const isolated = listBridgesIsolatedIslands(board, exactButSplit);
+
+    expect(isolated).toEqual([3, 4]);
+  });
+
+  test("数字の合わない島があるうちは、何も返さないこと", () => {
+    const isolated = listBridgesIsolatedIslands(board, unfinished);
+
+    expect(isolated).toEqual([]);
   });
 });
 

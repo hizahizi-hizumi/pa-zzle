@@ -30,6 +30,7 @@ type BridgesPlayProps = GamePlayScreenProps<BridgesDifficulty, BridgesResult> &
     board: BridgesBoardState;
     bridges: readonly BridgeCount[];
     islandStatuses: readonly BridgesIslandStatus[];
+    isolatedIslands: readonly number[];
     undoCount: number;
     edgeNotice: BridgesEdgeNotice | null;
     onCycleEdge: (edge: number, direction?: BridgesCycleDirection) => void;
@@ -44,6 +45,7 @@ export function BridgesPlay({
   board,
   bridges,
   islandStatuses,
+  isolatedIslands,
   undoCount,
   edgeNotice,
   canUndo,
@@ -102,6 +104,7 @@ export function BridgesPlay({
             board={board}
             bridges={bridges}
             islandStatuses={islandStatuses}
+            isolatedIslands={isolatedIslands}
             edgeNotice={edgeNotice}
             clearing={progress === "clearing"}
             solved={progress !== "playing"}

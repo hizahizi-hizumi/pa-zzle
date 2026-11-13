@@ -74,6 +74,7 @@ describe("BridgesPlay", () => {
     board,
     bridges: [0, 0, 0, 0],
     islandStatuses: ["short", "short", "short", "short", "short"],
+    isolatedIslands: [],
     undoCount: performance.undoCount,
     edgeNotice: null,
     canUndo: false,
@@ -130,6 +131,27 @@ describe("BridgesPlay", () => {
       tapBetweenFirstIslands();
 
       expect(callbacks.onCycleEdge).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("全部の島が数字どおりなのにつながっていない場合", () => {
+    beforeEach(() => {
+      renderPlay({
+        progress: "playing",
+        result: null,
+        islandStatuses: ["exact", "exact", "exact", "exact", "exact"],
+        isolatedIslands: [4],
+      });
+    });
+
+    test("離れた島だけを、つながっていないと伝えること", () => {
+      const isolated = screen.getByRole("button", {
+        name: /5行3列の島.*ほかとつながっていない/,
+      });
+      const connected = screen.getByRole("button", { name: /1行1列の島/ });
+
+      expect(isolated).toBeTruthy();
+      expect(connected.textContent).not.toContain("つながっていない");
     });
   });
 

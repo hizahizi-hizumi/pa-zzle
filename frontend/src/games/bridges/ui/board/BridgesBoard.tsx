@@ -56,6 +56,8 @@ type BridgesBoardProps = {
   board: BridgesBoardState;
   bridges: readonly BridgeCount[];
   islandStatuses: readonly BridgesIslandStatus[];
+  /** 全部の島が数字どおりなのにつながっていないとき、離れた組の島。通常のプレイだけで渡す。 */
+  isolatedIslands?: readonly number[];
   edgeNotice: BridgesEdgeNotice | null;
   /** クリアしてから演出を終えるまで `true`。 */
   clearing: boolean;
@@ -181,6 +183,7 @@ export function BridgesBoard({
   board,
   bridges,
   islandStatuses,
+  isolatedIslands = [],
   edgeNotice,
   clearing,
   solved = clearing,
@@ -691,6 +694,7 @@ export function BridgesBoard({
         blockingEdges={blockingEdges}
         blockedAttempt={blockedAttempt}
         retractingEdge={retractingEdge}
+        isolatedIslands={isolatedIslands}
         lit={clearing || solved}
         clearOriginEdge={clearOriginEdge}
         compact={compact}
@@ -717,7 +721,7 @@ export function BridgesBoard({
               }}
               onBlur={() => setKeyboardFocused(false)}
             >
-              {`${row + 1}行${column + 1}列の島 数字${clue} 橋${islandBridgeCounts[island]}本${islandStatusLabels[islandStatuses[island]!]}`}
+              {`${row + 1}行${column + 1}列の島 数字${clue} 橋${islandBridgeCounts[island]}本${islandStatusLabels[islandStatuses[island]!]}${isolatedIslands.includes(island) ? " ほかとつながっていない" : ""}`}
             </button>
           </li>
         ))}

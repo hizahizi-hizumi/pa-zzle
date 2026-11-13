@@ -73,6 +73,9 @@ export function BridgesHowToPlayDialog({
         <p>橋の本数が数字と同じになった島は緑に、多すぎる島は赤くなる。</p>
         <HowToPlayFigure board={squareBoard} bridges={[2, 2, 1, 0]} />
       </li>
+      <li>
+        全部の島が緑になってもつながっていないときは、離れている島を点線の輪で囲む。
+      </li>
       <li>{PLAY_OPERATION_LABELS.undo}は、橋を変えた操作を1つずつ取り消す。</li>
       <li className="hidden pointer-fine:list-item">
         <p className="text-muted-foreground">

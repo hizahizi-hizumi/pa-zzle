@@ -14,6 +14,7 @@ import { selectBridgesProblemForDifficulty } from "@/games/bridges/problem-selec
 import {
   type BridgesIslandStatus,
   listBridgesIslandStatuses,
+  listBridgesIsolatedIslands,
 } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import type { BridgesCycleDirection } from "@/games/bridges/puzzle/transitions";
@@ -75,6 +76,8 @@ export type BridgesPlay = GamePlay<
     board: BridgesProblem;
     bridges: readonly BridgeCount[];
     islandStatuses: readonly BridgesIslandStatus[];
+    /** 全部の島が数字どおりなのにクリアにならないときだけ、いちばん大きな組から離れている島を返す。 */
+    isolatedIslands: readonly number[];
     undoCount: number;
     /** 盤面を戻す・リセットの後は `null`。 */
     edgeNotice: BridgesEdgeNotice | null;
@@ -249,6 +252,7 @@ export function useBridgesPlay(
     board: problem,
     bridges: puzzleState.bridges,
     islandStatuses: listBridgesIslandStatuses(problem, puzzleState),
+    isolatedIslands: listBridgesIsolatedIslands(problem, puzzleState),
     undoCount: session.undoCount,
     edgeNotice: play.edgeNotice,
     canUndo: canUndoBridgesSession(session),
