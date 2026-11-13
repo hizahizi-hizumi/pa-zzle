@@ -32,7 +32,7 @@ describe("MinesweeperCell", () => {
     fireEvent.pointerDown(cell, { button: 0 });
     vi.advanceTimersByTime(100);
     fireEvent.pointerUp(cell, { button: 0 });
-    fireEvent.click(cell);
+    fireEvent.click(cell, { detail: 1 });
 
     expect(onPress).toHaveBeenCalledWith(0);
     expect(onFlagPress).not.toHaveBeenCalled();
@@ -44,7 +44,7 @@ describe("MinesweeperCell", () => {
     fireEvent.pointerDown(cell, { button: 0 });
     vi.advanceTimersByTime(450);
     fireEvent.pointerUp(cell, { button: 0 });
-    fireEvent.click(cell);
+    fireEvent.click(cell, { detail: 1 });
 
     expect(onFlagPress).toHaveBeenCalledWith(0);
     expect(onPress).not.toHaveBeenCalled();
@@ -57,7 +57,7 @@ describe("MinesweeperCell", () => {
     vi.advanceTimersByTime(450);
     fireEvent.contextMenu(cell);
     fireEvent.pointerUp(cell, { button: 0 });
-    fireEvent.click(cell);
+    fireEvent.click(cell, { detail: 1 });
 
     expect(onFlagPress).toHaveBeenCalledTimes(1);
     expect(onPress).not.toHaveBeenCalled();
@@ -71,7 +71,7 @@ describe("MinesweeperCell", () => {
     fireEvent.contextMenu(cell);
     vi.advanceTimersByTime(450);
     fireEvent.pointerUp(cell, { button: 0 });
-    fireEvent.click(cell);
+    fireEvent.click(cell, { detail: 1 });
 
     expect(onFlagPress).toHaveBeenCalledTimes(1);
     expect(onPress).not.toHaveBeenCalled();
@@ -117,7 +117,7 @@ describe("MinesweeperCell", () => {
     fireEvent.pointerMove(cell, { clientX: 100, clientY: 100 });
     vi.advanceTimersByTime(450);
     fireEvent.pointerUp(cell, { button: 0 });
-    fireEvent.click(cell);
+    fireEvent.click(cell, { detail: 1 });
 
     expect(cell.hasAttribute("data-pressed")).toBe(false);
     expect(onPress).not.toHaveBeenCalled();
@@ -130,11 +130,22 @@ describe("MinesweeperCell", () => {
     fireEvent.pointerDown(cell, { button: 0 });
     fireEvent.pointerLeave(cell);
     fireEvent.pointerUp(cell, { button: 0 });
-    fireEvent.click(cell);
+    fireEvent.click(cell, { detail: 1 });
     fireEvent.pointerDown(cell, { button: 0 });
     fireEvent.pointerUp(cell, { button: 0 });
-    fireEvent.click(cell);
+    fireEvent.click(cell, { detail: 1 });
 
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  test("取り消した押下の後のキーボードの押下を通知すること", () => {
+    const cell = screen.getByLabelText("マス 1 未開示");
+
+    fireEvent.pointerDown(cell, { button: 0 });
+    fireEvent.pointerLeave(cell);
+    fireEvent.pointerUp(cell, { button: 0 });
+    fireEvent.click(cell, { detail: 0 });
+
+    expect(onPress).toHaveBeenCalledWith(0);
   });
 });

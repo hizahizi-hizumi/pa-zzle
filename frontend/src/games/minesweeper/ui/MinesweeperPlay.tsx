@@ -9,6 +9,7 @@ import type {
 } from "@/games/minesweeper/play/use-minesweeper-play";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import { MinesweeperClearAnimation } from "@/games/minesweeper/ui/board/clear/MinesweeperClearAnimation";
+import { InputModeSwitch } from "@/games/minesweeper/ui/board/InputModeSwitch";
 import {
   getMinesweeperBoardFittingWidth,
   MinesweeperBoard,
@@ -16,7 +17,6 @@ import {
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
 import { MinesweeperGround } from "@/games/minesweeper/ui/MinesweeperGround";
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
-import { InputModeSwitch } from "@/games/minesweeper/ui/MinesweeperPlay/InputModeSwitch";
 import { MinesweeperTutorial } from "@/games/minesweeper/ui/MinesweeperTutorial";
 import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
 import { useMinesweeperSoundEffects } from "@/games/minesweeper/ui/use-minesweeper-sound-effects";

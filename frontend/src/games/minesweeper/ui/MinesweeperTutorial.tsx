@@ -32,14 +32,15 @@ import {
 import type { MinesweeperCellCue } from "@/games/minesweeper/ui/board/cell-cue";
 import { MinesweeperClearAnimation } from "@/games/minesweeper/ui/board/clear/MinesweeperClearAnimation";
 import {
+  InputModeSwitch,
+  type InputModeSwitchCue,
+} from "@/games/minesweeper/ui/board/InputModeSwitch";
+import {
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
 import { MinesweeperTutorialCover } from "@/games/minesweeper/ui/MinesweeperTutorial/MinesweeperTutorialCover";
-import {
-  MinesweeperTutorialStatus,
-  type MinesweeperTutorialToggleCue,
-} from "@/games/minesweeper/ui/MinesweeperTutorial/MinesweeperTutorialStatus";
+import { MinesweeperTutorialStatus } from "@/games/minesweeper/ui/MinesweeperTutorial/MinesweeperTutorialStatus";
 import { useMinesweeperSoundEffects } from "@/games/minesweeper/ui/use-minesweeper-sound-effects";
 import type { GameProgress } from "@/games/play";
 import {
@@ -322,22 +323,19 @@ export function MinesweeperTutorial({
       !goalShown &&
       (progress.phase === "intro" || progress.phase === "playing");
     const stepSpotlit = step !== null && progress.phase === "playing";
-    const toggleCue: MinesweeperTutorialToggleCue | null =
+    const modeSwitchCue: InputModeSwitchCue | null =
       stepMarksShown && modeMismatched
-        ? { recallId }
+        ? { mode: stepOperationModes[step.operation], recallId }
         : idleHintNeedsSwitch
-          ? { recallId: null }
+          ? { mode: idleHintMode, recallId: null }
           : null;
     return (
-      <div className="flex w-[min(100cqw,calc(100cqh-3.25rem),28rem)] flex-col gap-2">
+      // 盤面の上の地雷の数の行と、盤面の下の切り替えの行の高さを除いた高さにも、盤面を収める。
+      <div className="flex w-[min(100cqw,calc(100cqh-6.25rem),28rem)] flex-col gap-2">
         <MinesweeperTutorialStatus
           mineCount={MINESWEEPER_TUTORIAL_MINE_COUNT}
           flagCount={shownBoardState.puzzle.flaggedCellIndices.length}
           mineCountSpotlit={stepSpotlit && step.reasonMineCount}
-          mode={mode}
-          toggleCue={toggleCue}
-          toggleSpotlit={stepSpotlit && modeMismatched}
-          onModeChange={setMode}
         />
         <MinesweeperClearAnimation
           columns={MINESWEEPER_TUTORIAL_COLUMNS}
@@ -382,6 +380,18 @@ export function MinesweeperTutorial({
             />
           </MinesweeperTutorialCover>
         </MinesweeperClearAnimation>
+        <div className="flex justify-center">
+          <InputModeSwitch
+            mode={mode}
+            cue={modeSwitchCue}
+            spotlitMode={
+              stepSpotlit && modeMismatched
+                ? stepOperationModes[step.operation]
+                : null
+            }
+            onChange={setMode}
+          />
+        </div>
       </div>
     );
   }

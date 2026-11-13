@@ -156,7 +156,7 @@ const steps: readonly MinesweeperTutorialStep[] = [
 
 export const minesweeperTutorialModeSwitchDetails = {
   flag: "旗に切り替えて、印のマスを押してください",
-  reveal: "旗から戻して、印のマスを押してください",
+  reveal: "開くに切り替えて、印のマスを押してください",
 } as const satisfies Record<MinesweeperTutorialOperation, string>;
 
 /** 数字の決まりで、まだ決まっていないマスが決まるもの。決め手は、そう決めた数字のマスと、その数字の周りの、もう地雷と決まったマス。 */

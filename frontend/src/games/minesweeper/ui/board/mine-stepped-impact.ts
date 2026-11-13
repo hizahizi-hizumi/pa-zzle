@@ -7,6 +7,7 @@ const steppedCellFlashKeyframes: Keyframe[] = [
   { filter: "brightness(1) saturate(1)" },
 ];
 const STEPPED_CELL_FLASH_MS = 320;
+const STEPPED_CELL_FLASH_EASING = "ease-out";
 
 /** 盤面の横揺れ。最初の振れをいちばん大きくし、1往復半で収める。 */
 const boardShakeKeyframes: Keyframe[] = [
@@ -18,6 +19,7 @@ const boardShakeKeyframes: Keyframe[] = [
   { transform: "translateX(0)" },
 ];
 const BOARD_SHAKE_MS = 150;
+const BOARD_SHAKE_EASING = "linear";
 
 /** 地雷を踏んだ重さを、踏んだマスのフラッシュと盤面全体の短い横揺れで返す。入力は止めない。 */
 export function playMineSteppedImpact(
@@ -33,11 +35,11 @@ export function playMineSteppedImpact(
   return [
     steppedCell?.animate?.(steppedCellFlashKeyframes, {
       duration: STEPPED_CELL_FLASH_MS,
-      easing: "ease-out",
+      easing: STEPPED_CELL_FLASH_EASING,
     }),
     board.animate?.(boardShakeKeyframes, {
       duration: BOARD_SHAKE_MS,
-      easing: "linear",
+      easing: BOARD_SHAKE_EASING,
     }),
   ].filter((animation) => animation !== undefined);
 }

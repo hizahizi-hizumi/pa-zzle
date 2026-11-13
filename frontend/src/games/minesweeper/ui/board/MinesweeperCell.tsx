@@ -148,10 +148,13 @@ export function MinesweeperCell({
     clearLongPressTimer();
   }
 
-  function handleClick(): void {
-    if (longPressTriggeredRef.current || pressCancelledRef.current) {
-      longPressTriggeredRef.current = false;
-      pressCancelledRef.current = false;
+  function handleClick(event: React.MouseEvent<HTMLButtonElement>): void {
+    const followsHandledPress =
+      longPressTriggeredRef.current || pressCancelledRef.current;
+    longPressTriggeredRef.current = false;
+    pressCancelledRef.current = false;
+    // キーボードのクリック（detail が 0）は、長押しや取り消した押下の後に届くものではない。
+    if (followsHandledPress && event.detail !== 0) {
       return;
     }
     onPress(cellIndex);

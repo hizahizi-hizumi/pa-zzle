@@ -3,6 +3,7 @@ import {
   fireEvent,
   render as renderWithoutRouter,
   screen,
+  within,
 } from "@testing-library/react";
 import type { ComponentProps, ReactElement } from "react";
 import { MemoryRouter } from "react-router";
@@ -23,6 +24,12 @@ function openPlayMenu(): void {
     button: 0,
     ctrlKey: false,
   });
+}
+
+function getModeItem(name: "開く" | "旗"): HTMLElement {
+  return within(
+    screen.getByRole("radiogroup", { name: "マスを押したときの入力" }),
+  ).getByRole("radio", { name });
 }
 
 describe("MinesweeperPlay", () => {
@@ -151,23 +158,33 @@ describe("MinesweeperPlay", () => {
       });
     });
 
-    test("盤面の下の旗モード切替が初期状態で押されていないこと", () => {
-      const toggle = screen.getByRole("button", { name: "旗モード" });
+    describe("盤面の下の入力の切り替え", () => {
+      test("初めは開くを選んでいること", () => {
+        const reveal = getModeItem("開く");
 
-      expect(toggle.getAttribute("aria-pressed")).toBe("false");
+        expect(reveal.getAttribute("aria-checked")).toBe("true");
+      });
+
+      test("旗を押すと旗を選ぶこと", () => {
+        const flag = getModeItem("旗");
+
+        fireEvent.click(flag);
+
+        expect(flag.getAttribute("aria-checked")).toBe("true");
+      });
+
+      test("選んでいる開くをもう一度押しても開くのままにすること", () => {
+        const reveal = getModeItem("開く");
+
+        fireEvent.click(reveal);
+
+        expect(reveal.getAttribute("aria-checked")).toBe("true");
+      });
     });
 
-    test("旗モード切替を押すと旗モードが押された状態になること", () => {
-      const toggle = screen.getByRole("button", { name: "旗モード" });
-
-      fireEvent.click(toggle);
-
-      expect(toggle.getAttribute("aria-pressed")).toBe("true");
-    });
-
-    describe("旗モードの場合", () => {
+    describe("旗を選んだ場合", () => {
       beforeEach(() => {
-        fireEvent.click(screen.getByRole("button", { name: "旗モード" }));
+        fireEvent.click(getModeItem("旗"));
       });
 
       test("未開示マスを押すと旗操作を通知すること", () => {
@@ -177,13 +194,11 @@ describe("MinesweeperPlay", () => {
         expect(onRevealCell).not.toHaveBeenCalled();
       });
 
-      test("旗モード切替をもう一度押すと開示モードへ戻ること", () => {
-        const toggle = screen.getByRole("button", { name: "旗モード" });
-
-        fireEvent.click(toggle);
+      test("開くを押すと開示へ戻ること", () => {
+        fireEvent.click(getModeItem("開く"));
         fireEvent.click(screen.getByLabelText("マス 1 未開示"));
 
-        expect(toggle.getAttribute("aria-pressed")).toBe("false");
+        expect(getModeItem("開く").getAttribute("aria-checked")).toBe("true");
         expect(onRevealCell).toHaveBeenCalledWith(0);
       });
 
@@ -194,11 +209,7 @@ describe("MinesweeperPlay", () => {
         );
         fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
 
-        expect(
-          screen
-            .getByRole("button", { name: "旗モード" })
-            .getAttribute("aria-pressed"),
-        ).toBe("false");
+        expect(getModeItem("開く").getAttribute("aria-checked")).toBe("true");
       });
     });
   });
@@ -345,10 +356,12 @@ describe("MinesweeperPlay", () => {
       expect(mine).toBeTruthy();
     });
 
-    test("旗モード切替を表示しないこと", () => {
-      const toggle = screen.queryByRole("button", { name: "旗モード" });
+    test("入力の切り替えを表示しないこと", () => {
+      const modeSwitch = screen.queryByRole("radiogroup", {
+        name: "マスを押したときの入力",
+      });
 
-      expect(toggle).toBeNull();
+      expect(modeSwitch).toBeNull();
     });
 
     test("盤面の操作を通知しないこと", () => {

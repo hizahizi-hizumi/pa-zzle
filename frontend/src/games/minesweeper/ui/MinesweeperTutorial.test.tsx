@@ -141,15 +141,16 @@ function getCellLabel(position: CellPosition): string | null {
   return getCell(position).getAttribute("aria-label");
 }
 
-function getModeToggle(): HTMLElement {
-  return screen.getByRole("button", { name: "旗モード" });
+function getModeSwitch(): HTMLElement {
+  return screen.getByRole("radiogroup", { name: "マスを押したときの入力" });
 }
 
+const modeNames = { reveal: "開く", flag: "旗" } as const;
+
 function setMode(mode: "reveal" | "flag"): void {
-  const flagMode = getModeToggle().getAttribute("aria-pressed") === "true";
-  if (flagMode !== (mode === "flag")) {
-    fireEvent.click(getModeToggle());
-  }
+  fireEvent.click(
+    within(getModeSwitch()).getByRole("radio", { name: modeNames[mode] }),
+  );
 }
 
 function operate(
@@ -213,19 +214,16 @@ function isMineCountSpotlit(): boolean {
 }
 
 function isToggleSpotlit(): boolean {
-  return (
-    getModeToggle().parentElement?.querySelector("[data-tutorial-spotlight]") !=
-    null
-  );
+  return getModeSwitch().querySelector("[data-tutorial-spotlight]") !== null;
 }
 
 function hasToggleCue(): boolean {
-  return document.querySelector('[data-toggle-cue="hint"]') !== null;
+  return getModeSwitch().querySelector("[data-input-mode-cue]") !== null;
 }
 
 function getToggleRecallCue(): Element | null {
-  return document.querySelector(
-    '[data-toggle-cue="hint"] [data-tutorial-cue="recall"]',
+  return getModeSwitch().querySelector(
+    '[data-input-mode-cue] [data-tutorial-cue="recall"]',
   );
 }
 
@@ -294,7 +292,7 @@ describe("MinesweeperTutorial", () => {
     });
 
     test("旗に切り替えると、切り替えの印を外して覆いに戻し、旗を置く一言に替えること", () => {
-      fireEvent.click(getModeToggle());
+      setMode("flag");
 
       const toggleCued = hasToggleCue();
       const toggleSpotlit = isToggleSpotlit();
@@ -420,9 +418,9 @@ describe("MinesweeperTutorial", () => {
         finishSteps(1);
       });
 
-      test("旗のままなら、旗から戻すことを一言と印で示し、切り替えを覆いから抜くこと", () => {
+      test("旗のままなら、開くに切り替えることを一言と印で示し、切り替えを覆いから抜くこと", () => {
         const detail = screen.queryByText(
-          "旗から戻して、印のマスを押してください",
+          "開くに切り替えて、印のマスを押してください",
         );
         const toggleCued = hasToggleCue();
         const toggleSpotlit = isToggleSpotlit();
@@ -682,10 +680,12 @@ describe("MinesweeperTutorial", () => {
         pressNextThroughIntro();
 
         const label = getCellLabel([4, 3]);
-        const flagMode = getModeToggle().getAttribute("aria-pressed");
+        const revealChecked = within(getModeSwitch())
+          .getByRole("radio", { name: "開く" })
+          .getAttribute("aria-checked");
 
         expect(label).toBe("マス 18 未開示");
-        expect(flagMode).toBe("false");
+        expect(revealChecked).toBe("true");
       });
     });
   });

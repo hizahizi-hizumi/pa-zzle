@@ -4,6 +4,7 @@ import { prefersReducedMotion } from "@/lib/motion";
 const OPENING_RIPPLE_STEP_MS = 14;
 const OPENING_RIPPLE_MAX_SPREAD_MS = 200;
 const OPENING_CELL_DURATION_MS = 160;
+const OPENING_CELL_EASING = "ease-out";
 
 /** 開いたマスが、閉じた面の下から沈んだ面として現れる。遅れて開くマスは、開くまで面を見せない。 */
 const openingKeyframes: Keyframe[] = [
@@ -73,7 +74,7 @@ export function playOpeningRipple(
         ?.animate?.(openingKeyframes, {
           duration: OPENING_CELL_DURATION_MS,
           delay,
-          easing: "ease-out",
+          easing: OPENING_CELL_EASING,
           fill: "backwards",
         }) ?? [],
   );
