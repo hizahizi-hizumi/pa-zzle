@@ -32,6 +32,7 @@ import {
   type ReflectionLaserTrace,
   traceReflectionLaser,
 } from "@/games/reflection/puzzle/laser";
+import { countNewlyMatchedReflectionClues } from "@/games/reflection/puzzle/rules";
 import {
   calculateReflectionPlayScore,
   calculateReflectionSpeedScoreRule,
@@ -59,8 +60,15 @@ export type ReflectionLaserView = {
   trace: ReflectionLaserTrace;
 };
 
-/** 効果音を鳴らすため、操作ごとに増える `id` を付ける。 */
-export type ReflectionOperation = { id: number; type: "piece-placed" };
+/**
+ * 効果音を鳴らすため、操作ごとに増える `id` を付ける。
+ * `newlyMatchedClueCount` は、その手で新しく一致に変わった外周ヒントの数。クリアした手では、クリアの音に任せて 0 にする。
+ */
+export type ReflectionOperation = {
+  id: number;
+  type: "piece-placed";
+  newlyMatchedClueCount: number;
+};
 
 export type ReflectionResult = ReflectionSessionResult & {
   workload: ReflectionSolveWorkload;
@@ -131,7 +139,18 @@ function createOperation(
   ) {
     return null;
   }
-  return { id, type: "piece-placed" };
+  return {
+    id,
+    type: "piece-placed",
+    newlyMatchedClueCount:
+      next.status === "cleared"
+        ? 0
+        : countNewlyMatchedReflectionClues(
+            previous.problem.clues,
+            previous.puzzleState,
+            next.puzzleState,
+          ),
+  };
 }
 
 function selectProblem(

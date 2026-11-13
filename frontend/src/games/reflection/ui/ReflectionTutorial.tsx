@@ -135,6 +135,7 @@ export function ReflectionTutorial({
       ? {
           id: runCount * RUN_OPERATION_ID_STRIDE + boardState.moveCount,
           type: "piece-placed",
+          newlyMatchedClueCount: boardState.lastMove.newlyMatchedClueCount,
         }
       : null,
     boardProgress,

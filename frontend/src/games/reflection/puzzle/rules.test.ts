@@ -4,6 +4,7 @@ import {
 } from "@/games/reflection/puzzle/board";
 import { computeReflectionClues } from "@/games/reflection/puzzle/laser";
 import {
+  countNewlyMatchedReflectionClues,
   isReflectionSolved,
   listReflectionClueMatches,
 } from "@/games/reflection/puzzle/rules";
@@ -111,5 +112,27 @@ describe("listReflectionClueMatches", () => {
       true,
       false,
     ]);
+  });
+});
+
+describe("countNewlyMatchedReflectionClues", () => {
+  // 目標は listReflectionClueMatches と同じ。空の盤面では上1・右1・下1・左1 の4本が一致している。
+  const clues = computeReflectionClues(
+    parseReflectionBoard(["/..", "...", "..@"]),
+  );
+  const empty = parseReflectionBoard(["...", "...", "..."]);
+  const slashPlaced = parseReflectionBoard(["/..", "...", "..."]);
+
+  test("置いて一致に変わった外周ヒントだけを数え、元から一致していたものは数えないこと", () => {
+    // `/` で上0・左0（退出1）と、右0・下0（退出5）が一致に変わる。
+    const result = countNewlyMatchedReflectionClues(clues, empty, slashPlaced);
+
+    expect(result).toBe(4);
+  });
+
+  test("一致が崩れただけの変化は数えないこと", () => {
+    const result = countNewlyMatchedReflectionClues(clues, slashPlaced, empty);
+
+    expect(result).toBe(0);
   });
 });

@@ -11,6 +11,7 @@ import {
   type ReflectionEntry,
   traceReflectionLaser,
 } from "@/games/reflection/puzzle/laser";
+import { countNewlyMatchedReflectionClues } from "@/games/reflection/puzzle/rules";
 import {
   clearReflectionSessionSelection,
   createReflectionSession,
@@ -70,11 +71,13 @@ export type ReflectionTutorialStep = TutorialStep<ReflectionTutorialRuleId> & {
  * - `fittedCellIndex`: この手で手順どおりに置いたマス。
  * - `litEntry`: この手で手順を終えたときに光を見せる外周ヒント。次の手まで、その外周ヒントから入れた今の光を見せ、手の結果を盤面で返す。
  * - `piecePlaced`: この手でピースが盤面に現れた（置いた・移した・入れ替えた・置き換えた）。本番と同じく、置いた音を鳴らすのに使う。
+ * - `newlyMatchedClueCount`: この手で新しく一致に変わった外周ヒントの数。本番と同じく、一致の音を鳴らすのに使う。解き終えた手では 0。
  */
 export type ReflectionTutorialMove = {
   fittedCellIndex: number | null;
   litEntry: ReflectionEntry | null;
   piecePlaced: boolean;
+  newlyMatchedClueCount: number;
 };
 
 /**
@@ -380,6 +383,14 @@ function performReflectionTutorialAction(
       fittedCellIndex: stepped && step.type === "place" ? step.cellIndex : null,
       litEntry,
       piecePlaced: isPiecePlaced(state.session, session),
+      newlyMatchedClueCount:
+        session.status === "cleared"
+          ? 0
+          : countNewlyMatchedReflectionClues(
+              problem.clues,
+              state.session.puzzleState,
+              session.puzzleState,
+            ),
     },
   };
   if (session.status === "cleared") {

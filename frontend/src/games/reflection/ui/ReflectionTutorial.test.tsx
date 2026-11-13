@@ -425,8 +425,13 @@ describe("ReflectionTutorial", () => {
         await advanceTimeInSlices(clearEnoughMs);
         fireEvent.click(screen.getByRole("button", { name: "レベル 3を遊ぶ" }));
 
+        // 一致の音（2〜3音）も重ねて鳴らすので、光が広がる5音と和音を重ねたクリアの音だけを数える。
+        const clearSoundCalls = vi
+          .mocked(playLayeredSound)
+          .mock.calls.filter(([layers]) => layers.length > 3);
+
         expect(message).toContain("完成です");
-        expect(playLayeredSound).toHaveBeenCalledOnce();
+        expect(clearSoundCalls).toHaveLength(1);
         expect(playStart.onStart).toHaveBeenCalledOnce();
       });
     });

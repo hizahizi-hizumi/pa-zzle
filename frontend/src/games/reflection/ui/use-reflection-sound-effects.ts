@@ -52,14 +52,46 @@ const clearedSoundLayers: readonly SoundLayer[] = [
   },
 ];
 
+/**
+ * 置いた結果として外周ヒントが新しく一致したときに、置いた音に続けて鳴らす短い上がる音。
+ * クリアで光が広がる音と同じ素材から2音を選び、置いた音の立ち上がりと重ならないよう少し遅らせる。
+ * 同じ手で複数が一致しても音を積み増さず、2本以上なら上の音を1つ足すだけにする。
+ */
+const CLUE_MATCH_DELAY_MS = 60;
+const CLUE_MATCH_STEP_MS = 55;
+const CLUE_MATCH_VOLUME = 0.8;
+
+function listClueMatchedLayers(newlyMatchedClueCount: number): SoundLayer[] {
+  const [low, middle, high] = [
+    clearedSpreadSounds[1],
+    clearedSpreadSounds[3],
+    clearedSpreadSounds[4],
+  ];
+  if (!low || !middle || !high) return [];
+  const layers: SoundLayer[] = [
+    { sound: low, offsetMs: 0 },
+    { sound: middle, offsetMs: CLUE_MATCH_STEP_MS },
+  ];
+  if (newlyMatchedClueCount >= 2) {
+    layers.push({ sound: high, offsetMs: CLUE_MATCH_STEP_MS * 2 });
+  }
+  return layers;
+}
+
 const reflectionSounds: readonly SoundEffect[] = [
   piecePlacedSound,
   ...clearedSpreadSounds,
   clearedChordSound,
 ];
 
-function playPiecePlacedSound() {
+function playPiecePlacedSound({ newlyMatchedClueCount }: ReflectionOperation) {
   playSound(piecePlacedSound, { variation: REPEATED_SOUND_VARIATION });
+  if (newlyMatchedClueCount > 0) {
+    playLayeredSound(listClueMatchedLayers(newlyMatchedClueCount), {
+      delayMs: CLUE_MATCH_DELAY_MS,
+      volume: CLUE_MATCH_VOLUME,
+    });
+  }
 }
 
 function playClearSound() {

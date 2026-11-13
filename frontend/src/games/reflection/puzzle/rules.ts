@@ -72,3 +72,15 @@ export function listReflectionClueMatches(
     },
   );
 }
+
+/** 盤面が変わって、新しく一致に変わった外周ヒントの数。 */
+export function countNewlyMatchedReflectionClues(
+  clues: readonly ReflectionClue[],
+  previousBoard: ReflectionBoard,
+  nextBoard: ReflectionBoard,
+): number {
+  const previousMatches = listReflectionClueMatches(previousBoard, clues);
+  return listReflectionClueMatches(nextBoard, clues).filter(
+    (matched, index) => matched && !previousMatches[index],
+  ).length;
+}

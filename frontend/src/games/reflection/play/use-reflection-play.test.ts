@@ -4,6 +4,8 @@ import { createProblemSeed } from "@/games/problem-seed";
 import { useReflectionPlay } from "@/games/reflection/play/use-reflection-play";
 import type { ReflectionProblem } from "@/games/reflection/problem/problem";
 import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
+import { createEmptyReflectionBoard } from "@/games/reflection/puzzle/board";
+import { countNewlyMatchedReflectionClues } from "@/games/reflection/puzzle/rules";
 import {
   calculateReflectionPlayScore,
   calculateReflectionSpeedScoreRule,
@@ -72,6 +74,17 @@ describe("useReflectionPlay", () => {
 
       test("置いたことを操作の知らせとして返すこと", () => {
         expect(result.current.operation?.type).toBe("piece-placed");
+      });
+
+      test("置いて新しく一致した外周ヒントの数を知らせに添えること", () => {
+        const { problem } = pooled;
+        const expected = countNewlyMatchedReflectionClues(
+          problem.clues,
+          createEmptyReflectionBoard(problem.size),
+          result.current.board,
+        );
+
+        expect(result.current.operation?.newlyMatchedClueCount).toBe(expected);
       });
 
       test("別のマスへ移すと置いたことを知らせること", () => {

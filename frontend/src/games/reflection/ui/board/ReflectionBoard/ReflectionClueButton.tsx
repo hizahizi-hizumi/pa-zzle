@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useLayoutEffect, useRef } from "react";
 import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import type { TapHandlers } from "@/components/touch-tap";
 import type {
@@ -16,6 +16,7 @@ import {
   reflectionOutcomeToneClassNames,
   reflectionToneClassNames,
 } from "@/games/reflection/ui/reflection-tone";
+import { prefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 type ReflectionClueButtonProps = {
@@ -62,6 +63,59 @@ const clueMatchSurfaceInsetClassNames = {
   right: "inset-y-[10%] -inset-x-[5%]",
 } as const satisfies Record<ReflectionSide, string>;
 
+/**
+ * 盤面が変わって一致に変わった外周ヒントは、拡大して戻る動きで知らせ、一致が崩れた外周ヒントは小さく沈ませる。
+ * 一致の地と数字の色は瞬時に切り替え、動きは外周ヒント全体の見た目だけに付ける（格子の位置と大きさは変えない）。
+ */
+const CLUE_MATCH_MOTION = {
+  keyframes: [
+    { transform: "scale(1)" },
+    { transform: "scale(1.38)", offset: 0.4 },
+    { transform: "scale(1)" },
+  ],
+  options: { duration: 170, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+} as const;
+
+const CLUE_UNMATCH_MOTION = {
+  keyframes: [
+    { transform: "scale(1)", opacity: 1 },
+    { transform: "scale(0.8)", opacity: 0.55, offset: 0.4 },
+    { transform: "scale(1)", opacity: 1 },
+  ],
+  options: { duration: 160, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
+} as const;
+
+/** 同じ外周ヒントのまま一致が変わったときだけ動かす。初めから一致しているものや、別の問題に替わったときは動かさない。 */
+function useClueMatchMotion(
+  clue: ReflectionClue,
+  matched: boolean,
+): (element: HTMLElement | null) => void {
+  const elementRef = useRef<HTMLElement | null>(null);
+  const previousRef = useRef({ clue, matched });
+  const animationRef = useRef<Animation | null>(null);
+
+  useLayoutEffect(() => {
+    const previous = previousRef.current;
+    previousRef.current = { clue, matched };
+    if (previous.clue !== clue || previous.matched === matched) return;
+    const element = elementRef.current;
+    if (typeof element?.animate !== "function" || prefersReducedMotion()) {
+      return;
+    }
+    // 続けて置いたときは、前の動きを途中で切って新しい動きを最初から出す。
+    animationRef.current?.cancel();
+    const motion = matched ? CLUE_MATCH_MOTION : CLUE_UNMATCH_MOTION;
+    animationRef.current = element.animate(
+      motion.keyframes.map((keyframe) => ({ ...keyframe })),
+      motion.options,
+    );
+  }, [clue, matched]);
+
+  return useCallback((element: HTMLElement | null) => {
+    elementRef.current = element;
+  }, []);
+}
+
 export function ReflectionClueButton({
   size,
   entry,
@@ -85,9 +139,13 @@ export function ReflectionClueButton({
       : null;
   const insideLaserCount = outsideCountClassName === null ? laserCount : null;
   const spotlit = cues.some((cue) => cue.kind === "spotlight");
+  const motionRef = useClueMatchMotion(clue, matched);
   const buttonRef = useCallback(
-    (element: HTMLButtonElement | null) => onElementChange(focusKey, element),
-    [focusKey, onElementChange],
+    (element: HTMLButtonElement | null) => {
+      onElementChange(focusKey, element);
+      motionRef(element);
+    },
+    [focusKey, onElementChange, motionRef],
   );
 
   return (
