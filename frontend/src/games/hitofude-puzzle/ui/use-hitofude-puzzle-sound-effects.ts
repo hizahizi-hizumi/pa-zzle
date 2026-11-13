@@ -94,7 +94,6 @@ function playReducedMotionClearSound() {
   playSound(clearedEndSound);
 }
 
-/** 結果の報酬の音はアプリが鳴らす。 */
 export function useHitofudePuzzleSoundEffects(
   pathNotice: HitofudePuzzlePathNotice | null,
   progress: GameProgress,

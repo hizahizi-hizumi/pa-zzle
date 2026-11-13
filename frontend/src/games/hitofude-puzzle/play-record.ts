@@ -30,7 +30,7 @@ const HITOFUDE_PUZZLE_GAME_ID = "hitofude-puzzle";
 const HITOFUDE_PUZZLE_PLAY_RECORD_PAYLOAD_VERSION = 1;
 
 /**
- * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
+ * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。
  * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準時間との差は保存せず、現在の評価規則で導出する。
  *   戻したマスの数・待った・盤面を戻した回数・入力回数は評価に使わないが、評価規則を見直すときの材料として残す。
  */
