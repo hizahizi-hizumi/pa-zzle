@@ -4,10 +4,6 @@ import { InputModeToggle } from "@/games/minesweeper/ui/board/InputModeToggle";
 import type { MinesweeperInputMode } from "@/games/minesweeper/ui/board/MinesweeperBoard";
 import { StatusMetric } from "@/games/minesweeper/ui/MinesweeperTutorial/MinesweeperTutorialStatus/StatusMetric";
 
-/**
- * 切り替えに付ける、次に押す所の印。
- * - `recallId`: 印の無い所が押されるたびに変え、変わると印の線を短く濃くして戻す。押されていなければ `null`。
- */
 export type MinesweeperTutorialToggleCue = {
   recallId: number | null;
 };
@@ -15,20 +11,14 @@ export type MinesweeperTutorialToggleCue = {
 type MinesweeperTutorialStatusProps = {
   mineCount: number;
   flagCount: number;
-  /** 手を引いている間、地雷の総数を次の操作を決める手がかりとして覆いから抜く。 */
   mineCountSpotlit: boolean;
   mode: MinesweeperInputMode;
-  /** 切り替えに付ける印。`null` なら付けない。 */
   toggleCue: MinesweeperTutorialToggleCue | null;
-  /** 手を引いている間、次に押す所として切り替えを覆いから抜く。 */
   toggleSpotlit: boolean;
   onModeChange: (mode: MinesweeperInputMode) => void;
 };
 
-/**
- * 盤面の上に、本番の見出しと同じ書式の地雷と旗の数と、本番と同じ旗の切り替えを並べる。
- * 地雷の総数は解く手がかりなので、盤面と一緒に見える位置に置く。
- */
+/** 地雷の総数は解く手がかりなので、盤面と一緒に見える位置に置く。 */
 export function MinesweeperTutorialStatus({
   mineCount,
   flagCount,

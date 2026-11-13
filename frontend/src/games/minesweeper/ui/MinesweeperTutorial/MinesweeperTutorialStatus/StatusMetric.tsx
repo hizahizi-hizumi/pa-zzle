@@ -3,7 +3,6 @@ import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 type StatusMetricProps = {
   label: string;
   value: number;
-  /** 手を引いている間、次の操作を決める手がかりとして、画面全体の覆いから名前と数を抜く。 */
   spotlit: boolean;
 };
 

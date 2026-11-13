@@ -54,7 +54,6 @@ import {
 
 type MinesweeperTutorialProps = {
   open: boolean;
-  /** ゲームのホームから開いたときに渡す。終えたときに、ゲームのホームで開いているレベルを始める操作を出す。渡さなければプレイ中に開いたとして、閉じてプレイに戻る操作を出す。 */
   playStart?: TutorialPlayStart;
   onClose: () => void;
 };
@@ -70,11 +69,6 @@ type MinesweeperTutorialProgress = TutorialProgress<
  */
 const IDLE_HINT_DELAY_MS = 10_000;
 
-/**
- * 手を引いている間に印の無いマスを押されたときや、手順と違う操作をされたときの、印の押し直し。印の線を短く濃くして戻す。
- * - `id`: 押されるたびに増やし、続けて押されても押し直す。
- * - `progress`: 押されたときの進行。手が進んだら押し直しを終える。
- */
 type MinesweeperTutorialRecall = {
   id: number;
   progress: MinesweeperTutorialProgress;
@@ -85,19 +79,17 @@ const goalBoardState = minesweeperTutorial.goal();
 const startRevealedCellIndices =
   minesweeperTutorial.start().puzzle.revealedCellIndices;
 
-/** 始めの盤面で開いていないマス。導入で、解き終えた盤面からここを閉じて始めの盤面へ戻す。 */
 const startCoveredCellIndices = Array.from(
   { length: MINESWEEPER_TUTORIAL_ROWS * MINESWEEPER_TUTORIAL_COLUMNS },
   (_, cellIndex) => cellIndex,
 ).filter((cellIndex) => !startRevealedCellIndices.includes(cellIndex));
 
-/** 手順で印のマスにさせる操作と、それを受け付ける切り替え。 */
 const stepOperationModes = {
   reveal: "reveal",
   flag: "flag",
 } as const satisfies Record<MinesweeperTutorialOperation, MinesweeperInputMode>;
 
-/** 本番の効果音のフックへ渡す、プレイの進行。解けた盤面の演出の間を完成演出として、完成の音を鳴らす。 */
+/** 解けた盤面の演出の間を完成演出として、完成の音を鳴らす。 */
 const gameProgressByPhase = {
   intro: "playing",
   playing: "playing",
@@ -105,10 +97,7 @@ const gameProgressByPhase = {
   completed: "result",
 } as const satisfies Record<MinesweeperTutorialProgress["phase"], GameProgress>;
 
-/**
- * 盤面を変えた手を、本番と同じ操作の知らせにする。数字を押してまとめて開く手は、本番と同じく開く手として鳴らす。
- * `id` は、もう一度始めても本番の効果音が同じ知らせとみなさないよう、開いている間ずっと増やす。
- */
+/** 数字を押してまとめて開く手は、本番と同じく開く手として鳴らす。 */
 function createOperation(
   action: MinesweeperTutorialAction,
   previous: MinesweeperTutorialBoardState,
@@ -139,11 +128,6 @@ function getCueDelayMs(
   return guiding ? 0 : IDLE_HINT_DELAY_MS;
 }
 
-/**
- * マスに重ねる印と応え。
- * - 手順の印のマスを手順どおりにしたら、そのマスに応える。
- * - 次に操作するマスに印を付け、押し直すとき（`recallId`）だけ印の線を濃くする。
- */
 function getCellCues(
   { lastMove, moveCount }: MinesweeperTutorialBoardState,
   hintCellIndices: readonly number[],
@@ -184,7 +168,7 @@ function getSpotlitCellIndices(
 
 /**
  * 5×5 の盤面を、一言と印に沿って一緒に解き、数字と地雷の総数の決まりを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分で開かせる。盤面・旗の切り替え・解けたときの演出は本番と同じ部品を使う。
+ * 手順を終えたら手を離し、残りを自分で開かせる。
  */
 export function MinesweeperTutorial({
   open,
@@ -195,8 +179,8 @@ export function MinesweeperTutorial({
     startTutorial(minesweeperTutorial),
   );
   const [mode, setMode] = useState<MinesweeperInputMode>("reveal");
-  // 本番の効果音のフックへ渡す、盤面を変えた手の知らせ。
   const [operation, setOperation] = useState<MinesweeperOperation | null>(null);
+  // `id` は、もう一度始めても本番の効果音が同じ知らせとみなさないよう、開いている間ずっと増やす。
   const nextOperationIdRef = useRef(1);
   const [idleProgress, setIdleProgress] =
     useState<MinesweeperTutorialProgress | null>(null);
@@ -217,7 +201,6 @@ export function MinesweeperTutorial({
     situation,
     boardState,
   );
-  // 手順の操作に切り替えが合っていない。一言の補足と切り替えの印で、切り替えさせる。
   const modeMismatched =
     step !== null && stepOperationModes[step.operation] !== mode;
   // 手がかりの印のマスを今の切り替えで押しても進めないときは、切り替えにも印を付ける。
@@ -262,12 +245,10 @@ export function MinesweeperTutorial({
     setProgress(finishTutorialIntro);
   }
 
-  /** 印の無いマスを押されたり、手順と違う操作をされたりしたら、赤は使わず、印の線を短く濃くして目を向けさせる。 */
   function recallHint(): void {
     setRecall((current) => ({ id: (current?.id ?? 0) + 1, progress }));
   }
 
-  /** 手を引いている間に、印のとおりでない操作を受けたら、印へ目を向けさせる。 */
   function handleIgnoredAction(): void {
     if (guiding && progress.phase === "playing") {
       recallHint();
@@ -322,16 +303,13 @@ export function MinesweeperTutorial({
     playStart?.onStart();
   }
 
-  /**
-   * 始めの盤面の場面では、解き終えた盤面に開いていないマスを閉じていき、閉じ終えたら始めの盤面に替える。
-   * 最初の手順の印は、導入の終わりに一言と同時に出す。
-   */
   function renderBoard({
     scene,
     playing,
     onSceneEnd,
     messageShown,
   }: TutorialBoardIntro) {
+    // 始めの盤面の場面では、解き終えた盤面に開いていないマスを閉じていき、閉じ終えたら始めの盤面に替える。
     const goalShown = scene === "goal" || (scene === "start" && playing);
     const shownBoardState = goalShown ? goalBoardState : boardState;
     // 最初の手順の印と決め手は、導入の終わりに一言と同時に出す。

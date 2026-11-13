@@ -16,11 +16,8 @@ export type MinesweeperBoardProps = {
   onRevealCell: (cellIndex: number) => void;
   onToggleFlag: (cellIndex: number) => void;
   onChordCell: (cellIndex: number) => void;
-  /** マスに一時的に重ねる合図。通常のプレイでは渡さない。 */
   cues?: readonly MinesweeperCellCue[];
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せるマス。次に操作するマスと、それを決めるマス。通常のプレイでは渡さない。 */
   spotlitCellIndices?: readonly number[];
-  /** 盤面を変えない操作を受けた。開いたマス・地雷のマスを、その操作で変えられないのに押した。チュートリアルで印へ目を向けさせるのに使い、通常のプレイでは渡さない。 */
   onIneffectiveCellPress?: (cellIndex: number) => void;
 };
 
@@ -30,7 +27,7 @@ function getCellKey(columns: number, cellIndex: number): string {
   return `${row}:${column}`;
 }
 
-/** マスの並べ方。盤面と同じ格子にマスを重ねる部品（チュートリアルの始めの盤面へ戻す面）も、このクラスと `getMinesweeperBoardGridStyle` で並べる。 */
+/** 盤面と同じ格子にマスを重ねる部品（チュートリアルの始めの盤面へ戻す面）も、このクラスと `getMinesweeperBoardGridStyle` で並べる。 */
 export const MINESWEEPER_BOARD_GRID_CLASS_NAME =
   "grid w-full gap-[4px] p-[8px]";
 
