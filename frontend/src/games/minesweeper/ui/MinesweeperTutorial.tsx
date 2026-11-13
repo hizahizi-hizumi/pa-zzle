@@ -345,7 +345,7 @@ export function MinesweeperTutorial({
             active={scene === "start" && playing}
             rows={MINESWEEPER_TUTORIAL_ROWS}
             columns={MINESWEEPER_TUTORIAL_COLUMNS}
-            coveredCellIndices={startCoveredCellIndices}
+            startCoveredCellIndices={startCoveredCellIndices}
             onComplete={onSceneEnd}
           >
             {/*
