@@ -20,10 +20,7 @@ export type ReflectionOutcome = "exit" | "reflect" | "absorb";
 
 export type ReflectionClue = {
   outcome: ReflectionOutcome;
-  /**
-   * 光が通ったマスの数。入ったマスを1と数え、同じマスを何度通っても通るたびに数える。
-   * 吸収ではブラックホールのマスまでを数える。
-   */
+  /** 光が通ったマスの数。 */
   distance: number;
 };
 

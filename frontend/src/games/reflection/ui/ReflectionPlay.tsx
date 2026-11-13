@@ -185,7 +185,6 @@ export function ReflectionPlay({
           />
         </div>
       </main>
-      {/* 置き切っても揃わないときも文は出さない。どれが合っていないかは外周ヒントの一致の地で見える。 */}
       <footer className="grid shrink-0 px-3 pb-2">
         <ReflectionStock
           inventory={inventory}
