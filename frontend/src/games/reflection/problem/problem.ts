@@ -48,7 +48,6 @@ export type ReflectionProblemIdentity = {
   conditions: ReflectionGenerationConditions;
 };
 
-/** 生成器の版が今と違う記録も読み込む。 */
 export type ReflectionRecordedProblemIdentity = RecordedProblemIdentity;
 
 export type ReflectionIdentifiedProblem = {

@@ -45,7 +45,7 @@ import {
 
 type ReflectionTutorialProps = {
   open: boolean;
-  /** ゲームのホームから開いたときに渡す。終えたときに、ゲームのホームで開いているレベルを始める操作を出す。渡さなければプレイ中に開いたとして、閉じてプレイに戻る操作を出す。 */
+  /** ゲームのホームから開いたときに渡す。渡さなければプレイ中に開いたとして扱う。 */
   playStart?: TutorialPlayStart;
   onClose: () => void;
 };
@@ -237,7 +237,6 @@ export function ReflectionTutorial({
     setProgress(startTutorial(reflectionTutorial));
   }
 
-  // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();

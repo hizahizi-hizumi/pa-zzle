@@ -1,7 +1,6 @@
 import type { ReflectionPiece } from "@/games/reflection/puzzle/board";
 import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
 
-/** リフレクション固有の色。共通UIの意味色（`primary`・`ring`・`success` など）は流用しない。 */
 export const reflectionToneClassNames = {
   /**
    * 光路と、光路を表示している外周ヒント。線や記号は `laserText`、外周ヒントに添える今の光の通るマスの数は、
@@ -13,7 +12,6 @@ export const reflectionToneClassNames = {
    * 今の配置での光が外周ヒントの数字・行き先と一致している外周ヒントの地と数字。
    * 外周ヒントの内側に余白を残した控えめな緑の地にし、隣り合う一致の地が帯としてつながらないようにする。
    * 一致の切り替えでは地と数字の色だけを瞬時に変える（大きさ・位置・枠・太さは変えない）。
-   * ゲームの中の状態を示す色で、アプリ共通の `success`（クリア・完了）とは分ける。
    */
   clueMatchSurface: "bg-emerald-100 dark:bg-emerald-950",
   /** 押せる外周ヒントでは、ホバー・押下・フォーカスで一致の地を一段濃くする（外周ヒントのボタンを `group` にする）。 */

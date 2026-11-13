@@ -33,12 +33,11 @@ type ReflectionPlayRecordPayload = {
   difficulty: ReflectionDifficulty;
   /**
    * 問題集の版と番号は問題集を作り直すと変わるので保存せず、必要なら identity の seed から引く。
-   * 生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
    */
   problemIdentity: ReflectionRecordedProblemIdentity;
   workload: ReflectionSolveWorkload;
   /**
-   * 置き直し・盤面を戻した回数・光路を確かめた回数・入力回数は評価に使わないが、結果・記録画面に出し、評価規則を見直すときの材料として残す。
+   * 置き直し・盤面を戻した回数・光路を確かめた回数・入力回数も、結果・記録画面に出し、評価規則を見直すときの材料として残す。
    */
   performance: ReflectionSessionResult;
 };
