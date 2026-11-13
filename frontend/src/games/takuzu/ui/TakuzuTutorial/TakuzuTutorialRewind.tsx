@@ -9,9 +9,8 @@ type TakuzuTutorialRewindProps = {
   children: ReactNode;
 };
 
-/** 置いたタイル。固定タイルは始めの盤面に残るので消さない。 */
+/** 固定タイルは始めの盤面に残るので消さない。 */
 const placedTileSelector = '[data-takuzu-tile="placed"]';
-/** 完成の波と同じく、タイルが `data-clear-wave-step` に持つ「行 + 列」の順で消す。 */
 const REWIND_STAGGER_MS = 20;
 const REWIND_DURATION_MS = 220;
 const REWIND_SETTLE_MS = 80;
@@ -25,10 +24,7 @@ function getWaveStep(element: HTMLElement): number {
   return Number(element.dataset.clearWaveStep ?? 0);
 }
 
-/**
- * 解き終えた盤面から、置いたタイルを左上から右下へ順に消して、始めの盤面へ戻す。
- * 消したタイルは、盤面が始めの盤面に替わるまで消したまま保つ。
- */
+/** 解き終えた盤面から、置いたタイルを左上から右下へ順に消して、始めの盤面へ戻す。 */
 export function TakuzuTutorialRewind({
   active,
   onComplete,
@@ -51,6 +47,7 @@ export function TakuzuTutorialRewind({
           return (
             element.animate?.(rewindKeyframes, {
               duration: REWIND_DURATION_MS,
+              // 完成の波と同じく、タイルが `data-clear-wave-step` に持つ「行 + 列」の順で消す。
               delay: getWaveStep(element) * REWIND_STAGGER_MS,
               easing: MOTION_EASING.exit,
               fill: "both",

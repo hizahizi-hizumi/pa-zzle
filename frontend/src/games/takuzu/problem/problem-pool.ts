@@ -39,7 +39,6 @@ const codeByRemovalTechniqueLimit = Object.fromEntries(
 
 /**
  * 事前生成した問題集の1問。
- * - 生成条件（手筋の上限・戻す数）と候補番号から `createTakuzuProblemIdentity` で identity を再構成する。
  * - `encodedProblem` は解と初期配置を16進で並べた32文字（`encodeTakuzuPoolProblem`）。
  *   実行時に生成器・解探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
  * - `roundCount` / `lineReadingRoundCount` は生成時の分析結果（`TakuzuSolveWorkload`）。
@@ -54,7 +53,6 @@ export type TakuzuProblemPoolEntry = readonly [
   lineReadingRoundCount: number,
 ];
 
-/** 問題集から復元した1問。問題を解き切る作業の量を伴う。 */
 export type TakuzuPooledProblem = TakuzuIdentifiedProblem & {
   workload: TakuzuSolveWorkload;
 };
@@ -180,14 +178,14 @@ const poolIndex = createProblemPoolIndex(
   toTakuzuPoolIdentity,
 );
 
-/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+/** 問題 ID を、問題集の並び順で返す。 */
 export function listTakuzuPoolProblemIds(
   difficulty: TakuzuDifficulty,
 ): readonly ProblemId[] {
   return poolIndex.listProblemIds(difficulty);
 }
 
-/** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+/** 問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findTakuzuPoolEntryByProblemId(
   difficulty: TakuzuDifficulty,
   problemId: string,
@@ -206,7 +204,6 @@ function getEntriesBySeed(): ReadonlyMap<string, TakuzuProblemPoolEntry> {
   return entriesBySeed;
 }
 
-/** identity に一致する問題集の1問を探す。生成器の版や条件が違う identity には `null` を返す。 */
 export function findTakuzuPoolEntry(
   identity: TakuzuProblemIdentity,
 ): TakuzuProblemPoolEntry | null {
@@ -232,7 +229,6 @@ export type TakuzuProblemFeatures = {
 };
 
 /**
- * 難易度の問題集の1問の特徴を、問題を復元せずに初期配置の位置から求める。問題集に無い ID・別の難易度の ID には `null` を返す。
  * 図鑑の絞り込みでレベルの全問について求めるので、解の読み解きと問題の検査をしない。
  */
 export function findTakuzuPoolProblemFeatures(
@@ -247,7 +243,6 @@ export function findTakuzuPoolProblemFeatures(
   return { givenCount: givenMask.filter(Boolean).length };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
 export const takuzuProblemFeatureAxes = [
   {
     id: "given-count",

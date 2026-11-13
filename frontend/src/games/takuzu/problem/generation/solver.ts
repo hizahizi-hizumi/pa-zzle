@@ -19,7 +19,6 @@ export type TakuzuSolutionCount = 0 | 1 | 2;
 
 export type TakuzuSolutionSearchResult = {
   solutionCount: TakuzuSolutionCount;
-  /** 最初に見つけた完成盤。解が無ければ `null`。 */
   firstSolution: TakuzuBoard | null;
 };
 
@@ -144,14 +143,12 @@ function searchSolutions(
   };
 }
 
-/** 初期配置に合う完成盤を 0 / 1 / 2以上 で数える。一意性の確認に使う。 */
 export function countTakuzuSolutions(
   givens: TakuzuBoard,
 ): TakuzuSolutionSearchResult {
   return searchSolutions(givens, { solutionLimit: 2 });
 }
 
-/** 初期配置に合う完成盤を、`random` で決まる順に探して1つ返す。完成盤の生成に使う。 */
 export function findRandomTakuzuSolution(
   givens: TakuzuBoard,
   random: ProblemRandom,

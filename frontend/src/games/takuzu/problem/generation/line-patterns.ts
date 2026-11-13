@@ -36,7 +36,7 @@ function hasRunOfThree(pattern: TakuzuLinePattern, size: number): boolean {
   return false;
 }
 
-/** 1本の行・列だけで見て完成として正しい並び。2種類が半分ずつで、3つ続かない。 */
+/** 1本の行・列だけで見て完成として正しい並び。 */
 export function listLegalTakuzuLinePatterns(
   size: number,
 ): readonly TakuzuLinePattern[] {

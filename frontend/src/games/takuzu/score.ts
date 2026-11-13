@@ -10,30 +10,25 @@ import {
 } from "@/games/score";
 import type { TakuzuSolveWorkload } from "@/games/takuzu/problem/problem";
 
-/**
- * 盤面を読んで確定したマスだけを置き、置き直しをせずに解き切ることを最も称え、その上で速さを称える。
- * 推測なしに解ける問題だけを出すので、読みの正確さを速さより重くする。
- */
+/** 推測なしに解ける問題だけを出すので、読みの正確さを速さより重くする。 */
 export const TAKUZU_SCORE_MAXIMUMS = {
   accuracy: 60,
   speed: 40,
 } as const satisfies ScoreMaximums<"accuracy" | "speed">;
 
 /**
- * 置き直し1回ごとの正確さの減点。
  * 押し間違いを直した程度（2回まで）なら great に残り、試し置きを重ねて5回以上直したプレイは速さによらず good に届かない重さにする。
  */
 export const TAKUZU_CORRECTION_PENALTY = 5;
 
 /**
- * 盤面を戻した1回ごとの正確さの減点。
  * 盤面を戻して消えたマスは置き直しに数えないので、試し置きの跡を消せる分を含めて重くする。
  * 1回戻せば、ほかが完璧でも最高で good とする。
  */
 export const TAKUZU_RESTART_PENALTY = 15;
 
 /**
- * 待った1回ごとの正確さの減点。ナンプレの待ったと同じ重さにする。
+ * ナンプレの待ったと同じ重さにする。
  * 待ったで取り消した操作は置き直しに数えないので、押し間違いをすぐ取り消したプレイは置き直したプレイより軽く扱い、
  * 試し置きを待ったで戻し続けたプレイにも回数に応じた減点を残す。
  */
@@ -60,11 +55,6 @@ type TakuzuPlayScoreInput = TakuzuTimeDeltaInput & {
   undoCount: number;
 };
 
-/**
- * 問題ごとの速さ満点の基準時間。
- * 盤面把握の時間に、タイルを置く数、次の一手を探し直す局面の数、行・列全体を読む局面の数に応じた時間を足す。
- * 問題を解き切る作業の量だけから決め、難易度そのものは使わない。
- */
 export function calculateTakuzuSpeedFullScoreMs({
   emptyCellCount,
   roundCount,

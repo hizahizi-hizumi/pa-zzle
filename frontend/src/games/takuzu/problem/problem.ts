@@ -18,11 +18,6 @@ import {
   isRecordObject,
 } from "@/lib/type-guards";
 
-/**
- * 1問を遊ぶためのデータ。
- * - `givens`: 初期配置。タイルがあるマスは固定マスになる。
- * - `solution`: ただ1つの解。
- */
 export type TakuzuProblem = {
   givens: TakuzuBoard;
   solution: TakuzuBoard;
@@ -34,7 +29,6 @@ export const TAKUZU_BOARD_SIZE = 8;
 export const TAKUZU_GENERATOR_VERSION = "1";
 
 /**
- * 問題を作る条件。
  * - `removalTechniqueLimit`: 初期配置を減らすとき、解き切れることを保つのに使ってよい最も深い手筋。
  *   `null` なら手筋で解き切れることは保たず、一意解であることだけを保つ（評価可能範囲の外の問題も作る）。
  *   生成された問題の難易度はこの値で決めず、できた問題を分析して決める。
@@ -46,7 +40,6 @@ export type TakuzuGenerationConditions = {
   extraGivenCount: number;
 };
 
-/** 同じ問題を再現するための情報。記録から同じ問題を引き直すときに使う。 */
 export type TakuzuProblemIdentity = {
   generatorVersion: typeof TAKUZU_GENERATOR_VERSION;
   seed: ProblemSeed;
@@ -55,7 +48,6 @@ export type TakuzuProblemIdentity = {
 
 /**
  * 問題を解き切るのに要る作業の量。速さの基準時間を問題ごとに決めるのに使い、難易度の判定には使わない。
- * - `emptyCellCount`: 空きマスの数。置くタイルの数。
  * - `roundCount`: 人間向け解法器が解き切るまでの局面の数。次に確定できるマスを探し直す回数を表す。
  * - `lineReadingRoundCount`: そのうち、行・列全体を読む手筋（C 残り1個・D 重複の回避・E 一般の行候補）が要った局面の数。
  */
@@ -68,7 +60,6 @@ export type TakuzuSolveWorkload = {
 /** 記録に残した問題の識別情報。生成器の版が今と違う記録も読み込む。 */
 export type TakuzuRecordedProblemIdentity = RecordedProblemIdentity;
 
-/** 問題と、それを再現するための情報。難易度分析を伴わない。 */
 export type TakuzuIdentifiedProblem = {
   problem: TakuzuProblem;
   identity: TakuzuProblemIdentity;
@@ -152,7 +143,6 @@ export function isTakuzuRecordedProblemIdentity(
   });
 }
 
-/** 記録など外部から読み戻した値が、8×8 の問題で成り立つ作業の量かを確かめる。 */
 export function isTakuzuSolveWorkload(
   value: unknown,
 ): value is TakuzuSolveWorkload {

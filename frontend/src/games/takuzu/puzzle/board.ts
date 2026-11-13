@@ -37,10 +37,7 @@ export function assertTakuzuBoard(board: TakuzuBoard): void {
   }
 }
 
-/**
- * 1行を1文字列とした記法から盤面を作る。`A` と `B` がタイル、`.` が空きマス。
- * 固定問題やテストで盤面を読みやすく書くための記法。
- */
+/** 固定問題やテストで盤面を読みやすく書くための記法。 */
 export function parseTakuzuBoard(rows: readonly string[]): TakuzuBoard {
   const isSquare = rows.every((row) => row.length === rows.length);
   if (!isSquare) {

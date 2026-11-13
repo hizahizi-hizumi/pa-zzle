@@ -19,7 +19,6 @@ import {
   TAKUZU_UNDO_PENALTY,
 } from "@/games/takuzu/score";
 
-/** 基準時間の式。その問題で0回の項は省く。 */
 function listSpeedFormula({
   emptyCellCount,
   roundCount,

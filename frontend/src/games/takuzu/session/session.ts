@@ -29,7 +29,6 @@ type TakuzuEditingCell = {
   cellBeforeEditing: TakuzuCell;
 };
 
-/** 待ったで戻す先。盤面と、その盤面までの置き直しの記録を一緒に戻す。 */
 type TakuzuSessionSnapshot = {
   puzzleState: TakuzuBoard;
   settledCorrectionCount: number;
@@ -39,18 +38,15 @@ type TakuzuSessionSnapshot = {
 export type TakuzuSession = GameSession<TakuzuProblem, TakuzuBoard> & {
   /** 固定マス以外のマスを押した回数。 */
   inputCount: number;
-  /** 盤面を戻した回数。 */
   restartCount: number;
-  /** 待ったで盤面操作を取り消した回数。 */
   undoCount: number;
-  /** 待ったで戻せる盤面操作の履歴。古い順。盤面を戻すと空にする。 */
+  /** 待ったで戻せる盤面操作の履歴。古い順。 */
   history: readonly TakuzuSessionSnapshot[];
   /** 押し終えたマスで確定した置き直しの回数。押している途中のマスは `editingCell` から数える。 */
   settledCorrectionCount: number;
   editingCell: TakuzuEditingCell | null;
 };
 
-/** 評価に使うプレイ事実。採点はしない。 */
 export type TakuzuSessionResult = {
   elapsedMs: number;
   correctionCount: number;
@@ -62,7 +58,7 @@ export type TakuzuSessionResult = {
 export type TakuzuCellView = {
   cell: TakuzuCell;
   given: boolean;
-  /** 同じタイルが3つ以上続く並びに入っている。3連続の違反はマスごとに示す。 */
+  /** 3連続の違反はマスごとに示す。 */
   inViolatingRun: boolean;
 };
 
@@ -119,7 +115,6 @@ export function createTakuzuSession(
   };
 }
 
-/** マスの中身を直接置き換える。固定マスや、すでに同じ中身のマスへの入力は記録しない。 */
 export function placeTakuzuSessionCell(
   session: TakuzuSession,
   cellIndex: number,
@@ -185,7 +180,6 @@ export function cycleTakuzuSessionCell(
 
 /**
  * 同じプレイのまま盤面を初期配置へ戻す（盤面を戻す）。経過時間と入力の記録は引き継ぐ。
- * 盤面が初期配置のままなら何もしない。盤面を戻して消えたマスは置き直しに数えない。
  * 盤面を戻す前の操作は待ったで戻せない。
  */
 export function restartTakuzuSession(session: TakuzuSession): TakuzuSession {
@@ -201,7 +195,6 @@ export function restartTakuzuSession(session: TakuzuSession): TakuzuSession {
   };
 }
 
-/** 固定マス以外にタイルを置いたプレイ中だけ、盤面を戻せる。 */
 export function canRestartTakuzuSession(session: TakuzuSession): boolean {
   return (
     session.status === "playing" &&
