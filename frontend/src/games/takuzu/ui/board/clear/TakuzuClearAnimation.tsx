@@ -11,11 +11,9 @@ type TakuzuClearAnimationProps = {
 /** 波の中の順番を持つタイル。盤面のマスのタイルが `data-clear-wave-step` に「行 + 列」を置く。 */
 const waveCellSelector = "[data-clear-wave-step]";
 
-/** 波の隣り合う順番のタイルが膨らみ始めるまでの間。 */
 export const CLEAR_WAVE_STAGGER_MS = 35;
 const CLEAR_WAVE_DURATION_MS = 380;
 const CLEAR_WAVE_PEAK_OFFSET = 0.4;
-/** 1枚のタイルが膨らみ始めてから、いちばん膨らむまでの時間。 */
 export const CLEAR_WAVE_PEAK_MS =
   CLEAR_WAVE_DURATION_MS * CLEAR_WAVE_PEAK_OFFSET;
 const CLEAR_HOLD_MS = 240;

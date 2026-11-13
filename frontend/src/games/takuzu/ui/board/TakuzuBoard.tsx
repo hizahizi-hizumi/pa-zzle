@@ -30,20 +30,18 @@ type TakuzuBoardProps = {
   lineViolations: readonly TakuzuLineViolationView[];
   operation: TakuzuOperation | null;
   interactionDisabled: boolean;
-  /** マスに一時的に重ねる合図。通常のプレイでは渡さない。 */
+  /** 通常のプレイでは渡さない。 */
   cues?: readonly TakuzuCellCue[];
-  /**
-   * チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せるもの。通常のプレイでは渡さない。
-   * - `cellIndices`: 次に置くマスと、そのタイルを決めるマス。
-   * - `lineViolations`: 個数超過・重複の行・列の、縁の外の印も抜くか。
-   */
+  /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せるもの。通常のプレイでは渡さない。 */
   spotlight?: TakuzuBoardSpotlight | null;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
 };
 
 export type TakuzuBoardSpotlight = {
+  /** 次に置くマスと、そのタイルを決めるマス。 */
   cellIndices: readonly number[];
+  /** 個数超過・重複の行・列の、縁の外の印も抜くか。 */
   lineViolations: boolean;
 };
 

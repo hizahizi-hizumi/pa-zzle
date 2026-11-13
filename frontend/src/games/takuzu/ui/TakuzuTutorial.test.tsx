@@ -21,7 +21,7 @@ vi.mock("@/lib/sound-effects", () => ({
 
 type CellPlacement = readonly [row: number, column: number, tile: "A" | "B"];
 
-/** 手順ごとに印を付けるマスと、その解。四角は1回、丸は2回タップして置く。 */
+/** 手順ごとに印を付けるマスと、その解。 */
 const stepPlacements: readonly (readonly CellPlacement[])[] = [
   [[4, 1, "A"]],
   [[1, 4, "B"]],
@@ -36,22 +36,18 @@ const stepPlacements: readonly (readonly CellPlacement[])[] = [
   ],
 ];
 
-/** 手順を終えた後に残るマスと、その解。 */
 const remainingPlacements: readonly CellPlacement[] = [
   [4, 2, "B"],
   [4, 3, "A"],
 ];
 
-/** ルールに合わない手に、違反の一言で応えるまでの間。 */
 const violationReactionDelayMs = 500;
 
 /** 手順のマスを正しい手へ向かう途中にしたまま手が止まってから、盤面にルールに合わないところを示すまでの間。 */
 const towardStepRevealDelayMs = 1000;
 
-/** 手順どおりに置いてから、次の印を付けるまでの間。 */
 const nextStepCueDelayMs = 900;
 
-/** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
 const idleHintDelayMs = 4000;
 
 /** 名前を出してから、盤面の段に入るまでの間。 */
@@ -103,7 +99,7 @@ async function advanceTimeInSlices(ms: number): Promise<void> {
   }
 }
 
-/** 導入の「次へ」を押す。導入は自動では先へ進まない。 */
+/** 導入は自動では先へ進まない。 */
 function pressNext(): void {
   fireEvent.click(screen.getByRole("button", { name: "次へ" }));
 }
@@ -190,7 +186,6 @@ function solveAll(): void {
   placeAll(remainingPlacements);
 }
 
-/** 合図を重ねているマスの位置。 */
 function getCuedCellPositions(kind: "hint" | "fitted"): string[] {
   return within(getBoard())
     .getAllByRole("button")
@@ -198,7 +193,6 @@ function getCuedCellPositions(kind: "hint" | "fitted"): string[] {
     .map((cell) => cell.getAttribute("aria-label")?.split(" ")[0] ?? "");
 }
 
-/** 画面全体の覆いから抜いて、元の明るさで見せているマスの位置。 */
 function getSpotlitCellPositions(): string[] {
   return within(getBoard())
     .getAllByRole("button")
@@ -206,7 +200,6 @@ function getSpotlitCellPositions(): string[] {
     .map((cell) => cell.getAttribute("aria-label")?.split(" ")[0] ?? "");
 }
 
-/** 印を付けているマスの位置。 */
 function getHintedCellPositions(): string[] {
   return getCuedCellPositions("hint");
 }
@@ -216,7 +209,6 @@ function getViolatedLineCount(): number {
   return getBoard().querySelectorAll("span[data-violated]").length / 2;
 }
 
-/** 印の線を短く濃くしている合図。 */
 function getRecallCue(row: number, column: number): Element | null {
   return getCell(row, column).querySelector('[data-tutorial-cue="recall"]');
 }
@@ -235,7 +227,6 @@ function getCellLabel(row: number, column: number): string | null {
   return getCell(row, column).getAttribute("aria-label");
 }
 
-/** 今の手順で示しているルールとして目立たせているもの。 */
 function getCurrentRuleTexts(): string[] {
   return getRuleItems()
     .filter((item) => item.querySelector('[aria-current="step"]'))

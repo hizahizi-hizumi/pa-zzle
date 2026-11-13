@@ -6,12 +6,8 @@ import {
 } from "@/games/takuzu/ui/board/violation-mark-style";
 import { cn } from "@/lib/utils";
 
-/**
- * 盤面と同じ見え方で描く、遊び方の小さな図。
- * `rows` の1文字が1マス。`A` / `B` は固定タイル、`a` / `b` は置いたタイル、`.` は空き。
- * `violation` は盤面と同じ違反の印を付ける。`run` はすべてのマスを3連続として、`line` は各行を行の違反として示す。
- */
 type HowToPlayFigureProps = {
+  /** 1文字が1マス。`A` / `B` は固定タイル、`a` / `b` は置いたタイル、`.` は空き。 */
   rows: readonly string[];
   violation?: "run" | "line";
 };

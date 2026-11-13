@@ -20,12 +20,10 @@ type TakuzuCellProps = {
   size: number;
   cellIndex: number;
   view: TakuzuCellView;
-  /** このマスを含む行・列の違反の読み上げ名（例「行の個数超過」）。 */
   lineViolationNames: readonly string[];
   disabled: boolean;
   /** 揺れの合図は盤面が掛けるので、マスは印と応えだけを描く。 */
   cue: TakuzuCellCue | undefined;
-  /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜き、元の明るさで見せる。 */
   spotlit: boolean;
   focusable: boolean;
   onElementChange: (
@@ -118,7 +116,6 @@ export function TakuzuCell({
           runViolationCellClassName,
         )}
       />
-      {/* マスの形のまま、角の無い四角で覆いから抜く。 */}
       <TutorialSpotlight active={spotlit} className="inset-0" />
       {cue?.kind === "fitted" && (
         <span

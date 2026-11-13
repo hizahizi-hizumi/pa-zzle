@@ -10,7 +10,6 @@ type TakuzuLineViolationMarkProps = {
   size: number;
   line: TakuzuLine;
   violated: boolean;
-  /** チュートリアルで手を引いている間、違反の印を画面全体の覆いから抜き、覆いに埋もれさせない。 */
   spotlit: boolean;
 };
 
@@ -29,7 +28,6 @@ const barPlacementClassNames = {
   },
 } as const satisfies Record<TakuzuLine["axis"], Record<LineEdge, string>>;
 
-/** 行・列の端のマスのグリッド領域。印はこの領域の外側（盤面の縁の外）に置く。 */
 function getEdgeCellArea(
   size: number,
   { axis, index }: TakuzuLine,
@@ -70,7 +68,6 @@ export function TakuzuLineViolationMark({
             violationMarkTimingClassName,
           )}
         />
-        {/* 印の線そのものの位置と角丸で抜く。 */}
         <TutorialSpotlight
           active={spotlit && violated}
           className={cn(

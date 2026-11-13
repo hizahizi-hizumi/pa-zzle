@@ -8,9 +8,9 @@
  */
 export type TakuzuCellCueKind = "fitted" | "hint" | "recall";
 
-/** `id` が変わると、同じマスの同じ合図でもやり直す。 */
 export type TakuzuCellCue = {
   cellIndex: number;
   kind: TakuzuCellCueKind;
+  /** `id` が変わると、同じマスの同じ合図でもやり直す。 */
   id: number;
 };

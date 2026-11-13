@@ -35,7 +35,6 @@ type Progress = TutorialProgress<
 
 const allLessons = listLessons(["run", "count", "duplicate"]);
 
-/** 1始まりの行・列で書いたマス。 */
 function cellAt(row: number, column: number): number {
   return (row - 1) * solution.size + (column - 1);
 }
@@ -64,7 +63,6 @@ function placeSolution(cellIndices: readonly number[]) {
   );
 }
 
-/** 最初の `count` 個の手順を、印のマスへ解のタイルを置いて終える。 */
 function finishSteps(count: number): Progress {
   return takuzuTutorial.steps
     .slice(0, count)
@@ -78,7 +76,6 @@ function getEmptyCellIndices(board: TakuzuBoard): number[] {
   return board.cells.flatMap((cell, index) => (cell === null ? [index] : []));
 }
 
-/** 空きマスをすべての組み合わせで埋め、3つのルールに合う埋め方を返す。 */
 function listSolutions(board: TakuzuBoard): string[] {
   const emptyCellIndices = getEmptyCellIndices(board);
   return Array.from(
@@ -97,14 +94,11 @@ function listSolutions(board: TakuzuBoard): string[] {
     .map((filled) => filled.cells.join(""));
 }
 
-/**
- * 固定マスのほかを空き・四角・丸のどれかにした盤面のうち、ルールに合わないところが無く、解けていないものすべて。
- * タイルを足してもルールに合わないところは消えないので、合わなくなった所で先を数えない。
- */
 function listUnsolvedConsistentBoards(): TakuzuBoard[] {
   const freeCellIndices = getEmptyCellIndices(givens);
   const choices = [null, "a", "b"] as const satisfies readonly TakuzuCell[];
   function extend(board: TakuzuBoard, position: number): TakuzuBoard[] {
+    // タイルを足してもルールに合わないところは消えないので、合わなくなった所で先を数えない。
     if (hasTakuzuRuleViolation(findTakuzuRuleViolations(board))) {
       return [];
     }
@@ -121,7 +115,6 @@ function listUnsolvedConsistentBoards(): TakuzuBoard[] {
   return extend(givens, 0);
 }
 
-/** 決まるマスを、決まらなくなるまで1つずつ埋める。 */
 function fillByDeduction(
   board: TakuzuBoard,
   lessons: readonly TakuzuTutorialLesson[],
@@ -145,7 +138,6 @@ function fillByDeduction(
 const operationStepCount = takuzuTutorial.steps.findIndex(
   (step) => step.introducedRuleId !== null,
 );
-/** 手順ごとの、始めた盤面と手に入れたルール、前の手順までに使わせた見方、印のマスの解。 */
 const ruleStepCases = takuzuTutorial.steps
   .map(function createStepCase(step, stepIndex) {
     const progress = finishSteps(stepIndex);
