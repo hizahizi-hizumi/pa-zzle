@@ -27,8 +27,6 @@ import { SeaWaves } from "@/games/bridges/ui/SeaWaves";
 import { cn } from "@/lib/utils";
 
 /**
- * 島から架けられる相手へ張るロープと、島と同じ行と列の淡い帯。島を押している間、島を選んでいる間、マウスを島に乗せている間に見せる。
- * - `island`: ロープを張る元の島。
  * - `edges`: ロープを張る辺。交わる橋に阻まれて今は架けられない辺は含めない。
  * - `aimEdge`: なぞる指が向いている辺。決まらなければ `null`。ほかのロープを淡くし、この辺のロープを目立たせる。
  * - `previewEdge`: 今離せば橋を回す辺。`aimEdge` の相手の島に指が届いたときだけ持つ。決まらなければ `null`。
@@ -45,25 +43,18 @@ export type BridgesBlockedAttempt = { edge: number; island: number };
 
 type BridgesFigureProps = {
   board: BridgesBoard;
-  /** 絵の座標。省略すると、盤面から作る。 */
   view?: BoardView;
-  /** 辺ごとの橋の本数。 */
   bridges: readonly BridgeCount[];
-  /** 島ごとの、橋の本数と数字の比べ。 */
   islandStatuses: readonly BridgesIslandStatus[];
-  /** 絵の地に海を描くか。プレイ画面では画面全体の海の上に置くので描かず、遊び方の図とチュートリアルでは描く。 */
+  /** プレイ画面では画面全体の海の上に置くので描かず、遊び方の図とチュートリアルでは描く。 */
   showsSea?: boolean;
   guide?: BridgesFigureGuide | null;
   /** マウスを乗せた所で押せば回る辺。架かった後の板の影を淡く予告する。 */
   hoverEdge?: number | null;
-  /**
-   * 最も近い2本の線までの距離がほとんど同じ所を押した（マウスを乗せた）ときの、候補の2辺。どちらの辺かを位置で決めないので、
-   * 2辺にロープを張って、島から架ければどちらも選べることを示す。
-   */
+  /** 最も近い2本の線までの距離がほとんど同じ所を押した（マウスを乗せた）ときの、候補の2辺。 */
   candidateEdges?: readonly number[] | null;
-  /** 押している指が今離せば回す辺。回した後の板の影と、張ったロープで光らせる。 */
+  /** 押している指が今離せば回す辺。 */
   pressedEdge?: number | null;
-  /** 押している島。選んだ島と同じ輪で囲む。 */
   pressedIsland?: number | null;
   /**
    * 島を触っていなくても、架けられる相手までの帯を敷く辺。チュートリアルで押させる辺に敷き、本番の案内と同じ表し方で見せる。
@@ -71,12 +62,11 @@ type BridgesFigureProps = {
   bandEdges?: readonly number[];
   /**
    * チュートリアルで手を引いている間に、元の明るさで見せる島と辺。海を深い海の色で暗くし、ほかの島と橋を薄くして沈める。
-   * 灰色の覆いを盤面に重ねず、海の色を残したまま見る所を絞る。
    */
   focus?: BridgesBoardSpotlight | null;
   /** 2段階の操作で選んでいる島。 */
   selectedIsland?: number | null;
-  /** キーボードで選んでいる島。輪で囲む。 */
+  /** キーボードで選んでいる島。 */
   focusedIsland?: number | null;
   /** 交わる橋に阻まれたとき、阻んだ橋の辺。板の薔薇色の縁取りを描いておき、盤面の反応で短く点けて揺らす。 */
   blockingEdges?: readonly number[];
@@ -121,7 +111,6 @@ export const bridgesFigureParts = {
  * 板の寸法。図の寸法はマス幅を 1 とした値。
  * - `single`・`double`: 1本・2本の橋の板1枚の幅。
  * - `spacing`: 2本の橋の2枚の板の中心どうしの間隔。
- * - `seams`: 板に横木を刻むか。
  */
 type PlankLayout = {
   single: number;
@@ -147,42 +136,34 @@ const SHADOW_OFFSET = { x: 0.02, y: 0.045 } as const;
 /** 杭の半径と、島の中心から杭までの距離。杭は島の輪郭線のすぐ外に立て、10×10 のスマホでも点でなく杭に見える太さにする。 */
 const POST_RADIUS = 0.065;
 const POST_DISTANCE = ISLAND_RADIUS + 0.1;
-/** 島を触っている間に、架けられる相手までの区間に敷く帯の太さ。 */
 const GUIDE_BAND_WIDTH = 0.56;
-/** マスの中心の、島の無い所に打つ点の半径。 */
 const GRID_DOT_RADIUS = 0.05;
 /**
  * 島の輪郭線の太さ。10×10 のスマホでも 2px ほどの線にし、塗りが海や橋と近い明るさになる状態でも島の縁を切り出す。
  */
 const ISLAND_OUTLINE_WIDTH = 0.06;
-/** 多すぎの島の、輪郭線の内側に重ねる途切れた輪の半径・太さ・途切れの間隔。 */
 const OVER_RIM_RADIUS = ISLAND_RADIUS - 0.07;
 const OVER_RIM_WIDTH = 0.07;
 const OVER_RIM_DASH = "0.12 0.07";
 /** 阻んだ橋の板の外側に、片側に見せる薔薇色の縁取りの幅と、その外の白い縁の幅。 */
 const BLOCKING_OUTLINE_SIDE = 0.12;
 const BLOCKING_CASING_SIDE = 0.03;
-/** ロープの太さと撚りの切れ目、縁の太さ。 */
 const ROPE_WIDTH = 0.12;
 const ROPE_DASH = "0.15 0.07";
 const PREVIEW_ROPE_WIDTH = 0.12;
 /** 板の影を、板より少し太く描く分。ロープを上に重ねても、ロープの両脇に影が見える。 */
 const GHOST_EXTRA_WIDTH = 0.08;
 const ROPE_CASING_EXTRA = 0.07;
-/** 外れる板に重ねる海の色の覆いを、板より少し太く描く分。 */
 const REMOVAL_EXTRA_WIDTH = 0.04;
 /** なぞっている間、指の向いた辺のほかのロープの濃さ。 */
 const UNFOCUSED_ROPE_OPACITY = 0.35;
-/** マウスを乗せた所の予告の濃さ。 */
 const HOVER_GHOST_OPACITY = 0.6;
-/** 島を囲む輪の半径。島と同じ中心の真円にする。 */
 const SELECTION_RING_RADIUS = ISLAND_RADIUS + 0.1;
 /** 離せば回す辺の相手の島を囲む輪。指で隠れても輪の外側が見える大きさにする。 */
 const TARGET_RING_RADIUS = ISLAND_RADIUS + 0.16;
 const TARGET_RING_WIDTH = 0.09;
 const FOCUS_RING_RADIUS = ISLAND_RADIUS + 0.17;
 const FOCUS_RING_WIDTH = 0.05;
-/** 見る所を絞っている間の、海を暗くする深い海の色の濃さと、沈めた島と橋の濃さ。 */
 const FOCUS_VEIL_OPACITY = 0.38;
 const UNFOCUSED_OPACITY = 0.4;
 /** 阻まれた辺に架かるはずだった板の濃さ。板そのものを透かし、下の海が見える濃さにする。 */
@@ -200,7 +181,6 @@ const CLUE_BASELINE_OFFSET = 0.36;
 /** 絵の中の海の波の印の、区画の寸法に掛ける倍率。マス幅の 1/40 を 1 とする。 */
 const FIGURE_WAVE_UNIT = 1 / 40;
 
-/** 辺の中心線から横へずらした線分。 */
 function offsetSegment(
   { start, end }: BoardSegment,
   offset: number,
@@ -251,7 +231,6 @@ function getPlankOffsets(
   return getBridgeLineOffsets(count, layout.spacing);
 }
 
-/** 橋の本数ぶんの板が占める幅の半分。杭を板の外側に立てる位置に使う。 */
 function getFootprintHalfWidth(
   count: BridgeCount,
   layout: PlankLayout,
@@ -260,9 +239,7 @@ function getFootprintHalfWidth(
   return Math.max(...offsets.map(Math.abs)) + getPlankWidth(count, layout) / 2;
 }
 
-/**
- * 橋の両端の杭の位置。両端の島ごとに、板の外側の左右に1本ずつ立てる。
- */
+/** 両端の島ごとに、板の外側の左右に1本ずつ立てる。 */
 function listPostPoints(
   { start, end }: BoardSegment,
   count: BridgeCount,
@@ -300,7 +277,6 @@ type LitDeckWave = {
 };
 
 /**
- * 1枚の木の板。影、欄干の縁、板の面、横木の順に重ねる。`seams` が無ければ横木を刻まない。
  * `litWave` を渡すと、全島がつながった盤面の明るい木の色の面を、板の面と横木の間に重ねる。渡り切った姿で描き、
  * 演出がその姿へ向けて光を渡す。
  */
@@ -378,7 +354,6 @@ function BridgePlank({
   );
 }
 
-/** 辺の橋の板。本数ぶんの板を、辺の中心線から横へずらして並べる。 */
 function BridgePlanks({
   segment,
   count,
@@ -402,7 +377,6 @@ function BridgePlanks({
   ));
 }
 
-/** 橋の両端の、島の外に立てる杭。 */
 function BridgePosts({
   segment,
   count,
@@ -426,10 +400,7 @@ function BridgePosts({
   );
 }
 
-/**
- * 辺の橋を回した後の姿の予告が占める幅。チュートリアルの印を、予告の板の影に沿わせるのに使う。
- * 1本・2本になるなら板の影の幅、なしになるなら今の板を覆う幅。
- */
+/** 辺の橋を回した後の姿の予告が占める幅。チュートリアルの印を、予告の板の影に沿わせるのに使う。 */
 export function getGhostBridgeWidth(
   current: BridgeCount,
   compact = false,
@@ -441,10 +412,6 @@ export function getGhostBridgeWidth(
     : getFootprintHalfWidth(next, layout) * 2 + GHOST_EXTRA_WIDTH;
 }
 
-/**
- * 離せば・押せば回る辺の、回した後の姿の予告。
- * 1本・2本になるなら、その本数の板の影を半透明で置く。なしになるなら、今の板に海の色を重ねて薄める。
- */
 function GhostBridge({
   segment,
   current,
@@ -483,11 +450,7 @@ function GhostBridge({
   );
 }
 
-/**
- * 交わる橋に阻まれた辺で、押した端の島から阻んだ橋の手前まで伸びる1本の板。板そのものを半透明にし、橋と同じ木の姿で見せる。
- * `opacity` は盤面の反応で一瞬だけ点けるための濃さで、点いたときも板は半透明のままにする。
- * 伸ばす動きのために、板を伸ばし始める点（`data-origin-x`・`data-origin-y`）と向き（`data-axis`）を持つ。
- */
+/** `opacity` は盤面の反応で一瞬だけ点けるための濃さで、点いたときも板は半透明のままにする。 */
 function BlockedAttempt({
   segment,
   layout,
@@ -561,7 +524,7 @@ function getBlockedAttemptSegment(
   };
 }
 
-/** 島から架けられる相手までの区間に敷く帯。どの相手へ架けられるかを、ロープより広い面で示す。 */
+/** どの相手へ架けられるかを、ロープより広い面で示す。 */
 function GuideBands({
   view,
   edges,
@@ -589,7 +552,6 @@ function GuideBands({
   );
 }
 
-/** マスの中心のうち、島の無い所に打つごく薄い点。島が縦横に並んでいることを、海の上の静かな手がかりで読めるようにする。 */
 function GridDots({ view }: { view: BoardView }) {
   const { board } = view;
   const occupied = new Set(
@@ -642,7 +604,6 @@ function Rope({
   );
 }
 
-/** 遊び方の図とチュートリアルで、絵の地に敷く海。絵の枠いっぱいに敷き、角は絵を置く枠に合わせる。 */
 function FigureSea({ view }: { view: BoardView }) {
   return (
     <>
@@ -664,7 +625,7 @@ const centerOrigin = {
 } as const;
 
 /**
- * 盤面の絵。下から、海・マスの中心の点・架けられる相手までの帯・板の予告・
+ * 下から、海・マスの中心の点・架けられる相手までの帯・板の予告・
  * 阻まれた辺の板・橋（阻んだ橋の縁取り、板、明るい木の色の板、杭）・外す板・ロープ・交点の候補のロープ・島（平らな真円の塗りと輪郭線）と数字・
  * 選んだ島とキーボードの輪の順に重ねる。
  * 阻まれた辺の板の影は橋の下に置き、阻んだ橋がその上を渡って見えるようにする。

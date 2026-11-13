@@ -34,13 +34,12 @@ import {
  * マインスイーパーの旗を立てる）と同じ小ささ（50ms 窓の最大 RMS −37dB 前後）にそろえ、短くする。
  * 音は `scripts/assets/bridges_sounds.py` で合成する。
  */
-/** 1本目の板が相手の島に着く、木の1打。一筆の道を伸ばす高い音と紛れないよう、低い板の鳴り（G4）にする。 */
+/** 一筆の道を伸ばす高い音と紛れないよう、低い板の鳴り（G4）にする。 */
 const bridgePlacedSound = defineSoundEffect(bridgePlacedSoundUrl);
-/** 2本目の板が着く、木の2打。2打目を1打目より5半音高くし、1本目と打つ数でも高さでも聞き分けられるようにする。 */
 const bridgeDoubledSound = defineSoundEffect(bridgeDoubledSoundUrl);
-/** 橋を外す、外した板が水に落ちる小さな水の音。架ける木の音と素材で分ける。 */
+/** 外した板が水に落ちる水の音にし、架ける木の音と素材で分ける。 */
 const bridgeRemovedSound = defineSoundEffect(bridgeRemovedSoundUrl);
-/** 交わる橋に阻まれた、板が阻んだ橋に当たる鈍い木の音。ほかのゲームの阻まれた音と同じ小ささにする。 */
+/** ほかのゲームの阻まれた音と同じ小ささにする。 */
 const blockedSound = defineSoundEffect(blockedSoundUrl);
 
 /**
@@ -106,7 +105,7 @@ export function createClearedSoundLayers(
 }
 
 /**
- * 橋を回した音。架けたときは、板が相手の島に着く時に木の音を1つだけ鳴らす。
+ * 架けたときは、板が相手の島に着く時に木の音を1つだけ鳴らす。
  * 板の渡る時間は辺の長さで変わるので、盤面の板の動きと同じ時間（`getBridgeExtendMs`）で着かせる。
  * 動きを減らす設定では板が渡らずすぐ置かれるので、着く音をすぐ鳴らす。
  */
@@ -131,7 +130,7 @@ function playReducedMotionClearSound() {
 }
 
 /**
- * 橋を架ける・重ねる・外す・交わる橋に阻まれた操作と、全島がつながった瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
+ * 結果の報酬の音はアプリが鳴らす。
  * 待った・盤面を戻す・リセットでは鳴らさない。阻まれた操作は動きを減らす設定でも阻んだ橋を点けて見せるので鳴らす。
  */
 export function useBridgesSoundEffects(

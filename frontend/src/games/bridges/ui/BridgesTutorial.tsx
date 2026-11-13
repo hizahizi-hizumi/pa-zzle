@@ -39,7 +39,6 @@ import {
 
 type BridgesTutorialProps = {
   open: boolean;
-  /** ゲームのホームから開いたときに渡す。終えたときに、ゲームのホームで開いているレベルを始める操作を出す。渡さなければプレイ中に開いたとして、閉じてプレイに戻る操作を出す。 */
   playStart?: TutorialPlayStart;
   onClose: () => void;
 };
@@ -50,12 +49,10 @@ type BridgesTutorialProgress = TutorialProgress<
 >;
 
 /**
- * ルールに合わない手に、違反の一言で応えるまでの間。
  * 1本 → 2本 → なし と回して橋を外す途中の2本で、一瞬だけ数字より多くなっても一言が替わらないよう、違反が続いたときだけ応える。
  */
 const VIOLATION_REACTION_DELAY_MS = 500;
 
-/** 手を離した後、手が止まってから橋が要ると決まる辺を示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
 const goalBoardState = bridgesTutorial.goal();
@@ -63,14 +60,12 @@ const goalBoardState = bridgesTutorial.goal();
 /**
  * 手を引いている間に印の無い所を押されたときの、印の押し直し。印の線を短く濃くして戻す。
  * - `id`: 押されるたびに増やし、続けて押されても押し直す。
- * - `progress`: 押されたときの進行。手が進んだら押し直しを終える。
  */
 type BridgesTutorialRecall = {
   id: number;
   progress: BridgesTutorialProgress;
 };
 
-/** 本番と同じ効果音を、本番のプレイの進行に当てはめて鳴らす。解けた盤面の演出の間が、本番の完成演出の間に当たる。 */
 const soundProgressByPhase = {
   intro: "playing",
   playing: "playing",
@@ -78,7 +73,6 @@ const soundProgressByPhase = {
   completed: "result",
 } as const satisfies Record<TutorialPhase, GameProgress>;
 
-/** 盤面を変えた手と阻まれた手を、本番と同じ操作の知らせにする。 */
 function createEdgeNotice(
   { bridges, lastMove }: BridgesTutorialBoardState,
   id: number,
@@ -101,11 +95,6 @@ function createEdgeNotice(
       };
 }
 
-/**
- * 辺に重ねる印と応え。
- * - 手順の辺を手順の本数まで架けたら、その辺に応える。
- * - 次に押す辺に印を付け、押し直すとき（`recallId`）だけ印の線を濃くする。
- */
 function getCues(
   { lastMove, moveCount }: BridgesTutorialBoardState,
   markedEdge: number | null,
@@ -127,10 +116,7 @@ function getCues(
   ];
 }
 
-/**
- * 5×5 の盤面を、一言と印に沿って1本ずつ一緒に架け、ルールを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分で架けさせる。盤面・島の状態の色・阻まれた橋の点灯・解けたときの波は本番と同じ部品を使う。
- */
+/** 手順を終えたら手を離し、残りを自分で架けさせる。 */
 export function BridgesTutorial({
   open,
   playStart,
@@ -144,7 +130,6 @@ export function BridgesTutorial({
   const [settledViolationProgress, setSettledViolationProgress] =
     useState<BridgesTutorialProgress | null>(null);
   const [recall, setRecall] = useState<BridgesTutorialRecall | null>(null);
-  // 本番の効果音のフックと読み上げへ渡す、盤面を変えた手と阻まれた手の知らせ。
   const [edgeNotice, setEdgeNotice] = useState<BridgesEdgeNotice | null>(null);
   // 開き直しても同じ知らせとみなされないよう、もう一度始めても数え直さない。
   const noticeIdRef = useRef(0);
@@ -259,7 +244,6 @@ export function BridgesTutorial({
     playStart?.onStart();
   }
 
-  /** 始めの盤面の場面では、ゴールの盤面を薄くしながら、橋の無い始めの盤面を浮かび上がらせる。 */
   function renderBoard({
     scene,
     playing,
@@ -270,7 +254,6 @@ export function BridgesTutorial({
     // 最初の手順の印は、導入の終わりに一言と同時に出す。
     const cuesShown = solving || (scene === null && messageShown);
     return (
-      // 盤面の図を画面の幅いっぱいの正方形にし、一言の下の高さの中央に置く。
       <div className="relative aspect-square w-[min(100cqw,100cqh,36rem)] self-center">
         <TutorialCrossFadeIntroScene
           scene={scene}

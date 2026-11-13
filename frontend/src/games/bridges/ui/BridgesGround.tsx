@@ -16,12 +16,6 @@ const WIDE_WAVES_CLASS_NAME =
 const TALL_WAVES_CLASS_NAME =
   "absolute inset-0 size-full lg:hidden landscape:hidden [mask-image:linear-gradient(to_bottom,transparent_0,transparent_6rem,black_9rem,black_calc(50%-50vw-1.5rem),transparent_calc(50%-50vw+1rem),transparent_calc(50%+50vw-1rem),black_calc(50%+50vw+1.5rem))]";
 
-/**
- * ブリッジパズルの地。プレイ画面とゲームのホームの背景に敷く。
- *
- * プレイ画面の盤面の周りから、ブランドの帯と見出しの後ろまでを満たす海。クリアしても色を変えず、ブランドの帯とブラウザの色と
- * いつも同じ色でつなぐ。完成の演出は盤面の島ごとに見せる。
- */
 export function BridgesGround() {
   return (
     <div className={cn("relative size-full", bridgesToneClassNames.sea)}>

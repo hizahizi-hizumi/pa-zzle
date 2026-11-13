@@ -34,7 +34,6 @@ const WIDE_BOARD_SIDE = 9;
 
 /**
  * 盤面を描く絵の座標。マス幅を 1 とした正方形のマスで、盤面の周りに `margin` の海を置く。
- * - `margin`: 盤面の周りの海の幅。
  * - `width`・`height`: 絵の幅と高さ（`viewBox` の大きさ）。
  */
 export type BoardView = {
@@ -72,7 +71,6 @@ export function toViewPoint(
   return { x: x + margin, y: y + margin };
 }
 
-/** 画面上の点（`clientX`・`clientY`）を盤面の座標へ写す。 */
 export function toBoardPoint(
   view: BoardView,
   frame: BoardFrame,
@@ -91,10 +89,9 @@ export function getIslandCenter(island: BridgesIsland): BoardPoint {
   return { x: island.column + 0.5, y: island.row + 0.5 };
 }
 
-/** 2点を結ぶ線分。 */
 export type BoardSegment = { start: BoardPoint; end: BoardPoint };
 
-/** 辺の両端の島の中心を、絵の座標で結ぶ線分。橋は島の陸の下に描くので、線分の端は陸に隠れる。 */
+/** 橋は島の陸の下に描くので、線分の端は陸に隠れる。 */
 export function getEdgeViewSegment(
   view: BoardView,
   edge: number,
@@ -106,7 +103,6 @@ export function getEdgeViewSegment(
   };
 }
 
-/** 盤面の上の四角。 */
 export type BoardRect = { x: number; y: number; width: number; height: number };
 
 /** 辺の帯の太さ。2本の橋の2枚の板を収め、島の陸より細くして、どの2島の間かを読めるようにする。 */
@@ -134,9 +130,6 @@ function getBand(
       };
 }
 
-/**
- * 押した点が、辺の両端の島の陸の間で、線の当たり範囲と同じ幅の帯の中にあるか。チュートリアルで押させる辺の押しの範囲に使う。
- */
 export function isPointInEdgeBand(
   board: BridgesBoard,
   edge: number,
@@ -156,10 +149,6 @@ export function isPointInEdgeBand(
   );
 }
 
-/**
- * 辺の帯を絵の座標で返す。覆いから抜く所と、チュートリアルの印を辺に沿わせるのに使う。
- * `thickness` を渡すとその太さにし、渡さなければ2本の橋の2枚の板を収める太さにする。
- */
 export function getEdgeViewBand(
   view: BoardView,
   edge: number,
@@ -169,7 +158,6 @@ export function getEdgeViewBand(
   return getBand(start, end, thickness);
 }
 
-/** 島の陸を囲む四角を絵の座標で返す。 */
 export function getIslandViewRect(view: BoardView, island: number): BoardRect {
   const { x, y } = toViewPoint(
     view,
@@ -187,7 +175,7 @@ export function getIslandViewRect(view: BoardView, island: number): BoardRect {
 export const DOUBLE_BRIDGE_SPACING = 0.3;
 
 /**
- * 橋の本数ぶんの板を、辺の中心線から横へずらす量。1本は中心線の上、2本は中心線を挟んだ平行な2枚。
+ * 橋の本数ぶんの板を、辺の中心線から横へずらす量。
  * `spacing` は2枚の板の中心どうしの間隔（マス幅を 1 とした値）。
  */
 export function getBridgeLineOffsets(
@@ -198,29 +186,19 @@ export function getBridgeLineOffsets(
   return count === 1 ? [0] : [-spacing / 2, spacing / 2];
 }
 
-/**
- * 押した位置が指すもの。
- * - `island`: 島の陸の上。
- * - `edge`: 島の外で、その辺の線の当たり範囲にあり、ほかの線より明らかに近い所。その辺の橋を回す。
- * - `ambiguous`: 島の外で、最も近い2本の線までの距離がほとんど同じ所（交点のそばや、1つの島から出る縦と横の線の間）。
- *   どちらを狙ったかを位置で決められないので、どちらの橋も回さず、2辺を候補として示す。`edges` は辺の番号の小さい順。
- */
+/** `ambiguous` の `edges` は辺の番号の小さい順。 */
 export type BoardTarget =
   | { kind: "island"; island: number }
   | { kind: "edge"; edge: number }
   | { kind: "ambiguous"; edges: readonly [number, number] };
 
 /**
- * 島を押したとみなす、島の中心からの距離。描いた島の半径（`ISLAND_RADIUS` に輪郭線の外側の半分を足した所）とほぼ同じにし、
- * 島の外の水面は島の的にしない。斜めに隣り合う島（中心の間 1.41）の的は、2島の間の線から半マス離れた所で止まり、線の当たり範囲と
+ * 描いた島の半径（`ISLAND_RADIUS` に輪郭線の外側の半分を足した所）とほぼ同じにする。斜めに隣り合う島（中心の間 1.41）の的は、2島の間の線から半マス離れた所で止まり、線の当たり範囲と
  * 重ならない。
  */
 export const ISLAND_HIT_RADIUS = 0.5;
 
-/**
- * 線の当たり範囲の、線から片側の幅。2島の中心の間で、線から両側にこの幅までの長方形を、その辺の線の当たり範囲にする。
- * 隣の行・列の平行な線の範囲と、真ん中で接する。
- */
+/** 隣の行・列の平行な線の範囲と、真ん中で接する。 */
 export const LINE_HIT_HALF_WIDTH = 0.5;
 
 /** 最も近い2本の線までの距離の差がこれより小さいと、どちらの線かを位置で決めない。交点の中心から片側 0.1 マスほどの帯になる。 */
@@ -228,7 +206,6 @@ export const AMBIGUOUS_DISTANCE_GAP = 0.2;
 
 const pointTolerance = 1e-9;
 
-/** 島の中心からの距離。 */
 function distanceToIsland(
   board: BridgesBoard,
   island: number,
@@ -238,7 +215,6 @@ function distanceToIsland(
   return Math.hypot(point.x - center.x, point.y - center.y);
 }
 
-/** `islands` のうち、`point` を陸の上に含む島（中心から `ISLAND_HIT_RADIUS` の内）。2つの島に入るときは中心の近い島。 */
 function findIslandNear(
   board: BridgesBoard,
   point: BoardPoint,
@@ -259,7 +235,6 @@ function findIslandNear(
   return nearest;
 }
 
-/** 押した点を当たり範囲に含む線の辺と、線までの垂直な距離。距離の近い順。 */
 function listLinesInRange(
   board: BridgesBoard,
   point: BoardPoint,
@@ -284,15 +259,7 @@ function listLinesInRange(
     );
 }
 
-/**
- * 押した位置が指す島か辺。
- * - 島の陸の上（中心から `ISLAND_HIT_RADIUS` の内）なら島。
- * - 島の外では、押した点を当たり範囲（2島の中心の間で、線から両側に `LINE_HIT_HALF_WIDTH` までの長方形）に含む線のうち、
- *   線までの垂直な距離が最も近い線の辺。架かった橋もそこを押せば回る。交わる別の橋に阻まれていても、そのまま返す
- *   （架けようとして阻まれたことを盤面で返す）。
- * - 最も近い2本の線までの距離の差が `AMBIGUOUS_DISTANCE_GAP` より小さければ、どちらの辺にも決めない（`ambiguous`）。
- * - どの線の当たり範囲にも入らなければ `null`。
- */
+/** 交わる別の橋に阻まれていても辺をそのまま返す（架けようとして阻まれたことを盤面で返す）。 */
 export function findBoardTarget(
   board: BridgesBoard,
   point: BoardPoint,
@@ -317,7 +284,6 @@ export function findBoardTarget(
   return { kind: "edge", edge: nearest.edge };
 }
 
-/** 押した点が、島 `island` の陸の上にあるか。 */
 export function isPointOnIsland(
   board: BridgesBoard,
   island: number,
@@ -326,7 +292,6 @@ export function isPointOnIsland(
   return findIslandNear(board, point, [island]) !== null;
 }
 
-/** 島 `island` から辺の伸びる相手の島と、その辺。 */
 function listNeighbors(
   board: BridgesBoard,
   island: number,
@@ -338,7 +303,6 @@ function listNeighbors(
   });
 }
 
-/** 島 `island` と島 `other` の間の辺。辺が無ければ `null`。 */
 export function findEdgeBetween(
   board: BridgesBoard,
   island: number,
@@ -350,9 +314,6 @@ export function findEdgeBetween(
   );
 }
 
-/**
- * なぞりを縦横の向きとして受ける、縦横からの角度の幅。斜めのなぞりで、どちらの向きの橋か分からないまま架けない。
- */
 const DRAG_ANGLE_TOLERANCE = (25 * Math.PI) / 180;
 
 /**
@@ -361,19 +322,9 @@ const DRAG_ANGLE_TOLERANCE = (25 * Math.PI) / 180;
  */
 const DRAG_LANDING_REACH = 0.7;
 
-/**
- * なぞっている指の狙い。
- * - `edge`: 指の向きの最初の島への辺。
- * - `landed`: 今離せば `edge` の橋を回すか。指が相手の島に届く前は `false`。
- */
+/** `landed` は、今離せば `edge` の橋を回すか。指が相手の島に届く前は `false`。 */
 export type DragAim = { edge: number; landed: boolean };
 
-/**
- * 島 `island` からなぞって `point` まで指を動かしたときの狙い。指が島の陸（`ISLAND_HIT_RADIUS`）を出て、縦横から
- * `DRAG_ANGLE_TOLERANCE` の内へ動いたら、その向きの最初の島への辺を狙う。離して回すのは、指が相手の島に届いた
- * （`DRAG_LANDING_REACH`）ときだけにし、海の上で止めたなぞりでは回さない。
- * 指が島の的の内にあるか、斜めに動いたか、その向きに辺が無ければ `null`。
- */
 export function findDragAim(
   board: BridgesBoard,
   island: number,
@@ -418,10 +369,6 @@ const directionVectors = {
   left: { x: -1, y: 0 },
 } as const satisfies Record<BridgesDirection, BoardPoint>;
 
-/**
- * キーボードで `direction` の向きへ移るときの、次の島。その向きに辺のある島があればその島、無ければ、その向きにある島のうち
- * 向きに沿った距離と横へのずれの2倍の和が最も小さい島。その向きに島が無ければ `null`。
- */
 export function findIslandToward(
   board: BridgesBoard,
   island: number,

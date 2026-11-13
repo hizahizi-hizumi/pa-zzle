@@ -33,9 +33,6 @@ function describeNotice(
   }
 }
 
-/**
- * 盤面操作の結果を支援技術へ知らせる、見えない読み上げ。盤面には文字を出さず、形と色で知らせる。
- */
 export function BridgesStatusAnnouncement({
   board,
   notice,
