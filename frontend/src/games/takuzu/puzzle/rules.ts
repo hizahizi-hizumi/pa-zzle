@@ -112,3 +112,34 @@ export function isTakuzuSolved(board: TakuzuBoard): boolean {
     !hasTakuzuRuleViolation(findTakuzuRuleViolations(board))
   );
 }
+
+function isSameLine(left: TakuzuLine, right: TakuzuLine): boolean {
+  return left.axis === right.axis && left.index === right.index;
+}
+
+/** すべて埋まり、3連続・個数超過・重複のどの違反も無い行・列。 */
+function listTakuzuCompletedLines(board: TakuzuBoard): TakuzuLine[] {
+  const { runCellIndices, overfilledLines, duplicateLines } =
+    findTakuzuRuleViolations(board);
+  const runCells = new Set(runCellIndices);
+  return listTakuzuLines(board.size).filter(function isCompleted(line) {
+    const cellIndices = getTakuzuLineCellIndices(board.size, line);
+    return (
+      cellIndices.every((cellIndex) => board.cells[cellIndex] !== null) &&
+      cellIndices.every((cellIndex) => !runCells.has(cellIndex)) &&
+      !overfilledLines.some((other) => isSameLine(line, other)) &&
+      !duplicateLines.some((other) => isSameLine(line, other))
+    );
+  });
+}
+
+/** 盤面が `before` から `after` へ変わって、違反なく埋まりきった行・列。 */
+export function findTakuzuLinesCompletedBetween(
+  before: TakuzuBoard,
+  after: TakuzuBoard,
+): TakuzuLine[] {
+  const completedBefore = listTakuzuCompletedLines(before);
+  return listTakuzuCompletedLines(after).filter(
+    (line) => !completedBefore.some((other) => isSameLine(line, other)),
+  );
+}

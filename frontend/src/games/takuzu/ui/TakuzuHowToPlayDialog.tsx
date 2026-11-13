@@ -48,6 +48,13 @@ export function TakuzuHowToPlayDialog({
         </HowToPlayTransition>
       </li>
       <li className="space-y-2">
+        <p>なぞると、最初のマスと同じタイルを、通った空きマスにも置く。</p>
+        <HowToPlayTransition>
+          <HowToPlayFigure rows={["...."]} />
+          <HowToPlayFigure rows={["aa.."]} />
+        </HowToPlayTransition>
+      </li>
+      <li className="space-y-2">
         <p>最初からあるタイルは変えられない。</p>
         <HowToPlayFigure rows={["AB"]} />
       </li>

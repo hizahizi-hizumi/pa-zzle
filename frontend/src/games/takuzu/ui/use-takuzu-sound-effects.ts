@@ -54,6 +54,13 @@ const clearedWaveSounds = [
 
 const clearedChordSound = defineSoundEffect(clearedChordSoundUrl);
 
+/**
+ * 行・列が違反なく埋まった音。クリアの波の音の1粒を小さく鳴らし、クリアの前触れに聞かせる。
+ * 行と列が同時に埋まっても、音は1つにする。
+ */
+const lineCompletedSound = clearedWaveSounds[2]!;
+const LINE_COMPLETED_VOLUME = 0.55;
+
 function getClearedSoundLayers(boardSize: number): readonly SoundLayer[] {
   // 波の順番はマスの「行 + 列」。
   const lastWaveStep = (boardSize - 1) * 2;
@@ -85,6 +92,10 @@ function playOperationSound(operation: TakuzuOperation) {
       playSound(tilePlacedSounds[operation.tile], {
         variation: REPEATED_SOUND_VARIATION,
       });
+      // 動きを減らす設定では、行・列を光らせないので鳴らさない。
+      if (operation.completedLines.length > 0 && !prefersReducedMotion()) {
+        playSound(lineCompletedSound, { volume: LINE_COMPLETED_VOLUME });
+      }
       return;
     case "emptied":
       playSound(emptiedSound, { variation: REPEATED_SOUND_VARIATION });

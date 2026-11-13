@@ -288,7 +288,7 @@ export function TakuzuTutorial({
 
   function notifyOperation(
     notice:
-      | { type: "placed"; tile: TakuzuTile }
+      | { type: "placed"; tile: TakuzuTile; completedLines: readonly [] }
       | { type: "emptied" }
       | { type: "invalid"; cellIndex: number },
   ): void {
@@ -321,7 +321,9 @@ export function TakuzuTutorial({
     }
     const placed = next.boardState.board.cells[action.cellIndex] ?? null;
     notifyOperation(
-      placed === null ? { type: "emptied" } : { type: "placed", tile: placed },
+      placed === null
+        ? { type: "emptied" }
+        : { type: "placed", tile: placed, completedLines: [] },
     );
     if (next.stepIndex !== progress.stepIndex) {
       setFinishedStep({ progress: next, previous: progress });

@@ -12,7 +12,7 @@ import type {
   TakuzuOperation,
   TakuzuResult,
 } from "@/games/takuzu/play/use-takuzu-play";
-import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
+import type { TakuzuCell, TakuzuTile } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type {
   TakuzuCellView,
@@ -37,6 +37,7 @@ type TakuzuPlayProps = GamePlayScreenProps<TakuzuDifficulty, TakuzuResult> &
     operation: TakuzuOperation | null;
     onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
     onPlaceCell: (cellIndex: number, cell: TakuzuCell) => void;
+    onStrokeCell: (cellIndex: number, tile: TakuzuTile) => void;
   };
 
 export function TakuzuPlay({
@@ -54,6 +55,7 @@ export function TakuzuPlay({
   canUndo,
   onCycleCell,
   onPlaceCell,
+  onStrokeCell,
   onUndo,
   canRestart,
   onRestart,
@@ -117,6 +119,7 @@ export function TakuzuPlay({
               interactionDisabled={progress !== "playing"}
               onCycleCell={onCycleCell}
               onPlaceCell={onPlaceCell}
+              onStrokeCell={onStrokeCell}
             />
           </TakuzuClearAnimation>
         </div>

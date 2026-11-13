@@ -8,7 +8,7 @@ import {
 import type { ReactNode } from "react";
 
 import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
-import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
+import type { TakuzuCell, TakuzuTile } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type {
   TakuzuCellView,
@@ -217,7 +217,7 @@ describe("TakuzuBoard", () => {
     }
 
     beforeEach(() => {
-      animate = vi.fn();
+      animate = vi.fn(() => ({ cancel: vi.fn() }));
       Object.defineProperty(HTMLElement.prototype, "animate", {
         configurable: true,
         value: animate,
@@ -237,10 +237,80 @@ describe("TakuzuBoard", () => {
         name: "1行1列 四角 固定",
       });
 
-      expect(animate).toHaveBeenCalledOnce();
-      expect(animate.mock.contexts[0]).toBe(
-        givenCell.querySelector("[data-takuzu-tile]"),
+      const shakenTiles = animate.mock.contexts.filter(
+        (context) =>
+          context instanceof HTMLElement &&
+          context.matches("[data-takuzu-tile]"),
       );
+
+      expect(shakenTiles).toEqual([
+        givenCell.querySelector("[data-takuzu-tile]"),
+      ]);
+    });
+  });
+
+  describe("空きマスからなぞった場合", () => {
+    const strokeCells: TakuzuCellView[] = [
+      { cell: null, given: false, inViolatingRun: false },
+      { cell: null, given: false, inViolatingRun: false },
+      { cell: "a", given: true, inViolatingRun: false },
+      { cell: null, given: false, inViolatingRun: false },
+    ];
+    let onStrokeCell: ReturnType<
+      typeof vi.fn<(cellIndex: number, tile: TakuzuTile) => void>
+    >;
+    let cellButtons: HTMLElement[];
+
+    beforeEach(() => {
+      onStrokeCell = vi.fn<(cellIndex: number, tile: TakuzuTile) => void>();
+      render(
+        <TakuzuBoard
+          size={2}
+          cells={strokeCells}
+          lineViolations={[]}
+          operation={null}
+          interactionDisabled={false}
+          onCycleCell={onCycleCell}
+          onPlaceCell={onPlaceCell}
+          onStrokeCell={onStrokeCell}
+        />,
+      );
+      board = screen.getByRole("group", { name: "バイナリパズル盤面" });
+      cellButtons = within(board).getAllByRole("button");
+      // jsdom はレイアウトを持たないので、指の位置の x をマスの番号として扱う。
+      document.elementFromPoint = (x: number) => cellButtons[x] ?? null;
+    });
+
+    afterEach(() => {
+      Reflect.deleteProperty(document, "elementFromPoint");
+    });
+
+    test("最初のマスを押したときのタイルを、通った空きマスに置き、固定マスには置かないこと", () => {
+      const [first, , , last] = cellButtons;
+      fireEvent.pointerDown(board, { pointerId: 1, button: 0, clientX: 0 });
+      fireEvent.pointerMove(board, { pointerId: 1, buttons: 1, clientX: 1 });
+      fireEvent.pointerMove(board, { pointerId: 1, buttons: 1, clientX: 2 });
+      fireEvent.pointerMove(board, { pointerId: 1, buttons: 1, clientX: 3 });
+      fireEvent.pointerUp(board, { pointerId: 1 });
+      fireEvent.click(first as HTMLElement);
+
+      expect(onCycleCell).toHaveBeenCalledExactlyOnceWith(0, "forward");
+      expect(onStrokeCell.mock.calls).toEqual([
+        [1, "a"],
+        [3, "a"],
+      ]);
+      expect(last).toBeTruthy();
+    });
+
+    test("同じマスの中で離すと、なぞらずに押した操作だけを通知すること", () => {
+      const [first] = cellButtons;
+      fireEvent.pointerDown(board, { pointerId: 1, button: 0, clientX: 0 });
+      fireEvent.pointerMove(board, { pointerId: 1, buttons: 1, clientX: 0 });
+      fireEvent.pointerUp(board, { pointerId: 1 });
+      fireEvent.click(first as HTMLElement);
+
+      expect(onCycleCell).toHaveBeenCalledExactlyOnceWith(0, "forward");
+      expect(onStrokeCell).not.toHaveBeenCalled();
     });
   });
 

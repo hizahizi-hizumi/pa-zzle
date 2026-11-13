@@ -76,6 +76,7 @@ export function PlayableTakuzu({
         canUndo={play.canUndo}
         onCycleCell={play.cycleCell}
         onPlaceCell={play.placeCell}
+        onStrokeCell={play.strokeCell}
         onUndo={play.undo}
         canRestart={play.canRestart}
         onRestart={play.restart}

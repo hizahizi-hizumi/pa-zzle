@@ -1,5 +1,6 @@
 import { parseTakuzuBoard } from "@/games/takuzu/puzzle/board";
 import {
+  findTakuzuLinesCompletedBetween,
   findTakuzuRuleViolations,
   isTakuzuSolved,
 } from "@/games/takuzu/puzzle/rules";
@@ -112,5 +113,54 @@ describe("isTakuzuSolved", () => {
     const result = isTakuzuSolved(board);
 
     expect(result).toBe(expected);
+  });
+});
+
+describe("findTakuzuLinesCompletedBetween", () => {
+  describe("最後の空きマスに置いて行と列が違反なく埋まった場合", () => {
+    const before = parseTakuzuBoard(["AAB.", "BBA.", "....", "...."]);
+    const after = parseTakuzuBoard(["AABB", "BBA.", "....", "...."]);
+
+    test("埋まった行だけを返すこと", () => {
+      const lines = findTakuzuLinesCompletedBetween(before, after);
+
+      expect(lines).toEqual([{ axis: "row", index: 0 }]);
+    });
+  });
+
+  describe("埋まった行と列がどちらも違反なく埋まった場合", () => {
+    const before = parseTakuzuBoard(["AABB", "BBAA", "ABAB", "BAB."]);
+    const after = solvedBoard;
+
+    test("行と列の両方を返すこと", () => {
+      const lines = findTakuzuLinesCompletedBetween(before, after);
+
+      expect(lines).toEqual([
+        { axis: "row", index: 3 },
+        { axis: "column", index: 3 },
+      ]);
+    });
+  });
+
+  describe("埋まった行に違反がある場合", () => {
+    const before = parseTakuzuBoard(["AAA.", "....", "....", "...."]);
+    const after = parseTakuzuBoard(["AAAB", "....", "....", "...."]);
+
+    test("その行を返さないこと", () => {
+      const lines = findTakuzuLinesCompletedBetween(before, after);
+
+      expect(lines).toEqual([]);
+    });
+  });
+
+  describe("埋まった行が別の埋まった行と同じ並びになった場合", () => {
+    const before = parseTakuzuBoard(["ABAB", "ABA.", "....", "...."]);
+    const after = parseTakuzuBoard(["ABAB", "ABAB", "....", "...."]);
+
+    test("その行を返さないこと", () => {
+      const lines = findTakuzuLinesCompletedBetween(before, after);
+
+      expect(lines).toEqual([]);
+    });
   });
 });

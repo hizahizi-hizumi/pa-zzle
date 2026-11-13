@@ -80,6 +80,14 @@ function installAnimate() {
   return animate;
 }
 
+/** 違反の印の脈は数えず、タイルを揺らした回数だけを数える。 */
+function countTileShakes(animate: ReturnType<typeof installAnimate>): number {
+  return animate.mock.contexts.filter(
+    (context) =>
+      context instanceof HTMLElement && context.matches("[data-takuzu-tile]"),
+  ).length;
+}
+
 function advanceTime(ms: number): void {
   act(() => {
     vi.advanceTimersByTime(ms);
@@ -397,7 +405,7 @@ describe("TakuzuTutorial", () => {
         expect(messageBeforeSettled).toBeNull();
         expect(message).toBeTruthy();
         expect(label).toBe("2行3列 丸 3連続");
-        expect(animate).not.toHaveBeenCalled();
+        expect(countTileShakes(animate)).toBe(0);
         expect(getHintedCellPositions()).toEqual(["2行3列"]);
       });
 
@@ -456,7 +464,7 @@ describe("TakuzuTutorial", () => {
 
         expect(message).toBeTruthy();
         expect(label).toBe("1行3列 四角");
-        expect(animate).not.toHaveBeenCalled();
+        expect(countTileShakes(animate)).toBe(0);
         expect(getHintedCellPositions()).toEqual(["1行3列"]);
       });
 
@@ -475,7 +483,7 @@ describe("TakuzuTutorial", () => {
           "1行1列 四角 3連続 行の個数超過",
           "1行3列 四角 3連続 行の個数超過",
         ]);
-        expect(animate).not.toHaveBeenCalled();
+        expect(countTileShakes(animate)).toBe(0);
         expect(getHintedCellPositions()).toEqual(["1行3列"]);
       });
 
@@ -502,7 +510,7 @@ describe("TakuzuTutorial", () => {
 
         expect(message).toBeTruthy();
         expect(violationMessage).toBeNull();
-        expect(animate).not.toHaveBeenCalled();
+        expect(countTileShakes(animate)).toBe(0);
       });
 
       test("解と違う四角では応えず、丸を置くとそのマスに応えること", () => {

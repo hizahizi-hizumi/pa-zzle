@@ -1,7 +1,8 @@
-import type { CSSProperties } from "react";
+import { type CSSProperties, useRef } from "react";
 
 import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import type { TakuzuLine } from "@/games/takuzu/puzzle/board";
+import { useViolationPulse } from "@/games/takuzu/ui/board/TakuzuBoard/use-violation-pulse";
 import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/TakuzuBoard/violation-mark-timing";
 import { lineViolationBarClassName } from "@/games/takuzu/ui/board/violation-mark-style";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,17 @@ type TakuzuLineViolationMarkProps = {
 type LineEdge = "start" | "end";
 
 const lineEdges = ["start", "end"] as const satisfies readonly LineEdge[];
+
+/** 印が出た瞬間に1回だけ、太く長く膨らませて周りに光の輪を広げる。 */
+const linePulseKeyframes: Keyframe[] = [
+  { transform: "scale(1)", boxShadow: "0 0 0 0 rgb(251 113 133 / 0)" },
+  {
+    transform: "scale(2.2)",
+    boxShadow: "0 0 0 3px rgb(251 113 133 / 0.45)",
+    offset: 0.3,
+  },
+  { transform: "scale(1)", boxShadow: "0 0 0 0 rgb(251 113 133 / 0)" },
+];
 
 const barPlacementClassNames = {
   row: {
@@ -48,6 +60,13 @@ export function TakuzuLineViolationMark({
   violated,
   spotlit,
 }: TakuzuLineViolationMarkProps) {
+  const barRefs = {
+    start: useRef<HTMLSpanElement>(null),
+    end: useRef<HTMLSpanElement>(null),
+  } satisfies Record<LineEdge, unknown>;
+  useViolationPulse(barRefs.start, violated, linePulseKeyframes);
+  useViolationPulse(barRefs.end, violated, linePulseKeyframes);
+
   return lineEdges.map(function renderEdgeMark(edge) {
     return (
       <span
@@ -58,6 +77,7 @@ export function TakuzuLineViolationMark({
         style={getEdgeCellArea(size, line, edge)}
       >
         <span
+          ref={barRefs[edge]}
           className={cn(
             "absolute",
             lineViolationBarClassName,

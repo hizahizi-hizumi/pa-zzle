@@ -130,6 +130,53 @@ describe("placeTakuzuSessionCell", () => {
       expect(result).toBe(1);
     });
   });
+
+  describe("なぞって続けて置いた場合", () => {
+    const started = cycleTakuzuSessionCell(session, 1, "forward", 200);
+    const stroked = [2, 4, 5].reduce(
+      (current, cellIndex) =>
+        placeTakuzuSessionCell(current, cellIndex, "a", 210, {
+          extendsStroke: true,
+        }),
+      started,
+    );
+
+    test("通った空きマスに同じタイルを置き、置き直しに数えないこと", () => {
+      const cells = [1, 2, 4, 5].map(
+        (cellIndex) => stroked.puzzleState.cells[cellIndex],
+      );
+      const correctionCount = getTakuzuSessionCorrectionCount(stroked);
+
+      expect(cells).toEqual(["a", "a", "a", "a"]);
+      expect(correctionCount).toBe(0);
+      expect(stroked.inputCount).toBe(4);
+    });
+
+    test("なぞり全体を1回の待ったで戻すこと", () => {
+      const result = undoTakuzuSession(stroked);
+
+      expect(result.puzzleState).toBe(session.puzzleState);
+      expect(result.undoCount).toBe(1);
+    });
+
+    test("タイルのあるマスには置かないこと", () => {
+      const result = placeTakuzuSessionCell(stroked, 2, "b", 220, {
+        extendsStroke: true,
+      });
+
+      expect(result).toBe(stroked);
+    });
+  });
+
+  describe("なぞり始めていない場合", () => {
+    test("なぞりの続きとして置かないこと", () => {
+      const result = placeTakuzuSessionCell(session, 1, "a", 200, {
+        extendsStroke: true,
+      });
+
+      expect(result).toBe(session);
+    });
+  });
 });
 
 describe("getTakuzuSessionCorrectionCount", () => {

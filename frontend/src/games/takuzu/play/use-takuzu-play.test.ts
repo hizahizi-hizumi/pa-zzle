@@ -109,6 +109,26 @@ describe("useTakuzuPlay", () => {
       },
     );
 
+    describe("なぞって続けて置いた場合", () => {
+      beforeEach(() => {
+        act(() => result.current.cycleCell(firstEmptyCellIndex, "forward"));
+        act(() => result.current.strokeCell(secondEmptyCellIndex, "a"));
+      });
+
+      test("通った空きマスにタイルを置くこと", () => {
+        const placed = result.current.cells[secondEmptyCellIndex]?.cell;
+
+        expect(placed).toBe("a");
+      });
+
+      test("1回の待ったでなぞり全体を戻すこと", () => {
+        act(() => result.current.undo());
+
+        expect(listCells(result)).toEqual(initial.problem.givens.cells);
+        expect(result.current.undoCount).toBe(1);
+      });
+    });
+
     test("固定マスへの巡回を、盤面を変えずに通らない操作として知らせること", () => {
       act(() => result.current.cycleCell(givenCellIndex, "forward"));
 

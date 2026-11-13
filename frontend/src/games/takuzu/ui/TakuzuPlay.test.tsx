@@ -56,6 +56,7 @@ describe("TakuzuPlay", () => {
   const callbacks = {
     onCycleCell: vi.fn(),
     onPlaceCell: vi.fn(),
+    onStrokeCell: vi.fn(),
     onUndo: vi.fn(),
     onRestart: vi.fn(),
     onReplay: vi.fn(),

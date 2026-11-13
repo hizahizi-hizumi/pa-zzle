@@ -11,6 +11,7 @@ import { getTakuzuCellPosition } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
 import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
+import { useViolationPulse } from "@/games/takuzu/ui/board/TakuzuBoard/use-violation-pulse";
 import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/TakuzuBoard/violation-mark-timing";
 import { TakuzuCellFace } from "@/games/takuzu/ui/board/TakuzuCellFace";
 import { runViolationCellClassName } from "@/games/takuzu/ui/board/violation-mark-style";
@@ -35,6 +36,13 @@ type TakuzuCellProps = {
 };
 
 const tileNameByCell = { a: "四角", b: "丸" } as const;
+
+/** 3連続の違反の地が出た瞬間に、マスの縁を1回だけ濃く脈打たせる。 */
+const runViolationPulseKeyframes: Keyframe[] = [
+  { boxShadow: "inset 0 0 0 0 rgb(244 63 94 / 0)" },
+  { boxShadow: "inset 0 0 0 4px rgb(244 63 94 / 0.85)", offset: 0.3 },
+  { boxShadow: "inset 0 0 0 0 rgb(244 63 94 / 0)" },
+];
 
 /** 印と応えの線は、隣り合うマスの線と重ならないよう、マスの縁から少し内側に、角の立ったマスの形で引く。 */
 const cueOutlinePlacementClassName = "pointer-events-none absolute inset-1";
@@ -69,6 +77,12 @@ export function TakuzuCell({
   onFocus,
 }: TakuzuCellProps) {
   const lastPointerTypeRef = useRef<string | null>(null);
+  const violationRef = useRef<HTMLSpanElement>(null);
+  useViolationPulse(
+    violationRef,
+    view.inViolatingRun,
+    runViolationPulseKeyframes,
+  );
   const { row, column } = getTakuzuCellPosition(size, cellIndex);
   const buttonRef = useCallback(
     (element: HTMLButtonElement | null) => onElementChange(cellIndex, element),
@@ -102,6 +116,7 @@ export function TakuzuCell({
       onPointerDown={handlePointerDown}
       onFocus={() => onFocus(cellIndex)}
       data-violated={view.inViolatingRun || undefined}
+      data-takuzu-cell-index={cellIndex}
       className={cn(
         "group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center bg-background outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:not-aria-disabled:hover:bg-accent/60 enabled:not-aria-disabled:active:bg-accent",
         row !== size - 1 && "border-b border-b-border",
@@ -109,12 +124,19 @@ export function TakuzuCell({
       )}
     >
       <span
+        ref={violationRef}
         aria-hidden="true"
         className={cn(
           "pointer-events-none absolute inset-0",
           violationMarkTimingClassName,
           runViolationCellClassName,
         )}
+      />
+      {/* 行・列が違反なく埋まったときに盤面が光らせる面。タイルより奥に置く。 */}
+      <span
+        aria-hidden="true"
+        data-takuzu-line-flash={cellIndex}
+        className="pointer-events-none absolute inset-0 bg-sky-200 opacity-0 dark:bg-sky-800"
       />
       <TutorialSpotlight active={spotlit} className="inset-0" />
       {cue?.kind === "fitted" && (

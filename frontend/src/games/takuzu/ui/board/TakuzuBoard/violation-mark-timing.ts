@@ -2,5 +2,7 @@
  * 違反の印は、印を持つ要素の祖先（`group`）に `data-violated` を置くと出る。
  * 出すときに待つ 240ms は、同じマスを続けて押す間隔（120〜200ms）より長く、手を止めればすぐ見える長さ。
  */
+export const VIOLATION_MARK_DELAY_MS = 240;
+/** Tailwind はクラス名を文字のまま読むので、`VIOLATION_MARK_DELAY_MS` と同じ値をクラスにも書く。 */
 export const violationMarkTimingClassName =
   "opacity-0 transition-opacity duration-0 group-data-violated:opacity-100 group-data-violated:delay-[240ms] group-data-violated:duration-(--duration-normal) motion-reduce:group-data-violated:duration-0";

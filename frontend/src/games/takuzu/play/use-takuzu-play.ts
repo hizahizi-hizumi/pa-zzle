@@ -20,7 +20,12 @@ import type {
 } from "@/games/takuzu/problem/problem";
 import type { TakuzuPooledProblem } from "@/games/takuzu/problem/problem-pool";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
-import type { TakuzuCell, TakuzuTile } from "@/games/takuzu/puzzle/board";
+import type {
+  TakuzuCell,
+  TakuzuLine,
+  TakuzuTile,
+} from "@/games/takuzu/puzzle/board";
+import { findTakuzuLinesCompletedBetween } from "@/games/takuzu/puzzle/rules";
 import {
   isTakuzuGivenCell,
   type TakuzuCycleDirection,
@@ -50,9 +55,15 @@ import {
 
 /**
  * マスへの操作の知らせ。効果音と盤面の反応のため、操作ごとに増える `id` を付ける。
+ * `completedLines` は、その操作で違反なく埋まりきった行・列。盤面が完成した操作では空にし、完成の演出に任せる。
  */
 export type TakuzuOperation =
-  | { id: number; type: "placed"; tile: TakuzuTile }
+  | {
+      id: number;
+      type: "placed";
+      tile: TakuzuTile;
+      completedLines: readonly TakuzuLine[];
+    }
   | { id: number; type: "emptied" }
   | { id: number; type: "invalid"; cellIndex: number };
 
@@ -93,6 +104,8 @@ export type TakuzuPlay = GamePlay<
     operation: TakuzuOperation | null;
     cycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
     placeCell: (cellIndex: number, cell: TakuzuCell) => void;
+    /** なぞりの2マス目以降。なぞり始めのマスで決まったタイルを、通った空きマスに置く。 */
+    strokeCell: (cellIndex: number, tile: TakuzuTile) => void;
   };
 
 type TakuzuPlayState = {
@@ -142,7 +155,18 @@ function applyCellOperation(
     operation:
       tile === null
         ? { id: operationId, type: "emptied" }
-        : { id: operationId, type: "placed", tile },
+        : {
+            id: operationId,
+            type: "placed",
+            tile,
+            completedLines:
+              next.session.status === "playing"
+                ? findTakuzuLinesCompletedBetween(
+                    state.session.puzzleState,
+                    next.session.puzzleState,
+                  )
+                : [],
+          },
   };
 }
 
@@ -200,6 +224,18 @@ export function useTakuzuPlay(
     setPlay((current) =>
       applyCellOperation(current, cellIndex, operationId, (session) =>
         placeTakuzuSessionCell(session, cellIndex, cell, operatedAt),
+      ),
+    );
+  }, []);
+
+  const strokeCell = useCallback((cellIndex: number, tile: TakuzuTile) => {
+    const operatedAt = Date.now();
+    const operationId = nextOperationId.current++;
+    setPlay((current) =>
+      applyCellOperation(current, cellIndex, operationId, (session) =>
+        placeTakuzuSessionCell(session, cellIndex, tile, operatedAt, {
+          extendsStroke: true,
+        }),
       ),
     );
   }, []);
@@ -277,6 +313,7 @@ export function useTakuzuPlay(
     canRestart: canRestartTakuzuSession(session),
     cycleCell,
     placeCell,
+    strokeCell,
     undo,
     restart,
     replay,

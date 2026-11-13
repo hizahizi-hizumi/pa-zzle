@@ -112,13 +112,29 @@ export function createTakuzuSession(
   };
 }
 
+type PlaceTakuzuSessionCellOptions = {
+  /**
+   * なぞりの2マス目以降の空きマスへの置き。なぞり全体を1回の待ったで戻せるよう、なぞり始めの履歴に含めて履歴を足さない。
+   * 空きマスにだけ置き、置いたマスは押し始める前が空きなので置き直しに数えない。
+   */
+  extendsStroke?: boolean;
+};
+
 export function placeTakuzuSessionCell(
   session: TakuzuSession,
   cellIndex: number,
   cell: TakuzuCell,
   operatedAt: number,
+  { extendsStroke = false }: PlaceTakuzuSessionCellOptions = {},
 ): TakuzuSession {
   if (session.status !== "playing") {
+    return session;
+  }
+  if (
+    extendsStroke &&
+    (session.puzzleState.cells[cellIndex] !== null ||
+      session.history.length === 0)
+  ) {
     return session;
   }
 
@@ -132,12 +148,15 @@ export function placeTakuzuSessionCell(
     return session;
   }
 
-  const continuesEditing = session.editingCell?.cellIndex === cellIndex;
+  const continuesEditing =
+    !extendsStroke && session.editingCell?.cellIndex === cellIndex;
   const beforeInput = continuesEditing ? session : settleEditingCell(session);
   const next: TakuzuSession = {
     ...beforeInput,
     puzzleState: board,
-    history: [...session.history, takeSnapshot(session)],
+    history: extendsStroke
+      ? session.history
+      : [...session.history, takeSnapshot(session)],
     inputCount: session.inputCount + 1,
     editingCell: beforeInput.editingCell ?? {
       cellIndex,

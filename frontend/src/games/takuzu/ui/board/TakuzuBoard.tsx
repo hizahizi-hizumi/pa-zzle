@@ -1,6 +1,8 @@
 import {
   type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -13,16 +15,23 @@ import {
   listTakuzuLines,
   type TakuzuCell as TakuzuCellValue,
   type TakuzuLine,
+  type TakuzuTile,
 } from "@/games/takuzu/puzzle/board";
-import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
+import {
+  getNextTakuzuCell,
+  type TakuzuCycleDirection,
+} from "@/games/takuzu/puzzle/transitions";
 import type {
   TakuzuCellView,
   TakuzuLineViolationView,
 } from "@/games/takuzu/session/session";
 import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { animateGivenCellRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-given-cell-rejection";
+import { playLineCompletionFlash } from "@/games/takuzu/ui/board/TakuzuBoard/line-completion-flash";
+import { listTakuzuStrokeCellIndices } from "@/games/takuzu/ui/board/TakuzuBoard/stroke-path";
 import { TakuzuCell } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuCell";
 import { TakuzuLineViolationMark } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationMark";
+import { cn } from "@/lib/utils";
 
 type TakuzuBoardProps = {
   size: number;
@@ -36,7 +45,31 @@ type TakuzuBoardProps = {
   spotlight?: TakuzuBoardSpotlight | null;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
+  /** なぞりの2マス目以降の空きマスに置く。渡さなければ、なぞって置かない。 */
+  onStrokeCell?: (cellIndex: number, tile: TakuzuTile) => void;
 };
+
+/**
+ * なぞっている指。`tile` はなぞり始めのマスを押したときに置いたタイルで、2マス目に入るまでは `undefined`。
+ * `null` なら、なぞり始めのマスを空きにしたので、通ったマスには何も置かない。
+ */
+type TakuzuStroke = {
+  pointerId: number;
+  startCellIndex: number;
+  lastCellIndex: number;
+  tile: TakuzuCellValue | undefined;
+};
+
+/** なぞり終えて指を離したときに届くクリックを、なぞり始めのマスを押した操作として二重に受けない間。 */
+const STROKE_CLICK_GUARD_MS = 400;
+
+function findCellIndexAt(x: number, y: number): number | null {
+  const element = document
+    .elementFromPoint?.(x, y)
+    ?.closest<HTMLElement>("[data-takuzu-cell-index]");
+  const cellIndex = element?.dataset.takuzuCellIndex;
+  return cellIndex === undefined ? null : Number(cellIndex);
+}
 
 export type TakuzuBoardSpotlight = {
   /** 次に置くマスと、そのタイルを決めるマス。 */
@@ -100,9 +133,13 @@ export function TakuzuBoard({
   spotlight = null,
   onCycleCell,
   onPlaceCell,
+  onStrokeCell,
 }: TakuzuBoardProps) {
   const [focusableCellIndex, setFocusableCellIndex] = useState(0);
   const cellElementRefs = useRef(new Map<number, HTMLButtonElement>());
+  const boardRef = useRef<HTMLDivElement>(null);
+  const strokeRef = useRef<TakuzuStroke | null>(null);
+  const strokeEndedAtRef = useRef<number | null>(null);
   const lineViolationByKey = new Map(
     lineViolations.map((violation) => [getLineKey(violation), violation]),
   );
@@ -115,6 +152,111 @@ export function TakuzuBoard({
       );
     }
   }, [operation]);
+
+  useEffect(() => {
+    const board = boardRef.current;
+    if (
+      !board ||
+      operation?.type !== "placed" ||
+      operation.completedLines.length === 0
+    ) {
+      return;
+    }
+    const animations = playLineCompletionFlash(
+      board,
+      size,
+      operation.completedLines,
+    );
+    return function stopFlash() {
+      for (const animation of animations) {
+        animation.cancel();
+      }
+    };
+  }, [operation, size]);
+
+  function handleCellCycle(
+    cellIndex: number,
+    direction: TakuzuCycleDirection,
+  ): void {
+    const strokeEndedAt = strokeEndedAtRef.current;
+    strokeEndedAtRef.current = null;
+    if (
+      strokeEndedAt !== null &&
+      performance.now() - strokeEndedAt < STROKE_CLICK_GUARD_MS
+    ) {
+      return;
+    }
+    onCycleCell(cellIndex, direction);
+  }
+
+  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>): void {
+    strokeEndedAtRef.current = null;
+    if (interactionDisabled || !onStrokeCell || event.button !== 0) {
+      return;
+    }
+    const cellIndex = findCellIndexAt(event.clientX, event.clientY);
+    strokeRef.current =
+      cellIndex === null
+        ? null
+        : {
+            pointerId: event.pointerId,
+            startCellIndex: cellIndex,
+            lastCellIndex: cellIndex,
+            tile: undefined,
+          };
+  }
+
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>): void {
+    const stroke = strokeRef.current;
+    if (!stroke || stroke.pointerId !== event.pointerId || !onStrokeCell) {
+      return;
+    }
+    // 盤面の外でマウスのボタンを離すと、盤面に離した知らせが届かない。
+    if (event.buttons === 0) {
+      handlePointerEnd(event);
+      return;
+    }
+    const cellIndex = findCellIndexAt(event.clientX, event.clientY);
+    if (cellIndex === null || cellIndex === stroke.lastCellIndex) {
+      return;
+    }
+    if (stroke.tile === undefined) {
+      const start = cells[stroke.startCellIndex];
+      // 固定マスからはなぞらない。押した固定マスは、離したときに本番と同じく揺れで返す。
+      if (!start || start.given) {
+        strokeRef.current = null;
+        return;
+      }
+      stroke.tile = getNextTakuzuCell(start.cell, "forward");
+      strokeEndedAtRef.current = performance.now();
+      onCycleCell(stroke.startCellIndex, "forward");
+    }
+    const tile = stroke.tile;
+    if (tile !== null) {
+      for (const passedCellIndex of listTakuzuStrokeCellIndices(
+        size,
+        stroke.lastCellIndex,
+        cellIndex,
+      )) {
+        const passed = cells[passedCellIndex];
+        if (passed && !passed.given && passed.cell === null) {
+          onStrokeCell(passedCellIndex, tile);
+        }
+      }
+    }
+    stroke.lastCellIndex = cellIndex;
+  }
+
+  function handlePointerEnd(event: ReactPointerEvent<HTMLDivElement>): void {
+    const stroke = strokeRef.current;
+    if (!stroke || stroke.pointerId !== event.pointerId) {
+      return;
+    }
+    strokeRef.current = null;
+    if (stroke.tile !== undefined) {
+      strokeEndedAtRef.current = performance.now();
+    }
+  }
 
   const handleCellElementChange = useCallback(
     (cellIndex: number, element: HTMLButtonElement | null) => {
@@ -163,14 +305,23 @@ export function TakuzuBoard({
     // 行・列の違反の印を盤面の縁の外に置くため、盤面の周りに余白を取る。
     <div className="size-full p-3">
       <div
+        ref={boardRef}
         role="group"
         aria-label={`${TAKUZU_DISPLAY_NAME}盤面`}
-        className="relative grid size-full border-2 border-foreground/55 bg-background"
+        // なぞる指で画面がスクロールしないよう、盤面の上ではブラウザのタッチ操作を止める。
+        className={cn(
+          "relative grid size-full border-2 border-foreground/55 bg-background",
+          onStrokeCell && "touch-none",
+        )}
         style={{
           gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${size}, minmax(0, 1fr))`,
         }}
         onKeyDown={handleKeyDown}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
       >
         {cells.map(function renderCell(view, cellIndex) {
           const { row, column } = getTakuzuCellPosition(size, cellIndex);
@@ -197,7 +348,7 @@ export function TakuzuBoard({
               spotlit={spotlight?.cellIndices.includes(cellIndex) ?? false}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}
-              onCycle={onCycleCell}
+              onCycle={handleCellCycle}
               onFocus={setFocusableCellIndex}
             />
           );
