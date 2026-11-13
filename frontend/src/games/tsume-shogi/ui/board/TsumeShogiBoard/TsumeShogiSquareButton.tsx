@@ -61,7 +61,7 @@ type TsumeShogiSquareButtonProps = {
    * チュートリアルで次に押す升の印。`undefined` なら印を付けない。値は印の線を短く濃くし直す合図（`TutorialCue` の `recallId`）。
    */
   tutorialMarkRecallId: number | null | undefined;
-  /** チュートリアルで手を引いている間、画面全体の覆いからこの升を抜く。 */
+  /** チュートリアルで決め手を見せる間、盤の覆いからこの升を抜く。 */
   spotlit: boolean;
   /** 押しても何もしない。応手を待つ間などに押せなくしても、フォーカスは升に残す。 */
   disabled: boolean;

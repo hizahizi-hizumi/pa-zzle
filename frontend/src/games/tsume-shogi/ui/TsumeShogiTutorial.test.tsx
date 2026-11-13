@@ -21,8 +21,6 @@ const defenderReplyDelayMs = 600;
 
 const nextStepCueDelayMs = 450;
 
-const idleHintDelayMs = 4000;
-
 /** 詰みの演出を見せ終えるのに十分な間。 */
 const clearEnoughMs = 8000;
 
@@ -44,15 +42,16 @@ function advanceThroughReply(): void {
   advanceTime(nextStepCueDelayMs);
 }
 
-/** 場面の動きを待たずに「次へ」を続けて押し、ゴールと始まりの盤面を通って最初の手順から始める。 */
-function pressNextThroughIntro(): void {
-  for (
-    let next = screen.queryByRole("button", { name: "次へ" });
-    next;
-    next = screen.queryByRole("button", { name: "次へ" })
-  ) {
-    fireEvent.click(next);
-  }
+/** 入口の「はじめる」を押し、始めの盤面へ替える場面を終えて、最初の手順から始める。 */
+function pressStart(): void {
+  fireEvent.click(screen.getByRole("button", { name: "はじめる" }));
+  advanceTime(1000);
+}
+
+function getProgressValue(): string | null {
+  return screen
+    .getByRole("progressbar", { name: "チュートリアルの進み具合" })
+    .getAttribute("aria-valuenow");
 }
 
 function getSquare(name: string): HTMLElement {
@@ -61,10 +60,10 @@ function getSquare(name: string): HTMLElement {
   });
 }
 
-function getHandGold(): HTMLElement {
+function getHandRook(): HTMLElement {
   return within(screen.getByRole("group", { name: "攻方の持駒" })).getByRole(
     "button",
-    { name: /^金/ },
+    { name: /^飛/ },
   );
 }
 
@@ -72,32 +71,39 @@ function getUndo(): HTMLElement {
   return screen.getByRole("button", { name: "待った" });
 }
 
-/** 升の名前（例: `2三`）を順に押す。 */
+/** 升の名前（例: `8三`）を順に押す。 */
 function tapSquares(...names: readonly string[]): void {
   for (const name of names) {
     fireEvent.click(getSquare(name));
   }
 }
 
-function getMarked(): string[] {
+function getCueOwners(cue: string): string[] {
   return Array.from(
-    document.querySelectorAll('[data-tutorial-cue="mark"]'),
-    (mark) => mark.parentElement?.getAttribute("aria-label") ?? "待った",
+    document.querySelectorAll(`[data-tutorial-cue="${cue}"]`),
+    (element) => {
+      const owner = element.closest("button") ?? element.parentElement;
+      return owner?.getAttribute("aria-label") ?? "待った";
+    },
   );
 }
 
-function getRecalled(): string[] {
-  return Array.from(
-    document.querySelectorAll('[data-tutorial-cue="recall"]'),
-    (mark) => mark.parentElement?.getAttribute("aria-label") ?? "待った",
-  );
-}
-
+/** 盤の中を覆う間、覆いから抜いている盤の升。盤の外の抜く所（一言の欄など）は除く。 */
 function getSpotlit(): string[] {
   return Array.from(
     document.querySelectorAll("[data-tutorial-spotlight]"),
     (spotlight) => spotlight.parentElement?.getAttribute("aria-label") ?? "",
   ).filter((label) => label !== "");
+}
+
+function isBoardCovered(): boolean {
+  return screen
+    .getByRole("group", { name: "盤" })
+    .hasAttribute("data-tutorial-spotlight-area");
+}
+
+function getMessageText(): string {
+  return screen.getByRole("dialog").textContent ?? "";
 }
 
 function getPlayedSoundNames(): string[] {
@@ -106,16 +112,25 @@ function getPlayedSoundNames(): string[] {
     .mock.calls.map(([sound]) => sound.url.split("/").at(-1) ?? "");
 }
 
-/** 手順の4手（金を打つ・金を下げる・飛を上げる・待った）を指す。 */
+/** 銀を王手の升へ動かす。成・不成は成るほうを選ぶ。 */
+function playSilverCheck(): void {
+  tapSquares("6一", "7二");
+  fireEvent.click(screen.getByRole("button", { name: /^成/ }));
+}
+
+/** 手順をすべて指して手を離す。 */
 function playAllSteps(): void {
-  fireEvent.click(getHandGold());
-  tapSquares("2三");
+  fireEvent.click(getHandRook());
+  tapSquares("8三");
   advanceThroughReply();
-  tapSquares("2三", "2四");
+  playSilverCheck();
   advanceThroughReply();
-  tapSquares("2六", "2五");
+  tapSquares("7三", "8二");
   advanceThroughReply();
   fireEvent.click(getUndo());
+  advanceThroughReply();
+  tapSquares("7三", "7二");
+  advanceThroughReply();
 }
 
 describe("TsumeShogiTutorial", () => {
@@ -125,7 +140,7 @@ describe("TsumeShogiTutorial", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     onClose = vi.fn<() => void>();
-    playStart = { difficulty: "3", onStart: vi.fn<() => void>() };
+    playStart = { difficulty: "1", onStart: vi.fn<() => void>() };
   });
 
   describe("ゲームのホームから開いた場合", () => {
@@ -137,142 +152,202 @@ describe("TsumeShogiTutorial", () => {
           onClose={onClose}
         />,
       );
-      pressNextThroughIntro();
+      pressStart();
     });
 
-    test("始めの盤面で、持駒の金に印を付け、打ち方を伝えること", () => {
-      const headline = screen.getByText("持駒は、空いた升に打てます");
-      const marked = getMarked();
+    test("始めの盤面で、持駒の飛車に指を添えた印を付け、盤を覆わず、進み具合を空にしておくこと", () => {
+      const marked = getCueOwners("mark");
+      const pointed = getCueOwners("pointer");
+      const progress = getProgressValue();
 
-      expect(headline).toBeTruthy();
-      expect(marked).toEqual(["金 1枚"]);
+      expect(getMessageText()).toContain("印の駒を押してから");
+      expect(marked).toEqual(["飛車 1枚"]);
+      expect(pointed).toEqual(["飛車 1枚"]);
+      expect(isBoardCovered()).toBe(false);
+      expect(progress).toBe("0");
     });
 
-    test("印の持駒と、王手をかける玉を覆いから抜くこと", () => {
-      const spotlit = getSpotlit();
+    test("印の無い金を押しても選ばず、音も鳴らさずに、印の線を濃くし直すこと", () => {
+      tapSquares("7三");
 
-      expect(spotlit).toEqual(["1三 玉方の玉", "金 1枚"]);
-    });
+      const gold = getSquare("7三");
+      const recalled = getCueOwners("recall");
 
-    test("印の無い飛を押しても選ばず、音も鳴らさずに、印の線を濃くし直すこと", () => {
-      tapSquares("2六");
-
-      const rook = getSquare("2六");
-      const recalled = getRecalled();
-
-      expect(rook.getAttribute("aria-pressed")).toBe("false");
-      expect(recalled).toEqual(["金 1枚"]);
+      expect(gold.getAttribute("aria-pressed")).toBe("false");
+      expect(recalled).toEqual(["飛車 1枚"]);
       expect(playSound).not.toHaveBeenCalled();
     });
 
-    test("持駒の金を選ぶと、打つ升へ印を移すこと", () => {
-      fireEvent.click(getHandGold());
+    test("持駒の飛車を選ぶと、打つ升へ指の無い印を移すこと", () => {
+      fireEvent.click(getHandRook());
 
-      const marked = getMarked();
+      const marked = getCueOwners("mark");
+      const pointed = getCueOwners("pointer");
 
-      expect(marked).toEqual(["2三"]);
+      expect(marked).toEqual(["8三"]);
+      expect(pointed).toEqual([]);
     });
 
-    test("印の升へ打つと、本番と同じ音で指し、間を置いて玉が逃げてから、王手を伝えて次の印を付けること", () => {
-      fireEvent.click(getHandGold());
-      tapSquares("2三");
-      const markedBeforeReply = getMarked();
+    test("印の升へ打つと、本番と同じ音で指し、間を置いて玉が応じてから、王手を伝えて銀に印を付けること", () => {
+      fireEvent.click(getHandRook());
+      tapSquares("8三");
+      const markedBeforeReply = getCueOwners("mark");
       advanceThroughReply();
 
-      const king = getSquare("1四");
-      const headline = screen.getByText(
-        "金を打った手は、王手でした 自分の番では、必ず王手をかけます",
-      );
-      const marked = getMarked();
+      const king = getSquare("7一");
+      const marked = getCueOwners("mark");
       const sounds = getPlayedSoundNames();
 
       expect(markedBeforeReply).toEqual([]);
-      expect(king.getAttribute("aria-label")).toBe("1四 玉方の玉");
-      expect(headline).toBeTruthy();
-      expect(marked).toEqual(["2三 攻方の金"]);
-      expect(sounds).toHaveLength(2);
+      expect(king.getAttribute("aria-label")).toBe("7一 玉方の玉");
+      expect(getMessageText()).toContain("自分の番はいつも王手をかけます");
+      expect(marked).toEqual(["6一 攻方の銀"]);
+      expect(sounds.length).toBeGreaterThanOrEqual(2);
+      expect(getProgressValue()).not.toBe("0");
     });
 
     describe("王手を伝えた手順に進んだ場合", () => {
       beforeEach(() => {
-        fireEvent.click(getHandGold());
-        tapSquares("2三");
+        fireEvent.click(getHandRook());
+        tapSquares("8三");
         advanceThroughReply();
         vi.mocked(playSound).mockClear();
       });
 
-      test("印の金を王手にならない升へ動かそうとすると、本番と同じく着手させずに音を鳴らし、わけを伝えること", () => {
-        tapSquares("2三", "3三");
+      test("盤の中を覆い、印の銀と王手をかける玉を元の明るさで残すこと", () => {
+        const spotlit = getSpotlit();
 
-        const headline = screen.getByText("王手にならない手は指せません");
-        const gold = getSquare("2三");
+        expect(isBoardCovered()).toBe(true);
+        expect(new Set(spotlit)).toEqual(
+          new Set(["7一 玉方の玉", "6一 攻方の銀"]),
+        );
+      });
+
+      test("銀を選んだ後は、行き先に印を付けず、王手の升を自分で選ぶことを伝え、覆いは残すこと", () => {
+        tapSquares("6一");
+
+        const marked = getCueOwners("mark");
+
+        expect(marked).toEqual([]);
+        expect(getMessageText()).toContain("王手になる升を選びます");
+        expect(isBoardCovered()).toBe(true);
+      });
+
+      test("銀を王手にならない升へ動かそうとすると、本番と同じく着手させずに音を鳴らし、わけを伝えること", () => {
+        tapSquares("6一", "5二");
+
+        const silver = getSquare("6一");
         const sounds = getPlayedSoundNames();
 
-        expect(headline).toBeTruthy();
-        expect(gold.getAttribute("aria-label")).toBe("2三 攻方の金");
+        expect(getMessageText()).toContain("王手になっていません");
+        expect(silver.getAttribute("aria-label")).toBe("6一 攻方の銀");
         expect(sounds).toEqual(["rejected.flac"]);
       });
+
+      test("一度ルールに合わない手を指すと、銀の行き先の升にも印を付けること", () => {
+        tapSquares("6一", "5二");
+
+        const marked = getCueOwners("mark");
+
+        expect(marked).toEqual(["7二"]);
+      });
+
+      test("王手になる升へ動かすと、成・不成を選ぶ間に成ることを伝えること", () => {
+        tapSquares("6一", "7二");
+
+        expect(getMessageText()).toContain("成ると裏返って");
+      });
     });
 
-    describe("逃げ道を伝える手順に進んだ場合", () => {
+    describe("王手した駒を取られて詰まなくなることを伝える手順に進んだ場合", () => {
       beforeEach(() => {
-        fireEvent.click(getHandGold());
-        tapSquares("2三");
+        fireEvent.click(getHandRook());
+        tapSquares("8三");
         advanceThroughReply();
-        tapSquares("2三", "2四");
+        playSilverCheck();
         advanceThroughReply();
       });
 
-      test("印の飛車と、王手をかける玉と、飛車が守っている逃げ道の升を覆いから抜くこと", () => {
+      test("印の金と、金を取る相手の飛車を覆いから抜くこと", () => {
         const spotlit = getSpotlit();
-        const detail = screen.getByText(
-          "空いた升と、守られていない駒の升が逃げ道です 飛車を動かして、逃げ道を開けてみてください",
-        );
 
+        expect(getMessageText()).toContain("次に金で王手をかけると");
         expect(new Set(spotlit)).toEqual(
-          new Set(["1五 玉方の玉", "1六", "2六 攻方の飛車"]),
+          new Set(["7二 玉方の飛車", "7三 攻方の金"]),
         );
-        expect(detail).toBeTruthy();
+      });
+
+      test("金を選んで印の無い飛車を押すと、何をする手順かを言い直し、印の線を濃くし直すこと", () => {
+        tapSquares("7三", "7二");
+
+        const rook = getSquare("7二");
+        const recalled = getCueOwners("recall");
+
+        expect(rook.getAttribute("aria-label")).toBe("7二 玉方の飛車");
+        expect(getMessageText()).toContain("先に取られる王手を");
+        expect(recalled).toEqual(["8二"]);
+      });
+
+      test("印の升へ金を動かすと、金を取られて逃れられ、待ったに覆いの無い印を付けること", () => {
+        tapSquares("7三", "8二");
+        advanceThroughReply();
+
+        const rook = getSquare("8二");
+        const status = screen.getByRole("status");
+        const marked = getCueOwners("mark");
+
+        expect(rook.getAttribute("aria-label")).toBe("8二 玉方の飛車");
+        expect(status.textContent).toContain("逃れる");
+        expect(getMessageText()).toContain(
+          "詰まなくなったら待ったボタンを押して",
+        );
+        expect(marked).toEqual(["待った"]);
+        expect(isBoardCovered()).toBe(false);
       });
     });
 
-    describe("逃げ道のある王手を指した場合", () => {
+    describe("持駒を伝える手順に進んだ場合", () => {
       beforeEach(() => {
-        fireEvent.click(getHandGold());
-        tapSquares("2三");
+        fireEvent.click(getHandRook());
+        tapSquares("8三");
         advanceThroughReply();
-        tapSquares("2三", "2四");
+        playSilverCheck();
         advanceThroughReply();
-        tapSquares("2六", "2五");
+        tapSquares("7三", "8二");
+        advanceThroughReply();
+        fireEvent.click(getUndo());
         advanceThroughReply();
       });
 
-      test("玉が逃げ、この手数では詰まないことを盤の下に出して、待ったに印を付けること", () => {
-        const king = getSquare("1六");
-        const status = screen.getByRole("status");
-        const headline = screen.getByText(
-          "「5手では詰みません」と出たら 待ったを押して戻しましょう",
-        );
-        const marked = getMarked();
+      test("金に印を付け、取られなかった飛車を取る王手を自分で選ばせること", () => {
+        const marked = getCueOwners("mark");
 
-        expect(king.getAttribute("aria-label")).toBe("1六 玉方の玉");
-        expect(status.textContent).toContain("5手では詰みません");
-        expect(headline).toBeTruthy();
-        expect(marked).toEqual(["待った"]);
+        expect(getMessageText()).toContain("自分の持駒になります");
+        expect(marked).toEqual(["7三 攻方の金"]);
       });
 
-      test("待ったを押すと、王手の前に戻して手を離すこと", () => {
+      test("ほかの王手を指して逃れられた後に盤を押しても、取られたわけの一言を残すこと", () => {
+        tapSquares("7三", "6二");
+        advanceThroughReply();
+        tapSquares("8三");
+
+        expect(getMessageText()).toContain("詰まなくなりました");
+      });
+
+      test("ほかの王手を指すと、金を取られたわけを伝え、待ったで同じ手順に戻すこと", () => {
+        tapSquares("7三", "6二");
+        advanceThroughReply();
+        const refutedMessage = getMessageText();
         fireEvent.click(getUndo());
 
-        const king = getSquare("1五");
-        const headline = screen.getByText(
-          "逃げ道をふさぐ王手で 詰ませてください",
-        );
-        const marked = getMarked();
+        const marked = getCueOwners("mark");
 
-        expect(king.getAttribute("aria-label")).toBe("1五 玉方の玉");
-        expect(headline).toBeTruthy();
-        expect(marked).toEqual([]);
+        fireEvent.click(getSquare("7三"));
+        const markedAfterSelect = getCueOwners("mark");
+
+        expect(refutedMessage).toContain("詰まなくなりました");
+        expect(marked).toEqual(["7三 攻方の金"]);
+        expect(markedAfterSelect).toEqual(["7二 玉方の飛車"]);
       });
     });
 
@@ -281,44 +356,103 @@ describe("TsumeShogiTutorial", () => {
         playAllSteps();
       });
 
-      test("手が止まると、詰ませる手の駒に印を付けること", () => {
-        advanceTime(idleHintDelayMs);
+      test("取った飛車を駒台に置き、印を付けず、盤を覆わず、「ヒント」を出すこと", () => {
+        const rook = getHandRook();
+        const marked = getCueOwners("mark");
 
-        const marked = getMarked();
-
-        expect(marked).toEqual(["2四 攻方の金"]);
+        expect(rook.getAttribute("aria-label")).toBe("飛車 1枚");
+        expect(marked).toEqual([]);
+        expect(isBoardCovered()).toBe(false);
+        expect(screen.getByRole("button", { name: "ヒント" })).toBeTruthy();
       });
 
-      test("覆いを外し、盤のどの升も覆いから抜かないこと", () => {
+      test("手が止まっても、求められるまで手がかりを出さないこと", () => {
+        advanceTime(10000);
+
+        const marked = getCueOwners("mark");
+
+        expect(marked).toEqual([]);
+      });
+
+      test("「ヒント」を押すと、持駒の飛車に印を付けて玉を覆いから抜き、選ぶと打つ升へ印を移すこと", () => {
+        fireEvent.click(screen.getByRole("button", { name: "ヒント" }));
+        const hinted = getCueOwners("mark");
         const spotlit = getSpotlit();
+        fireEvent.click(getHandRook());
 
-        expect(spotlit).toEqual([]);
+        const marked = getCueOwners("mark");
+
+        expect(hinted).toEqual(["飛車 1枚"]);
+        expect(spotlit).toEqual(["7二 玉方の玉"]);
+        expect(marked).toEqual(["7三"]);
       });
 
-      test("逃げ道のある王手を指すと、玉が逃げてから、待ったで戻せることを伝えること", () => {
-        tapSquares("2六", "2五");
+      test("逃れられる王手を指すと、待ったで戻せることを伝え、直す所として待ったに印を付けて「ヒント」を下げること", () => {
+        fireEvent.click(getHandRook());
+        tapSquares("7四");
         advanceThroughReply();
 
-        const headline = screen.getByText("逃げ道が残っていました");
-        const detail = screen.getByText(
-          "待ったを押すと、その王手の前に戻せます",
-        );
+        const marked = getCueOwners("mark");
+        const hint = screen.queryByRole("button", { name: "ヒント" });
 
-        expect(headline).toBeTruthy();
-        expect(detail).toBeTruthy();
+        expect(getMessageText()).toContain(
+          "待ったボタンを押して王手の前に戻します",
+        );
+        expect(marked).toEqual(["待った"]);
+        expect(hint).toBeNull();
       });
 
-      test("金を下げて詰ませると、詰みの演出の後に、ゲームのホームで開いているレベルを遊ぶ操作を出し、押すとそのレベルを始めること", () => {
-        tapSquares("2四", "2五");
+      test("取った飛車を打って詰ませると、詰みの演出の後に、ゲームのホームで開いているレベルを遊ぶ操作を出し、押すとそのレベルを始めること", () => {
+        fireEvent.click(getHandRook());
+        tapSquares("7三");
         advanceTime(clearEnoughMs);
-        const headline = screen.getByText("詰みです");
-        const detail = screen.getByText("どのレベルも、3手か5手で詰む問題です");
-        fireEvent.click(screen.getByRole("button", { name: "レベル 3を遊ぶ" }));
+        const message = getMessageText();
+        fireEvent.click(screen.getByRole("button", { name: "レベル 1を遊ぶ" }));
 
-        expect(headline).toBeTruthy();
-        expect(detail).toBeTruthy();
+        expect(message).toContain("詰みです");
         expect(playLayeredSound).toHaveBeenCalled();
         expect(playStart.onStart).toHaveBeenCalledTimes(1);
+      });
+
+      describe("詰ませた場合", () => {
+        beforeEach(() => {
+          fireEvent.click(getHandRook());
+          tapSquares("7三");
+          advanceTime(clearEnoughMs);
+        });
+
+        test("覚えたルールを並べ、進み具合を満たすこと", () => {
+          const recap = within(
+            screen.getByRole("list", { name: "覚えたルール" }),
+          )
+            .getAllByRole("listitem")
+            .map((item) => item.textContent);
+          const progress = getProgressValue();
+
+          expect(recap).toEqual([
+            "自分の番はいつも王手をかけます",
+            "取られて詰まなくなる王手もあります",
+            "相手の駒を取ると自分の持駒になります",
+          ]);
+          expect(progress).toBe("100");
+        });
+
+        test("もう一度を押すと、入口を通さずに、始めの盤面で最初の手順から始めること", () => {
+          fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+          advanceTime(0);
+
+          const startButton = screen.queryByRole("button", {
+            name: "はじめる",
+          });
+          const king = getSquare("8一");
+          const marked = getCueOwners("mark");
+          const progress = getProgressValue();
+
+          expect(startButton).toBeNull();
+          expect(king.getAttribute("aria-label")).toBe("8一 玉方の玉");
+          expect(marked).toEqual(["飛車 1枚"]);
+          expect(progress).toBe("0");
+        });
       });
     });
   });
@@ -326,12 +460,13 @@ describe("TsumeShogiTutorial", () => {
   describe("プレイ中に開いた場合", () => {
     beforeEach(() => {
       render(<TsumeShogiTutorial open={true} onClose={onClose} />);
-      pressNextThroughIntro();
+      pressStart();
       playAllSteps();
     });
 
     test("詰ませると、プレイに戻る操作を出し、押すと閉じること", () => {
-      tapSquares("2四", "2五");
+      fireEvent.click(getHandRook());
+      tapSquares("7三");
       advanceTime(clearEnoughMs);
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 

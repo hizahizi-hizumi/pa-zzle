@@ -1,19 +1,21 @@
-import { isTsumeShogiMateWithin } from "@/games/tsume-shogi/puzzle/mate-search";
+import {
+  findTsumeShogiRefutation,
+  isTsumeShogiMateWithin,
+} from "@/games/tsume-shogi/puzzle/mate-search";
 import {
   applyTsumeShogiMove,
   formatTsumeShogiMoveUsi,
-  isSameTsumeShogiMove,
-  isTsumeShogiDefenderInCheck,
+  isTsumeShogiCheckmate,
   listTsumeShogiAttackerChecks,
-  listTsumeShogiDefenderResponses,
   listTsumeShogiLegalMoves,
   type TsumeShogiMove,
 } from "@/games/tsume-shogi/puzzle/moves";
 import {
-  findTsumeShogiDefenderKing,
   formatTsumeShogiPosition,
+  getTsumeShogiHand,
   getTsumeShogiPieceAt,
   isSameTsumeShogiSquare,
+  type TsumeShogiPosition,
   type TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
 import {
@@ -25,6 +27,8 @@ import {
   _private,
   findTsumeShogiTutorialHint,
   getTsumeShogiTutorialMark,
+  getTsumeShogiTutorialProgressRatio,
+  TSUME_SHOGI_TUTORIAL_PROGRESS_STEP_COUNT,
   type TsumeShogiTutorialAction,
   type TsumeShogiTutorialBoardState,
   type TsumeShogiTutorialRuleId,
@@ -40,7 +44,14 @@ import {
   type TutorialProgress,
 } from "@/games/tutorial";
 
-const { problem, escapeSquare, escapingCheck, matingMove, playMove } = _private;
+const {
+  problem,
+  capturedCheck,
+  defenderRookSquare,
+  matingDrop,
+  playMove,
+  RELEASED_TURN_COUNT,
+} = _private;
 const { steps } = tsumeShogiTutorial;
 
 type Progress = TutorialProgress<
@@ -48,19 +59,13 @@ type Progress = TutorialProgress<
   TsumeShogiTutorialBoardState
 >;
 
-const allSquares: readonly TsumeShogiSquare[] = Array.from(
-  { length: 81 },
-  (_, index) => ({ file: (index % 9) + 1, rank: Math.floor(index / 9) + 1 }),
-);
-
-function formatSquare({ file, rank }: TsumeShogiSquare): string {
-  return `${file}-${rank}`;
-}
+const usi = formatTsumeShogiMoveUsi;
 
 function perform(progress: Progress, action: TsumeShogiTutorialAction) {
   return performTutorialAction(tsumeShogiTutorial, progress, action);
 }
 
+/** 駒（持駒）を選び、行き先の升を押す。成・不成を選ぶ所では手のとおりに選ぶ。 */
 function selectAndPlay(progress: Progress, move: TsumeShogiMove): Progress {
   const selected = perform(
     progress,
@@ -68,7 +73,20 @@ function selectAndPlay(progress: Progress, move: TsumeShogiMove): Progress {
       ? { type: "hand", pieceType: move.pieceType }
       : { type: "square", square: move.from },
   );
-  return perform(selected, { type: "square", square: move.to });
+  const played = perform(selected, { type: "square", square: move.to });
+  return played.boardState.promotionChoice
+    ? perform(played, {
+        type: "promotion",
+        promote: move.kind === "board" && move.promote,
+      })
+    : played;
+}
+
+function getStepMove(step: TsumeShogiTutorialStep): TsumeShogiMove {
+  if (step.target.type === "undo") {
+    throw new Error("攻方の手の手順ではありません");
+  }
+  return step.target.move;
 }
 
 function playStep(progress: Progress, step: TsumeShogiTutorialStep): Progress {
@@ -88,19 +106,61 @@ function playSteps(count: number): Progress {
 
 const released = playSteps(steps.length);
 
-function getStepMove(step: TsumeShogiTutorialStep): TsumeShogiMove {
-  if (step.target.type !== "move") {
-    throw new Error("攻方の手の手順ではありません");
+function getStepIndex(predicate: (step: TsumeShogiTutorialStep) => boolean) {
+  const index = steps.findIndex(predicate);
+  if (index < 0) {
+    throw new Error("手順がありません");
   }
-  return step.target.move;
+  return index;
 }
 
-function playWithReply(session: TsumeShogiSession, move: TsumeShogiMove) {
-  return perform(
-    { ...released, boardState: playMove(session, move) },
-    { type: "defender-reply" },
-  ).boardState;
+const checkStepIndex = getStepIndex(
+  (step) => step.introducedRuleId === "check",
+);
+const captureStepIndex = getStepIndex(
+  (step) => step.introducedRuleId === "capture",
+);
+const handStepIndex = getStepIndex((step) => step.introducedRuleId === "hand");
+
+/** 駒（持駒）から指せる手のうち、行き先の升ごとの手。成・不成は同じ行き先にまとめる。 */
+function groupBySource(
+  moves: readonly TsumeShogiMove[],
+  source: TsumeShogiMove,
+): Map<string, TsumeShogiMove[]> {
+  const groups = new Map<string, TsumeShogiMove[]>();
+  for (const move of moves) {
+    const sameSource =
+      source.kind === "drop"
+        ? move.kind === "drop" && move.pieceType === source.pieceType
+        : move.kind === "board" &&
+          isSameTsumeShogiSquare(move.from, source.from);
+    if (!sameSource) {
+      continue;
+    }
+    const key = `${move.to.file}-${move.to.rank}`;
+    groups.set(key, [...(groups.get(key) ?? []), move]);
+  }
+  return groups;
 }
+
+/** 王手の後、玉方が王手した駒を取って逃れるか。 */
+function isRefutedByCapture(
+  position: TsumeShogiPosition,
+  check: TsumeShogiMove,
+  remainingPlies: number,
+): boolean {
+  const after = applyTsumeShogiMove(position, check);
+  const refutation = findTsumeShogiRefutation(after, remainingPlies - 1);
+  return refutation !== null && isSameTsumeShogiSquare(refutation.to, check.to);
+}
+
+/** 作意の攻方の手番ごとの、指す前の局面と残りの手数。 */
+const attackerTurns = [0, 2, 4, 6].map((index) => ({
+  position: problem.mainLine
+    .slice(0, index)
+    .reduce(applyTsumeShogiMove, problem.initialPosition),
+  remainingPlies: problem.plies - index,
+}));
 
 function toStateKey(session: TsumeShogiSession): string {
   return [
@@ -111,359 +171,93 @@ function toStateKey(session: TsumeShogiSession): string {
 }
 
 function exploreFreePlay(
-  start: TsumeShogiSession,
-): Map<string, { session: TsumeShogiSession; nextKeys: string[] }> {
+  start: Progress,
+): Map<string, { progress: Progress; nextKeys: string[] }> {
   const explored = new Map<
     string,
-    { session: TsumeShogiSession; nextKeys: string[] }
+    { progress: Progress; nextKeys: string[] }
   >();
   const queue = [start];
   for (let index = 0; index < queue.length; index += 1) {
-    const session = queue[index] as TsumeShogiSession;
+    const progress = queue[index] as Progress;
+    const session = progress.boardState;
     const key = toStateKey(session);
     if (explored.has(key)) {
       continue;
     }
-    const nextSessions: TsumeShogiSession[] = [];
+    const nexts: Progress[] = [];
     if (session.status !== "cleared") {
-      const undone = perform(
-        { ...released, boardState: session },
-        { type: "undo" },
-      ).boardState;
-      if (undone !== session) {
-        nextSessions.push(undone);
+      const undone = perform(progress, { type: "undo" });
+      if (undone !== progress) {
+        nexts.push(undone);
       }
       // 王手にならない手と指せない手は盤面を変えないので含めない。
       if (getTsumeShogiSessionPhase(session) === "attacker") {
         for (const check of listTsumeShogiAttackerChecks(session.puzzleState)) {
-          nextSessions.push(playWithReply(session, check));
+          nexts.push(
+            perform(
+              { ...progress, boardState: playMove(session, check) },
+              { type: "defender-reply" },
+            ),
+          );
         }
       }
     }
     explored.set(key, {
-      session,
-      nextKeys: nextSessions.map(toStateKey),
+      progress,
+      nextKeys: nexts.map((next) => toStateKey(next.boardState)),
     });
-    queue.push(...nextSessions);
+    queue.push(...nexts);
   }
   return explored;
 }
 
-const attackerTurns = [0, 2, 4].map((index) => ({
-  position: problem.mainLine
-    .slice(0, index)
-    .reduce(applyTsumeShogiMove, problem.initialPosition),
-  remainingPlies: problem.plies - index,
-}));
-
 describe("盤面", () => {
-  const defenderResponseCounts = [1, 3].map(
-    (index) =>
-      listTsumeShogiDefenderResponses(
-        problem.mainLine
-          .slice(0, index)
-          .reduce(applyTsumeShogiMove, problem.initialPosition),
-      ).length,
-  );
+  test("5手では詰まず、7手で詰むこと", () => {
+    const within5 = isTsumeShogiMateWithin(problem.initialPosition, 5);
+    const within7 = isTsumeShogiMateWithin(problem.initialPosition, 7);
 
-  test("3手では詰まず、5手で詰むこと", () => {
-    const withinThree = isTsumeShogiMateWithin(problem.initialPosition, 3);
-    const withinFive = isTsumeShogiMateWithin(problem.initialPosition, 5);
-
-    expect(withinThree).toBe(false);
-    expect(withinFive).toBe(true);
+    expect(within5).toBe(false);
+    expect(within7).toBe(true);
   });
 
-  test("攻方のどの手番でも、残りの手数のうちに詰む王手が作意の手だけであること", () => {
-    const matingChecks = attackerTurns.map(({ position, remainingPlies }) =>
-      listTsumeShogiAttackerChecks(position)
-        .filter((check) =>
-          isTsumeShogiMateWithin(
-            applyTsumeShogiMove(position, check),
-            remainingPlies - 1,
-          ),
-        )
-        .map(formatTsumeShogiMoveUsi),
-    );
+  test("作意の玉方の応手が、どれも残りの手数を最も長くする応手であること", () => {
+    const shortened = [1, 3, 5].filter((index) => {
+      const position = problem.mainLine
+        .slice(0, index + 1)
+        .reduce(applyTsumeShogiMove, problem.initialPosition);
+      const remaining = problem.plies - index - 1;
+      return (
+        !isTsumeShogiMateWithin(position, remaining) ||
+        isTsumeShogiMateWithin(position, remaining - 2)
+      );
+    });
 
-    expect(matingChecks).toEqual(
-      [0, 2, 4].map((index) => [
-        formatTsumeShogiMoveUsi(problem.mainLine[index]!),
-      ]),
-    );
+    expect(shortened).toEqual([]);
   });
-
-  test("作意の玉方の応手が、どれも1つに決まること", () => {
-    const counts = defenderResponseCounts;
-
-    expect(counts).toEqual([1, 1]);
-  });
-
-  const matedPosition = problem.mainLine.reduce(
-    applyTsumeShogiMove,
-    problem.initialPosition,
-  );
-  const attackerMoves = [
-    ...problem.mainLine.filter((_, index) => index % 2 === 0),
-    escapingCheck,
-  ];
 
   test("ゴールの盤面が、作意を指し終えて玉が詰んだ盤面であること", () => {
     const goal = tsumeShogiTutorial.goal();
-
-    expect(goal.status).toBe("cleared");
-    expect(formatTsumeShogiPosition(goal.puzzleState)).toBe(
-      formatTsumeShogiPosition(matedPosition),
+    const finalPosition = problem.mainLine.reduce(
+      applyTsumeShogiMove,
+      problem.initialPosition,
     );
+
+    expect(formatTsumeShogiPosition(goal.puzzleState)).toBe(
+      formatTsumeShogiPosition(finalPosition),
+    );
+    expect(goal.status).toBe("cleared");
   });
 
-  test("指させる攻方の手に、成る手が無いこと", () => {
-    const promotable = attackerMoves.filter(
-      (move) => move.kind === "board" && move.promote,
-    );
+  test("始めの攻方の持駒が、最初の手順で打つ飛車だけであること", () => {
+    const hand = getTsumeShogiHand(problem.initialPosition, "attacker");
 
-    expect(promotable).toEqual([]);
+    expect(hand).toMatchObject({ rook: 1, gold: 0, silver: 0 });
   });
 });
 
 describe("手順", () => {
-  test("最初の手順で、作意の初手を、持駒を打つ操作で指させること", () => {
-    const [first] = steps;
-    const move = first ? getStepMove(first) : null;
-
-    expect(move?.kind).toBe("drop");
-    expect(move && isSameTsumeShogiMove(move, problem.mainLine[0]!)).toBe(true);
-  });
-
-  test("2つ目の手順で、作意の3手目を、盤の駒を動かす操作で指させること", () => {
-    const move = getStepMove(steps[1]!);
-
-    expect(move.kind).toBe("board");
-    expect(isSameTsumeShogiMove(move, problem.mainLine[2]!)).toBe(true);
-  });
-
-  const checkCases = steps.flatMap((step, index) =>
-    step.target.type === "move" ? [[index + 1, step, index] as const] : [],
-  );
-
-  test.each(checkCases)(
-    "%i つ目の手順の手が、伝えた王手のルールどおり、玉を取れる所へ指す王手であること",
-    (_, step, index) => {
-      const before = playSteps(index).boardState.puzzleState;
-      const after = applyTsumeShogiMove(before, getStepMove(step));
-
-      expect(isTsumeShogiDefenderInCheck(after)).toBe(true);
-    },
-  );
-
-  describe("持駒を伝える手順の場合", () => {
-    const index = steps.findIndex((step) => step.introducedRuleId === "drop");
-    const move = getStepMove(steps[index]!);
-    const before = playSteps(index).boardState.puzzleState;
-
-    test("空いた升に持駒を打たせること", () => {
-      const occupant = getTsumeShogiPieceAt(before, move.to);
-
-      expect(move.kind).toBe("drop");
-      expect(occupant).toBeNull();
-    });
-  });
-
-  describe("逃げ道を伝える手順の場合", () => {
-    const index = steps.findIndex((step) => step.introducedRuleId === "escape");
-    const before = playSteps(index);
-    const after = playStep(before, steps[index]!);
-    const reply = after.boardState.turns.at(-1)?.defenderMove;
-    const kingBefore = findTsumeShogiDefenderKing(
-      before.boardState.puzzleState,
-    );
-
-    test("王手を指すと、玉が空いた升へ逃げ、この手数では詰まなくなること", () => {
-      const phase = getTsumeShogiSessionPhase(after.boardState);
-
-      expect(reply?.kind).toBe("board");
-      expect(
-        reply?.kind === "board" &&
-          isSameTsumeShogiSquare(reply.from, kingBefore),
-      ).toBe(true);
-      expect(
-        reply && getTsumeShogiPieceAt(before.boardState.puzzleState, reply.to),
-      ).toBeNull();
-      expect(phase).toBe("refuted");
-    });
-
-    test("決め手として見せる升へ、玉が逃げること", () => {
-      const keySquares = steps[index]?.keySquares;
-
-      expect(keySquares).toEqual([escapeSquare]);
-      expect(
-        reply?.kind === "board" &&
-          isSameTsumeShogiSquare(reply.to, escapeSquare),
-      ).toBe(true);
-    });
-
-    test("逃げる王手と詰ませる手の行き先が同じ升で、詰ませる手を自分で見比べられること", () => {
-      const sameDestination = isSameTsumeShogiSquare(
-        escapingCheck.to,
-        matingMove.to,
-      );
-
-      expect(sameDestination).toBe(true);
-    });
-
-    test("次の手順で待ったを押すと、逃げられた王手の前の盤面へ戻ること", () => {
-      const undone = playStep(after, steps[index + 1]!);
-
-      expect(steps[index + 1]?.target.type).toBe("undo");
-      expect(formatTsumeShogiPosition(undone.boardState.puzzleState)).toBe(
-        formatTsumeShogiPosition(before.boardState.puzzleState),
-      );
-      expect(undone.stepIndex).toBe(steps.length);
-    });
-  });
-
-  describe("ルールの決め手", () => {
-    const freePosition = released.boardState.puzzleState;
-    const checkStepIndex = steps.findIndex(
-      (step) => step.introducedRuleId === "check",
-    );
-    const checkStepMove = getStepMove(steps[checkStepIndex]!);
-    const checkStepPosition = playSteps(checkStepIndex).boardState.puzzleState;
-    const escapingReplies = listTsumeShogiAttackerChecks(freePosition)
-      .filter((check) => !isSameTsumeShogiMove(check, matingMove))
-      .map((check) => {
-        const after = applyTsumeShogiMove(freePosition, check);
-        return listTsumeShogiDefenderResponses(after).map((reply) => ({
-          reply,
-          captures:
-            reply.kind === "board" &&
-            getTsumeShogiPieceAt(after, reply.to) !== null,
-        }));
-      });
-    const decisive: Record<TsumeShogiTutorialRuleId, boolean> = {
-      // 持駒: 手順で、空いた升に持駒を打つ。
-      drop: steps.some(
-        (step, index) =>
-          step.target.type === "move" &&
-          step.target.move.kind === "drop" &&
-          getTsumeShogiPieceAt(
-            playSteps(index).boardState.puzzleState,
-            step.target.move.to,
-          ) === null,
-      ),
-      // 王手: 王手を伝える手順で、印の駒の行き先のうち王手にならない升を外し、印の升は王手になる。
-      check:
-        checkStepMove.kind === "board" &&
-        isTsumeShogiDefenderInCheck(
-          applyTsumeShogiMove(checkStepPosition, checkStepMove),
-        ) &&
-        listTsumeShogiLegalMoves(checkStepPosition).some(
-          (move) =>
-            move.kind === "board" &&
-            isSameTsumeShogiSquare(move.from, checkStepMove.from) &&
-            !isTsumeShogiDefenderInCheck(
-              applyTsumeShogiMove(checkStepPosition, move),
-            ),
-        ),
-      // 逃げ道: 手を離した後、詰まない王手はどれも玉が空いた升へ逃げるか守られていない駒を取って外れ、
-      // 逃げ道も取れる駒も残さない詰ませる手だけが残る。
-      escape:
-        escapingReplies.length > 0 &&
-        escapingReplies.every(
-          (replies) =>
-            replies.length > 0 &&
-            replies.every(({ reply }) => reply.kind === "board"),
-        ) &&
-        escapingReplies.some((replies) =>
-          replies.some(({ captures }) => captures),
-        ) &&
-        listTsumeShogiDefenderResponses(
-          applyTsumeShogiMove(freePosition, matingMove),
-        ).length === 0,
-    };
-
-    test.each(tsumeShogiTutorial.rules.map(({ id }) => id))(
-      "%s が、1つ以上の手を決めること",
-      (ruleId) => {
-        const decided = decisive[ruleId];
-
-        expect(decided).toBe(true);
-      },
-    );
-  });
-
-  const sourceCases = steps.flatMap((step, index) =>
-    step.target.type === "move"
-      ? [[index + 1, step.target.move, playSteps(index)] as const]
-      : [],
-  );
-
-  test.each(sourceCases)(
-    "%i つ目の手順で印の駒を選んだ途中の盤面は、駒を選んだだけで、ルールに合わないところが無いこと",
-    (_, move, before) => {
-      const selected = perform(
-        before,
-        move.kind === "drop"
-          ? { type: "hand", pieceType: move.pieceType }
-          : { type: "square", square: move.from },
-      );
-
-      expect(selected.violated).toBe(false);
-      expect(selected.boardState.rejection).toBeNull();
-      expect(selected.boardState.turns).toBe(before.boardState.turns);
-      expect(selected.boardState.selection).not.toBeNull();
-    },
-  );
-
-  const guidedMoveCases = steps.flatMap((step, index) =>
-    step.target.type === "move" &&
-    step.target.move.kind === "board" &&
-    playSteps(index)
-      .earnedRuleIds.concat(step.introducedRuleId ?? [])
-      .includes("check")
-      ? [[index + 1, step.target.move, playSteps(index)] as const]
-      : [],
-  );
-
-  test.each(guidedMoveCases)(
-    "王手を伝えた後の %i つ目の手順で、印の駒の行き先のうち、王手にならない升はどれも着手させずにルールに合わない手として返すこと",
-    (_, move, before) => {
-      const selected = perform(before, {
-        type: "square",
-        square: move.kind === "board" ? move.from : move.to,
-      });
-      const accepted = allSquares.filter((square) => {
-        const next = perform(selected, { type: "square", square });
-        return (
-          next !== selected &&
-          !next.violated &&
-          next.boardState.turns.length > selected.boardState.turns.length
-        );
-      });
-      const violatedSquares = allSquares.filter(
-        (square) => perform(selected, { type: "square", square }).violated,
-      );
-      const position = before.boardState.puzzleState;
-      const nonCheckSquares = listTsumeShogiLegalMoves(position)
-        .filter(
-          (candidate) =>
-            candidate.kind === "board" &&
-            move.kind === "board" &&
-            isSameTsumeShogiSquare(candidate.from, move.from) &&
-            !isTsumeShogiDefenderInCheck(
-              applyTsumeShogiMove(position, candidate),
-            ),
-        )
-        .map((candidate) => candidate.to);
-
-      expect(accepted).toEqual([move.to]);
-      expect(new Set(violatedSquares.map(formatSquare))).toEqual(
-        new Set(nonCheckSquares.map(formatSquare)),
-      );
-    },
-  );
-
-  test("ルールのどれもが、1つ以上の手順で示されること", () => {
+  test("ルールのどれもが、この順に1つずつ手順で伝えられること", () => {
     const introduced = steps.flatMap((step) =>
       step.introducedRuleId ? [step.introducedRuleId] : [],
     );
@@ -471,37 +265,233 @@ describe("手順", () => {
     expect(introduced).toEqual(tsumeShogiTutorial.rules.map(({ id }) => id));
   });
 
-  describe("手順を終えた盤面の場合", () => {
-    const session = released.boardState;
-    const checks = listTsumeShogiAttackerChecks(session.puzzleState);
-    const matingChecks = checks.filter((check) =>
-      isTsumeShogiMateWithin(
-        applyTsumeShogiMove(session.puzzleState, check),
-        0,
-      ),
-    );
+  test("最初の手順で操作を教え、作意の初手を駒と升の両方に印を付けて指させること", () => {
+    const [first] = steps;
 
-    test("詰ませる王手が、逃げられた王手と同じ升へ金を下げる手ただ1つであること", () => {
-      const mating = matingChecks.map(formatTsumeShogiMoveUsi);
+    expect(first?.introducedRuleId).toBeNull();
+    expect(first?.target).toEqual({ type: "move", move: problem.mainLine[0] });
+    expect(first?.keySquares).toEqual([]);
+  });
 
-      expect(mating).toEqual([formatTsumeShogiMoveUsi(matingMove)]);
-    });
+  test("操作を教える手で動かした駒が、ゴールの盤面に残っていること", () => {
+    const move = getStepMove(steps[0] as TsumeShogiTutorialStep);
+    const goal = tsumeShogiTutorial.goal().puzzleState;
 
-    test("詰まない王手もあり、指すと手詰まりになるので、待ったを手を引く間に教えていること", () => {
-      const undoTaught = steps.some((step) => step.target.type === "undo");
-
-      expect(checks.length).toBeGreaterThan(matingChecks.length);
-      expect(undoTaught).toBe(true);
+    expect(getTsumeShogiPieceAt(goal, move.to)).toEqual({
+      side: "attacker",
+      type: "rook",
     });
   });
 
-  describe("手を離した後にどう進めても", () => {
-    const explored = exploreFreePlay(released.boardState);
+  test("印の手を手順どおりに指す間は、守らせるルールに当たる手（誤王手と着手させない手）が1つも無いこと", () => {
+    const progresses = steps.map((_, index) => playSteps(index + 1));
+    const violated = progresses.flatMap((progress, index) =>
+      progress.violated ||
+      (steps[index]?.target.type !== "move" &&
+        isTsumeShogiSessionOnWrongLine(progress.boardState))
+        ? [index]
+        : [],
+    );
+
+    expect(violated).toEqual([]);
+  });
+
+  test("攻方の手を指させる手順は、作意の手か、王手した駒を取られることを見せる王手であること", () => {
+    const moves = steps.flatMap((step) =>
+      step.target.type === "undo" ? [] : [usi(step.target.move)],
+    );
+
+    expect(moves).toEqual(
+      [
+        problem.mainLine[0],
+        problem.mainLine[2],
+        capturedCheck,
+        problem.mainLine[4],
+      ].map((move) => usi(move as TsumeShogiMove)),
+    );
+  });
+
+  describe("王手を伝える手順の場合", () => {
+    const step = steps[checkStepIndex] as TsumeShogiTutorialStep;
+    const { position } = attackerTurns[1] as (typeof attackerTurns)[number];
+    const move = getStepMove(step);
+    const destinations = groupBySource(
+      listTsumeShogiLegalMoves(position),
+      move,
+    );
+    const checkDestinations = groupBySource(
+      listTsumeShogiAttackerChecks(position),
+      move,
+    );
+
+    test("駒にだけ印を付け、行き先を自分で選ばせること", () => {
+      const target = step.target.type;
+
+      expect(target).toBe("choice");
+    });
+
+    test("印の駒の行き先が2つ以上あり、王手になる行き先は作意の升ただ1つであること", () => {
+      const checkKeys = [...checkDestinations.keys()];
+
+      expect(destinations.size).toBeGreaterThanOrEqual(2);
+      expect(checkKeys).toEqual([`${move.to.file}-${move.to.rank}`]);
+    });
+
+    test("王手になる行き先へは、成っても成らなくても残りの手数で詰むこと", () => {
+      const checks = checkDestinations.get(`${move.to.file}-${move.to.rank}`);
+      const mates = (checks ?? []).map((check) =>
+        isTsumeShogiMateWithin(applyTsumeShogiMove(position, check), 4),
+      );
+
+      expect(mates.length).toBeGreaterThan(0);
+      expect(mates.every(Boolean)).toBe(true);
+    });
+  });
+
+  describe("王手した駒を取られて詰まなくなることを伝える手順の場合", () => {
+    const step = steps[captureStepIndex] as TsumeShogiTutorialStep;
+    const turn = attackerTurns[2] as (typeof attackerTurns)[number];
+
+    test("印の王手を指すと、王手した駒を取られて、この手数では詰まなくなること", () => {
+      const refutedByCapture = isRefutedByCapture(
+        turn.position,
+        getStepMove(step),
+        turn.remainingPlies,
+      );
+
+      expect(refutedByCapture).toBe(true);
+    });
+
+    test("決め手として見せる升に、王手した駒を取る玉方の駒があること", () => {
+      const piece = getTsumeShogiPieceAt(turn.position, defenderRookSquare);
+
+      expect(step.keySquares).toEqual([defenderRookSquare]);
+      expect(piece?.side).toBe("defender");
+    });
+
+    test("次の手順で待ったを押すと、取られた王手の前の盤面へ戻ること", () => {
+      const beforeUndo = playSteps(captureStepIndex + 1);
+      const undone = playSteps(captureStepIndex + 2);
+
+      expect(steps[captureStepIndex + 1]?.target.type).toBe("undo");
+      expect(isTsumeShogiSessionOnWrongLine(beforeUndo.boardState)).toBe(true);
+      expect(formatTsumeShogiPosition(undone.boardState.puzzleState)).toBe(
+        formatTsumeShogiPosition(turn.position),
+      );
+    });
+  });
+
+  describe("持駒を伝え、読ませる手順の場合", () => {
+    const step = steps[handStepIndex] as TsumeShogiTutorialStep;
+    const turn = attackerTurns[2] as (typeof attackerTurns)[number];
+    const move = getStepMove(step);
+    const checks = [
+      ...groupBySource(
+        listTsumeShogiAttackerChecks(turn.position),
+        move,
+      ).values(),
+    ].flat();
+
+    test("駒にだけ印を付け、王手になる行き先が2つ以上あること", () => {
+      const target = step.target.type;
+
+      expect(target).toBe("choice");
+      expect(checks.length).toBeGreaterThanOrEqual(2);
+    });
+
+    test("残りの手数で詰む王手は、相手の飛車を取る作意の手だけであること", () => {
+      const mating = checks
+        .filter((check) =>
+          isTsumeShogiMateWithin(
+            applyTsumeShogiMove(turn.position, check),
+            turn.remainingPlies - 1,
+          ),
+        )
+        .map(usi);
+      const captured = getTsumeShogiPieceAt(turn.position, move.to);
+
+      expect(mating).toEqual([usi(move)]);
+      expect(captured?.type).toBe("rook");
+    });
+
+    test("ほかの王手は、どれも王手した駒を取られて崩れること", () => {
+      const notCaptured = checks
+        .filter((check) => usi(check) !== usi(move))
+        .filter(
+          (check) =>
+            !isRefutedByCapture(turn.position, check, turn.remainingPlies),
+        )
+        .map(usi);
+
+      expect(notCaptured).toEqual([]);
+    });
+  });
+
+  test("決め手の無い手順（操作と待った）だけ、決め手の升を持たないこと", () => {
+    const withoutKeys = steps.flatMap((step, index) =>
+      step.keySquares.length === 0 ? [index] : [],
+    );
+    const operations = steps.flatMap((step, index) =>
+      step.introducedRuleId === null ? [index] : [],
+    );
+
+    expect(withoutKeys).toEqual(operations);
+  });
+
+  test("進み具合の段の数が、手順の数と手を離した後の1段であること", () => {
+    const ratio = getTsumeShogiTutorialProgressRatio(steps.length);
+
+    expect(TSUME_SHOGI_TUTORIAL_PROGRESS_STEP_COUNT).toBe(steps.length + 1);
+    expect(ratio).toBeLessThan(1);
+  });
+});
+
+describe("手を離した後", () => {
+  const turn = attackerTurns[3] as (typeof attackerTurns)[number];
+  const checks = listTsumeShogiAttackerChecks(turn.position);
+
+  test("手順を終えて手を離し、取った飛車を持っていること", () => {
+    const situation = getTutorialSituation(tsumeShogiTutorial, released);
+    const hand = getTsumeShogiHand(released.boardState.puzzleState, "attacker");
+
+    expect(situation.step).toBeNull();
+    expect(released.boardState.turns).toHaveLength(RELEASED_TURN_COUNT);
+    expect(hand.rook).toBe(1);
+  });
+
+  test("王手が2つ以上あり、詰ませる王手は取った飛車を打つ手ただ1つであること", () => {
+    const mating = checks
+      .filter((check) =>
+        isTsumeShogiCheckmate(applyTsumeShogiMove(turn.position, check)),
+      )
+      .map(usi);
+
+    expect(checks.length).toBeGreaterThanOrEqual(2);
+    expect(mating).toEqual([usi(matingDrop)]);
+  });
+
+  test("ほかの王手は、どれも玉方がすぐに逃れること", () => {
+    const unrefuted = checks
+      .filter((check) => usi(check) !== usi(matingDrop))
+      .filter(
+        (check) =>
+          findTsumeShogiRefutation(
+            applyTsumeShogiMove(turn.position, check),
+            0,
+          ) === null,
+      )
+      .map(usi);
+
+    expect(unrefuted).toEqual([]);
+  });
+
+  describe("どう進めても", () => {
+    const explored = exploreFreePlay(released);
 
     test("届くどの盤面からも、王手と待ったで詰みへたどり着けること", () => {
       const solving = new Set(
-        [...explored].flatMap(([key, { session }]) =>
-          session.status === "cleared" ? [key] : [],
+        [...explored].flatMap(([key, { progress }]) =>
+          progress.boardState.status === "cleared" ? [key] : [],
         ),
       );
       for (let grew = true; grew; ) {
@@ -519,25 +509,33 @@ describe("手順", () => {
       expect(stuck).toEqual([]);
     });
 
-    test("手が止まったときの手がかりが、詰みへ向かう王手か、逃げられた後の待ったであること", () => {
-      const wrongHints = [...explored.values()].flatMap(({ session }) => {
+    test("待ったで、手を離す前の盤面へは戻らないこと", () => {
+      const rewound = [...explored.values()].filter(
+        ({ progress }) =>
+          progress.boardState.turns.length < RELEASED_TURN_COUNT,
+      );
+
+      expect(rewound).toEqual([]);
+    });
+
+    test("「ヒント」の手がかりが、詰ませる王手か、逃れられた後の待ったであること", () => {
+      const wrongHints = [...explored.values()].flatMap(({ progress }) => {
+        const session = progress.boardState;
         const hint = findTsumeShogiTutorialHint(session);
-        const phase = getTsumeShogiSessionPhase(session);
         if (session.status === "cleared") {
-          return hint === null ? [] : [session];
+          return hint === null ? [] : [toStateKey(session)];
         }
-        if (phase === "refuted" || isTsumeShogiSessionOnWrongLine(session)) {
-          return hint?.type === "undo" ? [] : [session];
+        if (isTsumeShogiSessionOnWrongLine(session)) {
+          return hint?.type === "undo" ? [] : [toStateKey(session)];
         }
         if (hint?.type !== "move") {
-          return [session];
+          return [toStateKey(session)];
         }
-        const remaining = problem.plies - session.turns.length * 2;
-        const mates = isTsumeShogiMateWithin(
+        return isTsumeShogiCheckmate(
           applyTsumeShogiMove(session.puzzleState, hint.move),
-          remaining - 1,
-        );
-        return mates ? [] : [session];
+        )
+          ? []
+          : [toStateKey(session)];
       });
 
       expect(wrongHints).toEqual([]);
@@ -546,191 +544,158 @@ describe("手順", () => {
 });
 
 describe("performTutorialAction", () => {
-  const firstMove = getStepMove(steps[0]!);
-  const handSelected = perform(started, {
-    type: "hand",
-    pieceType: "gold",
-  });
+  const firstMove = getStepMove(steps[0] as TsumeShogiTutorialStep);
 
   test("手を引いている間は、印の持駒を選び、印の升へ打つと、玉方が応じてから次の手順へ進むこと", () => {
-    const played = perform(handSelected, {
-      type: "square",
-      square: firstMove.to,
-    });
+    const played = selectAndPlay(started, firstMove);
     const replied = perform(played, { type: "defender-reply" });
 
-    expect(handSelected.boardState.selection).toEqual({
-      type: "hand",
-      pieceType: "gold",
-    });
     expect(played.stepIndex).toBe(0);
-    expect(played.boardState.defenderReplyPending).toBe(true);
     expect(replied.stepIndex).toBe(1);
   });
 
   test("手を引いている間は、印の無い駒を押しても盤面を変えないこと", () => {
     const tapped = perform(started, {
       type: "square",
-      square: { file: 2, rank: 6 },
+      square: { file: 7, rank: 3 },
     });
 
     expect(tapped).toBe(started);
   });
 
-  test("王手を伝える前は、王手にならない升に打とうとしても、ルールに合わない手にしないこと", () => {
-    const tapped = perform(handSelected, {
-      type: "square",
-      square: { file: 5, rank: 5 },
-    });
+  describe("王手を伝える前の場合", () => {
+    const handSelected = perform(started, { type: "hand", pieceType: "rook" });
 
-    expect(tapped).toBe(handSelected);
+    test("印の無い升へ打とうとしても、盤面を変えず、ルールに合わない手にもしないこと", () => {
+      const tapped = perform(handSelected, {
+        type: "square",
+        square: { file: 1, rank: 9 },
+      });
+
+      expect(tapped).toBe(handSelected);
+    });
   });
 
   describe("王手を伝えた手順の場合", () => {
-    const checkStep = playSteps(1);
-    const secondMove = getStepMove(steps[1]!);
-    const selected = perform(checkStep, {
+    const atCheckStep = playSteps(checkStepIndex);
+    const move = getStepMove(steps[checkStepIndex] as TsumeShogiTutorialStep);
+    const selected = perform(atCheckStep, {
       type: "square",
-      square: secondMove.kind === "board" ? secondMove.from : secondMove.to,
+      square: move.kind === "board" ? move.from : move.to,
     });
+    const notCheckSquare: TsumeShogiSquare = { file: 5, rank: 2 };
 
     test("印の駒を王手にならない升へ動かそうとすると、本番と同じく着手させず、ルールに合わない手として応えること", () => {
-      const rejected = perform(selected, {
-        type: "square",
-        square: { file: 3, rank: 3 },
-      });
-      const message = getTutorialMessage(tsumeShogiTutorial, rejected, {
-        entry: "home",
-        violationSettled: true,
-      });
-
-      expect(rejected.violated).toBe(true);
-      expect(rejected.boardState.rejection?.reason).toBe("not-check");
-      expect(rejected.boardState.turns).toEqual(checkStep.boardState.turns);
-      expect(message).toEqual({
-        headline: "王手にならない手は指せません",
-        detail: null,
-      });
-    });
-
-    test("印の無い升への王手は指させないこと", () => {
       const tapped = perform(selected, {
         type: "square",
-        square: { file: 1, rank: 3 },
+        square: notCheckSquare,
+      });
+      const message = getTutorialMessage(tsumeShogiTutorial, tapped, {
+        entry: "home",
+        violationSettled: true,
       });
 
-      expect(tapped).toBe(selected);
+      expect(tapped.violated).toBe(true);
+      expect(tapped.boardState.rejection?.reason).toBe("not-check");
+      expect(tapped.boardState.turns).toEqual(atCheckStep.boardState.turns);
+      expect(message.headline).toBe("王手になっていません");
     });
+
+    test.each([true, false])(
+      "王手になる升では成・不成を選ばせ、どちらを選んでも次の手順へ進むこと: 成る %s",
+      (promote) => {
+        const tapped = perform(selected, { type: "square", square: move.to });
+        const chosen = perform(tapped, { type: "promotion", promote });
+        const replied = perform(chosen, { type: "defender-reply" });
+
+        expect(tapped.boardState.promotionChoice).not.toBeNull();
+        expect(replied.stepIndex).toBe(checkStepIndex + 1);
+      },
+    );
   });
 
-  test("手順を進めるたびに、示したルールを手に入れること", () => {
-    const earned = released.earnedRuleIds;
-
-    expect(earned).toEqual(["drop", "check", "escape"]);
-  });
-
-  describe("手を離した後の場合", () => {
-    const situation = getTutorialSituation(tsumeShogiTutorial, released);
-    const escaped = perform(selectAndPlay(released, escapingCheck), {
+  describe("持駒を伝え、読ませる手順でほかの王手を指した場合", () => {
+    const atHandStep = playSteps(handStepIndex);
+    const wrongCheck = parseWrong();
+    const refuted = perform(selectAndPlay(atHandStep, wrongCheck), {
       type: "defender-reply",
     });
-    const solved = selectAndPlay(released, matingMove);
 
-    test("手順を終えて、手を離していること", () => {
-      const message = getTutorialMessage(tsumeShogiTutorial, released, {
-        entry: "home",
-        violationSettled: true,
-      });
-
-      expect(situation.step).toBeNull();
-      expect(message).toBe(tsumeShogiTutorial.freePlay);
-    });
-
-    test("逃げ道のある王手を指すと、本番と同じく玉方が逃れ、待ったへ向かわせる一言を出すこと", () => {
-      const message = getTutorialMessage(tsumeShogiTutorial, escaped, {
-        entry: "home",
-        violationSettled: true,
-      });
-
-      expect(escaped.violated).toBe(true);
-      expect(getTsumeShogiSessionPhase(escaped.boardState)).toBe("refuted");
-      expect(message).toEqual({
-        headline: "逃げ道が残っていました",
-        detail: "待ったを押すと、その王手の前に戻せます",
-      });
-    });
-
-    test("駒を玉に取られる王手を指すと、守られていない駒は取られることを伝えること", () => {
-      const captured = perform(
-        selectAndPlay(released, {
-          kind: "board",
-          from: { file: 2, rank: 4 },
-          to: { file: 1, rank: 4 },
-          promote: false,
-        }),
-        { type: "defender-reply" },
+    function parseWrong(): TsumeShogiMove {
+      const move = getStepMove(steps[handStepIndex] as TsumeShogiTutorialStep);
+      const turn = attackerTurns[2] as (typeof attackerTurns)[number];
+      const other = listTsumeShogiAttackerChecks(turn.position).find(
+        (check) =>
+          check.kind === "board" &&
+          move.kind === "board" &&
+          isSameTsumeShogiSquare(check.from, move.from) &&
+          usi(check) !== usi(move),
       );
-      const message = getTutorialMessage(tsumeShogiTutorial, captured, {
+      if (!other) {
+        throw new Error("ほかの王手がありません");
+      }
+      return other;
+    }
+
+    test("本番と同じく玉方が逃れ、駒を取られたわけを伝え、待ったに印を付けること", () => {
+      const message = getTutorialMessage(tsumeShogiTutorial, refuted, {
+        entry: "home",
+        violationSettled: true,
+      });
+      const step = steps[handStepIndex] as TsumeShogiTutorialStep;
+      const mark = getTsumeShogiTutorialMark(step.target, refuted.boardState);
+
+      expect(refuted.stepIndex).toBe(handStepIndex);
+      expect(refuted.violated).toBe(true);
+      expect(message.headline).toBe("王手した駒を取られて\n詰まなくなりました");
+      expect(mark).toEqual({ type: "undo" });
+    });
+
+    test("待ったを押すと、同じ手順の始めの盤面へ戻ること", () => {
+      const undone = perform(refuted, { type: "undo" });
+
+      expect(undone.stepIndex).toBe(handStepIndex);
+      expect(undone.violated).toBe(false);
+      expect(formatTsumeShogiPosition(undone.boardState.puzzleState)).toBe(
+        formatTsumeShogiPosition(atHandStep.boardState.puzzleState),
+      );
+    });
+  });
+
+  describe("手を離した後に逃れられる王手を指した場合", () => {
+    const wrongDrop: TsumeShogiMove = {
+      kind: "drop",
+      pieceType: "rook",
+      to: { file: 7, rank: 4 },
+    };
+    const refuted = perform(selectAndPlay(released, wrongDrop), {
+      type: "defender-reply",
+    });
+
+    test("本番と同じく玉方が逃れ、待ったで戻すことを伝えること", () => {
+      const message = getTutorialMessage(tsumeShogiTutorial, refuted, {
         entry: "home",
         violationSettled: true,
       });
 
-      expect(message).toEqual({
-        headline: "守られていない駒を\n玉に取られました",
-        detail: "待ったを押すと、その王手の前に戻せます",
-      });
+      expect(refuted.violated).toBe(true);
+      expect(message.detail).toBe("待ったボタンを押して王手の前に戻します");
     });
 
     test("待ったを押すと、違反の一言を下げて手を離した後の一言に戻すこと", () => {
-      const undone = perform(escaped, { type: "undo" });
+      const undone = perform(refuted, { type: "undo" });
       const message = getTutorialMessage(tsumeShogiTutorial, undone, {
         entry: "home",
         violationSettled: true,
       });
 
-      expect(undone.violated).toBe(false);
-      expect(message).toBe(tsumeShogiTutorial.freePlay);
-    });
-
-    test("逃げ道をふさぐ王手を指すと、詰んで解き終えること", () => {
-      const phase = solved.phase;
-
-      expect(phase).toBe("solved");
+      expect(message).toEqual(tsumeShogiTutorial.freePlay);
     });
   });
-});
 
-describe("getTsumeShogiTutorialMark", () => {
-  const firstTarget = steps[0]!.target;
-  const firstMove = getStepMove(steps[0]!);
-  const handSelected = perform(started, {
-    type: "hand",
-    pieceType: "gold",
-  });
+  test("手を離した後に取った飛車を打って詰ませると、解き終えること", () => {
+    const solved = selectAndPlay(released, matingDrop);
 
-  const cases = [
-    ["持駒を選ぶ前は、持駒", started, { type: "hand", pieceType: "gold" }],
-    [
-      "持駒を選んだ後は、打つ升",
-      handSelected,
-      { type: "square", square: firstMove.to },
-    ],
-  ] as const;
-
-  test.each(cases)("%sに印を付けること", (_, progress, expected) => {
-    const mark = getTsumeShogiTutorialMark(firstTarget, progress.boardState);
-
-    expect(mark).toEqual(expected);
-  });
-
-  test("玉方の応手を待つ間は、印を付けないこと", () => {
-    const played = perform(handSelected, {
-      type: "square",
-      square: firstMove.to,
-    });
-
-    const mark = getTsumeShogiTutorialMark(firstTarget, played.boardState);
-
-    expect(mark).toBeNull();
+    expect(solved.phase).toBe("solved");
   });
 });

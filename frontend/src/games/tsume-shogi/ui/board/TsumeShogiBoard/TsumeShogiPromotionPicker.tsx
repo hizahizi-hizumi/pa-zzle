@@ -102,7 +102,7 @@ export function TsumeShogiPromotionPicker({
           />
           <span
             className={cn(
-              "absolute bottom-0 px-0.5 text-[0.625rem] leading-none",
+              "absolute bottom-0 whitespace-nowrap px-0.5 text-[0.625rem] leading-none",
               tsumeShogiToneClassNames.promotionLabel,
             )}
           >

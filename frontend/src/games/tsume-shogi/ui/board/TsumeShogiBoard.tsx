@@ -1,5 +1,6 @@
 import { type CSSProperties, useRef } from "react";
 
+import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import { useTouchTap } from "@/components/touch-tap";
 import {
   formatTsumeShogiSquareKey,
@@ -46,8 +47,10 @@ type TsumeShogiBoardProps = {
    * 本番では渡さない。
    */
   tutorialMark?: { square: TsumeShogiSquare; recallId: number | null } | null;
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜く升。本番では渡さない。 */
-  spotlitSquares?: readonly TsumeShogiSquare[];
+  /**
+   * チュートリアルで決め手を見せる間、盤の升の中だけを薄く覆い、元の明るさで残す升。覆わないときと本番では `null`。
+   */
+  spotlitSquares?: readonly TsumeShogiSquare[] | null;
   onSelectSquare: (square: TsumeShogiSquare) => void;
   onChoosePromotion: (promote: boolean) => void;
 };
@@ -105,7 +108,7 @@ export function TsumeShogiBoard({
   mated,
   interactionDisabled,
   tutorialMark = null,
-  spotlitSquares = [],
+  spotlitSquares = null,
   onSelectSquare,
   onChoosePromotion,
 }: TsumeShogiBoardProps) {
@@ -160,6 +163,9 @@ export function TsumeShogiBoard({
         data-board-squares=""
         role="group"
         aria-label="盤"
+        {...(spotlitSquares !== null && {
+          [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "",
+        })}
         className={cn(
           "relative col-start-2 row-start-2 grid grid-cols-9 grid-rows-9",
         )}
@@ -190,9 +196,11 @@ export function TsumeShogiBoard({
                     ? tutorialMark.recallId
                     : undefined
                 }
-                spotlit={spotlitSquares.some((spotlit) =>
-                  isSameTsumeShogiSquare(spotlit, square),
-                )}
+                spotlit={
+                  spotlitSquares?.some((spotlit) =>
+                    isSameTsumeShogiSquare(spotlit, square),
+                  ) ?? false
+                }
                 disabled={interactionDisabled}
                 tapHandlers={getTapHandlers(() => onSelectSquare(square))}
                 onLeftEdge={file === files[0]}

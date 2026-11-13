@@ -1,6 +1,5 @@
 import { type ReactNode, useRef } from "react";
 import { TutorialCue } from "@/components/TutorialCue";
-import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import { useTouchTap } from "@/components/touch-tap";
 import {
   type TsumeShogiHand as TsumeShogiHandCounts,
@@ -32,13 +31,14 @@ type TsumeShogiHandProps = {
   rejection: TsumeShogiRejection | null;
   /** 駒台と同じ行の、左の空きに置く操作。駒台には重ねない。 */
   leadingAction?: ReactNode;
-  /** `recallId` は印の線を短く濃くし直す合図。本番では渡さない。 */
+  /**
+   * チュートリアルで次に押す持駒の印。駒台の駒は盤の升より大きく、指が盤の駒を隠さないので、輪郭に指を添える。
+   * `recallId` は印の線を短く濃くし直す合図。本番では渡さない。
+   */
   tutorialMark?: {
     pieceType: TsumeShogiHandPieceType;
     recallId: number | null;
   } | null;
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜く持駒。本番では渡さない。 */
-  spotlitPieceTypes?: readonly TsumeShogiHandPieceType[];
   onSelectHandPiece: (pieceType: TsumeShogiHandPieceType) => void;
 };
 
@@ -51,7 +51,6 @@ export function TsumeShogiHand({
   rejection,
   leadingAction,
   tutorialMark = null,
-  spotlitPieceTypes = [],
   onSelectHandPiece,
 }: TsumeShogiHandProps) {
   const { getTapHandlers } = useTouchTap();
@@ -115,12 +114,8 @@ export function TsumeShogiHand({
               >
                 {hand[type] > 1 ? hand[type] : null}
               </span>
-              <TutorialSpotlight
-                active={spotlitPieceTypes.includes(type)}
-                className="inset-0 rounded-[2px]"
-              />
               {tutorialMark?.pieceType === type && (
-                <TutorialCue kind="mark" recallId={tutorialMark.recallId} />
+                <TutorialCue kind="pointer" recallId={tutorialMark.recallId} />
               )}
             </button>
           );
