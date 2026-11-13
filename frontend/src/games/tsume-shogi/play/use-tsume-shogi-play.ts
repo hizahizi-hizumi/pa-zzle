@@ -75,10 +75,6 @@ import {
   undoTsumeShogiSession,
 } from "@/games/tsume-shogi/session/session";
 
-/**
- * 攻方が指してから玉方の応手を盤面に指すまでの間。玉方の手を攻方の手と分けて見せ、見落とさないようにする。
- * 間の長さは経過時間に含める。
- */
 export const TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS = 600;
 
 export type TsumeShogiPlayedMove = {

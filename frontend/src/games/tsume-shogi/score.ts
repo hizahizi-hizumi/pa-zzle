@@ -10,13 +10,7 @@ import {
 } from "@/games/score";
 import type { TsumeShogiSolveWorkload } from "@/games/tsume-shogi/problem/problem";
 
-/**
- * 誤王手は玉方の反証を盤面で見て考え直す体験でもあるので、何回指しても正確さの20点を超えては減らさない。
- * 誤王手を1回でも指すと `perfect` には届かないが、速ければ `great` に残る。
- * 反証を見た回数・待ったの回数（誤王手の筋から判断地点へ戻ったときを含む）・盤面を戻した回数は減点しない。どれも誤王手の後の考え直しか、
- * 正しい筋の確かめ直しで、かかった時間は速さに表れる。
- * 係数はすべて実プレイで確かめる前の仮置き（`詰将棋成績評価.md`）。
- */
+/** 係数はすべて実プレイで確かめる前の仮置き（`詰将棋成績評価.md`）。 */
 export const TSUME_SHOGI_SCORE_MAXIMUMS = {
   accuracy: 20,
   speed: 80,
@@ -37,7 +31,6 @@ export const TSUME_SHOGI_SPEED_PER_DEEP_DECOY_MS = 6_000;
 /**
  * 基準時間に数える、もっともらしい誤王手と深い紛れの上限（仮置き）。
  * 分析器はすべての判断地点の誤王手を数えるので裾が長い（問題集の最大はもっともらしい誤王手41・深い紛れ26）。
- * 人間は正解を見つけた時点で残りの候補を読まないので、上限で打ち切る。
  */
 export const TSUME_SHOGI_SPEED_PLAUSIBLE_WRONG_LIMIT = 20;
 export const TSUME_SHOGI_SPEED_DEEP_DECOY_LIMIT = 10;
