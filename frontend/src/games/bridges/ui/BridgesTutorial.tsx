@@ -116,7 +116,6 @@ function getCues(
   ];
 }
 
-/** 手順を終えたら手を離し、残りを自分で架けさせる。 */
 export function BridgesTutorial({
   open,
   playStart,
@@ -233,7 +232,6 @@ export function BridgesTutorial({
     setProgress(startTutorial(bridgesTutorial));
   }
 
-  // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();

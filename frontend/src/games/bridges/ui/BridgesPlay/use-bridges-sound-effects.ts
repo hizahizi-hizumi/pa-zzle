@@ -129,10 +129,7 @@ function playReducedMotionClearSound() {
   playSound(clearedChordSound);
 }
 
-/**
- * 結果の報酬の音はアプリが鳴らす。
- * 待った・盤面を戻す・リセットでは鳴らさない。阻まれた操作は動きを減らす設定でも阻んだ橋を点けて見せるので鳴らす。
- */
+/** 阻まれた操作は動きを減らす設定でも阻んだ橋を点けて見せるので鳴らす。 */
 export function useBridgesSoundEffects(
   edgeNotice: BridgesEdgeNotice | null,
   progress: GameProgress,

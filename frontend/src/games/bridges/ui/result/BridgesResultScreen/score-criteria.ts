@@ -7,10 +7,7 @@ import {
 import type { BridgesResult } from "@/games/bridges/play/use-bridges-play";
 import { BRIDGES_SCORE_MAXIMUMS } from "@/games/bridges/score";
 
-/**
- * 基準時間の式の項は遊ぶ人が盤面から数えられないので並べず、何から決まるかだけを1文で示す。
- * 内訳に並ぶ操作の回数は、どれも減点しないと名指しで言い切る。
- */
+/** 内訳に並ぶ操作の回数は、どれも減点しないと名指しで言い切る。 */
 export function getBridgesScoreCriteria(
   result: BridgesResult,
 ): GameResultScoreCriteria {

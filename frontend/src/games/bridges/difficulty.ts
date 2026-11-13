@@ -26,7 +26,6 @@ export type BridgesDifficulty = DifficultyLevel;
 export type BridgesLevelCombination = {
   boardSize: NumericRange<BridgesBoardSize>;
   islandCount: NumericRange;
-  /** 入口が広いほど、見るだけで次々に決まる。 */
   openingEdgeRatio: NumericRange;
   countRoundCount: NumericRange;
   connectivityRoundCount: NumericRange;
@@ -71,11 +70,7 @@ function atMost(maximum: number): NumericRange {
   return { minimum: 0, maximum };
 }
 
-/**
- * 手作りの良問に近い所に置く。数字の平均が低い盤面、同じ数字か 2 が並ぶ単調な盤面、
- * 2本の組が3割に満たない盤面は、1か所ずつの読みが「足りる・足りない」の確かめだけになる。外周に沿う橋が半分を超える盤面は、
- * 盤面の枠をなぞる問題になる。架ける行き先が 85% を超える盤面は、どこへ架けるかを選ぶ所が無い。
- */
+// 手作りの良問に近い所に置く。
 const baseClueQuality = {
   // 10×10 で磨いた候補の多くが数字2 31〜33%・平均 2.75〜2.8 に集まり、数字2 30%・最も多い数字 35%・平均 2.8 では
   // L5 の各500問を作るのに数時間かかる。
@@ -89,7 +84,6 @@ const baseClueQuality = {
 
 const upperClueQuality = {
   ...baseClueQuality,
-  // 大きい数字と2本の配分を読む所を増やす。
   clueMean: atLeast(3),
 } as const satisfies Partial<BridgesLevelReading>;
 
@@ -98,15 +92,10 @@ const smallBoardClueQuality = {
   // 島が10前後と少なく、1島で割合が1割近く動くので、1段緩める。
   dominantClueShare: atMost(0.4),
   twoClueShare: atMost(0.35),
-  // 一本道で枠をなぞる問題に戻さないよう、ほかのレベルより厳しくする。
   borderBridgeShare: atMost(0.45),
 } as const satisfies Partial<BridgesLevelReading>;
 
-/**
- * 盤面の一辺は、読む範囲と架ける量で単独でレベルを決めないよう、隣のレベルと重ねる。共有する盤面では手筋でだけレベルが分かれる。
- * 島の数は、下のレベルでは一目で解ける盤面を除く下限、上の2つのレベルでは規模で分ける範囲。
- * 境界は人間の実プレイで確かめる前の暫定値。
- */
+// 境界は人間の実プレイで確かめる前の暫定値。
 export const bridgesLevelCombinations = {
   "1": {
     boardSize: { minimum: 6, maximum: 7 },
@@ -241,12 +230,10 @@ export const bridgesLevelReadings = {
 export type BridgesLevelStructure = {
   diagonalNeighborShare: NumericRange;
   borderIslandShare: NumericRange;
-  /** `longBridgeCount` と合わせて、隣をつなぐだけの盤面を除く。 */
   shortBridgeShare: NumericRange;
   longBridgeCount: NumericRange;
   lookaheadSpotCount: NumericRange;
   longestLookaheadChain: NumericRange;
-  /** 読みの山場が解き始めに偏り、残りが決め打ちの連鎖だけになる問題を除く。 */
   lastConnectivityDecidedRatio: NumericRange;
 };
 
@@ -260,7 +247,6 @@ const smallLayoutShape = {
 
 const layoutShape = {
   ...smallLayoutShape,
-  // どちらも少ない候補を、問題集を選ぶときの点で先に採る。
   // 45% までにすると、9×9・10×10 で残る盤面は長い橋で広がった疎な盤面ばかりで、つながりの読みが要らず、L4・L5 に当たる候補が
   // 0.4〜0.6% に減る（一時スクリプト）。
   borderIslandShare: atMost(0.5),
