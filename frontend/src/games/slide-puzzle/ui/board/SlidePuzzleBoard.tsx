@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 
+import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import type { SlidePuzzleOperation } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import {
   getSlidePuzzleBoardSize,
@@ -101,6 +102,9 @@ export function SlidePuzzleBoard({
     <div
       role="group"
       aria-label="盤面"
+      {...(spotlitTiles !== null && {
+        [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "",
+      })}
       className="@container size-full rounded-[1rem] bg-muted p-[1%]"
     >
       <div className="relative size-full">

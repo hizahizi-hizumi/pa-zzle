@@ -8,9 +8,13 @@ import type { SlidePuzzleTile } from "@/games/slide-puzzle/puzzle/state";
  */
 export type SlidePuzzleTileCueKind = "landed" | "hint" | "recall";
 
-/** `id` が変わると、同じタイルの同じ合図でもやり直す。 */
+/**
+ * - `id`: 変わると、同じタイルの同じ合図でもやり直す。
+ * - `pointed`: `hint`・`recall` の印に、押すしぐさをする指を添える。
+ */
 export type SlidePuzzleTileCue = {
   tile: SlidePuzzleTile;
   kind: SlidePuzzleTileCueKind;
   id: number;
+  pointed?: boolean;
 };
