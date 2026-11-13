@@ -1,9 +1,6 @@
 import type { IceFloorMazeElementRuleId } from "@/games/ice-floor-maze/tutorial/tutorial";
 
-/**
- * 本番で一言を見て、その要素の問題で1手指した要素。記録の完了記録は問題を解き切ったプレイしか残さず、
- * 一言を見たかは分からないので、要素ごとに見たことだけをこの端末に残す。
- */
+/** 一言を見たものとして残した要素（SPEC-025）。 */
 const storageKey = "pa-zzle.ice-floor-maze.seen-elements.v1";
 
 function isStringList(value: unknown): value is string[] {

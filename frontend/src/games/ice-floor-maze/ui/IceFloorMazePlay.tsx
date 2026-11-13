@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
@@ -10,7 +10,10 @@ import type {
   IceFloorMazeResult,
 } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import type { IceFloorMazeBoard as IceFloorMazeBoardState } from "@/games/ice-floor-maze/puzzle/board";
-import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
+import {
+  type IceFloorMazeDirection,
+  slideIceFloorMazePiece,
+} from "@/games/ice-floor-maze/puzzle/rules";
 import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import { listIceFloorMazeElementIntroductions } from "@/games/ice-floor-maze/tutorial/tutorial";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
@@ -91,9 +94,6 @@ export function IceFloorMazePlay({
   const [slideAnimating, setSlideAnimating] = useState(false);
   const playing = progress === "playing";
   useIceFloorMazeSoundEffects(lastSlide, blockedInput, goal, progress);
-  // 知らせ始める滑りでは、駒が滑り着いてから知らせる。知らせた後の滑りでは知らせを出したままにする。
-  // 初めて見る要素のある問題では、1手目を指すまで、その要素のルールを一言で添える。
-  // 1手指したら見たと残し、同じ問題を遊び直しても出さない。
   const beforeFirstMove = moveCount === 0;
   const unseenIntroductions = useMemo(() => {
     if (!beforeFirstMove) return [];
@@ -102,21 +102,27 @@ export function IceFloorMazePlay({
       ({ ruleId }) => !seen.has(ruleId),
     );
   }, [board, beforeFirstMove]);
-  const shownIntroductionsRef = useRef(unseenIntroductions);
+  const elementNoticeShown =
+    playing && beforeFirstMove && unseenIntroductions.length > 0;
 
-  useEffect(() => {
-    if (beforeFirstMove) {
-      shownIntroductionsRef.current = unseenIntroductions;
-      return;
-    }
-    markIceFloorMazeElementsSeen(
-      shownIntroductionsRef.current.map(({ ruleId }) => ruleId),
-    );
-    shownIntroductionsRef.current = [];
-  }, [beforeFirstMove, unseenIntroductions]);
-
+  // 知らせ始める滑りでは、駒が滑り着いてから知らせる。知らせた後の滑りでは知らせを出したままにする。
   const showTrappedNotice =
     isTrapped && !(slideAnimating && lastSlide?.entersTrap === true);
+
+  function handleSlide(direction: IceFloorMazeDirection): void {
+    if (
+      elementNoticeShown &&
+      slideIceFloorMazePiece(board, { position, cells, blocks }, direction)
+        .status !== "blocked"
+    ) {
+      markIceFloorMazeElementsSeen(
+        unseenIntroductions.map(({ ruleId }) => ruleId),
+      );
+    }
+    onSlide(direction);
+  }
+
+  const slideByKey = useEffectEvent(handleSlide);
 
   useEffect(() => {
     if (!playing) {
@@ -145,13 +151,13 @@ export function IceFloorMazePlay({
       event.preventDefault();
       // 押し続けたときの繰り返しは、止まった後に同じ向きへ押し戻しを重ねるだけなので滑らせない。
       if (!event.repeat) {
-        onSlide(direction);
+        slideByKey(direction);
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onSlide, playing]);
+  }, [playing]);
 
   return (
     <GamePlayFrame
@@ -189,11 +195,8 @@ export function IceFloorMazePlay({
         />
       )}
     >
-      <IceFloorMazeSwipeArea disabled={!playing} onSwipe={onSlide}>
+      <IceFloorMazeSwipeArea disabled={!playing} onSwipe={handleSlide}>
         <main className="relative flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
-          {playing && beforeFirstMove && unseenIntroductions.length > 0 ? (
-            <IceFloorMazeElementNotice introductions={unseenIntroductions} />
-          ) : null}
           <IceFloorMazeBoard
             board={board}
             cells={cells}
@@ -207,7 +210,11 @@ export function IceFloorMazePlay({
             onClearAnimationComplete={onClearAnimationComplete}
           />
         </main>
-        <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
+        {/* 一言と、もうゴールに止まれない知らせは、盤面の位置と大きさを変えないよう、高さを決めた欄の中に出す。 */}
+        <footer className="flex h-28 shrink-0 flex-col justify-end px-4 pb-2">
+          {elementNoticeShown ? (
+            <IceFloorMazeElementNotice introductions={unseenIntroductions} />
+          ) : null}
           {showTrappedNotice ? (
             <IceFloorMazeTrappedNotice
               canUndo={canUndo}

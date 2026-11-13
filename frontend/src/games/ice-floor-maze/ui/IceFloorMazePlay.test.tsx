@@ -567,7 +567,6 @@ describe("IceFloorMazePlay", () => {
       "#...#",
     ]);
     const headline = "もろい岩は、一度駒を止めると崩れます";
-    const ignoreSpaces = (text: string) => text.replace(/\s+/g, "");
 
     function createElementPlay(moveCount: number) {
       return (
@@ -593,32 +592,57 @@ describe("IceFloorMazePlay", () => {
       );
     }
 
+    let rendered: ReturnType<typeof render>;
+
     beforeEach(() => {
       window.localStorage.clear();
+      rendered = render(createElementPlay(0));
     });
 
     test("1手目を指すまで、その要素のルールを一言で出すこと", () => {
-      render(createElementPlay(0));
-
-      const notice = screen.queryByText(headline, { normalizer: ignoreSpaces });
+      const notice = screen.queryByText(headline);
 
       expect(notice).not.toBeNull();
     });
 
-    test("1手指すと一言を消し、次に同じ要素の問題を始めても出さないこと", () => {
-      const { rerender, unmount } = render(createElementPlay(0));
-      rerender(createElementPlay(1));
-      const afterFirstMove = screen.queryByText(headline, {
-        normalizer: ignoreSpaces,
-      });
-      unmount();
-      render(createElementPlay(0));
-      const nextProblem = screen.queryByText(headline, {
-        normalizer: ignoreSpaces,
+    describe("1手指した場合", () => {
+      beforeEach(() => {
+        fireEvent.keyDown(document.body, { key: "ArrowLeft" });
+        rendered.rerender(createElementPlay(1));
       });
 
-      expect(afterFirstMove).toBeNull();
-      expect(nextProblem).toBeNull();
+      test("一言を消すこと", () => {
+        const notice = screen.queryByText(headline);
+
+        expect(notice).toBeNull();
+      });
+
+      describe("次に同じ要素の問題を始めた場合", () => {
+        beforeEach(() => {
+          rendered.unmount();
+          render(createElementPlay(0));
+        });
+
+        test("一言を出さないこと", () => {
+          const notice = screen.queryByText(headline);
+
+          expect(notice).toBeNull();
+        });
+      });
+    });
+
+    describe("1手目が岩に止められて動かなかった場合", () => {
+      beforeEach(() => {
+        fireEvent.keyDown(document.body, { key: "ArrowUp" });
+        rendered.unmount();
+        render(createElementPlay(0));
+      });
+
+      test("次に同じ要素の問題を始めても一言を出すこと", () => {
+        const notice = screen.queryByText(headline);
+
+        expect(notice).not.toBeNull();
+      });
     });
   });
 });
