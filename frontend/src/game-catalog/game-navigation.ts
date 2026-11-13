@@ -38,7 +38,7 @@ export function createGameNavigation(
         { replace: options?.replacesHistory ?? false, flushSync: true },
       );
     },
-    backToHome() {
+    backToAppHome() {
       navigate("/");
     },
     startNewProblem(difficulty, avoidedProblemId, options) {

@@ -112,7 +112,7 @@ export function PlayRecordsView() {
         <div className="max-w-3xl">
           <TabsContent value="history">
             <PlayRecordsScreen
-              entries={entries}
+              newestFirstEntries={entries}
               now={now}
               describeEntry={describePlayTimelineEntry}
               onOpenEntry={openEntry}

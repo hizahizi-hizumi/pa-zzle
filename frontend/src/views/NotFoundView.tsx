@@ -86,13 +86,13 @@ export function NotFoundView() {
           ))}
 
           <PuzzleListLinkPiece
-            height={layout.linkPiece.height}
+            cellAreaHeight={layout.linkPiece.cellAreaHeight}
+            cellAreaWidth={layout.linkPiece.cellAreaWidth}
             path={layout.linkPiece.path}
             tabExtent={layout.tabExtent}
             textScale={layout.textScale}
-            width={layout.linkPiece.width}
-            x={layout.linkPiece.x}
-            y={layout.linkPiece.y}
+            x={layout.linkPiece.cellAreaX}
+            y={layout.linkPiece.cellAreaY}
           />
         </div>
       )}

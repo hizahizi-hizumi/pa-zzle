@@ -44,7 +44,10 @@ export function PuzzleSelectionView() {
     preferredOrder,
   );
   const { selectedGameIndex, selectedGameContinuation, selectGame } =
-    useAppHome(gameCatalog, { isCovered, firstGameId: orderedIds[0] });
+    useAppHome(gameCatalog, {
+      opensCovered: isCovered,
+      fallbackGameId: orderedIds[0],
+    });
   const orderedGames = orderedIds.flatMap((id) => {
     const game = games.find((item) => item.id === id);
     return game ? [game] : [];

@@ -83,9 +83,9 @@ describe("groupPlayTimelineByDay", () => {
     const days = groupPlayTimelineByDay(entries);
 
     expect(
-      days.map(({ dayStart, entries: dayEntries }) => [
+      days.map(({ dayStart, newestFirstEntries }) => [
         dayStart,
-        toPlayedAt(dayEntries),
+        toPlayedAt(newestFirstEntries),
       ]),
     ).toEqual([
       [at(11, 1, 0), [at(11, 1, 21), at(11, 1, 0)]],

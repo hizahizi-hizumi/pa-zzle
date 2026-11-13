@@ -1,13 +1,11 @@
 import { Link } from "@/router";
 
 type PuzzleListLinkPieceProps = {
-  /** セル部分の高さ。 */
-  height: number;
+  cellAreaHeight: number;
+  cellAreaWidth: number;
   path: string;
   tabExtent: number;
   textScale: number;
-  /** セル部分の幅。 */
-  width: number;
   x: number;
   y: number;
 };
@@ -16,17 +14,17 @@ type PuzzleListLinkPieceProps = {
 const ringAllowance = 4;
 
 export function PuzzleListLinkPiece({
-  height,
+  cellAreaHeight,
+  cellAreaWidth,
   path,
   tabExtent,
   textScale,
-  width,
   x,
   y,
 }: PuzzleListLinkPieceProps) {
   const padding = tabExtent + ringAllowance;
-  const boxWidth = width + padding * 2;
-  const boxHeight = height + padding * 2;
+  const boxWidth = cellAreaWidth + padding * 2;
+  const boxHeight = cellAreaHeight + padding * 2;
 
   return (
     <Link
