@@ -174,6 +174,8 @@ const FOCUS_VEIL_OPACITY = 0.38;
 const ISOLATED_RING_RADIUS = ISLAND_RADIUS + 0.13;
 const ISOLATED_RING_WIDTH = 0.08;
 const ISOLATED_RING_DASH = "0.16 0.1";
+const ISOLATED_RINGS_FADE_IN_MS = 500;
+const ISOLATED_RINGS_FADE_IN_DELAY_MS = 400;
 const UNFOCUSED_OPACITY = 0.4;
 /** 阻まれた辺に架かるはずだった板の濃さ。板そのものを透かし、下の海が見える濃さにする。 */
 const BLOCKED_ATTEMPT_OPACITY = 0.5;
@@ -967,7 +969,11 @@ export function BridgesFigure({
           fill="none"
           strokeLinecap="round"
           strokeDasharray={ISOLATED_RING_DASH}
-          className="animate-in fade-in-0 duration-500 [animation-delay:400ms] [animation-fill-mode:backwards] motion-reduce:animate-none"
+          className="animate-in fade-in-0 [animation-fill-mode:backwards] motion-reduce:animate-none"
+          style={{
+            animationDuration: `${ISOLATED_RINGS_FADE_IN_MS}ms`,
+            animationDelay: `${ISOLATED_RINGS_FADE_IN_DELAY_MS}ms`,
+          }}
         >
           {isolatedIslands.map((island) => {
             const { x, y } = islandCenters[island]!;
