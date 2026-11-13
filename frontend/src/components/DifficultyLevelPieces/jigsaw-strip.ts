@@ -22,8 +22,7 @@ const topEdgeKnobs = [
 export type JigsawStrip = {
   width: number;
   height: number;
-  /** 左から順の各マスの輪郭。 */
-  cells: readonly string[];
+  cellOutlines: readonly string[];
   /** 隣り合うマスの境目。継ぎ目の凸は埋まっていく向き（右）にそろえる。 */
   seams: readonly string[];
 };
@@ -98,7 +97,7 @@ export function createJigsawStrip(cellSize: number): JigsawStrip {
   const bottom = top + cellSize;
   const lastIndex = JIGSAW_STRIP_CELL_COUNT - 1;
 
-  const cells = topEdgeKnobs.map((topKnob, index) => {
+  const cellOutlines = topEdgeKnobs.map((topKnob, index) => {
     const left = index * cellSize;
     const right = left + cellSize;
     const topLeft = { x: left, y: top };
@@ -129,7 +128,7 @@ export function createJigsawStrip(cellSize: number): JigsawStrip {
   return {
     width: cellSize * JIGSAW_STRIP_CELL_COUNT,
     height: bottom,
-    cells,
+    cellOutlines,
     seams,
   };
 }

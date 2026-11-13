@@ -17,13 +17,18 @@ type TutorialFocusScrimProps = {
   containerRef: RefObject<HTMLElement | null>;
 };
 
-/** 覆いの座標で表した、抜く所の角丸の四角。角丸は左上・右上・右下・左下の順に、角ごとに持つ。 */
+/** 覆いの座標で表した、抜く所の角丸の四角。 */
 type Hole = {
   x: number;
   y: number;
   width: number;
   height: number;
-  radii: readonly [number, number, number, number];
+  radii: {
+    topLeft: number;
+    topRight: number;
+    bottomRight: number;
+    bottomLeft: number;
+  };
 };
 
 const cornerRadiusProperties = [
@@ -43,12 +48,21 @@ function round(value: number): number {
 }
 
 function getHoleKey({ x, y, width, height, radii }: Hole): string {
-  return [x, y, width, height, ...radii].join(",");
+  return [
+    x,
+    y,
+    width,
+    height,
+    radii.topLeft,
+    radii.topRight,
+    radii.bottomRight,
+    radii.bottomLeft,
+  ].join(",");
 }
 
 /** 底だけが丸いボトルのように、角ごとに違う角丸の物も、その形のまま抜く。 */
 function getHolePath({ x, y, width, height, radii }: Hole): string {
-  const [topLeft, topRight, bottomRight, bottomLeft] = radii;
+  const { topLeft, topRight, bottomRight, bottomLeft } = radii;
   const right = x + width;
   const bottom = y + height;
   return [
@@ -89,7 +103,12 @@ function measureHoles(svg: SVGSVGElement, container: HTMLElement): Hole[] {
         y: round(rect.top - origin.top),
         width: round(rect.width),
         height: round(rect.height),
-        radii: [topLeft ?? 0, topRight ?? 0, bottomRight ?? 0, bottomLeft ?? 0],
+        radii: {
+          topLeft: topLeft ?? 0,
+          topRight: topRight ?? 0,
+          bottomRight: bottomRight ?? 0,
+          bottomLeft: bottomLeft ?? 0,
+        },
       } satisfies Hole,
     ];
   });

@@ -52,7 +52,7 @@ export function DifficultyLevelPieces({ level }: DifficultyLevelPiecesProps) {
               </mask>
             </defs>
             <g mask={`url(#${maskId})`}>
-              {strip.cells.map((cell, index) => (
+              {strip.cellOutlines.map((cell, index) => (
                 <path
                   key={cell}
                   d={cell}
