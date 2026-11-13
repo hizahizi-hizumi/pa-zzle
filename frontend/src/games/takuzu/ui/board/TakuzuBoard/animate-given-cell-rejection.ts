@@ -14,7 +14,6 @@ const givenCellShakeKeyframes: Keyframe[] = [
   { transform: "translateX(0)" },
 ];
 
-/** 固定マスは押しても変わらないことを、そのマスだけの小さな横揺れで返す。 */
 export function animateGivenCellRejection(
   element: HTMLElement | undefined,
 ): void {

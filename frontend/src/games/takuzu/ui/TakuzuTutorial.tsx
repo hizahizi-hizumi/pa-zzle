@@ -99,7 +99,6 @@ const soundProgressByPhase = {
 /**
  * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
  * 手を引いている間は、印のマスにしか置けないので、違反があっても付け続ける。
- * 手を離した後は手が止まったときだけ付け、違反がある間は直すことに向かわせるため付けない。
  */
 function getCueDelayMs(
   progress: TakuzuTutorialProgress,

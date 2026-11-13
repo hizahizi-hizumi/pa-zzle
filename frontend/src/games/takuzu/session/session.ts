@@ -22,7 +22,6 @@ import {
 
 /**
  * 同じマスを続けて押している間の記録。
- * 別のマスを押すまでは1回の入力とみなし、押し始める前の値と比べて置き直しかどうかを決める。
  */
 type TakuzuEditingCell = {
   cellIndex: number;
@@ -58,11 +57,9 @@ export type TakuzuSessionResult = {
 export type TakuzuCellView = {
   cell: TakuzuCell;
   given: boolean;
-  /** 3連続の違反はマスごとに示す。 */
   inViolatingRun: boolean;
 };
 
-/** 個数超過・重複の違反がある行・列。行・列全体の違反なので、マスではなく行・列ごとに示す。 */
 export type TakuzuLineViolationView = TakuzuLine & {
   overfilled: boolean;
   duplicated: boolean;

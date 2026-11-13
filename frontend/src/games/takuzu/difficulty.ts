@@ -11,7 +11,7 @@ import type {
 export type TakuzuDifficulty = DifficultyLevel;
 
 /**
- * - `out-of-range`: 分析できるが提供しない。`too-light` は、局所の形を数巡見るだけで解き終わり、次の一手を探す挑戦がほとんど無い。
+ * - `out-of-range`: 分析できるが提供しない。
  * - `unsupported`: 一意解だが、1本の行・列を読む手筋では解き切れず、挑戦の強さを評価できない。
  */
 export type TakuzuDifficultyAssessment = DifficultyAssessment<{

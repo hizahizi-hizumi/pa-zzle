@@ -41,10 +41,7 @@ function getEdgeCellArea(
     : { gridRow: edgeTrack, gridColumn: lineTrack };
 }
 
-/**
- * 個数超過・重複の違反がある行・列の印。行・列全体の違反なので、マスには付けず、盤面の縁の外の両端に置く。
- * 直す必要のないタイルまで誤りに見せないためと、マスごとに示す3連続と見分けるため。
- */
+/** 個数超過・重複の違反がある行・列の印。マスには付けず、盤面の縁の外の両端に置く。 */
 export function TakuzuLineViolationMark({
   size,
   line,
