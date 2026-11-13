@@ -33,8 +33,17 @@ import {
 } from "@/zukan/zukan-last-viewed";
 import {
   readZukanLastViewed,
+  readZukanLastViewedTimes,
   writeZukanLastViewed,
 } from "@/zukan/zukan-last-viewed-storage";
+
+function readLastViewed(gameId: string) {
+  return {
+    gameId,
+    statuses: readZukanLastViewed(gameId),
+    times: readZukanLastViewedTimes(gameId),
+  };
+}
 
 export type GameHome = {
   /** 遊び方とチュートリアルはゲームの View が描く。 */
@@ -47,12 +56,9 @@ export type GameHome = {
 export function useGameHome(game: GameCatalogEntry): GameHome {
   const [records] = useState(() => readPlayRecords());
   // 開いたときの変化を求めるよう、見たレベルを保存する前に前回の状態を読んでおく。別のゲームのホームへ移ったら読み直す。
-  const [lastViewed, setLastViewed] = useState(() => ({
-    gameId: game.id,
-    statuses: readZukanLastViewed(game.id),
-  }));
+  const [lastViewed, setLastViewed] = useState(() => readLastViewed(game.id));
   if (lastViewed.gameId !== game.id) {
-    setLastViewed({ gameId: game.id, statuses: readZukanLastViewed(game.id) });
+    setLastViewed(readLastViewed(game.id));
   }
   // 直前のプレイ画面の離脱は、この画面を描画したあとに保存されるので、保存へ追従する。
   const attempts = useSyncExternalStore(
@@ -66,7 +72,7 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
     [game, records, attempts],
   );
   const changes = useMemo(
-    () => findZukanChanges(zukan, lastViewed.statuses),
+    () => findZukanChanges(zukan, lastViewed.statuses, lastViewed.times),
     [zukan, lastViewed],
   );
 
@@ -78,6 +84,7 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
         zukan,
         listUnchangedZukanDifficulties(zukan, changes),
       ),
+      Date.now(),
     );
   }, [game.id, zukan, changes]);
 
@@ -86,6 +93,7 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
       writeZukanLastViewed(
         game.id,
         listZukanViewedStatuses(zukan, [difficulty]),
+        Date.now(),
       );
     },
     [game.id, zukan],

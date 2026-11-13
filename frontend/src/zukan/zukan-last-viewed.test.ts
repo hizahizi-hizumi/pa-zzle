@@ -10,6 +10,7 @@ import {
   listZukanViewedStatuses,
   noZukanChanges,
   type ZukanViewedStatuses,
+  type ZukanViewedTimes,
 } from "@/zukan/zukan-last-viewed";
 
 function solved(
@@ -27,6 +28,7 @@ function solved(
     fewestMoves: null,
     fewestMistakes: null,
     firstCompletedAt: 0,
+    bestScoreCompletedAt: 0,
   };
 }
 
@@ -64,6 +66,9 @@ const zukan = createZukan({
 
 const allDifficulties = difficultyLevels.map(({ id }) => id);
 
+/** どの問題の最高スコアのプレイ（時刻 0）よりも前に、前回の状態を残したものとする。 */
+const viewedBeforeBestPlays: ZukanViewedTimes = { "1": -1, "3": -1 };
+
 describe("listZukanViewedStatuses", () => {
   test("解いた問題の評価段階と挑戦中の問題を、未挑戦の問題を除いて難易度ごとに問題 ID で引けるようにすること", () => {
     const statuses = listZukanViewedStatuses(zukan, allDifficulties);
@@ -87,7 +92,7 @@ describe("listZukanViewedStatuses", () => {
 describe("findZukanChanges", () => {
   describe("前回の状態が無い場合", () => {
     test("変化なしとすること", () => {
-      const changes = findZukanChanges(zukan, null);
+      const changes = findZukanChanges(zukan, null, {});
 
       expect(changes).toBe(noZukanChanges);
     });
@@ -97,7 +102,11 @@ describe("findZukanChanges", () => {
     const lastViewed = listZukanViewedStatuses(zukan, allDifficulties);
 
     test("変化なしとすること", () => {
-      const changes = findZukanChanges(zukan, lastViewed);
+      const changes = findZukanChanges(
+        zukan,
+        lastViewed,
+        viewedBeforeBestPlays,
+      );
 
       expect(changes).toEqual(noZukanChanges);
     });
@@ -110,7 +119,11 @@ describe("findZukanChanges", () => {
     };
 
     test("新しく解いた問題と段階が上がった問題を、変化する前の状態とともに難易度ごとに返すこと", () => {
-      const { byDifficulty } = findZukanChanges(zukan, lastViewed);
+      const { byDifficulty } = findZukanChanges(
+        zukan,
+        lastViewed,
+        viewedBeforeBestPlays,
+      );
 
       expect(byDifficulty).toEqual({
         "1": new Map([
@@ -124,6 +137,33 @@ describe("findZukanChanges", () => {
     });
   });
 
+  describe("最高スコアのプレイが前回の状態を残す前のもので、段階が上がった問題がある場合", () => {
+    const lastViewed: ZukanViewedStatuses = {
+      "1": { a: "perfect", b: "clear", c: "attempted" },
+      "3": { d: "clear" },
+    };
+    const viewedAfterBestPlays: ZukanViewedTimes = { "1": 1, "3": 1 };
+
+    test("評価規則が変わって上がっただけなので、変化に数えないこと", () => {
+      const changes = findZukanChanges(zukan, lastViewed, viewedAfterBestPlays);
+
+      expect(changes).toEqual(noZukanChanges);
+    });
+  });
+
+  describe("前回の状態を残した時刻が無く、段階が上がった問題がある場合", () => {
+    const lastViewed: ZukanViewedStatuses = {
+      "1": { a: "perfect", b: "clear", c: "attempted" },
+      "3": { d: "clear" },
+    };
+
+    test("変化に数えないこと", () => {
+      const changes = findZukanChanges(zukan, lastViewed, {});
+
+      expect(changes).toEqual(noZukanChanges);
+    });
+  });
+
   describe("前回より段階が下がった問題がある場合", () => {
     const lastViewed: ZukanViewedStatuses = {
       "1": { a: "perfect", b: "great" },
@@ -131,7 +171,11 @@ describe("findZukanChanges", () => {
     };
 
     test("変化に数えないこと", () => {
-      const changes = findZukanChanges(zukan, lastViewed);
+      const changes = findZukanChanges(
+        zukan,
+        lastViewed,
+        viewedBeforeBestPlays,
+      );
 
       expect(changes).toEqual(noZukanChanges);
     });
@@ -143,7 +187,7 @@ describe("listUnchangedZukanDifficulties", () => {
     "1": { a: "perfect", b: "good" },
     "3": {},
   };
-  const changes = findZukanChanges(zukan, lastViewed);
+  const changes = findZukanChanges(zukan, lastViewed, viewedBeforeBestPlays);
 
   test("変化の無い難易度だけを返すこと", () => {
     const difficulties = listUnchangedZukanDifficulties(zukan, changes);

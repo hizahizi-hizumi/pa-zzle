@@ -2,6 +2,7 @@ import type { PlayRecordStorage } from "@/records/storage";
 import type { ZukanViewedStatuses } from "@/zukan/zukan-last-viewed";
 import {
   readZukanLastViewed,
+  readZukanLastViewedTimes,
   writeZukanLastViewed,
 } from "@/zukan/zukan-last-viewed-storage";
 
@@ -125,12 +126,12 @@ describe("writeZukanLastViewed", () => {
 
     beforeEach(() => {
       storage = createMemoryStorage();
-      writeZukanLastViewed("water-sort", waterSortLevels, storage);
-      writeZukanLastViewed("nanpure", { "1": {} }, storage);
+      writeZukanLastViewed("water-sort", waterSortLevels, 1_000, storage);
+      writeZukanLastViewed("nanpure", { "1": {} }, 1_000, storage);
     });
 
     test("そのゲームの難易度の状態を置き換え、ほかのゲームの状態を保つこと", () => {
-      writeZukanLastViewed("nanpure", nanpureLevels, storage);
+      writeZukanLastViewed("nanpure", nanpureLevels, 1_000, storage);
       const saved = [
         readZukanLastViewed("nanpure", storage),
         readZukanLastViewed("water-sort", storage),
@@ -145,17 +146,24 @@ describe("writeZukanLastViewed", () => {
 
     beforeEach(() => {
       storage = createMemoryStorage();
-      writeZukanLastViewed("nanpure", nanpureLevels, storage);
+      writeZukanLastViewed("nanpure", nanpureLevels, 1_000, storage);
     });
 
     test("渡した難易度だけを置き換え、渡していない難易度の前回の状態を残すこと", () => {
-      writeZukanLastViewed("nanpure", { "3": { b: "great" } }, storage);
+      writeZukanLastViewed("nanpure", { "3": { b: "great" } }, 2_000, storage);
       const saved = readZukanLastViewed("nanpure", storage);
 
       expect(saved).toEqual({
         "1": { a: "perfect", d: "attempted" },
         "3": { b: "great" },
       });
+    });
+
+    test("渡した難易度の残した時刻だけを置き換えること", () => {
+      writeZukanLastViewed("nanpure", { "3": { b: "great" } }, 2_000, storage);
+      const times = readZukanLastViewedTimes("nanpure", storage);
+
+      expect(times).toEqual({ "1": 1_000, "3": 2_000 });
     });
   });
 
@@ -167,7 +175,7 @@ describe("writeZukanLastViewed", () => {
     });
 
     test("今の状態で保存し直すこと", () => {
-      writeZukanLastViewed("nanpure", nanpureLevels, storage);
+      writeZukanLastViewed("nanpure", nanpureLevels, 1_000, storage);
       const saved = readZukanLastViewed("nanpure", storage);
 
       expect(saved).toEqual(nanpureLevels);
@@ -185,7 +193,8 @@ describe("writeZukanLastViewed", () => {
     };
 
     test("失敗を外へ投げないこと", () => {
-      const act = () => writeZukanLastViewed("nanpure", nanpureLevels, storage);
+      const act = () =>
+        writeZukanLastViewed("nanpure", nanpureLevels, 1_000, storage);
 
       expect(act).not.toThrow();
     });

@@ -9,6 +9,7 @@ import {
   type GameZukan,
   getZukanProblemStatus,
   type ZukanProblemStatus,
+  type ZukanSolvedProblem,
 } from "@/zukan/zukan-collection";
 
 export type ZukanViewedStatus = Exclude<ZukanProblemStatus, "untouched">;
@@ -19,6 +20,11 @@ export type ZukanViewedSection = Readonly<Record<ProblemId, ZukanViewedStatus>>;
 export type ZukanViewedStatuses = Partial<
   Record<DifficultyLevel, ZukanViewedSection>
 >;
+
+/**
+ * 難易度ごとの、前回の状態を残した時刻。持たない難易度は、時刻を残す前の保存か、まだ見たことが無いもの。
+ */
+export type ZukanViewedTimes = Partial<Record<DifficultyLevel, number>>;
 
 export type ZukanProblemChange =
   | { kind: "newly-solved"; previousStatus: "attempted" | "untouched" }
@@ -63,9 +69,11 @@ export function listUnchangedZukanDifficulties(
     .filter((difficulty) => changes.byDifficulty[difficulty] === undefined);
 }
 
+/** 評価段階の上がりは SPEC-026 のとおり数え、前回の状態を残した時刻が無い難易度では数えない。 */
 function findProblemChange(
-  level: GameResultLevel,
+  problem: ZukanSolvedProblem,
   previousStatus: ZukanViewedStatus | undefined,
+  viewedAt: number | undefined,
 ): ZukanProblemChange | null {
   if (previousStatus === undefined || previousStatus === "attempted") {
     return {
@@ -73,7 +81,12 @@ function findProblemChange(
       previousStatus: previousStatus ?? "untouched",
     };
   }
-  return isHigherGameResultLevel(level, previousStatus)
+  return isHigherGameResultLevel(
+    getGameResultLevel(problem.bestScore),
+    previousStatus,
+  ) &&
+    viewedAt !== undefined &&
+    problem.bestScoreCompletedAt > viewedAt
     ? { kind: "raised", previousStatus }
     : null;
 }
@@ -81,6 +94,7 @@ function findProblemChange(
 export function findZukanChanges(
   zukan: GameZukan,
   lastViewed: ZukanViewedStatuses | null,
+  viewedTimes: ZukanViewedTimes,
 ): ZukanChanges {
   if (lastViewed === null) {
     return noZukanChanges;
@@ -95,8 +109,9 @@ export function findZukanChanges(
       }
       // 前回の状態に無い難易度は、その難易度の問題を前回は解いていなかったものとする。
       const change = findProblemChange(
-        getGameResultLevel(problem.bestScore),
+        problem,
         lastViewed[difficulty]?.[problem.problemId],
+        viewedTimes[difficulty],
       );
       if (change === null) {
         continue;

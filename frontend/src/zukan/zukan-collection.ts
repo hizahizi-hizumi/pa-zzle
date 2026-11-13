@@ -43,6 +43,8 @@ export type ZukanSolvedProblem = ZukanProblemSlot & {
   /** ミスを数えないゲームでは `null`。 */
   fewestMistakes: number | null;
   firstCompletedAt: number;
+  /** 最高スコアを出したプレイを終えた時刻。同じスコアのプレイが複数あれば、最も新しいもの。 */
+  bestScoreCompletedAt: number;
 };
 
 export type ZukanUnsolvedProblem = ZukanProblemSlot & {
@@ -103,6 +105,7 @@ type SolvedProblemTally = Pick<
   | "fewestMoves"
   | "fewestMistakes"
   | "firstCompletedAt"
+  | "bestScoreCompletedAt"
 >;
 
 type ClearMoves = NonNullable<PlayRecordClearPerformance["moves"]>;
@@ -142,6 +145,7 @@ function addClear(
       fewestMoves: performance.moves ?? null,
       fewestMistakes: performance.mistakeCount ?? null,
       firstCompletedAt: completedAt,
+      bestScoreCompletedAt: completedAt,
     };
   }
   return {
@@ -153,6 +157,11 @@ function addClear(
       performance.mistakeCount ?? null,
     ),
     firstCompletedAt: Math.min(tally.firstCompletedAt, completedAt),
+    bestScoreCompletedAt:
+      score > tally.bestScore ||
+      (score === tally.bestScore && completedAt > tally.bestScoreCompletedAt)
+        ? completedAt
+        : tally.bestScoreCompletedAt,
   };
 }
 

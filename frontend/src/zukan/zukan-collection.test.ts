@@ -219,7 +219,7 @@ describe("deriveGameZukan", () => {
       }),
     ];
 
-    test("問題ごとに、最高スコア・最速タイム・最少手数と最短手数・最少ミス・初めてクリアした時刻をそれぞれ別の記録からでもまとめ、問題集の番号のまま返すこと", () => {
+    test("問題ごとに、最高スコア・最速タイム・最少手数と最短手数・最少ミス・初めてクリアした時刻・最高スコアのプレイの時刻をそれぞれ別の記録からでもまとめ、問題集の番号のまま返すこと", () => {
       const zukan = deriveGameZukan(game, records, []);
 
       expect(
@@ -237,6 +237,7 @@ describe("deriveGameZukan", () => {
           fewestMoves: { completionMoveCount: 11, optimalMoveCount: 10 },
           fewestMistakes: 0,
           firstCompletedAt: 3_000,
+          bestScoreCompletedAt: 9_000,
         },
         {
           kind: "solved",
@@ -248,6 +249,7 @@ describe("deriveGameZukan", () => {
           fewestMoves: null,
           fewestMistakes: null,
           firstCompletedAt: 5_000,
+          bestScoreCompletedAt: 5_000,
         },
       ]);
     });
@@ -457,6 +459,7 @@ describe("getZukanProblemStatus", () => {
     fewestMoves: null,
     fewestMistakes: null,
     firstCompletedAt: 1_000,
+    bestScoreCompletedAt: 1_000,
   } as const;
   const unsolvedProblem = {
     kind: "unsolved",

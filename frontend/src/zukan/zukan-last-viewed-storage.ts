@@ -6,12 +6,16 @@ import { getDefaultStorage, type PlayRecordStorage } from "@/records/storage";
 import type {
   ZukanViewedStatus,
   ZukanViewedStatuses,
+  ZukanViewedTimes,
 } from "@/zukan/zukan-last-viewed";
 
 /**
+ * ゲームごとに、難易度をキーにした前回の状態と、`viewedAt` に難易度ごとの残した時刻を持つ。
  * 挑戦中の問題を残す前の保存は解いた問題の評価段階だけを持ち、同じ形のまま挑戦中の問題が無いものとして読める。
+ * 時刻を残す前の保存は、同じ形のまま時刻が無いものとして読める。
  */
 const ZUKAN_LAST_VIEWED_STORAGE_KEY = "pa-zzle.zukan-last-viewed.v1";
+const VIEWED_TIMES_KEY = "viewedAt";
 
 function isZukanViewedStatus(value: unknown): value is ZukanViewedStatus {
   return (
@@ -50,6 +54,20 @@ function parseViewedStatuses(value: unknown): ZukanViewedStatuses | null {
   return statuses;
 }
 
+function parseViewedTimes(value: unknown): ZukanViewedTimes {
+  if (!isRecordObject(value)) {
+    return {};
+  }
+  const times: ZukanViewedTimes = {};
+  for (const [key, time] of Object.entries(value)) {
+    const difficulty = parseDifficultyLevel(key);
+    if (difficulty !== undefined && typeof time === "number") {
+      times[difficulty] = time;
+    }
+  }
+  return times;
+}
+
 function readStoredGames(
   storage: PlayRecordStorage,
 ): Record<string, unknown> | null {
@@ -78,16 +96,40 @@ export function readZukanLastViewed(
   return readStoredGame(storage ? readStoredGames(storage) : null, gameId);
 }
 
+export function readZukanLastViewedTimes(
+  gameId: string,
+  storage: PlayRecordStorage | null = getDefaultStorage(),
+): ZukanViewedTimes {
+  const games = storage ? readStoredGames(storage) : null;
+  const game =
+    games && Object.hasOwn(games, gameId) ? games[gameId] : undefined;
+  return parseViewedTimes(
+    isRecordObject(game) ? game[VIEWED_TIMES_KEY] : undefined,
+  );
+}
+
+/** `statuses` が持つ難易度の状態を、`viewedAt` を残した時刻として置き換える。 */
 export function writeZukanLastViewed(
   gameId: string,
   statuses: ZukanViewedStatuses,
+  viewedAt: number,
   storage: PlayRecordStorage | null = getDefaultStorage(),
 ): void {
   if (!storage) {
     return;
   }
   const games = readStoredGames(storage) ?? {};
-  const game = { ...readStoredGame(games, gameId), ...statuses };
+  const times: ZukanViewedTimes = {
+    ...readZukanLastViewedTimes(gameId, storage),
+    ...Object.fromEntries(
+      Object.keys(statuses).map((difficulty) => [difficulty, viewedAt]),
+    ),
+  };
+  const game = {
+    ...readStoredGame(games, gameId),
+    ...statuses,
+    [VIEWED_TIMES_KEY]: times,
+  };
   // 保存できなくても図鑑を見るのを妨げないよう、失敗は無視する。
   try {
     storage.setItem(

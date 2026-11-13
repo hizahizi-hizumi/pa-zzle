@@ -33,6 +33,7 @@ function createSolvedProblem(
     fewestMoves: null,
     fewestMistakes: null,
     firstCompletedAt: 0,
+    bestScoreCompletedAt: 0,
     ...overrides,
   };
 }
