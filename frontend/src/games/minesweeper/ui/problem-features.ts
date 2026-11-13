@@ -9,7 +9,6 @@ import {
   minesweeperProblemFeatureAxes,
 } from "@/games/minesweeper/problem/problem-pool";
 
-/** 絞り込みでは、レベルにある値の種類が多いとき、地雷の数は5個ごとにまとめる。 */
 export const minesweeperProblemFeatureAxisDisplays = {
   "board-size": { label: "盤面", valueFormat: { kind: "board-size" } },
   "mine-count": {

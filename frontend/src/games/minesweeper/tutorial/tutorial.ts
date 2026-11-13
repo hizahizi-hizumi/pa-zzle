@@ -39,8 +39,8 @@ export type MinesweeperTutorialOperation = "reveal" | "flag";
 /**
  * - `message`: 盤面の切り替えが `operation` に合っているときの一言。合っていないときは、補足を `modeSwitchDetails` に替える。
  * - `cellIndices`: 印を付け、手順の間だけ `operation` を受け付けるマス。
- * - `reasonCellIndices`: 印のマスを決めるマス（決め手）。決めた数字と、その読みに使った、もう地雷と決まったマス。手順の間、印のマスと一緒に覆いから抜き、操作する前に何で決まるかを盤面で分からせる。
- * - `reasonMineCount`: 印のマスを決めるのに、上の地雷の総数も使う。手順の間、地雷の総数も覆いから抜く。
+ * - `reasonCellIndices`: 印のマスを決めるマス（決め手）。決めた数字と、その読みに使った、もう地雷と決まったマス。
+ * - `reasonMineCount`: 印のマスを決めるのに、上の地雷の総数も使う。
  */
 export type MinesweeperTutorialStep =
   TutorialStep<MinesweeperTutorialRuleId> & {
