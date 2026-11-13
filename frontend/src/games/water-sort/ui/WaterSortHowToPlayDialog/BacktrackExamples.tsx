@@ -1,5 +1,5 @@
 import { HowToPlayFlowFigures } from "@/components/HowToPlayFlowFigures";
-import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
+import { PLAY_OPERATION_PHRASES } from "@/games/play-vocabulary";
 import { BottleSizeScope } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/BottleSizeScope";
 import type {
   WaterSortHowToPlayBacktrackFigure,
@@ -17,10 +17,13 @@ type BacktrackExamplesProps = {
   examples: readonly BacktrackExample[];
 };
 
-/** 矢印に添える操作の名前。1手を注ぐときは「注ぐ」、まとめて注ぐときは手数を添え、やり直しはプレイ画面と同じ名前にする。 */
+/**
+ * 矢印に添える操作の名前。1手を注ぐときは「注ぐ」、まとめて注ぐときは手数を添え、やり直しはプレイ画面と同じ名前にする。
+ * どの矢印の列も、いちばん長い行の幅にそろうので、やり直しの名前は文節で行を分けた呼び名を使い、ボトルを小さくしない。
+ */
 function describeBacktrackStep(step: WaterSortHowToPlayFlowStep): string {
   if (step.kind !== "pour") {
-    return PLAY_OPERATION_LABELS[step.kind];
+    return PLAY_OPERATION_PHRASES[step.kind];
   }
   return step.moves.length === 1 ? "注ぐ" : `${step.moves.length}手/注ぐ`;
 }

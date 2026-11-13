@@ -155,7 +155,8 @@ function recordPathChange(
     : changed;
 }
 
-function haveSamePath(
+/** 2つの状態の道が同じか。 */
+export function haveSameHitofudePuzzlePath(
   left: HitofudePuzzlePuzzleState,
   right: HitofudePuzzlePuzzleState,
 ): boolean {
@@ -171,7 +172,7 @@ function closeStroke(session: HitofudePuzzleSession): HitofudePuzzleSession {
     return session;
   }
   const closed = { ...session, strokeOrigin: null };
-  return haveSamePath(strokeOrigin, session.puzzleState)
+  return haveSameHitofudePuzzlePath(strokeOrigin, session.puzzleState)
     ? closed
     : commitInput(closed, strokeOrigin);
 }
