@@ -5,12 +5,12 @@ import {
   useRef,
   useState,
 } from "react";
-
+import { TutorialCrossFadeIntroScene } from "@/components/TutorialCrossFadeIntroScene";
 import {
-  type TutorialBoardIntro,
   type TutorialFinish,
   TutorialOverlay,
   type TutorialPlayStart,
+  type TutorialStageBoardIntro,
 } from "@/components/TutorialOverlay";
 import type { GameProgress } from "@/games/play";
 import pictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
@@ -22,16 +22,20 @@ import type {
 } from "@/games/slide-puzzle/puzzle/state";
 import {
   findSlidePuzzleTutorialHintTile,
-  getSlidePuzzleTutorialStepCarriedTiles,
+  getSlidePuzzleTutorialFocusTiles,
+  getSlidePuzzleTutorialProgressRatio,
   getSlidePuzzleTutorialStepTile,
+  isSlidePuzzleTutorialLureShown,
+  isSlidePuzzleTutorialStepCueShownUpfront,
+  SLIDE_PUZZLE_TUTORIAL_PROGRESS_STEP_COUNT,
   type SlidePuzzleTutorialBoardState,
   type SlidePuzzleTutorialRuleId,
-  type SlidePuzzleTutorialSituation,
   slidePuzzleTutorial,
 } from "@/games/slide-puzzle/tutorial/tutorial";
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
 import type { SlidePuzzleTileCue } from "@/games/slide-puzzle/ui/board/tile-cue";
-import { SlidePuzzleTutorialScramble } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial/SlidePuzzleTutorialScramble";
+import { SlidePuzzleGround } from "@/games/slide-puzzle/ui/SlidePuzzleGround";
+import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
 import { useSlidePuzzleSoundEffects } from "@/games/slide-puzzle/ui/use-slide-puzzle-sound-effects";
 import {
   completeTutorial,
@@ -56,26 +60,21 @@ type SlidePuzzleTutorialProgress = TutorialProgress<
   SlidePuzzleTutorialBoardState
 >;
 
-/** スライドしたタイルが収まるのを見届けてから、次の印を付けるまでの間。 */
-const NEXT_STEP_CUE_DELAY_MS = 450;
+/** スライドしたタイルが収まるのを見届けてから、次の印を付けるまでの間。手順を終えた手では、この間は終えた手順の一言を残す。 */
+const NEXT_CUE_DELAY_MS = 450;
 
-/** 手を離した後、手が止まってから次にスライドさせるタイルを示すまでの間。 */
-const IDLE_HINT_DELAY_MS = 4000;
+/** 自分で探させる手順で、手が止まってから次に押すタイルに印を付けるまでの間。読みを考える間は割り込まない。 */
+const SEARCH_IDLE_CUE_DELAY_MS = 4000;
 
 const goalBoard = slidePuzzleTutorial.goal().board;
 
-/** 本番の効果音を鳴らすための進行。導入でゴールを見せる波は完成ではないので、解いたときだけ完成演出として鳴らす。 */
-function getSoundProgress(phase: TutorialPhase): GameProgress {
-  switch (phase) {
-    case "intro":
-    case "playing":
-      return "playing";
-    case "solved":
-      return "clearing";
-    case "completed":
-      return "result";
-  }
-}
+/** 本番の効果音を鳴らすための進行。解けた盤面の演出の間を完成演出として、完成の音を鳴らす。 */
+const soundProgressByPhase = {
+  intro: "playing",
+  playing: "playing",
+  solved: "clearing",
+  completed: "result",
+} as const satisfies Record<TutorialPhase, GameProgress>;
 
 function createOperation(
   id: number,
@@ -100,30 +99,27 @@ function createOperation(
   }
 }
 
-/**
- * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
- * 手を引いている間は、スライドが収まってから印を付け、スライドしなかった手の後は付けたままにする。手を離した後は手が止まったときだけ付ける。
- */
-function getCueDelayMs(
+/** 0 ならすぐ付け、`null` なら手が止まっても付けない。 */
+function getStepCueDelayMs(
   progress: SlidePuzzleTutorialProgress,
-  guiding: boolean,
 ): number | null {
-  if (progress.phase !== "playing") {
+  const situation = getTutorialSituation(slidePuzzleTutorial, progress);
+  if (progress.phase !== "playing" || situation.step === null) {
     return null;
   }
-  if (!guiding) {
-    return IDLE_HINT_DELAY_MS;
+  if (!isSlidePuzzleTutorialStepCueShownUpfront(situation)) {
+    return SEARCH_IDLE_CUE_DELAY_MS;
   }
-  return progress.boardState.lastMove?.type === "slid"
-    ? NEXT_STEP_CUE_DELAY_MS
-    : 0;
+  return progress.boardState.lastMove?.type === "slid" ? NEXT_CUE_DELAY_MS : 0;
 }
 
+/** `recallId` があれば、印の線を短く濃くして戻す。`recallId` が変わるたびにやり直す。 */
 function getTileCues(
   state: SlidePuzzleTutorialBoardState,
   acknowledged: boolean,
-  hintTile: number | null,
+  cueTile: SlidePuzzleTile | null,
   recallId: number | null,
+  pointed: boolean,
 ): SlidePuzzleTileCue[] {
   const { lastMove, moveCount } = state;
   const landedCues: SlidePuzzleTileCue[] =
@@ -134,37 +130,15 @@ function getTileCues(
           id: moveCount,
         }))
       : [];
-  return hintTile === null
+  return cueTile === null
     ? landedCues
     : [
-        ...landedCues.filter((cue) => cue.tile !== hintTile),
+        // 印を付けるタイルには、印だけを重ねる。
+        ...landedCues.filter((cue) => cue.tile !== cueTile),
         recallId === null
-          ? { tile: hintTile, kind: "hint", id: 0 }
-          : { tile: hintTile, kind: "recall", id: recallId },
+          ? { tile: cueTile, kind: "hint", id: 0, pointed }
+          : { tile: cueTile, kind: "recall", id: recallId, pointed },
       ];
-}
-
-/**
- * 手を引いていなければ `null` で、覆いを出さない。
- * タイルが収まる空白は、決め手として盤面が抜く。
- */
-function getSpotlitTiles(
-  situation: SlidePuzzleTutorialSituation,
-  state: SlidePuzzleTutorialBoardState,
-  hintTile: SlidePuzzleTile | null,
-): SlidePuzzleTile[] | null {
-  if (situation.step === null) {
-    return null;
-  }
-  const { lastMove } = state;
-  const focused =
-    hintTile !== null
-      ? [hintTile, ...getSlidePuzzleTutorialStepCarriedTiles(situation, state)]
-      : lastMove?.type === "slid"
-        ? [...lastMove.landedTiles]
-        : [];
-  // ルールに当たってスライドしなかったタイルは、揺れとわけの一言が指すタイルとして抜く。
-  return lastMove?.type === "rejected" ? [...focused, lastMove.tile] : focused;
 }
 
 export function SlidePuzzleTutorial({
@@ -180,40 +154,71 @@ export function SlidePuzzleTutorial({
   const operationIdRef = useRef(0);
   const [idleProgress, setIdleProgress] =
     useState<SlidePuzzleTutorialProgress | null>(null);
-  // 手を引いている間に、ルールに当たらない印の無いタイルを押されたら、押されるたびに印の線を短く濃くして戻す。
-  // 揺れと違反の一言はルールに当たった手にだけ返すので、ここでは印へ目を向けさせるだけにする。
+  // 手を引いている間に、手順に無いタイルを押されたら、押されるたびに次に押すタイルの印の線を短く濃くして戻す。
   const [recall, setRecall] = useState<{
     progress: SlidePuzzleTutorialProgress;
     id: number;
   } | null>(null);
-  // 手を引いている間にスライドさせた手の進行と、その手の前の進行。収まった合図はこの進行の間だけ見せる。
-  const [acknowledgedMove, setAcknowledgedMove] = useState<{
+  // 手を引いている間にスライドさせた手の進行。収まった合図はこの進行の間だけ見せる。
+  const [acknowledgedProgress, setAcknowledgedProgress] =
+    useState<SlidePuzzleTutorialProgress | null>(null);
+  // 手順を終えた手の進行と、その手の前の進行。収まったタイルを見せる間は、一言も終えた手順のままにする。
+  const [finishedStep, setFinishedStep] = useState<{
     progress: SlidePuzzleTutorialProgress;
     previous: SlidePuzzleTutorialProgress;
   } | null>(null);
+  const [lingerEndedProgress, setLingerEndedProgress] =
+    useState<SlidePuzzleTutorialProgress | null>(null);
+  const [hintRequestedProgress, setHintRequestedProgress] =
+    useState<SlidePuzzleTutorialProgress | null>(null);
+
   const situation = getTutorialSituation(slidePuzzleTutorial, progress);
   const guiding = situation.step !== null;
+  const solving = progress.phase === "playing";
   const { boardState } = progress;
+  const lingering =
+    solving &&
+    finishedStep?.progress === progress &&
+    lingerEndedProgress !== progress;
+  const shownProgress =
+    lingering && finishedStep ? finishedStep.previous : progress;
+  const shownSituation = getTutorialSituation(
+    slidePuzzleTutorial,
+    shownProgress,
+  );
   const recallId = recall?.progress === progress ? recall.id : null;
-  const cueDelayMs = getCueDelayMs(progress, guiding);
-  const cueShown =
-    cueDelayMs === 0 ||
-    recallId !== null ||
-    (cueDelayMs !== null && idleProgress === progress);
-  // 次の印を付けるまでは、覆いから抜いた収まったタイルに合わせて、一言とルールの並びも終えた手順のまま見せる。
-  const holdingFinishedStep =
-    guiding && !cueShown && acknowledgedMove?.progress === progress;
-  const hintTile = !cueShown
-    ? null
-    : guiding
-      ? getSlidePuzzleTutorialStepTile(situation)
-      : findSlidePuzzleTutorialHintTile(boardState);
+  const cueDelayMs = getStepCueDelayMs(progress);
+  const stepCueShown =
+    guiding &&
+    !lingering &&
+    (cueDelayMs === 0 ||
+      recallId !== null ||
+      progress.violated ||
+      (cueDelayMs !== null && idleProgress === progress));
+  const requestedHintShown =
+    solving && !guiding && hintRequestedProgress === progress;
+  const cueTile = stepCueShown
+    ? getSlidePuzzleTutorialStepTile(situation, boardState)
+    : requestedHintShown
+      ? findSlidePuzzleTutorialHintTile(boardState)
+      : null;
 
   useSlidePuzzleSoundEffects(
     operation,
-    getSoundProgress(progress.phase),
+    soundProgressByPhase[progress.phase],
     goalBoard.length - 1,
   );
+
+  useEffect(() => {
+    if (!open || !lingering) {
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setLingerEndedProgress(progress),
+      NEXT_CUE_DELAY_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [open, progress, lingering]);
 
   useEffect(() => {
     if (!open || cueDelayMs === null || cueDelayMs === 0) {
@@ -234,7 +239,7 @@ export function SlidePuzzleTutorial({
     setProgress(finishTutorialIntro);
   }
 
-  function recallHint(): void {
+  function recallCue(): void {
     if (guiding) {
       setRecall((current) => ({
         progress,
@@ -244,22 +249,21 @@ export function SlidePuzzleTutorial({
   }
 
   function handleSlideTile(cellIndex: number): void {
-    // 収まったタイルを見せている間は、まだ次の手順の一言も印も出していないので、手を受け付けずに次の手順を見せる。
-    if (holdingFinishedStep) {
-      setIdleProgress(progress);
-      return;
+    // 終えた手順の収まったタイルを見せている間に押されたら、見せるのを終えて、その手を次の手順の手として受ける。
+    if (lingering) {
+      setLingerEndedProgress(progress);
     }
     const next = performTutorialAction(slidePuzzleTutorial, progress, {
       cellIndex,
     });
     if (next === progress) {
-      recallHint();
+      recallCue();
       return;
     }
-    // 収まった合図は本番に無いので、手を引いている間の手にだけ返す。
-    if (guiding) {
-      setAcknowledgedMove({ progress: next, previous: progress });
+    if (next.stepIndex !== progress.stepIndex) {
+      setFinishedStep({ progress: next, previous: progress });
     }
+    setAcknowledgedProgress(guiding ? next : null);
     setProgress(next);
     operationIdRef.current += 1;
     setOperation(
@@ -269,52 +273,44 @@ export function SlidePuzzleTutorial({
 
   function handleBoardAreaClick(event: ReactMouseEvent<HTMLDivElement>): void {
     if (
-      progress.phase === "playing" &&
+      solving &&
       event.target instanceof Element &&
       !event.target.closest("button")
     ) {
-      recallHint();
+      recallCue();
     }
   }
 
-  function restart(): void {
-    setAcknowledgedMove(null);
+  function handleRequestHint(): void {
+    setHintRequestedProgress(progress);
+  }
+
+  function reset(): void {
+    setAcknowledgedProgress(null);
+    setFinishedStep(null);
+    setLingerEndedProgress(null);
     setIdleProgress(null);
     setRecall(null);
+    setHintRequestedProgress(null);
     setOperation(null);
     setProgress(startTutorial(slidePuzzleTutorial));
   }
 
+  // ゴールはもう見せたので、入口を通さずに最初の手順から始める。
+  function handleRestart(): void {
+    reset();
+    setProgress(finishTutorialIntro);
+  }
+
   function handleClose(): void {
-    restart();
+    reset();
     onClose();
   }
 
   function handleStartPlay(): void {
-    restart();
+    reset();
     playStart?.onStart();
   }
-
-  function getMessage(): TutorialMessage {
-    // 印の線を濃くし直したときと、手を離した後に止まって印が出たときは、前の違反の一言を下げて、
-    // 印のタイルへ向かう手順の一言か、残りを収める一言に戻す。
-    if (recallId !== null || (!guiding && hintTile !== null)) {
-      return situation.step?.message ?? slidePuzzleTutorial.freePlay;
-    }
-    return getTutorialMessage(slidePuzzleTutorial, shownProgress, {
-      entry: finish.entry,
-      // 1回のタップで決まる手なので、一瞬だけ違反になる途中の状態は無い。
-      violationSettled: true,
-    });
-  }
-
-  const shownProgress = holdingFinishedStep
-    ? (acknowledgedMove?.previous ?? progress)
-    : progress;
-  const shownSituation = getTutorialSituation(
-    slidePuzzleTutorial,
-    shownProgress,
-  );
 
   const finish: TutorialFinish = playStart
     ? {
@@ -324,75 +320,129 @@ export function SlidePuzzleTutorial({
       }
     : { entry: "play", onReturnToPlay: handleClose };
 
-  function renderBoard({ scene, playing, onSceneEnd }: TutorialBoardIntro) {
+  /** `null` なら覆わない。タイルが動く先の空白は、盤面が抜く。 */
+  function getSpotlitTiles(): SlidePuzzleTile[] | null {
+    if (!solving) {
+      return null;
+    }
+    const focusTiles = getSlidePuzzleTutorialFocusTiles(
+      shownSituation,
+      boardState,
+    );
+    if (focusTiles.length === 0) {
+      return null;
+    }
+    const { lastMove } = boardState;
+    const movedTiles =
+      lastMove?.type === "slid"
+        ? lingering
+          ? lastMove.landedTiles
+          : []
+        : lastMove?.type === "rejected"
+          ? [lastMove.tile]
+          : [];
+    return [
+      ...new Set([
+        ...focusTiles,
+        ...movedTiles,
+        ...(cueTile === null ? [] : [cueTile]),
+      ]),
+    ];
+  }
+  const spotlitTiles = getSpotlitTiles();
+
+  /**
+   * 次に押すタイルの印の線を濃くし直したときと、「ヒント」で印を出したときは、前の違反の一言を下げて、
+   * 手順の一言か、残りを並べる一言に戻す。
+   */
+  function getMessage(): TutorialMessage {
+    if (recallId !== null || requestedHintShown) {
+      return situation.step?.message ?? slidePuzzleTutorial.freePlay;
+    }
+    return getTutorialMessage(slidePuzzleTutorial, shownProgress, {
+      entry: finish.entry,
+      // 1回のタップで決まる手なので、一瞬だけ違反になる途中の状態は無い。
+      violationSettled: true,
+    });
+  }
+
+  function renderBoard({
+    scene,
+    playing,
+    onSceneEnd,
+  }: TutorialStageBoardIntro) {
     return (
-      // タイルの無い所を押したときに印へ目を向けさせるだけで、キーで押す物は無い。
-      <div
-        className="aspect-square w-[min(100cqw,100cqh,28rem)]"
-        onClick={handleBoardAreaClick}
+      <TutorialCrossFadeIntroScene
+        scene={scene}
+        playing={playing}
+        onSceneEnd={onSceneEnd}
       >
-        <SlidePuzzleTutorialScramble
-          active={scene === "start" && playing}
-          onComplete={onSceneEnd}
-        >
-          {(frame) => (
+        {(showsGoal) => (
+          // タイルの無い所を押したときに次に押すタイルへ目を向けさせるだけで、キーで押す物は無い。
+          <div
+            className="aspect-square w-[min(100cqw,100cqh,28rem)]"
+            onClick={handleBoardAreaClick}
+          >
             <SlidePuzzleBoard
-              board={
-                frame?.board ??
-                (scene === "goal" ? goalBoard : boardState.board)
-              }
-              operation={
-                frame ? frame.operation : scene === null ? operation : null
-              }
-              interactionDisabled={progress.phase !== "playing"}
-              spotlitTiles={
-                progress.phase === "playing" && scene === null
-                  ? getSpotlitTiles(situation, boardState, hintTile)
-                  : null
-              }
-              clearing={
-                progress.phase === "solved" || (scene === "goal" && playing)
-              }
+              board={showsGoal ? goalBoard : boardState.board}
+              operation={showsGoal ? null : operation}
+              interactionDisabled={showsGoal || !solving}
+              spotlitTiles={showsGoal ? null : spotlitTiles}
+              clearing={!showsGoal && progress.phase === "solved"}
               cues={
                 // 完成の波を、収まった合図と重ねずに見せる。
-                progress.phase === "playing"
-                  ? getTileCues(
+                showsGoal || !solving
+                  ? []
+                  : getTileCues(
                       boardState,
-                      acknowledgedMove?.progress === progress,
-                      hintTile,
+                      acknowledgedProgress === progress,
+                      cueTile,
                       recallId,
+                      !isSlidePuzzleTutorialLureShown(situation, boardState),
                     )
-                  : []
               }
               onSlideTile={handleSlideTile}
-              onClearAnimationComplete={
-                scene === "goal" ? onSceneEnd : handleClearAnimationComplete
-              }
+              onClearAnimationComplete={handleClearAnimationComplete}
             />
-          )}
-        </SlidePuzzleTutorialScramble>
-      </div>
+          </div>
+        )}
+      </TutorialCrossFadeIntroScene>
     );
   }
 
   return (
     <TutorialOverlay
+      presentation="stage"
       open={open}
       title={SLIDE_PUZZLE_DISPLAY_NAME}
       pictogramSvg={pictogramSvg}
+      background={<SlidePuzzleGround />}
       intro={slidePuzzleTutorial.intro}
-      rules={slidePuzzleTutorial.rules.map((rule) => ({
-        ...rule,
-        earned: shownProgress.earnedRuleIds.includes(rule.id),
-        current: shownSituation.step?.introducedRuleId === rule.id,
-      }))}
+      recap={slidePuzzleTutorial.rules.map((rule) => rule.label)}
       message={getMessage()}
       phase={progress.phase}
-      guiding={progress.phase === "playing" && guiding}
+      spotlighting={spotlitTiles !== null}
+      progress={
+        progress.phase === "solved" || progress.phase === "completed"
+          ? 1
+          : getSlidePuzzleTutorialProgressRatio(
+              shownProgress.stepIndex,
+              boardState,
+            )
+      }
+      progressStepCount={SLIDE_PUZZLE_TUTORIAL_PROGRESS_STEP_COUNT}
       finish={finish}
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
-      onRestart={restart}
+      onRestart={handleRestart}
+      renderHowToPlayDialog={(control) => (
+        <SlidePuzzleHowToPlayDialog {...control} />
+      )}
+      onRequestHint={
+        solving && !guiding && !lingering && !requestedHintShown
+          ? handleRequestHint
+          : null
+      }
       onClose={handleClose}
     />
   );

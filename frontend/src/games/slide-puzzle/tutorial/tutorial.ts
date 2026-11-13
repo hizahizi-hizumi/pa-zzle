@@ -21,13 +21,23 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-export type SlidePuzzleTutorialRuleId = "slide" | "line";
+export type SlidePuzzleTutorialRuleId = "line" | "pair";
 
 export type SlidePuzzleTutorialAction = { cellIndex: number };
 
+/**
+ * 手を引く道（`guidedTiles` を1枚ずつスライドさせた盤面の並び）の一区切り。道に沿った手だけを受け付け、`endMoveIndex` まで進むと次の手順へ進む。
+ * - `cue`: `marked` は次に押すタイルに印を付けて押させる。`search` は印を付けずに自分で探させ、道に無い手を押したときや手が止まったときにだけ印を付ける。
+ * - `lureTile`: 手順の始まりに、次に押すタイルの代わりに印を付けるタイル。押すとルールの違反になり、それから直す手に印を移す。
+ * - `focusTiles`: その手を決めるタイル（決め手）。空白と一緒に、盤面の覆いから抜いて見せる。空なら覆わない。
+ */
 export type SlidePuzzleTutorialStep =
   TutorialStep<SlidePuzzleTutorialRuleId> & {
-    tile: SlidePuzzleTile;
+    cue: "marked" | "search";
+    startMoveIndex: number;
+    endMoveIndex: number;
+    lureTile: SlidePuzzleTile | null;
+    focusTiles: readonly SlidePuzzleTile[];
   };
 
 export type SlidePuzzleTutorialMove =
@@ -41,6 +51,8 @@ export type SlidePuzzleTutorialMove =
 
 export type SlidePuzzleTutorialBoardState = {
   board: SlidePuzzleBoard;
+  /** 手を引く道をどこまで進んだか。スライドしたタイルの枚数で数える。手を離した後は増やさない。 */
+  guidedMoveIndex: number;
   /** 盤面に反応した手の数。同じタイルへの合図をやり直す目印に使う。 */
   moveCount: number;
   lastMove: SlidePuzzleTutorialMove | null;
@@ -52,54 +64,92 @@ export type SlidePuzzleTutorialSituation = TutorialSituation<
 >;
 
 /**
- * 8枚すべてが崩れ、空白が真ん中から始まる。空白を自分の場所とするタイルが、いつも空白の隣にあり、
- * それをスライドさせるたびに1枚ずつ自分の場所に収まるので、遠回りせずに8手で完成する。最短の解き方はこの1通りだけ。
- *
  * ```text
- * 最初    ゴール
- * 4 1 2   1 2 3
- * 7 _ 3   4 5 6
- * 8 5 6   7 8 _
+ * 最初    上の行が揃った後   ゴール
+ * 1 7 2   1 2 3              1 2 3
+ * _ 4 5   4 7 _              4 5 6
+ * 8 6 3   8 5 6              7 8 _
  * ```
  */
-const startBoard: SlidePuzzleBoard = [4, 1, 2, 7, 0, 3, 8, 5, 6];
+const startBoard: SlidePuzzleBoard = [1, 7, 2, 0, 4, 5, 8, 6, 3];
 const goalBoard = createSolvedSlidePuzzleBoard(3);
 
-/**
- * 5 を下から、8 を左から1枚ずつ収め、左の列の 7 と 4 をまとめて収める。7 は隣にあり1枚でも収まるが、4 なら 7 もスライドして2枚が一度に収まる。
- * 手順を終えると、空白が左上に来て、上の行の 1・2 と右の列の 3・6 が残る。どちらも行・列ごとまとめても収められる。
- */
+const guidedTiles: readonly SlidePuzzleTile[] = [
+  4, 7, 2, 2, 7, 5, 3, 6, 5, 7, 2, 3,
+];
+
+function slideTile(
+  board: SlidePuzzleBoard,
+  tile: SlidePuzzleTile,
+): SlidePuzzleBoard {
+  const slide = getSlidePuzzleSlide(board, board.indexOf(tile));
+  if (slide?.movedTileIndices.length !== 1) {
+    throw new RangeError(`Slide puzzle tutorial cannot slide ${tile}`);
+  }
+  return applySlidePuzzleSlide(board, slide);
+}
+
+/** 手を引く道の盤面。`guidedBoards[i]` は、i 枚スライドさせた後の盤面。 */
+const guidedBoards: readonly SlidePuzzleBoard[] = listGuidedBoards();
+
+function listGuidedBoards(): SlidePuzzleBoard[] {
+  const boards = [startBoard];
+  for (const tile of guidedTiles) {
+    boards.push(slideTile(boards.at(-1) ?? startBoard, tile));
+  }
+  return boards;
+}
+
 const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
-      headline: "空白の隣のタイルは\nタップするとスライドします",
-      detail: "印のタイルをタップしてください",
-    },
-    introducedRuleId: "slide",
-    tile: 5,
-  },
-  {
-    message: {
-      headline: "この空白には 8 が収まります",
+      headline: "空白の隣のタイルをタップしてスライドさせます",
       detail: null,
     },
     introducedRuleId: null,
-    tile: 8,
+    cue: "marked",
+    startMoveIndex: 0,
+    endMoveIndex: 1,
+    lureTile: null,
+    focusTiles: [],
   },
   {
     message: {
-      headline: "空白と同じ行や列なら\n離れたタイルもスライドします",
-      detail: "4 をタップすると 7 もスライドします",
+      headline: "空白と同じ行か列のタイルをタップしてスライドさせます",
+      detail: "2を1の右へ入れます",
     },
     introducedRuleId: "line",
-    tile: 4,
+    cue: "marked",
+    startMoveIndex: 1,
+    endMoveIndex: 3,
+    lureTile: 2,
+    focusTiles: [2],
+  },
+  {
+    message: {
+      headline: "1と2を並べたままでは3が入りません",
+      detail: "2を右上へずらして3を2の下へ運んで組にします",
+    },
+    introducedRuleId: "pair",
+    cue: "search",
+    startMoveIndex: 3,
+    endMoveIndex: 7,
+    lureTile: null,
+    focusTiles: [2, 3],
+  },
+  {
+    message: {
+      headline: "空白を2の左へ回して\n2と3を続けて入れます",
+      detail: "タイルをまとめてスライドさせることもできます",
+    },
+    introducedRuleId: null,
+    cue: "marked",
+    startMoveIndex: 7,
+    endMoveIndex: 12,
+    lureTile: null,
+    focusTiles: [2, 3],
   },
 ];
-
-function getTileForBlank(board: SlidePuzzleBoard): SlidePuzzleTile | null {
-  const blankIndex = findSlidePuzzleBlankIndex(board);
-  return blankIndex === board.length - 1 ? null : blankIndex + 1;
-}
 
 function isAtGoal(tile: SlidePuzzleTile, cellIndex: number): boolean {
   return tile === cellIndex + 1;
@@ -118,34 +168,44 @@ function listLandedTiles(
   });
 }
 
-/**
- * 空白を自分の場所とするタイルを、空白と同じ行・列にある間スライドさせて収め続けた盤面の並び。始めの盤面から始まる。
- * 手に入れたルールを当てはめるだけの読みで、どこまで進めるかを確かめるのに使う。
- */
-function listBoardsByReading(
+function isSameBoard(
+  left: SlidePuzzleBoard,
+  right: SlidePuzzleBoard | undefined,
+): boolean {
+  return (
+    right !== undefined &&
+    left.length === right.length &&
+    left.every((tile, index) => tile === right[index])
+  );
+}
+
+const topRowTiles: readonly SlidePuzzleTile[] = [1, 2, 3];
+const leftColumnTiles: readonly SlidePuzzleTile[] = [4, 7];
+
+function areTilesAtGoal(
   board: SlidePuzzleBoard,
-): readonly SlidePuzzleBoard[] {
-  const boards = [board];
-  let current = board;
-  for (;;) {
-    const tile = getTileForBlank(current);
-    const slide =
-      tile === null
-        ? null
-        : getSlidePuzzleSlide(current, current.indexOf(tile));
-    if (!slide) {
-      return boards;
-    }
-    current = applySlidePuzzleSlide(current, slide);
-    boards.push(current);
+  tiles: readonly SlidePuzzleTile[],
+): boolean {
+  return tiles.every((tile) => board[tile - 1] === tile);
+}
+
+function listSettledTiles(board: SlidePuzzleBoard): SlidePuzzleTile[] {
+  if (!areTilesAtGoal(board, topRowTiles)) {
+    return [];
   }
+  return areTilesAtGoal(board, leftColumnTiles)
+    ? [...topRowTiles, ...leftColumnTiles]
+    : [...topRowTiles];
 }
 
 /**
- * 今の盤面から最短で完成させるときに、次にスライドさせる空白の隣のタイルのマス。完成していれば `null`。
+ * 完成していれば `null`。
  * 3×3 の盤面は、タイルと自分の場所との距離の和を下限にした反復深化で、どこからでもすぐ求まる。
  */
-function findNextShortestMoveCellIndex(board: SlidePuzzleBoard): number | null {
+function findNextShortestMoveCellIndex(
+  board: SlidePuzzleBoard,
+  fixedTiles: readonly SlidePuzzleTile[],
+): number | null {
   if (isSlidePuzzleSolved(board)) {
     return null;
   }
@@ -165,7 +225,12 @@ function findNextShortestMoveCellIndex(board: SlidePuzzleBoard): number | null {
     }
     let nextBound = Number.POSITIVE_INFINITY;
     for (const cellIndex of listSlidePuzzleSingleMoves(current)) {
-      if (cellIndex === previousBlankIndex) {
+      const tile = current[cellIndex];
+      if (
+        cellIndex === previousBlankIndex ||
+        tile === undefined ||
+        fixedTiles.includes(tile)
+      ) {
         continue;
       }
       const slide = getSlidePuzzleSlide(current, cellIndex);
@@ -189,24 +254,29 @@ function findNextShortestMoveCellIndex(board: SlidePuzzleBoard): number | null {
 
   const firstMoves: number[] = [];
   let bound = calculateSlidePuzzleManhattanDistance(board);
-  for (;;) {
+  while (Number.isFinite(bound)) {
     const result = search(board, 0, bound, -1);
     if (result === "found") {
       return firstMoves[0] ?? null;
     }
     bound = result;
   }
+  return null;
 }
 
 function startSlidePuzzleTutorial(): SlidePuzzleTutorialBoardState {
-  return { board: startBoard, moveCount: 0, lastMove: null };
+  return {
+    board: startBoard,
+    guidedMoveIndex: 0,
+    moveCount: 0,
+    lastMove: null,
+  };
 }
 
 function getSlidePuzzleTutorialGoal(): SlidePuzzleTutorialBoardState {
-  return { board: goalBoard, moveCount: 0, lastMove: null };
+  return { ...startSlidePuzzleTutorial(), board: goalBoard };
 }
 
-/** 手を引いている間は、印のタイルだけをスライドさせる。手を離した後は本番と同じく、空白と同じ行・列のタイルはスライドする。 */
 function performSlidePuzzleTutorialAction(
   { step, earnedRuleIds }: SlidePuzzleTutorialSituation,
   state: SlidePuzzleTutorialBoardState,
@@ -230,13 +300,23 @@ function performSlidePuzzleTutorialAction(
         }
       : { state, outcome: "ignored" };
   }
-  if (step !== null && tile !== step.tile) {
+
+  const board = applySlidePuzzleSlide(state.board, slide);
+  const guidedMoveIndex =
+    step === null
+      ? state.guidedMoveIndex
+      : state.guidedMoveIndex + slide.movedTileIndices.length;
+  if (
+    step !== null &&
+    (guidedMoveIndex > step.endMoveIndex ||
+      !isSameBoard(board, guidedBoards[guidedMoveIndex]))
+  ) {
     return { state, outcome: "ignored" };
   }
 
-  const board = applySlidePuzzleSlide(state.board, slide);
   const next: SlidePuzzleTutorialBoardState = {
     board,
+    guidedMoveIndex,
     moveCount: state.moveCount + 1,
     lastMove: {
       type: "slid",
@@ -247,54 +327,135 @@ function performSlidePuzzleTutorialAction(
   if (isSlidePuzzleSolved(board)) {
     return { state: next, outcome: "solved" };
   }
-  return { state: next, outcome: step !== null ? "stepped" : "continued" };
+  if (step === null) {
+    return { state: next, outcome: "continued" };
+  }
+  return {
+    state: next,
+    outcome: guidedMoveIndex === step.endMoveIndex ? "stepped" : "continued",
+  };
 }
 
-/** 空白と同じ行・列にないタイルをタップしたとき。同じ行・列のルールを示した後にだけ起きる。 */
 function describeSlidePuzzleTutorialViolation(
   _situation: SlidePuzzleTutorialSituation,
   { lastMove }: SlidePuzzleTutorialBoardState,
 ): TutorialMessage {
+  if (lastMove?.type !== "rejected") {
+    return {
+      headline: "空白と同じ行か列のタイルをタップしてスライドさせます",
+      detail: null,
+    };
+  }
   return {
-    headline:
-      lastMove?.type === "rejected"
-        ? `${lastMove.tile} は空白と同じ行にも列にもありません`
-        : "空白と同じ行・列にないタイルはスライドしません",
-    detail: null,
+    headline: `${lastMove.tile}は空白と同じ行にも\n列にもありません`,
+    detail: `空白を${lastMove.tile}と同じ行か列へ動かします`,
   };
 }
 
-export function getSlidePuzzleTutorialStepTile({
-  step,
-}: SlidePuzzleTutorialSituation): SlidePuzzleTile | null {
-  return step?.tile ?? null;
+/** 手を離した後は `null`。`lureTile` のある手順では、ルールの違反を見せるまで `lureTile` を返す。 */
+export function getSlidePuzzleTutorialStepTile(
+  { step }: SlidePuzzleTutorialSituation,
+  { board, guidedMoveIndex, lastMove }: SlidePuzzleTutorialBoardState,
+): SlidePuzzleTile | null {
+  if (step === null) {
+    return null;
+  }
+  if (
+    step.lureTile !== null &&
+    guidedMoveIndex === step.startMoveIndex &&
+    lastMove?.type !== "rejected"
+  ) {
+    return step.lureTile;
+  }
+  return findFarthestGuidedTile(step, board, guidedMoveIndex);
 }
 
-export function getSlidePuzzleTutorialStepCarriedTiles(
-  situation: SlidePuzzleTutorialSituation,
-  state: SlidePuzzleTutorialBoardState,
-): SlidePuzzleTile[] {
-  const tile = getSlidePuzzleTutorialStepTile(situation);
-  if (tile === null) {
+/** 手を引く道の次の何手かを、空白と同じ行・列の1回のタップでまとめて進められるなら、そのいちばん遠いタイル。 */
+function findFarthestGuidedTile(
+  step: SlidePuzzleTutorialStep,
+  board: SlidePuzzleBoard,
+  guidedMoveIndex: number,
+): SlidePuzzleTile | null {
+  for (
+    let moveIndex = step.endMoveIndex;
+    moveIndex > guidedMoveIndex;
+    moveIndex -= 1
+  ) {
+    const tile = guidedTiles[moveIndex - 1];
+    const slide =
+      tile === undefined
+        ? null
+        : getSlidePuzzleSlide(board, board.indexOf(tile));
+    if (
+      tile !== undefined &&
+      slide?.movedTileIndices.length === moveIndex - guidedMoveIndex &&
+      isSameBoard(applySlidePuzzleSlide(board, slide), guidedBoards[moveIndex])
+    ) {
+      return tile;
+    }
+  }
+  return null;
+}
+
+/** 決め手の無い手順と、手を離した後は空。 */
+export function getSlidePuzzleTutorialFocusTiles(
+  { step }: SlidePuzzleTutorialSituation,
+  { board }: SlidePuzzleTutorialBoardState,
+): readonly SlidePuzzleTile[] {
+  if (step === null || step.focusTiles.length === 0) {
     return [];
   }
-  const slide = getSlidePuzzleSlide(state.board, state.board.indexOf(tile));
-  return (slide?.movedTileIndices ?? []).flatMap((cellIndex) => {
-    const moved = state.board[cellIndex];
-    return moved === undefined || moved === tile ? [] : [moved];
-  });
+  if (step.cue === "marked") {
+    return step.focusTiles;
+  }
+  const movableTiles = board.filter(
+    (tile, cellIndex) =>
+      tile !== SLIDE_PUZZLE_BLANK &&
+      getSlidePuzzleSlide(board, cellIndex) !== null,
+  );
+  return [...new Set([...step.focusTiles, ...movableTiles])];
 }
 
-export function findSlidePuzzleTutorialHintTile(
+export function isSlidePuzzleTutorialLureShown(
+  situation: SlidePuzzleTutorialSituation,
   state: SlidePuzzleTutorialBoardState,
-): SlidePuzzleTile | null {
-  const cellIndex = findNextShortestMoveCellIndex(state.board);
-  return cellIndex === null ? null : (state.board[cellIndex] ?? null);
+): boolean {
+  const { step } = situation;
+  return (
+    step !== null &&
+    step.lureTile !== null &&
+    getSlidePuzzleTutorialStepTile(situation, state) === step.lureTile &&
+    state.guidedMoveIndex === step.startMoveIndex
+  );
 }
 
-export const slidePuzzleTutorialScrambleBoards: readonly SlidePuzzleBoard[] = [
-  ...listBoardsByReading(startBoard),
-].reverse();
+export function isSlidePuzzleTutorialStepCueShownUpfront({
+  step,
+}: SlidePuzzleTutorialSituation): boolean {
+  return step?.cue === "marked";
+}
+
+/** 完成していれば `null`。 */
+export function findSlidePuzzleTutorialHintTile({
+  board,
+}: SlidePuzzleTutorialBoardState): SlidePuzzleTile | null {
+  const cellIndex = findNextShortestMoveCellIndex(
+    board,
+    listSettledTiles(board),
+  );
+  return cellIndex === null ? null : (board[cellIndex] ?? null);
+}
+
+export const SLIDE_PUZZLE_TUTORIAL_PROGRESS_STEP_COUNT = steps.length + 1;
+
+export function getSlidePuzzleTutorialProgressRatio(
+  stepIndex: number,
+  { board }: SlidePuzzleTutorialBoardState,
+): number {
+  return isSlidePuzzleSolved(board)
+    ? 1
+    : stepIndex / SLIDE_PUZZLE_TUTORIAL_PROGRESS_STEP_COUNT;
+}
 
 export const slidePuzzleTutorial: Tutorial<
   SlidePuzzleTutorialRuleId,
@@ -303,27 +464,26 @@ export const slidePuzzleTutorial: Tutorial<
   SlidePuzzleTutorialAction
 > = {
   intro: {
-    purpose: "番号が書かれたタイルをスライドさせて、順番に並べるパズルです",
-    goalCaption: "この形がゴールです",
-    startCaption: "最初はこのように崩れています",
+    purpose: "タイルをスライドさせて\n番号順に並べるパズルです",
+    goalCaption: "1から8まで並べて右下を空けると完成です",
   },
   rules: [
-    { id: "slide", label: "空白にスライド" },
-    { id: "line", label: "まとめてスライド" },
+    { id: "line", label: "空白と同じ行か列のタイルが動かせます" },
+    { id: "pair", label: "行や列の最後の2枚は組にして続けて入れます" },
   ],
   steps,
   freePlay: {
-    headline: "残りを収めると完成です",
-    detail: null,
+    headline: "残りのタイルも並べてみましょう",
+    detail: "上の行と同じように\n左の列から並べます",
   },
   completion: {
     home: {
       headline: "完成です",
-      detail: "どのレベルも同じルールです",
+      detail: "本番も行や列の最後の2枚は組にして入れると進められます",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も同じルールです",
+      detail: "プレイ中の盤面と同じルールです",
     },
   },
   start: startSlidePuzzleTutorial,
@@ -335,7 +495,8 @@ export const slidePuzzleTutorial: Tutorial<
 export const _private = {
   startBoard,
   goalBoard,
-  getTileForBlank,
-  listBoardsByReading,
+  guidedTiles,
+  guidedBoards,
+  listSettledTiles,
   findNextShortestMoveCellIndex,
 };
