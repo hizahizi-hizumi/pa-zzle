@@ -26,14 +26,9 @@ type GameHomePerformanceProps = GameHomeLayerControl & {
   /** 全記録。開いているレベルの記録は、成績を開いたときにこの中から選ぶ。 */
   records: readonly PlayRecord[];
   playRecordDisplay: PlayRecordDisplayDefinition;
-  /** 開いているレベル。成績はこのレベルの分だけを示す。 */
   difficulty: DifficultyLevel;
 };
 
-/**
- * 開いているレベルの成績（自己ベスト・推移。内部診断が有効なビルドでは記録の JSON コピーも）。見出しのメニューから、スマートフォンでは画面の下からのシート、PC ではメニューのボタンから出すポップオーバーで出す。
- * 中身は開いたときだけ描き、ゲームのホームを開くまでの時間を延ばさない。
- */
 export function GameHomePerformance({
   records,
   playRecordDisplay,
@@ -45,6 +40,7 @@ export function GameHomePerformance({
   const isSheet = useHeaderLayerSheet();
   const titleId = useId();
   const levelLabel = getDifficultyLabel(difficulty);
+  // 中身は開いたときだけ描き、ゲームのホームを開くまでの時間を延ばさない。
   const performance = (
     <PlayRecordsPerformance
       records={records}

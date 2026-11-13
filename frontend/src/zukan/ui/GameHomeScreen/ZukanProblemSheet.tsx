@@ -34,17 +34,15 @@ type ZukanProblemSheetProps = {
   /** 絞り込んでいるとき、前に並べた当たった問題の数。絞り込んでいなければ `null`。 */
   matchedCount: number | null;
   numberDigitCount: number;
-  /** 選んでいる問題。選んでいなければ `null`。 */
   selectedProblemId: ProblemId | null;
-  /** 前回図鑑を見たときから変化した問題と、その変化。見せる変化が無ければ `undefined`。 */
+  /** 見せる変化が無ければ `undefined`。 */
   changes: ReadonlyMap<ProblemId, ZukanProblemChange> | undefined;
-  /** 変化した問題ごとの、変化を今どこまで見せたか。見せる変化が無ければ `undefined`。 */
+  /** 見せる変化が無ければ `undefined`。 */
   changeStages: ReadonlyMap<ProblemId, ZukanChangeStage> | undefined;
-  /** 台紙のスクロール領域。マスは `data-index` に番号の順の位置を持つ。変化を見せるときに、変化したマスが見えるようスクロールするのに使う。 */
+  /** 台紙のスクロール領域。マスは `data-index` に番号の順の位置を持つ。 */
   scrollerRef: RefObject<HTMLDivElement | null>;
   /** スクロール領域の下端に重なって覆っている高さ（px）。覆われたところのマスも、その上へスクロールして見られるようにする。 */
   coveredBottomHeight: number;
-  /** マスを並べる幅（px）が分かったときと、変わったとき。 */
   onWidthChange: (widthPx: number) => void;
   /** 選んでいないマスを押したときと、矢印キーなどで動いたとき。 */
   onSelect: (problem: ZukanProblem) => void;
@@ -93,11 +91,11 @@ function getNarrowSquareSizePx(problemCount: number): number {
   );
 }
 
-/** PC の幅のマスの大きさを使う画面幅。台紙のクラスの `lg:` と同じ境目にする。 */
+/** 台紙のクラスの `lg:` と同じ境目にする。 */
 const WIDE_MEDIA_QUERY = "(width >= 64rem)";
 
 /**
- * 幅 `widthPx` に `problemCount` 問の台紙を並べたときの列の数。台紙は、マスを最低の大きさ以上で、幅を等分して並べる。
+ * 台紙は、マスを最低の大きさ以上で、幅を等分して並べる。
  * 開いていないレベルの台紙の並びを、描かずに求めるのに使う。
  */
 export function countZukanSheetColumns(
@@ -113,7 +111,7 @@ export function countZukanSheetColumns(
 
 type SquareRow = { start: number; length: number };
 
-/** 台紙の行。当たった問題と当たらなかった問題は、それぞれ行の頭から並べる。 */
+/** 当たった問題と当たらなかった問題は、それぞれ行の頭から並べる。 */
 function listSquareRows(
   squareCount: number,
   columnCount: number,
@@ -130,11 +128,6 @@ function listSquareRows(
   );
 }
 
-/**
- * キー操作で移る先のマスの位置。台紙の端より先へは動かず、台紙の操作でないキーには `null` を返す。
- * 左右は並びの前後へ、上下は見えている行の同じ列へ移り、その列が無い短い行では行の最後のマスへ移る。
- * Home と End は台紙の最初と最後のマスへ移る。
- */
 function findNextSquareIndex(
   key: string,
   index: number,
@@ -202,12 +195,8 @@ function listPositions(
 }
 
 /**
- * 1つの難易度の全問をマス目で並べた台紙。難易度の名前と解いた数は、台紙を切り替えるレベルのカードが示す。
+ * 難易度の名前と解いた数は、台紙を切り替えるレベルのカードが示す。
  * 絞り込んでいるときは、当たった問題を前に、当たらなかった問題を薄くして区切りの線の後ろに、それぞれ番号の順で並べる。当たった問題が無ければ、その旨を前に示す。
- * 条件を変えるたびに多くのマスを置き直さないよう、マスは番号の順に置いたまま、当たらなかったマスを CSS の `order` で区切りの後ろへ並べて見せる。
- * 台紙は与えられた高さの中で自分だけスクロールし、選んだマスを、下端を覆うものに隠れない見える範囲へ寄せる。条件を変えても選んだマスへは寄せ直さない。
- * マスは台紙ごとに1つだけ Tab で止まり、台紙の中は見えている並びに沿って矢印キーで動く。動いた先のマスを選ぶ。選んでいるマスをもう一度押すと選択を解く。
- * Tab で止まるマスは問題で持ち、選んでいるマスがあればそのマス、無ければ最後に選んだマス、それも台紙に無ければ並びの最初のマスにする。
  */
 function ZukanProblemSheetContent({
   difficulty,
@@ -290,6 +279,7 @@ function ZukanProblemSheetContent({
     }
   }, [coveredBottomHeight, scrollerRef]);
 
+  // 条件を変えても選んだマスへは寄せ直さない。
   // 下端を覆う高さは描いたあとに分かるので、選んだマスだけでなく覆う高さが変わったときも寄せ直す。
   // biome-ignore lint/correctness/useExhaustiveDependencies: 覆う高さはスクロールの余白として描かれ、寄せる先を変える。
   useLayoutEffect(() => {
@@ -356,11 +346,6 @@ function ZukanProblemSheetContent({
   const hasFilteredOut =
     matchedCount !== null && matchedCount < arrangedProblems.length;
 
-  // 押すときに大きく浮くマスが、台紙の端のマスでもスクロール領域で切れないよう、領域を盤の余白とページの余白へ広げ、内側に浮いたマスが収まる余白を取る。
-  // 盤の幅をマスで埋め切るよう、マスは決めた大きさ以上で、列を等分して並べる。
-  // 覆われたところの余白は、領域の余白ではなく末尾の要素で取る。画面が低く、覆う高さが領域より高いときも、領域が縮めずにページをはみ出さないようにする。
-  // スクロールした行が台紙の上の数の真下で途切れて見えないよう、上端の余白の中で盤の色を重ねて薄れさせる。選んだマスはこの余白より内側へ寄せる。
-  // 薄れは `mask-image` で作らない。iOS の Safari は mask をかけた要素の中身を低い解像度で描き、ピースの輪郭がぼやけるため。
   return (
     <div
       ref={scrollerRef}
@@ -368,8 +353,11 @@ function ZukanProblemSheetContent({
       style={
         { "--covered-bottom": `${coveredBottomHeight}px` } as CSSProperties
       }
+      // 押すときに大きく浮くマスが、台紙の端のマスでもスクロール領域で切れないよう、領域を盤の余白とページの余白へ広げ、内側に浮いたマスが収まる余白を取る。
       className="-mx-6 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-6 pt-4 pb-2 sm:-mx-7 sm:px-7 sm:pb-3 lg:pt-3 [scrollbar-width:none] lg:[scrollbar-width:thin]"
     >
+      {/* スクロールした行が台紙の上の数の真下で途切れて見えないよう、上端の余白の中で盤の色を重ねて薄れさせる。選んだマスはこの余白より内側へ寄せる。 */}
+      {/* 薄れは `mask-image` で作らない。iOS の Safari は mask をかけた要素の中身を低い解像度で描き、ピースの輪郭がぼやけるため。 */}
       <div
         aria-hidden="true"
         className="pointer-events-none sticky -top-4 z-10 -mt-4 mb-1 h-3 bg-linear-to-b from-background"
@@ -386,6 +374,8 @@ function ZukanProblemSheetContent({
             "--narrow-square-size": `${getNarrowSquareSizePx(problems.length)}px`,
           } as CSSProperties
         }
+        // 盤の幅をマスで埋め切るよう、マスは決めた大きさ以上で、列を等分して並べる。
+        // 条件を変えるたびに多くのマスを置き直さないよう、マスは番号の順に置いたまま、当たらなかったマスを CSS の `order` で区切りの後ろへ並べて見せる。
         className="isolate grid grid-cols-[repeat(auto-fill,minmax(var(--narrow-square-size),1fr))] lg:grid-cols-[repeat(auto-fill,minmax(var(--wide-square-size),1fr))] [&>[data-filtered-out]]:order-2"
       >
         {matchedCount === 0 && (
@@ -423,6 +413,7 @@ function ZukanProblemSheetContent({
           />
         )}
       </div>
+      {/* 覆われたところの余白は、領域の余白ではなく末尾の要素で取る。画面が低く、覆う高さが領域より高いときも、領域が縮めずにページをはみ出さないようにする。 */}
       <div aria-hidden="true" className="h-(--covered-bottom)" />
       {/* 盤の下端で途切れた行が、まだ続くと分かるよう、下端でも盤の色を重ねて薄れさせる。 */}
       <div

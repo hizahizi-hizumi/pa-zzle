@@ -15,7 +15,6 @@ type RecordedAnimation = {
 
 let recorded: RecordedAnimation[];
 
-/** 呼ばれた動きを記録し、`finish` で終えられる Animation を返す。 */
 function recordAnimate(this: Element): Animation {
   let resolveFinished: (animation: Animation) => void = function noop() {};
   const animation = {
@@ -35,7 +34,6 @@ async function flushPromises() {
   await vi.advanceTimersByTimeAsync(0);
 }
 
-/** 渡した要素の動きをすべて終える。 */
 async function finishAnimationsOf(element: Element | null) {
   for (const animation of recorded.filter(
     (entry) => entry.element === element,
@@ -55,7 +53,6 @@ function stubRect(element: Element, rect: Partial<DOMRect>) {
   };
 }
 
-/** 台紙のスクロール領域の大きさと、送った位置を持たせる。 */
 function stubScroller(
   scroller: HTMLElement,
   {
@@ -77,7 +74,7 @@ function stubScroller(
   });
 }
 
-/** 画面・台紙のスクロール領域・抜くマスを置く。マスは台紙の見えている範囲より下にある。 */
+/** マスは台紙の見えている範囲より下にある。 */
 function renderHome(): Omit<
   ZukanPlayEntry,
   "piecePath" | "pictogramSvg" | "spinsToPiece" | "onEnter"

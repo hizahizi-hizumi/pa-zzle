@@ -10,9 +10,6 @@ import {
   zukanProblemStatusOrder,
 } from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
 
-/**
- * マスの塗りが、どの評価段階・状態を表すかの見本。台紙を広く見せるよう、常には出さず、見出しのメニューの「見方」を選んだときだけ、メニューのボタンから出す。
- */
 export function ZukanLegend({
   open,
   onOpenChange,

@@ -31,22 +31,16 @@ import {
 
 type ZukanFilterProps = GameHomeLayerControl & {
   conditions: ZukanFilterConditions;
-  /** 開いているレベルの、条件に当たる問題の数。 */
   matchedCount: number;
-  /** 開いているレベルで選べる特徴の軸。条件を選ぶ並びを開いている間だけ求める。 */
+  /** 条件を選ぶ並びを開いている間だけ求める。 */
   featureAxes: readonly ZukanFilterFeatureAxis[];
   performanceAxes: readonly ZukanPerformanceAxis[];
-  /** 開いているレベルの選択肢ごとの、今の条件で当たる問題の数。 */
   optionCounts: ZukanFilterOptionCounts;
-  /** 開いているレベルの選択肢ごとの、条件をかけないときに当たる問題の数。 */
+  /** 選択肢ごとの、条件をかけないときに当たる問題の数。 */
   optionCountLimits: ZukanFilterOptionCounts;
   onConditionsChange: (conditions: ZukanFilterConditions) => void;
 };
 
-/**
- * 図鑑の絞り込み。条件を選ぶ並びを、スマートフォンでは画面の下からのシート、PC では見出しのメニューのボタンから出すポップオーバーで出す。
- * 選んだ条件はすぐ台紙に映し、当たる問題の数を並びの下に示す。条件は並びの「解除」で全部外せる。
- */
 export function ZukanFilter({
   conditions,
   matchedCount,

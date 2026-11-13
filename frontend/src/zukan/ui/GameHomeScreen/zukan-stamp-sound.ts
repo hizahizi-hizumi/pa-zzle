@@ -1,5 +1,4 @@
 /**
- * 図鑑の変化を見せるときに、変化したマスを押すたびに鳴らす音。
  * 押すたびの音は短く小さくし、段階が上がったマスと perfect に至ったマスだけを強くする。
  * 図鑑の画面はゲームの音を使わないので、アプリが持つ選ぶ音・始める音・結果の報酬の音を、高さと大きさを変えて使う。
  */
@@ -40,7 +39,6 @@ const RAISED_SECOND_NOTE_DELAY_MS = 80;
 const PERFECT_REWARD_RATE = 1.25;
 const PERFECT_REWARD_VOLUME = 0.45;
 
-/** 1マスを押したときに鳴らす音の1つ。 */
 export type ZukanStampSoundCue = {
   sound: SoundEffect;
   delayMs: number;
@@ -62,13 +60,6 @@ function cue(
   return { sound, delayMs, playbackRate, volume, varies };
 }
 
-/**
- * 押した変化に合わせて鳴らす音。
- * - perfect に至った: 始める音と、結果の報酬の perfect の音を重ねる。
- * - 段階が上がった: 選ぶ音を、少し遅らせて高くした2音にする。
- * - 新しく great で解いた: 始める音を少し高くする。
- * - 新しく good・clear で解いた: 選ぶ音を小さく鳴らす。回数が多いので揺らす。
- */
 export function listZukanStampSoundCues({
   level,
   isRaised,
@@ -99,7 +90,6 @@ export function listZukanStampSoundCues({
     : [cue(tickSound, { volume: CLEAR_VOLUME, varies: true })];
 }
 
-/** 押した変化に合わせた音を鳴らす。鳴らさない設定と鳴らせない環境では `playSound` が何もしない。 */
 export function playZukanStampSound(stamp: ZukanStamp): void {
   for (const {
     sound,
@@ -108,6 +98,7 @@ export function playZukanStampSound(stamp: ZukanStamp): void {
     volume,
     varies,
   } of listZukanStampSoundCues(stamp)) {
+    // 鳴らさない設定と鳴らせない環境では `playSound` が何もしない。
     playSound(sound, {
       delayMs,
       playbackRate,

@@ -8,14 +8,12 @@ import type {
   ZukanPerformanceCondition,
 } from "@/zukan/zukan-filter";
 
-/** 絞り込みに示す特徴の1つの軸。開いているレベルの問題集にある値から作った選択肢を持つ。 */
 export type ZukanFilterFeatureAxis = {
   axisId: string;
   display: ProblemFeatureAxisDisplay;
   options: readonly ZukanFeatureOption[];
 };
 
-/** 特徴の選択肢の書き方。0個は「なし」、まとめた数は範囲で示す。 */
 export function formatZukanFeatureOption(
   option: ZukanFeatureOption,
   display: ProblemFeatureAxisDisplay,

@@ -48,7 +48,6 @@ async function flushPromises() {
   await vi.advanceTimersByTimeAsync(0);
 }
 
-/** 押す姿を落とす動きを終え、マスに着かせる。 */
 async function land(face: Element) {
   for (const animation of recorded.filter(({ element }) => element === face)) {
     animation.finish();

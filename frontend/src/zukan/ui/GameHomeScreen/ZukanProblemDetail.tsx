@@ -29,24 +29,22 @@ import {
 type ZukanProblemDetailProps = {
   /** 詳細を描いている間の要素。閉じる動きの間も描き、閉じ終えると `null` になる。 */
   ref: RefObject<HTMLElement | null>;
-  /** 重ねて覆う台紙のスクロール領域。重ねるときは、この領域の上端からマスの数行分を覆わない高さに収め、収まらない中身はスクロールさせる。 */
+  /** 重ねて覆う台紙のスクロール領域。 */
   coverLimitRef: RefObject<HTMLElement | null>;
-  /** 台紙で選んでいる問題。選んでいなければ `null` で、詳細を閉じる。 */
+  /** 選んでいなければ `null` で、詳細を閉じる。 */
   problem: ZukanProblem | null;
   numberDigitCount: number;
-  /** 問題の、始めたときの盤面を見れば分かる特徴。求められなければ `null`。 */
+  /** 特徴を求められなければ `null`。 */
   describeProblem: (problem: ZukanProblem) => readonly ProblemFeature[] | null;
   onPlay: (problem: ZukanProblem) => void;
-  /** 閉じるボタンを押したとき。 */
   onClose: () => void;
   /** 台紙の下端に重ねている高さ（px）が変わったとき。重ねていないときは 0。 */
   onOverlayHeightChange: (height: number) => void;
 };
 
-/** 詳細を台紙の下端に重ねて出す画面幅。クラスの `lg:` で台紙の横へ移すのと同じ境目にする。 */
+/** クラスの `lg:` で台紙の横へ移すのと同じ境目にする。 */
 const OVERLAY_MEDIA_QUERY = "(width < 64rem)";
 
-/** 今の画面幅で、詳細を台紙の下端に重ねて出すか。 */
 export function isZukanDetailOverlayingSheet(): boolean {
   return window.matchMedia?.(OVERLAY_MEDIA_QUERY).matches ?? false;
 }
@@ -54,10 +52,10 @@ export function isZukanDetailOverlayingSheet(): boolean {
 /** 重ねるときに、台紙のスクロール領域の上端から覆わずに残す高さ（px）。台紙の上の余白と、選んだマスを含むマスの3行ほど。 */
 const UNCOVERED_SHEET_HEIGHT_PX = 64;
 
-/** 重ねる詳細の最低の高さ。解いた問題の詳細が収まる高さで、選ぶ問題を変えても縁が動かないようにする。 */
+/** 解いた問題の詳細が収まる高さで、選ぶ問題を変えても縁が動かないようにする。 */
 const MIN_OVERLAY_HEIGHT = "8rem";
 
-/** 重ねる詳細の高さの上限を、台紙のスクロール領域の上端から決める。重ねない幅では上限を外す。 */
+/** 低い画面で台紙を覆い尽くさないよう、重ねるときは台紙の上端からマスの数行を覆わない高さに収め、収まらない中身は詳細の中でスクロールさせる。 */
 function limitOverlayHeight(
   element: HTMLElement,
   coverLimit: HTMLElement | null,
@@ -141,16 +139,6 @@ function listSolvedProblemFacts(
   ];
 }
 
-/**
- * 台紙で選んだ1問の詳細と、その問題を始める操作。選んでいる間だけ描く。
- * スマートフォンでは台紙の下端に重ね、下から短く滑らせて出し入れし、重ねた高さを知らせる。選ぶ問題を変えても縁が動かないよう、解いた問題の詳細が収まる高さを保つ。PC では台紙の横に置き、動かさない。
- * 閉じるボタンは始める操作と並べる。PC の狭い列では番号と難易度の行に並べると難易度が折り返すので、始める操作の横に置く。
- * 番号と難易度の下に、始めたときの盤面を見れば分かる問題の特徴を、解いたかどうかによらず小さく示す。解かないと分からないことは示さない。
- * 解いた問題には、最高スコアと、最速タイム・最少手数・最少ミスのうちそのゲームが数える値を示す。最高スコアは結果画面の評価段階と同じ色の札で示し、称賛の言葉は付けない。
- * 難易度の名前は、番号の行に収まらない狭い幅では、途中で折り返さずに次の行へ送る。
- * 名前と値の組は、スマートフォンでは2組ずつ、PC では1組ずつの列に揃え、組の途中で折り返さない。値の補足（最短手数）は、収まらない幅では値の下へ送る。
- * 低い画面で台紙を覆い尽くさないよう、重ねるときは台紙の上端からマスの数行を覆わない高さに収め、収まらない中身は詳細の中でスクロールさせる。
- */
 export function ZukanProblemDetail({
   ref,
   coverLimitRef,
@@ -262,6 +250,7 @@ export function ZukanProblemDetail({
             遊ぶ
           </Button>
         </div>
+        {/* 閉じるボタンは始める操作と並べる。PC の狭い列では番号と難易度の行に並べると難易度が折り返すので、始める操作の横に置く。 */}
         <div className="lg:order-last">
           <Button
             variant="ghost"
@@ -273,6 +262,7 @@ export function ZukanProblemDetail({
           </Button>
         </div>
         {shownProblem.kind === "solved" ? (
+          // 名前と値の組は、スマートフォンでは2組ずつ、PC では1組ずつの列に揃え、組の途中で折り返さない。値の補足（最短手数）は、収まらない幅では値の下へ送る。
           <dl className="col-span-full grid grid-cols-[auto_minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5 text-meta text-muted-foreground tabular-nums min-[360px]:grid-cols-[auto_auto_auto_minmax(0,1fr)] min-[360px]:gap-x-3 lg:grid-cols-[auto_minmax(0,1fr)]">
             {listSolvedProblemFacts(shownProblem).map(({ label, value }) => (
               <div
