@@ -1,6 +1,6 @@
 /**
  * `frontend/styles/globals.css` の `@theme` にある動きのトークンを、Web Animations API など TS から使う値として写す。
- * 値の正は `@theme` で、ここは `@theme` と同じ値を保つ。Tailwind のクラスでは `duration-(--duration-*)` と `ease-*` を使う。
+ * 値の正は `@theme` で、ここは `@theme` と同じ値を保つ。
  */
 export const MOTION_DURATION_MS = {
   fast: 100,

@@ -16,7 +16,6 @@ type VolumeSettingRowProps = {
   onChange: (volume: number) => void;
   /** スライダーを離したときや、キーで動かしたときに、選び終えた音量を渡す。 */
   onCommit: (volume: number) => void;
-  /** 印のボタンで消音と、消音する前の音量に戻すのを切り替える。 */
   onToggleMuted: () => void;
 };
 

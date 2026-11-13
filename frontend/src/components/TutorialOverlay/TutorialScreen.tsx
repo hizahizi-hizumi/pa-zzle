@@ -81,7 +81,7 @@ type TutorialScreenProps = {
   intro: TutorialIntro;
   rules: readonly TutorialRuleListItem[];
   message: TutorialMessage;
-  /** 導入を見せている間。開いたときと、もう一度始めたときに導入から始まる。 */
+  /** 導入を見せている間。もう一度始めたときも導入から始まる。 */
   introducing: boolean;
   completed: boolean;
   /** 手を引いている間。 */

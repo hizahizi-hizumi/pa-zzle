@@ -93,7 +93,7 @@ export function getAppBackgroundMusicScene(
   { progress, unsavedResultShown }: PlayScreenMusicState,
   tutorial: TutorialMusicState,
 ): AppBackgroundMusicScene {
-  // チュートリアルは開いた画面の上に重ねる、盤面を解く場面として扱うので、開いた画面によらず決める。
+  // チュートリアルは開いた画面の上に重ねるので、開いた画面によらず決める。
   if (tutorial !== "closed") {
     return tutorial === "solving" ? "play" : "silent";
   }
@@ -144,7 +144,7 @@ export function useAppBackgroundMusic(): void {
     subscribeAppLaunchTitle,
     isAppLaunchTitleShown,
   );
-  // タイトルはホームの上に重ねるので、裏のホームの曲を流さない。設定のボタンなどの操作で音を出せるようになっても鳴らさない。
+  // タイトルはホームの上に重ねるので、裏のホームの曲を流さない。
   const scene = titleShown
     ? "silent"
     : getAppBackgroundMusicScene(pathname, playScreen, tutorial);

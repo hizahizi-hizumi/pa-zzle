@@ -13,10 +13,7 @@ import { playSound } from "@/lib/sound-effects";
 /** 報酬の音の余韻を BGM で消さない。 */
 const MUSIC_REST_AFTER_REWARD_MS = 300;
 
-/**
- * 記録を保存して記録の結果画面へ移るときも、保存に失敗してその場で結果画面を出すときも、報酬の音を鳴らす。
- * 記録から開いた結果画面と、結果画面の再読み込みはプレイを通らないので鳴らさない。
- */
+/** 記録を保存して記録の結果画面へ移るときも、保存に失敗してその場で結果画面を出すときも、報酬の音を鳴らす。 */
 export function useResultRewardSound(
   progress: GameProgress,
   score: number | null,

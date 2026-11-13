@@ -745,7 +745,6 @@ export function GameHomeScreen({
     enterPlay(problem, false);
   }
 
-  // 特定のレベルを勧めないよう、チュートリアルを終えたら、「ランダムに遊ぶ」と同じく開いているレベルを始める。
   const tutorialPlayStart: TutorialPlayStart = {
     difficulty: openDifficulty,
     // チュートリアルを終えて始めるときは、台紙が見えていないので、動かさずに始める。
@@ -839,6 +838,7 @@ export function GameHomeScreen({
         <Tabs
           value={openDifficulty}
           onValueChange={handleLevelChange}
+          // 矢印キーで選ぶと通り過ぎたレベルの台紙を開いて変化を見せ終えるので、矢印キーではフォーカスだけを動かし、押したときと Enter・Space で選ぶ。
           activationMode="manual"
           className="mt-2 min-h-0 flex-1 sm:mt-3"
         >

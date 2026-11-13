@@ -27,7 +27,6 @@ export type GameHomePath = Exclude<
 
 export type GamePlayPath = Extract<Path, `/puzzles/${string}/play/:difficulty`>;
 
-/** 完了記録や離脱した試行の問題を遊び直すプレイ画面の難易度と、その難易度の問題集で引ける問題 ID。 */
 export type RecordProblemPlayTarget = {
   difficulty: string;
   problemId: ProblemId;
@@ -88,17 +87,11 @@ export type GameCatalogEntry = {
   homePath: GameHomePath;
   playPath: GamePlayPath;
   playRecordDisplay: PlayRecordDisplayDefinition;
-  /**
-   * 遊び直せない記録には `null` を返す。
-   * 記録の一覧の行ごとに求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。
-   */
+  /** 遊び直せない記録には `null` を返す。 */
   recordProblemPlayTarget: (
     record: PlayRecord,
   ) => RecordProblemPlayTarget | null;
-  /**
-   * 遊び直せない試行には `null` を返す。
-   * 完了記録の `recordProblemPlayTarget` と同じく、問題を復元せず問題集の索引で引けるかだけを確かめる。
-   */
+  /** 遊び直せない試行には `null` を返す。 */
   attemptProblemPlayTarget: (
     attempt: PlayAttempt,
   ) => RecordProblemPlayTarget | null;
@@ -116,7 +109,6 @@ export type GameCatalogEntry = {
   /** `renderRecordResult` が結果画面を返すときだけ `true`。 */
   hasRecordResult: (record: PlayRecord) => boolean;
   /**
-   * 今の版の記録でなく結果を作れないときは `null` を返す。
    * 呼び出し側は記録の `gameId` がこのゲームの `id` と一致することを確かめてから渡す。
    */
   renderRecordResult: (
