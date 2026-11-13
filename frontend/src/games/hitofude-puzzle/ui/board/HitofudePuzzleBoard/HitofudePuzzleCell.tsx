@@ -18,6 +18,8 @@ type HitofudePuzzleCellProps = {
   cue: HitofudePuzzleCellCue | undefined;
   /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜く。 */
   spotlit: boolean;
+  /** 見せるマスか。見せないマスは場所だけを取り、見えず、押せない。 */
+  shown: boolean;
   onPress: (cell: number) => void;
   onFocus: (cell: number) => void;
 };
@@ -74,6 +76,7 @@ export function HitofudePuzzleCell({
   isTabStop,
   cue,
   spotlit,
+  shown,
   onPress,
   onFocus,
 }: HitofudePuzzleCellProps) {
@@ -89,6 +92,7 @@ export function HitofudePuzzleCell({
       aria-label={label}
       {...{ [CELL_ATTRIBUTE]: cell }}
       disabled={disabled}
+      style={shown ? undefined : { visibility: "hidden" }}
       tabIndex={isTabStop ? 0 : -1}
       onFocus={() => onFocus(cell)}
       onClick={(event) => {

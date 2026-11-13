@@ -2,11 +2,11 @@ import { cleanup, render } from "@testing-library/react";
 import { createElement } from "react";
 
 import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
-import { playClearTrace } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/play-clear-trace";
 import {
   HitofudePuzzleFigure,
   hitofudePuzzleFigureParts,
 } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
+import { playClearTrace } from "@/games/hitofude-puzzle/ui/board/play-clear-trace";
 
 const board = parseHitofudePuzzleBoard(["S . .", ". . .", ". . ."]);
 const path = [0, 1, 2, 5, 4, 3, 6, 7, 8];

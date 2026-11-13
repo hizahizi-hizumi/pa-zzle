@@ -1,6 +1,7 @@
 import { Check, type LucideIcon, X } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { HowToPlayVerdictLine } from "@/components/HowToPlayVerdictLine";
 import { cn } from "@/lib/utils";
 
 /**
@@ -21,7 +22,7 @@ type HowToPlayVerdictProps = {
   disallowedClassName?: string;
   /** ✕ のとき、例が教えるルールとは別のわけ。判定の下の2行目に、場所を取らずに重ねて添える。 */
   reason?: string;
-  /** 判定の右に添える物（行の数など）。判定と1つのまとまりにする。 */
+  /** 判定の右に添える物（行の数など）。判定を盤面の中央に置いたまま、右の列に置く。 */
   aside?: ReactNode;
 };
 
@@ -32,14 +33,14 @@ const verdictStates = ["allowed", "disallowed", "incomplete"] as const;
 const incompleteLabel = "途中";
 
 /**
- * 触れる例の今の姿の判定（✓ / ✕ と言葉、または途中）。
- * 判定の言葉はどれも同じ場所に重ねて短く入れ替え、場所はいちばん長い言葉の幅で取るので、入れ替えても周りは動かない。
- * 右に添える物があるときは、判定と添える物を1つのまとまりにし、まとまりごと例の盤面の中央に置く。
- * 判定の言葉は添える物の側に寄せ、添える物との間をどの言葉でも同じにする。
+ * 触れる例の今の姿の判定（✓ / ✕ と言葉、または途中）。記号と言葉の1行は `HowToPlayVerdictLine` で描く。
+ * 判定の言葉はどれも同じ場所に重ね、場所はいちばん長い言葉の幅で取るので、入れ替えても周りは動かない。
+ * 入れ替えはすぐに行い、古い言葉と新しい言葉を重ねて見せない。
+ * 右に添える物があるときも、判定の言葉を例の盤面の中央に置き、添える物はその右に並べる。
  * 添える物が無いときは、記号と言葉の組を場所の中央、つまり盤面の中央に置く。
  * 例が教えるルールとは別のわけで弾かれたときは、なぜできないかが分かるよう、わけを判定の下に添える。
- * 添える言葉は行の高さを取らずに判定の下に重ね、判定と周りを動かさない。例を並べる面が、その高さの分の間を例の下に取る。
- * 動きを減らす設定ではすぐ入れ替える。
+ * わけは行の高さを取らずに判定の下に重ね、判定と周りを動かさない。例を並べる面が、その高さの分の間を例の下に取る。
+ * わけもまとまりの中央に置き、長いわけが片側へ伸びないようにする。
  */
 export function HowToPlayVerdict({
   verdict,
@@ -54,8 +55,18 @@ export function HowToPlayVerdict({
     incomplete: { Icon: null, className: "text-muted-foreground" },
   } as const satisfies Record<HowToPlayVerdictState, VerdictLook>;
   const words = { ...labels, incomplete: incompleteLabel };
+  const shownReason =
+    verdict === "disallowed" && reason !== undefined ? reason : undefined;
   return (
-    <span className="relative flex items-center gap-3">
+    <span
+      data-how-to-play-verdict
+      className={cn(
+        "relative items-center gap-3",
+        // 添える物があるときは、同じ幅の左右の列の真ん中に判定を置き、判定を盤面の中央に保ったまま右の列に添える物を置く。
+        aside === undefined ? "flex" : "grid grid-cols-[1fr_auto_1fr]",
+      )}
+    >
+      {aside === undefined ? null : <span aria-hidden="true" />}
       {/* どの言葉の箱も場所いっぱいに広げて同じ矩形にし、中身をその中で寄せる。 */}
       <span className="grid">
         {verdictStates.map((shown) => {
@@ -65,26 +76,31 @@ export function HowToPlayVerdict({
               key={shown}
               aria-hidden={shown !== verdict}
               className={cn(
-                "col-start-1 row-start-1 flex items-center gap-1 whitespace-nowrap transition-opacity duration-(--duration-fast) ease-standard motion-reduce:transition-none",
-                aside === undefined ? "justify-center" : "justify-end",
+                "col-start-1 row-start-1 flex",
                 className,
-                shown === verdict ? "opacity-100" : "opacity-0",
+                shown === verdict ? null : "invisible",
               )}
             >
-              {Icon ? (
-                <Icon
-                  aria-hidden
-                  className="size-4 shrink-0"
-                  strokeWidth={2.5}
-                />
-              ) : null}
-              {words[shown]}
+              <HowToPlayVerdictLine
+                mark={
+                  Icon ? (
+                    <Icon className="size-4 shrink-0" strokeWidth={2.5} />
+                  ) : undefined
+                }
+                align="center"
+              >
+                {words[shown]}
+              </HowToPlayVerdictLine>
             </span>
           );
         })}
       </span>
-      {aside}
-      {verdict === "disallowed" && reason !== undefined ? (
+      {aside === undefined ? null : (
+        <span data-how-to-play-verdict-aside className="flex justify-start">
+          {aside}
+        </span>
+      )}
+      {shownReason !== undefined ? (
         <span
           className={cn(
             "absolute top-full left-1/2 -translate-x-1/2 whitespace-nowrap",
@@ -92,7 +108,7 @@ export function HowToPlayVerdict({
           )}
         >
           <span className="sr-only">・</span>
-          {reason}
+          {shownReason}
         </span>
       ) : null}
     </span>

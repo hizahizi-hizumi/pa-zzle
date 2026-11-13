@@ -3,7 +3,7 @@ import { createElement } from "react";
 
 import type { HitofudePuzzleBlockedMove } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
-import { animateBlockedMove } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/animate-blocked-move";
+import { animateBlockedMove } from "@/games/hitofude-puzzle/ui/board/animate-blocked-move";
 import {
   HitofudePuzzleFigure,
   hitofudePuzzleFigureParts,

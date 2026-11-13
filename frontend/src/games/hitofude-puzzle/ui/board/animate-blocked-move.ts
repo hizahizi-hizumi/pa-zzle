@@ -17,7 +17,7 @@ const HEAD_SHAKE_DISTANCE = 0.08;
  * 進もうとしたマスの×。すぐ点け、目を向けてから読める間（0.7秒ほど）を置いてゆっくり消す。
  * 次の操作の邪魔にならないよう、1秒で消し切る。
  */
-const BLOCKED_MARK_DURATION_MS = 1_000;
+export const BLOCKED_MARK_DURATION_MS = 1_000;
 const blockedMarkKeyframes: Keyframe[] = [
   { opacity: 0 },
   { opacity: 1, offset: 0.05 },

@@ -28,6 +28,7 @@ import type {
   UndoableGamePlayScreenProps,
 } from "@/games/play";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
+import { cn } from "@/lib/utils";
 
 type HitofudePuzzlePlayProps = GamePlayScreenProps<
   HitofudePuzzleDifficulty,
