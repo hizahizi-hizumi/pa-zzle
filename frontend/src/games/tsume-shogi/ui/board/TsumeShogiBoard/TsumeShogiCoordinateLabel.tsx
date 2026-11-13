@@ -4,7 +4,7 @@ type TsumeShogiCoordinateLabelProps = {
   text: string;
 };
 
-/** 筋・段の1文字。盤図らしい明朝の輪郭で書き、端末の書体によらない。 */
+/** 盤図らしい明朝の輪郭で書き、端末の書体によらない。 */
 export function TsumeShogiCoordinateLabel({
   text,
 }: TsumeShogiCoordinateLabelProps) {

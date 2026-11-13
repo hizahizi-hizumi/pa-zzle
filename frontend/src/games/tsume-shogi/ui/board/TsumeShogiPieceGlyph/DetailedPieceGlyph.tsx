@@ -30,19 +30,19 @@ const restingShadows = [
   { x: 18, y: 17, opacity: 0.06 },
 ] as const;
 /**
- * 持ち上げた駒の影。盤から離れた分だけ右下へ遠く落ちる広く淡い影（`ambient`）と、駒の厚みを残す近く濃い影（`core`）を
- * 重ねる。淡い影だけにすると、厚みの無い札が浮いて見える。
- */
-/**
  * 持ち上げた駒の姿。見る側へ近づくので、ひと回り大きくし、指の下から見えるよう上へ少しずらす（升の高さの約 6%）。
  * 大きくせずに上へずらすだけだと、厚みの無い札が盤の上を滑って見える。真上の升の駒に重ならない量に抑える。
  * 駒を囲む HTML の要素ではなく、絵の中で動かす（理由は `pieceMotionAttribute`）。
  */
 const liftedPose = "translate(0px, -23px) scale(1.08)";
 const restingPose = "translate(0px, 0px) scale(1)";
-/** 持ち上げる・置く動きと、影の入れ替わりを同じ長さでそろえる。動きを減らす設定では動かさない。 */
+/** 持ち上げる・置く動きと、影の入れ替わりを同じ長さでそろえる。 */
 const liftTransition =
   "duration-(--duration-normal) ease-(--ease-standard) motion-reduce:transition-none";
+/**
+ * 持ち上げた駒の影。盤から離れた分だけ右下へ遠く落ちる広く淡い影（`ambient`）と、駒の厚みを残す近く濃い影（`core`）を
+ * 重ねる。淡い影だけにすると、厚みの無い札が浮いて見える。
+ */
 const liftedShadows = [
   { kind: "ambient", x: 20, y: 46, opacity: 0.26 },
   { kind: "core", x: 9, y: 20, opacity: 0.3 },

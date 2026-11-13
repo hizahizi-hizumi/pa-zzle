@@ -60,7 +60,6 @@ export const tsumeShogiToneClassNames = {
   pieceSide: "fill-[#c79a4a]",
   /** 側面の下の縁。盤に接する稜線を細く締める。 */
   pieceSideEdge: "stroke-[#7a5220]/50",
-  /** 駒の影。置いた駒にも持ち上げた駒にも落とす。 */
   pieceShadow: "fill-[#2d1605]",
   /** 小さな図の駒の輪郭。小さいと面取りが見えないので、細い線で地から分ける。 */
   miniaturePieceOutline: "stroke-[#7a5224]/45",

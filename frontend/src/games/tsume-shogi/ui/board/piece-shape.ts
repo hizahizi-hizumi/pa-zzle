@@ -136,7 +136,6 @@ function toPath(points: readonly Point[]): string {
   return `M${points.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join("L")}Z`;
 }
 
-/** 上下を返した形。玉方の駒は頂点を下にして置く。 */
 function flip(points: readonly Point[], height: number): Point[] {
   return points.map(([x, y]) => [x, height - y]);
 }

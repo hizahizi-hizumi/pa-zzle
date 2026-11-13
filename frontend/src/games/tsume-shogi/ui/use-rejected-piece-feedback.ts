@@ -30,8 +30,6 @@ const rejectedPieceShakeKeyframes: Keyframe[] = [
 const REJECTED_PIECE_FLASH_MS = 240;
 
 /**
- * 着手させなかった入力を、選んでいた駒で返す。理由は文で示さない。
- * 駒を小さく横に揺らし、動きを減らす設定では揺らさずに、駒の地を短く変える。
  * `container` の中の `selectedPieceSelector` が揺らす駒。戻り値は駒の地を変えている間 `true`。
  */
 export function useRejectedPieceFeedback(

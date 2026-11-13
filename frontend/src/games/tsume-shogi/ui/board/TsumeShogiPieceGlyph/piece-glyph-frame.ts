@@ -71,7 +71,6 @@ export type TsumeShogiPieceGlyphProps = {
   grainSeed?: string;
 };
 
-/** 駒の外形・字の置き方。玉方の駒は頂点を下にし、字を 180° 回す。`solid` は手前の側面まで含めた形。 */
 export function getPieceGlyphLayout(
   shape: TsumeShogiPieceShape,
   side: TsumeShogiSide,
@@ -83,6 +82,7 @@ export function getPieceGlyphLayout(
   return {
     outline: defender ? shape.defenderOutline : shape.outline,
     face: defender ? shape.defenderFace : shape.face,
+    // `solid` は手前の側面まで含めた形。
     solid: defender ? shape.defenderSolid : shape.solid,
     bodyTransform: `scale(${PIECE_SCALE}) translate(0 ${-shape.height / 2})`,
     glyphTransform: `translate(0 ${glyphY})${defender ? " rotate(180)" : ""}`,

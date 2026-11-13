@@ -8,10 +8,10 @@ const UNDO_FOOTER_HEIGHT_PX = 112;
  * 320×568 で欄を置いた升（約20px）は欄を回す。
  */
 const MIN_SQUARE_WIDTH_PX = 28;
-/** 待ったの欄を戻すときの余裕。境目で欄を出し入れし続けないようにする。 */
+/** 境目で欄を出し入れし続けないようにする。 */
 const RESTORE_MARGIN_PX = 1;
 
-/** 盤を置く欄と盤の今の大きさ。`squares*` は 9×9 の升の部分。 */
+/** `squares*` は 9×9 の升の部分。 */
 type PlayAreaMeasurement = {
   areaHeight: number;
   contentHeight: number;
@@ -43,7 +43,6 @@ function getSquareWidthWithUndoFooter({
   return Math.min(squareWidth, heightLimitedSquareWidth);
 }
 
-/** 待ったの欄を盤に回すか。回している間は、余裕を足した幅まで升が戻ってから欄を戻す。 */
 function shouldMoveUndoToHand(
   squareWidthWithUndoFooter: number,
   movedToHand: boolean,

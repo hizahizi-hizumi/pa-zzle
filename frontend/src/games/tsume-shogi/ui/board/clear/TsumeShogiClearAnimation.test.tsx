@@ -26,7 +26,7 @@ afterEach(() => {
   Reflect.deleteProperty(Element.prototype, "animate");
 });
 
-/** 盤の升の並び。玉は 2三、2三から2升離れた 4三に駒、駒の無い 5三。 */
+/** 玉は 2三、2三から2升離れた 4三に駒、駒の無い 5三。 */
 function Squares() {
   return (
     <div data-board-squares="">
