@@ -507,7 +507,7 @@ describe("GameHomeScreen", () => {
       const solvedCount = screen.getByText(/^解いた問題 /);
 
       expect(heading.textContent).toBe("ナンプレ");
-      expect(solvedCount.textContent).toBe("解いた問題 2問 · あと8問");
+      expect(solvedCount.textContent).toBe("解いた問題 2問 · 10問まであと8問");
     });
 
     test("レベルごとのカードを並べ、それぞれにそのレベルの中身の一言と、解いた問題の数と次の節目までの残りを添えること", () => {
@@ -2013,7 +2013,7 @@ describe("GameHomeScreen", () => {
             "未挑戦 2問",
           ]);
           expect(tabCounts).toEqual(["0", "0", "1", "0", "0"]);
-          expect(solvedCount).toBe("解いた問題 1問 · あと9問");
+          expect(solvedCount).toBe("解いた問題 1問 · 10問まであと9問");
         });
 
         test("段階が上がったマスにだけ、押す姿に前の段階の色を重ねておくこと", () => {
@@ -2072,7 +2072,7 @@ describe("GameHomeScreen", () => {
             "挑戦中 1問",
             "未挑戦 2問",
           ]);
-          expect(solvedCount).toBe("解いた問題 1問 · あと9問");
+          expect(solvedCount).toBe("解いた問題 1問 · 10問まであと9問");
         });
       });
 
@@ -2581,7 +2581,7 @@ describe("GameHomeScreen", () => {
         const solvedCount = getSolvedCountText();
         const tabCounts = getTabCounts();
 
-        expect(solvedCount).toBe("解いた問題 3問 · あと7問");
+        expect(solvedCount).toBe("解いた問題 3問 · 10問まであと7問");
         expect(tabCounts).toEqual(["1", "0", "2", "0", "0"]);
       });
 

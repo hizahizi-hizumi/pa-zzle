@@ -45,7 +45,7 @@ export function NanpureBoard({
   conflictCellIndices,
   mistakeCellIndices,
   interactionDisabled = false,
-  sizeClassName = "w-[min(96vw,calc(100svh-12rem),38rem)]",
+  sizeClassName = "w-[min(96vw,calc(100svh-17rem),38rem)]",
   cues = [],
   spotlight = null,
   unitCompletionFlash = null,

@@ -211,9 +211,12 @@ export function IceFloorMazePlay({
           />
         </main>
         {/* 一言と、もうゴールに止まれない知らせは、盤面の位置と大きさを変えないよう、高さを決めた欄の中に出す。 */}
-        <footer className="flex h-28 shrink-0 flex-col justify-end px-4 pb-2">
+        <footer className="relative flex h-32 shrink-0 flex-col justify-end px-4 pb-2">
           {elementNoticeShown ? (
-            <IceFloorMazeElementNotice introductions={unseenIntroductions} />
+            // 行数が増えても待ったの位置を動かさないよう、欄の流れから外して待ったの上に重ねる。
+            <div className="absolute inset-x-4 bottom-16">
+              <IceFloorMazeElementNotice introductions={unseenIntroductions} />
+            </div>
           ) : null}
           {showTrappedNotice ? (
             <IceFloorMazeTrappedNotice

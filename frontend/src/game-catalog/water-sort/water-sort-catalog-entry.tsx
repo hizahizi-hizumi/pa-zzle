@@ -38,7 +38,7 @@ export const waterSortCatalogEntry = {
     "2": "たまに行き止まり",
     "3": "行き止まりに注意",
     "4": "先読みが必要",
-    "5": "ほぼ一本道",
+    "5": "一手のミスが命取り",
   },
   recordProblemPlayTarget(record) {
     return isWaterSortPlayRecord(record)

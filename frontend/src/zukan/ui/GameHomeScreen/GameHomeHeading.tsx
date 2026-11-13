@@ -56,7 +56,7 @@ export function GameHomeHeading({
           {next !== null && (
             <span className="text-muted-foreground">
               {" "}
-              · あと{next - solvedCount}問
+              · {next}問まであと{next - solvedCount}問
             </span>
           )}
         </p>

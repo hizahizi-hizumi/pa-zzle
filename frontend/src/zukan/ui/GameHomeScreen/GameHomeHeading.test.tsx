@@ -44,7 +44,7 @@ describe("GameHomeHeading", () => {
     test("解いた問題の数を、全問の数ではなく次の節目までの残りと並べて示すこと", () => {
       const count = screen.getByText("解いた問題 3問", { exact: false });
 
-      expect(count.textContent).toBe("解いた問題 3問 · あと7問");
+      expect(count.textContent).toBe("解いた問題 3問 · 10問まであと7問");
     });
   });
 

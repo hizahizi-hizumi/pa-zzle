@@ -229,7 +229,7 @@ describe("useGameHome", () => {
       const solvedCount = screen.getByText(/^解いた問題 /);
 
       expect(heading.textContent).toBe("ナンプレ");
-      expect(solvedCount.textContent).toBe("解いた問題 1問 · あと9問");
+      expect(solvedCount.textContent).toBe("解いた問題 1問 · 10問まであと9問");
     });
 
     test("最後にクリアまたは離脱したレベルのカードを選んで開くこと", () => {
