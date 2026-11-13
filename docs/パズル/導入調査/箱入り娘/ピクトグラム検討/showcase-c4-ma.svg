@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="箱入り娘">
+<style>@media (prefers-reduced-motion: no-preference){[data-pictogram-motion="play"] .pz-hakoiri-musume-blocker{animation:pz-hakoiri-musume-blocker 4800ms linear infinite}[data-pictogram-motion="play"] .pz-hakoiri-musume-daughter{animation:pz-hakoiri-musume-daughter 4800ms linear infinite}@keyframes pz-hakoiri-musume-blocker{0%{transform:translate(-18px,36px)}6.25%{transform:translate(-18px,36px);animation-timing-function:cubic-bezier(.45,0,.75,.7)}11.458%{transform:translate(0px,36px);animation-timing-function:cubic-bezier(.25,.3,.55,1)}21.875%{transform:none}100%{transform:none}}@keyframes pz-hakoiri-musume-daughter{0%{transform:translate(0px,-26px)}34.375%{transform:translate(0px,-26px);animation-timing-function:cubic-bezier(.4,0,.1,1)}55.208%{transform:none}100%{transform:none}}}</style>
+<path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M41 107H22V13H98V107H79"/>
+<rect class="pz-hakoiri-musume-wood" x="25.5" y="16.5" width="15" height="33" rx="2.5" fill="#c08a47"/>
+<rect class="pz-hakoiri-musume-wood" x="43.5" y="16.5" width="33" height="15" rx="2.5" fill="#c08a47"/>
+<rect class="pz-hakoiri-musume-wood" x="79.5" y="16.5" width="15" height="33" rx="2.5" fill="#c08a47"/>
+<rect class="pz-hakoiri-musume-wood" x="43.5" y="34.5" width="15" height="15" rx="2.5" fill="#c08a47"/>
+<rect class="pz-hakoiri-musume-wood" x="25.5" y="52.5" width="15" height="15" rx="2.5" fill="#c08a47"/>
+<rect class="pz-hakoiri-musume-wood pz-hakoiri-musume-blocker" x="79.5" y="52.5" width="15" height="15" rx="2.5" fill="#c08a47"/>
+<rect class="pz-hakoiri-musume-daughter" x="43.5" y="78.5" width="33" height="33" rx="3.5" fill="#a8301f"/>
+</svg>
