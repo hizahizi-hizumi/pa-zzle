@@ -29,10 +29,6 @@ function boardSizes(
   return sizes.map(([rows, columns]) => ({ rows, columns }));
 }
 
-/**
- * 隣り合う難易度はサイズが一部重なってよいが、離れた難易度同士はサイズと密度の組が重ならない。
- * 盤面は正方形か縦長（行数 ≥ 列数）で、最大 16行×12列。
- */
 export const minesweeperDifficultyBoardRanges = {
   "1": {
     sizes: boardSizes([9, 9], [10, 9], [10, 10]),
