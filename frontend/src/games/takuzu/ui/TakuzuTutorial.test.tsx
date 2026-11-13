@@ -104,8 +104,7 @@ function pressNext(): void {
   fireEvent.click(screen.getByRole("button", { name: "次へ" }));
 }
 
-/** 場面の動きを待っては「次へ」を押し、導入を最後まで進める。 */
-function goThroughIntroSync(): void {
+function pressNextThroughIntroWaitingForScenes(): void {
   for (let press = 0; press < 3; press += 1) {
     advanceTime(introEnoughMs);
     const next = screen.queryByRole("button", { name: "次へ" });
@@ -724,7 +723,7 @@ describe("TakuzuTutorial", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
       const caption = screen.getByText("最初は一部のマスだけ埋まっています");
-      goThroughIntroSync();
+      pressNextThroughIntroWaitingForScenes();
 
       const message = screen.getByText("印のマスをタップすると四角が入ります");
       const label = getCell(4, 1).getAttribute("aria-label");
@@ -896,7 +895,7 @@ describe("TakuzuTutorial", () => {
 
     test("次へで最後まで進めると、始めの盤面の最初の手順から始めること", () => {
       pressNext();
-      goThroughIntroSync();
+      pressNextThroughIntroWaitingForScenes();
 
       const headline = screen.getByText("印のマスをタップすると四角が入ります");
       const label = getCellLabel(4, 1);

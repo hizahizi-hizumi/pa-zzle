@@ -100,30 +100,32 @@ const board: BridgesBoard = parseBridgesBoard([
 
 const network = getBridgesNetwork(board);
 
-/** 1始まりの行・列で書いた島。 */
-function islandAt(row: number, column: number): number {
+function islandAt(oneBasedRow: number, oneBasedColumn: number): number {
   const island = board.islands.findIndex(
-    (candidate) => candidate.row === row - 1 && candidate.column === column - 1,
+    (candidate) =>
+      candidate.row === oneBasedRow - 1 &&
+      candidate.column === oneBasedColumn - 1,
   );
   if (island < 0) {
-    throw new RangeError(`No Bridges tutorial island at ${row}:${column}`);
+    throw new RangeError(
+      `No Bridges tutorial island at ${oneBasedRow}:${oneBasedColumn}`,
+    );
   }
   return island;
 }
 
-/** 1始まりの行・列で書いた2つの島の間の辺。 */
 function edgeBetween(
-  [fromRow, fromColumn]: readonly [number, number],
-  [toRow, toColumn]: readonly [number, number],
+  [oneBasedFromRow, oneBasedFromColumn]: readonly [number, number],
+  [oneBasedToRow, oneBasedToColumn]: readonly [number, number],
 ): number {
-  const from = islandAt(fromRow, fromColumn);
-  const to = islandAt(toRow, toColumn);
+  const from = islandAt(oneBasedFromRow, oneBasedFromColumn);
+  const to = islandAt(oneBasedToRow, oneBasedToColumn);
   const edge = network.edges.findIndex(
     (candidate) => candidate.from === from && candidate.to === to,
   );
   if (edge < 0) {
     throw new RangeError(
-      `No Bridges tutorial edge between ${fromRow}:${fromColumn} and ${toRow}:${toColumn}`,
+      `No Bridges tutorial edge between ${oneBasedFromRow}:${oneBasedFromColumn} and ${oneBasedToRow}:${oneBasedToColumn}`,
     );
   }
   return edge;
