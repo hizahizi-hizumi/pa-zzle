@@ -260,7 +260,6 @@ export function TsumeShogiPlay({
               />
             }
           />
-          {/* 画面では駒で返し、理由は文で示さない。読み上げでも指せなかったことだけを伝える。 */}
           <p aria-live="polite" className="sr-only">
             {rejection && (
               <span key={getRejectionAnnouncementKey(rejection)}>

@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
  * - `rejected`: 選んでいる攻方の駒で、直前の入力を着手させなかったことを返している間（動きを減らす設定）。
  * - `last-move`: 最後に指した手の移動先。
  * - `refutation`: 誤王手への玉方の反証の移動先。
- * - `mated`: 詰んだ玉。地は変えず、玉を傾ける。
+ * - `mated`: 詰んだ玉。
  */
 export type TsumeShogiSquareHighlight =
   | "selected"
@@ -54,9 +54,7 @@ type TsumeShogiSquareButtonProps = {
   piece: TsumeShogiPiece | null;
   /** 駒の、指し手で変わらない識別。駒ごとの木目の位置を決める。 */
   pieceId: string | null;
-  /** 詰みの波で一度だけ光る層を置く。 */
   clearGlow: boolean;
-  /** この升へ指した手。駒を移動元から滑らせる（打った駒は浮かび上がらせる）。 */
   arrivedMove: TsumeShogiPlayedMove | null;
   highlight: TsumeShogiSquareHighlight | null;
   /**
@@ -68,7 +66,6 @@ type TsumeShogiSquareButtonProps = {
   /** 押しても何もしない。応手を待つ間などに押せなくしても、フォーカスは升に残す。 */
   disabled: boolean;
   tapHandlers: TapHandlers;
-  /** 盤の左端・上端の升。外枠の線を足す。 */
   onLeftEdge: boolean;
   onTopEdge: boolean;
 };

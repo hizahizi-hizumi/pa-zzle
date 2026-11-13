@@ -13,7 +13,6 @@ type TsumeShogiHowToPlayDialogProps = {
   onClose: () => void;
 };
 
-/** 成る駒と、成った後の駒。 */
 const promotions = [
   ["rook", "dragon"],
   ["bishop", "horse"],
@@ -26,7 +25,6 @@ const promotions = [
   TsumeShogiPieceType,
 ])[];
 
-/** ルールと操作を、短い文と駒の動き・成りの図で示す。 */
 export function TsumeShogiHowToPlayDialog({
   open,
   onClose,

@@ -17,13 +17,10 @@ vi.mock("@/lib/sound-effects", async (importOriginal) => ({
   playLayeredSound: vi.fn(),
 }));
 
-/** 攻方が指してから、玉方の応手を盤面に指すまでの間。 */
 const defenderReplyDelayMs = 600;
 
-/** 玉方が応じて次の手順へ進んでから、次の印を付けるまでの間。 */
 const nextStepCueDelayMs = 450;
 
-/** 手を離した後、手が止まってから次の手を示すまでの間。 */
 const idleHintDelayMs = 4000;
 
 /** 詰みの演出を見せ終えるのに十分な間。 */
@@ -42,7 +39,6 @@ function advanceTime(ms: number): void {
   });
 }
 
-/** 玉方が応じ、次の印を付けるまで待つ。 */
 function advanceThroughReply(): void {
   advanceTime(defenderReplyDelayMs);
   advanceTime(nextStepCueDelayMs);
@@ -83,7 +79,6 @@ function tapSquares(...names: readonly string[]): void {
   }
 }
 
-/** 印を付けている升・持駒・待った。 */
 function getMarked(): string[] {
   return Array.from(
     document.querySelectorAll('[data-tutorial-cue="mark"]'),
@@ -98,7 +93,6 @@ function getRecalled(): string[] {
   );
 }
 
-/** 画面全体の覆いから抜いている盤の升と持駒。 */
 function getSpotlit(): string[] {
   return Array.from(
     document.querySelectorAll("[data-tutorial-spotlight]"),

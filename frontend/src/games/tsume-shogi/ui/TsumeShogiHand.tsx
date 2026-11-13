@@ -17,8 +17,6 @@ import { useRejectedPieceFeedback } from "@/games/tsume-shogi/ui/use-rejected-pi
 import { cn } from "@/lib/utils";
 
 /**
- * 持駒を押せるか。
- * - `available`: 押して選べる。
  * - `waiting`: 玉方の応手を待つ短い間だけ押せない。見た目は変えず、フォーカスも残す。
  * - `unavailable`: この筋が尽きた・詰んだなどで、戻すまで押せない。押せそうに見えないよう薄くする。
  */
@@ -31,11 +29,10 @@ type TsumeShogiHandProps = {
   hand: TsumeShogiHandCounts;
   selectedPieceType: TsumeShogiHandPieceType | null;
   availability: TsumeShogiHandAvailability;
-  /** 直前の入力を着手させなかった。選んでいる持駒で返す。 */
   rejection: TsumeShogiRejection | null;
   /** 駒台と同じ行の、左の空きに置く操作。駒台には重ねない。 */
   leadingAction?: ReactNode;
-  /** チュートリアルで次に押す持駒の印。`recallId` は印の線を短く濃くし直す合図。本番では渡さない。 */
+  /** `recallId` は印の線を短く濃くし直す合図。本番では渡さない。 */
   tutorialMark?: {
     pieceType: TsumeShogiHandPieceType;
     recallId: number | null;
@@ -47,9 +44,6 @@ type TsumeShogiHandProps = {
 
 const selectedHandPieceGlyphSelector = `[aria-pressed="true"] ${pieceMotionSelector}`;
 
-/**
- * 攻方の持駒。盤の下の駒台（`TsumeShogiKomadai`）に並べ、押して選んでから空いた升を押して打つ。2枚以上は枚数を添える。
- */
 export function TsumeShogiHand({
   hand,
   selectedPieceType,

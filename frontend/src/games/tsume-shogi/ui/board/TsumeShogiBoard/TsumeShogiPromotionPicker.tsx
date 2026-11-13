@@ -31,11 +31,7 @@ type TsumeShogiPromotionPickerProps = {
 /** 盤の幅に対する1升の割合。 */
 const squareRatio = 100 / 9;
 
-/**
- * 成・不成のどちらでも王手になる移動で、移動先の升のそばに成った駒と成らない駒を並べて選ばせる。
- * 移動先の升の真上（一段目なら真下）の升2つにちょうど重ね、移動先を隠さない（`promotion-picker-placement.ts`）。
- * 出したら「成」へフォーカスを移し、閉じたら出す前にフォーカスのあった升へ戻す。
- */
+/** 移動先の升の真上（一段目なら真下）の升2つにちょうど重ね、移動先を隠さない（`promotion-picker-placement.ts`）。 */
 export function TsumeShogiPromotionPicker({
   to,
   pieceType,
