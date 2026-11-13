@@ -12,8 +12,7 @@ type MinesweeperTutorialCoverProps = {
   active: boolean;
   rows: number;
   columns: number;
-  /** 始めの盤面で開いていないマス。 */
-  coveredCellIndices: readonly number[];
+  startCoveredCellIndices: readonly number[];
   onComplete: () => void;
   children: ReactNode;
 };
@@ -44,7 +43,7 @@ export function MinesweeperTutorialCover({
   active,
   rows,
   columns,
-  coveredCellIndices,
+  startCoveredCellIndices,
   onComplete,
   children,
 }: MinesweeperTutorialCoverProps) {
@@ -94,7 +93,7 @@ export function MinesweeperTutorialCover({
             function renderFace(_, cellIndex) {
               const row = Math.floor(cellIndex / columns);
               const column = cellIndex % columns;
-              return coveredCellIndices.includes(cellIndex) ? (
+              return startCoveredCellIndices.includes(cellIndex) ? (
                 <div
                   key={getCellKey(row, column)}
                   data-cover-step={row + column}
