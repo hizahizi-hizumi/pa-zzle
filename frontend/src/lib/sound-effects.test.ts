@@ -72,7 +72,6 @@ class FakeAudioContext {
   }
 }
 
-/** 音声ファイルの中身として、取得した URL をそのまま持つ 0.2 秒の音のデータを返す。 */
 class FakeOfflineAudioContext {
   async decodeAudioData(data: ArrayBuffer): Promise<FakeAudioBuffer> {
     return { url: new TextDecoder().decode(data), duration: 0.2 };
@@ -95,7 +94,6 @@ function stubWebAudio() {
   vi.stubGlobal("OfflineAudioContext", FakeOfflineAudioContext);
 }
 
-/** 読み込みの取得と読み解きを終わらせる。 */
 function finishLoading(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }

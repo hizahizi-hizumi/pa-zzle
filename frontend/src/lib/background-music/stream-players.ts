@@ -1,23 +1,16 @@
 /**
- * BGM をストリーミング再生する `<audio>` 要素を、決まった数だけ作って使い回す。
- *
  * iOS Safari は、利用者の操作の中で一度再生した要素でないと、操作の外での再生（画面が移ったときの曲の切り替えなど）を拒む。
- * そのため要素は作り捨てず、最初の操作の中で全ての要素を一度再生させておく（`unlockStreamPlayers`）。
+ * そのため BGM の `<audio>` 要素は作り捨てず、最初の操作の中で全ての要素を一度再生させておく（`unlockStreamPlayers`）。
  * それでも再生を拒まれた要素は、次の操作の中で再生し直す。
  */
 
-/** BGM をストリーミング再生する `<audio>` 要素1つと、その状態。 */
 export type StreamPlayer = {
   readonly element: HTMLAudioElement;
-  /** 要素の音を AudioContext へ通す口。要素ごとに一度しか作れないので、作ったら使い回す。 */
+  /** MediaElementAudioSourceNode は要素ごとに一度しか作れないので、作ったら使い回す。 */
   source: MediaElementAudioSourceNode | null;
-  /** 読み込ませている曲の URL。何も読み込ませていなければ `null`。 */
   url: string | null;
-  /** 曲のファイルを持っているときに、要素へ読み込ませるために作った URL。使い終えたら破棄する。 */
   objectUrl: string | null;
-  /** 曲を流すために使っているか。使っていない要素は、別の曲の読み込みに回せる。 */
   inUse: boolean;
-  /** 音を出しているか。 */
   playing: boolean;
   /** ネットワークからの読み込みが一区切りついたか（続けて再生できるだけ読み込んだか、読み込めなかったか）。 */
   settled: boolean;
@@ -27,13 +20,12 @@ export type StreamPlayer = {
   blocked: boolean;
 };
 
-/** 使い回す要素の数。曲を切り替えるときに、フェードアウトする曲とフェードインする曲を同時に流せるだけ持つ。 */
+/** 曲を切り替えるときに、フェードアウトする曲とフェードインする曲を同時に流せるだけ持つ。 */
 const STREAM_PLAYER_COUNT = 2;
 
 const players: StreamPlayer[] = [];
 let changeListener: (() => void) | null = null;
 
-/** 要素の状態（再生を始めた・読み込みが一区切りついた・再生を拒まれた）が変わったら `onChange` を呼ぶ。 */
 export function listenForStreamPlayerChanges(onChange: () => void): void {
   changeListener = onChange;
 }
@@ -139,7 +131,6 @@ function loadStreamPlayer(
   element.src = player.objectUrl ?? url;
 }
 
-/** `url` の曲をネットワークから読み込んでいる最中の要素があるか。 */
 export function isStreamingFromNetwork(url: string): boolean {
   return players.some(
     (player) =>
@@ -147,7 +138,6 @@ export function isStreamingFromNetwork(url: string): boolean {
   );
 }
 
-/** 要素の音を `context` へ通す口を返す。 */
 export function connectStreamPlayer(
   player: StreamPlayer,
   context: AudioContext,
@@ -159,7 +149,6 @@ export function connectStreamPlayer(
   return player.source;
 }
 
-/** 曲を流すために要素を使い、再生を始める。拒まれたら、次の `unlockStreamPlayers` で再生し直す。 */
 export function playStreamPlayer(player: StreamPlayer): void {
   player.inUse = true;
   player.blocked = false;
@@ -188,7 +177,6 @@ export function playStreamPlayer(player: StreamPlayer): void {
   );
 }
 
-/** 要素を使い終え、読み込みを止めて、別の曲に使えるようにする。 */
 export function releaseStreamPlayer(player: StreamPlayer): void {
   const { element } = player;
   player.inUse = false;
@@ -205,7 +193,6 @@ export function releaseStreamPlayer(player: StreamPlayer): void {
   }
 }
 
-/** 使っていない要素のうち、`keep` 以外の曲を読み込ませている要素の読み込みを止める。 */
 export function releaseIdleStreamPlayers(keep: (url: string) => boolean): void {
   for (const player of players) {
     if (!player.inUse && player.url !== null && !keep(player.url)) {
@@ -214,7 +201,6 @@ export function releaseIdleStreamPlayers(keep: (url: string) => boolean): void {
   }
 }
 
-/** 全ての要素を利用者の操作の中で再生させ終えておらず、操作を待つ必要があるか。 */
 export function streamPlayersNeedUserGesture(): boolean {
   return (
     players.length < STREAM_PLAYER_COUNT ||
@@ -222,15 +208,13 @@ export function streamPlayersNeedUserGesture(): boolean {
   );
 }
 
-/**
- * 利用者の操作の中で呼び、全ての要素をこの先いつでも再生できるようにする。
- * 拒まれていた再生はやり直し、使っていない要素は一度再生してすぐ止める。要素の音は先に `context` へ通しておき、外へは出さない。
- */
+/** 利用者の操作の中で呼ぶ。 */
 export function unlockStreamPlayers(context: AudioContext): void {
   while (players.length < STREAM_PLAYER_COUNT) {
     createStreamPlayer();
   }
   for (const player of players) {
+    // 要素の音は先に `context` へ通しておき、外へは出さない。
     connectStreamPlayer(player, context);
     if (player.blocked) {
       playStreamPlayer(player);

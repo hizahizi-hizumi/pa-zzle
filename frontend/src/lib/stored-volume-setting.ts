@@ -1,12 +1,3 @@
-/**
- * 端末に保存する音量の設定。全ゲームで共通にし、次に開いたときも引き継ぐ。
- * 音量は 0〜`MAX_VOLUME` の整数で、0 は鳴らさない。はじめは `DEFAULT_VOLUME` にし、保存した値を読めないときも `DEFAULT_VOLUME` にする。
- * 消音して 0 にしても、消音を戻したときに元の音量で鳴らせるよう、0 にする前に決めた音量を覚えておく。
- *
- * 設定ごとに `createStoredVolumeSetting` で一つ作り、その設定のモジュールが公開する。
- * React からは `useSyncExternalStore(setting.subscribe, setting.getVolume)` で読む。
- */
-
 import { isRecordObject } from "@/lib/type-guards";
 
 export const MAX_VOLUME = 10;
@@ -16,7 +7,7 @@ type SettingStorage = Pick<Storage, "getItem" | "setItem">;
 
 type StoredVolumeSetting = {
   volume: number;
-  /** 消音を戻すときの音量。0 より大きい。 */
+  // 消音して 0 にしても、消音を戻したときに元の音量で鳴らせるよう、0 にする前に決めた音量を覚えておく。
   unmutedVolume: number;
 };
 
@@ -32,35 +23,22 @@ const DEFAULT_SETTING: StoredVolumeSetting = {
 
 type StoredVolumeSettingOptions = {
   storageKey: string;
-  /**
-   * 音量を選べるようにする前の、鳴らすかどうかだけを保存していたキー。
-   * 音量をまだ保存していない端末では、鳴らさない設定を 0、鳴らす設定を `DEFAULT_VOLUME` として読み替える。
-   */
   legacyEnabledStorageKey: string;
 };
 
 export type VolumeSetting = {
-  /** 今の音量。0 は鳴らさない。 */
   getVolume: () => number;
-  /** 音量を変え、端末に保存する。スライダーを動かしている途中の値を渡してよい。 */
+  /** スライダーを動かしている途中の値を渡してよい。 */
   setVolume: (next: number) => void;
-  /**
-   * 利用者が選び終えた音量に変え、端末に保存する。0 より大きければ、消音を戻すときの音量として覚える。
-   * スライダーを離したときや、キーで動かしたときに呼ぶ。
-   */
+  /** スライダーを離したときや、キーで動かしたときに呼ぶ。 */
   commitVolume: (next: number) => void;
-  /** 鳴らしていれば消音し、消音していれば 0 にする前に選んでいた音量へ戻す。 */
   toggleMuted: () => void;
-  /** 音量が変わったら `onChange` を呼ぶ。別のタブで変えたときも呼ぶ。購読をやめる関数を返す。 */
   subscribe: (onChange: () => void) => () => void;
 };
 
-/**
- * 音量を、出口の GainNode に掛ける大きさにする。`maxGain` は音量が `MAX_VOLUME` のときの大きさ。
- * 耳は音の大きさを比で感じるので、スライダーの位置が音量の感じ方とおおよそ揃うよう、音量の二乗に比例させる
- * （音量が半分の `DEFAULT_VOLUME` で -12 dB）。
- */
 export function getVolumeGain(volume: number, maxGain: number): number {
+  // 耳は音の大きさを比で感じるので、スライダーの位置が音量の感じ方とおおよそ揃うよう、音量の二乗に比例させる
+  // （音量が半分の `DEFAULT_VOLUME` で -12 dB）。
   return maxGain * (volume / MAX_VOLUME) ** 2;
 }
 
@@ -155,7 +133,6 @@ function writeSetting(
   }
 }
 
-/** 端末に保存する音量の設定を作る。 */
 export function createStoredVolumeSetting(
   options: StoredVolumeSettingOptions,
 ): VolumeSetting {

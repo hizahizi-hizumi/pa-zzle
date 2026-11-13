@@ -7,9 +7,8 @@
  * メディア要素の再生のように操作の中でしか許されないことは、`subscribeUserGesture` で同じ操作の中で行う。
  */
 
-/** 鳴っていない AudioContext を動かせる操作。 */
 const UNLOCK_EVENTS = ["pointerdown", "pointerup", "touchend", "keydown"];
-/** 音声ファイルを読み解く速さ。同梱する音声ファイルと同じにし、読み解くときに速さを変えない。 */
+/** 同梱する音声ファイルと同じにし、読み解くときに速さを変えない。 */
 const DECODING_SAMPLE_RATE = 48000;
 /**
  * 全ての音が通る最後の出口の圧縮。効果音が重なったときや音量を上げたときに、音が割れないよう抑える。
@@ -36,12 +35,10 @@ let audioContext: AudioContext | null = null;
 let audioOutput: AudioOutput | null = null;
 let decodingContext: OfflineAudioContext | null = null;
 let unlockListening = false;
-/** AudioContext を動かしたいかを答える関数。どれかが動かしたいと答えたら、次の操作で動かす。 */
 const unlockWishes = new Set<() => boolean>();
 const runningListeners = new Set<() => void>();
 const gestureListeners = new Set<(context: AudioContext) => void>();
 
-/** 音を出せる環境か。Web Audio API が無い環境では、効果音も BGM も何もしない。 */
 export function canPlayAudio(): boolean {
   return getAudioContextClass() !== undefined;
 }
@@ -55,7 +52,7 @@ function getOfflineAudioContextClass(): typeof OfflineAudioContext | undefined {
 }
 
 /**
- * 共有の AudioContext を返す。まだ無ければ作る。利用者の操作の中か、操作に応じて音を鳴らすときに呼ぶ。
+ * 利用者の操作の中か、操作に応じて音を鳴らすときに呼ぶ。
  * 操作の前に作ると、ブラウザが止めたままにして警告を出す。
  */
 export function getAudioContext(): AudioContext | null {
@@ -72,15 +69,10 @@ export function getAudioContext(): AudioContext | null {
   return audioContext;
 }
 
-/** 共有の AudioContext が動いていれば返す。作ってはいない、または止まっているなら `null`。 */
 export function getRunningAudioContext(): AudioContext | null {
   return audioContext?.state === "running" ? audioContext : null;
 }
 
-/**
- * 対応するブラウザで、アプリの音を他のアプリの音楽を止めない音として扱わせる。
- * 端末の消音設定にも従う。
- */
 function preferAmbientAudioSession() {
   const audioSession = (
     navigator as Navigator & { audioSession?: { type: string } }
@@ -90,7 +82,6 @@ function preferAmbientAudioSession() {
   }
 }
 
-/** `context` の全ての音が通る最後の出口。効果音と BGM の出口をここへつなぐ。 */
 export function getAudioOutput(context: AudioContext): AudioNode {
   if (audioOutput?.context === context) {
     return audioOutput.limiter;
@@ -106,7 +97,6 @@ export function getAudioOutput(context: AudioContext): AudioNode {
   return limiter;
 }
 
-/** 止まっている AudioContext を動かす。動き出したら `subscribeAudioContextRunning` の購読者へ知らせる。 */
 export function resumeAudioContext(context: AudioContext): void {
   if (context.state === "running") {
     notifyRunning();
@@ -115,7 +105,6 @@ export function resumeAudioContext(context: AudioContext): void {
   context.resume().then(notifyRunning, function ignoreRejectedResume() {});
 }
 
-/** 共有の AudioContext が動き出したら `onRunning` を呼ぶ。購読をやめる関数を返す。 */
 export function subscribeAudioContextRunning(
   onRunning: () => void,
 ): () => void {
@@ -139,9 +128,8 @@ function notifyRunning() {
 }
 
 /**
- * 利用者の次の操作で、共有の AudioContext を作って動かすよう頼む。何度呼んでもよい。
+ * 何度呼んでもよい。
  * 操作のときに `wantsAudio` が偽を返せば、その操作では作らない（鳴らさない設定の間に AudioContext を作らないため）。
- * 利用者の操作の中で呼んだときは、次の操作を待たずにその場で動かす。
  */
 export function requestAudioContextUnlock(wantsAudio: () => boolean): void {
   if (!getAudioContextClass()) {
@@ -163,9 +151,8 @@ function isHandlingUserGesture(): boolean {
 }
 
 /**
- * AudioContext を動かす利用者の操作の中で、AudioContext を動かし始めてから `onGesture` を呼ぶ。購読をやめる関数を返す。
- * 渡す AudioContext は、まだ動き出していないことがある。
- * AudioContext を動かしたい（`requestAudioContextUnlock` に渡した関数が真を返す）ものが無い操作では呼ばない。
+ * `onGesture` に渡す AudioContext は、まだ動き出していないことがある。
+ * AudioContext を動かしたい（`requestAudioContextUnlock` に渡した関数が真を返す）ものが無い操作では `onGesture` を呼ばない。
  */
 export function subscribeUserGesture(
   onGesture: (context: AudioContext) => void,
@@ -227,16 +214,11 @@ function stopListeningForUnlock() {
   unlockListening = false;
 }
 
-/**
- * 音声ファイルを取得して読み解く。読み解けない環境では `null` を返す。
- * 音を出す AudioContext は利用者が操作するまで作れないので、音を出さない AudioContext で先に読み解いておく。
- */
 export function decodeAudioFile(url: string): Promise<AudioBuffer> | null {
   const context = getDecodingContext();
   return context ? fetchAndDecode(context, url) : null;
 }
 
-/** 取得済みの音声ファイルを読み解く。読み解けない環境では `null` を返す。 */
 export function decodeAudioBlob(file: Blob): Promise<AudioBuffer> | null {
   const context = getDecodingContext();
   return context ? decodeBlob(context, file) : null;
@@ -268,6 +250,7 @@ function getDecodingContext(): OfflineAudioContext | null {
   if (!OfflineAudioContextClass) {
     return null;
   }
+  // 音を出す AudioContext は利用者が操作するまで作れないので、音を出さない AudioContext で先に読み解いておく。
   decodingContext = new OfflineAudioContextClass(1, 1, DECODING_SAMPLE_RATE);
   return decodingContext;
 }
