@@ -17,11 +17,9 @@ import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/problem";
 import type { WaterSortPooledProblem } from "@/games/water-sort/problem/problem-pool";
 import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
+import { selectWaterSortBottle } from "@/games/water-sort/puzzle/bottle-selection";
 import { classifyWaterSortDeadlock } from "@/games/water-sort/puzzle/deadlock";
-import {
-  isCompleteWaterSortBottle,
-  type WaterSortState,
-} from "@/games/water-sort/puzzle/state";
+import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import {
   calculateWaterSortMoveDelta,
   calculateWaterSortPlayScore,
@@ -34,7 +32,6 @@ import {
   canUndoWaterSortSession,
   createWaterSortSession,
   getWaterSortSessionResult,
-  listWaterSortSessionLegalMoves,
   restartWaterSortSession,
   undoWaterSortSession,
   type WaterSortSession,
@@ -176,65 +173,33 @@ export function useWaterSortPlay(
         return current;
       }
 
-      if (current.sourceBottleIndex === null) {
-        const bottle = session.puzzleState[bottleIndex];
-        const hasLegalMove = listWaterSortSessionLegalMoves(session).some(
-          (move) => move.sourceBottleIndex === bottleIndex,
-        );
-        if (!bottle || isCompleteWaterSortBottle(bottle) || !hasLegalMove) {
-          return {
-            ...current,
-            operation: { id: operationId, type: "invalid", bottleIndex },
-          };
-        }
-
-        return {
-          ...current,
-          sourceBottleIndex: bottleIndex,
-          operation: {
-            id: operationId,
-            type: "source-selected",
-            bottleIndex,
-          },
-        };
-      }
-
-      if (current.sourceBottleIndex === bottleIndex) {
-        return {
-          ...current,
-          sourceBottleIndex: null,
-          operation: {
-            id: operationId,
-            type: "source-deselected",
-            bottleIndex,
-          },
-        };
-      }
-
-      const sourceBottleIndex = current.sourceBottleIndex;
-      const nextSession = applyWaterSortSessionMove(
-        session,
-        {
-          sourceBottleIndex,
-          destinationBottleIndex: bottleIndex,
-        },
-        selectedAt,
+      const selection = selectWaterSortBottle(
+        session.puzzleState,
+        current.sourceBottleIndex,
+        bottleIndex,
       );
-      if (nextSession === session) {
+      if (selection.type !== "pour") {
         return {
           ...current,
-          operation: { id: operationId, type: "invalid", bottleIndex },
+          sourceBottleIndex:
+            selection.type === "invalid"
+              ? current.sourceBottleIndex
+              : selection.type === "source-selected"
+                ? bottleIndex
+                : null,
+          operation: { id: operationId, ...selection },
         };
       }
 
+      const { move } = selection;
+      const nextSession = applyWaterSortSessionMove(session, move, selectedAt);
       return {
         ...applyPlaySession(current, nextSession),
         sourceBottleIndex: null,
         operation: {
           id: operationId,
           type: "poured",
-          sourceBottleIndex,
-          destinationBottleIndex: bottleIndex,
+          ...move,
           stateBefore: session.puzzleState,
           stateAfter: nextSession.puzzleState,
           isClearingMove: nextSession.status === "cleared",

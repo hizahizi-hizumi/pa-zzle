@@ -91,7 +91,9 @@ describe("WaterSortHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
+    const dialog = await screen.findByRole("dialog", {
+      name: "ウォーターソートの遊び方",
+    });
 
     expect(dialog).toBeTruthy();
   });
@@ -102,15 +104,14 @@ describe("WaterSortHomeView", () => {
       menuButton.focus();
       fireEvent.pointerDown(menuButton, { button: 0, ctrlKey: false });
       fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
-      await screen.findByRole("dialog", { name: "遊び方" });
+      await screen.findByRole("dialog", { name: "ウォーターソートの遊び方" });
     });
 
     test("閉じると、メニューのボタンへフォーカスを戻すこと", () => {
       fireEvent.click(
-        within(screen.getByRole("dialog", { name: "遊び方" })).getByRole(
-          "button",
-          { name: "閉じる" },
-        ),
+        within(
+          screen.getByRole("dialog", { name: "ウォーターソートの遊び方" }),
+        ).getByRole("button", { name: "閉じる" }),
       );
       const focused = document.activeElement;
 

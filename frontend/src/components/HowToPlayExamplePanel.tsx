@@ -57,6 +57,7 @@ export function useReportHowToPlayExampleChange(): (changed: boolean) => void {
 /**
  * 例を並べる、背景差だけの面。面はどこでも置き場所の幅いっぱいにそろえ、内側の余白も同じにし、図は面の中で中央に置く。
  * 図が面の内側の幅に合わせて大きさを決められるよう、余白の内側をコンテナにする。
+ * 上下の余白は `--how-to-play-panel-padding-block` で中の図に渡し、図が面の中に動く場所を取るときに使えるようにする。
  * 触れる例の面では、面の中のどれかの例が最初の姿と違う間だけ、面の右下の角に元に戻すボタンを出す。
  * ボタンは面の内側の余白の右端にそろえて角に重ね、そのための行の高さを取らない。例の図と言葉は中央に寄せるので、ボタンは長い言葉や盤面と重ならない。
  * 戻すときは面の例を作り直して、最初の姿にする。
@@ -92,7 +93,7 @@ export function HowToPlayExamplePanel({
   }
 
   return (
-    <div className="relative rounded-lg bg-muted px-4 py-8">
+    <div className="relative rounded-lg bg-muted px-4 py-(--how-to-play-panel-padding-block) [--how-to-play-panel-padding-block:--spacing(8)]">
       <div className="@container">
         <div className={arrangementClassNames[arrangement]}>
           <ReportChangeContext value={reportChange}>
@@ -101,7 +102,8 @@ export function HowToPlayExamplePanel({
         </div>
       </div>
       {resettable ? (
-        <span className="absolute right-4 bottom-4">
+        // ボタン（36px）の縦の中心を、例の下の言葉の1行目（面の下の余白の上の 24px の行）の中心にそろえる。
+        <span className="absolute right-4 bottom-[calc(var(--how-to-play-panel-padding-block)-6px)]">
           <HowToPlayExampleResetButton
             changed={changedExampleIds.size > 0}
             onPress={reset}

@@ -6,6 +6,12 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 import {
+  listWaterSortPourRejections,
+  listWaterSortSourceRejections,
+  selectWaterSortBottle,
+  type WaterSortRejection,
+} from "@/games/water-sort/puzzle/bottle-selection";
+import {
   applyWaterSortMove,
   getWaterSortPourAmount,
   listWaterSortLegalMoves,
@@ -29,20 +35,19 @@ export type WaterSortTutorialStep = TutorialStep<WaterSortTutorialRuleId> & {
   move: WaterSortMove;
 };
 
-export type WaterSortTutorialRejection =
-  | "empty"
-  | "complete"
-  | "no-destination"
-  | "full"
-  | "different-color";
-
+/**
+ * 直前の手。盤面の動きに使う。
+ * - `selected` / `deselected`: 注ぎ元を選んだ・選び直した。
+ * - `poured`: 注いだ。`stateBefore` は注ぐ前の盤面。
+ * - `rejected`: 選べないボトルや注げない注ぎ先をタップし、盤面が揺れて応える。
+ */
 export type WaterSortTutorialMove =
   | { type: "selected" | "deselected"; bottleIndex: number }
   | { type: "poured"; move: WaterSortMove; stateBefore: WaterSortState }
   | {
       type: "rejected";
       bottleIndex: number;
-      rejection: WaterSortTutorialRejection;
+      rejection: WaterSortRejection;
     };
 
 /** 注いで1色そろったボトル。次に注ぐまで残し、注ぐ動きの間に次のボトルを選んでも、そろったことに応えられるようにする。 */
@@ -171,33 +176,23 @@ const STEP_DESTINATION_DETAIL = "印のボトルへ注ぎます";
 function findSourceRejection(
   bottles: WaterSortState,
   bottleIndex: number,
-): WaterSortTutorialRejection | null {
-  const bottle = bottles[bottleIndex];
-  if (!bottle || bottle.length === 0) {
-    return "empty";
-  }
-  if (isCompleteWaterSortBottle(bottle)) {
-    return "complete";
-  }
-  const hasDestination = listWaterSortLegalMoves(bottles).some(
-    (move) => move.sourceBottleIndex === bottleIndex,
-  );
-  return hasDestination ? null : "no-destination";
+): WaterSortRejection | null {
+  return listWaterSortSourceRejections(bottles, bottleIndex)[0] ?? null;
 }
 
+/**
+ * 選んだ注ぎ元から注げないわけ。注ぎ元は空でないので、満杯か上の色が違うかのどちらか。
+ * 満杯で上の色も違うときは、先に示す、色が違うことをわけにする。注げるなら `null`。
+ */
 function findPourRejection(
   bottles: WaterSortState,
   move: WaterSortMove,
 ): "full" | "different-color" | null {
-  if (getWaterSortPourAmount(bottles, move) > 0) {
+  const rejections = listWaterSortPourRejections(bottles, move);
+  if (rejections.length === 0) {
     return null;
   }
-  const source = bottles[move.sourceBottleIndex] ?? [];
-  const destination = bottles[move.destinationBottleIndex] ?? [];
-  // 満杯で上の色も違うときは、先に示す、色が違うことをわけにする。
-  return destination.length > 0 && destination.at(-1) !== source.at(-1)
-    ? "different-color"
-    : "full";
+  return rejections.includes("different-color") ? "different-color" : "full";
 }
 
 const ruleByPourRejection = {
@@ -337,7 +332,7 @@ function reject(
   state: WaterSortTutorialBoardState,
   sourceBottleIndex: number | null,
   bottleIndex: number,
-  rejection: WaterSortTutorialRejection,
+  rejection: WaterSortRejection,
 ): WaterSortTutorialBoardState {
   return {
     ...state,
@@ -425,42 +420,49 @@ function performFreePlay(
   state: WaterSortTutorialBoardState,
   bottleIndex: number,
 ): { state: WaterSortTutorialBoardState; outcome: TutorialMoveOutcome } {
-  const { sourceBottleIndex } = state;
-  if (sourceBottleIndex === null) {
-    const rejection = findSourceRejection(state.bottles, bottleIndex);
-    return rejection === null
-      ? {
-          state: {
-            ...state,
-            sourceBottleIndex: bottleIndex,
-            lastMove: { type: "selected", bottleIndex },
-          },
-          outcome: "continued",
-        }
-      : {
-          state: reject(state, null, bottleIndex, rejection),
-          outcome: "violated",
-        };
+  const { bottles, sourceBottleIndex } = state;
+  const selection = selectWaterSortBottle(
+    bottles,
+    sourceBottleIndex,
+    bottleIndex,
+  );
+  switch (selection.type) {
+    case "source-selected":
+      return {
+        state: {
+          ...state,
+          sourceBottleIndex: bottleIndex,
+          lastMove: { type: "selected", bottleIndex },
+        },
+        outcome: "continued",
+      };
+    case "source-deselected":
+      return {
+        state: {
+          ...state,
+          sourceBottleIndex: null,
+          lastMove: { type: "deselected", bottleIndex },
+        },
+        outcome: "continued",
+      };
+    case "invalid": {
+      const rejection =
+        sourceBottleIndex === null
+          ? findSourceRejection(bottles, bottleIndex)
+          : findPourRejection(bottles, {
+              sourceBottleIndex,
+              destinationBottleIndex: bottleIndex,
+            });
+      return rejection === null
+        ? { state, outcome: "ignored" }
+        : {
+            state: reject(state, sourceBottleIndex, bottleIndex, rejection),
+            outcome: "violated",
+          };
+    }
+    case "pour":
+      return pour(state, selection.move, false);
   }
-  if (sourceBottleIndex === bottleIndex) {
-    return {
-      state: {
-        ...state,
-        sourceBottleIndex: null,
-        lastMove: { type: "deselected", bottleIndex },
-      },
-      outcome: "continued",
-    };
-  }
-  const move = { sourceBottleIndex, destinationBottleIndex: bottleIndex };
-  const rejection = findPourRejection(state.bottles, move);
-  if (rejection !== null) {
-    return {
-      state: reject(state, sourceBottleIndex, bottleIndex, rejection),
-      outcome: "violated",
-    };
-  }
-  return pour(state, move, false);
 }
 
 function performWaterSortTutorialAction(
@@ -482,11 +484,9 @@ const rejectionMessages = {
   "no-destination": "今は注ぎ先がありません",
   full: "満杯のボトルには注げません",
   "different-color": "違う色の上には注げません",
-} as const satisfies Record<WaterSortTutorialRejection, string>;
+} as const satisfies Record<WaterSortRejection, string>;
 
-function describeRejection(
-  rejection: WaterSortTutorialRejection,
-): TutorialMessage {
+function describeRejection(rejection: WaterSortRejection): TutorialMessage {
   return { headline: rejectionMessages[rejection], detail: null };
 }
 

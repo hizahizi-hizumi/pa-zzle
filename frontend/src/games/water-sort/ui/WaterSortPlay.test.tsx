@@ -326,7 +326,9 @@ describe("WaterSortPlay", () => {
   test("遊び方を自動では開かないこと", () => {
     render(<WaterSortPlay {...baseProps} />);
 
-    const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+    const dialog = screen.queryByRole("dialog", {
+      name: "ウォーターソートの遊び方",
+    });
 
     expect(dialog).toBeNull();
   });
@@ -339,7 +341,9 @@ describe("WaterSortPlay", () => {
     );
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = screen.getByRole("dialog", { name: "遊び方" });
+    const dialog = screen.getByRole("dialog", {
+      name: "ウォーターソートの遊び方",
+    });
 
     expect(dialog).toBeTruthy();
   });

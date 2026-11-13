@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { HowToPlayPhrases } from "@/components/HowToPlayPhrases";
 
 type HowToPlayScoreRowProps = {
-  /** 数えるもの。プレイ画面の見出しや結果画面と同じ呼び名にする。 */
+  /** 数えるもの。プレイ画面の見出しや結果画面と同じ呼び名にする。`/` で区切った所の間でだけ折り返す。 */
   measure: string;
   /** 1回ごとに下がる点など、数えるものが点にどう効くか（「1回 −5点」など）。名前の行の右端に置く。 */
   deduction?: string;

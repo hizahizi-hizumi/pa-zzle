@@ -9,7 +9,8 @@ function topColor(bottle: WaterSortBottle): number | undefined {
   return bottle.at(-1);
 }
 
-function countTopColorUnits(bottle: WaterSortBottle): number {
+/** いちばん上から続く同じ色の数。空のボトルは 0。 */
+export function countWaterSortTopColorUnits(bottle: WaterSortBottle): number {
   const color = topColor(bottle);
   if (color === undefined) {
     return 0;
@@ -58,7 +59,7 @@ export function getWaterSortPourAmount(
     return 0;
   }
 
-  return Math.min(countTopColorUnits(source), availableCapacity);
+  return Math.min(countWaterSortTopColorUnits(source), availableCapacity);
 }
 
 export function applyWaterSortMove(
