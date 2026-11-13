@@ -54,7 +54,6 @@ const pourConditionFigureGroups: readonly {
   },
 ];
 
-/** ルールと操作を、盤面と同じボトルの小さな図と短い一文で示す。 */
 export function WaterSortHowToPlayDialog({
   open,
   onClose,

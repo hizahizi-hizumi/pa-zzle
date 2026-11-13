@@ -23,15 +23,11 @@ type WaterSortBoardProps = {
   interactionDisabled: boolean;
   onPourAnimationActivityChange?: (active: boolean) => void;
   onClearAnimationComplete?: () => void;
-  /** ボトルに重ねる合図。チュートリアルだけが渡す。 */
+  /** チュートリアルだけが渡す。 */
   cues?: readonly WaterSortBottleCue[];
   /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せるボトル。`null` なら抜かない。通常のプレイでは渡さない。 */
   spotlitBottleIndices?: readonly number[] | null;
-  /**
-   * ボトルの並べ方。
-   * - `rows`: 本数に応じて段に分け、画面の幅に応じた幅にする。
-   * - `single-row`: 全部を1段に並べ、置いた場所の幅いっぱいにする。注ぐ動きと、選んだボトルの持ち上げが盤面の外へはみ出さない余白を、置く側が上に取るときに使う。
-   */
+  /** `single-row` は、注ぐ動きと、選んだボトルの持ち上げが盤面の外へはみ出さない余白を、置く側が上に取るときに使う。 */
   layout?: "rows" | "single-row";
 };
 

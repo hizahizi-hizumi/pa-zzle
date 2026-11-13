@@ -48,7 +48,7 @@ import { prefersReducedMotion } from "@/lib/motion";
 
 type WaterSortTutorialProps = {
   open: boolean;
-  /** ゲームのホームから開いたときに渡す。終えたときに、ゲームのホームで開いているレベルを始める操作を出す。渡さなければプレイ中に開いたとして、閉じてプレイに戻る操作を出す。 */
+  /** ゲームのホームから開いたときに渡す。 */
   playStart?: TutorialPlayStart;
   onClose: () => void;
 };
@@ -58,12 +58,10 @@ type WaterSortTutorialProgress = TutorialProgress<
   WaterSortTutorialBoardState
 >;
 
-/** 手を離した後、手が止まってから次にタップするボトルを示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
 const goalBottles = waterSortTutorial.goal().bottles;
 
-/** 1段に並べるボトルの数と、ボトルの間の合計。 */
 const BOTTLE_COUNT = waterSortTutorial.start().bottles.length;
 const BOTTLE_GAPS = `${WATER_SORT_SINGLE_ROW_GAP_PX * (BOTTLE_COUNT - 1)}px`;
 
@@ -82,7 +80,7 @@ const boardFrameStyle = {
   paddingTop: "calc(var(--bottle) * 2.1)",
 } as CSSProperties;
 
-/** 本番の盤面と同じく、注ぐ動きを見せられるか。見せられないときは、注いだ結果をすぐ見せる。 */
+/** 本番の盤面と同じく、注ぐ動きを見せられるか。 */
 function canAnimatePour(): boolean {
   return (
     typeof HTMLElement.prototype.animate === "function" &&
@@ -90,7 +88,7 @@ function canAnimatePour(): boolean {
   );
 }
 
-/** 本番の効果音のフックへ渡す、プレイの進行。解けた盤面の演出の間を完成演出として、完成の音を鳴らす。 */
+/** 解けた盤面の演出の間を完成演出として、完成の音を鳴らす。 */
 const gameProgressByPhase = {
   intro: "playing",
   playing: "playing",
@@ -98,10 +96,6 @@ const gameProgressByPhase = {
   completed: "result",
 } as const satisfies Record<WaterSortTutorialProgress["phase"], GameProgress>;
 
-/**
- * 手の結果を、盤面の選択・注ぐ動き・揺れにする。
- * `id` は、もう一度始めても本番の効果音が同じ知らせとみなさないよう、開いている間ずっと増やす。
- */
 function createOperation(
   next: WaterSortTutorialProgress,
   id: number,
@@ -141,15 +135,12 @@ function createOperation(
   }
 }
 
-/**
- * ボトルに重ねる合図。注いで1色そろったボトルへの応えと、次にタップするボトルの印。
- * 解き終えた手には、本番と同じ完成の動きだけで応える。`recallId` があれば、印の線を短く濃くして戻す。
- */
 function getBottleCues(
   progress: WaterSortTutorialProgress,
   hintBottleIndex: number | null,
   recallId: number | null,
 ): WaterSortBottleCue[] {
+  // 解き終えた手には、本番と同じ完成の動きだけで応える。
   const completion =
     progress.phase === "playing" ? progress.boardState.completion : null;
   return [
@@ -176,10 +167,6 @@ function getBottleCues(
   ];
 }
 
-/**
- * 3色の盤面を、一言と印に沿って1手ずつ注ぎ、ルールを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分でそろえさせる。盤面・注ぐ動き・最後に注いでそろう動きは本番と同じ部品を使う。
- */
 export function WaterSortTutorial({
   open,
   playStart,
@@ -188,9 +175,7 @@ export function WaterSortTutorial({
   const [progress, setProgress] = useState<WaterSortTutorialProgress>(() =>
     startTutorial(waterSortTutorial),
   );
-  // 盤面の動き。手のたびにイベントハンドラで作り、盤面が選択・注ぐ動き・揺れで応える。
   const [operation, setOperation] = useState<WaterSortOperation | null>(null);
-  // 注ぐ動きの間は印を付けず、注ぎ終えてから次のボトルを示す。
   const [pouring, setPouring] = useState(false);
   // 注ぐ動きを見せている間に、一言とルールの並びを留めておく、注ぐ前の進行。
   // 一言とルールが実際の動きより先に替わらないよう、注ぎ終えてから替える。
@@ -198,6 +183,7 @@ export function WaterSortTutorial({
     useState<WaterSortTutorialProgress | null>(null);
   const [idleProgress, setIdleProgress] =
     useState<WaterSortTutorialProgress | null>(null);
+  // 操作の `id` は、もう一度始めても本番の効果音が同じ知らせとみなさないよう、開いている間ずっと増やす。
   const nextOperationIdRef = useRef(1);
   // 手を引いている間に、ルールに当たらない印の無いボトルを押されたら、押されるたびに印の線を短く濃くして戻す。
   // 揺れと違反の一言はルールに当たった手にだけ返すので、ここでは印へ目を向けさせるだけにする。
@@ -304,7 +290,6 @@ export function WaterSortTutorial({
     playStart?.onStart();
   }
 
-  /** `shown` の進行で出す一言。手を引いている間は、印が注ぎ元と注ぎ先のどちらにあるかを補足で言う。 */
   function describeProgress(
     shown: WaterSortTutorialProgress,
     violationOnScreen: boolean,
@@ -350,12 +335,10 @@ export function WaterSortTutorial({
       }
     : { entry: "play", onReturnToPlay: handleClose };
 
-  // 注ぐ動きの間は、合図を出さず、注ぎ終えてから出す。
   const cues = pouring
     ? []
     : getBottleCues(progress, hintBottleIndex, recallId);
 
-  /** 導入の間はゴールの盤面を見せ、始めの盤面の場面では、ゴールの盤面を薄くしながら始めの盤面に替える。 */
   function renderBoard({ scene, playing, onSceneEnd }: TutorialBoardIntro) {
     return (
       <TutorialCrossFadeIntroScene
