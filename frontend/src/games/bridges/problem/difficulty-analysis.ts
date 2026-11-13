@@ -22,13 +22,13 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
  * - `size`: 正方形の盤面の一辺。
  * - `islandCount`・`edgeCount`: 島の数と、橋を架けられる島の組（行き先）の数。
  * - `bridgeCount`: 解の橋の本数の合計（2本の組は2と数える）。
- * - `clueMean`: 島の数字の平均。1 と 2 ばかりの盤面は、1か所ずつの読みが「足りる・足りない」の確かめだけになる。
- * - `highClueCount`: 数字5以上の島の数。行き先の多くに2本ずつ要り、2本と1本の配分を読む所になる。
- * - `veryHighClueCount`: 数字6以上の島の数。行き先が3つ以上の島に2本ずつ架かる見せ場。
+ * - `clueMean`: 島の数字の平均。
+ * - `highClueCount`: 数字5以上の島の数。
+ * - `veryHighClueCount`: 数字6以上の島の数。
  * - `dominantClueShare`: 最も多い数字の島の割合。同じ数字が並ぶ単調な盤面ほど大きい。
- * - `twoClueShare`: 数字2の島の割合。2 は行き先1つに2本か2つに1本ずつで、多いと盤面が単調になる。
+ * - `twoClueShare`: 数字2の島の割合。
  * - `doubleBridgeRatio`: 解で橋を架ける組のうち、2本の組の割合。
- * - `loopCount`: 解の輪の数（架ける組の数 − 島の数 + 1）。輪が無い解は、伸ばした先から決まる木の読みだけになる。
+ * - `loopCount`: 解の輪の数（架ける組の数 − 島の数 + 1）。
  * - `borderBridgeShare`: 解で橋を架ける組のうち、盤面の外周の行・列に沿う組の割合。
  * - `longBridgeShare`: 解で橋を架ける組のうち、盤面の一辺の半分以上の長さの組の割合。
  * - `usedEdgeShare`: 行き先（橋を架けられる組）のうち、解で橋を架ける組の割合。
