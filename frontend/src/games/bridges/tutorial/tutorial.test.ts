@@ -55,7 +55,6 @@ function cycle(progress: Progress, edge: number): Progress {
   });
 }
 
-/** 手順で阻まれるのを見せる辺があれば押してから、印の辺を手順の本数まで押す。押すたびに `onPress` を呼ぶ。 */
 function finishStep(
   start: Progress,
   step: (typeof bridgesTutorial.steps)[number],
@@ -73,7 +72,6 @@ function finishStep(
   return progress;
 }
 
-/** 最初の `count` 個の手順を終える。 */
 function finishSteps(count: number): Progress {
   let progress = finishTutorialIntro(startTutorial(bridgesTutorial));
   for (const step of bridgesTutorial.steps.slice(0, count)) {
@@ -92,7 +90,6 @@ function listAllBridges(): BridgeCount[][] {
   );
 }
 
-/** 手順の後に、手に入れたルールで決まる辺へ決まった本数を架けていき、決まらなくなった盤面と架けた辺を返す。 */
 function solveByRules(
   start: readonly BridgeCount[],
   ruleIds: readonly BridgesTutorialRuleId[],
@@ -239,7 +236,6 @@ describe("bridgesTutorial の盤面", () => {
   });
 });
 
-/** 本番のルールで、交わる2辺の両方に橋が架かっていないか。 */
 function hasNoCrossing(bridges: readonly BridgeCount[]): boolean {
   return bridges.every(
     (count, edge) =>

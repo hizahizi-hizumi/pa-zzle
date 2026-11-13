@@ -20,63 +20,56 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-/**
- * - `double`: 同じ2島の間に架けられるのは2本まで。
- * - `count`: どの島からも、数字と同じ本数の橋が出る。
- * - `cross`: 橋どうしは交わらない。
- * - `connect`: 全部の島が1つにつながる。
- */
 export type BridgesTutorialRuleId = "double" | "count" | "cross" | "connect";
 
 /** 本番と同じく、島の間を押すか島からなぞって、辺の橋を 1本 → 2本 → なし と回す。 */
 export type BridgesTutorialAction = { type: "cycle"; edge: number };
 
-/**
- * - `edge`: 印を付け、手順の間だけ操作を受け付ける辺。
- * - `bridgeCount`: この手順で `edge` に架ける本数。ここまで架けたら次の手順へ進む。
- * - `island`: `edge` の本数を、数字から決めさせる島。伝えたルールで、この島から見て `edge` が `bridgeCount` 本に決まる。
- *   操作を教える手順では `null`。
- * - `gesture`: この手順で受け付ける架け方。`between` は島の間を押す（島を選んでから相手の島を押す、なぞるも受ける）。
- *   `fromIsland` は島から架ける操作（なぞる、島を選んでから相手の島を押す）だけを受け、島の間を押しても架けない。
- * - `blockedEdge`: `edge` より先に印を付けて押させ、交わる橋に阻まれる盤面の反応を見せる辺。阻まれるのを見せたら、
- *   印を `edge` へ移す。見せない手順では `null`。
- */
 export type BridgesTutorialStep = TutorialStep<BridgesTutorialRuleId> & {
+  /** 印を付け、手順の間だけ操作を受け付ける辺。 */
   edge: number;
+  /** この手順で `edge` に架ける本数。ここまで架けたら次の手順へ進む。 */
   bridgeCount: BridgeCount;
+  /**
+   * `edge` の本数を、数字から決めさせる島。伝えたルールで、この島から見て `edge` が `bridgeCount` 本に決まる。
+   * 操作を教える手順では `null`。
+   */
   island: number | null;
+  /**
+   * この手順で受け付ける架け方。`between` は島の間を押す（島を選んでから相手の島を押す、なぞるも受ける）。
+   * `fromIsland` は島から架ける操作（なぞる、島を選んでから相手の島を押す）だけを受け、島の間を押しても架けない。
+   */
   gesture: "between" | "fromIsland";
+  /**
+   * `edge` より先に印を付けて押させ、交わる橋に阻まれる盤面の反応を見せる辺。阻まれるのを見せたら、
+   * 印を `edge` へ移す。見せない手順では `null`。
+   */
   blockedEdge: number | null;
 };
 
-/**
- * 決め手。手を決めるときに見る島と橋。
- * - `islands`: 数字を見る島。
- * - `edges`: 架かっている橋のうち、手を決めるもの（2本で上限の橋、交わる橋）。
- */
+/** 決め手。手を決めるときに見る島と橋。 */
 export type BridgesTutorialReason = {
+  /** 数字を見る島。 */
   islands: readonly number[];
+  /** 架かっている橋のうち、手を決めるもの（2本で上限の橋、交わる橋）。 */
   edges: readonly number[];
 };
 
-/**
- * 直前の手。盤面の反応と合図に使う。
- * - `changed`: 辺 `edge` の橋の本数を変えた。`fitsStep` は、手を引いている手順の辺を、手順の本数まで架けたか。
- *   `removing` は、手がかりで外させている解と違う橋を、1本 → 2本 → なし と回して外す途中の2本にしたか。
- * - `blocked`: 辺 `edge` に架けようとしたが、交わる辺 `crossingEdges` の橋に阻まれた。本番と同じく盤面は変えない。
- */
+/** 直前の手。盤面の反応と合図に使う。 */
 export type BridgesTutorialMove =
+  /**
+   * `fitsStep` は、手を引いている手順の辺を、手順の本数まで架けたか。
+   * `removing` は、手がかりで外させている解と違う橋を、1本 → 2本 → なし と回して外す途中の2本にしたか。
+   */
   | { kind: "changed"; edge: number; fitsStep: boolean; removing: boolean }
   | { kind: "blocked"; edge: number; crossingEdges: readonly number[] };
 
-/**
- * - `moveCount`: 操作した手の数。同じ辺への合図をやり直す目印に使う。
- * - `shownBlockedEdges`: 手順で押させて、交わる橋に阻まれるのを見せ終えた辺。
- */
 export type BridgesTutorialBoardState = {
   bridges: readonly BridgeCount[];
+  /** 同じ辺への合図をやり直す目印に使う。 */
   moveCount: number;
   lastMove: BridgesTutorialMove | null;
+  /** 手順で押させて、交わる橋に阻まれるのを見せ終えた辺。 */
   shownBlockedEdges: readonly number[];
 };
 
@@ -407,7 +400,7 @@ function deduceEdge(
   }, null);
 }
 
-/** 手に入れたルールに合わないところ。数字より多い島と、閉じた島の組。 */
+/** 手に入れたルールに合わないところ。 */
 type BridgesVisibleViolations = {
   overIslands: readonly number[];
   closedGroups: readonly (readonly number[])[];
@@ -435,7 +428,6 @@ function hasVisibleViolation({
   return overIslands.length > 0 || closedGroups.length > 0;
 }
 
-/** 手順の `blockedEdge` を押して阻まれるのを見せ終えたか。見せる辺の無い手順では、いつも見せ終えている。 */
 function hasShownBlockedEdge(
   step: BridgesTutorialStep,
   { shownBlockedEdges }: BridgesTutorialBoardState,
@@ -573,7 +565,6 @@ function describeBridgesTutorialViolation(
   return closedViolation;
 }
 
-/** 辺 `edge` が、手がかりで外させる、解と違う橋の辺か。 */
 function isRemovalHint(
   situation: BridgesTutorialSituation,
   state: BridgesTutorialBoardState,
@@ -599,17 +590,13 @@ export function hasBridgesTutorialBoardViolation(
   return hasVisibleViolation(findVisibleViolations(bridges, earnedRuleIds));
 }
 
-/** 本番と同じ、島ごとの橋の本数と数字の比べ。 */
 export function getBridgesTutorialIslandStatuses({
   bridges,
 }: BridgesTutorialBoardState): BridgesIslandStatus[] {
   return listBridgesIslandStatuses(board, { bridges });
 }
 
-/**
- * 手順で印を付ける辺。阻まれるのを見せる辺があれば、見せ終えるまでその辺。手順の本数まで架けたら、次の手順へ進むまで `null`。
- * 手を離した後も `null`。
- */
+/** 手順で印を付ける辺。 */
 export function getBridgesTutorialStepEdge(
   { step }: BridgesTutorialSituation,
   state: BridgesTutorialBoardState,
@@ -623,10 +610,7 @@ export function getBridgesTutorialStepEdge(
   return state.bridges[step.edge]! < step.bridgeCount ? step.edge : null;
 }
 
-/**
- * 手順の辺の本数を決めるもの（決め手）。手順で伝えたルールまでで、手順の辺が手順の本数に決まる島と橋。
- * 阻まれるのを見せている間は、押させる辺に交わる、架かった橋。操作を教える手順と、手を離した後は空。
- */
+/** 手順の辺の本数を決めるもの（決め手）。手順で伝えたルールまでで、手順の辺が手順の本数に決まる島と橋。 */
 export function getBridgesTutorialStepReason(
   { step, earnedRuleIds }: BridgesTutorialSituation,
   state: BridgesTutorialBoardState,

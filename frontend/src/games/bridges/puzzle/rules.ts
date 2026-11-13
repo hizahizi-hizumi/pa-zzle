@@ -5,15 +5,8 @@ import {
 } from "@/games/bridges/puzzle/board";
 import type { BridgesPuzzleState } from "@/games/bridges/puzzle/state";
 
-/**
- * 島から出ている橋の本数と、島の数字の比べ。
- * - `short`: 数字より少ない。
- * - `exact`: 数字と同じ。
- * - `over`: 数字より多い。
- */
 export type BridgesIslandStatus = "short" | "exact" | "over";
 
-/** 島ごとの、出ている橋の本数。 */
 export function countBridgesIslandBridges(
   board: BridgesBoard,
   state: BridgesPuzzleState,
@@ -24,7 +17,6 @@ export function countBridgesIslandBridges(
   );
 }
 
-/** 島ごとの、橋の本数と数字の比べ。 */
 export function listBridgesIslandStatuses(
   board: BridgesBoard,
   state: BridgesPuzzleState,
@@ -38,7 +30,6 @@ export function listBridgesIslandStatuses(
   );
 }
 
-/** 橋でたどって、全部の島が1つにつながっているか。 */
 export function areBridgesIslandsConnected(
   board: BridgesBoard,
   state: BridgesPuzzleState,
@@ -63,7 +54,6 @@ export function areBridgesIslandsConnected(
   return reached.size === board.islands.length;
 }
 
-/** 橋の本数がどの辺でも 0〜2 で、交わる2辺の両方に橋が無いか。 */
 function areBridgesPlacementsValid(
   board: BridgesBoard,
   state: BridgesPuzzleState,
@@ -85,8 +75,7 @@ function areBridgesPlacementsValid(
 }
 
 /**
- * 橋が規則を満たして完成したか。橋を架けた入力処理を信頼せず、規則だけで確かめる。
- * 交わる橋が無く、どの島も数字と同じ本数で、全部の島が1つにつながっていること。
+ * 橋を架けた入力処理を信頼せず、規則だけで確かめる。
  * 問題は一意解なので、保存した解との一致は要らない。
  */
 export function isBridgesSolved(

@@ -8,7 +8,6 @@ import {
 } from "@/games/bridges/score";
 import { getGameResultLevel } from "@/games/result";
 
-// 数字の読みだけで決まる小さな盤面と、つながりを何度も読む大きな盤面の作業の量。
 const lightWorkload: BridgesSolveWorkload = {
   islandCount: 11,
   edgeCount: 11,

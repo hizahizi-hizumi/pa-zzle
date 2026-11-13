@@ -23,7 +23,6 @@ import {
 type CellPosition = readonly [row: number, column: number];
 type PlacedBridge = readonly [CellPosition, CellPosition, BridgeCount];
 
-/** 島の位置の組で書いた橋から状態を作る。 */
 function createState(
   board: BridgesBoard,
   placed: readonly PlacedBridge[],
@@ -140,7 +139,6 @@ function randomInteger(
   return minimum + Math.floor(random() * (maximum - minimum + 1));
 }
 
-/** 島が上下左右に隣り合わないよう、ランダムに島を置いた盤面。 */
 function createRandomBoard(random: ProblemRandom): BridgesBoard {
   const width = randomInteger(random, 3, 10);
   const height = randomInteger(random, 3, 10);
@@ -162,7 +160,6 @@ function createRandomBoard(random: ProblemRandom): BridgesBoard {
     : { width, height, islands };
 }
 
-/** 交差を気にせず、辺ごとにランダムな本数を置いた状態。 */
 function createRandomState(
   board: BridgesBoard,
   random: ProblemRandom,
@@ -174,7 +171,6 @@ function createRandomState(
   };
 }
 
-/** 交わる橋を作らないよう、ランダムな順に辺へ本数を置いた状態。 */
 function createRandomPlanarState(
   board: BridgesBoard,
   random: ProblemRandom,
@@ -332,7 +328,6 @@ describe("固定問題の場合", () => {
 });
 
 describe("数字はちょうどでも全部の島がつながらない場合", () => {
-  // 1-1 の組が2つ。どの島もちょうどだが、2つの組に分かれる。
   const board = parseBridgesBoard(["1.1", "...", "1.1"]);
   const state = createState(board, [
     [[0, 0], [0, 2], 1],

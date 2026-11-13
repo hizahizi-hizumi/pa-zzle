@@ -3,8 +3,7 @@ import { getSessionElapsedMs } from "@/games/session";
 import type { PlayAttemptProgress } from "@/records/play-attempt";
 
 /**
- * 離れた時点までの実測値。評価値は保存しない。
- * 架けていた橋の本数（2本の組は2と数える）と、解に要る橋の本数（島の数字の合計の半分）を並べ、どこまで架けていたかを残す。
+ * 架けていた橋の本数と解に要る橋の本数を並べ、どこまで架けていたかを残す。
  * 架けた本数は解と照らさない数なので、正しい橋かどうかは表さない。
  */
 export function createBridgesPlayAttemptProgress(

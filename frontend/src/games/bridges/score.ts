@@ -9,22 +9,12 @@ import {
   sumPlayScore,
 } from "@/games/score";
 
-/**
- * 数字とつながりを読んで、迷わず速く全島をつなぐことを称える。問題ごとの基準時間と比べた速さだけで100点満点にする。
- * 架け直し・待った・盤面を戻す・交差に阻まれた回数は減点しない。架けて本数の知らせを見ながら直すことがこのゲームの中心の操作で、
- * それを減点すると遊び方そのもの（押し間違いも含む）を罰するため。直した分は時間にだけ表れる。
- * 基準時間の係数と0点になる倍率は、人の実プレイで校正する前の暫定値。
- */
 export const BRIDGES_SCORE_MAXIMUMS = {
   speed: 100,
 } as const satisfies ScoreMaximums<"speed">;
 
-/**
- * 基準時間の係数（暫定）。人の記録は無いので、評価役と作り手が手で解いた所見の、読みの種類ごとの時間から置く
- * （成績評価の文書 §3.8・§3.9）。つながりの読みと1手の先読みは、普通の人がスマホで丁寧に解くと組をたどり場合を分けて確かめる
- * ので、数字の読みより重い。
- */
-/** 盤面を見渡して始める時間。 */
+// 基準時間の係数（暫定）。人の記録は無いので、評価役と作り手が手で解いた所見の、読みの種類ごとの時間から置く
+// （成績評価の文書 §3.8・§3.9）。
 export const BRIDGES_SPEED_INITIAL_RECOGNITION_MS = 10_000;
 /** 島1つの数字と行き先を見比べる時間。 */
 export const BRIDGES_SPEED_PER_ISLAND_MS = 1_000;
@@ -44,11 +34,7 @@ export const BRIDGES_SPEED_PER_LOOKAHEAD_ROUND_MS = 110_000;
 /** 数字の読みだけでは決まらない行き先1つを、つながりを読んで決める時間。 */
 export const BRIDGES_SPEED_PER_UNDECIDED_EDGE_MS = 1_000;
 
-/**
- * 0点になる時間の、基準時間に対する倍率（暫定）。読みにかかる時間の割合が大きい問題ほど、人による時間のぶれが大きいので、
- * 0点の線を広げる。倍率は 3 に、基準時間のうち読みの項（配分・つながり・交差・先読み・決まらない行き先）の割合の3倍を足し、
- * 0.1 単位に丸める。読みの無い問題は3倍、読みが基準時間の半分なら 4.5倍になる。
- */
+// 0点になる時間の、基準時間に対する倍率（暫定）。
 export const BRIDGES_SPEED_BASE_ZERO_SCORE_RATIO = 3;
 export const BRIDGES_SPEED_READING_ZERO_SCORE_RATIO = 3;
 
@@ -59,7 +45,6 @@ type BridgesPlayScoreInput = {
   workload: BridgesSolveWorkload;
 };
 
-/** 基準時間のうち、読みの項（配分・つながり・交差・先読み・決まらない行き先）の時間。 */
 function calculateReadingMs({
   countRoundCount,
   connectivityRoundCount,
@@ -78,10 +63,7 @@ function calculateReadingMs({
   );
 }
 
-/**
- * 問題ごとの速さ満点の基準時間。盤面を見渡す時間に、島の数、橋を架ける操作の回数（橋の本数）、読みの項の時間を足す。
- * 問題を解き切る作業の量だけから決め、難易度そのものは使わない。行き先の数は島の数と橋の本数に強く連動するので使わない。
- */
+/** 行き先の数は島の数と橋の本数に強く連動するので使わない。 */
 export function calculateBridgesSpeedFullScoreMs(
   workload: BridgesSolveWorkload,
 ): number {
@@ -93,7 +75,6 @@ export function calculateBridgesSpeedFullScoreMs(
   );
 }
 
-/** 0点になる時間の、基準時間に対する倍率。 */
 export function calculateBridgesZeroScoreRatio(
   workload: BridgesSolveWorkload,
 ): number {
@@ -117,7 +98,6 @@ export function calculateBridgesSpeedScoreRule(
   );
 }
 
-/** 基準時間に対するクリア時間の差。負なら基準より速い。 */
 export function calculateBridgesTimeDeltaMs({
   elapsedMs,
   workload,
