@@ -419,7 +419,7 @@ function performStep(
 
 /**
  * 手を離した後は本番と同じく応える。選べないボトルを注ぎ元にしようとしたときと、注げない先をタップしたときは、
- * 手に入れたルールに合わない手として返し、注げない先のときは注ぎ元を選んだままにする。
+ * 手に入れたルールに合わない手として返し、注げない先のときは選んでいた注ぎ元を下ろす。
  */
 function performFreePlay(
   state: WaterSortTutorialBoardState,
@@ -456,7 +456,7 @@ function performFreePlay(
   const rejection = findPourRejection(state.bottles, move);
   if (rejection !== null) {
     return {
-      state: reject(state, sourceBottleIndex, bottleIndex, rejection),
+      state: reject(state, null, bottleIndex, rejection),
       outcome: "violated",
     };
   }

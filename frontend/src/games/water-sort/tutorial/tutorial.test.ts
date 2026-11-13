@@ -626,10 +626,10 @@ describe("waterSortTutorial", () => {
       },
     );
 
-    test("注げない注ぎ先をタップしても、注ぎ元を選んだままにすること", () => {
+    test("注げない注ぎ先をタップすると、本番と同じく選んでいた注ぎ元を下ろすこと", () => {
       const next = tapBottles(released, [1, 3]);
 
-      expect(next.boardState.sourceBottleIndex).toBe(1);
+      expect(next.boardState.sourceBottleIndex).toBeNull();
     });
 
     test("選んだ注ぎ元をもう一度タップすると、選び直せること", () => {

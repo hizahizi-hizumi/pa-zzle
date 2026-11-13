@@ -221,8 +221,10 @@ export function useWaterSortPlay(
         selectedAt,
       );
       if (nextSession === session) {
+        // 注げない先を揺らすのと同時に、選んでいたボトルを下ろし、選び直しから始めさせる。
         return {
           ...current,
+          sourceBottleIndex: null,
           operation: { id: operationId, type: "invalid", bottleIndex },
         };
       }

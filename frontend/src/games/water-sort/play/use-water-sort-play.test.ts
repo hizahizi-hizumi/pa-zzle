@@ -96,7 +96,7 @@ describe("useWaterSortPlay", () => {
     expect(result.current.operation?.type).toBe("poured");
   });
 
-  test("パズルのルールが拒否する注ぎ先では盤面と手数を変更しないこと", () => {
+  test("パズルのルールが拒否する注ぎ先では盤面と手数を変えず、選んでいた注ぎ元を下ろすこと", () => {
     const { result } = renderHook(() => useWaterSortPlay("1"));
     const legalMove = listWaterSortLegalMoves(result.current.state)[0];
     expect(legalMove).toBeDefined();
@@ -121,7 +121,7 @@ describe("useWaterSortPlay", () => {
 
     expect(result.current.state).toEqual(initialState);
     expect(result.current.moveCount).toBe(0);
-    expect(result.current.sourceBottleIndex).toBe(legalMove.sourceBottleIndex);
+    expect(result.current.sourceBottleIndex).toBeNull();
     expect(result.current.operation?.type).toBe("invalid");
   });
 

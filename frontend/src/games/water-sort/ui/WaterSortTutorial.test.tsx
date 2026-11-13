@@ -418,8 +418,8 @@ describe("WaterSortTutorial", () => {
         },
       );
 
-      test("注ぎ元を選んだまま手が止まると、そこから注ぐ注ぎ先に印を付け、残りをそろえる一言に戻すこと", () => {
-        tapBottles([2, 4]);
+      test("注げない先を押して注ぎ元が下りた後に選び直して手が止まると、そこから注ぐ注ぎ先に印を付け、残りをそろえる一言に戻すこと", () => {
+        tapBottles([2, 4, 2]);
         advanceTime(idleHintDelayMs);
 
         const hinted = getCuedBottles();
