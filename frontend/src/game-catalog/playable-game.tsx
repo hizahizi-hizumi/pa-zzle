@@ -148,7 +148,7 @@ export function usePlayableGame<
           replacesHistory: true,
         });
       },
-      onBackToHome: navigation.backToHome,
+      onBackToHome: navigation.backToAppHome,
       onOpenDiagnostics: diagnostics.open,
     },
     diagnostics,

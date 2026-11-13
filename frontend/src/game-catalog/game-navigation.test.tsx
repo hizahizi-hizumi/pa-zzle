@@ -37,8 +37,8 @@ describe("useGameNavigation", () => {
     }));
   });
 
-  test("backToHome で / へ移ること", () => {
-    act(() => result.current.navigation.backToHome());
+  test("backToAppHome で / へ移ること", () => {
+    act(() => result.current.navigation.backToAppHome());
 
     const { pathname } = result.current.location;
 

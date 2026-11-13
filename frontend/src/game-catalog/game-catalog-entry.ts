@@ -41,8 +41,7 @@ export type GameNavigation = {
     selectedProblemId?: ProblemId,
     options?: { replacesHistory: boolean },
   ) => void;
-  /** アプリのホームへ移る。 */
-  backToHome: () => void;
+  backToAppHome: () => void;
   startNewProblem: (
     difficulty: string,
     avoidedProblemId: ProblemId,

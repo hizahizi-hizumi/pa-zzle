@@ -94,8 +94,7 @@ const arrowKeyByDirection = {
   left: "ArrowLeft",
 } as const satisfies Record<IceFloorMazeDirection, string>;
 
-/** 開始位置からゴールで止まる最少手数の向きの並び。 */
-function findSolution({
+function findShortestSolution({
   board,
   start,
   goal,
@@ -207,7 +206,7 @@ describe("IceFloorMazePlayView", () => {
   describe("通常の出題を解き終えた場合", () => {
     const seed = "ice-floor-maze-play-view";
     const selected = selectIceFloorMazeProblemForDifficulty("1", seed);
-    const solution = findSolution(selected.problem);
+    const solution = findShortestSolution(selected.problem);
     let router: PlayRouter;
 
     beforeEach(async () => {

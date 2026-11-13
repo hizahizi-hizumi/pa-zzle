@@ -11,8 +11,7 @@ export type PlayTimelineEntry =
 
 export type PlayTimelineDay = {
   dayStart: number;
-  /** 新しい順。 */
-  entries: readonly PlayTimelineEntry[];
+  newestFirstEntries: readonly PlayTimelineEntry[];
 };
 
 /** 0 は遊んでいない日。 */
@@ -70,14 +69,15 @@ export function getDayStart(time: number): number {
 export function groupPlayTimelineByDay(
   entries: readonly PlayTimelineEntry[],
 ): PlayTimelineDay[] {
-  const days: { dayStart: number; entries: PlayTimelineEntry[] }[] = [];
+  const days: { dayStart: number; newestFirstEntries: PlayTimelineEntry[] }[] =
+    [];
   for (const entry of entries) {
     const dayStart = getDayStart(entry.playedAt);
     const lastDay = days.at(-1);
     if (lastDay?.dayStart === dayStart) {
-      lastDay.entries.push(entry);
+      lastDay.newestFirstEntries.push(entry);
     } else {
-      days.push({ dayStart, entries: [entry] });
+      days.push({ dayStart, newestFirstEntries: [entry] });
     }
   }
   return days;
@@ -101,10 +101,10 @@ function addDays(dayStart: number, days: number): number {
 
 /**
  * 今日を含む週までの直近の週を、日曜始まりの週ごとに、古い週から並べる。各日には、その日の時間の流れの件数から遊んだ量の段階を添える。
- * 今日より後の日は、まだ来ていない日とする。`entries` は新しい順。
+ * 今日より後の日は、まだ来ていない日とする。
  */
 export function createPlayCalendar(
-  entries: readonly PlayTimelineEntry[],
+  newestFirstEntries: readonly PlayTimelineEntry[],
   now: number,
   weekCount: number = PLAY_CALENDAR_WEEK_COUNT,
 ): PlayCalendarWeek[] {
@@ -114,7 +114,7 @@ export function createPlayCalendar(
     -new Date(today).getDay() - (weekCount - 1) * DAYS_PER_WEEK,
   );
   const playCounts = new Map<number, number>();
-  for (const { playedAt } of entries) {
+  for (const { playedAt } of newestFirstEntries) {
     if (playedAt < firstDay) {
       // 新しい順なので、ここから先はカレンダーより前の日だけになる。
       break;

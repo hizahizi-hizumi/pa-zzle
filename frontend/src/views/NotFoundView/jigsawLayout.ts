@@ -27,13 +27,13 @@ export type Digit404Glyphs = {
   glyphXs: readonly [number, number, number];
 };
 
-/** 横に連続したセルを結合した1枚のリンク用ピース。`x` / `y` / `width` / `height` はセル部分の範囲。 */
+/** 横に連続したセルを結合した1枚のリンク用ピース。 */
 export type LinkPiece = {
-  height: number;
+  cellAreaHeight: number;
+  cellAreaWidth: number;
+  cellAreaX: number;
+  cellAreaY: number;
   path: string;
-  width: number;
-  x: number;
-  y: number;
 };
 
 export type NotFoundJigsawLayout = {
@@ -215,11 +215,11 @@ export function createNotFoundJigsawLayout(
     headingCenterY,
     height,
     linkPiece: {
-      height: pieceSize,
+      cellAreaHeight: pieceSize,
+      cellAreaWidth: pieceSize * grid.link.cellCount,
+      cellAreaX: grid.originX + grid.link.firstColumn * pieceSize,
+      cellAreaY: grid.originY + grid.link.row * pieceSize,
       path: createLinkPath(grid, seams),
-      width: pieceSize * grid.link.cellCount,
-      x: grid.originX + grid.link.firstColumn * pieceSize,
-      y: grid.originY + grid.link.row * pieceSize,
     },
     pieceSize,
     snapRadius: pieceSize * snapRadiusInPieces,

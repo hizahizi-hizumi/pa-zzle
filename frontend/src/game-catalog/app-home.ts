@@ -28,10 +28,8 @@ export type AppHome = {
 };
 
 type AppHomeOptions = {
-  /** ホームを開いたときに、ホームがタイトルで覆われているか。 */
-  isCovered: boolean;
-  /** 遊んだ履歴がないとき、選んでおくゲームの ID。 */
-  firstGameId?: string;
+  opensCovered: boolean;
+  fallbackGameId?: string;
 };
 
 function scheduleIdleTask(task: () => void): () => void {
@@ -64,7 +62,7 @@ function prefetchContinuations(
 
 export function useAppHome(
   games: readonly GameCatalogEntry[],
-  { isCovered, firstGameId }: AppHomeOptions,
+  { opensCovered, fallbackGameId }: AppHomeOptions,
 ): AppHome {
   const [records] = useState(() => readPlayRecords());
   const attempts = useSyncExternalStore(
@@ -73,7 +71,7 @@ export function useAppHome(
   );
   const [chosenIndex, setChosenIndex] = useState<number | null>(null);
   // 続きを求めるには問題集の索引が要り、作るのが重い。タイトルで覆われている間は、タイトルを描いたあとに求める。
-  const defersContinuations = useDeferredValue(false, isCovered);
+  const defersContinuations = useDeferredValue(false, opensCovered);
   const continuations = useMemo(
     () =>
       defersContinuations
@@ -104,11 +102,11 @@ export function useAppHome(
   const latestPlayedIndex = games.findIndex(
     ({ id }) => id === latestPlayedGameId,
   );
-  const firstGameIndex = games.findIndex(({ id }) => id === firstGameId);
+  const fallbackGameIndex = games.findIndex(({ id }) => id === fallbackGameId);
   const selectedGameIndex =
     chosenIndex ??
     (latestPlayedIndex === -1
-      ? Math.max(firstGameIndex, 0)
+      ? Math.max(fallbackGameIndex, 0)
       : latestPlayedIndex);
   const selectedGame = games[selectedGameIndex];
 

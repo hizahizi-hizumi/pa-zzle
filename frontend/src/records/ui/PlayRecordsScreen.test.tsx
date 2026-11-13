@@ -76,7 +76,7 @@ describe("PlayRecordsScreen", () => {
     beforeEach(() => {
       render(
         <PlayRecordsScreen
-          entries={[]}
+          newestFirstEntries={[]}
           now={now}
           describeEntry={describeEntry}
           onOpenEntry={onOpenEntry}
@@ -109,7 +109,7 @@ describe("PlayRecordsScreen", () => {
     beforeEach(() => {
       render(
         <PlayRecordsScreen
-          entries={entries}
+          newestFirstEntries={entries}
           now={now}
           describeEntry={describeEntry}
           onOpenEntry={onOpenEntry}
@@ -198,7 +198,7 @@ describe("PlayRecordsScreen", () => {
       );
       render(
         <PlayRecordsScreen
-          entries={manyEntries}
+          newestFirstEntries={manyEntries}
           now={now}
           describeEntry={describeEntry}
           onOpenEntry={onOpenEntry}

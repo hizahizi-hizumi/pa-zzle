@@ -9,8 +9,7 @@ import { PlayTimelineRow } from "@/records/ui/PlayRecordsScreen/PlayDayList/Play
 import type { PlayTimelineEntryDescription } from "@/records/ui/play-timeline-entry-description";
 
 type PlayDayListProps = {
-  /** 新しい順。 */
-  entries: readonly PlayTimelineEntry[];
+  newestFirstEntries: readonly PlayTimelineEntry[];
   describeEntry: (entry: PlayTimelineEntry) => PlayTimelineEntryDescription;
   onOpenEntry: (entry: PlayTimelineEntry) => void;
   shownEntryCount: number;
@@ -27,17 +26,17 @@ const PRELOAD_MARGIN = "800px";
  * 全件を一度に描かず、新しいものから描き、一覧の終わりが近づくたびに描き足す。
  */
 export function PlayDayList({
-  entries,
+  newestFirstEntries,
   describeEntry,
   onOpenEntry,
   shownEntryCount,
   onShownEntryCountChange,
 }: PlayDayListProps) {
   const endRef = useRef<HTMLDivElement>(null);
-  const hasMore = shownEntryCount < entries.length;
+  const hasMore = shownEntryCount < newestFirstEntries.length;
   const days = useMemo(
-    () => groupPlayTimelineByDay(entries.slice(0, shownEntryCount)),
-    [entries, shownEntryCount],
+    () => groupPlayTimelineByDay(newestFirstEntries.slice(0, shownEntryCount)),
+    [newestFirstEntries, shownEntryCount],
   );
 
   // 描き足したあとも終わりが見えているときに続けて描き足せるよう、描き足すたびに見張り直す。
@@ -47,7 +46,7 @@ export function PlayDayList({
       return;
     }
     if (typeof IntersectionObserver === "undefined") {
-      onShownEntryCountChange(entries.length);
+      onShownEntryCountChange(newestFirstEntries.length);
       return;
     }
     const observer = new IntersectionObserver(
@@ -60,12 +59,17 @@ export function PlayDayList({
     );
     observer.observe(end);
     return () => observer.disconnect();
-  }, [hasMore, shownEntryCount, entries.length, onShownEntryCountChange]);
+  }, [
+    hasMore,
+    shownEntryCount,
+    newestFirstEntries.length,
+    onShownEntryCountChange,
+  ]);
 
   return (
     <>
       <ol aria-label="遊んだ日" className="grid gap-5">
-        {days.map(({ dayStart, entries: dayEntries }) => (
+        {days.map(({ dayStart, newestFirstEntries: dayEntries }) => (
           <li key={dayStart}>
             <h2 className="mb-2 text-meta text-muted-foreground tabular-nums">
               {formatPlayedDay(dayStart)}

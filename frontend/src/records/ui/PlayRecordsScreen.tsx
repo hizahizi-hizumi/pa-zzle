@@ -14,8 +14,7 @@ import {
 import type { PlayTimelineEntryDescription } from "@/records/ui/play-timeline-entry-description";
 
 type PlayRecordsScreenProps = {
-  /** 新しい順。 */
-  entries: readonly PlayTimelineEntry[];
+  newestFirstEntries: readonly PlayTimelineEntry[];
   now: number;
   /** 一覧に描く行の分だけ求める。 */
   describeEntry: (entry: PlayTimelineEntry) => PlayTimelineEntryDescription;
@@ -30,7 +29,7 @@ type PlayRecordsScreenProps = {
 export const INITIAL_SHOWN_ENTRY_COUNT = PLAY_DAY_LIST_BATCH_SIZE;
 
 export function PlayRecordsScreen({
-  entries,
+  newestFirstEntries,
   now,
   describeEntry,
   onOpenEntry,
@@ -41,8 +40,8 @@ export function PlayRecordsScreen({
 }: PlayRecordsScreenProps) {
   const calendarLabelId = useId();
   const calendarWeeks = useMemo(
-    () => createPlayCalendar(entries, now),
-    [entries, now],
+    () => createPlayCalendar(newestFirstEntries, now),
+    [newestFirstEntries, now],
   );
   const calendarLabel = `直近${PLAY_CALENDAR_WEEK_COUNT}週`;
 
@@ -61,15 +60,15 @@ export function PlayRecordsScreen({
           {calendarLabel}
         </p>
         <PlayCalendar
-          weeks={calendarWeeks}
+          oldestFirstWeeks={calendarWeeks}
           label={`${calendarLabel}に遊んだ日`}
         />
       </section>
-      {entries.length === 0 ? (
+      {newestFirstEntries.length === 0 ? (
         <EmptyRecords action={emptyAction} />
       ) : (
         <PlayDayList
-          entries={entries}
+          newestFirstEntries={newestFirstEntries}
           describeEntry={describeEntry}
           onOpenEntry={onOpenEntry}
           shownEntryCount={shownEntryCount}
