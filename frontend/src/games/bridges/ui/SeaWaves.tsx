@@ -42,8 +42,7 @@ const wideWaveTile = {
   ],
 } as const;
 
-/** 印の大きさは横幅。 */
-const WAVE_SIZES = { small: 12, large: 20 } as const;
+const WAVE_WIDTHS = { small: 12, large: 20 } as const;
 const WAVE_STROKE_WIDTH = 2;
 
 type WaveTile = {
@@ -86,7 +85,7 @@ function WavePattern({
             d={wavePath(
               mark.x * unit,
               mark.y * unit,
-              (mark.large ? WAVE_SIZES.large : WAVE_SIZES.small) * unit,
+              (mark.large ? WAVE_WIDTHS.large : WAVE_WIDTHS.small) * unit,
             )}
           />
         ))}

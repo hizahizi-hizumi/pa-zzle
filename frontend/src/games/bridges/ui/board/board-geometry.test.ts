@@ -119,7 +119,7 @@ describe("findBoardTarget", () => {
     [
       "島から出る横と縦の線のどちらからも同じだけ離れた、島のマスの角",
       { x: 0.98, y: 0.98 },
-      { kind: "ambiguous", edges: [0, 1] },
+      { kind: "ambiguous", ascendingEdges: [0, 1] },
     ],
     ["横の線の近く", { x: 1.5, y: 0.75 }, { kind: "edge", edge: 0 }],
     ["縦の線の近く", { x: 0.25, y: 1.5 }, { kind: "edge", edge: 1 }],
@@ -140,11 +140,11 @@ describe("findBoardTarget", () => {
       { x: 1.6, y: 2.6 },
       { kind: "edge", edge: 3 },
     ],
-    ["交点", { x: 2.5, y: 2.5 }, { kind: "ambiguous", edges: [2, 3] }],
+    ["交点", { x: 2.5, y: 2.5 }, { kind: "ambiguous", ascendingEdges: [2, 3] }],
     [
       "交点の近くで、2本の線から同じだけ離れた所",
       { x: 2.75, y: 2.25 },
-      { kind: "ambiguous", edges: [2, 3] },
+      { kind: "ambiguous", ascendingEdges: [2, 3] },
     ],
   ] as const)("%sを押すと %j を指すこと", (_, point, expected) => {
     const target = findBoardTarget(board, point);
@@ -175,26 +175,31 @@ describe("findDragAim", () => {
       "右へなぞり、相手の島に届く前",
       0,
       { x: 1.3, y: 0.6 },
-      { edge: 0, landed: false },
+      { edge: 0, cyclesOnRelease: false },
     ],
     [
       "下へなぞり、相手の島に届く前",
       0,
       { x: 0.6, y: 1.3 },
-      { edge: 1, landed: false },
+      { edge: 1, cyclesOnRelease: false },
     ],
-    ["右の相手の島の陸の中", 0, { x: 2.3, y: 0.6 }, { edge: 0, landed: true }],
+    [
+      "右の相手の島の陸の中",
+      0,
+      { x: 2.3, y: 0.6 },
+      { edge: 0, cyclesOnRelease: true },
+    ],
     [
       "右の相手の島を通り過ぎた所",
       0,
       { x: 4.6, y: 0.9 },
-      { edge: 0, landed: true },
+      { edge: 0, cyclesOnRelease: true },
     ],
     [
       "右へ 20° ほど傾けて相手の島の近くまで",
       0,
       { x: 1.9, y: 1.0 },
-      { edge: 0, landed: true },
+      { edge: 0, cyclesOnRelease: true },
     ],
     ["右下へ斜めに 28° ほど", 0, { x: 2.2, y: 1.4 }, null],
     ["右下へ斜めに 45°", 0, { x: 1.4, y: 1.4 }, null],
@@ -260,7 +265,7 @@ describe("交わる2本の線のどちらからもほとんど同じだけ離れ
     (_, point) => {
       const target = findBoardTarget(crossBoard, point);
 
-      expect(target).toEqual({ kind: "ambiguous", edges: bothEdges });
+      expect(target).toEqual({ kind: "ambiguous", ascendingEdges: bothEdges });
     },
   );
 
@@ -344,7 +349,7 @@ describe("誤操作が起きやすい形の当たり判定", () => {
       [
         "2本の線のちょうど真ん中",
         { x: 2, y: 1 },
-        { kind: "ambiguous", edges: both },
+        { kind: "ambiguous", ascendingEdges: both },
       ],
     ] as const)("%sを押すと %j を指すこと", (_, point, expected) => {
       expect(findBoardTarget(parallelBoard, point)).toEqual(expected);

@@ -90,8 +90,8 @@ const qualityConditionLabels = {
   string
 >;
 
-/** 割合で、小数2桁で示す特徴。ほかの特徴は回数・個数で整数。 */
-const fractionalFeatures: ReadonlySet<keyof BridgesAssessedFeatures> = new Set([
+/** ほかの特徴は回数・個数で整数。 */
+const twoDecimalFeatures: ReadonlySet<keyof BridgesAssessedFeatures> = new Set([
   "openingEdgeRatio",
   "countReasoningUndecidedRatio",
   "islandShare",
@@ -136,7 +136,7 @@ function formatRange({
 }
 
 function formatFeature(key: keyof BridgesAssessedFeatures, value: number) {
-  return fractionalFeatures.has(key) ? value.toFixed(2) : `${value}`;
+  return twoDecimalFeatures.has(key) ? value.toFixed(2) : `${value}`;
 }
 
 function isUnbounded({ minimum, maximum, excludesMinimum }: NumericRange) {

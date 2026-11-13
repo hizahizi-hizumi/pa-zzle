@@ -54,8 +54,8 @@ const record = createBridgesPlayRecord({
   result: performance,
 });
 
-/** 今の生成器より前の版（版 1。分割の生成条件を持たない）の identity。 */
-const pastProblemIdentity = {
+/** 分割の生成条件を持たない。 */
+const version1ProblemIdentity = {
   generatorVersion: "1",
   seed: "br-10-d30-p10-e15-16",
   conditions: {
@@ -127,7 +127,7 @@ describe("isBridgesPlayRecord", () => {
     ["作成した記録", record],
     [
       "生成器の版が今と違う記録",
-      withPayload({ problemIdentity: pastProblemIdentity }),
+      withPayload({ problemIdentity: version1ProblemIdentity }),
     ],
     [
       "待ったの回数が入力回数と同じ記録",
@@ -162,7 +162,7 @@ describe("isBridgesPlayRecord", () => {
     [
       "島が無い作業の量",
       withPayload({
-        problemIdentity: pastProblemIdentity,
+        problemIdentity: version1ProblemIdentity,
         workload: { ...workload, islandCount: 0 },
       }),
     ],
@@ -241,7 +241,9 @@ describe("bridgesPlayRecordDefinition", () => {
   });
 
   describe("生成器の版が今と違う記録の場合", () => {
-    const pastRecord = withPayload({ problemIdentity: pastProblemIdentity });
+    const pastRecord = withPayload({
+      problemIdentity: version1ProblemIdentity,
+    });
 
     test("記録に残した作業の量で評価し、自己ベストの比較に含めること", () => {
       const values = metricIds.map((metricId) =>
@@ -309,7 +311,7 @@ describe("restoreBridgesRecordedResult", () => {
       ["別の payload の版の記録", { ...record, payloadVersion: 2 }],
       [
         "生成器の版が今と違う記録",
-        withPayload({ problemIdentity: pastProblemIdentity }),
+        withPayload({ problemIdentity: version1ProblemIdentity }),
       ],
     ] as const;
 
