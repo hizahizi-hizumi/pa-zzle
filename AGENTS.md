@@ -59,9 +59,12 @@ gh actions-lock # 全ワークフローを走査して actions.lock を更新
 - 画面変更の確認は、`docs/開発/画面レビュー手順.md` に従って、実際の描画・操作・途中状態・画面遷移・エラーを確認する。
 - 人間の動作確認は、Cloudflare のプレビューURLで行う。仕組みと設定は `frontend/README.md` の「PRプレビュー」を参照。
   - 確認を頼むときは、スキルの手順が別のURLを決めていなければ、Branch Preview URL を渡す。
-  - Branch Preview URL は、PR の最新コミットのチェック `Workers Builds: pa-zzle` の結果に Preview Alias URL として出ているものをそのまま使う。
-  - PR があるブランチへ push した後は、PO への返信ごとに、末尾へ PR ごとに1行ずつ `Preview #<PR番号>: <URL>` を書く。
-  - チェックが成功していないときは、URLの代わりにチェックの状態を書く。
+  - Branch Preview URL は、リモートへ push したブランチの最新コミットのチェック `Workers Builds: pa-zzle` の結果に Preview Alias URL として出ているものをそのまま使う。PR が無くても出る。
+  - リモートへ push した後は、そのチェックが終わるまで PO に返信しない。
+    - チェックの状態は、確かめるたびにコミットのチェック一覧（`gh api repos/<owner>/<repo>/commits/<sha>/check-runs`）から引き直す。完了すると別の ID のチェックに置き換わる。
+  - push した後は、PO への返信ごとに、末尾へそのセッションで push したブランチごとに1行ずつ `Preview <ブランチ名>: <URL>` を書く。
+    - PR があるブランチは、ブランチ名の代わりに `#<PR番号>` を書く。
+  - チェックが成功以外で終わったときは、URLの代わりにチェックの状態と原因を書く。
 
 ## 文書
 
