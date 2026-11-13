@@ -71,8 +71,7 @@ function pressNext(): void {
   fireEvent.click(screen.getByRole("button", { name: "次へ" }));
 }
 
-/** 場面の動きを待っては「次へ」を押し、導入を最後まで進める。 */
-function goThroughIntroSync(): void {
+function pressNextThroughIntroWaitingForScenes(): void {
   for (let press = 0; press < 3; press += 1) {
     advanceTime(introEnoughMs);
     const next = screen.queryByRole("button", { name: "次へ" });
@@ -425,7 +424,7 @@ describe("HitofudePuzzleTutorial", () => {
         advanceTime(introEnoughMs);
         fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
         const caption = screen.getByText("輪の付いたマスから 道を引きます");
-        goThroughIntroSync();
+        pressNextThroughIntroWaitingForScenes();
 
         const visited = getVisitedCells();
         const hinted = getCuedCells("hint");
@@ -495,7 +494,7 @@ describe("HitofudePuzzleTutorial", () => {
 
     test("次へで最後まで進めると、最初の手順の一言と印を出すこと", () => {
       pressNext();
-      goThroughIntroSync();
+      pressNextThroughIntroWaitingForScenes();
 
       const headline = screen.getByText("印のマスを順になぞります");
       const hinted = getCuedCells("hint");

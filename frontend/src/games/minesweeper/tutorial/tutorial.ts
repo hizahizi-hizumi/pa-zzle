@@ -80,9 +80,8 @@ type MinesweeperDeduction = {
   round: number;
 };
 
-/** 1始まりの行・列で書いたマス。 */
-function cellAt(row: number, column: number): number {
-  return (row - 1) * 5 + (column - 1);
+function cellAt(oneBasedRow: number, oneBasedColumn: number): number {
+  return (oneBasedRow - 1) * 5 + (oneBasedColumn - 1);
 }
 
 /**

@@ -105,9 +105,8 @@ type ReflectionTutorialPlacement = {
 
 const SIZE = 5;
 
-/** 1始まりの行・列で書いたマス。 */
-function cellAt(row: number, column: number): number {
-  return (row - 1) * SIZE + (column - 1);
+function cellAt(oneBasedRow: number, oneBasedColumn: number): number {
+  return (oneBasedRow - 1) * SIZE + (oneBasedColumn - 1);
 }
 
 /**

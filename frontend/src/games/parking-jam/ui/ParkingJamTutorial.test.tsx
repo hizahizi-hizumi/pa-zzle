@@ -73,7 +73,7 @@ function pressNext(): void {
   fireEvent.click(screen.getByRole("button", { name: "次へ" }));
 }
 
-function goThroughIntroSync(): void {
+function pressNextThroughIntroWaitingForScenes(): void {
   for (let press = 0; press < 3; press += 1) {
     advanceTime(introEnoughMs);
     const next = screen.queryByRole("button", { name: "次へ" });
@@ -476,7 +476,7 @@ describe("ParkingJamTutorial", () => {
         describe("もう一度で導入を終えた場合", () => {
           beforeEach(() => {
             fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-            goThroughIntroSync();
+            pressNextThroughIntroWaitingForScenes();
           });
 
           test("始めの盤面に戻し、最初の手順から始めること", () => {
@@ -581,7 +581,7 @@ describe("ParkingJamTutorial", () => {
     describe("導入を終えた場合", () => {
       beforeEach(() => {
         pressNext();
-        goThroughIntroSync();
+        pressNextThroughIntroWaitingForScenes();
       });
 
       test("印の車を出すと、待たずに次のルールの一言と印を出すこと", () => {

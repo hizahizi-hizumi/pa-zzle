@@ -108,9 +108,8 @@ const solution: NanpureBoard = parseRows([
   "916578432",
 ]);
 
-/** 1始まりの行・列で書いたマス。 */
-function cellAt(row: number, column: number): number {
-  return (row - 1) * NANPURE_SIZE + (column - 1);
+function cellAt(oneBasedRow: number, oneBasedColumn: number): number {
+  return (oneBasedRow - 1) * NANPURE_SIZE + (oneBasedColumn - 1);
 }
 
 function getSolutionDigit(cellIndex: number): NanpureDigit {
