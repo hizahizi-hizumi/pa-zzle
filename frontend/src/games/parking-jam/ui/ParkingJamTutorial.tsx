@@ -51,7 +51,7 @@ import { prefersReducedMotion } from "@/lib/motion";
 
 type ParkingJamTutorialProps = {
   open: boolean;
-  /** ゲームのホームから開いたときに渡す。終えたときに、ゲームのホームで開いているレベルを始める操作を出す。渡さなければプレイ中に開いたとして、閉じてプレイに戻る操作を出す。 */
+  /** ゲームのホームから開いたときだけ渡す。 */
   playStart?: TutorialPlayStart;
   onClose: () => void;
 };
@@ -277,7 +277,6 @@ export function ParkingJamTutorial({
     setProgress(startTutorial(parkingJamTutorial));
   }
 
-  // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();
@@ -319,7 +318,7 @@ export function ParkingJamTutorial({
   }
 
   /**
-   * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せる物。
+   * 手を引いている間に覆いから抜く物。
    * - 印の車と、その手を決める物（手順で示すルールで出られない手の車と、その手で当たるもの）。車が出ていく間は、出す前の手順のまま抜く。
    * - 出られない手をしたら、揺れとわけの一言が指す、その車と当たったもの。
    */

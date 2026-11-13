@@ -22,22 +22,16 @@ export const PARKING_JAM_DIFFICULTY_MODEL_VERSION = "challenge-levers-v1";
 /** 挑戦を強めるレバーの強さ。1が最も弱い。 */
 export type ParkingJamLeverStrength = 1 | 2 | 3;
 
-/**
- * 問題の挑戦を3系統のレバーで表したもの。
- * - `dependency`: 依存の深さ・広さ。塞いでいる車をさらに何段さかのぼって読むか、何台の依存を同時に保つか。
- * - `misread`: 読み違いの誘発。出られそうに見えて不成立になる操作を誘う車の割合。
- * - `scale`: 規模。盤面の広さと、読む対象（車と固定物）の数の弱い方。
- */
+/** 仕様の難易度の3つの観点（依存の深さ・広さ、読み違いの誘いやすさ、規模）の強さ。 */
 export type ParkingJamChallengeLevers = {
   dependency: ParkingJamLeverStrength;
   misread: ParkingJamLeverStrength;
   scale: ParkingJamLeverStrength;
 };
 
-// 全車がすぐ出せる、または塞がれた車が1台だけの問題は、出す順序を読む挑戦がほぼない。
+// 段数（`dependencyDepth`）は出せる車をまとめて出す層の数で、仕様の「さかのぼる段数」より1多い。
 const MINIMUM_PROVIDED_DEPENDENCY_DEPTH = 2;
 const MINIMUM_PROVIDED_INITIAL_BLOCKED_VEHICLE_COUNT = 2;
-// 段数7以上は候補空間の0.1%しか現れず、人が遊んで確かめていないため提供しない。
 const MAXIMUM_PROVIDED_DEPENDENCY_DEPTH = 6;
 
 // 境界はすべて人間校正前の暫定値。
@@ -58,7 +52,6 @@ const SCALE_MODERATE_MAXIMUM_ELEMENT_COUNT = 11;
  * 1: 塞いでいる車はすぐ出せる（段数2で、2台以上を先に出す車がない）。
  * 2: 2台以上を先に出す車がある、または塞いでいる車がさらに塞がれている（段数3で枝分かれ1以下）。
  * 3: 3段以上さかのぼる（段数4以上）、または2段の待ちが枝分かれする（段数3で枝分かれ2以上）。
- * 枝分かれは「最少先行台数の最大 −（段数 − 1）」で、1本の連鎖だけなら0になる。
  */
 function classifyDependencyLever(
   dependencyDepth: number,
@@ -94,7 +87,6 @@ function classifyMisreadLever(
   return 1;
 }
 
-/** 盤面の広さと読む対象の数の弱い方。広いだけ・多いだけでは上がらない。 */
 function classifyScaleLever(
   boardCellCount: number,
   vehicleCount: number,
@@ -141,14 +133,9 @@ export function calculateParkingJamChallengeLevers(
 type ParkingJamLevelLevers = {
   dependency: ParkingJamLeverStrength;
   misread: ParkingJamLeverStrength;
-  /** 規模は単独でレベルを決めないよう、隣のレベルと重なる範囲で許す。 */
   scale: NumericRange<ParkingJamLeverStrength>;
 };
 
-/**
- * 各レベルが求めるレバーの組合せ。依存と読み違いを1つずつ交互に上げ、規模の許す範囲の両端も下げない。
- * 上のレベルはどのレバーも下のレベルより弱くならないので、上位は下位の挑戦を含む。
- */
 export const parkingJamLevelLevers = {
   "1": { dependency: 1, misread: 1, scale: { minimum: 1, maximum: 2 } },
   "2": { dependency: 1, misread: 2, scale: { minimum: 1, maximum: 2 } },
@@ -158,10 +145,7 @@ export const parkingJamLevelLevers = {
 } as const satisfies Record<ParkingJamDifficulty, ParkingJamLevelLevers>;
 
 /**
- * 分析結果を難易度へ分類した結果。
- * - `classified`: 提供範囲内で、レバーの組合せがいずれかのレベルにちょうど当たった。
- * - `out-of-range`: 評価できるが提供しない。出す順序を読む挑戦がほぼない（`too-light`）、
- *   依存が深すぎて確かめていない（`too-heavy`）、レバーの組合せがどのレベルにも当たらない（`unlisted-combination`）。
+ * - `out-of-range`: 評価できるが、仕様の「難易度」で出さないとする問題。
  * - `unsupported`: 車両数が厳密解析の上限を超え、評価できない。
  */
 export type ParkingJamDifficultyAssessment = DifficultyAssessment<{

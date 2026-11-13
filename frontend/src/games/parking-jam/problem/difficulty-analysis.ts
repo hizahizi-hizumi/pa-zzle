@@ -66,18 +66,12 @@ export type ParkingJamDifficultyFeatures = {
   maximumNewlyUnlockedVehicleCount: number | null;
   requiredPrecedenceCount: number | null;
   maximumRequiredPredecessorCount: number | null;
-  /**
-   * 各車について、その車が出庫できるようになる到達状態のうち既に出庫した車が最も少ないものの台数。
-   * その全車での最大値（最も奥に埋もれた車を出すまでに、最少で先に出す台数）。
-   */
   maximumPrerequisiteVehicleCount: number | null;
-  /** 開口のない側が、同じ辺で1車線ずれた開口に接している車（固定物に塞がれない側だけ数える）。 */
   adjacentLaneOpeningVehicleCount: number;
   /** 両側に開口があり、初期盤面で片側だけが車に塞がれている車。 */
   directionChoiceVehicleCount: number;
   /** 初期盤面で塞がれていて、最も塞がれ方の少ない進路で最初の遮断車が2マス以上先にある車。 */
   farBlockedVehicleCount: number;
-  /** 上の3種のいずれかに当たる、出られそうに見えて不成立になる操作を誘う車。 */
   misreadInducingVehicleCount: number;
   vehicleCellOccupancyRatio: number;
   longVehicleRatio: number;
