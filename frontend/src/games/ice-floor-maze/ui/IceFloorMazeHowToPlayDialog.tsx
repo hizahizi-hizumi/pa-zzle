@@ -126,7 +126,7 @@ export function IceFloorMazeHowToPlayDialog({
               piece={6}
               trail={{ direction: "right", from: 4 }}
             />
-            <HowToPlayRuleMark allowed />
+            <HowToPlayRuleMark figureAllowed />
           </div>
           <div className="flex items-center gap-2">
             <HowToPlayFigure
@@ -135,7 +135,7 @@ export function IceFloorMazeHowToPlayDialog({
               piece={7}
               trail={{ direction: "right", from: 4 }}
             />
-            <HowToPlayRuleMark allowed={false} />
+            <HowToPlayRuleMark figureAllowed={false} />
           </div>
         </div>
       </li>

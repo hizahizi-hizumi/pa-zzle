@@ -1,5 +1,8 @@
 import type { ProblemId } from "@/games/problem-id";
-import { type GameResultLevel, gameResultLevels } from "@/games/result";
+import {
+  type GameResultLevel,
+  gameResultLevelsAscending,
+} from "@/games/result";
 import {
   getZukanProblemStatus,
   type ZukanProblem,
@@ -43,7 +46,9 @@ export function getZukanStamp(
 
 export function readZukanStamp(square: Element): ZukanStamp | null {
   const level = square.getAttribute("data-change-level");
-  const solvedLevel = gameResultLevels.find((value) => value === level);
+  const solvedLevel = gameResultLevelsAscending.find(
+    (value) => value === level,
+  );
   return solvedLevel === undefined
     ? null
     : {
@@ -57,11 +62,11 @@ export function readZukanStamp(square: Element): ZukanStamp | null {
  * まとめて押す回で音を代表して鳴らすマスを選ぶのに使う。
  */
 export function getZukanStampWeight({ level, isRaised }: ZukanStamp): number {
-  const levelWeight = gameResultLevels.indexOf(level);
+  const levelWeight = gameResultLevelsAscending.indexOf(level);
   return level === "perfect"
-    ? gameResultLevels.length + 1
+    ? gameResultLevelsAscending.length + 1
     : isRaised
-      ? gameResultLevels.length
+      ? gameResultLevelsAscending.length
       : levelWeight;
 }
 

@@ -1,12 +1,11 @@
 import { Check, X } from "lucide-react";
 
 type HowToPlayRuleMarkProps = {
-  /** 隣の図がルール上できる形か。 */
-  allowed: boolean;
+  figureAllowed: boolean;
 };
 
-export function HowToPlayRuleMark({ allowed }: HowToPlayRuleMarkProps) {
-  const Mark = allowed ? Check : X;
+export function HowToPlayRuleMark({ figureAllowed }: HowToPlayRuleMarkProps) {
+  const Mark = figureAllowed ? Check : X;
 
   return <Mark className="size-4 shrink-0 text-muted-foreground" aria-hidden />;
 }

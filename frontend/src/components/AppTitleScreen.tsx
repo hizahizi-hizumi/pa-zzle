@@ -101,7 +101,7 @@ export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
             <div className="flex h-10 w-40 items-center justify-center">
               {title.status === "loading" ? (
                 <Progress
-                  value={Math.round(title.progress * 100)}
+                  value={Math.round(title.progressRatio * 100)}
                   aria-label="効果音の読み込み"
                   className="h-1 bg-muted motion-reduce:*:transition-none"
                 />

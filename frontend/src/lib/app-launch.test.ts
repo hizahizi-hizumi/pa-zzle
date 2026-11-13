@@ -73,7 +73,7 @@ describe("startAppLaunch", () => {
     });
 
     test("タイトルを出さずに、効果音すべての読み込みを始めること", () => {
-      appLaunch.startAppLaunch({ showTitle: false, sounds });
+      appLaunch.startAppLaunch({ showTitle: false, allSounds: sounds });
 
       const title = appLaunch.getAppLaunchTitle();
       expect(title).toEqual({ status: "hidden" });
@@ -86,7 +86,7 @@ describe("startAppLaunch", () => {
 
     beforeEach(async () => {
       appLaunch = await importAppLaunch();
-      appLaunch.startAppLaunch({ showTitle: true, sounds });
+      appLaunch.startAppLaunch({ showTitle: true, allSounds: sounds });
     });
 
     test("効果音すべての読み込みを待ち、進みを見せること", () => {
@@ -97,7 +97,7 @@ describe("startAppLaunch", () => {
         sounds,
         expect.any(Function),
       );
-      expect(title).toEqual({ status: "loading", progress: 0.5 });
+      expect(title).toEqual({ status: "loading", progressRatio: 0.5 });
     });
 
     test("読み込みが済んだら入れるようにすること", async () => {
@@ -137,7 +137,7 @@ describe("startAppLaunch", () => {
     });
 
     test("2回目は何もしないこと", () => {
-      appLaunch.startAppLaunch({ showTitle: false, sounds });
+      appLaunch.startAppLaunch({ showTitle: false, allSounds: sounds });
 
       const title = appLaunch.getAppLaunchTitle();
       expect(title.status).toBe("loading");
@@ -155,7 +155,7 @@ describe("startAppLaunch", () => {
     });
 
     test("待たずに入れるようにすること", () => {
-      appLaunch.startAppLaunch({ showTitle: true, sounds });
+      appLaunch.startAppLaunch({ showTitle: true, allSounds: sounds });
 
       const title = appLaunch.getAppLaunchTitle();
       expect(title).toEqual({ status: "ready" });
@@ -167,7 +167,7 @@ describe("startAppLaunch", () => {
 
     beforeEach(async () => {
       appLaunch = await importAppLaunch();
-      appLaunch.startAppLaunch({ showTitle: true, sounds });
+      appLaunch.startAppLaunch({ showTitle: true, allSounds: sounds });
     });
 
     test("待つのをやめて入れるようにすること", () => {
@@ -186,7 +186,7 @@ describe("enterApp", () => {
 
     beforeEach(async () => {
       appLaunch = await importAppLaunch();
-      appLaunch.startAppLaunch({ showTitle: true, sounds });
+      appLaunch.startAppLaunch({ showTitle: true, allSounds: sounds });
       notifiedTitles = [];
       appLaunch.subscribeAppLaunchTitle(() => {
         notifiedTitles.push(appLaunch.getAppLaunchTitle());

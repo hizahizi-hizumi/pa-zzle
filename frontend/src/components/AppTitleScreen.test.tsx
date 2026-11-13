@@ -53,7 +53,7 @@ afterEach(() => {
 describe("AppTitleScreen", () => {
   describe("効果音を読み込んでいる場合", () => {
     beforeEach(() => {
-      renderTitle({ status: "loading", progress: 0.4 });
+      renderTitle({ status: "loading", progressRatio: 0.4 });
     });
 
     test("読み込みの進みを見せ、はじめる操作を出さず、ゲームへの入口を押せなくすること", () => {

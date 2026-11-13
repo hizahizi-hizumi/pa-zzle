@@ -75,7 +75,7 @@ function renderAtHome() {
 /** 効果音の読み込みを待ち終える。テストの環境には Web Audio API が無いので、待たずに済む。 */
 async function launchApp(showTitle: boolean) {
   await act(async () => {
-    startAppLaunch({ showTitle, sounds: [] });
+    startAppLaunch({ showTitle, allSounds: [] });
   });
 }
 

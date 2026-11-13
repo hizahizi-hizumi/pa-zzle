@@ -324,7 +324,7 @@ describe("useAppHome", () => {
       beforeEach(async () => {
         cleanup();
         await act(async () => {
-          startAppLaunch({ showTitle: true, sounds: [] });
+          startAppLaunch({ showTitle: true, allSounds: [] });
         });
         await act(async () => {
           renderAtHome();

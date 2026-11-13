@@ -1,6 +1,6 @@
 import { parseDifficultyLevel } from "@/games/difficulty";
 import type { ProblemId } from "@/games/problem-id";
-import { gameResultLevels } from "@/games/result";
+import { gameResultLevelsAscending } from "@/games/result";
 import { isRecordObject } from "@/lib/type-guards";
 import { getDefaultStorage, type PlayRecordStorage } from "@/records/storage";
 import type {
@@ -15,7 +15,8 @@ const ZUKAN_LAST_VIEWED_STORAGE_KEY = "pa-zzle.zukan-last-viewed.v1";
 
 function isZukanViewedStatus(value: unknown): value is ZukanViewedStatus {
   return (
-    value === "attempted" || gameResultLevels.some((level) => level === value)
+    value === "attempted" ||
+    gameResultLevelsAscending.some((level) => level === value)
   );
 }
 

@@ -1,7 +1,7 @@
 import { difficultyLevels } from "@/games/difficulty";
 import {
   type GameResultLevel,
-  gameResultLevels,
+  gameResultLevelsAscending,
   getGameResultLevel,
 } from "@/games/result";
 import { toClearedProblem } from "@/records/cleared-problem";
@@ -99,7 +99,10 @@ function createTally(): GameTally {
 function snapshotGame(id: string, tally: GameTally): CollectionGame {
   const difficulties = tally.difficulties.map((counts, index) => ({
     level: Number(difficultyLevels[index]?.id ?? index + 1),
-    total: gameResultLevels.reduce((sum, level) => sum + counts[level], 0),
+    total: gameResultLevelsAscending.reduce(
+      (sum, level) => sum + counts[level],
+      0,
+    ),
     counts: { ...counts },
   }));
   return {
@@ -200,7 +203,8 @@ export function totalCollectionCounts(
 ): CollectionCounts {
   const counts = emptyCounts();
   for (const game of games) {
-    for (const level of gameResultLevels) counts[level] += game.counts[level];
+    for (const level of gameResultLevelsAscending)
+      counts[level] += game.counts[level];
   }
   return counts;
 }
