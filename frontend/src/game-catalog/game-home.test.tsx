@@ -7,7 +7,7 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { type ReactNode, StrictMode } from "react";
+import { StrictMode } from "react";
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
 import { GameCatalogProvider } from "@/components/GameCatalogContext";
@@ -15,7 +15,6 @@ import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
 import { useGameHome } from "@/game-catalog/game-home";
 import { minesweeperCatalogEntry } from "@/game-catalog/minesweeper/minesweeper-catalog-entry";
 import { nanpureCatalogEntry } from "@/game-catalog/nanpure/nanpure-catalog-entry";
-import { difficultyLevels } from "@/games/difficulty";
 import {
   createNanpurePlayRecord,
   getNanpurePlayRecordScore,
@@ -67,11 +66,6 @@ function withLeadingPoolProblems(game: GameCatalogEntry): GameCatalogEntry {
 
 const nanpureGame = withLeadingPoolProblems(nanpureCatalogEntry);
 const minesweeperGame = withLeadingPoolProblems(minesweeperCatalogEntry);
-
-const nanpureProblemCount = difficultyLevels.reduce(
-  (total, { id }) => total + nanpureGame.listPoolProblemIds(id).length,
-  0,
-);
 
 beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();

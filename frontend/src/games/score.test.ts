@@ -1,9 +1,9 @@
 import {
+  _private,
   calculateLinearScore,
   calculateSpeedFloorScore,
   calculateSpeedScore,
   createSpeedScoreRule,
-  _private,
   subtractWithFloor,
 } from "@/games/score";
 
