@@ -1,6 +1,9 @@
+import type { ScoreItem } from "@/games/score";
+
 export type GameResultDetailMetric = {
   label: string;
   value: string;
+  scoreItem?: { item: ScoreItem; points: number; maximum: number };
 };
 
 type DetailMetricProps = GameResultDetailMetric;

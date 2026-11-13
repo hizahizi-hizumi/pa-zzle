@@ -281,3 +281,55 @@ describe("GameResultScreen の指標と自己ベスト", () => {
     expect(container.querySelector(".result-record-updates")).toBeNull();
   });
 });
+
+describe("GameResultScreen の称号", () => {
+  function renderWithScore(score: number) {
+    const speed = score === 100 ? 40 : 14;
+    render(
+      <MemoryRouter>
+        <GameResultScreen
+          {...createProps()}
+          score={score}
+          scoreBreakdown={[
+            {
+              label: "正確さ",
+              value: "60 / 60",
+              scoreItem: { item: "accuracy", points: 60, maximum: 60 },
+            },
+            {
+              label: "速さ",
+              value: `${speed} / 40`,
+              scoreItem: { item: "speed", points: speed, maximum: 40 },
+            },
+          ]}
+        />
+      </MemoryRouter>,
+    );
+  }
+
+  describe("perfect に届かない場合", () => {
+    beforeEach(() => {
+      renderWithScore(74);
+    });
+
+    test("採点の観点から言える良いプレイの事実を、評価の言葉に添えること", () => {
+      const grade = screen.getByRole("region", { name: "スコア" });
+
+      expect(within(grade).getByText("クリア！")).toBeTruthy();
+      expect(within(grade).getByText("ノーミス！")).toBeTruthy();
+    });
+  });
+
+  describe("perfect の場合", () => {
+    beforeEach(() => {
+      renderWithScore(100);
+    });
+
+    test("個々の称号を重ねないこと", () => {
+      const grade = screen.getByRole("region", { name: "スコア" });
+
+      expect(within(grade).getByText("パーフェクト！")).toBeTruthy();
+      expect(within(grade).queryByText("ノーミス！")).toBeNull();
+    });
+  });
+});

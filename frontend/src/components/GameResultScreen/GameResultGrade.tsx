@@ -13,6 +13,7 @@ type GameResultGradeProps = {
   score: number;
   countUp?: boolean;
   improvement?: ResultRecordImprovement;
+  feats?: readonly string[];
 };
 
 const SCORE_REVEAL_DELAY_MS = 340;
@@ -23,8 +24,9 @@ export function GameResultGrade({
   score,
   countUp = false,
   improvement,
+  feats = [],
 }: GameResultGradeProps) {
-  const message = getGameResultStyle(level).message ?? "クリア！";
+  const { message, markClassName } = getGameResultStyle(level);
   const [displayScore, setDisplayScore] = useState(() =>
     countUp && !prefersReducedMotion() ? 0 : score,
   );
@@ -62,6 +64,19 @@ export function GameResultGrade({
   return (
     <div className="result-grade" role="region" aria-label="スコア">
       <strong className="result-grade-name">{message}</strong>
+      <p className="result-grade-tags">
+        <span
+          className={`result-grade-level ${markClassName}`}
+          aria-label={`評価 ${level}`}
+        >
+          {level}
+        </span>
+        {feats.map((feat) => (
+          <span key={feat} className="result-grade-feat">
+            {feat}
+          </span>
+        ))}
+      </p>
       <div className="result-grade-score">
         {countUp && <span className="sr-only">{score}点（100点満点）</span>}
         <b aria-hidden={countUp}>{countUp ? displayScore : score}</b>

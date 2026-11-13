@@ -12,6 +12,7 @@ import { GameResultMetrics } from "@/components/GameResultScreen/GameResultMetri
 import { GameResultMoment } from "@/components/GameResultScreen/GameResultMoment";
 import { GameResultRecordNotice } from "@/components/GameResultScreen/GameResultRecordNotice";
 import type { GameResultMetric } from "@/components/GameResultScreen/ResultMetric";
+import { listGameResultFeats } from "@/components/game-result-feats";
 import { Button } from "@/components/ui/button";
 import type { ResultRecordFeedback } from "@/games/play";
 import { getGameResultLevel } from "@/games/result";
@@ -53,6 +54,8 @@ export function GameResultScreen({
   const level = getGameResultLevel(score);
   const improvements =
     recordFeedback.kind === "updated" ? recordFeedback.improvements : [];
+  const feats =
+    level === "perfect" ? [] : listGameResultFeats({ metrics, scoreBreakdown });
 
   useEffect(() => {
     screenRef.current?.focus({ preventScroll: true });
@@ -115,6 +118,7 @@ export function GameResultScreen({
             score={score}
             skipReveal={skipReveal}
             improvement={improvements.find((item) => item.id === "play-score")}
+            feats={feats}
           />
         </main>
         <div className="result-quiet-feedback">

@@ -7,6 +7,7 @@ type GameResultMomentProps = {
   score: number;
   skipReveal: boolean;
   improvement?: ResultRecordImprovement;
+  feats: readonly string[];
 };
 
 export function GameResultMoment({
@@ -14,6 +15,7 @@ export function GameResultMoment({
   score,
   skipReveal,
   improvement,
+  feats,
 }: GameResultMomentProps) {
   return (
     <div className="result-theater">
@@ -32,6 +34,7 @@ export function GameResultMoment({
         score={score}
         countUp={!skipReveal}
         improvement={improvement}
+        feats={feats}
       />
     </div>
   );

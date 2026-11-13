@@ -94,5 +94,10 @@ export function listScoreBreakdownMetrics<Item extends ScoreItem>(
   return items.map((item) => ({
     label: SCORE_ITEM_LABELS[item],
     value: `${score.breakdown[item]} / ${maximumsInDisplayOrder[item]}`,
+    scoreItem: {
+      item,
+      points: score.breakdown[item],
+      maximum: maximumsInDisplayOrder[item],
+    },
   }));
 }

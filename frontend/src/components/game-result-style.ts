@@ -1,7 +1,7 @@
 import type { GameResultLevel } from "@/games/result";
 
 type GameResultStyle = {
-  message: string | null;
+  message: string;
   scoreClassName: string;
   markClassName: string;
   fillColorClassName: string;
@@ -27,7 +27,7 @@ const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
     fillColorClassName: "text-grade-good",
   },
   clear: {
-    message: null,
+    message: "クリア！",
     scoreClassName: "text-grade-clear-ink",
     markClassName: "bg-grade-clear/20 text-grade-clear-ink",
     fillColorClassName: "text-grade-clear",

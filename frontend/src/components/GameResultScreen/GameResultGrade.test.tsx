@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { GameResultGrade } from "@/components/GameResultScreen/GameResultGrade";
 import { getGameResultLevel } from "@/games/result";
@@ -58,5 +58,41 @@ describe("GameResultGrade の動きを減らす設定", () => {
 
     expect(score).toBeTruthy();
     expect(screen.queryByText("0")).toBeNull();
+  });
+});
+
+describe("GameResultGrade の評価の言葉", () => {
+  describe("clear の場合", () => {
+    beforeEach(() => {
+      render(<GameResultGrade level="clear" score={74} />);
+    });
+
+    test("褒める言葉を出し、図鑑と同じ評価段階の名前を添えること", () => {
+      const message = screen.getByText("クリア！");
+      const levelName = screen.getByLabelText("評価 clear");
+
+      expect(message).toBeTruthy();
+      expect(levelName.textContent).toBe("clear");
+    });
+  });
+
+  describe("称号を渡した場合", () => {
+    beforeEach(() => {
+      render(
+        <GameResultGrade
+          level="good"
+          score={86}
+          feats={["ノーミス！", "待ったなし！"]}
+        />,
+      );
+    });
+
+    test("評価の言葉と同じまとまりに称号を出すこと", () => {
+      const grade = screen.getByRole("region", { name: "スコア" });
+
+      expect(within(grade).getByText("ナイスプレイ！")).toBeTruthy();
+      expect(within(grade).getByText("ノーミス！")).toBeTruthy();
+      expect(within(grade).getByText("待ったなし！")).toBeTruthy();
+    });
   });
 });
