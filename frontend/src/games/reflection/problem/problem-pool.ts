@@ -29,34 +29,22 @@ import {
 } from "@/games/reflection/puzzle/board";
 import { computeReflectionClues } from "@/games/reflection/puzzle/laser";
 
-/**
- * 事前生成した問題集の1問。
- * - `candidateIndex` と `encodedSolution` から得る盤面サイズ・ピース数で、`createReflectionProblemIdentity` の identity を再構成する。
- * - `encodedSolution` は解の各マスを `ReflectionCellCode`（`0` が空き、`1`〜`6` がピース）の1桁で行優先に並べた文字列。
- *   手持ちと外周ヒントは解から求まるので持たない。実行時に生成器・解探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
- * - `propagationRoundCount` / `assumptionTestCount` / `trialMoveCount` は生成時の分析結果（`ReflectionSolveWorkload`）。
- *   速さの基準時間に使う。プレイ時に解法器を動かさずに済むよう、問題集に持たせる。
- */
 export type ReflectionProblemPoolEntry = readonly [
   candidateIndex: number,
+  // 手持ちと外周ヒントは解から求まるので持たない。実行時に生成器・解探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
   encodedSolution: string,
+  // 生成時の分析結果（`ReflectionSolveWorkload`）。プレイ時に解法器を動かさずに済むよう、問題集に持たせる。
   propagationRoundCount: number,
   assumptionTestCount: number,
   trialMoveCount: number | null,
 ];
 
-/**
- * 問題集の中の1問を指す識別情報。
- * - `poolVersion`: 問題集を作り直して問題の並びが変わったら上げる。
- * - `problemId`: `<レベル>-<番号>`（番号はレベルの中の1始まりの並び順）。例: `4-17`。
- * 生成器の identity（`ReflectionProblemIdentity`）とは相互に引ける。
- */
 export type ReflectionProblemPoolReference = {
+  /** 問題集を作り直して問題の並びが変わったら上げる。 */
   poolVersion: string;
   problemId: string;
 };
 
-/** 問題集から復元した1問。問題集の中の位置と、問題を解き切る作業の量を伴う。 */
 export type ReflectionPooledProblem = ReflectionIdentifiedProblem & {
   poolReference: ReflectionProblemPoolReference;
   workload: ReflectionSolveWorkload;
@@ -137,7 +125,6 @@ export function formatReflectionPoolProblemId(
   return `${difficulty}-${entryIndex + 1}`;
 }
 
-/** 問題集の1問を、問題集の中の位置 `poolReference` を添えて復元する。 */
 export function restoreReflectionPoolEntry(
   [
     candidateIndex,
@@ -190,14 +177,12 @@ const poolIndex = createProblemPoolIndex(
   toReflectionPoolIdentity,
 );
 
-/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
 export function listReflectionPoolProblemIds(
   difficulty: ReflectionDifficulty,
 ): readonly ProblemId[] {
   return poolIndex.listProblemIds(difficulty);
 }
 
-/** 難易度の問題集に問題 ID の問題があるかを返す。 */
 export function hasReflectionPoolProblemId(
   difficulty: ReflectionDifficulty,
   problemId: string,
@@ -205,7 +190,6 @@ export function hasReflectionPoolProblemId(
   return poolIndex.findPositionById(difficulty, problemId) !== null;
 }
 
-/** 難易度の問題集から問題 ID で1問を探して復元する。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findReflectionPooledProblemByProblemId(
   difficulty: ReflectionDifficulty,
   problemId: string,
@@ -235,7 +219,6 @@ function getPositionsBySeed(): ReadonlyMap<string, PoolPosition> {
   return positionsBySeed;
 }
 
-/** identity に一致する問題集の1問を復元する。生成器の版や条件が違う identity・問題集に無い identity には `null` を返す。 */
 export function findReflectionPooledProblem(
   identity: ReflectionProblemIdentity,
 ): ReflectionPooledProblem | null {
@@ -257,13 +240,12 @@ export function findReflectionPooledProblem(
     : null;
 }
 
-/** 始めたときの盤面を見れば分かる、問題の特徴。ピースの数は手持ちのピースの数。 */
 export type ReflectionProblemFeatures = {
   size: number;
+  /** ピースの数は手持ちのピースの数。 */
   pieceCount: number;
 };
 
-/** 難易度の問題集の1問の特徴を、外周ヒントを求めずに解の盤面から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findReflectionPoolProblemFeatures(
   difficulty: ReflectionDifficulty,
   problemId: string,
@@ -281,7 +263,6 @@ export function findReflectionPoolProblemFeatures(
   };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
 export const reflectionProblemFeatureAxes = [
   {
     id: "board-size",

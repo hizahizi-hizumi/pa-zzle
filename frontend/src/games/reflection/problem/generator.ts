@@ -25,10 +25,6 @@ import {
 } from "@/games/reflection/puzzle/board";
 import { computeReflectionClues } from "@/games/reflection/puzzle/laser";
 
-/**
- * - `symmetryKey`: 回転・反転の同型を問題集から除くための正規化キー。
- * - `generationAttemptCount`: 採用までに作った候補配置の数。
- */
 export type ReflectionGeneratedProblem = ReflectionIdentifiedProblem & {
   symmetryKey: string;
   generationAttemptCount: number;
@@ -36,10 +32,7 @@ export type ReflectionGeneratedProblem = ReflectionIdentifiedProblem & {
 
 const MAXIMUM_GENERATION_ATTEMPTS = 100;
 
-/**
- * 手持ちの各ピースを6種から等確率で選ぶ。同じ種類が重なってもよい。
- * 特定の種類を必ず含めると、ピースが少ない問題で種類の組み合わせが偏り、1本のヒントで決まる問題がほとんど出なくなる。
- */
+/** 特定の種類を必ず含めると、ピースが少ない問題で種類の組み合わせが偏り、1本のヒントで決まる問題がほとんど出なくなる。 */
 function sampleInventoryPieces(
   pieceCount: number,
   random: ProblemRandom,
@@ -95,11 +88,7 @@ function validateIdentity(identity: ReflectionProblemIdentity): void {
   }
 }
 
-/**
- * identity の seed から手持ちとその配置を乱数で作り、問題成立条件を満たすまで作り直す。
- * 問題成立条件は、全ピースがいずれかの外周ヒントに影響し、手持ちと外周ヒントに合う配置がただ1つであること。
- * 同じ identity からは同じ問題を作る。回転・反転の同型除外は問題集の生成で `symmetryKey` を使って行う。
- */
+/** 回転・反転の同型除外は問題集の生成で `symmetryKey` を使って行う。 */
 export function generateReflectionProblem(
   identity: ReflectionProblemIdentity,
 ): ReflectionGeneratedProblem {

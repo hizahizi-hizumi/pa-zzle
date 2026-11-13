@@ -30,11 +30,8 @@ import {
  */
 export type ReflectionSolutionCount = 0 | 1 | 2;
 
-/**
- * - `status`: `search-limit-reached` なら探索量の上限で打ち切ったため、`solutionCount` は下限にすぎない。
- * - `firstSolution`: 最初に見つけた配置。解が無ければ `null`。
- */
 export type ReflectionSolutionSearchResult = {
+  /** `search-limit-reached` なら探索量の上限で打ち切ったため、`solutionCount` は下限にすぎない。 */
   status: "complete" | "search-limit-reached";
   solutionCount: ReflectionSolutionCount;
   firstSolution: ReflectionBoard | null;
@@ -47,7 +44,6 @@ export type ReflectionSolutionSearchInput = {
 };
 
 /**
- * - `solutionLimit`: この数の解が見つかったら打ち切る。
  * - `searchStepLimit`: 探索量の上限。探索の節点と、ヒント1本の光路をたどった1マスをそれぞれ1と数える。
  *   時間ではなく探索量で打ち切るのは、同じ入力に同じ結果を返し、生成器が identity から同じ問題を再現できるようにするため。
  */
@@ -533,7 +529,6 @@ function canFillRemaining(
  */
 export const REFLECTION_UNIQUENESS_SEARCH_STEP_LIMIT = 4_000_000;
 
-/** 手持ちのピースをすべて使い、全外周ヒントを満たす配置を数える。 */
 export function countReflectionSolutions(
   input: ReflectionSolutionSearchInput,
   options: ReflectionSolutionSearchOptions = {},

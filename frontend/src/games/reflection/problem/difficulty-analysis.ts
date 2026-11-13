@@ -14,11 +14,6 @@ import {
   reflectionPieces,
 } from "@/games/reflection/puzzle/board";
 
-/**
- * 難易度特徴と比べるための問題の規模。挑戦ではなく、読む範囲・置く対象の数の側の値。
- * - `clueCount`: 外周ヒントの本数（4 × 一辺）。
- * - `pieceKindCount`: 手持ちに含まれるピースの種類の数。
- */
 export type ReflectionScaleMetrics = {
   size: number;
   cellCount: number;
@@ -27,13 +22,6 @@ export type ReflectionScaleMetrics = {
   pieceKindCount: number;
 };
 
-/**
- * 人間向け解法器で置き場所を決め切った経過から求めた特徴。
- * - `highestLevel`: 使わざるを得なかった最も深い推論レベル。
- * - `fixedPieceCountByLevel`: 各レベルの推論で新しく置き場所が決まったピースの数。添字0がレベル1。
- * - `propagationRoundCount`: 直接整合性・在庫の適用で候補が変わった回数。
- * - `assumptionTestCount` / `assumptionEliminationCount`: 仮に置いて確かめた回数と、矛盾で除いた候補の数。
- */
 export type ReflectionReasoningFeatures = {
   highestLevel: ReflectionReasoningLevel;
   fixedPieceCountByLevel: readonly [number, number, number, number, number];
@@ -42,13 +30,6 @@ export type ReflectionReasoningFeatures = {
   assumptionEliminationCount: number;
 };
 
-/**
- * 一致表示を見ながら、推論をせずに外周ヒントを1本ずつ満たしていく試し置き（`traceReflectionTrialSolve`）の経過から求めた特徴。
- * 一致表示があると各外周ヒントの正否がすぐ分かるので、ヒント同士が干渉しない問題は試し置きだけで押し切れる。
- * - `solved`: 試し置きで、手数の上限までに解き切れた。
- * - `moveCount`: 解き切るまで（または止まるまで）の手数。
- * - `retryCount`: 一致していた外周ヒントを崩したり、別の置き方を試したりした手の数。1つ直すと他が崩れる干渉の強さの目安。
- */
 export type ReflectionTrialFeatures = {
   solved: boolean;
   moveCount: number;
@@ -57,8 +38,7 @@ export type ReflectionTrialFeatures = {
 
 /**
  * - `analyzed`: 一意解で、推論レベル1〜5で置き場所を決め切れた。
- * - `unsupported`: 一意解だが、推論レベル5まで使っても決まらないマスが残る（評価不能）。`reason` は
- *   `unresolved`（仮定を試し尽くしても決まらない）か `assumption-limit-reached`（仮定を試す回数の上限に達した）。
+ * - `unsupported`: 一意解だが、推論レベル5まで使っても決まらないマスが残る（評価不能）。
  * - `invalid`: 解が無い、2つ以上ある、または一意性を確かめ切れない（成立しない）。
  */
 export type ReflectionDifficultyAnalysis =
@@ -102,10 +82,6 @@ function measureTrialFeatures(
   return { solved: status === "solved", moveCount, retryCount };
 }
 
-/**
- * 手持ちと外周ヒントの一意性を確かめたうえで、人間向け解法器の経過を特徴へまとめる。
- * 解は推論の手掛かりには使わず、仮定の試しを省く高速化（結果は変わらない）にだけ渡す。
- */
 export function analyzeReflectionDifficulty(
   problem: ReflectionProblem,
   options: ReflectionHumanSolveOptions = {},
@@ -129,6 +105,7 @@ export function analyzeReflectionDifficulty(
   }
 
   const trace = traceReflectionHumanSolve(problem, {
+    // 解は推論の手掛かりには使わず、仮定の試しを省く高速化（結果は変わらない）にだけ渡す。
     knownSolution: problem.solution,
     ...options,
   });

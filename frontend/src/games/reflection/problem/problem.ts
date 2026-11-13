@@ -21,22 +21,15 @@ import {
   isRecordObject,
 } from "@/lib/type-guards";
 
-/**
- * 1問を遊ぶためのデータ。
- * - `inventory`: 手持ちのピース。すべて盤面に置く。
- * - `clues`: 外周ヒント。並びは `listReflectionEntries` に従う。
- * - `solution`: ただ1つの解。
- */
 export type ReflectionProblem = {
   size: number;
   inventory: ReflectionInventory;
+  /** 外周ヒントの並びは `listReflectionEntries` に従う。 */
   clues: readonly ReflectionClue[];
   solution: ReflectionBoard;
 };
 
-/**
- * 生成器が扱う盤面サイズ。どのレベルでどの大きさを出すかは `reflectionLevelCombinations` が決める。
- */
+/** どのレベルでどの大きさを出すかは `reflectionLevelCombinations` が決める。 */
 export const reflectionBoardSizes = [5, 6, 7, 8, 9, 10, 11] as const;
 
 export type ReflectionBoardSize = (typeof reflectionBoardSizes)[number];
@@ -44,31 +37,26 @@ export type ReflectionBoardSize = (typeof reflectionBoardSizes)[number];
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
 export const REFLECTION_GENERATOR_VERSION = "3";
 
-/** 問題を作る条件。`pieceCount` は手持ちのピースの総数。 */
 export type ReflectionGenerationConditions = {
   size: ReflectionBoardSize;
   pieceCount: number;
 };
 
-/** 同じ問題を再現するための情報。記録から同じ問題を引き直すときに使う。 */
 export type ReflectionProblemIdentity = {
   generatorVersion: typeof REFLECTION_GENERATOR_VERSION;
   seed: ProblemSeed;
   conditions: ReflectionGenerationConditions;
 };
 
-/** 記録に残した問題の識別情報。生成器の版が今と違う記録も読み込む。 */
+/** 生成器の版が今と違う記録も読み込む。 */
 export type ReflectionRecordedProblemIdentity = RecordedProblemIdentity;
 
-/** 問題と、それを再現するための情報。 */
 export type ReflectionIdentifiedProblem = {
   problem: ReflectionProblem;
   identity: ReflectionProblemIdentity;
 };
 
 /**
- * 問題を解き切る作業の量。速さの基準時間を問題ごとに決めるために使い、難易度そのものは表さない。
- * - `pieceCount` / `clueCount`: 置くピースの数と、読む外周ヒントの本数。
  * - `propagationRoundCount`: 人間向け解法器で、全外周ヒントへ照らし直して候補が変わった回数。
  * - `assumptionTestCount`: 人間向け解法器で、候補を仮に置いて確かめた回数（推論レベル5 でだけ増える）。
  * - `trialMoveCount`: 一致表示を見ながら1本ずつ満たす試し置きで解き切った手数。解き切れない問題は `null`。
@@ -81,10 +69,6 @@ export type ReflectionSolveWorkload = {
   trialMoveCount: number | null;
 };
 
-/**
- * 生成条件と候補番号から identity を作る。seed は条件ごとに別の系列になるよう条件を含める。
- * 例: 7×7・10ピース・候補番号 3 は `rf-7-10-3`。
- */
 export function createReflectionProblemIdentity(
   size: ReflectionBoardSize,
   pieceCount: number,
@@ -92,6 +76,7 @@ export function createReflectionProblemIdentity(
 ): ReflectionProblemIdentity {
   return {
     generatorVersion: REFLECTION_GENERATOR_VERSION,
+    // seed は条件ごとに別の系列になるよう条件を含める。
     seed: `rf-${size}-${pieceCount}-${candidateIndex}`,
     conditions: { size, pieceCount },
   };
@@ -103,7 +88,6 @@ export function isReflectionBoardSize(
   return reflectionBoardSizes.some((size) => size === value);
 }
 
-/** 盤面の一辺に対して置けるピース数か。少なくとも1つ置き、空きマスを1つは残す。 */
 export function isReflectionPieceCount(
   size: ReflectionBoardSize,
   value: unknown,
@@ -138,7 +122,6 @@ export function assertReflectionProblem(problem: ReflectionProblem): void {
   }
 }
 
-/** 記録など外部から読み戻した値が、現在の生成器で扱える識別情報かを確かめる。 */
 export function isReflectionProblemIdentity(
   value: unknown,
 ): value is ReflectionProblemIdentity {
@@ -155,11 +138,6 @@ export function isReflectionProblemIdentity(
   );
 }
 
-/**
- * 記録から読み戻した値が、作業の量として読めるかを確かめる。
- * 外周ヒントは一辺ごとに盤面の一辺と同じ本数あるので4の倍数で、ピースは少なくとも1つ置き、空きマスを1つは残す。
- * 生成器の版が今と違う記録も読めるよう、盤面サイズは今の生成器の範囲に限らない。
- */
 export function isReflectionSolveWorkload(
   value: unknown,
 ): value is ReflectionSolveWorkload {
@@ -174,6 +152,7 @@ export function isReflectionSolveWorkload(
     assumptionTestCount,
     trialMoveCount,
   } = value;
+  // 外周ヒントは一辺ごとに盤面の一辺と同じ本数あるので、4の倍数になる。
   if (
     !(trialMoveCount === null || isNonNegativeInteger(trialMoveCount)) ||
     !isNonNegativeInteger(pieceCount) ||
@@ -186,11 +165,11 @@ export function isReflectionSolveWorkload(
     return false;
   }
 
+  // 生成器の版が今と違う記録も読めるよう、盤面サイズは今の生成器の範囲に限らない。
   const size = clueCount / 4;
   return pieceCount >= 1 && pieceCount < size * size;
 }
 
-/** 作業の量が、識別情報の生成条件（盤面サイズとピース数）と食い違わないか。 */
 export function isReflectionWorkloadOfIdentity(
   workload: ReflectionSolveWorkload,
   identity: ReflectionProblemIdentity,
@@ -201,7 +180,6 @@ export function isReflectionWorkloadOfIdentity(
   );
 }
 
-/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
 export function isReflectionRecordedProblemIdentity(
   value: unknown,
 ): value is ReflectionRecordedProblemIdentity {

@@ -17,7 +17,7 @@ function toInput(board: ReflectionBoard) {
   };
 }
 
-/** 手持ちのピースを置く全配置を列挙する。同じ種類のピース同士の入れ替えは同じ配置として1回だけ数える。 */
+/** 同じ種類のピース同士の入れ替えは同じ配置として1回だけ数える。 */
 function enumerateBoards(
   size: number,
   pieces: readonly ReflectionPiece[],

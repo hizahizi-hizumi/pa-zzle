@@ -27,9 +27,8 @@ export type ReflectionTrialSolveInput = {
 };
 
 /**
- * 一致表示を見ながら試し置きで進めた経過。
  * - `status`: `solved` は全ピースを置いて全外周ヒントが一致した。`stuck` はまだ通っていない盤面への手が無くなった。
- *   `move-limit-reached` は手数の上限（ピース数 × 20 + 20）に達した。
+ *   `move-limit-reached` は手数の上限に達した。
  * - `cleanFixCount`: 狙った外周ヒントを、一致していた外周ヒントを崩さずに一致させた手の数。
  * - `breakingFixCount` / `brokenMatchCount`: 狙った外周ヒントを一致させる代わりに一致を崩した手の数と、崩した一致の延べ数。
  * - `advanceCount`: 狙った外周ヒントは一致しないが、一致の数を増やした手の数。
@@ -55,9 +54,9 @@ type TraceResult = {
   exitIndex: number | null;
 };
 
-/** 盤面の変更。`cellIndex` のマスを `code` にする。移動は2つの変更（移す先に置き、元を空ける）で表す。 */
 type CellChange = { cellIndex: number; code: ReflectionCellCode };
 
+/** 移動は2つの変更（移す先に置き、元を空ける）で表す。 */
 type Move = readonly CellChange[];
 
 type EvaluatedMove = {
