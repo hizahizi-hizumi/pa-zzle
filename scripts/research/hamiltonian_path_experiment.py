@@ -383,7 +383,6 @@ class PathCounter:
                 ndead = dead
                 if deg[x] == 0 and x != end:
                     ndead -= 1  # x was a dead end (only head)
-                # parity
                 if use_parity and rr > 0:
                     c2 = cnt[0] - (color[x] == 0), cnt[1] - (color[x] == 1)
                     nc = 1 - color[x]
@@ -393,7 +392,6 @@ class PathCounter:
                         ec = nc if rr % 2 == 1 else 1 - nc
                         if color[end] != ec:
                             continue
-                # apply
                 visited[x] = 1
                 cnt[color[x]] -= 1
                 nun = unvisited & ~(1 << x)

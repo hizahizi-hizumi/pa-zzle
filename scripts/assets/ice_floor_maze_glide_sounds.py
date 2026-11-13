@@ -49,7 +49,6 @@ SUSTAIN_END_RATIO = 0.7
 
 
 def band_noise(length: int, band_hz: tuple[float, float], random: np.random.Generator) -> Signal:
-    """帯域の縁をなだらかにした雑音。"""
     spectrum = np.fft.rfft(random.standard_normal(length))
     frequencies = np.fft.rfftfreq(length, 1 / SAMPLE_RATE)
     low, high = band_hz
