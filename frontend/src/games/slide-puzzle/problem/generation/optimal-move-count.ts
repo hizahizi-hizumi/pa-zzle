@@ -14,16 +14,12 @@ type SlidePuzzleOptimalMoveCounterOptions = {
   nodeLimit?: number;
 };
 
-/** 最短手数を返す。探索が上限に達して求められなかった盤面では `null` を返す。 */
+/** 探索が上限に達して最短手数を求められなかった盤面では `null` を返す。 */
 export type SlidePuzzleOptimalMoveCounter = (
   board: SlidePuzzleBoard,
 ) => number | null;
 
-/**
- * 盤面サイズに合う方法で最短手数を求める関数を作る。
- * 3×3 は全状態の表を引き、4×4・5×5 はパターンデータベースを下界にした IDA* で探す。
- * 5×5 のパターンデータベースは構築に数分・数百 MB を使うので、問題集の事前生成と分析だけで作る。
- */
+/** 5×5 のパターンデータベースは構築に数分・数百 MB を使うので、問題集の事前生成と分析だけで作る。 */
 export function createSlidePuzzleOptimalMoveCounter(
   boardSize: SlidePuzzleBoardSize,
   { nodeLimit }: SlidePuzzleOptimalMoveCounterOptions = {},

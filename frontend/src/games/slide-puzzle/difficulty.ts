@@ -68,13 +68,6 @@ export const slidePuzzleDifficultyCriteria = {
   SlidePuzzleDifficultyCriteria
 >;
 
-/**
- * 分析結果を難易度へ分類した結果。
- * - `classified`: 提供範囲内で、盤面サイズと遠回り手数の組がいずれかのレベルに当たった。
- * - `out-of-range`: 評価できるが提供しない。最短手数が盤面サイズごとの提供範囲の下限より短い（`too-light`）か、
- *   盤面サイズと遠回り手数の組がどのレベルにも当たらない（`unlisted-combination`）。
- * - `unsupported`: 最短手数が分からず、評価できない。
- */
 export type SlidePuzzleDifficultyAssessment = DifficultyAssessment<{
   classified: NoAssessmentDetail;
   outOfRange: { reason: "too-light" | "unlisted-combination" };
@@ -82,7 +75,6 @@ export type SlidePuzzleDifficultyAssessment = DifficultyAssessment<{
   invalid: never;
 }>;
 
-/** 盤面サイズと遠回り手数（タイルを一時的にゴールから遠ざける必要がある手の数）の組でレベルを決める。 */
 export function assessSlidePuzzleDifficulty(
   analysis: SlidePuzzleDifficultyAnalysis,
 ): SlidePuzzleDifficultyAssessment {
@@ -109,7 +101,6 @@ export function assessSlidePuzzleDifficulty(
     : { status: "out-of-range", reason: "unlisted-combination" };
 }
 
-/** 記録・診断から読み戻した問題が、そのレベルで遊ぶ盤面サイズで作られているかを確かめる。 */
 export function isSlidePuzzleProblemIdentityOfDifficulty(
   identity: SlidePuzzleProblemIdentity,
   difficulty: SlidePuzzleDifficulty,

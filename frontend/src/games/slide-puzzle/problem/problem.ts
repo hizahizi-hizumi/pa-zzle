@@ -27,7 +27,6 @@ export type SlidePuzzleProblem = {
   initialBoard: SlidePuzzleBoard;
 };
 
-/** 初期盤面は、扱う盤面サイズのマス数を持ち、空白と各タイルを1つずつ並べる。 */
 export function assertSlidePuzzleProblem(problem: SlidePuzzleProblem): void {
   const { initialBoard } = problem;
   getSlidePuzzleBoardSize(initialBoard);
@@ -50,13 +49,11 @@ export type SlidePuzzleProblemIdentity = {
   conditions: SlidePuzzleGenerationConditions;
 };
 
-/** 問題と、それを再現するための情報。 */
 export type SlidePuzzleIdentifiedProblem = {
   problem: SlidePuzzleProblem;
   identity: SlidePuzzleProblemIdentity;
 };
 
-/** 記録・診断など外部から読み戻した値が、現在の生成器で復元できる識別情報かを確かめる。 */
 export function isSlidePuzzleProblemIdentity(
   value: unknown,
 ): value is SlidePuzzleProblemIdentity {
@@ -72,12 +69,11 @@ export function isSlidePuzzleProblemIdentity(
   );
 }
 
-/** 記録に残した問題の識別情報。生成器の版が今と違う記録も、採点に使う盤面サイズが読めれば読み込む。 */
+/** 生成器の版が今と違う記録も、採点に使う盤面サイズが読めれば読み込む。 */
 export type SlidePuzzleRecordedProblemIdentity = RecordedProblemIdentity<{
   size: SlidePuzzleBoardSize;
 }>;
 
-/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
 export function isSlidePuzzleRecordedProblemIdentity(
   value: unknown,
 ): value is SlidePuzzleRecordedProblemIdentity {

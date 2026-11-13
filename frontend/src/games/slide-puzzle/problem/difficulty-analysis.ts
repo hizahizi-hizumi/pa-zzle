@@ -76,10 +76,6 @@ function countLinearConflictPairs(board: SlidePuzzleBoard): number {
   return pairCount;
 }
 
-/**
- * 最短手数は事前生成時に solver で求めた値を受け取る。
- * 最短手数が分からない問題（solver の探索上限に達した問題）は評価不能とする。
- */
 export function analyzeSlidePuzzleDifficulty(
   board: SlidePuzzleBoard,
   optimalMoveCount: number | null,

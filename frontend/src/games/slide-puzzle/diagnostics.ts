@@ -54,7 +54,6 @@ function parseSlidePuzzleDiagnosticSnapshot(
   );
 }
 
-/** 評価の基準になる最短手数は問題集にしか無いので、問題集に無い識別情報では `null` を返す。 */
 function restoreSlidePuzzleProblemFromDiagnosticSnapshot(
   snapshot: SlidePuzzleDiagnosticSnapshot,
 ): SlidePuzzlePooledProblem | null {

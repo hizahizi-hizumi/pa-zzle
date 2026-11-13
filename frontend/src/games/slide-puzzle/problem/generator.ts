@@ -50,10 +50,6 @@ function createGeneratorRandom(
   );
 }
 
-/**
- * 完成盤面から、直前の手を打ち消さない合法手を seed に従って打つ。
- * 完成盤面から合法手だけでたどるので、生成した盤面は常に可解になる。
- */
 export function generateSlidePuzzleBoard(
   seed: ProblemSeed,
   conditions: SlidePuzzleGenerationConditions,
