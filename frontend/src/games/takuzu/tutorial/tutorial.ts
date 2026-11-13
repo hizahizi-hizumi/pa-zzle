@@ -49,7 +49,7 @@ export type TakuzuTutorialStep = TutorialStep<TakuzuTutorialRuleId> & {
   /** 印を付け、手順の間だけ操作を受け付けるマス。すべて解と同じタイルになったら次の手順へ進む。 */
   cellIndices: readonly number[];
   /**
-   * この手順で初めて使わせる見方。印のマスはこの見方で決まり、前の手順までに使わせた見方だけでは決まらないようにする。
+   * この手順で初めて使わせる見方。
    * 操作を教える手順と、使わせた見方をおさらいする手順では `null`。
    */
   lesson: TakuzuTutorialLesson | null;
@@ -57,7 +57,7 @@ export type TakuzuTutorialStep = TutorialStep<TakuzuTutorialRuleId> & {
 
 export type TakuzuTutorialMove = {
   cellIndex: number;
-  /** 手を引いている手順のマスを、正しい手へ向かう途中にした。責めないよう、すぐにはルールに合わないところを見せない。 */
+  /** 手を引いている手順のマスを、正しい手へ向かう途中にした。 */
   towardStep: boolean;
   /** 置いたマスが、見せているルールに合わないところに入っている。 */
   violated: boolean;
@@ -105,7 +105,6 @@ function cellAt(row: number, column: number): number {
 
 /**
  * 四角と丸を1つずつ自分で置き、ルールを1つずつ、まず行に、次に列に当てはめて埋めていく。
- * 丸は空き→四角→丸と2回押して入れるので、丸を入れる手は途中で四角を置いた盤面を通る。その途中の盤面も、まだ伝えていないルールに当たらないマスを選ぶ。
  * - 操作: 4行目の1列目に四角を、1行目の4列目に丸を置く。丸の途中の四角は、1行目の四角を2つにするだけで、どのルールにも当たらない。
  * - 3つ続かない: 2行目の丸2つの右を、続いて1列目の丸2つの上を、四角で埋める。どちらも1回押すだけなので、途中の盤面を通らない。
  * - 同じ数: 2行目の丸2つから2行目の4列目を、続いて4列目の丸2つ（1つは自分で置いた丸）から4列目の3行目を埋める。
@@ -395,7 +394,7 @@ function isInRunAlong(
   return end - start + 1 >= 3;
 }
 
-/** 伝えた見方のぶんだけの違反。まだ伝えていないルールと、まだ伝えていない向き（行・列）の違反は見せない。 */
+/** 伝えた見方のぶんだけの違反。 */
 function findVisibleViolations(
   board: TakuzuBoard,
   lessons: readonly TakuzuTutorialLesson[],
@@ -424,10 +423,7 @@ const noViolations: TakuzuRuleViolations = {
   duplicateLines: [],
 };
 
-/**
- * 盤面に見せる違反。手順のマスを正しい手へ向かう途中にした直後は、責めないよう何も見せない。
- * 途中の盤面のまま手が止まったら（`towardStepSettled`）、ルールに合わないところを見せる。
- */
+/** 盤面に見せる違反。 */
 function findShownViolations(
   { board, lastMove }: TakuzuTutorialBoardState,
   lessons: readonly TakuzuTutorialLesson[],
@@ -734,7 +730,6 @@ function listViolationDescriptions(
   return [...runs, ...overfilled, ...duplicates];
 }
 
-/** 直前に置いたマスが当たっている違反を先に言う。古い違反が残っていても、今の手の結果を返すため。 */
 function describeTakuzuTutorialViolation(
   situation: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
@@ -791,8 +786,6 @@ export function getTakuzuTutorialStepReasonCellIndices(
 
 /**
  * 手を離した後、手が止まったときに示すマス。無ければ `null`。
- * 本番と同じく、置いたタイルが解と合うかは明かさず、今の盤面と手に入れたルールだけで決まるマスを示す。解と違うタイルは、ルールを当てはめていけば違反として盤面に現れる。
- * 解と違うタイルのせいで、ルールだけで決まるマスが無くなったときに限り、手詰まりのままにしないよう、そのタイルのマスを示す。
  */
 export function findTakuzuTutorialHintCellIndex(
   { earnedRuleIds }: TakuzuTutorialSituation,

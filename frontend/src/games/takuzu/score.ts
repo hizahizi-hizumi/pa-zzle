@@ -10,28 +10,16 @@ import {
 } from "@/games/score";
 import type { TakuzuSolveWorkload } from "@/games/takuzu/problem/problem";
 
-/** 推測なしに解ける問題だけを出すので、読みの正確さを速さより重くする。 */
 export const TAKUZU_SCORE_MAXIMUMS = {
   accuracy: 60,
   speed: 40,
 } as const satisfies ScoreMaximums<"accuracy" | "speed">;
 
-/**
- * 押し間違いを直した程度（2回まで）なら great に残り、試し置きを重ねて5回以上直したプレイは速さによらず good に届かない重さにする。
- */
 export const TAKUZU_CORRECTION_PENALTY = 5;
 
-/**
- * 盤面を戻して消えたマスは置き直しに数えないので、試し置きの跡を消せる分を含めて重くする。
- * 1回戻せば、ほかが完璧でも最高で good とする。
- */
 export const TAKUZU_RESTART_PENALTY = 15;
 
-/**
- * ナンプレの待ったと同じ重さにする。
- * 待ったで取り消した操作は置き直しに数えないので、押し間違いをすぐ取り消したプレイは置き直したプレイより軽く扱い、
- * 試し置きを待ったで戻し続けたプレイにも回数に応じた減点を残す。
- */
+/** ナンプレの待ったと同じ重さにする。 */
 export const TAKUZU_UNDO_PENALTY = 2;
 
 export const TAKUZU_SPEED_INITIAL_RECOGNITION_MS = 10_000;
