@@ -1,3 +1,4 @@
+import { Progress } from "@/components/ui/progress";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
 import { ZukanLevelMosaic } from "@/zukan/ui/GameHomeScreen/GameLevelCards/ZukanLevelMosaic";
@@ -68,7 +69,7 @@ export function GameLevelCards({ levels }: GameLevelCardsProps) {
                 <span className="font-medium">
                   {getDifficultyLabel(difficulty)}
                 </span>
-                <span className="truncate font-normal text-muted-foreground">
+                <span className="font-normal whitespace-normal text-muted-foreground">
                   <span className="sr-only">、</span>
                   {summary}
                 </span>
@@ -83,18 +84,10 @@ export function GameLevelCards({ levels }: GameLevelCardsProps) {
                 {hasUnseenChanges && (
                   <span className="sr-only">、前回から変化あり</span>
                 )}
-                <span
+                <Progress
                   aria-hidden="true"
-                  data-milestone-bar=""
-                  className="block h-1 overflow-hidden rounded-full bg-muted"
-                >
-                  <span
-                    className="block h-full origin-left rounded-full bg-foreground transition-transform duration-(--duration-slow) ease-standard motion-reduce:transition-none"
-                    style={{
-                      transform: `scaleX(${getZukanMilestoneRatio(shownMilestone)})`,
-                    }}
-                  />
-                </span>
+                  value={getZukanMilestoneRatio(shownMilestone) * 100}
+                />
               </span>
             </span>
           </TabsTrigger>
