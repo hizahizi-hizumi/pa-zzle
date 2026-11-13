@@ -268,7 +268,7 @@ export function HitofudePuzzleBoard({
             isHead={cell === head}
             isDeadEnd={cell === head && isDeadEnd}
             disabled={interactionDisabled}
-            focusable={cell === focusableCell}
+            isTabStop={cell === focusableCell}
             cue={cues.find((cue) => cue.cell === cell)}
             spotlit={spotlitCells.includes(cell)}
             onPress={pressCell}

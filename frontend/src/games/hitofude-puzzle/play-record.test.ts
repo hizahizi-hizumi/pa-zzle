@@ -43,8 +43,7 @@ const record = createHitofudePuzzlePlayRecord({
 });
 
 // 今の生成器の版でない identity は生成条件を確かめないので、作業の量の形だけを確かめられる。
-/** 今の生成器より前の版（版 1）の identity。 */
-const pastProblemIdentity = {
+const version1ProblemIdentity = {
   generatorVersion: "1",
   seed: "hp-8-0-16",
   conditions: { size: 8, wallRatio: 0 },
@@ -115,7 +114,7 @@ describe("isHitofudePuzzlePlayRecord", () => {
     ["作成した記録", record],
     [
       "生成器の版が今と違う記録",
-      withPayload({ problemIdentity: pastProblemIdentity }),
+      withPayload({ problemIdentity: version1ProblemIdentity }),
     ],
     [
       "引き直しが入力回数と待ったの回数の合計と同じ記録",
@@ -148,14 +147,14 @@ describe("isHitofudePuzzlePlayRecord", () => {
     [
       "道が通るマスが無い作業の量",
       withPayload({
-        problemIdentity: pastProblemIdentity,
+        problemIdentity: version1ProblemIdentity,
         workload: { ...workload, openCellCount: 0 },
       }),
     ],
     [
       "最も長い先読みが先読みの手数の合計を超える作業の量",
       withPayload({
-        problemIdentity: pastProblemIdentity,
+        problemIdentity: version1ProblemIdentity,
         workload: { ...workload, longestRefutationLength: 72 },
       }),
     ],
@@ -244,7 +243,9 @@ describe("hitofudePuzzlePlayRecordDefinition", () => {
   });
 
   describe("生成器の版が今と違う記録の場合", () => {
-    const pastRecord = withPayload({ problemIdentity: pastProblemIdentity });
+    const pastRecord = withPayload({
+      problemIdentity: version1ProblemIdentity,
+    });
 
     test("記録に残した作業の量で評価し、自己ベストの比較に含めること", () => {
       const values = metricIds.map((metricId) =>
@@ -315,7 +316,7 @@ describe("restoreHitofudePuzzleRecordedResult", () => {
       ["別の payload の版の記録", { ...record, payloadVersion: 2 }],
       [
         "生成器の版が今と違う記録",
-        withPayload({ problemIdentity: pastProblemIdentity }),
+        withPayload({ problemIdentity: version1ProblemIdentity }),
       ],
     ] as const;
 
