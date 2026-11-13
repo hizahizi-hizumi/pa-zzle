@@ -115,13 +115,11 @@ const zukan: GameZukan = {
 };
 
 const onPlayProblem = vi.fn();
-/** ゲームが選ぶ問題として、そのレベルの最後の問題を返す。 */
 const pickRandomProblemId = vi.fn(
   (difficulty: DifficultyLevel): ProblemId | null =>
     problemsByDifficulty[difficulty].at(-1)?.problemId ?? null,
 );
 const onLevelChangesShown = vi.fn();
-/** 特徴を求められない問題を除き、問題ごとに違う特徴を返す。 */
 const describeProblem = vi.fn(({ problemId }: ZukanProblem) =>
   problemId === "p-1-0"
     ? null
@@ -152,7 +150,6 @@ const findProblemFeatureValues = vi.fn(
     ]),
 );
 
-/** 開いているレベル 3 の記録2件と、ほかのレベルの記録1件。 */
 const playRecords = (["3", "3", "1"] as const).map((difficulty, index) =>
   createNanpurePlayRecord({
     difficulty,
@@ -226,7 +223,6 @@ function getDetail(): HTMLElement {
   return screen.getByRole("complementary", { name: "選んだ問題" });
 }
 
-/** 詳細に名前と値の組で示した、問題の特徴と成績。 */
 function listDetailFacts(detail: HTMLElement) {
   return within(detail)
     .queryAllByRole("term")
@@ -253,7 +249,6 @@ function listShownSheetChildren(sheetName: string): Element[] {
   );
 }
 
-/** 台紙に見えている順の番号と、絞り込みの条件に当たらなかったマスの印。 */
 function listSquareOrder(sheetName: string): string[] {
   return listShownSheetChildren(sheetName)
     .filter((child) => child.getAttribute("type") === "button")
@@ -264,7 +259,6 @@ function listSquareOrder(sheetName: string): string[] {
     });
 }
 
-/** 台紙の上に添えた、条件に当たる問題の数。見えていなければ `null`。 */
 function getShownMatchedCount(): string | null {
   const matchedCount = document.querySelector("[data-matched-count]");
   if (
@@ -288,13 +282,12 @@ function openMenu() {
   fireEvent.pointerDown(getMenuButton(), { button: 0, ctrlKey: false });
 }
 
-/** 見出しのメニューを開き、層を開く項目を選ぶ。 */
 function openFromMenu(itemName: string | RegExp) {
   openMenu();
   fireEvent.click(screen.getByRole("menuitem", { name: itemName }));
 }
 
-/** 絞り込みの選択肢。読み上げ名は、名前に当たる問題の数を添えた「名前、数問」。 */
+/** 選択肢の読み上げ名は、名前に当たる問題の数を添えた「名前、数問」。 */
 function getFilterOption(
   panel: HTMLElement,
   groupName: string,
@@ -319,7 +312,6 @@ function listFilterOptionNames(panel: HTMLElement, groupName: string) {
     .map((option) => option.getAttribute("aria-label"));
 }
 
-/** 押せない選択肢の名前。 */
 function listDisabledFilterOptionNames(panel: HTMLElement) {
   return within(panel)
     .getAllByRole("toolbar")
@@ -328,7 +320,6 @@ function listDisabledFilterOptionNames(panel: HTMLElement) {
     .map((option) => option.getAttribute("aria-label"));
 }
 
-/** 要素の入れ子と、要素ごとの属性の名前。文字・属性の値は除く。 */
 function describeElementStructure(element: Element): string {
   const attributeNames = [...element.attributes]
     .map(({ name }) => name)
@@ -338,11 +329,9 @@ function describeElementStructure(element: Element): string {
   return `<${element.tagName} ${attributeNames}>${children}</${element.tagName}>`;
 }
 
-/**
- * カードの要素の入れ子と属性の名前。縮図の中の塗り分けはレベルの問題の状態で変わるので、縮図の中は除く。
- */
 function describeLevelCardStructure(tab: Element): string {
   const card = tab.cloneNode(true) as Element;
+  // 縮図の中の塗り分けはレベルの問題の状態で変わるので、縮図の中は除く。
   for (const mosaic of card.querySelectorAll("[data-level-mosaic]")) {
     mosaic.replaceChildren();
   }
@@ -361,7 +350,6 @@ function getLevelTab(label: string): HTMLElement {
   return screen.getByRole("tab", { name: new RegExp(`^${label}`) });
 }
 
-/** 読み上げる名前と同じく、見せるだけの要素を除いた文字。 */
 function readShownText(element: Element): string | null {
   const shown = element.cloneNode(true) as Element;
   for (const hidden of shown.querySelectorAll('[aria-hidden="true"]')) {
@@ -370,7 +358,6 @@ function readShownText(element: Element): string | null {
   return shown.textContent;
 }
 
-/** カードに示した「解いた数 / 全問の数」。 */
 function readLevelCardCount(tab: Element): string | undefined {
   const [, problemCount, solvedCount] =
     readShownText(tab)?.match(/(\d+)問中(\d+)問を解いた/) ?? [];
@@ -386,7 +373,6 @@ function readShownLevelCardCount(tab: Element): string | null | undefined {
   )?.textContent;
 }
 
-/** カードの縮図が、状態ごとに塗るマスのパス。 */
 function readLevelMosaicPaths(
   label: string,
 ): Partial<Record<ZukanProblemStatus, string | null>> {
@@ -427,7 +413,6 @@ let scrollIntoView: ReturnType<typeof vi.fn>;
 let scrollTo: ReturnType<typeof vi.fn>;
 let resizeCallbacks: Set<ResizeObserverCallback>;
 
-/** 見ている要素の大きさが変わったと、ResizeObserver の購読者へ知らせる。 */
 function resizeObservedElements(blockSize: number) {
   const entry = {
     borderBoxSize: [{ blockSize, inlineSize: 0 }],
@@ -1798,7 +1783,6 @@ describe("GameHomeScreen", () => {
 
     let animate: ReturnType<typeof vi.fn>;
 
-    /** 変化したマスの押す姿を動かした数。 */
     function countStampFaceAnimations(): number {
       return animate.mock.contexts.filter(
         (element) =>
@@ -1815,7 +1799,6 @@ describe("GameHomeScreen", () => {
     let reducedMotionListeners: Set<() => void>;
     let prefersReduced: boolean;
 
-    /** 渡された長さが経つと終わる Animation を作る。取り消すと終わらない。 */
     function createTimedAnimation(
       options: number | KeyframeAnimationOptions | undefined,
     ): Animation {
@@ -2441,7 +2424,6 @@ describe("GameHomeScreen", () => {
       };
       type CountSample = { untouched: number; solved: number; total: number };
 
-      /** 押していく途中に数を示す、見出し・レベルのカード・状態ごとの数の領域。 */
       type CountRegions = {
         heading: HTMLElement;
         tabList: HTMLElement;

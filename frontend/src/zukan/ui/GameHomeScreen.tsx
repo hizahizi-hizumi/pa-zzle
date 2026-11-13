@@ -97,37 +97,30 @@ import type {
   ZukanProblemChange,
 } from "@/zukan/zukan-last-viewed";
 
-/** 絞り込みで問題を分ける、問題の特徴の1つの軸と、その名前と値の書き方。 */
 export type ZukanFeatureAxis = ZukanFeatureAxisSource & {
   display: ProblemFeatureAxisDisplay;
 };
 
 export type GameHomeScreenProps = {
   gameId: string;
-  /** 見出しに使うゲームの表示名。 */
   gameTitle: string;
-  /** 見出しに添えるゲームのピクトグラム。 */
   pictogramSvg: string;
-  /** 見出しに見せる、色と動きのあるピクトグラム。無ければ `pictogramSvg` を見せる。 */
+  /** 色と動きのあるピクトグラム。無ければ `pictogramSvg` を見せる。 */
   pictogramShowcaseSvg?: string;
-  /** ゲーム固有の地。プレイ画面と同じものを、画面全体の背景として敷く。 */
   ground: ReactNode;
   zukan: GameZukan;
-  /** 前回図鑑を見たときから、この図鑑までの変化。 */
   changes: ZukanChanges;
   /**
    * レベルの変化を見せ終えたとき。最後まで押したとき・飛ばしたとき・押している途中で別のレベルへ切り替えたときと、
    * 動きを減らす設定で印を載せた台紙を見せたとき。画面を離れて演出をやめたときは呼ばない。
    */
   onLevelChangesShown: (difficulty: DifficultyLevel) => void;
-  /** 開いたときに選んでおく問題。その問題のレベルを開いて詳細を出す。図鑑に無い問題なら選ばない。 */
   initialSelectedProblemId: ProblemId | null;
   /**
    * レベルの問題から、新しいプレイを始める問題をゲームが選ぶ。出題条件に合う問題が無ければ、そのことを知らせて `null` を返す。
    * 選んだ問題は `onPlayProblem` で始める。
    */
   pickRandomProblemId: (difficulty: DifficultyLevel) => ProblemId | null;
-  /** 図鑑の問題を、新しいプレイとして始める。 */
   onPlayProblem: (problem: ZukanProblem) => void;
   /** 問題の、始めたときの盤面を見れば分かる特徴。詳細を出す1問についてだけ求める。求められなければ `null`。 */
   describeProblem: (problem: ZukanProblem) => readonly ProblemFeature[] | null;
@@ -140,22 +133,14 @@ export type GameHomeScreenProps = {
   findProblemFeatureValues: (
     problem: ZukanProblem,
   ) => ReadonlyMap<string, ProblemFeatureValue> | null;
-  /** ゲーム固有の遊び方ダイアログを描く。開閉の状態は画面が持ち、引数で渡す。 */
   renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
-  /**
-   * ゲーム固有のチュートリアルを描く。開閉の状態は画面が持ち、終えて開いているレベルを始める操作と一緒に引数で渡す。
-   * 省略すると、見出しのメニューにチュートリアルを出さない。
-   */
   renderTutorial?: (control: GameHomeTutorialControl) => ReactNode;
   /** 全記録。開いているレベルの成績（自己ベスト・推移）を、成績を開いたときにこの中から求める。 */
   records: readonly PlayRecord[];
-  /** そのゲームの記録表示。成績の指標の名前と値の書き方に使う。 */
   playRecordDisplay: PlayRecordDisplayDefinition;
 };
 
-/** ゲームのホームから開いたチュートリアルの開閉の状態と、終えてプレイへ進む操作。 */
 export type GameHomeTutorialControl = HowToPlayDialogControl & {
-  /** チュートリアルを終えて、開いているレベルのプレイを始める。 */
   playStart: TutorialPlayStart;
 };
 
@@ -163,7 +148,6 @@ type SelectedProblemKey = { difficulty: DifficultyLevel; problemId: ProblemId };
 
 type SelectedProblem = { problem: ZukanProblem; index: number };
 
-/** 絞り込みの条件と、条件をかけたレベル。 */
 type LevelFilter = {
   difficulty: DifficultyLevel | null;
   conditions: ZukanFilterConditions;
@@ -197,7 +181,6 @@ const noProblems: readonly ZukanProblem[] = [];
 
 const noStatuses: readonly ZukanProblemStatus[] = [];
 
-/** 台紙の全問の、今示す状態。まだ見せていない変化のある問題は、前回の状態を示す。 */
 function listShownStatuses(
   problems: readonly ZukanProblem[],
   pendingChanges: ReadonlyMap<ProblemId, ZukanProblemChange> | undefined,
@@ -215,7 +198,6 @@ const INITIAL_SHEET_WIDTH_PX = 320;
  */
 const PENDING_DETAIL_COVER_HEIGHT_PX = 80;
 
-/** 「ランダムに遊ぶ」の行が、上の余白を含めて取っている高さ（px）。 */
 function getOuterHeight(row: HTMLElement | null): number {
   return row === null
     ? 0
@@ -244,7 +226,6 @@ function arrangeOpenProblems(
       );
 }
 
-/** 開いているレベルで選べる特徴の軸に、軸の名前と値の書き方を添える。 */
 function listFilterFeatureAxes(
   levelFeatures: ZukanLevelFeatures | null,
   featureAxes: readonly ZukanFeatureAxis[],
@@ -256,7 +237,6 @@ function listFilterFeatureAxes(
 }
 
 /**
- * 開いている台紙。選ぶまでは、そのゲームで最後にクリアまたは離脱したレベルを開き、そのゲームを遊んだことが無ければ最も低いレベルを開く。
  * 離脱はこの画面を描いたあとに保存されることがあるので、選ぶまでは図鑑から求め直す。
  */
 function findOpenSection(
@@ -275,7 +255,6 @@ function findOpenSection(
   return openSection;
 }
 
-/** 図鑑の問題を問題 ID で引き、選ぶ問題として持つ形にする。図鑑に無ければ `null`。 */
 function findProblemKey(
   sections: readonly ZukanDifficultySection[],
   problemId: ProblemId | null,
@@ -317,7 +296,6 @@ function getStampStage(
   return slot < startedSlotCount ? "stamping" : "waiting";
 }
 
-/** 開いている台紙の変化したマスごとの、今見せている段階。 */
 function listChangeStages(
   problems: readonly ZukanProblem[],
   changeIndices: readonly number[],
@@ -355,28 +333,8 @@ function listPendingChanges(
 }
 
 /**
- * 1ゲームのホーム。遊ぶレベルを選んでプレイを始める操作と、そのゲームの図鑑を1画面にまとめる。
- * 画面全体にプレイ画面と同じゲーム固有の地を敷き、その上に、ホームへ戻る導線を頭に置いたゲーム名の見出し、レベルのカード、開いているレベルの台紙を載せた盤、開いているレベルで遊ぶ「ランダムに遊ぶ」を置く。
- * 「ランダムに遊ぶ」は、スマートフォンでは盤の下に、PC では盤の横の列に置き、選んだ問題の詳細と始める操作を同じ場所に出す。
- * 開いたときは、選んでおく問題があればそのレベル、無ければそのゲームで最後にクリアまたは離脱したレベル、そのゲームを遊んだことが無ければ最も低いレベルを開く。
- * 最も低いレベルのカードもほかのカードと同じ姿で示し、推奨として強調しない。
- * 開いたときは、ほかの画面から移ってきてもフォーカスを見失わないよう、選んでおいた問題のマス、無ければゲーム名の見出しへフォーカスを置く。
- *
- * 図鑑は、難易度ごとの全問をマス目の台紙にし、レベルのカードで1枚ずつ切り替えて見せる。カードには各レベルの台紙を同じ並びのまま縮めた縮図と解いた数を添え、全レベルの跡を切り替えずに見比べられるようにする。
- * 画面の高さに収め、台紙だけをスクロールさせる。そのレベルの問題の数を評価段階ごとと挑戦中・未挑戦に分け、スマートフォンでは台紙の上に、PC では横の列に示す。
- * マスを選んでいる間だけ、その問題の詳細と始める操作を出す。スマートフォンでは台紙の高さを変えずに下端へ重ねて「ランダムに遊ぶ」も覆い、PC では横の列の状態ごとの数の下に置く。
- * 詳細は、閉じるボタン・選んでいるマスをもう一度押す・Escape で閉じる。解いた問題の数は全問の数と並べた静かな計数で示し、カードに示す数の合計と常に一致させる。
- * 台紙の見えているところから問題を始めるときは、そのピースを台紙から抜いて画面の中央へ運びながらゲームのピクトグラムを浮かべ、ほかの表示を引いてからプレイへ移る。チュートリアルを終えて始めるときは、台紙が見えていないので、動かさずに始める。ゲームが選んだ問題は、台紙を送ってそのピースを見せてから抜く。動きの間に画面を押すと、すぐに始める。
- * 前回図鑑を見たときからの変化は、変化をまだ見せていないレベルのカードの点で示し、各レベルの台紙を初めて開いたときに一度だけ見せる。
- * 見せるときは、台紙と数と縮図を前回の姿で描き始め、変化したマスを1つずつ押していき、押してマスに着くたびに、そのレベルのカードの数と縮図・状態ごとの数・解いた数を今の姿へ進める。
- * ページが見えるまでは見せ始めない。画面を押すかキーを押すと最後の姿まで飛ばす。
- * 選んでおいた問題があっても、そのレベルの変化を見せ終えるまで詳細を出さず、見せ終えてから出す。マスが詳細に隠れるなら、台紙を寄せる。
- * 絞り込みは開いているレベルの台紙にかけ、当たった問題を前に詰め、当たらなかった問題を薄くして後ろに並べる。条件は保存せず、開いたときは条件なしで始め、レベルを切り替えると外す。
- * 条件は、かけたレベルを添えて持ち、選ぶ前に最初に開くレベルが変わったときも、ほかのレベルには持ち越さない。条件を変えると台紙を先頭までスクロールし、前に集めた問題を見せる。
- * 変化は絞り込みの無い台紙で見せる。見せている途中で絞り込みを開くか条件を選ぶと、見せ終えたものとする。
- * 遊び方・見方・絞り込み・成績は、見出しの1つのメニューから開く。メニューのボタンと「ランダムに遊ぶ」を押したタップは、最後の姿まで飛ばしたうえでそのまま操作する。
- * 成績は、開いているレベルの自己ベスト・推移・記録の JSON コピーを、見出しのメニューから開いたときだけ示す。
- * 状態ごとの数は、絞り込んでいても台紙の全問で数え、当たった問題の数は同じ行の右に添える。
+ * 画面の高さに収め、台紙だけをスクロールさせる。
+ * 前回図鑑を見たときからの変化を見せるときは、台紙と数と縮図を前回の姿で描き始め、変化したマスを1つずつ押していき、押してマスに着くたびに、そのレベルのカードの数と縮図・状態ごとの数・解いた数を今の姿へ進める。
  */
 export function GameHomeScreen({
   gameId,
@@ -790,6 +748,7 @@ export function GameHomeScreen({
   // 特定のレベルを勧めないよう、チュートリアルを終えたら、「ランダムに遊ぶ」と同じく開いているレベルを始める。
   const tutorialPlayStart: TutorialPlayStart = {
     difficulty: openDifficulty,
+    // チュートリアルを終えて始めるときは、台紙が見えていないので、動かさずに始める。
     onStart() {
       const problem = findRandomProblem();
       if (problem !== null) {

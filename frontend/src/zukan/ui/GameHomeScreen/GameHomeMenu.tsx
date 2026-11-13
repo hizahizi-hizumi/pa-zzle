@@ -21,17 +21,13 @@ import type { GameHomeLayer } from "@/zukan/ui/GameHomeScreen/use-game-home-laye
 type GameHomeMenuProps = {
   /** メニューのボタン。開いた層を寄せて出し、層を閉じたらフォーカスを戻すのに使う。 */
   buttonRef: RefObject<HTMLButtonElement | null>;
-  /** かけている絞り込みの条件の数。 */
   filterConditionCount: number;
-  /** チュートリアルを開けるか。開けなければ、メニューにチュートリアルを出さない。 */
   hasTutorial: boolean;
   onOpenLayer: (layer: GameHomeLayer) => void;
 };
 
 /**
- * ゲームのホームの見出しに置く、遊び方・チュートリアルと、台紙を見る助けになる層（見方・絞り込み・成績）を開くメニュー。
- * 補助の操作をゲーム名と競わない強さにまとめ、どの画面幅でも同じ1つのボタンから開く。
- * 絞り込みの条件をかけている間は、閉じたメニューのボタンとメニューの絞り込みの両方に条件の数を示す。
+ * 見出しの補助の操作は、どの画面幅でも同じ1つのボタンから開く。
  */
 export function GameHomeMenu({
   buttonRef,
