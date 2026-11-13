@@ -188,8 +188,12 @@ export function TsumeShogiPlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <TsumeShogiHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <TsumeShogiHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose }) => (
         <TsumeShogiTutorial open={open} onClose={onClose} />

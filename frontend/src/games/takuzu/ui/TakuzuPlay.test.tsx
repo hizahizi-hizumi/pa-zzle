@@ -138,7 +138,9 @@ describe("TakuzuPlay", () => {
     });
 
     test("遊び方を自動では開かないこと", () => {
-      const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+      const dialog = screen.queryByRole("dialog", {
+        name: "バイナリパズルの遊び方",
+      });
 
       expect(dialog).toBeNull();
     });
@@ -184,7 +186,9 @@ describe("TakuzuPlay", () => {
         });
 
         test("遊び方を開くこと", () => {
-          const dialog = screen.getByRole("dialog", { name: "遊び方" });
+          const dialog = screen.getByRole("dialog", {
+            name: "バイナリパズルの遊び方",
+          });
 
           expect(dialog).toBeTruthy();
         });
@@ -194,12 +198,34 @@ describe("TakuzuPlay", () => {
 
           expect(callbacks.onReplay).not.toHaveBeenCalled();
         });
+
+        test("チュートリアルを押すと、遊び方を閉じてチュートリアルを開くこと", () => {
+          fireEvent.click(
+            within(
+              screen.getByRole("dialog", { name: "バイナリパズルの遊び方" }),
+            ).getByRole("button", { name: "チュートリアルで遊んで覚える" }),
+          );
+          const howToPlay = screen.queryByRole("dialog", {
+            name: "バイナリパズルの遊び方",
+          });
+          const tutorial = screen.getByRole("dialog", {
+            name: "バイナリパズル",
+            description: "チュートリアル",
+          });
+
+          expect(howToPlay).toBeNull();
+          expect(tutorial).toBeTruthy();
+          expect(callbacks.onReplay).not.toHaveBeenCalled();
+        });
       });
 
-      describe("チュートリアルを選んだ場合", () => {
+      describe("遊び方からチュートリアルを始めた場合", () => {
         beforeEach(() => {
+          fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
           fireEvent.click(
-            screen.getByRole("menuitem", { name: "チュートリアル" }),
+            screen.getByRole("button", {
+              name: "チュートリアルで遊んで覚える",
+            }),
           );
         });
 

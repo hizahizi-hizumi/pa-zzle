@@ -7,17 +7,21 @@ import { HowToPlayFigure } from "@/games/minesweeper/ui/MinesweeperHowToPlayDial
 type MinesweeperHowToPlayDialogProps = {
   open: boolean;
   onClose: () => void;
+  /** 遊び方を閉じてチュートリアルを開く。開いた画面が渡す。 */
+  onOpenTutorial?: () => void;
 };
 
 export function MinesweeperHowToPlayDialog({
   open,
   onClose,
+  onOpenTutorial,
 }: MinesweeperHowToPlayDialogProps) {
   return (
     <HowToPlayDialog
       open={open}
       description="数字を手がかりに、地雷ではないマスをすべて開く。"
       onClose={onClose}
+      onOpenTutorial={onOpenTutorial}
     >
       <li className="space-y-2">
         <p>

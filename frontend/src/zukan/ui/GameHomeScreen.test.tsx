@@ -187,8 +187,17 @@ function createScreen(
         describeProblem={describeProblem}
         featureAxes={featureAxes}
         findProblemFeatureValues={findProblemFeatureValues}
-        renderHowToPlayDialog={({ open }) =>
-          open ? <p>遊び方のダイアログ</p> : null
+        renderHowToPlayDialog={({ open, onOpenTutorial }) =>
+          open ? (
+            <div>
+              <p>遊び方のダイアログ</p>
+              {onOpenTutorial ? (
+                <button type="button" onClick={onOpenTutorial}>
+                  遊び方からチュートリアルへ
+                </button>
+              ) : null}
+            </div>
+          ) : null
         }
         renderTutorial={renderTutorial}
         records={playRecords}
@@ -1055,12 +1064,15 @@ describe("GameHomeScreen", () => {
       expect(dialog).toBeTruthy();
     });
 
-    test("チュートリアルを渡さなければ、メニューにチュートリアルを出さないこと", () => {
-      openMenu();
+    test("チュートリアルを渡さなければ、遊び方にチュートリアルを開く操作を渡さないこと", async () => {
+      openFromMenu("遊び方");
+      await screen.findByText("遊び方のダイアログ");
 
-      const item = screen.queryByRole("menuitem", { name: "チュートリアル" });
+      const tutorialEntry = screen.queryByRole("button", {
+        name: "遊び方からチュートリアルへ",
+      });
 
-      expect(item).toBeNull();
+      expect(tutorialEntry).toBeNull();
     });
 
     test("絞り込みを開くまで、問題の特徴の値を求めないこと", () => {
@@ -1106,28 +1118,37 @@ describe("GameHomeScreen", () => {
       expect(dialog).toBeNull();
     });
 
-    test("メニューで、チュートリアルを遊び方の次に置くこと", () => {
+    async function openTutorialFromHowToPlay(): Promise<void> {
+      openFromMenu("遊び方");
+      fireEvent.click(
+        await screen.findByRole("button", {
+          name: "遊び方からチュートリアルへ",
+        }),
+      );
+    }
+
+    test("メニューにチュートリアルの項目を出さないこと", () => {
       openMenu();
 
-      const items = screen
-        .getAllByRole("menuitem")
-        .map((item) => item.textContent);
+      const item = screen.queryByRole("menuitem", { name: "チュートリアル" });
 
-      expect(items.slice(0, 2)).toEqual(["遊び方", "チュートリアル"]);
+      expect(item).toBeNull();
     });
 
-    test("メニューからチュートリアルを開くと、ゲームのチュートリアルを開くこと", async () => {
-      openFromMenu("チュートリアル");
+    test("遊び方からチュートリアルを開くと、遊び方を閉じてゲームのチュートリアルを開くこと", async () => {
+      await openTutorialFromHowToPlay();
 
       const dialog = await screen.findByRole("dialog", {
         name: "チュートリアル",
       });
+      const howToPlay = screen.queryByText("遊び方のダイアログ");
 
       expect(dialog).toBeTruthy();
+      expect(howToPlay).toBeNull();
     });
 
     test("チュートリアルを閉じると、フォーカスをメニューのボタンへ戻すこと", async () => {
-      openFromMenu("チュートリアル");
+      await openTutorialFromHowToPlay();
       fireEvent.click(await screen.findByRole("button", { name: "閉じる" }));
 
       await waitFor(() => {
@@ -1136,7 +1157,7 @@ describe("GameHomeScreen", () => {
     });
 
     test("チュートリアルから遊び始めると、開いているレベルでプレイを始めること", async () => {
-      openFromMenu("チュートリアル");
+      await openTutorialFromHowToPlay();
 
       fireEvent.click(await screen.findByRole("button", { name: "3を遊ぶ" }));
 

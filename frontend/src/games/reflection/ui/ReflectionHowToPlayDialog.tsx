@@ -8,6 +8,8 @@ import { HowToPlayFigure } from "@/games/reflection/ui/ReflectionHowToPlayDialog
 type ReflectionHowToPlayDialogProps = {
   open: boolean;
   onClose: () => void;
+  /** 遊び方を閉じてチュートリアルを開く。開いた画面が渡す。 */
+  onOpenTutorial?: () => void;
 };
 
 const outcomeFigures = [
@@ -40,12 +42,14 @@ const leftMiddle = { side: "left", index: 1 } as const;
 export function ReflectionHowToPlayDialog({
   open,
   onClose,
+  onOpenTutorial,
 }: ReflectionHowToPlayDialogProps) {
   return (
     <HowToPlayDialog
       open={open}
       description="外周の数字どおりに光が進むよう、手持ちのピースをすべて盤面に置く。"
       onClose={onClose}
+      onOpenTutorial={onOpenTutorial}
     >
       <li className="space-y-2">
         <p>数字は、そこから入れた光が通るマスの数。記号と色は光の行き先。</p>

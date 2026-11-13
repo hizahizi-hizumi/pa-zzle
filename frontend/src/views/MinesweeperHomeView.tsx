@@ -12,8 +12,12 @@ export function MinesweeperHomeView() {
     <GameHomeScreen
       {...screenProps}
       ground={<MinesweeperGround />}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <MinesweeperHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <MinesweeperHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose, playStart }) => (
         <MinesweeperTutorial

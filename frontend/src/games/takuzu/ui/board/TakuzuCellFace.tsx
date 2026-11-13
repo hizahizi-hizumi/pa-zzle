@@ -1,7 +1,9 @@
+import { useState } from "react";
+
 import type { TakuzuCell, TakuzuTile } from "@/games/takuzu/puzzle/board";
 import { cn } from "@/lib/utils";
 
-/** `board` は盤面のマス、`figure` は遊び方や難易度の図に描く小さなマス。 */
+/** `board` は盤面のマスで、置いたタイルをその場で現れさせる。`figure` は遊び方の図のマスで、動かさない。 */
 export type TakuzuCellFaceSize = "board" | "figure";
 
 /**
@@ -13,11 +15,8 @@ const toneClassNames = {
   placed: "text-sky-700 dark:text-sky-300",
 } as const;
 
-// 小さな図では輪郭が細くなりすぎないよう、丸の線を太くする。
-const circleStrokeWidths = {
-  board: 9,
-  figure: 12,
-} as const satisfies Record<TakuzuCellFaceSize, number>;
+// 遊び方の図も盤面と同じ質感に見せるため、丸の線の太さは盤面と図で同じにする。
+const circleStrokeWidth = 9;
 
 // 置いたタイルだけを、その場で小さく現れさせる。固定タイルは最初から盤面にあるので動かさない。
 const placedTileAppearanceClassName =
@@ -29,7 +28,12 @@ type TakuzuCellFaceProps = {
   size: TakuzuCellFaceSize;
 };
 
+/** 置いたタイルを現れさせ直すときは、置いたタイルごとに `key` を替えて描き直す。 */
 export function TakuzuCellFace({ cell, given, size }: TakuzuCellFaceProps) {
+  // 現れ終えたら現れ方の動きを外す。残すと、遊び方のタブのように盤面を表示から外して戻したとき、
+  // CSS の動きが始めから流れ直し、置いてあったタイルが一度消えて現れ直す。
+  const [appeared, setAppeared] = useState(false);
+
   if (cell === null) {
     return null;
   }
@@ -41,16 +45,20 @@ export function TakuzuCellFace({ cell, given, size }: TakuzuCellFaceProps) {
       className={cn(
         "size-full",
         given ? toneClassNames.given : toneClassNames.placed,
-        !given && size === "board" && placedTileAppearanceClassName,
+        !given &&
+          size === "board" &&
+          !appeared &&
+          placedTileAppearanceClassName,
       )}
+      onAnimationEnd={() => setAppeared(true)}
     >
-      {renderTileShape(cell, circleStrokeWidths[size])}
+      {renderTileShape(cell)}
     </svg>
   );
 }
 
 // A は塗りの四角、B は輪郭の丸。色を見なくても形だけで見分けられる。
-function renderTileShape(tile: TakuzuTile, circleStrokeWidth: number) {
+function renderTileShape(tile: TakuzuTile) {
   if (tile === "a") {
     return (
       <rect x="20" y="20" width="60" height="60" rx="6" fill="currentColor" />

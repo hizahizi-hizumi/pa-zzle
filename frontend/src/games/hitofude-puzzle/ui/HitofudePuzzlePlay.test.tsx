@@ -391,7 +391,7 @@ describe("HitofudePuzzlePlay", () => {
       expect(callbacks.onEndStroke).toHaveBeenCalledOnce();
     });
 
-    describe("メニューからチュートリアルを選んだ場合", () => {
+    describe("遊び方からチュートリアルを始めた場合", () => {
       function getTutorialDialog(): HTMLElement {
         return screen.getByRole("dialog", {
           name: HITOFUDE_PUZZLE_DISPLAY_NAME,
@@ -404,8 +404,11 @@ describe("HitofudePuzzlePlay", () => {
           screen.getByRole("button", { name: "その他の操作" }),
           { button: 0, ctrlKey: false },
         );
+        fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
         fireEvent.click(
-          screen.getByRole("menuitem", { name: "チュートリアル" }),
+          screen.getByRole("button", {
+            name: "チュートリアルで遊んで覚える",
+          }),
         );
       });
 

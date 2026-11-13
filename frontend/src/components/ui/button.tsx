@@ -30,6 +30,11 @@ const buttonVariants = cva(
         icon: "size-9",
         "icon-sm": "size-8",
         "icon-lg": "size-10",
+        // touch: 指で押しやすい標準の高さに、本文と同じ大きさの言葉を置く。
+        touch: "h-11 rounded-md px-6 text-body has-[>svg]:px-4",
+        // icon-touch: 本文のそばに置く 36px のアイコンのボタン。押せる範囲を周りへ 44px 四方まで広げる。
+        "icon-touch":
+          "relative size-9 rounded-md after:absolute after:-inset-1 after:content-[''] [&_svg:not([class*='size-'])]:size-5",
       },
     },
     defaultVariants: {

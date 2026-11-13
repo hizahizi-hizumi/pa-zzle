@@ -1,19 +1,18 @@
-import {
-  type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
-  useCallback,
-  useRef,
-} from "react";
+import { useCallback } from "react";
 
 import { TutorialCue } from "@/components/TutorialCue";
 import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import { getTakuzuCellPosition } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
+import { takuzuCellSurfaceClassName } from "@/games/takuzu/ui/board/board-surface-style";
+import { getTakuzuCellAccessibleName } from "@/games/takuzu/ui/board/cell-accessible-name";
+import { takuzuCellButtonClassName } from "@/games/takuzu/ui/board/cell-button-style";
 import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
-import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/TakuzuBoard/violation-mark-timing";
 import { TakuzuCellFace } from "@/games/takuzu/ui/board/TakuzuCellFace";
+import { useTakuzuCellSecondaryClick } from "@/games/takuzu/ui/board/use-cell-secondary-click";
 import { runViolationCellClassName } from "@/games/takuzu/ui/board/violation-mark-style";
+import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/violation-mark-timing";
 import { cn } from "@/lib/utils";
 
 type TakuzuCellProps = {
@@ -34,26 +33,8 @@ type TakuzuCellProps = {
   onFocus: (cellIndex: number) => void;
 };
 
-const tileNameByCell = { a: "四角", b: "丸" } as const;
-
 /** 印と応えの線は、隣り合うマスの線と重ならないよう、マスの縁から少し内側に、角の立ったマスの形で引く。 */
 const cueOutlinePlacementClassName = "pointer-events-none absolute inset-1";
-
-function getAccessibleName(
-  size: number,
-  cellIndex: number,
-  view: TakuzuCellView,
-  lineViolationNames: readonly string[],
-): string {
-  const { row, column } = getTakuzuCellPosition(size, cellIndex);
-  const content = view.cell === null ? "空き" : tileNameByCell[view.cell];
-  const qualifiers = [
-    view.given ? "固定" : null,
-    view.inViolatingRun ? "3連続" : null,
-    ...lineViolationNames,
-  ].filter((qualifier) => qualifier !== null);
-  return [`${row + 1}行${column + 1}列`, content, ...qualifiers].join(" ");
-}
 
 export function TakuzuCell({
   size,
@@ -68,42 +49,41 @@ export function TakuzuCell({
   onCycle,
   onFocus,
 }: TakuzuCellProps) {
-  const lastPointerTypeRef = useRef<string | null>(null);
+  const { handlePointerDown, handleContextMenu } =
+    useTakuzuCellSecondaryClick();
   const { row, column } = getTakuzuCellPosition(size, cellIndex);
   const buttonRef = useCallback(
     (element: HTMLButtonElement | null) => onElementChange(cellIndex, element),
     [cellIndex, onElementChange],
   );
 
-  function handlePointerDown(
-    event: ReactPointerEvent<HTMLButtonElement>,
-  ): void {
-    lastPointerTypeRef.current = event.pointerType;
-  }
-
-  function handleContextMenu(event: ReactMouseEvent<HTMLButtonElement>): void {
-    event.preventDefault();
-    // タッチの長押しでも contextmenu が届く環境があるため、逆方向の巡回はマウスの右クリックに限る。
-    if (!disabled && lastPointerTypeRef.current !== "touch") {
-      onCycle(cellIndex, "backward");
-    }
-  }
-
   return (
     <button
       ref={buttonRef}
       type="button"
-      aria-label={getAccessibleName(size, cellIndex, view, lineViolationNames)}
+      aria-label={getTakuzuCellAccessibleName(
+        { row, column },
+        view,
+        lineViolationNames,
+      )}
       aria-disabled={view.given || undefined}
       disabled={disabled}
       tabIndex={focusable ? 0 : -1}
       onClick={() => onCycle(cellIndex, "forward")}
-      onContextMenu={handleContextMenu}
+      onContextMenu={(event) =>
+        handleContextMenu(event, () => {
+          if (!disabled) {
+            onCycle(cellIndex, "backward");
+          }
+        })
+      }
       onPointerDown={handlePointerDown}
       onFocus={() => onFocus(cellIndex)}
       data-violated={view.inViolatingRun || undefined}
       className={cn(
-        "group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center bg-background outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:not-aria-disabled:hover:bg-accent/60 enabled:not-aria-disabled:active:bg-accent",
+        "group relative flex min-h-0 min-w-0 items-center justify-center",
+        takuzuCellButtonClassName,
+        takuzuCellSurfaceClassName,
         row !== size - 1 && "border-b border-b-border",
         column !== size - 1 && "border-r border-r-border",
       )}

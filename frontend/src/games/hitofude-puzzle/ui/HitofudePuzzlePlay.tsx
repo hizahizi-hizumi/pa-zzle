@@ -134,8 +134,12 @@ export function HitofudePuzzlePlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <HitofudePuzzleHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <HitofudePuzzleHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose }) => (
         <HitofudePuzzleTutorial open={open} onClose={onClose} />

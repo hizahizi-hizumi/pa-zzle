@@ -13,6 +13,11 @@ function openPlayMenu(): void {
   });
 }
 
+function openHowToPlay(): void {
+  openPlayMenu();
+  fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+}
+
 function renderFrame(
   progress: GameProgress,
   result: string | null,
@@ -30,7 +35,16 @@ function renderFrame(
     onOpenGameHome: vi.fn(),
     onBackToAppHome: vi.fn(),
     renderResultScreen: (clearedResult) => <p>結果 {clearedResult}</p>,
-    renderHowToPlayDialog: () => null,
+    renderHowToPlayDialog: ({ open, onOpenTutorial }) =>
+      open ? (
+        <section aria-label="遊び方">
+          {onOpenTutorial ? (
+            <button type="button" onClick={onOpenTutorial}>
+              遊び方からチュートリアルへ
+            </button>
+          ) : null}
+        </section>
+      ) : null,
     renderTutorial,
     children: <main>盤面</main>,
   };
@@ -79,12 +93,16 @@ describe("GamePlayFrame", () => {
       renderFrame("playing", null);
     });
 
-    test("メニューにチュートリアルの項目を出さないこと", () => {
-      openPlayMenu();
+    test("遊び方にチュートリアルを開く操作を渡さないこと", () => {
+      openHowToPlay();
 
-      const item = screen.queryByRole("menuitem", { name: "チュートリアル" });
+      const howToPlay = screen.queryByRole("region", { name: "遊び方" });
+      const tutorialEntry = screen.queryByRole("button", {
+        name: "遊び方からチュートリアルへ",
+      });
 
-      expect(item).toBeNull();
+      expect(howToPlay).not.toBeNull();
+      expect(tutorialEntry).toBeNull();
     });
   });
 
@@ -107,9 +125,20 @@ describe("GamePlayFrame", () => {
       expect(tutorial).toBeNull();
     });
 
-    test("メニューのチュートリアルで開き、閉じる操作で閉じること", () => {
+    test("メニューにチュートリアルの項目を出さないこと", () => {
       openPlayMenu();
-      fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+
+      const item = screen.queryByRole("menuitem", { name: "チュートリアル" });
+
+      expect(item).toBeNull();
+    });
+
+    test("遊び方のチュートリアルを開く操作で、遊び方を閉じてチュートリアルを開き、閉じる操作で閉じること", () => {
+      openHowToPlay();
+      fireEvent.click(
+        screen.getByRole("button", { name: "遊び方からチュートリアルへ" }),
+      );
+      const howToPlay = screen.queryByRole("region", { name: "遊び方" });
       const openedTutorial = screen.queryByRole("button", {
         name: "チュートリアルを閉じる",
       });
@@ -120,6 +149,7 @@ describe("GamePlayFrame", () => {
         name: "チュートリアルを閉じる",
       });
 
+      expect(howToPlay).toBeNull();
       expect(openedTutorial).not.toBeNull();
       expect(closedTutorial).toBeNull();
     });

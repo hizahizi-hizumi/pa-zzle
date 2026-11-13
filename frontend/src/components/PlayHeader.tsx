@@ -19,7 +19,6 @@ type PlayHeaderProps = {
   onOpenGameHome: () => void;
   onBackToAppHome: () => void;
   onOpenHowToPlay?: () => void;
-  onOpenTutorial?: () => void;
   onOpenDiagnostics?: () => void;
 };
 
@@ -34,7 +33,6 @@ export function PlayHeader({
   onOpenGameHome,
   onBackToAppHome,
   onOpenHowToPlay,
-  onOpenTutorial,
   onOpenDiagnostics,
 }: PlayHeaderProps) {
   const hasTrailingAction = trailingAction !== undefined;
@@ -47,7 +45,6 @@ export function PlayHeader({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenHowToPlay={onOpenHowToPlay}
-      onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
     />
   );

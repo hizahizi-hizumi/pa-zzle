@@ -12,8 +12,12 @@ export function NanpureHomeView() {
     <GameHomeScreen
       {...screenProps}
       ground={<NanpureGround />}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <NanpureHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <NanpureHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose, playStart }) => (
         <NanpureTutorial open={open} playStart={playStart} onClose={onClose} />

@@ -2,8 +2,11 @@ import type { CSSProperties } from "react";
 
 import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import type { TakuzuLine } from "@/games/takuzu/puzzle/board";
-import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/TakuzuBoard/violation-mark-timing";
-import { lineViolationBarClassName } from "@/games/takuzu/ui/board/violation-mark-style";
+import {
+  lineViolationBarClassName,
+  lineViolationBarPlacementClassNames,
+} from "@/games/takuzu/ui/board/violation-mark-style";
+import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/violation-mark-timing";
 import { cn } from "@/lib/utils";
 
 type TakuzuLineViolationMarkProps = {
@@ -16,17 +19,6 @@ type TakuzuLineViolationMarkProps = {
 type LineEdge = "start" | "end";
 
 const lineEdges = ["start", "end"] as const satisfies readonly LineEdge[];
-
-const barPlacementClassNames = {
-  row: {
-    start: "top-[25%] bottom-[25%] right-[calc(100%+6px)] w-0.5",
-    end: "top-[25%] bottom-[25%] left-[calc(100%+6px)] w-0.5",
-  },
-  column: {
-    start: "left-[25%] right-[25%] bottom-[calc(100%+6px)] h-0.5",
-    end: "left-[25%] right-[25%] top-[calc(100%+6px)] h-0.5",
-  },
-} as const satisfies Record<TakuzuLine["axis"], Record<LineEdge, string>>;
 
 function getEdgeCellArea(
   size: number,
@@ -61,7 +53,7 @@ export function TakuzuLineViolationMark({
           className={cn(
             "absolute",
             lineViolationBarClassName,
-            barPlacementClassNames[line.axis][edge],
+            lineViolationBarPlacementClassNames[line.axis][edge],
             violationMarkTimingClassName,
           )}
         />
@@ -69,7 +61,7 @@ export function TakuzuLineViolationMark({
           active={spotlit && violated}
           className={cn(
             "rounded-full",
-            barPlacementClassNames[line.axis][edge],
+            lineViolationBarPlacementClassNames[line.axis][edge],
           )}
         />
       </span>
