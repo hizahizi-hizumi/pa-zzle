@@ -9,7 +9,6 @@ import {
   waterSortProblemFeatureAxes,
 } from "@/games/water-sort/problem/problem-pool";
 
-/** 絞り込みでは、レベルにある値の種類が多いとき、色の数は3種類ごと、空ボトルの数は2本ごとにまとめる。 */
 export const waterSortProblemFeatureAxisDisplays = {
   "color-count": {
     label: "色",

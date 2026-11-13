@@ -21,7 +21,6 @@ type WaterSortGenerationProfile = Pick<
 
 type WaterSortDifficultyCriteria = {
   generationProfiles: readonly WaterSortGenerationProfile[];
-  /** 下限ちょうどの詰み率は下のレベルに属する。 */
   stuckRate: NumericRange;
 };
 
@@ -86,11 +85,6 @@ function hasGenerationProfile(
   );
 }
 
-/**
- * 問題を難易度へ分類した結果。
- * - `classified`: 生成条件と自然詰み率の組がいずれかのレベルに当たった。
- * - `out-of-range`: 生成条件と自然詰み率の組がどのレベルにも当たらないので提供しない。
- */
 export type WaterSortDifficultyAssessment = DifficultyAssessment<{
   classified: NoAssessmentDetail;
   outOfRange: { reason: "unlisted-combination" };

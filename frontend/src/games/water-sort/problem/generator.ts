@@ -22,7 +22,6 @@ import {
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
 
-/** 生成した問題。解いて求めた最短手数を伴う。 */
 export type WaterSortGeneratedProblem = WaterSortIdentifiedProblem & {
   optimalMoveCount: number;
 };

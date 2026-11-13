@@ -18,7 +18,6 @@ export const WATER_SORT_SCORE_MAXIMUMS = {
 export const WATER_SORT_SPEED_INITIAL_RECOGNITION_MS = 5_000;
 export const WATER_SORT_SPEED_PER_COLOR_MS = 1_500;
 export const WATER_SORT_SPEED_PER_OPTIMAL_MOVE_MS = 5_000;
-/** 速さが0点になる時間の、基準時間に対する倍率。 */
 export const WATER_SORT_SPEED_ZERO_SCORE_RATIO = 2;
 
 export type WaterSortPlayScore = PlayScore<

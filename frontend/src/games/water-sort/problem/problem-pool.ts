@@ -26,14 +26,12 @@ export type WaterSortProblemPool = {
   levels: Record<WaterSortDifficulty, readonly WaterSortProblemPoolEntry[]>;
 };
 
-/** 問題集の1項目を読み解いた値。問題は生成器で復元する。 */
 export type WaterSortDecodedPoolEntry = {
   identity: WaterSortProblemIdentity;
   optimalMoveCount: number;
   stuckRate: number;
 };
 
-/** 問題集から復元した1問。評価の基準になる最短手数を伴う。 */
 export type WaterSortPooledProblem = WaterSortIdentifiedProblem & {
   optimalMoveCount: number;
 };
@@ -75,14 +73,12 @@ const poolIndex = createProblemPoolIndex(
   (entry) => decodeWaterSortPoolEntry(entry).identity,
 );
 
-/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
 export function listWaterSortPoolProblemIds(
   difficulty: WaterSortDifficulty,
 ): readonly ProblemId[] {
   return poolIndex.listProblemIds(difficulty);
 }
 
-/** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findWaterSortPoolEntryByProblemId(
   difficulty: WaterSortDifficulty,
   problemId: string,
@@ -90,13 +86,11 @@ export function findWaterSortPoolEntryByProblemId(
   return poolIndex.findPositionById(difficulty, problemId)?.entry ?? null;
 }
 
-/** 始めたときの盤面を見れば分かる、問題の特徴。 */
 export type WaterSortProblemFeatures = {
   colorCount: number;
   emptyBottleCount: number;
 };
 
-/** 難易度の問題集の1問の特徴を、問題を復元せずに問題集の項目から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findWaterSortPoolProblemFeatures(
   difficulty: WaterSortDifficulty,
   problemId: string,
@@ -110,7 +104,6 @@ export function findWaterSortPoolProblemFeatures(
   return { colorCount, emptyBottleCount };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
 export const waterSortProblemFeatureAxes = [
   {
     id: "color-count",
