@@ -12,12 +12,15 @@ import {
   listParkingJamMoveBlockers,
 } from "@/games/parking-jam/puzzle/rules";
 import {
+  describeParkingJamTutorialHint,
   findParkingJamTutorialBlocker,
   findParkingJamTutorialContact,
   findParkingJamTutorialDecider,
-  findParkingJamTutorialHintVehicle,
-  getParkingJamTutorialStepVehicle,
+  findParkingJamTutorialHint,
+  getParkingJamTutorialProgressRatio,
+  getParkingJamTutorialStepMove,
   PARKING_JAM_TUTORIAL_BOARD,
+  PARKING_JAM_TUTORIAL_PROGRESS_STEP_COUNT,
   type ParkingJamTutorialBlocker,
   type ParkingJamTutorialBoardState,
   type ParkingJamTutorialRuleId,
@@ -86,19 +89,12 @@ function perform(
 }
 
 function playSteps(count: number): Progress {
-  return steps.slice(0, count).reduce((progress, step) => {
-    const direction = listDirections(step.vehicleId).find(
-      (candidate) =>
-        findParkingJamTutorialBlocker(progress.boardState.puzzle, {
-          vehicleId: step.vehicleId,
-          direction: candidate,
-        }) === null,
+  return steps
+    .slice(0, count)
+    .reduce(
+      (progress, step) => perform(progress, step.vehicleId, step.exitDirection),
+      started,
     );
-    if (!direction) {
-      throw new Error(`手順の車 ${step.vehicleId} を動かす向きがない`);
-    }
-    return perform(progress, step.vehicleId, direction);
-  }, started);
 }
 
 function listReachableStates(from: ParkingJamState): ParkingJamState[] {
@@ -299,15 +295,67 @@ describe("手順", () => {
       );
       const layers = countRemovalLayers(puzzle);
 
-      expect(puzzle.remainingVehicleIds).toHaveLength(3);
+      expect(puzzle.remainingVehicleIds).toHaveLength(4);
       expect(stuckStates).toEqual([]);
       expect(layers).toBe(2);
+    });
+
+    test("残りに、片方は道路がなく、もう片方は今出せる車1台だけに塞がれた車があり、塞いでいる車を先に出す読みがもう一度要ること", () => {
+      const puzzle = released.boardState.puzzle;
+      const waitingVehicleIds = puzzle.remainingVehicleIds.filter(
+        (vehicleId) => {
+          const blockers = listDirections(vehicleId).map((direction) =>
+            listParkingJamMoveBlockers(board, puzzle, {
+              vehicleId,
+              direction,
+            }),
+          );
+          const wallSide = blockers.some(
+            (list) => list.length === 1 && list[0]?.kind === "wall",
+          );
+          const blockerId = blockers
+            .flatMap((list) =>
+              list.length === 1 && list[0]?.kind === "vehicle"
+                ? [list[0].vehicleId]
+                : [],
+            )
+            .at(0);
+          return (
+            wallSide && blockerId !== undefined && canExit(puzzle, blockerId)
+          );
+        },
+      );
+
+      expect(waitingVehicleIds).toEqual(["h"]);
+    });
+
+    test("残りに、本番のレベル1と同じく3マスの長い車があること", () => {
+      const longVehicleIds =
+        released.boardState.puzzle.remainingVehicleIds.filter(
+          (vehicleId) => getVehicle(vehicleId).length === 3,
+        );
+
+      expect(longVehicleIds.length).toBeGreaterThan(0);
     });
   });
 });
 
 describe("findParkingJamTutorialContact", () => {
   const blockedMoves = listBlockedMovesOnReachableStates();
+
+  test("出庫を続けてたどり着くどの盤面でも、出られない手のあとに、どう出すかを言えること", () => {
+    const released = playSteps(steps.length);
+    const withoutFix = blockedMoves.filter(({ puzzle, move }) => {
+      const progress = perform(
+        { ...released, boardState: { ...released.boardState, puzzle } },
+        move.vehicleId,
+        move.direction,
+      );
+      return getMessage(progress).detail === null;
+    });
+
+    expect(withoutFix).toEqual([]);
+  });
 
   test("出庫を続けてたどり着くどの盤面でも、出られない手のわけが本番の判定と同じ優先で選ばれること", () => {
     const mismatches = blockedMoves.filter(({ puzzle, move }) => {
@@ -414,14 +462,14 @@ describe("performTutorialAction", () => {
   });
 
   test("印の車を出すと、盤面から出して次の手順へ進むこと", () => {
-    const exited = perform(started, firstVehicleId, "down");
+    const exited = perform(started, firstVehicleId, "right");
 
     expect(exited.boardState.puzzle.remainingVehicleIds).not.toContain(
       firstVehicleId,
     );
     expect(exited.boardState.lastMove).toEqual({
       vehicleId: firstVehicleId,
-      direction: "down",
+      direction: "right",
       type: "exited",
     });
     expect(exited.stepIndex).toBe(1);
@@ -434,7 +482,10 @@ describe("performTutorialAction", () => {
     expect(blocked.violated).toBe(true);
     expect(blocked.stepIndex).toBe(1);
     expect(blocked.boardState.puzzle).toEqual(afterFirstStep.boardState.puzzle);
-    expect(message.headline).toBe("左へ進む先に道路がないので\n出られません");
+    expect(message).toEqual({
+      headline: "この先は道路につながっていません",
+      detail: "反対の向きへ出します",
+    });
     expect(blocked.boardState.lastMove).toMatchObject({
       type: "blocked",
       blocker: "road",
@@ -453,9 +504,9 @@ describe("performTutorialAction", () => {
   });
 
   const stepViolationCases = [
-    ["road", "g", "left", "左へ進む先に道路がないので\n出られません"],
-    ["planter", "b", "right", "右に植え込みがあるので\n通れません"],
-    ["car", "c", "down", "下にほかの車があるので\n通れません"],
+    ["road", "b", "left", "この先は道路につながっていません"],
+    ["planter", "c", "right", "植え込みにぶつかりました"],
+    ["car", "d", "down", "ほかの車にぶつかりました"],
   ] as const satisfies readonly (readonly [
     ParkingJamTutorialRuleId,
     ParkingJamVehicleId,
@@ -477,57 +528,66 @@ describe("performTutorialAction", () => {
   );
 
   test.each(stepViolations)(
-    "$ruleId を示す手順で印の車を出られない向きへ動かすと、手順の見出しから、動かした向きと当たったものを言う一言に替わること",
+    "$ruleId を示す手順で印の車を出られない向きへ動かすと、手順の見出しから、ぶつかったものと、反対の向きへ出すことを言う一言に替わること",
     ({ before, vehicleId, direction, headline, stepHeadline }) => {
       const blocked = perform(before, vehicleId, direction);
       const message = getMessage(blocked);
 
-      expect(message.headline).toBe(headline);
+      expect(message).toEqual({ headline, detail: "反対の向きへ出します" });
       expect(message.headline).not.toBe(stepHeadline);
     },
   );
 
   describe("手を離した後の場合", () => {
     const released = playSteps(steps.length);
-    const blockedByD = perform(released, "d", "left");
+    const blockedByCar = perform(released, "h", "left");
 
     const blockedCases = [
       [
-        "進む先に道路がない向き",
-        "d",
-        "left",
-        "左へ進む先に道路がないので\n出られません",
-      ],
-      [
-        "ほかの車がある向き",
-        "d",
+        "反対の向きへは出られる車を、進む先に道路がない向き",
+        "e",
         "right",
-        "右にほかの車があるので\n通れません",
+        {
+          headline: "この先は道路につながっていません",
+          detail: "反対の向きへ出します",
+        },
       ],
       [
-        "途中にほかの車があっても道路につながっていない向き",
-        "f",
+        "反対の向きも塞がれた車を、進む先に道路がない向き",
+        "h",
+        "right",
+        {
+          headline: "この先は道路につながっていません",
+          detail: "左の車を先に出します",
+        },
+      ],
+      [
+        "反対の向きに道路がない車を、ほかの車がある向き",
+        "h",
         "left",
-        "左へ進む先に道路がないので\n出られません",
+        {
+          headline: "ほかの車にぶつかりました",
+          detail: "左の車を先に出します",
+        },
       ],
     ] as const;
 
     test.each(blockedCases)(
-      "%sへ出そうとすると、そのわけを言うこと",
-      (_, vehicleId, direction, headline) => {
+      "%sへ出そうとすると、ぶつかったものと、どう出すかを言うこと",
+      (_, vehicleId, direction, expected) => {
         const blocked = perform(released, vehicleId, direction);
         const message = getMessage(blocked);
 
         expect(blocked.violated).toBe(true);
-        expect(message.headline).toBe(headline);
+        expect(message).toEqual(expected);
       },
     );
 
     describe("同じ側のほかの車線には道路がある向きの場合", () => {
       const laneCases = (
         [
-          ["a", "right"],
-          ["d", "left"],
+          ["e", "right"],
+          ["h", "right"],
         ] as const
       ).map(([vehicleId, direction]) => ({
         vehicleId,
@@ -544,13 +604,13 @@ describe("performTutorialAction", () => {
           const message = getMessage(blocked);
 
           expect(roadOnSameSide).toBe(true);
-          expect(message.headline).toMatch(/^.へ進む先に道路がないので\n/);
+          expect(message.headline).toBe("この先は道路につながっていません");
         },
       );
     });
 
     test("次に車を出すと、違反の一言を下げて残りを出す一言に戻すこと", () => {
-      const exited = perform(blockedByD, "f", "right");
+      const exited = perform(blockedByCar, "g", "left");
       const message = getMessage(exited);
 
       expect(exited.violated).toBe(false);
@@ -559,42 +619,107 @@ describe("performTutorialAction", () => {
   });
 });
 
-describe("getParkingJamTutorialStepVehicle", () => {
+describe("getParkingJamTutorialStepMove", () => {
   const situations = [started, playSteps(steps.length)].map((progress) =>
     getTutorialSituation(parkingJamTutorial, progress),
   );
 
-  test("手を引いている間は手順の車を、手を離した後は何も返さないこと", () => {
-    const vehicles = situations.map(getParkingJamTutorialStepVehicle);
+  test("手を引いている間は手順の車と出させる向きを、手を離した後は何も返さないこと", () => {
+    const moves = situations.map(getParkingJamTutorialStepMove);
 
-    expect(vehicles).toEqual([steps[0]?.vehicleId, null]);
+    expect(moves).toEqual([{ vehicleId: "a", direction: "right" }, null]);
   });
+
+  test.each(steps.map((step, index) => ({ index, step })))(
+    "$index 番目の手順で出させる向きが、その手順の盤面で出られる向きであること",
+    ({ index, step }) => {
+      const { puzzle } = playSteps(index).boardState;
+      const blocker = findParkingJamTutorialBlocker(puzzle, {
+        vehicleId: step.vehicleId,
+        direction: step.exitDirection,
+      });
+
+      expect(blocker).toBeNull();
+    },
+  );
 });
 
-describe("findParkingJamTutorialHintVehicle", () => {
+describe("findParkingJamTutorialHint", () => {
   const released = playSteps(steps.length);
   const goal = parkingJamTutorial.goal();
+
+  test("手を離した直後は、塞がれた車を通す車を示し、塞がれていた手を決め手として添えること", () => {
+    const hint = findParkingJamTutorialHint(released.boardState);
+
+    expect(hint).toMatchObject({
+      vehicleId: "g",
+      clearedMove: {
+        move: { vehicleId: "h", direction: "left" },
+        contact: { blocker: { kind: "vehicle", vehicleId: "g" } },
+      },
+    });
+    expect(hint && describeParkingJamTutorialHint(hint).headline).toBe(
+      "この車を先に出します",
+    );
+  });
+
+  test("塞がれた車が無ければ、今出せる車を示し、今出せることを言うこと", () => {
+    const progress = perform(released, "g", "left");
+    const hint = findParkingJamTutorialHint(progress.boardState);
+
+    expect(hint?.clearedMove).toBeNull();
+    expect(hint && canExit(progress.boardState.puzzle, hint.vehicleId)).toBe(
+      true,
+    );
+    expect(hint && describeParkingJamTutorialHint(hint).headline).toBe(
+      "この車は今出せます",
+    );
+  });
 
   test("示された車を出せる向きへ出し続けると、すべての車を出し終えること", () => {
     let progress = released;
     for (let turn = 0; turn < 10 && progress.phase === "playing"; turn += 1) {
-      const vehicleId = findParkingJamTutorialHintVehicle(progress.boardState);
-      const direction = listDirections(vehicleId ?? "").find(
+      const vehicleId =
+        findParkingJamTutorialHint(progress.boardState)?.vehicleId ?? "";
+      const direction = listDirections(vehicleId).find(
         (candidate) =>
           findParkingJamTutorialBlocker(progress.boardState.puzzle, {
-            vehicleId: vehicleId ?? "",
+            vehicleId,
             direction: candidate,
           }) === null,
       );
-      progress = perform(progress, vehicleId ?? "", direction ?? "left");
+      progress = perform(progress, vehicleId, direction ?? "left");
     }
 
     expect(progress.phase).toBe("solved");
   });
 
   test("出し終えた盤面では何も示さないこと", () => {
-    const hint = findParkingJamTutorialHintVehicle(goal);
+    const hint = findParkingJamTutorialHint(goal);
 
     expect(hint).toBeNull();
+  });
+});
+
+describe("getParkingJamTutorialProgressRatio", () => {
+  const progresses = [started, playSteps(1), playSteps(steps.length)];
+  const goal = parkingJamTutorial.goal();
+
+  test("始めの盤面の車のうち、出し終えた車の割合を返すこと", () => {
+    const ratios = progresses.map(({ boardState }) =>
+      getParkingJamTutorialProgressRatio(boardState),
+    );
+
+    expect(ratios).toEqual([
+      0,
+      1 / PARKING_JAM_TUTORIAL_PROGRESS_STEP_COUNT,
+      steps.length / PARKING_JAM_TUTORIAL_PROGRESS_STEP_COUNT,
+    ]);
+  });
+
+  test("すべての車を出し終えた盤面で1を返すこと", () => {
+    const ratio = getParkingJamTutorialProgressRatio(goal);
+
+    expect(ratio).toBe(1);
   });
 });

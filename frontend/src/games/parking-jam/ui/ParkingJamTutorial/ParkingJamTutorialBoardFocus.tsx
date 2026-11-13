@@ -1,10 +1,14 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { TutorialCue } from "@/components/TutorialCue";
-import { TutorialSpotlight } from "@/components/TutorialSpotlight";
+import {
+  TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE,
+  TutorialSpotlight,
+} from "@/components/TutorialSpotlight";
 import type {
   ParkingJamBoard,
   ParkingJamCell,
+  ParkingJamDirection,
   ParkingJamMove,
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
@@ -27,7 +31,9 @@ export type ParkingJamTutorialFocusTarget =
 
 export type ParkingJamTutorialMark = {
   vehicleId: ParkingJamVehicleId;
-  // 印の無い車を触られるたびに変え、印の線を短く濃くして戻す。
+  // 指がこの向きへ滑る。`null` なら、指は押すしぐさをする。
+  swipe: ParkingJamDirection | null;
+  // 印の無い車を触られるたびに変え、印の線を短く濃くして戻し、指を出し直す。
   recallId: number | null;
 };
 
@@ -108,6 +114,29 @@ function getFixedAreaShape(
     : null;
 }
 
+/** 縁石の線の外形。縁石は端の丸い線なので、線の両端から半分の太さだけ広げ、同じ値の角丸にする。 */
+function getCurbLineShape({
+  x1,
+  y1,
+  x2,
+  y2,
+}: {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}): Shape {
+  const left = Math.min(x1, x2) - CURB_HALF_WIDTH;
+  const top = Math.min(y1, y2) - CURB_HALF_WIDTH;
+  return {
+    x: left,
+    y: top,
+    width: Math.max(x1, x2) + CURB_HALF_WIDTH - left,
+    height: Math.max(y1, y2) + CURB_HALF_WIDTH - top,
+    radius: CURB_HALF_WIDTH,
+  };
+}
+
 /** 手の車線が外周に当たる所を通る縁石。縁石は道路の口の間ごとに1本の線なので、その1本の形にする。 */
 function getCurbShape(
   board: ParkingJamBoard,
@@ -139,18 +168,7 @@ function getCurbShape(
           Math.min(x1, x2) <= laneCenter &&
           laneCenter <= Math.max(x1, x2),
     );
-  if (!curb) {
-    return null;
-  }
-  const left = Math.min(curb.x1, curb.x2) - CURB_HALF_WIDTH;
-  const top = Math.min(curb.y1, curb.y2) - CURB_HALF_WIDTH;
-  return {
-    x: left,
-    y: top,
-    width: Math.max(curb.x1, curb.x2) + CURB_HALF_WIDTH - left,
-    height: Math.max(curb.y1, curb.y2) + CURB_HALF_WIDTH - top,
-    radius: CURB_HALF_WIDTH,
-  };
+  return curb ? getCurbLineShape(curb) : null;
 }
 
 function getTargetShape(
@@ -216,7 +234,35 @@ function getPlacementStyle(
 }
 
 /**
+ * 盤面に描いた物（駐車場・道路・縁石）の外形をすべて合わせ、盤面の外の地は覆わない。
+ * 駐車場の四角だけを覆うと、駐車場の角から道路へ続く1本の縁石や、道路の口のアスファルトが、覆いの縁で途中から明るさを変えるため、道路と道路の縁石も覆う。
+ */
+function listCoveredShapes(board: ParkingJamBoard): Shape[] {
+  const roads = board.roadOpenings.map((opening) =>
+    parkingJamBoardGeometry.getAccessRoadGeometry(opening, board),
+  );
+  const curbs = [
+    ...parkingJamBoardGeometry.getBoundaryCurbLines(board),
+    ...board.roadOpenings.flatMap((opening) =>
+      parkingJamBoardGeometry.getAccessRoadCurbLines(opening, board),
+    ),
+  ];
+  return [
+    {
+      x: 0,
+      y: 0,
+      width: board.width * PARKING_JAM_CELL,
+      height: board.height * PARKING_JAM_CELL,
+      radius: 0,
+    },
+    ...roads.map((road) => ({ ...road, radius: 0 })),
+    ...curbs.map(getCurbLineShape),
+  ];
+}
+
+/**
  * チュートリアルの盤面を、盤面と同じ縦横比の枠に収め、その上に覆いから抜く所と印を盤面の物と同じ位置・形で重ねる。
+ * 抜く物があるときは、盤面に描いた物の外形を覆う範囲として示し、盤面だけを薄く覆わせる。
  * 盤面は SVG で描くので、覆いが位置と角丸を読めるよう、抜く所と印は盤面の上に重ねた HTML の要素に置く。
  * 車は車体の形、植え込みは植え込みの形、縁石は端の丸い線の形のまま抜き、覆いのための余白や角丸は足さない。
  */
@@ -242,6 +288,15 @@ export function ParkingJamTutorialBoardFocus({
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 [container-type:inline-size]"
       >
+        {spotlights.length > 0 &&
+          listCoveredShapes(board).map((shape) => (
+            <span
+              key={[shape.x, shape.y, shape.width, shape.height].join()}
+              {...{ [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "" }}
+              className="absolute"
+              style={getPlacementStyle(board, shape)}
+            />
+          ))}
         {listSpotlightPlacements(board, spotlights).map(
           ({ key, name, shape }) => (
             <span
@@ -260,7 +315,12 @@ export function ParkingJamTutorialBoardFocus({
             className="absolute"
             style={getPlacementStyle(board, markShape)}
           >
-            <TutorialCue kind="mark" recallId={mark.recallId} />
+            <TutorialCue
+              kind="pointer"
+              placement="center"
+              swipe={mark.swipe ?? undefined}
+              recallId={mark.recallId}
+            />
           </span>
         )}
       </div>
