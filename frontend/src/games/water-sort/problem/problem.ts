@@ -28,7 +28,6 @@ export type WaterSortProblem = {
   initialState: WaterSortState;
 };
 
-/** 初期状態は、色ごとに瓶の容量と同じ数のブロックがあり、空でない瓶は満杯で、空の瓶を1本以上持つ。 */
 export function assertWaterSortProblem(problem: WaterSortProblem): void {
   const { initialState } = problem;
   if (
@@ -49,7 +48,6 @@ export type WaterSortProblemIdentity = {
   generationAttempt: number;
 };
 
-/** 記録・診断など外部から読み戻した値が、現在の生成器で復元できる識別情報かを確かめる。 */
 export function isWaterSortProblemIdentity(
   value: unknown,
 ): value is WaterSortProblemIdentity {
@@ -67,12 +65,10 @@ export function isWaterSortProblemIdentity(
   );
 }
 
-/** 記録に残した問題の識別情報。生成器の版が今と違う記録も、採点に使う色数が読めれば読み込む。 */
 export type WaterSortRecordedProblemIdentity = RecordedProblemIdentity<{
   colorCount: number;
 }>;
 
-/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
 export function isWaterSortRecordedProblemIdentity(
   value: unknown,
 ): value is WaterSortRecordedProblemIdentity {
@@ -84,7 +80,6 @@ export function isWaterSortRecordedProblemIdentity(
   );
 }
 
-/** 問題と、それを再現するための情報。 */
 export type WaterSortIdentifiedProblem = {
   problem: WaterSortProblem;
   identity: WaterSortProblemIdentity;

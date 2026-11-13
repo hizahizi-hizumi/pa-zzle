@@ -51,13 +51,10 @@ type WaterSortPlayRecordPayloadV1 = {
   performance: WaterSortPlayPerformanceV1;
 };
 
-/**
- * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
- * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準との差は保存せず、現在の評価規則で導出する。
- */
 type WaterSortPlayRecordPayload = {
   difficulty: WaterSortRecordedDifficulty;
   problemIdentity: WaterSortRecordedProblemIdentity;
+  // 評価点・評価段階・基準との差は保存せず、現在の評価規則で導出する。
   performance: WaterSortPlayPerformance;
 };
 
@@ -135,17 +132,12 @@ export function isWaterSortPlayRecord(
   );
 }
 
-/** 記録から作り直した、結果画面に出す内容。 */
 export type WaterSortRecordedResult = {
   difficulty: WaterSortDifficulty;
   problemIdentity: WaterSortProblemIdentity;
   result: WaterSortResult;
 };
 
-/**
- * 記録から結果画面に出す内容を作り直す。
- * 今の版の記録で、今の難易度区分と今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
- */
 export function restoreWaterSortRecordedResult(
   record: PlayRecord,
 ): WaterSortRecordedResult | null {
