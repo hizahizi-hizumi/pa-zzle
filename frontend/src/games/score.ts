@@ -22,16 +22,12 @@ export type SpeedScoreRule = {
 };
 
 /**
- * 速さの割合が、この値に下がるまでは超過時間に比例して減らし、その先は緩やかな曲線に切り替える。
- * 切り替えより上は前の直線のままなので、満点・`perfect`・`great` に届く条件は直線の採点と変わらない。
+ * 速さの割合が、この値に下がるまでは超過時間に比例して減らし、その先は緩やかな曲線に切り替える（SPEC-006）。
  * どのゲームでも速さの配点のこの割合では、ほかが満点でも `great` に届かない（40点 × 0.7 = 28点 < 30点）。
  */
-export const SPEED_SCORE_CURVE_KNEE_RATIO = 0.7;
-/**
- * 速さの割合の下限。解き切った人が速さで極端に低い点を見ないよう、どれだけ長くかかってもこの割合は残す。
- * 直線なら0点になる時間で、およそ0.4が残る。
- */
-export const SPEED_SCORE_FLOOR_RATIO = 0.35;
+const SPEED_SCORE_CURVE_KNEE_RATIO = 0.7;
+/** 速さの割合の下限（SPEC-006）。直線なら0点になる時間で、およそ0.4が残る。 */
+const SPEED_SCORE_FLOOR_RATIO = 0.35;
 
 function clampUnit(value: number): number {
   return Math.min(1, Math.max(0, value));
@@ -66,7 +62,7 @@ export function createSpeedScoreRule(
  * 超過の度合い（超過時間 ÷ 直線で0点になるまでの幅）から速さの割合を求める。
  * 切り替えまでは直線、その先は下限へ近づく指数の曲線で、切り替えの点で傾きをつなぐ。長くかかるほど減り方が緩やかになる。
  */
-export function calculateSpeedScoreRatio(overtimeRatio: number): number {
+function calculateSpeedScoreRatio(overtimeRatio: number): number {
   const linearRatio = 1 - Math.max(0, overtimeRatio);
   if (linearRatio >= SPEED_SCORE_CURVE_KNEE_RATIO) {
     return linearRatio;
@@ -106,3 +102,8 @@ export function calculateTimeDeltaMs(
 ): number {
   return elapsedMs - fullScoreMs;
 }
+
+export const _private = {
+  SPEED_SCORE_CURVE_KNEE_RATIO,
+  calculateSpeedScoreRatio,
+};

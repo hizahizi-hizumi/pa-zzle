@@ -2,11 +2,12 @@ import {
   calculateLinearScore,
   calculateSpeedFloorScore,
   calculateSpeedScore,
-  calculateSpeedScoreRatio,
   createSpeedScoreRule,
-  SPEED_SCORE_CURVE_KNEE_RATIO,
+  _private,
   subtractWithFloor,
 } from "@/games/score";
+
+const { SPEED_SCORE_CURVE_KNEE_RATIO, calculateSpeedScoreRatio } = _private;
 
 describe("calculateLinearScore", () => {
   const maximum = 40;
