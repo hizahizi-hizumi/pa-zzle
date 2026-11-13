@@ -68,7 +68,6 @@ export function appendPlayRecord(
   return writePlayRecords([...records, record], storage) ? "saved" : "failed";
 }
 
-/** 記録 ID の記録を1件引く。無ければ `null` を返す。 */
 export function findPlayRecord(
   recordId: string,
   storage: PlayRecordStorage | null = getDefaultStorage(),
