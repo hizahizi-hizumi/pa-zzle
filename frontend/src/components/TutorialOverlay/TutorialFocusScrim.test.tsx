@@ -1,5 +1,6 @@
 import { act, cleanup, render } from "@testing-library/react";
 
+import { TUTORIAL_CUE_HAND_ATTRIBUTE } from "@/components/TutorialCue";
 import { TutorialFocusScrim } from "@/components/TutorialOverlay/TutorialFocusScrim";
 import {
   TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE,
@@ -27,7 +28,6 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** 覆いから抜く所の印を付けた要素を、画面の中の位置・大きさ・角丸で置く。 */
 function addSpotlight(
   box: SpotlightBox,
   attribute = TUTORIAL_SPOTLIGHT_ATTRIBUTE,
@@ -229,6 +229,33 @@ describe("TutorialFocusScrim", () => {
 
       expect(scrim).toBeNull();
       expect(holes).toHaveLength(0);
+    });
+  });
+
+  describe("消えかけている指がある場合", () => {
+    beforeEach(() => {
+      const hand = addSpotlight(
+        { left: 10, top: 20, width: 32, height: 32 },
+        TUTORIAL_CUE_HAND_ATTRIBUTE,
+      );
+      hand.style.opacity = "0.3";
+      renderScrim(true);
+    });
+
+    test("指が消えている間に抜いた跡だけが残らないよう、指のまわりを指の濃さに合わせ、縁をぼかして抜くこと", () => {
+      const circles = Array.from(
+        document.querySelectorAll("svg mask circle"),
+      ).map((circle) => ({
+        cx: circle.getAttribute("cx"),
+        cy: circle.getAttribute("cy"),
+        r: circle.getAttribute("r"),
+        soft: circle.getAttribute("fill")?.startsWith("url(#"),
+        strength: circle.getAttribute("fill-opacity"),
+      }));
+
+      expect(circles).toEqual([
+        { cx: "26", cy: "36", r: "28", soft: true, strength: "0.3" },
+      ]);
     });
   });
 });

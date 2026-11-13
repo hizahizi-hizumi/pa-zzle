@@ -119,6 +119,46 @@ describe("TutorialCue", () => {
     });
   });
 
+  describe("スワイプの向きを渡した指さしの場合", () => {
+    beforeEach(() => {
+      render(<TutorialCue kind="pointer" recallId={null} swipe="left" />);
+    });
+
+    test("印を描き、指に滑る向きを持たせること", () => {
+      const marks = queryCues("mark");
+      const pointer = queryCues("pointer")[0];
+
+      expect(marks).toHaveLength(1);
+      expect(pointer?.getAttribute("data-swipe")).toBe("left");
+    });
+
+    test("押すしぐさと取り違えないよう、波紋を描かないこと", () => {
+      const pointer = queryCues("pointer")[0];
+      const ripple = pointer?.querySelector(".animate-tutorial-tap-ripple");
+
+      expect(pointer).toBeDefined();
+      expect(ripple).toBeNull();
+    });
+  });
+
+  describe("輪郭を描かない指さしの場合", () => {
+    beforeEach(() => {
+      render(
+        <TutorialCue kind="pointer" recallId={1} swipe="up" outlined={false} />,
+      );
+    });
+
+    test("着く所の印と並んでも印が1つに見えるよう、指だけを描くこと", () => {
+      const pointers = queryCues("pointer");
+      const marks = queryCues("mark");
+      const recalls = queryCues("recall");
+
+      expect(pointers).toHaveLength(1);
+      expect(marks).toHaveLength(0);
+      expect(recalls).toHaveLength(0);
+    });
+  });
+
   describe("仕上げたことへの応えの場合", () => {
     beforeEach(() => {
       render(<TutorialCue kind="achievement" />);
