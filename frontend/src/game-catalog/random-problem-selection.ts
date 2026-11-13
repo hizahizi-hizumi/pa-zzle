@@ -15,7 +15,6 @@ import {
   getZukanProblemStatus,
 } from "@/zukan/zukan-collection";
 
-/** 図鑑と同じ状態判定で候補を絞る。選ばれている状態が無ければ別の状態へ勝手に広げない。 */
 export function listRandomProblemCandidates(
   game: GameCatalogEntry,
   difficulty: DifficultyLevel,
@@ -56,7 +55,6 @@ export function selectRandomProblemId(
   return candidates[Math.floor(Math.random() * candidates.length)] ?? null;
 }
 
-/** 選択した出題条件を今回だけ外して遊ぶと明示された場合に使う。設定は変更しない。 */
 export function selectAnyRandomProblemId(
   game: GameCatalogEntry,
   difficulty: DifficultyLevel,

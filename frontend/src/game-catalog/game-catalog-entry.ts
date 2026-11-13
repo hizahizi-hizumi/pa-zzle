@@ -20,13 +20,11 @@ import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-displ
 import type { Path } from "@/router";
 import type { ZukanGameSource } from "@/zukan/zukan-collection";
 
-/** ゲームのホームのパス。アプリのホームからゲームを選ぶと開く。 */
 export type GameHomePath = Exclude<
   Extract<Path, `/puzzles/${string}`>,
   `${string}/:${string}`
 >;
 
-/** 難易度を `:difficulty` に入れて開くプレイ画面のパス。 */
 export type GamePlayPath = Extract<Path, `/puzzles/${string}/play/:difficulty`>;
 
 /** 完了記録や離脱した試行の問題を遊び直すプレイ画面の難易度と、その難易度の問題集で引ける問題 ID。 */
@@ -35,24 +33,17 @@ export type RecordProblemPlayTarget = {
   problemId: ProblemId;
 };
 
-/** 完了記録や離脱した試行の問題を遊び直すプレイ画面。 */
 export type RecordProblemPlayDestination = RecordProblemPlayTarget & {
   playPath: GamePlayPath;
 };
 
-/** ゲームのプレイ画面・結果画面から、ゲームの外や同じゲームの別のプレイへ移る操作。 */
 export type GameNavigation = {
-  /**
-   * ゲームのホームへ移る。問題 ID を渡すと、図鑑でその問題を選んだ状態で開く。
-   * `replacesHistory` では今の画面の履歴を置き換え、ブラウザの戻るで今の画面へ戻らないようにする。
-   */
   openGameHome: (
     selectedProblemId?: ProblemId,
     options?: { replacesHistory: boolean },
   ) => void;
   /** アプリのホームへ移る。 */
   backToHome: () => void;
-  /** その難易度のプレイ画面を開き、最初の問題として `avoidedProblemId` の問題を避ける。 */
   startNewProblem: (
     difficulty: string,
     avoidedProblemId: ProblemId,
@@ -60,29 +51,25 @@ export type GameNavigation = {
   ) => void;
 };
 
-/** 記録から描く結果画面へ、ゲームの外側が渡す告知と操作。検証情報はゲームが記録から用意する。 */
+/** 検証情報はゲームが記録から用意する。 */
 export type RecordResultContext = {
-  /** 記録を保存した直後の自己ベスト更新などの告知。 */
   recordFeedback: ResultRecordFeedback;
-  /** 記録の問題を遊び直す。遊び直せない記録では `undefined`。 */
+  /** 遊び直せない記録では `undefined`。 */
   onReplay: (() => void) | undefined;
   navigation: GameNavigation;
 };
 
-/** 図鑑の絞り込みで問題を分ける、問題の特徴の1つの軸と、その名前と値の書き方。 */
 export type ProblemFeatureFilterAxis = {
   id: string;
-  /** 1つのレベルの問題集にある値の種類が多いとき、数をまとめる幅。数の軸だけが、`display` の値の書き方から持つ。 */
   countRangeWidth?: number;
   display: ProblemFeatureAxisDisplay;
 };
 
-/** 図鑑の絞り込みに使う、問題の特徴の軸と、問題集の1問の特徴の値。 */
 export type ProblemFeatureFilter = {
-  /** 軸。示す順。 */
+  /** 示す順に並ぶ。 */
   axes: readonly ProblemFeatureFilterAxis[];
   /**
-   * 難易度の問題集の1問の、軸の ID ごとの特徴の値を返す。問題集に無い ID・別の難易度の ID には `null` を返す。
+   * 問題集に無い ID・別の難易度の ID には `null` を返す。
    * 図鑑で開いているレベルの全問について求めるので、問題を復元せず問題集の項目から求める。
    */
   findPoolProblemValues: (
@@ -91,47 +78,45 @@ export type ProblemFeatureFilter = {
   ) => ReadonlyMap<string, ProblemFeatureValue> | null;
 };
 
-/** アプリが提供する1つのゲームの、ゲームのホーム・プレイ画面・記録・離脱したプレイ・それらの問題の遊び直し先・問題集の全問・記録の結果画面。 */
 export type GameCatalogEntry = {
   /** 記録の `gameId` と同じ値。 */
   id: string;
   name: string;
   pictogramSvg: string;
-  /** パズル選択で選んでいるときに見せる、プレイ画面の色と動きを持つピクトグラム。持たないゲームは `pictogramSvg` を見せる。 */
+  /** 持たないゲームは `pictogramSvg` を見せる。 */
   pictogramShowcaseSvg?: string;
   homePath: GameHomePath;
   playPath: GamePlayPath;
   playRecordDisplay: PlayRecordDisplayDefinition;
   /**
-   * 記録の問題を遊び直すプレイ画面の難易度と問題 ID を返す。遊び直せない記録には `null` を返す。
+   * 遊び直せない記録には `null` を返す。
    * 記録の一覧の行ごとに求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。
    */
   recordProblemPlayTarget: (
     record: PlayRecord,
   ) => RecordProblemPlayTarget | null;
   /**
-   * 離脱した試行の問題を遊び直すプレイ画面の難易度と問題 ID を返す。遊び直せない試行には `null` を返す。
+   * 遊び直せない試行には `null` を返す。
    * 完了記録の `recordProblemPlayTarget` と同じく、問題を復元せず問題集の索引で引けるかだけを確かめる。
    */
   attemptProblemPlayTarget: (
     attempt: PlayAttempt,
   ) => RecordProblemPlayTarget | null;
-  /** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。図鑑はこれで問題集の全問を枠として並べる。 */
+  /** 問題集の並び順で返す。 */
   listPoolProblemIds: (difficulty: DifficultyLevel) => readonly ProblemId[];
   /**
-   * 難易度の問題集の1問の、始めたときの盤面を見れば分かる特徴を返す。問題集に無い ID・別の難易度の ID には `null` を返す。
+   * 問題集に無い ID・別の難易度の ID には `null` を返す。
    * 図鑑で選んだ1問について求めるので、重い生成・解析をせず問題集の項目から求める。
    */
   describePoolProblem: (
     difficulty: DifficultyLevel,
     problemId: ProblemId,
   ) => readonly ProblemFeature[] | null;
-  /** 図鑑の絞り込みに使う、問題の特徴の軸と値。 */
   problemFeatureFilter: ProblemFeatureFilter;
-  /** 記録から結果画面を描けるか。`renderRecordResult` が結果画面を返すときだけ `true`。 */
+  /** `renderRecordResult` が結果画面を返すときだけ `true`。 */
   hasRecordResult: (record: PlayRecord) => boolean;
   /**
-   * 記録から結果画面を描く。今の版の記録でなく結果を作れないときは `null` を返す。
+   * 今の版の記録でなく結果を作れないときは `null` を返す。
    * 呼び出し側は記録の `gameId` がこのゲームの `id` と一致することを確かめてから渡す。
    */
   renderRecordResult: (
@@ -140,7 +125,6 @@ export type GameCatalogEntry = {
   ) => ReactNode | null;
 };
 
-/** 図鑑とゲームの続きを記録から導くのに要る、カタログ項目の部分。 */
 export function toZukanGameSource(game: GameCatalogEntry): ZukanGameSource {
   return {
     id: game.id,
@@ -152,7 +136,6 @@ export function toZukanGameSource(game: GameCatalogEntry): ZukanGameSource {
 }
 
 /**
- * 完了記録や試行の難易度と identity から遊び直し先を求める。
  * 難易度が今の難易度区分に無い（`undefined`）か、その難易度の問題集で問題 ID を引けなければ `null` を返す。
  */
 export function resolveRecordProblemPlayTarget<Difficulty extends string>(
@@ -173,7 +156,6 @@ export function resolveRecordProblemPlayTarget<Difficulty extends string>(
     : null;
 }
 
-/** ゲームの特徴の求め方・軸・軸の名前と値の書き方から、図鑑の絞り込みに使う特徴の軸と値の求め方を作る。 */
 export function createProblemFeatureFilter<Features, Id extends string>(
   findPoolProblemFeatures: (
     difficulty: DifficultyLevel,

@@ -37,7 +37,6 @@ export function findGameCatalogEntry(
   return gameCatalog.find((game) => game.id === gameId);
 }
 
-/** 記録の問題を遊び直すプレイ画面を求める。今のアプリに無いゲームの記録や、遊び直せない記録には `null` を返す。 */
 export function findRecordProblemPlayDestination(
   record: PlayRecord,
 ): RecordProblemPlayDestination | null {
@@ -46,7 +45,6 @@ export function findRecordProblemPlayDestination(
   return game && target ? { ...target, playPath: game.playPath } : null;
 }
 
-/** 離脱した試行の問題を遊び直すプレイ画面を求める。今のアプリに無いゲームの試行や、遊び直せない試行には `null` を返す。 */
 export function findAttemptProblemPlayDestination(
   attempt: PlayAttempt,
 ): RecordProblemPlayDestination | null {

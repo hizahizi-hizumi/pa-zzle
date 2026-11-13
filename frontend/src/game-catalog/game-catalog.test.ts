@@ -81,7 +81,6 @@ describe("gameCatalog", () => {
 });
 
 describe("problemFeatureFilter", () => {
-  /** 選択肢を、盤面は `行x列`、数は `最小-最大`（1つの値なら値）で書く。 */
   function writeOption(option: ZukanFeatureOption): string {
     if (option.kind === "board-size") {
       return `${option.rows}x${option.columns}`;
@@ -90,7 +89,6 @@ describe("problemFeatureFilter", () => {
       ? String(option.min)
       : `${option.min}-${option.max}`;
   }
-  /** 問題集の1レベルの全問について、軸の名前と選択肢を求める。 */
   function listLevelFeatureOptions(
     gameId: string,
     difficulty: DifficultyLevel,

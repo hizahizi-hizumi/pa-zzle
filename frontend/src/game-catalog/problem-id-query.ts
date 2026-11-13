@@ -13,12 +13,10 @@ import {
  */
 const problemIdQueryKey = "problem";
 
-/** プレイ画面・ゲームのホームを問題 ID の問題で開くための URL のクエリ文字列（`?problem=<問題ID>`）を作る。 */
 export function createProblemIdSearch(problemId: ProblemId): string {
   return `?${new URLSearchParams({ [problemIdQueryKey]: problemId })}`;
 }
 
-/** 問題IDを明示したプレイかどうか。難易度だけのURLからの出題と区別する。 */
 export function hasProblemIdQuery(search: string): boolean {
   return new URLSearchParams(search).has(problemIdQueryKey);
 }
@@ -66,10 +64,6 @@ export function useRequestedProblem<Problem>(
   return requestedProblem;
 }
 
-/**
- * 遊んでいる問題の ID を、履歴を増やさずに URL のクエリへ反映し続ける。
- * 再読み込みしても `useRequestedProblem` が同じ問題を引けるようにする。`null` を渡すと URL に触れない。
- */
 export function useProblemIdQuerySync(
   problemIdentity: ProblemIdentity | null,
 ): void {

@@ -37,17 +37,13 @@ import {
 } from "@/zukan/zukan-last-viewed-storage";
 
 export type GameHome = {
-  /** ゲームのホーム `GameHomeScreen` へそのまま渡す、図鑑・選んでおく問題・プレイを始める操作。遊び方とチュートリアルはゲームの View が描く。 */
+  /** 遊び方とチュートリアルはゲームの View が描く。 */
   screenProps: Omit<
     GameHomeScreenProps,
     "ground" | "renderHowToPlayDialog" | "renderTutorial"
   >;
 };
 
-/**
- * 1ゲームのホームを、記録と離脱したプレイから導いた図鑑・前回図鑑を見たときの状態・URL で選んでおく問題・プレイ画面への遷移へつなぐ。
- * 前回の状態は、変化の無いレベルを開いたときに、変化のあるレベルを変化を見せ終えたときに今の状態で保存する。
- */
 export function useGameHome(game: GameCatalogEntry): GameHome {
   const [records] = useState(() => readPlayRecords());
   // 開いたときの変化を求めるよう、見たレベルを保存する前に前回の状態を読んでおく。別のゲームのホームへ移ったら読み直す。
