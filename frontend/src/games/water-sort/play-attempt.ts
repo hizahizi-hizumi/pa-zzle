@@ -6,7 +6,7 @@ export function createWaterSortPlayAttemptProgress(
   session: WaterSortSession,
   abandonedAt: number,
 ) {
-  // 評価値と、クリアの評価にだけ使うクリアまでの手数・最短手数は保存しない。
+  // クリアの評価にだけ使うクリアまでの手数・最短手数は保存しない。
   return {
     elapsedMs: getSessionElapsedMs(session, abandonedAt),
     moveCount: session.moveCount,

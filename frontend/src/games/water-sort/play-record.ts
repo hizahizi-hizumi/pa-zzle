@@ -54,7 +54,7 @@ type WaterSortPlayRecordPayloadV1 = {
 type WaterSortPlayRecordPayload = {
   difficulty: WaterSortRecordedDifficulty;
   problemIdentity: WaterSortRecordedProblemIdentity;
-  // 評価点・評価段階・基準との差は保存せず、現在の評価規則で導出する。
+  // 基準との差は保存せず、現在の評価規則で導出する。
   performance: WaterSortPlayPerformance;
 };
 

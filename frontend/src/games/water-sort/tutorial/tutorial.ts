@@ -490,10 +490,7 @@ function describeRejection(
   return { headline: rejectionMessages[rejection], detail: null };
 }
 
-/**
- * 選べないボトルや注げない注ぎ先をタップしたとき。手を引いている間は、注げないわけのルールを示した後の注ぎ先でだけ起きる。
- * そろったボトルから注げないことは、盤面で初めて1色そろったときに伝えている。
- */
+/** 選べないボトルや注げない注ぎ先をタップしたとき。手を引いている間は、注げないわけのルールを示した後の注ぎ先でだけ起きる。 */
 function describeWaterSortTutorialViolation(
   _situation: WaterSortTutorialSituation,
   { lastMove }: WaterSortTutorialBoardState,
@@ -515,7 +512,6 @@ export function isWaterSortTutorialFirstCompletion({
 }
 
 /**
- * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せるボトル。
  * 手順の注ぎ元と、注げるかと何が移るかを決める注ぎ先を、印がどちらにあっても抜く。
  * `violationShown` は、ルールに合わない手のわけの一言を出しているか。出している間は、はじいたボトルも、揺れとわけの一言が指すボトルとして抜く。
  */

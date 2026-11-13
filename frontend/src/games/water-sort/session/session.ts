@@ -100,7 +100,6 @@ export function undoWaterSortSession(
   };
 }
 
-/** 同じプレイのまま初期状態へ戻す（盤面を戻す）。経過時間と記録は引き継ぐ。 */
 export function restartWaterSortSession(
   session: WaterSortSession,
 ): WaterSortSession {
