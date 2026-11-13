@@ -1,5 +1,4 @@
 import { TutorialCue } from "@/components/TutorialCue";
-import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import {
   NANPURE_DIGITS,
   type NanpureDigit,
@@ -13,8 +12,7 @@ type NanpureDigitPadProps = {
   cuedDigit?: NanpureDigit | null;
   /** 押させたい数字の印の線を短く濃くして戻す目印。変わるたびに戻し直す。`null` なら戻さない。 */
   cuedDigitRecallId?: number | null;
-  spotlitDigits?: readonly NanpureDigit[];
-  /** `compact` は、盤面に高さを譲るチュートリアルで使う。 */
+  /** ボタンの高さ。`compact` は、盤面に高さを譲るチュートリアルで使う。 */
   size?: "play" | "compact";
   onInputDigit: (digit: NanpureDigit) => void;
 };
@@ -25,7 +23,6 @@ export function NanpureDigitPad({
   completedDigits,
   cuedDigit = null,
   cuedDigitRecallId = null,
-  spotlitDigits = [],
   size = "play",
   onInputDigit,
 }: NanpureDigitPadProps) {
@@ -52,13 +49,12 @@ export function NanpureDigitPad({
             disabled={disabled}
           >
             {digit}
-            {/* ボタンの形のまま、同じ角丸で覆いから抜く。 */}
-            <TutorialSpotlight
-              active={spotlitDigits.includes(digit)}
-              className="inset-0 rounded-md"
-            />
             {cuedDigit === digit && !disabled && (
-              <TutorialCue kind="mark" recallId={cuedDigitRecallId} />
+              <TutorialCue
+                kind="pointer"
+                placement="center"
+                recallId={cuedDigitRecallId}
+              />
             )}
           </button>
         );

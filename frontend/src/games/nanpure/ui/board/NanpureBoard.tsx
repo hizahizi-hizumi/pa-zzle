@@ -1,3 +1,4 @@
+import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import {
   areNanpureCellsRelated,
   NANPURE_SIZE,
@@ -26,6 +27,7 @@ type NanpureBoardProps = {
   /** 盤面の幅。渡さなければ、プレイ画面に合わせて画面の幅と高さから決める。 */
   sizeClassName?: string;
   cues?: readonly NanpureCellCue[];
+  /** チュートリアルで、盤面の覆いから抜く所。渡している間、盤面を覆う範囲として示す。`null` なら覆わない。 */
   spotlight?: NanpureBoardSpotlight | null;
   onSelectCell: (cellIndex: number) => void;
 };
@@ -53,6 +55,7 @@ export function NanpureBoard({
   return (
     // マスの数字の大きさを盤面の幅で抑え、狭く置いた盤面でも数字がマスに収まるようにする。
     <div
+      {...(spotlight !== null && { [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "" })}
       className={cn(
         "relative grid aspect-square grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background [container-type:inline-size]",
         sizeClassName,

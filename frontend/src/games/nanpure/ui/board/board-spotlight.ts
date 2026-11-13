@@ -5,7 +5,7 @@ export type NanpureBoardUnit = {
 };
 
 /**
- * チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せる所。
+ * チュートリアルで、盤面の覆いから抜いて元の明るさで見せる所。
  * `units` は、まとまりのマスをまとめて1つの形で抜く。
  */
 export type NanpureBoardSpotlight = {
