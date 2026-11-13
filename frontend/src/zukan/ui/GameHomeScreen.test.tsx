@@ -2822,15 +2822,38 @@ describe("findMilestoneProblemId", () => {
   const changes = new Map(
     problems.slice(6, 11).map(({ problemId }) => [problemId, newlySolved]),
   );
+  const numberOrder = [6, 7, 8, 9, 10];
+  const reversedOrder = [10, 9, 8, 7, 6];
 
   test("押す順に新しく解いた問題を数え、解いた数が最初に節目に届く問題を返すこと", () => {
-    const problemId = findMilestoneProblemId(problems, changes, 11);
+    const problemId = findMilestoneProblemId(
+      problems,
+      numberOrder,
+      changes,
+      11,
+    );
 
     expect(problemId).toBe(problems[9]?.problemId);
   });
 
+  test("押す順が番号の順と違えば、押す順で節目に届く問題を返すこと", () => {
+    const problemId = findMilestoneProblemId(
+      problems,
+      reversedOrder,
+      changes,
+      11,
+    );
+
+    expect(problemId).toBe(problems[7]?.problemId);
+  });
+
   test("節目に届かなければ null を返すこと", () => {
-    const problemId = findMilestoneProblemId(problems, changes, 9);
+    const problemId = findMilestoneProblemId(
+      problems,
+      numberOrder,
+      changes,
+      9,
+    );
 
     expect(problemId).toBeNull();
   });

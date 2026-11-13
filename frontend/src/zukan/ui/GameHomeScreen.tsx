@@ -338,17 +338,22 @@ function listChangeStages(
 }
 
 /**
- * 押していくと、そのレベルの解いた数が節目に届く問題。押す順（番号の順）に新しく解いた問題を数え、前回の解いた数に足して最初に節目に届くもの。
+ * 押していくと、そのレベルの解いた数が節目に届く問題。押す順に新しく解いた問題を数え、前回の解いた数に足して最初に節目に届くもの。
  * 1回で節目を2つ以上越えるときも、最初に届いた節目の1問だけを強く押す。
  */
 function findMilestoneProblemId(
   problems: readonly ZukanProblem[],
+  changeIndices: readonly number[],
   changes: ReadonlyMap<ProblemId, ZukanProblemChange>,
   solvedCount: number,
 ): ProblemId | null {
   let shownSolvedCount = solvedCount - countZukanNewlySolved(changes);
-  for (const { problemId } of problems) {
-    if (changes.get(problemId)?.kind !== "newly-solved") {
+  for (const index of changeIndices) {
+    const problemId = problems[index]?.problemId;
+    if (
+      problemId === undefined ||
+      changes.get(problemId)?.kind !== "newly-solved"
+    ) {
       continue;
     }
     shownSolvedCount += 1;
@@ -616,10 +621,11 @@ export function GameHomeScreen({
         ? null
         : findMilestoneProblemId(
             openProblems,
+            changeIndices,
             openChanges,
             openSection.solvedCount,
           ),
-    [openProblems, openChanges, openSection.solvedCount],
+    [openProblems, changeIndices, openChanges, openSection.solvedCount],
   );
   const openStatusCounts = countZukanProblemsByStatus(openProblems, (problem) =>
     getZukanShownProblemStatus(problem, pendingChanges.get(problem.problemId)),
