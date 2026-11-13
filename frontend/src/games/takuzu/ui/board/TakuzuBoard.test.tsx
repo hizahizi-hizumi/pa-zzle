@@ -286,7 +286,7 @@ describe("TakuzuBoard", () => {
     });
 
     test("最初のマスを押したときのタイルを、通った空きマスに置き、固定マスには置かないこと", () => {
-      const [first, , , last] = cellButtons;
+      const [first] = cellButtons;
       fireEvent.pointerDown(board, { pointerId: 1, button: 0, clientX: 0 });
       fireEvent.pointerMove(board, { pointerId: 1, buttons: 1, clientX: 1 });
       fireEvent.pointerMove(board, { pointerId: 1, buttons: 1, clientX: 2 });
@@ -299,7 +299,6 @@ describe("TakuzuBoard", () => {
         [1, "a"],
         [3, "a"],
       ]);
-      expect(last).toBeTruthy();
     });
 
     test("同じマスの中で離すと、なぞらずに押した操作だけを通知すること", () => {

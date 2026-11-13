@@ -4,6 +4,7 @@ import { VIOLATION_MARK_DELAY_MS } from "@/games/takuzu/ui/board/TakuzuBoard/vio
 import { prefersReducedMotion } from "@/lib/motion";
 
 const VIOLATION_PULSE_DURATION_MS = 520;
+const VIOLATION_PULSE_EASING = "ease-out";
 
 /**
  * 違反の印が出た瞬間に1回だけ脈打たせ、気づかせてから控えめな姿に戻す。
@@ -25,7 +26,7 @@ export function useViolationPulse(
     const animation = element.animate(keyframes, {
       duration: VIOLATION_PULSE_DURATION_MS,
       delay: VIOLATION_MARK_DELAY_MS,
-      easing: "ease-out",
+      easing: VIOLATION_PULSE_EASING,
     });
     return function stopPulse() {
       animation.cancel();
