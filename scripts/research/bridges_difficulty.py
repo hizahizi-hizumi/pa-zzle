@@ -129,12 +129,12 @@ def generate(w: int, h: int, target: int, p2: float, p_extra: float, rng: random
     """島を伸ばして木を作り、余分な橋を足す。戻り値は (Puzzle, 解の橋の本数リスト)。"""
     island_at: dict[tuple[int, int], int] = {}
     islands: list[tuple[int, int]] = []
-    used: set[tuple[int, int]] = set()  # 橋が通るマス
+    bridge_cells: set[tuple[int, int]] = set()
     bridges: dict[tuple[int, int], int] = {}
 
     def free_for_island(cell: tuple[int, int]) -> bool:
         r, c = cell
-        if cell in island_at or cell in used:
+        if cell in island_at or cell in bridge_cells:
             return False
         for dr, dc in DIRS:
             if (r + dr, c + dc) in island_at:
@@ -152,7 +152,7 @@ def generate(w: int, h: int, target: int, p2: float, p_extra: float, rng: random
         r, c = islands[i]
         run = []
         rr, cc = r + dr, c + dc
-        while 0 <= rr < h and 0 <= cc < w and (rr, cc) not in island_at and (rr, cc) not in used:
+        while 0 <= rr < h and 0 <= cc < w and (rr, cc) not in island_at and (rr, cc) not in bridge_cells:
             run.append((rr, cc))
             rr += dr
             cc += dc
@@ -167,7 +167,7 @@ def generate(w: int, h: int, target: int, p2: float, p_extra: float, rng: random
         island_at[cell] = j
         islands.append(cell)
         for x in run[:k]:
-            used.add(x)
+            bridge_cells.add(x)
         bridges[(i, j)] = 2 if rng.random() < p2 else 1
     if len(islands) < 2:
         return None
@@ -180,10 +180,10 @@ def generate(w: int, h: int, target: int, p2: float, p_extra: float, rng: random
             continue
         if rng.random() >= p_extra:
             continue
-        if any(x in used for x in p.edge_cells[e]):
+        if any(x in bridge_cells for x in p.edge_cells[e]):
             continue
         for x in p.edge_cells[e]:
-            used.add(x)
+            bridge_cells.add(x)
         bridges[(i, j)] = 2 if rng.random() < p2 else 1
     sol = [0] * len(p.edges)
     for e, (i, j) in enumerate(p.edges):
