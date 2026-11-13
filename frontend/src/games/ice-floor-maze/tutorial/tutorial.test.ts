@@ -63,7 +63,6 @@ function finishSteps(count: number): Progress {
   );
 }
 
-/** 手順の印の滑りを、手順を始める前の状態とともに並べる。 */
 function listStepSlides() {
   return iceFloorMazeTutorial.steps.map((step, index) => {
     const before = finishSteps(index);
@@ -77,7 +76,6 @@ function listStepSlides() {
   });
 }
 
-/** 手を離した後を最短で進める滑りを、滑る前の状態とともに並べる。 */
 function listFreePlaySlides() {
   let state = freePlayState;
   return (findShortestDirections(freePlayState) ?? []).map((direction) => {
