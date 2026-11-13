@@ -9,10 +9,6 @@ import {
   type ProblemSeed,
 } from "@/games/problem-seed";
 
-/**
- * 問題集から seed で1問を選ぶ。同じ seed と問題集からは同じ1問を選ぶ。
- * `poolDescription` は問題集が空のときの例外で、どの問題集かを示す。
- */
 export function selectProblemPoolEntry<Entry>(
   entries: readonly Entry[],
   seed: ProblemSeed,
@@ -28,16 +24,11 @@ export function selectProblemPoolEntry<Entry>(
 // 問題集に避ける問題しか無いときにも選択を終えるための、選び直す回数の上限。
 const maximumAvoidingSelectionAttempts = 8;
 
-/** 新しい seed と、その seed で選んだ1問。 */
 export type SeededProblemSelection<Problem> = {
   seed: ProblemSeed;
   problem: Problem;
 };
 
-/**
- * 新しい seed で1問を選ぶ。`avoidedProblemId` の問題を選んだら seed を変えて選び直す。
- * 選び直しには上限があり、上限まで避けられなければ最後に選んだ問題を返す。
- */
 export function selectProblemAvoiding<
   Problem extends { identity: ProblemIdentity },
 >(

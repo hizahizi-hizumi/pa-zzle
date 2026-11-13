@@ -3,7 +3,6 @@ export const gameResultLevels = ["clear", "good", "great", "perfect"] as const;
 
 export type GameResultLevel = (typeof gameResultLevels)[number];
 
-/** 100点満点の評価点を、プレイの出来に応じた称賛の強さへ変換する。 */
 export function getGameResultLevel(score: number): GameResultLevel {
   if (score >= 100) {
     return "perfect";
@@ -17,7 +16,6 @@ export function getGameResultLevel(score: number): GameResultLevel {
   return "clear";
 }
 
-/** `level` が `other` より高い評価段階か。 */
 export function isHigherGameResultLevel(
   level: GameResultLevel,
   other: GameResultLevel,

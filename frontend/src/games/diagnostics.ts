@@ -29,10 +29,6 @@ type InternalDiagnosticSnapshotBase<
   Snapshot["problemIdentity"]
 >;
 
-/**
- * 1ゲームの内部診断の形式。各ゲームの `diagnostics.ts` が定義し、
- * snapshot の作成（`createInternalDiagnosticSnapshot`）と読み戻し（`parseInternalDiagnosticSnapshot`）に渡す。
- */
 export type InternalDiagnosticFormat<
   Snapshot extends AnyInternalDiagnosticSnapshot,
 > = {
@@ -40,7 +36,6 @@ export type InternalDiagnosticFormat<
   parseDifficulty: (value: string) => Snapshot["difficulty"] | undefined;
   isProblemIdentity: (value: unknown) => value is Snapshot["problemIdentity"];
   /**
-   * 共通項目のほかにゲームが持つ項目を、読み戻した値から取り出す。
    * 項目の形や、共通項目との整合（identity が難易度に合うかなど）が合わなければ `undefined` を返す。
    * 共通項目だけを持ち、整合を確かめることもないゲームでは省く。
    */
@@ -50,7 +45,6 @@ export type InternalDiagnosticFormat<
   ) => Omit<Snapshot, keyof AnyInternalDiagnosticSnapshot> | undefined;
 };
 
-/** snapshot の共通項目を作る。identity は呼び出し元の値と切り離して持つ。 */
 export function createInternalDiagnosticSnapshot<
   Snapshot extends AnyInternalDiagnosticSnapshot,
 >(
@@ -80,7 +74,6 @@ export function serializeInternalDiagnosticSnapshot(
   return JSON.stringify(snapshot, null, 2);
 }
 
-/** コピーした snapshot を読み戻す。形式・ゲーム・難易度・identity・ゲーム固有の項目が合わなければ `TypeError` を投げる。 */
 export function parseInternalDiagnosticSnapshot<
   Snapshot extends AnyInternalDiagnosticSnapshot,
 >(serialized: string, format: InternalDiagnosticFormat<Snapshot>): Snapshot {

@@ -11,7 +11,6 @@ export function createProblemSeed(): ProblemSeed {
 }
 
 /**
- * 文字列を32bit符号なし整数へ写す。
  * 問題集の選択と生成済み問題の再現がこの値に依存するため、アルゴリズムを変えない。
  */
 export function hashProblemSeed(seed: string): number {

@@ -13,7 +13,6 @@ import {
 
 type RuleId = "first" | "second";
 
-/** 手の結果をそのまま指定できる、盤面を持たないチュートリアル。状態は盤面を変えた手の数。 */
 type FakeAction = TutorialMoveOutcome;
 
 function createMessage(headline: string) {

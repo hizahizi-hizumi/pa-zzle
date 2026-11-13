@@ -1,4 +1,3 @@
-/** 全ゲームが提供する5段階の難易度レベル。 */
 export const difficultyLevels = [
   { id: "1", label: "レベル 1" },
   { id: "2", label: "レベル 2" },
@@ -18,7 +17,7 @@ const legacyDifficulties = [
 
 export type LegacyDifficulty = (typeof legacyDifficulties)[number]["id"];
 
-/** 記録に残っている難易度。3段階の時代があったゲームの記録は、旧区分も持つ。 */
+/** 3段階の時代があったゲームの記録は、旧区分も持つ。 */
 export type RecordedDifficulty = DifficultyLevel | LegacyDifficulty;
 
 export function parseDifficultyLevel(
@@ -70,13 +69,7 @@ export function isInNumericRange(
 /** 判定結果の状態に、状態名のほかに添える値が無いこと。 */
 export type NoAssessmentDetail = Record<never, never>;
 
-/**
- * 各状態に添える値。そのゲームで起こらない状態は `never` にする。
- * - `classified`: 分類できたときに、レベルのほかに添える値。
- * - `outOfRange`: 提供しない理由（`reason`）と、それに添える値。
- * - `unsupported`: 評価できなかったときに添える値。
- * - `invalid`: 問題として成立しないときに添える値。
- */
+/** 各状態に添える値。そのゲームで起こらない状態は `never` にする。 */
 type DifficultyAssessmentDetails = {
   classified: object;
   outOfRange: { reason: string };

@@ -24,12 +24,12 @@ export type SoundOperation = {
 };
 
 /**
- * 盤面操作の効果音を、操作の知らせ1つにつき一度だけ鳴らす。プレイ画面 `<Game>Play` で呼ぶ。
+ * プレイ画面 `<Game>Play` で呼ぶ。
  *
- * - `operation` はプレイフックが返す今の操作の知らせ。画面を出した時点の知らせは鳴らし済みとして扱う。
+ * - `operation` はプレイフックが返す今の操作の知らせ。
  * - `playOperationSound` は知らせの種類で音を選び、`@/lib/sound-effects` の `playSound` で鳴らす。
  *   毎回作り直す関数を渡してよい。回数の多い操作の音には `variation: REPEATED_SOUND_VARIATION` を付ける。
- * - 知らせが無い描画（`null`）では何も鳴らさない。知らせが複数の種類を持つなら、1つの関数の中で振り分ける。
+ * - 知らせが複数の種類を持つなら、1つの関数の中で振り分ける。
  *
  * @example
  * useOperationSound(operation, function playOperationSound(operation) {
@@ -70,14 +70,10 @@ type ClearSoundOptions = {
 };
 
 /**
- * 盤面の完成演出の始まり（`progress` が `playing` から `clearing` へ移るとき）に、ゲームのクリア音を鳴らす。
  * プレイ画面 `<Game>Play` で呼ぶ。
  *
- * - クリア音はゲームの題材から作り、完成演出に合わせる。演出の途中に合わせるなら `playSound` の `delayMs` で遅らせる。
- * - 動きを減らす設定では `playClearSound` を呼ばない。完成した盤面を保持して見せるゲームは、
- *   その姿に合わせた音を `playReducedMotionClearSound` で渡す。渡さなければ鳴らさず、報酬の音だけになる。
+ * - クリア音を完成演出の途中に合わせるなら `playSound` の `delayMs` で遅らせる。
  * - 結果を受け取る瞬間の報酬の音はアプリが鳴らすので、ゲームは鳴らさない。
- * - 画面を出した時点の進行は鳴らし済みとして扱う。リセットして解き直したら、またクリアしたときに鳴らす。
  *
  * @example
  * useClearSound(progress, function playClearSound() {
