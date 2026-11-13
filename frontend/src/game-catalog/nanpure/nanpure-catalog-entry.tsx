@@ -33,6 +33,14 @@ export const nanpureCatalogEntry = {
   homePath: "/puzzles/nanpure",
   playPath: "/puzzles/nanpure/play/:difficulty",
   playRecordDisplay: nanpurePlayRecordDisplay,
+  // 難易度の定義に遊ぶ人が一目で分かる数が無いので、問題集の中身を短く言い表す。
+  levelSummaries: {
+    "1": "入門",
+    "2": "単独候補",
+    "3": "ロックド",
+    "4": "ペア系",
+    "5": "X-Wing級",
+  },
   recordProblemPlayTarget(record) {
     return isNanpurePlayRecord(record)
       ? resolveRecordProblemPlayTarget(

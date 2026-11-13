@@ -319,7 +319,9 @@ describe("TutorialOverlay", () => {
     beforeEach(() => {
       installAnimate();
       onStartPlay = vi.fn<() => void>();
-      renderOverlay({ finish: { entry: "home", difficulty: "4", onStartPlay } });
+      renderOverlay({
+        finish: { entry: "home", difficulty: "4", onStartPlay },
+      });
     });
 
     test("最初の画面でとばして遊ぶを押すと、導入を進めずにそのプレイを始めること", () => {

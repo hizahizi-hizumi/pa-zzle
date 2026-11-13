@@ -33,6 +33,14 @@ export const parkingJamCatalogEntry = {
   homePath: "/puzzles/parking-jam",
   playPath: "/puzzles/parking-jam/play/:difficulty",
   playRecordDisplay: parkingJamPlayRecordDisplay,
+  // 難易度の定義に遊ぶ人が一目で分かる数が無いので、問題集の中身を短く言い表す。
+  levelSummaries: {
+    "1": "すぐ出せる",
+    "2": "見落とし",
+    "3": "2段の待ち",
+    "4": "読み違い多",
+    "5": "3段以上",
+  },
   recordProblemPlayTarget(record) {
     return isParkingJamPlayRecord(record)
       ? resolveRecordProblemPlayTarget(

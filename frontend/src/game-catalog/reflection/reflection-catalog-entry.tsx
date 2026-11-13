@@ -3,10 +3,15 @@ import {
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
+import {
+  formatSquareBoardRange,
+  summarizeLevels,
+} from "@/game-catalog/level-summary";
 import { RecordedReflectionResult } from "@/game-catalog/reflection/RecordedReflectionResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/reflection/assets/pictogram.svg?raw";
 import pictogramShowcaseSvg from "@/games/reflection/assets/pictogram-showcase.svg?raw";
+import { reflectionLevelCombinations } from "@/games/reflection/difficulty";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import {
   isReflectionPlayRecord,
@@ -33,6 +38,9 @@ export const reflectionCatalogEntry = {
   homePath: "/puzzles/reflection",
   playPath: "/puzzles/reflection/play/:difficulty",
   playRecordDisplay: reflectionPlayRecordDisplay,
+  levelSummaries: summarizeLevels((difficulty) =>
+    formatSquareBoardRange(reflectionLevelCombinations[difficulty].boardSize),
+  ),
   recordProblemPlayTarget(record) {
     return isReflectionPlayRecord(record)
       ? resolveRecordProblemPlayTarget(

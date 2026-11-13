@@ -4,8 +4,10 @@ import {
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
+import { formatRange, summarizeLevels } from "@/game-catalog/level-summary";
 import pictogramSvg from "@/games/bridges/assets/pictogram.svg?raw";
 import pictogramShowcaseSvg from "@/games/bridges/assets/pictogram-showcase.svg?raw";
+import { bridgesLevelCombinations } from "@/games/bridges/difficulty";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import {
   bridgesPlayRecordDefinition,
@@ -33,6 +35,10 @@ export const bridgesCatalogEntry = {
   homePath: "/puzzles/bridges",
   playPath: "/puzzles/bridges/play/:difficulty",
   playRecordDisplay: bridgesPlayRecordDisplay,
+  levelSummaries: summarizeLevels(
+    (difficulty) =>
+      `島${formatRange(bridgesLevelCombinations[difficulty].islandCount)}`,
+  ),
   recordProblemPlayTarget(record) {
     return isBridgesPlayRecord(record)
       ? resolveRecordProblemPlayTarget(

@@ -39,6 +39,8 @@ type ZukanProblemSheetProps = {
   changes: ReadonlyMap<ProblemId, ZukanProblemChange> | undefined;
   /** 見せる変化が無ければ `undefined`。 */
   changeStages: ReadonlyMap<ProblemId, ZukanChangeStage> | undefined;
+  /** 押すと、そのレベルの解いた数が節目に届く問題。 */
+  milestoneProblemId: ProblemId | null;
   /** 台紙のスクロール領域。マスは `data-index` に番号の順の位置を持つ。 */
   scrollerRef: RefObject<HTMLDivElement | null>;
   /** スクロール領域の下端に重なって覆っている高さ（px）。覆われたところのマスも、その上へスクロールして見られるようにする。 */
@@ -207,6 +209,7 @@ function ZukanProblemSheetContent({
   selectedProblemId,
   changes,
   changeStages,
+  milestoneProblemId,
   scrollerRef,
   coveredBottomHeight,
   onWidthChange,
@@ -406,6 +409,7 @@ function ZukanProblemSheetContent({
             }
             change={changes?.get(problem.problemId) ?? null}
             changeStage={changeStages?.get(problem.problemId) ?? null}
+            reachesMilestone={problem.problemId === milestoneProblemId}
           />
         ))}
         {hasFilteredOut && (

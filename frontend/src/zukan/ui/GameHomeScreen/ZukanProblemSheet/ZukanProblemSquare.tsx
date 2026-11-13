@@ -31,6 +31,7 @@ type ZukanProblemSquareProps = {
   isFilteredOut: boolean;
   change: ZukanProblemChange | null;
   changeStage: ZukanChangeStage | null;
+  reachesMilestone: boolean;
 };
 
 /** 選んだピースの周りを空ける幅と、その外を囲む線の太さ。ホバーとフォーカスの線の太さ。どれもピースの1辺に対する比。 */
@@ -51,6 +52,7 @@ function ZukanProblemSquareContent({
   isFilteredOut,
   change,
   changeStage,
+  reachesMilestone,
 }: ZukanProblemSquareProps) {
   const status = getZukanProblemStatus(problem);
   const isPending = changeStage === "waiting" || changeStage === "stamping";
@@ -81,6 +83,9 @@ function ZukanProblemSquareContent({
       data-change-stage={changeStage ?? undefined}
       data-change-level={stamp?.level}
       data-change-raised={stamp?.isRaised ? "" : undefined}
+      data-change-milestone={
+        stamp !== null && reachesMilestone ? "" : undefined
+      }
       // 台紙は、当たらなかったマスを `data-filtered-out` で見分けて後ろへ並べる。
       data-filtered-out={isFilteredOut ? "" : undefined}
       tabIndex={isTabStop ? 0 : -1}

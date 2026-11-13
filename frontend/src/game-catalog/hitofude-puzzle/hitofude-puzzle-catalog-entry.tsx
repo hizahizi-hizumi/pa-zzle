@@ -4,9 +4,14 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import { RecordedHitofudePuzzleResult } from "@/game-catalog/hitofude-puzzle/RecordedHitofudePuzzleResult";
+import {
+  formatSquareBoardRange,
+  summarizeLevels,
+} from "@/game-catalog/level-summary";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/hitofude-puzzle/assets/pictogram.svg?raw";
 import pictogramShowcaseSvg from "@/games/hitofude-puzzle/assets/pictogram-showcase.svg?raw";
+import { hitofudePuzzleLevelCombinations } from "@/games/hitofude-puzzle/difficulty";
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import {
   hitofudePuzzlePlayRecordDefinition,
@@ -33,6 +38,11 @@ export const hitofudePuzzleCatalogEntry = {
   homePath: "/puzzles/hitofude-puzzle",
   playPath: "/puzzles/hitofude-puzzle/play/:difficulty",
   playRecordDisplay: hitofudePuzzlePlayRecordDisplay,
+  levelSummaries: summarizeLevels((difficulty) =>
+    formatSquareBoardRange(
+      hitofudePuzzleLevelCombinations[difficulty].boardSize,
+    ),
+  ),
   recordProblemPlayTarget(record) {
     return isHitofudePuzzlePlayRecord(record)
       ? resolveRecordProblemPlayTarget(

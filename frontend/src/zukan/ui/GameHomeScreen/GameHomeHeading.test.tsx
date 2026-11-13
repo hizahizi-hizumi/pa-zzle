@@ -18,8 +18,7 @@ describe("GameHomeHeading", () => {
           gameTitle="ナンプレ"
           pictogramSvg={pictogramSvg}
           pictogramShowcaseSvg={showcaseSvg}
-          shownSolvedCount={3}
-          problemCount={10}
+          shownMilestone={{ solvedCount: 3, previous: 0, next: 10 }}
           titleRef={createRef()}
           actionsRef={createRef()}
         >
@@ -42,10 +41,10 @@ describe("GameHomeHeading", () => {
       expect(mono).toBeNull();
     });
 
-    test("解いた問題の数を、全問の数と並べて読み上げること", () => {
-      const count = screen.getByText("10問中3問を解いた");
+    test("解いた問題の数を、全問の数ではなく次の節目までの残りと並べて示すこと", () => {
+      const count = screen.getByText("解いた問題 3問", { exact: false });
 
-      expect(count).toBeTruthy();
+      expect(count.textContent).toBe("解いた問題 3問 · あと7問");
     });
   });
 

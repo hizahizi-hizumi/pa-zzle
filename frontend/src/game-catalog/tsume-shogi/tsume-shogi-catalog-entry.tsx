@@ -33,6 +33,14 @@ export const tsumeShogiCatalogEntry = {
   homePath: "/puzzles/tsume-shogi",
   playPath: "/puzzles/tsume-shogi/play/:difficulty",
   playRecordDisplay: tsumeShogiPlayRecordDisplay,
+  // 難易度の定義に遊ぶ人が一目で分かる数が無いので、問題集の中身を短く言い表す。
+  levelSummaries: {
+    "1": "3手詰",
+    "2": "3・5手詰",
+    "3": "5手詰",
+    "4": "5手詰",
+    "5": "5手詰",
+  },
   recordProblemPlayTarget(record) {
     return isTsumeShogiPlayRecord(record)
       ? resolveRecordProblemPlayTarget(

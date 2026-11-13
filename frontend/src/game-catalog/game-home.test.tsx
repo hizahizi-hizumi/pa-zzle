@@ -230,14 +230,12 @@ describe("useGameHome", () => {
       expect(dialog.getAllByRole("checkbox")).toHaveLength(6);
     });
 
-    test("ゲーム名を見出しに出し、解いた問題の数を問題集の全問の数と並べて示すこと", () => {
+    test("ゲーム名を見出しに出し、解いた問題の数を次の節目までの残りと並べて示すこと", () => {
       const heading = screen.getByRole("heading", { level: 1 });
-      const solvedCount = screen.getByText(
-        `解いた問題 1 / ${nanpureProblemCount}`,
-      );
+      const solvedCount = screen.getByText(/^解いた問題 /);
 
       expect(heading.textContent).toBe("ナンプレ");
-      expect(solvedCount).toBeTruthy();
+      expect(solvedCount.textContent).toBe("解いた問題 1問 · あと9問");
     });
 
     test("最後にクリアまたは離脱したレベルのカードを選んで開くこと", () => {
@@ -556,10 +554,10 @@ describe("useGameHome", () => {
       router = renderAt("/puzzles/nanpure");
     });
 
-    test("解いた問題が無いことを全問の数と並べて示し、最も低いレベルを開くこと", () => {
-      const solvedCount = screen.getByText(
-        `解いた問題 0 / ${nanpureProblemCount}`,
-      );
+    test("解いた問題が無いことを示し、最も低いレベルを開くこと", () => {
+      const solvedCount = screen.getByText("解いた問題 0問", {
+        exact: false,
+      });
       const selectedTab = screen.getByRole("tab", { selected: true });
 
       expect(solvedCount).toBeTruthy();

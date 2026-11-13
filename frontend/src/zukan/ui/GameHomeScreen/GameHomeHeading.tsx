@@ -3,15 +3,15 @@ import type { ReactNode, Ref } from "react";
 import { GamePictogram } from "@/components/GamePictogram";
 import { HomeBackLink } from "@/components/HomeBackLink";
 import { SettingsButton } from "@/components/SettingsButton";
+import type { ZukanMilestoneProgress } from "@/zukan/zukan-milestone";
 
 type GameHomeHeadingProps = {
   gameId: string;
   gameTitle: string;
   pictogramSvg: string;
   pictogramShowcaseSvg: string | undefined;
-  /** 各レベルのカードに示す数の合計。 */
-  shownSolvedCount: number;
-  problemCount: number;
+  /** 各レベルのカードに示す解いた数の合計から求めた、ゲーム全体の節目。 */
+  shownMilestone: ZukanMilestoneProgress;
   titleRef: Ref<HTMLHeadingElement>;
   /** 層を開くメニューと設定のボタンの範囲。変化を見せている間に押されたときに、そのまま開くのに使う。 */
   actionsRef: Ref<HTMLDivElement>;
@@ -23,8 +23,7 @@ export function GameHomeHeading({
   gameTitle,
   pictogramSvg,
   pictogramShowcaseSvg,
-  shownSolvedCount,
-  problemCount,
+  shownMilestone: { solvedCount, next },
   titleRef,
   actionsRef,
   children,
@@ -52,13 +51,14 @@ export function GameHomeHeading({
         >
           {gameTitle}
         </h1>
-        <p className="text-meta whitespace-nowrap tabular-nums">
-          <span aria-hidden="true">
-            解いた問題 {shownSolvedCount} / {problemCount}
-          </span>
-          <span className="sr-only">
-            {problemCount}問中{shownSolvedCount}問を解いた
-          </span>
+        <p className="truncate text-meta tabular-nums">
+          解いた問題 {solvedCount}問
+          {next !== null && (
+            <span className="text-muted-foreground">
+              {" "}
+              · あと{next - solvedCount}問
+            </span>
+          )}
         </p>
       </div>
       {/* 設定のアイコンの線を台紙の右端にそろえるよう、ボタンの内側の余白の分だけ外へ出す。 */}

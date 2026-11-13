@@ -110,6 +110,7 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
       pictogramSvg: game.pictogramSvg,
       pictogramShowcaseSvg: game.pictogramShowcaseSvg,
       zukan,
+      levelSummaries: game.levelSummaries,
       changes,
       onLevelChangesShown: handleLevelChangesShown,
       initialSelectedProblemId: requestedProblemId,

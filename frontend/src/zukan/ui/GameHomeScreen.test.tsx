@@ -16,6 +16,7 @@ import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display
 import type { ProblemId } from "@/games/problem-id";
 import type { PlayRecord } from "@/records/play-record";
 import {
+  _private,
   GameHomeScreen,
   type GameHomeScreenProps,
   type GameHomeTutorialControl,
@@ -116,6 +117,14 @@ const zukan: GameZukan = {
   latestPlayedDifficulty: "3",
 };
 
+const levelSummaries = {
+  "1": "入門",
+  "2": "単独候補",
+  "3": "ロックド",
+  "4": "ペア",
+  "5": "X-Wing",
+} as const;
+
 const onPlayProblem = vi.fn();
 const pickRandomProblemId = vi.fn(
   (difficulty: DifficultyLevel): ProblemId | null =>
@@ -181,6 +190,7 @@ function createScreen(
         gameTitle="ナンプレ"
         pictogramSvg="<svg></svg>"
         zukan={shownZukan}
+        levelSummaries={levelSummaries}
         changes={changes}
         ground={<div data-testid="ground" />}
         initialSelectedProblemId={initialSelectedProblemId}
@@ -385,15 +395,12 @@ function readShownText(element: Element): string | null {
   return shown.textContent;
 }
 
+/** カードが読み上げる、そのレベルの解いた数。 */
 function readLevelCardCount(tab: Element): string | undefined {
-  const [, problemCount, solvedCount] =
-    readShownText(tab)?.match(/(\d+)問中(\d+)問を解いた/) ?? [];
-  return problemCount === undefined
-    ? undefined
-    : `${solvedCount} / ${problemCount}`;
+  return readShownText(tab)?.match(/、全?(\d+)問を解いた/)?.[1];
 }
 
-/** カードに見せている「解いた数/全問の数」。 */
+/** カードに見せている、次の節目までの残り。 */
 function readShownLevelCardCount(tab: Element): string | null | undefined {
   return tab.querySelector(
     '[aria-hidden="true"]:not([data-level-mosaic]):not([data-unseen-change-mark])',
@@ -493,34 +500,40 @@ describe("GameHomeScreen", () => {
       renderScreen();
     });
 
-    test("ゲーム名の見出しと、解いた問題の数を全問の数と並べて示すこと", () => {
+    test("ゲーム名の見出しと、解いた問題の数を、全問の数ではなくゲーム全体の次の節目までの残りと並べて示すこと", () => {
       const heading = screen.getByRole("heading", { level: 1 });
-      const solvedCount = screen.getByText("解いた問題 2 / 1200");
+      const solvedCount = screen.getByText(/^解いた問題 /);
 
       expect(heading.textContent).toBe("ナンプレ");
-      expect(solvedCount).toBeTruthy();
+      expect(solvedCount.textContent).toBe("解いた問題 2問 · あと8問");
     });
 
-    test("レベルごとのカードを並べ、それぞれにそのレベルの解いた問題の数を添えること", () => {
+    test("レベルごとのカードを並べ、それぞれにそのレベルの中身の一言と、解いた問題の数と次の節目までの残りを添えること", () => {
       const tabNames = within(screen.getByRole("tablist", { name: "レベル" }))
         .getAllByRole("tab")
         .map(readShownText);
 
       expect(tabNames).toEqual([
-        "レベル 1、3問中0問を解いた",
-        "レベル 2、1問中0問を解いた",
-        "レベル 3、4問中2問を解いた",
-        "レベル 4、1問中0問を解いた",
-        "レベル 5、1問中0問を解いた",
+        "レベル 1、入門、0問を解いた。3問まであと3問",
+        "レベル 2、単独候補、0問を解いた。1問まであと1問",
+        "レベル 3、ロックド、2問を解いた。4問まであと2問",
+        "レベル 4、ペア、0問を解いた。1問まであと1問",
+        "レベル 5、X-Wing、0問を解いた。1問まであと1問",
       ]);
     });
 
-    test("カードに、解いた数と全問の数を間を空けずに / でつないで見せること", () => {
+    test("カードに、全問の数ではなく次の節目までの残りの数を見せること", () => {
       const counts = within(screen.getByRole("tablist", { name: "レベル" }))
         .getAllByRole("tab")
         .map(readShownLevelCardCount);
 
-      expect(counts).toEqual(["0/3", "0/1", "2/4", "0/1", "0/1"]);
+      expect(counts).toEqual([
+        "あと3問",
+        "あと1問",
+        "あと2問",
+        "あと1問",
+        "あと1問",
+      ]);
     });
 
     test("カードごとに、そのレベルの全問を台紙と同じ列の数で1問1マスに並べ、状態の色で塗った縮図を描くこと", () => {
@@ -1115,7 +1128,9 @@ describe("GameHomeScreen", () => {
     test("クリアしたことがあれば、ランダムに遊ぶを押すとチュートリアルを開かずにプレイへ入ること", () => {
       fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
 
-      expect(screen.queryByRole("dialog", { name: "チュートリアル" })).toBeNull();
+      expect(
+        screen.queryByRole("dialog", { name: "チュートリアル" }),
+      ).toBeNull();
     });
 
     test("チュートリアルを最初は開かないこと", () => {
@@ -1416,7 +1431,9 @@ describe("GameHomeScreen", () => {
         const panelCount = within(panel).getByText(/^該当/).textContent;
         const menuButton = getMenuButton();
 
-        expect(readShownText(openTab)).toBe("レベル 3、4問中2問を解いた");
+        expect(readShownText(openTab)).toBe(
+          "レベル 3、ロックド、2問を解いた。4問まであと2問",
+        );
         expect(getShownMatchedCount()).toBe("該当 2問");
         expect(panelCount).toBe("該当 2問");
         expect(menuButton.getAttribute("aria-label")).toBe(
@@ -1796,18 +1813,15 @@ describe("GameHomeScreen", () => {
     }
 
     function sumTabSolvedCounts(): number {
-      return getTabCounts().reduce(
-        (total, count) => total + Number(count?.split(" / ")[0]),
-        0,
-      );
+      return getTabCounts().reduce((total, count) => total + Number(count), 0);
     }
 
     function getSolvedCountText(): string | null {
-      return screen.getByText(/^解いた問題 \d+ \/ 1200$/).textContent;
+      return screen.getByText(/^解いた問題 \d+問/).textContent;
     }
 
     function getShownSolvedCount(): number {
-      return Number(getSolvedCountText()?.match(/(\d+) \//)?.[1]);
+      return Number(getSolvedCountText()?.match(/(\d+)問/)?.[1]);
     }
 
     /** 押していく途中の姿も描かれるよう、時刻を少しずつ進める。Animation の終わりもこの時刻で来る。 */
@@ -1993,14 +2007,8 @@ describe("GameHomeScreen", () => {
             "挑戦中 1問",
             "未挑戦 2問",
           ]);
-          expect(tabCounts).toEqual([
-            "0 / 3",
-            "0 / 1",
-            "1 / 4",
-            "0 / 1",
-            "0 / 1",
-          ]);
-          expect(solvedCount).toBe("解いた問題 1 / 1200");
+          expect(tabCounts).toEqual(["0", "0", "1", "0", "0"]);
+          expect(solvedCount).toBe("解いた問題 1問 · あと9問");
         });
 
         test("段階が上がったマスにだけ、押す姿に前の段階の色を重ねておくこと", () => {
@@ -2059,7 +2067,7 @@ describe("GameHomeScreen", () => {
             "挑戦中 1問",
             "未挑戦 2問",
           ]);
-          expect(solvedCount).toBe("解いた問題 1 / 1200");
+          expect(solvedCount).toBe("解いた問題 1問 · あと9問");
         });
       });
 
@@ -2115,13 +2123,7 @@ describe("GameHomeScreen", () => {
             "挑戦中 1問",
             "未挑戦 1問",
           ]);
-          expect(tabCounts).toEqual([
-            "0 / 3",
-            "0 / 1",
-            "2 / 4",
-            "0 / 1",
-            "0 / 1",
-          ]);
+          expect(tabCounts).toEqual(["0", "0", "2", "0", "0"]);
           expect(markedTabs).toEqual(["レベル 1"]);
         });
 
@@ -2162,13 +2164,7 @@ describe("GameHomeScreen", () => {
           const tabCounts = getTabCounts();
 
           expect(stages).toEqual([null, null, null, null]);
-          expect(tabCounts).toEqual([
-            "0 / 3",
-            "0 / 1",
-            "2 / 4",
-            "0 / 1",
-            "0 / 1",
-          ]);
+          expect(tabCounts).toEqual(["0", "0", "2", "0", "0"]);
           expect(onLevelChangesShown.mock.calls).toEqual([["3"]]);
         });
 
@@ -2357,13 +2353,7 @@ describe("GameHomeScreen", () => {
             "挑戦中 1問",
             "未挑戦 2問",
           ]);
-          expect(tabCounts).toEqual([
-            "0 / 3",
-            "0 / 1",
-            "2 / 4",
-            "0 / 1",
-            "0 / 1",
-          ]);
+          expect(tabCounts).toEqual(["0", "0", "2", "0", "0"]);
           expect(solvedCount).toBe(sumTabSolvedCounts());
         });
 
@@ -2382,13 +2372,7 @@ describe("GameHomeScreen", () => {
             "挑戦中 0問",
             "未挑戦 2問",
           ]);
-          expect(tabCounts).toEqual([
-            "1 / 3",
-            "0 / 1",
-            "2 / 4",
-            "0 / 1",
-            "0 / 1",
-          ]);
+          expect(tabCounts).toEqual(["1", "0", "2", "0", "0"]);
           expect(markedTabs).toEqual([]);
           expect(getShownSolvedCount()).toBe(3);
           expect(onLevelChangesShown.mock.calls).toEqual([["3"], ["1"]]);
@@ -2505,11 +2489,11 @@ describe("GameHomeScreen", () => {
           within(tabList).getAllByRole("tab")[1] as HTMLElement,
         );
         const solvedCountText =
-          within(heading).getByText(/^解いた問題 \d+ \/ 1200$/).textContent;
+          within(heading).getByText(/^解いた問題 \d+問/).textContent;
         return {
           untouched: Number(untouchedName?.match(/\d+/)?.[0]),
-          solved: Number(levelTwoCount?.split(" / ")[0]),
-          total: Number(solvedCountText?.match(/(\d+) \//)?.[1]),
+          solved: Number(levelTwoCount),
+          total: Number(solvedCountText?.match(/(\d+)問/)?.[1]),
         };
       }
 
@@ -2591,14 +2575,8 @@ describe("GameHomeScreen", () => {
         const solvedCount = getSolvedCountText();
         const tabCounts = getTabCounts();
 
-        expect(solvedCount).toBe("解いた問題 3 / 1200");
-        expect(tabCounts).toEqual([
-          "1 / 3",
-          "0 / 1",
-          "2 / 4",
-          "0 / 1",
-          "0 / 1",
-        ]);
+        expect(solvedCount).toBe("解いた問題 3問 · あと7問");
+        expect(tabCounts).toEqual(["1", "0", "2", "0", "0"]);
       });
 
       test("印を載せた台紙を見せたところで、開いているレベルの変化を見せ終えたと知らせること", () => {
@@ -2831,5 +2809,29 @@ describe("GameHomeScreen", () => {
       expect(selectedTab.textContent).toMatch(/^レベル 3/);
       expect(detail).toBeNull();
     });
+  });
+});
+
+describe("findMilestoneProblemId", () => {
+  const { findMilestoneProblemId } = _private;
+  const problems = createUntouchedProblems("1", 1, 12);
+  const newlySolved = {
+    kind: "newly-solved",
+    previousStatus: "untouched",
+  } as const;
+  const changes = new Map(
+    problems.slice(6, 11).map(({ problemId }) => [problemId, newlySolved]),
+  );
+
+  test("押す順に新しく解いた問題を数え、解いた数が最初に節目に届く問題を返すこと", () => {
+    const problemId = findMilestoneProblemId(problems, changes, 11);
+
+    expect(problemId).toBe(problems[9]?.problemId);
+  });
+
+  test("節目に届かなければ null を返すこと", () => {
+    const problemId = findMilestoneProblemId(problems, changes, 9);
+
+    expect(problemId).toBeNull();
   });
 });

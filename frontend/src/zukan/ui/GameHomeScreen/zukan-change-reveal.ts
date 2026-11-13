@@ -32,6 +32,8 @@ export type ZukanStamp = {
   level: GameResultLevel;
   /** 前回解いていて、評価段階が上がったか。 */
   isRaised: boolean;
+  /** 押すと、そのレベルの解いた数が節目に届くか。 */
+  reachesMilestone?: true;
 };
 
 export function getZukanStamp(
@@ -54,15 +56,25 @@ export function readZukanStamp(square: Element): ZukanStamp | null {
     : {
         level: solvedLevel,
         isRaised: square.hasAttribute("data-change-raised"),
+        ...(square.hasAttribute("data-change-milestone")
+          ? { reachesMilestone: true }
+          : {}),
       };
 }
 
 /**
- * perfect、段階の上がり、great、good、clear の順に重い。
+ * 節目に届くマス、perfect、段階の上がり、great、good、clear の順に重い。
  * まとめて押す回で音を代表して鳴らすマスを選ぶのに使う。
  */
-export function getZukanStampWeight({ level, isRaised }: ZukanStamp): number {
+export function getZukanStampWeight({
+  level,
+  isRaised,
+  reachesMilestone,
+}: ZukanStamp): number {
   const levelWeight = gameResultLevelsAscending.indexOf(level);
+  if (reachesMilestone) {
+    return gameResultLevelsAscending.length + 2;
+  }
   return level === "perfect"
     ? gameResultLevelsAscending.length + 1
     : isRaised

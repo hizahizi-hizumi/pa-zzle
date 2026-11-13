@@ -1,5 +1,5 @@
 /**
- * 押すたびの音は短く小さくし、段階が上がったマスと perfect に至ったマスだけを強くする。
+ * 押すたびの音は短く小さくし、段階が上がったマスと perfect に至ったマスだけを強くする。節目に届くマスは、そのマスの音に報酬の音を重ねる。
  * 図鑑の画面はゲームの音を使わないので、アプリが持つ選ぶ音・始める音・結果の報酬の音を、高さと大きさを変えて使う。
  */
 
@@ -38,6 +38,9 @@ const RAISED_SECOND_NOTE_DELAY_MS = 80;
 /** perfect の報酬の音は、結果画面で受け取る音より短く明るく、小さく鳴らす。 */
 const PERFECT_REWARD_RATE = 1.25;
 const PERFECT_REWARD_VOLUME = 0.45;
+/** 節目に届いたときの報酬の音は、perfect の音より一段大きく、少し遅らせてマスの音の後に重ねる。 */
+const MILESTONE_REWARD_VOLUME = 0.6;
+const MILESTONE_REWARD_DELAY_MS = 60;
 
 export type ZukanStampSoundCue = {
   sound: SoundEffect;
@@ -60,7 +63,22 @@ function cue(
   return { sound, delayMs, playbackRate, volume, varies };
 }
 
-export function listZukanStampSoundCues({
+export function listZukanStampSoundCues(
+  stamp: ZukanStamp,
+): ZukanStampSoundCue[] {
+  const cues = listLevelSoundCues(stamp);
+  return stamp.reachesMilestone
+    ? [
+        ...cues.filter(({ sound }) => sound !== perfectRewardSound),
+        cue(perfectRewardSound, {
+          delayMs: MILESTONE_REWARD_DELAY_MS,
+          volume: MILESTONE_REWARD_VOLUME,
+        }),
+      ]
+    : cues;
+}
+
+function listLevelSoundCues({
   level,
   isRaised,
 }: ZukanStamp): ZukanStampSoundCue[] {

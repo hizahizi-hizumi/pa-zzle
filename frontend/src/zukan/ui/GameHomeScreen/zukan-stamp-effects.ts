@@ -113,6 +113,13 @@ const OTHER_EFFECTS = {
   flash: { durationMs: 160, scale: 1.6 },
   countPopMs: 240,
 } as const;
+/** 節目に届いたマスに、評価段階の効果へ重ねる効果。perfect より大きく広げ、開いているレベルのカードを弾ませる。 */
+const MILESTONE_EFFECTS = {
+  shockwave: { scale: 8, widthPx: 3 },
+  sparkles: { count: 16, distancePx: 64 },
+  shake: { distancePx: 4, durationMs: 240 },
+  cardPop: { scale: 1.12, durationMs: 420 },
+} as const;
 /** 台紙の揺れと周りのマスの押し退けの、行って戻る形。 */
 const SHAKE_OFFSETS = { push: 0.2, recoil: 0.5 } as const;
 const NUDGE_PUSH_OFFSET = 0.25;
@@ -549,6 +556,27 @@ function popStatusCount(
   );
 }
 
+function popOpenLevelCard(
+  motion: StampMotion,
+  { scale, durationMs }: { scale: number; durationMs: number },
+) {
+  const card = document.querySelector(
+    '[aria-label="レベル"] [role="tab"][aria-selected="true"]',
+  );
+  if (card === null) {
+    return;
+  }
+  motion.animate(
+    card,
+    [
+      { transform: "scale(1)" },
+      { transform: `scale(${scale})`, offset: COUNT_POP_PEAK_OFFSET },
+      { transform: "scale(1)" },
+    ],
+    { duration: durationMs, easing: MOTION_EASING.celebrate },
+  );
+}
+
 export type ZukanStampTarget = {
   square: Element;
   parts: ZukanStampParts;
@@ -574,6 +602,7 @@ function canAnimate({ face, shadow, previous }: ZukanStampParts): boolean {
 /**
  * 変化したマスを押す。評価段階が高いほど大きく浮かせてから縮めてマスに着かせ、着いたら少し膨らんで戻しながら、段階に応じた衝撃波・光・粒を広げ、状態ごとの数を弾ませて音を鳴らす。
  * 段階が上がったマスは前の色で持ち上げ、落ちながら今の色へ塗り替える。perfect は浮いている間に光を帯び、着いたときに台紙を揺らして周りのマスを押し退ける。
+ * 節目に届くマスは、着いたときに大きな衝撃波と金の粒を足し、台紙を揺らして、開いているレベルのカードを弾ませる。
  * 戻り値は動きを取り消して、重ねて描いた効果を片付ける関数。
  */
 export function playZukanStamp(
@@ -691,6 +720,20 @@ export function playZukanStamp(
       });
       shakeSheet(motion, square, FINEST_EFFECTS.shake);
       nudgeNeighbors(motion, square, FINEST_EFFECTS.nudge);
+    }
+    if (stamp.reachesMilestone) {
+      shockwave(motion, at, piecePath, color, {
+        ...MILESTONE_EFFECTS.shockwave,
+        durationMs: impactTailMs,
+      });
+      burstParticles(motion, at, FINEST_SPARKLE_COLOR, {
+        ...MILESTONE_EFFECTS.sparkles,
+        durationMs: impactTailMs,
+      });
+      if (!isFinest) {
+        shakeSheet(motion, square, MILESTONE_EFFECTS.shake);
+      }
+      popOpenLevelCard(motion, MILESTONE_EFFECTS.cardPop);
     }
     popStatusCount(motion, stamp.level, {
       scale: tier.countPopScale,

@@ -3,10 +3,12 @@ import {
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
+import { summarizeLevels } from "@/game-catalog/level-summary";
 import { RecordedSlidePuzzleResult } from "@/game-catalog/slide-puzzle/RecordedSlidePuzzleResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
 import pictogramShowcaseSvg from "@/games/slide-puzzle/assets/pictogram-showcase.svg?raw";
+import { slidePuzzleDifficultyCriteria } from "@/games/slide-puzzle/difficulty";
 import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import {
   isSlidePuzzlePlayRecord,
@@ -33,6 +35,10 @@ export const slidePuzzleCatalogEntry = {
   homePath: "/puzzles/slide-puzzle",
   playPath: "/puzzles/slide-puzzle/play/:difficulty",
   playRecordDisplay: slidePuzzlePlayRecordDisplay,
+  levelSummaries: summarizeLevels((difficulty) => {
+    const { boardSize } = slidePuzzleDifficultyCriteria[difficulty];
+    return `${boardSize}×${boardSize}`;
+  }),
   recordProblemPlayTarget(record) {
     return isSlidePuzzlePlayRecord(record)
       ? resolveRecordProblemPlayTarget(

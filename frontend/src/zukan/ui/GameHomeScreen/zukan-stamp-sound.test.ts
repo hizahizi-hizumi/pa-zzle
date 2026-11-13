@@ -96,6 +96,29 @@ describe("listZukanStampSoundCues", () => {
       expect(reward?.volume).toBeLessThan(1);
     });
   });
+
+  describe("節目に届いた場合", () => {
+    const stamp: ZukanStamp = {
+      level: "clear",
+      isRaised: false,
+      reachesMilestone: true,
+    };
+
+    test("そのマスの音の後に、結果の報酬の perfect の音を perfect のマスより大きく重ねて鳴らすこと", () => {
+      const cues = listZukanStampSoundCues(stamp);
+      const perfectReward = listZukanStampSoundCues({
+        level: "perfect",
+        isRaised: false,
+      }).find(({ sound }) => sound.url === resultRewardPerfectSoundUrl);
+
+      expect(cues.map(({ sound }) => sound.url)).toEqual([
+        gameSelectSoundUrl,
+        resultRewardPerfectSoundUrl,
+      ]);
+      expect(cues[1]?.delayMs).toBeGreaterThan(0);
+      expect(cues[1]?.volume).toBeGreaterThan(perfectReward?.volume ?? 1);
+    });
+  });
 });
 
 describe("playZukanStampSound", () => {

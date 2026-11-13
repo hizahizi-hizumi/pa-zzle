@@ -96,6 +96,10 @@ import type {
   ZukanChanges,
   ZukanProblemChange,
 } from "@/zukan/zukan-last-viewed";
+import {
+  findZukanMilestoneProgress,
+  isZukanMilestone,
+} from "@/zukan/zukan-milestone";
 
 export type ZukanFeatureAxis = ZukanFeatureAxisSource & {
   display: ProblemFeatureAxisDisplay;
@@ -109,6 +113,8 @@ export type GameHomeScreenProps = {
   pictogramShowcaseSvg?: string;
   ground: ReactNode;
   zukan: GameZukan;
+  /** レベルのカードに添える、そのレベルの中身の一言。 */
+  levelSummaries: Readonly<Record<DifficultyLevel, string>>;
   changes: ZukanChanges;
   /**
    * レベルの変化を見せ終えたとき。最後まで押したとき・飛ばしたとき・押している途中で別のレベルへ切り替えたときと、
@@ -331,6 +337,28 @@ function listChangeStages(
   );
 }
 
+/**
+ * 押していくと、そのレベルの解いた数が節目に届く問題。押す順（番号の順）に新しく解いた問題を数え、前回の解いた数に足して最初に節目に届くもの。
+ * 1回で節目を2つ以上越えるときも、最初に届いた節目の1問だけを強く押す。
+ */
+function findMilestoneProblemId(
+  problems: readonly ZukanProblem[],
+  changes: ReadonlyMap<ProblemId, ZukanProblemChange>,
+  solvedCount: number,
+): ProblemId | null {
+  let shownSolvedCount = solvedCount - countZukanNewlySolved(changes);
+  for (const { problemId } of problems) {
+    if (changes.get(problemId)?.kind !== "newly-solved") {
+      continue;
+    }
+    shownSolvedCount += 1;
+    if (isZukanMilestone(shownSolvedCount, problems.length)) {
+      return problemId;
+    }
+  }
+  return null;
+}
+
 /** まだマスに着いていない変化。今の数から引いて、前回の数から数え上げて見せるのに使う。 */
 function listPendingChanges(
   changes: ReadonlyMap<ProblemId, ZukanProblemChange> | undefined,
@@ -354,6 +382,7 @@ export function GameHomeScreen({
   pictogramSvg,
   pictogramShowcaseSvg,
   zukan,
+  levelSummaries,
   changes,
   ground,
   initialSelectedProblemId,
@@ -565,8 +594,11 @@ export function GameHomeScreen({
         : 0;
     return {
       difficulty,
-      problemCount: problems.length,
-      shownSolvedCount: solvedCount - unshownNewlySolved,
+      summary: levelSummaries[difficulty],
+      shownMilestone: findZukanMilestoneProgress(
+        solvedCount - unshownNewlySolved,
+        problems.length,
+      ),
       shownStatuses: isOpen
         ? openShownStatuses
         : (restingLevelStatuses.get(difficulty) ?? noStatuses),
@@ -575,8 +607,19 @@ export function GameHomeScreen({
     };
   });
   const shownSolvedCount = levelCards.reduce(
-    (total, level) => total + level.shownSolvedCount,
+    (total, level) => total + level.shownMilestone.solvedCount,
     0,
+  );
+  const milestoneProblemId = useMemo(
+    () =>
+      openChanges === undefined
+        ? null
+        : findMilestoneProblemId(
+            openProblems,
+            openChanges,
+            openSection.solvedCount,
+          ),
+    [openProblems, openChanges, openSection.solvedCount],
   );
   const openStatusCounts = countZukanProblemsByStatus(openProblems, (problem) =>
     getZukanShownProblemStatus(problem, pendingChanges.get(problem.problemId)),
@@ -822,8 +865,10 @@ export function GameHomeScreen({
           gameTitle={gameTitle}
           pictogramSvg={pictogramSvg}
           pictogramShowcaseSvg={pictogramShowcaseSvg}
-          shownSolvedCount={shownSolvedCount}
-          problemCount={zukan.problemCount}
+          shownMilestone={findZukanMilestoneProgress(
+            shownSolvedCount,
+            zukan.problemCount,
+          )}
           titleRef={titleRef}
           actionsRef={headerActionsRef}
         >
@@ -913,6 +958,7 @@ export function GameHomeScreen({
                 selectedProblemId={selected?.problem.problemId ?? null}
                 changes={openChanges}
                 changeStages={changeStages}
+                milestoneProblemId={milestoneProblemId}
                 scrollerRef={scrollerRef}
                 coveredBottomHeight={sheetCoveredBottomHeight}
                 onWidthChange={setSheetWidthPx}
@@ -945,3 +991,5 @@ export function GameHomeScreen({
     </div>
   );
 }
+
+export const _private = { findMilestoneProblemId };

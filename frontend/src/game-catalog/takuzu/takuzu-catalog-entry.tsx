@@ -33,6 +33,14 @@ export const takuzuCatalogEntry = {
   homePath: "/puzzles/takuzu",
   playPath: "/puzzles/takuzu/play/:difficulty",
   playRecordDisplay: takuzuPlayRecordDisplay,
+  // 難易度の定義に遊ぶ人が一目で分かる数が無いので、問題集の中身を短く言い表す。
+  levelSummaries: {
+    "1": "3連禁止",
+    "2": "個数の一致",
+    "3": "残り1つ",
+    "4": "同じ列禁止",
+    "5": "複合読み",
+  },
   recordProblemPlayTarget(record) {
     return isTakuzuPlayRecord(record)
       ? resolveRecordProblemPlayTarget(

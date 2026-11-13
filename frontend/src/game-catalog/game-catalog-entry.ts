@@ -3,6 +3,7 @@ import type {
   ProblemFeature,
   ProblemFeatureAxisDisplay,
 } from "@/components/problem-features";
+import type { LevelSummaries } from "@/game-catalog/level-summary";
 import type { DifficultyLevel } from "@/games/difficulty";
 import type { ResultRecordFeedback } from "@/games/play";
 import type {
@@ -86,6 +87,7 @@ export type GameCatalogEntry = {
   homePath: GameHomePath;
   playPath: GamePlayPath;
   playRecordDisplay: PlayRecordDisplayDefinition;
+  levelSummaries: LevelSummaries;
   /** 遊び直せない記録には `null` を返す。 */
   recordProblemPlayTarget: (
     record: PlayRecord,

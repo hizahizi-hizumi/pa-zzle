@@ -33,6 +33,14 @@ export const iceFloorMazeCatalogEntry = {
   homePath: "/puzzles/ice-floor-maze",
   playPath: "/puzzles/ice-floor-maze/play/:difficulty",
   playRecordDisplay: iceFloorMazePlayRecordDisplay,
+  // 難易度の定義に遊ぶ人が一目で分かる数が無いので、問題集の中身を短く言い表す。
+  levelSummaries: {
+    "1": "7〜10手",
+    "2": "10〜16手",
+    "3": "地形2〜3",
+    "4": "地形3〜6",
+    "5": "地形4〜8",
+  },
   recordProblemPlayTarget(record) {
     return isIceFloorMazePlayRecord(record)
       ? resolveRecordProblemPlayTarget(
