@@ -54,20 +54,14 @@ import {
 } from "@/games/reflection/session/session";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
-/** 表示中の光路。今の盤面で、外周の `entry` から入れた光がどう進むか。 */
 export type ReflectionLaserView = {
   entry: ReflectionEntry;
   trace: ReflectionLaserTrace;
 };
 
-/**
- * ピースを盤面に置いた操作の知らせ。効果音を鳴らすため、操作ごとに増える `id` を付ける。
- * 手持ちのピースを置く、盤面のピースを別のマスへ移す・入れ替える・別の種類で置き換えるときに知らせる。
- * 選択とその解除、手持ちへ戻す、光路の表示、盤面を戻す・リセットでは知らせない。
- */
+/** 効果音を鳴らすため、操作ごとに増える `id` を付ける。 */
 export type ReflectionOperation = { id: number; type: "piece-placed" };
 
-/** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type ReflectionResult = ReflectionSessionResult & {
   workload: ReflectionSolveWorkload;
   speedRule: SpeedScoreRule;
@@ -124,12 +118,12 @@ function countPlacedPieces(board: ReflectionBoard): number {
   return board.cells.filter((cell) => cell !== null).length;
 }
 
-/** 操作の前後の session から、ピースを盤面に置いた操作なら知らせる。盤面のピースが減った操作は手持ちへ戻す操作なので知らせない。 */
 function createOperation(
   id: number,
   previous: ReflectionSession,
   next: ReflectionSession,
 ): ReflectionOperation | null {
+  // 盤面のピースが減った操作は手持ちへ戻す操作なので知らせない。
   if (
     next.puzzleState === previous.puzzleState ||
     countPlacedPieces(next.puzzleState) <
@@ -150,7 +144,6 @@ function selectProblem(
   ).problem;
 }
 
-/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createReflectionResult(
   sessionResult: ReflectionSessionResult,
   workload: ReflectionSolveWorkload,
@@ -168,12 +161,6 @@ export function createReflectionResult(
   };
 }
 
-/**
- * 難易度のプレイを始める。`initialProblem` を渡すと、最初の1問だけその問題を出す。
- * 渡さなければ、最初の1問は `avoidedProblemId` の問題を避けて選ぶ。
- * `selectClue` は外周ヒントの光路を表示し、盤面が揃うと `progress` が `clearing` になる。
- * クリアすると `result` に評価を返す。
- */
 export function useReflectionPlay(
   difficulty: ReflectionDifficulty,
   initialProblem?: ReflectionPooledProblem,

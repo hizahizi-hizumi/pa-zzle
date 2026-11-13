@@ -36,7 +36,6 @@ type ReflectionCueLayerProps = {
   place: ReflectionCuePlace;
 };
 
-/** 1か所に重ねる、チュートリアルの印・応え・覆いから抜く所。見せ方は共通の部品に任せる。 */
 export function ReflectionCueLayer({ cues, place }: ReflectionCueLayerProps) {
   return cues.map(function renderCue(cue) {
     if (cue.kind === "spotlight") {

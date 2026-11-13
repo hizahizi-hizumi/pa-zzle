@@ -53,7 +53,6 @@ type ReflectionPlayProps = GamePlayScreenProps<
     onClearSelection: () => void;
   };
 
-/** 数字キーの `1` から順に、ストックに並ぶ種類を選ぶ。 */
 function getStockKeyIndex(key: string): number | null {
   return /^[1-9]$/.test(key) ? Number(key) - 1 : null;
 }

@@ -37,9 +37,6 @@ const pieceGroups: readonly {
 
 const leftMiddle = { side: "left", index: 1 } as const;
 
-/**
- * ルールと操作を、盤面と同じ形・色の小さな図と短い一文で示す。
- */
 export function ReflectionHowToPlayDialog({
   open,
   onClose,

@@ -23,21 +23,16 @@ type ReflectionStockProps = {
   selectedCell: ReflectionPiece | null;
   disabled: boolean;
   onSelectStockPiece: (piece: ReflectionPiece) => void;
-  /** 種類ごとのボタンに重ねる、チュートリアルの印と覆いから抜く所。 */
   cues?: readonly ReflectionCue[];
 };
 
-/** 問題に含まれる種類だけを、決まった順で並べる。キーボードの数字キーもこの順に対応する。 */
+/** キーボードの数字キーもこの順に対応する。 */
 export function listReflectionStockPieces(
   inventory: ReflectionInventory,
 ): ReflectionPiece[] {
   return reflectionPieces.filter((piece) => inventory[piece] > 0);
 }
 
-/**
- * 手持ちのピース。種類ごとのボタンを枠も影も付けずに平らに並べ、選んでいる種類だけを選択の地と枠で示す。
- * 盤面のピースを選んでいる間は、そのピースと同じ種類の下に薄い線を引いて戻し先を示す（押すと戻す。別の種類を押すと置き換える）。
- */
 export function ReflectionStock({
   inventory,
   stock,
@@ -48,7 +43,6 @@ export function ReflectionStock({
   cues = [],
 }: ReflectionStockProps) {
   const returning = !disabled && selection?.type === "cell";
-  // 盤面のピースを選んでいる間、そのピースと同じ種類（押すと戻す）と、残りのある種類（押すと置き換える）を押せる。
   const selectedCellPiece = returning ? selectedCell : null;
   const pieces = listReflectionStockPieces(inventory);
   const { getTapHandlers } = useTouchTap();
@@ -93,7 +87,6 @@ export function ReflectionStock({
                 className={cn(
                   "pointer-events-none absolute inset-x-[25%] bottom-0 h-[3px]",
                   reflectionPieceBarClassNames[piece],
-                  // 戻し先は選択の線を薄くした印にする。押すと盤面で選んだピースがこの種類へ戻る。
                   !selected && "opacity-35",
                 )}
               />

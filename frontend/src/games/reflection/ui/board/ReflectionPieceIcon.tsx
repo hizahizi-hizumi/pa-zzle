@@ -10,7 +10,6 @@ type ReflectionPieceIconSize = "cell" | "stock" | "figure";
 type ReflectionPieceIconProps = {
   piece: ReflectionPiece;
   size: ReflectionPieceIconSize;
-  /** 置いた直後に、その場で小さく現れさせる。 */
   appearing?: boolean;
 };
 
@@ -27,10 +26,7 @@ export const REFLECTION_PIECE_STROKE_WIDTH = 10;
 /** 光路の線の上に描くとき、ピースの周りに背景色の縁を取って形を切り離す幅。 */
 export const REFLECTION_PIECE_HALO_WIDTH = 8;
 
-/**
- * ピースの形。7×7 を 320px 幅で表示すると1マスが約34pxになるため、線と面だけの単純な形で光学機能を表す。
- * 斜め鏡は向きの違う1本線、両面鏡は光を通す向きに沿う2本線、反射体は四角の輪郭、ブラックホールは塗りの円。
- */
+/** 7×7 を 320px 幅で表示すると1マスが約34pxになるため、線と面だけの単純な形で光学機能を表す。 */
 export function renderReflectionPieceShape(
   piece: ReflectionPiece,
   extra = 0,

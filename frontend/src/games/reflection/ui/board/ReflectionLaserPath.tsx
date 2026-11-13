@@ -22,7 +22,6 @@ const LASER_WIDTH = 0.075;
 /** 入口の印（光路に直交する短い太線）の半分の長さと太さ。 */
 const ENTRY_MARK_HALF_LENGTH = 0.2;
 const ENTRY_MARK_WIDTH = 0.1;
-/** 出口の矢印。 */
 const ARROW_LENGTH = 0.17;
 const ARROW_HALF_WIDTH = 0.11;
 /**
@@ -50,7 +49,6 @@ function getArrowPoints(
   ]);
 }
 
-/** 入口の印。外側の縁が盤面の縁に沿う。 */
 function getEntryMarkPoints(
   center: ReflectionPoint,
   { dx, dy }: { dx: number; dy: number },

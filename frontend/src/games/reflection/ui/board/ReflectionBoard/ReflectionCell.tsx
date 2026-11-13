@@ -11,10 +11,7 @@ import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPiece
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { reflectionPieceToneClassNames } from "@/games/reflection/ui/reflection-tone";
 
-/**
- * 選んだピースのマスの四隅に置く鉤形の印。ピースの色（`currentColor`）で描き、マスの地や枠は変えない。
- * 線幅は2px、各辺の長さはマスの28%。
- */
+/** 選んだピースのマスの四隅に置く鉤形の印。ピースの色（`currentColor`）で描き、マスの地や枠は変えない。 */
 const SELECTION_CORNERS =
   "linear-gradient(currentColor,currentColor) top left/28% 2px no-repeat,linear-gradient(currentColor,currentColor) top left/2px 28% no-repeat,linear-gradient(currentColor,currentColor) top right/28% 2px no-repeat,linear-gradient(currentColor,currentColor) top right/2px 28% no-repeat,linear-gradient(currentColor,currentColor) bottom left/28% 2px no-repeat,linear-gradient(currentColor,currentColor) bottom left/2px 28% no-repeat,linear-gradient(currentColor,currentColor) bottom right/28% 2px no-repeat,linear-gradient(currentColor,currentColor) bottom right/2px 28% no-repeat";
 
@@ -32,7 +29,6 @@ type ReflectionCellProps = {
   selectHandlers: TapHandlers;
   onFocus: (key: string) => void;
   focusKey: string;
-  /** このマスに重ねる、チュートリアルの印・応え・覆いから抜く所。 */
   cues?: readonly ReflectionCue[];
 };
 

@@ -19,11 +19,6 @@ import {
 import { isReflectionSolved } from "@/games/reflection/puzzle/rules";
 import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
-/**
- * 選んでいる対象。
- * - `stock`: 手持ちのピースの種類。空きマスを押すとその種類を置く。
- * - `cell`: 盤面に置いたピース。別のマスやストックを押すと動かす。
- */
 export type ReflectionSelection =
   | { type: "stock"; piece: ReflectionPiece }
   | { type: "cell"; cellIndex: number };
@@ -35,22 +30,12 @@ export type ReflectionSession = GameSession<
   selection: ReflectionSelection | null;
   /** 盤面・ストックを押して状態が変わった回数。 */
   inputCount: number;
-  /**
-   * 一度盤面に置いたピースを動かし直した回数。
-   * 別のマスへ移す・入れ替える・ストックへ戻す・別の種類で上書きされる、をそれぞれ1回と数える。
-   */
   relocationCount: number;
-  /** 盤面を戻した回数。 */
   restartCount: number;
-  /**
-   * 光路を表示している外周の位置。表示するのは今の盤面での光路で、盤面が変わると閉じる。
-   */
   laserEntry: ReflectionEntry | null;
-  /** 外周ヒントを押して光路を表示した回数。 */
   laserCheckCount: number;
 };
 
-/** 評価に使うプレイ事実。採点はしない。 */
 export type ReflectionSessionResult = {
   elapsedMs: number;
   relocationCount: number;
@@ -80,7 +65,6 @@ export function createReflectionSession(
   };
 }
 
-/** まだ盤面に置いていない手持ちのピース。 */
 export function getReflectionSessionStock(
   session: ReflectionSession,
 ): ReflectionInventory {
@@ -125,11 +109,6 @@ function withCell(
   return { ...board, cells };
 }
 
-/**
- * 盤面を変える操作を反映する。揃えばクリアにする。
- * `relocated` は、置いてあったピースを動かし直した操作か。
- * 表示中の光路は変える前の盤面のものなので閉じる。確かめ直すには外周ヒントを押し直す。
- */
 function applyBoardChange(
   session: ReflectionSession,
   board: ReflectionBoard,
@@ -169,12 +148,6 @@ function selectionAfterPlacing(
   return remaining > 0 ? { type: "stock", piece } : null;
 }
 
-/**
- * ストックを押す。`piece` は押したピースの種類。
- * - 盤面のピースを選んでいれば、同じ種類ならそのピースをストックへ戻し、別の種類（残りがあるもの）ならその種類に置き換える
- *   （選んでいたピースはストックへ戻る）。どちらも置き直しに数え、選択を解除する。残りが無い別の種類では何もしない。
- * - そうでなければ、その種類を選ぶ。選んでいる種類をもう一度押すと選択を解除する。残りが無い種類は選べない。
- */
 export function tapReflectionSessionStock(
   session: ReflectionSession,
   piece: ReflectionPiece,
@@ -212,13 +185,6 @@ export function tapReflectionSessionStock(
   return changeSelection(session, { type: "stock", piece });
 }
 
-/**
- * 盤面のマスを押す。
- * - ストックの種類を選んでいれば、空きマスへ置く。ピースのあるマスでは置き換えず、そのピースを選ぶ（選択を切り替える）。
- *   置き換えは、盤面のピースを選んでからストックの種類を押して行う。
- * - 盤面のピースを選んでいれば、空きマスへ移す、または別の種類のピースと入れ替える。同じマスを押すと選択を解除する。
- * - 何も選んでいなければ、ピースのあるマスを選ぶ。
- */
 export function tapReflectionSessionCell(
   session: ReflectionSession,
   cellIndex: number,
@@ -231,6 +197,7 @@ export function tapReflectionSessionCell(
   if (tappedCell === undefined) return session;
 
   if (selection?.type === "stock") {
+    // 置き換えは、盤面のピースを選んでからストックの種類を押して行う。
     if (tappedCell !== null) {
       return changeSelection(session, { type: "cell", cellIndex });
     }
@@ -268,10 +235,6 @@ export function tapReflectionSessionCell(
   return changeSelection(session, { type: "cell", cellIndex });
 }
 
-/**
- * 盤面のマスのピースをストックへ戻す（キーボードの Delete / Backspace）。
- * 盤面のピースを選んでからストックを押すのと同じく、置き直しに数える。空きマスでは何もしない。
- */
 export function removeReflectionSessionPiece(
   session: ReflectionSession,
   cellIndex: number,
@@ -292,7 +255,6 @@ export function removeReflectionSessionPiece(
   );
 }
 
-/** 選択を解除する（キーボードの Escape）。 */
 export function clearReflectionSessionSelection(
   session: ReflectionSession,
 ): ReflectionSession {
@@ -301,10 +263,6 @@ export function clearReflectionSessionSelection(
   return changeSelection(session, null);
 }
 
-/**
- * 外周ヒントを押す。その位置から入れた光の、今の盤面での光路を表示し、光路を確かめた回数を数える。
- * 表示中の位置をもう一度押すと閉じる（数えない）。盤面と選択は変えない。
- */
 export function tapReflectionSessionClue(
   session: ReflectionSession,
   entry: ReflectionEntry,
@@ -322,10 +280,6 @@ export function tapReflectionSessionClue(
   };
 }
 
-/**
- * 同じプレイのまま、全ピースをストックへ戻す（盤面を戻す）。経過時間と記録は引き継ぐ。
- * 戻したピースは置き直しに数えない。
- */
 export function restartReflectionSession(
   session: ReflectionSession,
 ): ReflectionSession {

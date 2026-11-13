@@ -30,13 +30,6 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-/**
- * - `number`: 数字は、そこから入れた光が通るマスの数。外へ出る光は、出た先にも同じ数字の退出があり、違えば緑にならない。
- * - `black-hole`: ブラックホールは光を吸い込む。
- * - `mirror`: 斜め鏡は光を直角に曲げる。
- * - `reflector`: 反射体は光をはね返す。戻る道のマスも数える。
- * - `double`: 両面鏡は、当たる光をはね返し、沿う光は通す。
- */
 export type ReflectionTutorialRuleId =
   | "number"
   | "black-hole"
@@ -44,7 +37,6 @@ export type ReflectionTutorialRuleId =
   | "reflector"
   | "double";
 
-/** 本番と同じく、ストックの種類・盤面のマス・外周ヒントを押す。キーボードでは、ピースを戻すことと選択の解除もできる。 */
 export type ReflectionTutorialAction =
   | { type: "stock"; piece: ReflectionPiece }
   | { type: "cell"; cellIndex: number }
@@ -96,7 +88,6 @@ export type ReflectionTutorialBoardState = {
   lastMove: ReflectionTutorialMove | null;
 };
 
-/** 次に押す所。ストックの種類、盤面のマス、外周ヒントのどれか。 */
 export type ReflectionTutorialTarget =
   | { type: "stock"; piece: ReflectionPiece }
   | { type: "cell"; cellIndex: number }
@@ -107,7 +98,6 @@ type ReflectionTutorialSituation = TutorialSituation<
   ReflectionTutorialStep
 >;
 
-/** 正解の配置の1つと、そこに置くピースを決める外周ヒント（決め手）。 */
 type ReflectionTutorialPlacement = {
   piece: ReflectionPiece;
   cellIndex: number;
@@ -292,11 +282,6 @@ function applyAction(
   }
 }
 
-/**
- * 手を引いている間の手が、手順どおりか。
- * 光を出す手順では、印の外周ヒントを押す手だけを受け付ける。
- * 置く手順では、印の種類を選ぶ手と、その種類を選んでから印のマスを押す手と、選んだ種類を解除する手だけを受け付ける。
- */
 function fitsStep(
   step: ReflectionTutorialStep,
   session: ReflectionSession,
@@ -359,7 +344,6 @@ function startReflectionTutorial(): ReflectionTutorialBoardState {
   };
 }
 
-/** 解き終えた盤面。手持ちのピースはすべて置いてある。 */
 function getReflectionTutorialGoal(): ReflectionTutorialBoardState {
   const session = createReflectionSession(problem, 0);
   return {
@@ -374,10 +358,6 @@ function getReflectionTutorialGoal(): ReflectionTutorialBoardState {
   };
 }
 
-/**
- * 手を引いている間は、手順どおりの手だけを受け付ける。
- * 手を離した後は本番と同じく、置く・移す・入れ替える・戻す・光を出すのどれもでき、合わない配置でも止めない。
- */
 function performReflectionTutorialAction(
   { step }: ReflectionTutorialSituation,
   state: ReflectionTutorialBoardState,
@@ -426,11 +406,6 @@ function describeReflectionTutorialViolation(): TutorialMessage {
   return freePlay;
 }
 
-/**
- * 盤面に見せる光の入口。
- * 手を引く間は、手順を終えた手の直後はその結果の光を見せ、置く手順の間は置く場所を決める外周ヒントの今の光を見せる。
- * 手を離した後は本番と同じく、押した外周ヒントの光を見せる。手を離した直後は、最後の手順の結果の光を押したものとして見せる。
- */
 export function getReflectionTutorialLaserEntry(
   { step }: ReflectionTutorialSituation,
   state: ReflectionTutorialBoardState,
@@ -444,9 +419,6 @@ export function getReflectionTutorialLaserEntry(
   return step.type === "place" ? step.entry : null;
 }
 
-/**
- * 手順で印を付ける所。光を出す手順は外周ヒント、置く手順は種類を選ぶまでストック、選んだ後はマス。手を離した後は `null`。
- */
 export function getReflectionTutorialStepTarget(
   { step }: ReflectionTutorialSituation,
   state: ReflectionTutorialBoardState,
@@ -462,11 +434,6 @@ export function getReflectionTutorialStepTarget(
     : { type: "stock", piece: step.piece };
 }
 
-/**
- * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せる所。手を離した後は空。
- * 次に押す所と、その手を決める外周ヒント（決め手）と、決め手から入れて見せている光が通るマスを抜く。
- * 前の手順の結果として残している光は、一言が次の手順に替わっているので抜かない。
- */
 export function listReflectionTutorialSpotlitTargets(
   situation: ReflectionTutorialSituation,
   state: ReflectionTutorialBoardState,
@@ -477,6 +444,7 @@ export function listReflectionTutorialSpotlitTargets(
   }
   const target = getReflectionTutorialStepTarget(situation, state);
   const laserEntry = getReflectionTutorialLaserEntry(situation, state);
+  // 前の手順の結果として残している光は、一言が次の手順に替わっているので抜かない。
   const reasonLaserEntry =
     laserEntry !== null &&
     step.reasonEntries.some((entry) => isSameReflectionEntry(entry, laserEntry))
@@ -520,7 +488,6 @@ function isSameTarget(
   }
 }
 
-/** 何も選んでいない盤面で、次に押す所。 */
 function findUnselectedHintTarget(
   session: ReflectionSession,
 ): ReflectionTutorialTarget | null {
@@ -542,7 +509,6 @@ function findUnselectedHintTarget(
 }
 
 /**
- * 手を離した後、手が止まったときに示す次に押す所。揃っていれば `null`。
  * 本番と同じく、置いたピースが解と合うかは明かさず、ストックに残るピースを空いている正解のマスへ置く手を示す。
  * 解と違う所に置いたピースが正解のマスやピースをふさぎ、そう置ける手が無くなったときに限り、手詰まりのままにしないよう、そのピースを示す。
  * - ストックの種類を選んでいる: その種類の正解のマスが空いていればそこを、ふさがれていれば選んだ種類を押して選ぶのをやめさせる。
