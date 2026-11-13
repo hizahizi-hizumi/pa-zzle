@@ -25,11 +25,9 @@ export const hitofudePuzzleToneClassNames = {
   startMarkOutline: "stroke-(--hitofude-puzzle-cell)",
   deadEndHead: "fill-stone-800 dark:fill-stone-200",
   deadEndBar: "fill-(--hitofude-puzzle-cell)",
-  /** クリアしたとき、始点から終点へ道をなぞる光。 */
   clearTrace: "stroke-white/80 dark:stroke-white/70",
 } as const;
 
-/** 道が通ったマスの塗りに混ぜる、道の色の割合（%）。 */
 const VISITED_CELL_TINT_PERCENT = 28;
 
 /**
@@ -41,7 +39,6 @@ export function getPathColor(progress: number): string {
   return `color-mix(in oklch, var(--hitofude-puzzle-to) ${toPercent}%, var(--hitofude-puzzle-from))`;
 }
 
-/** 道が `progress` の位置で通ったマスの塗り。 */
 export function getVisitedCellColor(progress: number): string {
   // 無彩色の地と oklch で混ぜると色相が回って濁るので、地との混ぜ合わせは oklab で行う。
   return `color-mix(in oklab, ${getPathColor(progress)} ${VISITED_CELL_TINT_PERCENT}%, var(--hitofude-puzzle-cell))`;

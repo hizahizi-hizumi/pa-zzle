@@ -3,7 +3,7 @@ import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import { getHitofudePuzzleCellPosition } from "@/games/hitofude-puzzle/puzzle/board";
 import type { HitofudePuzzleCellCue } from "@/games/hitofude-puzzle/ui/board/cell-cue";
 
-/** マスの今の状態。`visited` は道が通ったマスで、始点と先端を含む。 */
+/** `visited` は道が通ったマスで、始点と先端を含む。 */
 export type HitofudePuzzleCellState = "hole" | "unvisited" | "visited";
 
 type HitofudePuzzleCellProps = {
@@ -12,7 +12,6 @@ type HitofudePuzzleCellProps = {
   state: HitofudePuzzleCellState;
   isStart: boolean;
   isHead: boolean;
-  /** 先端から延ばせるマスが無いか。 */
   isDeadEnd: boolean;
   disabled: boolean;
   /** 盤面の Tab の止まり先か。 */
@@ -32,7 +31,6 @@ const CELL_ATTRIBUTE = "data-cell";
  */
 const cuePlacementClassName = "pointer-events-none absolute inset-[7%]";
 
-/** 盤面の中から、マスのボタンを探す。 */
 export function findCellButton(
   board: HTMLElement,
   cell: number,

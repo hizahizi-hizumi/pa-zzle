@@ -64,27 +64,24 @@ type HitofudePuzzleTutorialProgress = TutorialProgress<
   HitofudePuzzleTutorialBoardState
 >;
 
-/** 盤面が反応した手。`id` は手のたびに増やし、もう一度始めても前の回と重ならないようにする。 */
 type HitofudePuzzleTutorialReaction = {
+  /** `id` は手のたびに増やし、もう一度始めても前の回と重ならないようにする。 */
   id: number;
   move: HitofudePuzzleTutorialMove;
   head: number;
 };
 
-/**
- * 手を引いている間に印の無い所へ延ばそうとしたときの、印の押し直し。印の線を短く濃くして戻す。
- * - `id`: 延ばそうとするたびに増やし、続けて延ばそうとしても押し直す。
- * - `progress`: 延ばそうとしたときの進行。手が進んだら押し直しを終える。
- */
+/** 手を引いている間に印の無い所へ延ばそうとしたときの、印の押し直し。印の線を短く濃くして戻す。 */
 type HitofudePuzzleTutorialRecall = {
+  /** 延ばそうとするたびに増やし、続けて延ばそうとしても押し直す。 */
   id: number;
+  /** 延ばそうとしたときの進行。手が進んだら押し直しを終える。 */
   progress: HitofudePuzzleTutorialProgress;
 };
 
 /** 手順の最後のマスまで延ばしてから、延ばしたマスと決め手を残して見せ、次の印に替えるまでの間。 */
 const NEXT_STEP_CUE_DELAY_MS = 700;
 
-/** 手を離した後、手が止まってから手がかりの印を付けるまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
 /**
@@ -108,7 +105,6 @@ function getHead(state: HitofudePuzzleTutorialBoardState): number {
   return state.path.at(-1) ?? hitofudePuzzleTutorialBoard.start;
 }
 
-/** 盤面が先端を揺らし、進もうとしたマスに×を点けて返す、阻まれた手。 */
 function toBlockedMove(
   reaction: HitofudePuzzleTutorialReaction | null,
 ): HitofudePuzzleBlockedMove | null {
@@ -121,7 +117,6 @@ function toBlockedMove(
     : null;
 }
 
-/** 本番と同じ、道を延ばす・縮める・阻まれた音を鳴らす知らせ。 */
 function toPathNotice(
   reaction: HitofudePuzzleTutorialReaction | null,
 ): HitofudePuzzlePathNotice | null {
@@ -139,11 +134,7 @@ function toPathNotice(
   }
 }
 
-/**
- * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
- * 手を引いている間は、手順を終えた直後だけ延ばしたマスを見せてから付け、それ以外はすぐ付ける。
- * 手を離した後は、手が止まったときだけ付ける。
- */
+/** 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。 */
 function getCueDelayMs(
   progress: HitofudePuzzleTutorialProgress,
   guiding: boolean,
@@ -158,10 +149,6 @@ function getCueDelayMs(
   return completedStep === null ? 0 : NEXT_STEP_CUE_DELAY_MS;
 }
 
-/**
- * マスに重ねる合図。手順を終えた直後の応えと、印か押し直し。
- * 印を付けるマスには、印だけを重ねる。
- */
 function getCellCues(
   progress: HitofudePuzzleTutorialProgress,
   completedStep: HitofudePuzzleTutorialStep | null,
@@ -216,10 +203,6 @@ function getSpotlitCells(
     : focused;
 }
 
-/**
- * 4×4 の盤面に、一言と印に沿って道を延ばし、ルールを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分で引かせる。盤面・道の反応・完成の演出・効果音は本番と同じ部品を使う。
- */
 export function HitofudePuzzleTutorial({
   open,
   playStart,
