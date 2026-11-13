@@ -9,19 +9,16 @@ import {
   type ZukanProblemStatus,
 } from "@/zukan/zukan-collection";
 
-/** 絞り込みで問題を分ける、問題の特徴の1つの軸。 */
 export type ZukanFeatureAxisSource = {
   id: string;
-  /** 1つのレベルの問題集にある値の種類が多いとき、数をまとめる幅。 */
   countRangeWidth?: number;
 };
 
-/** 特徴の軸の1つの選択肢。数は範囲（まとめないときは `min` と `max` が同じ）、盤面は大きさ。 */
+/** 数をまとめないときは `min` と `max` が同じ。 */
 export type ZukanFeatureOption =
   | { kind: "count"; min: number; max: number }
   | { kind: "board-size"; rows: number; columns: number };
 
-/** 選択肢を見分けるキー。選んだ選択肢として持つ。 */
 export function getZukanFeatureOptionKey(option: ZukanFeatureOption): string {
   return option.kind === "count"
     ? `count:${option.min}-${option.max}`
@@ -34,7 +31,6 @@ export type ZukanFeatureAxisOptions = {
   options: readonly ZukanFeatureOption[];
 };
 
-/** 1つのレベルの全問の特徴の値と、その値から作った軸ごとの選択肢。 */
 export type ZukanLevelFeatures = {
   valuesByProblem: ReadonlyMap<
     ProblemId,
@@ -44,7 +40,6 @@ export type ZukanLevelFeatures = {
   axes: readonly ZukanFeatureAxisOptions[];
 };
 
-/** これより種類の多い数の値は、軸の幅でまとめる。 */
 const MAX_EXACT_COUNT_OPTION_COUNT = 8;
 
 function listCountOptions(
@@ -102,10 +97,6 @@ function listAxisOptions(
   ];
 }
 
-/**
- * 1つのレベルの全問の特徴の値を求め、そのレベルの問題集にある値だけから軸ごとの選択肢を作る。
- * 特徴を求められない問題は、特徴の条件に当たらない。
- */
 export function collectZukanLevelFeatures(
   problems: readonly ZukanProblem[],
   axes: readonly ZukanFeatureAxisSource[],
@@ -119,6 +110,7 @@ export function collectZukanLevelFeatures(
   >();
   for (const problem of problems) {
     const values = findValues(problem);
+    // 特徴を求められない問題は、特徴の条件に当たらない。
     if (values !== null) {
       valuesByProblem.set(problem.problemId, values);
     }
@@ -139,10 +131,6 @@ export function collectZukanLevelFeatures(
   };
 }
 
-/**
- * レベルの特徴を、レベルごとに一度だけ求めて持っておく関数を作る。
- * 問題集はゲームのホームを開いている間に変わらないので、絞り込みを閉じて開き直しても、離脱の保存で図鑑が導き直されても求め直さない。
- */
 export function createZukanLevelFeaturesCache(
   axes: readonly ZukanFeatureAxisSource[],
   findValues: (
@@ -152,6 +140,7 @@ export function createZukanLevelFeaturesCache(
   difficulty: DifficultyLevel,
   problems: readonly ZukanProblem[],
 ) => ZukanLevelFeatures {
+  // 問題集はゲームのホームを開いている間に変わらないので、絞り込みを閉じて開き直しても、離脱の保存で図鑑が導き直されても求め直さない。
   const cache = new Map<DifficultyLevel, ZukanLevelFeatures>();
   return function findLevelFeatures(difficulty, problems) {
     const cached = cache.get(difficulty);
@@ -182,17 +171,14 @@ function isValueInOption(
   );
 }
 
-/** 解いた問題の成績の軸。そのゲームが数える事実だけを持つ。 */
 export type ZukanPerformanceAxis = "mistakes" | "moves";
 
-/** 解いた問題の成績で絞る条件。成績は、その問題をクリアしたプレイの中で最も良い値で見る。 */
 export type ZukanPerformanceCondition =
   | "no-mistakes"
   | "with-mistakes"
   | "optimal-moves"
   | "over-optimal-moves";
 
-/** 成績の軸ごとの条件。特徴の軸と同じく、軸の中はどれかに、軸をまたいではすべてに当たる問題が当たる。 */
 export const zukanPerformanceConditionsByAxis = {
   mistakes: ["no-mistakes", "with-mistakes"],
   moves: ["optimal-moves", "over-optimal-moves"],
@@ -205,7 +191,6 @@ const zukanPerformanceAxisOrder = Object.keys(
   zukanPerformanceConditionsByAxis,
 ) as ZukanPerformanceAxis[];
 
-/** 値が成績の軸 `axis` の条件か。 */
 export function isZukanPerformanceConditionOfAxis(
   value: string,
   axis: ZukanPerformanceAxis,
@@ -215,7 +200,6 @@ export function isZukanPerformanceConditionOfAxis(
   return axisConditions.includes(value);
 }
 
-/** 図鑑の解いた問題に、ミスや手数を数えた成績が1つでもあるときだけ、その成績の軸を返す。 */
 export function listZukanPerformanceAxes(
   zukan: GameZukan,
 ): ZukanPerformanceAxis[] {
@@ -258,7 +242,7 @@ function meetsPerformance(
   }
 }
 
-/** 絞り込みの条件。どの種類も、空なら条件をかけない。 */
+/** どの種類も、空なら条件をかけない。 */
 export type ZukanFilterConditions = {
   statuses: readonly ZukanProblemStatus[];
   /** 特徴の軸の ID ごとに、選んだ選択肢のキー。 */
@@ -272,7 +256,6 @@ export const noZukanFilterConditions: ZukanFilterConditions = {
   performances: [],
 };
 
-/** かけている条件（選んだ選択肢）の数。 */
 export function countZukanFilterConditions({
   statuses,
   features,
@@ -285,14 +268,12 @@ export function countZukanFilterConditions({
   );
 }
 
-/** 選んだ選択肢のある特徴の軸。 */
 export function hasZukanFeatureConditions({
   features,
 }: ZukanFilterConditions): boolean {
   return Object.values(features).some((keys) => keys.length > 0);
 }
 
-/** 成績の条件を軸ごとに分ける。条件を選んでいない軸は持たない。 */
 function groupPerformanceConditions(
   performances: readonly ZukanPerformanceCondition[],
 ): ZukanPerformanceCondition[][] {
@@ -305,11 +286,7 @@ function groupPerformanceConditions(
     .filter((axisConditions) => axisConditions.length > 0);
 }
 
-/**
- * 条件に当たるかを判定する関数を作る。状態は選んだ中のどれかに、特徴と成績は軸ごとに選んだ選択肢のどれかに当たり、
- * それらをすべて満たす問題が当たる。成績の条件は解いた問題だけが当たる。
- * 特徴の条件は、レベルの特徴 `levelFeatures` の選択肢と値で判定し、求めていなければどの問題も当たらない。
- */
+/** 特徴の条件は、レベルの特徴 `levelFeatures` の選択肢と値で判定し、求めていなければどの問題も当たらない。 */
 export function createZukanFilterMatcher(
   conditions: ZukanFilterConditions,
   levelFeatures: ZukanLevelFeatures | null,
@@ -356,7 +333,6 @@ export function createZukanFilterMatcher(
   };
 }
 
-/** 選択肢ごとの、当たる問題の数。 */
 export type ZukanFilterOptionCounts = {
   statuses: Readonly<Record<ZukanProblemStatus, number>>;
   /** 特徴の軸の ID ごとに、選択肢のキーごとの数。 */
@@ -432,11 +408,7 @@ function countPerformanceConditions(
   return counts;
 }
 
-/**
- * 選択肢ごとに、その選択肢とほかの種類の条件に当たる問題を数える。同じ種類（特徴と成績は同じ軸）で選んでいるほかの選択肢は数に関わらない。
- * 種類（特徴と成績は軸）の中はどれかに当たればよいので、選択肢を選ぶと、少なくともこの数の問題が当たる。
- * 特徴の選択肢は、レベルの特徴 `levelFeatures` を求めているときだけ数える。
- */
+/** 種類（特徴と成績は軸）の中はどれかに当たればよいので、選択肢を選ぶと、少なくともこの数の問題が当たる。 */
 export function countZukanFilterOptions(
   problems: readonly ZukanProblem[],
   conditions: ZukanFilterConditions,
@@ -463,11 +435,9 @@ export function countZukanFilterOptions(
   };
 }
 
-/** 絞り込みで並べ替えた台紙の問題。 */
 export type ZukanArrangement = {
   /** 当たった問題を番号の順に前へ、当たらなかった問題を番号の順に後ろへ並べる。 */
   problems: readonly ZukanProblem[];
-  /** 前に並べた、当たった問題の数。 */
   matchedCount: number;
 };
 
