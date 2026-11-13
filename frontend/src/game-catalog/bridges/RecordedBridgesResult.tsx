@@ -16,7 +16,6 @@ type RecordedBridgesResultProps = RecordedGameResultProps<
   BridgesResult
 >;
 
-/** 記録から作り直したブリッジパズルの結果画面。 */
 export function RecordedBridgesResult(props: RecordedBridgesResultProps) {
   const { screenProps, diagnostics } = useRecordedGameResult(
     props,

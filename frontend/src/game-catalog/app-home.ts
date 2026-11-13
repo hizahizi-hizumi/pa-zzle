@@ -22,9 +22,7 @@ import {
 } from "@/zukan/zukan-continuation";
 
 export type AppHome = {
-  /** 選んでいるゲームの、並びの中の位置。 */
   selectedGameIndex: number;
-  /** 選んでいるゲームの続き。そのゲームを遊んだことが無ければ `null`。 */
   selectedGameContinuation: ZukanContinuation | null;
   selectGame: (index: number) => void;
 };
@@ -36,7 +34,6 @@ type AppHomeOptions = {
   firstGameId?: string;
 };
 
-/** 空いている時間に `task` を呼ぶ。`requestIdleCallback` の無いブラウザでは次のタスクで呼ぶ。 */
 function scheduleIdleTask(task: () => void): () => void {
   if (typeof window.requestIdleCallback === "function") {
     const handle = window.requestIdleCallback(task);
@@ -46,7 +43,7 @@ function scheduleIdleTask(task: () => void): () => void {
   return () => window.clearTimeout(handle);
 }
 
-/** 選んだときに待たせないよう、ゲームの続きを空いている時間に1ゲームずつ求めておく。 */
+/** 選んだときに待たせないよう、ゲームの続きを先に求めておく。 */
 function prefetchContinuations(
   gameIds: readonly string[],
   continuations: ZukanContinuations,
@@ -65,11 +62,6 @@ function prefetchContinuations(
   return () => cancel();
 }
 
-/**
- * アプリのホームで選んでいるゲームと、その続きを、記録と離脱したプレイへつなぐ。
- * 利用者が選ぶまでは、最後に遊んだゲームを選んでおき、遊んだゲームが無ければ並びの先頭を選んでおく。
- * 離脱はこの画面を描いたあとに保存されることがあるので、選ぶまでは求め直す。
- */
 export function useAppHome(
   games: readonly GameCatalogEntry[],
   { isCovered, firstGameId }: AppHomeOptions,
@@ -104,6 +96,7 @@ export function useAppHome(
     );
   }, [games, continuations]);
 
+  // 離脱はこの画面を描いたあとに保存されることがあるので、選ぶまでは求め直す。
   const latestPlayedGameId =
     chosenIndex === null
       ? (continuations?.findLatestPlayedGameId() ?? null)

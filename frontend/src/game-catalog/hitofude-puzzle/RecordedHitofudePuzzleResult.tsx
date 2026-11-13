@@ -16,7 +16,6 @@ type RecordedHitofudePuzzleResultProps = RecordedGameResultProps<
   HitofudePuzzleResult
 >;
 
-/** 記録から作り直した一筆パズルの結果画面。 */
 export function RecordedHitofudePuzzleResult(
   props: RecordedHitofudePuzzleResultProps,
 ) {

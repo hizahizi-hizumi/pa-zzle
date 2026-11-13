@@ -15,7 +15,6 @@ type RecordedWaterSortResultProps = RecordedGameResultProps<
   WaterSortResult
 >;
 
-/** 記録から作り直したウォーターソートの結果画面。 */
 export function RecordedWaterSortResult(props: RecordedWaterSortResultProps) {
   const { screenProps, diagnostics } = useRecordedGameResult(
     props,

@@ -17,7 +17,6 @@ type RecordedTsumeShogiResultProps = RecordedGameResultProps<
   TsumeShogiResult
 >;
 
-/** 記録から作り直した詰将棋の結果画面。 */
 export function RecordedTsumeShogiResult(props: RecordedTsumeShogiResultProps) {
   // 結果は記録だけで描ける。検証情報は問題集の位置と局面を要るので、問題集の本体を読み込んでから問題を探して作る。
   const problemPoolStatus = useTsumeShogiProblemPool();

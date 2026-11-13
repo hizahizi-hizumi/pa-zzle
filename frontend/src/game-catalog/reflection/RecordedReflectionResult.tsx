@@ -16,7 +16,6 @@ type RecordedReflectionResultProps = RecordedGameResultProps<
   ReflectionResult
 >;
 
-/** 記録から作り直したリフレクションの結果画面。 */
 export function RecordedReflectionResult(props: RecordedReflectionResultProps) {
   const { screenProps, diagnostics } = useRecordedGameResult(
     props,

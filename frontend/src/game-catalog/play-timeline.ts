@@ -21,17 +21,15 @@ import {
   type FindZukanNumber,
 } from "@/zukan/zukan-number";
 
-/** 時間の流れの1件を押したときに開く画面。 */
 export type PlayTimelineEntryDestination =
   | { kind: "result"; game: GameCatalogEntry; record: PlayRecord }
   | {
       kind: "game-home";
       game: GameCatalogEntry;
-      /** ゲームのホームで選んでおく問題。今の問題集で引けない問題なら `undefined`。 */
+      /** 今の問題集で引けない問題なら `undefined`。 */
       problemId: ProblemId | undefined;
     };
 
-/** 今のアプリにあるゲームの完了記録と離脱した試行を、遊んだ時刻の新しい順に並べる。 */
 export function listCatalogPlayTimelineEntries(
   records: readonly PlayRecord[],
   attempts: readonly PlayAttempt[],
@@ -78,10 +76,6 @@ function requireEntryGame(entry: PlayTimelineEntry): GameCatalogEntry {
   return game;
 }
 
-/**
- * 時間の流れの1件に示す、ゲーム・レベル・図鑑の番号・評価点を求める。`listCatalogPlayTimelineEntries` で並べた1件を渡す。
- * 図鑑の番号は、今の問題集で引ける問題だけに付ける。
- */
 export function describePlayTimelineEntry(
   entry: PlayTimelineEntry,
 ): PlayTimelineEntryDescription {
@@ -114,10 +108,6 @@ export function describePlayTimelineEntry(
   };
 }
 
-/**
- * 時間の流れの1件を押したときに開く画面を求める。結果画面を描ける記録はその結果画面、
- * それ以外（離脱したプレイ・今の規則で結果を作れない記録）はその問題を選んだゲームのホームを開く。
- */
 export function findPlayTimelineEntryDestination(
   entry: PlayTimelineEntry,
 ): PlayTimelineEntryDestination {

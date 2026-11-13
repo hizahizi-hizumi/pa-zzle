@@ -15,7 +15,6 @@ type RecordedParkingJamResultProps = RecordedGameResultProps<
   ParkingJamResult
 >;
 
-/** 記録から作り直したパーキングジャムの結果画面。 */
 export function RecordedParkingJamResult(props: RecordedParkingJamResultProps) {
   const { screenProps, diagnostics } = useRecordedGameResult(
     props,

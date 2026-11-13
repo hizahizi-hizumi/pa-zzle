@@ -15,7 +15,6 @@ type RecordedTakuzuResultProps = RecordedGameResultProps<
   TakuzuResult
 >;
 
-/** 記録から作り直したバイナリパズルの結果画面。 */
 export function RecordedTakuzuResult(props: RecordedTakuzuResultProps) {
   const { screenProps, diagnostics } = useRecordedGameResult(
     props,

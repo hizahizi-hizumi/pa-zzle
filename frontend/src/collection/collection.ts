@@ -30,7 +30,6 @@ export type CollectionGame = {
   difficulties: readonly CollectionDifficulty[];
 };
 
-/** 月内で初めてクリアした問題と、前月までの最高評価が上がった問題の数。 */
 export type CollectionActivity = {
   added: number;
   raised: number;
@@ -111,7 +110,6 @@ function snapshotGame(id: string, tally: GameTally): CollectionGame {
   };
 }
 
-/** 図鑑と同じ対象問題・評価規則から、月末時点のコレクションと月内の変化を導く。 */
 export function createCollectionJourney(
   records: readonly PlayRecord[],
   games: readonly CollectionSource[],

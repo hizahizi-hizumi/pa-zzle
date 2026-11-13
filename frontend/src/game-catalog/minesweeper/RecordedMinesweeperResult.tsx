@@ -15,7 +15,6 @@ type RecordedMinesweeperResultProps = RecordedGameResultProps<
   MinesweeperResult
 >;
 
-/** 記録から作り直したマインスイーパーの結果画面。 */
 export function RecordedMinesweeperResult(
   props: RecordedMinesweeperResultProps,
 ) {

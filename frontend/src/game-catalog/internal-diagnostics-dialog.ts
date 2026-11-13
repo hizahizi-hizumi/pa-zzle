@@ -5,11 +5,10 @@ import {
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
 
-/** 検証情報のダイアログの開閉と、開いている間に見せる診断スナップショット。 */
 export type InternalDiagnosticsDialog<Snapshot> = {
   /** 開いている間だけ値を持つ。 */
   snapshot: Snapshot | null;
-  /** 検証情報を開く。内部診断を使えないビルドでは `undefined` で、開く操作を出さない。 */
+  /** 内部診断を使えないビルドでは `undefined` で、開く操作を出さない。 */
   open: (() => void) | undefined;
   close: () => void;
 };
