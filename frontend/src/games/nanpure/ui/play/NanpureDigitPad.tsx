@@ -1,5 +1,9 @@
 import { Lock } from "lucide-react";
-import { type PointerEvent as ReactPointerEvent, useRef } from "react";
+import {
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  useRef,
+} from "react";
 
 import { TutorialCue } from "@/components/TutorialCue";
 import { TutorialSpotlight } from "@/components/TutorialSpotlight";
@@ -69,10 +73,14 @@ export function NanpureDigitPad({
     }, LOCK_LONG_PRESS_MS);
   }
 
-  function handleClick(digit: NanpureDigit): void {
-    // 長押しで固めた後に指を離して届くクリックで、固めを解かない。
-    if (lockedByLongPressRef.current) {
-      lockedByLongPressRef.current = false;
+  function handleClick(
+    event: ReactMouseEvent<HTMLButtonElement>,
+    digit: NanpureDigit,
+  ): void {
+    const followsLongPress = lockedByLongPressRef.current;
+    lockedByLongPressRef.current = false;
+    // 長押しで固めた後に指を離して届くクリックで、固めを解かない。キーボードのクリック（detail が 0）は長押しの後に届くものではない。
+    if (followsLongPress && event.detail !== 0) {
       return;
     }
     if (digitsAvailable) {
@@ -98,10 +106,10 @@ export function NanpureDigitPad({
             aria-pressed={onLockDigit ? locked : undefined}
             aria-disabled={(dimmed && !disabled) || undefined}
             className={cn(
-              "relative min-w-0 touch-manipulation select-none rounded-md px-0 font-sans text-[min(clamp(1.5rem,7vw,2.25rem),9cqw)] tabular-nums transition-colors [-webkit-touch-callout:none] hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none disabled:pointer-events-none",
+              "relative min-w-0 touch-manipulation select-none rounded-md px-0 font-medium font-sans tabular-nums transition-colors [-webkit-touch-callout:none] hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none disabled:pointer-events-none",
               notesMode
-                ? "font-medium text-violet-400/75 dark:text-violet-400/70"
-                : "font-medium text-violet-600 dark:text-violet-300",
+                ? "text-[min(clamp(1.125rem,5vw,1.625rem),6.5cqw)] text-violet-600 dark:text-violet-300"
+                : "text-[min(clamp(1.5rem,7vw,2.25rem),9cqw)] text-violet-600 dark:text-violet-300",
               dimmed &&
                 "text-muted-foreground/20 dark:text-muted-foreground/20",
               locked &&
@@ -111,7 +119,7 @@ export function NanpureDigitPad({
                 "bg-violet-400 hover:bg-violet-400 dark:bg-violet-700 dark:hover:bg-violet-700",
               size === "play" ? "h-14" : "h-11",
             )}
-            onClick={() => handleClick(digit)}
+            onClick={(event) => handleClick(event, digit)}
             onPointerDown={(event) => handlePointerDown(event, digit)}
             onPointerUp={clearLongPressTimer}
             onPointerCancel={clearLongPressTimer}

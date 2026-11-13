@@ -103,7 +103,7 @@ export type NanpurePlay = GamePlay<
     mistakeCellIndices: number[];
     completedDigits: NanpureDigit[];
     notesMode: boolean;
-    /** 数字ボタンの長押しで固めた数字。固めている間は、マスを押すだけでその数字を置く。 */
+    /** 数字ボタンの長押しで固めた数字。固めている間は、空きマスを押すだけでその数字を置く。 */
     lockedDigit: NanpureDigit | null;
     operation: NanpureOperation | null;
     mistakeCount: number;
@@ -249,7 +249,8 @@ export function useNanpurePlay(
     const operationId = nextOperationId.current++;
     setPlay((current) => {
       const selected = { ...current, selectedCellIndex: cellIndex };
-      return current.lockedDigit === null
+      return current.lockedDigit === null ||
+        current.session.puzzleState[cellIndex] !== null
         ? selected
         : inputDigitAt(
             selected,

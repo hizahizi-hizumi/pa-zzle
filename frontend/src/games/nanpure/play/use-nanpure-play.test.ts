@@ -246,6 +246,22 @@ describe("useNanpurePlay", () => {
       expect(selectedCellIndex).toBe(clueCellIndex);
     });
 
+    describe("数字を置いたマスへ別の数字を固めた場合", () => {
+      beforeEach(() => {
+        act(() => result.current.selectCell(emptyCellIndex));
+        act(() => result.current.inputDigit(otherDigit));
+      });
+
+      test("そのマスを押しても数字を変えずに選ぶだけにすること", () => {
+        act(() => result.current.selectCell(emptyCellIndex));
+        const { board, selectedCellIndex, mistakeCount } = result.current;
+
+        expect(board[emptyCellIndex]).toBe(lockedDigit);
+        expect(selectedCellIndex).toBe(emptyCellIndex);
+        expect(mistakeCount).toBe(0);
+      });
+    });
+
     test("固めた数字をもう一度押すと固めを解くこと", () => {
       act(() => result.current.inputDigit(lockedDigit));
       act(() => result.current.selectCell(emptyCellIndex));

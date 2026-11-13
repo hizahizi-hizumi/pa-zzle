@@ -122,10 +122,19 @@ describe("NanpurePlay", () => {
       fireEvent.pointerDown(digit, { button: 0 });
       vi.advanceTimersByTime(450);
       fireEvent.pointerUp(digit);
-      fireEvent.click(digit);
+      fireEvent.click(digit, { detail: 1 });
 
       expect(props.onLockDigit).toHaveBeenCalledWith(5);
       expect(props.onInputDigit).not.toHaveBeenCalled();
+    });
+
+    test("ボタンの外で離した後のキーボードの押下で数字を入れること", () => {
+      fireEvent.pointerDown(digit, { button: 0 });
+      vi.advanceTimersByTime(450);
+      fireEvent.pointerLeave(digit);
+      fireEvent.click(digit, { detail: 0 });
+
+      expect(props.onInputDigit).toHaveBeenCalledWith(5);
     });
 
     test("すぐに離すと固めずに数字を入れること", () => {

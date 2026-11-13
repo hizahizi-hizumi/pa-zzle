@@ -10,7 +10,7 @@ export type NanpureUnitCompletionFlash = {
   units: readonly NanpureUnit[];
 };
 
-export const UNIT_FLASH_STAGGER_MS = 30;
+const UNIT_FLASH_STAGGER_MS = 30;
 const UNIT_FLASH_DURATION_MS = 420;
 
 const flashKeyframes: Keyframe[] = [
