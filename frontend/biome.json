@@ -18,7 +18,8 @@
       "!src/games/hitofude-puzzle/problem/problem-pool.json",
       "!src/games/ice-floor-maze/problem/problem-pool.json",
       "!src/games/tsume-shogi/problem/problem-pool.json",
-      "!src/games/bridges/problem/problem-pool.json"
+      "!src/games/bridges/problem/problem-pool.json",
+      "!src/games/hakoiri-musume/problem/problem-pool.json"
     ]
   },
   "formatter": {
@@ -478,6 +479,7 @@
                   },
                   {
                     "group": [
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -525,6 +527,7 @@
                   },
                   {
                     "group": [
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -571,6 +574,7 @@
                   },
                   {
                     "group": [
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -627,6 +631,7 @@
                   },
                   {
                     "group": [
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -682,6 +687,7 @@
                   },
                   {
                     "group": [
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -742,6 +748,7 @@
                   },
                   {
                     "group": [
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -801,6 +808,7 @@
                   },
                   {
                     "group": [
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -821,6 +829,392 @@
                       "@/games/bridges/problem/generation/**",
                       "@/games/bridges/play-record",
                       "@/games/bridges/diagnostics"
+                    ],
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/hakoiri-musume/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/hakoiri-musume/ui/play-record-display.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "!@/records/ui/play-record-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/hakoiri-musume/puzzle/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hakoiri-musume/problem/**",
+                      "@/games/hakoiri-musume/session/**",
+                      "@/games/hakoiri-musume/play/**",
+                      "@/games/hakoiri-musume/tutorial/**",
+                      "@/games/hakoiri-musume/ui/**"
+                    ],
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/hakoiri-musume/problem/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hakoiri-musume/session/**",
+                      "@/games/hakoiri-musume/play/**",
+                      "@/games/hakoiri-musume/tutorial/**",
+                      "@/games/hakoiri-musume/ui/**"
+                    ],
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/hakoiri-musume/session/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hakoiri-musume/problem/generation/**",
+                      "@/games/hakoiri-musume/difficulty",
+                      "@/games/hakoiri-musume/score",
+                      "@/games/hakoiri-musume/play/**",
+                      "@/games/hakoiri-musume/tutorial/**",
+                      "@/games/hakoiri-musume/ui/**",
+                      "@/games/hakoiri-musume/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/hakoiri-musume/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hakoiri-musume/problem/generation/**",
+                      "@/games/hakoiri-musume/difficulty",
+                      "@/games/hakoiri-musume/score",
+                      "@/games/hakoiri-musume/play/**",
+                      "@/games/hakoiri-musume/ui/**",
+                      "@/games/hakoiri-musume/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/hakoiri-musume/play/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/hakoiri-musume/ui/**",
+                      "@/games/hakoiri-musume/tutorial/**",
+                      "@/games/hakoiri-musume/problem/generation/**",
+                      "@/games/hakoiri-musume/play-record",
+                      "@/games/hakoiri-musume/diagnostics"
                     ],
                     "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
@@ -858,6 +1252,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -905,6 +1300,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -951,6 +1347,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1007,6 +1404,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1062,6 +1460,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1122,6 +1521,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1181,6 +1581,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1237,6 +1638,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1284,6 +1686,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1330,6 +1733,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1386,6 +1790,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1441,6 +1846,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1501,6 +1907,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1560,6 +1967,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
@@ -1616,6 +2024,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1663,6 +2072,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1709,6 +2119,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1765,6 +2176,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1820,6 +2232,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1880,6 +2293,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1939,6 +2353,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
@@ -1995,6 +2410,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2042,6 +2458,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2088,6 +2505,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2144,6 +2562,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2199,6 +2618,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2259,6 +2679,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2318,6 +2739,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2374,6 +2796,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2421,6 +2844,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2467,6 +2891,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2523,6 +2948,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2578,6 +3004,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2638,6 +3065,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2697,6 +3125,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2753,6 +3182,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2800,6 +3230,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2846,6 +3277,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2902,6 +3334,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -2957,6 +3390,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3017,6 +3451,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3076,6 +3511,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3132,6 +3568,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3179,6 +3616,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3225,6 +3663,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3281,6 +3720,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3336,6 +3776,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3396,6 +3837,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3455,6 +3897,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3511,6 +3954,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3558,6 +4002,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3604,6 +4049,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3660,6 +4106,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3715,6 +4162,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3775,6 +4223,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3834,6 +4283,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3890,6 +4340,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3937,6 +4388,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -3983,6 +4435,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4039,6 +4492,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4094,6 +4548,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4154,6 +4609,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4213,6 +4669,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4269,6 +4726,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4316,6 +4774,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4362,6 +4821,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4418,6 +4878,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4473,6 +4934,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4533,6 +4995,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4592,6 +5055,7 @@
                   {
                     "group": [
                       "@/games/bridges/**",
+                      "@/games/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4664,6 +5128,59 @@
                   },
                   {
                     "group": [
+                      "@/games/hakoiri-musume/**",
+                      "@/game-catalog/hakoiri-musume/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/game-catalog/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/game-catalog/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/game-catalog/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/game-catalog/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/game-catalog/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/game-catalog/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/game-catalog/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/game-catalog/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/game-catalog/tsume-shogi/**",
+                      "@/games/water-sort/**",
+                      "@/game-catalog/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/game-catalog/hakoiri-musume/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/views/**", "@/pages/**"],
+                    "message": "[dependency/game-catalog-boundary] ゲームカタログは画面合成・pages へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/game-catalog/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -4715,6 +5232,8 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/game-catalog/bridges/**",
+                      "@/games/hakoiri-musume/**",
+                      "@/game-catalog/hakoiri-musume/**",
                       "@/games/ice-floor-maze/**",
                       "@/game-catalog/ice-floor-maze/**",
                       "@/games/minesweeper/**",
@@ -4764,6 +5283,8 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/game-catalog/bridges/**",
+                      "@/games/hakoiri-musume/**",
+                      "@/game-catalog/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/minesweeper/**",
@@ -4813,6 +5334,8 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/game-catalog/bridges/**",
+                      "@/games/hakoiri-musume/**",
+                      "@/game-catalog/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -4862,6 +5385,8 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/game-catalog/bridges/**",
+                      "@/games/hakoiri-musume/**",
+                      "@/game-catalog/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -4911,6 +5436,8 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/game-catalog/bridges/**",
+                      "@/games/hakoiri-musume/**",
+                      "@/game-catalog/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -4960,6 +5487,8 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/game-catalog/bridges/**",
+                      "@/games/hakoiri-musume/**",
+                      "@/game-catalog/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -5009,6 +5538,8 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/game-catalog/bridges/**",
+                      "@/games/hakoiri-musume/**",
+                      "@/game-catalog/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -5058,6 +5589,8 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/game-catalog/bridges/**",
+                      "@/games/hakoiri-musume/**",
+                      "@/game-catalog/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -5107,6 +5640,8 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/game-catalog/bridges/**",
+                      "@/games/hakoiri-musume/**",
+                      "@/game-catalog/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
@@ -5156,6 +5691,8 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/game-catalog/bridges/**",
+                      "@/games/hakoiri-musume/**",
+                      "@/game-catalog/hakoiri-musume/**",
                       "@/games/hitofude-puzzle/**",
                       "@/game-catalog/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
