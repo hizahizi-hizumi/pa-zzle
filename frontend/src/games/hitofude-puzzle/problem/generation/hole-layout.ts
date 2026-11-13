@@ -4,32 +4,26 @@ import {
   listHitofudePuzzleGridNeighbors,
 } from "@/games/hitofude-puzzle/puzzle/board";
 
-/**
- * 穴の散らばり方の指標。問題を「穴が適度に散らばった盤面」に保つ見た目の基準（`hitofudePuzzleHoleLayoutCriteria`）に使う。
- * - `holeCount`: 穴の数。
- * - `largestHoleClusterSize`: 上下左右につながった穴の塊のうち、最も大きい塊のマスの数。穴が無ければ0。
- * - `quadrantsWithHolesCount`: 枠を上下左右に四分割した区画のうち、穴のある区画の数。奇数の一辺の中央の行・列は両側の区画に数える。
- * - `openBlockRatio`: 枠の中の 2×2 のブロックのうち、4マスとも穴でないブロックの割合。
- */
+/** 穴の散らばり方の指標。問題を「穴が適度に散らばった盤面」に保つ見た目の基準（`hitofudePuzzleHoleLayoutCriteria`）に使う。 */
 export type HitofudePuzzleHoleLayout = {
   holeCount: number;
+  /** 上下左右につながった穴の塊のうち、最も大きい塊のマスの数。穴が無ければ0。 */
   largestHoleClusterSize: number;
+  /** 枠を上下左右に四分割した区画のうち、穴のある区画の数。奇数の一辺の中央の行・列は両側の区画に数える。 */
   quadrantsWithHolesCount: number;
+  /** 枠の中の 2×2 のブロックのうち、4マスとも穴でないブロックの割合。 */
   openBlockRatio: number;
 };
 
-/**
- * 見た目の基準。穴が少なすぎて長方形の盤面に近づくこと、大きな空白・片寄り、通路だらけの盤面を避ける。
- * - `holeRatio`: 枠のマスのうち穴の割合の範囲（5×5 は 2〜6、8×8 は 6〜16 個）。
- * - `maximumHoleClusterSize`: つながった穴の塊の大きさの上限。
- * - `minimumQuadrantsWithHoles`: 穴が `quadrantRuleMinimumHoleCount` 個以上あるときに、穴のある区画の数の下限。
- * - `minimumOpenBlockRatio`: 4マスとも穴でない 2×2 のブロックの割合の下限。
- */
+/** 見た目の基準。穴が少なすぎて長方形の盤面に近づくこと、大きな空白・片寄り、通路だらけの盤面を避ける。 */
 export const hitofudePuzzleHoleLayoutCriteria = {
+  // 枠のマスのうち穴の割合の範囲（5×5 は 2〜6、8×8 は 6〜16 個）。
   holeRatio: { minimum: 0.08, maximum: 0.25 },
   maximumHoleClusterSize: 3,
   quadrantRuleMinimumHoleCount: 4,
+  // 穴が `quadrantRuleMinimumHoleCount` 個以上あるときに、穴のある区画の数の下限。
   minimumQuadrantsWithHoles: 3,
+  // 4マスとも穴でない 2×2 のブロックの割合の下限。
   minimumOpenBlockRatio: 0.35,
 } as const;
 
@@ -66,7 +60,6 @@ function measureLargestHoleClusterSize(board: HitofudePuzzleBoard): number {
   return largest;
 }
 
-/** 行か列の位置が、四分割のどちらの半分にあるか。奇数の一辺の中央は両方。 */
 function listHalves(size: number, position: number): number[] {
   const middle = size / 2 - 0.5;
   return position < middle ? [0] : position > middle ? [1] : [0, 1];
@@ -110,11 +103,6 @@ export function measureHitofudePuzzleHoleLayout(
   };
 }
 
-/**
- * 見た目の基準から外れた量。0 なら基準を満たす。生成器はこれを解の数と合わせて減らす。
- * 穴の数の過不足・塊の超過・穴のある区画の不足はその個数を、2×2 のブロックの割合の不足は
- * `OPEN_BLOCK_SHORTAGE_SCALE` 倍して切り上げた値を足す。
- */
 export function countHitofudePuzzleHoleLayoutViolations(
   board: HitofudePuzzleBoard,
 ): number {

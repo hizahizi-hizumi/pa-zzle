@@ -15,16 +15,13 @@ import {
 import { areHitofudePuzzleOpenCellsConnected } from "@/games/hitofude-puzzle/puzzle/rules";
 import { type ProblemRandom, pickProblemValue } from "@/games/problem-seed";
 
-/** 一意解の盤面と、そのただ1つの解の道。 */
 export type HitofudePuzzleUniqueHoleBoard = {
   board: HitofudePuzzleBoard;
   solution: readonly number[];
 };
 
-/** 焼きなましを始める盤面の穴の割合。始めの自己回避路が通らないマスを穴にする。 */
 const INITIAL_HOLE_RATIO = 0.15;
 
-/** 焼きなましで穴を動かす回数の上限。これで一意解に着かなければ、その盤面は諦める。 */
 const ANNEALING_ITERATIONS = {
   5: 1_000,
   6: 1_500,
@@ -44,16 +41,11 @@ const SOLUTION_COUNT_CAP = 32;
 /** 見た目の基準の違反1つを、解の数の対数の何倍に数えるか。 */
 const LAYOUT_VIOLATION_WEIGHT = 1.5;
 
-/**
- * 難しさへ歩く回数の上限。先読みの重さが目標に届かなくても、ここまでで最も難しかった一意解の盤面を返す。
- */
 const HARDENING_WALK_ITERATIONS = 20_000;
 
-/**
- * 難しさへ歩くときの、一意解の盤面どうしの比べ方。難しさ1の差を、解の数の対数1の差と同じ重さに数える。
- * 温度は、先読みの重さ4（8×8・目標4）に届く歩行の割合が 0.5 より高かった 0.3 にする。
- */
+/** 難しさへ歩くときの、一意解の盤面どうしの比べ方。難しさ1の差を、解の数の対数1の差と同じ重さに数える。 */
 const HARDENING_SCORE_WEIGHT = 1;
+/** 温度は、先読みの重さ4（8×8・目標4）に届く歩行の割合が 0.5 より高かった 0.3 にする。 */
 const HARDENING_TEMPERATURE = 0.3;
 
 /** 難しさを見積もる人間向け解法器の、推論を進めた回数の上限。分析（200,000）より小さくとり、歩く1歩を軽くする。 */
@@ -88,7 +80,6 @@ function estimateSolutions(board: HitofudePuzzleBoard): SolutionEstimate {
   };
 }
 
-/** 焼きなましで下げる量。解の数の対数と、見た目の基準の違反の重み付きの和。 */
 function measureEnergy(solutionCount: number, layoutViolations: number) {
   return (
     Math.log2(Math.max(1, solutionCount)) +
@@ -112,14 +103,9 @@ function accepts(
 const ADD_HOLE_UNTIL = 0.25;
 const REMOVE_HOLE_UNTIL = 0.45;
 const MOVE_HOLE_UNTIL = 0.85;
-/** 穴・始点を動かす先を、隣のマスから選ぶ割合。残りは盤面のどこからでも選ぶ。 */
 const MOVE_HOLE_TO_NEIGHBOR_RATIO = 0.7;
 const MOVE_START_TO_NEIGHBOR_RATIO = 0.6;
 
-/**
- * 盤面の無作為な近傍。穴を1つ足す・消す・動かすか、始点を動かす。外周に穴を置いてよい（外形が欠ける）。
- * 穴でないマスがつながらなくなる近傍や、動かせる先が無い近傍は `null`。
- */
 function moveHoles(
   board: HitofudePuzzleBoard,
   random: ProblemRandom,
@@ -332,7 +318,6 @@ function walkHitofudePuzzleHolesTowardHardness(
 }
 
 /**
- * 穴だけで一意解にした盤面を作る。焼きなましで一意解に着いたら、`targetLookaheadLoad` が正なら難しさへ歩く。
  * 焼きなましが一意解に着かなければ `null`（同じ乱数列の続きで作り直せる）。
  * 乱数と探索量の上限だけで決まり、同じ乱数列からは同じ盤面を作る。
  */

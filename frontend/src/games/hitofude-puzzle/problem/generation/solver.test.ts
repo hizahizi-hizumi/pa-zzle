@@ -16,7 +16,7 @@ function createOpenBoard(size: number, start: number): HitofudePuzzleBoard {
   return { size, holes: [], start };
 }
 
-/** 4×4 か 5×5 に、穴と始点を無作為に置いた盤面。穴でないマスがつながらない盤面・解の無い盤面も含む。 */
+/** 穴でないマスがつながらない盤面・解の無い盤面も含む。 */
 function createRandomBoard(seed: string): HitofudePuzzleBoard {
   const random = createProblemSeededRandom(seed);
   const size = random() < 0.5 ? 4 : 5;
@@ -30,7 +30,6 @@ function createRandomBoard(seed: string): HitofudePuzzleBoard {
   };
 }
 
-/** 枝刈りをせずに、始点から全ての有効マスを1回ずつ通る道を数える。 */
 function countPathsByBruteForce(board: HitofudePuzzleBoard): number {
   const adjacency = createHitofudePuzzleAdjacency(board);
   const openCellCount = listHitofudePuzzleOpenCells(board).length;

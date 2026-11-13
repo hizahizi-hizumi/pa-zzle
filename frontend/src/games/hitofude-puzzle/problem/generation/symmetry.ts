@@ -6,7 +6,6 @@ import {
 
 type CellTransform = (cell: number) => number;
 
-/** マスの写し方で盤面全体（穴と始点の位置）を写す。 */
 function transformBoard(
   board: HitofudePuzzleBoard,
   transformCell: CellTransform,
@@ -53,16 +52,12 @@ export function mirrorHitofudePuzzleBoardLeftRight(
   return transformBoard(board, mirrorCellLeftRight(board.size));
 }
 
-/**
- * 回転・反転した盤面と、元の盤面のマスをその盤面のマスへ写す関数。
- * 解の道など、元の盤面のマスで表した値を写した盤面へ移すのに使う。
- */
 export type HitofudePuzzleBoardOrientation = {
   board: HitofudePuzzleBoard;
+  /** 元の盤面のマスを `board` のマスへ写す。解の道など、元の盤面のマスで表した値を写した盤面へ移すのに使う。 */
   transformCell: CellTransform;
 };
 
-/** 回転4通り（元の盤面を含む）と、それぞれの左右反転4通り。 */
 export function listHitofudePuzzleBoardOrientations(
   board: HitofudePuzzleBoard,
 ): HitofudePuzzleBoardOrientation[] {
@@ -86,7 +81,6 @@ export function listHitofudePuzzleBoardOrientations(
   }));
 }
 
-/** 回転4通りとそれぞれの左右反転4通り。 */
 export function listHitofudePuzzleBoardSymmetries(
   board: HitofudePuzzleBoard,
 ): HitofudePuzzleBoard[] {
@@ -95,10 +89,6 @@ export function listHitofudePuzzleBoardSymmetries(
   );
 }
 
-/**
- * 回転・反転で重なる盤面に共通の正規化キー。8通りの盤面それぞれの記法（`formatHitofudePuzzleBoard`）を
- * 改行でつないだ文字列のうち、辞書順で最小のもの。問題集の同型除外に使う。
- */
 export function getHitofudePuzzleSymmetryKey(
   board: HitofudePuzzleBoard,
 ): string {

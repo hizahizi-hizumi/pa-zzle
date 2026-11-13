@@ -22,7 +22,6 @@ export function measureHitofudePuzzleStraightRatio(
     if (continuesRun) {
       continue;
     }
-    // runStart から step までのマスが同じ向きに並ぶ区間。
     if (step - runStart + 1 >= STRAIGHT_RUN_CELL_COUNT) {
       covered.fill(1, runStart, step + 1);
     }

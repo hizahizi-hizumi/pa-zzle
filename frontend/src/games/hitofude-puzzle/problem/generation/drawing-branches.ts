@@ -10,25 +10,25 @@ import {
 } from "@/games/hitofude-puzzle/puzzle/board";
 import { findHitofudePuzzleStranding } from "@/games/hitofude-puzzle/puzzle/rules";
 
-/** 誤った手を退けるのに要った段階。`6` は1段仮置きを重ねても退けられなかった手。 */
+/** `6` は1段仮置きを重ねても退けられなかった手。 */
 export type HitofudePuzzleBranchRefutationStage =
   | HitofudePuzzleRefutationStage
   | 6;
 
-/**
- * 始点から解の道を引き進めるプレイヤーが出会う分岐。
- * - `branchCount`: 先端から進める手のうち、取り残し（`findHitofudePuzzleStranding`）がすぐには見えない手が2つ以上ある地点の数。
- * - `fatalBranchCount`: そのうち、全マスを通れなくなる手を含む地点の数。一意解の問題では、解の道以外の手はすべてそう。
- * - `fatalBranchCountByStage`: 致命的な分岐を、そこで最も見抜きにくい誤った手を退けるのに要る段階で数えたもの。
- * - `longestTrapLength`: 誤った手に入ってから、取り残しがすぐには見えないまま引き進められる最も長いマス数。
- *   探索量の上限に達したら `null`（それより長い）。
- */
+/** 始点から解の道を引き進めるプレイヤーが出会う分岐。 */
 export type HitofudePuzzleDrawingBranches = {
+  /** 先端から進める手のうち、取り残し（`findHitofudePuzzleStranding`）がすぐには見えない手が2つ以上ある地点の数。 */
   branchCount: number;
+  /** そのうち、全マスを通れなくなる手を含む地点の数。一意解の問題では、解の道以外の手はすべてそう。 */
   fatalBranchCount: number;
+  /** 致命的な分岐を、そこで最も見抜きにくい誤った手を退けるのに要る段階で数えたもの。 */
   fatalBranchCountByStage: Readonly<
     Record<HitofudePuzzleBranchRefutationStage, number>
   >;
+  /**
+   * 誤った手に入ってから、取り残しがすぐには見えないまま引き進められる最も長いマス数。
+   * 探索量の上限に達したら `null`（それより長い）。
+   */
   longestTrapLength: number | null;
 };
 
@@ -152,8 +152,6 @@ function measureLongestUnstrandedPath(
  * 一意解の問題で、始点から解の道 `solution` をたどり、各分岐で誤った手を退けるのに要る推論の段階を測る。
  * 分岐の数え方は研究用 Python の `decision_profile`（一意解の場合）と同じ。段階の判定は製品の人間向け解法器に従い、
  * 2辺カットを持たない Python とは段階が分かれることがある。
- * 一意解なので、解の道以外の手はすべて誤りとして扱い、完成できるかを探索で確かめない。
- * 段階の判定が作業量の上限に達したら `work-limit-reached` を返す。
  */
 export function analyzeHitofudePuzzleDrawingBranches(
   board: HitofudePuzzleBoard,
@@ -181,6 +179,7 @@ export function analyzeHitofudePuzzleDrawingBranches(
     }
     branchCount += 1;
     let hardestStage: HitofudePuzzleBranchRefutationStage | null = null;
+    // 一意解なので、解の道以外の手はすべて誤りとして扱い、完成できるかを探索で確かめない。
     for (const wrongMove of unstrandedMoves) {
       if (wrongMove === solution[index + 1]) {
         continue;

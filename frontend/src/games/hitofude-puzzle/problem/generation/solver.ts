@@ -5,30 +5,26 @@ import {
   listHitofudePuzzleOpenCells,
 } from "@/games/hitofude-puzzle/puzzle/board";
 
-/**
- * - `status`: `search-limit-reached` なら探索量の上限で打ち切ったため、`solutionCount` は下限にすぎない。
- * - `solutionCount`: 見つけた解の数。`solutionLimit` で頭打ちにする。
- * - `firstSolutions`: 最初に見つけた解を2本まで。別解を求める一意化で使う。
- * - `searchStepCount`: たどった探索の節点の数。
- */
 export type HitofudePuzzleSolutionSearchResult = {
+  /** `search-limit-reached` なら探索量の上限で打ち切ったため、`solutionCount` は下限にすぎない。 */
   status: "complete" | "search-limit-reached";
+  /** 見つけた解の数。`solutionLimit` で頭打ちにする。 */
   solutionCount: number;
+  /** 最初に見つけた解を2本まで。 */
   firstSolutions: readonly (readonly number[])[];
   searchStepCount: number;
 };
 
-/**
- * - `solutionLimit`: この数の解が見つかったら打ち切る。一意性の確認には2で足りる。
- * - `searchStepLimit`: 探索の節点の数の上限。
- *   時間ではなく探索量で打ち切るのは、同じ入力に同じ結果を返し、生成器が identity から同じ問題を再現できるようにするため。
- */
 export type HitofudePuzzleSolutionSearchOptions = {
+  /** この数の解が見つかったら打ち切る。一意性の確認には2で足りる。 */
   solutionLimit?: number;
+  /**
+   * 探索の節点の数の上限。
+   * 時間ではなく探索量で打ち切るのは、同じ入力に同じ結果を返し、生成器が identity から同じ問題を再現できるようにするため。
+   */
   searchStepLimit?: number;
 };
 
-/** 一意性の確認で1回の探索に許す節点の数。 */
 export const HITOFUDE_PUZZLE_UNIQUENESS_SEARCH_STEP_LIMIT = 20_000;
 
 const keptSolutionCount = 2;
@@ -243,7 +239,6 @@ class SolutionSearch {
     }
   }
 
-  /** 先端から未訪問マスだけをたどって、残りの全マスへ届くか。 */
   #isRestConnected(head: number, remaining: number): boolean {
     const { neighbors } = this.#graph;
     const visited = this.#visited;
@@ -369,7 +364,6 @@ class SolutionSearch {
   }
 }
 
-/** 始点から全有効マスをちょうど1回ずつ通る道を数える。 */
 export function countHitofudePuzzleSolutions(
   board: HitofudePuzzleBoard,
   options: HitofudePuzzleSolutionSearchOptions = {},
@@ -382,7 +376,6 @@ export function countHitofudePuzzleSolutions(
   return search.run(board.start);
 }
 
-/** 解がただ1つだと、探索量の上限までに確かめられたか。上限に達した盤面は一意とみなさない。 */
 export function isHitofudePuzzleUniquelySolvable(
   board: HitofudePuzzleBoard,
   searchStepLimit = HITOFUDE_PUZZLE_UNIQUENESS_SEARCH_STEP_LIMIT,

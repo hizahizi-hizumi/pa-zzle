@@ -23,27 +23,23 @@ import {
 } from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
-/**
- * 事前生成した問題集の1問。
- * - `size`・`targetLookaheadLoad`・`candidateIndex` から `createHitofudePuzzleProblemIdentity` で identity を再構成する。
- * - `start` と `encodedHoles`（`encodeHitofudePuzzlePoolHoles`）で盤面を表す。解の道は持たない。
- *   実行時に生成器・解探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
- * - 残りは生成時の分析結果（`HitofudePuzzleSolveWorkload`）。速さの基準時間に使う。
- *   プレイ時に解法器を動かさずに済むよう、問題集に持たせる。なぞる長さは盤面から求まるので持たない。
- */
 export type HitofudePuzzleProblemPoolEntry = readonly [
+  // `size`・`targetLookaheadLoad`・`candidateIndex` から `createHitofudePuzzleProblemIdentity` で identity を再構成する。
   size: number,
   targetLookaheadLoad: number,
   candidateIndex: number,
+  // `start` と `encodedHoles`（`encodeHitofudePuzzlePoolHoles`）で盤面を表す。解の道は持たない。
+  // 実行時に生成器・解探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
   start: number,
   encodedHoles: string,
+  // 残りは生成時の分析結果（`HitofudePuzzleSolveWorkload`）。速さの基準時間に使う。
+  // プレイ時に解法器を動かさずに済むよう、問題集に持たせる。なぞる長さは盤面から求まるので持たない。
   assumptionCount: number,
   refutationStepCount: number,
   longestRefutationLength: number,
   fatalBranchCount: number,
 ];
 
-/** 問題集から復元した1問。問題を解き切る作業の量を伴う。 */
 export type HitofudePuzzlePooledProblem = HitofudePuzzleIdentifiedProblem & {
   workload: HitofudePuzzleSolveWorkload;
 };
@@ -66,7 +62,6 @@ function countHoleHexDigits(size: number): number {
 
 /**
  * 穴を、枠の全マス（行優先）の順のビット列（穴なら 1）にして16進で表す。先頭のビットを最上位にし、末尾は 0 で埋める。
- * 例: 8×8 は 64 ビットで 16 桁。
  */
 export function encodeHitofudePuzzlePoolHoles(
   board: HitofudePuzzleBoard,
@@ -86,7 +81,6 @@ export function encodeHitofudePuzzlePoolHoles(
   return encoded;
 }
 
-/** `encodeHitofudePuzzlePoolHoles` で表した穴と始点から問題を作り、形を確かめる。 */
 export function decodeHitofudePuzzlePoolProblem(
   size: number,
   start: number,
@@ -181,7 +175,6 @@ const poolIndex = createProblemPoolIndex(
   toHitofudePuzzlePoolIdentity,
 );
 
-/** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findHitofudePuzzlePoolEntryByProblemId(
   difficulty: HitofudePuzzleDifficulty,
   problemId: string,
@@ -205,7 +198,6 @@ function getEntriesBySeed(): ReadonlyMap<
   return entriesBySeed;
 }
 
-/** identity に一致する問題集の1問を探す。生成器の版や条件が違う identity・問題集に無い identity には `null` を返す。 */
 export function findHitofudePuzzlePoolEntry(
   identity: HitofudePuzzleProblemIdentity,
 ): HitofudePuzzleProblemPoolEntry | null {
@@ -223,20 +215,18 @@ export function findHitofudePuzzlePoolEntry(
     : null;
 }
 
-/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
 export function listHitofudePuzzlePoolProblemIds(
   difficulty: HitofudePuzzleDifficulty,
 ): readonly ProblemId[] {
   return poolIndex.listProblemIds(difficulty);
 }
 
-/** 始めたときの盤面を見れば分かる、問題の特徴。`size` は盤面の一辺のマスの数。 */
 export type HitofudePuzzleProblemFeatures = {
+  /** 盤面の一辺のマスの数。 */
   size: number;
   holeCount: number;
 };
 
-/** 難易度の問題集の1問の特徴を、作業の量を使わず問題集の項目の盤面から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findHitofudePuzzlePoolProblemFeatures(
   difficulty: HitofudePuzzleDifficulty,
   problemId: string,
@@ -250,7 +240,6 @@ export function findHitofudePuzzlePoolProblemFeatures(
   return { size, holeCount: holes.length };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
 export const hitofudePuzzleProblemFeatureAxes = [
   {
     id: "board-size",

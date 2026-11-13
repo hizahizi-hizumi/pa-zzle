@@ -14,7 +14,6 @@ const scatteredBoard = parseHitofudePuzzleBoard([
   ". . . . # .",
 ]);
 
-/** 左上に4つの穴が固まった 6×6 の盤面。 */
 const clusteredBoard = parseHitofudePuzzleBoard([
   "# # . . . .",
   "# # . . . .",
