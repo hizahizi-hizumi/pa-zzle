@@ -135,7 +135,6 @@ export function ReflectionTutorial({
       ? findReflectionTutorialHint(boardState)
       : null;
   const boardProgress = getBoardProgress(progress);
-  // 本番のプレイ画面と同じ効果音を、置いた手と完成演出の始まりに鳴らす。
   useReflectionSoundEffects(
     boardState.lastMove?.piecePlaced
       ? {
@@ -254,10 +253,6 @@ export function ReflectionTutorial({
     playStart?.onStart();
   }
 
-  /**
-   * 手順の印と、手順どおりに置いた応え。最初の手順の印は、導入の終わりに一言と同時に出す。
-   * 手を引いている間は、次に押す所と決め手と見せている光を覆いから抜く。手を離した後は、手が止まったときだけ次に押す所に印を付ける。
-   */
   function getCues(marksShown: boolean): ReflectionCue[] {
     const { lastMove, moveCount } = boardState;
     const cues: ReflectionCue[] = [];

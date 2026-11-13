@@ -19,7 +19,6 @@ import { ReflectionBoard } from "@/games/reflection/ui/board/ReflectionBoard";
 import { ReflectionStock } from "@/games/reflection/ui/ReflectionStock";
 import { ReflectionTutorialRewind } from "@/games/reflection/ui/ReflectionTutorial/ReflectionTutorialRewind";
 
-/** 盤面とストックに見せる、ある時点の配置。 */
 export type ReflectionTutorialView = {
   board: ReflectionBoardState;
   stock: ReflectionInventory;
@@ -47,7 +46,6 @@ type ReflectionTutorialStageProps = {
 };
 
 /**
- * チュートリアルの盤面とストック。本番と同じ盤面とストックの部品で描く。
  * 導入のゴールの場面では、解き終えた盤面に本番と同じ完成演出で全光路を伸ばし、伸ばし終えるか、押して場面の動きを終えたら、全光路を出したまま見せる。
  * 始めの盤面の場面では、何も置いていない盤面にゴールのピースを重ね、1つずつ消して始めの盤面へ戻す。
  */

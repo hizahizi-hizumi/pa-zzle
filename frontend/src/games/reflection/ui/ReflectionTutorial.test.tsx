@@ -46,13 +46,10 @@ const freePresses: readonly Press[] = [
   { cell: [5, 1] },
 ];
 
-/** 手を離した後、手が止まってから次の手を示すまでの間。 */
 const idleHintDelayMs = 10_000;
 
-/** 導入の場面の動きを見せ終えるのに十分な間。 */
 const introEnoughMs = 8000;
 
-/** 完成演出を見せ終えるのに十分な間。 */
 const clearEnoughMs = 3000;
 
 afterEach(() => {
@@ -126,12 +123,10 @@ function getCueKinds(element: HTMLElement): string[] {
   );
 }
 
-/** 画面全体の覆いから抜いて、元の明るさで見せているか。 */
 function isSpotlit(element: HTMLElement): boolean {
   return element.querySelector("[data-tutorial-spotlight]") !== null;
 }
 
-/** 手を引いている間の、画面全体の覆い。 */
 function getFocusScrim(): Element | null {
   return document.querySelector("[data-tutorial-focus-scrim]");
 }

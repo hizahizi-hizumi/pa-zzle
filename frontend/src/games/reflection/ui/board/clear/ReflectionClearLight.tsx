@@ -23,7 +23,6 @@ export const CLEAR_LIGHT_DRAW_MS = 420;
  * 全光路が点いたときの音（`assets/sounds/cleared-chord.flac`）は、この間に鳴り終える長さで作っているので、変えるなら作り直す。
  */
 const CLEAR_LIGHT_HOLD_MS = 700;
-/** 演出を始めてから結果へ進めるまでの時間。光路の本数によらず、全光路を伸ばし切る時間に見せておく時間を足した長さにする。 */
 const CLEAR_LIGHT_TOTAL_MS =
   CLEAR_LIGHT_SPREAD_MS + CLEAR_LIGHT_DRAW_MS + CLEAR_LIGHT_HOLD_MS;
 

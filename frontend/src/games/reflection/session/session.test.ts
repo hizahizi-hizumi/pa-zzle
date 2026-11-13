@@ -68,7 +68,6 @@ function isEmptyBoard(session: ReflectionSession): boolean {
   return session.puzzleState.cells.every((cell) => cell === null);
 }
 
-/** 解と違う位置の 4 に `/` を置いた状態。 */
 const slashAtCenter = placeFromStock(initial, "slash", 4);
 
 describe("createReflectionSession", () => {

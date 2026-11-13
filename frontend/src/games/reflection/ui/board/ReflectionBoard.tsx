@@ -38,7 +38,7 @@ import { cn } from "@/lib/utils";
 type ReflectionBoardProps = {
   board: ReflectionBoardState;
   clues: readonly ReflectionClue[];
-  /** 外周ヒントごとに、今の配置での光が一致しているか。並びは `clues` と同じ。 */
+  /** 並びは `clues` と同じ。 */
   clueMatches: readonly boolean[];
   selection: ReflectionSelection | null;
   laser: ReflectionLaserView | null;
@@ -49,7 +49,6 @@ type ReflectionBoardProps = {
   onSelectClue: (entry: ReflectionEntry) => void;
   onRemovePiece: (cellIndex: number) => void;
   onClearAnimationComplete: () => void;
-  /** マスと外周ヒントに重ねる、チュートリアルの印・応え・覆いから抜く所。 */
   cues?: readonly ReflectionCue[];
 };
 
@@ -123,11 +122,6 @@ function hasModifierKey(event: ReactKeyboardEvent): boolean {
   return event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
 }
 
-/**
- * 盤面と、その四辺を囲む外周ヒント。外周ヒントを押した位置の光路を、罫線の上・ピースの下に重ねて描く。
- * 今の配置での光が一致している外周ヒントは、地の色で示す。
- * 盤面が揃うと全光路を描き、完成演出を終えたら `onClearAnimationComplete` を呼ぶ。
- */
 export function ReflectionBoard({
   board,
   clues,
@@ -259,7 +253,6 @@ export function ReflectionBoard({
       <div
         role="group"
         aria-label={`${REFLECTION_DISPLAY_NAME}盤面`}
-        // マスは地を持たず、光路の図より上でピースと選択の印だけを描く。
         className="relative z-2 grid"
         style={{
           ...getReflectionBoardGridArea(size),

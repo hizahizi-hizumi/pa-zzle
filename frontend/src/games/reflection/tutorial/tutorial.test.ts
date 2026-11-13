@@ -51,7 +51,6 @@ const size = solution.size;
 const entries = listReflectionEntries(size);
 const { clues, inventory } = reflectionTutorial.start().session.problem;
 
-/** ピースごとに、その働きを示すルール。向きの違う斜め鏡・両面鏡は同じ働き。 */
 const ruleByPiece = {
   slash: "mirror",
   backslash: "mirror",
@@ -103,7 +102,6 @@ function stepActions(step: ReflectionTutorialStep): ReflectionTutorialAction[] {
       ];
 }
 
-/** 最初の `count` 個の手順を、印の所へ手順どおりの操作をして終える。 */
 function finishSteps(count: number): Progress {
   return performAll(
     finishTutorialIntro(startTutorial(reflectionTutorial)),
@@ -111,7 +109,6 @@ function finishSteps(count: number): Progress {
   );
 }
 
-/** 手を引く間の、導入を終えた時点から手を離すまでの各手の後の進行。手順どおりの操作だけを順に打つ。 */
 function listGuidedProgresses(): Progress[] {
   const progresses = [finishTutorialIntro(startTutorial(reflectionTutorial))];
   for (const action of steps.flatMap(stepActions)) {
@@ -126,7 +123,6 @@ function listGuidedProgresses(): Progress[] {
   );
 }
 
-/** 手を引いた手順で置いた盤面。 */
 function boardAfterPlaceSteps(count: number): ReflectionBoard {
   return withPieces(
     createEmptyReflectionBoard(size),
@@ -262,7 +258,6 @@ function listStepCandidates(
   });
 }
 
-/** 外周ヒントの光が通るマスに置いたピース。 */
 function listPiecesOnLight(
   board: ReflectionBoard,
   lightEntries: readonly ReflectionEntry[],

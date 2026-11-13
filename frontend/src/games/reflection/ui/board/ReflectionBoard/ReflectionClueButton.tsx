@@ -24,7 +24,6 @@ type ReflectionClueButtonProps = {
   clue: ReflectionClue;
   /** この位置の光路を表示している。 */
   selected: boolean;
-  /** 今の配置での光が、この外周ヒントの行き先・マスの数と一致している。 */
   matched: boolean;
   /** 光路を表示しているとき、今の配置での光の結果（通るマスの数と行き先）。 */
   laserResult: ReflectionClue | null;
@@ -35,7 +34,6 @@ type ReflectionClueButtonProps = {
   /** 押したときの受け口。タッチは押した位置のボタンで受ける（`useTouchTap`）。 */
   selectHandlers: TapHandlers;
   onFocus: (key: string) => void;
-  /** この外周ヒントに重ねる、チュートリアルの印・覆いから抜く所。 */
   cues?: readonly ReflectionCue[];
 };
 
