@@ -12,10 +12,10 @@ const surfaceClassNames = {
 export function BrowserBottomSurface({
   surface = "page",
 }: BrowserBottomSurfaceProps) {
-  // WebKitの採色は10px以下の面を除くので、通常の余白3単位（12px）を確保する。
   return (
     <div
       aria-hidden="true"
+      // WebKitの採色は10px以下の面を除くので、通常の余白3単位（12px）を確保する。
       className={`pointer-events-none sticky bottom-0 z-20 h-3 shrink-0 ${surfaceClassNames[surface]}`}
     />
   );

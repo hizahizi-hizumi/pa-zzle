@@ -5,7 +5,6 @@ type HowToPlayRuleMarkProps = {
   allowed: boolean;
 };
 
-/** 遊び方の図に添えて、ルール上できる形か（✓）できない形か（✗）を示す。 */
 export function HowToPlayRuleMark({ allowed }: HowToPlayRuleMarkProps) {
   const Mark = allowed ? Check : X;
 

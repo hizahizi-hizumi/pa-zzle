@@ -28,10 +28,7 @@ type InternalDiagnosticsDialogProps = {
   /** 生成を試行して問題を選ぶゲームだけが渡す。 */
   generationAttempt?: number;
   buildRevision: string | null;
-  /**
-   * 問題の再現情報に続けて見せる、ゲーム固有の診断値のまとまり。
-   * 渡すと、再現情報を含めて各まとまりに見出しを付ける。
-   */
+  /** 問題の再現情報に続けて見せる、ゲーム固有の診断値のまとまり。 */
   sections?: readonly InternalDiagnosticSection[];
   serializedSnapshot: string;
   onClose: () => void;

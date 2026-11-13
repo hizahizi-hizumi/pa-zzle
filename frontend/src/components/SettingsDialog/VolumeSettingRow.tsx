@@ -5,26 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { MAX_VOLUME } from "@/lib/stored-volume-setting";
 
-/** スライダーを一度動かしたときに変わる音量。 */
 const VOLUME_STEP = 1;
 
 type VolumeSettingRowProps = {
-  /** 音量を選ぶ音の名前。 */
   label: string;
-  /** 0〜`MAX_VOLUME` の音量。0 は鳴らさない。 */
   volume: number;
-  /** 鳴らしているときの印。 */
   icon: LucideIcon;
-  /** 音量が 0 のときの印。 */
   mutedIcon: LucideIcon;
   /** スライダーを動かしている間、動かした先の音量を渡す。 */
   onChange: (volume: number) => void;
   /** スライダーを離したときや、キーで動かしたときに、選び終えた音量を渡す。 */
   onCommit: (volume: number) => void;
+  /** 印のボタンで消音と、消音する前の音量に戻すのを切り替える。 */
   onToggleMuted: () => void;
 };
 
-/** 一つの音の音量を、スライダーで選ぶ行。印のボタンで消音と、消音する前の音量に戻すのを切り替える。 */
 export function VolumeSettingRow({
   label,
   volume,

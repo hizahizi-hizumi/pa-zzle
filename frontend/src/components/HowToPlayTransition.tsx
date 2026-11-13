@@ -6,7 +6,6 @@ type HowToPlayTransitionProps = {
   children: ReactNode;
 };
 
-/** 遊び方の図を、操作による変化の順に矢印でつないで並べる。 */
 export function HowToPlayTransition({ children }: HowToPlayTransitionProps) {
   const figures = Children.toArray(children);
 

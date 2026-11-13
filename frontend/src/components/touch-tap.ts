@@ -15,7 +15,7 @@ export type TapHandlers = {
   onClick: (event: ReactMouseEvent<HTMLElement>) => void;
 };
 
-/** 押せないボタン。`aria-disabled` のボタンはフォーカスを残したまま押せなくしているので、`disabled` と同じく押さなかったことにする。 */
+/** `aria-disabled` のボタンはフォーカスを残したまま押せなくしているので、`disabled` と同じく押さなかったことにする。 */
 function isDisabled(element: HTMLElement): boolean {
   return element.matches(':disabled, [aria-disabled="true"]');
 }

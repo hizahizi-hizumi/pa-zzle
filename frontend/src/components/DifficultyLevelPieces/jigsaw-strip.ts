@@ -11,7 +11,6 @@ const KNOB_HEAD_RATIO = 0.15;
 const KNOB_FILLET_TO_HEAD = 0.4;
 const KNOB_CENTER_TO_HEAD = 1.13;
 
-/** 上の辺の凸凹。左から凸と凹を交互に置く。 */
 const topEdgeKnobs = [
   "tab",
   "blank",

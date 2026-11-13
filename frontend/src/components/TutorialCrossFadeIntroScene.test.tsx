@@ -12,7 +12,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** 盤面を替える動きを、`finishAnimations` を呼ぶまで終えない形で差し替える。 */
 function installAnimate(): { finishAnimations: () => Promise<void> } {
   const finishers: (() => void)[] = [];
   Object.defineProperty(HTMLElement.prototype, "animate", {

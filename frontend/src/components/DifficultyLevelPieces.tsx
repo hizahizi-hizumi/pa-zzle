@@ -7,10 +7,7 @@ type DifficultyLevelPiecesProps = {
   level: DifficultyLevel;
 };
 
-/**
- * 5マスのジグソーの帯。左から、レベルの数だけピースが埋まっている。
- * 小さく表示する記号なので縮小で兼用せず、スマホの行とPCのカードで1単位=1pxの原図を描き分ける。
- */
+/** 小さく表示する記号なので縮小で兼用せず、スマホの行とPCのカードで1単位=1pxの原図を描き分ける。 */
 const artworks = [
   {
     key: "compact",

@@ -25,7 +25,6 @@ function isKeyframeEffect(
   return effect !== null && "getKeyframes" in effect;
 }
 
-/** 周のうち、最後の姿（静止した姿）のまま変わらない区間が始まる割合。 */
 function restStartFraction(effect: KeyframeEffect): number {
   const keyframes = effect.getKeyframes();
   const last = keyframes.at(-1);
@@ -41,7 +40,6 @@ function restStartFraction(effect: KeyframeEffect): number {
 }
 
 /**
- * 包む要素の中で動く色付きピクトグラムを、周の終わりの静止した姿から始める。
  * 切り替えループ（cut）は周の終わりが静止した姿なので、選んだ瞬間に一覧と同じ姿のまま動きへ入れる。
  * 静止した姿の区間が `SHOWCASE_ENTRY_REST_MS` より長ければ、その終わりの部分だけを見せる。
  */

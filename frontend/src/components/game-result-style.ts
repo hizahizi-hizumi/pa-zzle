@@ -4,10 +4,6 @@ type GameResultStyle = {
   message: string | null;
   scoreClassName: string;
   markClassName: string;
-  /**
-   * 図鑑などの小さな面に使う評価段階そのものの色。
-   * 文字は同系色の濃いトーンを使い、薄い clear でも読めるようにする。
-   */
   fillColorClassName: string;
 };
 
