@@ -166,10 +166,7 @@ function getSpotlitCellIndices(
   ];
 }
 
-/**
- * 5×5 の盤面を、一言と印に沿って一緒に解き、数字と地雷の総数の決まりを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分で開かせる。
- */
+/** 手順を終えたら手を離し、残りを自分で開かせる。 */
 export function MinesweeperTutorial({
   open,
   playStart,

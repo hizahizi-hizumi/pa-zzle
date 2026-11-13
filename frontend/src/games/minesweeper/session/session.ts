@@ -34,7 +34,6 @@ export type MinesweeperSession = GameSession<
   MinesweeperProblem,
   MinesweeperPuzzleState
 > & {
-  // 踏んだ地雷の数。1回の操作で複数の地雷を踏んだ場合は、その数だけ数える。
   mistakeCount: number;
 };
 

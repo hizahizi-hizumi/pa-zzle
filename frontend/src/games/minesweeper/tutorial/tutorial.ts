@@ -117,7 +117,7 @@ const safeCellIndices = cellIndices.filter(
 /**
  * 1の3つに囲まれたマスが地雷だと数字の決まりで見つけて旗を置き、その旗で数がそろった1の隣を開く。
  * 開いた3の周りにあと2つ地雷があり、地雷の総数3つと合わせると、3から離れた3マスには地雷が無いと決まる。
- * 3マスは数字の決まりだけでは決まらない。手順を終えると下の2マスが残り、開いた3マスの数字で1つずつ決まる。
+ * 手順を終えると下の2マスが残り、開いた3マスの数字で1つずつ決まる。
  */
 const steps: readonly MinesweeperTutorialStep[] = [
   {
@@ -377,10 +377,7 @@ function fitsStep(
   );
 }
 
-/**
- * 手を引いている間は、手順どおりの手だけを受け付ける。
- * 手を離した後は本番と同じく、地雷を踏んでも続けられる。
- */
+/** 手を引いている間は、手順どおりの手だけを受け付ける。 */
 function performMinesweeperTutorialAction(
   { step }: MinesweeperTutorialSituation,
   state: MinesweeperTutorialBoardState,
