@@ -3,12 +3,9 @@ import {
   reflectionPieces,
 } from "@/games/reflection/puzzle/board";
 
-/**
- * 生成・検証の内部で使うマスの番号。`0` が空きマス、`1` 以降が `reflectionPieces` の順。
- * 同型判定の正規化キーはこの番号の並びの辞書順で最小のものを取るので、順序を変えると正規化キーも変わる。
- */
 export type ReflectionCellCode = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
+/** 同型判定の正規化キーはマスの番号の並びの辞書順で最小のものを取るので、順序を変えると正規化キーも変わる。 */
 export const reflectionCellsByCode = [
   null,
   ...reflectionPieces,

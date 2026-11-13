@@ -35,7 +35,6 @@ function includesSolution(
   );
 }
 
-/** 解の手持ちのピースが置かれたマスについて、候補がそのピースだけになっているか。 */
 function pinsSolutionPieces(
   domains: Readonly<Uint8Array>,
   solution: ReflectionBoard,
