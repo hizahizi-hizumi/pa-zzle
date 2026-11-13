@@ -17,6 +17,7 @@ import {
   getIceFloorMazeNeighbor,
   type IceFloorMazeDirection,
   type IceFloorMazeShift,
+  type IceFloorMazeSlide,
 } from "@/games/ice-floor-maze/puzzle/rules";
 import type {
   IceFloorMazeState,
@@ -79,6 +80,39 @@ export type IceFloorMazeLastSlide = {
   isClearingMove: boolean;
   entersTrap: boolean;
 };
+
+/** プレイとチュートリアルで、盤面の滑り・変化・音を同じ反応にするため共有する。 */
+export function createIceFloorMazeLastSlide({
+  id,
+  board,
+  goal,
+  slide,
+  isClearingMove,
+  entersTrap,
+}: {
+  id: number;
+  board: IceFloorMazeBoard;
+  goal: number;
+  slide: Extract<IceFloorMazeSlide, { status: "slid" }>;
+  isClearingMove: boolean;
+  entersTrap: boolean;
+}): IceFloorMazeLastSlide {
+  return {
+    id,
+    direction: slide.direction,
+    from: slide.from,
+    to: slide.to,
+    path: slide.path,
+    crumbledRock: slide.crumbledRock,
+    crackedIce: slide.crackedIce,
+    pushedSnow: slide.pushedSnow,
+    movedBlock: slide.movedBlock,
+    stoppedOnFloor: board.cells[slide.to] === "floor",
+    passedGoal: doesIceFloorMazeSlidePassGoal(slide, goal),
+    isClearingMove,
+    entersTrap,
+  };
+}
 
 /**
  * 直前の入力が、すぐ隣が止め役か外壁で1マスも動けなかったこと。盤面と直前の滑りは変わらない。
@@ -259,21 +293,14 @@ function slideInPlay(
   return {
     ...applyPlaySession(current, session),
     ...deadlockNotice,
-    lastSlide: {
+    lastSlide: createIceFloorMazeLastSlide({
       id: inputId,
-      direction,
-      from: slide.from,
-      to: slide.to,
-      path: slide.path,
-      crumbledRock: slide.crumbledRock,
-      crackedIce: slide.crackedIce,
-      pushedSnow: slide.pushedSnow,
-      movedBlock: slide.movedBlock,
-      stoppedOnFloor: board.cells[slide.to] === "floor",
-      passedGoal: doesIceFloorMazeSlidePassGoal(slide, goal),
+      board,
+      goal,
+      slide,
       isClearingMove: session.status === "cleared",
       entersTrap: deadlockNotice.trapNoticed && !current.trapNoticed,
-    },
+    }),
     blockedInput: null,
   };
 }

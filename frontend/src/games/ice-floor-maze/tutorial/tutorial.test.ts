@@ -1,40 +1,38 @@
-import { findIceFloorMazeDeadlock } from "@/games/ice-floor-maze/puzzle/deadlock";
+import { isIceFloorMazeStaticBoard } from "@/games/ice-floor-maze/puzzle/board";
 import {
-  applyIceFloorMazeSlide,
   getIceFloorMazeNeighbor,
   type IceFloorMazeDirection,
-  iceFloorMazeDirections,
-  slideIceFloorMazePiece,
 } from "@/games/ice-floor-maze/puzzle/rules";
-import type { IceFloorMazeState } from "@/games/ice-floor-maze/puzzle/state";
-import { exploreIceFloorMazeStates } from "@/games/ice-floor-maze/puzzle/state-graph";
 import {
   _private,
-  findIceFloorMazeTutorialHintCellIndex,
+  findIceFloorMazeTutorialHint,
   getIceFloorMazeTutorialStepFocus,
   type IceFloorMazeTutorialBoardState,
   type IceFloorMazeTutorialRuleId,
+  type IceFloorMazeTutorialSlide,
   iceFloorMazeTutorial,
   iceFloorMazeTutorialPuzzle,
-  listIceFloorMazeTutorialMoveCellIndices,
-  readIceFloorMazeTutorialSlide,
 } from "@/games/ice-floor-maze/tutorial/tutorial";
 import {
   finishTutorialIntro,
   getTutorialSituation,
   performTutorialAction,
   startTutorial,
+  type TutorialMessage,
   type TutorialProgress,
 } from "@/games/tutorial";
 
 const {
   startState,
   freePlayState,
-  solvedState,
-  findShortestDirections,
-  findStepSlide,
+  listSlides,
+  listSlidesToward,
+  listStepSlides,
+  measureMovesTo,
+  stateAt,
 } = _private;
-const { board, goal } = iceFloorMazeTutorialPuzzle;
+const { board, start, goal } = iceFloorMazeTutorialPuzzle;
+const { steps } = iceFloorMazeTutorial;
 
 type Progress = TutorialProgress<
   IceFloorMazeTutorialRuleId,
@@ -52,301 +50,219 @@ function slideAll(
   );
 }
 
-/** 最初の `count` 個の手順を、印のマスへ止まる向きへ滑らせて終える。 */
 function finishSteps(count: number): Progress {
-  return iceFloorMazeTutorial.steps.slice(0, count).reduce(
-    (progress, step) => {
-      const slide = findStepSlide(progress.boardState.puzzleState, step.target);
-      return slide ? slideAll(progress, [slide.direction]) : progress;
-    },
+  return steps.slice(0, count).reduce(
+    (progress, step) =>
+      slideAll(
+        progress,
+        listStepSlides(progress.boardState.puzzleState, step.target).map(
+          ({ direction }) => direction,
+        ),
+      ),
     finishTutorialIntro(startTutorial(iceFloorMazeTutorial)),
   );
 }
 
-function listStepSlides() {
-  return iceFloorMazeTutorial.steps.map((step, index) => {
-    const before = finishSteps(index);
-    const slide = findStepSlide(before.boardState.puzzleState, step.target);
-    const earnedRuleIds = iceFloorMazeTutorial.steps
-      .slice(0, index + 1)
-      .flatMap(({ introducedRuleId }) =>
-        introducedRuleId === null ? [] : [introducedRuleId],
-      );
-    return { step, before, slide, earnedRuleIds };
-  });
+/** 滑りの止まる位置を読むのに要るルール。岩か壁で止まる滑りは滑るルールだけで読める。 */
+function readSlideRuleIds(
+  slide: IceFloorMazeTutorialSlide,
+): IceFloorMazeTutorialRuleId[] {
+  return [
+    "slide",
+    ...(board.cells[slide.to] === "floor" ? (["floor"] as const) : []),
+    ...(slide.path.includes(goal) ? (["goal"] as const) : []),
+  ];
 }
 
-function listFreePlaySlides() {
-  let state = freePlayState;
-  return (findShortestDirections(freePlayState) ?? []).map((direction) => {
-    const slide = slideIceFloorMazePiece(board, state, direction);
-    const before = state;
-    if (slide.status === "slid") {
-      state = applyIceFloorMazeSlide(state, slide);
-    }
-    return { before, slide };
-  });
+function stopsAtRock(slide: IceFloorMazeTutorialSlide): boolean {
+  const stopper = getIceFloorMazeNeighbor(board, slide.to, slide.direction);
+  return (
+    board.cells[slide.to] !== "floor" &&
+    stopper !== null &&
+    board.cells[stopper] === "rock"
+  );
 }
 
-/**
- * 手順で伝えていない細かいルールで、盤面が応える手か。応えるなら、その理由。
- * すぐ隣のもろい岩・塊・雪へ向ける、動けない塊や押し出せない雪の手前で止まる、塊が薄い氷やゴールの上を通るか止め役でない物の手前で止まる、
- * 雪をゴールか薄い氷の上へ押し出す、床の先のもろい岩が崩れない、のどれか。
- */
-function findUntaughtReaction(
-  state: IceFloorMazeState,
-  direction: IceFloorMazeDirection,
-): string | null {
-  const slide = slideIceFloorMazePiece(board, state, direction);
-  const next = getIceFloorMazeNeighbor(board, state.position, direction);
-  const describeCell = (cell: number | null) =>
-    cell === null
-      ? "wall"
-      : state.blocks.includes(cell)
-        ? "sliding-block"
-        : state.cells[cell];
-  if (slide.status === "blocked") {
-    const neighbor = describeCell(next);
-    return ["sliding-block", "brittle-rock", "snow"].includes(neighbor ?? "")
-      ? `すぐ隣の${neighbor}`
-      : null;
-  }
-  if (slide.movedBlock) {
-    const { from, to } = slide.movedBlock;
-    const stopper = describeCell(getIceFloorMazeNeighbor(board, to, direction));
-    const crossed = [from];
-    for (let cell = from; cell !== to; ) {
-      cell = getIceFloorMazeNeighbor(board, cell, direction)!;
-      crossed.push(cell);
+/** `from` から滑りを重ねて止まれる位置。ゴールで止まると完成するので、ゴールから先はたどらない。 */
+function listReachableStops(from: number): number[] {
+  const stops = [from];
+  for (let order = 0; order < stops.length; order += 1) {
+    const stop = stops[order]!;
+    if (stop === goal) {
+      continue;
     }
-    if (
-      crossed.some((cell) => cell === goal || state.cells[cell] === "thin-ice")
-    ) {
-      return "塊が薄い氷かゴールの上を通る";
+    for (const slide of listSlides(stateAt(stop))) {
+      if (!stops.includes(slide.to)) {
+        stops.push(slide.to);
+      }
     }
-    return ["rock", "water", "snow-mound", "wall", "outside"].includes(
-      stopper ?? "",
-    )
-      ? null
-      : `塊が${stopper}の手前で止まる`;
   }
-  if (slide.pushedSnow) {
-    const { to } = slide.pushedSnow;
-    return to === goal || state.cells[to] === "thin-ice"
-      ? "雪をゴールか薄い氷の上へ押し出す"
-      : null;
-  }
-  const stopper = getIceFloorMazeNeighbor(board, slide.to, direction);
-  if (state.cells[slide.to] === "floor") {
-    return stopper !== null && state.cells[stopper] === "brittle-rock"
-      ? "床の先のもろい岩"
-      : null;
-  }
-  const stopperCell = describeCell(stopper);
-  return stopperCell === "sliding-block" || stopperCell === "snow"
-    ? `動けない${stopperCell}の手前で止まる`
-    : null;
+  return stops;
 }
+
+/** 手順ごとの、始める前の状態と、印のマスへ最も少ない手数で止める滑りの並び。 */
+const stepRoutes = steps.map((step, index) => {
+  const before = finishSteps(index).boardState.puzzleState;
+  return {
+    step,
+    before,
+    slides: listStepSlides(before, step.target),
+    // 滑るルールは、操作を教える最初の手順で伝える。
+    earnedRuleIds: [
+      "slide",
+      ...steps
+        .slice(0, index + 1)
+        .flatMap(({ introducedRuleId }) =>
+          introducedRuleId === null ? [] : [introducedRuleId],
+        ),
+    ],
+  };
+});
+
+describe("盤面", () => {
+  test("要素の無い、レベル1と同じ材料だけの盤面であること", () => {
+    const isStatic = isIceFloorMazeStaticBoard(board);
+
+    expect(isStatic).toBe(true);
+  });
+
+  test("開始位置とゴールが本番と同じく氷のマスにあること", () => {
+    const cells = [board.cells[start], board.cells[goal]];
+
+    expect(cells).toEqual(["ice", "ice"]);
+  });
+});
 
 describe("手を引く間", () => {
-  const stepSlides = listStepSlides();
+  test("どの手順も、印のマスまで滑りを重ねて止まれること", () => {
+    const reached = stepRoutes.map(
+      ({ before, slides }) => slides.at(-1)?.to ?? before.position,
+    );
 
-  test("どの手順にも、印のマスで止まる向きがあること", () => {
-    const missing = stepSlides.filter(({ slide }) => slide === null);
-
-    expect(missing).toEqual([]);
+    expect(reached).toEqual(steps.map(({ target }) => target));
   });
 
-  test("最初の手順で操作を教える滑りが、始めの盤面からゴールに止まる最短の道筋の1手目になること", () => {
-    const fromStart = findShortestDirections(startState)?.length;
-    const afterFirst = findShortestDirections(
-      finishSteps(1).boardState.puzzleState,
-    )?.length;
+  test("最初の手順で操作を教える滑りが、上へ1回滑らせて岩の手前で止まる滑りであること", () => {
+    const [{ slides }] = stepRoutes as [(typeof stepRoutes)[number]];
+    const shape = slides.map((slide) => ({
+      direction: slide.direction,
+      stopsAtRock: stopsAtRock(slide),
+    }));
 
-    expect({ fromStart, afterFirst }).toEqual({
-      fromStart: (afterFirst ?? 0) + 1,
-      afterFirst,
-    });
-  });
-
-  test("手順を終えて残りを最短で進めると、導入で見せるゴールの盤面で完成すること", () => {
-    const solved = slideAll(finishSteps(iceFloorMazeTutorial.steps.length), [
-      ...(findShortestDirections(freePlayState) ?? []),
-    ]);
-
-    expect({
-      phase: solved.phase,
-      position: solved.boardState.puzzleState.position,
-      cells: solved.boardState.puzzleState.cells,
-      blocks: solved.boardState.puzzleState.blocks,
-    }).toEqual({
-      phase: "solved",
-      position: iceFloorMazeTutorial.goal().puzzleState.position,
-      cells: iceFloorMazeTutorial.goal().puzzleState.cells,
-      blocks: iceFloorMazeTutorial.goal().puzzleState.blocks,
-    });
+    expect(shape).toEqual([{ direction: "up", stopsAtRock: true }]);
   });
 
   test("各手順の滑りが、その手順までに示したルールだけで読めること", () => {
-    const unearned = stepSlides.flatMap(({ before, slide, earnedRuleIds }) =>
-      slide
-        ? readIceFloorMazeTutorialSlide(
-            before.boardState.puzzleState,
-            slide,
-          ).ruleIds.filter((ruleId) => !earnedRuleIds.includes(ruleId))
-        : [],
+    const unearned = stepRoutes.flatMap(({ slides, earnedRuleIds }) =>
+      slides
+        .flatMap(readSlideRuleIds)
+        .filter((ruleId) => !earnedRuleIds.includes(ruleId)),
     );
 
     expect(unearned).toEqual([]);
   });
 
-  test("各手順の滑りが、その手順で示すルールを決め手に使うこと", () => {
-    const unused = stepSlides.flatMap(({ step, before, slide }) =>
-      slide &&
-      step.introducedRuleId !== null &&
-      !readIceFloorMazeTutorialSlide(
-        before.boardState.puzzleState,
-        slide,
-      ).ruleIds.includes(step.introducedRuleId)
-        ? [step.introducedRuleId]
-        : [],
+  test("床とゴールの手順の滑りが、その手順で示すルールを決め手に使うこと", () => {
+    const used = stepRoutes
+      .filter(({ step }) =>
+        (["floor", "goal"] as const).some(
+          (ruleId) => ruleId === step.introducedRuleId,
+        ),
+      )
+      .map(({ step, slides }) =>
+        slides.flatMap(readSlideRuleIds).includes(step.introducedRuleId!),
+      );
+
+    expect(used).toEqual([true, true]);
+  });
+
+  test("読みの手順は、印のマスへ1回では止まれず、2回の滑りをどちらも岩で止めること", () => {
+    const reading = stepRoutes.find(
+      ({ step }) => step.introducedRuleId === "stopper",
+    )!;
+    const shape = reading.slides.map(stopsAtRock);
+
+    expect(shape).toEqual([true, true]);
+  });
+
+  test("手順の途中でゴールに止まらないこと", () => {
+    const stoppedAtGoal = stepRoutes.flatMap(({ slides }) =>
+      slides.filter((slide) => slide.to === goal),
     );
 
-    expect(unused).toEqual([]);
+    expect(stoppedAtGoal).toEqual([]);
   });
 
-  test("印の滑りに、まだ伝えていない細かいルールで盤面が応える所が無いこと", () => {
-    const reactions = stepSlides.flatMap(({ before, slide }) => {
-      const reaction = slide
-        ? findUntaughtReaction(before.boardState.puzzleState, slide.direction)
-        : null;
-      return reaction === null ? [] : [reaction];
-    });
+  test("ルールと読みを伝える手順では、ほかの向きにも滑れて、印を見るだけでは向きが決まらないこと", () => {
+    const choices = stepRoutes
+      .filter(({ step }) => step.introducedRuleId !== null)
+      .map(({ before }) => listSlides(before).length >= 2);
 
-    expect(reactions).toEqual([]);
+    expect(choices).toEqual([true, true, true]);
   });
 
-  test("印の滑りが、ゴールで止まらないこと", () => {
-    const stoppedOnGoal = stepSlides.filter(({ slide }) => slide?.to === goal);
-
-    expect(stoppedOnGoal).toEqual([]);
-  });
-});
-
-describe("ルールの決め手", () => {
-  const ruleIds = iceFloorMazeTutorial.rules.map(({ id }) => id);
-  const usedRuleIds = [
-    ...listStepSlides().flatMap(({ before, slide }) =>
-      slide
-        ? readIceFloorMazeTutorialSlide(before.boardState.puzzleState, slide)
-            .ruleIds
-        : [],
-    ),
-    ...listFreePlaySlides().flatMap(({ before, slide }) =>
-      slide.status === "slid"
-        ? readIceFloorMazeTutorialSlide(before, slide).ruleIds
-        : [],
-    ),
-  ];
-
-  test.each(ruleIds)("%s が、1つ以上の滑りの決め手になること", (ruleId) => {
-    const used = usedRuleIds.includes(ruleId);
-
-    expect(used).toBe(true);
-  });
-
-  test("手順で示すルールが、上部に並べたルールの順と同じこと", () => {
-    const introduced = iceFloorMazeTutorial.steps.flatMap(
-      ({ introducedRuleId }) =>
-        introducedRuleId === null ? [] : [introducedRuleId],
+  test("どの手順も、印のマスへ最も少ない手数で近づく向きが1つだけであること", () => {
+    const counts = stepRoutes.flatMap(({ before, slides, step }) =>
+      [before, ...slides.slice(0, -1).map(({ to }) => stateAt(to))].map(
+        (state) => listSlidesToward(state, step.target).length,
+      ),
     );
 
-    expect(introduced).toEqual(ruleIds);
+    expect(new Set(counts)).toEqual(new Set([1]));
   });
-});
-
-describe("伝えた止め役", () => {
-  const slides = [
-    ...listStepSlides().flatMap(({ before, slide }) =>
-      slide ? [{ before: before.boardState.puzzleState, slide }] : [],
-    ),
-    ...listFreePlaySlides().flatMap(({ before, slide }) =>
-      slide.status === "slid" ? [{ before, slide }] : [],
-    ),
-  ];
-  const stopperCells = slides.flatMap(({ before, slide }) => {
-    const stopper = getIceFloorMazeNeighbor(board, slide.to, slide.direction);
-    return stopper === null ? [] : [before.cells[stopper]];
-  });
-  const createdStoppers = ["water", "snow-mound"] as const;
-
-  test.each(createdStoppers)(
-    "要素が変わってできた %s を、伝えた後の滑りで止め役に使うこと",
-    (cell) => {
-      const used = stopperCells.includes(cell);
-
-      expect(used).toBe(true);
-    },
-  );
 });
 
 describe("手を離した後", () => {
-  const graph = exploreIceFloorMazeStates(board, freePlayState, { goal });
+  test("ゴールまで2手以上かかり、伝えた読みがもう一度要ること", () => {
+    const moveCount = measureMovesTo(freePlayState.position, goal);
 
-  test("どう滑っても、ゴールに止まれなくなる状態へ入らないこと", () => {
-    const deadlocked = (graph?.states ?? []).filter(
-      (state) => findIceFloorMazeDeadlock(board, state, goal) !== null,
+    expect(moveCount).toBeGreaterThanOrEqual(2);
+  });
+
+  test("どこからゴールへ滑り込んでも、ゴールの先の岩で止まること", () => {
+    const intoGoal = listReachableStops(freePlayState.position).flatMap(
+      (stop) =>
+        stop === goal
+          ? []
+          : listSlides(stateAt(stop)).filter((slide) => slide.to === goal),
     );
 
-    expect({ explored: graph !== null, deadlocked }).toEqual({
-      explored: true,
-      deadlocked: [],
+    expect(intoGoal.map(stopsAtRock)).toEqual(intoGoal.map(() => true));
+  });
+
+  test("どう滑っても、ゴールに止まれなくなる所が無いこと", () => {
+    const trapped = listReachableStops(freePlayState.position).filter(
+      (stop) => measureMovesTo(stop, goal) === null,
+    );
+
+    expect(trapped).toEqual([]);
+  });
+
+  test("始めの盤面から、手順の滑りの後に最も少ない手数で進めると完成すること", () => {
+    const solved = slideAll(
+      finishSteps(steps.length),
+      listStepSlides(freePlayState, goal).map(({ direction }) => direction),
+    );
+
+    expect({
+      phase: solved.phase,
+      position: solved.boardState.puzzleState.position,
+    }).toEqual({
+      phase: "solved",
+      position: iceFloorMazeTutorial.goal().puzzleState.position,
     });
-  });
-
-  test("最短で3手かかること", () => {
-    const directions = findShortestDirections(freePlayState);
-
-    expect(directions?.length).toBe(3);
-  });
-
-  test("まだ伝えていない細かいルールで盤面が応える手が、どの状態にも無いこと", () => {
-    const reactions = (graph?.states ?? [])
-      .filter(({ position }) => position !== goal)
-      .flatMap((state) =>
-        iceFloorMazeDirections.flatMap((direction) => {
-          const reaction = findUntaughtReaction(state, direction);
-          return reaction === null ? [] : [reaction];
-        }),
-      );
-
-    expect(reactions).toEqual([]);
   });
 });
 
-describe("iceFloorMazeTutorial.perform", () => {
-  describe("滑れる向きがほかにもある手順を引いている間", () => {
-    const progress = finishSteps(1);
-    const step = iceFloorMazeTutorial.steps[1]!;
-    const otherDirections = iceFloorMazeDirections.filter(
-      (direction) =>
-        slideIceFloorMazePiece(
-          board,
-          progress.boardState.puzzleState,
-          direction,
-        ).status === "slid" &&
-        findStepSlide(progress.boardState.puzzleState, step.target)
-          ?.direction !== direction,
-    );
+describe("performTutorialAction", () => {
+  describe("手を引いている間", () => {
+    const progress = finishSteps(0);
+    const ignoredDirections = listSlides(startState)
+      .filter((slide) => slide.direction !== "up")
+      .map(({ direction }) => direction);
 
-    test("印のマスで止まらない、滑れる向きがあること", () => {
-      const count = otherDirections.length;
-
-      expect(count).toBeGreaterThan(0);
-    });
-
-    test.each(otherDirections)(
-      "印のマスで止まらない向き %s では盤面を変えないこと",
+    test.each(ignoredDirections)(
+      "印のマスへ近づかない向きでは盤面が変わらないこと: %s",
       (direction) => {
         const next = performTutorialAction(iceFloorMazeTutorial, progress, {
           direction,
@@ -355,126 +271,186 @@ describe("iceFloorMazeTutorial.perform", () => {
         expect(next).toBe(progress);
       },
     );
+  });
 
-    test("印のマスで止まる向きでは次の手順へ進むこと", () => {
-      const next = finishSteps(2);
+  describe("読みの手順で1回目を滑らせた場合", () => {
+    const readingIndex = steps.findIndex(
+      ({ introducedRuleId }) => introducedRuleId === "stopper",
+    );
+    const progress = finishSteps(readingIndex);
+    const [first] = stepRoutes[readingIndex]!.slides;
+
+    test("同じ手順のまま盤面が進むこと", () => {
+      const next = performTutorialAction(iceFloorMazeTutorial, progress, {
+        direction: first!.direction,
+      });
 
       expect({
         stepIndex: next.stepIndex,
         position: next.boardState.puzzleState.position,
-      }).toEqual({ stepIndex: 2, position: step.target });
+      }).toEqual({ stepIndex: readingIndex, position: first!.to });
     });
   });
 
-  describe("1マスも動けない向き", () => {
-    const progress = slideAll(finishSteps(iceFloorMazeTutorial.steps.length), [
-      "down",
-    ]);
+  describe("手を離した後", () => {
+    const progress = finishSteps(steps.length);
+    const blocked = (["up", "right", "down", "left"] as const).filter(
+      (direction) =>
+        !listSlides(freePlayState).some(
+          (slide) => slide.direction === direction,
+        ),
+    );
 
-    test("手を離した後も盤面を変えないこと", () => {
+    test("ゴールへ近づかない向きにも滑れること", () => {
       const next = performTutorialAction(iceFloorMazeTutorial, progress, {
         direction: "down",
       });
 
-      expect(next).toBe(progress);
+      expect(next.boardState.puzzleState.position).not.toBe(
+        freePlayState.position,
+      );
     });
-  });
 
-  describe("手を離した後", () => {
-    const progress = finishSteps(iceFloorMazeTutorial.steps.length);
+    test.each(blocked)(
+      "1マスも動けない向きでは盤面が変わらないこと: %s",
+      (direction) => {
+        const next = performTutorialAction(iceFloorMazeTutorial, progress, {
+          direction,
+        });
 
-    test("最短の道筋から外れる滑りも受け付けること", () => {
-      const next = slideAll(progress, ["up"]);
-
-      expect({
-        phase: next.phase,
-        moved:
-          next.boardState.puzzleState.position !==
-          progress.boardState.puzzleState.position,
-      }).toEqual({ phase: "playing", moved: true });
-    });
+        expect(next).toBe(progress);
+      },
+    );
   });
 });
 
 describe("getIceFloorMazeTutorialStepFocus", () => {
-  describe("薄い氷の手順", () => {
-    const stepIndex = iceFloorMazeTutorial.steps.findIndex(
-      ({ introducedRuleId }) => introducedRuleId === "thin-ice",
+  describe("読みの手順を始めた場合", () => {
+    const readingIndex = steps.findIndex(
+      ({ introducedRuleId }) => introducedRuleId === "stopper",
     );
-    const progress = finishSteps(stepIndex);
+    const progress = finishSteps(readingIndex);
+    const [first, last] = stepRoutes[readingIndex]!.slides;
 
-    test("印のマスと、割れる薄い氷と止める岩を決め手にすること", () => {
+    test("印のマスとその先の岩を見せ、途中で止まるマスを見せないこと", () => {
       const focus = getIceFloorMazeTutorialStepFocus(
         getTutorialSituation(iceFloorMazeTutorial, progress),
         progress.boardState,
       );
 
-      expect(focus).toEqual({
-        target: 1 + 3 * board.width,
-        path: [1 + 2 * board.width, 1 + 3 * board.width],
-        reasonCellIndices: [1 + 2 * board.width, 1 + 4 * board.width],
+      expect({
+        target: focus?.target,
+        showsStopper: focus?.cellIndices.includes(
+          getIceFloorMazeNeighbor(board, last!.to, last!.direction)!,
+        ),
+        showsMidway: focus?.cellIndices.includes(first!.to),
+      }).toEqual({
+        target: steps[readingIndex]!.target,
+        showsStopper: true,
+        showsMidway: false,
       });
     });
   });
+});
 
-  describe("手を離した後", () => {
-    const progress = finishSteps(iceFloorMazeTutorial.steps.length);
+describe("getIceFloorMazeTutorialStepFocus の通り道", () => {
+  const routes = stepRoutes.filter(
+    ({ step }) => step.introducedRuleId !== null,
+  );
 
-    test("印を付けないこと", () => {
+  test("ルールと読みを伝える手順では、駒から印のマスまでの通り道を見せず、向きを自分で選ばせること", () => {
+    const shownPaths = routes.flatMap(({ step, before, slides }) => {
+      const progress = finishSteps(steps.indexOf(step));
       const focus = getIceFloorMazeTutorialStepFocus(
         getTutorialSituation(iceFloorMazeTutorial, progress),
         progress.boardState,
       );
-
-      expect(focus).toBeNull();
-    });
-  });
-});
-
-describe("listIceFloorMazeTutorialMoveCellIndices", () => {
-  describe("塊を押した手順の後", () => {
-    const stepIndex = iceFloorMazeTutorial.steps.findIndex(
-      ({ introducedRuleId }) => introducedRuleId === "sliding-block",
-    );
-    const progress = finishSteps(stepIndex + 1);
-
-    test("駒の通ったマスと、塊の元と行き先と、塊を止めた岩を含むこと", () => {
-      const lastMove = progress.boardState.lastMove;
-      const cellIndices = lastMove
-        ? listIceFloorMazeTutorialMoveCellIndices(lastMove).sort(
-            (left, right) => left - right,
-          )
-        : [];
-
-      expect(cellIndices).toEqual(
-        [0, 1, 2, 3, 4].map((y) => 4 + y * board.width),
+      const firstPath = slides[0]!.path.filter(
+        (cellIndex) =>
+          cellIndex !== step.target &&
+          cellIndex !== goal &&
+          board.cells[cellIndex] !== "floor",
+      );
+      return firstPath.filter(
+        (cellIndex) =>
+          cellIndex !== before.position &&
+          focus?.cellIndices.includes(cellIndex),
       );
     });
+
+    expect(shownPaths).toEqual([]);
   });
 });
 
-describe("findIceFloorMazeTutorialHintCellIndex", () => {
-  describe("手を離した直後", () => {
-    const state = iceFloorMazeTutorial.start();
-    const freePlay = { ...state, puzzleState: freePlayState };
+describe("findIceFloorMazeTutorialHint", () => {
+  const [first, next] = listStepSlides(freePlayState, goal);
+  const progress = slideAll(finishSteps(steps.length), [first!.direction]);
 
-    test("最短の道筋で次に止まるマスを返すこと", () => {
-      const hint = findIceFloorMazeTutorialHintCellIndex(freePlay);
+  test("岩で止まる手では、最も少ない手数でゴールに止まる道筋で次に止まるマスと、その先の岩を示すこと", () => {
+    const hint = findIceFloorMazeTutorialHint(progress.boardState);
 
-      expect(hint).toBe(2 + 5 * board.width);
-    });
+    expect({
+      target: hint?.target,
+      showsStopper: hint?.cellIndices.includes(
+        getIceFloorMazeNeighbor(board, next!.to, next!.direction)!,
+      ),
+    }).toEqual({ target: next!.to, showsStopper: true });
   });
 
-  describe("ゴールに止まった後", () => {
-    const solved = {
-      ...iceFloorMazeTutorial.start(),
-      puzzleState: solvedState,
-    };
+  test("岩で止まる手では、止めたいマスの先の岩に向けて滑らせる読みの一言を添えること", () => {
+    const hint = findIceFloorMazeTutorialHint(progress.boardState);
 
-    test("何も返さないこと", () => {
-      const hint = findIceFloorMazeTutorialHintCellIndex(solved);
+    expect(hint?.message.headline).toBe(
+      steps.find(({ introducedRuleId }) => introducedRuleId === "stopper")!
+        .message.headline,
+    );
+  });
 
-      expect(hint).toBeNull();
+  describe("壁で止まる手の場合", () => {
+    const wallProgress = finishSteps(steps.length);
+
+    test("滑るルールの一言を添えること", () => {
+      const hint = findIceFloorMazeTutorialHint(wallProgress.boardState);
+
+      expect(hint?.message.headline).toBe(steps[0]!.message.headline);
     });
+  });
+});
+
+describe("一言", () => {
+  const messages: TutorialMessage[] = [
+    ...steps.map(({ message }) => message),
+    iceFloorMazeTutorial.freePlay,
+    iceFloorMazeTutorial.completion.home,
+    iceFloorMazeTutorial.completion.play,
+    {
+      headline: iceFloorMazeTutorial.intro.purpose,
+      detail: iceFloorMazeTutorial.intro.goalCaption,
+    },
+  ];
+  const texts = messages.flatMap(({ headline, detail }) =>
+    detail === null ? [headline] : [headline, detail],
+  );
+
+  test("全角45字まで・3行までで、読点と句点を打たないこと", () => {
+    const broken = texts.filter(
+      (text) =>
+        text.replaceAll("\n", "").length > 45 ||
+        text.split("\n").length > 3 ||
+        /[、。]/.test(text),
+    );
+
+    expect(broken).toEqual([]);
+  });
+
+  test("完成で振り返るルールの順が、手順で示す順と同じこと", () => {
+    const introduced = steps.flatMap(({ introducedRuleId }) =>
+      introducedRuleId === null ? [] : [introducedRuleId],
+    );
+
+    expect(iceFloorMazeTutorial.rules.map(({ id }) => id)).toEqual([
+      "slide",
+      ...introduced,
+    ]);
   });
 });

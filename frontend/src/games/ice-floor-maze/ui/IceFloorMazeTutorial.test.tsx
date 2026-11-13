@@ -4,10 +4,16 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
+import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
+import {
+  iceFloorMazeTutorial,
+  iceFloorMazeTutorialRecap,
+} from "@/games/ice-floor-maze/tutorial/tutorial";
 import { IceFloorMazeTutorial } from "@/games/ice-floor-maze/ui/IceFloorMazeTutorial";
 import { playSound } from "@/lib/sound-effects";
 
@@ -20,28 +26,30 @@ function cellAt(x: number, y: number): number {
   return y * 6 + x;
 }
 
-/** 手順ごとの、印のマスへ止まる向きと印のマス。 */
+const start = cellAt(2, 5);
+const goal = cellAt(4, 4);
+
+/** 手順ごとの、印のマスへ最も少ない手数で止める向きと印のマス。 */
 const steps = [
-  { direction: "right", target: cellAt(1, 0) },
-  { direction: "down", target: cellAt(1, 1) },
-  { direction: "down", target: cellAt(1, 3) },
-  { direction: "right", target: cellAt(4, 3) },
-  { direction: "down", target: cellAt(4, 4) },
-  { direction: "up", target: cellAt(4, 2) },
-  { direction: "left", target: cellAt(2, 2) },
+  { directions: ["up"], target: cellAt(2, 2) },
+  { directions: ["right"], target: cellAt(4, 2) },
+  { directions: ["down"], target: cellAt(4, 5) },
+  { directions: ["left", "up"], target: cellAt(1, 1) },
 ] as const satisfies readonly {
-  direction: IceFloorMazeDirection;
+  directions: readonly IceFloorMazeDirection[];
   target: number;
 }[];
 
-/** 手を離した後、最短でゴールに止まる向き。 */
-const remainingDirections = ["down", "right", "up"] as const;
+const remainingDirections = ["left", "down", "right"] as const;
 
-/** 次の印を付けるまでの間を十分に越える時間。 */
+const firstFreePlayStop = cellAt(0, 1);
+
 const nextStepCueEnoughMs = 1500;
 
-/** 手を離した後、手が止まってから次に止まるマスを示すまでの間。 */
-const idleHintDelayMs = 4000;
+/** 最初の手順の滑り（3マス）を滑り終えるのに十分で、次の印に替わるまでの間より短い時間。 */
+const slideFinishedMs = 500;
+
+const longIdleMs = 10000;
 
 const arrowKeyByDirection = {
   up: "ArrowUp",
@@ -70,15 +78,25 @@ function advanceTime(ms: number): void {
   });
 }
 
-/** 場面の動きを待たずに「次へ」を続けて押し、ゴールと始まりの盤面を通って最初の手順から始める。 */
-function pressNextThroughIntro(): void {
-  for (
-    let next = screen.queryByRole("button", { name: "次へ" });
-    next;
-    next = screen.queryByRole("button", { name: "次へ" })
-  ) {
-    fireEvent.click(next);
-  }
+function getScreen(): HTMLElement {
+  return screen.getByRole("dialog", { name: ICE_FLOOR_MAZE_DISPLAY_NAME });
+}
+
+function pressStart(): void {
+  fireEvent.click(
+    within(getScreen()).getByRole("button", { name: "はじめる" }),
+  );
+  advanceTime(0);
+}
+
+function queryStartButton(): HTMLElement | null {
+  return within(getScreen()).queryByRole("button", { name: "はじめる" });
+}
+
+function getProgressValue(): string | null {
+  return within(getScreen())
+    .getByRole("progressbar", { name: "チュートリアルの進み具合" })
+    .getAttribute("aria-valuenow");
 }
 
 function slide(directions: readonly IceFloorMazeDirection[]): void {
@@ -90,8 +108,10 @@ function slide(directions: readonly IceFloorMazeDirection[]): void {
 /** 手順を順に、印のマスへ止まる向きへ滑らせ、そのたびに次の印が出るまで待つ。 */
 function finishSteps(count: number): void {
   for (const step of steps.slice(0, count)) {
-    slide([step.direction]);
-    advanceTime(nextStepCueEnoughMs);
+    for (const direction of step.directions) {
+      slide([direction]);
+      advanceTime(nextStepCueEnoughMs);
+    }
   }
 }
 
@@ -112,7 +132,19 @@ function getCuedCell(): number | null {
   return cue ? Number(cue.getAttribute("data-cell-cue")) : null;
 }
 
-/** 盤面の上で、画面全体の覆いから抜いている所。 */
+function getSwipeCue(): { cellIndex: number; direction: string | null } | null {
+  const cue = document.querySelector("[data-swipe-cue]");
+  return cue
+    ? {
+        cellIndex: Number(cue.getAttribute("data-swipe-cue")),
+        direction:
+          cue
+            .querySelector('[data-tutorial-cue="pointer"]')
+            ?.getAttribute("data-swipe") ?? null,
+      }
+    : null;
+}
+
 function getBoardSpotlights(): NodeListOf<Element> {
   return (getBoard().parentElement ?? getBoard()).querySelectorAll(
     "[data-tutorial-spotlight]",
@@ -144,66 +176,120 @@ describe("IceFloorMazeTutorial", () => {
           onClose={onClose}
         />,
       );
-      pressNextThroughIntro();
+      pressStart();
     });
 
     test("始めの盤面で、操作と滑るルールを伝え、駒を止めるマスに印を付けること", () => {
       const headline = screen.getByText("駒は岩か壁にぶつかるまで 滑ります");
-      const detail = screen.getByText("右へスワイプしてください");
+      const detail = screen.getByText("上へスワイプして駒を滑らせてみましょう");
       const position = getPiecePosition();
       const cued = getCuedCell();
 
       expect(headline).toBeTruthy();
       expect(detail).toBeTruthy();
-      expect(position).toBe(cellAt(0, 0));
+      expect(position).toBe(start);
       expect(cued).toBe(steps[0].target);
+      expect(getProgressValue()).toBe("0");
     });
 
-    test("駒のいるマス・印のマス・止める岩を、画面全体の覆いから抜くこと", () => {
+    test("操作を教える手順では、駒のマスで指を上へ滑らせて、スワイプの向きを見せること", () => {
+      const swipe = getSwipeCue();
+
+      expect(swipe).toEqual({ cellIndex: start, direction: "up" });
+    });
+
+    test("操作を教える手順では、盤面を覆わないこと", () => {
       const spotlights = getBoardSpotlights();
 
-      expect(spotlights.length).toBeGreaterThan(0);
+      expect(spotlights.length).toBe(0);
     });
 
-    test("1マスも動けない向きへ滑らせようとすると、駒を動かさず音も鳴らさずに、印の線を濃くし直すこと", () => {
-      slide(["up"]);
+    test("印のマスで止まらない向きへ滑らせようとすると、駒を動かさず音も鳴らさずに、印の線を濃くし直すこと", () => {
+      slide(["left"]);
 
       const position = getPiecePosition();
       const recalled = document.querySelector('[data-tutorial-cue="recall"]');
 
-      expect(position).toBe(cellAt(0, 0));
+      expect(position).toBe(start);
       expect(recalled).not.toBeNull();
       expect(playSound).not.toHaveBeenCalled();
     });
 
-    test("滑らせてから次の一言と印に替えるまでは、次の手順の手を受け付けないこと", () => {
-      slide(["right", "down"]);
+    test("1マスも動けない向きへ滑らせようとすると、本番と同じく押し戻して動けなかった音を鳴らし、印の線を濃くし直すこと", () => {
+      slide(["down"]);
+
+      const position = getPiecePosition();
+      const recalled = document.querySelector('[data-tutorial-cue="recall"]');
+      const sounds = getPlayedSoundNames();
+
+      expect(position).toBe(start);
+      expect(recalled).not.toBeNull();
+      expect(sounds).toEqual(["blocked.flac"]);
+    });
+
+    test("駒が滑っている間は、次の手順の手を受け付けないこと", () => {
+      slide(["up", "right"]);
 
       const position = getPiecePosition();
 
       expect(position).toBe(steps[0].target);
     });
 
-    describe("滑れる向きがほかにもある手順に進んだ場合", () => {
+    test("滑り終えた後なら、次の一言と印に替わる前の手でも受け付けること", () => {
+      slide(["up"]);
+      advanceTime(slideFinishedMs);
+      slide(["right"]);
+
+      const position = getPiecePosition();
+
+      expect(position).toBe(steps[1].target);
+    });
+
+    describe("ルールを伝える手順に進んだ場合", () => {
       beforeEach(() => {
         finishSteps(1);
-        vi.mocked(playSound).mockClear();
       });
 
-      test("印のマスで止まらない向きへ滑らせようとすると、駒を動かさず音も鳴らさずに、印の線を濃くし直すこと", () => {
-        slide(["left"]);
+      test("向きを自分で選ばせるため、指のしぐさを出さないこと", () => {
+        const swipe = getSwipeCue();
 
-        const position = getPiecePosition();
-        const recalled = document.querySelector('[data-tutorial-cue="recall"]');
+        expect(swipe).toBeNull();
+      });
 
-        expect(position).toBe(steps[0].target);
-        expect(recalled).not.toBeNull();
-        expect(playSound).not.toHaveBeenCalled();
+      test("駒のいるマス・印のマス・止める床を、盤面の覆いから抜くこと", () => {
+        const spotlights = getBoardSpotlights();
+
+        expect(spotlights.length).toBeGreaterThan(0);
       });
     });
 
-    test("印のマスへ止まる向きへ滑らせると、駒が止まり、滑り終えて見届けるまで今の一言を残してから、次の一言と印に替えること", () => {
-      slide(["right"]);
+    describe("読みの手順に進んだ場合", () => {
+      beforeEach(() => {
+        finishSteps(3);
+      });
+
+      test("1回目を滑らせても同じ一言と印のままで、もう1回滑らせると手を離すこと", () => {
+        slide(["left"]);
+        advanceTime(nextStepCueEnoughMs);
+        const cuedAfterFirst = getCuedCell();
+        const headlineAfterFirst = screen.queryByText(
+          "止めたいマスの先の岩に 向けて滑らせます",
+        );
+        slide(["up"]);
+        advanceTime(nextStepCueEnoughMs);
+
+        const headline = screen.queryByText(
+          "ゴールで止めるにはどこから滑らせるかを逆にたどりましょう",
+        );
+
+        expect(cuedAfterFirst).toBe(steps[3].target);
+        expect(headlineAfterFirst).not.toBeNull();
+        expect(headline).not.toBeNull();
+      });
+    });
+
+    test("印のマスへ止まる向きへ滑らせると、駒が止まり、滑り終えて見届けるまで今の一言を残してから、次の一言と印に替え、進み具合を進めること", () => {
+      slide(["up"]);
       const position = getPiecePosition();
       const cuedBeforeDelay = getCuedCell();
       const headlineBeforeDelay = screen.queryByText(
@@ -212,21 +298,26 @@ describe("IceFloorMazeTutorial", () => {
       advanceTime(nextStepCueEnoughMs);
 
       const cued = getCuedCell();
-      const headline = screen.queryByText("駒は床に入ると止まります");
+      const headline = screen.queryByText("駒は緑の床に乗ると止まります");
 
       expect(position).toBe(steps[0].target);
       expect(cuedBeforeDelay).toBeNull();
       expect(headlineBeforeDelay).not.toBeNull();
       expect(cued).toBe(steps[1].target);
       expect(headline).not.toBeNull();
+      expect(getProgressValue()).toBe("20");
     });
 
     test("印のマスへ止まる向きへ滑らせると、本番と同じ滑る音を鳴らすこと", () => {
-      slide(["right"]);
+      slide(["up"]);
 
       const sounds = getPlayedSoundNames();
 
-      expect(sounds).toEqual(["slid.flac", "stopped.flac"]);
+      expect(sounds).toEqual([
+        "slid.flac",
+        "glided-short.flac",
+        "stopped.flac",
+      ]);
     });
 
     test("盤面をスワイプしても滑らせること", () => {
@@ -241,8 +332,8 @@ describe("IceFloorMazeTutorial", () => {
       fireEvent.pointerMove(board, {
         isPrimary: true,
         pointerId: 1,
-        clientX: 160,
-        clientY: 100,
+        clientX: 100,
+        clientY: 40,
       });
 
       const position = getPiecePosition();
@@ -255,63 +346,104 @@ describe("IceFloorMazeTutorial", () => {
         finishSteps(steps.length);
       });
 
-      test("ゴールで止めることを伝え、手が止まったときだけ、一言は替えずに次に止まるマスへ印を付けること", () => {
-        const cuedBeforeIdle = getCuedCell();
-        advanceTime(idleHintDelayMs);
+      test("ゴールで止めることを伝え、手が止まっていても印も覆いも出さないこと", () => {
+        advanceTime(longIdleMs);
 
         const cued = getCuedCell();
+        const spotlights = getBoardSpotlights();
         const headline = screen.getByText(
-          "ここからは自分で 駒をゴールで止めてみましょう",
+          "ゴールで止めるにはどこから滑らせるかを逆にたどりましょう",
         );
 
-        expect(cuedBeforeIdle).toBeNull();
-        expect(cued).toBe(cellAt(2, 5));
+        expect(cued).toBeNull();
+        expect(spotlights.length).toBe(0);
         expect(headline).toBeTruthy();
       });
 
-      test("画面全体の覆いから抜くマスを置かないこと", () => {
-        advanceTime(idleHintDelayMs);
+      test("ヒントを押すと、次に止まるマスに印を付けてその手を決めるルールの一言を出し、次の手で消すこと", () => {
+        fireEvent.click(screen.getByRole("button", { name: "ヒント" }));
+        const cued = getCuedCell();
+        const headline = screen.queryByText(
+          "駒は岩か壁にぶつかるまで 滑ります",
+        );
+        slide(["left"]);
 
-        const spotlights = getBoardSpotlights();
+        const cuedAfterSlide = getCuedCell();
 
-        expect(spotlights.length).toBe(0);
+        expect(cued).toBe(firstFreePlayStop);
+        expect(headline).not.toBeNull();
+        expect(cuedAfterSlide).toBeNull();
+      });
+
+      test("ヒントでは、手を引く間のルールを伝える手順と同じく、指のしぐさを出さないこと", () => {
+        fireEvent.click(screen.getByRole("button", { name: "ヒント" }));
+
+        const swipe = getSwipeCue();
+
+        expect(swipe).toBeNull();
       });
 
       test("1マスも動けない向きへ滑らせると、駒を動かさず、本番と同じ動けなかった音を鳴らすこと", () => {
-        slide(["down"]);
         vi.mocked(playSound).mockClear();
-        slide(["down"]);
+        slide(["up"]);
 
         const position = getPiecePosition();
         const sounds = getPlayedSoundNames();
 
-        expect(position).toBe(cellAt(2, 5));
+        expect(position).toBe(steps[3].target);
         expect(sounds).toEqual(["blocked.flac"]);
       });
 
-      test("ゴールで止めると、完成を伝え、ゲームのホームで開いているレベルを遊ぶ操作でそのレベルを始めること", () => {
-        slide(remainingDirections);
-        advanceTime(nextStepCueEnoughMs);
-        const headline = screen.getByText("完成です");
-        const detail = screen.getByText("どのレベルも同じルールです");
-        fireEvent.click(screen.getByRole("button", { name: "レベル 3を遊ぶ" }));
+      test("手を離した後は、手順の分だけ進み具合を進めておくこと", () => {
+        const progress = getProgressValue();
 
-        expect(headline).toBeTruthy();
-        expect(detail).toBeTruthy();
-        expect(playStart.onStart).toHaveBeenCalledOnce();
+        expect(progress).toBe("80");
       });
 
-      test("ゴールで止めた後のもう一度で、最初の手順から始めること", () => {
-        slide(remainingDirections);
-        advanceTime(nextStepCueEnoughMs);
-        fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-        pressNextThroughIntro();
+      describe("ゴールで止めた場合", () => {
+        beforeEach(() => {
+          slide(remainingDirections);
+          advanceTime(nextStepCueEnoughMs);
+        });
 
-        const position = getPiecePosition();
-        const cued = getCuedCell();
+        test("完成を伝え、覚えたルールを並べ、進み具合を満たすこと", () => {
+          const headline = screen.getByText("完成です");
+          const detail = screen.getByText(
+            "ほかの仕掛けは 「遊び方」で見られます",
+          );
+          const recap = within(
+            within(getScreen()).getByRole("list", { name: "覚えたルール" }),
+          )
+            .getAllByRole("listitem")
+            .map((item) => item.textContent);
 
-        expect(position).toBe(cellAt(0, 0));
-        expect(cued).toBe(steps[0].target);
+          expect(headline).toBeTruthy();
+          expect(detail).toBeTruthy();
+          expect(recap).toEqual(iceFloorMazeTutorialRecap);
+          expect(getProgressValue()).toBe("100");
+        });
+
+        test("ゲームのホームで開いているレベルを遊ぶ操作で、そのレベルを始めること", () => {
+          fireEvent.click(
+            screen.getByRole("button", { name: "レベル 3を遊ぶ" }),
+          );
+
+          expect(playStart.onStart).toHaveBeenCalledOnce();
+        });
+
+        test("もう一度を押すと、入口を通さずに、始めの盤面で最初の手順から始めること", () => {
+          fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+          advanceTime(0);
+
+          const position = getPiecePosition();
+          const cued = getCuedCell();
+          const startButton = queryStartButton();
+
+          expect(position).toBe(start);
+          expect(cued).toBe(steps[0].target);
+          expect(startButton).toBeNull();
+          expect(getProgressValue()).toBe("0");
+        });
       });
     });
   });
@@ -328,16 +460,23 @@ describe("IceFloorMazeTutorial", () => {
       );
     });
 
-    test("最初の画面で、何をするパズルかとゴールの盤面を、ゴールの一言と一緒に見せること", () => {
-      const caption = screen.getByText("駒がゴールの印で止まれば完成です");
+    test("入口で、何をするパズルかとゴールの盤面を、ゴールの一言とはじめるの操作と一緒に見せること", () => {
+      const purpose = screen.getByText(
+        iceFloorMazeTutorial.intro.purpose.replaceAll("\n", " "),
+      );
+      const caption = screen.getByText("ゴールで止めると完成です");
       const position = getPiecePosition();
+      const startButton = queryStartButton();
 
+      expect(purpose).toBeTruthy();
       expect(caption).toBeTruthy();
-      expect(position).toBe(cellAt(3, 2));
+      expect(position).toBe(goal);
+      expect(startButton).not.toBeNull();
+      expect(getProgressValue()).toBe("0");
     });
 
     test("手順を進めて、手を離した後にゴールで止められること", () => {
-      pressNextThroughIntro();
+      pressStart();
       finishSteps(steps.length);
       slide(remainingDirections);
       advanceTime(nextStepCueEnoughMs);
@@ -348,17 +487,56 @@ describe("IceFloorMazeTutorial", () => {
     });
   });
 
+  describe("始めてから閉じて開き直した場合", () => {
+    beforeEach(() => {
+      const { rerender } = render(
+        <IceFloorMazeTutorial
+          open={true}
+          playStart={playStart}
+          onClose={onClose}
+        />,
+      );
+      pressStart();
+      finishSteps(1);
+      fireEvent.keyDown(getScreen(), { key: "Escape" });
+      rerender(
+        <IceFloorMazeTutorial
+          open={false}
+          playStart={playStart}
+          onClose={onClose}
+        />,
+      );
+      rerender(
+        <IceFloorMazeTutorial
+          open={true}
+          playStart={playStart}
+          onClose={onClose}
+        />,
+      );
+    });
+
+    test("入口から、ゴールの盤面で始まること", () => {
+      const startButton = queryStartButton();
+      const position = getPiecePosition();
+
+      expect(onClose).toHaveBeenCalledOnce();
+      expect(startButton).not.toBeNull();
+      expect(position).toBe(goal);
+      expect(getProgressValue()).toBe("0");
+    });
+  });
+
   describe("プレイ中に開いた場合", () => {
     beforeEach(() => {
       render(<IceFloorMazeTutorial open={true} onClose={onClose} />);
-      pressNextThroughIntro();
+      pressStart();
       finishSteps(steps.length);
     });
 
-    test("ゴールで止めると、プレイ中の盤面も同じルールだと伝え、プレイに戻る操作で閉じること", () => {
+    test("ゴールで止めると、ほかの仕掛けは遊び方で見られると伝え、プレイに戻る操作で閉じること", () => {
       slide(remainingDirections);
       advanceTime(nextStepCueEnoughMs);
-      const detail = screen.getByText("プレイ中の盤面も同じルールです");
+      const detail = screen.getByText("ほかの仕掛けは 「遊び方」で見られます");
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
       expect(detail).toBeTruthy();
