@@ -175,10 +175,7 @@ export function cycleTakuzuSessionCell(
   );
 }
 
-/**
- * 同じプレイのまま盤面を初期配置へ戻す（盤面を戻す）。経過時間と入力の記録は引き継ぐ。
- * 盤面を戻す前の操作は待ったで戻せない。
- */
+/** 盤面を戻す前の操作は待ったで戻せない。 */
 export function restartTakuzuSession(session: TakuzuSession): TakuzuSession {
   if (!canRestartTakuzuSession(session)) {
     return session;
@@ -201,10 +198,7 @@ export function canRestartTakuzuSession(session: TakuzuSession): boolean {
   );
 }
 
-/**
- * 直前の盤面操作を1つ取り消す（待った）。置き直しの記録も操作前へ戻すので、取り消した操作は置き直しに数えない。
- * 入力回数は押した事実として戻さない。
- */
+/** 置き直しの記録は操作前へ戻し、入力回数は押した事実として戻さない。 */
 export function undoTakuzuSession(session: TakuzuSession): TakuzuSession {
   if (session.status !== "playing") {
     return session;

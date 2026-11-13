@@ -32,7 +32,7 @@ type TakuzuBoardProps = {
   interactionDisabled: boolean;
   /** 通常のプレイでは渡さない。 */
   cues?: readonly TakuzuCellCue[];
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せるもの。通常のプレイでは渡さない。 */
+  /** 通常のプレイでは渡さない。 */
   spotlight?: TakuzuBoardSpotlight | null;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;

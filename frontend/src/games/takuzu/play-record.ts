@@ -105,10 +105,6 @@ export type TakuzuRecordedResult = {
   result: TakuzuResult;
 };
 
-/**
- * 記録から結果画面に出す内容を作り直す。
- * 今の版の記録で、今の生成器の問題のときだけ作れる。
- */
 export function restoreTakuzuRecordedResult(
   record: PlayRecord,
 ): TakuzuRecordedResult | null {

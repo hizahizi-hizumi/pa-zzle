@@ -57,7 +57,6 @@ export type TakuzuSolveWorkload = {
   lineReadingRoundCount: number;
 };
 
-/** 記録に残した問題の識別情報。生成器の版が今と違う記録も読み込む。 */
 export type TakuzuRecordedProblemIdentity = RecordedProblemIdentity;
 
 export type TakuzuIdentifiedProblem = {
