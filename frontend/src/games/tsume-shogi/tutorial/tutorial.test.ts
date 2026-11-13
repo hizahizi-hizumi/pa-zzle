@@ -61,7 +61,6 @@ function perform(progress: Progress, action: TsumeShogiTutorialAction) {
   return performTutorialAction(tsumeShogiTutorial, progress, action);
 }
 
-/** 駒（持駒）を選び、行き先の升を押す。 */
 function selectAndPlay(progress: Progress, move: TsumeShogiMove): Progress {
   const selected = perform(
     progress,
@@ -72,7 +71,6 @@ function selectAndPlay(progress: Progress, move: TsumeShogiMove): Progress {
   return perform(selected, { type: "square", square: move.to });
 }
 
-/** 手順の手を指し、玉方の応手を盤面に指す。待ったの手順では待ったを押す。 */
 function playStep(progress: Progress, step: TsumeShogiTutorialStep): Progress {
   if (step.target.type === "undo") {
     return perform(progress, { type: "undo" });
@@ -84,7 +82,6 @@ function playStep(progress: Progress, step: TsumeShogiTutorialStep): Progress {
 
 const started = finishTutorialIntro(startTutorial(tsumeShogiTutorial));
 
-/** `count` 個の手順を終えた進行。 */
 function playSteps(count: number): Progress {
   return steps.slice(0, count).reduce(playStep, started);
 }
@@ -98,7 +95,6 @@ function getStepMove(step: TsumeShogiTutorialStep): TsumeShogiMove {
   return step.target.move;
 }
 
-/** 本番と同じ遷移で、攻方の手を指して玉方が応じた盤面。 */
 function playWithReply(session: TsumeShogiSession, move: TsumeShogiMove) {
   return perform(
     { ...released, boardState: playMove(session, move) },
@@ -114,10 +110,6 @@ function toStateKey(session: TsumeShogiSession): string {
   ].join(" ");
 }
 
-/**
- * 手を離した後に、王手を指す・玉方が応じる・待ったを押すで届く盤面すべて。詰んだ盤面からは先へ進めない。
- * 王手にならない手と指せない手は盤面を変えないので含めない。
- */
 function exploreFreePlay(
   start: TsumeShogiSession,
 ): Map<string, { session: TsumeShogiSession; nextKeys: string[] }> {
@@ -141,6 +133,7 @@ function exploreFreePlay(
       if (undone !== session) {
         nextSessions.push(undone);
       }
+      // 王手にならない手と指せない手は盤面を変えないので含めない。
       if (getTsumeShogiSessionPhase(session) === "attacker") {
         for (const check of listTsumeShogiAttackerChecks(session.puzzleState)) {
           nextSessions.push(playWithReply(session, check));
@@ -156,7 +149,6 @@ function exploreFreePlay(
   return explored;
 }
 
-/** 作意の攻方の手番ごとの、指す前の局面と残りの手数。 */
 const attackerTurns = [0, 2, 4].map((index) => ({
   position: problem.mainLine
     .slice(0, index)
@@ -337,7 +329,6 @@ describe("手順", () => {
     );
     const checkStepMove = getStepMove(steps[checkStepIndex]!);
     const checkStepPosition = playSteps(checkStepIndex).boardState.puzzleState;
-    /** 手を離した後の王手のうち、詰まない王手それぞれへの玉の応手。 */
     const escapingReplies = listTsumeShogiAttackerChecks(freePosition)
       .filter((check) => !isSameTsumeShogiMove(check, matingMove))
       .map((check) => {

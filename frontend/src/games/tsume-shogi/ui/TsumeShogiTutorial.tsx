@@ -94,7 +94,6 @@ const tutorialBoardGroupSizeStyle = {
 /** 玉方が応じて次の手順へ進んでから、次の印を付けるまでの間。玉が動き終えるのを見届けてから、次の印に替える。 */
 const NEXT_STEP_CUE_DELAY_MS = 450;
 
-/** 手を離した後、手が止まってから次の手を示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
 const goalState = tsumeShogiTutorial.goal();
@@ -146,10 +145,6 @@ function getSpotlitSquares(
   ];
 }
 
-/**
- * 盤の右の端で玉を追う5手詰を、一言と印に沿って1手ずつ指し、持駒・王手・逃げ道と待ったを身につけさせる。
- * 手順を終えたら手を離し、詰ませる手を自分で指させる。盤・駒台・駒の動き・玉方の応手・詰みの演出は本番と同じ部品を使う。
- */
 export function TsumeShogiTutorial({
   open,
   playStart,
@@ -158,7 +153,7 @@ export function TsumeShogiTutorial({
   const [progress, setProgress] = useState<TsumeShogiTutorialProgress>(() =>
     startTutorial(tsumeShogiTutorial),
   );
-  // 盤面の操作の知らせ。本番と同じ効果音を鳴らす。最初からやり直しても前の回と重ならない `id` を振る。
+  // 盤面の操作の知らせ。最初からやり直しても前の回と重ならない `id` を振る。
   const [operation, setOperation] = useState<TsumeShogiOperation | null>(null);
   const operationIdRef = useRef(0);
   // 待ったで盤面に戻ってきた最後の組。指し直したときのように動かして見せない。
@@ -244,7 +239,6 @@ export function TsumeShogiTutorial({
     [progress, guiding],
   );
 
-  // 本番と同じく、攻方が指してから間を置いて玉方の応手を盤面に指す。
   useEffect(() => {
     if (!open || !session.defenderReplyPending) {
       return;
@@ -310,16 +304,13 @@ export function TsumeShogiTutorial({
     });
   }
 
-  /**
-   * 導入の間はゴールの盤面を、始まりの場面では始めの盤面を見せる。
-   * 最初の手順の印は、導入の終わりに一言と同時に出す。
-   */
   function renderBoard({
     scene,
     playing,
     onSceneEnd,
     messageShown,
   }: TutorialBoardIntro) {
+    // 最初の手順の印は、導入の終わりに一言と同時に出す。
     const introMark =
       progress.phase === "intro" && messageShown && situation.step
         ? getTsumeShogiTutorialMark(situation.step.target, session)
@@ -376,7 +367,6 @@ export function TsumeShogiTutorial({
 }
 
 type TsumeShogiTutorialBoardProps = {
-  /** 盤に見せる状態。導入の場面ではゴールか始めの盤面。 */
   state: TsumeShogiTutorialBoardState;
   scene: TutorialBoardIntro["scene"];
   scenePlaying: boolean;
@@ -388,14 +378,12 @@ type TsumeShogiTutorialBoardProps = {
   restoredTurn: TsumeShogiSessionTurn | null;
   /** 盤の下の、この手数では詰まないという知らせを、覆いから抜く。 */
   statusSpotlit: boolean;
-  /** 手順の決め手として、玉と一緒に覆いから抜く升。 */
   keySquares: readonly TsumeShogiSquare[];
   acceptsInput: boolean;
   onAction: (action: TsumeShogiTutorialAction) => void;
   onClearAnimationComplete: () => void;
 };
 
-/** 本番と同じ盤・駒台・直前の手の行に、チュートリアルの印と覆いから抜く所を重ねる。待ったは駒台の左に置く。 */
 function TsumeShogiTutorialBoard({
   state,
   scene,

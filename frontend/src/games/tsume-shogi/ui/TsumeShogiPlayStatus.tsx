@@ -6,7 +6,6 @@ import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-ton
 import { cn } from "@/lib/utils";
 
 type TsumeShogiPlayStatusProps = {
-  /** 問題の手数。誤王手の筋で手数が尽きたとき、その手数では詰まないことを示す。 */
   plies: number;
   phase: TsumeShogiSessionPhase;
   shownMoves: readonly TsumeShogiPlayedMove[];
@@ -15,7 +14,7 @@ type TsumeShogiPlayStatusProps = {
 };
 
 /**
- * 盤の下の1行。直前の組の手を棋譜で示し、誤王手の筋では玉方の反証を反証の色で示す。行の高さは変えず、盤を動かさない。
+ * 盤の下の1行。行の高さは変えず、盤を動かさない。
  * 盤が狭くて収まらないときは、この手数では詰まないという知らせを残し、棋譜の方を省いて見せる。
  */
 export function TsumeShogiPlayStatus({

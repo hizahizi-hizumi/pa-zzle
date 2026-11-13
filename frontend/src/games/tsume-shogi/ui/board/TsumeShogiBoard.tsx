@@ -33,14 +33,12 @@ type TsumeShogiBoardProps = {
   /** 盤上の駒ごとの、指し手で変わらない識別（`formatTsumeShogiSquareKey` の升から）。駒ごとの木目の位置を決める。 */
   boardPieceIds: ReadonlyMap<string, string>;
   selection: TsumeShogiSelection | null;
-  /** 盤面に見せている最後の組の手。最後の手の移動先の地を変え、その駒を動かして見せる。 */
+  /** 盤面に見せている最後の組の手。 */
   shownMoves: readonly TsumeShogiPlayedMove[];
   /** `shownMoves` が、待ったなどで盤面に戻ってきた手か。指した手ではないので駒を動かして見せない。 */
   shownMovesRestored: boolean;
   promotionChoice: TsumeShogiPromotionChoice | null;
-  /** 直前の入力を着手させなかった。選んでいる盤上の駒で返す。 */
   rejection: TsumeShogiRejection | null;
-  /** 詰み上がり。詰んだ玉を傾け、詰みの波で光る層を升に置く。 */
   mated: boolean;
   interactionDisabled: boolean;
   /**
@@ -96,10 +94,6 @@ function findPiece(
   );
 }
 
-/**
- * 9×9 の盤。升を歪めずに描いた天面の手前に側面を見せた榧の盤で、木の縁の上に筋、右に段を書き、星を打つ。升全体を押せる。
- * 移動先の候補は示さない（どの手が王手になるかを読むことがこのゲームの考えどころなので、合法手を盤に出さない）。
- */
 export function TsumeShogiBoard({
   boardPieces,
   boardPieceIds,

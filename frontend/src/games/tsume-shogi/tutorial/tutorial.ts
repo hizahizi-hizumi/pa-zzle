@@ -43,9 +43,7 @@ import type {
 export type TsumeShogiTutorialRuleId = "drop" | "check" | "escape";
 
 /**
- * 利用者の1回の操作と、盤面に玉方の応手を指すこと。
  * - `square` / `hand`: 盤の升・攻方の持駒を押す。本番と同じく、駒を選んでから行き先の升を押すと指す。
- * - `promotion`: 成・不成を選ぶ。
  * - `undo`: 待った。
  * - `defender-reply`: 攻方が指してから間を置いて、決めてある玉方の応手を盤面に指す。
  */
@@ -56,17 +54,11 @@ export type TsumeShogiTutorialAction =
   | { type: "undo" }
   | { type: "defender-reply" };
 
-/**
- * 手順で指させる手、または押させる操作。
- * - `move`: 攻方の手。駒（持駒）と行き先の升の両方に印を付ける。
- * - `undo`: 待った。
- */
 export type TsumeShogiTutorialTarget =
   | { type: "move"; move: TsumeShogiMove }
   | { type: "undo" };
 
 /**
- * - `target`: 印を付け、手順の間だけ受け付ける手。手の後に玉方が応じたら次の手順へ進む。待ったは押したら進む。
  * - `reason`: その手を決めるもの（決め手）。`king` は王手をかける玉、`status` は盤の下の、この手数では詰まないという知らせ。
  * - `keySquares`: 決め手として玉と一緒に見せる升。逃げ道を伝える手順で、飛が守っていて、飛を動かすと玉が逃げる升。
  */
@@ -77,7 +69,7 @@ export type TsumeShogiTutorialStep = TutorialStep<TsumeShogiTutorialRuleId> & {
 };
 
 /**
- * 本番のプレイと同じ1回のプレイの状態。盤面の反応（選んだ駒、着手させなかった手の揺れ、玉方の応手と反証、
+ * 盤面の反応（選んだ駒、着手させなかった手の揺れ、玉方の応手と反証、
  * この手数では詰まないという知らせ、待った）を本番と同じ遷移で返すため、`session/` の状態をそのまま使う。
  * 経過時間は測らない。
  */
@@ -88,12 +80,6 @@ export type TsumeShogiTutorialSituation = TutorialSituation<
   TsumeShogiTutorialStep
 >;
 
-/**
- * 印を付ける所。
- * - `square`: 盤の升。指す駒の升か、選んだ駒の行き先。
- * - `hand`: 攻方の持駒。
- * - `undo`: 待った。
- */
 export type TsumeShogiTutorialMark =
   | { type: "square"; square: TsumeShogiSquare }
   | { type: "hand"; pieceType: TsumeShogiHandPieceType }
@@ -192,7 +178,6 @@ function startTsumeShogiTutorial(): TsumeShogiTutorialBoardState {
   return createTsumeShogiSession(problem, 0);
 }
 
-/** 作意を最後まで指した、詰み上がりの盤面。 */
 function getTsumeShogiTutorialGoal(): TsumeShogiTutorialBoardState {
   return [firstMove, secondMove, matingMove].reduce(
     (session, move) =>
@@ -201,7 +186,6 @@ function getTsumeShogiTutorialGoal(): TsumeShogiTutorialBoardState {
   );
 }
 
-/** 駒（持駒）を選び、行き先の升を押して、攻方の手を指す。 */
 function playMove(
   session: TsumeShogiSession,
   move: TsumeShogiMove,
@@ -220,7 +204,6 @@ function playMove(
     : played;
 }
 
-/** 手を選ぶ操作を、本番と同じ遷移で盤面に返す。 */
 function applyInput(
   state: TsumeShogiTutorialBoardState,
   action: Exclude<
@@ -238,7 +221,6 @@ function applyInput(
   }
 }
 
-/** 直前の入力を、着手させなかった。 */
 function isNewlyRejected(
   before: TsumeShogiTutorialBoardState,
   after: TsumeShogiTutorialBoardState,
@@ -246,7 +228,6 @@ function isNewlyRejected(
   return after.rejection !== null && after.rejection !== before.rejection;
 }
 
-/** 手の駒（持駒）を選んでいるか。 */
 function isSourceSelected(
   state: TsumeShogiTutorialBoardState,
   move: TsumeShogiMove,
@@ -284,7 +265,6 @@ export function getTsumeShogiTutorialMark(
     : { type: "square", square: move.from };
 }
 
-/** 手順の手のための入力か。駒（持駒）を選ぶ操作と、選んだ後に行き先の升を押す操作。 */
 function isTowardStepMove(
   state: TsumeShogiTutorialBoardState,
   move: TsumeShogiMove,
@@ -396,7 +376,6 @@ function performTsumeShogiTutorialAction(
     : performFree(state, action);
 }
 
-/** 着手させなかった手と、玉方に逃げられた王手のわけ。玉が王手した駒を取って逃れたときは、駒が守られていなかったことを言う。 */
 function describeTsumeShogiTutorialViolation(
   _situation: TsumeShogiTutorialSituation,
   state: TsumeShogiTutorialBoardState,
