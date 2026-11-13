@@ -55,7 +55,6 @@ export function listWaterSortSessionLegalMoves(
     : [];
 }
 
-/** 注ぐ。注げない組み合わせなら何もしない。 */
 export function applyWaterSortSessionMove(
   session: WaterSortSession,
   move: WaterSortMove,
@@ -121,7 +120,6 @@ export function canUndoWaterSortSession(session: WaterSortSession): boolean {
   return session.status === "playing" && session.history.length > 0;
 }
 
-/** 瓶の中身が初期状態と違うプレイ中だけ、盤面を戻せる。 */
 export function canRestartWaterSortSession(session: WaterSortSession): boolean {
   const { initialState } = session.problem;
   return (

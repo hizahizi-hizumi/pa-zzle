@@ -57,7 +57,7 @@ const waterSortSounds: readonly SoundEffect[] = [
   clearedSound,
 ];
 
-/** 注いだ水が注ぎ先へ流れ込み終わるまでの時間。動きを減らす設定では注ぐ動きが無いので待たない。 */
+/** 動きを減らす設定では注ぐ動きが無いので待たない。 */
 function getPourTransferDelayMs(transferOffset: number): number {
   return prefersReducedMotion()
     ? 0
@@ -88,11 +88,6 @@ function playClearSound() {
   });
 }
 
-/**
- * 注ぐ操作と通らない操作、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
- * チュートリアルも本番と同じ音を鳴らすため、プレイ画面とチュートリアルの両方が使う。
- * ボトルの選択とその解除では鳴らさない。
- */
 export function useWaterSortSoundEffects(
   operation: WaterSortOperation | null,
   progress: GameProgress,

@@ -6,9 +6,9 @@
  */
 export type WaterSortBottleCueKind = "hint" | "recall" | "completed";
 
-/** `id` が変わると、同じボトルの同じ合図でもやり直す。 */
 export type WaterSortBottleCue = {
   bottleIndex: number;
   kind: WaterSortBottleCueKind;
+  /** 変わると、同じボトルの同じ合図でもやり直す。 */
   id: number;
 };

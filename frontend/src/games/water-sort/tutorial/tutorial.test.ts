@@ -49,7 +49,6 @@ const fullStepIndex = steps.findIndex(
 );
 const allRuleIds = waterSortTutorial.rules.map(({ id }) => id);
 
-/** 盤面を、手順の注ぎを順に進める。 */
 function playSteps(count: number): WaterSortState {
   return steps
     .slice(0, count)
@@ -62,7 +61,6 @@ function playSteps(count: number): WaterSortState {
     );
 }
 
-/** 手順を始めた時点で手に入れているルール。その手順で示すルールを含む。 */
 function listEarnedRuleIds(stepIndex: number): WaterSortTutorialRuleId[] {
   return steps
     .slice(0, stepIndex + 1)
@@ -71,7 +69,6 @@ function listEarnedRuleIds(stepIndex: number): WaterSortTutorialRuleId[] {
     );
 }
 
-/** 今の盤面から、本番で注げる手を何度重ねてもたどり着ける盤面。 */
 function listReachableStates(bottles: WaterSortState): WaterSortState[] {
   const seen = new Set([createWaterSortStateKey(bottles)]);
   const reachable = [bottles];
@@ -87,7 +84,6 @@ function listReachableStates(bottles: WaterSortState): WaterSortState[] {
   return reachable;
 }
 
-/** 空でないボトルを注ぎ元に、ほかのボトルを注ぎ先に選ぶ、すべての組。 */
 function listBottlePairs(bottles: WaterSortState): WaterSortMove[] {
   return bottles.flatMap((source, sourceBottleIndex) =>
     source.length === 0
@@ -100,10 +96,7 @@ function listBottlePairs(bottles: WaterSortState): WaterSortMove[] {
   );
 }
 
-/**
- * 手に入れたルールだけで、注げることと何が移るかが分かる注ぎを重ねて、そろうまでの最短手数。
- * そろえられなければ `null`。
- */
+/** 手に入れたルールだけで、注げることと何が移るかが分かる注ぎを重ねて、そろうまでの最短手数。 */
 function countShortestMovesByRules(
   bottles: WaterSortState,
   ruleIds: readonly WaterSortTutorialRuleId[],
@@ -145,7 +138,6 @@ function tapBottles(progress: Progress, bottleIndices: readonly number[]) {
   );
 }
 
-/** 手順の印を順にタップする。 */
 function tapSteps(progress: Progress, count: number): Progress {
   return tapBottles(
     progress,
@@ -403,7 +395,6 @@ describe("盤面", () => {
   });
 
   describe("手を離した後に、ボトルを2本タップした結果を、伝えたことから読む場合", () => {
-    /** 伝えたこと。ルールと、盤面で初めて1色そろったときに伝える、そろったボトルから注げないこと。 */
     const allKnowledge: readonly Knowledge[] = [...allRuleIds, "complete"];
     const taps = releasedStates.flatMap((bottles) =>
       listBottlePairs(bottles).map((move) => ({ bottles, move })),
@@ -858,7 +849,6 @@ describe("findWaterSortTutorialHintBottleIndex", () => {
     (state) => !isWaterSortCleared(state),
   );
 
-  /** 手がかりのボトルだけをタップし続けたときに、そろうまでにタップした数。 */
   function countTapsFollowingHints(
     bottles: WaterSortState,
   ): number | undefined {

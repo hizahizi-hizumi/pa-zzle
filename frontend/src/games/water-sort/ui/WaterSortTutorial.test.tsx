@@ -25,12 +25,10 @@ const stepBottles = [[1, 4], [3, 4], [2, 5], [5, 3], [5], [3, 5]] as const;
 /** 手順を終えた後、同じ色を重ねていってそろえるボトル（1始まり）。 */
 const remainingBottles = [2, 1, 3, 4, 2, 4] as const;
 
-/** 手を離した後、手が止まってから次のボトルを示すまでの間。 */
 const idleHintDelayMs = 4000;
 
 const hiddenRule = "まだ出ていないルール";
 
-/** ゴールの盤面の、1本目のボトル。 */
 const goalFirstBottle = "ボトル 1: 赤、赤、赤、赤";
 
 /** 導入の場面の動きを見せ終えるのに十分な間。 */
@@ -84,15 +82,13 @@ function pressNextThroughIntro(): void {
   }
 }
 
-/** 導入の「次へ」を押す。導入は自動では先へ進まない。 */
+/** 導入は自動では先へ進まない。 */
 function pressNext(): void {
   fireEvent.click(screen.getByRole("button", { name: "次へ" }));
 }
 
-/** 印の線を短く濃くしている合図。 */
 const recallSelector = '[data-tutorial-cue="recall"]';
 
-/** 合図を重ねているボトル（1始まり）。 */
 function getCuedBottles(
   kind: "hint" | "recall" | "completed" = "hint",
 ): number[] {
@@ -103,7 +99,6 @@ function getCuedBottles(
   );
 }
 
-/** 画面全体の覆いから抜いて、元の明るさで見せているボトル（1始まり）。 */
 function getSpotlitBottles(): number[] {
   return [1, 2, 3, 4, 5].filter((bottleNumber) =>
     getBottle(bottleNumber).querySelector("[data-tutorial-spotlight]"),
@@ -119,7 +114,6 @@ function getScrim(): Element | null {
   return document.querySelector("[data-tutorial-focus-scrim]");
 }
 
-/** 鳴らした効果音の音声ファイル名。 */
 function getPlayedSoundNames(): string[] {
   return vi.mocked(playSound).mock.calls.map(
     ([sound]) =>

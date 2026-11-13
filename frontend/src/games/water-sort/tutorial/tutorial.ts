@@ -19,36 +19,16 @@ import {
 } from "@/games/water-sort/puzzle/state";
 import { listWaterSortDistinctTransitions } from "@/games/water-sort/puzzle/transitions";
 
-/**
- * - `where`: 注げるのは、空のボトルか、上の色が同じボトル。
- * - `together`: 上に続く同じ色は、まとめて移る。
- * - `fit`: 移るのは注ぎ先に入るぶんだけ。
- * - `full`: 満杯のボトルには注げない。
- */
 export type WaterSortTutorialRuleId = "where" | "together" | "fit" | "full";
 
-/** 盤面と同じく、ボトルをタップする。 */
 export type WaterSortTutorialAction = { bottleIndex: number };
 
-/**
- * - `kind`: 手順で打たせる手。
- *   - `pour`: `move` の注ぎ元、注ぎ先の順に印を付けてタップさせ、注ぐと次の手順へ進む。
- *   - `refusal`: `move` の注ぎ元に印を付けて、注ぎ先へ注ごうとさせる。注げる先が無いので、本番と同じく選べずに揺れて、次の手順へ進む。
- *     `move` の注ぎ先は、注ぎたくなるが注げない先で、選べないわけとして覆いから抜く。
- */
 export type WaterSortTutorialStep = TutorialStep<WaterSortTutorialRuleId> & {
   kind: "pour" | "refusal";
+  /** `refusal` の注ぎ先は、注ぎたくなるが注げない先で、選べないわけとして覆いから抜く。 */
   move: WaterSortMove;
 };
 
-/**
- * 本番と同じく、選べないボトルや注げない注ぎ先をタップしたわけ。
- * - `empty`: 空のボトルを注ぎ元に選ぼうとした。
- * - `complete`: 1色で満杯になったボトルを注ぎ元に選ぼうとした。
- * - `no-destination`: 注げるボトルが無いボトルを注ぎ元に選ぼうとした。
- * - `full`: 満杯のボトルへ注ごうとした。
- * - `different-color`: 上の色が違うボトルへ注ごうとした。
- */
 export type WaterSortTutorialRejection =
   | "empty"
   | "complete"
@@ -56,12 +36,6 @@ export type WaterSortTutorialRejection =
   | "full"
   | "different-color";
 
-/**
- * 直前の手。盤面の動きに使う。
- * - `selected` / `deselected`: 注ぎ元を選んだ・選び直した。
- * - `poured`: 注いだ。`stateBefore` は注ぐ前の盤面。
- * - `rejected`: 選べないボトルや注げない注ぎ先をタップし、盤面が揺れて応える。
- */
 export type WaterSortTutorialMove =
   | { type: "selected" | "deselected"; bottleIndex: number }
   | { type: "poured"; move: WaterSortMove; stateBefore: WaterSortState }
@@ -71,27 +45,21 @@ export type WaterSortTutorialMove =
       rejection: WaterSortTutorialRejection;
     };
 
-/**
- * 注いで1色そろったボトル。次に注ぐまで残し、注ぐ動きの間に次のボトルを選んでも、そろったことに応えられるようにする。
- * - `id`: そろえた注ぎの番号。同じボトルでも、注ぎ直してそろえたら応え直す。
- * - `first`: 盤面で初めてそろった。そろったボトルから注げないことを、ルールに合わない手を打つまで言う。
- */
+/** 注いで1色そろったボトル。次に注ぐまで残し、注ぐ動きの間に次のボトルを選んでも、そろったことに応えられるようにする。 */
 export type WaterSortTutorialCompletion = {
   bottleIndex: number;
+  /** そろえた注ぎの番号。同じボトルでも、注ぎ直してそろえたら応え直す。 */
   id: number;
+  /** 盤面で初めてそろった。そろったボトルから注げないことを、ルールに合わない手を打つまで言う。 */
   first: boolean;
 };
 
-/**
- * - `sourceBottleIndex`: 注ぎ元に選んでいるボトル。
- * - `pourCount`: 注いだ回数。
- * - `completion`: 直前の注ぎで1色そろったボトル。そろわなかったら `null`。
- */
 export type WaterSortTutorialBoardState = {
   bottles: WaterSortState;
   sourceBottleIndex: number | null;
   lastMove: WaterSortTutorialMove | null;
   pourCount: number;
+  /** 直前の注ぎで1色そろったボトル。そろわなかったら `null`。 */
   completion: WaterSortTutorialCompletion | null;
 };
 
@@ -126,7 +94,7 @@ const startState: WaterSortState = [
   [],
 ];
 
-/** 手順の後、同じ色を重ねていく最短の3手でそろえた盤面。導入で、始めの盤面より先に見せる。 */
+/** 手順の後、同じ色を重ねていく最短の3手でそろえた盤面。 */
 const goalState: WaterSortState = [
   [RED, RED, RED, RED],
   [],
@@ -200,10 +168,8 @@ const steps: readonly WaterSortTutorialStep[] = [
   },
 ];
 
-/** 注ぎ元を選んだ後の、手順の一言の補足。印が注ぎ先へ移ったことを言う。 */
 const STEP_DESTINATION_DETAIL = "印のボトルへ注ぎます";
 
-/** 本番で注ぎ元に選べないわけ。選べるなら `null`。 */
 function findSourceRejection(
   bottles: WaterSortState,
   bottleIndex: number,
@@ -221,7 +187,6 @@ function findSourceRejection(
   return hasDestination ? null : "no-destination";
 }
 
-/** 注げないわけ。満杯で上の色も違うときは、先に示す、色が違うことをわけにする。注げるなら `null`。 */
 function findPourRejection(
   bottles: WaterSortState,
   move: WaterSortMove,
@@ -231,12 +196,12 @@ function findPourRejection(
   }
   const source = bottles[move.sourceBottleIndex] ?? [];
   const destination = bottles[move.destinationBottleIndex] ?? [];
+  // 満杯で上の色も違うときは、先に示す、色が違うことをわけにする。
   return destination.length > 0 && destination.at(-1) !== source.at(-1)
     ? "different-color"
     : "full";
 }
 
-/** 注げない注ぎ先の、注げないわけを決めるルール。 */
 const ruleByPourRejection = {
   full: "full",
   "different-color": "where",
@@ -245,7 +210,6 @@ const ruleByPourRejection = {
   WaterSortTutorialRuleId
 >;
 
-/** 注ぎ元の上に続く同じ色の数。 */
 function countTopRun(bottle: readonly number[]): number {
   const top = bottle.at(-1);
   let count = 0;
@@ -260,9 +224,7 @@ function countTopRun(bottle: readonly number[]): number {
 
 /**
  * 注ぎ元と注ぎ先を選んだときに、注げるかと、何が移るかを決めるルール。
- * - 注げない: 満杯なら `full`、上の色が違えば `where`。
- * - 注げる: 空でない注ぎ先なら `where`、2つ以上移るなら `together`、続く同じ色の一部だけ移るなら `fit`。
- *   空のボトルへ1つ移すだけなら、ボトルを選んで注ぐ操作のほかに要らない。
+ * 空のボトルへ1つ移すだけなら、ボトルを選んで注ぐ操作のほかに要らない。
  */
 function listRulesForMove(
   bottles: WaterSortState,
@@ -307,7 +269,6 @@ function countShortestMovesToClear(bottles: WaterSortState): number | null {
   return null;
 }
 
-/** 注いだ後にそろえるまでの手数が最も少ない注ぎ。`sourceBottleIndex` を渡すと、そのボトルから注ぐものに限る。 */
 function findShortestMove(
   bottles: WaterSortState,
   sourceBottleIndex: number | null,
@@ -374,7 +335,6 @@ function pour(
   return { state: next, outcome: stepping ? "stepped" : "continued" };
 }
 
-/** 選べないボトルや注げない注ぎ先のタップ。ルールに合わない手のわけを言うので、初めてそろったことはもう言わない。 */
 function reject(
   state: WaterSortTutorialBoardState,
   sourceBottleIndex: number | null,
@@ -385,11 +345,11 @@ function reject(
     ...state,
     sourceBottleIndex,
     lastMove: { type: "rejected", bottleIndex, rejection },
+    // ルールに合わない手のわけを言うので、初めてそろったことはもう言わない。
     completion: state.completion && { ...state.completion, first: false },
   };
 }
 
-/** 注ぎ元に選ばせようとして、本番と同じく選べずに揺れる手順。印のボトルをタップしたときだけ応える。 */
 function performRefusalStep(
   step: WaterSortTutorialStep,
   state: WaterSortTutorialBoardState,
@@ -554,7 +514,6 @@ export const waterSortTutorialFirstCompletionMessage: TutorialMessage = {
   detail: "そろったボトルからは注げません",
 };
 
-/** 盤面で初めて1色そろえた後、次に注ぐかルールに合わない手を打つまでの間か。 */
 export function isWaterSortTutorialFirstCompletion({
   completion,
 }: WaterSortTutorialBoardState): boolean {
@@ -562,7 +521,7 @@ export function isWaterSortTutorialFirstCompletion({
 }
 
 /**
- * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せるボトル。手を離した後は `null`。
+ * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せるボトル。
  * 手順の注ぎ元と、注げるかと何が移るかを決める注ぎ先を、印がどちらにあっても抜く。
  * `violationShown` は、ルールに合わない手のわけの一言を出しているか。出している間は、はじいたボトルも、揺れとわけの一言が指すボトルとして抜く。
  */
@@ -584,7 +543,6 @@ export function getWaterSortTutorialSpotlitBottleIndices(
   ];
 }
 
-/** 手順の一言。注ぎ元を選んだ後は、印が注ぎ先へ移ったことを補足で言う。 */
 export function describeWaterSortTutorialStep(
   step: WaterSortTutorialStep,
   { sourceBottleIndex }: WaterSortTutorialBoardState,
@@ -595,7 +553,6 @@ export function describeWaterSortTutorialStep(
     : step.message;
 }
 
-/** 手順で印を付けるボトル。注ぎ元を選ぶまでは注ぎ元、選んだ後は注ぎ先。手を離した後は `null`。 */
 export function getWaterSortTutorialStepBottleIndex(
   { step }: WaterSortTutorialSituation,
   state: WaterSortTutorialBoardState,
@@ -608,10 +565,7 @@ export function getWaterSortTutorialStepBottleIndex(
     : step.move.sourceBottleIndex;
 }
 
-/**
- * 手を離した後、手が止まったときに示すボトル。最も早くそろう注ぎの注ぎ元を示し、注ぎ元を選んでいれば、そこから最も早くそろう注ぎ先を示す。
- * そろっていれば `null`。
- */
+/** 手を離した後、手が止まったときに示すボトル。 */
 export function findWaterSortTutorialHintBottleIndex(
   state: WaterSortTutorialBoardState,
 ): number | null {
