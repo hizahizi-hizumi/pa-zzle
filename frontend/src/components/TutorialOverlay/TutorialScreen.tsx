@@ -31,8 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * 上部に並べるルール。手に入れるまでは中身を伏せる。
- * - `current`: 今の手順で示しているルール。一言で示したルールがどれかを、ルールの並びの側でも分かるようにする。
+ * - `current`: 今の手順で示しているルール。
  */
 export type TutorialRuleListItem = {
   id: string;
@@ -76,7 +75,6 @@ export type TutorialBoardIntro = {
 };
 
 type TutorialScreenProps = {
-  /** チュートリアルはパズルの入口の1つなので、何のパズルかを盤面と一緒に見せる。 */
   title: string;
   /** パズル選択と同じピクトグラム。 */
   pictogramSvg: string;
@@ -86,7 +84,7 @@ type TutorialScreenProps = {
   /** 導入を見せている間。開いたときと、もう一度始めたときに導入から始まる。 */
   introducing: boolean;
   completed: boolean;
-  /** 手を引いている間。導入を終えてから完成までのうち、手を離すまでの間だけ、画面全体に覆いを重ねる。 */
+  /** 手を引いている間。 */
   guiding: boolean;
   finish: TutorialFinish;
   /** 盤面の大きさは盤面の側が、この領域の大きさから決める。 */
@@ -281,11 +279,6 @@ function getMoveFromIntroName(
   return `translate(${sourceRect.left - targetRect.left}px, ${sourceRect.top - targetRect.top}px) scale(${scale})`;
 }
 
-/**
- * 開いたときに、パズルの名前と何をするパズルか、ゴールの盤面、始めの盤面を順に見せてから、1つの盤面を埋めながらルールを1つずつ身につけていく画面。
- * 盤面を主役にし、上部にパズルの名前と手に入れたルール、盤面の直上に短い一言だけを出す。
- * 導入は自分のペースで進められるよう、ゴールと始まりの盤面は「次へ」で進める。
- */
 export function TutorialScreen({
   title,
   pictogramSvg,
@@ -427,7 +420,6 @@ export function TutorialScreen({
     );
   }, [changeStage, finishIntro, schedule]);
 
-  /** 盤面を見る速さは人によって違うので、ゴールと始まりの盤面は自動では先へ進めない。 */
   const handleSceneEnd = useCallback(() => {
     const current = stageRef.current;
     if (
@@ -469,7 +461,6 @@ export function TutorialScreen({
 
   /**
    * 今の段の動きを終えて、その段の終わりの画面を見せる。終える動きが無ければ何もせず `false` を返す。
-   * ゴールと始めの盤面を見ないまま手順に入らないよう、2つの盤面の場面は「次へ」でしか先へ進めない。
    */
   function finishStageMotion(): boolean {
     const current = stageRef.current;
@@ -554,7 +545,6 @@ export function TutorialScreen({
         ? intro.startCaption
         : null;
   return (
-    // 導入の間は、「次へ」のほかはどこを押しても、どのキーでも、今の段の動きを終えて見せる。
     <div
       ref={mergeRefs(rootRef, ref)}
       tabIndex={-1}
@@ -594,7 +584,6 @@ export function TutorialScreen({
             </DialogClose>
           </div>
         </header>
-        {/* 押せる部品に見えないよう、枠や塗りを付けず、文書の一部として読める印と文字で並べる。 */}
         <ul
           aria-label="ルール"
           className={cn(
@@ -630,7 +619,6 @@ export function TutorialScreen({
                     </span>
                   </span>
                 ) : (
-                  // 中身を伏せたルール。押せる部品や問いかけに見えないよう、記号も枠も付けず、伏せた文字の幅の薄い線だけを置く。
                   // 手に入れたときに並びの折り返しが変わって下の盤面が動かないよう、伏せている間も、手に入れた後の太い字の幅を取っておく。
                   <span key="hidden" className="relative flex items-center">
                     <span

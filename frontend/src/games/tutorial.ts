@@ -1,6 +1,5 @@
 /**
- * 1つの盤面を、ルールを1つずつ示しながら一緒に埋めていくチュートリアルの、ゲームに依存しない契約。
- * 最初は手順ごとに一言と操作するところを示して手を引き、手順を終えたら手を離して残りを解かせる。
+ * チュートリアルの、ゲームに依存しない契約。
  * 手順の進行、手に入れたルール、盤面の上に出す一言を扱い、盤面と判定はゲームが持つ。
  * - `RuleId`: ゲームのルールの識別子。
  * - `BoardState`: 盤面を解いている途中の状態。
@@ -25,7 +24,7 @@ export type TutorialRule<RuleId extends string> = {
 /**
  * 手を引く1手順。ゲームは、手順で操作させるところと、そこを終えたとみなす盤面を、この型を広げて持つ。
  * - `message`: この手順の間の一言。
- * - `introducedRuleId`: この手順で示すルール。手順を始めた時点で手に入り、上部のルールの並びでも今示しているルールとして目立たせる。
+ * - `introducedRuleId`: この手順で示すルール。
  */
 export type TutorialStep<RuleId extends string> = {
   message: TutorialMessage;
@@ -35,7 +34,7 @@ export type TutorialStep<RuleId extends string> = {
 /**
  * ゲームが手を判定するときの、今の手順と手に入れたルール。
  * - `step`: 手を引いている手順。手順を終えて手を離した後は `null`。
- * - `earnedRuleIds`: 手に入れたルール。まだ示していないルールの違反は見せない。
+ * - `earnedRuleIds`: 手に入れたルール。
  */
 export type TutorialSituation<
   RuleId extends string,
@@ -74,8 +73,8 @@ export type TutorialIntro = {
 
 /**
  * チュートリアルを開いた場所。終えた後の行き先と、解き終えたときの一言が変わる。
- * - `home`: ゲームのホーム。終えたら、ゲームのホームで開いているレベルを始める。
- * - `play`: プレイ中のメニュー。終えたらプレイに戻る。
+ * - `home`: ゲームのホーム。
+ * - `play`: プレイ中のメニュー。
  */
 export type TutorialEntry = "home" | "play";
 
@@ -92,17 +91,17 @@ export type Tutorial<
   steps: readonly Step[];
   /** 手を離した後、解き終えるまでの一言。 */
   freePlay: TutorialMessage;
-  /** 解き終えたときの一言。本番へどうつながるかを、開いた場所ごとに言う。 */
+  /** 解き終えたときの一言。 */
   completion: Record<TutorialEntry, TutorialMessage>;
   start: () => BoardState;
-  /** 解き終えた盤面。導入で、何を目指すかを始めの盤面より先に見せる。 */
+  /** 解き終えた盤面。 */
   goal: () => BoardState;
   perform: (
     situation: TutorialSituation<RuleId, Step>,
     state: BoardState,
     action: Action,
   ) => { state: BoardState; outcome: TutorialMoveOutcome };
-  /** ルールに合わないところが続いたときの一言。どのルールに当たったかを、今の盤面から具体的に言う。 */
+  /** ルールに合わないところが続いたときの一言。 */
   describeViolation: (
     situation: TutorialSituation<RuleId, Step>,
     state: BoardState,

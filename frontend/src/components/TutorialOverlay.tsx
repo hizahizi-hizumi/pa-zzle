@@ -41,7 +41,6 @@ type TutorialOverlayProps = {
   onClose: () => void;
 };
 
-/** チュートリアルは盤面を解く場面なので、開いている間は解く場面の曲を流し、解き終えたら曲を引いてクリア音を前に出す。 */
 function getMusicState(
   open: boolean,
   phase: TutorialPhase,
