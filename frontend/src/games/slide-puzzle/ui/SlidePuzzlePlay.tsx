@@ -11,7 +11,7 @@ import type {
   SlidePuzzleOperation,
   SlidePuzzleResult,
 } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
-import type { SlidePuzzleDirection } from "@/games/slide-puzzle/puzzle/rules";
+import type { SlidePuzzleTileDirection } from "@/games/slide-puzzle/puzzle/rules";
 import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
 import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen";
@@ -29,15 +29,16 @@ type SlidePuzzlePlayProps = GamePlayScreenProps<
     moveCount: number;
     operation: SlidePuzzleOperation | null;
     onSlideTile: (tileIndex: number) => void;
-    onSlideInDirection: (direction: SlidePuzzleDirection) => void;
+    onSlideInDirection: (direction: SlidePuzzleTileDirection) => void;
   };
 
-const directionByArrowKey: Readonly<Record<string, SlidePuzzleDirection>> = {
-  ArrowUp: "up",
-  ArrowDown: "down",
-  ArrowLeft: "left",
-  ArrowRight: "right",
-};
+const directionByArrowKey: Readonly<Record<string, SlidePuzzleTileDirection>> =
+  {
+    ArrowUp: "up",
+    ArrowDown: "down",
+    ArrowLeft: "left",
+    ArrowRight: "right",
+  };
 
 export function SlidePuzzlePlay({
   difficulty,

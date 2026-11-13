@@ -11,8 +11,7 @@ const UNREACHABLE = 0xff;
 
 export type SlidePuzzleAllStateDistances = {
   distanceOf(board: SlidePuzzleBoard): number | null;
-  /** 最短手数ごとの配置数。添字が最短手数。 */
-  countsByDistance: readonly number[];
+  boardCountsByDistance: readonly number[];
 };
 
 const factorials = Array.from({ length: CELL_COUNT + 1 }, (_, n) =>
@@ -60,12 +59,13 @@ export function buildSlidePuzzleAllStateDistances(): SlidePuzzleAllStateDistance
   distances[goalRank] = 0;
   queue[0] = goalRank;
   let queueLength = 1;
-  const countsByDistance: number[] = [];
+  const boardCountsByDistance: number[] = [];
 
   for (let head = 0; head < queueLength; head += 1) {
     const rank = queue[head] ?? 0;
     const distance = distances[rank] ?? 0;
-    countsByDistance[distance] = (countsByDistance[distance] ?? 0) + 1;
+    boardCountsByDistance[distance] =
+      (boardCountsByDistance[distance] ?? 0) + 1;
     writeUnranked(rank, cells);
     const blankCell = cells.indexOf(0);
     for (const cell of neighborCells[blankCell] ?? []) {
@@ -90,6 +90,6 @@ export function buildSlidePuzzleAllStateDistances(): SlidePuzzleAllStateDistance
       const distance = distances[rankOf(board)] ?? UNREACHABLE;
       return distance === UNREACHABLE ? null : distance;
     },
-    countsByDistance,
+    boardCountsByDistance,
   };
 }

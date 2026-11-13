@@ -18,8 +18,8 @@ import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/prob
 import {
   getSlidePuzzleKeyboardSlide,
   getSlidePuzzleSlide,
-  type SlidePuzzleDirection,
   type SlidePuzzleSlide,
+  type SlidePuzzleTileDirection,
 } from "@/games/slide-puzzle/puzzle/rules";
 import type {
   SlidePuzzleBoard,
@@ -104,7 +104,7 @@ export type SlidePuzzlePlay = GamePlay<
     optimalMoveCount: number;
     operation: SlidePuzzleOperation | null;
     slideTile: (tileIndex: number) => void;
-    slideInDirection: (direction: SlidePuzzleDirection) => void;
+    slideInDirection: (direction: SlidePuzzleTileDirection) => void;
   };
 
 type SlidePuzzlePlayState = {
@@ -202,22 +202,25 @@ export function useSlidePuzzlePlay(
     );
   }, []);
 
-  const slideInDirection = useCallback((direction: SlidePuzzleDirection) => {
-    const movedAt = Date.now();
-    const operationId = nextOperationId.current++;
-    setPlay((current) => {
-      const slide = getSlidePuzzleKeyboardSlide(
-        current.session.puzzleState,
-        direction,
-      );
-      const tileIndex = slide?.movedTileIndices[0];
-      if (!slide || tileIndex === undefined) {
-        return current;
-      }
+  const slideInDirection = useCallback(
+    (direction: SlidePuzzleTileDirection) => {
+      const movedAt = Date.now();
+      const operationId = nextOperationId.current++;
+      setPlay((current) => {
+        const slide = getSlidePuzzleKeyboardSlide(
+          current.session.puzzleState,
+          direction,
+        );
+        const tileIndex = slide?.movedTileIndices[0];
+        if (!slide || tileIndex === undefined) {
+          return current;
+        }
 
-      return slideTileInPlay(current, tileIndex, slide, movedAt, operationId);
-    });
-  }, []);
+        return slideTileInPlay(current, tileIndex, slide, movedAt, operationId);
+      });
+    },
+    [],
+  );
 
   const restart = useCallback(() => {
     setPlay((current) => {

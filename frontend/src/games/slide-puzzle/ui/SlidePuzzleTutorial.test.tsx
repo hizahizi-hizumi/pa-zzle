@@ -19,8 +19,7 @@ vi.mock("@/lib/sound-effects", async (importOriginal) => ({
 
 const stepTiles = [5, 8, 4] as const;
 
-/** 手順を終えた後、行と列をまとめてスライドさせて完成させるタイル。 */
-const remainingTiles = [2, 6] as const;
+const finishingLineSlideTiles = [2, 6] as const;
 
 const nextStepCueDelayMs = 450;
 
@@ -443,7 +442,7 @@ describe("SlidePuzzleTutorial", () => {
       });
 
       test("並べ終えると、本番と同じ完成の音を、完成の波に合わせて鳴らすこと", () => {
-        tapTiles(remainingTiles);
+        tapTiles(finishingLineSlideTiles);
 
         const clearSounds = vi.mocked(playLayeredSound).mock.calls.length;
 
@@ -459,7 +458,7 @@ describe("SlidePuzzleTutorial", () => {
       });
 
       test("並べ終えると、どのレベルも同じルールだと伝え、ゲームのホームで開いているレベルを遊ぶ操作でそのレベルを始めること", () => {
-        tapTiles(remainingTiles);
+        tapTiles(finishingLineSlideTiles);
         const detail = screen.getByText("どのレベルも同じルールです");
         fireEvent.click(screen.getByRole("button", { name: "レベル 2を遊ぶ" }));
 
@@ -468,7 +467,7 @@ describe("SlidePuzzleTutorial", () => {
       });
 
       test("並べ終えた後のもう一度で、始まりの盤面を見せてから最初の手順を始めること", () => {
-        tapTiles(remainingTiles);
+        tapTiles(finishingLineSlideTiles);
         fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
         const caption = screen.getByText("最初はこのように崩れています");
         goThroughIntroSync();
@@ -569,7 +568,7 @@ describe("SlidePuzzleTutorial", () => {
 
     test("並べ終えると、プレイに戻ることを伝え、プレイに戻る操作で閉じること", () => {
       playSteps(stepTiles);
-      tapTiles(remainingTiles);
+      tapTiles(finishingLineSlideTiles);
       const detail = screen.getByText("プレイ中の盤面も同じルールです");
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 

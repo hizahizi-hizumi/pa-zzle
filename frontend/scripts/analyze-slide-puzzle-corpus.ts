@@ -635,11 +635,11 @@ function printHandmadeBoardReport(
 
 /** 3×3 は全配置を幅優先探索でたどれるので、候補に頼らない最短手数の分布も出す。 */
 function printAllStateReport() {
-  const { countsByDistance } = buildSlidePuzzleAllStateDistances();
+  const { boardCountsByDistance } = buildSlidePuzzleAllStateDistances();
   console.log("## 3×3 の全配置の最短手数\n");
   printTable(
     ["最短手数", "配置数"],
-    countsByDistance.map((count, distance) => [
+    boardCountsByDistance.map((count, distance) => [
       String(distance),
       String(count),
     ]),

@@ -9,16 +9,15 @@ import {
   type SlidePuzzleBoardSize,
 } from "@/games/slide-puzzle/puzzle/state";
 
-/** タイルが動く向き。 */
-export type SlidePuzzleDirection = "up" | "down" | "left" | "right";
+export type SlidePuzzleTileDirection = "up" | "down" | "left" | "right";
 
 export type SlidePuzzleSlide = {
-  direction: SlidePuzzleDirection;
+  direction: SlidePuzzleTileDirection;
   /** 動く前のマス index。空白に近い順に並ぶ。 */
   movedTileIndices: readonly number[];
 };
 
-const slideDirections: readonly SlidePuzzleDirection[] = [
+const slideDirections: readonly SlidePuzzleTileDirection[] = [
   "up",
   "down",
   "left",
@@ -26,7 +25,7 @@ const slideDirections: readonly SlidePuzzleDirection[] = [
 ];
 
 function getCellOffset(
-  direction: SlidePuzzleDirection,
+  direction: SlidePuzzleTileDirection,
   boardSize: SlidePuzzleBoardSize,
 ): number {
   switch (direction) {
@@ -54,7 +53,7 @@ function getSlideDirection(
   tileIndex: number,
   blankIndex: number,
   boardSize: SlidePuzzleBoardSize,
-): SlidePuzzleDirection | null {
+): SlidePuzzleTileDirection | null {
   if (
     getSlidePuzzleRow(tileIndex, boardSize) ===
     getSlidePuzzleRow(blankIndex, boardSize)
@@ -134,7 +133,7 @@ export function listSlidePuzzleSingleMoves(board: SlidePuzzleBoard): number[] {
 
 export function getSlidePuzzleKeyboardSlide(
   board: SlidePuzzleBoard,
-  direction: SlidePuzzleDirection,
+  direction: SlidePuzzleTileDirection,
 ): SlidePuzzleSlide | null {
   const tileIndex =
     findSlidePuzzleBlankIndex(board) -
