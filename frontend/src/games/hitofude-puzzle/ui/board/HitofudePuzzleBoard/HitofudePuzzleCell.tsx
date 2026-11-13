@@ -14,8 +14,7 @@ type HitofudePuzzleCellProps = {
   isHead: boolean;
   isDeadEnd: boolean;
   disabled: boolean;
-  /** 盤面の Tab の止まり先か。 */
-  focusable: boolean;
+  isTabStop: boolean;
   cue: HitofudePuzzleCellCue | undefined;
   /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜く。 */
   spotlit: boolean;
@@ -72,7 +71,7 @@ export function HitofudePuzzleCell({
   isHead,
   isDeadEnd,
   disabled,
-  focusable,
+  isTabStop,
   cue,
   spotlit,
   onPress,
@@ -90,7 +89,7 @@ export function HitofudePuzzleCell({
       aria-label={label}
       {...{ [CELL_ATTRIBUTE]: cell }}
       disabled={disabled}
-      tabIndex={focusable ? 0 : -1}
+      tabIndex={isTabStop ? 0 : -1}
       onFocus={() => onFocus(cell)}
       onClick={(event) => {
         if (event.detail === 0) {

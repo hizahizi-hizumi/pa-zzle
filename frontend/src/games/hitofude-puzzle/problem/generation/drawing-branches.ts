@@ -10,10 +10,11 @@ import {
 } from "@/games/hitofude-puzzle/puzzle/board";
 import { findHitofudePuzzleStranding } from "@/games/hitofude-puzzle/puzzle/rules";
 
-/** `6` は1段仮置きを重ねても退けられなかった手。 */
+const UNREFUTED_BRANCH_STAGE = 6;
+
 export type HitofudePuzzleBranchRefutationStage =
   | HitofudePuzzleRefutationStage
-  | 6;
+  | typeof UNREFUTED_BRANCH_STAGE;
 
 /** 始点から解の道を引き進めるプレイヤーが出会う分岐。 */
 export type HitofudePuzzleDrawingBranches = {
@@ -161,7 +162,13 @@ export function analyzeHitofudePuzzleDrawingBranches(
   const adjacency = createHitofudePuzzleAdjacency(board);
   const openCells = listHitofudePuzzleOpenCells(board);
   const refuter = createHitofudePuzzleRefuter(board, options);
-  const fatalBranchCountByStage = { 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+  const fatalBranchCountByStage = {
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+    [UNREFUTED_BRANCH_STAGE]: 0,
+  };
   let branchCount = 0;
   let fatalBranchCount = 0;
   let longestTrapLength: number | null = 0;
@@ -189,7 +196,7 @@ export function analyzeHitofudePuzzleDrawingBranches(
       if (refutation === "work-limit-reached") {
         return refutation;
       }
-      const stage = refutation ?? 6;
+      const stage = refutation ?? UNREFUTED_BRANCH_STAGE;
       hardestStage = Math.max(
         hardestStage ?? stage,
         stage,
