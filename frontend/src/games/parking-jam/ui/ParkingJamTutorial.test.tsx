@@ -8,16 +8,18 @@ import {
 } from "@testing-library/react";
 
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
+import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
 import { ParkingJamTutorial } from "@/games/parking-jam/ui/ParkingJamTutorial";
 
 const vehicleLabels = {
-  a: "横向きの車 行2 列4",
-  b: "横向きの車 行3 列1",
-  c: "縦向きの車 行1 列2",
-  d: "横向きの車 行4 列1",
-  e: "縦向きの車 行4 列3",
-  f: "横向きの車 行4 列4",
-  g: "横向きの車 行5 列4",
+  a: "横向きの車 行4 列4",
+  b: "横向きの車 行6 列2",
+  c: "横向きの車 行5 列1",
+  d: "縦向きの車 行1 列2",
+  e: "横向きの車 行2 列5",
+  f: "横向きの車 行1 列5",
+  g: "横向きの車 行3 列1",
+  h: "横向きの車 行3 列4",
 } as const;
 
 type VehicleId = keyof typeof vehicleLabels;
@@ -25,30 +27,44 @@ type VehicleId = keyof typeof vehicleLabels;
 type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 
 const stepMoves = [
-  ["e", "ArrowUp"],
-  ["g", "ArrowRight"],
-  ["b", "ArrowLeft"],
-  ["c", "ArrowUp"],
+  ["a", "ArrowRight"],
+  ["b", "ArrowRight"],
+  ["c", "ArrowLeft"],
+  ["d", "ArrowUp"],
 ] as const satisfies readonly (readonly [VehicleId, ArrowKey])[];
 
 const remainingMoves = [
-  ["a", "ArrowLeft"],
-  ["f", "ArrowRight"],
-  ["d", "ArrowRight"],
+  ["e", "ArrowLeft"],
+  ["f", "ArrowLeft"],
+  ["g", "ArrowLeft"],
+  ["h", "ArrowLeft"],
 ] as const satisfies readonly (readonly [VehicleId, ArrowKey])[];
 
 const exitStepHoldMs = 700;
 
-const idleHintDelayMs = 4000;
+const longIdleMs = 10000;
 
 const introEnoughMs = 8000;
 
 const firstHeadline = "車を出したい向きへ スワイプします";
-const roadHeadline = "進む先に道路がないと 出られません";
-const planterHeadline = "植え込みがあると 通れません";
-const carHeadline = "ほかの車があると 通れません";
-const freePlayHeadline = "残りの車も出すと完成です";
-const hiddenRule = "まだ出ていないルール";
+const roadHeadline = "道路につながる向きへ出します";
+const planterHeadline = "植え込みにはぶつかります 植え込みのない向きへ出します";
+const carHeadline =
+  "植え込みだけでなくほかの車にもぶつかります ぶつかる車を先に出します";
+const freePlayHeadline = "残りの車も出してみましょう";
+const noRoadHeadline = "この先は道路につながっていません";
+const oppositeDetail = "反対の向きへ出します";
+const clearTheWayText = "左の車を先に出します";
+const hintHeadline = "この車を先に出します";
+const missNotice = "これからは出られない向きへ 動かすとミスになります";
+const freePlayDetail = "本番は出られない向きへ 動かすとミスになります";
+const goalCaption = "駐車場を空にすると完成です";
+const recapLabels = [
+  "車は前か後ろへ出します",
+  "道路につながる向きへ出します",
+  "植え込みのない向きへ出します",
+  "ぶつかる車を先に出します",
+];
 
 afterEach(() => {
   cleanup();
@@ -69,30 +85,19 @@ function advanceTime(ms: number): void {
   });
 }
 
-function pressNext(): void {
-  fireEvent.click(screen.getByRole("button", { name: "次へ" }));
+function getScreen(): HTMLElement {
+  return screen.getByRole("dialog", { name: PARKING_JAM_DISPLAY_NAME });
 }
 
-function pressNextThroughIntroWaitingForScenes(): void {
-  for (let press = 0; press < 3; press += 1) {
-    advanceTime(introEnoughMs);
-    const next = screen.queryByRole("button", { name: "次へ" });
-    if (!next) {
-      return;
-    }
-    fireEvent.click(next);
-  }
-  advanceTime(introEnoughMs);
+function queryStartButton(): HTMLElement | null {
+  return within(getScreen()).queryByRole("button", { name: "はじめる" });
 }
 
-function pressNextThroughIntro(): void {
-  for (
-    let next = screen.queryByRole("button", { name: "次へ" });
-    next;
-    next = screen.queryByRole("button", { name: "次へ" })
-  ) {
-    fireEvent.click(next);
-  }
+function pressStart(): void {
+  fireEvent.click(
+    within(getScreen()).getByRole("button", { name: "はじめる" }),
+  );
+  advanceTime(0);
 }
 
 function queryVehicle(vehicleId: VehicleId): HTMLElement | null {
@@ -122,7 +127,16 @@ function getCuedVehicles(): string[] {
   );
 }
 
-/** 印の線を短く濃くしている合図。濃くし直すたびに、別の要素に替わる。 */
+function getPointerSwipe(): string | null {
+  const pointer = screen
+    .getByRole("main")
+    .querySelector('[data-tutorial-cue="pointer"]');
+  if (!pointer) {
+    throw new Error("指がない");
+  }
+  return pointer.getAttribute("data-swipe");
+}
+
 function queryRecall(): Element | null {
   return screen.getByRole("main").querySelector('[data-tutorial-cue="recall"]');
 }
@@ -134,12 +148,28 @@ function getSpotlitTargets(): string[] {
   );
 }
 
+function queryHintButton(): HTMLElement | null {
+  return within(getScreen()).queryByRole("button", { name: "ヒント" });
+}
+
+function querySpotlightArea(): Element | null {
+  return screen
+    .getByRole("main")
+    .querySelector("[data-tutorial-spotlight-area]");
+}
+
 function getScrim(): Element | null {
   return document.querySelector("[data-tutorial-focus-scrim]");
 }
 
-function getRuleTexts(): string[] {
-  return within(screen.getByRole("list", { name: "ルール" }))
+function getProgressValue(): string | null {
+  return within(getScreen())
+    .getByRole("progressbar", { name: "チュートリアルの進み具合" })
+    .getAttribute("aria-valuenow");
+}
+
+function getRecapTexts(): string[] {
+  return within(within(getScreen()).getByRole("list", { name: "覚えたルール" }))
     .getAllByRole("listitem")
     .map((item) => item.textContent ?? "");
 }
@@ -163,47 +193,59 @@ describe("ParkingJamTutorial", () => {
           onClose={onClose}
         />,
       );
-      pressNextThroughIntro();
+      pressStart();
     });
 
-    test("車の停まった始めの盤面で、最初に動かす車を示し、まだ示していないルールを伏せておくこと", () => {
+    test("車の停まった始めの盤面で、最初に動かす車を、手前の道路へ滑る指で示し、進み具合を0にしておくこと", () => {
       const headline = screen.queryByText(firstHeadline);
-      const vehicle = queryVehicle("e");
+      const vehicle = queryVehicle("a");
       const cued = getCuedVehicles();
-      const rules = getRuleTexts();
+      const swipe = getPointerSwipe();
+      const progress = getProgressValue();
 
       expect(headline).not.toBeNull();
       expect(vehicle).not.toBeNull();
-      expect(cued).toEqual(["e"]);
-      expect(rules).toEqual(["前か後ろへ", hiddenRule, hiddenRule, hiddenRule]);
+      expect(cued).toEqual(["a"]);
+      expect(swipe).toBe("right");
+      expect(progress).toBe("0");
     });
 
-    test("画面全体に覆いを重ね、印の車だけを覆いから抜くこと", () => {
+    test("操作を教える手順には決め手が無いので、盤面を覆わないこと", () => {
       const scrim = getScrim();
+      const area = querySpotlightArea();
       const spotlit = getSpotlitTargets();
 
-      expect(scrim).not.toBeNull();
-      expect(spotlit).toEqual(["vehicle-e"]);
+      expect(scrim).toBeNull();
+      expect(area).toBeNull();
+      expect(spotlit).toEqual([]);
+    });
+
+    test("手を引いている間は、ヒントを出さないこと", () => {
+      const hintButton = queryHintButton();
+
+      expect(hintButton).toBeNull();
     });
 
     test("印の無い車を動かすと、受け付けずに、一言を変えないまま印の線を濃くし直すこと", () => {
-      moveVehicles([["g", "ArrowRight"]]);
+      moveVehicles([["g", "ArrowLeft"]]);
 
       const vehicle = queryVehicle("g");
       const headline = screen.queryByText(firstHeadline);
       const recall = queryRecall();
       const cued = getCuedVehicles();
 
-      expect(vehicle).not.toBeNull();
+      expect(vehicle?.getAttribute("class")).not.toContain(
+        "parking-jam-car--exit",
+      );
       expect(headline).not.toBeNull();
       expect(recall).not.toBeNull();
-      expect(cued).toEqual(["e"]);
+      expect(cued).toEqual(["a"]);
     });
 
     test("印の無い車を続けて触るたびに、印の線を濃くし直すこと", () => {
-      moveVehicles([["g", "ArrowRight"]]);
+      moveVehicles([["g", "ArrowLeft"]]);
       const firstRecall = queryRecall();
-      moveVehicles([["d", "ArrowRight"]]);
+      moveVehicles([["c", "ArrowLeft"]]);
 
       const secondRecall = queryRecall();
 
@@ -226,9 +268,9 @@ describe("ParkingJamTutorial", () => {
       });
 
       test("出ていく間は、次の手順の車を動かしても受け付けないこと", () => {
-        moveVehicles([["g", "ArrowRight"]]);
+        moveVehicles([["b", "ArrowRight"]]);
 
-        const vehicle = queryVehicle("g");
+        const vehicle = queryVehicle("b");
         const headline = screen.queryByText(firstHeadline);
 
         expect(vehicle?.getAttribute("class")).not.toContain(
@@ -237,29 +279,26 @@ describe("ParkingJamTutorial", () => {
         expect(headline).not.toBeNull();
       });
 
-      test("出ていく間は、出した車を覆いから抜いたままにすること", () => {
-        const spotlit = getSpotlitTargets();
+      test("出した車の分だけ進み具合を進めること", () => {
+        const progress = getProgressValue();
 
-        expect(spotlit).toEqual(["vehicle-e"]);
+        expect(progress).toBe("13");
       });
 
-      test("出ていき終えると、次のルールの一言と印を出し、印の車とその手を決める縁石を覆いから抜くこと", () => {
+      test("出ていき終えると、次のルールの一言と、道路のある向きへ滑る指を出し、盤面の中を覆って、印の車とその手を決める縁石を残すこと", () => {
         advanceTime(exitStepHoldMs);
 
         const headline = screen.queryByText(roadHeadline);
         const cued = getCuedVehicles();
+        const swipe = getPointerSwipe();
+        const area = querySpotlightArea();
         const spotlit = getSpotlitTargets();
-        const rules = getRuleTexts();
 
         expect(headline).not.toBeNull();
-        expect(cued).toEqual(["g"]);
-        expect(spotlit).toEqual(["vehicle-g", "curb-left"]);
-        expect(rules).toEqual([
-          "前か後ろへ",
-          "道路へ出る",
-          hiddenRule,
-          hiddenRule,
-        ]);
+        expect(cued).toEqual(["b"]);
+        expect(swipe).toBe("right");
+        expect(area).not.toBeNull();
+        expect(spotlit).toEqual(["vehicle-b", "curb-left"]);
       });
     });
 
@@ -268,32 +307,34 @@ describe("ParkingJamTutorial", () => {
         moveVehicles(stepMoves.slice(0, 1), exitStepHoldMs);
       });
 
-      test("進む先に道路がない向きへ動かすと、出さずに、本番と同じく揺らして、進む先に道路がないことを言うこと", () => {
-        moveVehicles([["g", "ArrowLeft"]]);
+      test("進む先に道路がない向きへ動かすと、出さずに、本番と同じく揺らして、道路がないことと反対の向きへ出すことを言うこと", () => {
+        moveVehicles([["b", "ArrowLeft"]]);
 
-        const vehicle = queryVehicle("g");
-        const headline = screen.queryByText(
-          "左へ進む先に道路がないので 出られません",
-        );
+        const vehicle = queryVehicle("b");
+        const headline = screen.queryByText(noRoadHeadline);
+        const detail = screen.queryByText(oppositeDetail);
         const cued = getCuedVehicles();
 
         expect(vehicle?.getAttribute("class")).toContain(
           "parking-jam-car--blocked-left",
         );
         expect(headline).not.toBeNull();
-        expect(cued).toEqual(["g"]);
+        expect(detail).not.toBeNull();
+        expect(cued).toEqual(["b"]);
       });
 
-      test("道路のある向きへ出すと、次のルールの一言と印へ進み、印の車とその手を決める植え込みを覆いから抜くこと", () => {
-        moveVehicles([["g", "ArrowRight"]], exitStepHoldMs);
+      test("道路のある向きへ出すと、次のルールの一言と、植え込みのない向きへ滑る指へ進み、印の車とその手を決める植え込みを残すこと", () => {
+        moveVehicles([["b", "ArrowRight"]], exitStepHoldMs);
 
         const headline = screen.queryByText(planterHeadline);
         const cued = getCuedVehicles();
+        const swipe = getPointerSwipe();
         const spotlit = getSpotlitTargets();
 
         expect(headline).not.toBeNull();
-        expect(cued).toEqual(["b"]);
-        expect(spotlit).toEqual(["vehicle-b", "fixed-area-2-4"]);
+        expect(cued).toEqual(["c"]);
+        expect(swipe).toBe("left");
+        expect(spotlit).toEqual(["vehicle-c", "fixed-area-4-4"]);
       });
     });
 
@@ -302,16 +343,14 @@ describe("ParkingJamTutorial", () => {
         moveVehicles(stepMoves.slice(0, 2), exitStepHoldMs);
       });
 
-      test("植え込みへ動かすと、動かした向きに植え込みがあることを言い、覆いから抜く物を変えないこと", () => {
-        moveVehicles([["b", "ArrowRight"]]);
+      test("植え込みへ動かすと、植え込みにぶつかったことを言い、残す物を変えないこと", () => {
+        moveVehicles([["c", "ArrowRight"]]);
 
-        const headline = screen.queryByText(
-          "右に植え込みがあるので 通れません",
-        );
+        const headline = screen.queryByText("植え込みにぶつかりました");
         const spotlit = getSpotlitTargets();
 
         expect(headline).not.toBeNull();
-        expect(spotlit).toEqual(["vehicle-b", "fixed-area-2-4"]);
+        expect(spotlit).toEqual(["vehicle-c", "fixed-area-4-4"]);
       });
     });
 
@@ -320,26 +359,26 @@ describe("ParkingJamTutorial", () => {
         moveVehicles(stepMoves.slice(0, 3), exitStepHoldMs);
       });
 
-      test("塞いでいる車に印を付け、その車と、塞がれた車を覆いから抜くこと", () => {
+      test("塞いでいる車に印と上へ滑る指を付け、その車と、塞がれた車と、印の車が下へ出るとぶつかる車を残すこと", () => {
         const headline = screen.queryByText(carHeadline);
         const cued = getCuedVehicles();
+        const swipe = getPointerSwipe();
         const spotlit = getSpotlitTargets();
 
         expect(headline).not.toBeNull();
-        expect(cued).toEqual(["c"]);
-        expect(spotlit).toEqual(["vehicle-c", "vehicle-a"]);
+        expect(cued).toEqual(["d"]);
+        expect(swipe).toBe("up");
+        expect(spotlit).toEqual(["vehicle-d", "vehicle-e", "vehicle-g"]);
       });
 
-      test("ほかの車がある向きへ動かすと、動かした向きにほかの車があることを言い、当たった車も覆いから抜くこと", () => {
-        moveVehicles([["c", "ArrowDown"]]);
+      test("ほかの車がある向きへ動かすと、ほかの車にぶつかったことを言い、ぶつかった車も残すこと", () => {
+        moveVehicles([["d", "ArrowDown"]]);
 
-        const headline = screen.queryByText(
-          "下にほかの車があるので 通れません",
-        );
+        const headline = screen.queryByText("ほかの車にぶつかりました");
         const spotlit = getSpotlitTargets();
 
         expect(headline).not.toBeNull();
-        expect(spotlit).toEqual(["vehicle-c", "vehicle-a", "vehicle-d"]);
+        expect(spotlit).toEqual(["vehicle-d", "vehicle-e", "vehicle-g"]);
       });
 
       describe("塞いでいる車を出した場合", () => {
@@ -348,9 +387,9 @@ describe("ParkingJamTutorial", () => {
         });
 
         test("出ていく間は、塞がれていた車を動かしても受け付けず、手順の一言と覆いのままにすること", () => {
-          moveVehicles([["a", "ArrowLeft"]]);
+          moveVehicles([["e", "ArrowLeft"]]);
 
-          const vehicle = queryVehicle("a");
+          const vehicle = queryVehicle("e");
           const headline = screen.queryByText(carHeadline);
           const scrim = getScrim();
 
@@ -380,67 +419,86 @@ describe("ParkingJamTutorial", () => {
         moveVehicles(stepMoves, exitStepHoldMs);
       });
 
-      test("残りを出すことを伝え、すべてのルールを見せ、手が止まるまで印を出さないこと", () => {
+      test("残りを出すことと、本番では出られない向きへ動かすとミスになることを伝え、ヒントを出せるようにすること", () => {
         const headline = screen.queryByText(freePlayHeadline);
-        const rules = getRuleTexts();
-        const cued = getCuedVehicles();
+        const detail = screen.queryByText(freePlayDetail);
+        const hintButton = queryHintButton();
 
         expect(headline).not.toBeNull();
-        expect(rules).toEqual([
-          "前か後ろへ",
-          "道路へ出る",
-          "植え込み",
-          "ほかの車",
-        ]);
-        expect(cued).toEqual([]);
+        expect(detail).not.toBeNull();
+        expect(hintButton).not.toBeNull();
       });
 
-      test("手が止まると、今出せる車を1台示すこと", () => {
-        advanceTime(idleHintDelayMs);
+      test("手が止まっても、ヒントを押すまで印を出さないこと", () => {
+        advanceTime(longIdleMs);
 
         const cued = getCuedVehicles();
+        const spotlit = getSpotlitTargets();
 
-        expect(cued).toHaveLength(1);
+        expect(cued).toEqual([]);
+        expect(spotlit).toEqual([]);
       });
 
-      test("ほかの車がある向きへ動かすと、本番と同じく揺らし、わけを言うこと", () => {
-        moveVehicles([["d", "ArrowRight"]]);
+      describe("ヒントを押した場合", () => {
+        beforeEach(() => {
+          const hintButton = queryHintButton();
+          if (!hintButton) {
+            throw new Error("ヒントがない");
+          }
+          fireEvent.click(hintButton);
+        });
 
-        const vehicle = queryVehicle("d");
-        const headline = screen.queryByText(
-          "右にほかの車があるので 通れません",
-        );
+        test("塞いでいる車を、向きを示さずに押す指で示し、その車と塞がれた車を残して、先に出すことを言うこと", () => {
+          const cued = getCuedVehicles();
+          const swipe = getPointerSwipe();
+          const spotlit = getSpotlitTargets();
+          const headline = screen.queryByText(hintHeadline);
+          const hintButton = queryHintButton();
+
+          expect(cued).toEqual(["g"]);
+          expect(swipe).toBeNull();
+          expect(spotlit).toEqual(["vehicle-g", "vehicle-h"]);
+          expect(headline).not.toBeNull();
+          expect(hintButton).toBeNull();
+        });
+
+        test("次の手で、手がかりを消すこと", () => {
+          moveVehicles([["e", "ArrowLeft"]]);
+
+          const cued = getCuedVehicles();
+          const spotlit = getSpotlitTargets();
+          const headline = screen.queryByText(freePlayHeadline);
+
+          expect(cued).toEqual([]);
+          expect(spotlit).toEqual([]);
+          expect(headline).not.toBeNull();
+        });
+      });
+
+      test("ほかの車がある向きへ動かすと、本番と同じく揺らし、ぶつかったものと、ぶつかる車を先に出すことを言うこと", () => {
+        moveVehicles([["h", "ArrowLeft"]]);
+
+        const vehicle = queryVehicle("h");
+        const headline = screen.queryByText("ほかの車にぶつかりました");
+        const detail = screen.queryByText(clearTheWayText);
+        const spotlit = getSpotlitTargets();
 
         expect(vehicle?.getAttribute("class")).toContain(
-          "parking-jam-car--blocked-right",
+          "parking-jam-car--blocked-left",
         );
         expect(headline).not.toBeNull();
+        expect(detail).not.toBeNull();
+        expect(spotlit).toEqual(["vehicle-h", "vehicle-g"]);
       });
 
-      test("途中にほかの車があっても道路につながっていない向きへ動かすと、本番と同じく道路がないことを伝えること", () => {
-        moveVehicles([["f", "ArrowLeft"]]);
+      test("同じ側のほかの車線には道路がある向きへ動かすと、本番と同じく道路がないことを伝えること", () => {
+        moveVehicles([["e", "ArrowRight"]]);
 
-        const headline = screen.queryByText(
-          "左へ進む先に道路がないので 出られません",
-        );
+        const headline = screen.queryByText(noRoadHeadline);
+        const detail = screen.queryByText(oppositeDetail);
 
         expect(headline).not.toBeNull();
-      });
-
-      describe("出られない向きへ動かした後の場合", () => {
-        beforeEach(() => {
-          moveVehicles([["d", "ArrowRight"]]);
-        });
-
-        test("手が止まると、印と一緒に残りを出す一言に戻すこと", () => {
-          advanceTime(idleHintDelayMs);
-
-          const headline = screen.queryByText(freePlayHeadline);
-          const cued = getCuedVehicles();
-
-          expect(headline).not.toBeNull();
-          expect(cued).toHaveLength(1);
-        });
+        expect(detail).not.toBeNull();
       });
 
       describe("すべて出した場合", () => {
@@ -449,12 +507,14 @@ describe("ParkingJamTutorial", () => {
           advanceTime(0);
         });
 
-        test("長い車も同じルールで出せることと、ミスの数え方を伝えること", () => {
-          const detail = screen.queryByText(
-            "長い車も同じルールで出せます 出られない向きへ動かすとミスに数えます",
-          );
+        test("ミスの数え方を伝え、覚えたルールを並べ、進み具合を満たすこと", () => {
+          const detail = screen.queryByText(missNotice);
+          const recap = getRecapTexts();
+          const progress = getProgressValue();
 
           expect(detail).not.toBeNull();
+          expect(recap).toEqual(recapLabels);
+          expect(progress).toBe("100");
         });
 
         test("ゲームのホームで開いているレベルを遊ぶ操作で、そのレベルを始めること", () => {
@@ -465,40 +525,29 @@ describe("ParkingJamTutorial", () => {
           expect(playStart.onStart).toHaveBeenCalledOnce();
         });
 
-        test("もう一度で、始まりの盤面の一言を見せること", () => {
-          fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+        test("もう一度を押すと、入口を通さずに、始めの盤面で最初の手順から始めること", () => {
+          fireEvent.click(
+            within(getScreen()).getByRole("button", { name: "もう一度" }),
+          );
+          advanceTime(0);
 
-          const caption = screen.queryByText("最初は車でいっぱいです");
+          const headline = screen.queryByText(firstHeadline);
+          const startButton = queryStartButton();
+          const vehicle = queryVehicle("h");
+          const cued = getCuedVehicles();
+          const progress = getProgressValue();
 
-          expect(caption).not.toBeNull();
-        });
-
-        describe("もう一度で導入を終えた場合", () => {
-          beforeEach(() => {
-            fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-            pressNextThroughIntroWaitingForScenes();
-          });
-
-          test("始めの盤面に戻し、最初の手順から始めること", () => {
-            const vehicle = queryVehicle("a");
-            const cued = getCuedVehicles();
-            const rules = getRuleTexts();
-
-            expect(vehicle).not.toBeNull();
-            expect(cued).toEqual(["e"]);
-            expect(rules).toEqual([
-              "前か後ろへ",
-              hiddenRule,
-              hiddenRule,
-              hiddenRule,
-            ]);
-          });
+          expect(headline).not.toBeNull();
+          expect(startButton).toBeNull();
+          expect(vehicle).not.toBeNull();
+          expect(cued).toEqual(["a"]);
+          expect(progress).toBe("0");
         });
       });
     });
   });
 
-  describe("導入を見せる場合", () => {
+  describe("入口を見せる場合", () => {
     beforeEach(() => {
       render(
         <ParkingJamTutorial
@@ -509,43 +558,43 @@ describe("ParkingJamTutorial", () => {
       );
     });
 
-    test("開くと、何をするパズルかと、車を出していく前の駐車場を、ゴールの一言と一緒に見せること", () => {
+    test("開くと、何をするパズルかと、車を出していく前の駐車場を、ゴールの一言と一緒に見せ、進み具合を0にしておくこと", () => {
       const purpose = screen.queryByText(
         "駐車場の車を すべて道路へ出すパズルです",
       );
-      const caption = screen.queryByText("駐車場が空になったらゴールです");
-      const vehicle = queryVehicle("e");
+      const caption = screen.queryByText(goalCaption);
+      const vehicle = queryVehicle("a");
+      const progress = getProgressValue();
 
       expect(purpose).not.toBeNull();
       expect(caption).not.toBeNull();
       expect(vehicle).not.toBeNull();
+      expect(progress).toBe("0");
     });
 
-    test("待つと、車をすべて出し終えた空の駐車場を見せ、次へを待つこと", () => {
+    test("待つと、車をすべて出し終えた空の駐車場を見せ、はじめるを待つこと", () => {
       advanceTime(introEnoughMs);
 
-      const vehicle = queryVehicle("e");
-      const nextButton = screen.queryByRole("button", { name: "次へ" });
+      const vehicle = queryVehicle("a");
+      const startButton = queryStartButton();
 
       expect(vehicle).toBeNull();
-      expect(nextButton).not.toBeNull();
+      expect(startButton).not.toBeNull();
     });
 
-    test("車を押しても、手順へ飛ばずに、車を出していく動きを終えて空の駐車場を見せ、次へを待つこと", () => {
-      const vehicleBeforePress = queryVehicle("e");
+    test("車を押しても、手順へ飛ばずに、ゴールの一言のまま、はじめるを待つこと", () => {
+      const vehicleBeforePress = queryVehicle("a");
       if (!vehicleBeforePress) {
-        throw new Error("車 e がない");
+        throw new Error("車 a がない");
       }
       fireEvent.pointerDown(vehicleBeforePress);
 
-      const caption = screen.queryByText("駐車場が空になったらゴールです");
-      const vehicle = queryVehicle("e");
-      const nextButton = screen.queryByRole("button", { name: "次へ" });
+      const caption = screen.queryByText(goalCaption);
+      const startButton = queryStartButton();
       const cued = getCuedVehicles();
 
       expect(caption).not.toBeNull();
-      expect(vehicle).toBeNull();
-      expect(nextButton).not.toBeNull();
+      expect(startButton).not.toBeNull();
       expect(cued).toEqual([]);
     });
   });
@@ -560,28 +609,29 @@ describe("ParkingJamTutorial", () => {
       const purpose = screen.queryByText(
         "駐車場の車を すべて道路へ出すパズルです",
       );
-      const caption = screen.queryByText("駐車場が空になったらゴールです");
-      const vehicle = queryVehicle("e");
+      const caption = screen.queryByText(goalCaption);
+      const vehicle = queryVehicle("a");
 
       expect(purpose).not.toBeNull();
       expect(caption).not.toBeNull();
       expect(vehicle).toBeNull();
     });
 
-    test("ゴールで次へを押すと、始まりの一言を添えて車の停まった始めの盤面を見せること", () => {
-      pressNext();
+    test("はじめるを押すと、動きを待たずに、車の停まった始めの盤面で最初の手順から始めること", () => {
+      pressStart();
 
-      const caption = screen.queryByText("最初は車でいっぱいです");
-      const vehicle = queryVehicle("e");
+      const headline = screen.queryByText(firstHeadline);
+      const vehicle = queryVehicle("a");
+      const cued = getCuedVehicles();
 
-      expect(caption).not.toBeNull();
+      expect(headline).not.toBeNull();
       expect(vehicle).not.toBeNull();
+      expect(cued).toEqual(["a"]);
     });
 
-    describe("導入を終えた場合", () => {
+    describe("始めた場合", () => {
       beforeEach(() => {
-        pressNext();
-        pressNextThroughIntroWaitingForScenes();
+        pressStart();
       });
 
       test("印の車を出すと、待たずに次のルールの一言と印を出すこと", () => {
@@ -591,7 +641,7 @@ describe("ParkingJamTutorial", () => {
         const cued = getCuedVehicles();
 
         expect(headline).not.toBeNull();
-        expect(cued).toEqual(["g"]);
+        expect(cued).toEqual(["b"]);
       });
 
       describe("道路のルールの手順の場合", () => {
@@ -601,13 +651,11 @@ describe("ParkingJamTutorial", () => {
 
         test("進む先に道路がない向きへ動かすと、揺れが見えなくても、手順の見出しから、進む先に道路がないことを言う一言に替えること", () => {
           const headlineBefore = screen.queryByText(roadHeadline);
-          moveVehicles([["g", "ArrowLeft"]]);
+          moveVehicles([["b", "ArrowLeft"]]);
 
-          const vehicle = queryVehicle("g");
+          const vehicle = queryVehicle("b");
           const stepHeadline = screen.queryByText(roadHeadline);
-          const violation = screen.queryByText(
-            "左へ進む先に道路がないので 出られません",
-          );
+          const violation = screen.queryByText(noRoadHeadline);
 
           expect(headlineBefore).not.toBeNull();
           expect(vehicle).not.toBeNull();
@@ -621,15 +669,13 @@ describe("ParkingJamTutorial", () => {
           moveVehicles(stepMoves.slice(0, 2));
         });
 
-        test("植え込みへ動かすと、揺れが見えなくても、手順の見出しから、動かした向きに植え込みがあることを言う一言に替えること", () => {
+        test("植え込みへ動かすと、揺れが見えなくても、手順の見出しから、植え込みにぶつかったことを言う一言に替えること", () => {
           const headlineBefore = screen.queryByText(planterHeadline);
-          moveVehicles([["b", "ArrowRight"]]);
+          moveVehicles([["c", "ArrowRight"]]);
 
-          const vehicle = queryVehicle("b");
+          const vehicle = queryVehicle("c");
           const stepHeadline = screen.queryByText(planterHeadline);
-          const violation = screen.queryByText(
-            "右に植え込みがあるので 通れません",
-          );
+          const violation = screen.queryByText("植え込みにぶつかりました");
 
           expect(headlineBefore).not.toBeNull();
           expect(vehicle).not.toBeNull();
@@ -643,7 +689,7 @@ describe("ParkingJamTutorial", () => {
   describe("プレイ中に開いた場合", () => {
     beforeEach(() => {
       render(<ParkingJamTutorial open={true} onClose={onClose} />);
-      pressNextThroughIntro();
+      pressStart();
     });
 
     describe("すべて出した場合", () => {
@@ -654,9 +700,7 @@ describe("ParkingJamTutorial", () => {
       });
 
       test("ミスの数え方を伝えること", () => {
-        const detail = screen.queryByText(
-          "出られない向きへ動かすとミスに数えます",
-        );
+        const detail = screen.queryByText(missNotice);
 
         expect(detail).not.toBeNull();
       });
