@@ -19,7 +19,6 @@ export type ZukanStampTier = {
   liftedScale: number;
   /** 着いたときに飛び散らせる、マスの色の粒の数。 */
   particleCount: number;
-  /** 着いたときに広げる衝撃波の大きさと太さ。 */
   shockwaveScale: number;
   shockwaveWidthPx: number;
   /** 着いたときに、マスの色の光をにじませるか。 */
@@ -90,7 +89,6 @@ const PREVIOUS_COLOR_FADE_END_OFFSET = 0.85;
 /** 衝撃波は半分ほどの時間で大きさの多くを広げ、そこから薄れながら残りを広げる。 */
 const SHOCKWAVE_MIDWAY = { offset: 0.45, progress: 0.7, opacity: 0.7 } as const;
 const PARTICLE_SIZE_PX = 5;
-/** 粒を飛ばす向きと距離のばらつき。 */
 const PARTICLE_ANGLE_JITTER = 0.6;
 const PARTICLE_DISTANCE_RANGE = { min: 0.6, spread: 0.5 } as const;
 const PARTICLE_END_SCALE = 0.4;
@@ -122,7 +120,7 @@ const COUNT_POP_PEAK_OFFSET = 0.3;
 /** 効果を描く層の重なり。台紙の外のヘッダーやレベルのカードより手前に出す。 */
 const EFFECT_LAYER_Z_INDEX = "60";
 
-/** 押すマスの中の、今の姿で押す面・前の色を重ねる面・浮いた影の要素。前の色の面は段階が上がったマスにだけある。 */
+/** 前の色の面は段階が上がったマスにだけある。 */
 export type ZukanStampParts = {
   face: Element;
   previous: Element | null;
@@ -196,7 +194,7 @@ type SquareBox = Point & { size: number };
 /** マスに `data-piece-shape` が無いときに描く、四角いピースの形。 */
 const SQUARE_PIECE_SHAPE = "0,0,0,0";
 
-/** 効果をピースの形で描く SVG。マスの2倍の大きさの要素いっぱいに、マスと中心を揃えて描く。 */
+/** マスの2倍の大きさの要素いっぱいに、マスと中心を揃えて描く。 */
 function createPieceSvg(
   path: string,
   attributes: Record<string, string>,
@@ -286,7 +284,6 @@ class StampMotion {
     animation.finished.then(then, function ignoreCancelled() {});
   }
 
-  /** 層の、中心 `at` に大きさ `size` の要素を置き、動き終えたら外す。`content` があれば要素の中に描く。 */
   spawn(
     at: Point,
     size: number,
@@ -403,7 +400,7 @@ function shockwave(
   );
 }
 
-/** 着いた瞬間にマスの色の光をにじませる。白い台紙の上でも見えるよう、白ではなくマスの色にする。 */
+/** 白い台紙の上でも見えるよう、白ではなくマスの色にする。 */
 function flash(
   motion: StampMotion,
   at: SquareBox,
@@ -424,7 +421,6 @@ function flash(
   );
 }
 
-/** perfect を浮かせている間だけ、浮いた姿の周りに光を帯びさせ、着くときに消す。 */
 function glowWhileLifted(
   motion: StampMotion,
   at: SquareBox,
@@ -467,7 +463,6 @@ const NEIGHBOR_DIRECTIONS = [
   [1, 1],
 ] as const;
 
-/** 押したマスの周りの8マスを、押したマスから外へ押し退けて戻す。変化を見せているマスは動かさない。 */
 function nudgeNeighbors(
   motion: StampMotion,
   square: Element,
@@ -485,6 +480,7 @@ function nudgeNeighbors(
       column < 0 || column >= columns
         ? null
         : grid.querySelector(`[data-index="${index + dx + dy * columns}"]`);
+    // 変化を見せているマスは動かさない。
     if (neighbor === null || neighbor.hasAttribute("data-change-stage")) {
       continue;
     }
@@ -531,7 +527,6 @@ function shakeSheet(
   );
 }
 
-/** 台紙の上の状態ごとの数のうち、`status` の項目を弾ませる。 */
 function popStatusCount(
   motion: StampMotion,
   status: ZukanProblemStatus,
@@ -554,7 +549,6 @@ function popStatusCount(
   );
 }
 
-/** 押すマスと、その中の部品と変化。 */
 export type ZukanStampTarget = {
   square: Element;
   parts: ZukanStampParts;
@@ -580,8 +574,7 @@ function canAnimate({ face, shadow, previous }: ZukanStampParts): boolean {
 /**
  * 変化したマスを押す。評価段階が高いほど大きく浮かせてから縮めてマスに着かせ、着いたら少し膨らんで戻しながら、段階に応じた衝撃波・光・粒を広げ、状態ごとの数を弾ませて音を鳴らす。
  * 段階が上がったマスは前の色で持ち上げ、落ちながら今の色へ塗り替える。perfect は浮いている間に光を帯び、着いたときに台紙を揺らして周りのマスを押し退ける。
- * 着いたことは時刻の見込みではなく落とす動きの終わりで知らせ、音と数をマスに着いた姿に揃える。
- * 動きを減らす設定と、動かせない環境では動かさず鳴らさず、すぐに着いて終わったものとする。戻り値は動きを取り消して、重ねて描いた効果を片付ける関数。
+ * 戻り値は動きを取り消して、重ねて描いた効果を片付ける関数。
  */
 export function playZukanStamp(
   { square, parts, stamp }: ZukanStampTarget,
@@ -648,6 +641,7 @@ export function playZukanStamp(
     });
   }
 
+  // 着いたことは時刻の見込みではなく落とす動きの終わりで知らせ、音と数をマスに着いた姿に揃える。
   motion.whenFinished(drop, function impact() {
     onLanded();
     motion.after(impactTailMs, onFinished);

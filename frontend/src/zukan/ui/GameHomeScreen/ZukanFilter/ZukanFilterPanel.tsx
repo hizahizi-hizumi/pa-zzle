@@ -25,11 +25,8 @@ import {
 
 type ZukanFilterPanelProps = {
   conditions: ZukanFilterConditions;
-  /** 開いているレベルで選べる特徴の軸。 */
   featureAxes: readonly ZukanFilterFeatureAxis[];
-  /** そのゲームが数える成績の軸。 */
   performanceAxes: readonly ZukanPerformanceAxis[];
-  /** 選択肢ごとの、今の条件で当たる問題の数。 */
   optionCounts: ZukanFilterOptionCounts;
   /** 選択肢ごとの、条件をかけないときに当たる問題の数。 */
   optionCountLimits: ZukanFilterOptionCounts;
@@ -40,12 +37,6 @@ function isZukanProblemStatus(value: string): value is ZukanProblemStatus {
   return (zukanProblemStatusOrder as readonly string[]).includes(value);
 }
 
-/**
- * 絞り込みの条件を選ぶ並び。状態・問題の特徴・成績の種類ごとに、選択肢を何個でも選べるボタンで並べる。
- * 状態の選択肢はマスと同じ見本を添える。特徴は軸ごとに名前と選択肢を並べ、選べる軸が無ければ特徴の並びを出さない。
- * 成績は解いた問題を分けるもので、そのゲームが数える軸だけを、特徴と同じく軸ごとに並べる。
- * 各選択肢には、ほかの種類の条件をかけた上でその選択肢に当たる問題の数を添える。
- */
 export function ZukanFilterPanel({
   conditions,
   featureAxes,

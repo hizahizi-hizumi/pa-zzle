@@ -21,7 +21,7 @@ function hashToUnit(values: readonly number[]): number {
 const HORIZONTAL_EDGE = 0;
 const VERTICAL_EDGE = 1;
 
-/** 区切りの中で隣り合う2つのピースの間の辺を、上または左のピースから見た形。凸か凹を位置から決める。 */
+/** 区切りの中で隣り合う2つのピースの間の辺を、上または左のピースから見た形。 */
 function findInnerEdge(
   direction: typeof HORIZONTAL_EDGE | typeof VERTICAL_EDGE,
   section: number,
@@ -32,7 +32,7 @@ function findInnerEdge(
 }
 
 /**
- * 台紙に並べた位置のピースの形。絞り込みで分けた区切り（当たった問題と当たらなかった問題）を、それぞれ1枚のジグソーとして組む。
+ * 絞り込みで分けた区切り（当たった問題と当たらなかった問題）を、それぞれ1枚のジグソーとして組む。
  * 区切りの外周だけを平らにし、ピースの間の辺は位置から凸か凹に決める。隣り合うピースは同じ辺を引くので、必ず噛み合う。
  */
 export function findZukanPieceShape(
@@ -117,12 +117,10 @@ function edgePath(
   return `${path} L${formatPoint(bx, by)}`;
 }
 
+// 形は辺の組み合わせの数しかないので、同じ形には作り置いたパスを返す。
 const piecePaths = new Map<ZukanPieceShape, string>();
 
-/**
- * ピースの輪郭の SVG パス。マスの左上を原点、1辺を 1 とする座標で描く。
- * 形は辺の組み合わせの数しかないので、同じ形には作り置いたパスを返す。
- */
+/** マスの左上を原点、1辺を 1 とする座標で描く。 */
 export function getZukanPiecePath(shape: ZukanPieceShape): string {
   const cached = piecePaths.get(shape);
   if (cached !== undefined) {
@@ -137,7 +135,7 @@ export function getZukanPiecePath(shape: ZukanPieceShape): string {
 }
 
 /**
- * ピースを描く SVG の `viewBox`。タブと選んだピースの囲みが収まるよう、マスの周りに半マスずつ取る。
+ * タブと選んだピースの囲みが収まるよう、マスの周りに半マスずつ取る。
  * この SVG は、マスの2倍の大きさでマスと中心を揃えて置く。
  */
 export const ZUKAN_PIECE_VIEW_BOX = "-0.5 -0.5 2 2";

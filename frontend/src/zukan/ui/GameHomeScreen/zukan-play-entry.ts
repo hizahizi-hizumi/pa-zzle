@@ -2,7 +2,6 @@ import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 import { ZUKAN_PIECE_VIEW_BOX } from "@/zukan/ui/GameHomeScreen/zukan-piece-shape";
 import { readZukanSheetView } from "@/zukan/ui/GameHomeScreen/zukan-sheet-view";
 
-/** 台紙から抜いたピースがプレイへ入るまでの、それぞれの動きの長さ（ms）。 */
 const ZUKAN_PLAY_ENTRY_DURATION_MS = {
   /** 台紙を送って、抜くピースを見える所へ運ぶ。 */
   spin: 360,
@@ -12,14 +11,11 @@ const ZUKAN_PLAY_ENTRY_DURATION_MS = {
   dissolve: 240,
 } as const;
 
-/** 画面の中央へ運んだピースの1辺（px）と、消すときに広げる倍率。 */
 const LIFTED_PIECE_SIZE_PX = 104;
 const DISSOLVE_SCALE = 1.5;
 
-/** 飛ばした押下の続きのクリックを待って捨てる長さ（ms）。 */
 const SKIP_CLICK_SWALLOW_MS = 500;
 
-/** 単独で押しても、飛ばす操作として受けないキー。 */
 const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta"]);
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
@@ -31,7 +27,7 @@ export type ZukanPlayEntry = {
   square: HTMLElement;
   /** 台紙のスクロール領域。 */
   scroller: HTMLElement;
-  /** ゲームのホームの、地を除く表示全体。ピースを運ぶ間に引く。 */
+  /** ゲームのホームの、地を除く表示全体。 */
   screen: HTMLElement;
   /** ピースの輪郭の SVG パス。マスの左上を原点、1辺を 1 とする。 */
   piecePath: string;
@@ -50,7 +46,6 @@ function canAnimate(element: Element): boolean {
   return typeof element.animate === "function" && !prefersReducedMotion();
 }
 
-/** 抜くピースを、台紙の見えている高さの中央へ運ぶスクロール位置。 */
 function findCenteredScrollTop(
   square: HTMLElement,
   scroller: HTMLElement,
@@ -63,7 +58,6 @@ function findCenteredScrollTop(
   return Math.min(Math.max(scroller.scrollTop + offset, 0), maxScrollTop);
 }
 
-/** マスが、台紙の見えている範囲に収まっているか。 */
 function isFullyVisible(square: HTMLElement, scroller: HTMLElement): boolean {
   const squareRect = square.getBoundingClientRect();
   const view = readZukanSheetView(scroller);
@@ -80,7 +74,6 @@ function easeOutCubic(progress: number): number {
 /** 運ぶピースの面に浮かべるピクトグラムの、ピースの1辺に対する大きさ。タブの凹みにかからない大きさにする。 */
 const PIECE_PICTOGRAM_SIZE = 0.5;
 
-/** 運ぶ間に、ピースの面を状態の色から明るい面へ替え、その上にピクトグラムを浮かべる層。 */
 function createPieceFace(piecePath: string, pictogramSvg: string): SVGGElement {
   const face = document.createElementNS(SVG_NAMESPACE, "g");
   face.dataset.zukanPlayEntryFace = "";
@@ -138,11 +131,6 @@ function createPieceLayer(
 }
 
 /**
- * 台紙の1問を始めるときに、そのピースを台紙から抜いて画面の中央へ大きく運び、プレイ画面の上で広げて消す。
- * 運ぶ間に、ピースの面を明るい面へ替えてゲームのピクトグラムを浮かべ、どのゲームの1問へ入るかを見せる。
- * ゲームのホームとプレイ画面は同じゲームの地の上にあるので、ピースだけを残してほかの表示を引き、ピースの中へ入っていくように見せる。
- * ピースの層は、画面を移っても残るよう `document.body` に置き、消し終えたら取り除く。
- * 動きの間に画面を押すかキーを押すと、すぐに始める。動きを減らす設定と動かせない環境では、何も動かさずにすぐ始める。
  * 戻り値の `skip` は演出を飛ばしてすぐ始め、`cancel` は始める前なら始めずにやめて、動かしたものを元へ戻す。始めたあとの `cancel` は何もしない。
  */
 export function playZukanPlayEntry({
@@ -254,12 +242,14 @@ export function playZukanPlayEntry({
         easing: MOTION_EASING.exit,
         fill: "forwards",
       });
+    // ピースの層は、画面を移っても残るよう `document.body` に置き、消し終えたら取り除く。
     document.body.append(layer);
     square.style.visibility = "hidden";
     const { left, top, width, height } = square.getBoundingClientRect();
     const dx = window.innerWidth / 2 - (left + width / 2);
     const dy = window.innerHeight / 2 - (top + height / 2);
     const scale = LIFTED_PIECE_SIZE_PX / width;
+    // ゲームのホームとプレイ画面は同じゲームの地の上にあるので、ピースだけを残してほかの表示を引き、ピースの中へ入っていくように見せる。
     screenFade = screen.animate([{ opacity: 1 }, { opacity: 0 }], {
       duration: ZUKAN_PLAY_ENTRY_DURATION_MS.lift,
       easing: MOTION_EASING.standard,

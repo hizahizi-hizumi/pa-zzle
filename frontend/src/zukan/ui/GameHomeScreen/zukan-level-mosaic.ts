@@ -1,7 +1,7 @@
 import type { ZukanProblemStatus } from "@/zukan/zukan-collection";
 
 /**
- * 状態ごとの、その状態のマスをまとめて塗る SVG パス。マスの1辺を 1 とし、同じ行で続くマスは1つの矩形にまとめる。
+ * 状態ごとの SVG パス。マスの1辺を 1 とし、同じ行で続くマスは1つの矩形にまとめる。
  * その状態のマスが無ければ、その状態を持たない。
  */
 export function listZukanLevelMosaicPaths(

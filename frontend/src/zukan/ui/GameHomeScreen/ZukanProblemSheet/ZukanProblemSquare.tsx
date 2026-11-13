@@ -24,17 +24,12 @@ type ZukanProblemSquareProps = {
   problem: ZukanProblem;
   /** 台紙に番号の順で置いた中の位置。押した・矢印で動いたマスと、変化を押すマスを台紙が見分けるのに使う。 */
   index: number;
-  /** 台紙に並べた位置が決める、ピースの形。 */
   pieceShape: ZukanPieceShape;
   numberDigitCount: number;
-  /** 台紙へ Tab で入ったときにフォーカスを受けるマスか。 */
   isTabStop: boolean;
   isSelected: boolean;
-  /** 絞り込みの条件に当たらなかったか。台紙は、当たらなかったマスを `data-filtered-out` で見分けて後ろへ並べる。 */
   isFilteredOut: boolean;
-  /** この台紙を開いて見せる、前回からの変化。無ければ `null`。 */
   change: ZukanProblemChange | null;
-  /** 変化を今どこまで見せたか。見せる変化が無ければ `null`。 */
   changeStage: ZukanChangeStage | null;
 };
 
@@ -43,21 +38,9 @@ const SELECTION_HALO_WIDTH = 0.2;
 const SELECTION_LINE_WIDTH = 0.083;
 const HOVER_LINE_WIDTH = 0.11;
 
-/** ピースを描く SVG を、マスの2倍の大きさでマスと中心を揃えて置く。 */
 const PIECE_LAYER_CLASS_NAME =
   "pointer-events-none absolute -top-1/2 -left-1/2 size-[200%] overflow-visible";
 
-/**
- * 台紙の1問のマス。台紙が並べた位置で決めたジグソーのピースの形に描き、状態を塗りだけで示し、文字は読み上げ名に持たせる。
- * ピースは SVG の図形で描く。画像で切り抜くと、画素の細かい画面でも等倍で描かれてぼやけるため。
- * 押す・矢印キーの操作は台紙がまとめて受けるので、マス自身はイベントを持たない。
- * 前回からの変化は、マスに着くまで前回の姿で描く。押していく演出が動かす押す姿・浮いた影を、押し終えるまで重ねておく。
- * 段階が上がったマスは、押す姿に前の段階の色を重ね、落ちながら今の色へ塗り替えられるようにする。
- * 押していく演出が押し方を決められるよう、変化したマスに今の段階と段階が上がったか、ピースの形を持たせる。
- * 動きを減らす設定では今の姿に印を載せる。
- * 絞り込みの条件に当たらなかったマスは、色を変えずに薄くする。選んでいる間は、選んだことが分かるよう薄くしない。
- * 選んだピースは、周りを背景の色で空けて前景色の線で囲む。`ring` の明るさの線は、小さなピースでは塗りに紛れるため。
- */
 function ZukanProblemSquareContent({
   problem,
   index,
@@ -73,6 +56,7 @@ function ZukanProblemSquareContent({
   const isPending = changeStage === "waiting" || changeStage === "stamping";
   const hasStamp = isPending || changeStage === "landed";
   const isLifted = changeStage === "stamping" || changeStage === "landed";
+  // 前回からの変化は、マスに着くまで前回の姿で描く。
   const shownStatus =
     change !== null && isPending ? change.previousStatus : status;
   const path = getZukanPiecePath(pieceShape);
@@ -82,18 +66,22 @@ function ZukanProblemSquareContent({
   const layerClassName = isSelected ? "z-20" : "hover:z-10 focus-visible:z-10";
   // 押す姿はマスより大きく浮くので、選んだマスも含めて周りのマスより手前に重ねる。
   const stampClassName = isLifted ? "z-30" : "";
+  // 絞り込みの条件に当たらなかったマスは、色を変えずに薄くする。選んでいる間は、選んだことが分かるよう薄くしない。
   const filteredOutClassName = isFilteredOut && !isSelected ? "opacity-30" : "";
   const description = describeZukanProblem(problem, numberDigitCount, change);
   const stamp = change === null ? null : getZukanStamp(problem, change);
 
   return (
     <button
+      // 押す・矢印キーの操作は台紙がまとめて受けるので、マス自身はイベントを持たない。
       type="button"
       data-index={index}
+      // 押していく演出が押し方を決められるよう、変化したマスに今の段階と段階が上がったか、ピースの形を持たせる。
       data-piece-shape={pieceShape}
       data-change-stage={changeStage ?? undefined}
       data-change-level={stamp?.level}
       data-change-raised={stamp?.isRaised ? "" : undefined}
+      // 台紙は、当たらなかったマスを `data-filtered-out` で見分けて後ろへ並べる。
       data-filtered-out={isFilteredOut ? "" : undefined}
       tabIndex={isTabStop ? 0 : -1}
       aria-label={
@@ -102,6 +90,7 @@ function ZukanProblemSquareContent({
       aria-current={isSelected ? "true" : undefined}
       className={`group relative aspect-square w-full scroll-m-3 outline-none ${layerClassName} ${stampClassName} ${filteredOutClassName}`}
     >
+      {/* ピースは SVG の図形で描く。画像で切り抜くと、画素の細かい画面でも等倍で描かれてぼやけるため。 */}
       <svg
         aria-hidden="true"
         viewBox={ZUKAN_PIECE_VIEW_BOX}
@@ -125,6 +114,7 @@ function ZukanProblemSquareContent({
         <path
           d={path}
           fill="none"
+          // 選んだピースは、周りを背景の色で空けて前景色の線で囲む。`ring` の明るさの線は、小さなピースでは塗りに紛れるため。
           className={
             isSelected
               ? "stroke-foreground"
@@ -134,6 +124,7 @@ function ZukanProblemSquareContent({
           strokeLinejoin="round"
         />
       </svg>
+      {/* 押していく演出が動かす押す姿・浮いた影を、押し終えるまで重ねておく。 */}
       {hasStamp && (
         <svg
           aria-hidden="true"
@@ -158,6 +149,7 @@ function ZukanProblemSquareContent({
               strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
               strokeLinejoin="round"
             />
+            {/* 段階が上がったマスは、押す姿に前の段階の色を重ね、落ちながら今の色へ塗り替えられるようにする。 */}
             {change?.kind === "raised" && (
               <path
                 data-stamp-part="previous"
@@ -171,6 +163,7 @@ function ZukanProblemSquareContent({
           </svg>
         </span>
       )}
+      {/* 動きを減らす設定では今の姿に印を載せる。 */}
       {changeStage === "marked" && (
         <span
           aria-hidden="true"

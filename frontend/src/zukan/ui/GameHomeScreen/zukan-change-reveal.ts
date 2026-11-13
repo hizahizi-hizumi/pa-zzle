@@ -31,7 +31,6 @@ export type ZukanStamp = {
   isRaised: boolean;
 };
 
-/** 変化したマスの、今の評価段階と前回の状態。押していく演出は、マスに載せたこれを読んで押し方を決める。 */
 export function getZukanStamp(
   problem: ZukanProblem,
   change: ZukanProblemChange,
@@ -42,7 +41,6 @@ export function getZukanStamp(
     : { level: status, isRaised: change.kind === "raised" };
 }
 
-/** マスの `data-change-level` と `data-change-raised` から、押す変化を読む。 */
 export function readZukanStamp(square: Element): ZukanStamp | null {
   const level = square.getAttribute("data-change-level");
   const solvedLevel = gameResultLevels.find((value) => value === level);
@@ -55,7 +53,7 @@ export function readZukanStamp(square: Element): ZukanStamp | null {
 }
 
 /**
- * 押す変化の重さ。perfect、段階の上がり、great、good、clear の順に重い。
+ * perfect、段階の上がり、great、good、clear の順に重い。
  * まとめて押す回で音を代表して鳴らすマスを選ぶのに使う。
  */
 export function getZukanStampWeight({ level, isRaised }: ZukanStamp): number {
@@ -84,7 +82,6 @@ export function findZukanHeaviestStamp(
   return heaviest;
 }
 
-/** 押す1マスの動きの長さ。perfect は落とす間とその後の余韻を長く取る。 */
 export const ZUKAN_STAMP_DURATION_MS = {
   /** 浮いた姿から縮んでマスに着くまで。 */
   drop: 200,
@@ -121,17 +118,14 @@ const INDIVIDUAL_STAMP_LIMIT = 12;
 /** 押すマスを見えているものとする、台紙の見える範囲の端からの距離。浮いた姿と衝撃波が端で切れない幅。 */
 const REVEAL_SCROLL_MARGIN_PX = 32;
 
-/** 変化したマスを押す順のうち `order` 番目のマスを押す回。1つずつ押す数より後のマスは、最後の1回にまとめる。 */
 export function getZukanStampSlot(order: number): number {
   return Math.min(order, INDIVIDUAL_STAMP_LIMIT);
 }
 
-/** 変化したマスが `changeCount` 個のときに、押す回の数。 */
 export function countZukanStampSlots(changeCount: number): number {
   return changeCount === 0 ? 0 : getZukanStampSlot(changeCount - 1) + 1;
 }
 
-/** 押す順に並べたものを、押す回ごとに分ける。 */
 export function groupZukanStampSlots<Item>(items: readonly Item[]): Item[][] {
   const slots: Item[][] = [];
   items.forEach((item, order) => {
@@ -141,7 +135,7 @@ export function groupZukanStampSlots<Item>(items: readonly Item[]): Item[][] {
   return slots;
 }
 
-/** マスを押す回ごとの時刻。台紙を開いてからの経過で表す。 */
+/** 時刻は、台紙を開いてからの経過で表す。 */
 export type ZukanStampPlan = {
   /** 回ごとの、押し始める時刻。スクロールを待つ間は後へずれる。 */
   slotStartMs: readonly number[];
@@ -155,7 +149,6 @@ const typicalStampTailMs = getZukanStampTailMs({
 });
 
 /**
- * 回ごとに押すマスの変化 `slots` から、押し始める時刻を決める。
  * 少ないうちは一定の間隔で押し、多ければ全体が上限に収まるよう間隔を詰める。
  * perfect を含む回の前には間を置き、その分だけ後の回を後ろへずらす。間を置くのは最初の回を除いて上限の数まで。
  */
@@ -217,7 +210,6 @@ export function joinZukanVerticalSpans(
   };
 }
 
-/** 見えている範囲 `view` の中に、端から `margin` 空けて `target` が入っているか。 */
 export function isZukanSpanInView(
   view: ZukanVerticalSpan,
   target: ZukanVerticalSpan,
@@ -228,7 +220,6 @@ export function isZukanSpanInView(
   );
 }
 
-/** 押すマスの範囲 `target` が、浮いた姿が端で切れない余白を空けて見えているか。 */
 export function isZukanStampTargetVisible(
   view: ZukanVerticalSpan,
   target: ZukanVerticalSpan,
@@ -237,7 +228,6 @@ export function isZukanStampTargetVisible(
 }
 
 /**
- * 押すマスの範囲 `target` が、端から余白を空けて見えるようにする台紙のスクロール位置。既に見えていれば `null`。
  * 範囲が見える範囲に入るなら、動かす量が最も小さい位置にする。入らなければ、範囲の先頭を見える範囲の上端に寄せ、後に続くマスをなるべく多く見せる。
  */
 export function findZukanRevealScrollTop(
@@ -258,10 +248,6 @@ export function findZukanRevealScrollTop(
   return Math.max(0, scrollTop + offset);
 }
 
-/**
- * 押す回ごとに、次に押すマスの範囲 `next` を見せるための台紙のスクロール位置。`next` が見えていれば動かさず `null`。
- * 見えていなければ、まだ押していないマスの範囲 `rest` を `findZukanRevealScrollTop` と同じく見せる。
- */
 export function findZukanFollowScrollTop(
   view: ZukanVerticalSpan,
   scrollTop: number,
@@ -273,7 +259,6 @@ export function findZukanFollowScrollTop(
     : findZukanRevealScrollTop(view, scrollTop, rest);
 }
 
-/** まだ見せていない変化 `pendingChange` があれば前回の姿、無ければ今の姿。 */
 export function getZukanShownProblemStatus(
   problem: ZukanProblem,
   pendingChange: ZukanProblemChange | undefined,
@@ -283,7 +268,6 @@ export function getZukanShownProblemStatus(
     : pendingChange.previousStatus;
 }
 
-/** 変化のうち、新しく解いた問題の数。 */
 export function countZukanNewlySolved(
   changes: ReadonlyMap<ProblemId, ZukanProblemChange> | undefined,
 ): number {

@@ -23,11 +23,8 @@ import {
 } from "@/zukan/ui/GameHomeScreen/zukan-stamp-effects";
 import { zukanStampSounds } from "@/zukan/ui/GameHomeScreen/zukan-stamp-sound";
 
-/** 変化したマスを押していく演出の進み。押す回の数で表す。 */
 export type ZukanStampProgress = {
-  /** 押し始めた回の数。 */
   startedSlotCount: number;
-  /** マスに着いた回の数。 */
   landedSlotCount: number;
 };
 
@@ -42,15 +39,10 @@ const notStarted: ZukanStampProgress = {
 const SHEET_SCROLL_DURATION_MS = 220;
 /** 押してから離すまでに動いた距離がこれ未満なら、スクロールではなくタップとみなす。 */
 const TAP_SLOP_PX = 10;
-/** 演出を飛ばしたタップに続くクリックを待つ上限。 */
 const SKIP_TAP_CLICK_WAIT_MS = 600;
 
 function cancelNothing() {}
 
-/**
- * 次のクリックを1回だけ、どこにも届かせない。演出を飛ばしたタップで、マスを選んだりリンクを開いたりしないようにする。
- * 次に押し始めたときと、待つ上限を過ぎたときには、何もせずにやめる。戻り値はやめる関数。
- */
 function suppressNextClick(): () => void {
   function swallow(event: MouseEvent) {
     event.preventDefault();
@@ -73,7 +65,7 @@ function readSpan(element: Element): ZukanVerticalSpan {
   return { top, bottom };
 }
 
-/** 動き始めと終わりをゆるめる3次の緩急。`MOTION_EASING.standard` と同じ向きの形を、スクロール位置の計算に使う。 */
+/** `MOTION_EASING.standard` と同じ向きの形を、スクロール位置の計算に使う。 */
 function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 }
@@ -140,7 +132,6 @@ function findSquaresSpan(
   );
 }
 
-/** 変化したマス全体の範囲を見せる台紙のスクロール位置。見えていれば `null`。 */
 function findChangesScrollTop(
   scroller: HTMLElement,
   indices: readonly number[],
@@ -421,9 +412,7 @@ type ZukanChangeRevealOptions = {
 };
 
 /**
- * 開いている台紙で、前回からの変化を見せる。変化したマスが見えるよう台紙をスクロールし、`appearance` が `animated` なら変化したマスを押していく。
  * `difficulty` が変わったり `null` になったりしたときと、画面を離れたときは、`onShown` を呼ばずにやめ、進みを初めに戻す。
- * 戻り値は押していく演出の進み。
  */
 export function useZukanChangeReveal(
   options: ZukanChangeRevealOptions,

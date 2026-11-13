@@ -8,7 +8,6 @@ import {
 } from "@/zukan/zukan-collection";
 import type { ZukanProblemChange } from "@/zukan/zukan-last-viewed";
 
-/** 見方と状態ごとの数に並べる状態。評価段階の高い順に続けて、まだクリアしていない状態を並べる。 */
 export const zukanProblemStatusOrder = [
   "perfect",
   "great",
@@ -29,8 +28,7 @@ export const zukanProblemStatusLabels: Record<ZukanProblemStatus, string> = {
 };
 
 /**
- * マスと凡例の見本に共通する、状態ごとの塗りの色。文字色として与え、面は `currentColor` で塗る。
- * 解いた問題は結果画面と同じ評価段階の色で塗る。未挑戦は淡い灰色で塗り、挑戦中はそれより少し濃い灰色で塗る。
+ * 文字色として与え、面は `currentColor` で塗る。
  * 未挑戦と挑戦中を枠で示すと、ピースの輪郭が台紙一面に線の模様を作って騒がしく、白抜きのピースが穴のように浮くので、塗りの濃さで分ける。
  */
 const zukanProblemStatusColorClassNames: Record<ZukanProblemStatus, string> = {
@@ -53,7 +51,6 @@ const zukanProblemChangeLabels: Record<ZukanProblemChange["kind"], string> = {
   raised: "前回から段階が上がった",
 };
 
-/** マスの読み上げ名。番号・難易度と、最高スコアか、挑戦中・未挑戦であることを1文で示し、前回図鑑を見たときからの変化があれば添える。 */
 export function describeZukanProblem(
   problem: ZukanProblem,
   digitCount: number,
