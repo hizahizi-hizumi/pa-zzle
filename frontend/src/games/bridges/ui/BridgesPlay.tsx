@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
 import type { BridgesDifficulty } from "@/games/bridges/difficulty";
@@ -12,10 +14,12 @@ import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import type { BridgesCycleDirection } from "@/games/bridges/puzzle/transitions";
 import { BridgesGround } from "@/games/bridges/ui/BridgesGround";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
+import { BridgesSeparationNotice } from "@/games/bridges/ui/BridgesPlay/BridgesSeparationNotice";
 import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/BridgesStatusAnnouncement";
 import { useBridgesSoundEffects } from "@/games/bridges/ui/BridgesPlay/use-bridges-sound-effects";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
 import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
+import { BOARD_SETTLE_DELAY_MS } from "@/games/bridges/ui/board-settle-delay";
 import { BridgesResultScreen } from "@/games/bridges/ui/result/BridgesResultScreen";
 import type {
   GamePlayScreenProps,
@@ -30,6 +34,7 @@ type BridgesPlayProps = GamePlayScreenProps<BridgesDifficulty, BridgesResult> &
     board: BridgesBoardState;
     bridges: readonly BridgeCount[];
     islandStatuses: readonly BridgesIslandStatus[];
+    separatedGroupCount: number | null;
     undoCount: number;
     edgeNotice: BridgesEdgeNotice | null;
     onCycleEdge: (edge: number, direction?: BridgesCycleDirection) => void;
@@ -44,6 +49,7 @@ export function BridgesPlay({
   board,
   bridges,
   islandStatuses,
+  separatedGroupCount,
   undoCount,
   edgeNotice,
   canUndo,
@@ -59,6 +65,29 @@ export function BridgesPlay({
   onOpenDiagnostics,
 }: BridgesPlayProps) {
   useBridgesSoundEffects(edgeNotice, progress, board, bridges);
+  // 盤面ごとに待ち直すので、組の数ではなく今の盤面の橋の並びで、続いた盤面かを見分ける。
+  const [settledBridges, setSettledBridges] = useState<
+    readonly BridgeCount[] | null
+  >(null);
+  const shownSeparatedGroupCount =
+    progress === "playing" && settledBridges === bridges
+      ? separatedGroupCount
+      : null;
+
+  useEffect(() => {
+    if (separatedGroupCount === null) {
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setSettledBridges(bridges),
+      BOARD_SETTLE_DELAY_MS,
+    );
+    return () => {
+      window.clearTimeout(timer);
+      // 待ったは前の盤面の配列をそのまま戻すので、知らせた盤面へ戻ったときも待ち直すよう、盤面を離れたら忘れる。
+      setSettledBridges(null);
+    };
+  }, [bridges, separatedGroupCount]);
 
   return (
     <GamePlayFrame
@@ -115,9 +144,16 @@ export function BridgesPlay({
           board={board}
           notice={edgeNotice}
           solved={progress !== "playing"}
+          separatedGroupCount={shownSeparatedGroupCount}
         />
       </main>
-      <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
+      <footer className="grid h-28 shrink-0 content-end px-4 pb-2">
+        {/* 一言の有無で待ったのボタンと盤面を動かさないよう、一言の場所を空けておく。 */}
+        <div className="flex h-12 items-end justify-center">
+          {shownSeparatedGroupCount !== null && (
+            <BridgesSeparationNotice groupCount={shownSeparatedGroupCount} />
+          )}
+        </div>
         <div className="flex h-14 items-center justify-center">
           <UndoButton disabled={!canUndo} onUndo={onUndo} />
         </div>

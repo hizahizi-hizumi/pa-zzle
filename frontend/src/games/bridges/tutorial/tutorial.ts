@@ -8,6 +8,7 @@ import {
   type BridgesIslandStatus,
   countBridgesIslandBridges,
   isBridgesSolved,
+  listBridgesIslandGroups,
   listBridgesIslandStatuses,
 } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
@@ -247,32 +248,11 @@ function getOtherIsland(edge: number, island: number): number {
 /** 橋でたどれる島の組のうち、どの島も数字とちょうどで、全部の島ではないもの。ほかの島へ橋を架けられないまま閉じている。 */
 function findClosedGroups(bridges: readonly BridgeCount[]): number[][] {
   const statuses = listBridgesIslandStatuses(board, { bridges });
-  const visited = new Set<number>();
-  const groups: number[][] = [];
-  for (const [start] of board.islands.entries()) {
-    if (visited.has(start)) {
-      continue;
-    }
-    const group = [start];
-    visited.add(start);
-    for (let index = 0; index < group.length; index += 1) {
-      const island = group[index]!;
-      for (const edge of network.islandEdges[island]!) {
-        const other = getOtherIsland(edge, island);
-        if (bridges[edge] !== 0 && !visited.has(other)) {
-          visited.add(other);
-          group.push(other);
-        }
-      }
-    }
-    if (
+  return listBridgesIslandGroups(board, { bridges }).filter(
+    (group) =>
       group.length < board.islands.length &&
-      group.every((island) => statuses[island] === "exact")
-    ) {
-      groups.push(group);
-    }
-  }
-  return groups;
+      group.every((island) => statuses[island] === "exact"),
+  );
 }
 
 /** 辺に架けられる残りの本数と、それを限った決め手。 */

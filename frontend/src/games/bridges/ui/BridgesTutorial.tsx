@@ -25,6 +25,7 @@ import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/Bridge
 import { useBridgesSoundEffects } from "@/games/bridges/ui/BridgesPlay/use-bridges-sound-effects";
 import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
 import type { BridgesBoardCue } from "@/games/bridges/ui/board/board-cue";
+import { BOARD_SETTLE_DELAY_MS } from "@/games/bridges/ui/board-settle-delay";
 import type { GameProgress } from "@/games/play";
 import {
   completeTutorial,
@@ -47,11 +48,6 @@ type BridgesTutorialProgress = TutorialProgress<
   BridgesTutorialRuleId,
   BridgesTutorialBoardState
 >;
-
-/**
- * 1本 → 2本 → なし と回して橋を外す途中の2本で、一瞬だけ数字より多くなっても一言が替わらないよう、違反が続いたときだけ応える。
- */
-const VIOLATION_REACTION_DELAY_MS = 500;
 
 const IDLE_HINT_DELAY_MS = 4000;
 
@@ -180,7 +176,7 @@ export function BridgesTutorial({
     }
     const timer = window.setTimeout(
       () => setSettledViolationProgress(progress),
-      VIOLATION_REACTION_DELAY_MS,
+      BOARD_SETTLE_DELAY_MS,
     );
     return () => window.clearTimeout(timer);
   }, [open, progress]);

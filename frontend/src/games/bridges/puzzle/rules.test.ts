@@ -7,7 +7,9 @@ import {
 import {
   areBridgesIslandsConnected,
   type BridgesIslandStatus,
+  countBridgesSeparatedIslandGroups,
   isBridgesSolved,
+  listBridgesIslandGroups,
   listBridgesIslandStatuses,
 } from "@/games/bridges/puzzle/rules";
 import type {
@@ -325,6 +327,80 @@ describe("固定問題の場合", () => {
       expect(connected).toBe(true);
     });
   });
+
+  describe("listBridgesIslandGroups", () => {
+    test("正解の配置で全部の島が1つの組になること", () => {
+      const groups = listBridgesIslandGroups(board, solved);
+
+      expect(groups).toEqual([board.islands.map((_, island) => island)]);
+    });
+  });
+
+  describe("countBridgesSeparatedIslandGroups", () => {
+    test.each([
+      ["正解の", solved],
+      ["橋が1本足りない", missingOne],
+      ["数字の合わない島がある", isolated],
+    ])("%s配置では組の数を返さないこと", (_, state) => {
+      const groupCount = countBridgesSeparatedIslandGroups(
+        board,
+        state,
+        listBridgesIslandStatuses(board, state),
+      );
+
+      expect(groupCount).toBeNull();
+    });
+  });
+});
+
+describe("全部の島がちょうどのまま、3組に分かれた盤面の場合", () => {
+  const board = parseBridgesBoard(["1.1", "...", "1.1", "...", "1.1"]);
+  const state = createState(board, [
+    [[0, 0], [0, 2], 1],
+    [[2, 0], [2, 2], 1],
+    [[4, 0], [4, 2], 1],
+  ]);
+
+  test("島の番号の小さい島を含む組から順に、3つの組を返すこと", () => {
+    const groups = listBridgesIslandGroups(board, state);
+
+    expect(groups).toEqual([
+      [0, 1],
+      [2, 3],
+      [4, 5],
+    ]);
+  });
+
+  test("分かれた組の数として3を返すこと", () => {
+    const groupCount = countBridgesSeparatedIslandGroups(
+      board,
+      state,
+      listBridgesIslandStatuses(board, state),
+    );
+
+    expect(groupCount).toBe(3);
+  });
+});
+
+describe("閉じた組があっても、数字の足りない島が残る場合", () => {
+  const board = parseBridgesBoard(["1.1", "...", "2.1"]);
+  const state = createState(board, [[[0, 0], [0, 2], 1]]);
+
+  test("橋でたどれる組を、架かっていない島も1島の組として返すこと", () => {
+    const groups = listBridgesIslandGroups(board, state);
+
+    expect(groups).toEqual([[0, 1], [2], [3]]);
+  });
+
+  test("全部の島がちょうどではないので、分かれた組の数を返さないこと", () => {
+    const groupCount = countBridgesSeparatedIslandGroups(
+      board,
+      state,
+      listBridgesIslandStatuses(board, state),
+    );
+
+    expect(groupCount).toBeNull();
+  });
 });
 
 describe("数字はちょうどでも全部の島がつながらない場合", () => {
@@ -344,6 +420,16 @@ describe("数字はちょうどでも全部の島がつながらない場合", (
     const statuses = listBridgesIslandStatuses(board, state);
 
     expect(statuses).toEqual(["exact", "exact", "exact", "exact"]);
+  });
+
+  test("分かれた組の数として2を返すこと", () => {
+    const groupCount = countBridgesSeparatedIslandGroups(
+      board,
+      state,
+      listBridgesIslandStatuses(board, state),
+    );
+
+    expect(groupCount).toBe(2);
   });
 });
 

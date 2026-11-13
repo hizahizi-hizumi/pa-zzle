@@ -2,9 +2,13 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 
 import { useBridgesPlay } from "@/games/bridges/play/use-bridges-play";
 import { countBridgesSolutions } from "@/games/bridges/problem/generation/exact-solver";
+import type { BridgesPooledProblem } from "@/games/bridges/problem/problem-pool";
 import { measureBridgesSolveWorkload } from "@/games/bridges/problem/workload";
 import { selectBridgesProblemForDifficulty } from "@/games/bridges/problem-selection";
-import { getBridgesNetwork } from "@/games/bridges/puzzle/board";
+import {
+  getBridgesNetwork,
+  parseBridgesBoard,
+} from "@/games/bridges/puzzle/board";
 import { createProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
 
@@ -43,6 +47,57 @@ afterEach(() => {
 });
 
 describe("useBridgesPlay", () => {
+  describe("全部の島がちょうどのまま、2組に分かれた盤面にした場合", () => {
+    let separated: HookResult;
+    // 島: 0 (0,0)、1 (0,5)、2 (5,0)、3 (5,5)。辺: 0 = 島0-島1、1 = 島0-島2、2 = 島1-島3、3 = 島2-島3。
+    // 上の2島と下の2島を1本ずつでつなぐと、どの島もちょうどのまま2組に分かれる。
+    const corners: BridgesPooledProblem = {
+      ...initial,
+      problem: parseBridgesBoard([
+        "1....1",
+        "......",
+        "......",
+        "......",
+        "......",
+        "1....1",
+      ]),
+    };
+    const topEdge = 0;
+    const bottomEdge = 3;
+
+    beforeEach(() => {
+      separated = renderHook(() => useBridgesPlay("5", corners)).result;
+      for (const edge of [topEdge, bottomEdge]) {
+        act(() => {
+          separated.current.cycleEdge(edge);
+        });
+      }
+    });
+
+    test("クリアにせず、分かれた組の数を返すこと", () => {
+      const { status, separatedGroupCount } = separated.current;
+
+      expect({ status, separatedGroupCount }).toEqual({
+        status: "playing",
+        separatedGroupCount: 2,
+      });
+    });
+
+    describe("待ったで数字の足りない島ができた場合", () => {
+      beforeEach(() => {
+        act(() => {
+          separated.current.undo();
+        });
+      });
+
+      test("組の数を返さなくなること", () => {
+        const { separatedGroupCount } = separated.current;
+
+        expect(separatedGroupCount).toBeNull();
+      });
+    });
+  });
+
   describe("交わる橋に阻まれた場合", () => {
     let blocked: HookResult;
     const crossing = selectBridgesProblemForDifficulty(
