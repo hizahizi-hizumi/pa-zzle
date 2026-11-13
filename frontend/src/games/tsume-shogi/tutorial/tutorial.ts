@@ -118,18 +118,12 @@ const [firstMove, , secondMove, , matingMove] = problem.mainLine as [
   TsumeShogiMove,
 ];
 
-/**
- * 詰ませる手の前で、飛を金と同じ升へ上げて王手する。飛が離れた升へ玉が逃げ、この手数では詰まなくなる。
- * 同じ升へ金を下げれば詰むことと見比べられるよう、詰ませる手と同じ行き先にする。
- */
+/** 詰ませる手の前で、飛を金と同じ升へ上げて王手する。飛が離れた升へ玉が逃げ、この手数では詰まなくなる。 */
 const escapingCheck = parseTsumeShogiMoveUsi("2f2e");
 
 /** 飛が守っていて、逃げ道のある王手で飛を動かすと、玉が逃げる升。 */
 const escapeSquare: TsumeShogiSquare = { file: 1, rank: 6 };
 
-/**
- * 金を打つ・金を下げる2手で操作と王手を、詰まない王手と待ったで逃げ道を伝えてから、詰ませる手を自分で指させる。
- */
 const steps: readonly TsumeShogiTutorialStep[] = [
   {
     message: {
@@ -327,7 +321,7 @@ function performGuided(
 }
 
 /**
- * 手を離した後は、本番と同じく盤面が応える。着手させなかった手と、玉方に逃げられた王手には、そのわけの一言を添える。
+ * 手を離した後は、本番と同じく盤面が応える。
  */
 function performFree(
   state: TsumeShogiTutorialBoardState,

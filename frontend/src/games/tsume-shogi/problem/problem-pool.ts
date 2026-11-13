@@ -399,7 +399,7 @@ export function findTsumeShogiPooledProblem(
     : null;
 }
 
-/** 始めたときの局面を見れば分かる、問題の特徴。手数は見出しに「n手詰」として出す問題の条件。 */
+/** 始めたときの局面と見出しを見れば分かる、問題の特徴。 */
 export type TsumeShogiProblemFeatures = {
   plies: number;
   attackerHandPieceCount: number;

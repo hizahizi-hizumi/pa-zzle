@@ -3,7 +3,6 @@ import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-ton
 import { cn } from "@/lib/utils";
 
 /**
- * 玉方の持駒（駒箱）。盤上と攻方の持駒に無い駒はすべて玉方が使えるので、枚数を並べずに「残り全部」とだけ示す。
  * 駒箱は盤の脇に置く箱で駒台ではないので、木の台は置かず、盤の外の地に、盤の筋・段と同じ書体の小さな札として出す。
  */
 export function TsumeShogiPieceBox() {
