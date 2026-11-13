@@ -91,9 +91,9 @@ describe("TakuzuPlay", () => {
         canRestart
         elapsedMs={65_000}
         result={playResult}
-        recordFeedback={{ kind: "none" }}
         {...callbacks}
         onOpenDiagnostics={onOpenDiagnostics}
+        recordFeedback={{ kind: "none" }}
       />,
     );
   }
@@ -109,9 +109,66 @@ describe("TakuzuPlay", () => {
     vi.clearAllMocks();
   });
 
+  test("比較用URLでも本番の数字盤面を表示し比較操作を公開しないこと", () => {
+    renderWithoutRouter(
+      <TakuzuPlay
+        difficulty="2"
+        size={2}
+        cells={cells}
+        lineViolations={[]}
+        progress="playing"
+        correctionCount={3}
+        undoCount={4}
+        operation={null}
+        canUndo
+        canRestart
+        elapsedMs={65_000}
+        result={null}
+        recordFeedback={{ kind: "none" }}
+        {...callbacks}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <MemoryRouter
+            initialEntries={[
+              "/puzzles/takuzu/play/2?experienceLab=1&experience=signal&palette=amber",
+            ]}
+          >
+            {children}
+          </MemoryRouter>
+        ),
+      },
+    );
+
+    const board = screen.getByRole("group", { name: "バイナリパズル盤面" });
+    const givenCell = within(board).getByRole("button", {
+      name: "1行1列 0 固定",
+    });
+
+    expect(board.parentElement?.getAttribute("data-experience")).toBeNull();
+    expect(
+      screen.queryByRole("group", { name: "盤面デザイン比較" }),
+    ).toBeNull();
+    expect(screen.queryByText("配色・書体")).toBeNull();
+    fireEvent.click(givenCell);
+    expect(callbacks.onCycleCell).toHaveBeenCalledWith(0, "forward");
+  });
+
   describe("プレイ中の場合", () => {
     beforeEach(() => {
       renderPlay("playing");
+    });
+    test("マトリクス数字盤面を表示し、比較操作を出さないこと", () => {
+      const board = screen.getByRole("group", { name: "バイナリパズル盤面" });
+      expect(
+        board.parentElement?.classList.contains("takuzu-board-shell"),
+      ).toBe(true);
+      expect(
+        screen.queryByRole("group", { name: "盤面デザイン比較" }),
+      ).toBeNull();
+      expect(
+        within(board).getByRole("button", { name: "1行1列 0 固定" }),
+      ).toBeTruthy();
     });
 
     test("表示名と置き直しの回数と経過時間を表示すること", () => {
@@ -141,6 +198,14 @@ describe("TakuzuPlay", () => {
       const dialog = screen.queryByRole("dialog", { name: "遊び方" });
 
       expect(dialog).toBeNull();
+    });
+
+    test("待ったを共通ボタンとして盤面の外に配置すること", () => {
+      const undo = screen.getByRole("button", { name: "待った" });
+
+      expect(undo.closest("footer")).toBeTruthy();
+      expect(undo.classList.contains("rounded-full")).toBe(true);
+      expect(undo.closest("main")).toBeNull();
     });
 
     test("待ったボタンで待ったを通知すること", () => {
@@ -307,13 +372,11 @@ describe("TakuzuPlay", () => {
     test("共通の結果階層でゲーム名・難易度・スコアを表示すること", () => {
       const brand = screen.getByRole("img", { name: "pa-zzle" });
       const heading = screen.getByRole("heading", { name: "プレイ結果" });
-
       const difficulty = screen.getByText("レベル 2");
       const score = within(screen.getByRole("region", { name: "スコア" }));
 
       expect(brand).toBeTruthy();
       expect(heading).toBeTruthy();
-
       expect(difficulty).toBeTruthy();
       expect(score.getByText("65点（100点満点）")).toBeTruthy();
     });

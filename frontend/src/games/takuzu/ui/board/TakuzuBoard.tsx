@@ -10,6 +10,7 @@ import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
 
 import {
   getTakuzuCellPosition,
+  getTakuzuLineCellIndices,
   listTakuzuLines,
   type TakuzuCell as TakuzuCellValue,
   type TakuzuLine,
@@ -22,6 +23,8 @@ import type {
 import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { animateGivenCellRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-given-cell-rejection";
 import { TakuzuCell } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuCell";
+import "@fontsource/zen-kaku-gothic-new/latin-700.css";
+import "@/games/takuzu/ui/board/takuzu-board.css";
 import { TakuzuLineViolationMark } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationMark";
 
 type TakuzuBoardProps = {
@@ -45,11 +48,10 @@ export type TakuzuBoardSpotlight = {
   lineViolations: boolean;
 };
 
-/** キーボードで直接置くキー。`1` と `2` は巡回の順（A → B）に合わせる。 */
+/** 盤面表示と同じ 0・1 を直接入力する。 */
 const cellByInputKey: Readonly<Record<string, TakuzuCellValue>> = {
-  "1": "a",
-  "2": "b",
-  "0": null,
+  "0": "a",
+  "1": "b",
   Backspace: null,
   Delete: null,
 };
@@ -90,6 +92,26 @@ function listLineViolationNames(
   ].filter((name) => name !== null);
 }
 
+function isCompletedLine(
+  size: number,
+  cells: readonly TakuzuCellView[],
+  line: TakuzuLine,
+): boolean {
+  const values = getTakuzuLineCellIndices(size, line).map(
+    (index) => cells[index]?.cell ?? null,
+  );
+  if (values.some((value) => value === null)) {
+    return false;
+  }
+  if (values.filter((value) => value === "a").length !== size / 2) {
+    return false;
+  }
+  return values.every(
+    (value, index) =>
+      index < 2 || value !== values[index - 1] || value !== values[index - 2],
+  );
+}
+
 export function TakuzuBoard({
   size,
   cells,
@@ -102,11 +124,28 @@ export function TakuzuBoard({
   onPlaceCell,
 }: TakuzuBoardProps) {
   const [focusableCellIndex, setFocusableCellIndex] = useState(0);
+  const [readingCellIndex, setReadingCellIndex] = useState<number | null>(null);
   const cellElementRefs = useRef(new Map<number, HTMLButtonElement>());
+  const lines = listTakuzuLines(size);
   const lineViolationByKey = new Map(
     lineViolations.map((violation) => [getLineKey(violation), violation]),
   );
   const cueByCellIndex = new Map(cues.map((cue) => [cue.cellIndex, cue]));
+  const indicatorLength = `calc((100% - 38px) / ${size} - 4px)`;
+  const readingRow =
+    readingCellIndex === null ? null : Math.floor(readingCellIndex / size);
+  const readingColumn =
+    readingCellIndex === null ? null : readingCellIndex % size;
+  const completedLineKeys = new Set(
+    lines
+      .filter((line) => {
+        return (
+          !lineViolationByKey.has(getLineKey(line)) &&
+          isCompletedLine(size, cells, line)
+        );
+      })
+      .map(getLineKey),
+  );
 
   useLayoutEffect(() => {
     if (operation?.type === "invalid") {
@@ -160,17 +199,24 @@ export function TakuzuBoard({
   }
 
   return (
-    // 行・列の違反の印を盤面の縁の外に置くため、盤面の周りに余白を取る。
-    <div className="size-full p-3">
+    <div
+      className="takuzu-board-shell size-full p-3"
+      data-interaction-disabled={interactionDisabled || undefined}
+    >
       <div
         role="group"
         aria-label={`${TAKUZU_DISPLAY_NAME}盤面`}
-        className="relative grid size-full border-2 border-foreground/55 bg-background"
+        className="takuzu-board-grid relative grid size-full border-2 border-foreground/55 bg-background"
         style={{
           gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${size}, minmax(0, 1fr))`,
         }}
         onKeyDown={handleKeyDown}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) {
+            setReadingCellIndex(null);
+          }
+        }}
       >
         {cells.map(function renderCell(view, cellIndex) {
           const { row, column } = getTakuzuCellPosition(size, cellIndex);
@@ -195,14 +241,25 @@ export function TakuzuBoard({
               disabled={interactionDisabled}
               cue={cueByCellIndex.get(cellIndex)}
               spotlit={spotlight?.cellIndices.includes(cellIndex) ?? false}
+              reading={row === readingRow || column === readingColumn}
+              selected={readingCellIndex === cellIndex}
+              rowCompleted={completedLineKeys.has(
+                getLineKey({ axis: "row", index: row }),
+              )}
+              columnCompleted={completedLineKeys.has(
+                getLineKey({ axis: "column", index: column }),
+              )}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}
               onCycle={onCycleCell}
-              onFocus={setFocusableCellIndex}
+              onFocus={(focusedIndex) => {
+                setFocusableCellIndex(focusedIndex);
+                setReadingCellIndex(focusedIndex);
+              }}
             />
           );
         })}
-        {listTakuzuLines(size).map(function renderLineMark(line) {
+        {lines.map(function renderLineMark(line) {
           return (
             <TakuzuLineViolationMark
               key={getLineKey(line)}
@@ -213,7 +270,53 @@ export function TakuzuBoard({
             />
           );
         })}
+        {lines.map((line) => (
+          <span
+            key={`trace:${getLineKey(line)}`}
+            aria-hidden="true"
+            className={`takuzu-completion-trace takuzu-completion-trace--${line.axis}`}
+            data-completed={
+              completedLineKeys.has(getLineKey(line)) || undefined
+            }
+            style={
+              line.axis === "row"
+                ? {
+                    gridRow: `${line.index + 1} / span 1`,
+                    gridColumn: `1 / span ${size}`,
+                  }
+                : {
+                    gridRow: `1 / span ${size}`,
+                    gridColumn: `${line.index + 1} / span 1`,
+                  }
+            }
+          />
+        ))}
+        <span aria-hidden="true" data-clear-aura="" />
       </div>
+      {lines.map((line) => (
+        <span
+          key={getLineKey(line)}
+          aria-hidden="true"
+          data-completed={completedLineKeys.has(getLineKey(line)) || undefined}
+          data-reading={
+            (line.axis === "row" && line.index === readingRow) ||
+            (line.axis === "column" && line.index === readingColumn) ||
+            undefined
+          }
+          className={`takuzu-line-indicator takuzu-line-indicator--${line.axis}`}
+          style={
+            line.axis === "row"
+              ? {
+                  top: `calc(19px + (100% - 38px) * ${(line.index + 0.5) / size})`,
+                  height: indicatorLength,
+                }
+              : {
+                  left: `calc(19px + (100% - 38px) * ${(line.index + 0.5) / size})`,
+                  width: indicatorLength,
+                }
+          }
+        />
+      ))}
     </div>
   );
 }

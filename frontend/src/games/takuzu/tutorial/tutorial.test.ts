@@ -177,8 +177,8 @@ function withCell(
 }
 
 /**
- * 丸はタップで空き→四角→丸と入れるので、丸を入れる印のマスは途中で四角になる。
- * 手順ごとに、印のマスの1つを途中の四角にした盤面（ほかの印のマスは空きのままと、解を置いた後の両方）と、その手順でもまだ伝えていない見方。
+ * 1はタップで空き→0→1と入れるので、1を入れる印のマスは途中で0になる。
+ * 手順ごとに、印のマスの1つを途中の0にした盤面（ほかの印のマスは空きのままと、解を置いた後の両方）と、その手順でもまだ伝えていない見方。
  * ルールは行と列に分けて伝えるので、まだ伝えていない向き（行・列）も、まだ伝えていない見方に数える。
  */
 const towardCircleCases = takuzuTutorial.steps.flatMap(
@@ -241,7 +241,7 @@ describe("takuzuTutorial の盤面", () => {
     expect(result).toEqual(solution);
   });
 
-  test("操作の手順は、1つ目で1回タップした四角、2つ目で2回タップした丸を置くこと", () => {
+  test("操作の手順は、1つ目で1回タップした0、2つ目で2回タップした1を置くこと", () => {
     const result = takuzuTutorial.steps
       .slice(0, operationStepCount)
       .map((step) => step.cellIndices.map((index) => solution.cells[index]));
@@ -283,7 +283,7 @@ describe("takuzuTutorial の盤面", () => {
   });
 
   test.each(towardCircleCases)(
-    "手順 %i でマス %i へ丸を入れる途中の盤面は、まだ伝えていないルールにも、まだ伝えていない向きにも当たらないこと",
+    "手順 %i でマス %i へ1を入れる途中の盤面は、まだ伝えていないルールにも、まだ伝えていない向きにも当たらないこと",
     (_, __, { board, untaughtLessons }) => {
       const violations = findVisibleViolations(board, untaughtLessons);
 
@@ -349,14 +349,14 @@ describe("takuzuTutorial.perform", () => {
     expect(result).toBe(released);
   });
 
-  test("1つ目の手順のマスを1回タップすると四角になり、次の手順へ進むこと", () => {
+  test("1つ目の手順のマスを1回タップすると0になり、次の手順へ進むこと", () => {
     const result = performAll(started, [tap(cellAt(4, 1))]);
 
     expect(result.boardState.board.cells[cellAt(4, 1)]).toBe("a");
     expect(result.stepIndex).toBe(1);
   });
 
-  test("2つ目の手順のマスは、2回タップして丸にすると次の手順へ進むこと", () => {
+  test("2つ目の手順のマスは、2回タップして1にすると次の手順へ進むこと", () => {
     const once = performAll(afterFirstStep, [tap(cellAt(1, 4))]);
     const twice = performAll(once, [tap(cellAt(1, 4))]);
 
@@ -381,7 +381,7 @@ describe("takuzuTutorial.perform", () => {
         .map((view) => view.inViolatingRun);
     }
 
-    test("キーで丸を置くと、ルールに合わないとして進まず、3つ続くマスを示すこと", () => {
+    test("キーで1を置くと、ルールに合わないとして進まず、3つ続くマスを示すこと", () => {
       const result = performAll(runStep, [place(cellAt(2, 3), "b")]);
 
       expect(result.violated).toBe(true);
@@ -389,7 +389,7 @@ describe("takuzuTutorial.perform", () => {
       expect(getRowRunFlags(result, 2)).toEqual([true, true, true, false]);
     });
 
-    test("四角にすると、並んだ2つの丸を決め手にして次の手順へ進むこと", () => {
+    test("0にすると、並んだ2つの1を決め手にして次の手順へ進むこと", () => {
       const result = performAll(runStep, [tap(cellAt(2, 3))]);
 
       expect(result.violated).toBe(false);
@@ -404,7 +404,7 @@ describe("takuzuTutorial.perform", () => {
       const reviewStepIndex = takuzuTutorial.steps.length - 2;
       const reviewStep = finishSteps(reviewStepIndex);
 
-      test("丸へ向かう途中の四角では、ルールに合わないところを見せず、進まないこと", () => {
+      test("1へ向かう途中の0では、ルールに合わないところを見せず、進まないこと", () => {
         const result = performAll(reviewStep, [tap(cellAt(1, 3))]);
 
         expect(result.violated).toBe(false);
@@ -412,7 +412,7 @@ describe("takuzuTutorial.perform", () => {
         expect(getRowRunFlags(result, 1)).toEqual([false, false, false, false]);
       });
 
-      test("丸へ向かう途中の四角のまま手が止まったら、ルールに合わないとはせず、3つ続くマスを示すこと", () => {
+      test("1へ向かう途中の0のまま手が止まったら、ルールに合わないとはせず、3つ続くマスを示すこと", () => {
         const result = performAll(reviewStep, [tap(cellAt(1, 3))]);
 
         expect(result.violated).toBe(false);
@@ -424,7 +424,7 @@ describe("takuzuTutorial.perform", () => {
         ]);
       });
 
-      test("キーで四角を置くと、ルールに合わないとして進まず、3つ続くマスを示すこと", () => {
+      test("キーで0を置くと、ルールに合わないとして進まず、3つ続くマスを示すこと", () => {
         const result = performAll(reviewStep, [place(cellAt(1, 3), "a")]);
 
         expect(result.violated).toBe(true);
@@ -432,7 +432,7 @@ describe("takuzuTutorial.perform", () => {
         expect(getRowRunFlags(result, 1)).toEqual([true, true, true, false]);
       });
 
-      test("丸にすると、並んだ2つの四角を決め手にして次の手順へ進むこと", () => {
+      test("1にすると、並んだ2つの0を決め手にして次の手順へ進むこと", () => {
         const result = performAll(reviewStep, [
           tap(cellAt(1, 3)),
           tap(cellAt(1, 3)),
@@ -612,20 +612,20 @@ describe("takuzuTutorial.perform", () => {
 describe("takuzuTutorial.describeViolation", () => {
   const cases = [
     [
-      "丸が3つ続いた",
+      "1が3つ続いた",
       2,
       [place(cellAt(2, 3), "b")],
       {
-        headline: "丸が3つ続いています",
+        headline: "1が3つ続いています",
         detail: null,
       },
     ],
     [
-      "丸が多すぎる行ができた",
+      "1が多すぎる行ができた",
       4,
       [place(cellAt(2, 4), "b")],
       {
-        headline: "この行は丸が多すぎます",
+        headline: "この行は1が多すぎます",
         detail: null,
       },
     ],
@@ -639,11 +639,11 @@ describe("takuzuTutorial.describeViolation", () => {
       },
     ],
     [
-      "手を離した後に、四角が多すぎる列ができた",
+      "手を離した後に、0が多すぎる列ができた",
       takuzuTutorial.steps.length,
       [place(cellAt(4, 2), "a")],
       {
-        headline: "この列は四角が多すぎます",
+        headline: "この列は0が多すぎます",
         detail: null,
       },
     ],

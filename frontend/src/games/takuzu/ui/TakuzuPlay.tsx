@@ -65,7 +65,6 @@ export function TakuzuPlay({
   onOpenDiagnostics,
 }: TakuzuPlayProps) {
   useTakuzuSoundEffects(operation, progress, size);
-
   return (
     <GamePlayFrame
       progress={progress}
@@ -102,8 +101,8 @@ export function TakuzuPlay({
         />
       )}
     >
-      {/* 行・列の違反の印は盤面の縁の外に出るので、狭い画面でも画面の端に寄らないよう左右に余白を取る。 */}
-      <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 [container-type:size]">
+      {/* 盤面の外周に違反マークを置くため、狭い画面でも左右に余白を確保する。 */}
+      <main className="flex min-h-0 flex-1 items-center justify-center px-1 py-2 [container-type:size] sm:px-3">
         <div className="relative aspect-square w-[min(100cqw,100cqh,42rem)]">
           <TakuzuClearAnimation
             active={progress === "clearing"}
