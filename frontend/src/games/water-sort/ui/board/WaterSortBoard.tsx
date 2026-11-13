@@ -51,15 +51,18 @@ const invalidBottleShakeKeyframes: Keyframe[] = [
   { transform: "translateX(0) rotate(0deg)" },
 ];
 
+const INVALID_BOTTLE_SHAKE_DURATION_MS = 300;
+const INVALID_BOTTLE_SHAKE_EASING = "ease-out";
 const invalidBottleShakeTiming: RejectionShakeTiming = {
-  durationMs: 300,
-  easing: "ease-out",
+  durationMs: INVALID_BOTTLE_SHAKE_DURATION_MS,
+  easing: INVALID_BOTTLE_SHAKE_EASING,
 };
 
 /** 全ボトルがそろったとき、左上から順に弾ませる。 */
 const CLEAR_BOUNCE_DURATION_MS = 300;
 /** 最初のボトルと最後のボトルが弾み始める時刻の差。 */
 const CLEAR_BOUNCE_SPREAD_MS = 240;
+const CLEAR_BOUNCE_EASING = "ease-out";
 const clearBounceKeyframes: Keyframe[] = [
   { transform: "translateY(0) scale(1, 1)" },
   { transform: "translateY(0) scale(1.08, 0.9)", offset: 0.18 },
@@ -126,7 +129,7 @@ export function WaterSortBoard({
                 bottles.length > 1
                   ? (index / (bottles.length - 1)) * CLEAR_BOUNCE_SPREAD_MS
                   : 0,
-              easing: "ease-out",
+              easing: CLEAR_BOUNCE_EASING,
             },
           );
           // Web Animations を真似るだけで動かない環境では、待つものが無い。

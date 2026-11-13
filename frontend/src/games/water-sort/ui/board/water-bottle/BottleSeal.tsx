@@ -9,14 +9,21 @@ type BottleSealProps = {
 };
 
 const SEAL_DROP_DURATION_MS = 240;
+const SEAL_DROP_EASING = "cubic-bezier(0.5, 0, 0.75, 0)";
 const SPARKLE_DURATION_MS = 320;
+const SPARKLE_EASING = "ease-out";
+/** 散り終わりに、半ばの位置から外へ伸ばす割合。 */
+const SPARKLE_END_SPREAD = 1.25;
 
-/** 口から外へ散るきらめきの向き（度、上が 0）と、飛ぶ距離（ボトルの幅に対する割合）。 */
+/**
+ * 口から外へ散るきらめきの向き（度、上が 0）と、半ばで届く距離（ボトルの幅に対する割合）。
+ * 上の段のボトルでも盤面の上の手数・時間の行に届かないよう、真上へは飛ばさず、横へ開いて短く散らす。
+ */
 const sparkles = [
-  { angle: -70, distance: 0.8 },
-  { angle: -28, distance: 0.95 },
-  { angle: 28, distance: 0.95 },
-  { angle: 70, distance: 0.8 },
+  { angle: -85, distance: 0.7 },
+  { angle: -55, distance: 0.5 },
+  { angle: 55, distance: 0.5 },
+  { angle: 85, distance: 0.7 },
 ] as const;
 
 /** 1色で満杯になったボトルの口に、その色の蓋をはめる。 */
@@ -45,7 +52,7 @@ export function BottleSeal({ colorIndex, celebration }: BottleSealProps) {
       {
         duration: SEAL_DROP_DURATION_MS,
         delay: delayMs,
-        easing: "cubic-bezier(0.5, 0, 0.75, 0)",
+        easing: SEAL_DROP_EASING,
         fill: "backwards",
       },
     );
@@ -70,14 +77,14 @@ export function BottleSeal({ colorIndex, celebration }: BottleSealProps) {
               offset: 0.5,
             },
             {
-              transform: `translate(calc(-50% + ${x * 1.25}cqw), calc(-50% + ${y * 1.25}cqw)) scale(0) rotate(45deg)`,
+              transform: `translate(calc(-50% + ${x * SPARKLE_END_SPREAD}cqw), calc(-50% + ${y * SPARKLE_END_SPREAD}cqw)) scale(0) rotate(45deg)`,
               opacity: 0,
             },
           ],
           {
             duration: SPARKLE_DURATION_MS,
             delay: delayMs + SEAL_DROP_DURATION_MS * 0.55,
-            easing: "ease-out",
+            easing: SPARKLE_EASING,
             fill: "both",
           },
         ),

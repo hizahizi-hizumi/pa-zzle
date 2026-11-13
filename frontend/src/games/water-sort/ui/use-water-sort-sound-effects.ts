@@ -43,18 +43,19 @@ const pouredBubbles = [
   { url: pouredBubble4SoundUrl, transferProgress: 0.48 },
   { url: pouredBubble5SoundUrl, transferProgress: 0.64 },
   { url: pouredBubble6SoundUrl, transferProgress: 0.82 },
-].map(({ url, transferProgress }) => ({
-  sound: defineSoundEffect(url),
-  transferProgress,
-}));
+].map(function definePouredBubble({ url, transferProgress }) {
+  return { sound: defineSoundEffect(url), transferProgress };
+});
 
 function getPouredSoundLayers(pourDurationMs: number): SoundLayer[] {
   const transferDurationMs =
     pourDurationMs * (POUR_TRANSFER_END_OFFSET - POUR_TRANSFER_START_OFFSET);
-  return pouredBubbles.map(({ sound, transferProgress }) => ({
+  return pouredBubbles.map(function createPouredLayer({
     sound,
-    offsetMs: transferDurationMs * transferProgress,
-  }));
+    transferProgress,
+  }): SoundLayer {
+    return { sound, offsetMs: transferDurationMs * transferProgress };
+  });
 }
 
 const bottleCompletedSound = defineSoundEffect(bottleCompletedSoundUrl);
@@ -63,7 +64,9 @@ const clearedSound = defineSoundEffect(clearedSoundUrl);
 
 const waterSortSounds: readonly SoundEffect[] = [
   invalidSound,
-  ...pouredBubbles.map(({ sound }) => sound),
+  ...pouredBubbles.map(function getPouredSound({ sound }) {
+    return sound;
+  }),
   bottleCompletedSound,
   clearedSound,
 ];

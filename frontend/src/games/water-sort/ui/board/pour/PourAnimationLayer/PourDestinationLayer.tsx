@@ -15,6 +15,7 @@ type PourDestinationLayerProps = {
 };
 
 const COMPLETION_BOUNCE_DURATION_MS = 280;
+const COMPLETION_BOUNCE_EASING = "ease-out";
 
 export function PourDestinationLayer({
   animations,
@@ -48,7 +49,7 @@ export function PourDestinationLayer({
       {
         duration: COMPLETION_BOUNCE_DURATION_MS,
         delay: completionDelayMs,
-        easing: "ease-out",
+        easing: COMPLETION_BOUNCE_EASING,
       },
     );
     return () => bounce.cancel();
