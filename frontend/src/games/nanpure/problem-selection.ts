@@ -14,7 +14,6 @@ import type { ProblemSeed } from "@/games/problem-seed";
 import { selectProblemPoolEntry } from "@/games/problem-selection";
 
 /**
- * 難易度の問題集から seed で1問を選ぶ。
  * 問題集は生成時に難易度を判定済みで解も持つため、プレイ時には生成・解探索・難易度分析を走らせない。
  */
 export function selectNanpureProblemForDifficulty(
@@ -30,7 +29,6 @@ export function selectNanpureProblemForDifficulty(
 }
 
 /**
- * 記録に残した identity から同じ問題を復元する。
  * 問題集に無い identity（生成器の版が今と違う記録など）は復元できないので `null` を返す。
  */
 export function restoreNanpureProblem(
@@ -42,7 +40,6 @@ export function restoreNanpureProblem(
   return entry ? toNanpurePooledProblem(entry) : null;
 }
 
-/** 難易度の問題集から問題 ID で1問を引く。引けない ID には `null` を返す。 */
 export function selectNanpureProblemById(
   difficulty: NanpureDifficulty,
   problemId: string,
@@ -51,7 +48,6 @@ export function selectNanpureProblemById(
   return entry ? toNanpurePooledProblem(entry) : null;
 }
 
-/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
 export function canSelectNanpureProblemById(
   difficulty: NanpureDifficulty,
   problemId: string,

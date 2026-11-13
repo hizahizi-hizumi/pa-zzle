@@ -7,7 +7,6 @@ export const nanpureCellToneClassNames = {
   selected: "bg-violet-300/80 dark:bg-violet-800/60",
   clue: "font-semibold text-foreground",
   entered: "font-medium text-violet-600 dark:text-violet-300",
-  /** 完成解と違う数字。 */
   mistake: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
   /** 同じ行・列・ブロックで重なった数字。 */
   conflict: "bg-rose-100 text-rose-700 dark:bg-rose-950/45 dark:text-rose-300",

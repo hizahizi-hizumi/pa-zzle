@@ -42,7 +42,6 @@ export type NanpureHumanSolveRound = {
 
 /**
  * - `solved`: 許した手筋だけで全マスを埋めた。手筋はどれも健全なので、解は唯一で推測も要らない。
- * - `stalled`: 許した手筋では進められなくなった。
  * - `contradiction`: 同じ単位に同じ数字が重なるか、候補が無くなるマスや置き場所が無くなる数字が現れた。初期配置に解が無い。
  */
 export type NanpureHumanSolveResult = {
@@ -52,7 +51,7 @@ export type NanpureHumanSolveResult = {
 };
 
 export type NanpureHumanSolverOptions = {
-  /** 使ってよい手筋。省略するとすべての手筋を使う。問題生成で手筋の上限を決めるときに使う。 */
+  /** 使ってよい手筋。省略するとすべての手筋を使う。 */
   techniques?: readonly NanpureTechnique[];
 };
 
@@ -212,7 +211,6 @@ function createState(board: NanpureBoard): SolveState | null {
   return state;
 }
 
-/** 数字を置き、同じ行・列・ブロックのマスからその数字の候補を消す。置けない数字なら `false`。 */
 function place(
   state: SolveState,
   cellIndex: number,
@@ -244,7 +242,6 @@ function unitPlacedMask(state: SolveState, unit: readonly number[]): number {
   return mask;
 }
 
-/** 単位の中で、まだ置かれていない数字の候補があるマス。 */
 function cellsWithCandidate(
   state: SolveState,
   unit: readonly number[],
@@ -518,7 +515,6 @@ function cellsWithCandidateCount(state: SolveState, count: number): number[] {
   return cells;
 }
 
-/** 候補を消す先: `wing` のマスすべてから見えるマス（`wing` 自身を除く）。 */
 function eliminationsSeenByAll(
   state: SolveState,
   wing: readonly number[],

@@ -16,11 +16,7 @@ export type NanpureDifficulty = DifficultyLevel;
 export type NanpureRecordedDifficulty = RecordedDifficulty;
 
 /**
- * 分析結果を難易度へ分類した結果。
- * - `classified`: 提供範囲内で、難易度が決まった。
  * - `out-of-range`: 分析できるが提供しない。`too-light` は、行・列・ブロックの最後の1マスを埋めるだけで解き終わり、数字の置き場所を探す挑戦が無い。
- * - `unsupported`: 一意解だが、対応した手筋では解き切れず、挑戦の強さを評価できない。
- * - `invalid`: 解が無い、または2つ以上あり、問題として成立しない。
  */
 export type NanpureDifficultyAssessment = DifficultyAssessment<{
   classified: NoAssessmentDetail;
@@ -45,14 +41,6 @@ const difficultyByDeepestTechnique = {
   "xyz-wing": "5",
 } as const satisfies Record<NanpureTechnique, NanpureDifficulty>;
 
-/**
- * 解くのに要った最も深い手筋で難易度を決める。
- * 5: 2〜3本の行・列にまたがる数字の配置（X-Wing・Swordfish）か、3マスの候補のつながり（XY-Wing・XYZ-Wing）を読む。
- * 4: 1つの単位の中で、2〜3マス・2〜3種類の数字の組（ペア・トリプル）を読んで候補を消す。
- * 3: ブロックと行・列の重なりで候補の位置を絞る（ポインティング・クレーミング）。
- * 2: 行・列の中の置き場所か、1マスに入り得る数字を、行・列・ブロックを合わせて読む。
- * 1: ブロックの中で数字の置き場所を探すだけで解ける。
- */
 export function classifyNanpureChallengeDifficulty({
   deepestTechnique,
 }: NanpureHumanSolveFeatures): NanpureDifficulty {

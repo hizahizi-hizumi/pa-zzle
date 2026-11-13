@@ -21,13 +21,10 @@ export type NanpureScaleMetrics = {
 };
 
 /**
- * 人間向け解法器で解き切った経過から求めた特徴。
  * - `deepestTechnique`: 使わざるを得なかった最も深い手筋。ヒントだけで埋まっている問題では `null`。
- * - `deepestTechniqueRoundCount`: 最も深い手筋が要ったラウンド数。
  * - `eliminationRoundCount`: 候補を消す手筋が要ったラウンド数。数字を置く手筋では進めなくなった局面の数を表す。
  * - `longestEliminationStreak`: 候補を消す手筋が要るラウンドが続いた最長の回数。消しても次の一手がまだ見えない連続を表す。
  * - `meanAvailablePlacementCount` / `minimumAvailablePlacementCount`: 数字を置くラウンドの前に置けた異なる「マスと数字」の数の平均・最小。次の一手の見つけやすさを表す。
- * - `singleAvailablePlacementRoundCount`: 置ける数字が盤面に1つしかなかったラウンド数。
  * - `firstEliminationEmptyCellRatio`: 最初に候補を消す手筋が要った時点の空きマスの割合。深い読みが序盤に要るほど大きい。
  */
 export type NanpureHumanSolveFeatures = {
@@ -43,11 +40,6 @@ export type NanpureHumanSolveFeatures = {
   firstEliminationEmptyCellRatio: number | null;
 };
 
-/**
- * - `analyzed`: 一意解で、人間向け解法器で推測なしに解き切れた。
- * - `unsupported`: 一意解だが、対応した手筋だけでは解き切れない（評価不能）。
- * - `invalid`: 解が無い、または2つ以上ある（成立しない）。
- */
 export type NanpureDifficultyAnalysis =
   | {
       status: "analyzed";
@@ -126,7 +118,6 @@ function summarizeRounds(
   };
 }
 
-/** ヒントの一意性を確かめたうえで、人間向け解法器の経過を特徴へまとめる。 */
 export function analyzeNanpureDifficulty(
   clues: NanpureBoard,
   options: NanpureHumanSolverOptions = {},

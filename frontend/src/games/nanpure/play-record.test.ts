@@ -28,7 +28,6 @@ const record = createNanpurePlayRecord({
   result: performance,
 });
 
-// 3段階の難易度と、ヒント数を指定した生成器（版 "1"）で記録したプレイ。
 const threeLevelPayload = {
   difficulty: "normal",
   problemIdentity: {

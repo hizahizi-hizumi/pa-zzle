@@ -41,7 +41,6 @@ const placementTechniques: ReadonlySet<NanpureTechnique> = new Set([
   "naked-single",
 ]);
 
-/** 数字を置く手筋か。そうでなければ候補を消す手筋。 */
 export function isNanpurePlacementTechnique(
   technique: NanpureTechnique,
 ): boolean {
@@ -55,7 +54,6 @@ export function compareNanpureTechniqueDepth(
   return nanpureTechniques.indexOf(left) - nanpureTechniques.indexOf(right);
 }
 
-/** 上限の手筋までの浅い手筋の並び。問題生成で使ってよい手筋を決めるのに使う。 */
 export function listNanpureTechniquesUpTo(
   limit: NanpureTechnique,
 ): readonly NanpureTechnique[] {

@@ -19,7 +19,6 @@ const clearPulseKeyframes: Keyframe[] = [
   { transform: "scale(1)", filter: "saturate(1)" },
 ];
 
-/** 埋まった盤面を小さく脈打たせてから結果へ進める。 */
 export function NanpureClearAnimation({
   active,
   onComplete,

@@ -9,7 +9,7 @@ type NanpureTutorialRewindProps = {
   children: ReactNode;
 };
 
-/** 入れた数字。最初からある数字は始めの盤面に残るので消さない。 */
+/** 最初からある数字は始めの盤面に残るので消さない。 */
 const enteredDigitSelector = '[data-nanpure-digit="entered"]';
 const REWIND_STAGGER_MS = 60;
 const REWIND_DURATION_MS = 240;

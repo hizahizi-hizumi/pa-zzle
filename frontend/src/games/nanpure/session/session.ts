@@ -180,7 +180,6 @@ export function undoNanpureSession(session: NanpureSession): NanpureSession {
   };
 }
 
-/** 同じプレイのまま盤面を初期状態へ戻す（盤面を戻す）。経過時間と記録は引き継ぐ。 */
 export function restartNanpureSession(session: NanpureSession): NanpureSession {
   if (!canRestartNanpureSession(session)) {
     return session;
@@ -221,7 +220,6 @@ export function canUndoNanpureSession(session: NanpureSession): boolean {
   return session.status === "playing" && session.history.length > 0;
 }
 
-/** 盤面に数字かメモがあるプレイ中だけ、盤面を戻せる。 */
 export function canRestartNanpureSession(session: NanpureSession): boolean {
   return (
     session.status === "playing" &&

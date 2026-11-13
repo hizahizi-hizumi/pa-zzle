@@ -11,10 +11,9 @@ import {
   type NanpureDigit,
 } from "@/games/nanpure/puzzle/board";
 
-/** 1〜9が1つずつ入るまとまりの種類。 */
 export type NanpureUnitKind = "row" | "column" | "block";
 
-/** ルールのまとまりのすべて。どれか一部だけで調べるのは、ルールを1つずつ示すチュートリアル。 */
+/** どれか一部だけで調べるのは、ルールを1つずつ示すチュートリアル。 */
 export const NANPURE_UNIT_KINDS = [
   "row",
   "column",
@@ -96,7 +95,6 @@ const unitIndexGetters = {
   block: getNanpureBlockIndex,
 } as const satisfies Record<NanpureUnitKind, (cellIndex: number) => number>;
 
-/** 空きマスに入り得る数字。`unitKinds` の種類のまとまりにある数字を除く。 */
 export function getNanpureCandidates(
   board: NanpureBoard,
   cellIndex: number,
@@ -124,7 +122,6 @@ export function getNanpureCandidates(
   return NANPURE_DIGITS.filter((digit) => !usedDigits.has(digit));
 }
 
-/** 同じまとまりで、ほかのマスと数字が重なったマス。`unitKinds` の種類のまとまりだけを調べる。 */
 export function findNanpureConflictCellIndices(
   board: NanpureBoard,
   unitKinds: readonly NanpureUnitKind[] = NANPURE_UNIT_KINDS,

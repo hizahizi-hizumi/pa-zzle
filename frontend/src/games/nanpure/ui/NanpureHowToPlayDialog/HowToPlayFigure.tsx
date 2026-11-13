@@ -44,7 +44,6 @@ function toPositionedCells(
   });
 }
 
-/** 盤面と同じ地・数字・メモの見え方で描く、遊び方の小さな図。 */
 export function HowToPlayFigure({ rows }: HowToPlayFigureProps) {
   const columnCount = rows[0]?.length ?? 0;
 

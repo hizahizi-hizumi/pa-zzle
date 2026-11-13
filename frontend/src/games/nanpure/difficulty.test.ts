@@ -13,7 +13,6 @@ import {
   nanpureTechniques,
 } from "@/games/nanpure/problem/technique";
 
-/** 手筋ごとのラウンド数から、つじつまの合う特徴量を作る。 */
 function createFeatures(
   roundCountByTechnique: Partial<Record<NanpureTechnique, number>>,
 ): NanpureHumanSolveFeatures {

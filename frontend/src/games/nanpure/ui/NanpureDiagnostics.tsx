@@ -9,7 +9,6 @@ type NanpureDiagnosticsProps = {
   onClose: () => void;
 };
 
-// 上限なしは、一意解であることだけを保ってヒントを減らした生成。
 function formatGenerationConditions({
   removalTechniqueLimit,
 }: NanpureGenerationConditions): string {
