@@ -72,7 +72,10 @@ export function CollectionTowers({
               >
                 {game.total}
               </span>
-              <span className="grid h-36 w-full max-w-10 grid-cols-2 grid-rows-14 gap-[1.5px] sm:h-52 sm:gap-[2px]">
+              <span
+                // 行の高さを整数の px にし、小数の高さの丸めで段の間隔がばらつかないようにする。
+                className="grid w-full max-w-10 grid-cols-2 grid-rows-[repeat(14,8px)] gap-0.5 border-t border-dashed border-muted-foreground pt-0.5 sm:grid-rows-[repeat(14,12px)]"
+              >
                 {getCollectionTowerTiles(game, scaleCount, 28).map(
                   ({ id, level }) => (
                     <span
@@ -86,7 +89,7 @@ export function CollectionTowers({
               <span className="mt-2 block size-6 shrink-0 sm:size-8">
                 <GamePictogram svg={info.pictogramSvg} />
               </span>
-              <span className="mt-1 hidden w-full truncate text-center text-[10px] text-muted-foreground sm:block">
+              <span className="mt-1 hidden w-full text-center text-[10px] leading-tight text-muted-foreground sm:block">
                 {info.name}
               </span>
             </button>
