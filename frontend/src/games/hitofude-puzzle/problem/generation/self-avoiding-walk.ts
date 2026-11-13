@@ -4,7 +4,6 @@ import { type ProblemRandom, pickProblemValue } from "@/games/problem-seed";
 /** 道を混ぜる変形の回数を、盤面のマス数の何倍にするか。 */
 const MIXING_SWEEPS = 30;
 
-/** 行ごとに向きを変えて全マスを通る蛇行の道。 */
 function createSerpentinePath(size: number): number[] {
   return Array.from({ length: size }, function serpentineRow(_, row) {
     const columns = Array.from({ length: size }, (_, column) => column);
@@ -41,11 +40,6 @@ function mutatePath(
   ];
 }
 
-/**
- * 一辺 `size` の盤面で、`openCellCount` マスを1回ずつ通る無作為な自己回避路を作る。道が通らないマスは穴になる。
- * 全マスを通すなら蛇行の道から backbite だけで混ぜ、そうでなければ蛇行の道の一部から backbite と reptation で混ぜる。
- * 先頭のマスを問題の始点にする。
- */
 export function createRandomSelfAvoidingWalk(
   size: number,
   openCellCount: number,

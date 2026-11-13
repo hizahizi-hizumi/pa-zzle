@@ -9,14 +9,12 @@ import {
 } from "@/games/hitofude-puzzle/problem/problem";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
-/**
- * - `solution`: 問題のただ1つの解の道。問題集の分析と検証に使い、プレイには渡さない。
- * - `symmetryKey`: 回転・反転の同型を問題集から除くための正規化キー。
- * - `generationAttemptCount`: 採用までに穴の焼きなましを始めた回数。
- */
 export type HitofudePuzzleGeneratedProblem = HitofudePuzzleIdentifiedProblem & {
+  /** 問題のただ1つの解の道。問題集の分析と検証に使い、プレイには渡さない。 */
   solution: readonly number[];
+  /** 回転・反転の同型を問題集から除くための正規化キー。 */
   symmetryKey: string;
+  /** 採用までに穴の焼きなましを始めた回数。 */
   generationAttemptCount: number;
 };
 
@@ -40,11 +38,7 @@ function validateIdentity(identity: HitofudePuzzleProblemIdentity): void {
   }
 }
 
-/**
- * identity の seed から、穴だけで一意解にした問題を作る（`createHitofudePuzzleHoleBoard`）。
- * 焼きなましが一意解に着かなければ、同じ乱数列の続きで始め直す。同じ identity からは同じ問題を作る。
- * 回転・反転の同型除外は問題集の生成で `symmetryKey` を使って行う。
- */
+/** 回転・反転の同型除外は問題集の生成で `symmetryKey` を使って行う。 */
 export function generateHitofudePuzzleProblem(
   identity: HitofudePuzzleProblemIdentity,
 ): HitofudePuzzleGeneratedProblem {

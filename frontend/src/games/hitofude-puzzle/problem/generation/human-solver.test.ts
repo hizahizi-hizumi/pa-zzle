@@ -23,7 +23,7 @@ const generatedIdentities = [
   createHitofudePuzzleProblemIdentity(7, 4, 3),
 ];
 
-/** 4×4 か 5×5 に、穴と始点を無作為に置いた盤面。解が2つ以上ある盤面も含む。 */
+/** 解が2つ以上ある盤面も含む。 */
 function createRandomBoard(seed: string): HitofudePuzzleBoard {
   const random = createProblemSeededRandom(seed);
   const size = random() < 0.5 ? 4 : 5;
@@ -39,7 +39,6 @@ function createRandomBoard(seed: string): HitofudePuzzleBoard {
 
 const { deduceHitofudePuzzleEdges } = _private;
 
-/** 解の道が使う辺を、両端のマスの組（小さい方が先）で挙げる。 */
 function listPathEdges(path: readonly number[]): string[] {
   return path
     .slice(1)
@@ -48,7 +47,6 @@ function listPathEdges(path: readonly number[]): string[] {
     );
 }
 
-/** 解のある無作為盤面と、その解を2本まで。 */
 const solvableRandomCases = Array.from({ length: 80 }, (_, index) => {
   const board = createRandomBoard(`human-solver-property-${index}`);
   const { firstSolutions } = countHitofudePuzzleSolutions(board, {

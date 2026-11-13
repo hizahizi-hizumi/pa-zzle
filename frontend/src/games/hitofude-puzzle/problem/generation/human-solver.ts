@@ -25,40 +25,43 @@ export type HitofudePuzzleReasoningStage =
 
 type StageCounts = [number, number, number, number, number, number];
 
-/**
- * - `solved`: 段階1〜6で全マスを通る道が決まった。
- * - `unresolved`: 2段仮置きまで使っても決まらない辺が残った（評価不能）。
- * - `work-limit-reached`: 推論を進めた回数が上限に達した（評価不能）。
- * - `contradiction`: 盤面に解が無い。
- *
- * - `firingCountByStage` / `decidedEdgeCountByStage`: 仮置きの外で、各段階の推論を使った回数と、それで決めた辺の数。添字0が段階1。
- *   段階5は局面1つで1回と数える。
- * - `assumptionCount`: 段階1〜4で止まり、1段仮置きで進めた局面の数（先読みを要した回数）。
- * - `deepAssumptionCount`: 1段仮置きでも決まらず、2段仮置きで辺を1本決めた回数。
- * - `refutationLengths`: 仮置きで進めた局面ごとの、仮置きから矛盾が出るまでの推論の手数の最小。先読みの長さ。
- * - `stallCount`: 段階1〜2だけでは進めなくなった回数。
- * - `firstStallDecidedEdgeRatio` / `firstAssumptionDecidedEdgeRatio`: 最初に段階1〜2で止まった時点と、最初に仮置きへ進んだ
- *   時点で、使う・使わないが決まっていた辺の割合。止まらなかったら1。
- * - `edgeCount`: 道に使える辺（上下左右に隣り合う、穴でないマスの組）の数。
- */
 export type HitofudePuzzleHumanSolveTrace = {
+  /**
+   * - `solved`: 段階1〜6で全マスを通る道が決まった。
+   * - `unresolved`: 2段仮置きまで使っても決まらない辺が残った（評価不能）。
+   * - `work-limit-reached`: 推論を進めた回数が上限に達した（評価不能）。
+   * - `contradiction`: 盤面に解が無い。
+   */
   status: "solved" | "unresolved" | "work-limit-reached" | "contradiction";
+  /**
+   * `firingCountByStage` / `decidedEdgeCountByStage` は、仮置きの外で、各段階の推論を使った回数と、それで決めた辺の数。
+   * 添字0が段階1。段階5は局面1つで1回と数える。
+   */
   firingCountByStage: Readonly<StageCounts>;
   decidedEdgeCountByStage: Readonly<StageCounts>;
+  /** 段階1〜4で止まり、1段仮置きで進めた局面の数（先読みを要した回数）。 */
   assumptionCount: number;
+  /** 1段仮置きでも決まらず、2段仮置きで辺を1本決めた回数。 */
   deepAssumptionCount: number;
+  /** 仮置きで進めた局面ごとの、仮置きから矛盾が出るまでの推論の手数の最小。先読みの長さ。 */
   refutationLengths: readonly number[];
+  /** 段階1〜2だけでは進めなくなった回数。 */
   stallCount: number;
+  /**
+   * `firstStallDecidedEdgeRatio` / `firstAssumptionDecidedEdgeRatio` は、最初に段階1〜2で止まった時点と、最初に仮置きへ進んだ
+   * 時点で、使う・使わないが決まっていた辺の割合。止まらなかったら1。
+   */
   firstStallDecidedEdgeRatio: number;
   firstAssumptionDecidedEdgeRatio: number;
+  /** 道に使える辺（上下左右に隣り合う、穴でないマスの組）の数。 */
   edgeCount: number;
 };
 
-/**
- * - `workLimit`: 推論を進めた回数（段階1〜4を1つ適用した回数。仮置きの中を含む）の上限。
- *   時間ではなく作業量で打ち切るのは、実行環境の速さで結果が変わらないようにするため。
- */
 export type HitofudePuzzleHumanSolveOptions = {
+  /**
+   * 推論を進めた回数（段階1〜4を1つ適用した回数。仮置きの中を含む）の上限。
+   * 時間ではなく作業量で打ち切るのは、実行環境の速さで結果が変わらないようにするため。
+   */
   workLimit?: number;
 };
 
@@ -186,7 +189,6 @@ function summarizeCell(
   ];
 }
 
-/** 推論の手数を数え、上限を超えたら仮置きを打ち切る。 */
 class StepTracker {
   readonly budget: number | null;
   steps = 0;
@@ -1099,11 +1101,11 @@ export function traceHitofudePuzzleHumanSolve(
 /** 道がもう全マスを通れないと示すのに要った推論の段階。1段仮置きを重ねて示せたら `5`。 */
 export type HitofudePuzzleRefutationStage = 2 | 3 | 4 | 5;
 
-/**
- * - `findRefutationStage`: 始点から引いた道 `path` がもう全マスを通れないと示せる最も浅い段階。段階2〜4の推論、
- *   1段仮置きの重ね合わせの順に試し、示せなければ `null`。描画視点の分析で、誤った手を退けるのに要る段階として使う。
- */
 export type HitofudePuzzleRefuter = {
+  /**
+   * 始点から引いた道 `path` がもう全マスを通れないと示せる最も浅い段階。段階2〜4の推論、
+   * 1段仮置きの重ね合わせの順に試し、示せなければ `null`。描画視点の分析で、誤った手を退けるのに要る段階として使う。
+   */
   findRefutationStage(
     path: readonly number[],
   ): HitofudePuzzleRefutationStage | null | "work-limit-reached";

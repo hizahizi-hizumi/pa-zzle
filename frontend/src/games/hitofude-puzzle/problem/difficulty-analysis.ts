@@ -23,15 +23,12 @@ import type {
 } from "@/games/hitofude-puzzle/problem/problem";
 import { listHitofudePuzzleOpenCells } from "@/games/hitofude-puzzle/puzzle/board";
 
-/**
- * 難易度特徴と比べるための問題の規模。挑戦ではなく、なぞる長さと盤面の広さの側の値。
- * - `size`・`cellCount`: 穴を含む枠の一辺とマスの数。
- * - `openCellCount`: 道が通るマスの数（なぞる長さ）。
- * - `holeCount`: 穴の数。
- */
+/** 難易度特徴と比べるための問題の規模。挑戦ではなく、なぞる長さと盤面の広さの側の値。 */
 export type HitofudePuzzleScaleMetrics = {
+  /** `size`・`cellCount` は、穴を含む枠の一辺とマスの数。 */
   size: number;
   cellCount: number;
+  /** 道が通るマスの数（なぞる長さ）。 */
   openCellCount: number;
   holeCount: number;
 };
@@ -39,48 +36,47 @@ export type HitofudePuzzleScaleMetrics = {
 /**
  * 人間向け解法器（段階1〜6）で、始点と盤面だけから道を決め切った経過から求めた特徴。回転・反転した8通りの盤面のうち、
  * 最も上手に読めた向きの経過（`analyzeHitofudePuzzleDifficulty`）で、盤面の向きに依らない。
- * - `localReasoningSuffices`: 局所の推論（段階1〜2）だけで道が決まり、一度も止まらなかった。
- * - `regionalReasoningUsed`: 分断・到達・パリティの推論（段階3〜4）で、仮置きの外の盤面を進めたことがある。
- * - `assumptionCount`: 段階1〜4で止まり、1段仮置きで進めた局面の数（先読みを要した回数）。
- * - `deepAssumptionCount`: 2段仮置きで辺を1本決めた回数。
- * - `longestRefutationLength`: 局面ごとの先読みの手数の最大（最も長い先読み）。仮置きが無ければ0。
- * - `refutationLengths`: 仮置きで進めた局面ごとの、仮置きから矛盾が出るまでの推論の手数の最小。
- * - `lookaheadLoad`: 先読みの重さ（`measureHitofudePuzzleLookaheadLoad`）。局面の数に、長い先読みの段を足したもの。
- * - `stallCount`: 段階1〜2だけでは進めなくなった回数。
- * - `firstStallDecidedEdgeRatio`: 最初に止まった時点で、使う・使わないが決まっていた辺の割合。強制の連鎖でどこまで進むか。
- * - `firingCountByStage`: 仮置きの外で各段階の推論を使った回数。添字0が段階1。
  */
 export type HitofudePuzzleReasoningFeatures = {
+  /** 局所の推論（段階1〜2）だけで道が決まり、一度も止まらなかった。 */
   localReasoningSuffices: boolean;
+  /** 分断・到達・パリティの推論（段階3〜4）で、仮置きの外の盤面を進めたことがある。 */
   regionalReasoningUsed: boolean;
+  /** 段階1〜4で止まり、1段仮置きで進めた局面の数（先読みを要した回数）。 */
   assumptionCount: number;
+  /** 2段仮置きで辺を1本決めた回数。 */
   deepAssumptionCount: number;
+  /** 局面ごとの先読みの手数の最大（最も長い先読み）。仮置きが無ければ0。 */
   longestRefutationLength: number;
+  /** 仮置きで進めた局面ごとの、仮置きから矛盾が出るまでの推論の手数の最小。 */
   refutationLengths: readonly number[];
+  /** 先読みの重さ（`measureHitofudePuzzleLookaheadLoad`）。局面の数に、長い先読みの段を足したもの。 */
   lookaheadLoad: number;
+  /** 段階1〜2だけでは進めなくなった回数。 */
   stallCount: number;
+  /** 最初に止まった時点で、使う・使わないが決まっていた辺の割合。強制の連鎖でどこまで進むか。 */
   firstStallDecidedEdgeRatio: number;
+  /** 仮置きの外で各段階の推論を使った回数。 */
   firingCountByStage: Readonly<Record<HitofudePuzzleReasoningStage, number>>;
 };
 
-/**
- * - `analyzed`: 一意解で、段階1〜6の推論で道を決め切れた。`drawing` は始点から解の道を引き進める視点の分岐（診断と提供範囲の判断に使う）。
- * - `unsupported`: 一意解だが、2段仮置きまで使っても決まらない辺が残る（`unresolved`）、または推論の作業量の上限に達した
- *   （`computation-limit`）。評価不能。
- * - `invalid`: 解が無い、2つ以上ある、または一意性を確かめる探索が上限に達した。
- */
 export type HitofudePuzzleDifficultyAnalysis =
+  // 一意解で、段階1〜6の推論で道を決め切れた。
   | {
       status: "analyzed";
       scale: HitofudePuzzleScaleMetrics;
       reasoning: HitofudePuzzleReasoningFeatures;
+      // 始点から解の道を引き進める視点の分岐（診断と提供範囲の判断に使う）。
       drawing: HitofudePuzzleDrawingBranches;
     }
+  // 一意解だが、2段仮置きまで使っても決まらない辺が残る（`unresolved`）、または推論の作業量の上限に達した
+  // （`computation-limit`）。評価不能。
   | {
       status: "unsupported";
       reason: "unresolved" | "computation-limit";
       scale: HitofudePuzzleScaleMetrics;
     }
+  // 解が無い、2つ以上ある、または一意性を確かめる探索が上限に達した。
   | {
       status: "invalid";
       reason: "no-solution" | "multiple-solutions" | "search-limit-reached";
@@ -162,10 +158,6 @@ function compareSerialized(left: unknown, right: unknown): number {
   return leftText < rightText ? -1 : leftText > rightText ? 1 : 0;
 }
 
-/**
- * 読み方の上手さの順（上手な方が先）。2段仮置きの回数、先読みの重さ、仮置きの回数、先読みの手数の合計、最も長い先読みの
- * 順に少ない方を上手とする。それでも並ぶ読み方は特徴全体の表記の順で決め、どの向きの盤面から数えても同じ読み方を選ぶ。
- */
 function compareReasoning(
   left: HitofudePuzzleReasoningFeatures,
   right: HitofudePuzzleReasoningFeatures,
@@ -176,6 +168,7 @@ function compareReasoning(
     left.assumptionCount - right.assumptionCount ||
     sumRefutationLengths(left) - sumRefutationLengths(right) ||
     left.longestRefutationLength - right.longestRefutationLength ||
+    // それでも並ぶ読み方は特徴全体の表記の順で決め、どの向きの盤面から数えても同じ読み方を選ぶ。
     compareSerialized(left, right)
   );
 }
@@ -186,8 +179,7 @@ type OrientedReasoning = {
 };
 
 /**
- * 回転・反転した8通りの盤面のそれぞれで、人間向け解法器が道を決め切った読み方。解き切れた向きが無ければ、
- * 評価不能の理由を返す。どの向きでも解法器は同じ推論を使うが、仮置きを試す辺の順がマスの番号に従うので、
+ * どの向きでも解法器は同じ推論を使うが、仮置きを試す辺の順がマスの番号に従うので、
  * 盤面の向きによって仮置きで決まる辺、ひいては後の局面の数や先読みの手数が変わることがある。
  */
 function readInEveryOrientation(
@@ -219,13 +211,8 @@ function readInEveryOrientation(
 }
 
 /**
- * 一意性を確かめたうえで、人間向け解法器の経過を特徴へまとめ、解の道を引き進める視点の分岐も測る。
  * 解の道は一意性の探索（`searchHitofudePuzzleSolutionsForAnalysis`）から求め、問題からは受け取らない。
  * 探索を済ませた呼び出し元は、その結果を `solutionSearch` に渡す。
- *
- * 推論の特徴は、回転・反転した8通りの盤面のうち最も上手に読めた向きの読み方から求める（`compareReasoning`）。
- * 盤面の向きで難易度が変わらないようにするためで、「最も上手な読み順でも、少なくともこれだけ先読みが要る」を表す。
- * 描画視点の分岐は、その読み方になった向きの盤面で測る。
  */
 export function analyzeHitofudePuzzleDifficulty(
   problem: HitofudePuzzleProblem,
@@ -251,6 +238,7 @@ export function analyzeHitofudePuzzleDifficulty(
   if (!Array.isArray(readings)) {
     return { status: "unsupported", reason: readings, scale };
   }
+  // 推論の特徴は最も上手に読めた向きの読み方から求め、「最も上手な読み順でも、少なくともこれだけ先読みが要る」を表す。
   const [best] = readings.toSorted((left, right) =>
     compareReasoning(left.reasoning, right.reasoning),
   ) as [OrientedReasoning];
@@ -275,7 +263,6 @@ export function analyzeHitofudePuzzleDifficulty(
   return { status: "analyzed", scale, reasoning: best.reasoning, drawing };
 }
 
-/** 分析結果から、速さの基準時間に使う作業の量を取り出す。 */
 export function getHitofudePuzzleSolveWorkload({
   scale,
   reasoning,
