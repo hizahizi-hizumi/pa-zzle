@@ -1,6 +1,8 @@
 import {
+  type CollectionGame,
   type CollectionSource,
   createCollectionJourney,
+  findMostCollectedGameId,
   totalCollectionCounts,
 } from "@/collection/collection";
 import type { PlayRecord } from "@/records/play-record";
@@ -212,5 +214,32 @@ describe("createCollectionJourney", () => {
       addedByLevel: { perfect: 1 },
     });
     expect(journey.snapshots[0]?.[0]?.counts.perfect).toBe(1);
+  });
+});
+
+describe("findMostCollectedGameId", () => {
+  const counts = { clear: 0, good: 0, great: 0, perfect: 0 };
+  function game(id: string, total: number): CollectionGame {
+    return { id, total, counts, difficulties: [] };
+  }
+  const records = [
+    record("alpha", "a", 80, jan),
+    record("beta", "b", 80, feb),
+    record("gamma", "c", 80, mar),
+  ];
+  const cases = [
+    ["解いた数が最も多いゲーム", [game("alpha", 3), game("beta", 2)], "alpha"],
+    [
+      "解いた数が同じなら、最後に遊んだゲーム",
+      [game("alpha", 2), game("beta", 2), game("gamma", 1)],
+      "beta",
+    ],
+    ["どのゲームも解いていなければ null", [game("alpha", 0)], null],
+  ] as const;
+
+  test.each(cases)("%s を返すこと", (_, games, expected) => {
+    const gameId = findMostCollectedGameId(games, records);
+
+    expect(gameId).toBe(expected);
   });
 });

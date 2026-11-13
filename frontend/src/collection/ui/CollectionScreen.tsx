@@ -1,6 +1,7 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   createCollectionJourney,
+  findMostCollectedGameId,
   totalCollectionCounts,
 } from "@/collection/collection";
 import { CollectionBreakdown } from "@/collection/ui/CollectionScreen/CollectionBreakdown";
@@ -29,7 +30,6 @@ export function CollectionScreen({ records, now }: CollectionScreenProps) {
     gameCatalog.map(({ id }) => id),
     preferredOrder,
   );
-  const activeId = selectedId ?? orderedIds[0] ?? "";
   const journey = useMemo(
     () =>
       createCollectionJourney(
@@ -39,6 +39,11 @@ export function CollectionScreen({ records, now }: CollectionScreenProps) {
       ),
     [records, now],
   );
+  const activeId =
+    selectedId ??
+    findMostCollectedGameId(journey.snapshots.at(-1) ?? [], records) ??
+    orderedIds[0] ??
+    "";
   const activePeriod = period < 0 ? journey.periods.length - 1 : period;
   const currentGames = journey.snapshots[activePeriod] ?? [];
   const items = orderedIds.flatMap((id) => {

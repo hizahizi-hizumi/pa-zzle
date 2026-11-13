@@ -208,3 +208,36 @@ export function totalCollectionCounts(
   }
   return counts;
 }
+
+/** 解いた数が最も多いゲーム。同じ数のゲームがあれば、最後に遊んだゲーム。どのゲームも解いていなければ `null`。 */
+export function findMostCollectedGameId(
+  games: readonly CollectionGame[],
+  records: readonly PlayRecord[],
+): string | null {
+  const lastPlayedAt = new Map<string, number>();
+  for (const { gameId, completedAt } of records) {
+    lastPlayedAt.set(
+      gameId,
+      Math.max(
+        lastPlayedAt.get(gameId) ?? Number.NEGATIVE_INFINITY,
+        completedAt,
+      ),
+    );
+  }
+  let best: CollectionGame | null = null;
+  for (const game of games) {
+    if (game.total === 0) {
+      continue;
+    }
+    if (
+      best === null ||
+      game.total > best.total ||
+      (game.total === best.total &&
+        (lastPlayedAt.get(game.id) ?? Number.NEGATIVE_INFINITY) >
+          (lastPlayedAt.get(best.id) ?? Number.NEGATIVE_INFINITY))
+    ) {
+      best = game;
+    }
+  }
+  return best?.id ?? null;
+}
