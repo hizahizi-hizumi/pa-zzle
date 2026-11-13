@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 
 import {
-  POUR_ANIMATION_DURATION_MS,
   POUR_TRANSFER_END_OFFSET,
   POUR_TRANSFER_START_OFFSET,
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
@@ -26,14 +25,14 @@ export function AnimatedDestinationTransfer({
         { transform: "scaleY(1)", offset: 1 },
       ],
       {
-        duration: POUR_ANIMATION_DURATION_MS,
+        duration: animation.durationMs,
         easing: "linear",
         fill: "forwards",
       },
     );
 
     return () => transferAnimation?.cancel();
-  }, []);
+  }, [animation.durationMs]);
 
   return (
     <TransferLiquidView

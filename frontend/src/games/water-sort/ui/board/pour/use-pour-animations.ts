@@ -13,12 +13,15 @@ import {
   createPourAnimation,
   interruptPourAnimationsForBottle,
   type PourAnimation,
+  type PourBounds,
 } from "@/games/water-sort/ui/board/pour/pour-animation";
 import { prefersReducedMotion } from "@/lib/motion";
 
 type UsePourAnimationsOptions = {
   operation: WaterSortOperation | null;
   bottleRefs: RefObject<Array<HTMLButtonElement | null>>;
+  /** ボトルを並べた要素。注ぐ動きは、その入れ物の左右と上の端に収める。 */
+  bottlesRef: RefObject<HTMLElement | null>;
   onActivityChange?: (active: boolean) => void;
   onClearAnimationComplete?: () => void;
 };
@@ -26,6 +29,7 @@ type UsePourAnimationsOptions = {
 export function usePourAnimations({
   operation,
   bottleRefs,
+  bottlesRef,
   onActivityChange,
   onClearAnimationComplete,
 }: UsePourAnimationsOptions) {
@@ -121,6 +125,7 @@ export function usePourAnimations({
       sourceRect,
       sourceLiftY,
       destinationRect,
+      captureBounds(bottlesRef.current?.parentElement ?? null),
     );
     if (!animation) {
       if (operation.isClearingMove) {
@@ -130,7 +135,13 @@ export function usePourAnimations({
     }
 
     replaceAnimations(addPourAnimation(animationsRef.current, animation));
-  }, [bottleRefs, onClearAnimationComplete, operation, replaceAnimations]);
+  }, [
+    bottleRefs,
+    bottlesRef,
+    onClearAnimationComplete,
+    operation,
+    replaceAnimations,
+  ]);
 
   return {
     animations,
@@ -151,6 +162,14 @@ function captureLiftY(element: HTMLElement): number {
   }
   const liftY = Number.parseFloat(translateY);
   return Number.isFinite(liftY) ? liftY : 0;
+}
+
+function captureBounds(element: HTMLElement | null): PourBounds {
+  const rect = element?.getBoundingClientRect();
+  if (!rect || rect.width === 0) {
+    return { left: 0, right: window.innerWidth, top: 0 };
+  }
+  return { left: rect.left, right: rect.right, top: rect.top };
 }
 
 function captureRestingRect(

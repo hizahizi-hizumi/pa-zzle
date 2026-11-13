@@ -1,8 +1,15 @@
-import { useLayoutEffect, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
+import { getCompletedBottleColor } from "@/games/water-sort/ui/board/bottle-completion";
 import type { WaterSortBottleCue } from "@/games/water-sort/ui/board/bottle-cue";
 import { PourAnimationLayer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer";
 import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-animations";
@@ -12,7 +19,11 @@ import {
 } from "@/games/water-sort/ui/board/WaterSortBoard/BottleCue";
 import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
-import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
+import {
+  playAnimations,
+  playRejectionShake,
+  type RejectionShakeTiming,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 type WaterSortBoardProps = {
@@ -32,17 +43,30 @@ type WaterSortBoardProps = {
 };
 
 const invalidBottleShakeKeyframes: Keyframe[] = [
-  { transform: "translateX(0)" },
-  { transform: "translateX(-4px)" },
-  { transform: "translateX(4px)" },
-  { transform: "translateX(-2px)" },
-  { transform: "translateX(0)" },
+  { transform: "translateX(0) rotate(0deg)" },
+  { transform: "translateX(-10px) rotate(-4deg)" },
+  { transform: "translateX(9px) rotate(3deg)" },
+  { transform: "translateX(-6px) rotate(-2deg)" },
+  { transform: "translateX(3px) rotate(1deg)" },
+  { transform: "translateX(0) rotate(0deg)" },
 ];
 
 const invalidBottleShakeTiming: RejectionShakeTiming = {
-  durationMs: 220,
+  durationMs: 300,
   easing: "ease-out",
 };
+
+/** 全ボトルがそろったとき、左上から順に弾ませる。 */
+const CLEAR_BOUNCE_DURATION_MS = 300;
+/** 最初のボトルと最後のボトルが弾み始める時刻の差。 */
+const CLEAR_BOUNCE_SPREAD_MS = 240;
+const clearBounceKeyframes: Keyframe[] = [
+  { transform: "translateY(0) scale(1, 1)" },
+  { transform: "translateY(0) scale(1.08, 0.9)", offset: 0.18 },
+  { transform: "translateY(-22%) scale(0.96, 1.05)", offset: 0.5 },
+  { transform: "translateY(0) scale(1.05, 0.94)", offset: 0.82 },
+  { transform: "translateY(0) scale(1, 1)" },
+];
 
 const bottleAspectRatio = 0.36;
 
@@ -59,13 +83,62 @@ export function WaterSortBoard({
   layout: layoutKind = "rows",
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const bottlesRef = useRef<HTMLFieldSetElement>(null);
+  const [pouredClearOperationId, setPouredClearOperationId] = useState<
+    number | null
+  >(null);
+  const clearingOperationId =
+    operation?.type === "poured" && operation.isClearingMove
+      ? operation.id
+      : null;
+  const handlePouredClear = useCallback(() => {
+    setPouredClearOperationId(clearingOperationId);
+  }, [clearingOperationId]);
   const { animations, finishAnimation, interruptForBottleInteraction } =
     usePourAnimations({
       operation,
       bottleRefs,
+      bottlesRef,
       onActivityChange: onPourAnimationActivityChange,
-      onClearAnimationComplete,
+      onClearAnimationComplete: handlePouredClear,
     });
+  const celebrating =
+    clearingOperationId !== null &&
+    pouredClearOperationId === clearingOperationId;
+
+  // 最後の注ぎを終えたら、全ボトルを順に弾ませてから結果へ進める。
+  useEffect(() => {
+    if (!celebrating || !onClearAnimationComplete) {
+      return;
+    }
+    return playAnimations({
+      animate: () => {
+        const bottles = bottleRefs.current.filter(
+          (bottle): bottle is HTMLButtonElement =>
+            typeof bottle?.animate === "function",
+        );
+        return bottles.flatMap((bottle, index) => {
+          const bounce: Animation | undefined = bottle.animate(
+            clearBounceKeyframes,
+            {
+              duration: CLEAR_BOUNCE_DURATION_MS,
+              delay:
+                bottles.length > 1
+                  ? (index / (bottles.length - 1)) * CLEAR_BOUNCE_SPREAD_MS
+                  : 0,
+              easing: "ease-out",
+            },
+          );
+          // Web Animations を真似るだけで動かない環境では、待つものが無い。
+          return bounce ? [bounce] : [];
+        });
+      },
+      completion: { type: "after-animations", holdMs: 0 },
+      reducedMotionHoldMs: 0,
+      unanimatedHoldMs: 0,
+      onFinished: onClearAnimationComplete,
+    });
+  }, [celebrating, onClearAnimationComplete]);
 
   useLayoutEffect(() => {
     if (operation?.type === "invalid") {
@@ -104,6 +177,7 @@ export function WaterSortBoard({
 
   const bottles = (
     <fieldset
+      ref={bottlesRef}
       className={cn(
         "grid w-full items-end justify-center border-0 p-0 [--selected-bottle-lift:--spacing(3.5)]",
         layoutKind === "rows" && "pt-(--selected-bottle-lift)",
@@ -129,6 +203,7 @@ export function WaterSortBoard({
         const isSource = bottleIndex === sourceBottleIndex;
         const isAnimated = animatedBottleIndexes.has(bottleIndex);
         const cue = cues.find((item) => item.bottleIndex === bottleIndex);
+        const completedColor = getCompletedBottleColor(bottle);
 
         return (
           <button
@@ -147,7 +222,15 @@ export function WaterSortBoard({
             <span
               className={`absolute inset-0 ${isAnimated ? "invisible" : ""}`}
             >
-              <WaterBottle contents={bottle} selected={isSource} />
+              <WaterBottle
+                contents={bottle}
+                selected={isSource}
+                seal={
+                  completedColor === null
+                    ? undefined
+                    : { colorIndex: completedColor }
+                }
+              />
             </span>
             <TutorialSpotlight
               active={spotlitBottleIndices?.includes(bottleIndex) ?? false}

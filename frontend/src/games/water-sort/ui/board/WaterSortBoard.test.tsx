@@ -298,4 +298,30 @@ describe("WaterSortBoard", () => {
 
     expect(onClearAnimationComplete).toHaveBeenCalledOnce();
   });
+
+  describe("1色で満杯のボトルがある場合", () => {
+    beforeEach(() => {
+      render(
+        <WaterSortBoard
+          interactionDisabled={false}
+          state={[
+            [0, 0, 0, 0],
+            [1, 1, 1],
+            [1, 0],
+          ]}
+          sourceBottleIndex={null}
+          operation={null}
+          onSelectBottle={vi.fn()}
+        />,
+      );
+    });
+
+    test("そのボトルにだけ蓋をすること", () => {
+      const sealed = screen
+        .getAllByRole("button")
+        .map((bottle) => bottle.querySelector("[data-bottle-sealed]") !== null);
+
+      expect(sealed).toEqual([true, false, false]);
+    });
+  });
 });

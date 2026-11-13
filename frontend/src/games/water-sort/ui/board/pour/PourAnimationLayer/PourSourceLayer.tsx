@@ -3,7 +3,6 @@ import { useEffect, useRef } from "react";
 import {
   getOverlayStyle,
   getPourStreamStyle,
-  POUR_ANIMATION_DURATION_MS,
   POUR_LAYER_ORDER,
   POUR_TILT_EASING,
   POUR_TRANSFER_END_OFFSET,
@@ -32,12 +31,9 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
       return;
     }
 
-    const { rect: sourceRect, liftY } = animation.source;
-    const { rect: destinationRect } = animation.destination;
-    const deltaX = destinationRect.left - sourceRect.left;
-    const deltaY = destinationRect.top - sourceRect.top;
-    const hoverY = deltaY - sourceRect.height * 0.55;
-    const direction = deltaX >= 0 ? 1 : -1;
+    const { liftY } = animation.source;
+    const { deltaX, hoverY, tiltDeg } = animation.pose;
+    const duration = animation.durationMs;
     const sourceTransferElement = sourceTransferRef.current;
 
     const sourceAnimation = sourceElement.animate(
@@ -58,12 +54,12 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
           easing: "ease-in-out",
         },
         {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 68}deg)`,
+          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${tiltDeg}deg)`,
           offset: 0.32,
           easing: "ease-out",
         },
         {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 68}deg)`,
+          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${tiltDeg}deg)`,
           offset: 0.76,
           easing: "ease-in",
         },
@@ -75,7 +71,7 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
         { transform: "translate(0, 0) rotate(0deg)", offset: 1 },
       ],
       {
-        duration: POUR_ANIMATION_DURATION_MS,
+        duration,
         easing: "linear",
       },
     );
@@ -93,7 +89,7 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
         { opacity: 0, transform: "scaleY(0.35)", offset: 0.77 },
         { opacity: 0, transform: "scaleY(0.15)", offset: 1 },
       ],
-      { duration: POUR_ANIMATION_DURATION_MS, easing: "linear" },
+      { duration, easing: "linear" },
     );
 
     const sourceTransferAnimation = sourceTransferElement?.animate?.(
@@ -104,7 +100,7 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
         { transform: "scaleY(0)", offset: 1 },
       ],
       {
-        duration: POUR_ANIMATION_DURATION_MS,
+        duration,
         easing: "linear",
         fill: "forwards",
       },

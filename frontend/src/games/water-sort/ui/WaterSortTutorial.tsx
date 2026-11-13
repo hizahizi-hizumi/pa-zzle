@@ -135,35 +135,18 @@ function createOperation(
   }
 }
 
+/** 1色そろった手には、合図を重ねず、本番と同じ盤面の蓋とその音だけで応える。 */
 function getBottleCues(
-  progress: WaterSortTutorialProgress,
   hintBottleIndex: number | null,
   recallId: number | null,
 ): WaterSortBottleCue[] {
-  // 解き終えた手には、本番と同じ完成の動きだけで応える。
-  const completion =
-    progress.phase === "playing" ? progress.boardState.completion : null;
+  if (hintBottleIndex === null) {
+    return [];
+  }
   return [
-    ...(completion === null
-      ? []
-      : [
-          {
-            bottleIndex: completion.bottleIndex,
-            kind: "completed",
-            id: completion.id,
-          } as const,
-        ]),
-    ...(hintBottleIndex === null
-      ? []
-      : [
-          recallId === null
-            ? ({ bottleIndex: hintBottleIndex, kind: "hint", id: 0 } as const)
-            : ({
-                bottleIndex: hintBottleIndex,
-                kind: "recall",
-                id: recallId,
-              } as const),
-        ]),
+    recallId === null
+      ? { bottleIndex: hintBottleIndex, kind: "hint", id: 0 }
+      : { bottleIndex: hintBottleIndex, kind: "recall", id: recallId },
   ];
 }
 
@@ -334,9 +317,7 @@ export function WaterSortTutorial({
       }
     : { entry: "play", onReturnToPlay: handleClose };
 
-  const cues = pouring
-    ? []
-    : getBottleCues(progress, hintBottleIndex, recallId);
+  const cues = pouring ? [] : getBottleCues(hintBottleIndex, recallId);
 
   function renderBoard({ scene, playing, onSceneEnd }: TutorialBoardIntro) {
     return (

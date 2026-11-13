@@ -88,9 +88,13 @@ function pressNext(): void {
 
 const recallSelector = '[data-tutorial-cue="recall"]';
 
-function getCuedBottles(
-  kind: "hint" | "recall" | "completed" = "hint",
-): number[] {
+function getSealedBottles(): number[] {
+  return [1, 2, 3, 4, 5].filter((bottleNumber) =>
+    getBottle(bottleNumber).querySelector("[data-bottle-sealed]"),
+  );
+}
+
+function getCuedBottles(kind: "hint" | "recall" = "hint"): number[] {
   const selector =
     kind === "recall" ? recallSelector : `[data-bottle-cue="${kind}"]`;
   return [1, 2, 3, 4, 5].filter((bottleNumber) =>
@@ -368,9 +372,9 @@ describe("WaterSortTutorial", () => {
         expect(spotlit).toEqual([]);
       });
 
-      test("緑をそろえて手を離し、そろったボトルに応えて、そろったボトルから注げないことを言うこと", () => {
+      test("緑をそろえて手を離し、そろったボトルに蓋をして、そろったボトルから注げないことを言うこと", () => {
         const green = getBottle(5).getAttribute("aria-label");
-        const completed = getCuedBottles("completed");
+        const completed = getSealedBottles();
         const headline = screen.getByText("1色そろいました");
         const detail = screen.getByText("そろったボトルからは注げません");
         const hinted = getCuedBottles();
@@ -382,11 +386,11 @@ describe("WaterSortTutorial", () => {
         expect(hinted).toEqual([]);
       });
 
-      test("注ぎ元を選んでも、そろったことの一言と応えを残すこと", () => {
+      test("注ぎ元を選んでも、そろったことの一言と蓋を残すこと", () => {
         tapBottles([2]);
 
         const headline = screen.getByText("1色そろいました");
-        const completed = getCuedBottles("completed");
+        const completed = getSealedBottles();
 
         expect(headline).toBeTruthy();
         expect(completed).toEqual([5]);
@@ -437,11 +441,11 @@ describe("WaterSortTutorial", () => {
         test("完成を伝え、どのレベルも同じルールだと言い、本番の完成の動きのほかに合図を重ねないこと", () => {
           const headline = screen.getByText("完成です");
           const detail = screen.getByText("どのレベルも同じルールです");
-          const completed = getCuedBottles("completed");
+          const cued = getCuedBottles();
 
           expect(headline).toBeTruthy();
           expect(detail).toBeTruthy();
-          expect(completed).toEqual([]);
+          expect(cued).toEqual([]);
         });
 
         test("本番と同じ完成の音を鳴らすこと", () => {
@@ -575,14 +579,14 @@ describe("WaterSortTutorial", () => {
         });
       });
 
-      test("注ぎ終えてから、そろったボトルに応えること", () => {
+      test("注ぎ終えてから、そろったボトルに蓋をすること", () => {
         const red = getBottle(1).getAttribute("aria-label");
         const pressed = getBottle(3).getAttribute("aria-pressed");
-        const completed = getCuedBottles("completed");
+        const completed = getSealedBottles();
 
         expect(red).toBe("ボトル 1: 赤、赤、赤、赤");
         expect(pressed).toBe("true");
-        expect(completed).toEqual([1]);
+        expect(completed).toContain(1);
       });
     });
 
