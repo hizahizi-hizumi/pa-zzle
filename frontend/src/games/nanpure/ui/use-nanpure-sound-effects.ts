@@ -82,10 +82,6 @@ function playClearSound() {
   playLayeredSound(clearedSoundLayers);
 }
 
-/**
- * 結果の報酬の音はアプリが鳴らす。
- * チュートリアルも本番と同じ音を鳴らすため、プレイ画面とチュートリアルの両方が使う。
- */
 export function useNanpureSoundEffects(
   operation: NanpureOperation | null,
   progress: GameProgress,
