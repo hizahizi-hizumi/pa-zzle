@@ -7,7 +7,6 @@ const directionByArrowKey: Readonly<Record<string, HitofudePuzzleDirection>> = {
   ArrowLeft: "left",
 };
 
-/** 矢印キーが指す盤面の向き。矢印キーでなければ `null`。 */
 export function findArrowKeyDirection(
   key: string,
 ): HitofudePuzzleDirection | null {

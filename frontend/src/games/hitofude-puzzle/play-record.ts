@@ -31,7 +31,6 @@ const HITOFUDE_PUZZLE_PLAY_RECORD_PAYLOAD_VERSION = 1;
 
 /**
  * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
- * - `workload`: 遊んだ問題を解き切る作業の量。問題集から問題を引けない記録でも基準時間を求め直せるよう、問題の事実として残す。
  * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準時間との差は保存せず、現在の評価規則で導出する。
  *   戻したマスの数・待った・盤面を戻した回数・入力回数は評価に使わないが、評価規則を見直すときの材料として残す。
  */
@@ -57,10 +56,6 @@ type CreateHitofudePuzzlePlayRecordInput = {
   result: HitofudePuzzleSessionResult;
 };
 
-/**
- * 待ったは入力1回ぶんを取り消すので、入力回数を超えない。
- * 引き直しは入力か待ったで道を変えたときに高々1回ずつ数えるので、その合計を超えない。
- */
 function isHitofudePuzzlePerformance(
   value: unknown,
 ): value is HitofudePuzzleSessionResult {
@@ -72,7 +67,9 @@ function isHitofudePuzzlePerformance(
     isNonNegativeInteger(value.undoCount) &&
     isNonNegativeInteger(value.restartCount) &&
     isNonNegativeInteger(value.inputCount) &&
+    // 待ったは入力1回ぶんを取り消すので、入力回数を超えない。
     value.undoCount <= value.inputCount &&
+    // 引き直しは入力か待ったで道を変えたときに高々1回ずつ数えるので、その合計を超えない。
     value.backtrackCount <= value.inputCount + value.undoCount
   );
 }
@@ -109,7 +106,7 @@ export function isHitofudePuzzlePlayRecord(
   );
 }
 
-/** 記録の値から、記録の項目だけを取り出す。読み戻した記録に余分な項目があっても結果へ持ち込まない。 */
+/** 読み戻した記録に余分な項目があっても結果へ持ち込まない。 */
 function copyPerformance({
   elapsedMs,
   backtrackCount,
@@ -144,17 +141,12 @@ function copyWorkload({
   };
 }
 
-/** 記録から作り直した、結果画面に出す内容。 */
 export type HitofudePuzzleRecordedResult = {
   difficulty: HitofudePuzzleDifficulty;
   problemIdentity: HitofudePuzzleProblemIdentity;
   result: HitofudePuzzleResult;
 };
 
-/**
- * 記録から結果画面に出す内容を作り直す。
- * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
- */
 export function restoreHitofudePuzzleRecordedResult(
   record: PlayRecord,
 ): HitofudePuzzleRecordedResult | null {

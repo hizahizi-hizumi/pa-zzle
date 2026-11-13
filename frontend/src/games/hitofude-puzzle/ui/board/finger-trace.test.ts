@@ -22,7 +22,6 @@ describe("findCellAt", () => {
   });
 });
 
-/** 指を `points` の順に動かしたときの、マスが移った順の一覧と、最後に指がいるマス。 */
 function traceFinger(points: readonly BoardPoint[], current: number) {
   const steps: HitofudePuzzleTraceStep[] = [];
   let cell = current;
@@ -34,7 +33,6 @@ function traceFinger(points: readonly BoardPoint[], current: number) {
   return { steps, cell };
 }
 
-/** `from` から `to` まで、指を `stride` ずつ動かした位置の一覧。 */
 function listPointsAlong(from: BoardPoint, to: BoardPoint, stride: number) {
   const count = Math.round(Math.hypot(to.x - from.x, to.y - from.y) / stride);
   return Array.from({ length: count + 1 }, (_, index) => ({

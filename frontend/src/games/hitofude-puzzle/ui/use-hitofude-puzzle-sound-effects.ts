@@ -94,10 +94,7 @@ function playReducedMotionClearSound() {
   playSound(clearedEndSound);
 }
 
-/**
- * 道を延ばす・巻き戻す・延ばせなかった操作と、道を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
- * 待った・盤面を戻す・リセットでは鳴らさない。行き止まりや引き直しは、その時の道を延ばす音とは別の音にしない。
- */
+/** 結果の報酬の音はアプリが鳴らす。 */
 export function useHitofudePuzzleSoundEffects(
   pathNotice: HitofudePuzzlePathNotice | null,
   progress: GameProgress,

@@ -18,7 +18,6 @@ import {
   HITOFUDE_PUZZLE_SPEED_REFUTATION_STEP_LIMIT,
 } from "@/games/hitofude-puzzle/score";
 
-/** 基準時間の式。その問題で0の項は省く。先読みで追う手は上限で打ち切った値を示す。 */
 function listSpeedFormula({
   openCellCount,
   fatalBranchCount,
@@ -72,7 +71,6 @@ function listSpeedFormula({
   ];
 }
 
-/** 基準時間の式の言葉の説明。式に出た項だけを説明する。 */
 function listSpeedFormulaNotes({
   fatalBranchCount,
   assumptionCount,

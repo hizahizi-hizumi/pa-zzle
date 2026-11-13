@@ -179,7 +179,6 @@ describe("moveHitofudePuzzleSessionHeadToward", () => {
   });
 });
 
-/** マスを押して、指を `cells` の順に動かし、離すまでの1回のなぞり。 */
 function stroke(
   session: HitofudePuzzleSession,
   [pressed, ...cells]: readonly number[],

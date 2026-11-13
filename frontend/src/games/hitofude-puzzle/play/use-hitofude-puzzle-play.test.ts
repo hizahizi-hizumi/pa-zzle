@@ -31,7 +31,6 @@ const initial = selectHitofudePuzzleProblemForDifficulty(
 const other = selectHitofudePuzzleProblemForDifficulty(difficulty, otherSeed);
 const { solution } = generateHitofudePuzzleProblem(initial.identity);
 
-/** マスを1つずつ押して離す。 */
 function tapAll(result: HookResult, cells: readonly number[]): void {
   for (const cell of cells) {
     act(() => {
@@ -41,7 +40,6 @@ function tapAll(result: HookResult, cells: readonly number[]): void {
   }
 }
 
-/** `cells` の先頭を押し、残りのマスを順になぞって離すまでを、1回の入力として流す。 */
 function drag(
   result: HookResult,
   [pressed, ...cells]: readonly number[],
@@ -57,7 +55,6 @@ function drag(
   });
 }
 
-/** 盤面の始点から上下左右に2マス以上離れた、穴でないマス。 */
 function findCellAwayFromStart(): number {
   const { size, start, holes } = initial.problem;
   const startRow = Math.floor(start / size);

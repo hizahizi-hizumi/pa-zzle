@@ -53,7 +53,6 @@ import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
-/** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type HitofudePuzzleResult = HitofudePuzzleSessionResult & {
   workload: HitofudePuzzleSolveWorkload;
   speedRule: SpeedScoreRule;
@@ -61,25 +60,21 @@ export type HitofudePuzzleResult = HitofudePuzzleSessionResult & {
   score: HitofudePuzzlePlayScore;
 };
 
-/**
- * 道を延ばせなかった操作。盤面が先端を揺らし、進もうとしたマスに×を点けて返すために持つ。
- * `id` は操作ごとに変わり、同じ所で続けて阻まれても別の操作として返せるようにする。
- */
+/** 盤面が先端を揺らし、進もうとしたマスに×を点けて返すために持つ。 */
 export type HitofudePuzzleBlockedMove = {
+  /** 操作ごとに変わり、同じ所で続けて阻まれても別の操作として返せるようにする。 */
   id: number;
-  /** 先端から進もうとした向き。先端に隣り合わないマスを押したときは `null`。 */
+  /** 先端に隣り合わないマスを押したときは `null`。 */
   direction: HitofudePuzzleDirection | null;
   /** 進もうとしたマス（押したマス・指が入ったマス・矢印キーの向きの隣のマス）。盤面の外へ進もうとしたときは `null`。 */
   cell: number | null;
 };
 
 /**
- * 最後の盤面操作で、道に起きた変化。プレイ画面が読み上げで知らせるために持つ。
+ * プレイ画面が読み上げで知らせるために持つ。
  * `id` は操作ごとに変わり、同じ変化が続いても別の操作として知らせられるようにする。
- * - `blocked`: 道を延ばせなかった。`cell` と `reason` は進もうとしたマスとその理由。
- * - `shortened`: 道が縮んだ（来た向きへ戻った・道の途中のマスを押した）。`head` は縮んだ後の先端。
- * - `extended`: 道が延びた。`head` は延びた後の先端。
- * - `undone`: 待ったで1つ前の道へ戻した。`head` は戻した後の先端、`lengthChange` は道のマス数の増減。
+ * - `shortened`: 道が縮んだ（来た向きへ戻った・道の途中のマスを押した）。
+ * - `undone`: 待ったで1つ前の道へ戻した。`lengthChange` は道のマス数の増減。
  */
 export type HitofudePuzzlePathNotice = { id: number } & (
   | {
@@ -98,7 +93,6 @@ export type HitofudePuzzlePathNotice = { id: number } & (
     }
 );
 
-/** 操作が進もうとした先。 */
 type HitofudePuzzleMoveTarget = Pick<
   HitofudePuzzleBlockedMove,
   "direction" | "cell"
@@ -113,25 +107,17 @@ export type HitofudePuzzlePlay = GamePlay<
   RestartableGamePlay &
   UndoableGamePlay & {
     board: HitofudePuzzleProblem;
-    /** 始点から先端までに通ったマスの番号。先頭は常に始点。 */
     path: readonly number[];
-    /** 全マスを通る前に、先端から延ばせるマスが無くなったか。 */
     isDeadEnd: boolean;
-    /** 最後に道を延ばせなかった操作。 */
     blockedMove: HitofudePuzzleBlockedMove | null;
-    /** 最後の操作（なぞり・矢印キー・マスを押す・待った）で道に起きた変化。盤面を戻すの後は `null`。 */
+    /** 盤面を戻すの後は `null`。 */
     pathNotice: HitofudePuzzlePathNotice | null;
-    /** ここまでの引き直しの回数。なぞりを離したとき・矢印キー・待った・盤面を戻すの後に数える。 */
+    /** なぞりを離したとき・矢印キー・待った・盤面を戻すの後に数える。 */
     backtrackCount: number;
-    /** ここまでに待ったを使った回数。 */
     undoCount: number;
-    /** マスを押して道をなぞり始める。道のマスならそこまで巻き戻し、先端の隣なら延ばす。 */
     beginStroke: (cell: number) => void;
-    /** なぞっている指が隣のマスへ移ったときに道を変える。 */
     traceStroke: (step: HitofudePuzzleTraceStep) => void;
-    /** 指を離してなぞりを終える。押してから離すまでを待ったの1単位にする。 */
     endStroke: () => void;
-    /** 先端からその向きの隣のマスへ先端を動かす。来た向きなら1マス縮む。 */
     moveHeadToward: (direction: HitofudePuzzleDirection) => void;
   };
 
@@ -158,7 +144,7 @@ function createPlayState(
   };
 }
 
-/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+/** プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createHitofudePuzzleResult(
   sessionResult: HitofudePuzzleSessionResult,
   workload: HitofudePuzzleSolveWorkload,
@@ -177,7 +163,6 @@ export function createHitofudePuzzleResult(
   };
 }
 
-/** 道を変える操作の前後の道から、知らせる変化を求める。道が変わらなければ `null`。 */
 function findPathNotice(
   before: HitofudePuzzleSession,
   after: HitofudePuzzleSession,
@@ -195,10 +180,6 @@ function findPathNotice(
   };
 }
 
-/**
- * 道を変える操作の結果を反映する。延ばせなかったときは、阻まれた操作として残す。
- * 道が変わったか阻まれたときは、読み上げで知らせる変化を残す。
- */
 function applyPathChange(
   current: HitofudePuzzlePlayState,
   { session, rejection }: HitofudePuzzleSessionPathChange,
@@ -222,7 +203,6 @@ function applyPathChange(
   };
 }
 
-/** 今の先端から `cell` へ進む操作の行き先。隣り合わなければ向きは `null`。 */
 function targetCell(
   session: HitofudePuzzleSession,
   cell: number,
@@ -237,7 +217,6 @@ function targetCell(
   };
 }
 
-/** 今の先端から `direction` の向きへ進む操作の行き先。 */
 function targetDirection(
   session: HitofudePuzzleSession,
   direction: HitofudePuzzleDirection,
@@ -262,11 +241,6 @@ function selectProblem(
   ).problem;
 }
 
-/**
- * 難易度の問題を選んで遊ぶ。
- * `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。
- * クリアすると `result` に評価を返す。
- */
 export function useHitofudePuzzlePlay(
   difficulty: HitofudePuzzleDifficulty,
   initialProblem?: HitofudePuzzlePooledProblem,

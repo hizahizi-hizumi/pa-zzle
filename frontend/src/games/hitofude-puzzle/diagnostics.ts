@@ -31,7 +31,7 @@ import {
   isRecordObject,
 } from "@/lib/type-guards";
 
-/** 一意性を確かめた探索の結果。見つけた解そのものは `solution` に分けて持つ。 */
+/** 見つけた解そのものは `solution` に分けて持つ。 */
 type HitofudePuzzleUniquenessCheck = Pick<
   HitofudePuzzleSolutionSearchResult,
   "status" | "solutionCount" | "searchStepCount"
@@ -41,10 +41,8 @@ type HitofudePuzzleUniquenessCheck = Pick<
  * 検証情報を開いたときに、遊んでいる問題を解き直し・分析し直して求めた値。プレイ中は求めない。
  * - `symmetryKey`: 回転・反転で重なる盤面に共通の正規化キー（問題集の同型除外に使うもの）。
  * - `uniqueness`: 難易度の分析と同じ探索（探索量の上限も同じ）で、解を2つまで数えた結果。
- * - `solution`: 正解の道（始点からのマス番号）。解がただ1つと確かめられたときだけ持つ。
- * - `straightRatio`: 正解の道の直進率。`solution` が無ければ `null`。
- * - `difficultyAnalysis`: 人間向け解法器の経過（推論段階ごとの発火数・仮置き・先読みの手数）と、描画視点の分岐。
- * - `difficultyAssessment`: 分析から決めたレベル（または提供範囲外の理由）。出題した難易度とは別に、今の規則で分類し直す。
+ * - `solution`: 正解の道（始点からのマス番号）。
+ * - `difficultyAssessment`: 出題した難易度とは別に、今の規則で分類し直す。
  */
 export type HitofudePuzzleDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "hitofude-puzzle",
@@ -114,11 +112,7 @@ const hitofudePuzzleDiagnosticFormat: InternalDiagnosticFormat<HitofudePuzzleDia
     },
   };
 
-/**
- * 検証情報としてコピーする値。問題の再現に要る identity と出題した難易度・ビルドに、
- * 遊んでいる問題を解き直した正解の道と、難易度を分析し直した結果を添える。
- * 解法器と描画視点の分析を走らせるので、検証情報を開いたときだけ呼ぶ。
- */
+/** 解法器と描画視点の分析を走らせるので、検証情報を開いたときだけ呼ぶ。 */
 export function createHitofudePuzzleDiagnosticSnapshot({
   problem,
   ...input
@@ -162,7 +156,6 @@ function parseHitofudePuzzleDiagnosticSnapshot(
   );
 }
 
-/** 問題集に無い identity は `null` を返す。 */
 function restoreHitofudePuzzleProblemFromDiagnosticSnapshot(
   snapshot: HitofudePuzzleDiagnosticSnapshot,
 ): HitofudePuzzlePooledProblem | null {
