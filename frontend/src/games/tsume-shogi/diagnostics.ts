@@ -32,20 +32,16 @@ import {
   isRecordObject,
 } from "@/lib/type-guards";
 
-/**
- * - `problemPool`: 出題した問題の問題集の版と番号。
- * - `problem`: 初期局面（SFEN）と作意（USI）。人間のレビューで盤面を確かめ、外部の将棋ソフトへ渡せるよう文字列で持つ。
- * - `difficultyFeatures`: 難易度分析の特徴（判断地点ごとの内訳と手筋の数を含む）。分析できない問題では `null`。
- * - `difficultyAssessment`: 特徴の分類。問題集の問題でも分析し直し、問題集のレベルと食い違えば分類の方を見せる。
- */
 export type TsumeShogiDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "tsume-shogi",
   TsumeShogiDifficulty,
   TsumeShogiProblemIdentity
 > & {
   problemPool: TsumeShogiProblemPoolReference;
+  /** 初期局面（SFEN）と作意（USI）。人間のレビューで盤面を確かめ、外部の将棋ソフトへ渡せるよう文字列で持つ。 */
   problem: TsumeShogiProblemText;
   difficultyFeatures: TsumeShogiDifficultyFeatures | null;
+  /** 問題集の問題でも分析し直し、問題集のレベルと食い違えば分類の方を見せる。 */
   difficultyAssessment: TsumeShogiDifficultyAssessment;
 };
 
@@ -125,10 +121,7 @@ const tsumeShogiDiagnosticFormat: InternalDiagnosticFormat<TsumeShogiDiagnosticS
     },
   };
 
-/**
- * 検証情報としてコピーする値。問題の再現に要る identity と、出題した難易度・ビルド、問題集の位置、局面と作意、
- * 難易度の特徴と分類を持つ。難易度分析は5手詰で数秒かかることがあるので、プレイ中には呼ばず検証情報を開いたときだけ呼ぶ。
- */
+/** 難易度分析は5手詰で数秒かかることがあるので、プレイ中には呼ばず検証情報を開いたときだけ呼ぶ。 */
 export function createTsumeShogiDiagnosticSnapshot({
   poolReference,
   problem,
@@ -161,7 +154,6 @@ function parseTsumeShogiDiagnosticSnapshot(
   );
 }
 
-/** 問題集に無い identity は `null` を返す。 */
 function restoreTsumeShogiProblemFromDiagnosticSnapshot(
   snapshot: TsumeShogiDiagnosticSnapshot,
 ): TsumeShogiPooledProblem | null {

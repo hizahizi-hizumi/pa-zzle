@@ -44,9 +44,6 @@ const seed = "use-tsume-shogi-play-a";
 const pooled = selectTsumeShogiProblemForDifficulty(difficulty, seed);
 const fivePly = selectTsumeShogiProblemForDifficulty("3", seed);
 
-/**
- * 作意の攻方の手を盤面と持駒の操作で指し、玉方の応手の間を進める。`plies` を渡すと、作意の初めのその手数までを指す。
- */
 function playMainLine(
   result: HookResult,
   problem: TsumeShogiProblem,
@@ -60,7 +57,7 @@ function playMainLine(
   });
 }
 
-/** 攻方の手を盤面と持駒の操作で指す。玉方の応手の間は進めない。 */
+/** 玉方の応手の間は進めない。 */
 function playAttackerMove(result: HookResult, move: TsumeShogiMove): void {
   if (move.kind === "drop") {
     act(() => result.current.selectHandPiece(move.pieceType));

@@ -28,15 +28,9 @@ import {
   wrapEnginePosition,
 } from "@/games/tsume-shogi/puzzle/position";
 
-/**
- * 詰み探索のための、着手と戻しで書き換える局面。
- * `moves.ts` の列挙は全合法手を `tsshogi` の判定に通すため1局面約1msかかる。ここでは王手と王手の受けだけを
- * 利きの形から候補に絞ってから `tsshogi` の合法性判定に通し、同じ合法手を速く列挙する。
- */
-
 const searchMoveKey = Symbol("tsume-shogi-search-move");
 
-/** 探索用の着手。`TsumeShogiSearchPosition` の局面でだけ意味を持つ。 */
+/** `TsumeShogiSearchPosition` の局面でだけ意味を持つ。 */
 export type TsumeShogiSearchMove = {
   readonly [searchMoveKey]: Move;
 };
@@ -84,6 +78,11 @@ export function isTsumeShogiInterposition(move: TsumeShogiSearchMove): boolean {
   );
 }
 
+/**
+ * 詰み探索のための、着手と戻しで書き換える局面。
+ * `moves.ts` の列挙は全合法手を `tsshogi` の判定に通すため1局面約1msかかる。ここでは王手と王手の受けだけを
+ * 利きの形から候補に絞ってから `tsshogi` の合法性判定に通し、同じ合法手を速く列挙する。
+ */
 export class TsumeShogiSearchPosition {
   readonly #engine: Position;
 
@@ -114,12 +113,10 @@ export class TsumeShogiSearchPosition {
     return this.#engine.board.isChecked(Color.WHITE);
   }
 
-  /** 盤上の `square` に駒があるか。 */
   isOccupied(square: TsumeShogiSquare): boolean {
     return this.#engine.board.at(toEngineSquare(square)) !== null;
   }
 
-  /** 玉方の玉の位置。 */
   get defenderKingSquare(): TsumeShogiSquare {
     return fromEngineSquare(this.#engine.board.findKing(Color.WHITE)!);
   }
@@ -132,12 +129,10 @@ export class TsumeShogiSearchPosition {
     );
   }
 
-  /** 今の局面を、変更されない詰将棋の局面として取り出す。 */
   toPosition(): TsumeShogiPosition {
     return wrapEnginePosition(this.#engine.clone());
   }
 
-  /** 合法手を指す。合法でなければ `RangeError` を投げる。 */
   play(move: TsumeShogiSearchMove): void {
     if (!this.#engine.doMove(move[searchMoveKey])) {
       throw new RangeError(
@@ -151,7 +146,6 @@ export class TsumeShogiSearchPosition {
     this.#engine.undoMove(move[searchMoveKey]);
   }
 
-  /** 今の局面で合法な `move` を探索用の着手にする。合法でなければ `null`。 */
   findMove(move: TsumeShogiMove): TsumeShogiSearchMove | null {
     const engine = this.#engine;
     const to = toEngineSquare(move.to);
@@ -173,10 +167,7 @@ export class TsumeShogiSearchPosition {
       : null;
   }
 
-  /**
-   * 攻方の手番で、玉方の玉に王手をかける合法手。盤上の駒の移動（成・不成を別の手とする）のあと、持駒の打ちを並べる。
-   * 攻方の手番でなければ `RangeError` を投げる。
-   */
+  /** 盤上の駒の移動（成・不成を別の手とする）のあと、持駒の打ちを並べる。 */
   listAttackerChecks(): TsumeShogiSearchMove[] {
     const engine = this.#engine;
     if (engine.color !== Color.BLACK) {
@@ -218,10 +209,7 @@ export class TsumeShogiSearchPosition {
     return checks;
   }
 
-  /**
-   * 玉方の手番で、王手を受ける合法手。玉の移動、王手した駒を取る手、合駒（盤上の駒の移動、駒箱からの打ち）の順。
-   * 玉方の手番でなければ `RangeError` を投げる。
-   */
+  /** 玉の移動、王手した駒を取る手、合駒（盤上の駒の移動、駒箱からの打ち）の順。 */
   *generateDefenderResponses(): Generator<
     TsumeShogiSearchMove,
     void,
@@ -368,7 +356,6 @@ function* listPseudoBoardMoves(
   }
 }
 
-/** 攻方が `type` の駒を打てば `king` に利く空きマス。 */
 function listDropSquaresAttacking(
   engine: Position,
   type: PieceType,
@@ -397,7 +384,6 @@ function listDropSquaresAttacking(
   return squares;
 }
 
-/** 玉方の玉に利いている攻方の駒のマス。 */
 function listCheckers(engine: Position, king: Square): Square[] {
   const board = engine.board;
   const checkers: Square[] = [];

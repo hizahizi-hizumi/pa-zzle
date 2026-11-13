@@ -32,20 +32,19 @@ import type { PlayRecordDefinition } from "@/records/play-record-definition";
 const TSUME_SHOGI_GAME_ID = "tsume-shogi";
 const TSUME_SHOGI_PLAY_RECORD_PAYLOAD_VERSION = 1;
 
-/**
- * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
- * - `poolReference`: 遊んだときの問題集の版と問題番号。問題集を作り直すと別の問題を指すので再プレイには使わず、
- *   記録がどの問題集から出たかを後から確かめるためだけに残す。
- * - `workload`: 遊んだ問題を読み切る作業の量。問題集から問題を引けない記録でも基準時間を求め直せるよう、問題の事実として残す。
- * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準時間との差は保存せず、現在の評価規則で導出する。
- *   反証を見た回数・待ったの回数・そのうち判断地点へ戻った回数・盤面を戻した回数・非合法入力の回数・入力回数は評価に使わないが、
- *   評価規則や操作の摩擦を見直すときの材料として残す。
- */
 type TsumeShogiPlayRecordPayload = {
   difficulty: TsumeShogiDifficulty;
   problemIdentity: TsumeShogiRecordedProblemIdentity;
+  /**
+   * 問題集を作り直すと別の問題を指すので再プレイには使わず、記録がどの問題集から出たかを後から確かめるためだけに残す。
+   */
   poolReference: TsumeShogiProblemPoolReference;
   workload: TsumeShogiSolveWorkload;
+  /**
+   * 基準時間との差は保存せず、現在の評価規則で導出する。
+   * 反証を見た回数・待ったの回数・そのうち判断地点へ戻った回数・盤面を戻した回数・非合法入力の回数・入力回数は評価に使わないが、
+   * 評価規則や操作の摩擦を見直すときの材料として残す。
+   */
   performance: TsumeShogiSessionResult;
 };
 
@@ -133,17 +132,13 @@ export function isTsumeShogiPlayRecord(
   );
 }
 
-/** 記録から作り直した、結果画面に出す内容。 */
 export type TsumeShogiRecordedResult = {
   difficulty: TsumeShogiDifficulty;
   problemIdentity: TsumeShogiProblemIdentity;
   result: TsumeShogiResult;
 };
 
-/**
- * 記録から結果画面に出す内容を作り直す。
- * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
- */
+/** 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。 */
 export function restoreTsumeShogiRecordedResult(
   record: PlayRecord,
 ): TsumeShogiRecordedResult | null {
@@ -274,7 +269,7 @@ export const tsumeShogiPlayRecordDefinition = {
   getComparisonKey(record) {
     return isTsumeShogiPlayRecord(record) ? record.payload.difficulty : null;
   },
-  /** 誤王手をミスとして数える。手数は評価に使わないので読まない。 */
+  /** 手数は評価に使わないので読まない。 */
   getClearPerformance(record) {
     if (!isTsumeShogiPlayRecord(record)) {
       return null;

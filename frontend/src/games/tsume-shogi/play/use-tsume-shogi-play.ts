@@ -81,21 +81,18 @@ import {
  */
 export const TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS = 600;
 
-/**
- * 盤面に見せている最後の組の手。`pieceType` は指した後の駒（成った手は成った駒）、`line` はその手の筋。
- * `promotable` は成ることを選べた手か（成った手と、成れたのに成らなかった手）。
- * `dropAmbiguous` は持駒を打った手で、同じ升へ盤上の同じ種類の駒も動けたか（棋譜に「打」を付ける手）。
- */
 export type TsumeShogiPlayedMove = {
   side: TsumeShogiSide;
   move: TsumeShogiMove;
+  /** 指した後の駒（成った手は成った駒）。 */
   pieceType: TsumeShogiPieceType;
+  /** 成ることを選べた手か（成った手と、成れたのに成らなかった手）。 */
   promotable: boolean;
+  /** 持駒を打った手で、同じ升へ盤上の同じ種類の駒も動けたか（棋譜に「打」を付ける手）。 */
   dropAmbiguous: boolean;
   line: TsumeShogiTurnLine;
 };
 
-/** 打った升へ、盤上の同じ種類の駒も動けたか。 */
 function isDropAmbiguous(
   positionBeforeMove: TsumeShogiPosition,
   move: TsumeShogiMove,
@@ -110,7 +107,6 @@ function isDropAmbiguous(
   );
 }
 
-/** 升の位置の key（`<筋>-<段>`）。 */
 export function formatTsumeShogiSquareKey(square: TsumeShogiSquare): string {
   return `${square.file}-${square.rank}`;
 }
@@ -170,10 +166,6 @@ function toPlayedMove(
   };
 }
 
-/**
- * 盤面に見せている最後の組の手。`turn` は最後の組、`positionBeforeTurn` はその組の攻方の手を指す前の局面。
- * 玉方の応手を待つ間と、詰めた手は攻方の手だけ。
- */
 export function listTsumeShogiShownMoves(
   turn: TsumeShogiSessionTurn | undefined,
   positionBeforeTurn: TsumeShogiPosition,
@@ -202,7 +194,6 @@ export function listTsumeShogiShownMoves(
   ];
 }
 
-/** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type TsumeShogiResult = TsumeShogiSessionResult & {
   workload: TsumeShogiSolveWorkload;
   speedRule: SpeedScoreRule;
@@ -222,7 +213,6 @@ export type TsumeShogiPlay = GamePlay<
     poolReference: TsumeShogiProblemPoolReference;
     plies: number;
     phase: TsumeShogiSessionPhase;
-    /** 盤面に指した手の数。攻方と玉方の手を合わせて数える。 */
     playedPlies: number;
     boardPieces: readonly TsumeShogiBoardPiece[];
     attackerHand: TsumeShogiHand;
@@ -245,12 +235,9 @@ export type TsumeShogiPlay = GamePlay<
     clearSelection: () => void;
   };
 
-/**
- * - `workload` / `poolReference`: 問題集から出した問題の作業の量と、問題集の中の位置。
- * - `restoredTurn`: 待った・盤面を戻すで、最後の組として盤面に戻ってきた手。指し直したときのように動かして見せない。
- */
 type TsumeShogiPlayState = {
   session: TsumeShogiSession;
+  /** 待った・盤面を戻すで、最後の組として盤面に戻ってきた手。指し直したときのように動かして見せない。 */
   restoredTurn: TsumeShogiSessionTurn | null;
   operation: TsumeShogiOperation | null;
   progress: GameProgress;
@@ -310,7 +297,7 @@ function selectProblem(
   ).problem;
 }
 
-/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+/** プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createTsumeShogiResult(
   sessionResult: TsumeShogiSessionResult,
   workload: TsumeShogiSolveWorkload,
@@ -330,12 +317,8 @@ export function createTsumeShogiResult(
 }
 
 /**
- * 難易度のプレイを始める。`initialProblem` を渡すと、最初の1問だけその問題を出す。
+ * `initialProblem` を渡すと、最初の1問だけその問題を出す。
  * 渡さなければ、最初の1問は `avoidedProblemId` の問題を避けて選ぶ。
- * 攻方が王手を指すと、`TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS` の間を置いて玉方の応手（作意の応手、誤王手なら反証）を指す。
- * `undo`（待った）は攻方の1手を取り消し、誤王手の筋にいれば判断地点まで戻す。
- * 詰むと `progress` が `clearing` になり、完成演出を終えたら `completeClearAnimation` で `result` に進める。
- * クリアすると `result` に評価を返す。
  */
 export function useTsumeShogiPlay(
   difficulty: TsumeShogiDifficulty,

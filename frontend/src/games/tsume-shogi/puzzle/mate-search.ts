@@ -10,9 +10,6 @@ import {
 } from "@/games/tsume-shogi/puzzle/search-position";
 
 /**
- * 手数を区切った詰み探索。攻方は毎手王手、玉方はすべての受けを試す AND/OR 探索で、
- * 「残り `plies` 手以内に必ず詰むか」だけを答える。
- *
  * - `"counted"`: 玉方の合駒をすべて1手として数える。合駒を取られて詰むだけの無駄合も逃れの手になる（通常の判定）。
  * - `"ignored"`: 玉方の合駒をどれも逃れの手に数えない。無駄合の判定は解釈やソルバーによって違うが、どの解釈よりも
  *   玉方に厳しい（詰みやすい）上限になる。無駄合の解釈で答えが変わりうるかを、安全側に確かめるために使う。
@@ -27,6 +24,8 @@ type BoundRecord = {
 };
 
 /**
+ * 手数を区切った詰み探索。攻方は毎手王手、玉方はすべての受けを試す AND/OR 探索で、
+ * 「残り `plies` 手以内に必ず詰むか」だけを答える。
  * 同じ問題の局面を何度も調べるときに、置換表を共有するための探索器。
  * 局面ごとに「何手以内なら詰む / 詰まない」の境界を覚え、同じ局面の再探索を省く。
  */
@@ -58,7 +57,6 @@ export class TsumeShogiMateSearch {
       : this.#defenderIsMated(state, plies);
   }
 
-  /** 残り `maximumPlies` 手以内で最短の詰み手数。詰まなければ `null`。 */
   findShortestMate(
     state: TsumeShogiSearchPosition,
     maximumPlies: number,
@@ -152,10 +150,7 @@ export class TsumeShogiMateSearch {
   }
 }
 
-/**
- * 局面から残り `plies` 手以内に必ず詰むか。手番側に関わらず使える。
- * 玉方は合駒を含むすべての受けを使える。
- */
+/** 手番側に関わらず使える。玉方は合駒を含むすべての受けを使える。 */
 export function isTsumeShogiMateWithin(
   position: TsumeShogiPosition,
   plies: number,
@@ -169,7 +164,7 @@ export function isTsumeShogiMateWithin(
 /**
  * 攻方の王手の後（玉方の手番）で、残り `remainingPlies` 手（この玉方の手を含む）以内に詰まないことを示す玉方の応手。
  * 合駒でない受けを先に、玉の移動・王手した駒を取る手・合駒の順で最初に見つかった手を返す。
- * 残り手数以内に必ず詰む（その王手が正解の一つ）なら `null`。玉方の手番でなければ `RangeError` を投げる。
+ * 残り手数以内に必ず詰む（その王手が正解の一つ）なら `null`。
  */
 export function findTsumeShogiRefutation(
   position: TsumeShogiPosition,
@@ -201,7 +196,7 @@ export function findTsumeShogiRefutation(
 /**
  * 攻方の王手の後（玉方の手番）で、残り `remainingPlies` 手（この玉方の手を含む）以内に詰む局面での、最も長く逃れる応手。
  * 応手の後の最短の詰み手数が最も長い手を選び、並べば合駒でない応手、残りは列挙の順で最初の手にする。
- * 応手が無い（詰んでいる）、または残り手数以内に詰まない応手があるなら `null`。玉方の手番でなければ `RangeError` を投げる。
+ * 応手が無い（詰んでいる）、または残り手数以内に詰まない応手があるなら `null`。
  *
  * 作意から外れた詰み筋を続けるときの安全側の応手に使う。作意線上の玉方の手は問題の作意を使う。
  */

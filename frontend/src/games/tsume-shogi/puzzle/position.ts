@@ -8,12 +8,8 @@ import {
   Square,
 } from "tsshogi";
 
-/**
- * 詰将棋の局面とその読み取り。
- * 将棋のルールは `tsshogi` に任せ、このモジュールと `moves.ts` の外へ `tsshogi` の型を出さない。
- */
+/** 将棋のルールは `tsshogi` に任せ、このモジュールと `moves.ts` の外へ `tsshogi` の型を出さない。 */
 
-/** 攻方（先手。利用者が操作する側）と玉方（後手。玉を持つ側）。 */
 export type TsumeShogiSide = "attacker" | "defender";
 
 export type TsumeShogiHandPieceType =
@@ -121,10 +117,7 @@ const deadRanksForBlack: Partial<Record<PieceType, readonly number[]>> = {
   [PieceType.KNIGHT]: [1, 2],
 };
 
-/**
- * 盤面（SFEN の盤面部分）と攻方の持駒から、攻方の手番の局面を作る。玉方の持駒には駒箱を入れる。
- * 局面が詰将棋として成り立たなければ `RangeError` を投げる。
- */
+/** 盤面（SFEN の盤面部分）と攻方の持駒から、攻方の手番の局面を作る。玉方の持駒には駒箱を入れる。 */
 export function createTsumeShogiPosition(
   board: string,
   attackerHand: Partial<TsumeShogiHand>,
@@ -152,10 +145,6 @@ export function createTsumeShogiPosition(
   return wrapEnginePosition(engine);
 }
 
-/**
- * SFEN を詰将棋の局面として読む。
- * 局面が詰将棋として成り立たなければ `RangeError` を投げる。
- */
 export function parseTsumeShogiPosition(sfen: string): TsumeShogiPosition {
   const engine = Position.newBySFEN(sfen);
   if (engine === null) {
@@ -186,7 +175,7 @@ export function getTsumeShogiPieceAt(
   return piece === null ? null : fromEnginePiece(piece);
 }
 
-/** 盤上の駒。並びは 9筋1段から 1筋9段へ、段ごとに左から右。 */
+/** 並びは 9筋1段から 1筋9段へ、段ごとに左から右。 */
 export function listTsumeShogiBoardPieces(
   position: TsumeShogiPosition,
 ): TsumeShogiBoardPiece[] {
@@ -199,7 +188,7 @@ export function listTsumeShogiBoardPieces(
   });
 }
 
-/** 持駒。玉方の持駒は駒箱。 */
+/** 玉方の持駒は駒箱。 */
 export function getTsumeShogiHand(
   position: TsumeShogiPosition,
   side: TsumeShogiSide,
@@ -232,7 +221,7 @@ export function isSameTsumeShogiSquare(
 }
 
 /**
- * 局面を `tsshogi` の局面として読む。`puzzle/` のルール実装だけが使う。
+ * `puzzle/` のルール実装だけが使う。
  * 返した局面は変更しない。変更するときは `clone()` してから使う。
  */
 export function unwrapEnginePosition(
@@ -242,7 +231,7 @@ export function unwrapEnginePosition(
 }
 
 /**
- * `tsshogi` の局面を詰将棋の局面として包む。`puzzle/` のルール実装だけが使う。
+ * `puzzle/` のルール実装だけが使う。
  * 詰将棋として成り立つ局面から合法手で進めた局面だけを包み、包んだ後に `engine` を変更しない。
  */
 export function wrapEnginePosition(engine: Position): TsumeShogiPosition {

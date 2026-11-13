@@ -40,7 +40,6 @@ function square(file: number, rank: number): TsumeShogiSquare {
   return { file, rank };
 }
 
-/** 盤上の駒を選んで移動先を押す。 */
 function moveOnBoard(
   session: TsumeShogiSession,
   from: TsumeShogiSquare,

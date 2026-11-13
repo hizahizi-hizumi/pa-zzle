@@ -11,14 +11,10 @@ import {
 import type { TsumeShogiSolveWorkload } from "@/games/tsume-shogi/problem/problem";
 
 /**
- * 王手の候補を読み比べ、誤王手を指さずに速く詰ますプレイを称える。正確さ20点と速さ80点の100点満点にする。
- * - 正確さ: 誤王手（作意・詰み筋の上から指した、残りの手数以内に詰まない王手）1回ごとに減点し、4回で0点。
- *   誤王手は玉方の反証を盤面で見て考え直す体験でもあるので、何回指しても正確さの20点を超えては減らさない。
- *   1回でも指すと `perfect` には届かないが、速ければ `great` に残る。
- * - 速さ: 問題ごとの基準時間以内で満点、基準時間の3倍で0点。
+ * 誤王手は玉方の反証を盤面で見て考え直す体験でもあるので、何回指しても正確さの20点を超えては減らさない。
+ * 誤王手を1回でも指すと `perfect` には届かないが、速ければ `great` に残る。
  * 反証を見た回数・待ったの回数（誤王手の筋から判断地点へ戻ったときを含む）・盤面を戻した回数は減点しない。どれも誤王手の後の考え直しか、
- * 正しい筋の確かめ直しで、かかった時間は速さに表れる。指せない手を押した回数（非合法入力）は入力の摩擦を見る診断用で、
- * 評価に使わない。
+ * 正しい筋の確かめ直しで、かかった時間は速さに表れる。
  * 係数はすべて実プレイで確かめる前の仮置き（`詰将棋成績評価.md`）。
  */
 export const TSUME_SHOGI_SCORE_MAXIMUMS = {
@@ -26,7 +22,6 @@ export const TSUME_SHOGI_SCORE_MAXIMUMS = {
   speed: 80,
 } as const satisfies ScoreMaximums<"accuracy" | "speed">;
 
-/** 誤王手1回ごとの正確さの減点（仮置き）。4回で正確さが0点になる。 */
 export const TSUME_SHOGI_WRONG_CHECK_PENALTY = 5;
 
 /** 基準時間の係数（仮置き）。盤面と持駒を見渡す時間。 */
@@ -62,15 +57,10 @@ type TsumeShogiPlayScoreInput = {
   workload: TsumeShogiSolveWorkload;
 };
 
-/** 攻方が指す手の数。手数（奇数）の攻方の側。 */
 export function countTsumeShogiAttackerMoves(plies: number): number {
   return Math.ceil(Math.max(0, plies) / 2);
 }
 
-/**
- * 問題ごとの速さ満点の基準時間。盤面を見渡す時間に、攻方の手の数・初手の王手の候補・もっともらしい誤王手・深い紛れ
- * （どちらも上限あり）に応じた時間を足す。問題を読み切る作業の量だけから決め、難易度そのものは使わない。
- */
 export function calculateTsumeShogiSpeedFullScoreMs({
   plies,
   rootChecks,
@@ -112,10 +102,6 @@ export function calculateTsumeShogiTimeDeltaMs({
   );
 }
 
-/**
- * 正確さと速さの和。正確さは誤王手1回ごとに5点減らし（0点まで）、速さは基準時間以内で満点、
- * 超過に応じて線形に減らして基準時間の3倍で0点にする。速さは1点単位に四捨五入する。
- */
 export function calculateTsumeShogiPlayScore({
   elapsedMs,
   wrongCheckCount,
