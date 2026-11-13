@@ -9,17 +9,15 @@ import {
 import { slidePuzzleTutorialScrambleBoards } from "@/games/slide-puzzle/tutorial/tutorial";
 import { prefersReducedMotion } from "@/lib/motion";
 
-/** 崩していく途中の1コマ。`operation` は、前のコマからこのコマへのスライド。 */
 export type SlidePuzzleScrambleFrame = {
   board: SlidePuzzleBoard;
+  /** 前のコマからこのコマへのスライド。 */
   operation: SlidePuzzleOperation | null;
 };
 
 type SlidePuzzleTutorialScrambleProps = {
-  /** `true` の間、ゴールの盤面から始めの盤面へ1枚ずつ崩していく。`false` に戻ると最初のコマへ戻る。 */
   active: boolean;
   onComplete: () => void;
-  /** 崩している間はそのコマを、それ以外は `null` を受け取って盤面を描く。 */
   children: (frame: SlidePuzzleScrambleFrame | null) => ReactNode;
 };
 
@@ -50,10 +48,6 @@ const frames: readonly SlidePuzzleScrambleFrame[] =
     };
   });
 
-/**
- * 導入で、ゴールの盤面から1枚ずつスライドさせて、始めの盤面まで崩していく。
- * 動きを減らす設定では、崩さずにすぐ終える。
- */
 export function SlidePuzzleTutorialScramble({
   active,
   onComplete,

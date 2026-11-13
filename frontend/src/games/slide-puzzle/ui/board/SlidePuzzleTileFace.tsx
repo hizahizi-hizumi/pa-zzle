@@ -18,10 +18,7 @@ type SlidePuzzleTileFaceProps = {
   ref?: Ref<HTMLSpanElement>;
 };
 
-/**
- * 番号を載せたタイルの面。盤面と遊び方の図で同じ見た目にする。
- * 大きさは外側の要素に合わせ、押した・フォーカスした見え方は外側の `group` に従う。
- */
+/** 大きさは外側の要素に合わせ、押した・フォーカスした見え方は外側の `group` に従う。 */
 export function SlidePuzzleTileFace({
   tile,
   boardSize,

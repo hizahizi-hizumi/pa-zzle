@@ -49,7 +49,6 @@ const slidePuzzleSounds: readonly SoundEffect[] = [
   ...clearScaleSounds,
 ];
 
-/** 1番から順にタイルが持ち上がるのに合わせて、音を1枚ずつ上げていくクリア音。 */
 function createClearedSoundLayers(tileCount: number): SoundLayer[] {
   const lastScaleIndex = clearScaleSounds.length - 1;
   const firstTileDelayMs = getClearWaveTileDelayMs(0);
@@ -81,10 +80,6 @@ function playOperationSound(operation: SlidePuzzleOperation) {
   }
 }
 
-/**
- * 盤面の操作と、完成演出の波に合わせて効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
- * チュートリアルも本番と同じ盤面で同じ音を鳴らすので、プレイ画面とチュートリアルの両方から呼ぶ。
- */
 export function useSlidePuzzleSoundEffects(
   operation: SlidePuzzleOperation | null,
   progress: GameProgress,

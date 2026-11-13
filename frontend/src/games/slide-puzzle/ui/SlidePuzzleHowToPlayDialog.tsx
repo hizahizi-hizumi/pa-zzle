@@ -22,7 +22,6 @@ const multipleSlide = {
   after: solvedBoard,
 } as const;
 
-/** ルールと操作を、盤面と同じタイルの小さな図と短い一文で示す。 */
 export function SlidePuzzleHowToPlayDialog({
   open,
   onClose,

@@ -47,7 +47,6 @@ import {
 
 type SlidePuzzleTutorialProps = {
   open: boolean;
-  /** ゲームのホームから開いたときに渡す。終えたときに、ゲームのホームで開いているレベルを始める操作を出す。渡さなければプレイ中に開いたとして、閉じてプレイに戻る操作を出す。 */
   playStart?: TutorialPlayStart;
   onClose: () => void;
 };
@@ -78,7 +77,6 @@ function getSoundProgress(phase: TutorialPhase): GameProgress {
   }
 }
 
-/** 手の結果を、盤面のスライドか揺れの動きにする。 */
 function createOperation(
   id: number,
   before: SlidePuzzleBoardState,
@@ -121,10 +119,6 @@ function getCueDelayMs(
     : 0;
 }
 
-/**
- * `recallId` があれば、印の線を短く濃くして戻す。`recallId` が変わるたびにやり直す。
- * 収まった合図は本番に無いので、手を引いている間の手（`acknowledged`）にだけ返し、手を離した後は本番と同じ反応だけにする。
- */
 function getTileCues(
   state: SlidePuzzleTutorialBoardState,
   acknowledged: boolean,
@@ -143,7 +137,6 @@ function getTileCues(
   return hintTile === null
     ? landedCues
     : [
-        // 印を付けるタイルには、印だけを重ねる。
         ...landedCues.filter((cue) => cue.tile !== hintTile),
         recallId === null
           ? { tile: hintTile, kind: "hint", id: 0 }
@@ -154,9 +147,6 @@ function getTileCues(
 /**
  * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せるタイル。手を引いていなければ `null` で、覆いを出さない。
  * タイルが収まる空白は、決め手として盤面が抜く。
- * - 印が出ている間は、印のタイルと、それをタップすると一緒にスライドするタイル。
- * - スライドしてから次の印を出すまでの間は、収まったタイル。
- * - ルールに当たってスライドしなかったタイルは、揺れとわけの一言が指すタイルとして抜く。
  */
 function getSpotlitTiles(
   situation: SlidePuzzleTutorialSituation,
@@ -173,13 +163,10 @@ function getSpotlitTiles(
       : lastMove?.type === "slid"
         ? [...lastMove.landedTiles]
         : [];
+  // ルールに当たってスライドしなかったタイルは、揺れとわけの一言が指すタイルとして抜く。
   return lastMove?.type === "rejected" ? [...focused, lastMove.tile] : focused;
 }
 
-/**
- * 3×3 の盤面を、一言と印に沿って1枚ずつスライドさせ、ルールを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分で並べさせる。盤面・スライドの動き・完成の波は本番と同じ部品を使う。
- */
 export function SlidePuzzleTutorial({
   open,
   playStart,
@@ -188,7 +175,6 @@ export function SlidePuzzleTutorial({
   const [progress, setProgress] = useState<SlidePuzzleTutorialProgress>(() =>
     startTutorial(slidePuzzleTutorial),
   );
-  // 盤面の動き。手のたびにイベントハンドラで作り、盤面がスライドや揺れで応える。
   const [operation, setOperation] = useState<SlidePuzzleOperation | null>(null);
   // 効果音は同じ `id` の動きで一度しか鳴らないので、最初からやり直しても前の回と重ならない `id` を振る。
   const operationIdRef = useRef(0);
@@ -201,7 +187,6 @@ export function SlidePuzzleTutorial({
     id: number;
   } | null>(null);
   // 手を引いている間にスライドさせた手の進行と、その手の前の進行。収まった合図はこの進行の間だけ見せる。
-  // 収まったタイルを覆いから抜いて見せる間は、一言とルールの並びも終えた手順のままにする。
   const [acknowledgedMove, setAcknowledgedMove] = useState<{
     progress: SlidePuzzleTutorialProgress;
     previous: SlidePuzzleTutorialProgress;
@@ -249,7 +234,6 @@ export function SlidePuzzleTutorial({
     setProgress(finishTutorialIntro);
   }
 
-  /** 手を引いている間に印の無い所を押されたら、印の線を濃くし直して印へ目を向けさせる。 */
   function recallHint(): void {
     if (guiding) {
       setRecall((current) => ({
@@ -283,7 +267,6 @@ export function SlidePuzzleTutorial({
     );
   }
 
-  /** 覆いから抜いた空白など、タイルの無い所を押したときも、印へ目を向けさせる。 */
   function handleBoardAreaClick(event: ReactMouseEvent<HTMLDivElement>): void {
     if (
       progress.phase === "playing" &&
@@ -313,11 +296,9 @@ export function SlidePuzzleTutorial({
     playStart?.onStart();
   }
 
-  /**
-   * 印の線を濃くし直したときと、手を離した後に止まって印が出たときは、前の違反の一言を下げて、
-   * 印のタイルへ向かう手順の一言か、残りを収める一言に戻す。
-   */
   function getMessage(): TutorialMessage {
+    // 印の線を濃くし直したときと、手を離した後に止まって印が出たときは、前の違反の一言を下げて、
+    // 印のタイルへ向かう手順の一言か、残りを収める一言に戻す。
     if (recallId !== null || (!guiding && hintTile !== null)) {
       return situation.step?.message ?? slidePuzzleTutorial.freePlay;
     }
@@ -344,7 +325,6 @@ export function SlidePuzzleTutorial({
       }
     : { entry: "play", onReturnToPlay: handleClose };
 
-  /** 導入の間はゴールの盤面を見せ、始めの盤面の場面では、ゴールから1枚ずつ崩していく。 */
   function renderBoard({ scene, playing, onSceneEnd }: TutorialBoardIntro) {
     return (
       // タイルの無い所を押したときに印へ目を向けさせるだけで、キーで押す物は無い。
