@@ -50,7 +50,6 @@ export type ReflectionTutorialAction =
  * - `place`: 印の種類をストックで選ばせ、印のマスに置かせる。手順の間、`entry` から入れた今の光を見せ続ける。
  * - `entry`: 押させる外周ヒント、または置く場所を決める外周ヒント。
  * - `reasonEntries`: その手を決める外周ヒント（決め手）。光を出す手順では、押させる所が決まる光の外周ヒント。
- *   手順の間、覆いから抜いて、どの数字で決まるかを盤面で分からせる。
  * - `resultEntry`: 置いた後に光を見せる外周ヒント。一言が置いた結果として示すものに合わせる。
  */
 export type ReflectionTutorialStep = TutorialStep<ReflectionTutorialRuleId> & {

@@ -123,7 +123,7 @@ function createOperation(
   previous: ReflectionSession,
   next: ReflectionSession,
 ): ReflectionOperation | null {
-  // 盤面のピースが減った操作は手持ちへ戻す操作なので知らせない。
+  // 盤面のピースが減った操作は、手持ちへ戻す操作。
   if (
     next.puzzleState === previous.puzzleState ||
     countPlacedPieces(next.puzzleState) <
