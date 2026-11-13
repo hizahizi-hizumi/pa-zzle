@@ -4,6 +4,7 @@ import {
 } from "@/games/ice-floor-maze/puzzle/board";
 import {
   applyIceFloorMazeSlide,
+  doesIceFloorMazeSlidePassGoal,
   getIceFloorMazeNeighbor,
   type IceFloorMazeDirection,
   type IceFloorMazeSlide,
@@ -15,7 +16,6 @@ import {
   createIceFloorMazeInitialState,
   type IceFloorMazeState,
 } from "@/games/ice-floor-maze/puzzle/state";
-import { exploreIceFloorMazeStates } from "@/games/ice-floor-maze/puzzle/state-graph";
 import type {
   Tutorial,
   TutorialMessage,
@@ -24,47 +24,29 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-export type IceFloorMazeTutorialRuleId =
-  | "slide"
-  | "floor"
-  | "brittle-rock"
-  | "thin-ice"
-  | "snow"
-  | "sliding-block"
-  | "goal";
+export type IceFloorMazeTutorialRuleId = "slide" | "floor" | "goal" | "stopper";
 
 export type IceFloorMazeTutorialAction = { direction: IceFloorMazeDirection };
 
-/**
- * - `target`: 印を付け、手順の間だけそこで止まる滑りを受け付けるマス。駒をそこで止めると次の手順へ進む。
- */
 export type IceFloorMazeTutorialStep =
   TutorialStep<IceFloorMazeTutorialRuleId> & {
     target: number;
   };
 
-type IceFloorMazeSlid = Extract<IceFloorMazeSlide, { status: "slid" }>;
+export type IceFloorMazeTutorialSlide = Extract<
+  IceFloorMazeSlide,
+  { status: "slid" }
+>;
 
-/**
- * 1回の滑りを、どのルールで読めば止まる位置と盤面の変わり方が分かるか。
- * - `ruleIds`: その滑りを読むのに要るルール。
- * - `reasonCellIndices`: 止まる位置と盤面の変わり方を決めるマス（決め手）。止めた岩・入った床・割れる薄い氷・押し出す雪とその先・
- *   押す塊とそれを止める岩・通るゴールなど。外壁で止まる滑りでは、止めたマスを含めない。
- */
-export type IceFloorMazeTutorialSlideReading = {
-  ruleIds: readonly IceFloorMazeTutorialRuleId[];
-  reasonCellIndices: readonly number[];
-};
-
-/** 直前の滑り。`reasonCellIndices` は滑る前の盤面で読んだ決め手。 */
 export type IceFloorMazeTutorialMove = {
-  slide: IceFloorMazeSlid;
-  reasonCellIndices: readonly number[];
+  slide: IceFloorMazeTutorialSlide;
+  // 手を引いている間の滑り。滑りを見届けてから次の印を出す。
+  guided: boolean;
 };
 
-/** `moveCount`: 盤面が変わった手の数。滑りごとの動きと音を見分ける目印に使う。 */
 export type IceFloorMazeTutorialBoardState = {
   puzzleState: IceFloorMazeState;
+  // 盤面が変わった手の数。滑りごとの動きと音を見分ける目印に使う。
   moveCount: number;
   lastMove: IceFloorMazeTutorialMove | null;
 };
@@ -74,240 +56,213 @@ export type IceFloorMazeTutorialSituation = TutorialSituation<
   IceFloorMazeTutorialStep
 >;
 
+export type IceFloorMazeTutorialFocus = {
+  target: number;
+  // 覆いから抜くマス。駒のいるマスと印のマスと、印のマスへ最後に滑り込む滑りを決める物（岩・床・通り過ぎるゴール）。
+  cellIndices: readonly number[];
+  // 印のマスへ最も少ない手数で近づく、次の滑り。
+  nextSlide: IceFloorMazeTutorialSlide;
+};
+
 /**
- * 6×6 の盤面に、床・薄い氷・もろい岩・雪・滑る氷の塊を1つずつ置く。
- * 手順で、止める岩・床・薄い氷・もろい岩・雪・氷の塊・ゴールを1つずつ使いながら盤面を一回りする。
- * 薄い氷が割れてできた水面は、ゴールを通り過ぎる手順の止め役として、押し出した雪山は手を離した後の止め役として使う。
- * 手を離した後は3手でゴールに止まり、どう滑っても詰まない。
+ * 6×6 の氷の盤面に、岩4つと床1つを置く。
  *
  * ```text
- * S . # . # .
- * # o . # . #
- * . c . G m .
- * . . . . . b
- * . # . . s .
- * . . . . . .
+ * 始まり        ゴール
+ * . # . . . .   . # . . . .
+ * . . # . . .   . . # . . .
+ * . . . . o .   . . . . o .
+ * . . . . . .   . . . . . .
+ * . . . . G #   . . . . P #
+ * # . S . . .   # . . . . .
  * ```
  */
 const board: IceFloorMazeBoard = parseIceFloorMazeBoard([
-  "..#.#.",
-  "#o.#.#",
-  ".c..m.",
-  ".....b",
-  ".#..s.",
+  ".#....",
+  "..#...",
+  "....o.",
   "......",
+  ".....#",
+  "#.....",
 ]);
 
 function cellAt(x: number, y: number): number {
   return y * board.width + x;
 }
 
-const start = cellAt(0, 0);
-const goal = cellAt(3, 2);
+const start = cellAt(2, 5);
+const goal = cellAt(4, 4);
 
-/** チュートリアルの1枚の盤面。開始位置とゴールは本番と同じく氷のマスに置く。 */
 export const iceFloorMazeTutorialPuzzle = { board, start, goal } as const;
 
 /**
- * 岩の手前（右）、床（下）、薄い氷を抜けて岩の手前（下）、もろい岩の手前（右）、雪（下）、塊を押して（上）、
- * ゴールを通り過ぎて水面の手前（左）の順に止める。
- * 1手目は、始めの盤面からゴールに止まる最短の道筋の1手目でもある。
+ * 上へ滑らせて岩の手前、右へ滑らせて床、下へ滑らせてゴールを通り過ぎた先の壁の手前、の順に1回ずつ止めさせ、
+ * 最後に、すぐ上に岩のある左から2列目・上から2行目のマスへ、左・上の2回で止めさせる。
  */
 const steps: readonly IceFloorMazeTutorialStep[] = [
   {
     message: {
       headline: "駒は岩か壁にぶつかるまで\n滑ります",
-      detail: "右へスワイプしてください",
+      detail: "上へスワイプして駒を滑らせてみましょう",
     },
-    introducedRuleId: "slide",
-    target: cellAt(1, 0),
+    introducedRuleId: null,
+    target: cellAt(2, 2),
   },
   {
     message: {
-      headline: "駒は床に入ると止まります",
-      detail: null,
+      headline: "駒は緑の床に乗ると止まります",
+      detail: "印の緑の床で止めてみましょう",
     },
     introducedRuleId: "floor",
-    target: cellAt(1, 1),
-  },
-  {
-    message: {
-      headline: "薄い氷は、駒が通ると割れて\n水面になります",
-      detail: "水面は岩と同じく駒を止めます",
-    },
-    introducedRuleId: "thin-ice",
-    target: cellAt(1, 3),
-  },
-  {
-    message: {
-      headline: "もろい岩は、一度駒を止めると\n崩れます",
-      detail: null,
-    },
-    introducedRuleId: "brittle-rock",
-    target: cellAt(4, 3),
-  },
-  {
-    message: {
-      headline: "駒は雪に入ると止まり\n雪を1マス先へ押し出します",
-      detail: "押し出した雪は雪山になり、駒を止めます",
-    },
-    introducedRuleId: "snow",
-    target: cellAt(4, 4),
-  },
-  {
-    message: {
-      headline: "駒は氷の塊にぶつかると\n塊を押しながら滑ります",
-      detail: "塊が止まると、駒もそのすぐ手前で止まります",
-    },
-    introducedRuleId: "sliding-block",
     target: cellAt(4, 2),
   },
   {
     message: {
-      headline: "ゴールを通り過ぎるだけでは\n完成しません",
-      detail: null,
+      headline: "駒はゴールを\n通り過ぎます",
+      detail: "ゴールで止めると完成です",
     },
     introducedRuleId: "goal",
-    target: cellAt(2, 2),
+    target: cellAt(4, 5),
+  },
+  {
+    message: {
+      headline: "止めたいマスの先の岩に\n向けて滑らせます",
+      detail: "2回滑らせて\n印のマスで止めましょう",
+    },
+    introducedRuleId: "stopper",
+    target: cellAt(1, 1),
   },
 ];
 
-function getStopperRuleId(
-  state: IceFloorMazeState,
-  stopper: number,
-): IceFloorMazeTutorialRuleId | null {
-  if (state.blocks.includes(stopper)) {
-    return "sliding-block";
-  }
-  switch (state.cells[stopper]) {
-    case "brittle-rock":
-      return "brittle-rock";
-    case "water":
-      return "thin-ice";
-    case "snow":
-    case "snow-mound":
-      return "snow";
-    // 岩・盤面の外は滑るルールだけで読める。
-    default:
-      return null;
-  }
+function stateAt(position: number): IceFloorMazeState {
+  return createIceFloorMazeInitialState(board, position);
 }
 
-/** `state` は滑る前の状態。 */
-export function readIceFloorMazeTutorialSlide(
-  state: IceFloorMazeState,
-  slide: IceFloorMazeSlid,
-): IceFloorMazeTutorialSlideReading {
-  const ruleIds = new Set<IceFloorMazeTutorialRuleId>(["slide"]);
-  const reasonCellIndices: number[] = [];
-
-  function addStopper(stopper: number | null): void {
-    if (stopper === null) {
-      return;
-    }
-    reasonCellIndices.push(stopper);
-    const ruleId = getStopperRuleId(state, stopper);
-    if (ruleId !== null) {
-      ruleIds.add(ruleId);
-    }
-  }
-
-  const thinIce = [slide.from, ...slide.path].filter(
-    (cellIndex) => state.cells[cellIndex] === "thin-ice",
-  );
-  if (thinIce.length > 0) {
-    ruleIds.add("thin-ice");
-    reasonCellIndices.push(...thinIce);
-  }
-  if (slide.path.includes(goal)) {
-    ruleIds.add("goal");
-    reasonCellIndices.push(goal);
-  }
-  if (state.cells[slide.to] === "floor") {
-    ruleIds.add("floor");
-    reasonCellIndices.push(slide.to);
-  } else if (slide.pushedSnow) {
-    ruleIds.add("snow");
-    reasonCellIndices.push(slide.pushedSnow.from, slide.pushedSnow.to);
-  } else if (slide.movedBlock) {
-    ruleIds.add("sliding-block");
-    reasonCellIndices.push(slide.movedBlock.from);
-    addStopper(
-      getIceFloorMazeNeighbor(board, slide.movedBlock.to, slide.direction),
-    );
-  } else {
-    addStopper(getIceFloorMazeNeighbor(board, slide.to, slide.direction));
-  }
-  return { ruleIds: [...ruleIds], reasonCellIndices };
-}
-
-/** 今の状態から最短でゴールに止まる滑りの向きの並び。ゴールにいれば空、止まれなければ `null`。 */
-function findShortestDirections(
-  state: IceFloorMazeState,
-): IceFloorMazeDirection[] | null {
-  const graph = exploreIceFloorMazeStates(board, state, { goal });
-  if (!graph) {
-    return null;
-  }
-  const arrival = graph.states.findIndex(({ position }) => position === goal);
-  if (arrival < 0) {
-    return null;
-  }
-  // 状態は起点からの最少手数の順に並ぶので、最初に見つかる前の状態が最短の道筋の1つ前になる。
-  const previous = new Map<
-    number,
-    { from: number; direction: IceFloorMazeDirection }
-  >();
-  graph.moves.forEach((moves, from) => {
-    for (const { toStateIndex: to, direction } of moves) {
-      if (to !== 0 && !previous.has(to)) {
-        previous.set(to, { from, direction });
-      }
-    }
-  });
-  const directions: IceFloorMazeDirection[] = [];
-  for (let current = arrival; current !== 0; ) {
-    const step = previous.get(current)!;
-    directions.unshift(step.direction);
-    current = step.from;
-  }
-  return directions;
-}
-
-function slideTutorialState(
-  state: IceFloorMazeState,
-  direction: IceFloorMazeDirection,
-): IceFloorMazeState {
-  const slide = slideIceFloorMazePiece(board, state, direction);
-  return slide.status === "slid" ? applyIceFloorMazeSlide(state, slide) : state;
-}
-
-function findStepSlide(
-  state: IceFloorMazeState,
-  target: number,
-): IceFloorMazeSlid | null {
-  for (const direction of iceFloorMazeDirections) {
+function listSlides(state: IceFloorMazeState): IceFloorMazeTutorialSlide[] {
+  return iceFloorMazeDirections.flatMap((direction) => {
     const slide = slideIceFloorMazePiece(board, state, direction);
-    if (slide.status === "slid" && slide.to === target) {
-      return slide;
+    return slide.status === "slid" ? [slide] : [];
+  });
+}
+
+/**
+ * `from` から `target` で止まるまでの最も少ない手数。止まれなければ `null`。
+ * ゴールで止まると完成して先へ進めないので、`target` でないゴールからは先をたどらない。
+ * 盤面に要素が無く、滑っても盤面は変わらないので、駒の位置だけでたどる。
+ */
+function measureMovesTo(from: number, target: number): number | null {
+  const moveCounts = new Map([[from, 0]]);
+  const queue = [from];
+  for (let order = 0; order < queue.length; order += 1) {
+    const position = queue[order]!;
+    if (position === target) {
+      return moveCounts.get(position)!;
+    }
+    if (position === goal) {
+      continue;
+    }
+    for (const slide of listSlides(stateAt(position))) {
+      if (!moveCounts.has(slide.to)) {
+        moveCounts.set(slide.to, moveCounts.get(position)! + 1);
+        queue.push(slide.to);
+      }
     }
   }
   return null;
 }
 
-const startState = createIceFloorMazeInitialState(board, start);
+/** `target` へ最も少ない手数で近づく滑り。`target` で止まる滑りと、`target` 以外のゴールで止まらずに近づく滑り。 */
+function listSlidesToward(
+  state: IceFloorMazeState,
+  target: number,
+): IceFloorMazeTutorialSlide[] {
+  const remaining = measureMovesTo(state.position, target);
+  if (remaining === null || remaining === 0) {
+    return [];
+  }
+  return listSlides(state).filter(
+    (slide) =>
+      slide.to === target ||
+      (slide.to !== goal && measureMovesTo(slide.to, target) === remaining - 1),
+  );
+}
 
-/** 手順をすべて終えて手を離すときの状態。 */
-const freePlayState = steps.reduce((state, step) => {
-  const slide = findStepSlide(state, step.target);
-  return slide ? applyIceFloorMazeSlide(state, slide) : state;
-}, startState);
+/** 滑りの止まる位置を決める物。床で止まれば床、岩で止まればその岩、通り過ぎたゴール。壁で止まれば壁はマスではないので含めない。 */
+function listSlideReasonCellIndices(
+  slide: IceFloorMazeTutorialSlide,
+): number[] {
+  const passedGoal = doesIceFloorMazeSlidePassGoal(slide, goal);
+  const stopper =
+    board.cells[slide.to] === "floor"
+      ? slide.to
+      : getIceFloorMazeNeighbor(board, slide.to, slide.direction);
+  return [
+    ...(passedGoal ? [goal] : []),
+    ...(stopper === null ? [] : [stopper]),
+  ];
+}
 
-/** 手を離した後を最短で進めて、ゴールに止まった状態。導入でゴールとして見せる。 */
-const solvedState = (findShortestDirections(freePlayState) ?? []).reduce(
-  slideTutorialState,
-  freePlayState,
-);
+function getFocus(
+  state: IceFloorMazeState,
+  target: number,
+): IceFloorMazeTutorialFocus | null {
+  const [slide] = listSlidesToward(state, target);
+  if (!slide) {
+    return null;
+  }
+  // 通り道や道筋を見せると、向きを自分で選ぶ読みが要らなくなるので、印のマスへ最後に滑り込む向きで駒を止める物だけを見せる。
+  const lastSlide =
+    slide.to === target ? slide : findLastSlideInto(state.position, target);
+  return {
+    target,
+    nextSlide: slide,
+    cellIndices: [
+      state.position,
+      target,
+      ...(lastSlide ? listSlideReasonCellIndices(lastSlide) : []),
+    ],
+  };
+}
+
+function findLastSlideInto(
+  from: number,
+  target: number,
+): IceFloorMazeTutorialSlide | null {
+  let state = stateAt(from);
+  for (;;) {
+    const [slide] = listSlidesToward(state, target);
+    if (!slide) {
+      return null;
+    }
+    if (slide.to === target) {
+      return slide;
+    }
+    state = stateAt(slide.to);
+  }
+}
+
+const startState = stateAt(start);
+
+function listStepSlides(
+  state: IceFloorMazeState,
+  target: number,
+): IceFloorMazeTutorialSlide[] {
+  const slides: IceFloorMazeTutorialSlide[] = [];
+  for (let current = state; current.position !== target; ) {
+    const [slide] = listSlidesToward(current, target);
+    if (!slide) {
+      return slides;
+    }
+    slides.push(slide);
+    current = applyIceFloorMazeSlide(current, slide);
+  }
+  return slides;
+}
+
+/** 手順をすべて終えて手を離すときの状態。盤面は変わらないので、最後の手順の印のマスに駒がいる。 */
+const freePlayState = stateAt(steps.at(-1)!.target);
+
+const solvedState = stateAt(goal);
 
 function startIceFloorMazeTutorial(): IceFloorMazeTutorialBoardState {
   return { puzzleState: startState, moveCount: 0, lastMove: null };
@@ -317,17 +272,19 @@ function getIceFloorMazeTutorialGoal(): IceFloorMazeTutorialBoardState {
   return { puzzleState: solvedState, moveCount: 0, lastMove: null };
 }
 
-/**
- * 手を引いている間は、印のマスで止まる滑りだけを受け付ける。手を離した後は本番と同じく、成立する滑りはすべて受け付ける。
- * 1マスも動けない向きは、本番と同じく盤面を変えない。
- */
 function performIceFloorMazeTutorialAction(
   { step }: IceFloorMazeTutorialSituation,
   state: IceFloorMazeTutorialBoardState,
   { direction }: IceFloorMazeTutorialAction,
 ): { state: IceFloorMazeTutorialBoardState; outcome: TutorialMoveOutcome } {
   const slide = slideIceFloorMazePiece(board, state.puzzleState, direction);
-  if (slide.status !== "slid" || (step !== null && slide.to !== step.target)) {
+  if (
+    slide.status !== "slid" ||
+    (step !== null &&
+      !listSlidesToward(state.puzzleState, step.target).some(
+        (accepted) => accepted.direction === direction,
+      ))
+  ) {
     return { state, outcome: "ignored" };
   }
 
@@ -335,16 +292,18 @@ function performIceFloorMazeTutorialAction(
   const next: IceFloorMazeTutorialBoardState = {
     puzzleState,
     moveCount: state.moveCount + 1,
-    lastMove: {
-      slide,
-      reasonCellIndices: readIceFloorMazeTutorialSlide(state.puzzleState, slide)
-        .reasonCellIndices,
-    },
+    lastMove: { slide, guided: step !== null },
   };
   if (isIceFloorMazeCleared(puzzleState.position, goal)) {
     return { state: next, outcome: "solved" };
   }
-  return { state: next, outcome: step !== null ? "stepped" : "continued" };
+  if (step === null) {
+    return { state: next, outcome: "continued" };
+  }
+  return {
+    state: next,
+    outcome: puzzleState.position === step.target ? "stepped" : "continued",
+  };
 }
 
 /** どの滑りもルールに合うので、ルールに合わない手は起きない。契約を満たすため、今の手順か手を離した後の一言を返す。 */
@@ -354,62 +313,54 @@ function describeIceFloorMazeTutorialViolation({
   return step?.message ?? freePlay;
 }
 
-/**
- * 手順の印のマスと、そこへ止まる滑りで駒が通るマス（`path`、印のマスを含む）と、その滑りの決め手。
- * 手を離した後と、印のマスへ止まれないときは `null`。
- */
 export function getIceFloorMazeTutorialStepFocus(
   { step }: IceFloorMazeTutorialSituation,
   { puzzleState }: IceFloorMazeTutorialBoardState,
-): {
-  target: number;
-  path: readonly number[];
-  reasonCellIndices: readonly number[];
-} | null {
-  if (step === null) {
-    return null;
-  }
-  const slide = findStepSlide(puzzleState, step.target);
-  return slide
-    ? {
-        target: step.target,
-        path: slide.path,
-        reasonCellIndices: readIceFloorMazeTutorialSlide(puzzleState, slide)
-          .reasonCellIndices,
-      }
-    : null;
+): IceFloorMazeTutorialFocus | null {
+  return step === null ? null : getFocus(puzzleState, step.target);
 }
 
-/**
- * 直前の滑りで駒が通ったマスと、その決め手と、動いた雪・塊の行き先。手順どおりに滑らせてから次の印を出すまで、元の明るさで残す。
- */
 export function listIceFloorMazeTutorialMoveCellIndices({
   slide,
-  reasonCellIndices,
 }: IceFloorMazeTutorialMove): number[] {
   return [
     ...new Set([
       slide.from,
       ...slide.path,
-      ...reasonCellIndices,
-      ...(slide.pushedSnow ? [slide.pushedSnow.to] : []),
-      ...(slide.movedBlock ? [slide.movedBlock.to] : []),
+      ...listSlideReasonCellIndices(slide),
     ]),
   ];
 }
 
-/** 手を離した後、手が止まったときに示す、最短でゴールに止まるために次に止まるマス。ゴールにいれば `null`。 */
-export function findIceFloorMazeTutorialHintCellIndex({
+export function findIceFloorMazeTutorialHint({
   puzzleState,
-}: IceFloorMazeTutorialBoardState): number | null {
-  const [direction] = findShortestDirections(puzzleState) ?? [];
-  return direction === undefined
-    ? null
-    : slideTutorialState(puzzleState, direction).position;
+}: IceFloorMazeTutorialBoardState):
+  | (IceFloorMazeTutorialFocus & { message: TutorialMessage })
+  | null {
+  const [slide] = listSlidesToward(puzzleState, goal);
+  const focus = slide ? getFocus(puzzleState, slide.to) : null;
+  if (!slide || !focus) {
+    return null;
+  }
+  const stopper = getIceFloorMazeNeighbor(board, slide.to, slide.direction);
+  const ruleId: IceFloorMazeTutorialRuleId =
+    board.cells[slide.to] === "floor"
+      ? "floor"
+      : stopper !== null && board.cells[stopper] === "rock"
+        ? "stopper"
+        : "slide";
+  // 滑るルールは、操作を教える最初の手順の一言で伝えている。
+  const { message } =
+    ruleId === "slide"
+      ? steps[0]!
+      : steps.find(({ introducedRuleId }) => introducedRuleId === ruleId)!;
+  return { ...focus, message: { headline: message.headline, detail: null } };
 }
 
+export const ICE_FLOOR_MAZE_TUTORIAL_PROGRESS_STEP_COUNT = steps.length + 1;
+
 const freePlay: TutorialMessage = {
-  headline: "ここからは自分で\n駒をゴールで止めてみましょう",
+  headline: "ゴールで止めるにはどこから滑らせるかを逆にたどりましょう",
   detail: null,
 };
 
@@ -420,29 +371,25 @@ export const iceFloorMazeTutorial: Tutorial<
   IceFloorMazeTutorialAction
 > = {
   intro: {
-    purpose: "駒を氷の上で滑らせて、\nゴールでぴたりと止めるパズルです",
-    goalCaption: "駒がゴールの印で止まれば完成です",
-    startCaption: "この盤面から始めます",
+    purpose: "駒を氷の上で滑らせて\nゴールで止めるパズルです",
+    goalCaption: "ゴールで止めると完成です",
   },
   rules: [
-    { id: "slide", label: "滑る" },
-    { id: "floor", label: "床" },
-    { id: "thin-ice", label: "薄い氷" },
-    { id: "brittle-rock", label: "もろい岩" },
-    { id: "snow", label: "雪" },
-    { id: "sliding-block", label: "氷の塊" },
-    { id: "goal", label: "ゴール" },
+    { id: "slide", label: "駒は岩か壁にぶつかるまで滑ります" },
+    { id: "floor", label: "駒は緑の床に乗ると止まります" },
+    { id: "goal", label: "ゴールで止めると完成です" },
+    { id: "stopper", label: "止めたいマスの先の岩に向けて滑らせます" },
   ],
   steps,
   freePlay,
   completion: {
     home: {
       headline: "完成です",
-      detail: "どのレベルも同じルールです",
+      detail: "ほかの仕掛けは\n「遊び方」で見られます",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も同じルールです",
+      detail: "ほかの仕掛けは\n「遊び方」で見られます",
     },
   },
   start: startIceFloorMazeTutorial,
@@ -454,7 +401,14 @@ export const iceFloorMazeTutorial: Tutorial<
 export const _private = {
   startState,
   freePlayState,
-  solvedState,
-  findShortestDirections,
-  findStepSlide,
+  listSlides,
+  listSlidesToward,
+  listStepSlides,
+  measureMovesTo,
+  stateAt,
 };
+
+export const iceFloorMazeTutorialRecap: readonly string[] = [
+  ...iceFloorMazeTutorial.rules.map(({ label }) => label),
+  "ゴールで止めるにはどこから滑らせるかを逆にたどります",
+];

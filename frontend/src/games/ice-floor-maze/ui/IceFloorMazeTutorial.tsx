@@ -5,40 +5,44 @@ import {
   useRef,
   useState,
 } from "react";
-
+import { TutorialCrossFadeIntroScene } from "@/components/TutorialCrossFadeIntroScene";
 import {
-  type TutorialBoardIntro,
   type TutorialFinish,
   TutorialOverlay,
   type TutorialPlayStart,
+  type TutorialStageBoardIntro,
 } from "@/components/TutorialOverlay";
 import pictogramSvg from "@/games/ice-floor-maze/assets/pictogram.svg?raw";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
-import type {
-  IceFloorMazeBlockedInput,
-  IceFloorMazeLastSlide,
+import {
+  createIceFloorMazeLastSlide,
+  type IceFloorMazeBlockedInput,
+  type IceFloorMazeLastSlide,
 } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import {
-  doesIceFloorMazeSlidePassGoal,
   getIceFloorMazeNeighbor,
   type IceFloorMazeDirection,
+  slideIceFloorMazePiece,
 } from "@/games/ice-floor-maze/puzzle/rules";
 import {
-  findIceFloorMazeTutorialHintCellIndex,
+  findIceFloorMazeTutorialHint,
   getIceFloorMazeTutorialStepFocus,
+  ICE_FLOOR_MAZE_TUTORIAL_PROGRESS_STEP_COUNT,
   type IceFloorMazeTutorialBoardState,
+  type IceFloorMazeTutorialFocus,
   type IceFloorMazeTutorialMove,
   type IceFloorMazeTutorialRuleId,
-  type IceFloorMazeTutorialSituation,
   iceFloorMazeTutorial,
   iceFloorMazeTutorialPuzzle,
+  iceFloorMazeTutorialRecap,
   listIceFloorMazeTutorialMoveCellIndices,
 } from "@/games/ice-floor-maze/tutorial/tutorial";
 import type { IceFloorMazeCellCue } from "@/games/ice-floor-maze/ui/board/cell-cue";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
 import { getIceFloorMazeSlideDurationMs } from "@/games/ice-floor-maze/ui/board/slide-timing";
+import { IceFloorMazeGround } from "@/games/ice-floor-maze/ui/IceFloorMazeGround";
+import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
 import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazeSwipeArea";
-import { IceFloorMazeTutorialRewind } from "@/games/ice-floor-maze/ui/IceFloorMazeTutorial/IceFloorMazeTutorialRewind";
 import { useIceFloorMazeSoundEffects } from "@/games/ice-floor-maze/ui/use-ice-floor-maze-sound-effects";
 import type { GameProgress } from "@/games/play";
 import {
@@ -48,10 +52,11 @@ import {
   getTutorialSituation,
   performTutorialAction,
   startTutorial,
+  type TutorialMessage,
   type TutorialPhase,
   type TutorialProgress,
 } from "@/games/tutorial";
-import { cn } from "@/lib/utils";
+import { prefersReducedMotion } from "@/lib/motion";
 
 type IceFloorMazeTutorialProps = {
   open: boolean;
@@ -65,14 +70,9 @@ type IceFloorMazeTutorialProgress = TutorialProgress<
   IceFloorMazeTutorialBoardState
 >;
 
-/**
- * 手順どおりに滑らせてから次の手順へ替えるまでの、滑り終えてからの間。崩れる・割れる・押し出す動きを、
- * 今の手順の一言と、駒の通ったマスと決め手を残したまま見届けさせてから、次の一言と印とその決め手に替える。
- */
-const NEXT_STEP_SETTLE_MS = 900;
-
-/** 手を離した後、手が止まってから次に止まるマスを示すまでの間。 */
-const IDLE_HINT_DELAY_MS = 4000;
+// 駒の通ったマスと止まる位置を決めた物を、その手順の一言と一緒に残して見届けさせてから、次の一言と印に替える。
+// この間に次の手が来たら、見届けたとみなしてすぐ次の印に替え、その手を受け付ける。
+const GUIDED_SLIDE_SETTLE_MS = 900;
 
 const { board, goal } = iceFloorMazeTutorialPuzzle;
 const goalBoardState = iceFloorMazeTutorial.goal();
@@ -84,7 +84,7 @@ const directionByArrowKey: Readonly<Record<string, IceFloorMazeDirection>> = {
   ArrowRight: "right",
 };
 
-/** 本番と同じ効果音を、本番のプレイの進行に当てはめて鳴らす。導入でゴールを見せる演出は完成ではないので、解いたときだけ完成の音を鳴らす。 */
+/** 解けた盤面の演出の間が、本番の完成演出の間に当たる。 */
 const soundProgressByPhase = {
   intro: "playing",
   playing: "playing",
@@ -95,64 +95,19 @@ const soundProgressByPhase = {
 /** 盤面は滑りの間の動きを自分で描くので、チュートリアルは滑っている間を待たない。 */
 function ignoreSlideAnimationActivity(): void {}
 
-/**
- * 手順どおりに滑らせてから、次の手順の一言と印に替えるまでの間。直前の手が手順の手でなければ `null`。
- * 手順の手のほかに手を打てないので、盤面が変わった手の数が手順の数以下なら、直前の手は手順の手。
- */
-function getStepSettleDelayMs(
+function getSlideAnimationMs({ slide }: IceFloorMazeTutorialMove): number {
+  return prefersReducedMotion()
+    ? 0
+    : getIceFloorMazeSlideDurationMs(slide.path.length);
+}
+
+function getGuidedSettleDelayMs(
   progress: IceFloorMazeTutorialProgress,
 ): number | null {
-  const { lastMove, moveCount } = progress.boardState;
-  return progress.phase === "playing" &&
-    lastMove &&
-    moveCount <= iceFloorMazeTutorial.steps.length
-    ? getIceFloorMazeSlideDurationMs(lastMove.slide.path.length) +
-        NEXT_STEP_SETTLE_MS
+  const { lastMove } = progress.boardState;
+  return progress.phase === "playing" && lastMove?.guided
+    ? getSlideAnimationMs(lastMove) + GUIDED_SLIDE_SETTLE_MS
     : null;
-}
-
-function createLastSlide(
-  id: number,
-  { slide }: IceFloorMazeTutorialMove,
-  cleared: boolean,
-): IceFloorMazeLastSlide {
-  return {
-    id,
-    direction: slide.direction,
-    from: slide.from,
-    to: slide.to,
-    path: slide.path,
-    crumbledRock: slide.crumbledRock,
-    crackedIce: slide.crackedIce,
-    pushedSnow: slide.pushedSnow,
-    movedBlock: slide.movedBlock,
-    stoppedOnFloor: board.cells[slide.to] === "floor",
-    passedGoal: doesIceFloorMazeSlidePassGoal(slide, goal),
-    isClearingMove: cleared,
-    // 手を離した後もどう滑っても詰まない盤面なので、もう止まれないことを知らせる場面は無い。
-    entersTrap: false,
-  };
-}
-
-/**
- * 手を引いている間に、画面全体の覆いから抜くマス。手を引いていなければ空で、覆いは出ない。
- * - 手順どおりに滑らせてから次の手順に替えるまでの間は、駒が通ったマスと、その滑りの決め手と、動いた雪・塊の行き先。
- * - 手順の間は、駒のいるマスから印のマスまでの通り道と、そこへ止まる滑りの決め手。
- */
-function getSpotlitCells(
-  situation: IceFloorMazeTutorialSituation,
-  state: IceFloorMazeTutorialBoardState,
-  settling: boolean,
-): number[] {
-  if (settling) {
-    return state.lastMove
-      ? listIceFloorMazeTutorialMoveCellIndices(state.lastMove)
-      : [];
-  }
-  const focus = getIceFloorMazeTutorialStepFocus(situation, state);
-  return focus
-    ? [state.puzzleState.position, ...focus.path, ...focus.reasonCellIndices]
-    : [];
 }
 
 export function IceFloorMazeTutorial({
@@ -163,11 +118,15 @@ export function IceFloorMazeTutorial({
   const [progress, setProgress] = useState<IceFloorMazeTutorialProgress>(() =>
     startTutorial(iceFloorMazeTutorial),
   );
-  const [idleProgress, setIdleProgress] =
-    useState<IceFloorMazeTutorialProgress | null>(null);
+  // 手を引いている間に滑らせた手の進行と、その手の前の進行。滑りを見届ける間は、一言を滑らせる前の手順のままにする。
+  const [guidedMove, setGuidedMove] = useState<{
+    progress: IceFloorMazeTutorialProgress;
+    previous: IceFloorMazeTutorialProgress;
+  } | null>(null);
   const [settledProgress, setSettledProgress] =
     useState<IceFloorMazeTutorialProgress | null>(null);
-  // 手を引いている間に印のマスで止まらない向きへ滑らせようとされたら、そのたびに印の線を短く濃くして戻す。
+  const [hintRequestedProgress, setHintRequestedProgress] =
+    useState<IceFloorMazeTutorialProgress | null>(null);
   const [recall, setRecall] = useState<{
     progress: IceFloorMazeTutorialProgress;
     id: number;
@@ -180,29 +139,53 @@ export function IceFloorMazeTutorial({
     useState<IceFloorMazeBlockedInput | null>(null);
   // 効果音は同じ `id` の入力で一度しか鳴らないので、最初からやり直しても前の回と重ならない `id` を振る。
   const inputIdRef = useRef(0);
+  // 手を引いている間に最後に滑らせた時刻。駒が滑っている間の入力は受け付けない。
+  const guidedMovedAtRef = useRef(0);
   const situation = getTutorialSituation(iceFloorMazeTutorial, progress);
   const guiding = situation.step !== null;
   const playing = progress.phase === "playing";
   const { boardState } = progress;
   const recallId = recall?.progress === progress ? recall.id : null;
-  const settleDelayMs = getStepSettleDelayMs(progress);
-  // 手順どおりに滑らせてから見届けるまでは、今滑らせた手順の一言とルールを残し、次の手は受け付けない。
+  const settleDelayMs = getGuidedSettleDelayMs(progress);
+  // 手を引いている間に滑らせてから見届けるまでは、滑らせる前の手順の一言を残す。
   const settling = settleDelayMs !== null && settledProgress !== progress;
-  const shownStepIndex = settling ? progress.stepIndex - 1 : progress.stepIndex;
-  const shownStep = iceFloorMazeTutorial.steps[shownStepIndex] ?? null;
-  const shownRuleIds = iceFloorMazeTutorial.steps
-    .slice(0, shownStepIndex + 1)
-    .map(({ introducedRuleId }) => introducedRuleId);
-  const idleHintShown =
-    playing && !guiding && !settling && idleProgress === progress;
-  const cueCellIndex = settling
+  const shownProgress =
+    settling && guidedMove?.progress === progress
+      ? guidedMove.previous
+      : progress;
+  const shownSituation = getTutorialSituation(
+    iceFloorMazeTutorial,
+    shownProgress,
+  );
+  // 手を離した後は、自分で解いている間に割り込まないよう、手がかりは「ヒント」を押されたときだけ見せ、次の手で消す。
+  const hint =
+    playing && !guiding && !settling && hintRequestedProgress === progress
+      ? findIceFloorMazeTutorialHint(boardState)
+      : null;
+  const focus: IceFloorMazeTutorialFocus | null = settling
     ? null
-    : (situation.step?.target ??
-      (idleHintShown
-        ? findIceFloorMazeTutorialHintCellIndex(boardState)
-        : null));
+    : guiding
+      ? getIceFloorMazeTutorialStepFocus(situation, boardState)
+      : hint;
+  // スワイプの操作は、操作を教える手順でだけ指で見せる。ほかの手順と手がかりで向きを見せると、止めたいマスへの向きを自分で読まずに済んでしまう。
+  const swipe =
+    focus !== null && situation.step === iceFloorMazeTutorial.steps[0]
+      ? {
+          cellIndex: focus.nextSlide.from,
+          direction: focus.nextSlide.direction,
+        }
+      : null;
   const cue: IceFloorMazeCellCue | null =
-    cueCellIndex === null ? null : { cellIndex: cueCellIndex, recallId };
+    focus === null ? null : { cellIndex: focus.target, recallId, swipe };
+  // 操作を教える手順には、手を決める物を見せる読みが無いので、盤面を覆わない。
+  const teachesOperation =
+    shownSituation.step === iceFloorMazeTutorial.steps[0];
+  const spotlitCells =
+    !playing || teachesOperation
+      ? []
+      : settling && boardState.lastMove
+        ? listIceFloorMazeTutorialMoveCellIndices(boardState.lastMove)
+        : (focus?.cellIndices ?? []);
 
   useIceFloorMazeSoundEffects(
     lastSlide,
@@ -221,18 +204,6 @@ export function IceFloorMazeTutorial({
     );
     return () => window.clearTimeout(timer);
   }, [open, progress, settleDelayMs]);
-
-  useEffect(() => {
-    // 止まったとみなす間は、手を離す一言が出てから数える。
-    if (!open || !playing || guiding || settling) {
-      return;
-    }
-    const timer = window.setTimeout(
-      () => setIdleProgress(progress),
-      IDLE_HINT_DELAY_MS,
-    );
-    return () => window.clearTimeout(timer);
-  }, [open, playing, guiding, settling, progress]);
 
   const handleArrowKey = useEffectEvent((event: KeyboardEvent) => {
     const direction = directionByArrowKey[event.key];
@@ -279,9 +250,18 @@ export function IceFloorMazeTutorial({
   }
 
   function slide(direction: IceFloorMazeDirection): void {
-    // 次の手順の一言と印を出す前に、その手順のルールを使う手を通さない。
-    if (!playing || settling) {
+    if (!playing) {
       return;
+    }
+    if (settling && boardState.lastMove) {
+      // 駒が滑っている間は、次の一言と印を出す前の手を通さない。滑り終えた後の手は、見届けたとみなして受け付ける。
+      if (
+        Date.now() - guidedMovedAtRef.current <
+        getSlideAnimationMs(boardState.lastMove)
+      ) {
+        return;
+      }
+      setSettledProgress(progress);
     }
     const next = performTutorialAction(iceFloorMazeTutorial, progress, {
       direction,
@@ -292,35 +272,58 @@ export function IceFloorMazeTutorial({
           progress,
           id: current?.progress === progress ? current.id + 1 : 0,
         }));
-        return;
       }
-      // 手を離した後に盤面が変わらないのは、すぐ隣が止め役で1マスも動けない向きだけ。本番と同じく押し戻す。
       const from = boardState.puzzleState.position;
-      setBlockedInput({
-        id: nextInputId(),
-        direction,
-        from,
-        stopper: getIceFloorMazeNeighbor(board, from, direction),
-      });
+      // 1マスも動けない向きは、手を引いている間も本番と同じく押し戻す。滑れる向きは、印の線を濃くし直すだけにする。
+      if (
+        slideIceFloorMazePiece(board, boardState.puzzleState, direction)
+          .status === "blocked"
+      ) {
+        setBlockedInput({
+          id: nextInputId(),
+          direction,
+          from,
+          stopper: getIceFloorMazeNeighbor(board, from, direction),
+        });
+      }
       return;
     }
     const move = next.boardState.lastMove;
+    if (move?.guided) {
+      guidedMovedAtRef.current = Date.now();
+      setGuidedMove({ progress: next, previous: progress });
+    }
     setProgress(next);
     setBlockedInput(null);
     setLastSlide(
       move
-        ? createLastSlide(nextInputId(), move, next.phase === "solved")
+        ? createIceFloorMazeLastSlide({
+            id: nextInputId(),
+            board,
+            goal,
+            slide: move.slide,
+            isClearingMove: next.phase === "solved",
+            // どう滑ってもゴールに止まれなくなる所の無い盤面なので、もう止まれないことを知らせる場面は無い。
+            entersTrap: false,
+          })
         : null,
     );
   }
 
   function restart(): void {
-    setIdleProgress(null);
+    setGuidedMove(null);
     setSettledProgress(null);
+    setHintRequestedProgress(null);
     setRecall(null);
     setLastSlide(null);
     setBlockedInput(null);
     setProgress(startTutorial(iceFloorMazeTutorial));
+  }
+
+  // ゴールはもう見せたので、入口を通さずに最初の手順から始める。
+  function handleRestart(): void {
+    restart();
+    setProgress(finishTutorialIntro);
   }
 
   function handleClose(): void {
@@ -341,61 +344,49 @@ export function IceFloorMazeTutorial({
       }
     : { entry: "play", onReturnToPlay: handleClose };
 
-  /**
-   * 導入では解き終えた盤面を見せ、始めの盤面の場面では、解き終えた盤面を消してから始めの盤面を出す。
-   * 最初の手順の印は、導入の終わりに一言と同時に出す。盤面の領域のどこでもスワイプを受ける。
-   */
+  const message: TutorialMessage =
+    hint !== null
+      ? hint.message
+      : getTutorialMessage(iceFloorMazeTutorial, shownProgress, {
+          entry: finish.entry,
+          // どの滑りもルールに合うので、違反の一言は出ない。
+          violationSettled: true,
+        });
+
   function renderBoard({
     scene,
     playing: scenePlaying,
     onSceneEnd,
-    messageShown,
-  }: TutorialBoardIntro) {
-    const goalShown = scene === "goal" || (scene === "start" && scenePlaying);
-    const { puzzleState } = goalShown ? goalBoardState : boardState;
+  }: TutorialStageBoardIntro) {
     const solving = playing && scene === null;
-    const cueShown =
-      solving || (progress.phase === "intro" && scene === null && messageShown);
     return (
       <div className="flex h-[100cqh] w-[100cqw] flex-col">
         <IceFloorMazeSwipeArea disabled={!solving} onSwipe={slide}>
-          <IceFloorMazeTutorialRewind
-            active={scene === "start" && scenePlaying}
-            onComplete={onSceneEnd}
+          <TutorialCrossFadeIntroScene
+            scene={scene}
+            playing={scenePlaying}
+            onSceneEnd={onSceneEnd}
           >
-            <div
-              className={cn(
-                "size-full",
-                scene === "start" &&
-                  !scenePlaying &&
-                  "animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none",
-              )}
-            >
-              <IceFloorMazeBoard
-                board={board}
-                cells={puzzleState.cells}
-                blocks={puzzleState.blocks}
-                goal={goal}
-                position={puzzleState.position}
-                lastSlide={scene === null ? lastSlide : null}
-                blockedInput={scene === null ? blockedInput : null}
-                clearing={
-                  progress.phase === "solved" ||
-                  (scene === "goal" && scenePlaying)
-                }
-                cue={cueShown ? cue : null}
-                spotlitCells={
-                  solving && shownStep !== null
-                    ? getSpotlitCells(situation, boardState, settling)
-                    : []
-                }
-                onSlideAnimationActivityChange={ignoreSlideAnimationActivity}
-                onClearAnimationComplete={
-                  scene === "goal" ? onSceneEnd : handleClearAnimationComplete
-                }
-              />
-            </div>
-          </IceFloorMazeTutorialRewind>
+            {(showsGoal) => {
+              const { puzzleState } = showsGoal ? goalBoardState : boardState;
+              return (
+                <IceFloorMazeBoard
+                  board={board}
+                  cells={puzzleState.cells}
+                  blocks={puzzleState.blocks}
+                  goal={goal}
+                  position={puzzleState.position}
+                  lastSlide={showsGoal ? null : lastSlide}
+                  blockedInput={showsGoal ? null : blockedInput}
+                  clearing={!showsGoal && progress.phase === "solved"}
+                  cue={solving ? cue : null}
+                  spotlitCells={solving ? spotlitCells : []}
+                  onSlideAnimationActivityChange={ignoreSlideAnimationActivity}
+                  onClearAnimationComplete={handleClearAnimationComplete}
+                />
+              );
+            }}
+          </TutorialCrossFadeIntroScene>
         </IceFloorMazeSwipeArea>
       </div>
     );
@@ -403,31 +394,35 @@ export function IceFloorMazeTutorial({
 
   return (
     <TutorialOverlay
+      presentation="stage"
       open={open}
       title={ICE_FLOOR_MAZE_DISPLAY_NAME}
       pictogramSvg={pictogramSvg}
+      background={<IceFloorMazeGround />}
       intro={iceFloorMazeTutorial.intro}
-      rules={iceFloorMazeTutorial.rules.map((rule) => ({
-        ...rule,
-        earned: shownRuleIds.includes(rule.id),
-        current: shownStep?.introducedRuleId === rule.id,
-      }))}
-      message={
-        // 手を離した後に止まって手がかりの印を出しても、一言は足さない。
-        settling && shownStep
-          ? shownStep.message
-          : getTutorialMessage(iceFloorMazeTutorial, progress, {
-              entry: finish.entry,
-              // どの滑りもルールに合うので、違反の一言は出ない。
-              violationSettled: true,
-            })
-      }
+      recap={iceFloorMazeTutorialRecap}
+      message={message}
       phase={progress.phase}
-      guiding={playing && shownStep !== null}
+      spotlighting={playing && spotlitCells.length > 0}
+      progress={
+        progress.phase === "solved" || progress.phase === "completed"
+          ? 1
+          : shownProgress.stepIndex /
+            ICE_FLOOR_MAZE_TUTORIAL_PROGRESS_STEP_COUNT
+      }
+      progressStepCount={ICE_FLOOR_MAZE_TUTORIAL_PROGRESS_STEP_COUNT}
       finish={finish}
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
-      onRestart={restart}
+      onRestart={handleRestart}
+      renderHowToPlayDialog={(control) => (
+        <IceFloorMazeHowToPlayDialog {...control} />
+      )}
+      onRequestHint={
+        playing && !guiding && !settling && hint === null
+          ? () => setHintRequestedProgress(progress)
+          : null
+      }
       onClose={handleClose}
     />
   );

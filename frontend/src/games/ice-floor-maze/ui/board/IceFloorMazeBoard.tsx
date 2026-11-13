@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 
+import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
+
 import type {
   IceFloorMazeBlockedInput,
   IceFloorMazeLastSlide,
@@ -53,7 +55,7 @@ type IceFloorMazeBoardProps = {
   clearing: boolean;
   /** チュートリアルで、駒を止めるマスに付ける印。 */
   cue?: IceFloorMazeCellCue | null;
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜くマス。 */
+  /** チュートリアルで覆いから抜くマス。空でない間、盤面を覆う範囲にする。 */
   spotlitCells?: readonly number[];
   /** 駒が滑って見えている間だけ `true` を知らせる。 */
   onSlideAnimationActivityChange: (active: boolean) => void;
@@ -296,6 +298,9 @@ export function IceFloorMazeBoard({
   return (
     <div className="flex size-full items-center justify-center [container-type:size]">
       <div
+        {...(spotlitCells.length > 0 && {
+          [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "",
+        })}
         className="relative max-h-full max-w-full"
         style={{
           aspectRatio,
