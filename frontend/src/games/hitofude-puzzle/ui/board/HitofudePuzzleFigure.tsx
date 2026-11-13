@@ -24,8 +24,6 @@ type HitofudePuzzleFigureProps = {
   solved: boolean;
   /** 最後に道を延ばせなかった操作が進もうとしたマス。×の印を置き、阻まれたときだけ盤面の反応で点ける。 */
   blockedCell?: number | null;
-  /** ×の印を点けたまま描くか。遊び方の図で、阻まれたときの盤面の反応を見せるときに使う。 */
-  showsBlockedMark?: boolean;
   ref?: Ref<SVGSVGElement>;
 };
 
@@ -99,7 +97,6 @@ export function HitofudePuzzleFigure({
   isDeadEnd,
   solved,
   blockedCell = null,
-  showsBlockedMark = false,
   ref,
 }: HitofudePuzzleFigureProps) {
   const { size } = board;
@@ -242,7 +239,7 @@ export function HitofudePuzzleFigure({
         <g
           {...{ [hitofudePuzzleFigureParts.blockedMark]: "" }}
           transform={`translate(${blockedMarkCenter.x} ${blockedMarkCenter.y})`}
-          opacity={showsBlockedMark ? 1 : 0}
+          opacity={0}
           strokeLinecap="round"
         >
           <g

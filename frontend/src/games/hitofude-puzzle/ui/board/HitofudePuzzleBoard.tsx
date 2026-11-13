@@ -10,27 +10,28 @@ import {
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import type { HitofudePuzzleBlockedMove } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import {
+  getHitofudePuzzleCellPosition,
   getHitofudePuzzleNeighborCell,
   type HitofudePuzzleBoard as HitofudePuzzleBoardState,
   listHitofudePuzzleCells,
 } from "@/games/hitofude-puzzle/puzzle/board";
 import type { HitofudePuzzleTraceStep } from "@/games/hitofude-puzzle/puzzle/transitions";
 import { findArrowKeyDirection } from "@/games/hitofude-puzzle/ui/arrow-key-direction";
+import { animateBlockedMove } from "@/games/hitofude-puzzle/ui/board/animate-blocked-move";
 import type { HitofudePuzzleCellCue } from "@/games/hitofude-puzzle/ui/board/cell-cue";
 import {
   type BoardPoint,
   findCellAt,
   listFingerSteps,
 } from "@/games/hitofude-puzzle/ui/board/finger-trace";
-import { animateBlockedMove } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/animate-blocked-move";
 import { animateDeadEnd } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/animate-dead-end";
 import {
   findCellButton,
   HitofudePuzzleCell,
   type HitofudePuzzleCellState,
 } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/HitofudePuzzleCell";
-import { playClearTrace } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/play-clear-trace";
 import { HitofudePuzzleFigure } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
+import { playClearTrace } from "@/games/hitofude-puzzle/ui/board/play-clear-trace";
 
 type HitofudePuzzleBoardProps = {
   board: HitofudePuzzleBoardState;
@@ -46,6 +47,11 @@ type HitofudePuzzleBoardProps = {
   cues?: readonly HitofudePuzzleCellCue[];
   /** チュートリアルで手を引いている間、画面全体の覆いから抜くマス。通常のプレイでは渡さない。 */
   spotlitCells?: readonly number[];
+  /**
+   * 左から何列のマスを見せるか。遊び方の例で、穴だけの右の列を切り落として盤面を短く見せるときにだけ渡す。
+   * 見せない列のマスは見えなくし、盤面の外と同じく、押してもなぞっても受けない。渡さなければ全部の列を見せる。
+   */
+  visibleColumns?: number;
   onBeginStroke: (cell: number) => void;
   onTraceStroke: (step: HitofudePuzzleTraceStep) => void;
   onEndStroke: () => void;
@@ -88,6 +94,7 @@ export function HitofudePuzzleBoard({
   interactionDisabled,
   cues = [],
   spotlitCells = [],
+  visibleColumns = board.size,
   onBeginStroke,
   onTraceStroke,
   onEndStroke,
@@ -121,8 +128,12 @@ export function HitofudePuzzleBoard({
     }
   }, [blockedMove]);
 
+  // 行き止まりになった瞬間にだけ先端を膨らませる。最初から行き止まりの盤面（遊び方の例）は、触る前は動かさない。
+  const wasDeadEndRef = useRef(isDeadEnd);
   useLayoutEffect(() => {
-    if (isDeadEnd) {
+    const becameDeadEnd = isDeadEnd && !wasDeadEndRef.current;
+    wasDeadEndRef.current = isDeadEnd;
+    if (becameDeadEnd) {
       animateDeadEnd(figureRef.current);
     }
   }, [isDeadEnd]);
@@ -137,6 +148,10 @@ export function HitofudePuzzleBoard({
       onClearAnimationComplete,
     );
   }, [clearing, onClearAnimationComplete, pathLength]);
+
+  function isCellShown(cell: number): boolean {
+    return getHitofudePuzzleCellPosition(size, cell).column < visibleColumns;
+  }
 
   function getCellState(cell: number): HitofudePuzzleCellState {
     if (holes.has(cell)) return "hole";
@@ -163,7 +178,7 @@ export function HitofudePuzzleBoard({
     }
     const point = toBoardPoint(event);
     const cell = findCellAt(size, point);
-    if (cell === null) {
+    if (cell === null || !isCellShown(cell)) {
       return;
     }
     // 押したマスのボタンへ focus を移さず、マウスの選択やドラッグも始めない。
@@ -182,7 +197,9 @@ export function HitofudePuzzleBoard({
     const { steps, cell } = listFingerSteps(size, drag.point, point, drag.cell);
     dragRef.current = { ...drag, point, cell };
     for (const step of steps) {
-      onTraceStroke(step);
+      if (isCellShown(step.to)) {
+        onTraceStroke(step);
+      }
     }
   }
 
@@ -219,7 +236,7 @@ export function HitofudePuzzleBoard({
       focusableCell,
       direction,
     );
-    if (neighbor !== null) {
+    if (neighbor !== null && isCellShown(neighbor)) {
       moveKeyboardFocus(neighbor);
     }
   }
@@ -233,7 +250,7 @@ export function HitofudePuzzleBoard({
     <div
       ref={boardRef}
       role="group"
-      aria-label={`${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面 ${size}行${size}列`}
+      aria-label={`${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面 ${size}行${visibleColumns}列`}
       className="relative size-full touch-none select-none [-webkit-touch-callout:none]"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -271,6 +288,7 @@ export function HitofudePuzzleBoard({
             isTabStop={cell === focusableCell}
             cue={cues.find((cue) => cue.cell === cell)}
             spotlit={spotlitCells.includes(cell)}
+            shown={isCellShown(cell)}
             onPress={pressCell}
             onFocus={(focusedCell) =>
               setKeyboardFocus({ head, cell: focusedCell })

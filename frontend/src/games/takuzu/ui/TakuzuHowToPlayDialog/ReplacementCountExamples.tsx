@@ -16,10 +16,10 @@ type ReplacementCountExamplesProps = {
 /**
  * 図のマスの大きさ。広い画面ではルールの例と同じ 56px にする。
  * 狭い画面でも、ルールの例と同じ大きさ（40px）を上限にし、3つの姿と2つの矢印が1行に収まらない幅でだけ、収まる大きさまで小さくする。
- * 1行の幅は、6マスと、姿の格子の線と外枠（3 × 5px）、矢印のまとまり（2 × 28px）、その間（4 × 4px）。
+ * 1行の幅は、6マスと、姿の格子の線と外枠（3 × 5px）、矢印のまとまり（2 × 28px）、その間（4 × 8px）。
  */
 const figureCellSizeClassName =
-  "[--takuzu-figure-cell:min(39px,calc((100cqw-90px)/6))] lg:[--takuzu-figure-cell:55px]";
+  "[--takuzu-figure-cell:min(39px,calc((100cqw-106px)/6))] lg:[--takuzu-figure-cell:55px]";
 
 /** 矢印に添える、姿を進める操作。 */
 const pressWord = "押す";

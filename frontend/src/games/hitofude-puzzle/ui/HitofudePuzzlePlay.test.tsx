@@ -236,6 +236,44 @@ describe("HitofudePuzzlePlay", () => {
     });
   }
 
+  describe("プレイ中に道が行き止まりになった場合", () => {
+    // 先端の右上の 2 へ延ばすと、左の列の 3・6 を残して先へ延ばせなくなる。
+    const beforeDeadEnd = [0, 1, 4, 7, 8, 5];
+    const deadEnd = [...beforeDeadEnd, 2];
+    const animate = vi.fn();
+    let rerender: (ui: ReactElement) => void;
+
+    beforeEach(() => {
+      Element.prototype.animate = animate as unknown as Element["animate"];
+      ({ rerender } = renderResult({
+        progress: "playing",
+        result: null,
+        path: beforeDeadEnd,
+      }));
+    });
+
+    afterEach(() => {
+      Reflect.deleteProperty(Element.prototype, "animate");
+    });
+
+    test("先端を一度だけ膨らませること", () => {
+      rerender(
+        <HitofudePuzzlePlay
+          {...baseProps}
+          progress="playing"
+          result={null}
+          path={deadEnd}
+          isDeadEnd
+        />,
+      );
+
+      const animated = animate.mock.contexts.map((element) =>
+        (element as Element).hasAttribute("data-head"),
+      );
+      expect(animated).toEqual([true]);
+    });
+  });
+
   describe("プレイ中の場合", () => {
     const touch = { pointerId: 1, pointerType: "touch", isPrimary: true };
 

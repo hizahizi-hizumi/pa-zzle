@@ -88,7 +88,9 @@ describe("HitofudePuzzleHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
+    const dialog = await screen.findByRole("dialog", {
+      name: "一筆パズルの遊び方",
+    });
 
     expect(dialog).toBeTruthy();
   });
