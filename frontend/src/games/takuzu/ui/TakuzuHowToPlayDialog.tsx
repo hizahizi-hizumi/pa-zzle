@@ -8,7 +8,6 @@ type TakuzuHowToPlayDialogProps = {
   onClose: () => void;
 };
 
-/** ルールと操作を、盤面と同じ見え方の小さな図と短い一文で示す。 */
 export function TakuzuHowToPlayDialog({
   open,
   onClose,

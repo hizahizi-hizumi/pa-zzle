@@ -33,14 +33,8 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-/**
- * - `run`: 同じタイルは3つ続かない。
- * - `count`: 1つの行・列の四角と丸は同じ数。
- * - `duplicate`: 同じ並びの行・列は作れない。
- */
 export type TakuzuTutorialRuleId = "run" | "count" | "duplicate";
 
-/** 盤面と同じく、巡回で押すか、キーで直接置くか。 */
 export type TakuzuTutorialAction =
   | { type: "cycle"; cellIndex: number; direction: TakuzuCycleDirection }
   | { type: "place"; cellIndex: number; cell: TakuzuCell };
@@ -51,34 +45,31 @@ export type TakuzuTutorialLesson = {
   axis: TakuzuLine["axis"];
 };
 
-/**
- * - `cellIndices`: 印を付け、手順の間だけ操作を受け付けるマス。すべて解と同じタイルになったら次の手順へ進む。
- * - `lesson`: この手順で初めて使わせる見方。印のマスはこの見方で決まり、前の手順までに使わせた見方だけでは決まらないようにする。
- *   操作を教える手順と、使わせた見方をおさらいする手順では `null`。
- */
 export type TakuzuTutorialStep = TutorialStep<TakuzuTutorialRuleId> & {
+  /** 印を付け、手順の間だけ操作を受け付けるマス。すべて解と同じタイルになったら次の手順へ進む。 */
   cellIndices: readonly number[];
+  /**
+   * この手順で初めて使わせる見方。印のマスはこの見方で決まり、前の手順までに使わせた見方だけでは決まらないようにする。
+   * 操作を教える手順と、使わせた見方をおさらいする手順では `null`。
+   */
   lesson: TakuzuTutorialLesson | null;
 };
 
-/**
- * 直前の手。盤面の上の合図に使う。
- * - `towardStep`: 手を引いている手順のマスを、正しい手へ向かう途中にした。責めないよう、すぐにはルールに合わないところを見せない。
- * - `violated`: 置いたマスが、見せているルールに合わないところに入っている。
- * - `reasonCellIndices`: 置いたタイルが手前の盤面だけで決まっていたときの決め手のマス。決まっていなければ空。
- * - `fitsStep`: 手を引いている手順のマスに、解と同じタイルを置いた。手を離した後は常に `false`。
- */
 export type TakuzuTutorialMove = {
   cellIndex: number;
+  /** 手を引いている手順のマスを、正しい手へ向かう途中にした。責めないよう、すぐにはルールに合わないところを見せない。 */
   towardStep: boolean;
+  /** 置いたマスが、見せているルールに合わないところに入っている。 */
   violated: boolean;
+  /** 置いたタイルが手前の盤面だけで決まっていたときの決め手のマス。決まっていなければ空。 */
   reasonCellIndices: readonly number[];
+  /** 手を引いている手順のマスに、解と同じタイルを置いた。手を離した後は常に `false`。 */
   fitsStep: boolean;
 };
 
-/** `moveCount`: 盤面を変えた手の数。同じマスへの合図をやり直す目印に使う。 */
 export type TakuzuTutorialBoardState = {
   board: TakuzuBoard;
+  /** 盤面を変えた手の数。同じマスへの合図をやり直す目印に使う。 */
   moveCount: number;
   lastMove: TakuzuTutorialMove | null;
 };
@@ -108,7 +99,6 @@ type TakuzuDeduction = {
 const givens = parseTakuzuBoard([".A..", "BB..", "B...", "...B"]);
 const solution = parseTakuzuBoard(["AABB", "BBAA", "BABA", "ABAB"]);
 
-/** 1始まりの行・列で書いたマス。 */
 function cellAt(row: number, column: number): number {
   return (row - 1) * givens.size + (column - 1);
 }
@@ -293,7 +283,6 @@ const takuzuAxes = [
   "column",
 ] as const satisfies readonly TakuzuLine["axis"][];
 
-/** 手に入れたルールを、行と列の両方に当てはめる見方。ルールの順に並べる。 */
 function listLessons(
   ruleIds: readonly TakuzuTutorialRuleId[],
 ): TakuzuTutorialLesson[] {
@@ -311,7 +300,6 @@ function getCellLine(
   return { axis, index: axis === "row" ? row : column };
 }
 
-/** 空きマスに入るタイルを、`lessons` の見方を前から順に当てはめて決める。 */
 function deduceCell(
   board: TakuzuBoard,
   lessons: readonly TakuzuTutorialLesson[],
@@ -382,7 +370,6 @@ function isLessonTaught(
   );
 }
 
-/** マスが、その向きの行・列で3つ以上続く同じタイルの中にあるか。 */
 function isInRunAlong(
   board: TakuzuBoard,
   cellIndex: number,
@@ -474,7 +461,6 @@ function getPlacedCell(
     : action.cell;
 }
 
-/** 置いたタイルが手前の盤面で決まっていたときの決め手。手順で使わせる見方の決め手を先に探す。 */
 function getPlacementReason(
   { step, earnedRuleIds }: TakuzuTutorialSituation,
   before: TakuzuBoard,
@@ -529,7 +515,6 @@ function isTowardStep(
   );
 }
 
-/** 手順の印のマスのうち、解と違うタイルが置かれたマスを空けた盤面。 */
 function clearMistakenStepCells(
   step: TakuzuTutorialStep | null,
   board: TakuzuBoard,
@@ -606,7 +591,6 @@ function performTakuzuTutorialAction(
   return { state: next, outcome: "continued" };
 }
 
-/** `towardStepSettled`: 正しい手へ向かう途中の盤面のまま、手が止まった。ルールに合わないところを見せる。 */
 export function getTakuzuTutorialCellViews(
   situation: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
@@ -629,7 +613,6 @@ function isSameLine(left: TakuzuLine, right: TakuzuLine): boolean {
   return left.axis === right.axis && left.index === right.index;
 }
 
-/** `towardStepSettled`: `getTakuzuTutorialCellViews` と同じ。 */
 export function getTakuzuTutorialLineViolations(
   situation: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
@@ -666,7 +649,6 @@ const lineNames = { row: "行", column: "列" } as const satisfies Record<
   string
 >;
 
-/** 隣り合う行・列は向きで、離れた行・列は何番目かで言う。 */
 function getLinePlaceName(line: TakuzuLine, twin: TakuzuLine): string {
   if (Math.abs(twin.index - line.index) > 1) {
     return `${twin.index + 1}${lineNames[line.axis]}目`;
@@ -681,7 +663,6 @@ function getLinePlaceName(line: TakuzuLine, twin: TakuzuLine): string {
       : "右の列";
 }
 
-/** 同じ並びになった行・列から見た、同じ並びの相手のうち最も近いもの。 */
 function describeTwinLine(
   board: TakuzuBoard,
   duplicateLines: readonly TakuzuLine[],
@@ -702,7 +683,6 @@ function describeTwinLine(
   return twin ? getLinePlaceName(line, twin) : `別の${lineNames[line.axis]}`;
 }
 
-/** 1つの違反と、その違反に当たっているマス。 */
 type TakuzuViolationDescription = {
   cellIndices: readonly number[];
   message: TutorialMessage;
@@ -776,7 +756,6 @@ function describeTakuzuTutorialViolation(
   );
 }
 
-/** 手順で印を付けるマスのうち、まだ解と同じタイルになっていないもの。手を離した後は空。 */
 export function getTakuzuTutorialStepCellIndices(
   { step }: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
@@ -786,10 +765,7 @@ export function getTakuzuTutorialStepCellIndices(
   );
 }
 
-/**
- * 手順で印を付けるマスのタイルを決めるもの（決め手）のマス。手順で使わせる見方の決め手を先に探す。
- * 印のマスに解と違うタイルが置かれていても、空けた盤面で決め手を探す。決まらない操作の手順と、手を離した後は空。
- */
+/** 手順で印を付けるマスのタイルを決めるもの（決め手）のマス。決まらない操作の手順と、手を離した後は空。 */
 export function getTakuzuTutorialStepReasonCellIndices(
   situation: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,

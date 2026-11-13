@@ -51,7 +51,7 @@ import {
 
 type TakuzuTutorialProps = {
   open: boolean;
-  /** ゲームのホームから開いたときに渡す。終えたときに、ゲームのホームで開いているレベルを始める操作を出す。渡さなければプレイ中に開いたとして、閉じてプレイに戻る操作を出す。 */
+  /** ゲームのホームから開いたときだけ渡す。渡さなければプレイ中に開いたとみなす。 */
   playStart?: TutorialPlayStart;
   onClose: () => void;
 };
@@ -62,7 +62,6 @@ type TakuzuTutorialProgress = TutorialProgress<
 >;
 
 /**
- * ルールに合わない手に、違反の一言で応えるまでの間。
  * 空き→四角→丸と切り替える途中の四角が一瞬だけ違反になっても一言が替わらないよう、違反が続いたときだけ応える。
  * 盤面の違反の印の遅れ（240ms）より長く取り、ゆっくり続けて押す間隔（300〜400ms）でも出ず、手を止めればすぐ分かる長さにする。
  */
@@ -74,21 +73,18 @@ const VIOLATION_REACTION_DELAY_MS = 500;
  */
 const TOWARD_STEP_REVEAL_DELAY_MS = 1000;
 
-/** 手順どおりに置いてから次の印を付けるまでの間。置いたマスへの応えと決め手を残して見せてから、次の印とその決め手に替える。 */
+/** 置いたマスへの応えと決め手を残して見せてから、次の印とその決め手に替える。 */
 const NEXT_STEP_CUE_DELAY_MS = 900;
 
-/** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
 const goalBoardState = takuzuTutorial.goal();
 
-/**
- * 手を引いている間に印の無いマスを押されたときの、印の押し直し。印の線を短く濃くして戻す。
- * - `id`: 押されるたびに増やし、続けて押されても押し直す。
- * - `progress`: 押されたときの進行。手が進んだら押し直しを終える。
- */
+/** 手を引いている間に印の無いマスを押されたときの、印の押し直し。 */
 type TakuzuTutorialRecall = {
+  /** 押されるたびに増やし、続けて押されても押し直す。 */
   id: number;
+  /** 押されたときの進行。手が進んだら押し直しを終える。 */
   progress: TakuzuTutorialProgress;
 };
 
@@ -122,10 +118,7 @@ function getCueDelayMs(
   return fitted ? NEXT_STEP_CUE_DELAY_MS : 0;
 }
 
-/**
- * ルールに合わない手は、本番と同じ違反の印だけで示し、タイルは揺らさない。
- * 印は手を置くたびには付け直さず、押し直すとき（`recallId`）だけ線を濃くする。
- */
+/** 印は手を置くたびには付け直さず、押し直すとき（`recallId`）だけ線を濃くする。 */
 function getCellCues(
   state: TakuzuTutorialBoardState,
   hintCellIndices: readonly number[],
@@ -142,7 +135,6 @@ function getCellCues(
   ];
 }
 
-/** 直前の手への合図。手順のマスを正しく置いた応え。 */
 function getMoveCues({
   lastMove,
   moveCount,
@@ -189,7 +181,6 @@ function getSpotlitCellIndices(
   return [...new Set([...focused, ...runCellIndices, ...lineCellIndices])];
 }
 
-/** 手を引いている間は、抜くマスに加えて、個数超過・重複の行・列の縁の外の印も覆いから抜く。 */
 function getBoardSpotlight(
   cellIndices: readonly number[] | null,
 ): TakuzuBoardSpotlight | null {
@@ -198,7 +189,7 @@ function getBoardSpotlight(
 
 /**
  * 4×4 の盤面を、一言と印に沿って1マスずつ一緒に埋め、ルールを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分で埋めさせる。盤面・違反の印・解けたときの波は本番と同じ部品を使う。
+ * 手順を終えたら手を離し、残りを自分で埋めさせる。
  */
 export function TakuzuTutorial({
   open,
@@ -215,12 +206,11 @@ export function TakuzuTutorial({
   const [settledTowardStepProgress, setSettledTowardStepProgress] =
     useState<TakuzuTutorialProgress | null>(null);
   const [recall, setRecall] = useState<TakuzuTutorialRecall | null>(null);
-  // 手順を終えた手の進行と、その手の前の進行。置いたマスと決め手を残して見せる間は、一言とルールの並びも終えた手順のままにする。
+  // 手順を終えた手の進行と、その手の前の進行。
   const [finishedStep, setFinishedStep] = useState<{
     progress: TakuzuTutorialProgress;
     previous: TakuzuTutorialProgress;
   } | null>(null);
-  // 本番と同じく、置いた・消した・固定マスで通らなかったを知らせ、音を鳴らす。固定マスは盤面が揺らす。
   const [operation, setOperation] = useState<TakuzuOperation | null>(null);
   // 開き直しても同じ知らせとみなされないよう、もう一度始めても数え直さない。
   const operationIdRef = useRef(0);
@@ -346,7 +336,6 @@ export function TakuzuTutorial({
       setFinishedStep({ progress: next, previous: progress });
     }
     setProgress(next);
-    // 次の手が来たら、前の手には応えない。
     cancelPendingReaction();
     if (next.violated) {
       scheduleReaction(

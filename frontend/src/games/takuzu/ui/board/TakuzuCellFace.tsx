@@ -29,10 +29,6 @@ type TakuzuCellFaceProps = {
   size: TakuzuCellFaceSize;
 };
 
-/**
- * A は塗りの四角、B は輪郭の丸。色を見なくても形だけで見分けられる。
- * 描く大きさは外側の要素に合わせる。
- */
 export function TakuzuCellFace({ cell, given, size }: TakuzuCellFaceProps) {
   if (cell === null) {
     return null;
@@ -53,6 +49,7 @@ export function TakuzuCellFace({ cell, given, size }: TakuzuCellFaceProps) {
   );
 }
 
+// A は塗りの四角、B は輪郭の丸。色を見なくても形だけで見分けられる。
 function renderTileShape(tile: TakuzuTile, circleStrokeWidth: number) {
   if (tile === "a") {
     return (
