@@ -42,7 +42,7 @@ export type GameHome = {
   /** 遊び方とチュートリアルはゲームの View が描く。 */
   screenProps: Omit<
     GameHomeScreenProps,
-    "ground" | "renderHowToPlayDialog" | "renderTutorial"
+    "renderHowToPlayDialog" | "renderTutorial"
   >;
 };
 

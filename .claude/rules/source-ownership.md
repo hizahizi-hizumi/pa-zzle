@@ -11,10 +11,10 @@ paths:
 - 具体ゲーム・共通ゲーム契約・Page・View・親専用子は `game-structure.md`・`pages.md`・`views.md`・`typescript-react.md` の該当する規則に従う。
 - `app/game-integration/` は具体ゲームの登録とプレイ・記録・結果・遷移への接続を所有する。
 - `app/game-home/` は各ゲームのホーム画面の合成と専用UIを所有する。
-- `app/navigation/` は具体ゲームの登録情報を必要としないURL・遷移の契約を所有する。
-- `app/shell/` はアプリ全体の外枠と場面に応じたBGMの選択・接続を所有する。
+- `app/navigation/` は具体ゲームの登録情報を必要としないURL・遷移の契約と、画面の組から決まる行き来の動きの種類を所有する。
+- `app/shell/` はアプリ全体の外枠、画面の行き来の動きと行き来で運ぶものの動き、場面に応じたBGMの選択・接続を所有する。
 - `features/records/` はプレイの記録・試行・自己ベストの保存と計算を所有する。
-- `features/zukan/` は問題別の進捗・閲覧・絞り込みを所有する。
+- `features/zukan/` は問題別の進捗・閲覧・絞り込みと、台紙とピースの形・並び、複数の画面で共有するピースの描画を所有する。
 - `features/collection/` はゲーム横断の集計・推移を所有する。
 - `features/random-play/` は出題条件と候補の選択を所有する。
 - `features/settings/` は設定UIとゲームの並び順を所有する。

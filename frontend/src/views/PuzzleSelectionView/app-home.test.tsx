@@ -12,6 +12,10 @@ import { useGameHome } from "@/app/game-home/game-home";
 import type { GameCatalogEntry } from "@/app/game-integration/game-catalog-entry";
 import { nanpureCatalogEntry } from "@/app/game-integration/nanpure/nanpure-catalog-entry";
 import {
+  followHomeOrigin,
+  _private as homeOriginPrivate,
+} from "@/app/navigation/home-origin";
+import {
   abandonPlayAttempt,
   startPlayAttempt,
 } from "@/features/records/play-attempt-storage";
@@ -89,25 +93,26 @@ type GameHomeProps = {
 
 function GameHome({ game }: GameHomeProps) {
   const { screenProps } = useGameHome(game);
-  return (
-    <GameHomeScreen
-      {...screenProps}
-      ground={null}
-      renderHowToPlayDialog={() => null}
-    />
-  );
+  return <GameHomeScreen {...screenProps} renderHowToPlayDialog={() => null} />;
 }
 
-function renderAtHome() {
-  const router = createMemoryRouter([
-    { path: "/", element: <PuzzleSelectionView /> },
-    {
-      path: "/puzzles/nanpure",
-      element: <GameHome game={nanpureCatalogEntry} />,
-    },
-  ]);
+function renderAtHome(initialPath = "/") {
+  const router = createMemoryRouter(
+    [
+      { path: "/", element: <PuzzleSelectionView /> },
+      {
+        path: "/puzzles/nanpure",
+        element: <GameHome game={nanpureCatalogEntry} />,
+      },
+    ],
+    { initialEntries: [initialPath] },
+  );
+  stopFollowingHomeOrigin = followHomeOrigin(router);
   render(<RouterProvider router={router} />);
+  return router;
 }
+
+let stopFollowingHomeOrigin = function stopNothing() {};
 
 function getHeroLink(): HTMLElement {
   return screen.getByRole("link", { name: /を開く$/ });
@@ -157,6 +162,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  stopFollowingHomeOrigin();
+  homeOriginPrivate.resetForTest();
   appLaunch.resetAppLaunch();
   window.localStorage.clear();
   orderPrivate.resetCache();
@@ -212,6 +219,28 @@ describe("useAppHome", () => {
 
       expect(heroLink.getAttribute("aria-label")).toBe("詰将棋を開く");
       expect(getContinuationText()).toBe("レベル 3 ・ 挑戦中 1問");
+    });
+  });
+
+  describe("ナンプレのあとに詰将棋を遊び、ナンプレのゲームのホームからホームへ戻った場合", () => {
+    beforeEach(async () => {
+      saveAbandonedPlay("nanpure", 100_000, "4", selectNanpureIdentity("4"));
+      saveAbandonedPlay(
+        "tsume-shogi",
+        200_000,
+        "3",
+        selectTsumeShogiIdentity(),
+      );
+      const router = renderAtHome("/puzzles/nanpure");
+      await act(async () => {
+        await router.navigate("/");
+      });
+    });
+
+    test("最後に遊んだ詰将棋ではなく、戻る前にいたナンプレを選んでおくこと", () => {
+      const heroLink = getHeroLink();
+
+      expect(heroLink.getAttribute("aria-label")).toBe("ナンプレを開く");
     });
   });
 

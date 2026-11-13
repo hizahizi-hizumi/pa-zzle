@@ -31,6 +31,7 @@ export function GameResultActions({
         type="button"
         variant="result-action"
         size="result"
+        data-result-collection=""
         onClick={onOpenGameHome}
       >
         <Grid2X2 aria-hidden="true" />

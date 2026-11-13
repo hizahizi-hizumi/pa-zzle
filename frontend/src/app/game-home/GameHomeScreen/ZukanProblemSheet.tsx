@@ -5,6 +5,8 @@ import {
   memo,
   type RefObject,
   type UIEvent,
+  useDeferredValue,
+  useEffect,
   useEffectEvent,
   useLayoutEffect,
   useMemo,
@@ -13,9 +15,17 @@ import {
 } from "react";
 import { ZukanProblemSquare } from "@/app/game-home/GameHomeScreen/ZukanProblemSheet/ZukanProblemSquare";
 import type { ZukanChangeStage } from "@/app/game-home/GameHomeScreen/zukan-change-reveal";
-import { findZukanPieceShape } from "@/app/game-home/GameHomeScreen/zukan-piece-shape";
+import { findZukanPieceShape } from "@/features/zukan/ui/zukan-piece-shape";
+import {
+  getNarrowZukanSquareSizePx,
+  getWideZukanSquareSizePx,
+} from "@/features/zukan/ui/zukan-sheet-layout";
 import type { ZukanProblem } from "@/features/zukan/zukan-collection";
 import type { ZukanProblemChange } from "@/features/zukan/zukan-last-viewed";
+import {
+  clearOpeningZukanSheetRow,
+  peekOpeningZukanSheetRow,
+} from "@/features/zukan/zukan-sheet-opening";
 import { type DifficultyLevel, getDifficultyLabel } from "@/games/difficulty";
 import type { ProblemId } from "@/games/problem-id";
 import {
@@ -23,6 +33,7 @@ import {
   MOTION_EASING,
   prefersReducedMotion,
 } from "@/lib/motion";
+import { isScreenTransitionRunning } from "@/lib/screen-transition";
 
 type ZukanProblemSheetProps = {
   difficulty: DifficultyLevel;
@@ -48,65 +59,6 @@ type ZukanProblemSheetProps = {
   /** 選んでいるマスをもう一度押したとき。 */
   onDeselect: () => void;
 };
-
-/**
- * PC の幅で、マスの1辺を最低この大きさ（px）にする。問題の少ないレベルでも盤が空いて見えないよう、問題が少ないほど大きくする。
- * 並びは問題の数の昇順。
- */
-const WIDE_SQUARE_SIZES = [
-  { maxProblemCount: 250, sizePx: 40 },
-  { maxProblemCount: 500, sizePx: 32 },
-] as const;
-const DEFAULT_WIDE_SQUARE_SIZE_PX = 26;
-
-/** PC より狭い幅で、マスの1辺を最低この大きさ（px）にする。考え方は `WIDE_SQUARE_SIZES` と同じ。 */
-const NARROW_SQUARE_SIZES = [{ maxProblemCount: 250, sizePx: 30 }] as const;
-const DEFAULT_NARROW_SQUARE_SIZE_PX = 24;
-
-function findSquareSizePx(
-  sizes: readonly { maxProblemCount: number; sizePx: number }[],
-  defaultSizePx: number,
-  problemCount: number,
-): number {
-  return (
-    sizes.find(({ maxProblemCount }) => problemCount <= maxProblemCount)
-      ?.sizePx ?? defaultSizePx
-  );
-}
-
-function getWideSquareSizePx(problemCount: number): number {
-  return findSquareSizePx(
-    WIDE_SQUARE_SIZES,
-    DEFAULT_WIDE_SQUARE_SIZE_PX,
-    problemCount,
-  );
-}
-
-function getNarrowSquareSizePx(problemCount: number): number {
-  return findSquareSizePx(
-    NARROW_SQUARE_SIZES,
-    DEFAULT_NARROW_SQUARE_SIZE_PX,
-    problemCount,
-  );
-}
-
-/** 台紙のクラスの `lg:` と同じ境目にする。 */
-const WIDE_MEDIA_QUERY = "(width >= 64rem)";
-
-/**
- * 台紙は、マスを最低の大きさ以上で、幅を等分して並べる。
- * 開いていないレベルの台紙の並びを、描かずに求めるのに使う。
- */
-export function countZukanSheetColumns(
-  widthPx: number,
-  problemCount: number,
-): number {
-  const isWide = window.matchMedia?.(WIDE_MEDIA_QUERY).matches ?? false;
-  const squareSizePx = isWide
-    ? getWideSquareSizePx(problemCount)
-    : getNarrowSquareSizePx(problemCount);
-  return Math.max(1, Math.floor(widthPx / squareSizePx));
-}
 
 type SquareRow = { start: number; length: number };
 
@@ -187,6 +139,8 @@ function findSquare(
   return grid?.querySelector<HTMLElement>(`[data-index="${index}"]`) ?? null;
 }
 
+const NO_PROBLEMS: readonly ZukanProblem[] = [];
+
 function listPositions(
   problems: readonly ZukanProblem[],
 ): ReadonlyMap<ProblemId, number> {
@@ -215,7 +169,11 @@ function ZukanProblemSheetContent({
   const [lastSelectedProblemId, setLastSelectedProblemId] =
     useState<ProblemId | null>(null);
   const [columnCount, setColumnCount] = useState(1);
+  // 画面の行き来の動きの中で開いたときは、マスの描画が動き出しを止めないよう、マスを描かずに開き、後から描く。
+  const drawsSquares = useDeferredValue(true, !isScreenTransitionRunning());
   const gridRef = useRef<HTMLDivElement>(null);
+  const openingRowRef = useRef(peekOpeningZukanSheetRow());
+  useEffect(() => clearOpeningZukanSheetRow(), []);
   const reportWidth = useEffectEvent(onWidthChange);
   const shownScrollTopRef = useRef(0);
   const previousCoveredBottomHeightRef = useRef(coveredBottomHeight);
@@ -259,6 +217,33 @@ function ZukanProblemSheetContent({
     return () => observer.disconnect();
   }, []);
 
+  // パズル選択の額の中の台紙は縦に送れる。額から入ったときは、額で見ていた行から台紙を見せて開く。
+  // マスを描くまで台紙に高さが無いので、描いてから送る。問題を選んで開いたときは、選んだマスへ寄せるので送らない。
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current;
+    const grid = gridRef.current;
+    const openingRow = openingRowRef.current;
+    if (
+      !drawsSquares ||
+      openingRow <= 0 ||
+      scroller === null ||
+      grid === null
+    ) {
+      return;
+    }
+    openingRowRef.current = 0;
+    // 行の高さから求めると端数がずれるので、その行の最初のマスの位置から送る。
+    const row = Math.floor(openingRow);
+    const firstSquare = findSquare(grid, row * countGridColumns(grid));
+    if (selectedIndex === null && firstSquare !== null) {
+      const square = firstSquare.getBoundingClientRect();
+      scroller.scrollTop +=
+        square.top -
+        grid.getBoundingClientRect().top +
+        (openingRow - row) * square.height;
+    }
+  }, [drawsSquares, selectedIndex, scrollerRef]);
+
   // 覆うものが退いて末尾の余白が減ると、末尾まで送っていた台紙はスクロール位置が詰められて跳ぶので、元の位置から滑らせて下ろす。
   useLayoutEffect(() => {
     const isUncovered =
@@ -282,8 +267,8 @@ function ZukanProblemSheetContent({
   }, [coveredBottomHeight, scrollerRef]);
 
   // 条件を変えても選んだマスへは寄せ直さない。
-  // 下端を覆う高さは描いたあとに分かるので、選んだマスだけでなく覆う高さが変わったときも寄せ直す。
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 覆う高さはスクロールの余白として描かれ、寄せる先を変える。
+  // 下端を覆う高さは描いたあとに分かり、マスは後から描くことがあるので、選んだマスだけでなく、覆う高さが変わったときとマスを描いたときも寄せ直す。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 覆う高さはスクロールの余白として描かれ、寄せる先を変える。マスを描くまでは寄せる先が無い。
   useLayoutEffect(() => {
     if (selectedIndex === null) {
       return;
@@ -292,7 +277,7 @@ function ZukanProblemSheetContent({
       block: "nearest",
       inline: "nearest",
     });
-  }, [selectedIndex, coveredBottomHeight]);
+  }, [selectedIndex, coveredBottomHeight, drawsSquares]);
 
   function selectSquare(problem: ZukanProblem) {
     setLastSelectedProblemId(problem.problemId);
@@ -366,14 +351,15 @@ function ZukanProblemSheetContent({
       />
       <div
         ref={gridRef}
+        data-screen-shared="sheet"
         role="group"
         aria-label={`${getDifficultyLabel(difficulty)}の問題`}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         style={
           {
-            "--wide-square-size": `${getWideSquareSizePx(problemsInNumberOrder.length)}px`,
-            "--narrow-square-size": `${getNarrowSquareSizePx(problemsInNumberOrder.length)}px`,
+            "--wide-square-size": `${getWideZukanSquareSizePx(problemsInNumberOrder.length)}px`,
+            "--narrow-square-size": `${getNarrowZukanSquareSizePx(problemsInNumberOrder.length)}px`,
           } as CSSProperties
         }
         // 盤の幅をマスで埋め切るよう、マスは決めた大きさ以上で、列を等分して並べる。
@@ -385,28 +371,30 @@ function ZukanProblemSheetContent({
             条件に当たる問題はありません
           </p>
         )}
-        {problemsInNumberOrder.map((problem, index) => (
-          <ZukanProblemSquare
-            key={problem.problemId}
-            problem={problem}
-            index={index}
-            pieceShape={findZukanPieceShape(
-              positions.get(problem.problemId) ?? index,
-              matchedCount ?? arrangedProblems.length,
-              arrangedProblems.length,
-              columnCount,
-            )}
-            numberDigitCount={numberDigitCount}
-            isTabStop={problem.problemId === tabStopProblemId}
-            isSelected={index === selectedIndex}
-            isFilteredOut={
-              matchedCount !== null &&
-              (positions.get(problem.problemId) ?? 0) >= matchedCount
-            }
-            change={changes?.get(problem.problemId) ?? null}
-            changeStage={changeStages?.get(problem.problemId) ?? null}
-          />
-        ))}
+        {(drawsSquares ? problemsInNumberOrder : NO_PROBLEMS).map(
+          (problem, index) => (
+            <ZukanProblemSquare
+              key={problem.problemId}
+              problem={problem}
+              index={index}
+              pieceShape={findZukanPieceShape(
+                positions.get(problem.problemId) ?? index,
+                matchedCount ?? arrangedProblems.length,
+                arrangedProblems.length,
+                columnCount,
+              )}
+              numberDigitCount={numberDigitCount}
+              isTabStop={problem.problemId === tabStopProblemId}
+              isSelected={index === selectedIndex}
+              isFilteredOut={
+                matchedCount !== null &&
+                (positions.get(problem.problemId) ?? 0) >= matchedCount
+              }
+              change={changes?.get(problem.problemId) ?? null}
+              changeStage={changeStages?.get(problem.problemId) ?? null}
+            />
+          ),
+        )}
         {hasFilteredOut && (
           <div
             aria-hidden="true"
@@ -430,6 +418,4 @@ export const ZukanProblemSheet = memo(ZukanProblemSheetContent);
 
 export const _private = {
   findNextSquareIndex,
-  getWideSquareSizePx,
-  getNarrowSquareSizePx,
 };

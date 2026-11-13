@@ -11,12 +11,14 @@ import type { DifficultyLevel } from "@/games/difficulty";
 import { prefersReducedMotion } from "@/lib/motion";
 import type { Path } from "@/router";
 import { GameSelectionSlide } from "@/views/PuzzleSelectionView/GameSelectionGallery/GameSelectionCarousel/GameSelectionSlide";
+import type { GameSelectionSheetPreview } from "@/views/PuzzleSelectionView/GameSelectionGallery/game-selection-sheet-preview";
 
 type GameSelectionCarouselProps = {
   games: readonly {
     name: string;
     pictogramSvg: string;
     pictogramShowcaseSvg?: string;
+    sheetPreview?: GameSelectionSheetPreview;
     to: Path;
   }[];
   selectedIndex: number;
@@ -27,9 +29,13 @@ type GameSelectionCarouselProps = {
   onSelect: (index: number) => void;
 };
 
+/** マウスで押してから離すまでに動いた距離がこれ以上なら、押す操作ではなく引く操作とみなす（px）。 */
+const MOUSE_DRAG_SLOP_PX = 6;
+
 type MouseGesture = {
   pointerId: number;
   startX: number;
+  startY: number;
   startScroll: number;
   dragged: boolean;
 };
@@ -299,6 +305,7 @@ export function GameSelectionCarousel({
     mouseGesture.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
+      startY: event.clientY,
       startScroll: event.currentTarget.scrollLeft,
       dragged: false,
     };
@@ -308,7 +315,7 @@ export function GameSelectionCarousel({
     const gesture = mouseGesture.current;
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     const distance = event.clientX - gesture.startX;
-    if (!gesture.dragged && Math.abs(distance) < 6) return;
+    if (!gesture.dragged && Math.abs(distance) < MOUSE_DRAG_SLOP_PX) return;
     if (!gesture.dragged) {
       gesture.dragged = true;
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -321,7 +328,12 @@ export function GameSelectionCarousel({
     const gesture = mouseGesture.current;
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     mouseGesture.current = null;
-    if (!gesture.dragged) return;
+    if (!gesture.dragged) {
+      // 縦に引いて離した操作は、額を押した操作として受けない。額の中の台紙を縦に送ろうとした操作で、ゲームを開かない。
+      suppressClick.current =
+        Math.abs(event.clientY - gesture.startY) >= MOUSE_DRAG_SLOP_PX;
+      return;
+    }
     suppressClick.current = true;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
@@ -450,6 +462,7 @@ export function GameSelectionCarousel({
                 colorsIn={colorsInGame === game.to && selectedIndex === index}
                 continuation={showsContinuation ? continuation : null}
                 continuationId={continuationId}
+                sheetPreview={game.sheetPreview}
                 onChoose={slideTo}
               />
             );

@@ -33,10 +33,7 @@ import {
   isZukanDetailOverlayingSheet,
   ZukanProblemDetail,
 } from "@/app/game-home/GameHomeScreen/ZukanProblemDetail";
-import {
-  countZukanSheetColumns,
-  ZukanProblemSheet,
-} from "@/app/game-home/GameHomeScreen/ZukanProblemSheet";
+import { ZukanProblemSheet } from "@/app/game-home/GameHomeScreen/ZukanProblemSheet";
 import { ZukanProblemStatusCounts } from "@/app/game-home/GameHomeScreen/ZukanProblemStatusCounts";
 import {
   countZukanNewlySolved,
@@ -46,7 +43,6 @@ import {
   type ZukanChangeStage,
 } from "@/app/game-home/GameHomeScreen/zukan-change-reveal";
 import type { ZukanFilterFeatureAxis } from "@/app/game-home/GameHomeScreen/zukan-filter-appearance";
-import { getZukanPiecePath } from "@/app/game-home/GameHomeScreen/zukan-piece-shape";
 import { playZukanPlayEntry } from "@/app/game-home/GameHomeScreen/zukan-play-entry";
 import { openGameGuide } from "@/app/navigation/game-guide-navigation";
 import { playPlayStartSound } from "@/components/app-decision-sound";
@@ -61,6 +57,8 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import type { PlayRecord } from "@/features/records/play-record";
 import type { PlayRecordDisplayDefinition } from "@/features/records/ui/play-record-display";
 import { getZukanNumberDigitCount } from "@/features/zukan/ui/zukan-number-format";
+import { getZukanPiecePath } from "@/features/zukan/ui/zukan-piece-shape";
+import { countZukanSheetColumns } from "@/features/zukan/ui/zukan-sheet-layout";
 import {
   countZukanProblemsByStatus,
   type GameZukan,
@@ -86,6 +84,7 @@ import type {
   ZukanChanges,
   ZukanProblemChange,
 } from "@/features/zukan/zukan-last-viewed";
+import { findZukanOpenSection } from "@/features/zukan/zukan-open-sheet";
 import { type DifficultyLevel, parseDifficultyLevel } from "@/games/difficulty";
 import type { ProblemFeatureValue } from "@/games/problem-feature";
 import type { ProblemId } from "@/games/problem-id";
@@ -108,7 +107,6 @@ export type GameHomeScreenProps = {
   pictogramSvg: string;
   /** 色と動きのあるピクトグラム。無ければ `pictogramSvg` を見せる。 */
   pictogramShowcaseSvg?: string;
-  ground: ReactNode;
   zukan: GameZukan;
   changes: ZukanChanges;
   /**
@@ -241,16 +239,12 @@ function listFilterFeatureAxes(
  * 離脱はこの画面を描いたあとに保存されることがあるので、選ぶまでは図鑑から求め直す。
  */
 function findOpenSection(
-  sections: readonly ZukanDifficultySection[],
+  zukan: GameZukan,
   chosenDifficulty: DifficultyLevel | null,
-  latestPlayedDifficulty: DifficultyLevel | null,
 ): ZukanDifficultySection {
-  const openSection =
-    sections.find(({ difficulty }) => difficulty === chosenDifficulty) ??
-    sections.find(({ difficulty }) => difficulty === latestPlayedDifficulty) ??
-    sections[0];
+  const openSection = findZukanOpenSection(zukan, chosenDifficulty);
   // どのゲームも難易度1〜5のそれぞれに問題を供給するので（難易度提供の採用条件）、問題のあるレベルが無いのは問題集の誤りである。
-  if (openSection === undefined) {
+  if (openSection === null) {
     throw new Error("ゲームのホームを開くには、問題のあるレベルが要る");
   }
   return openSection;
@@ -344,7 +338,6 @@ export function GameHomeScreen({
   pictogramShowcaseSvg,
   zukan,
   changes,
-  ground,
   initialSelectedProblemId,
   pickRandomProblemId,
   onPlayProblem,
@@ -420,11 +413,7 @@ export function GameHomeScreen({
   const playRandomRef = useRef<HTMLButtonElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const sections = zukan.sections.filter(({ problems }) => problems.length > 0);
-  const openSection = findOpenSection(
-    sections,
-    chosenDifficulty,
-    zukan.latestPlayedDifficulty,
-  );
+  const openSection = findOpenSection(zukan, chosenDifficulty);
   const openDifficulty = openSection.difficulty;
   const openRevealStatus = revealStatuses.get(openDifficulty);
   const openChanges =
@@ -733,8 +722,8 @@ export function GameHomeScreen({
   }, []);
 
   /**
-   * 台紙の問題を始める。そのピースを台紙から抜いてプレイへ入る動きを見せてから始め、動きの間に画面を押すと、すぐに始める。
-   * ゲームが選んだ問題は、台紙のどこから抜いたかが分かるよう、台紙を送ってから抜く。
+   * 台紙の問題を始める。そのピースへ寄ってプレイへ入る動きを見せて始め、動きの間に画面を押すと、すぐに始める。
+   * ゲームが選んだ問題は、台紙のどこのピースかが分かるよう、台紙を送ってから入る。
    */
   function enterPlay(problem: ZukanProblem, spinsToPiece: boolean) {
     const square = findSquareElement(
@@ -742,8 +731,7 @@ export function GameHomeScreen({
       openProblems.indexOf(problem),
     );
     const scroller = scrollerRef.current;
-    const screen = screenRef.current;
-    if (square === null || scroller === null || screen === null) {
+    if (square === null || scroller === null) {
       onPlayProblem(problem);
       return;
     }
@@ -751,9 +739,8 @@ export function GameHomeScreen({
     cancelPlayEntryRef.current = playZukanPlayEntry({
       square,
       scroller,
-      screen,
+      problemId: problem.problemId,
       piecePath: getZukanPiecePath(square.dataset.pieceShape ?? ""),
-      pictogramSvg,
       spinsToPiece,
       onEnter() {
         onPlayProblem(problem);
@@ -774,8 +761,8 @@ export function GameHomeScreen({
       return;
     }
     playPlayStartSound();
-    // 条件に当たらなかった問題は後ろへ並べ替えて薄くしているので、抜くピースを今の姿で見せるよう、絞り込みを外す。
-    // 抜くピースの位置は外したあとの並びで測るので、外した台紙を先に描き切る。
+    // 条件に当たらなかった問題は後ろへ並べ替えて薄くしているので、入るピースを今の姿で見せるよう、絞り込みを外す。
+    // 入るピースの位置は外したあとの並びで測るので、外した台紙を先に描き切る。
     flushSync(() => {
       finishOpenLevelReveal();
       setLevelFilter(noLevelFilter);
@@ -811,12 +798,10 @@ export function GameHomeScreen({
     <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col">
       <div
         aria-hidden="true"
-        data-browser-surface="child"
-        className="pointer-events-none fixed inset-0 -z-10"
-      >
-        {ground}
-      </div>
-      {/* 開いたときは、地の上に表示を短く浮かび上がらせる。プレイへ入る動きでは、地を残してこの中の表示だけを引く。動きの間は、動きを飛ばす操作だけを受け、画面の操作は受けない。 */}
+        data-browser-surface="self"
+        className="pointer-events-none fixed inset-0 -z-10 bg-brand"
+      />
+      {/* 開いたときは、壁の上に表示を短く浮かび上がらせる。動きの間は、動きを飛ばす操作だけを受け、画面の操作は受けない。 */}
       <div
         ref={screenRef}
         inert={isEnteringPlay}
@@ -892,11 +877,20 @@ export function GameHomeScreen({
           <div className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_--spacing(64)] lg:grid-rows-[auto_auto_minmax(0,1fr)] lg:gap-x-8">
             <div
               aria-hidden="true"
-              className="col-start-1 row-span-2 row-start-1 rounded-lg bg-background lg:row-span-3 lg:row-start-1"
+              className="col-start-1 row-span-2 row-start-1 bg-background lg:row-span-3 lg:row-start-1"
+            />
+            {/* 額の縁は盤の外側へ出し、盤の中の並びを変えない。 */}
+            <div
+              aria-hidden="true"
+              data-screen-shared="frame"
+              className="pointer-events-none col-start-1 row-span-2 row-start-1 -m-(--border-width-frame) border-(length:--border-width-frame) border-frame-edge lg:row-span-3 lg:row-start-1"
             />
             {/* 当たった数は条件が無い間も場所を取っておくので、条件を付け外ししても状態ごとの数の折り返し方は変わらない。
               状態ごとの数がレベルによって2行に折り返す狭い画面では、レベルを切り替えても台紙が動かないよう、常に2行分を取っておく。 */}
-            <div className="col-start-1 row-start-1 flex items-start justify-between gap-x-3 px-2 pt-2 max-[359px]:min-h-11 sm:px-3 sm:pt-3 lg:col-start-2 lg:row-start-2 lg:mt-4 lg:flex-col lg:gap-y-3 lg:rounded-lg lg:bg-background lg:p-4">
+            <div
+              data-screen-content=""
+              className="col-start-1 row-start-1 flex items-start justify-between gap-x-3 px-2 pt-2 max-[359px]:min-h-11 sm:px-3 sm:pt-3 lg:col-start-2 lg:row-start-2 lg:mt-4 lg:flex-col lg:gap-y-3 lg:rounded-lg lg:bg-background lg:p-4"
+            >
               <ZukanProblemStatusCounts counts={openStatusCounts} />
               <ZukanMatchedCount
                 matchedCount={isFiltering ? arrangement.matchedCount : null}
@@ -927,6 +921,7 @@ export function GameHomeScreen({
             </TabsContent>
             <div
               ref={playRandomRowRef}
+              data-screen-content=""
               className="col-start-1 row-start-3 mt-2 grid lg:col-start-2 lg:row-start-1 lg:mt-0"
             >
               <Button ref={playRandomRef} size="lg" onClick={handlePlayRandom}>

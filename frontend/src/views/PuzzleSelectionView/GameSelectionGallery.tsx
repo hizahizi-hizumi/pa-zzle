@@ -4,6 +4,7 @@ import { SettingsButton } from "@/features/settings/SettingsButton";
 import type { DifficultyLevel } from "@/games/difficulty";
 import type { Path } from "@/router";
 import { GameSelectionCarousel } from "@/views/PuzzleSelectionView/GameSelectionGallery/GameSelectionCarousel";
+import type { GameSelectionSheetPreview } from "@/views/PuzzleSelectionView/GameSelectionGallery/game-selection-sheet-preview";
 import "@/views/PuzzleSelectionView/GameSelectionGallery.css";
 
 export type GameSelectionContinuation = {
@@ -16,6 +17,7 @@ type GameSelectionGalleryProps = {
     name: string;
     pictogramSvg: string;
     pictogramShowcaseSvg?: string;
+    sheetPreview?: GameSelectionSheetPreview;
     to: Path;
   }[];
   recordsTo: Path;

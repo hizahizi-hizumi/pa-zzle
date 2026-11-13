@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { findZukanPieceShape } from "@/app/game-home/GameHomeScreen/zukan-piece-shape";
+import { findZukanPieceShape } from "@/features/zukan/ui/zukan-piece-shape";
 
 type Edges = { top: number; right: number; bottom: number; left: number };
 

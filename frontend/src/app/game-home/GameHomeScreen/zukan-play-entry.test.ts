@@ -8,43 +8,12 @@ import {
 
 const { findCenteredScrollTop, ZUKAN_PLAY_ENTRY_DURATION_MS } = _private;
 
-type RecordedAnimation = {
-  element: Element;
-  finish: () => void;
-};
-
-let recorded: RecordedAnimation[];
-
-function recordAnimate(this: Element): Animation {
-  let resolveFinished: (animation: Animation) => void = function noop() {};
-  const animation = {
-    finished: new Promise<Animation>((resolve) => {
-      resolveFinished = resolve;
-    }),
-    cancel() {},
-  } as unknown as Animation;
-  recorded.push({
-    element: this,
-    finish: () => resolveFinished(animation),
-  });
-  return animation;
+async function flushFrames(milliseconds: number) {
+  await vi.advanceTimersByTimeAsync(milliseconds);
 }
 
-async function flushPromises() {
-  await vi.advanceTimersByTimeAsync(0);
-}
-
-async function finishAnimationsOf(element: Element | null) {
-  for (const animation of recorded.filter(
-    (entry) => entry.element === element,
-  )) {
-    animation.finish();
-  }
-  await flushPromises();
-}
-
-function queryPieceLayer(): Element | null {
-  return document.querySelector("[data-zukan-play-entry-piece]");
+function isMarkedAsEntered(square: HTMLElement): boolean {
+  return square.hasAttribute("data-zukan-play-entry-dive");
 }
 
 function stubRect(element: Element, rect: Partial<DOMRect>) {
@@ -74,61 +43,52 @@ function stubScroller(
   });
 }
 
-/** マスは台紙の見えている範囲より下にある。 */
-function renderHome(): Omit<
-  ZukanPlayEntry,
-  "piecePath" | "pictogramSvg" | "spinsToPiece" | "onEnter"
-> {
+/** 台紙のスクロール領域と、入るマスを置く。マスは台紙の見えている範囲より下にある。 */
+function renderHome(): Pick<ZukanPlayEntry, "scroller" | "square"> {
   document.body.innerHTML = `
-    <div data-testid="screen">
-      <div data-testid="scroller">
-        <button data-testid="square"><svg></svg></button>
-      </div>
+    <div data-testid="scroller">
+      <button data-testid="square"><svg></svg></button>
     </div>`;
-  const screen = document.querySelector<HTMLElement>('[data-testid="screen"]');
   const scroller = document.querySelector<HTMLElement>(
     '[data-testid="scroller"]',
   );
   const square = document.querySelector<HTMLElement>('[data-testid="square"]');
-  if (!screen || !scroller || !square) {
+  if (!scroller || !square) {
     throw new Error("画面を作れない");
   }
   stubRect(scroller, { top: 0, height: 200 });
   stubRect(square, { left: 40, top: 500, width: 20, height: 20 });
   stubScroller(scroller, { scrollHeight: 1000, clientHeight: 200 });
-  return { screen, scroller, square };
+  return { scroller, square };
 }
 
 const piecePath = "M0,0h1v1h-1z";
-const pictogramSvg =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><circle data-testid="pictogram" cx="4" cy="4" r="3"/></svg>';
+const problemId = "problem-1";
 
 let onEnter: Mock<() => void>;
 let home: ReturnType<typeof renderHome>;
 /** 始めた演出を飛ばす関数。飛ばさずに終えたテストの演出が、window への操作を次のテストまで受け続けないよう、終わりに飛ばす。 */
 let skips: (() => void)[];
-let cancels: (() => void)[];
 
-function startEntry(options: Pick<ZukanPlayEntry, "spinsToPiece">): () => void {
-  const { skip, cancel } = playZukanPlayEntry({
+function startEntry(
+  options: Pick<ZukanPlayEntry, "spinsToPiece">,
+): ReturnType<typeof playZukanPlayEntry> {
+  const control = playZukanPlayEntry({
     ...home,
+    problemId,
     piecePath,
-    pictogramSvg,
     onEnter,
     ...options,
   });
-  skips.push(skip);
-  cancels.push(cancel);
-  return skip;
+  skips.push(control.skip);
+  return control;
 }
 
 beforeEach(() => {
   vi.useFakeTimers();
-  recorded = [];
   onEnter = vi.fn();
   home = renderHome();
   skips = [];
-  cancels = [];
 });
 
 afterEach(() => {
@@ -137,7 +97,7 @@ afterEach(() => {
   }
   vi.useRealTimers();
   vi.unstubAllGlobals();
-  Reflect.deleteProperty(Element.prototype, "animate");
+  Reflect.deleteProperty(document, "startViewTransition");
   document.body.innerHTML = "";
 });
 
@@ -162,208 +122,111 @@ describe("findCenteredScrollTop", () => {
 });
 
 describe("playZukanPlayEntry", () => {
-  describe("動かせない環境の場合", () => {
-    test("何も動かさず、すぐに onEnter を1回呼ぶこと", () => {
+  describe("画面の行き来の動きを使えない環境の場合", () => {
+    test("台紙を送らず、マスに印を付けず、すぐに onEnter を1回呼ぶこと", () => {
       startEntry({ spinsToPiece: true });
 
       expect(onEnter).toHaveBeenCalledTimes(1);
-      expect(queryPieceLayer()).toBeNull();
       expect(home.scroller.scrollTop).toBe(0);
+      expect(isMarkedAsEntered(home.square)).toBe(false);
     });
   });
 
-  describe("動かせる環境の場合", () => {
+  describe("画面の行き来の動きを使える環境の場合", () => {
     beforeEach(() => {
-      Element.prototype.animate = recordAnimate as Element["animate"];
+      Object.defineProperty(document, "startViewTransition", {
+        configurable: true,
+        value: vi.fn(),
+      });
     });
 
     describe("動きを減らす設定の場合", () => {
       beforeEach(() => {
         vi.stubGlobal(
           "matchMedia",
-          vi.fn(() => ({ matches: true }) as unknown as MediaQueryList),
+          vi.fn(() => ({ matches: true })),
         );
       });
 
-      test("何も動かさず、すぐに onEnter を1回呼ぶこと", () => {
+      test("台紙を送らず、すぐに onEnter を1回呼ぶこと", () => {
         startEntry({ spinsToPiece: true });
 
         expect(onEnter).toHaveBeenCalledTimes(1);
-        expect(recorded).toEqual([]);
-        expect(queryPieceLayer()).toBeNull();
+        expect(home.scroller.scrollTop).toBe(0);
       });
     });
 
-    describe("台紙を送らずに抜き始めた場合", () => {
-      let skip: () => void;
-
+    describe("入るピースが台紙の見えている範囲にあり、台紙を送らずに入る場合", () => {
       beforeEach(() => {
         stubRect(home.square, { left: 40, top: 100, width: 20, height: 20 });
-        skip = startEntry({ spinsToPiece: false });
       });
 
-      test("ピースの層を document.body に置いてマスを隠し、ピースの面にピクトグラムを浮かべ、画面を引きながら運び始め、まだ onEnter を呼ばないこと", () => {
-        const layer = queryPieceLayer();
-        const pieceFace = layer?.querySelector("[data-zukan-play-entry-face]");
-        const animatedElements = recorded.map(({ element }) => element);
-
-        expect(layer?.parentElement).toBe(document.body);
-        expect(layer?.querySelector("path")?.getAttribute("d")).toBe(piecePath);
-        expect(home.square.style.visibility).toBe("hidden");
-        expect(animatedElements).toEqual([pieceFace, home.screen, layer]);
-        expect(pieceFace?.querySelector('[data-testid="pictogram"]')).not.toBe(
-          null,
-        );
-        expect(onEnter).not.toHaveBeenCalled();
-      });
-
-      test("運び終えると onEnter を1回呼び、層を残して消し始めること", async () => {
-        const layer = queryPieceLayer();
-
-        await finishAnimationsOf(layer);
-
-        expect(onEnter).toHaveBeenCalledTimes(1);
-        expect(queryPieceLayer()).toBe(layer);
-        expect(
-          recorded.filter(({ element }) => element === layer),
-        ).toHaveLength(2);
-      });
-
-      test("消し終えると層を取り除き、onEnter を呼び直さないこと", async () => {
-        const layer = queryPieceLayer();
-
-        await finishAnimationsOf(layer);
-        await finishAnimationsOf(layer);
-
-        expect(queryPieceLayer()).toBeNull();
-        expect(onEnter).toHaveBeenCalledTimes(1);
-      });
-
-      const skipEvents = [
-        ["pointerdown", () => new PointerEvent("pointerdown")],
-        ["keydown", () => new KeyboardEvent("keydown", { key: "Escape" })],
-      ] as const;
-
-      test.each(skipEvents)(
-        "動きの間に window へ届いた操作で飛ばし、すぐに onEnter を1回呼ぶこと: %s",
-        async (_, createEvent) => {
-          window.dispatchEvent(createEvent());
-          const calledOnSkip = onEnter.mock.calls.length;
-          await finishAnimationsOf(queryPieceLayer());
-
-          expect(calledOnSkip).toBe(1);
-          expect(onEnter).toHaveBeenCalledTimes(1);
-        },
-      );
-
-      describe("運び終えた場合", () => {
-        let animationCount: number;
-
-        beforeEach(async () => {
-          await finishAnimationsOf(queryPieceLayer());
-          animationCount = recorded.length;
-        });
-
-        test("window へ届いた操作を受けないこと", () => {
-          window.dispatchEvent(new PointerEvent("pointerdown"));
-          window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-
-          expect(recorded).toHaveLength(animationCount);
-          expect(onEnter).toHaveBeenCalledTimes(1);
-        });
-      });
-
-      test("始める前にやめると、onEnter を呼ばず、ピースの層を取り除いてマスを戻し、運び終えても始めないこと", async () => {
-        const layer = queryPieceLayer();
-
-        cancels[0]?.();
-        await finishAnimationsOf(layer);
-
-        expect(onEnter).not.toHaveBeenCalled();
-        expect(queryPieceLayer()).toBeNull();
-        expect(home.square.style.visibility).toBe("");
-      });
-
-      describe("運び終えて始めたあと", () => {
-        beforeEach(async () => {
-          await finishAnimationsOf(queryPieceLayer());
-        });
-
-        test("やめても、消していくピースの層を取り除かないこと", () => {
-          cancels[0]?.();
-
-          expect(onEnter).toHaveBeenCalledTimes(1);
-          expect(queryPieceLayer()).not.toBeNull();
-        });
-      });
-
-      test("返り値の関数で飛ばすと、すぐに onEnter を呼び、運び終えても呼び直さないこと", async () => {
-        skip();
-        const calledOnSkip = onEnter.mock.calls.length;
-        await finishAnimationsOf(queryPieceLayer());
-
-        expect(calledOnSkip).toBe(1);
-        expect(onEnter).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    describe("抜くピースが台紙の見えている範囲の外にあり、台紙を送らずに抜く場合", () => {
-      beforeEach(() => {
+      test("入るマスに印を付け、すぐに onEnter を1回呼ぶこと", () => {
         startEntry({ spinsToPiece: false });
-      });
 
-      test("ピースを見える所へ送ってから抜くこと", async () => {
-        await vi.advanceTimersByTimeAsync(
-          ZUKAN_PLAY_ENTRY_DURATION_MS.spin + 50,
-        );
-
-        expect(home.scroller.scrollTop).toBe(410);
-        expect(queryPieceLayer()).not.toBeNull();
+        expect(isMarkedAsEntered(home.square)).toBe(true);
+        expect(onEnter).toHaveBeenCalledTimes(1);
       });
     });
 
-    describe("台紙を送ってから抜く動きを始めた場合", () => {
-      let skip: () => void;
+    describe("台紙を送ってから入る場合", () => {
+      describe("動きを始めた場合", () => {
+        beforeEach(() => {
+          startEntry({ spinsToPiece: true });
+        });
 
-      beforeEach(() => {
-        skip = startEntry({ spinsToPiece: true });
-      });
+        test("送っている間は、マスに印を付けず、onEnter を呼ばないこと", async () => {
+          await flushFrames(ZUKAN_PLAY_ENTRY_DURATION_MS.spin / 2);
 
-      test("送っている間はピースを抜かず、onEnter を呼ばないこと", async () => {
-        await vi.advanceTimersByTimeAsync(
-          ZUKAN_PLAY_ENTRY_DURATION_MS.spin / 2,
-        );
+          expect(isMarkedAsEntered(home.square)).toBe(false);
+          expect(onEnter).not.toHaveBeenCalled();
+        });
 
-        expect(home.scroller.scrollTop).toBeGreaterThan(0);
-        expect(home.scroller.scrollTop).toBeLessThan(410);
-        expect(queryPieceLayer()).toBeNull();
-        expect(onEnter).not.toHaveBeenCalled();
-      });
+        test("入るピースが台紙の見えている高さの中央へ来る位置まで送ってから、マスに印を付けて onEnter を1回呼ぶこと", async () => {
+          await flushFrames(ZUKAN_PLAY_ENTRY_DURATION_MS.spin + 50);
 
-      test("抜くピースが台紙の見えている高さの中央へ来る位置まで送ってから、ピースを抜くこと", async () => {
-        await vi.advanceTimersByTimeAsync(
-          ZUKAN_PLAY_ENTRY_DURATION_MS.spin + 50,
-        );
+          expect(home.scroller.scrollTop).toBe(410);
+          expect(isMarkedAsEntered(home.square)).toBe(true);
+          expect(onEnter).toHaveBeenCalledTimes(1);
+        });
 
-        expect(home.scroller.scrollTop).toBe(410);
-        expect(queryPieceLayer()?.parentElement).toBe(document.body);
-      });
+        describe("送っている間に操作が届いた場合", () => {
+          const pressCases = [
+            ["pointerdown", () => new MouseEvent("pointerdown", { button: 0 })],
+            ["keydown", () => new KeyboardEvent("keydown", { key: "Enter" })],
+          ] as const;
 
-      describe("送っている途中", () => {
-        beforeEach(async () => {
-          await vi.advanceTimersByTimeAsync(
-            ZUKAN_PLAY_ENTRY_DURATION_MS.spin / 2,
+          test.each(pressCases)(
+            "window へ %s が届くと、すぐに onEnter を1回呼ぶこと",
+            (_type, createEvent) => {
+              window.dispatchEvent(createEvent());
+
+              expect(onEnter).toHaveBeenCalledTimes(1);
+            },
           );
         });
+      });
 
-        test("飛ばすと、すぐに onEnter を1回呼び、送るのをやめてピースを抜かないこと", async () => {
-          skip();
-          const scrollTopOnSkip = home.scroller.scrollTop;
-          await vi.advanceTimersByTimeAsync(ZUKAN_PLAY_ENTRY_DURATION_MS.spin);
+      describe("返り値の操作を受け取った場合", () => {
+        let control: ReturnType<typeof playZukanPlayEntry>;
 
+        beforeEach(() => {
+          control = startEntry({ spinsToPiece: true });
+        });
+
+        test("skip で飛ばすと、マスに印を付けずにすぐ onEnter を1回呼び、送り終える時間が過ぎても呼び直さないこと", async () => {
+          control.skip();
+          await flushFrames(ZUKAN_PLAY_ENTRY_DURATION_MS.spin + 50);
+
+          expect(isMarkedAsEntered(home.square)).toBe(false);
           expect(onEnter).toHaveBeenCalledTimes(1);
-          expect(home.scroller.scrollTop).toBe(scrollTopOnSkip);
-          expect(queryPieceLayer()).toBeNull();
+        });
+
+        test("cancel でやめると、送り終える時間が過ぎても onEnter を呼ばないこと", async () => {
+          control.cancel();
+          await flushFrames(ZUKAN_PLAY_ENTRY_DURATION_MS.spin + 50);
+
+          expect(onEnter).not.toHaveBeenCalled();
         });
       });
     });

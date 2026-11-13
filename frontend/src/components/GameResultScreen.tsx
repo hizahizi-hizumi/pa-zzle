@@ -76,6 +76,7 @@ export function GameResultScreen({
       <h1 className="sr-only">プレイ結果</h1>
       <div
         className="result-screen"
+        data-screen-frame=""
         data-level={level}
         onPointerDown={(event) => finishReveal(event.currentTarget)}
         onKeyDown={(event) => {
