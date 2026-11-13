@@ -113,15 +113,17 @@ describe("MinesweeperHomeView", () => {
     expect(href).toBe("/");
   });
 
-  test("まだクリアしていなければ、ランダムに遊ぶでチュートリアルを開き、とばして遊ぶを押すと選んだレベルのプレイ画面へ進むこと", async () => {
-    chooseLevel("レベル 3");
-    fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
-    fireEvent.click(
-      await screen.findByRole("button", { name: "とばして遊ぶ" }),
-    );
+  describe("まだクリアしていない場合", () => {
+    test("ランダムに遊ぶでチュートリアルを開き、とばして遊ぶを押すと選んだレベルのプレイ画面へ進むこと", async () => {
+      chooseLevel("レベル 3");
+      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+      fireEvent.click(
+        await screen.findByRole("button", { name: "とばして遊ぶ" }),
+      );
 
-    const { pathname } = router.state.location;
+      const { pathname } = router.state.location;
 
-    expect(pathname).toBe("/puzzles/minesweeper/play/3");
+      expect(pathname).toBe("/puzzles/minesweeper/play/3");
+    });
   });
 });

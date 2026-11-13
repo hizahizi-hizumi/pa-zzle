@@ -1125,12 +1125,13 @@ describe("GameHomeScreen", () => {
       renderScreen(zukan, noZukanChanges, null, renderTestTutorial);
     });
 
-    test("クリアしたことがあれば、ランダムに遊ぶを押すとチュートリアルを開かずにプレイへ入ること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+    describe("クリアしたことがある場合", () => {
+      test("ランダムに遊ぶを押すとチュートリアルを開かずにプレイへ入ること", () => {
+        fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+        const dialog = screen.queryByRole("dialog", { name: "チュートリアル" });
 
-      expect(
-        screen.queryByRole("dialog", { name: "チュートリアル" }),
-      ).toBeNull();
+        expect(dialog).toBeNull();
+      });
     });
 
     test("チュートリアルを最初は開かないこと", () => {
@@ -2848,12 +2849,7 @@ describe("findMilestoneProblemId", () => {
   });
 
   test("節目に届かなければ null を返すこと", () => {
-    const problemId = findMilestoneProblemId(
-      problems,
-      numberOrder,
-      changes,
-      9,
-    );
+    const problemId = findMilestoneProblemId(problems, numberOrder, changes, 9);
 
     expect(problemId).toBeNull();
   });
