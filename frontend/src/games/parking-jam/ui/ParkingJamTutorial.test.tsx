@@ -101,6 +101,11 @@ function queryVehicle(vehicleId: VehicleId): HTMLElement | null {
   });
 }
 
+/** 導入で出ていく姿だけを見せる車は押せる車として読ませないので、描いた車の絵で数える。 */
+function getDrawnCars(): Element[] {
+  return [...screen.getByRole("main").querySelectorAll(".parking-jam-car")];
+}
+
 function moveVehicles(
   moves: readonly (readonly [VehicleId, ArrowKey])[],
   holdMs = 0,
@@ -514,37 +519,39 @@ describe("ParkingJamTutorial", () => {
         "駐車場の車を すべて道路へ出すパズルです",
       );
       const caption = screen.queryByText("駐車場が空になったらゴールです");
-      const vehicle = queryVehicle("e");
+      const cars = getDrawnCars();
+      const operableVehicle = queryVehicle("e");
 
       expect(purpose).not.toBeNull();
       expect(caption).not.toBeNull();
-      expect(vehicle).not.toBeNull();
+      expect(cars).toHaveLength(Object.keys(vehicleLabels).length);
+      expect(operableVehicle).toBeNull();
     });
 
     test("待つと、車をすべて出し終えた空の駐車場を見せ、次へを待つこと", () => {
       advanceTime(introEnoughMs);
 
-      const vehicle = queryVehicle("e");
+      const cars = getDrawnCars();
       const nextButton = screen.queryByRole("button", { name: "次へ" });
 
-      expect(vehicle).toBeNull();
+      expect(cars).toEqual([]);
       expect(nextButton).not.toBeNull();
     });
 
     test("車を押しても、手順へ飛ばずに、車を出していく動きを終えて空の駐車場を見せ、次へを待つこと", () => {
-      const vehicleBeforePress = queryVehicle("e");
-      if (!vehicleBeforePress) {
-        throw new Error("車 e がない");
+      const [carBeforePress] = getDrawnCars();
+      if (!carBeforePress) {
+        throw new Error("車がない");
       }
-      fireEvent.pointerDown(vehicleBeforePress);
+      fireEvent.pointerDown(carBeforePress);
 
       const caption = screen.queryByText("駐車場が空になったらゴールです");
-      const vehicle = queryVehicle("e");
+      const cars = getDrawnCars();
       const nextButton = screen.queryByRole("button", { name: "次へ" });
       const cued = getCuedVehicles();
 
       expect(caption).not.toBeNull();
-      expect(vehicle).toBeNull();
+      expect(cars).toEqual([]);
       expect(nextButton).not.toBeNull();
       expect(cued).toEqual([]);
     });

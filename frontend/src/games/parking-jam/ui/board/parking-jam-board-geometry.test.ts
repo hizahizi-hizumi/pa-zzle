@@ -98,7 +98,6 @@ describe("getVehicleCollisionTranslation", () => {
       {
         target: { kind: "vehicle", vehicleId: "b" },
         freeCellCount: 0,
-        roadless: false,
       },
       { x: 26, y: 0 },
     ],
@@ -108,14 +107,13 @@ describe("getVehicleCollisionTranslation", () => {
       {
         target: { kind: "fixed-area", cell: { row: 0, column: 0 } },
         freeCellCount: 2,
-        roadless: false,
       },
       { x: 0, y: -226 },
     ],
     [
       "外周には、縁石に当たるまで進む",
       "left",
-      { target: { kind: "wall" }, freeCellCount: 1, roadless: true },
+      { target: { kind: "wall" }, freeCellCount: 1 },
       { x: -109, y: 0 },
     ],
   ] as const;

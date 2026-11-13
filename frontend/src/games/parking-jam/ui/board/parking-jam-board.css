@@ -132,21 +132,18 @@
 .parking-jam-car--depart-down {
   animation: pj-exit 520ms cubic-bezier(0.25, 0.1, 0.45, 1) forwards;
 }
-/* 車がぶつかった瞬間（parking-jam-board-motion.ts の PARKING_JAM_COLLISION_IMPACT_MS）に、行き止まりの縁石を光らせる。 */
+/* 光り始める時刻・長さ・イージングは parking-jam-board-motion.ts の値を ParkingJamBoard.tsx が渡す。 */
 .parking-jam-board__roadless-curb {
   stroke: #ffd65c;
   stroke-linecap: round;
   opacity: 0;
   filter: drop-shadow(0 0 6px rgb(255 196 64 / 0.9));
   pointer-events: none;
-  animation: pj-roadless-curb 420ms ease-out 118ms;
+  animation-name: pj-roadless-curb;
 }
 @media (prefers-reduced-motion: reduce) {
   [class*="parking-jam-car--depart-"] {
     animation-duration: 1ms;
-  }
-  .parking-jam-board__roadless-curb {
-    animation-delay: 0ms;
   }
 }
 .parking-jam-car__wheel {

@@ -222,13 +222,12 @@ describe("findParkingJamCollision", () => {
       {
         target: { kind: "vehicle", vehicleId: "b" },
         freeCellCount: 1,
-        roadless: true,
       },
     ],
     [
       "途中に何もなく道路につながっていない車線では、外周にぶつかる",
       { vehicleId: "c", direction: "right" },
-      { target: { kind: "wall" }, freeCellCount: 0, roadless: true },
+      { target: { kind: "wall" }, freeCellCount: 0 },
     ],
     [
       "道路につながっている車線では、途中で最初に当たる植え込みにぶつかる",
@@ -236,7 +235,6 @@ describe("findParkingJamCollision", () => {
       {
         target: { kind: "fixed-area", cell: { row: 1, column: 5 } },
         freeCellCount: 1,
-        roadless: false,
       },
     ],
     [
@@ -245,7 +243,6 @@ describe("findParkingJamCollision", () => {
       {
         target: { kind: "vehicle", vehicleId: "b" },
         freeCellCount: 3,
-        roadless: false,
       },
     ],
   ] as const;

@@ -241,8 +241,6 @@ export type ParkingJamCollision = {
   target: ParkingJamExitContact["blocker"];
   /** ぶつかるものまでのマスの数。`wall` では、外周までのマスの数。 */
   freeCellCount: number;
-  /** 進む先の外周が、その車線で道路につながっていない。 */
-  roadless: boolean;
 };
 
 export function findParkingJamCollision(
@@ -255,8 +253,5 @@ export function findParkingJamCollision(
   if (!contact || !vehicle) {
     return null;
   }
-  return {
-    ...findFirstObstacle(board, state, vehicle, move.direction),
-    roadless: contact.blocker.kind === "wall",
-  };
+  return findFirstObstacle(board, state, vehicle, move.direction);
 }

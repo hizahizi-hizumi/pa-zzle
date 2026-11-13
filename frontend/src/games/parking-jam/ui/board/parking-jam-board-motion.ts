@@ -3,7 +3,7 @@ import type { ParkingJamDirection } from "@/games/parking-jam/puzzle/board";
 type Translation = { x: number; y: number };
 
 /** 出られない車が、ぶつかって元の位置へ戻り終えるまでの長さ。 */
-export const PARKING_JAM_COLLISION_DURATION_MS = 280;
+const PARKING_JAM_COLLISION_DURATION_MS = 280;
 /** 出られない車が、ぶつかる相手に当たる時刻。 */
 export const PARKING_JAM_COLLISION_IMPACT_MS = Math.round(
   PARKING_JAM_COLLISION_DURATION_MS * 0.42,
@@ -14,6 +14,15 @@ const STRUCK_SHAKE_DURATION_MS = 220;
 const STRUCK_SHAKE_DISTANCE = 16;
 /** ぶつかった車が跳ね返る量。 */
 const COLLISION_REBOUND_DISTANCE = 18;
+/** ぶつかる相手へ加速していく、当たった後に跳ね返る、元の位置へ戻る動きのイージング。 */
+const COLLISION_APPROACH_EASING = "cubic-bezier(0.55, 0, 1, 0.6)";
+const COLLISION_REBOUND_EASING = "cubic-bezier(0, 0, 0.3, 1)";
+const COLLISION_RETURN_EASING = "cubic-bezier(0.4, 0, 0.2, 1)";
+const STRUCK_SHAKE_EASING = "ease-out";
+
+/** 行き止まりの縁石が、車が当たった瞬間から光って消えるまでの長さとイージング。 */
+export const PARKING_JAM_ROADLESS_CURB_FLASH_MS = 420;
+export const PARKING_JAM_ROADLESS_CURB_FLASH_EASING = "ease-out";
 
 /** 出ていく動きの長さ。 */
 export const PARKING_JAM_EXIT_DURATION_MS = 520;
@@ -25,6 +34,7 @@ export const PARKING_JAM_FINALE_DELAY_MS = 240;
 const FINALE_LINE_DURATION_MS = 300;
 /** 最後の車が出た所から遠い線ほど遅れて光り始める、その遅れの最大。 */
 const FINALE_SPREAD_MS = 260;
+const FINALE_LINE_EASING = "ease-out";
 
 function translate({ x, y }: Translation): string {
   return `translate(${x}px, ${y}px)`;
@@ -85,16 +95,16 @@ export function playParkingJamCollision(
     PARKING_JAM_COLLISION_IMPACT_MS / PARKING_JAM_COLLISION_DURATION_MS;
   car.animate(
     [
-      { transform: from, easing: "cubic-bezier(0.55, 0, 1, 0.6)" },
+      { transform: from, easing: COLLISION_APPROACH_EASING },
       {
         transform: translate(hit),
         offset: impactOffset,
-        easing: "cubic-bezier(0, 0, 0.3, 1)",
+        easing: COLLISION_REBOUND_EASING,
       },
       {
         transform: translate({ x: hit.x + rebound.x, y: hit.y + rebound.y }),
         offset: impactOffset + 0.18,
-        easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+        easing: COLLISION_RETURN_EASING,
       },
       { transform: translate({ x: 0, y: 0 }) },
     ],
@@ -122,7 +132,7 @@ export function playParkingJamStruck(
     {
       duration: STRUCK_SHAKE_DURATION_MS,
       delay: PARKING_JAM_COLLISION_IMPACT_MS,
-      easing: "ease-out",
+      easing: STRUCK_SHAKE_EASING,
       composite: "add",
     },
   );
@@ -184,7 +194,7 @@ export function playParkingJamFinale(
               delay:
                 PARKING_JAM_FINALE_DELAY_MS +
                 (distance / farthest) * FINALE_SPREAD_MS,
-              easing: "ease-out",
+              easing: FINALE_LINE_EASING,
             },
           ),
         ]

@@ -41,6 +41,9 @@ import {
   parkingJamBoardGeometry,
 } from "@/games/parking-jam/ui/board/parking-jam-board-geometry";
 import {
+  PARKING_JAM_COLLISION_IMPACT_MS,
+  PARKING_JAM_ROADLESS_CURB_FLASH_EASING,
+  PARKING_JAM_ROADLESS_CURB_FLASH_MS,
   playParkingJamCollision,
   playParkingJamExit,
   playParkingJamFinale,
@@ -167,7 +170,9 @@ function getVehicleCenter(vehicle: ParkingJamVehicle): {
 }
 
 function getLineCenter(line: Element): { x: number; y: number } {
-  const read = (name: string) => Number(line.getAttribute(name) ?? 0);
+  function read(name: string): number {
+    return Number(line.getAttribute(name) ?? 0);
+  }
   return {
     x: (read("x1") + read("x2")) / 2,
     y: (read("y1") + read("y2")) / 2,
@@ -214,8 +219,9 @@ export function ParkingJamBoard({
     operation?.type === "blocked"
       ? board.vehicles.find(({ id }) => id === operation.vehicleId)
       : undefined;
+  // 行き止まりの縁石は、車か植え込みより先に縁石へ当たるときだけ光らせる。
   const roadlessCurb =
-    blockedVehicle && operation && collision?.roadless
+    blockedVehicle && operation && collision?.target.kind === "wall"
       ? parkingJamBoardGeometry.getLaneCurbLine(
           board,
           blockedVehicle,
@@ -312,7 +318,7 @@ export function ParkingJamBoard({
     }));
   }, [exitedVehicleIds, state]);
 
-  const playFinale = useEffectEvent((): Animation[] => {
+  const playFinale = useEffectEvent(function playFinale(): Animation[] {
     const lastVehicle = board.vehicles.find(
       ({ id }) => id === operation?.vehicleId,
     );
@@ -409,6 +415,12 @@ export function ParkingJamBoard({
           key={`roadless-${operation.id}`}
           {...roadlessCurb}
           className="parking-jam-board__roadless-curb"
+          style={{
+            animationDuration: `${PARKING_JAM_ROADLESS_CURB_FLASH_MS}ms`,
+            animationTimingFunction: PARKING_JAM_ROADLESS_CURB_FLASH_EASING,
+            // 動きを減らす設定では車がぶつかる動きが無いので、すぐ光らせる。
+            animationDelay: `${prefersReducedMotion() ? 0 : PARKING_JAM_COLLISION_IMPACT_MS}ms`,
+          }}
         />
       ) : null}
       <g key={getBoardKey(board)} clipPath={paint.vehicleSpaceClipPath}>
@@ -459,10 +471,14 @@ export function ParkingJamBoard({
                   carElements.current.delete(vehicle.id);
                 }
               }}
-              role="button"
-              tabIndex={interactionDisabled || !isRemaining ? -1 : 0}
-              aria-label={getVehicleLabel(vehicle)}
-              aria-pressed={selected}
+              // 出庫して盤面の外で出ていく姿だけを見せる車は、押せる車として読ませない。
+              role={isRemaining ? "button" : undefined}
+              tabIndex={
+                isRemaining ? (interactionDisabled ? -1 : 0) : undefined
+              }
+              aria-label={isRemaining ? getVehicleLabel(vehicle) : undefined}
+              aria-pressed={isRemaining ? selected : undefined}
+              aria-hidden={isRemaining ? undefined : true}
               className={`parking-jam-car${selected ? " parking-jam-car--selected" : ""}${feedbackClass}`}
               style={departureStyle}
               onPointerDown={(event) => handlePointerDown(event, vehicle)}
