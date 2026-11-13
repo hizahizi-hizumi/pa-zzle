@@ -4,7 +4,37 @@ import {
   getSlidePuzzleBoardSize,
   isSlidePuzzleSolved,
   isStandardSlidePuzzleBoard,
+  listSlidePuzzleSolvedLines,
 } from "@/games/slide-puzzle/puzzle/state";
+
+describe("listSlidePuzzleSolvedLines", () => {
+  const cases = [
+    [
+      "上の行と左の列がそろった盤面では、その行と列",
+      [1, 2, 3, 4, 8, 5, 7, 0, 6],
+      [
+        { axis: "row", index: 0 },
+        { axis: "column", index: 0 },
+      ],
+    ],
+    [
+      "空白が右下にない最下段は、ほかのタイルがそろっていてもそろっていない",
+      [1, 2, 3, 4, 5, 6, 7, 0, 8],
+      [
+        { axis: "row", index: 0 },
+        { axis: "row", index: 1 },
+        { axis: "column", index: 0 },
+      ],
+    ],
+    ["そろった並びのない盤面では空", [2, 1, 3, 5, 4, 0, 8, 7, 6], []],
+  ] as const;
+
+  test.each(cases)("%sを返すこと", (_, board, expected) => {
+    const lines = listSlidePuzzleSolvedLines(board);
+
+    expect(lines).toEqual(expected);
+  });
+});
 
 describe("isSlidePuzzleSolved", () => {
   const cases = [

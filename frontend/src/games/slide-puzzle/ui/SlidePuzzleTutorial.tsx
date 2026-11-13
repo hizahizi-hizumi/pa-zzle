@@ -94,6 +94,7 @@ function createOperation(
         boardBefore: before,
         boardAfter: board,
         isClearingMove: next.phase === "solved",
+        alignedLines: [],
       };
     case undefined:
       return null;

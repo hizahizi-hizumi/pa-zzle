@@ -60,6 +60,47 @@ describe("useSlidePuzzlePlay", () => {
     });
   });
 
+  test("初めて完成配置にそろった列を知らせ、始めからそろっていた行は知らせないこと", () => {
+    act(() => result.current.slideTile(13));
+
+    expect(result.current.operation).toMatchObject({
+      type: "slid",
+      alignedLines: [{ axis: "column", index: 0 }],
+    });
+  });
+
+  test("一度そろえた列を崩してまたそろえても、知らせ直さないこと", () => {
+    act(() => result.current.slideTile(13));
+    act(() => result.current.slideTile(12));
+    act(() => result.current.slideTile(13));
+
+    expect(result.current.operation).toMatchObject({
+      type: "slid",
+      alignedLines: [],
+    });
+  });
+
+  test("盤面を戻すと、そろえた列をまた知らせること", () => {
+    act(() => result.current.slideTile(13));
+    act(() => result.current.restart());
+    act(() => result.current.slideTile(13));
+
+    expect(result.current.operation).toMatchObject({
+      type: "slid",
+      alignedLines: [{ axis: "column", index: 0 }],
+    });
+  });
+
+  test("クリアする手では、そろった行と列を知らせないこと", () => {
+    act(() => result.current.slideTile(15));
+
+    expect(result.current.operation).toMatchObject({
+      type: "slid",
+      isClearingMove: true,
+      alignedLines: [],
+    });
+  });
+
   test("成立しないタップでは盤面と手数を変えず不成立を通知すること", () => {
     act(() => result.current.slideTile(1));
 

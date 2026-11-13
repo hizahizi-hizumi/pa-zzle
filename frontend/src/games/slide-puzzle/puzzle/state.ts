@@ -65,6 +65,46 @@ export function isSlidePuzzleSolved(board: SlidePuzzleBoard): boolean {
   );
 }
 
+/** 盤面の1行か1列。`index` は上・左から 0 始まり。 */
+export type SlidePuzzleLine = {
+  axis: "row" | "column";
+  index: number;
+};
+
+function getSolvedTile(cellIndex: number, cellCount: number): SlidePuzzleTile {
+  return cellIndex === cellCount - 1 ? SLIDE_PUZZLE_BLANK : cellIndex + 1;
+}
+
+/** すべてのマスが完成配置と同じになっている行と列。行を上から、続けて列を左から並べる。 */
+export function listSlidePuzzleSolvedLines(
+  board: SlidePuzzleBoard,
+): SlidePuzzleLine[] {
+  const boardSize = getSlidePuzzleBoardSize(board);
+  function isSolvedCell(cellIndex: number): boolean {
+    return board[cellIndex] === getSolvedTile(cellIndex, board.length);
+  }
+  const lines: SlidePuzzleLine[] = [];
+  for (const axis of ["row", "column"] as const) {
+    for (let index = 0; index < boardSize; index += 1) {
+      const line = { axis, index };
+      if (listSlidePuzzleLineCellIndices(line, boardSize).every(isSolvedCell)) {
+        lines.push(line);
+      }
+    }
+  }
+  return lines;
+}
+
+/** 行は左から、列は上から並べたマス index。 */
+export function listSlidePuzzleLineCellIndices(
+  { axis, index }: SlidePuzzleLine,
+  boardSize: SlidePuzzleBoardSize,
+): number[] {
+  return Array.from({ length: boardSize }, (_, offset) =>
+    axis === "row" ? index * boardSize + offset : offset * boardSize + index,
+  );
+}
+
 export function findSlidePuzzleBlankIndex(board: SlidePuzzleBoard): number {
   const blankIndex = board.indexOf(SLIDE_PUZZLE_BLANK);
   if (blankIndex < 0) {

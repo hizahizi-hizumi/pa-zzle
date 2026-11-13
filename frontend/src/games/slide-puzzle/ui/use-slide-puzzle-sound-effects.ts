@@ -15,8 +15,11 @@ import clearNoteG5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-g
 import invalidSoundUrl from "@/games/slide-puzzle/assets/sounds/invalid.flac";
 import slidSoundUrl from "@/games/slide-puzzle/assets/sounds/slid.flac";
 import type { SlidePuzzleOperation } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
-import { getClearWaveTileDelayMs } from "@/games/slide-puzzle/ui/board/clear-wave";
-import { prefersReducedMotion } from "@/lib/motion";
+import {
+  CLEAR_LAST_PIECE_LANDING_MS,
+  getClearWaveTileDelayMs,
+} from "@/games/slide-puzzle/ui/board/clear-wave";
+import { MOTION_DURATION_MS, prefersReducedMotion } from "@/lib/motion";
 import {
   defineSoundEffect,
   playLayeredSound,
@@ -49,28 +52,51 @@ const slidePuzzleSounds: readonly SoundEffect[] = [
   ...clearScaleSounds,
 ];
 
+/** 完成演出の始まりからの時刻で並べた、最後の1枚がはまる音と、波でタイルが持ち上がるたびの音。波には最後の1枚も含める。 */
 function createClearedSoundLayers(tileCount: number): SoundLayer[] {
   const lastScaleIndex = clearScaleSounds.length - 1;
-  const firstTileDelayMs = getClearWaveTileDelayMs(0);
-  return Array.from({ length: tileCount }, function createTileNote(_, order) {
-    const scaleIndex = Math.round(
-      (order * lastScaleIndex) / Math.max(tileCount - 1, 1),
-    );
-    const sound = clearScaleSounds[scaleIndex];
-    return (
-      sound && {
-        sound,
-        offsetMs: getClearWaveTileDelayMs(order) - firstTileDelayMs,
-      }
-    );
-  }).filter((layer) => layer !== undefined);
+  const pieceCount = tileCount + 1;
+  const waveNotes = Array.from(
+    { length: pieceCount },
+    function createTileNote(_, order) {
+      const scaleIndex = Math.round(
+        (order * lastScaleIndex) / Math.max(pieceCount - 1, 1),
+      );
+      const sound = clearScaleSounds[scaleIndex];
+      return sound && { sound, offsetMs: getClearWaveTileDelayMs(order) };
+    },
+  ).filter((layer) => layer !== undefined);
+  return [
+    { sound: slidSound, offsetMs: CLEAR_LAST_PIECE_LANDING_MS },
+    ...waveNotes,
+  ];
+}
+
+/** そろった行・列を持ち上げるときの1音。下の行・右の列ほど高くし、そろえ進むほど上がっていくようにする。 */
+function getAlignedLineSound(
+  lines: Extract<SlidePuzzleOperation, { type: "slid" }>["alignedLines"],
+): SoundEffect | undefined {
+  const steps = lines.map(
+    ({ axis, index }) => index + (axis === "column" ? 2 : 0),
+  );
+  return clearScaleSounds[
+    Math.min(Math.max(...steps), clearScaleSounds.length - 1)
+  ];
 }
 
 function playOperationSound(operation: SlidePuzzleOperation) {
   switch (operation.type) {
-    case "slid":
+    case "slid": {
       playSound(slidSound, { variation: REPEATED_SOUND_VARIATION });
+      const alignedSound =
+        operation.alignedLines.length > 0 && !prefersReducedMotion()
+          ? getAlignedLineSound(operation.alignedLines)
+          : undefined;
+      if (alignedSound) {
+        playSound(alignedSound, { delayMs: MOTION_DURATION_MS.normal });
+      }
       return;
+    }
     case "invalid":
       if (!prefersReducedMotion()) {
         playSound(invalidSound);
@@ -87,9 +113,6 @@ export function useSlidePuzzleSoundEffects(
   usePrepareSoundEffects(slidePuzzleSounds);
   useOperationSound(operation, playOperationSound);
   useClearSound(progress, function playClearSound() {
-    // 波は最後のタイルが滑り終えてから始まる。
-    playLayeredSound(createClearedSoundLayers(tileCount), {
-      delayMs: getClearWaveTileDelayMs(0),
-    });
+    playLayeredSound(createClearedSoundLayers(tileCount));
   });
 }

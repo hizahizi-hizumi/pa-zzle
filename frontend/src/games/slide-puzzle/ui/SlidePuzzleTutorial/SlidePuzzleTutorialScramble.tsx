@@ -43,6 +43,7 @@ const frames: readonly SlidePuzzleScrambleFrame[] =
               boardBefore: before,
               boardAfter: board,
               isClearingMove: false,
+              alignedLines: [],
             }
           : null,
     };

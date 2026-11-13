@@ -65,6 +65,21 @@ describe("SlidePuzzleBoard", () => {
         expect(onSlideTile).toHaveBeenCalledWith(expectedTileIndex);
       },
     );
+
+    // 空白は左下（マス 12）。タイル 15（マス 15）は空白の右にある。
+    const swipeCases = [
+      ["空白へ向かう左へのスワイプはタップと同じく受けること", -40, [[15]]],
+      ["空白から離れる右へのスワイプは受けないこと", 40, []],
+    ] as const;
+
+    test.each(swipeCases)("タイルの%s", (_, deltaX, expectedCalls) => {
+      const tile = within(boardGroup).getByRole("button", { name: "15" });
+      fireEvent.pointerDown(tile, { clientX: 200, clientY: 100 });
+      fireEvent.pointerUp(tile, { clientX: 200 + deltaX, clientY: 104 });
+      fireEvent.click(tile);
+
+      expect(onSlideTile.mock.calls).toEqual(expectedCalls);
+    });
   });
 
   describe.each([

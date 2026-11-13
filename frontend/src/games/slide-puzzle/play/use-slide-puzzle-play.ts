@@ -21,9 +21,11 @@ import {
   type SlidePuzzleSlide,
   type SlidePuzzleTileDirection,
 } from "@/games/slide-puzzle/puzzle/rules";
-import type {
-  SlidePuzzleBoard,
-  SlidePuzzleBoardSize,
+import {
+  listSlidePuzzleSolvedLines,
+  type SlidePuzzleBoard,
+  type SlidePuzzleBoardSize,
+  type SlidePuzzleLine,
 } from "@/games/slide-puzzle/puzzle/state";
 import {
   calculateSlidePuzzleMoveDelta,
@@ -49,6 +51,8 @@ export type SlidePuzzleOperation =
       boardBefore: SlidePuzzleBoard;
       boardAfter: SlidePuzzleBoard;
       isClearingMove: boolean;
+      /** この手で初めて完成配置にそろった行と列。クリアする手では空にする。 */
+      alignedLines: readonly SlidePuzzleLine[];
     }
   | { id: number; type: "invalid"; tileIndex: number };
 
@@ -113,7 +117,17 @@ type SlidePuzzlePlayState = {
   optimalMoveCount: number;
   progress: GameProgress;
   operation: SlidePuzzleOperation | null;
+  /** このプレイでそろったことを一度示した行と列（`getLineKey`）。始めからそろっていたものも含める。 */
+  celebratedLineKeys: readonly string[];
 };
+
+function getLineKey({ axis, index }: SlidePuzzleLine): string {
+  return `${axis}:${index}`;
+}
+
+function listSolvedLineKeys(board: SlidePuzzleBoard): string[] {
+  return listSlidePuzzleSolvedLines(board).map(getLineKey);
+}
 
 function createPlayState(
   { problem, identity, optimalMoveCount }: SlidePuzzlePooledProblem,
@@ -125,6 +139,7 @@ function createPlayState(
     optimalMoveCount,
     progress: "playing",
     operation: null,
+    celebratedLineKeys: listSolvedLineKeys(problem.initialBoard),
   };
 }
 
@@ -160,6 +175,13 @@ function slideTileInPlay(
     };
   }
 
+  // 一度示した行と列は、崩してまたそろえても示し直さない。行き来するたびに鳴り続けないようにするため。
+  const isClearingMove = nextSession.status === "cleared";
+  const alignedLines = isClearingMove
+    ? []
+    : listSlidePuzzleSolvedLines(nextSession.puzzleState).filter(
+        (line) => !current.celebratedLineKeys.includes(getLineKey(line)),
+      );
   return {
     ...applyPlaySession(current, nextSession),
     operation: {
@@ -168,8 +190,13 @@ function slideTileInPlay(
       slide,
       boardBefore: session.puzzleState,
       boardAfter: nextSession.puzzleState,
-      isClearingMove: nextSession.status === "cleared",
+      isClearingMove,
+      alignedLines,
     },
+    celebratedLineKeys: [
+      ...current.celebratedLineKeys,
+      ...alignedLines.map(getLineKey),
+    ],
   };
 }
 
@@ -228,7 +255,13 @@ export function useSlidePuzzlePlay(
         current,
         restartSlidePuzzleSession(current.session),
       );
-      return next === current ? current : { ...next, operation: null };
+      return next === current
+        ? current
+        : {
+            ...next,
+            operation: null,
+            celebratedLineKeys: listSolvedLineKeys(next.session.puzzleState),
+          };
     });
   }, []);
 
@@ -240,6 +273,9 @@ export function useSlidePuzzlePlay(
         createSlidePuzzleSession(current.session.problem, startedAt),
       ),
       operation: null,
+      celebratedLineKeys: listSolvedLineKeys(
+        current.session.problem.initialBoard,
+      ),
     }));
   }, []);
 
