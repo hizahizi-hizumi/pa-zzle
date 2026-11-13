@@ -175,6 +175,108 @@ describe("useNanpurePlay", () => {
     });
   });
 
+  describe("行の最後の空きマスに解の数字を入れた場合", () => {
+    const { problem } = selectNanpureProblemForDifficulty(
+      "2",
+      "nanpure-selection-2",
+    );
+    const emptyCellIndices = problem.clues.flatMap((cell, cellIndex) =>
+      cell === null && cellIndex < 9 ? [cellIndex] : [],
+    );
+    const lastCellIndex = emptyCellIndices.at(-1) ?? 0;
+    let result: { current: HookResult };
+
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(
+        "nanpure-selection-2",
+      );
+      ({ result } = renderHook(() => useNanpurePlay("2")));
+      for (const cellIndex of emptyCellIndices.slice(0, -1)) {
+        act(() => result.current.selectCell(cellIndex));
+        act(() => result.current.inputDigit(problem.solution[cellIndex] ?? 1));
+      }
+      act(() => result.current.selectCell(lastCellIndex));
+    });
+
+    test("埋まりきった行を知らせること", () => {
+      act(() =>
+        result.current.inputDigit(problem.solution[lastCellIndex] ?? 1),
+      );
+      const { operation } = result.current;
+
+      expect(
+        operation?.type === "digit-entered" ? operation.completedUnits : null,
+      ).toContainEqual({ kind: "row", index: 0 });
+    });
+  });
+
+  describe("数字を固めた場合", () => {
+    const { problem } = selectNanpureProblemForDifficulty(
+      "2",
+      "nanpure-selection-2",
+    );
+    const emptyCellIndex = problem.clues.indexOf(null);
+    const lockedDigit = problem.solution[emptyCellIndex] ?? 1;
+    const otherDigit = lockedDigit === 1 ? 2 : 1;
+    const clueCellIndex = problem.clues.findIndex((cell) => cell !== null);
+    let result: { current: HookResult };
+
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(
+        "nanpure-selection-2",
+      );
+      ({ result } = renderHook(() => useNanpurePlay("2")));
+      act(() => result.current.lockDigit(lockedDigit));
+    });
+
+    test("マスを押すだけで固めた数字を置くこと", () => {
+      act(() => result.current.selectCell(emptyCellIndex));
+      const { board, selectedCellIndex, operation } = result.current;
+
+      expect(board[emptyCellIndex]).toBe(lockedDigit);
+      expect(selectedCellIndex).toBe(emptyCellIndex);
+      expect(operation?.type).toBe("digit-entered");
+    });
+
+    test("初期ヒントのマスは選ぶだけにすること", () => {
+      act(() => result.current.selectCell(clueCellIndex));
+      const { board, selectedCellIndex } = result.current;
+
+      expect(board[clueCellIndex]).toBe(problem.clues[clueCellIndex]);
+      expect(selectedCellIndex).toBe(clueCellIndex);
+    });
+
+    test("固めた数字をもう一度押すと固めを解くこと", () => {
+      act(() => result.current.inputDigit(lockedDigit));
+      act(() => result.current.selectCell(emptyCellIndex));
+      const { lockedDigit: currentLockedDigit, board } = result.current;
+
+      expect(currentLockedDigit).toBeNull();
+      expect(board[emptyCellIndex]).toBeNull();
+    });
+
+    test("別の数字を押すと固める数字を替えること", () => {
+      act(() => result.current.inputDigit(otherDigit));
+      const { lockedDigit: currentLockedDigit } = result.current;
+
+      expect(currentLockedDigit).toBe(otherDigit);
+    });
+
+    describe("メモの入力に切り替えた場合", () => {
+      beforeEach(() => {
+        act(() => result.current.toggleNotesMode());
+      });
+
+      test("マスを押すと固めた数字のメモを付けること", () => {
+        act(() => result.current.selectCell(emptyCellIndex));
+        const { notes, board } = result.current;
+
+        expect(notes[emptyCellIndex]).toEqual([lockedDigit]);
+        expect(board[emptyCellIndex]).toBeNull();
+      });
+    });
+  });
+
   describe("盤面を完成させる場合", () => {
     const { solution } = selectNanpureProblemForDifficulty(
       "2",

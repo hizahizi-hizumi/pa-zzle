@@ -1,7 +1,9 @@
 import type { NanpureBoard, NanpureCell } from "@/games/nanpure/puzzle/board";
 import {
   findNanpureConflictCellIndices,
+  findNanpureUnitsCompletedAt,
   getNanpureCandidates,
+  getNanpureUnitCellIndices,
   isNanpureBoardConsistent,
   isNanpureSolved,
 } from "@/games/nanpure/puzzle/rules";
@@ -102,4 +104,54 @@ describe("isNanpureSolved", () => {
 
     expect(solved).toBe(false);
   });
+});
+
+describe("findNanpureUnitsCompletedAt", () => {
+  const completedBoard = solution.map((cell, cellIndex) =>
+    cellIndex === 0 ? null : cell,
+  );
+  const unfinishedBoard = solution.map((cell, cellIndex) =>
+    cellIndex === 0 || cellIndex === 80 ? null : cell,
+  );
+  const mistakenBoard = solution.map((cell, cellIndex) =>
+    cellIndex === 8 ? 1 : cellIndex === 0 ? null : cell,
+  );
+
+  test("入れたマスを含む、解どおりに埋まった行・列・ブロックを返すこと", () => {
+    const units = findNanpureUnitsCompletedAt(completedBoard, solution, 80);
+
+    expect(units).toEqual([
+      { kind: "row", index: 8 },
+      { kind: "column", index: 8 },
+      { kind: "block", index: 8 },
+    ]);
+  });
+
+  test("空きのあるまとまりを返さないこと", () => {
+    const units = findNanpureUnitsCompletedAt(unfinishedBoard, solution, 72);
+
+    expect(units).toEqual([{ kind: "block", index: 6 }]);
+  });
+
+  test("解と違う数字を含むまとまりを返さないこと", () => {
+    const units = findNanpureUnitsCompletedAt(mistakenBoard, solution, 17);
+
+    expect(units).toEqual([{ kind: "row", index: 1 }]);
+  });
+});
+
+describe("getNanpureUnitCellIndices", () => {
+  const cases = [
+    [{ kind: "column", index: 2 }, [2, 11, 20, 29, 38, 47, 56, 65, 74]],
+    [{ kind: "block", index: 4 }, [30, 31, 32, 39, 40, 41, 48, 49, 50]],
+  ] as const;
+
+  test.each(cases)(
+    "まとまりのマスを端から順に返すこと: %o",
+    (unit, expected) => {
+      const cellIndices = getNanpureUnitCellIndices(unit);
+
+      expect(cellIndices).toEqual(expected);
+    },
+  );
 });

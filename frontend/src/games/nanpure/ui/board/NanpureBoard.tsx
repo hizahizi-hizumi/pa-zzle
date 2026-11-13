@@ -1,3 +1,5 @@
+import { useEffect, useEffectEvent, useRef } from "react";
+
 import {
   areNanpureCellsRelated,
   NANPURE_SIZE,
@@ -8,6 +10,10 @@ import type { NanpureBoardSpotlight } from "@/games/nanpure/ui/board/board-spotl
 import type { NanpureCellCue } from "@/games/nanpure/ui/board/cell-cue";
 import { NanpureUnitSpotlight } from "@/games/nanpure/ui/board/NanpureBoard/NanpureUnitSpotlight";
 import { NanpureCell } from "@/games/nanpure/ui/board/NanpureCell";
+import {
+  type NanpureUnitCompletionFlash,
+  playUnitCompletionFlash,
+} from "@/games/nanpure/ui/board/unit-completion-flash";
 import { cn } from "@/lib/utils";
 
 const NANPURE_CELL_INDICES = Array.from(
@@ -27,6 +33,7 @@ type NanpureBoardProps = {
   sizeClassName?: string;
   cues?: readonly NanpureCellCue[];
   spotlight?: NanpureBoardSpotlight | null;
+  unitCompletionFlash?: NanpureUnitCompletionFlash | null;
   onSelectCell: (cellIndex: number) => void;
 };
 
@@ -41,8 +48,30 @@ export function NanpureBoard({
   sizeClassName = "w-[min(96vw,calc(100svh-12rem),38rem)]",
   cues = [],
   spotlight = null,
+  unitCompletionFlash = null,
   onSelectCell,
 }: NanpureBoardProps) {
+  const boardRef = useRef<HTMLDivElement>(null);
+  const flashId = unitCompletionFlash?.id ?? null;
+  const playFlash = useEffectEvent(function playFlash() {
+    const board = boardRef.current;
+    return board && unitCompletionFlash
+      ? playUnitCompletionFlash(board, unitCompletionFlash.units)
+      : [];
+  });
+
+  useEffect(() => {
+    if (flashId === null) {
+      return;
+    }
+    const animations = playFlash();
+    return function finishFlash() {
+      for (const animation of animations) {
+        animation.cancel();
+      }
+    };
+  }, [flashId]);
+
   const cueByCellIndex = new Map(cues.map((cue) => [cue.cellIndex, cue]));
   const spotlitCells = new Set(spotlight?.cellIndices);
   const conflictCells = new Set(conflictCellIndices);
@@ -53,6 +82,7 @@ export function NanpureBoard({
   return (
     // マスの数字の大きさを盤面の幅で抑え、狭く置いた盤面でも数字がマスに収まるようにする。
     <div
+      ref={boardRef}
       className={cn(
         "relative grid aspect-square grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background [container-type:inline-size]",
         sizeClassName,

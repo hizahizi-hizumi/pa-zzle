@@ -55,6 +55,11 @@ export function NanpureHowToPlayDialog({
           <HowToPlayFigure rows={[[{ highlight: "selected", digit: 7 }]]} />
         </HowToPlayTransition>
       </li>
+      <li>
+        <p>
+          数字を長押しすると、その数字を固め、マスを押すだけで入れられる。固めた数字をもう一度押すと解ける。
+        </p>
+      </li>
       <li className="space-y-2">
         <p>
           メモをオンにすると、押した数字を候補として小さく書く。同じ数字をもう一度押すと消える。
@@ -114,6 +119,9 @@ export function NanpureHowToPlayDialog({
       </li>
       <li>
         <p>「消す」で選んだマスの数字とメモを消す。「待った」で1手戻す。</p>
+      </li>
+      <li>
+        <p>行・列・ブロックが正しくそろうと、そのマスが順に光る。</p>
       </li>
       <li>
         <p>盤面に正しく9つそろった数字は、下の数字が押せなくなる。</p>

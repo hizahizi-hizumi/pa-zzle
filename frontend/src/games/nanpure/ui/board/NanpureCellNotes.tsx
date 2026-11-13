@@ -11,10 +11,12 @@ type NanpureCellNotesProps = {
   notes: NanpureNotes[number];
   selectedValue: NanpureDigit | null;
   size: NanpureCellNotesSize;
+  /** 選んだマスの濃い地の上でも読めるよう、メモを濃い色で書く。 */
+  onSelectedCell?: boolean;
 };
 
 const textSizeClassNames: Record<NanpureCellNotesSize, string> = {
-  board: "text-[clamp(0.58rem,2.4vw,0.9rem)]",
+  board: "text-[clamp(0.7rem,2.9vw,1.08rem)]",
   figure: "text-xs",
 };
 
@@ -22,6 +24,7 @@ export function NanpureCellNotes({
   notes,
   selectedValue,
   size,
+  onSelectedCell = false,
 }: NanpureCellNotesProps) {
   return (
     <span
@@ -29,7 +32,8 @@ export function NanpureCellNotes({
       className={cn(
         // 文字サイズのクラスは後ろに置くと cn が leading-none を外すため、先に置く。
         textSizeClassNames[size],
-        "grid h-full w-full grid-cols-3 grid-rows-3 place-items-center leading-none font-normal text-muted-foreground/60",
+        "grid h-full w-full grid-cols-3 grid-rows-3 place-items-center leading-none font-medium text-muted-foreground",
+        onSelectedCell && "text-violet-950/85 dark:text-violet-50",
       )}
     >
       {NANPURE_DIGITS.map((digit) => (

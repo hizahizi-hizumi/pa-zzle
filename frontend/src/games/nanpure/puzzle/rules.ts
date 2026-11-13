@@ -150,3 +150,35 @@ export function isNanpureSolved(board: NanpureBoard): boolean {
     board.every((cell) => cell !== null) && isNanpureBoardConsistent(board)
   );
 }
+
+/** `index` は0始まりで、ブロックは左上から行優先に数える。 */
+export type NanpureUnit = {
+  kind: NanpureUnitKind;
+  index: number;
+};
+
+/** 行は左から、列は上から、ブロックは左上から行優先の順に並べる。 */
+export function getNanpureUnitCellIndices({
+  kind,
+  index,
+}: NanpureUnit): number[] {
+  return unitCellIndicesByKind[kind](index);
+}
+
+/** `cellIndex` を含む行・列・ブロックのうち、9マスすべてが解と同じ数字で埋まったもの。 */
+export function findNanpureUnitsCompletedAt(
+  board: NanpureBoard,
+  solution: NanpureBoard,
+  cellIndex: number,
+): NanpureUnit[] {
+  assertNanpureCellIndex(cellIndex);
+
+  return NANPURE_UNIT_KINDS.flatMap((kind) => {
+    const unit = { kind, index: unitIndexGetters[kind](cellIndex) };
+    const completed = getNanpureUnitCellIndices(unit).every(
+      (peerIndex) =>
+        board[peerIndex] !== null && board[peerIndex] === solution[peerIndex],
+    );
+    return completed ? [unit] : [];
+  });
+}

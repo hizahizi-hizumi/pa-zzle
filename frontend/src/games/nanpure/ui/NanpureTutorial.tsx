@@ -268,6 +268,7 @@ export function NanpureTutorial({
     setOperation(
       createNanpureDigitOperation(
         nextOperationIdRef.current++,
+        selectedCellIndex,
         getNanpureTutorialMistakeCellIndices(next.boardState).includes(
           selectedCellIndex,
         ),
@@ -339,6 +340,9 @@ export function NanpureTutorial({
     return (
       <div className="flex w-[min(100cqw,calc(100cqh-3.25rem),28rem)] flex-col gap-2">
         <NanpureClearAnimation
+          originCellIndex={
+            operation && "cellIndex" in operation ? operation.cellIndex : null
+          }
           active={
             progress.phase === "solved" || (scene === "goal" && scenePlaying)
           }

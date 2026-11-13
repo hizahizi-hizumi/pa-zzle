@@ -36,11 +36,13 @@ type NanpurePlayProps = GamePlayScreenProps<NanpureDifficulty, NanpureResult> &
     mistakeCellIndices: readonly number[];
     completedDigits: readonly NanpureDigit[];
     notesMode: boolean;
+    lockedDigit: NanpureDigit | null;
     operation: NanpureOperation | null;
     mistakeCount: number;
     undoCount: number;
     onSelectCell: (cellIndex: number) => void;
     onInputDigit: (digit: NanpureDigit) => void;
+    onLockDigit: (digit: NanpureDigit) => void;
     onErase: () => void;
     onToggleNotesMode: () => void;
   };
@@ -59,12 +61,14 @@ export function NanpurePlay({
   mistakeCellIndices,
   completedDigits,
   notesMode,
+  lockedDigit,
   operation,
   mistakeCount,
   undoCount,
   canUndo,
   onSelectCell,
   onInputDigit,
+  onLockDigit,
   onErase,
   onToggleNotesMode,
   onUndo,
@@ -126,6 +130,9 @@ export function NanpurePlay({
       <main className="flex shrink-0 justify-center px-2 pt-1 sm:px-6 sm:pt-3">
         <NanpureClearAnimation
           active={progress === "clearing"}
+          originCellIndex={
+            operation && "cellIndex" in operation ? operation.cellIndex : null
+          }
           onComplete={onClearAnimationComplete}
         >
           <NanpureBoard
@@ -136,6 +143,12 @@ export function NanpurePlay({
             conflictCellIndices={conflictCellIndices}
             mistakeCellIndices={mistakeCellIndices}
             interactionDisabled={!interactionEnabled}
+            unitCompletionFlash={
+              operation?.type === "digit-entered" &&
+              operation.completedUnits.length > 0
+                ? { id: operation.id, units: operation.completedUnits }
+                : null
+            }
             onSelectCell={onSelectCell}
           />
         </NanpureClearAnimation>
@@ -148,11 +161,13 @@ export function NanpurePlay({
         selectedHasAnswer={selectedHasAnswer}
         selectedHasNotes={selectedHasNotes}
         completedDigits={completedDigits}
+        lockedDigit={lockedDigit}
         canUndo={canUndo}
         onUndo={onUndo}
         onErase={onErase}
         onToggleNotesMode={onToggleNotesMode}
         onInputDigit={onInputDigit}
+        onLockDigit={onLockDigit}
       />
     </GamePlayFrame>
   );

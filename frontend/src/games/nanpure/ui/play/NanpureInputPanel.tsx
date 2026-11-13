@@ -11,11 +11,13 @@ type NanpureInputPanelProps = {
   selectedHasAnswer: boolean;
   selectedHasNotes: boolean;
   completedDigits: readonly NanpureDigit[];
+  lockedDigit: NanpureDigit | null;
   canUndo: boolean;
   onUndo: () => void;
   onErase: () => void;
   onToggleNotesMode: () => void;
   onInputDigit: (digit: NanpureDigit) => void;
+  onLockDigit: (digit: NanpureDigit) => void;
 };
 
 export function NanpureInputPanel({
@@ -25,11 +27,13 @@ export function NanpureInputPanel({
   selectedHasAnswer,
   selectedHasNotes,
   completedDigits,
+  lockedDigit,
   canUndo,
   onUndo,
   onErase,
   onToggleNotesMode,
   onInputDigit,
+  onLockDigit,
 }: NanpureInputPanelProps) {
   const canEnterDigit =
     interactionEnabled &&
@@ -68,7 +72,9 @@ export function NanpureInputPanel({
           notesMode={notesMode}
           canEnterDigit={canEnterDigit}
           completedDigits={completedDigits}
+          lockedDigit={interactionEnabled ? lockedDigit : null}
           onInputDigit={onInputDigit}
+          onLockDigit={interactionEnabled ? onLockDigit : undefined}
         />
       </div>
     </footer>

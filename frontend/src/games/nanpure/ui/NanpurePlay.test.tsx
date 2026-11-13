@@ -38,6 +38,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     mistakeCellIndices: [],
     completedDigits: [],
     notesMode: false,
+    lockedDigit: null,
     operation: null,
     elapsedMs: 65_000,
     mistakeCount: 2,
@@ -48,6 +49,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     recordFeedback: { kind: "none" } as const,
     onSelectCell: vi.fn(),
     onInputDigit: vi.fn(),
+    onLockDigit: vi.fn(),
     onErase: vi.fn(),
     onToggleNotesMode: vi.fn(),
     onUndo: vi.fn(),
@@ -94,9 +96,73 @@ describe("NanpurePlay", () => {
     });
 
     test("数字入力を無効にすること", () => {
-      const disabled = digit.hasAttribute("disabled");
+      const disabled = digit.getAttribute("aria-disabled");
 
-      expect(disabled).toBe(true);
+      expect(disabled).toBe("true");
+    });
+  });
+
+  describe("数字ボタンを長押しした場合", () => {
+    let props: ComponentProps<typeof NanpurePlay>;
+    let digit: HTMLElement;
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      props = createProps();
+      render(<NanpurePlay {...props} />);
+      const digitInput = screen.getByRole("group", { name: "数字入力" });
+      digit = within(digitInput).getByText("5");
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test("その数字を固めることを通知し、離したときに数字を入れないこと", () => {
+      fireEvent.pointerDown(digit, { button: 0 });
+      vi.advanceTimersByTime(450);
+      fireEvent.pointerUp(digit);
+      fireEvent.click(digit);
+
+      expect(props.onLockDigit).toHaveBeenCalledWith(5);
+      expect(props.onInputDigit).not.toHaveBeenCalled();
+    });
+
+    test("すぐに離すと固めずに数字を入れること", () => {
+      fireEvent.pointerDown(digit, { button: 0 });
+      vi.advanceTimersByTime(200);
+      fireEvent.pointerUp(digit);
+      fireEvent.click(digit);
+
+      expect(props.onLockDigit).not.toHaveBeenCalled();
+      expect(props.onInputDigit).toHaveBeenCalledWith(5);
+    });
+  });
+
+  describe("数字を固めている場合", () => {
+    let props: ComponentProps<typeof NanpurePlay>;
+    let digitInput: HTMLElement;
+
+    beforeEach(() => {
+      props = createProps();
+      render(
+        <NanpurePlay {...props} selectedCellIndex={null} lockedDigit={7} />,
+      );
+      digitInput = screen.getByRole("group", { name: "数字入力" });
+    });
+
+    test("固めた数字のボタンを押された姿で示すこと", () => {
+      const locked = within(digitInput).getByText("7");
+      const other = within(digitInput).getByText("3");
+
+      expect(locked.getAttribute("aria-pressed")).toBe("true");
+      expect(other.getAttribute("aria-pressed")).toBe("false");
+    });
+
+    test("マスを選んでいなくても固めた数字を押せること", () => {
+      fireEvent.click(within(digitInput).getByText("7"));
+
+      expect(props.onInputDigit).toHaveBeenCalledWith(7);
     });
   });
 

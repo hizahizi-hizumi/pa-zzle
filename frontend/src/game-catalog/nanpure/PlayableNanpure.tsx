@@ -55,12 +55,14 @@ export function PlayableNanpure({
         mistakeCellIndices={play.mistakeCellIndices}
         completedDigits={play.completedDigits}
         notesMode={play.notesMode}
+        lockedDigit={play.lockedDigit}
         operation={play.operation}
         mistakeCount={play.mistakeCount}
         undoCount={play.undoCount}
         canUndo={play.canUndo}
         onSelectCell={play.selectCell}
         onInputDigit={play.inputDigit}
+        onLockDigit={play.lockDigit}
         onErase={play.erase}
         onToggleNotesMode={play.toggleNotesMode}
         onUndo={play.undo}

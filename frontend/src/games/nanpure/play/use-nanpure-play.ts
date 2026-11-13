@@ -6,7 +6,11 @@ import type {
 } from "@/games/nanpure/problem/problem";
 import { selectNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
 import type { NanpureBoard, NanpureDigit } from "@/games/nanpure/puzzle/board";
-import { findNanpureConflictCellIndices } from "@/games/nanpure/puzzle/rules";
+import {
+  findNanpureConflictCellIndices,
+  findNanpureUnitsCompletedAt,
+  type NanpureUnit,
+} from "@/games/nanpure/puzzle/rules";
 import {
   calculateNanpurePlayScore,
   calculateNanpureSpeedScoreRule,
@@ -43,13 +47,26 @@ import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 /**
- * 効果音を鳴らすため、操作ごとに増える `id` を付ける。
+ * 効果音と盤面の反応のため、操作ごとに増える `id` を付ける。
  * `mistake-entered` は完成解と異なる数字を入れてミスに数えた入力、`digit-entered` はそれ以外の数字の入力。
+ * `completedUnits` は、その数字で解どおりに埋まりきった行・列・ブロック。盤面が完成した入力では空にし、完成の演出に任せる。
  */
-export type NanpureOperation = {
-  id: number;
-  type: "digit-entered" | "mistake-entered" | "note-added" | "note-removed";
-};
+export type NanpureOperation =
+  | {
+      id: number;
+      type: "digit-entered";
+      cellIndex: number;
+      completedUnits: readonly NanpureUnit[];
+    }
+  | {
+      id: number;
+      type: "mistake-entered";
+      cellIndex: number;
+    }
+  | {
+      id: number;
+      type: "note-added" | "note-removed";
+    };
 
 export type NanpureResult = NanpureSessionResult & {
   speedRule: SpeedScoreRule;
@@ -86,12 +103,16 @@ export type NanpurePlay = GamePlay<
     mistakeCellIndices: number[];
     completedDigits: NanpureDigit[];
     notesMode: boolean;
+    /** 数字ボタンの長押しで固めた数字。固めている間は、マスを押すだけでその数字を置く。 */
+    lockedDigit: NanpureDigit | null;
     operation: NanpureOperation | null;
     mistakeCount: number;
     undoCount: number;
     restartCount: number;
     selectCell: (cellIndex: number) => void;
+    /** 数字を固めている間は、置かずに固める数字を替える。固めた数字を押すと固めを解く。 */
     inputDigit: (digit: NanpureDigit) => void;
+    lockDigit: (digit: NanpureDigit) => void;
     erase: () => void;
     toggleNotesMode: () => void;
   };
@@ -101,6 +122,7 @@ type NanpurePlayState = {
   problemIdentity: NanpureProblemIdentity;
   selectedCellIndex: number | null;
   notesMode: boolean;
+  lockedDigit: NanpureDigit | null;
   progress: GameProgress;
   operation: NanpureOperation | null;
 };
@@ -114,6 +136,7 @@ function createPlayState(
     problemIdentity: identity,
     selectedCellIndex: null,
     notesMode: false,
+    lockedDigit: null,
     progress: "playing",
     operation: null,
   };
@@ -131,16 +154,68 @@ function applyOperatedSession(
 
 export function createNanpureDigitOperation(
   id: number,
+  cellIndex: number,
   mistaken: boolean,
+  completedUnits: readonly NanpureUnit[] = [],
 ): NanpureOperation {
-  return { id, type: mistaken ? "mistake-entered" : "digit-entered" };
+  return mistaken
+    ? { id, type: "mistake-entered", cellIndex }
+    : { id, type: "digit-entered", cellIndex, completedUnits };
+}
+
+/** 選んだマスへの数字の入力。メモの入力中はメモを付け外しする。 */
+function inputDigitAt(
+  current: NanpurePlayState,
+  cellIndex: number,
+  digit: NanpureDigit,
+  operationId: number,
+  enteredAt: number,
+): NanpurePlayState {
+  if (current.notesMode) {
+    return applyOperatedSession(
+      current,
+      toggleNanpureSessionNote(current.session, cellIndex, digit),
+      {
+        id: operationId,
+        type: getNoteOperationType(current.session.notes, cellIndex, digit),
+      },
+    );
+  }
+
+  const session = enterNanpureSessionDigit(
+    current.session,
+    cellIndex,
+    digit,
+    enteredAt,
+  );
+  const next = applyOperatedSession(
+    current,
+    session,
+    createNanpureDigitOperation(
+      operationId,
+      cellIndex,
+      session.mistakeCount > current.session.mistakeCount,
+      session.status === "playing"
+        ? findNanpureUnitsCompletedAt(
+            session.puzzleState,
+            session.problem.solution,
+            cellIndex,
+          )
+        : [],
+    ),
+  );
+  // 置ききった数字は押せなくなるので、固めたままにしない。
+  return next.lockedDigit !== null &&
+    findNanpureSessionCompletedDigits(next.session).includes(next.lockedDigit)
+    ? { ...next, lockedDigit: null }
+    : next;
 }
 
 function getNoteOperationType(
   notes: NanpureNotes,
   cellIndex: number,
   digit: NanpureDigit,
-): NanpureOperation["type"] {
+): "note-added" | "note-removed" {
   return notes[cellIndex]?.includes(digit) ? "note-removed" : "note-added";
 }
 
@@ -170,44 +245,46 @@ export function useNanpurePlay(
   const nextOperationId = useRef(0);
 
   const selectCell = useCallback((cellIndex: number) => {
-    setPlay((current) => ({ ...current, selectedCellIndex: cellIndex }));
+    const enteredAt = Date.now();
+    const operationId = nextOperationId.current++;
+    setPlay((current) => {
+      const selected = { ...current, selectedCellIndex: cellIndex };
+      return current.lockedDigit === null
+        ? selected
+        : inputDigitAt(
+            selected,
+            cellIndex,
+            current.lockedDigit,
+            operationId,
+            enteredAt,
+          );
+    });
   }, []);
 
   const inputDigit = useCallback((digit: NanpureDigit) => {
     const enteredAt = Date.now();
     const operationId = nextOperationId.current++;
     setPlay((current) => {
+      if (current.lockedDigit !== null) {
+        return {
+          ...current,
+          lockedDigit: current.lockedDigit === digit ? null : digit,
+        };
+      }
+
       const cellIndex = current.selectedCellIndex;
-      if (cellIndex === null) {
-        return current;
-      }
-
-      if (current.notesMode) {
-        return applyOperatedSession(
-          current,
-          toggleNanpureSessionNote(current.session, cellIndex, digit),
-          {
-            id: operationId,
-            type: getNoteOperationType(current.session.notes, cellIndex, digit),
-          },
-        );
-      }
-
-      const session = enterNanpureSessionDigit(
-        current.session,
-        cellIndex,
-        digit,
-        enteredAt,
-      );
-      return applyOperatedSession(
-        current,
-        session,
-        createNanpureDigitOperation(
-          operationId,
-          session.mistakeCount > current.session.mistakeCount,
-        ),
-      );
+      return cellIndex === null
+        ? current
+        : inputDigitAt(current, cellIndex, digit, operationId, enteredAt);
     });
+  }, []);
+
+  const lockDigit = useCallback((digit: NanpureDigit) => {
+    setPlay((current) =>
+      findNanpureSessionCompletedDigits(current.session).includes(digit)
+        ? current
+        : { ...current, lockedDigit: digit },
+    );
   }, []);
 
   const erase = useCallback(() => {
@@ -251,6 +328,7 @@ export function useNanpurePlay(
             ...next,
             selectedCellIndex: null,
             notesMode: false,
+            lockedDigit: null,
             operation: null,
           };
     });
@@ -265,6 +343,7 @@ export function useNanpurePlay(
       ),
       selectedCellIndex: null,
       notesMode: false,
+      lockedDigit: null,
       operation: null,
     }));
   }, []);
@@ -317,6 +396,7 @@ export function useNanpurePlay(
     mistakeCellIndices,
     completedDigits,
     notesMode: play.notesMode,
+    lockedDigit: play.lockedDigit,
     operation: play.operation,
     mistakeCount: session.mistakeCount,
     undoCount: session.undoCount,
@@ -325,6 +405,7 @@ export function useNanpurePlay(
     canRestart: canRestartNanpureSession(session),
     selectCell,
     inputDigit,
+    lockDigit,
     erase,
     toggleNotesMode,
     undo,

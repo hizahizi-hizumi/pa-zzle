@@ -111,6 +111,8 @@ export function NanpureCell({
         !clue && value !== null && nanpureCellToneClassNames.entered,
         mistake && nanpureCellToneClassNames.mistake,
         conflict && nanpureCellToneClassNames.conflict,
+        // 誤りは、ミスの音と同じ瞬間に赤く見せる。選んだマスの地からの色の移り変わりを待たない。
+        (mistake || conflict) && "transition-none",
       )}
       onClick={() => onSelect(cellIndex)}
     >
@@ -137,13 +139,26 @@ export function NanpureCell({
           />
         </span>
       )}
+      {/* まとまりが完成したときに盤面が光らせる面。数字より奥に置く。 */}
+      <span
+        aria-hidden="true"
+        data-nanpure-unit-flash={cellIndex}
+        className="pointer-events-none absolute inset-0 bg-violet-300 opacity-0 ring-2 ring-violet-500 ring-inset dark:bg-violet-600"
+      />
       {value !== null ? (
-        <span data-nanpure-digit={clue ? "clue" : "entered"}>{value}</span>
+        <span
+          data-nanpure-digit={clue ? "clue" : "entered"}
+          data-nanpure-wave-cell={cellIndex}
+          className="relative inline-block will-change-transform"
+        >
+          {value}
+        </span>
       ) : (
         <NanpureCellNotes
           notes={notes}
           selectedValue={selectedValue}
           size="board"
+          onSelectedCell={selected}
         />
       )}
     </button>
