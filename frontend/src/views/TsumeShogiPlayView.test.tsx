@@ -150,7 +150,6 @@ function getSquare(square: TsumeShogiSquare): HTMLElement {
   });
 }
 
-/** 攻方の手を、盤の升か持駒を押してから行き先の升を押して指す。成・不成を選ぶときは手のとおりに選ぶ。 */
 function playAttackerMove(move: TsumeShogiMove): void {
   fireEvent.click(
     move.kind === "drop"
@@ -232,7 +231,6 @@ function findPromotableCheck() {
   throw new Error("No pooled problem has a promotable check");
 }
 
-/** 指す前の駒がある升（打つ手は持駒）の要素。 */
 function getMoveSource(move: TsumeShogiMove): HTMLElement {
   return move.kind === "drop"
     ? within(screen.getByRole("group", { name: "攻方の持駒" })).getByRole(

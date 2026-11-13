@@ -41,10 +41,7 @@ export function readPlayAttempts(
   return parsePlayAttempts(readStoredPlayAttempts(storage));
 }
 
-/**
- * 既定の保存先の試行を、保存内容が変わるまで同じ配列で返す。
- * `subscribePlayAttempts` と組み合わせて、画面を保存内容へ追従させる。
- */
+/** `subscribePlayAttempts` と組み合わせて、画面を保存内容へ追従させる。 */
 export function readPlayAttemptsSnapshot(): readonly PlayAttempt[] {
   const stored = readStoredPlayAttempts(getDefaultStorage());
   if (snapshot?.stored !== stored) {
@@ -53,7 +50,6 @@ export function readPlayAttemptsSnapshot(): readonly PlayAttempt[] {
   return snapshot.attempts;
 }
 
-/** 試行を保存し直すたびに `listener` を呼ぶ。戻り値で購読をやめる。 */
 export function subscribePlayAttempts(listener: () => void): () => void {
   listeners.add(listener);
   return () => {
@@ -61,10 +57,6 @@ export function subscribePlayAttempts(listener: () => void): () => void {
   };
 }
 
-/**
- * 保存済みの試行を `update` の結果で保存し直す。`update` が `null` を返したら保存し直さない。
- * 保存できなくてもプレイを妨げないよう、失敗は無視する。
- */
 function updatePlayAttempts(
   storage: PlayRecordStorage | null,
   update: (
@@ -84,6 +76,7 @@ function updatePlayAttempts(
   try {
     storage.setItem(PLAY_ATTEMPTS_STORAGE_KEY, JSON.stringify(updated));
   } catch {
+    // 保存できなくてもプレイを妨げないよう、失敗は無視する。
     return;
   }
   for (const listener of listeners) {
@@ -91,7 +84,6 @@ function updatePlayAttempts(
   }
 }
 
-/** プレイを始めた事実を保存する。同じ試行は重ねて保存しない。 */
 export function startPlayAttempt(
   attempt: PlayAttempt,
   storage: PlayRecordStorage | null = getDefaultStorage(),
@@ -103,7 +95,6 @@ export function startPlayAttempt(
   );
 }
 
-/** プレイを離れた事実を保存する。離脱を記録済みの試行と、完了記録がある試行には保存しない。 */
 export function abandonPlayAttempt(
   play: Pick<PlayAttempt, "gameId" | "startedAt">,
   abandonment: PlayAttemptAbandonment,
@@ -129,7 +120,7 @@ export function abandonPlayAttempt(
 }
 
 /**
- * 完了記録がある試行を保存から除く。クリアした試行は完了記録から導出できるので保持しない。
+ * クリアした試行は完了記録から導出できるので保持しない。
  * 完了記録を保存したあとに呼ぶ。
  */
 export function removeClearedPlayAttempts(

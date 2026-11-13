@@ -31,12 +31,11 @@ function unquoteFontFamily(family: string): string {
   return family.replace(/^"(.*)"$/, "$1");
 }
 
-// アプリが同梱する効果音すべて。各画面が import する音声ファイルと同じ URL になり、同じ音として読み込む。
+// 同梱する効果音は、各画面が import する音声ファイルと同じ URL になり、同じ音として読み込む。
 const bundledSoundEffects = Object.values(
   import.meta.glob<string>("./**/*.flac", { eager: true, import: "default" }),
 ).map(defineSoundEffect);
 
-// タイトルは文書を読み込んだときだけ、ホームの上に出す。アプリの中でホームへ戻ったときは出さない。
 startAppLaunch({
   showTitle: window.location.pathname === "/",
   sounds: bundledSoundEffects,

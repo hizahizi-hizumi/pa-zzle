@@ -136,7 +136,6 @@ export const randomProblemSettings = {
 
 export const _private = {
   isStatusList,
-  /** テストで端末の初期設定を読み直す。 */
   reset() {
     currentSettings = null;
     notify();

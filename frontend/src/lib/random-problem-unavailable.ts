@@ -1,7 +1,6 @@
 type RandomProblemUnavailable = {
   gameId: string;
   gameName: string;
-  /** 選択中の設定を変えず、この一回だけ全状態から選ぶ操作。 */
   onPlayAny?: () => void;
 } | null;
 let notice: RandomProblemUnavailable = null;
