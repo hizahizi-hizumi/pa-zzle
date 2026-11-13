@@ -83,7 +83,7 @@ export const tsumeShogiToneClassNames = {
   /**
    * 選んだ駒の升。木の焼け色の濃い地と、升の内側の墨の縁で、指先の下でも選んだ升と分かるようにし、駒も持ち上げる。
    */
-  squareSelected: "bg-[#6e4214]/34 shadow-[inset_0_0_0_2px_rgb(42_27_16/0.8)]",
+  squareSelected: "bg-[#6e4214]/50 shadow-[inset_0_0_0_3px_rgb(42_27_16/0.9)]",
   /** 直前の手の移動先。低い濃さの暖色の焼け色。 */
   squareLastMove: "bg-[#c8742a]/22",
   /** 誤王手への玉方の反証。直前の手より濃い焦げ茶の焼け色を升の縁へ向けて濃くし、直前の手と見分ける。 */
@@ -91,7 +91,7 @@ export const tsumeShogiToneClassNames = {
     "bg-[radial-gradient(circle_at_50%_50%,rgb(110_60_20/0.18),rgb(80_40_10/0.42)_95%)]",
   /** 着手させなかった入力を返す間だけ、選んだ駒の升を変える朱の焦げ色。選んだ升の地より赤く濃くし、縁も朱にする。 */
   squareRejected: "bg-[#a8340f]/45 shadow-[inset_0_0_0_2px_rgb(150_40_10/0.9)]",
-  handSelected: "bg-[#6e4214]/30 shadow-[inset_0_0_0_2px_rgb(42_27_16/0.75)]",
+  handSelected: "bg-[#6e4214]/46 shadow-[inset_0_0_0_3px_rgb(42_27_16/0.85)]",
   /** 着手させなかった入力を返す間の、選んだ持駒の地。`squareRejected` と同じ色。 */
   handRejected: "bg-[#a8340f]/45 shadow-[inset_0_0_0_2px_rgb(150_40_10/0.9)]",
   /** 駒台の持駒を指したときの地。選んだ持駒の地（`handSelected`）は上書きしない。 */
@@ -106,12 +106,8 @@ export const tsumeShogiToneClassNames = {
     "bg-[#20150d]/92 text-[#fff4d8] shadow-[0_0_0_1.5px_rgb(255_244_216/0.55),0_6px_14px_-4px_rgb(20_10_2/0.6)]",
   /** 知らせの添え書き（待ったで戻ること）。札の上で一段淡くする。 */
   refutationNoticeHint: "text-[#e8d2a8]",
-  /**
-   * この手数では詰まなくなった間の待ったの縁取り。朱漆の色の太い輪で、卓の地から間を空けて囲む。
-   * 卓の地はライトとダークで明度が違うので、間の色（offset）も卓の地にそろえる。
-   */
-  undoEmphasis:
-    "ring-4 ring-[#bd4024] ring-offset-2 ring-offset-[#bbc09e] dark:ring-[#e87a55] dark:ring-offset-[#2b2b20]",
+  /** この手数では詰まなくなった間に待ったを囲む、朱漆の色の太い輪。待ったから間を空けて置く。 */
+  undoAttentionRing: "border-4 border-[#bd4024] dark:border-[#e87a55]",
   /** キーボード操作の枠。暗い線と明るい線の二重線にし、どの木目の上でも見えるようにする。升の地は上書きしない。 */
   focusRing:
     "focus-visible:outline-[#1a1410] focus-visible:shadow-[0_0_0_2px_rgb(255_248_232)]",

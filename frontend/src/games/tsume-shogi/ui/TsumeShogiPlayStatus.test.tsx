@@ -57,10 +57,11 @@ describe("TsumeShogiPlayStatus", () => {
     });
 
     test("その手数では詰まないことを、待ったで戻せることと合わせて大きな札で知らせること", () => {
-      const notice = document.querySelector("[data-refutation-notice]");
+      const notice = screen.queryByText("3手では詰みません");
+      const hint = screen.queryByText("待った（↶）で戻せます");
 
-      expect(notice?.textContent).toContain("3手では詰みません");
-      expect(notice?.textContent).toContain("待った");
+      expect(notice).not.toBeNull();
+      expect(hint).not.toBeNull();
     });
   });
 
@@ -74,7 +75,6 @@ describe("TsumeShogiPlayStatus", () => {
 
       expect(status).toContain("△同玉で逃れる");
       expect(status).not.toContain("詰みません");
-      expect(document.querySelector("[data-refutation-notice]")).toBeNull();
     });
   });
 });

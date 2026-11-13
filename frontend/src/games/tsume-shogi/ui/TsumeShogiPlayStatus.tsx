@@ -54,10 +54,9 @@ export function TsumeShogiPlayStatus({
       })}
       {phase === "refuted" && (
         <span
-          data-refutation-notice=""
           className={cn(
             "absolute bottom-[calc(100%+0.25rem)] left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-0.5 whitespace-nowrap rounded-lg px-5 py-2 leading-tight",
-            "animate-in fade-in-0 zoom-in-75 duration-200 ease-(--ease-celebrate) motion-reduce:animate-none",
+            "animate-in fade-in-0 zoom-in-75 duration-(--duration-slow) ease-(--ease-celebrate) motion-reduce:animate-none",
             tsumeShogiToneClassNames.refutationNotice,
           )}
         >
