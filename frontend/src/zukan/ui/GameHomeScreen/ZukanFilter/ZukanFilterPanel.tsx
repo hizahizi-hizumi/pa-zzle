@@ -28,8 +28,7 @@ type ZukanFilterPanelProps = {
   featureAxes: readonly ZukanFilterFeatureAxis[];
   performanceAxes: readonly ZukanPerformanceAxis[];
   optionCounts: ZukanFilterOptionCounts;
-  /** 選択肢ごとの、条件をかけないときに当たる問題の数。 */
-  optionCountLimits: ZukanFilterOptionCounts;
+  unfilteredOptionCounts: ZukanFilterOptionCounts;
   onConditionsChange: (conditions: ZukanFilterConditions) => void;
 };
 
@@ -42,7 +41,7 @@ export function ZukanFilterPanel({
   featureAxes,
   performanceAxes,
   optionCounts,
-  optionCountLimits,
+  unfilteredOptionCounts,
   onConditionsChange,
 }: ZukanFilterPanelProps) {
   const id = useId();
@@ -85,7 +84,7 @@ export function ZukanFilterPanel({
                 }
                 isSelected={conditions.statuses.includes(status)}
                 count={optionCounts.statuses[status]}
-                countLimit={optionCountLimits.statuses[status]}
+                unfilteredCount={unfilteredOptionCounts.statuses[status]}
               />
             ))}
           </ToggleGroup>
@@ -139,8 +138,8 @@ export function ZukanFilterPanel({
                           label={formatZukanFeatureOption(option, display)}
                           isSelected={selectedKeys.includes(key)}
                           count={optionCounts.features[axisId]?.[key] ?? 0}
-                          countLimit={
-                            optionCountLimits.features[axisId]?.[key] ?? 0
+                          unfilteredCount={
+                            unfilteredOptionCounts.features[axisId]?.[key] ?? 0
                           }
                         />
                       );
@@ -206,7 +205,9 @@ export function ZukanFilterPanel({
                       label={zukanPerformanceConditionLabels[condition]}
                       isSelected={conditions.performances.includes(condition)}
                       count={optionCounts.performances[condition]}
-                      countLimit={optionCountLimits.performances[condition]}
+                      unfilteredCount={
+                        unfilteredOptionCounts.performances[condition]
+                      }
                     />
                   ))}
                 </ToggleGroup>

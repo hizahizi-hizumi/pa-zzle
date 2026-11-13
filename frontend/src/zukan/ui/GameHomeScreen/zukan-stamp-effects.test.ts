@@ -127,7 +127,7 @@ describe("getZukanStampTier", () => {
   test("粒と光は great から付け、perfect で最も多くすること", () => {
     const tiers = levels.map(getZukanStampTier);
     const particles = tiers.map(({ particleCount }) => particleCount);
-    const flashes = tiers.map(({ flashes }) => flashes);
+    const flashes = tiers.map(({ flashesOnLanding }) => flashesOnLanding);
 
     expect(particles[0]).toBe(0);
     expect(particles[1]).toBe(0);

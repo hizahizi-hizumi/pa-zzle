@@ -241,11 +241,16 @@ function meetsPerformance(
   }
 }
 
+type ZukanFeatureAxisId = string;
+
+type ZukanFeatureOptionKey = string;
+
 /** どの種類も、空なら条件をかけない。 */
 export type ZukanFilterConditions = {
   statuses: readonly ZukanProblemStatus[];
-  /** 特徴の軸の ID ごとに、選んだ選択肢のキー。 */
-  features: Readonly<Record<string, readonly string[]>>;
+  features: Readonly<
+    Record<ZukanFeatureAxisId, readonly ZukanFeatureOptionKey[]>
+  >;
   performances: readonly ZukanPerformanceCondition[];
 };
 
@@ -334,8 +339,9 @@ export function createZukanFilterMatcher(
 
 export type ZukanFilterOptionCounts = {
   statuses: Readonly<Record<ZukanProblemStatus, number>>;
-  /** 特徴の軸の ID ごとに、選択肢のキーごとの数。 */
-  features: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  features: Readonly<
+    Record<ZukanFeatureAxisId, Readonly<Record<ZukanFeatureOptionKey, number>>>
+  >;
   performances: Readonly<Record<ZukanPerformanceCondition, number>>;
 };
 

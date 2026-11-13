@@ -8,8 +8,8 @@ type ZukanFilterOptionProps = {
   sample?: ReactNode;
   isSelected: boolean;
   count: number;
-  /** 条件をかけないときに、この選択肢に当たる問題の数。`count` はこれを超えない。 */
-  countLimit: number;
+  /** `count` はこれを超えない。 */
+  unfilteredCount: number;
 };
 
 export function ZukanFilterOption({
@@ -18,7 +18,7 @@ export function ZukanFilterOption({
   sample,
   isSelected,
   count,
-  countLimit,
+  unfilteredCount,
 }: ZukanFilterOptionProps) {
   const [isFocused, setIsFocused] = useState(false);
   const isUnavailable = count === 0 && !isSelected;
@@ -50,7 +50,7 @@ export function ZukanFilterOption({
             aria-hidden="true"
             className="invisible col-start-1 row-start-1"
           >
-            {"0".repeat(String(countLimit).length)}
+            {"0".repeat(String(unfilteredCount).length)}
           </span>
           <span className="col-start-1 row-start-1">{count}</span>
         </span>

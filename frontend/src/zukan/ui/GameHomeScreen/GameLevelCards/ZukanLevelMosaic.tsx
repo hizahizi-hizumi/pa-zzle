@@ -8,19 +8,19 @@ import {
 import type { ZukanProblemStatus } from "@/zukan/zukan-collection";
 
 type ZukanLevelMosaicProps = {
-  /** そのレベルの全問の、今示す状態。番号の順。 */
-  statuses: readonly ZukanProblemStatus[];
+  /** そのレベルの全問を番号の順に並べる。 */
+  shownStatuses: readonly ZukanProblemStatus[];
   columnCount: number;
 };
 
 function ZukanLevelMosaicContent({
-  statuses,
+  shownStatuses,
   columnCount,
 }: ZukanLevelMosaicProps) {
-  const rowCount = Math.max(1, Math.ceil(statuses.length / columnCount));
+  const rowCount = Math.max(1, Math.ceil(shownStatuses.length / columnCount));
   const paths = useMemo(
-    () => listZukanLevelMosaicPaths(statuses, columnCount),
-    [statuses, columnCount],
+    () => listZukanLevelMosaicPaths(shownStatuses, columnCount),
+    [shownStatuses, columnCount],
   );
 
   return (

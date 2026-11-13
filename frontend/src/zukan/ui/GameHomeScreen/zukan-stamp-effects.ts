@@ -1,7 +1,7 @@
 import type { GameResultLevel } from "@/games/result";
 import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 import {
-  getZukanStampTailMs,
+  getZukanStampDurationMs,
   ZUKAN_STAMP_DURATION_MS,
   type ZukanStamp,
 } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
@@ -21,8 +21,8 @@ export type ZukanStampTier = {
   particleCount: number;
   shockwaveScale: number;
   shockwaveWidthPx: number;
-  /** 着いたときに、マスの色の光をにじませるか。 */
-  flashes: boolean;
+  /** 光はマスの色でにじませる。 */
+  flashesOnLanding: boolean;
   /** 浮いている間に光を帯び、着いたときに台紙を揺らして周りのマスを押し退け、金の粒を足すか。perfect だけ。 */
   isFinest: boolean;
   /** 着いたときに状態ごとの数を弾ませる大きさ。 */
@@ -35,7 +35,7 @@ const zukanStampTiers: Record<GameResultLevel, ZukanStampTier> = {
     particleCount: 0,
     shockwaveScale: 2.6,
     shockwaveWidthPx: 2,
-    flashes: false,
+    flashesOnLanding: false,
     isFinest: false,
     countPopScale: 1.3,
   },
@@ -44,7 +44,7 @@ const zukanStampTiers: Record<GameResultLevel, ZukanStampTier> = {
     particleCount: 0,
     shockwaveScale: 3,
     shockwaveWidthPx: 2,
-    flashes: false,
+    flashesOnLanding: false,
     isFinest: false,
     countPopScale: 1.35,
   },
@@ -53,7 +53,7 @@ const zukanStampTiers: Record<GameResultLevel, ZukanStampTier> = {
     particleCount: 6,
     shockwaveScale: 3.6,
     shockwaveWidthPx: 2,
-    flashes: true,
+    flashesOnLanding: true,
     isFinest: false,
     countPopScale: 1.45,
   },
@@ -62,7 +62,7 @@ const zukanStampTiers: Record<GameResultLevel, ZukanStampTier> = {
     particleCount: 14,
     shockwaveScale: 6,
     shockwaveWidthPx: 3,
-    flashes: true,
+    flashesOnLanding: true,
     isFinest: true,
     countPopScale: 1.9,
   },
@@ -591,7 +591,7 @@ export function playZukanStamp(
   const dropMs = isFinest
     ? ZUKAN_STAMP_DURATION_MS.perfectDrop
     : ZUKAN_STAMP_DURATION_MS.drop;
-  const impactTailMs = getZukanStampTailMs(stamp) - dropMs;
+  const impactTailMs = getZukanStampDurationMs(stamp) - dropMs;
   // 押す面は文字色を `currentColor` にしてピースを塗る。
   const color = getComputedStyle(parts.face).color;
   const piecePath = getZukanPiecePath(
@@ -670,7 +670,7 @@ export function playZukanStamp(
       durationMs: impactTailMs,
       widthPx: tier.shockwaveWidthPx,
     });
-    if (tier.flashes) {
+    if (tier.flashesOnLanding) {
       flash(motion, at, piecePath, color, effects.flash);
     }
     burstParticles(motion, at, color, {

@@ -36,8 +36,7 @@ type ZukanFilterProps = GameHomeLayerControl & {
   featureAxes: readonly ZukanFilterFeatureAxis[];
   performanceAxes: readonly ZukanPerformanceAxis[];
   optionCounts: ZukanFilterOptionCounts;
-  /** 選択肢ごとの、条件をかけないときに当たる問題の数。 */
-  optionCountLimits: ZukanFilterOptionCounts;
+  unfilteredOptionCounts: ZukanFilterOptionCounts;
   onConditionsChange: (conditions: ZukanFilterConditions) => void;
 };
 
@@ -47,7 +46,7 @@ export function ZukanFilter({
   featureAxes,
   performanceAxes,
   optionCounts,
-  optionCountLimits,
+  unfilteredOptionCounts,
   open,
   onOpenChange,
   anchorRef,
@@ -63,7 +62,7 @@ export function ZukanFilter({
       featureAxes={featureAxes}
       performanceAxes={performanceAxes}
       optionCounts={optionCounts}
-      optionCountLimits={optionCountLimits}
+      unfilteredOptionCounts={unfilteredOptionCounts}
       onConditionsChange={onConditionsChange}
     />
   );
