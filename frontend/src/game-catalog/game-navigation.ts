@@ -75,7 +75,6 @@ export function useGameNavigation(game: GameNavigationTarget): GameNavigation {
   return useMemo(() => createGameNavigation(navigate, game), [navigate, game]);
 }
 
-/** 完了記録や離脱した試行の問題を、その問題 ID を URL に載せたプレイ画面で開く。 */
 export function openRecordProblemPlay(
   navigate: Navigate,
   destination: RecordProblemPlayDestination,

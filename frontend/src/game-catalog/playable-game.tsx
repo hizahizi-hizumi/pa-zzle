@@ -24,7 +24,6 @@ type ScoredResult = {
   score: Pick<PlayScore<ScoreItem>, "total">;
 };
 
-/** クリアした1回のプレイ。完了記録の元になる。 */
 export type CompletedGamePlay<Difficulty, Identity, Result> = {
   difficulty: Difficulty;
   problemIdentity: Identity;
@@ -43,7 +42,7 @@ type PlayableGameSource<
   game: GameCatalogEntry;
   play: GamePlay<Difficulty, Identity, Session, Result>;
   playRecordDefinition: PlayRecordDefinition;
-  /** クリアしたプレイの完了記録を作る。記録を作り直さないよう、描画ごとに作り直さない関数を渡す。 */
+  /** 記録を作り直さないよう、描画ごとに作り直さない関数を渡す。 */
   createPlayRecord: (
     completed: CompletedGamePlay<Difficulty, Identity, Result>,
   ) => PlayRecord;
@@ -55,15 +54,10 @@ type PlayableGameSource<
 };
 
 export type PlayableGame<Difficulty, Result, Snapshot> = {
-  /** プレイ画面 `<Game>Play` へそのまま渡す、進行・結果・遷移・検証情報の共通の props。 */
   screenProps: GamePlayScreenProps<Difficulty, Result>;
   diagnostics: InternalDiagnosticsDialog<Snapshot>;
 };
 
-/**
- * 1問のプレイを、URL の問題 ID・完了記録の保存と記録の結果画面への遷移・結果の報酬の音と BGM・離脱の記録・画面遷移・検証情報へつなぐ。
- * 記録を保存できたクリアは記録の結果画面へ移すので、その間はその場の結果画面を出さない（`result` を `null` にする）。
- */
 export function usePlayableGame<
   Difficulty extends string,
   Identity extends ProblemIdentity,
@@ -134,6 +128,7 @@ export function usePlayableGame<
       difficulty,
       progress: play.progress,
       elapsedMs: play.elapsedMs,
+      // 記録を保存できたクリアは記録の結果画面へ移すので、その間はその場の結果画面を出さない。
       result: navigatesToRecordResult ? null : result,
       recordFeedback: createResultRecordFeedback(
         recordOutcome,

@@ -161,7 +161,6 @@ function readStoredLastViewed(): Record<string, Record<string, unknown>> {
   );
 }
 
-/** まだ見せていない変化があると示しているレベルのカードの名前。 */
 function listLevelsWithUnseenChanges(): (string | undefined)[] {
   return screen
     .queryAllByRole("tab", { name: /前回から変化あり/ })

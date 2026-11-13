@@ -16,7 +16,7 @@ import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
 
 type PlayableWaterSortProps = {
   difficulty: WaterSortDifficulty;
-  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  /** URL の問題 ID で問題を指定したときは使わない。 */
   avoidedProblemId?: ProblemId;
 };
 
