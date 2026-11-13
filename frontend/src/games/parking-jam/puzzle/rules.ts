@@ -182,10 +182,30 @@ export function findParkingJamExitContact(
   ) {
     return null;
   }
-  const path = listParkingJamExitPathCells(board, vehicle, move.direction);
   if (blockers.some(({ kind }) => kind === "wall")) {
-    return { blocker: { kind: "wall" }, freeCellCount: path.length };
+    return {
+      blocker: { kind: "wall" },
+      freeCellCount: listParkingJamExitPathCells(board, vehicle, move.direction)
+        .length,
+    };
   }
+  const { target, freeCellCount } = findFirstObstacle(
+    board,
+    state,
+    vehicle,
+    move.direction,
+  );
+  return { blocker: target, freeCellCount };
+}
+
+/** 途中に何も無ければ外周を返す。 */
+function findFirstObstacle(
+  board: ParkingJamBoard,
+  state: ParkingJamState,
+  vehicle: ParkingJamVehicle,
+  direction: ParkingJamDirection,
+): Pick<ParkingJamCollision, "target" | "freeCellCount"> {
+  const path = listParkingJamExitPathCells(board, vehicle, direction);
   for (const [index, cell] of path.entries()) {
     const fixedArea = board.fixedAreas.some((area) =>
       listParkingJamFixedAreaCells(area).some((areaCell) =>
@@ -193,7 +213,7 @@ export function findParkingJamExitContact(
       ),
     );
     if (fixedArea) {
-      return { blocker: { kind: "fixed-area", cell }, freeCellCount: index };
+      return { target: { kind: "fixed-area", cell }, freeCellCount: index };
     }
     const other = board.vehicles.find(
       (candidate) =>
@@ -205,10 +225,38 @@ export function findParkingJamExitContact(
     );
     if (other) {
       return {
-        blocker: { kind: "vehicle", vehicleId: other.id },
+        target: { kind: "vehicle", vehicleId: other.id },
         freeCellCount: index,
       };
     }
   }
-  return { blocker: { kind: "wall" }, freeCellCount: path.length };
+  return { target: { kind: "wall" }, freeCellCount: path.length };
+}
+
+/**
+ * 出られない手で、車が進んで最初にぶつかるもの。出られないわけ（`findParkingJamExitContact`）と違い、
+ * 道路につながっていない車線でも、途中に車か植え込みがあれば先にそれへぶつかる。
+ */
+export type ParkingJamCollision = {
+  target: ParkingJamExitContact["blocker"];
+  /** ぶつかるものまでのマスの数。`wall` では、外周までのマスの数。 */
+  freeCellCount: number;
+  /** 進む先の外周が、その車線で道路につながっていない。 */
+  roadless: boolean;
+};
+
+export function findParkingJamCollision(
+  board: ParkingJamBoard,
+  state: ParkingJamState,
+  move: ParkingJamMove,
+): ParkingJamCollision | null {
+  const contact = findParkingJamExitContact(board, state, move);
+  const vehicle = board.vehicles.find(({ id }) => id === move.vehicleId);
+  if (!contact || !vehicle) {
+    return null;
+  }
+  return {
+    ...findFirstObstacle(board, state, vehicle, move.direction),
+    roadless: contact.blocker.kind === "wall",
+  };
 }

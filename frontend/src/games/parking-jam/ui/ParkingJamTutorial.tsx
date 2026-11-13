@@ -28,6 +28,7 @@ import {
   ParkingJamBoard,
   type ParkingJamDeparture,
 } from "@/games/parking-jam/ui/board/ParkingJamBoard";
+import { PARKING_JAM_EXIT_DURATION_MS } from "@/games/parking-jam/ui/board/parking-jam-board-motion";
 import {
   ParkingJamTutorialBoardFocus,
   type ParkingJamTutorialFocusTarget,
@@ -68,8 +69,7 @@ type BoardFocus = {
 
 const noFocus: BoardFocus = { spotlights: [], mark: null };
 
-/** `parking-jam-board.css` の出ていく動き（`pj-exit`）の長さ。 */
-const EXIT_ANIMATION_MS = 520;
+const EXIT_ANIMATION_MS = PARKING_JAM_EXIT_DURATION_MS;
 
 const EXIT_STEP_HOLD_MS = EXIT_ANIMATION_MS + 180;
 

@@ -4,6 +4,7 @@ import {
 } from "@/games/parking-jam/puzzle/board";
 import {
   applyParkingJamMove,
+  findParkingJamCollision,
   findParkingJamExitContact,
   listParkingJamLegalMoves,
   listParkingJamMoveBlockers,
@@ -193,5 +194,74 @@ describe("findParkingJamExitContact", () => {
     });
 
     expect(contact).toBeNull();
+  });
+});
+
+describe("findParkingJamCollision", () => {
+  const board: ParkingJamBoard = {
+    width: 6,
+    height: 3,
+    vehicles: [
+      { id: "a", row: 1, column: 2, orientation: "horizontal", length: 2 },
+      { id: "b", row: 0, column: 0, orientation: "vertical", length: 2 },
+      { id: "c", row: 0, column: 4, orientation: "horizontal", length: 2 },
+    ],
+    fixedAreas: [{ row: 1, column: 5, width: 1, height: 1 }],
+    roadOpenings: [
+      { side: "left", startOffset: 0, length: 1 },
+      { side: "right", startOffset: 1, length: 1 },
+    ],
+  };
+  const state = createParkingJamInitialState(board);
+  const stateWithoutB = { remainingVehicleIds: ["a", "c"] };
+
+  const cases = [
+    [
+      "道路につながっていない車線でも、途中に車があればその車にぶつかる",
+      { vehicleId: "a", direction: "left" },
+      {
+        target: { kind: "vehicle", vehicleId: "b" },
+        freeCellCount: 1,
+        roadless: true,
+      },
+    ],
+    [
+      "途中に何もなく道路につながっていない車線では、外周にぶつかる",
+      { vehicleId: "c", direction: "right" },
+      { target: { kind: "wall" }, freeCellCount: 0, roadless: true },
+    ],
+    [
+      "道路につながっている車線では、途中で最初に当たる植え込みにぶつかる",
+      { vehicleId: "a", direction: "right" },
+      {
+        target: { kind: "fixed-area", cell: { row: 1, column: 5 } },
+        freeCellCount: 1,
+        roadless: false,
+      },
+    ],
+    [
+      "道路につながっている車線では、途中で最初に当たる車にぶつかる",
+      { vehicleId: "c", direction: "left" },
+      {
+        target: { kind: "vehicle", vehicleId: "b" },
+        freeCellCount: 3,
+        roadless: false,
+      },
+    ],
+  ] as const;
+
+  test.each(cases)("%sこと", (_, move, expected) => {
+    const collision = findParkingJamCollision(board, state, move);
+
+    expect(collision).toEqual(expected);
+  });
+
+  test("出られる手では何も返さないこと", () => {
+    const collision = findParkingJamCollision(board, stateWithoutB, {
+      vehicleId: "c",
+      direction: "left",
+    });
+
+    expect(collision).toBeNull();
   });
 });

@@ -89,3 +89,63 @@ describe("getVehicleExitTranslation", () => {
     expect(translation.y).toBe(0);
   });
 });
+
+describe("getVehicleCollisionTranslation", () => {
+  const cases = [
+    [
+      "隣の車には、間の余白を詰めて少しめり込むまで進む",
+      "right",
+      {
+        target: { kind: "vehicle", vehicleId: "b" },
+        freeCellCount: 0,
+        roadless: false,
+      },
+      { x: 26, y: 0 },
+    ],
+    [
+      "2マス先の植え込みには、空いたマスと余白の分だけ進む",
+      "up",
+      {
+        target: { kind: "fixed-area", cell: { row: 0, column: 0 } },
+        freeCellCount: 2,
+        roadless: false,
+      },
+      { x: 0, y: -226 },
+    ],
+    [
+      "外周には、縁石に当たるまで進む",
+      "left",
+      { target: { kind: "wall" }, freeCellCount: 1, roadless: true },
+      { x: -109, y: 0 },
+    ],
+  ] as const;
+
+  test.each(cases)("%sこと", (_, direction, collision, expected) => {
+    const translation = parkingJamBoardGeometry.getVehicleCollisionTranslation(
+      direction,
+      collision,
+    );
+
+    expect(translation).toEqual(expected);
+  });
+});
+
+describe("getLaneCurbLine", () => {
+  const vehicle = {
+    id: "lane-car",
+    row: 2,
+    column: 1,
+    orientation: "horizontal",
+    length: 2,
+  } as const;
+
+  test("車の車線が突き当たる外周の1マス分の縁石を返すこと", () => {
+    const line = parkingJamBoardGeometry.getLaneCurbLine(
+      board,
+      vehicle,
+      "right",
+    );
+
+    expect(line).toEqual({ x1: 500, y1: 200, x2: 500, y2: 300 });
+  });
+});

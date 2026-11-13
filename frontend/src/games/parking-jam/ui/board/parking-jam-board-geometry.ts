@@ -5,6 +5,7 @@ import type {
   ParkingJamSide,
   ParkingJamVehicle,
 } from "@/games/parking-jam/puzzle/board";
+import type { ParkingJamCollision } from "@/games/parking-jam/puzzle/rules";
 
 export const PARKING_JAM_CELL = 100;
 export const PARKING_JAM_MARGIN = 90;
@@ -318,8 +319,57 @@ function getVehicleExitTranslation(
   };
 }
 
+/** 車・植え込みは、マスの縁から内側へこの幅だけ下げて描く。 */
+const BODY_INSET = 10;
+const CURB_HALF_WIDTH = 7;
+/** ぶつかった瞬間に、相手へ少しめり込ませて当たりを強く見せる。 */
+const COLLISION_OVERLAP = 6;
+
+const DIRECTION_VECTORS: Record<ParkingJamDirection, { x: number; y: number }> =
+  {
+    left: { x: -1, y: 0 },
+    right: { x: 1, y: 0 },
+    up: { x: 0, y: -1 },
+    down: { x: 0, y: 1 },
+  };
+
+/** 出られない車が、ぶつかる相手に当たるまで進む量。 */
+function getVehicleCollisionTranslation(
+  direction: ParkingJamDirection,
+  collision: ParkingJamCollision,
+): { x: number; y: number } {
+  const gap =
+    collision.target.kind === "wall"
+      ? BODY_INSET - CURB_HALF_WIDTH
+      : BODY_INSET * 2;
+  const distance =
+    collision.freeCellCount * PARKING_JAM_CELL + gap + COLLISION_OVERLAP;
+  const vector = DIRECTION_VECTORS[direction];
+  return { x: vector.x * distance, y: vector.y * distance };
+}
+
+/** 車が進む車線が外周に突き当たる所の縁石。 */
+function getLaneCurbLine(
+  board: ParkingJamBoard,
+  vehicle: ParkingJamVehicle,
+  direction: ParkingJamDirection,
+): LineGeometry {
+  const width = board.width * PARKING_JAM_CELL;
+  const height = board.height * PARKING_JAM_CELL;
+  if (direction === "left" || direction === "right") {
+    const x = direction === "left" ? 0 : width;
+    const y1 = vehicle.row * PARKING_JAM_CELL;
+    return { x1: x, y1, x2: x, y2: y1 + PARKING_JAM_CELL };
+  }
+  const y = direction === "up" ? 0 : height;
+  const x1 = vehicle.column * PARKING_JAM_CELL;
+  return { x1, y1: y, x2: x1 + PARKING_JAM_CELL, y2: y };
+}
+
 export const parkingJamBoardGeometry = {
   getAccessRoadCenterLine,
+  getLaneCurbLine,
+  getVehicleCollisionTranslation,
   getAccessRoadCurbLines,
   getAccessRoadGeometry,
   getBoundaryCurbLines,

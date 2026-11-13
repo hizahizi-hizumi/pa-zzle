@@ -2,6 +2,10 @@ import blockedSoundUrl from "@/games/parking-jam/assets/sounds/blocked.flac";
 import clearedSoundUrl from "@/games/parking-jam/assets/sounds/cleared.flac";
 import exitedSoundUrl from "@/games/parking-jam/assets/sounds/exited.flac";
 import type { ParkingJamOperation } from "@/games/parking-jam/play/use-parking-jam-play";
+import {
+  PARKING_JAM_COLLISION_IMPACT_MS,
+  PARKING_JAM_FINALE_DELAY_MS,
+} from "@/games/parking-jam/ui/board/parking-jam-board-motion";
 import type { GameProgress } from "@/games/play";
 import {
   useClearSound,
@@ -16,19 +20,14 @@ import {
   type SoundEffect,
 } from "@/lib/sound-effects";
 
-/** `parking-jam-board.css` のこつんと当たる動き（`pj-block-*`）で、車が前へ出きって止まるまでの時間。 */
-const BLOCKED_IMPACT_MS = 80;
-/** `parking-jam-board.css` の出ていく動き（`pj-exit`）の長さ。 */
-const EXIT_DURATION_MS = 520;
-
 const blockedSound = defineSoundEffect(blockedSoundUrl);
 
 const exitedSound = defineSoundEffect(exitedSoundUrl);
 
 const clearedSound = defineSoundEffect(clearedSoundUrl);
 
-/** 最後の車が駐車場を半分ほど走り抜けたところでクラクションを鳴らし、出ていき終える前に鳴り終える。 */
-const CLEAR_SOUND_DELAY_MS = EXIT_DURATION_MS * 0.4;
+/** 最後の車が駐車場を抜けかけ、空いた駐車場の線が光り始めるところでクラクションを鳴らす。 */
+const CLEAR_SOUND_DELAY_MS = PARKING_JAM_FINALE_DELAY_MS;
 
 const parkingJamSounds: readonly SoundEffect[] = [
   blockedSound,
@@ -45,7 +44,7 @@ function playOperationSound(operation: ParkingJamOperation) {
   switch (operation.type) {
     case "blocked":
       playSound(blockedSound, {
-        delayMs: getMotionDelayMs(BLOCKED_IMPACT_MS),
+        delayMs: getMotionDelayMs(PARKING_JAM_COLLISION_IMPACT_MS),
       });
       return;
     case "exited":

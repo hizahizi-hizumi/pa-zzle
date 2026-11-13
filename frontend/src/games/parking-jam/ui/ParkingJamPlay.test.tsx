@@ -156,6 +156,22 @@ describe("横向きの車を選択している場合", () => {
 
     expect(props.onMove).toHaveBeenCalledWith("a", "right");
   });
+
+  test("方向操作の上で押し始めて離すと出庫を試せること", () => {
+    const right = screen.getByRole("button", { name: "右へ出庫" });
+    fireEvent.pointerDown(right);
+    fireEvent.click(right, { detail: 1 });
+
+    expect(props.onMove).toHaveBeenCalledWith("a", "right");
+  });
+
+  test("車を押して選んだ指を離したときのクリックを、方向操作として受けないこと", () => {
+    fireEvent.click(screen.getByRole("button", { name: "右へ出庫" }), {
+      detail: 1,
+    });
+
+    expect(props.onMove).not.toHaveBeenCalled();
+  });
 });
 
 describe("クリア演出中の場合", () => {

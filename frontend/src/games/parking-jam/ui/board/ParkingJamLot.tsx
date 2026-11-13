@@ -1,4 +1,7 @@
-import type { ParkingJamBoard } from "@/games/parking-jam/puzzle/board";
+import type {
+  ParkingJamBoard,
+  ParkingJamFixedArea,
+} from "@/games/parking-jam/puzzle/board";
 import {
   PARKING_JAM_CELL,
   parkingJamBoardGeometry,
@@ -9,6 +12,15 @@ type ParkingJamLotProps = {
   board: ParkingJamBoard;
   paint: ParkingJamBoardPaint;
 };
+
+/** 盤面がぶつけられた植え込みを探すための印。 */
+export function getParkingJamFixedAreaKey(area: ParkingJamFixedArea): string {
+  return `${area.row}-${area.column}`;
+}
+
+/** クリアの見せ場で光らせる、駐車枠の線と出口の道路の中央線。 */
+export const PARKING_JAM_FINALE_LINE_SELECTOR =
+  "[data-parking-jam-finale-line]";
 
 export function ParkingJamLot({ board, paint }: ParkingJamLotProps) {
   const width = board.width * PARKING_JAM_CELL;
@@ -43,6 +55,7 @@ export function ParkingJamLot({ board, paint }: ParkingJamLotProps) {
                 opening,
                 board,
               )}
+              data-parking-jam-finale-line=""
               className="parking-jam-board__road-marking"
             />
             {parkingJamBoardGeometry
@@ -61,6 +74,7 @@ export function ParkingJamLot({ board, paint }: ParkingJamLotProps) {
         <line
           key={`parking-bay-${line.x1}-${line.y1}-${line.x2}-${line.y2}`}
           {...line}
+          data-parking-jam-finale-line=""
           className="parking-jam-board__parking-bay"
         />
       ))}
@@ -72,21 +86,18 @@ export function ParkingJamLot({ board, paint }: ParkingJamLotProps) {
         />
       ))}
       {board.fixedAreas.map((area) => (
-        <rect
-          key={`${area.row}-${area.column}-${area.width}-${area.height}`}
-          x={area.column * PARKING_JAM_CELL + 10}
-          y={area.row * PARKING_JAM_CELL + 10}
-          width={area.width * PARKING_JAM_CELL - 20}
-          height={area.height * PARKING_JAM_CELL - 20}
-          rx="8"
-          className="parking-jam-board__island"
-        />
-      ))}
-
-      {board.fixedAreas.map((area) => (
         <g
           key={`island-${area.row}-${area.column}-${area.width}-${area.height}`}
+          data-parking-jam-fixed-area={getParkingJamFixedAreaKey(area)}
         >
+          <rect
+            x={area.column * PARKING_JAM_CELL + 10}
+            y={area.row * PARKING_JAM_CELL + 10}
+            width={area.width * PARKING_JAM_CELL - 20}
+            height={area.height * PARKING_JAM_CELL - 20}
+            rx="8"
+            className="parking-jam-board__island"
+          />
           <rect
             x={area.column * PARKING_JAM_CELL + 25}
             y={area.row * PARKING_JAM_CELL + 25}
