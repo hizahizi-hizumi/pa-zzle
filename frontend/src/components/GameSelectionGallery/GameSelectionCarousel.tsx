@@ -34,7 +34,7 @@ type GameSelectionCarouselProps = {
   onSelect: (index: number) => void;
 };
 
-type MouseGesture = {
+type DragGesture = {
   pointerId: number;
   startX: number;
   startScroll: number;
@@ -111,7 +111,7 @@ export function GameSelectionCarousel({
   onSelect,
 }: GameSelectionCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const mouseGesture = useRef<MouseGesture | null>(null);
+  const dragGesture = useRef<DragGesture | null>(null);
   const suppressClick = useRef(false);
   const initializedOrder = useRef("");
   const focusedSlide = useRef(games.length + selectedIndex);
@@ -119,7 +119,7 @@ export function GameSelectionCarousel({
   const isNavigating = useRef(false);
   const lastMoveSoundAt = useRef(-Infinity);
   const [activeSlide, setActiveSlide] = useState(games.length + selectedIndex);
-  const [mouseDragging, setMouseDragging] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const count = games.length;
   const orderKey = games.map(({ to }) => to).join("|");
 
@@ -166,14 +166,14 @@ export function GameSelectionCarousel({
     const second = first.nextElementSibling as HTMLElement;
     const offset = lapShift * (second.offsetLeft - first.offsetLeft);
     scroller.scrollLeft += offset;
-    if (mouseGesture.current?.dragged) {
-      mouseGesture.current.startScroll += offset;
+    if (dragGesture.current?.dragged) {
+      dragGesture.current.startScroll += offset;
     }
     return physicalIndex + lapShift;
   }
 
   function commitSlide(scroller: HTMLDivElement) {
-    if (mouseGesture.current?.dragged) return;
+    if (dragGesture.current?.dragged) return;
     const physicalIndex = recenterScroll(scroller);
     focusSlide(physicalIndex);
     isNavigating.current = false;
@@ -225,15 +225,19 @@ export function GameSelectionCarousel({
     return () => window.removeEventListener("resize", handleResize);
   }, [count, scrollToSlide]);
 
-  function handleMouseDown(event: PointerEvent<HTMLDivElement>) {
-    mouseGesture.current = null;
+  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    dragGesture.current = null;
     suppressClick.current = false;
     isNavigating.current = true;
     const physicalIndex = recenterScroll(event.currentTarget);
     focusSlide(physicalIndex);
     updateVisualProximity(event.currentTarget);
-    if (event.pointerType !== "mouse" || event.button !== 0) return;
-    mouseGesture.current = {
+    if (
+      !event.isPrimary ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    )
+      return;
+    dragGesture.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startScroll: event.currentTarget.scrollLeft,
@@ -241,23 +245,23 @@ export function GameSelectionCarousel({
     };
   }
 
-  function handleMouseMove(event: PointerEvent<HTMLDivElement>) {
-    const gesture = mouseGesture.current;
+  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
+    const gesture = dragGesture.current;
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     const distance = event.clientX - gesture.startX;
     if (!gesture.dragged && Math.abs(distance) < 6) return;
     if (!gesture.dragged) {
       gesture.dragged = true;
       event.currentTarget.setPointerCapture(event.pointerId);
-      setMouseDragging(true);
+      setDragging(true);
     }
     event.currentTarget.scrollLeft = gesture.startScroll - distance;
   }
 
-  function handleMouseUp(event: PointerEvent<HTMLDivElement>) {
-    const gesture = mouseGesture.current;
+  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
+    const gesture = dragGesture.current;
     if (!gesture || gesture.pointerId !== event.pointerId) return;
-    mouseGesture.current = null;
+    dragGesture.current = null;
     if (!gesture.dragged) return;
     suppressClick.current = true;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -271,17 +275,15 @@ export function GameSelectionCarousel({
     const distance = event.clientX - gesture.startX;
     const direction = Math.sign(-distance);
     const start = centeredSlide(event.currentTarget, gesture.startScroll);
-    const target =
+    const destination =
       nearest === start && Math.abs(distance) > step * 0.18
-        ? Math.max(
-            0,
-            Math.min(
-              event.currentTarget.children.length - 1,
-              start + direction,
-            ),
-          )
-        : nearest;
-    setMouseDragging(false);
+        ? start + direction
+        : Math.max(start - 1, Math.min(start + 1, nearest));
+    const target = Math.max(
+      0,
+      Math.min(event.currentTarget.children.length - 1, destination),
+    );
+    setDragging(false);
     scrollToSlide(target, "smooth");
   }
 
@@ -300,7 +302,7 @@ export function GameSelectionCarousel({
         aria-label="左右にスライドしてパズルを切り替え"
         tabIndex={0}
         ref={scrollerRef}
-        data-mouse-dragging={mouseDragging}
+        data-dragging={dragging}
         onScroll={(event) => {
           const physicalIndex = centeredSlide(event.currentTarget);
           updateVisualProximity(event.currentTarget);
@@ -313,12 +315,12 @@ export function GameSelectionCarousel({
           focusSlide(physicalIndex);
           updateVisualProximity(event.currentTarget);
         }}
-        onPointerDown={handleMouseDown}
-        onPointerMove={handleMouseMove}
-        onPointerUp={handleMouseUp}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
         onPointerCancel={() => {
-          mouseGesture.current = null;
-          setMouseDragging(false);
+          dragGesture.current = null;
+          setDragging(false);
         }}
         onDragStart={(event) => event.preventDefault()}
         onClickCapture={(event) => {

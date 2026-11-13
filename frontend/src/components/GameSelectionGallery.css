@@ -109,6 +109,8 @@
   padding: var(--selection-frame-top) calc((100% - var(--slide-width)) / 2)
     var(--selection-frame-bottom);
   scroll-snap-type: x mandatory;
+  /* 横のスワイプはブラウザのスクロールに任せず、1回で1つまで送るよう自前で動かす。 */
+  touch-action: pan-y;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -127,6 +129,7 @@
   color: inherit;
   opacity: calc(0.82 + var(--proximity, 0) * 0.18);
   scroll-snap-align: center;
+  scroll-snap-stop: always;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -199,7 +202,7 @@
   color: var(--selection-detail-ink);
   border-color: color-mix(in srgb, var(--selection-muted-ink) 40%, transparent);
 }
-.game-selection__carousel[data-mouse-dragging="true"] {
+.game-selection__carousel[data-dragging="true"] {
   scroll-snap-type: none;
   cursor: grabbing;
 }
