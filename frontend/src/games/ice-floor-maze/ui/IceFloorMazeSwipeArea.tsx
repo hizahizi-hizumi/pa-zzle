@@ -3,16 +3,14 @@ import { type PointerEvent, type ReactNode, useRef } from "react";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
 
 type IceFloorMazeSwipeAreaProps = {
-  /** `true` の間はスワイプを受けない。 */
   disabled: boolean;
   onSwipe: (direction: IceFloorMazeDirection) => void;
   children: ReactNode;
 };
 
-/** 指がこの距離だけ動いたら向きを決める。これより小さい揺れやタップでは滑らせない。 */
+/** これより小さい指の揺れやタップでは滑らせない。 */
 const SWIPE_THRESHOLD_PX = 18;
 
-/** 指の動きの縦横の大きい方を向きにする。どちらも閾値に届かなければ `null`。 */
 function getSwipeDirection(
   deltaX: number,
   deltaY: number,
@@ -30,11 +28,9 @@ type SwipeGesture = {
   pointerId: number;
   startX: number;
   startY: number;
-  /** この指の動きで向きを決め終えたか。1回の指の動きで滑らせるのは1手だけ。 */
   decided: boolean;
 };
 
-/** 押した所の、タップで使うボタンなどの部品。そこから始めた指の動きはスワイプとして扱わない。 */
 const TAP_CONTROL_SELECTOR =
   "button, a, input, select, textarea, [role='button']";
 
@@ -44,10 +40,6 @@ function startsOnTapControl(target: EventTarget): boolean {
   );
 }
 
-/**
- * 盤面の外の余白と下の操作欄を含むプレイ領域全体でスワイプを受ける。ボタンなどから始めた指の動きは、そのタップに任せて受けない。
- * 向きは指が閾値を超えた時点で決め、指を離すまで待たない。ページのスクロールやズームには使わせない。
- */
 export function IceFloorMazeSwipeArea({
   disabled,
   onSwipe,

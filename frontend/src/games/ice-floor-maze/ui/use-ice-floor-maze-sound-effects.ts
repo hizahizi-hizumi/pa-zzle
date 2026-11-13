@@ -59,7 +59,7 @@ const stoppedSound = defineSoundEffect(stoppedSoundUrl);
  */
 const floorStoppedSound = defineSoundEffect(floorStoppedSoundUrl);
 
-/** 1マスも動けない向きを選んだときの、責めない鈍い音。 */
+/** 1マスも動けない向きを選んだときの、鈍い音。 */
 const blockedSound = defineSoundEffect(blockedSoundUrl);
 
 /** もろい岩にぶつかって止まり、岩が崩れる音。止まる音の代わりに鳴らす。 */
@@ -102,15 +102,9 @@ const iceFloorMazeSounds: readonly SoundEffect[] = [
   clearedSound,
 ];
 
-/**
- * 滑りの音。滑り出しに滑る音、3マス以上滑る手ではそこから止まるまで続く擦れの音、通り過ぎたゴールと割れた薄い氷はその時刻に鳴らす。止まり方の音は1つだけ鳴らし、
- * もろい岩を崩したら止まった時刻に崩れる音、雪を押し出したら押し出し始める時刻に雪の音、滑る氷の塊を押したら塊が止まる時刻に
- * 塊の音、ほかは止まった時刻に止まる音（床で止まったら床の音）を鳴らす。
- * ゴールで止まった滑りは完成演出のクリア音が止まりを返すので、止まる音を鳴らさない。
- * 動きを減らす設定では駒が終点へ飛び、変わったマスも変わった後の姿ですぐ描かれるので、
- * 滑る音・擦れの音とゴールの通過の音は鳴らさず、止まり方の音と、割れた薄い氷の音1つだけをすぐ鳴らす。
- */
 function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
+  // 動きを減らす設定では駒が終点へ飛び、変わったマスも変わった後の姿ですぐ描かれるので、
+  // 滑る音・擦れの音とゴールの通過の音は鳴らさず、止まり方の音と、割れた薄い氷の音1つだけをすぐ鳴らす。
   const reducedMotion = prefersReducedMotion();
   const distance = slide.path.length;
   const stopDelayMs = reducedMotion
@@ -131,6 +125,7 @@ function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
       });
     }
   }
+  // ゴールで止まった滑りは完成演出のクリア音が止まりを返すので、止まる音を鳴らさない。
   if (slide.crumbledRock !== null) {
     playSound(rockCrumbledSound, { delayMs: stopDelayMs });
   } else if (slide.pushedSnow) {
@@ -165,7 +160,6 @@ function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
   }
 }
 
-/** 滑る時間 `slideMs` に長さのいちばん近い擦れの音を、滑りが止まる時刻に鳴り終わる速さで鳴らす。 */
 function playGlideSound(slideMs: number) {
   const { sound, durationMs } = glideSounds.reduce((nearest, candidate) =>
     Math.abs(candidate.durationMs - slideMs) <
@@ -179,18 +173,14 @@ function playGlideSound(slideMs: number) {
   });
 }
 
-/** 動きを減らす設定では駒を押し戻さず、画面が何も変わらないので鳴らさない。 */
 function playBlockedSound() {
+  // 動きを減らす設定では駒を押し戻さず、画面が何も変わらないので鳴らさない。
   if (!prefersReducedMotion()) {
     playSound(blockedSound);
   }
 }
 
-/**
- * 滑り・動けない入力・ゴールの通過・床で止まる・もろい岩が崩れる・薄い氷が割れる・雪を押し出す・押した滑る氷の塊が止まる・
- * ゴールで止まる瞬間に効果音を鳴らす。
- * 結果の報酬の音はアプリが鳴らす。もうゴールに止まれないことの知らせ、待った・盤面を戻すでは鳴らさない。
- */
+/** 結果の報酬の音はアプリが鳴らす。もうゴールに止まれないことの知らせ、待った・盤面を戻すでは鳴らさない。 */
 export function useIceFloorMazeSoundEffects(
   lastSlide: IceFloorMazeLastSlide | null,
   blockedInput: IceFloorMazeBlockedInput | null,

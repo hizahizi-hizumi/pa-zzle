@@ -21,7 +21,7 @@ type IceFloorMazeClearEffectsProps = {
 const RING_DURATION_MS = 460;
 const RING_STAGGER_MS = 80;
 const RING_COUNT = 3;
-/** ゴールから氷の面へ広がる、白い明かり。輪より先に面で広がり、止まった所の氷が光ったと読ませる。色を重ねて岩や氷を濁らせない。 */
+/** 明かりは輪より先に面で広がり、止まった所の氷が光ったと読ませる。色を重ねて岩や氷を濁らせない。 */
 const GLOW_RADIUS = 0.5;
 const GLOW_SPREAD = 5;
 const GLOW_DURATION_MS = 480;
@@ -41,10 +41,7 @@ const SWEEP_OPACITY = 0.3;
 const sparklePath =
   "M0 -0.1Q0.015 -0.015 0.1 0Q0.015 0.015 0 0.1Q-0.015 0.015 -0.1 0Q-0.015 -0.015 0 -0.1Z";
 
-/**
- * 完成演出。ゴールの印から明かりが氷の下へ広がり、輪が3つ続けて広がり、きらめきが八方へ散り、氷の面を光の帯が1度だけ渡る。どれも氷の面の中に留める。
- * 解く間は抑えていた光を、止まった瞬間に盤面全体へ解放する。どれもふだんは見せない。
- */
+/** 完成演出。ゴールの印から明かりが氷の下へ広がり、輪が3つ続けて広がり、きらめきが八方へ散り、氷の面を光の帯が1度だけ渡る。 */
 export function IceFloorMazeClearEffects({
   ref,
   board,
@@ -120,7 +117,6 @@ export function IceFloorMazeClearEffects({
   );
 }
 
-/** 完成演出を `delayMs` 後に始める。 */
 export function animateIceFloorMazeClear(
   group: SVGGElement | null,
   delayMs: number,

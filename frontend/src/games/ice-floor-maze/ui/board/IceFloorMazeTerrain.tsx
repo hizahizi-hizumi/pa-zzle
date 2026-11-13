@@ -21,16 +21,11 @@ import { IceFloorMazeRockMass } from "@/games/ice-floor-maze/ui/board/IceFloorMa
 
 type IceFloorMazeTerrainProps = {
   board: IceFloorMazeBoard;
-  /** 今の盤面のマスと滑る氷の塊。渡さなければ初期盤面を描く。 */
   state?: Pick<IceFloorMazeState, "cells" | "blocks">;
-  /**
-   * 氷の上、マスに載る要素の下に描くもの（直前の滑りの跡とゴールの印）。
-   * ゴールへ押し出した雪山とゴールに載った滑る氷の塊は、この上に描いてゴールの印を覆う。
-   */
+  /** ゴールへ押し出した雪山とゴールに載った滑る氷の塊は、この上に描いてゴールの印を覆う。 */
   beneathCellFaces?: ReactNode;
 };
 
-/** マスの姿ごとの、描いたマスを見分ける属性。 */
 const cellAttributeByKind = {
   "brittle-rock": "data-brittle-rock-cell",
   "thin-ice": "data-thin-ice-cell",
@@ -42,7 +37,6 @@ const cellAttributeByKind = {
   "sliding-block": "data-sliding-block-cell",
 } as const satisfies Record<IceFloorMazeCellFaceKind, string>;
 
-/** 今のマスの姿。初期盤面のもろい岩が氷になったマスは、崩れた跡の石くずとして描く。岩は岩場としてまとめて描くので、ここでは描かない。 */
 function getCellFaceKind(
   initial: IceFloorMazeCell,
   current: IceFloorMazeStateCell,
@@ -56,8 +50,6 @@ function getCellFaceKind(
 }
 
 /**
- * 外壁・氷と、床・岩・もろい岩・崩れたもろい岩の跡・薄い氷・水面・雪・雪山と、その上に載る滑る氷の塊。駒より下の層に描く。
- * 盤面の外は描かず、外壁は盤面として描くマスの形に沿って囲む。盤面に囲まれた内側の盤面の外は、隣り合う岩とつないだ岩場として描く。
  * もろい岩・雪山・滑る氷の塊の姿（`data-cell-body`）は、隣から押されたときの揺れ・盛り上がり・止まるときのつぶれで動かせる。
  * 滑る氷の塊は、姿を包む `data-block-shift` を動かして、押されて滑る動きを描ける。
  */

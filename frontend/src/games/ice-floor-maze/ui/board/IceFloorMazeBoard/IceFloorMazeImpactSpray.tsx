@@ -13,12 +13,12 @@ import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 
 type IceFloorMazeImpactSprayProps = {
   board: IceFloorMazeBoard;
-  /** 直前の滑り。滑りごとに描き直す（`key` に滑りの `id` を渡す）。 */
+  /** 滑りごとに描き直す（`key` に滑りの `id` を渡す）。 */
   slide: IceFloorMazeLastSlide;
 };
 
 const SPRAY_DURATION_MS = 420;
-/** かけらの縁。明るい氷や雪の上でも、かけらを見分けられるようにする。 */
+/** 明るい氷や雪の上でも、かけらを見分けられるようにする。 */
 const CHIP_EDGE_WIDTH = 0.022;
 /** ぶつかった面に沿って一瞬走る、当たりの光。動かない岩場や外壁の側が勢いを受け止めたと読ませる。 */
 const FLASH_DURATION_MS = 180;
@@ -41,7 +41,6 @@ const chips = [
 
 /**
  * 駒が止め役にぶつかって止まった瞬間、ぶつかった面に沿って当たりの光が走り、削れた氷のかけらが左右へ散る。滑ってきた勢いが止め役に受け止められたと読ませる。
- * ふだん透明で、動きを減らす設定と動かせない環境では何も見せない。
  */
 export function IceFloorMazeImpactSpray({
   board,

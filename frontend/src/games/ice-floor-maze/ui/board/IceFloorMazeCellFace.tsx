@@ -66,7 +66,6 @@ const FLOOR_INSET = 0.05;
  */
 const MOUND_ROUNDING = 0.3;
 const MOUND_SHADE = 0.13;
-/** 薄い氷を裏返す向き。 */
 const thinIceTurns = [
   { mirrorX: false, mirrorY: false },
   { mirrorX: true, mirrorY: false },
@@ -78,7 +77,7 @@ const thinIceTurns = [
 const ICE_BLOCK_FACE_OPACITY = 0.9;
 
 /**
- * 1マスの姿。マスの左上を原点に描き、親がマスの位置へ置く。
+ * マスの左上を原点に描き、親がマスの位置へ置く。
  * 盤面と同じく真上から見た絵にし、手前の側面は描かない。滑っていった先で何が起きるかを、高さで読ませる。
  * 氷から立ち上がるもの（もろい岩・雪山・滑る氷の塊）は、下と右の縁が暗く、右下へ影を落とす。硬い塊（もろい岩・滑る氷の塊）は上と左の縁も明るい。
  * 入って止まるもの（床・雪）は縁取りも影も持たない。薄い氷と水面は、縁取りの明暗が逆の、氷より低い面。
@@ -275,7 +274,6 @@ export function IceFloorMazeCellFace({
   }
 }
 
-/** 氷から立ち上がる塊が、右下の氷へ落とす影。 */
 function renderRaisedShadow() {
   return (
     <rect
@@ -289,7 +287,6 @@ function renderRaisedShadow() {
   );
 }
 
-/** 真上から見た、氷から立ち上がる角丸の塊。上と左の縁が明るく、下と右の縁が暗く、その内側が上の面。 */
 function renderRaisedBlock(
   face: string,
   lit: string,
@@ -327,10 +324,7 @@ function renderRaisedBlock(
   );
 }
 
-/**
- * 真上から見た、氷より低いマスいっぱいの面。上と左の内側の縁が陰になり、下と右の内側の縁が光る。
- * 親が裏返して置くときは `turn` を渡し、裏返した後に陰が上と左へ来るよう、逆の縁に描く。
- */
+/** 親が裏返して置くときは `turn` を渡し、裏返した後に陰が上と左へ来るよう、逆の縁に描く。 */
 function renderSunken(
   surface: string,
   shaded: string,

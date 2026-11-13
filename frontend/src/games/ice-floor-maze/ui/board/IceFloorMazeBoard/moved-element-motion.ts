@@ -22,8 +22,6 @@ const BLOCK_STOP_STRETCH = 1.06;
 
 /**
  * 直前の滑りで動いた要素の、地形に描いた変わった後の姿を動かす。どれも滑りに合わせて遅らせ、それまでは前の姿を見せる。
- * - 押し出した先の雪山は、雪が縮み始めた少し後に、つぶれた姿から下を支点に盛り上がって現れる。
- * - 押した滑る氷の塊は、駒が触れた時刻から駒と同じ速さで元のマスから止まったマスへ滑り、止まった時刻に進んだ向きへつぶれて戻る。
  * 動きを止めると、地形に描いた変わった後の姿（雪山・止まったマスの塊）がそのまま見える。
  */
 export function animateIceFloorMazeMovedElements(
@@ -37,6 +35,7 @@ export function animateIceFloorMazeMovedElements(
   const { pushedSnow, movedBlock } = slide;
   const animations: (Animation | undefined)[] = [];
 
+  // 押し出した先の雪山は、雪が縮み始めた少し後に、つぶれた姿から下を支点に盛り上がって現れる。
   if (pushedSnow) {
     animations.push(
       svg
@@ -59,6 +58,7 @@ export function animateIceFloorMazeMovedElements(
     );
   }
 
+  // 押した滑る氷の塊は、駒が触れた時刻から駒と同じ速さで元のマスから止まったマスへ滑り、止まった時刻に進んだ向きへつぶれて戻る。
   if (movedBlock) {
     const block = svg.querySelector(
       `[data-sliding-block-cell="${movedBlock.to}"]`,

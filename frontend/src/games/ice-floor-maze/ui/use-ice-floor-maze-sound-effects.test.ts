@@ -64,7 +64,6 @@ const lateBlockSlide: IceFloorMazeLastSlide = {
 
 type SlideProps = { lastSlide: IceFloorMazeLastSlide | null };
 
-/** 鳴らした音の、音声ファイルの名前と遅れ。 */
 function listPlayedSounds(): {
   name: string | undefined;
   delayMs: number | undefined;

@@ -12,7 +12,6 @@ export const ICE_FLOOR_MAZE_WALL_THICKNESS = 0.18;
 
 export type IceFloorMazePoint = { x: number; y: number };
 
-/** マスの中心。 */
 export function getIceFloorMazeCellCenter(
   board: IceFloorMazeBoard,
   cellIndex: number,
@@ -21,7 +20,6 @@ export function getIceFloorMazeCellCenter(
   return { x: x + 0.5, y: y + 0.5 };
 }
 
-/** 外壁を含めた盤面の描画範囲。 */
 export function getIceFloorMazeBoardViewBox(
   board: Pick<IceFloorMazeBoard, "width" | "height">,
 ): { minX: number; minY: number; width: number; height: number } {
@@ -33,7 +31,6 @@ export function getIceFloorMazeBoardViewBox(
   };
 }
 
-/** 向きへ1マス進むときの座標の変化。 */
 export const iceFloorMazeDirectionVectors = {
   up: { x: 0, y: -1 },
   right: { x: 1, y: 0 },

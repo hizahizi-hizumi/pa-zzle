@@ -33,7 +33,6 @@ const growthOriginByDirection = {
   left: "right center",
 } as const satisfies Record<IceFloorMazeDirection, string>;
 
-/** 直前の滑りの跡。駒が氷に付けた2本の擦り傷で、滑り始めはかすれ、止まった駒の手前で終わる。 */
 export function IceFloorMazeTrail({
   board,
   direction,
