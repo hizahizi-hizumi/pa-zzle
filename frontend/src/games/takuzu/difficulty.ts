@@ -12,7 +12,7 @@ export type TakuzuDifficulty = DifficultyLevel;
 
 /**
  * - `out-of-range`: 分析できるが提供しない。
- * - `unsupported`: 一意解だが、1本の行・列を読む手筋では解き切れず、挑戦の強さを評価できない。
+ * - `unsupported`: 一意解だが、1本の行・列を読む手筋では解き切れない。
  */
 export type TakuzuDifficultyAssessment = DifficultyAssessment<{
   classified: NoAssessmentDetail;

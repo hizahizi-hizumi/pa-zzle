@@ -147,9 +147,8 @@ function getMoveCues({
 }
 
 /**
- * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せるマス。手を引いていなければ `null` で、覆いを出さない。
- * - 印が出ている間は、印を付ける手順のマスとその決め手。
- * - 置いてから次の印を出すまでの間は、置いたマスとその決め手。前の手の決め手を、次の印の決め手と読み違えさせないため、印と一緒に替える。
+ * 手を引いていなければ `null` で、覆いを出さない。
+ * - 置いてから次の印を出すまでの間は、置いたマスとその決め手を抜く。前の手の決め手を、次の印の決め手と読み違えさせないため、印と一緒に替える。
  * - ルールに合わない3連続のマスと、個数超過・重複の行・列のマスは、どこがルールに当たっているかを読めるよう抜く。
  */
 function getSpotlitCellIndices(
@@ -186,10 +185,6 @@ function getBoardSpotlight(
   return cellIndices === null ? null : { cellIndices, lineViolations: true };
 }
 
-/**
- * 4×4 の盤面を、一言と印に沿って1マスずつ一緒に埋め、ルールを1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分で埋めさせる。
- */
 export function TakuzuTutorial({
   open,
   playStart,
@@ -343,7 +338,6 @@ export function TakuzuTutorial({
         setSettledViolationProgress,
       );
     } else if (next.boardState.lastMove?.towardStep) {
-      // 途中の盤面のまま手が止まったら、責めずに済ませていたルールに合わないところを盤面に出す。
       scheduleReaction(
         next,
         TOWARD_STEP_REVEAL_DELAY_MS,
@@ -374,7 +368,6 @@ export function TakuzuTutorial({
     setProgress(startTutorial(takuzuTutorial));
   }
 
-  // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();
