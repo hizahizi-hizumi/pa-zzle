@@ -20,15 +20,11 @@ import { TsumeShogiSearchPosition } from "@/games/tsume-shogi/puzzle/search-posi
 export type TsumeShogiVerdict = "accepted" | "unsupported" | "invalid";
 
 export type TsumeShogiQualityIssue =
-  /** 指定の手数以内に詰まない。 */
   | "noMate"
-  /** 指定の手数より短く詰む。 */
   | "prematureMate"
   /** 作意の攻方の手番のどこかで、残りの手数以内に詰む王手が2つ以上ある。 */
   | "mainLineAlternative"
-  /** 作意の詰め上がりで攻方の持駒が残る。 */
   | "leftoverPieces"
-  /** 作意の玉方の手に合駒がある。 */
   | "interpositionInMainLine"
   /**
    * 玉方の合駒を逃れに数えないと、最短の詰み手数、作意の攻方の手番で残りの手数以内に詰む王手の数、
@@ -48,9 +44,9 @@ export type TsumeShogiValidation = {
   verdict: TsumeShogiVerdict;
   issues: TsumeShogiQualityIssue[];
   plies: number;
-  /** 指定の手数以内で最短の詰み手数。詰まなければ `null`。 */
+  /** 指定の手数以内で最短の詰み手数。 */
   shortestMatePlies: number | null;
-  /** 最短の詰みの作意。詰まなければ `null`。 */
+  /** 最短の詰みの作意。 */
   mainLine: TsumeShogiMainLine | null;
   /** 玉方の合駒を逃れに数えないときの、指定の手数以内で最短の詰み手数。 */
   shortestMatePliesIgnoringInterposition: number | null;
@@ -71,7 +67,6 @@ const unsupportedIssues: readonly TsumeShogiQualityIssue[] = [
   "longerVariationSensitive",
 ];
 
-/** 攻方の手番の局面を、ちょうど `plies` 手（奇数）の詰将棋として検証する。 */
 export function validateTsumeShogiProblem(
   position: TsumeShogiPosition,
   plies: number,
@@ -193,7 +188,6 @@ function decideVerdict(
   return "accepted";
 }
 
-/** 作意の攻方の手番ごとに、残りの手数以内に詰む王手を `search` の規則で数える。 */
 function countMatingChecksAlongMainLine(
   root: TsumeShogiSearchPosition,
   mainLine: TsumeShogiMainLine,

@@ -39,10 +39,8 @@ import {
 import { TsumeShogiSearchPosition } from "@/games/tsume-shogi/puzzle/search-position";
 
 /**
- * - `fingerprint`: 問題集の重複を見分ける指紋。
  * - `validation`: 採用した問題の strict validator の結果（`verdict` は必ず `accepted`）。
  * - `baseCount`: 逆算の起点にした1手詰の数。
- * - `validatedCandidateCount`: 採用までに strict validator にかけた候補の数。
  */
 export type TsumeShogiGeneratedProblem = TsumeShogiIdentifiedProblem & {
   fingerprint: TsumeShogiProblemFingerprint;
@@ -56,11 +54,7 @@ export class TsumeShogiGenerationExhaustedError extends Error {}
 
 /** 逆算の起点にする1手詰の数の上限。 */
 const MAXIMUM_BASE_COUNT = 12;
-/**
- * 逆算の起点の1手詰を探すときの、乱数局面の作り方。
- * - `maximumHandCount`: 攻方に持たせる持駒の枚数の上限。
- * - `maximumSamples`: 1つの起点を探すときに作る局面の数の上限。
- */
+/** 逆算の起点の1手詰を探すときの、乱数局面の作り方。 */
 type BaseSampling = { maximumHandCount: number; maximumSamples: number };
 
 const anyBaseSampling: BaseSampling = {
@@ -75,13 +69,10 @@ const anyBaseSampling: BaseSampling = {
 const baseSamplings = {
   "board-move": { maximumHandCount: 0, maximumSamples: 20000 },
 } as const satisfies Record<TsumeShogiBaseMate, BaseSampling>;
-/** 両端を含む範囲。 */
 type InclusiveRange = { minimum: number; maximum: number };
 
-/** 玉を置く筋と段の範囲。 */
 type KingSquareRange = { file: InclusiveRange; rank: InclusiveRange };
 
-/** 逆算の起点の局面で玉を置く範囲。起点の玉の範囲の無い生成条件は `edge`（盤の上の端）に置く。 */
 const baseKingSquareRanges = {
   edge: { file: { minimum: 1, maximum: 9 }, rank: { minimum: 1, maximum: 3 } },
   middle: {
@@ -90,7 +81,6 @@ const baseKingSquareRanges = {
   },
 } as const satisfies Record<TsumeShogiBaseKingArea | "edge", KingSquareRange>;
 
-/** 1つの局面から1段さかのぼるときに調べる候補の数の上限。 */
 const MAXIMUM_RETRO_STEPS_PER_POSITION = 300;
 
 const attackerBoardTypes: readonly TsumeShogiPieceType[] = [
@@ -126,10 +116,7 @@ function randomInteger(
   return minimum + Math.floor(random() * (maximum - minimum + 1));
 }
 
-/**
- * 詰み上がりの近くの局面を乱数で作る。玉を `kingSquares` の範囲に置き、攻方の駒1〜3枚・玉方の駒0〜2枚を玉の周り
- * （筋・段とも2以内）に、攻方の持駒を0〜`maximumHandCount`枚持たせる。詰将棋として成り立たない配置なら `null`。
- */
+/** 詰み上がりの近くの局面を乱数で作る。詰将棋として成り立たない配置なら `null`。 */
 function sampleNearMatePosition(
   random: ProblemRandom,
   maximumHandCount: number,
@@ -209,7 +196,6 @@ function hasUniqueFirstMove(
   return matingCheckCount === 1;
 }
 
-/** 生成条件の初手の王手の数の範囲に入るか。範囲が無ければ絞らない。 */
 function hasRootChecksWithin(
   position: TsumeShogiPosition,
   { rootChecks }: TsumeShogiGenerationConditions,
@@ -247,10 +233,8 @@ class RetroGeneration {
     this.#conditions = conditions;
   }
 
-  /**
-   * `plies` 手で採用できる局面か。目標の手数の局面は、strict validator より先に初手の王手の数で安く絞る。
-   */
   accepts(position: TsumeShogiPosition, plies: number): boolean {
+    // 目標の手数の局面は、strict validator より先に初手の王手の数で安く絞る。
     if (
       plies === this.#conditions.plies &&
       !hasRootChecksWithin(position, this.#conditions)
@@ -268,7 +252,6 @@ class RetroGeneration {
     );
   }
 
-  /** 起点の1手詰の詰め手が、生成条件の起点の種類に合うか。 */
   #acceptsBaseMate(validation: TsumeShogiValidation): boolean {
     switch (this.#conditions.baseMate) {
       case undefined:
@@ -278,7 +261,6 @@ class RetroGeneration {
     }
   }
 
-  /** `plies` 手の問題 `position` から逆算で `targetPlies` 手の問題を作る。作れなければ `null`。 */
   extend(
     position: TsumeShogiPosition,
     plies: number,

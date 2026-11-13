@@ -17,8 +17,7 @@ import {
 } from "@/games/tsume-shogi/puzzle/search-position";
 
 /**
- * 詰将棋の難易度分析。人間が詰将棋を解くときの挑戦（王手の候補を挙げ、玉方の最善の応手を読み、もっともらしい誤王手を反証し、
- * 正しい手順を手筋の組み合わせで保つ）を、作意の各判断地点の特徴として観測する。手数・盤上の駒数・探索量は特徴にしない。
+ * 人間が詰将棋を解くときの挑戦を、作意の各判断地点の特徴として観測する。手数・盤上の駒数・探索量は特徴にしない。
  *
  * 用語（操作的な定義）:
  * - 判断地点: 作意の攻方の手番。残りの手数（この攻方の手を含む）を `remainingPlies` とする。
@@ -36,23 +35,16 @@ import {
  *   脅しが続かない誤王手は、その局面を見ただけで崩れると分かるので数えない。
  */
 
-/** 作意の1つの判断地点の特徴。 */
 export type TsumeShogiDecisionFeatures = {
-  /** 残りの手数（この攻方の手を含む）。 */
   remainingPlies: number;
-  /** 合法な王手の数。 */
   checkCount: number;
-  /** もっともらしい誤王手の数（深い紛れを含む）。 */
   plausibleWrongCount: number;
-  /** 深い紛れの数。 */
   deepDecoyCount: number;
 };
 
 /**
  * 作意の攻方の手に現れた手筋の数。1手が複数の手筋を持てば、それぞれに数える。
- * - `drop`: 持駒を打つ。
- * - `promotion` / `nonPromotion`: 成る、成れるのに成らない。
- * - `capture`: 玉方の駒を取る。
+ * - `nonPromotion`: 成れるのに成らない。
  * - `sacrifice`: 次の玉方の手で取られる（捨駒）。
  * - `discoveredCheck`: 動かした駒以外の駒の利きで王手になる（開き王手・両王手）。
  * - `distantCheck`: 2マス以上離れた位置から、飛・角・香・龍・馬の利きで王手する（非局所的な利き）。
@@ -67,7 +59,7 @@ export type TsumeShogiMotifCounts = {
   distantCheck: number;
 };
 
-/** 手筋として組み合わせを数える種類。駒打ちは詰将棋の基本の手なので数えない。 */
+/** 駒打ちは詰将棋の基本の手なので、手筋の種類に数えない。 */
 export const tsumeShogiTesujiKinds = [
   "promotion",
   "nonPromotion",
@@ -97,14 +89,13 @@ export type TsumeShogiDifficultyFeatures = {
   motifs: TsumeShogiMotifCounts;
 };
 
-/** 深い紛れとみなす紛れの長さ（誤王手を含む手数）の下限。 */
 const DEEP_DECOY_LENGTH = 4;
 
 /** 深い紛れが起きうる判断地点の残りの手数の下限。誤王手・逃れ・脅しのある王手・逃れの4手に、詰みを確かめる1手が残る。 */
 export const TSUME_SHOGI_DEEP_DECOY_MINIMUM_REMAINING_PLIES =
   DEEP_DECOY_LENGTH + 1;
 
-/** 分析できる手数の上限。紛れの長さを数える探索は手数とともに重くなり、V1 の問題は5手までなので、それより長い問題は評価しない。 */
+/** 紛れの長さを数える探索は手数とともに重くなり、V1 の問題は5手までなので、それより長い問題は評価しない。 */
 export const TSUME_SHOGI_ANALYSIS_MAXIMUM_PLIES = 5;
 
 /**
@@ -213,7 +204,6 @@ class DecoyReader {
   }
 }
 
-/** 判断地点（攻方の手番、残り `remainingPlies` 手）で、作意の手 `mainMove` 以外の王手を読む。 */
 function readDecision(
   state: TsumeShogiSearchPosition,
   remainingPlies: number,
@@ -306,7 +296,6 @@ function addAttackerMotifs(
   }
 }
 
-/** 玉方の手番で、合駒でない応手の数。 */
 function countNaturalResponses(state: TsumeShogiSearchPosition): number {
   return state
     .listDefenderResponses()

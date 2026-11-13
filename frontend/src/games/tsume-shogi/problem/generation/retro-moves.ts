@@ -51,7 +51,6 @@ const capturableAttackerTypes: readonly TsumeShogiPieceType[] = [
   "promPawn",
 ];
 
-/** 攻方の駒が取る玉方の駒の候補。 */
 const capturableDefenderTypes: readonly TsumeShogiPieceType[] = [
   "rook",
   "bishop",
@@ -98,7 +97,6 @@ function toSquare(index: number): TsumeShogiSquare {
   return { file: 9 - (index % 9), rank: Math.floor(index / 9) + 1 };
 }
 
-/** 持駒にしたときの駒の種類。 */
 export function toTsumeShogiHandPieceType(
   type: TsumeShogiPieceType,
 ): TsumeShogiHandPieceType | null {
@@ -117,7 +115,6 @@ function readEditable(position: TsumeShogiPosition): EditablePosition {
   };
 }
 
-/** 盤面を SFEN の盤面部分にする。 */
 export function formatTsumeShogiBoardSfen(
   cells: readonly (TsumeShogiPiece | null)[],
 ): string {
@@ -164,10 +161,7 @@ const rangingTypes: ReadonlySet<TsumeShogiPieceType> = new Set([
   "horse",
 ]);
 
-/**
- * `type` の駒が `to` へ1手で動く前にいた可能性のあるマス。向き（前後）は見ず、距離の形だけで絞る。
- * 飛・角・香・龍・馬は同じ筋・段・斜めのどこでも、桂は跳ぶ位置、ほかの駒は隣のマス。
- */
+/** `type` の駒が `to` へ1手で動く前にいた可能性のあるマス。向き（前後）は見ず、距離の形だけで絞る。 */
 function listPossibleSources(
   type: TsumeShogiPieceType,
   to: TsumeShogiSquare,
@@ -243,7 +237,6 @@ function listDefenderRetros(editable: EditablePosition): DefenderRetro[] {
 
 type AttackerRetro = { editable: EditablePosition; move: TsumeShogiMove };
 
-/** 攻方の王手 a をさかのぼった局面 P' の盤面と持駒の候補。 */
 function listAttackerRetros(editable: EditablePosition): AttackerRetro[] {
   const retros: AttackerRetro[] = [];
   for (const [index, piece] of editable.cells.entries()) {
@@ -304,7 +297,6 @@ function listAttackerRetros(editable: EditablePosition): AttackerRetro[] {
 }
 
 /**
- * P から1組さかのぼった局面の候補を、`shuffle` で決めた順に1つずつ返す。
  * 返す候補は、P' から攻方の王手 a・玉方の応手 d を順に指すと P になることを確かめてある。
  * P' が詰将棋として成り立つか（手数・余詰・駒余りなど）はまだ見ない。
  */
