@@ -65,10 +65,8 @@ export function GameResultGrade({
     <div className="result-grade" role="region" aria-label="スコア">
       <strong className="result-grade-name">{message}</strong>
       <p className="result-grade-tags">
-        <span
-          className={`result-grade-level ${markClassName}`}
-          aria-label={`評価 ${level}`}
-        >
+        <span className={`result-grade-level ${markClassName}`}>
+          <span className="sr-only">評価 </span>
           {level}
         </span>
         {feats.map((feat) => (

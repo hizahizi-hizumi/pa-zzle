@@ -69,10 +69,10 @@ describe("GameResultGrade の評価の言葉", () => {
 
     test("褒める言葉を出し、図鑑と同じ評価段階の名前を添えること", () => {
       const message = screen.getByText("クリア！");
-      const levelName = screen.getByLabelText("評価 clear");
+      const levelName = screen.getByText("clear");
 
       expect(message).toBeTruthy();
-      expect(levelName.textContent).toBe("clear");
+      expect(levelName.textContent).toBe("評価 clear");
     });
   });
 
