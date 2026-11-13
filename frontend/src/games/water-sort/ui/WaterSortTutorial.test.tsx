@@ -34,7 +34,8 @@ const stepBottles = steps.map(({ move }) => [
 /** 手を離した後、青を空のボトルへよけて、最短の5手でそろえるボトル（1始まり）。 */
 const solvingBottles = [3, 5, 3, 4, 3, 5, 1, 5, 2, 1] as const;
 
-const idleHintDelayMs = 4000;
+/** 手を離した後に止まっていても、手がかりを勝手に出さないことを確かめる長さ。 */
+const longIdleMs = 60_000;
 
 const goalFirstBottle = "ボトル 1: 赤、赤、赤、赤";
 const startFirstBottle = "ボトル 1: 赤、赤、赤、青";
@@ -90,6 +91,14 @@ function tapBottles(bottleNumbers: readonly number[]): void {
   for (const bottleNumber of bottleNumbers) {
     fireEvent.click(getBottle(bottleNumber));
   }
+}
+
+function queryHintButton(): HTMLElement | null {
+  return within(getScreen()).queryByRole("button", { name: "ヒント" });
+}
+
+function pressHint(): void {
+  fireEvent.click(within(getScreen()).getByRole("button", { name: "ヒント" }));
 }
 
 function pressStart(): void {
@@ -190,6 +199,12 @@ describe("WaterSortTutorial", () => {
       expect(caption).not.toBeNull();
       expect(getBottleLabel(1)).toBe(goalFirstBottle);
       expect(progress).toBe("0");
+    });
+
+    test("入口では、ヒントを出さないこと", () => {
+      const hintButton = queryHintButton();
+
+      expect(hintButton).toBeNull();
     });
 
     test("入口でボトルを押しても、ゴールの盤面を見せたまま、はじめるを待つこと", () => {
@@ -304,6 +319,14 @@ describe("WaterSortTutorial", () => {
       expect(getCuedBottles()).toEqual([2]);
     });
 
+    test("手を引いている間は、手順を終えても、ヒントを出さないこと", () => {
+      tapBottles(stepBottles[0] ?? []);
+
+      const hintButton = queryHintButton();
+
+      expect(hintButton).toBeNull();
+    });
+
     describe("注げる先のルールを示した手順で注ぎ元を選んだ場合", () => {
       beforeEach(() => {
         tapBottles([...(stepBottles[0] ?? []), stepBottles[1]?.[0] ?? 0]);
@@ -345,15 +368,35 @@ describe("WaterSortTutorial", () => {
         expect(getCuedBottles()).toEqual([]);
       });
 
-      test("手が止まると、最も早くそろう注ぎの注ぎ元を指さすこと", () => {
-        advanceTime(idleHintDelayMs - 1);
-        const beforeIdle = getCuedBottles();
-        advanceTime(1);
+      test("手が止まっても、指ささずにヒントを出しておくこと", () => {
+        advanceTime(longIdleMs);
 
-        const afterIdle = getCuedBottles();
+        const cuedBottles = getCuedBottles();
+        const hintButton = queryHintButton();
 
-        expect(beforeIdle).toEqual([]);
-        expect(afterIdle).toEqual([1]);
+        expect(cuedBottles).toEqual([]);
+        expect(hintButton).not.toBeNull();
+      });
+
+      test("ヒントを押すと、最も早くそろう注ぎの注ぎ元を指さし、ヒントを下げること", () => {
+        pressHint();
+
+        const cuedBottles = getCuedBottles();
+        const hintButton = queryHintButton();
+
+        expect(cuedBottles).toEqual([1]);
+        expect(hintButton).toBeNull();
+      });
+
+      test("ヒントで指さした後に次の手を入れると、指さしを消し、またヒントを出すこと", () => {
+        pressHint();
+        tapBottles([1]);
+
+        const cuedBottles = getCuedBottles();
+        const hintButton = queryHintButton();
+
+        expect(cuedBottles).toEqual([]);
+        expect(hintButton).not.toBeNull();
       });
 
       test("1色そろうと、そのボトルにだけ応え、そろった数と残りの数を言うこと", () => {
@@ -391,9 +434,21 @@ describe("WaterSortTutorial", () => {
         },
       );
 
-      test("注ぎ元を選んだまま手が止まると、そこから注ぐ注ぎ先を指さし、違反の一言を下げること", () => {
+      test("注ぎ元を選んだまま手が止まっても、指ささずに違反の一言を残すこと", () => {
         tapBottles([2, 4]);
-        advanceTime(idleHintDelayMs);
+        advanceTime(longIdleMs);
+
+        const violation = queryShownText(
+          getViolationHeadline("different-color"),
+        );
+
+        expect(getCuedBottles()).toEqual([]);
+        expect(violation).not.toBeNull();
+      });
+
+      test("注ぎ元を選んだままヒントを押すと、そこから注ぐ注ぎ先を指さし、違反の一言を下げること", () => {
+        tapBottles([2, 4]);
+        pressHint();
 
         const violation = queryShownText(
           getViolationHeadline("different-color"),
@@ -425,6 +480,12 @@ describe("WaterSortTutorial", () => {
             waterSortTutorial.rules.map(({ label }) => label),
           );
           expect(getProgressValue()).toBe("100");
+        });
+
+        test("ヒントを出さないこと", () => {
+          const hintButton = queryHintButton();
+
+          expect(hintButton).toBeNull();
         });
 
         test("本番と同じ完成の音を1回鳴らすこと", () => {

@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
 
-import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import type { TakuzuLine } from "@/games/takuzu/puzzle/board";
 import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/TakuzuBoard/violation-mark-timing";
 import { lineViolationBarClassName } from "@/games/takuzu/ui/board/violation-mark-style";
@@ -10,7 +9,6 @@ type TakuzuLineViolationMarkProps = {
   size: number;
   line: TakuzuLine;
   violated: boolean;
-  spotlit: boolean;
 };
 
 type LineEdge = "start" | "end";
@@ -46,7 +44,6 @@ export function TakuzuLineViolationMark({
   size,
   line,
   violated,
-  spotlit,
 }: TakuzuLineViolationMarkProps) {
   return lineEdges.map(function renderEdgeMark(edge) {
     return (
@@ -63,13 +60,6 @@ export function TakuzuLineViolationMark({
             lineViolationBarClassName,
             barPlacementClassNames[line.axis][edge],
             violationMarkTimingClassName,
-          )}
-        />
-        <TutorialSpotlight
-          active={spotlit && violated}
-          className={cn(
-            "rounded-full",
-            barPlacementClassNames[line.axis][edge],
           )}
         />
       </span>

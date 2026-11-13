@@ -7,7 +7,10 @@ import {
   useState,
 } from "react";
 
-import { TUTORIAL_SPOTLIGHT_ATTRIBUTE } from "@/components/TutorialSpotlight";
+import {
+  TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE,
+  TUTORIAL_SPOTLIGHT_ATTRIBUTE,
+} from "@/components/TutorialSpotlight";
 import { cn } from "@/lib/utils";
 
 type TutorialFocusScrimProps = {
@@ -15,6 +18,12 @@ type TutorialFocusScrimProps = {
   active: boolean;
   /** 抜く所を探す範囲。チュートリアルの画面そのもの。 */
   containerRef: RefObject<HTMLElement | null>;
+  /**
+   * 覆う範囲。
+   * - `screen`（既定）: 画面全体を暗く覆う。
+   * - `area`: `TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE` の付いた要素（盤面）の形だけを薄く覆う。画面の地・名前・進み具合はプレイ画面と同じ見え方のまま残す。
+   */
+  scope?: "screen" | "area";
 };
 
 /** 覆いの座標で表した、抜く所の角丸の四角。 */
@@ -41,7 +50,11 @@ const cornerRadiusProperties = [
 /**
  * 暗い配色では `foreground` が明るい色になるので、`background` を濃く重ねる。
  */
-const scrimFillClassName = "fill-foreground/55 dark:fill-background/75";
+const scrimFillClassNames = {
+  screen: "fill-foreground/55 dark:fill-background/75",
+  // 盤面の中だけを覆うので、盤面がプレイ画面と同じ物に見えるまま、抜いた所との差が分かる薄さにする。
+  area: "fill-muted-foreground/35 dark:fill-background/55",
+} as const;
 
 function round(value: number): number {
   return Math.round(value * 2) / 2;
@@ -79,12 +92,18 @@ function getHolePath({ x, y, width, height, radii }: Hole): string {
   ].join(" ");
 }
 
-function measureHoles(svg: SVGSVGElement, container: HTMLElement): Hole[] {
+/**
+ * 印の付いた要素の今の位置・大きさ・角丸を、覆いの座標で読む。動いている物（スライド・揺れ）にも追いつくよう、毎フレーム読む。
+ * スライドで空白へ入るタイルのように、抜く所が同じ形で重なったときは1つにまとめる。
+ */
+function measureHoles(
+  svg: SVGSVGElement,
+  container: HTMLElement,
+  attribute: string,
+): Hole[] {
   const origin = svg.getBoundingClientRect();
   const holes = Array.from(
-    container.querySelectorAll<HTMLElement>(
-      `[${TUTORIAL_SPOTLIGHT_ATTRIBUTE}]`,
-    ),
+    container.querySelectorAll<HTMLElement>(`[${attribute}]`),
   ).flatMap((element) => {
     const rect = element.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) {
@@ -132,9 +151,11 @@ function getHolesKey(holes: readonly Hole[]): string {
 export function TutorialFocusScrim({
   active,
   containerRef,
+  scope = "screen",
 }: TutorialFocusScrimProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [holes, setHoles] = useState<readonly Hole[]>([]);
+  const [areas, setAreas] = useState<readonly Hole[]>([]);
   const holesKeyRef = useRef("");
   const maskId = `tutorial-focus-scrim-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
@@ -144,13 +165,18 @@ export function TutorialFocusScrim({
     if (!svg || !container) {
       return;
     }
-    const next = measureHoles(svg, container);
-    const key = getHolesKey(next);
+    const next = measureHoles(svg, container, TUTORIAL_SPOTLIGHT_ATTRIBUTE);
+    const nextAreas =
+      scope === "area"
+        ? measureHoles(svg, container, TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE)
+        : [];
+    const key = `${getHolesKey(next)}|${getHolesKey(nextAreas)}`;
     if (key !== holesKeyRef.current) {
       holesKeyRef.current = key;
       setHoles(next);
+      setAreas(nextAreas);
     }
-  }, [containerRef]);
+  }, [containerRef, scope]);
 
   // 描く前に読み、抜く所が替わった瞬間に一言や印が覆いに隠れないようにする。覆いを消す間は、最後に抜いた所のまま消す。
   useLayoutEffect(() => {
@@ -191,7 +217,13 @@ export function TutorialFocusScrim({
           width="100%"
           height="100%"
         >
-          <rect width="100%" height="100%" fill="white" />
+          {scope === "screen" ? (
+            <rect width="100%" height="100%" fill="white" />
+          ) : (
+            areas.map((area) => (
+              <path key={getHoleKey(area)} d={getHolePath(area)} fill="white" />
+            ))
+          )}
           {holes.map((hole) => (
             <path key={getHoleKey(hole)} d={getHolePath(hole)} fill="black" />
           ))}
@@ -201,7 +233,7 @@ export function TutorialFocusScrim({
         width="100%"
         height="100%"
         mask={`url(#${maskId})`}
-        className={scrimFillClassName}
+        className={scrimFillClassNames[scope]}
       />
     </svg>
   );

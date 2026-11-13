@@ -41,6 +41,7 @@ describe("TutorialStage", () => {
   let onIntroEnd: ReturnType<typeof vi.fn<() => void>>;
   let onRestart: ReturnType<typeof vi.fn<() => void>>;
   let onClose: ReturnType<typeof vi.fn<() => void>>;
+  let onRequestHint: ReturnType<typeof vi.fn<() => void>>;
   // 盤面に渡された入口の場面。盤面の代わりに場面の終わりを伝える。
   let boardIntro: TutorialStageBoardIntro | undefined;
 
@@ -49,6 +50,7 @@ describe("TutorialStage", () => {
     onIntroEnd = vi.fn<() => void>();
     onRestart = vi.fn<() => void>();
     onClose = vi.fn<() => void>();
+    onRequestHint = vi.fn<() => void>();
     boardIntro = undefined;
   });
 
@@ -56,12 +58,16 @@ describe("TutorialStage", () => {
     open = true,
     phase = "intro",
     progress = 0,
+    spotlighting = false,
     finish = { entry: "play", onReturnToPlay: vi.fn() },
+    hintRequestable = false,
   }: {
     open?: boolean;
     phase?: TutorialPhase;
     progress?: number;
+    spotlighting?: boolean;
     finish?: TutorialFinish;
+    hintRequestable?: boolean;
   } = {}): (nextPhase: TutorialPhase) => void {
     function createStage(shownPhase: TutorialPhase) {
       return (
@@ -74,6 +80,7 @@ describe("TutorialStage", () => {
           recap={recap}
           message={defaultMessage}
           phase={shownPhase}
+          spotlighting={spotlighting}
           progress={progress}
           progressStepCount={6}
           finish={finish}
@@ -83,6 +90,7 @@ describe("TutorialStage", () => {
           }}
           onIntroEnd={onIntroEnd}
           onRestart={onRestart}
+          onRequestHint={hintRequestable ? onRequestHint : null}
           onClose={onClose}
         />
       );
@@ -198,6 +206,132 @@ describe("TutorialStage", () => {
       );
 
       expect(onClose).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("盤面が決め手を示している場合", () => {
+    function getScrim(): Element | null {
+      return document.querySelector("[data-tutorial-focus-scrim]");
+    }
+
+    describe("盤面を解いている間", () => {
+      beforeEach(() => {
+        renderStage({ phase: "playing", spotlighting: true });
+      });
+
+      test("盤面の中を覆うこと", () => {
+        const scrim = getScrim();
+
+        expect(scrim).not.toBeNull();
+      });
+    });
+
+    const hiddenCases = [
+      ["入口を見せている", "intro"],
+      ["解き終えて完成演出を見せている", "solved"],
+      ["終えたときの操作を待っている", "completed"],
+    ] as const;
+
+    test.each(hiddenCases)("%s間は、覆わないこと", (_, phase) => {
+      renderStage({ phase, spotlighting: true });
+
+      const scrim = getScrim();
+
+      expect(scrim).toBeNull();
+    });
+
+    describe("はじめるを押して、始めの盤面へ替える場面を見せている間", () => {
+      beforeEach(() => {
+        const rerenderStage = renderStage({ spotlighting: true });
+        fireEvent.click(
+          within(getScreen()).getByRole("button", { name: "はじめる" }),
+        );
+        rerenderStage("playing");
+      });
+
+      test("覆わず、場面を終えると覆うこと", () => {
+        const scrimDuringScene = getScrim();
+        act(() => boardIntro?.onSceneEnd());
+
+        const scrim = getScrim();
+
+        expect(scrimDuringScene).toBeNull();
+        expect(scrim).not.toBeNull();
+      });
+    });
+  });
+
+  describe("手がかりを求める操作を渡した場合", () => {
+    function queryHintButton(): HTMLElement | null {
+      return within(getScreen()).queryByRole("button", { name: "ヒント" });
+    }
+
+    describe("盤面を解いている間", () => {
+      beforeEach(() => {
+        renderStage({ phase: "playing", hintRequestable: true });
+      });
+
+      test("ヒントを出すこと", () => {
+        const hintButton = queryHintButton();
+
+        expect(hintButton).not.toBeNull();
+      });
+
+      test("ヒントを押すと、手がかりを求める操作を知らせること", () => {
+        fireEvent.click(
+          within(getScreen()).getByRole("button", { name: "ヒント" }),
+        );
+
+        expect(onRequestHint).toHaveBeenCalledOnce();
+      });
+    });
+
+    const hiddenCases = [
+      ["入口を見せている", "intro"],
+      ["解き終えて完成演出を見せている", "solved"],
+      ["終えたときの操作を待っている", "completed"],
+    ] as const;
+
+    test.each(hiddenCases)("%s間は、ヒントを出さないこと", (_, phase) => {
+      renderStage({ phase, hintRequestable: true });
+
+      const hintButton = queryHintButton();
+
+      expect(hintButton).toBeNull();
+    });
+
+    describe("はじめるを押して、始めの盤面へ替える場面を見せている間", () => {
+      beforeEach(() => {
+        const rerenderStage = renderStage({ hintRequestable: true });
+        fireEvent.click(
+          within(getScreen()).getByRole("button", { name: "はじめる" }),
+        );
+        rerenderStage("playing");
+      });
+
+      test("ヒントを出さず、場面を終えると出すこと", () => {
+        const hintButtonDuringScene = queryHintButton();
+        act(() => boardIntro?.onSceneEnd());
+
+        const hintButton = queryHintButton();
+
+        expect(hintButtonDuringScene).toBeNull();
+        expect(hintButton).not.toBeNull();
+      });
+    });
+  });
+
+  describe("手がかりを求める操作を渡さずに盤面を解いている場合", () => {
+    beforeEach(() => {
+      renderStage({ phase: "playing" });
+    });
+
+    test("ヒントを出さないこと", () => {
+      const hintButton = within(getScreen()).queryByRole("button", {
+        name: "ヒント",
+      });
+
+      expect(hintButton).toBeNull();
     });
   });
 
