@@ -1,10 +1,7 @@
 import { bridgesFigureParts } from "@/games/bridges/ui/board/BridgesFigure";
 import { prefersReducedMotion } from "@/lib/motion";
 
-/**
- * 阻んだ橋の縁取りの点灯。板が突き当たるときに点け、しばらく点けたまま 0.8 秒で消し切る。続く状態の多すぎ（消えない陸の色）とは、
- * 点いて消える動きで分ける。動かない点灯なので、動きを減らす設定でも返す。
- */
+/** 阻んだ橋の縁取りの点灯は動かないので、動きを減らす設定でも返す。 */
 const OUTLINE_MS = 800;
 const outlineKeyframes: Keyframe[] = [
   { opacity: 0 },
@@ -16,7 +13,6 @@ const outlineKeyframes: Keyframe[] = [
 
 /**
  * 押した島から伸びて阻んだ橋に突き当たり、弾かれて縮む板。伸び切った所で阻んだ橋に当たり、少し押し戻されてから引っ込む。
- * 動きを減らす設定では伸ばさず、伸び切った姿を一瞬だけ見せる。
  */
 const ATTEMPT_MS = 620;
 function createAttemptKeyframes(axis: string | null): Keyframe[] {
@@ -50,11 +46,6 @@ function createShakeKeyframes(axis: string | null): Keyframe[] {
   }));
 }
 
-/**
- * 交わる橋に阻まれて架けられなかったことを、盤面だけで返す。文字は出さない。
- * 押した島から板を伸ばして阻んだ橋に突き当て、弾き返す動きを主にし、突き当たったときに阻んだ橋を揺らして明るく縁取り、
- * どこを押してどの橋に阻まれたかを形で知らせる。動きを減らす設定では伸ばさず揺らさない。
- */
 export function flashBlockingBridges(figure: SVGSVGElement | null): void {
   if (!figure) {
     return;

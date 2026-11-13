@@ -39,10 +39,8 @@ function readBoardSurface(): HTMLElement {
   return screen.getByRole("group");
 }
 
-/** 置いた盤面の、周りの海の余白の幅。 */
 let boardMargin = 0;
 
-/** 盤面の絵を、周りの海の余白も含めて1マス 100px で置く。 */
 function placeBoard(board: BridgesBoardState): void {
   boardMargin = createBoardView(board).margin;
   const size = (board.width + 2 * boardMargin) * 100;
@@ -51,7 +49,6 @@ function placeBoard(board: BridgesBoardState): void {
   );
 }
 
-/** 盤面の座標 `[x, y]` の所の、指の位置。 */
 function toPointer([x, y]: readonly [number, number]) {
   return {
     pointerId: 1,
@@ -62,13 +59,11 @@ function toPointer([x, y]: readonly [number, number]) {
   };
 }
 
-/** 盤面の座標 `at` を押して、動かさずに離す。 */
 function press(at: readonly [number, number]): void {
   fireEvent.pointerDown(readBoardSurface(), toPointer(at));
   fireEvent.pointerUp(readBoardSurface(), toPointer(at));
 }
 
-/** `from` から押してなぞり、`to` で離す。 */
 function drag(
   from: readonly [number, number],
   to: readonly [number, number],

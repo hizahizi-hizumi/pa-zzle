@@ -3,11 +3,11 @@ import { useId } from "react";
 import { bridgesToneClassNames } from "@/games/bridges/ui/bridges-tone";
 
 /**
- * 波の印を散らす区画。印の位置をばらした大きな区画を2つ、互いに割り切れない寸法で重ね、区画の繰り返しが格子に見えないようにする。
+ * 印の位置をばらした大きな区画を2つ、互いに割り切れない寸法で重ね、区画の繰り返しが格子に見えないようにする。
  * スマホの画面の幅では区画が1度も繰り返さず、PC の画面でも横に3〜4度にとどまる。
  * 寸法は `unit` を掛ける前の値で、プレイ画面の海では px、絵の中の海ではマス幅の 1/40 ほどにする。
  * 印は大小2段の大きさにし、数を絞って海の面を静かに保つ。
- * - `marks`: 区画の中の波の印。`x`・`y` は左端、`large` は大きい印か。
+ * - `marks`: `x`・`y` は印の左端。
  */
 const waveTiles = [
   {
@@ -31,7 +31,7 @@ const waveTiles = [
   },
 ] as const;
 
-/** 盤面の外の広い海（PC の左右、スマホの上下）に足す波の印の区画。盤面の外の広い面が空き地に見えないよう、印の密度を上げる。 */
+/** 盤面の外の広い面が空き地に見えないよう、印の密度を上げる。 */
 const wideWaveTile = {
   width: 233,
   height: 181,
@@ -42,7 +42,7 @@ const wideWaveTile = {
   ],
 } as const;
 
-/** 印の大きさ（横幅）と線の太さ。大きい印は小さい印の 1.6 倍ほどにする。 */
+/** 印の大きさは横幅。 */
 const WAVE_SIZES = { small: 12, large: 20 } as const;
 const WAVE_STROKE_WIDTH = 2;
 
@@ -95,11 +95,6 @@ function WavePattern({
   );
 }
 
-/**
- * SVG の中に、海に散らす動かない波の印を描く。区画の繰り返しを崩し、印の大きさを2段にする。
- * 海の地は無地にし、ブランドの帯・ブラウザの上下の面（同じ無地の色）と継ぎ目なくつなぐ。
- * `unit` は区画の寸法に掛ける倍率。
- */
 export function SeaWaves({ unit }: { unit: number }) {
   const id = useId();
   return (
@@ -126,7 +121,7 @@ export function SeaWaves({ unit }: { unit: number }) {
   );
 }
 
-/** SVG の中に、盤面の外の広い海に足す波の印を描く。見せる範囲は置く側で決める。 */
+/** 見せる範囲は置く側で決める。 */
 export function SeaWideWaves() {
   const id = useId();
   return (

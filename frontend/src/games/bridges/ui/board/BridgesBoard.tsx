@@ -56,17 +56,15 @@ type BridgesBoardProps = {
   board: BridgesBoardState;
   bridges: readonly BridgeCount[];
   islandStatuses: readonly BridgesIslandStatus[];
-  /** 最後の盤面操作で橋に起きた変化。架けた・外した板の動きと、阻まれた操作を盤面で返すのに使う。 */
   edgeNotice: BridgesEdgeNotice | null;
   /** クリアしてから演出を終えるまで `true`。 */
   clearing: boolean;
   /**
    * 全部の島がつながった後か。完成演出を終えて結果へ移る間も、明るい木の色の橋で完成した姿のまま描く。
-   * 省略すると `clearing` の間だけ明るい橋で描く。
    */
   solved?: boolean;
   interactionDisabled: boolean;
-  /** 盤面の絵の地に海を描くか。画面全体の海の上に置くプレイ画面では描かない。 */
+  /** 画面全体の海の上に置くプレイ画面では描かない。 */
   showsSea?: boolean;
   /** 辺に一時的に重ねる合図。通常のプレイでは渡さない。 */
   cues?: readonly BridgesBoardCue[];
@@ -85,9 +83,8 @@ type BridgesBoardProps = {
    * 盤面の中でほかの島と橋を深い海に沈めて見せる。通常のプレイでは渡さない。
    */
   spotlight?: BridgesBoardSpotlight | null;
-  /** 辺の橋を 1本 → 2本 → なし と回す。 */
   onCycleEdge: (edge: number) => void;
-  /** 辺の橋を逆に なし → 2本 → 1本 と回す。マウスの右クリックで使う。渡さなければ右クリックでは回さない。 */
+  /** マウスの右クリックで使う。渡さなければ右クリックでは回さない。 */
   onCycleEdgeBackward?: (edge: number) => void;
   /** 押したが、どの辺の橋も回さず、島も選ばなかった（線から遠い所、なぞって相手の島の外で離した）。 */
   onIneffectivePress?: () => void;
@@ -95,7 +92,6 @@ type BridgesBoardProps = {
 };
 
 /**
- * 押している指。押した瞬間に狙いを決めて光らせ、離したときに確かめて回す。
  * - `edge`: 線の当たり範囲を押した。`origin` は板を伸ばし始める端の島。`armed` は今離せば回すか（指が同じ線の当たり範囲にあるか）。
  * - `island`: 島を押した。`pairedEdge` は、別の島を選んでいたときの、その島との間の辺。`left` は指が島の陸を出た（なぞりを始めた）か。
  *   `aim` はなぞる指の狙う辺と、今離せば橋を回すか。
@@ -118,7 +114,6 @@ type Press =
     };
 
 /**
- * マウスを乗せている所。
  * - `edge`: 押せば回る辺。島の間に乗せたときと、選んだ島の相手に乗せたとき。
  * - `island`: 乗せている島。選んだ島が無いときに、その島から架けられる相手を示す。
  * - `candidates`: 最も近い2本の線までの距離がほとんど同じ所に乗せたときの、2辺。
@@ -130,7 +125,6 @@ type Hover = {
   candidates: readonly [number, number] | null;
 };
 
-/** 最も近い2本の線までの距離がほとんど同じ所を押したときの、候補の2辺。 */
 type CandidatePress = {
   board: BridgesBoardState;
   edges: readonly [number, number];
@@ -139,10 +133,8 @@ type CandidatePress = {
 /** 板の横木を省いて板を太くする、マスの幅（px）。スマホの 9×9 以上の盤面がこれを下回る。 */
 const COMPACT_CELL_PX = 37;
 
-/** どちらの線か決まらない所を押したときに、候補の2辺を示しておく時間。 */
 const CANDIDATE_HINT_MS = 1_200;
 
-/** 島の状態の読み上げ。足りない間は何も添えない。 */
 const islandStatusLabels = {
   short: "",
   exact: " ちょうど",
@@ -156,7 +148,6 @@ const arrowKeyDirections: Readonly<Record<string, BridgesDirection>> = {
   ArrowLeft: "left",
 };
 
-/** 読み上げとキーボードの止まり先にする、島のボタンを探す。 */
 function findIslandButton(
   boardElement: HTMLElement,
   island: number,
@@ -164,7 +155,7 @@ function findIslandButton(
   return boardElement.querySelector(`button[data-island="${island}"]`);
 }
 
-/** 押した辺の、押した点に近い方の端の島。板をこの島から伸ばす。 */
+/** 板をこの島から伸ばす。 */
 function findNearerEnd(
   board: BridgesBoardState,
   edge: number,
@@ -178,25 +169,11 @@ function findNearerEnd(
   return distanceTo(from) <= distanceTo(to) ? from : to;
 }
 
-/** 盤面ごとに持つ、選んだ島の番号。別の問題へ移った後は、前の盤面の島を今の盤面に当てはめない。 */
+/** 別の問題へ移った後は、前の盤面の島を今の盤面に当てはめない。 */
 type IslandsOnBoard = { board: BridgesBoardState; islands: readonly number[] };
 
 /**
- * 盤面。盤面全体の1要素で押した位置を受け、座標から島か辺を決める（`findBoardTarget`）。
- * - 島の当たり範囲は陸の上だけ。島の外では、2島の間の長方形（線から両側に半マス）に押した点を含む線のうち、線に最も近い線の辺を狙う。
- *   最も近い2本の線までの距離がほとんど同じ所（交点のそばなど）では、どちらの橋も回さず、2辺にロープを張って候補を示す。
- *   どの線の当たり範囲にも入らない海を押すと、どの橋も回さず、島の選びを解く。
- * - 押した瞬間に狙った辺へ回した後の板の影とロープを置いて光らせ、離したときにその辺の橋を回す。押したまま指を当たり範囲の外へずらすと
- *   光が消え、離しても回さない。
- * - 島を押して動かさずに離すと、その島を選ぶ。選んでいる間に相手の島を押すと、押している間その間の辺を光らせ、離すとその間の橋を回す。
- * - 島から押してなぞり、指が島の陸を出て縦横から 25° の内へ動いたら、その向きの最初の島への辺を狙う。指が相手の島に
- *   届いてから離すとその間の橋を回す。相手の島を通り過ぎて離しても回す。斜めのなぞりと、海の上で止めたなぞりでは回さない。
- * - なぞりを始めたとき、橋を回したとき、島の外（盤面の外を含む）を押したとき、Esc キーで、島の選びを解く。
- * - マウスの右クリックは、狙った辺の橋を逆に なし → 2本 → 1本 と回す。
- * - 島を押している間・選んでいる間・マウスを乗せている間は、その島から今架けられる相手へのロープと、島と同じ行と列の淡い帯を
- *   見せる。交わる橋に阻まれて今は架けられない相手にはロープを張らない。なぞっている間は、指の向いた辺のロープを目立たせて
- *   ほかを淡くし、指が相手の島に届いたら回した後の板の影と相手の島の輪を見せる。
- * - マウスを乗せた所で押せば回る辺には、回した後の板の影を淡く予告する。
+ * 盤面全体の1要素で押した位置を受け、座標から島か辺を決める（`findBoardTarget`）。
  * - 盤面はスクロール・拡大・長押しのメニューに指を奪わせず、押している間はポインターを捕捉する。
  * - キーボードでは、島ごとのボタン（見えない読み上げの一覧）の1つに止まり、矢印キーで隣の島へ移り、Shift と矢印キーで
  *   その向きの辺の橋を回す。
@@ -221,13 +198,13 @@ export function BridgesBoard({
 }: BridgesBoardProps) {
   const boardRef = useRef<HTMLDivElement>(null);
   const figureRef = useRef<SVGSVGElement>(null);
-  /** 最後に橋を回した辺と、板を伸ばし始める島。橋の変化や阻まれたことが盤面に届いたときに板を動かすのに使う。 */
+  /** 橋の変化や阻まれたことが盤面に届いたときに板を動かすのに使う。 */
   const [motionOrigin, setMotionOrigin] = useState<{
     edge: number;
     island: number;
   } | null>(null);
   const [press, setPress] = useState<Press | null>(null);
-  /** 最後に押したポインターの種類。タッチの長押しで届く contextmenu を右クリックと取り違えないために持つ。 */
+  /** タッチの長押しで届く contextmenu を右クリックと取り違えないために持つ。 */
   const lastPointerType = useRef<string | null>(null);
   const [selection, setSelection] = useState<IslandsOnBoard | null>(null);
   const [candidatePress, setCandidatePress] = useState<CandidatePress | null>(
@@ -260,7 +237,6 @@ export function BridgesBoard({
               : network.edges[edgeNotice.edge]!.from,
         }
       : null;
-  // 完成の光は最後に架けた橋から渡す。
   const clearOriginEdge =
     edgeNotice?.change === "changed" && edgeNotice.edge < network.edges.length
       ? edgeNotice.edge
@@ -287,7 +263,6 @@ export function BridgesBoard({
     currentHover?.island ??
     null;
   const aim = press?.kind === "island" ? press.aim : null;
-  // 押している指が今離せば回す辺。押した瞬間から光らせる。
   const pressedEdge =
     press?.kind === "edge"
       ? press.armed
@@ -431,7 +406,6 @@ export function BridgesBoard({
     return toBoardPoint(view, frame, event.clientX, event.clientY);
   }
 
-  /** 押した点の狙い。チュートリアルで押させる辺の帯の中なら、その辺。 */
   function findPressTarget(point: BoardPoint): BoardTarget | null {
     const guidedEdge = guidedEdges.find((edge) =>
       isPointInEdgeBand(board, edge, point),
@@ -510,9 +484,6 @@ export function BridgesBoard({
     });
   }
 
-  /**
-   * マウスを乗せた所。島の間なら押せば回る辺。島なら、選んだ島があればその島との間の辺、無ければ乗せた島そのもの。
-   */
   function findHover(point: BoardPoint): Hover | null {
     const target = findBoardTarget(board, point);
     if (target === null) {
@@ -564,7 +535,6 @@ export function BridgesBoard({
     }
     const left = press.left || !isPointOnIsland(board, press.island, point);
     if (left && !press.left) {
-      // なぞりを始めたら、前に選んでいた島との組は使わない。
       setSelection(null);
     }
     const next = left ? findDragAim(board, press.island, point) : null;
@@ -621,7 +591,6 @@ export function BridgesBoard({
     }
   }
 
-  /** マウスの右クリックで、狙った辺の橋を逆に回す。タッチの長押しで届く contextmenu では回さない。 */
   function handleContextMenu(event: ReactMouseEvent<HTMLDivElement>) {
     event.preventDefault();
     if (

@@ -16,15 +16,11 @@ import {
 type HowToPlayFigureProps = {
   board: BridgesBoard;
   bridges: readonly BridgeCount[];
-  /** 交わる橋に阻まれたときに縁取る、阻んだ橋の辺。 */
   blockingEdges?: readonly number[];
-  /** 交わる橋に阻まれたときに、押した端の島から阻んだ橋の手前まで板の影を置く、押した辺と端の島。 */
   blockedAttempt?: BridgesBlockedAttempt;
-  /** 指を置いている所（盤面の座標）。指の印を添える。 */
   finger?: BoardPoint;
 };
 
-/** 盤面と同じ部品で描く、遊び方の小さな図。島の状態は橋の本数から盤面と同じ規則で求める。 */
 export function HowToPlayFigure({
   board,
   bridges,

@@ -41,7 +41,7 @@ const edgePoints = {
   middle: [1.5, 2.5],
 } as const satisfies Record<string, BoardPoint>;
 
-/** 手順ごとに押す所。2本架ける手順は2回押す。 */
+/** 2本架ける手順は2回押す。 */
 const stepTaps: readonly BoardPoint[] = [
   edgePoints.center,
   edgePoints.center,
@@ -86,7 +86,6 @@ function stubReducedMotion(): void {
   );
 }
 
-/** 場面の動きを待たずに「次へ」を続けて押し、ゴールと始まりの盤面を通って最初の手順から始める。 */
 function pressNextThroughIntro(): void {
   for (
     let next = screen.queryByRole("button", { name: "次へ" });
@@ -101,7 +100,6 @@ function getBoard(): HTMLElement {
   return screen.getByRole("group", { name: "ブリッジパズル盤面 5行5列" });
 }
 
-/** 盤面の絵を、周りの海の余白も含めて1マス 100px で置き、押す所を画面の座標にする。 */
 function placeBoard([x, y]: BoardPoint) {
   const board = getBoard();
   const size = (BRIDGES_TUTORIAL_BOARD.width + 2 * BOARD_MARGIN) * 100;
@@ -120,14 +118,12 @@ function placeBoard([x, y]: BoardPoint) {
   };
 }
 
-/** 押して、動かさずに離す。 */
 function tap(at: BoardPoint): void {
   const { board, point } = placeBoard(at);
   fireEvent.pointerDown(board, point);
   fireEvent.pointerUp(board, point);
 }
 
-/** 島を押して、動かさずに離す。 */
 function pressIsland(at: BoardPoint): void {
   const { board, point } = placeBoard(at);
   fireEvent.pointerDown(board, point);
@@ -140,7 +136,6 @@ function tapAll(points: readonly BoardPoint[]): void {
   }
 }
 
-/** `from` の島から押してなぞり、`to` で離す。 */
 function drag(from: BoardPoint, to: BoardPoint): void {
   const { board, point: start } = placeBoard(from);
   const { point: end } = placeBoard(to);
@@ -149,7 +144,6 @@ function drag(from: BoardPoint, to: BoardPoint): void {
   fireEvent.pointerUp(board, end);
 }
 
-/** 手を引く手順をすべて終える。最後の手順は、島から相手の島へなぞって架ける。 */
 function finishGuidedSteps(): void {
   tapAll(stepTaps);
   drag(topLeftIsland, topIsland);
@@ -181,7 +175,6 @@ function hasFocusScrim(): boolean {
   return document.querySelector("[data-tutorial-focus-scrim]") !== null;
 }
 
-/** 鳴らした効果音の音声ファイル名。重ねて鳴らした効果音は、重ねた素材の順に並べる。 */
 function getPlayedSoundNames(): string[] {
   const single = vi.mocked(playSound).mock;
   const layered = vi.mocked(playLayeredSound).mock;

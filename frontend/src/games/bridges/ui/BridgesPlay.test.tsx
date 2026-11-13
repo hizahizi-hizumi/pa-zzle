@@ -89,7 +89,6 @@ describe("BridgesPlay", () => {
     return screen.getByRole("group", { name: boardName });
   }
 
-  /** 盤面の絵を、周りの海の余白も含めて1マス 100px で置く。 */
   function placeBoard(): void {
     const size = (board.width + 2 * BOARD_MARGIN) * 100;
     vi.spyOn(getBoardGroup(), "getBoundingClientRect").mockReturnValue(
@@ -97,7 +96,6 @@ describe("BridgesPlay", () => {
     );
   }
 
-  /** 島0 と島1 の間（辺0）の線の上を押す。 */
   function tapBetweenFirstIslands(): void {
     const point = {
       pointerId: 1,

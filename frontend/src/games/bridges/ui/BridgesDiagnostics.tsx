@@ -41,7 +41,7 @@ const invalidReasonLabels = {
   "search-limit": "不成立（一意性の探索が上限）",
 } as const;
 
-/** レベルの組み合わせの条件の名前。並びは組み合わせの定義の順。 */
+/** 並びは組み合わせの定義の順。 */
 const levelConditionLabels = {
   boardSize: "盤面の一辺",
   islandCount: "島の数",
@@ -53,7 +53,7 @@ const levelConditionLabels = {
 
 type BridgesLevelRequirement = BridgesLevelReading & BridgesLevelStructure;
 
-/** レベルが求める手筋の条件の名前。並びは手筋の定義の順で、先読みの場所と山場の置き所を後に足す。 */
+/** 並びは手筋の定義の順で、先読みの場所と山場の置き所を後に足す。 */
 const readingConditionLabels = {
   readingRoundCount: "ちょうど以外の読みの手詰まり",
   openingSaturatedIslandCount: "決め打ちの島",
@@ -70,7 +70,6 @@ const readingConditionLabels = {
   lastConnectivityDecidedRatio: "最後のつながりの読みの置き所",
 } as const satisfies Partial<Record<keyof BridgesLevelRequirement, string>>;
 
-/** レベルが求める数字と形の質の条件の名前。 */
 const qualityConditionLabels = {
   islandShare: "島の割合",
   clueMean: "数字の平均",
@@ -159,7 +158,6 @@ function formatAssessment(assessment: BridgesDifficultyAssessment): string {
   }
 }
 
-/** 条件の各項目に、この問題の値を並べる。`skipsUnbounded` なら、そのレベルが問わない（0以上で上限の無い）項目は除く。 */
 function listConditionItems<Key extends keyof BridgesAssessedFeatures>(
   labels: Record<Key, string>,
   ranges: Record<Key, NumericRange>,
@@ -175,7 +173,6 @@ function listConditionItems<Key extends keyof BridgesAssessedFeatures>(
     }));
 }
 
-/** 分類したレベルの組み合わせの各条件に、この問題の値を並べる。 */
 function listLevelConditions(
   assessment: BridgesDifficultyAssessment,
 ): DiagnosticItems {
@@ -192,10 +189,7 @@ function listLevelConditions(
   );
 }
 
-/**
- * 分類したレベルが求める手筋・盤面の形と数字・形の質のうち、そのレベルが問う条件だけに、この問題の値を並べる。
- * 問わない項目まで並べると、どの読みでレベルが決まったかが埋もれる。
- */
+/** そのレベルが問う条件だけを並べる。問わない項目まで並べると、どの読みでレベルが決まったかが埋もれる。 */
 function listReadingConditions<Key extends keyof BridgesLevelRequirement>(
   assessment: BridgesDifficultyAssessment,
   labels: Record<Key, string>,
