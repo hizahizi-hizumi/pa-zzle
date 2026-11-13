@@ -1,4 +1,5 @@
 import {
+  findZukanMilestoneAtLeast,
   findZukanMilestoneProgress,
   getZukanMilestoneRatio,
   isZukanMilestone,
@@ -59,4 +60,23 @@ describe("getZukanMilestoneRatio", () => {
 
     expect(ratio).toBe(expected);
   });
+});
+
+describe("findZukanMilestoneAtLeast", () => {
+  const cases = [
+    [0, 10],
+    [1, 10],
+    [10, 10],
+    [11, 25],
+    [12000, 20000],
+  ] as const;
+
+  test.each(cases)(
+    "%i 以上で最も小さい節目 %i を返すこと",
+    (count, expected) => {
+      const milestone = findZukanMilestoneAtLeast(count);
+
+      expect(milestone).toBe(expected);
+    },
+  );
 });

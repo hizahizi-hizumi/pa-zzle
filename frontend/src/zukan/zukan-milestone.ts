@@ -40,6 +40,15 @@ export function isZukanMilestone(
   return solvedCount > 0 && listMilestones(problemCount).includes(solvedCount);
 }
 
+/** `count` 以上で最も小さい節目。全問の数で切らない。最後の節目を越えたら、最後の節目の倍数へ切り上げる。 */
+export function findZukanMilestoneAtLeast(count: number): number {
+  const last = ZUKAN_MILESTONES[ZUKAN_MILESTONES.length - 1] ?? 1;
+  return (
+    ZUKAN_MILESTONES.find((milestone) => milestone >= count) ??
+    Math.ceil(count / last) * last
+  );
+}
+
 /** 次の節目までの進み（0〜1）。全問を解いていれば 1。 */
 export function getZukanMilestoneRatio({
   solvedCount,

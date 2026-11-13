@@ -1,5 +1,8 @@
 import type { CollectionGame } from "@/collection/collection";
-import { getCollectionTowerTiles } from "@/collection/ui/CollectionScreen/CollectionTowers/tower-tiles";
+import {
+  getCollectionTowerScale,
+  getCollectionTowerTiles,
+} from "@/collection/ui/CollectionScreen/CollectionTowers/tower-tiles";
 
 const fullGame: CollectionGame = {
   id: "alpha",
@@ -33,5 +36,32 @@ describe("getCollectionTowerTiles", () => {
 
     expect(emptyTiles.every(({ level }) => level === null)).toBe(true);
     expect(singleTiles.filter(({ level }) => level !== null)).toHaveLength(1);
+  });
+});
+
+describe("getCollectionTowerScale", () => {
+  const cases = [
+    [1, 10],
+    [10, 10],
+    [26, 50],
+  ] as const;
+
+  test.each(cases)(
+    "最も多いゲームが %i 問なら、上端を %i 問にすること",
+    (maxCount, expected) => {
+      const scale = getCollectionTowerScale(maxCount);
+
+      expect(scale).toBe(expected);
+    },
+  );
+});
+
+describe("最も多いゲームが1問だけの場合", () => {
+  const scale = getCollectionTowerScale(1);
+
+  test("塔を満杯にせず、上端の節目に対する高さで塗ること", () => {
+    const tiles = getCollectionTowerTiles(singleGame, scale, 28);
+
+    expect(tiles.filter(({ level }) => level !== null)).toHaveLength(3);
   });
 });

@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 import type { CollectionGame } from "@/collection/collection";
-import { getCollectionTowerTiles } from "@/collection/ui/CollectionScreen/CollectionTowers/tower-tiles";
+import {
+  getCollectionTowerScale,
+  getCollectionTowerTiles,
+} from "@/collection/ui/CollectionScreen/CollectionTowers/tower-tiles";
 import { GamePictogram } from "@/components/GamePictogram";
 import { getGameResultStyle } from "@/components/game-result-style";
 import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
@@ -17,7 +20,7 @@ type CollectionTowersProps = {
   onSelect: (id: string) => void;
 };
 
-/** 全ゲームの量と評価の分布。1片は一定数の問題ではなく、柱全体で各ゲームの量を表す。 */
+/** 全ゲームの量と評価の分布。柱の上端は節目の数で、柱全体の高さで各ゲームの量を表す。 */
 export function CollectionTowers({
   items,
   selectedId,
@@ -26,6 +29,7 @@ export function CollectionTowers({
 }: CollectionTowersProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const selectedIndex = items.findIndex(({ game }) => game.id === selectedId);
+  const scaleCount = getCollectionTowerScale(maxCount);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -47,6 +51,9 @@ export function CollectionTowers({
       aria-label="パズルの積み上げ"
       className="relative overflow-x-auto overscroll-x-contain rounded-lg bg-muted/30 px-2 pt-4 pb-3 sm:px-5 sm:pt-6 sm:pb-5"
     >
+      <p className="mb-1 text-meta text-muted-foreground tabular-nums">
+        上端 {scaleCount}問
+      </p>
       <div className="relative flex w-max gap-2 sm:gap-3">
         {items.map(({ game, info }) => {
           const isSelected = selectedId === game.id;
@@ -66,7 +73,7 @@ export function CollectionTowers({
                 {game.total}
               </span>
               <span className="grid h-36 w-full max-w-10 grid-cols-2 grid-rows-14 gap-[1.5px] sm:h-52 sm:gap-[2px]">
-                {getCollectionTowerTiles(game, maxCount, 28).map(
+                {getCollectionTowerTiles(game, scaleCount, 28).map(
                   ({ id, level }) => (
                     <span
                       key={id}
