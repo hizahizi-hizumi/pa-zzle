@@ -41,7 +41,7 @@ export type NanpureTutorialAction = {
 
 /**
  * - `cellIndex`: 印を付け、手順の間だけ選べるマス。
- * - `reasonUnits`: 印のマスの数字を決める行・列・ブロック（決め手）。手順の始まりから覆いから抜いて見せ、どこを見れば決まるかを盤面で分からせる。
+ * - `reasonUnits`: 印のマスの数字を決める行・列・ブロック（決め手）。
  * - `cuedDigit`: 押させる数字。操作を教える手順でだけ、数字のボタンにも印を付ける。
  */
 export type NanpureTutorialStep = TutorialStep<NanpureTutorialRuleId> & {
@@ -256,7 +256,6 @@ function deduceCell(
     : null;
 }
 
-/** まだ示していないまとまりの重なりは見せない。 */
 function findVisibleConflictCellIndices(
   board: NanpureBoard,
   earnedRuleIds: readonly NanpureTutorialRuleId[],

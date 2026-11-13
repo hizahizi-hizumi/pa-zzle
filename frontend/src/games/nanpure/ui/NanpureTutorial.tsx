@@ -129,9 +129,7 @@ function getHintCue(
 }
 
 /**
- * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せる所。
- * - 印が出ている間は、印のマスとその決め手の行・列・ブロック。
- * - 入れてから次の印を出すまでの間は、入れたマスとその決め手。前の手の決め手を、次の印の決め手と読み違えさせないため、印と一緒に替える。
+ * - 入れてから次の印を出すまでの間は、入れたマスとその決め手を抜く。前の手の決め手を、次の印の決め手と読み違えさせないため、印と一緒に替える。
  * - 重なりを示しているマスは、何と重なったかを読めるよう抜く。
  * 抜く行・列・ブロックに含まれるマスは、まとまりの形で抜けるので、マスとしては重ねて抜かない。
  */
@@ -161,7 +159,6 @@ function getBoardSpotlight(
   };
 }
 
-/** 手順を終えたら手を離し、残りを自分で埋めさせる。 */
 export function NanpureTutorial({
   open,
   playStart,
@@ -290,7 +287,6 @@ export function NanpureTutorial({
     setProgress(startTutorial(nanpureTutorial));
   }
 
-  // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();
