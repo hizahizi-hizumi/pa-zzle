@@ -16,7 +16,8 @@ export type MinesweeperBoardProps = {
   onToggleFlag: (cellIndex: number) => void;
   onChordCell: (cellIndex: number) => void;
   cues?: readonly MinesweeperCellCue[];
-  spotlitCellIndices?: readonly number[];
+  /** `null` でない間だけ、盤面を覆う範囲にする。 */
+  spotlitCellIndices?: readonly number[] | null;
   onIneffectiveCellPress?: (cellIndex: number) => void;
 };
 
@@ -36,7 +37,7 @@ export function MinesweeperBoard({
   onToggleFlag,
   onChordCell,
   cues = [],
-  spotlitCellIndices = [],
+  spotlitCellIndices = null,
   onIneffectiveCellPress,
 }: MinesweeperBoardProps) {
   if (cells.length !== rows * columns) {
@@ -89,6 +90,7 @@ export function MinesweeperBoard({
       columns={columns}
       role="group"
       aria-label={`${MINESWEEPER_DISPLAY_NAME}盤面`}
+      spotlightArea={spotlitCellIndices !== null}
     >
       {cells.map(function renderCell(cell, cellIndex) {
         return (
@@ -97,7 +99,7 @@ export function MinesweeperBoard({
             cellIndex={cellIndex}
             view={cell}
             cue={cueByCellIndex.get(cellIndex)}
-            spotlit={spotlitCellIndices.includes(cellIndex)}
+            spotlit={spotlitCellIndices?.includes(cellIndex) ?? false}
             disabled={interactionDisabled}
             onPress={handleCellPress}
             onFlagPress={handleCellFlagPress}
