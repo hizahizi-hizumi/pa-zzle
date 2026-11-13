@@ -128,7 +128,6 @@ export function usePlayableGame<
       difficulty,
       progress: play.progress,
       elapsedMs: play.elapsedMs,
-      // 記録を保存できたクリアは記録の結果画面へ移すので、その間はその場の結果画面を出さない。
       result: navigatesToRecordResult ? null : result,
       recordFeedback: createResultRecordFeedback(
         recordOutcome,

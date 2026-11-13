@@ -17,7 +17,7 @@ const fadeAwayClassName =
   "fill-mode-forwards animate-out fade-out-0 delay-(--duration-slow) duration-(--duration-slow) ease-standard";
 
 /**
- * チュートリアルの印と合図。ゲームは印と合図をこの部品だけで描く。決め手は印ではなく `TutorialSpotlight` で示す。
+ * チュートリアルの印と合図。
  * どこまで囲むかと角丸は押す物の形からゲームが決め、置き場所の要素に持たせる。
  *
  * 盤面部品は、押す物（マス・タイルなど）の中に `relative` で角丸を持つ置き場所を置き、その中にこの部品を描く。

@@ -1,9 +1,5 @@
 export type GameSessionStatus = "playing" | "cleared";
 
-/**
- * 全ゲームの `<Game>Session` が共有する形。各ゲームはこれにプレイの事実（手数・ミスなど）を足す。
- * `puzzleState` は今の盤面で、ゲーム固有の `puzzle/` の状態型を入れる。
- */
 export type GameSession<Problem, PuzzleState> = {
   status: GameSessionStatus;
   problem: Problem;

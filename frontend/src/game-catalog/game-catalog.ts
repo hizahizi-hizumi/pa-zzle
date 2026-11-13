@@ -16,7 +16,6 @@ import { waterSortCatalogEntry } from "@/game-catalog/water-sort/water-sort-cata
 import type { PlayAttempt } from "@/records/play-attempt";
 import type { PlayRecord } from "@/records/play-record";
 
-/** アプリが提供するゲームを、パズル選択と記録で見せる順に並べる。 */
 export const gameCatalog = [
   waterSortCatalogEntry,
   nanpureCatalogEntry,

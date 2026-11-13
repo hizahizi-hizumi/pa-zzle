@@ -28,7 +28,7 @@ export type SoundOperation = {
  *
  * - `operation` はプレイフックが返す今の操作の知らせ。
  * - `playOperationSound` は知らせの種類で音を選び、`@/lib/sound-effects` の `playSound` で鳴らす。
- *   毎回作り直す関数を渡してよい。回数の多い操作の音には `variation: REPEATED_SOUND_VARIATION` を付ける。
+ *   毎回作り直す関数を渡してよい。
  * - 知らせが複数の種類を持つなら、1つの関数の中で振り分ける。
  *
  * @example
@@ -62,10 +62,7 @@ export function useOperationSound<Operation extends SoundOperation>(
 }
 
 type ClearSoundOptions = {
-  /**
-   * 動きを減らす設定で鳴らすクリア音。完成演出の代わりに、完成した盤面を止まった姿で保持して見せるゲームだけ渡す。
-   * 渡さなければ、動きを減らす設定では完成演出が無くすぐ結果へ進むものとして、クリア音を鳴らさない。
-   */
+  /** 動きを減らす設定で、`playClearSound` の代わりに鳴らすクリア音。渡さなければ、動きを減らす設定ではクリア音を鳴らさない。 */
   playReducedMotionClearSound?: () => void;
 };
 
@@ -73,7 +70,6 @@ type ClearSoundOptions = {
  * プレイ画面 `<Game>Play` で呼ぶ。
  *
  * - クリア音を完成演出の途中に合わせるなら `playSound` の `delayMs` で遅らせる。
- * - 結果を受け取る瞬間の報酬の音はアプリが鳴らすので、ゲームは鳴らさない。
  *
  * @example
  * useClearSound(progress, function playClearSound() {

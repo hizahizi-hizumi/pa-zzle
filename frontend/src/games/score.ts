@@ -1,6 +1,6 @@
 export type ScoreItem = "accuracy" | "efficiency" | "speed" | "stability";
 
-/** 評価項目ごとの満点。並び順は結果画面に出す順。 */
+/** 並び順は結果画面に出す順。 */
 export type ScoreMaximums<Item extends ScoreItem> = Readonly<
   Record<Item, number>
 >;

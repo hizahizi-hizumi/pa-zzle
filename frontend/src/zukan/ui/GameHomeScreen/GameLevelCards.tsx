@@ -11,7 +11,6 @@ export type GameLevelCard = {
   /** そのレベルの全問の、今示す状態。番号の順。変化をまだ見せていない問題は前回の状態を示す。 */
   statuses: readonly ZukanProblemStatus[];
   columnCount: number;
-  /** 変化は、前回図鑑を見たときからのもの。 */
   hasUnseenChanges: boolean;
 };
 
@@ -20,7 +19,6 @@ type GameLevelCardsProps = {
   levels: readonly GameLevelCard[];
 };
 
-/** 矢印キーで選ぶと通り過ぎたレベルの台紙を開いて変化を見せ終えるので、矢印キーではフォーカスだけを動かし、押したときと Enter・Space で選ぶ。 */
 export function GameLevelCards({ levels }: GameLevelCardsProps) {
   return (
     <TabsList layout="card" aria-label="レベル">
