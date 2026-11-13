@@ -25,20 +25,19 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
  * - `clueMean`: 島の数字の平均。1 と 2 ばかりの盤面は、1か所ずつの読みが「足りる・足りない」の確かめだけになる。
  * - `highClueCount`: 数字5以上の島の数。行き先の多くに2本ずつ要り、2本と1本の配分を読む所になる。
  * - `veryHighClueCount`: 数字6以上の島の数。行き先が3つ以上の島に2本ずつ架かる見せ場。
- * - `maximumClue`: 最も大きい数字。
  * - `dominantClueShare`: 最も多い数字の島の割合。同じ数字が並ぶ単調な盤面ほど大きい。
  * - `twoClueShare`: 数字2の島の割合。2 は行き先1つに2本か2つに1本ずつで、多いと盤面が単調になる。
  * - `doubleBridgeRatio`: 解で橋を架ける組のうち、2本の組の割合。
  * - `loopCount`: 解の輪の数（架ける組の数 − 島の数 + 1）。輪が無い解は、伸ばした先から決まる木の読みだけになる。
- * - `borderBridgeShare`: 解で橋を架ける組のうち、盤面の外周の行・列に沿う組の割合。多いと盤面の枠をなぞる問題になる。
+ * - `borderBridgeShare`: 解で橋を架ける組のうち、盤面の外周の行・列に沿う組の割合。
  * - `longBridgeShare`: 解で橋を架ける組のうち、盤面の一辺の半分以上の長さの組の割合。
- * - `usedEdgeShare`: 行き先（橋を架けられる組）のうち、解で橋を架ける組の割合。1 に近いと、どこへ架けるかを選ぶ所が無い。
+ * - `usedEdgeShare`: 行き先（橋を架けられる組）のうち、解で橋を架ける組の割合。
  * - `islandShare`: 盤面のマスに対する島の数の割合。
- * - `diagonalNeighborShare`: 斜め隣のマスに島がある島の割合。大きいと島が市松に固まり、行き先が隣の島ばかりになる。
+ * - `diagonalNeighborShare`: 斜め隣のマスに島がある島の割合。
  * - `shortBridgeShare`: 解で橋を架ける組のうち、間が1マスの組の割合。
  * - `longBridgeCount`: 解で橋を架ける組のうち、盤面の一辺の半分以上の長さの組の数。
  * - `pointSymmetric`: 島の配置が盤面の中心について点対称なら 1、そうでなければ 0。
- * - `borderIslandShare`: 盤面の外周の行・列にある島の割合。多いと枠に島が並び、内側が空く。
+ * - `borderIslandShare`: 盤面の外周の行・列にある島の割合。
  * - `gridAlignmentShare`: 島の行と列の偶奇（4組）のうち、最も多い組の島の割合。大きいと島が1マスおきの格子にそろう
  *   （無作為なら 0.3 前後）。
  */
@@ -69,11 +68,9 @@ export type BridgesScaleMetrics = {
 
 /**
  * 人間向け解法器（段 A1〜D）で、数字と盤面だけから橋を決め切った経過から求めた特徴。
- * - `maximumTier`: 使った最も高い段。
  * - `countRoundCount`: 「少なくとも・多くとも」（A2）が要った数字の読みのまとまりの数。数字の読み（A1・A2）を続けて当てた
  *   まとまりを1つと数え、つながりの読みで区切る（`countBridgesCountReadingPhases`）。
  * - `connectivityRoundCount`: 数字の読みで止まり、つながりの読み（C1p・C1g・C3・D）が要った手詰まりの回数。
- * - `roundCountByTier`: 段ごとの手詰まりの回数。
  * - `countReasoningUndecidedRatio`: 数字の読み（A1・A2）だけでは本数が決まらない行き先の割合。
  *   数字の読みで止まり、つながりを読み始めなければならない範囲の広さ。
  * - `openingEdgeRatio`: 解き始めの盤面で、数字の読みだけで範囲を狭められる行き先の割合（入口の広さ）。
@@ -138,7 +135,6 @@ export type BridgesReasoningFeatures = {
  * 素朴な解き方（数字の読みと試し置き）を問題ごとに決まった乱数で数回試した結果。
  * - `medianBacktrackCount`: 戻した回数の中央値。試しに架けて直す進め方で、何度やり直しになるか。
  * - `medianDisconnectedFullCount`: 全島の本数がちょうどなのに、つながっていなかった回数の中央値。
- * - `firstTrySolvedRatio`: 1度も戻さずに解けた試行の割合。
  */
 export type BridgesTrialFeatures = {
   medianBacktrackCount: number;
@@ -170,10 +166,8 @@ export type BridgesDifficultyAnalysis =
 /** 一意性を確かめる探索の局面の数の上限。研究用の解法器と同じ値で、10×10 でも届いた問題は無い。 */
 export const BRIDGES_UNIQUENESS_NODE_LIMIT = 200_000;
 
-/** 素朴な解き方を1問に試す回数。 */
 export const BRIDGES_NAIVE_TRIAL_COUNT = 5;
 
-/** 推理の段。試し置き（T）を除く。 */
 const bridgesDeductionTiers = bridgesReasoningTiers.filter(
   (tier): tier is Exclude<BridgesReasoningTier, "T"> => tier !== "T",
 );
@@ -281,7 +275,6 @@ function measureScale(
   };
 }
 
-/** 大きい数字とみなす島の数字の下限。 */
 const HIGH_CLUE_MINIMUM = 5;
 
 /** とても大きい数字とみなす島の数字の下限。行き先が3つ以上要る。 */

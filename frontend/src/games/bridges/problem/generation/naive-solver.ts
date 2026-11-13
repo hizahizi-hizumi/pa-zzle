@@ -23,7 +23,6 @@ import {
 export type BridgesTrialEdgeChoice = "random" | "most-constrained";
 
 /**
- * - `solved`: 解けた。
  * - `backtrackCount`: 戻した回数。本数が破れたときと、全島がちょうどなのにつながっていないときに戻す。
  * - `disconnectedFullCount`: 全島の本数がちょうどになったのに、つながっていなかった回数。盤面では全島がちょうどの姿なのにクリアにならない。
  * - `exceededNodeLimit`: 試した局面の数が上限を超えて打ち切った。

@@ -61,7 +61,6 @@ export type BridgesPoolAnalysis = {
   crossingBlockCount: number;
 };
 
-/** 問題集から復元した1問。生成時の分析結果を伴う。 */
 export type BridgesPooledProblem = BridgesIdentifiedProblem & {
   analysis: BridgesPoolAnalysis;
 };
@@ -107,7 +106,6 @@ export function encodeBridgesPoolClues(board: BridgesBoard): string {
   return board.islands.map(({ clue }) => String(clue)).join("");
 }
 
-/** `encodeBridgesPoolIslands` と `encodeBridgesPoolClues` で表した正方形の盤面から問題を作り、形を確かめる。 */
 export function decodeBridgesPoolProblem(
   size: number,
   encodedIslands: string,
@@ -280,7 +278,6 @@ export function findBridgesPoolEntry(
     : null;
 }
 
-/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
 export function listBridgesPoolProblemIds(
   difficulty: BridgesDifficulty,
 ): readonly ProblemId[] {
