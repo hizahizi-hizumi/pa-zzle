@@ -326,7 +326,7 @@ function findVisibleSlideEnd(
   return current;
 }
 
-/** 滑った先がゴール・ゴールへ近づく・ゴールと見通しで揃う、または滑りがゴールを通過する手（v2 の定義を今の状態の盤面で測る）。 */
+/** もっともらしい手（v2 の定義を今の状態の盤面で測る）。 */
 function createPlausibility(
   space: StateSpace,
 ): (state: number, direction: number, target: number) => boolean {
@@ -606,10 +606,7 @@ function describeMove(
   };
 }
 
-/**
- * 詰みの状態で、要素を変えない滑りだけで行けるどの状態からも、要素を変えない滑りでその状態へ戻れるか（閉じ込め。
- * 要素を変える手を除けば同じところを回るだけで、詰みに入ったと気づきやすい）。
- */
+/** 詰みの状態で、要素を変えない滑りだけで行けるどの状態からも、要素を変えない滑りでその状態へ戻れるか（閉じ込め）。 */
 function isConfined(space: StateSpace, state: number): boolean {
   const { layoutIds } = space;
   const layout = layoutIds[state]!;

@@ -22,7 +22,7 @@ export type IceFloorMazeDifficulty = DifficultyLevel;
 /**
  * 氷と岩（と床）だけのレベルの、挑戦の型（研究用の生成 v2 の手筋の組み合わせ）。
  * - `readingDepth`: 先読みのモデルで解ける読み手数の範囲。
- * - `nearPathCount`: 最少手数+2手以内の近い別解の数の範囲。どこからでも何となく着く問題を外す。
+ * - `nearPathCount`: 最少手数+2手以内の近い別解の数の範囲。
  */
 export type IceFloorMazeTacticPattern = {
   optimalMoveCount: NumericRange;
@@ -44,8 +44,7 @@ export type IceFloorMazeLevelComposition = Exclude<
  * - `usedElementCount`: 最短解で変化させる要素の数の範囲。
  * - `lingeringDecoyCount`: 変化させた直後が閉じ込めにならないおとりの数の範囲。
  * - `distantStopCount`: 2手以上前に作った止め役で止まる回数の範囲。
- * - `floorCount`: 要素のあるレベルには床を置かない（床で止まる手が前の手で作った水面で止まる手の代わりになり、
- *   自作依存の点の帯と、要素の盤面の床の働き（目印にならないか）を確かめていないため）。
+ * - `floorCount`: 要素のあるレベルには床を置かない（自作依存の点の帯と、要素の盤面の床の働き（目印にならないか）を確かめていないため）。
  */
 export type IceFloorMazeElementPattern = {
   composition: IceFloorMazeLevelComposition;
@@ -80,10 +79,6 @@ const noFloors = { minimum: 0, maximum: 0 } as const;
 
 const tacticFloorCount = { minimum: 0, maximum: 4 } as const;
 
-/**
- * L3（要素の入門）。要素を2〜3個にし、最短解で変化させる要素を2個までにして気づきを1つに絞り、おとりは変化させるとすぐ
- * 閉じ込めになるものだけにする。自作依存の点に上限を置く。
- */
 const introductionPattern = {
   optimalMoveCount: { minimum: 9, maximum: 14 },
   elementCount: { minimum: 2, maximum: 3 },
@@ -104,10 +99,7 @@ const dependencePattern = {
   floorCount: noFloors,
 } as const;
 
-/**
- * L5。自作依存の点が高く、2手以上前に作った止め役で2回以上止まる。自作依存の点に上限 14 を置く（試遊で点の高い問題のギブアップが
- * 続いたため。どの要素の組み合わせにも同じ上限を当てる）。
- */
+/** 自作依存の点の上限 14 は、試遊で点の高い問題のギブアップが続いたため。 */
 const deepDependencePattern = {
   optimalMoveCount: { minimum: 14, maximum: 22 },
   elementCount: { minimum: 7, maximum: 8 },
@@ -120,7 +112,7 @@ const deepDependencePattern = {
 
 /**
  * 要素の数の範囲を、組み合わせごとに置き換える。滑る氷の塊は数が増えると状態の数が大きく増えるので少なめにし、雪は1つで
- * 止め役と通り道を両方作るので薄い氷より少なめにする。隣り合うレベルで同じ組み合わせの数の範囲は重ねない。
+ * 止め役と通り道を両方作るので薄い氷より少なめにする。
  */
 function withElementCount<T extends object>(
   pattern: T,
@@ -130,11 +122,7 @@ function withElementCount<T extends object>(
   return { ...pattern, elementCount: { minimum, maximum } };
 }
 
-/**
- * 各レベルの基準。L1・L2 は氷と岩だけ（床を置く問題と置かない問題を混ぜる）で手筋を足し、L3〜L5 は自作依存の点の帯で分ける（L3 は要素の
- * 1種類を少し置いた入門）。もろい岩は止め役を作れず通り道を開くだけなので、L4・L5 では薄い氷と組み合わせる。雪・滑る氷の塊は単独と
- * 薄い氷との組み合わせを L4・L5 に置く。手数と要素の数の範囲は試遊で決め直す前の仮の値。
- */
+/** 手数と要素の数の範囲は試遊で決め直す前の仮の値。 */
 export const iceFloorMazeLevelCriteria = {
   "1": {
     kind: "tactics",
@@ -249,8 +237,7 @@ export const iceFloorMazeCommonConditions = {
  * - `unreadable`: 先読みのモデルが上限まで読んでも解けない（氷と岩だけ）。
  * - `repeated-direction` / `element-chain`: 同じ向きが続く手がある（条件1）。`element-chain` は要素を働かせた直後に同じ向きで
  *   もう一度同じ種類の要素を働かせる2手（もろい岩を続けて崩す・雪を続けて押し出す・塊を続けて動かす）。床のある盤面では、最短解で床で止まった後に同じ向きへ
- *   続けるか、止まれるどこかに床で止まった後に同じ向きへ1マスだけ進むか別の床で止まる手（連打）がある。床で止まった後に同じ向きへ
- *   また滑れること自体は床の働きなので、最少手数+2手以内の道筋に乗っていても数えない。
+ *   続けるか、止まれるどこかに床で止まった後に同じ向きへ1マスだけ進むか別の床で止まる手（連打）がある。
  * - `irrelevant-floor`: 氷にしても最短解・もっともらしい選択肢・詰みが変わらない床がある。
  * - `floor-landmark`: 床があるのに、最短解で止まる床か、おとりの床（最短解では止まらないが、もっともらしい別の手が止まる床）の
  *   どちらかが無い。床が答えの目印（または、避ける目印）になる。
