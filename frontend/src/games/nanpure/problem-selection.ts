@@ -1,6 +1,6 @@
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import {
-  isNanpureProblemIdentity,
+  isCurrentNanpureProblemIdentity,
   type NanpureIdentifiedProblem,
   type NanpureRecordedProblemIdentity,
 } from "@/games/nanpure/problem/problem";
@@ -34,7 +34,7 @@ export function selectNanpureProblemForDifficulty(
 export function restoreNanpureProblem(
   identity: NanpureRecordedProblemIdentity,
 ): NanpureIdentifiedProblem | null {
-  const entry = isNanpureProblemIdentity(identity)
+  const entry = isCurrentNanpureProblemIdentity(identity)
     ? findNanpurePoolEntry(identity)
     : null;
   return entry ? toNanpurePooledProblem(entry) : null;

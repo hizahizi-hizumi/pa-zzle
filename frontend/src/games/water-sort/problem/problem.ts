@@ -48,7 +48,7 @@ export type WaterSortProblemIdentity = {
   generationAttempt: number;
 };
 
-export function isWaterSortProblemIdentity(
+export function isCurrentWaterSortProblemIdentity(
   value: unknown,
 ): value is WaterSortProblemIdentity {
   if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
@@ -75,7 +75,7 @@ export function isWaterSortRecordedProblemIdentity(
   return (
     isRecordedProblemIdentity(value, {
       generatorVersion: WATER_SORT_GENERATOR_VERSION,
-      isProblemIdentity: isWaterSortProblemIdentity,
+      isProblemIdentity: isCurrentWaterSortProblemIdentity,
     }) && isPositiveInteger(value.conditions.colorCount)
   );
 }

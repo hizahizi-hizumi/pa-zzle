@@ -8,7 +8,7 @@ import { parseDifficultyLevel } from "@/games/difficulty";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import { restoreMinesweeperProblemWithoutAnalysis } from "@/games/minesweeper/problem/generator";
 import {
-  isMinesweeperProblemIdentity,
+  isCurrentMinesweeperProblemIdentity,
   type MinesweeperIdentifiedProblem,
   type MinesweeperProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
@@ -23,7 +23,7 @@ const minesweeperDiagnosticFormat: InternalDiagnosticFormat<MinesweeperDiagnosti
   {
     game: "minesweeper",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isMinesweeperProblemIdentity,
+    isProblemIdentity: isCurrentMinesweeperProblemIdentity,
   };
 
 export function createMinesweeperDiagnosticSnapshot(input: {

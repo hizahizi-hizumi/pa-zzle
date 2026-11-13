@@ -8,7 +8,7 @@ import {
   type HitofudePuzzleProblemIdentity,
   type HitofudePuzzleRecordedProblemIdentity,
   type HitofudePuzzleSolveWorkload,
-  isHitofudePuzzleProblemIdentity,
+  isCurrentHitofudePuzzleProblemIdentity,
   isHitofudePuzzleRecordedProblemIdentity,
   isHitofudePuzzleSolveWorkload,
   isHitofudePuzzleWorkloadOfIdentity,
@@ -79,7 +79,7 @@ function isWorkloadOfRecordedIdentity(
   identity: HitofudePuzzleRecordedProblemIdentity,
 ): boolean {
   return (
-    !isHitofudePuzzleProblemIdentity(identity) ||
+    !isCurrentHitofudePuzzleProblemIdentity(identity) ||
     isHitofudePuzzleWorkloadOfIdentity(workload, identity)
   );
 }
@@ -152,7 +152,7 @@ export function restoreHitofudePuzzleRecordedResult(
 ): HitofudePuzzleRecordedResult | null {
   if (
     !isHitofudePuzzlePlayRecord(record) ||
-    !isHitofudePuzzleProblemIdentity(record.payload.problemIdentity)
+    !isCurrentHitofudePuzzleProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

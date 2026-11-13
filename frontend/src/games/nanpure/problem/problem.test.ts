@@ -1,6 +1,6 @@
 import {
   createNanpureProblemIdentity,
-  isNanpureProblemIdentity,
+  isCurrentNanpureProblemIdentity,
   isNanpureRecordedProblemIdentity,
   NANPURE_GENERATOR_VERSION,
 } from "@/games/nanpure/problem/problem";
@@ -23,7 +23,7 @@ describe("createNanpureProblemIdentity", () => {
   });
 });
 
-describe("isNanpureProblemIdentity", () => {
+describe("isCurrentNanpureProblemIdentity", () => {
   const valid = createNanpureProblemIdentity("naked-pair", 1);
   const cases = [
     ["今の生成器の identity", valid, true],
@@ -43,7 +43,7 @@ describe("isNanpureProblemIdentity", () => {
   ] as const;
 
   test.each(cases)("%s を %s と判定すること", (_, value, expected) => {
-    const result = isNanpureProblemIdentity(value);
+    const result = isCurrentNanpureProblemIdentity(value);
 
     expect(result).toBe(expected);
   });

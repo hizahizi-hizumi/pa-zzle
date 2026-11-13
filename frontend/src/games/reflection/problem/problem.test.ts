@@ -1,7 +1,7 @@
 import {
   assertReflectionProblem,
   createReflectionProblemIdentity,
-  isReflectionProblemIdentity,
+  isCurrentReflectionProblemIdentity,
   isReflectionRecordedProblemIdentity,
   type ReflectionProblem,
 } from "@/games/reflection/problem/problem";
@@ -72,7 +72,7 @@ describe("assertReflectionProblem", () => {
   });
 });
 
-describe("isReflectionProblemIdentity", () => {
+describe("isCurrentReflectionProblemIdentity", () => {
   const identity = createReflectionProblemIdentity(6, 8, 0);
   const invalidCases = [
     ["生成器の版が違う", { ...identity, generatorVersion: "1" }],
@@ -93,13 +93,13 @@ describe("isReflectionProblemIdentity", () => {
   ] as const;
 
   test("現在の生成器の identity を受け入れること", () => {
-    const accepted = isReflectionProblemIdentity(identity);
+    const accepted = isCurrentReflectionProblemIdentity(identity);
 
     expect(accepted).toBe(true);
   });
 
   test.each(invalidCases)("%s identity を拒否すること", (_, value) => {
-    const accepted = isReflectionProblemIdentity(value);
+    const accepted = isCurrentReflectionProblemIdentity(value);
 
     expect(accepted).toBe(false);
   });

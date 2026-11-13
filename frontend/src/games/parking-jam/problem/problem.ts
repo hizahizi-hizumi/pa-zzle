@@ -59,7 +59,7 @@ function isUnitInterval(value: unknown): value is number {
   );
 }
 
-export function isParkingJamProblemIdentity(
+export function isCurrentParkingJamProblemIdentity(
   value: unknown,
 ): value is ParkingJamProblemIdentity {
   if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
@@ -93,7 +93,7 @@ export function isParkingJamRecordedProblemIdentity(
   return (
     isRecordedProblemIdentity(value, {
       generatorVersion: PARKING_JAM_GENERATOR_VERSION,
-      isProblemIdentity: isParkingJamProblemIdentity,
+      isProblemIdentity: isCurrentParkingJamProblemIdentity,
     }) && isPositiveInteger(value.conditions.vehicleCount)
   );
 }

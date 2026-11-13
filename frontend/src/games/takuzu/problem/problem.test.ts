@@ -1,7 +1,7 @@
 import {
   assertTakuzuProblem,
   createTakuzuProblemIdentity,
-  isTakuzuProblemIdentity,
+  isCurrentTakuzuProblemIdentity,
   isTakuzuRecordedProblemIdentity,
   isTakuzuSolveWorkload,
   type TakuzuProblem,
@@ -42,7 +42,7 @@ describe("assertTakuzuProblem", () => {
   });
 });
 
-describe("isTakuzuProblemIdentity", () => {
+describe("isCurrentTakuzuProblemIdentity", () => {
   const identity = createTakuzuProblemIdentity("single-remaining", 4, 45);
   const validCases = [
     ["手筋の上限がある", identity],
@@ -73,13 +73,13 @@ describe("isTakuzuProblemIdentity", () => {
   ] as const;
 
   test.each(validCases)("%s identity を受け入れること", (_, value) => {
-    const accepted = isTakuzuProblemIdentity(value);
+    const accepted = isCurrentTakuzuProblemIdentity(value);
 
     expect(accepted).toBe(true);
   });
 
   test.each(invalidCases)("%s値を拒否すること", (_, value) => {
-    const accepted = isTakuzuProblemIdentity(value);
+    const accepted = isCurrentTakuzuProblemIdentity(value);
 
     expect(accepted).toBe(false);
   });

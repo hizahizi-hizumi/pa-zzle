@@ -302,8 +302,8 @@ export function restoreIceFloorMazeProblem(
   return { problem, identity };
 }
 
-/** 記録・診断など外部から読み戻した値が、現在の生成器で復元できる識別情報かを確かめる。 */
-export function isIceFloorMazeProblemIdentity(
+/** 記録・診断など外部から読み戻した値が、復元できる識別情報かを確かめる。 */
+export function isCurrentIceFloorMazeProblemIdentity(
   value: unknown,
 ): value is IceFloorMazeProblemIdentity {
   if (!isRecordObject(value) || !isIceFloorMazeBoardShape(value.conditions)) {
@@ -323,7 +323,7 @@ export function isIceFloorMazeRecordedProblemIdentity(
   return (
     isRecordedProblemIdentity(value, {
       generatorVersion: ICE_FLOOR_MAZE_GENERATOR_VERSION,
-      isProblemIdentity: isIceFloorMazeProblemIdentity,
+      isProblemIdentity: isCurrentIceFloorMazeProblemIdentity,
     }) &&
     isPositiveInteger(value.conditions.width) &&
     isPositiveInteger(value.conditions.height)

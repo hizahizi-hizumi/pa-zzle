@@ -6,8 +6,8 @@ import {
 import {
   type BridgesProblemIdentity,
   type BridgesRecordedProblemIdentity,
-  isBridgesProblemIdentity,
   isBridgesRecordedProblemIdentity,
+  isCurrentBridgesProblemIdentity,
 } from "@/games/bridges/problem/problem";
 import {
   type BridgesSolveWorkload,
@@ -71,7 +71,7 @@ function isWorkloadOfRecordedIdentity(
   workload: BridgesSolveWorkload,
   identity: BridgesRecordedProblemIdentity,
 ): boolean {
-  if (!isBridgesProblemIdentity(identity)) {
+  if (!isCurrentBridgesProblemIdentity(identity)) {
     return true;
   }
   const { size } = identity.conditions;
@@ -145,7 +145,7 @@ export function restoreBridgesRecordedResult(
 ): BridgesRecordedResult | null {
   if (
     !isBridgesPlayRecord(record) ||
-    !isBridgesProblemIdentity(record.payload.problemIdentity)
+    !isCurrentBridgesProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

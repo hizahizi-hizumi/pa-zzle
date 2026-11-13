@@ -5,8 +5,8 @@ import {
   countIceFloorMazeRecordedElements,
   createIceFloorMazeProblemIdentity,
   type IceFloorMazeProblem,
+  isCurrentIceFloorMazeProblemIdentity,
   isIceFloorMazeBoardShape,
-  isIceFloorMazeProblemIdentity,
   isIceFloorMazeRecordedProblemIdentity,
   restoreIceFloorMazeProblem,
 } from "@/games/ice-floor-maze/problem/problem";
@@ -291,7 +291,7 @@ describe("decodeIceFloorMazeProblem", () => {
   });
 });
 
-describe("isIceFloorMazeProblemIdentity", () => {
+describe("isCurrentIceFloorMazeProblemIdentity", () => {
   const identity = createIceFloorMazeProblemIdentity(problem);
   const cases = [
     ["今の生成器の identity", identity, true],
@@ -316,7 +316,7 @@ describe("isIceFloorMazeProblemIdentity", () => {
   ] as const;
 
   test.each(cases)("%sを見分けること", (_, value, expected) => {
-    const result = isIceFloorMazeProblemIdentity(value);
+    const result = isCurrentIceFloorMazeProblemIdentity(value);
 
     expect(result).toBe(expected);
   });

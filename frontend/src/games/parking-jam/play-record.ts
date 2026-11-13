@@ -12,7 +12,7 @@ import {
   type ParkingJamResult,
 } from "@/games/parking-jam/play/use-parking-jam-play";
 import {
-  isParkingJamProblemIdentity,
+  isCurrentParkingJamProblemIdentity,
   isParkingJamRecordedProblemIdentity,
   type ParkingJamProblemIdentity,
   type ParkingJamRecordedProblemIdentity,
@@ -232,7 +232,7 @@ export function restoreParkingJamRecordedResult(
   if (
     !isParkingJamPlayRecord(record) ||
     record.payloadVersion !== PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION ||
-    !isParkingJamProblemIdentity(record.payload.problemIdentity)
+    !isCurrentParkingJamProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

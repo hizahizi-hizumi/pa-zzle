@@ -50,7 +50,7 @@ model: opus
 
 ### 2. 共通契約の利用
 
-- 問題契約: `<Game>Problem` と `<Game>ProblemIdentity` の分離、`is<Game>ProblemIdentity` / `is<Game>RecordedProblemIdentity` / `assert<Game>Problem`、`ProblemRandom` と `shuffleProblemValues`
+- 問題契約: `<Game>Problem` と `<Game>ProblemIdentity` の分離、`isCurrent<Game>ProblemIdentity` / `is<Game>RecordedProblemIdentity` / `assert<Game>Problem`、`ProblemRandom` と `shuffleProblemValues`
 - 難易度: 解析と分類方針の分離、`DifficultyAssessment` の状態名、基準表の `as const satisfies`、`NumericRange`
 - 評価: `PlayScore`・`ScoreItem`・`ScoreMaximums`・`SpeedScoreRule`、`getGameResultLevel`、`play-vocabulary.ts` の呼び名を文字列で書いていないか
 - session / play: 命名 `<動詞><Game>Session<対象>`、受け付けない操作で session をそのまま返す、`restart` の条件、`applyPlaySession` などの共通関数、`selectProblemAvoiding`

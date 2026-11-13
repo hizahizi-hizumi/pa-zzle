@@ -1,7 +1,7 @@
 import {
   createBridgesProblemIdentity,
-  isBridgesProblemIdentity,
   isBridgesRecordedProblemIdentity,
+  isCurrentBridgesProblemIdentity,
 } from "@/games/bridges/problem/problem";
 
 describe("createBridgesProblemIdentity", () => {
@@ -37,7 +37,7 @@ describe("createBridgesProblemIdentity", () => {
   });
 });
 
-describe("isBridgesProblemIdentity", () => {
+describe("isCurrentBridgesProblemIdentity", () => {
   const identity = createBridgesProblemIdentity(
     {
       size: 7,
@@ -78,7 +78,7 @@ describe("isBridgesProblemIdentity", () => {
     ["別の生成器の版", { ...identity, generatorVersion: "0" }, false],
     ["空の seed", { ...identity, seed: "" }, false],
   ])("%sに %s を返すこと", (_, value, expected) => {
-    const result = isBridgesProblemIdentity(value);
+    const result = isCurrentBridgesProblemIdentity(value);
 
     expect(result).toBe(expected);
   });

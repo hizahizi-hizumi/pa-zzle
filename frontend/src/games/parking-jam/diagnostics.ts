@@ -17,7 +17,7 @@ import {
   restoreParkingJamProblemWithoutAnalysis,
 } from "@/games/parking-jam/problem/generator";
 import {
-  isParkingJamProblemIdentity,
+  isCurrentParkingJamProblemIdentity,
   type ParkingJamIdentifiedProblem,
   type ParkingJamProblemIdentity,
 } from "@/games/parking-jam/problem/problem";
@@ -41,7 +41,7 @@ const parkingJamDiagnosticFormat: InternalDiagnosticFormat<ParkingJamDiagnosticS
   {
     game: "parking-jam",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isParkingJamProblemIdentity,
+    isProblemIdentity: isCurrentParkingJamProblemIdentity,
     // 判定と特徴は診断を開いたときの写しで、問題の再現には identity だけを使う。読み戻しでは形の大枠だけを確かめる。
     readDetails({
       difficultyModelVersion,

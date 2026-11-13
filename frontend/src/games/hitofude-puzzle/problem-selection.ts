@@ -1,7 +1,7 @@
 import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
 import {
   type HitofudePuzzleRecordedProblemIdentity,
-  isHitofudePuzzleProblemIdentity,
+  isCurrentHitofudePuzzleProblemIdentity,
 } from "@/games/hitofude-puzzle/problem/problem";
 import {
   findHitofudePuzzlePoolEntry,
@@ -33,7 +33,7 @@ export function selectHitofudePuzzleProblemForDifficulty(
 export function restoreHitofudePuzzleProblem(
   identity: HitofudePuzzleRecordedProblemIdentity,
 ): HitofudePuzzlePooledProblem | null {
-  const entry = isHitofudePuzzleProblemIdentity(identity)
+  const entry = isCurrentHitofudePuzzleProblemIdentity(identity)
     ? findHitofudePuzzlePoolEntry(identity)
     : null;
   return entry ? toHitofudePuzzlePooledProblem(entry) : null;

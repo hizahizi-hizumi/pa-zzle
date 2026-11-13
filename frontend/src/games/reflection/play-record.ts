@@ -5,7 +5,7 @@ import {
   type ReflectionResult,
 } from "@/games/reflection/play/use-reflection-play";
 import {
-  isReflectionProblemIdentity,
+  isCurrentReflectionProblemIdentity,
   isReflectionRecordedProblemIdentity,
   isReflectionSolveWorkload,
   isReflectionWorkloadOfIdentity,
@@ -78,7 +78,7 @@ function isWorkloadOfRecordedIdentity(
   identity: ReflectionRecordedProblemIdentity,
 ): boolean {
   return (
-    !isReflectionProblemIdentity(identity) ||
+    !isCurrentReflectionProblemIdentity(identity) ||
     isReflectionWorkloadOfIdentity(workload, identity)
   );
 }
@@ -116,7 +116,7 @@ export function restoreReflectionRecordedResult(
 ): ReflectionRecordedResult | null {
   if (
     !isReflectionPlayRecord(record) ||
-    !isReflectionProblemIdentity(record.payload.problemIdentity)
+    !isCurrentReflectionProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

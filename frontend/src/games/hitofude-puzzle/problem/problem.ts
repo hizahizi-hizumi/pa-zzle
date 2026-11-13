@@ -141,7 +141,7 @@ export function assertHitofudePuzzleProblem(
   }
 }
 
-export function isHitofudePuzzleProblemIdentity(
+export function isCurrentHitofudePuzzleProblemIdentity(
   value: unknown,
 ): value is HitofudePuzzleProblemIdentity {
   if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
@@ -162,6 +162,6 @@ export function isHitofudePuzzleRecordedProblemIdentity(
 ): value is HitofudePuzzleRecordedProblemIdentity {
   return isRecordedProblemIdentity(value, {
     generatorVersion: HITOFUDE_PUZZLE_GENERATOR_VERSION,
-    isProblemIdentity: isHitofudePuzzleProblemIdentity,
+    isProblemIdentity: isCurrentHitofudePuzzleProblemIdentity,
   });
 }

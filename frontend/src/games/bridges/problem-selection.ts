@@ -1,7 +1,7 @@
 import type { BridgesDifficulty } from "@/games/bridges/difficulty";
 import {
   type BridgesRecordedProblemIdentity,
-  isBridgesProblemIdentity,
+  isCurrentBridgesProblemIdentity,
 } from "@/games/bridges/problem/problem";
 import {
   type BridgesPooledProblem,
@@ -30,7 +30,7 @@ export function selectBridgesProblemForDifficulty(
 export function restoreBridgesProblem(
   identity: BridgesRecordedProblemIdentity,
 ): BridgesPooledProblem | null {
-  const entry = isBridgesProblemIdentity(identity)
+  const entry = isCurrentBridgesProblemIdentity(identity)
     ? findBridgesPoolEntry(identity)
     : null;
   return entry ? toBridgesPooledProblem(entry) : null;

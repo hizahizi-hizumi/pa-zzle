@@ -14,7 +14,7 @@ import { getBridgesSymmetryKey } from "@/games/bridges/problem/generation/symmet
 import {
   type BridgesProblem,
   type BridgesProblemIdentity,
-  isBridgesProblemIdentity,
+  isCurrentBridgesProblemIdentity,
 } from "@/games/bridges/problem/problem";
 import type { BridgesPooledProblem } from "@/games/bridges/problem/problem-pool";
 import { restoreBridgesProblem } from "@/games/bridges/problem-selection";
@@ -76,7 +76,7 @@ const bridgesDiagnosticFormat: InternalDiagnosticFormat<BridgesDiagnosticSnapsho
   {
     game: "bridges",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isBridgesProblemIdentity,
+    isProblemIdentity: isCurrentBridgesProblemIdentity,
     // 解・分析・分類は診断を開いたときの写しで、問題の再現には identity だけを使う。読み戻しでは形の大枠だけを確かめる。
     readDetails({
       symmetryKey,

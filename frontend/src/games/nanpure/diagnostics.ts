@@ -7,7 +7,7 @@ import {
 import { parseDifficultyLevel } from "@/games/difficulty";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import {
-  isNanpureProblemIdentity,
+  isCurrentNanpureProblemIdentity,
   type NanpureIdentifiedProblem,
   type NanpureProblemIdentity,
 } from "@/games/nanpure/problem/problem";
@@ -23,7 +23,7 @@ const nanpureDiagnosticFormat: InternalDiagnosticFormat<NanpureDiagnosticSnapsho
   {
     game: "nanpure",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isNanpureProblemIdentity,
+    isProblemIdentity: isCurrentNanpureProblemIdentity,
   };
 
 export function createNanpureDiagnosticSnapshot(input: {

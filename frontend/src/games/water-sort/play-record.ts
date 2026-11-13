@@ -11,7 +11,7 @@ import {
   type WaterSortResult,
 } from "@/games/water-sort/play/use-water-sort-play";
 import {
-  isWaterSortProblemIdentity,
+  isCurrentWaterSortProblemIdentity,
   isWaterSortRecordedProblemIdentity,
   type WaterSortProblemIdentity,
   type WaterSortRecordedProblemIdentity,
@@ -144,7 +144,7 @@ export function restoreWaterSortRecordedResult(
   if (
     !isWaterSortPlayRecord(record) ||
     record.payloadVersion !== WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION ||
-    !isWaterSortProblemIdentity(record.payload.problemIdentity)
+    !isCurrentWaterSortProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

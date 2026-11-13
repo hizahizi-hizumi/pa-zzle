@@ -8,7 +8,7 @@ import {
   type SlidePuzzleResult,
 } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import {
-  isSlidePuzzleProblemIdentity,
+  isCurrentSlidePuzzleProblemIdentity,
   isSlidePuzzleRecordedProblemIdentity,
   type SlidePuzzleProblemIdentity,
   type SlidePuzzleRecordedProblemIdentity,
@@ -81,7 +81,7 @@ function isRecordedIdentityOfDifficulty(
   difficulty: SlidePuzzleDifficulty,
 ): boolean {
   return (
-    !isSlidePuzzleProblemIdentity(identity) ||
+    !isCurrentSlidePuzzleProblemIdentity(identity) ||
     isSlidePuzzleProblemIdentityOfDifficulty(identity, difficulty)
   );
 }
@@ -157,7 +157,7 @@ export function restoreSlidePuzzleRecordedResult(
 ): SlidePuzzleRecordedResult | null {
   if (
     !isSlidePuzzlePlayRecord(record) ||
-    !isSlidePuzzleProblemIdentity(record.payload.problemIdentity)
+    !isCurrentSlidePuzzleProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

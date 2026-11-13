@@ -57,8 +57,8 @@ const startCellPlacements: readonly MinesweeperStartCellPlacement[] = [
   "center",
 ];
 
-/** 記録・診断など外部から読み戻した値が、現在の生成器で復元できる識別情報かを確かめる。 */
-export function isMinesweeperProblemIdentity(
+/** 記録・診断など外部から読み戻した値が、復元できる識別情報かを確かめる。 */
+export function isCurrentMinesweeperProblemIdentity(
   value: unknown,
 ): value is MinesweeperProblemIdentity {
   if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
@@ -88,7 +88,7 @@ export function isMinesweeperRecordedProblemIdentity(
   return (
     isRecordedProblemIdentity(value, {
       generatorVersion: MINESWEEPER_GENERATOR_VERSION,
-      isProblemIdentity: isMinesweeperProblemIdentity,
+      isProblemIdentity: isCurrentMinesweeperProblemIdentity,
     }) && isPositiveInteger(value.conditions.mineCount)
   );
 }

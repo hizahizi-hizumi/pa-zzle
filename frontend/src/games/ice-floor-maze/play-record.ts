@@ -10,7 +10,7 @@ import {
 import {
   type IceFloorMazeProblemIdentity,
   type IceFloorMazeRecordedProblemIdentity,
-  isIceFloorMazeProblemIdentity,
+  isCurrentIceFloorMazeProblemIdentity,
   isIceFloorMazeRecordedProblemIdentity,
 } from "@/games/ice-floor-maze/problem/problem";
 import {
@@ -86,7 +86,7 @@ function isRecordedIdentityOfDifficulty(
   difficulty: IceFloorMazeDifficulty,
 ): boolean {
   return (
-    !isIceFloorMazeProblemIdentity(identity) ||
+    !isCurrentIceFloorMazeProblemIdentity(identity) ||
     isIceFloorMazeBoardShapeOfDifficulty(identity.conditions, difficulty)
   );
 }
@@ -162,7 +162,7 @@ export function restoreIceFloorMazeRecordedResult(
 ): IceFloorMazeRecordedResult | null {
   if (
     !isIceFloorMazePlayRecord(record) ||
-    !isIceFloorMazeProblemIdentity(record.payload.problemIdentity)
+    !isCurrentIceFloorMazeProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }
