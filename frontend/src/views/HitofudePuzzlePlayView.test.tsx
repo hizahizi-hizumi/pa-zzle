@@ -219,11 +219,11 @@ describe("HitofudePuzzlePlayView", () => {
         expect(head).toBe(solution[4]);
       });
 
-      test("待った1回で、なぞる前の道へ戻すこと", () => {
+      test("待った1回で、先端を1マスだけ戻すこと", () => {
         fireEvent.click(screen.getByRole("button", { name: "待った" }));
         const head = getHeadCell();
 
-        expect(head).toBe(problem.start);
+        expect(head).toBe(solution[3]);
       });
     });
 

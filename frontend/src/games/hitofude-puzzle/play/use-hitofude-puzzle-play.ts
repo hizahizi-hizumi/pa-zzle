@@ -13,7 +13,10 @@ import {
   getHitofudePuzzleNeighborCell,
   type HitofudePuzzleDirection,
 } from "@/games/hitofude-puzzle/puzzle/board";
-import { isHitofudePuzzleDeadEnd } from "@/games/hitofude-puzzle/puzzle/rules";
+import {
+  findHitofudePuzzleStranding,
+  isHitofudePuzzleDeadEnd,
+} from "@/games/hitofude-puzzle/puzzle/rules";
 import { getHitofudePuzzleHead } from "@/games/hitofude-puzzle/puzzle/state";
 import type {
   HitofudePuzzleExtensionRejection,
@@ -109,6 +112,11 @@ export type HitofudePuzzlePlay = GamePlay<
     board: HitofudePuzzleProblem;
     path: readonly number[];
     isDeadEnd: boolean;
+    /**
+     * もう全マスを通れないと盤面から分かる、原因のマス（孤立したマス・2つ以上できた袋小路・先端から届かないマス）。
+     * 補助なので、出す難易度（`STRANDING_ASSIST_DIFFICULTIES`）だけで求め、行き止まりの間は先端の印に任せて空にする。
+     */
+    strandedCells: readonly number[];
     blockedMove: HitofudePuzzleBlockedMove | null;
     /** 盤面を戻すの後は `null`。 */
     pathNotice: HitofudePuzzlePathNotice | null;
@@ -231,6 +239,38 @@ function targetDirection(
   };
 }
 
+/**
+ * もう解けない状態の補助を出す難易度。局所の推論で道が決まる難易度と、数手先の取り残しを読み始める難易度に出し、
+ * 先読みを重ねることが挑戦になる難易度4・5 には出さない（SPEC-020「補助」）。
+ */
+const STRANDING_ASSIST_DIFFICULTIES: ReadonlySet<HitofudePuzzleDifficulty> =
+  new Set(["1", "2", "3"]);
+
+function listStrandedCells(
+  difficulty: HitofudePuzzleDifficulty,
+  session: HitofudePuzzleSession,
+  isDeadEnd: boolean,
+): readonly number[] {
+  if (
+    !STRANDING_ASSIST_DIFFICULTIES.has(difficulty) ||
+    session.status !== "playing" ||
+    isDeadEnd
+  ) {
+    return [];
+  }
+  const stranding = findHitofudePuzzleStranding(
+    session.problem,
+    session.puzzleState.path,
+  );
+  if (stranding === null) return [];
+  // 入れないマス・届かないマスがあれば、それだけで解けない。袋小路はそのどちらも無いときだけ原因として挙げる。
+  // 袋小路の1つは盤面の形から決まる終点のことが多く、ほかの原因と並べると、正しい終点まで誤りに見えるため。
+  const unreachable = [
+    ...new Set([...stranding.isolatedCells, ...stranding.separatedCells]),
+  ];
+  return unreachable.length > 0 ? unreachable : stranding.deadEndCells;
+}
+
 function selectProblem(
   difficulty: HitofudePuzzleDifficulty,
   avoidedProblemId: ProblemId | undefined,
@@ -264,6 +304,11 @@ export function useHitofudePuzzlePlay(
   const { problem, puzzleState } = session;
 
   const nextOperationId = useRef(0);
+  const isDeadEnd = isHitofudePuzzleDeadEnd(problem, puzzleState.path);
+  const strandedCells = useMemo(
+    () => listStrandedCells(difficulty, session, isDeadEnd),
+    [difficulty, session, isDeadEnd],
+  );
 
   const beginStroke = useCallback((cell: number) => {
     const operatedAt = Date.now();
@@ -396,7 +441,8 @@ export function useHitofudePuzzlePlay(
     result,
     board: problem,
     path: puzzleState.path,
-    isDeadEnd: isHitofudePuzzleDeadEnd(problem, puzzleState.path),
+    isDeadEnd,
+    strandedCells,
     blockedMove,
     pathNotice,
     backtrackCount: session.backtrackCount,
@@ -414,3 +460,5 @@ export function useHitofudePuzzlePlay(
     completeClearAnimation,
   };
 }
+
+export const _private = { listStrandedCells };

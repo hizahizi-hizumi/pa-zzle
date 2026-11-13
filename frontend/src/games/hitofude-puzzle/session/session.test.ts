@@ -42,6 +42,16 @@ function extendAll(
 const initial = createHitofudePuzzleSession(problem, startedAt);
 const besideHole = extendAll(initial, [1, 2, 5]);
 const halfway = extendAll(besideHole, [4]);
+
+function undoTimes(
+  session: HitofudePuzzleSession,
+  times: number,
+): HitofudePuzzleSession {
+  return Array.from({ length: times }).reduce<HitofudePuzzleSession>(
+    (current) => undoHitofudePuzzleSession(current),
+    session,
+  );
+}
 const cleared = extendAll(halfway, [3, 6, 7], clearedAt);
 
 describe("createHitofudePuzzleSession", () => {
@@ -298,22 +308,34 @@ describe("endHitofudePuzzleSessionStroke", () => {
   describe("押してから離すまでに道を何マスも変えた場合", () => {
     const session = stroke(halfway, [4, 3, 6]);
 
-    test("待った1回で押す前の道へ戻すこと", () => {
-      const undone = undoHitofudePuzzleSession(session);
+    test("待ったで1マスずつ押す前の道へ戻し、なぞり1回分を待った1回と数えること", () => {
+      const once = undoHitofudePuzzleSession(session);
+      const undone = undoHitofudePuzzleSession(once);
 
       expect(session.puzzleState.path).toEqual([0, 1, 2, 5, 4, 3, 6]);
+      expect(once.puzzleState.path).toEqual([0, 1, 2, 5, 4, 3]);
       expect(undone.puzzleState.path).toEqual(halfway.puzzleState.path);
+      expect(undone.undoCount - session.undoCount).toBe(1);
+      expect(undone.history).toHaveLength(halfway.history.length);
     });
   });
 
   describe("途中のマスを押してそのまま引き直した場合", () => {
     const session = stroke(halfway, [1, 4, 3]);
 
-    test("待った1回で押す前の道へ戻すこと", () => {
-      const undone = undoHitofudePuzzleSession(session);
+    test("待ったで、引き直した先を1マスずつ消してから、押す前の道へ1マスずつ延ばし直すこと", () => {
+      const steps = [1, 2, 3, 4, 5].map(
+        (times) => undoTimes(session, times).puzzleState.path,
+      );
 
       expect(session.puzzleState.path).toEqual([0, 1, 4, 3]);
-      expect(undone.puzzleState.path).toEqual(halfway.puzzleState.path);
+      expect(steps).toEqual([
+        [0, 1, 4],
+        [0, 1],
+        [0, 1, 2],
+        [0, 1, 2, 5],
+        halfway.puzzleState.path,
+      ]);
     });
   });
 
@@ -429,19 +451,34 @@ describe("rewindHitofudePuzzleSessionPath", () => {
 });
 
 describe("undoHitofudePuzzleSession", () => {
-  test("直前の1操作だけを取り消して待った回数を数えること", () => {
+  test("先端の1マスだけを戻して待った回数を数えること", () => {
     const session = undoHitofudePuzzleSession(halfway);
 
     expect(session.puzzleState.path).toEqual([0, 1, 2, 5]);
     expect(session.undoCount).toBe(1);
   });
 
+  describe("途中まで戻してから引き、また戻した場合", () => {
+    const partlyUndone = undoTimes(stroke(initial, [0, 1, 2, 5, 4]), 2);
+    const redrawnStroke = stroke(partlyUndone, [2, 5]);
+
+    test("待った回数が道を変えた入力の回数を超えないこと", () => {
+      const redrawn = undoTimes(redrawnStroke, 3);
+
+      expect(redrawn.puzzleState.path).toEqual([0]);
+      expect(redrawn.undoCount).toBe(2);
+      expect(redrawn.undoCount).toBeLessThanOrEqual(redrawn.inputCount);
+    });
+  });
+
   describe("巻き戻した後の場合", () => {
     const rewound = rewindHitofudePuzzleSessionPath(halfway, 0);
 
-    test("巻き戻す前の道へ戻すこと", () => {
-      const session = undoHitofudePuzzleSession(rewound);
+    test("巻き戻す前の道へ1マスずつ延ばし直すこと", () => {
+      const once = undoHitofudePuzzleSession(rewound);
+      const session = undoTimes(rewound, 4);
 
+      expect(once.puzzleState.path).toEqual([0, 1]);
       expect(session.puzzleState.path).toEqual(halfway.puzzleState.path);
     });
   });
@@ -579,8 +616,13 @@ describe("引き直しの数え方", () => {
     ],
     [
       "待ったで前の道筋へ戻すと別のマスへ引いたのと同じに数えること",
-      undoHitofudePuzzleSession(stroke(halfway, [1, 4, 3])),
+      undoTimes(stroke(halfway, [1, 4, 3]), 5),
       { backtrackCount: 2, retractedCellCount: 5 },
+    ],
+    [
+      "待ったで1マスずつ戻しても、引いた道の上を戻るだけなら数えないこと",
+      undoTimes(halfway, 3),
+      { backtrackCount: 0, retractedCellCount: 3 },
     ],
   ] as const;
 

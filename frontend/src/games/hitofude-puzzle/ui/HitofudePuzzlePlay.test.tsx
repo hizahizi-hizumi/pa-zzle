@@ -71,6 +71,7 @@ describe("HitofudePuzzlePlay", () => {
     board,
     path: [0, 1, 2, 5, 4, 3, 6, 7, 8],
     isDeadEnd: false,
+    strandedCells: [],
     blockedMove: null,
     pathNotice: null,
     backtrackCount: 2,

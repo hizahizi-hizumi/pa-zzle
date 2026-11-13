@@ -1,6 +1,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
 import {
+  _private,
   createHitofudePuzzleResult,
   useHitofudePuzzlePlay,
 } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
@@ -10,7 +11,12 @@ import {
   findHitofudePuzzleDirection,
   getHitofudePuzzleNeighborCell,
   hitofudePuzzleDirections,
+  parseHitofudePuzzleBoard,
 } from "@/games/hitofude-puzzle/puzzle/board";
+import {
+  createHitofudePuzzleSession,
+  type HitofudePuzzleSession,
+} from "@/games/hitofude-puzzle/session/session";
 import { createProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
 
@@ -99,13 +105,20 @@ describe("useHitofudePuzzlePlay", () => {
     expect(result.current.isDeadEnd).toBe(false);
   });
 
-  test("1回のなぞりで通ったマスへ順に道を延ばし、待った1回で取り消せること", () => {
+  test("1回のなぞりで通ったマスへ順に道を延ばし、待ったで1マスずつ戻せること", () => {
     drag(result, solution.slice(0, 5));
     const tracedPath = result.current.path;
     act(() => result.current.undo());
+    const onceUndone = result.current.path;
+    for (let step = 0; step < 3; step += 1) {
+      act(() => result.current.undo());
+    }
 
     expect(tracedPath).toEqual(solution.slice(0, 5));
+    expect(onceUndone).toEqual(solution.slice(0, 4));
     expect(result.current.path).toEqual([initial.problem.start]);
+    expect(result.current.undoCount).toBe(1);
+    expect(result.current.canUndo).toBe(false);
   });
 
   describe("先端から離れたマスを押した場合", () => {
@@ -345,5 +358,59 @@ describe("useHitofudePuzzlePlay に最初の問題を渡した場合", () => {
 
     expect(board).toEqual(other.problem);
     expect(problemIdentity).toEqual(other.identity);
+  });
+});
+
+describe("listStrandedCells", () => {
+  // 0 1 2 3
+  // 4 5 6 7
+  // 8 9 a b
+  // c d e f
+  const openBoard = parseHitofudePuzzleBoard([
+    "S . . .",
+    ". . . .",
+    ". . . .",
+    ". . . .",
+  ]);
+  const created = createHitofudePuzzleSession(openBoard, 0);
+  // 右上の隅（3）を、入れる隣の無いマスとして取り残す。
+  const isolating: HitofudePuzzleSession = {
+    ...created,
+    puzzleState: { path: [0, 4, 5, 1, 2, 6, 7, 11, 10, 9, 8, 12, 13, 14] },
+  };
+  const unstranded: HitofudePuzzleSession = {
+    ...created,
+    puzzleState: { path: [0, 1, 2, 3] },
+  };
+  const { listStrandedCells } = _private;
+
+  test.each(["1", "2", "3"] as const)(
+    "補助を出す難易度では、取り残したマスを返すこと: %s",
+    (level) => {
+      const result = listStrandedCells(level, isolating, false);
+
+      expect(result).toEqual([3]);
+    },
+  );
+
+  test.each(["4", "5"] as const)(
+    "補助を出さない難易度では返さないこと: %s",
+    (level) => {
+      const result = listStrandedCells(level, isolating, false);
+
+      expect(result).toEqual([]);
+    },
+  );
+
+  test("まだ全マスを通れる道では返さないこと", () => {
+    const result = listStrandedCells("1", unstranded, false);
+
+    expect(result).toEqual([]);
+  });
+
+  test("行き止まりの間は先端の印に任せて返さないこと", () => {
+    const result = listStrandedCells("1", isolating, true);
+
+    expect(result).toEqual([]);
   });
 });

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
-import { UndoButton } from "@/components/UndoButton";
 import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import type {
@@ -19,6 +18,7 @@ import { HitofudePuzzleBoard } from "@/games/hitofude-puzzle/ui/board/HitofudePu
 import { HitofudePuzzleGround } from "@/games/hitofude-puzzle/ui/HitofudePuzzleGround";
 import { HitofudePuzzleHowToPlayDialog } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog";
 import { HitofudePuzzleStatusAnnouncement } from "@/games/hitofude-puzzle/ui/HitofudePuzzlePlay/HitofudePuzzleStatusAnnouncement";
+import { HitofudePuzzleUndoButton } from "@/games/hitofude-puzzle/ui/HitofudePuzzlePlay/HitofudePuzzleUndoButton";
 import { HitofudePuzzleTutorial } from "@/games/hitofude-puzzle/ui/HitofudePuzzleTutorial";
 import { HitofudePuzzleResultScreen } from "@/games/hitofude-puzzle/ui/result/HitofudePuzzleResultScreen";
 import { useHitofudePuzzleSoundEffects } from "@/games/hitofude-puzzle/ui/use-hitofude-puzzle-sound-effects";
@@ -38,6 +38,7 @@ type HitofudePuzzlePlayProps = GamePlayScreenProps<
     board: HitofudePuzzleBoardState;
     path: readonly number[];
     isDeadEnd: boolean;
+    strandedCells: readonly number[];
     blockedMove: HitofudePuzzleBlockedMove | null;
     pathNotice: HitofudePuzzlePathNotice | null;
     backtrackCount: number;
@@ -57,6 +58,7 @@ export function HitofudePuzzlePlay({
   board,
   path,
   isDeadEnd,
+  strandedCells,
   blockedMove,
   pathNotice,
   backtrackCount,
@@ -167,6 +169,7 @@ export function HitofudePuzzlePlay({
             board={board}
             path={path}
             isDeadEnd={isDeadEnd}
+            strandedCells={strandedCells}
             blockedMove={blockedMove}
             solved={progress !== "playing"}
             clearing={progress === "clearing"}
@@ -187,7 +190,7 @@ export function HitofudePuzzlePlay({
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
         <div className="flex h-14 items-center justify-center">
-          <UndoButton disabled={!canUndo} onUndo={onUndo} />
+          <HitofudePuzzleUndoButton disabled={!canUndo} onUndo={onUndo} />
         </div>
       </footer>
     </GamePlayFrame>

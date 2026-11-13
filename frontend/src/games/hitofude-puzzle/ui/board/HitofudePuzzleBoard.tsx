@@ -37,6 +37,8 @@ type HitofudePuzzleBoardProps = {
   /** 始点から先端までに通ったマスの番号。 */
   path: readonly number[];
   isDeadEnd: boolean;
+  /** もう全マスを通れない原因のマス。補助を出さない難易度・チュートリアルでは渡さない。 */
+  strandedCells?: readonly number[];
   blockedMove: HitofudePuzzleBlockedMove | null;
   solved: boolean;
   /** クリアしてから演出を終えるまで `true`。 */
@@ -82,6 +84,7 @@ export function HitofudePuzzleBoard({
   board,
   path,
   isDeadEnd,
+  strandedCells = [],
   blockedMove,
   solved,
   clearing,
@@ -248,6 +251,7 @@ export function HitofudePuzzleBoard({
         board={board}
         path={path}
         isDeadEnd={isDeadEnd}
+        strandedCells={strandedCells}
         solved={solved}
         blockedCell={blockedMove?.cell ?? null}
       />

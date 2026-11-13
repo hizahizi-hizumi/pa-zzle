@@ -21,6 +21,8 @@ type HitofudePuzzleFigureProps = {
   /** 始点から先端までに通ったマスの番号。 */
   path: readonly number[];
   isDeadEnd: boolean;
+  /** もう全マスを通れない原因のマス。点線の枠で控えめに囲む。 */
+  strandedCells?: readonly number[];
   solved: boolean;
   /** 最後に道を延ばせなかった操作が進もうとしたマス。×の印を置き、阻まれたときだけ盤面の反応で点ける。 */
   blockedCell?: number | null;
@@ -30,6 +32,10 @@ type HitofudePuzzleFigureProps = {
 };
 
 /** 図の寸法はマス幅を 1 とした値。 */
+/** もう通れないマスの点線の枠の、マスの縁からの間と、線の太さ・刻み。道や印と重ならないよう、マスの縁に沿わせる。 */
+const STRANDED_MARK_INSET = 0.1;
+const STRANDED_MARK_WIDTH = 0.06;
+const STRANDED_MARK_DASH = "0.12 0.09";
 const PATH_LINE_WIDTH = 0.3;
 const START_MARK_RADIUS = 0.2;
 const START_MARK_OUTLINE_WIDTH = 0.07;
@@ -85,6 +91,7 @@ export const hitofudePuzzleFigureParts = {
   clearTrace: "data-clear-trace",
   endMark: "data-end-mark",
   blockedMark: "data-blocked-mark",
+  strandedMarks: "data-stranded-marks",
 } as const;
 
 /**
@@ -97,6 +104,7 @@ export function HitofudePuzzleFigure({
   board,
   path,
   isDeadEnd,
+  strandedCells = [],
   solved,
   blockedCell = null,
   showsBlockedMark = false,
@@ -150,6 +158,32 @@ export function HitofudePuzzleFigure({
           />
         );
       })}
+      {strandedCells.length > 0 ? (
+        <g
+          {...{ [hitofudePuzzleFigureParts.strandedMarks]: "" }}
+          fill="none"
+          strokeWidth={STRANDED_MARK_WIDTH}
+          strokeDasharray={STRANDED_MARK_DASH}
+          className={cn(
+            "animate-in fade-in-0 duration-300 motion-reduce:animate-none",
+            hitofudePuzzleToneClassNames.strandedMark,
+          )}
+        >
+          {strandedCells.map((cell) => {
+            const { row, column } = getHitofudePuzzleCellPosition(size, cell);
+            return (
+              <rect
+                key={cell}
+                x={column + STRANDED_MARK_INSET}
+                y={row + STRANDED_MARK_INSET}
+                width={1 - STRANDED_MARK_INSET * 2}
+                height={1 - STRANDED_MARK_INSET * 2}
+                rx={0.08}
+              />
+            );
+          })}
+        </g>
+      ) : null}
       <path
         {...{ [hitofudePuzzleFigureParts.outline]: "" }}
         d={formatHitofudePuzzleOutlinePath(

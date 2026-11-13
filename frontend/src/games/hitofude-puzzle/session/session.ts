@@ -24,10 +24,23 @@ import {
 } from "@/games/hitofude-puzzle/puzzle/transitions";
 import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
+/**
+ * 待ったで戻れる1単位。盤面操作（なぞり1回・矢印キー1回・巻き戻し）の前の道。
+ * `undoStarted` は、待ったでこの単位へ戻り始めたか。待ったは1マスずつ戻すので、1単位を何回かの待ったで戻す。
+ */
+export type HitofudePuzzleHistoryEntry = {
+  state: HitofudePuzzlePuzzleState;
+  undoStarted: boolean;
+};
+
 export type HitofudePuzzleSession = GameSession<
   HitofudePuzzleProblem,
   HitofudePuzzlePuzzleState
 > & {
+  /**
+   * 待ったで戻り始めた単位の数。待ったは1マスずつ戻すが、1単位を戻すのに何回押しても、その単位では1回と数える。
+   * 道を変えた入力の回数を超えない。
+   */
   undoCount: number;
   restartCount: number;
   /** 道を変えた入力（なぞり・矢印キー）の回数。待った・盤面を戻すは含まない。 */
@@ -40,7 +53,7 @@ export type HitofudePuzzleSession = GameSession<
    */
   furthestPath: readonly number[];
   /** 待ったで戻せる、各盤面操作の前の道。古い順。 */
-  history: readonly HitofudePuzzlePuzzleState[];
+  history: readonly HitofudePuzzleHistoryEntry[];
   /**
    * 道をなぞっている間（押してから離すまで）だけ、押す前の道。
    * なぞる間の盤面操作は履歴に積まず、離したときに待ったの1単位としてまとめる。
@@ -140,7 +153,7 @@ function commitInput(
   return {
     ...session,
     ...countPathTransition(session, before.path, session.puzzleState.path),
-    history: [...session.history, before],
+    history: [...session.history, { state: before, undoStarted: false }],
     inputCount: session.inputCount + 1,
   };
 }
@@ -304,7 +317,23 @@ export function rewindHitofudePuzzleSessionPath(
     : recordPathChange(session, puzzleState);
 }
 
-/** 巻き戻しも取り消せる。盤面を戻す前の操作は待ったで戻せない。 */
+/**
+ * 待った1回で戻す先の道。直前の単位の前の道（`target`）へ1マスだけ近づける。
+ * 今の道が `target` から外れていれば先端を1マス消し、`target` の途中にあれば `target` に沿って1マス延ばす。
+ */
+function stepPathToward(
+  path: readonly number[],
+  target: readonly number[],
+): readonly number[] {
+  return path.length > countCommonPrefix(path, target)
+    ? path.slice(0, -1)
+    : target.slice(0, path.length + 1);
+}
+
+/**
+ * 1マスずつ戻す。延ばした道は先端から1マスずつ消え、巻き戻した道は巻き戻す前の道へ1マスずつ延び直す。
+ * 巻き戻しも取り消せる。盤面を戻す前の操作は待ったで戻せない。
+ */
 export function undoHitofudePuzzleSession(
   session: HitofudePuzzleSession,
 ): HitofudePuzzleSession {
@@ -313,13 +342,17 @@ export function undoHitofudePuzzleSession(
   }
 
   const closed = closeStroke(session);
-  const puzzleState = closed.history.at(-1)!;
+  const entry = closed.history.at(-1)!;
+  const path = stepPathToward(closed.puzzleState.path, entry.state.path);
+  const reached = haveSamePath({ path }, entry.state);
   return {
     ...closed,
-    ...countPathTransition(closed, closed.puzzleState.path, puzzleState.path),
-    puzzleState,
-    history: closed.history.slice(0, -1),
-    undoCount: closed.undoCount + 1,
+    ...countPathTransition(closed, closed.puzzleState.path, path),
+    puzzleState: reached ? entry.state : { path },
+    history: reached
+      ? closed.history.slice(0, -1)
+      : [...closed.history.slice(0, -1), { ...entry, undoStarted: true }],
+    undoCount: closed.undoCount + (entry.undoStarted ? 0 : 1),
   };
 }
 

@@ -7,6 +7,8 @@
  * - 盤面の外形（通れるマスと、穴・枠の外との境目）は、「この先へは通れない」ことを示す色の線で縁取る。
  *   格子は通常の境界幅、外形は強調の境界幅にし、角は丸めない（外形はマスの辺そのもの）。
  * - 道を延ばせなかったとき、進もうとしたマスに×を短く点ける。×は道の先端と同じ色にし、どの道の操作が阻まれたかを結ぶ。
+ * - もう全マスを通れない原因のマス（補助）は、外形と同じ「通れない」色を薄めた点線の枠で囲む。塗らずに枠だけにし、
+ *   盤面を読む邪魔をしない控えめな知らせにする。
  * - 行き止まりの先端は、道の色をやめ、外形と同じ「通れない」色で塗った円にマスの地の色の横棒を通す（進入禁止の標識の形）。
  *   灰色に沈めると見落とされ、欠けた輪は読み込み中に見える。
  * 色の値は `pathColorVariables` の CSS 変数として盤面の根に置き、マスと道の色は `getPathColor` などで混ぜて作る。
@@ -24,6 +26,7 @@ export const hitofudePuzzleToneClassNames = {
   /** 始点の印の縁取り。道の上でも印として浮くよう、マスの地の色で囲む。 */
   startMarkOutline: "stroke-(--hitofude-puzzle-cell)",
   deadEndHead: "fill-stone-800 dark:fill-stone-200",
+  strandedMark: "stroke-stone-500 dark:stroke-stone-400",
   deadEndBar: "fill-(--hitofude-puzzle-cell)",
   clearTrace: "stroke-white/80 dark:stroke-white/70",
 } as const;
