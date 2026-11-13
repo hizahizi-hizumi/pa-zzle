@@ -86,8 +86,8 @@ function getCellCenter(size: number, cellIndex: number): ReflectionPoint {
   return { x: BOARD_OFFSET + column + 0.5, y: BOARD_OFFSET + row + 0.5 };
 }
 
-/** 外周ヒントの盤面側の縁の中点。光路はここから入り、ここへ出る。 */
-export function getReflectionClueAnchor(
+/** 光路はここから入り、ここへ出る。 */
+export function getReflectionClueInnerEdgeMidpoint(
   size: number,
   { side, index }: ReflectionEntry,
 ): ReflectionPoint {
@@ -108,7 +108,7 @@ export function getReflectionClueCenter(
   size: number,
   entry: ReflectionEntry,
 ): ReflectionPoint {
-  const anchor = getReflectionClueAnchor(size, entry);
+  const anchor = getReflectionClueInnerEdgeMidpoint(size, entry);
   const { dx, dy } = getReflectionOutwardVector(entry.side);
   return {
     x: anchor.x + (dx * CLUE_TRACK) / 2,
@@ -129,7 +129,7 @@ export function getReflectionLaserEnd(
   entry: ReflectionEntry,
   inset: number,
 ): ReflectionPoint {
-  const anchor = getReflectionClueAnchor(size, entry);
+  const anchor = getReflectionClueInnerEdgeMidpoint(size, entry);
   const { dx, dy } = getReflectionOutwardVector(entry.side);
   const distance = GAP_TRACK + inset;
   return { x: anchor.x - dx * distance, y: anchor.y - dy * distance };

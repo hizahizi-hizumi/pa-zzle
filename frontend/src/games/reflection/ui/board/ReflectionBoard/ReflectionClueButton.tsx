@@ -22,8 +22,7 @@ type ReflectionClueButtonProps = {
   size: number;
   entry: ReflectionEntry;
   clue: ReflectionClue;
-  /** この位置の光路を表示している。 */
-  selected: boolean;
+  laserPathShown: boolean;
   matched: boolean;
   /** 光路を表示しているとき、今の配置での光の結果（通るマスの数と行き先）。 */
   laserResult: ReflectionClue | null;
@@ -67,7 +66,7 @@ export function ReflectionClueButton({
   size,
   entry,
   clue,
-  selected,
+  laserPathShown,
   matched,
   laserResult,
   disabled,
@@ -101,7 +100,7 @@ export function ReflectionClueButton({
           ? `今の光 ${reflectionOutcomeLabels[laserResult.outcome]} ${laserResult.distance}マス`
           : undefined
       }
-      aria-pressed={selected}
+      aria-pressed={laserPathShown}
       data-matched={matched}
       disabled={disabled}
       tabIndex={focusable ? 0 : -1}

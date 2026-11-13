@@ -13,8 +13,7 @@ import type {
   ReflectionTrialFeatures,
 } from "@/games/reflection/problem/difficulty-analysis";
 
-/** どのレベルの試し置きの条件も満たす。 */
-const trialUnsolved: ReflectionTrialFeatures = {
+const trialMeetingEveryLevel: ReflectionTrialFeatures = {
   solved: false,
   moveCount: 240,
   retryCount: 180,
@@ -24,7 +23,7 @@ function toAnalysis(
   highestLevel: ReflectionReasoningFeatures["highestLevel"],
   size: number,
   pieceCount: number,
-  trial: ReflectionTrialFeatures = trialUnsolved,
+  trial: ReflectionTrialFeatures = trialMeetingEveryLevel,
 ): ReflectionDifficultyAnalysis {
   return {
     status: "analyzed",

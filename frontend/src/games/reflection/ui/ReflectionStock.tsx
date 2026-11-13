@@ -19,8 +19,7 @@ type ReflectionStockProps = {
   inventory: ReflectionInventory;
   stock: ReflectionInventory;
   selection: ReflectionSelection | null;
-  /** 盤面で選んでいるマスのピース。盤面のピースを選んでいないときは `null`。 */
-  selectedCell: ReflectionPiece | null;
+  selectedBoardPiece: ReflectionPiece | null;
   disabled: boolean;
   onSelectStockPiece: (piece: ReflectionPiece) => void;
   cues?: readonly ReflectionCue[];
@@ -37,13 +36,13 @@ export function ReflectionStock({
   inventory,
   stock,
   selection,
-  selectedCell,
+  selectedBoardPiece,
   disabled,
   onSelectStockPiece,
   cues = [],
 }: ReflectionStockProps) {
   const returning = !disabled && selection?.type === "cell";
-  const selectedCellPiece = returning ? selectedCell : null;
+  const returnTargetPiece = returning ? selectedBoardPiece : null;
   const pieces = listReflectionStockPieces(inventory);
   const { getTapHandlers } = useTouchTap();
 
@@ -68,7 +67,7 @@ export function ReflectionStock({
             aria-label={`${reflectionPieceLabels[piece]} 残り${remaining}`}
             aria-pressed={selected}
             disabled={
-              disabled || (remaining === 0 && piece !== selectedCellPiece)
+              disabled || (remaining === 0 && piece !== returnTargetPiece)
             }
             {...getTapHandlers(() => onSelectStockPiece(piece))}
             className={cn(
@@ -79,7 +78,7 @@ export function ReflectionStock({
               cues={filterReflectionCues(cues, { type: "stock", piece })}
               place="stock"
             />
-            {selected || piece === selectedCellPiece ? (
+            {selected || piece === returnTargetPiece ? (
               <span
                 aria-hidden="true"
                 data-selection-mark={selected ? "" : undefined}
