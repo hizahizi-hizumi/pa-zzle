@@ -556,13 +556,20 @@ function popStatusCount(
   );
 }
 
+/** 台紙を収めたタブのパネルから、そのパネルを開いているレベルのカードを引く。 */
+function findOpenLevelCard(square: Element): Element | null {
+  const cardId = square
+    .closest('[role="tabpanel"]')
+    ?.getAttribute("aria-labelledby");
+  return cardId ? square.ownerDocument.getElementById(cardId) : null;
+}
+
 function popOpenLevelCard(
   motion: StampMotion,
+  square: Element,
   { scale, durationMs }: { scale: number; durationMs: number },
 ) {
-  const card = document.querySelector(
-    '[aria-label="レベル"] [role="tab"][aria-selected="true"]',
-  );
+  const card = findOpenLevelCard(square);
   if (card === null) {
     return;
   }
@@ -733,7 +740,7 @@ export function playZukanStamp(
       if (!isFinest) {
         shakeSheet(motion, square, MILESTONE_EFFECTS.shake);
       }
-      popOpenLevelCard(motion, MILESTONE_EFFECTS.cardPop);
+      popOpenLevelCard(motion, square, MILESTONE_EFFECTS.cardPop);
     }
     popStatusCount(motion, stamp.level, {
       scale: tier.countPopScale,

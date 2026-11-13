@@ -60,12 +60,18 @@ const columnCount = 3;
 /**
  * 3列3行の台紙を作り、真ん中のマスを変化したマスにする。
  * 状態ごとの数の並びも置き、押したときに数を弾ませられるようにする。
+ * 台紙はレベル2のカードが開いているタブのパネルに収める。
  */
 function renderSheet({ isRaised }: { isRaised: boolean }) {
   document.body.innerHTML = `
     <ul aria-label="状態ごとの問題の数">
       <li>perfect</li><li>great</li><li>good</li><li>clear</li><li>挑戦中</li><li>未挑戦</li>
     </ul>
+    <div role="tablist">
+      <button role="tab" id="level-1">レベル1</button>
+      <button role="tab" id="level-2">レベル2</button>
+    </div>
+    <div role="tabpanel" aria-labelledby="level-2">
     <div data-testid="scroller">
       <div data-testid="grid" style="grid-template-columns: 1fr 1fr 1fr">
         ${Array.from(
@@ -78,6 +84,7 @@ function renderSheet({ isRaised }: { isRaised: boolean }) {
             }</button>`,
         ).join("")}
       </div>
+    </div>
     </div>`;
   const scroller = document.querySelector<HTMLElement>(
     '[data-testid="scroller"]',
@@ -85,10 +92,19 @@ function renderSheet({ isRaised }: { isRaised: boolean }) {
   const grid = document.querySelector('[data-testid="grid"]');
   const square = document.querySelector('[data-index="4"]');
   const parts = square ? findZukanStampParts(square) : null;
-  if (!scroller || !grid || !square || !parts) {
+  const openLevelCard = document.getElementById("level-2");
+  const otherLevelCard = document.getElementById("level-1");
+  if (
+    !scroller ||
+    !grid ||
+    !square ||
+    !parts ||
+    !openLevelCard ||
+    !otherLevelCard
+  ) {
     throw new Error("台紙を作れない");
   }
-  return { scroller, grid, square, parts };
+  return { scroller, grid, square, parts, openLevelCard, otherLevelCard };
 }
 
 function listAnimatedElements(): Element[] {
@@ -283,6 +299,32 @@ describe("playZukanStamp", () => {
 
       expect(animated).toContain(sheet.grid);
       expect(nudgedSquares.size).toBe(8);
+    });
+  });
+
+  describe("節目に届くマスの場合", () => {
+    const stamp: ZukanStamp = {
+      level: "clear",
+      isRaised: false,
+      reachesMilestone: true,
+    };
+    let sheet: ReturnType<typeof renderSheet>;
+
+    beforeEach(() => {
+      sheet = renderSheet({ isRaised: false });
+      layer = createZukanStampEffectLayer(sheet.scroller);
+    });
+
+    test("着いたら、台紙を収めたパネルを開いているレベルのカードだけを弾ませること", async () => {
+      playZukanStamp(
+        { square: sheet.square, parts: sheet.parts, stamp },
+        { layer, playsSound: true, onLanded, onFinished },
+      );
+      await land(sheet.parts.face);
+      const animated = listAnimatedElements();
+
+      expect(animated).toContain(sheet.openLevelCard);
+      expect(animated).not.toContain(sheet.otherLevelCard);
     });
   });
 
