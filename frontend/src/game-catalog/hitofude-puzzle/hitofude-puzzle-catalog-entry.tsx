@@ -5,7 +5,6 @@ import {
 } from "@/game-catalog/game-catalog-entry";
 import { RecordedHitofudePuzzleResult } from "@/game-catalog/hitofude-puzzle/RecordedHitofudePuzzleResult";
 import {
-  formatRange,
   formatSquareBoardRange,
   summarizeLevelsDistinctly,
 } from "@/game-catalog/level-summary";
@@ -45,7 +44,9 @@ export const hitofudePuzzleCatalogEntry = {
         hitofudePuzzleLevelCombinations[difficulty].boardSize,
       ),
     (difficulty) =>
-      `先読み${formatRange(hitofudePuzzleLevelCombinations[difficulty].lookaheadLoad)}`,
+      hitofudePuzzleLevelCombinations[difficulty].lookaheadLoad.minimum >= 3
+        ? "先読み多め"
+        : "先読み少し",
   ),
   recordProblemPlayTarget(record) {
     return isHitofudePuzzlePlayRecord(record)

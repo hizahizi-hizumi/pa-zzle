@@ -39,7 +39,7 @@ export const takuzuCatalogEntry = {
     "2": "個数の一致",
     "3": "残り1つ",
     "4": "同じ列禁止",
-    "5": "複合読み",
+    "5": "合わせ技",
   },
   recordProblemPlayTarget(record) {
     return isTakuzuPlayRecord(record)

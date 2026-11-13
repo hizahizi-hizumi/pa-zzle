@@ -36,10 +36,10 @@ export const parkingJamCatalogEntry = {
   // 難易度の定義に、レベルの違いを表す数が無いので、違いを文言で書く。
   levelSummaries: {
     "1": "すぐ出せる",
-    "2": "見落とし",
-    "3": "2段の待ち",
-    "4": "読み違い多",
-    "5": "3段以上",
+    "2": "順番に注意",
+    "3": "2手先を読む",
+    "4": "ひっかけ多め",
+    "5": "3手先を読む",
   },
   recordProblemPlayTarget(record) {
     return isParkingJamPlayRecord(record)

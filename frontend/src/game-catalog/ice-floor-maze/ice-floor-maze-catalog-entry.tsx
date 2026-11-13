@@ -48,10 +48,11 @@ export const iceFloorMazeCatalogEntry = {
           ),
           "手",
         )
-      : `地形${formatRange(
+      : `仕掛け${formatRange(
           mergeRanges(
             criteria.patterns.map(({ elementCount }) => elementCount),
           ),
+          "種",
         )}`;
   }),
   recordProblemPlayTarget(record) {

@@ -4,14 +4,13 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import {
-  formatRange,
+  type LevelSummaries,
   summarizeLevelsDistinctly,
 } from "@/game-catalog/level-summary";
 import { RecordedTsumeShogiResult } from "@/game-catalog/tsume-shogi/RecordedTsumeShogiResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/tsume-shogi/assets/pictogram.svg?raw";
 import pictogramShowcaseSvg from "@/games/tsume-shogi/assets/pictogram-showcase.svg?raw";
-import { tsumeShogiLevelCombinations } from "@/games/tsume-shogi/difficulty";
 import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 import {
   isTsumeShogiPlayRecord,
@@ -32,6 +31,14 @@ import {
   tsumeShogiProblemFeatureAxisDisplays,
 } from "@/games/tsume-shogi/ui/problem-features";
 
+const tsumeShogiLevelDecoySummaries = {
+  "1": "ひっかけなし",
+  "2": "ひっかけ少し",
+  "3": "ひっかけあり",
+  "4": "ひっかけ多め",
+  "5": "ひっかけだらけ",
+} as const satisfies LevelSummaries;
+
 export const tsumeShogiCatalogEntry = {
   id: tsumeShogiPlayRecordDefinition.gameId,
   name: TSUME_SHOGI_DISPLAY_NAME,
@@ -51,13 +58,7 @@ export const tsumeShogiCatalogEntry = {
       ]
         .sort((left, right) => left - right)
         .join("・")}手詰`,
-    (difficulty) => {
-      const { plausibleWrong, deepDecoyCount } =
-        tsumeShogiLevelCombinations[difficulty];
-      return deepDecoyCount.maximum === 0
-        ? `誤王手${formatRange(plausibleWrong)}`
-        : `紛れ${formatRange(deepDecoyCount)}`;
-    },
+    (difficulty) => tsumeShogiLevelDecoySummaries[difficulty],
   ),
   recordProblemPlayTarget(record) {
     return isTsumeShogiPlayRecord(record)

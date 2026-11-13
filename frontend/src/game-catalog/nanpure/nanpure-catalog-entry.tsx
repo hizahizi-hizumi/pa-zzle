@@ -35,11 +35,11 @@ export const nanpureCatalogEntry = {
   playRecordDisplay: nanpurePlayRecordDisplay,
   // 難易度の定義に、レベルの違いを表す数が無いので、違いを文言で書く。
   levelSummaries: {
-    "1": "入門",
-    "2": "単独候補",
-    "3": "ロックド",
-    "4": "ペア系",
-    "5": "X-Wing級",
+    "1": "ヒント多め",
+    "2": "基本の消去",
+    "3": "候補を絞る",
+    "4": "ペアを読む",
+    "5": "上級の手筋",
   },
   recordProblemPlayTarget(record) {
     return isNanpurePlayRecord(record)

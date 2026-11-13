@@ -4,7 +4,7 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import {
-  formatRange,
+  type LevelSummaries,
   summarizeLevelsDistinctly,
 } from "@/game-catalog/level-summary";
 import { RecordedSlidePuzzleResult } from "@/game-catalog/slide-puzzle/RecordedSlidePuzzleResult";
@@ -30,6 +30,14 @@ import {
   slidePuzzleProblemFeatureAxisDisplays,
 } from "@/games/slide-puzzle/ui/problem-features";
 
+const slidePuzzleLevelDetourSummaries = {
+  "1": "遠回り少なめ",
+  "2": "遠回り少なめ",
+  "3": "遠回り多め",
+  "4": "遠回り少なめ",
+  "5": "遠回り多め",
+} as const satisfies LevelSummaries;
+
 export const slidePuzzleCatalogEntry = {
   id: slidePuzzlePlayRecordDefinition.gameId,
   name: SLIDE_PUZZLE_DISPLAY_NAME,
@@ -43,8 +51,7 @@ export const slidePuzzleCatalogEntry = {
       const { boardSize } = slidePuzzleDifficultyCriteria[difficulty];
       return `${boardSize}×${boardSize}`;
     },
-    (difficulty) =>
-      `遠回り${formatRange(slidePuzzleDifficultyCriteria[difficulty].detourMoveCount)}`,
+    (difficulty) => slidePuzzleLevelDetourSummaries[difficulty],
   ),
   recordProblemPlayTarget(record) {
     return isSlidePuzzlePlayRecord(record)

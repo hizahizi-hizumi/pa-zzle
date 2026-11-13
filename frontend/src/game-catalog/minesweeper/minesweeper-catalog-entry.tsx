@@ -47,6 +47,7 @@ export const minesweeperCatalogEntry = {
             ({ mineCount }) => mineCount,
           ),
         ),
+        "個",
       )}`,
   ),
   recordProblemPlayTarget(record) {
