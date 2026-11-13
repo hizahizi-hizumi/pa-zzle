@@ -24,7 +24,6 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** 覆いから抜く所の印を付けた要素を、画面の中の位置・大きさ・角丸で置く。 */
 function addSpotlight(box: SpotlightBox): HTMLElement {
   const element = document.createElement("span");
   element.setAttribute(TUTORIAL_SPOTLIGHT_ATTRIBUTE, "");

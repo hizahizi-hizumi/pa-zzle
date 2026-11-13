@@ -27,22 +27,15 @@ export type {
 
 type TutorialOverlayProps = {
   open: boolean;
-  /** パズルの名前。チュートリアルはパズルの入口の1つなので、何のパズルかを盤面と一緒に見せる。 */
   title: string;
-  /** パズル選択と同じピクトグラム。導入で名前と一緒に見せ、その後も上部で名前に添える。 */
   pictogramSvg: string;
-  /** 操作より先に見せる、何をするパズルかの一文と、ゴール・始まりの盤面に添える一言。 */
   intro: TutorialIntro;
   rules: readonly TutorialRuleListItem[];
   message: TutorialMessage;
-  /** 進行の段。開いたときと、もう一度始めたときは導入から始まる。 */
   phase: TutorialPhase;
-  /** 手を引いている間。この間だけ、画面全体に覆いを重ね、次に押す所・決め手・一言を抜いて見せる。 */
   guiding: boolean;
   finish: TutorialFinish;
-  /** ゲーム固有の盤面。盤面の大きさは盤面の側が、この領域の大きさから決める。導入の盤面の段も盤面が受け持つ。 */
   renderBoard: (intro: TutorialBoardIntro) => ReactNode;
-  /** 導入を終えた。 */
   onIntroEnd: () => void;
   onRestart: () => void;
   onClose: () => void;
@@ -60,15 +53,11 @@ function getMusicState(
 }
 
 /**
- * 1つの盤面を埋めながらルールを1つずつ身につけていく全画面の枠。
- * 開くたびに中の画面を作り直し、パズルの名前、何をするパズルか、ゴールと始まりの盤面を見せる導入から始める。
- *
  * ゲームのチュートリアルの画面（`games/<game>/ui/<Game>Tutorial.tsx`）は、次のようにこの枠へつなぐ。
  * - 進行は `games/tutorial.ts` の `startTutorial`・`performTutorialAction`・`finishTutorialIntro`・`completeTutorial` で進め、`phase` と、一言（`getTutorialMessage`）を渡す。
  * - `guiding` は、`phase` が `playing` で、`getTutorialSituation` の `step` があるときに `true` にする。
  * - `renderBoard` で本番の盤面部品を描き、次に押す所と決め手に `TutorialSpotlight`、印と合図に `TutorialCue` を置く。導入の場面（`TutorialBoardIntro`）は盤面が受け持つ。
  * - `finish` は、ゲームのホームから開いたとき（`GameHomeTutorialControl` の `playStart` があるとき）は `home`、プレイ中のメニューから開いたときは `play` にする。
- * - ゲームのホームへは `GameHomeScreen` の `renderTutorial`、プレイ中のメニューへは `GamePlayFrame` の `renderTutorial` で渡す。
  */
 export function TutorialOverlay({
   open,

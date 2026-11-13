@@ -47,7 +47,7 @@ function getHoleKey({ x, y, width, height, radii }: Hole): string {
   return [x, y, width, height, ...radii].join(",");
 }
 
-/** 角ごとの角丸を持つ四角の輪郭。底だけが丸いボトルのように、角ごとに違う角丸の物も、その形のまま抜く。 */
+/** 底だけが丸いボトルのように、角ごとに違う角丸の物も、その形のまま抜く。 */
 function getHolePath({ x, y, width, height, radii }: Hole): string {
   const [topLeft, topRight, bottomRight, bottomLeft] = radii;
   const right = x + width;
@@ -66,10 +66,6 @@ function getHolePath({ x, y, width, height, radii }: Hole): string {
   ].join(" ");
 }
 
-/**
- * 印の付いた要素の今の位置・大きさ・角丸を、覆いの座標で読む。動いている物（スライド・揺れ）にも追いつくよう、毎フレーム読む。
- * スライドで空白へ入るタイルのように、抜く所が同じ形で重なったときは1つにまとめる。
- */
 function measureHoles(svg: SVGSVGElement, container: HTMLElement): Hole[] {
   const origin = svg.getBoundingClientRect();
   const holes = Array.from(
@@ -98,6 +94,7 @@ function measureHoles(svg: SVGSVGElement, container: HTMLElement): Hole[] {
       } satisfies Hole,
     ];
   });
+  // スライドで空白へ入るタイルのように、抜く所が同じ形で重なったときは1つにまとめる。
   return [...new Map(holes.map((hole) => [getHoleKey(hole), hole])).values()];
 }
 
@@ -145,6 +142,7 @@ export function TutorialFocusScrim({
     }
   });
 
+  // 動いている物（スライド・揺れ）にも追いつくよう、毎フレーム読む。
   useLayoutEffect(() => {
     if (!active || typeof window.requestAnimationFrame !== "function") {
       return;
@@ -162,7 +160,6 @@ export function TutorialFocusScrim({
       aria-hidden="true"
       data-tutorial-focus-scrim={active || undefined}
       className={cn(
-        // 画面の下端の安全領域（ホームバーの所）まで覆う。
         "pointer-events-none absolute top-0 left-0 z-30 h-[calc(100%+env(safe-area-inset-bottom))] w-full transition-opacity duration-(--duration-normal) ease-standard motion-reduce:transition-none",
         active ? "opacity-100" : "opacity-0",
       )}

@@ -7,7 +7,6 @@ import { Link } from "@/router";
 type GameResultActionsProps = {
   onStartNewProblem: () => void;
   onOpenGameHome: () => void;
-  /** 省略すると「もう一度」を押せない状態で出す。 */
   onReplay?: () => void;
 };
 
