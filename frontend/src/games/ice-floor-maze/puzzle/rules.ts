@@ -9,19 +9,15 @@ import type {
 
 export const iceFloorMazeDirections = ["up", "right", "down", "left"] as const;
 
-/** 駒を滑らせる向き。 */
 export type IceFloorMazeDirection = (typeof iceFloorMazeDirections)[number];
 
-/** 雪を押し出した、または滑る氷の塊を動かしたときの、元のマス `from` と動いた先のマス `to`。 */
 export type IceFloorMazeShift = { from: number; to: number };
 
 /**
- * 1回の滑りの結果。
  * - `slid`: 1マス以上進んで止まった。`path` は動き出してから入ったマスの並びで、最後が止まったマス `to`。
  *   `crumbledRock` はこの滑りの後で崩れるもろい岩のマス、`crackedIce` は割れて水面になる薄い氷のマス（出発マスと通過したマス）。
  *   `pushedSnow` は押し出した雪（雪のマスから雪山になるマスへ）、`movedBlock` は押して動かした滑る氷の塊。
- *   滑りの後の状態は `applyIceFloorMazeSlide` で求める。
- * - `blocked`: すぐ隣が止め役か外壁（押し出せない雪・隣に接した塊を含む）で、1マスも動けない。移動として成立せず、どの要素も変わらない。
+ * - `blocked`: すぐ隣が止め役か外壁（押し出せない雪・隣に接した塊を含む）で、1マスも動けない。
  */
 export type IceFloorMazeSlide =
   | {
@@ -56,17 +52,13 @@ const stopperCells: ReadonlySet<IceFloorMazeStateCell> = new Set([
   "snow-mound",
 ]);
 
-/**
- * 駒がその手前で止まるマスか。岩・もろい岩・水面・雪山・盤面の外。床と雪は入って止まるマスで、止め役ではない。
- * 滑る氷の塊はマスではなく状態の `blocks` で持つので、`isIceFloorMazeBlockedCell` で確かめる。
- */
+/** 滑る氷の塊はマスではなく状態の `blocks` で持つので、`isIceFloorMazeBlockedCell` で確かめる。 */
 export function isIceFloorMazeStopperCell(
   cell: IceFloorMazeStateCell,
 ): boolean {
   return stopperCells.has(cell);
 }
 
-/** 隣のマスの番号。外周の外壁なら `null`。 */
 export function getIceFloorMazeNeighbor(
   board: IceFloorMazeBoard,
   cellIndex: number,
@@ -82,7 +74,6 @@ export function getIceFloorMazeNeighbor(
   return nextY * board.width + nextX;
 }
 
-/** 状態 `state` で、駒・雪・滑る氷の塊がそのマスへ入れないか。止め役のマスか、塊のあるマス。 */
 export function isIceFloorMazeBlockedCell(
   state: Pick<IceFloorMazeState, "cells" | "blocks">,
   cellIndex: number,
@@ -93,7 +84,6 @@ export function isIceFloorMazeBlockedCell(
   );
 }
 
-/** 押し出した雪・押した塊が入って進めるマスか。氷か薄い氷で、塊が無い。床・雪・止め役・塊のあるマスでは手前で止まる。 */
 function isOpenForShift(state: IceFloorMazeState, cellIndex: number): boolean {
   const cell = state.cells[cellIndex];
   return (
@@ -101,7 +91,6 @@ function isOpenForShift(state: IceFloorMazeState, cellIndex: number): boolean {
   );
 }
 
-/** 押した塊が `direction` へ滑って止まるマス。1マスも動けなければ `block`。 */
 function findBlockStop(
   board: IceFloorMazeBoard,
   state: IceFloorMazeState,
@@ -119,13 +108,6 @@ function findBlockStop(
   return current;
 }
 
-/**
- * 駒を `direction` へ、止め役か外壁にぶつかるか、床に入るまで滑らせる。途中で止まる位置は選べない。
- * 止めたのがもろい岩ならそれが崩れ、出発マスと通過したマスのうち薄い氷だったものが割れる。止まったマスは割れない。
- * 床に入って止まったときは、その先のマスにはぶつかっていないので、先がもろい岩でも崩れない。
- * 雪に滑り込むと、雪の先が氷か薄い氷なら雪をそこへ押し出して雪のマスで止まり、そうでなければ雪の手前で止まる。
- * 1マス以上滑って滑る氷の塊にぶつかると、塊が次の止め役の手前まで滑り、駒は塊と一緒に進んでその手前で止まる。
- */
 export function slideIceFloorMazePiece(
   board: IceFloorMazeBoard,
   state: IceFloorMazeState,
@@ -193,7 +175,6 @@ export function slideIceFloorMazePiece(
   };
 }
 
-/** 滑りで盤面のマスか塊の位置が変わるか（もろい岩が崩れる・薄い氷が割れる・雪を押し出す・塊が動く）。 */
 export function doesIceFloorMazeSlideChangeElements(
   slide: Extract<IceFloorMazeSlide, { status: "slid" }>,
 ): boolean {
@@ -205,10 +186,7 @@ export function doesIceFloorMazeSlideChangeElements(
   );
 }
 
-/**
- * 成立した滑りの後の状態。もろい岩が崩れて氷に、薄い氷が割れて水面に、押し出した雪のマスが氷に、押し出した先が雪山になり、
- * 押した塊が動く。どの要素も変わらなければ盤面のマスの配列と塊の並びを共有する。
- */
+/** どの要素も変わらなければ盤面のマスの配列と塊の並びを共有する。 */
 export function applyIceFloorMazeSlide(
   state: IceFloorMazeState,
   slide: Extract<IceFloorMazeSlide, { status: "slid" }>,
@@ -237,12 +215,10 @@ export function applyIceFloorMazeSlide(
   return { position: slide.to, cells, blocks };
 }
 
-/** ゴールで止まったときだけクリアになる。滑りの途中でゴールを通っただけではクリアにならない。 */
 export function isIceFloorMazeCleared(position: number, goal: number): boolean {
   return position === goal;
 }
 
-/** 止まらずにゴールを通り過ぎた滑りか。 */
 export function doesIceFloorMazeSlidePassGoal(
   slide: IceFloorMazeSlide,
   goal: number,

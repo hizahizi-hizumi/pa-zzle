@@ -5,7 +5,7 @@ import type {
 
 /**
  * 解いている途中の盤面のマス。初期盤面のマスのうち滑る氷の塊を除いたものに、薄い氷が割れた後の水面（`water`）と、
- * 雪を押し出してできた雪山（`snow-mound`）を足したもの。水面・雪山は止め役。滑る氷の塊はマスではなく、状態の `blocks` で持つ。
+ * 雪を押し出してできた雪山（`snow-mound`）を足したもの。滑る氷の塊はマスではなく、状態の `blocks` で持つ。
  */
 export type IceFloorMazeStateCell =
   | Exclude<IceFloorMazeCell, "sliding-block">
@@ -26,7 +26,6 @@ export type IceFloorMazeState = {
 
 const noBlocks: readonly number[] = [];
 
-/** 駒が `start` にいて、どの要素もまだ変わっていない状態。 */
 export function createIceFloorMazeInitialState(
   board: IceFloorMazeBoard,
   start: number,

@@ -56,7 +56,6 @@ function findFirstShortestSolution(
   return solution;
 }
 
-/** 開始状態からゴールで止まるまでの最短の手順の数。 */
 function countShortestSolutions(
   graph: IceFloorMazeStateGraph,
   goal: number,

@@ -1,16 +1,3 @@
-/**
- * 初期盤面のマスの種類。
- * - `ice`: 氷。駒は止まらずに滑り抜ける。
- * - `rock`: 岩。外壁と同じく、駒はその手前で止まる。
- * - `brittle-rock`: もろい岩。岩と同じ止め役で、駒が滑ってきてその手前で止まると、その滑りの後で崩れて氷になる。
- * - `thin-ice`: 薄い氷。氷と同じく滑れ、駒が離れると割れて水面（止め役）になる。
- * - `outside`: 盤面の外。外壁と同じ止め役で、盤面として描かない。
- * - `floor`: ふつうの床。駒は入れて、滑ってきて入るとそこで止まる。床の上から動くときは氷と同じに滑る。変化しない。
- * - `snow`: 雪。駒が滑り込むと、進む向きへ1マス押し出されて雪山（止め役）になり、駒は雪のあったマス（氷になる）で止まる。
- *   押し出す先がふさがっていれば雪は動かず、駒は雪の手前で止まる。
- * - `sliding-block`: 滑る氷の塊。止め役で、駒が1マス以上滑ってきてぶつかると、塊を押しながら一緒に滑り、塊が次の止め役の手前で
- *   止まると駒はその手前で止まる。塊の下は氷。
- */
 export type IceFloorMazeCell =
   | "ice"
   | "rock"
@@ -33,13 +20,12 @@ export const iceFloorMazeCells = [
   "sliding-block",
 ] as const satisfies readonly IceFloorMazeCell[];
 
-/** 解いている途中で崩れる・割れる・押し出される・動くなどして変わる要素（もろい岩・薄い氷・雪・滑る氷の塊）。 */
 export type IceFloorMazeChangeableCell = Extract<
   IceFloorMazeCell,
   "brittle-rock" | "thin-ice" | "snow" | "sliding-block"
 >;
 
-/** 幅 `width` 列 × 高さ `height` 行の盤面。`cells` は行優先で並べ、マスの番号は `y * width + x`。 */
+/** `cells` は行優先で並べ、マスの番号は `y * width + x`。 */
 export type IceFloorMazeBoard = {
   width: number;
   height: number;
@@ -87,11 +73,7 @@ export function assertIceFloorMazeBoard(board: IceFloorMazeBoard): void {
   }
 }
 
-/**
- * 1行を1文字列とした記法から盤面を作る。`.` が氷、`#` が岩、`b` がもろい岩、`c` が薄い氷、`x` が盤面の外、`o` が床、
- * `s` が雪、`m` が滑る氷の塊。
- * 固定問題やテストで盤面を読みやすく書くための記法。
- */
+/** 固定問題やテストで盤面を読みやすく書くための記法。 */
 export function parseIceFloorMazeBoard(
   rows: readonly string[],
 ): IceFloorMazeBoard {
@@ -126,7 +108,6 @@ export function isIceFloorMazeCellIndex(
   );
 }
 
-/** 開始位置・ゴールに置ける氷のマスか。薄い氷・床・雪・滑る氷の塊・盤面の外・番号の範囲の外は氷のマスではない。 */
 export function isIceFloorMazeIceCell(
   board: IceFloorMazeBoard,
   cellIndex: number,
@@ -160,7 +141,6 @@ export function isIceFloorMazeStaticBoard(board: IceFloorMazeBoard): boolean {
   return !board.cells.some(isIceFloorMazeChangeableCell);
 }
 
-/** 盤面として描くマスの数。盤面の外を除く。 */
 export function countIceFloorMazeDrawnCells(board: IceFloorMazeBoard): number {
   return board.cells.filter((cell) => cell !== "outside").length;
 }

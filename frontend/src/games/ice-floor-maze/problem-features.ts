@@ -20,7 +20,6 @@ export type IceFloorMazeProblemFeatures = {
   slidingBlockCount: number;
 };
 
-/** 難易度の問題集の1問の特徴を、問題集の盤面の符号から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findIceFloorMazePoolProblemFeatures(
   difficulty: IceFloorMazeDifficulty,
   problemId: string,
@@ -43,7 +42,7 @@ export function findIceFloorMazePoolProblemFeatures(
   };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。最短手数は解かないと分からないので軸にしない。 */
+/** 最短手数は解かないと分からないので軸にしない。 */
 export const iceFloorMazeProblemFeatureAxes = [
   {
     id: "board-size",

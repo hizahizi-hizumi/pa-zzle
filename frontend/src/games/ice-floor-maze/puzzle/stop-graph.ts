@@ -64,7 +64,6 @@ export function exploreIceFloorMazeStops(
   return { origin, stops, moveCounts, slides };
 }
 
-/** 停止点から1回の滑りで移れる停止点への移動。成立しない方向は含まない。 */
 export function listIceFloorMazeStopMoves(
   graph: IceFloorMazeStopGraph,
   stop: number,

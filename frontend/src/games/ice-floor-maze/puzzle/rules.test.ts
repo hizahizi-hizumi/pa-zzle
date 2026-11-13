@@ -17,7 +17,6 @@ import {
   type IceFloorMazeState,
 } from "@/games/ice-floor-maze/puzzle/state";
 
-/** どの要素もまだ変わっていない盤面で、駒を `from` に置いた状態から滑らせる。 */
 function slideFrom(
   initialBoard: IceFloorMazeBoard,
   from: number,
@@ -30,7 +29,6 @@ function slideFrom(
   );
 }
 
-/** 滑りを重ねる。成立しない向きがあれば失敗させる。 */
 function slideInOrder(
   elementBoard: IceFloorMazeBoard,
   start: number,
