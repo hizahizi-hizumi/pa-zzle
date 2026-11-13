@@ -52,8 +52,6 @@ export const TARGET_RING_RADIUS = ISLAND_RADIUS + 0.16;
 export const TARGET_RING_WIDTH = 0.09;
 export const FOCUS_RING_RADIUS = ISLAND_RADIUS + 0.17;
 export const FOCUS_RING_WIDTH = 0.05;
-export const FOCUS_VEIL_OPACITY = 0.38;
-export const UNFOCUSED_OPACITY = 0.4;
 /** 阻まれた辺に架かるはずだった板の濃さ。板そのものを透かし、下の海が見える濃さにする。 */
 export const BLOCKED_ATTEMPT_OPACITY = 0.5;
 

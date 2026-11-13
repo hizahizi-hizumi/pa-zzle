@@ -35,7 +35,7 @@ type BridgesBoardCuesProps = {
 
 /**
  * 辺の印は両端の島の間に架かる板の形（角の小さく丸い帯）に沿わせ、盤面が押せば架かる辺に置く板の影と同じ太さにする。
- * 覆いからは盤面の海を丸ごと抜き、海を灰色に濁らせない。元の明るさで見せる島と辺は、盤面の絵が海の中で絞る（`focus`）。
+ * 抜く所は、島の丸と、辺の帯（両端の島の間に架かる板の幅）にする。
  */
 export function BridgesBoardCues({
   view,
@@ -61,28 +61,40 @@ export function BridgesBoardCues({
           )}
         >
           {cue.kind === "mark" ? (
-            <TutorialCue kind="mark" recallId={cue.recallId} />
+            cue.pointed ? (
+              // 板の帯は細く、下の縁の外には島や別の帯が詰まるので、指は帯の中に置く。
+              <TutorialCue
+                kind="pointer"
+                recallId={cue.recallId}
+                placement="center"
+              />
+            ) : (
+              <TutorialCue kind="mark" recallId={cue.recallId} />
+            )
           ) : (
             <TutorialCue kind="acknowledgement" id={cue.id} />
           )}
         </span>
       ))}
-      {spotlight && <TutorialSpotlight active className="inset-0" />}
       {spotlight?.islands.map((island) => (
         <span
           key={`spotlit-island-${island}`}
           data-spotlit-island={island}
           className="absolute rounded-full"
           style={toPlacementStyle(view, getIslandViewRect(view, island))}
-        />
+        >
+          <TutorialSpotlight active className="inset-0 rounded-full" />
+        </span>
       ))}
       {spotlight?.edges.map((edge) => (
         <span
           key={`spotlit-edge-${edge}`}
           data-spotlit-edge={edge}
-          className="absolute rounded-full"
+          className="absolute rounded-sm"
           style={toPlacementStyle(view, getEdgeViewBand(view, edge))}
-        />
+        >
+          <TutorialSpotlight active className="inset-0 rounded-sm" />
+        </span>
       ))}
     </div>
   );
