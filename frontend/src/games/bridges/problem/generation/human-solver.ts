@@ -42,10 +42,8 @@ export type BridgesReasoningTier = (typeof bridgesReasoningTiers)[number];
 /** 「決め打ち」に数える島の数字の下限。1 と 2 の島は行き先が1つなら決まるのが当たり前で、見せ場にならない。 */
 const OPENING_SATURATION_MINIMUM_CLUE = 3;
 
-/** 一か所の気づきとみなす手詰まりで決まる組の数の上限。これより多くまとめて決まる手詰まりは、盤面を同じ規則で掃く作業とみなす。 */
 export const BRIDGES_SHARP_ROUND_EDGE_LIMIT = 2;
 
-/** つながりを読む段。 */
 export const bridgesConnectivityTiers = [
   "C1p",
   "C1g",
@@ -81,22 +79,11 @@ export type BridgesReasoningRound = {
   separated: boolean;
 };
 
-/**
- * 1手の先読みで、孤立を見て退ける島のまとまりの大きさの上限。仮に決めた手で、架けられる橋だけでは残りとつながらなくなる
- * まとまりが、この数以下の島なら、その島々の行き先を見渡すだけで孤立が分かる。それより大きいまとまりの孤立は、
- * 盤面の一部を見ても分からず、試し置きと同じ探索になるので、1手の先読みでは使わない。
- */
 export const BRIDGES_LOOKAHEAD_ISOLATION_LIMIT = 4;
 
-/**
- * 閉じるのを見る組（3島以上の組で閉じない読みと、1手の先読み）の大きさの上限と、そのとき組の外に残る島の数の上限。
- * 組がこの数以下の島か、外に残る島がこの数以下なら、閉じた側か残った側のどちらかを見渡せば閉じたと分かる。どちらも超える
- * 組が閉じるのを確かめるには、十数島をたどる探索になり、試し置きと変わらないので、推理では使わない。
- */
 export const BRIDGES_LOOKAHEAD_CLOSED_GROUP_LIMIT = 7;
 export const BRIDGES_LOOKAHEAD_REMAINING_LIMIT = 5;
 
-/** `groupSize` 島の組が、全 `islandCount` 島の盤面で見渡せる大きさか。 */
 function isVisibleGroup(groupSize: number, islandCount: number): boolean {
   return (
     groupSize <= BRIDGES_LOOKAHEAD_CLOSED_GROUP_LIMIT ||
@@ -284,7 +271,7 @@ function deduceOnlyPassages(
   return deductions;
 }
 
-/** 架かると決まった辺 `edge` と交わる辺を0本にする。交わる辺に架かると決まっていれば `false`。 */
+/** 交わる辺に架かると決まっていれば `false`。 */
 function blockCrossings(
   { network }: BridgesSolverContext,
   { lower, upper }: BridgeBounds,
@@ -481,7 +468,6 @@ function deduceByLookahead(
   return deductions;
 }
 
-/** 1手の先読みで狭めた範囲を、退けた手の理由と向きで分ける。 */
 function classifyLookahead(
   context: BridgesSolverContext,
   bounds: BridgeBounds,
@@ -541,10 +527,6 @@ const noLookahead = {
   lowersUpperByReading: false,
 } as const;
 
-/**
- * 狭めた辺を、離れた所ごとに分ける。2辺は、一方の両端の島か、その島から行き先の線でつながる隣の島が、もう一方の両端の島に
- * 重なれば同じ所とする。
- */
 function splitIntoSpots(
   { network, endpoints }: BridgesSolverContext,
   deductions: readonly [number, readonly [number, number]][],
@@ -585,7 +567,6 @@ function splitIntoSpots(
   return [...spots.values()];
 }
 
-/** 本数が決まった行き先の割合。 */
 function countDecidedRatio({ lower, upper }: BridgeBounds): number {
   return (
     lower.filter((atLeast, edge) => atLeast === upper[edge]).length /
@@ -593,13 +574,11 @@ function countDecidedRatio({ lower, upper }: BridgeBounds): number {
   );
 }
 
-/** 解き進めた記録。`traceBridgesHumanSolve` の `rounds` と `crossingBlockCount` になる。 */
 type SolveLog = {
   rounds: BridgesReasoningRound[];
   crossingBlockCount: number;
 };
 
-/** 交差を当て、両端の島がまだ足りないのに交差で0本になった辺の数を返す。 */
 function applyCrossingsCountingBlocks(
   context: BridgesSolverContext,
   bounds: BridgeBounds,
@@ -640,7 +619,6 @@ function tierRank(tier: BridgesReasoningTier): number {
   return bridgesReasoningTiers.indexOf(tier);
 }
 
-/** 範囲を実際に狭めた推論だけを残す。 */
 function listEffectiveDeductions(
   deductions: Deductions,
   { lower, upper }: BridgeBounds,
@@ -700,7 +678,6 @@ function deduceByTrial(
   return new Map();
 }
 
-/** 同じ辺の範囲をいくつかの推論が狭めたら、それらの重なりにする。 */
 function mergeDeductions(
   deductions: readonly [number, readonly [number, number]][],
 ): [number, readonly [number, number]][] {
@@ -877,17 +854,8 @@ function runTiers(
   }
 }
 
-/**
- * 1手の先読みが続けて要ったとみなす、前の1手の先読みからほかの読みで狭めた組の数の上限。
- * 先読みの結果から数組だけ進めて、また先読みが要るなら、人は1つの局面で先読みを重ねて読む。
- */
 export const BRIDGES_LOOKAHEAD_CHAIN_GAP = 3;
 
-/**
- * 数字の読み（A1・A2）を1つの読みとみなし、続けて当てた数字の読みのうち、「少なくとも・多くとも」（A2）が要ったまとまりの数。
- * 解法器は A1 で止まるたびに A2 を当てるが、人は数字の読みを行き来しながら続けて読むので、つながりの読みで区切られる
- * まとまりごとに1回と数える。
- */
 export function countBridgesCountReadingPhases(
   rounds: readonly Pick<BridgesReasoningRound, "tier">[],
 ): number {
@@ -909,7 +877,7 @@ export function countBridgesCountReadingPhases(
 /**
  * 1手の先読み（D）の手詰まりを、人が読む先読みの単位にまとめたもの。
  * - `lookaheads`: 先読みごとの、見た破れの種類と上限を下げたか。前の先読みから続けて要った手詰まりが、前の先読みと同じ行き先を
- *   狭めるなら、同じ手を読み進めた1つの先読みとしてまとめる（手詰まりの区切りは解法器の当て方で、人の読みは1つ）。
+ *   狭めるなら、同じ手を読み進めた1つの先読みとしてまとめる。
  * - `mergedRoundCount`: 前の先読みにまとめた D の手詰まりの数。
  * - `spotCount`: 先読みの場所の数。前の先読みから `BRIDGES_LOOKAHEAD_CHAIN_GAP` を超える組を狭めた後の先読みと、同じ手詰まりで
  *   離れた所の先読み（`separated`）は、別の場所とする。

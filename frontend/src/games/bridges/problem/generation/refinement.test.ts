@@ -31,7 +31,6 @@ function spreadUntil(
   return null;
 }
 
-/** つながりの読みの手詰まりの回数。 */
 function countConnectivityRounds(
   board: Parameters<typeof traceBridgesHumanSolve>[0],
 ): number {

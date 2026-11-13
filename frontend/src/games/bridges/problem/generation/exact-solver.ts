@@ -87,7 +87,6 @@ function propagateExactly(
   }
 }
 
-/** 範囲の幅が最も狭く、両端の島の辺が最も少ない未決の辺。全辺が決まっていれば `null`。 */
 function selectBranchEdge(
   { network, endpoints }: BridgesSolverContext,
   { lower, upper }: BridgeBounds,

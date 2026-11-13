@@ -1,6 +1,5 @@
 import type { BridgesBoard } from "@/games/bridges/puzzle/board";
 
-/** 島の位置と数字を `row,column,clue` で並べた文字列。 */
 function describeIslands(
   islands: readonly { row: number; column: number; clue: number }[],
 ): string {
@@ -12,7 +11,6 @@ function describeIslands(
 
 /**
  * 回転・反転（8通り）で同じ形になる盤面に同じ値を返す、正規化キー。問題集から同型の重複を除くのに使う。
- * 8通りの盤面の記述のうち、辞書順で最小のものに盤面の大きさを添える。
  */
 export function getBridgesSymmetryKey(board: BridgesBoard): string {
   const { width, height, islands } = board;

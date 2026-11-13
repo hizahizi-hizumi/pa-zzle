@@ -10,7 +10,6 @@ import {
 } from "@/games/bridges/puzzle/board";
 import { difficultyLevels } from "@/games/difficulty";
 
-/** 盤面を回転・反転した8通り。 */
 function listOrientations(board: BridgesBoard): BridgesBoard[] {
   return [false, true].flatMap((transposed) =>
     [false, true].flatMap((flipsRows) =>

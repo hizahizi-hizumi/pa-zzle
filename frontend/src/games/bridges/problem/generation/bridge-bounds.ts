@@ -21,11 +21,9 @@ export class BridgesContradiction extends Error {
   }
 }
 
-/** 解法器が使う盤面の事実。 */
 export type BridgesSolverContext = {
   board: BridgesBoard;
   network: BridgesNetwork;
-  /** 辺ごとの両端の島。 */
   endpoints: readonly (readonly [number, number])[];
   clues: readonly number[];
 };
@@ -42,7 +40,6 @@ export function createBridgesSolverContext(
   };
 }
 
-/** 何も決まっていない範囲。上限は2本と両端の島の数字の小さい方。 */
 export function createInitialBridgeBounds({
   endpoints,
   clues,
@@ -63,7 +60,6 @@ export function isEveryEdgeDecided({ lower, upper }: BridgeBounds): boolean {
   return lower.every((value, edge) => value === upper[edge]);
 }
 
-/** 架かることが決まった橋と交わる辺を0本にする。交わる2辺の両方に架かると決まっていれば矛盾。 */
 export function applyBridgeCrossings(
   { network }: BridgesSolverContext,
   { lower, upper }: BridgeBounds,
@@ -81,7 +77,6 @@ export function applyBridgeCrossings(
   }
 }
 
-/** どの島でも、決まった本数が数字を超えず、架けうる本数が数字に届くこと。範囲が空の辺が無いこと。 */
 export function checkBridgeCounts(
   { network, clues }: BridgesSolverContext,
   { lower, upper }: BridgeBounds,

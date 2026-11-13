@@ -58,7 +58,6 @@ describe("countBridgesSolutions", () => {
     });
   });
 
-  /** 全ての本数の組を並べ、規則を満たす配置を数える。 */
   function countByBruteForce(board: BridgesBoard): number {
     const edgeCount = getBridgesNetwork(board).edges.length;
     let count = 0;

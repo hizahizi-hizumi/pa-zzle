@@ -53,16 +53,6 @@ type Metrics = Record<
   number
 >;
 
-/**
- * 磨く向きごとの目標。
- * - `entry`（L1）: 配分の読みのまとまりちょうど1つ、つながりの読みと先読みは無し、交差で塞がる行き先は2つまで、輪を1つ。
- * - `count`（L2）: 配分の読みのまとまり1つ、2島を閉じない読みちょうど1回、ほかのつながりの読みは無し、輪を1つ。
- * - `closure`（L3）: 配分1つ、つながりの読み3回、閉じない読み1回、交差1つ、5以上の数字1つ、輪1つ、先読みは無し。
- * - `lookahead`（L4）: 配分2つ、つながり3回、読み5回、1手の先読みちょうど1つ、5以上の数字2つ、輪2つ、交差1つ。
- * - `spots`（L5）: 配分2つ、つながり4回、読み6回、1手の先読みを2か所以上で、閉じない読み2回、組を見る先読み、先読みで退けた
- *   理由2種類、最初の先読みが行き先の半分が決まった後、5以上の数字3つ、6以上の数字1つ、輪2つ、交差2つ。
- * つながりの読みを求める向きでは、唯一の通り道を1つと、最後のつながりの読みが解き進みの6割より後にあることも目標にする。
- */
 const targetsByGoal: Record<
   BridgesRefinementGoal,
   Partial<Record<keyof Metrics, Target>>
@@ -121,13 +111,11 @@ const targetsByGoal: Record<
   },
 };
 
-/** 目標1つに届いたときの点。届くまでは届いた割合に比べて足す。 */
 const TARGET_SCORE = 10;
 
-/** 下限の目標を超えた分の、1つの点。超えた分も少しだけ点にして、読みの多い盤面を選ぶ。 */
+/** 超えた分も少しだけ点にして、読みの多い盤面を選ぶ。 */
 const SURPLUS_SCORE = 1;
 
-/** 上限の目標を超えた分の、1つの点（引く）。 */
 const EXCESS_PENALTY = 10;
 
 /** 上限も超えた分も点にしない、割合の目標（`lateClimax`）。 */
@@ -136,10 +124,6 @@ const ratioMetrics: ReadonlySet<keyof Metrics> = new Set([
   "firstLookaheadLateness",
 ]);
 
-/**
- * 磨くときに保つ数字と形の質。数字の平均・2本の割合は下限、数字2・最も多い数字・外周に沿う橋・間が1マスの橋・架ける行き先の
- * 割合は上限。外れた分を `QUALITY_SHORTFALL_WEIGHT` 倍して引く。長い橋の無い盤面も引く。
- */
 const MINIMUM_CLUE_MEAN = 2.8;
 /** 5以上の数字を目標にする向き（L3〜L5）の数字の平均の下限。L3〜L5 の分類と同じ。 */
 const MINIMUM_UPPER_CLUE_MEAN = 3.0;
@@ -162,12 +146,11 @@ const SHORT_BRIDGE_WEIGHT = 200;
 const SEVEN_SCORE = 2;
 const EIGHT_SCORE = 4;
 
-/** 磨く途中で最も高い点がこの回数のあいだ上がらなければ、磨くのを打ち切る。 */
 const REFINEMENT_PATIENCE = 700;
 
 /**
  * 焼きなましの温度の始めと終わり（点の差の尺度）。始めは数点下がる変形も時々採って山登りの行き止まりを抜け、
- * 終わりはほぼ下がる変形を採らない。磨き終えたら、途中で最も点の高かった盤面を返す。
+ * 終わりはほぼ下がる変形を採らない。
  */
 const INITIAL_TEMPERATURE = 4;
 const FINAL_TEMPERATURE = 0.2;
@@ -222,7 +205,6 @@ function isConnected(
   return board.islands.every((_, island) => find(island) === root);
 }
 
-/** 解き進めた経過と解から、磨くときに数える読みと盤面の量を求める。 */
 function measure(
   rounds: readonly BridgesReasoningRound[],
   crossings: number,
@@ -267,7 +249,6 @@ function measure(
   };
 }
 
-/** 磨く向きの目標に照らした点。 */
 function scoreTargets(metrics: Metrics, goal: BridgesRefinementGoal): number {
   let value = 0;
   for (const [key, { minimum, maximum }] of Object.entries(
@@ -378,7 +359,6 @@ function scoreLayout(
   };
 }
 
-/** 辺1つの本数を1段だけ変えた解。交わる橋が架かっている辺には新しく架けない。 */
 function mutate(
   board: BridgesBoard,
   solution: readonly number[],

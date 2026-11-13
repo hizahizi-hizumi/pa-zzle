@@ -106,7 +106,6 @@ export type BridgesProblemIdentity = {
 /** 記録に残した問題の識別情報。生成器の版が今と違う記録も読み込む。 */
 export type BridgesRecordedProblemIdentity = RecordedProblemIdentity;
 
-/** 問題と、それを再現するための情報。 */
 export type BridgesIdentifiedProblem = {
   problem: BridgesProblem;
   identity: BridgesProblemIdentity;
@@ -157,7 +156,6 @@ function isOneOf<T>(values: readonly T[], value: unknown): value is T {
   return values.some((candidate) => candidate === value);
 }
 
-/** 外部から読み戻した値が、今の生成器で扱える生成条件かを確かめる。 */
 export function isBridgesGenerationConditions(
   value: unknown,
 ): value is BridgesGenerationConditions {
@@ -186,7 +184,6 @@ export function isBridgesProblemIdentity(
   );
 }
 
-/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
 export function isBridgesRecordedProblemIdentity(
   value: unknown,
 ): value is BridgesRecordedProblemIdentity {
@@ -197,7 +194,6 @@ export function isBridgesRecordedProblemIdentity(
 }
 
 /**
- * 問題の形を確かめる。盤面の形が正しく、生成器が扱う一辺の正方形であること。
  * プレイ画面は正方形の枠に盤面を描き、押した位置を同じ枠から求めるので、正方形でない盤面は受け付けない。
  * 一意解であることは探索を要するので、ここでは確かめない（問題集の生成と検証で確かめる）。
  */

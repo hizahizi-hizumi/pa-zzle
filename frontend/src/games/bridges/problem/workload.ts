@@ -30,7 +30,6 @@ export type BridgesSolveWorkload = {
   crossingBlockCount?: number;
 };
 
-/** 問題集の1問の作業の量。盤面から数えられる量と、問題集が持つ生成時の分析結果から求める。 */
 export function measureBridgesSolveWorkload({
   problem,
   analysis,
