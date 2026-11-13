@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import {
   type TutorialFinish,
   TutorialOverlay,
@@ -41,6 +40,7 @@ import type { NanpureCellCue } from "@/games/nanpure/ui/board/cell-cue";
 import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureClearAnimation";
 import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 import { NanpureGround } from "@/games/nanpure/ui/NanpureGround";
+import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
 import { NanpureTutorialRewind } from "@/games/nanpure/ui/NanpureTutorial/NanpureTutorialRewind";
 import { NanpureDigitPad } from "@/games/nanpure/ui/play/NanpureDigitPad";
 import { useNanpureSoundEffects } from "@/games/nanpure/ui/use-nanpure-sound-effects";
@@ -96,11 +96,7 @@ const gameProgressByPhase = {
   completed: "result",
 } as const satisfies Record<TutorialPhase, GameProgress>;
 
-/**
- * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
- * 手を引いている間は、手順を終えた手に決め手があれば、それを見せてから付ける。
- * 手を離した後は付けない。手がかりは、求められたときだけ見せる。
- */
+/** 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。 */
 function getCueDelayMs(
   progress: NanpureTutorialProgress,
   guiding: boolean,
@@ -137,7 +133,6 @@ function getHintCue(
 
 const noFocus: NanpureTutorialFocus = { cellIndices: [], units: [] };
 
-/** 手を離した後、手が止まったときに示す手がかりで、目を向けさせる所。答えと違う数字は印だけで示し、覆わない。 */
 function getHintFocus(hint: NanpureTutorialHint | null): NanpureTutorialFocus {
   switch (hint?.kind) {
     case undefined:
@@ -153,7 +148,6 @@ function getHintFocus(hint: NanpureTutorialHint | null): NanpureTutorialFocus {
   }
 }
 
-/** 手がかりで印を付けるマス。置き場所はマスを自分で決めさせるので、印を付けない。 */
 function getHintCellIndex(hint: NanpureTutorialHint | null): number | null {
   return hint?.kind === "wrong-digit" || hint?.kind === "last-empty"
     ? hint.cellIndex
@@ -167,9 +161,8 @@ function getHintMessage(
 }
 
 /**
- * 盤面の覆いから抜いて元の明るさで見せる所。目を向けさせる所に、重なりを示しているマスを加える。重なったマスは、何と重なったかを読めるよう抜く。
+ * 重なりを示しているマスは、何と重なったかを読めるよう抜く。
  * 抜く行・列・ブロックに含まれるマスは、まとまりの形で抜けるので、マスとしては重ねて抜かない。
- * 行・列・ブロックも重なりも無ければ（操作を教える手順など）覆わない。
  */
 function getBoardSpotlight(
   focus: NanpureTutorialFocus,
@@ -189,11 +182,6 @@ function getBoardSpotlight(
   };
 }
 
-/**
- * 本物の 9×9 の盤面の空きマスを、一言と印に沿って1マスずつ一緒に埋め、行・列・ブロックのルールを1つずつ使って身につけさせ、
- * 最後にブロックの中で数字の置き場所を探させる。
- * 手順を終えたら手を離し、残りを自分で埋めさせる。盤面・数字のボタン・ミスと重なりの色・解けたときの演出は本番と同じ部品を使う。
- */
 export function NanpureTutorial({
   open,
   playStart,
@@ -248,10 +236,7 @@ export function NanpureTutorial({
       )
     : null;
 
-  /**
-   * 盤面で目を向けさせる所。手を引いている間は、手順の印が出ている間は手順の決め手、入れてから次の印を出すまでの間は入れたマスとその決め手。
-   * 前の手の決め手を、次の手順の決め手と読み違えさせないため、印と一緒に替える。手を離した後は、手がかりの決め手。
-   */
+  // 入れてから次の印を出すまでの間は、入れたマスとその決め手を見せる。前の手の決め手を、次の印の決め手と読み違えさせないため、印と一緒に替える。
   function getShownFocus(): NanpureTutorialFocus {
     if (!guiding) {
       return getHintFocus(idleHint);
@@ -264,7 +249,7 @@ export function NanpureTutorial({
           units: lastMove?.reasonUnits ?? [],
         };
   }
-  // 手順を終えた手の決め手を残して見せる間は、一言とルールの並びも終えた手順のままにし、次の印と一緒に替える。
+  // 手順を終えた手の決め手を残して見せる間は、一言も終えた手順のままにし、次の印と一緒に替える。
   const heldStep =
     playing && guiding && !cueShown
       ? (nanpureTutorial.steps[progress.stepIndex - 1] ?? null)
@@ -369,15 +354,12 @@ export function NanpureTutorial({
     playStart?.onStart();
   }
 
-  /**
-   * 始めの盤面の場面では、解き終えた盤面から入れた数字を消していき、消し終えたら始めの盤面に替える。
-   * 最初の手順の印は、始めの盤面に替え終えてから出す。
-   */
   function renderBoard({
     scene,
     playing: scenePlaying,
     onSceneEnd,
   }: TutorialStageBoardIntro) {
+    // 始めの盤面の場面では、解き終えた盤面から入れた数字を消していき、消し終えたら始めの盤面に替える。
     const goalShown = scene === "goal" || (scene === "start" && scenePlaying);
     const shownBoardState = goalShown ? goalBoardState : boardState;
     // 最初の手順の印は、導入の終わりに一言と同時に出す。
@@ -499,6 +481,9 @@ export function NanpureTutorial({
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
       onRestart={handleRestart}
+      renderHowToPlayDialog={(control) => (
+        <NanpureHowToPlayDialog {...control} />
+      )}
       onRequestHint={
         hintRequestable && idleHint === null
           ? () => setHintRequestedProgress(progress)

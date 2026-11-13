@@ -61,6 +61,7 @@ describe("TutorialStage", () => {
     spotlighting = false,
     finish = { entry: "play", onReturnToPlay: vi.fn() },
     hintRequestable = false,
+    howToPlay = false,
   }: {
     open?: boolean;
     phase?: TutorialPhase;
@@ -68,6 +69,7 @@ describe("TutorialStage", () => {
     spotlighting?: boolean;
     finish?: TutorialFinish;
     hintRequestable?: boolean;
+    howToPlay?: boolean;
   } = {}): (nextPhase: TutorialPhase) => void {
     function createStage(shownPhase: TutorialPhase) {
       return (
@@ -91,6 +93,18 @@ describe("TutorialStage", () => {
           onIntroEnd={onIntroEnd}
           onRestart={onRestart}
           onRequestHint={hintRequestable ? onRequestHint : null}
+          renderHowToPlayDialog={
+            howToPlay
+              ? ({ open: shown, onClose: onCloseHowToPlay }) =>
+                  shown && (
+                    <div role="region" aria-label="遊び方の説明">
+                      <button type="button" onClick={onCloseHowToPlay}>
+                        遊び方を閉じる
+                      </button>
+                    </div>
+                  )
+              : undefined
+          }
           onClose={onClose}
         />
       );
@@ -406,6 +420,66 @@ describe("TutorialStage", () => {
       expect(onRestart).toHaveBeenCalledOnce();
       expect(startButton).toBeNull();
       expect(boardIntro?.scene).toBeNull();
+    });
+  });
+
+  describe("遊び方の説明を渡した場合", () => {
+    const phases = ["intro", "playing", "completed"] as const;
+
+    test.each(phases)("%s の間も、上部に「遊び方」を出すこと", (phase) => {
+      renderStage({
+        phase,
+        progress: phase === "completed" ? 1 : 0,
+        howToPlay: true,
+      });
+
+      const button = within(getScreen()).queryByRole("button", {
+        name: "遊び方",
+      });
+
+      expect(button).not.toBeNull();
+    });
+
+    describe("盤面を解いている間", () => {
+      beforeEach(() => {
+        renderStage({ phase: "playing", howToPlay: true });
+      });
+
+      test("「遊び方」を押すまでは、遊び方の説明を開かないこと", () => {
+        const howToPlay = screen.queryByRole("region", {
+          name: "遊び方の説明",
+        });
+
+        expect(howToPlay).toBeNull();
+      });
+
+      test("「遊び方」を押すと遊び方の説明を開き、閉じるとチュートリアルに戻ること", () => {
+        fireEvent.click(
+          within(getScreen()).getByRole("button", { name: "遊び方" }),
+        );
+        const opened = screen.queryByRole("region", { name: "遊び方の説明" });
+        fireEvent.click(screen.getByRole("button", { name: "遊び方を閉じる" }));
+
+        const closed = screen.queryByRole("region", { name: "遊び方の説明" });
+
+        expect(opened).not.toBeNull();
+        expect(closed).toBeNull();
+        expect(onClose).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("遊び方の説明を渡さずに盤面を解いている場合", () => {
+    beforeEach(() => {
+      renderStage({ phase: "playing" });
+    });
+
+    test("「遊び方」を出さないこと", () => {
+      const button = within(getScreen()).queryByRole("button", {
+        name: "遊び方",
+      });
+
+      expect(button).toBeNull();
     });
   });
 
