@@ -16,52 +16,43 @@ import {
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordClearPerformance } from "@/records/play-record-definition";
 
-/** 記録と試行のうち図鑑に使うものを選ぶのに要る、1ゲーム分のカタログ項目の部分。 */
 export type ZukanPlaySource = ClearedProblemSource & {
-  /** 離脱した試行の問題を今の問題集で引けるときだけ、その難易度と問題 ID を返す。 */
+  /** 試行の問題を今の問題集で引けないときは `null` を返す。 */
   attemptProblemPlayTarget: (
     attempt: PlayAttempt,
   ) => { difficulty: string; problemId: ProblemId } | null;
 };
 
-/** 図鑑を記録から導くのに要る、1ゲーム分のカタログ項目の部分。 */
 export type ZukanGameSource = ZukanPlaySource & {
-  /** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+  /** 問題集の並び順で返す。 */
   listPoolProblemIds: (difficulty: DifficultyLevel) => readonly ProblemId[];
 };
 
 type ZukanProblemSlot = {
-  /** 問題集の並び順（難易度の昇順、難易度の中は問題集の並び）でゲームの中を通して1から数えた番号。表示にだけ使う。 */
   number: number;
   difficulty: DifficultyLevel;
   problemId: ProblemId;
 };
 
-/** クリアしたことのある1問。 */
 export type ZukanSolvedProblem = ZukanProblemSlot & {
   kind: "solved";
-  /** クリアした記録の評価点のうち最も高いもの。 */
   bestScore: number;
-  /** クリアした記録のうち最も速いクリアまでの経過時間。 */
   fastestElapsedMs: number;
-  /** クリアした記録のうち最も少ない完成までの手数と、その問題の最短手数。手数を数えないゲームでは `null`。 */
+  /** 手数を数えないゲームでは `null`。 */
   fewestMoves: ClearMoves | null;
-  /** クリアした記録のうち最も少ないミスの数。ミスを数えないゲームでは `null`。 */
+  /** ミスを数えないゲームでは `null`。 */
   fewestMistakes: number | null;
-  /** 初めてクリアした時刻（`PlayRecord.completedAt`）。 */
+  /** `PlayRecord.completedAt` の時刻。 */
   firstClearedAt: number;
 };
 
-/** まだクリアしていない1問。 */
 export type ZukanUnsolvedProblem = ZukanProblemSlot & {
   kind: "unsolved";
-  /** 途中でやめたことがあるか。 */
   attempted: boolean;
 };
 
 export type ZukanProblem = ZukanSolvedProblem | ZukanUnsolvedProblem;
 
-/** 1つの難易度の問題集の全問。 */
 export type ZukanDifficultySection = {
   difficulty: DifficultyLevel;
   /** 番号の順。 */
@@ -74,7 +65,6 @@ export type GameZukan = {
   sections: readonly ZukanDifficultySection[];
   problemCount: number;
   solvedCount: number;
-  /** 図鑑に使った完了記録と離脱した試行のうち、最も新しくクリアまたは離脱したプレイの難易度。どちらも無ければ `null`。 */
   latestPlayedDifficulty: DifficultyLevel | null;
 };
 
@@ -118,7 +108,6 @@ type SolvedProblemTally = Pick<
 
 type ClearMoves = NonNullable<PlayRecordClearPerformance["moves"]>;
 
-/** 少ない方を選ぶ。片方が無ければもう一方を選ぶ。 */
 function pickFewerMistakes(
   current: number | null,
   candidate: number | null,
@@ -129,7 +118,6 @@ function pickFewerMistakes(
   return Math.min(current, candidate);
 }
 
-/** 完成までの手数の少ない方を選ぶ。片方が無ければもう一方を選ぶ。 */
 function pickFewerMoves(
   current: ClearMoves | null,
   candidate: ClearMoves | null,
@@ -169,17 +157,12 @@ function addClear(
   };
 }
 
-/** 図鑑に使う履歴を、問題ごとのクリアの成績・離脱したことのある問題・最後のプレイへまとめたもの。 */
 type ZukanPlays = {
   tallies: ReadonlyMap<string, SolvedProblemTally>;
   attemptedProblems: ReadonlyMap<string, PlayableProblem>;
   latestPlay: LatestPlay | null;
 };
 
-/**
- * 完了記録・離脱した試行のうち、図鑑に使うものをまとめる。
- * 別のゲームの記録と、今の問題集で引けない記録・試行（生成器の版違い・旧難易度・問題集から外れた問題）は使わない。
- */
 function collectZukanPlays(
   game: ZukanPlaySource,
   records: readonly PlayRecord[],
@@ -232,7 +215,6 @@ function collectZukanPlays(
   return { tallies, attemptedProblems, latestPlay };
 }
 
-/** 問題集の全問と、完了記録・離脱した試行から、ゲームの図鑑を導く。 */
 export function deriveGameZukan(
   game: ZukanGameSource,
   records: readonly PlayRecord[],
@@ -282,20 +264,15 @@ export function deriveGameZukan(
   };
 }
 
-/** ゲームの続き。図鑑に使う履歴のうち最後のプレイの難易度と、その難易度の挑戦中の問題の数。 */
 export type ZukanContinuation = {
   /** 最も新しくクリアまたは離脱したプレイの難易度。そのゲームの図鑑の `latestPlayedDifficulty` と同じ。 */
   difficulty: DifficultyLevel;
   /** そのプレイをクリアまたは離脱した時刻。 */
   playedAt: number;
-  /** その難易度で、離脱したことがありまだクリアしていない問題の数。図鑑のその難易度で挑戦中の問題の数と同じ。 */
   attemptedCount: number;
 };
 
-/**
- * 完了記録・離脱した試行から、ゲームの続きを導く。図鑑に使う履歴が無ければ `null` を返す。
- * 図鑑と同じ履歴を使い、問題集の全問は並べない。
- */
+/** 図鑑と同じ履歴を使い、問題集の全問は並べない。 */
 export function deriveZukanContinuation(
   game: ZukanPlaySource,
   records: readonly PlayRecord[],
@@ -318,7 +295,6 @@ export function deriveZukanContinuation(
   return { ...latestPlay, attemptedCount };
 }
 
-/** 図鑑の1問の状態。クリアした問題は最高スコアの評価段階で表す。 */
 export type ZukanProblemStatus = GameResultLevel | "attempted" | "untouched";
 
 export function getZukanProblemStatus(
@@ -330,10 +306,6 @@ export function getZukanProblemStatus(
   return problem.attempted ? "attempted" : "untouched";
 }
 
-/**
- * 問題の数を状態ごとに数える。数の無い状態は0とする。
- * `getStatus` を渡すと、今の状態の代わりにその状態で数える。
- */
 export function countZukanProblemsByStatus(
   problems: readonly ZukanProblem[],
   getStatus: (

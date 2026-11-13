@@ -9,15 +9,12 @@ import {
   type ZukanPlaySource,
 } from "@/zukan/zukan-collection";
 
-/** 複数のゲームの続きを、要るゲームの分だけ求める。 */
 export type ZukanContinuations = {
-  /** そのゲームの続き。図鑑に使う履歴が無いゲームと、知らないゲームには `null` を返す。 */
   find: (gameId: string) => ZukanContinuation | null;
-  /** 図鑑に使う履歴のうち、最も新しくクリアまたは離脱したプレイのゲーム。そのようなプレイが無ければ `null` を返す。 */
   findLatestPlayedGameId: () => string | null;
 };
 
-/** ゲームごとの、完了記録と離脱した試行の最も新しい時刻。図鑑に使えるかは確かめない。 */
+/** 記録と試行を図鑑に使えるかは確かめない。 */
 function findNewestPlayTimes(
   records: readonly PlayRecord[],
   attempts: readonly PlayAttempt[],
@@ -35,11 +32,6 @@ function findNewestPlayTimes(
   return newestTimes;
 }
 
-/**
- * 完了記録・離脱した試行から、ゲームの続きを求める。各ゲームの続きは初めて求めたときに一度だけ導く。
- * 履歴を図鑑に使えるかは問題集の索引で確かめ、索引を作るのは重いので、
- * 最後に遊んだゲームは、記録と試行の最も新しい時刻が新しいゲームから順に、それより新しい続きが見つかったところまでだけ求める。
- */
 export function createZukanContinuations(
   games: readonly ZukanPlaySource[],
   records: readonly PlayRecord[],
@@ -60,6 +52,8 @@ export function createZukanContinuations(
     return continuation;
   }
 
+  // 履歴を図鑑に使えるかは問題集の索引で確かめ、索引を作るのは重いので、
+  // 最後に遊んだゲームは、記録と試行の最も新しい時刻が新しいゲームから順に、それより新しい続きが見つかったところまでだけ求める。
   function findLatestPlayedGame(): string | null {
     const newestTimes = findNewestPlayTimes(records, attempts);
     const candidates = games
