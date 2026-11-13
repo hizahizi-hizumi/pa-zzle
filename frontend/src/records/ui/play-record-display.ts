@@ -43,7 +43,6 @@ type PlayRecordDisplaySource<Definition extends PlayRecordDefinition> = Omit<
 };
 
 /**
- * 記録定義の全指標に表示を対応させた記録表示を作る。
  * 指標は記録定義の並び順で表示する。
  */
 export function createPlayRecordDisplay<
@@ -70,10 +69,9 @@ export function getPlayRecordMetricDisplay(
   return display.metrics.find((metric) => metric.id === metricId);
 }
 
-/** 数を示すときの単位。数には必ず単位を付ける。 */
+/** 数には必ず単位を付ける。 */
 type PlayRecordCountUnit = "回" | "手" | "本" | "マス";
 
-/** 100点満点の評価点。 */
 export const playScoreMetricPresentation: PlayRecordMetricPresentation = {
   label: "スコア",
   formatValue(value: number) {
@@ -86,7 +84,6 @@ export const playScoreMetricPresentation: PlayRecordMetricPresentation = {
   axis: { kind: "integer", minimum: 0, maximum: 100 },
 };
 
-/** 問題ごとの基準時間とクリア時間との差。 */
 export const timeDeltaMetricPresentation: PlayRecordMetricPresentation = {
   label: "基準時間との差",
   formatValue: formatElapsedTimeDelta,
@@ -116,7 +113,6 @@ export function createCountMetricPresentation(
   };
 }
 
-/** 最短手数とクリア手数との差。 */
 export const moveDeltaMetricPresentation: PlayRecordMetricPresentation = {
   label: "最短手数との差",
   formatValue: formatCountDelta,

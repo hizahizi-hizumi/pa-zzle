@@ -14,11 +14,10 @@ import {
 import type { PlayTimelineEntryDescription } from "@/records/ui/play-timeline-entry-description";
 
 type PlayRecordsScreenProps = {
-  /** ゲームをまたいだ、クリアしたプレイと離脱したプレイ。新しい順。 */
+  /** 新しい順。 */
   entries: readonly PlayTimelineEntry[];
-  /** カレンダーの今日を決める時刻。 */
   now: number;
-  /** 1件に示すゲーム・レベル・問題・評価点を求める。一覧に描く行の分だけ求める。 */
+  /** 一覧に描く行の分だけ求める。 */
   describeEntry: (entry: PlayTimelineEntry) => PlayTimelineEntryDescription;
   onOpenEntry: (entry: PlayTimelineEntry) => void;
   /** 一覧に新しいものから描くプレイの数。一覧の終わりが近づくと、描き足した数で `onShownEntryCountChange` を呼ぶ。 */
@@ -28,14 +27,8 @@ type PlayRecordsScreenProps = {
   showHeading?: boolean;
 };
 
-/** 記録画面を開いたときに一覧に描くプレイの数。 */
 export const INITIAL_SHOWN_ENTRY_COUNT = PLAY_DAY_LIST_BATCH_SIZE;
 
-/**
- * 記録画面。いつ・何を遊んだかを、ゲームをまたいだ時間の流れで示す。
- * 上に直近の週のカレンダーで日ごとに遊んだ量を、その下に遊んだ日ごとのプレイを新しい順に並べる。
- * 成績の比較（自己ベスト・推移）は示さない。
- */
 export function PlayRecordsScreen({
   entries,
   now,

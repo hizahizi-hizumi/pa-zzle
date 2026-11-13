@@ -47,7 +47,6 @@ const entries = listPlayTimelineEntries(
   [abandonedAttempt],
 );
 
-/** 完了記録の点は時刻ごとに変え、離脱したプレイには点を付けない。 */
 function describeEntry(entry: PlayTimelineEntry): PlayTimelineEntryDescription {
   return {
     gameName: "ウォーターソート",

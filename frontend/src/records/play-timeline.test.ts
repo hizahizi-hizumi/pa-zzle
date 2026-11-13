@@ -44,7 +44,6 @@ describe("listPlayTimelineEntries", () => {
   const olderRecord = createRecord(at(10, 30, 9), at(10, 30, 10));
   const newerRecord = createRecord(at(11, 1, 9), at(11, 1, 10));
   const abandoned = createAttempt(at(10, 31, 9), at(10, 31, 11));
-  // 離脱を記録したあとに完了記録が残った試行は、クリアとして完了記録の方だけを並べる。
   const clearedAfterAbandon = createAttempt(
     newerRecord.startedAt,
     at(11, 1, 9) + 1,

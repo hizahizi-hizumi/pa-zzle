@@ -13,19 +13,17 @@ type PlayDayListProps = {
   entries: readonly PlayTimelineEntry[];
   describeEntry: (entry: PlayTimelineEntry) => PlayTimelineEntryDescription;
   onOpenEntry: (entry: PlayTimelineEntry) => void;
-  /** 新しいものから描くプレイの数。 */
   shownEntryCount: number;
   onShownEntryCountChange: (count: number) => void;
 };
 
-/** 一度に描き足すプレイの数。記録が数千件あっても、開いたときは画面の数枚分だけを描く。 */
+/** 記録が数千件あっても、開いたときは画面の数枚分だけを描く。 */
 export const PLAY_DAY_LIST_BATCH_SIZE = 40;
 
 /** 一覧の終わりがこの距離まで近づいたら、見える前に次の分を描き足す。 */
 const PRELOAD_MARGIN = "800px";
 
 /**
- * 遊んだ日ごとの見出しと、その日のプレイを新しい順に並べた一覧。
  * 全件を一度に描かず、新しいものから描き、一覧の終わりが近づくたびに描き足す。
  */
 export function PlayDayList({

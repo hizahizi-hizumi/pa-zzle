@@ -8,7 +8,6 @@ type PlayCalendarProps = {
 };
 
 /**
- * 日ごとのマスを、週を列・曜日を行にして並べたカレンダー。その日に遊んだ量を濃さだけで示し、数・連続日数・称賛は示さない。
  * マスは押せず、その日のプレイは下の一覧で見る。
  */
 export function PlayCalendar({ weeks, label }: PlayCalendarProps) {

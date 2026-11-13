@@ -53,7 +53,6 @@ export function getPersonalBests(
   });
 }
 
-/** 比較単位（同じゲームの同じ開始条件）の記録を、完了した時刻の新しい順に選ぶ。 */
 export function listComparableRecords(
   records: readonly PlayRecord[],
   definition: PlayRecordDefinition,

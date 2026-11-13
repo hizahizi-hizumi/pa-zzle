@@ -26,11 +26,6 @@ type PlayTimelineRowProps = {
   onOpen: (entry: PlayTimelineEntry) => void;
 };
 
-/**
- * 時間の流れの1件。どのゲームのどのレベルのどの問題を、いつ、どう遊んだかを1行で示し、押すとそのプレイを開く。
- * クリアしたプレイは評価点を結果画面と同じ評価段階の色で、離脱したプレイは離脱したことを示す。
- * 一覧を描き足しても描いた行を描き直さないよう、同じプレイと操作のあいだは描き直さない。
- */
 function PlayTimelineRowContent({
   entry,
   describeEntry,
@@ -91,4 +86,5 @@ function PlayTimelineRowContent({
   );
 }
 
+/** 一覧を描き足しても描いた行を描き直さないよう、同じプレイと操作のあいだは描き直さない。 */
 export const PlayTimelineRow = memo(PlayTimelineRowContent);

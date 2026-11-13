@@ -6,10 +6,7 @@ import {
 } from "@/lib/type-guards";
 import type { PlayRecord } from "@/records/play-record";
 
-/**
- * プレイを始めたときの条件。完了記録と同じ意味の難易度と問題識別情報で、
- * 難易度は完了記録の比較キーと同じ値になる。
- */
+/** 難易度と問題識別情報は完了記録と同じ意味で、難易度は完了記録の比較キーと同じ値になる。 */
 export type PlayAttemptStart = {
   difficulty: string;
   problemIdentity: ProblemIdentity;
@@ -41,7 +38,6 @@ export type AbandonedPlayAttempt = PlayAttempt & {
 
 type PlayStartKey = Pick<PlayAttempt, "gameId" | "startedAt">;
 
-/** 同じゲームで同じ時刻に始めたプレイか。試行どうし、試行と完了記録の突き合わせに使う。 */
 export function isSamePlayStart(left: PlayStartKey, right: PlayStartKey) {
   return left.gameId === right.gameId && left.startedAt === right.startedAt;
 }
@@ -58,7 +54,6 @@ function toPlayStartKey({ gameId, startedAt }: PlayStartKey): string {
   return `${startedAt}:${gameId}`;
 }
 
-/** 状態が離脱の試行だけを選ぶ。完了記録がある試行は離脱を記録していてもクリアとして除く。 */
 export function getAbandonedPlayAttempts(
   attempts: readonly PlayAttempt[],
   records: readonly PlayRecord[],

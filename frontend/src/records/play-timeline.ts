@@ -5,20 +5,17 @@ import {
 } from "@/records/play-attempt";
 import type { PlayRecord } from "@/records/play-record";
 
-/** 遊んだ時間の流れの1件。クリアしたプレイはクリアした時刻、離脱したプレイは離れた時刻に置く。 */
 export type PlayTimelineEntry =
   | { kind: "cleared"; playedAt: number; record: PlayRecord }
   | { kind: "abandoned"; playedAt: number; attempt: AbandonedPlayAttempt };
 
-/** 遊んだ日ごとのまとまり。 */
 export type PlayTimelineDay = {
-  /** その日の0時（端末の時刻）の時刻。 */
   dayStart: number;
   /** 新しい順。 */
   entries: readonly PlayTimelineEntry[];
 };
 
-/** カレンダーのマスに示す、その日に遊んだ量の段階。0 は遊んでいない日。 */
+/** 0 は遊んでいない日。 */
 export type PlayAmountLevel = 0 | 1 | 2 | 3;
 
 export type PlayCalendarDay = {
@@ -30,13 +27,12 @@ export type PlayCalendarDay = {
 /** 日曜から土曜の7日。 */
 export type PlayCalendarWeek = readonly PlayCalendarDay[];
 
-/** 記録画面のカレンダーに示す週の数。 */
 export const PLAY_CALENDAR_WEEK_COUNT = 13;
 
 const DAYS_PER_WEEK = 7;
 
 /**
- * その日に遊んだ数を、遊んだ量の段階に分ける下限。段階は日ごとに独立して決め、ほかの日の多さに引きずられないようにする。
+ * 段階は日ごとに独立して決め、ほかの日の多さに引きずられないようにする。
  */
 const playAmountLevelMinimums = [
   { level: 3, minimum: 6 },
@@ -44,7 +40,6 @@ const playAmountLevelMinimums = [
   { level: 1, minimum: 1 },
 ] as const satisfies readonly { level: PlayAmountLevel; minimum: number }[];
 
-/** 完了記録と、離脱した試行（完了記録のある試行は除く）を、遊んだ時刻の新しい順に並べる。 */
 export function listPlayTimelineEntries(
   records: readonly PlayRecord[],
   attempts: readonly PlayAttempt[],
