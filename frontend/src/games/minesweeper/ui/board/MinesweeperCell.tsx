@@ -23,9 +23,7 @@ type MinesweeperCellProps = {
   cellIndex: number;
   view: MinesweeperVisibleCell;
   disabled: boolean;
-  /** チュートリアルで重ねる印と応え。通常のプレイでは渡さない。 */
   cue?: MinesweeperCellCue;
-  /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜き、元の明るさで見せる。 */
   spotlit?: boolean;
   onPress: (cellIndex: number) => void;
   onFlagPress: (cellIndex: number) => void;

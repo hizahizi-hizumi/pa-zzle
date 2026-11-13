@@ -66,7 +66,6 @@ function performAll(
   );
 }
 
-/** 最初の `count` 個の手順を、印のマスへ手順どおりの操作をして終える。 */
 function finishSteps(count: number): Progress {
   return minesweeperTutorial.steps.slice(0, count).reduce(
     (progress, step) =>
@@ -111,7 +110,6 @@ function listMinePlacements(revealedCellIndices: readonly number[]): string[] {
     .map((mines) => mines.join(","));
 }
 
-/** 決まる地雷でないマスを、決まらなくなるまで開く。 */
 function revealByDeduction(
   puzzle: MinesweeperPuzzleState,
   ruleIds: readonly MinesweeperTutorialRuleId[],
@@ -153,7 +151,6 @@ const introducingStepCases = ruleStepCases.filter(
 );
 const ruleCases = minesweeperTutorial.rules.map(({ id }) => id);
 
-/** 手順で印を付けるマスを打つ順の、すべての並べ方。 */
 function listOrders(cellIndices: readonly number[]): number[][] {
   if (cellIndices.length <= 1) {
     return [[...cellIndices]];
@@ -165,7 +162,6 @@ function listOrders(cellIndices: readonly number[]): number[][] {
   );
 }
 
-/** 手順の印のマスを `order` の順に手順どおりに打ち、打ち終えるまでの途中の進行をすべて返す。 */
 function listIntermediateProgresses(
   progress: Progress,
   operation: "reveal" | "flag",
@@ -183,7 +179,6 @@ function listIntermediateProgresses(
   return progresses;
 }
 
-/** 手順と違う操作。開かせるマスに旗を置く、旗を置かせるマスを開く。 */
 const otherOperations = {
   reveal: "flag",
   flag: "reveal",

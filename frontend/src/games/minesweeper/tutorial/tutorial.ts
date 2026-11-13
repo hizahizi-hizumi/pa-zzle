@@ -27,25 +27,18 @@ import type {
   TutorialStep,
 } from "@/games/tutorial";
 
-/**
- * - `number`: 数字は、周りの8マスにある地雷の数。
- * - `total`: 盤面全体の地雷の数は、上の「地雷」に出る。
- */
 export type MinesweeperTutorialRuleId = "number" | "total";
 
-/** 盤面と同じく、開く・旗を置く外す・開いた数字の周りをまとめて開く。 */
 export type MinesweeperTutorialAction = {
   type: "reveal" | "flag" | "chord";
   cellIndex: number;
 };
 
-/** 手順で印のマスにさせる操作。 */
 export type MinesweeperTutorialOperation = "reveal" | "flag";
 
 /**
  * - `message`: 盤面の切り替えが `operation` に合っているときの一言。合っていないときは、補足を `modeSwitchDetails` に替える。
- * - `cellIndices`: 印を付け、手順の間だけ `operation` を受け付けるマス。すべて開くか旗を置いたら次の手順へ進む。
- * - `operation`: 印のマスにさせる操作。地雷のマスには旗を置かせ、地雷でないマスは開かせる。
+ * - `cellIndices`: 印を付け、手順の間だけ `operation` を受け付けるマス。
  * - `reasonCellIndices`: 印のマスを決めるマス（決め手）。決めた数字と、その読みに使った、もう地雷と決まったマス。手順の間、印のマスと一緒に覆いから抜き、操作する前に何で決まるかを盤面で分からせる。
  * - `reasonMineCount`: 印のマスを決めるのに、上の地雷の総数も使う。手順の間、地雷の総数も覆いから抜く。
  */
@@ -57,12 +50,7 @@ export type MinesweeperTutorialStep =
     reasonMineCount: boolean;
   };
 
-/**
- * 直前の手。盤面の上の応えと、覆いから抜くマスに使う。
- * - `cellIndex`: 操作したマス。
- * - `steppedMine`: 地雷を踏んだ。
- * - `fittedCellIndices`: この手で手順どおりになった、手順の印のマス。開いた数字を押してまとめて開いたときは、押した数字ではなく開いた印のマス。手を離した後は常に空。
- */
+/** `fittedCellIndices`: この手で手順どおりになった、手順の印のマス。 */
 export type MinesweeperTutorialMove = {
   cellIndex: number;
   steppedMine: boolean;
@@ -98,9 +86,6 @@ function cellAt(row: number, column: number): number {
 }
 
 /**
- * 地雷は3つ。左上から開き始め、本番と同じく開いたマスの周りに地雷の無いマスが続けて開いた盤面から始める。
- * 開いていないマスのうち地雷でないマスは、どれも周りに地雷があり、開いても続けて開かない。
- *
  * ```text
  * 最初    解（*: 地雷）
  * .....   .....
@@ -170,7 +155,6 @@ const steps: readonly MinesweeperTutorialStep[] = [
   },
 ];
 
-/** 手を引いている間、盤面の切り替えが手順の操作に合っていないときの補足。 */
 export const minesweeperTutorialModeSwitchDetails = {
   flag: "旗に切り替えて、印のマスを押してください",
   reveal: "旗から戻して、印のマスを押してください",
@@ -369,10 +353,6 @@ function getMinesweeperTutorialGoal(): MinesweeperTutorialBoardState {
   };
 }
 
-/**
- * 手を引いている間の手が、手順どおりか。印のマスへの手順の操作と、開かせる手順で、開いた数字を押して印のマスだけをまとめて開く手を受け付ける。
- * 地雷の印を開く手と、開く印に旗を置く手は受け付けない。
- */
 function fitsStep(
   step: MinesweeperTutorialStep,
   before: MinesweeperPuzzleState,
@@ -450,7 +430,6 @@ function performMinesweeperTutorialAction(
   return { state: next, outcome: "continued" };
 }
 
-/** 地雷を踏んだ手への一言。本番と同じく、踏んでも続けられることを言う。 */
 function describeMinesweeperTutorialViolation(): TutorialMessage {
   return {
     headline: "地雷を踏みました",
@@ -462,7 +441,6 @@ export const MINESWEEPER_TUTORIAL_ROWS = board.rows;
 export const MINESWEEPER_TUTORIAL_COLUMNS = board.columns;
 export const MINESWEEPER_TUTORIAL_MINE_COUNT = board.mineCellIndices.length;
 
-/** 盤面の見え方。解き終えた盤面では、本番と同じく地雷の配置を明かす。 */
 export function getMinesweeperTutorialVisibleCells(
   state: MinesweeperTutorialBoardState,
 ): MinesweeperVisibleCell[] {
@@ -473,7 +451,6 @@ export function getMinesweeperTutorialVisibleCells(
   );
 }
 
-/** 手順で印を付けるマスのうち、まだ手順どおりになっていないもの。手を離した後は空。 */
 export function getMinesweeperTutorialStepCellIndices(
   { step }: MinesweeperTutorialSituation,
   state: MinesweeperTutorialBoardState,
@@ -486,8 +463,8 @@ export function getMinesweeperTutorialStepCellIndices(
 }
 
 /**
- * 手を離した後、手が止まったときに示す、今の盤面と手に入れたルールだけで地雷でないと決まる、開いていないマス。
- * 前に決まったマスを使わずに決まるマスほど先に返す。旗を置いたマスは押しても開かないので、ほかに無いときだけ返す。無ければ `null`。
+ * 今の盤面と手に入れたルールだけで地雷でないと決まる、開いていないマス。
+ * 旗を置いたマスは押しても開かないので、ほかに無いときだけ返す。
  */
 export function findMinesweeperTutorialHintCellIndex(
   { earnedRuleIds }: MinesweeperTutorialSituation,
@@ -509,7 +486,6 @@ export function findMinesweeperTutorialHintCellIndex(
   return candidates[0]?.cellIndex ?? null;
 }
 
-/** 旗を置いたマス。手がかりの印が旗のマスに付いたとき、旗を外させるのに使う。 */
 export function isMinesweeperTutorialCellFlagged(
   state: MinesweeperTutorialBoardState,
   cellIndex: number,

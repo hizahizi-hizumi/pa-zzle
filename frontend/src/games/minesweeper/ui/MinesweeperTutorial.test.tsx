@@ -20,7 +20,6 @@ vi.mock("@/lib/sound-effects", async (importOriginal) => ({
 
 type CellPosition = readonly [row: number, column: number];
 
-/** 手順ごとに印を付けるマスと、させる操作。 */
 const stepOperations: readonly {
   operation: "reveal" | "flag";
   cells: readonly CellPosition[];
@@ -43,7 +42,6 @@ const remainingCells: readonly CellPosition[] = [
   [5, 4],
 ];
 
-/** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
 const idleHintDelayMs = 10_000;
 
 /** 導入の場面の動きを見せ終えるのに十分な間。 */
@@ -108,7 +106,6 @@ function stubReducedMotion(): void {
   );
 }
 
-/** 鳴らした効果音の音声ファイル名。 */
 function getPlayedSoundNames(): string[] {
   return vi
     .mocked(playSound)
@@ -183,22 +180,18 @@ function getCellNumbers(selector: string): string[] {
     .map((cell) => cell.getAttribute("aria-label")?.split(" ")[1] ?? "");
 }
 
-/** 印か応えを重ねているマスの番号。 */
 function getCuedCellNumbers(kind: "hint" | "fitted"): string[] {
   return getCellNumbers(`[data-cell-cue="${kind}"]`);
 }
 
-/** 印の線を短く濃くしているマスの番号。 */
 function getRecalledCellNumbers(): string[] {
   return getCellNumbers('[data-tutorial-cue="recall"]');
 }
 
-/** 画面全体の覆いから抜いて、元の明るさで見せているマスの番号。 */
 function getSpotlitCellNumbers(): string[] {
   return getCellNumbers("[data-tutorial-spotlight]");
 }
 
-/** 印や応えを重ねているマスの番号。 */
 function getAnyCuedCellNumbers(): string[] {
   return getCellNumbers("[data-cell-cue]");
 }
@@ -207,12 +200,10 @@ function hasFocusScrim(): boolean {
   return document.querySelector("[data-tutorial-focus-scrim]") !== null;
 }
 
-/** 盤面の中で、ルールに当たったときの赤を使っているか。 */
 function usesRuleViolationColor(): boolean {
   return getBoard().querySelector('[class*="destructive"]') !== null;
 }
 
-/** 地雷の総数を、覆いから抜いて見せているか。 */
 function isMineCountSpotlit(): boolean {
   return (
     screen
@@ -221,7 +212,6 @@ function isMineCountSpotlit(): boolean {
   );
 }
 
-/** 切り替えを、覆いから抜いて見せているか。 */
 function isToggleSpotlit(): boolean {
   return (
     getModeToggle().parentElement?.querySelector("[data-tutorial-spotlight]") !=
@@ -233,7 +223,6 @@ function hasToggleCue(): boolean {
   return document.querySelector('[data-toggle-cue="hint"]') !== null;
 }
 
-/** 切り替えの印の線を短く濃くしている合図。 */
 function getToggleRecallCue(): Element | null {
   return document.querySelector(
     '[data-toggle-cue="hint"] [data-tutorial-cue="recall"]',
