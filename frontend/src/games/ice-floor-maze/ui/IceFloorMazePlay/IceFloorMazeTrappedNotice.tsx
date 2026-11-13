@@ -17,7 +17,6 @@ export function IceFloorMazeTrappedNotice({
   return (
     <div role="status" className="mx-auto max-w-md px-3 py-2">
       <div className="text-center">
-        {/* 駒はまだ動けるので、動けないとは言わない。 */}
         <p className="text-play-context">もうゴールに止まれない</p>
       </div>
       <div className="mt-1 flex justify-center gap-1">
