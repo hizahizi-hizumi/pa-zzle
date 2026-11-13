@@ -29,7 +29,6 @@ type SlidePuzzleBoardProps = {
   clearing: boolean;
   /** タイルに重ねる合図。1枚に1つまで。 */
   cues?: readonly SlidePuzzleTileCue[];
-  /** チュートリアルで手を引いている間、画面全体の覆いから抜いて元の明るさで見せるタイル。通常のプレイでは渡さない。 */
   spotlitTiles?: readonly SlidePuzzleTileNumber[] | null;
   onSlideTile: (tileIndex: number) => void;
   onClearAnimationComplete: () => void;

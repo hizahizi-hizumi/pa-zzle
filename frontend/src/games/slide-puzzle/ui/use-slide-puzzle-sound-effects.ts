@@ -72,7 +72,6 @@ function playOperationSound(operation: SlidePuzzleOperation) {
       playSound(slidSound, { variation: REPEATED_SOUND_VARIATION });
       return;
     case "invalid":
-      // 動きを減らす設定ではタイルを揺らさず、画面が何も変わらないので鳴らさない。
       if (!prefersReducedMotion()) {
         playSound(invalidSound);
       }

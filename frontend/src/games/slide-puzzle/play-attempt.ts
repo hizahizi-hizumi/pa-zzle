@@ -2,7 +2,7 @@ import { getSessionElapsedMs } from "@/games/session";
 import type { SlidePuzzleSession } from "@/games/slide-puzzle/session/session";
 import type { PlayAttemptProgress } from "@/records/play-attempt";
 
-/** 評価値と、クリアの評価にだけ使う最後に盤面を戻してからの手数・最短手数は保存しない。 */
+/** クリアの評価にだけ使う、最後に盤面を戻してからの手数と最短手数は保存しない。 */
 export function createSlidePuzzlePlayAttemptProgress(
   session: SlidePuzzleSession,
   abandonedAt: number,

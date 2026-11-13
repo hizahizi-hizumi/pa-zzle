@@ -95,7 +95,6 @@ export function restartSlidePuzzleSession(
   };
 }
 
-/** 盤面が初期盤面と違うプレイ中だけ、盤面を戻せる。 */
 export function canRestartSlidePuzzleSession(
   session: SlidePuzzleSession,
 ): boolean {

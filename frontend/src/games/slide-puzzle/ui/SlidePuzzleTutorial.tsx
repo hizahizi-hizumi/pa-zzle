@@ -145,7 +145,7 @@ function getTileCues(
 }
 
 /**
- * 手を引いている間に、画面全体の覆いから抜いて元の明るさで見せるタイル。手を引いていなければ `null` で、覆いを出さない。
+ * 手を引いていなければ `null` で、覆いを出さない。
  * タイルが収まる空白は、決め手として盤面が抜く。
  */
 function getSpotlitTiles(
@@ -285,7 +285,6 @@ export function SlidePuzzleTutorial({
     setProgress(startTutorial(slidePuzzleTutorial));
   }
 
-  // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
     restart();
     onClose();

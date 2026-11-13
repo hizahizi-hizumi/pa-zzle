@@ -64,7 +64,6 @@ function advanceTime(ms: number): void {
   });
 }
 
-/** 導入は自動では先へ進まない。 */
 function pressNext(): void {
   fireEvent.click(screen.getByRole("button", { name: "次へ" }));
 }
