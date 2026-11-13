@@ -64,7 +64,6 @@ export function createJigsawCellPath(
   });
 }
 
-/** 横に `cellCount` 個並んだセルの外周だけを辿る閉じたパスを作る。 */
 export function createJigsawOutlinePath(
   x: number,
   y: number,
@@ -101,7 +100,6 @@ export function jigsawSeamHalfWidth(seam: JigsawSeam): number {
   return seam.depth * headRadiusPerDepth;
 }
 
-/** 隣接ピースから同じ辺を逆向きに辿るときの凸凹を返す。 */
 export function reverseJigsawSeam(seam: JigsawSeam): JigsawSeam {
   return {
     center: 1 - seam.center,

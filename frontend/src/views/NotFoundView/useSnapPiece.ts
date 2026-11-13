@@ -20,10 +20,7 @@ type ActivePointer = {
 const primaryButton = 0;
 const snapVibrationMs = 12;
 
-/**
- * 外れたピースをドラッグして穴へはめる操作。配置状態は利用側が所有し、
- * このhookはドラッグ中の一時的な移動量だけを持つ。
- */
+/** 配置状態は利用側が所有し、このhookはドラッグ中の一時的な移動量だけを持つ。 */
 export function useSnapPiece({
   onStatusChange,
   snapRadius,

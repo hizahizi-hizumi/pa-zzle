@@ -107,15 +107,14 @@ function tapCell(cell: number): void {
   fireEvent.click(listCells()[cell] as HTMLElement);
 }
 
-// マスは押しても同じ DOM ノードのまま残るので、一度引いた盤面のマスを順に押す。
 function tapCellsInOrder(path: readonly number[]): void {
+  // マスは押しても同じ DOM ノードのまま残るので、一度引いた盤面のマスを順に押す。
   const cells = listCells();
   for (const cell of path) {
     fireEvent.click(cells[cell] as HTMLElement);
   }
 }
 
-/** 盤面を一辺 `boardWidth` px の正方形として置き、マスの中心の座標を返す。 */
 const boardWidth = 300;
 
 function getCellCenter(size: number, cell: number) {
@@ -126,7 +125,6 @@ function getCellCenter(size: number, cell: number) {
   };
 }
 
-/** `cells` の先頭のマスを指で押し、残りのマスを順になぞって離す。 */
 function dragThrough(size: number, [pressed, ...cells]: readonly number[]) {
   const surface = screen.getByRole("group", {
     name: new RegExp(`^${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面 `),

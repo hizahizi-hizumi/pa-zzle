@@ -81,7 +81,6 @@ function getBoardCells(): HTMLElement[] {
   ).getAllByRole("button");
 }
 
-/** 解どおりに、ストックの種類を選んでからマスを押して置く。 */
 function solve(solution: ReflectionBoard): void {
   const stock = screen.getByRole("group", { name: "ストック" });
   const cells = getBoardCells();
