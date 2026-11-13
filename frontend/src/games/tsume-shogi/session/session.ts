@@ -600,7 +600,6 @@ export function canUndoTsumeShogiSession(session: TsumeShogiSession): boolean {
   return session.status === "playing" && session.turns.length > 0;
 }
 
-/** 同じプレイのまま、盤面を初期局面へ戻す。経過時間とそれまでの回数は引き継ぐ。 */
 export function restartTsumeShogiSession(
   session: TsumeShogiSession,
 ): TsumeShogiSession {

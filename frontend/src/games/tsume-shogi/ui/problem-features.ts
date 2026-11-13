@@ -17,7 +17,6 @@ export const tsumeShogiProblemFeatureAxisDisplays = {
   },
   "board-piece-count": {
     label: "盤上の駒",
-    // 絞り込みでは、レベルにある値の種類が多いとき、盤上の駒の数は3枚ごとにまとめる。
     valueFormat: { kind: "count", unit: "枚", rangeWidth: 3 },
   },
 } as const satisfies Record<

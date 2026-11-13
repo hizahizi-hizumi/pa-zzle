@@ -2,7 +2,7 @@ import type { SoundEffect } from "@/lib/sound-effects";
 
 /**
  * 同じ音を録り直した複数のテイク。鳴らすたびに `pick` で1本を選び、直前に選んだテイクは続けて選ばない。
- * 回数の多い操作の音を、共通の揺らぎだけでなく録音の違いでも、同じ音の機械的な繰り返しにしないために使う。
+ * 回数の多い操作の音を、共通の揺らぎだけでなく録音の違いでも変えるために使う。
  */
 export type SoundTakes = {
   readonly takes: readonly [SoundEffect, ...SoundEffect[]];
