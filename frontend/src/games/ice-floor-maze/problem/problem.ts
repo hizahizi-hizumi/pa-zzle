@@ -28,10 +28,6 @@ export type IceFloorMazeBoardShape = {
   height: number;
 };
 
-/**
- * 生成器が扱う盤面の形の範囲。正方形と縦長だけを扱い、横長は出さない。
- * 最も広い形は、スマートフォンで1マスを読める大きさに収まる 12×14。
- */
 const minimumBoardSide = 3;
 const maximumBoardShape = {
   width: 12,

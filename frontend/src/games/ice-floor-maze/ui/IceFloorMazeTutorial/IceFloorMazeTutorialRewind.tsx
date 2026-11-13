@@ -17,7 +17,6 @@ const rewindKeyframes: Keyframe[] = [{ opacity: 1 }, { opacity: 0 }];
 
 /**
  * 導入で、解き終えた盤面を消して、始めの盤面へ戻す。盤面の要素は解く途中で変わるので、1手ずつ戻さずに盤面ごと替える。
- * 解いた道筋をさかのぼって見せると答えを教えることになるので、駒の動きは見せない。
  * 動きを減らす設定では、消さずにすぐ終える。
  */
 export function IceFloorMazeTutorialRewind({
