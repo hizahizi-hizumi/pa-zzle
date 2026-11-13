@@ -292,7 +292,7 @@ export function useReflectionPlay(
     status: session.status,
     progress,
     startedAt: session.startedAt,
-    completedAt: session.finishedAt,
+    completedAt: session.clearedAt,
     elapsedMs,
     result,
     poolReference: play.poolReference,

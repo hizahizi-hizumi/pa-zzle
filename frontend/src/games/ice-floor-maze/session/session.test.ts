@@ -122,7 +122,7 @@ describe("slideIceFloorMazeSessionPiece", () => {
 
     expect(result.session.status).toBe("cleared");
     expect(result.session.puzzleState.position).toBe(18);
-    expect(result.session.finishedAt).toBe(2_000);
+    expect(result.session.clearedAt).toBe(2_000);
     expect(result.session.moveCount).toBe(3);
   });
 

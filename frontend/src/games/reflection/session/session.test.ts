@@ -262,10 +262,10 @@ describe("全ピースを置いた場合", () => {
   const allPlacedWrongly = placeFromStock(slashAtCenter, "black-hole", 8);
 
   test("全ピースを置いて外周ヒントが揃うとクリアすること", () => {
-    const { status, finishedAt } = cleared;
+    const { status, clearedAt } = cleared;
 
     expect(status).toBe("cleared");
-    expect(finishedAt).toBe(9_000);
+    expect(clearedAt).toBe(9_000);
   });
 
   test("クリア後の操作を受け付けないこと", () => {

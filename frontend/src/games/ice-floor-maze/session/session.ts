@@ -58,7 +58,7 @@ export function createIceFloorMazeSession(
     puzzleState: createIceFloorMazeInitialState(problem.board, problem.start),
     history: [],
     startedAt,
-    finishedAt: null,
+    clearedAt: null,
     moveCount: 0,
     undoCount: 0,
     restartCount: 0,
@@ -89,7 +89,7 @@ export function slideIceFloorMazeSessionPiece(
       status: cleared ? "cleared" : "playing",
       puzzleState: applyIceFloorMazeSlide(puzzleState, slide),
       history: [...session.history, puzzleState],
-      finishedAt: cleared ? movedAt : null,
+      clearedAt: cleared ? movedAt : null,
       moveCount: session.moveCount + 1,
     },
   };

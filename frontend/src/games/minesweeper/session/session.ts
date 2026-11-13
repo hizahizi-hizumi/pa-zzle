@@ -71,7 +71,7 @@ function applyPuzzleState(
     ...session,
     status,
     puzzleState,
-    finishedAt: status === "playing" ? null : operatedAt,
+    clearedAt: status === "playing" ? null : operatedAt,
     mistakeCount: session.mistakeCount + steppedMineCount,
   };
 }
@@ -134,7 +134,7 @@ export function createMinesweeperSession(
     problem,
     puzzleState,
     startedAt,
-    finishedAt: status === "playing" ? null : startedAt,
+    clearedAt: status === "playing" ? null : startedAt,
     mistakeCount: 0,
   };
 }

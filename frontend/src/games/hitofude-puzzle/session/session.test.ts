@@ -102,7 +102,7 @@ describe("extendHitofudePuzzleSessionPath", () => {
 
       expect(session.puzzleState.path).toEqual(solution);
       expect(session.status).toBe("cleared");
-      expect(session.finishedAt).toBe(clearedAt);
+      expect(session.clearedAt).toBe(clearedAt);
     });
   });
 
@@ -400,7 +400,7 @@ describe("traceHitofudePuzzleSessionStroke で全有効マスを通った場合"
     );
 
     expect(session.status).toBe("cleared");
-    expect(session.finishedAt).toBe(clearedAt);
+    expect(session.clearedAt).toBe(clearedAt);
     expect(session.strokeOrigin).toBeNull();
   });
 });

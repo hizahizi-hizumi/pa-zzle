@@ -5,13 +5,9 @@ import {
 
 describe("getSessionElapsedMs", () => {
   const cases = [
-    ["プレイ中は現在時刻まで", { startedAt: 1_000, finishedAt: null }, 2_500],
-    [
-      "クリア後はクリア時刻まで",
-      { startedAt: 1_000, finishedAt: 3_000 },
-      2_000,
-    ],
-    ["現在時刻が開始より前なら 0", { startedAt: 5_000, finishedAt: null }, 0],
+    ["プレイ中は現在時刻まで", { startedAt: 1_000, clearedAt: null }, 2_500],
+    ["クリア後はクリア時刻まで", { startedAt: 1_000, clearedAt: 3_000 }, 2_000],
+    ["現在時刻が開始より前なら 0", { startedAt: 5_000, clearedAt: null }, 0],
   ] as const;
 
   test.each(cases)("経過時間を返すこと: %s", (_, session, expected) => {
@@ -26,7 +22,7 @@ describe("getClearedSessionElapsedMs", () => {
     const elapsedMs = getClearedSessionElapsedMs({
       status: "cleared",
       startedAt: 1_000,
-      finishedAt: 4_000,
+      clearedAt: 4_000,
     });
 
     expect(elapsedMs).toBe(3_000);
@@ -36,7 +32,7 @@ describe("getClearedSessionElapsedMs", () => {
     const elapsedMs = getClearedSessionElapsedMs({
       status: "playing",
       startedAt: 1_000,
-      finishedAt: null,
+      clearedAt: null,
     });
 
     expect(elapsedMs).toBeNull();

@@ -50,7 +50,7 @@ describe("MinesweeperSession operations", () => {
     const result = revealMinesweeperSessionCell(initialSession, 0, 200);
 
     expect(result.status).toBe("playing");
-    expect(result.finishedAt).toBeNull();
+    expect(result.clearedAt).toBeNull();
     expect(result.mistakeCount).toBe(1);
     expect(getMinesweeperSessionVisibleCells(result)[0]).toEqual({
       state: "steppedMine",
@@ -77,7 +77,7 @@ describe("MinesweeperSession operations", () => {
     const result = chordMinesweeperSessionCell(stepped, 1, 300);
 
     expect(result.status).toBe("cleared");
-    expect(result.finishedAt).toBe(300);
+    expect(result.clearedAt).toBe(300);
     expect(result.mistakeCount).toBe(1);
   });
 
@@ -104,7 +104,7 @@ describe("MinesweeperSession operations", () => {
     const result = chordMinesweeperSessionCell(flagged, 1, 300);
 
     expect(result.status).toBe("cleared");
-    expect(result.finishedAt).toBe(300);
+    expect(result.clearedAt).toBe(300);
   });
 
   test("クリア後は未旗の地雷を結果として表示できること", () => {

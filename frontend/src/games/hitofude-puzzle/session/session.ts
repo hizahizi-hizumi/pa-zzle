@@ -75,7 +75,7 @@ export function createHitofudePuzzleSession(
     problem,
     puzzleState,
     startedAt,
-    finishedAt: null,
+    clearedAt: null,
     undoCount: 0,
     restartCount: 0,
     inputCount: 0,
@@ -188,7 +188,7 @@ function applyPathMove(
   const next = recordPathChange(session, move.state);
   return {
     session: isHitofudePuzzleSolved(session.problem, move.state.path)
-      ? { ...closeStroke(next), status: "cleared", finishedAt: operatedAt }
+      ? { ...closeStroke(next), status: "cleared", clearedAt: operatedAt }
       : next,
     rejection: null,
   };

@@ -420,7 +420,7 @@ export function useIceFloorMazePlay(
     status: session.status,
     progress: play.progress,
     startedAt: session.startedAt,
-    completedAt: session.finishedAt,
+    completedAt: session.clearedAt,
     elapsedMs,
     result,
     board,

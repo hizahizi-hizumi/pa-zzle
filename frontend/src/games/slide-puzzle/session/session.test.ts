@@ -45,7 +45,7 @@ describe("slideSlidePuzzleSessionTile", () => {
 
     expect(result.puzzleState).toEqual(solvedBoard);
     expect(result.status).toBe("cleared");
-    expect(result.finishedAt).toBe(1_500);
+    expect(result.clearedAt).toBe(1_500);
   });
 
   test("空白と同じ行・列にないタイルでは同じ session を返すこと", () => {

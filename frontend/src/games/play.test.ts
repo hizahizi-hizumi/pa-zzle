@@ -17,7 +17,7 @@ import type { GameSessionStatus } from "@/games/session";
 type TestSession = {
   status: GameSessionStatus;
   startedAt: number;
-  finishedAt: number | null;
+  clearedAt: number | null;
 };
 
 type TestPlayState = {
@@ -29,12 +29,12 @@ type TestPlayState = {
 const playing: TestSession = {
   status: "playing",
   startedAt: 10_000,
-  finishedAt: null,
+  clearedAt: null,
 };
 const cleared: TestSession = {
   status: "cleared",
   startedAt: 10_000,
-  finishedAt: 12_500,
+  clearedAt: 12_500,
 };
 
 describe("applyPlaySession", () => {

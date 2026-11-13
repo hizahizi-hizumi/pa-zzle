@@ -56,7 +56,7 @@ export function createReflectionSession(
     puzzleState: createEmptyReflectionBoard(problem.size),
     selection: null,
     startedAt,
-    finishedAt: null,
+    clearedAt: null,
     inputCount: 0,
     relocationCount: 0,
     restartCount: 0,
@@ -131,7 +131,7 @@ function applyBoardChange(
     ...next,
     status: "cleared",
     selection: null,
-    finishedAt: operatedAt,
+    clearedAt: operatedAt,
   };
 }
 

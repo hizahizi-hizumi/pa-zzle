@@ -294,7 +294,7 @@ export function useMinesweeperPlay(
     status: session.status,
     progress: play.progress,
     startedAt: session.startedAt,
-    completedAt: session.finishedAt,
+    completedAt: session.clearedAt,
     elapsedMs,
     result,
     rows: session.problem.board.rows,
