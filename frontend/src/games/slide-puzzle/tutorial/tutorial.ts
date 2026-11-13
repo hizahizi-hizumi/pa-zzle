@@ -206,10 +206,7 @@ function getSlidePuzzleTutorialGoal(): SlidePuzzleTutorialBoardState {
   return { board: goalBoard, moveCount: 0, lastMove: null };
 }
 
-/**
- * 手を引いている間は、印のタイルだけをスライドさせる。手を離した後は本番と同じく、空白と同じ行・列のタイルはスライドする。
- * 空白と同じ行・列にないタイルは、同じ行・列のルールを示した後なら、手を引いている間も本番と同じくルールに合わない手として返す。
- */
+/** 手を引いている間は、印のタイルだけをスライドさせる。手を離した後は本番と同じく、空白と同じ行・列のタイルはスライドする。 */
 function performSlidePuzzleTutorialAction(
   { step, earnedRuleIds }: SlidePuzzleTutorialSituation,
   state: SlidePuzzleTutorialBoardState,
