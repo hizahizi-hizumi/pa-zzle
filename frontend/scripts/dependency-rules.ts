@@ -1,4 +1,5 @@
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
+import path from "node:path";
 
 /**
  * biome.json の overrides のうち、frontend/src の依存方向を表す部分を組み立てる。
@@ -29,11 +30,86 @@ export type BiomeOverride = {
   linter: { rules: Record<string, unknown> };
 };
 
+// 領域を追加するときは、名称と参照可能な領域・公開モジュールを一緒に定義する。
+const appAreaDependencies = {
+  navigation: [],
+  "game-integration": ["navigation"],
+  "game-home": ["navigation", "game-integration"],
+  shell: ["navigation", "game-integration", "game-home"],
+} as const;
+export const appAreas = Object.keys(appAreaDependencies);
+
+type FeatureArea =
+  | "records"
+  | "zukan"
+  | "collection"
+  | "random-play"
+  | "settings";
+
+// 別featureの内部実装ではなく、ここに明示した公開契約だけを参照する。
+const featurePublicImports: Record<
+  FeatureArea,
+  Partial<Record<FeatureArea, readonly string[]>>
+> = {
+  records: {},
+  zukan: {
+    records: [
+      "cleared-problem",
+      "play-attempt",
+      "play-record",
+      "play-record-definition",
+      "read-play-history",
+    ],
+  },
+  collection: { records: ["cleared-problem", "play-record"] },
+  "random-play": {
+    records: ["read-play-history"],
+    zukan: ["zukan-collection"],
+  },
+  settings: { "random-play": ["random-problem-settings"] },
+};
+export const featureAreas = Object.keys(featurePublicImports) as FeatureArea[];
+export const libAreas = ["audio"] as const;
+
+const sourceAreas = [
+  "app",
+  "assets",
+  "components",
+  "features",
+  "games",
+  "lib",
+  "pages",
+  "testing",
+  "views",
+] as const;
+
+const bunImport: RestrictedImportPattern = {
+  group: ["bun", "bun:*"],
+  message:
+    "[test-runtime/bun-import] frontend/src は Bun 固有モジュールへ依存しない。",
+};
+
 const absoluteImport: RestrictedImportPattern = {
   group: ["./**", "../**"],
   message:
     "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。",
 };
+
+const nonCanonicalImport: RestrictedImportPattern = {
+  group: ["@/../**", "@/**/../**", "@/**/./**", "@/**//**"],
+  message:
+    "[dependency/canonical-import] @/ の内部参照には . や .. を含めず、正規パスを使う。",
+};
+
+function withDirectoryPaths(group: readonly string[]): string[] {
+  return group.flatMap((pattern) =>
+    pattern.startsWith("!") ||
+    !pattern.endsWith("/**") ||
+    pattern.slice(0, -3).includes("*")
+      ? [pattern]
+      : [pattern.slice(0, -3), pattern],
+  );
+}
 
 function restrictImports(
   includes: string[],
@@ -47,7 +123,17 @@ function restrictImports(
           noRestrictedImports: {
             level: "error",
             // override は前の override の patterns を置き換えるので、全 override に絶対 import の規則を含める。
-            options: { patterns: [absoluteImport, ...patterns] },
+            options: {
+              patterns: [
+                absoluteImport,
+                nonCanonicalImport,
+                bunImport,
+                ...patterns,
+              ].map((pattern) => ({
+                ...pattern,
+                group: withDirectoryPaths(pattern.group),
+              })),
+            },
           },
         },
       },
@@ -55,11 +141,101 @@ function restrictImports(
   };
 }
 
+/** 登録された領域はすべて依存境界のoverrideを生成する。 */
+function createNewAreaOverrides(): BiomeOverride[] {
+  const upperLayerImports = ["@/pages/**", "@/views/**"];
+  function restrictArea(
+    source: string,
+    group: string[],
+    message: string,
+  ): BiomeOverride {
+    return restrictImports([source], [{ group, message }]);
+  }
+
+  return [
+    restrictArea(
+      "src/app/**/*.{ts,tsx}",
+      upperLayerImports,
+      "[dependency/app-boundary] app は pages・views へ逆依存しない。",
+    ),
+    ...appAreas.map((area) =>
+      restrictArea(
+        `src/app/${area}/**/*.{ts,tsx}`,
+        [
+          ...upperLayerImports,
+          ...appAreas
+            .filter(
+              (other) =>
+                other !== area &&
+                !(
+                  appAreaDependencies[
+                    area as keyof typeof appAreaDependencies
+                  ] as readonly string[]
+                ).includes(other),
+            )
+            .map((other) => `@/app/${other}/**`),
+        ],
+        `[dependency/app-${area}] ${area} は所有外のアプリ領域へ依存しない。`,
+      ),
+    ),
+    ...featureAreas.flatMap((area) => {
+      const boundaryPatterns: RestrictedImportPattern[] = [
+        {
+          group: [...upperLayerImports, "@/router", "@/app/**", "@/games/*/**"],
+          message: `[dependency/feature-${area}] 機能はアプリ・具体ゲーム内部へ逆依存しない。`,
+        },
+        ...featureAreas
+          .filter((other) => other !== area)
+          .map((other) => ({
+            group: [
+              `@/features/${other}/**`,
+              ...(featurePublicImports[area][other] ?? []).map(
+                (module) => `!@/features/${other}/${module}`,
+              ),
+            ],
+            message: `[dependency/feature-public-${area}] ${area} は ${other} の公開契約だけを参照する。`,
+          })),
+      ];
+      return [
+        restrictImports(
+          [`src/features/${area}/**/*.{ts,tsx}`],
+          boundaryPatterns,
+        ),
+        ...(area === "records"
+          ? [
+              restrictImports(
+                [
+                  "src/features/records/**/*.{ts,tsx}",
+                  "!src/features/records/hooks/**",
+                  "!src/features/records/ui/**",
+                ],
+                [
+                  ...boundaryPatterns,
+                  {
+                    group: [
+                      "@/components/**",
+                      "@/features/records/ui/**",
+                      "@/features/records/hooks/**",
+                      "react",
+                      "react*",
+                    ],
+                    message:
+                      "[dependency/records-core] 記録の中核は UI・hooks・React へ依存しない。",
+                  },
+                ],
+              ),
+            ]
+          : []),
+      ];
+    }),
+  ];
+}
+
 const gamesCommonBoundaryImports = [
   "@/components/**",
-  "@/game-catalog/**",
+  "@/app/**",
+  "@/features/**",
   "@/games/*/**",
-  "@/records/**",
   "@/views/**",
   "@/pages/**",
   "@/router",
@@ -74,10 +250,10 @@ function createApplicationLayerOverrides(): BiomeOverride[] {
         {
           group: [
             "@/components/**",
-            "@/game-catalog/**",
             "@/games/**",
             "@/lib/**",
-            "@/records/**",
+            "@/app/**",
+            "@/features/**",
           ],
           message:
             "[dependency/pages-boundary] pages はルートと View の対応だけを持ち、画面の依存は View が合成する。",
@@ -100,13 +276,13 @@ function createApplicationLayerOverrides(): BiomeOverride[] {
         {
           group: [
             "@/games/*/**",
-            "@/game-catalog/**",
-            "@/records/**",
+            "@/app/**",
+            "@/features/**",
             "@/views/**",
             "@/pages/**",
           ],
           message:
-            "[dependency/components-boundary] 共有コンポーネントは具体ゲーム・ゲームカタログ・記録・画面合成・pages へ依存しない。",
+            "[dependency/components-boundary] 共通UIは具体ゲーム・アプリ統合・機能内部・画面合成へ依存しない。",
         },
       ],
     ),
@@ -116,9 +292,9 @@ function createApplicationLayerOverrides(): BiomeOverride[] {
         {
           group: [
             "@/components/**",
-            "@/game-catalog/**",
             "@/games/**",
-            "@/records/**",
+            "@/app/**",
+            "@/features/**",
             "@/views/**",
             "@/pages/**",
             "@/router",
@@ -129,6 +305,7 @@ function createApplicationLayerOverrides(): BiomeOverride[] {
         },
       ],
     ),
+
     restrictImports(
       [
         "src/games/*.{ts,tsx}",
@@ -153,101 +330,7 @@ function createApplicationLayerOverrides(): BiomeOverride[] {
         },
       ],
     ),
-    restrictImports(
-      [
-        "src/records/**/*.{ts,tsx}",
-        "!src/records/hooks/**",
-        "!src/records/ui/**",
-      ],
-      [
-        {
-          group: [
-            "@/components/**",
-            "@/game-catalog/**",
-            "@/games/*/**",
-            "@/records/hooks/**",
-            "@/records/ui/**",
-            "@/views/**",
-            "@/pages/**",
-            "@/router",
-            "react*",
-          ],
-          message:
-            "[dependency/records-core-boundary] 記録の中核は具体ゲーム・React・UI・画面合成へ依存しない。",
-        },
-      ],
-    ),
-    restrictImports(
-      ["src/records/hooks/**/*.{ts,tsx}"],
-      [
-        {
-          group: [
-            "@/components/**",
-            "@/game-catalog/**",
-            "@/games/*/**",
-            "@/records/ui/**",
-            "@/views/**",
-            "@/pages/**",
-            "@/router",
-          ],
-          message:
-            "[dependency/records-hooks-boundary] 記録 hooks は記録中核を React へ接続し、具体ゲーム・UI・画面合成へ依存しない。",
-        },
-      ],
-    ),
-    restrictImports(
-      ["src/records/ui/**/*.{ts,tsx}"],
-      [
-        {
-          group: [
-            "@/game-catalog/**",
-            "@/games/*/**",
-            "@/views/**",
-            "@/pages/**",
-            "@/router",
-            "react-router",
-            "react-router/**",
-          ],
-          message:
-            "[dependency/records-ui-boundary] 記録 UI は具体ゲーム・画面合成・ルーティングへ逆依存しない。",
-        },
-      ],
-    ),
-    restrictImports(
-      ["src/zukan/**/*.{ts,tsx}", "!src/zukan/ui/**"],
-      [
-        {
-          group: [
-            "@/components/**",
-            "@/game-catalog/**",
-            "@/games/*/**",
-            "@/records/hooks/**",
-            "@/records/ui/**",
-            "@/views/**",
-            "@/pages/**",
-            "@/router",
-            "react*",
-          ],
-          message:
-            "[dependency/zukan-core-boundary] 図鑑の中核は具体ゲーム・ゲームカタログ・React・UI・画面合成へ依存しない。",
-        },
-      ],
-    ),
-    restrictImports(
-      ["src/zukan/ui/**/*.{ts,tsx}"],
-      [
-        {
-          group: [
-            "@/game-catalog/**",
-            "@/games/*/**",
-            "@/views/**",
-            "@/pages/**",
-          ],
-          message:
-            "[dependency/zukan-ui-boundary] 図鑑 UI は具体ゲーム・ゲームカタログ・画面合成・pages へ逆依存しない。",
-        },
-      ],
-    ),
+    ...createNewAreaOverrides(),
     {
       includes: [
         "src/pages/**/*.{ts,tsx}",
@@ -278,16 +361,15 @@ function concreteGameBoundary(
 ): RestrictedImportPattern {
   return {
     group: [
-      "@/game-catalog/**",
-      "@/records/hooks/**",
-      "@/records/ui/**",
+      "@/app/**",
+      "@/features/**",
       ...allowedImports.map((allowed) => `!${allowed}`),
       "@/views/**",
       "@/pages/**",
       "@/router",
     ],
     message:
-      "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。",
+      "[dependency/concrete-game-boundary] ゲーム固有の処理はアプリ統合・記録UI・画面合成・ルートへ逆依存しない。",
   };
 }
 
@@ -302,11 +384,25 @@ function createConcreteGameOverrides(
 
   return [
     restrictImports(gameFiles("**/*.{ts,tsx}"), boundary),
-    restrictImports(gameFiles("ui/play-record-display.ts"), [
-      // 記録表示の定義は、記録 UI が受け取る表示契約へゲームを接続する。
-      concreteGameBoundary(["@/records/ui/play-record-display"]),
-      crossGame,
-    ]),
+    restrictImports(
+      [
+        "play-record.ts",
+        "play-record.test.ts",
+        "play-attempt.ts",
+        "ui/play-record-display.ts",
+        "ui/play-record-display.test.ts",
+      ].flatMap(gameFiles),
+      [
+        // 記録に関するゲームのアダプターだけが共通記録契約へ接続する。
+        concreteGameBoundary([
+          "@/features/records/play-record",
+          "@/features/records/play-record-definition",
+          "@/features/records/play-attempt",
+          "@/features/records/ui/play-record-display",
+        ]),
+        crossGame,
+      ],
+    ),
     restrictImports(gameFiles("puzzle/**/*.{ts,tsx}"), [
       ...boundary,
       {
@@ -345,7 +441,7 @@ function createConcreteGameOverrides(
           gameImport("tutorial/**"),
           gameImport("ui/**"),
           gameImport("play-record"),
-          "@/records/**",
+          "@/features/records/**",
           "react*",
         ],
         message:
@@ -362,7 +458,7 @@ function createConcreteGameOverrides(
           gameImport("play/**"),
           gameImport("ui/**"),
           gameImport("play-record"),
-          "@/records/**",
+          "@/features/records/**",
           "react*",
         ],
         message:
@@ -386,25 +482,15 @@ function createConcreteGameOverrides(
   ];
 }
 
-const gameCatalogBoundary: RestrictedImportPattern = {
-  group: ["@/views/**", "@/pages/**"],
-  message:
-    "[dependency/game-catalog-boundary] ゲームカタログは画面合成・pages へ逆依存しない。",
-};
-
-function createGameCatalogOverrides(games: readonly string[]): BiomeOverride[] {
-  return [
-    restrictImports(["src/game-catalog/**/*.{ts,tsx}"], [gameCatalogBoundary]),
-    ...games.map((game) =>
-      restrictImports(
-        [`src/game-catalog/${game}/**/*.{ts,tsx}`],
-        [
-          gameCatalogBoundary,
-          crossGamePattern(games, game, ["games", "game-catalog"]),
-        ],
-      ),
+function createGameIntegrationOverrides(
+  games: readonly string[],
+): BiomeOverride[] {
+  return games.map((game) =>
+    restrictImports(
+      [`src/app/game-integration/${game}/**/*.{ts,tsx}`],
+      [crossGamePattern(games, game, ["games", "app/game-integration"])],
     ),
-  ];
+  );
 }
 
 function createTestOverride(): BiomeOverride {
@@ -413,19 +499,6 @@ function createTestOverride(): BiomeOverride {
     linter: {
       rules: {
         style: {
-          noRestrictedImports: {
-            level: "error",
-            options: {
-              patterns: [
-                absoluteImport,
-                {
-                  group: ["bun", "bun:*"],
-                  message:
-                    "[test-runtime/bun-import] テストは bun:test / Bun 固有モジュールへ依存しない。",
-                },
-              ],
-            },
-          },
           noRestrictedGlobals: {
             level: "error",
             options: {
@@ -446,9 +519,31 @@ export function createDependencyRuleOverrides(
   return [
     ...createApplicationLayerOverrides(),
     ...games.flatMap((game) => createConcreteGameOverrides(games, game)),
-    ...createGameCatalogOverrides(games),
+    ...createGameIntegrationOverrides(games),
+    restrictImports(["src/**/*.test.mjs"], []),
     createTestOverride(),
   ];
+}
+
+/** 新しい責務ディレクトリを登録せずに追加するとCIで検出する。 */
+export function listUnregisteredSourceAreas(sourceDirectory: string): string[] {
+  const registered: readonly [string, readonly string[]][] = [
+    [".", sourceAreas],
+    ["app", appAreas],
+    ["features", featureAreas],
+    ["lib", libAreas],
+  ];
+  return registered.flatMap(([directory, areas]) => {
+    const location = path.join(sourceDirectory, directory);
+    if (!existsSync(location)) {
+      return [];
+    }
+    return readdirSync(location, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory() && !areas.includes(entry.name))
+      .map((entry) =>
+        path.posix.join(directory, entry.name).replace(/^\.\//, ""),
+      );
+  });
 }
 
 /** `src/games/` 直下のディレクトリを具体ゲームとして名前順に返す。 */
