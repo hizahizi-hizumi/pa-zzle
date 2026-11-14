@@ -10,10 +10,8 @@ import {
   SkipBack,
   Wrench,
 } from "lucide-react";
-import { useState } from "react";
 
 import { withPlayStartSound } from "@/components/app-decision-sound";
-import { SettingsDialog } from "@/components/SettingsDialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,6 +31,7 @@ type PlayMenuProps = {
   onBackToAppHome: () => void;
   onOpenHowToPlay?: () => void;
   onOpenTutorial?: () => void;
+  onOpenSettings: () => void;
   onOpenDiagnostics?: () => void;
 };
 
@@ -45,82 +44,78 @@ export function PlayMenu({
   onBackToAppHome,
   onOpenHowToPlay,
   onOpenTutorial,
+  onOpenSettings,
   onOpenDiagnostics,
 }: PlayMenuProps) {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-lg"
-            aria-label="その他の操作"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-lg"
+          aria-label="その他の操作"
+        >
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {onRestart && (
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={!canRestart}
+            onSelect={onRestart}
           >
-            <MoreHorizontal />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {onRestart && (
-            <DropdownMenuItem
-              variant="destructive"
-              disabled={!canRestart}
-              onSelect={onRestart}
-            >
-              <SkipBack />
-              {PLAY_OPERATION_LABELS.restart}
-            </DropdownMenuItem>
-          )}
-          {onReplay && (
-            <DropdownMenuItem variant="destructive" onSelect={onReplay}>
-              <RotateCcw />
-              {PLAY_OPERATION_LABELS.replay}
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem onSelect={withPlayStartSound(onStartNewProblem)}>
-            <Play />
-            {PLAY_OPERATION_LABELS.startNewProblem}
+            <SkipBack />
+            {PLAY_OPERATION_LABELS.restart}
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={onOpenGameHome}>
-            <Grid2x2 />
-            問題選択
+        )}
+        {onReplay && (
+          <DropdownMenuItem variant="destructive" onSelect={onReplay}>
+            <RotateCcw />
+            {PLAY_OPERATION_LABELS.replay}
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={onBackToAppHome}>
-            <Home />
-            パズル選択
+        )}
+        <DropdownMenuItem onSelect={withPlayStartSound(onStartNewProblem)}>
+          <Play />
+          {PLAY_OPERATION_LABELS.startNewProblem}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={onOpenGameHome}>
+          <Grid2x2 />
+          問題選択
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={onBackToAppHome}>
+          <Home />
+          パズル選択
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {onOpenHowToPlay && (
+          <DropdownMenuItem onSelect={onOpenHowToPlay}>
+            <CircleHelp />
+            遊び方
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {onOpenHowToPlay && (
-            <DropdownMenuItem onSelect={onOpenHowToPlay}>
-              <CircleHelp />
-              遊び方
+        )}
+        {onOpenTutorial && (
+          <DropdownMenuItem onSelect={onOpenTutorial}>
+            <Pointer />
+            チュートリアル
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onSelect={onOpenSettings}>
+          <Settings />
+          設定
+        </DropdownMenuItem>
+        {onOpenDiagnostics && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onOpenDiagnostics}>
+              <Wrench />
+              検証情報
             </DropdownMenuItem>
-          )}
-          {onOpenTutorial && (
-            <DropdownMenuItem onSelect={onOpenTutorial}>
-              <Pointer />
-              チュートリアル
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem onSelect={() => setSettingsOpen(true)}>
-            <Settings />
-            設定
-          </DropdownMenuItem>
-          {onOpenDiagnostics && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={onOpenDiagnostics}>
-                <Wrench />
-                検証情報
-              </DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-    </>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

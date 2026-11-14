@@ -59,6 +59,7 @@ export function SlidePuzzlePlay({
   onOpenGameHome,
   onBackToAppHome,
   onOpenDiagnostics,
+  renderSettingsDialog,
 }: SlidePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
   useSlidePuzzleSoundEffects(operation, progress, board.length - 1);
@@ -113,6 +114,7 @@ export function SlidePuzzlePlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
+      renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (
         <SlidePuzzleHowToPlayDialog open={open} onClose={onClose} />
       )}

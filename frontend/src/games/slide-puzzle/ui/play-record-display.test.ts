@@ -1,6 +1,6 @@
+import { getPlayRecordMetricValue } from "@/features/records/play-record-definition";
 import { createSlidePuzzlePlayRecord } from "@/games/slide-puzzle/play-record";
 import { slidePuzzlePlayRecordDisplay } from "@/games/slide-puzzle/ui/play-record-display";
-import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const record = createSlidePuzzlePlayRecord({
   difficulty: "3",

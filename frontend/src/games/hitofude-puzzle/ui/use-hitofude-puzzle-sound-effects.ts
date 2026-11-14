@@ -15,7 +15,6 @@ import {
   useOperationSound,
   usePrepareSoundEffects,
 } from "@/games/play-sound-effects";
-import { prefersReducedMotion } from "@/lib/motion";
 import {
   defineSoundEffect,
   playLayeredSound,
@@ -23,7 +22,8 @@ import {
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
   type SoundLayer,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /** 道を1マス延ばす、ペン先が次の点に触れる小さく上がる音。 */
 const pathExtendedSound = defineSoundEffect(pathExtendedSoundUrl);

@@ -1,17 +1,17 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { hitofudePuzzleCatalogEntry } from "@/game-catalog/hitofude-puzzle/hitofude-puzzle-catalog-entry";
+import { hitofudePuzzleCatalogEntry } from "@/app/game-integration/hitofude-puzzle/hitofude-puzzle-catalog-entry";
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
 import { HitofudePuzzleHomeView } from "@/views/HitofudePuzzleHomeView";
 
 // 画面のつなぎを確かめるのに問題集の全問は要らず、全問の台紙を描くと重いので、各レベルの先頭の数問に絞る。
 vi.mock(
-  "@/game-catalog/hitofude-puzzle/hitofude-puzzle-catalog-entry",
+  "@/app/game-integration/hitofude-puzzle/hitofude-puzzle-catalog-entry",
   async (importOriginal) => {
     const { hitofudePuzzleCatalogEntry } =
       await importOriginal<
-        typeof import("@/game-catalog/hitofude-puzzle/hitofude-puzzle-catalog-entry")
+        typeof import("@/app/game-integration/hitofude-puzzle/hitofude-puzzle-catalog-entry")
       >();
     return {
       hitofudePuzzleCatalogEntry: {

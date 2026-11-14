@@ -60,6 +60,7 @@ export function WaterSortPlay({
   onOpenGameHome,
   onBackToAppHome,
   onOpenDiagnostics,
+  renderSettingsDialog,
 }: WaterSortPlayProps) {
   const [hasActivePourAnimation, setHasActivePourAnimation] = useState(false);
   const showDeadlockNotice = isDeadlocked && !hasActivePourAnimation;
@@ -83,6 +84,7 @@ export function WaterSortPlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
+      renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (
         <WaterSortHowToPlayDialog open={open} onClose={onClose} />
       )}

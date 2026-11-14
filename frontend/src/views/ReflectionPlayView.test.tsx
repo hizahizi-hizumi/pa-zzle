@@ -13,13 +13,12 @@ import {
   Routes,
   useLocation,
 } from "react-router";
-
+import { readPlayRecords } from "@/features/records/storage";
 import { createProblemId } from "@/games/problem-id";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
 import type { ReflectionBoard } from "@/games/reflection/puzzle/board";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
-import { readPlayRecords } from "@/records/storage";
 import { PlayResultView } from "@/views/PlayResultView";
 import { ReflectionPlayView } from "@/views/ReflectionPlayView";
 

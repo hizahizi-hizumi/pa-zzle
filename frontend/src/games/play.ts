@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import {
   type GameSession,
   type GameSessionStatus,
@@ -148,6 +148,10 @@ export type GamePlayScreenProps<Difficulty, Result> = Omit<
   result: Result | null;
   onReplay: () => void;
   onClearAnimationComplete: () => void;
+  renderSettingsDialog: (control: {
+    open: boolean;
+    onClose: () => void;
+  }) => ReactNode;
 };
 
 export type RestartableGamePlayScreenProps = {

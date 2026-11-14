@@ -1,12 +1,12 @@
 import { useLocation } from "react-router";
-import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
+import { PlayableSlidePuzzle } from "@/app/game-integration/slide-puzzle/PlayableSlidePuzzle";
+import { slidePuzzleCatalogEntry } from "@/app/game-integration/slide-puzzle/slide-puzzle-catalog-entry";
+import { useRandomPlayEntry } from "@/app/game-integration/use-random-play-entry";
 import {
   readAvoidedProblemId,
   readRandomPlaySerial,
-} from "@/game-catalog/play-location-state";
-import { PlayableSlidePuzzle } from "@/game-catalog/slide-puzzle/PlayableSlidePuzzle";
-import { slidePuzzleCatalogEntry } from "@/game-catalog/slide-puzzle/slide-puzzle-catalog-entry";
-import { useRandomPlayEntry } from "@/game-catalog/use-random-play-entry";
+} from "@/app/navigation/play-location-state";
+import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 

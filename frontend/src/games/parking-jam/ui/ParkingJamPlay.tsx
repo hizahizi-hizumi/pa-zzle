@@ -68,6 +68,7 @@ export function ParkingJamPlay({
   onBackToAppHome,
   onClearAnimationComplete,
   onOpenDiagnostics,
+  renderSettingsDialog,
 }: ParkingJamPlayProps) {
   useParkingJamSoundEffects(operation, progress);
 
@@ -89,6 +90,7 @@ export function ParkingJamPlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
+      renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (
         <ParkingJamHowToPlayDialog open={open} onClose={onClose} />
       )}

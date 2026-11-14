@@ -9,10 +9,10 @@ import {
 
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
 import { HitofudePuzzleTutorial } from "@/games/hitofude-puzzle/ui/HitofudePuzzleTutorial";
-import { playLayeredSound, playSound } from "@/lib/sound-effects";
+import { playLayeredSound, playSound } from "@/lib/audio/sound-effects";
 
-vi.mock("@/lib/sound-effects", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/sound-effects")>()),
+vi.mock("@/lib/audio/sound-effects", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/audio/sound-effects")>()),
   playSound: vi.fn(),
   playLayeredSound: vi.fn(),
 }));

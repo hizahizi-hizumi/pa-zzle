@@ -1,6 +1,6 @@
+import type { PlayAttemptProgress } from "@/features/records/play-attempt";
 import { getSessionElapsedMs } from "@/games/session";
 import type { WaterSortSession } from "@/games/water-sort/session/session";
-import type { PlayAttemptProgress } from "@/records/play-attempt";
 
 export function createWaterSortPlayAttemptProgress(
   session: WaterSortSession,

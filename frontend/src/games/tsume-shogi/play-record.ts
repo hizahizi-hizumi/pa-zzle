@@ -1,3 +1,8 @@
+import {
+  createPlayRecordId,
+  type PlayRecord,
+} from "@/features/records/play-record";
+import type { PlayRecordDefinition } from "@/features/records/play-record-definition";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
 import {
@@ -26,8 +31,6 @@ import {
   isNonNegativeInteger,
   isRecordObject,
 } from "@/lib/type-guards";
-import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const TSUME_SHOGI_GAME_ID = "tsume-shogi";
 const TSUME_SHOGI_PLAY_RECORD_PAYLOAD_VERSION = 1;

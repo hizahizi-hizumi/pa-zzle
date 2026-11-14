@@ -1,8 +1,11 @@
 import { useEffect, useEffectEvent, useLayoutEffect, useRef } from "react";
 
 import type { GameProgress } from "@/games/play";
+import {
+  prepareSoundEffects,
+  type SoundEffect,
+} from "@/lib/audio/sound-effects";
 import { prefersReducedMotion } from "@/lib/motion";
-import { prepareSoundEffects, type SoundEffect } from "@/lib/sound-effects";
 
 /**
  * 効果音を鳴らしうる画面を出したときに、その効果音の読み込みを始め、次の操作で音を出せるようにする。
@@ -27,7 +30,7 @@ export type SoundOperation = {
  * プレイ画面 `<Game>Play` で呼ぶ。
  *
  * - `operation` はプレイフックが返す今の操作の知らせ。
- * - `playOperationSound` は知らせの種類で音を選び、`@/lib/sound-effects` の `playSound` で鳴らす。
+ * - `playOperationSound` は知らせの種類で音を選び、`@/lib/audio/sound-effects` の `playSound` で鳴らす。
  *   毎回作り直す関数を渡してよい。
  * - 知らせが複数の種類を持つなら、1つの関数の中で振り分ける。
  *

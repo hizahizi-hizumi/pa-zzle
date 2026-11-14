@@ -1,14 +1,14 @@
 import {
-  getDifficultyLabel,
-  parseRecordedDifficulty,
-} from "@/games/difficulty";
-import { parkingJamPlayRecordDefinition } from "@/games/parking-jam/play-record";
-import {
   createCountMetricPresentation,
   createPlayRecordDisplay,
   playScoreMetricPresentation,
   timeDeltaMetricPresentation,
-} from "@/records/ui/play-record-display";
+} from "@/features/records/ui/play-record-display";
+import {
+  getDifficultyLabel,
+  parseRecordedDifficulty,
+} from "@/games/difficulty";
+import { parkingJamPlayRecordDefinition } from "@/games/parking-jam/play-record";
 
 export const parkingJamPlayRecordDisplay = createPlayRecordDisplay({
   definition: parkingJamPlayRecordDefinition,

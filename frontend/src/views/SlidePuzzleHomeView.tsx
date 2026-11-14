@@ -1,9 +1,9 @@
-import { useGameHome } from "@/game-catalog/game-home";
-import { slidePuzzleCatalogEntry } from "@/game-catalog/slide-puzzle/slide-puzzle-catalog-entry";
+import { GameHomeScreen } from "@/app/game-home/GameHomeScreen";
+import { useGameHome } from "@/app/game-home/game-home";
+import { slidePuzzleCatalogEntry } from "@/app/game-integration/slide-puzzle/slide-puzzle-catalog-entry";
 import { SlidePuzzleGround } from "@/games/slide-puzzle/ui/SlidePuzzleGround";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
 import { SlidePuzzleTutorial } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial";
-import { GameHomeScreen } from "@/zukan/ui/GameHomeScreen";
 
 export function SlidePuzzleHomeView() {
   const { screenProps } = useGameHome(slidePuzzleCatalogEntry);

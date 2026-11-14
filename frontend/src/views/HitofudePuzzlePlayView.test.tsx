@@ -13,7 +13,8 @@ import {
   Routes,
   useLocation,
 } from "react-router";
-
+import { readPlayAttempts } from "@/features/records/play-attempt-storage";
+import { readPlayRecords } from "@/features/records/storage";
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
 import {
@@ -21,8 +22,6 @@ import {
   selectHitofudePuzzleProblemForDifficulty,
 } from "@/games/hitofude-puzzle/problem-selection";
 import { createProblemId } from "@/games/problem-id";
-import { readPlayAttempts } from "@/records/play-attempt-storage";
-import { readPlayRecords } from "@/records/storage";
 import { HitofudePuzzlePlayView } from "@/views/HitofudePuzzlePlayView";
 import { PlayResultView } from "@/views/PlayResultView";
 

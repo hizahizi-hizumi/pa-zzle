@@ -1,3 +1,6 @@
+import type { PlayRecord } from "@/features/records/play-record";
+import { createPlayRecordId } from "@/features/records/play-record";
+import type { PlayRecordDefinition } from "@/features/records/play-record-definition";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
@@ -20,9 +23,6 @@ import {
   isNonNegativeInteger,
   isRecordObject,
 } from "@/lib/type-guards";
-import type { PlayRecord } from "@/records/play-record";
-import { createPlayRecordId } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const MINESWEEPER_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const MINESWEEPER_GAME_ID = "minesweeper";

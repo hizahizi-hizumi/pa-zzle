@@ -1,6 +1,6 @@
+import type { PlayAttemptProgress } from "@/features/records/play-attempt";
 import type { ParkingJamSession } from "@/games/parking-jam/session/session";
 import { getSessionElapsedMs } from "@/games/session";
-import type { PlayAttemptProgress } from "@/records/play-attempt";
 
 /** 離れた時点までの実測値。評価値は保存しない。 */
 export function createParkingJamPlayAttemptProgress(

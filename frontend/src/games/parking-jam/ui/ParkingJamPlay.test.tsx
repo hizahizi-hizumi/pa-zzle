@@ -48,6 +48,7 @@ function createProps(): ComponentProps<typeof ParkingJamPlay> {
     onOpenGameHome: vi.fn(),
     onBackToAppHome: vi.fn(),
     onClearAnimationComplete: vi.fn(),
+    renderSettingsDialog: () => null,
     onOpenDiagnostics: vi.fn(),
   };
 }

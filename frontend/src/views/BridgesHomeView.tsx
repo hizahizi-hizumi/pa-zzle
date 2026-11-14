@@ -1,9 +1,9 @@
-import { bridgesCatalogEntry } from "@/game-catalog/bridges/bridges-catalog-entry";
-import { useGameHome } from "@/game-catalog/game-home";
+import { GameHomeScreen } from "@/app/game-home/GameHomeScreen";
+import { useGameHome } from "@/app/game-home/game-home";
+import { bridgesCatalogEntry } from "@/app/game-integration/bridges/bridges-catalog-entry";
 import { BridgesGround } from "@/games/bridges/ui/BridgesGround";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
-import { GameHomeScreen } from "@/zukan/ui/GameHomeScreen";
 
 export function BridgesHomeView() {
   const { screenProps } = useGameHome(bridgesCatalogEntry);

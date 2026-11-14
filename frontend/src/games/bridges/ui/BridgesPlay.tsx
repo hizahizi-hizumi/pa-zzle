@@ -63,6 +63,7 @@ export function BridgesPlay({
   onOpenGameHome,
   onBackToAppHome,
   onOpenDiagnostics,
+  renderSettingsDialog,
 }: BridgesPlayProps) {
   useBridgesSoundEffects(edgeNotice, progress, board, bridges);
   // 盤面ごとに待ち直すので、組の数ではなく今の盤面の橋の並びで、続いた盤面かを見分ける。
@@ -106,6 +107,7 @@ export function BridgesPlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
+      renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (
         <BridgesHowToPlayDialog open={open} onClose={onClose} />
       )}

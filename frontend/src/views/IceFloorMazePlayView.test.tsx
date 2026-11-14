@@ -12,7 +12,9 @@ import {
   RouterProvider,
 } from "react-router";
 
-import { createPlayLocationState } from "@/game-catalog/play-location-state";
+import { createPlayLocationState } from "@/app/navigation/play-location-state";
+import { readPlayAttempts } from "@/features/records/play-attempt-storage";
+import { readPlayRecords } from "@/features/records/storage";
 import { isIceFloorMazeBoardShapeOfDifficulty } from "@/games/ice-floor-maze/difficulty";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
 import type {
@@ -27,8 +29,6 @@ import {
 } from "@/games/ice-floor-maze/puzzle/stop-graph";
 import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";
-import { readPlayAttempts } from "@/records/play-attempt-storage";
-import { readPlayRecords } from "@/records/storage";
 import { IceFloorMazePlayView } from "@/views/IceFloorMazePlayView";
 import { PlayResultView } from "@/views/PlayResultView";
 

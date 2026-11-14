@@ -1,3 +1,4 @@
+import type { PlayRecord } from "@/features/records/play-record";
 import {
   createMinesweeperPlayRecord,
   getMinesweeperPlayRecordScore,
@@ -11,7 +12,6 @@ import {
   calculateMinesweeperSpeedScoreRule,
   calculateMinesweeperTimeDeltaMs,
 } from "@/games/minesweeper/score";
-import type { PlayRecord } from "@/records/play-record";
 
 function createRecord() {
   return createMinesweeperPlayRecord({

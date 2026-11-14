@@ -1,12 +1,12 @@
 import { useLocation } from "react-router";
-import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
+import { PlayableTakuzu } from "@/app/game-integration/takuzu/PlayableTakuzu";
+import { takuzuCatalogEntry } from "@/app/game-integration/takuzu/takuzu-catalog-entry";
+import { useRandomPlayEntry } from "@/app/game-integration/use-random-play-entry";
 import {
   readAvoidedProblemId,
   readRandomPlaySerial,
-} from "@/game-catalog/play-location-state";
-import { PlayableTakuzu } from "@/game-catalog/takuzu/PlayableTakuzu";
-import { takuzuCatalogEntry } from "@/game-catalog/takuzu/takuzu-catalog-entry";
-import { useRandomPlayEntry } from "@/game-catalog/use-random-play-entry";
+} from "@/app/navigation/play-location-state";
+import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 

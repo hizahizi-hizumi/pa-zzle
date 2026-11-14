@@ -6,7 +6,7 @@ import {
   defineSoundEffect,
   playSound,
   REPEATED_SOUND_VARIATION,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
 
 const gameSelectSound = defineSoundEffect(gameSelectSoundUrl);
 

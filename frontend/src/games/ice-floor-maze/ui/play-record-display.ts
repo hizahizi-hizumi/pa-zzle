@@ -1,11 +1,11 @@
-import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
-import { iceFloorMazePlayRecordDefinition } from "@/games/ice-floor-maze/play-record";
 import {
   createPlayRecordDisplay,
   moveDeltaMetricPresentation,
   playScoreMetricPresentation,
   timeDeltaMetricPresentation,
-} from "@/records/ui/play-record-display";
+} from "@/features/records/ui/play-record-display";
+import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
+import { iceFloorMazePlayRecordDefinition } from "@/games/ice-floor-maze/play-record";
 
 export const iceFloorMazePlayRecordDisplay = createPlayRecordDisplay({
   definition: iceFloorMazePlayRecordDefinition,

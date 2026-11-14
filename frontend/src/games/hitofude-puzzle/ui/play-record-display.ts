@@ -1,11 +1,11 @@
-import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
-import { hitofudePuzzlePlayRecordDefinition } from "@/games/hitofude-puzzle/play-record";
 import {
   createCountMetricPresentation,
   createPlayRecordDisplay,
   playScoreMetricPresentation,
   timeDeltaMetricPresentation,
-} from "@/records/ui/play-record-display";
+} from "@/features/records/ui/play-record-display";
+import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
+import { hitofudePuzzlePlayRecordDefinition } from "@/games/hitofude-puzzle/play-record";
 
 export const hitofudePuzzlePlayRecordDisplay = createPlayRecordDisplay({
   definition: hitofudePuzzlePlayRecordDefinition,

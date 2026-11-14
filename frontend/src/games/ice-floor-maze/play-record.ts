@@ -1,3 +1,8 @@
+import {
+  createPlayRecordId,
+  type PlayRecord,
+} from "@/features/records/play-record";
+import type { PlayRecordDefinition } from "@/features/records/play-record-definition";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import {
   type IceFloorMazeDifficulty,
@@ -25,8 +30,6 @@ import {
   isPositiveInteger,
   isRecordObject,
 } from "@/lib/type-guards";
-import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const ICE_FLOOR_MAZE_GAME_ID = "ice-floor-maze";
 const ICE_FLOOR_MAZE_PLAY_RECORD_PAYLOAD_VERSION = 1;

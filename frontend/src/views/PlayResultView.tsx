@@ -3,14 +3,14 @@ import { useLocation } from "react-router";
 import {
   findGameCatalogEntry,
   findRecordProblemPlayDestination,
-} from "@/game-catalog/game-catalog";
+} from "@/app/game-integration/game-catalog";
 import {
   createGameNavigation,
   openRecordProblemPlay,
-} from "@/game-catalog/game-navigation";
-import { readRecordSaveOutcome } from "@/game-catalog/record-result-location-state";
-import { findPlayRecord } from "@/records/storage";
-import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
+} from "@/app/game-integration/game-navigation";
+import { readRecordSaveOutcome } from "@/app/navigation/record-result-location-state";
+import { findPlayRecord } from "@/features/records/storage";
+import { createResultRecordFeedback } from "@/features/records/ui/result-record-feedback";
 import { Link, useNavigate, useParams } from "@/router";
 
 export function PlayResultView() {

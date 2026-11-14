@@ -1,8 +1,8 @@
-import { loadSoundEffects, type SoundEffect } from "@/lib/sound-effects";
+import { loadSoundEffects, type SoundEffect } from "@/lib/audio/sound-effects";
 import {
   isSoundEffectsEnabled,
   soundEffectsVolumeSetting,
-} from "@/lib/sound-effects-setting";
+} from "@/lib/audio/sound-effects-setting";
 
 export type AppLaunchTitle =
   | { status: "hidden" }

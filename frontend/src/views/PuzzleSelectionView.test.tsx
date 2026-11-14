@@ -6,17 +6,16 @@ import {
   screen,
 } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
-
+import {
+  _private as gameOrderPrivate,
+  gameSelectionOrderSetting,
+} from "@/features/settings/game-selection-order-setting";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 import { _private, startAppLaunch } from "@/lib/app-launch";
-import {
-  _private as gameOrderPrivate,
-  gameSelectionOrderSetting,
-} from "@/lib/game-selection-order-setting";
 import { PuzzleSelectionView } from "@/views/PuzzleSelectionView";
 
 vi.mock("@/lib/internal-diagnostics", () => ({
