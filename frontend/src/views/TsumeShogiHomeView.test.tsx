@@ -1,17 +1,17 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { tsumeShogiCatalogEntry } from "@/game-catalog/tsume-shogi/tsume-shogi-catalog-entry";
+import { tsumeShogiCatalogEntry } from "@/app/game-integration/tsume-shogi/tsume-shogi-catalog-entry";
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
 import { TsumeShogiHomeView } from "@/views/TsumeShogiHomeView";
 
 // 画面のつなぎを確かめるのに問題集の全問は要らず、全問の台紙を描くと重いので、各レベルの先頭の数問に絞る。
 vi.mock(
-  "@/game-catalog/tsume-shogi/tsume-shogi-catalog-entry",
+  "@/app/game-integration/tsume-shogi/tsume-shogi-catalog-entry",
   async (importOriginal) => {
     const { tsumeShogiCatalogEntry } =
       await importOriginal<
-        typeof import("@/game-catalog/tsume-shogi/tsume-shogi-catalog-entry")
+        typeof import("@/app/game-integration/tsume-shogi/tsume-shogi-catalog-entry")
       >();
     return {
       tsumeShogiCatalogEntry: {

@@ -1,7 +1,7 @@
 ---
 paths:
   - "frontend/src/games/**/*.{ts,tsx}"
-  - "frontend/src/game-catalog/**/*.{ts,tsx}"
+  - "frontend/src/app/game-integration/**/*.{ts,tsx}"
   - "frontend/src/views/*HomeView.tsx"
 ---
 
@@ -109,11 +109,11 @@ frontend/src/games/
 - 共通モジュールは仕組みを一つにする。演出の時間・量、採点の係数など、ゲームの表現に属する値はゲームが渡し、共通モジュールに固定しない。
 - `score.ts` の評価関数は `games/score.ts` の `PlayScore` を返す。評価項目は `ScoreItem` の名前を使い、満点は `ScoreMaximums` で結果画面に出す順に並べる。
 - 速さは `games/score.ts` の `SpeedScoreRule` と `calculateSpeedScore` で採点する。各ゲームは `calculate<Game>SpeedScoreRule` と `calculate<Game>TimeDeltaMs` を置き、結果に `speedRule` と `timeDeltaMs` を含める。
-- 記録定義の自己ベストの指標には、評価点を `records/play-record-definition.ts` の `PLAY_SCORE_METRIC_ID`（`play-score`）の高いほど良い指標として含める。図鑑は、この指標で問題ごとの最高スコアを求める。
+- 記録定義の自己ベストの指標には、評価点を `features/records/play-record-definition.ts` の `PLAY_SCORE_METRIC_ID`（`play-score`）の高いほど良い指標として含める。図鑑は、この指標で問題ごとの最高スコアを求める。
 - 時間の自己ベストは `time-delta-ms`（基準時間との差）で比べる。今の採点規則で評価できない記録は記録一覧に残し、評価と自己ベストの値を `null` にする。
 - 操作（待った・盤面を戻す・リセット・別の問題）と評価項目の呼び名は `games/play-vocabulary.ts` から使い、文字列で書かない。
 - 結果画面の指標は `components/game-result-metrics.ts`、採点基準の文は `components/game-result-score-criteria.ts` で組み立てる。数には単位を付け、採点基準の文は常体で書く。丸めの注記は共通の結果画面が出す。
-- 記録表示の指標は `records/ui/play-record-display.ts` の共通の指標表示を使う。自己ベストの改善量の書き方は指標表示の `formatImprovement` が持つ。
+- 記録表示の指標は `features/records/ui/play-record-display.ts` の共通の指標表示を使う。自己ベストの改善量の書き方は指標表示の `formatImprovement` が持つ。
 
 ## session と play の共通契約
 
@@ -147,13 +147,13 @@ frontend/src/games/
 
 ## 効果音
 
-- ゲームの効果音は題材から作った音声ファイルを `assets/` に同梱し、`@/lib/sound-effects` の `playSound` で鳴らす。音の中身をコードで合成しない。回数の多い操作の音には `REPEATED_SOUND_VARIATION` を渡す。
+- ゲームの効果音は題材から作った音声ファイルを `assets/` に同梱し、`@/lib/audio/sound-effects` の `playSound` で鳴らす。音の中身をコードで合成しない。回数の多い操作の音には `REPEATED_SOUND_VARIATION` を渡す。
 - 音声ファイルは FLAC にする。アプリはタイトルで、同梱した FLAC を `frontend/src/frontend.tsx` の `import.meta.glob` ですべて読み込んでから入る（SPEC-022）。ほかの形式の音は前もって読み込まれず、FLAC の合計の大きさは入るまでの待ちに効く。
 - プレイ画面は、盤面操作の音を `games/play-sound-effects.ts` の `useOperationSound` で、プレイフックが返す `id` 付きの操作の知らせから鳴らす。クリア音は `useClearSound` で完成演出の始まりに鳴らす。
 - 動きを減らす設定では、不成立の動きが出ず画面が何も変わらない操作の音と、完成演出が無くすぐ結果へ進むときのクリア音を鳴らさない。完成した盤面を保持して見せるゲームだけ、その姿に合わせたクリア音を `useClearSound` へ渡す。
 - 結果を受け取る瞬間の報酬の音はアプリが `usePlayableGame` で鳴らすので、ゲームは鳴らさない。
 - ゲームを選ぶ・プレイを始める音はアプリの共通部品（ゲームのホームの「ランダムに遊ぶ」と図鑑の「遊ぶ」、ゲームのホームから開いたチュートリアルを終えて遊び始める操作、結果画面、プレイ中のメニュー）が `@/components/app-decision-sound` で鳴らすので、ゲームは鳴らさない。
-- BGM はプレイ中の曲も含めてアプリが画面ごとに `@/components/app-background-music` で流すので、ゲームは BGM を流さない。
+- BGM はプレイ中の曲も含めてアプリが画面ごとに `@/app/shell/app-background-music` で流すので、ゲームは BGM を流さない。
 
 ## チュートリアル
 
@@ -182,8 +182,8 @@ frontend/src/games/
 - `tutorial/` は `problem/`、`puzzle/`、`session/` とゲーム共通契約へ依存できるが、生成内部、難易度分類、採点、`play/`、保存、React、UIを知らない。
 - `ui/` は `play/`・`tutorial/` と表示に必要な読み取り専用の契約へ依存できる。問題生成、session更新、採点規則を実装しない。
 - `play-record.ts`、`play-attempt.ts`、`diagnostics.ts` は接続先と必要なゲーム内部契約へ依存できるが、通常プレイから逆依存させない。
-- `ui/play-record-display.ts` は記録 UI の表示契約（`@/records/ui/play-record-display`）へ接続できる。記録表示は記録定義の全指標を網羅する。
-- ゲームカタログ（`frontend/src/game-catalog/`）へ依存しない。
+- `ui/play-record-display.ts` は記録 UI の表示契約（`@/features/records/ui/play-record-display`）へ接続できる。記録表示は記録定義の全指標を網羅する。
+- アプリ統合（`frontend/src/app/game-integration/`）へ依存しない。
 - 別ゲームの実装を直接 import しない。
 - 循環依存を作らない。例外を追加する前に責務の配置を見直す。
 
@@ -194,54 +194,55 @@ frontend/src/games/
 - 同じ横断責務が複数ゲームに現れたら、同じ責務名と標準位置を使う。
 - 1責務が複数ファイルへ成長した場合は、責務名を保った同名ディレクトリへ分割する。
 
-## ゲームカタログ
+## ゲームとアプリの接続
 
-アプリがゲームをどう提供するかは、ゲームの外側の `frontend/src/game-catalog/` が持つ。
+アプリにゲームを登録し、プレイと結果画面へつなぐ処理は、ゲーム固有のルールではなく `frontend/src/app/game-integration/` が所有する。各ゲームはカタログの存在を知らない。
 
 ```text
-frontend/src/game-catalog/
-├── game-catalog-entry.ts
-├── game-catalog.ts
-├── game-navigation.ts
-├── app-home.ts
-├── game-home.tsx
-├── play-timeline.ts
-├── playable-game.tsx
-├── recorded-game-result.ts
-├── internal-diagnostics-dialog.ts
-├── problem-id-query.ts
-├── play-location-state.ts
-├── record-result-location-state.ts
-├── record-result-navigation.ts
-├── result-reward-sound.ts
-└── <game>/
-    ├── <game>-catalog-entry.tsx
-    ├── Playable<Game>.tsx
-    └── Recorded<Game>Result.tsx
+frontend/src/app/
+├── game-integration/
+│   ├── game-catalog-entry.ts
+│   ├── game-catalog.ts
+│   ├── game-navigation.ts
+│   ├── use-random-play-entry.ts
+│   ├── play-timeline.ts
+│   ├── playable-game.tsx
+│   ├── recorded-game-result.ts
+│   ├── internal-diagnostics-dialog.ts
+│   ├── result-reward-sound.ts
+│   └── <game>/
+│       ├── <game>-catalog-entry.tsx
+│       ├── Playable<Game>.tsx
+│       └── Recorded<Game>Result.tsx
+├── game-home/
+│   ├── game-home.tsx
+│   └── GameHomeScreen.tsx
+└── navigation/
+    ├── problem-id-query.ts
+    ├── play-location-state.ts
+    ├── record-result-location-state.ts
+    └── record-result-navigation.ts
 ```
 
-- `game-catalog-entry.ts`: 1ゲーム分のカタログ項目 `GameCatalogEntry` と、記録や離脱したプレイの問題を遊び直すプレイ画面・記録から描く結果画面（`RecordResultContext`）の契約を置く。
-- `game-catalog.ts`: 全ゲームを表示順に並べた `gameCatalog` を置く。パズル選択・記録・結果の画面は、ゲームを列挙せずこれを回す。
-- `game-navigation.ts`: ゲームのホーム（問題を選んだ状態でも開ける。プレイから戻るときは履歴を置き換える `replacesHistory`）・ホーム・同じゲームの次の問題へ移る `GameNavigation` と、記録の問題を遊び直すプレイ画面を開く `openRecordProblemPlay` を置く。ゲームの画面からの遷移はこれを使い、パスを直書きしない。ゲームのホームとプレイ画面のパスはカタログ項目の `homePath`・`playPath` を正とする。
-- `app-home.ts`: アプリのホームで選んでおくゲームと選んでいるゲームの続きを、記録と離脱したプレイへつなぐ `useAppHome` を置く。続きは図鑑と同じ導出（`zukan/zukan-collection.ts`）から求め、要るゲームの分だけ求める。
-- `game-home.tsx`: ゲームのホームを、そのゲームの図鑑・前回からの変化・URL の `problem` クエリで選ぶ問題・プレイ画面への遷移へつなぐ `useGameHome` を置く。返す `screenProps` をゲームのホームの画面へそのまま渡す。
-- `play-timeline.ts`: 記録画面の時間の流れに並べる、今のアプリにあるゲームの完了記録と離脱したプレイ、1件に示すゲーム・レベル・図鑑の番号・評価点、1件を押して開く画面（結果画面か、その問題を選んだゲームのホーム）を置く。
-- `playable-game.tsx`: 1問のプレイを URL の問題 ID・完了記録の保存と記録の結果画面への遷移・離脱の記録・画面遷移・検証情報へつなぐ `usePlayableGame` を置く。返す `screenProps` をプレイ画面へそのまま渡す。
-- `recorded-game-result.ts`: 記録から作り直した結果を、次の問題（記録と同じ難易度で記録の問題を避ける）・画面遷移・検証情報へつなぐ `useRecordedGameResult` と、`Recorded<Game>Result` の props `RecordedGameResultProps` を置く。
-- `internal-diagnostics-dialog.ts`: 検証情報のダイアログを開いたときだけ診断スナップショットを作る `useInternalDiagnosticsDialog` を置く。検証情報を開く操作は内部診断を使えるビルドでだけ出し、ダイアログはスナップショットがあるときだけ描く。
-- `problem-id-query.ts`: プレイ画面の URL の `problem` クエリ（問題 ID）の読み書きを置く。
-- `play-location-state.ts`: プレイ画面へ渡す location state（最初に避ける問題の ID）の作成と読み取りを置く。location state を読めないときは、どの読み取りも `undefined` を返す。
-- `record-result-location-state.ts`: 結果画面へ渡す location state（記録の保存結果）の作成と、形を確かめた読み取りを置く。
-- `record-result-navigation.ts`: クリアして記録を保存できたプレイを、記録の結果画面 `/puzzles/<game>/result/<記録ID>` へ履歴を置き換えて移す共通フックを置く。
-- `result-reward-sound.ts`: プレイを終えて結果を受け取る瞬間に、評価段階に応じた報酬の音を鳴らす共通フックを置く。記録から開いた結果画面では鳴らさない。
-- `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、ホームで選んでいるときとゲームのホームの見出しに見せる色と動きのあるピクトグラム（任意。`games/<game>/assets/pictogram-showcase.svg`）、ゲームのホームのパス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面と描けるかを持つ。遊び直し先は記録の一覧の行ごとに求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。
-- `Playable<Game>.tsx`: URL の問題 ID で最初の問題を引いて `play/` を始め、`usePlayableGame` に完了記録・離脱の進み具合・診断スナップショットの作り方を渡し、`ui/<Game>Play.tsx` と診断ダイアログを描く。記録を保存できたクリアは記録の結果画面へ移し、その場の結果画面は記録の保存に失敗したプレイでだけ出す。
-- `Recorded<Game>Result.tsx`: `useRecordedGameResult` に診断スナップショットの作り方を渡し、記録から作り直した結果を `ui/result/<Game>ResultScreen.tsx` と診断ダイアログで描く。
+- `game-catalog-entry.ts` はゲームごとの表示・遷移・問題供給・記録の再プレイ・記録から作る結果画面の接続契約 `GameCatalogEntry` を持つ。
+- `game-catalog.ts` は11ゲームの登録と並び順の正本 `gameCatalog` を持つ。選択・記録・結果画面はゲームの一覧を複製しない。
+- `game-navigation.ts` はゲームのホーム・次の問題・記録からの遊び直しを、登録済みゲームの `homePath`・`playPath` に基づいて開く。履歴を置き換える必要がある戻り遷移は `replacesHistory` を指定する。
+- `play-timeline.ts` は記録の時系列へゲーム名・難易度・図鑑番号・遷移先を接続する。記録の正本と横断集計の規則は `features/records/` と `features/collection/` が持つ。
+- `playable-game.tsx` は問題ID・完了記録・離脱記録・結果への遷移・診断情報を接続する。結果画面に保存済み記録を表示できる場合は記録IDのパスへ移動する。
+- `recorded-game-result.ts` は保存済み記録から結果を復元し、次の問題・画面遷移・診断情報へ接続する。記録からの再表示で報酬効果音を繰り返さない。
+- `internal-diagnostics-dialog.ts` は診断ダイアログを開いたときだけスナップショットを作り、利用可能なビルドでのみ操作を表示する。
+- `<game>-catalog-entry.tsx` はゲームID・表示名・ピクトグラム・ホームとプレイのパス・記録表示・問題IDからの再プレイ・記録からの結果画面の接続を持つ。
+- `Playable<Game>.tsx` は問題IDから初期問題を選び、ゲームのプレイを共通の完了・離脱記録と接続し、ゲーム固有のプレイUIを表示する。
+- `Recorded<Game>Result.tsx` は記録の復元結果をゲーム固有の結果UIと内部診断へ渡す。
+
+共通ゲームホームの `useGameHome` と `GameHomeScreen` は `app/game-home/` に置き、ゲーム固有の盤面・遊び方はそれぞれのゲームから受け取る。パズル選択画面でだけ使う `useAppHome`・`AppTitleScreen`・`GameSelectionGallery` は `views/PuzzleSelectionView/` が持つ。
+
+カタログを必要としない問題IDクエリ・プレイ/結果の location state・記録結果への遷移は `app/navigation/` に置く。ゲームカタログの情報を必要とする導線は `app/game-integration/` に置き、`app/navigation/` からゲーム統合へ逆依存させない。
 
 ## ゲームを追加するとき
 
 1. `games/<game>/` を標準配置で実装する。
-2. `game-catalog/<game>/` に `Playable<Game>.tsx`、`Recorded<Game>Result.tsx`、`<game>-catalog-entry.tsx` を置き、`game-catalog.ts` の並びへ加える。
+2. `app/game-integration/<game>/` に `Playable<Game>.tsx`、`Recorded<Game>Result.tsx`、`<game>-catalog-entry.tsx` を置き、`game-catalog.ts` の並びへ加える。
 3. `pages/puzzles/<game>/` と、そのルートの View（ゲームのホーム・プレイ）を置く。ゲームのホームは `pages/puzzles/<game>/index.tsx` に置き、`pages/puzzles/[game]/` の動的ルートにまとめない（静的な `<game>/play/` を持つゲームでは静的な枝が優先され、ゲームのホームが開けなくなる）。
 4. `bun run --cwd frontend generate:dependency-rules` で `frontend/biome.json` の依存規則を生成し直す。規則は `src/games/` 直下のディレクトリから全ゲームに同じ形で作られ、生成結果との一致はテストで検査される。
 5. 問題集を持つゲームは、生成スクリプト `frontend/scripts/generate-<game>-problem-pool.ts`（`--verify` で全問を再検証できる）と `package.json` の scripts を置き、`frontend/biome.json` の `files.includes` で `problem-pool.json` を除外する。

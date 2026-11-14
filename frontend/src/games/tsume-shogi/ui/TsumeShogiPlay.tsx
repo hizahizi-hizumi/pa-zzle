@@ -122,6 +122,7 @@ export function TsumeShogiPlay({
   onOpenGameHome,
   onBackToAppHome,
   onOpenDiagnostics,
+  renderSettingsDialog,
 }: TsumeShogiPlayProps) {
   const playing = progress === "playing";
   const kingSquare =
@@ -188,6 +189,7 @@ export function TsumeShogiPlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
+      renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (
         <TsumeShogiHowToPlayDialog open={open} onClose={onClose} />
       )}

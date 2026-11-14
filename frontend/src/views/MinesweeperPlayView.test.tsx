@@ -8,7 +8,7 @@ import {
   Routes,
 } from "react-router";
 
-import { createPlayLocationState } from "@/game-catalog/play-location-state";
+import { createPlayLocationState } from "@/app/navigation/play-location-state";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";

@@ -1,17 +1,17 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { takuzuCatalogEntry } from "@/game-catalog/takuzu/takuzu-catalog-entry";
+import { takuzuCatalogEntry } from "@/app/game-integration/takuzu/takuzu-catalog-entry";
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
 import { TakuzuHomeView } from "@/views/TakuzuHomeView";
 
 // 画面のつなぎを確かめるのに問題集の全問は要らず、全問の台紙を描くと重いので、各レベルの先頭の数問に絞る。
 vi.mock(
-  "@/game-catalog/takuzu/takuzu-catalog-entry",
+  "@/app/game-integration/takuzu/takuzu-catalog-entry",
   async (importOriginal) => {
     const { takuzuCatalogEntry } =
       await importOriginal<
-        typeof import("@/game-catalog/takuzu/takuzu-catalog-entry")
+        typeof import("@/app/game-integration/takuzu/takuzu-catalog-entry")
       >();
     return {
       takuzuCatalogEntry: {

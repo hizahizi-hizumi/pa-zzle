@@ -5,9 +5,6 @@ import {
   createElapsedTimeMetric,
   createMoveCountMetric,
 } from "@/components/game-result-metrics";
-import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
-import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
-import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
 
 afterEach(cleanup);
 
@@ -103,26 +100,28 @@ describe.each(comparisonCases)(
 );
 
 describe("異なる問題の基準で自己ベストを更新した場合", () => {
-  const updatedTime = createResultRecordFeedback(
-    {
-      status: "updated",
-      updates: [
-        {
-          metricId: "time-delta-ms",
-          previousValue: 15_000,
-          currentValue: 10_000,
-        },
-      ],
-    },
-    nanpurePlayRecordDisplay,
-  );
-  const updatedMoves = createResultRecordFeedback(
-    {
-      status: "updated",
-      updates: [{ metricId: "move-delta", previousValue: 4, currentValue: 2 }],
-    },
-    waterSortPlayRecordDisplay,
-  );
+  const updatedTime = {
+    improvements: [
+      {
+        id: "time-delta-ms",
+        label: "基準差",
+        previous: "+00:15",
+        current: "+00:10",
+        improvement: "5秒短縮",
+      },
+    ],
+  };
+  const updatedMoves = {
+    improvements: [
+      {
+        id: "move-delta",
+        label: "最短差",
+        previous: "+4",
+        current: "+2",
+        improvement: "2手減",
+      },
+    ],
+  };
   const displayCases = [
     {
       metric: createElapsedTimeMetric({
@@ -149,8 +148,7 @@ describe("異なる問題の基準で自己ベストを更新した場合", () =
       let container: HTMLElement;
 
       beforeEach(() => {
-        const improvements =
-          feedback.kind === "updated" ? feedback.improvements : [];
+        const improvements = feedback.improvements;
         ({ container } = render(
           <GameResultMetrics metrics={[metric]} improvements={improvements} />,
         ));

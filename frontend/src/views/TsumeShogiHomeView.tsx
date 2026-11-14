@@ -1,10 +1,10 @@
-import { useGameHome } from "@/game-catalog/game-home";
-import { tsumeShogiCatalogEntry } from "@/game-catalog/tsume-shogi/tsume-shogi-catalog-entry";
+import { GameHomeScreen } from "@/app/game-home/GameHomeScreen";
+import { useGameHome } from "@/app/game-home/game-home";
+import { tsumeShogiCatalogEntry } from "@/app/game-integration/tsume-shogi/tsume-shogi-catalog-entry";
 import { usePreloadTsumeShogiProblemPool } from "@/games/tsume-shogi/play/use-tsume-shogi-problem-pool";
 import { TsumeShogiGround } from "@/games/tsume-shogi/ui/TsumeShogiGround";
 import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
 import { TsumeShogiTutorial } from "@/games/tsume-shogi/ui/TsumeShogiTutorial";
-import { GameHomeScreen } from "@/zukan/ui/GameHomeScreen";
 
 export function TsumeShogiHomeView() {
   const { screenProps } = useGameHome(tsumeShogiCatalogEntry);

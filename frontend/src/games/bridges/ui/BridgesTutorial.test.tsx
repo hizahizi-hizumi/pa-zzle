@@ -15,10 +15,10 @@ import {
 } from "@/games/bridges/tutorial/tutorial";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
 import { BOARD_MARGIN } from "@/games/bridges/ui/board/board-geometry";
-import { playLayeredSound, playSound } from "@/lib/sound-effects";
+import { playLayeredSound, playSound } from "@/lib/audio/sound-effects";
 
-vi.mock("@/lib/sound-effects", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/sound-effects")>()),
+vi.mock("@/lib/audio/sound-effects", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/audio/sound-effects")>()),
   playSound: vi.fn(),
   playLayeredSound: vi.fn(),
 }));

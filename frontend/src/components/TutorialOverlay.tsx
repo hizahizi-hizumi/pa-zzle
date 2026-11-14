@@ -1,15 +1,14 @@
 import { type ReactNode, useRef } from "react";
-
-import {
-  type TutorialMusicState,
-  useTutorialMusicState,
-} from "@/components/app-background-music";
 import {
   type TutorialBoardIntro,
   type TutorialFinish,
   type TutorialRuleListItem,
   TutorialScreen,
 } from "@/components/TutorialOverlay/TutorialScreen";
+import {
+  type TutorialMusicState,
+  useTutorialMusicState,
+} from "@/components/tutorial-music-state";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type {
   TutorialIntro,

@@ -1,9 +1,9 @@
+import type { PlayAttemptProgress } from "@/features/records/play-attempt";
 import { getSessionElapsedMs } from "@/games/session";
 import {
   getTakuzuSessionCorrectionCount,
   type TakuzuSession,
 } from "@/games/takuzu/session/session";
-import type { PlayAttemptProgress } from "@/records/play-attempt";
 
 export function createTakuzuPlayAttemptProgress(
   session: TakuzuSession,

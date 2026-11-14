@@ -2,9 +2,9 @@ import { renderHook } from "@testing-library/react";
 
 import type { IceFloorMazeLastSlide } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import { useIceFloorMazeSoundEffects } from "@/games/ice-floor-maze/ui/use-ice-floor-maze-sound-effects";
-import { playSound, type SoundEffect } from "@/lib/sound-effects";
+import { playSound, type SoundEffect } from "@/lib/audio/sound-effects";
 
-vi.mock("@/lib/sound-effects", () => ({
+vi.mock("@/lib/audio/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),
   playSound: vi.fn(),
   prepareSoundEffects: vi.fn(),

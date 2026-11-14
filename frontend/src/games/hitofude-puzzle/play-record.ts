@@ -1,3 +1,8 @@
+import {
+  createPlayRecordId,
+  type PlayRecord,
+} from "@/features/records/play-record";
+import type { PlayRecordDefinition } from "@/features/records/play-record-definition";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
 import {
@@ -23,8 +28,6 @@ import {
   isNonNegativeInteger,
   isRecordObject,
 } from "@/lib/type-guards";
-import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const HITOFUDE_PUZZLE_GAME_ID = "hitofude-puzzle";
 const HITOFUDE_PUZZLE_PLAY_RECORD_PAYLOAD_VERSION = 1;

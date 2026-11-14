@@ -1,4 +1,4 @@
-import type { SoundEffect } from "@/lib/sound-effects";
+import type { SoundEffect } from "@/lib/audio/sound-effects";
 
 /**
  * 同じ音を録り直した複数のテイク。鳴らすたびに `pick` で1本を選び、直前に選んだテイクは続けて選ばない。

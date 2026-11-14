@@ -63,6 +63,7 @@ export function TakuzuPlay({
   onOpenGameHome,
   onBackToAppHome,
   onOpenDiagnostics,
+  renderSettingsDialog,
 }: TakuzuPlayProps) {
   useTakuzuSoundEffects(operation, progress, size);
 
@@ -84,6 +85,7 @@ export function TakuzuPlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
+      renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (
         <TakuzuHowToPlayDialog open={open} onClose={onClose} />
       )}

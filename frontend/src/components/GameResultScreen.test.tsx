@@ -9,9 +9,9 @@ import type { ComponentProps } from "react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { _private as appDecisionSound } from "@/components/app-decision-sound";
 import { GameResultScreen } from "@/components/GameResultScreen";
-import { playSound } from "@/lib/sound-effects";
+import { playSound } from "@/lib/audio/sound-effects";
 
-vi.mock("@/lib/sound-effects", () => ({
+vi.mock("@/lib/audio/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),
   playSound: vi.fn(),
 }));

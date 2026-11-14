@@ -1,3 +1,6 @@
+import type { PlayRecord } from "@/features/records/play-record";
+import { createPlayRecordId } from "@/features/records/play-record";
+import type { PlayRecordDefinition } from "@/features/records/play-record-definition";
 import {
   parseDifficultyLevel,
   parseRecordedDifficulty,
@@ -26,9 +29,6 @@ import {
   isNonNegativeInteger,
   isRecordObject,
 } from "@/lib/type-guards";
-import type { PlayRecord } from "@/records/play-record";
-import { createPlayRecordId } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION = 2;
 const WATER_SORT_GAME_ID = "water-sort";

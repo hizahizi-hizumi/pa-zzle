@@ -5,14 +5,14 @@ import {
   RouterProvider,
 } from "react-router";
 
-import { readRandomPlaySerial } from "@/game-catalog/play-location-state";
-import { createRecordResultLocationState } from "@/game-catalog/record-result-location-state";
+import { readRandomPlaySerial } from "@/app/navigation/play-location-state";
+import { createRecordResultLocationState } from "@/app/navigation/record-result-location-state";
+import type { PlayRecord } from "@/features/records/play-record";
+import { writePlayRecords } from "@/features/records/storage";
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { selectNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
 import { createProblemId } from "@/games/problem-id";
-import type { PlayRecord } from "@/records/play-record";
-import { writePlayRecords } from "@/records/storage";
 import { PlayResultView } from "@/views/PlayResultView";
 
 vi.mock("@/lib/internal-diagnostics", () => ({

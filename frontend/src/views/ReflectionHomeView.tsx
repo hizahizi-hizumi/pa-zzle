@@ -1,9 +1,9 @@
-import { useGameHome } from "@/game-catalog/game-home";
-import { reflectionCatalogEntry } from "@/game-catalog/reflection/reflection-catalog-entry";
+import { GameHomeScreen } from "@/app/game-home/GameHomeScreen";
+import { useGameHome } from "@/app/game-home/game-home";
+import { reflectionCatalogEntry } from "@/app/game-integration/reflection/reflection-catalog-entry";
 import { ReflectionGround } from "@/games/reflection/ui/ReflectionGround";
 import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowToPlayDialog";
 import { ReflectionTutorial } from "@/games/reflection/ui/ReflectionTutorial";
-import { GameHomeScreen } from "@/zukan/ui/GameHomeScreen";
 
 export function ReflectionHomeView() {
   const { screenProps } = useGameHome(reflectionCatalogEntry);

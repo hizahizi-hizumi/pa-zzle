@@ -9,7 +9,6 @@ import type { ComponentProps, ReactElement } from "react";
 import { MemoryRouter } from "react-router";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
-import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
 
 /** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
 function render(ui: ReactElement) {
@@ -57,6 +56,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     onOpenGameHome: vi.fn(),
     onBackToAppHome: vi.fn(),
     onClearAnimationComplete: vi.fn(),
+    renderSettingsDialog: () => null,
   };
 }
 
@@ -397,19 +397,18 @@ describe("NanpurePlay", () => {
               breakdown: { accuracy: 40, speed: 40, stability: 20 },
             },
           }}
-          recordFeedback={createResultRecordFeedback(
-            {
-              status: "updated",
-              updates: [
-                {
-                  metricId: "time-delta-ms",
-                  previousValue: -750_000,
-                  currentValue: -780_000,
-                },
-              ],
-            },
-            nanpurePlayRecordDisplay,
-          )}
+          recordFeedback={{
+            kind: "updated",
+            improvements: [
+              {
+                id: "time-delta-ms",
+                label: "基準時間との差",
+                previous: "-12:30",
+                current: "-13:00",
+                improvement: "30秒短縮",
+              },
+            ],
+          }}
         />,
       );
     });

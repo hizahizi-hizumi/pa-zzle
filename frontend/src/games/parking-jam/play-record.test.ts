@@ -1,3 +1,4 @@
+import type { PlayRecord } from "@/features/records/play-record";
 import { PARKING_JAM_DIFFICULTY_MODEL_VERSION } from "@/games/parking-jam/difficulty";
 import {
   createParkingJamPlayRecord,
@@ -11,7 +12,6 @@ import {
   calculateParkingJamSpeedScoreRule,
   PARKING_JAM_SCORE_MODEL_VERSION,
 } from "@/games/parking-jam/score";
-import type { PlayRecord } from "@/records/play-record";
 
 const problemIdentity = {
   generatorVersion: "2",

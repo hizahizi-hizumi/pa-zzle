@@ -1,7 +1,6 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
 import { useBridgesPlay } from "@/games/bridges/play/use-bridges-play";
-import { countBridgesSolutions } from "@/games/bridges/problem/generation/exact-solver";
 import type { BridgesPooledProblem } from "@/games/bridges/problem/problem-pool";
 import { measureBridgesSolveWorkload } from "@/games/bridges/problem/workload";
 import { selectBridgesProblemForDifficulty } from "@/games/bridges/problem-selection";
@@ -24,10 +23,7 @@ const initialSeed = "use-bridges-play-a";
 const otherSeed = "use-bridges-play-b";
 const initial = selectBridgesProblemForDifficulty(difficulty, initialSeed);
 const other = selectBridgesProblemForDifficulty(difficulty, otherSeed);
-const solution = countBridgesSolutions(initial.problem, {
-  limit: 1,
-  nodeLimit: 200_000,
-}).firstSolution!;
+const solution = [1, 2, 1, 2, 2, 1, 2, 2, 1, 0, 2, 0, 1, 1, 1, 2, 0, 1, 1];
 const firstEdge = solution.findIndex((count) => count > 0);
 
 function placeSolution(result: HookResult, skipLast = false): void {

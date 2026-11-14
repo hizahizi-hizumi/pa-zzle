@@ -1,16 +1,15 @@
 import { useSyncExternalStore } from "react";
-
-import { AppTitleScreen } from "@/components/AppTitleScreen";
-import { GameSelectionGallery } from "@/components/GameSelectionGallery";
-import { useAppHome } from "@/game-catalog/app-home";
-import { gameCatalog } from "@/game-catalog/game-catalog";
-import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
+import { gameCatalog } from "@/app/game-integration/game-catalog";
+import type { GameCatalogEntry } from "@/app/game-integration/game-catalog-entry";
+import { gameSelectionOrderSetting } from "@/features/settings/game-selection-order-setting";
 import {
   enterApp,
   getAppLaunchTitle,
   subscribeAppLaunchTitle,
 } from "@/lib/app-launch";
-import { gameSelectionOrderSetting } from "@/lib/game-selection-order-setting";
+import { AppTitleScreen } from "@/views/PuzzleSelectionView/AppTitleScreen";
+import { useAppHome } from "@/views/PuzzleSelectionView/app-home";
+import { GameSelectionGallery } from "@/views/PuzzleSelectionView/GameSelectionGallery";
 
 const games = gameCatalog.map(
   ({

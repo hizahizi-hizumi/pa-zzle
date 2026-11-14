@@ -32,6 +32,12 @@ function renderFrame(
     renderResultScreen: (clearedResult) => <p>結果 {clearedResult}</p>,
     renderHowToPlayDialog: () => null,
     renderTutorial,
+    renderSettingsDialog: ({ open, onClose }) =>
+      open ? (
+        <button type="button" onClick={onClose}>
+          設定を閉じる
+        </button>
+      ) : null,
     children: <main>盤面</main>,
   };
   render(<GamePlayFrame {...props} />);
@@ -71,6 +77,23 @@ describe("GamePlayFrame", () => {
       expect(heading).not.toBeNull();
       expect(board).not.toBeNull();
       expect(resultScreen).toBeNull();
+    });
+  });
+
+  describe("設定メニューを開く場合", () => {
+    beforeEach(() => {
+      renderFrame("playing", null);
+    });
+
+    test("設定を開いて閉じられること", () => {
+      openPlayMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "設定" }));
+      const opened = screen.queryByRole("button", { name: "設定を閉じる" });
+      fireEvent.click(screen.getByRole("button", { name: "設定を閉じる" }));
+      const closed = screen.queryByRole("button", { name: "設定を閉じる" });
+
+      expect(opened).not.toBeNull();
+      expect(closed).toBeNull();
     });
   });
 

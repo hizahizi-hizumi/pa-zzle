@@ -59,6 +59,7 @@ export function MinesweeperPlay({
   onBackToAppHome,
   onClearAnimationComplete,
   onOpenDiagnostics,
+  renderSettingsDialog,
 }: MinesweeperPlayProps) {
   const [mode, setMode] = useState<MinesweeperInputMode>("reveal");
   const interactionEnabled = progress === "playing";
@@ -96,6 +97,7 @@ export function MinesweeperPlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
+      renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (
         <MinesweeperHowToPlayDialog open={open} onClose={onClose} />
       )}

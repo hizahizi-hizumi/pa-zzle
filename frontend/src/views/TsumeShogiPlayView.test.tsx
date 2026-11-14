@@ -13,12 +13,11 @@ import {
   RouterProvider,
   Routes,
 } from "react-router";
-
+import { readPlayRecords } from "@/features/records/storage";
 import { difficultyLevels } from "@/games/difficulty";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 import { createProblemId } from "@/games/problem-id";
 import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
-
 import { TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import type { TsumeShogiProblem } from "@/games/tsume-shogi/problem/problem";
 import {
@@ -44,7 +43,6 @@ import {
   tsumeShogiHandPieceNames,
   tsumeShogiPieceNames,
 } from "@/games/tsume-shogi/ui/piece-label";
-import { readPlayRecords } from "@/records/storage";
 import { PlayResultView } from "@/views/PlayResultView";
 import { TsumeShogiPlayView } from "@/views/TsumeShogiPlayView";
 

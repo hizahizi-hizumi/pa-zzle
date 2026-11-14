@@ -9,7 +9,6 @@ import { MemoryRouter } from "react-router";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import { MinesweeperPlay } from "@/games/minesweeper/ui/MinesweeperPlay";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
-import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
 
 /** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
 function render(ui: ReactElement) {
@@ -49,6 +48,7 @@ describe("MinesweeperPlay", () => {
       onBackToAppHome = vi.fn();
       render(
         <MinesweeperPlay
+          renderSettingsDialog={() => null}
           difficulty="1"
           rows={2}
           columns={2}
@@ -210,6 +210,7 @@ describe("MinesweeperPlay", () => {
       onOpenDiagnostics = vi.fn();
       render(
         <MinesweeperPlay
+          renderSettingsDialog={() => null}
           difficulty="1"
           rows={2}
           columns={2}
@@ -263,6 +264,7 @@ describe("MinesweeperPlay", () => {
       onToggleFlag = vi.fn();
       render(
         <MinesweeperPlay
+          renderSettingsDialog={() => null}
           difficulty="1"
           rows={2}
           columns={2}
@@ -444,19 +446,18 @@ describe("MinesweeperPlay", () => {
       render(
         <MinesweeperPlay
           {...createResultProps()}
-          recordFeedback={createResultRecordFeedback(
-            {
-              status: "updated",
-              updates: [
-                {
-                  metricId: "time-delta-ms",
-                  previousValue: 9_000,
-                  currentValue: 4_000,
-                },
-              ],
-            },
-            minesweeperPlayRecordDisplay,
-          )}
+          recordFeedback={{
+            kind: "updated",
+            improvements: [
+              {
+                id: "time-delta-ms",
+                label: "基準時間との差",
+                previous: "+00:09",
+                current: "+00:04",
+                improvement: "5秒短縮",
+              },
+            ],
+          }}
         />,
       );
     });
@@ -528,5 +529,6 @@ function createResultProps(): ComponentProps<typeof MinesweeperPlay> {
     onOpenGameHome: vi.fn(),
     onBackToAppHome: vi.fn(),
     onClearAnimationComplete: vi.fn(),
+    renderSettingsDialog: () => null,
   };
 }

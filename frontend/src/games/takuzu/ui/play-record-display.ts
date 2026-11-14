@@ -1,11 +1,11 @@
-import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
-import { takuzuPlayRecordDefinition } from "@/games/takuzu/play-record";
 import {
   createCountMetricPresentation,
   createPlayRecordDisplay,
   playScoreMetricPresentation,
   timeDeltaMetricPresentation,
-} from "@/records/ui/play-record-display";
+} from "@/features/records/ui/play-record-display";
+import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
+import { takuzuPlayRecordDefinition } from "@/games/takuzu/play-record";
 
 export const takuzuPlayRecordDisplay = createPlayRecordDisplay({
   definition: takuzuPlayRecordDefinition,

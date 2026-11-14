@@ -1,9 +1,9 @@
-import { useGameHome } from "@/game-catalog/game-home";
-import { waterSortCatalogEntry } from "@/game-catalog/water-sort/water-sort-catalog-entry";
+import { GameHomeScreen } from "@/app/game-home/GameHomeScreen";
+import { useGameHome } from "@/app/game-home/game-home";
+import { waterSortCatalogEntry } from "@/app/game-integration/water-sort/water-sort-catalog-entry";
 import { WaterSortGround } from "@/games/water-sort/ui/WaterSortGround";
 import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
-import { GameHomeScreen } from "@/zukan/ui/GameHomeScreen";
 
 export function WaterSortHomeView() {
   const { screenProps } = useGameHome(waterSortCatalogEntry);

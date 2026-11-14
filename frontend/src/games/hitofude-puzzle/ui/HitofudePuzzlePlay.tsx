@@ -75,6 +75,7 @@ export function HitofudePuzzlePlay({
   onOpenGameHome,
   onBackToAppHome,
   onOpenDiagnostics,
+  renderSettingsDialog,
 }: HitofudePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
   const [boardFocused, setBoardFocused] = useState(false);
@@ -134,6 +135,7 @@ export function HitofudePuzzlePlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
+      renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (
         <HitofudePuzzleHowToPlayDialog open={open} onClose={onClose} />
       )}

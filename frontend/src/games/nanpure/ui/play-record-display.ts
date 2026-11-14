@@ -1,14 +1,14 @@
 import {
-  getDifficultyLabel,
-  parseRecordedDifficulty,
-} from "@/games/difficulty";
-import { nanpurePlayRecordDefinition } from "@/games/nanpure/play-record";
-import {
   createCountMetricPresentation,
   createPlayRecordDisplay,
   playScoreMetricPresentation,
   timeDeltaMetricPresentation,
-} from "@/records/ui/play-record-display";
+} from "@/features/records/ui/play-record-display";
+import {
+  getDifficultyLabel,
+  parseRecordedDifficulty,
+} from "@/games/difficulty";
+import { nanpurePlayRecordDefinition } from "@/games/nanpure/play-record";
 
 export const nanpurePlayRecordDisplay = createPlayRecordDisplay({
   definition: nanpurePlayRecordDefinition,

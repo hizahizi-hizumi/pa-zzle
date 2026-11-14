@@ -1,3 +1,4 @@
+import { getPlayRecordMetricValue } from "@/features/records/play-record-definition";
 import { createHitofudePuzzleResult } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import {
   createHitofudePuzzlePlayRecord,
@@ -8,7 +9,6 @@ import {
   restoreHitofudePuzzleRecordedResult,
 } from "@/games/hitofude-puzzle/play-record";
 import { createHitofudePuzzleProblemIdentity } from "@/games/hitofude-puzzle/problem/problem";
-import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const problemIdentity = createHitofudePuzzleProblemIdentity(8, 4, 16);
 

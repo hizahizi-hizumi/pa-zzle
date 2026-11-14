@@ -4,11 +4,11 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import "@/index.css";
-import { GameCatalogProvider } from "@/components/GameCatalogContext";
-import { RandomProblemUnavailableDialog } from "@/components/RandomProblemUnavailableDialog";
-import { gameCatalog } from "@/game-catalog/game-catalog";
+import { gameCatalog } from "@/app/game-integration/game-catalog";
+import { RandomProblemUnavailableDialog } from "@/app/RandomProblemUnavailableDialog";
+import { GameCatalogProvider } from "@/features/settings/GameCatalogContext";
 import { startAppLaunch } from "@/lib/app-launch";
-import { defineSoundEffect } from "@/lib/sound-effects";
+import { defineSoundEffect } from "@/lib/audio/sound-effects";
 
 const root = document.getElementById("root");
 if (!root) {

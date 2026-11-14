@@ -76,6 +76,7 @@ export function NanpurePlay({
   onBackToAppHome,
   onClearAnimationComplete,
   onOpenDiagnostics,
+  renderSettingsDialog,
 }: NanpurePlayProps) {
   useNanpureSoundEffects(operation, progress);
 
@@ -105,6 +106,7 @@ export function NanpurePlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
+      renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (
         <NanpureHowToPlayDialog open={open} onClose={onClose} />
       )}
