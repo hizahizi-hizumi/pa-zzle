@@ -1,3 +1,8 @@
+import {
+  createPlayRecordId,
+  type PlayRecord,
+} from "@/features/records/play-record";
+import type { PlayRecordDefinition } from "@/features/records/play-record-definition";
 import type { BridgesDifficulty } from "@/games/bridges/difficulty";
 import {
   type BridgesResult,
@@ -24,8 +29,6 @@ import {
   isNonNegativeInteger,
   isRecordObject,
 } from "@/lib/type-guards";
-import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const BRIDGES_GAME_ID = "bridges";
 const BRIDGES_PLAY_RECORD_PAYLOAD_VERSION = 1;

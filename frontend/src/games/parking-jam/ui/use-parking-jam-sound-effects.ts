@@ -8,13 +8,13 @@ import {
   useOperationSound,
   usePrepareSoundEffects,
 } from "@/games/play-sound-effects";
-import { prefersReducedMotion } from "@/lib/motion";
 import {
   defineSoundEffect,
   playSound,
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /** `parking-jam-board.css` のこつんと当たる動き（`pj-block-*`）で、車が前へ出きって止まるまでの時間。 */
 const BLOCKED_IMPACT_MS = 80;

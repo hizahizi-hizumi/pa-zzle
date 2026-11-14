@@ -1,0 +1,123 @@
+import { Dialog as DialogPrimitive } from "radix-ui";
+import { type MouseEvent, useRef } from "react";
+import { Link } from "react-router";
+
+import { playGameSelectSound } from "@/components/app-decision-sound";
+import { BrandMark } from "@/components/BrandMark";
+import { GamePictogram } from "@/components/GamePictogram";
+import { Dialog, DialogPortal, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { SettingsButton } from "@/features/settings/SettingsButton";
+import type { AppLaunchTitle } from "@/lib/app-launch";
+import type { Path } from "@/router";
+
+type AppTitleScreenGame = {
+  name: string;
+  pictogramSvg: string;
+  to: Path;
+};
+
+type AppTitleScreenProps = {
+  title: AppLaunchTitle;
+  games: readonly AppTitleScreenGame[];
+  onEnter: () => void;
+};
+
+function stopPropagation(event: MouseEvent) {
+  event.stopPropagation();
+}
+
+export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const ready = title.status === "ready";
+
+  function enter(event: MouseEvent) {
+    event.stopPropagation();
+    if (ready) {
+      onEnter();
+    }
+  }
+
+  function enterGame(event: MouseEvent) {
+    event.stopPropagation();
+    playGameSelectSound();
+    onEnter();
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen && ready) {
+      onEnter();
+    }
+  }
+
+  // 開いた直後に最初の操作部品へ枠を出さないよう、面そのものを選んでおく。Tab で面の中の操作へ進める。
+  function focusSurface(event: Event) {
+    event.preventDefault();
+    surfaceRef.current?.focus();
+  }
+
+  return (
+    <Dialog open={title.status !== "hidden"} onOpenChange={handleOpenChange}>
+      <DialogPortal>
+        <DialogPrimitive.Content
+          ref={surfaceRef}
+          aria-describedby={undefined}
+          data-browser-surface="self"
+          onOpenAutoFocus={focusSurface}
+          onClick={enter}
+          className="fixed inset-0 z-(--layer-overlay) flex flex-col bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] font-ui outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-(--duration-normal) data-[state=closed]:ease-exit motion-reduce:animate-none"
+        >
+          {/* 設定のボタンと、開いた設定のダイアログの中の操作で入らないよう、押した操作を面へ伝えない。 */}
+          <div
+            onClick={stopPropagation}
+            className="absolute top-[calc(env(safe-area-inset-top)+0.75rem)] right-3 sm:right-6"
+          >
+            <SettingsButton />
+          </div>
+
+          <div className="flex flex-1 flex-col items-center justify-center gap-10 px-6 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] sm:gap-12">
+            <DialogTitle className="flex justify-center">
+              <BrandMark size="title" />
+            </DialogTitle>
+
+            {/* ピクトグラムは、スマートフォンとタブレットでは4つずつ、PC では8つずつで折り返し、ゲームの数によらず画面の幅に収める。 */}
+            <ul className="flex max-w-68 flex-wrap justify-center gap-3 sm:max-w-92 sm:gap-4 lg:max-w-188">
+              {games.map((game) => (
+                <li key={game.to} className="size-14 sm:size-20">
+                  {/* 読み込み中も同じ要素のまま押せなくし、入れるようになったときにピクトグラムを描き直さない。 */}
+                  <Link
+                    to={game.to}
+                    aria-label={`${game.name}を遊ぶ`}
+                    inert={!ready}
+                    onClick={enterGame}
+                    className="flex size-full items-center justify-center rounded-md border-(length:--border-width-normal) border-border bg-background p-[18%] transition-colors hover:bg-accent outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  >
+                    <GamePictogram svg={game.pictogramSvg} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex h-10 w-40 items-center justify-center">
+              {title.status === "loading" ? (
+                <Progress
+                  value={Math.round(title.progressRatio * 100)}
+                  aria-label="効果音の読み込み"
+                  className="h-1 bg-muted motion-reduce:*:transition-none"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={enter}
+                  className="flex h-full w-full items-center justify-center rounded-md text-supporting font-medium text-muted-foreground animate-in fade-in duration-(--duration-slow) ease-enter outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:animate-none"
+                >
+                  タップしてはじめる
+                </button>
+              )}
+            </div>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPortal>
+    </Dialog>
+  );
+}

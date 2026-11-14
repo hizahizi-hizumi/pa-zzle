@@ -1,3 +1,4 @@
+import { getPlayRecordMetricValue } from "@/features/records/play-record-definition";
 import {
   createReflectionPlayRecord,
   getReflectionPlayRecordScore,
@@ -7,7 +8,6 @@ import {
   restoreReflectionRecordedResult,
 } from "@/games/reflection/play-record";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
-import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const problemIdentity = createReflectionProblemIdentity(6, 11, 3);
 

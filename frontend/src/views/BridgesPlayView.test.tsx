@@ -13,7 +13,8 @@ import {
   Routes,
   useLocation,
 } from "react-router";
-
+import { readPlayAttempts } from "@/features/records/play-attempt-storage";
+import { readPlayRecords } from "@/features/records/storage";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
 import { countBridgesSolutions } from "@/games/bridges/problem/generation/exact-solver";
 import { measureBridgesSolveWorkload } from "@/games/bridges/problem/workload";
@@ -28,8 +29,6 @@ import {
 } from "@/games/bridges/puzzle/board";
 import { createBoardView } from "@/games/bridges/ui/board/board-geometry";
 import { createProblemId } from "@/games/problem-id";
-import { readPlayAttempts } from "@/records/play-attempt-storage";
-import { readPlayRecords } from "@/records/storage";
 import { BridgesPlayView } from "@/views/BridgesPlayView";
 import { PlayResultView } from "@/views/PlayResultView";
 

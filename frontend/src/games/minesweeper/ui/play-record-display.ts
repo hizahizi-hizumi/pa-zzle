@@ -1,11 +1,11 @@
-import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
-import { minesweeperPlayRecordDefinition } from "@/games/minesweeper/play-record";
 import {
   createCountMetricPresentation,
   createPlayRecordDisplay,
   playScoreMetricPresentation,
   timeDeltaMetricPresentation,
-} from "@/records/ui/play-record-display";
+} from "@/features/records/ui/play-record-display";
+import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
+import { minesweeperPlayRecordDefinition } from "@/games/minesweeper/play-record";
 
 export const minesweeperPlayRecordDisplay = createPlayRecordDisplay({
   definition: minesweeperPlayRecordDefinition,

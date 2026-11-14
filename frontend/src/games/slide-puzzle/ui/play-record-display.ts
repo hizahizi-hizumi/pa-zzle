@@ -1,11 +1,11 @@
-import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
-import { slidePuzzlePlayRecordDefinition } from "@/games/slide-puzzle/play-record";
 import {
   createPlayRecordDisplay,
   moveDeltaMetricPresentation,
   playScoreMetricPresentation,
   timeDeltaMetricPresentation,
-} from "@/records/ui/play-record-display";
+} from "@/features/records/ui/play-record-display";
+import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
+import { slidePuzzlePlayRecordDefinition } from "@/games/slide-puzzle/play-record";
 
 export const slidePuzzlePlayRecordDisplay = createPlayRecordDisplay({
   definition: slidePuzzlePlayRecordDefinition,

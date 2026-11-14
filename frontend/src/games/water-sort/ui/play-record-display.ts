@@ -1,14 +1,14 @@
 import {
-  getDifficultyLabel,
-  parseRecordedDifficulty,
-} from "@/games/difficulty";
-import { waterSortPlayRecordDefinition } from "@/games/water-sort/play-record";
-import {
   createPlayRecordDisplay,
   moveDeltaMetricPresentation,
   playScoreMetricPresentation,
   timeDeltaMetricPresentation,
-} from "@/records/ui/play-record-display";
+} from "@/features/records/ui/play-record-display";
+import {
+  getDifficultyLabel,
+  parseRecordedDifficulty,
+} from "@/games/difficulty";
+import { waterSortPlayRecordDefinition } from "@/games/water-sort/play-record";
 
 export const waterSortPlayRecordDisplay = createPlayRecordDisplay({
   definition: waterSortPlayRecordDefinition,

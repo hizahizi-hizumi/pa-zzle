@@ -7,30 +7,30 @@ import {
   useSyncExternalStore,
 } from "react";
 import { useLocation } from "react-router";
-import { CollectionScreen } from "@/collection/ui/CollectionScreen";
-import { HomeBackLink } from "@/components/HomeBackLink";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { createGameNavigation } from "@/game-catalog/game-navigation";
+import { createGameNavigation } from "@/app/game-integration/game-navigation";
 import {
   describePlayTimelineEntry,
   findPlayTimelineEntryDestination,
   listCatalogPlayTimelineEntries,
-} from "@/game-catalog/play-timeline";
+} from "@/app/game-integration/play-timeline";
+import { HomeBackLink } from "@/components/HomeBackLink";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   readPlayAttemptsSnapshot,
   subscribePlayAttempts,
-} from "@/records/play-attempt-storage";
-import {
-  createPlayRecordsLocationState,
-  readPlayRecordsLocationState,
-} from "@/records/play-records-location-state";
-import type { PlayTimelineEntry } from "@/records/play-timeline";
-import { readPlayRecords } from "@/records/storage";
+} from "@/features/records/play-attempt-storage";
+import type { PlayTimelineEntry } from "@/features/records/play-timeline";
+import { readPlayRecords } from "@/features/records/storage";
+import { Link, useNavigate } from "@/router";
+import { CollectionScreen } from "@/views/PlayRecordsView/CollectionScreen";
 import {
   INITIAL_SHOWN_ENTRY_COUNT,
   PlayRecordsScreen,
-} from "@/records/ui/PlayRecordsScreen";
-import { Link, useNavigate } from "@/router";
+} from "@/views/PlayRecordsView/PlayRecordsScreen";
+import {
+  createPlayRecordsLocationState,
+  readPlayRecordsLocationState,
+} from "@/views/play-records-location-state";
 
 export function PlayRecordsView() {
   const [records] = useState(() => readPlayRecords());

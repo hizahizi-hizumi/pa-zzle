@@ -21,7 +21,7 @@ import {
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
   type SoundLayer,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
 
 const digitEnteredSound = defineSoundEffect(digitEnteredSoundUrl);
 

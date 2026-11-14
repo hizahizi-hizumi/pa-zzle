@@ -1,8 +1,8 @@
 import type { AppLaunchTitle } from "@/lib/app-launch";
-import type { SoundEffect } from "@/lib/sound-effects";
+import type { SoundEffect } from "@/lib/audio/sound-effects";
 
 type AppLaunch = typeof import("@/lib/app-launch");
-type SoundEffectsSetting = typeof import("@/lib/sound-effects-setting");
+type SoundEffectsSetting = typeof import("@/lib/audio/sound-effects-setting");
 
 type SoundLoading = {
   reportProgress: (progress: number) => void;
@@ -26,7 +26,7 @@ const { soundLoadings, loadSoundEffects } = vi.hoisted(() => {
   return { soundLoadings, loadSoundEffects };
 });
 
-vi.mock("@/lib/sound-effects", () => ({ loadSoundEffects }));
+vi.mock("@/lib/audio/sound-effects", () => ({ loadSoundEffects }));
 
 const sounds: readonly SoundEffect[] = [
   { url: "/select.flac" },
@@ -40,7 +40,7 @@ async function importAppLaunch(): Promise<
   vi.resetModules();
   const [appLaunch, setting] = await Promise.all([
     import("@/lib/app-launch"),
-    import("@/lib/sound-effects-setting"),
+    import("@/lib/audio/sound-effects-setting"),
   ]);
   return {
     ...appLaunch,

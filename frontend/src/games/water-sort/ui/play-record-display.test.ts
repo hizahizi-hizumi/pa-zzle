@@ -1,6 +1,6 @@
+import { getPlayRecordMetricValue } from "@/features/records/play-record-definition";
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
-import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const record = createWaterSortPlayRecord({
   difficulty: "3",

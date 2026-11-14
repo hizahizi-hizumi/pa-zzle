@@ -23,7 +23,7 @@ import {
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
   type SoundLayer,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
 
 /** ピースを盤面に置く音。移す・入れ替える・置き換えるときも、ピースが現れるので同じ音で鳴らす。 */
 const piecePlacedSound = defineSoundEffect(piecePlacedSoundUrl);

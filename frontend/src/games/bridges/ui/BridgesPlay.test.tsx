@@ -62,6 +62,7 @@ describe("BridgesPlay", () => {
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onClearAnimationComplete: vi.fn(),
+    renderSettingsDialog: () => null,
     onStartNewProblem: vi.fn(),
     onOpenGameHome: vi.fn(),
     onBackToAppHome: vi.fn(),

@@ -16,7 +16,6 @@ import invalidSoundUrl from "@/games/slide-puzzle/assets/sounds/invalid.flac";
 import slidSoundUrl from "@/games/slide-puzzle/assets/sounds/slid.flac";
 import type { SlidePuzzleOperation } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { getClearWaveTileDelayMs } from "@/games/slide-puzzle/ui/board/clear-wave";
-import { prefersReducedMotion } from "@/lib/motion";
 import {
   defineSoundEffect,
   playLayeredSound,
@@ -24,7 +23,8 @@ import {
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
   type SoundLayer,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /** タイルが滑る音。何枚まとめて滑っても同じ音で鳴らす。 */
 const slidSound = defineSoundEffect(slidSoundUrl);

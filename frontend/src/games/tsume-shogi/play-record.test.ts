@@ -1,3 +1,4 @@
+import { getPlayRecordMetricValue } from "@/features/records/play-record-definition";
 import {
   createTsumeShogiPlayRecord,
   getTsumeShogiPlayRecordScore,
@@ -7,7 +8,6 @@ import {
   tsumeShogiPlayRecordDefinition,
 } from "@/games/tsume-shogi/play-record";
 import { createTsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
-import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const problemIdentity = createTsumeShogiProblemIdentity(5, 50, {
   minimum: 10,

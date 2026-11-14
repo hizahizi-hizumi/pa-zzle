@@ -34,7 +34,7 @@ import {
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
   type SoundLayer,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
 
 const attackerMoveSounds = defineSoundTakes([
   defineSoundEffect(pieceMovedSoundUrl),

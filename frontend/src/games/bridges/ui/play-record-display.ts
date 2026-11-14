@@ -1,10 +1,10 @@
-import { bridgesPlayRecordDefinition } from "@/games/bridges/play-record";
-import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
 import {
   createPlayRecordDisplay,
   playScoreMetricPresentation,
   timeDeltaMetricPresentation,
-} from "@/records/ui/play-record-display";
+} from "@/features/records/ui/play-record-display";
+import { bridgesPlayRecordDefinition } from "@/games/bridges/play-record";
+import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
 
 export const bridgesPlayRecordDisplay = createPlayRecordDisplay({
   definition: bridgesPlayRecordDefinition,

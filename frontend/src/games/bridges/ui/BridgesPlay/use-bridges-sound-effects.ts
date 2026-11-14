@@ -19,7 +19,6 @@ import {
   useOperationSound,
   usePrepareSoundEffects,
 } from "@/games/play-sound-effects";
-import { prefersReducedMotion } from "@/lib/motion";
 import {
   defineSoundEffect,
   playLayeredSound,
@@ -27,7 +26,8 @@ import {
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
   type SoundLayer,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /**
  * 架ける・外す音は、盤面で最も回数の多い操作の音なので、ほかのゲームの最も回数の多い操作の音（一筆の道を伸ばす、ナンプレの数字を入れる、

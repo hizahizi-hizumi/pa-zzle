@@ -20,7 +20,7 @@ import {
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
   type SoundLayer,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
 
 /** マスを開く音の粒。1粒目が押したマスで、一度に多く開くほど続く粒を足す。 */
 const openingTickSounds = [

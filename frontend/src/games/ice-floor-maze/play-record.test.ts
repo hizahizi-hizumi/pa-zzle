@@ -1,3 +1,4 @@
+import type { PlayRecord } from "@/features/records/play-record";
 import {
   _private,
   createIceFloorMazePlayRecord,
@@ -5,7 +6,6 @@ import {
   isIceFloorMazePlayRecord,
   restoreIceFloorMazeRecordedResult,
 } from "@/games/ice-floor-maze/play-record";
-import type { PlayRecord } from "@/records/play-record";
 
 const {
   getIceFloorMazePlayRecordMoveDelta,

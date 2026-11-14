@@ -19,6 +19,7 @@ type GamePlayFrameProps<Result> = Pick<
   | "onOpenGameHome"
   | "onBackToAppHome"
   | "onOpenDiagnostics"
+  | "renderSettingsDialog"
 > &
   Partial<RestartableGamePlayScreenProps> & {
     title: string;
@@ -50,11 +51,13 @@ export function GamePlayFrame<Result>({
   renderResultScreen,
   renderHowToPlayDialog,
   renderTutorial,
+  renderSettingsDialog,
   ref,
   children,
 }: GamePlayFrameProps<Result>) {
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (progress === "result" && result !== null) {
     return renderResultScreen(result);
@@ -87,6 +90,7 @@ export function GamePlayFrame<Result>({
           onBackToAppHome={onBackToAppHome}
           onOpenHowToPlay={() => setHowToPlayOpen(true)}
           onOpenTutorial={renderTutorial && (() => setTutorialOpen(true))}
+          onOpenSettings={() => setSettingsOpen(true)}
           onOpenDiagnostics={onOpenDiagnostics}
         />
         {renderHowToPlayDialog({
@@ -96,6 +100,10 @@ export function GamePlayFrame<Result>({
         {renderTutorial?.({
           open: tutorialOpen,
           onClose: () => setTutorialOpen(false),
+        })}
+        {renderSettingsDialog({
+          open: settingsOpen,
+          onClose: () => setSettingsOpen(false),
         })}
         {children}
       </div>

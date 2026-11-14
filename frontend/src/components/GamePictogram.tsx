@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { startShowcaseAtRest } from "@/components/game-pictogram-motion";
+import { startShowcaseAtRest } from "@/components/GamePictogram/game-pictogram-motion";
 import { subscribePrefersReducedMotion } from "@/lib/motion";
 
 type GamePictogramProps = {

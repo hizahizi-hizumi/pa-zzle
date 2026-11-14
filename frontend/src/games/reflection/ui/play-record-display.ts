@@ -1,10 +1,10 @@
-import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
-import { reflectionPlayRecordDefinition } from "@/games/reflection/play-record";
 import {
   createPlayRecordDisplay,
   playScoreMetricPresentation,
   timeDeltaMetricPresentation,
-} from "@/records/ui/play-record-display";
+} from "@/features/records/ui/play-record-display";
+import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
+import { reflectionPlayRecordDefinition } from "@/games/reflection/play-record";
 
 export const reflectionPlayRecordDisplay = createPlayRecordDisplay({
   definition: reflectionPlayRecordDefinition,

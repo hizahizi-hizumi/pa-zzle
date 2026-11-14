@@ -20,7 +20,6 @@ import {
   CLEAR_WAVE_PEAK_MS,
   CLEAR_WAVE_STAGGER_MS,
 } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
-import { prefersReducedMotion } from "@/lib/motion";
 import {
   defineSoundEffect,
   playLayeredSound,
@@ -28,7 +27,8 @@ import {
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
   type SoundLayer,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /** A と B で見た目が違うので音も分ける。 */
 const tilePlacedSounds: Record<TakuzuTile, SoundEffect> = {

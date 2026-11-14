@@ -1,12 +1,12 @@
 import { useLocation } from "react-router";
-import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
+import { useRandomPlayEntry } from "@/app/game-integration/use-random-play-entry";
+import { PlayableWaterSort } from "@/app/game-integration/water-sort/PlayableWaterSort";
+import { waterSortCatalogEntry } from "@/app/game-integration/water-sort/water-sort-catalog-entry";
 import {
   readAvoidedProblemId,
   readRandomPlaySerial,
-} from "@/game-catalog/play-location-state";
-import { useRandomPlayEntry } from "@/game-catalog/use-random-play-entry";
-import { PlayableWaterSort } from "@/game-catalog/water-sort/PlayableWaterSort";
-import { waterSortCatalogEntry } from "@/game-catalog/water-sort/water-sort-catalog-entry";
+} from "@/app/navigation/play-location-state";
+import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 

@@ -1,6 +1,6 @@
+import { getPlayRecordMetricValue } from "@/features/records/play-record-definition";
 import { createIceFloorMazePlayRecord } from "@/games/ice-floor-maze/play-record";
 import { iceFloorMazePlayRecordDisplay } from "@/games/ice-floor-maze/ui/play-record-display";
-import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const record = createIceFloorMazePlayRecord({
   difficulty: "4",

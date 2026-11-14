@@ -83,6 +83,7 @@ export function ReflectionPlay({
   onOpenGameHome,
   onBackToAppHome,
   onOpenDiagnostics,
+  renderSettingsDialog,
 }: ReflectionPlayProps) {
   const playing = progress === "playing";
   const clueMatches = useMemo(
@@ -150,6 +151,7 @@ export function ReflectionPlay({
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
       onOpenDiagnostics={onOpenDiagnostics}
+      renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (
         <ReflectionHowToPlayDialog open={open} onClose={onClose} />
       )}
