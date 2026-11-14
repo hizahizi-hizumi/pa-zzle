@@ -64,6 +64,7 @@ describe("IceFloorMazePlay", () => {
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
     onClearAnimationComplete: vi.fn(),
+    renderSettingsDialog: () => null,
     onOpenGameHome: vi.fn(),
     onBackToAppHome: vi.fn(),
   };

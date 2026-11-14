@@ -9,9 +9,9 @@ import {
 
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
 import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
-import { playLayeredSound, playSound } from "@/lib/sound-effects";
+import { playLayeredSound, playSound } from "@/lib/audio/sound-effects";
 
-vi.mock("@/lib/sound-effects", () => ({
+vi.mock("@/lib/audio/sound-effects", () => ({
   REPEATED_SOUND_VARIATION: {},
   defineSoundEffect: (url: string) => ({ url }),
   playLayeredSound: vi.fn(),

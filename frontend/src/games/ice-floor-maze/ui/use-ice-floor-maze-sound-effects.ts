@@ -27,13 +27,13 @@ import {
   useOperationSound,
   usePrepareSoundEffects,
 } from "@/games/play-sound-effects";
-import { prefersReducedMotion } from "@/lib/motion";
 import {
   defineSoundEffect,
   playSound,
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /** 駒が氷の上を滑り出す、軽いこすれの音。1プレイで何十回も鳴るので短く小さくし、滑る距離によらず同じ音にする。 */
 const slidSound = defineSoundEffect(slidSoundUrl);

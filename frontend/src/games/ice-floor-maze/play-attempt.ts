@@ -1,6 +1,6 @@
+import type { PlayAttemptProgress } from "@/features/records/play-attempt";
 import type { IceFloorMazeSession } from "@/games/ice-floor-maze/session/session";
 import { getSessionElapsedMs } from "@/games/session";
-import type { PlayAttemptProgress } from "@/records/play-attempt";
 
 /** 評価値と、クリアの評価にだけ使う最短手数は保存しない。 */
 export function createIceFloorMazePlayAttemptProgress(

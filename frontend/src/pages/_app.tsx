@@ -1,7 +1,7 @@
 import { Outlet, type UIMatch, useLocation, useMatches } from "react-router";
 
 // biome-ignore lint/style/noRestrictedImports: _app is the router root layout and composes the application shell.
-import { AppShell } from "@/components/AppShell";
+import { AppShell } from "@/app/shell/AppShell";
 import { NotFoundView } from "@/views/NotFoundView";
 
 // generouted は 404.tsx を `path: "*"` のフォールバックルートとして登録するため、スプラットの一致で判定する。

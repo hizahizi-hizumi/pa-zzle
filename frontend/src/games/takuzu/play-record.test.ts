@@ -1,3 +1,4 @@
+import { getPlayRecordMetricValue } from "@/features/records/play-record-definition";
 import {
   createTakuzuPlayRecord,
   getTakuzuPlayRecordScore,
@@ -7,7 +8,6 @@ import {
   takuzuPlayRecordDefinition,
 } from "@/games/takuzu/play-record";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
-import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const problemIdentity = createTakuzuProblemIdentity(
   "duplicate-avoidance",

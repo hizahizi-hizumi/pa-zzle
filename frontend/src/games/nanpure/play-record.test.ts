@@ -1,3 +1,4 @@
+import type { PlayRecord } from "@/features/records/play-record";
 import {
   createNanpurePlayRecord,
   getNanpurePlayRecordScore,
@@ -11,7 +12,6 @@ import {
   calculateNanpureSpeedScoreRule,
   calculateNanpureTimeDeltaMs,
 } from "@/games/nanpure/score";
-import type { PlayRecord } from "@/records/play-record";
 
 const performance = {
   elapsedMs: 120_000,

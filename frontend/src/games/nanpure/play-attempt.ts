@@ -1,6 +1,6 @@
+import type { PlayAttemptProgress } from "@/features/records/play-attempt";
 import type { NanpureSession } from "@/games/nanpure/session/session";
 import { getSessionElapsedMs } from "@/games/session";
-import type { PlayAttemptProgress } from "@/records/play-attempt";
 
 export function createNanpurePlayAttemptProgress(
   session: NanpureSession,

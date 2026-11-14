@@ -1,3 +1,4 @@
+import { getPlayRecordMetricValue } from "@/features/records/play-record-definition";
 import { createBridgesResult } from "@/games/bridges/play/use-bridges-play";
 import {
   bridgesPlayRecordDefinition,
@@ -8,7 +9,6 @@ import {
   restoreBridgesRecordedResult,
 } from "@/games/bridges/play-record";
 import { createBridgesProblemIdentity } from "@/games/bridges/problem/problem";
-import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const problemIdentity = createBridgesProblemIdentity(
   {

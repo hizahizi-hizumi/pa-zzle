@@ -1,17 +1,17 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { reflectionCatalogEntry } from "@/game-catalog/reflection/reflection-catalog-entry";
+import { reflectionCatalogEntry } from "@/app/game-integration/reflection/reflection-catalog-entry";
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
 import { ReflectionHomeView } from "@/views/ReflectionHomeView";
 
 // 画面のつなぎを確かめるのに問題集の全問は要らず、全問の台紙を描くと重いので、各レベルの先頭の数問に絞る。
 vi.mock(
-  "@/game-catalog/reflection/reflection-catalog-entry",
+  "@/app/game-integration/reflection/reflection-catalog-entry",
   async (importOriginal) => {
     const { reflectionCatalogEntry } =
       await importOriginal<
-        typeof import("@/game-catalog/reflection/reflection-catalog-entry")
+        typeof import("@/app/game-integration/reflection/reflection-catalog-entry")
       >();
     return {
       reflectionCatalogEntry: {

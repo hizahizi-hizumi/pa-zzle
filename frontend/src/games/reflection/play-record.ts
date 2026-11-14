@@ -1,3 +1,8 @@
+import {
+  createPlayRecordId,
+  type PlayRecord,
+} from "@/features/records/play-record";
+import type { PlayRecordDefinition } from "@/features/records/play-record-definition";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import {
@@ -23,8 +28,6 @@ import {
   isNonNegativeInteger,
   isRecordObject,
 } from "@/lib/type-guards";
-import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const REFLECTION_GAME_ID = "reflection";
 const REFLECTION_PLAY_RECORD_PAYLOAD_VERSION = 2;

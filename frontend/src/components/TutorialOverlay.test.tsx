@@ -7,8 +7,6 @@ import {
   within,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
-
-import { useTutorialMusicState } from "@/components/app-background-music";
 import { TutorialCue } from "@/components/TutorialCue";
 import {
   type TutorialBoardIntro,
@@ -20,9 +18,10 @@ import {
   TUTORIAL_SPOTLIGHT_ATTRIBUTE,
   TutorialSpotlight,
 } from "@/components/TutorialSpotlight";
+import { useTutorialMusicState } from "@/components/tutorial-music-state";
 import type { TutorialMessage, TutorialPhase } from "@/games/tutorial";
 
-vi.mock("@/components/app-background-music", () => ({
+vi.mock("@/components/tutorial-music-state", () => ({
   useTutorialMusicState: vi.fn(),
 }));
 

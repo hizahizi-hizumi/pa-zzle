@@ -1,9 +1,9 @@
-import { useGameHome } from "@/game-catalog/game-home";
-import { nanpureCatalogEntry } from "@/game-catalog/nanpure/nanpure-catalog-entry";
+import { GameHomeScreen } from "@/app/game-home/GameHomeScreen";
+import { useGameHome } from "@/app/game-home/game-home";
+import { nanpureCatalogEntry } from "@/app/game-integration/nanpure/nanpure-catalog-entry";
 import { NanpureGround } from "@/games/nanpure/ui/NanpureGround";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
 import { NanpureTutorial } from "@/games/nanpure/ui/NanpureTutorial";
-import { GameHomeScreen } from "@/zukan/ui/GameHomeScreen";
 
 export function NanpureHomeView() {
   const { screenProps } = useGameHome(nanpureCatalogEntry);

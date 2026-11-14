@@ -12,10 +12,9 @@ import {
   RouterProvider,
   Routes,
 } from "react-router";
-
+import { readPlayRecords } from "@/features/records/storage";
 import { createProblemId } from "@/games/problem-id";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
-import { readPlayRecords } from "@/records/storage";
 import { PlayResultView } from "@/views/PlayResultView";
 import { TakuzuPlayView } from "@/views/TakuzuPlayView";
 

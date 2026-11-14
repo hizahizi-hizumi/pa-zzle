@@ -1,6 +1,6 @@
+import type { PlayAttemptProgress } from "@/features/records/play-attempt";
 import type { BridgesSession } from "@/games/bridges/session/session";
 import { getSessionElapsedMs } from "@/games/session";
-import type { PlayAttemptProgress } from "@/records/play-attempt";
 
 /**
  * 架けていた橋の本数と解に要る橋の本数を並べ、どこまで架けていたかを残す。

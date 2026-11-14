@@ -1,12 +1,12 @@
 import { useLocation } from "react-router";
-import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
-import { bridgesCatalogEntry } from "@/game-catalog/bridges/bridges-catalog-entry";
-import { PlayableBridges } from "@/game-catalog/bridges/PlayableBridges";
+import { bridgesCatalogEntry } from "@/app/game-integration/bridges/bridges-catalog-entry";
+import { PlayableBridges } from "@/app/game-integration/bridges/PlayableBridges";
+import { useRandomPlayEntry } from "@/app/game-integration/use-random-play-entry";
 import {
   readAvoidedProblemId,
   readRandomPlaySerial,
-} from "@/game-catalog/play-location-state";
-import { useRandomPlayEntry } from "@/game-catalog/use-random-play-entry";
+} from "@/app/navigation/play-location-state";
+import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 

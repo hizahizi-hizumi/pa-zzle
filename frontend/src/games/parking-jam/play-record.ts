@@ -1,3 +1,6 @@
+import type { PlayRecord } from "@/features/records/play-record";
+import { createPlayRecordId } from "@/features/records/play-record";
+import type { PlayRecordDefinition } from "@/features/records/play-record-definition";
 import {
   type LegacyDifficulty,
   parseDifficultyLevel,
@@ -30,9 +33,6 @@ import {
   isNonNegativeInteger,
   isRecordObject,
 } from "@/lib/type-guards";
-import type { PlayRecord } from "@/records/play-record";
-import { createPlayRecordId } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION = 4;
 const PARKING_JAM_GAME_ID = "parking-jam";

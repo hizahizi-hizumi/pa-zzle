@@ -1,3 +1,4 @@
+import type { PlayRecord } from "@/features/records/play-record";
 import {
   _private,
   createSlidePuzzlePlayRecord,
@@ -5,7 +6,6 @@ import {
   restoreSlidePuzzleRecordedResult,
   slidePuzzlePlayRecordDefinition,
 } from "@/games/slide-puzzle/play-record";
-import type { PlayRecord } from "@/records/play-record";
 
 const {
   getSlidePuzzlePlayRecordMoveDelta,

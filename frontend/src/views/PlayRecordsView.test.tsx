@@ -8,26 +8,26 @@ import {
 } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { gameCatalog } from "@/game-catalog/game-catalog";
-import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
-import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
-import { createProblemId } from "@/games/problem-id";
-import {
-  gameSelectionOrderSetting,
-  _private as orderPrivate,
-} from "@/lib/game-selection-order-setting";
-import type { PlayAttempt } from "@/records/play-attempt";
+import { gameCatalog } from "@/app/game-integration/game-catalog";
+import type { PlayAttempt } from "@/features/records/play-attempt";
 import {
   abandonPlayAttempt,
   startPlayAttempt,
-} from "@/records/play-attempt-storage";
-import type { PlayRecord } from "@/records/play-record";
+} from "@/features/records/play-attempt-storage";
+import type { PlayRecord } from "@/features/records/play-record";
+import { writePlayRecords } from "@/features/records/storage";
+import {
+  gameSelectionOrderSetting,
+  _private as orderPrivate,
+} from "@/features/settings/game-selection-order-setting";
+import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
+import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
+import { createProblemId } from "@/games/problem-id";
+import { PlayRecordsView } from "@/views/PlayRecordsView";
 import {
   createPlayRecordsLocationState,
   readPlayRecordsLocationState,
-} from "@/records/play-records-location-state";
-import { writePlayRecords } from "@/records/storage";
-import { PlayRecordsView } from "@/views/PlayRecordsView";
+} from "@/views/play-records-location-state";
 
 vi.mock("@/lib/internal-diagnostics", () => ({
   internalDiagnosticsAvailable: false,

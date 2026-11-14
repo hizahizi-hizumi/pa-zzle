@@ -1,12 +1,12 @@
 import { useLocation } from "react-router";
-import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
-import { hitofudePuzzleCatalogEntry } from "@/game-catalog/hitofude-puzzle/hitofude-puzzle-catalog-entry";
-import { PlayableHitofudePuzzle } from "@/game-catalog/hitofude-puzzle/PlayableHitofudePuzzle";
+import { hitofudePuzzleCatalogEntry } from "@/app/game-integration/hitofude-puzzle/hitofude-puzzle-catalog-entry";
+import { PlayableHitofudePuzzle } from "@/app/game-integration/hitofude-puzzle/PlayableHitofudePuzzle";
+import { useRandomPlayEntry } from "@/app/game-integration/use-random-play-entry";
 import {
   readAvoidedProblemId,
   readRandomPlaySerial,
-} from "@/game-catalog/play-location-state";
-import { useRandomPlayEntry } from "@/game-catalog/use-random-play-entry";
+} from "@/app/navigation/play-location-state";
+import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 

@@ -1,6 +1,6 @@
+import type { PlayAttemptProgress } from "@/features/records/play-attempt";
 import type { ReflectionSession } from "@/games/reflection/session/session";
 import { getSessionElapsedMs } from "@/games/session";
-import type { PlayAttemptProgress } from "@/records/play-attempt";
 
 export function createReflectionPlayAttemptProgress(
   session: ReflectionSession,

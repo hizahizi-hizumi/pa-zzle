@@ -11,7 +11,6 @@ import { MemoryRouter } from "react-router";
 import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
-import { createResultRecordFeedback } from "@/records/ui/result-record-feedback";
 
 /** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
 function render(ui: ReactElement) {
@@ -44,6 +43,7 @@ const baseProps = {
   onReplay: vi.fn(),
   onStartNewProblem: vi.fn(),
   onClearAnimationComplete: vi.fn(),
+  renderSettingsDialog: () => null,
   onOpenGameHome: vi.fn(),
   onBackToAppHome: vi.fn(),
 };
@@ -571,19 +571,18 @@ describe("WaterSortPlay", () => {
             breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
           },
         })}
-        recordFeedback={createResultRecordFeedback(
-          {
-            status: "updated",
-            updates: [
-              {
-                metricId: "play-score",
-                previousValue: 92,
-                currentValue: 100,
-              },
-            ],
-          },
-          waterSortPlayRecordDisplay,
-        )}
+        recordFeedback={{
+          kind: "updated",
+          improvements: [
+            {
+              id: "play-score",
+              label: "スコア",
+              previous: "92点",
+              current: "100点",
+              improvement: "+8点",
+            },
+          ],
+        }}
       />,
     );
 

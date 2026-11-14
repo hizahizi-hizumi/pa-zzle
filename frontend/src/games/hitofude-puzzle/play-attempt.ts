@@ -1,7 +1,7 @@
+import type { PlayAttemptProgress } from "@/features/records/play-attempt";
 import { listHitofudePuzzleOpenCells } from "@/games/hitofude-puzzle/puzzle/board";
 import type { HitofudePuzzleSession } from "@/games/hitofude-puzzle/session/session";
 import { getSessionElapsedMs } from "@/games/session";
-import type { PlayAttemptProgress } from "@/records/play-attempt";
 
 export function createHitofudePuzzlePlayAttemptProgress(
   session: HitofudePuzzleSession,

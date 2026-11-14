@@ -1,16 +1,10 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { _private as appDecisionSound } from "@/components/app-decision-sound";
 import { PlayHeader } from "@/components/PlayHeader";
-import { playSound } from "@/lib/sound-effects";
+import { playSound } from "@/lib/audio/sound-effects";
 
-vi.mock("@/lib/sound-effects", () => ({
+vi.mock("@/lib/audio/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),
   playSound: vi.fn(),
 }));
@@ -43,6 +37,7 @@ function createProps(): ComponentProps<typeof PlayHeader> {
     onBackToAppHome: vi.fn(),
     onOpenHowToPlay: vi.fn(),
     onOpenTutorial: vi.fn(),
+    onOpenSettings: vi.fn(),
     onOpenDiagnostics: vi.fn(),
   };
 }
@@ -98,6 +93,7 @@ describe("PlayHeader", () => {
       ["パズル選択", "onBackToAppHome"],
       ["遊び方", "onOpenHowToPlay"],
       ["チュートリアル", "onOpenTutorial"],
+      ["設定", "onOpenSettings"],
       ["検証情報", "onOpenDiagnostics"],
     ] as const;
 
@@ -163,18 +159,10 @@ describe("PlayHeader", () => {
       openPlayMenu();
     });
 
-    test("メニューの設定で、画面を移らずに効果音と BGM の音量を選ぶダイアログを開くこと", () => {
+    test("メニューの設定で設定を開く操作を通知すること", () => {
       fireEvent.click(screen.getByRole("menuitem", { name: "設定" }));
 
-      const settings = screen.getByRole("dialog", { name: "設定" });
-      fireEvent.click(
-        within(settings).getByRole("button", { name: /サウンド/ }),
-      );
-      const dialog = screen.getByRole("dialog", { name: "サウンド" });
-      const volumeNames = ["効果音", "BGM"].map(
-        (name) => within(dialog).getByRole("group", { name }).textContent,
-      );
-      expect(volumeNames).toEqual(["効果音5", "BGM5"]);
+      expect(props.onOpenSettings).toHaveBeenCalledOnce();
       expect(props.onBackToAppHome).not.toHaveBeenCalled();
       expect(props.onOpenGameHome).not.toHaveBeenCalled();
       expect(playSound).not.toHaveBeenCalled();

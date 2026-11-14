@@ -1,6 +1,6 @@
+import { getPlayRecordMetricValue } from "@/features/records/play-record-definition";
 import { createParkingJamPlayRecord } from "@/games/parking-jam/play-record";
 import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
-import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const record = createParkingJamPlayRecord({
   difficulty: "5",

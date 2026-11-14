@@ -18,7 +18,6 @@ import {
   POUR_TRANSFER_END_OFFSET,
   POUR_TRANSFER_START_OFFSET,
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
-import { prefersReducedMotion } from "@/lib/motion";
 import {
   defineSoundEffect,
   playLayeredSound,
@@ -26,7 +25,8 @@ import {
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
   type SoundLayer,
-} from "@/lib/sound-effects";
+} from "@/lib/audio/sound-effects";
+import { prefersReducedMotion } from "@/lib/motion";
 
 const invalidSound = defineSoundEffect(invalidSoundUrl);
 

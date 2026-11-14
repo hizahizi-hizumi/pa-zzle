@@ -1,12 +1,12 @@
 import { useLocation } from "react-router";
-import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
-import { PlayableParkingJam } from "@/game-catalog/parking-jam/PlayableParkingJam";
-import { parkingJamCatalogEntry } from "@/game-catalog/parking-jam/parking-jam-catalog-entry";
+import { PlayableParkingJam } from "@/app/game-integration/parking-jam/PlayableParkingJam";
+import { parkingJamCatalogEntry } from "@/app/game-integration/parking-jam/parking-jam-catalog-entry";
+import { useRandomPlayEntry } from "@/app/game-integration/use-random-play-entry";
 import {
   readAvoidedProblemId,
   readRandomPlaySerial,
-} from "@/game-catalog/play-location-state";
-import { useRandomPlayEntry } from "@/game-catalog/use-random-play-entry";
+} from "@/app/navigation/play-location-state";
+import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 

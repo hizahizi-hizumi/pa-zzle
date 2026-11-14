@@ -9,10 +9,10 @@ import {
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
 import { IceFloorMazeTutorial } from "@/games/ice-floor-maze/ui/IceFloorMazeTutorial";
-import { playSound } from "@/lib/sound-effects";
+import { playSound } from "@/lib/audio/sound-effects";
 
-vi.mock("@/lib/sound-effects", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/sound-effects")>()),
+vi.mock("@/lib/audio/sound-effects", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/audio/sound-effects")>()),
   playSound: vi.fn(),
 }));
 

@@ -9,9 +9,9 @@ import {
 
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
-import { playLayeredSound, playSound } from "@/lib/sound-effects";
+import { playLayeredSound, playSound } from "@/lib/audio/sound-effects";
 
-vi.mock("@/lib/sound-effects", () => ({
+vi.mock("@/lib/audio/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),
   playSound: vi.fn(),
   playLayeredSound: vi.fn(),

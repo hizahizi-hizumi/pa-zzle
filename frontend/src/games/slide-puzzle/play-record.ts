@@ -1,3 +1,8 @@
+import {
+  createPlayRecordId,
+  type PlayRecord,
+} from "@/features/records/play-record";
+import type { PlayRecordDefinition } from "@/features/records/play-record-definition";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import {
   isSlidePuzzleProblemIdentityOfDifficulty,
@@ -24,8 +29,6 @@ import {
   isPositiveInteger,
   isRecordObject,
 } from "@/lib/type-guards";
-import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const SLIDE_PUZZLE_GAME_ID = "slide-puzzle";
 const SLIDE_PUZZLE_PLAY_RECORD_PAYLOAD_VERSION = 1;
