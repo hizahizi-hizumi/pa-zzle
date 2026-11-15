@@ -409,7 +409,7 @@ function animateSlide(
   const to = getIceFloorMazeCellCenter(board, slide.to);
   const timing: KeyframeAnimationOptions = {
     duration: getIceFloorMazeSlideDurationMs(slide.path.length),
-    easing: "linear",
+    easing: GLIDE_EASING,
   };
   const scaleAxis = from.y === to.y ? "scaleX" : "scaleY";
 
