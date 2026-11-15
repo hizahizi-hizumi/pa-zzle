@@ -1,9 +1,15 @@
 ---
 status: accepted
+partially_superseded_by:
+  - ADR-0015
 date: 2026-11-03
 ---
 
 # 文書には決まりと Why / Why not を書き、ADR は意思決定の記録にする
+
+> **一部を ADR-0015（2026-11-05）で置き換えた。** 置き換えた部分は次のとおりで、それ以外は有効。
+>
+> - 正本の文書に決まりと Why / Why not を同じ文書に書く部分のうち、`.claude/rules/` に当てはめる部分。今は、`.claude/rules/` のルールには Why / Why not を書かず、決まりと手順だけを書く。
 
 ## 要約
 
