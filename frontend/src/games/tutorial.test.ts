@@ -104,9 +104,10 @@ describe("finishTutorialIntro", () => {
 
   test("導入を終えて、最初の手順から手を引くこと", () => {
     const result = finishTutorialIntro(introducing);
+    const step = getCurrentTutorialStep(fakeTutorial, result);
 
     expect(result.phase).toBe("playing");
-    expect(getCurrentTutorialStep(fakeTutorial, result)).toBe(operationStep);
+    expect(step).toBe(operationStep);
   });
 
   test("導入の後では進行を変えないこと", () => {
@@ -151,8 +152,9 @@ describe("performTutorialAction", () => {
 
   test("手順どおりの手で次の手順へ進み、その手順で示すルールを手に入れること", () => {
     const result = performAll(started, ["stepped", "stepped"]);
+    const step = getCurrentTutorialStep(fakeTutorial, result);
 
-    expect(getCurrentTutorialStep(fakeTutorial, result)).toBe(secondRuleStep);
+    expect(step).toBe(secondRuleStep);
     expect(result.earnedRuleIds).toEqual(["first", "second"]);
   });
 

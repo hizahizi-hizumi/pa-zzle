@@ -36,33 +36,54 @@ afterEach(() => {
 });
 
 describe("出題候補がない場合", () => {
-  test("設定を変えず、今回だけ全問から遊ぶ操作を選べる", () => {
-    const onPlayAny = vi.fn();
-    renderDialog();
-    act(() => randomProblemUnavailable.show("nanpure", "ナンプレ", onPlayAny));
-    const dialog = within(
-      screen.getByRole("dialog", { name: "条件に合う別の問題がありません" }),
-    );
-    fireEvent.click(
-      dialog.getByRole("button", { name: "今回だけ全問から遊ぶ" }),
-    );
-    expect(onPlayAny).toHaveBeenCalledExactlyOnceWith();
-    expect(randomProblemUnavailable.getSnapshot()).toBeNull();
+  describe("今回だけ全問から遊べる候補がある場合", () => {
+    let onPlayAny: () => void;
+
+    beforeEach(() => {
+      onPlayAny = vi.fn();
+      renderDialog();
+    });
+
+    test("設定を変えず、今回だけ全問から遊べること", () => {
+      act(() =>
+        randomProblemUnavailable.show("nanpure", "ナンプレ", onPlayAny),
+      );
+      const dialog = within(
+        screen.getByRole("dialog", { name: "条件に合う別の問題がありません" }),
+      );
+      fireEvent.click(
+        dialog.getByRole("button", { name: "今回だけ全問から遊ぶ" }),
+      );
+      const unavailable = randomProblemUnavailable.getSnapshot();
+
+      expect(onPlayAny).toHaveBeenCalledExactlyOnceWith();
+      expect(unavailable).toBeNull();
+    });
   });
 
-  test("今回だけ遊べる候補もない場合、条件変更だけを案内する", () => {
-    renderDialog();
-    act(() => randomProblemUnavailable.show("nanpure", "ナンプレ"));
-    const dialog = within(
-      screen.getByRole("dialog", { name: "条件に合う別の問題がありません" }),
-    );
-    expect(
-      dialog.queryByRole("button", { name: "今回だけ全問から遊ぶ" }),
-    ).toBeNull();
-    fireEvent.click(dialog.getByRole("button", { name: "出題対象を変更" }));
-    const settings = within(screen.getByRole("dialog", { name: "設定" }));
-    fireEvent.click(settings.getByRole("button", { name: /ランダム出題/ }));
-    const random = within(screen.getByRole("dialog", { name: "ランダム出題" }));
-    expect(random.getByRole("group", { name: "出題対象" })).toBeTruthy();
+  describe("今回だけ遊べる候補もない場合", () => {
+    beforeEach(() => {
+      renderDialog();
+    });
+
+    test("条件変更だけを案内すること", () => {
+      act(() => randomProblemUnavailable.show("nanpure", "ナンプレ"));
+      const dialog = within(
+        screen.getByRole("dialog", { name: "条件に合う別の問題がありません" }),
+      );
+      const playAny = dialog.queryByRole("button", {
+        name: "今回だけ全問から遊ぶ",
+      });
+      fireEvent.click(dialog.getByRole("button", { name: "出題対象を変更" }));
+      const settings = within(screen.getByRole("dialog", { name: "設定" }));
+      fireEvent.click(settings.getByRole("button", { name: /ランダム出題/ }));
+      const random = within(
+        screen.getByRole("dialog", { name: "ランダム出題" }),
+      );
+      const eligibility = random.getByRole("group", { name: "出題対象" });
+
+      expect(playAny).toBeNull();
+      expect(eligibility).toBeTruthy();
+    });
   });
 });

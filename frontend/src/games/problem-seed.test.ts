@@ -18,7 +18,6 @@ describe("createProblemSeededRandom", () => {
   test("同じ入力から同じ乱数列を再現すること", () => {
     const firstRandom = createProblemSeededRandom(seed);
     const secondRandom = createProblemSeededRandom(seed);
-
     const first = Array.from({ length: 5 }, () => firstRandom());
     const second = Array.from({ length: 5 }, () => secondRandom());
 
@@ -30,19 +29,23 @@ describe("shuffleProblemValues", () => {
   const values = [1, 2, 3, 4, 5] as const;
   const seed = "shuffle-source";
   const original = [...values];
+  let firstRandom: ReturnType<typeof createProblemSeededRandom>;
+  let secondRandom: ReturnType<typeof createProblemSeededRandom>;
+
+  beforeEach(() => {
+    firstRandom = createProblemSeededRandom(seed);
+    secondRandom = createProblemSeededRandom(seed);
+  });
 
   test("同じ乱数列から同じ並びを再現すること", () => {
-    const first = shuffleProblemValues(values, createProblemSeededRandom(seed));
-    const second = shuffleProblemValues(
-      values,
-      createProblemSeededRandom(seed),
-    );
+    const first = shuffleProblemValues(values, firstRandom);
+    const second = shuffleProblemValues(values, secondRandom);
 
     expect(second).toEqual(first);
   });
 
   test("入力配列を変更しないこと", () => {
-    shuffleProblemValues(values, createProblemSeededRandom(seed));
+    shuffleProblemValues(values, firstRandom);
 
     expect(values).toEqual(original);
   });

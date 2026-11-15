@@ -21,26 +21,42 @@ function useProblemSelection() {
   return { selected, location, navigate };
 }
 
-describe("ゲームホームの問題URL", () => {
-  test("問題IDをURLから読み、消さずに維持する", () => {
-    const { result } = renderHook(useProblemSelection, {
-      wrapper: RouterWrapper,
-    });
-    expect(result.current.selected).toBe("abc123");
-    expect(result.current.location.search).toBe("?problem=abc123");
+function mountProblemSelection() {
+  return renderHook(useProblemSelection, { wrapper: RouterWrapper });
+}
+
+describe("useRequestedProblemId", () => {
+  let hook: ReturnType<typeof mountProblemSelection>;
+
+  beforeEach(() => {
+    hook = mountProblemSelection();
   });
 
-  test("ブラウザ履歴の移動で選択を復元する", () => {
-    const { result } = renderHook(useProblemSelection, {
-      wrapper: RouterWrapper,
-    });
-    act(() => result.current.navigate("/puzzles/nanpure?level=2"));
-    expect(result.current.selected).toBeNull();
-    act(() => result.current.navigate(-1));
-    expect(result.current.selected).toBe("abc123");
+  test("問題IDをURLから読み、消さずに維持すること", () => {
+    const selected = hook.result.current.selected;
+    const search = hook.result.current.location.search;
+
+    expect(selected).toBe("abc123");
+    expect(search).toBe("?problem=abc123");
   });
 
-  test("問題IDをクエリへ正しくエンコードする", () => {
-    expect(createProblemIdSearch("abc 123")).toBe("?problem=abc+123");
+  test("ブラウザ履歴の移動で選択を復元すること", () => {
+    act(() => hook.result.current.navigate("/puzzles/nanpure?level=2"));
+    const changedSelection = hook.result.current.selected;
+    act(() => hook.result.current.navigate(-1));
+    const restoredSelection = hook.result.current.selected;
+
+    expect(changedSelection).toBeNull();
+    expect(restoredSelection).toBe("abc123");
+  });
+});
+
+describe("createProblemIdSearch", () => {
+  const problemId = "abc 123";
+
+  test("問題IDをクエリへ正しくエンコードすること", () => {
+    const search = createProblemIdSearch(problemId);
+
+    expect(search).toBe("?problem=abc+123");
   });
 });

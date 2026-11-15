@@ -63,26 +63,30 @@ describe("listUnregisteredSourceAreas", () => {
     expect(unknown).toEqual([]);
   });
 
-  test("トップレベルとappとfeaturesとlibに追加された未登録領域を検出すること", () => {
-    mkdirSync(path.join(scratchDirectory, "music"), { recursive: true });
-    mkdirSync(path.join(scratchDirectory, "app", "audio"), {
-      recursive: true,
-    });
-    mkdirSync(path.join(scratchDirectory, "features", "music"), {
-      recursive: true,
-    });
-    mkdirSync(path.join(scratchDirectory, "lib", "music"), {
-      recursive: true,
+  describe("トップレベル・app・features・libに未登録領域がある場合", () => {
+    beforeEach(() => {
+      mkdirSync(path.join(scratchDirectory, "music"), { recursive: true });
+      mkdirSync(path.join(scratchDirectory, "app", "audio"), {
+        recursive: true,
+      });
+      mkdirSync(path.join(scratchDirectory, "features", "music"), {
+        recursive: true,
+      });
+      mkdirSync(path.join(scratchDirectory, "lib", "music"), {
+        recursive: true,
+      });
     });
 
-    const unknown = listUnregisteredSourceAreas(scratchDirectory);
+    test("追加された未登録領域を検出すること", () => {
+      const unknown = listUnregisteredSourceAreas(scratchDirectory);
 
-    expect(unknown).toEqual([
-      "music",
-      "app/audio",
-      "features/music",
-      "lib/music",
-    ]);
+      expect(unknown).toEqual([
+        "music",
+        "app/audio",
+        "features/music",
+        "lib/music",
+      ]);
+    });
   });
 });
 
@@ -354,29 +358,49 @@ describe("Biomeの依存制約", () => {
     ...publicFeatureCases,
   ];
 
-  test("許可・禁止される参照を実際のBiome CLIで検査すること", () => {
-    const probes = [...cases, ...registeredBoundaryCases].map(
-      ([file, imported, allowed]) => {
-        const parent = path.join(frontendDirectory, path.dirname(file));
-        const createdDirectories: string[] = [];
-        for (
-          let current = parent;
-          !existsSync(current);
-          current = path.dirname(current)
-        ) {
-          createdDirectories.unshift(current);
+  describe("許可・禁止される参照", () => {
+    let probes: {
+      probe: string;
+      imported: string;
+      allowed: boolean;
+      directory: string;
+      createdDirectories: string[];
+    }[];
+
+    beforeEach(() => {
+      probes = [...cases, ...registeredBoundaryCases].map(
+        ([file, imported, allowed]) => {
+          const parent = path.join(frontendDirectory, path.dirname(file));
+          const createdDirectories: string[] = [];
+          for (
+            let current = parent;
+            !existsSync(current);
+            current = path.dirname(current)
+          ) {
+            createdDirectories.unshift(current);
+          }
+          mkdirSync(parent, { recursive: true });
+          const directory = mkdtempSync(path.join(parent, "dependency-probe-"));
+          const probe = path.join(directory, path.basename(file));
+          writeFileSync(
+            probe,
+            `import { value } from "${imported}";\nvoid value;\n`,
+          );
+          return { probe, imported, allowed, directory, createdDirectories };
+        },
+      );
+    });
+
+    afterEach(() => {
+      for (const { directory, createdDirectories } of probes) {
+        rmSync(directory, { recursive: true, force: true });
+        for (const created of [...createdDirectories].reverse()) {
+          rmdirSync(created);
         }
-        mkdirSync(parent, { recursive: true });
-        const directory = mkdtempSync(path.join(parent, "dependency-probe-"));
-        const probe = path.join(directory, path.basename(file));
-        writeFileSync(
-          probe,
-          `import { value } from "${imported}";\nvoid value;\n`,
-        );
-        return { probe, imported, allowed, directory, createdDirectories };
-      },
-    );
-    try {
+      }
+    });
+
+    test("実際のBiome CLIで依存制約を検査できること", () => {
       // CLIを毎ケース起動すると検査が遅くなるため、独立したファイルを一括で検査する。
       const result = spawnSync(
         biome,
@@ -389,7 +413,6 @@ describe("Biomeの依存制約", () => {
         ],
         { cwd: frontendDirectory, encoding: "utf8" },
       );
-      expect(result.error, result.stderr).toBeUndefined();
       const report = JSON.parse(result.stdout) as {
         diagnostics: { category: string; location: { path: string } }[];
       };
@@ -400,6 +423,8 @@ describe("Biomeの依存制約", () => {
           )
           .map((diagnostic) => diagnostic.location.path),
       );
+
+      expect(result.error, result.stderr).toBeUndefined();
       for (const { probe, imported, allowed } of probes) {
         const relative = path
           .relative(frontendDirectory, probe)
@@ -409,75 +434,87 @@ describe("Biomeの依存制約", () => {
           `${relative} -> ${imported}: ${result.stderr}`,
         ).toBe(!allowed);
       }
-    } finally {
-      for (const { directory, createdDirectories } of probes) {
-        rmSync(directory, { recursive: true, force: true });
-        for (const created of [...createdDirectories].reverse()) {
-          rmdirSync(created);
-        }
-      }
-    }
+    });
   });
 
-  test.each([
+  const adapterBoundaryCases = [
     ["@/features/records/play-record", true],
     ["@/features/records/storage", false],
     ["@/features/records/ui/PlayRecordsPerformance", false],
-  ])("記録アダプターから %s への参照は %s であること", (imported, allowed) => {
-    // 実際のアダプターファイル名で検査する。子ディレクトリのprobeでは個別の許可規則に一致しない。
-    const scratch = mkdtempSync(
-      path.join(tmpdir(), "pa-zzle-adapter-boundary-"),
-    );
-    try {
-      const directory = path.join(scratch, "src/games/bridges");
-      mkdirSync(directory, { recursive: true });
-      copyFileSync(
-        path.join(frontendDirectory, "biome.json"),
-        path.join(scratch, "biome.json"),
-      );
-      writeFileSync(
-        path.join(directory, "play-record.ts"),
-        `import { value } from "${imported}";\nvoid value;\n`,
-      );
-      const result = spawnSync(
-        biome,
-        [
-          "lint",
-          "--only=style/noRestrictedImports",
-          "src/games/bridges/play-record.ts",
-        ],
-        { cwd: scratch, encoding: "utf8" },
-      );
-      const output = result.stdout + result.stderr;
-      expect(result.error, output).toBeUndefined();
-      if (allowed) {
-        expect(result.status, output).toBe(0);
-      } else {
-        expect(result.status, output).not.toBe(0);
-        expect(output).toContain("noRestrictedImports");
-      }
-    } finally {
-      rmSync(scratch, { recursive: true, force: true });
-    }
-  });
+  ] as const;
 
-  test.each([
+  describe.each(adapterBoundaryCases)(
+    "記録アダプターから %s への参照が %s の場合",
+    (imported, allowed) => {
+      let scratch: string;
+
+      beforeEach(() => {
+        // 実際のアダプターファイル名で検査する。子ディレクトリのprobeでは個別の許可規則に一致しない。
+        scratch = mkdtempSync(path.join(tmpdir(), "pa-zzle-adapter-boundary-"));
+        const directory = path.join(scratch, "src/games/bridges");
+        mkdirSync(directory, { recursive: true });
+        copyFileSync(
+          path.join(frontendDirectory, "biome.json"),
+          path.join(scratch, "biome.json"),
+        );
+        writeFileSync(
+          path.join(directory, "play-record.ts"),
+          `import { value } from "${imported}";\nvoid value;\n`,
+        );
+      });
+
+      afterEach(() => {
+        rmSync(scratch, { recursive: true, force: true });
+      });
+
+      test("実際のBiome CLIの判定が公開契約と一致すること", () => {
+        const result = spawnSync(
+          biome,
+          [
+            "lint",
+            "--only=style/noRestrictedImports",
+            "src/games/bridges/play-record.ts",
+          ],
+          { cwd: scratch, encoding: "utf8" },
+        );
+        const output = result.stdout + result.stderr;
+
+        expect(result.error, output).toBeUndefined();
+        if (allowed) {
+          expect(result.status, output).toBe(0);
+        } else {
+          expect(result.status, output).not.toBe(0);
+          expect(output).toContain("noRestrictedImports");
+        }
+      });
+    },
+  );
+
+  const recordAdapterCases = [
     ["src/games/bridges/play-record.ts", "@/features/records/play-record"],
     ["src/games/bridges/play-attempt.ts", "@/features/records/play-attempt"],
     [
       "src/games/bridges/ui/play-record-display.ts",
       "@/features/records/ui/play-record-display",
     ],
-  ])("記録アダプター %s は必要な共通契約を参照できること", (file, imported) => {
-    expect(readFileSync(path.join(frontendDirectory, file), "utf8")).toContain(
-      imported,
-    );
-    const result = spawnSync(
-      biome,
-      ["lint", "--only=style/noRestrictedImports", file],
-      { cwd: frontendDirectory, encoding: "utf8" },
-    );
-    expect(result.status, result.stdout + result.stderr).toBe(0);
+  ] as const;
+
+  describe.each(recordAdapterCases)("記録アダプター %s", (file, imported) => {
+    test("必要な共通契約を参照していること", () => {
+      const content = readFileSync(path.join(frontendDirectory, file), "utf8");
+
+      expect(content).toContain(imported);
+    });
+
+    test("Biome依存制約を満たすこと", () => {
+      const result = spawnSync(
+        biome,
+        ["lint", "--only=style/noRestrictedImports", file],
+        { cwd: frontendDirectory, encoding: "utf8" },
+      );
+
+      expect(result.status, result.stdout + result.stderr).toBe(0);
+    });
   });
 
   test("移行後の出題設定に既存のBiome規則を適用できること", () => {
@@ -490,6 +527,7 @@ describe("Biomeの依存制約", () => {
       ],
       { cwd: frontendDirectory, encoding: "utf8" },
     );
+
     expect(result.status, result.stdout + result.stderr).toBe(0);
   });
 });
