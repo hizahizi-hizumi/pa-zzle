@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { prefersReducedMotion } from "@/lib/motion";
 
@@ -25,6 +25,8 @@ export function ParkingJamTutorialGoalScene({
   children,
 }: ParkingJamTutorialGoalSceneProps) {
   const [departed, setDeparted] = useState(prefersReducedMotion);
+  const startedAtRef = useRef(Date.now());
+  const notifiedRef = useRef(false);
   // 場面の動きを見せ始めたか。見せ始めた後に `playing` が `false` になれば、場面の動きを終えたとみる。
   const [shown, setShown] = useState(playing);
   if (playing && !shown) {
@@ -33,18 +35,18 @@ export function ParkingJamTutorialGoalScene({
   const departing = !departed && !(shown && !playing);
 
   useEffect(() => {
-    if (departed) {
+    if (!playing || notifiedRef.current) {
       return;
     }
-    const timer = window.setTimeout(() => setDeparted(true), durationMs);
-    return () => window.clearTimeout(timer);
-  }, [departed, durationMs]);
-
-  useEffect(() => {
-    if (playing && departed) {
+    const elapsedMs = Date.now() - startedAtRef.current;
+    const remainingMs = departed ? 0 : Math.max(0, durationMs - elapsedMs);
+    const timer = window.setTimeout(() => {
+      notifiedRef.current = true;
+      setDeparted(true);
       onSceneEnd();
-    }
-  }, [playing, departed, onSceneEnd]);
+    }, remainingMs);
+    return () => window.clearTimeout(timer);
+  }, [playing, departed, durationMs, onSceneEnd]);
 
   return children(departing);
 }
