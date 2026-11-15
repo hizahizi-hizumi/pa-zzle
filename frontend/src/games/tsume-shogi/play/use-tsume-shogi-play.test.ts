@@ -25,9 +25,11 @@ import {
 } from "@/games/tsume-shogi/puzzle/position";
 import {
   calculateTsumeShogiPlayScore,
-  calculateTsumeShogiSpeedFullScoreMs,
+  _private as scorePrivate,
 } from "@/games/tsume-shogi/score";
 import type { TsumeShogiSessionTurn } from "@/games/tsume-shogi/session/session";
+
+const { calculateTsumeShogiSpeedFullScoreMs } = scorePrivate;
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/games/problem-seed")>()),

@@ -54,7 +54,7 @@ export function countTsumeShogiAttackerMoves(plies: number): number {
   return Math.ceil(Math.max(0, plies) / 2);
 }
 
-export function calculateTsumeShogiSpeedFullScoreMs({
+function calculateTsumeShogiSpeedFullScoreMs({
   plies,
   rootChecks,
   plausibleWrong,
@@ -113,3 +113,5 @@ export function calculateTsumeShogiPlayScore({
 
   return sumPlayScore({ accuracy, speed });
 }
+
+export const _private = { calculateTsumeShogiSpeedFullScoreMs };

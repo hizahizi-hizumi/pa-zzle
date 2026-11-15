@@ -1,12 +1,14 @@
 import { getGameResultLevel } from "@/games/result";
 import type { TsumeShogiSolveWorkload } from "@/games/tsume-shogi/problem/problem";
 import {
+  _private,
   calculateTsumeShogiPlayScore,
-  calculateTsumeShogiSpeedFullScoreMs,
   calculateTsumeShogiSpeedScoreRule,
   calculateTsumeShogiTimeDeltaMs,
   countTsumeShogiAttackerMoves,
 } from "@/games/tsume-shogi/score";
+
+const { calculateTsumeShogiSpeedFullScoreMs } = _private;
 
 // 誤王手の紛れの無い3手詰と、もっともらしい誤王手・深い紛れがどちらも上限を超える5手詰（問題集のレベル5 の最大）の作業の量。
 const lightWorkload: TsumeShogiSolveWorkload = {

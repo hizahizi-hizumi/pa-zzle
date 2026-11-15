@@ -52,7 +52,7 @@ type SlidePuzzleMoveDeltaInput = {
 type SlidePuzzlePlayScoreInput = SlidePuzzleTimeDeltaInput &
   SlidePuzzleMoveDeltaInput;
 
-export function calculateSlidePuzzleSpeedFullScoreMs({
+function calculateSlidePuzzleSpeedFullScoreMs({
   boardSize,
   optimalMoveCount,
 }: SlidePuzzleSpeedFullScoreInput): number {
@@ -110,3 +110,5 @@ export function calculateSlidePuzzlePlayScore({
 
   return sumPlayScore({ efficiency, speed });
 }
+
+export const _private = { calculateSlidePuzzleSpeedFullScoreMs };

@@ -80,7 +80,7 @@ export function calculateReflectionTrialMs({
  * 一致表示があると、外周ヒント同士が干渉しない問題は試し置きの方が速く解けるので、その分だけ基準を縮める。
  * 読んで解く人が不利になりすぎないよう、試し置きの時間そのものまでは縮めない。
  */
-export function calculateReflectionSpeedFullScoreMs(
+function calculateReflectionSpeedFullScoreMs(
   workload: ReflectionSolveWorkload,
 ): number {
   const readingMs = calculateReflectionReadingMs(workload);
@@ -121,3 +121,5 @@ export function calculateReflectionPlayScore({
 
   return sumPlayScore({ speed });
 }
+
+export const _private = { calculateReflectionSpeedFullScoreMs };

@@ -1,11 +1,13 @@
 import {
+  _private,
   calculateWaterSortMoveDelta,
   calculateWaterSortPlayScore,
-  calculateWaterSortSpeedFullScoreMs,
   calculateWaterSortSpeedScoreRule,
   calculateWaterSortTimeDeltaMs,
   WATER_SORT_SCORE_MAXIMUMS,
 } from "@/games/water-sort/score";
+
+const { calculateWaterSortSpeedFullScoreMs } = _private;
 
 describe("calculateWaterSortSpeedFullScoreMs", () => {
   test("初期把握時間と色数と最短手数から基準時間を算出すること", () => {

@@ -46,7 +46,7 @@ type WaterSortMoveDeltaInput = {
   optimalMoveCount: number;
 };
 
-export function calculateWaterSortSpeedFullScoreMs({
+function calculateWaterSortSpeedFullScoreMs({
   optimalMoveCount,
   colorCount,
 }: WaterSortSpeedFullScoreInput): number {
@@ -117,3 +117,5 @@ export function calculateWaterSortPlayScore({
 
   return sumPlayScore({ efficiency, speed, accuracy });
 }
+
+export const _private = { calculateWaterSortSpeedFullScoreMs };

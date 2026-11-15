@@ -1,11 +1,13 @@
 import {
+  _private,
   calculateSlidePuzzleMoveDelta,
   calculateSlidePuzzlePlayScore,
-  calculateSlidePuzzleSpeedFullScoreMs,
   calculateSlidePuzzleSpeedScoreRule,
   calculateSlidePuzzleTimeDeltaMs,
   SLIDE_PUZZLE_SCORE_MAXIMUMS,
 } from "@/games/slide-puzzle/score";
+
+const { calculateSlidePuzzleSpeedFullScoreMs } = _private;
 
 // 4×4 で最短 30 手（レベル 3 の中央値）の問題。基準時間は 10 秒 + 30 手 × 2 秒 = 70 秒。
 const boardSize = 4;

@@ -1,14 +1,19 @@
 import {
+  _private,
   getReflectionSymmetryKey,
-  listReflectionBoardSymmetries,
-  mirrorReflectionBoardLeftRight,
-  rotateReflectionBoardClockwise,
 } from "@/games/reflection/problem/generation/symmetry";
 import { parseReflectionBoard } from "@/games/reflection/puzzle/board";
+
 import {
   computeReflectionClues,
   type ReflectionClue,
 } from "@/games/reflection/puzzle/laser";
+
+const {
+  rotateReflectionBoardClockwise,
+  mirrorReflectionBoardLeftRight,
+  listReflectionBoardSymmetries,
+} = _private;
 
 function toSortedClueKeys(clues: readonly ReflectionClue[]): string[] {
   return clues.map((clue) => `${clue.outcome}:${clue.distance}`).sort();
