@@ -23,7 +23,7 @@ model: opus
 ## 参照する正本
 
 - 作業の決まり: `AGENTS.md`、`CLAUDE.md`、`.claude/rules/`（特に `typescript*.md`、`react-hooks.md`、`component-styling.md`、`views.md`、`pages.md`、`vitest.md`、`self-documenting-code.md`）
-- 振る舞いと文書: `GAME.md`、`APP.md`、`DESIGN.md`（値は `frontend/styles/globals.css` の `@theme`）、画面の文書 `docs/プロダクト/画面/`、`docs/プロダクト/仕様/`。文書の置き場所と書き方は `.claude/rules/documents.md`
+- 振る舞いと文書: `GAME.md`、`APP.md`、`DESIGN.md`（値は `frontend/styles/globals.css` の `@theme`）、画面の文書 `docs/プロダクト/画面/`、アプリ仕様 `docs/プロダクト/仕様/`、ゲーム共通仕様 `docs/プロダクト/ゲーム/`、パズル仕様 `docs/プロダクト/パズル/`。文書の置き場所と書き方は `.claude/rules/documents.md`
 - ゲームの置き場所・依存方向・追加時に触る場所: `.claude/rules/game-structure.md`
 - 失敗パターンと予防: 作業カードの失敗パターン。全体は失敗パターン集の絶対パス
 - 作り方の Skill と項目の対応: `/add-puzzle` の `references/build-order.md`。各 Skill の「`/add-puzzle` から起動されたとき」に従う
