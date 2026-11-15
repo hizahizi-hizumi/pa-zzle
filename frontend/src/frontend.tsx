@@ -7,7 +7,7 @@ import "@/index.css";
 import { gameCatalog } from "@/app/game-integration/game-catalog";
 import { RandomProblemUnavailableDialog } from "@/app/RandomProblemUnavailableDialog";
 import { GameCatalogProvider } from "@/features/settings/GameCatalogContext";
-import { startAppLaunch } from "@/lib/app-launch";
+import { shouldShowAppTitle, startAppLaunch } from "@/lib/app-launch";
 import { defineSoundEffect } from "@/lib/audio/sound-effects";
 
 const root = document.getElementById("root");
@@ -36,8 +36,11 @@ const bundledSoundEffects = Object.values(
   import.meta.glob<string>("./**/*.flac", { eager: true, import: "default" }),
 ).map(defineSoundEffect);
 
+const [navigation] = performance.getEntriesByType(
+  "navigation",
+) as PerformanceNavigationTiming[];
 startAppLaunch({
-  showTitle: window.location.pathname === "/",
+  showTitle: shouldShowAppTitle(window.location.pathname, navigation?.type),
   allSounds: bundledSoundEffects,
 });
 

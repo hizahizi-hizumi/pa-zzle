@@ -15,6 +15,37 @@ type AppLaunchOptions = {
 };
 
 const SOUND_LOADING_LIMIT_MS = 4000;
+const ENTERED_APP_KEY = "pa-zzle:entered-app";
+
+function wasAppEnteredInThisTab(): boolean {
+  try {
+    return window.sessionStorage.getItem(ENTERED_APP_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function rememberAppEntry(): void {
+  try {
+    window.sessionStorage.setItem(ENTERED_APP_KEY, "1");
+  } catch {
+    // 保存できない環境では従来どおりタイトルを表示する。
+  }
+}
+
+/** 新規に開いた画面ではタイトルを表示し、同じタブで入場済みの再読み込みは直接復帰する。 */
+export function shouldShowAppTitle(
+  pathname: string,
+  navigationType: PerformanceNavigationTiming["type"] | undefined,
+): boolean {
+  return (
+    pathname === "/" &&
+    !(
+      (navigationType === "reload" || navigationType === "back_forward") &&
+      wasAppEnteredInThisTab()
+    )
+  );
+}
 
 const HIDDEN_TITLE: AppLaunchTitle = { status: "hidden" };
 const READY_TITLE: AppLaunchTitle = { status: "ready" };
@@ -32,6 +63,10 @@ export function startAppLaunch({
     return;
   }
   launched = true;
+
+  if (!showTitle) {
+    rememberAppEntry();
+  }
 
   if (!showTitle || !isSoundEffectsEnabled()) {
     void loadSoundEffects(allSounds);
@@ -76,6 +111,7 @@ function waitForSounds(sounds: readonly SoundEffect[]) {
 }
 
 export function enterApp(): void {
+  rememberAppEntry();
   setTitle(HIDDEN_TITLE);
   stopWaitingForSounds?.();
 }

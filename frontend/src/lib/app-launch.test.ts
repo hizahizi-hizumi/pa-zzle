@@ -62,6 +62,7 @@ afterEach(() => {
   loadSoundEffects.mockClear();
   vi.useRealTimers();
   window.localStorage.clear();
+  window.sessionStorage.clear();
 });
 
 describe("startAppLaunch", () => {
@@ -200,5 +201,71 @@ describe("enterApp", () => {
 
       expect(notifiedTitles).toEqual([{ status: "hidden" }]);
     });
+  });
+});
+
+describe("shouldShowAppTitle", () => {
+  let appLaunch: AppLaunch;
+
+  beforeEach(async () => {
+    appLaunch = await importAppLaunch();
+  });
+
+  test("初めてホームを開くとタイトルを表示すること", () => {
+    const showTitle = appLaunch.shouldShowAppTitle("/", "navigate");
+
+    expect(showTitle).toBe(true);
+  });
+
+  test("タイトルを閉じた後の再読み込みではタイトルを省くこと", () => {
+    appLaunch.startAppLaunch({ showTitle: true, allSounds: sounds });
+    appLaunch.enterApp();
+
+    const showTitle = appLaunch.shouldShowAppTitle("/", "reload");
+
+    expect(showTitle).toBe(false);
+  });
+
+  test("入場後に履歴から再表示したときもタイトルを省くこと", () => {
+    appLaunch.startAppLaunch({ showTitle: true, allSounds: sounds });
+    appLaunch.enterApp();
+
+    const showTitle = appLaunch.shouldShowAppTitle("/", "back_forward");
+
+    expect(showTitle).toBe(false);
+  });
+
+  test("タイトルへ入る前の再読み込みではタイトルを表示すること", () => {
+    appLaunch.startAppLaunch({ showTitle: true, allSounds: sounds });
+
+    const showTitle = appLaunch.shouldShowAppTitle("/", "reload");
+
+    expect(showTitle).toBe(true);
+  });
+
+  test("別タブで新しくホームを開いたときはタイトルを表示すること", () => {
+    appLaunch.startAppLaunch({ showTitle: true, allSounds: sounds });
+    appLaunch.enterApp();
+
+    const showTitle = appLaunch.shouldShowAppTitle("/", "navigate");
+
+    expect(showTitle).toBe(true);
+  });
+
+  test("ほかの画面から利用を開始した後もホームの再読み込みではタイトルを省くこと", () => {
+    appLaunch.startAppLaunch({ showTitle: false, allSounds: sounds });
+
+    const showTitle = appLaunch.shouldShowAppTitle("/", "reload");
+
+    expect(showTitle).toBe(false);
+  });
+
+  test("ホーム以外を直接開いたときはタイトルを表示しないこと", () => {
+    const showTitle = appLaunch.shouldShowAppTitle(
+      "/puzzles/nanpure",
+      "navigate",
+    );
+
+    expect(showTitle).toBe(false);
   });
 });

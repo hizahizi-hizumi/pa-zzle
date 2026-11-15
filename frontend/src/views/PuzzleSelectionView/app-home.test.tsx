@@ -159,6 +159,7 @@ afterEach(() => {
   cleanup();
   appLaunch.resetAppLaunch();
   window.localStorage.clear();
+  window.sessionStorage.clear();
   orderPrivate.resetCache();
   Reflect.deleteProperty(Element.prototype, "scrollIntoView");
   Reflect.deleteProperty(HTMLElement.prototype, "scrollTo");

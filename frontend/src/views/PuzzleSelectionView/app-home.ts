@@ -27,6 +27,24 @@ export type AppHome = {
   selectGame: (index: number) => void;
 };
 
+const SELECTED_GAME_KEY = "pa-zzle:selected-game";
+
+function readSelectedGameId(): string | null {
+  try {
+    return window.sessionStorage.getItem(SELECTED_GAME_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function rememberSelectedGameId(gameId: string): void {
+  try {
+    window.sessionStorage.setItem(SELECTED_GAME_KEY, gameId);
+  } catch {
+    // 保存できない環境では、この画面を開いている間だけ選択を保持する。
+  }
+}
+
 type AppHomeOptions = {
   opensCovered: boolean;
   fallbackGameId?: string;
@@ -69,7 +87,10 @@ export function useAppHome(
     subscribePlayAttempts,
     readPlayAttemptsSnapshot,
   );
-  const [chosenIndex, setChosenIndex] = useState<number | null>(null);
+  const [chosenGameId, setChosenGameId] = useState<string | null>(
+    readSelectedGameId,
+  );
+  const chosenIndex = games.findIndex(({ id }) => id === chosenGameId);
   // 続きを求めるには問題集の索引が要り、作るのが重い。タイトルで覆われている間は、タイトルを描いたあとに求める。
   const defersContinuations = useDeferredValue(false, opensCovered);
   const continuations = useMemo(
@@ -96,7 +117,7 @@ export function useAppHome(
 
   // 離脱はこの画面を描いたあとに保存されることがあるので、選ぶまでは求め直す。
   const latestPlayedGameId =
-    chosenIndex === null
+    chosenIndex === -1
       ? (continuations?.findLatestPlayedGameId() ?? null)
       : null;
   const latestPlayedIndex = games.findIndex(
@@ -104,10 +125,11 @@ export function useAppHome(
   );
   const fallbackGameIndex = games.findIndex(({ id }) => id === fallbackGameId);
   const selectedGameIndex =
-    chosenIndex ??
-    (latestPlayedIndex === -1
-      ? Math.max(fallbackGameIndex, 0)
-      : latestPlayedIndex);
+    chosenIndex !== -1
+      ? chosenIndex
+      : latestPlayedIndex === -1
+        ? Math.max(fallbackGameIndex, 0)
+        : latestPlayedIndex;
   const selectedGame = games[selectedGameIndex];
 
   return {
@@ -116,6 +138,11 @@ export function useAppHome(
       selectedGame && continuations
         ? continuations.find(selectedGame.id)
         : null,
-    selectGame: setChosenIndex,
+    selectGame(index) {
+      const gameId = games[index]?.id;
+      if (!gameId) return;
+      setChosenGameId(gameId);
+      rememberSelectedGameId(gameId);
+    },
   };
 }

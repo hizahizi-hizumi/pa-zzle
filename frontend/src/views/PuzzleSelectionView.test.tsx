@@ -86,6 +86,7 @@ afterEach(() => {
   cleanup();
   resetAppLaunch();
   window.localStorage.clear();
+  window.sessionStorage.clear();
   gameOrderPrivate.resetCache();
 });
 
@@ -231,5 +232,33 @@ describe("保存されたホームの並び順", () => {
     expect(
       screen.getByRole("link", { name: "ウォーターソートを開く" }),
     ).toBeTruthy();
+  });
+});
+
+describe("同じタブでパズル選択を再表示した場合", () => {
+  beforeEach(() => {
+    renderAtHome();
+    selectGameByName("ナンプレ");
+  });
+
+  test("選んだパズルを復元すること", () => {
+    cleanup();
+    renderAtHome();
+
+    const selected = screen.getByRole("link", { name: "ナンプレを開く" });
+
+    expect(selected.getAttribute("href")).toBe("/puzzles/nanpure");
+  });
+
+  test("存在しないゲームが保存されていても選択画面を表示できること", () => {
+    window.sessionStorage.setItem("pa-zzle:selected-game", "removed-game");
+    cleanup();
+    renderAtHome();
+
+    const selected = screen.getByRole("link", {
+      name: "ウォーターソートを開く",
+    });
+
+    expect(selected.getAttribute("href")).toBe("/puzzles/water-sort");
   });
 });
