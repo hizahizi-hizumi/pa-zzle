@@ -30,8 +30,8 @@ game id は `frontend/src/games/<game>/` のディレクトリ名。
 
 全段の判断軸にする。評価は A → B → C → D の順に行う。
 
-- **目的 A**: 選んだパズルで何を考え何をする遊びかが、動きで分かる（`docs/プロダクト/要件/FR-001.md`）。
-- **目的 B**: 解けた・揃った瞬間の気持ちよさが見え、遊びたくなる（`docs/プロダクト/要求/RQ-002.md`）。
+- **目的 A**: 選んだパズルで何を考え何をする遊びかが、動きで分かる（`docs/プロダクト/要件/FR-001-遊ぶパズルを見分けて選べる.md`）。
+- **目的 B**: 解けた・揃った瞬間の気持ちよさが見え、遊びたくなる（`docs/プロダクト/要求/RQ-002-遊びたいパズルを手軽に始めたい.md`）。
 - **合格条件 C**: 選んだ手応えが即座に返る。A と B ができていれば自然に生まれる。弱ければ A/B の作り方を直し、C のためだけの演出は足さない。
 - **制約 D**: 画面の落ち着きを不必要に崩さない。
 
@@ -121,7 +121,7 @@ Skill 配下には特定ゲームの生成物を置かない。
 - `references/self-review.md` — 観察方法、必須チェックリスト、`self-review.json`
 - `.claude/agents/showcase-pictogram-reviewer.md` — 人間へ見せる前のレビュー役
 - `scripts/` — 検査（`check_animation.py`、`check_self_review.py`）、観察（`observe_animation.cjs`、`capture_frames.cjs`）、ギャラリー（`make_review_gallery.py`、`check_gallery.cjs`）、色の実値（`resolve_color.py`）。オプションは各スクリプトの `--help`
-- `DESIGN.md` の「コンポーネント」の「ゲームを表す表現」「ゲームピクトグラム」と「動き」、`docs/プロダクト/画面/SCR-001.md`（ホーム）、`docs/adr/ADR-0016-selected-pictogram-color-motion.md`
+- `DESIGN.md` の「コンポーネント」の「ゲームを表す表現」「ゲームピクトグラム」と「動き」、`docs/プロダクト/画面/SCR-001-ホーム.md`（ホーム）、`docs/adr/ADR-0016-selected-pictogram-color-motion.md`
 
 ## 制約
 

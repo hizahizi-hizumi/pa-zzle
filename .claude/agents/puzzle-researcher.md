@@ -24,7 +24,7 @@ model: opus
 ## 参照する正本
 
 - 合意ファイル: 守る前提。合意と逆の前提で調べない
-- 決まり: `GAME.md`、`APP.md`、`DESIGN.md`、画面の文書 `docs/プロダクト/画面/`、共通仕様 `docs/プロダクト/仕様/`、パズル仕様 `docs/プロダクト/パズル/`（図鑑の観点では `ゲーム/SPEC-026.md`）、文書の置き場所は `.claude/rules/documents.md`、難易度の観点では `docs/パズル/README.md` から辿る難易度文書
+- 決まり: `GAME.md`、`APP.md`、`DESIGN.md`、画面の文書 `docs/プロダクト/画面/`、共通仕様 `docs/プロダクト/仕様/`、パズル仕様 `docs/プロダクト/パズル/`（図鑑の観点では `ゲーム/SPEC-026-図鑑.md`）、文書の置き場所は `.claude/rules/documents.md`、難易度の観点では `docs/パズル/README.md` から辿る難易度文書
 - 前例: 既存ゲームの導入調査（`docs/パズル/導入調査/`）と `frontend/src/games/` の実装、`docs/パズル/導入調査/` の各パズルの `調査コード/`
 - 失敗パターン集: 「いつ」が research か「全項目」の行を、この観点に関わるものだけ当てる
 - 調査資産の配置と保守範囲: `.claude/rules/research-artifacts.md` を読み、その場所に保存する
