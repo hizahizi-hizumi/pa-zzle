@@ -135,7 +135,7 @@ export function findParkingJamPoolEntryByProblemId(
   return poolIndex.findPositionById(difficulty, problemId)?.entry ?? null;
 }
 
-export function getParkingJamProblemPoolDifficultyModelVersion(): string {
+function getParkingJamProblemPoolDifficultyModelVersion(): string {
   return problemPool.difficultyModelVersion;
 }
 
@@ -183,3 +183,5 @@ export const parkingJamProblemFeatureAxes = [
 
 export type ParkingJamProblemFeatureAxisId =
   (typeof parkingJamProblemFeatureAxes)[number]["id"];
+
+export const _private = { getParkingJamProblemPoolDifficultyModelVersion };

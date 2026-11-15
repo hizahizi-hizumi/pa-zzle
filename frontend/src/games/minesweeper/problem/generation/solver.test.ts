@@ -2,12 +2,12 @@ import { createMinesweeperDeductionState } from "@/games/minesweeper/problem/gen
 import {
   _private,
   findMinesweeperCertainCells,
-  solveMinesweeperLogically,
 } from "@/games/minesweeper/problem/generation/solver";
 import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 
 const { splitConstraintComponents, selectMineCountsConsistentWithTotal } =
   _private;
+const { solveMinesweeperLogically } = _private;
 
 /** `*` は未開示の地雷、`#` は未開示の安全マス、`.` は開示済みの安全マス。行は `/` で区切る。 */
 function problemFromPicture(picture: string): MinesweeperProblem {

@@ -29,7 +29,7 @@ export type IceFloorMazeStopGraph = {
 };
 
 /** 要素の無い盤面で、起点から幅優先で停止点をたどる。 */
-export function exploreIceFloorMazeStops(
+function exploreIceFloorMazeStops(
   board: IceFloorMazeBoard,
   origin: number,
 ): IceFloorMazeStopGraph {
@@ -64,7 +64,7 @@ export function exploreIceFloorMazeStops(
   return { origin, stops, moveCounts, slides };
 }
 
-export function listIceFloorMazeStopMoves(
+function listIceFloorMazeStopMoves(
   graph: IceFloorMazeStopGraph,
   stop: number,
 ): IceFloorMazeStopMove[] {
@@ -72,3 +72,5 @@ export function listIceFloorMazeStopMoves(
     (slide): slide is IceFloorMazeStopMove => slide.status === "slid",
   );
 }
+
+export const _private = { exploreIceFloorMazeStops, listIceFloorMazeStopMoves };

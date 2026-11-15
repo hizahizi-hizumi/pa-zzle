@@ -1,6 +1,6 @@
 import {
   countHitofudePuzzleSolutions,
-  isHitofudePuzzleUniquelySolvable,
+  _private as solverPrivate,
 } from "@/games/hitofude-puzzle/problem/generation/solver";
 import {
   createHitofudePuzzleAdjacency,
@@ -11,6 +11,8 @@ import {
 } from "@/games/hitofude-puzzle/puzzle/board";
 import { isHitofudePuzzleSolved } from "@/games/hitofude-puzzle/puzzle/rules";
 import { createProblemSeededRandom } from "@/games/problem-seed";
+
+const { isHitofudePuzzleUniquelySolvable } = solverPrivate;
 
 function createOpenBoard(size: number, start: number): HitofudePuzzleBoard {
   return { size, holes: [], start };

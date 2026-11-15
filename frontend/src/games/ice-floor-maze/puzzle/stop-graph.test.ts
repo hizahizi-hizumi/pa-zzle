@@ -1,8 +1,8 @@
 import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
-import {
-  exploreIceFloorMazeStops,
-  listIceFloorMazeStopMoves,
-} from "@/games/ice-floor-maze/puzzle/stop-graph";
+import { _private as stopGraphPrivate } from "@/games/ice-floor-maze/puzzle/stop-graph";
+
+const { exploreIceFloorMazeStops, listIceFloorMazeStopMoves } =
+  stopGraphPrivate;
 
 describe("exploreIceFloorMazeStops", () => {
   // 0  #  2
