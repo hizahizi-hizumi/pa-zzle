@@ -11,6 +11,7 @@ import { CollectionBreakdown } from "@/views/PlayRecordsView/CollectionScreen/Co
 import { CollectionLegend } from "@/views/PlayRecordsView/CollectionScreen/CollectionLegend";
 import { CollectionTimeline } from "@/views/PlayRecordsView/CollectionScreen/CollectionTimeline";
 import { CollectionTowers } from "@/views/PlayRecordsView/CollectionScreen/CollectionTowers";
+import { formatCollectionMonth } from "@/views/PlayRecordsView/CollectionScreen/format-collection-month";
 
 type CollectionScreenProps = {
   records: readonly PlayRecord[];
@@ -40,6 +41,7 @@ export function CollectionScreen({ records, now }: CollectionScreenProps) {
     [records, now],
   );
   const activePeriod = period < 0 ? journey.periods.length - 1 : period;
+  const activeMonth = journey.periods[activePeriod];
   const currentGames = journey.snapshots[activePeriod] ?? [];
   const items = orderedIds.flatMap((id) => {
     const game = currentGames.find((item) => item.id === id);
@@ -61,7 +63,7 @@ export function CollectionScreen({ records, now }: CollectionScreenProps) {
       <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3">
         <div>
           <p className="text-meta text-muted-foreground">
-            {journey.periods[activePeriod]?.label}
+            {activeMonth ? formatCollectionMonth(activeMonth) : null}
           </p>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-[clamp(3.25rem,13vw,5rem)] leading-none font-semibold tracking-[-0.06em] tabular-nums">

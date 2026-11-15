@@ -18,7 +18,9 @@ const record: PlayRecord = {
 const recordedOutcome: PlayRecordSaveOutcome = { status: "first-record" };
 const failedOutcome: PlayRecordSaveOutcome = { status: "failed" };
 
-function RouterWrapper({ children }: { children: ReactNode }) {
+type RouterWrapperProps = { children: ReactNode };
+
+function RouterWrapper({ children }: RouterWrapperProps) {
   return <MemoryRouter initialEntries={[playPath]}>{children}</MemoryRouter>;
 }
 

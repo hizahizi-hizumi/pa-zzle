@@ -14,7 +14,6 @@ export type CollectionMonth = {
   key: string;
   year: number;
   month: number;
-  label: string;
 };
 
 export type CollectionCounts = Readonly<Record<GameResultLevel, number>>;
@@ -78,7 +77,6 @@ function createMonths(fromMonth: number, toMonth: number): CollectionMonth[] {
       key: `${year}-${String(month).padStart(2, "0")}`,
       year,
       month,
-      label: `${year}年${month}月`,
     };
   });
 }
