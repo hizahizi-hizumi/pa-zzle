@@ -225,8 +225,9 @@ function printConditionYields(rows: readonly Row[]): void {
   console.log("|---|---:|---:|---:|---:|---:|---:|---:|---:|---|");
   const groups = Map.groupBy(rows, (row) => conditionKeyOf(row.conditions));
   for (const [key, group] of groups) {
-    const share = (predicate: (row: Row) => boolean) =>
-      `${((group.filter(predicate).length / group.length) * 100).toFixed(1)}%`;
+    function share(predicate: (row: Row) => boolean) {
+      return `${((group.filter(predicate).length / group.length) * 100).toFixed(1)}%`;
+    }
     const times = group.map((row) => row.milliseconds).sort((a, b) => a - b);
     console.log(
       `| ${key} | ${group.length} | ${share((row) => row.analysis.status !== "invalid")} | ${share((row) => row.outcome === "requires-trial")} | ${difficultyLevels
@@ -376,8 +377,8 @@ function printLevelDistributions(rows: readonly ClassifiedRow[]): void {
 
   console.log("\n## 生成条件の内訳（E2）");
   for (const [index, group] of byLevel.entries()) {
-    const describeKey = (key: string) =>
-      [
+    function describeKey(key: string) {
+      return [
         ...Map.groupBy(group, (row) =>
           key === "p"
             ? row.conditions.doubleBridgeRate
@@ -389,6 +390,7 @@ function printLevelDistributions(rows: readonly ClassifiedRow[]): void {
         .sort(([a], [b]) => a - b)
         .map(([value, items]) => `${value}:${items.length}`)
         .join(" ");
+    }
     console.log(
       `L${index + 1}: 2本 ${describeKey("p")} / 密度 ${describeKey("d")} / 輪 ${describeKey("e")}`,
     );

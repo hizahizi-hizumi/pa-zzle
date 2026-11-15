@@ -575,7 +575,9 @@ function describeDistribution(values: readonly number[]): string {
     return "-";
   }
   const sorted = [...values].sort((left, right) => left - right);
-  const format = (value: number) => String(Number(value.toFixed(1)));
+  function format(value: number) {
+    return String(Number(value.toFixed(1)));
+  }
   return `min=${format(sorted[0]!)} p10=${format(quantile(sorted, 0.1))} median=${format(quantile(sorted, 0.5))} p90=${format(quantile(sorted, 0.9))} max=${format(sorted.at(-1)!)}`;
 }
 

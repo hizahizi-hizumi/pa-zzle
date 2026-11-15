@@ -145,18 +145,20 @@ async function runMain() {
   const nextIndexes = new Map(
     profiles.map((profile) => [profileKey(profile), 0]),
   );
-  const shareOf = (level: WaterSortDifficulty) =>
-    Math.ceil(
+  function shareOf(level: WaterSortDifficulty) {
+    return Math.ceil(
       perLevel / waterSortDifficultyCriteria[level].generationProfiles.length,
     );
-  const levelsOf = (profile: Profile) =>
-    difficultyLevels
+  }
+  function levelsOf(profile: Profile) {
+    return difficultyLevels
       .map(({ id }) => id)
       .filter((id) =>
         waterSortDifficultyCriteria[id].generationProfiles.some(
           (candidate) => profileKey(candidate) === profileKey(profile),
         ),
       );
+  }
 
   function takeUsablePrefix(profile: Profile): Candidate[] | null {
     const generated = results.get(profileKey(profile))!;

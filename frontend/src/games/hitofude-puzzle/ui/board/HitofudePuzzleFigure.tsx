@@ -107,7 +107,9 @@ export function HitofudePuzzleFigure({
     1,
     listHitofudePuzzleOpenCells(board).length - 1,
   );
-  const progressAt = (index: number) => index / lastProgressIndex;
+  function progressAt(index: number) {
+    return index / lastProgressIndex;
+  }
   const visitedOrder = new Map(path.map((cell, index) => [cell, index]));
   const start = getCellCenter(size, board.start);
   const headIndex = path.length - 1;

@@ -446,8 +446,12 @@ function createConcreteGameOverrides(
   games: readonly string[],
   game: string,
 ): BiomeOverride[] {
-  const gameImport = (path: string) => `@/games/${game}/${path}`;
-  const gameFiles = (path: string) => [`src/games/${game}/${path}`];
+  function gameImport(path: string) {
+    return `@/games/${game}/${path}`;
+  }
+  function gameFiles(path: string) {
+    return [`src/games/${game}/${path}`];
+  }
   const crossGame = crossGamePattern(games, game, ["games"]);
   const boundary = [concreteGameBoundary(), crossGame];
 
