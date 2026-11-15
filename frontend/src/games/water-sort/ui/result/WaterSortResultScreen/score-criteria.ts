@@ -50,9 +50,9 @@ export function getWaterSortScoreCriteria(
       }),
     ),
     createScoreItemCriterion(
-      "accuracy",
+      "stability",
       describeLinearScoreCriterion({
-        maximum: WATER_SORT_SCORE_MAXIMUMS.accuracy,
+        maximum: WATER_SORT_SCORE_MAXIMUMS.stability,
         fullScoreCondition: "手戻りなし",
         zeroScoreCondition: `手戻り${result.optimalMoveCount}手以上`,
         basis: "手戻りの手数",

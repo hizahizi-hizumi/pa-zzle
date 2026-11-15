@@ -45,7 +45,7 @@ export function HitofudePuzzleResultScreen({
     <GameResultScreen
       gameName={HITOFUDE_PUZZLE_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      // 待った・盤面を戻すの回数は点に入らないので内訳に置き、主な成績は時間と、正確さの元の引き直しにする。
+      // 待った・盤面を戻すの回数は点に入らないので内訳に置き、主な成績は時間と、安定性の元の引き直しにする。
       metrics={[
         createElapsedTimeMetric(result),
         createCountMetric(

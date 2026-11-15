@@ -15,11 +15,11 @@ import {
  */
 export const HITOFUDE_PUZZLE_SCORE_MAXIMUMS = {
   speed: 60,
-  accuracy: 40,
-} as const satisfies ScoreMaximums<"speed" | "accuracy">;
+  stability: 40,
+} as const satisfies ScoreMaximums<"speed" | "stability">;
 
 /**
- * 引き直し1回ごとの正確さの減点（暫定値）。
+ * 引き直し1回ごとの安定性の減点（暫定値）。
  * 押し間違いを直した程度（3回まで）なら、ほかが満点で great に残る。
  */
 export const HITOFUDE_PUZZLE_BACKTRACK_PENALTY = 3;
@@ -110,11 +110,11 @@ export function calculateHitofudePuzzlePlayScore({
     elapsedMs,
     calculateHitofudePuzzleSpeedScoreRule(workload),
   );
-  // 正確さは引き直しの回数だけで減点する。解の道との照合は使わない。
-  const accuracy = subtractWithFloor(
-    HITOFUDE_PUZZLE_SCORE_MAXIMUMS.accuracy,
+  // 安定性は引き直しの回数だけで減点する。解の道との照合は使わない。
+  const stability = subtractWithFloor(
+    HITOFUDE_PUZZLE_SCORE_MAXIMUMS.stability,
     backtrackCount * HITOFUDE_PUZZLE_BACKTRACK_PENALTY,
   );
 
-  return sumPlayScore({ speed, accuracy });
+  return sumPlayScore({ speed, stability });
 }

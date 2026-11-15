@@ -65,7 +65,7 @@ function createResult(
     colorCount: 6,
     score: {
       total: 87,
-      breakdown: { efficiency: 32, speed: 39, accuracy: 16 },
+      breakdown: { efficiency: 32, speed: 39, stability: 16 },
     },
     ...overrides,
   };
@@ -417,7 +417,7 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("待った")).toBeTruthy();
     expect(screen.getAllByText("効率")).toHaveLength(2);
     expect(screen.getAllByText("速さ")).toHaveLength(2);
-    expect(screen.getAllByText("正確さ")).toHaveLength(2);
+    expect(screen.getAllByText("安定性")).toHaveLength(2);
     expect(screen.getByText("01:04")).toBeTruthy();
     expect(screen.getByText(/6色 × 1.5秒/)).toBeTruthy();
     expect(screen.queryByText(/seed:/)).toBeNull();
@@ -455,7 +455,7 @@ describe("WaterSortPlay", () => {
           backtrackMoveCount: 0,
           score: {
             total: 100,
-            breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
+            breakdown: { efficiency: 40, speed: 40, stability: 20 },
           },
         })}
       />,
@@ -490,7 +490,7 @@ describe("WaterSortPlay", () => {
       speedRule: { fullScoreMs: 74_000, zeroScoreMs: 148_000 },
       score: {
         total: 100,
-        breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
+        breakdown: { efficiency: 40, speed: 40, stability: 20 },
       },
     });
     const { rerender } = render(
@@ -568,7 +568,7 @@ describe("WaterSortPlay", () => {
           backtrackMoveCount: 0,
           score: {
             total: 100,
-            breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
+            breakdown: { efficiency: 40, speed: 40, stability: 20 },
           },
         })}
         recordFeedback={{

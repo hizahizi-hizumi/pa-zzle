@@ -32,7 +32,7 @@ const workload = {
   longestRefutationLength: 20,
 };
 
-// 21秒超過で速さ55点、引き直し2回で正確さ34点。待った・盤面を戻すの回数は点に入らない。
+// 21秒超過で速さ55点、引き直し2回で安定性34点。待った・盤面を戻すの回数は点に入らない。
 const performance: HitofudePuzzleSessionResult = {
   elapsedMs: 145_000,
   backtrackCount: 2,
@@ -158,7 +158,7 @@ describe("HitofudePuzzlePlay", () => {
         fireEvent.click(screen.getByRole("button", { name: "採点内訳" }));
       });
 
-      test("速さ・正確さの点を速さから並べ、操作の回数・基準時間を内訳に表示し、問題の作業の量は内訳に並べないこと", () => {
+      test("速さ・安定性の点を速さから並べ、操作の回数・基準時間を内訳に表示し、問題の作業の量は内訳に並べないこと", () => {
         const items = screen
           .getAllByRole("term")
           .map(
@@ -168,7 +168,7 @@ describe("HitofudePuzzlePlay", () => {
         expect(items).toEqual(
           expect.arrayContaining([
             "速さ 55 / 60",
-            "正確さ 34 / 40",
+            "安定性 34 / 40",
             "待った 3回",
             "盤面を戻す 1回",
             "基準時間 02:04",
@@ -180,7 +180,7 @@ describe("HitofudePuzzlePlay", () => {
           ),
         ).toEqual([]);
         expect(items.findIndex((item) => item.startsWith("速さ"))).toBeLessThan(
-          items.findIndex((item) => item.startsWith("正確さ")),
+          items.findIndex((item) => item.startsWith("安定性")),
         );
       });
 
@@ -192,7 +192,7 @@ describe("HitofudePuzzlePlay", () => {
         );
       });
 
-      test("正確さの基準を、引き直しの減点と数え方で表示すること", () => {
+      test("安定性の基準を、引き直しの減点と数え方で表示すること", () => {
         const criteria = screen.getByText(/^40点から/);
 
         expect(criteria.textContent).toBe(

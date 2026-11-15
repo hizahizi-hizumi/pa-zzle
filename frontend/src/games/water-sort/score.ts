@@ -12,8 +12,8 @@ import {
 export const WATER_SORT_SCORE_MAXIMUMS = {
   efficiency: 40,
   speed: 40,
-  accuracy: 20,
-} as const satisfies ScoreMaximums<"efficiency" | "speed" | "accuracy">;
+  stability: 20,
+} as const satisfies ScoreMaximums<"efficiency" | "speed" | "stability">;
 
 export const WATER_SORT_SPEED_INITIAL_RECOGNITION_MS = 5_000;
 export const WATER_SORT_SPEED_PER_COLOR_MS = 1_500;
@@ -110,10 +110,10 @@ export function calculateWaterSortPlayScore({
   );
 
   const backtrackMoveCount = Math.max(0, moveCount - completionMoveCount);
-  const accuracy = calculateLinearScore(
-    WATER_SORT_SCORE_MAXIMUMS.accuracy,
+  const stability = calculateLinearScore(
+    WATER_SORT_SCORE_MAXIMUMS.stability,
     1 - backtrackMoveCount / optimalMoveCount,
   );
 
-  return sumPlayScore({ efficiency, speed, accuracy });
+  return sumPlayScore({ efficiency, speed, stability });
 }
