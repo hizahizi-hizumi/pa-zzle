@@ -55,113 +55,68 @@ describe("calculateWaterSortSpeedScoreRule", () => {
 });
 
 describe("calculateWaterSortPlayScore", () => {
-  test("最短経路を基準時間内かつ手戻りなしで解くと100点になること", () => {
-    const score = calculateWaterSortPlayScore({
-      elapsedMs: 64_000,
-      moveCount: 10,
-      completionMoveCount: 10,
-      optimalMoveCount: 10,
-      colorCount: 6,
-    });
+  const base = {
+    elapsedMs: 64_000,
+    moveCount: 10,
+    optimalMoveCount: 10,
+    colorCount: 6,
+  };
+
+  test("最短手数かつ基準時間内で解くと100点になること", () => {
+    const score = calculateWaterSortPlayScore(base);
 
     expect(score).toEqual({
       total: 100,
       breakdown: {
         efficiency: WATER_SORT_SCORE_MAXIMUMS.efficiency,
         speed: WATER_SORT_SCORE_MAXIMUMS.speed,
-        accuracy: WATER_SORT_SCORE_MAXIMUMS.accuracy,
       },
     });
   });
 
-  test("クリア手数が最短手数の1.5倍なら効率を半分にすること", () => {
-    const score = calculateWaterSortPlayScore({
-      elapsedMs: 64_000,
-      moveCount: 15,
-      completionMoveCount: 15,
-      optimalMoveCount: 10,
-      colorCount: 6,
-    });
+  test("経路に残らない注ぎも効率へ含め、余分な注ぎ5手で45点にすること", () => {
+    const score = calculateWaterSortPlayScore({ ...base, moveCount: 15 });
 
-    expect(score.breakdown.efficiency).toBe(20);
+    expect(score.breakdown.efficiency).toBe(45);
   });
 
-  test("クリア手数が最短手数の2倍以上なら効率を0点にすること", () => {
-    const score = calculateWaterSortPlayScore({
-      elapsedMs: 64_000,
-      moveCount: 20,
-      completionMoveCount: 20,
-      optimalMoveCount: 10,
-      colorCount: 6,
-    });
+  test("総注ぎ手数が最短手数の3倍以上なら効率を0点にすること", () => {
+    const score = calculateWaterSortPlayScore({ ...base, moveCount: 30 });
 
     expect(score.breakdown.efficiency).toBe(0);
   });
 
-  test("基準時間の1.5倍なら速さを半分にすること", () => {
-    const score = calculateWaterSortPlayScore({
-      elapsedMs: 96_000,
-      moveCount: 10,
-      completionMoveCount: 10,
-      optimalMoveCount: 10,
-      colorCount: 6,
+  test("同じ実注ぎ手数ならやり直し方法に関係なく同じ効率となること", () => {
+    const score = calculateWaterSortPlayScore({ ...base, moveCount: 12 });
+
+    expect(score).toEqual({
+      total: 94,
+      breakdown: { efficiency: 54, speed: 40 },
     });
+  });
+
+  test("基準時間の1.5倍なら速さを半分にすること", () => {
+    const score = calculateWaterSortPlayScore({ ...base, elapsedMs: 96_000 });
 
     expect(score.breakdown.speed).toBe(20);
   });
 
   test("基準時間の2倍以上なら速さを0点にすること", () => {
-    const score = calculateWaterSortPlayScore({
-      elapsedMs: 128_000,
-      moveCount: 10,
-      completionMoveCount: 10,
-      optimalMoveCount: 10,
-      colorCount: 6,
-    });
+    const score = calculateWaterSortPlayScore({ ...base, elapsedMs: 128_000 });
 
     expect(score.breakdown.speed).toBe(0);
   });
 
-  test("手戻りが最短手数の半分なら正確さを半分にすること", () => {
-    const score = calculateWaterSortPlayScore({
-      elapsedMs: 64_000,
-      moveCount: 15,
-      completionMoveCount: 10,
-      optimalMoveCount: 10,
-      colorCount: 6,
-    });
-
-    expect(score.breakdown.accuracy).toBe(10);
-  });
-
-  test("手戻りが最短手数以上なら正確さを0点にすること", () => {
-    const score = calculateWaterSortPlayScore({
-      elapsedMs: 64_000,
-      moveCount: 20,
-      completionMoveCount: 10,
-      optimalMoveCount: 10,
-      colorCount: 6,
-    });
-
-    expect(score.breakdown.accuracy).toBe(0);
-  });
-
   test("各評価軸を1点単位へ四捨五入して合計すること", () => {
     const score = calculateWaterSortPlayScore({
+      ...base,
       elapsedMs: 65_000,
       moveCount: 14,
-      completionMoveCount: 12,
-      optimalMoveCount: 10,
-      colorCount: 6,
     });
 
     expect(score).toEqual({
       total: 87,
-      breakdown: {
-        efficiency: 32,
-        speed: 39,
-        accuracy: 16,
-      },
+      breakdown: { efficiency: 48, speed: 39 },
     });
   });
 });

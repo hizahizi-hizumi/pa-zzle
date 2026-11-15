@@ -76,7 +76,7 @@ describe("PlayRecordsPerformance", () => {
         .querySelectorAll("dd");
 
       expect([...bests].map((best) => best.textContent)).toEqual([
-        "93点",
+        "94点",
         "-00:04",
         "±0",
       ]);

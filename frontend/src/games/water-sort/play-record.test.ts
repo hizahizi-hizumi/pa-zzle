@@ -57,6 +57,28 @@ test("保存した事実から現在のプレイ評価を導出すること", ()
   expect(score).toBe(87);
 });
 
+describe("getWaterSortPlayRecordScore", () => {
+  const record = createRecord();
+  const restoredPathRecord: PlayRecord = {
+    ...record,
+    payload: {
+      ...record.payload,
+      performance: {
+        ...record.payload.performance,
+        completionMoveCount: 10,
+        undoCount: 4,
+      },
+    },
+  };
+
+  test("同じ総注ぎ手数なら取り消し方に関係なく同じ評価点になること", () => {
+    const score = getWaterSortPlayRecordScore(record);
+    const restoredPathScore = getWaterSortPlayRecordScore(restoredPathRecord);
+
+    expect(score).toBe(restoredPathScore);
+  });
+});
+
 test("問題ごとの基準時間との差を比較指標として導出すること", () => {
   const record = createRecord();
 
@@ -107,7 +129,7 @@ test("盤面を戻していない旧記録は待った回数からクリア手�
   expect(score).toBe(87);
 });
 
-test("盤面を戻して失われた手数を復元できない旧記録は評価を推測しないこと", () => {
+test("盤面を戻した旧記録も保存済みの総注ぎ手数から評価できること", () => {
   const legacyRecord: PlayRecord = {
     id: "legacy-with-restart",
     gameId: "water-sort",
@@ -139,8 +161,8 @@ test("盤面を戻して失われた手数を復元できない旧記録は評�
   const metricValue = scoreMetric?.getValue(legacyRecord);
 
   expect(isWaterSortPlayRecord(legacyRecord)).toBe(true);
-  expect(score).toBeNull();
-  expect(metricValue).toBeNull();
+  expect(score).toBe(87);
+  expect(metricValue).toBe(87);
 });
 
 describe("restoreWaterSortRecordedResult", () => {

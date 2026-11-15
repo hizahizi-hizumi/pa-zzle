@@ -226,16 +226,10 @@ export function getWaterSortPlayRecordScore(record: PlayRecord): number | null {
     return null;
   }
 
-  const completionMoveCount = getCompletionMoveCount(record);
-  if (completionMoveCount === null) {
-    return null;
-  }
-
   const { elapsedMs, moveCount, optimalMoveCount } = record.payload.performance;
   return calculateWaterSortPlayScore({
     elapsedMs,
     moveCount,
-    completionMoveCount,
     optimalMoveCount,
     colorCount: record.payload.problemIdentity.conditions.colorCount,
   }).total;
