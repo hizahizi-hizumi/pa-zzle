@@ -31,7 +31,7 @@ model: opus
 観点の出典はこれだけとする。読む前に結論を出さない。
 
 - `.claude/rules/game-structure.md` — 全節（標準配置から「ゲームを追加するとき」まで）
-- `.claude/rules/typescript.md`, `typescript-react.md`, `react-hooks.md`, `component-styling.md`, `self-documenting-code.md`
+- `.claude/rules/code-cohesion.md`, `typescript.md`, `typescript-react.md`, `react-hooks.md`, `component-styling.md`, `self-documenting-code.md`
 - `.claude/rules/views.md`, `pages.md`
 - `.claude/rules/vitest.md`
 - `AGENTS.md` の「検証」節（再発防止だけを理由に特定の不具合向けテストを足さない）
@@ -47,6 +47,7 @@ model: opus
 - 既存ゲームが共通して持つファイル（`game-structure.md` に無くても、直近の2ゲームがどちらも同じ位置・名前で持つもの）と配置・命名が揃っているか。Glob で並べて確かめる
 - `hooks` / `utils` / `services` など実装方式の箱で分類していないか
 - 責務の混入（session で採点、`difficulty-analysis.ts` で閾値判定、`ui/` で問題生成・session 更新・採点、View にドメインロジック）
+- `code-cohesion.md` に沿い、追加・変更したファイルの利用元と類似する既存ゲームの実装・関連テストを比べ、分割・統合・共通化・維持の判断を確かめる
 
 ### 2. 共通契約の利用
 
