@@ -1,3 +1,4 @@
+import { createParkingJamResult } from "@/games/parking-jam/play/use-parking-jam-play";
 import {
   calculateParkingJamPlayScore,
   calculateParkingJamSpeedFullScoreMs,
@@ -5,6 +6,7 @@ import {
   PARKING_JAM_SCORE_MAXIMUMS,
   type ParkingJamPlayScoreInput,
 } from "@/games/parking-jam/score";
+import type { ParkingJamSessionResult } from "@/games/parking-jam/session/session";
 
 describe("calculateParkingJamSpeedFullScoreMs", () => {
   const cases = [
@@ -42,11 +44,9 @@ describe("calculateParkingJamPlayScore", () => {
     speedReference,
     elapsedMs: speedFullScoreMs,
     failedMoveCount: 0,
-    undoCount: 0,
-    restartCount: 0,
   };
 
-  test("不成立操作も待ったも盤面を戻した回数もなく基準時間内なら100点になること", () => {
+  test("不成立操作がなく基準時間内なら100点になること", () => {
     const score = calculateParkingJamPlayScore(perfectInput);
 
     expect(score).toEqual({
@@ -54,7 +54,6 @@ describe("calculateParkingJamPlayScore", () => {
       breakdown: {
         accuracy: PARKING_JAM_SCORE_MAXIMUMS.accuracy,
         speed: PARKING_JAM_SCORE_MAXIMUMS.speed,
-        stability: PARKING_JAM_SCORE_MAXIMUMS.stability,
       },
     });
   });
@@ -65,11 +64,11 @@ describe("calculateParkingJamPlayScore", () => {
       failedMoveCount: 3,
     };
 
-    test("1回につき正確さを5点減点すること", () => {
+    test("1回につき正確さを10点減点すること", () => {
       const score = calculateParkingJamPlayScore(input);
 
-      expect(score.breakdown.accuracy).toBe(25);
-      expect(score.total).toBe(85);
+      expect(score.breakdown.accuracy).toBe(30);
+      expect(score.total).toBe(70);
     });
   });
 
@@ -159,19 +158,82 @@ describe("calculateParkingJamPlayScore", () => {
     );
   });
 
-  describe("待ったと盤面を戻す操作を使った場合", () => {
-    const input: ParkingJamPlayScoreInput = {
-      ...perfectInput,
-      undoCount: 3,
-      restartCount: 1,
+  describe("異なるプレイの優劣を比較する場合", () => {
+    const cases = [
+      ["出せない方向を一度選択", { ...perfectInput, failedMoveCount: 1 }, 90],
+      ["出せない方向を二度選択", { ...perfectInput, failedMoveCount: 2 }, 80],
+      [
+        "ミスなく基準時間の1.25倍でクリア",
+        { ...perfectInput, elapsedMs: speedFullScoreMs * 1.25 },
+        90,
+      ],
+      [
+        "ミスなく基準時間の1.5倍でクリア",
+        { ...perfectInput, elapsedMs: speedFullScoreMs * 1.5 },
+        80,
+      ],
+    ] as const satisfies readonly (readonly [
+      string,
+      ParkingJamPlayScoreInput,
+      number,
+    ])[];
+
+    test.each(cases)(
+      "ミスの数と経過時間に応じた評価点となること: %s",
+      (_label, input, expected) => {
+        const score = calculateParkingJamPlayScore(input);
+
+        expect(score.total).toBe(expected);
+        expect(Object.keys(score.breakdown)).toEqual(["accuracy", "speed"]);
+      },
+    );
+  });
+
+  describe("成立出庫を取り消すか選び直す場合", () => {
+    const performance: ParkingJamSessionResult = {
+      elapsedMs: speedFullScoreMs,
+      moveAttemptCount: 9,
+      successfulMoveCount: 9,
+      failedMoveCount: 0,
+      undoCount: 0,
+      restartCount: 0,
     };
+    const variants = [
+      [
+        "待った後に出庫し直す",
+        {
+          ...performance,
+          successfulMoveCount: 10,
+          moveAttemptCount: 10,
+          undoCount: 1,
+        },
+      ],
+      [
+        "盤面を戻した後に出庫し直す",
+        {
+          ...performance,
+          successfulMoveCount: 12,
+          moveAttemptCount: 12,
+          restartCount: 1,
+        },
+      ],
+      ["車を選び直してから出庫する", performance],
+    ] as const satisfies readonly (readonly [
+      string,
+      ParkingJamSessionResult,
+    ])[];
 
-    test("安定性からそれぞれ減点すること", () => {
-      const score = calculateParkingJamPlayScore(input);
+    test.each(variants)(
+      "成立した出庫の取り消しや選び直しだけでは減点しないこと: %s",
+      (_label, variant) => {
+        const result = createParkingJamResult(variant, speedReference);
 
-      expect(score.breakdown.stability).toBe(9);
-      expect(score.total).toBe(89);
-    });
+        expect(result.score).toEqual({
+          total: 100,
+          breakdown: { accuracy: 60, speed: 40 },
+        });
+      },
+    );
   });
 
   describe("大きな減点が発生した場合", () => {
@@ -179,8 +241,6 @@ describe("calculateParkingJamPlayScore", () => {
       ...perfectInput,
       elapsedMs: speedFullScoreMs * 3,
       failedMoveCount: 100,
-      undoCount: 100,
-      restartCount: 100,
     };
 
     test("各評価軸を0点未満にしないこと", () => {
@@ -188,7 +248,7 @@ describe("calculateParkingJamPlayScore", () => {
 
       expect(score).toEqual({
         total: 0,
-        breakdown: { accuracy: 0, speed: 0, stability: 0 },
+        breakdown: { accuracy: 0, speed: 0 },
       });
     });
   });

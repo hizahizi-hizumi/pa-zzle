@@ -68,7 +68,7 @@ describe("parkingJamPlayRecordDisplay", () => {
     const timeDelta = getFormattedMetric("time-delta-ms");
     const failedMoves = getFormattedMetric("failed-move-count");
 
-    expect(score).toBe("60点");
+    expect(score).toBe("52点");
     expect(timeDelta).toBe("+00:49");
     expect(failedMoves).toBe("2回");
   });
