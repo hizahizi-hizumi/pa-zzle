@@ -13,6 +13,17 @@ import {
 } from "@/games/bridges/puzzle/transitions";
 import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
+type BridgesEditingEdge = {
+  edge: number;
+  countBeforeEditing: number;
+};
+
+type BridgesSessionSnapshot = {
+  puzzleState: BridgesPuzzleState;
+  settledRetractionCount: number;
+  editingEdge: BridgesEditingEdge | null;
+};
+
 export type BridgesSession = GameSession<BridgesProblem, BridgesPuzzleState> & {
   undoCount: number;
   /** 盤面を戻した回数。 */
@@ -20,8 +31,10 @@ export type BridgesSession = GameSession<BridgesProblem, BridgesPuzzleState> & {
   /** 橋の本数を変えた入力（タップ・なぞり）の回数。待った・盤面を戻すは含まない。 */
   inputCount: number;
   blockedCount: number;
+  settledRetractionCount: number;
+  editingEdge: BridgesEditingEdge | null;
   /** 待ったで戻せる、各盤面操作の前の状態。古い順。 */
-  history: readonly BridgesPuzzleState[];
+  history: readonly BridgesSessionSnapshot[];
 };
 
 export type BridgesSessionResult = {
@@ -30,12 +43,40 @@ export type BridgesSessionResult = {
   restartCount: number;
   inputCount: number;
   blockedCount: number;
+  retractionCount: number;
 };
 
 export type BridgesSessionEdgeChange = {
   session: BridgesSession;
   crossingEdges: readonly number[] | null;
 };
+
+function getBridgesRetractionCount(session: BridgesSession): number {
+  const editing = session.editingEdge;
+  return (
+    session.settledRetractionCount +
+    (editing &&
+    session.puzzleState.bridges[editing.edge]! < editing.countBeforeEditing
+      ? 1
+      : 0)
+  );
+}
+
+function settleEditingEdge(session: BridgesSession): BridgesSession {
+  return {
+    ...session,
+    settledRetractionCount: getBridgesRetractionCount(session),
+    editingEdge: null,
+  };
+}
+
+function takeSnapshot(session: BridgesSession): BridgesSessionSnapshot {
+  return {
+    puzzleState: session.puzzleState,
+    settledRetractionCount: session.settledRetractionCount,
+    editingEdge: session.editingEdge,
+  };
+}
 
 export function createBridgesSession(
   problem: BridgesProblem,
@@ -53,6 +94,8 @@ export function createBridgesSession(
     restartCount: 0,
     inputCount: 0,
     blockedCount: 0,
+    settledRetractionCount: 0,
+    editingEdge: null,
     history: [],
   };
 }
@@ -80,15 +123,25 @@ export function cycleBridgesSessionEdge(
     };
   }
 
-  const changed = {
-    ...session,
+  const continuesEditing = session.editingEdge?.edge === edge;
+  const beforeInput = continuesEditing ? session : settleEditingEdge(session);
+  const changed: BridgesSession = {
+    ...beforeInput,
     puzzleState: change.state,
-    history: [...session.history, session.puzzleState],
+    history: [...session.history, takeSnapshot(session)],
     inputCount: session.inputCount + 1,
+    editingEdge: beforeInput.editingEdge ?? {
+      edge,
+      countBeforeEditing: session.puzzleState.bridges[edge]!,
+    },
   };
   return {
     session: isBridgesSolved(session.problem, change.state)
-      ? { ...changed, status: "cleared", clearedAt: operatedAt }
+      ? {
+          ...settleEditingEdge(changed),
+          status: "cleared",
+          clearedAt: operatedAt,
+        }
       : changed,
     crossingEdges: null,
   };
@@ -102,7 +155,7 @@ export function undoBridgesSession(session: BridgesSession): BridgesSession {
 
   return {
     ...session,
-    puzzleState: session.history.at(-1)!,
+    ...session.history.at(-1)!,
     history: session.history.slice(0, -1),
     undoCount: session.undoCount + 1,
   };
@@ -121,6 +174,7 @@ export function restartBridgesSession(session: BridgesSession): BridgesSession {
     ...session,
     puzzleState: createInitialBridgesState(session.problem),
     history: [],
+    editingEdge: null,
     restartCount: session.restartCount + 1,
   };
 }
@@ -146,5 +200,6 @@ export function getBridgesSessionResult(
     restartCount: session.restartCount,
     inputCount: session.inputCount,
     blockedCount: session.blockedCount,
+    retractionCount: getBridgesRetractionCount(session),
   };
 }

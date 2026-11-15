@@ -34,15 +34,16 @@ const workload = {
   countReasoningUndecidedEdgeCount: 26,
 };
 
-// 速さは 100 × (1 − 23秒 / 1,108.8秒) ≒ 98点。
+// 速さ39点、訂正1回・待った2回・盤面戻し1回で正確性36点。
 const performance = {
   elapsedMs: 287_000,
   undoCount: 2,
   restartCount: 1,
   inputCount: 40,
   blockedCount: 3,
+  retractionCount: 1,
 };
-const expectedScore = 98;
+const expectedScore = 75;
 const expectedTimeDeltaMs = 23_000;
 
 const record = createBridgesPlayRecord({
@@ -53,6 +54,13 @@ const record = createBridgesPlayRecord({
   completedAt: 288_000,
   result: performance,
 });
+
+const { retractionCount: _, ...legacyPerformance } = performance;
+const legacyRecord = {
+  ...record,
+  payloadVersion: 1,
+  payload: { ...record.payload, performance: legacyPerformance },
+};
 
 /** 分割の生成条件を持たない。 */
 const version1ProblemIdentity = {
@@ -77,7 +85,7 @@ describe("createBridgesPlayRecord", () => {
     expect({ id, gameId, payloadVersion }).toEqual({
       id: "bridges:1000:288000:br-10-d26-p65-e25-s45-r500-lookahead-16",
       gameId: "bridges",
-      payloadVersion: 1,
+      payloadVersion: 2,
     });
     expect(payload).toEqual({
       difficulty: "5",
@@ -125,6 +133,7 @@ describe("getBridgesPlayRecordTimeDelta", () => {
 describe("isBridgesPlayRecord", () => {
   const validCases = [
     ["作成した記録", record],
+    ["旧版の記録", legacyRecord],
     [
       "生成器の版が今と違う記録",
       withPayload({ problemIdentity: version1ProblemIdentity }),
@@ -141,7 +150,7 @@ describe("isBridgesPlayRecord", () => {
 
   const invalidCases = [
     ["別のゲームの記録", { ...record, gameId: "reflection" }],
-    ["未知の payload の版", { ...record, payloadVersion: 2 }],
+    ["未知の payload の版", { ...record, payloadVersion: 3 }],
     ["未知の難易度", withPayload({ difficulty: "6" })],
     [
       "生成器の版が無い identity",
@@ -159,6 +168,14 @@ describe("isBridgesPlayRecord", () => {
       }),
     ],
     ["作業の量が無い記録", withPayload({ workload: undefined })],
+    [
+      "新版で訂正回数が無い記録",
+      withPayload({ performance: legacyPerformance }),
+    ],
+    [
+      "訂正回数が入力回数より多い記録",
+      withPayload({ performance: { ...performance, retractionCount: 41 } }),
+    ],
     [
       "島が無い作業の量",
       withPayload({
@@ -240,6 +257,20 @@ describe("bridgesPlayRecordDefinition", () => {
     expect(values).toEqual([expectedScore, expectedTimeDeltaMs]);
   });
 
+  describe("旧版の記録の場合", () => {
+    test("訂正回数を推定せず評価点は欠損とし、基準時間との差の比較には残すこと", () => {
+      const values = metricIds.map((metricId) =>
+        getPlayRecordMetricValue(
+          legacyRecord,
+          bridgesPlayRecordDefinition,
+          metricId,
+        ),
+      );
+
+      expect(values).toEqual([null, expectedTimeDeltaMs]);
+    });
+  });
+
   describe("生成器の版が今と違う記録の場合", () => {
     const pastRecord = withPayload({
       problemIdentity: version1ProblemIdentity,
@@ -288,7 +319,10 @@ describe("restoreBridgesRecordedResult", () => {
           workload,
           speedRule: { fullScoreMs: 264_000, zeroScoreMs: 1_372_800 },
           timeDeltaMs: expectedTimeDeltaMs,
-          score: { total: expectedScore, breakdown: { speed: expectedScore } },
+          score: {
+            total: expectedScore,
+            breakdown: { accuracy: 36, speed: 39 },
+          },
         },
       });
     });
@@ -308,7 +342,8 @@ describe("restoreBridgesRecordedResult", () => {
 
   describe("今の版でない記録の場合", () => {
     const unrestorableRecords = [
-      ["別の payload の版の記録", { ...record, payloadVersion: 2 }],
+      ["旧版の記録", legacyRecord],
+      ["別の payload の版の記録", { ...record, payloadVersion: 3 }],
       [
         "生成器の版が今と違う記録",
         withPayload({ problemIdentity: version1ProblemIdentity }),

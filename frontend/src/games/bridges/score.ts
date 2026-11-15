@@ -6,12 +6,18 @@ import {
   type PlayScore,
   type ScoreMaximums,
   type SpeedScoreRule,
+  subtractWithFloor,
   sumPlayScore,
 } from "@/games/score";
 
 export const BRIDGES_SCORE_MAXIMUMS = {
-  speed: 100,
-} as const satisfies ScoreMaximums<"speed">;
+  accuracy: 60,
+  speed: 40,
+} as const satisfies ScoreMaximums<"accuracy" | "speed">;
+
+export const BRIDGES_RETRACTION_PENALTY = 5;
+export const BRIDGES_RESTART_PENALTY = 15;
+export const BRIDGES_UNDO_PENALTY = 2;
 
 // 基準時間の係数（暫定）。人の記録は無いので、評価役と作り手が手で解いた所見の、読みの種類ごとの時間から置く
 // （成績評価の文書 §3.8・§3.9）。
@@ -40,9 +46,15 @@ export const BRIDGES_SPEED_READING_ZERO_SCORE_RATIO = 3;
 
 export type BridgesPlayScore = PlayScore<keyof typeof BRIDGES_SCORE_MAXIMUMS>;
 
-type BridgesPlayScoreInput = {
+type BridgesTimeDeltaInput = {
   elapsedMs: number;
   workload: BridgesSolveWorkload;
+};
+
+type BridgesPlayScoreInput = BridgesTimeDeltaInput & {
+  retractionCount: number;
+  restartCount: number;
+  undoCount: number;
 };
 
 function calculateReadingMs({
@@ -100,7 +112,7 @@ export function calculateBridgesSpeedScoreRule(
 export function calculateBridgesTimeDeltaMs({
   elapsedMs,
   workload,
-}: BridgesPlayScoreInput): number {
+}: BridgesTimeDeltaInput): number {
   return calculateTimeDeltaMs(
     elapsedMs,
     calculateBridgesSpeedScoreRule(workload),
@@ -110,12 +122,21 @@ export function calculateBridgesTimeDeltaMs({
 export function calculateBridgesPlayScore({
   elapsedMs,
   workload,
+  retractionCount,
+  restartCount,
+  undoCount,
 }: BridgesPlayScoreInput): BridgesPlayScore {
+  const accuracy = subtractWithFloor(
+    BRIDGES_SCORE_MAXIMUMS.accuracy,
+    retractionCount * BRIDGES_RETRACTION_PENALTY +
+      restartCount * BRIDGES_RESTART_PENALTY +
+      undoCount * BRIDGES_UNDO_PENALTY,
+  );
   const speed = calculateSpeedScore(
     BRIDGES_SCORE_MAXIMUMS.speed,
     elapsedMs,
     calculateBridgesSpeedScoreRule(workload),
   );
 
-  return sumPlayScore({ speed });
+  return sumPlayScore({ accuracy, speed });
 }

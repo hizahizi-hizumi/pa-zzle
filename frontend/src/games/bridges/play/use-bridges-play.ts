@@ -44,12 +44,14 @@ import {
   useSessionElapsedMs,
 } from "@/games/play";
 import {
+  type PlayStateCodec,
   restorePlayState,
   savePlayState,
 } from "@/games/play-state-persistence";
 import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
+import { isRecordObject } from "@/lib/type-guards";
 
 export type BridgesResult = BridgesSessionResult & {
   workload: BridgesSolveWorkload;
@@ -96,6 +98,23 @@ type BridgesPlayState = {
   edgeNotice: BridgesEdgeNotice | null;
 };
 
+/** 採点項目を変える前の途中盤面は訂正履歴を持たず、正確さを再計算できない。 */
+const bridgesPlayStateCodec: PlayStateCodec<BridgesPlayState> = {
+  serialize(state) {
+    return { version: 2, state };
+  },
+  deserialize(value) {
+    if (
+      !isRecordObject(value) ||
+      value.version !== 2 ||
+      !isRecordObject(value.state)
+    ) {
+      return null;
+    }
+    return value.state as BridgesPlayState;
+  },
+};
+
 function createPlayState(
   pooled: BridgesPooledProblem,
   startedAt: number,
@@ -123,6 +142,9 @@ export function createBridgesResult(
     timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
     score: calculateBridgesPlayScore({
       elapsedMs: sessionResult.elapsedMs,
+      retractionCount: sessionResult.retractionCount,
+      restartCount: sessionResult.restartCount,
+      undoCount: sessionResult.undoCount,
       workload,
     }),
   };
@@ -145,15 +167,19 @@ export function useBridgesPlay(
   playProblemId?: ProblemId,
 ): BridgesPlay {
   const [play, setPlay] = useState(() =>
-    restorePlayState("bridges", playProblemId, () =>
-      createPlayState(
-        initialProblem ?? selectProblem(difficulty, avoidedProblemId),
-        Date.now(),
-      ),
+    restorePlayState(
+      "bridges",
+      playProblemId,
+      () =>
+        createPlayState(
+          initialProblem ?? selectProblem(difficulty, avoidedProblemId),
+          Date.now(),
+        ),
+      bridgesPlayStateCodec,
     ),
   );
   useEffect(
-    () => savePlayState("bridges", playProblemId, play),
+    () => savePlayState("bridges", playProblemId, play, bridgesPlayStateCodec),
     [playProblemId, play],
   );
   const { session, progress, problemIdentity, workload } = play;

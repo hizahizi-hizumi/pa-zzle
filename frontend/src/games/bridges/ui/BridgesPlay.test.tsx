@@ -35,13 +35,14 @@ const workload = {
   countReasoningUndecidedEdgeCount: 26,
 };
 
-// 23秒超過で速さ98点。待った・盤面を戻す・阻まれた回数は点に入らない。
+// 23秒超過で速さ39点、訂正1回・待った2回・盤面戻し1回で正確性36点。
 const performance: BridgesSessionResult = {
   elapsedMs: 287_000,
   undoCount: 2,
   restartCount: 1,
   inputCount: 40,
   blockedCount: 3,
+  retractionCount: 1,
 };
 const result = createBridgesResult(performance, workload);
 
@@ -172,7 +173,7 @@ describe("BridgesPlay", () => {
 
       expect(screen.getByText(BRIDGES_DISPLAY_NAME)).toBeTruthy();
       expect(screen.getByText("レベル 5")).toBeTruthy();
-      expect(score.getByText("98点（100点満点）")).toBeTruthy();
+      expect(score.getByText("75点（100点満点）")).toBeTruthy();
     });
 
     test("時間と基準時間との差・基準時間だけを主な成績として表示すること", () => {
@@ -181,8 +182,8 @@ describe("BridgesPlay", () => {
         .getAllByRole("definition")
         .map((definition) => definition.textContent);
 
-      expect(terms).toEqual(["時間", "基準時間"]);
-      expect(definitions).toEqual(["04:47", "基準差 +00:23", "04:24"]);
+      expect(terms).toEqual(["時間", "橋の訂正", "基準時間"]);
+      expect(definitions).toEqual(["04:47", "基準差 +00:23", "1回", "04:24"]);
     });
 
     test("盤面を表示しないこと", () => {
@@ -220,7 +221,8 @@ describe("BridgesPlay", () => {
 
         expect(items).toEqual(
           expect.arrayContaining([
-            "速さ 98 / 100",
+            "正確さ 36 / 60",
+            "速さ 39 / 40",
             "待った 2回",
             "盤面を戻す 1回",
             "交わる橋に阻まれた 3回",
@@ -228,12 +230,14 @@ describe("BridgesPlay", () => {
         );
       });
 
-      test("速さの基準を、0点になる時間と、基準時間が何から決まるか・減点しない回数で表示すること", () => {
-        const criteria = screen.getByText(/^基準時間\d\d:\d\d(\.\d)?以内/);
+      test("正確性の減点条件と速さの基準を表示すること", () => {
+        const accuracy = screen.getByText(/^60点から、橋の訂正/);
+        const speed = screen.getByText(/^基準時間\d\d:\d\d(\.\d)?以内/);
 
-        expect(criteria.textContent).toBe(
-          "基準時間04:24以内で100点、22:52.8以上で0点、その間は時間に応じて減らす。基準時間は、この問題の島と橋の数と、考える所（数字だけでは決まらない所）の多さで決まる。「待った」・「盤面を戻す」・架け直し・交わる橋に阻まれた回数では減点しない。",
-        );
+        expect(accuracy.textContent).toContain("橋の訂正1回につき5点");
+        expect(accuracy.textContent).toContain("「待った」1回につき2点");
+        expect(speed.textContent).toContain("基準時間04:24以内で40点");
+        expect(speed.textContent).toContain("交わる橋に阻まれた回数");
       });
     });
   });

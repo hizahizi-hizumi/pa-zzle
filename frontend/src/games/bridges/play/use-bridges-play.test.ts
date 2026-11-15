@@ -221,7 +221,7 @@ describe("useBridgesPlay", () => {
           progress: "clearing",
           inputCount: solution.reduce((total, count) => total + count, 0),
           workload: measureBridgesSolveWorkload(initial),
-          speedScore: 100,
+          speedScore: 40,
         });
       });
 

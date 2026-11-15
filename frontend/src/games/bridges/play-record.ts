@@ -31,22 +31,32 @@ import {
 } from "@/lib/type-guards";
 
 const BRIDGES_GAME_ID = "bridges";
-const BRIDGES_PLAY_RECORD_PAYLOAD_VERSION = 1;
+const BRIDGES_PLAY_RECORD_PAYLOAD_VERSION = 2;
 
 type BridgesPlayRecordPayload = {
   difficulty: BridgesDifficulty;
   /** 再プレイで問題集から同じ問題を引くのに使う。 */
   problemIdentity: BridgesRecordedProblemIdentity;
   workload: BridgesSolveWorkload;
-  /** 待った・盤面を戻した回数・入力回数・交差に阻まれた回数は評価に使わないが、評価規則を見直すときの材料として残す。 */
   performance: BridgesSessionResult;
+};
+
+type BridgesLegacyPlayRecordPayload = Omit<
+  BridgesPlayRecordPayload,
+  "performance"
+> & {
+  performance: Omit<BridgesSessionResult, "retractionCount">;
 };
 
 export type BridgesPlayRecord = PlayRecord & {
   gameId: typeof BRIDGES_GAME_ID;
-  payloadVersion: typeof BRIDGES_PLAY_RECORD_PAYLOAD_VERSION;
-  payload: BridgesPlayRecordPayload;
-};
+} & (
+    | { payloadVersion: 1; payload: BridgesLegacyPlayRecordPayload }
+    | {
+        payloadVersion: typeof BRIDGES_PLAY_RECORD_PAYLOAD_VERSION;
+        payload: BridgesPlayRecordPayload;
+      }
+  );
 
 type CreateBridgesPlayRecordInput = {
   difficulty: BridgesDifficulty;
@@ -58,7 +68,9 @@ type CreateBridgesPlayRecordInput = {
 };
 
 /** 待ったは入力1回ぶんを取り消すので、入力回数を超えない。 */
-function isBridgesPerformance(value: unknown): value is BridgesSessionResult {
+function isLegacyBridgesPerformance(
+  value: unknown,
+): value is Omit<BridgesSessionResult, "retractionCount"> {
   return (
     isRecordObject(value) &&
     isNonNegativeFiniteNumber(value.elapsedMs) &&
@@ -67,6 +79,15 @@ function isBridgesPerformance(value: unknown): value is BridgesSessionResult {
     isNonNegativeInteger(value.inputCount) &&
     isNonNegativeInteger(value.blockedCount) &&
     value.undoCount <= value.inputCount
+  );
+}
+
+function isBridgesPerformance(value: unknown): value is BridgesSessionResult {
+  return (
+    isLegacyBridgesPerformance(value) &&
+    "retractionCount" in value &&
+    isNonNegativeInteger(value.retractionCount) &&
+    value.retractionCount <= value.inputCount
   );
 }
 
@@ -86,7 +107,8 @@ export function isBridgesPlayRecord(
 ): record is BridgesPlayRecord {
   if (
     record.gameId !== BRIDGES_GAME_ID ||
-    record.payloadVersion !== BRIDGES_PLAY_RECORD_PAYLOAD_VERSION ||
+    (record.payloadVersion !== 1 &&
+      record.payloadVersion !== BRIDGES_PLAY_RECORD_PAYLOAD_VERSION) ||
     !isRecordObject(record.payload)
   ) {
     return false;
@@ -99,7 +121,9 @@ export function isBridgesPlayRecord(
     isBridgesRecordedProblemIdentity(problemIdentity) &&
     isBridgesSolveWorkload(workload) &&
     isWorkloadOfRecordedIdentity(workload, problemIdentity) &&
-    isBridgesPerformance(performance)
+    (record.payloadVersion === 1
+      ? isLegacyBridgesPerformance(performance)
+      : isBridgesPerformance(performance))
   );
 }
 
@@ -110,8 +134,16 @@ function copyPerformance({
   restartCount,
   inputCount,
   blockedCount,
+  retractionCount,
 }: BridgesSessionResult): BridgesSessionResult {
-  return { elapsedMs, undoCount, restartCount, inputCount, blockedCount };
+  return {
+    elapsedMs,
+    undoCount,
+    restartCount,
+    inputCount,
+    blockedCount,
+    retractionCount,
+  };
 }
 
 function copyWorkload({
@@ -148,6 +180,7 @@ export function restoreBridgesRecordedResult(
 ): BridgesRecordedResult | null {
   if (
     !isBridgesPlayRecord(record) ||
+    record.payloadVersion !== BRIDGES_PLAY_RECORD_PAYLOAD_VERSION ||
     !isCurrentBridgesProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
@@ -196,13 +229,16 @@ export function createBridgesPlayRecord({
 }
 
 export function getBridgesPlayRecordScore(record: PlayRecord): number | null {
-  if (!isBridgesPlayRecord(record)) {
+  if (
+    !isBridgesPlayRecord(record) ||
+    record.payloadVersion !== BRIDGES_PLAY_RECORD_PAYLOAD_VERSION
+  ) {
     return null;
   }
 
   const { workload, performance } = record.payload;
   return calculateBridgesPlayScore({
-    elapsedMs: performance.elapsedMs,
+    ...performance,
     workload,
   }).total;
 }

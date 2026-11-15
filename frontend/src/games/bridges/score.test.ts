@@ -119,25 +119,52 @@ describe("calculateBridgesTimeDeltaMs", () => {
 
 describe("calculateBridgesPlayScore", () => {
   const cases = [
-    ["基準時間ちょうど", 1, 100, "perfect"],
-    ["基準時間の1.2倍", 1.2, 90, "great"],
-    ["基準時間の1.4倍", 1.4, 80, "good"],
-    ["基準時間の2倍", 2, 50, "clear"],
-    ["基準時間の3倍", 3, 0, "clear"],
+    ["基準時間ちょうど", 1, 40, 100, "perfect"],
+    ["基準時間の1.2倍", 1.2, 36, 96, "great"],
+    ["基準時間の1.4倍", 1.4, 32, 92, "great"],
+    ["基準時間の2倍", 2, 20, 80, "good"],
+    ["基準時間の3倍", 3, 0, 60, "clear"],
   ] as const;
 
   test.each(cases)(
-    "読みの無い問題を%sでクリアしたとき、速さだけで%d点・%sになること",
-    (_, elapsedRatio, expectedTotal, expectedLevel) => {
+    "訂正のないプレイを%sでクリアしたとき、速さ%d点・合計%d点・%sになること",
+    (_, elapsedRatio, expectedSpeed, expectedTotal, expectedLevel) => {
       const score = calculateBridgesPlayScore({
         elapsedMs: lightFullScoreMs * elapsedRatio,
         workload: lightWorkload,
+        retractionCount: 0,
+        restartCount: 0,
+        undoCount: 0,
       });
 
       expect(score).toEqual({
         total: expectedTotal,
-        breakdown: { speed: expectedTotal },
+        breakdown: { accuracy: 60, speed: expectedSpeed },
       });
+      expect(getGameResultLevel(score.total)).toBe(expectedLevel);
+    },
+  );
+
+  const playCases = [
+    ["確定後に橋を1回減らした", 1, 0, 0, 95, "great"],
+    ["仮説を5回撤回した", 5, 0, 0, 75, "clear"],
+    ["待ったで1回取り消した", 0, 1, 0, 98, "great"],
+    ["盤面を1回戻した", 0, 0, 1, 85, "good"],
+    ["待ったと盤面戻しが重なった", 1, 2, 1, 76, "clear"],
+  ] as const;
+
+  test.each(playCases)(
+    "%sプレイの正確さを評価すること",
+    (_, retractionCount, undoCount, restartCount, expectedTotal, expectedLevel) => {
+      const score = calculateBridgesPlayScore({
+        elapsedMs: lightFullScoreMs,
+        workload: lightWorkload,
+        retractionCount,
+        undoCount,
+        restartCount,
+      });
+
+      expect(score.total).toBe(expectedTotal);
       expect(getGameResultLevel(score.total)).toBe(expectedLevel);
     },
   );
