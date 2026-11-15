@@ -27,7 +27,7 @@ export function RandomProblemUnavailableDialog() {
           if (!open) randomProblemUnavailable.dismiss();
         }}
       >
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent size="compact">
           <DialogHeader>
             <DialogTitle>条件に合う別の問題がありません</DialogTitle>
             <DialogDescription>

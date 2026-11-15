@@ -67,8 +67,7 @@ export function RandomProblemSettingsPanel({
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
-                className="px-1.5"
+                size="compact"
                 onClick={() => randomProblemSettings.clearGame(scope)}
               >
                 共通に戻す
@@ -78,8 +77,7 @@ export function RandomProblemSettingsPanel({
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
-                className="px-1.5"
+                size="compact"
                 onClick={() => changeStatuses(randomProblemStatuses)}
               >
                 すべて選択

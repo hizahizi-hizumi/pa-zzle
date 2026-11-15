@@ -90,10 +90,7 @@ export function InternalDiagnosticsDialog({
 
   return (
     <Dialog open onOpenChange={handleOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="max-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto]"
-      >
+      <DialogContent showCloseButton={false} presentation="diagnostics">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div>

@@ -4,6 +4,7 @@ import { GamePictogram } from "@/components/GamePictogram";
 import {
   MOTION_EASING,
   prefersReducedMotion,
+  subscribePrefersReducedMotion,
   waitForAnimations,
 } from "@/lib/motion";
 
@@ -67,11 +68,20 @@ export function SelectedGamePictogram({
       colorLayer.animate(COLOR_LAYER_KEYFRAMES, timing),
       monoLayer.animate(MONO_LAYER_KEYFRAMES, timing),
     ];
-    const stopWaiting = waitForAnimations(animations, () => {
+    function finishColoring() {
       startsColoringRef.current = false;
       setIsColoring(false);
+    }
+    const stopWaiting = waitForAnimations(animations, finishColoring);
+    const stopWatchingMotion = subscribePrefersReducedMotion(() => {
+      if (prefersReducedMotion()) {
+        stopWaiting();
+        for (const animation of animations) animation.cancel();
+        finishColoring();
+      }
     });
     return () => {
+      stopWatchingMotion();
       stopWaiting();
       for (const animation of animations) animation.cancel();
     };

@@ -39,10 +39,7 @@ export function HowToPlayDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="max-h-[calc(100svh-2rem)] overflow-y-auto"
-      >
+      <DialogContent showCloseButton={false} presentation="scrollable">
         <DialogHeader className="text-left">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle>遊び方</DialogTitle>

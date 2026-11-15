@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import { playGameSelectSound } from "@/components/app-decision-sound";
 import { BrandMark } from "@/components/BrandMark";
 import { GamePictogram } from "@/components/GamePictogram";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { SettingsButton } from "@/features/settings/SettingsButton";
@@ -103,16 +104,17 @@ export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
                 <Progress
                   value={Math.round(title.progressRatio * 100)}
                   aria-label="効果音の読み込み"
-                  className="h-1 bg-muted motion-reduce:*:transition-none"
+                  appearance="launch"
                 />
               ) : (
-                <button
+                <Button
                   type="button"
+                  variant="title-entry"
+                  size="fill"
                   onClick={enter}
-                  className="flex h-full w-full items-center justify-center rounded-md text-supporting font-medium text-muted-foreground animate-in fade-in duration-(--duration-slow) ease-enter outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:animate-none"
                 >
                   タップしてはじめる
-                </button>
+                </Button>
               )}
             </div>
           </div>

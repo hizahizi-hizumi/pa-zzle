@@ -65,7 +65,7 @@ export function GameResultDetails({
           採点内訳
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[min(78svh,680px)] overflow-y-auto">
+      <DialogContent presentation="score-details">
         <DialogTitle>スコアの内訳・採点基準</DialogTitle>
         <div className="text-supporting text-muted-foreground">{details}</div>
       </DialogContent>
