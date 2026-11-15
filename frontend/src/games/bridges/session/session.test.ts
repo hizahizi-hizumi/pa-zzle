@@ -53,6 +53,8 @@ describe("createBridgesSession", () => {
       clearedAt: null,
       inputCount: 0,
       blockedCount: 0,
+      settledRetractionCount: 0,
+      editingEdge: null,
     });
   });
 
@@ -98,7 +100,14 @@ describe("cycleBridgesSessionEdge", () => {
       session: {
         puzzleState: { bridges: [1, 0] },
         inputCount: 1,
-        history: [{ bridges: [0, 0] }],
+        history: [
+          {
+            puzzleState: { bridges: [0, 0] },
+            settledRetractionCount: 0,
+            editingEdge: null,
+          },
+        ],
+        editingEdge: { edge: 0, countBeforeEditing: 0 },
       },
       crossingEdges: null,
     });
@@ -225,6 +234,7 @@ describe("getBridgesSessionResult", () => {
       restartCount: 0,
       inputCount: 5,
       blockedCount: 0,
+      retractionCount: 0,
     });
   });
 
@@ -232,5 +242,78 @@ describe("getBridgesSessionResult", () => {
     const result = getBridgesSessionResult(initial);
 
     expect(result).toBeNull();
+  });
+});
+
+describe("橋の訂正の計測", () => {
+  const initial = createBridgesSession(crossingProblem, startedAt);
+  const cases = [
+    ["同じ辺を0→1→2→0→1と連続で切り替えた", [0, 0, 0, 0, 1], 0],
+    ["別の辺に進んだ後1本から2本へ追加した", [0, 1, 0], 0],
+    ["別の辺に進んだ後2本から0本に撤回した", [0, 0, 1, 0], 1],
+    ["同じ辺を減らし直しても1つの訂正にまとめた", [0, 0, 1, 0, 0], 1],
+  ] as const;
+
+  test.each(cases)("%sプレイの訂正を%d回と数えること", (_, edges, count) => {
+    const session = cycleEdges(initial, edges);
+    const measured =
+      session.settledRetractionCount +
+      (session.editingEdge &&
+      session.puzzleState.bridges[session.editingEdge.edge]! <
+        session.editingEdge.countBeforeEditing
+        ? 1
+        : 0);
+
+    expect(measured).toBe(count);
+  });
+
+  test("右クリックで2本から1本に訂正しても1回と数えること", () => {
+    const played = cycleEdges(initial, [0, 0, 1]);
+    const changed = cycleBridgesSessionEdge(
+      played,
+      0,
+      startedAt,
+      "backward",
+    ).session;
+
+    expect(changed.puzzleState.bridges[0]).toBe(1);
+    expect(changed.editingEdge).toEqual({ edge: 0, countBeforeEditing: 2 });
+  });
+
+  test("訂正にあたる最後の操作を待ったで取り消すと訂正を残さないこと", () => {
+    const played = cycleEdges(initial, [0, 0, 1, 0]);
+    const undone = undoBridgesSession(played);
+
+    expect(undone.settledRetractionCount).toBe(0);
+    expect(undone.editingEdge).toEqual({ edge: 1, countBeforeEditing: 0 });
+    expect(undone.undoCount).toBe(1);
+  });
+
+  test("別の辺を編集してから待ったで戻した訂正も二重計上しないこと", () => {
+    const played = cycleEdges(initial, [0, 0, 1, 0, 3]);
+    const undone = undoBridgesSession(played);
+
+    expect(undone.settledRetractionCount).toBe(0);
+    expect(undone.editingEdge).toEqual({ edge: 0, countBeforeEditing: 2 });
+  });
+
+  test("盤面を戻してもそれまでの訂正を残し、盤面を戻す行為を別に数えること", () => {
+    const played = cycleEdges(initial, [0, 0, 1, 0, 3]);
+    const restarted = restartBridgesSession(played);
+
+    expect(restarted.settledRetractionCount).toBe(1);
+    expect(restarted.editingEdge).toBeNull();
+    expect(restarted.restartCount).toBe(1);
+  });
+
+  test("別の辺に切り替えても交差に阻まれた操作では前の編集を確定しないこと", () => {
+    const crossed = cycleEdges(initial, [3, 0]);
+    const changed = cycleBridgesSessionEdge(crossed, 2, startedAt);
+
+    expect(changed.session.editingEdge).toEqual({
+      edge: 0,
+      countBeforeEditing: 0,
+    });
+    expect(changed.session.blockedCount).toBe(1);
   });
 });

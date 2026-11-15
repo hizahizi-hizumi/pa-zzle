@@ -45,9 +45,9 @@ export function BridgesResultScreen({
     <GameResultScreen
       gameName={BRIDGES_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
-      // 点は速さだけなので、主な成績は点を決める時間と基準時間だけにする。操作の回数を並べると、手数で採点するゲームと同じ形に見える。
       metrics={[
         createElapsedTimeMetric(result),
+        createCountMetric("橋の訂正", result.retractionCount, "回"),
         createSpeedFullScoreMetric(result.speedRule),
       ]}
       score={result.score.total}
