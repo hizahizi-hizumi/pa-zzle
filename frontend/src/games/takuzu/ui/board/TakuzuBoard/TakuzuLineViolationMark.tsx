@@ -58,6 +58,7 @@ export function TakuzuLineViolationMark({
         style={getEdgeCellArea(size, line, edge)}
       >
         <span
+          data-takuzu-line-warning=""
           className={cn(
             "absolute",
             lineViolationBarClassName,

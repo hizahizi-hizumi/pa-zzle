@@ -12,7 +12,6 @@ import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
 import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/TakuzuBoard/violation-mark-timing";
-import { TakuzuCellFace } from "@/games/takuzu/ui/board/TakuzuCellFace";
 import { runViolationCellClassName } from "@/games/takuzu/ui/board/violation-mark-style";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +24,10 @@ type TakuzuCellProps = {
   /** 揺れの合図は盤面が掛けるので、マスは印と応えだけを描く。 */
   cue: TakuzuCellCue | undefined;
   spotlit: boolean;
+  reading: boolean;
+  selected: boolean;
+  rowCompleted: boolean;
+  columnCompleted: boolean;
   focusable: boolean;
   onElementChange: (
     cellIndex: number,
@@ -33,8 +36,6 @@ type TakuzuCellProps = {
   onCycle: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onFocus: (cellIndex: number) => void;
 };
-
-const tileNameByCell = { a: "四角", b: "丸" } as const;
 
 /** 印と応えの線は、隣り合うマスの線と重ならないよう、マスの縁から少し内側に、角の立ったマスの形で引く。 */
 const cueOutlinePlacementClassName = "pointer-events-none absolute inset-1";
@@ -46,7 +47,7 @@ function getAccessibleName(
   lineViolationNames: readonly string[],
 ): string {
   const { row, column } = getTakuzuCellPosition(size, cellIndex);
-  const content = view.cell === null ? "空き" : tileNameByCell[view.cell];
+  const content = view.cell === null ? "空き" : view.cell === "a" ? "0" : "1";
   const qualifiers = [
     view.given ? "固定" : null,
     view.inViolatingRun ? "3連続" : null,
@@ -63,6 +64,10 @@ export function TakuzuCell({
   disabled,
   cue,
   spotlit,
+  reading,
+  selected,
+  rowCompleted,
+  columnCompleted,
   focusable,
   onElementChange,
   onCycle,
@@ -102,14 +107,22 @@ export function TakuzuCell({
       onPointerDown={handlePointerDown}
       onFocus={() => onFocus(cellIndex)}
       data-violated={view.inViolatingRun || undefined}
+      data-cell={view.cell ?? "empty"}
+      data-given={view.given || undefined}
+      data-reading={reading || undefined}
+      data-selected={selected || undefined}
+      data-row-completed={rowCompleted || undefined}
+      data-column-completed={columnCompleted || undefined}
       className={cn(
-        "group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center bg-background outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:not-aria-disabled:hover:bg-accent/60 enabled:not-aria-disabled:active:bg-accent",
+        "takuzu-cell",
+        "group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center outline-none focus-visible:z-10 disabled:cursor-default",
         row !== size - 1 && "border-b border-b-border",
         column !== size - 1 && "border-r border-r-border",
       )}
     >
       <span
         aria-hidden="true"
+        data-takuzu-run-warning=""
         className={cn(
           "pointer-events-none absolute inset-0",
           violationMarkTimingClassName,
@@ -149,12 +162,11 @@ export function TakuzuCell({
         data-clear-wave-step={row + column}
         className="relative size-[80%] will-change-transform"
       >
-        <TakuzuCellFace
-          key={view.cell}
-          cell={view.cell}
-          given={view.given}
-          size="board"
-        />
+        {view.cell !== null && (
+          <span key={view.cell} aria-hidden="true" className="takuzu-digit">
+            {view.cell === "a" ? "0" : "1"}
+          </span>
+        )}
       </span>
     </button>
   );

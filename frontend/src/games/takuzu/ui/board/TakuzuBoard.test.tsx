@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -68,9 +69,9 @@ describe("TakuzuBoard", () => {
         .map((cell) => cell.getAttribute("aria-label"));
 
       expect(result).toEqual([
-        "1行1列 四角 固定",
+        "1行1列 0 固定",
         "1行2列 空き 列の個数超過",
-        "2行1列 丸 3連続",
+        "2行1列 1 3連続",
         "2行2列 空き 列の個数超過",
       ]);
     });
@@ -83,6 +84,22 @@ describe("TakuzuBoard", () => {
       expect(result).toEqual([0, -1, -1, -1]);
     });
 
+    test("盤面外へフォーカスが移ると行と列の案内を消すこと", () => {
+      const cell = within(board).getByRole("button", { name: "1行1列 0 固定" });
+      fireEvent.focus(cell);
+      const readingBefore = document.querySelectorAll(
+        ".takuzu-line-indicator[data-reading]",
+      );
+
+      fireEvent.blur(cell, { relatedTarget: null });
+      const readingAfter = document.querySelectorAll(
+        ".takuzu-line-indicator[data-reading]",
+      );
+
+      expect(readingBefore).toHaveLength(2);
+      expect(readingAfter).toHaveLength(0);
+    });
+
     test("タップで順方向の巡回を通知すること", () => {
       fireEvent.click(
         within(board).getByRole("button", { name: "1行2列 空き 列の個数超過" }),
@@ -93,7 +110,7 @@ describe("TakuzuBoard", () => {
 
     test("右クリックで逆方向の巡回を通知すること", () => {
       fireEvent.contextMenu(
-        within(board).getByRole("button", { name: "2行1列 丸 3連続" }),
+        within(board).getByRole("button", { name: "2行1列 1 3連続" }),
       );
 
       expect(onCycleCell).toHaveBeenCalledWith(2, "backward");
@@ -101,7 +118,7 @@ describe("TakuzuBoard", () => {
 
     test("タッチの長押しでは逆方向の巡回を通知しないこと", () => {
       const cell = within(board).getByRole("button", {
-        name: "2行1列 丸 3連続",
+        name: "2行1列 1 3連続",
       });
 
       fireEvent.pointerDown(cell, { pointerType: "touch" });
@@ -112,7 +129,7 @@ describe("TakuzuBoard", () => {
 
     test("固定マスへのタップも巡回として通知し、通るかをプレイに任せること", () => {
       fireEvent.click(
-        within(board).getByRole("button", { name: "1行1列 四角 固定" }),
+        within(board).getByRole("button", { name: "1行1列 0 固定" }),
       );
 
       expect(onCycleCell).toHaveBeenCalledWith(0, "forward");
@@ -120,14 +137,16 @@ describe("TakuzuBoard", () => {
 
     describe("左上のマスにフォーカスがある場合", () => {
       beforeEach(() => {
-        within(board).getByRole("button", { name: "1行1列 四角 固定" }).focus();
+        act(() => {
+          within(board).getByRole("button", { name: "1行1列 0 固定" }).focus();
+        });
       });
 
       const arrowKeyCases = [
         ["ArrowRight", "1行2列 空き 列の個数超過"],
-        ["ArrowDown", "2行1列 丸 3連続"],
-        ["ArrowLeft", "1行1列 四角 固定"],
-        ["ArrowUp", "1行1列 四角 固定"],
+        ["ArrowDown", "2行1列 1 3連続"],
+        ["ArrowLeft", "1行1列 0 固定"],
+        ["ArrowUp", "1行1列 0 固定"],
       ] as const;
 
       test.each(arrowKeyCases)(
@@ -141,7 +160,7 @@ describe("TakuzuBoard", () => {
       );
 
       test("固定マスへのキー入力も通知し、通るかをプレイに任せること", () => {
-        fireEvent.keyDown(document.activeElement ?? board, { key: "2" });
+        fireEvent.keyDown(document.activeElement ?? board, { key: "1" });
 
         expect(onPlaceCell).toHaveBeenCalledWith(0, "b");
       });
@@ -149,14 +168,16 @@ describe("TakuzuBoard", () => {
 
     describe("空きマスにフォーカスがある場合", () => {
       beforeEach(() => {
-        within(board)
-          .getByRole("button", { name: "1行2列 空き 列の個数超過" })
-          .focus();
+        act(() => {
+          within(board)
+            .getByRole("button", { name: "1行2列 空き 列の個数超過" })
+            .focus();
+        });
       });
 
       const tileKeyCases = [
-        ["1", "a"],
-        ["2", "b"],
+        ["0", "a"],
+        ["1", "b"],
       ] as const;
 
       test.each(tileKeyCases)(
@@ -168,7 +189,7 @@ describe("TakuzuBoard", () => {
         },
       );
 
-      const clearKeys = ["0", "Backspace", "Delete"];
+      const clearKeys = ["Backspace", "Delete"];
 
       test.each(clearKeys)(
         "%s キーでそのマスを空きにするよう通知すること",
@@ -195,6 +216,184 @@ describe("TakuzuBoard", () => {
 
         expect(onPlaceCell).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe("数字盤面の状態表現", () => {
+    const completedCells: TakuzuCellView[] = [
+      { cell: "a", given: true, inViolatingRun: false },
+      { cell: "b", given: false, inViolatingRun: false },
+      { cell: "b", given: false, inViolatingRun: false },
+      { cell: "a", given: false, inViolatingRun: false },
+    ];
+
+    function renderCompleted(
+      violations: readonly TakuzuLineViolationView[] = [],
+    ) {
+      return render(
+        <TakuzuBoard
+          size={2}
+          cells={completedCells}
+          lineViolations={violations}
+          operation={null}
+          interactionDisabled={false}
+          onCycleCell={onCycleCell}
+          onPlaceCell={onPlaceCell}
+        />,
+      );
+    }
+
+    test("成立した行と列を両方向の完成インジケータで表示すること", () => {
+      const { container } = renderCompleted();
+      const completed = container.querySelectorAll(
+        ".takuzu-line-indicator[data-completed]",
+      );
+      const signals = container.querySelectorAll(
+        ".takuzu-completion-trace[data-completed]",
+      );
+
+      expect(completed).toHaveLength(4);
+      expect(signals).toHaveLength(4);
+    });
+
+    test("違反している列を完成表示から除外すること", () => {
+      const { container } = renderCompleted([
+        { axis: "column", index: 1, overfilled: false, duplicated: true },
+      ]);
+      const completed = container.querySelectorAll(
+        ".takuzu-line-indicator[data-completed]",
+      );
+      const signals = container.querySelectorAll(
+        ".takuzu-completion-trace[data-completed]",
+      );
+
+      expect(completed).toHaveLength(3);
+      expect(signals).toHaveLength(3);
+    });
+
+    test("数字が3連続した行を完成として表示しないこと", () => {
+      const row = ["a", "a", "a", "b", "a", "b", "b", "b"] as const;
+      const invalidCells: TakuzuCellView[] = Array.from(
+        { length: 64 },
+        (_, index) => ({
+          cell: row[index] ?? null,
+          given: false,
+          inViolatingRun: index < 3 || (index >= 5 && index < 8),
+        }),
+      );
+      const { container } = render(
+        <TakuzuBoard
+          size={8}
+          cells={invalidCells}
+          lineViolations={[]}
+          operation={null}
+          interactionDisabled={false}
+          onCycleCell={onCycleCell}
+          onPlaceCell={onPlaceCell}
+        />,
+      );
+      const completed = container.querySelectorAll(
+        ".takuzu-line-indicator[data-completed]",
+      );
+
+      expect(completed).toHaveLength(0);
+    });
+
+    test("選択したマスの行と列を盤面と外枠の両方で示すこと", () => {
+      const { container } = renderCompleted();
+      const board = screen.getByRole("group", { name: "バイナリパズル盤面" });
+      fireEvent.focus(within(board).getByRole("button", { name: "1行2列 1" }));
+      const reading = container.querySelectorAll(".takuzu-cell[data-reading]");
+      const selected = container.querySelectorAll(
+        ".takuzu-cell[data-selected]",
+      );
+      const indicators = container.querySelectorAll(
+        ".takuzu-line-indicator[data-reading]",
+      );
+
+      expect(reading).toHaveLength(3);
+      expect(selected).toHaveLength(1);
+      expect(indicators).toHaveLength(2);
+    });
+
+    test("数字と固定マスの違いを読み上げ名で識別できること", () => {
+      renderCompleted();
+      const board = screen.getByRole("group", { name: "バイナリパズル盤面" });
+      const labels = within(board)
+        .getAllByRole("button")
+        .map((cell) => cell.getAttribute("aria-label"));
+
+      expect(labels).toEqual([
+        "1行1列 0 固定",
+        "1行2列 1",
+        "2行1列 1",
+        "2行2列 0",
+      ]);
+    });
+
+    test("3連続と行列の違反を別々の表示で知らせること", () => {
+      const { container } = render(
+        <TakuzuBoard
+          size={2}
+          cells={cells}
+          lineViolations={lineViolations}
+          operation={null}
+          interactionDisabled={false}
+          onCycleCell={onCycleCell}
+          onPlaceCell={onPlaceCell}
+        />,
+      );
+      const violatingCell = container.querySelector(
+        '.takuzu-cell[data-violated="true"]',
+      );
+      const lineMarkers = container.querySelectorAll(
+        '[data-takuzu-line-warning=""]',
+      );
+
+      expect(
+        violatingCell?.querySelector("[data-takuzu-run-warning]"),
+      ).not.toBeNull();
+      expect(lineMarkers).toHaveLength(8);
+    });
+
+    test("数字の0と1を直接入力し、Backspaceで消せること", () => {
+      renderCompleted();
+      const board = screen.getByRole("group", { name: "バイナリパズル盤面" });
+      const cell = within(board).getByRole("button", { name: "1行2列 1" });
+      fireEvent.focus(cell);
+      fireEvent.keyDown(cell, { key: "0" });
+      fireEvent.keyDown(cell, { key: "1" });
+      fireEvent.keyDown(cell, { key: "Backspace" });
+      fireEvent.keyDown(cell, { key: "2" });
+
+      expect(onPlaceCell.mock.calls).toEqual([
+        [1, "a"],
+        [1, "b"],
+        [1, null],
+      ]);
+    });
+
+    test("個数が不均等な完成列を違反通知に依存せず未完成として扱うこと", () => {
+      const unbalancedCells: TakuzuCellView[] = Array.from(
+        { length: 4 },
+        () => ({ cell: "a", given: false, inViolatingRun: false }),
+      );
+      const { container } = render(
+        <TakuzuBoard
+          size={2}
+          cells={unbalancedCells}
+          lineViolations={[]}
+          operation={null}
+          interactionDisabled={false}
+          onCycleCell={onCycleCell}
+          onPlaceCell={onPlaceCell}
+        />,
+      );
+      const completed = container.querySelectorAll(
+        ".takuzu-line-indicator[data-completed]",
+      );
+
+      expect(completed).toHaveLength(0);
     });
   });
 
@@ -234,7 +433,7 @@ describe("TakuzuBoard", () => {
     test("そのマスのタイルだけを揺らすこと", () => {
       rerender(renderBoard({ id: 1, type: "invalid", cellIndex: 0 }));
       const givenCell = within(board).getByRole("button", {
-        name: "1行1列 四角 固定",
+        name: "1行1列 0 固定",
       });
 
       expect(animate).toHaveBeenCalledOnce();

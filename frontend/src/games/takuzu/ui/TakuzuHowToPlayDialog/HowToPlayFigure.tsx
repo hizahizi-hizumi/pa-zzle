@@ -1,5 +1,5 @@
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
-import { TakuzuCellFace } from "@/games/takuzu/ui/board/TakuzuCellFace";
+import "@/games/takuzu/ui/board/takuzu-board.css";
 import {
   lineViolationBarClassName,
   runViolationCellClassName,
@@ -46,7 +46,7 @@ export function HowToPlayFigure({ rows, violation }: HowToPlayFigureProps) {
     <span
       aria-hidden="true"
       className={cn(
-        "relative inline-grid gap-px border-2 border-foreground/55 bg-border",
+        "takuzu-howto-figure relative inline-grid gap-px border-2 border-foreground/55 bg-border",
         violation === "line" && "mx-2",
       )}
       style={{ gridTemplateColumns: `repeat(${columnCount}, 1.5rem)` }}
@@ -60,16 +60,22 @@ export function HowToPlayFigure({ rows, violation }: HowToPlayFigureProps) {
         return (
           <span
             key={key}
+            data-given={given || undefined}
+            data-cell={cell ?? "empty"}
+            data-run-warning={violation === "run" || undefined}
             className={cn(
-              "relative flex size-6 items-center justify-center bg-background",
+              "takuzu-howto-cell relative flex size-6 items-center justify-center",
               violation === "run" && runViolationCellClassName,
             )}
           >
-            <span className="size-[80%]">
-              <TakuzuCellFace cell={cell} given={given} size="figure" />
-            </span>
+            {cell !== null && (
+              <span className="takuzu-howto-digit" aria-hidden="true">
+                {cell === "a" ? "0" : "1"}
+              </span>
+            )}
             {violation === "line" && lineEdge !== null ? (
               <span
+                data-takuzu-line-warning=""
                 className={cn(
                   "absolute top-1/4 bottom-1/4 w-0.5",
                   lineBarPlacementClassNames[lineEdge],

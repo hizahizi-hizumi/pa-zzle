@@ -104,29 +104,30 @@ function cellAt(row: number, column: number): number {
 }
 
 /**
- * 四角と丸を1つずつ自分で置き、ルールを1つずつ、まず行に、次に列に当てはめて埋めていく。
- * - 操作: 4行目の1列目に四角を、1行目の4列目に丸を置く。丸の途中の四角は、1行目の四角を2つにするだけで、どのルールにも当たらない。
- * - 3つ続かない: 2行目の丸2つの右を、続いて1列目の丸2つの上を、四角で埋める。どちらも1回押すだけなので、途中の盤面を通らない。
- * - 同じ数: 2行目の丸2つから2行目の4列目を、続いて4列目の丸2つ（1つは自分で置いた丸）から4列目の3行目を埋める。
- * - おさらい: 1行目の3列目を、並んだ四角2つから丸で埋める。丸の途中の四角は、ここまでに伝えた3つ続かないことと同じ数に当たる。
+ * 0と1を1つずつ自分で置き、ルールを1つずつ行と列に当てはめて埋めていく。
+ * 1は空き→0→1と2回押すため、途中の0でも、まだ伝えていないルールに違反しないマスを選ぶ。
+ * - 操作: 4行目の1列目に0を、1行目の4列目に1を置く。
+ * - 3つ続かない: 2行目に並ぶ2つの1の右と、1列目に並ぶ2つの1の上を0で埋める。
+ * - 同じ数: 2行目の2つの1と、4列目の2つの1から、残る0を決める。
+ * - おさらい: 1行目に並ぶ2つの0の隣を1で埋める。途中の0は既に伝えたルールに当たる。
  * - 同じ並び: 3行目 `B..A` を、真上でそろった2行目 `BBAA` と同じにしない入れ方で埋める。3行目の2マスは、3つ続かないことと同じ数だけでは決まらない。
  * 手順を終えると4行目の2マスが残り、列の同じ数で1つずつ決まる。
  */
 const steps: readonly TakuzuTutorialStep[] = [
   {
-    message: { headline: "印のマスをタップすると四角が入ります", detail: null },
+    message: { headline: "印のマスをタップすると0が入ります", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(4, 1)],
     lesson: null,
   },
   {
-    message: { headline: "2回タップすると丸が入ります", detail: null },
+    message: { headline: "2回タップすると1が入ります", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(1, 4)],
     lesson: null,
   },
   {
-    message: { headline: "同じ形は3つ続けられません", detail: null },
+    message: { headline: "同じ数字は3つ続けられません", detail: null },
     introducedRuleId: "run",
     cellIndices: [cellAt(2, 3)],
     lesson: { ruleId: "run", axis: "row" },
@@ -139,7 +140,7 @@ const steps: readonly TakuzuTutorialStep[] = [
   },
   {
     message: {
-      headline: "どの行にも四角と丸が\n同じ数ずつ入ります",
+      headline: "どの行にも0と1が\n同じ数ずつ入ります",
       detail: null,
     },
     introducedRuleId: "count",
@@ -225,7 +226,7 @@ function deduceByCount(
 }
 
 /**
- * 残り2マスに四角と丸を1つずつ入れる行・列で、片方の入れ方が埋まった別の行・列と同じ並びになるなら、もう片方に決まる。
+ * 残り2マスに0と1を1つずつ入れる行・列で、片方の入れ方が埋まった別の行・列と同じ並びになるなら、もう片方に決まる。
  * 決め手は、同じ並びになってしまう行・列のマス。
  */
 function deduceByDuplicate(
@@ -635,7 +636,7 @@ export function getTakuzuTutorialLineViolations(
 }
 
 /** 遊び方の説明と同じ、画面のタイルの呼び方。 */
-const tileNames = { a: "四角", b: "丸" } as const satisfies Record<
+const tileNames = { a: "0", b: "1" } as const satisfies Record<
   TakuzuTile,
   string
 >;
@@ -808,7 +809,7 @@ export const takuzuTutorial: Tutorial<
   TakuzuTutorialAction
 > = {
   intro: {
-    purpose: "すべてのマスを四角か丸で\nルールどおりに埋めるパズルです",
+    purpose: "すべてのマスを0か1で\nルールどおりに埋めるパズルです",
     goalCaption: "この盤面がゴールです",
     startCaption: "最初は一部のマスだけ埋まっています",
   },

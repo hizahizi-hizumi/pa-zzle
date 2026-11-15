@@ -15,15 +15,15 @@ export function TakuzuHowToPlayDialog({
   return (
     <HowToPlayDialog
       open={open}
-      description="すべてのマスを四角か丸で埋める。"
+      description="すべてのマスを0か1で埋める。"
       onClose={onClose}
     >
       <li className="space-y-2">
-        <p>各行・各列の四角と丸は同じ数。</p>
+        <p>各行・各列の0と1は同じ数。</p>
         <HowToPlayFigure rows={["abaabbab"]} />
       </li>
       <li className="space-y-2">
-        <p>同じ形は3つ以上続けない。</p>
+        <p>同じ数字は3つ以上続けない。</p>
         <div className="flex items-center gap-3">
           <HowToPlayFigure rows={["aab"]} />
           <HowToPlayRuleMark figureAllowed />
@@ -39,7 +39,7 @@ export function TakuzuHowToPlayDialog({
         </div>
       </li>
       <li className="space-y-2">
-        <p>タップで 空き → 四角 → 丸 → 空き。</p>
+        <p>タップで 空き → 0 → 1 → 空き。</p>
         <HowToPlayTransition>
           <HowToPlayFigure rows={["."]} />
           <HowToPlayFigure rows={["a"]} />
@@ -48,7 +48,7 @@ export function TakuzuHowToPlayDialog({
         </HowToPlayTransition>
       </li>
       <li className="space-y-2">
-        <p>最初からあるタイルは変えられない。</p>
+        <p>最初からある数字は変えられない。</p>
         <HowToPlayFigure rows={["AB"]} />
       </li>
     </HowToPlayDialog>
