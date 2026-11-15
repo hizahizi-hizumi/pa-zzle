@@ -90,13 +90,13 @@ const CLEARANCE_DEFAULT_MIN = 0.5;
 const PLAYBACKS = new Set(['cut', 'rest-cut', 'seam']);
 const PLAYBACK_ERROR = 'playback must be cut, rest-cut or seam (once is not used: it moves only at the moment of selection and is easily missed)';
 // rest-cut: the static state closes the cycle for at least the rest the app shows on selection
-// (SHOWCASE_ENTRY_REST_MS in frontend/src/components/game-pictogram-motion.ts), as long as a cut shows,
+// (SHOWCASE_ENTRY_REST_MS in frontend/src/components/GamePictogram/game-pictogram-motion.ts), as long as a cut shows,
 // and the switch into it from the payoff pose takes at most one frame at 60fps.
 const REST_CUT_MIN_REST_MS = 600;
 const FRAME_MS = 1000 / 60;
 // rest-cut is scanned at 1ms steps, so its closing rest and switch are read up to 1ms off.
 const REST_CUT_SCAN_TOLERANCE_MS = 1;
-// The app's entry rest (SHOWCASE_ENTRY_REST_MS in frontend/src/components/game-pictogram-motion.ts).
+// The app's entry rest (SHOWCASE_ENTRY_REST_MS in frontend/src/components/GamePictogram/game-pictogram-motion.ts).
 const APP_ENTRY_REST_MS = 600;
 // Guide for the hold after the payoff before the rest-cut switch (references/motion.md); outside is a WARN.
 const PAYOFF_HOLD_MS = [1500, 2500];

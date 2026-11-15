@@ -21,18 +21,17 @@ bun run --cwd frontend test # Vitest の1回実行
 bun run --cwd frontend build # プロダクションビルド
 ```
 
-
 ### Semantic lint
 
-`tools/semantic-lint` と `.semantic-lint/` は運用を停止している。実行・保守・rule 追加をしない。
-
-Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境では、対象Snapshotと同じworkflow runの `repository-environment-<target>-<sha>.json` から依存アーティファクトを取得する。全品質検証ではそのアーカイブを `scripts/chatgpt-verify.sh` に渡す。画面確認などで Vite を直接使う場合は、依存アーティファクトの `frontend/node_modules` を配置して利用する。画面確認などで Vite を直接使う場合は次を実行する。
+- `tools/semantic-lint` と `.semantic-lint/` は運用を停止している。実行・保守・rule 追加をしない。
+- Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境では、対象 Snapshot と同じ workflow run の `repository-environment-<target>-<sha>.json` から依存アーティファクトを取得し、全品質検証ではそのアーカイブを `scripts/chatgpt-verify.sh` に渡す。
+- Vite を直接使う画面確認では、依存アーティファクトの `frontend/node_modules` を配置し、次を実行する。
 
 ```sh
 frontend/node_modules/.bin/vite --config frontend/vite.chatgpt.config.ts --host 127.0.0.1 --port 3000
 ```
 
-ChatGPT環境で画面確認する場合は、`docs/メモ/ChatGPT画面確認.md` の手順に従い、`scripts/chatgpt_playwright.py` を使って描画・操作・スクリーンショット・ブラウザエラーまで確認する。
+- ChatGPT環境で画面確認する場合は、`docs/メモ/ChatGPT画面確認.md` の手順に従い、`scripts/chatgpt_playwright.py` を使って描画・操作・スクリーンショット・ブラウザエラーまで確認する。
 
 ### Backend
 
@@ -44,7 +43,7 @@ uv run --directory backend ruff check . # Ruff の静的解析
 
 ### GitHub Actions
 
-外部アクションは `.github/workflows/actions.lock` でコミットに固定する。`uses:` を追加・変更したら lockfile を更新する。
+- 外部アクションは `.github/workflows/actions.lock` でコミットに固定する。`uses:` を追加・変更したら lockfile を更新する。
 
 ```sh
 gh extension install github/gh-actions-lock # 初回のみ
@@ -68,29 +67,24 @@ gh actions-lock # 全ワークフローを走査して actions.lock を更新
 
 ## 文書
 
-どの文書に何を書き、どう保つかは `.claude/rules/documents.md` を正とする。文書を書く・変える前に読む。
+- 文書を書く・変える前に `.claude/rules/documents.md` を読み、置き場所と保ち方を確認する。
+- 関係する文書は次のタイミングで読む:
 
-いつ読むか:
+  - 機能を足す・削る: `docs/プロダクト/要求/`・`要件/`
+  - 振る舞いを実装・変更・レビューする: `docs/プロダクト/要件/`・`仕様/`。パズルを作る・変えるときは該当パズルの仕様
+  - 画面・機能・演出を足す・変える、アプリとゲームの分担を判断する: `APP.md`
+  - ゲームを作る・変える: `GAME.md`
+  - 画面を足す・変える・レビューする: `docs/プロダクト/画面/` の該当する画面の文書
+  - UI を作る・変える・レビューする: `DESIGN.md`。正確な値は `frontend/styles/globals.css` の `@theme`
+  - 難易度を作る・変える: `docs/パズル/README.md` から難易度文書
+  - 決まりを変える・新しく決める前に、関係する過去の意思決定を確かめる: `docs/adr/`（`index.csv` から探す）
 
-- 機能を足す・削る: `docs/プロダクト/要求/`・`要件/`
-- 振る舞いを実装・変更・レビューする: `docs/プロダクト/要件/`・`仕様/`。パズルを作る・変えるときは該当パズルの仕様
-- 画面・機能・演出を足す・変える、アプリとゲームの分担を判断する: `APP.md`
-- ゲームを作る・変える: `GAME.md`
-- 画面を足す・変える・レビューする: `docs/プロダクト/画面/` の該当する画面の文書
-- UI を作る・変える・レビューする: `DESIGN.md`。正確な値は `frontend/styles/globals.css` の `@theme`
-- 難易度を作る・変える: `docs/パズル/README.md` から難易度文書
-- 決まりを変える・新しく決める前に、関係する過去の意思決定を確かめる: `docs/adr/`（`index.csv` から探す）
+- レビューや作業で決めたことは、同じ変更の中で、振る舞いはコードとテストに、守るべき決まりは該当する文書かルールに、将来の意思決定を揃えるべきプロジェクト全体の意思決定は ADR に反映する。
 
-レビューや作業で決めたことは、同じ変更の中で、振る舞いはコードとテストに、守るべき決まりは該当する文書かルールに、将来の意思決定を揃えるべきプロジェクト全体の意思決定は ADR に反映する。
-
-文書・ルールを直すときは、継ぎはぎにしない。継ぎはぎを重ねると、大事な決まりとそうでない決まりが同じ大きさで並ぶため。
-
-- 指摘された箇所に継ぎ足さず、文書全体を読み直し、一続きに読める形に書き直す。ADR は本文を書き換えないので除く。
+- 文書・ルールを直すときは、指摘された箇所への継ぎ足しではなく、全文を読み直して一続きに読める形に書き直す。ADR の本文は書き換えない。
 - 書き終えたら、文脈を引き継がないサブエージェントに全文を読ませ、継ぎ目・重複・ほかの文書との食い違いを指摘させる。
 
 ## 進め方
-
-プロダクトオーナー（PO）の思考と時間を奪わないように進める。
 
 - 決まりと文書、PO のこれまでの発言から判断できることは自分で判断する。PO には、それで決められず、答えによって作業が変わることだけを聞く。
 - PO に判断を求めるのは、原因と、比べられる選択肢を揃えてからにする。

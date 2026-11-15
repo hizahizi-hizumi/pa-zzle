@@ -36,8 +36,8 @@ model: opus
 - `.claude/rules/vitest.md`
 - `AGENTS.md` の「検証」節（再発防止だけを理由に特定の不具合向けテストを足さない）
 - `APP.md`・`GAME.md` — 原則必須の責務を省略している場合に、その省略が説明できるかを確かめるときだけ使う
-- 契約: `frontend/src/game-catalog/game-catalog-entry.ts`（カタログエントリの各項目）と、既存ゲームが使う共通部品（`frontend/src/components/`、`frontend/src/zukan/ui/`）
-- 前例: 既存ゲームの同じ責務のファイル（Glob で直近の2ゲームの `frontend/src/games/<game>/`・`frontend/src/game-catalog/<game>/` を並べる）
+- 契約: `frontend/src/app/game-integration/game-catalog-entry.ts`（カタログエントリの各項目）と、既存ゲームが使う共通部品（`frontend/src/components/`、`frontend/src/app/game-home/GameHomeScreen/`（表示）と `frontend/src/features/zukan/`（図鑑の状態））
+- 前例: 既存ゲームの同じ責務のファイル（Glob で直近の2ゲームの `frontend/src/games/<game>/`・`frontend/src/app/game-integration/<game>/` を並べる）
 
 ## 観点
 
@@ -45,42 +45,34 @@ model: opus
 
 - `game-structure.md`「標準配置」「原則必須の責務」「条件付きの責務」「ゲーム直下」と、ファイルの位置・名前・中身が一致しているか。範囲に含まれる責務を省略しているなら、`APP.md` / `GAME.md` 上の説明が付くか
 - 既存ゲームが共通して持つファイル（`game-structure.md` に無くても、直近の2ゲームがどちらも同じ位置・名前で持つもの）と配置・命名が揃っているか。Glob で並べて確かめる
-- `hooks` / `utils` / `services` など実装方式の箱で分類していないか
-- 責務の混入（session で採点、`difficulty-analysis.ts` で閾値判定、`ui/` で問題生成・session 更新・採点、View にドメインロジック）
+- 対象ファイルの import・export と呼び出しをたどり、`game-structure.md`「標準配置」「ゲーム直下」に照らして、置き場所と実際の責務のずれを特定する。既存ゲームの同責務と対照し、単なるファイル名ではなく処理の所有先を確かめる
 
 ### 2. 共通契約の利用
 
-- 問題契約: `<Game>Problem` と `<Game>ProblemIdentity` の分離、`isCurrent<Game>ProblemIdentity` / `is<Game>RecordedProblemIdentity` / `assert<Game>Problem`、`ProblemRandom` と `shuffleProblemValues`
-- 難易度: 解析と分類方針の分離、`DifficultyAssessment` の状態名、基準表の `as const satisfies`、`NumericRange`
-- 評価: `PlayScore`・`ScoreItem`・`ScoreMaximums`・`SpeedScoreRule`、`getGameResultLevel`、`play-vocabulary.ts` の呼び名を文字列で書いていないか
-- session / play: 命名 `<動詞><Game>Session<対象>`、受け付けない操作で session をそのまま返す、`restart` の条件、`applyPlaySession` などの共通関数、`selectProblemAvoiding`
-- 画面: `GamePlayScreenProps` 系の props、`GamePlayFrame` の利用、`interactionDisabled`、クリア演出の `playAnimations` と `onClearAnimationComplete`、portal しない
-- 記録: `RecordedProblemIdentity`、`payloadVersion`、`@/lib/type-guards` による読み戻しの検査、`restore<Game>RecordedResult`
-- 既存ゲームが使う共通部品があるのに、同等物をゲーム内に書いていないか
-- カタログエントリ: 図鑑に渡す問題集の全問・問題の特徴が、問題を復元せず問題集の項目から求めているか。記録定義の自己ベストの指標と、図鑑が読むクリアの成績（`game-structure.md`「プレイ評価」）
-- 効果音: `game-structure.md`「効果音」のつなぎ方。音声ファイルの形式と置き場所
+- `game-structure.md` の問題・難易度・評価・プレイ・画面・記録・カタログ・音声の各契約を、対象ゲームの実装と参照先で照合する。契約の内容は同ルールを正とし、この Agent 側に複製しない
+- 契約の実体が既存の共通部品にあるものは、共通部品と対象ゲームの import・引数・戻り値を追う。同等の処理を独自実装している疑いは、実際の処理を比較して判定する
+- カタログ登録の読み出し側（ゲームのホーム・図鑑・記録）もたどり、登録値が表示・選択・記録の各用途に使えるかを確かめる
 
 ### 3. 依存方向
 
-- `game-structure.md`「依存方向」の各行。特に `problem/generation/` を通常プレイから参照していないか、`play/` が `ui/` を import していないか、別ゲーム・`game-catalog` への依存
+- 各ファイルの import と型の参照元をたどり、`game-structure.md`「依存方向」の各行に照らす。参照が間接的なときも実際の依存先まで追う
 - import の禁止は Biome の生成規則でも検査される。ここでは規則に現れない意味上の逆依存（型だけ借りる、値を経由して知る）を見る
 
 ### 4. 統合（ゲームの外側）
 
 - 範囲に含まれる統合が揃っているか。作り込みのレビューでは `game-structure.md`「ゲームを追加するとき」の全手順
 - 範囲が作る順番の途中の版なら、各項目が置いた最初の版と一時的に置くものが `/add-puzzle` の `references/build-order.md` のとおりか。一時的に置くものが、置き換える項目の後に残っていないか
-- `pages/` は View を再 export するだけか（`pages.md`）、View の責務（`views.md`）
+- `pages/` と View の実際の宣言・import を読み、`pages.md`・`views.md` の責務境界と照合する
 
 ### 5. テスト
 
-- 置き方・命名・構造が `vitest.md` に従うか（コロケーション、「〜こと」、条件は describe、AAA、DOM は利用者から観測できる契約）
+- `vitest.md` の全節を正本として、対象テストの配置・命名・構造とアサーションが観測可能な契約を検証しているかを調べる
 - 振る舞いの契約にテストがあるか: ルール判定、問題の成立（一意解など対象 SPEC の条件）、identity からの再現性、難易度分類、採点、記録の読み戻し、図鑑に渡す問題の特徴など既存ゲームが持つ種類
 
 ### 6. 型とコード
 
-- `typescript.md`（ロジックと UI の分離、意味のある戻り値、export、テスト専用公開は `_private`）
-- `typescript-react.md`（1ファイル1コンポーネント、props 契約、子コンポーネントの配置）、`react-hooks.md`（state / effect）、`component-styling.md`（外観の API）
-- `self-documenting-code.md`: 試行錯誤や経緯・予定（「後で載せる」など）を書いたコメント、コードの言い換えコメントが無いか
+- `typescript.md`・`typescript-react.md`・`react-hooks.md`・`component-styling.md` の各節を読み、対象の宣言・参照・状態更新・props・スタイル指定を実際の規約と照合する
+- `self-documenting-code.md` を読み、コメントの説明対象と実装の実態が一致するか確認する
 - 正しさの疑い: 境界条件、例外、状態遷移の抜け、決定性（seed 以外の乱数・時刻への依存）
 
 ## 出力形式

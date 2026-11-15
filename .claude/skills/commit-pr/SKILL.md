@@ -1,13 +1,13 @@
 ---
 name: commit-pr
 description: >
-  This skill should be used when the user asks to "コミットしてPRを作って", "未コミット差分をPRにして",
-  "変更をPRにまとめて", "差分をコミット・PR化して", "commit and create PR",
-  "作業内容をPRにして", "変更をGitHubに上げてPRを作成して".
   Analyzes uncommitted diffs, designs commit and PR boundaries, creates branches as needed,
-  then orchestrates the commit and pr skills to produce one or more open pull requests.
+  then orchestrates commit and pr skills to produce open pull requests. Use for
+  "コミットしてPRを作って", "未コミット差分をPRにして", "変更をPRにまとめて",
+  "差分をコミット・PR化して", "作業内容をPRにして", "変更をGitHubに上げてPRを作成して",
+  "commit and create PR".
 argument-hint: "baseBranch=main, preview=false"
-allowed-tools: Read, Glob, Bash(git *), Bash(find *), Bash(*validate-input.sh*), Skill, TaskCreate, TaskUpdate, TaskGet, TaskList
+allowed-tools: Read, Glob, Bash(git status *), Bash(git diff *), Bash(git switch -c *), Bash(bash .claude/skills/commit-pr/scripts/validate-input.sh *), Skill, TaskCreate, TaskUpdate, TaskGet, TaskList
 ---
 
 # 未コミット差分のコミットとPR作成
@@ -26,7 +26,7 @@ allowed-tools: Read, Glob, Bash(git *), Bash(find *), Bash(*validate-input.sh*),
 プロジェクト内スクリプトを使う。
 
 ```bash
-"$CLAUDE_PROJECT_DIR/.claude/skills/commit-pr/scripts/validate-input.sh" "<baseBranch>"
+bash .claude/skills/commit-pr/scripts/validate-input.sh "<baseBranch>"
 ```
 
 成功時は次を返す。

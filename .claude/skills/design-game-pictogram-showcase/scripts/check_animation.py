@@ -102,7 +102,7 @@ ANIMATION_KEYWORDS = {
 # Rough guide values for the hold after the payoff (cut, rest-cut); outside them is a WARN, not a FAIL.
 CUT_HOLD_MS = (1500.0, 2500.0)
 # rest-cut closes its cycle on the static state for at least the rest the app shows on selection
-# (SHOWCASE_ENTRY_REST_MS in frontend/src/components/game-pictogram-motion.ts), as long as a cut shows.
+# (SHOWCASE_ENTRY_REST_MS in frontend/src/components/GamePictogram/game-pictogram-motion.ts), as long as a cut shows.
 REST_CUT_MIN_REST_MS = 600.0
 # Offsets in percent of a duration in ms leave fractions of a millisecond; a rest this close counts as met.
 REST_CUT_ROUNDING_MS = 1.0

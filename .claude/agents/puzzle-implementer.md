@@ -27,7 +27,7 @@ model: opus
 - ゲームの置き場所・依存方向・追加時に触る場所: `.claude/rules/game-structure.md`
 - 失敗パターンと予防: 作業カードの失敗パターン。全体は失敗パターン集の絶対パス
 - 作り方の Skill と項目の対応: `/add-puzzle` の `references/build-order.md`。各 Skill の「`/add-puzzle` から起動されたとき」に従う
-- コミットの粒度とメッセージ: `.claude/skills/commit/references/commit.md`
+- コミットの粒度とメッセージ: `.claude/skills/share/commit.md`
 
 ## 手順
 

@@ -1,12 +1,11 @@
 ---
 name: pr
 description: >
-  This skill should be used when the user asks to "PRを作って", "プルリクエストを作成して",
-  "PRにして", "現在ブランチでPR作成", "create PR", "open PR".
-  Creates a single open pull request from the current branch against a specified base branch.
-  Uses committed changes only; uncommitted diffs are not included.
+  Creates a single open pull request from committed changes on the current branch against a specified
+  base branch. Use for "PRを作って", "プルリクエストを作成して", "PRにして",
+  "現在ブランチでPR作成", "create PR", "open PR".
 argument-hint: "baseBranch=main, preview=false"
-allowed-tools: Read, Glob, Bash(git *), Bash(gh *), Bash(find *), TaskCreate, TaskUpdate, TaskGet, TaskList
+allowed-tools: Read, Glob, Bash(git rev-parse *), Bash(git branch --show-current), Bash(git status *), Bash(git log *), Bash(git diff *), Bash(git push), Bash(git push --set-upstream origin *), Bash(git push --force-with-lease), Bash(git fetch origin *), Bash(git rebase *), Bash(gh pr create *), Bash(gh pr view *), Bash(find . -type f -iname *), TaskCreate, TaskUpdate, TaskGet, TaskList
 ---
 
 # 現在ブランチからのオープンPR作成
@@ -33,7 +32,7 @@ allowed-tools: Read, Glob, Bash(git *), Bash(gh *), Bash(find *), TaskCreate, Ta
 
 - `references/pr.md` を読む。
 - `find . -type f -iname "*pull_request*template*"` でリポジトリ内テンプレートを探し、存在すれば優先する。
-- タイトルのラベル・scopeは `.claude/skills/commit/references/commit.md` に従う。
+- タイトルのラベル・scopeは `${CLAUDE_PROJECT_DIR}/.claude/skills/share/commit.md` に従う。
 
 ### 3. 差分把握
 
@@ -100,5 +99,5 @@ Git / push / gh が失敗したら、その時点で停止して事実だけを�
 ## 参照
 
 - `references/pr.md` — PR粒度・レビュー容易性・構成ルール
-- `.claude/skills/commit/references/commit.md` — タイトル用ラベル・scope
+- `${CLAUDE_PROJECT_DIR}/.claude/skills/share/commit.md` — タイトル用ラベル・scope
 - `AGENTS.md` — Git運用・検証コマンド

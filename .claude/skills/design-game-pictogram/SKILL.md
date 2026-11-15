@@ -3,6 +3,7 @@ name: design-game-pictogram
 description: >
   This skill should be used when designing, refining, reviewing, or validating a game-selection pictogram,
   game pictogram, puzzle pictogram, game icon, or SVG used to identify a game in the pa-zzle game list.
+  Japanese triggers include "ゲームのピクトグラムを作って", "パズルのアイコンを見直して".
   It explores many low-cost concepts before SVG production, filters candidates in stages, compares SVGs at
   real display sizes, and refines the strongest directions into a high-quality final pictogram.
   Not for the colored or animated showcase pictogram (use design-game-pictogram-showcase).
@@ -46,7 +47,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design
 
 - `DESIGN.md` — 「コンポーネント」の「ゲームを表す表現」と「ゲームピクトグラム」
 - `references/method.md` — 探索とふるい分けで使う評価方法
-- `examples/README.md` — レビュー済み完成見本と品質観点
+- `examples/README.md` と `examples/nanpure.svg` — 着手時に完成見本の解説と実物を読み、品質観点を比較する
 
 評価軸の外部根拠が必要な場合だけ `references/research.md` を参照する。PoC の途中経緯が必要な場合だけ `docs/立ち上げ/ゲーム選択ピクトグラムPoC.md` を参照する。
 

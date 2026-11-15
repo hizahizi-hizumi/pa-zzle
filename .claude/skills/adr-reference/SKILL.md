@@ -1,12 +1,11 @@
 ---
 name: adr-reference
 description: >
-  This skill should be used when the user asks to "/adr-reference", "ADR を参照",
-  "ADR を見る", "意思決定の経緯を確認", "既存 ADR を探す", "ADR 検索",
-  "過去の意思決定を確認", "なぜこう決めたか確認", "look up ADR",
-  "find decision record", "read decision record". Looks up existing Any Decision Records
-  under docs/adr/ by ADR-NNNN identifier or free-text keyword. Uses docs/adr/index.csv
-  as the primary search target and reads ADR bodies only when needed.
+  Looks up existing Any Decision Records under docs/adr/ by ADR-NNNN identifier or keyword,
+  searching docs/adr/index.csv first and reading bodies as needed. Use for
+  "/adr-reference", "ADR を参照", "ADR を見る", "意思決定の経緯を確認",
+  "既存 ADR を探す", "ADR 検索", "過去の意思決定を確認", "なぜこう決めたか確認",
+  "look up ADR", "find decision record", "read decision record".
 argument-hint: "<ADR-NNNN | keyword>"
 allowed-tools: Read, Glob, Grep
 ---
