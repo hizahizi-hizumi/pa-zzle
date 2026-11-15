@@ -1,11 +1,13 @@
 import type { ReflectionSolveWorkload } from "@/games/reflection/problem/problem";
 import {
+  _private,
   calculateReflectionPlayScore,
-  calculateReflectionSpeedFullScoreMs,
   calculateReflectionSpeedScoreRule,
   calculateReflectionTimeDeltaMs,
 } from "@/games/reflection/score";
 import { getGameResultLevel } from "@/games/result";
+
+const { calculateReflectionSpeedFullScoreMs } = _private;
 
 // 2ピースの軽い問題と、照らし直しが多く仮に置く回数が上限を超える重い問題の作業の量。どちらも試し置きでは解き切れない。
 const lightWorkload: ReflectionSolveWorkload = {

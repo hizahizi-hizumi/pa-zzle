@@ -33,7 +33,7 @@ function transformCell(
   return cell === null ? null : transform[cell];
 }
 
-export function rotateReflectionBoardClockwise(
+function rotateReflectionBoardClockwise(
   board: ReflectionBoard,
 ): ReflectionBoard {
   const { size } = board;
@@ -52,7 +52,7 @@ export function rotateReflectionBoardClockwise(
   return { size, cells };
 }
 
-export function mirrorReflectionBoardLeftRight(
+function mirrorReflectionBoardLeftRight(
   board: ReflectionBoard,
 ): ReflectionBoard {
   const { size } = board;
@@ -71,7 +71,7 @@ export function mirrorReflectionBoardLeftRight(
   return { size, cells };
 }
 
-export function listReflectionBoardSymmetries(
+function listReflectionBoardSymmetries(
   board: ReflectionBoard,
 ): ReflectionBoard[] {
   const rotations = [board];
@@ -88,3 +88,9 @@ export function getReflectionSymmetryKey(board: ReflectionBoard): string {
   );
   return keys.reduce((minimum, key) => (key < minimum ? key : minimum));
 }
+
+export const _private = {
+  rotateReflectionBoardClockwise,
+  mirrorReflectionBoardLeftRight,
+  listReflectionBoardSymmetries,
+};
