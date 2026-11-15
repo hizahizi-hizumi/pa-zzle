@@ -52,7 +52,7 @@ function countPathsByBruteForce(board: HitofudePuzzleBoard): number {
 }
 
 /**
- * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py`）の `PathCounter.count` が、穴だけの盤面に返した結果。
+ * 研究用 Python（`docs/パズル/導入調査/ハミルトン路/調査コード/hamiltonian_path_experiment.py`）の `PathCounter.count` が、穴だけの盤面に返した結果。
  * 解の数・探索の節点の数・最初の解が一致することで移植を確かめる。
  * 一意解の盤面は TypeScript の生成器で作った問題を同型の正規化キーの向きで書き、2解目まで（20,000節点まで）探した。
  */

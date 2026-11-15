@@ -42,12 +42,7 @@ from itertools import pairwise
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-_RESEARCH = (
-    _HERE
-    if (_HERE / "ice_floor_hardest_generation_experiment.py").exists()
-    else Path("/home/user/pa-zzle/scripts/research")
-)
-sys.path.insert(0, str(_RESEARCH))
+sys.path.insert(0, str(_HERE))
 
 from ice_floor_difficulty_experiment import Shape  # noqa: E402
 from ice_floor_dynamic_generation_experiment import (  # noqa: E402

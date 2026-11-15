@@ -3,10 +3,10 @@
 ブラウザは使わず、既存のプレイ画面のレイアウト（Tailwind のクラスと定数）から盤面のマスの大きさを計算し、
 島の間をタップで押し分けられるかを、島の配置を生成して幾何と手ぶれの模擬で測る。標準ライブラリだけで動く。
 
-    python3 scripts/research/bridges_mobile.py layout   # 既存ゲームとのマスの大きさ・縦長盤面の収まり
-    python3 scripts/research/bridges_mobile.py taps     # タップの押し分け（安全半径と手ぶれ σ ごとの成功率）
-    python3 scripts/research/bridges_mobile.py crossings  # 交わる候補で押せる範囲が狭くなる候補の割合
-    python3 scripts/research/bridges_mobile.py all
+    python3 docs/パズル/導入調査/橋をかけろ/調査コード/bridges_mobile.py layout   # 既存ゲームとのマスの大きさ・縦長盤面の収まり
+    python3 docs/パズル/導入調査/橋をかけろ/調査コード/bridges_mobile.py taps     # タップの押し分け（安全半径と手ぶれ σ ごとの成功率）
+    python3 docs/パズル/導入調査/橋をかけろ/調査コード/bridges_mobile.py crossings  # 交わる候補で押せる範囲が狭くなる候補の割合
+    python3 docs/パズル/導入調査/橋をかけろ/調査コード/bridges_mobile.py all
 
 前提（コードから読んだ値。rem は 16px）
 - プレイ画面の外枠 GamePlayFrame は fixed inset-0 overflow-hidden。ブランドの帯 1.75rem=28px、PlayHeader 4.5rem=72px。

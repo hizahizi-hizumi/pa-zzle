@@ -32,7 +32,7 @@ function countConnectivityRounds({ rounds }: BridgesHumanSolveTrace): number {
 }
 
 describe("traceWithSeparateClosingTiers", () => {
-  describe("研究用の解法器（scripts/research/bridges_parity_cases.py）で解いた盤面の場合", () => {
+  describe("研究用の解法器（docs/パズル/導入調査/橋をかけろ/調査コード/bridges_parity_cases.py）で解いた盤面の場合", () => {
     // 研究用の解法器は、全辺の本数が決まれば全島がつながらなくても solved と返す。製品コードはそれを contradiction と返す。
     const traces = cases.map(({ parsed }) =>
       traceWithSeparateClosingTiers(parsed, "T"),

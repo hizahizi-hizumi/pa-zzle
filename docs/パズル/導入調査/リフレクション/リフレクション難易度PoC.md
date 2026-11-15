@@ -166,13 +166,13 @@ PoC途中では、この区別が弱く、単純な候補照合まで深い仮�
 分析コード:
 
 ```text
-scripts/research/reflection_difficulty_experiment.py
+docs/パズル/導入調査/リフレクション/調査コード/reflection_difficulty_experiment.py
 ```
 
 例:
 
 ```sh
-python3 scripts/research/reflection_difficulty_experiment.py \
+python3 docs/パズル/導入調査/リフレクション/調査コード/reflection_difficulty_experiment.py \
   --condition 5x2 \
   --condition 5x10 \
   --samples 20 \

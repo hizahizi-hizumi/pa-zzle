@@ -14,8 +14,8 @@
     selfcheck        全解探索の既知値と人間向け解法器の健全性の確認
 
 例:
-    python3 scripts/research/hamiltonian_path_experiment.py unique --seed 20261031 --jsonl /tmp/ham_unique.jsonl
-    python3 scripts/research/hamiltonian_path_experiment.py report --unique-jsonl /tmp/ham_unique.jsonl
+    python3 docs/パズル/導入調査/ハミルトン路/調査コード/hamiltonian_path_experiment.py unique --seed 20261031 --jsonl /tmp/ham_unique.jsonl
+    python3 docs/パズル/導入調査/ハミルトン路/調査コード/hamiltonian_path_experiment.py report --unique-jsonl /tmp/ham_unique.jsonl
 """
 
 # ruff: noqa: C901, PLR0912, PLR0915, PLR0917, PLR2004, S311, FBT001, FBT002, FBT003, INP001, RUF002, RUF003

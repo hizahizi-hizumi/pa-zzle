@@ -9,7 +9,7 @@ import { _private as stateSpace } from "@/games/ice-floor-maze/problem/generatio
 
 const { formatGenerationBoardRows, parseGenerationBoardRows } = stateSpace;
 
-// 期待値は scripts/research/ice_floor_persistent_port_reference.py が研究用の生成 v5・v6
+// 期待値は docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_persistent_port_reference.py が研究用の生成 v5・v6
 // （ice_floor_persistent_generation_experiment.py: 押し出す雪・押し進む滑る岩）から書き出した値。
 // 研究用 v5 の見た目どおりの読み（静的な盤面の解）は v4 の直す前の判定なので比べない。自作依存の点は、研究用と同じく
 // 手の番号の小さい手を優先した最短解の点を比べる（製品は最短解が複数あれば最も低い解の点を使う）。

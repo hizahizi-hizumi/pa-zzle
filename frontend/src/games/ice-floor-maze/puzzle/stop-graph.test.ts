@@ -57,7 +57,7 @@ describe("exploreIceFloorMazeStops", () => {
   });
 
   describe("研究用 Python の固定盤面の場合", () => {
-    // scripts/research/ice_floor_supply_experiment.py の random_board_candidates で作った盤面と開始位置。
+    // docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_supply_experiment.py の random_board_candidates で作った盤面と開始位置。
     // 期待値は同じ盤面に対する explore の dist。
     const cases = [
       {

@@ -74,7 +74,7 @@ describe("listIceFloorMazeSymmetries", () => {
 
 describe("getIceFloorMazeSymmetryKey", () => {
   describe("研究用 Python の固定盤面の場合", () => {
-    // scripts/research/ice_floor_supply_experiment.py の random_board_candidates で作った盤面と開始位置に、
+    // docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_supply_experiment.py の random_board_candidates で作った盤面と開始位置に、
     // 最も遠い停止点をゴールにした問題。期待値は canonical_key の (盤面, 開始位置, ゴール) を、
     // 形・盤面・3桁の開始位置・3桁のゴールの順に `:` でつないだもの。
     const researchCases = [

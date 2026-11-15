@@ -125,7 +125,7 @@ describe("findIceFloorMazeDeadlock", () => {
   });
 
   describe("研究用 Python の固定盤面の場合", () => {
-    // scripts/research/ice_floor_supply_experiment.py の random_board_candidates で作った盤面と開始位置に、
+    // docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_supply_experiment.py の random_board_candidates で作った盤面と開始位置に、
     // 最も遠い停止点をゴールにした問題。期待値は ice_floor_difficulty_experiment.py の
     // trap_structure の dead（詰み）。
     const researchCases = [

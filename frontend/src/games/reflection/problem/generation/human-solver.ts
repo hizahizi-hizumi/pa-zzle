@@ -1013,7 +1013,7 @@ const levelSolvers = [
  * 外周ヒントと手持ちから、人間の推論をレベル1から順に使って置き場所を決めていく。
  * 浅いレベルで決まり切ればそこで止め、決まり切らなければ次のレベルの推論を加える。
  * 仮定の順はマスの並び順・番号順、光路の探索量の上限は歩数で固定しているので、同じ入力には同じ結果を返す。
- * レベルの手順は研究用 Python（`scripts/research/reflection_difficulty_experiment.py` の `analyze_problem`）と同じ。
+ * レベルの手順は研究用 Python（`docs/パズル/導入調査/リフレクション/調査コード/reflection_difficulty_experiment.py` の `analyze_problem`）と同じ。
  * 光路の扱いは Python より厳密で（同じマスを別のピースとして通る並びと、残り数を超える並びを除く）、推論レベルは浅く出る。
  */
 export function traceReflectionHumanSolve(

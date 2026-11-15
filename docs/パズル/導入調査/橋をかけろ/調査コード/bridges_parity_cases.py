@@ -5,7 +5,7 @@
 一意解でない盤面も含める（解法器は数字だけを見るので、どの盤面でも結果が一致するはず）。
 
 使い方（seed は固定）:
-  python3 scripts/research/bridges_parity_cases.py frontend/src/games/bridges/problem/generation/research-solver-cases.json
+  python3 docs/パズル/導入調査/橋をかけろ/調査コード/bridges_parity_cases.py frontend/src/games/bridges/problem/generation/research-solver-cases.json
   bun run --cwd frontend format
 """
 

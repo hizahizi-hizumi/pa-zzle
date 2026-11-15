@@ -4,7 +4,7 @@ import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 describe("analyzeIceFloorMazeDifficulty", () => {
   describe("研究用の生成 v4 の試遊候補の場合", () => {
     // docs/パズル/導入調査/氷の床迷路/作り直し資料/試遊ページv4.html の w01・w02。期待値は
-    // scripts/research/ice_floor_hardest_generation_experiment.py の候補の特徴量（難しさは状態の読み深さを含む）。
+    // docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hardest_generation_experiment.py の候補の特徴量（難しさは状態の読み深さを含む）。
     const candidates = [
       {
         name: "w01（もろい岩）",
@@ -106,7 +106,7 @@ describe("analyzeIceFloorMazeDifficulty", () => {
   });
 
   describe("研究用の生成 v2 の試遊候補 q12（氷と岩だけ）の場合", () => {
-    // 期待値は scripts/research/ice_floor_tactic_generation_experiment.py の候補の特徴量。
+    // 期待値は docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_tactic_generation_experiment.py の候補の特徴量。
     const problem = {
       board: parseIceFloorMazeBoard([
         "#.##......",

@@ -21,12 +21,12 @@
   T  試し置き（仮に決めて A〜D で進めると矛盾する。提供範囲外の判定に使う）
 
 使い方（調査の再現手順。seed は固定）:
-  python3 scripts/research/bridges_difficulty.py corpus --out main.jsonl --per 200
-  python3 scripts/research/bridges_difficulty.py corpus --set l5 --out l5.jsonl --per 300
-  python3 scripts/research/bridges_difficulty.py report main.jsonl
-  python3 scripts/research/bridges_difficulty.py l5 main.jsonl l5.jsonl
-  python3 scripts/research/bridges_difficulty.py levels --scheme R main.jsonl l5.jsonl
-  python3 scripts/research/bridges_difficulty.py selfcheck main.jsonl
+  python3 docs/パズル/導入調査/橋をかけろ/調査コード/bridges_difficulty.py corpus --out main.jsonl --per 200
+  python3 docs/パズル/導入調査/橋をかけろ/調査コード/bridges_difficulty.py corpus --set l5 --out l5.jsonl --per 300
+  python3 docs/パズル/導入調査/橋をかけろ/調査コード/bridges_difficulty.py report main.jsonl
+  python3 docs/パズル/導入調査/橋をかけろ/調査コード/bridges_difficulty.py l5 main.jsonl l5.jsonl
+  python3 docs/パズル/導入調査/橋をかけろ/調査コード/bridges_difficulty.py levels --scheme R main.jsonl l5.jsonl
+  python3 docs/パズル/導入調査/橋をかけろ/調査コード/bridges_difficulty.py selfcheck main.jsonl
 """
 
 from __future__ import annotations
