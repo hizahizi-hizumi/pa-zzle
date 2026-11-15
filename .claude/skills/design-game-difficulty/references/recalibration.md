@@ -4,7 +4,7 @@
 
 ## 受け取る記録
 
-ゲームのホームの「成績」で、レベルごとにコピーした JSON（`frontend/src/records/play-record-copy.ts`）を集めたもの。コピーは開いているレベルの記録だけを書き出すので、レベルを比べる問い（4 の順序）には、比べるレベルの分がそろっている必要がある。届かなかったレベルは「記録なし」と書き、そのレベルを含む比べ方はしない。1つの JSON の形:
+ゲームのホームの「成績」で、レベルごとにコピーした JSON（`frontend/src/features/records/play-record-copy.ts`）を集めたもの。コピーは開いているレベルの記録だけを書き出すので、レベルを比べる問い（4 の順序）には、比べるレベルの分がそろっている必要がある。届かなかったレベルは「記録なし」と書き、そのレベルを含む比べ方はしない。1つの JSON の形:
 
 ```json
 { "formatVersion": 1, "records": [ { "gameId": "...", "recordId": "...", "startedAt": "...", "completedAt": "...", "payloadVersion": 4, "payload": { } } ] }

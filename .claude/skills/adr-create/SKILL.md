@@ -1,14 +1,13 @@
 ---
 name: adr-create
 description: >
-  This skill should be used when the user asks to "/adr-create", "ADR を作成", "新規 ADR",
-  "意思決定を記録", "ADR 起票", "MADR で書く", "decision を残したい",
-  "create ADR", "record a decision", "write a decision record".
   Creates a new ADR (Any Decision Record) under docs/adr/, assigns the next NNNN sequence
-  number, and appends a row to docs/adr/index.csv with a searchable summary. Optional
-  argument is a short Japanese ADR title; the filename uses an ASCII slug.
+  number, and appends a searchable summary to docs/adr/index.csv. The optional title is
+  Japanese and the filename uses an ASCII slug. Use for "/adr-create", "ADR を作成",
+  "新規 ADR", "意思決定を記録", "ADR 起票", "MADR で書く", "decision を残したい",
+  "create ADR", "record a decision", "write a decision record".
 argument-hint: "<日本語タイトル>?"
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash(date *)
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(date +%Y-%m-%d), Bash(sh .claude/skills/adr-create/scripts/next-number.sh)
 ---
 
 # adr-create
@@ -39,10 +38,7 @@ pa-zzleの重要な意思決定を MADR v3 ベースの ADR として作成す�
 
 ### 3. 連番採番
 
-- `docs/adr/ADR-*.md` を Glob する。
-- ADR が0件なら `0001` を採番する。
-- 既存ADRがある場合は、ファイル名の `NNNN` 最大値 + 1 を4桁ゼロ埋めして新しい番号にする。
-- 同一番号が複数存在しないことを確認する。
+- `sh .claude/skills/adr-create/scripts/next-number.sh` を実行して次の4桁の番号を得る。`index.csv` と既存ファイルに同じ番号がないことを確認する。
 
 ### 4. タイトルとslugを確定
 
@@ -82,8 +78,7 @@ pa-zzleの重要な意思決定を MADR v3 ベースの ADR として作成す�
 
 ### 9. 整合確認
 
-- ADR 本文の `status` / `date` / title と index.csv 行が一致することを確認する。
-- 本文 `要約` と CSV `summary` が同一文字列であることを確認する。
+- 作成した ADR と `index.csv` の該当行を読み、`id`・`title`・`summary`・`status`・`date`・`path` が一致することを確認する。
 - 同じ論点の既存 ADR がある場合、置き換えなのか補完なのかを確認する。置き換えなら旧 ADR を自動で書き換えず、`docs/adr/README.md` の「置き換え」に沿った次の操作をユーザーへ提示する。
   - 全体を置き換える場合: 旧 ADR の `status` と index.csv の status を `superseded by ADR-<NNNN>` にする。
   - 一部を置き換える場合: 旧 ADR の `status` は変えず、front matter の `partially_superseded_by` に新 ADR の ID を足し、表題の直後に置き換えた部分を明記する。
@@ -104,7 +99,8 @@ pa-zzleの重要な意思決定を MADR v3 ベースの ADR として作成す�
 - `references/madr-authoring-rules.md` — 執筆・命名・CSV・今の決まりとの分離ルール
 - `docs/adr/README.md` — ADR 運用方針と status 定義
 - `docs/adr/index.csv` — ADR 一覧
-- `docs/adr/ADR-*.md` — 採番・既存判断確認対象
+- `docs/adr/ADR-*.md` — 既存判断確認対象
+- `scripts/next-number.sh` — 採番時に実行するスクリプト
 - `AGENTS.md` — 文書の位置付けと開発運用
 
 ## 制約

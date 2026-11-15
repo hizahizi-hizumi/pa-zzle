@@ -24,7 +24,7 @@
 | 掲載（catalog） | カタログ・ルート・View と、一覧のテスト |
 | 文書（docs） | 仕様・台帳の行と候補ファイル・各 README の一覧、ゲームをまたぐ判断の ADR（あるときだけ）、最終レビューで足した正本と失敗パターン集への追記 |
 
-カタログの網羅テスト（`frontend/src/game-catalog/game-catalog.test.ts`）は `src/games/` の全ゲームが一覧にあることを確かめる。掲載より下の層では、このゲームを外す一時的な除外をそのテストに置き、掲載の層で消す（前例は `git log --all -S gamesNotInCatalogYet`）。作業ブランチには置かない。
+カタログの網羅テスト（`frontend/src/app/game-integration/game-catalog.test.ts`）は `src/games/` の全ゲームが一覧にあることを確かめる。掲載より下の層では、このゲームを外す一時的な除外をそのテストに置き、掲載の層で消す（前例は `git log --all -S gamesNotInCatalogYet`）。作業ブランチには置かない。
 
 切り出しの手順:
 

@@ -100,7 +100,7 @@ node .claude/skills/design-game-pictogram-showcase/scripts/check_gallery.cjs <ht
 
 1. 実表示サイズで詰め、4 の自己チェックをやり直す。
 2. `frontend/src/games/<game>/assets/pictogram-showcase.svg` に置く。
-3. `frontend/src/game-catalog/<game>/<game>-catalog-entry.tsx` で `?raw` import し、`pictogramShowcaseSvg` に渡す。
+3. `frontend/src/app/game-integration/<game>/<game>-catalog-entry.tsx` で `?raw` import し、`pictogramShowcaseSvg` に渡す。
 4. `bun run --cwd frontend check` / `typecheck` / `test` を通す。
 5. `bun run --cwd frontend dev` をバックグラウンドで起動し、実アプリのホームで、ヒーロー・一覧の選択中・ライト/ダーク・動きを減らす設定と、選んだ瞬間に形が変わらず（変わるのは色だけ）静止状態から動き始めること（タイトルを閉じた直後も含む）を確かめる（Playwright のスクリプトは `/tmp/pictogram-showcase-<game>/` に置き、`scripts/playwright_resolve.cjs` で読み込む）。
 
@@ -108,7 +108,7 @@ node .claude/skills/design-game-pictogram-showcase/scripts/check_gallery.cjs <ht
 
 - 探索中の候補・記録・ギャラリー: `/tmp/pictogram-showcase-<game>/`
 - 完成 SVG: `frontend/src/games/<game>/assets/pictogram-showcase.svg`
-- 登録: `frontend/src/game-catalog/<game>/<game>-catalog-entry.tsx`
+- 登録: `frontend/src/app/game-integration/<game>/<game>-catalog-entry.tsx`
 
 Skill 配下には特定ゲームの生成物を置かない。
 

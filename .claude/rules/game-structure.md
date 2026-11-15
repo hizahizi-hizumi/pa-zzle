@@ -2,6 +2,7 @@
 paths:
   - "frontend/src/games/**/*.{ts,tsx}"
   - "frontend/src/app/game-integration/**/*.{ts,tsx}"
+  - "frontend/src/app/game-home/**/*.{ts,tsx}"
   - "frontend/src/views/*HomeView.tsx"
 ---
 

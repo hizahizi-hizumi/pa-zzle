@@ -40,6 +40,8 @@ showcase ピクトグラムの目的を理解したうえで、候補を初め�
 - `DESIGN.md` の「ゲームピクトグラム」と「動き」、`docs/プロダクト/画面/SCR-001.md`
 - 対象パズルの仕様（`docs/プロダクト/仕様/パズル/` から辿る）、プレイ画面（`frontend/src/games/<game>/ui/`。ゲーム固有色の有無と値を確かめる）、白黒版 `frontend/src/games/<game>/assets/pictogram.svg`
 
+`references/` と `scripts/` で始まる参照は、`.claude/skills/design-game-pictogram-showcase/` を基準に解決する。
+
 ## 見方
 
 次の順で見る。各段で見たことを根拠として残す。

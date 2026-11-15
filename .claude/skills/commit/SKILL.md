@@ -1,13 +1,12 @@
 ---
 name: commit
 description: >
-  This skill should be used when the user asks to "コミットして", "未コミット差分をコミットして",
+  Analyzes uncommitted diffs on the current branch and creates one or more commits with appropriate
+  granularity without branching or pushing. Use for "コミットして", "未コミット差分をコミットして",
   "変更をコミット", "差分をコミット", "適切な粒度でコミット", "コミットを分割して作成",
   "commit changes", "make commits", "split into commits", "コミット作成".
-  Analyzes uncommitted diffs on the current branch and creates one or more commits with appropriate
-  granularity. Operates on the current branch only; it does not create branches or push.
 argument-hint: "preview=false, scope=all"
-allowed-tools: Read, Glob, Bash(git *), TaskCreate, TaskUpdate, TaskGet, TaskList
+allowed-tools: Read, Glob, Bash(git rev-parse *), Bash(git branch --show-current), Bash(git branch -r *), Bash(git status *), Bash(git diff *), Bash(git log *), Bash(git restore --staged *), Bash(git add *), Bash(git commit -m *), TaskCreate, TaskUpdate, TaskGet, TaskList
 ---
 
 # 現在ブランチへのコミット作成
@@ -31,7 +30,7 @@ allowed-tools: Read, Glob, Bash(git *), TaskCreate, TaskUpdate, TaskGet, TaskLis
 
 ### 2. ルール読込
 
-`references/commit.md` を読み、コミット境界とメッセージ規約を適用する。
+`${CLAUDE_PROJECT_DIR}/.claude/skills/share/commit.md` を読み、コミット境界とメッセージ規約を適用する。
 
 ### 3. 差分把握
 
@@ -72,4 +71,4 @@ git diff --staged
 
 ## 参照
 
-- `references/commit.md` — コミット粒度・メッセージ・履歴品質の正
+- `${CLAUDE_PROJECT_DIR}/.claude/skills/share/commit.md` — コミット粒度・メッセージ・履歴品質の正
