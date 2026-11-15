@@ -60,11 +60,17 @@ const legacyPayload = { difficulty: "normal", problemIdentity, performance };
 const threeLevelPayload = {
   difficulty: "hard",
   difficultyModelVersion: "visual-local-load-v1",
-  scoreModelVersion: PARKING_JAM_SCORE_MODEL_VERSION,
+  scoreModelVersion: "play-quality-v2",
   problemIdentity,
   problemFacts: { initialBlockedVehicleCount: 6 },
   performance,
 };
+const previousFourLevelRecord: PlayRecord = {
+  ...record,
+  id: "parking-jam-previous-score-model",
+  payload: { ...record.payload, scoreModelVersion: "play-quality-v2" },
+};
+
 const threeLevelRecord: PlayRecord = {
   id: "parking-jam-three-level",
   gameId: "parking-jam",
@@ -95,6 +101,7 @@ describe("isParkingJamPlayRecord", () => {
     ["待ったで戻した車を再び出庫した現在の形式", record],
     ["難易度モデル版と採点版を持たない payloadVersion 2", legacyRecord],
     ["3段階の難易度で分類した payloadVersion 3", threeLevelRecord],
+    ["前の採点版で保存した payloadVersion 4", previousFourLevelRecord],
   ] as const;
 
   test.each(recognizedCases)(
@@ -179,16 +186,24 @@ describe("getParkingJamPlayRecordScore", () => {
   const cases = [
     ["現在の形式", record],
     ["payloadVersion 3", threeLevelRecord],
+    ["旧採点版の payloadVersion 4", previousFourLevelRecord],
   ] as const;
 
   test.each(cases)(
-    "保存済み事実から問題ごとの基準時間65秒で評価点を再計算すること: %s",
+    "旧採点版の記録も今の正確さ60点と速さ40点で再計算すること: %s",
     (_label, candidate) => {
       const score = getParkingJamPlayRecordScore(candidate);
 
-      expect(score).toBe(78);
+      expect(score).toBe(75);
     },
   );
+
+  test("旧採点版の保存済み記録も同じ時間とミス数なら同点になること", () => {
+    const currentScore = getParkingJamPlayRecordScore(record);
+    const previousScore = getParkingJamPlayRecordScore(previousFourLevelRecord);
+
+    expect(previousScore).toBe(currentScore);
+  });
 
   describe("基準時間を求める問題の事実を持たない payloadVersion 2 の記録の場合", () => {
     test("評価点を推測しないこと", () => {

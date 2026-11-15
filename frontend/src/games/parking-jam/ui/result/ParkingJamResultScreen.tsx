@@ -2,7 +2,6 @@ import { GameResultScreen } from "@/components/GameResultScreen";
 import {
   createCountMetric,
   createElapsedTimeMetric,
-  createOperationCountMetric,
   createSpeedFullScoreMetric,
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
@@ -41,7 +40,6 @@ export function ParkingJamResultScreen({
           "回",
           "failed-move-count",
         ),
-        createOperationCountMetric("undo", result.undoCount),
       ]}
       recordFeedback={recordFeedback}
       scoreBreakdown={[
@@ -53,7 +51,6 @@ export function ParkingJamResultScreen({
           result.speedReference.initialBlockedVehicleCount,
           "台",
         ),
-        createOperationCountMetric("restart", result.restartCount),
       ]}
       scoreCriteria={getParkingJamScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}

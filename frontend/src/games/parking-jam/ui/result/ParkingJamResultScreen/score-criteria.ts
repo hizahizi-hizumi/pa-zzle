@@ -1,6 +1,5 @@
 import type { GameResultScoreCriteria } from "@/components/GameResultScreen";
 import {
-  createOperationPenalty,
   createScoreItemCriterion,
   describePenaltyScoreCriterion,
   describeSpeedScoreCriterion,
@@ -8,12 +7,10 @@ import {
 import type { ParkingJamResult } from "@/games/parking-jam/play/use-parking-jam-play";
 import {
   PARKING_JAM_FAILED_MOVE_PENALTY,
-  PARKING_JAM_RESTART_PENALTY,
   PARKING_JAM_SCORE_MAXIMUMS,
   PARKING_JAM_SPEED_BOARD_READING_MS,
   PARKING_JAM_SPEED_PER_INITIALLY_BLOCKED_VEHICLE_MS,
   PARKING_JAM_SPEED_PER_VEHICLE_MS,
-  PARKING_JAM_UNDO_PENALTY,
 } from "@/games/parking-jam/score";
 
 export function getParkingJamScoreCriteria(
@@ -52,13 +49,6 @@ export function getParkingJamScoreCriteria(
           },
         ],
       }),
-    ),
-    createScoreItemCriterion(
-      "stability",
-      describePenaltyScoreCriterion(PARKING_JAM_SCORE_MAXIMUMS.stability, [
-        createOperationPenalty("undo", PARKING_JAM_UNDO_PENALTY),
-        createOperationPenalty("restart", PARKING_JAM_RESTART_PENALTY),
-      ]),
     ),
   ];
 }

@@ -9,17 +9,14 @@ import {
   sumPlayScore,
 } from "@/games/score";
 
-export const PARKING_JAM_SCORE_MODEL_VERSION = "play-quality-v2";
+export const PARKING_JAM_SCORE_MODEL_VERSION = "play-quality-v3";
 
 export const PARKING_JAM_SCORE_MAXIMUMS = {
-  accuracy: 40,
+  accuracy: 60,
   speed: 40,
-  stability: 20,
-} as const satisfies ScoreMaximums<"accuracy" | "speed" | "stability">;
+} as const satisfies ScoreMaximums<"accuracy" | "speed">;
 
-export const PARKING_JAM_FAILED_MOVE_PENALTY = 5;
-export const PARKING_JAM_UNDO_PENALTY = 2;
-export const PARKING_JAM_RESTART_PENALTY = 5;
+export const PARKING_JAM_FAILED_MOVE_PENALTY = 10;
 
 export const PARKING_JAM_SPEED_BOARD_READING_MS = 5_000;
 export const PARKING_JAM_SPEED_PER_VEHICLE_MS = 3_000;
@@ -43,8 +40,6 @@ type ParkingJamTimeDeltaInput = {
 
 export type ParkingJamPlayScoreInput = ParkingJamTimeDeltaInput & {
   failedMoveCount: number;
-  undoCount: number;
-  restartCount: number;
 };
 
 export function calculateParkingJamSpeedFullScoreMs({
@@ -82,8 +77,6 @@ export function calculateParkingJamPlayScore({
   speedReference,
   elapsedMs,
   failedMoveCount,
-  undoCount,
-  restartCount,
 }: ParkingJamPlayScoreInput): ParkingJamPlayScore {
   const accuracy = subtractWithFloor(
     PARKING_JAM_SCORE_MAXIMUMS.accuracy,
@@ -96,11 +89,5 @@ export function calculateParkingJamPlayScore({
     calculateParkingJamSpeedScoreRule(speedReference),
   );
 
-  const stability = subtractWithFloor(
-    PARKING_JAM_SCORE_MAXIMUMS.stability,
-    undoCount * PARKING_JAM_UNDO_PENALTY +
-      restartCount * PARKING_JAM_RESTART_PENALTY,
-  );
-
-  return sumPlayScore({ accuracy, speed, stability });
+  return sumPlayScore({ accuracy, speed });
 }

@@ -36,6 +36,7 @@ import {
 
 const PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION = 4;
 const PARKING_JAM_GAME_ID = "parking-jam";
+const PARKING_JAM_PREVIOUS_SCORE_MODEL_VERSION = "play-quality-v2";
 
 type ParkingJamProblemFacts = {
   initialBlockedVehicleCount: number;
@@ -53,15 +54,18 @@ type ParkingJamPlayRecordPayloadV2 = {
 
 type ParkingJamPlayRecordPayloadV3 = ParkingJamPlayRecordPayloadV2 & {
   difficultyModelVersion: string;
-  scoreModelVersion: typeof PARKING_JAM_SCORE_MODEL_VERSION;
+  scoreModelVersion: typeof PARKING_JAM_PREVIOUS_SCORE_MODEL_VERSION;
   problemFacts: ParkingJamProblemFacts;
 };
 
 type ParkingJamPlayRecordPayload = Omit<
   ParkingJamPlayRecordPayloadV3,
-  "difficulty"
+  "difficulty" | "scoreModelVersion"
 > & {
   difficulty: ParkingJamDifficulty;
+  scoreModelVersion:
+    | typeof PARKING_JAM_PREVIOUS_SCORE_MODEL_VERSION
+    | typeof PARKING_JAM_SCORE_MODEL_VERSION;
 };
 
 type ParkingJamPlayRecordV2 = PlayRecord & {
@@ -168,7 +172,10 @@ export function isParkingJamPlayRecord(
     (record.payloadVersion === 3 ||
       record.payloadVersion === PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION) &&
     isNonEmptyString(difficultyModelVersion) &&
-    scoreModelVersion === PARKING_JAM_SCORE_MODEL_VERSION &&
+    (record.payloadVersion === 3
+      ? scoreModelVersion === PARKING_JAM_PREVIOUS_SCORE_MODEL_VERSION
+      : scoreModelVersion === PARKING_JAM_PREVIOUS_SCORE_MODEL_VERSION ||
+        scoreModelVersion === PARKING_JAM_SCORE_MODEL_VERSION) &&
     isParkingJamProblemFacts(
       problemFacts,
       problemIdentity.conditions.vehicleCount,
@@ -277,8 +284,6 @@ export function getParkingJamPlayRecordScore(
     speedReference: getSpeedReference(record),
     elapsedMs: performance.elapsedMs,
     failedMoveCount: performance.failedMoveCount,
-    undoCount: performance.undoCount,
-    restartCount: performance.restartCount,
   }).total;
 }
 

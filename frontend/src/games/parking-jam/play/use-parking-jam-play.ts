@@ -77,8 +77,6 @@ export function createParkingJamResult(
       speedReference,
       elapsedMs: sessionResult.elapsedMs,
       failedMoveCount: sessionResult.failedMoveCount,
-      undoCount: sessionResult.undoCount,
-      restartCount: sessionResult.restartCount,
     }),
   };
 }
