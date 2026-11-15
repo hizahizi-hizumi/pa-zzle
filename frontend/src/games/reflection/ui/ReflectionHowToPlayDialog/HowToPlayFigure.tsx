@@ -4,10 +4,10 @@ import {
   traceReflectionLaser,
 } from "@/games/reflection/puzzle/laser";
 import { getReflectionFigureExtent } from "@/games/reflection/ui/board/board-geometry";
-import { ReflectionFigureClue } from "@/games/reflection/ui/board/figure/ReflectionFigureClue";
-import { ReflectionFigureGrid } from "@/games/reflection/ui/board/figure/ReflectionFigureGrid";
-import { ReflectionFigurePiece } from "@/games/reflection/ui/board/figure/ReflectionFigurePiece";
 import { ReflectionLaserPath } from "@/games/reflection/ui/board/ReflectionLaserPath";
+import { ReflectionFigureClue } from "@/games/reflection/ui/ReflectionHowToPlayDialog/HowToPlayFigure/ReflectionFigureClue";
+import { ReflectionFigureGrid } from "@/games/reflection/ui/ReflectionHowToPlayDialog/HowToPlayFigure/ReflectionFigureGrid";
+import { ReflectionFigurePiece } from "@/games/reflection/ui/ReflectionHowToPlayDialog/HowToPlayFigure/ReflectionFigurePiece";
 import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone";
 
 type HowToPlayFigureProps = {

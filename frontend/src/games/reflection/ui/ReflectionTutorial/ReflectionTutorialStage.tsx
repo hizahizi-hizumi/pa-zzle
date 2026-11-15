@@ -17,7 +17,7 @@ import type { ReflectionSelection } from "@/games/reflection/session/session";
 import type { ReflectionCue } from "@/games/reflection/ui/board/cue";
 import { ReflectionBoard } from "@/games/reflection/ui/board/ReflectionBoard";
 import { ReflectionStock } from "@/games/reflection/ui/ReflectionStock";
-import { ReflectionTutorialRewind } from "@/games/reflection/ui/ReflectionTutorial/ReflectionTutorialRewind";
+import { ReflectionTutorialRewind } from "@/games/reflection/ui/ReflectionTutorial/ReflectionTutorialStage/ReflectionTutorialRewind";
 
 export type ReflectionTutorialView = {
   board: ReflectionBoardState;

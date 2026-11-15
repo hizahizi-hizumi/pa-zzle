@@ -12,6 +12,9 @@ import {
 } from "@/games/minesweeper/ui/board/MinesweeperCellFace";
 
 const LONG_PRESS_DELAY_MS = 450;
+/** 未開示マスを押すときだけ使う、色の反応の速さ。 */
+const HIDDEN_CELL_PRESS_FEEDBACK_MOTION_CLASS_NAME =
+  "transition-[filter] duration-75";
 
 /**
  * 印と応えの線は、マスの面の上に、面の縁から少し内側へ引く。面の縁と浮いたマスの下の縁は線と近い明るさなので、縁に重ねると線が埋もれる。
@@ -57,7 +60,7 @@ function getCellClassName(view: MinesweeperVisibleCell): string {
     "relative min-w-0 touch-manipulation select-none outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
   if (view.state === "hidden") {
-    return `${faceClassName} ${interactionClassName} transition-[filter] duration-75 hover:brightness-[1.015] active:brightness-[0.95]`;
+    return `${faceClassName} ${interactionClassName} ${HIDDEN_CELL_PRESS_FEEDBACK_MOTION_CLASS_NAME} hover:brightness-[1.015] active:brightness-[0.95]`;
   }
   return `${faceClassName} ${interactionClassName}`;
 }

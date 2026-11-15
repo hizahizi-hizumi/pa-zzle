@@ -6,8 +6,8 @@ import {
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 import type { NanpureBoardSpotlight } from "@/games/nanpure/ui/board/board-spotlight";
 import type { NanpureCellCue } from "@/games/nanpure/ui/board/cell-cue";
+import { NanpureCell } from "@/games/nanpure/ui/board/NanpureBoard/NanpureCell";
 import { NanpureUnitSpotlight } from "@/games/nanpure/ui/board/NanpureBoard/NanpureUnitSpotlight";
-import { NanpureCell } from "@/games/nanpure/ui/board/NanpureCell";
 import { cn } from "@/lib/utils";
 
 const NANPURE_CELL_INDICES = Array.from(

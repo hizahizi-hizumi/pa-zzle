@@ -1,7 +1,7 @@
 import { Eraser, Pencil, Undo2 } from "lucide-react";
 import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
+import { PlayActionButton } from "@/games/nanpure/ui/NanpurePlay/NanpureInputPanel/PlayActionButton";
 import { NanpureDigitPad } from "@/games/nanpure/ui/play/NanpureDigitPad";
-import { PlayActionButton } from "@/games/nanpure/ui/play/NanpureInputPanel/PlayActionButton";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 type NanpureInputPanelProps = {
