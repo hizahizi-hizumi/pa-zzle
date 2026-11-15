@@ -107,12 +107,12 @@ describe("calculateHitofudePuzzlePlayScore", () => {
       workload: heavyWorkload,
     };
 
-    test("速さ60点と正確さ40点の満点にすること", () => {
+    test("速さ80点と正確さ20点の満点にすること", () => {
       const score = calculateHitofudePuzzlePlayScore(play);
 
       expect(score).toEqual({
         total: 100,
-        breakdown: { speed: 60, accuracy: 40 },
+        breakdown: { speed: 80, accuracy: 20 },
       });
     });
   });
@@ -124,17 +124,17 @@ describe("calculateHitofudePuzzlePlayScore", () => {
       workload: heavyWorkload,
     };
 
-    test("速さを超過時間に比例して減らし、正確さを引き直し1回3点ずつ減らすこと", () => {
+    test("速さを超過時間に比例して減らし、正確さを引き直し1回1点ずつ減らすこと", () => {
       const score = calculateHitofudePuzzlePlayScore(play);
 
       expect(score).toEqual({
         total: 55,
-        breakdown: { speed: 30, accuracy: 25 },
+        breakdown: { speed: 40, accuracy: 15 },
       });
     });
   });
 
-  describe("基準時間の3倍以上かかり、引き直しを14回以上した場合", () => {
+  describe("基準時間の3倍以上かかり、引き直しを20回以上した場合", () => {
     const play = {
       elapsedMs: heavyFullScoreMs * 4,
       backtrackCount: 20,
@@ -145,6 +145,20 @@ describe("calculateHitofudePuzzlePlayScore", () => {
       const score = calculateHitofudePuzzlePlayScore(play);
 
       expect(score).toEqual({ total: 0, breakdown: { speed: 0, accuracy: 0 } });
+    });
+  });
+
+  describe("先読みと引いて確かめる探索の比較", () => {
+    const quickExploration = { elapsedRatio: 1, backtrackCount: 8 };
+    const slowWithoutRedraw = { elapsedRatio: 1.5, backtrackCount: 0 };
+
+    test("速く引き切った探索プレイを、長く考えて引き直しがないプレイより高く評価すること", () => {
+      const exploringScore = scorePlay(quickExploration);
+      const deliberateScore = scorePlay(slowWithoutRedraw);
+
+      expect(exploringScore).toBe(92);
+      expect(deliberateScore).toBe(80);
+      expect(exploringScore).toBeGreaterThan(deliberateScore);
     });
   });
 
@@ -166,14 +180,19 @@ describe("calculateHitofudePuzzlePlayScore", () => {
         { elapsedRatio: 1.2, backtrackCount: 0 },
       ],
       [
-        "基準時間の1.5倍で引き直し1回",
+        "基準時間の1.4倍で引き直し1回",
         "good",
-        { elapsedRatio: 1.5, backtrackCount: 1 },
+        { elapsedRatio: 1.4, backtrackCount: 1 },
       ],
       [
-        "基準時間内で引き直し4回",
+        "基準時間内で引き直し8回",
+        "great",
+        { elapsedRatio: 1, backtrackCount: 8 },
+      ],
+      [
+        "基準時間内で引き直し12回",
         "good",
-        { elapsedRatio: 1, backtrackCount: 4 },
+        { elapsedRatio: 1, backtrackCount: 12 },
       ],
       [
         "基準時間の2倍で引き直しなし",
