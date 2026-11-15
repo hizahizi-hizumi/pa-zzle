@@ -32,6 +32,7 @@ export const tsumeShogiCatalogEntry = {
   pictogramShowcaseSvg,
   homePath: "/puzzles/tsume-shogi",
   playPath: "/puzzles/tsume-shogi/play/:problemId",
+  synchronousProblemNavigation: true,
   playRecordDisplay: tsumeShogiPlayRecordDisplay,
   recordProblemPlayTarget(record) {
     return isTsumeShogiPlayRecord(record)

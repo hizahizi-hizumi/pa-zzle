@@ -19,11 +19,13 @@ function renderFrame(
   renderTutorial?: ComponentProps<
     typeof GamePlayFrame<string>
   >["renderTutorial"],
+  entryAnimation?: boolean,
 ): void {
   const props: ComponentProps<typeof GamePlayFrame<string>> = {
     progress,
     result,
     title: "テストパズル",
+    entryAnimation,
     metrics: [{ type: "elapsed-time", elapsedMs: 0 }],
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
@@ -77,6 +79,32 @@ describe("GamePlayFrame", () => {
       expect(heading).not.toBeNull();
       expect(board).not.toBeNull();
       expect(resultScreen).toBeNull();
+    });
+  });
+
+  describe("既定の入場演出", () => {
+    beforeEach(() => {
+      renderFrame("playing", null);
+    });
+
+    test("盤面の表示時にフェードインすること", () => {
+      const content = screen.getByText("盤面").parentElement;
+
+      expect(content?.classList.contains("animate-in")).toBe(true);
+      expect(content?.classList.contains("fade-in")).toBe(true);
+    });
+  });
+
+  describe("入場演出を無効にした場合", () => {
+    beforeEach(() => {
+      renderFrame("playing", null, undefined, false);
+    });
+
+    test("盤面をフェードさせずに表示すること", () => {
+      const content = screen.getByText("盤面").parentElement;
+
+      expect(content?.classList.contains("animate-in")).toBe(false);
+      expect(content?.classList.contains("fade-in")).toBe(false);
     });
   });
 

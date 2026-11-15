@@ -65,6 +65,7 @@ export function createGameNavigation(
               ? { fromGameHome: true }
               : null,
             replace: options?.replacesHistory ?? false,
+            flushSync: game.synchronousProblemNavigation ?? false,
           },
         );
       }
