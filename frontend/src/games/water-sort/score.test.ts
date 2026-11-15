@@ -67,7 +67,7 @@ describe("calculateWaterSortPlayScore", () => {
       breakdown: {
         efficiency: WATER_SORT_SCORE_MAXIMUMS.efficiency,
         speed: WATER_SORT_SCORE_MAXIMUMS.speed,
-        accuracy: WATER_SORT_SCORE_MAXIMUMS.accuracy,
+        stability: WATER_SORT_SCORE_MAXIMUMS.stability,
       },
     });
   });
@@ -120,7 +120,7 @@ describe("calculateWaterSortPlayScore", () => {
     expect(score.breakdown.speed).toBe(0);
   });
 
-  test("手戻りが最短手数の半分なら正確さを半分にすること", () => {
+  test("手戻りが最短手数の半分なら安定性を半分にすること", () => {
     const score = calculateWaterSortPlayScore({
       elapsedMs: 64_000,
       moveCount: 15,
@@ -129,10 +129,10 @@ describe("calculateWaterSortPlayScore", () => {
       colorCount: 6,
     });
 
-    expect(score.breakdown.accuracy).toBe(10);
+    expect(score.breakdown.stability).toBe(10);
   });
 
-  test("手戻りが最短手数以上なら正確さを0点にすること", () => {
+  test("手戻りが最短手数以上なら安定性を0点にすること", () => {
     const score = calculateWaterSortPlayScore({
       elapsedMs: 64_000,
       moveCount: 20,
@@ -141,7 +141,7 @@ describe("calculateWaterSortPlayScore", () => {
       colorCount: 6,
     });
 
-    expect(score.breakdown.accuracy).toBe(0);
+    expect(score.breakdown.stability).toBe(0);
   });
 
   test("各評価軸を1点単位へ四捨五入して合計すること", () => {
@@ -158,7 +158,7 @@ describe("calculateWaterSortPlayScore", () => {
       breakdown: {
         efficiency: 32,
         speed: 39,
-        accuracy: 16,
+        stability: 16,
       },
     });
   });

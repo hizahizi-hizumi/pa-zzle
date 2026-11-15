@@ -21,7 +21,7 @@ const workload = {
   fatalBranchCount: 12,
 };
 
-// 速さは 60 × (1 − 29秒 / 199秒) ≒ 51点、正確さは 40 − 3×3 = 31点。
+// 速さは 60 × (1 − 29秒 / 199秒) ≒ 51点、安定性は 40 − 3×3 = 31点。
 const performance = {
   elapsedMs: 128_500,
   backtrackCount: 3,
@@ -292,7 +292,7 @@ describe("restoreHitofudePuzzleRecordedResult", () => {
           timeDeltaMs: expectedTimeDeltaMs,
           score: {
             total: expectedScore,
-            breakdown: { speed: 51, accuracy: 31 },
+            breakdown: { speed: 51, stability: 31 },
           },
         },
       });

@@ -107,12 +107,12 @@ describe("calculateHitofudePuzzlePlayScore", () => {
       workload: heavyWorkload,
     };
 
-    test("速さ60点と正確さ40点の満点にすること", () => {
+    test("速さ60点と安定性40点の満点にすること", () => {
       const score = calculateHitofudePuzzlePlayScore(play);
 
       expect(score).toEqual({
         total: 100,
-        breakdown: { speed: 60, accuracy: 40 },
+        breakdown: { speed: 60, stability: 40 },
       });
     });
   });
@@ -124,12 +124,12 @@ describe("calculateHitofudePuzzlePlayScore", () => {
       workload: heavyWorkload,
     };
 
-    test("速さを超過時間に比例して減らし、正確さを引き直し1回3点ずつ減らすこと", () => {
+    test("速さを超過時間に比例して減らし、安定性を引き直し1回3点ずつ減らすこと", () => {
       const score = calculateHitofudePuzzlePlayScore(play);
 
       expect(score).toEqual({
         total: 55,
-        breakdown: { speed: 30, accuracy: 25 },
+        breakdown: { speed: 30, stability: 25 },
       });
     });
   });
@@ -144,7 +144,10 @@ describe("calculateHitofudePuzzlePlayScore", () => {
     test("どちらも0点を下回らないこと", () => {
       const score = calculateHitofudePuzzlePlayScore(play);
 
-      expect(score).toEqual({ total: 0, breakdown: { speed: 0, accuracy: 0 } });
+      expect(score).toEqual({
+        total: 0,
+        breakdown: { speed: 0, stability: 0 },
+      });
     });
   });
 

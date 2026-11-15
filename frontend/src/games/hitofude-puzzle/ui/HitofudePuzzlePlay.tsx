@@ -124,7 +124,7 @@ export function HitofudePuzzlePlay({
       result={result}
       title={HITOFUDE_PUZZLE_DISPLAY_NAME}
       background={<HitofudePuzzleGround />}
-      // 引き直しは正確さの元なので、バイナリパズルの置き直しと同じく見出しの先頭に置き、待ったを添える。
+      // 引き直しは安定性の元なので、バイナリパズルの置き直しと同じく見出しの先頭に置き、待ったを添える。
       metrics={[
         { type: "count", label: "引き直し", count: backtrackCount },
         { type: "elapsed-time", elapsedMs },

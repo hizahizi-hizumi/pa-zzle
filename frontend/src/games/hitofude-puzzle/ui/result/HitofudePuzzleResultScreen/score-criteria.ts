@@ -108,9 +108,9 @@ export function getHitofudePuzzleScoreCriteria(
       }),
     ),
     createScoreItemCriterion(
-      "accuracy",
+      "stability",
       describePenaltyScoreCriterion(
-        HITOFUDE_PUZZLE_SCORE_MAXIMUMS.accuracy,
+        HITOFUDE_PUZZLE_SCORE_MAXIMUMS.stability,
         [
           {
             subject: "引き直し",
