@@ -86,6 +86,7 @@ export type GameCatalogEntry = {
   pictogramShowcaseSvg?: string;
   homePath: GameHomePath;
   playPath: GamePlayPath;
+  synchronousProblemNavigation?: boolean;
   playRecordDisplay: PlayRecordDisplayDefinition;
   /** 遊び直せない記録には `null` を返す。 */
   recordProblemPlayTarget: (

@@ -3,10 +3,12 @@ import type { ReactNode } from "react";
 import { MemoryRouter, useLocation, useNavigationType } from "react-router";
 
 import {
+  createGameNavigation,
   openRecordProblemPlay,
   useGameNavigation,
 } from "@/app/game-integration/game-navigation";
 import { minesweeperCatalogEntry } from "@/app/game-integration/minesweeper/minesweeper-catalog-entry";
+import { tsumeShogiCatalogEntry } from "@/app/game-integration/tsume-shogi/tsume-shogi-catalog-entry";
 import { useNavigate } from "@/router";
 
 const game = minesweeperCatalogEntry;
@@ -102,6 +104,28 @@ describe("useGameNavigation", () => {
       }),
     );
     expect(result.current.navigationType).toBe("REPLACE");
+  });
+});
+
+describe.each([
+  ["詰将棋", tsumeShogiCatalogEntry, true],
+  ["その他のゲーム", minesweeperCatalogEntry, false],
+] as const)("問題切り替えの同期更新: %s", (_, game, expected) => {
+  let navigate: ReturnType<typeof useNavigate>;
+  let navigation: ReturnType<typeof createGameNavigation>;
+
+  beforeEach(() => {
+    navigate = vi.fn() as unknown as ReturnType<typeof useNavigate>;
+    navigation = createGameNavigation(navigate, game);
+  });
+
+  test("指定されたゲームだけを同期更新して遷移すること", () => {
+    navigation.startNewProblem("3", "problem-1");
+
+    expect(navigate).toHaveBeenCalledWith(
+      { pathname: game.playPath },
+      expect.objectContaining({ flushSync: expected }),
+    );
   });
 });
 
