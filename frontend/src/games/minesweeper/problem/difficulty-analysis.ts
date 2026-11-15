@@ -23,7 +23,7 @@ export type MinesweeperScaleMetrics = {
  * 人間向け推論モデルで解き切った経過から求めた特徴。
  * 発見数はラウンドごとの「その段階で確定を与える最小の制約集合」の数で、1のラウンドは進め方が1通りしかない隘路を表す。
  * 初期開示だけで解き終わっている問題ではラウンドが無いため、ラウンドから求める値は `null` になる。
- * `containmentEquivalentRoundCount` から `chainedGroupRoundCount` までは、SPEC-010「難易度」の手の分け方で難易度2〜5の手に当たるラウンドの数。
+ * `containmentEquivalentRoundCount` から `chainedGroupRoundCount` までは、PZL-003「難易度」の手の分け方で難易度2〜5の手に当たるラウンドの数。
  */
 export type MinesweeperHumanSolveFeatures = {
   highestDeductionLevel: MinesweeperDeductionLevel | null;
