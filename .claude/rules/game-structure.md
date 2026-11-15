@@ -104,7 +104,7 @@ frontend/src/games/
 
 - `session/` は経過時間、手数、ミス、操作回数など評価元の事実を返す。
 - `score.ts` はその事実からゲーム固有の評価を導出する。
-- スコアから称賛段階などの意味的な評価段階を決める処理はゲーム層に置く。SPEC-006 の段階基準は全ゲーム共通なので `result.ts` の `getGameResultLevel` を使う。
+- スコアから称賛段階などの意味的な評価段階を決める処理はゲーム層に置く。GAME-004 の段階基準は全ゲーム共通なので `result.ts` の `getGameResultLevel` を使う。
 - 色、文言、演出など評価段階の視覚表現はUIが担当する。
 - 複数ゲームで同じ意味を持つ契約は `frontend/src/games/` 直下へ置く。例: `result.ts` の `GameResultLevel`。
 - 共通モジュールは仕組みを一つにする。演出の時間・量、採点の係数など、ゲームの表現に属する値はゲームが渡し、共通モジュールに固定しない。
@@ -149,7 +149,7 @@ frontend/src/games/
 ## 効果音
 
 - ゲームの効果音は題材から作った音声ファイルを `assets/` に同梱し、`@/lib/audio/sound-effects` の `playSound` で鳴らす。音の中身をコードで合成しない。回数の多い操作の音には `REPEATED_SOUND_VARIATION` を渡す。
-- 音声ファイルは FLAC にする。アプリはタイトルで、同梱した FLAC を `frontend/src/frontend.tsx` の `import.meta.glob` ですべて読み込んでから入る（SPEC-022）。ほかの形式の音は前もって読み込まれず、FLAC の合計の大きさは入るまでの待ちに効く。
+- 音声ファイルは FLAC にする。アプリはタイトルで、同梱した FLAC を `frontend/src/frontend.tsx` の `import.meta.glob` ですべて読み込んでから入る（SPEC-005）。ほかの形式の音は前もって読み込まれず、FLAC の合計の大きさは入るまでの待ちに効く。
 - プレイ画面は、盤面操作の音を `games/play-sound-effects.ts` の `useOperationSound` で、プレイフックが返す `id` 付きの操作の知らせから鳴らす。クリア音は `useClearSound` で完成演出の始まりに鳴らす。
 - 動きを減らす設定では、不成立の動きが出ず画面が何も変わらない操作の音と、完成演出が無くすぐ結果へ進むときのクリア音を鳴らさない。完成した盤面を保持して見せるゲームだけ、その姿に合わせたクリア音を `useClearSound` へ渡す。
 - 結果を受け取る瞬間の報酬の音はアプリが `usePlayableGame` で鳴らすので、ゲームは鳴らさない。
