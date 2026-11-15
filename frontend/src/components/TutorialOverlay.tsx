@@ -2,6 +2,7 @@ import { type ReactNode, useRef } from "react";
 import {
   type TutorialBoardIntro,
   type TutorialFinish,
+  type TutorialIntroScene,
   type TutorialRuleListItem,
   TutorialScreen,
 } from "@/components/TutorialOverlay/TutorialScreen";
@@ -35,6 +36,7 @@ type TutorialOverlayProps = {
   guiding: boolean;
   finish: TutorialFinish;
   renderBoard: (intro: TutorialBoardIntro) => ReactNode;
+  staticIntroScenes?: readonly TutorialIntroScene[];
   onIntroEnd: () => void;
   onRestart: () => void;
   onClose: () => void;
@@ -68,6 +70,7 @@ export function TutorialOverlay({
   guiding,
   finish,
   renderBoard,
+  staticIntroScenes,
   onIntroEnd,
   onRestart,
   onClose,
@@ -106,6 +109,7 @@ export function TutorialOverlay({
           guiding={guiding}
           finish={finish}
           renderBoard={renderBoard}
+          staticIntroScenes={staticIntroScenes}
           onIntroEnd={onIntroEnd}
           onRestart={onRestart}
         />

@@ -89,6 +89,7 @@ type TutorialScreenProps = {
   finish: TutorialFinish;
   /** 盤面の大きさは盤面の側が、この領域の大きさから決める。 */
   renderBoard: (intro: TutorialBoardIntro) => ReactNode;
+  staticIntroScenes?: readonly TutorialIntroScene[];
   onIntroEnd: () => void;
   onRestart: () => void;
   /** 画面そのもの。開いたときのフォーカスを置く。 */
@@ -113,6 +114,8 @@ type IntroStage =
   | "header"
   | "reveal"
   | "done";
+
+const NO_STATIC_INTRO_SCENES: readonly TutorialIntroScene[] = [];
 
 const BOARD_APPEAR_AFTER_NAME_DELAY_MS = 300;
 /** 盤面の領域を出す間。盤面を出す段の見せ方と同じ値。 */
@@ -289,6 +292,7 @@ export function TutorialScreen({
   guiding,
   finish,
   renderBoard,
+  staticIntroScenes = NO_STATIC_INTRO_SCENES,
   onIntroEnd,
   onRestart,
   ref,
@@ -336,13 +340,19 @@ export function TutorialScreen({
     }
   }, []);
 
-  const changeStage = useCallback((next: IntroStage) => {
-    stageRef.current = next;
-    endedStageRef.current = null;
-    setSceneEnded(false);
-    setHeaderStageMessageShown(false);
-    setStage(next);
-  }, []);
+  const changeStage = useCallback(
+    (next: IntroStage) => {
+      stageRef.current = next;
+      const staticScene =
+        (next === "goal" || next === "start") &&
+        staticIntroScenes.includes(next);
+      endedStageRef.current = staticScene ? next : null;
+      setSceneEnded(staticScene);
+      setHeaderStageMessageShown(false);
+      setStage(next);
+    },
+    [staticIntroScenes],
+  );
 
   const finishIntro = useCallback(() => {
     stopIntroMotion();
