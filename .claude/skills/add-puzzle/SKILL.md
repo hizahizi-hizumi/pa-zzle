@@ -140,7 +140,7 @@ Critical・Major は「直す」か「人間に残す」のどちらかで、Min
 - 文書の置き場所と書き方: `.claude/rules/documents.md`（導入調査と台帳は資料で、正本は仕様とコード）
 - 導入調査: `docs/パズル/導入調査/<パズル名>/`
 - 難易度の決まり: `docs/パズル/README.md` から辿る難易度文書
-- 候補台帳: `docs/棚上げ/パズル候補.csv` と `docs/棚上げ/パズル候補/PUZZLE-nnn.md`
+- 候補台帳: `docs/パズル/候補/パズル候補.csv` と `docs/パズル/候補/詳細/PUZZLE-nnn.md`
 - パズル仕様: `docs/プロダクト/パズル/PZL-nnn.md`
 
 ## 環境
