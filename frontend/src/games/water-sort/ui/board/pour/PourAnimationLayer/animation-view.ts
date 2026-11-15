@@ -8,6 +8,10 @@ export const POUR_ANIMATION_DURATION_MS = 1600;
 export const POUR_TRANSFER_START_OFFSET = 0.38;
 export const POUR_TRANSFER_END_OFFSET = 0.72;
 export const POUR_TILT_EASING = "cubic-bezier(.22,.61,.36,1)";
+export const POUR_SOURCE_LIFT_EASING = "ease-out";
+export const POUR_SOURCE_TRAVEL_EASING = "ease-in-out";
+export const POUR_SOURCE_POUR_EASING = "ease-in";
+export const POUR_LINEAR_EASING = "linear";
 
 /**
  * 注ぐ演出の層の重なり順。プレイ画面の中で、盤面と操作部品より上に、注ぎ先・水の筋・注ぎ元の順で重ねる。

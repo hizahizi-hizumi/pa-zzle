@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 
 import {
   POUR_ANIMATION_DURATION_MS,
+  POUR_LINEAR_EASING,
   POUR_TRANSFER_END_OFFSET,
   POUR_TRANSFER_START_OFFSET,
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
@@ -27,7 +28,7 @@ export function AnimatedDestinationTransfer({
       ],
       {
         duration: POUR_ANIMATION_DURATION_MS,
-        easing: "linear",
+        easing: POUR_LINEAR_EASING,
         fill: "forwards",
       },
     );
