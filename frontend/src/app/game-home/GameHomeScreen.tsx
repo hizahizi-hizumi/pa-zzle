@@ -374,6 +374,8 @@ export function GameHomeScreen({
   const [selectedKey, setSelectedKey] = useState<SelectedProblemKey | null>(
     initialSelectedKey,
   );
+  // URLはブラウザ履歴の入力、選択stateは即時のユーザー操作と入場時の初期選択を所有する。
+  // 履歴移動や問題集更新時に、URLで指定された問題を画面内の選択へ反映する。
   const hasMountedRef = useRef(false);
   useEffect(() => {
     if (!hasMountedRef.current) {
