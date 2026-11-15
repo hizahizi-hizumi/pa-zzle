@@ -119,16 +119,21 @@ export function playAnimations({
 export type RejectionShakeTiming = {
   durationMs: number;
   easing: string;
+  delayMs?: number;
 };
 
 export function playRejectionShake(
   element: Element | null | undefined,
   keyframes: Keyframe[],
-  { durationMs, easing }: RejectionShakeTiming,
+  { durationMs, easing, delayMs }: RejectionShakeTiming,
 ): void {
   if (typeof element?.animate !== "function" || prefersReducedMotion()) {
     return;
   }
 
-  element.animate(keyframes, { duration: durationMs, easing });
+  element.animate(keyframes, {
+    duration: durationMs,
+    easing,
+    ...(delayMs === undefined ? {} : { delay: delayMs }),
+  });
 }

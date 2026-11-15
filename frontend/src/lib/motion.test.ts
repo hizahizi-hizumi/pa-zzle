@@ -448,5 +448,15 @@ describe("playRejectionShake", () => {
         easing: "ease-out",
       });
     });
+
+    test("揺れの開始遅延を指定できること", () => {
+      playRejectionShake(element, keyframes, { ...timing, delayMs: 180 });
+
+      expect(animate).toHaveBeenCalledWith(keyframes, {
+        duration: 220,
+        easing: "ease-out",
+        delay: 180,
+      });
+    });
   });
 });
