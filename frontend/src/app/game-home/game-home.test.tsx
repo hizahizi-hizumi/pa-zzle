@@ -665,3 +665,44 @@ describe("useGameHome", () => {
     });
   });
 });
+
+describe("ゲームホームのURLと選択状態", () => {
+  test("外部の履歴移動ではURLの問題選択とレベルを復元し、画面操作の状態と矛盾しない", async () => {
+    const problem = selectFirstPoolProblem("2");
+    const problemId = createProblemId(problem.identity);
+    const router = renderAt("/puzzles/nanpure?level=4");
+
+    expect(screen.getByRole("tab", { selected: true }).textContent).toMatch(
+      /^レベル 4/,
+    );
+    expect(
+      screen.queryByRole("complementary", { name: "選んだ問題" }),
+    ).toBeNull();
+
+    await act(async () => {
+      await router.navigate(`/puzzles/nanpure?problem=${problemId}`);
+    });
+    expect(screen.getByRole("tab", { selected: true }).textContent).toMatch(
+      /^レベル 2/,
+    );
+    expect(getDetail()).toBeTruthy();
+
+    await act(async () => {
+      await router.navigate(-1);
+    });
+    expect(screen.getByRole("tab", { selected: true }).textContent).toMatch(
+      /^レベル 4/,
+    );
+    expect(
+      screen.queryByRole("complementary", { name: "選んだ問題" }),
+    ).toBeNull();
+
+    await act(async () => {
+      await router.navigate(1);
+    });
+    expect(screen.getByRole("tab", { selected: true }).textContent).toMatch(
+      /^レベル 2/,
+    );
+    expect(getDetail()).toBeTruthy();
+  });
+});
