@@ -49,6 +49,17 @@ export default defineConfig({
     },
   },
   build: {
+    rollupOptions: {
+      input: {
+        app: fileURLToPath(new URL("./index.html", import.meta.url)),
+        textureLab: fileURLToPath(
+          new URL("./texture-lab.html", import.meta.url),
+        ),
+        textureLabPlay: fileURLToPath(
+          new URL("./texture-lab-play.html", import.meta.url),
+        ),
+      },
+    },
     outDir: outputDir,
     emptyOutDir: true,
     // 効果音は鳴らす設定のときだけ読み込むので、小さくても JS に埋め込まず別のファイルにする。
