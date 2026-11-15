@@ -1,4 +1,4 @@
-import type { GameResultScoreCriterion } from "@/components/GameResultScreen/GameResultDetails";
+import type { GameResultScoreCriterion } from "@/components/game-result-contract";
 import { formatScoreReferenceTime } from "@/components/game-result-metrics";
 import {
   PLAY_OPERATION_LABELS,

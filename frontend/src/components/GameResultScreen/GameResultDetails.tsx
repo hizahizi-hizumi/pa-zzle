@@ -1,7 +1,8 @@
-import {
-  DetailMetric,
-  type GameResultDetailMetric,
-} from "@/components/GameResultScreen/GameResultDetails/DetailMetric";
+import { DetailMetric } from "@/components/GameResultScreen/GameResultDetails/DetailMetric";
+import type {
+  GameResultDetailMetric,
+  GameResultScoreCriteria,
+} from "@/components/game-result-contract";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,13 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-export type GameResultScoreCriterion = {
-  label: string;
-  description: string;
-};
-
-export type GameResultScoreCriteria = readonly GameResultScoreCriterion[];
 
 const SCORE_ROUNDING_NOTE = "各項目は1点単位に四捨五入し、0点を下限とする。";
 

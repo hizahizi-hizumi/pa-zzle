@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { GameResultMetrics } from "@/components/GameResultScreen/GameResultMetrics";
-import type { GameResultMetric } from "@/components/GameResultScreen/ResultMetric";
+import type { GameResultMetric } from "@/components/game-result-contract";
 import {
   createElapsedTimeMetric,
   createMoveCountMetric,

@@ -3,21 +3,21 @@ import { useEffect, useRef, useState } from "react";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { BrowserBottomSurface } from "@/components/BrowserBottomSurface";
 import { GameResultActions } from "@/components/GameResultScreen/GameResultActions";
-import {
-  GameResultDetails,
-  type GameResultScoreCriteria,
-} from "@/components/GameResultScreen/GameResultDetails";
-import type { GameResultDetailMetric } from "@/components/GameResultScreen/GameResultDetails/DetailMetric";
+import { GameResultDetails } from "@/components/GameResultScreen/GameResultDetails";
 import { GameResultMetrics } from "@/components/GameResultScreen/GameResultMetrics";
 import { GameResultMoment } from "@/components/GameResultScreen/GameResultMoment";
 import { GameResultRecordNotice } from "@/components/GameResultScreen/GameResultRecordNotice";
-import type { GameResultMetric } from "@/components/GameResultScreen/ResultMetric";
+import type {
+  GameResultDetailMetric,
+  GameResultMetric,
+  GameResultScoreCriteria,
+} from "@/components/game-result-contract";
 import { Button } from "@/components/ui/button";
 import type { ResultRecordFeedback } from "@/games/play";
 import { getGameResultLevel } from "@/games/result";
 import "@/components/GameResultScreen.css";
 
-export type { GameResultScoreCriteria };
+export type { GameResultScoreCriteria } from "@/components/game-result-contract";
 
 type GameResultScreenProps = {
   gameName: string;
