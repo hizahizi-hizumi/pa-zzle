@@ -7,7 +7,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import {
   GameHomeScreen,
   type GameHomeScreenProps,
@@ -167,6 +167,11 @@ const playRecords = (["3", "3", "1"] as const).map((difficulty, index) =>
   }),
 );
 
+function TutorialRouteFixture() {
+  const location = useLocation();
+  return <p>チュートリアルの画面：{location.state?.difficulty}</p>;
+}
+
 function createScreen(
   shownZukan: GameZukan = zukan,
   changes: ZukanChanges = noZukanChanges,
@@ -174,28 +179,40 @@ function createScreen(
   renderTutorial?: GameHomeScreenProps["renderTutorial"],
 ) {
   return (
-    <MemoryRouter>
-      <GameHomeScreen
-        gameId="nanpure"
-        gameTitle="ナンプレ"
-        pictogramSvg="<svg></svg>"
-        zukan={shownZukan}
-        changes={changes}
-        ground={<div data-testid="ground" />}
-        initialSelectedProblemId={initialSelectedProblemId}
-        pickRandomProblemId={pickRandomProblemId}
-        onPlayProblem={onPlayProblem}
-        onLevelChangesShown={onLevelChangesShown}
-        describeProblem={describeProblem}
-        featureAxes={featureAxes}
-        findProblemFeatureValues={findProblemFeatureValues}
-        renderHowToPlayDialog={({ open }) =>
-          open ? <p>遊び方のダイアログ</p> : null
-        }
-        renderTutorial={renderTutorial}
-        records={playRecords}
-        playRecordDisplay={nanpurePlayRecordDisplay}
-      />
+    <MemoryRouter initialEntries={["/puzzles/nanpure"]}>
+      <Routes>
+        <Route
+          path="/puzzles/nanpure"
+          element={
+            <GameHomeScreen
+              gameId="nanpure"
+              gameTitle="ナンプレ"
+              pictogramSvg="<svg></svg>"
+              zukan={shownZukan}
+              changes={changes}
+              ground={<div data-testid="ground" />}
+              initialSelectedProblemId={initialSelectedProblemId}
+              pickRandomProblemId={pickRandomProblemId}
+              onPlayProblem={onPlayProblem}
+              onLevelChangesShown={onLevelChangesShown}
+              describeProblem={describeProblem}
+              featureAxes={featureAxes}
+              findProblemFeatureValues={findProblemFeatureValues}
+              renderHowToPlayDialog={({ open }) =>
+                open ? <p>遊び方のダイアログ</p> : null
+              }
+              renderTutorial={renderTutorial}
+              records={playRecords}
+              playRecordDisplay={nanpurePlayRecordDisplay}
+            />
+          }
+        />
+        <Route path="/puzzles/nanpure/how-to" element={<p>遊び方の画面</p>} />
+        <Route
+          path="/puzzles/nanpure/tutorial"
+          element={<TutorialRouteFixture />}
+        />
+      </Routes>
     </MemoryRouter>
   );
 }
@@ -1052,9 +1069,9 @@ describe("GameHomeScreen", () => {
     test("メニューから遊び方を開くと、ゲームの遊び方を開くこと", async () => {
       openFromMenu("遊び方");
 
-      const dialog = await screen.findByText("遊び方のダイアログ");
+      const page = await screen.findByText("遊び方の画面");
 
-      expect(dialog).toBeTruthy();
+      expect(page).toBeTruthy();
     });
 
     test("チュートリアルを渡さなければ、メニューにチュートリアルを出さないこと", () => {
@@ -1121,29 +1138,17 @@ describe("GameHomeScreen", () => {
     test("メニューからチュートリアルを開くと、ゲームのチュートリアルを開くこと", async () => {
       openFromMenu("チュートリアル");
 
-      const dialog = await screen.findByRole("dialog", {
-        name: "チュートリアル",
-      });
+      const page = await screen.findByText("チュートリアルの画面：3");
 
-      expect(dialog).toBeTruthy();
+      expect(page).toBeTruthy();
     });
 
-    test("チュートリアルを閉じると、フォーカスをメニューのボタンへ戻すこと", async () => {
-      openFromMenu("チュートリアル");
-      fireEvent.click(await screen.findByRole("button", { name: "閉じる" }));
-
-      await waitFor(() => {
-        expect(document.activeElement).toBe(getMenuButton());
-      });
-    });
-
-    test("チュートリアルから遊び始めると、開いているレベルでプレイを始めること", async () => {
+    test("選択中のレベルをチュートリアルへ渡すこと", async () => {
       openFromMenu("チュートリアル");
 
-      fireEvent.click(await screen.findByRole("button", { name: "3を遊ぶ" }));
+      const page = await screen.findByText("チュートリアルの画面：3");
 
-      expect(pickRandomProblemId.mock.calls).toEqual([["3"]]);
-      expect(onPlayProblem.mock.calls).toEqual([[levelThreeProblems[3]]]);
+      expect(page).toBeTruthy();
     });
   });
 

@@ -80,6 +80,7 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.mocked(createProblemSeed).mockReset();
+  window.sessionStorage.clear();
 });
 
 describe("useTsumeShogiPlay", () => {
@@ -194,6 +195,78 @@ describe("useTsumeShogiPlay", () => {
         fivePly.problem.mainLine.slice(0, 2).map(formatTsumeShogiMoveUsi),
       );
       expect(shownMovesRestored).toBe(true);
+    });
+  });
+
+  describe("同じタブでのプレイ復元", () => {
+    const problemId = createProblemId(fivePly.identity);
+
+    test("駒の選択と開始時刻を、画面を開き直しても維持すること", () => {
+      const first = renderHook(() =>
+        useTsumeShogiPlay("3", fivePly, undefined, problemId),
+      );
+      const startedAt = first.result.current.startedAt;
+      const move = fivePly.problem.mainLine[0]!;
+      if (move.kind === "drop") {
+        act(() => first.result.current.selectHandPiece(move.pieceType));
+      } else {
+        act(() => first.result.current.selectSquare(move.from));
+      }
+      const selection = first.result.current.selection;
+      expect(selection).not.toBeNull();
+      first.unmount();
+
+      const resumed = renderHook(() =>
+        useTsumeShogiPlay("3", fivePly, undefined, problemId),
+      );
+      expect(resumed.result.current.startedAt).toBe(startedAt);
+      expect(resumed.result.current.selection).toEqual(selection);
+      expect(resumed.result.current.boardPieces.length).toBeGreaterThan(0);
+    });
+
+    test("着手・玉方の応手・待ったの履歴を、盤面を壊さず復元すること", () => {
+      const first = renderHook(() =>
+        useTsumeShogiPlay("3", fivePly, undefined, problemId),
+      );
+      playMainLine(first.result, fivePly.problem, 4);
+      act(() => first.result.current.undo());
+      const startedAt = first.result.current.startedAt;
+      const shownBefore = first.result.current.shownMoves.map(({ move }) =>
+        formatTsumeShogiMoveUsi(move),
+      );
+      expect(first.result.current.shownMovesRestored).toBe(true);
+      first.unmount();
+
+      const resumed = renderHook(() =>
+        useTsumeShogiPlay("3", fivePly, undefined, problemId),
+      );
+      expect(resumed.result.current.startedAt).toBe(startedAt);
+      expect(resumed.result.current.shownMovesRestored).toBe(true);
+      expect(
+        resumed.result.current.shownMoves.map(({ move }) =>
+          formatTsumeShogiMoveUsi(move),
+        ),
+      ).toEqual(shownBefore);
+      expect(resumed.result.current.session.undoCount).toBe(1);
+      expect(resumed.result.current.boardPieces.length).toBeGreaterThan(0);
+      act(() => resumed.result.current.restart());
+      expect(resumed.result.current.session.restartCount).toBe(1);
+    });
+
+    test("破損した局面を復元しないこと", () => {
+      const first = renderHook(() =>
+        useTsumeShogiPlay("3", fivePly, undefined, problemId),
+      );
+      first.unmount();
+      const key = "pa-zzle.active-play.v1.tsume-shogi";
+      const saved = JSON.parse(window.sessionStorage.getItem(key)!);
+      saved.state.session.puzzleState = "invalid SFEN";
+      window.sessionStorage.setItem(key, JSON.stringify(saved));
+      const resumed = renderHook(() =>
+        useTsumeShogiPlay("3", fivePly, undefined, problemId),
+      );
+      expect(resumed.result.current.boardPieces.length).toBeGreaterThan(0);
+      expect(resumed.result.current.session.turns).toHaveLength(0);
     });
   });
 

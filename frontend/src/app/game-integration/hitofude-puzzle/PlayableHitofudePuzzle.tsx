@@ -3,7 +3,6 @@ import {
   type CompletedGamePlay,
   usePlayableGame,
 } from "@/app/game-integration/playable-game";
-import { useRequestedProblem } from "@/app/navigation/problem-id-query";
 import { createHitofudePuzzleDiagnosticSnapshot } from "@/games/hitofude-puzzle/diagnostics";
 import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
 import {
@@ -23,8 +22,7 @@ import type { ProblemId } from "@/games/problem-id";
 
 type PlayableHitofudePuzzleProps = {
   difficulty: HitofudePuzzleDifficulty;
-  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
-  avoidedProblemId?: ProblemId;
+  problemId: ProblemId;
 };
 
 function createPlayRecord(
@@ -42,15 +40,19 @@ function createPlayRecord(
 
 export function PlayableHitofudePuzzle({
   difficulty,
-  avoidedProblemId,
+  problemId,
 }: PlayableHitofudePuzzleProps) {
-  const requestedProblem = useRequestedProblem((problemId) =>
-    selectHitofudePuzzleProblemById(difficulty, problemId),
+  const requestedProblem = selectHitofudePuzzleProblemById(
+    difficulty,
+    problemId,
   );
+  if (requestedProblem === null)
+    throw new Error("指定された問題を復元できません");
   const play = useHitofudePuzzlePlay(
     difficulty,
     requestedProblem,
-    avoidedProblemId,
+    undefined,
+    problemId,
   );
   const { screenProps, diagnostics } = usePlayableGame({
     game: hitofudePuzzleCatalogEntry,

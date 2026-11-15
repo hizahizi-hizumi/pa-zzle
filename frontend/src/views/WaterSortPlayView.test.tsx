@@ -1,8 +1,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-
+import { waterSortCatalogEntry } from "@/app/game-integration/water-sort/water-sort-catalog-entry";
 import { createProblemId } from "@/games/problem-id";
 import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
+import { testPlayUrl } from "@/testing/play-url";
 import { WaterSortPlayView } from "@/views/WaterSortPlayView";
 
 vi.mock("@/lib/internal-diagnostics", () => ({
@@ -21,12 +22,12 @@ function renderRouterAt(path: string): PlayRouter {
   const router = createMemoryRouter(
     [
       {
-        path: "/puzzles/water-sort/play/:difficulty",
+        path: "/puzzles/water-sort/play/:problemId",
         element: <WaterSortPlayView />,
       },
       { path: "/puzzles/water-sort", element: <p>ゲームのホーム画面</p> },
     ],
-    { initialEntries: [path] },
+    { initialEntries: [testPlayUrl(waterSortCatalogEntry, path)] },
   );
   render(<RouterProvider router={router} />);
   return router;
@@ -55,7 +56,10 @@ describe("WaterSortPlayView", () => {
     test("その問題で始めURLを置き換えないこと", () => {
       const { historyAction, location } = router.state;
 
-      expect(location.search).toBe(`?problem=${poolProblemId}`);
+      expect(location.pathname).toBe(
+        `/puzzles/water-sort/play/${poolProblemId}`,
+      );
+      expect(location.search).toBe("");
       expect(historyAction).toBe("POP");
     });
 
@@ -90,7 +94,7 @@ describe("WaterSortPlayView", () => {
     });
 
     test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
-      const message = screen.getByText("この難易度は選べません");
+      const message = screen.getByText("この問題は現在遊べません");
       const backLink = screen.getByRole("link", {
         name: "問題選択へ戻る",
       });

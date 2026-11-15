@@ -143,6 +143,8 @@ export type GamePlayScreenProps<Difficulty, Result> = Omit<
   "result" | "onReplay"
 > & {
   onBackToAppHome: () => void;
+  onOpenHowToPlay?: () => void;
+  onOpenTutorial?: () => void;
   progress: GameProgress;
   elapsedMs: number;
   result: Result | null;

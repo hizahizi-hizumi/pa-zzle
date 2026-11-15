@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   applyPlaySession,
   completePlayClearAnimation,
@@ -9,6 +8,10 @@ import {
   startPlaySession,
   useSessionElapsedMs,
 } from "@/games/play";
+import {
+  restorePlayState,
+  savePlayState,
+} from "@/games/play-state-persistence";
 import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
@@ -165,12 +168,19 @@ export function useReflectionPlay(
   difficulty: ReflectionDifficulty,
   initialProblem?: ReflectionPooledProblem,
   avoidedProblemId?: ProblemId,
+  playProblemId?: ProblemId,
 ): ReflectionPlay {
   const [play, setPlay] = useState<ReflectionPlayState>(() =>
-    createPlayState(
-      initialProblem ?? selectProblem(difficulty, avoidedProblemId),
-      Date.now(),
+    restorePlayState("reflection", playProblemId, () =>
+      createPlayState(
+        initialProblem ?? selectProblem(difficulty, avoidedProblemId),
+        Date.now(),
+      ),
     ),
+  );
+  useEffect(
+    () => savePlayState("reflection", playProblemId, play),
+    [playProblemId, play],
   );
   const { session, progress, problemIdentity, workload } = play;
   const elapsedMs = useSessionElapsedMs(session);

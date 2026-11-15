@@ -31,7 +31,7 @@ export const reflectionCatalogEntry = {
   pictogramSvg,
   pictogramShowcaseSvg,
   homePath: "/puzzles/reflection",
-  playPath: "/puzzles/reflection/play/:difficulty",
+  playPath: "/puzzles/reflection/play/:problemId",
   playRecordDisplay: reflectionPlayRecordDisplay,
   recordProblemPlayTarget(record) {
     return isReflectionPlayRecord(record)

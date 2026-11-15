@@ -1,6 +1,5 @@
 import { minesweeperCatalogEntry } from "@/app/game-integration/minesweeper/minesweeper-catalog-entry";
 import { usePlayableGame } from "@/app/game-integration/playable-game";
-import { useRequestedProblem } from "@/app/navigation/problem-id-query";
 import { createMinesweeperDiagnosticSnapshot } from "@/games/minesweeper/diagnostics";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import { useMinesweeperPlay } from "@/games/minesweeper/play/use-minesweeper-play";
@@ -16,21 +15,21 @@ import type { ProblemId } from "@/games/problem-id";
 
 type PlayableMinesweeperProps = {
   difficulty: MinesweeperDifficulty;
-  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
-  avoidedProblemId?: ProblemId;
+  problemId: ProblemId;
 };
 
 export function PlayableMinesweeper({
   difficulty,
-  avoidedProblemId,
+  problemId,
 }: PlayableMinesweeperProps) {
-  const requestedProblem = useRequestedProblem((problemId) =>
-    selectMinesweeperProblemById(difficulty, problemId),
-  );
+  const requestedProblem = selectMinesweeperProblemById(difficulty, problemId);
+  if (requestedProblem === null)
+    throw new Error("指定された問題を復元できません");
   const play = useMinesweeperPlay(
     difficulty,
     requestedProblem,
-    avoidedProblemId,
+    undefined,
+    problemId,
   );
   const { screenProps, diagnostics } = usePlayableGame({
     game: minesweeperCatalogEntry,

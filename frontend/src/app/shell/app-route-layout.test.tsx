@@ -5,7 +5,6 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { waterSortCatalogEntry } from "@/app/game-integration/water-sort/water-sort-catalog-entry";
 
 // 生成されたルート表をそのまま使い、ルートの一致からレイアウトと見つからない画面を選ぶ流れを通す。
-// ルート表のページを置くディレクトリにテストを置くとページとして読み込まれるため、図鑑の URL の移し先もここで確かめる。
 
 vi.mock("@/lib/internal-diagnostics", () => ({
   internalDiagnosticsAvailable: false,
@@ -106,33 +105,14 @@ describe("AppPage", () => {
   });
 });
 
-describe("GameZukanRedirect", () => {
-  describe("今のアプリにあるゲームの図鑑のURLの場合", () => {
-    beforeEach(() => {
-      renderAppAt(`${waterSortCatalogEntry.homePath}/zukan`);
-    });
-
-    test("履歴を置き換えてそのゲームのホームへ移ること", () => {
-      const { historyAction, location } = router.state;
-      const heading = screen.getByRole("heading", { level: 1 });
-
-      expect(location.pathname).toBe(waterSortCatalogEntry.homePath);
-      expect(historyAction).toBe("REPLACE");
-      expect(heading.textContent).toBe(waterSortCatalogEntry.name);
-    });
+describe("廃止した図鑑のURLの場合", () => {
+  beforeEach(() => {
+    renderAppAt(`${waterSortCatalogEntry.homePath}/zukan`);
   });
 
-  describe("今のアプリに無いゲームの図鑑のURLの場合", () => {
-    beforeEach(() => {
-      renderAppAt("/puzzles/unknown-game/zukan");
-    });
+  test("旧URLの転送先を設けず、見つからない画面を表示すること", () => {
+    const heading = screen.getByRole("heading", { name: notFoundHeading });
 
-    test("移った先で見つからない画面を出すこと", () => {
-      const { location } = router.state;
-      const heading = screen.getByRole("heading", { name: notFoundHeading });
-
-      expect(location.pathname).toBe("/puzzles/unknown-game");
-      expect(heading).toBeTruthy();
-    });
+    expect(heading).toBeTruthy();
   });
 });

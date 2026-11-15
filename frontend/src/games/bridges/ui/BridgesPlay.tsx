@@ -62,6 +62,8 @@ export function BridgesPlay({
   onStartNewProblem,
   onOpenGameHome,
   onBackToAppHome,
+  onOpenHowToPlay,
+  onOpenTutorial,
   onOpenDiagnostics,
   renderSettingsDialog,
 }: BridgesPlayProps) {
@@ -106,6 +108,8 @@ export function BridgesPlay({
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
+      onOpenHowToPlay={onOpenHowToPlay}
+      onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (

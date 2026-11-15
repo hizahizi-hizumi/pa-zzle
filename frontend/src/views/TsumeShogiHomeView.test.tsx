@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { tsumeShogiCatalogEntry } from "@/app/game-integration/tsume-shogi/tsume-shogi-catalog-entry";
@@ -62,8 +68,13 @@ describe("TsumeShogiHomeView", () => {
           path: "/puzzles/tsume-shogi",
           element: <TsumeShogiHomeView />,
         },
+        { path: "/puzzles/tsume-shogi/how-to", element: <p>遊び方の画面</p> },
         {
-          path: "/puzzles/tsume-shogi/play/:difficulty",
+          path: "/puzzles/tsume-shogi/tutorial",
+          element: <p>チュートリアルの画面</p>,
+        },
+        {
+          path: "/puzzles/tsume-shogi/play/:problemId",
           element: <p>プレイ画面</p>,
         },
       ],
@@ -93,9 +104,11 @@ describe("TsumeShogiHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/tsume-shogi/how-to",
+      ),
+    );
   });
 
   test("見出しのメニューからチュートリアルを開けること", async () => {
@@ -105,12 +118,11 @@ describe("TsumeShogiHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
 
-    const dialog = await screen.findByRole("dialog", {
-      name: "詰将棋",
-      description: "チュートリアル",
-    });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/tsume-shogi/tutorial",
+      ),
+    );
   });
 
   test("戻るリンクでホームへ戻れること", () => {
@@ -133,6 +145,8 @@ describe("TsumeShogiHomeView", () => {
 
     const { pathname } = router.state.location;
 
-    expect(pathname).toBe("/puzzles/tsume-shogi/play/3");
+    const problemId = pathname.replace("/puzzles/tsume-shogi/play/", "");
+
+    expect(tsumeShogiCatalogEntry.listPoolProblemIds("3")).toContain(problemId);
   });
 });

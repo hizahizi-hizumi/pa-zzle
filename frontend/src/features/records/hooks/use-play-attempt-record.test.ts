@@ -2,7 +2,10 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { StrictMode } from "react";
 
 import { usePlayAttemptRecord } from "@/features/records/hooks/use-play-attempt-record";
-import { readPlayAttempts } from "@/features/records/play-attempt-storage";
+import {
+  abandonPlayAttempt,
+  readPlayAttempts,
+} from "@/features/records/play-attempt-storage";
 
 type HookProps = {
   startedAt: number;
@@ -77,6 +80,40 @@ describe("プレイを進めた場合", () => {
     });
   });
 
+  test("bfcacheへ退避するだけでは離脱として記録しないこと", () => {
+    window.dispatchEvent(
+      new PageTransitionEvent("pagehide", { persisted: true }),
+    );
+    const abandonment = readPlayAttempts()[0]?.abandonment;
+
+    expect(abandonment).toBeNull();
+  });
+
+  test("bfcache復帰で既存の離脱記録を解除し、同じ挑戦を維持すること", () => {
+    abandonPlayAttempt(createAttempt(1_000), {
+      abandonedAt: 9_000,
+      progress: { moveCount: 3, elapsedMs: 8_000 },
+    });
+    window.dispatchEvent(
+      new PageTransitionEvent("pageshow", { persisted: true }),
+    );
+    const attempts = readPlayAttempts();
+
+    expect(attempts).toEqual([createAttempt(1_000)]);
+  });
+
+  test("通常のpageshowでは離脱を解除しないこと", () => {
+    const abandonment = {
+      abandonedAt: 9_000,
+      progress: { moveCount: 3, elapsedMs: 8_000 },
+    };
+    abandonPlayAttempt(createAttempt(1_000), abandonment);
+    window.dispatchEvent(new PageTransitionEvent("pageshow"));
+    const attempts = readPlayAttempts();
+
+    expect(attempts[0]?.abandonment).toEqual(abandonment);
+  });
+
   test("プレイ画面を離れると、その時点の進み具合を離脱として記録すること", async () => {
     hook.unmount();
     await flushAbandonment();
@@ -108,6 +145,15 @@ describe("解き終えた場合", () => {
       moveCount: 0,
     });
     hook.rerender({ startedAt: 1_000, finished: true, moveCount: 5 });
+  });
+
+  test("完了後にbfcache復帰しても未完了の試行を増やさないこと", () => {
+    window.dispatchEvent(
+      new PageTransitionEvent("pageshow", { persisted: true }),
+    );
+    const attempts = readPlayAttempts();
+
+    expect(attempts).toEqual([createAttempt(1_000)]);
   });
 
   test("プレイ画面を離れても離脱にしないこと", async () => {

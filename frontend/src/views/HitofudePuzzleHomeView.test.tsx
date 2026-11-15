@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { hitofudePuzzleCatalogEntry } from "@/app/game-integration/hitofude-puzzle/hitofude-puzzle-catalog-entry";
@@ -58,7 +64,15 @@ describe("HitofudePuzzleHomeView", () => {
           element: <HitofudePuzzleHomeView />,
         },
         {
-          path: "/puzzles/hitofude-puzzle/play/:difficulty",
+          path: "/puzzles/hitofude-puzzle/how-to",
+          element: <p>遊び方の画面</p>,
+        },
+        {
+          path: "/puzzles/hitofude-puzzle/tutorial",
+          element: <p>チュートリアルの画面</p>,
+        },
+        {
+          path: "/puzzles/hitofude-puzzle/play/:problemId",
           element: <p>プレイ画面</p>,
         },
       ],
@@ -88,9 +102,11 @@ describe("HitofudePuzzleHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/hitofude-puzzle/how-to",
+      ),
+    );
   });
 
   test("見出しのメニューからチュートリアルを開けること", async () => {
@@ -100,12 +116,11 @@ describe("HitofudePuzzleHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
 
-    const dialog = await screen.findByRole("dialog", {
-      name: "一筆パズル",
-      description: "チュートリアル",
-    });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/hitofude-puzzle/tutorial",
+      ),
+    );
   });
 
   test("戻るリンクでホームへ戻れること", () => {
@@ -122,6 +137,10 @@ describe("HitofudePuzzleHomeView", () => {
 
     const { pathname } = router.state.location;
 
-    expect(pathname).toBe("/puzzles/hitofude-puzzle/play/3");
+    const problemId = pathname.replace("/puzzles/hitofude-puzzle/play/", "");
+
+    expect(hitofudePuzzleCatalogEntry.listPoolProblemIds("3")).toContain(
+      problemId,
+    );
   });
 });

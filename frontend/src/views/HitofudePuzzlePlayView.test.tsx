@@ -13,6 +13,7 @@ import {
   Routes,
   useLocation,
 } from "react-router";
+import { hitofudePuzzleCatalogEntry } from "@/app/game-integration/hitofude-puzzle/hitofude-puzzle-catalog-entry";
 import { readPlayAttempts } from "@/features/records/play-attempt-storage";
 import { readPlayRecords } from "@/features/records/storage";
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
@@ -22,6 +23,7 @@ import {
   selectHitofudePuzzleProblemForDifficulty,
 } from "@/games/hitofude-puzzle/problem-selection";
 import { createProblemId } from "@/games/problem-id";
+import { testPlayUrl } from "@/testing/play-url";
 import { HitofudePuzzlePlayView } from "@/views/HitofudePuzzlePlayView";
 import { PlayResultView } from "@/views/PlayResultView";
 
@@ -47,15 +49,24 @@ afterEach(() => {
 });
 
 function LocationSearch() {
-  return <output aria-label="URL のクエリ">{useLocation().search}</output>;
+  return <output aria-label="プレイURL">{useLocation().pathname}</output>;
 }
 
 function renderAt(path: string): void {
   render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter
+      initialEntries={[
+        testPlayUrl(hitofudePuzzleCatalogEntry, path, (difficulty) =>
+          createProblemId(
+            selectHitofudePuzzleProblemForDifficulty(difficulty, problemSeed)
+              .identity,
+          ),
+        ),
+      ]}
+    >
       <Routes>
         <Route
-          path="/puzzles/hitofude-puzzle/play/:difficulty"
+          path="/puzzles/hitofude-puzzle/play/:problemId"
           element={
             <>
               <HitofudePuzzlePlayView />
@@ -83,12 +94,21 @@ function renderRouterAt(path: string): PlayRouter {
   const router = createMemoryRouter(
     [
       {
-        path: "/puzzles/hitofude-puzzle/play/:difficulty",
+        path: "/puzzles/hitofude-puzzle/play/:problemId",
         element: <HitofudePuzzlePlayView />,
       },
       { path: "/puzzles/hitofude-puzzle", element: <p>ゲームのホーム画面</p> },
     ],
-    { initialEntries: [path] },
+    {
+      initialEntries: [
+        testPlayUrl(hitofudePuzzleCatalogEntry, path, (difficulty) =>
+          createProblemId(
+            selectHitofudePuzzleProblemForDifficulty(difficulty, problemSeed)
+              .identity,
+          ),
+        ),
+      ],
+    },
   );
   render(<RouterProvider router={router} />);
   return router;
@@ -164,13 +184,15 @@ describe("HitofudePuzzlePlayView", () => {
 
     test("選んだ問題の盤面と、その問題 ID の URL を示すこと", () => {
       const cells = listCells();
-      const search = screen.getByRole("status", { name: "URL のクエリ" });
+      const search = screen.getByRole("status", { name: "プレイURL" });
 
       expect(cells).toHaveLength(problem.size * problem.size);
       expect(cells[problem.start]?.getAttribute("aria-label")).toContain(
         "始点",
       );
-      expect(search.textContent).toBe(`?problem=${createProblemId(identity)}`);
+      expect(search.textContent).toBe(
+        `/puzzles/hitofude-puzzle/play/${createProblemId(identity)}`,
+      );
     });
 
     describe("先端に隣り合うマスを押した場合", () => {
@@ -306,13 +328,15 @@ describe("HitofudePuzzlePlayView", () => {
 
     test("その問題で始めること", () => {
       const cells = listCells();
-      const search = screen.getByRole("status", { name: "URL のクエリ" });
+      const search = screen.getByRole("status", { name: "プレイURL" });
 
       expect(cells).toHaveLength(requested.problem.size ** 2);
       expect(
         cells[requested.problem.start]?.getAttribute("aria-label"),
       ).toContain("始点");
-      expect(search.textContent).toBe(`?problem=${problemId}`);
+      expect(search.textContent).toBe(
+        `/puzzles/hitofude-puzzle/play/${problemId}`,
+      );
     });
   });
 

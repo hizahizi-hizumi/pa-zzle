@@ -3,6 +3,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
@@ -60,8 +61,13 @@ describe("WaterSortHomeView", () => {
     router = createMemoryRouter(
       [
         { path: "/puzzles/water-sort", element: <WaterSortHomeView /> },
+        { path: "/puzzles/water-sort/how-to", element: <p>遊び方の画面</p> },
         {
-          path: "/puzzles/water-sort/play/:difficulty",
+          path: "/puzzles/water-sort/tutorial",
+          element: <p>チュートリアルの画面</p>,
+        },
+        {
+          path: "/puzzles/water-sort/play/:problemId",
           element: <p>プレイ画面</p>,
         },
       ],
@@ -91,9 +97,9 @@ describe("WaterSortHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/puzzles/water-sort/how-to"),
+    );
   });
 
   describe("遊び方を開いた場合", () => {
@@ -102,19 +108,17 @@ describe("WaterSortHomeView", () => {
       menuButton.focus();
       fireEvent.pointerDown(menuButton, { button: 0, ctrlKey: false });
       fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
-      await screen.findByRole("dialog", { name: "遊び方" });
-    });
-
-    test("閉じると、メニューのボタンへフォーカスを戻すこと", () => {
-      fireEvent.click(
-        within(screen.getByRole("dialog", { name: "遊び方" })).getByRole(
-          "button",
-          { name: "閉じる" },
+      await waitFor(() =>
+        expect(router.state.location.pathname).toBe(
+          "/puzzles/water-sort/how-to",
         ),
       );
-      const focused = document.activeElement;
+    });
 
-      expect(focused).toBe(screen.getByRole("button", { name: "メニュー" }));
+    test("ブラウザの戻るで元の問題選択へ戻ること", async () => {
+      await router.navigate(-1);
+
+      expect(router.state.location.pathname).toBe("/puzzles/water-sort");
     });
   });
 
@@ -125,12 +129,11 @@ describe("WaterSortHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
 
-    const dialog = await screen.findByRole("dialog", {
-      name: "ウォーターソート",
-      description: "チュートリアル",
-    });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/water-sort/tutorial",
+      ),
+    );
   });
 
   test("戻るリンクでホームへ戻れること", () => {
@@ -147,6 +150,8 @@ describe("WaterSortHomeView", () => {
 
     const { pathname } = router.state.location;
 
-    expect(pathname).toBe("/puzzles/water-sort/play/3");
+    const problemId = pathname.replace("/puzzles/water-sort/play/", "");
+
+    expect(waterSortCatalogEntry.listPoolProblemIds("3")).toContain(problemId);
   });
 });

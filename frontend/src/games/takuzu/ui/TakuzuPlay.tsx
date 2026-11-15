@@ -62,6 +62,8 @@ export function TakuzuPlay({
   onStartNewProblem,
   onOpenGameHome,
   onBackToAppHome,
+  onOpenHowToPlay,
+  onOpenTutorial,
   onOpenDiagnostics,
   renderSettingsDialog,
 }: TakuzuPlayProps) {
@@ -84,6 +86,8 @@ export function TakuzuPlay({
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
+      onOpenHowToPlay={onOpenHowToPlay}
+      onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (

@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import type {
   ParkingJamIdentifiedProblem,
@@ -41,6 +40,10 @@ import {
   type UndoableGamePlay,
   useSessionElapsedMs,
 } from "@/games/play";
+import {
+  restorePlayState,
+  savePlayState,
+} from "@/games/play-state-persistence";
 import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
@@ -154,12 +157,19 @@ export function useParkingJamPlay(
   difficulty: ParkingJamDifficulty,
   initialProblem?: ParkingJamIdentifiedProblem,
   avoidedProblemId?: ProblemId,
+  playProblemId?: ProblemId,
 ): ParkingJamPlay {
   const [play, setPlay] = useState<ParkingJamPlayState>(() =>
-    createPlayState(
-      initialProblem ?? selectProblem(difficulty, avoidedProblemId),
-      Date.now(),
+    restorePlayState("parking-jam", playProblemId, () =>
+      createPlayState(
+        initialProblem ?? selectProblem(difficulty, avoidedProblemId),
+        Date.now(),
+      ),
     ),
+  );
+  useEffect(
+    () => savePlayState("parking-jam", playProblemId, play),
+    [playProblemId, play],
   );
   const { session, problemIdentity, speedReference } = play;
   const elapsedMs = useSessionElapsedMs(session);

@@ -24,7 +24,7 @@ type PendingAbandonment = {
 };
 
 /**
- * プレイを始めたことを保存し、解き終える前に離れたら進み具合を離脱として保存する。
+ * プレイ開始と離脱時の進み具合を記録し、復帰した同じ挑戦の離脱を解除する。
  * `gameId`・`startedAt` が変わると別のプレイとして扱う。
  */
 export function usePlayAttemptRecord(source: PlayAttemptSource): void {
@@ -46,11 +46,14 @@ export function usePlayAttemptRecord(source: PlayAttemptSource): void {
       pending.cancelled = true;
       pendingAbandonment.current = null;
     }
-    startPlayAttempt({
-      ...play,
-      start: latest.current.start,
-      abandonment: null,
-    });
+    function resumeAttempt() {
+      startPlayAttempt({
+        ...play,
+        start: latest.current.start,
+        abandonment: null,
+      });
+    }
+    resumeAttempt();
 
     function captureAbandonment(): PlayAttemptAbandonment | null {
       const { finished, getProgress } = latest.current;
@@ -59,16 +62,24 @@ export function usePlayAttemptRecord(source: PlayAttemptSource): void {
         ? null
         : { abandonedAt, progress: getProgress(abandonedAt) };
     }
-    function handlePageHide() {
+    function handlePageHide(event: PageTransitionEvent) {
+      if (event.persisted) return;
       const abandonment = captureAbandonment();
       if (abandonment) {
         abandonPlayAttempt(play, abandonment);
       }
     }
+    function handlePageShow(event: PageTransitionEvent) {
+      if (event.persisted && !latest.current.finished) {
+        resumeAttempt();
+      }
+    }
     window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("pageshow", handlePageShow);
 
     return () => {
       window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("pageshow", handlePageShow);
 
       const abandonment = captureAbandonment();
       if (!abandonment) {

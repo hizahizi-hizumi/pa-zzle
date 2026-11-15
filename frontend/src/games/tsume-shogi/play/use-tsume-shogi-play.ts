@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import {
   applyPlaySession,
   completePlayClearAnimation,
   type GamePlay,
-  type GameProgress,
   type RestartableGamePlay,
   startPlaySession,
   type UndoableGamePlay,
   useSessionElapsedMs,
 } from "@/games/play";
+import {
+  restorePlayState,
+  savePlayState,
+} from "@/games/play-state-persistence";
 import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
@@ -18,6 +20,10 @@ import {
   describeTsumeShogiOperation,
   type TsumeShogiOperation,
 } from "@/games/tsume-shogi/play/tsume-shogi-operation";
+import {
+  type TsumeShogiPlayState,
+  tsumeShogiPlayStateCodec,
+} from "@/games/tsume-shogi/play/tsume-shogi-play-state";
 import type {
   TsumeShogiProblemIdentity,
   TsumeShogiSolveWorkload,
@@ -231,17 +237,6 @@ export type TsumeShogiPlay = GamePlay<
     clearSelection: () => void;
   };
 
-type TsumeShogiPlayState = {
-  session: TsumeShogiSession;
-  /** 待った・盤面を戻すで、最後の組として盤面に戻ってきた手。指し直したときのように動かして見せない。 */
-  restoredTurn: TsumeShogiSessionTurn | null;
-  operation: TsumeShogiOperation | null;
-  progress: GameProgress;
-  problemIdentity: TsumeShogiProblemIdentity;
-  workload: TsumeShogiSolveWorkload;
-  poolReference: TsumeShogiProblemPoolReference;
-};
-
 function createPlayState(
   { problem, identity, workload, poolReference }: TsumeShogiPooledProblem,
   startedAt: number,
@@ -320,12 +315,29 @@ export function useTsumeShogiPlay(
   difficulty: TsumeShogiDifficulty,
   initialProblem?: TsumeShogiPooledProblem,
   avoidedProblemId?: ProblemId,
+  playProblemId?: ProblemId,
 ): TsumeShogiPlay {
   const [play, setPlay] = useState<TsumeShogiPlayState>(() =>
-    createPlayState(
-      initialProblem ?? selectProblem(difficulty, avoidedProblemId),
-      Date.now(),
+    restorePlayState(
+      "tsume-shogi",
+      playProblemId,
+      () =>
+        createPlayState(
+          initialProblem ?? selectProblem(difficulty, avoidedProblemId),
+          Date.now(),
+        ),
+      tsumeShogiPlayStateCodec,
     ),
+  );
+  useEffect(
+    () =>
+      savePlayState(
+        "tsume-shogi",
+        playProblemId,
+        play,
+        tsumeShogiPlayStateCodec,
+      ),
+    [playProblemId, play],
   );
   const { session, progress, problemIdentity, workload } = play;
   const elapsedMs = useSessionElapsedMs(session);

@@ -6,9 +6,10 @@ import {
   RouterProvider,
   Routes,
 } from "react-router";
-
+import { parkingJamCatalogEntry } from "@/app/game-integration/parking-jam/parking-jam-catalog-entry";
 import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
 import { createProblemId } from "@/games/problem-id";
+import { testPlayUrl } from "@/testing/play-url";
 import { ParkingJamPlayView } from "@/views/ParkingJamPlayView";
 
 vi.mock("@/lib/internal-diagnostics", () => ({
@@ -22,10 +23,10 @@ afterEach(() => {
 
 function renderAt(path: string): void {
   render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter initialEntries={[testPlayUrl(parkingJamCatalogEntry, path)]}>
       <Routes>
         <Route
-          path="/puzzles/parking-jam/play/:difficulty"
+          path="/puzzles/parking-jam/play/:problemId"
           element={<ParkingJamPlayView />}
         />
       </Routes>
@@ -43,12 +44,12 @@ function renderRouterAt(path: string): PlayRouter {
   const router = createMemoryRouter(
     [
       {
-        path: "/puzzles/parking-jam/play/:difficulty",
+        path: "/puzzles/parking-jam/play/:problemId",
         element: <ParkingJamPlayView />,
       },
       { path: "/puzzles/parking-jam", element: <p>ゲームのホーム画面</p> },
     ],
-    { initialEntries: [path] },
+    { initialEntries: [testPlayUrl(parkingJamCatalogEntry, path)] },
   );
   render(<RouterProvider router={router} />);
   return router;
@@ -68,7 +69,7 @@ describe("ParkingJamPlayView", () => {
     });
 
     test("プレイ画面を表示すること", () => {
-      const message = screen.queryByText("この難易度は選べません");
+      const message = screen.queryByText("この問題は現在遊べません");
 
       expect(message).toBeNull();
       expect(countRenderedCars()).toBeGreaterThan(0);
@@ -83,7 +84,7 @@ describe("ParkingJamPlayView", () => {
     });
 
     test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
-      const message = screen.getByText("この難易度は選べません");
+      const message = screen.getByText("この問題は現在遊べません");
       const backLink = screen.getByRole("link", {
         name: "問題選択へ戻る",
       });

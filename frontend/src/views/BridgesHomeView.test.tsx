@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { bridgesCatalogEntry } from "@/app/game-integration/bridges/bridges-catalog-entry";
@@ -55,8 +61,13 @@ describe("BridgesHomeView", () => {
           path: "/puzzles/bridges",
           element: <BridgesHomeView />,
         },
+        { path: "/puzzles/bridges/how-to", element: <p>遊び方の画面</p> },
         {
-          path: "/puzzles/bridges/play/:difficulty",
+          path: "/puzzles/bridges/tutorial",
+          element: <p>チュートリアルの画面</p>,
+        },
+        {
+          path: "/puzzles/bridges/play/:problemId",
           element: <p>プレイ画面</p>,
         },
       ],
@@ -86,9 +97,9 @@ describe("BridgesHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/puzzles/bridges/how-to"),
+    );
   });
 
   test("戻るリンクでホームへ戻れること", () => {
@@ -105,6 +116,8 @@ describe("BridgesHomeView", () => {
 
     const { pathname } = router.state.location;
 
-    expect(pathname).toBe("/puzzles/bridges/play/3");
+    const problemId = pathname.replace("/puzzles/bridges/play/", "");
+
+    expect(bridgesCatalogEntry.listPoolProblemIds("3")).toContain(problemId);
   });
 });

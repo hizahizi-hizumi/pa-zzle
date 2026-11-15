@@ -131,21 +131,29 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
             anyProblemId === null
               ? undefined
               : () =>
-                  openRecordProblemPlay(navigate, {
-                    playPath: game.playPath,
-                    difficulty,
-                    problemId: anyProblemId,
-                  }),
+                  openRecordProblemPlay(
+                    navigate,
+                    {
+                      playPath: game.playPath,
+                      difficulty,
+                      problemId: anyProblemId,
+                    },
+                    { fromGameHome: true },
+                  ),
           );
         }
         return problemId;
       },
       onPlayProblem({ difficulty, problemId }) {
-        openRecordProblemPlay(navigate, {
-          playPath: game.playPath,
-          difficulty,
-          problemId,
-        });
+        openRecordProblemPlay(
+          navigate,
+          {
+            playPath: game.playPath,
+            difficulty,
+            problemId,
+          },
+          { fromGameHome: true },
+        );
       },
       describeProblem,
       featureAxes: game.problemFeatureFilter.axes,

@@ -74,6 +74,8 @@ export function NanpurePlay({
   onStartNewProblem,
   onOpenGameHome,
   onBackToAppHome,
+  onOpenHowToPlay,
+  onOpenTutorial,
   onClearAnimationComplete,
   onOpenDiagnostics,
   renderSettingsDialog,
@@ -105,6 +107,8 @@ export function NanpurePlay({
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
+      onOpenHowToPlay={onOpenHowToPlay}
+      onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (

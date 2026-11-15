@@ -3,7 +3,6 @@ import {
   type CompletedGamePlay,
   usePlayableGame,
 } from "@/app/game-integration/playable-game";
-import { useRequestedProblem } from "@/app/navigation/problem-id-query";
 import { createParkingJamDiagnosticSnapshot } from "@/games/parking-jam/diagnostics";
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import {
@@ -23,8 +22,7 @@ import type { ProblemId } from "@/games/problem-id";
 
 type PlayableParkingJamProps = {
   difficulty: ParkingJamDifficulty;
-  /** URL の問題 ID で問題を指定したときは使わない。 */
-  avoidedProblemId?: ProblemId;
+  problemId: ProblemId;
 };
 
 function createPlayRecord(
@@ -42,15 +40,16 @@ function createPlayRecord(
 
 export function PlayableParkingJam({
   difficulty,
-  avoidedProblemId,
+  problemId,
 }: PlayableParkingJamProps) {
-  const requestedProblem = useRequestedProblem((problemId) =>
-    selectParkingJamProblemById(difficulty, problemId),
-  );
+  const requestedProblem = selectParkingJamProblemById(difficulty, problemId);
+  if (requestedProblem === null)
+    throw new Error("指定された問題を復元できません");
   const play = useParkingJamPlay(
     difficulty,
     requestedProblem,
-    avoidedProblemId,
+    undefined,
+    problemId,
   );
   const { screenProps, diagnostics } = usePlayableGame({
     game: parkingJamCatalogEntry,

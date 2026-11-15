@@ -1,6 +1,5 @@
 import { usePlayableGame } from "@/app/game-integration/playable-game";
 import { waterSortCatalogEntry } from "@/app/game-integration/water-sort/water-sort-catalog-entry";
-import { useRequestedProblem } from "@/app/navigation/problem-id-query";
 import type { ProblemId } from "@/games/problem-id";
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
@@ -16,18 +15,22 @@ import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
 
 type PlayableWaterSortProps = {
   difficulty: WaterSortDifficulty;
-  /** URL の問題 ID で問題を指定したときは使わない。 */
-  avoidedProblemId?: ProblemId;
+  problemId: ProblemId;
 };
 
 export function PlayableWaterSort({
   difficulty,
-  avoidedProblemId,
+  problemId,
 }: PlayableWaterSortProps) {
-  const requestedProblem = useRequestedProblem((problemId) =>
-    selectWaterSortProblemById(difficulty, problemId),
+  const requestedProblem = selectWaterSortProblemById(difficulty, problemId);
+  if (requestedProblem === null)
+    throw new Error("指定された問題を復元できません");
+  const play = useWaterSortPlay(
+    difficulty,
+    requestedProblem,
+    undefined,
+    problemId,
   );
-  const play = useWaterSortPlay(difficulty, requestedProblem, avoidedProblemId);
   const { screenProps, diagnostics } = usePlayableGame({
     game: waterSortCatalogEntry,
     play,

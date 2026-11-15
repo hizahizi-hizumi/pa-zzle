@@ -31,7 +31,7 @@ export const waterSortCatalogEntry = {
   pictogramSvg,
   pictogramShowcaseSvg,
   homePath: "/puzzles/water-sort",
-  playPath: "/puzzles/water-sort/play/:difficulty",
+  playPath: "/puzzles/water-sort/play/:problemId",
   playRecordDisplay: waterSortPlayRecordDisplay,
   recordProblemPlayTarget(record) {
     return isWaterSortPlayRecord(record)

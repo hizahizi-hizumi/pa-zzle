@@ -88,11 +88,16 @@ export function startPlayAttempt(
   attempt: PlayAttempt,
   storage: PlayRecordStorage | null = getDefaultStorage(),
 ): void {
-  updatePlayAttempts(storage, (attempts) =>
-    attempts.some((existing) => isSamePlayStart(existing, attempt))
+  updatePlayAttempts(storage, (attempts) => {
+    const existing = attempts.find((entry) => isSamePlayStart(entry, attempt));
+    if (!existing) return [...attempts, attempt];
+    // 戻る・再読み込みから同じ挑戦へ復帰した場合は離脱扱いを解除する。
+    return existing.abandonment === null
       ? null
-      : [...attempts, attempt],
-  );
+      : attempts.map((entry) =>
+          entry === existing ? { ...entry, abandonment: null } : entry,
+        );
+  });
 }
 
 export function abandonPlayAttempt(

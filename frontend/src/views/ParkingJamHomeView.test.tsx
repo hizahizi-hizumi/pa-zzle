@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { parkingJamCatalogEntry } from "@/app/game-integration/parking-jam/parking-jam-catalog-entry";
@@ -54,8 +60,13 @@ describe("ParkingJamHomeView", () => {
     router = createMemoryRouter(
       [
         { path: "/puzzles/parking-jam", element: <ParkingJamHomeView /> },
+        { path: "/puzzles/parking-jam/how-to", element: <p>遊び方の画面</p> },
         {
-          path: "/puzzles/parking-jam/play/:difficulty",
+          path: "/puzzles/parking-jam/tutorial",
+          element: <p>チュートリアルの画面</p>,
+        },
+        {
+          path: "/puzzles/parking-jam/play/:problemId",
           element: <p>プレイ画面</p>,
         },
       ],
@@ -85,9 +96,11 @@ describe("ParkingJamHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/parking-jam/how-to",
+      ),
+    );
   });
 
   test("見出しのメニューからチュートリアルを開けること", async () => {
@@ -97,12 +110,11 @@ describe("ParkingJamHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
 
-    const dialog = await screen.findByRole("dialog", {
-      name: "パーキングジャム",
-      description: "チュートリアル",
-    });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/parking-jam/tutorial",
+      ),
+    );
   });
 
   test("戻るリンクでホームへ戻れること", () => {
@@ -119,6 +131,8 @@ describe("ParkingJamHomeView", () => {
 
     const { pathname } = router.state.location;
 
-    expect(pathname).toBe("/puzzles/parking-jam/play/3");
+    const problemId = pathname.replace("/puzzles/parking-jam/play/", "");
+
+    expect(parkingJamCatalogEntry.listPoolProblemIds("3")).toContain(problemId);
   });
 });

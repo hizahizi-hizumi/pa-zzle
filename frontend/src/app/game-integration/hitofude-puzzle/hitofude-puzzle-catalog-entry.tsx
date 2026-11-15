@@ -31,7 +31,7 @@ export const hitofudePuzzleCatalogEntry = {
   pictogramSvg,
   pictogramShowcaseSvg,
   homePath: "/puzzles/hitofude-puzzle",
-  playPath: "/puzzles/hitofude-puzzle/play/:difficulty",
+  playPath: "/puzzles/hitofude-puzzle/play/:problemId",
   playRecordDisplay: hitofudePuzzlePlayRecordDisplay,
   recordProblemPlayTarget(record) {
     return isHitofudePuzzlePlayRecord(record)

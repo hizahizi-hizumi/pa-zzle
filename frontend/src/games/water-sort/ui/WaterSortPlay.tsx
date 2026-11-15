@@ -59,6 +59,8 @@ export function WaterSortPlay({
   onClearAnimationComplete,
   onOpenGameHome,
   onBackToAppHome,
+  onOpenHowToPlay,
+  onOpenTutorial,
   onOpenDiagnostics,
   renderSettingsDialog,
 }: WaterSortPlayProps) {
@@ -83,6 +85,8 @@ export function WaterSortPlay({
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
+      onOpenHowToPlay={onOpenHowToPlay}
+      onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (

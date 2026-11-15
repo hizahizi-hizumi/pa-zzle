@@ -31,7 +31,7 @@ export const nanpureCatalogEntry = {
   pictogramSvg,
   pictogramShowcaseSvg,
   homePath: "/puzzles/nanpure",
-  playPath: "/puzzles/nanpure/play/:difficulty",
+  playPath: "/puzzles/nanpure/play/:problemId",
   playRecordDisplay: nanpurePlayRecordDisplay,
   recordProblemPlayTarget(record) {
     return isNanpurePlayRecord(record)

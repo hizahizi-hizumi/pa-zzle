@@ -31,7 +31,7 @@ export const slidePuzzleCatalogEntry = {
   pictogramSvg,
   pictogramShowcaseSvg,
   homePath: "/puzzles/slide-puzzle",
-  playPath: "/puzzles/slide-puzzle/play/:difficulty",
+  playPath: "/puzzles/slide-puzzle/play/:problemId",
   playRecordDisplay: slidePuzzlePlayRecordDisplay,
   recordProblemPlayTarget(record) {
     return isSlidePuzzlePlayRecord(record)

@@ -134,7 +134,7 @@ function renderAt(path: string, { strict = false } = {}) {
         path: "/puzzles/minesweeper",
         element: <GameHome game={minesweeperGame} />,
       },
-      { path: "/puzzles/nanpure/play/:difficulty", element: <PlayLocation /> },
+      { path: "/puzzles/nanpure/play/:problemId", element: <PlayLocation /> },
     ],
     { initialEntries: [path] },
   );
@@ -283,10 +283,10 @@ describe("useGameHome", () => {
           within(getDetail()).getByRole("button", { name: "遊ぶ" }),
         );
 
-        expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/2");
-        expect(router.state.location.search).toBe(
-          `?problem=${createProblemId(solvedProblem.identity)}`,
+        expect(router.state.location.pathname).toBe(
+          `/puzzles/nanpure/play/${createProblemId(solvedProblem.identity)}`,
         );
+        expect(router.state.location.search).toBe("");
       });
     });
 
@@ -316,22 +316,21 @@ describe("useGameHome", () => {
         fireEvent.click(
           within(getDetail()).getByRole("button", { name: "遊ぶ" }),
         );
-        const problemId = new URLSearchParams(router.state.location.search).get(
-          "problem",
-        );
+        const { pathname, search } = router.state.location;
+        const problemId = pathname.replace("/puzzles/nanpure/play/", "");
 
-        expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/4");
-        expect(selectNanpureProblemById("4", problemId ?? "")).not.toBeNull();
+        expect(search).toBe("");
+        expect(selectNanpureProblemById("4", problemId)).not.toBeNull();
       });
     });
 
     test("ランダムに遊ぶを押すと、開いているレベルのプレイ画面を開くこと", () => {
       fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
 
-      expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/4");
-      const problemId = new URLSearchParams(router.state.location.search).get(
-        "problem",
-      );
+      const { pathname, search } = router.state.location;
+      const problemId = pathname.replace("/puzzles/nanpure/play/", "");
+
+      expect(search).toBe("");
       expect(nanpureGame.listPoolProblemIds("4")).toContain(problemId);
     });
   });
@@ -346,12 +345,11 @@ describe("useGameHome", () => {
       router = renderAt(`/puzzles/nanpure?problem=${requestedProblemId}`);
     });
 
-    test("読んだ問題 ID を、履歴を増やさずに URL から外すこと", () => {
-      const { location, historyAction } = router.state;
+    test("問題 ID を URL に残して直接アクセスした問題を示すこと", () => {
+      const { location } = router.state;
 
       expect(location.pathname).toBe("/puzzles/nanpure");
-      expect(location.search).toBe("");
-      expect(historyAction).toBe("REPLACE");
+      expect(location.search).toBe(`?problem=${requestedProblemId}`);
     });
 
     test("その問題のレベルを開き、その問題を選んで詳細を出すこと", () => {
@@ -578,7 +576,12 @@ describe("useGameHome", () => {
     test("ランダムに遊ぶを押すと、最も低いレベルのプレイ画面を開くこと", () => {
       fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
 
-      expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/1");
+      const problemId = router.state.location.pathname.replace(
+        "/puzzles/nanpure/play/",
+        "",
+      );
+
+      expect(nanpureGame.listPoolProblemIds("1")).toContain(problemId);
     });
   });
   describe("pickRandomProblemId", () => {
@@ -654,9 +657,9 @@ describe("useGameHome", () => {
           randomProblemUnavailable.getSnapshot()?.onPlayAny?.();
         });
         const { pathname, search } = router.state.location;
-        const problemId = new URLSearchParams(search).get("problem");
+        const problemId = pathname.replace("/puzzles/nanpure/play/", "");
 
-        expect(pathname).toBe("/puzzles/nanpure/play/1");
+        expect(search).toBe("");
         expect(nanpureGame.listPoolProblemIds("1")).toContain(problemId);
       });
     });

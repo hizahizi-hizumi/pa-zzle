@@ -5,46 +5,48 @@ import { components, hooks, utils } from '@generouted/react-router/client'
 
 export type Path =
   | `/`
+  | `/puzzles/:game/how-to`
   | `/puzzles/:game/result/:recordId`
-  | `/puzzles/:game/zukan`
+  | `/puzzles/:game/tutorial`
   | `/puzzles/bridges`
-  | `/puzzles/bridges/play/:difficulty`
+  | `/puzzles/bridges/play/:problemId`
   | `/puzzles/hitofude-puzzle`
-  | `/puzzles/hitofude-puzzle/play/:difficulty`
+  | `/puzzles/hitofude-puzzle/play/:problemId`
   | `/puzzles/ice-floor-maze`
-  | `/puzzles/ice-floor-maze/play/:difficulty`
+  | `/puzzles/ice-floor-maze/play/:problemId`
   | `/puzzles/minesweeper`
-  | `/puzzles/minesweeper/play/:difficulty`
+  | `/puzzles/minesweeper/play/:problemId`
   | `/puzzles/nanpure`
-  | `/puzzles/nanpure/play/:difficulty`
+  | `/puzzles/nanpure/play/:problemId`
   | `/puzzles/parking-jam`
-  | `/puzzles/parking-jam/play/:difficulty`
+  | `/puzzles/parking-jam/play/:problemId`
   | `/puzzles/reflection`
-  | `/puzzles/reflection/play/:difficulty`
+  | `/puzzles/reflection/play/:problemId`
   | `/puzzles/slide-puzzle`
-  | `/puzzles/slide-puzzle/play/:difficulty`
+  | `/puzzles/slide-puzzle/play/:problemId`
   | `/puzzles/takuzu`
-  | `/puzzles/takuzu/play/:difficulty`
+  | `/puzzles/takuzu/play/:problemId`
   | `/puzzles/tsume-shogi`
-  | `/puzzles/tsume-shogi/play/:difficulty`
+  | `/puzzles/tsume-shogi/play/:problemId`
   | `/puzzles/water-sort`
-  | `/puzzles/water-sort/play/:difficulty`
+  | `/puzzles/water-sort/play/:problemId`
   | `/records`
 
 export type Params = {
+  '/puzzles/:game/how-to': { game: string }
   '/puzzles/:game/result/:recordId': { game: string; recordId: string }
-  '/puzzles/:game/zukan': { game: string }
-  '/puzzles/bridges/play/:difficulty': { difficulty: string }
-  '/puzzles/hitofude-puzzle/play/:difficulty': { difficulty: string }
-  '/puzzles/ice-floor-maze/play/:difficulty': { difficulty: string }
-  '/puzzles/minesweeper/play/:difficulty': { difficulty: string }
-  '/puzzles/nanpure/play/:difficulty': { difficulty: string }
-  '/puzzles/parking-jam/play/:difficulty': { difficulty: string }
-  '/puzzles/reflection/play/:difficulty': { difficulty: string }
-  '/puzzles/slide-puzzle/play/:difficulty': { difficulty: string }
-  '/puzzles/takuzu/play/:difficulty': { difficulty: string }
-  '/puzzles/tsume-shogi/play/:difficulty': { difficulty: string }
-  '/puzzles/water-sort/play/:difficulty': { difficulty: string }
+  '/puzzles/:game/tutorial': { game: string }
+  '/puzzles/bridges/play/:problemId': { problemId: string }
+  '/puzzles/hitofude-puzzle/play/:problemId': { problemId: string }
+  '/puzzles/ice-floor-maze/play/:problemId': { problemId: string }
+  '/puzzles/minesweeper/play/:problemId': { problemId: string }
+  '/puzzles/nanpure/play/:problemId': { problemId: string }
+  '/puzzles/parking-jam/play/:problemId': { problemId: string }
+  '/puzzles/reflection/play/:problemId': { problemId: string }
+  '/puzzles/slide-puzzle/play/:problemId': { problemId: string }
+  '/puzzles/takuzu/play/:problemId': { problemId: string }
+  '/puzzles/tsume-shogi/play/:problemId': { problemId: string }
+  '/puzzles/water-sort/play/:problemId': { problemId: string }
 }
 
 export type ModalPath = never

@@ -5,7 +5,6 @@ import {
   usePlayableGame,
 } from "@/app/game-integration/playable-game";
 import { tsumeShogiCatalogEntry } from "@/app/game-integration/tsume-shogi/tsume-shogi-catalog-entry";
-import { useRequestedProblem } from "@/app/navigation/problem-id-query";
 import type { ProblemId } from "@/games/problem-id";
 import { createTsumeShogiDiagnosticSnapshot } from "@/games/tsume-shogi/diagnostics";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
@@ -25,21 +24,21 @@ import { TsumeShogiPlay } from "@/games/tsume-shogi/ui/TsumeShogiPlay";
 
 type PlayableTsumeShogiProps = {
   difficulty: TsumeShogiDifficulty;
-  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
-  avoidedProblemId?: ProblemId;
+  problemId: ProblemId;
 };
 
 export function PlayableTsumeShogi({
   difficulty,
-  avoidedProblemId,
+  problemId,
 }: PlayableTsumeShogiProps) {
-  const requestedProblem = useRequestedProblem((problemId) =>
-    selectTsumeShogiProblemById(difficulty, problemId),
-  );
+  const requestedProblem = selectTsumeShogiProblemById(difficulty, problemId);
+  if (requestedProblem === null)
+    throw new Error("指定された問題を復元できません");
   const play = useTsumeShogiPlay(
     difficulty,
     requestedProblem,
-    avoidedProblemId,
+    undefined,
+    problemId,
   );
   const { poolReference } = play;
   // 記録には遊んだ問題の問題集の位置も残す。問題が替わるまでは同じ関数を渡し、記録を作り直さない。
