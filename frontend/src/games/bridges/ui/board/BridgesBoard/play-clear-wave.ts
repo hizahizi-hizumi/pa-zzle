@@ -16,6 +16,7 @@ import { MOTION_EASING, playAnimations } from "@/lib/motion";
 const CLEAR_HOLD_MS = 520;
 /** 光が渡る時間が無い分を足す。 */
 const REDUCED_MOTION_CLEAR_HOLD_MS = 2_000;
+const DECK_SPREAD_EASING = "linear";
 
 /** 段の違う島を結ぶ板は、段の浅い島の中心を起点に、相手の島へ向けて明るい木の色を伸ばす。 */
 function collapsedTransform(axis: string | null): string {
@@ -75,7 +76,12 @@ export function playClearWave(
               { transform: collapsedTransform(deck.getAttribute("data-axis")) },
               { transform: "none" },
             ],
-            { duration: stepMs, delay, easing: "linear", fill: "backwards" },
+            {
+              duration: stepMs,
+              delay,
+              easing: DECK_SPREAD_EASING,
+              fill: "backwards",
+            },
           );
         },
       );
