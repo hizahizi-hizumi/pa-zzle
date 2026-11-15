@@ -14,8 +14,8 @@ import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureCle
 import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 import { NanpureGround } from "@/games/nanpure/ui/NanpureGround";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
+import { NanpureInputPanel } from "@/games/nanpure/ui/NanpurePlay/NanpureInputPanel";
 import { NanpureTutorial } from "@/games/nanpure/ui/NanpureTutorial";
-import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
 import { useNanpureSoundEffects } from "@/games/nanpure/ui/use-nanpure-sound-effects";
 import type {

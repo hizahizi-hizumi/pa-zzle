@@ -1,8 +1,8 @@
 import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import type { MinesweeperCellCue } from "@/games/minesweeper/ui/board/cell-cue";
+import { MinesweeperCell } from "@/games/minesweeper/ui/board/MinesweeperBoard/MinesweeperCell";
 import { MinesweeperBoardGrid } from "@/games/minesweeper/ui/board/MinesweeperBoardGrid";
-import { MinesweeperCell } from "@/games/minesweeper/ui/board/MinesweeperCell";
 
 export type MinesweeperInputMode = "reveal" | "flag";
 
