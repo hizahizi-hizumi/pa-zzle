@@ -360,7 +360,7 @@ export function findMinesweeperCertainCells(
 /**
  * 初期状態から、確実に言えるマスを全て確定・開示することを繰り返し、推測なしで全安全マスを開けられるかを判定する。
  */
-export function solveMinesweeperLogically(
+function solveMinesweeperLogically(
   problem: MinesweeperProblem,
   options: MinesweeperSolverOptions = {},
 ): MinesweeperLogicalSolveResult {
@@ -383,6 +383,7 @@ export function solveMinesweeperLogically(
 }
 
 export const _private = {
+  solveMinesweeperLogically,
   splitConstraintComponents,
   selectMineCountsConsistentWithTotal,
 };

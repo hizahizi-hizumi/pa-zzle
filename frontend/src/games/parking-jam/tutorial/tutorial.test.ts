@@ -12,7 +12,6 @@ import {
   listParkingJamMoveBlockers,
 } from "@/games/parking-jam/puzzle/rules";
 import {
-  findParkingJamTutorialBlocker,
   findParkingJamTutorialContact,
   findParkingJamTutorialDecider,
   findParkingJamTutorialHintVehicle,
@@ -22,6 +21,7 @@ import {
   type ParkingJamTutorialBoardState,
   type ParkingJamTutorialRuleId,
   parkingJamTutorial,
+  _private as tutorialPrivate,
 } from "@/games/parking-jam/tutorial/tutorial";
 import {
   finishTutorialIntro,
@@ -31,6 +31,8 @@ import {
   startTutorial,
   type TutorialProgress,
 } from "@/games/tutorial";
+
+const { findParkingJamTutorialBlocker } = tutorialPrivate;
 
 type Progress = TutorialProgress<
   ParkingJamTutorialRuleId,

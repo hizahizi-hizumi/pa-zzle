@@ -260,7 +260,7 @@ export function listParkingJamProblemPoolCandidateConditions(): ParkingJamGenera
   );
 }
 
-export function generateParkingJamDifficultyCandidate(
+function generateParkingJamDifficultyCandidate(
   seed: ProblemSeed,
   conditions: ParkingJamGenerationConditions,
 ): ParkingJamGeneratedProblem {
@@ -270,3 +270,5 @@ export function generateParkingJamDifficultyCandidate(
     maximumAttempts: MAXIMUM_CANDIDATE_GENERATION_ATTEMPTS,
   });
 }
+
+export const _private = { generateParkingJamDifficultyCandidate };

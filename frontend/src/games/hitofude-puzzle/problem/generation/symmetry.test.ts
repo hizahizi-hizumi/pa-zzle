@@ -2,10 +2,14 @@ import { countHitofudePuzzleSolutions } from "@/games/hitofude-puzzle/problem/ge
 import {
   getHitofudePuzzleSymmetryKey,
   listHitofudePuzzleBoardSymmetries,
-  mirrorHitofudePuzzleBoardLeftRight,
-  rotateHitofudePuzzleBoardClockwise,
+  _private as symmetryPrivate,
 } from "@/games/hitofude-puzzle/problem/generation/symmetry";
 import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
+
+const {
+  rotateHitofudePuzzleBoardClockwise,
+  mirrorHitofudePuzzleBoardLeftRight,
+} = symmetryPrivate;
 
 describe("rotateHitofudePuzzleBoardClockwise", () => {
   const board = parseHitofudePuzzleBoard(["S . .", ". . #", "# . ."]);

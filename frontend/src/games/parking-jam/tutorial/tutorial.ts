@@ -173,7 +173,7 @@ export function findParkingJamTutorialContact(
   return findParkingJamExitContact(board, puzzle, move);
 }
 
-export function findParkingJamTutorialBlocker(
+function findParkingJamTutorialBlocker(
   puzzle: ParkingJamState,
   move: ParkingJamMove,
 ): ParkingJamTutorialBlocker | null {
@@ -333,3 +333,5 @@ export const parkingJamTutorial: Tutorial<
   perform: performParkingJamTutorialAction,
   describeViolation: describeParkingJamTutorialViolation,
 };
+
+export const _private = { findParkingJamTutorialBlocker };

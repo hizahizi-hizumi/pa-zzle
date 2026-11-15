@@ -376,10 +376,12 @@ export function countHitofudePuzzleSolutions(
   return search.run(board.start);
 }
 
-export function isHitofudePuzzleUniquelySolvable(
+function isHitofudePuzzleUniquelySolvable(
   board: HitofudePuzzleBoard,
   searchStepLimit = HITOFUDE_PUZZLE_UNIQUENESS_SEARCH_STEP_LIMIT,
 ): boolean {
   const result = countHitofudePuzzleSolutions(board, { searchStepLimit });
   return result.status === "complete" && result.solutionCount === 1;
 }
+
+export const _private = { isHitofudePuzzleUniquelySolvable };

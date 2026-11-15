@@ -12,7 +12,9 @@ import {
   createIceFloorMazeInitialState,
   type IceFloorMazeState,
 } from "@/games/ice-floor-maze/puzzle/state";
-import { exploreIceFloorMazeStops } from "@/games/ice-floor-maze/puzzle/stop-graph";
+import { _private as stopGraphPrivate } from "@/games/ice-floor-maze/puzzle/stop-graph";
+
+const { exploreIceFloorMazeStops } = stopGraphPrivate;
 
 function slideInOrder(
   board: IceFloorMazeBoard,

@@ -40,13 +40,13 @@ function thenTransform(
   };
 }
 
-export function rotateHitofudePuzzleBoardClockwise(
+function rotateHitofudePuzzleBoardClockwise(
   board: HitofudePuzzleBoard,
 ): HitofudePuzzleBoard {
   return transformBoard(board, rotateCellClockwise(board.size));
 }
 
-export function mirrorHitofudePuzzleBoardLeftRight(
+function mirrorHitofudePuzzleBoardLeftRight(
   board: HitofudePuzzleBoard,
 ): HitofudePuzzleBoard {
   return transformBoard(board, mirrorCellLeftRight(board.size));
@@ -97,3 +97,8 @@ export function getHitofudePuzzleSymmetryKey(
   );
   return keys.reduce((minimum, key) => (key < minimum ? key : minimum));
 }
+
+export const _private = {
+  rotateHitofudePuzzleBoardClockwise,
+  mirrorHitofudePuzzleBoardLeftRight,
+};

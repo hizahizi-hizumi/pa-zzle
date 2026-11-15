@@ -9,11 +9,13 @@ import {
   restoreParkingJamProblemWithoutAnalysis,
 } from "@/games/parking-jam/problem/generator";
 import {
-  getParkingJamProblemPoolDifficultyModelVersion,
   listParkingJamPoolEntries,
+  _private as problemPoolPrivate,
   toParkingJamPoolIdentity,
 } from "@/games/parking-jam/problem/problem-pool";
 import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
+
+const { getParkingJamProblemPoolDifficultyModelVersion } = problemPoolPrivate;
 
 const difficulties = difficultyLevels.map(({ id }) => id);
 

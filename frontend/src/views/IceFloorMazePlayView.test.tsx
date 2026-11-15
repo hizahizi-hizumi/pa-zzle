@@ -22,15 +22,15 @@ import type {
 } from "@/games/ice-floor-maze/problem/problem";
 import { selectIceFloorMazeProblemForDifficulty } from "@/games/ice-floor-maze/problem-selection";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
-import {
-  exploreIceFloorMazeStops,
-  listIceFloorMazeStopMoves,
-} from "@/games/ice-floor-maze/puzzle/stop-graph";
+import { _private as stopGraphPrivate } from "@/games/ice-floor-maze/puzzle/stop-graph";
 import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";
 import { testPlayUrl } from "@/testing/play-url";
 import { IceFloorMazePlayView } from "@/views/IceFloorMazePlayView";
 import { PlayResultView } from "@/views/PlayResultView";
+
+const { exploreIceFloorMazeStops, listIceFloorMazeStopMoves } =
+  stopGraphPrivate;
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
 
