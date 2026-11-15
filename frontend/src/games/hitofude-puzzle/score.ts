@@ -10,19 +10,13 @@ import {
   sumPlayScore,
 } from "@/games/score";
 
-/**
- * 配点・減点幅・基準時間の係数はすべて暫定値で、実プレイで校正する（`ハミルトン路成績評価.md`）。
- */
+/** 配点・減点幅と基準時間の係数は、人の実プレイによる校正前の値。 */
 export const HITOFUDE_PUZZLE_SCORE_MAXIMUMS = {
-  speed: 60,
-  accuracy: 40,
+  speed: 80,
+  accuracy: 20,
 } as const satisfies ScoreMaximums<"speed" | "accuracy">;
 
-/**
- * 引き直し1回ごとの正確さの減点（暫定値）。
- * 押し間違いを直した程度（3回まで）なら、ほかが満点で great に残る。
- */
-export const HITOFUDE_PUZZLE_BACKTRACK_PENALTY = 3;
+export const HITOFUDE_PUZZLE_BACKTRACK_PENALTY = 1;
 
 /** 基準時間の係数（暫定値）。盤面を見渡して始める時間。 */
 export const HITOFUDE_PUZZLE_SPEED_INITIAL_RECOGNITION_MS = 5_000;
@@ -44,7 +38,7 @@ export const HITOFUDE_PUZZLE_SPEED_REFUTATION_STEP_LIMIT = 45;
 /**
  * 0点になる時間の、基準時間に対する倍率（暫定値）。
  * 先読みを要する問題は読みの当たり外れで時間がぶれるので、バイナリパズル（2倍）より緩くし、
- * 基準時間の1.2倍で速さ −6点、1.5倍で −15点にとどめる。
+ * 基準時間の1.2倍で速さ −8点、1.5倍で −20点にとどめる。
  */
 export const HITOFUDE_PUZZLE_SPEED_ZERO_SCORE_RATIO = 3;
 
