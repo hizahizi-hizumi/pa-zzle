@@ -66,7 +66,7 @@ argument-hint: "<パズル名かゲーム ID> [作り直す理由 | プレイ記
 同じ問題に先に当たったゲーム。値や特徴を流用せず、作り方と失敗の型を読む。
 
 - リフレクション: `docs/パズル/導入調査/リフレクション/リフレクション難易度.md`（難易度の資料の型の手本。§8・§16〜18 は、一致表示のもとでの試し置きを分類に入れた作り直しと、記録から帯の中のばらつきを測った例）、`frontend/src/games/reflection/problem/generation/trial-solver.ts`（素朴な解き方を `problem/generation/` に置いた例）。
-- パーキングジャム: `docs/パズル/パーキングジャム難易度.md`・`パーキングジャム採点.md`、`frontend/src/games/parking-jam/difficulty.ts`・`problem/difficulty-analysis.ts`、`frontend/scripts/generate-parking-jam-problem-pool.ts`。3系統のつまみ、規模を「許す範囲」として組む形、組み合わせ外の扱い、問題特徴から求める基準時間、判定モデル版。
+- パーキングジャム: `docs/パズル/導入調査/パーキングジャム/パーキングジャム難易度.md`・`docs/パズル/導入調査/パーキングジャム/パーキングジャム採点.md`、`frontend/src/games/parking-jam/difficulty.ts`・`problem/difficulty-analysis.ts`、`frontend/scripts/generate-parking-jam-problem-pool.ts`。3系統のつまみ、規模を「許す範囲」として組む形、組み合わせ外の扱い、問題特徴から求める基準時間、判定モデル版。
 - ウォーターソート: `frontend/src/games/water-sort/problem/natural-play.ts`。素朴な解き方で自然に詰む割合を測る例。
 - ノノグラム（失敗の例としてだけ。main に未マージ）: `git -C <root> show origin/ng/07-spec:"docs/パズル/導入調査/ノノグラム/ノノグラム難易度.md"` の §4.1。解法器の量はきれいに上がるのに手応えが揃っていた失敗と、図柄の規則が近道になった失敗。
 
