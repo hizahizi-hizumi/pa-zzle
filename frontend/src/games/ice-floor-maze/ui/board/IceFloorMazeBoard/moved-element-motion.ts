@@ -17,6 +17,7 @@ const MOUND_RISE_DURATION_MS = 240;
 
 /** 押された塊が止まった瞬間、進んだ向きに少しつぶれて戻る。駒のつぶれより浅く、重い塊が止まったと読ませる。 */
 const BLOCK_STOP_DURATION_MS = 180;
+const BLOCK_SLIDE_EASING = "linear";
 const BLOCK_STOP_SQUASH = 0.9;
 const BLOCK_STOP_STRETCH = 1.06;
 
@@ -81,7 +82,7 @@ export function animateIceFloorMazeMovedElements(
           {
             duration: stopMs - contactMs,
             delay: contactMs,
-            easing: "linear",
+            easing: BLOCK_SLIDE_EASING,
             fill: "backwards",
           },
         ),

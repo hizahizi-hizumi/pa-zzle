@@ -18,6 +18,7 @@ const HEAD_SHAKE_DISTANCE = 0.08;
  * 次の操作の邪魔にならないよう、1秒で消し切る。
  */
 const BLOCKED_MARK_DURATION_MS = 1_000;
+const BLOCKED_MARK_EASING = "ease-out";
 const blockedMarkKeyframes: Keyframe[] = [
   { opacity: 0 },
   { opacity: 1, offset: 0.05 },
@@ -77,7 +78,7 @@ export function animateBlockedMove(
       ?.querySelector(`[${hitofudePuzzleFigureParts.blockedMark}]`)
       ?.animate?.(blockedMarkKeyframes, {
         duration: BLOCKED_MARK_DURATION_MS,
-        easing: "ease-out",
+        easing: BLOCKED_MARK_EASING,
       });
   }
 }

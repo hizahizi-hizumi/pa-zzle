@@ -3,6 +3,7 @@ import { prefersReducedMotion } from "@/lib/motion";
 
 /** 先端が行き止まりになった瞬間に、輪を一度だけ膨らませて戻す。指に隠れた先端の変化にも気づけるようにする。 */
 const DEAD_END_PULSE_DURATION_MS = 360;
+const DEAD_END_PULSE_EASING = "ease-out";
 const deadEndPulseKeyframes: Keyframe[] = [
   { transform: "scale(1)" },
   { transform: "scale(1.3)", offset: 0.35 },
@@ -16,6 +17,6 @@ export function animateDeadEnd(figure: SVGSVGElement | null): void {
   }
   head.animate(deadEndPulseKeyframes, {
     duration: DEAD_END_PULSE_DURATION_MS,
-    easing: "ease-out",
+    easing: DEAD_END_PULSE_EASING,
   });
 }
