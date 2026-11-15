@@ -11,7 +11,7 @@ import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
 describe("countBridgesSolutions", () => {
-  describe("研究用の解法器（scripts/research/bridges_parity_cases.py）で数えた盤面の場合", () => {
+  describe("研究用の解法器（docs/パズル/導入調査/橋をかけろ/調査コード/bridges_parity_cases.py）で数えた盤面の場合", () => {
     const cases = researchCases.map((researchCase) => ({
       ...researchCase,
       parsed: parseBridgesBoard(researchCase.board.split("/")),

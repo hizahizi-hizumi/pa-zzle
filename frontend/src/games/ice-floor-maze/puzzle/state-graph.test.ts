@@ -246,7 +246,7 @@ describe("exploreIceFloorMazeStates", () => {
 
   describe("研究用 Python の生成 v4 の試遊候補の場合", () => {
     // docs/パズル/導入調査/氷の床迷路/作り直し資料/試遊ページv4.html の9問。期待値は
-    // scripts/research/ice_floor_hardest_generation_experiment.py の explore（ゴールつき）の状態の数と、
+    // docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hardest_generation_experiment.py の explore（ゴールつき）の状態の数と、
     // reverse_layers・canonical_solution の最短解。
     const candidates = [
       {
@@ -634,7 +634,7 @@ describe("exploreIceFloorMazeStates", () => {
   });
 
   describe("研究用 Python の生成 v6 の試遊候補の場合", () => {
-    // 押し出す雪・滑る氷の塊の試遊候補（q01〜q04）。期待値は scripts/research/ice_floor_persistent_generation_experiment.py の
+    // 押し出す雪・滑る氷の塊の試遊候補（q01〜q04）。期待値は docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_persistent_generation_experiment.py の
     // explore（ゴールつき）の状態の数と canonical_solution の最短解（persistent-reference.json と同じ値）。
     const candidates = [
       {

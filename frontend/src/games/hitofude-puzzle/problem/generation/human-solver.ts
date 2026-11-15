@@ -211,7 +211,7 @@ class StepTracker {
 
 /**
  * 辺ごとに「使う・使わない・未定」を決めていく、人間向けの解法器。終点は与えず、始点だけから推論する。
- * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py` の `HumanSolver`）は2辺カットと局面ごとの仮置きを
+ * 研究用 Python（`docs/パズル/導入調査/ハミルトン路/調査コード/hamiltonian_path_experiment.py` の `HumanSolver`）は2辺カットと局面ごとの仮置きを
  * 持たない解法器として凍結しており、この解法器とは経過が一致しない。
  */
 class HumanSolver {

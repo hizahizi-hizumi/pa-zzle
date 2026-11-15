@@ -7,7 +7,7 @@ import { ICE_FLOOR_MAZE_STATE_LIMIT } from "@/games/ice-floor-maze/puzzle/state-
 
 /**
  * 生成と難易度分析で使う、型付き配列の盤面と状態のグラフ。研究用の生成 v4・v5
- * （`scripts/research/ice_floor_hardest_generation_experiment.py`・`ice_floor_persistent_generation_experiment.py` の
+ * （`docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hardest_generation_experiment.py`・`ice_floor_persistent_generation_experiment.py` の
  * `Rules`・`explore`）と同じ手と状態を求める。
  * プレイ中の規則（`puzzle/rules.ts`・`puzzle/state-graph.ts`）と同じ動きで、山登りで何万回も解くために数で持つ。
  */

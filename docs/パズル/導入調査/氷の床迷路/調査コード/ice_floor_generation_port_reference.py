@@ -53,7 +53,7 @@ from ice_floor_tactic_generation_experiment import (  # noqa: E402
     weights_for,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[5]
 DEFAULT_OUTPUT = (
     REPO_ROOT
     / "frontend/src/games/ice-floor-maze/problem/generation/research-reference.json"

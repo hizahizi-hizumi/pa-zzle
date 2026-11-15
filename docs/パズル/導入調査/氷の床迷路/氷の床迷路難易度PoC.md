@@ -432,30 +432,30 @@ G....#..
 分析コード:
 
 ```text
-scripts/research/ice_floor_difficulty_experiment.py
+docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py
 ```
 
-問題成立性（BFS・詰み・同型判定）は [`scripts/research/ice_floor_supply_experiment.py`](../../../../scripts/research/ice_floor_supply_experiment.py) を共有する。Python標準ライブラリだけを使用する。既定seedは `20261031`。
+問題成立性（BFS・詰み・同型判定）は [`docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_supply_experiment.py`](調査コード/ice_floor_supply_experiment.py) を共有する。Python標準ライブラリだけを使用する。既定seedは `20261031`。
 
 ```sh
-python3 scripts/research/ice_floor_difficulty_experiment.py features --sizes 8 10 --samples 2000
-python3 scripts/research/ice_floor_difficulty_experiment.py levels --sizes 6 8 10 12 --samples 2000
-python3 scripts/research/ice_floor_difficulty_experiment.py robustness --sizes 8 10 --samples 2000
-python3 scripts/research/ice_floor_difficulty_experiment.py supply --sizes 6 8 10 12 --samples 500
-python3 scripts/research/ice_floor_difficulty_experiment.py local --sizes 8 10 --samples 30
-python3 scripts/research/ice_floor_difficulty_experiment.py variants --sizes 8 --samples 2000
-python3 scripts/research/ice_floor_difficulty_experiment.py variants --sizes 10 --samples 2000
-python3 scripts/research/ice_floor_difficulty_experiment.py examples --sizes 8 --samples 2000
-python3 scripts/research/ice_floor_difficulty_experiment.py contrast --sizes 8 --samples 2000 --contrast-d 6
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py features --sizes 8 10 --samples 2000
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py levels --sizes 6 8 10 12 --samples 2000
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py robustness --sizes 8 10 --samples 2000
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py supply --sizes 6 8 10 12 --samples 500
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py local --sizes 8 10 --samples 30
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py variants --sizes 8 --samples 2000
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py variants --sizes 10 --samples 2000
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py examples --sizes 8 --samples 2000
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py contrast --sizes 8 --samples 2000 --contrast-d 6
 ```
 
 盤面の大きさと形の追加計測。`--sizes` は `8`（8×8）または `9x12`（幅9・高さ12）で指定する。
 
 ```sh
-python3 scripts/research/ice_floor_difficulty_experiment.py cells --sizes 8 8x10 10 9x12 10x12 10x13 10x14 12 11x14 12x14 12x16 14
-python3 scripts/research/ice_floor_difficulty_experiment.py shapes --sizes 8 8x10 10 9x12 10x12 10x13 10x14 12 11x14 12x14 12x16 14 --samples 2000
-python3 scripts/research/ice_floor_difficulty_experiment.py supply --sizes 8 8x10 10 9x12 10x12 10x13 10x14 12 11x14 12x14 12x16 14 --samples 500
-python3 scripts/research/ice_floor_difficulty_experiment.py traps --sizes 8 8x10 10 9x12 10x12 10x13 10x14 12 11x14 12x14 12x16 14 --samples 2000
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py cells --sizes 8 8x10 10 9x12 10x12 10x13 10x14 12 11x14 12x14 12x16 14
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py shapes --sizes 8 8x10 10 9x12 10x12 10x13 10x14 12 11x14 12x14 12x16 14 --samples 2000
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py supply --sizes 8 8x10 10 9x12 10x12 10x13 10x14 12 11x14 12x14 12x16 14 --samples 500
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_difficulty_experiment.py traps --sizes 8 8x10 10 9x12 10x12 10x13 10x14 12 11x14 12x14 12x16 14 --samples 2000
 ```
 
 形ごとに乱数を作るので、形を1つずつ指定しても同じ結果になる。

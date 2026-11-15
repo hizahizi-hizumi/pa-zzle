@@ -8,7 +8,7 @@
 
 記述は次のように区別する。
 
-- **事実（実測）**: [`scripts/research/ice_floor_hard_generation_experiment.py`](../../../../scripts/research/ice_floor_hard_generation_experiment.py) で測った結果。条件と再現コマンドは §9。
+- **事実（実測）**: [`docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py`](調査コード/ice_floor_hard_generation_experiment.py) で測った結果。条件と再現コマンドは §9。
 - **事実（リポジトリ）**: 現在のコード・問題集から確かめたこと。
 - **推測**: 計測から導いた判断で、人間の実プレイで確かめていないもの。
 
@@ -303,19 +303,19 @@ G####...#...
 Python 標準ライブラリだけを使う。既定の seed は `20261101`。乱数はすべて seed と条件名から作るので、同じコマンドで同じ結果を得る（時間は環境に依存する）。`--workers` は並列数（既定4）。
 
 ```sh
-python3 scripts/research/ice_floor_hard_generation_experiment.py verify --samples 300
-python3 scripts/research/ice_floor_hard_generation_experiment.py methods --sizes 8 10 10x13 12 12x14 --runs 16 --iterations 8000 --methods random hc ga
-python3 scripts/research/ice_floor_hard_generation_experiment.py methods --sizes 8 12x14 --runs 16 --iterations 8000 --methods sa --temperature 0.5
-python3 scripts/research/ice_floor_hard_generation_experiment.py methods --sizes 8 12x14 --runs 16 --iterations 8000 --methods sa --temperature 1.5
-python3 scripts/research/ice_floor_hard_generation_experiment.py lengths --sizes 8 10 10x13 12 12x14 14 12x16 --runs 40 --iterations 8000
-python3 scripts/research/ice_floor_hard_generation_experiment.py density --sizes 8 10 12x14 --runs 16 --iterations 8000
-python3 scripts/research/ice_floor_hard_generation_experiment.py features --sizes 12x14 --runs 16 --iterations 8000
-python3 scripts/research/ice_floor_hard_generation_experiment.py objectives --sizes 8 10 10x13 12 12x14 --runs 16 --iterations 6000 --ranges 5-8 9-12 13-17 18-23 24-30
-python3 scripts/research/ice_floor_hard_generation_experiment.py levels --runs 64
-python3 scripts/research/ice_floor_hard_generation_experiment.py levels --runs 32 --objective length --seed 7
-python3 scripts/research/ice_floor_hard_generation_experiment.py levels --runs 32 --plan-iterations 6000 --seed 7
-python3 scripts/research/ice_floor_hard_generation_experiment.py levels --runs 32 --seed 7
-python3 scripts/research/ice_floor_hard_generation_experiment.py candidates --runs 40  # /tmp/hard-candidates.json
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py verify --samples 300
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py methods --sizes 8 10 10x13 12 12x14 --runs 16 --iterations 8000 --methods random hc ga
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py methods --sizes 8 12x14 --runs 16 --iterations 8000 --methods sa --temperature 0.5
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py methods --sizes 8 12x14 --runs 16 --iterations 8000 --methods sa --temperature 1.5
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py lengths --sizes 8 10 10x13 12 12x14 14 12x16 --runs 40 --iterations 8000
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py density --sizes 8 10 12x14 --runs 16 --iterations 8000
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py features --sizes 12x14 --runs 16 --iterations 8000
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py objectives --sizes 8 10 10x13 12 12x14 --runs 16 --iterations 6000 --ranges 5-8 9-12 13-17 18-23 24-30
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py levels --runs 64
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py levels --runs 32 --objective length --seed 7
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py levels --runs 32 --plan-iterations 6000 --seed 7
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py levels --runs 32 --seed 7
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py candidates --runs 40  # /tmp/hard-candidates.json
 ```
 
 - `features` は現行の問題集（`frontend/src/games/ice-floor-maze/problem/problem-pool.json`）を復号して全問を測り、`--sizes` の盤面で長さだけ・合成の目的関数で最大化した問題と並べる。
@@ -483,12 +483,12 @@ python3 scripts/research/ice_floor_hard_generation_experiment.py candidates --ru
 §9 と同じく標準ライブラリだけで、seed は既定の `20261101`。
 
 ```sh
-python3 scripts/research/ice_floor_hard_generation_experiment.py floor-verify --samples 300
-python3 scripts/research/ice_floor_hard_generation_experiment.py floors --runs 64 --floor-caps 0 2 4 6 8 2:1 4:1 6:2 8:2 --dump /tmp/floors.jsonl
-python3 scripts/research/ice_floor_hard_generation_experiment.py floors --runs 64 --levels 3 4 5 --floor-caps 4:1 --goal-on-floor
-python3 scripts/research/ice_floor_hard_generation_experiment.py floors --runs 64 --levels 3 4 5 --floor-caps 4:1 --start-on-floor
-python3 scripts/research/ice_floor_hard_generation_experiment.py floor-lengths --sizes 8 10 10x13 12 12x14 --runs 16 --iterations 8000 --floor-caps 0 2 4 8
-python3 scripts/research/ice_floor_hard_generation_experiment.py floor-candidates --levels 3 4 5 --runs 40 --floor-caps 4:1  # /tmp/floor-candidates.json
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py floor-verify --samples 300
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py floors --runs 64 --floor-caps 0 2 4 6 8 2:1 4:1 6:2 8:2 --dump /tmp/floors.jsonl
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py floors --runs 64 --levels 3 4 5 --floor-caps 4:1 --goal-on-floor
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py floors --runs 64 --levels 3 4 5 --floor-caps 4:1 --start-on-floor
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py floor-lengths --sizes 8 10 10x13 12 12x14 --runs 16 --iterations 8000 --floor-caps 0 2 4 8
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hard_generation_experiment.py floor-candidates --levels 3 4 5 --runs 40 --floor-caps 4:1  # /tmp/floor-candidates.json
 ```
 
 - `--floor-caps` は「床の枚数の上限」か「上限:道筋で床に止まる回数の下限」。`floor-candidates` は最後の値を使う。
@@ -496,7 +496,7 @@ python3 scripts/research/ice_floor_hard_generation_experiment.py floor-candidate
 
 ## 11. 生成 v2: 手筋を含む問題
 
-§4〜§6 の生成（以下「v1」。目的関数は最短手数＋読みどころ）の候補に対するレビューを受け、このパズル固有の手筋を特徴量にして目的関数と採用条件に入れた生成（以下「v2」）を作り、v1 と比べた。スクリプトは [`scripts/research/ice_floor_tactic_generation_experiment.py`](../../../../scripts/research/ice_floor_tactic_generation_experiment.py)（v1 のスクリプトから盤面・山登り・読み深さを import し、v1 の結果は変えない）。条件と再現コマンドは §11.9。
+§4〜§6 の生成（以下「v1」。目的関数は最短手数＋読みどころ）の候補に対するレビューを受け、このパズル固有の手筋を特徴量にして目的関数と採用条件に入れた生成（以下「v2」）を作り、v1 と比べた。スクリプトは [`docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_tactic_generation_experiment.py`](調査コード/ice_floor_tactic_generation_experiment.py)（v1 のスクリプトから盤面・山登り・読み深さを import し、v1 の結果は変えない）。条件と再現コマンドは §11.9。
 
 ### 11.1 v1 へのレビューの指摘
 
@@ -658,11 +658,11 @@ v1 の5段階の案（§5.1）と同じ盤面・最短手数の範囲で、v1 �
 標準ライブラリだけを使う。既定の seed は `20261101`、`--workers` は並列数（既定4）。
 
 ```sh
-python3 scripts/research/ice_floor_tactic_generation_experiment.py verify --samples 300 --sizes 8 10 12x14
-python3 scripts/research/ice_floor_tactic_generation_experiment.py compare --runs 32  # §11.4
-python3 scripts/research/ice_floor_tactic_generation_experiment.py levels --runs 32  # §11.5
-python3 scripts/research/ice_floor_tactic_generation_experiment.py candidates --runs 10  # §11.6、/tmp/v2-candidates.json
-python3 scripts/research/ice_floor_tactic_generation_experiment.py probe --sizes 12x14 --range 22-30 --runs 8  # 重みの調整用
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_tactic_generation_experiment.py verify --samples 300 --sizes 8 10 12x14
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_tactic_generation_experiment.py compare --runs 32  # §11.4
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_tactic_generation_experiment.py levels --runs 32  # §11.5
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_tactic_generation_experiment.py candidates --runs 10  # §11.6、/tmp/v2-candidates.json
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_tactic_generation_experiment.py probe --sizes 12x14 --range 22-30 --runs 8  # 重みの調整用
 ```
 
 - `compare` は v1 の `LEVEL_PLANS` の各条件で、v1（v1 の `levels` と同じ seed）と v2 の問題の特徴量の中央値・タグの数・v1 の採用条件に合う数を出す。
@@ -670,7 +670,7 @@ python3 scripts/research/ice_floor_tactic_generation_experiment.py probe --sizes
 
 ## 12. 生成 v3: 盤面の状態が変わる要素
 
-生成 v2（§11）の試遊と先行事例の調査を受け、解いている途中で盤面の状態が変わる要素を1種類ずつ足した生成（以下「v3」）を作った。スクリプトは [`scripts/research/ice_floor_dynamic_generation_experiment.py`](../../../../scripts/research/ice_floor_dynamic_generation_experiment.py)（v1・v2 のスクリプトから滑りの表・読み深さモデル・並列実行を import し、v1・v2 の結果は変えない）。条件と再現コマンドは §12.10。
+生成 v2（§11）の試遊と先行事例の調査を受け、解いている途中で盤面の状態が変わる要素を1種類ずつ足した生成（以下「v3」）を作った。スクリプトは [`docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_dynamic_generation_experiment.py`](調査コード/ice_floor_dynamic_generation_experiment.py)（v1・v2 のスクリプトから滑りの表・読み深さモデル・並列実行を import し、v1・v2 の結果は変えない）。条件と再現コマンドは §12.10。
 
 ### 12.1 経緯
 
@@ -839,9 +839,9 @@ python3 scripts/research/ice_floor_tactic_generation_experiment.py probe --sizes
 標準ライブラリだけを使う。既定の seed は `20261101`、`--workers` は並列数（既定4）。
 
 ```sh
-python3 scripts/research/ice_floor_dynamic_generation_experiment.py verify --samples 100  # §12.3・§12.5
-python3 scripts/research/ice_floor_dynamic_generation_experiment.py candidates --runs 8  # §12.6・§12.7、/tmp/v3-candidates.json
-python3 scripts/research/ice_floor_dynamic_generation_experiment.py probe --variants cracked --step 4 --runs 8  # 1つの段の分布（重みの調整用）
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_dynamic_generation_experiment.py verify --samples 100  # §12.3・§12.5
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_dynamic_generation_experiment.py candidates --runs 8  # §12.6・§12.7、/tmp/v3-candidates.json
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_dynamic_generation_experiment.py probe --variants cracked --step 4 --runs 8  # 1つの段の分布（重みの調整用）
 ```
 
 - `candidates` は4並列で約20分。各要素の段はスクリプトの `plan_for`、目的関数の重みは `Weights`、見た目どおりの読みの誤りを求める段は `LOOKS_TRAP_STEPS` と `LOOKS_TRAP_VARIANTS` にある。
@@ -849,7 +849,7 @@ python3 scripts/research/ice_floor_dynamic_generation_experiment.py probe --vari
 
 ## 13. 生成 v4: もろい岩・薄い氷の難しさの上限
 
-生成 v3（§12）の試遊を受け、もろい岩・薄い氷でどこまで難しくできるかを測るため、難しさを最大にする方向へ山登りする生成（以下「v4」）を作り、もろい岩だけ・薄い氷だけ・両方の3種類を比べた。スクリプトは [`scripts/research/ice_floor_hardest_generation_experiment.py`](../../../../scripts/research/ice_floor_hardest_generation_experiment.py)（v1〜v3 のスクリプトから滑りの表・状態の BFS・状態の読み深さ・並列実行を import し、v1〜v3 の結果は変えない）。条件と再現コマンドは §13.10。
+生成 v3（§12）の試遊を受け、もろい岩・薄い氷でどこまで難しくできるかを測るため、難しさを最大にする方向へ山登りする生成（以下「v4」）を作り、もろい岩だけ・薄い氷だけ・両方の3種類を比べた。スクリプトは [`docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hardest_generation_experiment.py`](調査コード/ice_floor_hardest_generation_experiment.py)（v1〜v3 のスクリプトから滑りの表・状態の BFS・状態の読み深さ・並列実行を import し、v1〜v3 の結果は変えない）。条件と再現コマンドは §13.10。
 
 ### 13.1 経緯
 
@@ -1033,9 +1033,9 @@ v1〜v3 と同じ山登り（3,000回、悪くならなければ受理）で、�
 標準ライブラリだけを使う。既定の seed は `20261101`、`--workers` は並列数（既定4）、`--iterations` は山登りの回数（既定3,000）。
 
 ```sh
-python3 scripts/research/ice_floor_hardest_generation_experiment.py verify --samples 100  # §13.5
-python3 scripts/research/ice_floor_hardest_generation_experiment.py candidates --runs 8  # §13.6・§13.7、/tmp/v4-candidates.json
-python3 scripts/research/ice_floor_hardest_generation_experiment.py probe --variants brittle --shape 1 --runs 8 --max-elements 11  # §13.6.1（thin・mixed も同じ。1種類で約20〜35分）
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hardest_generation_experiment.py verify --samples 100  # §13.5
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hardest_generation_experiment.py candidates --runs 8  # §13.6・§13.7、/tmp/v4-candidates.json
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hardest_generation_experiment.py probe --variants brittle --shape 1 --runs 8 --max-elements 11  # §13.6.1（thin・mixed も同じ。1種類で約20〜35分）
 ```
 
 - `candidates` は4並列で約25分。盤面と範囲は `SHAPES`、要素の数は `ELEMENT_RANGE`、目的関数の重みは `Weights`、おとりの候補を試す間隔は `POLISH_EVERY` にある。
@@ -1043,7 +1043,7 @@ python3 scripts/research/ice_floor_hardest_generation_experiment.py probe --vari
 
 ## 14. 生成 v5: 一回でなくならない雪・滑る岩
 
-試遊記録の分析で、人の難しさを生むのは「初期盤面に無い止め役を自分の手で作り、それに何手も後で頼ること」だと分かった。v4 の要素でそれを作れるのは薄い氷だけで、もろい岩（崩れて消える）と v3 の雪（溶けて消える）は一回でなくなるので作れない。v5 では雪と岩を外さず、一回でなくならない形に作り直し、自作依存の点を主項にした目的関数で生成して薄い氷と比べた。スクリプトは [`scripts/research/ice_floor_persistent_generation_experiment.py`](../../../../scripts/research/ice_floor_persistent_generation_experiment.py)（v1〜v4 から滑りの表・状態の BFS・選択肢・読み深さ・並列実行を import する）。再現コマンドは §14.7。
+試遊記録の分析で、人の難しさを生むのは「初期盤面に無い止め役を自分の手で作り、それに何手も後で頼ること」だと分かった。v4 の要素でそれを作れるのは薄い氷だけで、もろい岩（崩れて消える）と v3 の雪（溶けて消える）は一回でなくなるので作れない。v5 では雪と岩を外さず、一回でなくならない形に作り直し、自作依存の点を主項にした目的関数で生成して薄い氷と比べた。スクリプトは [`docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_persistent_generation_experiment.py`](調査コード/ice_floor_persistent_generation_experiment.py)（v1〜v4 から滑りの表・状態の BFS・選択肢・読み深さ・並列実行を import する）。再現コマンドは §14.7。
 
 ### 14.1 規則
 
@@ -1114,7 +1114,7 @@ python3 scripts/research/ice_floor_hardest_generation_experiment.py probe --vari
 
 - 内訳は、雪3・滑る岩3・雪＋薄い氷2・滑る岩＋薄い氷2。
 - 自作依存の点の上位から、盤面の大きさと性質が重ならないように選んだ。雪は6以上が無いので、雪の上位から選んだ。
-- 置き場所は `candidates` の `--output`（§14.7 では `/tmp/v5-candidates.json`）。リポジトリには入れていない。滑る岩の5問は、盤面・開始位置・ゴールを [`scripts/research/ice_floor_persistent_port_reference.py`](../../../../scripts/research/ice_floor_persistent_port_reference.py) に書き写し、製品の実装との突き合わせに使っている。
+- 置き場所は `candidates` の `--output`（§14.7 では `/tmp/v5-candidates.json`）。リポジトリには入れていない。滑る岩の5問は、盤面・開始位置・ゴールを [`docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_persistent_port_reference.py`](調査コード/ice_floor_persistent_port_reference.py) に書き写し、製品の実装との突き合わせに使っている。
 - 試遊ページは、テンプレートに2要素を足した版から作った（リポジトリには入れていない）。
 - 最短は 13〜20 手。自作依存の点は次のとおり。
   - 雪: 3.5〜4.5
@@ -1138,10 +1138,10 @@ python3 scripts/research/ice_floor_hardest_generation_experiment.py probe --vari
 ### 14.7 再現方法
 
 ```sh
-python3 scripts/research/ice_floor_persistent_generation_experiment.py verify --samples 100
-python3 scripts/research/ice_floor_persistent_generation_experiment.py generate --runs 3 --iterations 2000 --output /tmp/v5-made.jsonl
-python3 scripts/research/ice_floor_persistent_generation_experiment.py generate --variants snow --runs 3 --iterations 6000 --seed 20261102 --output /tmp/v5-made.jsonl
-python3 scripts/research/ice_floor_persistent_generation_experiment.py candidates --records /tmp/v5-made.jsonl --pick <番号...> --output /tmp/v5-candidates.json
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_persistent_generation_experiment.py verify --samples 100
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_persistent_generation_experiment.py generate --runs 3 --iterations 2000 --output /tmp/v5-made.jsonl
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_persistent_generation_experiment.py generate --variants snow --runs 3 --iterations 6000 --seed 20261102 --output /tmp/v5-made.jsonl
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_persistent_generation_experiment.py candidates --records /tmp/v5-made.jsonl --pick <番号...> --output /tmp/v5-candidates.json
 ```
 
 最初の案の滑る岩は `--variants slider_kick slider_kick_thin` で作る。
@@ -1188,7 +1188,7 @@ python3 scripts/research/ice_floor_persistent_generation_experiment.py candidate
 ### 15.3 人が試遊する候補（10問、q01〜q10）
 
 - 内訳: 雪3（各帯1）、雪＋薄い氷2（L3・L5）、滑る岩3（各帯1）、滑る岩＋薄い氷2（L3・L5）。最短は 9〜19 手。
-- 盤面・開始位置・ゴールは [`scripts/research/ice_floor_persistent_port_reference.py`](../../../../scripts/research/ice_floor_persistent_port_reference.py) に書き写した（候補の JSON はリポジトリに入れていない）。
+- 盤面・開始位置・ゴールは [`docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_persistent_port_reference.py`](調査コード/ice_floor_persistent_port_reference.py) に書き写した（候補の JSON はリポジトリに入れていない）。
 - 試遊ページでは、閉じ込めの知らせを「もうゴールに止まれない（待った・盤面を戻すで戻れます）」に変えた。今の状態からゴールへ行く手順が無いときに出す。
 - 確かめること:
   - 押し出す雪の決まりが分かるか。
@@ -1198,8 +1198,8 @@ python3 scripts/research/ice_floor_persistent_generation_experiment.py candidate
 ### 15.4 再現方法
 
 ```sh
-python3 scripts/research/ice_floor_persistent_generation_experiment.py generate --variants snow snow_thin slider slider_thin --bands L3 L4 L5 --runs 3 --iterations 2000 --seed 20261104 --output /tmp/v6-made.jsonl
-python3 scripts/research/ice_floor_persistent_generation_experiment.py generate --variants snow --bands L3w --runs 8 --iterations 3000 --seed 20261106 --output /tmp/v6-made.jsonl
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_persistent_generation_experiment.py generate --variants snow snow_thin slider slider_thin --bands L3 L4 L5 --runs 3 --iterations 2000 --seed 20261104 --output /tmp/v6-made.jsonl
+python3 docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_persistent_generation_experiment.py generate --variants snow --bands L3w --runs 8 --iterations 3000 --seed 20261106 --output /tmp/v6-made.jsonl
 ```
 
 踏み固まる雪（§14）は `--variants snow_pack snow_pack_thin` で作る。

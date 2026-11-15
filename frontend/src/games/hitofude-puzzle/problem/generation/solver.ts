@@ -50,7 +50,7 @@ function createSearchGraph(board: HitofudePuzzleBoard): SearchGraph {
 }
 
 /**
- * 始点から道を延ばす全解探索。研究用 Python（`scripts/research/hamiltonian_path_experiment.py` の `PathCounter.count`）と
+ * 始点から道を延ばす全解探索。研究用 Python（`docs/パズル/導入調査/ハミルトン路/調査コード/hamiltonian_path_experiment.py` の `PathCounter.count`）と
  * 同じ枝刈り・同じ手順で、同じ盤面には同じ解の数と節点の数を返す。
  *
  * 枝刈り: 次へ進めないマスが残る（孤立）、終点にしかなれないマスが2つ以上残る（行き止まり）、

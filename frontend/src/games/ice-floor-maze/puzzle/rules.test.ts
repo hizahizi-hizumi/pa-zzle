@@ -116,7 +116,7 @@ describe("slideIceFloorMazePiece", () => {
   );
 
   describe("研究用 Python の固定盤面の場合", () => {
-    // scripts/research/ice_floor_supply_experiment.py の random_board_candidates(8, 8, Random("fixture-8x8"), 0.2) の159盤面目。
+    // docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_supply_experiment.py の random_board_candidates(8, 8, Random("fixture-8x8"), 0.2) の159盤面目。
     const researchBoard = parseIceFloorMazeBoard([
       "#...#.#.",
       "........",
@@ -144,7 +144,7 @@ describe("slideIceFloorMazePiece", () => {
     });
   });
 
-  // 研究用 Python（scripts/research/ice_floor_hardest_generation_experiment.py）の run_hand_checks と同じ盤面と手。
+  // 研究用 Python（docs/パズル/導入調査/氷の床迷路/調査コード/ice_floor_hardest_generation_experiment.py）の run_hand_checks と同じ盤面と手。
   describe("もろい岩の場合", () => {
     // 0 1 2 3 b 5
     const brittleBoard = parseIceFloorMazeBoard(["....b."]);

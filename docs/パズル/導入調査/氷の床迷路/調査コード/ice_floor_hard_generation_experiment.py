@@ -55,7 +55,7 @@ from ice_floor_supply_experiment import (  # noqa: E402
     without_irrelevant_rocks,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[5]
 PROBLEM_POOL = REPO_ROOT / "frontend/src/games/ice-floor-maze/problem/problem-pool.json"
 
 # 方向番号: 0=上, 1=右, 2=下, 3=左（供給実験と同じ）
