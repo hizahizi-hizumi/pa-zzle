@@ -1,39 +1,18 @@
-import { useLocation } from "react-router";
+import { findGameProblemDifficulty } from "@/app/game-integration/game-catalog-entry";
 import { PlayableTsumeShogi } from "@/app/game-integration/tsume-shogi/PlayableTsumeShogi";
 import { tsumeShogiCatalogEntry } from "@/app/game-integration/tsume-shogi/tsume-shogi-catalog-entry";
-import { useRandomPlayEntry } from "@/app/game-integration/use-random-play-entry";
-import {
-  readAvoidedProblemId,
-  readRandomPlaySerial,
-} from "@/app/navigation/play-location-state";
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
-import { parseDifficultyLevel } from "@/games/difficulty";
 import { useTsumeShogiProblemPool } from "@/games/tsume-shogi/play/use-tsume-shogi-problem-pool";
 import { useParams } from "@/router";
 
 export function TsumeShogiPlayView() {
-  const { difficulty: difficultyParam } = useParams(
-    tsumeShogiCatalogEntry.playPath,
-  );
-  const location = useLocation();
-  const avoidedProblemId = readAvoidedProblemId(location.state);
-  const playSerial = readRandomPlaySerial(location.state);
-  const difficulty = parseDifficultyLevel(difficultyParam);
-  const randomEntry = useRandomPlayEntry(
+  const { problemId } = useParams(tsumeShogiCatalogEntry.playPath);
+  const difficulty = findGameProblemDifficulty(
     tsumeShogiCatalogEntry,
-    difficulty,
-    avoidedProblemId,
+    problemId,
   );
   const problemPoolStatus = useTsumeShogiProblemPool();
 
-  if (!difficulty) {
-    return (
-      <PlayUnavailableNotice
-        title="この難易度は選べません"
-        backTo={tsumeShogiCatalogEntry.homePath}
-      />
-    );
-  }
   if (problemPoolStatus === "failed") {
     return (
       <PlayUnavailableNotice
@@ -48,21 +27,19 @@ export function TsumeShogiPlayView() {
     return null;
   }
 
-  if (randomEntry !== "ready") {
-    return randomEntry === "unavailable" ? (
+  if (!difficulty) {
+    return (
       <PlayUnavailableNotice
-        title="条件に合う問題がありません"
-        description="設定で出題対象を変更してください。"
+        title="この問題は現在遊べません"
         backTo={tsumeShogiCatalogEntry.homePath}
       />
-    ) : null;
+    );
   }
-
   return (
     <PlayableTsumeShogi
-      key={`${difficulty}:${playSerial}`}
+      key={problemId}
       difficulty={difficulty}
-      avoidedProblemId={avoidedProblemId}
+      problemId={problemId}
     />
   );
 }

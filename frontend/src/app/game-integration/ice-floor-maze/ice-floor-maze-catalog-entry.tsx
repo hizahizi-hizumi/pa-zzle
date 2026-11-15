@@ -31,7 +31,7 @@ export const iceFloorMazeCatalogEntry = {
   pictogramSvg,
   pictogramShowcaseSvg,
   homePath: "/puzzles/ice-floor-maze",
-  playPath: "/puzzles/ice-floor-maze/play/:difficulty",
+  playPath: "/puzzles/ice-floor-maze/play/:problemId",
   playRecordDisplay: iceFloorMazePlayRecordDisplay,
   recordProblemPlayTarget(record) {
     return isIceFloorMazePlayRecord(record)

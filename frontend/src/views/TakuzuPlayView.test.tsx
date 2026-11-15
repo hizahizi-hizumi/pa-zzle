@@ -12,9 +12,11 @@ import {
   RouterProvider,
   Routes,
 } from "react-router";
+import { takuzuCatalogEntry } from "@/app/game-integration/takuzu/takuzu-catalog-entry";
 import { readPlayRecords } from "@/features/records/storage";
 import { createProblemId } from "@/games/problem-id";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
+import { testPlayUrl } from "@/testing/play-url";
 import { PlayResultView } from "@/views/PlayResultView";
 import { TakuzuPlayView } from "@/views/TakuzuPlayView";
 
@@ -41,10 +43,18 @@ afterEach(() => {
 
 function renderAt(path: string): void {
   render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter
+      initialEntries={[
+        testPlayUrl(takuzuCatalogEntry, path, (difficulty) =>
+          createProblemId(
+            selectTakuzuProblemForDifficulty(difficulty, problemSeed).identity,
+          ),
+        ),
+      ]}
+    >
       <Routes>
         <Route
-          path="/puzzles/takuzu/play/:difficulty"
+          path="/puzzles/takuzu/play/:problemId"
           element={<TakuzuPlayView />}
         />
         <Route path="/puzzles/takuzu" element={<p>ゲームのホーム画面</p>} />
@@ -64,12 +74,20 @@ function renderRouterAt(path: string): PlayRouter {
   const router = createMemoryRouter(
     [
       {
-        path: "/puzzles/takuzu/play/:difficulty",
+        path: "/puzzles/takuzu/play/:problemId",
         element: <TakuzuPlayView />,
       },
       { path: "/puzzles/takuzu", element: <p>ゲームのホーム画面</p> },
     ],
-    { initialEntries: [path] },
+    {
+      initialEntries: [
+        testPlayUrl(takuzuCatalogEntry, path, (difficulty) =>
+          createProblemId(
+            selectTakuzuProblemForDifficulty(difficulty, problemSeed).identity,
+          ),
+        ),
+      ],
+    },
   );
   render(<RouterProvider router={router} />);
   return router;
@@ -282,7 +300,7 @@ describe("TakuzuPlayView", () => {
     });
 
     test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
-      const message = screen.getByText("この難易度は選べません");
+      const message = screen.getByText("この問題は現在遊べません");
       const backLink = screen.getByRole("link", {
         name: "問題選択へ戻る",
       });

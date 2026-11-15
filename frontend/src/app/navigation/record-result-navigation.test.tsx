@@ -6,7 +6,7 @@ import { useRecordResultNavigation } from "@/app/navigation/record-result-naviga
 import type { PlayRecord } from "@/features/records/play-record";
 import type { PlayRecordSaveOutcome } from "@/features/records/save-play-record";
 
-const playPath = "/puzzles/test-game/play/1";
+const playPath = "/puzzles/test-game/play/test-problem";
 const record: PlayRecord = {
   id: "record-1",
   gameId: "test-game",
@@ -16,6 +16,7 @@ const record: PlayRecord = {
   payload: {},
 };
 const recordedOutcome: PlayRecordSaveOutcome = { status: "first-record" };
+const failedOutcome: PlayRecordSaveOutcome = { status: "failed" };
 
 function RouterWrapper({ children }: { children: ReactNode }) {
   return <MemoryRouter initialEntries={[playPath]}>{children}</MemoryRouter>;
@@ -69,10 +70,25 @@ describe("useRecordResultNavigation", () => {
     });
   });
 
-  const stayingCases = [
-    ["クリアしていない", false, record, null],
-    ["記録の保存に失敗した", true, record, { status: "failed" }],
-  ] as const;
+  describe("記録の保存に失敗した場合", () => {
+    test("保存できなかった結果を履歴に渡して同じ結果画面へ遷移すること", () => {
+      const { result } = renderHook(
+        () => useNavigatedLocation(true, record, failedOutcome),
+        { wrapper: RouterWrapper },
+      );
+
+      expect(result.current.navigatesToRecordResult).toBe(true);
+      expect(result.current.location.pathname).toBe(
+        "/puzzles/test-game/result/record-1",
+      );
+      expect(result.current.location.state).toEqual({
+        recordSaveOutcome: { status: "failed" },
+        unsavedRecord: record,
+      });
+    });
+  });
+
+  const stayingCases = [["クリアしていない", false, record, null]] as const;
 
   test.each(stayingCases)(
     "%sプレイでは遷移せず、プレイ画面で結果を出させること",

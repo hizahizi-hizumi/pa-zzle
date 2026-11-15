@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { nanpureCatalogEntry } from "@/app/game-integration/nanpure/nanpure-catalog-entry";
@@ -52,8 +58,13 @@ describe("NanpureHomeView", () => {
     router = createMemoryRouter(
       [
         { path: "/puzzles/nanpure", element: <NanpureHomeView /> },
+        { path: "/puzzles/nanpure/how-to", element: <p>遊び方の画面</p> },
         {
-          path: "/puzzles/nanpure/play/:difficulty",
+          path: "/puzzles/nanpure/tutorial",
+          element: <p>チュートリアルの画面</p>,
+        },
+        {
+          path: "/puzzles/nanpure/play/:problemId",
           element: <p>プレイ画面</p>,
         },
       ],
@@ -83,9 +94,9 @@ describe("NanpureHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/puzzles/nanpure/how-to"),
+    );
   });
 
   test("見出しのメニューからチュートリアルを開けること", async () => {
@@ -95,12 +106,9 @@ describe("NanpureHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
 
-    const dialog = await screen.findByRole("dialog", {
-      name: "ナンプレ",
-      description: "チュートリアル",
-    });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/puzzles/nanpure/tutorial"),
+    );
   });
 
   test("戻るリンクでホームへ戻れること", () => {
@@ -117,6 +125,8 @@ describe("NanpureHomeView", () => {
 
     const { pathname } = router.state.location;
 
-    expect(pathname).toBe("/puzzles/nanpure/play/3");
+    const problemId = pathname.replace("/puzzles/nanpure/play/", "");
+
+    expect(nanpureCatalogEntry.listPoolProblemIds("3")).toContain(problemId);
   });
 });

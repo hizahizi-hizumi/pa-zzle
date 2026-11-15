@@ -74,7 +74,7 @@ const enterPlayTransition: BackgroundMusicTransition = {
 
 const crossfadeTransition: BackgroundMusicTransition = { kind: "crossfade" };
 
-const PLAY_PATH_PATTERN = "/puzzles/:game/play/:difficulty";
+const PLAY_PATH_PATTERN = "/puzzles/:game/play/:problemId";
 const RESULT_PATH_PATTERN = "/puzzles/:game/result/:recordId";
 
 function isAppLaunchTitleShown(): boolean {

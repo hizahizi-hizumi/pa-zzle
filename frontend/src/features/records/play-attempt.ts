@@ -23,7 +23,7 @@ export type PlayAttemptAbandonment = {
 /**
  * 始めたプレイ（プレイ試行）の記録。完了したかどうかは持たず、
  * 同じゲームで同じ時刻に始めた完了記録があるかから導出する。
- * `abandonment` は利用者が明示的にプレイを離れたときだけ持つ。
+ * `abandonment` は中断中の進み具合を表し、同じ挑戦への復帰で解除する。
  */
 export type PlayAttempt = {
   gameId: string;

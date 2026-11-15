@@ -191,7 +191,7 @@ describe("findRecordProblemPlayDestination", () => {
     const destination = findRecordProblemPlayDestination(record);
 
     expect(destination).toEqual({
-      playPath: "/puzzles/minesweeper/play/:difficulty",
+      playPath: "/puzzles/minesweeper/play/:problemId",
       difficulty: "1",
       problemId: createProblemId(problem.identity),
     });
@@ -222,7 +222,7 @@ describe("findAttemptProblemPlayDestination", () => {
     const destination = findAttemptProblemPlayDestination(attempt);
 
     expect(destination).toEqual({
-      playPath: "/puzzles/minesweeper/play/:difficulty",
+      playPath: "/puzzles/minesweeper/play/:problemId",
       difficulty: "1",
       problemId: createProblemId(problem.identity),
     });

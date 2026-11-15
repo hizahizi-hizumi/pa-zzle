@@ -3,7 +3,6 @@ import {
   usePlayableGame,
 } from "@/app/game-integration/playable-game";
 import { reflectionCatalogEntry } from "@/app/game-integration/reflection/reflection-catalog-entry";
-import { useRequestedProblem } from "@/app/navigation/problem-id-query";
 import type { ProblemId } from "@/games/problem-id";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
@@ -23,8 +22,7 @@ import { ReflectionPlay } from "@/games/reflection/ui/ReflectionPlay";
 
 type PlayableReflectionProps = {
   difficulty: ReflectionDifficulty;
-  /** URL の問題 ID で問題を指定したときは使わない。 */
-  avoidedProblemId?: ProblemId;
+  problemId: ProblemId;
 };
 
 function createPlayRecord(
@@ -42,15 +40,16 @@ function createPlayRecord(
 
 export function PlayableReflection({
   difficulty,
-  avoidedProblemId,
+  problemId,
 }: PlayableReflectionProps) {
-  const requestedProblem = useRequestedProblem((problemId) =>
-    selectReflectionProblemById(difficulty, problemId),
-  );
+  const requestedProblem = selectReflectionProblemById(difficulty, problemId);
+  if (requestedProblem === null)
+    throw new Error("指定された問題を復元できません");
   const play = useReflectionPlay(
     difficulty,
     requestedProblem,
-    avoidedProblemId,
+    undefined,
+    problemId,
   );
   const { screenProps, diagnostics } = usePlayableGame({
     game: reflectionCatalogEntry,

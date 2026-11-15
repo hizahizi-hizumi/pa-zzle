@@ -3,7 +3,6 @@ import {
   type CompletedGamePlay,
   usePlayableGame,
 } from "@/app/game-integration/playable-game";
-import { useRequestedProblem } from "@/app/navigation/problem-id-query";
 import { createBridgesDiagnosticSnapshot } from "@/games/bridges/diagnostics";
 import type { BridgesDifficulty } from "@/games/bridges/difficulty";
 import {
@@ -23,8 +22,7 @@ import type { ProblemId } from "@/games/problem-id";
 
 type PlayableBridgesProps = {
   difficulty: BridgesDifficulty;
-  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
-  avoidedProblemId?: ProblemId;
+  problemId: ProblemId;
 };
 
 function createPlayRecord(
@@ -42,12 +40,17 @@ function createPlayRecord(
 
 export function PlayableBridges({
   difficulty,
-  avoidedProblemId,
+  problemId,
 }: PlayableBridgesProps) {
-  const requestedProblem = useRequestedProblem((problemId) =>
-    selectBridgesProblemById(difficulty, problemId),
+  const requestedProblem = selectBridgesProblemById(difficulty, problemId);
+  if (requestedProblem === null)
+    throw new Error("指定された問題を復元できません");
+  const play = useBridgesPlay(
+    difficulty,
+    requestedProblem,
+    undefined,
+    problemId,
   );
-  const play = useBridgesPlay(difficulty, requestedProblem, avoidedProblemId);
   const { screenProps, diagnostics } = usePlayableGame({
     game: bridgesCatalogEntry,
     play,

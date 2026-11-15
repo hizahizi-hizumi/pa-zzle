@@ -194,10 +194,10 @@ describe("GameResultScreen", () => {
 describe("GameResultScreen のパズル選択", () => {
   beforeEach(() => {
     render(
-      <MemoryRouter initialEntries={["/puzzles/test/play/1"]}>
+      <MemoryRouter initialEntries={["/puzzles/test/play/test-problem"]}>
         <Routes>
           <Route
-            path="/puzzles/test/play/1"
+            path="/puzzles/test/play/test-problem"
             element={<GameResultScreen {...createProps()} />}
           />
           <Route path="/" element={<p>パズル選択画面</p>} />

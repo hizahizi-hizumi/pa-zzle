@@ -7,11 +7,10 @@ import {
   RouterProvider,
   Routes,
 } from "react-router";
-
-import { createPlayLocationState } from "@/app/navigation/play-location-state";
+import { minesweeperCatalogEntry } from "@/app/game-integration/minesweeper/minesweeper-catalog-entry";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import { createProblemId } from "@/games/problem-id";
-import * as problemSeed from "@/games/problem-seed";
+import { testPlayUrl } from "@/testing/play-url";
 import { MinesweeperPlayView } from "@/views/MinesweeperPlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
@@ -30,10 +29,10 @@ afterEach(() => {
 
 function renderAt(path: string): void {
   render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter initialEntries={[testPlayUrl(minesweeperCatalogEntry, path)]}>
       <Routes>
         <Route
-          path="/puzzles/minesweeper/play/:difficulty"
+          path="/puzzles/minesweeper/play/:problemId"
           element={<MinesweeperPlayView />}
         />
       </Routes>
@@ -47,19 +46,32 @@ function renderRouterAt(entry: InitialEntry): PlayRouter {
   const router = createMemoryRouter(
     [
       {
-        path: "/puzzles/minesweeper/play/:difficulty",
+        path: "/puzzles/minesweeper/play/:problemId",
         element: <MinesweeperPlayView />,
       },
       { path: "/puzzles/minesweeper", element: <p>ゲームのホーム画面</p> },
     ],
-    { initialEntries: [entry] },
+    {
+      initialEntries: [
+        typeof entry === "string"
+          ? testPlayUrl(minesweeperCatalogEntry, entry)
+          : {
+              ...entry,
+              pathname: testPlayUrl(
+                minesweeperCatalogEntry,
+                `${entry.pathname ?? ""}${entry.search ?? ""}`,
+              ),
+              search: "",
+            },
+      ],
+    },
   );
   render(<RouterProvider router={router} />);
   return router;
 }
 
 function readProblemId(router: PlayRouter): string | null {
-  return new URLSearchParams(router.state.location.search).get("problem");
+  return router.state.location.pathname.split("/").at(-1) ?? null;
 }
 
 function openMenu(): void {
@@ -81,7 +93,7 @@ describe("MinesweeperPlayView", () => {
       });
 
       expect(backButton).toBeTruthy();
-      expect(screen.queryByText("この難易度は選べません")).toBeNull();
+      expect(screen.queryByText("この問題は現在遊べません")).toBeNull();
     });
   });
 
@@ -91,7 +103,7 @@ describe("MinesweeperPlayView", () => {
     });
 
     test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
-      const message = screen.getByText("この難易度は選べません");
+      const message = screen.getByText("この問題は現在遊べません");
       const backLink = screen.getByRole("link", {
         name: "問題選択へ戻る",
       });
@@ -131,7 +143,7 @@ describe("MinesweeperPlayView", () => {
         const problemId = readProblemId(router);
 
         expect(problemId).toMatch(/^[0-9a-v]{10}$/);
-        expect(router.state.historyAction).toBe("REPLACE");
+        expect(router.state.historyAction).toBe("POP");
       });
     });
 
@@ -202,88 +214,16 @@ describe("MinesweeperPlayView", () => {
       });
     });
 
-    const unresolvedCases = [
-      ["形式の違う問題ID", "1", "invalid"],
-      ["別の難易度の問題ID", "2", poolProblemId],
-    ] as const;
-
-    describe.each(unresolvedCases)(
-      "%sで開いた場合",
-      (_, difficulty, requestedProblemId) => {
-        beforeEach(() => {
-          router = renderRouterAt(
-            `/puzzles/minesweeper/play/${difficulty}?problem=${requestedProblemId}`,
-          );
-        });
-
-        test("知らせずに新しい問題を出し、そのIDへURLを置き換えること", () => {
-          const problemId = readProblemId(router);
-
-          expect(problemId).toMatch(/^[0-9a-v]{10}$/);
-          expect(problemId).not.toBe(requestedProblemId);
-          expect(router.state.historyAction).toBe("REPLACE");
-          expect(
-            screen.getByRole("button", { name: "その他の操作" }),
-          ).toBeTruthy();
-        });
-      },
-    );
-  });
-});
-
-describe("直前の問題を避ける location state", () => {
-  const firstProblem = selectMinesweeperProblemForDifficulty(
-    "1",
-    "avoided-first",
-  );
-  const secondProblem = selectMinesweeperProblemForDifficulty(
-    "1",
-    "avoided-second",
-  );
-  const firstProblemId = createProblemId(firstProblem.identity);
-  const secondProblemId = createProblemId(secondProblem.identity);
-  const state = createPlayLocationState(firstProblemId);
-  let router: PlayRouter;
-
-  beforeEach(() => {
-    vi.spyOn(problemSeed, "createProblemSeed")
-      .mockReturnValueOnce("avoided-first")
-      .mockReturnValueOnce("avoided-second");
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  describe("問題IDの無いURLで開いた場合", () => {
-    beforeEach(() => {
-      router = renderRouterAt({
-        pathname: "/puzzles/minesweeper/play/1",
-        state,
+    describe("存在しない問題IDで開いた場合", () => {
+      beforeEach(() => {
+        router = renderRouterAt("/puzzles/minesweeper/play/1?problem=invalid");
       });
-    });
 
-    test("避ける問題を選ばずに別の問題で始めること", () => {
-      const problemId = readProblemId(router);
-
-      expect(secondProblemId).not.toBe(firstProblemId);
-      expect(problemId).toBe(secondProblemId);
-    });
-  });
-
-  describe("避ける問題をURLの問題IDでも指定した場合", () => {
-    beforeEach(() => {
-      router = renderRouterAt({
-        pathname: "/puzzles/minesweeper/play/1",
-        search: `?problem=${firstProblemId}`,
-        state,
+      test("別問題へ置き換えず、開けないことを伝えること", () => {
+        expect(screen.getByText("この問題は現在遊べません")).toBeTruthy();
+        expect(readProblemId(router)).toBe("invalid");
+        expect(router.state.historyAction).toBe("POP");
       });
-    });
-
-    test("URLで指定した問題で始めること", () => {
-      const problemId = readProblemId(router);
-
-      expect(problemId).toBe(firstProblemId);
     });
   });
 });

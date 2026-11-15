@@ -11,8 +11,7 @@ import {
   type InitialEntry,
   RouterProvider,
 } from "react-router";
-
-import { createPlayLocationState } from "@/app/navigation/play-location-state";
+import { iceFloorMazeCatalogEntry } from "@/app/game-integration/ice-floor-maze/ice-floor-maze-catalog-entry";
 import { readPlayAttempts } from "@/features/records/play-attempt-storage";
 import { readPlayRecords } from "@/features/records/storage";
 import { isIceFloorMazeBoardShapeOfDifficulty } from "@/games/ice-floor-maze/difficulty";
@@ -29,6 +28,7 @@ import {
 } from "@/games/ice-floor-maze/puzzle/stop-graph";
 import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";
+import { testPlayUrl } from "@/testing/play-url";
 import { IceFloorMazePlayView } from "@/views/IceFloorMazePlayView";
 import { PlayResultView } from "@/views/PlayResultView";
 
@@ -51,10 +51,25 @@ afterEach(() => {
 type PlayRouter = ReturnType<typeof createMemoryRouter>;
 
 function renderAt(entry: InitialEntry): PlayRouter {
+  const pathname =
+    typeof entry === "string"
+      ? entry
+      : `${entry.pathname ?? ""}${entry.search ?? ""}`;
+  const resolved = testPlayUrl(
+    iceFloorMazeCatalogEntry,
+    pathname,
+    (difficulty) =>
+      createProblemId(
+        selectIceFloorMazeProblemForDifficulty(
+          difficulty,
+          problemSeed.createProblemSeed(),
+        ).identity,
+      ),
+  );
   const router = createMemoryRouter(
     [
       {
-        path: "/puzzles/ice-floor-maze/play/:difficulty",
+        path: "/puzzles/ice-floor-maze/play/:problemId",
         element: <IceFloorMazePlayView />,
       },
       { path: "/puzzles/ice-floor-maze", element: <p>ゲームのホーム画面</p> },
@@ -65,14 +80,20 @@ function renderAt(entry: InitialEntry): PlayRouter {
       { path: "/records", element: <p>記録画面</p> },
       { path: "/", element: <p>ホーム画面</p> },
     ],
-    { initialEntries: [entry] },
+    {
+      initialEntries: [
+        typeof entry === "string"
+          ? resolved
+          : { ...entry, pathname: resolved, search: "" },
+      ],
+    },
   );
   render(<RouterProvider router={router} />);
   return router;
 }
 
 function readProblemId(router: PlayRouter): string | null {
-  return new URLSearchParams(router.state.location.search).get("problem");
+  return router.state.location.pathname.split("/").at(-1) ?? null;
 }
 
 /** 盤面の外壁の枠を除いた列数・行数。 */
@@ -263,7 +284,7 @@ describe("IceFloorMazePlayView", () => {
         const problemId = readProblemId(router);
 
         expect(router.state.location.pathname).toBe(
-          "/puzzles/ice-floor-maze/play/1",
+          `/puzzles/ice-floor-maze/play/${createProblemId(selected.identity)}`,
         );
         expect(problemId).toBe(createProblemId(selected.identity));
         expect(screen.getByText("手数").parentElement?.textContent).toBe(
@@ -303,7 +324,7 @@ describe("IceFloorMazePlayView", () => {
     });
 
     test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
-      const message = screen.getByText("この難易度は選べません");
+      const message = screen.getByText("この問題は現在遊べません");
       const backLink = screen.getByRole("link", { name: "問題選択へ戻る" });
 
       expect(message).toBeTruthy();
@@ -328,7 +349,7 @@ describe("IceFloorMazePlayView", () => {
         const problemId = readProblemId(router);
 
         expect(problemId).toMatch(/^[0-9a-v]{10}$/);
-        expect(router.state.historyAction).toBe("REPLACE");
+        expect(router.state.historyAction).toBe("POP");
       });
     });
 
@@ -386,55 +407,16 @@ describe("IceFloorMazePlayView", () => {
       });
     });
 
-    const unresolvedCases = [
-      ["形式の違う問題ID", "5", "invalid"],
-      ["別の難易度の問題ID", "4", poolProblemId],
-    ] as const;
-
-    describe.each(unresolvedCases)(
-      "%sで開いた場合",
-      (_, difficulty, requestedProblemId) => {
-        beforeEach(() => {
-          router = renderAt(
-            `/puzzles/ice-floor-maze/play/${difficulty}?problem=${requestedProblemId}`,
-          );
-        });
-
-        test("知らせずに新しい問題を出し、そのIDへURLを置き換えること", () => {
-          const problemId = readProblemId(router);
-
-          expect(problemId).toMatch(/^[0-9a-v]{10}$/);
-          expect(problemId).not.toBe(requestedProblemId);
-          expect(router.state.historyAction).toBe("REPLACE");
-        });
-      },
-    );
-  });
-
-  describe("直前の問題を避ける location state", () => {
-    const firstProblemId = createProblemId(
-      selectIceFloorMazeProblemForDifficulty("1", "avoided-first").identity,
-    );
-    const secondProblemId = createProblemId(
-      selectIceFloorMazeProblemForDifficulty("1", "avoided-second").identity,
-    );
-    let router: PlayRouter;
-
-    beforeEach(() => {
-      vi.spyOn(problemSeed, "createProblemSeed")
-        .mockReturnValueOnce("avoided-first")
-        .mockReturnValueOnce("avoided-second");
-      router = renderAt({
-        pathname: "/puzzles/ice-floor-maze/play/1",
-        state: createPlayLocationState(firstProblemId),
+    describe("存在しない問題IDで開いた場合", () => {
+      beforeEach(() => {
+        router = renderAt("/puzzles/ice-floor-maze/play/5?problem=invalid");
       });
-    });
 
-    test("避ける問題を選ばずに別の問題で始めること", () => {
-      const problemId = readProblemId(router);
-
-      expect(secondProblemId).not.toBe(firstProblemId);
-      expect(problemId).toBe(secondProblemId);
+      test("別問題へ置き換えず、開けないことを伝えること", () => {
+        expect(screen.getByText("この問題は現在遊べません")).toBeTruthy();
+        expect(readProblemId(router)).toBe("invalid");
+        expect(router.state.historyAction).toBe("POP");
+      });
     });
   });
 });

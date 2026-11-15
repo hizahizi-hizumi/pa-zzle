@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { flushSync } from "react-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { GameHomeHeading } from "@/app/game-home/GameHomeScreen/GameHomeHeading";
 import { GameHomeMenu } from "@/app/game-home/GameHomeScreen/GameHomeMenu";
 import { GameHomePerformance } from "@/app/game-home/GameHomeScreen/GameHomePerformance";
@@ -47,6 +48,7 @@ import {
 import type { ZukanFilterFeatureAxis } from "@/app/game-home/GameHomeScreen/zukan-filter-appearance";
 import { getZukanPiecePath } from "@/app/game-home/GameHomeScreen/zukan-piece-shape";
 import { playZukanPlayEntry } from "@/app/game-home/GameHomeScreen/zukan-play-entry";
+import { openGameGuide } from "@/app/navigation/game-guide-navigation";
 import { playPlayStartSound } from "@/components/app-decision-sound";
 import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
 import type {
@@ -355,15 +357,34 @@ export function GameHomeScreen({
   records,
   playRecordDisplay,
 }: GameHomeScreenProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const urlProblemId = searchParams.get("problem");
+  const urlDifficulty = parseDifficultyLevel(
+    searchParams.get("level") ?? undefined,
+  );
   const [initialSelectedKey] = useState(() =>
     findProblemKey(zukan.sections, initialSelectedProblemId),
   );
-  // 選んでおく問題のレベルは、利用者が選んだレベルと同じく、最後に遊んだレベルが変わっても開いたままにする。
   const [chosenDifficulty, setChosenDifficulty] =
-    useState<DifficultyLevel | null>(initialSelectedKey?.difficulty ?? null);
+    useState<DifficultyLevel | null>(
+      urlDifficulty ?? initialSelectedKey?.difficulty ?? null,
+    );
   const [selectedKey, setSelectedKey] = useState<SelectedProblemKey | null>(
     initialSelectedKey,
   );
+  const hasMountedRef = useRef(false);
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      if (urlProblemId === null && urlDifficulty === undefined) return;
+    }
+    const key = findProblemKey(zukan.sections, urlProblemId);
+    setSelectedKey(key);
+    if (key !== null) setChosenDifficulty(key.difficulty);
+    else if (urlDifficulty !== undefined) setChosenDifficulty(urlDifficulty);
+  }, [urlProblemId, urlDifficulty, zukan.sections]);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(noLevelFilter);
   const { openLayer, menuButtonRef, changeLayerOpen } = useGameHomeLayers();
   const isFilterOpen = openLayer === "filter";
@@ -591,13 +612,23 @@ export function GameHomeScreen({
       // 選んだあとに最後に遊んだレベルが変わっても、選んだ問題の台紙を開いたままにする。
       setChosenDifficulty(difficulty);
       setSelectedKey({ difficulty, problemId });
+      setSearchParams(
+        { problem: problemId },
+        {
+          replace: selectedKey !== null,
+          state:
+            selectedKey === null ? { fromGameSheet: true } : location.state,
+        },
+      );
     },
-    [],
+    [location.state, selectedKey, setSearchParams],
   );
 
   const handleDeselect = useCallback(() => {
     setSelectedKey(null);
-  }, []);
+    if (location.state?.fromGameSheet) navigate(-1);
+    else setSearchParams({ level: chosenDifficulty ?? "1" }, { replace: true });
+  }, [location.state, navigate, setSearchParams, chosenDifficulty]);
 
   function closeDetail() {
     // 詳細の中の操作から閉じたときは、フォーカスを見失わないよう選んでいたマスへ戻す。
@@ -609,7 +640,7 @@ export function GameHomeScreen({
         preventScroll: true,
       });
     }
-    setSelectedKey(null);
+    handleDeselect();
   }
 
   // ほかの画面から移ってきたときにフォーカスを見失わないよう、選んでおいた問題があればそのマスへ、無ければ見出しへ置く。
@@ -654,6 +685,7 @@ export function GameHomeScreen({
     finishOpenLevelReveal();
     setChosenDifficulty(difficulty);
     setSelectedKey(null);
+    setSearchParams({ level: difficulty }, { replace: true });
     // 特徴の選択肢はレベルの問題集にある値から作るので、レベルごとに選び直す。
     setLevelFilter(noLevelFilter);
   }
@@ -667,6 +699,16 @@ export function GameHomeScreen({
   }
 
   function handleOpenLayer(layer: GameHomeLayer) {
+    if (layer === "tutorial" || layer === "howToPlay") {
+      openGameGuide(
+        navigate,
+        gameId,
+        layer === "tutorial" ? "tutorial" : "how-to",
+        location.pathname + location.search,
+        openDifficulty,
+      );
+      return;
+    }
     if (layer === "filter") {
       handleFilterOpenChange(true);
       return;

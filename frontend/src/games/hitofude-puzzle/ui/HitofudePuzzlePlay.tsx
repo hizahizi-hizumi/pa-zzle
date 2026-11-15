@@ -74,6 +74,8 @@ export function HitofudePuzzlePlay({
   onStartNewProblem,
   onOpenGameHome,
   onBackToAppHome,
+  onOpenHowToPlay,
+  onOpenTutorial,
   onOpenDiagnostics,
   renderSettingsDialog,
 }: HitofudePuzzlePlayProps) {
@@ -134,6 +136,8 @@ export function HitofudePuzzlePlay({
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
+      onOpenHowToPlay={onOpenHowToPlay}
+      onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (

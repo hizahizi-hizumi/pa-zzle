@@ -1,6 +1,5 @@
 import { nanpureCatalogEntry } from "@/app/game-integration/nanpure/nanpure-catalog-entry";
 import { usePlayableGame } from "@/app/game-integration/playable-game";
-import { useRequestedProblem } from "@/app/navigation/problem-id-query";
 import { createNanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
@@ -16,18 +15,22 @@ import type { ProblemId } from "@/games/problem-id";
 
 type PlayableNanpureProps = {
   difficulty: NanpureDifficulty;
-  /** URL の問題 ID で問題を指定したときは使わない。 */
-  avoidedProblemId?: ProblemId;
+  problemId: ProblemId;
 };
 
 export function PlayableNanpure({
   difficulty,
-  avoidedProblemId,
+  problemId,
 }: PlayableNanpureProps) {
-  const requestedProblem = useRequestedProblem((problemId) =>
-    selectNanpureProblemById(difficulty, problemId),
+  const requestedProblem = selectNanpureProblemById(difficulty, problemId);
+  if (requestedProblem === null)
+    throw new Error("指定された問題を復元できません");
+  const play = useNanpurePlay(
+    difficulty,
+    requestedProblem,
+    undefined,
+    problemId,
   );
-  const play = useNanpurePlay(difficulty, requestedProblem, avoidedProblemId);
   const { screenProps, diagnostics } = usePlayableGame({
     game: nanpureCatalogEntry,
     play,

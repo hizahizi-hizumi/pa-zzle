@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { minesweeperCatalogEntry } from "@/app/game-integration/minesweeper/minesweeper-catalog-entry";
@@ -54,8 +60,13 @@ describe("MinesweeperHomeView", () => {
     router = createMemoryRouter(
       [
         { path: "/puzzles/minesweeper", element: <MinesweeperHomeView /> },
+        { path: "/puzzles/minesweeper/how-to", element: <p>遊び方の画面</p> },
         {
-          path: "/puzzles/minesweeper/play/:difficulty",
+          path: "/puzzles/minesweeper/tutorial",
+          element: <p>チュートリアルの画面</p>,
+        },
+        {
+          path: "/puzzles/minesweeper/play/:problemId",
           element: <p>プレイ画面</p>,
         },
       ],
@@ -85,9 +96,11 @@ describe("MinesweeperHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/minesweeper/how-to",
+      ),
+    );
   });
 
   test("見出しのメニューからチュートリアルを開けること", async () => {
@@ -97,12 +110,11 @@ describe("MinesweeperHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
 
-    const dialog = await screen.findByRole("dialog", {
-      name: "マインスイーパー",
-      description: "チュートリアル",
-    });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/minesweeper/tutorial",
+      ),
+    );
   });
 
   test("戻るリンクでホームへ戻れること", () => {
@@ -119,6 +131,10 @@ describe("MinesweeperHomeView", () => {
 
     const { pathname } = router.state.location;
 
-    expect(pathname).toBe("/puzzles/minesweeper/play/3");
+    const problemId = pathname.replace("/puzzles/minesweeper/play/", "");
+
+    expect(minesweeperCatalogEntry.listPoolProblemIds("3")).toContain(
+      problemId,
+    );
   });
 });

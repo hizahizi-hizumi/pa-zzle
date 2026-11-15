@@ -3,7 +3,6 @@ import {
   usePlayableGame,
 } from "@/app/game-integration/playable-game";
 import { takuzuCatalogEntry } from "@/app/game-integration/takuzu/takuzu-catalog-entry";
-import { useRequestedProblem } from "@/app/navigation/problem-id-query";
 import type { ProblemId } from "@/games/problem-id";
 import { createTakuzuDiagnosticSnapshot } from "@/games/takuzu/diagnostics";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
@@ -23,8 +22,7 @@ import { TakuzuPlay } from "@/games/takuzu/ui/TakuzuPlay";
 
 type PlayableTakuzuProps = {
   difficulty: TakuzuDifficulty;
-  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
-  avoidedProblemId?: ProblemId;
+  problemId: ProblemId;
 };
 
 function createPlayRecord(
@@ -40,14 +38,16 @@ function createPlayRecord(
   });
 }
 
-export function PlayableTakuzu({
-  difficulty,
-  avoidedProblemId,
-}: PlayableTakuzuProps) {
-  const requestedProblem = useRequestedProblem((problemId) =>
-    selectTakuzuProblemById(difficulty, problemId),
+export function PlayableTakuzu({ difficulty, problemId }: PlayableTakuzuProps) {
+  const requestedProblem = selectTakuzuProblemById(difficulty, problemId);
+  if (requestedProblem === null)
+    throw new Error("指定された問題を復元できません");
+  const play = useTakuzuPlay(
+    difficulty,
+    requestedProblem,
+    undefined,
+    problemId,
   );
-  const play = useTakuzuPlay(difficulty, requestedProblem, avoidedProblemId);
   const { screenProps, diagnostics } = usePlayableGame({
     game: takuzuCatalogEntry,
     play,

@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { reflectionCatalogEntry } from "@/app/game-integration/reflection/reflection-catalog-entry";
@@ -54,8 +60,13 @@ describe("ReflectionHomeView", () => {
     router = createMemoryRouter(
       [
         { path: "/puzzles/reflection", element: <ReflectionHomeView /> },
+        { path: "/puzzles/reflection/how-to", element: <p>遊び方の画面</p> },
         {
-          path: "/puzzles/reflection/play/:difficulty",
+          path: "/puzzles/reflection/tutorial",
+          element: <p>チュートリアルの画面</p>,
+        },
+        {
+          path: "/puzzles/reflection/play/:problemId",
           element: <p>プレイ画面</p>,
         },
       ],
@@ -85,9 +96,9 @@ describe("ReflectionHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/puzzles/reflection/how-to"),
+    );
   });
 
   test("見出しのメニューからチュートリアルを開けること", async () => {
@@ -97,12 +108,11 @@ describe("ReflectionHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
 
-    const dialog = await screen.findByRole("dialog", {
-      name: "リフレクション",
-      description: "チュートリアル",
-    });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/reflection/tutorial",
+      ),
+    );
   });
 
   test("戻るリンクでホームへ戻れること", () => {
@@ -119,6 +129,8 @@ describe("ReflectionHomeView", () => {
 
     const { pathname } = router.state.location;
 
-    expect(pathname).toBe("/puzzles/reflection/play/3");
+    const problemId = pathname.replace("/puzzles/reflection/play/", "");
+
+    expect(reflectionCatalogEntry.listPoolProblemIds("3")).toContain(problemId);
   });
 });

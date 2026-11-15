@@ -13,12 +13,14 @@ import {
   Routes,
   useLocation,
 } from "react-router";
+import { reflectionCatalogEntry } from "@/app/game-integration/reflection/reflection-catalog-entry";
 import { readPlayRecords } from "@/features/records/storage";
 import { createProblemId } from "@/games/problem-id";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
 import type { ReflectionBoard } from "@/games/reflection/puzzle/board";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
+import { testPlayUrl } from "@/testing/play-url";
 import { PlayResultView } from "@/views/PlayResultView";
 import { ReflectionPlayView } from "@/views/ReflectionPlayView";
 
@@ -50,10 +52,19 @@ function GameHomeLocation() {
 
 function renderAt(path: string): void {
   render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter
+      initialEntries={[
+        testPlayUrl(reflectionCatalogEntry, path, (difficulty) =>
+          createProblemId(
+            selectReflectionProblemForDifficulty(difficulty, problemSeed)
+              .identity,
+          ),
+        ),
+      ]}
+    >
       <Routes>
         <Route
-          path="/puzzles/reflection/play/:difficulty"
+          path="/puzzles/reflection/play/:problemId"
           element={<ReflectionPlayView />}
         />
         <Route path="/puzzles/reflection" element={<GameHomeLocation />} />
@@ -102,12 +113,21 @@ function renderRouterAt(path: string): PlayRouter {
   const router = createMemoryRouter(
     [
       {
-        path: "/puzzles/reflection/play/:difficulty",
+        path: "/puzzles/reflection/play/:problemId",
         element: <ReflectionPlayView />,
       },
       { path: "/puzzles/reflection", element: <p>ゲームのホーム画面</p> },
     ],
-    { initialEntries: [path] },
+    {
+      initialEntries: [
+        testPlayUrl(reflectionCatalogEntry, path, (difficulty) =>
+          createProblemId(
+            selectReflectionProblemForDifficulty(difficulty, problemSeed)
+              .identity,
+          ),
+        ),
+      ],
+    },
   );
   render(<RouterProvider router={router} />);
   return router;
@@ -230,7 +250,7 @@ describe("ReflectionPlayView", () => {
     });
 
     test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
-      const message = screen.getByText("この難易度は選べません");
+      const message = screen.getByText("この問題は現在遊べません");
       const backLink = screen.getByRole("link", {
         name: "問題選択へ戻る",
       });

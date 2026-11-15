@@ -66,6 +66,8 @@ export function ParkingJamPlay({
   onStartNewProblem,
   onOpenGameHome,
   onBackToAppHome,
+  onOpenHowToPlay,
+  onOpenTutorial,
   onClearAnimationComplete,
   onOpenDiagnostics,
   renderSettingsDialog,
@@ -89,6 +91,8 @@ export function ParkingJamPlay({
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
+      onOpenHowToPlay={onOpenHowToPlay}
+      onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (

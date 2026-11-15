@@ -5,7 +5,6 @@ import {
   RouterProvider,
 } from "react-router";
 
-import { readRandomPlaySerial } from "@/app/navigation/play-location-state";
 import { createRecordResultLocationState } from "@/app/navigation/record-result-location-state";
 import type { PlayRecord } from "@/features/records/play-record";
 import { writePlayRecords } from "@/features/records/storage";
@@ -51,7 +50,7 @@ function renderAt(entry: InitialEntry): ResultRouter {
         path: "/puzzles/:game/result/:recordId",
         element: <PlayResultView />,
       },
-      { path: "/puzzles/nanpure/play/:difficulty", element: <p>プレイ画面</p> },
+      { path: "/puzzles/nanpure/play/:problemId", element: <p>プレイ画面</p> },
       { path: "/puzzles/nanpure", element: <p>ゲームのホーム</p> },
       { path: "/records", element: <p>記録画面</p> },
     ],
@@ -91,12 +90,14 @@ describe("今の版の記録の場合", () => {
 
     const { location } = router.state;
 
-    expect(location.pathname).toBe("/puzzles/nanpure/play/3");
-    const nextProblemId = new URLSearchParams(location.search).get("problem");
+    const nextProblemId = location.pathname.replace(
+      "/puzzles/nanpure/play/",
+      "",
+    );
 
     expect(nextProblemId).toBeTruthy();
     expect(nextProblemId).not.toBe(nanpureProblemId);
-    expect(readRandomPlaySerial(location.state)).toBeGreaterThan(0);
+    expect(location.search).toBe("");
   });
 
   test("もう一度で記録の問題 ID を付けたプレイ画面へ移ること", () => {
@@ -104,8 +105,8 @@ describe("今の版の記録の場合", () => {
 
     const { location } = router.state;
 
-    expect(location.pathname).toBe("/puzzles/nanpure/play/3");
-    expect(location.search).toBe(`?problem=${nanpureProblemId}`);
+    expect(location.pathname).toBe(`/puzzles/nanpure/play/${nanpureProblemId}`);
+    expect(location.search).toBe("");
   });
 
   test("ゲームのホームへで、記録の問題を選んだゲームのホームへ移ること", () => {
@@ -188,5 +189,45 @@ describe.each(unrenderableCases)("%sの場合", (_, path) => {
 
     expect(heading).toBeTruthy();
     expect(backLink.getAttribute("href")).toBe("/records");
+  });
+});
+
+describe("記録の保存に失敗した結果の場合", () => {
+  beforeEach(() => {
+    renderAt({
+      pathname: createResultPath(nanpureRecord),
+      state: createRecordResultLocationState(
+        { status: "failed" },
+        nanpureRecord,
+      ),
+    });
+  });
+
+  test("記録が無くても結果を表示して保存失敗を伝えること", () => {
+    const resultScreen = screen.getByRole("region", { name: "プレイ結果" });
+
+    expect(resultScreen.textContent).toContain("レベル 3");
+    expect(resultScreen.textContent).toContain("02:00");
+    expect(resultScreen.textContent).toContain("保存");
+  });
+});
+
+describe("ほかの結果IDの未保存記録を履歴に持つ場合", () => {
+  beforeEach(() => {
+    renderAt({
+      pathname: "/puzzles/nanpure/result/another-id",
+      state: createRecordResultLocationState(
+        { status: "failed" },
+        nanpureRecord,
+      ),
+    });
+  });
+
+  test("履歴中の記録を異なるURLの結果として誤表示しないこと", () => {
+    const message = screen.getByRole("heading", {
+      name: "記録が見つかりません",
+    });
+
+    expect(message).toBeTruthy();
   });
 });

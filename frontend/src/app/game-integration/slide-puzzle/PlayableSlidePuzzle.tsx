@@ -1,6 +1,5 @@
 import { usePlayableGame } from "@/app/game-integration/playable-game";
 import { slidePuzzleCatalogEntry } from "@/app/game-integration/slide-puzzle/slide-puzzle-catalog-entry";
-import { useRequestedProblem } from "@/app/navigation/problem-id-query";
 import type { ProblemId } from "@/games/problem-id";
 import { createSlidePuzzleDiagnosticSnapshot } from "@/games/slide-puzzle/diagnostics";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
@@ -16,21 +15,21 @@ import { SlidePuzzlePlay } from "@/games/slide-puzzle/ui/SlidePuzzlePlay";
 
 type PlayableSlidePuzzleProps = {
   difficulty: SlidePuzzleDifficulty;
-  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
-  avoidedProblemId?: ProblemId;
+  problemId: ProblemId;
 };
 
 export function PlayableSlidePuzzle({
   difficulty,
-  avoidedProblemId,
+  problemId,
 }: PlayableSlidePuzzleProps) {
-  const requestedProblem = useRequestedProblem((problemId) =>
-    selectSlidePuzzleProblemById(difficulty, problemId),
-  );
+  const requestedProblem = selectSlidePuzzleProblemById(difficulty, problemId);
+  if (requestedProblem === null)
+    throw new Error("指定された問題を復元できません");
   const play = useSlidePuzzlePlay(
     difficulty,
     requestedProblem,
-    avoidedProblemId,
+    undefined,
+    problemId,
   );
   const { screenProps, diagnostics } = usePlayableGame({
     game: slidePuzzleCatalogEntry,

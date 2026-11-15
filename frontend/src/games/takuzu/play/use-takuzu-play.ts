@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   applyPlaySession,
   completePlayClearAnimation,
@@ -10,6 +9,10 @@ import {
   type UndoableGamePlay,
   useSessionElapsedMs,
 } from "@/games/play";
+import {
+  restorePlayState,
+  savePlayState,
+} from "@/games/play-state-persistence";
 import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
@@ -170,12 +173,19 @@ export function useTakuzuPlay(
   difficulty: TakuzuDifficulty,
   initialProblem?: TakuzuPooledProblem,
   avoidedProblemId?: ProblemId,
+  playProblemId?: ProblemId,
 ): TakuzuPlay {
   const [play, setPlay] = useState(() =>
-    createPlayState(
-      initialProblem ?? selectProblem(difficulty, avoidedProblemId),
-      Date.now(),
+    restorePlayState("takuzu", playProblemId, () =>
+      createPlayState(
+        initialProblem ?? selectProblem(difficulty, avoidedProblemId),
+        Date.now(),
+      ),
     ),
+  );
+  useEffect(
+    () => savePlayState("takuzu", playProblemId, play),
+    [playProblemId, play],
   );
   const { session, progress, problemIdentity, workload } = play;
   const elapsedMs = useSessionElapsedMs(session);

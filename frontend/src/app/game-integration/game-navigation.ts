@@ -1,11 +1,11 @@
 import { useMemo } from "react";
+import { useLocation } from "react-router";
 import type {
   GameCatalogEntry,
   GameNavigation,
   RecordProblemPlayDestination,
 } from "@/app/game-integration/game-catalog-entry";
 import { toZukanGameSource } from "@/app/game-integration/game-catalog-entry";
-import { createRandomPlayLocationState } from "@/app/navigation/play-location-state";
 import { createProblemIdSearch } from "@/app/navigation/problem-id-query";
 import {
   selectAnyRandomProblemId,
@@ -20,12 +20,26 @@ type Navigate = ReturnType<typeof useNavigate>;
 
 type GameNavigationTarget = GameCatalogEntry;
 
+function cameFromGameHome(state: unknown): boolean {
+  return (
+    typeof state === "object" &&
+    state !== null &&
+    "fromGameHome" in state &&
+    state.fromGameHome === true
+  );
+}
+
 export function createGameNavigation(
   navigate: Navigate,
   game: GameNavigationTarget,
+  locationState?: unknown,
 ): GameNavigation {
   return {
     openGameHome(selectedProblemId, options) {
+      if (options?.replacesHistory && cameFromGameHome(locationState)) {
+        navigate(-1);
+        return;
+      }
       navigate(
         {
           pathname: game.homePath,
@@ -39,15 +53,17 @@ export function createGameNavigation(
       );
     },
     backToAppHome() {
-      navigate("/");
+      navigate("/", { replace: true });
     },
     startNewProblem(difficulty, avoidedProblemId, options) {
       function openProblem(problemId: ProblemId) {
         navigate(
-          { pathname: game.playPath, search: createProblemIdSearch(problemId) },
+          { pathname: game.playPath },
           {
-            params: { difficulty },
-            state: createRandomPlayLocationState(),
+            params: { problemId },
+            state: cameFromGameHome(locationState)
+              ? { fromGameHome: true }
+              : null,
             replace: options?.replacesHistory ?? false,
           },
         );
@@ -78,18 +94,20 @@ export function createGameNavigation(
 
 export function useGameNavigation(game: GameNavigationTarget): GameNavigation {
   const navigate = useNavigate();
-  return useMemo(() => createGameNavigation(navigate, game), [navigate, game]);
+  const location = useLocation();
+  return useMemo(
+    () => createGameNavigation(navigate, game, location.state),
+    [navigate, game, location.state],
+  );
 }
 
 export function openRecordProblemPlay(
   navigate: Navigate,
   destination: RecordProblemPlayDestination,
+  options?: { fromGameHome: boolean },
 ): void {
-  navigate(
-    {
-      pathname: destination.playPath,
-      search: createProblemIdSearch(destination.problemId),
-    },
-    { params: { difficulty: destination.difficulty } },
-  );
+  navigate(destination.playPath, {
+    params: { problemId: destination.problemId },
+    state: options?.fromGameHome ? { fromGameHome: true } : null,
+  });
 }

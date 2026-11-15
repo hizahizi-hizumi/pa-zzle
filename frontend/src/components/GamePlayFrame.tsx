@@ -18,6 +18,8 @@ type GamePlayFrameProps<Result> = Pick<
   | "onStartNewProblem"
   | "onOpenGameHome"
   | "onBackToAppHome"
+  | "onOpenHowToPlay"
+  | "onOpenTutorial"
   | "onOpenDiagnostics"
   | "renderSettingsDialog"
 > &
@@ -47,6 +49,8 @@ export function GamePlayFrame<Result>({
   onStartNewProblem,
   onOpenGameHome,
   onBackToAppHome,
+  onOpenHowToPlay,
+  onOpenTutorial,
   onOpenDiagnostics,
   renderResultScreen,
   renderHowToPlayDialog,
@@ -88,8 +92,10 @@ export function GamePlayFrame<Result>({
           onStartNewProblem={onStartNewProblem}
           onOpenGameHome={onOpenGameHome}
           onBackToAppHome={onBackToAppHome}
-          onOpenHowToPlay={() => setHowToPlayOpen(true)}
-          onOpenTutorial={renderTutorial && (() => setTutorialOpen(true))}
+          onOpenHowToPlay={onOpenHowToPlay ?? (() => setHowToPlayOpen(true))}
+          onOpenTutorial={
+            renderTutorial && (onOpenTutorial ?? (() => setTutorialOpen(true)))
+          }
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenDiagnostics={onOpenDiagnostics}
         />

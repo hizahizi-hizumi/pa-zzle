@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { iceFloorMazeCatalogEntry } from "@/app/game-integration/ice-floor-maze/ice-floor-maze-catalog-entry";
@@ -58,7 +64,15 @@ describe("IceFloorMazeHomeView", () => {
           element: <IceFloorMazeHomeView />,
         },
         {
-          path: "/puzzles/ice-floor-maze/play/:difficulty",
+          path: "/puzzles/ice-floor-maze/how-to",
+          element: <p>遊び方の画面</p>,
+        },
+        {
+          path: "/puzzles/ice-floor-maze/tutorial",
+          element: <p>チュートリアルの画面</p>,
+        },
+        {
+          path: "/puzzles/ice-floor-maze/play/:problemId",
           element: <p>プレイ画面</p>,
         },
       ],
@@ -88,9 +102,11 @@ describe("IceFloorMazeHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/ice-floor-maze/how-to",
+      ),
+    );
   });
 
   test("見出しのメニューからチュートリアルを開けること", async () => {
@@ -100,12 +116,11 @@ describe("IceFloorMazeHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
 
-    const dialog = await screen.findByRole("dialog", {
-      name: "アイスフロア迷路",
-      description: "チュートリアル",
-    });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/ice-floor-maze/tutorial",
+      ),
+    );
   });
 
   test("戻るリンクでホームへ戻れること", () => {
@@ -122,6 +137,10 @@ describe("IceFloorMazeHomeView", () => {
 
     const { pathname } = router.state.location;
 
-    expect(pathname).toBe("/puzzles/ice-floor-maze/play/3");
+    const problemId = pathname.replace("/puzzles/ice-floor-maze/play/", "");
+
+    expect(iceFloorMazeCatalogEntry.listPoolProblemIds("3")).toContain(
+      problemId,
+    );
   });
 });

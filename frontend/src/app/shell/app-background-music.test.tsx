@@ -34,7 +34,7 @@ vi.mock("@/lib/audio/background-music", () => ({
   prepareBackgroundMusic: vi.fn(),
 }));
 
-const playPath = "/puzzles/nanpure/play/3";
+const playPath = "/puzzles/nanpure/play/example-problem";
 
 function createWrapper(path: string) {
   return function RouterWrapper({ children }: { children: ReactNode }) {

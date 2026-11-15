@@ -13,6 +13,7 @@ import {
   Routes,
   useLocation,
 } from "react-router";
+import { bridgesCatalogEntry } from "@/app/game-integration/bridges/bridges-catalog-entry";
 import { readPlayAttempts } from "@/features/records/play-attempt-storage";
 import { readPlayRecords } from "@/features/records/storage";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
@@ -29,6 +30,7 @@ import {
 } from "@/games/bridges/puzzle/board";
 import { createBoardView } from "@/games/bridges/ui/board/board-geometry";
 import { createProblemId } from "@/games/problem-id";
+import { testPlayUrl } from "@/testing/play-url";
 import { BridgesPlayView } from "@/views/BridgesPlayView";
 import { PlayResultView } from "@/views/PlayResultView";
 
@@ -54,15 +56,23 @@ afterEach(() => {
 });
 
 function LocationSearch() {
-  return <output aria-label="URL のクエリ">{useLocation().search}</output>;
+  return <output aria-label="プレイURL">{useLocation().pathname}</output>;
 }
 
 function renderAt(path: string): void {
   render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter
+      initialEntries={[
+        testPlayUrl(bridgesCatalogEntry, path, (difficulty) =>
+          createProblemId(
+            selectBridgesProblemForDifficulty(difficulty, problemSeed).identity,
+          ),
+        ),
+      ]}
+    >
       <Routes>
         <Route
-          path="/puzzles/bridges/play/:difficulty"
+          path="/puzzles/bridges/play/:problemId"
           element={
             <>
               <BridgesPlayView />
@@ -86,13 +96,21 @@ function renderRouterAt(path: string): PlayRouter {
   const router = createMemoryRouter(
     [
       {
-        path: "/puzzles/bridges/play/:difficulty",
+        path: "/puzzles/bridges/play/:problemId",
         element: <BridgesPlayView />,
       },
       { path: "/puzzles/bridges", element: <p>ゲームのホーム画面</p> },
       { path: "/puzzles/:game/result/:recordId", element: <PlayResultView /> },
     ],
-    { initialEntries: [path] },
+    {
+      initialEntries: [
+        testPlayUrl(bridgesCatalogEntry, path, (difficulty) =>
+          createProblemId(
+            selectBridgesProblemForDifficulty(difficulty, problemSeed).identity,
+          ),
+        ),
+      ],
+    },
   );
   render(<RouterProvider router={router} />);
   return router;
@@ -233,12 +251,12 @@ describe("BridgesPlayView", () => {
     });
 
     test("橋の無い盤面と、その問題 ID の URL を示すこと", () => {
-      const search = screen.getByRole("status", { name: "URL のクエリ" });
+      const search = screen.getByRole("status", { name: "プレイURL" });
       const bridgeCount = countPlacedBridges();
 
       expect({ bridgeCount, query: search.textContent }).toEqual({
         bridgeCount: 0,
-        query: `?problem=${createProblemId(identity)}`,
+        query: `/puzzles/bridges/play/${createProblemId(identity)}`,
       });
     });
 
@@ -457,26 +475,18 @@ describe("BridgesPlayView", () => {
         name: `${BRIDGES_DISPLAY_NAME}盤面 ${requested.problem.height}行${requested.problem.width}列`,
       });
       const islandCount = within(board).getAllByRole("button").length;
-      const search = screen.getByRole("status", { name: "URL のクエリ" });
+      const search = screen.getByRole("status", { name: "プレイURL" });
 
       expect(islandCount).toBe(requested.problem.islands.length);
-      expect(search.textContent).toBe(`?problem=${problemId}`);
+      expect(search.textContent).toBe(`/puzzles/bridges/play/${problemId}`);
     });
   });
 
-  describe("URL の問題 ID が引けない場合", () => {
-    beforeEach(() => {
-      renderAt("/puzzles/bridges/play/3?problem=unknown");
-    });
+  describe("存在しない問題IDで開いた場合", () => {
+    beforeEach(() => renderAt("/puzzles/bridges/play/5?problem=invalid"));
 
-    const expected = selectBridgesProblemForDifficulty("3", problemSeed);
-
-    test("難易度の問題を選び、その問題 ID に URL を置き換えること", () => {
-      const search = screen.getByRole("status", { name: "URL のクエリ" });
-
-      expect(search.textContent).toBe(
-        `?problem=${createProblemId(expected.identity)}`,
-      );
+    test("別の問題にすり替えず、開けないことを知らせること", () => {
+      expect(screen.getByText("この問題は現在遊べません")).toBeTruthy();
     });
   });
 

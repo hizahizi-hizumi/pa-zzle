@@ -1,9 +1,13 @@
 ---
 status: accepted
 date: 2026-10-02
+partially_superseded_by:
+  - ADR-0019
 ---
 
 # 結果画面を記録IDの専用パスで開く
+
+記録の保存に失敗したとき、結果をプレイ画面内に表示する決定は ADR-0019 で置き換えた。
 
 ## 要約
 

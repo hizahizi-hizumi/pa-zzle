@@ -1,6 +1,5 @@
 import { iceFloorMazeCatalogEntry } from "@/app/game-integration/ice-floor-maze/ice-floor-maze-catalog-entry";
 import { usePlayableGame } from "@/app/game-integration/playable-game";
-import { useRequestedProblem } from "@/app/navigation/problem-id-query";
 import { createIceFloorMazeDiagnosticSnapshot } from "@/games/ice-floor-maze/diagnostics";
 import type { IceFloorMazeDifficulty } from "@/games/ice-floor-maze/difficulty";
 import { useIceFloorMazePlay } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
@@ -16,21 +15,21 @@ import type { ProblemId } from "@/games/problem-id";
 
 type PlayableIceFloorMazeProps = {
   difficulty: IceFloorMazeDifficulty;
-  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
-  avoidedProblemId?: ProblemId;
+  problemId: ProblemId;
 };
 
 export function PlayableIceFloorMaze({
   difficulty,
-  avoidedProblemId,
+  problemId,
 }: PlayableIceFloorMazeProps) {
-  const requestedProblem = useRequestedProblem((problemId) =>
-    selectIceFloorMazeProblemById(difficulty, problemId),
-  );
+  const requestedProblem = selectIceFloorMazeProblemById(difficulty, problemId);
+  if (requestedProblem === null)
+    throw new Error("指定された問題を復元できません");
   const play = useIceFloorMazePlay(
     difficulty,
     requestedProblem,
-    avoidedProblemId,
+    undefined,
+    problemId,
   );
   const { screenProps, diagnostics } = usePlayableGame({
     game: iceFloorMazeCatalogEntry,

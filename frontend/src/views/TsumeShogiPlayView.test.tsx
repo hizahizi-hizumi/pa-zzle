@@ -13,6 +13,7 @@ import {
   RouterProvider,
   Routes,
 } from "react-router";
+import { tsumeShogiCatalogEntry } from "@/app/game-integration/tsume-shogi/tsume-shogi-catalog-entry";
 import { readPlayRecords } from "@/features/records/storage";
 import { difficultyLevels } from "@/games/difficulty";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
@@ -43,6 +44,9 @@ import {
   tsumeShogiHandPieceNames,
   tsumeShogiPieceNames,
 } from "@/games/tsume-shogi/ui/piece-label";
+import { testPlayUrl } from "@/testing/play-url";
+import { GameHowToView } from "@/views/GameHowToView";
+import { GameTutorialView } from "@/views/GameTutorialView";
 import { PlayResultView } from "@/views/PlayResultView";
 import { TsumeShogiPlayView } from "@/views/TsumeShogiPlayView";
 
@@ -75,6 +79,7 @@ vi.mock("@/games/tsume-shogi/play/use-tsume-shogi-problem-pool", () => ({
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  window.sessionStorage.clear();
   vi.useRealTimers();
   internalDiagnostics.available = false;
   problemPool.status = "loaded";
@@ -82,16 +87,27 @@ afterEach(() => {
 
 function renderAt(path: string): void {
   render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter
+      initialEntries={[
+        testPlayUrl(tsumeShogiCatalogEntry, path, (difficulty) =>
+          createProblemId(
+            selectTsumeShogiProblemForDifficulty(difficulty, problemSeed)
+              .identity,
+          ),
+        ),
+      ]}
+    >
       <Routes>
         <Route
-          path="/puzzles/tsume-shogi/play/:difficulty"
+          path="/puzzles/tsume-shogi/play/:problemId"
           element={<TsumeShogiPlayView />}
         />
         <Route
           path="/puzzles/tsume-shogi"
           element={<p>ゲームのホーム画面</p>}
         />
+        <Route path="/puzzles/:game/how-to" element={<GameHowToView />} />
+        <Route path="/puzzles/:game/tutorial" element={<GameTutorialView />} />
         <Route path="/records" element={<p>記録画面</p>} />
         <Route path="/" element={<p>ホーム画面</p>} />
         <Route
@@ -109,20 +125,31 @@ function renderRouterAt(path: string): PlayRouter {
   const router = createMemoryRouter(
     [
       {
-        path: "/puzzles/tsume-shogi/play/:difficulty",
+        path: "/puzzles/tsume-shogi/play/:problemId",
         element: <TsumeShogiPlayView />,
       },
       { path: "/puzzles/tsume-shogi", element: <p>ゲームのホーム画面</p> },
+      { path: "/puzzles/:game/how-to", element: <GameHowToView /> },
+      { path: "/puzzles/:game/tutorial", element: <GameTutorialView /> },
       { path: "/puzzles/:game/result/:recordId", element: <PlayResultView /> },
     ],
-    { initialEntries: [path] },
+    {
+      initialEntries: [
+        testPlayUrl(tsumeShogiCatalogEntry, path, (difficulty) =>
+          createProblemId(
+            selectTsumeShogiProblemForDifficulty(difficulty, problemSeed)
+              .identity,
+          ),
+        ),
+      ],
+    },
   );
   render(<RouterProvider router={router} />);
   return router;
 }
 
 function readProblemId(router: PlayRouter): string | null {
-  return new URLSearchParams(router.state.location.search).get("problem");
+  return router.state.location.pathname.split("/").at(-1) ?? null;
 }
 
 function openMenu(): void {
@@ -441,7 +468,7 @@ describe("TsumeShogiPlayView", () => {
     });
 
     test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
-      const message = screen.getByText("この難易度は選べません");
+      const message = screen.getByText("この問題は現在遊べません");
       const backLink = screen.getByRole("link", { name: "問題選択へ戻る" });
 
       expect(message).toBeTruthy();
@@ -605,23 +632,10 @@ describe("TsumeShogiPlayView", () => {
     });
   });
 
-  describe("問題IDのクエリ", () => {
+  describe("プレイURLの問題ID", () => {
     const requested = toTsumeShogiPooledProblem("3", 4);
     const requestedProblemId = createProblemId(requested.identity);
     let router: PlayRouter;
-
-    describe("問題IDの無いURLで開いた場合", () => {
-      beforeEach(() => {
-        router = renderRouterAt("/puzzles/tsume-shogi/play/1");
-      });
-
-      test("出題した問題のIDを履歴を増やさずにURLへ反映すること", () => {
-        const problemId = readProblemId(router);
-
-        expect(problemId).toBe(createProblemId(selected.identity));
-        expect(router.state.historyAction).toBe("REPLACE");
-      });
-    });
 
     describe("問題集にある問題IDで開いた場合", () => {
       beforeEach(() => {
@@ -669,27 +683,16 @@ describe("TsumeShogiPlayView", () => {
       });
     });
 
-    const unresolvedCases = [
-      ["形式の違う問題ID", "1", "invalid"],
-      ["別の難易度の問題ID", "1", requestedProblemId],
-    ] as const;
+    describe("存在しない問題IDで開いた場合", () => {
+      beforeEach(() => {
+        router = renderRouterAt("/puzzles/tsume-shogi/play/1?problem=invalid");
+      });
 
-    describe.each(unresolvedCases)(
-      "%sで開いた場合",
-      (_, difficulty, problemIdInUrl) => {
-        beforeEach(() => {
-          router = renderRouterAt(
-            `/puzzles/tsume-shogi/play/${difficulty}?problem=${problemIdInUrl}`,
-          );
-        });
-
-        test("知らせずに新しい問題を出し、そのIDへURLを置き換えること", () => {
-          const problemId = readProblemId(router);
-
-          expect(problemId).toBe(createProblemId(selected.identity));
-          expect(router.state.historyAction).toBe("REPLACE");
-        });
-      },
-    );
+      test("指定した問題を開けないことを知らせ、別の問題へ置き換えないこと", () => {
+        expect(screen.getByText("この問題は現在遊べません")).toBeTruthy();
+        expect(readProblemId(router)).toBe("invalid");
+        expect(router.state.historyAction).toBe("POP");
+      });
+    });
   });
 });

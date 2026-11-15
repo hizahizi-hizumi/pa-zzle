@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { slidePuzzleCatalogEntry } from "@/app/game-integration/slide-puzzle/slide-puzzle-catalog-entry";
@@ -54,8 +60,13 @@ describe("SlidePuzzleHomeView", () => {
     router = createMemoryRouter(
       [
         { path: "/puzzles/slide-puzzle", element: <SlidePuzzleHomeView /> },
+        { path: "/puzzles/slide-puzzle/how-to", element: <p>遊び方の画面</p> },
         {
-          path: "/puzzles/slide-puzzle/play/:difficulty",
+          path: "/puzzles/slide-puzzle/tutorial",
+          element: <p>チュートリアルの画面</p>,
+        },
+        {
+          path: "/puzzles/slide-puzzle/play/:problemId",
           element: <p>プレイ画面</p>,
         },
       ],
@@ -85,9 +96,11 @@ describe("SlidePuzzleHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "遊び方" });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/slide-puzzle/how-to",
+      ),
+    );
   });
 
   test("見出しのメニューからチュートリアルを開けること", async () => {
@@ -97,12 +110,11 @@ describe("SlidePuzzleHomeView", () => {
     });
     fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
 
-    const dialog = await screen.findByRole("dialog", {
-      name: "スライドパズル",
-      description: "チュートリアル",
-    });
-
-    expect(dialog).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/slide-puzzle/tutorial",
+      ),
+    );
   });
 
   test("戻るリンクでホームへ戻れること", () => {
@@ -119,6 +131,10 @@ describe("SlidePuzzleHomeView", () => {
 
     const { pathname } = router.state.location;
 
-    expect(pathname).toBe("/puzzles/slide-puzzle/play/3");
+    const problemId = pathname.replace("/puzzles/slide-puzzle/play/", "");
+
+    expect(slidePuzzleCatalogEntry.listPoolProblemIds("3")).toContain(
+      problemId,
+    );
   });
 });

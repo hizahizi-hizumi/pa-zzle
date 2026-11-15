@@ -31,7 +31,7 @@ export const bridgesCatalogEntry = {
   pictogramSvg,
   pictogramShowcaseSvg,
   homePath: "/puzzles/bridges",
-  playPath: "/puzzles/bridges/play/:difficulty",
+  playPath: "/puzzles/bridges/play/:problemId",
   playRecordDisplay: bridgesPlayRecordDisplay,
   recordProblemPlayTarget(record) {
     return isBridgesPlayRecord(record)

@@ -57,6 +57,8 @@ export function MinesweeperPlay({
   onStartNewProblem,
   onOpenGameHome,
   onBackToAppHome,
+  onOpenHowToPlay,
+  onOpenTutorial,
   onClearAnimationComplete,
   onOpenDiagnostics,
   renderSettingsDialog,
@@ -96,6 +98,8 @@ export function MinesweeperPlay({
       onStartNewProblem={handleStartNewProblem}
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
+      onOpenHowToPlay={onOpenHowToPlay}
+      onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
       renderHowToPlayDialog={({ open, onClose }) => (

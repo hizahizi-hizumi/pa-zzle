@@ -1,9 +1,13 @@
 ---
 status: accepted
 date: 2026-10-02
+partially_superseded_by:
+  - ADR-0019
 ---
 
 # 問題IDでプレイ画面と記録の遊び直しを結ぶ
+
+プレイURLの難易度・問題IDの配置と、無効な問題IDを別問題へ自動置換する決定は ADR-0019 で置き換えた。
 
 ## 要約
 

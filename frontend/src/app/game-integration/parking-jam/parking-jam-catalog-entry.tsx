@@ -31,7 +31,7 @@ export const parkingJamCatalogEntry = {
   pictogramSvg,
   pictogramShowcaseSvg,
   homePath: "/puzzles/parking-jam",
-  playPath: "/puzzles/parking-jam/play/:difficulty",
+  playPath: "/puzzles/parking-jam/play/:problemId",
   playRecordDisplay: parkingJamPlayRecordDisplay,
   recordProblemPlayTarget(record) {
     return isParkingJamPlayRecord(record)

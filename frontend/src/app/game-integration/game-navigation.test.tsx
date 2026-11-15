@@ -13,7 +13,7 @@ const game = minesweeperCatalogEntry;
 
 function RouterWrapper({ children }: { children: ReactNode }) {
   return (
-    <MemoryRouter initialEntries={["/puzzles/minesweeper/play/1"]}>
+    <MemoryRouter initialEntries={["/puzzles/minesweeper/play/p1"]}>
       {children}
     </MemoryRouter>
   );
@@ -89,10 +89,9 @@ describe("useGameNavigation", () => {
 
     const { pathname, search } = result.current.location;
 
-    expect(pathname).toBe("/puzzles/minesweeper/play/3");
-    expect(game.listPoolProblemIds("3")).toContain(
-      new URLSearchParams(search).get("problem"),
-    );
+    expect(pathname.startsWith("/puzzles/minesweeper/play/")).toBe(true);
+    expect(game.listPoolProblemIds("3")).toContain(pathname.split("/").at(-1));
+    expect(search).toBe("");
     expect(result.current.navigationType).toBe("PUSH");
   });
 
@@ -126,7 +125,7 @@ describe("openRecordProblemPlay", () => {
 
     const { pathname, search } = result.current.location;
 
-    expect(pathname).toBe("/puzzles/minesweeper/play/2");
-    expect(search).toBe("?problem=problem-1");
+    expect(pathname).toBe("/puzzles/minesweeper/play/problem-1");
+    expect(search).toBe("");
   });
 });

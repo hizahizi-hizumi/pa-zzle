@@ -8,7 +8,7 @@ import type { PlayAttempt } from "@/features/records/play-attempt";
 import type { PlayRecord } from "@/features/records/play-record";
 import type { PlayRecordDisplayDefinition } from "@/features/records/ui/play-record-display";
 import type { ZukanGameSource } from "@/features/zukan/zukan-collection";
-import type { DifficultyLevel } from "@/games/difficulty";
+import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
 import type { ResultRecordFeedback } from "@/games/play";
 import type {
   ProblemFeatureAxis,
@@ -26,7 +26,7 @@ export type GameHomePath = Exclude<
   `${string}/:${string}`
 >;
 
-export type GamePlayPath = Extract<Path, `/puzzles/${string}/play/:difficulty`>;
+export type GamePlayPath = Extract<Path, `/puzzles/${string}/play/:problemId`>;
 
 export type RecordProblemPlayTarget = {
   difficulty: string;
@@ -185,4 +185,15 @@ export function createProblemFeatureFilter<Features, Id extends string>(
         : new Map(axes.map((axis) => [axis.id, axis.getValue(features)]));
     },
   };
+}
+
+/** 問題IDが現在の問題集に存在する場合だけ、その問題の難易度を返す。 */
+export function findGameProblemDifficulty(
+  game: GameCatalogEntry,
+  problemId: string,
+): DifficultyLevel | null {
+  for (const { id } of difficultyLevels) {
+    if (game.listPoolProblemIds(id).includes(problemId)) return id;
+  }
+  return null;
 }

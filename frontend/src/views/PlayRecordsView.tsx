@@ -6,7 +6,11 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { useLocation } from "react-router";
+import {
+  useLocation,
+  useNavigate as useReactRouterNavigate,
+  useSearchParams,
+} from "react-router";
 import { createGameNavigation } from "@/app/game-integration/game-navigation";
 import {
   describePlayTimelineEntry,
@@ -45,7 +49,10 @@ export function PlayRecordsView() {
     [records, attempts],
   );
   const navigate = useNavigate();
-  const locationState = useLocation().state;
+  const navigateHistory = useReactRouterNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const locationState = location.state;
   // 一覧から開いたプレイから戻ったときは、一覧を同じ所まで描き、同じ位置へ戻す。
   const [returnedPosition] = useState(() =>
     readPlayRecordsLocationState(locationState),
@@ -69,13 +76,16 @@ export function PlayRecordsView() {
 
   const openEntry = useCallback(
     (entry: PlayTimelineEntry) => {
-      navigate("/records", {
-        replace: true,
-        state: createPlayRecordsLocationState(
-          shownEntryCountRef.current,
-          window.scrollY,
-        ),
-      });
+      navigateHistory(
+        { pathname: location.pathname, search: location.search },
+        {
+          replace: true,
+          state: createPlayRecordsLocationState(
+            shownEntryCountRef.current,
+            window.scrollY,
+          ),
+        },
+      );
       const destination = findPlayTimelineEntryDestination(entry);
       if (destination.kind === "result") {
         navigate("/puzzles/:game/result/:recordId", {
@@ -90,7 +100,7 @@ export function PlayRecordsView() {
         destination.problemId,
       );
     },
-    [navigate],
+    [navigate, navigateHistory, location.pathname, location.search],
   );
 
   return (
@@ -99,7 +109,14 @@ export function PlayRecordsView() {
       <header className="mt-2 mb-4">
         <h1 className="text-screen-title">記録</h1>
       </header>
-      <Tabs defaultValue={returnedPosition ? "history" : "collection"}>
+      <Tabs
+        value={searchParams.get("tab") === "history" ? "history" : "collection"}
+        onValueChange={(value) =>
+          setSearchParams(value === "history" ? { tab: "history" } : {}, {
+            replace: true,
+          })
+        }
+      >
         <div>
           <TabsList>
             <TabsTrigger value="collection">コレクション</TabsTrigger>
