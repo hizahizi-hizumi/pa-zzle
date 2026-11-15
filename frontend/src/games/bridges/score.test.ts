@@ -61,10 +61,9 @@ describe("calculateBridgesSpeedFullScoreMs", () => {
   describe("先読みと交差の回数の無い作業の量の場合", () => {
     test("0回として扱うこと", () => {
       const { crossingBlockCount: _, ...withoutCrossing } = heavyWorkload;
+      const fullScoreMs = calculateBridgesSpeedFullScoreMs(withoutCrossing);
 
-      expect(calculateBridgesSpeedFullScoreMs(withoutCrossing)).toBe(
-        heavyFullScoreMs - 8_000,
-      );
+      expect(fullScoreMs).toBe(heavyFullScoreMs - 8_000);
     });
   });
 
@@ -81,14 +80,17 @@ describe("calculateBridgesSpeedFullScoreMs", () => {
 
 describe("calculateBridgesZeroScoreRatio", () => {
   test("読みの無い問題は3倍にすること", () => {
-    expect(calculateBridgesZeroScoreRatio(lightWorkload)).toBe(3);
+    const ratio = calculateBridgesZeroScoreRatio(lightWorkload);
+
+    expect(ratio).toBe(3);
   });
 
   test("読みの項の割合の3倍を3に足し、0.1単位に丸めること", () => {
     const expected =
       Math.round((3 + (3 * heavyReadingMs) / heavyFullScoreMs) * 10) / 10;
+    const ratio = calculateBridgesZeroScoreRatio(heavyWorkload);
 
-    expect(calculateBridgesZeroScoreRatio(heavyWorkload)).toBe(expected);
+    expect(ratio).toBe(expected);
     expect(expected).toBe(5.2);
   });
 });

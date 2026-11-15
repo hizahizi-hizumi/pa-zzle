@@ -17,10 +17,14 @@ describe("getBridgeExtendMs", () => {
   ]);
 
   test("隣の島への板は、90ミリ秒に1マスあたり15ミリ秒を足した時間で渡すこと", () => {
-    expect(getBridgeExtendMs(board, 0)).toBe(120);
+    const durationMs = getBridgeExtendMs(board, 0);
+
+    expect(durationMs).toBe(120);
   });
 
   test("遠い島への板も、220ミリ秒より長くかけないこと", () => {
-    expect(getBridgeExtendMs(board, 1)).toBe(220);
+    const durationMs = getBridgeExtendMs(board, 1);
+
+    expect(durationMs).toBe(220);
   });
 });

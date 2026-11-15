@@ -60,7 +60,9 @@ describe("createBoardView", () => {
       ),
     );
 
-    expect(createBoardView(wide)).toMatchObject({
+    const view = createBoardView(wide);
+
+    expect(view).toMatchObject({
       margin: WIDE_BOARD_MARGIN,
       width: 9 + 2 * WIDE_BOARD_MARGIN,
     });
@@ -324,7 +326,9 @@ describe("誤操作が起きやすい形の当たり判定", () => {
         { kind: "island", island: diagonal },
       ],
     ] as const)("%sを押すと %j を指すこと", (_, point, expected) => {
-      expect(findBoardTarget(shortBoard, point)).toEqual(expected);
+      const target = findBoardTarget(shortBoard, point);
+
+      expect(target).toEqual(expected);
     });
   });
 
@@ -352,7 +356,9 @@ describe("誤操作が起きやすい形の当たり判定", () => {
         { kind: "ambiguous", ascendingEdges: both },
       ],
     ] as const)("%sを押すと %j を指すこと", (_, point, expected) => {
-      expect(findBoardTarget(parallelBoard, point)).toEqual(expected);
+      const target = findBoardTarget(parallelBoard, point);
+
+      expect(target).toEqual(expected);
     });
   });
 });

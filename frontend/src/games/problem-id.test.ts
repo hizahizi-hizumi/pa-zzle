@@ -25,8 +25,9 @@ describe("canonicalizeProblemIdentity", () => {
 
     test("同じ文字列にすること", () => {
       const canonical = canonicalizeProblemIdentity(reordered);
+      const baseline = canonicalizeProblemIdentity(identity);
 
-      expect(canonical).toBe(canonicalizeProblemIdentity(identity));
+      expect(canonical).toBe(baseline);
     });
   });
 
@@ -35,8 +36,9 @@ describe("canonicalizeProblemIdentity", () => {
 
     test("そのキーが無い identity と同じ文字列にすること", () => {
       const canonical = canonicalizeProblemIdentity(withUndefined);
+      const baseline = canonicalizeProblemIdentity(identity);
 
-      expect(canonical).toBe(canonicalizeProblemIdentity(identity));
+      expect(canonical).toBe(baseline);
     });
   });
 
@@ -66,8 +68,9 @@ describe("createProblemId", () => {
 
     test("元の identity と同じ問題IDにすること", () => {
       const problemId = createProblemId(recorded);
+      const baselineId = createProblemId(identity);
 
-      expect(problemId).toBe(createProblemId(identity));
+      expect(problemId).toBe(baselineId);
     });
   });
 
@@ -85,8 +88,9 @@ describe("createProblemId", () => {
     "%s identity には別の問題IDにすること",
     (_, different) => {
       const problemId = createProblemId(different);
+      const baselineId = createProblemId(identity);
 
-      expect(problemId).not.toBe(createProblemId(identity));
+      expect(problemId).not.toBe(baselineId);
     },
   );
 });
@@ -100,6 +104,8 @@ describe("createProblemPoolIndex", () => {
   const { findPositionById: findPosition, listProblemIds } =
     createProblemPoolIndex(levels, ([seed]) => ({ seed }));
   const secondEntryId = createProblemId({ seed: "b" });
+  const firstEntryId = createProblemId({ seed: "a" });
+  const unknownEntryId = createProblemId({ seed: "z" });
 
   test("難易度と問題IDから項目と並び順を引けること", () => {
     const position = findPosition("1", secondEntryId);
@@ -114,7 +120,7 @@ describe("createProblemPoolIndex", () => {
   });
 
   test("問題集に無い問題IDでは引けないこと", () => {
-    const position = findPosition("1", createProblemId({ seed: "z" }));
+    const position = findPosition("1", unknownEntryId);
 
     expect(position).toBeNull();
   });
@@ -122,7 +128,7 @@ describe("createProblemPoolIndex", () => {
   test("難易度の全問の問題IDを問題集の並び順で返すこと", () => {
     const problemIds = listProblemIds("1");
 
-    expect(problemIds).toEqual([createProblemId({ seed: "a" }), secondEntryId]);
+    expect(problemIds).toEqual([firstEntryId, secondEntryId]);
   });
 });
 

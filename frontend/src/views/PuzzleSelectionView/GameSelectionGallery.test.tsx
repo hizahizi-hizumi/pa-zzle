@@ -488,12 +488,14 @@ describe("選んだゲームの情報", () => {
     expect(current.getAttribute("aria-describedby")).toBe(badge.id);
   });
 
-  test("挑戦中の問題が無い場合はレベルのみ表示すること", () => {
-    renderGallery(0, { difficulty: "1", attemptedCount: 0 });
-    const current = screen.getByRole("link", {
-      name: "ウォーターソートを開く",
+  describe("挑戦中の問題が無い場合", () => {
+    test("レベルのみ表示すること", () => {
+      renderGallery(0, { difficulty: "1", attemptedCount: 0 });
+      const current = screen.getByRole("link", {
+        name: "ウォーターソートを開く",
+      });
+      expect(within(current).getByText("レベル 1")).toBeTruthy();
     });
-    expect(within(current).getByText("レベル 1")).toBeTruthy();
   });
 
   test("未プレイのゲームには続きの情報を表示しないこと", () => {
