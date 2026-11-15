@@ -11,7 +11,9 @@ import { useNavigate } from "@/router";
 
 const game = minesweeperCatalogEntry;
 
-function RouterWrapper({ children }: { children: ReactNode }) {
+type RouterWrapperProps = { children: ReactNode };
+
+function RouterWrapper({ children }: RouterWrapperProps) {
   return (
     <MemoryRouter initialEntries={["/puzzles/minesweeper/play/p1"]}>
       {children}

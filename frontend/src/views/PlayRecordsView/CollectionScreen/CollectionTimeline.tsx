@@ -9,6 +9,7 @@ import type {
   CollectionJourney,
 } from "@/features/collection/collection";
 import { gameResultLevelsAscending } from "@/games/result";
+import { formatCollectionMonth } from "@/views/PlayRecordsView/CollectionScreen/format-collection-month";
 
 const levels = gameResultLevelsAscending;
 const pageSize = 6;
@@ -47,6 +48,7 @@ export function CollectionTimeline({
     ),
   );
   const months = journey.periods;
+  const activeMonth = months[period];
   const pageFromEnd = Math.floor((months.length - 1 - period) / pageSize);
   const pageEnd = months.length - pageFromEnd * pageSize;
   const pageStart = Math.max(0, pageEnd - pageSize);
@@ -120,7 +122,7 @@ export function CollectionTimeline({
               key={month.key}
               className={`min-w-0 rounded-sm py-2 font-medium outline-offset-2 focus-visible:outline-2 focus-visible:outline-ring ${period === pageStart + index ? "bg-background text-foreground shadow-xs ring-1 ring-ring" : "text-muted-foreground hover:bg-background/60"}`}
               aria-pressed={period === pageStart + index}
-              aria-label={`${month.label}の時点を見る`}
+              aria-label={`${formatCollectionMonth(month)}の時点を見る`}
               onClick={() => onPeriodChange(pageStart + index)}
             >
               {month.month}月
@@ -155,7 +157,7 @@ export function CollectionTimeline({
                   <button
                     key={month.key}
                     type="button"
-                    aria-label={`${info.name} ${month.label}: 初クリア${newCount}問、評価アップ${change?.raised ?? 0}問`}
+                    aria-label={`${info.name} ${formatCollectionMonth(month)}: 初クリア${newCount}問、評価アップ${change?.raised ?? 0}問`}
                     aria-pressed={
                       period === pageStart + index && selectedId === info.id
                     }
@@ -194,7 +196,8 @@ export function CollectionTimeline({
           aria-live="polite"
         >
           <span className="font-semibold">
-            {selectedInfo.name} · {months[period]?.label}
+            {selectedInfo.name} ·{" "}
+            {activeMonth ? formatCollectionMonth(activeMonth) : null}
           </span>
           <span className="text-muted-foreground tabular-nums">
             初クリア{" "}

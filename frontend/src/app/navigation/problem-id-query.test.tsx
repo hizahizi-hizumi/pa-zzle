@@ -6,7 +6,9 @@ import {
   useRequestedProblemId,
 } from "@/app/navigation/problem-id-query";
 
-function RouterWrapper({ children }: { children: ReactNode }) {
+type RouterWrapperProps = { children: ReactNode };
+
+function RouterWrapper({ children }: RouterWrapperProps) {
   return (
     <MemoryRouter initialEntries={["/puzzles/nanpure?problem=abc123"]}>
       {children}
