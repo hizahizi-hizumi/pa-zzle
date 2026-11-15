@@ -1,5 +1,6 @@
 import { bridgesToneClassNames } from "@/games/bridges/ui/bridges-tone";
-import { SeaWaves, SeaWideWaves } from "@/games/bridges/ui/SeaWaves";
+import { SeaWaves } from "@/games/bridges/ui/SeaWaves";
+import { SeaWideWaves } from "@/games/bridges/ui/SeaWideWaves";
 import { cn } from "@/lib/utils";
 
 /**
