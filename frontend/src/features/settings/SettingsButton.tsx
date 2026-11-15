@@ -1,6 +1,7 @@
 import { Settings } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { SettingsDialog } from "@/features/settings/SettingsDialog";
 
 type SettingsButtonProps = {
@@ -16,14 +17,15 @@ export function SettingsButton({ initialGameId }: SettingsButtonProps) {
       onOpenChange={setOpen}
       initialGameId={initialGameId}
       trigger={
-        <button
+        <Button
           type="button"
+          variant="bare"
+          size="icon"
           aria-label="設定"
           title="設定"
-          className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <Settings className="size-4.5" aria-hidden="true" />
-        </button>
+        </Button>
       }
     />
   );

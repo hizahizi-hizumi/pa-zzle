@@ -30,10 +30,7 @@ import { TsumeShogiClearAnimation } from "@/games/tsume-shogi/ui/board/clear/Tsu
 import { TsumeShogiBoard } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
 import { TsumeShogiPieceDefs } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs";
 import { TsumeShogiResultScreen } from "@/games/tsume-shogi/ui/result/TsumeShogiResultScreen";
-import {
-  TsumeShogiBoardGroup,
-  tsumeShogiBoardGroupSizeStyle,
-} from "@/games/tsume-shogi/ui/TsumeShogiBoardGroup";
+import { TsumeShogiBoardGroup } from "@/games/tsume-shogi/ui/TsumeShogiBoardGroup";
 import { TsumeShogiGround } from "@/games/tsume-shogi/ui/TsumeShogiGround";
 import {
   TsumeShogiHand,
@@ -220,7 +217,6 @@ export function TsumeShogiPlay({
             "flex min-h-0 flex-1 items-center justify-center py-1 [container-type:size]",
             tsumeShogiToneClassNames.tableSurface,
           )}
-          style={tsumeShogiBoardGroupSizeStyle}
         >
           <TsumeShogiBoardGroup
             ref={boardGroupRef}

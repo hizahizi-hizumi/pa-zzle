@@ -44,17 +44,34 @@ describe("SelectedGamePictogram", () => {
   describe("選んだ直後として描く場合", () => {
     let container: HTMLElement;
     let finish: () => void;
+    let setReducedMotion: () => void;
+    let cancelAnimation: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
       const finished = new Promise<void>((resolve) => {
         finish = resolve;
       });
       // jsdom は Web Animations API を持たないので、終わりを外から決められる動きを置く。
+      cancelAnimation = vi.fn();
       Object.defineProperty(HTMLElement.prototype, "animate", {
         configurable: true,
-        value: () => ({ finished, cancel: vi.fn() }),
+        value: () => ({ finished, cancel: cancelAnimation }),
       });
-      vi.stubGlobal("matchMedia", () => ({ matches: false }));
+      let reducedMotion = false;
+      let notifyMotionChange: () => void = () => {};
+      setReducedMotion = () => {
+        reducedMotion = true;
+        notifyMotionChange();
+      };
+      vi.stubGlobal("matchMedia", () => ({
+        get matches() {
+          return reducedMotion;
+        },
+        addEventListener: (_type: string, listener: () => void) => {
+          notifyMotionChange = listener;
+        },
+        removeEventListener: vi.fn(),
+      }));
       ({ container } = render(
         <SelectedGamePictogram
           pictogramSvg={monoSvg}
@@ -84,6 +101,19 @@ describe("SelectedGamePictogram", () => {
 
       const mono = container.querySelector('svg[data-game="mono"]');
       expect([mono, motionOf(container)]).toEqual([null, "play"]);
+    });
+
+    test("色を入れている途中で動きを減らす設定に変えると、動きを止めて色付きの姿を示すこと", () => {
+      act(() => {
+        setReducedMotion();
+      });
+
+      const mono = container.querySelector('svg[data-game="mono"]');
+      expect([
+        mono,
+        motionOf(container),
+        cancelAnimation.mock.calls.length,
+      ]).toEqual([null, "play", 2]);
     });
   });
 

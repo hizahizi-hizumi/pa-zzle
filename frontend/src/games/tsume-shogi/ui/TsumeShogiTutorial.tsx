@@ -1,10 +1,4 @@
-import {
-  type CSSProperties,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TutorialCue } from "@/components/TutorialCue";
 import {
   type TutorialBoardIntro,
@@ -51,10 +45,7 @@ import {
 import { TsumeShogiClearAnimation } from "@/games/tsume-shogi/ui/board/clear/TsumeShogiClearAnimation";
 import { TsumeShogiBoard } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
 import { TsumeShogiPieceDefs } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs";
-import {
-  TsumeShogiBoardGroup,
-  tsumeShogiBoardGroupSizeStyle,
-} from "@/games/tsume-shogi/ui/TsumeShogiBoardGroup";
+import { TsumeShogiBoardGroup } from "@/games/tsume-shogi/ui/TsumeShogiBoardGroup";
 import {
   TsumeShogiHand,
   type TsumeShogiHandAvailability,
@@ -84,12 +75,6 @@ type TsumeShogiTutorialProgress = TutorialProgress<
   TsumeShogiTutorialRuleId,
   TsumeShogiTutorialBoardState
 >;
-
-/** 盤の欄の左右の余白はチュートリアルの画面が取っているので、盤を卓に置いて見せる左右の余白は重ねない。 */
-const tutorialBoardGroupSizeStyle = {
-  ...tsumeShogiBoardGroupSizeStyle,
-  "--board-gutter": "0px",
-} as CSSProperties;
 
 /** 玉方が応じて次の手順へ進んでから、次の印を付けるまでの間。玉が動き終えるのを見届けてから、次の印に替える。 */
 const NEXT_STEP_CUE_DELAY_MS = 450;
@@ -435,11 +420,9 @@ function TsumeShogiTutorialBoard({
 
   return (
     <TsumeShogiPieceDefs>
-      <div
-        className="flex size-full items-start justify-center"
-        style={tutorialBoardGroupSizeStyle}
-      >
+      <div className="flex size-full items-start justify-center">
         <TsumeShogiBoardGroup
+          context="tutorial"
           board={
             <TsumeShogiClearAnimation
               active={

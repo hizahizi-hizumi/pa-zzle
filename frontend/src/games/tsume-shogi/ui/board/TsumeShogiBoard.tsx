@@ -1,4 +1,4 @@
-import { type CSSProperties, useRef } from "react";
+import { useRef } from "react";
 
 import { useTouchTap } from "@/components/touch-tap";
 import {
@@ -55,23 +55,6 @@ type TsumeShogiBoardProps = {
 /** 左が9筋、上が1段目。攻方（利用者）から見た向き。 */
 const files = [9, 8, 7, 6, 5, 4, 3, 2, 1] as const;
 const ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
-
-/**
- * 盤の縁と表記の寸法。盤の木の四辺に同じ幅の縁（`--board-frame`）を取り、上の縁に筋、右の縁に段を書く。
- * 四辺が同じ幅なので、盤の木そのものが左右の中央に来る。幅の広い画面ほど縁を太くする。
- * 320px でも盤を画面の縁に付けず、卓に置いた盤に見える余白を左右に残す（`--board-gutter`）。
- * 盤を置く画面は、この寸法を含めて盤の大きさを決める。
- * `--board-thickness` は盤の手前に見える側面の高さ。升を歪めず、天面の下に足す。
- * `--piece-box-height`・`--komadai-height` は盤の上下の駒箱の札・駒台の欄の高さ、`--komadai-gap` は盤と駒台の間。
- */
-export const tsumeShogiBoardFrameStyle = {
-  "--board-gutter": "clamp(6px, calc(6px + (100cqw - 320px) / 7), 14px)",
-  "--board-frame": "clamp(16px, calc(16px + (100cqw - 320px) / 14), 21px)",
-  "--board-thickness": "clamp(5px, calc(5px + (100cqw - 320px) / 40), 8px)",
-  "--piece-box-height": "1.5rem",
-  "--komadai-height": "3.75rem",
-  "--komadai-gap": "10px",
-} as CSSProperties;
 
 const selectedPieceGlyphSelector = `[data-selected-piece] ${pieceMotionSelector}`;
 

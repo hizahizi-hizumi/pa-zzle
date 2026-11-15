@@ -92,7 +92,7 @@ export function TutorialOverlay({
       <DialogContent
         showCloseButton={false}
         onOpenAutoFocus={handleOpenAutoFocus}
-        className="top-0 left-0 flex h-svh max-h-none w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 pb-[env(safe-area-inset-bottom)] shadow-none sm:max-w-none"
+        presentation="full-screen"
       >
         <TutorialScreen
           ref={screenRef}

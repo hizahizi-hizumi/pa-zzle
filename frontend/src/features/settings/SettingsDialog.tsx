@@ -120,10 +120,7 @@ export function SettingsDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent
-        showCloseButton={false}
-        className="flex max-h-[min(90dvh,48rem)] flex-col overflow-hidden sm:max-w-md"
-      >
+      <DialogContent showCloseButton={false} presentation="settings">
         <DialogHeader className="shrink-0 text-left">
           <div className="flex items-center justify-between gap-4">
             {panel !== "settings" && (

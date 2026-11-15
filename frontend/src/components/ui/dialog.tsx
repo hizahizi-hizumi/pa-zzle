@@ -49,9 +49,13 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  presentation = "standard",
+  size = "standard",
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  presentation?: "standard" | "full-screen" | "scrollable" | "settings" | "diagnostics" | "score-details"
+  size?: "standard" | "compact"
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
@@ -60,6 +64,12 @@ function DialogContent({
         data-slot="dialog-content"
         className={cn(
           "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg bg-background p-6 shadow-raised duration-100 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 sm:max-w-lg",
+          presentation === "full-screen" && "top-0 left-0 flex h-svh max-h-none w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 pb-[env(safe-area-inset-bottom)] shadow-none sm:max-w-none",
+          presentation === "scrollable" && "max-h-[calc(100svh-2rem)] overflow-y-auto",
+          presentation === "settings" && "flex max-h-[min(90dvh,48rem)] flex-col overflow-hidden sm:max-w-md",
+          presentation === "diagnostics" && "max-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto]",
+          presentation === "score-details" && "max-h-[min(78svh,680px)] overflow-y-auto",
+          size === "compact" && "sm:max-w-sm",
           className
         )}
         {...props}

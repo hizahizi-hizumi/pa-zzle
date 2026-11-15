@@ -1,9 +1,6 @@
 import { type ReactNode, useEffect, useRef } from "react";
 
-import {
-  getMinesweeperBoardGridStyle,
-  MINESWEEPER_BOARD_GRID_CLASS_NAME,
-} from "@/games/minesweeper/ui/board/MinesweeperBoard";
+import { MinesweeperBoardGrid } from "@/games/minesweeper/ui/board/MinesweeperBoardGrid";
 import { getMinesweeperCellFaceClassName } from "@/games/minesweeper/ui/board/MinesweeperCellFace";
 import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
@@ -82,11 +79,11 @@ export function MinesweeperTutorialCover({
     <div className="relative">
       {children}
       {active && (
-        <div
+        <MinesweeperBoardGrid
           ref={coverRef}
+          columns={columns}
+          presentation="cover"
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-0 ${MINESWEEPER_BOARD_GRID_CLASS_NAME}`}
-          style={getMinesweeperBoardGridStyle(columns)}
         >
           {Array.from(
             { length: rows * columns },
@@ -104,7 +101,7 @@ export function MinesweeperTutorialCover({
               );
             },
           )}
-        </div>
+        </MinesweeperBoardGrid>
       )}
     </div>
   );

@@ -20,12 +20,20 @@ const buttonVariants = cva(
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         quiet:
           "text-muted-foreground font-normal hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        bare: "text-muted-foreground hover:text-foreground",
+        "title-entry":
+          "text-muted-foreground animate-in fade-in duration-(--duration-slow) ease-enter motion-reduce:animate-none",
+        "result-action": "result-action transition-none",
+        "result-action-primary": "result-action result-action--primary transition-none",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
         context: "h-8 rounded-md gap-1.5 px-3 text-[11px] has-[>svg]:px-2.5",
+        compact: "h-8 rounded-md gap-1.5 px-1.5",
+        fill: "h-full w-full",
+        result: "",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         icon: "size-9",
         "icon-sm": "size-8",
