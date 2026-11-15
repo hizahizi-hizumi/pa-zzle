@@ -218,7 +218,7 @@ describe("useWaterSortPlay", () => {
       colorCount: result.current.problemIdentity.conditions.colorCount,
       score: {
         total: 100,
-        breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
+        breakdown: { efficiency: 60, speed: 40 },
       },
     });
     act(() => result.current.completeClearAnimation());

@@ -96,7 +96,6 @@ export function createWaterSortResult(
     score: calculateWaterSortPlayScore({
       elapsedMs: sessionResult.elapsedMs,
       moveCount: sessionResult.moveCount,
-      completionMoveCount: sessionResult.completionMoveCount,
       optimalMoveCount,
       colorCount,
     }),

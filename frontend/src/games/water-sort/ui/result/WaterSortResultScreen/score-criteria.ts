@@ -21,8 +21,8 @@ export function getWaterSortScoreCriteria(
       describeLinearScoreCriterion({
         maximum: WATER_SORT_SCORE_MAXIMUMS.efficiency,
         fullScoreCondition: `最短${result.optimalMoveCount}手`,
-        zeroScoreCondition: `${result.optimalMoveCount * 2}手以上`,
-        basis: "クリア手数",
+        zeroScoreCondition: `${result.optimalMoveCount * 3}手以上`,
+        basis: "総手数（取り消した注ぎも含む）",
       }),
     ),
     createScoreItemCriterion(
@@ -47,15 +47,6 @@ export function getWaterSortScoreCriteria(
             durationMsPerUnit: WATER_SORT_SPEED_PER_OPTIMAL_MOVE_MS,
           },
         ],
-      }),
-    ),
-    createScoreItemCriterion(
-      "accuracy",
-      describeLinearScoreCriterion({
-        maximum: WATER_SORT_SCORE_MAXIMUMS.accuracy,
-        fullScoreCondition: "手戻りなし",
-        zeroScoreCondition: `手戻り${result.optimalMoveCount}手以上`,
-        basis: "手戻りの手数",
       }),
     ),
   ];

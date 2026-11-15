@@ -9,7 +9,6 @@ import {
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router";
 import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
-import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
 
 /** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
@@ -65,7 +64,7 @@ function createResult(
     colorCount: 6,
     score: {
       total: 87,
-      breakdown: { efficiency: 32, speed: 39, accuracy: 16 },
+      breakdown: { efficiency: 48, speed: 39 },
     },
     ...overrides,
   };
@@ -417,7 +416,8 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("待った")).toBeTruthy();
     expect(screen.getAllByText("効率")).toHaveLength(2);
     expect(screen.getAllByText("速さ")).toHaveLength(2);
-    expect(screen.getAllByText("正確さ")).toHaveLength(2);
+    expect(screen.queryByText("正確さ")).toBeNull();
+    expect(screen.getByText(/その間は総手数/u)).toBeTruthy();
     expect(screen.getByText("01:04")).toBeTruthy();
     expect(screen.getByText(/6色 × 1.5秒/)).toBeTruthy();
     expect(screen.queryByText(/seed:/)).toBeNull();
@@ -455,7 +455,7 @@ describe("WaterSortPlay", () => {
           backtrackMoveCount: 0,
           score: {
             total: 100,
-            breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
+            breakdown: { efficiency: 60, speed: 40 },
           },
         })}
       />,
@@ -490,7 +490,7 @@ describe("WaterSortPlay", () => {
       speedRule: { fullScoreMs: 74_000, zeroScoreMs: 148_000 },
       score: {
         total: 100,
-        breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
+        breakdown: { efficiency: 60, speed: 40 },
       },
     });
     const { rerender } = render(
@@ -568,7 +568,7 @@ describe("WaterSortPlay", () => {
           backtrackMoveCount: 0,
           score: {
             total: 100,
-            breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
+            breakdown: { efficiency: 60, speed: 40 },
           },
         })}
         recordFeedback={{
