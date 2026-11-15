@@ -133,8 +133,9 @@ class SpreadLayout {
 
   /** 行と列の偶奇が `cell` と同じ島の数が、偶奇の4つの組の平均より多いか。 */
   isParityCrowded(cell: CellPosition): boolean {
-    const parityOf = ({ row, column }: CellPosition) =>
-      (row % 2) * 2 + (column % 2);
+    function parityOf({ row, column }: CellPosition) {
+      return (row % 2) * 2 + (column % 2);
+    }
     const target = parityOf(cell);
     const same = this.cells.filter(
       (other) => parityOf(other) === target,
@@ -539,8 +540,9 @@ export function spreadBridgesIslands(
   const boardIndexOf = new Map(
     ordered.map((cell, index) => [keyOf(cell), index]),
   );
-  const toBoardIndex = (island: number) =>
-    boardIndexOf.get(keyOf(layout.cells[island]!))!;
+  function toBoardIndex(island: number) {
+    return boardIndexOf.get(keyOf(layout.cells[island]!))!;
+  }
   const board = toBoard(size, ordered);
   const { edges, crossingEdges } = getBridgesNetwork(board);
   const edgeByPair = new Map(
@@ -558,20 +560,23 @@ export function spreadBridgesIslands(
       return edge;
     }),
   );
-  const canAdd = (edge: number) =>
-    !chosen.has(edge) &&
-    !crossingEdges[edge]!.some((crossing) => chosen.has(crossing));
+  function canAdd(edge: number) {
+    return (
+      !chosen.has(edge) &&
+      !crossingEdges[edge]!.some((crossing) => chosen.has(crossing))
+    );
+  }
   if (!connectChosenEdges(board.islands.length, edges, chosen, canAdd)) {
     return null;
   }
-  const isShort = (edge: number) => {
+  function isShort(edge: number) {
     const { from, to } = edges[edge]!;
     const start = board.islands[from]!;
     const end = board.islands[to]!;
     return (
       Math.abs(start.row - end.row) + Math.abs(start.column - end.column) === 2
     );
-  };
+  }
   for (const edge of edges.keys()) {
     if (
       canAdd(edge) &&

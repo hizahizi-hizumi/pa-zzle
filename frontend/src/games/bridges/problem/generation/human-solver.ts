@@ -385,12 +385,12 @@ function failsAfterOneStep(
     return "count";
   }
   const touched = new Set<number>();
-  const touch = (changed: number) => {
+  function touch(changed: number) {
     for (const island of endpoints[changed]!) {
       touched.add(island);
     }
-  };
-  const blockAndTouch = (decided: number): boolean => {
+  }
+  function blockAndTouch(decided: number): boolean {
     if (!tryBlockCrossings(context, trial, decided)) {
       return false;
     }
@@ -398,7 +398,7 @@ function failsAfterOneStep(
       touch(crossing);
     }
     return true;
-  };
+  }
   touch(edge);
   if (lower[edge]! > 0 && !blockAndTouch(edge)) {
     return "count";
@@ -584,8 +584,9 @@ function applyCrossingsCountingBlocks(
   const before = [...bounds.upper];
   applyBridgeCrossings(context, bounds);
   const { network, endpoints, clues } = context;
-  const lacks = (island: number) =>
-    sumOver(network.islandEdges[island]!, bounds.lower) < clues[island]!;
+  function lacks(island: number) {
+    return sumOver(network.islandEdges[island]!, bounds.lower) < clues[island]!;
+  }
   return before.filter(
     (upper, edge) =>
       upper > 0 && bounds.upper[edge] === 0 && endpoints[edge]!.every(lacks),
@@ -1094,7 +1095,7 @@ export function describeBridgesSolveFlow(board: BridgesBoard): string {
 export function describeBridgesSolveFingerprint(board: BridgesBoard): string {
   const { edges } = getBridgesNetwork(board);
   const last = board.width - 1;
-  const describeEdge = (edge: number) => {
+  function describeEdge(edge: number) {
     const from = board.islands[edges[edge]!.from]!;
     const to = board.islands[edges[edge]!.to]!;
     const [low, high] = [from.clue, to.clue].sort(
@@ -1105,7 +1106,7 @@ export function describeBridgesSolveFingerprint(board: BridgesBoard): string {
       (from.column === to.column &&
         (from.column === 0 || from.column === last));
     return `${low}${high}${alongBorder ? "b" : ""}`;
-  };
+  }
   return traceBridgesHumanSolve(board, "D")
     .rounds.map(
       ({ tier, edges: narrowed }) =>

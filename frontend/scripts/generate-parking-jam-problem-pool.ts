@@ -237,8 +237,9 @@ function selectFromPrefix(
   const seenKeys = new Set<string>();
   let duplicateCount = 0;
   let roundCount = 0;
-  const isSatisfied = () =>
-    difficultyLevels.every(({ id }) => levels[id].length >= perLevel);
+  function isSatisfied() {
+    return difficultyLevels.every(({ id }) => levels[id].length >= perLevel);
+  }
   for (;;) {
     if (isSatisfied()) break;
     const candidates = results.get(roundCount);
@@ -339,11 +340,13 @@ async function runMain(): Promise<void> {
       tableIndex,
     ]),
   );
-  const toEntry = (candidate: Candidate): ParkingJamProblemPoolEntry => [
-    tableIndexOf.get(candidate.conditionIndex)!,
-    candidate.round,
-    candidate.accepted!.generationAttempt,
-  ];
+  function toEntry(candidate: Candidate): ParkingJamProblemPoolEntry {
+    return [
+      tableIndexOf.get(candidate.conditionIndex)!,
+      candidate.round,
+      candidate.accepted!.generationAttempt,
+    ];
+  }
   const levelLines = difficultyLevels.map(
     ({ id }, levelIndex) =>
       `    ${JSON.stringify(id)}: [\n${selection.levels[id]
@@ -372,18 +375,22 @@ async function runMain(): Promise<void> {
     const { difficulty } = candidate.accepted;
     acceptedCounts.set(difficulty, (acceptedCounts.get(difficulty) ?? 0) + 1);
   }
-  const sizeOf = ([width, height]: ParkingJamProblemPoolConditions) =>
-    `${width}x${height}`;
-  const vehiclesOf = ([, , vehicleCount]: ParkingJamProblemPoolConditions) =>
-    String(vehicleCount);
-  const fixedOf = ([
+  function sizeOf([width, height]: ParkingJamProblemPoolConditions) {
+    return `${width}x${height}`;
+  }
+  function vehiclesOf([, , vehicleCount]: ParkingJamProblemPoolConditions) {
+    return String(vehicleCount);
+  }
+  function fixedOf([
     ,
     ,
     ,
     ,
     ,
     fixedAreaCount,
-  ]: ParkingJamProblemPoolConditions) => String(fixedAreaCount);
+  ]: ParkingJamProblemPoolConditions) {
+    return String(fixedAreaCount);
+  }
   console.log(
     `候補 ${examined.length}（${selection.roundCount}周回×${conditions.length}条件）/ 生成成功 ${examined.filter((candidate) => candidate.generated).length} / 同型重複で除外 ${selection.duplicateCount}`,
   );

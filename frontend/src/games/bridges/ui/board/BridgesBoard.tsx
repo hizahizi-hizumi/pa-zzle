@@ -162,10 +162,10 @@ function findNearerEnd(
   point: BoardPoint,
 ): number {
   const { from, to } = getBridgesNetwork(board).edges[edge]!;
-  const distanceTo = (island: number) => {
+  function distanceTo(island: number) {
     const center = getIslandCenter(board.islands[island]!);
     return Math.hypot(point.x - center.x, point.y - center.y);
-  };
+  }
   return distanceTo(from) <= distanceTo(to) ? from : to;
 }
 
@@ -250,8 +250,9 @@ export function BridgesBoard({
     hover?.board === board && press === null && !interactionDisabled
       ? hover
       : null;
-  const isBlocked = (edge: number) =>
-    cycleBridgesEdge(board, { bridges }, edge).kind === "blocked";
+  function isBlocked(edge: number) {
+    return cycleBridgesEdge(board, { bridges }, edge).kind === "blocked";
+  }
   const pressedIsland = press?.kind === "island" ? press.island : null;
   const draggingIsland =
     press?.kind === "island" && press.left ? press.island : null;

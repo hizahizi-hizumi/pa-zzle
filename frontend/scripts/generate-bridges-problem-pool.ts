@@ -214,8 +214,9 @@ function scoreCandidate(
     scale,
   }: Extract<BridgesDifficultyAnalysis, { requiresTrial: false }>,
 ): number {
-  const surplus = (amount: number, minimum: number, cap: number) =>
-    Math.min(cap, Math.max(0, amount - minimum));
+  function surplus(amount: number, minimum: number, cap: number) {
+    return Math.min(cap, Math.max(0, amount - minimum));
+  }
   const combination = bridgesLevelCombinations[difficulty];
   const reading = bridgesLevelReadings[difficulty];
   const structure = bridgesLevelStructures[difficulty];
