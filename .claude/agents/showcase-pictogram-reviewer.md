@@ -38,7 +38,7 @@ showcase ピクトグラムの目的を理解したうえで、候補を初め�
 - `.claude/skills/design-game-pictogram-showcase/references/exploration.md` の 3 節「白黒版が途中の姿を描くゲーム」と 9 節（元の案への寄せ方）
 - `.claude/skills/design-game-pictogram-showcase/references/review.md` の 1 節「白黒版の修正案」
 - `DESIGN.md` の「ゲームピクトグラム」と「動き」、`docs/プロダクト/画面/SCR-001.md`
-- 対象パズルの仕様（`docs/プロダクト/仕様/パズル/` から辿る）、プレイ画面（`frontend/src/games/<game>/ui/`。ゲーム固有色の有無と値を確かめる）、白黒版 `frontend/src/games/<game>/assets/pictogram.svg`
+- 対象パズルの仕様（`docs/プロダクト/パズル/` から辿る）、プレイ画面（`frontend/src/games/<game>/ui/`。ゲーム固有色の有無と値を確かめる）、白黒版 `frontend/src/games/<game>/assets/pictogram.svg`
 
 `references/` と `scripts/` で始まる参照は、`.claude/skills/design-game-pictogram-showcase/` を基準に解決する。
 
