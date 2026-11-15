@@ -1,7 +1,4 @@
-export type GameResultDetailMetric = {
-  label: string;
-  value: string;
-};
+import type { GameResultDetailMetric } from "@/components/game-result-contract";
 
 type DetailMetricProps = GameResultDetailMetric;
 

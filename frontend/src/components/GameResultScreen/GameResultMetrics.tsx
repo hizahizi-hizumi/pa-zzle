@@ -1,7 +1,5 @@
-import {
-  type GameResultMetric,
-  ResultMetric,
-} from "@/components/GameResultScreen/ResultMetric";
+import { ResultMetric } from "@/components/GameResultScreen/ResultMetric";
+import type { GameResultMetric } from "@/components/game-result-contract";
 import type { ResultRecordImprovement } from "@/games/play";
 
 type GameResultMetricsProps = {

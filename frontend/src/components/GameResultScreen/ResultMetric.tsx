@@ -1,16 +1,6 @@
 import { ArrowDownRight, ArrowUpRight, Award, Equal } from "lucide-react";
+import type { GameResultMetric } from "@/components/game-result-contract";
 import type { ResultRecordImprovement } from "@/games/play";
-
-export type GameResultMetric = {
-  label: string;
-  recordMetricId?: string;
-  value: string;
-  comparison?: {
-    basis: "referenceTime" | "minimumMoves";
-    difference: number;
-    display: string;
-  };
-};
 
 type ResultMetricProps = GameResultMetric & {
   improvement?: ResultRecordImprovement;

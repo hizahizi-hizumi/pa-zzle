@@ -1,5 +1,7 @@
-import type { GameResultDetailMetric } from "@/components/GameResultScreen/GameResultDetails/DetailMetric";
-import type { GameResultMetric } from "@/components/GameResultScreen/ResultMetric";
+import type {
+  GameResultDetailMetric,
+  GameResultMetric,
+} from "@/components/game-result-contract";
 import {
   PLAY_OPERATION_LABELS,
   type PlayOperation,
