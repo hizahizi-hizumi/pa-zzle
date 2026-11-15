@@ -1,6 +1,5 @@
 import { useId } from "react";
-
-import { bridgesToneClassNames } from "@/games/bridges/ui/bridges-tone";
+import { WavePattern } from "@/games/bridges/ui/WavePattern";
 
 /**
  * 印の位置をばらした大きな区画を2つ、互いに割り切れない寸法で重ね、区画の繰り返しが格子に見えないようにする。
@@ -31,70 +30,11 @@ const waveTiles = [
   },
 ] as const;
 
-/** 盤面の外の広い面が空き地に見えないよう、印の密度を上げる。 */
-const wideWaveTile = {
-  width: 233,
-  height: 181,
-  marks: [
-    { x: 31, y: 42, large: false },
-    { x: 152, y: 97, large: true },
-    { x: 78, y: 158, large: false },
-  ],
-} as const;
-
-const WAVE_WIDTHS = { small: 12, large: 20 } as const;
-const WAVE_STROKE_WIDTH = 2;
-
-type WaveTile = {
-  width: number;
-  height: number;
-  marks: readonly { x: number; y: number; large: boolean }[];
+type SeaWavesProps = {
+  unit: number;
 };
 
-/** 波の印を1つ置く、横に2つ山を持つ短い線。`x`・`y` は左端。 */
-function wavePath(x: number, y: number, size: number): string {
-  const half = size / 2;
-  return `M${x} ${y}q${half / 2} ${-half / 2} ${half} 0t${half} 0`;
-}
-
-function WavePattern({
-  id,
-  tile,
-  unit,
-}: {
-  id: string;
-  tile: WaveTile;
-  unit: number;
-}) {
-  return (
-    <pattern
-      id={id}
-      width={tile.width * unit}
-      height={tile.height * unit}
-      patternUnits="userSpaceOnUse"
-    >
-      <g
-        fill="none"
-        strokeWidth={WAVE_STROKE_WIDTH * unit}
-        strokeLinecap="round"
-        className={bridgesToneClassNames.seaWave}
-      >
-        {tile.marks.map((mark) => (
-          <path
-            key={`${mark.x}:${mark.y}`}
-            d={wavePath(
-              mark.x * unit,
-              mark.y * unit,
-              (mark.large ? WAVE_WIDTHS.large : WAVE_WIDTHS.small) * unit,
-            )}
-          />
-        ))}
-      </g>
-    </pattern>
-  );
-}
-
-export function SeaWaves({ unit }: { unit: number }) {
+export function SeaWaves({ unit }: SeaWavesProps) {
   const id = useId();
   return (
     <>
@@ -116,19 +56,6 @@ export function SeaWaves({ unit }: { unit: number }) {
           fill={`url(#${id}-${index})`}
         />
       ))}
-    </>
-  );
-}
-
-/** 見せる範囲は置く側で決める。 */
-export function SeaWideWaves() {
-  const id = useId();
-  return (
-    <>
-      <defs>
-        <WavePattern id={id} tile={wideWaveTile} unit={1} />
-      </defs>
-      <rect width="100%" height="100%" fill={`url(#${id})`} />
     </>
   );
 }
