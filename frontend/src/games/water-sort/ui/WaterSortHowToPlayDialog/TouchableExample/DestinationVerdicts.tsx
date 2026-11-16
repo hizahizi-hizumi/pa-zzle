@@ -1,11 +1,11 @@
-import { Check, X } from "lucide-react";
 import type { CSSProperties } from "react";
 
+import { HowToPlayMarkLegend } from "@/components/HowToPlayMarkLegend";
+import { HowToPlayVerdictMark } from "@/components/HowToPlayVerdictMark";
 import {
   getBottleRowGap,
   getBottleRowWidth,
 } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/bottle-size";
-import { cn } from "@/lib/utils";
 
 /**
  * 1本のボトルの真下に付ける答え。
@@ -28,15 +28,10 @@ const answerWords = {
   poured: "注げた",
 } as const satisfies Record<DestinationAnswer["result"], string>;
 
-const iconClassName = "size-4 shrink-0";
-
-function AnswerMark({ result }: { result: DestinationAnswer["result"] }) {
-  return result === "disallowed" ? (
-    <X aria-hidden className={iconClassName} strokeWidth={2.5} />
-  ) : (
-    <Check aria-hidden className={iconClassName} strokeWidth={2.5} />
-  );
-}
+const legendLabels = {
+  allowed: answerWords.allowed,
+  disallowed: answerWords.disallowed,
+};
 
 /** 印の真下に添える言葉。✕ には注げないわけ、注いだボトルの ✓ には試した手の結果。 */
 function findNote(answer: DestinationAnswer | null): string | null {
@@ -51,13 +46,13 @@ function findNote(answer: DestinationAnswer | null): string | null {
 }
 
 /**
- * 各ボトルの真下に並べる答え（✓ / ✕）と、その下の言葉の段、さらにその下に1行で添える印の言葉（✓ 注げる　✕ 注げない）。
+ * 各ボトルの真下に並べる答え（✓ / ✕）と、その下の言葉の段、さらにその下に1行で添える印の凡例（✓ 注げる　✕ 注げない）。
  * 答えは例の盤面と同じ幅と列でボトルにそろえ、例の判定の言葉と同じ形・大きさ・色にする。
  * ✕ のボトルには、押す前から注げないわけを、その ✕ の真下に添える。いちばん上が同じ色でも満杯のボトルは、見ただけでは注げそうに見えるため。
- * 「注げない」はボトル1本の幅に収まらないので、選んでいる間の答えの意味は、ボトルごとに書かず、印の言葉の行にまとめる。
- * 印の言葉の行は、答えを付けたボトルの列の真ん中に置き、印の並びと同じ所を中心にする。
- * 注いだ後は、注いだボトルの ✓ の真下に「注げた」と書く。ボトルの幅に収まる言葉なので、印の言葉の行は消す。
- * 言葉の段と印の言葉の行の高さは最初から取り、答えが1つも無いときも同じ高さの場所を取って、周りを動かさない。
+ * 「注げない」はボトル1本の幅に収まらないので、選んでいる間の答えの意味は、ボトルごとに書かず、凡例の行にまとめる。
+ * 凡例は付けた答えの記号だけを説明し、盤面の真ん中に置く。選んだボトルで答えを付けるボトルが替わっても、凡例は動かさない。
+ * 注いだ後は、注いだボトルの ✓ の真下に「注げた」と書く。ボトルの幅に収まる言葉なので、凡例の行は消す。
+ * 言葉の段と凡例の行の高さは最初から取り、答えが1つも無いときも同じ高さの場所を取って、周りを動かさない。
  */
 export function DestinationVerdicts({ answers }: DestinationVerdictsProps) {
   const columns: CSSProperties = {
@@ -65,18 +60,10 @@ export function DestinationVerdicts({ answers }: DestinationVerdictsProps) {
     gridTemplateColumns: `repeat(${answers.length}, minmax(0, 1fr))`,
     columnGap: getBottleRowGap(answers.length),
   };
-  const answeredColumns = answers.flatMap((answer, bottleIndex) =>
-    answer === null ? [] : [bottleIndex],
-  );
-  const showsLegend = answers.some(
-    (answer) => answer !== null && answer.result !== "poured",
-  );
-  const legendSpan: CSSProperties = showsLegend
-    ? {
-        gridColumnStart: Math.min(...answeredColumns) + 1,
-        gridColumnEnd: Math.max(...answeredColumns) + 2,
-      }
-    : { gridColumn: "1 / -1" };
+  const shownMarks = {
+    allowed: answers.some((answer) => answer?.result === "allowed"),
+    disallowed: answers.some((answer) => answer?.result === "disallowed"),
+  };
   return (
     <span className="grid gap-y-1" style={columns}>
       {answers.map((answer, bottleIndex) => {
@@ -91,7 +78,11 @@ export function DestinationVerdicts({ answers }: DestinationVerdictsProps) {
               <span />
             ) : (
               <span className="flex">
-                <AnswerMark result={answer.result} />
+                <HowToPlayVerdictMark
+                  verdict={
+                    answer.result === "disallowed" ? "disallowed" : "allowed"
+                  }
+                />
                 <span className="sr-only">
                   {`ボトル ${position}: ${answerWords[answer.result]}`}
                 </span>
@@ -115,21 +106,14 @@ export function DestinationVerdicts({ answers }: DestinationVerdictsProps) {
           </span>
         );
       })}
-      {/* 印の言葉は答えの列の幅より長いことがあるので、列の幅を変えずに、列の真ん中から左右へはみ出して置く。 */}
+      {/* 凡例は盤面の幅より長いことがあるので、列の幅を変えずに、盤面の真ん中から左右へはみ出して置く。 */}
+      {/* ボトルごとの答えを読み上げで言い終えているので、凡例は読み上げない。 */}
       <span
         aria-hidden="true"
-        className={cn("relative row-start-2 h-lh", !showsLegend && "invisible")}
-        style={legendSpan}
+        className="relative col-span-full row-start-2 h-lh"
       >
-        <span className="absolute top-0 left-1/2 flex -translate-x-1/2 gap-4 whitespace-nowrap">
-          <span className="flex items-center gap-1">
-            <AnswerMark result="allowed" />
-            {answerWords.allowed}
-          </span>
-          <span className="flex items-center gap-1">
-            <AnswerMark result="disallowed" />
-            {answerWords.disallowed}
-          </span>
+        <span className="absolute top-0 left-1/2 flex -translate-x-1/2 whitespace-nowrap">
+          <HowToPlayMarkLegend labels={legendLabels} shownMarks={shownMarks} />
         </span>
       </span>
     </span>

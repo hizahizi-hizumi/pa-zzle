@@ -1,6 +1,7 @@
-import { Pointer } from "lucide-react";
 import type { CSSProperties } from "react";
 
+import { HowToPlayPressHint } from "@/components/HowToPlayPressHint";
+import { HowToPlayVerdictMark } from "@/components/HowToPlayVerdictMark";
 import type { HitofudePuzzleBlockedMove } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import type { HitofudePuzzleBoard as HitofudePuzzleBoardState } from "@/games/hitofude-puzzle/puzzle/board";
 import type { HitofudePuzzleTraceStep } from "@/games/hitofude-puzzle/puzzle/transitions";
@@ -12,7 +13,6 @@ import {
   getHitofudePuzzleFigureSide,
   hitofudePuzzleFigureCellClassNames,
 } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog/figure-size";
-import { CandidateMark } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog/TouchableExample/CandidateMark";
 import { cn } from "@/lib/utils";
 
 type HowToPlayBoardProps = {
@@ -22,7 +22,7 @@ type HowToPlayBoardProps = {
   solved: boolean;
   clearing: boolean;
   blockedMove: HitofudePuzzleBlockedMove | null;
-  /** 押す所の手がかりを付けるマス。マスの内側の破線の枠と指のアイコンを、動かさずに描く。 */
+  /** 押す所の手がかりを付けるマス。マスの内側に沿う破線の枠と、マスの右下の角の内側の指のアイコンを、動かさずに描く。 */
   hintedCell: number | null;
   /** 手ごとに通れるかの印を付ける、先端の隣のマス。 */
   candidates?: readonly HitofudePuzzleExampleCandidate[];
@@ -39,26 +39,32 @@ type HowToPlayBoardProps = {
 };
 
 /**
- * 手ごとの印の置き場所の大きさ（マス幅に対する比）。マスの中央に、道の線（太さ 0.3 マス）を縁取りで隠して読める大きさで置き、
- * 記号の線がマスの内側の手がかりの枠（マスの辺から 0.1 マス）と、マスの右下の指（`hintPointerStyle`）に届かない大きさにする。
+ * マスの中央に置く手ごとの印の大きさ。まだ通っていないマスと穴の中央に、読める大きさ（マス幅の 0.38 倍）で置く。
+ * 押す所の手がかりの指は、マスの右下の角から 0.06 マス内側に、14px を下限に置かれる。マスが 40px より小さい狭い画面では、
+ * 0.38 倍の ✕ の腕の端がその指の人差し指に届くので（幅 320px の 36px のマスで描いて確かめた）、腕の端が指の 2px 手前で止まる
+ * 「マス幅の 1.76 倍 − 53px」までに小さくする。式は、14px の指の人差し指の左の線（指の箱の左から 0.21）と ✕ の腕の端（印の 0.75 と線の太さ）から求めた。
  */
-const MARK_RATIO = 0.38;
+const markSide =
+  "min(calc(var(--hitofude-figure-cell) * 0.38), calc(var(--hitofude-figure-cell) * 1.76 - 53px))";
 
-/**
- * 手がかりの指の大きさと置き場所。マス幅の 0.3 倍（20px まで）にし、マスの右下の角から 0.06 マス内側に置く。
- * 指はマスの線と盤面の縁の内側に収まり、置き場所は 0.64 マスからになるので、中央の印の記号（0.31〜0.69 マスの置き場所の中で、
- * 線が角まで届かない ✓ / ✕）にも触れない。
- */
-const hintPointerStyle: CSSProperties = {
-  width: "min(20px, calc(var(--hitofude-figure-cell) * 0.3))",
-  height: "min(20px, calc(var(--hitofude-figure-cell) * 0.3))",
-  right: "calc(var(--hitofude-figure-cell) * 0.06)",
-  bottom: "calc(var(--hitofude-figure-cell) * 0.06)",
+const centerMarkStyle: CSSProperties = {
+  top: "50%",
+  left: "50%",
+  width: markSide,
+  height: markSide,
+  transform: "translate(-50%, -50%)",
 };
 
-const markPlacementStyle: CSSProperties = {
-  width: `calc(var(--hitofude-figure-cell) * ${MARK_RATIO})`,
-  height: `calc(var(--hitofude-figure-cell) * ${MARK_RATIO})`,
+/**
+ * 道が通ったマスの印の置き場所。マスの中央には道の線と始点の印があるので、印で隠さないよう左上の角に寄せる。
+ * 道の線（中央の 0.35〜0.65 マス）と始点の印（中央から半径約 0.24 マス）に届かない、角から 0.06 マス・マス幅の 0.26 倍にする。
+ * 右下の角の手がかりの指とは反対の角なので、指にも触れない。
+ */
+const cornerMarkStyle: CSSProperties = {
+  top: "calc(var(--hitofude-figure-cell) * 0.06)",
+  left: "calc(var(--hitofude-figure-cell) * 0.06)",
+  width: "calc(var(--hitofude-figure-cell) * 0.26)",
+  height: "calc(var(--hitofude-figure-cell) * 0.26)",
 };
 
 /** 残ったマスの印の大きさ。マスの中央に置く、手がかりの枠より小さな点。 */
@@ -73,8 +79,8 @@ const remainingMarkStyle: CSSProperties = {
  * マスは、ゴールの盤面のマスと同じ物に見える大きさ（`hitofudePuzzleFigureCellClassNames.example`）で描く。
  * 右の列がどれも穴の盤面は、その列を切り落として見せ、狭い画面でも例を横に並べられるようにする。切り落とした列のマスは、
  * 盤面部品が見えなくし、押しても受けない。
- * 手ごとの印は、どのマスでも中央に置き、どのマスの印かがひと目で分かるようにする。印は下の道の線を地の縁取りで隠す。
- * 本番の×（阻まれた手）もマスの中央に点くので、今の道から弾かれた手の×が点いている間はそのマスの印を消す。
+ * 手ごとの印は、まだ通っていないマスと穴では中央に置き、道が通ったマスでは道の線と始点の印を隠さないよう左上の角に置く。
+ * 本番の×（阻まれた手）はマスの中央に点くので、今の道から弾かれた手の×が点いている間はそのマスの印を消す。
  * 印は通ったマスや穴の上に置くので、通れないわけ（道が通っている・穴）が印の周りから押す前に読める。
  * 押す所の手がかりの枠と指は、印に触れないよう、枠はマスの縁に沿わせ、指はマスの右下の内側に小さく置く。
  * 判定の下で残りのマスの数を言う間は、まだ通っていないマスの中央に点を置き、どのマスが残ったかを盤面で示す。
@@ -129,6 +135,7 @@ export function HowToPlayBoard({
           clearing={clearing}
           interactionDisabled={solved}
           visibleColumns={visibleColumns}
+          touchScrollLock="stroke-start"
           onBeginStroke={onBeginStroke}
           onTraceStroke={onTraceStroke}
           onEndStroke={onEndStroke}
@@ -149,10 +156,13 @@ export function HowToPlayBoard({
             >
               <span
                 data-candidate-mark=""
-                className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2"
-                style={markPlacementStyle}
+                className="absolute flex"
+                style={path.includes(cell) ? cornerMarkStyle : centerMarkStyle}
               >
-                <CandidateMark allowed={rejection === null} size="cell" />
+                <HowToPlayVerdictMark
+                  verdict={rejection === null ? "allowed" : "disallowed"}
+                  placement="board-halo"
+                />
               </span>
             </span>
           ))}
@@ -177,14 +187,10 @@ export function HowToPlayBoard({
             className="pointer-events-none absolute"
             style={getHitofudePuzzleFigureCellBoxStyle(board.size, hintedCell)}
           >
-            <span
-              data-hint-frame=""
-              className="absolute inset-[10%] rounded-[22%] border border-muted-foreground border-dashed"
-            />
-            <Pointer
-              data-hint-pointer=""
-              className="absolute fill-background text-muted-foreground"
-              style={hintPointerStyle}
+            <HowToPlayPressHint
+              frame="inside"
+              outline="rounded"
+              pointer="inside-corner"
             />
           </span>
         )}

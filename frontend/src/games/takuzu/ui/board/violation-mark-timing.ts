@@ -11,3 +11,10 @@ export const VIOLATION_MARK_DELAY_MS = 240;
  */
 export const violationMarkTimingClassName =
   "opacity-0 transition-opacity duration-0 group-data-violated:opacity-100 group-data-violated:delay-[240ms] group-data-violated:duration-(--duration-normal) motion-reduce:group-data-violated:duration-0";
+
+/**
+ * 待つ時間を呼び出し側が持つときの、違反の印の出し方。`data-violated` を置いたらすぐ出す。
+ * 遊び方の例は、印と判定の言葉を同じ描画で替えるため、待つ時間を印ではなく判定の側で数える。
+ */
+export const violationMarkImmediateTimingClassName =
+  "opacity-0 transition-opacity duration-0 group-data-violated:opacity-100 group-data-violated:duration-(--duration-normal) motion-reduce:group-data-violated:duration-0";

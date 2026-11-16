@@ -82,6 +82,16 @@ function listPlayedSounds(): (string | undefined)[] {
     );
 }
 
+/** 現れる動きを流しているタイルのマスの名前。 */
+function readAppearingCells(): string[] {
+  return readCellNames().filter((name) =>
+    screen
+      .getByRole("button", { name })
+      .querySelector("[data-takuzu-tile] svg")
+      ?.classList.contains("animate-in"),
+  );
+}
+
 function isResetDisabled(): boolean {
   return screen.getByRole<HTMLButtonElement>("button", {
     name: "例を元に戻す",
@@ -103,6 +113,20 @@ describe("TouchableRuleExample", () => {
       expect(verdict).toBe("できる");
       expect(cells).toEqual(["1行1列 丸", "1行2列 丸", "1行3列 四角 押すと丸"]);
       expect(isResetDisabled()).toBe(true);
+    });
+
+    test("最初の姿からあるタイルは、描いたときに現れる動きを流さないこと", () => {
+      const appearing = readAppearingCells();
+
+      expect(appearing).toEqual([]);
+    });
+
+    test("押して置いたタイルだけを現れさせること", () => {
+      press(/^1行3列 四角/);
+
+      const appearing = readAppearingCells();
+
+      expect(appearing).toEqual(["1行3列 丸"]);
     });
 
     test("押す所を押すと、印と同じ時間だけ待ってから ✕ できない に替わり、手がかりが消えること", () => {

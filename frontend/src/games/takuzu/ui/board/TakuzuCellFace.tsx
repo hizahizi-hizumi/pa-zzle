@@ -26,13 +26,23 @@ type TakuzuCellFaceProps = {
   cell: TakuzuCell;
   given: boolean;
   size: TakuzuCellFaceSize;
+  /**
+   * 描き始めから現れ終えた姿で描くか。遊び方の例で、最初の姿からあるタイルを動かさないときに渡す。
+   * 読むのは描き始めだけで、タイルが替わったら `key` を替えて描き直す。渡さなければ置いたタイルを現れさせる。
+   */
+  settledOnMount?: boolean;
 };
 
 /** 置いたタイルを現れさせ直すときは、置いたタイルごとに `key` を替えて描き直す。 */
-export function TakuzuCellFace({ cell, given, size }: TakuzuCellFaceProps) {
-  // 現れ終えたら現れ方の動きを外す。残すと、遊び方のタブのように盤面を表示から外して戻したとき、
+export function TakuzuCellFace({
+  cell,
+  given,
+  size,
+  settledOnMount = false,
+}: TakuzuCellFaceProps) {
+  // 現れ終えたら現れ方の動きを外す。残すと、盤面を表示から外して戻したとき（display: none）に
   // CSS の動きが始めから流れ直し、置いてあったタイルが一度消えて現れ直す。
-  const [appeared, setAppeared] = useState(false);
+  const [appeared, setAppeared] = useState(settledOnMount);
 
   if (cell === null) {
     return null;

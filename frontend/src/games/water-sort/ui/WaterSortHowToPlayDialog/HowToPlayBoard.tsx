@@ -1,6 +1,6 @@
-import { Pointer } from "lucide-react";
 import type { CSSProperties, Ref } from "react";
 
+import { HowToPlayPressHint } from "@/components/HowToPlayPressHint";
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import {
@@ -25,7 +25,7 @@ type HowToPlayBoardProps = {
   operation: WaterSortOperation | null;
   /** 渡すと、ボトルを本番の盤面と同じく押せる。渡さない盤面は、本番の盤面と同じく押せないボトルにする（カーソルも普通の形）。 */
   onSelectBottle?: (bottleIndex: number) => void;
-  /** 押す所の手がかりを付けるボトル。ボトルの形に沿う破線の枠と指のアイコンを、動かさずに描く。 */
+  /** 押す所の手がかりを付けるボトル。ボトルの外に沿う破線の枠と、右下の外の指のアイコンを、動かさずに描く。 */
   hintedBottleIndex?: number | null;
   onClearAnimationComplete?: () => void;
   ref?: Ref<HTMLDivElement>;
@@ -99,8 +99,11 @@ export function HowToPlayBoard({
               aspectRatio: WATER_SORT_BOTTLE_ASPECT_RATIO,
             }}
           >
-            <span className="absolute -inset-1 rounded-b-[1.7rem] border border-muted-foreground border-dashed" />
-            <Pointer className="absolute -right-2.5 -bottom-2 size-5 fill-background text-muted-foreground" />
+            <HowToPlayPressHint
+              frame="outside"
+              outline="round-bottom"
+              pointer="outside-corner"
+            />
           </span>
         </span>
       )}

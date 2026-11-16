@@ -199,13 +199,7 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
             />
           </div>
         }
-        caption={
-          caption === undefined ? undefined : (
-            <span className="flex w-full justify-center">
-              {renderCaptionContent()}
-            </span>
-          )
-        }
+        caption={renderCaptionContent()}
       />
     </BottleSizeScope>
   );

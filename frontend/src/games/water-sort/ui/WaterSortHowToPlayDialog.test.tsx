@@ -56,8 +56,11 @@ function listHeadings(panel: HTMLElement, level: 3 | 4): (string | null)[] {
 }
 
 describe("WaterSortHowToPlayDialog", () => {
+  let onClose: ReturnType<typeof vi.fn<() => void>>;
+
   beforeEach(() => {
-    render(<WaterSortHowToPlayDialog open onClose={vi.fn()} />);
+    onClose = vi.fn<() => void>();
+    render(<WaterSortHowToPlayDialog open onClose={onClose} />);
   });
 
   test("ルール・操作・採点のタブを、ルールを開いて置くこと", () => {
@@ -215,6 +218,34 @@ describe("WaterSortHowToPlayDialog", () => {
       );
 
       expect(captioned).toEqual(flowCaptions.map(() => true));
+    });
+  });
+
+  describe("例で注ぐボトルを選んでいる場合", () => {
+    function getSelectedBottle(): HTMLElement {
+      const panel = within(getDialog()).getByRole("tabpanel", {
+        name: "操作",
+      });
+      const [bottle] = within(panel).getAllByRole("button", {
+        name: /^ボトル 1:/,
+      });
+      if (bottle === undefined) {
+        throw new Error("操作の例のボトルがありません");
+      }
+      return bottle;
+    }
+
+    beforeEach(() => {
+      openTab("操作");
+      fireEvent.click(getSelectedBottle());
+    });
+
+    test("本番に Esc で選ぶのをやめる操作が無いので、Esc で遊び方を閉じること", () => {
+      fireEvent.keyDown(getSelectedBottle(), { key: "Escape" });
+
+      const closed = onClose.mock.calls.length;
+
+      expect(closed).toBe(1);
     });
   });
 });
