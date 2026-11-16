@@ -23,8 +23,6 @@ export const bridgesToneClassNames = {
   seaFill: "fill-[#72aebb] dark:fill-[#18404f]",
   seaWave: "stroke-white/55 dark:stroke-[#d9f3f2]/35",
   gridDot: "fill-white/70 dark:fill-[#d9f3f2]/45",
-  /** チュートリアルで見る所を絞っている間に、海に重ねる深い海の色。灰色の覆いの代わりに、海の色のまま暗くする。 */
-  focusVeil: "fill-[#0e3d4a] dark:fill-[#03141b]",
   bridgeShadow: "stroke-[#1f5a63]/30 dark:stroke-black/40",
   bridgeRail: "stroke-[#5a361a] dark:stroke-[#94663a]",
   bridgeDeck: "stroke-[#9e6a3a] dark:stroke-[#c99358]",

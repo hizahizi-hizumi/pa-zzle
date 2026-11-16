@@ -17,7 +17,6 @@ import {
   CLUE_FONT_SIZE,
   FOCUS_RING_RADIUS,
   FOCUS_RING_WIDTH,
-  FOCUS_VEIL_OPACITY,
   HOVER_GHOST_OPACITY,
   ISLAND_OUTLINE_WIDTH,
   OVER_RIM_DASH,
@@ -29,7 +28,6 @@ import {
   SELECTION_RING_RADIUS,
   TARGET_RING_RADIUS,
   TARGET_RING_WIDTH,
-  UNFOCUSED_OPACITY,
   UNFOCUSED_ROPE_OPACITY,
 } from "@/games/bridges/ui/board/BridgesFigure/figure-appearance";
 import type {
@@ -47,7 +45,6 @@ import { GridDots } from "@/games/bridges/ui/board/BridgesFigure/GridDots";
 import { GuideBands } from "@/games/bridges/ui/board/BridgesFigure/GuideBands";
 import { Rope } from "@/games/bridges/ui/board/BridgesFigure/Rope";
 import { SegmentLine } from "@/games/bridges/ui/board/BridgesFigure/SegmentLine";
-import type { BridgesBoardSpotlight } from "@/games/bridges/ui/board/board-cue";
 import {
   type BoardView,
   createBoardView,
@@ -85,14 +82,6 @@ type BridgesFigureProps = {
   /** 押している指が今離せば回す辺。 */
   pressedEdge?: number | null;
   pressedIsland?: number | null;
-  /**
-   * 島を触っていなくても、架けられる相手までの帯を敷く辺。チュートリアルで押させる辺に敷き、本番の案内と同じ表し方で見せる。
-   */
-  bandEdges?: readonly number[];
-  /**
-   * チュートリアルで手を引いている間に、元の明るさで見せる島と辺。海を深い海の色で暗くし、ほかの島と橋を薄くして沈める。
-   */
-  focus?: BridgesBoardSpotlight | null;
   /** 2段階の操作で選んでいる島。 */
   selectedIsland?: number | null;
   /** キーボードで選んでいる島。 */
@@ -143,8 +132,6 @@ export function BridgesFigure({
   candidateEdges = null,
   pressedEdge = null,
   pressedIsland = null,
-  bandEdges = [],
-  focus = null,
   selectedIsland = null,
   focusedIsland = null,
   blockingEdges = [],
@@ -240,21 +227,8 @@ export function BridgesFigure({
       aria-hidden="true"
     >
       {showsSea && <FigureSea view={view} />}
-      {focus && (
-        <rect
-          width={view.width}
-          height={view.height}
-          className={bridgesToneClassNames.focusVeil}
-          opacity={FOCUS_VEIL_OPACITY}
-        />
-      )}
       <GridDots view={view} />
-      {(guide || bandEdges.length > 0) && (
-        <GuideBands
-          view={view}
-          edges={[...new Set([...(guide?.edges ?? []), ...bandEdges])]}
-        />
-      )}
+      {guide && <GuideBands view={view} edges={guide.edges} />}
       {ghostEdge !== null && bridges[ghostEdge] !== 2 && (
         <GhostBridge
           segment={getEdgeViewSegment(view, ghostEdge)}
@@ -290,11 +264,6 @@ export function BridgesFigure({
               [bridgesFigureParts.bridgeAxis]:
                 orientation === "horizontal" ? "y" : "x",
             }}
-            opacity={
-              focus && !focus.edges.includes(edge)
-                ? UNFOCUSED_OPACITY
-                : undefined
-            }
           >
             {blockingEdges.includes(edge) && (
               <g
@@ -414,11 +383,6 @@ export function BridgesFigure({
             key={`${island.row}:${island.column}`}
             {...{ [bridgesFigureParts.island]: index }}
             style={centerOrigin}
-            opacity={
-              focus && !focus.islands.includes(index)
-                ? UNFOCUSED_OPACITY
-                : undefined
-            }
           >
             <circle
               cx={center.x}
