@@ -1,0 +1,2753 @@
+[
+ {
+  "id": "lv1-a",
+  "title": "Lv1 代表1",
+  "level": 1,
+  "kind": "代表",
+  "bayCount": 2,
+  "solutions": 4,
+  "queue": [
+   "A",
+   "B",
+   "B",
+   "C",
+   "C",
+   "D",
+   "D",
+   "A"
+  ],
+  "board": {
+   "width": 6,
+   "height": 6,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 2,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v1",
+     "row": 1,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v2",
+     "row": 1,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 3,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 4,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v5",
+     "row": 2,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v7",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 6
+    },
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 6
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "bays": 2,
+   "k_min": 1,
+   "slack": 1,
+   "headFirst": 1.0,
+   "fewestBlockers": 1.0,
+   "headFirstPerfect": 1,
+   "fewestPerfect": 1,
+   "solutions": 4,
+   "decisionKinds": {},
+   "decisions": 0,
+   "distanceMax": 0,
+   "distanceMin": 0,
+   "reasons": {},
+   "hasA": 0,
+   "hasB": 0,
+   "lures": 0,
+   "chainMax": 0,
+   "optionsMax": 0,
+   "onlyUnnaturalWins": 0,
+   "rollingHStarCapped5": 1,
+   "chunkedHStarCapped5": 1,
+   "level": 1,
+   "levelKeepingBuriedTwin": 1,
+   "solutionsOneBayFewer": 1,
+   "generator": "G1",
+   "opening": "adjacent2"
+  },
+  "firstDecision": null,
+  "solution": [
+   "v2",
+   "v1",
+   "v0",
+   "v6",
+   "v7",
+   "v5",
+   "v3",
+   "v4"
+  ],
+  "diagram": " vvvvvv \n#...666<\n#111.22<\n#.05557<\n#.0.3.7<\n#.443.7<\n#...3..<\n ###### "
+ },
+ {
+  "id": "lv1-b",
+  "title": "Lv1 代表2",
+  "level": 1,
+  "kind": "代表",
+  "bayCount": 3,
+  "solutions": 4,
+  "queue": [
+   "A",
+   "B",
+   "B",
+   "C",
+   "A",
+   "D",
+   "D",
+   "C"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v1",
+     "row": 4,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v3",
+     "row": 6,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v5",
+     "row": 1,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v6",
+     "row": 6,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v7",
+     "row": 0,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "bays": 3,
+   "k_min": 2,
+   "slack": 1,
+   "headFirst": 0.75,
+   "fewestBlockers": 1.0,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 1,
+   "solutions": 4,
+   "decisionKinds": {},
+   "decisions": 0,
+   "distanceMax": 0,
+   "distanceMin": 0,
+   "reasons": {},
+   "hasA": 0,
+   "hasB": 0,
+   "lures": 0,
+   "chainMax": 0,
+   "optionsMax": 0,
+   "onlyUnnaturalWins": 0,
+   "rollingHStarCapped5": 1,
+   "chunkedHStarCapped5": 1,
+   "level": 1,
+   "levelKeepingBuriedTwin": 1,
+   "solutionsOneBayFewer": 1,
+   "generator": "G2",
+   "opening": "adjacent2"
+  },
+  "firstDecision": null,
+  "solution": [
+   "v7",
+   "v2",
+   "v4",
+   "v0",
+   "v5",
+   "v1",
+   "v3",
+   "v6"
+  ],
+  "diagram": " vvvvvvv \n#..22277<\n#...4..5<\n#...4..5<\n#...4..5<\n#...0..1<\n#...0..1<\n#6663331<\n ####### "
+ },
+ {
+  "id": "lv1-c",
+  "title": "Lv1 境界",
+  "level": 1,
+  "kind": "境界",
+  "bayCount": 2,
+  "solutions": 45,
+  "queue": [
+   "A",
+   "B",
+   "B",
+   "C",
+   "D",
+   "D",
+   "A",
+   "C"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 3,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v1",
+     "row": 5,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v3",
+     "row": 4,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v4",
+     "row": 1,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v5",
+     "row": 1,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v6",
+     "row": 2,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v7",
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "bays": 2,
+   "k_min": 1,
+   "slack": 1,
+   "headFirst": 1.0,
+   "fewestBlockers": 1.0,
+   "headFirstPerfect": 1,
+   "fewestPerfect": 1,
+   "solutions": 45,
+   "decisionKinds": {},
+   "decisions": 0,
+   "distanceMax": 0,
+   "distanceMin": 0,
+   "reasons": {},
+   "hasA": 0,
+   "hasB": 0,
+   "lures": 0,
+   "chainMax": 0,
+   "optionsMax": 0,
+   "onlyUnnaturalWins": 0,
+   "rollingHStarCapped5": 3,
+   "chunkedHStarCapped5": 3,
+   "level": 1,
+   "levelKeepingBuriedTwin": 2,
+   "solutionsOneBayFewer": 4,
+   "generator": "G1",
+   "opening": "one"
+  },
+  "firstDecision": null,
+  "solution": [
+   "v2",
+   "v7",
+   "v3",
+   "v4",
+   "v6",
+   "v0",
+   "v5",
+   "v1"
+  ],
+  "diagram": " vvvvvvv \n#.2...7.#\n#52..47.#\n#56..47.#\n#56..0..#\n#....03.#\n#....13.#\n#....1..#\n ####### "
+ },
+ {
+  "id": "lv2-a",
+  "title": "Lv2 代表1",
+  "level": 2,
+  "kind": "代表",
+  "bayCount": 2,
+  "solutions": 1,
+  "queue": [
+   "A",
+   "A",
+   "B",
+   "C",
+   "C",
+   "B",
+   "D",
+   "D"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 2,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v1",
+     "row": 4,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v2",
+     "row": 1,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v3",
+     "row": 5,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 5,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v6",
+     "row": 3,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v7",
+     "row": 0,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "bays": 2,
+   "k_min": 2,
+   "slack": 0,
+   "headFirst": 0.08333333333333333,
+   "fewestBlockers": 0.5,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 1,
+   "decisionKinds": {
+    "twin": 1
+   },
+   "decisions": 1,
+   "distanceMax": 2,
+   "distanceMin": 2,
+   "reasons": {
+    "A": 1
+   },
+   "hasA": 1,
+   "hasB": 0,
+   "lures": 2,
+   "chainMax": 0,
+   "optionsMax": 2,
+   "onlyUnnaturalWins": 0,
+   "rollingHStarCapped5": 3,
+   "chunkedHStarCapped5": 5,
+   "level": 2,
+   "levelKeepingBuriedTwin": 2,
+   "solutionsOneBayFewer": 0,
+   "generator": "G1",
+   "opening": "adjacent2"
+  },
+  "firstDecision": {
+   "before": [
+    "v4",
+    "v7",
+    "v0"
+   ],
+   "served": 2,
+   "waiting": 1,
+   "winning": [
+    [
+     "v2"
+    ]
+   ],
+   "losing": [
+    [
+     "v1"
+    ]
+   ],
+   "reasons": [
+    "A"
+   ],
+   "distance": [
+    2,
+    2
+   ]
+  },
+  "solution": [
+   "v4",
+   "v7",
+   "v0",
+   "v2",
+   "v6",
+   "v5",
+   "v1",
+   "v3"
+  ],
+  "diagram": " vvvvvvv \n#..7774.<\n#2....4.<\n#2...04.<\n#6...0..<\n#6...111<\n#5.....3<\n#5.....3<\n ####### "
+ },
+ {
+  "id": "lv2-b",
+  "title": "Lv2 代表2",
+  "level": 2,
+  "kind": "代表",
+  "bayCount": 2,
+  "solutions": 1,
+  "queue": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "A",
+   "C",
+   "B",
+   "D"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v1",
+     "row": 2,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 4,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v4",
+     "row": 3,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 2,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v7",
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "bays": 2,
+   "k_min": 2,
+   "slack": 0,
+   "headFirst": 0.041666666666666664,
+   "fewestBlockers": 0.5,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 1,
+   "decisionKinds": {
+    "twin": 1
+   },
+   "decisions": 1,
+   "distanceMax": 2,
+   "distanceMin": 2,
+   "reasons": {
+    "A": 1
+   },
+   "hasA": 1,
+   "hasB": 0,
+   "lures": 2,
+   "chainMax": 0,
+   "optionsMax": 2,
+   "onlyUnnaturalWins": 0,
+   "rollingHStarCapped5": 3,
+   "chunkedHStarCapped5": 5,
+   "level": 2,
+   "levelKeepingBuriedTwin": 2,
+   "solutionsOneBayFewer": 0,
+   "generator": "G2",
+   "opening": "one"
+  },
+  "firstDecision": {
+   "before": [
+    "v7",
+    "v1",
+    "v6"
+   ],
+   "served": 2,
+   "waiting": 1,
+   "winning": [
+    [
+     "v3"
+    ]
+   ],
+   "losing": [
+    [
+     "v4"
+    ]
+   ],
+   "reasons": [
+    "A"
+   ],
+   "distance": [
+    2,
+    2
+   ]
+  },
+  "solution": [
+   "v7",
+   "v1",
+   "v6",
+   "v3",
+   "v5",
+   "v0",
+   "v4",
+   "v2"
+  ],
+  "diagram": " vvvvvvv \n#6..7..3#\n#6..7..3#\n#...1..5#\n#.4.1..5#\n#24....0#\n#2.....0#\n#.......#\n ####### "
+ },
+ {
+  "id": "lv2-c",
+  "title": "Lv2 境界",
+  "level": 2,
+  "kind": "境界",
+  "bayCount": 2,
+  "solutions": 100,
+  "queue": [
+   "A",
+   "B",
+   "C",
+   "B",
+   "D",
+   "A",
+   "D",
+   "C"
+  ],
+  "board": {
+   "width": 6,
+   "height": 6,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 3,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v1",
+     "row": 2,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 1,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v5",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v7",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 6
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "bays": 2,
+   "k_min": 1,
+   "slack": 1,
+   "headFirst": 0.4583333333333333,
+   "fewestBlockers": 0.75,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 100,
+   "decisionKinds": {
+    "twin": 1
+   },
+   "decisions": 1,
+   "distanceMax": 1,
+   "distanceMin": 1,
+   "reasons": {
+    "A": 1
+   },
+   "hasA": 1,
+   "hasB": 0,
+   "lures": 2,
+   "chainMax": 0,
+   "optionsMax": 2,
+   "onlyUnnaturalWins": 0,
+   "rollingHStarCapped5": 2,
+   "chunkedHStarCapped5": 2,
+   "level": 2,
+   "levelKeepingBuriedTwin": null,
+   "solutionsOneBayFewer": 1,
+   "generator": "G1",
+   "opening": "one"
+  },
+  "firstDecision": {
+   "before": [
+    "v0",
+    "v6",
+    "v4",
+    "v3",
+    "v7"
+   ],
+   "served": 4,
+   "waiting": 1,
+   "winning": [
+    [
+     "v5"
+    ]
+   ],
+   "losing": [
+    [
+     "v2"
+    ]
+   ],
+   "reasons": [
+    "A"
+   ],
+   "distance": [
+    1,
+    1
+   ]
+  },
+  "solution": [
+   "v0",
+   "v6",
+   "v4",
+   "v3",
+   "v7",
+   "v5",
+   "v1",
+   "v2"
+  ],
+  "diagram": " vvvvvv \n#5..643#\n#5.2643#\n#1.2..7#\n#102..7#\n#.0...7#\n#......#\n ###### "
+ },
+ {
+  "id": "lv3-a",
+  "title": "Lv3 代表1",
+  "level": 3,
+  "kind": "代表",
+  "bayCount": 2,
+  "solutions": 1,
+  "queue": [
+   "A",
+   "B",
+   "A",
+   "C",
+   "D",
+   "E",
+   "C",
+   "E",
+   "D",
+   "B"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v1",
+     "row": 6,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v3",
+     "row": 3,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v4",
+     "row": 6,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v5",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v6",
+     "row": 1,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v7",
+     "row": 6,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "E"
+    },
+    {
+     "id": "v8",
+     "row": 3,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "E"
+    },
+    {
+     "id": "v9",
+     "row": 4,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 10,
+   "bays": 2,
+   "k_min": 2,
+   "slack": 0,
+   "headFirst": 0.03333333333333333,
+   "fewestBlockers": 0.5,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 1,
+   "decisionKinds": {
+    "twin": 1
+   },
+   "decisions": 1,
+   "distanceMax": 3,
+   "distanceMin": 3,
+   "reasons": {
+    "A": 1
+   },
+   "hasA": 1,
+   "hasB": 0,
+   "lures": 2,
+   "chainMax": 0,
+   "optionsMax": 2,
+   "onlyUnnaturalWins": 0,
+   "rollingHStarCapped5": 4,
+   "chunkedHStarCapped5": 4,
+   "level": 3,
+   "levelKeepingBuriedTwin": 3,
+   "solutionsOneBayFewer": 0,
+   "generator": "G2",
+   "opening": "adjacent2"
+  },
+  "firstDecision": {
+   "before": [
+    "v7",
+    "v1",
+    "v3",
+    "v4",
+    "v6"
+   ],
+   "served": 4,
+   "waiting": 1,
+   "winning": [
+    [
+     "v5"
+    ]
+   ],
+   "losing": [
+    [
+     "v2"
+    ]
+   ],
+   "reasons": [
+    "A"
+   ],
+   "distance": [
+    3,
+    3
+   ]
+  },
+  "solution": [
+   "v7",
+   "v1",
+   "v3",
+   "v4",
+   "v6",
+   "v5",
+   "v9",
+   "v0",
+   "v8",
+   "v2"
+  ],
+  "diagram": " vvvvvvv \n#5.2....<\n#5.2...6<\n#5.2...6<\n#8....3.<\n#8..0039<\n#8....39<\n#4441177<\n ####### "
+ },
+ {
+  "id": "lv3-b",
+  "title": "Lv3 代表2",
+  "level": 3,
+  "kind": "代表",
+  "bayCount": 3,
+  "solutions": 396,
+  "queue": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "B",
+   "A",
+   "C",
+   "D",
+   "E",
+   "E"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "E"
+    },
+    {
+     "id": "v1",
+     "row": 5,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v3",
+     "row": 1,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 1,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v6",
+     "row": 3,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v7",
+     "row": 2,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "E"
+    },
+    {
+     "id": "v8",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v9",
+     "row": 5,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 10,
+   "bays": 3,
+   "k_min": 3,
+   "slack": 0,
+   "headFirst": 0.10833333333333334,
+   "fewestBlockers": 0.75,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 396,
+   "decisionKinds": {
+    "twin": 2
+   },
+   "decisions": 2,
+   "distanceMax": 3,
+   "distanceMin": 3,
+   "reasons": {
+    "A": 2
+   },
+   "hasA": 1,
+   "hasB": 0,
+   "lures": 7,
+   "chainMax": 0,
+   "optionsMax": 2,
+   "onlyUnnaturalWins": 0,
+   "rollingHStarCapped5": null,
+   "chunkedHStarCapped5": 3,
+   "level": 3,
+   "levelKeepingBuriedTwin": 3,
+   "solutionsOneBayFewer": 0,
+   "generator": "G2",
+   "opening": "one"
+  },
+  "firstDecision": {
+   "before": [
+    "v2",
+    "v4",
+    "v6"
+   ],
+   "served": 3,
+   "waiting": 0,
+   "winning": [
+    [
+     "v8"
+    ]
+   ],
+   "losing": [
+    [
+     "v3"
+    ]
+   ],
+   "reasons": [
+    "A"
+   ],
+   "distance": [
+    3,
+    3
+   ]
+  },
+  "solution": [
+   "v0",
+   "v4",
+   "v6",
+   "v2",
+   "v5",
+   "v8",
+   "v1",
+   "v7",
+   "v9",
+   "v3"
+  ],
+  "diagram": " vvvvvvv \n#.42.0..#\n#542.0.3#\n#542.783#\n#56..783#\n#.6.....#\n#.6..91.#\n#....91.#\n ####### "
+ },
+ {
+  "id": "lv3-c",
+  "title": "Lv3 境界",
+  "level": 3,
+  "kind": "境界",
+  "bayCount": 2,
+  "solutions": 49,
+  "queue": [
+   "A",
+   "B",
+   "B",
+   "C",
+   "D",
+   "E",
+   "A",
+   "D",
+   "E",
+   "C"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 0,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v1",
+     "row": 4,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "E"
+    },
+    {
+     "id": "v3",
+     "row": 4,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v5",
+     "row": 6,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v6",
+     "row": 5,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "E"
+    },
+    {
+     "id": "v7",
+     "row": 1,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v8",
+     "row": 6,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v9",
+     "row": 5,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 10,
+   "bays": 2,
+   "k_min": 2,
+   "slack": 0,
+   "headFirst": 0.125,
+   "fewestBlockers": 0.375,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 49,
+   "decisionKinds": {
+    "twin": 1,
+    "other": 1
+   },
+   "decisions": 2,
+   "distanceMax": 2,
+   "distanceMin": 2,
+   "reasons": {
+    "A": 2
+   },
+   "hasA": 1,
+   "hasB": 0,
+   "lures": 6,
+   "chainMax": 0,
+   "optionsMax": 2,
+   "onlyUnnaturalWins": 1,
+   "rollingHStarCapped5": null,
+   "chunkedHStarCapped5": 4,
+   "level": 3,
+   "levelKeepingBuriedTwin": null,
+   "solutionsOneBayFewer": 0,
+   "generator": "G1",
+   "opening": "adjacent2"
+  },
+  "firstDecision": {
+   "before": [
+    "v1",
+    "v9",
+    "v4",
+    "v8",
+    "v5"
+   ],
+   "served": 5,
+   "waiting": 0,
+   "winning": [
+    [
+     "v0",
+     "v2"
+    ]
+   ],
+   "losing": [
+    [
+     "v6"
+    ]
+   ],
+   "reasons": [
+    "A"
+   ],
+   "distance": [
+    2,
+    2
+   ]
+  },
+  "solution": [
+   "v1",
+   "v3",
+   "v4",
+   "v0",
+   "v2",
+   "v7",
+   "v8",
+   "v9",
+   "v5",
+   "v6"
+  ],
+  "diagram": " vvvvvvv \n#22.00.4<\n#7.....4<\n#7.....4<\n#7......<\n#..33.11<\n#..66699<\n#..55588<\n ####### "
+ },
+ {
+  "id": "lv4-a",
+  "title": "Lv4 代表1",
+  "level": 4,
+  "kind": "代表",
+  "bayCount": 3,
+  "solutions": 40,
+  "queue": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "C",
+   "A",
+   "E",
+   "E",
+   "B",
+   "D"
+  ],
+  "board": {
+   "width": 8,
+   "height": 8,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 2,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v1",
+     "row": 5,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v2",
+     "row": 4,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "E"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 7,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v5",
+     "row": 3,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v7",
+     "row": 7,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v8",
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v9",
+     "row": 1,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "E"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 8
+    },
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 8
+    }
+   ]
+  },
+  "features": {
+   "cars": 10,
+   "bays": 3,
+   "k_min": 3,
+   "slack": 0,
+   "headFirst": 0.0078125,
+   "fewestBlockers": 0.25,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 40,
+   "decisionKinds": {
+    "twin": 2
+   },
+   "decisions": 2,
+   "distanceMax": 4,
+   "distanceMin": 2,
+   "reasons": {
+    "AB": 1,
+    "A": 1
+   },
+   "hasA": 1,
+   "hasB": 1,
+   "lures": 3,
+   "chainMax": 1,
+   "optionsMax": 2,
+   "onlyUnnaturalWins": 0,
+   "rollingHStarCapped5": null,
+   "chunkedHStarCapped5": null,
+   "level": 4,
+   "levelKeepingBuriedTwin": 4,
+   "solutionsOneBayFewer": 0,
+   "generator": "G3",
+   "opening": "adjacent2"
+  },
+  "firstDecision": {
+   "before": [],
+   "served": 0,
+   "waiting": 0,
+   "winning": [
+    [
+     "v4",
+     "v6"
+    ]
+   ],
+   "losing": [
+    [
+     "v3",
+     "v0"
+    ]
+   ],
+   "reasons": [
+    "AB"
+   ],
+   "distance": [
+    4,
+    4
+   ]
+  },
+  "solution": [
+   "v3",
+   "v4",
+   "v6",
+   "v7",
+   "v9",
+   "v2",
+   "v1",
+   "v0",
+   "v5",
+   "v8"
+  ],
+  "diagram": " vvvvvvvv \n#...83664<\n#...839.4<\n#...809.4<\n#..5.09..<\n#..5..2..<\n#.111.2..<\n#.....2..<\n#777.....<\n ######## "
+ },
+ {
+  "id": "lv4-b",
+  "title": "Lv4 代表2",
+  "level": 4,
+  "kind": "代表",
+  "bayCount": 3,
+  "solutions": 327,
+  "queue": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "A",
+   "E",
+   "D",
+   "C",
+   "E",
+   "B"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v1",
+     "row": 1,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v2",
+     "row": 4,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v3",
+     "row": 2,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v4",
+     "row": 2,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v5",
+     "row": 4,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "E"
+    },
+    {
+     "id": "v7",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "E"
+    },
+    {
+     "id": "v8",
+     "row": 2,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v9",
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 10,
+   "bays": 3,
+   "k_min": 3,
+   "slack": 0,
+   "headFirst": 0.06944444444444443,
+   "fewestBlockers": 0.25,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 327,
+   "decisionKinds": {
+    "twin": 1,
+    "other": 1
+   },
+   "decisions": 2,
+   "distanceMax": 4,
+   "distanceMin": 1,
+   "reasons": {
+    "AB": 1,
+    "A": 1
+   },
+   "hasA": 1,
+   "hasB": 1,
+   "lures": 1,
+   "chainMax": 1,
+   "optionsMax": 2,
+   "onlyUnnaturalWins": 1,
+   "rollingHStarCapped5": 5,
+   "chunkedHStarCapped5": 4,
+   "level": 4,
+   "levelKeepingBuriedTwin": 4,
+   "solutionsOneBayFewer": 0,
+   "generator": "G2",
+   "opening": "one"
+  },
+  "firstDecision": {
+   "before": [
+    "v1",
+    "v5"
+   ],
+   "served": 2,
+   "waiting": 0,
+   "winning": [
+    [
+     "v6",
+     "v8"
+    ]
+   ],
+   "losing": [
+    [
+     "v9",
+     "v3"
+    ]
+   ],
+   "reasons": [
+    "AB"
+   ],
+   "distance": [
+    1,
+    1
+   ]
+  },
+  "solution": [
+   "v1",
+   "v5",
+   "v6",
+   "v7",
+   "v8",
+   "v2",
+   "v9",
+   "v4",
+   "v0",
+   "v3"
+  ],
+  "diagram": " vvvvvvv \n#7...6.9#\n#7.1.6.9#\n#4.1.8.3#\n#4...8.3#\n#0..52.3#\n#0..52..#\n#0..52..#\n ####### "
+ },
+ {
+  "id": "lv4-c",
+  "title": "Lv4 境界",
+  "level": 4,
+  "kind": "境界",
+  "bayCount": 3,
+  "solutions": 2142,
+  "queue": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "E",
+   "D",
+   "A",
+   "E",
+   "C",
+   "F",
+   "F",
+   "B"
+  ],
+  "board": {
+   "width": 8,
+   "height": 8,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 3,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "F"
+    },
+    {
+     "id": "v1",
+     "row": 3,
+     "column": 7,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "E"
+    },
+    {
+     "id": "v5",
+     "row": 3,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v6",
+     "row": 6,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "E"
+    },
+    {
+     "id": "v7",
+     "row": 5,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v8",
+     "row": 5,
+     "column": 7,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v9",
+     "row": 0,
+     "column": 7,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "F"
+    },
+    {
+     "id": "v10",
+     "row": 3,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v11",
+     "row": 2,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 8
+    }
+   ]
+  },
+  "features": {
+   "cars": 12,
+   "bays": 3,
+   "k_min": 3,
+   "slack": 0,
+   "headFirst": 0.0625,
+   "fewestBlockers": 0.25,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 2142,
+   "decisionKinds": {
+    "other": 1,
+    "twin": 1
+   },
+   "decisions": 2,
+   "distanceMax": 5,
+   "distanceMin": 3,
+   "reasons": {
+    "A": 1,
+    "AB": 1
+   },
+   "hasA": 1,
+   "hasB": 1,
+   "lures": 2,
+   "chainMax": 1,
+   "optionsMax": 2,
+   "onlyUnnaturalWins": 1,
+   "rollingHStarCapped5": null,
+   "chunkedHStarCapped5": null,
+   "level": 4,
+   "levelKeepingBuriedTwin": 5,
+   "solutionsOneBayFewer": 0,
+   "generator": "G2",
+   "opening": "one"
+  },
+  "firstDecision": {
+   "before": [
+    "v3",
+    "v10"
+   ],
+   "served": 2,
+   "waiting": 0,
+   "winning": [
+    [
+     "v9",
+     "v1"
+    ]
+   ],
+   "losing": [
+    [
+     "v5"
+    ]
+   ],
+   "reasons": [
+    "A"
+   ],
+   "distance": [
+    5,
+    5
+   ]
+  },
+  "solution": [
+   "v2",
+   "v3",
+   "v4",
+   "v11",
+   "v5",
+   "v9",
+   "v1",
+   "v8",
+   "v7",
+   "v6",
+   "v0",
+   "v10"
+  ],
+  "diagram": " vvvvvvvv \n#...24.39#\n#...24.39#\n#...2b.39#\n#...0ba51#\n#...0.a51#\n#7..0..58#\n#7...6..8#\n#....6..8#\n ######## "
+ },
+ {
+  "id": "lv5-a",
+  "title": "Lv5 代表1",
+  "level": 5,
+  "kind": "代表",
+  "bayCount": 3,
+  "solutions": 6,
+  "queue": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "E",
+   "A",
+   "C",
+   "B",
+   "E",
+   "F",
+   "D",
+   "F"
+  ],
+  "board": {
+   "width": 8,
+   "height": 8,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 5,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v1",
+     "row": 3,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 3,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "F"
+    },
+    {
+     "id": "v3",
+     "row": 7,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v4",
+     "row": 1,
+     "column": 6,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "F"
+    },
+    {
+     "id": "v5",
+     "row": 4,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "E"
+    },
+    {
+     "id": "v7",
+     "row": 0,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v8",
+     "row": 4,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "E"
+    },
+    {
+     "id": "v9",
+     "row": 2,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v10",
+     "row": 3,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v11",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 8
+    },
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 8
+    }
+   ]
+  },
+  "features": {
+   "cars": 12,
+   "bays": 3,
+   "k_min": 3,
+   "slack": 0,
+   "headFirst": 0.0002777777777777778,
+   "fewestBlockers": 0.0,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 6,
+   "decisionKinds": {
+    "twin": 2,
+    "other": 1
+   },
+   "decisions": 3,
+   "distanceMax": 6,
+   "distanceMin": 5,
+   "reasons": {
+    "B": 1,
+    "A": 2
+   },
+   "hasA": 1,
+   "hasB": 1,
+   "lures": 3,
+   "chainMax": 2,
+   "optionsMax": 2,
+   "onlyUnnaturalWins": 1,
+   "rollingHStarCapped5": null,
+   "chunkedHStarCapped5": null,
+   "level": 5,
+   "levelKeepingBuriedTwin": 5,
+   "solutionsOneBayFewer": 0,
+   "generator": "G2",
+   "opening": "adjacent2"
+  },
+  "firstDecision": {
+   "before": [],
+   "served": 0,
+   "waiting": 0,
+   "winning": [
+    [
+     "v6",
+     "v1"
+    ]
+   ],
+   "losing": [
+    [
+     "v4",
+     "v2",
+     "v10"
+    ]
+   ],
+   "reasons": [
+    "B"
+   ],
+   "distance": [
+    5,
+    6
+   ]
+  },
+  "solution": [
+   "v6",
+   "v1",
+   "v11",
+   "v9",
+   "v4",
+   "v7",
+   "v2",
+   "v10",
+   "v0",
+   "v3",
+   "v8",
+   "v5"
+  ],
+  "diagram": " vvvvvvvv \n#6b.777..<\n#6b....44<\n#69......<\n#19.aa.2.<\n#195..82.<\n#105..82.<\n#.0......<\n#..33....<\n ######## "
+ },
+ {
+  "id": "lv5-b",
+  "title": "Lv5 代表2",
+  "level": 5,
+  "kind": "代表",
+  "bayCount": 3,
+  "solutions": 3324,
+  "queue": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "C",
+   "B",
+   "E",
+   "F",
+   "F",
+   "D",
+   "E",
+   "A"
+  ],
+  "board": {
+   "width": 8,
+   "height": 8,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 0,
+     "column": 7,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "E"
+    },
+    {
+     "id": "v1",
+     "row": 0,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v2",
+     "row": 1,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "F"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "E"
+    },
+    {
+     "id": "v5",
+     "row": 4,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v6",
+     "row": 5,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "F"
+    },
+    {
+     "id": "v7",
+     "row": 2,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v8",
+     "row": 6,
+     "column": 6,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v9",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v10",
+     "row": 7,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v11",
+     "row": 4,
+     "column": 7,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 8
+    },
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 8
+    },
+    {
+     "side": "down",
+     "startOffset": 0,
+     "length": 8
+    },
+    {
+     "side": "left",
+     "startOffset": 0,
+     "length": 8
+    }
+   ]
+  },
+  "features": {
+   "cars": 12,
+   "bays": 3,
+   "k_min": 3,
+   "slack": 0,
+   "headFirst": 0.03915550595238095,
+   "fewestBlockers": 0.25,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 3324,
+   "decisionKinds": {
+    "route": 1,
+    "twin": 2
+   },
+   "decisions": 3,
+   "distanceMax": 5,
+   "distanceMin": 2,
+   "reasons": {
+    "B": 1,
+    "A": 2
+   },
+   "hasA": 1,
+   "hasB": 1,
+   "lures": 4,
+   "chainMax": 2,
+   "optionsMax": 4,
+   "onlyUnnaturalWins": 0,
+   "rollingHStarCapped5": null,
+   "chunkedHStarCapped5": null,
+   "level": 5,
+   "levelKeepingBuriedTwin": 5,
+   "solutionsOneBayFewer": 0,
+   "generator": "G3",
+   "opening": "all4"
+  },
+  "firstDecision": {
+   "before": [],
+   "served": 0,
+   "waiting": 0,
+   "winning": [
+    [
+     "v8",
+     "v11"
+    ],
+    [
+     "v0",
+     "v3",
+     "v2"
+    ],
+    [
+     "v4",
+     "v9",
+     "v2"
+    ]
+   ],
+   "losing": [
+    [
+     "v0",
+     "v11"
+    ]
+   ],
+   "reasons": [
+    "B"
+   ],
+   "distance": [
+    5,
+    5
+   ]
+  },
+  "solution": [
+   "v0",
+   "v3",
+   "v2",
+   "v1",
+   "v5",
+   "v9",
+   "v7",
+   "v8",
+   "v4",
+   "v6",
+   "v10",
+   "v11"
+  ],
+  "diagram": " vvvvvvvv \n>49.11130<\n>49.22230<\n>49..7...<\n>....7...<\n>555.7..b<\n>...66..b<\n>......88<\n>.aaa....<\n ^^^^^^^^ "
+ },
+ {
+  "id": "lv5-c",
+  "title": "Lv5 境界",
+  "level": 5,
+  "kind": "境界",
+  "bayCount": 3,
+  "solutions": 128,
+  "queue": [
+   "A",
+   "B",
+   "C",
+   "A",
+   "D",
+   "C",
+   "E",
+   "F",
+   "F",
+   "B",
+   "D",
+   "E"
+  ],
+  "board": {
+   "width": 8,
+   "height": 8,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 0,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v1",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "F"
+    },
+    {
+     "id": "v2",
+     "row": 4,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 5,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "E"
+    },
+    {
+     "id": "v4",
+     "row": 4,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v5",
+     "row": 7,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "E"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 7,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v7",
+     "row": 2,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v8",
+     "row": 2,
+     "column": 7,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v9",
+     "row": 2,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v10",
+     "row": 1,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v11",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "F"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 8
+    },
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 8
+    },
+    {
+     "side": "down",
+     "startOffset": 0,
+     "length": 8
+    },
+    {
+     "side": "left",
+     "startOffset": 0,
+     "length": 8
+    }
+   ]
+  },
+  "features": {
+   "cars": 12,
+   "bays": 3,
+   "k_min": 3,
+   "slack": 0,
+   "headFirst": 0.005208333333333333,
+   "fewestBlockers": 0.0,
+   "headFirstPerfect": 0,
+   "fewestPerfect": 0,
+   "solutions": 128,
+   "decisionKinds": {
+    "twin": 3
+   },
+   "decisions": 3,
+   "distanceMax": 3,
+   "distanceMin": 1,
+   "reasons": {
+    "AB": 1,
+    "A": 2
+   },
+   "hasA": 1,
+   "hasB": 1,
+   "lures": 1,
+   "chainMax": 2,
+   "optionsMax": 2,
+   "onlyUnnaturalWins": 0,
+   "rollingHStarCapped5": 4,
+   "chunkedHStarCapped5": 4,
+   "level": 5,
+   "levelKeepingBuriedTwin": 5,
+   "solutionsOneBayFewer": 0,
+   "generator": "G3",
+   "opening": "all4"
+  },
+  "firstDecision": {
+   "before": [],
+   "served": 0,
+   "waiting": 0,
+   "winning": [
+    [
+     "v11",
+     "v7",
+     "v9"
+    ]
+   ],
+   "losing": [
+    [
+     "v5",
+     "v2"
+    ]
+   ],
+   "reasons": [
+    "AB"
+   ],
+   "distance": [
+    3,
+    3
+   ]
+  },
+  "solution": [
+   "v11",
+   "v7",
+   "v9",
+   "v10",
+   "v0",
+   "v2",
+   "v1",
+   "v6",
+   "v3",
+   "v4",
+   "v5",
+   "v8"
+  ],
+  "diagram": " vvvvvvvv \n>.b.000.6<\n>.b.aaa.6<\n>.799.1.8<\n>.7...1.8<\n>4442...8<\n>...2.33.<\n>...2....<\n>.555....<\n ^^^^^^^^ "
+ }
+]

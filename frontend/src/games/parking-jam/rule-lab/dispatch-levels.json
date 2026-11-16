@@ -1,0 +1,1580 @@
+[
+  {
+    "id": "lv1-a",
+    "title": "Lv1 代表1",
+    "level": 1,
+    "kind": "代表",
+    "bayCount": 2,
+    "solutions": 4,
+    "queue": ["A", "B", "B", "C", "C", "D", "D", "A"],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 1,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 1,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 3,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 4,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 2,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 6
+        },
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 6
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv1-b",
+    "title": "Lv1 代表2",
+    "level": 1,
+    "kind": "代表",
+    "bayCount": 3,
+    "solutions": 4,
+    "queue": ["A", "B", "B", "C", "A", "D", "D", "C"],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 4,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v3",
+          "row": 6,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 1,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v5",
+          "row": 1,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 6,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        },
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv1-c",
+    "title": "Lv1 境界",
+    "level": 1,
+    "kind": "境界",
+    "bayCount": 2,
+    "solutions": 45,
+    "queue": ["A", "B", "B", "C", "D", "D", "A", "C"],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 3,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 5,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v3",
+          "row": 4,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 1,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v5",
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv2-a",
+    "title": "Lv2 代表1",
+    "level": 2,
+    "kind": "代表",
+    "bayCount": 2,
+    "solutions": 1,
+    "queue": ["A", "A", "B", "C", "C", "B", "D", "D"],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 4,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v3",
+          "row": 5,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 5,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 3,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        },
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv2-b",
+    "title": "Lv2 代表2",
+    "level": 2,
+    "kind": "代表",
+    "bayCount": 2,
+    "solutions": 1,
+    "queue": ["A", "B", "C", "D", "A", "C", "B", "D"],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 4,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v4",
+          "row": 3,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 2,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv2-c",
+    "title": "Lv2 境界",
+    "level": 2,
+    "kind": "境界",
+    "bayCount": 2,
+    "solutions": 100,
+    "queue": ["A", "B", "C", "B", "D", "A", "D", "C"],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 3,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 1,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 6
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv3-a",
+    "title": "Lv3 代表1",
+    "level": 3,
+    "kind": "代表",
+    "bayCount": 2,
+    "solutions": 1,
+    "queue": ["A", "B", "A", "C", "D", "E", "C", "E", "D", "B"],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 6,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v3",
+          "row": 3,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 6,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 1,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 6,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "E"
+        },
+        {
+          "id": "v8",
+          "row": 3,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "E"
+        },
+        {
+          "id": "v9",
+          "row": 4,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        },
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv3-b",
+    "title": "Lv3 代表2",
+    "level": 3,
+    "kind": "代表",
+    "bayCount": 3,
+    "solutions": 396,
+    "queue": ["A", "B", "C", "D", "B", "A", "C", "D", "E", "E"],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "E"
+        },
+        {
+          "id": "v1",
+          "row": 5,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v3",
+          "row": 1,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v6",
+          "row": 3,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "E"
+        },
+        {
+          "id": "v8",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v9",
+          "row": 5,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv3-c",
+    "title": "Lv3 境界",
+    "level": 3,
+    "kind": "境界",
+    "bayCount": 2,
+    "solutions": 49,
+    "queue": ["A", "B", "B", "C", "D", "E", "A", "D", "E", "C"],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 4,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "E"
+        },
+        {
+          "id": "v3",
+          "row": 4,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 6,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 5,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "E"
+        },
+        {
+          "id": "v7",
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v8",
+          "row": 6,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v9",
+          "row": 5,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        },
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv4-a",
+    "title": "Lv4 代表1",
+    "level": 4,
+    "kind": "代表",
+    "bayCount": 3,
+    "solutions": 40,
+    "queue": ["A", "B", "C", "D", "C", "A", "E", "E", "B", "D"],
+    "board": {
+      "width": 8,
+      "height": 8,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 5,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v2",
+          "row": 4,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "E"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 3,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 7,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v8",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v9",
+          "row": 1,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "E"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 8
+        },
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 8
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv4-b",
+    "title": "Lv4 代表2",
+    "level": 4,
+    "kind": "代表",
+    "bayCount": 3,
+    "solutions": 327,
+    "queue": ["A", "B", "C", "D", "A", "E", "D", "C", "E", "B"],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v1",
+          "row": 1,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 4,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v3",
+          "row": 2,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v4",
+          "row": 2,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 4,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "E"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "E"
+        },
+        {
+          "id": "v8",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v9",
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv4-c",
+    "title": "Lv4 境界",
+    "level": 4,
+    "kind": "境界",
+    "bayCount": 3,
+    "solutions": 2142,
+    "queue": ["A", "B", "C", "D", "E", "D", "A", "E", "C", "F", "F", "B"],
+    "board": {
+      "width": 8,
+      "height": 8,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 3,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "F"
+        },
+        {
+          "id": "v1",
+          "row": 3,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "E"
+        },
+        {
+          "id": "v5",
+          "row": 3,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 6,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "E"
+        },
+        {
+          "id": "v7",
+          "row": 5,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v8",
+          "row": 5,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v9",
+          "row": 0,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "F"
+        },
+        {
+          "id": "v10",
+          "row": 3,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v11",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 8
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv5-a",
+    "title": "Lv5 代表1",
+    "level": 5,
+    "kind": "代表",
+    "bayCount": 3,
+    "solutions": 6,
+    "queue": ["A", "B", "C", "D", "E", "A", "C", "B", "E", "F", "D", "F"],
+    "board": {
+      "width": 8,
+      "height": 8,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 5,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 3,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 3,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "F"
+        },
+        {
+          "id": "v3",
+          "row": 7,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 1,
+          "column": 6,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "F"
+        },
+        {
+          "id": "v5",
+          "row": 4,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "E"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v8",
+          "row": 4,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "E"
+        },
+        {
+          "id": "v9",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v10",
+          "row": 3,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v11",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 8
+        },
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 8
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv5-b",
+    "title": "Lv5 代表2",
+    "level": 5,
+    "kind": "代表",
+    "bayCount": 3,
+    "solutions": 3324,
+    "queue": ["A", "B", "C", "D", "C", "B", "E", "F", "F", "D", "E", "A"],
+    "board": {
+      "width": 8,
+      "height": 8,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 0,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "E"
+        },
+        {
+          "id": "v1",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 1,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "F"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "E"
+        },
+        {
+          "id": "v5",
+          "row": 4,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 5,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "F"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v8",
+          "row": 6,
+          "column": 6,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v9",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v10",
+          "row": 7,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v11",
+          "row": 4,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 8
+        },
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 8
+        },
+        {
+          "side": "down",
+          "startOffset": 0,
+          "length": 8
+        },
+        {
+          "side": "left",
+          "startOffset": 0,
+          "length": 8
+        }
+      ]
+    }
+  },
+  {
+    "id": "lv5-c",
+    "title": "Lv5 境界",
+    "level": 5,
+    "kind": "境界",
+    "bayCount": 3,
+    "solutions": 128,
+    "queue": ["A", "B", "C", "A", "D", "C", "E", "F", "F", "B", "D", "E"],
+    "board": {
+      "width": 8,
+      "height": 8,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "F"
+        },
+        {
+          "id": "v2",
+          "row": 4,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 5,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "E"
+        },
+        {
+          "id": "v4",
+          "row": 4,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v5",
+          "row": 7,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "E"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v8",
+          "row": 2,
+          "column": 7,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v9",
+          "row": 2,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v10",
+          "row": 1,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v11",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "F"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 8
+        },
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 8
+        },
+        {
+          "side": "down",
+          "startOffset": 0,
+          "length": 8
+        },
+        {
+          "side": "left",
+          "startOffset": 0,
+          "length": 8
+        }
+      ]
+    }
+  }
+]

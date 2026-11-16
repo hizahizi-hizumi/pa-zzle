@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { dispatchLevelProblems } from "@/games/parking-jam/rule-lab/dispatch-levels";
 import {
   analyzeRuleLab,
   applyRuleLabExit,
@@ -41,7 +42,7 @@ const descriptions: Record<RuleLabMode, string> = {
   pairs:
     "車を出庫させると待機枠に入ります。同色2台がそろった瞬間に出発して枠が空きます。2枠ではペアを連続して完成させます。3枠では1台を一時待機させ、別のペアを先に完成させることもできます。",
   dispatch:
-    "出庫指令は左から順に処理します。車を出庫させると待機枠に入り、先頭の指令と色が一致すれば即座に出発して枠が空きます。待機中の車も次の指令に一致すると出発します。指令は全部公開しています。",
+    "出庫指令は左から順に処理します。車を出庫させると待機枠に入り、先頭の指令と色が一致すれば即座に出発して枠が空きます。待機中の車も次の指令に一致すると出発します。待機枠が埋まると、指令と色が合う車も出庫できません。指令は全部公開しています。",
 };
 
 function labelOfVehicle(vehicleId: string): string {
@@ -58,7 +59,13 @@ export function ParkingJamRuleLab() {
   );
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const scenario = getRuleLabScenario(mode, size, bayCount);
+  const [problemId, setProblemId] = useState<string | null>(null);
+  const problem =
+    mode === "dispatch"
+      ? dispatchLevelProblems.find((item) => item.id === problemId)
+      : undefined;
+  const scenario =
+    problem?.scenario ?? getRuleLabScenario(mode, size, bayCount);
   const legal = legalRuleLabExits(scenario, state);
   const won = isRuleLabWon(scenario, state);
   const stuck = isRuleLabStuck(scenario, state);
@@ -67,8 +74,22 @@ export function ParkingJamRuleLab() {
     result?.exits.map(({ vehicleId, canWin }) => [vehicleId, canWin]) ?? [],
   );
 
+  function changeProblem(nextId: string | null) {
+    const next = dispatchLevelProblems.find((item) => item.id === nextId);
+    setProblemId(next ? next.id : null);
+    setState(
+      createRuleLabState(
+        next?.scenario ?? getRuleLabScenario(mode, size, bayCount),
+      ),
+    );
+    setHistory([]);
+    setNotice(null);
+    setShowAnalysis(false);
+  }
+
   function changeMode(nextMode: RuleLabMode) {
     setMode(nextMode);
+    setProblemId(null);
     setState(createRuleLabState(getRuleLabScenario(nextMode, size, bayCount)));
     setHistory([]);
     setNotice(null);
@@ -97,7 +118,7 @@ export function ParkingJamRuleLab() {
       setNotice(
         scenario.mode !== "standard" &&
           state.waiting.length >= scenario.bayCount
-          ? "待機枠が満杯です。1手戻して別の順序を試してください。"
+          ? "待機枠が満杯です。戻して別の順序を試してください。"
           : `${labelOfVehicle(vehicleId)}は出口までの進路が塞がれています。`,
       );
       return;
@@ -132,7 +153,7 @@ export function ParkingJamRuleLab() {
             パーキングジャムのルール比較
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
-            ゲーム本体には影響しない検証画面です。車を選び、出庫順を考えてください。同一の車両配置で、出庫後の規則による選択の違いを比較できます。
+            ゲーム本体には影響しない検証画面です。車を選び、出庫順を考えてください。共通盤面では、同一の車両配置で出庫後の規則による選択の違いを比較できます。
           </p>
         </div>
         <div
@@ -152,32 +173,64 @@ export function ParkingJamRuleLab() {
             </Button>
           ))}
         </div>
-        <div
-          className="mb-5 flex items-center gap-2"
-          role="group"
-          aria-label="比較盤面の規模"
-        >
-          <span className="mr-1 text-xs font-medium text-slate-600">
-            盤面規模
-          </span>
-          <Button
-            size="sm"
-            variant={size === "small" ? "default" : "outline"}
-            aria-pressed={size === "small"}
-            onClick={() => changeSize("small")}
+        {mode === "dispatch" && (
+          <div
+            className="mb-5 flex flex-wrap items-center gap-2"
+            role="group"
+            aria-label="レベル別の問題例"
           >
-            8台 / 7×7
-          </Button>
-          <Button
-            size="sm"
-            variant={size === "large" ? "default" : "outline"}
-            aria-pressed={size === "large"}
-            onClick={() => changeSize("large")}
+            <span className="mr-1 text-xs font-medium text-slate-600">
+              問題
+            </span>
+            <Button
+              size="sm"
+              variant={problem ? "outline" : "default"}
+              aria-pressed={!problem}
+              onClick={() => changeProblem(null)}
+            >
+              共通盤面
+            </Button>
+            {dispatchLevelProblems.map((item) => (
+              <Button
+                key={item.id}
+                size="sm"
+                variant={problem?.id === item.id ? "default" : "outline"}
+                aria-pressed={problem?.id === item.id}
+                onClick={() => changeProblem(item.id)}
+              >
+                {item.title}
+              </Button>
+            ))}
+          </div>
+        )}
+        {!problem && (
+          <div
+            className="mb-5 flex items-center gap-2"
+            role="group"
+            aria-label="比較盤面の規模"
           >
-            12台 / 8×8
-          </Button>
-        </div>
-        {(mode === "pairs" || mode === "dispatch") && (
+            <span className="mr-1 text-xs font-medium text-slate-600">
+              盤面規模
+            </span>
+            <Button
+              size="sm"
+              variant={size === "small" ? "default" : "outline"}
+              aria-pressed={size === "small"}
+              onClick={() => changeSize("small")}
+            >
+              8台 / 7×7
+            </Button>
+            <Button
+              size="sm"
+              variant={size === "large" ? "default" : "outline"}
+              aria-pressed={size === "large"}
+              onClick={() => changeSize("large")}
+            >
+              12台 / 8×8
+            </Button>
+          </div>
+        )}
+        {!problem && (mode === "pairs" || mode === "dispatch") && (
           <div
             className="mb-5 flex items-center gap-2"
             role="group"
@@ -229,7 +282,7 @@ export function ParkingJamRuleLab() {
               />
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              車は向きに沿って盤外へ出ます。出庫できない車を選んでも盤面は変わりません。
+              車は向きに沿って盤外へ出ます。濃い線の辺は壁で、そこからは出られません。出庫できない車を選んでも盤面は変わりません。
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Button
@@ -351,7 +404,7 @@ export function ParkingJamRuleLab() {
                 {won
                   ? "クリア：すべて出発しました"
                   : stuck
-                    ? "詰み：これ以上出庫できません。1手戻して再検討してください。"
+                    ? "詰み：これ以上出庫できません。原因は何手か前にあることがあります。戻して再検討してください。"
                     : `進行中：現在出庫できる車は ${legal.length} 台です。`}
               </p>
               {notice && (
@@ -378,7 +431,9 @@ export function ParkingJamRuleLab() {
               )}
             </div>
             <p className="text-xs leading-relaxed text-slate-500">
-              4方式は各盤面規模で同一の車両配置・色を使います。数値は試作の全探索結果で、人間の面白さの評価ではありません。
+              {problem
+                ? "この問題は出庫指令型だけの盤面です。レベルは機械的な基準による仮のもので、人間の体感で確かめたものではありません。"
+                : "4方式は各盤面規模で同一の車両配置・色を使います。数値は試作の全探索結果で、人間の面白さの評価ではありません。"}
             </p>
           </section>
         </div>
