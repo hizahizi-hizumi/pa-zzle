@@ -39,6 +39,11 @@
   --parking-jam-car-highlight: rgb(255 255 255 / 0.18);
   --parking-jam-car-accent: #8d3934;
 }
+/* 遊び方の図は置き場所が大きさを決め、余白の外へ延びる道路と走り去る車を描かない。 */
+.parking-jam-board--figure {
+  max-width: none;
+  overflow: hidden;
+}
 .parking-jam-board__asphalt-speck {
   fill: rgb(255 255 255 / 0.065);
 }
@@ -191,4 +196,21 @@
 .parking-jam-direction-control:focus-visible
   .parking-jam-direction-control__surface {
   stroke-width: 6;
+}
+/* 送る画面の盤面は、盤面の全体ではスクロールを止めない。車と矢印の上で始めた動きは、盤面の受け手が止める。 */
+.parking-jam-board--vehicle-touch-lock {
+  touch-action: auto;
+}
+/* 車の周りに、画面の上で一定の幅（片側 7px）の見えない縁を足し、細い車でも指で 44px ほどの所から始められるようにする。 */
+.parking-jam-car__touch-area {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 0;
+  vector-effect: non-scaling-stroke;
+  pointer-events: all;
+}
+@media (pointer: coarse) {
+  .parking-jam-car__touch-area {
+    stroke-width: 14px;
+  }
 }

@@ -121,7 +121,9 @@ describe("ParkingJamPlay", () => {
     openPlayMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-    const dialog = screen.getByRole("dialog", { name: "遊び方" });
+    const dialog = screen.getByRole("dialog", {
+      name: "パーキングジャムの遊び方",
+    });
 
     expect(dialog).toBeTruthy();
   });

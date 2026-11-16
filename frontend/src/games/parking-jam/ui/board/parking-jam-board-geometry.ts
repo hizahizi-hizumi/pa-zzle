@@ -9,6 +9,25 @@ import type {
 export const PARKING_JAM_CELL = 100;
 export const PARKING_JAM_MARGIN = 90;
 
+/**
+ * 盤面の外に取る余白。
+ * - `play`: プレイ画面とチュートリアル。どの辺にも、道路を長く見せる余白を取る。
+ * - `figure`: 遊び方の図。道路のある辺は道路が外へ続いて見える幅、ない辺は縁石が収まる幅だけを取り、余白の外は描かない。
+ *   向かい合う辺の片方に道路があれば、もう片方も同じ幅を取る。
+ *   小さく並べる図で、盤面のマスより余白が場所を取らないようにする。
+ */
+export type ParkingJamBoardFrame = "play" | "figure";
+
+const FIGURE_ROAD_MARGIN = 50;
+const FIGURE_CURB_MARGIN = 20;
+
+export type ParkingJamViewBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 const PARKING_BAY_EDGE_INSET = 22;
 const PARKING_BAY_DEPTH = 178;
 const ROAD_OVERLAP = 10;
@@ -22,7 +41,7 @@ type LineGeometry = {
   y2: number;
 };
 
-type RectGeometry = {
+export type ParkingJamRectGeometry = {
   x: number;
   y: number;
   width: number;
@@ -103,7 +122,7 @@ function getBoundaryCurbLines(board: ParkingJamBoard): LineGeometry[] {
 function getAccessRoadGeometry(
   opening: ParkingJamRoadOpening,
   board: ParkingJamBoard,
-): RectGeometry {
+): ParkingJamRectGeometry {
   const { start, end } = getOpeningSegment(opening);
   const length = end - start;
   const width = board.width * PARKING_JAM_CELL;
@@ -278,18 +297,28 @@ function getParkingBayLines(board: ParkingJamBoard): LineGeometry[] {
   return lines;
 }
 
+/** 車の車体が占める矩形。マスの縁から内側へ 10 寄せる。 */
+function getVehicleBody(vehicle: ParkingJamVehicle): ParkingJamRectGeometry {
+  const horizontal = vehicle.orientation === "horizontal";
+  return {
+    x: vehicle.column * PARKING_JAM_CELL + 10,
+    y: vehicle.row * PARKING_JAM_CELL + 10,
+    width: (horizontal ? vehicle.length : 1) * PARKING_JAM_CELL - 20,
+    height: (horizontal ? 1 : vehicle.length) * PARKING_JAM_CELL - 20,
+  };
+}
+
 function getVehicleExitTranslation(
   board: ParkingJamBoard,
   vehicle: ParkingJamVehicle,
   direction: ParkingJamDirection,
 ): { x: number; y: number } {
-  const horizontal = vehicle.orientation === "horizontal";
-  const vehicleWidth =
-    (horizontal ? vehicle.length : 1) * PARKING_JAM_CELL - 20;
-  const vehicleHeight =
-    (horizontal ? 1 : vehicle.length) * PARKING_JAM_CELL - 20;
-  const x = vehicle.column * PARKING_JAM_CELL + 10;
-  const y = vehicle.row * PARKING_JAM_CELL + 10;
+  const {
+    x,
+    y,
+    width: vehicleWidth,
+    height: vehicleHeight,
+  } = getVehicleBody(vehicle);
   const boardWidth = board.width * PARKING_JAM_CELL;
   const boardHeight = board.height * PARKING_JAM_CELL;
   const outsidePadding = 24;
@@ -318,13 +347,62 @@ function getVehicleExitTranslation(
   };
 }
 
+const oppositeSides = {
+  up: "down",
+  right: "left",
+  down: "up",
+  left: "right",
+} as const satisfies Record<ParkingJamSide, ParkingJamSide>;
+
+function hasRoadOpening(board: ParkingJamBoard, side: ParkingJamSide): boolean {
+  return board.roadOpenings.some((opening) => opening.side === side);
+}
+
+/** 向かい合う辺の余白はそろえ、駐車場を描く範囲の真ん中に置く。 */
+function getFrameMargin(
+  board: ParkingJamBoard,
+  frame: ParkingJamBoardFrame,
+  side: ParkingJamSide,
+): number {
+  if (frame === "play") {
+    return PARKING_JAM_MARGIN;
+  }
+  return hasRoadOpening(board, side) ||
+    hasRoadOpening(board, oppositeSides[side])
+    ? FIGURE_ROAD_MARGIN
+    : FIGURE_CURB_MARGIN;
+}
+
+/** 盤面を描く範囲。駐車場の左上を原点にし、`frame` の余白を周りに取る。 */
+function getViewBox(
+  board: ParkingJamBoard,
+  frame: ParkingJamBoardFrame,
+): ParkingJamViewBox {
+  const left = getFrameMargin(board, frame, "left");
+  const top = getFrameMargin(board, frame, "up");
+  return {
+    x: -left,
+    y: -top,
+    width:
+      board.width * PARKING_JAM_CELL +
+      left +
+      getFrameMargin(board, frame, "right"),
+    height:
+      board.height * PARKING_JAM_CELL +
+      top +
+      getFrameMargin(board, frame, "down"),
+  };
+}
+
 export const parkingJamBoardGeometry = {
   getAccessRoadCenterLine,
   getAccessRoadCurbLines,
   getAccessRoadGeometry,
   getBoundaryCurbLines,
   getParkingBayLines,
+  getVehicleBody,
   getVehicleExitTranslation,
+  getViewBox,
 };
 
 export const _private = {

@@ -69,6 +69,33 @@ describe("getParkingBayLines", () => {
   });
 });
 
+describe("getViewBox", () => {
+  const rightRoadOnly: ParkingJamBoard = {
+    width: 3,
+    height: 2,
+    vehicles: [],
+    fixedAreas: [],
+    roadOpenings: [{ side: "right", startOffset: 0, length: 1 }],
+  };
+
+  test("プレイ画面の余白では、どの辺にも同じ余白を取ること", () => {
+    const viewBox = parkingJamBoardGeometry.getViewBox(rightRoadOnly, "play");
+
+    expect(viewBox).toEqual({
+      x: -PARKING_JAM_MARGIN,
+      y: -PARKING_JAM_MARGIN,
+      width: 300 + PARKING_JAM_MARGIN * 2,
+      height: 200 + PARKING_JAM_MARGIN * 2,
+    });
+  });
+
+  test("遊び方の図の余白では、片側にだけ道路がある向かい合う辺の両方に道路の幅を取り、道路の無い辺の組には縁石の幅を取ること", () => {
+    const viewBox = parkingJamBoardGeometry.getViewBox(rightRoadOnly, "figure");
+
+    expect(viewBox).toEqual({ x: -50, y: -20, width: 400, height: 240 });
+  });
+});
+
 describe("getVehicleExitTranslation", () => {
   const vehicle = {
     id: "exit-car",
