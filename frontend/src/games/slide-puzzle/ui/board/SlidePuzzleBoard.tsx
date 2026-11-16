@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useRef } from "react";
 
 import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import type { SlidePuzzleOperation } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
@@ -31,6 +31,8 @@ type SlidePuzzleBoardProps = {
   /** タイルに重ねる合図。1枚に1つまで。 */
   cues?: readonly SlidePuzzleTileCue[];
   spotlitTiles?: readonly SlidePuzzleTileNumber[] | null;
+  /** タイルの面に重ね、面と一緒にスライド・揺れ・持ち上がる、遊び方だけの見せ方（押す所の手がかりなど）。 */
+  tileAdornments?: ReadonlyMap<SlidePuzzleTileNumber, ReactNode>;
   onSlideTile: (tileIndex: number) => void;
   onClearAnimationComplete: () => void;
 };
@@ -57,6 +59,7 @@ export function SlidePuzzleBoard({
   clearing,
   cues = [],
   spotlitTiles = null,
+  tileAdornments,
   onSlideTile,
   onClearAnimationComplete,
 }: SlidePuzzleBoardProps) {
@@ -123,6 +126,7 @@ export function SlidePuzzleBoard({
             disabled={interactionDisabled}
             cue={cues.find((cue) => cue.tile === tile)}
             spotlit={spotlitTiles?.includes(tile) ?? false}
+            adornment={tileAdornments?.get(tile)}
             // 盤面を戻す・別の問題などの置き換えでは、タイル同士が交差して滑らないよう即座に並べ替える。
             slideAnimated={operation !== null}
             faceRef={(element) => {
