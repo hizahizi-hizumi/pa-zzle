@@ -14,7 +14,7 @@ type SlidePuzzleBlankSpotlightProps = {
   boardSize: SlidePuzzleBoardSize;
 };
 
-/** 手を引く間、タイルが収まる空白を決め手として、タイルの面と同じ位置・角丸で画面全体の覆いから抜く。 */
+/** 手を引く間、タイルが動く先の空白を決め手として、タイルの面と同じ位置・角丸で盤面の覆いから抜く。 */
 export function SlidePuzzleBlankSpotlight({
   cellIndex,
   boardSize,

@@ -76,10 +76,19 @@ export function SlidePuzzleTile({
           data-tile-cue="hint"
           className={cuePlacementClassName}
         >
-          <TutorialCue
-            kind="mark"
-            recallId={cue.kind === "recall" ? cue.id : null}
-          />
+          {cue.pointed ? (
+            // タイルは隙間なく詰まっているので、指は下のタイルではなく、押すタイルの中を指す。
+            <TutorialCue
+              kind="pointer"
+              placement="center"
+              recallId={cue.kind === "recall" ? cue.id : null}
+            />
+          ) : (
+            <TutorialCue
+              kind="mark"
+              recallId={cue.kind === "recall" ? cue.id : null}
+            />
+          )}
         </span>
       )}
     </button>
