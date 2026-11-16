@@ -11,6 +11,7 @@ import {
   gameSelectionOrderSetting,
 } from "@/features/settings/game-selection-order-setting";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
+import { HAKOIRI_MUSUME_DISPLAY_NAME } from "@/games/hakoiri-musume/display-name";
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
@@ -101,6 +102,7 @@ describe("PuzzleSelectionView", () => {
     [HITOFUDE_PUZZLE_DISPLAY_NAME, "/puzzles/hitofude-puzzle"],
     [ICE_FLOOR_MAZE_DISPLAY_NAME, "/puzzles/ice-floor-maze"],
     [TSUME_SHOGI_DISPLAY_NAME, "/puzzles/tsume-shogi"],
+    [HAKOIRI_MUSUME_DISPLAY_NAME, "/puzzles/hakoiri-musume"],
     [BRIDGES_DISPLAY_NAME, "/puzzles/bridges"],
   ] as const;
 

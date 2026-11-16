@@ -3,6 +3,7 @@ import type {
   GameCatalogEntry,
   RecordProblemPlayDestination,
 } from "@/app/game-integration/game-catalog-entry";
+import { hakoiriMusumeCatalogEntry } from "@/app/game-integration/hakoiri-musume/hakoiri-musume-catalog-entry";
 import { hitofudePuzzleCatalogEntry } from "@/app/game-integration/hitofude-puzzle/hitofude-puzzle-catalog-entry";
 import { iceFloorMazeCatalogEntry } from "@/app/game-integration/ice-floor-maze/ice-floor-maze-catalog-entry";
 import { minesweeperCatalogEntry } from "@/app/game-integration/minesweeper/minesweeper-catalog-entry";
@@ -27,6 +28,7 @@ export const gameCatalog = [
   hitofudePuzzleCatalogEntry,
   iceFloorMazeCatalogEntry,
   tsumeShogiCatalogEntry,
+  hakoiriMusumeCatalogEntry,
   bridgesCatalogEntry,
 ] as const satisfies readonly [GameCatalogEntry, ...GameCatalogEntry[]];
 
