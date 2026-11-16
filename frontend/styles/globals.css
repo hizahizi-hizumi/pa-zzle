@@ -95,6 +95,66 @@
   --radius-md: 2px;
   --radius-lg: 3px;
   --shadow-raised: 0 1px 3px rgb(0 0 0 / 0.08);
+  /* チュートリアルの指さし。指先が押す所へ寄って戻り、寄った瞬間に指先から輪が広がる。 */
+  --animate-tutorial-tap: tutorial-tap 1.4s var(--ease-standard) infinite;
+  --animate-tutorial-tap-ripple: tutorial-tap-ripple 1.4s var(--ease-enter)
+    infinite;
+
+  /* チュートリアルの達成。そろった物の輪郭が一度広がって消え、完成の一言の後ろで輪が広がる。 */
+  --animate-tutorial-achieve-ring: tutorial-achieve-ring 500ms
+    var(--ease-celebrate) forwards;
+  --animate-tutorial-complete-pulse: tutorial-complete-pulse 1200ms
+    var(--ease-celebrate) both;
+
+  @keyframes tutorial-achieve-ring {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(1.18);
+    }
+  }
+
+  @keyframes tutorial-complete-pulse {
+    from {
+      opacity: 0.25;
+      transform: scale(0.5);
+    }
+    to {
+      opacity: 0;
+      transform: scale(2.6);
+    }
+  }
+
+  @keyframes tutorial-tap {
+    0%,
+    55%,
+    100% {
+      transform: translateY(0.5rem);
+    }
+    25%,
+    35% {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes tutorial-tap-ripple {
+    0%,
+    25% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    30% {
+      opacity: 0.5;
+    }
+    70%,
+    100% {
+      opacity: 0;
+      transform: scale(1.8);
+    }
+  }
 }
 
 :root {
