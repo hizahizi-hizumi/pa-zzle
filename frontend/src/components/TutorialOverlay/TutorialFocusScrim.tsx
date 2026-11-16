@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 
+import { TUTORIAL_CUE_HAND_ATTRIBUTE } from "@/components/TutorialCue";
 import {
   TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE,
   TUTORIAL_SPOTLIGHT_ATTRIBUTE,
@@ -14,14 +15,14 @@ import {
 import { cn } from "@/lib/utils";
 
 type TutorialFocusScrimProps = {
-  /** `true` の間、覆いを出す。手を引いている間だけ渡し、導入・手を離した後・完成では出さない。 */
+  /** `true` の間、覆いを出す。 */
   active: boolean;
   /** 抜く所を探す範囲。チュートリアルの画面そのもの。 */
   containerRef: RefObject<HTMLElement | null>;
   /**
    * 覆う範囲。
-   * - `screen`（既定）: 画面全体を暗く覆う。
-   * - `area`: `TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE` の付いた要素（盤面）の形だけを薄く覆う。画面の地・名前・進み具合はプレイ画面と同じ見え方のまま残す。
+   * - `screen`（既定）: 画面全体。
+   * - `area`: `TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE` の付いた要素（盤面）の形だけ。
    */
   scope?: "screen" | "area";
 };
@@ -52,9 +53,21 @@ const cornerRadiusProperties = [
  */
 const scrimFillClassNames = {
   screen: "fill-foreground/55 dark:fill-background/75",
-  // 盤面の中だけを覆うので、盤面がプレイ画面と同じ物に見えるまま、抜いた所との差が分かる薄さにする。
-  area: "fill-muted-foreground/35 dark:fill-background/55",
+  // 乗算で重ねる（`scrimBlendClassNames`）。明るい盤面でも暗い盤面でも、覆った所が同じ割合で暗くなる。
+  area: "fill-muted-foreground/45 dark:fill-background/45",
 } as const;
+
+/**
+ * 覆いの重ね方。盤面だけを覆うときは乗算にする。
+ * そのまま重ねると、アスファルトのような暗い盤面では覆った所が灰色に明るんで、抜いた所との差が消える。
+ */
+const scrimBlendClassNames = {
+  screen: "",
+  area: "mix-blend-multiply",
+} as const;
+
+/** 指のまわりを抜く丸を、指の置き場所の四角からどれだけ広げるか。縁をぼかして抜くので、指の絵の端までぼかしの内側に入る広さにする。 */
+const HAND_HOLE_MARGIN_PX = 12;
 
 function round(value: number): number {
   return Math.round(value * 2) / 2;
@@ -92,10 +105,6 @@ function getHolePath({ x, y, width, height, radii }: Hole): string {
   ].join(" ");
 }
 
-/**
- * 印の付いた要素の今の位置・大きさ・角丸を、覆いの座標で読む。動いている物（スライド・揺れ）にも追いつくよう、毎フレーム読む。
- * スライドで空白へ入るタイルのように、抜く所が同じ形で重なったときは1つにまとめる。
- */
 function measureHoles(
   svg: SVGSVGElement,
   container: HTMLElement,
@@ -135,12 +144,48 @@ function measureHoles(
   return [...new Map(holes.map((hole) => [getHoleKey(hole), hole])).values()];
 }
 
+/**
+ * 指（`TutorialCue`）のまわりを、覆いから淡く抜く。
+ * 指は盤面の物の中に描かれて覆いより上へ出せないので、抜かないと、抜いた物の外へ出た指だけが覆いで暗く分かれる。
+ * - 指は押す・滑るしぐさで動き続けるので、React の描き直しを通さず、読んだフレームのうちに丸を直接書き換える。
+ * - 現れたり消えたりする指は、その濃さに合わせて抜き、指が消えている間に抜いた跡だけが残らないようにする。
+ * - くっきりした穴に見えないよう、縁はぼかす（`fill`）。
+ */
+function syncHandHoles(
+  layer: SVGGElement,
+  svg: SVGSVGElement,
+  container: HTMLElement,
+  fill: string,
+): void {
+  const origin = svg.getBoundingClientRect();
+  const hands = container.querySelectorAll<HTMLElement>(
+    `[${TUTORIAL_CUE_HAND_ATTRIBUTE}]`,
+  );
+  while (layer.childElementCount > hands.length) {
+    layer.lastElementChild?.remove();
+  }
+  hands.forEach((hand, index) => {
+    const circle =
+      layer.children[index] ??
+      layer.appendChild(
+        document.createElementNS("http://www.w3.org/2000/svg", "circle"),
+      );
+    const rect = hand.getBoundingClientRect();
+    const radius = Math.max(rect.width, rect.height) / 2 + HAND_HOLE_MARGIN_PX;
+    circle.setAttribute("cx", String(rect.left + rect.width / 2 - origin.left));
+    circle.setAttribute("cy", String(rect.top + rect.height / 2 - origin.top));
+    circle.setAttribute("r", String(radius));
+    circle.setAttribute("fill", fill);
+    circle.setAttribute("fill-opacity", getComputedStyle(hand).opacity);
+  });
+}
+
 function getHolesKey(holes: readonly Hole[]): string {
   return holes.map(getHoleKey).join(";");
 }
 
 /**
- * チュートリアルで手を引いている間の覆い。各ゲームは抜く所に `TutorialSpotlight` を置くか `TUTORIAL_SPOTLIGHT_ATTRIBUTE` を付けるだけにし、覆いを描かない。
+ * チュートリアルの盤面や画面の覆い。各ゲームは抜く所に `TutorialSpotlight` を置くか `TUTORIAL_SPOTLIGHT_ATTRIBUTE` を付けるだけにし、覆いを描かない。
  *
  * 覆いは画面の一番上に置いた1枚の SVG に描き、抜く所は `<mask>` の四角で空ける。四角の角丸は抜く物の角丸に合わせる。
  * - 盤面の物は transform・will-change・アニメーションで重なりの文脈が分かれているので、物を z-index で覆いの上へ持ち上げる作りは文脈を越えられない。
@@ -159,11 +204,22 @@ export function TutorialFocusScrim({
   const holesKeyRef = useRef("");
   const maskId = `tutorial-focus-scrim-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
+  const softHoleId = `${maskId}-soft`;
+  const handLayerRef = useRef<SVGGElement>(null);
+
   const updateHoles = useCallback(() => {
     const svg = svgRef.current;
     const container = containerRef.current;
     if (!svg || !container) {
       return;
+    }
+    if (handLayerRef.current) {
+      syncHandHoles(
+        handLayerRef.current,
+        svg,
+        container,
+        `url(#${softHoleId})`,
+      );
     }
     const next = measureHoles(svg, container, TUTORIAL_SPOTLIGHT_ATTRIBUTE);
     const nextAreas =
@@ -176,7 +232,7 @@ export function TutorialFocusScrim({
       setHoles(next);
       setAreas(nextAreas);
     }
-  }, [containerRef, scope]);
+  }, [containerRef, scope, softHoleId]);
 
   // 描く前に読み、抜く所が替わった瞬間に一言や印が覆いに隠れないようにする。覆いを消す間は、最後に抜いた所のまま消す。
   useLayoutEffect(() => {
@@ -204,10 +260,15 @@ export function TutorialFocusScrim({
       data-tutorial-focus-scrim={active || undefined}
       className={cn(
         "pointer-events-none absolute top-0 left-0 z-30 h-[calc(100%+env(safe-area-inset-bottom))] w-full transition-opacity duration-(--duration-normal) ease-standard motion-reduce:transition-none",
+        scrimBlendClassNames[scope],
         active ? "opacity-100" : "opacity-0",
       )}
     >
       <defs>
+        <radialGradient id={softHoleId}>
+          <stop offset="55%" stopColor="black" />
+          <stop offset="100%" stopColor="black" stopOpacity="0" />
+        </radialGradient>
         <mask
           id={maskId}
           maskUnits="userSpaceOnUse"
@@ -227,6 +288,7 @@ export function TutorialFocusScrim({
           {holes.map((hole) => (
             <path key={getHoleKey(hole)} d={getHolePath(hole)} fill="black" />
           ))}
+          <g ref={handLayerRef} />
         </mask>
       </defs>
       <rect
