@@ -3,19 +3,20 @@ import {
   countReflectionBoardPieces,
   parseReflectionBoard,
   type ReflectionBoard,
+  type ReflectionCell,
   type ReflectionPiece,
 } from "@/games/reflection/puzzle/board";
 import {
   computeReflectionClues,
-  isSameReflectionEntry,
+  getReflectionEntryIndex,
   type ReflectionEntry,
   traceReflectionLaser,
 } from "@/games/reflection/puzzle/laser";
+import { listReflectionClueMatches } from "@/games/reflection/puzzle/rules";
 import {
   clearReflectionSessionSelection,
   createReflectionSession,
   getReflectionSessionStock,
-  type ReflectionSelection,
   type ReflectionSession,
   removeReflectionSessionPiece,
   tapReflectionSessionCell,
@@ -31,8 +32,8 @@ import type {
 } from "@/games/tutorial";
 
 export type ReflectionTutorialRuleId =
-  | "number"
   | "black-hole"
+  | "number"
   | "mirror"
   | "reflector"
   | "double";
@@ -44,53 +45,65 @@ export type ReflectionTutorialAction =
   | { type: "remove"; cellIndex: number }
   | { type: "clear-selection" };
 
-/**
- * 手を引く1手順。
- * - `light`: 印の外周ヒントを押させ、その光の道筋を出す。
- * - `place`: 印の種類をストックで選ばせ、印のマスに置かせる。手順の間、`entry` から入れた今の光を見せ続ける。
- * - `entry`: 押させる外周ヒント、または置く場所を決める外周ヒント。
- * - `reasonEntries`: その手を決める外周ヒント（決め手）。光を出す手順では、押させる所が決まる光の外周ヒント。
- * - `resultEntry`: 置いた後に光を見せる外周ヒント。一言が置いた結果として示すものに合わせる。
- */
-export type ReflectionTutorialStep = TutorialStep<ReflectionTutorialRuleId> & {
-  entry: ReflectionEntry;
-  reasonEntries: readonly ReflectionEntry[];
-} & (
-    | { type: "light" }
-    | {
-        type: "place";
-        piece: ReflectionPiece;
-        cellIndex: number;
-        resultEntry: ReflectionEntry;
-      }
-  );
+/** 手順で、プレイヤーが自分で選ぶもの。`none` は操作を教える手順。 */
+export type ReflectionTutorialChoice = "none" | "cell" | "piece" | "both";
 
 /**
- * 直前の手。盤面の上の合図に使う。
- * - `fittedCellIndex`: この手で手順どおりに置いたマス。
- * - `litEntry`: この手で手順を終えたときに光を見せる外周ヒント。次の手まで、その外周ヒントから入れた今の光を見せ、手の結果を盤面で返す。
- * - `piecePlaced`: この手でピースが盤面に現れた（置いた・移した・入れ替えた・置き換えた）。本番と同じく、置いた音を鳴らすのに使う。
+ * 1つのピースを置かせる手順。
+ * - `piece` / `cellIndex`: 置くピースとマス。解と同じ。
+ * - `reasonEntries`: 置く物を決める外周ヒント（決め手）。手順の間、最初の外周ヒントから入れた今の光を見せ続ける。
+ * - `resultEntry`: 置いた後に光を見せる外周ヒント。
+ * - `midwayMessage`: 印のピースを選んだ後の一言。操作を教える手順だけが持つ。
+ * - `namedPieces`: 一言で名前を言うピース。
  */
+export type ReflectionTutorialStep = TutorialStep<ReflectionTutorialRuleId> & {
+  piece: ReflectionPiece;
+  cellIndex: number;
+  choice: ReflectionTutorialChoice;
+  namedPieces: readonly ReflectionPiece[];
+  reasonEntries: readonly ReflectionEntry[];
+  resultEntry: ReflectionEntry;
+  midwayMessage: TutorialMessage | null;
+};
+
 export type ReflectionTutorialMove = {
   fittedCellIndex: number | null;
+  /** この手で手順を終えたときに光を見せる外周ヒント。次の手まで、その外周ヒントから入れた今の光を見せる。 */
   litEntry: ReflectionEntry | null;
+  /** 置いた・移した・入れ替えた・置き換えたのどれでも真。本番と同じく、置いた音を鳴らすのに使う。 */
   piecePlaced: boolean;
 };
 
-/**
- * 本番と同じ操作で盤面を進めるため、本番の1回のプレイ（`ReflectionSession`）をそのまま持つ。経過時間や回数は使わない。
- * `moveCount` は盤面かどこを選んでいるかを変えた手の数。同じ所への合図をやり直す目印に使う。
- */
+/** 本番と同じ操作で盤面を進めるため、本番の1回のプレイをそのまま持つ。経過時間や回数は使わない。 */
 export type ReflectionTutorialBoardState = {
   session: ReflectionSession;
+  /** 盤面かどこを選んでいるかを変えた手の数。同じ所への合図をやり直す目印に使う。 */
   moveCount: number;
   lastMove: ReflectionTutorialMove | null;
 };
 
 export type ReflectionTutorialTarget =
   | { type: "stock"; piece: ReflectionPiece }
-  | { type: "cell"; cellIndex: number }
-  | { type: "clue"; entry: ReflectionEntry };
+  | { type: "cell"; cellIndex: number };
+
+export type ReflectionTutorialMark = {
+  target: ReflectionTutorialTarget;
+  /** 輪郭に加えて指で指す。 */
+  pointed: boolean;
+};
+
+/** どちらも空なら盤面を覆わない。 */
+export type ReflectionTutorialSpotlight = {
+  entries: readonly ReflectionEntry[];
+  cellIndices: readonly number[];
+};
+
+export type ReflectionTutorialHint = {
+  target: ReflectionTutorialTarget;
+  /** 解と違う所に置いたピースを示すときは空。 */
+  reasonEntries: readonly ReflectionEntry[];
+  message: TutorialMessage;
+};
 
 type ReflectionTutorialSituation = TutorialSituation<
   ReflectionTutorialRuleId,
@@ -109,24 +122,32 @@ function cellAt(oneBasedRow: number, oneBasedColumn: number): number {
   return (oneBasedRow - 1) * SIZE + (oneBasedColumn - 1);
 }
 
+/** 1始まりの位置で書いた外周ヒント。上下の辺は左からの列、左右の辺は上からの行。 */
+function entryAt(
+  side: ReflectionEntry["side"],
+  position: number,
+): ReflectionEntry {
+  return { side, index: position - 1 };
+}
+
 /**
  * ```text
- *       5•  5↗  3•  3↩  9↩
- *  5↗   .   .   .   .   .    5↗
- *  5↗   .   .   .   =   .    5↗
- *  3↗   \   .   @   .   .    3•
- *  7↩   .   .   .   o   /    2↗
- *  1↩   |   .   .   .   .    9↩
- *       3↗  5↗  3•  3↩  2↗
+ *       2•  4↗  5↗  5↩  1↩
+ *  5•   .   \   .   .   =    4↗
+ *  1•   @   .   .   .   .    5•
+ *  5↗   .   .   /   o   .    3↩
+ *  2•   .   @   .   .   @    1•
+ *  2↗   .   \   .   .   .    5•
+ *       4•  2↗  7↩  5↩  2•
  * ```
  * （↗ 退出、↩ 反射、• 吸収）
  */
 const solution: ReflectionBoard = parseReflectionBoard([
-  ".....",
-  "...=.",
-  "\\.@..",
-  "...o/",
-  "|....",
+  ".\\..=",
+  "@....",
+  "../o.",
+  ".@..@",
+  ".\\...",
 ]);
 
 const problem: ReflectionProblem = {
@@ -136,124 +157,139 @@ const problem: ReflectionProblem = {
   solution,
 };
 
-/** 最初に、何も置いていない盤面でまっすぐ抜ける光を出す。この光は後で両面鏡に沿って通る。 */
 const steps: readonly ReflectionTutorialStep[] = [
   {
-    type: "light",
     message: {
-      headline: "数字は光が通るマスの数です",
-      detail: "数字を押すと光が見えます",
+      headline: "置くピースをタップして選択します",
+      detail: "ブラックホールは\n光を止めます",
     },
-    introducedRuleId: "number",
-    entry: { side: "left", index: 1 },
-    reasonEntries: [],
-  },
-  {
-    type: "light",
-    message: {
-      headline: "光が出た先にも同じ数字があります",
-      detail: "出た先の数字が違うと緑になりません",
-    },
-    introducedRuleId: "number",
-    entry: { side: "right", index: 1 },
-    reasonEntries: [{ side: "left", index: 1 }],
-  },
-  {
-    type: "place",
-    message: {
-      headline: "ブラックホールは光を吸い込みます",
-      detail: "点の付いた3は\n光が3マス目で吸い込まれます",
+    midwayMessage: {
+      headline: "印のマスをタップして置きます",
+      detail: null,
     },
     introducedRuleId: "black-hole",
     piece: "black-hole",
-    cellIndex: cellAt(3, 3),
-    entry: { side: "top", index: 2 },
-    reasonEntries: [{ side: "top", index: 2 }],
-    resultEntry: { side: "top", index: 2 },
-  },
-  {
-    type: "place",
-    message: {
-      headline: "斜め鏡は光を直角に曲げます",
-      detail: "斜めの矢印の2は\n光が2マス通って外へ出ます",
-    },
-    introducedRuleId: "mirror",
-    piece: "slash",
     cellIndex: cellAt(4, 5),
-    entry: { side: "bottom", index: 4 },
-    reasonEntries: [
-      { side: "bottom", index: 4 },
-      { side: "right", index: 3 },
-    ],
-    resultEntry: { side: "bottom", index: 4 },
+    choice: "none",
+    namedPieces: ["black-hole"],
+    reasonEntries: [],
+    resultEntry: entryAt("bottom", 5),
   },
   {
-    type: "place",
     message: {
-      headline: "反射体は光をはね返します",
-      detail: "折り返す矢印の3は\n光が戻る1マスも数に入ります",
+      headline: "光が通るマスの数が\n書かれています",
+      detail:
+        "光が吸い込まれる数字には点が付いています\n下の4の光を4マス目で止めます",
     },
+    midwayMessage: null,
+    introducedRuleId: "number",
+    piece: "black-hole",
+    cellIndex: cellAt(2, 1),
+    choice: "cell",
+    namedPieces: [],
+    reasonEntries: [entryAt("bottom", 1)],
+    resultEntry: entryAt("bottom", 1),
+  },
+  {
+    message: {
+      headline:
+        "斜め鏡は光を直角に曲げます\n光が出ていく数字には斜めの矢印が付いています",
+      detail:
+        "光が入る所と出る所には同じ数字があります\n上の4の光を右の4から出します",
+    },
+    midwayMessage: null,
+    introducedRuleId: "mirror",
+    piece: "backslash",
+    cellIndex: cellAt(1, 2),
+    choice: "both",
+    namedPieces: ["slash", "backslash"],
+    reasonEntries: [entryAt("top", 2), entryAt("right", 1)],
+    resultEntry: entryAt("top", 2),
+  },
+  {
+    message: {
+      headline:
+        "反射鏡は光をはね返します\n光が戻る数字には折り返す矢印が付いています",
+      detail: "上の5の光が行きと戻りを合わせて5マスで戻るように置きます",
+    },
+    midwayMessage: null,
     introducedRuleId: "reflector",
     piece: "reflector",
-    cellIndex: cellAt(4, 4),
-    entry: { side: "bottom", index: 3 },
-    reasonEntries: [{ side: "bottom", index: 3 }],
-    resultEntry: { side: "bottom", index: 3 },
+    cellIndex: cellAt(3, 4),
+    choice: "cell",
+    namedPieces: ["reflector"],
+    reasonEntries: [entryAt("top", 4)],
+    resultEntry: entryAt("top", 4),
   },
   {
-    type: "place",
     message: {
-      headline: "両面鏡は当たる光をはね返し\n鏡に沿う光は通します",
-      detail: "折り返す矢印の3は2マス目ではね返ります",
+      headline: "両面鏡は当たる光をはね返し\n沿って進む光は通します",
+      detail: "上の1の光が戻り\n右の4の光が通るように置きます",
     },
+    midwayMessage: null,
     introducedRuleId: "double",
     piece: "horizontal-double",
-    cellIndex: cellAt(2, 4),
-    entry: { side: "top", index: 3 },
-    reasonEntries: [{ side: "top", index: 3 }],
-    resultEntry: { side: "left", index: 1 },
+    cellIndex: cellAt(1, 5),
+    choice: "piece",
+    namedPieces: ["horizontal-double"],
+    reasonEntries: [entryAt("top", 5), entryAt("right", 1)],
+    resultEntry: entryAt("top", 5),
+  },
+  {
+    message: {
+      headline: "数字1つから置く場所とピースを決めます",
+      detail: "左の真ん中の5の光が\n5マスで上へ出るように置きます",
+    },
+    midwayMessage: null,
+    introducedRuleId: null,
+    piece: "slash",
+    cellIndex: cellAt(3, 3),
+    choice: "both",
+    namedPieces: [],
+    reasonEntries: [entryAt("left", 3), entryAt("top", 3)],
+    resultEntry: entryAt("left", 3),
   },
 ];
 
-/** 手を離した後に自分で置くピース。 */
 const freePlacements: readonly ReflectionTutorialPlacement[] = [
   {
-    piece: "backslash",
-    cellIndex: cellAt(3, 1),
-    reasonEntries: [
-      { side: "left", index: 2 },
-      { side: "bottom", index: 0 },
-    ],
+    piece: "black-hole",
+    cellIndex: cellAt(4, 2),
+    reasonEntries: [entryAt("left", 4)],
   },
   {
-    piece: "vertical-double",
-    cellIndex: cellAt(5, 1),
-    reasonEntries: [{ side: "left", index: 4 }],
+    piece: "backslash",
+    cellIndex: cellAt(5, 2),
+    reasonEntries: [entryAt("left", 5), entryAt("bottom", 2)],
   },
 ];
 
-/** 正解の配置を、手がかりで示す順に並べる。手を引いた手順の配置を先にする。 */
+/** 手がかりで示す順に並べる。 */
 const placements: readonly ReflectionTutorialPlacement[] = [
-  ...steps.flatMap((step): ReflectionTutorialPlacement[] =>
-    step.type === "place"
-      ? [
-          {
-            piece: step.piece,
-            cellIndex: step.cellIndex,
-            reasonEntries: step.reasonEntries,
-          },
-        ]
-      : [],
-  ),
+  ...steps.map(({ piece, cellIndex, reasonEntries }) => ({
+    piece,
+    cellIndex,
+    reasonEntries,
+  })),
   ...freePlacements,
 ];
 
-function isSameSelection(
-  selection: ReflectionSelection | null,
-  piece: ReflectionPiece,
-): boolean {
-  return selection?.type === "stock" && selection.piece === piece;
-}
+const doubleRuleMessage: TutorialMessage = {
+  headline: "両面鏡は当たる光をはね返し\n沿って進む光は通します",
+  detail: null,
+};
+
+const pieceRuleMessages = {
+  "black-hole": {
+    headline: "ブラックホールは\n光を止めます",
+    detail: null,
+  },
+  slash: { headline: "斜め鏡は光を直角に曲げます", detail: null },
+  backslash: { headline: "斜め鏡は光を直角に曲げます", detail: null },
+  reflector: { headline: "反射鏡は光をはね返します", detail: null },
+  "vertical-double": doubleRuleMessage,
+  "horizontal-double": doubleRuleMessage,
+} as const satisfies Record<ReflectionPiece, TutorialMessage>;
 
 function applyAction(
   session: ReflectionSession,
@@ -273,29 +309,73 @@ function applyAction(
   }
 }
 
-function fitsStep(
+/** 手順を始めたときの盤面。それまでの手順のピースだけが置いてある。 */
+function getStepStartBoard(step: ReflectionTutorialStep): ReflectionBoard {
+  const cells: ReflectionCell[] = Array.from(
+    { length: SIZE * SIZE },
+    () => null,
+  );
+  for (const earlier of steps.slice(0, steps.indexOf(step))) {
+    cells[earlier.cellIndex] = earlier.piece;
+  }
+  return { size: SIZE, cells };
+}
+
+function listChangedCellIndices(
+  step: ReflectionTutorialStep,
+  board: ReflectionBoard,
+): number[] {
+  const start = getStepStartBoard(step);
+  return board.cells.flatMap((cell, index) =>
+    cell === start.cells[index] ? [] : [index],
+  );
+}
+
+function findStepPlacedCellIndex(
+  step: ReflectionTutorialStep,
+  board: ReflectionBoard,
+): number | null {
+  // 手順の中で置ける物は1つなので、変わったマスはこの手順で置いたピースのマスになる。
+  return listChangedCellIndices(step, board)[0] ?? null;
+}
+
+function choosesCell(step: ReflectionTutorialStep): boolean {
+  return step.choice === "cell" || step.choice === "both";
+}
+
+function choosesPiece(step: ReflectionTutorialStep): boolean {
+  return step.choice === "piece" || step.choice === "both";
+}
+
+/** 手順を始めたときの盤面の空きマスに、選べるピースを1つ置いただけの盤面と、選べるピースかこの手順で置いたピースの選択に限る。 */
+function isWithinStep(
   step: ReflectionTutorialStep,
   session: ReflectionSession,
-  action: ReflectionTutorialAction,
 ): boolean {
-  if (step.type === "light") {
-    return (
-      action.type === "clue" &&
-      isSameReflectionEntry(action.entry, step.entry) &&
-      (session.laserEntry === null ||
-        !isSameReflectionEntry(session.laserEntry, step.entry))
-    );
+  const { cells } = session.puzzleState;
+  const changed = listChangedCellIndices(step, session.puzzleState);
+  if (changed.length > 1) {
+    return false;
   }
-  const selected = isSameSelection(session.selection, step.piece);
-  switch (action.type) {
-    case "stock":
-      return action.piece === step.piece && !selected;
-    case "cell":
-      return action.cellIndex === step.cellIndex && selected;
-    case "clear-selection":
-      return selected;
-    default:
+  const [placedCellIndex] = changed;
+  if (placedCellIndex !== undefined) {
+    const placed = cells[placedCellIndex] ?? null;
+    const placedOnEmpty =
+      getStepStartBoard(step).cells[placedCellIndex] === null;
+    const allowedCell = choosesCell(step) || placedCellIndex === step.cellIndex;
+    const allowedPiece = choosesPiece(step) || placed === step.piece;
+    if (placed === null || !placedOnEmpty || !allowedCell || !allowedPiece) {
       return false;
+    }
+  }
+  const { selection } = session;
+  switch (selection?.type) {
+    case undefined:
+      return true;
+    case "stock":
+      return choosesPiece(step) || selection.piece === step.piece;
+    case "cell":
+      return selection.cellIndex === placedCellIndex;
   }
 }
 
@@ -303,13 +383,12 @@ function isStepDone(
   step: ReflectionTutorialStep,
   session: ReflectionSession,
 ): boolean {
-  if (step.type === "light") {
-    return (
-      session.laserEntry !== null &&
-      isSameReflectionEntry(session.laserEntry, step.entry)
-    );
-  }
-  return session.puzzleState.cells[step.cellIndex] === step.piece;
+  const changed = listChangedCellIndices(step, session.puzzleState);
+  return (
+    changed.length === 1 &&
+    changed[0] === step.cellIndex &&
+    session.puzzleState.cells[step.cellIndex] === step.piece
+  );
 }
 
 function countPlacedPieces(session: ReflectionSession): number {
@@ -324,6 +403,12 @@ function isPiecePlaced(
   return (
     after.puzzleState !== before.puzzleState &&
     countPlacedPieces(after) >= countPlacedPieces(before)
+  );
+}
+
+function isStockEmpty(session: ReflectionSession): boolean {
+  return Object.values(getReflectionSessionStock(session)).every(
+    (count) => count === 0,
   );
 }
 
@@ -357,26 +442,25 @@ function performReflectionTutorialAction(
   state: ReflectionTutorialBoardState;
   outcome: TutorialMoveOutcome;
 } {
-  if (step !== null && !fitsStep(step, state.session, action)) {
+  if (step !== null && action.type === "clue") {
     return { state, outcome: "ignored" };
   }
   const session = applyAction(state.session, action);
-  if (session === state.session) {
+  if (
+    session === state.session ||
+    (step !== null && !isWithinStep(step, session))
+  ) {
     return { state, outcome: "ignored" };
   }
 
   const stepped = step !== null && isStepDone(step, session);
-  const litEntry = !stepped
-    ? null
-    : step.type === "place"
-      ? step.resultEntry
-      : step.entry;
+  const litEntry = stepped ? step.resultEntry : null;
   // 結果として見せる光は、本番でその外周ヒントを押したのと同じに扱い、押すと閉じるようにする。
   const next: ReflectionTutorialBoardState = {
     session: litEntry === null ? session : { ...session, laserEntry: litEntry },
     moveCount: state.moveCount + 1,
     lastMove: {
-      fittedCellIndex: stepped && step.type === "place" ? step.cellIndex : null,
+      fittedCellIndex: stepped ? step.cellIndex : null,
       litEntry,
       piecePlaced: isPiecePlaced(state.session, session),
     },
@@ -384,152 +468,347 @@ function performReflectionTutorialAction(
   if (session.status === "cleared") {
     return { state: next, outcome: "solved" };
   }
-  return { state: next, outcome: stepped ? "stepped" : "continued" };
+  if (stepped) {
+    return { state: next, outcome: "stepped" };
+  }
+  const misplaced =
+    step !== null &&
+    findStepPlacedCellIndex(step, session.puzzleState) !== null;
+  return { state: next, outcome: misplaced ? "violated" : "continued" };
+}
+
+// 違反のときにだけ使うので、合っている光は言わない。
+function describeLight(board: ReflectionBoard, entry: ReflectionEntry): string {
+  const trace = traceReflectionLaser(board, entry);
+  const { outcome, distance } = trace;
+  // 数字どおりのマス数で出ても、出た先の数字が違えば合わない。数を言うだけでは何が違うか分からないので、出た先のことを言う。
+  const clueIndex = getReflectionEntryIndex(SIZE, entry);
+  const clue = problem.clues[clueIndex];
+  const matched = listReflectionClueMatches(board, problem.clues)[clueIndex];
+  if (
+    !matched &&
+    outcome === "exit" &&
+    clue?.outcome === "exit" &&
+    clue.distance === distance
+  ) {
+    return "光が出た先の数字と合っていません";
+  }
+  switch (outcome) {
+    case "absorb":
+      return `光が${distance}マス目で止まります`;
+    case "reflect":
+      return `光が${distance}マス通って戻ります`;
+    case "exit":
+      return `光が${distance}マス通って出ます`;
+  }
+}
+
+const fixDetails = {
+  cell: {
+    unselected: "置いたピースをタップしてから\n別のマスをタップします",
+    selected: "別のマスをタップして動かします",
+  },
+  piece: {
+    unselected: "置いたピースをタップしてから\n別のピースをタップします",
+    selected: "別のピースをタップして置き換えます",
+  },
+  both: {
+    unselected: "置いたピースをタップしてから\n別のマスかピースをタップします",
+    selected: "別のマスかピースをタップして置き直します",
+  },
+} as const satisfies Record<
+  Exclude<ReflectionTutorialChoice, "none">,
+  Record<"unselected" | "selected", string>
+>;
+
+/** 手順で違う物を置いたら、決め手のうち合っていない最初のものにし、何に当たったかを光で見せる。決め手の無い操作の手順では `null`。 */
+function getStepLightEntry(
+  step: ReflectionTutorialStep,
+  board: ReflectionBoard,
+): ReflectionEntry | null {
+  const [first] = step.reasonEntries;
+  if (findStepPlacedCellIndex(step, board) === null) {
+    return first ?? null;
+  }
+  const matches = listReflectionClueMatches(board, problem.clues);
+  return (
+    step.reasonEntries.find(
+      (entry) => !matches[getReflectionEntryIndex(SIZE, entry)],
+    ) ??
+    first ??
+    null
+  );
+}
+
+function describeStep(
+  step: ReflectionTutorialStep,
+  session: ReflectionSession,
+): TutorialMessage {
+  const placedCellIndex = findStepPlacedCellIndex(step, session.puzzleState);
+  const lightEntry = getStepLightEntry(step, session.puzzleState);
+  if (placedCellIndex !== null && step.choice !== "none" && lightEntry) {
+    const selected =
+      session.selection?.type === "cell" &&
+      session.selection.cellIndex === placedCellIndex;
+    return {
+      headline: describeLight(session.puzzleState, lightEntry),
+      detail: fixDetails[step.choice][selected ? "selected" : "unselected"],
+    };
+  }
+  const pieceSelected =
+    session.selection?.type === "stock" &&
+    session.selection.piece === step.piece;
+  return pieceSelected && step.midwayMessage
+    ? step.midwayMessage
+    : step.message;
 }
 
 const freePlay: TutorialMessage = {
-  headline: "すべての数字が緑になれば完成です",
+  headline: "残りのピースも置いてみましょう",
+  detail: "数字をタップすると\n今の光の道筋が見えます",
+};
+
+const unsolvedMessage: TutorialMessage = {
+  headline: "緑でない数字があります",
   detail: null,
 };
 
-/** 合わない配置でも止めないので、ルールに合わない手は無い。 */
-function describeReflectionTutorialViolation(): TutorialMessage {
-  return freePlay;
+/** 完成の一言は `games/tutorial.ts` の進行が出す。 */
+export function describeReflectionTutorialMessage(
+  { step }: ReflectionTutorialSituation,
+  { session }: ReflectionTutorialBoardState,
+): TutorialMessage {
+  if (step !== null) {
+    return describeStep(step, session);
+  }
+  return isStockEmpty(session) ? unsolvedMessage : freePlay;
 }
 
+export const REFLECTION_TUTORIAL_PROGRESS_STEP_COUNT = placements.length;
+
+export function getReflectionTutorialProgressRatio({
+  session,
+}: ReflectionTutorialBoardState): number {
+  const placedCount = placements.filter(
+    ({ piece, cellIndex }) => session.puzzleState.cells[cellIndex] === piece,
+  ).length;
+  return placedCount / REFLECTION_TUTORIAL_PROGRESS_STEP_COUNT;
+}
+
+/** 手を離した直後は、最後の手順の結果の光を押したものとして見せる。 */
 export function getReflectionTutorialLaserEntry(
   { step }: ReflectionTutorialSituation,
   state: ReflectionTutorialBoardState,
+  resultShown: boolean,
 ): ReflectionEntry | null {
   if (step === null) {
     return state.session.laserEntry;
   }
-  if (state.lastMove?.litEntry) {
-    return state.lastMove.litEntry;
-  }
-  return step.type === "place" ? step.entry : null;
+  const resultEntry = resultShown ? state.lastMove?.litEntry : null;
+  return resultEntry ?? getStepLightEntry(step, state.session.puzzleState);
 }
 
-export function getReflectionTutorialStepTarget(
-  { step }: ReflectionTutorialSituation,
-  state: ReflectionTutorialBoardState,
-): ReflectionTutorialTarget | null {
-  if (step === null) {
-    return null;
-  }
-  if (step.type === "light") {
-    return { type: "clue", entry: step.entry };
-  }
-  return isSameSelection(state.session.selection, step.piece)
-    ? { type: "cell", cellIndex: step.cellIndex }
-    : { type: "stock", piece: step.piece };
-}
-
-export function listReflectionTutorialSpotlitTargets(
-  situation: ReflectionTutorialSituation,
-  state: ReflectionTutorialBoardState,
-): ReflectionTutorialTarget[] {
-  const { step } = situation;
-  if (step === null) {
-    return [];
-  }
-  const target = getReflectionTutorialStepTarget(situation, state);
-  const laserEntry = getReflectionTutorialLaserEntry(situation, state);
-  // 前の手順の結果として残している光は、一言が次の手順に替わっているので抜かない。
-  const reasonLaserEntry =
-    laserEntry !== null &&
-    step.reasonEntries.some((entry) => isSameReflectionEntry(entry, laserEntry))
-      ? laserEntry
-      : null;
-  const litCellIndices =
-    reasonLaserEntry === null
-      ? []
-      : traceReflectionLaser(
-          state.session.puzzleState,
-          reasonLaserEntry,
-        ).path.map((laserStep) => laserStep.cellIndex);
-  const targets: ReflectionTutorialTarget[] = [
-    ...(target === null ? [] : [target]),
-    ...step.reasonEntries.map(
-      (entry): ReflectionTutorialTarget => ({ type: "clue", entry }),
-    ),
-    ...litCellIndices.map(
-      (cellIndex): ReflectionTutorialTarget => ({ type: "cell", cellIndex }),
-    ),
-  ];
-  return targets.filter(
-    (candidate, index) =>
-      targets.findIndex((other) => isSameTarget(other, candidate)) === index,
-  );
-}
-
-function isSameTarget(
-  left: ReflectionTutorialTarget,
-  right: ReflectionTutorialTarget,
-): boolean {
-  switch (left.type) {
-    case "stock":
-      return right.type === "stock" && left.piece === right.piece;
-    case "cell":
-      return right.type === "cell" && left.cellIndex === right.cellIndex;
-    case "clue":
-      return (
-        right.type === "clue" && isSameReflectionEntry(left.entry, right.entry)
-      );
-  }
-}
-
-function findUnselectedHintTarget(
-  session: ReflectionSession,
-): ReflectionTutorialTarget | null {
-  const { cells } = session.puzzleState;
-  const stock = getReflectionSessionStock(session);
-  const placeable = placements.find(
-    (placement) =>
-      cells[placement.cellIndex] === null && stock[placement.piece] > 0,
-  );
-  if (placeable) {
-    return { type: "stock", piece: placeable.piece };
-  }
-  const mistakenCellIndex = cells.findIndex(
-    (cell, cellIndex) => cell !== null && solution.cells[cellIndex] !== cell,
-  );
-  return mistakenCellIndex >= 0
-    ? { type: "cell", cellIndex: mistakenCellIndex }
-    : null;
+function markNamedPieces(
+  step: ReflectionTutorialStep,
+): ReflectionTutorialMark[] {
+  return step.namedPieces.map((piece) => ({
+    target: { type: "stock", piece },
+    pointed: false,
+  }));
 }
 
 /**
- * - ストックの種類を選んでいる: その種類の正解のマスが空いていればそこを、ふさがれていれば選んだ種類を押して選ぶのをやめさせる。
- * - 盤面のピースを選んでいる: 示すピースがそれなら、その正解のマスを示す。そうでなければ、押して選ぶのをやめさせる。
+ * 手を離した後は空。
+ * - 選ばせないピースは、選んだ後も、ほかを押されたときに目を向けさせるよう輪郭を残す。
+ * - 解と違う物を置いたら、置いたピースを選ぶまで輪郭で示し、ピースを選ばせる手順では置き換え先の名前のピースにも輪郭を付ける。
+ */
+export function listReflectionTutorialStepMarks(
+  { step }: ReflectionTutorialSituation,
+  { session }: ReflectionTutorialBoardState,
+): ReflectionTutorialMark[] {
+  if (step === null) {
+    return [];
+  }
+  const { selection } = session;
+  const placedCellIndex = findStepPlacedCellIndex(step, session.puzzleState);
+  if (placedCellIndex !== null) {
+    const placedSelected =
+      selection?.type === "cell" && selection.cellIndex === placedCellIndex;
+    return [
+      ...(placedSelected
+        ? []
+        : [
+            {
+              target: { type: "cell", cellIndex: placedCellIndex },
+              pointed: false,
+            } as const,
+          ]),
+      ...(choosesPiece(step) ? markNamedPieces(step) : []),
+    ];
+  }
+  const stepPieceSelected =
+    selection?.type === "stock" && selection.piece === step.piece;
+  const marks: ReflectionTutorialMark[] = [];
+  if (choosesPiece(step)) {
+    marks.push(...markNamedPieces(step));
+  } else if (step.choice === "cell" || !stepPieceSelected) {
+    marks.push({
+      target: { type: "stock", piece: step.piece },
+      pointed: !stepPieceSelected,
+    });
+  }
+  if (!choosesCell(step)) {
+    marks.push({
+      target: { type: "cell", cellIndex: step.cellIndex },
+      pointed: false,
+    });
+  }
+  return marks;
+}
+
+/** 抜くのは、決め手の外周ヒントと、光を見せる外周ヒントから入れた今の光が通るマスと、印のマス。 */
+function spotlightReasons(
+  board: ReflectionBoard,
+  reasonEntries: readonly ReflectionEntry[],
+  lightEntry: ReflectionEntry | null,
+  markedCellIndices: readonly number[],
+): ReflectionTutorialSpotlight {
+  if (lightEntry === null) {
+    return { entries: [], cellIndices: [] };
+  }
+  const litCellIndices = traceReflectionLaser(board, lightEntry).path.map(
+    ({ cellIndex }) => cellIndex,
+  );
+  return {
+    entries: reasonEntries,
+    cellIndices: [...new Set([...litCellIndices, ...markedCellIndices])],
+  };
+}
+
+/** 手を離した後と、決め手の無い操作の手順では空で、盤面を覆わない。 */
+export function getReflectionTutorialStepSpotlight(
+  situation: ReflectionTutorialSituation,
+  state: ReflectionTutorialBoardState,
+): ReflectionTutorialSpotlight {
+  const { step } = situation;
+  const board = state.session.puzzleState;
+  return spotlightReasons(
+    board,
+    step?.reasonEntries ?? [],
+    step ? getStepLightEntry(step, board) : null,
+    listReflectionTutorialStepMarks(situation, state).flatMap(({ target }) =>
+      target.type === "cell" ? [target.cellIndex] : [],
+    ),
+  );
+}
+
+/** 解と違う所に置いたピースを示すときは決め手が無いので空。 */
+export function getReflectionTutorialHintSpotlight(
+  hint: ReflectionTutorialHint,
+  { session }: ReflectionTutorialBoardState,
+): ReflectionTutorialSpotlight {
+  return spotlightReasons(
+    session.puzzleState,
+    hint.reasonEntries,
+    hint.reasonEntries[0] ?? null,
+    hint.target.type === "cell" ? [hint.target.cellIndex] : [],
+  );
+}
+
+const mistakenHintMessage: TutorialMessage = {
+  headline: "緑でない数字があります",
+  detail: "印のピースをタップして\n別のマスへ動かします",
+};
+
+function createPlacementHint(
+  placement: ReflectionTutorialPlacement,
+  target: ReflectionTutorialTarget,
+): ReflectionTutorialHint {
+  return {
+    target,
+    reasonEntries: placement.reasonEntries,
+    message: pieceRuleMessages[placement.piece],
+  };
+}
+
+function createMistakenHint(
+  target: ReflectionTutorialTarget,
+): ReflectionTutorialHint {
+  return { target, reasonEntries: [], message: mistakenHintMessage };
+}
+
+function findPlaceable(
+  session: ReflectionSession,
+): ReflectionTutorialPlacement | null {
+  const { cells } = session.puzzleState;
+  const stock = getReflectionSessionStock(session);
+  return (
+    placements.find(
+      (placement) =>
+        cells[placement.cellIndex] === null && stock[placement.piece] > 0,
+    ) ?? null
+  );
+}
+
+function findMistakenCellIndex(board: ReflectionBoard): number | null {
+  const cellIndex = board.cells.findIndex(
+    (cell, index) => cell !== null && solution.cells[index] !== cell,
+  );
+  return cellIndex >= 0 ? cellIndex : null;
+}
+
+/**
+ * 揃っていれば `null`。
+ * - ストックの種類を選んでいる: その種類の解のマスが空いていればそこを、ふさがれていれば選んだ種類を押して選ぶのをやめさせる。
+ * - 盤面のピースを選んでいる: 示すピースがそれなら、その解のマスを示す。そうでなければ、押して選ぶのをやめさせる。
  * - 何も選んでいない: ストックの種類か、示すピースを選ばせる。
  */
-export function findReflectionTutorialHint(
-  state: ReflectionTutorialBoardState,
-): ReflectionTutorialTarget | null {
-  const { session } = state;
+export function findReflectionTutorialHint({
+  session,
+}: ReflectionTutorialBoardState): ReflectionTutorialHint | null {
   const { puzzleState: board, selection } = session;
   if (selection?.type === "stock") {
     const placement = placements.find(
-      (candidate) => candidate.piece === selection.piece,
+      (candidate) =>
+        candidate.piece === selection.piece &&
+        board.cells[candidate.cellIndex] === null,
     );
-    return placement && board.cells[placement.cellIndex] === null
-      ? { type: "cell", cellIndex: placement.cellIndex }
-      : { type: "stock", piece: selection.piece };
+    return placement
+      ? createPlacementHint(placement, {
+          type: "cell",
+          cellIndex: placement.cellIndex,
+        })
+      : createMistakenHint({ type: "stock", piece: selection.piece });
   }
-  const unselected = findUnselectedHintTarget({ ...session, selection: null });
+  const placeable = findPlaceable({ ...session, selection: null });
+  const mistakenCellIndex =
+    placeable === null ? findMistakenCellIndex(board) : null;
   if (selection?.type !== "cell") {
-    return unselected;
+    if (placeable) {
+      return createPlacementHint(placeable, {
+        type: "stock",
+        piece: placeable.piece,
+      });
+    }
+    return mistakenCellIndex === null
+      ? null
+      : createMistakenHint({ type: "cell", cellIndex: mistakenCellIndex });
   }
-  const mistaken =
-    unselected?.type === "cell" && unselected.cellIndex === selection.cellIndex;
   const piece = board.cells[selection.cellIndex] ?? null;
-  const placement = mistaken
-    ? placements.find((candidate) => candidate.piece === piece)
-    : undefined;
-  return placement
-    ? { type: "cell", cellIndex: placement.cellIndex }
-    : { type: "cell", cellIndex: selection.cellIndex };
+  const destination =
+    mistakenCellIndex === selection.cellIndex
+      ? placements.find(
+          (candidate) =>
+            candidate.piece === piece &&
+            board.cells[candidate.cellIndex] !== piece,
+        )
+      : undefined;
+  return destination
+    ? createPlacementHint(destination, {
+        type: "cell",
+        cellIndex: destination.cellIndex,
+      })
+    : createMistakenHint({ type: "cell", cellIndex: selection.cellIndex });
 }
 
 export const reflectionTutorial: Tutorial<
@@ -539,39 +818,46 @@ export const reflectionTutorial: Tutorial<
   ReflectionTutorialAction
 > = {
   intro: {
-    purpose: "外周の数字どおりに光が進むよう\nピースを盤面に置くパズルです",
-    goalCaption: "この盤面がゴールです",
-    startCaption: "最初は盤面が空です\n合っている数字は緑です",
+    purpose: "数字と記号に合わせ光が進むようにピースを置くパズルです",
+    goalCaption: "数字をすべて緑にすると完成です",
   },
   rules: [
-    { id: "number", label: "数字" },
-    { id: "black-hole", label: "ブラックホール" },
-    { id: "mirror", label: "斜め鏡" },
-    { id: "reflector", label: "反射体" },
-    { id: "double", label: "両面鏡" },
+    { id: "black-hole", label: "ブラックホールは光を止めます" },
+    { id: "number", label: "光が通るマスの数が書かれています" },
+    { id: "mirror", label: "斜め鏡は光を直角に曲げます" },
+    { id: "reflector", label: "反射鏡は光をはね返します" },
+    { id: "double", label: "両面鏡は当たる光をはね返し沿って進む光は通します" },
   ],
   steps,
   freePlay,
   completion: {
     home: {
       headline: "完成です",
-      detail: "どのレベルも同じルールです",
+      detail:
+        "両面鏡には横向きだけでなく縦向きもあります\n数字1つで決まる所から置きます",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も同じルールです",
+      detail: "プレイ中の盤面と同じルールです",
     },
   },
   start: startReflectionTutorial,
   goal: getReflectionTutorialGoal,
   perform: performReflectionTutorialAction,
-  describeViolation: describeReflectionTutorialViolation,
+  describeViolation: describeReflectionTutorialMessage,
 };
 
 export const _private = {
+  fixDetails,
+  unsolvedMessage,
+  mistakenHintMessage,
+  pieceRuleMessages,
+  describeLight,
   solution,
+  problem,
   steps,
   placements,
   freePlacements,
   cellAt,
+  getStepStartBoard,
 };

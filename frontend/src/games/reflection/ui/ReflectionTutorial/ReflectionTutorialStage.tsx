@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import type { TutorialBoardIntro } from "@/components/TutorialOverlay";
+import type { TutorialStageBoardIntro } from "@/components/TutorialOverlay";
 import type { GameProgress } from "@/games/play";
 import type { ReflectionLaserView } from "@/games/reflection/play/use-reflection-play";
 import type {
@@ -28,7 +28,7 @@ export type ReflectionTutorialView = {
 };
 
 type ReflectionTutorialStageProps = {
-  intro: TutorialBoardIntro;
+  intro: TutorialStageBoardIntro;
   clues: readonly ReflectionClue[];
   inventory: ReflectionInventory;
   /** 解き終えた盤面。導入でゴールとして見せ、始めの盤面へ戻すときにピースを消していく。 */
@@ -45,7 +45,7 @@ type ReflectionTutorialStageProps = {
 };
 
 /**
- * 導入のゴールの場面では、解き終えた盤面に本番と同じ完成演出で全光路を伸ばし、伸ばし終えるか、押して場面の動きを終えたら、全光路を出したまま見せる。
+ * 入口のゴールの場面では、解き終えた盤面に本番と同じ完成演出で全光路を伸ばし、伸ばし終えたら全光路を出したまま見せる。
  * 始めの盤面の場面では、何も置いていない盤面にゴールのピースを重ね、1つずつ消して始めの盤面へ戻す。
  */
 export function ReflectionTutorialStage({
@@ -63,23 +63,23 @@ export function ReflectionTutorialStage({
   onClearAnimationComplete,
 }: ReflectionTutorialStageProps) {
   const goalShown = scene === "goal";
-  // ゴールの全光路を伸ばし始めた。伸ばす前は光路を出さない。
-  // 伸ばし始めた後は、伸ばし終えたときも、押して場面の動きを終えたときも、全光路を出したまま見せる。
-  const [goalLightShown, setGoalLightShown] = useState(false);
-  if (goalShown && playing && !goalLightShown) {
-    setGoalLightShown(true);
-  }
+  // 入口のゴールの場面は動きを待たずに「はじめる」を待つので、場面に入ったら全光路を伸ばし、伸ばし終えたら出したまま見せる。
+  const [goalLightSpread, setGoalLightSpread] = useState(false);
   const view = goalShown ? goal : solvingView;
   const boardProgress: GameProgress = goalShown
-    ? playing
-      ? "clearing"
-      : goalLightShown
-        ? "result"
-        : "playing"
+    ? goalLightSpread
+      ? "result"
+      : "clearing"
     : progress;
 
+  function handleGoalLightSpread(): void {
+    setGoalLightSpread(true);
+  }
+
   return (
-    <div className="flex w-[min(100cqw,calc(100cqh-3.75rem),28rem)] flex-col gap-2">
+    // 上下に余白を取る。上は、上の辺の外周ヒントの外に出す今の光のマスの数を、上の進み具合に重ねないため。
+    // 下は、ストックを指す指を、盤面の下の一言に重ねないため。
+    <div className="flex w-[min(100cqw,calc(100cqh-6.75rem),28rem)] flex-col gap-2 pt-4 pb-8">
       <div className="relative aspect-square w-full">
         <ReflectionTutorialRewind
           active={scene === "start" && playing}
@@ -99,7 +99,7 @@ export function ReflectionTutorialStage({
             onSelectClue={onSelectClue}
             onRemovePiece={onRemovePiece}
             onClearAnimationComplete={
-              goalShown ? onSceneEnd : onClearAnimationComplete
+              goalShown ? handleGoalLightSpread : onClearAnimationComplete
             }
           />
         </ReflectionTutorialRewind>

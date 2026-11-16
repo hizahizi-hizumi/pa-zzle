@@ -39,7 +39,7 @@ const outcomeBarClassNames = {
 /**
  * ピースの色。そのピースの働きを外周ヒントの結果の色にそろえる。
  * 光を直角に曲げて外へ導く斜め鏡2種は「退出」、正面から当たった光をはね返す両面鏡2種と、当たった光を必ずはね返す
- * 反射体は「反射」、必ず吸い込むブラックホールは「吸収」と同じ色にする。同じ色のピースは形で見分ける。
+ * 反射鏡は「反射」、必ず吸い込むブラックホールは「吸収」と同じ色にする。同じ色のピースは形で見分ける。
  */
 export const reflectionPieceToneClassNames = {
   slash: reflectionOutcomeToneClassNames.exit,
