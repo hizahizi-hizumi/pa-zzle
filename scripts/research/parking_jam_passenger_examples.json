@@ -1,0 +1,893 @@
+[
+ {
+  "id": "blocking",
+  "title": "遮断が本質の判断",
+  "kind": "代表",
+  "bayCount": 2,
+  "solutions": 36,
+  "queue": [
+   "A",
+   "B",
+   "B",
+   "B",
+   "A",
+   "A",
+   "B",
+   "B",
+   "C",
+   "C",
+   "D",
+   "C",
+   "C",
+   "C",
+   "D",
+   "D",
+   "D",
+   "D",
+   "A",
+   "A",
+   "A"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v1",
+     "row": 4,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 6,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 3,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v6",
+     "row": 2,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v7",
+     "row": 3,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "kMin": 2,
+  "kMinWithoutBlocking": 2,
+  "features": {
+   "pathStates": 9,
+   "forcedStates": 7,
+   "freeChoiceStates": 1,
+   "decisions": 1,
+   "essentialDecisions": 1,
+   "queueDecisions": 0,
+   "mixedDecisions": 0,
+   "losingOptions": 1,
+   "essentialOptions": 1,
+   "kinds": {
+    "twin": 1
+   },
+   "kindsEssential": {
+    "twin": 1
+   },
+   "twinSameLength": 0,
+   "reasons": {
+    "AB": 1
+   },
+   "hasA": 1,
+   "hasB": 1,
+   "distanceMax": 2,
+   "visibleMax": 3,
+   "onlyUnnaturalWins": 0
+  },
+  "firstDecisions": [
+   {
+    "before": [
+     "v2",
+     "v6",
+     "v7",
+     "v4"
+    ],
+    "served": 10,
+    "head": "D",
+    "options": [
+     {
+      "exits": [
+       "v3"
+      ],
+      "wins": true,
+      "continuation": [
+       "v1",
+       "v0",
+       "v5"
+      ],
+      "stuckAtPassenger": null,
+      "waitingAfter": 1,
+      "blockingEssential": null
+     },
+     {
+      "exits": [
+       "v5"
+      ],
+      "wins": false,
+      "continuation": [],
+      "stuckAtPassenger": 12,
+      "waitingAfter": 1,
+      "blockingEssential": true
+     }
+    ],
+    "losing": [
+     {
+      "kind": "twin",
+      "sameLength": false,
+      "blockingEssential": true,
+      "reason": "AB",
+      "distanceMin": 2,
+      "distanceMax": 2,
+      "visible": 3
+     }
+    ]
+   }
+  ],
+  "solution": [
+   "v2",
+   "v6",
+   "v3",
+   "v7",
+   "v1",
+   "v4",
+   "v0",
+   "v5"
+  ],
+  "diagram": " vvvvvvv \n#..2..33<\n#..2....<\n#..2666.<\n#555.77.<\n#000...1<\n#......1<\n#...444.<\n ####### ",
+  "note": "D の2台のうち定員3の v5 を使うと、残った定員2の v3 が C の v1 の出口を塞ぐ。v1 を出すには v3 を待機させるしかなく、C の受付中に枠が溢れる（12人目で停止）。遮断を無くすと v1 がすぐ出せて勝つ。手で追った。"
+ },
+ {
+  "id": "queue",
+  "title": "列だけで決まる判断",
+  "kind": "代表",
+  "bayCount": 2,
+  "solutions": 30,
+  "queue": [
+   "C",
+   "C",
+   "D",
+   "D",
+   "C",
+   "C",
+   "A",
+   "D",
+   "D",
+   "A",
+   "B",
+   "D",
+   "B",
+   "A",
+   "B",
+   "B",
+   "A",
+   "A",
+   "B",
+   "B"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 1,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v1",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v2",
+     "row": 3,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 4,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v5",
+     "row": 2,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v6",
+     "row": 2,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v7",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "kMin": 2,
+  "kMinWithoutBlocking": 2,
+  "features": {
+   "pathStates": 14,
+   "forcedStates": 10,
+   "freeChoiceStates": 3,
+   "decisions": 1,
+   "essentialDecisions": 0,
+   "queueDecisions": 1,
+   "mixedDecisions": 0,
+   "losingOptions": 1,
+   "essentialOptions": 0,
+   "kinds": {
+    "twin": 1
+   },
+   "kindsEssential": {},
+   "twinSameLength": 0,
+   "reasons": {
+    "B": 1
+   },
+   "hasA": 0,
+   "hasB": 1,
+   "distanceMax": 2,
+   "visibleMax": 5,
+   "onlyUnnaturalWins": 0
+  },
+  "firstDecisions": [
+   {
+    "before": [
+     "v7",
+     "v3",
+     "v5"
+    ],
+    "served": 6,
+    "head": "A",
+    "options": [
+     {
+      "exits": [
+       "v2"
+      ],
+      "wins": false,
+      "continuation": [],
+      "stuckAtPassenger": 8,
+      "waitingAfter": 1,
+      "blockingEssential": false
+     },
+     {
+      "exits": [
+       "v6"
+      ],
+      "wins": true,
+      "continuation": [
+       "v0",
+       "v1",
+       "v2",
+       "v4"
+      ],
+      "stuckAtPassenger": null,
+      "waitingAfter": 1,
+      "blockingEssential": null
+     }
+    ],
+    "losing": [
+     {
+      "kind": "twin",
+      "sameLength": false,
+      "blockingEssential": false,
+      "reason": "B",
+      "distanceMin": 2,
+      "distanceMax": 2,
+      "visible": 5
+     }
+    ]
+   }
+  ],
+  "solution": [
+   "v0",
+   "v7",
+   "v3",
+   "v5",
+   "v6",
+   "v1",
+   "v2",
+   "v4"
+  ],
+  "diagram": " vvvvvvv \n#7.3....#\n#7.3.0..#\n#5.3.016#\n#5.2..16#\n#..2..14#\n#..2...4#\n#......4#\n ####### ",
+  "note": "A の2台はどちらもすぐ出せる。定員3の v2 を使うと A の席が1つ余って待機が続き、次の D の受付で v0 と並んで枠が溢れる（8人目で停止）。定員2の v6 なら A の受付で出発する。遮断を無くしても同じ選択が負ける。手で追った。"
+ },
+ {
+  "id": "boundary",
+  "title": "両方を含む境界",
+  "kind": "境界",
+  "bayCount": 3,
+  "solutions": 24,
+  "queue": [
+   "D",
+   "D",
+   "A",
+   "C",
+   "A",
+   "A",
+   "D",
+   "D",
+   "D",
+   "C",
+   "B",
+   "B",
+   "B",
+   "A",
+   "A",
+   "B",
+   "B",
+   "C",
+   "C"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 3,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v1",
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v2",
+     "row": 5,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v3",
+     "row": 4,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v5",
+     "row": 1,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v6",
+     "row": 3,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v7",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "kMin": 3,
+  "kMinWithoutBlocking": 2,
+  "features": {
+   "pathStates": 11,
+   "forcedStates": 7,
+   "freeChoiceStates": 2,
+   "decisions": 2,
+   "essentialDecisions": 1,
+   "queueDecisions": 1,
+   "mixedDecisions": 0,
+   "losingOptions": 2,
+   "essentialOptions": 1,
+   "kinds": {
+    "twin": 2
+   },
+   "kindsEssential": {
+    "twin": 1
+   },
+   "twinSameLength": 1,
+   "reasons": {
+    "AB": 1,
+    "B": 1
+   },
+   "hasA": 1,
+   "hasB": 1,
+   "distanceMax": 5,
+   "visibleMax": 6,
+   "onlyUnnaturalWins": 0
+  },
+  "firstDecisions": [
+   {
+    "before": [],
+    "served": 0,
+    "head": "D",
+    "options": [
+     {
+      "exits": [
+       "v5"
+      ],
+      "wins": true,
+      "continuation": [
+       "v3",
+       "v7",
+       "v6",
+       "v2",
+       "v4",
+       "v1",
+       "v0"
+      ],
+      "stuckAtPassenger": null,
+      "waitingAfter": 0,
+      "blockingEssential": null
+     },
+     {
+      "exits": [
+       "v7"
+      ],
+      "wins": false,
+      "continuation": [
+       "v4",
+       "v6"
+      ],
+      "stuckAtPassenger": 5,
+      "waitingAfter": 1,
+      "blockingEssential": true
+     }
+    ],
+    "losing": [
+     {
+      "kind": "twin",
+      "sameLength": false,
+      "blockingEssential": true,
+      "reason": "AB",
+      "distanceMin": 5,
+      "distanceMax": 5,
+      "visible": 6
+     }
+    ]
+   },
+   {
+    "before": [
+     "v5",
+     "v4"
+    ],
+    "served": 3,
+    "head": "C",
+    "options": [
+     {
+      "exits": [
+       "v1",
+       "v0"
+      ],
+      "wins": false,
+      "continuation": [],
+      "stuckAtPassenger": 5,
+      "waitingAfter": 2,
+      "blockingEssential": false
+     },
+     {
+      "exits": [
+       "v7",
+       "v6"
+      ],
+      "wins": true,
+      "continuation": [
+       "v3",
+       "v1",
+       "v0",
+       "v2"
+      ],
+      "stuckAtPassenger": null,
+      "waitingAfter": 2,
+      "blockingEssential": null
+     }
+    ],
+    "losing": [
+     {
+      "kind": "twin",
+      "sameLength": true,
+      "blockingEssential": false,
+      "reason": "B",
+      "distanceMin": 2,
+      "distanceMax": 2,
+      "visible": 4
+     }
+    ]
+   }
+  ],
+  "solution": [
+   "v4",
+   "v5",
+   "v7",
+   "v6",
+   "v3",
+   "v1",
+   "v0",
+   "v2"
+  ],
+  "diagram": " vvvvvvv \n#.7.44..<\n#.7.1.55<\n#.7.1...<\n#.6.0...<\n#.6.0..3<\n#..222.3<\n#......3<\n ####### ",
+  "note": "1つ目の判断（D の v7 か v5）は遮断が本質: v7 を使うと残った v5 が A の v3 の出口を塞ぐ。2つ目の判断（C を掘る側）は列だけ: B の v1 を掘ると B の受付まで待機が続き枠が溢れる。手で追った。"
+ },
+ {
+  "id": "counter",
+  "title": "掘る側の選択が列で決まる反例",
+  "kind": "反例",
+  "bayCount": 4,
+  "solutions": 1592,
+  "queue": [
+   "B",
+   "C",
+   "C",
+   "A",
+   "D",
+   "D",
+   "D",
+   "A",
+   "A",
+   "C",
+   "B",
+   "A",
+   "B",
+   "B",
+   "C",
+   "D"
+  ],
+  "board": {
+   "width": 6,
+   "height": 6,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v1",
+     "row": 2,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v3",
+     "row": 2,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v4",
+     "row": 4,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v5",
+     "row": 3,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v7",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "down",
+     "startOffset": 0,
+     "length": 6
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 6
+    }
+   ]
+  },
+  "kMin": 4,
+  "kMinWithoutBlocking": 4,
+  "features": {
+   "pathStates": 42,
+   "forcedStates": 27,
+   "freeChoiceStates": 13,
+   "decisions": 2,
+   "essentialDecisions": 0,
+   "queueDecisions": 2,
+   "mixedDecisions": 0,
+   "losingOptions": 2,
+   "essentialOptions": 0,
+   "kinds": {
+    "route": 2
+   },
+   "kindsEssential": {},
+   "twinSameLength": 0,
+   "reasons": {
+    "B": 2
+   },
+   "hasA": 0,
+   "hasB": 1,
+   "distanceMax": 2,
+   "visibleMax": 4,
+   "onlyUnnaturalWins": 0
+  },
+  "firstDecisions": [
+   {
+    "before": [
+     "v7",
+     "v0",
+     "v3",
+     "v6"
+    ],
+    "served": 6,
+    "head": "D",
+    "options": [
+     {
+      "exits": [
+       "v2",
+       "v1"
+      ],
+      "wins": true,
+      "continuation": [
+       "v5",
+       "v4"
+      ],
+      "stuckAtPassenger": null,
+      "waitingAfter": 3,
+      "blockingEssential": null
+     },
+     {
+      "exits": [
+       "v4",
+       "v1"
+      ],
+      "wins": false,
+      "continuation": [],
+      "stuckAtPassenger": 8,
+      "waitingAfter": 3,
+      "blockingEssential": false
+     }
+    ],
+    "losing": [
+     {
+      "kind": "route",
+      "sameLength": true,
+      "blockingEssential": false,
+      "reason": "B",
+      "distanceMin": 2,
+      "distanceMax": 2,
+      "visible": 4
+     }
+    ]
+   },
+   {
+    "before": [
+     "v7",
+     "v0",
+     "v5",
+     "v6"
+    ],
+    "served": 6,
+    "head": "D",
+    "options": [
+     {
+      "exits": [
+       "v2",
+       "v1"
+      ],
+      "wins": true,
+      "continuation": [
+       "v3",
+       "v4"
+      ],
+      "stuckAtPassenger": null,
+      "waitingAfter": 3,
+      "blockingEssential": null
+     },
+     {
+      "exits": [
+       "v4",
+       "v1"
+      ],
+      "wins": false,
+      "continuation": [],
+      "stuckAtPassenger": 8,
+      "waitingAfter": 3,
+      "blockingEssential": false
+     }
+    ],
+    "losing": [
+     {
+      "kind": "route",
+      "sameLength": true,
+      "blockingEssential": false,
+      "reason": "B",
+      "distanceMin": 2,
+      "distanceMax": 2,
+      "visible": 4
+     }
+    ]
+   }
+  ],
+  "solution": [
+   "v0",
+   "v2",
+   "v1",
+   "v4",
+   "v3",
+   "v6",
+   "v5",
+   "v7"
+  ],
+  "diagram": " vvvvvv \n#....26#\n#....26#\n#.3..17#\n#.35.17#\n#0.5.4.#\n#0...4.#\n ^^^^^^ ",
+  "note": "上下だけが開く盤面で、D の v1 を上の C（v2）と下の B（v4）のどちらから掘るか。選択肢は遮断から生じるが、勝ち負けは掘った車の色がいつ受け付けられるかで決まり、遮断を無くしても負けは変わらないので「列だけ」に数える。遮断が選択肢を作っても、分類は遮断が本質とは判定しない例。最初の局面だけ手で追った。"
+ }
+]

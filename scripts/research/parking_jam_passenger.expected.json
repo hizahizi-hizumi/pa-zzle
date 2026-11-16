@@ -1,0 +1,363 @@
+{
+ "survey738": {
+  "problems": 2000,
+  "kMinEqualsFree": 0.938,
+  "kMinDistribution": {"1": 30, "2": 678, "3": 725, "4": 372, "5": 140, "6": 50, "7": 5},
+  "slack0": {
+   "rows": 1775,
+   "withDecision": 0.3223,
+   "withEssential": 0.2208,
+   "essentialOnlyProblems": 0.1808,
+   "decisions": 2967,
+   "essentialShare": 0.4907,
+   "queueShare": 0.5062,
+   "mixedShare": 0.003,
+   "forcedShareOfPath": 0.43,
+   "kindShare": {"other": 0.0152, "route": 0.0099, "twin": 0.9749},
+   "twinSameLengthShare": 0.3496,
+   "freeDecisionsPerProblem": 2.33,
+   "headFirstPerfect": 0.5155
+  }
+ },
+ "survey20261116": {
+  "problems": 2000,
+  "kMinEqualsFree": 0.944,
+  "kMinDistribution": {"1": 17, "2": 651, "3": 769, "4": 397, "5": 111, "6": 48, "7": 7},
+  "slack0": {
+   "rows": 1817,
+   "withDecision": 0.3379,
+   "withEssential": 0.2262,
+   "essentialOnlyProblems": 0.1932,
+   "decisions": 3135,
+   "essentialShare": 0.4593,
+   "queueShare": 0.5362,
+   "mixedShare": 0.0045,
+   "forcedShareOfPath": 0.4213,
+   "kindShare": {"other": 0.0171, "route": 0.0163, "twin": 0.9666},
+   "twinSameLengthShare": 0.3579,
+   "freeDecisionsPerProblem": 2.184,
+   "headFirstPerfect": 0.4937
+  }
+ },
+ "surveyAll": {
+  "problems": 4000,
+  "clearable": 4000,
+  "kMinEqualsFree": 0.941,
+  "kMinDistribution": {"1": 47, "2": 1329, "3": 1494, "4": 769, "5": 251, "6": 98, "7": 12},
+  "kMinMinusFree": {"0": 3764, "1": 211, "2": 23, "3": 2},
+  "kPairsTop": [["(3, 3)", 1433], ["(2, 2)", 1326], ["(4, 4)", 699], ["(5, 5)", 188], ["(6, 6)", 71], ["(4, 3)", 70]],
+  "slack0": {
+   "rows": 3592,
+   "withDecision": 0.3302,
+   "withEssential": 0.2236,
+   "essentialOnlyProblems": 0.1871,
+   "decisions": 6102,
+   "essentialShare": 0.4746,
+   "queueShare": 0.5216,
+   "mixedShare": 0.0038,
+   "forcedShareOfPath": 0.4255,
+   "kindShare": {"other": 0.0162, "route": 0.0131, "twin": 0.9707},
+   "twinSameLengthShare": 0.3538,
+   "freeDecisionsPerProblem": 2.256,
+   "headFirstPerfect": 0.5045
+  },
+  "bySlack": {
+   "columns": [
+    "rows",
+    "withDecision",
+    "withEssential",
+    "essentialOnlyProblems",
+    "decisions",
+    "essentialShare",
+    "queueShare",
+    "twinSameLengthShare",
+    "freeDecisionsPerProblem",
+    "headFirstPerfect"
+   ],
+   "0": [3592, 0.3302, 0.2236, 0.1871, 6102, 0.4746, 0.5216, 0.3538, 2.256, 0.5045],
+   "1": [2870, 0.0669, 0.0537, 0.0505, 676, 0.7249, 0.2707, 0.3358, 0.236, 0.7024],
+   "2": [1376, 0.0102, 0.0073, 0.0058, 26, 0.6538, 0.3462, 0.1667, 0.009, 0.8118],
+   "3": [47, 0.0, 0.0, 0.0, 0, null, null, null, 0, 0.8936]
+  },
+  "byBaysAllSlack": {
+   "columns": [
+    "rows",
+    "withDecision",
+    "withEssential",
+    "essentialOnlyProblems",
+    "decisions",
+    "essentialShare",
+    "queueShare",
+    "twinSameLengthShare",
+    "freeDecisionsPerProblem",
+    "headFirstPerfect"
+   ],
+   "2": [1376, 0.367, 0.1984, 0.1381, 3223, 0.2557, 0.7391, 0.2057, 4.739, 0.5174],
+   "3": [2870, 0.1927, 0.1446, 0.1321, 2616, 0.6835, 0.3138, 0.4707, 0.71, 0.6108],
+   "4": [3639, 0.0918, 0.0767, 0.0703, 965, 0.8197, 0.1782, 0.5879, 0.064, 0.693]
+  },
+  "byConditionSlack0": {
+   "columns": [
+    "rows",
+    "withDecision",
+    "withEssential",
+    "essentialOnlyProblems",
+    "decisions",
+    "essentialShare",
+    "queueShare",
+    "twinSameLengthShare",
+    "freeDecisionsPerProblem",
+    "headFirstPerfect"
+   ],
+   "cars": {
+    "8": [1271, 0.2211, 0.1503, 0.1393, 563, 0.5719, 0.4281, 0.4736, 0.302, 0.6341],
+    "10": [1163, 0.3276, 0.2193, 0.1849, 1427, 0.5179, 0.4786, 0.414, 1.327, 0.4961],
+    "12": [1158, 0.4525, 0.3083, 0.2418, 4112, 0.4463, 0.5494, 0.3207, 5.333, 0.3705]
+   },
+   "opening": {
+    "adjacent2": [891, 0.4242, 0.3659, 0.3277, 1412, 0.796, 0.2011, 0.5926, 2.025, 0.3378],
+    "all4": [949, 0.2856, 0.156, 0.1149, 1229, 0.3629, 0.633, 0.3439, 1.972, 0.5437],
+    "one": [822, 0.444, 0.3577, 0.3029, 1595, 0.7179, 0.274, 0.515, 2.736, 0.3297],
+    "opposite2": [930, 0.1849, 0.0376, 0.0237, 1866, 0.097, 0.9025, 0.0808, 2.343, 0.7785]
+   },
+   "colors": {
+    "3": [1268, 0.3368, 0.2674, 0.2216, 3404, 0.5035, 0.4918, 0.3395, 3.823, 0.5181],
+    "4": [1339, 0.3376, 0.2203, 0.186, 2016, 0.4578, 0.5392, 0.3802, 1.892, 0.4832],
+    "pairs": [985, 0.3117, 0.1716, 0.1442, 682, 0.3798, 0.6188, 0.359, 0.734, 0.5157]
+   },
+   "longShare": {
+    "0.0": [1211, 0.2395, 0.2155, 0.2081, 870, 0.9345, 0.0621, 1.0, 0, 0.5153],
+    "0.5": [1208, 0.5132, 0.2525, 0.1631, 4116, 0.2838, 0.7121, 0.1461, 6.228, 0.3709],
+    "1.0": [1173, 0.2353, 0.202, 0.1901, 1116, 0.8199, 0.1774, 0.6887, 0.494, 0.6309]
+   },
+   "queueMethod": {
+    "order": [1921, 0.3123, 0.1692, 0.1244, 3499, 0.2801, 0.7156, 0.2127, 3.37, 0.5383],
+    "random": [1671, 0.3507, 0.2861, 0.2591, 2603, 0.7361, 0.2609, 0.5587, 0.975, 0.4656]
+   },
+   "bays": {
+    "2": [1329, 0.377, 0.2047, 0.143, 3183, 0.2586, 0.7367, 0.2085, 4.868, 0.5094],
+    "3": [1494, 0.2898, 0.2175, 0.1975, 2218, 0.688, 0.3093, 0.5064, 0.97, 0.5234],
+    "4": [769, 0.3277, 0.2679, 0.2432, 701, 0.7803, 0.2168, 0.6182, 0.241, 0.459]
+   }
+  },
+  "reading": {
+   "all": {
+    "options": 6930,
+    "visibleMedian": 6.0,
+    "visibleP90": 11,
+    "visibleShareOfRemainingMedian": 0.333,
+    "distanceMaxMedian": 4.0,
+    "runsMedian": 4.0,
+    "runsP90": 8,
+    "visibleOver6": 0.4238
+   },
+   "essential": {
+    "options": 3257,
+    "visibleMedian": 6,
+    "visibleP90": 12,
+    "visibleShareOfRemainingMedian": 0.333,
+    "distanceMaxMedian": 5,
+    "runsMedian": 4,
+    "runsP90": 8,
+    "visibleOver6": 0.4255
+   },
+   "queueOnly": {
+    "options": 3673,
+    "visibleMedian": 6,
+    "visibleP90": 11,
+    "visibleShareOfRemainingMedian": 0.333,
+    "distanceMaxMedian": 4,
+    "runsMedian": 4,
+    "runsP90": 7,
+    "visibleOver6": 0.4223
+   },
+   "byCars": {
+    "8": {
+     "options": 583,
+     "visibleMedian": 6,
+     "visibleP90": 10,
+     "visibleShareOfRemainingMedian": 0.375,
+     "distanceMaxMedian": 4,
+     "runsMedian": 4,
+     "runsP90": 7,
+     "visibleOver6": 0.4048
+    },
+    "10": {
+     "options": 1551,
+     "visibleMedian": 6,
+     "visibleP90": 11,
+     "visibleShareOfRemainingMedian": 0.333,
+     "distanceMaxMedian": 4,
+     "runsMedian": 4,
+     "runsP90": 8,
+     "visibleOver6": 0.3572
+    },
+    "12": {
+     "options": 4796,
+     "visibleMedian": 6.0,
+     "visibleP90": 12,
+     "visibleShareOfRemainingMedian": 0.333,
+     "distanceMaxMedian": 4.0,
+     "runsMedian": 4.0,
+     "runsP90": 8,
+     "visibleOver6": 0.4477
+    }
+   },
+   "twinByLengthAndOrigin": {"sameLength-essential": 2334, "sameLength-queueOnly": 46, "differentLength-essential": 845, "differentLength-queueOnly": 3502},
+   "kindByOrigin": {
+    "twin-essential": 3179,
+    "twin-queueOnly": 3548,
+    "route-essential": 10,
+    "route-queueOnly": 81,
+    "order-essential": 0,
+    "order-queueOnly": 0,
+    "other-essential": 68,
+    "other-queueOnly": 44
+   },
+   "queueLengthByCars": {"8": 20.0, "10": 25, "12": 30}
+  },
+  "cpuSecondsPerProblem": 0.164
+ },
+ "supply": {
+  "columns": [
+   "attempts",
+   "accepted",
+   "hitRate",
+   "distinctGeometric",
+   "distinctStructural",
+   "cpuSeconds",
+   "acceptedPerCpuMinute",
+   "secondsPerAttemptMedian",
+   "acceptedByCars",
+   "acceptedByOpening"
+  ],
+  "738:G1:essential": [1029, 151, 0.1467, 151, 151, 48.6, 186.33, 0.0232, {"10": 45, "12": 70, "8": 36}, {"adjacent2": 61, "all4": 23, "one": 59, "opposite2": 8}],
+  "738:G1:essentialOnly": [887, 116, 0.1308, 116, 116, 48.2, 144.46, 0.0292, {"10": 35, "12": 58, "8": 23}, {"adjacent2": 39, "all4": 17, "one": 56, "opposite2": 4}],
+  "738:G1:lv4": [981, 37, 0.0377, 37, 37, 48.2, 46.1, 0.0251, {"10": 14, "12": 21, "8": 2}, {"adjacent2": 14, "all4": 2, "one": 19, "opposite2": 2}],
+  "738:G1:lv5": [912, 9, 0.0099, 9, 9, 48.3, 11.18, 0.0263, {"10": 3, "12": 6}, {"adjacent2": 4, "all4": 1, "one": 4}],
+  "738:Grand:essential": [767, 185, 0.2412, 185, 185, 48.6, 228.46, 0.0285, {"10": 57, "12": 72, "8": 56}, {"adjacent2": 61, "all4": 26, "one": 91, "opposite2": 7}],
+  "738:Grand:essentialOnly": [809, 176, 0.2176, 176, 176, 48.4, 218.34, 0.0291, {"10": 64, "12": 59, "8": 53}, {"adjacent2": 79, "all4": 25, "one": 66, "opposite2": 6}],
+  "738:Grand:lv4": [797, 53, 0.0665, 53, 53, 48.6, 65.48, 0.0269, {"10": 16, "12": 30, "8": 7}, {"adjacent2": 25, "all4": 8, "one": 17, "opposite2": 3}],
+  "738:Grand:lv5": [748, 26, 0.0348, 26, 26, 48.3, 32.27, 0.0312, {"10": 9, "12": 15, "8": 2}, {"adjacent2": 12, "all4": 2, "one": 12}],
+  "738:G3:essentialOnly": [33, 23, 0.697, 23, 23, 48.3, 28.59, 0.4313, {"10": 9, "12": 8, "8": 6}, {"adjacent2": 8, "all4": 3, "one": 10, "opposite2": 2}],
+  "738:G3:lv5": [12, 3, 0.25, 3, 3, 48.6, 3.71, 1.0579, {"10": 1, "12": 2}, {"adjacent2": 1, "one": 2}],
+  "20261116:G1:essential": [853, 142, 0.1665, 142, 142, 48.4, 176.1, 0.0266, {"10": 51, "12": 62, "8": 29}, {"adjacent2": 48, "all4": 37, "one": 55, "opposite2": 2}],
+  "20261116:G1:essentialOnly": [879, 86, 0.0978, 86, 86, 48.1, 107.3, 0.0284, {"10": 34, "12": 31, "8": 21}, {"adjacent2": 37, "all4": 11, "one": 37, "opposite2": 1}],
+  "20261116:G1:lv4": [889, 20, 0.0225, 20, 20, 48.1, 24.97, 0.0266, {"10": 9, "12": 9, "8": 2}, {"adjacent2": 6, "all4": 2, "one": 11, "opposite2": 1}],
+  "20261116:G1:lv5": [879, 5, 0.0057, 5, 5, 48.1, 6.23, 0.0274, {"10": 1, "12": 4}, {"adjacent2": 1, "all4": 1, "one": 3}],
+  "20261116:Grand:essential": [707, 170, 0.2405, 170, 170, 48.2, 211.52, 0.029, {"10": 52, "12": 66, "8": 52}, {"adjacent2": 60, "all4": 28, "one": 79, "opposite2": 3}],
+  "20261116:Grand:essentialOnly": [789, 159, 0.2015, 159, 159, 48.1, 198.26, 0.0282, {"10": 44, "12": 60, "8": 55}, {"adjacent2": 68, "all4": 32, "one": 51, "opposite2": 8}],
+  "20261116:Grand:lv4": [741, 55, 0.0742, 55, 55, 48.5, 68.1, 0.0313, {"10": 16, "12": 33, "8": 6}, {"adjacent2": 20, "all4": 6, "one": 27, "opposite2": 2}],
+  "20261116:Grand:lv5": [745, 22, 0.0295, 22, 22, 48.4, 27.28, 0.032, {"10": 6, "12": 16}, {"adjacent2": 8, "all4": 2, "one": 12}],
+  "20261116:G3:essentialOnly": [40, 27, 0.675, 27, 27, 48.8, 33.18, 0.6019, {"10": 10, "12": 9, "8": 8}, {"adjacent2": 9, "all4": 7, "one": 8, "opposite2": 3}],
+  "20261116:G3:lv5": [21, 5, 0.2381, 5, 5, 48.2, 6.22, 1.3153, {"10": 4, "12": 1}, {"adjacent2": 2, "all4": 1, "one": 2}]
+ },
+ "acceptedContents": {
+  "essential": {
+   "accepted": 648,
+   "kindShare": {"other": 0.0301, "route": 0.0038, "twin": 0.9661},
+   "twinSameLengthShare": 0.6035,
+   "withDecisionWithoutBlocking": 0.1667,
+   "byLongShare": {"0.0": 208, "0.5": 256, "1.0": 184},
+   "byColors": {"3": 274, "4": 242, "pairs": 132},
+   "byBays": {"2": 253, "3": 246, "4": 149}
+  },
+  "essentialOnly": {
+   "accepted": 587,
+   "kindShare": {"other": 0.0525, "route": 0.0009, "twin": 0.9466},
+   "twinSameLengthShare": 0.7721,
+   "withDecisionWithoutBlocking": 0.0562,
+   "byLongShare": {"0.0": 214, "0.5": 173, "1.0": 200},
+   "byColors": {"3": 257, "4": 195, "pairs": 135},
+   "byBays": {"2": 164, "3": 247, "4": 176}
+  },
+  "lv4": {
+   "accepted": 165,
+   "kindShare": {"other": 0.0205, "twin": 0.9795},
+   "twinSameLengthShare": 0.7727,
+   "withDecisionWithoutBlocking": 0.0485,
+   "byLongShare": {"0.0": 59, "0.5": 47, "1.0": 59},
+   "byColors": {"3": 90, "4": 62, "pairs": 13},
+   "byBays": {"2": 47, "3": 77, "4": 41}
+  },
+  "lv5": {
+   "accepted": 70,
+   "kindShare": {"other": 0.0088, "route": 0.0025, "twin": 0.9887},
+   "twinSameLengthShare": 0.8138,
+   "withDecisionWithoutBlocking": 0.0714,
+   "byLongShare": {"0.0": 14, "0.5": 26, "1.0": 30},
+   "byColors": {"3": 44, "4": 25, "pairs": 1},
+   "byBays": {"2": 14, "3": 40, "4": 16}
+  }
+ },
+ "tentativeLevels": {
+  "levelByCars": {
+   "10": {"1": 782, "2": 42, "3": 76, "4": 75, "5": 22, "None": 166},
+   "12": {"1": 634, "2": 35, "3": 70, "4": 111, "5": 64, "None": 244},
+   "8": {"1": 990, "2": 74, "3": 73, "4": 29, "5": 1, "None": 104}
+  },
+  "variantSample": {"1": 472, "2": 32, "3": 38, "4": 45, "5": 13},
+  "variantMoved": {
+   "1:countLosingOptions": 0.0,
+   "1:keepBuriedTwin": 0.197,
+   "2:countLosingOptions": 0.0312,
+   "2:keepBuriedTwin": 0.4375,
+   "3:countLosingOptions": 0.1053,
+   "3:keepBuriedTwin": 0.2895,
+   "4:countLosingOptions": 0.0222,
+   "4:keepBuriedTwin": 0.4222,
+   "5:countLosingOptions": 0.0,
+   "5:keepBuriedTwin": 0.1538
+  }
+ },
+ "examples": {
+  "blocking": {
+   "kind": "代表",
+   "bays": 2,
+   "solutions": 36,
+   "kMin": 2,
+   "kMinWithoutBlocking": 2,
+   "decisions": 1,
+   "essentialDecisions": 1,
+   "queueDecisions": 0,
+   "kinds": {"twin": 1},
+   "distanceMax": 2
+  },
+  "queue": {
+   "kind": "代表",
+   "bays": 2,
+   "solutions": 30,
+   "kMin": 2,
+   "kMinWithoutBlocking": 2,
+   "decisions": 1,
+   "essentialDecisions": 0,
+   "queueDecisions": 1,
+   "kinds": {"twin": 1},
+   "distanceMax": 2
+  },
+  "boundary": {
+   "kind": "境界",
+   "bays": 3,
+   "solutions": 24,
+   "kMin": 3,
+   "kMinWithoutBlocking": 2,
+   "decisions": 2,
+   "essentialDecisions": 1,
+   "queueDecisions": 1,
+   "kinds": {"twin": 2},
+   "distanceMax": 5
+  },
+  "counter": {
+   "kind": "反例",
+   "bays": 4,
+   "solutions": 1592,
+   "kMin": 4,
+   "kMinWithoutBlocking": 4,
+   "decisions": 2,
+   "essentialDecisions": 0,
+   "queueDecisions": 2,
+   "kinds": {"route": 2},
+   "distanceMax": 2
+  }
+ }
+}
