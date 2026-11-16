@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 type TsumeShogiKomadaiProps = {
   /** 駒台と同じ行の、左の空きに置く操作。駒台はその残りの幅までに抑え、操作に重ねない。 */
   leadingAction?: ReactNode;
+  layout?: "standard" | "wide";
   children: ReactNode;
 };
 
@@ -16,6 +17,7 @@ type TsumeShogiKomadaiProps = {
  */
 export function TsumeShogiKomadai({
   leadingAction,
+  layout = "standard",
   children,
 }: TsumeShogiKomadaiProps) {
   return (
@@ -25,7 +27,10 @@ export function TsumeShogiKomadai({
       )}
       <div
         className={cn(
-          "ml-auto flex h-full min-w-1/2 max-w-full items-center gap-2 bg-size-[100%_100%] px-2",
+          "flex h-full items-center gap-2 bg-size-[100%_100%] px-2",
+          layout === "standard"
+            ? "ml-auto min-w-1/2 max-w-full"
+            : "min-w-0 flex-1",
           tone.komadaiSurface,
           tone.komadaiSide,
           tone.komadaiShadow,

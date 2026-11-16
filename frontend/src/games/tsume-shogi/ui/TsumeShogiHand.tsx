@@ -31,6 +31,7 @@ type TsumeShogiHandProps = {
   rejection: TsumeShogiRejection | null;
   /** 駒台と同じ行の、左の空きに置く操作。駒台には重ねない。 */
   leadingAction?: ReactNode;
+  layout?: "standard" | "wide";
   /**
    * チュートリアルで次に押す持駒の印。駒台の駒は盤の升より大きく、指が盤の駒を隠さないので、輪郭に指を添える。
    * `recallId` は印の線を短く濃くし直す合図。本番では渡さない。
@@ -50,6 +51,7 @@ export function TsumeShogiHand({
   availability,
   rejection,
   leadingAction,
+  layout = "standard",
   tutorialMark = null,
   onSelectHandPiece,
 }: TsumeShogiHandProps) {
@@ -65,7 +67,7 @@ export function TsumeShogiHand({
   const pieceTypes = tsumeShogiHandPieceTypes.filter((type) => hand[type] > 0);
 
   return (
-    <TsumeShogiKomadai leadingAction={leadingAction}>
+    <TsumeShogiKomadai leadingAction={leadingAction} layout={layout}>
       <div
         ref={piecesRef}
         role="group"

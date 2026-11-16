@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode, Ref } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { TsumeShogiPieceBox } from "@/games/tsume-shogi/ui/TsumeShogiBoardGroup/TsumeShogiPieceBox";
 
@@ -11,8 +11,8 @@ import { TsumeShogiPieceBox } from "@/games/tsume-shogi/ui/TsumeShogiBoardGroup/
  * `--piece-box-height`・`--komadai-height` は盤の上下の駒箱の札・駒台の欄の高さ、`--komadai-gap` は盤と駒台の間。
  */
 const tsumeShogiBoardFrameStyle = {
-  "--board-gutter": "clamp(6px, calc(6px + (100cqw - 320px) / 7), 14px)",
-  "--board-frame": "clamp(16px, calc(16px + (100cqw - 320px) / 14), 21px)",
+  "--board-gutter": "clamp(4px, calc(4px + (100cqw - 320px) / 35), 6px)",
+  "--board-frame": "clamp(12px, calc(12px + (100cqw - 320px) / 35), 14px)",
   "--board-thickness": "clamp(5px, calc(5px + (100cqw - 320px) / 40), 8px)",
   "--piece-box-height": "1.5rem",
   "--komadai-height": "3.75rem",
@@ -38,7 +38,6 @@ type TsumeShogiBoardGroupProps = {
   board: ReactNode;
   hand: ReactNode;
   status: ReactNode;
-  ref?: Ref<HTMLDivElement>;
   context?: "play" | "tutorial";
 };
 
@@ -47,12 +46,10 @@ export function TsumeShogiBoardGroup({
   board,
   hand,
   status,
-  ref,
   context = "play",
 }: TsumeShogiBoardGroupProps) {
   return (
     <div
-      ref={ref}
       className="flex w-(--board-width) flex-col gap-1"
       style={
         context === "tutorial"

@@ -133,7 +133,7 @@ export function TsumeShogiBoard({
       <div
         aria-hidden="true"
         className={cn(
-          "relative col-start-2 row-start-1 grid grid-cols-9 items-center text-[0.75rem] leading-none",
+          "relative col-start-2 row-start-1 grid grid-cols-9 items-center text-[0.625rem] leading-none",
           tsumeShogiToneClassNames.coordinate,
         )}
       >
@@ -217,7 +217,7 @@ export function TsumeShogiBoard({
       <div
         aria-hidden="true"
         className={cn(
-          "relative col-start-3 row-start-2 grid grid-rows-9 text-[0.75rem] leading-none",
+          "relative col-start-3 row-start-2 grid grid-rows-9 text-[0.625rem] leading-none",
           tsumeShogiToneClassNames.coordinate,
         )}
       >

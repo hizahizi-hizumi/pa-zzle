@@ -169,6 +169,9 @@ describe("TsumeShogiHand", () => {
       const action = screen.getByRole("button", { name: "待った" });
 
       expect(pieces.contains(action)).toBe(false);
+      expect(action.parentElement?.nextElementSibling?.contains(pieces)).toBe(
+        true,
+      );
     });
   });
 });
