@@ -44,16 +44,22 @@ export type ReflectionSessionResult = {
   inputCount: number;
 };
 
+/**
+ * `board` を渡すと、ピースをその盤面のとおりに置いた姿から始める（遊び方の例など）。
+ * 置いたピースは手持ちから引くので、手持ちに収まる盤面だけを渡す。
+ */
 export function createReflectionSession(
   problem: ReflectionProblem,
   startedAt: number,
+  board: ReflectionBoard = createEmptyReflectionBoard(problem.size),
 ): ReflectionSession {
   assertReflectionProblem(problem);
+  assertReflectionBoardWithinInventory(problem, board);
 
   return {
     status: "playing",
     problem,
-    puzzleState: createEmptyReflectionBoard(problem.size),
+    puzzleState: board,
     selection: null,
     startedAt,
     clearedAt: null,
@@ -63,6 +69,21 @@ export function createReflectionSession(
     laserEntry: null,
     laserCheckCount: 0,
   };
+}
+
+function assertReflectionBoardWithinInventory(
+  problem: ReflectionProblem,
+  board: ReflectionBoard,
+): void {
+  if (board.size !== problem.size) {
+    throw new RangeError("Reflection board must match the problem size");
+  }
+  const placed = countReflectionBoardPieces(board);
+  if (
+    reflectionPieces.some((piece) => placed[piece] > problem.inventory[piece])
+  ) {
+    throw new RangeError("Reflection board must fit the inventory");
+  }
 }
 
 export function getReflectionSessionStock(
@@ -278,6 +299,18 @@ export function tapReflectionSessionClue(
     laserEntry: entry,
     laserCheckCount: session.laserCheckCount + 1,
   };
+}
+
+/**
+ * 揃って完成したプレイを、盤面はそのままにプレイ中へ戻す。完成していなければ何もしない。
+ * 完成を教えない遊び方の例で、揃っても触り続けられるようにするのに使う。
+ */
+export function reopenReflectionSession(
+  session: ReflectionSession,
+): ReflectionSession {
+  if (session.status !== "cleared") return session;
+
+  return { ...session, status: "playing", clearedAt: null };
 }
 
 export function restartReflectionSession(

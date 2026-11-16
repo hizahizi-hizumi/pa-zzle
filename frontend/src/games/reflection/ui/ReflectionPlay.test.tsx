@@ -146,15 +146,16 @@ describe("ReflectionPlay", () => {
       openHowToPlay();
     });
 
-    test("光路を表示する操作と用途を説明すること", () => {
-      const dialog = screen.getByRole("dialog", { name: "遊び方" });
+    test("ルール・操作・採点のタブで遊び方を開くこと", () => {
+      const dialog = screen.getByRole("dialog", {
+        name: "リフレクションの遊び方",
+      });
 
-      expect(
-        within(dialog).getByText(
-          /外周の数字を押すと、今の配置での光の道筋を線で表示し/,
-        ),
-      ).toBeTruthy();
-      expect(within(dialog).queryByText(/補助/)).toBeNull();
+      const tabs = within(dialog)
+        .getAllByRole("tab")
+        .map((tab) => tab.textContent);
+
+      expect(tabs).toEqual(["ルール", "操作", "採点"]);
     });
 
     test("閉じてもプレイを測り直さないこと", () => {
@@ -170,7 +171,9 @@ describe("ReflectionPlay", () => {
     });
 
     test("遊び方を自動では開かないこと", () => {
-      const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+      const dialog = screen.queryByRole("dialog", {
+        name: "リフレクションの遊び方",
+      });
 
       expect(dialog).toBeNull();
     });

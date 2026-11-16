@@ -121,7 +121,8 @@ function countPlacedPieces(board: ReflectionBoard): number {
   return board.cells.filter((cell) => cell !== null).length;
 }
 
-function createOperation(
+/** 本番の盤面の操作から、効果音を鳴らす知らせを作る。遊び方の例も、同じ知らせで本番と同じ音を鳴らす。 */
+export function createReflectionOperation(
   id: number,
   previous: ReflectionSession,
   next: ReflectionSession,
@@ -195,7 +196,7 @@ export function useReflectionPlay(
           ? current
           : {
               ...next,
-              operation: createOperation(
+              operation: createReflectionOperation(
                 operationId,
                 current.session,
                 next.session,

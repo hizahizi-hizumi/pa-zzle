@@ -104,18 +104,6 @@ export function getReflectionClueInnerEdgeMidpoint(
   }
 }
 
-export function getReflectionClueCenter(
-  size: number,
-  entry: ReflectionEntry,
-): ReflectionPoint {
-  const anchor = getReflectionClueInnerEdgeMidpoint(size, entry);
-  const { dx, dy } = getReflectionOutwardVector(entry.side);
-  return {
-    x: anchor.x + (dx * CLUE_TRACK) / 2,
-    y: anchor.y + (dy * CLUE_TRACK) / 2,
-  };
-}
-
 export function getReflectionBoardOrigin(): ReflectionPoint {
   return { x: BOARD_OFFSET, y: BOARD_OFFSET };
 }
