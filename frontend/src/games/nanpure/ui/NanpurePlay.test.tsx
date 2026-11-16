@@ -146,7 +146,7 @@ describe("NanpurePlay", () => {
     });
 
     test("遊び方を自動では開かないこと", () => {
-      const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+      const dialog = screen.queryByRole("dialog", { name: "ナンプレの遊び方" });
 
       expect(dialog).toBeNull();
     });
@@ -161,13 +161,13 @@ describe("NanpurePlay", () => {
       });
 
       test("遊び方を開くこと", () => {
-        const dialog = screen.getByRole("dialog", { name: "遊び方" });
+        const dialog = screen.getByRole("dialog", { name: "ナンプレの遊び方" });
 
         expect(dialog).toBeTruthy();
       });
 
       test("閉じてもプレイを測り直さないこと", () => {
-        const dialog = screen.getByRole("dialog", { name: "遊び方" });
+        const dialog = screen.getByRole("dialog", { name: "ナンプレの遊び方" });
         fireEvent.click(within(dialog).getByRole("button", { name: "閉じる" }));
 
         expect(props.onReplay).not.toHaveBeenCalled();

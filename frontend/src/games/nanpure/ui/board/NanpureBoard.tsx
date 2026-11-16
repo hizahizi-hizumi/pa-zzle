@@ -1,6 +1,5 @@
 import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import {
-  areNanpureCellsRelated,
   NANPURE_SIZE,
   type NanpureBoard as NanpureBoardState,
 } from "@/games/nanpure/puzzle/board";
@@ -9,6 +8,10 @@ import type { NanpureBoardSpotlight } from "@/games/nanpure/ui/board/board-spotl
 import type { NanpureCellCue } from "@/games/nanpure/ui/board/cell-cue";
 import { NanpureCell } from "@/games/nanpure/ui/board/NanpureBoard/NanpureCell";
 import { NanpureUnitSpotlight } from "@/games/nanpure/ui/board/NanpureBoard/NanpureUnitSpotlight";
+import {
+  getNanpureCellSelectionRelation,
+  nanpureBoardFrameClassName,
+} from "@/games/nanpure/ui/board/nanpure-cell-tone";
 import { cn } from "@/lib/utils";
 
 const NANPURE_CELL_INDICES = Array.from(
@@ -57,17 +60,15 @@ export function NanpureBoard({
     <div
       {...(spotlight !== null && { [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "" })}
       className={cn(
-        "relative grid aspect-square grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background [container-type:inline-size]",
+        "relative grid aspect-square grid-cols-9 overflow-hidden [container-type:inline-size]",
+        nanpureBoardFrameClassName,
         sizeClassName,
       )}
     >
       {NANPURE_CELL_INDICES.map((cellIndex) => {
         const value = board[cellIndex] ?? null;
-        const selected = selectedCellIndex === cellIndex;
-        const sameUnitAsSelected =
-          selectedCellIndex !== null &&
-          !selected &&
-          areNanpureCellsRelated(selectedCellIndex, cellIndex);
+        const { selected, sameUnitAsSelected, sameDigitAsSelected } =
+          getNanpureCellSelectionRelation(board, selectedCellIndex, cellIndex);
 
         return (
           <NanpureCell
@@ -79,9 +80,7 @@ export function NanpureBoard({
             selectedValue={selectedValue}
             selected={selected}
             sameUnitAsSelected={sameUnitAsSelected}
-            sameDigitAsSelected={
-              selectedValue !== null && !selected && value === selectedValue
-            }
+            sameDigitAsSelected={sameDigitAsSelected}
             conflict={conflictCells.has(cellIndex)}
             mistake={mistakeCells.has(cellIndex)}
             disabled={interactionDisabled}

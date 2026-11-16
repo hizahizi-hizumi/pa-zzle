@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { TutorialCue } from "@/components/TutorialCue";
 import {
   NANPURE_DIGITS,
@@ -12,8 +14,10 @@ type NanpureDigitPadProps = {
   cuedDigit?: NanpureDigit | null;
   /** 押させたい数字の印の線を短く濃くして戻す目印。変わるたびに戻し直す。`null` なら戻さない。 */
   cuedDigitRecallId?: number | null;
-  /** ボタンの高さ。`compact` は、盤面に高さを譲るチュートリアルで使う。 */
+  /** ボタンの高さ。`compact` は、盤面に高さを譲るチュートリアルと遊び方の例で使う。 */
   size?: "play" | "compact";
+  /** 数字のボタンに重ねる物。遊び方の例が、押す所の手がかりを重ねる。 */
+  renderDigitOverlay?: (digit: NanpureDigit) => ReactNode;
   onInputDigit: (digit: NanpureDigit) => void;
 };
 
@@ -24,6 +28,7 @@ export function NanpureDigitPad({
   cuedDigit = null,
   cuedDigitRecallId = null,
   size = "play",
+  renderDigitOverlay,
   onInputDigit,
 }: NanpureDigitPadProps) {
   const completedDigitSet = new Set(completedDigits);
@@ -56,6 +61,7 @@ export function NanpureDigitPad({
                 recallId={cuedDigitRecallId}
               />
             )}
+            {renderDigitOverlay?.(digit)}
           </button>
         );
       })}
