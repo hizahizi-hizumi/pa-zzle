@@ -1,5 +1,9 @@
 import type { CSSProperties } from "react";
 import type {
+  ParkingJamBoard,
+  ParkingJamSide,
+} from "@/games/parking-jam/puzzle/board";
+import type {
   RuleLabScenario,
   RuleLabState,
 } from "@/games/parking-jam/rule-lab/rule-lab";
@@ -14,6 +18,59 @@ type ParkingJamRuleLabBoardProps = {
   outcomeByVehicle: ReadonlyMap<string, boolean>;
 };
 
+type WallSegment = {
+  side: ParkingJamSide;
+  start: number;
+  length: number;
+};
+
+const WALL_THICKNESS = "5px";
+
+/** 辺ごとに、開口に覆われていない区間を壁として返す。 */
+function wallSegments(board: ParkingJamBoard): WallSegment[] {
+  const segments: WallSegment[] = [];
+  for (const side of ["up", "right", "down", "left"] as const) {
+    const size = side === "up" || side === "down" ? board.width : board.height;
+    let start: number | null = null;
+    for (let offset = 0; offset <= size; offset += 1) {
+      const open =
+        offset === size ||
+        board.roadOpenings.some(
+          (opening) =>
+            opening.side === side &&
+            offset >= opening.startOffset &&
+            offset < opening.startOffset + opening.length,
+        );
+      if (!open && start === null) start = offset;
+      if (open && start !== null) {
+        segments.push({ side, start, length: offset - start });
+        start = null;
+      }
+    }
+  }
+  return segments;
+}
+
+function wallStyle(board: ParkingJamBoard, wall: WallSegment): CSSProperties {
+  const horizontal = wall.side === "up" || wall.side === "down";
+  const size = horizontal ? board.width : board.height;
+  const from = `${(wall.start / size) * 100}%`;
+  const span = `${(wall.length / size) * 100}%`;
+  return horizontal
+    ? {
+        left: from,
+        width: span,
+        height: WALL_THICKNESS,
+        ...(wall.side === "up" ? { top: 0 } : { bottom: 0 }),
+      }
+    : {
+        top: from,
+        height: span,
+        width: WALL_THICKNESS,
+        ...(wall.side === "left" ? { left: 0 } : { right: 0 }),
+      };
+}
+
 export function ParkingJamRuleLabBoard({
   scenario,
   state,
@@ -22,9 +79,10 @@ export function ParkingJamRuleLabBoard({
   outcomeByVehicle,
 }: ParkingJamRuleLabBoardProps) {
   const { board } = scenario;
+  const walls = wallSegments(board);
   return (
     <div
-      className="relative aspect-square w-full max-w-[470px] overflow-hidden rounded-2xl border-[7px] border-slate-500 bg-[#e4e9e8] shadow-inner"
+      className="relative aspect-square w-full max-w-[470px] overflow-hidden rounded-2xl border-[7px] border-[#cbd5d1] bg-[#e4e9e8] shadow-inner"
       aria-label="試作パーキングジャムの盤面"
     >
       <div
@@ -35,6 +93,13 @@ export function ParkingJamRuleLabBoard({
           backgroundSize: `${100 / board.width}% ${100 / board.height}%`,
         }}
       />
+      {walls.map((wall) => (
+        <div
+          key={`${wall.side}-${wall.start}`}
+          className="absolute bg-[#334155]"
+          style={wallStyle(board, wall)}
+        />
+      ))}
       {board.vehicles.map((vehicle, index) => {
         if (!state.remainingVehicleIds.includes(vehicle.id)) return null;
         const color = vehicleColor(scenario, vehicle.id);
