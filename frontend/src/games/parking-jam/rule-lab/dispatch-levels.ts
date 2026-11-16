@@ -3,6 +3,7 @@ import type {
   ParkingJamVehicleLength,
 } from "@/games/parking-jam/puzzle/board";
 import problems from "@/games/parking-jam/rule-lab/dispatch-levels.json";
+import passengerProblemData from "@/games/parking-jam/rule-lab/passenger-problems.json";
 import type {
   RuleLabColor,
   RuleLabScenario,
@@ -41,7 +42,10 @@ export type DispatchLevelProblem = {
   scenario: RuleLabScenario;
 };
 
-function toProblem(problem: ExportedProblem): DispatchLevelProblem {
+function toProblem(
+  problem: ExportedProblem,
+  mode: "dispatch" | "passengers",
+): DispatchLevelProblem {
   return {
     id: problem.id,
     title: problem.title,
@@ -49,7 +53,7 @@ function toProblem(problem: ExportedProblem): DispatchLevelProblem {
     kind: problem.kind,
     solutions: problem.solutions,
     scenario: {
-      mode: "dispatch",
+      mode,
       bayCount: problem.bayCount,
       queue: problem.queue as RuleLabColor[],
       colors: problem.board.vehicles.map(
@@ -80,4 +84,9 @@ function toProblem(problem: ExportedProblem): DispatchLevelProblem {
 /** `scripts/research/parking_jam_dispatch_levels.examples.json` から画面に要る項目だけを写した問題例。 */
 export const dispatchLevelProblems: readonly DispatchLevelProblem[] = (
   problems as ExportedProblem[]
-).map(toProblem);
+).map((problem) => toProblem(problem, "dispatch"));
+
+/** `scripts/research/parking_jam_passenger_examples.json` から画面に要る項目だけを写した乗客列型の問題例。 */
+export const passengerProblems: readonly DispatchLevelProblem[] = (
+  passengerProblemData as ExportedProblem[]
+).map((problem) => toProblem(problem, "passengers"));

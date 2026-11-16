@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { dispatchLevelProblems } from "@/games/parking-jam/rule-lab/dispatch-levels";
+import {
+  dispatchLevelProblems,
+  passengerProblems,
+} from "@/games/parking-jam/rule-lab/dispatch-levels";
 import {
   analyzeRuleLab,
   applyRuleLabExit,
@@ -38,7 +41,7 @@ const descriptions: Record<RuleLabMode, string> = {
   standard:
     "車をタップして出庫させ、すべての車を出せばクリアです。出せる車を選ぶ限り、間違った順序はありません。",
   passengers:
-    "車を出庫させると3つの乗り場の空き枠に入ります。左から順に並ぶ乗客は、色が合う車に1人ずつ乗り込みます。車体の長さ（2または3人分）だけ乗ると出発し、枠が空きます。すべての乗客と車を送り出せばクリア。",
+    "車を出庫させると乗り場の空き枠に入ります。左から順に並ぶ乗客は、色が合う車に1人ずつ乗り込みます。車体の長さ（2または3人分）だけ乗ると出発し、枠が空きます。すべての乗客と車を送り出せばクリア。",
   pairs:
     "車を出庫させると待機枠に入ります。同色2台がそろった瞬間に出発して枠が空きます。2枠ではペアを連続して完成させます。3枠では1台を一時待機させ、別のペアを先に完成させることもできます。",
   dispatch:
@@ -60,10 +63,13 @@ export function ParkingJamRuleLab() {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [problemId, setProblemId] = useState<string | null>(null);
-  const problem =
+  const problems =
     mode === "dispatch"
-      ? dispatchLevelProblems.find((item) => item.id === problemId)
-      : undefined;
+      ? dispatchLevelProblems
+      : mode === "passengers"
+        ? passengerProblems
+        : [];
+  const problem = problems.find((item) => item.id === problemId);
   const scenario =
     problem?.scenario ?? getRuleLabScenario(mode, size, bayCount);
   const legal = legalRuleLabExits(scenario, state);
@@ -75,7 +81,7 @@ export function ParkingJamRuleLab() {
   );
 
   function changeProblem(nextId: string | null) {
-    const next = dispatchLevelProblems.find((item) => item.id === nextId);
+    const next = problems.find((item) => item.id === nextId);
     setProblemId(next ? next.id : null);
     setState(
       createRuleLabState(
@@ -173,11 +179,11 @@ export function ParkingJamRuleLab() {
             </Button>
           ))}
         </div>
-        {mode === "dispatch" && (
+        {problems.length > 0 && (
           <div
             className="mb-5 flex flex-wrap items-center gap-2"
             role="group"
-            aria-label="レベル別の問題例"
+            aria-label="問題例"
           >
             <span className="mr-1 text-xs font-medium text-slate-600">
               問題
@@ -190,7 +196,7 @@ export function ParkingJamRuleLab() {
             >
               共通盤面
             </Button>
-            {dispatchLevelProblems.map((item) => (
+            {problems.map((item) => (
               <Button
                 key={item.id}
                 size="sm"
@@ -432,7 +438,7 @@ export function ParkingJamRuleLab() {
             </div>
             <p className="text-xs leading-relaxed text-slate-500">
               {problem
-                ? "この問題は出庫指令型だけの盤面です。レベルは機械的な基準による仮のもので、人間の体感で確かめたものではありません。"
+                ? "この問題はこの方式だけの盤面です。レベルや分類は機械的な基準による仮のもので、人間の体感で確かめたものではありません。"
                 : "4方式は各盤面規模で同一の車両配置・色を使います。数値は試作の全探索結果で、人間の面白さの評価ではありません。"}
             </p>
           </section>

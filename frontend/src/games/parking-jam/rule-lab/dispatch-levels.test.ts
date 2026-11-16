@@ -1,5 +1,8 @@
 import { validateParkingJamBoard } from "@/games/parking-jam/puzzle/board";
-import { dispatchLevelProblems } from "@/games/parking-jam/rule-lab/dispatch-levels";
+import {
+  dispatchLevelProblems,
+  passengerProblems,
+} from "@/games/parking-jam/rule-lab/dispatch-levels";
 import {
   analyzeRuleLab,
   createRuleLabState,
@@ -23,6 +26,25 @@ describe("出庫指令型のレベル別の問題例", () => {
       expect(() => validateParkingJamBoard(scenario.board)).not.toThrow();
       expect(scenario.queue).toHaveLength(scenario.board.vehicles.length);
       expect([...scenario.queue].sort()).toEqual([...scenario.colors].sort());
+      const result = analyzeRuleLab(scenario, createRuleLabState(scenario));
+      expect(result.totalWinningSequences).toBe(problem.solutions);
+    },
+  );
+});
+
+describe("乗客列型の問題例", () => {
+  test.each(
+    passengerProblems.map((problem) => [problem.title, problem] as const),
+  )(
+    "%s は盤面が正しく、解の数が研究用の探索と一致すること",
+    (_title, problem) => {
+      const { scenario } = problem;
+      expect(() => validateParkingJamBoard(scenario.board)).not.toThrow();
+      const seats = scenario.board.vehicles.reduce(
+        (total, vehicle) => total + vehicle.length,
+        0,
+      );
+      expect(scenario.queue).toHaveLength(seats);
       const result = analyzeRuleLab(scenario, createRuleLabState(scenario));
       expect(result.totalWinningSequences).toBe(problem.solutions);
     },
