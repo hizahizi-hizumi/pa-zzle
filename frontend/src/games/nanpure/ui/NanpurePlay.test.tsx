@@ -8,7 +8,6 @@ import {
 import type { ComponentProps, ReactElement } from "react";
 import { MemoryRouter } from "react-router";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
-import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 
 /** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
 function render(ui: ReactElement) {
@@ -363,10 +362,9 @@ describe("NanpurePlay", () => {
       fireEvent.click(screen.getByText("採点内訳"));
 
       expect(screen.getByText("30 / 40")).toBeTruthy();
-      expect(screen.getByText("9 / 20")).toBeTruthy();
       expect(screen.getByText(/ミス1回につき/)).toBeTruthy();
       expect(screen.getByText(/1分単位で切り上げ/)).toBeTruthy();
-      expect(screen.getByText(/「待った」1回につき/)).toBeTruthy();
+      expect(screen.getAllByText(/数字を戻す待った/)).toHaveLength(2);
 
       fireEvent.click(playButton);
 

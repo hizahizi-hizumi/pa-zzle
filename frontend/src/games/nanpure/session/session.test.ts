@@ -172,6 +172,16 @@ describe("findNanpureSessionCompletedDigits", () => {
 });
 
 describe("undoNanpureSession", () => {
+  test("候補メモの待ったは数字の撤回に数えないこと", () => {
+    const session = toggleNanpureSessionNote(
+      createNanpureSession(createProblem(), 1_000),
+      0,
+      4,
+    );
+    const undone = undoNanpureSession(session);
+    expect(undone.undoCount).toBe(1);
+    expect(undone.digitUndoCount).toBe(0);
+  });
   test("盤面と手動メモを戻してミス履歴は減らさないこと", () => {
     let session = createNanpureSession(createProblem(), 1_000);
     session = toggleNanpureSessionNote(session, 0, 4);
@@ -183,6 +193,7 @@ describe("undoNanpureSession", () => {
     expect(undone.notes[0]).toEqual([4]);
     expect(undone.mistakeCount).toBe(1);
     expect(undone.undoCount).toBe(1);
+    expect(undone.digitUndoCount).toBe(1);
   });
 
   test("正解入力を戻すと待っただけを増やすこと", () => {
@@ -193,6 +204,7 @@ describe("undoNanpureSession", () => {
 
     expect(undone.mistakeCount).toBe(0);
     expect(undone.undoCount).toBe(1);
+    expect(undone.digitUndoCount).toBe(1);
   });
 
   test("履歴が空なら操作できないこと", () => {
@@ -281,6 +293,7 @@ describe("getNanpureSessionResult", () => {
       elapsedMs: 3_500,
       mistakeCount: 0,
       undoCount: 0,
+      digitUndoCount: 0,
       restartCount: 0,
     });
   });

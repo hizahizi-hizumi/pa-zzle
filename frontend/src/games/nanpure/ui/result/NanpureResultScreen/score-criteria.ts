@@ -34,7 +34,11 @@ export function getNanpureScoreCriteria(
     createScoreItemCriterion(
       "stability",
       describePenaltyScoreCriterion(NANPURE_SCORE_MAXIMUMS.stability, [
-        createOperationPenalty("undo", NANPURE_UNDO_PENALTY),
+        {
+          subject: "数字を戻す待った",
+          unit: "回",
+          points: NANPURE_UNDO_PENALTY,
+        },
         createOperationPenalty("restart", NANPURE_RESTART_PENALTY),
       ]),
     ),

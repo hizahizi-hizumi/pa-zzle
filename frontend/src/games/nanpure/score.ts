@@ -35,8 +35,9 @@ export type NanpurePlayScore = PlayScore<keyof typeof NANPURE_SCORE_MAXIMUMS>;
 type NanpurePlayScoreInput = {
   elapsedMs: number;
   mistakeCount: number;
-  undoCount: number;
-  restartCount: number;
+  undoCount?: number;
+  digitUndoCount?: number;
+  restartCount?: number;
 };
 
 export function calculateNanpureSpeedScoreRule(): SpeedScoreRule {
@@ -55,6 +56,7 @@ export function calculateNanpurePlayScore({
   elapsedMs,
   mistakeCount,
   undoCount,
+  digitUndoCount,
   restartCount,
 }: NanpurePlayScoreInput): NanpurePlayScore {
   const accuracy = subtractWithFloor(
@@ -70,7 +72,8 @@ export function calculateNanpurePlayScore({
 
   const stability = subtractWithFloor(
     NANPURE_SCORE_MAXIMUMS.stability,
-    undoCount * NANPURE_UNDO_PENALTY + restartCount * NANPURE_RESTART_PENALTY,
+    (digitUndoCount ?? undoCount ?? 0) * NANPURE_UNDO_PENALTY +
+      (restartCount ?? 0) * NANPURE_RESTART_PENALTY,
   );
 
   return sumPlayScore({ accuracy, speed, stability });

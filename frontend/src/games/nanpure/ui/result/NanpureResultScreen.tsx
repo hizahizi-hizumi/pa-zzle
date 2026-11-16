@@ -2,7 +2,6 @@ import { GameResultScreen } from "@/components/GameResultScreen";
 import {
   createCountMetric,
   createElapsedTimeMetric,
-  createOperationCountMetric,
   createSpeedFullScoreMetric,
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
@@ -36,13 +35,17 @@ export function NanpureResultScreen({
       metrics={[
         createElapsedTimeMetric(result),
         createCountMetric("ミス", result.mistakeCount, "回", "mistake-count"),
-        createOperationCountMetric("undo", result.undoCount),
+        createCountMetric(
+          "数字を戻す待った",
+          result.digitUndoCount ?? result.undoCount,
+          "回",
+          "digit-undo-count",
+        ),
       ]}
       recordFeedback={recordFeedback}
       scoreBreakdown={[
         ...listScoreBreakdownMetrics(result.score, NANPURE_SCORE_MAXIMUMS),
         createSpeedFullScoreMetric(result.speedRule),
-        createOperationCountMetric("restart", result.restartCount),
       ]}
       scoreCriteria={getNanpureScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}
