@@ -7,10 +7,6 @@ import type {
   TsumeShogiPiece,
   TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
-import {
-  TSUME_SHOGI_SQUARE_HEIGHT,
-  TSUME_SHOGI_SQUARE_WIDTH,
-} from "@/games/tsume-shogi/ui/board/piece-shape";
 import { TsumeShogiPieceGlyph } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph";
 import { pieceMotionSelector } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph/piece-glyph-frame";
 import {
@@ -54,7 +50,6 @@ type TsumeShogiSquareButtonProps = {
   piece: TsumeShogiPiece | null;
   /** 駒の、指し手で変わらない識別。駒ごとの木目の位置を決める。 */
   pieceId: string | null;
-  clearGlow: boolean;
   arrivedMove: TsumeShogiPlayedMove | null;
   highlight: TsumeShogiSquareHighlight | null;
   /**
@@ -70,11 +65,40 @@ type TsumeShogiSquareButtonProps = {
   onTopEdge: boolean;
 };
 
+/**
+ * SVGの駒を移動元の升に重ねるオフセット。罫線を含む升の座標と、
+ * 罫線の内側で描かれるSVGの座標系は異なるため、実測の画面座標を変換して求める。
+ */
+function getBoardArrivalTransform(
+  element: SVGGElement,
+  from: TsumeShogiSquare,
+): string | null {
+  const destination = element.ownerSVGElement?.closest<HTMLButtonElement>(
+    "button[data-file][data-rank]",
+  );
+  const source = destination?.parentElement?.querySelector<HTMLButtonElement>(
+    `button[data-file="${from.file}"][data-rank="${from.rank}"]`,
+  );
+  const matrix = element.getScreenCTM?.();
+  if (!source || !destination || !matrix) return null;
+
+  const determinant = matrix.a * matrix.d - matrix.b * matrix.c;
+  if (determinant === 0) return null;
+  const sourceRect = source.getBoundingClientRect();
+  const destinationRect = destination.getBoundingClientRect();
+  const dx = sourceRect.x - destinationRect.x;
+  const dy = sourceRect.y - destinationRect.y;
+  const x = (matrix.d * dx - matrix.c * dy) / determinant;
+  const y = (matrix.a * dy - matrix.b * dx) / determinant;
+  return `translate(${x}px, ${y}px)`;
+}
+
 function useArrivalAnimation(arrivedMove: TsumeShogiPlayedMove | null) {
   const pieceRef = useRef<HTMLSpanElement>(null);
 
   useLayoutEffect(() => {
-    const element = pieceRef.current?.querySelector(pieceMotionSelector);
+    const element =
+      pieceRef.current?.querySelector<SVGGElement>(pieceMotionSelector);
     if (
       !arrivedMove ||
       !element ||
@@ -85,19 +109,20 @@ function useArrivalAnimation(arrivedMove: TsumeShogiPlayedMove | null) {
     }
 
     const { move, side } = arrivedMove;
-    // 盤は左が9筋なので、筋が大きいほど左にある。
-    const keyframes: Keyframe[] =
-      move.kind === "board"
-        ? [
-            {
-              transform: `translate(${(move.to.file - move.from.file) * TSUME_SHOGI_SQUARE_WIDTH}px, ${(move.from.rank - move.to.rank) * TSUME_SHOGI_SQUARE_HEIGHT}px)`,
-            },
-            { transform: "translate(0px, 0px)" },
-          ]
-        : [
-            { opacity: 0, transform: "scale(0.8)" },
-            { opacity: 1, transform: "scale(1)" },
-          ];
+    let keyframes: Keyframe[];
+    if (move.kind === "board") {
+      const arrivalTransform = getBoardArrivalTransform(element, move.from);
+      if (!arrivalTransform) return;
+      keyframes = [
+        { transform: arrivalTransform },
+        { transform: "translate(0px, 0px)" },
+      ];
+    } else {
+      keyframes = [
+        { opacity: 0, transform: "scale(0.8)" },
+        { opacity: 1, transform: "scale(1)" },
+      ];
+    }
     const animation = element.animate(keyframes, {
       duration: arrivalDurationMs[side],
       easing: ARRIVAL_EASING,
@@ -112,7 +137,6 @@ export function TsumeShogiSquareButton({
   square,
   piece,
   pieceId,
-  clearGlow,
   arrivedMove,
   highlight,
   tutorialMarkRecallId,
@@ -152,16 +176,15 @@ export function TsumeShogiSquareButton({
         highlight && highlightClassNames[highlight],
       )}
     >
-      {clearGlow && (
-        // 詰みの波で一度だけ光る層。ふだんは見えない。
-        <span
-          data-clear-glow=""
-          className={cn(
-            "pointer-events-none absolute inset-0 opacity-0",
-            tsumeShogiToneClassNames.clearGlow,
-          )}
-        />
-      )}
+      {/* 詰みの開始時に挿入せず、盤面の描画層を一定に保つ。 */}
+      <span
+        aria-hidden="true"
+        data-clear-glow=""
+        className={cn(
+          "pointer-events-none absolute inset-0 opacity-0",
+          tsumeShogiToneClassNames.clearGlow,
+        )}
+      />
       {piece && (
         <span
           // 指した手ごとに作り直し、到着の動きを1回だけ流す。
