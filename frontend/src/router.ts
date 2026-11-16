@@ -10,6 +10,9 @@ export type Path =
   | `/puzzles/:game/tutorial`
   | `/puzzles/bridges`
   | `/puzzles/bridges/play/:problemId`
+  | `/puzzles/hakoiri-musume`
+  | `/puzzles/hakoiri-musume/play/:problemId`
+  | `/puzzles/hakoiri-musume/playtest/:problem`
   | `/puzzles/hitofude-puzzle`
   | `/puzzles/hitofude-puzzle/play/:problemId`
   | `/puzzles/ice-floor-maze`
@@ -37,6 +40,8 @@ export type Params = {
   '/puzzles/:game/result/:recordId': { game: string; recordId: string }
   '/puzzles/:game/tutorial': { game: string }
   '/puzzles/bridges/play/:problemId': { problemId: string }
+  '/puzzles/hakoiri-musume/play/:problemId': { problemId: string }
+  '/puzzles/hakoiri-musume/playtest/:problem': { problem: string }
   '/puzzles/hitofude-puzzle/play/:problemId': { problemId: string }
   '/puzzles/ice-floor-maze/play/:problemId': { problemId: string }
   '/puzzles/minesweeper/play/:problemId': { problemId: string }
