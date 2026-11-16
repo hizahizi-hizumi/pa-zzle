@@ -1,6 +1,7 @@
 {
-  "$comment": "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH は上限を絞るためではなく引き上げるために設定している。クラウド環境では基盤側が 1 を注入し、環境設定の環境変数より優先されるため、ここで上書きしてサブエージェントのネストを許可する。CLAUDE_CODE_THRIFTY_SONIC は auto mode でファイルの読み取りを Bash（cat・sed など）へ寄せる指示を止めるために false にしている。paths 付きの .claude/rules は Read ツールで対象ファイルを読んだときにしか読み込まれず、Bash で読まれるとルールが効かないため。非公開のフラグなので、Claude Code の更新で名前が変わったり消えたりすると、黙って Bash 寄りに戻る。",
+  "$comment": "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH は上限を絞るためではなく引き上げるために設定している。クラウド環境では基盤側が 1 を注入し、環境設定の環境変数より優先されるため、ここで上書きしてサブエージェントのネストを許可する。CLAUDE_CODE_THRIFTY_SONIC は auto mode でファイルの読み取りを Bash（cat・sed など）へ寄せる指示を止めるために false にしている。paths 付きの .claude/rules は Read ツールで対象ファイルを読んだときにしか読み込まれず、Bash で読まれるとルールが効かないため。非公開のフラグなので、Claude Code の更新で名前が変わったり消えたりすると、黙って Bash 寄りに戻る。CLAUDE_CODE_AUTO_COMPACT_WINDOW は自動コンパクションを早めるために設定している。既定では文脈が約 90 万トークンになるまで圧縮されず、長いセッションと長く走るサブエージェントで、毎リクエストの読み直しが消費の大半を占めるため。実効ウィンドウは設定値から 2 万を引いた値で、基盤側が注入する CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=92 と合わせて、約 62.6 万トークンで圧縮される。メインにもサブエージェントにも効く。値を下げるほど消費は減るが、圧縮の回数が増えて経緯が落ちやすくなる。",
   "env": {
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "700000",
     "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "2",
     "CLAUDE_CODE_THRIFTY_SONIC": "false"
   },
