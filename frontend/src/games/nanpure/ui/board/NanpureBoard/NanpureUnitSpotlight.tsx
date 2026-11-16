@@ -29,7 +29,7 @@ function getUnitArea({ kind, index }: NanpureBoardUnit): CSSProperties {
   }
 }
 
-/** 行・列・ブロックを、そのマスが並ぶ角の無い四角のまま、画面全体の覆いから抜く。 */
+/** 行・列・ブロックを、そのマスが並ぶ角の無い四角のまま、盤面の覆いから抜く。 */
 export function NanpureUnitSpotlight({ unit }: NanpureUnitSpotlightProps) {
   return (
     <span

@@ -44,11 +44,25 @@ export type NanpureTutorialAction = {
  * - `reasonUnits`: 印のマスの数字を決める行・列・ブロック（決め手）。
  * - `cuedDigit`: 押させる数字。操作を教える手順でだけ、数字のボタンにも印を付ける。
  */
-export type NanpureTutorialStep = TutorialStep<NanpureTutorialRuleId> & {
-  cuedCellIndex: number;
-  reasonUnits: readonly NanpureTutorialUnit[];
-  cuedDigit: NanpureDigit | null;
-};
+export type NanpureTutorialMarkedCellStep =
+  TutorialStep<NanpureTutorialRuleId> & {
+    kind: "marked-cell";
+    cuedCellIndex: number;
+    reasonUnits: readonly NanpureTutorialUnit[];
+    cuedDigit: NanpureDigit | null;
+  };
+
+export type NanpureTutorialPlacementStep =
+  TutorialStep<NanpureTutorialRuleId> & {
+    kind: "placement";
+    digit: NanpureDigit;
+    block: NanpureTutorialUnit;
+    cellIndex: number;
+  };
+
+export type NanpureTutorialStep =
+  | NanpureTutorialMarkedCellStep
+  | NanpureTutorialPlacementStep;
 
 export type NanpureTutorialMove = {
   cellIndex: number;
@@ -70,9 +84,17 @@ export type NanpureTutorialSituation = TutorialSituation<
   NanpureTutorialStep
 >;
 
-type NanpureDeduction = {
+type NanpureLastEmptyDeduction = {
   digit: NanpureDigit;
-  reasonUnits: readonly NanpureTutorialUnit[];
+  unit: NanpureTutorialUnit;
+};
+
+/** `eliminatingCellIndices` は、ブロックの空きマスと同じ行・列にあり、そこに `digit` が入らないと分からせる `digit` のマス。 */
+export type NanpureTutorialPlacement = {
+  digit: NanpureDigit;
+  block: NanpureTutorialUnit;
+  cellIndex: number;
+  eliminatingCellIndices: readonly number[];
 };
 
 function parseRows(rows: readonly string[]): NanpureCell[] {
@@ -86,15 +108,15 @@ function parseRows(rows: readonly string[]): NanpureCell[] {
 
 /** 本番の問題集の解を使う。 */
 const givens: NanpureBoard = parseRows([
-  "658729314",
-  "3.145.278",
-  "7243..96.",
-  "46721.89.",
-  "582937641",
-  "13.86452.",
-  ".4.193786",
-  "8736.2159",
-  "916578432",
+  "658.29314",
+  "3..456278",
+  "72.3.1965",
+  "467215893",
+  "58.937..1",
+  "139.6.5..",
+  "245193786",
+  "8..6421.9",
+  "91.578..2",
 ]);
 const solution: NanpureBoard = parseRows([
   "658729314",
@@ -164,58 +186,90 @@ export function getNanpureTutorialUnitCellIndices({
   return unitCellIndices[kind][index] ?? [];
 }
 
-/** 操作で入れる6行3列の9で、6行目の空きは6行9列だけになる。 */
+const unitNames = {
+  row: "行",
+  column: "列",
+  block: "ブロック",
+} as const satisfies Record<NanpureTutorialRuleId, string>;
+
+const ruleStepMessages = {
+  row: {
+    headline: "全ての行に1〜9が1つずつ入ります",
+    detail: "この行にまだ無い数字を入れます",
+  },
+  column: {
+    headline: "全ての列に1〜9が1つずつ入ります",
+    detail: "この列にまだ無い数字を入れます",
+  },
+  block: {
+    headline: "太線で区切ったブロックにも\n1〜9が1つずつ入ります",
+    detail: "このブロックにまだ無い\n数字を入れます",
+  },
+} as const satisfies Record<NanpureTutorialRuleId, TutorialMessage>;
+
+function describePlacementSearch(digit: NanpureDigit): TutorialMessage {
+  return {
+    headline: `このブロックで${digit}が入るマスを探します`,
+    detail: `${digit}がある行と列を除いて探します`,
+  };
+}
+
+function describePlacementHint(digit: NanpureDigit): TutorialMessage {
+  return {
+    headline: `このブロックで${digit}が入るマスを\n探します`,
+    detail: `${digit}がある行と列を除いて探します`,
+  };
+}
+
+function createRuleStep(
+  kind: NanpureTutorialRuleId,
+  cellIndex: number,
+): NanpureTutorialMarkedCellStep {
+  return {
+    kind: "marked-cell",
+    message: ruleStepMessages[kind],
+    introducedRuleId: kind,
+    cuedCellIndex: cellIndex,
+    reasonUnits: [getCellUnit(cellIndex, kind)],
+    cuedDigit: null,
+  };
+}
+
+function createPlacementStep(cellIndex: number): NanpureTutorialPlacementStep {
+  const digit = getSolutionDigit(cellIndex);
+  return {
+    kind: "placement",
+    message: describePlacementSearch(digit),
+    introducedRuleId: null,
+    digit,
+    block: getCellUnit(cellIndex, "block"),
+    cellIndex,
+  };
+}
+
+const operationCellIndex = cellAt(3, 5);
+const operationDigit = getSolutionDigit(operationCellIndex);
+
+/**
+ * 操作で入れる3行5列の8で、3行目の空きは3行3列だけになる。
+ * ブロックの手順で入れた5行3列の2も、最後の手順で2の置き場所を絞る数字の1つになる。
+ */
 const steps: readonly NanpureTutorialStep[] = [
   {
+    kind: "marked-cell",
     message: {
-      headline: "マスを選んで、下の数字を押します",
-      detail: `印の付いたマスに${getSolutionDigit(cellAt(6, 3))}を入れてください`,
+      headline: "マスを選んで下の数字を押します",
+      detail: `印のマスに${operationDigit}を入れます`,
     },
     introducedRuleId: null,
-    cuedCellIndex: cellAt(6, 3),
+    cuedCellIndex: operationCellIndex,
     reasonUnits: [],
-    cuedDigit: getSolutionDigit(cellAt(6, 3)),
+    cuedDigit: operationDigit,
   },
-  {
-    message: {
-      headline: "どの行にも\n1〜9が1つずつ入ります",
-      detail: "この行にない数字を入れてください",
-    },
-    introducedRuleId: "row",
-    cuedCellIndex: cellAt(6, 9),
-    reasonUnits: [getCellUnit(cellAt(6, 9), "row")],
-    cuedDigit: null,
-  },
-  {
-    message: {
-      headline: "どの列にも\n1〜9が1つずつ入ります",
-      detail: "この列にない数字を入れてください",
-    },
-    introducedRuleId: "column",
-    cuedCellIndex: cellAt(7, 1),
-    reasonUnits: [getCellUnit(cellAt(7, 1), "column")],
-    cuedDigit: null,
-  },
-  {
-    message: {
-      headline: "太線で区切ったブロックにも\n1〜9が1つずつ入ります",
-      detail: "このブロックにない数字を入れてください",
-    },
-    introducedRuleId: "block",
-    cuedCellIndex: cellAt(4, 9),
-    reasonUnits: [getCellUnit(cellAt(4, 9), "block")],
-    cuedDigit: null,
-  },
-  {
-    message: {
-      headline: "行・列・ブロックを合わせると\n入る数字が1つに決まります",
-      detail: "3つのどこにもない数字を入れてください",
-    },
-    introducedRuleId: null,
-    cuedCellIndex: cellAt(3, 6),
-    reasonUnits: ruleIds.map((kind) => getCellUnit(cellAt(3, 6), kind)),
-    cuedDigit: null,
-  },
+  createRuleStep("row", cellAt(3, 3)),
+  createRuleStep("column", cellAt(6, 6)),
+  createRuleStep("block", cellAt(5, 3)),
+  createPlacementStep(cellAt(6, 8)),
 ];
 
 function isGiven(cellIndex: number): boolean {
@@ -228,30 +282,85 @@ function listEarnedKinds(
   return ruleIds.filter((kind) => earnedRuleIds.includes(kind));
 }
 
-/**
- * 空きマスの数字が、手に入れたルールだけで決まるか。入り得る数字は本番と同じ求め方で、手に入れたまとまりだけから求める。
- * まとまりで最後に空いたマスなら、そのまとまりに無い数字に決まる。決め手はそのまとまり。
- * それで決まらなければ、手に入れたまとまりを合わせて入らない数字を除き、残りが1つなら決まる。決め手は合わせたまとまり。
- */
-function deduceCell(
+function deduceLastEmptyCell(
   board: NanpureBoard,
   earnedRuleIds: readonly NanpureTutorialRuleId[],
   cellIndex: number,
-): NanpureDeduction | null {
+): NanpureLastEmptyDeduction | null {
   if (board[cellIndex] !== null) {
     return null;
   }
-  const kinds = listEarnedKinds(earnedRuleIds);
-  for (const kind of kinds) {
+  for (const kind of listEarnedKinds(earnedRuleIds)) {
     const [digit, ...others] = getNanpureCandidates(board, cellIndex, [kind]);
     if (digit !== undefined && others.length === 0) {
-      return { digit, reasonUnits: [getCellUnit(cellIndex, kind)] };
+      return { digit, unit: getCellUnit(cellIndex, kind) };
     }
   }
+  return null;
+}
 
-  const [digit, ...others] = getNanpureCandidates(board, cellIndex, kinds);
-  return digit !== undefined && others.length === 0
-    ? { digit, reasonUnits: kinds.map((kind) => getCellUnit(cellIndex, kind)) }
+function findDigitCellIndices(
+  board: NanpureBoard,
+  unit: NanpureTutorialUnit,
+  digit: NanpureDigit,
+): number[] {
+  return getNanpureTutorialUnitCellIndices(unit).filter(
+    (cellIndex) => board[cellIndex] === digit,
+  );
+}
+
+function findCrossingDigitCellIndices(
+  board: NanpureBoard,
+  cellIndex: number,
+  digit: NanpureDigit,
+): number[] {
+  return (["row", "column"] as const).flatMap((kind) =>
+    findDigitCellIndices(board, getCellUnit(cellIndex, kind), digit),
+  );
+}
+
+function findEmptyCellIndices(
+  board: NanpureBoard,
+  unit: NanpureTutorialUnit,
+): number[] {
+  return getNanpureTutorialUnitCellIndices(unit).filter(
+    (cellIndex) => board[cellIndex] === null,
+  );
+}
+
+function findEliminatingCellIndices(
+  board: NanpureBoard,
+  block: NanpureTutorialUnit,
+  digit: NanpureDigit,
+): number[] {
+  const cellIndices = new Set(
+    findEmptyCellIndices(board, block).flatMap((cellIndex) =>
+      findCrossingDigitCellIndices(board, cellIndex, digit),
+    ),
+  );
+  return [...cellIndices].sort((left, right) => left - right);
+}
+
+function findPlacement(
+  board: NanpureBoard,
+  blockIndex: number,
+  digit: NanpureDigit,
+): NanpureTutorialPlacement | null {
+  const block: NanpureTutorialUnit = { kind: "block", index: blockIndex };
+  if (findDigitCellIndices(board, block, digit).length > 0) {
+    return null;
+  }
+  const [cellIndex, ...others] = findEmptyCellIndices(board, block).filter(
+    (emptyCellIndex) =>
+      findCrossingDigitCellIndices(board, emptyCellIndex, digit).length === 0,
+  );
+  return cellIndex !== undefined && others.length === 0
+    ? {
+        digit,
+        block,
+        cellIndex,
+        eliminatingCellIndices: findEliminatingCellIndices(board, block, digit),
+      }
     : null;
 }
 
@@ -288,8 +397,8 @@ function getMoveReasonUnits(
   // 決め手は、正しく入れた数字と最初の数字だけから読む。
   const board = keepCorrectDigits(before);
   board[cellIndex] = null;
-  const deduction = deduceCell(board, earnedRuleIds, cellIndex);
-  return deduction?.digit === digit ? deduction.reasonUnits : [];
+  const deduction = deduceLastEmptyCell(board, earnedRuleIds, cellIndex);
+  return deduction?.digit === digit ? [deduction.unit] : [];
 }
 
 function startNanpureTutorial(): NanpureTutorialBoardState {
@@ -300,6 +409,27 @@ function getNanpureTutorialGoal(): NanpureTutorialBoardState {
   return { board: solution, moveCount: 0, lastMove: null };
 }
 
+function getStepAnswerCellIndex(step: NanpureTutorialStep): number {
+  return step.kind === "marked-cell" ? step.cuedCellIndex : step.cellIndex;
+}
+
+function isOutsideStep(
+  step: NanpureTutorialStep | null,
+  { cellIndex, digit }: NanpureTutorialAction,
+): boolean {
+  if (step === null) {
+    return false;
+  }
+  if (getStepAnswerCellIndex(step) !== cellIndex) {
+    return true;
+  }
+  return (
+    step.kind === "marked-cell" &&
+    step.cuedDigit !== null &&
+    step.cuedDigit !== digit
+  );
+}
+
 function performNanpureTutorialAction(
   { step, earnedRuleIds }: NanpureTutorialSituation,
   state: NanpureTutorialBoardState,
@@ -307,15 +437,11 @@ function performNanpureTutorialAction(
 ): { state: NanpureTutorialBoardState; outcome: TutorialMoveOutcome } {
   const { cellIndex, digit } = action;
   const current = state.board[cellIndex];
-  const outsideStep =
-    step !== null &&
-    (step.cuedCellIndex !== cellIndex ||
-      (step.cuedDigit !== null && step.cuedDigit !== digit));
   if (
     current === undefined ||
     current === digit ||
     isGiven(cellIndex) ||
-    outsideStep
+    isOutsideStep(step, action)
   ) {
     return { state, outcome: "ignored" };
   }
@@ -353,12 +479,6 @@ function performNanpureTutorialAction(
   return { state: next, outcome: "continued" };
 }
 
-const unitNames = {
-  row: "行",
-  column: "列",
-  block: "ブロック",
-} as const satisfies Record<NanpureTutorialRuleId, string>;
-
 /**
  * 直前の手は正しく、前に入れた違う数字との重なりが残っているなら、その違う数字のマスを直させる。マスには印を付ける。
  */
@@ -373,23 +493,63 @@ function describeNanpureTutorialViolation(
   if (!lastMove || units.length === 0) {
     return {
       headline: "印のマスの数字が違います",
-      detail: "印のマスを選んで、別の数字を押してください",
+      detail: "印のマスを選んで\n別の数字を入れます",
     };
   }
   const unitNameList = units.map((unit) => unitNames[unit.kind]).join("と");
   return {
-    headline: `この${unitNameList}には、もう${lastMove.digit}があります`,
-    detail: "別の数字を押すと変わります",
+    headline: `この${unitNameList}にはもう${lastMove.digit}があります`,
+    detail: "別の数字を押すと入れ直せます",
+  };
+}
+
+/** 直前に入れた数字が、どこにも重ならないのに答えと違うときの一言。そうでなければ `null`。 */
+export function describeNanpureTutorialMistake({
+  lastMove,
+}: NanpureTutorialBoardState): TutorialMessage | null {
+  if (
+    !lastMove ||
+    lastMove.violated ||
+    lastMove.digit === getSolutionDigit(lastMove.cellIndex)
+  ) {
+    return null;
+  }
+  return {
+    headline: `${lastMove.digit}は別のマスに入ります`,
+    detail: "本番では入れ間違いが\nミスに数えられます",
   };
 }
 
 export const NANPURE_TUTORIAL_GIVENS = givens;
 
+export const NANPURE_TUTORIAL_PROGRESS_STEP_COUNT = givens.filter(
+  (cell) => cell === null,
+).length;
+
+/** 空いていたマスのうち、解の数字を入れたマスの割合。 */
+export function getNanpureTutorialProgressRatio({
+  board,
+}: NanpureTutorialBoardState): number {
+  const solvedCount = board.filter(
+    (cell, cellIndex) =>
+      givens[cellIndex] === null && cell === solution[cellIndex],
+  ).length;
+  return solvedCount / NANPURE_TUTORIAL_PROGRESS_STEP_COUNT;
+}
+
 export function isNanpureTutorialCellSelectable(
   { step }: NanpureTutorialSituation,
+  state: NanpureTutorialBoardState,
   cellIndex: number,
 ): boolean {
-  return step === null || step.cuedCellIndex === cellIndex;
+  if (step === null) {
+    return true;
+  }
+  return step.kind === "marked-cell"
+    ? step.cuedCellIndex === cellIndex
+    : findEmptyCellIndices(keepCorrectDigits(state.board), step.block).includes(
+        cellIndex,
+      );
 }
 
 export function getNanpureTutorialConflictCellIndices(
@@ -423,10 +583,80 @@ export function getNanpureTutorialStepCellIndex(
   { step }: NanpureTutorialSituation,
   state: NanpureTutorialBoardState,
 ): number | null {
-  return step !== null &&
+  return step?.kind === "marked-cell" &&
     state.board[step.cuedCellIndex] !== solution[step.cuedCellIndex]
     ? step.cuedCellIndex
     : null;
+}
+
+export type NanpureTutorialFocus = {
+  cellIndices: readonly number[];
+  units: readonly NanpureTutorialUnit[];
+};
+
+export function getNanpureTutorialStepFocus(
+  { step }: NanpureTutorialSituation,
+  state: NanpureTutorialBoardState,
+): NanpureTutorialFocus | null {
+  if (step === null) {
+    return null;
+  }
+  return step.kind === "marked-cell"
+    ? { cellIndices: [step.cuedCellIndex], units: step.reasonUnits }
+    : {
+        cellIndices: findEliminatingCellIndices(
+          keepCorrectDigits(state.board),
+          step.block,
+          step.digit,
+        ),
+        units: [step.block],
+      };
+}
+
+export function describeNanpureTutorialStep(
+  situation: NanpureTutorialSituation,
+  state: NanpureTutorialBoardState,
+  selectedCellIndex: number | null,
+): TutorialMessage | null {
+  const { step } = situation;
+  if (
+    step === null ||
+    step.kind === "marked-cell" ||
+    selectedCellIndex === null ||
+    !isNanpureTutorialCellSelectable(situation, state, selectedCellIndex)
+  ) {
+    return step?.message ?? null;
+  }
+  const { digit } = step;
+  if (selectedCellIndex === step.cellIndex) {
+    return {
+      headline: `ここが${digit}の入るマスです`,
+      detail: `下の${digit}を押します`,
+    };
+  }
+  const board = keepCorrectDigits(state.board);
+  const unitNameList = (["row", "column"] as const)
+    .filter(
+      (kind) =>
+        findDigitCellIndices(board, getCellUnit(selectedCellIndex, kind), digit)
+          .length > 0,
+    )
+    .map((kind) => unitNames[kind])
+    .join("と");
+  return {
+    headline: `この${unitNameList}にはもう${digit}があります`,
+    detail: "ほかのマスを選びます",
+  };
+}
+
+export function getNanpureTutorialCuedDigit(
+  { step }: NanpureTutorialSituation,
+  selectedCellIndex: number | null,
+): NanpureDigit | null {
+  if (step === null || selectedCellIndex !== getStepAnswerCellIndex(step)) {
+    return null;
+  }
+  return step.kind === "placement" ? step.digit : step.cuedDigit;
 }
 
 /** 重なった2つのマスのどちらが違うかは盤面だけでは分からないので、違反の一言と一緒に印で示す。 */
@@ -448,28 +678,66 @@ export function findNanpureTutorialWrongCellIndex(
   );
 }
 
-/**
- * 手を離した後、手が止まったときに示すマス。
- * 答えと違う数字があれば、まずそれを直させる。無ければ、今の盤面と手に入れたルールだけで決まる空きマスを、
- * まとまりで最後に空いたマスから先に示す。無ければ `null`。
- */
-export function findNanpureTutorialHintCellIndex(
+export type NanpureTutorialHint =
+  | { kind: "wrong-digit"; cellIndex: number }
+  | {
+      kind: "last-empty";
+      cellIndex: number;
+      unit: NanpureTutorialUnit;
+      message: TutorialMessage;
+    }
+  | {
+      kind: "placement";
+      placement: NanpureTutorialPlacement;
+      message: TutorialMessage;
+    };
+
+function findLastEmptyHint(
+  board: NanpureBoard,
+  earnedRuleIds: readonly NanpureTutorialRuleId[],
+): NanpureTutorialHint | null {
+  for (const cellIndex of allCellIndices) {
+    const deduction = deduceLastEmptyCell(board, earnedRuleIds, cellIndex);
+    if (deduction) {
+      return {
+        kind: "last-empty",
+        cellIndex,
+        unit: deduction.unit,
+        message: ruleStepMessages[deduction.unit.kind],
+      };
+    }
+  }
+  return null;
+}
+
+function findPlacementHint(board: NanpureBoard): NanpureTutorialHint | null {
+  for (const blockIndex of unitCellIndices.block.keys()) {
+    for (const digit of NANPURE_DIGITS) {
+      const placement = findPlacement(board, blockIndex, digit);
+      if (placement) {
+        return {
+          kind: "placement",
+          placement,
+          message: describePlacementHint(digit),
+        };
+      }
+    }
+  }
+  return null;
+}
+
+export function findNanpureTutorialHint(
   situation: NanpureTutorialSituation,
   state: NanpureTutorialBoardState,
-): number | null {
-  const { earnedRuleIds } = situation;
+): NanpureTutorialHint | null {
   const wrongCellIndex = findNanpureTutorialWrongCellIndex(situation, state);
   if (wrongCellIndex !== null) {
-    return wrongCellIndex;
+    return { kind: "wrong-digit", cellIndex: wrongCellIndex };
   }
-  const deductions = allCellIndices.flatMap((cellIndex) => {
-    const deduction = deduceCell(state.board, earnedRuleIds, cellIndex);
-    return deduction ? [{ cellIndex, ...deduction }] : [];
-  });
-  const hint =
-    deductions.find(({ reasonUnits }) => reasonUnits.length === 1) ??
-    deductions[0];
-  return hint?.cellIndex ?? null;
+  return (
+    findLastEmptyHint(state.board, situation.earnedRuleIds) ??
+    findPlacementHint(state.board)
+  );
 }
 
 export const nanpureTutorial: Tutorial<
@@ -480,27 +748,26 @@ export const nanpureTutorial: Tutorial<
 > = {
   intro: {
     purpose: "空いたマスに1〜9の数字を入れて\n盤面を完成させるパズルです",
-    goalCaption: "この盤面がゴールです",
-    startCaption: "最初はいくつかのマスが空いています",
+    goalCaption: "紫の数字を入れていきます",
   },
   rules: [
-    { id: "row", label: "行に1つずつ" },
-    { id: "column", label: "列に1つずつ" },
-    { id: "block", label: "ブロックに1つずつ" },
+    { id: "row", label: "全ての行に1〜9が1つずつ入ります" },
+    { id: "column", label: "全ての列に1〜9が1つずつ入ります" },
+    { id: "block", label: "全てのブロックに1〜9が1つずつ入ります" },
   ],
   steps,
   freePlay: {
-    headline: "あとは残りを埋めれば完成です",
-    detail: null,
+    headline: "残りも埋めてみましょう",
+    detail: "ブロックごとに数字が入るマスを探します",
   },
   completion: {
     home: {
       headline: "完成です",
-      detail: "どのレベルも同じルールです",
+      detail: "本番もブロックごとに数字が入るマスを探すと進められます",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も同じルールです",
+      detail: "プレイ中の盤面と同じルールです",
     },
   },
   start: startNanpureTutorial,
@@ -509,4 +776,11 @@ export const nanpureTutorial: Tutorial<
   describeViolation: describeNanpureTutorialViolation,
 };
 
-export const _private = { givens, solution, cellAt, deduceCell };
+export const _private = {
+  givens,
+  solution,
+  cellAt,
+  getStepAnswerCellIndex,
+  deduceLastEmptyCell,
+  findPlacement,
+};
