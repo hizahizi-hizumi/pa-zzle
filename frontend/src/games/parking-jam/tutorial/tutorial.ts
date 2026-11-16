@@ -5,12 +5,14 @@ import {
   type ParkingJamDirection,
   type ParkingJamMove,
   type ParkingJamState,
+  type ParkingJamVehicle,
   type ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
 import {
   applyParkingJamMove,
   findParkingJamExitContact,
   listParkingJamLegalMoves,
+  listParkingJamMoveBlockers,
   type ParkingJamExitContact,
 } from "@/games/parking-jam/puzzle/rules";
 import type {
@@ -29,7 +31,9 @@ export type ParkingJamTutorialBlocker = "road" | "planter" | "car";
 
 export type ParkingJamTutorialStep = TutorialStep<ParkingJamTutorialRuleId> & {
   vehicleId: ParkingJamVehicleId;
-  // 手順で示すルールで出られない手。その手の車と当たるものが、印の車をどう出すかを決める（決め手）。操作を見せる手順では `null`。
+  // どちらへも出られる手順では、手前の道路へ出る向きにする。
+  exitDirection: ParkingJamDirection;
+  // 手順で示すルールで出られない手。その手の車と、その手でぶつかるものが、印の車をどう出すかを決める（決め手）。操作を教える手順では `null`。
   ruledOutMove: ParkingJamMove | null;
 };
 
@@ -38,6 +42,14 @@ export type ParkingJamTutorialContactedMove = {
   contact: ParkingJamExitContact;
 };
 
+export type ParkingJamTutorialFix =
+  | { kind: "opposite" }
+  | {
+      kind: "clear";
+      direction: ParkingJamDirection;
+      vehicleIds: readonly ParkingJamVehicleId[];
+    };
+
 export type ParkingJamTutorialMove = ParkingJamMove &
   (
     | { type: "exited" }
@@ -45,6 +57,7 @@ export type ParkingJamTutorialMove = ParkingJamMove &
         type: "blocked";
         blocker: ParkingJamTutorialBlocker;
         contact: ParkingJamExitContact;
+        fix: ParkingJamTutorialFix | null;
       }
   );
 
@@ -61,83 +74,89 @@ type ParkingJamTutorialSituation = TutorialSituation<
 >;
 
 /**
- * 5×5の駐車場に7台。
+ * 6×6の駐車場に8台（うち3台は3マスの長い車）と植え込み1つ。
  *
  * ```text
- *        上の道路: 2〜4列
- *        1 2 3 4 5
- *   1    . c . . .
- *   2    . c . a a     左の道路: 2〜3行
- *   3    b b . . #     右の道路: 3〜5行
- *   4    d d e f f
- *   5    . . e g g
- *        下の道路: 1〜3列
+ *          上の道路: 2〜3列
+ *        1 2 3 4 5 6
+ *   1    . d . . f f
+ *   2    . d . . e e     左の道路: 1〜5行
+ *   3    g g g h h h
+ *   4    . . . a a .     右の道路: 4〜6行
+ *   5    c c c . # .
+ *   6    . b b . . .
+ *          下の道路: 2〜4列
  * ```
  *
- * - `e`: どちらへも出られる。最初に出させる。
- * - `g`: 左は道路がなく、右へ出る。
- * - `b`: 右は植え込みに当たり、左へ出る。
- * - `c`: 上へ出られる。`a` の左を塞いでいるので、先に出させる。
- * - `a`: 右は道路がなく、左は `c` に当たる。`c` が出た後、手を離してから自分で出させる。
- * - `d`: 左は道路がなく、右は `f` に当たる。手を離した後に、`f` を先に出して読ませる。
+ * - `a`: どちらへも出られる。最初に出させて、操作を教える。
+ * - `b`: 左は道路がなく、右へ出る。
+ * - `c`: 右は植え込みにぶつかり、左へ出る。
+ * - `d`: 下は `g` にぶつかり、上へ出る。`e` の左を塞いでいるので、先に出させる。
+ * - 手を離した後: `e`・`f`・`g` は左へ出られる。`h` は右に道路がなく、左は `g` に塞がれているので、`g` を先に出すと読ませる。
  */
 const board: ParkingJamBoard = {
-  width: 5,
-  height: 5,
+  width: 6,
+  height: 6,
   vehicles: [
-    { id: "c", row: 0, column: 1, orientation: "vertical", length: 2 },
-    { id: "a", row: 1, column: 3, orientation: "horizontal", length: 2 },
-    { id: "b", row: 2, column: 0, orientation: "horizontal", length: 2 },
-    { id: "d", row: 3, column: 0, orientation: "horizontal", length: 2 },
-    { id: "e", row: 3, column: 2, orientation: "vertical", length: 2 },
-    { id: "f", row: 3, column: 3, orientation: "horizontal", length: 2 },
-    { id: "g", row: 4, column: 3, orientation: "horizontal", length: 2 },
+    { id: "d", row: 0, column: 1, orientation: "vertical", length: 2 },
+    { id: "f", row: 0, column: 4, orientation: "horizontal", length: 2 },
+    { id: "e", row: 1, column: 4, orientation: "horizontal", length: 2 },
+    { id: "g", row: 2, column: 0, orientation: "horizontal", length: 3 },
+    { id: "h", row: 2, column: 3, orientation: "horizontal", length: 3 },
+    { id: "a", row: 3, column: 3, orientation: "horizontal", length: 2 },
+    { id: "c", row: 4, column: 0, orientation: "horizontal", length: 3 },
+    { id: "b", row: 5, column: 1, orientation: "horizontal", length: 2 },
   ],
-  fixedAreas: [{ row: 2, column: 4, width: 1, height: 1 }],
+  fixedAreas: [{ row: 4, column: 4, width: 1, height: 1 }],
   roadOpenings: [
-    { side: "up", startOffset: 1, length: 3 },
-    { side: "left", startOffset: 1, length: 2 },
-    { side: "right", startOffset: 2, length: 3 },
-    { side: "down", startOffset: 0, length: 3 },
+    { side: "up", startOffset: 1, length: 2 },
+    { side: "right", startOffset: 3, length: 3 },
+    { side: "down", startOffset: 1, length: 3 },
+    { side: "left", startOffset: 0, length: 5 },
   ],
 };
 
-const blockerMessages = {
-  road: "進む先に道路がないと\n出られません",
-  planter: "植え込みがあると\n通れません",
-  car: "ほかの車があると\n通れません",
-} as const satisfies Record<ParkingJamTutorialBlocker, string>;
+const missNotice = "これからは出られない向きへ\n動かすとミスになります";
+
+const clearTheWayMessage = "ぶつかる車を先に出します";
 
 const steps: readonly ParkingJamTutorialStep[] = [
   {
     message: {
       headline: "車を出したい向きへ\nスワイプします",
-      detail: "上にも下にも出られます",
+      detail: "前にも後ろにも出せます",
     },
     introducedRuleId: "straight",
-    vehicleId: "e",
+    vehicleId: "a",
+    exitDirection: "right",
     ruledOutMove: null,
   },
   {
-    message: { headline: blockerMessages.road, detail: null },
+    message: { headline: "道路につながる向きへ出します", detail: null },
     introducedRuleId: "road",
-    vehicleId: "g",
-    ruledOutMove: { vehicleId: "g", direction: "left" },
-  },
-  {
-    message: { headline: blockerMessages.planter, detail: null },
-    introducedRuleId: "planter",
     vehicleId: "b",
-    ruledOutMove: { vehicleId: "b", direction: "right" },
+    exitDirection: "right",
+    ruledOutMove: { vehicleId: "b", direction: "left" },
   },
   {
     message: {
-      headline: blockerMessages.car,
-      detail: "じゃまな車から出します",
+      headline: "植え込みにはぶつかります\n植え込みのない向きへ出します",
+      detail: null,
+    },
+    introducedRuleId: "planter",
+    vehicleId: "c",
+    exitDirection: "left",
+    ruledOutMove: { vehicleId: "c", direction: "right" },
+  },
+  {
+    message: {
+      headline: `植え込みだけでなくほかの車にもぶつかります\n${clearTheWayMessage}`,
+      detail: null,
     },
     introducedRuleId: "car",
-    vehicleId: "c",
-    ruledOutMove: { vehicleId: "a", direction: "left" },
+    vehicleId: "d",
+    exitDirection: "up",
+    ruledOutMove: { vehicleId: "e", direction: "left" },
   },
 ];
 
@@ -165,6 +184,25 @@ const contactBlockers = {
   ParkingJamExitContact["blocker"]["kind"],
   ParkingJamTutorialBlocker
 >;
+
+const oppositeDirections = {
+  up: "down",
+  down: "up",
+  left: "right",
+  right: "left",
+} as const satisfies Record<ParkingJamDirection, ParkingJamDirection>;
+
+function findVehicle(vehicleId: ParkingJamVehicleId): ParkingJamVehicle | null {
+  return board.vehicles.find(({ id }) => id === vehicleId) ?? null;
+}
+
+function listVehicleDirections(
+  vehicle: ParkingJamVehicle,
+): readonly ParkingJamDirection[] {
+  return vehicle.orientation === "horizontal"
+    ? ["left", "right"]
+    : ["up", "down"];
+}
 
 export function findParkingJamTutorialContact(
   puzzle: ParkingJamState,
@@ -223,11 +261,39 @@ function performParkingJamTutorialAction(
         type: "blocked",
         blocker: contactBlockers[contact.blocker.kind],
         contact,
+        fix: findFix(puzzle, move),
       },
       puzzle,
     ),
     outcome: "violated",
   };
+}
+
+function findFix(
+  puzzle: ParkingJamState,
+  move: ParkingJamMove,
+): ParkingJamTutorialFix | null {
+  const opposite = {
+    vehicleId: move.vehicleId,
+    direction: oppositeDirections[move.direction],
+  };
+  if (listParkingJamMoveBlockers(board, puzzle, opposite).length === 0) {
+    return { kind: "opposite" };
+  }
+  // 問題はどの順に出しても出し切れるので、どちらへも出られない車には、車だけに塞がれた向きが必ずある。
+  for (const direction of [move.direction, opposite.direction]) {
+    const blockers = listParkingJamMoveBlockers(board, puzzle, {
+      vehicleId: move.vehicleId,
+      direction,
+    });
+    const vehicleIds = blockers.flatMap((blocker) =>
+      blocker.kind === "vehicle" ? [blocker.vehicleId] : [],
+    );
+    if (blockers.length > 0 && vehicleIds.length === blockers.length) {
+      return { kind: "clear", direction, vehicleIds };
+    }
+  }
+  return null;
 }
 
 const directionNames = {
@@ -237,14 +303,22 @@ const directionNames = {
   left: "左",
 } as const satisfies Record<ParkingJamDirection, string>;
 
-const violationMessages = {
-  road: (direction) => `${direction}へ進む先に道路がないので\n出られません`,
-  planter: (direction) => `${direction}に植え込みがあるので\n通れません`,
-  car: (direction) => `${direction}にほかの車があるので\n通れません`,
-} as const satisfies Record<
-  ParkingJamTutorialBlocker,
-  (direction: string) => string
->;
+function describeFix(fix: ParkingJamTutorialFix | null): string | null {
+  switch (fix?.kind) {
+    case "opposite":
+      return "反対の向きへ出します";
+    case "clear":
+      return `${directionNames[fix.direction]}の車を先に出します`;
+    case undefined:
+      return null;
+  }
+}
+
+const violationHeadlines = {
+  road: "この先は道路につながっていません",
+  planter: "植え込みにぶつかりました",
+  car: "ほかの車にぶつかりました",
+} as const satisfies Record<ParkingJamTutorialBlocker, string>;
 
 function describeParkingJamTutorialViolation(
   situation: ParkingJamTutorialSituation,
@@ -254,10 +328,8 @@ function describeParkingJamTutorialViolation(
     return situation.step?.message ?? parkingJamTutorial.freePlay;
   }
   return {
-    headline: violationMessages[lastMove.blocker](
-      directionNames[lastMove.direction],
-    ),
-    detail: null,
+    headline: violationHeadlines[lastMove.blocker],
+    detail: describeFix(lastMove.fix),
   };
 }
 
@@ -270,16 +342,80 @@ export function findParkingJamTutorialDecider(
   return move && contact ? { move, contact } : null;
 }
 
-export function getParkingJamTutorialStepVehicle({
-  step,
-}: ParkingJamTutorialSituation): ParkingJamVehicleId | null {
-  return step?.vehicleId ?? null;
+export function listParkingJamTutorialStepContacts(
+  { step }: ParkingJamTutorialSituation,
+  { puzzle }: ParkingJamTutorialBoardState,
+): ParkingJamTutorialContactedMove[] {
+  const vehicle = step && findVehicle(step.vehicleId);
+  if (!vehicle) {
+    return [];
+  }
+  return listVehicleDirections(vehicle).flatMap((direction) => {
+    const move = { vehicleId: vehicle.id, direction };
+    const contact = findParkingJamTutorialContact(puzzle, move);
+    return contact ? [{ move, contact }] : [];
+  });
 }
 
-export function findParkingJamTutorialHintVehicle({
+export function getParkingJamTutorialStepMove({
+  step,
+}: ParkingJamTutorialSituation): ParkingJamMove | null {
+  return step && { vehicleId: step.vehicleId, direction: step.exitDirection };
+}
+
+function findMoveBlockedOnlyBy(
+  puzzle: ParkingJamState,
+  blockerId: ParkingJamVehicleId,
+): ParkingJamMove | null {
+  for (const vehicleId of puzzle.remainingVehicleIds) {
+    const vehicle = findVehicle(vehicleId);
+    if (!vehicle || vehicleId === blockerId) {
+      continue;
+    }
+    for (const direction of listVehicleDirections(vehicle)) {
+      const move = { vehicleId, direction };
+      const blockers = listParkingJamMoveBlockers(board, puzzle, move);
+      const onlyBlocker = blockers.length === 1 ? blockers[0] : null;
+      if (
+        onlyBlocker?.kind === "vehicle" &&
+        onlyBlocker.vehicleId === blockerId
+      ) {
+        return move;
+      }
+    }
+  }
+  return null;
+}
+
+export function findParkingJamTutorialHint({
   puzzle,
-}: ParkingJamTutorialBoardState): ParkingJamVehicleId | null {
-  return listParkingJamLegalMoves(board, puzzle)[0]?.vehicleId ?? null;
+}: ParkingJamTutorialBoardState): {
+  vehicleId: ParkingJamVehicleId;
+  clearedMove: ParkingJamTutorialContactedMove | null;
+} | null {
+  const exitableVehicleIds = [
+    ...new Set(
+      listParkingJamLegalMoves(board, puzzle).map(({ vehicleId }) => vehicleId),
+    ),
+  ];
+  for (const vehicleId of exitableVehicleIds) {
+    const move = findMoveBlockedOnlyBy(puzzle, vehicleId);
+    const contact = move && findParkingJamTutorialContact(puzzle, move);
+    if (move && contact) {
+      return { vehicleId, clearedMove: { move, contact } };
+    }
+  }
+  const vehicleId = exitableVehicleIds[0];
+  return vehicleId === undefined ? null : { vehicleId, clearedMove: null };
+}
+
+export function describeParkingJamTutorialHint(hint: {
+  clearedMove: ParkingJamTutorialContactedMove | null;
+}): TutorialMessage {
+  return {
+    headline: hint.clearedMove ? "この車を先に出します" : "この車は今出せます",
+    detail: null,
+  };
 }
 
 export function listParkingJamTutorialSolution(): ParkingJamMove[] {
@@ -295,6 +431,17 @@ export function listParkingJamTutorialSolution(): ParkingJamMove[] {
 
 export const PARKING_JAM_TUTORIAL_BOARD = board;
 
+export const PARKING_JAM_TUTORIAL_PROGRESS_STEP_COUNT = board.vehicles.length;
+
+export function getParkingJamTutorialProgressRatio({
+  puzzle,
+}: ParkingJamTutorialBoardState): number {
+  const exitedCount =
+    PARKING_JAM_TUTORIAL_PROGRESS_STEP_COUNT -
+    puzzle.remainingVehicleIds.length;
+  return exitedCount / PARKING_JAM_TUTORIAL_PROGRESS_STEP_COUNT;
+}
+
 export const parkingJamTutorial: Tutorial<
   ParkingJamTutorialRuleId,
   ParkingJamTutorialStep,
@@ -303,30 +450,22 @@ export const parkingJamTutorial: Tutorial<
 > = {
   intro: {
     purpose: "駐車場の車を\nすべて道路へ出すパズルです",
-    goalCaption: "駐車場が空になったらゴールです",
-    startCaption: "最初は車でいっぱいです",
+    goalCaption: "駐車場を空にすると完成です",
   },
   rules: [
-    { id: "straight", label: "前か後ろへ" },
-    { id: "road", label: "道路へ出る" },
-    { id: "planter", label: "植え込み" },
-    { id: "car", label: "ほかの車" },
+    { id: "straight", label: "車は前か後ろへ出します" },
+    { id: "road", label: "道路につながる向きへ出します" },
+    { id: "planter", label: "植え込みのない向きへ出します" },
+    { id: "car", label: "ぶつかる車を先に出します" },
   ],
   steps,
   freePlay: {
-    headline: "残りの車も出すと完成です",
-    detail: null,
+    headline: "残りの車も出してみましょう",
+    detail: "本番は出られない向きへ\n動かすとミスになります",
   },
   completion: {
-    home: {
-      headline: "完成です",
-      detail:
-        "長い車も同じルールで出せます\n出られない向きへ動かすとミスに数えます",
-    },
-    play: {
-      headline: "完成です",
-      detail: "出られない向きへ動かすとミスに数えます",
-    },
+    home: { headline: "完成です", detail: missNotice },
+    play: { headline: "完成です", detail: missNotice },
   },
   start: startParkingJamTutorial,
   goal: getParkingJamTutorialGoal,

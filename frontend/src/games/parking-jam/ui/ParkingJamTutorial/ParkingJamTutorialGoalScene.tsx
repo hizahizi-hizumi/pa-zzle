@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { prefersReducedMotion } from "@/lib/motion";
 
@@ -14,7 +14,7 @@ type ParkingJamTutorialGoalSceneProps = {
 };
 
 /**
- * 導入のゴールの場面で、盤面を描き始めたときから車を1台ずつ出していき、空の駐車場にする。
+ * 入口のゴールの場面で、盤面を描き始めたときから車を1台ずつ出していき、空の駐車場にする。
  * 出し終えるまでを場面の動きとし、押したりキーを押したりして場面の動きを終えたら、空の駐車場をすぐ見せる。
  * 動きを減らす設定では、空の駐車場をすぐ見せる。
  */
@@ -25,8 +25,6 @@ export function ParkingJamTutorialGoalScene({
   children,
 }: ParkingJamTutorialGoalSceneProps) {
   const [departed, setDeparted] = useState(prefersReducedMotion);
-  const startedAtRef = useRef(Date.now());
-  const notifiedRef = useRef(false);
   // 場面の動きを見せ始めたか。見せ始めた後に `playing` が `false` になれば、場面の動きを終えたとみる。
   const [shown, setShown] = useState(playing);
   if (playing && !shown) {
@@ -35,18 +33,18 @@ export function ParkingJamTutorialGoalScene({
   const departing = !departed && !(shown && !playing);
 
   useEffect(() => {
-    if (!playing || notifiedRef.current) {
+    if (departed) {
       return;
     }
-    const elapsedMs = Date.now() - startedAtRef.current;
-    const remainingMs = departed ? 0 : Math.max(0, durationMs - elapsedMs);
-    const timer = window.setTimeout(() => {
-      notifiedRef.current = true;
-      setDeparted(true);
-      onSceneEnd();
-    }, remainingMs);
+    const timer = window.setTimeout(() => setDeparted(true), durationMs);
     return () => window.clearTimeout(timer);
-  }, [playing, departed, durationMs, onSceneEnd]);
+  }, [departed, durationMs]);
+
+  useEffect(() => {
+    if (playing && departed) {
+      onSceneEnd();
+    }
+  }, [playing, departed, onSceneEnd]);
 
   return children(departing);
 }
