@@ -5,12 +5,11 @@ import {
   useRef,
   useState,
 } from "react";
-
 import {
-  type TutorialBoardIntro,
   type TutorialFinish,
   TutorialOverlay,
   type TutorialPlayStart,
+  type TutorialStageBoardIntro,
 } from "@/components/TutorialOverlay";
 import pictogramSvg from "@/games/hitofude-puzzle/assets/pictogram.svg?raw";
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
@@ -20,15 +19,18 @@ import type {
 } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import type { HitofudePuzzleTraceStep } from "@/games/hitofude-puzzle/puzzle/transitions";
 import {
+  describeHitofudePuzzleTutorialHint,
   findHitofudePuzzleTutorialHint,
-  getHitofudePuzzleTutorialStepCells,
+  findHitofudePuzzleTutorialViolation,
+  getHitofudePuzzleTutorialProgressRatio,
+  getHitofudePuzzleTutorialStepMarks,
   getHitofudePuzzleTutorialStepReasonCells,
+  HITOFUDE_PUZZLE_TUTORIAL_PROGRESS_STEP_COUNT,
+  HITOFUDE_PUZZLE_TUTORIAL_RECAP,
   type HitofudePuzzleTutorialAction,
   type HitofudePuzzleTutorialBoardState,
-  type HitofudePuzzleTutorialHint,
   type HitofudePuzzleTutorialMove,
   type HitofudePuzzleTutorialRuleId,
-  type HitofudePuzzleTutorialSituation,
   type HitofudePuzzleTutorialStep,
   hitofudePuzzleTutorial,
   hitofudePuzzleTutorialBoard,
@@ -37,6 +39,8 @@ import {
 import { findArrowKeyDirection } from "@/games/hitofude-puzzle/ui/arrow-key-direction";
 import type { HitofudePuzzleCellCue } from "@/games/hitofude-puzzle/ui/board/cell-cue";
 import { HitofudePuzzleBoard } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard";
+import { HitofudePuzzleGround } from "@/games/hitofude-puzzle/ui/HitofudePuzzleGround";
+import { HitofudePuzzleHowToPlayDialog } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog";
 import { HitofudePuzzleTutorialRewind } from "@/games/hitofude-puzzle/ui/HitofudePuzzleTutorial/HitofudePuzzleTutorialRewind";
 import { useHitofudePuzzleSoundEffects } from "@/games/hitofude-puzzle/ui/use-hitofude-puzzle-sound-effects";
 import type { GameProgress } from "@/games/play";
@@ -82,15 +86,12 @@ type HitofudePuzzleTutorialRecall = {
 /** 手順の最後のマスまで延ばしてから、延ばしたマスと決め手を残して見せ、次の印に替えるまでの間。 */
 const NEXT_STEP_CUE_DELAY_MS = 700;
 
-const IDLE_HINT_DELAY_MS = 4000;
-
 /**
- * ルールに合わない道に、違反の一言で応えるまでの間。
- * なぞる指が解から外れたマスを一瞬通って戻る間に、一言がちらつかないようにする。
+ * ルールに合わない道に、違反の一言と直す所の印で応えるまでの間。
+ * なぞる指が、全マスを通れなくなるマスを一瞬通って戻る間に、一言と印がちらつかないようにする。
  */
 const VIOLATION_MESSAGE_DELAY_MS = 500;
 
-const { steps } = hitofudePuzzleTutorial;
 const goalPath = hitofudePuzzleTutorial.goal().path;
 
 /** 解けた盤面の演出の間が、本番の完成演出の間に当たる。 */
@@ -134,73 +135,40 @@ function toPathNotice(
   }
 }
 
-/** 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。 */
-function getCueDelayMs(
-  progress: HitofudePuzzleTutorialProgress,
-  guiding: boolean,
-  completedStep: HitofudePuzzleTutorialStep | null,
-): number | null {
-  if (progress.phase !== "playing") {
-    return null;
-  }
-  if (!guiding) {
-    return IDLE_HINT_DELAY_MS;
-  }
-  return completedStep === null ? 0 : NEXT_STEP_CUE_DELAY_MS;
-}
+type HitofudePuzzleTutorialMarks = {
+  cells: readonly number[];
+  pointed: boolean;
+};
 
+const noMarks: HitofudePuzzleTutorialMarks = { cells: [], pointed: false };
+
+/** 印を付けるマスには、印だけを重ねる。 */
 function getCellCues(
   progress: HitofudePuzzleTutorialProgress,
   completedStep: HitofudePuzzleTutorialStep | null,
-  markedCells: readonly number[],
+  marks: HitofudePuzzleTutorialMarks,
   recallId: number | null,
 ): HitofudePuzzleCellCue[] {
-  const acknowledgements: HitofudePuzzleCellCue[] = (completedStep?.cells ?? [])
-    .filter((cell) => !markedCells.includes(cell))
-    .map((cell) => ({
-      cell,
-      kind: "extended",
-      id: progress.boardState.moveCount,
-    }));
+  const acknowledgements = (completedStep?.route ?? [])
+    .filter((cell) => !marks.cells.includes(cell))
+    .map(
+      (cell): HitofudePuzzleCellCue => ({
+        cell,
+        kind: "extended",
+        id: progress.boardState.moveCount,
+      }),
+    );
   return [
     ...acknowledgements,
-    ...markedCells.map(
-      (cell): HitofudePuzzleCellCue =>
-        recallId === null
-          ? { cell, kind: "hint", id: 0 }
-          : { cell, kind: "recall", id: recallId },
+    ...marks.cells.map(
+      (cell): HitofudePuzzleCellCue => ({
+        cell,
+        kind: "mark",
+        recallId,
+        pointed: marks.pointed,
+      }),
     ),
   ];
-}
-
-/**
- * 手を引いている間に、画面全体の覆いから抜くマス。手を引いていなければ空。
- * - 印が出ている間は、なぞり始める先端、印のマス、その手順の決め手。
- * - 手順を終えてから次の印を出すまでの間は、延ばしたマスとその決め手。前の手順の決め手を次の印の決め手と読み違えさせないため、印と一緒に替える。
- * - 穴へ進もうとした手は、×の点いた穴を残す。
- */
-function getSpotlitCells(
-  situation: HitofudePuzzleTutorialSituation,
-  progress: HitofudePuzzleTutorialProgress,
-  completedStep: HitofudePuzzleTutorialStep | null,
-  markedCells: readonly number[],
-): number[] {
-  if (situation.step === null) {
-    return [];
-  }
-  const { boardState } = progress;
-  const focused =
-    markedCells.length > 0 || completedStep === null
-      ? [
-          getHead(boardState),
-          ...markedCells,
-          ...getHitofudePuzzleTutorialStepReasonCells(situation),
-        ]
-      : [...completedStep.cells, ...completedStep.reasonCells];
-  const { lastMove } = boardState;
-  return lastMove?.type === "blocked" && lastMove.cell !== null
-    ? [...focused, lastMove.cell]
-    : focused;
 }
 
 export function HitofudePuzzleTutorial({
@@ -216,9 +184,11 @@ export function HitofudePuzzleTutorial({
   const [reaction, setReaction] =
     useState<HitofudePuzzleTutorialReaction | null>(null);
   const reactionIdRef = useRef(0);
-  const [idleProgress, setIdleProgress] =
+  const [cueShownProgress, setCueShownProgress] =
     useState<HitofudePuzzleTutorialProgress | null>(null);
   const [settledViolationProgress, setSettledViolationProgress] =
+    useState<HitofudePuzzleTutorialProgress | null>(null);
+  const [hintRequestedProgress, setHintRequestedProgress] =
     useState<HitofudePuzzleTutorialProgress | null>(null);
   const [recall, setRecall] = useState<HitofudePuzzleTutorialRecall | null>(
     null,
@@ -231,27 +201,44 @@ export function HitofudePuzzleTutorial({
   const strokeSpentRef = useRef(false);
   const boardAreaRef = useRef<HTMLDivElement>(null);
   const situation = getTutorialSituation(hitofudePuzzleTutorial, progress);
-  const guiding = situation.step !== null;
+  const { step } = situation;
+  const guiding = step !== null;
   const { boardState } = progress;
+  const playing = progress.phase === "playing";
+  const head = getHead(boardState);
   const recallId = recall?.progress === progress ? recall.id : null;
   const completedStep =
     steppedProgress === progress
-      ? (steps[progress.stepIndex - 1] ?? null)
+      ? (hitofudePuzzleTutorial.steps[progress.stepIndex - 1] ?? null)
       : null;
-  const cueDelayMs = getCueDelayMs(progress, guiding, completedStep);
-  const cueShown =
-    recallId !== null ||
-    cueDelayMs === 0 ||
-    (cueDelayMs !== null && idleProgress === progress);
-  const hint: HitofudePuzzleTutorialHint | null =
-    cueShown && !guiding ? findHitofudePuzzleTutorialHint(boardState) : null;
-  const markedCells = !cueShown
-    ? []
-    : guiding
-      ? getHitofudePuzzleTutorialStepCells(situation, boardState)
-      : hint === null
-        ? []
-        : [hint.cell];
+  // 手順を終えた直後は、延ばしたマスと決め手を少し残して見せてから、次の印に替える。
+  const lingering =
+    playing && completedStep !== null && cueShownProgress !== progress;
+  const violationSettled = settledViolationProgress === progress;
+  const violation =
+    playing && progress.violated && violationSettled
+      ? findHitofudePuzzleTutorialViolation(situation, boardState)
+      : null;
+  const hintRequestable = playing && !guiding && !progress.violated;
+  const hint =
+    hintRequestable && hintRequestedProgress === progress
+      ? findHitofudePuzzleTutorialHint(boardState)
+      : null;
+  const marks = getMarks();
+
+  function getMarks(): HitofudePuzzleTutorialMarks {
+    if (!playing || lingering) {
+      return noMarks;
+    }
+    if (violation?.fixCell != null) {
+      return { cells: [violation.fixCell], pointed: true };
+    }
+    if (guiding) {
+      const cells = getHitofudePuzzleTutorialStepMarks(situation, boardState);
+      return { cells, pointed: step.marks.length === 1 };
+    }
+    return hint === null ? noMarks : { cells: [hint.cell], pointed: true };
+  }
 
   useHitofudePuzzleSoundEffects(
     toPathNotice(reaction),
@@ -260,15 +247,15 @@ export function HitofudePuzzleTutorial({
   );
 
   useEffect(() => {
-    if (!open || cueDelayMs === null || cueDelayMs === 0) {
+    if (!open || !lingering) {
       return;
     }
     const timer = window.setTimeout(
-      () => setIdleProgress(progress),
-      cueDelayMs,
+      () => setCueShownProgress(progress),
+      NEXT_STEP_CUE_DELAY_MS,
     );
     return () => window.clearTimeout(timer);
-  }, [open, progress, cueDelayMs]);
+  }, [open, progress, lingering]);
 
   useEffect(() => {
     if (!open || !progress.violated) {
@@ -335,19 +322,16 @@ export function HitofudePuzzleTutorial({
   function handleBeginStroke(cell: number): void {
     strokeSpentRef.current = false;
     const current = progressRef.current;
-    // 手を引いている間、先端を押すのはなぞり始めなので、印へ目を向けさせない。
-    if (
-      getTutorialSituation(hitofudePuzzleTutorial, current).step !== null &&
-      cell === getHead(current.boardState)
-    ) {
+    // 先端を押すのはなぞり始めなので、印へ目を向けさせない。
+    if (cell === getHead(current.boardState)) {
       return;
     }
     perform({ type: "press", cell });
   }
 
-  function handleTraceStroke(step: HitofudePuzzleTraceStep): void {
+  function handleTraceStroke(traceStep: HitofudePuzzleTraceStep): void {
     if (!strokeSpentRef.current) {
-      perform({ type: "trace", step });
+      perform({ type: "trace", step: traceStep });
     }
   }
 
@@ -389,12 +373,19 @@ export function HitofudePuzzleTutorial({
 
   function restart(): void {
     strokeSpentRef.current = false;
-    setIdleProgress(null);
+    setCueShownProgress(null);
     setSettledViolationProgress(null);
+    setHintRequestedProgress(null);
     setRecall(null);
     setSteppedProgress(null);
     setReaction(null);
     changeProgress(startTutorial(hitofudePuzzleTutorial));
+  }
+
+  // ゴールはもう見せたので、入口を通さずに最初の手順から始める。
+  function handleRestart(): void {
+    restart();
+    changeProgress(finishTutorialIntro(progressRef.current));
   }
 
   function handleClose(): void {
@@ -415,36 +406,75 @@ export function HitofudePuzzleTutorial({
       }
     : { entry: "play", onReturnToPlay: handleClose };
 
-  /**
-   * 押し直したときは、前の違反の一言を下げて、印のマスへ向かう手順の一言に戻す。
-   * 手を離した後に止まって手がかりの印を出したときは、印だけを出し、一言は足さない。
-   */
-  function getMessage(): TutorialMessage {
-    if (recallId !== null && situation.step !== null) {
-      return situation.step.message;
+  /** 見せる決め手が無ければ `null` で、覆わない。 */
+  function getSpotlitCells(): number[] | null {
+    if (!playing) {
+      return null;
     }
-    return getTutorialMessage(hitofudePuzzleTutorial, progress, {
-      entry: finish.entry,
-      violationSettled: settledViolationProgress === progress,
-    });
+    const violationCells =
+      violation === null
+        ? []
+        : [
+            head,
+            ...violation.cells,
+            ...(violation.fixCell === null ? [] : [violation.fixCell]),
+          ];
+    const focused = getFocusedCells();
+    if (focused.length === 0 && violationCells.length === 0) {
+      return null;
+    }
+    return [...new Set([...focused, ...violationCells])];
   }
 
-  /**
-   * 導入ではゴールの道を見せ、始めの盤面の場面では、ゴールの道を始点まで巻き戻す。
-   * 最初の手順の印は、導入の終わりに一言と同時に出す。
-   */
+  function getFocusedCells(): number[] {
+    if (lingering) {
+      return completedStep.reasonCells.length === 0
+        ? []
+        : [...completedStep.route, ...completedStep.reasonCells];
+    }
+    if (guiding) {
+      const reasonCells = getHitofudePuzzleTutorialStepReasonCells(situation);
+      // 印までなぞる道筋も、暗い所を通らせないよう元の明るさで残す。
+      const routeCells = step.route.filter(
+        (cell) => !boardState.path.includes(cell),
+      );
+      return reasonCells.length === 0
+        ? []
+        : [head, ...marks.cells, ...routeCells, ...reasonCells];
+    }
+    return hint?.kind === "extend" && hint.reasonCells.length > 0
+      ? [head, hint.cell, ...hint.reasonCells]
+      : [];
+  }
+
+  function getMessage(): TutorialMessage {
+    if (lingering) {
+      return completedStep.message;
+    }
+    // 押し直したときは、前の違反の一言を下げて、印のマスへ向かう手順の一言に戻す。
+    if (recallId !== null && step !== null) {
+      return step.message;
+    }
+    const hintMessage =
+      hint === null ? null : describeHitofudePuzzleTutorialHint(hint);
+    return (
+      hintMessage ??
+      getTutorialMessage(hitofudePuzzleTutorial, progress, {
+        entry: finish.entry,
+        violationSettled,
+      })
+    );
+  }
+
+  /** 最初の手順の印は、始めの盤面に巻き戻し終えてから出す。 */
   function renderBoard({
     scene,
-    playing,
+    playing: scenePlaying,
     onSceneEnd,
-    messageShown,
-  }: TutorialBoardIntro) {
+  }: TutorialStageBoardIntro) {
     const solved =
       progress.phase === "solved" || progress.phase === "completed";
-    const introMarksShown =
-      progress.phase === "intro" && scene === null && messageShown;
-    const cuesShown =
-      scene === null && (progress.phase === "playing" || introMarksShown);
+    const onBoard = scene === null && playing;
     return (
       <div
         ref={boardAreaRef}
@@ -452,7 +482,7 @@ export function HitofudePuzzleTutorial({
       >
         <HitofudePuzzleTutorialRewind
           path={goalPath}
-          active={scene === "start" && playing}
+          active={scene === "start" && scenePlaying}
           onComplete={onSceneEnd}
         >
           {(rewindingPath) => (
@@ -467,34 +497,16 @@ export function HitofudePuzzleTutorial({
               blockedMove={scene === null ? toBlockedMove(reaction) : null}
               solved={rewindingPath === null && (scene === "goal" || solved)}
               clearing={
-                (scene === "goal" && playing) || progress.phase === "solved"
+                (scene === "goal" && scenePlaying) ||
+                progress.phase === "solved"
               }
-              interactionDisabled={progress.phase !== "playing"}
+              interactionDisabled={!playing}
               cues={
-                cuesShown
-                  ? getCellCues(
-                      progress,
-                      completedStep,
-                      introMarksShown
-                        ? getHitofudePuzzleTutorialStepCells(
-                            situation,
-                            boardState,
-                          )
-                        : markedCells,
-                      recallId,
-                    )
+                onBoard
+                  ? getCellCues(progress, completedStep, marks, recallId)
                   : []
               }
-              spotlitCells={
-                progress.phase === "playing" && scene === null
-                  ? getSpotlitCells(
-                      situation,
-                      progress,
-                      completedStep,
-                      markedCells,
-                    )
-                  : []
-              }
+              spotlitCells={onBoard ? spotlitCells : null}
               onBeginStroke={handleBeginStroke}
               onTraceStroke={handleTraceStroke}
               onEndStroke={handleEndStroke}
@@ -508,24 +520,38 @@ export function HitofudePuzzleTutorial({
     );
   }
 
+  const spotlitCells = getSpotlitCells();
+
   return (
     <TutorialOverlay
+      presentation="stage"
       open={open}
       title={HITOFUDE_PUZZLE_DISPLAY_NAME}
       pictogramSvg={pictogramSvg}
+      background={<HitofudePuzzleGround />}
       intro={hitofudePuzzleTutorial.intro}
-      rules={hitofudePuzzleTutorial.rules.map((rule) => ({
-        ...rule,
-        earned: progress.earnedRuleIds.includes(rule.id),
-        current: situation.step?.introducedRuleId === rule.id,
-      }))}
+      recap={HITOFUDE_PUZZLE_TUTORIAL_RECAP}
       message={getMessage()}
       phase={progress.phase}
-      guiding={progress.phase === "playing" && guiding}
+      spotlighting={spotlitCells !== null}
+      progress={
+        progress.phase === "solved" || progress.phase === "completed"
+          ? 1
+          : getHitofudePuzzleTutorialProgressRatio(boardState)
+      }
+      progressStepCount={HITOFUDE_PUZZLE_TUTORIAL_PROGRESS_STEP_COUNT}
       finish={finish}
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
-      onRestart={restart}
+      onRestart={handleRestart}
+      renderHowToPlayDialog={(control) => (
+        <HitofudePuzzleHowToPlayDialog {...control} />
+      )}
+      onRequestHint={
+        hintRequestable && hint === null
+          ? () => setHintRequestedProgress(progress)
+          : null
+      }
       onClose={handleClose}
     />
   );

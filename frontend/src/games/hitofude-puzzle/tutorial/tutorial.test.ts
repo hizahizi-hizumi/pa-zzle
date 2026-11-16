@@ -1,20 +1,25 @@
 import {
   createHitofudePuzzleAdjacency,
+  getHitofudePuzzleCellPosition,
   isHitofudePuzzleHole,
-  listHitofudePuzzleGridNeighbors,
   listHitofudePuzzleOpenCells,
 } from "@/games/hitofude-puzzle/puzzle/board";
 import {
   findHitofudePuzzleStranding,
-  isHitofudePuzzleSolved,
+  isHitofudePuzzleDeadEnd,
 } from "@/games/hitofude-puzzle/puzzle/rules";
 import {
   _private,
+  describeHitofudePuzzleTutorialHint,
   findHitofudePuzzleTutorialHint,
-  getHitofudePuzzleTutorialStepCells,
+  findHitofudePuzzleTutorialViolation,
+  getHitofudePuzzleTutorialProgressRatio,
+  getHitofudePuzzleTutorialStepMarks,
+  HITOFUDE_PUZZLE_TUTORIAL_PROGRESS_STEP_COUNT,
   type HitofudePuzzleTutorialAction,
   type HitofudePuzzleTutorialBoardState,
   type HitofudePuzzleTutorialRuleId,
+  type HitofudePuzzleTutorialStep,
   hitofudePuzzleTutorial,
 } from "@/games/hitofude-puzzle/tutorial/tutorial";
 import {
@@ -26,7 +31,7 @@ import {
   type TutorialProgress,
 } from "@/games/tutorial";
 
-const { board, solution } = _private;
+const { board, solution, findVisibleStranding } = _private;
 const { steps } = hitofudePuzzleTutorial;
 
 type Progress = TutorialProgress<
@@ -35,13 +40,15 @@ type Progress = TutorialProgress<
 >;
 
 const allRuleIds: readonly HitofudePuzzleTutorialRuleId[] = [
-  "once",
   "hole",
   "all",
+  "narrow",
 ];
 
+const adjacency = createHitofudePuzzleAdjacency(board);
+
+/** 始点から全マスを通る道をすべて挙げる。 */
 function listSolutions(): number[][] {
-  const adjacency = createHitofudePuzzleAdjacency(board);
   const openCount = listHitofudePuzzleOpenCells(board).length;
   const solutions: number[][] = [];
   function extend(path: number[]): void {
@@ -59,499 +66,587 @@ function listSolutions(): number[][] {
   return solutions;
 }
 
-function listOtherCandidates(path: readonly number[], next: number): number[] {
-  const head = path.at(-1) ?? board.start;
-  return listHitofudePuzzleGridNeighbors(board.size, head).filter(
-    (cell) => cell !== next && cell !== path.at(-2),
+function listUnvisitedNeighbors(path: readonly number[]): number[] {
+  return (adjacency[path.at(-1) ?? board.start] ?? []).filter(
+    (cell) => !path.includes(cell),
   );
 }
 
-function findExcludingRule(
+/** 伝えたルールで、全マスを通れなくなったと分からない道か。 */
+function isAcceptable(
   path: readonly number[],
-  cell: number,
-): HitofudePuzzleTutorialRuleId | null {
-  if (isHitofudePuzzleHole(board, cell)) {
-    return "hole";
-  }
-  if (path.includes(cell)) {
-    return "once";
-  }
-  if (findHitofudePuzzleStranding(board, [...path, cell]) !== null) {
-    return "all";
-  }
-  return null;
-}
-
-type SolutionMove = { before: readonly number[]; next: number };
-
-function listSolutionMoves(from: number, to: number): SolutionMove[] {
-  return solution.slice(from, to).map((next, offset) => ({
-    before: solution.slice(0, from + offset),
-    next,
-  }));
-}
-
-function isDecidedBy(
-  { before, next }: SolutionMove,
-  earned: readonly HitofudePuzzleTutorialRuleId[],
+  ruleIds: readonly HitofudePuzzleTutorialRuleId[],
 ): boolean {
-  return listOtherCandidates(before, next).every((cell) => {
-    const rule = findExcludingRule(before, cell);
-    return rule !== null && earned.includes(rule);
-  });
+  return findVisibleStranding(path, ruleIds) === null;
 }
 
-/** 手順ごとの、手順の手と、手順を始めた時点で手に入れているルール。 */
-const stepMoves = steps.map((step, index) => {
-  const from = solution.indexOf(steps[index - 1]?.cells.at(-1) ?? board.start);
-  const to = solution.indexOf(step.cells.at(-1) ?? board.start);
-  const earned = steps
-    .slice(0, index + 1)
-    .flatMap((earlier) =>
-      earlier.introducedRuleId === null ? [] : [earlier.introducedRuleId],
+function listTaughtRuleIds(
+  step: HitofudePuzzleTutorialStep,
+): HitofudePuzzleTutorialRuleId[] {
+  return steps
+    .slice(0, steps.indexOf(step) + 1)
+    .flatMap((taught) => taught.introducedRuleId ?? []);
+}
+
+function getStepStart(step: HitofudePuzzleTutorialStep): number[] {
+  return solution.slice(0, solution.indexOf(step.route[0] ?? board.start));
+}
+
+/**
+ * 先端から `target` まで、穴と通ったマスをよけて、伝えたルールで全マスを通れなくなったと分からない道筋のうち、最も短いものをすべて挙げる。
+ */
+function listShortestRoutes(
+  start: readonly number[],
+  target: number,
+  ruleIds: readonly HitofudePuzzleTutorialRuleId[],
+): number[][] {
+  let frontier: number[][] = [[...start]];
+  while (frontier.length > 0) {
+    const reached = frontier.filter((path) => path.at(-1) === target);
+    if (reached.length > 0) {
+      return reached.map((path) => path.slice(start.length));
+    }
+    frontier = frontier.flatMap((path) =>
+      listUnvisitedNeighbors(path)
+        .map((cell) => [...path, cell])
+        .filter((path_) => isAcceptable(path_, ruleIds)),
     );
-  return { step, index, moves: listSolutionMoves(from + 1, to + 1), earned };
-});
-const guidedEndLength = solution.indexOf(steps.at(-1)?.cells.at(-1) ?? 0) + 1;
-const freeMoves = listSolutionMoves(guidedEndLength, solution.length);
-
-function press(cell: number): HitofudePuzzleTutorialAction {
-  return { type: "press", cell };
+  }
+  return [];
 }
 
-function perform(
+/** 先端から一直線に `target` へ向かう、間のマス（`target` を含む）。一直線に並ばなければ `null`。 */
+function listStraightCells(from: number, target: number): number[] | null {
+  const origin = getHitofudePuzzleCellPosition(board.size, from);
+  const goal = getHitofudePuzzleCellPosition(board.size, target);
+  if (origin.row !== goal.row && origin.column !== goal.column) {
+    return null;
+  }
+  const stride =
+    Math.sign(goal.row - origin.row) * board.size +
+    Math.sign(goal.column - origin.column);
+  const cells: number[] = [];
+  for (let cell = from + stride; cells.at(-1) !== target; cell += stride) {
+    cells.push(cell);
+  }
+  return cells;
+}
+
+function createProgress(path: readonly number[], stepIndex: number): Progress {
+  const started = finishTutorialIntro(startTutorial(hitofudePuzzleTutorial));
+  return {
+    ...started,
+    boardState: { path, moveCount: 0, lastMove: null },
+    stepIndex,
+    earnedRuleIds: steps
+      .slice(0, stepIndex + 1)
+      .flatMap((step) => step.introducedRuleId ?? []),
+  };
+}
+
+function act(
   progress: Progress,
-  actions: readonly HitofudePuzzleTutorialAction[],
+  action: HitofudePuzzleTutorialAction,
 ): Progress {
-  return actions.reduce(
-    (current, action) =>
-      performTutorialAction(hitofudePuzzleTutorial, current, action),
+  return performTutorialAction(hitofudePuzzleTutorial, progress, action);
+}
+
+function pressCells(progress: Progress, cells: readonly number[]): Progress {
+  return cells.reduce(
+    (current, cell) => act(current, { type: "press", cell }),
     progress,
   );
 }
 
-const playing = finishTutorialIntro(startTutorial(hitofudePuzzleTutorial));
-
+/** 入口を終えてから、手順を `count` 個、解のとおりに終えた進行。 */
 function playSteps(count: number): Progress {
-  return perform(
-    playing,
-    steps.slice(0, count).flatMap((step) => step.cells.map(press)),
-  );
+  return steps
+    .slice(0, count)
+    .reduce(
+      (progress, step) => pressCells(progress, step.route),
+      finishTutorialIntro(startTutorial(hitofudePuzzleTutorial)),
+    );
 }
 
-describe("盤面", () => {
-  test("始点から全マスを通る道が、ゴールの道の1本だけであること", () => {
+const freePlayStart = solution.slice(
+  0,
+  solution.indexOf(steps.at(-1)?.route.at(-1) ?? board.start) + 1,
+);
+
+/** 道の途中の盤面。 */
+function boardStateOf(
+  path: readonly number[],
+): HitofudePuzzleTutorialBoardState {
+  return { path, moveCount: 0, lastMove: null };
+}
+
+function getMessage(progress: Progress): string {
+  return getTutorialMessage(hitofudePuzzleTutorial, progress, {
+    entry: "home",
+    violationSettled: true,
+  }).headline;
+}
+
+function findStepIntroducing(
+  ruleId: HitofudePuzzleTutorialRuleId,
+): HitofudePuzzleTutorialStep {
+  const step = steps.find((candidate) => candidate.introducedRuleId === ruleId);
+  if (step === undefined) {
+    throw new Error(`No step introduces ${ruleId}`);
+  }
+  return step;
+}
+
+describe("hitofudePuzzleTutorial の盤面", () => {
+  const ruleSteps = steps.filter((step) => step.introducedRuleId !== null);
+  const singleTargetRuleSteps = ruleSteps.filter(
+    (step) => step.marks.length === 1,
+  );
+  const choiceSteps = steps.filter((step) => step.marks.length > 1);
+  const freePlayPaths = Array.from(
+    { length: solution.length - freePlayStart.length },
+    (_, offset) => solution.slice(0, freePlayStart.length + offset),
+  );
+  const guidedPaths = freePlayStart.map((_, index) =>
+    freePlayStart.slice(0, index + 1),
+  );
+
+  test("始点から全マスを通る道がゴールの1本だけであること", () => {
     const solutions = listSolutions();
 
     expect(solutions).toEqual([solution]);
   });
 
-  test("導入で見せるゴールが、全マスを通り終えた道であること", () => {
-    const goal = hitofudePuzzleTutorial.goal();
+  test("手順の道筋をつなぐとゴールの道の途中になり、手順の行き先が印のマスの1つであること", () => {
+    const routes = steps.flatMap((step) => step.route);
 
-    expect(isHitofudePuzzleSolved(board, goal.path)).toBe(true);
+    expect(routes).toEqual(freePlayStart.slice(1));
+    for (const step of steps) {
+      expect(step.marks).toContain(step.route.at(-1));
+    }
   });
 
-  test("始めの盤面が、道が始点だけの盤面であること", () => {
-    const start = hitofudePuzzleTutorial.start();
+  test("操作を教える手順が、ゴールの盤面と一致すること", () => {
+    const [operation] = steps;
 
-    expect(start.path).toEqual([board.start]);
-  });
-});
-
-describe("手順", () => {
-  test("手順のマスと手を離した後の残りが、ゴールの道を始点から順にたどること", () => {
-    const cells = [
-      board.start,
-      ...steps.flatMap((step) => step.cells),
-      ...freeMoves.map((move) => move.next),
-    ];
-
-    expect(cells).toEqual(solution);
+    expect(operation?.introducedRuleId).toBeNull();
+    expect(operation?.route).toEqual(solution.slice(1, 2));
   });
 
-  test("操作を教えるのは最初の手順だけで、ほかの手順はルールを1つずつ伝えること", () => {
-    const introduced = steps.map((step) => step.introducedRuleId);
-
-    expect(introduced).toEqual([null, ...allRuleIds]);
-  });
-
-  const ruleStepCases = stepMoves.filter(({ index }) => index > 0);
-
-  test.each(ruleStepCases)(
-    "ルールを伝えた後の手は、それまでに伝えたルールで決まること: 手順$index",
-    ({ moves, earned }) => {
-      const decided = moves.every((move) => isDecidedBy(move, earned));
-
-      expect(decided).toBe(true);
-    },
-  );
-
-  test.each(ruleStepCases)(
-    "手順で伝えたルールが、その手順の手で、ほかの手を除く決め手になること: 手順$index",
-    ({ step, moves }) => {
-      const excludingRules = moves.flatMap(({ before, next }) =>
-        listOtherCandidates(before, next).map((cell) =>
-          findExcludingRule(before, cell),
-        ),
-      );
-
-      expect(excludingRules).toContain(step.introducedRuleId);
-    },
-  );
-
-  test.each(ruleStepCases)(
-    "決め手のマスが、手順で伝えたルールでほかの手を除くマスであること: 手順$index",
-    ({ step, moves }) => {
-      const reasons = new Set(
-        moves.flatMap(({ before, next }) =>
-          listOtherCandidates(before, next).flatMap((cell) => {
-            const rule = findExcludingRule(before, cell);
-            if (rule !== step.introducedRuleId) {
-              return [];
-            }
-            if (rule !== "all") {
-              return [cell];
-            }
-            const stranding = findHitofudePuzzleStranding(board, [
-              ...before,
-              cell,
-            ]);
-            return [
-              ...(stranding?.isolatedCells ?? []),
-              ...(stranding?.deadEndCells ?? []),
-              ...(stranding?.separatedCells ?? []),
-            ];
-          }),
-        ),
-      );
-      const outside = step.reasonCells.filter((cell) => !reasons.has(cell));
-
-      expect(step.reasonCells.length).toBeGreaterThan(0);
-      expect(outside).toEqual([]);
-    },
-  );
-
-  const allRuleStep = stepMoves.find(
-    ({ step }) => step.introducedRuleId === "all",
-  );
-
-  test("すべてのマスのルールを伝える手順は、ほかの手で取り残されるマスをすべて決め手に挙げること", () => {
-    const strandedCells = (allRuleStep?.moves ?? []).flatMap(
-      ({ before, next }) =>
-        listOtherCandidates(before, next).flatMap((cell) => {
-          const stranding = findHitofudePuzzleStranding(board, [
-            ...before,
-            cell,
-          ]);
-          return [
-            ...(stranding?.isolatedCells ?? []),
-            ...(stranding?.deadEndCells ?? []),
-            ...(stranding?.separatedCells ?? []),
-          ];
-        }),
-    );
-    const missing = strandedCells.filter(
-      (cell) => !allRuleStep?.step.reasonCells.includes(cell),
+  test("手順の道筋の途中の盤面が、どのルールにも反しないこと", () => {
+    const strandings = guidedPaths.map(
+      (path) =>
+        isHitofudePuzzleDeadEnd(board, path) ||
+        findHitofudePuzzleStranding(board, path) !== null,
     );
 
-    expect(strandedCells.length).toBeGreaterThan(0);
-    expect(missing).toEqual([]);
+    expect(strandings.every((stranded) => !stranded)).toBe(true);
   });
 
-  test("操作を教える手順の手が、ゴールの道と一致すること", () => {
-    const [operationStep] = stepMoves;
-    const cells = operationStep?.moves.map((move) => move.next);
-
-    expect(cells).toEqual(steps[0]?.cells);
-  });
-
-  test("手を引く間のどの途中の盤面にも、取り残しが無いこと", () => {
-    const strandings = solution
-      .slice(1, guidedEndLength)
-      .map((_, index) =>
-        findHitofudePuzzleStranding(board, solution.slice(0, index + 2)),
+  test.each(singleTargetRuleSteps)(
+    "1つの行き先へ向かう手順の道筋が、それまでに伝えたルールに合う、印までの最も短い道筋の1つだけであること: $introducedRuleId",
+    (step) => {
+      const routes = listShortestRoutes(
+        getStepStart(step),
+        step.route.at(-1) ?? board.start,
+        listTaughtRuleIds(step),
       );
 
-    expect(strandings.every((stranding) => stranding === null)).toBe(true);
+      expect(routes).toEqual([step.route]);
+    },
+  );
+
+  test.each(choiceSteps)(
+    "行き先を選ぶ手順が、伝えたルールで1つに決まり、その手順のルールを伝える前は決まらないこと: $introducedRuleId",
+    (step) => {
+      const start = getStepStart(step);
+      const taught = listTaughtRuleIds(step);
+      // 印へ最も短く進む道筋が、伝えたルールで全マスを通れなくなると分からないまま残るか。
+      function listReachableMarks(
+        ruleIds: readonly HitofudePuzzleTutorialRuleId[],
+      ): number[] {
+        return step.marks.filter((mark) => {
+          const shortestLength =
+            listShortestRoutes(start, mark, [])[0]?.length ?? 0;
+          return listShortestRoutes(start, mark, ruleIds).some(
+            (route) => route.length === shortestLength,
+          );
+        });
+      }
+
+      const reachableWithStepRule = listReachableMarks(taught);
+      const reachableWithoutStepRule = listReachableMarks(taught.slice(0, -1));
+
+      expect(reachableWithStepRule).toEqual([step.route.at(-1)]);
+      expect(reachableWithoutStepRule).toEqual(step.marks);
+    },
+  );
+
+  test.each(ruleSteps)(
+    "ルールを伝える手順が、考えずに印へまっすぐ進むとそのルールに当たるか、行き先を選ばせること: $introducedRuleId",
+    (step) => {
+      const start = getStepStart(step);
+      const line = listStraightCells(
+        start.at(-1) ?? board.start,
+        step.route.at(-1) ?? board.start,
+      );
+
+      const hitsRule =
+        line !== null &&
+        line.join() !== step.route.join() &&
+        (isHitofudePuzzleHole(board, line[0] ?? board.start) ||
+          !isAcceptable([...start, ...line], listTaughtRuleIds(step)));
+
+      expect(hitsRule || step.marks.length >= 2).toBe(true);
+    },
+  );
+
+  describe("穴を伝える手順", () => {
+    const step = findStepIntroducing("hole");
+    const start = getStepStart(step);
+
+    test("先端から印へ一直線に進むと、穴に当たること", () => {
+      const line = listStraightCells(
+        start.at(-1) ?? board.start,
+        step.route.at(-1) ?? board.start,
+      );
+
+      expect(isHitofudePuzzleHole(board, line?.[0] ?? board.start)).toBe(true);
+    });
   });
 
-  test("手を離した後の残りを、3つのルールを当てはめるだけで解き切れること", () => {
-    const decided = freeMoves.every((move) => isDecidedBy(move, allRuleIds));
+  describe("すべてのマスを伝える手順", () => {
+    const step = findStepIntroducing("all");
+    const start = getStepStart(step);
 
-    expect(freeMoves.length).toBeGreaterThan(0);
-    expect(decided).toBe(true);
+    test("先端から印へ一直線に進むと、決め手のマスへ入れなくなること", () => {
+      const line =
+        listStraightCells(
+          start.at(-1) ?? board.start,
+          step.route.at(-1) ?? board.start,
+        ) ?? [];
+
+      const stranding = findVisibleStranding(
+        [...start, ...line],
+        ["hole", "all"],
+      );
+
+      expect(line.length).toBeGreaterThan(1);
+      expect(stranding).toEqual({ kind: "stranded", cells: step.reasonCells });
+    });
   });
 
-  test("手を離した後の残りに、すべてのマスのルールで決まる手があること", () => {
-    const excludingRules = freeMoves.flatMap(({ before, next }) =>
-      listOtherCandidates(before, next).map((cell) =>
-        findExcludingRule(before, cell),
+  describe("通れる隣が少ないマスを伝える手順", () => {
+    const step = findStepIntroducing("narrow");
+    const atFork = [...getStepStart(step), ...step.route.slice(0, -1)];
+    const head = atFork.at(-1) ?? board.start;
+    /** 穴でも通ったマスでもない隣と、先端。 */
+    function listPassableNeighbors(cell: number): number[] {
+      return (adjacency[cell] ?? []).filter(
+        (neighbor) => !atFork.includes(neighbor) || neighbor === head,
+      );
+    }
+
+    test("行き先は、通れる隣が先端と決め手のマスの2つだけのマスであること", () => {
+      const neighbors = listPassableNeighbors(step.route.at(-1) ?? board.start);
+
+      expect(neighbors.sort()).toEqual([head, step.reasonCells[0]].sort());
+    });
+
+    test("決め手に、通れる隣が1つだけのマス（道の終わり）があること", () => {
+      const counts = step.reasonCells.map(
+        (cell) => listPassableNeighbors(cell).length,
+      );
+
+      expect(counts).toContain(1);
+    });
+  });
+
+  test("手を離した後、どの分かれ道でも、伝えたルールで全マスを通れなくなると分からない手がゴールの手の1つだけであること", () => {
+    const acceptableMoves = freePlayPaths.map((path) =>
+      listUnvisitedNeighbors(path).filter((cell) =>
+        isAcceptable([...path, cell], allRuleIds),
       ),
     );
 
-    expect(excludingRules).toContain("all");
+    expect(acceptableMoves).toEqual(
+      freePlayPaths.map((path) => [solution[path.length]]),
+    );
+  });
+
+  test("手を離した後にも、通れる隣が少ないマスの読みが要ること", () => {
+    const needsEnd = freePlayPaths.some((path) =>
+      listUnvisitedNeighbors(path).some(
+        (cell) =>
+          isAcceptable([...path, cell], ["hole", "all"]) &&
+          !isAcceptable([...path, cell], allRuleIds),
+      ),
+    );
+
+    expect(needsEnd).toBe(true);
   });
 });
 
 describe("hitofudePuzzleTutorial.perform", () => {
-  describe("操作を教える手順の場合", () => {
-    test("印のマスへなぞると、道が延びること", () => {
-      const result = perform(playing, [
-        { type: "trace", step: { from: 6, to: 2, horizontalFirst: false } },
-      ]);
+  describe("操作を教える手順", () => {
+    const progress = playSteps(0);
+    const atFirstMark = createProgress([0, 1], 0);
 
-      expect(result.boardState.path).toEqual([6, 2]);
-      expect(result.stepIndex).toBe(0);
+    test("手順のマスでない所へ延ばさないこと", () => {
+      const result = act(progress, { type: "press", cell: 5 });
+
+      expect(result).toBe(progress);
     });
 
-    test("印の最後のマスまで延ばすと、次の手順へ進むこと", () => {
-      const result = perform(playing, [press(2), press(3)]);
+    test("穴へ進もうとしても、違反にしないこと", () => {
+      const result = act(atFirstMark, { type: "move", direction: "down" });
 
-      expect(result.boardState.path).toEqual([6, 2, 3]);
+      expect(result.violated).toBe(false);
+    });
+
+    test("印のマスまで延ばすと次の手順へ進むこと", () => {
+      const result = pressCells(progress, [1]);
+
       expect(result.stepIndex).toBe(1);
     });
-
-    test("印の無いマスへ延ばそうとしても、道を変えないこと", () => {
-      const result = perform(playing, [press(7)]);
-
-      expect(result).toBe(playing);
-    });
-
-    test("穴のルールを伝える前は、穴へ進もうとしても、ルールに合わない手にしないこと", () => {
-      const result = perform(playing, [press(2), press(1)]);
-
-      expect(result.violated).toBe(false);
-      expect(result.boardState.path).toEqual([6, 2]);
-    });
-
-    test("先端を押しても、道を変えないこと", () => {
-      const result = perform(playing, [press(6)]);
-
-      expect(result).toBe(playing);
-    });
   });
 
-  describe("同じマスのルールを伝える手順の場合", () => {
+  describe("穴を伝える手順", () => {
     const progress = playSteps(1);
 
-    test("来た道をなぞり戻しても、道を縮めないこと", () => {
-      const result = perform(progress, [
-        { type: "trace", step: { from: 3, to: 2, horizontalFirst: true } },
-      ]);
+    test("手順のマスでない所へは延ばさないこと", () => {
+      const result = pressCells(progress, [2, 3]);
 
-      expect(result).toBe(progress);
+      expect(result.boardState.path).toEqual([0, 1, 2]);
     });
 
-    test("道のマスを押しても、巻き戻さないこと", () => {
-      const result = perform(progress, [press(6)]);
-
-      expect(result).toBe(progress);
-    });
-
-    test("同じマスのルールを手に入れていること", () => {
-      const earned = progress.earnedRuleIds;
-
-      expect(earned).toEqual(["once"]);
-    });
-
-    test("矢印キーで通ったマスへ進もうとすると、道を変えずにルールに合わない手として応え、同じマスを通れないと言うこと", () => {
-      const result = perform(progress, [
-        press(7),
-        { type: "move", direction: "left" },
-      ]);
-      const message = getTutorialMessage(hitofudePuzzleTutorial, result, {
-        entry: "home",
-        violationSettled: true,
-      });
+    test("穴へ進もうとすると、道を変えずに阻まれた違反になり、穴だと言うこと", () => {
+      const result = act(progress, { type: "move", direction: "down" });
 
       expect(result.violated).toBe(true);
-      expect(result.boardState.path).toEqual([6, 2, 3, 7]);
-      expect(result.boardState.lastMove).toEqual({
+      expect(result.boardState.path).toEqual([0, 1]);
+      expect(result.boardState.lastMove).toMatchObject({
         type: "blocked",
         cell: 6,
-        direction: "left",
-        reason: "visited",
-      });
-      expect(message.headline).toBe("同じマスは2回通れません");
-    });
-  });
-
-  describe("穴のルールを伝えた手順の場合", () => {
-    const progress = playSteps(2);
-    const blocked = perform(progress, [
-      { type: "trace", step: { from: 11, to: 10, horizontalFirst: true } },
-    ]);
-
-    test("穴へ進もうとすると、道を変えずにルールに合わない手として応えること", () => {
-      const lastMove = blocked.boardState.lastMove;
-
-      expect(blocked.violated).toBe(true);
-      expect(blocked.boardState.path).toEqual(progress.boardState.path);
-      expect(lastMove).toEqual({
-        type: "blocked",
-        cell: 10,
-        direction: "left",
         reason: "hole",
       });
+      expect(getMessage(result)).toBe("そこは通れません");
+    });
+  });
+
+  describe("すべてのマスを伝える手順", () => {
+    const progress = playSteps(2);
+
+    test("印へまっすぐ進んで入れないマスが残ると違反になり、戻り先と入れないマスを示すこと", () => {
+      const result = pressCells(progress, [16, 21]);
+
+      expect(result.violated).toBe(true);
+      expect(
+        findHitofudePuzzleTutorialViolation(
+          getTutorialSituation(hitofudePuzzleTutorial, result),
+          result.boardState,
+        ),
+      ).toEqual({ fixCell: 11, cells: [10, 15] });
+      expect(getMessage(result)).toBe("入れなくなったマスがあります");
     });
 
-    test("違反の一言が、穴を通れないことを言うこと", () => {
-      const message = getTutorialMessage(hitofudePuzzleTutorial, blocked, {
-        entry: "home",
-        violationSettled: true,
-      });
-
-      expect(message.headline).toBe("穴は通れません");
-    });
-
-    test("印のマスへ延ばすと、違反を下げて進めること", () => {
-      const result = perform(blocked, [press(15)]);
+    test("通れる隣が1つのマスができても、通れる隣が少ないマスを伝える前は違反にしないこと", () => {
+      const result = pressCells(progress, [16]);
 
       expect(result.violated).toBe(false);
-      expect(result.boardState.path.at(-1)).toBe(15);
-    });
-  });
-
-  describe("すべてのマスのルールを伝えた手順の場合", () => {
-    const progress = playSteps(3);
-
-    test("角を通らずに上へ曲がろうとしても、道を変えないこと", () => {
-      const result = perform(progress, [press(9)]);
-
-      expect(result).toBe(progress);
     });
 
-    test("角を通って印のマスまで延ばすと、手を離すこと", () => {
-      const result = perform(progress, [press(12), press(8)]);
-      const situation = getTutorialSituation(hitofudePuzzleTutorial, result);
+    test("行き止まりに入ると違反になること", () => {
+      const result = pressCells(progress, [16, 15, 10]);
 
-      expect(situation.step).toBeNull();
-      expect(result.earnedRuleIds).toEqual(allRuleIds);
-    });
-  });
-
-  describe("手を離した後の場合", () => {
-    const progress = playSteps(steps.length);
-
-    test("解から外れて全マスを通れなくなる手は、本番と同じく道を延ばし、ルールに合わない手として応えること", () => {
-      const result = perform(progress, [press(4)]);
-      const message = getTutorialMessage(hitofudePuzzleTutorial, result, {
-        entry: "home",
-        violationSettled: true,
-      });
-
-      expect(result.boardState.path.at(-1)).toBe(4);
       expect(result.violated).toBe(true);
-      expect(message.headline).toBe(
-        "このままでは\nたどり着けないマスが残ります",
-      );
-    });
-
-    test("行き止まりまで延ばすと、行き止まりだと言うこと", () => {
-      const result = perform(progress, [press(4), press(0)]);
-      const message = getTutorialMessage(hitofudePuzzleTutorial, result, {
-        entry: "home",
-        violationSettled: true,
-      });
-
-      expect(message.headline).toBe(
+      expect(getMessage(result)).toBe(
         "行き止まりです\n通っていないマスが残っています",
       );
     });
 
-    test("来た道をなぞり戻すと、本番と同じく道が縮み、違反を下げること", () => {
-      const result = perform(progress, [
-        press(4),
-        { type: "trace", step: { from: 4, to: 8, horizontalFirst: false } },
-      ]);
+    describe("違反の後", () => {
+      const violated = pressCells(progress, [16, 21]);
+      const back = act(violated, { type: "press", cell: 11 });
 
-      expect(result.boardState.path).toEqual(progress.boardState.path);
-      expect(result.violated).toBe(false);
-    });
+      test("手順を始めた所まで戻せること", () => {
+        const result = act(violated, { type: "press", cell: 11 });
 
-    test("道のマスを押すと、本番と同じくそこまで巻き戻すこと", () => {
-      const result = perform(progress, [press(13)]);
+        expect(result.boardState.path).toEqual(solution.slice(0, 6));
+        expect(result.violated).toBe(false);
+      });
 
-      expect(result.boardState.path).toEqual(solution.slice(0, 8));
-    });
+      test("手順を始めた所より前へは戻せないこと", () => {
+        const result = act(back, { type: "press", cell: 12 });
 
-    test("先端から離れたマスを押すと、道を変えずに阻まれたとして応え、ルールに合わない手にはしないこと", () => {
-      const result = perform(progress, [press(0)]);
-
-      expect(result.violated).toBe(false);
-      expect(result.boardState.lastMove).toEqual({
-        type: "blocked",
-        cell: 0,
-        direction: null,
-        reason: "not-adjacent",
+        expect(result).toBe(back);
       });
     });
+  });
 
-    test("残りを延ばして全マスを通ると、解き終えること", () => {
-      const result = perform(progress, [9, 5, 4, 0].map(press));
+  describe("通れる隣が少ないマスを伝える手順", () => {
+    const progress = playSteps(3);
+
+    test("通れる隣が1つのマスを2つにする向きを選ぶと違反になり、その2つのマスを示すこと", () => {
+      const result = pressCells(progress, [22, 23]);
+
+      expect(result.violated).toBe(true);
+      expect(
+        findHitofudePuzzleTutorialViolation(
+          getTutorialSituation(hitofudePuzzleTutorial, result),
+          result.boardState,
+        ),
+      ).toEqual({ fixCell: 22, cells: [4, 17] });
+    });
+
+    test("正しい向きを選ぶと手を離すこと", () => {
+      const result = pressCells(progress, [22, 17]);
+
+      expect(result.stepIndex).toBe(steps.length);
+      expect(result.boardState.path).toEqual(freePlayStart);
+    });
+  });
+
+  describe("手を離した後", () => {
+    const progress = playSteps(steps.length);
+    const besideHole = createProgress(solution.slice(0, 19), steps.length);
+
+    test("残りを解のとおりに延ばすと解けること", () => {
+      const result = pressCells(progress, solution.slice(freePlayStart.length));
 
       expect(result.phase).toBe("solved");
     });
 
-    test("矢印キーでも、本番と同じく先端を動かせること", () => {
-      const result = perform(progress, [{ type: "move", direction: "right" }]);
+    test("一本道を進んでも違反にしないこと", () => {
+      const result = pressCells(progress, [18]);
 
-      expect(result.boardState.path.at(-1)).toBe(9);
+      expect(result.violated).toBe(false);
     });
 
-    test("矢印キーで通ったマスへ進もうとすると、本番と同じく阻まれ、ルールに合わない手として応えること", () => {
-      const result = perform(progress, [
-        press(9),
-        { type: "move", direction: "down" },
-      ]);
+    test("通れる隣が1つのマスを2つにする向きへ進むと違反になること", () => {
+      const result = pressCells(progress, [18, 13]);
 
       expect(result.violated).toBe(true);
-      expect(result.boardState.path.at(-1)).toBe(9);
+    });
+
+    test("穴へ進もうとすると違反になること", () => {
+      const result = act(besideHole, { type: "move", direction: "right" });
+
+      expect(result.violated).toBe(true);
     });
   });
 });
 
-describe("getHitofudePuzzleTutorialStepCells", () => {
-  const progress = perform(playing, [press(2)]);
-  const situation = getTutorialSituation(hitofudePuzzleTutorial, progress);
+describe("getHitofudePuzzleTutorialStepMarks", () => {
+  const progress = playSteps(3);
 
-  test("手順のマスのうち、まだ延ばしていないマスを返すこと", () => {
-    const cells = getHitofudePuzzleTutorialStepCells(
-      situation,
+  test("行き先を選ぶ手順で、まだ通っていない行き先の両方に印を付けること", () => {
+    const marks = getHitofudePuzzleTutorialStepMarks(
+      getTutorialSituation(hitofudePuzzleTutorial, progress),
       progress.boardState,
     );
 
-    expect(cells).toEqual([3]);
+    expect(marks).toEqual([17, 23]);
   });
 });
 
 describe("findHitofudePuzzleTutorialHint", () => {
-  const cases = [
-    {
-      name: "道が解の途中なら、次に延ばすマス",
-      path: solution.slice(0, 10),
-      expected: { kind: "extend", cell: 9 },
-    },
-    {
-      name: "道が解から外れていれば、外れる前のマス",
-      path: [...solution.slice(0, 10), 4, 0],
-      expected: { kind: "rewind", cell: 8 },
-    },
-    {
-      name: "解き終えていれば無し",
-      path: solution,
-      expected: null,
-    },
-  ];
+  const forkPath = [...freePlayStart, 18];
 
-  test.each(cases)("$name を返すこと", ({ path, expected }) => {
-    const hint = findHitofudePuzzleTutorialHint({
-      path,
-      moveCount: 0,
-      lastMove: null,
+  test("一本道では、次のマスだけを示し、一言を添えないこと", () => {
+    const hint = findHitofudePuzzleTutorialHint(boardStateOf(freePlayStart));
+
+    expect(hint).toEqual({
+      kind: "extend",
+      cell: 18,
+      ruleId: null,
+      reasonCells: [],
     });
+    expect(hint && describeHitofudePuzzleTutorialHint(hint)).toBeNull();
+  });
 
-    expect(hint).toEqual(expected);
+  test("分かれ道では、次のマスに通れる隣が1つのマスを添え、通れる隣が少ないマスの一言を添えること", () => {
+    const hint = findHitofudePuzzleTutorialHint(boardStateOf(forkPath));
+
+    expect(hint).toEqual({
+      kind: "extend",
+      cell: 23,
+      ruleId: "narrow",
+      reasonCells: [4],
+    });
+    expect(hint && describeHitofudePuzzleTutorialHint(hint)?.headline).toEqual(
+      findStepIntroducing("narrow").message.headline,
+    );
+  });
+
+  test("手順の道筋まで戻した分かれ道では、ほかの向きを退けるルールとその決め手を示すこと", () => {
+    const hint = findHitofudePuzzleTutorialHint(
+      boardStateOf(solution.slice(0, 6)),
+    );
+
+    expect(hint).toEqual({
+      kind: "extend",
+      cell: 10,
+      ruleId: "narrow",
+      reasonCells: [4],
+    });
+    expect(hint && describeHitofudePuzzleTutorialHint(hint)).toEqual(
+      findStepIntroducing("narrow").message,
+    );
+  });
+
+  test("伝えたルールで決まらない分かれ道では、決め手も一言も添えないこと", () => {
+    const hint = findHitofudePuzzleTutorialHint(
+      boardStateOf(solution.slice(0, 3)),
+    );
+
+    expect(hint).toEqual({
+      kind: "extend",
+      cell: 7,
+      ruleId: null,
+      reasonCells: [],
+    });
+  });
+
+  test("手を離した後のどの道でも、手がかりの決め手は、ほかの向きへ進むと伝えたルールで退けられるマスであること", () => {
+    const hints = solution.slice(1).map((_, index) => ({
+      path: solution.slice(0, index + 1),
+      hint: findHitofudePuzzleTutorialHint(
+        boardStateOf(solution.slice(0, index + 1)),
+      ),
+    }));
+
+    for (const { path, hint } of hints) {
+      if (hint?.kind !== "extend" || hint.ruleId === null) {
+        continue;
+      }
+      const others = listUnvisitedNeighbors(path).filter(
+        (cell) => cell !== hint.cell,
+      );
+      expect(
+        others.every((cell) => !isAcceptable([...path, cell], allRuleIds)),
+      ).toBe(true);
+    }
+  });
+
+  test("解から外れた道では、外れる前のマスへ戻させること", () => {
+    const hint = findHitofudePuzzleTutorialHint(
+      boardStateOf([...forkPath, 13]),
+    );
+
+    expect(hint).toEqual({ kind: "rewind", cell: 18 });
+  });
+});
+
+describe("getHitofudePuzzleTutorialProgressRatio", () => {
+  const path = [0, 1, 2, 3];
+
+  test("始点の後に解のとおりに通ったマスの割合を返すこと", () => {
+    const ratio = getHitofudePuzzleTutorialProgressRatio(boardStateOf(path));
+
+    expect(HITOFUDE_PUZZLE_TUTORIAL_PROGRESS_STEP_COUNT).toBe(
+      solution.length - 1,
+    );
+    expect(ratio).toBe(2 / (solution.length - 1));
   });
 });
