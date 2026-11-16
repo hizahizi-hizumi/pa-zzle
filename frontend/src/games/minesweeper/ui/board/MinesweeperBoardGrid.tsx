@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode, Ref } from "react";
 
+import { TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import { cn } from "@/lib/utils";
 
 type MinesweeperBoardGridProps = Pick<
@@ -8,6 +9,8 @@ type MinesweeperBoardGridProps = Pick<
 > & {
   columns: number;
   presentation?: "board" | "cover";
+  /** チュートリアルが、盤面の中だけを覆う範囲にする。 */
+  spotlightArea?: boolean;
   children: ReactNode;
   ref?: Ref<HTMLDivElement>;
 };
@@ -19,6 +22,7 @@ const BOARD_SURFACE_CLASS_NAME =
 export function MinesweeperBoardGrid({
   columns,
   presentation = "board",
+  spotlightArea = false,
   children,
   ref,
   ...props
@@ -33,6 +37,7 @@ export function MinesweeperBoardGrid({
           : "pointer-events-none absolute inset-0",
       )}
       style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+      {...(spotlightArea && { [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "" })}
       {...props}
     >
       {children}
