@@ -1,6 +1,6 @@
 import { parseBridgesBoard } from "@/games/bridges/puzzle/board";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
-import { createClearedSoundLayers } from "@/games/bridges/ui/BridgesPlay/use-bridges-sound-effects";
+import { createClearedSoundLayers } from "@/games/bridges/ui/use-bridges-sound-effects";
 
 function readSoundName(url: string): string {
   return url.split("/").at(-1) ?? "";

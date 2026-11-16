@@ -12,8 +12,12 @@ export function BridgesHomeView() {
     <GameHomeScreen
       {...screenProps}
       ground={<BridgesGround />}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <BridgesHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <BridgesHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose, playStart }) => (
         <BridgesTutorial open={open} playStart={playStart} onClose={onClose} />

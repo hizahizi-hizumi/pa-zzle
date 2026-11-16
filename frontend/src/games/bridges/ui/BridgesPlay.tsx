@@ -16,11 +16,11 @@ import { BridgesGround } from "@/games/bridges/ui/BridgesGround";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesSeparationNotice } from "@/games/bridges/ui/BridgesPlay/BridgesSeparationNotice";
 import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/BridgesStatusAnnouncement";
-import { useBridgesSoundEffects } from "@/games/bridges/ui/BridgesPlay/use-bridges-sound-effects";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
 import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
 import { BOARD_SETTLE_DELAY_MS } from "@/games/bridges/ui/board-settle-delay";
 import { BridgesResultScreen } from "@/games/bridges/ui/result/BridgesResultScreen";
+import { useBridgesSoundEffects } from "@/games/bridges/ui/use-bridges-sound-effects";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,
@@ -112,8 +112,12 @@ export function BridgesPlay({
       onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <BridgesHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <BridgesHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose }) => (
         <BridgesTutorial open={open} onClose={onClose} />
@@ -141,7 +145,8 @@ export function BridgesPlay({
             clearing={progress === "clearing"}
             solved={progress !== "playing"}
             interactionDisabled={progress !== "playing"}
-            onCycleEdge={onCycleEdge}
+            // 盤面は第2引数に押し方を渡すので、プレイの第2引数（回す向き）へ流さないよう包む。
+            onCycleEdge={(edge) => onCycleEdge(edge)}
             onCycleEdgeBackward={(edge) => onCycleEdge(edge, "backward")}
             onClearAnimationComplete={onClearAnimationComplete}
           />

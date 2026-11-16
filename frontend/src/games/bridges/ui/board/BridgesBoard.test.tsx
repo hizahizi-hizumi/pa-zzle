@@ -6,14 +6,17 @@ import {
   getBridgesNetwork,
   parseBridgesBoard,
 } from "@/games/bridges/puzzle/board";
-import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
+import {
+  BridgesBoard,
+  type BridgesEdgeGesture,
+} from "@/games/bridges/ui/board/BridgesBoard";
 import { createBoardView } from "@/games/bridges/ui/board/board-geometry";
 
 afterEach(cleanup);
 
 function renderBoard(
   board: BridgesBoardState,
-  onCycleEdge: (edge: number) => void = vi.fn(),
+  onCycleEdge: (edge: number, gesture: BridgesEdgeGesture) => void = vi.fn(),
 ) {
   return (
     <BridgesBoard
@@ -74,6 +77,60 @@ function drag(
 }
 
 describe("BridgesBoard", () => {
+  describe("スクロールを止める範囲を渡さない場合", () => {
+    const board = parseBridgesBoard(["1.1", "...", "..."]);
+
+    beforeEach(() => {
+      render(renderBoard(board));
+    });
+
+    test("指で触れたときに、盤面の全体でスクロールを止めること", () => {
+      const surface = readBoardSurface();
+      const islandLocks = surface.querySelectorAll("[data-touch-scroll-lock]");
+
+      expect(surface.classList.contains("touch-none")).toBe(true);
+      expect(islandLocks).toHaveLength(0);
+    });
+  });
+
+  describe("スクロールを止める範囲を島の上だけにした場合", () => {
+    const board = parseBridgesBoard(["1.1", "...", "..."]);
+
+    beforeEach(() => {
+      render(
+        <BridgesBoard
+          board={board}
+          bridges={getBridgesNetwork(board).edges.map(() => 0)}
+          islandStatuses={board.islands.map(() => "short")}
+          edgeNotice={null}
+          clearing={false}
+          interactionDisabled={false}
+          touchScrollLock="islands"
+          onCycleEdge={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+    });
+
+    test("盤面の全体ではスクロールを止めず、島ごとの 44px 以上の所でだけ止めること", () => {
+      const surface = readBoardSurface();
+      const islandLocks = Array.from(
+        surface.querySelectorAll<HTMLElement>("[data-touch-scroll-lock]"),
+      );
+
+      expect(surface.classList.contains("touch-none")).toBe(false);
+      expect(islandLocks).toHaveLength(board.islands.length);
+      expect(
+        islandLocks.every(
+          (lock) =>
+            lock.classList.contains("touch-none") &&
+            Number.parseFloat(lock.style.width) >= 44 &&
+            lock.style.height === lock.style.width,
+        ),
+      ).toBe(true);
+    });
+  });
+
   describe("島の多い盤面の最後の島を選んでから、島の少ない盤面へ移った場合", () => {
     const manyIslands = parseBridgesBoard([
       "2.2.2.",
@@ -116,14 +173,24 @@ describe("BridgesBoard", () => {
       ".....",
       "..1..",
     ]);
-    let onCycleEdge: ReturnType<typeof vi.fn<(edge: number) => void>>;
-    let onIneffectivePress: ReturnType<typeof vi.fn<() => void>>;
+    let onCycleEdge: ReturnType<
+      typeof vi.fn<(edge: number, gesture: BridgesEdgeGesture) => void>
+    >;
+    let onIneffectivePress: ReturnType<
+      typeof vi.fn<(kind: "candidates" | "missed") => void>
+    >;
+    let onSelectIsland: ReturnType<
+      typeof vi.fn<(island: number | null) => void>
+    >;
 
     beforeEach(() => {
-      onCycleEdge = vi.fn<(edge: number) => void>();
-      onIneffectivePress = vi.fn<() => void>();
+      onCycleEdge =
+        vi.fn<(edge: number, gesture: BridgesEdgeGesture) => void>();
+      onIneffectivePress = vi.fn<(kind: "candidates" | "missed") => void>();
+      onSelectIsland = vi.fn<(island: number | null) => void>();
       render(
         <BridgesBoard
+          onSelectIsland={onSelectIsland}
           board={islandsBoard}
           bridges={getBridgesNetwork(islandsBoard).edges.map(() => 0)}
           islandStatuses={islandsBoard.islands.map(() => "short")}
@@ -143,17 +210,29 @@ describe("BridgesBoard", () => {
         press([0.5, 0.5]);
       });
 
+      test("押した島を選んだことを知らせること", () => {
+        const calls = onSelectIsland.mock.calls;
+
+        expect(calls).toEqual([[0]]);
+      });
+
+      test("相手の島を押すと、選びを解いたことを知らせること", () => {
+        press([2.5, 0.5]);
+
+        expect(onSelectIsland).toHaveBeenLastCalledWith(null);
+      });
+
       test("2島の間の橋を回すこと", () => {
         press([2.5, 0.5]);
 
-        expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0);
+        expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0, "islands");
       });
 
       test("回した後は選びを解き、続けて別の島を押しても橋を回さないこと", () => {
         press([2.5, 0.5]);
         press([2.5, 4.5]);
 
-        expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0);
+        expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0, "islands");
       });
     });
 
@@ -179,7 +258,7 @@ describe("BridgesBoard", () => {
       test("押した島を選び直し、その相手の島を押すとその間の橋を回すこと", () => {
         press([2.5, 0.5]);
 
-        expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(2);
+        expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(2, "islands");
       });
     });
 
@@ -191,7 +270,7 @@ describe("BridgesBoard", () => {
 
       test("近くの辺の橋を回さず、回さなかったことを知らせること", () => {
         expect(onCycleEdge).not.toHaveBeenCalled();
-        expect(onIneffectivePress).toHaveBeenCalledOnce();
+        expect(onIneffectivePress).toHaveBeenCalledExactlyOnceWith("missed");
       });
 
       test("選びを解き、次に相手の島を押しても橋を回さないこと", () => {
@@ -210,14 +289,14 @@ describe("BridgesBoard", () => {
     test("島からなぞって相手の島の近くで離すと、その間の橋を回すこと", () => {
       drag([0.5, 0.5], [2.1, 0.6]);
 
-      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0);
+      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0, "drag");
     });
 
     test("島からなぞって相手の島に届く前の海の上で離すと、橋を回さず回さなかったことを知らせること", () => {
       drag([0.5, 0.5], [1.4, 0.6]);
 
       expect(onCycleEdge).not.toHaveBeenCalled();
-      expect(onIneffectivePress).toHaveBeenCalledOnce();
+      expect(onIneffectivePress).toHaveBeenCalledExactlyOnceWith("missed");
     });
 
     test("島から斜めになぞって相手の島の行の近くで離しても、橋を回さないこと", () => {
@@ -229,14 +308,14 @@ describe("BridgesBoard", () => {
     test("島からなぞって相手の島を通り過ぎて離しても、なぞった向きの最初の島との間の橋を回すこと", () => {
       drag([0.5, 0.5], [4.6, 0.8]);
 
-      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0);
+      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0, "drag");
     });
 
     test("島からなぞって辺の無い向きへ離すと、橋を回さず回さなかったことを知らせること", () => {
       drag([0.5, 0.5], [-0.4, 0.5]);
 
       expect(onCycleEdge).not.toHaveBeenCalled();
-      expect(onIneffectivePress).toHaveBeenCalledOnce();
+      expect(onIneffectivePress).toHaveBeenCalledExactlyOnceWith("missed");
     });
   });
 
@@ -265,12 +344,17 @@ describe("BridgesBoard", () => {
         crossBoard.islands[from]!.column === 0 &&
         crossBoard.islands[to]!.column === 2,
     );
-    let onCycleEdge: ReturnType<typeof vi.fn<(edge: number) => void>>;
-    let onIneffectivePress: ReturnType<typeof vi.fn<() => void>>;
+    let onCycleEdge: ReturnType<
+      typeof vi.fn<(edge: number, gesture: BridgesEdgeGesture) => void>
+    >;
+    let onIneffectivePress: ReturnType<
+      typeof vi.fn<(kind: "candidates" | "missed") => void>
+    >;
 
     function renderWithBridges(counts: Readonly<Record<number, 0 | 1 | 2>>) {
-      onCycleEdge = vi.fn<(edge: number) => void>();
-      onIneffectivePress = vi.fn<() => void>();
+      onCycleEdge =
+        vi.fn<(edge: number, gesture: BridgesEdgeGesture) => void>();
+      onIneffectivePress = vi.fn<(kind: "candidates" | "missed") => void>();
       render(
         <BridgesBoard
           board={crossBoard}
@@ -307,7 +391,9 @@ describe("BridgesBoard", () => {
         press(point);
 
         expect(onCycleEdge).not.toHaveBeenCalled();
-        expect(onIneffectivePress).toHaveBeenCalledOnce();
+        expect(onIneffectivePress).toHaveBeenCalledExactlyOnceWith(
+          "candidates",
+        );
         expect(listHintEdges().sort()).toEqual([vertical, horizontal].sort());
       },
     );
@@ -316,7 +402,7 @@ describe("BridgesBoard", () => {
       renderWithBridges({ [vertical]: 1 });
       press([1.5, 2.4]);
 
-      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(vertical);
+      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(vertical, "edge");
     });
 
     test("候補を示した後で島を押して相手の島を押すと、その間の橋を回すこと", () => {
@@ -325,7 +411,10 @@ describe("BridgesBoard", () => {
       press([0.5, 3.5]);
       press([2.5, 3.5]);
 
-      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(horizontal);
+      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(
+        horizontal,
+        "islands",
+      );
     });
   });
 
@@ -389,7 +478,7 @@ describe("BridgesBoard", () => {
 
     function renderWith(props: {
       guidedEdges?: readonly number[];
-      onCycleEdge: (edge: number) => void;
+      onCycleEdge: (edge: number, gesture: BridgesEdgeGesture) => void;
     }) {
       render(
         <BridgesBoard
@@ -409,15 +498,17 @@ describe("BridgesBoard", () => {
     }
 
     test("手を引いて押させる辺があれば、その帯の中の押しとして、その辺の橋を回すこと", () => {
-      const onCycleEdge = vi.fn<(edge: number) => void>();
+      const onCycleEdge =
+        vi.fn<(edge: number, gesture: BridgesEdgeGesture) => void>();
       renderWith({ guidedEdges: [3], onCycleEdge });
       press([2.5, 2.5]);
 
-      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(3);
+      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(3, "edge");
     });
 
     test("印があっても押させる辺が無ければ、本番と同じくどちらの辺の橋も回さないこと", () => {
-      const onCycleEdge = vi.fn<(edge: number) => void>();
+      const onCycleEdge =
+        vi.fn<(edge: number, gesture: BridgesEdgeGesture) => void>();
       renderWith({ onCycleEdge });
       press([2.5, 2.5]);
 
@@ -448,10 +539,13 @@ describe("BridgesBoard", () => {
       "2.4.4..",
       ".1....2",
     ]);
-    let onCycleEdge: ReturnType<typeof vi.fn<(edge: number) => void>>;
+    let onCycleEdge: ReturnType<
+      typeof vi.fn<(edge: number, gesture: BridgesEdgeGesture) => void>
+    >;
 
     function renderScene(board: BridgesBoardState) {
-      onCycleEdge = vi.fn<(edge: number) => void>();
+      onCycleEdge =
+        vi.fn<(edge: number, gesture: BridgesEdgeGesture) => void>();
       render(
         <BridgesBoard
           board={board}
@@ -496,6 +590,7 @@ describe("BridgesBoard", () => {
 
         expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(
           edgeBetween(wideBoard, [3, 4], [3, 7]),
+          "edge",
         );
       },
     );
@@ -506,6 +601,7 @@ describe("BridgesBoard", () => {
 
       expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(
         edgeBetween(wideBoard, [0, 0], [0, 2]),
+        "edge",
       );
     });
 
@@ -515,6 +611,7 @@ describe("BridgesBoard", () => {
 
       expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(
         edgeBetween(wideBoard, [0, 0], [0, 2]),
+        "edge",
       );
     });
 
@@ -525,6 +622,7 @@ describe("BridgesBoard", () => {
 
       expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(
         edgeBetween(smallBoard, [0, 4], [2, 4]),
+        "drag",
       );
     });
   });
@@ -537,7 +635,9 @@ describe("BridgesBoard", () => {
       ".....",
       "..1..",
     ]);
-    let onCycleEdge: ReturnType<typeof vi.fn<(edge: number) => void>>;
+    let onCycleEdge: ReturnType<
+      typeof vi.fn<(edge: number, gesture: BridgesEdgeGesture) => void>
+    >;
     let onCycleEdgeBackward: ReturnType<typeof vi.fn<(edge: number) => void>>;
 
     function readPressedEdge(): string | null {
@@ -553,7 +653,8 @@ describe("BridgesBoard", () => {
     }
 
     beforeEach(() => {
-      onCycleEdge = vi.fn<(edge: number) => void>();
+      onCycleEdge =
+        vi.fn<(edge: number, gesture: BridgesEdgeGesture) => void>();
       onCycleEdgeBackward = vi.fn<(edge: number) => void>();
       render(
         <>
@@ -582,7 +683,7 @@ describe("BridgesBoard", () => {
 
       fireEvent.pointerUp(readBoardSurface(), toPointer([1.5, 0.7]));
 
-      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0);
+      expect(onCycleEdge).toHaveBeenCalledExactlyOnceWith(0, "edge");
       expect(readPressedEdge()).toBeNull();
     });
 

@@ -31,13 +31,13 @@ import {
 import { BridgesGround } from "@/games/bridges/ui/BridgesGround";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/BridgesStatusAnnouncement";
-import { useBridgesSoundEffects } from "@/games/bridges/ui/BridgesPlay/use-bridges-sound-effects";
 import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
 import type {
   BridgesBoardCue,
   BridgesBoardSpotlight,
 } from "@/games/bridges/ui/board/board-cue";
 import { BOARD_SETTLE_DELAY_MS } from "@/games/bridges/ui/board-settle-delay";
+import { useBridgesSoundEffects } from "@/games/bridges/ui/use-bridges-sound-effects";
 import type { GameProgress } from "@/games/play";
 import {
   completeTutorial,

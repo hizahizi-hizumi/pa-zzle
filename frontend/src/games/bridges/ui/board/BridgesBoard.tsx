@@ -3,6 +3,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useRef,
   useState,
@@ -24,9 +25,6 @@ import {
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { cycleBridgesEdge } from "@/games/bridges/puzzle/transitions";
 import { BridgesBoardCues } from "@/games/bridges/ui/board/BridgesBoard/BridgesBoardCues";
-import { flashBlockingBridges } from "@/games/bridges/ui/board/BridgesBoard/flash-blocking-bridges";
-import { playBridgeMotion } from "@/games/bridges/ui/board/BridgesBoard/play-bridge-motion";
-import { playClearWave } from "@/games/bridges/ui/board/BridgesBoard/play-clear-wave";
 import {
   type BridgesBlockedAttempt,
   BridgesFigure,
@@ -46,12 +44,17 @@ import {
   findEdgeBetween,
   findIslandToward,
   getIslandCenter,
+  ISLAND_HIT_RADIUS,
   isPointInEdgeBand,
   isPointOnIsland,
   toBoardPoint,
   toViewPoint,
 } from "@/games/bridges/ui/board/board-geometry";
 import { getBridgeExtendMs } from "@/games/bridges/ui/board/bridge-extend";
+import { flashBlockingBridges } from "@/games/bridges/ui/board/flash-blocking-bridges";
+import { playBridgeMotion } from "@/games/bridges/ui/board/play-bridge-motion";
+import { playClearWave } from "@/games/bridges/ui/board/play-clear-wave";
+import { cn } from "@/lib/utils";
 
 type BridgesBoardProps = {
   board: BridgesBoardState;
@@ -75,17 +78,45 @@ type BridgesBoardProps = {
    */
   guidedEdges?: readonly number[];
   /**
+   * 指で触れたときに、ページのスクロールを止める範囲。
+   * - `board`: 盤面の全体。送らない画面（プレイ画面・チュートリアル）で使う。
+   * - `islands`: なぞりが始まる島の上だけ。送る画面（遊び方）に置く盤面で使い、島の外の盤面の上では指で縦に送れるようにする。
+   *   島の間を押すのは押すだけなので、スクロールと両立する。
+   * マウスとペンの振る舞いは変えない。
+   */
+  touchScrollLock?: "board" | "islands";
+  /**
    * チュートリアルで決め手を見せている間、盤面の覆いから抜いて元の明るさで見せる島と辺。渡している間は盤面を覆う範囲にする。
    * 通常のプレイでは渡さない。
    */
   spotlight?: BridgesBoardSpotlight | null;
-  onCycleEdge: (edge: number) => void;
+  /** `gesture` は、どう押して回したか。遊び方の例が、文の言う手で回したかを見分けるのに使う。 */
+  onCycleEdge: (edge: number, gesture: BridgesEdgeGesture) => void;
   /** マウスの右クリックで使う。渡さなければ右クリックでは回さない。 */
   onCycleEdgeBackward?: (edge: number) => void;
-  /** 押したが、どの辺の橋も回さず、島も選ばなかった（線から遠い所、なぞって相手の島の外で離した）。 */
-  onIneffectivePress?: () => void;
+  /**
+   * 押したが、どの辺の橋も回さず、島も選ばなかった。`candidates` は線の交わる所のそばを押して候補の2辺を示したとき、
+   * `missed` はそれ以外（線から遠い所、なぞって相手の島の外で離した）。
+   */
+  onIneffectivePress?: (kind: "candidates" | "missed") => void;
+  /** 2段階の操作の島の選びを置き直すたびに、選んでいる島（無ければ `null`）を受け取る。 */
+  onSelectIsland?: (island: number | null) => void;
+  /**
+   * 渡すと、2段階の操作で選んでいる島を、盤面ではなく渡した側が持つ。盤面は選びを置き直すたびに `onSelectIsland` で知らせ、
+   * 渡した側がこの値を置き直す。遊び方の例が、遊び方の層の Esc で選びを解くのに使う。渡さなければ盤面が持つ。
+   */
+  selectedIsland?: number | null;
   onClearAnimationComplete: () => void;
 };
+
+/**
+ * 辺の橋を回した押し方。
+ * - `edge`: 島の間を押した。
+ * - `drag`: 島から相手の島へなぞった。
+ * - `islands`: 島を選んでから相手の島を押した。
+ * - `keyboard`: Shift と矢印キーで回した。
+ */
+export type BridgesEdgeGesture = "edge" | "drag" | "islands" | "keyboard";
 
 /**
  * - `edge`: 線の当たり範囲を押した。`origin` は板を伸ばし始める端の島。`armed` は今離せば回すか（指が同じ線の当たり範囲にあるか）。
@@ -127,7 +158,10 @@ type CandidatePress = {
 };
 
 /** 板の横木を省いて板を太くする、マスの幅（px）。スマホの 9×9 以上の盤面がこれを下回る。 */
-const COMPACT_CELL_PX = 37;
+export const COMPACT_CELL_PX = 37;
+
+/** 指で操作を始める所の、最も小さい一辺（px）。 */
+const TOUCH_TARGET_MIN_PX = 44;
 
 const CANDIDATE_HINT_MS = 1_200;
 
@@ -184,10 +218,13 @@ export function BridgesBoard({
   showsSea = false,
   cues = [],
   guidedEdges = [],
+  touchScrollLock = "board",
   spotlight = null,
   onCycleEdge,
   onCycleEdgeBackward,
   onIneffectivePress,
+  onSelectIsland,
+  selectedIsland: controlledSelectedIsland,
   onClearAnimationComplete,
 }: BridgesBoardProps) {
   const boardRef = useRef<HTMLDivElement>(null);
@@ -201,6 +238,10 @@ export function BridgesBoard({
   /** タッチの長押しで届く contextmenu を右クリックと取り違えないために持つ。 */
   const lastPointerType = useRef<string | null>(null);
   const [selection, setSelection] = useState<IslandsOnBoard | null>(null);
+  function changeSelection(next: IslandsOnBoard | null) {
+    setSelection(next);
+    onSelectIsland?.(next?.islands[0] ?? null);
+  }
   const [candidatePress, setCandidatePress] = useState<CandidatePress | null>(
     null,
   );
@@ -214,10 +255,18 @@ export function BridgesBoard({
   const compact =
     boardWidth !== null && boardWidth / view.width < COMPACT_CELL_PX;
   const network = getBridgesNetwork(board);
-  const selectedIsland =
-    selection?.board === board && !interactionDisabled
-      ? selection.islands[0]!
-      : null;
+  // 島の陸（輪郭線の外まで）を覆い、指で始められるよう 44px より小さくしない。
+  const islandScrollLockSize = `${Math.max(
+    TOUCH_TARGET_MIN_PX,
+    boardWidth === null ? 0 : (boardWidth / view.width) * ISLAND_HIT_RADIUS * 2,
+  )}px`;
+  const ownSelectedIsland =
+    selection?.board === board ? selection.islands[0]! : null;
+  const selectedIsland = interactionDisabled
+    ? null
+    : controlledSelectedIsland === undefined
+      ? ownSelectedIsland
+      : controlledSelectedIsland;
   const islandBridgeCounts = countBridgesIslandBridges(board, { bridges });
   const blockingEdges =
     edgeNotice?.change === "blocked" ? edgeNotice.crossingEdges : [];
@@ -340,7 +389,11 @@ export function BridgesBoard({
 
   // 盤面の外を押したときと Esc キーで、島の選びと候補の表示を解く。
   // メニューやダイアログは盤面の外へ描かれるので、そこでの Esc（ダイアログを閉じる操作）は盤面へ流さない。
-  const hasSelection = selection !== null;
+  const hasSelection = selectedIsland !== null;
+  const clearSelection = useEffectEvent(function clearSelection() {
+    changeSelection(null);
+    setCandidatePress(null);
+  });
   useEffect(() => {
     if (!hasSelection && candidatePress === null) {
       return;
@@ -350,8 +403,7 @@ export function BridgesBoard({
     }
     function handlePointerDownOutside(event: PointerEvent) {
       if (isOutsideBoard(event.target)) {
-        setSelection(null);
-        setCandidatePress(null);
+        clearSelection();
       }
     }
     function handleKeyDown(event: KeyboardEvent) {
@@ -363,8 +415,7 @@ export function BridgesBoard({
       ) {
         return;
       }
-      setSelection(null);
-      setCandidatePress(null);
+      clearSelection();
     }
     document.addEventListener("pointerdown", handlePointerDownOutside, true);
     window.addEventListener("keydown", handleKeyDown);
@@ -413,27 +464,28 @@ export function BridgesBoard({
   function cycleEdge(
     edge: number,
     originIsland: number,
+    gesture: BridgesEdgeGesture,
     direction: "forward" | "backward" = "forward",
   ) {
     setMotionOrigin({ edge, island: originIsland });
     setCandidatePress(null);
-    setSelection(null);
+    changeSelection(null);
     if (direction === "backward") {
       onCycleEdgeBackward?.(edge);
     } else {
-      onCycleEdge(edge);
+      onCycleEdge(edge, gesture);
     }
   }
 
   function rejectPress() {
-    setSelection(null);
-    onIneffectivePress?.();
+    changeSelection(null);
+    onIneffectivePress?.("missed");
   }
 
   function showCandidates(edges: readonly [number, number]) {
-    setSelection(null);
+    changeSelection(null);
     setCandidatePress({ board, edges });
-    onIneffectivePress?.();
+    onIneffectivePress?.("candidates");
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
@@ -535,7 +587,7 @@ export function BridgesBoard({
     }
     const left = press.left || !isPointOnIsland(board, press.island, point);
     if (left && !press.left) {
-      setSelection(null);
+      changeSelection(null);
     }
     const next = left ? findDragAim(board, press.island, point) : null;
     if (
@@ -559,7 +611,7 @@ export function BridgesBoard({
     if (press.kind === "edge") {
       const target = findPressTarget(point);
       if (target?.kind === "edge" && target.edge === press.edge) {
-        cycleEdge(press.edge, press.origin);
+        cycleEdge(press.edge, press.origin, "edge");
       } else {
         rejectPress();
       }
@@ -568,17 +620,17 @@ export function BridgesBoard({
     if (press.left || !isPointOnIsland(board, press.island, point)) {
       const landing = findDragAim(board, press.island, point);
       if (landing?.cyclesOnRelease) {
-        cycleEdge(landing.edge, press.island);
+        cycleEdge(landing.edge, press.island, "drag");
       } else {
         rejectPress();
       }
       return;
     }
     if (press.pairedEdge !== null && selectedIsland !== null) {
-      cycleEdge(press.pairedEdge, selectedIsland);
+      cycleEdge(press.pairedEdge, selectedIsland, "islands");
       return;
     }
-    setSelection(
+    changeSelection(
       selectedIsland === press.island
         ? null
         : { board, islands: [press.island] },
@@ -614,6 +666,7 @@ export function BridgesBoard({
       cycleEdge(
         target.edge,
         findNearerEnd(board, target.edge, point),
+        "edge",
         "backward",
       );
       return;
@@ -623,7 +676,7 @@ export function BridgesBoard({
         ? null
         : findEdgeBetween(board, selectedIsland, target.island);
     if (pairedEdge !== null && selectedIsland !== null) {
-      cycleEdge(pairedEdge, selectedIsland, "backward");
+      cycleEdge(pairedEdge, selectedIsland, "islands", "backward");
     }
   }
 
@@ -641,7 +694,7 @@ export function BridgesBoard({
     if (event.shiftKey) {
       const edge = findBridgesEdgeToward(board, focusedIsland, direction);
       if (!interactionDisabled && edge !== null) {
-        cycleEdge(edge, focusedIsland);
+        cycleEdge(edge, focusedIsland, "keyboard");
       }
       return;
     }
@@ -657,7 +710,10 @@ export function BridgesBoard({
       ref={boardRef}
       role="group"
       aria-label={`${BRIDGES_DISPLAY_NAME}盤面 ${board.height}行${board.width}列`}
-      className="relative size-full touch-none select-none [-webkit-touch-callout:none]"
+      className={cn(
+        "relative size-full select-none [-webkit-touch-callout:none]",
+        touchScrollLock === "board" && "touch-none",
+      )}
       {...(spotlight !== null && { [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "" })}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -698,6 +754,25 @@ export function BridgesBoard({
           compact={compact}
         />
       )}
+      {touchScrollLock === "islands" && !interactionDisabled
+        ? board.islands.map((island, index) => {
+            const center = toViewPoint(view, getIslandCenter(island));
+            return (
+              <span
+                key={`${island.row}:${island.column}`}
+                aria-hidden="true"
+                data-touch-scroll-lock={index}
+                className="absolute -translate-x-1/2 -translate-y-1/2 touch-none rounded-full"
+                style={{
+                  left: `${(center.x / view.width) * 100}%`,
+                  top: `${(center.y / view.height) * 100}%`,
+                  width: islandScrollLockSize,
+                  height: islandScrollLockSize,
+                }}
+              />
+            );
+          })
+        : null}
       <ul className="sr-only">
         {board.islands.map(({ row, column, clue }, island) => (
           <li key={`${row}:${column}`}>

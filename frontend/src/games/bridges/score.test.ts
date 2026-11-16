@@ -1,5 +1,6 @@
 import type { BridgesSolveWorkload } from "@/games/bridges/problem/workload";
 import {
+  BRIDGES_SPEED_ZERO_SCORE_RATIO_RANGE,
   calculateBridgesPlayScore,
   calculateBridgesSpeedFullScoreMs,
   calculateBridgesSpeedScoreRule,
@@ -92,6 +93,29 @@ describe("calculateBridgesZeroScoreRatio", () => {
 
     expect(ratio).toBe(expected);
     expect(expected).toBe(5.2);
+  });
+});
+
+describe("BRIDGES_SPEED_ZERO_SCORE_RATIO_RANGE", () => {
+  test("読みの無い問題と読みの重い問題の倍率が、幅の中にあること", () => {
+    const ratios = [lightWorkload, heavyWorkload].map(
+      calculateBridgesZeroScoreRatio,
+    );
+
+    expect(
+      ratios.every(
+        (ratio) =>
+          ratio >= BRIDGES_SPEED_ZERO_SCORE_RATIO_RANGE.min &&
+          ratio <= BRIDGES_SPEED_ZERO_SCORE_RATIO_RANGE.max,
+      ),
+    ).toBe(true);
+    expect(ratios[0]).toBe(BRIDGES_SPEED_ZERO_SCORE_RATIO_RANGE.min);
+  });
+
+  test("下限の3倍から、読みの倍率3を足した6倍までの幅であること", () => {
+    const { min, max } = BRIDGES_SPEED_ZERO_SCORE_RATIO_RANGE;
+
+    expect([min, max]).toEqual([3, 6]);
   });
 });
 
