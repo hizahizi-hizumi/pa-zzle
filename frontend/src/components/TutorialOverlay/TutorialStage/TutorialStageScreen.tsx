@@ -4,6 +4,7 @@ import {
   type Ref,
   type RefObject,
   useCallback,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -11,6 +12,7 @@ import {
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { BrowserBottomSurface } from "@/components/BrowserBottomSurface";
 import { GamePictogram } from "@/components/GamePictogram";
+import { TutorialFocusScrim } from "@/components/TutorialOverlay/TutorialFocusScrim";
 import type {
   TutorialFinish,
   TutorialIntroScene,
@@ -52,12 +54,16 @@ type TutorialStageScreenProps = {
   message: TutorialMessage;
   /** 作ったときに `intro` なら入口を見せる。もう一度始めたときは入口を見せずに最初の手順から始める。 */
   phase: TutorialPhase;
+  /** 盤面が決め手を示している間、盤面の中だけを薄く覆う。 */
+  spotlighting: boolean;
   progress: number;
   progressStepCount: number;
   finish: TutorialFinish;
   renderBoard: (intro: TutorialStageBoardIntro) => ReactNode;
   onIntroEnd: () => void;
   onRestart: () => void;
+  /** 渡している間だけ、解いている間の一言の下に「ヒント」を出す。 */
+  onRequestHint: (() => void) | null;
   /** 画面そのもの。開いたときのフォーカスを置く。 */
   ref?: Ref<HTMLDivElement>;
 };
@@ -92,6 +98,14 @@ function getMoveFromIntroName(target: HTMLElement, source: HTMLElement) {
   return `translate(${sourceRect.left - targetRect.left}px, ${sourceRect.top - targetRect.top}px) scale(${scale})`;
 }
 
+/** 完成で盤面の下の欄が伸びたとき、盤面を新しい位置と大きさへ移す間。 */
+const BOARD_SETTLE_MS = 400;
+
+/** 前の位置と大きさから、今の位置と大きさへ移す変形（FLIP）。 */
+function getMoveFromPreviousRect(current: DOMRect, previous: DOMRect): string {
+  return `translate(${previous.left - current.left}px, ${previous.top - current.top}px) scale(${previous.width / current.width}, ${previous.height / current.height})`;
+}
+
 /** 画面の中で使う参照と、開いた側へ渡す参照の両方に、同じ要素を渡す。 */
 function mergeRefs(
   inner: RefObject<HTMLDivElement | null>,
@@ -123,12 +137,14 @@ export function TutorialStageScreen({
   recap,
   message,
   phase,
+  spotlighting,
   progress,
   progressStepCount,
   finish,
   renderBoard,
   onIntroEnd,
   onRestart,
+  onRequestHint,
   ref,
 }: TutorialStageScreenProps) {
   const [introScene, setIntroScene] = useState<TutorialIntroScene | null>(
@@ -143,6 +159,9 @@ export function TutorialStageScreen({
   const titleRef = useRef<HTMLHeadingElement>(null);
   const introPictogramRef = useRef<HTMLSpanElement>(null);
   const introTitleRef = useRef<HTMLSpanElement>(null);
+  const boardAreaRef = useRef<HTMLElement>(null);
+  const boardRectRef = useRef<DOMRect | null>(null);
+  const settledCompletedRef = useRef(completed);
   const shownMessage: TutorialMessage = showsGoal
     ? { headline: intro.purpose, detail: intro.goalCaption }
     : message;
@@ -150,6 +169,41 @@ export function TutorialStageScreen({
   const handleSceneEnd = useCallback(() => {
     setIntroScene((scene) => (scene === "start" ? null : scene));
   }, []);
+
+  // 完成で振り返りと操作が出ると、盤面の下の欄が伸びて盤面が縮む。盤面を飛ばさず、前の位置と大きさから滑らかに移す。
+  useLayoutEffect(() => {
+    const board = boardAreaRef.current?.firstElementChild;
+    if (!(board instanceof HTMLElement)) {
+      return;
+    }
+    const previous = boardRectRef.current;
+    const current = board.getBoundingClientRect();
+    boardRectRef.current = current;
+    const justCompleted = completed && !settledCompletedRef.current;
+    settledCompletedRef.current = completed;
+    const moved =
+      previous !== null &&
+      (previous.width !== current.width || previous.top !== current.top);
+    if (
+      !justCompleted ||
+      !moved ||
+      current.width === 0 ||
+      prefersReducedMotion() ||
+      typeof board.animate !== "function"
+    ) {
+      return;
+    }
+    board.animate(
+      [
+        {
+          transform: getMoveFromPreviousRect(current, previous),
+          transformOrigin: "0 0",
+        },
+        { transform: "none", transformOrigin: "0 0" },
+      ],
+      { duration: BOARD_SETTLE_MS, easing: MOTION_EASING.standard },
+    );
+  });
 
   /** 大きな名前が消える前に位置を測り、上部の名前をそこから元の位置へ動かす。動きを減らす設定では、替えるだけにする。 */
   function moveNameToHeader(): void {
@@ -262,6 +316,7 @@ export function TutorialStageScreen({
 
         {/* ゴールを見せる間と、始めの盤面へ替える動きの間は、盤面を押せないようにする。 */}
         <main
+          ref={boardAreaRef}
           inert={introScene !== null}
           className="flex min-h-0 flex-1 items-end justify-center px-4 [container-type:size]"
         >
@@ -337,6 +392,17 @@ export function TutorialStageScreen({
               はじめる
             </Button>
           )}
+          {onRequestHint && introScene === null && phase === "playing" && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={appearClassName}
+              onClick={onRequestHint}
+            >
+              ヒント
+            </Button>
+          )}
           {completed && (
             // 覚えたルールを1つずつ確かめるように出してから、次の操作を出す。
             <>
@@ -381,6 +447,11 @@ export function TutorialStageScreen({
         </footer>
       </div>
       <BrowserBottomSurface surface="game" />
+      <TutorialFocusScrim
+        scope="area"
+        active={spotlighting && introScene === null && phase === "playing"}
+        containerRef={rootRef}
+      />
     </div>
   );
 }

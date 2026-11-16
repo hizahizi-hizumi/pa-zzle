@@ -87,6 +87,36 @@ describe("TutorialCue", () => {
       expect(pointers).toHaveLength(1);
       expect(recalls).toHaveLength(1);
     });
+
+    test("置き場所を指定しないと、押す物のすぐ下に指を置き、押すしぐさに波紋を添えること", () => {
+      const pointer = queryCues("pointer")[0];
+      const ripple = pointer?.querySelector(".animate-tutorial-tap-ripple");
+
+      expect(pointer?.getAttribute("data-placement")).toBe("below");
+      expect(ripple).not.toBeNull();
+    });
+  });
+
+  describe("押す物の中央を指す指さしの場合", () => {
+    beforeEach(() => {
+      render(<TutorialCue kind="pointer" recallId={null} placement="center" />);
+    });
+
+    test("押す物の中央に指を置き、印も描くこと", () => {
+      const marks = queryCues("mark");
+      const pointer = queryCues("pointer")[0];
+
+      expect(marks).toHaveLength(1);
+      expect(pointer?.getAttribute("data-placement")).toBe("center");
+    });
+
+    test("押す物に重なって盤面の物に見えないよう、波紋を描かないこと", () => {
+      const pointer = queryCues("pointer")[0];
+      const ripple = pointer?.querySelector(".animate-tutorial-tap-ripple");
+
+      expect(pointer).toBeDefined();
+      expect(ripple).toBeNull();
+    });
   });
 
   describe("仕上げたことへの応えの場合", () => {
