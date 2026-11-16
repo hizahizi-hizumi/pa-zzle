@@ -32,10 +32,10 @@ afterEach(() => {
   cleanup();
 });
 
-function renderStatus(phase: TsumeShogiSessionPhase): void {
+function renderStatus(phase: TsumeShogiSessionPhase, plies?: number): void {
   render(
     <TsumeShogiPlayStatus
-      plies={3}
+      plies={plies}
       phase={phase}
       shownMoves={refutedMoves}
       precedingMoveTo={null}
@@ -46,7 +46,7 @@ function renderStatus(phase: TsumeShogiSessionPhase): void {
 describe("TsumeShogiPlayStatus", () => {
   describe("誤王手の筋で手数が尽きた場合", () => {
     beforeEach(() => {
-      renderStatus("refuted");
+      renderStatus("refuted", 3);
     });
 
     test("反証と、その手数では詰まないことを示すこと", () => {
@@ -57,9 +57,22 @@ describe("TsumeShogiPlayStatus", () => {
     });
   });
 
+  describe("手数を渡さずに、誤王手の筋で手数が尽きた場合", () => {
+    beforeEach(() => {
+      renderStatus("refuted");
+    });
+
+    test("反証だけを示し、手数の知らせを出さないこと", () => {
+      const status = screen.getByRole("status").textContent;
+
+      expect(status).toContain("△同玉");
+      expect(status).not.toContain("詰みません");
+    });
+  });
+
   describe("誤王手の筋でまだ指せる場合", () => {
     beforeEach(() => {
-      renderStatus("attacker");
+      renderStatus("attacker", 3);
     });
 
     test("反証で逃れたことだけを示すこと", () => {
