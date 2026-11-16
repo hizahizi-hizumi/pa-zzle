@@ -188,6 +188,18 @@ describe("useAppHome", () => {
       renderAtHome();
     });
 
+    test("最後に遊んだゲームが非表示なら、表示対象の先頭を選ぶこと", () => {
+      act(() =>
+        gameSelectionOrderSetting.setGameHidden("nanpure", true, [
+          "water-sort",
+          "nanpure",
+        ]),
+      );
+      expect(getHeroLink().getAttribute("aria-label")).toBe(
+        "ウォーターソートを開く",
+      );
+    });
+
     test("並びの先頭よりも最後に遊んだゲームを選んでおくこと", () => {
       const selected = getHeroLink();
 

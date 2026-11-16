@@ -302,6 +302,31 @@ describe("パズルの選択", () => {
   });
 });
 
+describe("候補が1件の場合", () => {
+  beforeEach(() => {
+    render(
+      <MemoryRouter>
+        <GameSelectionGallery
+          games={games.slice(0, 1)}
+          recordsTo="/records"
+          selectedIndex={0}
+          continuation={null}
+          onSelect={onSelect}
+        />
+      </MemoryRouter>,
+    );
+  });
+
+  test("スクロール位置から間隔を求められなくても選んだゲームを中央の大きさで表示すること", () => {
+    const selected = screen.getByRole("link", {
+      name: "ウォーターソートを開く",
+    });
+
+    expect(selected.style.getPropertyValue("--proximity")).toBe("1.000");
+    expect(within(selected).getByText("ウォーターソート")).toBeTruthy();
+  });
+});
+
 describe("スライドの間隔が整数でない場合", () => {
   const step = 240.8;
   let carousel: HTMLElement;

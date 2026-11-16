@@ -233,3 +233,55 @@ describe("保存されたホームの並び順", () => {
     ).toBeTruthy();
   });
 });
+
+describe("パズルの非表示", () => {
+  test("非表示のゲームをホームから除き、表示を戻すと元の順に戻ること", () => {
+    gameSelectionOrderSetting.setGameHidden("water-sort", true, [
+      "water-sort",
+      "nanpure",
+    ]);
+    renderAtHome();
+
+    const carousel = screen.getByRole("group", {
+      name: "左右にスライドしてパズルを切り替え",
+    });
+    expect(carousel.children.length / lapCount).toBe(10);
+    expect(screen.getByRole("link", { name: "ナンプレを開く" })).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: "ウォーターソートを開く" }),
+    ).toBeNull();
+
+    act(() => gameSelectionOrderSetting.showAllGames());
+    expect(carousel.children.length / lapCount).toBe(11);
+    expect(
+      screen.getByRole("link", { name: "ウォーターソートを開く" }),
+    ).toBeTruthy();
+  });
+
+  test("選んでいるゲームを非表示にすると別のゲームを選ぶこと", () => {
+    renderAtHome();
+    selectGameByName("ナンプレ");
+    act(() =>
+      gameSelectionOrderSetting.setGameHidden("nanpure", true, [
+        "water-sort",
+        "nanpure",
+      ]),
+    );
+    expect(
+      screen.getByRole("link", { name: "ウォーターソートを開く" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "ナンプレを開く" })).toBeNull();
+  });
+
+  test("タイトル画面でも非表示のゲームを除外すること", async () => {
+    gameSelectionOrderSetting.setGameHidden("nanpure", true, [
+      "water-sort",
+      "nanpure",
+    ]);
+    await launchApp(true);
+    renderAtHome();
+    const title = screen.getByRole("dialog", { name: "pa-zzle" });
+    expect(title.querySelector('a[href="/puzzles/nanpure"]')).toBeNull();
+    expect(title.querySelector('a[href="/puzzles/water-sort"]')).not.toBeNull();
+  });
+});

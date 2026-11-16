@@ -252,6 +252,43 @@ describe("パズルの並び順の設定", () => {
     expect(gameSelectionOrderSetting.getSnapshot()).toEqual([]);
   });
 
+  test("パズルを非表示にしても一覧で復帰でき、最後の1件は非表示にできないこと", () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: "ナンプレを非表示にする" }),
+    );
+    const list = screen.getByRole("list", { name: "パズルの並び順" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(gameSelectionOrderSetting.getHiddenSnapshot()).toEqual(["nanpure"]);
+    expect(
+      screen
+        .getByRole("button", { name: "ウォーターソートを非表示にする" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "ナンプレを表示にする" }),
+    );
+    expect(gameSelectionOrderSetting.getHiddenSnapshot()).toEqual([]);
+    expect(
+      screen
+        .getByRole("button", { name: "ウォーターソートを非表示にする" })
+        .hasAttribute("disabled"),
+    ).toBe(false);
+  });
+
+  test("すべて表示に戻しても、並び替えは保持すること", () => {
+    act(() => gameSelectionOrderSetting.setOrder(["nanpure", "water-sort"]));
+    fireEvent.click(
+      screen.getByRole("button", { name: "ナンプレを非表示にする" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "すべて表示" }));
+    expect(gameSelectionOrderSetting.getSnapshot()).toEqual([
+      "nanpure",
+      "water-sort",
+    ]);
+    expect(gameSelectionOrderSetting.getHiddenSnapshot()).toEqual([]);
+  });
+
   test("設定した並びを初期順に戻せること", () => {
     act(() => gameSelectionOrderSetting.setOrder(["nanpure", "water-sort"]));
     fireEvent.click(screen.getByRole("button", { name: "初期順に戻す" }));
@@ -298,6 +335,15 @@ describe("設定一覧", () => {
     expect(screen.getByRole("dialog", { name: "設定" })).toBeTruthy();
     expect(screen.getByText("並び替え済み")).toBeTruthy();
     expect(gameSelectionOrderSetting.getSnapshot()[0]).toBe("nanpure");
+  });
+
+  test("非表示数を設定一覧の要約に示すこと", () => {
+    fireEvent.click(screen.getByRole("button", { name: /パズルの並び順/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "ナンプレを非表示にする" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "設定に戻る" }));
+    expect(screen.getByText("初期順 · 非表示 1件")).toBeTruthy();
   });
 
   test("ランダム出題の条件を変更すると設定一覧の要約に反映すること", () => {

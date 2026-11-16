@@ -22,9 +22,18 @@ export function GameSelectionOrderPanel() {
     gameSelectionOrderSetting.getSnapshot,
     gameSelectionOrderSetting.getSnapshot,
   );
+  const hiddenIds = useSyncExternalStore(
+    gameSelectionOrderSetting.subscribe,
+    gameSelectionOrderSetting.getHiddenSnapshot,
+    gameSelectionOrderSetting.getHiddenSnapshot,
+  );
   const orderedIds = gameSelectionOrderSetting.sortGameIds(
     defaultGameIds,
     preferredOrder,
+  );
+  const visibleIds = gameSelectionOrderSetting.visibleGameIds(
+    orderedIds,
+    hiddenIds,
   );
   const isDefault = orderedIds.every(
     (id, index) => id === defaultGameIds[index],
@@ -73,7 +82,20 @@ export function GameSelectionOrderPanel() {
           {orderedIds.map((id, index) => {
             const game = gameCatalog.find((item) => item.id === id);
             return game ? (
-              <GameSelectionSortItem key={id} game={game} index={index} />
+              <GameSelectionSortItem
+                key={id}
+                game={game}
+                index={index}
+                isHidden={!visibleIds.includes(id)}
+                canHide={visibleIds.length > 1}
+                onToggleHidden={() =>
+                  gameSelectionOrderSetting.setGameHidden(
+                    id,
+                    visibleIds.includes(id),
+                    orderedIds,
+                  )
+                }
+              />
             ) : null;
           })}
         </div>
@@ -116,15 +138,26 @@ export function GameSelectionOrderPanel() {
       <span role="status" className="sr-only">
         {announcement}
       </span>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        disabled={isDefault}
-        onClick={gameSelectionOrderSetting.restoreDefault}
-      >
-        初期順に戻す
-      </Button>
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={isDefault}
+          onClick={gameSelectionOrderSetting.restoreDefault}
+        >
+          初期順に戻す
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={visibleIds.length === orderedIds.length}
+          onClick={gameSelectionOrderSetting.showAllGames}
+        >
+          すべて表示
+        </Button>
+      </div>
     </div>
   );
 }

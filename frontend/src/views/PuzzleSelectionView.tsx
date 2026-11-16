@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { gameCatalog } from "@/app/game-integration/game-catalog";
 import type { GameCatalogEntry } from "@/app/game-integration/game-catalog-entry";
 import { gameSelectionOrderSetting } from "@/features/settings/game-selection-order-setting";
@@ -38,27 +38,39 @@ export function PuzzleSelectionView() {
     gameSelectionOrderSetting.getSnapshot,
     gameSelectionOrderSetting.getSnapshot,
   );
-  const orderedIds = gameSelectionOrderSetting.sortGameIds(
-    gameCatalog.map(({ id }) => id),
-    preferredOrder,
+  const hiddenIds = useSyncExternalStore(
+    gameSelectionOrderSetting.subscribe,
+    gameSelectionOrderSetting.getHiddenSnapshot,
+    gameSelectionOrderSetting.getHiddenSnapshot,
+  );
+  const visibleIds = useMemo(() => {
+    const orderedIds = gameSelectionOrderSetting.sortGameIds(
+      gameCatalog.map(({ id }) => id),
+      preferredOrder,
+    );
+    return gameSelectionOrderSetting.visibleGameIds(orderedIds, hiddenIds);
+  }, [preferredOrder, hiddenIds]);
+  const visibleCatalog = useMemo(
+    () => gameCatalog.filter(({ id }) => visibleIds.includes(id)),
+    [visibleIds],
   );
   const { selectedGameIndex, selectedGameContinuation, selectGame } =
-    useAppHome(gameCatalog, {
+    useAppHome(visibleCatalog, {
       opensCovered: isCovered,
-      fallbackGameId: orderedIds[0],
+      fallbackGameId: visibleIds[0],
     });
-  const orderedGames = orderedIds.flatMap((id) => {
+  const orderedGames = visibleIds.flatMap((id) => {
     const game = games.find((item) => item.id === id);
     return game ? [game] : [];
   });
-  const selectedId = gameCatalog[selectedGameIndex]?.id;
+  const selectedId = visibleCatalog[selectedGameIndex]?.id;
   const orderedSelectedIndex = orderedGames.findIndex(
     ({ id }) => id === selectedId,
   );
 
   function selectOrderedGame(index: number) {
     const id = orderedGames[index]?.id;
-    const catalogIndex = gameCatalog.findIndex((game) => game.id === id);
+    const catalogIndex = visibleCatalog.findIndex((game) => game.id === id);
     if (catalogIndex !== -1) selectGame(catalogIndex);
   }
 
@@ -72,7 +84,7 @@ export function PuzzleSelectionView() {
         onSelect={selectOrderedGame}
         isCovered={isCovered}
       />
-      <AppTitleScreen title={title} games={games} onEnter={enterApp} />
+      <AppTitleScreen title={title} games={orderedGames} onEnter={enterApp} />
     </>
   );
 }
