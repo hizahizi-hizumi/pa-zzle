@@ -69,8 +69,19 @@ function getRectStyle(board: IceFloorMazeBoard, rect: CellRect): CSSProperties {
   };
 }
 
+function getCellStyle(
+  board: IceFloorMazeBoard,
+  cellIndex: number,
+): CSSProperties {
+  return getRectStyle(board, {
+    ...getIceFloorMazeCellPosition(board, cellIndex),
+    width: 1,
+    height: 1,
+  });
+}
+
 /**
- * チュートリアルで盤面の上に重ねる、駒を止めるマスの印と、画面全体の覆いから抜くマス。
+ * チュートリアルで盤面の上に重ねる、駒を止めるマスの印と、駒を滑らせる向きへ滑る指と、盤面の覆いから抜くマス。
  * マスは角の無い正方形で並ぶので、印も抜く所もマスの形のまま角を付けない。
  */
 export function IceFloorMazeTutorialLayer({
@@ -93,15 +104,30 @@ export function IceFloorMazeTutorialLayer({
         <span
           data-cell-cue={cue.cellIndex}
           className="absolute"
-          style={getRectStyle(board, {
-            ...getIceFloorMazeCellPosition(board, cue.cellIndex),
-            width: 1,
-            height: 1,
-          })}
+          style={getCellStyle(board, cue.cellIndex)}
         >
           {/* マスの縁は抜いた所と覆いの境目に重なり、印の線が覆いの縁に紛れるので、マスの内側に引く。 */}
           <span className="absolute inset-1">
             <TutorialCue kind="mark" recallId={cue.recallId} />
+          </span>
+        </span>
+      ) : null}
+      {cue?.swipe ? (
+        <span
+          data-swipe-cue={cue.swipe.cellIndex}
+          className="absolute"
+          style={getCellStyle(board, cue.swipe.cellIndex)}
+        >
+          {/* 駒のマスの下は盤面の外か別のマスなので、指は駒のマスの中から滑らせる。 */}
+          <span className="absolute inset-1">
+            <TutorialCue
+              kind="pointer"
+              recallId={cue.recallId}
+              placement="center"
+              swipe={cue.swipe.direction}
+              // 印は止まるマスの1つだけにする。駒のマスにも輪郭を描くと、どちらが止まる所か見分けにくい。
+              outlined={false}
+            />
           </span>
         </span>
       ) : null}
