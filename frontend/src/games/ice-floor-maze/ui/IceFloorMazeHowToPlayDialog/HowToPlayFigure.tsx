@@ -1,9 +1,6 @@
-import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
+import type { IceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
-import {
-  createIceFloorMazeInitialState,
-  type IceFloorMazeStateCell,
-} from "@/games/ice-floor-maze/puzzle/state";
+import type { IceFloorMazeState } from "@/games/ice-floor-maze/puzzle/state";
 import {
   getIceFloorMazeBoardViewBox,
   getIceFloorMazeCellCenter,
@@ -12,74 +9,46 @@ import { IceFloorMazeGoalMark } from "@/games/ice-floor-maze/ui/board/IceFloorMa
 import { IceFloorMazePieceMark } from "@/games/ice-floor-maze/ui/board/IceFloorMazePieceMark";
 import { IceFloorMazeTerrain } from "@/games/ice-floor-maze/ui/board/IceFloorMazeTerrain";
 import { IceFloorMazeTrail } from "@/games/ice-floor-maze/ui/board/IceFloorMazeTrail";
+import { getIceFloorMazeFigureSizeStyle } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog/figure-size";
 
 type HowToPlayFigureProps = {
-  /**
-   * 1行を1文字列とした盤面。`.` が氷、`#` が岩、`b` がもろい岩、`c` が薄い氷、`o` が床、`s` が雪、`m` が滑る氷の塊、
-   * `x` が盤面の外、`w` が薄い氷の割れた後の水面、`r` がもろい岩の崩れた後の跡、`h` が雪を押し出してできた雪山。
-   */
-  rows: readonly string[];
-  /** 要素の働きだけを示す図では、ゴールを渡さない。 */
-  goal?: number;
-  piece: number;
-  trail?: { direction: IceFloorMazeDirection; from: number };
+  board: IceFloorMazeBoard;
+  state: IceFloorMazeState;
+  /** ゴールの無い図では `null`。 */
+  goal: number | null;
+  /** そのコマへ移った滑りの跡。滑りで移ったのでなければ `null`。 */
+  trail: { direction: IceFloorMazeDirection; from: number } | null;
 };
 
 /**
- * 要素が変わった後の姿は初期盤面に現れないので、盤面の記法には無い。図では、変わる前の要素と変わった後のマスとして描く。
+ * 押せない図の盤面1つ。本番の盤面部品と同じ地形・ゴールの印・駒・滑りの跡を、動かさずに描く。
+ * 大きさは、置き場所が決める図のマスの大きさ（`--ice-floor-maze-figure-cell`）で決める。
  */
-const changedNotations = {
-  w: { initial: "c", current: "water" },
-  r: { initial: "b", current: "ice" },
-  h: { initial: ".", current: "snow-mound" },
-} as const satisfies Record<
-  string,
-  { initial: string; current: IceFloorMazeStateCell }
->;
-
-function findChangedNotation(notation: string) {
-  return Object.hasOwn(changedNotations, notation)
-    ? changedNotations[notation as keyof typeof changedNotations]
-    : null;
-}
-
 export function HowToPlayFigure({
-  rows,
+  board,
+  state,
   goal,
-  piece,
   trail,
 }: HowToPlayFigureProps) {
-  const board = parseIceFloorMazeBoard(
-    rows.map((row) =>
-      Array.from(
-        row,
-        (notation) => findChangedNotation(notation)?.initial ?? notation,
-      ).join(""),
-    ),
-  );
-  const initialState = createIceFloorMazeInitialState(board, piece);
-  const cells = rows
-    .flatMap((row) => Array.from(row))
-    .map(
-      (notation, cellIndex): IceFloorMazeStateCell =>
-        findChangedNotation(notation)?.current ??
-        initialState.cells[cellIndex]!,
-    );
   const viewBox = getIceFloorMazeBoardViewBox(board);
+  // 本番の盤面と同じく、雪山がゴールに載っている間はゴールの印を描かない。
   const goalCenter =
-    goal === undefined ? null : getIceFloorMazeCellCenter(board, goal);
-  const pieceCenter = getIceFloorMazeCellCenter(board, piece);
+    goal === null || state.cells[goal] === "snow-mound"
+      ? null
+      : getIceFloorMazeCellCenter(board, goal);
+  const pieceCenter = getIceFloorMazeCellCenter(board, state.position);
 
   return (
     <svg
       aria-hidden="true"
       focusable="false"
       viewBox={`${viewBox.minX} ${viewBox.minY} ${viewBox.width} ${viewBox.height}`}
-      className="h-20 w-auto shrink-0"
+      className="block shrink-0 overflow-visible"
+      style={getIceFloorMazeFigureSizeStyle(board)}
     >
       <IceFloorMazeTerrain
         board={board}
-        state={{ cells, blocks: initialState.blocks }}
+        state={state}
         beneathCellFaces={
           <>
             {trail ? (
@@ -87,7 +56,7 @@ export function HowToPlayFigure({
                 board={board}
                 direction={trail.direction}
                 from={trail.from}
-                to={piece}
+                to={state.position}
               />
             ) : null}
             {goalCenter ? (

@@ -294,25 +294,38 @@ describe("IceFloorMazePlay", () => {
       },
     );
 
-    test("メニューの 遊び方 で、もろい岩・薄い氷・雪・滑る氷の塊とスワイプの操作を説明する遊び方を開くこと", () => {
+    test("メニューの 遊び方 で、もろい岩・薄い氷・雪・氷の塊とスワイプの操作を説明する遊び方を開くこと", () => {
       fireEvent.pointerDown(
         screen.getByRole("button", { name: "その他の操作" }),
         { button: 0, ctrlKey: false },
       );
       fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-      const dialog = within(screen.getByRole("dialog", { name: "遊び方" }));
+      const dialog = within(
+        screen.getByRole("dialog", { name: "アイスフロア迷路の遊び方" }),
+      );
 
       expect(
-        dialog.getByText(/もろい岩.*すぐ隣から押しても崩れない/),
+        dialog.getByRole("heading", {
+          name: /^もろい岩は.*すぐ隣にいる駒がぶつかっても崩れません/,
+        }),
       ).toBeTruthy();
-      expect(dialog.getByText(/薄い氷.*割れて水面になる/)).toBeTruthy();
-      expect(dialog.getByText(/雪を1マス先へ押し出して/)).toBeTruthy();
       expect(
-        dialog.getByText(/滑る氷の塊.*すぐ隣から押しても動かない/),
+        dialog.getByRole("heading", {
+          name: /^薄い氷は.*割れて水面になります/,
+        }),
       ).toBeTruthy();
-      expect(dialog.getByText(/盤面をスワイプして/)).toBeTruthy();
-      expect(dialog.queryByText(/スライド|矢印ボタン/)).toBeNull();
+      expect(
+        dialog.getByRole("heading", { name: /雪を1マス先へ押し出して/ }),
+      ).toBeTruthy();
+      expect(
+        dialog.getByRole("heading", {
+          name: /^駒は氷の塊に.*すぐ隣からは押せません/,
+        }),
+      ).toBeTruthy();
+      expect(
+        dialog.getByRole("heading", { name: /^盤面をスワイプした向きへ/ }),
+      ).toBeTruthy();
     });
     test("遊び方の チュートリアルで遊んで覚える で、1枚の盤面を解きながら学ぶチュートリアルを開くこと", () => {
       fireEvent.pointerDown(

@@ -1,7 +1,14 @@
-import { RotateCcw, Undo2 } from "lucide-react";
+import { Undo2 } from "lucide-react";
 
+import { playMenuOperationItems } from "@/components/play-menu-operations";
 import { Button } from "@/components/ui/button";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
+
+/** 知らせの言葉。遊び方の見出しも同じ言葉にする。 */
+export const TRAPPED_NOTICE_LABEL = "もうゴールに止まれない";
+
+/** 盤面を戻すボタンは、メニューの「盤面を戻す」と同じアイコンにし、リセットのアイコンと取り違えないようにする。 */
+const RestartIcon = playMenuOperationItems.restart.icon;
 
 type IceFloorMazeTrappedNoticeProps = {
   canUndo: boolean;
@@ -17,7 +24,7 @@ export function IceFloorMazeTrappedNotice({
   return (
     <div role="status" className="mx-auto max-w-md px-3 py-2">
       <div className="text-center">
-        <p className="text-play-context">もうゴールに止まれない</p>
+        <p className="text-play-context">{TRAPPED_NOTICE_LABEL}</p>
       </div>
       <div className="mt-1 flex justify-center gap-1">
         <Button
@@ -30,7 +37,7 @@ export function IceFloorMazeTrappedNotice({
           {PLAY_OPERATION_LABELS.undo}
         </Button>
         <Button type="button" variant="secondary" onClick={onRestart}>
-          <RotateCcw />
+          <RestartIcon />
           {PLAY_OPERATION_LABELS.restart}
         </Button>
       </div>

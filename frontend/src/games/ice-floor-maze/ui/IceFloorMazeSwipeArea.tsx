@@ -1,10 +1,21 @@
 import { type PointerEvent, type ReactNode, useRef } from "react";
 
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
+import { cn } from "@/lib/utils";
+
+/**
+ * 指のスワイプを受ける範囲。
+ * - `whole`: 領域の全体で受け、領域の全体で画面のスクロールを止める。送らない画面（プレイ画面・チュートリアル）で使う。
+ * - `start-targets`: 指のスワイプは、子に置いた `SWIPE_START_TARGET_ATTRIBUTE` の付いた要素の上で始めたときだけ受ける。
+ *   その要素がスクロールを止め（`touch-action: none`）、ほかの所では指で画面を送れるようにする。送る画面（遊び方）で使う。
+ *   マウスとペンは `whole` と同じく全体で受ける。
+ */
+type IceFloorMazeSwipeTouchArea = "whole" | "start-targets";
 
 type IceFloorMazeSwipeAreaProps = {
   disabled: boolean;
   onSwipe: (direction: IceFloorMazeDirection) => void;
+  touchArea?: IceFloorMazeSwipeTouchArea;
   children: ReactNode;
 };
 
@@ -40,9 +51,20 @@ function startsOnTapControl(target: EventTarget): boolean {
   );
 }
 
+/** `start-targets` の領域で、指のスワイプを始められる所に付ける属性。付けた要素は、自分でスクロールを止める。 */
+export const SWIPE_START_TARGET_ATTRIBUTE = "data-swipe-start-target";
+
+function startsOnSwipeStartTarget(target: EventTarget): boolean {
+  return (
+    target instanceof Element &&
+    target.closest(`[${SWIPE_START_TARGET_ATTRIBUTE}]`) !== null
+  );
+}
+
 export function IceFloorMazeSwipeArea({
   disabled,
   onSwipe,
+  touchArea = "whole",
   children,
 }: IceFloorMazeSwipeAreaProps) {
   const gesture = useRef<SwipeGesture | null>(null);
@@ -52,7 +74,10 @@ export function IceFloorMazeSwipeArea({
       disabled ||
       !event.isPrimary ||
       event.button !== 0 ||
-      startsOnTapControl(event.target)
+      startsOnTapControl(event.target) ||
+      (touchArea === "start-targets" &&
+        event.pointerType === "touch" &&
+        !startsOnSwipeStartTarget(event.target))
     ) {
       return;
     }
@@ -97,7 +122,10 @@ export function IceFloorMazeSwipeArea({
 
   return (
     <div
-      className="flex min-h-0 flex-1 touch-none select-none flex-col"
+      className={cn(
+        "flex min-h-0 flex-1 select-none flex-col",
+        touchArea === "whole" && "touch-none",
+      )}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
