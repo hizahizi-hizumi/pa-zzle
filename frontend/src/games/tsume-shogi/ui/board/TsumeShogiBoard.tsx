@@ -16,14 +16,14 @@ import type {
   TsumeShogiRejection,
   TsumeShogiSelection,
 } from "@/games/tsume-shogi/session/session";
-import { TsumeShogiBoardWood } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiBoardWood";
-import { TsumeShogiCoordinateLabel } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiCoordinateLabel";
-import { TsumeShogiPromotionPicker } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiPromotionPicker";
+import { TsumeShogiBoardWood } from "@/games/tsume-shogi/ui/board/TsumeShogiBoardWood";
+import { TsumeShogiCoordinateLabel } from "@/games/tsume-shogi/ui/board/TsumeShogiCoordinateLabel";
+import { pieceMotionSelector } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph/piece-glyph-frame";
+import { TsumeShogiPromotionPicker } from "@/games/tsume-shogi/ui/board/TsumeShogiPromotionPicker";
 import {
   TsumeShogiSquareButton,
   type TsumeShogiSquareHighlight,
-} from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiSquareButton";
-import { pieceMotionSelector } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph/piece-glyph-frame";
+} from "@/games/tsume-shogi/ui/board/TsumeShogiSquareButton";
 import { formatTsumeShogiRank } from "@/games/tsume-shogi/ui/piece-label";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { useRejectedPieceFeedback } from "@/games/tsume-shogi/ui/use-rejected-piece-feedback";
@@ -59,7 +59,8 @@ type TsumeShogiBoardProps = {
 const files = [9, 8, 7, 6, 5, 4, 3, 2, 1] as const;
 const ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
-const selectedPieceGlyphSelector = `[data-selected-piece] ${pieceMotionSelector}`;
+/** 選んだ駒の絵の、揺らす要素。 */
+export const TSUME_SHOGI_SELECTED_PIECE_GLYPH_SELECTOR = `[data-selected-piece] ${pieceMotionSelector}`;
 
 /** 星。3筋と4筋・6筋と7筋の境、三段と四段・六段と七段の境が交わる4点。 */
 const starPoints = [
@@ -69,7 +70,7 @@ const starPoints = [
   { left: "66.667%", top: "66.667%" },
 ] as const;
 
-function findPiece(
+export function findTsumeShogiBoardPiece(
   boardPieces: readonly TsumeShogiBoardPiece[],
   square: TsumeShogiSquare,
 ) {
@@ -78,6 +79,42 @@ function findPiece(
       isSameTsumeShogiSquare(boardPiece.square, square),
     )?.piece ?? null
   );
+}
+
+type TsumeShogiSquareHighlightSource = {
+  boardPieces: readonly TsumeShogiBoardPiece[];
+  selection: TsumeShogiSelection | null;
+  lastMove: TsumeShogiPlayedMove | null;
+  mated: boolean;
+  /** 動きを減らす設定で、着手させなかった入力を選んだ駒の地で返している間。 */
+  rejectedPieceFlashing: boolean;
+};
+
+/** 盤の升の地が示す状態。盤の一部を切り出した遊び方の盤面も、本番と同じ決め方にする。 */
+export function getTsumeShogiSquareHighlight(
+  {
+    boardPieces,
+    selection,
+    lastMove,
+    mated,
+    rejectedPieceFlashing,
+  }: TsumeShogiSquareHighlightSource,
+  square: TsumeShogiSquare,
+): TsumeShogiSquareHighlight | null {
+  const piece = findTsumeShogiBoardPiece(boardPieces, square);
+  if (mated && piece?.type === "king") return "mated";
+  if (
+    selection?.type === "board" &&
+    isSameTsumeShogiSquare(selection.square, square)
+  ) {
+    return rejectedPieceFlashing ? "rejected" : "selected";
+  }
+  if (lastMove && isSameTsumeShogiSquare(lastMove.move.to, square)) {
+    return lastMove.side === "defender" && lastMove.line === "wrong"
+      ? "refutation"
+      : "last-move";
+  }
+  return null;
 }
 
 export function TsumeShogiBoard({
@@ -99,33 +136,21 @@ export function TsumeShogiBoard({
   const squaresRef = useRef<HTMLDivElement>(null);
   const lastMove = shownMoves.at(-1) ?? null;
   const promotingPiece = promotionChoice
-    ? findPiece(boardPieces, promotionChoice.from)
+    ? findTsumeShogiBoardPiece(boardPieces, promotionChoice.from)
     : null;
 
   const rejectedPieceFlashing = useRejectedPieceFeedback(
     rejection,
     squaresRef,
-    selectedPieceGlyphSelector,
+    TSUME_SHOGI_SELECTED_PIECE_GLYPH_SELECTOR,
   );
-
-  function getHighlight(
-    square: TsumeShogiSquare,
-  ): TsumeShogiSquareHighlight | null {
-    const piece = findPiece(boardPieces, square);
-    if (mated && piece?.type === "king") return "mated";
-    if (
-      selection?.type === "board" &&
-      isSameTsumeShogiSquare(selection.square, square)
-    ) {
-      return rejectedPieceFlashing ? "rejected" : "selected";
-    }
-    if (lastMove && isSameTsumeShogiSquare(lastMove.move.to, square)) {
-      return lastMove.side === "defender" && lastMove.line === "wrong"
-        ? "refutation"
-        : "last-move";
-    }
-    return null;
-  }
+  const highlightSource = {
+    boardPieces,
+    selection,
+    lastMove,
+    mated,
+    rejectedPieceFlashing,
+  };
 
   return (
     <div className="grid size-full grid-cols-[var(--board-frame)_minmax(0,1fr)_var(--board-frame)] grid-rows-[var(--board-frame)_minmax(0,1fr)_var(--board-frame)_var(--board-thickness)]">
@@ -166,13 +191,16 @@ export function TsumeShogiBoard({
               <TsumeShogiSquareButton
                 key={`${file}-${rank}`}
                 square={square}
-                piece={findPiece(boardPieces, square)}
+                piece={findTsumeShogiBoardPiece(boardPieces, square)}
                 pieceId={
                   boardPieceIds.get(formatTsumeShogiSquareKey(square)) ?? null
                 }
                 clearGlow={mated}
                 arrivedMove={arrivedMove}
-                highlight={getHighlight(square)}
+                highlight={getTsumeShogiSquareHighlight(
+                  highlightSource,
+                  square,
+                )}
                 tutorialMarkRecallId={
                   tutorialMark &&
                   isSameTsumeShogiSquare(tutorialMark.square, square)

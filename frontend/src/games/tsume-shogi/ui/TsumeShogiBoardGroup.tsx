@@ -1,16 +1,16 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import { TsumeShogiPieceBox } from "@/games/tsume-shogi/ui/TsumeShogiBoardGroup/TsumeShogiPieceBox";
+import { TsumeShogiPieceBox } from "@/games/tsume-shogi/ui/TsumeShogiPieceBox";
 
 /**
  * 盤の縁と表記の寸法。盤の木の四辺に同じ幅の縁（`--board-frame`）を取り、上の縁に筋、右の縁に段を書く。
  * 四辺が同じ幅なので、盤の木そのものが左右の中央に来る。幅の広い画面ほど縁を太くする。
  * 320px でも盤を画面の縁に付けず、卓に置いた盤に見える余白を左右に残す（`--board-gutter`）。
- * 盤の大きさもこの部品で決める。
+ * 盤の大きさもこの部品で決める。遊び方の盤も、本番と同じ見た目にするためこの寸法で描く。
  * `--board-thickness` は盤の手前に見える側面の高さ。升を歪めず、天面の下に足す。
  * `--piece-box-height`・`--komadai-height` は盤の上下の駒箱の札・駒台の欄の高さ、`--komadai-gap` は盤と駒台の間。
  */
-const tsumeShogiBoardFrameStyle = {
+export const tsumeShogiBoardFrameStyle = {
   "--board-gutter": "clamp(4px, calc(4px + (100cqw - 320px) / 35), 6px)",
   "--board-frame": "clamp(12px, calc(12px + (100cqw - 320px) / 35), 14px)",
   "--board-thickness": "clamp(5px, calc(5px + (100cqw - 320px) / 40), 8px)",

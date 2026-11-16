@@ -117,6 +117,19 @@ const deadRanksForBlack: Partial<Record<PieceType, readonly number[]>> = {
   [PieceType.KNIGHT]: [1, 2],
 };
 
+/** `side` の `pieceType` の駒を `square` に置くと、成らずにはその先へ動けない（行き所のない駒になる）か。 */
+export function isTsumeShogiDeadSquare(
+  side: TsumeShogiSide,
+  pieceType: TsumeShogiPieceType,
+  square: TsumeShogiSquare,
+): boolean {
+  const blackRank = side === "attacker" ? square.rank : 10 - square.rank;
+  return (
+    deadRanksForBlack[pieceTypeToEngine[pieceType]]?.includes(blackRank) ??
+    false
+  );
+}
+
 /** 盤面（SFEN の盤面部分）と攻方の持駒から、攻方の手番の局面を作る。玉方の持駒には駒箱を入れる。 */
 export function createTsumeShogiPosition(
   board: string,

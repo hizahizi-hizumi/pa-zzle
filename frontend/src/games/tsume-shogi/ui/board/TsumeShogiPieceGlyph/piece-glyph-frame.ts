@@ -30,15 +30,14 @@ export const PIECE_SCALE = 1.1;
 
 /**
  * 駒を置く升の大きさ。`board` は盤の升いっぱい、`choice` は下に「成」「不成」の札を置く成・不成の選択肢、
- * `hand` は持駒の駒台、`figure` は遊び方の図、`movement` は遊び方の駒の動きの図の中央の升。
+ * `hand` は持駒の駒台、`movement` は遊び方の駒の動きの図の中央の升。
  * どれも升の縦横比のまま、駒の大きさは升に対して実物の比率になる。
  */
 export const glyphSizeClassNames = {
   board: "size-full",
   choice: "mb-2 aspect-[352/386] h-[78%]",
   hand: "aspect-[352/386] h-10",
-  figure: "aspect-[352/386] h-7",
-  movement: "aspect-[352/386] h-3.5",
+  movement: "aspect-[352/386] h-6",
 } as const;
 
 /**
@@ -51,9 +50,8 @@ export const pieceMotionSelector = `[${pieceMotionAttribute}]`;
 
 export type TsumeShogiPieceGlyphSize = keyof typeof glyphSizeClassNames;
 
-/** 小さくて木目・面取り・艶を見分けられない大きさ。遊び方の図。 */
+/** 小さくて木目・面取り・艶を見分けられない大きさ。遊び方の駒の動きの図。 */
 const miniatureGlyphSizes: ReadonlySet<TsumeShogiPieceGlyphSize> = new Set([
-  "figure",
   "movement",
 ]);
 

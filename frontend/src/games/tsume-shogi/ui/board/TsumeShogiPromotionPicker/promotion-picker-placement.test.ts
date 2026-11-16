@@ -1,4 +1,4 @@
-import { placeTsumeShogiPromotionPicker } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/promotion-picker-placement";
+import { placeTsumeShogiPromotionPicker } from "@/games/tsume-shogi/ui/board/TsumeShogiPromotionPicker/promotion-picker-placement";
 
 describe("placeTsumeShogiPromotionPicker", () => {
   const cases = [

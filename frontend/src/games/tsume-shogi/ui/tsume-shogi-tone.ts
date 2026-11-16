@@ -31,6 +31,8 @@ export const tsumeShogiToneClassNames = {
   boardStar: "bg-[#2a1b10]",
   /** 筋・段は盤の木の縁に墨で書く。 */
   coordinate: "text-[#4a3220]",
+  /** 遊び方の押せない図で、その間の操作で押した升を囲む無彩の枠。手がかりの破線と見分けられる実線にする。 */
+  howToPlayOperatedFrame: "border-[#111111]/80",
   /** 遊び方の駒の動きの図の、罫線と、動ける先の印。 */
   figureLine: "stroke-[#2a1b10]/55",
   figureMark: "fill-[#2a1b10] stroke-[#2a1b10]",

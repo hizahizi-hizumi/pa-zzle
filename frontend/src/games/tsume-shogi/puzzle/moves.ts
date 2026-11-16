@@ -12,7 +12,10 @@ import {
 import {
   fromEnginePieceType,
   fromEngineSquare,
+  getTsumeShogiPieceAt,
   getTsumeShogiSideToMove,
+  isTsumeShogiDeadSquare,
+  listTsumeShogiBoardPieces,
   type TsumeShogiHandPieceType,
   type TsumeShogiPieceType,
   type TsumeShogiPosition,
@@ -120,6 +123,49 @@ export function isTsumeShogiLegalMove(
   const engine = unwrapEnginePosition(position);
   const engineMove = toEngineMove(engine, move);
   return engineMove !== null && engine.isValidMove(engineMove);
+}
+
+/**
+ * 持駒を打てないわけ。
+ * - `occupied`: 駒のある升に打つ。
+ * - `dead-piece`: 行き所のない段に打つ。
+ * - `double-pawn`: 自分の歩のある筋に歩を打つ（二歩）。
+ * - `pawn-drop-mate`: 歩を打って詰ませる（打歩詰）。
+ */
+export type TsumeShogiIllegalDropReason =
+  | "occupied"
+  | "dead-piece"
+  | "double-pawn"
+  | "pawn-drop-mate";
+
+/**
+ * 手番側が持駒を打てないわけ。打てる手と、ここに挙げないわけで打てない手（自玉への王手を残す手）は `null`。
+ * わけが重なるときは、駒のある升・行き所のない段・二歩・打歩詰の順に1つを返す。
+ */
+export function findTsumeShogiIllegalDropReason(
+  position: TsumeShogiPosition,
+  move: Extract<TsumeShogiMove, { kind: "drop" }>,
+): TsumeShogiIllegalDropReason | null {
+  if (isTsumeShogiLegalMove(position, move)) {
+    return null;
+  }
+  if (getTsumeShogiPieceAt(position, move.to) !== null) {
+    return "occupied";
+  }
+  const side = getTsumeShogiSideToMove(position);
+  if (isTsumeShogiDeadSquare(side, move.pieceType, move.to)) {
+    return "dead-piece";
+  }
+  if (move.pieceType !== "pawn") {
+    return null;
+  }
+  const hasPawnOnFile = listTsumeShogiBoardPieces(position).some(
+    ({ square, piece }) =>
+      square.file === move.to.file &&
+      piece.side === side &&
+      piece.type === "pawn",
+  );
+  return hasPawnOnFile ? "double-pawn" : "pawn-drop-mate";
 }
 
 export function applyTsumeShogiMove(
