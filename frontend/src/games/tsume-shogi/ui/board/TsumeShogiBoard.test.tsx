@@ -51,12 +51,14 @@ type BoardOptions = {
   rejection?: TsumeShogiRejection | null;
   shownMoves?: readonly TsumeShogiPlayedMove[];
   promoting?: boolean;
+  mated?: boolean;
 };
 
 function renderBoard({
   rejection: currentRejection = null,
   shownMoves = [],
   promoting = false,
+  mated = false,
 }: BoardOptions = {}) {
   return (
     <TsumeShogiBoard
@@ -71,7 +73,7 @@ function renderBoard({
           : null
       }
       rejection={currentRejection}
-      mated={false}
+      mated={mated}
       interactionDisabled={false}
       onSelectSquare={vi.fn()}
       onChoosePromotion={onChoosePromotion}
@@ -108,6 +110,87 @@ afterEach(() => {
 });
 
 describe("TsumeShogiBoard", () => {
+  describe("着手の到着演出", () => {
+    const movedDiagonally: TsumeShogiPlayedMove = {
+      ...lastMove,
+      move: {
+        kind: "board",
+        from: { file: 5, rank: 2 },
+        to: { file: 4, rank: 3 },
+        promote: false,
+      },
+    };
+
+    beforeEach(() => {
+      Object.defineProperty(SVGElement.prototype, "getScreenCTM", {
+        configurable: true,
+        value: vi.fn(() => ({ a: 0.1, b: 0, c: 0, d: 0.1 })),
+      });
+      vi.spyOn(
+        HTMLElement.prototype,
+        "getBoundingClientRect",
+      ).mockImplementation(function (this: HTMLElement) {
+        const file = Number(this.dataset.file);
+        const rank = Number(this.dataset.rank);
+        return {
+          x: (9 - file) * 33,
+          y: (rank - 1) * 37,
+        } as DOMRect;
+      });
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      Reflect.deleteProperty(SVGElement.prototype, "getScreenCTM");
+    });
+
+    test("罫線を含む升間の距離で駒を動かすこと", () => {
+      render(renderBoard({ shownMoves: [lastMove] }));
+      const keyframes = animate.mock.calls[0]?.[0];
+
+      const coordinates = (keyframes?.[0]?.transform as string | undefined)
+        ?.match(/-?\d+(?:\.\d+)?/g)
+        ?.map(Number);
+
+      expect(coordinates?.[0]).toBeCloseTo(0);
+      expect(coordinates?.[1]).toBeCloseTo(370);
+      expect(keyframes?.[1]).toEqual({ transform: "translate(0px, 0px)" });
+    });
+
+    test("斜めの着手でも実際の升間の差を使うこと", () => {
+      render(renderBoard({ shownMoves: [movedDiagonally] }));
+      const keyframes = animate.mock.calls[0]?.[0];
+
+      const coordinates = (keyframes?.[0]?.transform as string | undefined)
+        ?.match(/-?\d+(?:\.\d+)?/g)
+        ?.map(Number);
+
+      expect(coordinates?.[0]).toBeCloseTo(-330);
+      expect(coordinates?.[1]).toBeCloseTo(-370);
+      expect(keyframes?.[1]).toEqual({ transform: "translate(0px, 0px)" });
+    });
+  });
+
+  describe("詰み成立時", () => {
+    test("駒と盤の光の層を作り直さないこと", () => {
+      const { container, rerender } = render(renderBoard());
+      const piece = getSelectedSquare().querySelector("[data-piece]");
+      const glyph = piece?.querySelector("svg");
+      const glow = getSelectedSquare().querySelector("[data-clear-glow]");
+      const allGlows = container.querySelectorAll("[data-clear-glow]");
+
+      expect(allGlows).toHaveLength(81);
+      expect(piece).not.toBeNull();
+      expect(glow).not.toBeNull();
+      rerender(renderBoard({ mated: true }));
+
+      expect(getSelectedSquare().querySelector("[data-piece]")).toBe(piece);
+      expect(getSelectedSquare().querySelector("svg")).toBe(glyph);
+      expect(getSelectedSquare().querySelector("[data-clear-glow]")).toBe(glow);
+      expect(container.querySelectorAll("[data-clear-glow]")).toHaveLength(81);
+    });
+  });
+
   describe("着手させなかった入力を受けた場合", () => {
     beforeEach(() => {
       const { rerender } = render(renderBoard());

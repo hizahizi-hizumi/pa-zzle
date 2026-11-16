@@ -170,7 +170,6 @@ export function TsumeShogiBoard({
                 pieceId={
                   boardPieceIds.get(formatTsumeShogiSquareKey(square)) ?? null
                 }
-                clearGlow={mated}
                 arrivedMove={arrivedMove}
                 highlight={getHighlight(square)}
                 tutorialMarkRecallId={
