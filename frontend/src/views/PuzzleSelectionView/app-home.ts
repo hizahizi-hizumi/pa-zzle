@@ -69,7 +69,7 @@ export function useAppHome(
     subscribePlayAttempts,
     readPlayAttemptsSnapshot,
   );
-  const [chosenIndex, setChosenIndex] = useState<number | null>(null);
+  const [chosenGameId, setChosenGameId] = useState<string | null>(null);
   // 続きを求めるには問題集の索引が要り、作るのが重い。タイトルで覆われている間は、タイトルを描いたあとに求める。
   const defersContinuations = useDeferredValue(false, opensCovered);
   const continuations = useMemo(
@@ -95,8 +95,9 @@ export function useAppHome(
   }, [games, continuations]);
 
   // 離脱はこの画面を描いたあとに保存されることがあるので、選ぶまでは求め直す。
+  const chosenIndex = games.findIndex(({ id }) => id === chosenGameId);
   const latestPlayedGameId =
-    chosenIndex === null
+    chosenIndex === -1
       ? (continuations?.findLatestPlayedGameId() ?? null)
       : null;
   const latestPlayedIndex = games.findIndex(
@@ -104,10 +105,11 @@ export function useAppHome(
   );
   const fallbackGameIndex = games.findIndex(({ id }) => id === fallbackGameId);
   const selectedGameIndex =
-    chosenIndex ??
-    (latestPlayedIndex === -1
-      ? Math.max(fallbackGameIndex, 0)
-      : latestPlayedIndex);
+    chosenIndex !== -1
+      ? chosenIndex
+      : latestPlayedIndex === -1
+        ? Math.max(fallbackGameIndex, 0)
+        : latestPlayedIndex;
   const selectedGame = games[selectedGameIndex];
 
   return {
@@ -116,6 +118,9 @@ export function useAppHome(
       selectedGame && continuations
         ? continuations.find(selectedGame.id)
         : null,
-    selectGame: setChosenIndex,
+    selectGame(index) {
+      const game = games[index];
+      if (game) setChosenGameId(game.id);
+    },
   };
 }

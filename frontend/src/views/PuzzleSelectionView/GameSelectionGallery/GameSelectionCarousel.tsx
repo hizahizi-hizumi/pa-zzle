@@ -85,6 +85,11 @@ function updateVisualProximity(scroller: HTMLDivElement) {
   const children = scroller.children;
   const first = children[0] as HTMLElement | undefined;
   if (!first) return;
+  if (children.length === 1) {
+    first.style.setProperty("--proximity", "1.000");
+    slidesNearFocus.set(scroller, new Set([0]));
+    return;
+  }
   const step = slideStep(scroller);
   if (step <= 0) return;
   const firstCenter = first.offsetLeft + first.offsetWidth / 2;

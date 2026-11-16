@@ -76,6 +76,11 @@ export function SettingsDialog({
     gameSelectionOrderSetting.getSnapshot,
     gameSelectionOrderSetting.getSnapshot,
   );
+  const hiddenIds = useSyncExternalStore(
+    gameSelectionOrderSetting.subscribe,
+    gameSelectionOrderSetting.getHiddenSnapshot,
+    gameSelectionOrderSetting.getHiddenSnapshot,
+  );
   const randomSettings = useSyncExternalStore(
     randomProblemSettings.subscribe,
     randomProblemSettings.getSnapshot,
@@ -86,6 +91,9 @@ export function SettingsDialog({
     defaultGameIds,
     preferredOrder,
   );
+  const hiddenCount =
+    gameCatalog.length -
+    gameSelectionOrderSetting.visibleGameIds(currentOrder, hiddenIds).length;
   const isDefaultOrder = currentOrder.every(
     (id, index) => id === defaultGameIds[index],
   );
@@ -95,7 +103,7 @@ export function SettingsDialog({
   const settingEntries = [
     {
       id: "order",
-      summary: isDefaultOrder ? "初期順" : "並び替え済み",
+      summary: `${isDefaultOrder ? "初期順" : "並び替え済み"}${hiddenCount > 0 ? ` · 非表示 ${hiddenCount}件` : ""}`,
     },
     {
       id: "random",
