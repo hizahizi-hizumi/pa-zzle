@@ -37,7 +37,6 @@ import {
   type TsumeShogiHandAvailability,
 } from "@/games/tsume-shogi/ui/TsumeShogiHand";
 import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
-import { useShortPlayArea } from "@/games/tsume-shogi/ui/TsumeShogiPlay/use-short-play-area";
 import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlayStatus";
 import { TsumeShogiTutorial } from "@/games/tsume-shogi/ui/TsumeShogiTutorial";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
@@ -136,10 +135,6 @@ export function TsumeShogiPlay({
       ? "waiting"
       : "unavailable";
   const playAreaRef = useRef<HTMLElement>(null);
-  const boardAreaRef = useRef<HTMLElement>(null);
-  const boardGroupRef = useRef<HTMLDivElement>(null);
-  const shortPlayArea = useShortPlayArea(boardAreaRef, boardGroupRef);
-  const undoButton = <UndoButton disabled={!canUndo} onUndo={onUndo} />;
 
   useEffect(() => {
     if (!playing) return;
@@ -211,16 +206,13 @@ export function TsumeShogiPlay({
       )}
     >
       <TsumeShogiPieceDefs>
-        {/* 他のゲームと同じく、盤を残りの高さの中央に置き、待ったを画面の下の中央に置く。地は盤を置いた座卓の面にする。 */}
         <main
-          ref={boardAreaRef}
           className={cn(
             "flex min-h-0 flex-1 items-center justify-center py-1 [container-type:size]",
             tsumeShogiToneClassNames.tableSurface,
           )}
         >
           <TsumeShogiBoardGroup
-            ref={boardGroupRef}
             board={
               <TsumeShogiClearAnimation
                 active={progress === "clearing"}
@@ -249,8 +241,10 @@ export function TsumeShogiPlay({
                 }
                 availability={handAvailability}
                 rejection={rejection}
-                // 背の低い画面では、待ったの欄を無くして盤に高さを回し、待ったを駒台と同じ行の左の空きに置く。
-                leadingAction={shortPlayArea ? undoButton : undefined}
+                leadingAction={
+                  <UndoButton disabled={!canUndo} onUndo={onUndo} />
+                }
+                layout="wide"
                 onSelectHandPiece={onSelectHandPiece}
               />
             }
@@ -271,18 +265,6 @@ export function TsumeShogiPlay({
             )}
           </p>
         </main>
-        {!shortPlayArea && (
-          <footer
-            className={cn(
-              "grid h-28 shrink-0 items-end px-4 pb-2",
-              tsumeShogiToneClassNames.tableSurface,
-            )}
-          >
-            <div className="flex h-14 items-center justify-center">
-              {undoButton}
-            </div>
-          </footer>
-        )}
       </TsumeShogiPieceDefs>
     </GamePlayFrame>
   );
