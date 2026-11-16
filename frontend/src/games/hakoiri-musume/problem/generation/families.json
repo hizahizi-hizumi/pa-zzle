@@ -1,0 +1,607 @@
+{
+  "families": [
+    {
+      "id": "B45",
+      "label": "基準 4×5・2×2・下の真ん中2マス",
+      "elements": [],
+      "introducedAtLevel": 1,
+      "columns": 4,
+      "rows": 5,
+      "walls": [],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [13],
+          "exitSide": "bottom",
+          "exitCells": [17, 18]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 6
+        },
+        {
+          "kind": "horizontal",
+          "max": 6
+        },
+        {
+          "kind": "small",
+          "max": 10
+        }
+      ],
+      "mustIncludeOneOf": [],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "B44",
+      "label": "盤 4×4",
+      "elements": ["board"],
+      "introducedAtLevel": 1,
+      "columns": 4,
+      "rows": 4,
+      "walls": [],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [9],
+          "exitSide": "bottom",
+          "exitCells": [13, 14]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 6
+        },
+        {
+          "kind": "horizontal",
+          "max": 6
+        },
+        {
+          "kind": "small",
+          "max": 10
+        }
+      ],
+      "mustIncludeOneOf": [],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "W1c",
+      "label": "4×5・壁1（左上の角）",
+      "elements": ["wall"],
+      "introducedAtLevel": 1,
+      "columns": 4,
+      "rows": 5,
+      "walls": [0],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [13],
+          "exitSide": "bottom",
+          "exitCells": [17, 18]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 6
+        },
+        {
+          "kind": "horizontal",
+          "max": 6
+        },
+        {
+          "kind": "small",
+          "max": 10
+        }
+      ],
+      "mustIncludeOneOf": [],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "W2d",
+      "label": "4×5・壁2（左上と右下の角）",
+      "elements": ["wall"],
+      "introducedAtLevel": 1,
+      "columns": 4,
+      "rows": 5,
+      "walls": [0, 19],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [13],
+          "exitSide": "bottom",
+          "exitCells": [17, 18]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 6
+        },
+        {
+          "kind": "horizontal",
+          "max": 6
+        },
+        {
+          "kind": "small",
+          "max": 10
+        }
+      ],
+      "mustIncludeOneOf": [],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "Es2",
+      "label": "4×5・横の出口（右辺の行2〜3）",
+      "elements": ["exit"],
+      "introducedAtLevel": 2,
+      "columns": 4,
+      "rows": 5,
+      "walls": [],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [6],
+          "exitSide": "right",
+          "exitCells": [7, 11]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 6
+        },
+        {
+          "kind": "horizontal",
+          "max": 6
+        },
+        {
+          "kind": "small",
+          "max": 10
+        }
+      ],
+      "mustIncludeOneOf": [],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "P_L",
+      "label": "4×5＋L字トロミノ",
+      "elements": ["shape"],
+      "introducedAtLevel": 2,
+      "columns": 4,
+      "rows": 5,
+      "walls": [],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [13],
+          "exitSide": "bottom",
+          "exitCells": [17, 18]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 6
+        },
+        {
+          "kind": "horizontal",
+          "max": 6
+        },
+        {
+          "kind": "small",
+          "max": 10
+        },
+        {
+          "kind": "bend-up-right",
+          "max": 2
+        },
+        {
+          "kind": "bend-up-left",
+          "max": 2
+        },
+        {
+          "kind": "bend-down-right",
+          "max": 2
+        },
+        {
+          "kind": "bend-down-left",
+          "max": 2
+        }
+      ],
+      "mustIncludeOneOf": [
+        "bend-up-right",
+        "bend-up-left",
+        "bend-down-right",
+        "bend-down-left"
+      ],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "E1v",
+      "label": "4×5・出口1マス・目標 縦長1×2",
+      "elements": ["exit", "tshape"],
+      "introducedAtLevel": 3,
+      "columns": 4,
+      "rows": 5,
+      "walls": [],
+      "targets": [
+        {
+          "kind": "vertical",
+          "goalAnchors": [13],
+          "exitSide": "bottom",
+          "exitCells": [17]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 6
+        },
+        {
+          "kind": "horizontal",
+          "max": 6
+        },
+        {
+          "kind": "small",
+          "max": 10
+        },
+        {
+          "kind": "square",
+          "max": 1
+        }
+      ],
+      "mustIncludeOneOf": [],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "T2a",
+      "label": "目標2つ: 2×2→下・横長→上の真ん中",
+      "elements": ["target2"],
+      "introducedAtLevel": 3,
+      "columns": 4,
+      "rows": 5,
+      "walls": [],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [13],
+          "exitSide": "bottom",
+          "exitCells": [17, 18]
+        },
+        {
+          "kind": "horizontal",
+          "goalAnchors": [1],
+          "exitSide": "top",
+          "exitCells": [1, 2]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 6
+        },
+        {
+          "kind": "horizontal",
+          "max": 6
+        },
+        {
+          "kind": "small",
+          "max": 10
+        }
+      ],
+      "mustIncludeOneOf": [],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "T2b",
+      "label": "目標2つ: 2×2→下・小駒→左上の角",
+      "elements": ["target2"],
+      "introducedAtLevel": 3,
+      "columns": 4,
+      "rows": 5,
+      "walls": [],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [13],
+          "exitSide": "bottom",
+          "exitCells": [17, 18]
+        },
+        {
+          "kind": "small",
+          "goalAnchors": [0],
+          "exitSide": "top",
+          "exitCells": [0]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 6
+        },
+        {
+          "kind": "horizontal",
+          "max": 6
+        },
+        {
+          "kind": "small",
+          "max": 10
+        }
+      ],
+      "mustIncludeOneOf": [],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "T2L",
+      "label": "目標2つ（2×2→下・横長→上）＋L字",
+      "elements": ["target2", "shape"],
+      "introducedAtLevel": 5,
+      "columns": 4,
+      "rows": 5,
+      "walls": [],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [13],
+          "exitSide": "bottom",
+          "exitCells": [17, 18]
+        },
+        {
+          "kind": "horizontal",
+          "goalAnchors": [1],
+          "exitSide": "top",
+          "exitCells": [1, 2]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 6
+        },
+        {
+          "kind": "horizontal",
+          "max": 6
+        },
+        {
+          "kind": "small",
+          "max": 10
+        },
+        {
+          "kind": "bend-up-right",
+          "max": 1
+        },
+        {
+          "kind": "bend-up-left",
+          "max": 1
+        },
+        {
+          "kind": "bend-down-right",
+          "max": 1
+        },
+        {
+          "kind": "bend-down-left",
+          "max": 1
+        }
+      ],
+      "mustIncludeOneOf": [
+        "bend-up-right",
+        "bend-up-left",
+        "bend-down-right",
+        "bend-down-left"
+      ],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "B46",
+      "label": "盤 4×6（下の真ん中2マス）",
+      "elements": ["board"],
+      "introducedAtLevel": 4,
+      "columns": 4,
+      "rows": 6,
+      "walls": [],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [17],
+          "exitSide": "bottom",
+          "exitCells": [21, 22]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 8
+        },
+        {
+          "kind": "horizontal",
+          "max": 8
+        },
+        {
+          "kind": "small",
+          "max": 10
+        }
+      ],
+      "mustIncludeOneOf": [],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "B55",
+      "label": "盤 5×5（下の真ん中3マス）",
+      "elements": ["board"],
+      "introducedAtLevel": 4,
+      "columns": 5,
+      "rows": 5,
+      "walls": [],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [16, 17],
+          "exitSide": "bottom",
+          "exitCells": [21, 22, 23]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 8
+        },
+        {
+          "kind": "horizontal",
+          "max": 8
+        },
+        {
+          "kind": "small",
+          "max": 10
+        }
+      ],
+      "mustIncludeOneOf": [],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    },
+    {
+      "id": "B56",
+      "label": "盤 5×6（下の真ん中3マス）",
+      "elements": ["board"],
+      "introducedAtLevel": 5,
+      "columns": 5,
+      "rows": 6,
+      "walls": [],
+      "targets": [
+        {
+          "kind": "square",
+          "goalAnchors": [21, 22],
+          "exitSide": "bottom",
+          "exitCells": [26, 27, 28]
+        }
+      ],
+      "palette": [
+        {
+          "kind": "vertical",
+          "max": 8
+        },
+        {
+          "kind": "horizontal",
+          "max": 8
+        },
+        {
+          "kind": "small",
+          "max": 10
+        }
+      ],
+      "mustIncludeOneOf": [],
+      "emptyCells": [2, 6],
+      "maxSmallPieces": 6,
+      "levelOffset": 0
+    }
+  ],
+  "mix": {
+    "problemsPerLevel": 500,
+    "perPieceSetPerLevel": 10,
+    "shares": {
+      "1": {
+        "B45": 0.5,
+        "B44": 0.2,
+        "W1c": 0.15,
+        "W2d": 0.15
+      },
+      "2": {
+        "B45": 0.3,
+        "P_L": 0.2,
+        "Es2": 0.15,
+        "W1c": 0.1,
+        "W2d": 0.1,
+        "B44": 0.15
+      },
+      "3": {
+        "B45": 0.2,
+        "P_L": 0.2,
+        "T2a": 0.15,
+        "E1v": 0.1,
+        "Es2": 0.1,
+        "W1c": 0.1,
+        "W2d": 0.05,
+        "T2b": 0.1
+      },
+      "4": {
+        "B45": 0.2,
+        "P_L": 0.15,
+        "T2a": 0.2,
+        "T2b": 0.05,
+        "E1v": 0.1,
+        "B46": 0.1,
+        "B55": 0.1,
+        "Es2": 0.05,
+        "W1c": 0.05
+      },
+      "5": {
+        "B45": 0.15,
+        "P_L": 0.15,
+        "T2a": 0.15,
+        "T2L": 0.15,
+        "E1v": 0.1,
+        "B46": 0.1,
+        "B55": 0.1,
+        "B56": 0.05,
+        "W1c": 0.05
+      }
+    }
+  },
+  "selection": {
+    "1": {
+      "optimalMoveCount": [8, 18],
+      "componentLimit": 50,
+      "finalPositionLimit": null,
+      "requireFarTarget": false
+    },
+    "2": {
+      "optimalMoveCount": [8, 40],
+      "componentLimit": 50,
+      "finalPositionLimit": null,
+      "requireFarTarget": false
+    },
+    "3": {
+      "optimalMoveCount": [8, 40],
+      "componentLimit": 40,
+      "finalPositionLimit": null,
+      "requireFarTarget": false
+    },
+    "4": {
+      "optimalMoveCount": [8, 54],
+      "componentLimit": 40,
+      "finalPositionLimit": 10,
+      "requireFarTarget": true
+    },
+    "5": {
+      "optimalMoveCount": [8, 90],
+      "componentLimit": 25,
+      "finalPositionLimit": 10,
+      "requireFarTarget": true
+    }
+  }
+}
