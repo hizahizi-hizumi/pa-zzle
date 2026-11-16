@@ -1,4 +1,4 @@
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { ReactNode, PointerEvent as ReactPointerEvent } from "react";
 import { useRef } from "react";
 
 import { TutorialCue } from "@/components/TutorialCue";
@@ -28,6 +28,8 @@ type MinesweeperCellProps = {
   disabled: boolean;
   cue?: MinesweeperCellCue;
   spotlit?: boolean;
+  /** 遊び方の例が面の上に重ねる見せ方（押す所の手がかりや札）。押す邪魔をしないよう、渡す側が `pointer-events-none` で描く。 */
+  overlay?: ReactNode;
   onPress: (cellIndex: number) => void;
   onFlagPress: (cellIndex: number) => void;
 };
@@ -55,7 +57,7 @@ function getAccessibleName(
 }
 
 function getCellClassName(view: MinesweeperVisibleCell): string {
-  const faceClassName = getMinesweeperCellFaceClassName(view, "board");
+  const faceClassName = getMinesweeperCellFaceClassName(view);
   const interactionClassName =
     "relative min-w-0 touch-manipulation select-none outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
@@ -71,6 +73,7 @@ export function MinesweeperCell({
   disabled,
   cue,
   spotlit = false,
+  overlay,
   onPress,
   onFlagPress,
 }: MinesweeperCellProps) {
@@ -140,7 +143,7 @@ export function MinesweeperCell({
       data-cell-state={view.state}
       className={getCellClassName(view)}
     >
-      <MinesweeperCellFace view={view} size="board" />
+      <MinesweeperCellFace view={view} />
       {/* 浮いたマスは下の縁まで含めた、見えるマスの形のまま覆いから抜く。 */}
       <TutorialSpotlight
         active={spotlit}
@@ -176,6 +179,7 @@ export function MinesweeperCell({
           )}
         </span>
       )}
+      {overlay}
     </button>
   );
 }

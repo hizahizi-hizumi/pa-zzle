@@ -118,7 +118,9 @@ describe("MinesweeperPlay", () => {
     });
 
     test("遊び方を自動では開かないこと", () => {
-      const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+      const dialog = screen.queryByRole("dialog", {
+        name: "マインスイーパーの遊び方",
+      });
 
       expect(dialog).toBeNull();
     });
@@ -130,7 +132,9 @@ describe("MinesweeperPlay", () => {
       });
 
       test("遊び方を開くこと", () => {
-        const dialog = screen.getByRole("dialog", { name: "遊び方" });
+        const dialog = screen.getByRole("dialog", {
+          name: "マインスイーパーの遊び方",
+        });
 
         expect(dialog).toBeTruthy();
       });
