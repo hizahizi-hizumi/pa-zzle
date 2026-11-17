@@ -130,7 +130,9 @@ describe("SlidePuzzlePlay", () => {
     );
 
     test("遊び方を自動では開かないこと", () => {
-      const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+      const dialog = screen.queryByRole("dialog", {
+        name: "スライドパズルの遊び方",
+      });
 
       expect(dialog).toBeNull();
     });
@@ -142,7 +144,9 @@ describe("SlidePuzzlePlay", () => {
       );
       fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-      const dialog = screen.getByRole("dialog", { name: "遊び方" });
+      const dialog = screen.getByRole("dialog", {
+        name: "スライドパズルの遊び方",
+      });
 
       expect(dialog).toBeTruthy();
     });

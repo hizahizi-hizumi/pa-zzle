@@ -1,4 +1,4 @@
-import type { Ref } from "react";
+import type { ReactNode, Ref } from "react";
 
 import { TutorialCue } from "@/components/TutorialCue";
 import { TutorialSpotlight } from "@/components/TutorialSpotlight";
@@ -28,6 +28,7 @@ type SlidePuzzleTileProps = {
   disabled: boolean;
   cue: SlidePuzzleTileCue | undefined;
   spotlit: boolean;
+  adornment: ReactNode;
   slideAnimated: boolean;
   faceRef: Ref<HTMLSpanElement>;
   onPress: (cellIndex: number) => void;
@@ -40,6 +41,7 @@ export function SlidePuzzleTile({
   disabled,
   cue,
   spotlit,
+  adornment,
   slideAnimated,
   faceRef,
   onPress,
@@ -59,7 +61,9 @@ export function SlidePuzzleTile({
       }`}
       style={{ transform: `translate(${column * 100}%, ${row * 100}%)` }}
     >
-      <SlidePuzzleTileFace tile={tile} boardSize={boardSize} ref={faceRef} />
+      <SlidePuzzleTileFace tile={tile} boardSize={boardSize} ref={faceRef}>
+        {adornment}
+      </SlidePuzzleTileFace>
       <TutorialSpotlight active={spotlit} className={tileFaceShapeClassName} />
       {cue?.kind === "landed" && (
         <span
