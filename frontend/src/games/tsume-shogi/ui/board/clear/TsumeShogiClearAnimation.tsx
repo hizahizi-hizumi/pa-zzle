@@ -29,13 +29,6 @@ const matedKingKeyframes: Keyframe[] = [
   { transform: "translateY(0) scale(1) rotate(0deg)" },
 ];
 
-/** 盤の他の駒は、玉の升から広がる波で一度浮いて着く。 */
-const wavePieceKeyframes: Keyframe[] = [
-  { transform: "translateY(0) scale(1)" },
-  { transform: "translateY(-10%) scale(1.07)", offset: 0.4 },
-  { transform: "translateY(0) scale(1)" },
-];
-
 const CLEAR_GLOW_PEAK_OFFSET = 0.35;
 /** 波の升が照り始めてから、いちばん明るく照るまでの時間。 */
 export const CLEAR_GLOW_PEAK_MS =
@@ -62,7 +55,7 @@ function readWaveSquares(squares: readonly HTMLElement[]) {
 
 /**
  * 詰んだ瞬間に入力を止め、玉を傾けて大きく揺らす。同時に玉の升から盤の端へ照りの波を広げ、
- * 升を順に光らせ、駒を浮かせる。盤全体が応えるので、他のゲームの完成演出（盤全体の波・脈動・光）と同じ強さになる。
+ * 升を順に光らせる。玉以外の駒は動かさず、升の間隔と駒の大きさを保つ。
  * 動きを減らす設定でも、演出と同じ長さだけ詰み上がりを見せてから結果へ進める（`planTsumeShogiClearWave`）。
  */
 export function TsumeShogiClearAnimation({
@@ -100,12 +93,11 @@ export function TsumeShogiClearAnimation({
             easing: MOTION_EASING.celebrate,
           };
           return [
-            square
-              ?.querySelector<HTMLElement>(pieceSelector)
-              ?.animate?.(
-                step.matedKing ? matedKingKeyframes : wavePieceKeyframes,
-                timing,
-              ),
+            step.matedKing
+              ? square
+                  ?.querySelector<HTMLElement>(pieceSelector)
+                  ?.animate?.(matedKingKeyframes, timing)
+              : undefined,
             // 玉の升も照りは波と同じ長さにし、照りの頂点を波の音に合わせる。
             square
               ?.querySelector<HTMLElement>(glowSelector)

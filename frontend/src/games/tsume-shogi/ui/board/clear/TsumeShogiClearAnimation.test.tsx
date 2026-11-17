@@ -57,7 +57,7 @@ describe("TsumeShogiClearAnimation", () => {
       ));
     });
 
-    test("玉の升からの升の距離で、駒と照りの層の動きを遅らせること", () => {
+    test("玉だけを動かし、他の駒は動かさずに照りの波を広げること", () => {
       const delays = Object.fromEntries(
         calls.map(({ target, delay }) => [
           `${(target.closest("button") as HTMLElement).dataset.file}-${target.hasAttribute("data-piece") ? "piece" : "glow"}`,
@@ -68,10 +68,14 @@ describe("TsumeShogiClearAnimation", () => {
       expect(delays).toEqual({
         "2-piece": CLEAR_START_DELAY_MS,
         "2-glow": CLEAR_START_DELAY_MS,
-        "4-piece": CLEAR_START_DELAY_MS + 2 * CLEAR_WAVE_STAGGER_MS,
         "4-glow": CLEAR_START_DELAY_MS + 2 * CLEAR_WAVE_STAGGER_MS,
         "5-glow": CLEAR_START_DELAY_MS + 3 * CLEAR_WAVE_STAGGER_MS,
       });
+      expect(
+        calls
+          .filter(({ target }) => target.hasAttribute("data-piece"))
+          .map(({ target }) => target.closest("button")?.dataset.file),
+      ).toEqual(["2"]);
       expect(container.querySelector("[data-board-squares]")).not.toBeNull();
     });
   });
