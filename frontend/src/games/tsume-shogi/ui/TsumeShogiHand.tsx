@@ -40,6 +40,8 @@ type TsumeShogiHandProps = {
     pieceType: TsumeShogiHandPieceType;
     recallId: number | null;
   } | null;
+  /** 遊び方で次に押す持駒の手がかり。持駒の押せる範囲いっぱいに重ねて描く。本番では渡さない。 */
+  hint?: { pieceType: TsumeShogiHandPieceType; mark: ReactNode } | null;
   onSelectHandPiece: (pieceType: TsumeShogiHandPieceType) => void;
 };
 
@@ -53,6 +55,7 @@ export function TsumeShogiHand({
   leadingAction,
   layout = "standard",
   tutorialMark = null,
+  hint = null,
   onSelectHandPiece,
 }: TsumeShogiHandProps) {
   const { getTapHandlers } = useTouchTap();
@@ -119,6 +122,7 @@ export function TsumeShogiHand({
               {tutorialMark?.pieceType === type && (
                 <TutorialCue kind="pointer" recallId={tutorialMark.recallId} />
               )}
+              {hint?.pieceType === type && hint.mark}
             </button>
           );
         })}

@@ -95,6 +95,13 @@ export function calculateTsumeShogiTimeDeltaMs({
   );
 }
 
+/** 正確さが0点になる誤王手の回数。正確さは満点から1回ごとの減点を引き、0点より下げない。 */
+export function countTsumeShogiWrongChecksToZeroAccuracy(): number {
+  return Math.ceil(
+    TSUME_SHOGI_SCORE_MAXIMUMS.accuracy / TSUME_SHOGI_WRONG_CHECK_PENALTY,
+  );
+}
+
 export function calculateTsumeShogiPlayScore({
   elapsedMs,
   wrongCheckCount,

@@ -1,6 +1,7 @@
 import {
   applyTsumeShogiMove,
   canTsumeShogiMovePromote,
+  findTsumeShogiIllegalDropReason,
   formatTsumeShogiMoveUsi,
   isTsumeShogiCheckmate,
   isTsumeShogiDefenderInCheck,
@@ -415,5 +416,58 @@ describe("isTsumeShogiDefenderInCheck", () => {
     const checked = isTsumeShogiDefenderInCheck(current);
 
     expect(checked).toBe(expected);
+  });
+});
+
+describe("findTsumeShogiIllegalDropReason", () => {
+  function parseDrop(usi: string): Extract<TsumeShogiMove, { kind: "drop" }> {
+    const move = parseTsumeShogiMoveUsi(usi);
+    if (move.kind !== "drop") {
+      throw new RangeError(`持駒を打つ手ではありません: ${usi}`);
+    }
+    return move;
+  }
+
+  function createPosition(board: string): TsumeShogiPosition {
+    return createTsumeShogiPosition(board, { pawn: 1, knight: 1 });
+  }
+
+  const cases = [
+    [
+      "打てる手",
+      createPosition("8k/9/7S1/9/9/9/9/9/9"),
+      parseDrop("P*1b"),
+      null,
+    ],
+    [
+      "駒のある升に打つ手",
+      createPosition("8k/9/7S1/9/9/9/9/9/9"),
+      parseDrop("N*1a"),
+      "occupied",
+    ],
+    [
+      "行き所のない段に桂馬を打つ手",
+      createPosition("8k/9/7S1/9/9/9/9/9/9"),
+      parseDrop("N*2b"),
+      "dead-piece",
+    ],
+    [
+      "歩のある筋に歩を打つ手",
+      createPosition("8k/9/7S1/8P/9/9/9/9/9"),
+      parseDrop("P*1b"),
+      "double-pawn",
+    ],
+    [
+      "歩を打って詰ませる手",
+      createPosition("8k/6S2/7S1/9/9/9/9/9/9"),
+      parseDrop("P*1b"),
+      "pawn-drop-mate",
+    ],
+  ] as const;
+
+  test.each(cases)("%sのわけを返すこと", (_, position, move, expected) => {
+    const reason = findTsumeShogiIllegalDropReason(position, move);
+
+    expect(reason).toBe(expected);
   });
 });

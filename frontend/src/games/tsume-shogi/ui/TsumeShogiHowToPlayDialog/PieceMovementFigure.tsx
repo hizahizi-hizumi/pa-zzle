@@ -69,6 +69,10 @@ type PieceMovementFigureProps = {
   type: (typeof pieceMovementFigureTypes)[number];
 };
 
+/**
+ * 駒の動きの図1つ。5升四方の小さな盤の中央に駒を置き、動ける升に点を、何升でも進める向きに矢印を描く。
+ * 駒の字が読める大きさにし、矢印は駒に重ならないよう、中央の升の縁の外から引く。
+ */
 export function PieceMovementFigure({ type }: PieceMovementFigureProps) {
   const extent = gridSize * cellSize;
   return (
@@ -77,7 +81,7 @@ export function PieceMovementFigure({ type }: PieceMovementFigureProps) {
         viewBox={`0 0 ${extent} ${extent}`}
         aria-hidden="true"
         className={cn(
-          "size-12 rounded-sm",
+          "size-28 rounded-sm",
           tsumeShogiToneClassNames.boardSurface,
         )}
       >
@@ -115,7 +119,7 @@ export function PieceMovementFigure({ type }: PieceMovementFigureProps) {
               />
             );
           }
-          const start = toPoint(dx * 0.6, dy * 0.6);
+          const start = toPoint(dx * 0.75, dy * 0.75);
           const arrow = toPoint(dx * 1.85, dy * 1.85);
           const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
           return (
@@ -145,3 +149,5 @@ export function PieceMovementFigure({ type }: PieceMovementFigureProps) {
     </span>
   );
 }
+
+export const _private = { pieceMovements };

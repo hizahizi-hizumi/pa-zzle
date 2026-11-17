@@ -1,12 +1,12 @@
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 import type { TapHandlers } from "@/components/touch-tap";
 import type {
   TsumeShogiPieceType,
   TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
-import { placeTsumeShogiPromotionPicker } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/promotion-picker-placement";
 import { TsumeShogiPieceGlyph } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph";
+import { placeTsumeShogiPromotionPicker } from "@/games/tsume-shogi/ui/board/TsumeShogiPromotionPicker/promotion-picker-placement";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,8 @@ type TsumeShogiPromotionPickerProps = {
   pieceType: TsumeShogiPieceType;
   /** 成（`promote`）・不成（`keep`）を押したときの受け口。盤の升と同じ記録を共有し、続けて素早く押しても押した方で受ける。 */
   optionTapHandlers: { promote: TapHandlers; keep: TapHandlers };
+  /** 遊び方で選択肢のボタンに重ねて描く物（次に押す所の手がかり）。本番では渡さない。 */
+  optionMarks?: { promote?: ReactNode; keep?: ReactNode };
 };
 
 const squarePercentOfBoard = 100 / 9;
@@ -35,6 +37,7 @@ export function TsumeShogiPromotionPicker({
   to,
   pieceType,
   optionTapHandlers,
+  optionMarks = {},
 }: TsumeShogiPromotionPickerProps) {
   const groupRef = useRef<HTMLDivElement>(null);
   const firstOptionRef = useRef<HTMLButtonElement>(null);
@@ -66,8 +69,14 @@ export function TsumeShogiPromotionPicker({
       type: promotedPieceTypes[pieceType] ?? pieceType,
       label: "成",
       tapHandlers: optionTapHandlers.promote,
+      mark: optionMarks.promote,
     },
-    { type: pieceType, label: "不成", tapHandlers: optionTapHandlers.keep },
+    {
+      type: pieceType,
+      label: "不成",
+      tapHandlers: optionTapHandlers.keep,
+      mark: optionMarks.keep,
+    },
   ];
 
   return (
@@ -81,7 +90,7 @@ export function TsumeShogiPromotionPicker({
       )}
       style={{ left: `${left}%`, top: `${top}%` }}
     >
-      {options.map(({ type, label, tapHandlers }, index) => (
+      {options.map(({ type, label, tapHandlers, mark }, index) => (
         <button
           key={label}
           ref={index === 0 ? firstOptionRef : undefined}
@@ -108,6 +117,7 @@ export function TsumeShogiPromotionPicker({
           >
             {label}
           </span>
+          {mark}
         </button>
       ))}
     </div>
