@@ -1,0 +1,33 @@
+name: 探索
+description: 課題の実態・原因・可能性など、まだ分かっていないことを明らかにする
+title: '探索: '
+body:
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 目的
+      description: 何を明らかにしたいか。仮説が成立すること自体を目的にしない。
+      placeholder: 解明したい問い、見つけたい可能性
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 背景・現状
+      description: 観測された事実と、まだ確かめていない仮説を分けて書く。
+    validations:
+      required: false
+  - type: textarea
+    id: scope
+    attributes:
+      label: 探索する範囲
+      description: 対象範囲が既に決まっている場合に書く。調査手順を先取りしない。
+    validations:
+      required: false
+  - type: textarea
+    id: constraints
+    attributes:
+      label: 既決事項・制約
+      description: 確定済みの事項がある場合だけ書く。
+    validations:
+      required: false
