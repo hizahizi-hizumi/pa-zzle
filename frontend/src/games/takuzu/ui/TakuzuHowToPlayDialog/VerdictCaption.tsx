@@ -18,7 +18,7 @@ type VerdictCaptionProps = {
   labels?: HowToPlayVerdictLabels;
   /** できない形のとき、例が教えるルールとは別に破ったルール。判定の下の2行目に、場所を取らずに重ねて添える。 */
   reason?: string;
-  /** 行の四角と丸の数を添えるときの、数と、違反の印と同じ色で示す超えた方のタイル。 */
+  /** 行の四角と丸の数を添えるときの、数と、違反の印と同じ色で示す超えた方のタイル。見比べる所の凡例と一緒には添えない。 */
   tileCounts?: TakuzuExampleLineTileCounts;
   /**
    * 見比べる所の短い線の凡例（線と「違う所」）を、判定の右に添えるか。
@@ -59,12 +59,49 @@ function renderDifferenceLegend(differenceLegend: "shown" | "reserved") {
   );
 }
 
+/** 行の四角と丸の数。超えた方のタイルの数を、違反の印と同じ色にする。 */
+function renderTileCounts(tileCounts: TakuzuExampleLineTileCounts) {
+  return (
+    <span
+      aria-hidden="true"
+      className="flex items-center gap-2 whitespace-nowrap tabular-nums"
+    >
+      {(["a", "b"] as const).map((tile) => (
+        <span key={tile}>
+          <span className={cn("me-1 inline-block", tileSymbolClassNames[tile])}>
+            <TakuzuCellFace cell={tile} given={false} size="figure" />
+          </span>
+          <span
+            className={
+              tile === tileCounts.overfilledTile
+                ? lineViolationTextClassName
+                : "text-foreground"
+            }
+          >
+            {tileCounts.counts[tile]}
+          </span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function renderAside(
+  tileCounts: TakuzuExampleLineTileCounts | undefined,
+  differenceLegend: "shown" | "reserved" | undefined,
+) {
+  if (tileCounts !== undefined) {
+    return renderTileCounts(tileCounts);
+  }
+  return differenceLegend === undefined
+    ? undefined
+    : renderDifferenceLegend(differenceLegend);
+}
+
 /**
- * 例の今の姿の判定。共通の判定（`HowToPlayVerdict`）で出し、✕ と添えるわけは盤面の違反の印と同じ色にする。
- * 数を添えるときは、判定を例の盤面の中央に置き、数をその右に置く。数は判定が替わっても出し入れしないので、判定は動かない。
- * 見比べる所の凡例を添えるときは、判定を盤面の中央に置き、凡例をその右に置く。判定の左には凡例と同じ幅を空けるので、
- * 凡例を隠している間も、判定は ✓ / ✕ / 途中 のどれでも盤面の中央にそろう。
- * 数も凡例も添えないときは、記号と言葉の組を盤面の中央に置く。
+ * 例の今の姿の判定。共通の判定（`HowToPlayVerdict`）で出す。
+ * 数か見比べる所の凡例を添えるときは、判定の右に添える物として渡し、判定を盤面の中央に残す。
+ * 数は判定が替わっても出し入れしない。凡例は盤面に線が無い間も場所を取って隠すので、判定は ✓ / ✕ / 途中 のどれでも動かない。
  * 例が教えるルールとは別のルールを破ったときは、なぜできないかが分かるよう、破ったルールを判定の下に重ねて添える。
  */
 export function VerdictCaption({
@@ -74,55 +111,12 @@ export function VerdictCaption({
   tileCounts,
   differenceLegend,
 }: VerdictCaptionProps) {
-  const shownVerdict = (
+  return (
     <HowToPlayVerdict
       verdict={verdict}
       labels={labels}
-      disallowedClassName={lineViolationTextClassName}
       reason={reason}
-      aside={
-        tileCounts ? (
-          <span
-            aria-hidden="true"
-            className="flex items-center gap-2 whitespace-nowrap tabular-nums"
-          >
-            {(["a", "b"] as const).map((tile) => (
-              <span key={tile}>
-                <span
-                  className={cn(
-                    "me-1 inline-block",
-                    tileSymbolClassNames[tile],
-                  )}
-                >
-                  <TakuzuCellFace cell={tile} given={false} size="figure" />
-                </span>
-                <span
-                  className={
-                    tile === tileCounts.overfilledTile
-                      ? lineViolationTextClassName
-                      : "text-foreground"
-                  }
-                >
-                  {tileCounts.counts[tile]}
-                </span>
-              </span>
-            ))}
-          </span>
-        ) : undefined
-      }
+      aside={renderAside(tileCounts, differenceLegend)}
     />
-  );
-  if (differenceLegend === undefined) {
-    return shownVerdict;
-  }
-  return (
-    // 左右の列は同じ幅（凡例の幅）になり、真ん中の判定が盤面の中央に来る。
-    <span className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-      <span aria-hidden="true" />
-      {shownVerdict}
-      <span data-how-to-play-verdict-aside className="flex justify-start">
-        {renderDifferenceLegend(differenceLegend)}
-      </span>
-    </span>
   );
 }

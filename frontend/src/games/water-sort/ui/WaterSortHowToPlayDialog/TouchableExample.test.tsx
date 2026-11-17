@@ -72,16 +72,12 @@ function readDestinationAnswers(): (string | null)[] {
     .map((answer) => answer.textContent);
 }
 
-/** 答えの下に添えた、✓ と ✕ の言葉の行が見えているか。隠すときは場所を取ったまま `invisible` にする。 */
-function isDestinationLegendShown(): boolean {
-  const figure = within(screen.getByRole("figure"));
-  const legends = [
-    figure.queryByText("注げる"),
-    figure.queryByText("注げない"),
-  ];
-  return legends.every(
-    (legend) => legend !== null && legend.closest(".invisible") === null,
-  );
+/** 答えの下に添えた凡例のうち、見えている言葉。隠す言葉は場所を取ったまま `invisible` にする。 */
+function readShownDestinationLegend(): string[] {
+  return within(screen.getByRole("figure"))
+    .queryAllByText(/^注げ(る|ない)$/)
+    .filter((legend) => legend.closest(".invisible") === null)
+    .map((legend) => legend.textContent ?? "");
 }
 
 function getBottle(position: number): HTMLElement {
@@ -167,9 +163,9 @@ describe("TouchableExample", () => {
     });
 
     test("各ボトルの答えの下に、✓ と ✕ の言葉を1行で添えること", () => {
-      const legendShown = isDestinationLegendShown();
+      const legend = readShownDestinationLegend();
 
-      expect(legendShown).toBe(true);
+      expect(legend).toEqual(["注げる", "注げない"]);
     });
 
     describe.each([
@@ -206,13 +202,13 @@ describe("TouchableExample", () => {
           const hinted = readHintedBottle();
           const sounds = countSounds();
           const resetVisible = isResetVisible();
-          const legendShown = isDestinationLegendShown();
+          const legend = readShownDestinationLegend();
 
           expect(bottles).toEqual(bottlesAfterPour);
           expect(pressed).toBe("false");
           expect(shown).toEqual([`ボトル ${destination}: 注げた`]);
           expect(figure).not.toBeNull();
-          expect(legendShown).toBe(false);
+          expect(legend).toEqual([]);
           expect(hinted).toBeNull();
           expect(sounds).toEqual({ invalid: 0, poured: 1 });
           expect(resetVisible).toBe(true);
@@ -262,12 +258,12 @@ describe("TouchableExample", () => {
 
       const pressed = getBottle(1).getAttribute("aria-pressed");
       const shown = readDestinationAnswers();
-      const legendShown = isDestinationLegendShown();
+      const legend = readShownDestinationLegend();
       const hinted = readHintedBottle();
 
       expect(pressed).toBe("false");
       expect(shown).toEqual([]);
-      expect(legendShown).toBe(false);
+      expect(legend).toEqual([]);
       expect(hinted).toBe(1);
     });
 
@@ -296,10 +292,9 @@ describe("TouchableExample", () => {
         fireEvent.click(getBottle(2));
 
         const shown = readDestinationAnswers();
-        const legendShown = isDestinationLegendShown();
+        const legend = readShownDestinationLegend();
 
-        expect(legendShown).toBe(true);
-
+        expect(legend).toEqual(["注げる", "注げない"]);
         expect(shown).toEqual([
           "ボトル 1: 注げない",
           "ボトル 3: 注げない",

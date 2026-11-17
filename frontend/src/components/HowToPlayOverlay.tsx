@@ -4,6 +4,10 @@ import { type ReactNode, useRef, useState } from "react";
 import { GamePictogram } from "@/components/GamePictogram";
 import { HowToPlayPhrases } from "@/components/HowToPlayPhrases";
 import { HowToPlayTutorialButton } from "@/components/HowToPlayTutorialButton";
+import {
+  createHowToPlayExampleSelections,
+  HowToPlayExampleSelectionsContext,
+} from "@/components/how-to-play-example-selection";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -57,13 +61,21 @@ function isHowToPlayTab(value: string): value is HowToPlayTab {
   return tabs.some((candidate) => candidate.value === value);
 }
 
+/**
+ * 表示していないタブと、狭い画面でルール以外のタブの間の左の列の隠し方。`display: none` にすると、中の CSS アニメーション
+ * （置いた物が現れる・出た車が去るなど）が戻ったときに始めから流れ直すので、描いたまま見えなくし、読み上げと Tab の移動からも外す。
+ * 流れから外して高さを取らず、中身は切って送る領域の高さに数えない。幅は表示しているときと同じにし、図の大きさを変えない。
+ */
+const hiddenPaneMaxLgClassName =
+  "max-lg:invisible max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:h-0 max-lg:overflow-hidden";
+
 const tabContentClassName =
-  "@container isolate data-[state=inactive]:hidden px-4 pt-6 pb-12 lg:col-start-2 lg:row-start-2 lg:min-h-0 lg:overflow-x-hidden lg:overflow-y-auto lg:px-0 lg:pt-8 lg:[clip-path:inset(0)]";
+  "@container isolate data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-x-0 data-[state=inactive]:top-0 data-[state=inactive]:h-0 data-[state=inactive]:overflow-hidden px-4 pt-6 pb-12 lg:col-start-2 lg:row-start-2 lg:min-h-0 lg:overflow-x-hidden lg:overflow-y-auto lg:px-0 lg:pt-8 lg:[clip-path:inset(0)]";
 
 /**
  * 遊び方の全画面の層。チュートリアルと同じく、上の帯にピクトグラムと名前、閉じるを置く。
  * 帯の下に「ルール」「操作」「採点」のタブを置き、タブを切り替えても帯とタブは動かさず、中身だけを送る。
- * タブの中身は開いている間ずっと保ち、触った例やゴールの盤面の移り変わりを、タブを行き来してもやり直さない。
+ * タブの中身は開いている間ずっと保ち、触った例やゴールの盤面の移り変わりを、タブを行き来してもやり直さず、済んだ動きも流し直さない。
  * 広い画面では、何をするパズルかとゴールの盤面を左の列に留め、右の列（読みやすい幅に絞る）でタブを読む。
  * 狭い画面では1列にし、それらをルールのタブの先頭に置く。どちらの画面でも1つだけ描き、置き場所を格子で替える。
  * 狭い画面では、タブの列を上に留めたまま中身全体を1つの領域で送り、タブを替えたら先頭から見せる。
@@ -75,6 +87,9 @@ const tabContentClassName =
  * 図が置き場所の幅に合わせて大きさを決められるよう、中身の領域をコンテナにする。
  * 中身を送る領域は、送る範囲の外へ描く物を切る。画面の座標で描く動き（`position: fixed`）は送る領域の overflow で切られないので、
  * `clip-path` で切り、帯とタブの上に描かれないようにする。
+ * 狭い画面では、フォーカスなどで送って見せる要素が上に留めたタブの列の下に隠れないよう、送る領域の上端にタブの列の高さの余白を取る。
+ * 文節で折り返す文は、最後の行に1文節だけが残りにくい組み方にする。
+ * 触れる例が物を選んでいる間は、Esc で層を閉じずに例の選びを解く。選んでいる物が無ければ、Esc で層を閉じる。
  */
 export function HowToPlayOverlay({
   open,
@@ -91,6 +106,7 @@ export function HowToPlayOverlay({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<HowToPlayTab>("rules");
   const [shownOpen, setShownOpen] = useState(open);
+  const [exampleSelections] = useState(createHowToPlayExampleSelections);
 
   // 閉じる間は消えていく中身を替えないよう、ルールのタブへは閉じるときではなく開くときに戻す。
   if (open !== shownOpen) {
@@ -111,6 +127,12 @@ export function HowToPlayOverlay({
   function handleOpenAutoFocus(event: Event) {
     event.preventDefault();
     titleRef.current?.focus();
+  }
+
+  function handleEscapeKeyDown(event: KeyboardEvent) {
+    if (exampleSelections.cancelAll()) {
+      event.preventDefault();
+    }
   }
 
   function handleTabChange(value: string) {
@@ -156,90 +178,93 @@ export function HowToPlayOverlay({
         presentation="full-screen"
         showCloseButton={false}
         onOpenAutoFocus={handleOpenAutoFocus}
+        onEscapeKeyDown={handleEscapeKeyDown}
       >
-        <div className="flex min-h-0 flex-1 flex-col [text-spacing-trim:trim-start]">
-          {/* 帯の左右の端を、中身の格子の左右の端にそろえる。 */}
-          <header className="mx-auto flex min-h-14 w-full max-w-7xl shrink-0 items-center gap-2 px-4 pt-2 lg:px-8">
-            <span className="size-8 shrink-0">
-              <GamePictogram svg={game.pictogramSvg} />
-            </span>
-            <DialogTitle ref={titleRef} tabIndex={-1} size="banner">
-              {game.name}
-              <span className="sr-only">の遊び方</span>
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              {description.replaceAll("/", "")}
-            </DialogDescription>
-            {/* 閉じるの×の字面の右端を、タブの列の右端にそろえる。 */}
-            <div className="ml-auto -me-4 flex shrink-0">
-              <DialogClose asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-lg"
-                  aria-label="閉じる"
-                >
-                  <X />
-                </Button>
-              </DialogClose>
-            </div>
-          </header>
+        <HowToPlayExampleSelectionsContext value={exampleSelections}>
+          <div className="flex min-h-0 flex-1 flex-col text-pretty [text-spacing-trim:trim-start]">
+            {/* 帯の左右の端を、中身の格子の左右の端にそろえる。 */}
+            <header className="mx-auto flex min-h-14 w-full max-w-7xl shrink-0 items-center gap-2 px-4 pt-2 lg:px-8">
+              <span className="size-8 shrink-0">
+                <GamePictogram svg={game.pictogramSvg} />
+              </span>
+              <DialogTitle ref={titleRef} tabIndex={-1} size="banner">
+                {game.name}
+                <span className="sr-only">の遊び方</span>
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                {description.replaceAll("/", "")}
+              </DialogDescription>
+              {/* 閉じるの×の字面の右端を、タブの列の右端にそろえる。 */}
+              <div className="ml-auto -me-4 flex shrink-0">
+                <DialogClose asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-lg"
+                    aria-label="閉じる"
+                  >
+                    <X />
+                  </Button>
+                </DialogClose>
+              </div>
+            </header>
 
-          <Tabs
-            value={tab}
-            onValueChange={handleTabChange}
-            className="min-h-0 w-full flex-1 gap-0"
-          >
-            <div
-              ref={scrollerRef}
-              className="mx-auto grid min-h-0 w-full max-w-7xl flex-1 grid-cols-1 content-start overflow-x-hidden overflow-y-auto [clip-path:inset(0)] lg:grid-cols-[minmax(0,1fr)_--spacing(160)] lg:grid-rows-[auto_minmax(0,1fr)] lg:content-stretch lg:gap-x-12 lg:overflow-hidden lg:px-8"
+            <Tabs
+              value={tab}
+              onValueChange={handleTabChange}
+              className="min-h-0 w-full flex-1 gap-0"
             >
-              {/* 左の列の一文の上端を、右の最初のルールの一文の上端にそろえるため、タブの列の高さを決めておく。 */}
-              {/* タブを列の下端に寄せ、選んだタブの下線（2px）の下端を区切り線（1px）の下端にそろえて、区切り線に重ねる。 */}
-              {/* 下線はタブの枠（1px）の内側の下端から 5px 下、つまりタブの下端から 4px 下に引かれるので、タブの下に区切り線を除いて 3px を空ける。 */}
-              <div className="sticky top-0 z-10 flex h-11 items-end border-b-(length:--border-width-normal) bg-background px-4 pb-[3px] lg:static lg:col-start-2 lg:row-start-1 lg:px-0">
-                <TabsList variant="line" layout="section">
-                  {tabs.map(({ value, label }) => (
-                    <TabsTrigger key={value} value={value}>
-                      {label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </div>
-              {/* 広い画面では、左の列をタブの列の高さから始めずに盤面へ高さを残し、一文の上端だけを、タブの列（h-11）と中身の上の余白（pt-8）の分下げて、右の最初のルールの一文の上端にそろえる。 */}
               <div
-                className={cn(
-                  "isolate px-4 pt-6 pb-6 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:min-h-0 lg:px-0 lg:pt-[calc(--spacing(11)+--spacing(8))] lg:pb-8",
-                  tab !== "rules" && "max-lg:hidden",
-                )}
+                ref={scrollerRef}
+                className="relative mx-auto grid min-h-0 w-full max-w-7xl flex-1 grid-cols-1 content-start scroll-pt-11 overflow-x-hidden overflow-y-auto [clip-path:inset(0)] lg:grid-cols-[minmax(0,1fr)_--spacing(160)] lg:grid-rows-[auto_minmax(0,1fr)] lg:content-stretch lg:gap-x-12 lg:overflow-hidden lg:px-8"
               >
-                {purpose}
+                {/* 左の列の一文の上端を、右の最初のルールの一文の上端にそろえるため、タブの列の高さを決めておく。 */}
+                {/* タブを列の下端に寄せ、選んだタブの下線（2px）の下端を区切り線（1px）の下端にそろえて、区切り線に重ねる。 */}
+                {/* 下線はタブの枠（1px）の内側の下端から 5px 下、つまりタブの下端から 4px 下に引かれるので、タブの下に区切り線を除いて 3px を空ける。 */}
+                <div className="sticky top-0 z-10 flex h-11 items-end border-b-(length:--border-width-normal) bg-background px-4 pb-[3px] lg:static lg:col-start-2 lg:row-start-1 lg:px-0">
+                  <TabsList variant="line" layout="section">
+                    {tabs.map(({ value, label }) => (
+                      <TabsTrigger key={value} value={value}>
+                        {label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
+                {/* 広い画面では、左の列をタブの列の高さから始めずに盤面へ高さを残し、一文の上端だけを、タブの列（h-11）と中身の上の余白（pt-8）の分下げて、右の最初のルールの一文の上端にそろえる。 */}
+                <div
+                  className={cn(
+                    "isolate px-4 pt-6 pb-6 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:min-h-0 lg:px-0 lg:pt-[calc(--spacing(11)+--spacing(8))] lg:pb-8",
+                    tab !== "rules" && hiddenPaneMaxLgClassName,
+                  )}
+                >
+                  {purpose}
+                </div>
+                <TabsContent
+                  value="rules"
+                  forceMount
+                  className={tabContentClassName}
+                >
+                  <div className="space-y-12">{rules}</div>
+                </TabsContent>
+                {/* 操作と採点は見出しを付けたまとまりで並べるので、まとまりどうしの間を、まとまりの中の項目の間より大きく空ける。 */}
+                <TabsContent
+                  value="operations"
+                  forceMount
+                  className={tabContentClassName}
+                >
+                  <div className="space-y-16">{operations}</div>
+                </TabsContent>
+                <TabsContent
+                  value="scoring"
+                  forceMount
+                  className={tabContentClassName}
+                >
+                  <div className="space-y-16">{scoring}</div>
+                </TabsContent>
               </div>
-              <TabsContent
-                value="rules"
-                forceMount
-                className={tabContentClassName}
-              >
-                <div className="space-y-12">{rules}</div>
-              </TabsContent>
-              {/* 操作と採点は見出しを付けたまとまりで並べるので、まとまりどうしの間を、まとまりの中の項目の間より大きく空ける。 */}
-              <TabsContent
-                value="operations"
-                forceMount
-                className={tabContentClassName}
-              >
-                <div className="space-y-16">{operations}</div>
-              </TabsContent>
-              <TabsContent
-                value="scoring"
-                forceMount
-                className={tabContentClassName}
-              >
-                <div className="space-y-16">{scoring}</div>
-              </TabsContent>
-            </div>
-          </Tabs>
-        </div>
+            </Tabs>
+          </div>
+        </HowToPlayExampleSelectionsContext>
       </DialogContent>
     </Dialog>
   );

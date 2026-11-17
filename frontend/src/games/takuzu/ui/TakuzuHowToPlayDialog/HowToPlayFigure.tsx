@@ -1,6 +1,6 @@
-import { MouseRight, Pointer } from "lucide-react";
-import type { CSSProperties } from "react";
+import { type CSSProperties, useState } from "react";
 
+import { HowToPlayPressHint } from "@/components/HowToPlayPressHint";
 import type { TakuzuCell, TakuzuLine } from "@/games/takuzu/puzzle/board";
 import {
   getNextTakuzuCell,
@@ -28,7 +28,10 @@ import {
   lineViolationTextClassName,
   runViolationCellClassName,
 } from "@/games/takuzu/ui/board/violation-mark-style";
-import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/violation-mark-timing";
+import {
+  violationMarkImmediateTimingClassName,
+  violationMarkTimingClassName,
+} from "@/games/takuzu/ui/board/violation-mark-timing";
 import {
   getTakuzuExampleMarks,
   listTakuzuExampleCells,
@@ -49,6 +52,11 @@ export type HowToPlayFigureSize = "goal" | "example" | "inherited";
 
 type HowToPlayFigureProps = {
   example: TakuzuExampleBoard;
+  /**
+   * 違反の印を求める姿。渡すと、印と読み上げ名の違反をこの姿から求め、待たずに出す。
+   * 判定の言葉と同じ姿を渡し、印と言葉を同じ描画で替える。渡さなければ `example` から求め、本番と同じく待ってから出す。
+   */
+  markedExample?: TakuzuExampleBoard;
   size: HowToPlayFigureSize;
   /**
    * 押す所の手がかりを付けるマス。マスの内側の破線の枠と、押し方のアイコン（押す向きでは指、逆の向きではマウスの右ボタン）を、動かさずに描く。
@@ -130,39 +138,11 @@ function getLineEdge(position: number, length: number): LineEdge | null {
   return position === length - 1 ? "end" : null;
 }
 
-/** 押し方のアイコン。押す向きでは指で押すことを、逆の向きではマウスの右ボタンで押すことを示す。 */
-const pressIcons = {
-  forward: Pointer,
-  backward: MouseRight,
-} as const satisfies Record<TakuzuCycleDirection, typeof Pointer>;
-
-/**
- * 押す所を示す押し方のアイコン。タイルの上でも読めるよう、地の色の縁取りを下に敷く。
- * 空きのマスではマスの中央に、タイルのあるマスではタイルを隠さないようマスの右下の隅に置く。
- */
-function renderPressIcon(
-  cell: TakuzuCell,
-  direction: TakuzuCycleDirection,
-  hidesOnHover: boolean,
-) {
-  const Icon = pressIcons[direction];
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "pointer-events-none absolute size-4",
-        cell !== null && "right-px bottom-px",
-        hidesOnHover && "pointer-fine:group-hover/cell:opacity-0",
-      )}
-    >
-      <Icon
-        className="absolute inset-0 size-full text-background"
-        strokeWidth={6}
-      />
-      <Icon className="absolute inset-0 size-full text-muted-foreground" />
-    </span>
-  );
-}
+/** 押し方。押す向きでは指で押し、逆の向きではマウスの右ボタンで押す。 */
+const pressGestures = {
+  forward: "press",
+  backward: "secondary-press",
+} as const satisfies Record<TakuzuCycleDirection, string>;
 
 function findLineViolation(
   marks: TakuzuExampleMarks,
@@ -227,6 +207,7 @@ function getCellName({
  */
 export function HowToPlayFigure({
   example,
+  markedExample,
   size,
   pressedCells = [],
   pressDirection = "forward",
@@ -241,14 +222,32 @@ export function HowToPlayFigure({
   const { handlePointerDown, handleContextMenu } =
     useTakuzuCellSecondaryClick();
   const { rowCount, columnCount } = example;
-  const marks = getTakuzuExampleMarks(example);
+  const marks = getTakuzuExampleMarks(markedExample ?? example);
+  const markTimingClassName =
+    markedExample === undefined
+      ? violationMarkTimingClassName
+      : violationMarkImmediateTimingClassName;
   const cells = listTakuzuExampleCells(example);
   const interactive = onTapCell !== undefined;
+  // 最初の姿から変わったマスを覚える。変わったことのあるマスのタイルだけを現れさせ、最初の姿からあるタイルは、
+  // 開いたとき・元に戻したとき（例を作り直す）・表示から外したタブへ戻ったときにも動かさない。
+  const [initialCells] = useState(cells);
+  const [changedCells, setChangedCells] = useState<ReadonlySet<number>>(
+    () => new Set(),
+  );
+  const newlyChangedCells = cells.flatMap(({ cell }, figureIndex) =>
+    cell !== initialCells[figureIndex]?.cell && !changedCells.has(figureIndex)
+      ? [figureIndex]
+      : [],
+  );
+  if (newlyChangedCells.length > 0) {
+    setChangedCells(new Set([...changedCells, ...newlyChangedCells]));
+  }
   const differingColumns = marksRowDifferences
     ? listTakuzuExampleDifferingColumns(example)
     : [];
   const overfilledTileCells = marksOverfilledTiles
-    ? listTakuzuExampleOverfilledTileCells(example)
+    ? listTakuzuExampleOverfilledTileCells(markedExample ?? example)
     : [];
 
   const grid = (
@@ -288,7 +287,7 @@ export function HowToPlayFigure({
               <span
                 className={cn(
                   "absolute inset-0",
-                  violationMarkTimingClassName,
+                  markTimingClassName,
                   runViolationCellClassName,
                 )}
               />
@@ -303,7 +302,7 @@ export function HowToPlayFigure({
                     "absolute",
                     lineViolationBarClassName,
                     lineViolationBarPlacementClassNames.row[rowEdge],
-                    violationMarkTimingClassName,
+                    markTimingClassName,
                   )}
                 />
               </span>
@@ -320,7 +319,7 @@ export function HowToPlayFigure({
                     "absolute",
                     lineViolationBarClassName,
                     lineViolationBarPlacementClassNames.column[columnEdge],
-                    violationMarkTimingClassName,
+                    markTimingClassName,
                   )}
                 />
               </span>
@@ -336,24 +335,10 @@ export function HowToPlayFigure({
                   className={cn(
                     "absolute inset-px rounded-sm border-[1.5px] border-current",
                     lineViolationTextClassName,
-                    violationMarkTimingClassName,
+                    markTimingClassName,
                   )}
                 />
               </span>
-            ) : null}
-            {hinted ? (
-              <>
-                <span className="pointer-events-none absolute inset-1 rounded-xs border border-muted-foreground border-dashed" />
-                {previewsHintTile && hintTile !== null ? (
-                  <span className="pointer-events-none absolute inset-[10%] opacity-0 pointer-fine:group-hover/cell:opacity-30">
-                    <TakuzuCellFace
-                      cell={hintTile}
-                      given={false}
-                      size="figure"
-                    />
-                  </span>
-                ) : null}
-              </>
             ) : null}
             <span
               data-takuzu-tile={given ? "given" : "placed"}
@@ -365,15 +350,34 @@ export function HowToPlayFigure({
                 cell={cell}
                 given={given}
                 size={interactive || size === "goal" ? "board" : "figure"}
+                settledOnMount={
+                  !changedCells.has(figureIndex) &&
+                  !newlyChangedCells.includes(figureIndex)
+                }
               />
             </span>
-            {hinted
-              ? renderPressIcon(cell, pressDirection, previewsHintTile)
-              : null}
+            {hinted ? (
+              // タイルのあるマスでは、タイルを隠さないよう指を右下の角に寄せる。
+              <HowToPlayPressHint
+                frame="inside"
+                outline="square"
+                pointer={cell === null ? "center" : "inside-corner"}
+                gesture={pressGestures[pressDirection]}
+                hoverPreview={
+                  previewsHintTile && hintTile !== null ? (
+                    <TakuzuCellFace
+                      cell={hintTile}
+                      given={false}
+                      size="figure"
+                    />
+                  ) : undefined
+                }
+              />
+            ) : null}
           </>
         );
         const cellClassName = cn(
-          "group/cell relative flex aspect-square items-center justify-center",
+          "relative flex aspect-square items-center justify-center",
           takuzuCellSurfaceClassName,
           currentCells.includes(figureIndex) && takuzuCurrentCellClassName,
         );

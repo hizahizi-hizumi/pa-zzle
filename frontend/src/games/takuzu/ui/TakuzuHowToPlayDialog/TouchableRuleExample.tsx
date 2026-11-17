@@ -61,7 +61,7 @@ function describeOtherViolations(
 
 /**
  * 形のルールの触れる例。押すと本番と同じに変わり、違反の印と判定（✓ できる / ✕ できない / 途中）が、本番の判定から求めた今の姿で替わる。
- * 判定の言葉と、添える数・破ったルールは、違反の印と同じ間合いで替える。
+ * 違反の印と、判定の言葉・添える数・破ったルールは、待つ時間を判定の側で数えた同じ姿から出し、同じ描画で替える。
  * 数を添える例では、超えた方のタイルを盤面でも囲み、判定の数と盤面のタイルを結び付ける。
  * 押す所の手がかりは、押す所を1回ずつ押していく途中の姿でだけ、まだ押していないマスに付ける。押して最初の形に戻ったときも付け直す。
  */
@@ -84,6 +84,7 @@ export function TouchableRuleExample({
       figure={
         <HowToPlayFigure
           example={example}
+          markedExample={shown.example}
           size="example"
           pressedCells={hintCell === null ? undefined : [hintCell]}
           marksRowDifferences={marksRowDifferences}

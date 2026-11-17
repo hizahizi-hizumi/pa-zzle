@@ -151,12 +151,26 @@ function getCellCenter(cell: number) {
 
 const touch = { pointerId: 1, pointerType: "touch", isPrimary: true };
 
+/**
+ * 指を置く要素。道のマスにはスクロールを止める所が重なるので、指はそこに触れる。ほかのマスでは盤面に触れる。
+ */
+function getTouchedElement(cell: number): HTMLElement {
+  return (
+    getBoardGroup().querySelector<HTMLElement>(
+      `[data-touch-lock-cell="${cell}"]`,
+    ) ?? getBoardGroup()
+  );
+}
+
 /** 指で `from` のマスを押したまま、`to` のマスまでなぞって離す。 */
 function drag(from: number, to: number): void {
   vi.spyOn(getBoardGroup(), "getBoundingClientRect").mockReturnValue(
     new DOMRect(0, 0, 300, 300),
   );
-  fireEvent.pointerDown(getBoardGroup(), { ...touch, ...getCellCenter(from) });
+  fireEvent.pointerDown(getTouchedElement(from), {
+    ...touch,
+    ...getCellCenter(from),
+  });
   fireEvent.pointerMove(getBoardGroup(), { ...touch, ...getCellCenter(to) });
   fireEvent.pointerUp(getBoardGroup(), touch);
 }

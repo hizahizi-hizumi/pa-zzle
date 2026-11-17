@@ -1,4 +1,5 @@
 import {
+  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
@@ -33,6 +34,7 @@ import {
 } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/HitofudePuzzleCell";
 import { HitofudePuzzleFigure } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
 import { playClearTrace } from "@/games/hitofude-puzzle/ui/board/play-clear-trace";
+import { cn } from "@/lib/utils";
 
 type HitofudePuzzleBoardProps = {
   board: HitofudePuzzleBoardState;
@@ -53,11 +55,43 @@ type HitofudePuzzleBoardProps = {
    * 見せない列のマスは見えなくし、盤面の外と同じく、押してもなぞっても受けない。渡さなければ全部の列を見せる。
    */
   visibleColumns?: number;
+  /**
+   * 指でスクロールを止める範囲。渡さなければ `board`。
+   * - `board`: 盤面の全体で止め、指を置いたらすぐになぞり始める。プレイ画面とチュートリアルは送らない画面なのでこれにする。
+   * - `stroke-start`: なぞりが始まる所（道の先端と道のマス）だけで止め、ほかのマスの上では指で縦に送れるようにする。
+   *   遊び方の例のように送る画面に置く盤面で使う。止める所は、マスが小さくても指で始められるよう 44px 四方からにする。
+   *   止めないマスを指で押したときは、離したときに押した手として受け、送るために置いた指では道を変えない。
+   */
+  touchScrollLock?: HitofudePuzzleTouchScrollLock;
   onBeginStroke: (cell: number) => void;
   onTraceStroke: (step: HitofudePuzzleTraceStep) => void;
   onEndStroke: () => void;
   onClearAnimationComplete: () => void;
 };
+
+export type HitofudePuzzleTouchScrollLock = "board" | "stroke-start";
+
+/** 指でスクロールを止める所の、指で始められる大きさ（px）。 */
+const TOUCH_TARGET_MIN_PX = 44;
+
+const TOUCH_LOCK_ATTRIBUTE = "data-touch-lock-cell";
+
+/** 指を置いた所が、スクロールを止める所か。 */
+function isTouchLockTarget(target: EventTarget): boolean {
+  return target instanceof Element && target.hasAttribute(TOUCH_LOCK_ATTRIBUTE);
+}
+
+/** スクロールを止める所の置き場所。マスの中央を中心に、マスか 44px 四方の大きい方にする。 */
+function getTouchLockStyle(size: number, cell: number): CSSProperties {
+  const { row, column } = getHitofudePuzzleCellPosition(size, cell);
+  const cellSide = `${100 / size}%`;
+  return {
+    left: `${((column + 0.5) / size) * 100}%`,
+    top: `${((row + 0.5) / size) * 100}%`,
+    width: `max(${cellSide}, ${TOUCH_TARGET_MIN_PX}px)`,
+    height: `max(${cellSide}, ${TOUCH_TARGET_MIN_PX}px)`,
+  };
+}
 
 /**
  * キーボードで盤面に入ったときに止まるマス。盤面の Tab の止まり先は1つで、普段は道の先端にする。
@@ -66,6 +100,12 @@ type HitofudePuzzleBoardProps = {
 type KeyboardFocus = {
   /** 止まり先を決めたときの先端。 */
   head: number;
+  cell: number;
+};
+
+/** スクロールを止めないマスに置いた指。離すまで、送るために置いた指か押した指かが決まらない。 */
+type PendingTouchPress = {
+  pointerId: number;
   cell: number;
 };
 
@@ -80,7 +120,7 @@ type FingerDrag = {
  * 指・マウスでなぞると道が延び、直前のマスへ戻ると縮む。マスを押すと、道のマスならそこまで巻き戻し、
  * 先端の隣のマスなら延ばして、そのままなぞり続けられる。延ばせないマスを押しても、なぞりは始まる。
  * 押してから離すまでが待ったの1単位になる。
- * 盤面は Pointer Events だけで受け、ページのスクロールや長押しのメニューに指を奪わせない。
+ * 盤面は Pointer Events だけで受け、スクロールを止める範囲（`touchScrollLock`）と長押しのメニューに指を奪わせない。
  * マスのボタンはキーボードと支援技術から押す受け口で、ポインターの押下は受けない。
  * 矢印キーは先端を動かす操作（プレイ画面が受ける）なので、Tab の止まり先は先端のマス1つにし、
  * マスの間を移るのは Shift と矢印キーにする。先端が動くと、盤面にあるフォーカスも先端へ移す。
@@ -96,6 +136,7 @@ export function HitofudePuzzleBoard({
   cues = [],
   spotlitCells = null,
   visibleColumns = board.size,
+  touchScrollLock = "board",
   onBeginStroke,
   onTraceStroke,
   onEndStroke,
@@ -104,6 +145,7 @@ export function HitofudePuzzleBoard({
   const { size } = board;
   const figureRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<FingerDrag | null>(null);
+  const pendingTouchPressRef = useRef<PendingTouchPress | null>(null);
   const holes = new Set(board.holes);
   const visited = new Set(path);
   const head = path.at(-1) ?? board.start;
@@ -184,6 +226,14 @@ export function HitofudePuzzleBoard({
     }
     // 押したマスのボタンへ focus を移さず、マウスの選択やドラッグも始めない。
     event.preventDefault();
+    if (
+      event.pointerType === "touch" &&
+      touchScrollLock === "stroke-start" &&
+      !isTouchLockTarget(event.target)
+    ) {
+      pendingTouchPressRef.current = { pointerId: event.pointerId, cell };
+      return;
+    }
     event.currentTarget.setPointerCapture?.(event.pointerId);
     dragRef.current = { pointerId: event.pointerId, point, cell };
     onBeginStroke(cell);
@@ -202,6 +252,25 @@ export function HitofudePuzzleBoard({
         onTraceStroke(step);
       }
     }
+  }
+
+  function handlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    const pending = pendingTouchPressRef.current;
+    if (pending?.pointerId === event.pointerId) {
+      pendingTouchPressRef.current = null;
+      pressCell(pending.cell);
+      return;
+    }
+    handlePointerEnd(event);
+  }
+
+  // 送り始めると、ブラウザが指を取って pointercancel を送るので、置いた指を押しとして受けない。
+  function handlePointerCancel(event: ReactPointerEvent<HTMLDivElement>) {
+    if (pendingTouchPressRef.current?.pointerId === event.pointerId) {
+      pendingTouchPressRef.current = null;
+      return;
+    }
+    handlePointerEnd(event);
   }
 
   function handlePointerEnd(event: ReactPointerEvent<HTMLDivElement>) {
@@ -247,6 +316,12 @@ export function HitofudePuzzleBoard({
     onEndStroke();
   }
 
+  // 受け付けない盤面（解き終えた例など）ではなぞりが始まらないので、指のスクロールを止めない。
+  const touchLockCells =
+    touchScrollLock === "stroke-start" && !interactionDisabled
+      ? path.filter((cell) => isCellShown(cell))
+      : [];
+
   return (
     <div
       ref={boardRef}
@@ -255,11 +330,14 @@ export function HitofudePuzzleBoard({
       {...(spotlitCells !== null && {
         [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "",
       })}
-      className="relative size-full touch-none select-none [-webkit-touch-callout:none]"
+      className={cn(
+        "relative size-full select-none [-webkit-touch-callout:none]",
+        touchScrollLock === "board" && "touch-none",
+      )}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerEnd}
-      onPointerCancel={handlePointerEnd}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
       onLostPointerCapture={handlePointerEnd}
       onContextMenu={(event) => event.preventDefault()}
       onKeyDown={handleKeyDown}
@@ -300,6 +378,15 @@ export function HitofudePuzzleBoard({
           />
         ))}
       </div>
+      {touchLockCells.map((cell) => (
+        <span
+          key={cell}
+          aria-hidden="true"
+          {...{ [TOUCH_LOCK_ATTRIBUTE]: cell }}
+          className="absolute -translate-1/2 touch-none"
+          style={getTouchLockStyle(size, cell)}
+        />
+      ))}
     </div>
   );
 }
