@@ -18,6 +18,10 @@ export const PARKING_JAM_SCORE_MAXIMUMS = {
 } as const satisfies ScoreMaximums<"accuracy" | "speed" | "stability">;
 
 export const PARKING_JAM_FAILED_MOVE_PENALTY = 5;
+/** 正確さが0点になるミスの回数。正確さは満点から1回ごとの減点を引き、0点より下げない。 */
+export const PARKING_JAM_ACCURACY_ZERO_FAILED_MOVE_COUNT = Math.ceil(
+  PARKING_JAM_SCORE_MAXIMUMS.accuracy / PARKING_JAM_FAILED_MOVE_PENALTY,
+);
 export const PARKING_JAM_UNDO_PENALTY = 2;
 export const PARKING_JAM_RESTART_PENALTY = 5;
 

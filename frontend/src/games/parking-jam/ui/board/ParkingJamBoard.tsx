@@ -24,11 +24,11 @@ import {
 } from "@/games/parking-jam/ui/board/ParkingJamDirectionMark";
 import { ParkingJamLot } from "@/games/parking-jam/ui/board/ParkingJamLot";
 import {
-  PARKING_JAM_CELL,
-  PARKING_JAM_MARGIN,
+  type ParkingJamBoardFrame,
   parkingJamBoardGeometry,
 } from "@/games/parking-jam/ui/board/parking-jam-board-geometry";
 import { useParkingJamBoardPaint } from "@/games/parking-jam/ui/board/parking-jam-board-paint";
+import { useVehicleTouchLock } from "@/games/parking-jam/ui/board/use-vehicle-touch-lock";
 import { playAnimations } from "@/lib/motion";
 
 import "@/games/parking-jam/ui/board/parking-jam-board.css";
@@ -49,6 +49,15 @@ type ParkingJamBoardProps = {
   onClearAnimationComplete: () => void;
   /** 盤面に残っていない車を、`delayMs` だけ待ってからそれぞれの向きへ出ていかせる。 */
   departures?: readonly ParkingJamDeparture[];
+  /** 盤面の外に取る余白。渡さなければプレイ画面の余白（`play`）にする。 */
+  frame?: ParkingJamBoardFrame;
+  /**
+   * 指で触れたときにスクロールを止める範囲。
+   * - `board`（既定）: 盤面の全体。送らないプレイ画面とチュートリアルで使う。
+   * - `vehicles`: スワイプが始まる車と、車の両端の矢印の上だけ。送る画面に置く遊び方の例で使い、ほかの所では縦に送れるようにする。
+   *   指の入力では、車が小さくても指で始められるよう、車の周りに触れる範囲を足す。
+   */
+  touchLock?: "board" | "vehicles";
 };
 
 export type ParkingJamDeparture = ParkingJamMove & { delayMs: number };
@@ -115,6 +124,8 @@ export function ParkingJamBoard({
   onMove,
   onClearAnimationComplete,
   departures = [],
+  frame = "play",
+  touchLock = "board",
 }: ParkingJamBoardProps) {
   const pointerStart = useRef<{
     vehicleId: string;
@@ -122,13 +133,14 @@ export function ParkingJamBoard({
     y: number;
   } | null>(null);
   const remaining = new Set(state.remainingVehicleIds);
-  const width = board.width * PARKING_JAM_CELL;
-  const height = board.height * PARKING_JAM_CELL;
+  const viewBox = parkingJamBoardGeometry.getViewBox(board, frame);
   const paint = useParkingJamBoardPaint();
   const selectedVehicle = board.vehicles.find(
     (vehicle) => vehicle.id === selectedVehicleId && remaining.has(vehicle.id),
   );
   const exitingCarRef = useRef<SVGGElement>(null);
+  const boardRef = useRef<SVGSVGElement>(null);
+  useVehicleTouchLock(boardRef, touchLock === "vehicles");
 
   useEffect(() => {
     if (!clearing) {
@@ -194,10 +206,11 @@ export function ParkingJamBoard({
 
   return (
     <svg
+      ref={boardRef}
       role="group"
       aria-label={`${PARKING_JAM_DISPLAY_NAME}盤面`}
-      viewBox={`${-PARKING_JAM_MARGIN} ${-PARKING_JAM_MARGIN} ${width + PARKING_JAM_MARGIN * 2} ${height + PARKING_JAM_MARGIN * 2}`}
-      className="parking-jam-board"
+      viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+      className={`parking-jam-board${frame === "figure" ? " parking-jam-board--figure" : ""}${touchLock === "vehicles" ? " parking-jam-board--vehicle-touch-lock" : ""}`}
     >
       <ParkingJamBoardDefs board={board} paint={paint} />
       <ParkingJamLot board={board} paint={paint} />
@@ -250,6 +263,12 @@ export function ParkingJamBoard({
               onPointerUp={(event) => handlePointerUp(event, vehicle)}
               onKeyDown={(event) => handleKeyDown(event, vehicle)}
             >
+              {touchLock === "vehicles" ? (
+                <rect
+                  {...parkingJamBoardGeometry.getVehicleBody(vehicle)}
+                  className="parking-jam-car__touch-area"
+                />
+              ) : null}
               <ParkingJamCar vehicle={vehicle} glassFill={paint.glassFill} />
             </g>
           );
