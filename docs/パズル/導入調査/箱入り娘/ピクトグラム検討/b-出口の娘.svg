@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="箱入り娘">
+  <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M41 107H22V13H98V107H79"/>
+  <rect x="25.5" y="16.5" width="15" height="33" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="43.5" y="16.5" width="33" height="15" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="79.5" y="16.5" width="15" height="33" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="25.5" y="52.5" width="15" height="15" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="43.5" y="34.5" width="15" height="15" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="79.5" y="52.5" width="15" height="15" rx="2.5" fill="var(--game-pictogram-soft)"/>
+  <rect x="43.5" y="78.5" width="33" height="33" rx="3.5" fill="var(--game-pictogram-strong)"/>
+</svg>
