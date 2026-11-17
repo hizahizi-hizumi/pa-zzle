@@ -46,7 +46,8 @@ type IceFloorMazeBoardProps = {
   cells: readonly IceFloorMazeStateCell[];
   /** 滑る氷の塊のあるマス。 */
   blocks: readonly number[];
-  goal: number;
+  /** ゴールの無い盤面（遊び方で、ゴールに関わらないルールを見せる例）は `null`。ゴールの印と完成演出を描かない。 */
+  goal: number | null;
   /** 駒のいるマス。 */
   position: number;
   lastSlide: IceFloorMazeLastSlide | null;
@@ -168,9 +169,10 @@ export function IceFloorMazeBoard({
   const viewBox = getIceFloorMazeBoardViewBox(board);
   const aspectRatio = viewBox.width / viewBox.height;
   const piece = getIceFloorMazeCellCenter(board, position);
-  const goalCenter = getIceFloorMazeCellCenter(board, goal);
+  const goalCenter =
+    goal === null ? null : getIceFloorMazeCellCenter(board, goal);
   // 雪山は動かないので、ゴールに載ったら二度と止まれない。ゴールの印が雪山の外に見えると「まだ入れる」と読めるので描かない。
-  const isGoalBuried = cells[goal] === "snow-mound";
+  const isGoalBuried = goal !== null && cells[goal] === "snow-mound";
 
   // 次の滑りが来たら、表示中の滑りを止めて駒を終点（次の滑りの始点）へ飛ばしてから次の滑りを始める。
   // 成立しない向きの入力では止めず、押し戻しを重ねる。
@@ -331,7 +333,7 @@ export function IceFloorMazeBoard({
                   />
                 ) : null}
                 {/* 雪山と滑る氷の塊はゴールの印の上に描き、ゴールをふさいでいると読ませる。 */}
-                {isGoalBuried ? null : (
+                {goalCenter === null || isGoalBuried ? null : (
                   <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
                     <IceFloorMazeGoalMark />
                   </g>
@@ -353,14 +355,18 @@ export function IceFloorMazeBoard({
               slide={lastSlide}
             />
           ) : null}
-          <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
-            <IceFloorMazeGoalBurst ref={goalBurstRef} />
-          </g>
-          <IceFloorMazeClearEffects
-            ref={clearEffectsRef}
-            board={board}
-            goal={goal}
-          />
+          {goalCenter === null || goal === null ? null : (
+            <>
+              <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
+                <IceFloorMazeGoalBurst ref={goalBurstRef} />
+              </g>
+              <IceFloorMazeClearEffects
+                ref={clearEffectsRef}
+                board={board}
+                goal={goal}
+              />
+            </>
+          )}
           <g
             data-piece-cell={position}
             transform={`translate(${piece.x} ${piece.y})`}
@@ -441,7 +447,7 @@ function animateSlideReactions(
   piece: SVGGElement | null,
   goalBurst: SVGCircleElement | null,
   slide: IceFloorMazeLastSlide,
-  goal: number,
+  goal: number | null,
 ): Animation[] {
   const distance = slide.path.length;
   const horizontal = slide.direction === "left" || slide.direction === "right";
@@ -468,7 +474,7 @@ function animateSlideReactions(
             easing: MOTION_EASING.standard,
           },
         ),
-    slide.passedGoal
+    slide.passedGoal && goal !== null
       ? goalBurst?.animate?.(goalPassKeyframes, {
           duration: GOAL_PASS_DURATION_MS,
           delay: getIceFloorMazeSlideProgressMs(

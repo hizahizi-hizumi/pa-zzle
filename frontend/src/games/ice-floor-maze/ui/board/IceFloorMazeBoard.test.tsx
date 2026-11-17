@@ -865,4 +865,33 @@ describe("IceFloorMazeBoard", () => {
       expect(blocks).toEqual(["1"]);
     });
   });
+
+  describe("ゴールの無い盤面の場合", () => {
+    beforeEach(() => {
+      render(
+        <IceFloorMazeBoard
+          board={board}
+          cells={listInitialCells(board)}
+          blocks={[]}
+          goal={null}
+          position={3}
+          lastSlide={lastSlide}
+          blockedInput={null}
+          clearing={false}
+          onSlideAnimationActivityChange={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+    });
+
+    test("ゴールの印を描かずに、駒と直前の滑りの跡を描くこと", () => {
+      const boardImage = screen.getByRole("img", { name: "盤面" });
+
+      const parts = ["[data-goal]", "[data-piece-cell]", "[data-trail]"].map(
+        (selector) => boardImage.querySelector(selector) !== null,
+      );
+
+      expect(parts).toEqual([false, true, true]);
+    });
+  });
 });

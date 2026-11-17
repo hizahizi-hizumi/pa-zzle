@@ -37,6 +37,7 @@ import {
   iceFloorMazeTutorialRecap,
   listIceFloorMazeTutorialMoveCellIndices,
 } from "@/games/ice-floor-maze/tutorial/tutorial";
+import { findArrowKeyDirection } from "@/games/ice-floor-maze/ui/arrow-key-direction";
 import type { IceFloorMazeCellCue } from "@/games/ice-floor-maze/ui/board/cell-cue";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
 import { getIceFloorMazeSlideDurationMs } from "@/games/ice-floor-maze/ui/board/slide-timing";
@@ -76,13 +77,6 @@ const GUIDED_SLIDE_SETTLE_MS = 900;
 
 const { board, goal } = iceFloorMazeTutorialPuzzle;
 const goalBoardState = iceFloorMazeTutorial.goal();
-
-const directionByArrowKey: Readonly<Record<string, IceFloorMazeDirection>> = {
-  ArrowUp: "up",
-  ArrowDown: "down",
-  ArrowLeft: "left",
-  ArrowRight: "right",
-};
 
 /** 解けた盤面の演出の間が、本番の完成演出の間に当たる。 */
 const soundProgressByPhase = {
@@ -206,7 +200,7 @@ export function IceFloorMazeTutorial({
   }, [open, progress, settleDelayMs]);
 
   const handleArrowKey = useEffectEvent((event: KeyboardEvent) => {
-    const direction = directionByArrowKey[event.key];
+    const direction = findArrowKeyDirection(event.key);
     if (
       !direction ||
       event.defaultPrevented ||

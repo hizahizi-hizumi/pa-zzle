@@ -102,7 +102,7 @@ const iceFloorMazeSounds: readonly SoundEffect[] = [
   clearedSound,
 ];
 
-function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
+function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number | null) {
   // 動きを減らす設定では駒が終点へ飛び、変わったマスも変わった後の姿ですぐ描かれるので、
   // 滑る音・擦れの音とゴールの通過の音は鳴らさず、止まり方の音と、割れた薄い氷の音1つだけをすぐ鳴らす。
   const reducedMotion = prefersReducedMotion();
@@ -116,7 +116,7 @@ function playSlideSounds(slide: IceFloorMazeLastSlide, goal: number) {
     if (distance >= GLIDE_SOUND_MIN_DISTANCE) {
       playGlideSound(stopDelayMs);
     }
-    if (slide.passedGoal) {
+    if (slide.passedGoal && goal !== null) {
       playSound(goalPassedSound, {
         delayMs: getIceFloorMazeSlideProgressMs(
           distance,
@@ -184,7 +184,7 @@ function playBlockedSound() {
 export function useIceFloorMazeSoundEffects(
   lastSlide: IceFloorMazeLastSlide | null,
   blockedInput: IceFloorMazeBlockedInput | null,
-  goal: number,
+  goal: number | null,
   progress: GameProgress,
 ) {
   usePrepareSoundEffects(iceFloorMazeSounds);

@@ -12,11 +12,12 @@ import type {
 import type { IceFloorMazeBoard as IceFloorMazeBoardState } from "@/games/ice-floor-maze/puzzle/board";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
 import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
+import { findArrowKeyDirection } from "@/games/ice-floor-maze/ui/arrow-key-direction";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
 import { IceFloorMazeGround } from "@/games/ice-floor-maze/ui/IceFloorMazeGround";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
-import { IceFloorMazeTrappedNotice } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeTrappedNotice";
 import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazeSwipeArea";
+import { IceFloorMazeTrappedNotice } from "@/games/ice-floor-maze/ui/IceFloorMazeTrappedNotice";
 import { IceFloorMazeTutorial } from "@/games/ice-floor-maze/ui/IceFloorMazeTutorial";
 import { IceFloorMazeResultScreen } from "@/games/ice-floor-maze/ui/result/IceFloorMazeResultScreen";
 import { useIceFloorMazeSoundEffects } from "@/games/ice-floor-maze/ui/use-ice-floor-maze-sound-effects";
@@ -46,13 +47,6 @@ type IceFloorMazePlayProps = GamePlayScreenProps<
     blockedInput: IceFloorMazeBlockedInput | null;
     onSlide: (direction: IceFloorMazeDirection) => void;
   };
-
-const directionByArrowKey: Readonly<Record<string, IceFloorMazeDirection>> = {
-  ArrowUp: "up",
-  ArrowDown: "down",
-  ArrowLeft: "left",
-  ArrowRight: "right",
-};
 
 export function IceFloorMazePlay({
   difficulty,
@@ -98,7 +92,7 @@ export function IceFloorMazePlay({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      const direction = directionByArrowKey[event.key];
+      const direction = findArrowKeyDirection(event.key);
       // メニューやダイアログはプレイ画面の外へ描画される。そこでの操作や、矢印キーを自分で扱う部品の操作は盤面へ流さない。
       const { target } = event;
       const targetsPlayArea =

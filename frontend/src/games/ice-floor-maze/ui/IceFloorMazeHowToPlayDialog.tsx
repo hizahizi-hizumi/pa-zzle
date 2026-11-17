@@ -1,7 +1,47 @@
-import { HowToPlayDialog } from "@/components/HowToPlayDialog";
-import { HowToPlayRuleMark } from "@/components/HowToPlayRuleMark";
-import { HowToPlayTransition } from "@/components/HowToPlayTransition";
-import { HowToPlayFigure } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog/HowToPlayFigure";
+import {
+  type HowToPlayKey,
+  HowToPlayKeyTable,
+} from "@/components/HowToPlayKeyTable";
+import {
+  type HowToPlayMenuOperation,
+  HowToPlayMenuOperations,
+} from "@/components/HowToPlayMenuOperations";
+import { HowToPlayOperationRow } from "@/components/HowToPlayOperationRow";
+import { HowToPlayOverlay } from "@/components/HowToPlayOverlay";
+import { HowToPlayRule } from "@/components/HowToPlayRule";
+import { HowToPlayScoreRow } from "@/components/HowToPlayScoreRow";
+import { HowToPlaySection } from "@/components/HowToPlaySection";
+import { playMenuOperationItems } from "@/components/play-menu-operations";
+import { UndoButton } from "@/components/UndoButton";
+import pictogramSvg from "@/games/ice-floor-maze/assets/pictogram.svg?raw";
+import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
+import {
+  ICE_FLOOR_MAZE_EFFICIENCY_SLACK_MOVES,
+  ICE_FLOOR_MAZE_SCORE_MAXIMUMS,
+  ICE_FLOOR_MAZE_SPEED_ZERO_SCORE_RATIO,
+} from "@/games/ice-floor-maze/score";
+import {
+  brittleRockRuleExamples,
+  coveredGoalRuleExamples,
+  floorRuleExample,
+  goalRuleExamples,
+  type IceFloorMazeHowToPlayExample,
+  slideOperationExample,
+  slideRuleExample,
+  slidingBlockRuleExamples,
+  snowRuleExamples,
+  thinIceRuleExample,
+} from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog/figure-boards";
+import { GoalPlayback } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog/GoalPlayback";
+import { MoveCountExamples } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog/MoveCountExamples";
+import { moveCountFlows } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog/move-count-flow";
+import { TouchableExample } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog/TouchableExample";
+import { TrappedFigure } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog/TrappedFigure";
+import { TRAPPED_NOTICE_LABEL } from "@/games/ice-floor-maze/ui/IceFloorMazeTrappedNotice";
+import {
+  PLAY_OPERATION_LABELS,
+  SCORE_ITEM_LABELS,
+} from "@/games/play-vocabulary";
 
 type IceFloorMazeHowToPlayDialogProps = {
   open: boolean;
@@ -10,87 +50,128 @@ type IceFloorMazeHowToPlayDialogProps = {
   onOpenTutorial?: () => void;
 };
 
-// x  x  2  3  4
-// 5  6  7  8  9
-// 10 11 12 #  14
-// 15 16 17 18 19
-// 20 21 22 23 G
-// 10 から右へ滑らせると、岩の手前の 12 で止まる。左上の2マスは盤面の外で、外壁が盤面の形に沿う。
-const slideRows = ["xx...", ".....", "...#.", ".....", "....."];
-const slideGoal = 24;
+const game = { name: ICE_FLOOR_MAZE_DISPLAY_NAME, pictogramSvg };
 
-// 左の列から右へ滑らせる。岩の手前のゴールでは止まり、岩の無い行ではゴールを通り過ぎて外壁の手前で止まる。
-const stopRows = ["....", "...#", "....", "...."];
-const passRows = ["....", "....", "....", "...."];
-const stopAndPassGoal = 6;
+const { undo, restart } = PLAY_OPERATION_LABELS;
 
-// 0 1 2 3 4
-// 5 6 o 8 9
-// 10 11 12 13 14
-// 5 から右へ滑らせると、床 7 に入ってそこで止まる。床の先 8・9 へは進まない。
-const floorRows = [".....", "..o..", "....."];
+/** 1つの盤面で、手がかりの手を順に試すルール。 */
+function renderSingleRule(text: string, example: IceFloorMazeHowToPlayExample) {
+  return (
+    <HowToPlayRule
+      text={text}
+      arrangement="stacked"
+      examples={<TouchableExample example={example} />}
+    />
+  );
+}
 
-// 0 1 2 3
-// 4 5 6 b
-// 8 9 10 11
-// 4 から右へ滑らせると、もろい岩の手前の 6 で止まり、もろい岩が崩れて石くずの跡が残る氷になる。
-const brittleBeforeRows = ["....", "...b", "...."];
-const brittleAfterRows = ["....", "...r", "...."];
+/** 見比べる2つの盤面を、左と右の別の例として並べるルール。 */
+function renderPairRule(
+  text: string,
+  examples: readonly [
+    IceFloorMazeHowToPlayExample,
+    IceFloorMazeHowToPlayExample,
+  ],
+) {
+  return (
+    <HowToPlayRule
+      text={text}
+      examples={examples.map((example, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: 対の左と右は、並び順そのものが識別になる
+        <TouchableExample key={index} example={example} />
+      ))}
+    />
+  );
+}
 
-// 0 1 2 3
-// 4 c c 7
-// 8 9 10 11
-// 4 から右へ滑らせると、薄い氷の上を滑り抜けて 7 で止まり、通った薄い氷が割れて水面になる。
-const thinBeforeRows = ["....", ".cc.", "...."];
-const thinAfterRows = ["....", ".ww.", "...."];
+function ignoreFigurePress() {}
 
-// 0 1 2 3
-// 4 5 s 7
-// 8 9 10 11
-// 4 から右へ滑らせると、雪 6 に入って雪を 7 へ押し出し、6 で止まる。押し出した雪は 7 で雪山になる。
-// ゴールを 7 に置くと、雪山がゴールをふさぐ。
-const snowBeforeRows = ["....", "..s.", "...."];
-const snowAfterRows = ["....", "...h", "...."];
-const snowCoveredGoal = 7;
+// 何が残り何が0に戻るかは、本番の session に合わせる。盤面を戻すは経過時間と手数を引き継ぎ、
+// リセットと別の問題は新しいプレイを始める。数えるものは、プレイ画面の上部と同じ呼び名で言う。
+const menuOperations: readonly HowToPlayMenuOperation[] = [
+  {
+    item: playMenuOperationItems.restart,
+    text: "時間と手数は/そのままで/最初の盤面に/戻します。",
+  },
+  {
+    item: playMenuOperationItems.replay,
+    text: "時間と手数も/0に戻して/同じ問題を/最初から/やり直します。",
+  },
+  {
+    item: playMenuOperationItems.startNewProblem,
+    text: "同じレベルの別の問題に/変えます。",
+  },
+];
 
-// 0 1 2 3
-// 4 5 6 s
-// 8 9 10 11
-// 雪 7 の先は外壁なので押し出せない。4 から右へ滑らせると、雪は動かず、駒は雪の手前の 6 で止まる。
-const snowStuckRows = ["....", "...s", "...."];
+/** キーボードの表。矢印キーはプレイ画面のどこにフォーカスがあっても受け、その向きへ滑らせる。 */
+const keyboardKeys: readonly HowToPlayKey[] = [
+  {
+    keys: ["↑", "↓", "←", "→"],
+    description: "その向きへ/駒を/滑らせます。",
+  },
+];
 
-// 0 1 2  3 4
-// 5 6 m  8 9
-// 10 11 12 13 14
-// 5 から右へ滑らせると、6 から滑る氷の塊 7 を押し、塊が外壁の手前の 9 まで滑って、駒はその手前の 8 で止まる。
-const blockBeforeRows = [".....", "..m..", "....."];
-const blockAfterRows = [".....", "....m", "....."];
-
-// 0 1 2 3
-// 4 5 m G
-// 8 9 10 11
-// 4 から右へ滑らせると、塊 6 がゴール 7 へ押されて載り、駒は 6 で止まる。塊が載っている間はゴールに入れない。
-const blockGoalBeforeRows = ["....", "..m.", "...."];
-const blockGoalAfterRows = ["....", "...m", "...."];
-const blockGoal = 7;
-
-// 0 1 2 3
-// 4 w G 7
-// 8 9 10 11
-// 割れてできた水面 5 は止め役になる。7 から左へ滑らせると、水面の手前のゴール 6 で止まる。
-const waterStopRows = ["....", ".w..", "...."];
-const waterStopGoal = 6;
-
-// 0 1 2 3
-// 4 r 6 G
-// 8 9 10 11
-// もろい岩の崩れた跡 5 は氷と同じく通り抜けられる。4 から右へ滑らせると、跡を抜けてゴール 7 で止まる。
-const rubblePassRows = ["....", ".r..", "...."];
-const rubblePassGoal = 7;
+/** 結果画面と同じ順に、評価の項目を満点と並べる。 */
+const scoreItems = Object.entries(ICE_FLOOR_MAZE_SCORE_MAXIMUMS) as [
+  keyof typeof ICE_FLOOR_MAZE_SCORE_MAXIMUMS,
+  number,
+][];
 
 /**
- * 床・もろい岩・薄い氷・雪・滑る氷の塊はどのレベルにも出るわけではないが、レベルによって出し分けずに同じ遊び方を示す
- * （リフレクションも、レベルによって出ないピースを含めて同じ遊び方を示す）。
+ * 点ごとの、何で満点になり、どこまで下がるか。効率は (最短 + ゆとり) ÷ (手数 + ゆとり) の比で下がり、0点にはならないので、
+ * 結果画面の採点基準と同じく、半分になる手数（最短の2倍にゆとりを足した手数）と、0点にはならないことを言う。速さは基準時間の倍で0点になる。
+ */
+const scoreLeads = {
+  efficiency: `手数が/最短なら/満点です。/最短の2倍より/${ICE_FLOOR_MAZE_EFFICIENCY_SLACK_MOVES}手/多いと/${ICE_FLOOR_MAZE_SCORE_MAXIMUMS.efficiency / 2}点に/なり/それより/多くても/0点には/なりません。`,
+  speed: `問題ごとの基準時間以内なら/満点です。/超えるほど/点が下がり/基準時間の${ICE_FLOOR_MAZE_SPEED_ZERO_SCORE_RATIO}倍で/0点です。`,
+} as const satisfies Record<keyof typeof ICE_FLOOR_MAZE_SCORE_MAXIMUMS, string>;
+
+/** 点ごとに、数えるものをプレイ画面と結果画面と同じ呼び名で並べる。速さには基準時間の決まり方を置く。 */
+function renderScoreRows(item: keyof typeof ICE_FLOOR_MAZE_SCORE_MAXIMUMS) {
+  if (item === "speed") {
+    // score.ts の基準時間は、盤面として描くマスの数・最短の手数・初期盤面の要素の数に応じた時間を足す。
+    return (
+      <HowToPlayScoreRow
+        measure="基準時間"
+        text="盤面のマス・/最短の手数・/もろい岩・薄い氷・雪・氷の塊の数が/多い問題ほど/長くなります。"
+      />
+    );
+  }
+  return (
+    <>
+      <HowToPlayScoreRow
+        measure="手数"
+        // 本番の session は、成立した滑りだけを数え、待った・盤面を戻すでは減らさない。
+        text={`駒が滑った/回数です。/「${undo}」で/取り消した手も/「${restart}」より/前に/滑った手も/数えます。`}
+        figure={
+          <MoveCountExamples
+            examples={[
+              {
+                flow: moveCountFlows.undo,
+                caption: `滑らせてから/「${undo}」で/取り消す`,
+              },
+              {
+                flow: moveCountFlows.blocked,
+                caption: "動けない/向きを/選ぶ",
+              },
+            ]}
+          />
+        }
+      />
+      <HowToPlayScoreRow
+        measure={`「${undo}」・/「${restart}」`}
+        // 効率は手数だけで決まり、待った・盤面を戻すを使った回数では点を引かない（score.ts）。
+        text="使った回数では/点が/下がりません。"
+      />
+    </>
+  );
+}
+
+/**
+ * 遊び方。ルール・操作・採点のタブで、本番と同じ盤面の触れる例と話し言葉の一文を並べる。
+ * 例は本番の盤面部品とスワイプで動き、滑る・止まる・崩れる・割れる・押し出す・押し戻されるを本番と同じに返し、
+ * 例の下には、その手で起きることを本番のルールから求めて言う。
+ * 床・もろい岩・薄い氷・雪・氷の塊はどのレベルにも出るわけではないが、レベルによって出し分けずに同じ遊び方を示す。
  */
 export function IceFloorMazeHowToPlayDialog({
   open,
@@ -98,204 +179,101 @@ export function IceFloorMazeHowToPlayDialog({
   onOpenTutorial,
 }: IceFloorMazeHowToPlayDialogProps) {
   return (
-    <HowToPlayDialog
+    <HowToPlayOverlay
       open={open}
-      description="駒を氷の上で滑らせて、ゴールでぴたりと止める。"
+      game={game}
+      description="駒を/氷の上で/滑らせて/ゴールで/ぴたりと止める/パズルです。"
+      goal={<GoalPlayback />}
       onClose={onClose}
       onOpenTutorial={onOpenTutorial}
-    >
-      <li className="space-y-2">
-        <p>
-          上下左右のどれかを選ぶと、駒は岩か外壁にぶつかるか、床に入るまで止まらずに滑る。途中で止めることはできない。
-        </p>
-        <HowToPlayTransition>
-          <HowToPlayFigure rows={slideRows} goal={slideGoal} piece={10} />
-          <HowToPlayFigure
-            rows={slideRows}
-            goal={slideGoal}
-            piece={12}
-            trail={{ direction: "right", from: 10 }}
-          />
-        </HowToPlayTransition>
-      </li>
-      <li className="space-y-2">
-        <p>
-          ゴールの上で止まればクリア。ゴールを通り過ぎただけではクリアにならない。
-        </p>
-        <div className="flex flex-wrap gap-x-5 gap-y-2">
-          <div className="flex items-center gap-2">
-            <HowToPlayFigure
-              rows={stopRows}
-              goal={stopAndPassGoal}
-              piece={6}
-              trail={{ direction: "right", from: 4 }}
+      rules={
+        <>
+          {renderSingleRule(
+            "駒は/岩か壁に/ぶつかるまで/止まらずに/滑ります。",
+            slideRuleExample,
+          )}
+          {renderPairRule(
+            "ゴールで/止まれば/完成です。/通り過ぎるだけでは/完成しません。",
+            goalRuleExamples,
+          )}
+          {renderSingleRule(
+            "駒は/床に入ると/止まります。/床からは/また/滑り出せます。",
+            floorRuleExample,
+          )}
+          {renderSingleRule(
+            "薄い氷は/駒が通ると/割れて/水面になります。/駒は/水面の手前で/止まります。",
+            thinIceRuleExample,
+          )}
+          {renderPairRule(
+            "もろい岩は/駒が/滑ってきて/ぶつかると/崩れて/通れるように/なります。/すぐ隣に/いる駒が/ぶつかっても/崩れません。",
+            brittleRockRuleExamples,
+          )}
+          {renderPairRule(
+            "駒は/雪に入ると/止まり/雪を/1マス先へ/押し出して/雪山にします。/雪山と/押し出せない雪は/動かず/駒は/その手前で/止まります。",
+            snowRuleExamples,
+          )}
+          {renderPairRule(
+            "駒は/氷の塊に/ぶつかると/塊を押しながら/滑ります。/すぐ隣からは/押せません。",
+            slidingBlockRuleExamples,
+          )}
+          {renderPairRule(
+            "雪山が/載ったゴールには/もう/止まれません。/氷の塊が/載っている間も/止まれません。",
+            coveredGoalRuleExamples,
+          )}
+        </>
+      }
+      operations={
+        <>
+          <HowToPlaySection title="滑らせ方">
+            <li>
+              <HowToPlayRule
+                headingLevel={4}
+                text="盤面を/スワイプした/向きへ/駒が滑ります。"
+                arrangement="stacked"
+                examples={<TouchableExample example={slideOperationExample} />}
+              />
+            </li>
+          </HowToPlaySection>
+          <HowToPlaySection title="やり直し">
+            <HowToPlayOperationRow
+              visual={
+                // 本番の待ったのボタンそのままの、押しても何も起きない静止の図。
+                <span aria-hidden="true" inert className="flex">
+                  <UndoButton disabled={false} onUndo={ignoreFigurePress} />
+                </span>
+              }
+              text={`「${undo}」で/最後の/1手を/取り消します。/崩れた岩も/水面も/雪も/塊も/元の姿に/戻ります。`}
+              note="時間と手数は/そのままです。"
             />
-            <HowToPlayRuleMark figureAllowed />
-          </div>
-          <div className="flex items-center gap-2">
-            <HowToPlayFigure
-              rows={passRows}
-              goal={stopAndPassGoal}
-              piece={7}
-              trail={{ direction: "right", from: 4 }}
-            />
-            <HowToPlayRuleMark figureAllowed={false} />
-          </div>
-        </div>
-      </li>
-      <li className="space-y-2">
-        <p>
-          擦り傷の入った緑の板は床。滑ってきた駒は床に入るとそこで止まる。ゴールと違い、通り過ぎずに止まる。床の上からは氷と同じく滑り出せる。
-        </p>
-        <HowToPlayTransition>
-          <HowToPlayFigure rows={floorRows} piece={5} />
-          <HowToPlayFigure
-            rows={floorRows}
-            piece={7}
-            trail={{ direction: "right", from: 5 }}
-          />
-        </HowToPlayTransition>
-      </li>
-      <li className="space-y-2">
-        <p>
-          割れ目の入った明るい岩はもろい岩。岩と同じく駒を止め、滑ってきてぶつかると、止まった後に崩れて氷になる。崩れた跡の石くずは通り抜けられる。すぐ隣から押しても崩れない。
-        </p>
-        <HowToPlayTransition>
-          <HowToPlayFigure rows={brittleBeforeRows} piece={4} />
-          <HowToPlayFigure
-            rows={brittleAfterRows}
-            piece={6}
-            trail={{ direction: "right", from: 4 }}
-          />
-        </HowToPlayTransition>
-      </li>
-      <li className="space-y-2">
-        <p>
-          ひびの入った濃い氷は薄い氷。上を滑れるが、駒が離れると割れて水面になる。水面は岩と同じく駒を止める。
-        </p>
-        <HowToPlayTransition>
-          <HowToPlayFigure rows={thinBeforeRows} piece={4} />
-          <HowToPlayFigure
-            rows={thinAfterRows}
-            piece={7}
-            trail={{ direction: "right", from: 4 }}
-          />
-        </HowToPlayTransition>
-      </li>
-      <li className="space-y-2">
-        <p>
-          白く積もった平らな面は雪。滑ってきた駒が雪に入ると、雪を1マス先へ押し出して、雪のあったマスで止まる。押し出した雪は雪山になり、岩と同じく駒を止める。
-        </p>
-        <HowToPlayTransition>
-          <HowToPlayFigure rows={snowBeforeRows} piece={4} />
-          <HowToPlayFigure
-            rows={snowAfterRows}
-            piece={6}
-            trail={{ direction: "right", from: 4 }}
-          />
-        </HowToPlayTransition>
-      </li>
-      <li className="space-y-2">
-        <p>
-          押し出す先が氷か薄い氷でなければ、雪は動かず、駒は雪の手前で止まる。雪山をゴールに押し出すと、そのゴールには止まれなくなる。
-        </p>
-        <HowToPlayTransition>
-          <HowToPlayFigure rows={snowStuckRows} piece={4} />
-          <HowToPlayFigure
-            rows={snowStuckRows}
-            piece={6}
-            trail={{ direction: "right", from: 4 }}
-          />
-        </HowToPlayTransition>
-        <HowToPlayTransition>
-          <HowToPlayFigure
-            rows={snowBeforeRows}
-            goal={snowCoveredGoal}
-            piece={4}
-          />
-          <HowToPlayFigure
-            rows={snowAfterRows}
-            goal={snowCoveredGoal}
-            piece={6}
-            trail={{ direction: "right", from: 4 }}
-          />
-        </HowToPlayTransition>
-      </li>
-      <li className="space-y-2">
-        <p>
-          水色の四角い塊は滑る氷の塊。岩と同じく駒を止めるが、滑ってきた駒がぶつかると、塊を押しながら一緒に滑り、塊が止まるとその手前で止まる。すぐ隣から押しても動かない。
-        </p>
-        <HowToPlayTransition>
-          <HowToPlayFigure rows={blockBeforeRows} piece={5} />
-          <HowToPlayFigure
-            rows={blockAfterRows}
-            piece={8}
-            trail={{ direction: "right", from: 5 }}
-          />
-        </HowToPlayTransition>
-      </li>
-      <li className="space-y-2">
-        <p>
-          塊がゴールに載っている間は、ゴールに入れない。押してどかせば、またゴールに止まれる。
-        </p>
-        <HowToPlayTransition>
-          <HowToPlayFigure
-            rows={blockGoalBeforeRows}
-            goal={blockGoal}
-            piece={4}
-          />
-          <HowToPlayFigure
-            rows={blockGoalAfterRows}
-            goal={blockGoal}
-            piece={6}
-            trail={{ direction: "right", from: 4 }}
-          />
-        </HowToPlayTransition>
-      </li>
-      <li className="space-y-2">
-        <p>
-          変わった後の盤面も使える。割れてできた水面は駒を止める足場になり、もろい岩を崩すと通り道が開く。
-        </p>
-        <HowToPlayTransition>
-          <HowToPlayFigure
-            rows={waterStopRows}
-            goal={waterStopGoal}
-            piece={7}
-          />
-          <HowToPlayFigure
-            rows={waterStopRows}
-            goal={waterStopGoal}
-            piece={6}
-            trail={{ direction: "left", from: 7 }}
-          />
-        </HowToPlayTransition>
-        <HowToPlayTransition>
-          <HowToPlayFigure
-            rows={rubblePassRows}
-            goal={rubblePassGoal}
-            piece={4}
-          />
-          <HowToPlayFigure
-            rows={rubblePassRows}
-            goal={rubblePassGoal}
-            piece={7}
-            trail={{ direction: "right", from: 4 }}
-          />
-        </HowToPlayTransition>
-      </li>
-      <li>
-        <p>盤面をスワイプして、滑らせる向きを選ぶ。</p>
-      </li>
-      <li>
-        <p>
-          待ったで1手ずつ戻せる。崩れた岩や割れた氷、押した雪や塊も元に戻る。どう滑ってもゴールに止まれなくなったまま滑り続けたり、数か所を行き来するしかなくなったりすると、そのことを知らせる。待ったか盤面を戻すで、止まれるところまで戻る。
-        </p>
-      </li>
-      <li className="hidden pointer-fine:list-item">
-        <p className="text-muted-foreground">
-          キーボード: 矢印キーで、その向きへ滑らせる。
-        </p>
-      </li>
-    </HowToPlayDialog>
+            <HowToPlayMenuOperations operations={menuOperations} />
+          </HowToPlaySection>
+          <HowToPlaySection
+            // 見出しは、プレイ画面の知らせの言葉にそろえる。
+            title={TRAPPED_NOTICE_LABEL}
+            lead={`ゴールに/止まれなくなったまま/何度か滑ると/盤面の下に/この知らせが/出ます。/「${undo}」か/「${restart}」で/まだ/ゴールに/止まれる/盤面まで/戻れます。`}
+          >
+            {/* 知らせの図は押せないので、触れる例の面に置かず、待ったのボタンの図と同じく地の上に置いて見分けられるようにする。 */}
+            <li>
+              <TrappedFigure />
+            </li>
+          </HowToPlaySection>
+          <HowToPlaySection title="キーボード" availability="fine-pointer">
+            <li>
+              <HowToPlayKeyTable keys={keyboardKeys} />
+            </li>
+          </HowToPlaySection>
+        </>
+      }
+      scoring={scoreItems.map(([item, maximum]) => (
+        <HowToPlaySection
+          key={item}
+          title={SCORE_ITEM_LABELS[item]}
+          value={`${maximum}点`}
+          lead={scoreLeads[item]}
+        >
+          {renderScoreRows(item)}
+        </HowToPlaySection>
+      ))}
+    />
   );
 }

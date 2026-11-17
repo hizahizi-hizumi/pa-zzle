@@ -84,7 +84,10 @@ export type IceFloorMazeLastSlide = {
   entersTrap: boolean;
 };
 
-/** プレイとチュートリアルで、盤面の滑り・変化・音を同じ反応にするため共有する。 */
+/**
+ * プレイ・チュートリアル・遊び方の例で、盤面の滑り・変化・音を同じ反応にするため共有する。
+ * `goal` の無い盤面（遊び方の例）では、ゴールを通り過ぎたことにしない。
+ */
 export function createIceFloorMazeLastSlide({
   id,
   board,
@@ -95,7 +98,7 @@ export function createIceFloorMazeLastSlide({
 }: {
   id: number;
   board: IceFloorMazeBoard;
-  goal: number;
+  goal: number | null;
   slide: Extract<IceFloorMazeSlide, { status: "slid" }>;
   isClearingMove: boolean;
   entersTrap: boolean;
@@ -111,7 +114,7 @@ export function createIceFloorMazeLastSlide({
     pushedSnow: slide.pushedSnow,
     movedBlock: slide.movedBlock,
     stoppedOnFloor: board.cells[slide.to] === "floor",
-    passedGoal: doesIceFloorMazeSlidePassGoal(slide, goal),
+    passedGoal: goal !== null && doesIceFloorMazeSlidePassGoal(slide, goal),
     isClearingMove,
     entersTrap,
   };
@@ -128,6 +131,20 @@ export type IceFloorMazeBlockedInput = {
   from: number;
   stopper: number | null;
 };
+
+/** 1マスも動けなかった向きを、盤面へ伝える動けなかった入力にする。 */
+export function createIceFloorMazeBlockedInput(
+  board: IceFloorMazeBoard,
+  { direction, from }: Extract<IceFloorMazeSlide, { status: "blocked" }>,
+  id: number,
+): IceFloorMazeBlockedInput {
+  return {
+    id,
+    direction,
+    from,
+    stopper: getIceFloorMazeNeighbor(board, from, direction),
+  };
+}
 
 export type IceFloorMazeResult = IceFloorMazeSessionResult & {
   speedReference: IceFloorMazeSpeedReference;
@@ -280,12 +297,7 @@ function slideInPlay(
   if (slide.status === "blocked") {
     return {
       ...current,
-      blockedInput: {
-        id: inputId,
-        direction,
-        from: slide.from,
-        stopper: getIceFloorMazeNeighbor(board, slide.from, direction),
-      },
+      blockedInput: createIceFloorMazeBlockedInput(board, slide, inputId),
     };
   }
 
