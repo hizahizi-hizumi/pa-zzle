@@ -21,6 +21,9 @@ const outlineKeyframes: Keyframe[] = [
  */
 const ATTEMPT_MS = 620;
 const ATTEMPT_EASING = "ease-out";
+/** 阻まれた操作に返す動き（縁取りの点灯と板の突き当て）を見せ終えるまでの時間。 */
+export const BLOCKED_REACTION_MS = Math.max(OUTLINE_MS, ATTEMPT_MS);
+
 function createAttemptKeyframes(axis: string | null): Keyframe[] {
   function scale(value: number): string {
     return axis === "y" ? `scale(1, ${value})` : `scale(${value}, 1)`;

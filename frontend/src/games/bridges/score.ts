@@ -38,6 +38,16 @@ export const BRIDGES_SPEED_PER_UNDECIDED_EDGE_MS = 1_000;
 export const BRIDGES_SPEED_BASE_ZERO_SCORE_RATIO = 3;
 export const BRIDGES_SPEED_READING_ZERO_SCORE_RATIO = 3;
 
+/**
+ * 0点になる時間の倍率が取りうる幅。基準時間のうち読みにかかる時間の割合（0〜1）で、下限から上限までの間に決まる。
+ */
+export const BRIDGES_SPEED_ZERO_SCORE_RATIO_RANGE = {
+  min: BRIDGES_SPEED_BASE_ZERO_SCORE_RATIO,
+  max:
+    BRIDGES_SPEED_BASE_ZERO_SCORE_RATIO +
+    BRIDGES_SPEED_READING_ZERO_SCORE_RATIO,
+} as const;
+
 export type BridgesPlayScore = PlayScore<keyof typeof BRIDGES_SCORE_MAXIMUMS>;
 
 type BridgesPlayScoreInput = {

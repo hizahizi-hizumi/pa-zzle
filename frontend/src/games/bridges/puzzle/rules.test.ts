@@ -8,6 +8,7 @@ import {
   areBridgesIslandsConnected,
   type BridgesIslandStatus,
   countBridgesSeparatedIslandGroups,
+  findBridgesClosedGroups,
   isBridgesSolved,
   listBridgesIslandGroups,
   listBridgesIslandStatuses,
@@ -430,6 +431,43 @@ describe("数字はちょうどでも全部の島がつながらない場合", (
     );
 
     expect(groupCount).toBe(2);
+  });
+
+  test("ちょうどの島だけの組を、ほかとつながらない組として2つ返すこと", () => {
+    const groups = findBridgesClosedGroups(board, state);
+
+    expect(groups).toEqual([
+      [0, 1],
+      [2, 3],
+    ]);
+  });
+});
+
+describe("足りない島を含む組と、ちょうどの島だけの組がある場合", () => {
+  const board = parseBridgesBoard(["1.2", "...", "1.1"]);
+  const state = createState(board, [
+    [[0, 0], [0, 2], 1],
+    [[2, 0], [2, 2], 1],
+  ]);
+
+  test("ちょうどの島だけの組だけを返すこと", () => {
+    const groups = findBridgesClosedGroups(board, state);
+
+    expect(groups).toEqual([[2, 3]]);
+  });
+});
+
+describe("全部の島がちょうどでつながった場合", () => {
+  const board = parseBridgesBoard(["1.2", "...", "..1"]);
+  const state = createState(board, [
+    [[0, 0], [0, 2], 1],
+    [[0, 2], [2, 2], 1],
+  ]);
+
+  test("ほかとつながらない組を返さないこと", () => {
+    const groups = findBridgesClosedGroups(board, state);
+
+    expect(groups).toEqual([]);
   });
 });
 

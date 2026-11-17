@@ -82,6 +82,22 @@ export function countBridgesSeparatedIslandGroups(
   return groupCount > 1 ? groupCount : null;
 }
 
+/**
+ * どの島も数字とちょうどで、全部の島ではない、橋でたどれる島の組。ほかの島へ橋を足すと数字を超えるので、
+ * この組があるうちは全部の島を1つにつなげられない。
+ */
+export function findBridgesClosedGroups(
+  board: BridgesBoard,
+  state: BridgesPuzzleState,
+): number[][] {
+  const statuses = listBridgesIslandStatuses(board, state);
+  return listBridgesIslandGroups(board, state).filter(
+    (group) =>
+      group.length < board.islands.length &&
+      group.every((island) => statuses[island] === "exact"),
+  );
+}
+
 function areBridgesPlacementsValid(
   board: BridgesBoard,
   state: BridgesPuzzleState,
