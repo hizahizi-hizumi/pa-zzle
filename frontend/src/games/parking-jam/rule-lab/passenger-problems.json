@@ -1,0 +1,888 @@
+[
+  {
+    "id": "blocking",
+    "title": "遮断が本質の判断",
+    "kind": "代表",
+    "bayCount": 2,
+    "solutions": 36,
+    "queue": [
+      "A",
+      "B",
+      "B",
+      "B",
+      "A",
+      "A",
+      "B",
+      "B",
+      "C",
+      "C",
+      "D",
+      "C",
+      "C",
+      "C",
+      "D",
+      "D",
+      "D",
+      "D",
+      "A",
+      "A",
+      "A"
+    ],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 4,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 6,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 3,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 2,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v7",
+          "row": 3,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 7
+        },
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "queue",
+    "title": "列だけで決まる判断",
+    "kind": "代表",
+    "bayCount": 2,
+    "solutions": 30,
+    "queue": [
+      "C",
+      "C",
+      "D",
+      "D",
+      "C",
+      "C",
+      "A",
+      "D",
+      "D",
+      "A",
+      "B",
+      "D",
+      "B",
+      "A",
+      "B",
+      "B",
+      "A",
+      "A",
+      "B",
+      "B"
+    ],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 1,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 3,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 4,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 2,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 2,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "boundary",
+    "title": "両方を含む境界",
+    "kind": "境界",
+    "bayCount": 3,
+    "solutions": 24,
+    "queue": [
+      "D",
+      "D",
+      "A",
+      "C",
+      "A",
+      "A",
+      "D",
+      "D",
+      "D",
+      "C",
+      "B",
+      "B",
+      "B",
+      "A",
+      "A",
+      "B",
+      "B",
+      "C",
+      "C"
+    ],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 3,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 1,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 5,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v3",
+          "row": 4,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 1,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 3,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 7
+        },
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "counter",
+    "title": "掘る側の選択が列で決まる反例",
+    "kind": "反例",
+    "bayCount": 4,
+    "solutions": 1592,
+    "queue": [
+      "B",
+      "C",
+      "C",
+      "A",
+      "D",
+      "D",
+      "D",
+      "A",
+      "A",
+      "C",
+      "B",
+      "A",
+      "B",
+      "B",
+      "C",
+      "D"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v4",
+          "row": 4,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 3,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "down",
+          "startOffset": 0,
+          "length": 6
+        },
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 6
+        }
+      ]
+    }
+  },
+  {
+    "id": "capacity-blocking-1",
+    "title": "定員と遮断の両方を読む判断1",
+    "kind": "代表",
+    "bayCount": 3,
+    "solutions": 12,
+    "queue": [
+      "C",
+      "A",
+      "B",
+      "A",
+      "B",
+      "A",
+      "C",
+      "B",
+      "B",
+      "B",
+      "A",
+      "C",
+      "C",
+      "B",
+      "C",
+      "A",
+      "A",
+      "B"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 4,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 2,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v4",
+          "row": 2,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 3,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 3,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 1,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 6
+        },
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 6
+        }
+      ]
+    }
+  },
+  {
+    "id": "capacity-blocking-2",
+    "title": "定員と遮断の両方を読む判断2",
+    "kind": "代表",
+    "bayCount": 3,
+    "solutions": 189,
+    "queue": [
+      "A",
+      "B",
+      "C",
+      "A",
+      "B",
+      "C",
+      "A",
+      "A",
+      "A",
+      "A",
+      "B",
+      "C",
+      "C",
+      "C",
+      "B",
+      "B",
+      "A",
+      "B",
+      "C",
+      "A",
+      "B",
+      "B"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 3,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 3,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v4",
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v7",
+          "row": 5,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 6
+        },
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 6
+        }
+      ]
+    }
+  },
+  {
+    "id": "same-capacity",
+    "title": "同じ定員の使い分け",
+    "kind": "代表",
+    "bayCount": 3,
+    "solutions": 200,
+    "queue": [
+      "C",
+      "C",
+      "D",
+      "C",
+      "B",
+      "D",
+      "A",
+      "B",
+      "A",
+      "A",
+      "B",
+      "A",
+      "B",
+      "A",
+      "C",
+      "A",
+      "C",
+      "D",
+      "B",
+      "D"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 1,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 0,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v3",
+          "row": 4,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 5,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 3,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 6
+        },
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 6
+        }
+      ]
+    }
+  },
+  {
+    "id": "boundary-queue",
+    "title": "列だけの判断が混ざる境界",
+    "kind": "境界",
+    "bayCount": 2,
+    "solutions": 16,
+    "queue": [
+      "C",
+      "C",
+      "A",
+      "A",
+      "B",
+      "A",
+      "B",
+      "A",
+      "B",
+      "B",
+      "B",
+      "A",
+      "C",
+      "A",
+      "B",
+      "B",
+      "C",
+      "A",
+      "A"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 1,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 1,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 5,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 5,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 6
+        },
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 6
+        }
+      ]
+    }
+  }
+]

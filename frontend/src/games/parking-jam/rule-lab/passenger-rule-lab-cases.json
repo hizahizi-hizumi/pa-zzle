@@ -1,0 +1,3019 @@
+[
+  {
+    "id": "random-0",
+    "bayCount": 4,
+    "queue": ["C", "A", "B", "B", "A", "C", "B", "B", "C", "A", "A", "C"],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 2,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 4,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 4,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v4",
+          "row": 4,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 4,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 384,
+    "firstExits": [
+      { "vehicleId": "v1", "canWin": true },
+      { "vehicleId": "v2", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-1",
+    "bayCount": 2,
+    "queue": [
+      "B",
+      "C",
+      "C",
+      "C",
+      "B",
+      "A",
+      "A",
+      "C",
+      "C",
+      "C",
+      "B",
+      "A",
+      "A",
+      "A",
+      "B",
+      "A",
+      "A",
+      "C",
+      "C",
+      "A",
+      "A",
+      "B",
+      "B",
+      "B"
+    ],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 3,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v4",
+          "row": 5,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v6",
+          "row": 5,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v8",
+          "row": 6,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v9",
+          "row": 3,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 7 },
+        { "side": "left", "startOffset": 0, "length": 7 },
+        { "side": "right", "startOffset": 0, "length": 7 },
+        { "side": "up", "startOffset": 0, "length": 7 }
+      ]
+    },
+    "solutions": 6096,
+    "firstExits": [
+      { "vehicleId": "v1", "canWin": false },
+      { "vehicleId": "v2", "canWin": false },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": false },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true },
+      { "vehicleId": "v8", "canWin": false },
+      { "vehicleId": "v9", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-2",
+    "bayCount": 4,
+    "queue": [
+      "C",
+      "A",
+      "B",
+      "C",
+      "D",
+      "C",
+      "C",
+      "C",
+      "B",
+      "D",
+      "D",
+      "C",
+      "B",
+      "B",
+      "D",
+      "D",
+      "B",
+      "B",
+      "A",
+      "A",
+      "A",
+      "A",
+      "A",
+      "D"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 0,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 3,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 2,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 2,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 3,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 2304,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": true },
+      { "vehicleId": "v1", "canWin": true },
+      { "vehicleId": "v2", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-3",
+    "bayCount": 4,
+    "queue": [
+      "C",
+      "B",
+      "C",
+      "C",
+      "B",
+      "B",
+      "B",
+      "B",
+      "A",
+      "A",
+      "A",
+      "A",
+      "D",
+      "A",
+      "C",
+      "A",
+      "D",
+      "D",
+      "D",
+      "C",
+      "C",
+      "D",
+      "D"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 3,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 1,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [{ "side": "up", "startOffset": 0, "length": 6 }]
+    },
+    "solutions": 5184,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": true },
+      { "vehicleId": "v2", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-4",
+    "bayCount": 4,
+    "queue": [
+      "B",
+      "B",
+      "D",
+      "A",
+      "A",
+      "A",
+      "D",
+      "C",
+      "C",
+      "C",
+      "A",
+      "B",
+      "A",
+      "A",
+      "B"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 1,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 1,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 2,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "right", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 69,
+    "firstExits": [
+      { "vehicleId": "v1", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v5", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-5",
+    "bayCount": 4,
+    "queue": [
+      "C",
+      "A",
+      "C",
+      "C",
+      "B",
+      "C",
+      "C",
+      "A",
+      "B",
+      "A",
+      "B",
+      "B",
+      "A",
+      "A",
+      "B"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 5,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 3,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 2,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "right", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 56,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-6",
+    "bayCount": 2,
+    "queue": [
+      "A",
+      "A",
+      "A",
+      "D",
+      "D",
+      "D",
+      "D",
+      "A",
+      "A",
+      "C",
+      "D",
+      "B",
+      "B",
+      "B",
+      "C",
+      "B",
+      "B",
+      "C",
+      "C",
+      "C"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 0,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 2,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 3,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [{ "side": "up", "startOffset": 0, "length": 6 }]
+    },
+    "solutions": 60,
+    "firstExits": [
+      { "vehicleId": "v1", "canWin": false },
+      { "vehicleId": "v2", "canWin": false },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v6", "canWin": false },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-7",
+    "bayCount": 3,
+    "queue": [
+      "B",
+      "B",
+      "B",
+      "D",
+      "D",
+      "D",
+      "C",
+      "C",
+      "C",
+      "C",
+      "A",
+      "C",
+      "A",
+      "C",
+      "A",
+      "A",
+      "B",
+      "A",
+      "A",
+      "D",
+      "D",
+      "D",
+      "B",
+      "B"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v1",
+          "row": 1,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v2",
+          "row": 3,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 5,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v4",
+          "row": 3,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 2,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v6",
+          "row": 1,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 6 },
+        { "side": "left", "startOffset": 0, "length": 6 },
+        { "side": "right", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 3312,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": true },
+      { "vehicleId": "v1", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-8",
+    "bayCount": 3,
+    "queue": [
+      "C",
+      "B",
+      "A",
+      "A",
+      "A",
+      "A",
+      "B",
+      "C",
+      "A",
+      "C",
+      "B",
+      "C",
+      "C",
+      "B",
+      "C",
+      "A",
+      "B",
+      "B",
+      "A",
+      "A"
+    ],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 2,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 5,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v4",
+          "row": 3,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 5,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v6",
+          "row": 5,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v7",
+          "row": 5,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v8",
+          "row": 3,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v9",
+          "row": 4,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 7 },
+        { "side": "up", "startOffset": 0, "length": 7 }
+      ]
+    },
+    "solutions": 26496,
+    "firstExits": [
+      { "vehicleId": "v1", "canWin": true },
+      { "vehicleId": "v2", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true },
+      { "vehicleId": "v8", "canWin": true },
+      { "vehicleId": "v9", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-9",
+    "bayCount": 3,
+    "queue": [
+      "C",
+      "A",
+      "B",
+      "A",
+      "C",
+      "C",
+      "B",
+      "A",
+      "A",
+      "A",
+      "C",
+      "B",
+      "B",
+      "B",
+      "B",
+      "A",
+      "B"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 5,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 1,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 3,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 4,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "right", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 186,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-10",
+    "bayCount": 4,
+    "queue": [
+      "B",
+      "B",
+      "B",
+      "A",
+      "A",
+      "A",
+      "B",
+      "D",
+      "B",
+      "B",
+      "C",
+      "C",
+      "C",
+      "D",
+      "D",
+      "E",
+      "E",
+      "E",
+      "E",
+      "C",
+      "E",
+      "E",
+      "D",
+      "D",
+      "D",
+      "C",
+      "C",
+      "A",
+      "A",
+      "A"
+    ],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 4,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v2",
+          "row": 3,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "E"
+        },
+        {
+          "id": "v3",
+          "row": 4,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "E"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 1,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 2,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v8",
+          "row": 0,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v9",
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "right", "startOffset": 0, "length": 7 },
+        { "side": "up", "startOffset": 0, "length": 7 }
+      ]
+    },
+    "solutions": 23832,
+    "firstExits": [
+      { "vehicleId": "v2", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true },
+      { "vehicleId": "v8", "canWin": true },
+      { "vehicleId": "v9", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-11",
+    "bayCount": 2,
+    "queue": [
+      "B",
+      "A",
+      "A",
+      "A",
+      "B",
+      "B",
+      "B",
+      "B",
+      "B",
+      "C",
+      "C",
+      "C",
+      "D",
+      "D",
+      "D",
+      "D",
+      "D",
+      "C",
+      "C",
+      "C",
+      "D",
+      "A",
+      "A",
+      "A"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 3,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v2",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 3,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 2,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v6",
+          "row": 1,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [{ "side": "up", "startOffset": 0, "length": 6 }]
+    },
+    "solutions": 80,
+    "firstExits": [
+      { "vehicleId": "v1", "canWin": false },
+      { "vehicleId": "v2", "canWin": false },
+      { "vehicleId": "v3", "canWin": false },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v6", "canWin": false },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-12",
+    "bayCount": 3,
+    "queue": ["B", "B", "C", "A", "C", "B", "A", "B", "C", "A", "C", "A"],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 1,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 3,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 2,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 336,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": true },
+      { "vehicleId": "v1", "canWin": true },
+      { "vehicleId": "v2", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-13",
+    "bayCount": 2,
+    "queue": [
+      "C",
+      "B",
+      "B",
+      "B",
+      "A",
+      "A",
+      "B",
+      "A",
+      "C",
+      "C",
+      "A",
+      "A",
+      "B",
+      "B",
+      "A",
+      "C",
+      "B",
+      "B",
+      "C",
+      "C",
+      "B",
+      "A",
+      "A",
+      "A"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 3,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v4",
+          "row": 3,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v6",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 3,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [{ "side": "up", "startOffset": 0, "length": 6 }]
+    },
+    "solutions": 0,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": false },
+      { "vehicleId": "v1", "canWin": false },
+      { "vehicleId": "v3", "canWin": false },
+      { "vehicleId": "v5", "canWin": false },
+      { "vehicleId": "v6", "canWin": false },
+      { "vehicleId": "v7", "canWin": false }
+    ]
+  },
+  {
+    "id": "random-14",
+    "bayCount": 2,
+    "queue": [
+      "A",
+      "C",
+      "D",
+      "A",
+      "C",
+      "D",
+      "A",
+      "B",
+      "B",
+      "A",
+      "B",
+      "B",
+      "B",
+      "D",
+      "B",
+      "C",
+      "C",
+      "D",
+      "A",
+      "D",
+      "A",
+      "D",
+      "C",
+      "C"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v1",
+          "row": 1,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v3",
+          "row": 3,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 3,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v7",
+          "row": 3,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 0,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": false },
+      { "vehicleId": "v1", "canWin": false },
+      { "vehicleId": "v2", "canWin": false },
+      { "vehicleId": "v3", "canWin": false },
+      { "vehicleId": "v4", "canWin": false },
+      { "vehicleId": "v5", "canWin": false },
+      { "vehicleId": "v6", "canWin": false },
+      { "vehicleId": "v7", "canWin": false }
+    ]
+  },
+  {
+    "id": "random-15",
+    "bayCount": 3,
+    "queue": [
+      "A",
+      "B",
+      "A",
+      "C",
+      "C",
+      "C",
+      "B",
+      "A",
+      "B",
+      "B",
+      "C",
+      "B",
+      "A",
+      "A",
+      "A",
+      "C",
+      "A",
+      "A",
+      "B",
+      "B",
+      "B",
+      "C",
+      "B"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 3,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 1,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v4",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 5,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v6",
+          "row": 4,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "right", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 108,
+    "firstExits": [
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-16",
+    "bayCount": 3,
+    "queue": [
+      "B",
+      "A",
+      "C",
+      "B",
+      "A",
+      "B",
+      "B",
+      "A",
+      "A",
+      "B",
+      "A",
+      "D",
+      "A",
+      "C",
+      "D",
+      "C",
+      "B",
+      "D"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 3,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 3,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 3,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v3",
+          "row": 3,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v4",
+          "row": 2,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 0,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": false },
+      { "vehicleId": "v1", "canWin": false },
+      { "vehicleId": "v2", "canWin": false },
+      { "vehicleId": "v3", "canWin": false },
+      { "vehicleId": "v4", "canWin": false },
+      { "vehicleId": "v5", "canWin": false }
+    ]
+  },
+  {
+    "id": "random-17",
+    "bayCount": 3,
+    "queue": [
+      "C",
+      "A",
+      "C",
+      "A",
+      "B",
+      "B",
+      "B",
+      "C",
+      "C",
+      "C",
+      "A",
+      "A",
+      "A",
+      "B",
+      "C",
+      "A",
+      "B",
+      "B"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 3,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 3,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v4",
+          "row": 5,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 6 },
+        { "side": "left", "startOffset": 0, "length": 6 },
+        { "side": "right", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 70,
+    "firstExits": [
+      { "vehicleId": "v1", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true }
+    ]
+  },
+  {
+    "id": "random-18",
+    "bayCount": 3,
+    "queue": [
+      "C",
+      "C",
+      "A",
+      "D",
+      "B",
+      "C",
+      "A",
+      "D",
+      "A",
+      "A",
+      "D",
+      "B",
+      "B",
+      "B",
+      "C",
+      "D"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 5,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 4,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v2",
+          "row": 2,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 5,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v6",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "D"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 6 },
+        { "side": "left", "startOffset": 0, "length": 6 },
+        { "side": "right", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 0,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": false },
+      { "vehicleId": "v1", "canWin": false },
+      { "vehicleId": "v3", "canWin": false },
+      { "vehicleId": "v5", "canWin": false },
+      { "vehicleId": "v7", "canWin": false }
+    ]
+  },
+  {
+    "id": "random-19",
+    "bayCount": 3,
+    "queue": [
+      "A",
+      "A",
+      "A",
+      "A",
+      "A",
+      "A",
+      "A",
+      "A",
+      "A",
+      "D",
+      "D",
+      "D",
+      "B",
+      "B",
+      "B",
+      "B",
+      "C",
+      "C",
+      "C",
+      "D",
+      "D",
+      "C",
+      "D",
+      "B",
+      "B",
+      "C",
+      "C",
+      "B",
+      "B",
+      "B"
+    ],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 2,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v3",
+          "row": 3,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v4",
+          "row": 6,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v5",
+          "row": 3,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 4,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v8",
+          "row": 4,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v9",
+          "row": 1,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 7 },
+        { "side": "left", "startOffset": 0, "length": 7 },
+        { "side": "right", "startOffset": 0, "length": 7 },
+        { "side": "up", "startOffset": 0, "length": 7 }
+      ]
+    },
+    "solutions": 22880,
+    "firstExits": [
+      { "vehicleId": "v1", "canWin": true },
+      { "vehicleId": "v2", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true },
+      { "vehicleId": "v8", "canWin": true },
+      { "vehicleId": "v9", "canWin": true }
+    ]
+  },
+  {
+    "id": "example-blocking",
+    "bayCount": 2,
+    "queue": [
+      "A",
+      "B",
+      "B",
+      "B",
+      "A",
+      "A",
+      "B",
+      "B",
+      "C",
+      "C",
+      "D",
+      "C",
+      "C",
+      "C",
+      "D",
+      "D",
+      "D",
+      "D",
+      "A",
+      "A",
+      "A"
+    ],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 4,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 6,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 3,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 2,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v7",
+          "row": 3,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "right", "startOffset": 0, "length": 7 },
+        { "side": "up", "startOffset": 0, "length": 7 }
+      ]
+    },
+    "solutions": 36,
+    "firstExits": [
+      { "vehicleId": "v2", "canWin": true },
+      { "vehicleId": "v3", "canWin": false },
+      { "vehicleId": "v4", "canWin": false },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "example-queue",
+    "bayCount": 2,
+    "queue": [
+      "C",
+      "C",
+      "D",
+      "D",
+      "C",
+      "C",
+      "A",
+      "D",
+      "D",
+      "A",
+      "B",
+      "D",
+      "B",
+      "A",
+      "B",
+      "B",
+      "A",
+      "A",
+      "B",
+      "B"
+    ],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 1,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 3,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 4,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 2,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 2,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [{ "side": "up", "startOffset": 0, "length": 7 }]
+    },
+    "solutions": 30,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": true },
+      { "vehicleId": "v1", "canWin": false },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "example-boundary",
+    "bayCount": 3,
+    "queue": [
+      "D",
+      "D",
+      "A",
+      "C",
+      "A",
+      "A",
+      "D",
+      "D",
+      "D",
+      "C",
+      "B",
+      "B",
+      "B",
+      "A",
+      "A",
+      "B",
+      "B",
+      "C",
+      "C"
+    ],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 3,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 1,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 5,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v3",
+          "row": 4,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 1,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 3,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "right", "startOffset": 0, "length": 7 },
+        { "side": "up", "startOffset": 0, "length": 7 }
+      ]
+    },
+    "solutions": 24,
+    "firstExits": [
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v7", "canWin": false }
+    ]
+  },
+  {
+    "id": "example-counter",
+    "bayCount": 4,
+    "queue": [
+      "B",
+      "C",
+      "C",
+      "A",
+      "D",
+      "D",
+      "D",
+      "A",
+      "A",
+      "C",
+      "B",
+      "A",
+      "B",
+      "B",
+      "C",
+      "D"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v4",
+          "row": 4,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 3,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "down", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 1592,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": true },
+      { "vehicleId": "v2", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "example-capacity-blocking-1",
+    "bayCount": 3,
+    "queue": [
+      "C",
+      "A",
+      "B",
+      "A",
+      "B",
+      "A",
+      "C",
+      "B",
+      "B",
+      "B",
+      "A",
+      "C",
+      "C",
+      "B",
+      "C",
+      "A",
+      "A",
+      "B"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 4,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 2,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v4",
+          "row": 2,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 3,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 3,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 1,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "right", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 12,
+    "firstExits": [
+      { "vehicleId": "v2", "canWin": false },
+      { "vehicleId": "v4", "canWin": false },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "example-capacity-blocking-2",
+    "bayCount": 3,
+    "queue": [
+      "A",
+      "B",
+      "C",
+      "A",
+      "B",
+      "C",
+      "A",
+      "A",
+      "A",
+      "A",
+      "B",
+      "C",
+      "C",
+      "C",
+      "B",
+      "B",
+      "A",
+      "B",
+      "C",
+      "A",
+      "B",
+      "B"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 3,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 3,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v4",
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v7",
+          "row": 5,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "right", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 189,
+    "firstExits": [
+      { "vehicleId": "v2", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v6", "canWin": false },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "example-same-capacity",
+    "bayCount": 3,
+    "queue": [
+      "C",
+      "C",
+      "D",
+      "C",
+      "B",
+      "D",
+      "A",
+      "B",
+      "A",
+      "A",
+      "B",
+      "A",
+      "B",
+      "A",
+      "C",
+      "A",
+      "C",
+      "D",
+      "B",
+      "D"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 1,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 0,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v3",
+          "row": 4,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 5,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v6",
+          "row": 3,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "right", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 200,
+    "firstExits": [
+      { "vehicleId": "v2", "canWin": true },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v4", "canWin": true },
+      { "vehicleId": "v5", "canWin": false },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": true }
+    ]
+  },
+  {
+    "id": "example-boundary-queue",
+    "bayCount": 2,
+    "queue": [
+      "C",
+      "C",
+      "A",
+      "A",
+      "B",
+      "A",
+      "B",
+      "A",
+      "B",
+      "B",
+      "B",
+      "A",
+      "C",
+      "A",
+      "B",
+      "B",
+      "C",
+      "A",
+      "A"
+    ],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 1,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 1,
+          "column": 4,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 5,
+          "column": 1,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 5,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        { "side": "right", "startOffset": 0, "length": 6 },
+        { "side": "up", "startOffset": 0, "length": 6 }
+      ]
+    },
+    "solutions": 16,
+    "firstExits": [
+      { "vehicleId": "v0", "canWin": false },
+      { "vehicleId": "v3", "canWin": true },
+      { "vehicleId": "v5", "canWin": true },
+      { "vehicleId": "v6", "canWin": true },
+      { "vehicleId": "v7", "canWin": false }
+    ]
+  }
+]
