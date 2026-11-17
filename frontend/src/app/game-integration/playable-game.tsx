@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { useLocation, useNavigate } from "react-router";
 import type { GameCatalogEntry } from "@/app/game-integration/game-catalog-entry";
 import { useGameNavigation } from "@/app/game-integration/game-navigation";
 import {
@@ -8,7 +7,6 @@ import {
 } from "@/app/game-integration/internal-diagnostics-dialog";
 import { usePlayScreenMusicState } from "@/app/game-integration/play-screen-music-state";
 import { useResultRewardSound } from "@/app/game-integration/result-reward-sound";
-import { openGameGuide } from "@/app/navigation/game-guide-navigation";
 import { useRecordResultNavigation } from "@/app/navigation/record-result-navigation";
 import { usePlayAttemptRecord } from "@/features/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/features/records/hooks/use-save-play-record";
@@ -122,8 +120,6 @@ export function usePlayableGame<
     },
   });
   const navigation = useGameNavigation(game);
-  const navigate = useNavigate();
-  const location = useLocation();
   const diagnostics = useInternalDiagnosticsDialog(createDiagnosticSnapshot);
 
   return {
@@ -152,22 +148,6 @@ export function usePlayableGame<
         });
       },
       onBackToAppHome: navigation.backToAppHome,
-      onOpenHowToPlay() {
-        openGameGuide(
-          navigate,
-          game.id,
-          "how-to",
-          location.pathname + location.search,
-        );
-      },
-      onOpenTutorial() {
-        openGameGuide(
-          navigate,
-          game.id,
-          "tutorial",
-          location.pathname + location.search,
-        );
-      },
       onOpenDiagnostics: diagnostics.open,
       renderSettingsDialog({ open, onClose }) {
         return (
