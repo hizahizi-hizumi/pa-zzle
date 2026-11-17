@@ -305,6 +305,65 @@ describe("TsumeShogiPlayView", () => {
       expect(screen.getByText("ホーム画面")).toBeTruthy();
     });
 
+    describe("攻方と玉方が一手ずつ指した後に案内を参照する場合", () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+        playAttackerMove(firstMove);
+        waitForDefenderReply();
+      });
+
+      test("遊び方を開いて閉じても着手と盤面を保持すること", () => {
+        openMenu();
+        fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+        fireEvent.click(
+          within(
+            screen.getByRole("dialog", { name: "詰将棋の遊び方" }),
+          ).getByRole("button", { name: "閉じる" }),
+        );
+
+        const [, defenderMove] = selected.problem.mainLine as [
+          TsumeShogiMove,
+          TsumeShogiMove,
+        ];
+        const playedPlies = screen.getByText("手数").parentElement?.textContent;
+        const defenderSquare = getSquare(defenderMove.to).getAttribute(
+          "aria-label",
+        );
+
+        expect(playedPlies).toBe("手数2");
+        expect(defenderSquare).toMatch(/ 玉方の/);
+      });
+
+      test("遊び方からチュートリアルを参照しても着手と盤面を保持すること", () => {
+        openMenu();
+        fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+        fireEvent.click(
+          screen.getByRole("button", {
+            name: "チュートリアルで遊んで覚える",
+          }),
+        );
+        const tutorial = screen.getByRole("dialog", {
+          name: "詰将棋",
+          description: "チュートリアル",
+        });
+        fireEvent.click(
+          within(tutorial).getByRole("button", { name: "閉じる" }),
+        );
+
+        const [, defenderMove] = selected.problem.mainLine as [
+          TsumeShogiMove,
+          TsumeShogiMove,
+        ];
+        const playedPlies = screen.getByText("手数").parentElement?.textContent;
+        const defenderSquare = getSquare(defenderMove.to).getAttribute(
+          "aria-label",
+        );
+
+        expect(playedPlies).toBe("手数2");
+        expect(defenderSquare).toMatch(/ 玉方の/);
+      });
+    });
+
     test("遊び方からチュートリアルを開き、閉じると同じプレイの盤へ戻ること", () => {
       openMenu();
       fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
