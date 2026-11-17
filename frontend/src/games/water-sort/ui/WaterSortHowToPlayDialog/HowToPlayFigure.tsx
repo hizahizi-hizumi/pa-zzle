@@ -1,33 +1,44 @@
-import type { WaterSortState } from "@/games/water-sort/puzzle/state";
+import { WATER_SORT_BOTTLE_ASPECT_RATIO } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
+import {
+  getBottleRowGap,
+  getBottleRowWidth,
+} from "@/games/water-sort/ui/WaterSortHowToPlayDialog/bottle-size";
+import type { WaterSortHowToPlayFrame } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/figure-boards";
 import { cn } from "@/lib/utils";
 
 type HowToPlayFigureProps = {
-  /** 左から並べるボトルの中身。各ボトルは下から順の色番号。 */
-  bottles: WaterSortState;
-  selectedBottleIndex?: number;
+  frame: WaterSortHowToPlayFrame;
 };
 
-export function HowToPlayFigure({
-  bottles,
-  selectedBottleIndex,
-}: HowToPlayFigureProps) {
+/**
+ * 押せない図。本番と同じボトルを1段に並べ、ボトルの幅は置き場所が `--water-sort-figure-bottle` で決める。ボトルの間は遊び方の盤面と同じにする。
+ * 注ぐ元は、本番の選んだ姿と同じく持ち上げて示す。持ち上げる分は図の上へはみ出させ、図の箱をボトルの高さにそろえて、
+ * 並べたコマや矢印を、ボトルの高さの中央にそろえられるようにする。
+ * 押せない図なので、押す所の手がかり（破線の枠と指）は付けない。
+ */
+export function HowToPlayFigure({ frame }: HowToPlayFigureProps) {
+  const { bottles, selectedBottleIndex } = frame;
   return (
     <span
       aria-hidden="true"
-      // ボトルの枠線や液面の余白は px 固定なので、高さだけを縮めず全体を縮小して盤面と同じ見え方を保つ。
-      // 選んだボトルは盤面と同じく持ち上げる。注ぐ前と後の図でボトルの底の位置をそろえるため、選んでいるかによらず、持ち上げる分の高さを上に取っておく。
-      className="box-content flex h-24 shrink-0 items-end gap-2 pt-(--selected-bottle-lift) [--selected-bottle-lift:--spacing(3.5)] [zoom:0.75]"
+      className="grid shrink-0 items-end [--selected-bottle-lift:--spacing(3.5)]"
+      style={{
+        width: getBottleRowWidth(bottles.length),
+        gridTemplateColumns: `repeat(${bottles.length}, minmax(0, 1fr))`,
+        columnGap: getBottleRowGap(bottles.length),
+      }}
     >
       {bottles.map((contents, bottleIndex) => (
         <span
           // biome-ignore lint/suspicious/noArrayIndexKey: ボトルの並び順で決まる
           key={bottleIndex}
           className={cn(
-            "relative aspect-[0.36] h-full",
+            "relative",
             bottleIndex === selectedBottleIndex &&
               "-translate-y-(--selected-bottle-lift)",
           )}
+          style={{ aspectRatio: WATER_SORT_BOTTLE_ASPECT_RATIO }}
         >
           <WaterBottle
             contents={contents}
