@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   dispatchLevelProblems,
+  pairProblems,
   passengerProblems,
 } from "@/games/parking-jam/rule-lab/dispatch-levels";
 import {
@@ -68,7 +69,9 @@ export function ParkingJamRuleLab() {
       ? dispatchLevelProblems
       : mode === "passengers"
         ? passengerProblems
-        : [];
+        : mode === "pairs"
+          ? pairProblems
+          : [];
   const problem = problems.find((item) => item.id === problemId);
   const scenario =
     problem?.scenario ?? getRuleLabScenario(mode, size, bayCount);

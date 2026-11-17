@@ -3,6 +3,7 @@ import type {
   ParkingJamVehicleLength,
 } from "@/games/parking-jam/puzzle/board";
 import problems from "@/games/parking-jam/rule-lab/dispatch-levels.json";
+import pairProblemData from "@/games/parking-jam/rule-lab/pair-problems.json";
 import passengerProblemData from "@/games/parking-jam/rule-lab/passenger-problems.json";
 import type {
   RuleLabColor,
@@ -44,7 +45,7 @@ export type DispatchLevelProblem = {
 
 function toProblem(
   problem: ExportedProblem,
-  mode: "dispatch" | "passengers",
+  mode: "dispatch" | "passengers" | "pairs",
 ): DispatchLevelProblem {
   return {
     id: problem.id,
@@ -90,3 +91,8 @@ export const dispatchLevelProblems: readonly DispatchLevelProblem[] = (
 export const passengerProblems: readonly DispatchLevelProblem[] = (
   passengerProblemData as ExportedProblem[]
 ).map((problem) => toProblem(problem, "passengers"));
+
+/** `scripts/research/parking_jam_pair_examples.json` から画面に要る項目だけを写した同色ペア型の問題例。 */
+export const pairProblems: readonly DispatchLevelProblem[] = (
+  pairProblemData as ExportedProblem[]
+).map((problem) => toProblem(problem, "pairs"));

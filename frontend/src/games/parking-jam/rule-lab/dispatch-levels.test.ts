@@ -1,6 +1,7 @@
 import { validateParkingJamBoard } from "@/games/parking-jam/puzzle/board";
 import {
   dispatchLevelProblems,
+  pairProblems,
   passengerProblems,
 } from "@/games/parking-jam/rule-lab/dispatch-levels";
 import {
@@ -45,6 +46,18 @@ describe("乗客列型の問題例", () => {
         0,
       );
       expect(scenario.queue).toHaveLength(seats);
+      const result = analyzeRuleLab(scenario, createRuleLabState(scenario));
+      expect(result.totalWinningSequences).toBe(problem.solutions);
+    },
+  );
+});
+
+describe("同色ペア型の問題例", () => {
+  test.each(pairProblems.map((problem) => [problem.title, problem] as const))(
+    "%s は盤面が正しく、解の数が研究用の探索と一致すること",
+    (_title, problem) => {
+      const { scenario } = problem;
+      expect(() => validateParkingJamBoard(scenario.board)).not.toThrow();
       const result = analyzeRuleLab(scenario, createRuleLabState(scenario));
       expect(result.totalWinningSequences).toBe(problem.solutions);
     },
