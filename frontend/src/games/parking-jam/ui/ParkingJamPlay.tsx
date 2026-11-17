@@ -95,8 +95,12 @@ export function ParkingJamPlay({
       onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <ParkingJamHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <ParkingJamHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose }) => (
         <ParkingJamTutorial open={open} onClose={onClose} />

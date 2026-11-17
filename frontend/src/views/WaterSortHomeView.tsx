@@ -12,8 +12,12 @@ export function WaterSortHomeView() {
     <GameHomeScreen
       {...screenProps}
       ground={<WaterSortGround />}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <WaterSortHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <WaterSortHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose, playStart }) => (
         <WaterSortTutorial

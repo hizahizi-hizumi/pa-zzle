@@ -111,8 +111,12 @@ export function NanpurePlay({
       onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <NanpureHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <NanpureHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose }) => (
         <NanpureTutorial open={open} onClose={onClose} />

@@ -12,8 +12,12 @@ export function ParkingJamHomeView() {
     <GameHomeScreen
       {...screenProps}
       ground={<ParkingJamGround />}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <ParkingJamHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <ParkingJamHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose, playStart }) => (
         <ParkingJamTutorial

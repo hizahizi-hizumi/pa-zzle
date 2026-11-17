@@ -1,5 +1,6 @@
 import { type RefObject, useEffect, useRef, useState } from "react";
 
+/** ゲームのホームで開く層。チュートリアルは遊び方の中から、ほかは見出しのメニューから開く。 */
 export type GameHomeLayer =
   | "howToPlay"
   | "tutorial"

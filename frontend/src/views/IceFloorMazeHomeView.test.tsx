@@ -9,6 +9,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { iceFloorMazeCatalogEntry } from "@/app/game-integration/ice-floor-maze/ice-floor-maze-catalog-entry";
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
+import { GameHowToView } from "@/views/GameHowToView";
 import { IceFloorMazeHomeView } from "@/views/IceFloorMazeHomeView";
 
 // 画面のつなぎを確かめるのに問題集の全問は要らず、全問の台紙を描くと重いので、各レベルの先頭の数問に絞る。
@@ -63,10 +64,7 @@ describe("IceFloorMazeHomeView", () => {
           path: "/puzzles/ice-floor-maze",
           element: <IceFloorMazeHomeView />,
         },
-        {
-          path: "/puzzles/ice-floor-maze/how-to",
-          element: <p>遊び方の画面</p>,
-        },
+        { path: "/puzzles/:game/how-to", element: <GameHowToView /> },
         {
           path: "/puzzles/ice-floor-maze/tutorial",
           element: <p>チュートリアルの画面</p>,
@@ -109,12 +107,17 @@ describe("IceFloorMazeHomeView", () => {
     );
   });
 
-  test("見出しのメニューからチュートリアルを開けること", async () => {
+  test("遊び方からチュートリアルを開けること", async () => {
     fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
       button: 0,
       ctrlKey: false,
     });
-    fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "チュートリアルで遊んで覚える",
+      }),
+    );
 
     await waitFor(() =>
       expect(router.state.location.pathname).toBe(

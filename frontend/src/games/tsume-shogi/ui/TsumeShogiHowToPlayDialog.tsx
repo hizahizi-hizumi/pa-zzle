@@ -11,6 +11,8 @@ import {
 type TsumeShogiHowToPlayDialogProps = {
   open: boolean;
   onClose: () => void;
+  /** 遊び方を閉じてチュートリアルを開く。開いた画面が渡す。 */
+  onOpenTutorial?: () => void;
 };
 
 const promotions = [
@@ -28,12 +30,14 @@ const promotions = [
 export function TsumeShogiHowToPlayDialog({
   open,
   onClose,
+  onOpenTutorial,
 }: TsumeShogiHowToPlayDialogProps) {
   return (
     <HowToPlayDialog
       open={open}
       description="手前の攻方を指して、玉方の玉を詰ませる。「3手詰」は攻方と玉方の手を合わせた手数で、その手数のうちに詰ませる。"
       onClose={onClose}
+      onOpenTutorial={onOpenTutorial}
     >
       <li>
         <p>攻方は毎手、王手をかける。王手にならない手は指せない。</p>

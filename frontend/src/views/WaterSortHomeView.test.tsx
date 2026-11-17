@@ -10,6 +10,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { waterSortCatalogEntry } from "@/app/game-integration/water-sort/water-sort-catalog-entry";
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
+import { GameHowToView } from "@/views/GameHowToView";
 import { WaterSortHomeView } from "@/views/WaterSortHomeView";
 
 // 画面のつなぎを確かめるのに問題集の全問は要らず、全問の台紙を描くと重いので、各レベルの先頭の数問に絞る。
@@ -61,7 +62,7 @@ describe("WaterSortHomeView", () => {
     router = createMemoryRouter(
       [
         { path: "/puzzles/water-sort", element: <WaterSortHomeView /> },
-        { path: "/puzzles/water-sort/how-to", element: <p>遊び方の画面</p> },
+        { path: "/puzzles/:game/how-to", element: <GameHowToView /> },
         {
           path: "/puzzles/water-sort/tutorial",
           element: <p>チュートリアルの画面</p>,
@@ -122,12 +123,17 @@ describe("WaterSortHomeView", () => {
     });
   });
 
-  test("見出しのメニューからチュートリアルを開けること", async () => {
+  test("遊び方からチュートリアルを開けること", async () => {
     fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
       button: 0,
       ctrlKey: false,
     });
-    fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "チュートリアルで遊んで覚える",
+      }),
+    );
 
     await waitFor(() =>
       expect(router.state.location.pathname).toBe(

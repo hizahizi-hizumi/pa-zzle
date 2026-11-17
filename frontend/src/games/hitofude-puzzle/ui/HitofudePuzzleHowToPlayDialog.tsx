@@ -7,6 +7,8 @@ import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 type HitofudePuzzleHowToPlayDialogProps = {
   open: boolean;
   onClose: () => void;
+  /** 遊び方を閉じてチュートリアルを開く。開いた画面が渡す。 */
+  onOpenTutorial?: () => void;
 };
 
 /**
@@ -21,12 +23,14 @@ const holedBoard = parseHitofudePuzzleBoard(["S . .", ". # .", ". . #"]);
 export function HitofudePuzzleHowToPlayDialog({
   open,
   onClose,
+  onOpenTutorial,
 }: HitofudePuzzleHowToPlayDialogProps) {
   return (
     <HowToPlayDialog
       open={open}
       description="丸い印のマスから、すべてのマスを1回ずつ通る1本の道を引く。"
       onClose={onClose}
+      onOpenTutorial={onOpenTutorial}
     >
       <li className="space-y-2">
         <p>

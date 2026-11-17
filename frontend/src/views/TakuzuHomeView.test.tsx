@@ -4,11 +4,13 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { takuzuCatalogEntry } from "@/app/game-integration/takuzu/takuzu-catalog-entry";
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
+import { GameHowToView } from "@/views/GameHowToView";
 import { TakuzuHomeView } from "@/views/TakuzuHomeView";
 
 // 画面のつなぎを確かめるのに問題集の全問は要らず、全問の台紙を描くと重いので、各レベルの先頭の数問に絞る。
@@ -58,7 +60,7 @@ describe("TakuzuHomeView", () => {
     router = createMemoryRouter(
       [
         { path: "/puzzles/takuzu", element: <TakuzuHomeView /> },
-        { path: "/puzzles/takuzu/how-to", element: <p>遊び方の画面</p> },
+        { path: "/puzzles/:game/how-to", element: <GameHowToView /> },
         {
           path: "/puzzles/takuzu/tutorial",
           element: <p>チュートリアルの画面</p>,
@@ -99,12 +101,17 @@ describe("TakuzuHomeView", () => {
     );
   });
 
-  test("見出しのメニューからチュートリアルを開けること", async () => {
+  test("遊び方からチュートリアルを始めると、遊び方を閉じてチュートリアルを開くこと", async () => {
     fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
       button: 0,
       ctrlKey: false,
     });
-    fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+    fireEvent.click(
+      within(
+        await screen.findByRole("dialog", { name: "バイナリパズルの遊び方" }),
+      ).getByRole("button", { name: "チュートリアルで遊んで覚える" }),
+    );
 
     await waitFor(() =>
       expect(router.state.location.pathname).toBe("/puzzles/takuzu/tutorial"),

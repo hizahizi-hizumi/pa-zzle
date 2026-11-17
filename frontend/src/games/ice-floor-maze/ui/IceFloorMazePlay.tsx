@@ -148,8 +148,12 @@ export function IceFloorMazePlay({
       onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <IceFloorMazeHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <IceFloorMazeHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
       )}
       renderTutorial={({ open, onClose }) => (
         <IceFloorMazeTutorial open={open} onClose={onClose} />

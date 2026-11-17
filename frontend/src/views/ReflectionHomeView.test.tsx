@@ -9,6 +9,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { reflectionCatalogEntry } from "@/app/game-integration/reflection/reflection-catalog-entry";
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
+import { GameHowToView } from "@/views/GameHowToView";
 import { ReflectionHomeView } from "@/views/ReflectionHomeView";
 
 // 画面のつなぎを確かめるのに問題集の全問は要らず、全問の台紙を描くと重いので、各レベルの先頭の数問に絞る。
@@ -60,7 +61,7 @@ describe("ReflectionHomeView", () => {
     router = createMemoryRouter(
       [
         { path: "/puzzles/reflection", element: <ReflectionHomeView /> },
-        { path: "/puzzles/reflection/how-to", element: <p>遊び方の画面</p> },
+        { path: "/puzzles/:game/how-to", element: <GameHowToView /> },
         {
           path: "/puzzles/reflection/tutorial",
           element: <p>チュートリアルの画面</p>,
@@ -101,12 +102,17 @@ describe("ReflectionHomeView", () => {
     );
   });
 
-  test("見出しのメニューからチュートリアルを開けること", async () => {
+  test("遊び方からチュートリアルを開けること", async () => {
     fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
       button: 0,
       ctrlKey: false,
     });
-    fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "チュートリアルで遊んで覚える",
+      }),
+    );
 
     await waitFor(() =>
       expect(router.state.location.pathname).toBe(
