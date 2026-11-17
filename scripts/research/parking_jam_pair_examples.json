@@ -1,0 +1,815 @@
+[
+ {
+  "id": "two-bays",
+  "title": "2枠：判断が無い",
+  "kind": "限界",
+  "bayCount": 2,
+  "solutions": 24,
+  "queue": [],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v1",
+     "row": 2,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v3",
+     "row": 2,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v5",
+     "row": 1,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v6",
+     "row": 3,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v7",
+     "row": 2,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "kMin": 2,
+  "features": {
+   "pathStates": 6,
+   "decisions": 0,
+   "essentialDecisions": 0,
+   "distanceMax": 0,
+   "essentialDistanceMax": 0,
+   "essentialExitsMax": 0,
+   "kinds": {},
+   "essentialKinds": {},
+   "blockingDecides": 0,
+   "widerWins": 0,
+   "losingOptions": 0,
+   "essentialLosingOptions": 0,
+   "chainMax": 0,
+   "onlyUnnaturalWins": 0
+  },
+  "moveDecisions": {
+   "states": 21,
+   "decisionStates": 3,
+   "safeMoves": 34,
+   "losingMoves": 4,
+   "exitsMaxHistogram": {
+    "0": 4
+   }
+  },
+  "dependencies": {
+   "edges": 3,
+   "cyclicColors": 0,
+   "longestChain": 2
+  },
+  "firstDecisions": [],
+  "solution": [
+   "v2",
+   "v5",
+   "v4",
+   "v7",
+   "v3",
+   "v6",
+   "v1",
+   "v0"
+  ],
+  "diagram": " vvvvvvv \n#...4..2<\n#5..4..2<\n#5.73112<\n#5.73.66<\n#...3.0.<\n#.....0.<\n#.....0.<\n ####### ",
+  "note": "最小枠数2。2枠では1台待たせたら次は相方しか出せないので、出せるペアを順に出すだけで解ける。ペアの順は勝ち負けに関係しない。負ける手は、相方 v3 が A の v4 に塞がれている D の v6 を先に出す手などで、出した瞬間に次の手が無くなる（その後に出せる車は0台）。手で追った。"
+ },
+ {
+  "id": "lure-only",
+  "title": "3枠：負ける手は理由の無い保留だけ",
+  "kind": "限界",
+  "bayCount": 3,
+  "solutions": 216,
+  "queue": [],
+  "board": {
+   "width": 6,
+   "height": 6,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 5,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v1",
+     "row": 4,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v2",
+     "row": 2,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 5,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v5",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v6",
+     "row": 1,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v7",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 6
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 6
+    }
+   ]
+  },
+  "kMin": 3,
+  "features": {
+   "pathStates": 10,
+   "decisions": 0,
+   "essentialDecisions": 0,
+   "distanceMax": 0,
+   "essentialDistanceMax": 0,
+   "essentialExitsMax": 0,
+   "kinds": {},
+   "essentialKinds": {},
+   "blockingDecides": 0,
+   "widerWins": 0,
+   "losingOptions": 0,
+   "essentialLosingOptions": 0,
+   "chainMax": 0,
+   "onlyUnnaturalWins": 0
+  },
+  "moveDecisions": {
+   "states": 41,
+   "decisionStates": 8,
+   "safeMoves": 89,
+   "losingMoves": 8,
+   "exitsMaxHistogram": {
+    "0": 4,
+    "1": 1,
+    "2": 2,
+    "3": 1
+   }
+  },
+  "dependencies": {
+   "edges": 4,
+   "cyclicColors": 2,
+   "longestChain": 2
+  },
+  "firstDecisions": [],
+  "solution": [
+   "v3",
+   "v2",
+   "v1",
+   "v5",
+   "v4",
+   "v6",
+   "v0",
+   "v7"
+  ],
+  "diagram": " vvvvvv \n#75.333<\n#756...<\n#.562..<\n#..62..<\n#...1..<\n#000144<\n ###### ",
+  "note": "最小枠数3・余裕0。B の相方 v0 は D の v1 と A の v4 に塞がれ、v1 は C の v2 と D の v3 に塞がれる。勝ち筋は v3 と v2 を待たせて v1 を出し（D 出発）、v5 で C を出発させ、A、B と片付ける。負ける手は、すぐ出せる B の v7 を早く出す1種類だけで、B が1枠を占めたまま D と C を同時に待たせられず、最大3手後に詰む。1色をそろえる最短の出し方だけを考える読み手は v7 を選ばないので、判断局面は0。手で追った。"
+ },
+ {
+  "id": "one-decision",
+  "title": "3枠：判断1つ（典型）",
+  "kind": "代表",
+  "bayCount": 3,
+  "solutions": 45,
+  "queue": [],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v1",
+     "row": 1,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 1,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v4",
+     "row": 2,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v7",
+     "row": 1,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "kMin": 3,
+  "features": {
+   "pathStates": 6,
+   "decisions": 1,
+   "essentialDecisions": 1,
+   "distanceMax": 1,
+   "essentialDistanceMax": 1,
+   "essentialExitsMax": 1,
+   "kinds": {
+    "color": 1
+   },
+   "essentialKinds": {
+    "color": 1
+   },
+   "blockingDecides": 1,
+   "widerWins": 1,
+   "losingOptions": 1,
+   "essentialLosingOptions": 1,
+   "chainMax": 2,
+   "onlyUnnaturalWins": 0
+  },
+  "moveDecisions": {
+   "states": 17,
+   "decisionStates": 4,
+   "safeMoves": 34,
+   "losingMoves": 7,
+   "exitsMaxHistogram": {
+    "0": 5,
+    "3": 2
+   }
+  },
+  "dependencies": {
+   "edges": 4,
+   "cyclicColors": 3,
+   "longestChain": 3
+  },
+  "firstDecisions": [
+   {
+    "before": [],
+    "waiting": [],
+    "departed": 0,
+    "options": [
+     {
+      "exits": [
+       "v3",
+       "v2",
+       "v6"
+      ],
+      "color": "D",
+      "wins": true,
+      "continuation": [
+       "v1",
+       "v0",
+       "v5",
+       "v4",
+       "v7"
+      ],
+      "waitingAfter": [
+       "B"
+      ]
+     },
+     {
+      "exits": [
+       "v5",
+       "v4",
+       "v7"
+      ],
+      "color": "C",
+      "wins": false,
+      "continuation": [
+       "v3"
+      ],
+      "waitingAfter": [
+       "A"
+      ]
+     }
+    ],
+    "losing": [
+     {
+      "kind": "color",
+      "held": 2,
+      "distanceMin": 1,
+      "distanceMax": 1,
+      "exitsMin": 1,
+      "exitsMax": 1,
+      "blockingDecides": true,
+      "widerWins": true
+     }
+    ]
+   }
+  ],
+  "solution": [
+   "v3",
+   "v2",
+   "v6",
+   "v1",
+   "v0",
+   "v5",
+   "v4",
+   "v7"
+  ],
+  "diagram": " vvvvvvv \n#65...33<\n#6571112<\n#647...2<\n#.47...2<\n#.4...0.<\n#.....0.<\n#.....0.<\n ####### ",
+  "note": "最小枠数3・余裕0。初手で、D をそろえる（B の v3 を待たせて v2、v6）か、C をそろえる（A の v5 を待たせて v4、v7）かを選ぶ。C を先にすると A の v5 が枠に残る。A の相方 v1 は D の v2 に、v2 は B の v3 に塞がれているので、v3 と v2 を待たせると3枠が埋まり、1手で詰む。D を先にすれば待つのは B の v3 だけで、v1、v0、v5 と順に片付く。無作為な問題で見つかる判断は、ほぼすべてこの形（待機0台の局面で、2台を待たせる2通りの掘り方のどちらを先にするか、1色出発後に詰む）。手で追った。"
+ },
+ {
+  "id": "deepest",
+  "title": "最も深い問題（山登り）",
+  "kind": "上限",
+  "bayCount": 4,
+  "solutions": 13248,
+  "queue": [],
+  "board": {
+   "width": 8,
+   "height": 8,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v1",
+     "row": 1,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "E"
+    },
+    {
+     "id": "v2",
+     "row": 2,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 7,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 3,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "F"
+    },
+    {
+     "id": "v5",
+     "row": 7,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v6",
+     "row": 1,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "E"
+    },
+    {
+     "id": "v7",
+     "row": 4,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v8",
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v9",
+     "row": 2,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "F"
+    },
+    {
+     "id": "v10",
+     "row": 2,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v11",
+     "row": 6,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 8
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 8
+    }
+   ]
+  },
+  "kMin": 4,
+  "features": {
+   "pathStates": 25,
+   "decisions": 3,
+   "essentialDecisions": 3,
+   "distanceMax": 2,
+   "essentialDistanceMax": 2,
+   "essentialExitsMax": 4,
+   "kinds": {
+    "color": 3
+   },
+   "essentialKinds": {
+    "color": 3
+   },
+   "blockingDecides": 3,
+   "widerWins": 3,
+   "losingOptions": 3,
+   "essentialLosingOptions": 3,
+   "chainMax": 2,
+   "onlyUnnaturalWins": 0
+  },
+  "moveDecisions": {
+   "states": 97,
+   "decisionStates": 19,
+   "safeMoves": 275,
+   "losingMoves": 38,
+   "exitsMaxHistogram": {
+    "0": 16,
+    "3": 4,
+    "4": 8,
+    "5": 8,
+    "6": 2
+   }
+  },
+  "dependencies": {
+   "edges": 7,
+   "cyclicColors": 4,
+   "longestChain": 4
+  },
+  "firstDecisions": [
+   {
+    "before": [],
+    "waiting": [],
+    "departed": 0,
+    "options": [
+     {
+      "exits": [
+       "v2",
+       "v4",
+       "v9"
+      ],
+      "color": "F",
+      "wins": true,
+      "continuation": [
+       "v6",
+       "v8",
+       "v1",
+       "v0",
+       "v11",
+       "v5",
+       "v7",
+       "v3",
+       "v10"
+      ],
+      "waitingAfter": [
+       "A"
+      ]
+     },
+     {
+      "exits": [
+       "v5",
+       "v3",
+       "v10"
+      ],
+      "color": "D",
+      "wins": false,
+      "continuation": [
+       "v2",
+       "v4",
+       "v9",
+       "v6"
+      ],
+      "waitingAfter": [
+       "C"
+      ]
+     },
+     {
+      "exits": [
+       "v6",
+       "v8",
+       "v1"
+      ],
+      "color": "E",
+      "wins": true,
+      "continuation": [
+       "v2",
+       "v4",
+       "v9",
+       "v0",
+       "v11",
+       "v5",
+       "v7",
+       "v3",
+       "v10"
+      ],
+      "waitingAfter": [
+       "B"
+      ]
+     }
+    ],
+    "losing": [
+     {
+      "kind": "color",
+      "held": 2,
+      "distanceMin": 2,
+      "distanceMax": 2,
+      "exitsMin": 2,
+      "exitsMax": 4,
+      "blockingDecides": true,
+      "widerWins": true
+     }
+    ]
+   },
+   {
+    "before": [
+     "v2",
+     "v4",
+     "v9"
+    ],
+    "waiting": [
+     "A"
+    ],
+    "departed": 1,
+    "options": [
+     {
+      "exits": [
+       "v5",
+       "v3",
+       "v10"
+      ],
+      "color": "D",
+      "wins": false,
+      "continuation": [
+       "v6"
+      ],
+      "waitingAfter": [
+       "A",
+       "C"
+      ]
+     },
+     {
+      "exits": [
+       "v6",
+       "v8",
+       "v1"
+      ],
+      "color": "E",
+      "wins": true,
+      "continuation": [
+       "v0",
+       "v11",
+       "v5",
+       "v7",
+       "v3",
+       "v10"
+      ],
+      "waitingAfter": [
+       "A",
+       "B"
+      ]
+     },
+     {
+      "exits": [
+       "v8",
+       "v1",
+       "v0"
+      ],
+      "color": "A",
+      "wins": true,
+      "continuation": [
+       "v6",
+       "v11",
+       "v5",
+       "v7",
+       "v3",
+       "v10"
+      ],
+      "waitingAfter": [
+       "B",
+       "E"
+      ]
+     }
+    ],
+    "losing": [
+     {
+      "kind": "color",
+      "held": 2,
+      "distanceMin": 1,
+      "distanceMax": 1,
+      "exitsMin": 1,
+      "exitsMax": 1,
+      "blockingDecides": true,
+      "widerWins": true
+     }
+    ]
+   }
+  ],
+  "solution": [
+   "v2",
+   "v4",
+   "v9",
+   "v6",
+   "v8",
+   "v1",
+   "v0",
+   "v11",
+   "v5",
+   "v7",
+   "v3",
+   "v10"
+  ],
+  "diagram": " vvvvvvvv \n#......8.<\n#6.111.8.<\n#6a99222.<\n#6a...44.<\n#7770....<\n#...0....<\n#bb.0....<\n#333.555.<\n ######## ",
+  "note": "12台・最小枠数4・余裕0。山登り689回で判断局面3に届いた唯一の問題。D の v3 は C の v5 に塞がれ、C の相方 v7 は A の v0 に、v0 は E の v1 と F の v9 に、v1 は B の v8 に、v9 は A の v2 に塞がれる。勝ち筋は F（v2 を待たせる）、E（v8 を待たせる）を先に出発させて v0 を出し、A、B、C、D の順に片付く。3つの判断局面はどれも「D を先にそろえるか」で、D を先にすると C の v5 が1枠を占めたまま、v0 を掘るのに B・E・A・F を同時に待たせる必要が出て、2色出発した後に詰む。判断は3回あるが、読む内容は1つ。手で追った。"
+ }
+]
