@@ -28,7 +28,7 @@ import {
   isRecordObject,
 } from "@/lib/type-guards";
 
-const NANPURE_PLAY_RECORD_PAYLOAD_VERSION = 2;
+const NANPURE_PLAY_RECORD_PAYLOAD_VERSION = 3;
 const NANPURE_GAME_ID = "nanpure";
 
 type NanpurePlayRecordPayload = {
@@ -37,9 +37,16 @@ type NanpurePlayRecordPayload = {
   performance: NanpureSessionResult;
 };
 
+type NanpurePlayRecordPayloadV2 = Omit<
+  NanpurePlayRecordPayload,
+  "performance"
+> & {
+  performance: Omit<NanpureSessionResult, "digitUndoCount">;
+};
+
 // payloadVersion 1 は3段階（easy / normal / hard）の難易度と、ヒント数を指定した生成器（版 "1"）の問題で記録した。
 type NanpurePlayRecordPayloadV1 = Omit<
-  NanpurePlayRecordPayload,
+  NanpurePlayRecordPayloadV2,
   "difficulty"
 > & {
   difficulty: LegacyDifficulty;
@@ -51,13 +58,22 @@ type NanpurePlayRecordV1 = PlayRecord & {
   payload: NanpurePlayRecordPayloadV1;
 };
 
+type NanpurePlayRecordV2 = PlayRecord & {
+  gameId: typeof NANPURE_GAME_ID;
+  payloadVersion: 2;
+  payload: NanpurePlayRecordPayloadV2;
+};
+
 export type NanpurePlayRecord = PlayRecord & {
   gameId: typeof NANPURE_GAME_ID;
   payloadVersion: typeof NANPURE_PLAY_RECORD_PAYLOAD_VERSION;
   payload: NanpurePlayRecordPayload;
 };
 
-type RecognizedNanpurePlayRecord = NanpurePlayRecordV1 | NanpurePlayRecord;
+type RecognizedNanpurePlayRecord =
+  | NanpurePlayRecordV1
+  | NanpurePlayRecordV2
+  | NanpurePlayRecord;
 
 type CreateNanpurePlayRecordInput = {
   difficulty: NanpureDifficulty;
@@ -67,13 +83,14 @@ type CreateNanpurePlayRecordInput = {
   result: NanpureSessionResult;
 };
 
-function isNanpurePerformance(value: unknown): value is NanpureSessionResult {
+function isNanpurePerformance(value: unknown, version: number): boolean {
   return (
     isRecordObject(value) &&
     isNonNegativeFiniteNumber(value.elapsedMs) &&
     isNonNegativeInteger(value.mistakeCount) &&
     isNonNegativeInteger(value.undoCount) &&
-    isNonNegativeInteger(value.restartCount)
+    isNonNegativeInteger(value.restartCount) &&
+    (version !== 3 || isNonNegativeInteger(value.digitUndoCount))
   );
 }
 
@@ -90,12 +107,13 @@ export function isNanpurePlayRecord(
   const hasExpectedDifficulty =
     record.payloadVersion === 1
       ? parseLegacyDifficulty(recordedDifficulty) !== undefined
-      : record.payloadVersion === NANPURE_PLAY_RECORD_PAYLOAD_VERSION &&
+      : (record.payloadVersion === 2 ||
+          record.payloadVersion === NANPURE_PLAY_RECORD_PAYLOAD_VERSION) &&
         parseDifficultyLevel(recordedDifficulty) !== undefined;
   return (
     hasExpectedDifficulty &&
     isNanpureRecordedProblemIdentity(problemIdentity) &&
-    isNanpurePerformance(performance)
+    isNanpurePerformance(performance, record.payloadVersion)
   );
 }
 
@@ -127,6 +145,7 @@ export function createNanpurePlayRecord({
         elapsedMs: result.elapsedMs,
         mistakeCount: result.mistakeCount,
         undoCount: result.undoCount,
+        digitUndoCount: result.digitUndoCount ?? result.undoCount,
         restartCount: result.restartCount,
       },
     },
@@ -144,7 +163,8 @@ export function restoreNanpureRecordedResult(
 ): NanpureRecordedResult | null {
   if (
     !isNanpurePlayRecord(record) ||
-    record.payloadVersion !== NANPURE_PLAY_RECORD_PAYLOAD_VERSION ||
+    (record.payloadVersion !== 2 &&
+      record.payloadVersion !== NANPURE_PLAY_RECORD_PAYLOAD_VERSION) ||
     !isCurrentNanpureProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;

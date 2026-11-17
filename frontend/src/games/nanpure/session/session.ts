@@ -31,6 +31,7 @@ export type NanpureSession = GameSession<NanpureProblem, NanpureBoard> & {
   history: readonly NanpureSessionSnapshot[];
   mistakeCount: number;
   undoCount: number;
+  digitUndoCount: number;
   restartCount: number;
 };
 
@@ -38,6 +39,7 @@ export type NanpureSessionResult = {
   elapsedMs: number;
   mistakeCount: number;
   undoCount: number;
+  digitUndoCount?: number;
   restartCount: number;
 };
 
@@ -76,6 +78,7 @@ export function createNanpureSession(
     clearedAt: null,
     mistakeCount: 0,
     undoCount: 0,
+    digitUndoCount: 0,
     restartCount: 0,
   };
 }
@@ -177,6 +180,13 @@ export function undoNanpureSession(session: NanpureSession): NanpureSession {
     notes: previous.notes,
     history: session.history.slice(0, -1),
     undoCount: session.undoCount + 1,
+    digitUndoCount:
+      session.digitUndoCount +
+      (previous.puzzleState.some(
+        (digit, index) => digit !== session.puzzleState[index],
+      )
+        ? 1
+        : 0),
   };
 }
 
@@ -242,6 +252,7 @@ export function getNanpureSessionResult(
     elapsedMs,
     mistakeCount: session.mistakeCount,
     undoCount: session.undoCount,
+    digitUndoCount: session.digitUndoCount,
     restartCount: session.restartCount,
   };
 }

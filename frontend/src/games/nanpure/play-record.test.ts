@@ -17,6 +17,7 @@ const performance = {
   elapsedMs: 120_000,
   mistakeCount: 1,
   undoCount: 2,
+  digitUndoCount: 2,
   restartCount: 0,
 };
 
@@ -51,7 +52,7 @@ describe("createNanpurePlayRecord", () => {
   test("完了プレイの事実だけを保存用記録へ写すこと", () => {
     const { payloadVersion, payload } = record;
 
-    expect(payloadVersion).toBe(2);
+    expect(payloadVersion).toBe(3);
     expect(payload).toEqual({
       difficulty: "3",
       problemIdentity: {
@@ -106,7 +107,7 @@ describe("isNanpurePlayRecord", () => {
         payload: { ...threeLevelPayload, difficulty: "1" },
       },
     ],
-    ["知らない payloadVersion", { ...record, payloadVersion: 3 }],
+    ["知らない payloadVersion", { ...record, payloadVersion: 4 }],
     [
       "ミス数が負",
       {
@@ -147,6 +148,34 @@ describe("getNanpurePlayRecordScore", () => {
       expect(score).toBe(expected);
     },
   );
+});
+
+describe("getNanpurePlayRecordScoreの操作回数への依存", () => {
+  const sameAnswerWithManyOperations = {
+    ...record,
+    payload: {
+      ...record.payload,
+      performance: {
+        ...performance,
+        undoCount: 100,
+        digitUndoCount: 100,
+        restartCount: 10,
+      },
+    },
+  };
+
+  test("数字を戻す待ったは減点し、旧形式の保存記録も採点できること", () => {
+    const original = getNanpurePlayRecordScore(record);
+    const withOperations = getNanpurePlayRecordScore(
+      sameAnswerWithManyOperations,
+    );
+    const legacyScore = isNanpurePlayRecord(threeLevelRecord)
+      ? getNanpurePlayRecordScore(threeLevelRecord)
+      : null;
+
+    expect(original).toBeGreaterThan(withOperations);
+    expect(legacyScore).toBe(96);
+  });
 });
 
 describe("nanpurePlayRecordDefinition", () => {
