@@ -16,6 +16,10 @@ type MinesweeperBoardGridProps = Pick<
 };
 
 const BOARD_GRID_CLASS_NAME = "grid w-full gap-[4px] p-[8px]";
+
+/** `BOARD_GRID_CLASS_NAME` のマスの間と、縁の内側の余白（両側の合計）。盤面の幅を外から求めるときに使う。 */
+export const MINESWEEPER_BOARD_GAP_PX = 4;
+export const MINESWEEPER_BOARD_PADDING_INLINE_PX = 16;
 const BOARD_SURFACE_CLASS_NAME =
   "rounded-[6px] bg-[#a7b2c0] shadow-[0_2px_0_#8796a8,0_8px_16px_#52657b1f,inset_0_1px_0_#f7f9fc,inset_0_-1px_0_#909fb24d] dark:bg-[#2d3a4c] dark:shadow-[0_2px_0_#172333,0_8px_16px_#04091566,inset_0_1px_0_#7b8da34a,inset_0_-1px_0_#10192680]";
 

@@ -27,10 +27,9 @@ function getCellKey(row: number, column: number): string {
   return `${row}:${column}`;
 }
 
-const hiddenFaceClassName = getMinesweeperCellFaceClassName(
-  { state: "hidden" },
-  "board",
-);
+const hiddenFaceClassName = getMinesweeperCellFaceClassName({
+  state: "hidden",
+});
 
 /**
  * 解き終えた盤面に、始めの盤面で開いていないマスの面を左上から順に重ねて、始めの盤面へ戻す。
