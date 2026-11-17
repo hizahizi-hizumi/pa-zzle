@@ -2,11 +2,12 @@
 
 Usage (from scripts/research):
     python3 parking_jam_pair_study.py survey --seed 740 --count 300 --output <survey.json>
-    python3 parking_jam_pair_study.py climb --seed 740 --seconds 240 --output <climb.json>
-    python3 parking_jam_pair_study.py variant --seed 740 --count 300 --output <variant.json>
-    python3 parking_jam_pair_study.py digest <survey.json> <climb.json> <variant.json> --output parking_jam_pair.expected.json
+    python3 parking_jam_pair_study.py survey --seed 740 --count 150 --per-color 3 --output <v3.json>
+    python3 parking_jam_pair_study.py survey --seed 740 --count 150 --per-color 4 --group 2 --output <v42.json>
+    python3 parking_jam_pair_study.py climb --seed 740 --seconds 120 --output <climb.json>
+    python3 parking_jam_pair_study.py digest <survey.json> <climb.json> <v3.json> <v42.json> --output parking_jam_pair.expected.json
     python3 parking_jam_pair_study.py frontend-cases --output <cases.json>
-    python3 parking_jam_pair_study.py examples --climb <climb.json> --output parking_jam_pair_examples.json
+    python3 parking_jam_pair_study.py examples --output parking_jam_pair_examples.json
 """
 from __future__ import annotations
 

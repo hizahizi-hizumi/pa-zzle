@@ -253,6 +253,42 @@ def project_compressed(game: PassengerGame, state: State) -> tuple:
     return state[0], game.progress(state), rows
 
 
+def decision_type(kind: str, same_length: bool, essential: bool, swap: str | None) -> str:
+    """sameCapacityTwin, capacityAndBlocking, positionOnlyTwin, queueOnlyTwin, unplayableSwap, route, other, order."""
+    if kind != "twin":
+        return kind
+    if same_length:
+        return "sameCapacityTwin"
+    if not essential:
+        return "queueOnlyTwin"
+    return {"capacity": "capacityAndBlocking", "position": "positionOnlyTwin"}.get(swap, "unplayableSwap")
+
+
+def plan_order(game: PassengerGame, state: State, outcome: State) -> list[int]:
+    """One exit order from `state` to the plan outcome `outcome`."""
+    parents: dict[State, tuple[State, int] | None] = {state: None}
+    frontier = [state]
+    while frontier:
+        following = []
+        for s in frontier:
+            for i in game.moves(s):
+                child = game.step(s, i)
+                if child in parents:
+                    continue
+                parents[child] = (s, i)
+                if child == outcome:
+                    order = []
+                    node = child
+                    while parents[node] is not None:
+                        node, car = parents[node]
+                        order.append(car)
+                    return order[::-1]
+                if game.progress(child) == game.progress(state):
+                    following.append(child)
+        frontier = following
+    raise ValueError("outcome is not reachable within one plan")
+
+
 @dataclass(frozen=True)
 class Plan:
     outcome: State
@@ -276,6 +312,7 @@ class PassengerReading:
         self.skip_buried_twin = skip_buried_twin
         self.with_reasons = with_reasons
         self._plans: dict[State, tuple[Plan, ...]] = {}
+        self._every: dict[State, tuple[Plan, ...]] = {}
         self._natural: dict[State, tuple[Plan, ...]] = {}
         self._survival: dict[State, tuple[int, int]] = {}
 
@@ -305,11 +342,23 @@ class PassengerReading:
         exit_sets = set(hits.values())
         minimal = {e for e in exit_sets if not any(o != e and o & e == o for o in exit_sets)}
         head = game.color_mask[game.queue_colors[base]]
-        result = tuple(sorted(
-            (Plan(outcome, exits, (exits & head).bit_length() - 1) for outcome, exits in hits.items() if exits in minimal),
-            key=lambda p: (p.exits, p.outcome)))
+        every = tuple(sorted((Plan(outcome, exits, (exits & head).bit_length() - 1) for outcome, exits in hits.items()),
+                             key=lambda p: (p.exits, p.outcome)))
+        result = tuple(p for p in every if p.exits in minimal)
+        self._every[state] = every
         self._plans[state] = result
         return result
+
+    def follow(self, state: State) -> list[Plan]:
+        """Plans the reader takes on its path: winning natural plans, else winning minimal plans, else
+        winning plans that also exit cars not needed for this advance (needed when a same-color car must
+        arrive first)."""
+        game = self.game
+        for options in (self.natural(state), self.plans(state), self._every[state]):
+            winners = [p for p in options if game.wins(p.outcome)]
+            if winners:
+                return winners
+        return []
 
     def natural(self, state: State) -> tuple[Plan, ...]:
         cached = self._natural.get(state)
@@ -334,8 +383,7 @@ class PassengerReading:
         for state in order:
             if state[0] == 0:
                 continue
-            winners = [p.outcome for p in self.natural(state) if game.wins(p.outcome)]
-            for child in winners or [p.outcome for p in self.plans(state) if game.wins(p.outcome)]:
+            for child in (p.outcome for p in self.follow(state)):
                 if child not in seen:
                     seen.add(child)
                     order.append(child)
@@ -385,6 +433,40 @@ class PassengerReading:
             pressure = PassengerGame(game.sides, game.colors, game.lengths, game.queue, game.bays + more).wins(loser.outcome)
         return {(True, True): "AB", (True, False): "A", (False, True): "B"}.get((direct, pressure), "unknown")
 
+    def capacity_swap(self, state: State, loser: Plan, winners: list[Plan]) -> str | None:
+        outcomes = self.capacity_swap_outcomes(state, loser, winners)
+        if outcomes is None or isinstance(outcomes, str):
+            return outcomes
+        return "position" if outcomes == (True, False) else "capacity"
+
+    def capacity_swap_outcomes(self, state: State, loser: Plan, winners: list[Plan]):
+        """(winner still wins, loser now wins) after swapping the capacities of the losing twin and a winning twin.
+
+        The two cars are still on the board at the decision, so the state means the same
+        in the swapped game. None: no winning twin of another capacity. `unplayable`: a
+        plan cannot be replayed under the swapped capacities. `capacity_swap` reads
+        (True, False) as `position` (positions alone decide) and anything else as `capacity`.
+        """
+        game = self.game
+        partners = [w for w in winners if w.head_car != loser.head_car
+                    and game.lengths[w.head_car] != game.lengths[loser.head_car]]
+        if not partners:
+            return None
+        partner = min(partners, key=lambda w: (w.head_car, w.exits))
+        lengths = list(game.lengths)
+        a, b = loser.head_car, partner.head_car
+        lengths[a], lengths[b] = lengths[b], lengths[a]
+        swapped = PassengerGame(game.sides, game.colors, lengths, game.queue, game.bays)
+        outcomes = []
+        for plan in (partner, loser):
+            current = state
+            for car in plan_order(game, state, plan.outcome):
+                if car not in swapped.moves(current):
+                    return "unplayable"
+                current = swapped.step(current, car)
+            outcomes.append(swapped.wins(current))
+        return tuple(outcomes)
+
     def decision(self, state: State) -> dict[str, object] | None:
         game = self.game
         natural = self.natural(state)
@@ -393,17 +475,23 @@ class PassengerReading:
         losers = [p for p in natural if not game.wins(p.outcome)]
         if not losers:
             return None
-        fallback = winners or [p for p in self.plans(state) if game.wins(p.outcome)]
+        fallback = winners or self.follow(state)
         base = game.progress(state)
         remaining = len(game.queue) - base
         items = []
         for p in losers:
             survival = self.survival(p.outcome)
             twin_lengths = {game.lengths[w.head_car] for w in fallback}
+            kind = self.kind(p, winners)
+            same_length = game.lengths[p.head_car] in twin_lengths
+            essential = self.free.wins(p.outcome)
+            swap = self.capacity_swap(state, p, winners) if kind == "twin" and not same_length else None
             items.append({
-                "kind": self.kind(p, winners),
-                "sameLength": game.lengths[p.head_car] in twin_lengths,
-                "blockingEssential": self.free.wins(p.outcome),
+                "kind": kind,
+                "sameLength": same_length,
+                "blockingEssential": essential,
+                "capacitySwap": swap,
+                "type": decision_type(kind, same_length, essential, swap),
                 "reason": self.reason(state, p, fallback) if self.with_reasons else None,
                 "distanceMin": survival[0] - base,
                 "distanceMax": survival[1] - base,
@@ -446,6 +534,8 @@ class PassengerReading:
             "losingOptions": len(losing),
             "essentialOptions": sum(x["blockingEssential"] for x in losing),
             "kinds": dict(Counter(x["kind"] for x in losing)),
+            "types": dict(Counter(x["type"] for x in losing)),
+            "typeStates": dict(Counter(t for d in decisions for t in {x["type"] for x in d["losing"]})),
             "kindsEssential": dict(Counter(x["kind"] for x in losing if x["blockingEssential"])),
             "twinSameLength": sum(x["kind"] == "twin" and x["sameLength"] for x in losing),
             "reasons": dict(Counter(x["reason"] for x in losing)),
@@ -456,6 +546,35 @@ class PassengerReading:
             "onlyUnnaturalWins": sum(d["winningNatural"] == 0 for d in decisions),
             "detail": decisions,
         }
+
+
+def path_profile(reading: PassengerReading) -> dict[str, int]:
+    """Fewest and most decisions (and capacity-and-blocking decisions) met on one run of the reader's winning path.
+
+    The summary counts decision states over the union of all winning paths, which grows with
+    the number of equivalent paths; this counts what a single run must face.
+    """
+    game = reading.game
+    summary = reading.summary()
+    types = {d["state"]: {x["type"] for x in d["losing"]} for d in summary["detail"]}
+    cache: dict[State, tuple[int, int, int, int]] = {}
+
+    def visit(state: State) -> tuple[int, int, int, int]:
+        if state[0] == 0:
+            return 0, 0, 0, 0
+        cached = cache.get(state)
+        if cached is None:
+            ends = [visit(child) for child in dict.fromkeys(p.outcome for p in reading.follow(state))]
+            here = int(state in types)
+            capacity = int("capacityAndBlocking" in types.get(state, ()))
+            cached = (here + min(e[0] for e in ends), here + max(e[1] for e in ends),
+                      capacity + min(e[2] for e in ends), capacity + max(e[3] for e in ends))
+            cache[state] = cached
+        return cached
+
+    fewest, most, fewest_capacity, most_capacity = visit(game.start)
+    return {"decisionsOnRunMin": fewest, "decisionsOnRunMax": most,
+            "capacityAndBlockingOnRunMin": fewest_capacity, "capacityAndBlockingOnRunMax": most_capacity}
 
 
 @dataclass

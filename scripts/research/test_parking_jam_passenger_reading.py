@@ -21,6 +21,7 @@ from parking_jam_passenger_reading import (
     canonical,
     generate_board,
     order_queue,
+    path_profile,
     project_compressed,
     shuffled_queue,
     structural_canonical,
@@ -52,6 +53,8 @@ class NaiveReading:
         self.wins = lru_cache(None)(self._wins)
         self.reach = lru_cache(None)(self._reach)
         self.survival = lru_cache(None)(self._survival)
+        self.orders = {}
+        self.every = {}
 
     def _wins(self, state) -> bool:
         return self.game.won(state) or any(self.wins(self.game.step(state, i)) for i in self.game.moves(state))
@@ -65,19 +68,53 @@ class NaiveReading:
     def plans(self, state) -> list[tuple[frozenset, object, int]]:
         found = {}
 
-        def walk(s, exited):
+        def walk(s, order):
             for i in self.game.moves(s):
                 child = self.game.step(s, i)
                 if child[2] > state[2]:
                     if self.alive(child):
-                        found.setdefault((frozenset(exited | {i}), self.game.project(child)), (child, i))
+                        found.setdefault((frozenset(order) | {i}, self.game.project(child)), (child, i, (*order, i)))
                 else:
-                    walk(child, exited | {i})
+                    walk(child, (*order, i))
 
-        walk(state, frozenset())
+        walk(state, ())
         sets = {key[0] for key in found}
         minimal = {e for e in sets if not any(o < e for o in sets)}
-        return [(e, child, head) for (e, _), (child, head) in found.items() if e in minimal]
+        self.orders.update({(id(state), e, self.game.project(child)): order
+                            for (e, _), (child, _, order) in found.items()})
+        self.every[id(state)] = [(e, child, head) for (e, _), (child, head, _) in found.items()]
+        return [(e, child, head) for (e, _), (child, head, _) in found.items() if e in minimal]
+
+    def follow(self, state, natural):
+        for options in (natural, self.plans(state), self.every[id(state)]):
+            winners = [p for p in options if self.wins(p[1])]
+            if winners:
+                return winners
+        return []
+
+    def swap_type(self, state, loser, winners) -> str:
+        """Twin of another capacity, rescued without blocking: does swapping the capacities keep the answer?"""
+        lengths = self.problem.lengths
+        partners = [w for w in winners if w[2] != loser[2] and lengths[w[2]] != lengths[loser[2]]]
+        partner = min(partners, key=lambda w: (w[2], sum(1 << i for i in w[0])))
+        swapped_lengths = list(lengths)
+        swapped_lengths[loser[2]], swapped_lengths[partner[2]] = lengths[partner[2]], lengths[loser[2]]
+        swapped = ExplicitPassengerGame(self.game.sides, self.problem.colors, swapped_lengths, self.problem.queue,
+                                        self.bays)
+
+        @lru_cache(None)
+        def wins(s) -> bool:
+            return swapped.won(s) or any(wins(swapped.step(s, i)) for i in swapped.moves(s))
+
+        results = []
+        for exits, child, _ in (partner, loser):
+            current = state
+            for car in self.orders[(id(state), exits, self.game.project(child))]:
+                if car not in swapped.moves(current):
+                    return "unplayableSwap"
+                current = swapped.step(current, car)
+            results.append(wins(current))
+        return "positionOnlyTwin" if results == [True, False] else "capacityAndBlocking"
 
     def natural(self, state):
         plans = self.plans(state)
@@ -102,13 +139,14 @@ class NaiveReading:
         order, seen = [start], {self.game.project(start)}
         forced = free_choice = 0
         decisions = []
+        decision_types = {}
         for state in order:
             if not state[0]:
                 continue
             natural = self.natural(state)
             winners = [p for p in natural if self.wins(p[1])]
             losers = [p for p in natural if not self.wins(p[1])]
-            follow = winners or [p for p in self.plans(state) if self.wins(p[1])]
+            follow = winners or self.follow(state, natural)
             for _, child, _ in follow:
                 if self.game.project(child) not in seen:
                     seen.add(self.game.project(child))
@@ -130,13 +168,27 @@ class NaiveReading:
                 else:
                     kind = "twin"
                 survival = self.survival(child)
-                items.append({"kind": kind, "essential": free_game.wins(child),
+                essential = free_game.wins(child)
+                same = any(self.problem.lengths[w[2]] == self.problem.lengths[head] for w in follow)
+                if kind != "twin":
+                    kind_type = kind
+                elif same:
+                    kind_type = "sameCapacityTwin"
+                elif not essential:
+                    kind_type = "queueOnlyTwin"
+                else:
+                    kind_type = self.swap_type(state, (exits, child, head), winners)
+                items.append({"kind": kind, "essential": essential, "type": kind_type,
                               "reason": self.reason(exits, child, follow),
                               "distanceMax": survival[1] - state[2],
                               "visible": self.reach(child) - state[2] + 1})
             decisions.append(items)
+            decision_types[self.game.project(state)] = {x["type"] for x in items}
         losing = [x for d in decisions for x in d]
+        run = self.run_profile(start, decision_types)
         return {
+            "decisionsOnRunMin": run[0], "decisionsOnRunMax": run[1],
+            "capacityAndBlockingOnRunMin": run[2], "capacityAndBlockingOnRunMax": run[3],
             "pathStates": forced + free_choice + len(decisions),
             "forcedStates": forced,
             "freeChoiceStates": free_choice,
@@ -145,10 +197,32 @@ class NaiveReading:
             "queueDecisions": sum(not any(x["essential"] for x in d) for d in decisions),
             "essentialOptions": sum(x["essential"] for x in losing),
             "kinds": dict(Counter(x["kind"] for x in losing)),
+            "types": dict(Counter(x["type"] for x in losing)),
             "reasons": dict(Counter(x["reason"] for x in losing)),
             "distanceMax": max((x["distanceMax"] for x in losing), default=0),
             "visibleMax": max((x["visible"] for x in losing), default=0),
         }
+
+    def run_profile(self, start, decision_types) -> tuple[int, int, int, int]:
+        """Fewest/most decisions and capacity-and-blocking decisions over every run along winning plans."""
+        @lru_cache(None)
+        def visit(key):
+            state = representatives[key]
+            if not state[0]:
+                return 0, 0, 0, 0
+            natural = self.natural(state)
+            follow = [c for _, c, _ in self.follow(state, natural)]
+            ends = []
+            for child in follow:
+                representatives.setdefault(self.game.project(child), child)
+                ends.append(visit(self.game.project(child)))
+            types = decision_types.get(key, set())
+            here, capacity = int(key in decision_types), int("capacityAndBlocking" in types)
+            return (here + min(e[0] for e in ends), here + max(e[1] for e in ends),
+                    capacity + min(e[2] for e in ends), capacity + max(e[3] for e in ends))
+
+        representatives = {self.game.project(start): start}
+        return visit(self.game.project(start))
 
     def reason(self, exits, child, winners) -> str:
         if not winners:
@@ -243,6 +317,23 @@ def test_同色で定員の違う2台は先に待機した側から乗るので�
     assert (game.waiting(short_first), game.waiting(long_first)) == (1, 2)
 
 
+def favorable_problems_with_decisions(seed: int, count: int) -> list[PassengerProblem]:
+    """Mixed capacities, shuffled queue, two adjacent or one open side: where capacity-and-blocking decisions occur."""
+    rng = random.Random(seed)
+    chosen = []
+    while len(chosen) < count:
+        openings = OPENINGS_BY_NAME[rng.choice(["adjacent2", "one"])]
+        n = rng.choice([7, 8])
+        board = generate_board(rng, n, 6, openings, 0.5)
+        colors = assign_colors(rng, n, rng.choice(["3", "pairs"]))
+        problem = PassengerProblem(board, 6, openings, colors, [])
+        problem.queue = shuffled_queue(rng, colors, problem.lengths)
+        k_min = problem.minimum_bays()
+        if k_min is not None and k_min <= 4 and PassengerReading(problem.game(k_min)).summary()["decisions"]:
+            chosen.append(problem)
+    return chosen
+
+
 def problems_with_decisions(seed: int, count: int) -> list[PassengerProblem]:
     """Random 7-8 car problems whose slack-0 reading has a decision, so the comparison is not vacuous."""
     chosen = []
@@ -255,7 +346,8 @@ def problems_with_decisions(seed: int, count: int) -> list[PassengerProblem]:
     return chosen
 
 
-@pytest.mark.parametrize("problem", sample_problems(738, 30, cars=(6, 7)) + problems_with_decisions(11, 30),
+@pytest.mark.parametrize("problem", sample_problems(738, 30, cars=(6, 7)) + problems_with_decisions(11, 30)
+                         + favorable_problems_with_decisions(12, 30),
                          ids=lambda p: f"{len(p.colors)}台{''.join(p.colors)}")
 @pytest.mark.parametrize("extra", [0, 1], ids=["余裕0", "余裕1"])
 def test_読み手の判断局面と負ける理由の数え方が素朴な実装と一致すること(problem, extra):
@@ -263,7 +355,8 @@ def test_読み手の判断局面と負ける理由の数え方が素朴な実�
     if k_min is None:
         pytest.skip("駐車場から全車を出せない")
 
-    summary = PassengerReading(problem.game(k_min + extra)).summary()
+    reading = PassengerReading(problem.game(k_min + extra))
+    summary = {**reading.summary(), **path_profile(reading)}
     naive = NaiveReading(problem, k_min + extra).summary()
 
     assert {k: summary[k] for k in naive} == naive
