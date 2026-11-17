@@ -8,7 +8,7 @@ import clearedTrace5SoundUrl from "@/games/hitofude-puzzle/assets/sounds/cleared
 import pathExtendedSoundUrl from "@/games/hitofude-puzzle/assets/sounds/path-extended.flac";
 import pathShortenedSoundUrl from "@/games/hitofude-puzzle/assets/sounds/path-shortened.flac";
 import type { HitofudePuzzlePathNotice } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
-import { getClearTraceDurationMs } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/play-clear-trace";
+import { getClearTraceDurationMs } from "@/games/hitofude-puzzle/ui/board/play-clear-trace";
 import type { GameProgress } from "@/games/play";
 import {
   useClearSound,
