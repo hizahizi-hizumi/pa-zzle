@@ -110,8 +110,7 @@
           "length": 7
         }
       ]
-    },
-    "level": 0
+    }
   },
   {
     "id": "queue",
@@ -218,8 +217,7 @@
           "length": 7
         }
       ]
-    },
-    "level": 0
+    }
   },
   {
     "id": "boundary",
@@ -330,8 +328,7 @@
           "length": 7
         }
       ]
-    },
-    "level": 0
+    }
   },
   {
     "id": "counter",
@@ -439,8 +436,7 @@
           "length": 6
         }
       ]
-    },
-    "level": 0
+    }
   },
   {
     "id": "capacity-blocking-1",
@@ -550,8 +546,7 @@
           "length": 6
         }
       ]
-    },
-    "level": 0
+    }
   },
   {
     "id": "capacity-blocking-2",
@@ -665,8 +660,7 @@
           "length": 6
         }
       ]
-    },
-    "level": 0
+    }
   },
   {
     "id": "same-capacity",
@@ -778,8 +772,7 @@
           "length": 6
         }
       ]
-    },
-    "level": 0
+    }
   },
   {
     "id": "boundary-queue",
@@ -890,7 +883,6 @@
           "length": 6
         }
       ]
-    },
-    "level": 0
+    }
   }
 ]

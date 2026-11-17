@@ -237,7 +237,6 @@ def analyze_problem(row: dict) -> dict:
     exp_legal_ratio = 0.0  # 残りの車のうち出せる車の割合（手番平均）
     exp_tap_success = 0.0  # 残りの車と、その車軸の2方向から無作為に1つ押したときに出せる確率（手番平均）
     exp_single_steps = 0.0  # 出せる車が1台だけの手番の数
-    exp_min_legal = 0.0  # 1プレイ中の、出せる車の最少台数（期待値ではなく後で分布を取る）
     for s in sorted(reachable, key=popcount, reverse=True):
         p = prob.get(s, 0.0)
         if not s or p == 0.0:
@@ -272,7 +271,6 @@ def analyze_problem(row: dict) -> dict:
     two_way = sum(1 for row_ in model.open_masks if len(row_) == 2)
     initial_legal = len(model.legal_vehicles(full))
     initial_moves = len(model.legal_moves(full))
-    # 初期に塞がれている車のうち、車にだけ塞がれている車（固定物・壁は、開いている側の車を待つことで解ける）
     return {
         "level": row["level"],
         "problemId": row["problemId"],
@@ -312,6 +310,11 @@ def quantiles(values: list[float]) -> list[float]:
     return [round(q(0.1), 3), round(median(xs), 3), round(q(0.9), 3)]
 
 
+def first_layer(row: dict) -> int:
+    """最初から出せる車の数。出せる車が無い盤面では 0。"""
+    return row["layers"][0] if row["layers"] else 0
+
+
 def summarize(results: list[dict]) -> dict:
     out: dict = {"total": len(results)}
     out["allLevels"] = {
@@ -343,9 +346,9 @@ def summarize(results: list[dict]) -> dict:
             "wallDirectionsPerVehicle_p10_med_p90": quantiles([r["wallDirections"] / r["n"] for r in rs]),
             "twoWayVehicleRatio_p10_med_p90": quantiles([r["twoWayVehicles"] / r["n"] for r in rs]),
             "fixedDirectionProblems": sum(1 for r in rs if r["fixedDirections"] > 0),
-            "firstLayerShare_p10_med_p90": quantiles([r["layers"][0] / r["n"] for r in rs]),
+            "firstLayerShare_p10_med_p90": quantiles([first_layer(r) / r["n"] for r in rs]),
             # 依存の深い車は、すぐ出せる車を出し尽くした後の少数の残りに現れる
-            "remainingAfterFirstLayer_p10_med_p90": quantiles([r["n"] - r["layers"][0] for r in rs]),
+            "remainingAfterFirstLayer_p10_med_p90": quantiles([r["n"] - first_layer(r) for r in rs]),
             "remainingAfterSecondLayer_p10_med_p90": quantiles([r["n"] - sum(r["layers"][:2]) for r in rs]),
         }
         if feats:
@@ -356,7 +359,7 @@ def summarize(results: list[dict]) -> dict:
                 1 for r in rs if r["features"] and r["features"]["initialLegalVehicleCount"] == r["initialLegal"]
             )
             lv["misreadRatio_p10_med_p90"] = quantiles(
-                [f["misreadInducingVehicleCount"] / r["n"] for r, f in zip(rs, feats)]
+                [r["features"]["misreadInducingVehicleCount"] / r["n"] for r in rs if r["features"]]
             )
             lv["maxPrereq_p10_med_p90"] = quantiles([f["maximumPrerequisiteVehicleCount"] for f in feats])
             lv["prodAverageLegalRatio_p10_med_p90"] = quantiles([f["averageLegalVehicleRatio"] for f in feats])

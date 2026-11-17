@@ -13,7 +13,7 @@ import type {
 type ExportedProblem = {
   id: string;
   title: string;
-  level: number;
+  level?: number;
   kind: string;
   bayCount: number;
   solutions: number;
@@ -36,7 +36,8 @@ type ExportedProblem = {
 export type DispatchLevelProblem = {
   id: string;
   title: string;
-  level: number;
+  /** 出庫指令型の問題例だけが持つ、機械的な基準による仮のレベル。 */
+  level?: number;
   kind: string;
   /** 研究用スクリプトが厳密探索で数えた、クリアできる出庫順の数。 */
   solutions: number;

@@ -88,8 +88,7 @@
           "length": 7
         }
       ]
-    },
-    "level": 0
+    }
   },
   {
     "id": "lure-only",
@@ -180,8 +179,7 @@
           "length": 6
         }
       ]
-    },
-    "level": 0
+    }
   },
   {
     "id": "one-decision",
@@ -272,8 +270,7 @@
           "length": 7
         }
       ]
-    },
-    "level": 0
+    }
   },
   {
     "id": "deepest",
@@ -396,7 +393,6 @@
           "length": 8
         }
       ]
-    },
-    "level": 0
+    }
   }
 ]
