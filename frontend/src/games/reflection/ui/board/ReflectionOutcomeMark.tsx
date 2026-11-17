@@ -1,8 +1,8 @@
 import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
 import { cn } from "@/lib/utils";
 
-/** `clue` は外周ヒントの中で盤面の大きさに合わせる。`inline` は文中、`figure` は遊び方の図。 */
-type ReflectionOutcomeMarkSize = "clue" | "inline" | "figure";
+/** `clue` は外周ヒントの中で盤面の大きさに合わせる。`legend` は遊び方の例の下の言葉に添える。 */
+type ReflectionOutcomeMarkSize = "clue" | "legend";
 
 type ReflectionOutcomeMarkProps = {
   outcome: ReflectionOutcome;
@@ -11,8 +11,7 @@ type ReflectionOutcomeMarkProps = {
 
 const sizeClassNames = {
   clue: "size-[min(max(calc(var(--reflection-unit)*0.26),0.4375rem),calc(var(--reflection-unit)*0.3),1rem)]",
-  inline: "size-3",
-  figure: "size-3.5",
+  legend: "size-3.5",
 } as const satisfies Record<ReflectionOutcomeMarkSize, string>;
 
 /**
@@ -41,7 +40,7 @@ export function ReflectionOutcomeMark({
 }
 
 /** 12×12 の座標で描く。 */
-export function renderReflectionOutcomeShape(outcome: ReflectionOutcome) {
+function renderReflectionOutcomeShape(outcome: ReflectionOutcome) {
   switch (outcome) {
     case "exit":
       return (

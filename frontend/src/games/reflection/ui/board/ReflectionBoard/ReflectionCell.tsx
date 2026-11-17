@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import type { TapHandlers } from "@/components/touch-tap";
 import {
@@ -30,6 +30,11 @@ type ReflectionCellProps = {
   onFocus: (key: string) => void;
   focusKey: string;
   cues?: readonly ReflectionCue[];
+  /**
+   * 描き始めたときから置いてあるピースを、現れる動き無しで描く。マスの中身が一度でも変わった後は、置いた手のピースを現れさせる。
+   * 最初からピースを置いて始める盤面（遊び方の例）で、開いたときや最初の姿に戻したときにピースが現れ直さないようにする。
+   */
+  initialPieceStill?: boolean;
 };
 
 export function ReflectionCell({
@@ -44,8 +49,14 @@ export function ReflectionCell({
   onFocus,
   focusKey,
   cues = [],
+  initialPieceStill = false,
 }: ReflectionCellProps) {
   const { row, column } = getReflectionCellPosition(size, cellIndex);
+  const [initialCell] = useState(cell);
+  const [cellChanged, setCellChanged] = useState(false);
+  if (!cellChanged && cell !== initialCell) {
+    setCellChanged(true);
+  }
   const content = cell === null ? "空き" : reflectionPieceLabels[cell];
   const buttonRef = useCallback(
     (element: HTMLButtonElement | null) => onElementChange(focusKey, element),
@@ -66,7 +77,7 @@ export function ReflectionCell({
       onFocus={() => onFocus(focusKey)}
       className="relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"
     >
-      <ReflectionCueLayer cues={cues} place="cell" />
+      <ReflectionCueLayer cues={cues} place="cell" cell={cell} />
       {selected && cell !== null ? (
         <span
           aria-hidden="true"
@@ -79,7 +90,12 @@ export function ReflectionCell({
         />
       ) : null}
       {cell !== null ? (
-        <ReflectionPieceIcon key={cell} piece={cell} size="cell" appearing />
+        <ReflectionPieceIcon
+          key={cell}
+          piece={cell}
+          size="cell"
+          appearing={!initialPieceStill || cellChanged}
+        />
       ) : null}
     </button>
   );

@@ -4,30 +4,30 @@ import type { ReflectionPiece } from "@/games/reflection/puzzle/board";
 import { reflectionPieceToneClassNames } from "@/games/reflection/ui/reflection-tone";
 import { cn } from "@/lib/utils";
 
-/** `cell` は盤面のマス、`stock` はストックのボタン、`figure` は遊び方の図。 */
-type ReflectionPieceIconSize = "cell" | "stock" | "figure";
+/** `cell` は盤面のマス、`stock` はストックのボタン。 */
+type ReflectionPieceIconSize = "cell" | "stock";
 
 type ReflectionPieceIconProps = {
   piece: ReflectionPiece;
   size: ReflectionPieceIconSize;
+  /** 描き始めたときに、その場で現れる動きを1回流す。現れ直させるときは `key` を替えて描き直す。 */
   appearing?: boolean;
 };
 
 const sizeClassNames = {
   cell: "size-[80%]",
   stock: "size-6",
-  figure: "size-7",
 } as const satisfies Record<ReflectionPieceIconSize, string>;
 
 const appearingClassName =
   "animate-in fade-in-0 zoom-in-75 duration-(--duration-normal) motion-reduce:animate-none";
 
-export const REFLECTION_PIECE_STROKE_WIDTH = 10;
+const REFLECTION_PIECE_STROKE_WIDTH = 10;
 /** 光路の線の上に描くとき、ピースの周りに背景色の縁を取って形を切り離す幅。 */
-export const REFLECTION_PIECE_HALO_WIDTH = 8;
+const REFLECTION_PIECE_HALO_WIDTH = 8;
 
 /** 7×7 を 320px 幅で表示すると1マスが約34pxになるため、線と面だけの単純な形で光学機能を表す。 */
-export function renderReflectionPieceShape(
+function renderReflectionPieceShape(
   piece: ReflectionPiece,
   extra = 0,
 ): ReactNode {
@@ -80,6 +80,7 @@ export function ReflectionPieceIcon({
         reflectionPieceToneClassNames[piece],
         appearing && appearingClassName,
       )}
+      data-appearing={appearing ? "" : undefined}
       fill="none"
       stroke="currentColor"
       strokeWidth={REFLECTION_PIECE_STROKE_WIDTH}

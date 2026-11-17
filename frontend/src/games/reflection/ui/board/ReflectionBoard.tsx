@@ -50,6 +50,10 @@ type ReflectionBoardProps = {
   onRemovePiece: (cellIndex: number) => void;
   onClearAnimationComplete: () => void;
   cues?: readonly ReflectionCue[];
+  /** 渡すと、この外周の位置の数字だけを描く（遊び方の例で、見せたい数字に絞る）。外周の帯の場所は取ったままにする。 */
+  visibleEntries?: readonly ReflectionEntry[];
+  /** 描き始めたときから置いてあるピースを、現れる動き無しで描く（最初からピースを置いて始める遊び方の例）。 */
+  initialPiecesStill?: boolean;
 };
 
 /**
@@ -135,6 +139,8 @@ export function ReflectionBoard({
   onRemovePiece,
   onClearAnimationComplete,
   cues = [],
+  visibleEntries,
+  initialPiecesStill = false,
 }: ReflectionBoardProps) {
   const { size } = board;
   const [focusableKey, setFocusableKey] = useState(getCellFocusKey(0));
@@ -165,9 +171,11 @@ export function ReflectionBoard({
       row: Math.min(size + 1, Math.max(0, row + rowOffset)),
       column: Math.min(size + 1, Math.max(0, column + columnOffset)),
     });
-    if (next === null) return;
+    // 描いていない外周の数字（`visibleEntries` の外）へは移らない。
+    const element = next === null ? undefined : elementRefs.current.get(next);
+    if (next === null || element === undefined) return;
     setFocusableKey(next);
-    elementRefs.current.get(next)?.focus();
+    element.focus();
   }
 
   function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
@@ -280,6 +288,7 @@ export function ReflectionBoard({
               selectHandlers={getTapHandlers(() => onSelectCell(cellIndex))}
               onFocus={setFocusableKey}
               cues={filterReflectionCues(cues, { type: "cell", cellIndex })}
+              initialPieceStill={initialPiecesStill}
             />
           );
         })}
@@ -287,7 +296,10 @@ export function ReflectionBoard({
       {entries.map(function renderClue(entry, clueIndex) {
         const clue = clues[clueIndex];
         const focusKey = getClueFocusKey(entry);
-        return clue ? (
+        const visible =
+          visibleEntries === undefined ||
+          visibleEntries.some((shown) => isSameReflectionEntry(shown, entry));
+        return clue && visible ? (
           <ReflectionClueButton
             key={focusKey}
             size={size}

@@ -10,11 +10,12 @@ export type ReflectionCueTarget =
   | { type: "stock"; piece: ReflectionPiece };
 
 /**
- * 盤面とストックに重ねる、チュートリアルの印・応え・覆いから抜く所。1つの所に種類の違うものを重ねてよい。
+ * 盤面とストックに重ねる、チュートリアルの印・応え・覆いから抜く所と、遊び方の例の手がかり。1つの所に種類の違うものを重ねてよい。
  * - `mark`: 次に押す所の印。`recallId` は印の無い所が押されるたびに変え、押されていなければ `null`。
  *   `pointed` なら、輪郭に加えて押すしぐさをする指で指す。
  * - `acknowledgement`: 手順どおりに置いた応え。`id` が変わるとやり直す。
  * - `spotlight`: 盤面の覆いから抜いて元の明るさで見せる所。
+ * - `hint`: 遊び方の触れる例で、例が見せる手の次に押す所の手がかり。
  */
 export type ReflectionCue =
   | {
@@ -24,7 +25,8 @@ export type ReflectionCue =
       pointed: boolean;
     }
   | { target: ReflectionCueTarget; kind: "acknowledgement"; id: number }
-  | { target: ReflectionCueTarget; kind: "spotlight" };
+  | { target: ReflectionCueTarget; kind: "spotlight" }
+  | { target: ReflectionCueTarget; kind: "hint" };
 
 export function isSameReflectionCueTarget(
   left: ReflectionCueTarget,

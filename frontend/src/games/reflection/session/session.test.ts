@@ -13,6 +13,7 @@ import {
   getReflectionSessionStock,
   type ReflectionSession,
   removeReflectionSessionPiece,
+  reopenReflectionSession,
   restartReflectionSession,
   tapReflectionSessionCell,
   tapReflectionSessionClue,
@@ -85,6 +86,31 @@ describe("createReflectionSession", () => {
 
     test("受け付けないこと", () => {
       const act = () => createReflectionSession(invalidProblem, startedAt);
+
+      expect(act).toThrow();
+    });
+  });
+
+  describe("始まりの盤面を渡した場合", () => {
+    const board = parseReflectionBoard(["/..", "...", "..."]);
+
+    test("その盤面から始め、置いたピースを手持ちから引くこと", () => {
+      const session = createReflectionSession(problem, startedAt, board);
+
+      expect(session.puzzleState).toEqual(board);
+      expect(session.status).toBe("playing");
+      expect(getReflectionSessionStock(session)).toEqual({
+        ...problem.inventory,
+        slash: 0,
+      });
+    });
+  });
+
+  describe("手持ちに収まらない盤面を渡した場合", () => {
+    const board = parseReflectionBoard(["//.", "...", "..."]);
+
+    test("受け付けないこと", () => {
+      const act = () => createReflectionSession(problem, startedAt, board);
 
       expect(act).toThrow();
     });
@@ -280,6 +306,29 @@ describe("全ピースを置いた場合", () => {
 
     expect(stock.slash + stock["black-hole"]).toBe(0);
     expect(allPlacedWrongly.status).toBe("playing");
+  });
+});
+
+describe("reopenReflectionSession", () => {
+  const cleared = placeFromStock(
+    placeFromStock(initial, "slash", 0),
+    "black-hole",
+    8,
+    9_000,
+  );
+
+  test("完成したプレイを、盤面はそのままにプレイ中へ戻すこと", () => {
+    const reopened = reopenReflectionSession(cleared);
+
+    expect(reopened.status).toBe("playing");
+    expect(reopened.clearedAt).toBeNull();
+    expect(reopened.puzzleState).toBe(cleared.puzzleState);
+  });
+
+  test("完成していないプレイは変えないこと", () => {
+    const reopened = reopenReflectionSession(initial);
+
+    expect(reopened).toBe(initial);
   });
 });
 

@@ -1,5 +1,12 @@
+import {
+  HowToPlayPressHint,
+  type HowToPlayPressHintCorner,
+  type HowToPlayPressHintFrame,
+  type HowToPlayPressHintPointer,
+} from "@/components/HowToPlayPressHint";
 import { TutorialCue } from "@/components/TutorialCue";
 import { TutorialSpotlight } from "@/components/TutorialSpotlight";
+import type { ReflectionCell } from "@/games/reflection/puzzle/board";
 import type { ReflectionCue } from "@/games/reflection/ui/board/cue";
 import { cn } from "@/lib/utils";
 
@@ -45,10 +52,60 @@ const pointerPlacements = {
 type ReflectionCueLayerProps = {
   cues: readonly ReflectionCue[];
   place: ReflectionCuePlace;
+  /** マスに置くときの、マスの中身。遊び方の手がかりの指を、ピースの線にかけない角に置くのに使う。 */
+  cell?: ReflectionCell;
 };
 
-export function ReflectionCueLayer({ cues, place }: ReflectionCueLayerProps) {
+type HintPlacement = {
+  frame: HowToPlayPressHintFrame;
+  pointer: HowToPlayPressHintPointer;
+  corner?: HowToPlayPressHintCorner;
+};
+
+/**
+ * 遊び方の手がかりの置き方。指は押す物の中身を隠さない所に置く。
+ * - マス: 空きは中央。ピースのあるマスは角の内側に置き、右下がりの鏡は線が右下の角へ届くので左下にする。
+ * - 外周の数字: 数字と印で押せる範囲が埋まるので、右下の角に半分を外へ出す。
+ * - ストック: 右下に残りの数があるので、左下の角の内側に置く。
+ */
+function getHintPlacement(
+  place: ReflectionCuePlace,
+  cell: ReflectionCell | undefined,
+): HintPlacement {
+  switch (place) {
+    case "cell":
+      if (cell === null || cell === undefined) {
+        return { frame: "inside", pointer: "center" };
+      }
+      return {
+        frame: "inside",
+        pointer: "inside-corner",
+        corner: cell === "backslash" ? "bottom-left" : "bottom-right",
+      };
+    case "row-clue":
+    case "column-clue":
+      return { frame: "edge", pointer: "outside-corner" };
+    case "stock":
+      return { frame: "edge", pointer: "inside-corner", corner: "bottom-left" };
+  }
+}
+
+export function ReflectionCueLayer({
+  cues,
+  place,
+  cell,
+}: ReflectionCueLayerProps) {
   return cues.map(function renderCue(cue) {
+    if (cue.kind === "hint") {
+      // 遊び方の手がかりは、本番の印（チュートリアルの線）と見分けられるよう、遊び方の共通の手がかりで描く。
+      return (
+        <HowToPlayPressHint
+          key={cue.kind}
+          outline="square"
+          {...getHintPlacement(place, cell)}
+        />
+      );
+    }
     if (cue.kind === "spotlight") {
       return (
         <TutorialSpotlight
