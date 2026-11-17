@@ -18,6 +18,7 @@ import {
   tsumeShogiPieceNames,
 } from "@/games/tsume-shogi/ui/piece-label";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
+import { animateBoardGeometry } from "@/lib/board-visual-motion";
 import { prefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -98,11 +99,16 @@ function useArrivalAnimation(arrivedMove: TsumeShogiPlayedMove | null) {
             { opacity: 0, transform: "scale(0.8)" },
             { opacity: 1, transform: "scale(1)" },
           ];
-    const animation = element.animate(keyframes, {
-      duration: arrivalDurationMs[side],
-      easing: ARRIVAL_EASING,
-    });
-    return () => animation.cancel();
+    const animation = animateBoardGeometry(
+      pieceRef.current,
+      element,
+      keyframes,
+      {
+        duration: arrivalDurationMs[side],
+        easing: ARRIVAL_EASING,
+      },
+    );
+    return () => animation?.cancel();
   }, [arrivedMove]);
 
   return pieceRef;

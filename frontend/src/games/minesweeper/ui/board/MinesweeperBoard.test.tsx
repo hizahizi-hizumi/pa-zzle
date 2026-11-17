@@ -116,7 +116,8 @@ describe("MinesweeperBoard", () => {
 
     fireEvent.click(hiddenCell);
 
-    expect(hiddenCell.className).toContain("rounded-[4px]");
+    const visual = hiddenCell.querySelector("[data-board-visual]");
+    expect(visual?.className).toContain("rounded-[4px]");
     expect(onRevealCell).toHaveBeenCalledWith(0);
   });
 });

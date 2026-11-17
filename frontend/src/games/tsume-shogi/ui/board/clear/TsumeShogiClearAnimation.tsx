@@ -6,6 +6,7 @@ import {
   planTsumeShogiClearWave,
   type TsumeShogiClearWaveSquare,
 } from "@/games/tsume-shogi/ui/board/clear/clear-wave";
+import { animateBoardPaint } from "@/lib/board-visual-motion";
 import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
 type TsumeShogiClearAnimationProps = {
@@ -16,25 +17,8 @@ type TsumeShogiClearAnimationProps = {
 
 /** 波を立てる升。升のボタンが `data-file` / `data-rank` に升の位置を置き、照りの層と（駒があれば）駒を子に持つ。 */
 const waveSquareSelector = "[data-board-squares] > button[data-file]";
-const pieceSelector = ":scope > [data-piece]";
 const glowSelector = ":scope > [data-clear-glow]";
 const matedKingAttribute = "data-mated-king";
-
-/** 詰んだ玉は大きく揺れて沈む。 */
-const matedKingKeyframes: Keyframe[] = [
-  { transform: "translateY(0) scale(1) rotate(0deg)" },
-  { transform: "translateY(-14%) scale(1.16) rotate(-7deg)", offset: 0.2 },
-  { transform: "translateY(-14%) scale(1.16) rotate(7deg)", offset: 0.42 },
-  { transform: "translateY(-6%) scale(1.08) rotate(-3deg)", offset: 0.66 },
-  { transform: "translateY(0) scale(1) rotate(0deg)" },
-];
-
-/** 盤の他の駒は、玉の升から広がる波で一度浮いて着く。 */
-const wavePieceKeyframes: Keyframe[] = [
-  { transform: "translateY(0) scale(1)" },
-  { transform: "translateY(-10%) scale(1.07)", offset: 0.4 },
-  { transform: "translateY(0) scale(1)" },
-];
 
 const CLEAR_GLOW_PEAK_OFFSET = 0.35;
 /** 波の升が照り始めてから、いちばん明るく照るまでの時間。 */
@@ -61,9 +45,8 @@ function readWaveSquares(squares: readonly HTMLElement[]) {
 }
 
 /**
- * 詰んだ瞬間に入力を止め、玉を傾けて大きく揺らす。同時に玉の升から盤の端へ照りの波を広げ、
- * 升を順に光らせ、駒を浮かせる。盤全体が応えるので、他のゲームの完成演出（盤全体の波・脈動・光）と同じ強さになる。
- * 動きを減らす設定でも、演出と同じ長さだけ詰み上がりを見せてから結果へ進める（`planTsumeShogiClearWave`）。
+ * 詰んだ瞬間に入力を止め、玉から盤の端へ照りの波を広げる。
+ * 盤面の駒はその升に固定し、詰み上がりを見せてから結果へ進める。
  */
 export function TsumeShogiClearAnimation({
   active,
@@ -94,26 +77,17 @@ export function TsumeShogiClearAnimation({
           const square = elementsBySquare.get(
             formatTsumeShogiSquareKey(step.square),
           );
-          const timing = {
-            duration: step.durationMs,
-            delay: step.delayMs,
-            easing: MOTION_EASING.celebrate,
-          };
-          return [
-            square
-              ?.querySelector<HTMLElement>(pieceSelector)
-              ?.animate?.(
-                step.matedKing ? matedKingKeyframes : wavePieceKeyframes,
-                timing,
-              ),
-            // 玉の升も照りは波と同じ長さにし、照りの頂点を波の音に合わせる。
-            square
-              ?.querySelector<HTMLElement>(glowSelector)
-              ?.animate?.(glowKeyframes, {
-                ...timing,
-                duration: CLEAR_WAVE_DURATION_MS,
-              }),
-          ].filter((animation) => animation !== undefined);
+          const animation = animateBoardPaint(
+            square,
+            square?.querySelector(glowSelector),
+            glowKeyframes,
+            {
+              duration: CLEAR_WAVE_DURATION_MS,
+              delay: step.delayMs,
+              easing: MOTION_EASING.celebrate,
+            },
+          );
+          return animation ? [animation] : [];
         });
       },
       completion: { type: "after-duration", durationMs: plan.totalMs },

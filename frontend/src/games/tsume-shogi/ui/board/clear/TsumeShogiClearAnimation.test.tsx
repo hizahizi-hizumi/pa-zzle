@@ -57,21 +57,22 @@ describe("TsumeShogiClearAnimation", () => {
       ));
     });
 
-    test("玉の升からの升の距離で、駒と照りの層の動きを遅らせること", () => {
+    test("玉の升から距離に応じて照りを広げ、駒を動かさないこと", () => {
       const delays = Object.fromEntries(
         calls.map(({ target, delay }) => [
-          `${(target.closest("button") as HTMLElement).dataset.file}-${target.hasAttribute("data-piece") ? "piece" : "glow"}`,
+          `${(target.closest("button") as HTMLElement).dataset.file}-glow`,
           delay,
         ]),
       );
 
       expect(delays).toEqual({
-        "2-piece": CLEAR_START_DELAY_MS,
         "2-glow": CLEAR_START_DELAY_MS,
-        "4-piece": CLEAR_START_DELAY_MS + 2 * CLEAR_WAVE_STAGGER_MS,
         "4-glow": CLEAR_START_DELAY_MS + 2 * CLEAR_WAVE_STAGGER_MS,
         "5-glow": CLEAR_START_DELAY_MS + 3 * CLEAR_WAVE_STAGGER_MS,
       });
+      expect(
+        calls.every(({ target }) => target.hasAttribute("data-clear-glow")),
+      ).toBe(true);
       expect(container.querySelector("[data-board-squares]")).not.toBeNull();
     });
   });

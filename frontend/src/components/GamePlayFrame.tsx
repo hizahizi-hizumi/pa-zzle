@@ -90,24 +90,29 @@ export function GamePlayFrame<Result>({
       <div
         className={cn(
           "flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]",
-          entryAnimation &&
-            "animate-in duration-(--duration-slow) ease-enter fade-in motion-reduce:animate-none",
         )}
       >
-        <PlayHeader
-          title={title}
-          metrics={metrics}
-          trailingAction={trailingAction}
-          canRestart={canRestart}
-          onRestart={onRestart}
-          onReplay={onReplay}
-          onStartNewProblem={onStartNewProblem}
-          onOpenGameHome={onOpenGameHome}
-          onBackToAppHome={onBackToAppHome}
-          onOpenHowToPlay={onOpenHowToPlay ?? (() => setHowToPlayOpen(true))}
-          onOpenSettings={() => setSettingsOpen(true)}
-          onOpenDiagnostics={onOpenDiagnostics}
-        />
+        <div
+          className={cn(
+            entryAnimation &&
+              "animate-in duration-(--duration-slow) ease-enter fade-in motion-reduce:animate-none",
+          )}
+        >
+          <PlayHeader
+            title={title}
+            metrics={metrics}
+            trailingAction={trailingAction}
+            canRestart={canRestart}
+            onRestart={onRestart}
+            onReplay={onReplay}
+            onStartNewProblem={onStartNewProblem}
+            onOpenGameHome={onOpenGameHome}
+            onBackToAppHome={onBackToAppHome}
+            onOpenHowToPlay={onOpenHowToPlay ?? (() => setHowToPlayOpen(true))}
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenDiagnostics={onOpenDiagnostics}
+          />
+        </div>
         {renderHowToPlayDialog({
           open: howToPlayOpen,
           onClose: () => setHowToPlayOpen(false),

@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useRef } from "react";
-
+import { animateBoardGeometry } from "@/lib/board-visual-motion";
 import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
 type TakuzuClearAnimationProps = {
@@ -48,13 +48,17 @@ export function TakuzuClearAnimation({
             waveCellSelector,
           ) ?? [];
         return Array.from(cellElements).flatMap(function animateCell(element) {
-          return (
-            element.animate?.(clearWaveKeyframes, {
+          const animation = animateBoardGeometry(
+            element.parentElement,
+            element,
+            clearWaveKeyframes,
+            {
               duration: CLEAR_WAVE_DURATION_MS,
               delay: getWaveStep(element) * CLEAR_WAVE_STAGGER_MS,
               easing: MOTION_EASING.celebrate,
-            }) ?? []
+            },
           );
+          return animation ? [animation] : [];
         });
       },
       completion: { type: "after-animations", holdMs: CLEAR_HOLD_MS },

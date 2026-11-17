@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useRef } from "react";
-
+import { animateBoardPaint } from "@/lib/board-visual-motion";
 import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
 type MinesweeperClearAnimationProps = {
@@ -22,23 +22,21 @@ function animateCompletedCells(container: HTMLElement): Animation[] {
   );
   const lastIndex = Math.max(1, cells.length - 1);
   return cells.flatMap((cell, index) => {
-    if (typeof cell.animate !== "function") {
-      return [];
-    }
-    return [
-      cell.animate(
-        [
-          { filter: "brightness(1)", offset: 0 },
-          { filter: "brightness(1.13)", offset: 0.45 },
-          { filter: "brightness(1)", offset: 1 },
-        ],
-        {
-          duration: CELL_HIGHLIGHT_MS,
-          delay: Math.round((index / lastIndex) * CELL_STAGGER_MS),
-          easing: MOTION_EASING.celebrate,
-        },
-      ),
-    ];
+    const animation = animateBoardPaint(
+      cell,
+      cell.querySelector("[data-board-visual]"),
+      [
+        { filter: "brightness(1)", offset: 0 },
+        { filter: "brightness(1.13)", offset: 0.45 },
+        { filter: "brightness(1)", offset: 1 },
+      ],
+      {
+        duration: CELL_HIGHLIGHT_MS,
+        delay: Math.round((index / lastIndex) * CELL_STAGGER_MS),
+        easing: MOTION_EASING.celebrate,
+      },
+    );
+    return animation ? [animation] : [];
   });
 }
 
