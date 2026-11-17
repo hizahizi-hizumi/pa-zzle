@@ -36,7 +36,7 @@ describe("GameHowToView", () => {
   test("直接URLで開いて遊び方を表示できること", () => {
     renderGuide("/puzzles/nanpure/how-to");
 
-    const dialog = screen.getByRole("dialog", { name: "遊び方" });
+    const dialog = screen.getByRole("dialog", { name: "ナンプレの遊び方" });
 
     expect(dialog).toBeTruthy();
   });

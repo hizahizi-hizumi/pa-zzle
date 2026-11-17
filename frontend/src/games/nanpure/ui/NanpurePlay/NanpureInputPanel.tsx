@@ -1,7 +1,8 @@
 import { Eraser, Pencil, Undo2 } from "lucide-react";
 import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
-import { PlayActionButton } from "@/games/nanpure/ui/NanpurePlay/NanpureInputPanel/PlayActionButton";
+import { NANPURE_INPUT_LABELS } from "@/games/nanpure/ui/play/input-labels";
 import { NanpureDigitPad } from "@/games/nanpure/ui/play/NanpureDigitPad";
+import { PlayActionButton } from "@/games/nanpure/ui/play/PlayActionButton";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 type NanpureInputPanelProps = {
@@ -48,7 +49,7 @@ export function NanpureInputPanel({
           />
           <PlayActionButton
             icon={<Eraser />}
-            label="消す"
+            label={NANPURE_INPUT_LABELS.erase}
             onClick={onErase}
             disabled={
               !interactionEnabled ||
@@ -58,7 +59,7 @@ export function NanpureInputPanel({
           />
           <PlayActionButton
             icon={<Pencil />}
-            label="メモ"
+            label={NANPURE_INPUT_LABELS.notes}
             active={notesMode}
             onClick={onToggleNotesMode}
             disabled={!interactionEnabled}

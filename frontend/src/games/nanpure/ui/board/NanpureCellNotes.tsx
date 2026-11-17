@@ -15,7 +15,8 @@ type NanpureCellNotesProps = {
 
 const textSizeClassNames: Record<NanpureCellNotesSize, string> = {
   board: "text-[clamp(0.58rem,2.4vw,0.9rem)]",
-  figure: "text-xs",
+  // 遊び方の図は、マスの大きさ（`--nanpure-figure-cell`）に対して、盤面のメモと同じ割合の大きさにする。
+  figure: "text-[calc(var(--nanpure-figure-cell)*0.24)]",
 };
 
 export function NanpureCellNotes({

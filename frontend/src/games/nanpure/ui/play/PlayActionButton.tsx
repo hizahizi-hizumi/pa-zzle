@@ -7,6 +7,8 @@ type PlayActionButtonProps = {
   label: string;
   active?: boolean;
   disabled?: boolean;
+  /** ボタンに重ねる物。遊び方の例が、押す所の手がかりを重ねる。 */
+  overlay?: ReactNode;
   onClick: () => void;
 };
 
@@ -15,6 +17,7 @@ export function PlayActionButton({
   label,
   active = false,
   disabled = false,
+  overlay,
   onClick,
 }: PlayActionButtonProps) {
   return (
@@ -33,6 +36,7 @@ export function PlayActionButton({
         {icon}
       </span>
       <span className="text-play-meta">{label}</span>
+      {overlay}
     </button>
   );
 }

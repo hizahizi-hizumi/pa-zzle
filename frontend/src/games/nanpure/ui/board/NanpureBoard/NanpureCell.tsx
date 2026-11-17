@@ -8,9 +8,14 @@ import {
   type NanpureDigit,
 } from "@/games/nanpure/puzzle/board";
 import type { NanpureNotes } from "@/games/nanpure/session/session";
+import { getNanpureCellAccessibleName } from "@/games/nanpure/ui/board/cell-accessible-name";
 import type { NanpureCellCue } from "@/games/nanpure/ui/board/cell-cue";
 import { NanpureCellNotes } from "@/games/nanpure/ui/board/NanpureCellNotes";
-import { nanpureCellToneClassNames } from "@/games/nanpure/ui/board/nanpure-cell-tone";
+import {
+  getNanpureCellLineClassName,
+  getNanpureCellToneClassName,
+  nanpureCellFocusClassName,
+} from "@/games/nanpure/ui/board/nanpure-cell-tone";
 import { cn } from "@/lib/utils";
 
 type NanpureCellProps = {
@@ -34,34 +39,6 @@ type NanpureCellProps = {
 /** 印と応えの線は、隣り合うマスの線と重ならないよう、マスの縁から少し内側に、角の立ったマスの形で引く。 */
 const cueOutlinePlacementClassName = "pointer-events-none absolute inset-0.5";
 
-function getCellLabel({
-  cellIndex,
-  value,
-  clue,
-  notes,
-  conflict,
-  mistake,
-}: Pick<
-  NanpureCellProps,
-  "cellIndex" | "value" | "clue" | "notes" | "conflict" | "mistake"
->): string {
-  const row = getNanpureRowIndex(cellIndex) + 1;
-  const column = getNanpureColumnIndex(cellIndex) + 1;
-  const prefix = `${row}行${column}列`;
-
-  if (value !== null) {
-    const source = clue ? "、初期ヒント" : "";
-    const states = [mistake ? "誤り" : null, conflict ? "競合" : null]
-      .filter((state) => state !== null)
-      .join("、");
-    return `${prefix}、${value}${source}${states ? `、${states}` : ""}`;
-  }
-
-  return notes.length > 0
-    ? `${prefix}、空き、メモ ${notes.join("、")}`
-    : `${prefix}、空き`;
-}
-
 export function NanpureCell({
   cellIndex,
   value,
@@ -84,8 +61,9 @@ export function NanpureCell({
   return (
     <button
       type="button"
-      aria-label={getCellLabel({
-        cellIndex,
+      aria-label={getNanpureCellAccessibleName({
+        row: row + 1,
+        column: column + 1,
         value,
         clue,
         notes,
@@ -96,22 +74,23 @@ export function NanpureCell({
       aria-invalid={conflict || mistake || undefined}
       disabled={disabled}
       className={cn(
-        "relative flex aspect-square min-h-0 items-center justify-center font-sans text-[min(clamp(1rem,5vw,2rem),6.5cqw)] outline-none transition-colors focus-visible:bg-violet-200 dark:focus-visible:bg-violet-900/55",
-        row !== NANPURE_SIZE - 1 && "border-b border-b-border",
-        column !== NANPURE_SIZE - 1 && "border-r border-r-border",
-        row % 3 === 2 &&
-          row !== NANPURE_SIZE - 1 &&
-          "border-b-2 border-b-foreground/55",
-        column % 3 === 2 &&
-          column !== NANPURE_SIZE - 1 &&
-          "border-r-2 border-r-foreground/55",
-        sameUnitAsSelected && nanpureCellToneClassNames.sameUnitAsSelected,
-        sameDigitAsSelected && nanpureCellToneClassNames.sameDigitAsSelected,
-        selected && nanpureCellToneClassNames.selected,
-        clue && nanpureCellToneClassNames.clue,
-        !clue && value !== null && nanpureCellToneClassNames.entered,
-        mistake && nanpureCellToneClassNames.mistake,
-        conflict && nanpureCellToneClassNames.conflict,
+        "relative flex aspect-square min-h-0 items-center justify-center font-sans text-[min(clamp(1rem,5vw,2rem),6.5cqw)] transition-colors",
+        nanpureCellFocusClassName,
+        getNanpureCellLineClassName({
+          row,
+          column,
+          lastRow: NANPURE_SIZE - 1,
+          lastColumn: NANPURE_SIZE - 1,
+        }),
+        getNanpureCellToneClassName({
+          selected,
+          sameUnitAsSelected,
+          sameDigitAsSelected,
+          value,
+          clue,
+          mistake,
+          conflict,
+        }),
       )}
       onClick={() => onSelect(cellIndex)}
     >
