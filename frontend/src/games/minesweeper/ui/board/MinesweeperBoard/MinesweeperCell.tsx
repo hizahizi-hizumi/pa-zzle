@@ -14,7 +14,7 @@ import {
 const LONG_PRESS_DELAY_MS = 450;
 /** 未開示マスを押すときだけ使う、色の反応の速さ。 */
 const HIDDEN_CELL_PRESS_FEEDBACK_MOTION_CLASS_NAME =
-  "transition-[filter] duration-75";
+  "transition-[filter] duration-75 group-hover:brightness-[1.015] group-active:brightness-[0.95]";
 
 /**
  * 印と応えの線は、マスの面の上に、面の縁から少し内側へ引く。面の縁と浮いたマスの下の縁は線と近い明るさなので、縁に重ねると線が埋もれる。
@@ -56,15 +56,11 @@ function getAccessibleName(
   return `${position} 未開示`;
 }
 
-function getCellClassName(view: MinesweeperVisibleCell): string {
-  const faceClassName = getMinesweeperCellFaceClassName(view);
-  const interactionClassName =
-    "relative min-w-0 touch-manipulation select-none outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
+const cellButtonClassName =
+  "group relative aspect-square min-w-0 touch-manipulation select-none outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
-  if (view.state === "hidden") {
-    return `${faceClassName} ${interactionClassName} ${HIDDEN_CELL_PRESS_FEEDBACK_MOTION_CLASS_NAME} hover:brightness-[1.015] active:brightness-[0.95]`;
-  }
-  return `${faceClassName} ${interactionClassName}`;
+function getCellVisualClassName(view: MinesweeperVisibleCell): string {
+  return `${getMinesweeperCellFaceClassName(view)} pointer-events-none absolute inset-0 ${view.state === "hidden" ? HIDDEN_CELL_PRESS_FEEDBACK_MOTION_CLASS_NAME : ""}`;
 }
 
 export function MinesweeperCell({
@@ -141,9 +137,11 @@ export function MinesweeperCell({
       onPointerLeave={handlePointerEnd}
       data-cell-index={cellIndex}
       data-cell-state={view.state}
-      className={getCellClassName(view)}
+      className={cellButtonClassName}
     >
-      <MinesweeperCellFace view={view} />
+      <span data-board-visual="" className={getCellVisualClassName(view)}>
+        <MinesweeperCellFace view={view} />
+      </span>
       {/* 浮いたマスは下の縁まで含めた、見えるマスの形のまま覆いから抜く。 */}
       <TutorialSpotlight
         active={spotlit}

@@ -38,13 +38,15 @@ describe("MinesweeperClearAnimation", () => {
           <svg aria-hidden="true" />
         </button>
         <button type="button" data-cell-state="revealed" aria-label="開示済み">
-          1
+          <span data-board-visual="">1</span>
         </button>
       </MinesweeperClearAnimation>,
     );
     const revealedCell = screen.getByRole("button", { name: "開示済み" });
 
-    expect(animatedElements).toEqual([revealedCell]);
+    expect(animatedElements).toEqual([
+      revealedCell.querySelector("[data-board-visual]"),
+    ]);
     expect(
       screen.getByRole("button", { name: "旗" }).querySelector("svg"),
     ).not.toBeNull();

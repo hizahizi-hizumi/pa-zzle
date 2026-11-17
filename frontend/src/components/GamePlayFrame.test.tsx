@@ -101,11 +101,15 @@ describe("GamePlayFrame", () => {
       renderFrame("playing", null);
     });
 
-    test("盤面の表示時にフェードインすること", () => {
-      const content = screen.getByText("盤面").parentElement;
+    test("盤面の配置を変化させず、ヘッダーだけが入場フェードすること", () => {
+      const boardParent = screen.getByText("盤面").parentElement;
+      const headerParent = screen
+        .getByRole("heading", { name: "テストパズル" })
+        .closest("header")?.parentElement;
 
-      expect(content?.classList.contains("animate-in")).toBe(true);
-      expect(content?.classList.contains("fade-in")).toBe(true);
+      expect(boardParent?.classList.contains("animate-in")).toBe(false);
+      expect(headerParent?.classList.contains("animate-in")).toBe(true);
+      expect(headerParent?.classList.contains("fade-in")).toBe(true);
     });
   });
 
@@ -115,10 +119,12 @@ describe("GamePlayFrame", () => {
     });
 
     test("盤面をフェードさせずに表示すること", () => {
-      const content = screen.getByText("盤面").parentElement;
+      const headerParent = screen
+        .getByRole("heading", { name: "テストパズル" })
+        .closest("header")?.parentElement;
 
-      expect(content?.classList.contains("animate-in")).toBe(false);
-      expect(content?.classList.contains("fade-in")).toBe(false);
+      expect(headerParent?.classList.contains("animate-in")).toBe(false);
+      expect(headerParent?.classList.contains("fade-in")).toBe(false);
     });
   });
 

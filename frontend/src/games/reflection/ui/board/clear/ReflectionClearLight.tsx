@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { ReflectionBoard } from "@/games/reflection/puzzle/board";
 import { listDistinctReflectionLaserTraces } from "@/games/reflection/ui/board/board-geometry";
 import { ReflectionLaserPath } from "@/games/reflection/ui/board/ReflectionLaserPath";
+import { animateBoardPaint } from "@/lib/board-visual-motion";
 import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
 type ReflectionClearLightProps = {
@@ -66,18 +67,18 @@ export function ReflectionClearLight({
           const line = element.querySelector("[data-laser-line]");
           const arrow = element.querySelector("[data-laser-arrow]");
           return [
-            line?.animate?.(lineKeyframes, {
+            animateBoardPaint(element, line, lineKeyframes, {
               duration: CLEAR_LIGHT_DRAW_MS,
               delay,
               easing: MOTION_EASING.celebrate,
               fill: "backwards",
             }),
-            arrow?.animate?.(arrowKeyframes, {
+            animateBoardPaint(element, arrow, arrowKeyframes, {
               duration: CLEAR_LIGHT_DRAW_MS / 2,
               delay: delay + CLEAR_LIGHT_DRAW_MS / 2,
               fill: "backwards",
             }),
-          ].filter((animation) => animation !== undefined);
+          ].filter((animation) => animation !== null);
         });
       },
       completion: { type: "after-duration", durationMs: CLEAR_LIGHT_TOTAL_MS },
