@@ -1736,8 +1736,8 @@
     "sameCapacityTwin": 1
    },
    "typeStates": {
-    "queueOnlyTwin": 3,
     "capacityAndBlocking": 1,
+    "queueOnlyTwin": 3,
     "sameCapacityTwin": 1
    },
    "kindsEssential": {

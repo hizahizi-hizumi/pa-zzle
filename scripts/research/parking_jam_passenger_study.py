@@ -45,7 +45,6 @@ POPULATIONS: dict[str, dict[str, object]] = {
     "favorableAll4": {"longShare": 0.5, "queueMethod": "random", "opening": "all4"},
     "orderAll4": {"longShare": 0.5, "queueMethod": "order", "opening": "all4"},
 }
-FAVORABLE = {"longShare": 0.5, "queueMethod": "random", "opening": ["adjacent2", "one"]}
 
 
 def draw_conditions(rng: random.Random, fixed: dict[str, object] | None = None) -> dict[str, object]:
@@ -60,7 +59,7 @@ def draw_conditions(rng: random.Random, fixed: dict[str, object] | None = None) 
     }
     for key, value in (fixed or {}).items():
         conditions[key] = rng.choice(value) if isinstance(value, list) else value
-    if conditions["size"] not in SIZES[conditions["cars"]]:
+    if "size" not in (fixed or {}) and conditions["size"] not in SIZES[conditions["cars"]]:
         conditions["size"] = rng.choice(SIZES[conditions["cars"]])
     return conditions
 
@@ -83,11 +82,10 @@ def features(problem: PassengerProblem, bays: int, k_min: int, detail: bool = Fa
     """Reader features at `bays`, plus the same reader on the blocking-free problem."""
     game = problem.game(bays)
     reading = PassengerReading(game)
-    summary = reading.summary()
+    summary = {k: v for k, v in reading.summary().items() if k != "detail"}
+    decisions = reading.summary()["detail"]
     profile = path_profile(reading)
-    free_summary = PassengerReading(problem.game(bays, geometry=False)).summary()
-    decisions = summary.pop("detail")
-    free_summary.pop("detail")
+    free_summary = PassengerReading(problem.game(bays, geometry=False), with_reasons=False).summary()
     row = {
         **summary,
         **profile,
@@ -105,13 +103,23 @@ def features(problem: PassengerProblem, bays: int, k_min: int, detail: bool = Fa
     return row
 
 
-def survey_one(args: tuple) -> dict[str, object]:
-    """One survey problem; `(seed, index)` or `(seed, index, population)`."""
-    seed, index, population = (*args, "random")[:3]
+def survey_problem(seed: int, index: int, population: str = "random") -> tuple[dict[str, object], PassengerProblem]:
+    """Conditions and problem of one survey draw.
+
+    The random stream depends on (seed, index) only, so the populations draw paired
+    problems: index i shares its car count, board size and color scheme across
+    populations, and differs in the conditions the population fixes (and in all that follows).
+    """
     rng = random.Random(seed * 1_000_003 + index)
     conditions = draw_conditions(rng, POPULATIONS[population])
+    return conditions, build(rng, conditions)
+
+
+def survey_one(args: tuple) -> dict[str, object]:
+    """One survey problem with its features; `(seed, index)` or `(seed, index, population)`."""
+    seed, index, population = (*args, "random")[:3]
     begun = time.process_time()
-    problem = build(rng, conditions)
+    conditions, problem = survey_problem(seed, index, population)
     k_min = problem.minimum_bays()
     k_free = problem.minimum_bays(geometry=False)
     rows = []
@@ -199,6 +207,8 @@ def run_level_study(profiles: list[dict[str, object]]) -> dict[str, object]:
 # rescued by removing all blocking. `essentialOnly`: decisions exist and all are such,
 # and the head-first naive policy does not always win.
 def meets(row: dict[str, object], target: str) -> bool:
+    if row["slack"] != 0:
+        return False
     if target == "essential":
         return row["essentialDecisions"] >= 1
     if target.startswith("lv"):
@@ -214,13 +224,12 @@ def meets(row: dict[str, object], target: str) -> bool:
 
 
 def judge(problem: PassengerProblem, target: str) -> tuple[bool, float, dict[str, object] | None]:
-    """At slack 0 within 2-4 bays: (accepted, score to climb, features)."""
+    """At slack 0 with 2-4 bays: (accepted, score to climb, features). Problems with k_min outside 2-4 are rejected."""
     k_min = problem.minimum_bays()
-    if k_min is None or k_min > max(BAYS):
+    if k_min is None or not min(BAYS) <= k_min <= max(BAYS):
         return False, -10.0, None
-    bays = max(k_min, min(BAYS))
-    row = features(problem, bays, k_min)
-    score = (2.0 * row["essentialDecisions"] - row["queueDecisions"] - row["mixedDecisions"] - 0.5 * (k_min < min(BAYS))
+    row = features(problem, k_min, k_min)
+    score = (2.0 * row["essentialDecisions"] - row["queueDecisions"] - row["mixedDecisions"]
              + (row["types"].get("capacityAndBlocking", 0) if target == "essentialOnlyCB" else 0))
     return meets(row, target), score, row
 
@@ -540,6 +549,10 @@ def swap_breakdown_worker(args: tuple[dict[str, object], int]) -> Counter:
     return swap_breakdown(*args)
 
 
+SURVEY_CHECK_KEYS = ("decisions", "essentialDecisions", "queueDecisions", "mixedDecisions", "losingOptions",
+                     "essentialOptions", "types", "typeStates", "kinds", "reasons", "distanceMax")
+
+
 def profile_one(args: tuple[dict[str, object], dict[str, object]]) -> dict[str, object]:
     """Run profile of one in-scope slack-0 row, by default and with buried twins kept, plus the swap breakdown."""
     record, row = args
@@ -547,7 +560,9 @@ def profile_one(args: tuple[dict[str, object], dict[str, object]]) -> dict[str, 
     reading = PassengerReading(problem.game(row["bays"]))
     default = path_profile(reading)
     current = reading.summary()
-    changed = any(current[k] != row[k] for k in ("decisions", "essentialDecisions", "queueDecisions", "types"))
+    stale = [k for k in SURVEY_CHECK_KEYS if current[k] != row[k]]
+    if stale:
+        raise ValueError(f"survey row {record['population']}:{record['index']} differs from the current reader in {stale}")
     variant_reading = PassengerReading(problem.game(row["bays"]), skip_buried_twin=False)
     variant_summary = variant_reading.summary()
     variant = path_profile(variant_reading)
@@ -557,7 +572,7 @@ def profile_one(args: tuple[dict[str, object], dict[str, object]]) -> dict[str, 
             "variantOutOfScope": bool(variant_summary["queueDecisions"] or variant_summary["mixedDecisions"]),
             "headFirstPerfect": row["headFirst"] > 1 - 1e-9, "distanceMax": row["distanceMax"],
             **default, **{f"variant:{k}": v for k, v in variant.items()},
-            "swap": dict(swap_breakdown(record, row["bays"])), "changedSinceSurvey": changed}
+            "swap": dict(swap_breakdown(record, row["bays"]))}
 
 
 def run_profiles(surveys: list[dict[str, object]], populations: list[str], workers: int) -> dict[str, object]:
@@ -572,7 +587,10 @@ def run_profiles(surveys: list[dict[str, object]], populations: list[str], worke
 
 def populations_digest(surveys: list[dict[str, object]]) -> dict[str, object]:
     names = surveys[0]["populations"]
-    result = {"definitions": {n: POPULATIONS[n] for n in names}, "combined": {}, "bySeed": {}, "reading": {}}
+    result = {"definitions": {n: POPULATIONS[n] for n in names},
+              "drawing": "paired: index i of every population starts from the same random stream (seed, i), so it shares "
+                         "the car count, board size and color scheme; the fixed conditions and everything after differ",
+              "combined": {}, "bySeed": {}, "reading": {}}
     for name in names:
         records = [r for s in surveys for r in s["records"] if r["population"] == name]
         result["combined"][name] = population_block(records)
@@ -624,18 +642,6 @@ def winning_line(game, state) -> list[int]:
     return order
 
 
-def losing_line(reading: PassengerReading, state) -> list[int]:
-    """Natural continuation that stops earliest."""
-    order = []
-    while True:
-        children = reading.natural(state) if state[0] else ()
-        if not children:
-            return order
-        plan = min(children, key=lambda p: reading.survival(p.outcome)[0])
-        order += plan_order(reading.game, state, plan.outcome)
-        state = plan.outcome
-
-
 def explain(problem: PassengerProblem, bays: int, decisions: int = 1) -> dict[str, object]:
     """First decisions on the reader's path with winning and losing exit orders."""
     game = problem.game(bays)
@@ -655,7 +661,7 @@ def explain(problem: PassengerProblem, bays: int, decisions: int = 1) -> dict[st
                             "continuation": [f"v{i}" for i in after],
                             "boardedWhenStuck": None if won else replay_boarded(problem, bays, before + line + after),
                             "waitingAfter": game.waiting(p.outcome),
-                            "blockingEssential": None if won else game_free_wins(problem, bays, p.outcome)})
+                            "blockingEssential": None if won else reading.free.wins(p.outcome)})
         items.append({"before": [f"v{i}" for i in before], "served": d["served"],
                       "head": problem.queue[d["served"]], "options": entries,
                       "losing": [{k: v for k, v in x.items()} for x in d["losing"]]})
@@ -683,10 +689,6 @@ def replay_boarded(problem: PassengerProblem, bays: int, exits: list[int]) -> in
     if explicit.moves(state) or explicit.won(state):
         raise ValueError("the line does not end stuck")
     return state[2]
-
-
-def game_free_wins(problem: PassengerProblem, bays: int, state) -> bool:
-    return problem.game(bays, geometry=False).wins(state)
 
 
 def winning_prefix(reading: PassengerReading, target) -> list[int]:
@@ -719,14 +721,7 @@ def example_entry(identifier: str, title: str, kind: str, problem: PassengerProb
         "bayCount": bays,
         "solutions": game.solution_count(),
         "queue": problem.queue,
-        "board": {
-            "width": problem.size, "height": problem.size,
-            "vehicles": [{"id": f"v{i}", "row": v.row, "column": v.column, "orientation": v.direction,
-                          "length": v.length, "color": c} for i, (v, c) in enumerate(zip(problem.vehicles, problem.colors))],
-            "fixedAreas": [],
-            "roadOpenings": [{"side": FRONTEND_SIDE[s], "startOffset": 0, "length": problem.size}
-                             for s in sorted(problem.openings)],
-        },
+        "board": problem.frontend_board(FRONTEND_SIDE),
         "kMin": k_min,
         "kMinWithoutBlocking": problem.minimum_bays(geometry=False),
         "features": explained["summary"],
@@ -756,8 +751,8 @@ def level_study(surveys: list[dict[str, object]], sample: int, seed: int) -> dic
     for record, row in picked:
         level = tentative_level(row)
         problem = PassengerProblem.from_json(record["problem"])
-        variant = PassengerReading(problem.game(row["bays"]), skip_buried_twin=False).summary()
-        variant.update({"bays": row["bays"], "slack": row["slack"]})
+        variant = {**PassengerReading(problem.game(row["bays"]), skip_buried_twin=False).summary(),
+                   "bays": row["bays"], "slack": row["slack"]}
         by_options = tentative_level(row, "losingOptions")
         total[level] += 1
         moved[f"{level}:keepBuriedTwin"] += tentative_level(variant) != level
@@ -819,14 +814,7 @@ def rule_lab_case(identifier: str, problem: PassengerProblem, bays: int) -> dict
         "id": identifier,
         "bayCount": bays,
         "queue": problem.queue,
-        "board": {
-            "width": problem.size, "height": problem.size,
-            "vehicles": [{"id": f"v{i}", "row": v.row, "column": v.column, "orientation": v.direction,
-                          "length": v.length, "color": c} for i, (v, c) in enumerate(zip(problem.vehicles, problem.colors))],
-            "fixedAreas": [],
-            "roadOpenings": [{"side": FRONTEND_SIDE[s], "startOffset": 0, "length": problem.size}
-                             for s in sorted(problem.openings)],
-        },
+        "board": problem.frontend_board(FRONTEND_SIDE),
         "solutions": game.solution_count(),
         "firstExits": [{"vehicleId": f"v{i}", "canWin": game.wins(game.step(game.start, i))} for i in game.moves(game.start)],
     }
@@ -837,25 +825,23 @@ def build_rule_lab_cases(count: int = 20, seed: int = 739, limit: int = 200_000)
     rng = random.Random(seed)
     cases = []
     while len(cases) < count:
-        conditions = draw_conditions(rng, {"cars": rng.choice([8, 10])})
-        conditions["cars"] = rng.choice([6, 8, 10])
-        conditions["size"] = 6 if conditions["cars"] <= 8 else 7
+        cars = rng.choice([6, 8, 10])
+        conditions = draw_conditions(rng, {"cars": cars, "size": 6 if cars <= 8 else 7})
         problem = build(rng, conditions)
         bays = rng.choice(BAYS)
         case = rule_lab_case(f"random-{len(cases)}", problem, bays)
         if case["solutions"] <= limit:
             cases.append(case)
     for spec in EXAMPLES:
-        record = survey_one((spec["seed"], spec["index"], spec["population"]))
-        cases.append(rule_lab_case(f"example-{spec['id']}", PassengerProblem.from_json(record["problem"]), spec["bays"]))
+        _, problem = survey_problem(spec["seed"], spec["index"], spec["population"])
+        cases.append(rule_lab_case(f"example-{spec['id']}", problem, spec["bays"]))
     return cases
 
 
 def build_examples() -> list[dict[str, object]]:
     entries = []
     for spec in EXAMPLES:
-        record = survey_one((spec["seed"], spec["index"], spec["population"]))
-        problem = PassengerProblem.from_json(record["problem"])
+        _, problem = survey_problem(spec["seed"], spec["index"], spec["population"])
         entries.append(example_entry(spec["id"], spec["title"], spec["kind"], problem, spec["bays"], spec["note"]))
     return entries
 

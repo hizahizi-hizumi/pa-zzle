@@ -379,3 +379,14 @@ def test_同型判定が色の名前と車の並びに依らないこと(problem
     forms = (canonical(problem), canonical(renamed), structural_canonical(problem), structural_canonical(reversed_cars))
 
     assert forms[0] == forms[1] and forms[2] == forms[3]
+
+
+@pytest.fixture
+def problem_below_minimum_bays():
+    problem = next(p for p in sample_problems(739, 40) if (p.minimum_bays() or 0) >= 3)
+    return PassengerReading(problem.game(problem.minimum_bays() - 1))
+
+
+def test_最小枠数より少ない枠で勝ち筋の判断数を求めると原因の分かるエラーになること(problem_below_minimum_bays):
+    with pytest.raises(ValueError, match="below the minimum"):
+        path_profile(problem_below_minimum_bays)

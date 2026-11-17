@@ -313,6 +313,8 @@ class PassengerReading:
         self.with_reasons = with_reasons
         self._plans: dict[State, tuple[Plan, ...]] = {}
         self._every: dict[State, tuple[Plan, ...]] = {}
+        self._decision: dict[State, dict[str, object] | None] = {}
+        self._summary: dict[str, object] | None = None
         self._natural: dict[State, tuple[Plan, ...]] = {}
         self._survival: dict[State, tuple[int, int]] = {}
 
@@ -468,6 +470,11 @@ class PassengerReading:
         return tuple(outcomes)
 
     def decision(self, state: State) -> dict[str, object] | None:
+        if state not in self._decision:
+            self._decision[state] = self._decide(state)
+        return self._decision[state]
+
+    def _decide(self, state: State) -> dict[str, object] | None:
         game = self.game
         natural = self.natural(state)
         outcomes = {p.outcome for p in natural}
@@ -507,6 +514,12 @@ class PassengerReading:
         }
 
     def summary(self) -> dict[str, object]:
+        """Path-wide counts; callers must not mutate the returned dict (it is cached)."""
+        if self._summary is None:
+            self._summary = self._summarize()
+        return self._summary
+
+    def _summarize(self) -> dict[str, object]:
         forced = free_choice = 0
         decisions = []
         for state in self.path():
@@ -535,7 +548,7 @@ class PassengerReading:
             "essentialOptions": sum(x["blockingEssential"] for x in losing),
             "kinds": dict(Counter(x["kind"] for x in losing)),
             "types": dict(Counter(x["type"] for x in losing)),
-            "typeStates": dict(Counter(t for d in decisions for t in {x["type"] for x in d["losing"]})),
+            "typeStates": dict(sorted(Counter(t for d in decisions for t in {x["type"] for x in d["losing"]}).items())),
             "kindsEssential": dict(Counter(x["kind"] for x in losing if x["blockingEssential"])),
             "twinSameLength": sum(x["kind"] == "twin" and x["sameLength"] for x in losing),
             "reasons": dict(Counter(x["reason"] for x in losing)),
@@ -555,6 +568,8 @@ def path_profile(reading: PassengerReading) -> dict[str, int]:
     the number of equivalent paths; this counts what a single run must face.
     """
     game = reading.game
+    if not game.wins(game.start):
+        raise ValueError(f"no complete run with {game.bays} bays: the bay count is below the minimum (k_min)")
     summary = reading.summary()
     types = {d["state"]: {x["type"] for x in d["losing"]} for d in summary["detail"]}
     cache: dict[State, tuple[int, int, int, int]] = {}
@@ -617,6 +632,16 @@ class PassengerProblem:
 
         rows = [edge("left", ">") + "".join(row) + edge("right", "<") for row in grid]
         return "\n".join([" " + edge("top", "v") * self.size + " ", *rows, " " + edge("bottom", "^") * self.size + " "])
+
+    def frontend_board(self, side_names: dict[str, str]) -> dict[str, object]:
+        """The rule-lab `ParkingJamBoard` with each vehicle's color; every open side is open along its whole length."""
+        return {
+            "width": self.size, "height": self.size,
+            "vehicles": [{"id": f"v{i}", "row": v.row, "column": v.column, "orientation": v.direction,
+                          "length": v.length, "color": c} for i, (v, c) in enumerate(zip(self.vehicles, self.colors))],
+            "fixedAreas": [],
+            "roadOpenings": [{"side": side_names[s], "startOffset": 0, "length": self.size} for s in sorted(self.openings)],
+        }
 
     def to_json(self) -> dict[str, object]:
         return {
