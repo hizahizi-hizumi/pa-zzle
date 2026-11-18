@@ -1,7 +1,11 @@
 import { Award } from "lucide-react";
 import { useEffect, useState } from "react";
+import { describeResultRecordComparison } from "@/components/GameResultScreen/result-record-comparison";
 import { getGameResultStyle } from "@/components/game-result-style";
-import type { ResultRecordImprovement } from "@/games/play";
+import type {
+  ResultRecordComparison,
+  ResultRecordImprovement,
+} from "@/games/play";
 import type { GameResultLevel } from "@/games/result";
 import {
   prefersReducedMotion,
@@ -13,6 +17,7 @@ type GameResultGradeProps = {
   score: number;
   countUp?: boolean;
   improvement?: ResultRecordImprovement;
+  comparison?: ResultRecordComparison;
 };
 
 const SCORE_REVEAL_DELAY_MS = 340;
@@ -23,6 +28,7 @@ export function GameResultGrade({
   score,
   countUp = false,
   improvement,
+  comparison,
 }: GameResultGradeProps) {
   const message = getGameResultStyle(level).message ?? "クリア！";
   const [displayScore, setDisplayScore] = useState(() =>
@@ -82,6 +88,16 @@ export function GameResultGrade({
         >
           <Award aria-hidden="true" />
           <strong aria-hidden="true">{improvement.improvement}</strong>
+        </span>
+      )}
+      {!improvement && comparison && (
+        <span
+          className="result-grade-best-gap"
+          title={describeResultRecordComparison(comparison)}
+          aria-label={describeResultRecordComparison(comparison)}
+        >
+          <Award aria-hidden="true" />
+          <span aria-hidden="true">{comparison.delta}</span>
         </span>
       )}
     </div>

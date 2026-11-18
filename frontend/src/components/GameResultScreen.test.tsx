@@ -280,4 +280,78 @@ describe("GameResultScreen の指標と自己ベスト", () => {
     );
     expect(container.querySelector(".result-record-updates")).toBeNull();
   });
+
+  const comparisons = [
+    {
+      id: "play-score",
+      label: "スコア",
+      previous: "90点",
+      current: "82点",
+      delta: "−8点",
+    },
+    {
+      id: "time-delta-ms",
+      label: "基準時間との差",
+      previous: "+00:05",
+      current: "+00:10",
+      delta: "+5秒",
+    },
+    {
+      id: "mistake-count",
+      label: "ミス",
+      previous: "2回",
+      current: "2回",
+      delta: "±0回",
+    },
+  ];
+
+  test("非更新時はスコア・基準差・ミスの自己ベストとの差を示すこと", () => {
+    const props = createProps();
+    props.recordFeedback = { kind: "none", comparisons };
+
+    render(
+      <MemoryRouter>
+        <GameResultScreen {...props} />
+      </MemoryRouter>,
+    );
+
+    const score = screen.getByLabelText(/スコアの自己ベストとの差/);
+    const time = screen.getByLabelText(/基準時間との差の自己ベストとの差/);
+    const mistakes = screen.getByLabelText(/ミスの自己ベストとの差/);
+
+    expect(score.textContent).toBe("−8点");
+    expect(time.textContent).toContain("+5秒");
+    expect(mistakes.textContent).toBe("±0回");
+    expect(screen.queryByLabelText(/自己ベスト更新/)).toBeNull();
+    expect(screen.getByRole("button", { name: "次の問題" })).toBeTruthy();
+  });
+
+  test("更新した指標は従来の更新幅を優先し、ほかの指標との差を示すこと", () => {
+    const props = createProps();
+    props.recordFeedback = {
+      kind: "updated",
+      improvements: [
+        {
+          id: "play-score",
+          label: "スコア",
+          previous: "80点",
+          current: "82点",
+          improvement: "+2点",
+        },
+      ],
+      comparisons,
+    };
+
+    render(
+      <MemoryRouter>
+        <GameResultScreen {...props} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByLabelText(/スコアの自己ベスト更新/)).toBeTruthy();
+    expect(screen.queryByLabelText(/スコアの自己ベストとの差/)).toBeNull();
+    expect(
+      screen.getByLabelText(/基準時間との差の自己ベストとの差/),
+    ).toBeTruthy();
+  });
 });

@@ -119,12 +119,24 @@ export type ResultRecordImprovement = {
   improvement: string;
 };
 
+export type ResultRecordComparison = {
+  id: string;
+  label: string;
+  previous: string;
+  current: string;
+  delta: string;
+};
+
 /** 結果画面で使う表示値。記録の保存形式や表示定義を共通ゲームへ持ち込まない。 */
 export type ResultRecordFeedback =
-  | { kind: "none" }
+  | { kind: "none"; comparisons?: readonly ResultRecordComparison[] }
   | { kind: "first-record" }
   | { kind: "failed" }
-  | { kind: "updated"; improvements: readonly ResultRecordImprovement[] };
+  | {
+      kind: "updated";
+      improvements: readonly ResultRecordImprovement[];
+      comparisons?: readonly ResultRecordComparison[];
+    };
 
 export type GamePlayResultScreenProps<Difficulty, Result> = {
   difficulty: Difficulty;
