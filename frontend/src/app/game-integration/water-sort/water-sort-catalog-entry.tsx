@@ -34,7 +34,7 @@ export const waterSortCatalogEntry = {
   playPath: "/puzzles/water-sort/play/:problemId",
   playRecordDisplay: waterSortPlayRecordDisplay,
   recordProblemPlayTarget(record) {
-    return isWaterSortPlayRecord(record)
+    return isWaterSortPlayRecord(record) && record.payloadVersion === 2
       ? resolveRecordProblemPlayTarget(
           parseDifficultyLevel(record.payload.difficulty),
           record.payload.problemIdentity,

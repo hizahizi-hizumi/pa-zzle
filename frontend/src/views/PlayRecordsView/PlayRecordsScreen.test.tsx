@@ -58,6 +58,8 @@ function describeEntry(entry: PlayTimelineEntry): PlayTimelineEntryDescription {
         : entry.playedAt === greatRecord.completedAt
           ? 92
           : 70,
+    resultUnavailable:
+      entry.kind === "cleared" && entry.playedAt === olderRecord.completedAt,
   };
 }
 
@@ -137,8 +139,22 @@ describe("PlayRecordsScreen", () => {
         "ウォーターソートレベル 3No.004292点21:00",
         "ウォーターソートレベル 3No.0042離脱11:00",
         "ウォーターソートレベル 3No.004270点09:00",
-        "ウォーターソートレベル 3No.004270点20:00",
+        "ウォーターソートレベル 3No.004270点結果を開けません20:00",
       ]);
+    });
+
+    test("結果を開き直せない記録を履歴に残して、その状態を明示すること", () => {
+      const unavailable = screen.getByRole("button", {
+        name: /結果を開けません/,
+      });
+      fireEvent.click(unavailable);
+
+      expect(onOpenEntry).toHaveBeenCalledWith(
+        entries.find(
+          (entry) =>
+            entry.kind === "cleared" && entry.record.id === olderRecord.id,
+        ),
+      );
     });
 
     test("点を、結果画面と同じ評価段階の色で示すこと", () => {

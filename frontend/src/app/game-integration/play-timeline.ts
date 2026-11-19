@@ -108,6 +108,8 @@ export function describePlayTimelineEntry(
             PLAY_SCORE_METRIC_ID,
           )
         : null,
+    resultUnavailable:
+      entry.kind === "cleared" && !game.hasRecordResult(entry.record),
   };
 }
 

@@ -204,34 +204,30 @@ export function createWaterSortPlayRecord({
   };
 }
 
-function getCompletionMoveCount(
-  record: RecognizedWaterSortPlayRecord,
-): number | null {
-  if (record.payloadVersion === WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION) {
-    return record.payload.performance.completionMoveCount;
-  }
-
-  const { moveCount, undoCount, restartCount } = record.payload.performance;
-  return restartCount === 0 ? Math.max(0, moveCount - undoCount) : null;
+function isEvaluableWaterSortPlayRecord(
+  record: PlayRecord,
+): record is WaterSortPlayRecord {
+  return (
+    isWaterSortPlayRecord(record) &&
+    record.payloadVersion === WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION
+  );
 }
 
 export function getWaterSortPlayRecordCompletionMoveCount(
   record: PlayRecord,
 ): number | null {
-  return isWaterSortPlayRecord(record) ? getCompletionMoveCount(record) : null;
+  return isEvaluableWaterSortPlayRecord(record)
+    ? record.payload.performance.completionMoveCount
+    : null;
 }
 
 export function getWaterSortPlayRecordScore(record: PlayRecord): number | null {
-  if (!isWaterSortPlayRecord(record)) {
+  if (!isEvaluableWaterSortPlayRecord(record)) {
     return null;
   }
 
-  const completionMoveCount = getCompletionMoveCount(record);
-  if (completionMoveCount === null) {
-    return null;
-  }
-
-  const { elapsedMs, moveCount, optimalMoveCount } = record.payload.performance;
+  const { elapsedMs, moveCount, completionMoveCount, optimalMoveCount } =
+    record.payload.performance;
   return calculateWaterSortPlayScore({
     elapsedMs,
     moveCount,
@@ -244,7 +240,7 @@ export function getWaterSortPlayRecordScore(record: PlayRecord): number | null {
 export function getWaterSortPlayRecordTimeDelta(
   record: PlayRecord,
 ): number | null {
-  if (!isWaterSortPlayRecord(record)) {
+  if (!isEvaluableWaterSortPlayRecord(record)) {
     return null;
   }
 
@@ -259,17 +255,12 @@ export function getWaterSortPlayRecordTimeDelta(
 export function getWaterSortPlayRecordMoveDelta(
   record: PlayRecord,
 ): number | null {
-  if (!isWaterSortPlayRecord(record)) {
-    return null;
-  }
-
-  const completionMoveCount = getCompletionMoveCount(record);
-  if (completionMoveCount === null) {
+  if (!isEvaluableWaterSortPlayRecord(record)) {
     return null;
   }
 
   return calculateWaterSortMoveDelta({
-    completionMoveCount,
+    completionMoveCount: record.payload.performance.completionMoveCount,
     optimalMoveCount: record.payload.performance.optimalMoveCount,
   });
 }
@@ -289,11 +280,13 @@ export const waterSortPlayRecordDefinition = {
     if (!isWaterSortPlayRecord(record)) {
       return null;
     }
-    const { elapsedMs, optimalMoveCount } = record.payload.performance;
-    const completionMoveCount = getCompletionMoveCount(record);
-    return completionMoveCount === null
-      ? { elapsedMs }
-      : { elapsedMs, moves: { completionMoveCount, optimalMoveCount } };
+    const { elapsedMs } = record.payload.performance;
+    if (record.payloadVersion !== WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION) {
+      return { elapsedMs };
+    }
+    const { completionMoveCount, optimalMoveCount } =
+      record.payload.performance;
+    return { elapsedMs, moves: { completionMoveCount, optimalMoveCount } };
   },
   personalBestMetrics: [
     {

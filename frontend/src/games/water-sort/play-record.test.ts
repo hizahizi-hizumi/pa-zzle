@@ -2,6 +2,7 @@ import type { PlayRecord } from "@/features/records/play-record";
 import {
   createWaterSortPlayRecord,
   getWaterSortPlayRecordCompletionMoveCount,
+  getWaterSortPlayRecordMoveDelta,
   getWaterSortPlayRecordScore,
   getWaterSortPlayRecordTimeDelta,
   isWaterSortPlayRecord,
@@ -73,7 +74,7 @@ test("同じ開始条件を自己ベストの比較単位として扱うこと",
   expect(comparisonKey).toBe("3");
 });
 
-test("盤面を戻していない旧記録は待った回数からクリア手数を復元して再評価すること", () => {
+test("旧形式の記録を残しつつ、クリア手数や評価値を復元しないこと", () => {
   const legacyRecord: PlayRecord = {
     id: "legacy-without-restart",
     gameId: "water-sort",
@@ -101,10 +102,24 @@ test("盤面を戻していない旧記録は待った回数からクリア手�
   const completionMoveCount =
     getWaterSortPlayRecordCompletionMoveCount(legacyRecord);
   const score = getWaterSortPlayRecordScore(legacyRecord);
+  const timeDelta = getWaterSortPlayRecordTimeDelta(legacyRecord);
+  const moveDelta = getWaterSortPlayRecordMoveDelta(legacyRecord);
+  const comparisonKey =
+    waterSortPlayRecordDefinition.getComparisonKey(legacyRecord);
+  const clearPerformance =
+    waterSortPlayRecordDefinition.getClearPerformance(legacyRecord);
+  const bestValues = waterSortPlayRecordDefinition.personalBestMetrics.map(
+    (metric) => metric.getValue(legacyRecord),
+  );
 
   expect(isWaterSortPlayRecord(legacyRecord)).toBe(true);
-  expect(completionMoveCount).toBe(12);
-  expect(score).toBe(87);
+  expect(completionMoveCount).toBeNull();
+  expect(score).toBeNull();
+  expect(timeDelta).toBeNull();
+  expect(moveDelta).toBeNull();
+  expect(comparisonKey).toBe("normal");
+  expect(clearPerformance).toEqual({ elapsedMs: 65_000 });
+  expect(bestValues).toEqual([null, null, null]);
 });
 
 test("盤面を戻して失われた手数を復元できない旧記録は評価を推測しないこと", () => {

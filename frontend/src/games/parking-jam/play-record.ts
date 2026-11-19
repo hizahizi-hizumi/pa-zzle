@@ -245,26 +245,25 @@ export function restoreParkingJamRecordedResult(
   };
 }
 
-type EvaluableParkingJamPlayRecord =
-  | ParkingJamPlayRecordV3
-  | ParkingJamPlayRecord;
-
 function isEvaluableParkingJamPlayRecord(
   record: PlayRecord,
-): record is EvaluableParkingJamPlayRecord {
-  return isParkingJamPlayRecord(record) && record.payloadVersion !== 2;
+): record is ParkingJamPlayRecord {
+  return (
+    isParkingJamPlayRecord(record) &&
+    record.payloadVersion === PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION
+  );
 }
 
 function getSpeedReference({
   payload,
-}: EvaluableParkingJamPlayRecord): ParkingJamSpeedReference {
+}: ParkingJamPlayRecord): ParkingJamSpeedReference {
   return {
     vehicleCount: payload.problemIdentity.conditions.vehicleCount,
     initialBlockedVehicleCount: payload.problemFacts.initialBlockedVehicleCount,
   };
 }
 
-/** 今の採点規則で求めた評価点。採点に要る問題の事実を持たない記録は `null`。 */
+/** 今の形式だけ現在の採点規則で評価する。 */
 export function getParkingJamPlayRecordScore(
   record: PlayRecord,
 ): number | null {
