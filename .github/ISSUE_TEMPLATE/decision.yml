@@ -1,0 +1,32 @@
+name: 設計・判断
+description: 課題に対して採用する方針や設計を比較・判断する
+title: '判断: '
+body:
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 判断したいこと
+      description: 何を決める必要があるか。候補案を採用済みの方針として書かない。
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 背景・現状
+      description: なぜ判断が必要になったか。観測事実と仮説は分けて書く。
+    validations:
+      required: false
+  - type: textarea
+    id: questions
+    attributes:
+      label: 判断すべき論点
+      description: 既に分かっている論点だけを書く。比較する選択肢を無理に固定しない。
+    validations:
+      required: false
+  - type: textarea
+    id: constraints
+    attributes:
+      label: 既決事項・制約
+      description: 変更しない前提や、既に決定したことがあれば記載する。
+    validations:
+      required: false

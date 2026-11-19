@@ -1,0 +1,32 @@
+name: 実行
+description: 既に実現する内容が決まっている機能・修正・文書整備などを行う
+title: '実行: '
+body:
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 目的
+      description: 実現したい状態を記載する。具体的な実装方法と混同しない。
+    validations:
+      required: true
+  - type: textarea
+    id: requirements
+    attributes:
+      label: 実現する内容
+      description: 既に確定した振る舞い・変更対象・設計を記載する。
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: 既決事項・制約
+      description: 維持すべき仕様・互換性などがある場合に記載する。
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受け入れ条件（確定済みの場合のみ）
+      description: 確定した要求・仕様に根拠のある条件だけを書く。AIの推測で補わない。
+    validations:
+      required: false
