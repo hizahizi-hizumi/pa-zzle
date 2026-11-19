@@ -22,6 +22,7 @@ export type PlayRecordMetricDisplay = {
   formatValue: (value: number) => string;
   /** 自己ベストを更新した幅。良くなった向きの差を0以上の値で受け取る。 */
   formatImprovement: (amount: number) => string;
+  formatGap: (amount: number) => string;
   referenceValue?: number;
   axis?: PlayRecordMetricAxisDisplay;
 };
@@ -79,6 +80,9 @@ export const playScoreMetricPresentation: PlayRecordMetricPresentation = {
   formatImprovement(amount: number) {
     return `+${amount}点`;
   },
+  formatGap(amount: number) {
+    return `${amount}点`;
+  },
   referenceValue: 100,
   axis: { kind: "integer", minimum: 0, maximum: 100 },
 };
@@ -89,6 +93,9 @@ export const timeDeltaMetricPresentation: PlayRecordMetricPresentation = {
   formatImprovement(amount: number) {
     const wholeSecondsMs = Math.floor(amount / 1_000) * 1_000;
     return `${formatDurationInWords(wholeSecondsMs)}短縮`;
+  },
+  formatGap(amount: number) {
+    return formatDurationInWords(amount);
   },
   referenceValue: 0,
   axis: { kind: "duration-ms" },
@@ -107,6 +114,9 @@ export function createCountMetricPresentation(
     formatImprovement(amount: number) {
       return `${amount}${unit}減`;
     },
+    formatGap(amount: number) {
+      return `${amount}${unit}`;
+    },
     referenceValue: 0,
     axis: { kind: "integer", minimum: 0 },
   };
@@ -117,6 +127,9 @@ export const moveDeltaMetricPresentation: PlayRecordMetricPresentation = {
   formatValue: formatCountDelta,
   formatImprovement(amount: number) {
     return `${amount}手減`;
+  },
+  formatGap(amount: number) {
+    return `${amount}手`;
   },
   referenceValue: 0,
   axis: { kind: "integer", minimum: 0 },

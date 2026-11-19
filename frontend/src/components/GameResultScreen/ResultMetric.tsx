@@ -1,9 +1,14 @@
 import { ArrowDownRight, ArrowUpRight, Award, Equal } from "lucide-react";
+import { describeResultRecordComparison } from "@/components/GameResultScreen/result-record-comparison";
 import type { GameResultMetric } from "@/components/game-result-contract";
-import type { ResultRecordImprovement } from "@/games/play";
+import type {
+  ResultRecordComparison,
+  ResultRecordImprovement,
+} from "@/games/play";
 
 type ResultMetricProps = GameResultMetric & {
   improvement?: ResultRecordImprovement;
+  bestComparison?: ResultRecordComparison;
 };
 
 function describeComparison({
@@ -30,6 +35,7 @@ export function ResultMetric({
   value,
   comparison,
   improvement,
+  bestComparison,
 }: ResultMetricProps) {
   const Direction = comparison
     ? comparison.difference < 0
@@ -67,6 +73,16 @@ export function ResultMetric({
               (comparison.basis === "referenceTime" ? "基準差 " : "最短差 ")}
             {improvement.improvement}
           </strong>
+        </dd>
+      )}
+      {!improvement && bestComparison && (
+        <dd
+          className="result-metric-best-gap"
+          title={describeResultRecordComparison(bestComparison)}
+          aria-label={describeResultRecordComparison(bestComparison)}
+        >
+          <Award aria-hidden="true" />
+          <span aria-hidden="true">{bestComparison.delta}</span>
         </dd>
       )}
     </div>

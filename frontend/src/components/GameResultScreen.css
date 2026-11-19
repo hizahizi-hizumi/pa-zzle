@@ -258,6 +258,23 @@
   flex: none;
 }
 
+.result-screen .result-metrics dd.result-metric-best-gap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.result-screen .result-metric-best-gap svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+
 .result-grade-best {
   display: inline-flex;
   align-items: center;
@@ -273,6 +290,22 @@
 .result-screen .result-grade-best svg {
   width: 15px;
   height: 15px;
+}
+
+.result-grade-best-gap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 9px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-screen .result-grade-best-gap svg {
+  width: 13px;
+  height: 13px;
 }
 
 .result-quiet-moment {

@@ -140,6 +140,49 @@ describe("自己ベスト更新の保存結果を state に持つ場合", () => 
   });
 });
 
+describe("保存済みの過去の自己ベストがある場合", () => {
+  const olderRecord = createNanpurePlayRecord({
+    difficulty: "3",
+    problemIdentity: nanpureProblem.identity,
+    startedAt: 100,
+    completedAt: 60_100,
+    result: {
+      elapsedMs: 60_000,
+      mistakeCount: 0,
+      undoCount: 0,
+      restartCount: 0,
+    },
+  });
+  const laterRecord = createNanpurePlayRecord({
+    difficulty: "3",
+    problemIdentity: nanpureProblem.identity,
+    startedAt: 200_000,
+    completedAt: 230_000,
+    result: {
+      elapsedMs: 30_000,
+      mistakeCount: 0,
+      undoCount: 0,
+      restartCount: 0,
+    },
+  });
+
+  beforeEach(() => {
+    writePlayRecords([olderRecord, nanpureRecord, laterRecord]);
+    renderAt(createResultPath(nanpureRecord));
+  });
+
+  test("記録を開き直してもそのプレイより前の自己ベストを表示すること", () => {
+    const time = screen.getByLabelText(/基準時間との差の自己ベストとの差/);
+    const score = screen.getByLabelText(/スコアの自己ベストとの差/);
+    const mistakes = screen.getByLabelText(/ミスの自己ベストとの差/);
+
+    expect(time.textContent).toContain("+1分");
+    expect(score.textContent).toMatch(/^−\d+点$/);
+    expect(mistakes.textContent).toBe("+1回");
+    expect(screen.queryByLabelText(/自己ベスト更新/)).toBeNull();
+  });
+});
+
 describe("問題集に無い問題の記録の場合", () => {
   const unreplayableRecord = createNanpurePlayRecord({
     difficulty: "3",

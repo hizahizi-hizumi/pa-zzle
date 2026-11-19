@@ -1,5 +1,8 @@
 import { GameResultGrade } from "@/components/GameResultScreen/GameResultGrade";
-import type { ResultRecordImprovement } from "@/games/play";
+import type {
+  ResultRecordComparison,
+  ResultRecordImprovement,
+} from "@/games/play";
 import type { GameResultLevel } from "@/games/result";
 
 type GameResultMomentProps = {
@@ -7,6 +10,7 @@ type GameResultMomentProps = {
   score: number;
   skipReveal: boolean;
   improvement?: ResultRecordImprovement;
+  comparison?: ResultRecordComparison;
 };
 
 export function GameResultMoment({
@@ -14,6 +18,7 @@ export function GameResultMoment({
   score,
   skipReveal,
   improvement,
+  comparison,
 }: GameResultMomentProps) {
   return (
     <div className="result-theater">
@@ -32,6 +37,7 @@ export function GameResultMoment({
         score={score}
         countUp={!skipReveal}
         improvement={improvement}
+        comparison={comparison}
       />
     </div>
   );

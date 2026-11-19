@@ -53,6 +53,10 @@ export function GameResultScreen({
   const level = getGameResultLevel(score);
   const improvements =
     recordFeedback.kind === "updated" ? recordFeedback.improvements : [];
+  const comparisons =
+    recordFeedback.kind === "none" || recordFeedback.kind === "updated"
+      ? (recordFeedback.comparisons ?? [])
+      : [];
 
   useEffect(() => {
     screenRef.current?.focus({ preventScroll: true });
@@ -107,7 +111,11 @@ export function GameResultScreen({
           </div>
         </header>
         <div className="result-quiet-metrics">
-          <GameResultMetrics metrics={metrics} improvements={improvements} />
+          <GameResultMetrics
+            metrics={metrics}
+            improvements={improvements}
+            comparisons={comparisons}
+          />
         </div>
         <main className="result-quiet-moment">
           <GameResultMoment
@@ -115,6 +123,7 @@ export function GameResultScreen({
             score={score}
             skipReveal={skipReveal}
             improvement={improvements.find((item) => item.id === "play-score")}
+            comparison={comparisons.find((item) => item.id === "play-score")}
           />
         </main>
         <div className="result-quiet-feedback">

@@ -12,7 +12,10 @@ import {
   readRecordSaveOutcome,
   readUnsavedRecord,
 } from "@/app/navigation/record-result-location-state";
-import { findPlayRecord } from "@/features/records/read-play-history";
+import {
+  findPlayRecord,
+  readPlayRecords,
+} from "@/features/records/read-play-history";
 import { createResultRecordFeedback } from "@/features/records/ui/result-record-feedback";
 import { Link, useNavigate, useParams } from "@/router";
 
@@ -24,6 +27,11 @@ export function PlayResultView() {
   const recordSaveOutcome = readRecordSaveOutcome(locationState);
   const navigate = useNavigate();
   const storedRecord = useMemo(() => findPlayRecord(recordId), [recordId]);
+  const previousRecords = useMemo(() => {
+    const records = readPlayRecords();
+    const index = records.findIndex((item) => item.id === recordId);
+    return index < 0 ? [] : records.slice(0, index);
+  }, [recordId]);
   const record =
     storedRecord ?? readUnsavedRecord(locationState, gameId, recordId);
   const game = findGameCatalogEntry(gameId);
@@ -36,6 +44,9 @@ export function PlayResultView() {
           recordFeedback: createResultRecordFeedback(
             noticeOutcome,
             game.playRecordDisplay,
+            storedRecord
+              ? { currentRecord: storedRecord, previousRecords }
+              : undefined,
           ),
           onReplay: replayDestination
             ? () => openRecordProblemPlay(navigate, replayDestination)
