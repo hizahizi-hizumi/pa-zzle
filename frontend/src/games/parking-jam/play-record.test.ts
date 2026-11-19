@@ -176,27 +176,25 @@ describe("isParkingJamPlayRecord", () => {
 });
 
 describe("getParkingJamPlayRecordScore", () => {
-  const cases = [
-    ["現在の形式", record],
+  test("現行形式の記録を現在の採点規則で評価すること", () => {
+    const score = getParkingJamPlayRecordScore(record);
+
+    expect(score).toBe(78);
+  });
+
+  const legacyCases = [
+    ["payloadVersion 2", legacyRecord],
     ["payloadVersion 3", threeLevelRecord],
   ] as const;
 
-  test.each(cases)(
-    "保存済み事実から問題ごとの基準時間65秒で評価点を再計算すること: %s",
+  test.each(legacyCases)(
+    "旧形式の記録を新しい採点規則で評価しないこと: %s",
     (_label, candidate) => {
       const score = getParkingJamPlayRecordScore(candidate);
 
-      expect(score).toBe(78);
+      expect(score).toBeNull();
     },
   );
-
-  describe("基準時間を求める問題の事実を持たない payloadVersion 2 の記録の場合", () => {
-    test("評価点を推測しないこと", () => {
-      const score = getParkingJamPlayRecordScore(legacyRecord);
-
-      expect(score).toBeNull();
-    });
-  });
 });
 
 describe("getParkingJamPlayRecordTimeDelta", () => {
@@ -206,13 +204,19 @@ describe("getParkingJamPlayRecordTimeDelta", () => {
     expect(timeDelta).toBe(25_000);
   });
 
-  describe("基準時間を求める問題の事実を持たない payloadVersion 2 の記録の場合", () => {
-    test("基準時間との差を推測しないこと", () => {
-      const timeDelta = getParkingJamPlayRecordTimeDelta(legacyRecord);
+  const legacyCases = [
+    ["payloadVersion 2", legacyRecord],
+    ["payloadVersion 3", threeLevelRecord],
+  ] as const;
+
+  test.each(legacyCases)(
+    "旧形式の記録から現在の基準時間との差を求めないこと: %s",
+    (_label, candidate) => {
+      const timeDelta = getParkingJamPlayRecordTimeDelta(candidate);
 
       expect(timeDelta).toBeNull();
-    });
-  });
+    },
+  );
 });
 
 describe("parkingJamPlayRecordDefinition", () => {
@@ -251,15 +255,21 @@ describe("parkingJamPlayRecordDefinition", () => {
     expect(clearPerformance).toEqual({ elapsedMs: 90_000, mistakeCount: 1 });
   });
 
-  describe("payloadVersion 2 の記録の場合", () => {
-    test("自己ベストの比較に使う値を持たないこと", () => {
+  const legacyCases = [
+    ["payloadVersion 2", legacyRecord],
+    ["payloadVersion 3", threeLevelRecord],
+  ] as const;
+
+  test.each(legacyCases)(
+    "旧形式の記録を自己ベスト指標に使わないこと: %s",
+    (_label, candidate) => {
       const values = parkingJamPlayRecordDefinition.personalBestMetrics.map(
-        (metric) => metric.getValue(legacyRecord),
+        (metric) => metric.getValue(candidate),
       );
 
       expect(values).toEqual([null, null, null]);
-    });
-  });
+    },
+  );
 });
 
 describe("restoreParkingJamRecordedResult", () => {

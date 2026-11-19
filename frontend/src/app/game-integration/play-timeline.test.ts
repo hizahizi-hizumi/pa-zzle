@@ -1,14 +1,18 @@
 import { minesweeperCatalogEntry } from "@/app/game-integration/minesweeper/minesweeper-catalog-entry";
+import { parkingJamCatalogEntry } from "@/app/game-integration/parking-jam/parking-jam-catalog-entry";
 import {
   describePlayTimelineEntry,
   findPlayTimelineEntryDestination,
   listCatalogPlayTimelineEntries,
 } from "@/app/game-integration/play-timeline";
+import { waterSortCatalogEntry } from "@/app/game-integration/water-sort/water-sort-catalog-entry";
 import type { PlayAttempt } from "@/features/records/play-attempt";
 import { getPlayRecordMetricValue } from "@/features/records/play-record-definition";
 import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
+import { createParkingJamPlayRecord } from "@/games/parking-jam/play-record";
 import { createProblemId } from "@/games/problem-id";
+import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
 
 vi.mock("@/lib/internal-diagnostics", () => ({
   internalDiagnosticsAvailable: false,
@@ -99,4 +103,100 @@ describe("findPlayTimelineEntryDestination", () => {
 
     expect(destination).toMatchObject({ kind: "game-home", problemId });
   });
+});
+
+describe("旧形式の記録", () => {
+  const currentWaterSortRecord = createWaterSortPlayRecord({
+    difficulty: "3",
+    problemIdentity: {
+      generatorVersion: "1",
+      seed: "old-water-sort",
+      conditions: { colorCount: 6, capacity: 4, emptyBottleCount: 2 },
+      generationAttempt: 1,
+    },
+    startedAt: 300_000,
+    completedAt: 370_000,
+    result: {
+      elapsedMs: 70_000,
+      moveCount: 14,
+      completionMoveCount: 12,
+      undoCount: 2,
+      restartCount: 0,
+      optimalMoveCount: 10,
+    },
+  });
+  const { completionMoveCount: _unused, ...oldWaterSortPerformance } =
+    currentWaterSortRecord.payload.performance;
+  const oldWaterSortRecord = {
+    ...currentWaterSortRecord,
+    payloadVersion: 1,
+    payload: {
+      ...currentWaterSortRecord.payload,
+      difficulty: "normal",
+      performance: oldWaterSortPerformance,
+    },
+  };
+  const currentParkingJamRecord = createParkingJamPlayRecord({
+    difficulty: "3",
+    problemIdentity: {
+      generatorVersion: "2",
+      seed: "old-parking-jam",
+      conditions: {
+        width: 8,
+        height: 8,
+        vehicleCount: 14,
+        roadOpeningCount: 4,
+        roadOpeningSpan: 2,
+        fixedAreaCount: 2,
+        fixedAreaLength: 2,
+        blockingPlacementProbability: 0,
+      },
+      generationAttempt: 2,
+    },
+    speedReference: { vehicleCount: 14, initialBlockedVehicleCount: 6 },
+    startedAt: 380_000,
+    completedAt: 480_000,
+    result: {
+      elapsedMs: 100_000,
+      moveAttemptCount: 16,
+      successfulMoveCount: 15,
+      failedMoveCount: 1,
+      undoCount: 1,
+      restartCount: 0,
+    },
+  });
+  const oldParkingJamRecord = {
+    ...currentParkingJamRecord,
+    payloadVersion: 3,
+    payload: { ...currentParkingJamRecord.payload, difficulty: "hard" },
+  };
+  const cases = [
+    ["ウォーターソート", oldWaterSortRecord, "ふつう", waterSortCatalogEntry],
+    [
+      "パーキングジャム",
+      oldParkingJamRecord,
+      "むずかしい",
+      parkingJamCatalogEntry,
+    ],
+  ] as const;
+
+  test.each(cases)(
+    "旧記録を履歴に残し、結果を開けないことを示してゲームのホームへ案内すること: %s",
+    (_label, oldRecord, levelLabel, game) => {
+      const [entry] = listCatalogPlayTimelineEntries([oldRecord], []);
+      if (!entry) throw new Error("記録が履歴に含まれていません");
+
+      const description = describePlayTimelineEntry(entry);
+      const destination = findPlayTimelineEntryDestination(entry);
+      const replayTarget = game.recordProblemPlayTarget(oldRecord);
+
+      expect(description).toMatchObject({
+        levelLabel,
+        score: null,
+        resultUnavailable: true,
+      });
+      expect(destination).toMatchObject({ kind: "game-home", game });
+      expect(replayTarget).toBeNull();
+    },
+  );
 });

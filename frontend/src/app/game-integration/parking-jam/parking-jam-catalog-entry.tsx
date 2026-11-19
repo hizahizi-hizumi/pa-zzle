@@ -34,7 +34,7 @@ export const parkingJamCatalogEntry = {
   playPath: "/puzzles/parking-jam/play/:problemId",
   playRecordDisplay: parkingJamPlayRecordDisplay,
   recordProblemPlayTarget(record) {
-    return isParkingJamPlayRecord(record)
+    return isParkingJamPlayRecord(record) && record.payloadVersion === 4
       ? resolveRecordProblemPlayTarget(
           parseDifficultyLevel(record.payload.difficulty),
           record.payload.problemIdentity,

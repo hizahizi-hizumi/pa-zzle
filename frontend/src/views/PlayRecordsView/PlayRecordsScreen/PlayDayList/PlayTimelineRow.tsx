@@ -30,8 +30,14 @@ function PlayTimelineRowContent({
   describeEntry,
   onOpen,
 }: PlayTimelineRowProps) {
-  const { gameName, pictogramSvg, levelLabel, zukanNumber, score } =
-    describeEntry(entry);
+  const {
+    gameName,
+    pictogramSvg,
+    levelLabel,
+    zukanNumber,
+    score,
+    resultUnavailable,
+  } = describeEntry(entry);
 
   return (
     <Item asChild variant="outline" size="sm" className="w-full">
@@ -62,13 +68,16 @@ function PlayTimelineRowContent({
             {entry.kind === "abandoned" ? (
               <span>離脱</span>
             ) : (
-              score !== null && (
-                <span
-                  className={`font-semibold ${getGameResultStyle(getGameResultLevel(score)).scoreClassName}`}
-                >
-                  {playScoreMetricPresentation.formatValue(score)}
-                </span>
-              )
+              <>
+                {score !== null && (
+                  <span
+                    className={`font-semibold ${getGameResultStyle(getGameResultLevel(score)).scoreClassName}`}
+                  >
+                    {playScoreMetricPresentation.formatValue(score)}
+                  </span>
+                )}
+                {resultUnavailable && <span>結果を開けません</span>}
+              </>
             )}
           </ItemDescription>
         </ItemContent>

@@ -9,4 +9,6 @@ export type PlayTimelineEntryDescription = {
   zukanNumber: ZukanNumber | null;
   /** 今の評価規則で評価できない記録と離脱したプレイは `null`。 */
   score: number | null;
+  /** 記録から現在の結果画面を開けない。 */
+  resultUnavailable: boolean;
 };
