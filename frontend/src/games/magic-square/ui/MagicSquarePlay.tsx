@@ -13,18 +13,13 @@ import type {
 } from "@/games/magic-square/puzzle/rules";
 import type { MagicSquareState } from "@/games/magic-square/puzzle/state";
 import type { MagicSquareInputMode } from "@/games/magic-square/session/session";
-import {
-  MagicSquareBoard,
-  type MagicSquareCellRejection,
-} from "@/games/magic-square/ui/board/MagicSquareBoard";
+import { MagicSquareBoard } from "@/games/magic-square/ui/board/MagicSquareBoard";
 import { MagicSquareGround } from "@/games/magic-square/ui/MagicSquareGround";
 import { MagicSquareHowToPlayDialog } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog";
 import { MagicSquareMemoToggle } from "@/games/magic-square/ui/MagicSquareMemoToggle";
-import {
-  MagicSquareNumberPad,
-  type MagicSquareValueRejection,
-} from "@/games/magic-square/ui/MagicSquareNumberPad";
+import { MagicSquareNumberPad } from "@/games/magic-square/ui/MagicSquareNumberPad";
 import { MagicSquareTutorial } from "@/games/magic-square/ui/MagicSquareTutorial";
+import { splitMagicSquareRejection } from "@/games/magic-square/ui/magic-square-rejection";
 import { MagicSquareResultScreen } from "@/games/magic-square/ui/result/MagicSquareResultScreen";
 import { useMagicSquareSoundEffects } from "@/games/magic-square/ui/use-magic-square-sound-effects";
 import type {
@@ -52,22 +47,6 @@ type MagicSquarePlayProps = GamePlayScreenProps<
     onEnterValue: (value: number) => void;
     onToggleMemoInput: () => void;
   };
-
-/** 受け付けなかった押し方を、選んでいたマスがあればそのマスで、無ければ押した数の札で揺らして返す。 */
-function splitRejection(operation: MagicSquareOperation | null): {
-  cell: MagicSquareCellRejection | null;
-  value: MagicSquareValueRejection | null;
-} {
-  if (operation?.type !== "rejected") {
-    return { cell: null, value: null };
-  }
-  return operation.cellIndex === null
-    ? { cell: null, value: { id: operation.id, value: operation.value } }
-    : {
-        cell: { id: operation.id, cellIndex: operation.cellIndex },
-        value: null,
-      };
-}
 
 export function MagicSquarePlay({
   difficulty,
@@ -101,7 +80,7 @@ export function MagicSquarePlay({
   renderSettingsDialog,
 }: MagicSquarePlayProps) {
   const playing = progress === "playing";
-  const rejection = splitRejection(operation);
+  const rejection = splitMagicSquareRejection(operation);
   useMagicSquareSoundEffects(operation, progress);
 
   return (
