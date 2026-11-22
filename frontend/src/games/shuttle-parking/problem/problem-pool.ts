@@ -1,5 +1,8 @@
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
-import type { ShuttleParkingDifficulty } from "@/games/shuttle-parking/difficulty";
+import type {
+  SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION,
+  ShuttleParkingDifficulty,
+} from "@/games/shuttle-parking/difficulty";
 import {
   restoreShuttleParkingProblem,
   SHUTTLE_PARKING_GENERATOR_VERSION,
@@ -13,6 +16,8 @@ export type ShuttleParkingProblemPoolEntry = string;
 
 export type ShuttleParkingProblemPool = {
   generatorVersion: typeof SHUTTLE_PARKING_GENERATOR_VERSION;
+  /** 問題集を作ったときの判定モデルの版。判定を変えたら問題集を作り直す。 */
+  difficultyModelVersion: typeof SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION;
   levels: Record<
     ShuttleParkingDifficulty,
     readonly ShuttleParkingProblemPoolEntry[]
@@ -22,6 +27,10 @@ export type ShuttleParkingProblemPool = {
 export type ShuttleParkingPooledProblem = ShuttleParkingIdentifiedProblem;
 
 const problemPool = problemPoolJson as ShuttleParkingProblemPool;
+
+export function getShuttleParkingPoolDifficultyModelVersion(): string {
+  return problemPool.difficultyModelVersion;
+}
 
 const lotSizePattern = /^([0-9])/;
 

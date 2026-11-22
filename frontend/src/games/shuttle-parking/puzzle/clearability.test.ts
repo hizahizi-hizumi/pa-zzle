@@ -19,10 +19,16 @@ import {
   type ShuttleParkingState,
 } from "@/games/shuttle-parking/puzzle/rules";
 
-// 期待値は docs/パズル/導入調査/送迎パーキング/調査コード/shuttle-parking_difficulty.expected.json の、
-// 解ける最小の待機枠で全部の状態をたどった解（出す順）の数。
+// 期待値は docs/パズル/導入調査/送迎パーキング/調査コード/shuttle-parking_difficulty.expected.json（案H の150問）の、
+// 解ける最小の待機枠で全部の状態をたどった解（出す順）の数。解ける最小の待機枠が範囲外の問題は解の数を持たない。
 
 type ReferenceProblem = (typeof reference.problems)[number];
+
+const solvedProblems = reference.problems.flatMap((problem) =>
+  "solutionCount" in problem && problem.solutionCount !== undefined
+    ? [{ ...problem, solutionCount: problem.solutionCount }]
+    : [],
+);
 
 function toPuzzle(problem: ReferenceProblem): ShuttleParkingPuzzle {
   return {
@@ -38,7 +44,7 @@ function toPuzzle(problem: ReferenceProblem): ShuttleParkingPuzzle {
       })),
     },
     passengers: Array.from(problem.passengers) as ShuttleParkingColor[],
-    bayCount: problem.bayCount,
+    bayCount: problem.minimumBayCount,
   };
 }
 
@@ -63,9 +69,7 @@ function countClearingOrders(puzzle: ShuttleParkingPuzzle): number {
 }
 
 describe("調査コードの問題例の場合", () => {
-  test.each(
-    reference.problems.map((problem) => [problem.seed, problem] as const),
-  )(
+  test.each(solvedProblems.map((problem) => [problem.seed, problem] as const))(
     "%s は全部の状態をたどった解の数が調査コードと一致すること",
     (_, problem) => {
       const puzzle = toPuzzle(problem);
@@ -76,18 +80,19 @@ describe("調査コードの問題例の場合", () => {
     },
   );
 
-  test.each(
-    reference.problems.map((problem) => [problem.seed, problem] as const),
-  )("%s は待機枠を1つ減らすと解けないこと", (_, problem) => {
-    const puzzle = toPuzzle(problem);
-    const narrowPuzzle = { ...puzzle, bayCount: puzzle.bayCount - 1 };
+  test.each(solvedProblems.map((problem) => [problem.seed, problem] as const))(
+    "%s は待機枠を1つ減らすと解けないこと",
+    (_, problem) => {
+      const puzzle = toPuzzle(problem);
+      const narrowPuzzle = { ...puzzle, bayCount: puzzle.bayCount - 1 };
 
-    const clearable = createShuttleParkingClearability(narrowPuzzle).canClear(
-      createShuttleParkingInitialState(narrowPuzzle),
-    );
+      const clearable = createShuttleParkingClearability(narrowPuzzle).canClear(
+        createShuttleParkingInitialState(narrowPuzzle),
+      );
 
-    expect(clearable).toBe(false);
-  });
+      expect(clearable).toBe(false);
+    },
+  );
 });
 
 describe("createShuttleParkingClearability", () => {
