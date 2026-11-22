@@ -2,6 +2,8 @@ import type { ComponentType } from "react";
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
+import { HakoiriMusumeHowToPlayDialog } from "@/games/hakoiri-musume/ui/HakoiriMusumeHowToPlayDialog";
+import { HakoiriMusumeTutorial } from "@/games/hakoiri-musume/ui/HakoiriMusumeTutorial";
 import { HitofudePuzzleHowToPlayDialog } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog";
 import { HitofudePuzzleTutorial } from "@/games/hitofude-puzzle/ui/HitofudePuzzleTutorial";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
@@ -32,6 +34,10 @@ type GuideComponents = {
 
 const guides: Record<string, GuideComponents> = {
   bridges: { HowToPlay: BridgesHowToPlayDialog, Tutorial: BridgesTutorial },
+  "hakoiri-musume": {
+    HowToPlay: HakoiriMusumeHowToPlayDialog,
+    Tutorial: HakoiriMusumeTutorial,
+  },
   "hitofude-puzzle": {
     HowToPlay: HitofudePuzzleHowToPlayDialog,
     Tutorial: HitofudePuzzleTutorial,
