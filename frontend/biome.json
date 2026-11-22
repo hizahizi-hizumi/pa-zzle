@@ -1470,6 +1470,7 @@
                     "group": [
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1533,6 +1534,7 @@
                     "group": [
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1586,6 +1588,7 @@
                     "group": [
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1649,6 +1652,7 @@
                     "group": [
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1711,6 +1715,7 @@
                     "group": [
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1778,6 +1783,7 @@
                     "group": [
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1844,6 +1850,7 @@
                     "group": [
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1907,6 +1914,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1970,6 +1978,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2023,6 +2032,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2086,6 +2096,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2148,6 +2159,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2215,6 +2227,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2281,6 +2294,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2344,6 +2358,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2407,6 +2422,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2460,6 +2476,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2523,6 +2540,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2585,6 +2603,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2652,6 +2671,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2718,6 +2738,7 @@
                     "group": [
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2736,6 +2757,450 @@
                       "@/games/ice-floor-maze/problem/generation/**",
                       "@/games/ice-floor-maze/play-record",
                       "@/games/ice-floor-maze/diagnostics"
+                    ],
+                    "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/magic-square/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/../**", "@/**/../**", "@/**/./**", "@/**//**"],
+                    "message": "[dependency/canonical-import] @/ の内部参照には . や .. を含めず、正規パスを使う。"
+                  },
+                  {
+                    "group": ["bun", "bun:*"],
+                    "message": "[test-runtime/bun-import] frontend/src は Bun 固有モジュールへ依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/features/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] ゲーム固有の処理はアプリ統合・記録UI・画面合成・ルートへ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/magic-square/play-record.ts",
+        "src/games/magic-square/play-record.test.ts",
+        "src/games/magic-square/play-attempt.ts",
+        "src/games/magic-square/ui/play-record-display.ts",
+        "src/games/magic-square/ui/play-record-display.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/../**", "@/**/../**", "@/**/./**", "@/**//**"],
+                    "message": "[dependency/canonical-import] @/ の内部参照には . や .. を含めず、正規パスを使う。"
+                  },
+                  {
+                    "group": ["bun", "bun:*"],
+                    "message": "[test-runtime/bun-import] frontend/src は Bun 固有モジュールへ依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/features/**",
+                      "!@/features/records/play-record",
+                      "!@/features/records/play-record-definition",
+                      "!@/features/records/play-attempt",
+                      "!@/features/records/ui/play-record-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] ゲーム固有の処理はアプリ統合・記録UI・画面合成・ルートへ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/magic-square/puzzle/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/../**", "@/**/../**", "@/**/./**", "@/**//**"],
+                    "message": "[dependency/canonical-import] @/ の内部参照には . や .. を含めず、正規パスを使う。"
+                  },
+                  {
+                    "group": ["bun", "bun:*"],
+                    "message": "[test-runtime/bun-import] frontend/src は Bun 固有モジュールへ依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/features/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] ゲーム固有の処理はアプリ統合・記録UI・画面合成・ルートへ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/magic-square/problem/**",
+                      "@/games/magic-square/session/**",
+                      "@/games/magic-square/play/**",
+                      "@/games/magic-square/tutorial/**",
+                      "@/games/magic-square/ui/**"
+                    ],
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・tutorial・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/magic-square/problem/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/../**", "@/**/../**", "@/**/./**", "@/**//**"],
+                    "message": "[dependency/canonical-import] @/ の内部参照には . や .. を含めず、正規パスを使う。"
+                  },
+                  {
+                    "group": ["bun", "bun:*"],
+                    "message": "[test-runtime/bun-import] frontend/src は Bun 固有モジュールへ依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/features/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] ゲーム固有の処理はアプリ統合・記録UI・画面合成・ルートへ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/magic-square/session/**",
+                      "@/games/magic-square/play/**",
+                      "@/games/magic-square/tutorial/**",
+                      "@/games/magic-square/ui/**"
+                    ],
+                    "message": "[dependency/game-problem-layer] problem は session・play・tutorial・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/magic-square/session/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/../**", "@/**/../**", "@/**/./**", "@/**//**"],
+                    "message": "[dependency/canonical-import] @/ の内部参照には . や .. を含めず、正規パスを使う。"
+                  },
+                  {
+                    "group": ["bun", "bun:*"],
+                    "message": "[test-runtime/bun-import] frontend/src は Bun 固有モジュールへ依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/features/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] ゲーム固有の処理はアプリ統合・記録UI・画面合成・ルートへ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/magic-square/problem/generation/**",
+                      "@/games/magic-square/difficulty",
+                      "@/games/magic-square/score",
+                      "@/games/magic-square/play/**",
+                      "@/games/magic-square/tutorial/**",
+                      "@/games/magic-square/ui/**",
+                      "@/games/magic-square/play-record",
+                      "@/features/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・tutorial・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/magic-square/tutorial/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/../**", "@/**/../**", "@/**/./**", "@/**//**"],
+                    "message": "[dependency/canonical-import] @/ の内部参照には . や .. を含めず、正規パスを使う。"
+                  },
+                  {
+                    "group": ["bun", "bun:*"],
+                    "message": "[test-runtime/bun-import] frontend/src は Bun 固有モジュールへ依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/features/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] ゲーム固有の処理はアプリ統合・記録UI・画面合成・ルートへ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/magic-square/problem/generation/**",
+                      "@/games/magic-square/difficulty",
+                      "@/games/magic-square/score",
+                      "@/games/magic-square/play/**",
+                      "@/games/magic-square/ui/**",
+                      "@/games/magic-square/play-record",
+                      "@/features/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/magic-square/play/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/../**", "@/**/../**", "@/**/./**", "@/**//**"],
+                    "message": "[dependency/canonical-import] @/ の内部参照には . や .. を含めず、正規パスを使う。"
+                  },
+                  {
+                    "group": ["bun", "bun:*"],
+                    "message": "[test-runtime/bun-import] frontend/src は Bun 固有モジュールへ依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/features/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] ゲーム固有の処理はアプリ統合・記録UI・画面合成・ルートへ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/magic-square/ui/**",
+                      "@/games/magic-square/tutorial/**",
+                      "@/games/magic-square/problem/generation/**",
+                      "@/games/magic-square/play-record",
+                      "@/games/magic-square/diagnostics"
                     ],
                     "message": "[dependency/game-play-layer] play は ui・tutorial・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
@@ -2782,6 +3247,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -2845,6 +3311,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -2898,6 +3365,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -2961,6 +3429,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -3023,6 +3492,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -3090,6 +3560,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -3156,6 +3627,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -3219,6 +3691,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -3282,6 +3755,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -3335,6 +3809,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -3398,6 +3873,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -3460,6 +3936,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -3527,6 +4004,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -3593,6 +4071,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -3656,6 +4135,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -3719,6 +4199,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -3772,6 +4253,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -3835,6 +4317,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -3897,6 +4380,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -3964,6 +4448,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -4030,6 +4515,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -4093,6 +4579,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4156,6 +4643,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4209,6 +4697,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4272,6 +4761,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4334,6 +4824,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4401,6 +4892,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4467,6 +4959,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4530,6 +5023,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4593,6 +5087,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4646,6 +5141,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4709,6 +5205,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4771,6 +5268,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4838,6 +5336,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4904,6 +5403,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -4967,6 +5467,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5030,6 +5531,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5083,6 +5585,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5146,6 +5649,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5208,6 +5712,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5275,6 +5780,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5341,6 +5847,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5404,6 +5911,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5467,6 +5975,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5520,6 +6029,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5583,6 +6093,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5645,6 +6156,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5712,6 +6224,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5778,6 +6291,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5841,6 +6355,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5904,6 +6419,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -5957,6 +6473,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -6020,6 +6537,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -6082,6 +6600,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -6149,6 +6668,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -6215,6 +6735,7 @@
                       "@/games/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
+                      "@/games/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -6269,6 +6790,8 @@
                       "@/app/game-integration/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/app/game-integration/ice-floor-maze/**",
+                      "@/games/magic-square/**",
+                      "@/app/game-integration/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/app/game-integration/minesweeper/**",
                       "@/games/nanpure/**",
@@ -6322,6 +6845,8 @@
                       "@/app/game-integration/bridges/**",
                       "@/games/ice-floor-maze/**",
                       "@/app/game-integration/ice-floor-maze/**",
+                      "@/games/magic-square/**",
+                      "@/app/game-integration/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/app/game-integration/minesweeper/**",
                       "@/games/nanpure/**",
@@ -6375,6 +6900,63 @@
                       "@/app/game-integration/bridges/**",
                       "@/games/hitofude-puzzle/**",
                       "@/app/game-integration/hitofude-puzzle/**",
+                      "@/games/magic-square/**",
+                      "@/app/game-integration/magic-square/**",
+                      "@/games/minesweeper/**",
+                      "@/app/game-integration/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/app/game-integration/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/app/game-integration/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/app/game-integration/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/app/game-integration/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/app/game-integration/takuzu/**",
+                      "@/games/tsume-shogi/**",
+                      "@/app/game-integration/tsume-shogi/**",
+                      "@/games/water-sort/**",
+                      "@/app/game-integration/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/app/game-integration/magic-square/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/../**", "@/**/../**", "@/**/./**", "@/**//**"],
+                    "message": "[dependency/canonical-import] @/ の内部参照には . や .. を含めず、正規パスを使う。"
+                  },
+                  {
+                    "group": ["bun", "bun:*"],
+                    "message": "[test-runtime/bun-import] frontend/src は Bun 固有モジュールへ依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/bridges/**",
+                      "@/app/game-integration/bridges/**",
+                      "@/games/hitofude-puzzle/**",
+                      "@/app/game-integration/hitofude-puzzle/**",
+                      "@/games/ice-floor-maze/**",
+                      "@/app/game-integration/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/app/game-integration/minesweeper/**",
                       "@/games/nanpure/**",
@@ -6430,6 +7012,8 @@
                       "@/app/game-integration/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/app/game-integration/ice-floor-maze/**",
+                      "@/games/magic-square/**",
+                      "@/app/game-integration/magic-square/**",
                       "@/games/nanpure/**",
                       "@/app/game-integration/nanpure/**",
                       "@/games/parking-jam/**",
@@ -6483,6 +7067,8 @@
                       "@/app/game-integration/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/app/game-integration/ice-floor-maze/**",
+                      "@/games/magic-square/**",
+                      "@/app/game-integration/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/app/game-integration/minesweeper/**",
                       "@/games/parking-jam/**",
@@ -6536,6 +7122,8 @@
                       "@/app/game-integration/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/app/game-integration/ice-floor-maze/**",
+                      "@/games/magic-square/**",
+                      "@/app/game-integration/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/app/game-integration/minesweeper/**",
                       "@/games/nanpure/**",
@@ -6589,6 +7177,8 @@
                       "@/app/game-integration/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/app/game-integration/ice-floor-maze/**",
+                      "@/games/magic-square/**",
+                      "@/app/game-integration/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/app/game-integration/minesweeper/**",
                       "@/games/nanpure/**",
@@ -6642,6 +7232,8 @@
                       "@/app/game-integration/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/app/game-integration/ice-floor-maze/**",
+                      "@/games/magic-square/**",
+                      "@/app/game-integration/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/app/game-integration/minesweeper/**",
                       "@/games/nanpure/**",
@@ -6695,6 +7287,8 @@
                       "@/app/game-integration/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/app/game-integration/ice-floor-maze/**",
+                      "@/games/magic-square/**",
+                      "@/app/game-integration/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/app/game-integration/minesweeper/**",
                       "@/games/nanpure/**",
@@ -6748,6 +7342,8 @@
                       "@/app/game-integration/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/app/game-integration/ice-floor-maze/**",
+                      "@/games/magic-square/**",
+                      "@/app/game-integration/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/app/game-integration/minesweeper/**",
                       "@/games/nanpure/**",
@@ -6801,6 +7397,8 @@
                       "@/app/game-integration/hitofude-puzzle/**",
                       "@/games/ice-floor-maze/**",
                       "@/app/game-integration/ice-floor-maze/**",
+                      "@/games/magic-square/**",
+                      "@/app/game-integration/magic-square/**",
                       "@/games/minesweeper/**",
                       "@/app/game-integration/minesweeper/**",
                       "@/games/nanpure/**",
