@@ -1,0 +1,1582 @@
+[
+ {
+  "id": "lv1-rep1",
+  "title": "Lv1 代表1",
+  "kind": "代表",
+  "bays": 4,
+  "problem": {
+   "size": 7,
+   "openings": [
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 2,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 1,
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 2,
+     "row": 4,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 3,
+     "row": 4,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 4,
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 5,
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "car": 6,
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 7,
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    }
+   ],
+   "queue": [
+    "A",
+    "D",
+    "C",
+    "B",
+    "A",
+    "A",
+    "D",
+    "D",
+    "C",
+    "B",
+    "D",
+    "C",
+    "A",
+    "D",
+    "B",
+    "A",
+    "C",
+    "C",
+    "A",
+    "B"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 17,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv1-rep2",
+  "title": "Lv1 代表2",
+  "kind": "代表",
+  "bays": 4,
+  "problem": {
+   "size": 7,
+   "openings": [
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 1,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 1,
+     "row": 1,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 2,
+     "row": 2,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "car": 3,
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "car": 4,
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 5,
+     "row": 1,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "car": 6,
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 7,
+     "row": 1,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    }
+   ],
+   "queue": [
+    "C",
+    "C",
+    "C",
+    "D",
+    "B",
+    "D",
+    "B",
+    "B",
+    "C",
+    "A",
+    "D",
+    "D",
+    "A",
+    "C",
+    "A",
+    "A",
+    "B",
+    "B",
+    "C",
+    "D",
+    "A"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 45,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv1-boundary",
+  "title": "Lv1 境界",
+  "kind": "境界",
+  "bays": 3,
+  "problem": {
+   "size": 6,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 3,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 1,
+     "row": 2,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 2,
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 3,
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 4,
+     "row": 0,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 5,
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 6,
+     "row": 5,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 7,
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    }
+   ],
+   "queue": [
+    "D",
+    "A",
+    "D",
+    "A",
+    "B",
+    "B",
+    "C",
+    "B",
+    "A",
+    "B",
+    "A",
+    "A",
+    "C",
+    "D",
+    "C",
+    "A",
+    "C",
+    "D"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 1199,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv2-rep1",
+  "title": "Lv2 代表1",
+  "kind": "代表",
+  "bays": 3,
+  "problem": {
+   "size": 7,
+   "openings": [
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 4,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 1,
+     "row": 0,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 2,
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 3,
+     "row": 5,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 4,
+     "row": 3,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 5,
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 6,
+     "row": 4,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "car": 7,
+     "row": 2,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    }
+   ],
+   "queue": [
+    "B",
+    "D",
+    "C",
+    "D",
+    "B",
+    "A",
+    "A",
+    "D",
+    "A",
+    "C",
+    "C",
+    "D",
+    "B",
+    "C",
+    "A",
+    "A",
+    "C",
+    "B",
+    "A"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 38,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv2-rep2",
+  "title": "Lv2 代表2",
+  "kind": "代表",
+  "bays": 3,
+  "problem": {
+   "size": 7,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 4,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 1,
+     "row": 1,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 2,
+     "row": 5,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 3,
+     "row": 0,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 4,
+     "row": 0,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "car": 5,
+     "row": 1,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 6,
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 7,
+     "row": 2,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    }
+   ],
+   "queue": [
+    "B",
+    "C",
+    "B",
+    "B",
+    "A",
+    "A",
+    "B",
+    "B",
+    "A",
+    "C",
+    "C",
+    "A",
+    "C",
+    "A",
+    "A",
+    "C",
+    "A",
+    "B",
+    "A"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 238,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv2-boundary",
+  "title": "Lv2 境界",
+  "kind": "境界",
+  "bays": 3,
+  "problem": {
+   "size": 6,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 3,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 1,
+     "row": 5,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 2,
+     "row": 3,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 3,
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "car": 4,
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 5,
+     "row": 5,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 6,
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 7,
+     "row": 3,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    }
+   ],
+   "queue": [
+    "C",
+    "B",
+    "A",
+    "A",
+    "A",
+    "B",
+    "B",
+    "C",
+    "B",
+    "A",
+    "C",
+    "B",
+    "A",
+    "C",
+    "A",
+    "A",
+    "B",
+    "A",
+    "C",
+    "B",
+    "C",
+    "B"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 195,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv3-rep1",
+  "title": "Lv3 代表1",
+  "kind": "代表",
+  "bays": 4,
+  "problem": {
+   "size": 6,
+   "openings": [
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 2,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "car": 1,
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 2,
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 3,
+     "row": 3,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 4,
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "car": 5,
+     "row": 0,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 6,
+     "row": 1,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 7,
+     "row": 3,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    }
+   ],
+   "queue": [
+    "D",
+    "D",
+    "C",
+    "A",
+    "B",
+    "A",
+    "C",
+    "A",
+    "D",
+    "A",
+    "C",
+    "C",
+    "B",
+    "B",
+    "A",
+    "B",
+    "D",
+    "D",
+    "C",
+    "B"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 252,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv3-rep2",
+  "title": "Lv3 代表2",
+  "kind": "代表",
+  "bays": 3,
+  "problem": {
+   "size": 6,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 3,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 1,
+     "row": 2,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 2,
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 3,
+     "row": 0,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 4,
+     "row": 5,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 5,
+     "row": 1,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 6,
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 7,
+     "row": 1,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    }
+   ],
+   "queue": [
+    "A",
+    "A",
+    "B",
+    "A",
+    "B",
+    "C",
+    "A",
+    "B",
+    "A",
+    "B",
+    "A",
+    "C",
+    "C",
+    "C",
+    "A",
+    "A",
+    "B",
+    "B",
+    "A",
+    "B"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 470,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv3-boundary",
+  "title": "Lv3 境界",
+  "kind": "境界",
+  "bays": 3,
+  "problem": {
+   "size": 7,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 0,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 1,
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 2,
+     "row": 2,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 3,
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 4,
+     "row": 4,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 5,
+     "row": 1,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 6,
+     "row": 6,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 7,
+     "row": 6,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    }
+   ],
+   "queue": [
+    "D",
+    "B",
+    "D",
+    "A",
+    "B",
+    "B",
+    "C",
+    "C",
+    "A",
+    "B",
+    "D",
+    "B",
+    "A",
+    "D",
+    "C",
+    "C",
+    "A"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 1308,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv4-rep1",
+  "title": "Lv4 代表1",
+  "kind": "代表",
+  "bays": 4,
+  "problem": {
+   "size": 7,
+   "openings": [
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 4,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 1,
+     "row": 2,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 2,
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "car": 3,
+     "row": 3,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 4,
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "car": 5,
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "car": 6,
+     "row": 2,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 7,
+     "row": 1,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    }
+   ],
+   "queue": [
+    "A",
+    "B",
+    "C",
+    "A",
+    "A",
+    "A",
+    "C",
+    "B",
+    "D",
+    "D",
+    "B",
+    "D",
+    "D",
+    "B",
+    "B",
+    "C",
+    "C",
+    "D",
+    "B",
+    "C",
+    "D",
+    "A"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 123,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv4-rep2",
+  "title": "Lv4 代表2",
+  "kind": "代表",
+  "bays": 3,
+  "problem": {
+   "size": 7,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 4,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 1,
+     "row": 4,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 2,
+     "row": 0,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 3,
+     "row": 3,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 4,
+     "row": 2,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 5,
+     "row": 3,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 6,
+     "row": 1,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 7,
+     "row": 5,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    }
+   ],
+   "queue": [
+    "C",
+    "A",
+    "A",
+    "C",
+    "B",
+    "D",
+    "D",
+    "B",
+    "D",
+    "A",
+    "D",
+    "C",
+    "B",
+    "C",
+    "A",
+    "B",
+    "C",
+    "B",
+    "A"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 1286,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv4-boundary",
+  "title": "Lv4 境界",
+  "kind": "境界",
+  "bays": 3,
+  "problem": {
+   "size": 6,
+   "openings": [
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 2,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 1,
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 2,
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 3,
+     "row": 1,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 4,
+     "row": 1,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 5,
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 6,
+     "row": 4,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 7,
+     "row": 2,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    }
+   ],
+   "queue": [
+    "B",
+    "C",
+    "A",
+    "B",
+    "B",
+    "B",
+    "B",
+    "A",
+    "B",
+    "B",
+    "C",
+    "B",
+    "A",
+    "A",
+    "C",
+    "C",
+    "A",
+    "A",
+    "A",
+    "A"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 80,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv5-rep1",
+  "title": "Lv5 代表1",
+  "kind": "代表",
+  "bays": 3,
+  "problem": {
+   "size": 6,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 3,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 1,
+     "row": 3,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 2,
+     "row": 1,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "car": 3,
+     "row": 0,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 4,
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 5,
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 6,
+     "row": 4,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 7,
+     "row": 5,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    }
+   ],
+   "queue": [
+    "C",
+    "C",
+    "C",
+    "B",
+    "B",
+    "B",
+    "B",
+    "A",
+    "A",
+    "A",
+    "A",
+    "A",
+    "C",
+    "C",
+    "B",
+    "B",
+    "A",
+    "B",
+    "B"
+   ]
+  },
+  "source": {
+   "seed": 20261116,
+   "index": 584,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv5-rep2",
+  "title": "Lv5 代表2",
+  "kind": "代表",
+  "bays": 3,
+  "problem": {
+   "size": 7,
+   "openings": [
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 3,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 1,
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "car": 2,
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "car": 3,
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "car": 4,
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 5,
+     "row": 4,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "car": 6,
+     "row": 2,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 7,
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    }
+   ],
+   "queue": [
+    "D",
+    "D",
+    "B",
+    "C",
+    "B",
+    "A",
+    "B",
+    "B",
+    "C",
+    "D",
+    "A",
+    "B",
+    "A",
+    "A",
+    "A",
+    "C",
+    "A",
+    "D",
+    "C",
+    "C"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 764,
+   "population": "favorable"
+  }
+ },
+ {
+  "id": "lv5-boundary",
+  "title": "Lv5 境界",
+  "kind": "境界",
+  "bays": 3,
+  "problem": {
+   "size": 7,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "vehicles": [
+    {
+     "car": 0,
+     "row": 4,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "car": 1,
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "car": 2,
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "car": 3,
+     "row": 4,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "car": 4,
+     "row": 0,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "car": 5,
+     "row": 2,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 6,
+     "row": 1,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "car": 7,
+     "row": 6,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    }
+   ],
+   "queue": [
+    "C",
+    "A",
+    "B",
+    "A",
+    "D",
+    "B",
+    "C",
+    "D",
+    "A",
+    "C",
+    "D",
+    "A",
+    "B",
+    "B",
+    "B",
+    "C",
+    "C",
+    "B",
+    "D",
+    "C",
+    "D"
+   ]
+  },
+  "source": {
+   "seed": 738,
+   "index": 96,
+   "population": "favorable"
+  }
+ }
+]

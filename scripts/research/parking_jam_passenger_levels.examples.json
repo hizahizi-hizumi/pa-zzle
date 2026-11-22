@@ -1,0 +1,2630 @@
+[
+ {
+  "id": "lv1-rep1",
+  "title": "Lv1 代表1",
+  "kind": "代表",
+  "level": 1,
+  "bayCount": 4,
+  "solutions": 1080,
+  "queue": [
+   "A",
+   "D",
+   "C",
+   "B",
+   "A",
+   "A",
+   "D",
+   "D",
+   "C",
+   "B",
+   "D",
+   "C",
+   "A",
+   "D",
+   "B",
+   "A",
+   "C",
+   "C",
+   "A",
+   "B"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 2,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v1",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 4,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 4,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v7",
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "top"
+   ],
+   "kMin": 4,
+   "slack": 0,
+   "queueLength": 20,
+   "queueRuns": 17,
+   "lookahead": 0,
+   "lookaheadRuns": 0,
+   "h90": 0,
+   "h50": 0,
+   "curve": [
+    1.0
+   ],
+   "naive": 1.0,
+   "headFirst": 1.0,
+   "traps": 0,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 0,
+    "median": 0,
+    "max": 0,
+    "mean": 0.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 1,
+    "run1head": 1,
+    "run1": 1,
+    "run2": 2,
+    "run3": 2,
+    "all": 2
+   }
+  },
+  "deepestTrap": null,
+  "solution": [
+   "v1",
+   "v4",
+   "v5",
+   "v6",
+   "v0",
+   "v2",
+   "v3",
+   "v7"
+  ],
+  "diagram": " vvvvvvv \n#.6..4.7#\n#.6.54.7#\n#.0.5.17#\n#.0.5.1.#\n#...321.#\n#...32..#\n#....2..#\n ####### ",
+  "note": ""
+ },
+ {
+  "id": "lv1-rep2",
+  "title": "Lv1 代表2",
+  "kind": "代表",
+  "level": 1,
+  "bayCount": 4,
+  "solutions": 2076,
+  "queue": [
+   "C",
+   "C",
+   "C",
+   "D",
+   "B",
+   "D",
+   "B",
+   "B",
+   "C",
+   "A",
+   "D",
+   "D",
+   "A",
+   "C",
+   "A",
+   "A",
+   "B",
+   "B",
+   "C",
+   "D",
+   "A"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 1,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v1",
+     "row": 1,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 2,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v5",
+     "row": 1,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v6",
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v7",
+     "row": 1,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "top"
+   ],
+   "kMin": 4,
+   "slack": 0,
+   "queueLength": 21,
+   "queueRuns": 15,
+   "lookahead": 0,
+   "lookaheadRuns": 0,
+   "h90": 0,
+   "h50": 0,
+   "curve": [
+    1.0
+   ],
+   "naive": 1.0,
+   "headFirst": 0.5,
+   "traps": 0,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 0,
+    "median": 0,
+    "max": 0,
+    "mean": 0.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 1,
+    "run1head": 1,
+    "run1": 1,
+    "run2": null,
+    "run3": null,
+    "all": null
+   }
+  },
+  "deepestTrap": null,
+  "solution": [
+   "v0",
+   "v1",
+   "v3",
+   "v4",
+   "v5",
+   "v2",
+   "v6",
+   "v7"
+  ],
+  "diagram": " vvvvvvv \n#3.....4#\n#3156704#\n#3156702#\n#.15..02#\n#......2#\n#.......#\n#.......#\n ####### ",
+  "note": ""
+ },
+ {
+  "id": "lv1-boundary",
+  "title": "Lv1 境界",
+  "kind": "境界",
+  "level": 1,
+  "bayCount": 3,
+  "solutions": 8,
+  "queue": [
+   "D",
+   "A",
+   "D",
+   "A",
+   "B",
+   "B",
+   "C",
+   "B",
+   "A",
+   "B",
+   "A",
+   "A",
+   "C",
+   "D",
+   "C",
+   "A",
+   "C",
+   "D"
+  ],
+  "board": {
+   "width": 6,
+   "height": 6,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 3,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v1",
+     "row": 2,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v2",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v6",
+     "row": 5,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v7",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 6
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 6
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "kMin": 3,
+   "slack": 0,
+   "queueLength": 18,
+   "queueRuns": 16,
+   "lookahead": 0,
+   "lookaheadRuns": 0,
+   "h90": 0,
+   "h50": 0,
+   "curve": [
+    1.0
+   ],
+   "naive": 1.0,
+   "headFirst": 0.0625,
+   "traps": 0,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 0,
+    "median": 0,
+    "max": 0,
+    "mean": 0.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 1,
+    "run1head": 1,
+    "run1": 1,
+    "run2": 2,
+    "run3": 2,
+    "all": 2
+   }
+  },
+  "deepestTrap": null,
+  "solution": [
+   "v5",
+   "v2",
+   "v1",
+   "v6",
+   "v7",
+   "v0",
+   "v3",
+   "v4"
+  ],
+  "diagram": " vvvvvv \n#344.75<\n#3...75<\n#3..112<\n#...0.2<\n#...0.2<\n#...66.<\n ###### ",
+  "note": ""
+ },
+ {
+  "id": "lv2-rep1",
+  "title": "Lv2 代表1",
+  "kind": "代表",
+  "level": 2,
+  "bayCount": 3,
+  "solutions": 30,
+  "queue": [
+   "B",
+   "D",
+   "C",
+   "D",
+   "B",
+   "A",
+   "A",
+   "D",
+   "A",
+   "C",
+   "C",
+   "D",
+   "B",
+   "C",
+   "A",
+   "A",
+   "C",
+   "B",
+   "A"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v1",
+     "row": 0,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 5,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v4",
+     "row": 3,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v6",
+     "row": 4,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v7",
+     "row": 2,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "top"
+   ],
+   "kMin": 3,
+   "slack": 0,
+   "queueLength": 19,
+   "queueRuns": 16,
+   "lookahead": 3,
+   "lookaheadRuns": 2,
+   "h90": 3,
+   "h50": 0,
+   "curve": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "naive": 0.5,
+   "headFirst": 0.5,
+   "traps": 2,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 0,
+    "median": 0,
+    "max": 0,
+    "mean": 0.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 2,
+    "run1head": 2,
+    "run1": 2,
+    "run2": 2,
+    "run3": 2,
+    "all": 2
+   }
+  },
+  "deepestTrap": {
+   "before": [
+    "v5",
+    "v7",
+    "v4"
+   ],
+   "served": 5,
+   "losing": "v2",
+   "distance": 2,
+   "stuckAt": 7,
+   "queueOnly": false,
+   "winning": [
+    "v1"
+   ]
+  },
+  "solution": [
+   "v5",
+   "v4",
+   "v7",
+   "v1",
+   "v0",
+   "v2",
+   "v6",
+   "v3"
+  ],
+  "diagram": " vvvvvvv \n#.512...#\n#.512...#\n#7.12...#\n#74.....#\n#.40.6..#\n#.30.6..#\n#.3..6..#\n ####### ",
+  "note": ""
+ },
+ {
+  "id": "lv2-rep2",
+  "title": "Lv2 代表2",
+  "kind": "代表",
+  "level": 2,
+  "bayCount": 3,
+  "solutions": 8,
+  "queue": [
+   "B",
+   "C",
+   "B",
+   "B",
+   "A",
+   "A",
+   "B",
+   "B",
+   "A",
+   "C",
+   "C",
+   "A",
+   "C",
+   "A",
+   "A",
+   "C",
+   "A",
+   "B",
+   "A"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v1",
+     "row": 1,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v2",
+     "row": 5,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 1,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v7",
+     "row": 2,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "kMin": 3,
+   "slack": 0,
+   "queueLength": 19,
+   "queueRuns": 14,
+   "lookahead": 3,
+   "lookaheadRuns": 2,
+   "h90": 3,
+   "h50": 0,
+   "curve": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "naive": 0.5,
+   "headFirst": 0.125,
+   "traps": 1,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 0,
+    "median": 0,
+    "max": 0,
+    "mean": 0.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 2,
+    "run1head": 2,
+    "run1": 2,
+    "run2": 2,
+    "run3": 2,
+    "all": 2
+   }
+  },
+  "deepestTrap": {
+   "before": [
+    "v6"
+   ],
+   "served": 1,
+   "losing": "v7",
+   "distance": 2,
+   "stuckAt": 3,
+   "queueOnly": false,
+   "winning": [
+    "v4"
+   ]
+  },
+  "solution": [
+   "v4",
+   "v6",
+   "v3",
+   "v1",
+   "v0",
+   "v2",
+   "v7",
+   "v5"
+  ],
+  "diagram": " vvvvvvv \n#3336444<\n#1..6555<\n#1...77.<\n#.......<\n#0......<\n#0...22.<\n#.......<\n ####### ",
+  "note": ""
+ },
+ {
+  "id": "lv2-boundary",
+  "title": "Lv2 境界",
+  "kind": "境界",
+  "level": 2,
+  "bayCount": 3,
+  "solutions": 234,
+  "queue": [
+   "C",
+   "B",
+   "A",
+   "A",
+   "A",
+   "B",
+   "B",
+   "C",
+   "B",
+   "A",
+   "C",
+   "B",
+   "A",
+   "C",
+   "A",
+   "A",
+   "B",
+   "A",
+   "C",
+   "B",
+   "C",
+   "B"
+  ],
+  "board": {
+   "width": 6,
+   "height": 6,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 3,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v1",
+     "row": 5,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v2",
+     "row": 3,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v4",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v5",
+     "row": 5,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v7",
+     "row": 3,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 6
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 6
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "kMin": 3,
+   "slack": 0,
+   "queueLength": 22,
+   "queueRuns": 18,
+   "lookahead": 1,
+   "lookaheadRuns": 1,
+   "h90": 1,
+   "h50": 0,
+   "curve": [
+    0.875,
+    1.0
+   ],
+   "naive": 0.875,
+   "headFirst": 0.819444,
+   "traps": 0,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 0,
+    "median": 0,
+    "max": 0,
+    "mean": 0.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 2,
+    "run1head": 2,
+    "run1": 2,
+    "run2": 2,
+    "run3": 2,
+    "all": 2
+   }
+  },
+  "deepestTrap": {
+   "before": [
+    "v7",
+    "v4",
+    "v6"
+   ],
+   "served": 8,
+   "losing": "v3",
+   "distance": 0,
+   "stuckAt": 8,
+   "queueOnly": true,
+   "winning": [
+    "v5"
+   ]
+  },
+  "solution": [
+   "v3",
+   "v2",
+   "v4",
+   "v5",
+   "v0",
+   "v6",
+   "v7",
+   "v1"
+  ],
+  "diagram": " vvvvvv \n#...63.<\n#...63.<\n#...634<\n#700024<\n#7...24<\n#711555<\n ###### ",
+  "note": ""
+ },
+ {
+  "id": "lv3-rep1",
+  "title": "Lv3 代表1",
+  "kind": "代表",
+  "level": 3,
+  "bayCount": 4,
+  "solutions": 468,
+  "queue": [
+   "D",
+   "D",
+   "C",
+   "A",
+   "B",
+   "A",
+   "C",
+   "A",
+   "D",
+   "A",
+   "C",
+   "C",
+   "B",
+   "B",
+   "A",
+   "B",
+   "D",
+   "D",
+   "C",
+   "B"
+  ],
+  "board": {
+   "width": 6,
+   "height": 6,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 2,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v1",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v3",
+     "row": 3,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 0,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v6",
+     "row": 1,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v7",
+     "row": 3,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 6
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "top"
+   ],
+   "kMin": 4,
+   "slack": 0,
+   "queueLength": 20,
+   "queueRuns": 16,
+   "lookahead": 6,
+   "lookaheadRuns": 6,
+   "h90": 6,
+   "h50": 0,
+   "curve": [
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.625,
+    1.0
+   ],
+   "naive": 0.5,
+   "headFirst": 0.375,
+   "traps": 3,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 1,
+    "median": 1,
+    "max": 1,
+    "mean": 1.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 3,
+    "run1head": 3,
+    "run1": 3,
+    "run2": 4,
+    "run3": 4,
+    "all": 5
+   }
+  },
+  "deepestTrap": {
+   "before": [
+    "v6",
+    "v1",
+    "v7"
+   ],
+   "served": 4,
+   "losing": "v5",
+   "distance": 5,
+   "stuckAt": 9,
+   "queueOnly": false,
+   "winning": [
+    "v2"
+   ]
+  },
+  "solution": [
+   "v1",
+   "v2",
+   "v0",
+   "v7",
+   "v4",
+   "v3",
+   "v5",
+   "v6"
+  ],
+  "diagram": " vvvvvv \n#2.541.#\n#2.5416#\n#0.54.6#\n#07.3..#\n#07.3..#\n#.7....#\n ###### ",
+  "note": ""
+ },
+ {
+  "id": "lv3-rep2",
+  "title": "Lv3 代表2",
+  "kind": "代表",
+  "level": 3,
+  "bayCount": 3,
+  "solutions": 264,
+  "queue": [
+   "A",
+   "A",
+   "B",
+   "A",
+   "B",
+   "C",
+   "A",
+   "B",
+   "A",
+   "B",
+   "A",
+   "C",
+   "C",
+   "C",
+   "A",
+   "A",
+   "B",
+   "B",
+   "A",
+   "B"
+  ],
+  "board": {
+   "width": 6,
+   "height": 6,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 3,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v1",
+     "row": 2,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v4",
+     "row": 5,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 1,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v6",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v7",
+     "row": 1,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 6
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 6
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "kMin": 3,
+   "slack": 0,
+   "queueLength": 20,
+   "queueRuns": 15,
+   "lookahead": 6,
+   "lookaheadRuns": 5,
+   "h90": 6,
+   "h50": 0,
+   "curve": [
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.75,
+    1.0
+   ],
+   "naive": 0.5,
+   "headFirst": 0.333333,
+   "traps": 2,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 1,
+    "median": 1,
+    "max": 2,
+    "mean": 1.5
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 3,
+    "run1head": 3,
+    "run1": 3,
+    "run2": null,
+    "run3": 5,
+    "all": null
+   }
+  },
+  "deepestTrap": {
+   "before": [
+    "v6",
+    "v3",
+    "v4",
+    "v2"
+   ],
+   "served": 7,
+   "losing": "v5",
+   "distance": 5,
+   "stuckAt": 12,
+   "queueOnly": false,
+   "winning": [
+    "v7"
+   ]
+  },
+  "solution": [
+   "v3",
+   "v2",
+   "v1",
+   "v4",
+   "v5",
+   "v7",
+   "v0",
+   "v6"
+  ],
+  "diagram": " vvvvvv \n#.6..33<\n#5677..<\n#561112<\n#5.0..2<\n#..0..2<\n#...44.<\n ###### ",
+  "note": ""
+ },
+ {
+  "id": "lv3-boundary",
+  "title": "Lv3 境界",
+  "kind": "境界",
+  "level": 3,
+  "bayCount": 3,
+  "solutions": 33,
+  "queue": [
+   "D",
+   "B",
+   "D",
+   "A",
+   "B",
+   "B",
+   "C",
+   "C",
+   "A",
+   "B",
+   "D",
+   "B",
+   "A",
+   "D",
+   "C",
+   "C",
+   "A"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 0,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v1",
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v2",
+     "row": 2,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v4",
+     "row": 4,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v5",
+     "row": 1,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v6",
+     "row": 6,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v7",
+     "row": 6,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "kMin": 3,
+   "slack": 0,
+   "queueLength": 17,
+   "queueRuns": 14,
+   "lookahead": 5,
+   "lookaheadRuns": 4,
+   "h90": 5,
+   "h50": 0,
+   "curve": [
+    0.75,
+    0.75,
+    0.75,
+    0.75,
+    0.75,
+    1.0
+   ],
+   "naive": 0.75,
+   "headFirst": 0.234375,
+   "traps": 1,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 0,
+    "median": 0,
+    "max": 1,
+    "mean": 0.5
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 3,
+    "run1head": 3,
+    "run1": 3,
+    "run2": 3,
+    "run3": 3,
+    "all": 3
+   }
+  },
+  "deepestTrap": {
+   "before": [
+    "v5",
+    "v4",
+    "v1"
+   ],
+   "served": 6,
+   "losing": "v0",
+   "distance": 4,
+   "stuckAt": 10,
+   "queueOnly": false,
+   "winning": [
+    "v3"
+   ]
+  },
+  "solution": [
+   "v1",
+   "v3",
+   "v2",
+   "v5",
+   "v4",
+   "v7",
+   "v6",
+   "v0"
+  ],
+  "diagram": " vvvvvvv \n#...3001<\n#.5.3..1<\n#.5.2..1<\n#...2...<\n#.4.....<\n#.4.....<\n#.66..77<\n ####### ",
+  "note": ""
+ },
+ {
+  "id": "lv4-rep1",
+  "title": "Lv4 代表1",
+  "kind": "代表",
+  "level": 4,
+  "bayCount": 4,
+  "solutions": 96,
+  "queue": [
+   "A",
+   "B",
+   "C",
+   "A",
+   "A",
+   "A",
+   "C",
+   "B",
+   "D",
+   "D",
+   "B",
+   "D",
+   "D",
+   "B",
+   "B",
+   "C",
+   "C",
+   "D",
+   "B",
+   "C",
+   "D",
+   "A"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v1",
+     "row": 2,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v3",
+     "row": 3,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v6",
+     "row": 2,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v7",
+     "row": 1,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "top"
+   ],
+   "kMin": 4,
+   "slack": 0,
+   "queueLength": 22,
+   "queueRuns": 16,
+   "lookahead": 9,
+   "lookaheadRuns": 7,
+   "h90": 9,
+   "h50": 0,
+   "curve": [
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "naive": 0.5,
+   "headFirst": 0.058333,
+   "traps": 1,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 1,
+    "median": 1,
+    "max": 1,
+    "mean": 1.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 4,
+    "run1head": 4,
+    "run1": 4,
+    "run2": 5,
+    "run3": 5,
+    "all": 5
+   }
+  },
+  "deepestTrap": {
+   "before": [],
+   "served": 0,
+   "losing": "v4",
+   "distance": 8,
+   "stuckAt": 8,
+   "queueOnly": false,
+   "winning": [
+    "v1"
+   ]
+  },
+  "solution": [
+   "v1",
+   "v0",
+   "v4",
+   "v6",
+   "v3",
+   "v2",
+   "v5",
+   "v7"
+  ],
+  "diagram": " vvvvvvv \n#2...54.#\n#27..54.#\n#27.1546#\n#.7.1.36#\n#...0.36#\n#...0.3.#\n#.......#\n ####### ",
+  "note": ""
+ },
+ {
+  "id": "lv4-rep2",
+  "title": "Lv4 代表2",
+  "kind": "代表",
+  "level": 4,
+  "bayCount": 3,
+  "solutions": 99,
+  "queue": [
+   "C",
+   "A",
+   "A",
+   "C",
+   "B",
+   "D",
+   "D",
+   "B",
+   "D",
+   "A",
+   "D",
+   "C",
+   "B",
+   "C",
+   "A",
+   "B",
+   "C",
+   "B",
+   "A"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v1",
+     "row": 4,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v2",
+     "row": 0,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 3,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v4",
+     "row": 2,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v5",
+     "row": 3,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v6",
+     "row": 1,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v7",
+     "row": 5,
+     "column": 4,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "kMin": 3,
+   "slack": 0,
+   "queueLength": 19,
+   "queueRuns": 17,
+   "lookahead": 9,
+   "lookaheadRuns": 7,
+   "h90": 9,
+   "h50": 0,
+   "curve": [
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "naive": 0.5,
+   "headFirst": 0.5,
+   "traps": 1,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 1,
+    "median": 1,
+    "max": 1,
+    "mean": 1.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 4,
+    "run1head": 4,
+    "run1": 4,
+    "run2": 4,
+    "run3": 4,
+    "all": 4
+   }
+  },
+  "deepestTrap": {
+   "before": [],
+   "served": 0,
+   "losing": "v7",
+   "distance": 8,
+   "stuckAt": 8,
+   "queueOnly": false,
+   "winning": [
+    "v1"
+   ]
+  },
+  "solution": [
+   "v1",
+   "v2",
+   "v6",
+   "v4",
+   "v5",
+   "v0",
+   "v3",
+   "v7"
+  ],
+  "diagram": " vvvvvvv \n#.....22<\n#...66..<\n#....4..<\n#33354..<\n#.00511.<\n#...5777<\n#.......<\n ####### ",
+  "note": ""
+ },
+ {
+  "id": "lv4-boundary",
+  "title": "Lv4 境界",
+  "kind": "境界",
+  "level": 4,
+  "bayCount": 3,
+  "solutions": 474,
+  "queue": [
+   "B",
+   "C",
+   "A",
+   "B",
+   "B",
+   "B",
+   "B",
+   "A",
+   "B",
+   "B",
+   "C",
+   "B",
+   "A",
+   "A",
+   "C",
+   "C",
+   "A",
+   "A",
+   "A",
+   "A"
+  ],
+  "board": {
+   "width": 6,
+   "height": 6,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 2,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v1",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v3",
+     "row": 1,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v4",
+     "row": 1,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v5",
+     "row": 0,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v6",
+     "row": 4,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v7",
+     "row": 2,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 6
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "top"
+   ],
+   "kMin": 3,
+   "slack": 0,
+   "queueLength": 20,
+   "queueRuns": 11,
+   "lookahead": 8,
+   "lookaheadRuns": 4,
+   "h90": 8,
+   "h50": 0,
+   "curve": [
+    0.75,
+    0.75,
+    0.75,
+    0.75,
+    0.75,
+    0.75,
+    0.75,
+    0.75,
+    1.0
+   ],
+   "naive": 0.75,
+   "headFirst": 0.583333,
+   "traps": 2,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 0,
+    "median": 0,
+    "max": 1,
+    "mean": 0.5
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 4,
+    "run1head": 4,
+    "run1": 4,
+    "run2": 4,
+    "run3": 4,
+    "all": 4
+   }
+  },
+  "deepestTrap": {
+   "before": [
+    "v3",
+    "v4"
+   ],
+   "served": 2,
+   "losing": "v2",
+   "distance": 7,
+   "stuckAt": 9,
+   "queueOnly": false,
+   "winning": [
+    "v1"
+   ]
+  },
+  "solution": [
+   "v1",
+   "v3",
+   "v4",
+   "v5",
+   "v7",
+   "v6",
+   "v0",
+   "v2"
+  ],
+  "diagram": " vvvvvv \n#15....#\n#15.243#\n#057243#\n#0.72.3#\n#0.6...#\n#..6...#\n ###### ",
+  "note": ""
+ },
+ {
+  "id": "lv5-rep1",
+  "title": "Lv5 代表1",
+  "kind": "代表",
+  "level": 5,
+  "bayCount": 3,
+  "solutions": 276,
+  "queue": [
+   "C",
+   "C",
+   "C",
+   "B",
+   "B",
+   "B",
+   "B",
+   "A",
+   "A",
+   "A",
+   "A",
+   "A",
+   "C",
+   "C",
+   "B",
+   "B",
+   "A",
+   "B",
+   "B"
+  ],
+  "board": {
+   "width": 6,
+   "height": 6,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 3,
+     "column": 1,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v1",
+     "row": 3,
+     "column": 2,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v2",
+     "row": 1,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 0,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v5",
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v6",
+     "row": 4,
+     "column": 3,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v7",
+     "row": 5,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "C"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 6
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 6
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "kMin": 3,
+   "slack": 0,
+   "queueLength": 19,
+   "queueRuns": 7,
+   "lookahead": 10,
+   "lookaheadRuns": 3,
+   "h90": 10,
+   "h50": 8,
+   "curve": [
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    0.375,
+    0.5,
+    0.75,
+    1.0
+   ],
+   "naive": 0.25,
+   "headFirst": 0.25,
+   "traps": 4,
+   "queueOnlyTraps": 0,
+   "deepTrapsOnRun": {
+    "min": 2,
+    "median": 2,
+    "max": 2,
+    "mean": 2.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 5,
+    "run1head": 5,
+    "run1": 5,
+    "run2": 5,
+    "run3": 5,
+    "all": 5
+   }
+  },
+  "deepestTrap": {
+   "before": [
+    "v2"
+   ],
+   "served": 3,
+   "losing": "v6",
+   "distance": 9,
+   "stuckAt": 12,
+   "queueOnly": false,
+   "winning": [
+    "v4"
+   ]
+  },
+  "solution": [
+   "v2",
+   "v1",
+   "v4",
+   "v3",
+   "v0",
+   "v5",
+   "v7",
+   "v6"
+  ],
+  "diagram": " vvvvvv \n#333..4<\n#...524<\n#...52.<\n#.0112.<\n#.0.666<\n#.77...<\n ###### ",
+  "note": ""
+ },
+ {
+  "id": "lv5-rep2",
+  "title": "Lv5 代表2",
+  "kind": "代表",
+  "level": 5,
+  "bayCount": 3,
+  "solutions": 12,
+  "queue": [
+   "D",
+   "D",
+   "B",
+   "C",
+   "B",
+   "A",
+   "B",
+   "B",
+   "C",
+   "D",
+   "A",
+   "B",
+   "A",
+   "A",
+   "A",
+   "C",
+   "A",
+   "D",
+   "C",
+   "C"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 3,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v1",
+     "row": 0,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v2",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "C"
+    },
+    {
+     "id": "v3",
+     "row": 0,
+     "column": 4,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "A"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v5",
+     "row": 4,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "B"
+    },
+    {
+     "id": "v6",
+     "row": 2,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v7",
+     "row": 1,
+     "column": 3,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "top"
+   ],
+   "kMin": 3,
+   "slack": 0,
+   "queueLength": 20,
+   "queueRuns": 15,
+   "lookahead": 10,
+   "lookaheadRuns": 8,
+   "h90": 10,
+   "h50": 7,
+   "curve": [
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "naive": 0.25,
+   "headFirst": 0.25,
+   "traps": 2,
+   "queueOnlyTraps": 1,
+   "deepTrapsOnRun": {
+    "min": 2,
+    "median": 2,
+    "max": 2,
+    "mean": 2.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 5,
+    "run1head": 5,
+    "run1": 5,
+    "run2": 5,
+    "run3": 5,
+    "all": 5
+   }
+  },
+  "deepestTrap": {
+   "before": [],
+   "served": 0,
+   "losing": "v6",
+   "distance": 9,
+   "stuckAt": 9,
+   "queueOnly": false,
+   "winning": [
+    "v4"
+   ]
+  },
+  "solution": [
+   "v3",
+   "v4",
+   "v2",
+   "v7",
+   "v5",
+   "v6",
+   "v1",
+   "v0"
+  ],
+  "diagram": " vvvvvvv \n#....341#\n#...7341#\n#6..7321#\n#6..7.20#\n#...5..0#\n#...5..0#\n#.......#\n ####### ",
+  "note": ""
+ },
+ {
+  "id": "lv5-boundary",
+  "title": "Lv5 境界",
+  "kind": "境界",
+  "level": 5,
+  "bayCount": 3,
+  "solutions": 12,
+  "queue": [
+   "C",
+   "A",
+   "B",
+   "A",
+   "D",
+   "B",
+   "C",
+   "D",
+   "A",
+   "C",
+   "D",
+   "A",
+   "B",
+   "B",
+   "B",
+   "C",
+   "C",
+   "B",
+   "D",
+   "C",
+   "D"
+  ],
+  "board": {
+   "width": 7,
+   "height": 7,
+   "vehicles": [
+    {
+     "id": "v0",
+     "row": 4,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "D"
+    },
+    {
+     "id": "v1",
+     "row": 0,
+     "column": 0,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v2",
+     "row": 2,
+     "column": 5,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "C"
+    },
+    {
+     "id": "v3",
+     "row": 4,
+     "column": 6,
+     "orientation": "vertical",
+     "length": 2,
+     "color": "D"
+    },
+    {
+     "id": "v4",
+     "row": 0,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    },
+    {
+     "id": "v5",
+     "row": 2,
+     "column": 2,
+     "orientation": "vertical",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v6",
+     "row": 1,
+     "column": 1,
+     "orientation": "horizontal",
+     "length": 3,
+     "color": "B"
+    },
+    {
+     "id": "v7",
+     "row": 6,
+     "column": 5,
+     "orientation": "horizontal",
+     "length": 2,
+     "color": "A"
+    }
+   ],
+   "fixedAreas": [],
+   "roadOpenings": [
+    {
+     "side": "right",
+     "startOffset": 0,
+     "length": 7
+    },
+    {
+     "side": "up",
+     "startOffset": 0,
+     "length": 7
+    }
+   ]
+  },
+  "features": {
+   "cars": 8,
+   "openings": [
+    "right",
+    "top"
+   ],
+   "kMin": 3,
+   "slack": 0,
+   "queueLength": 21,
+   "queueRuns": 18,
+   "lookahead": 8,
+   "lookaheadRuns": 8,
+   "h90": 8,
+   "h50": 5,
+   "curve": [
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "naive": 0.5,
+   "headFirst": 0.25,
+   "traps": 2,
+   "queueOnlyTraps": 1,
+   "deepTrapsOnRun": {
+    "min": 2,
+    "median": 2,
+    "max": 2,
+    "mean": 2.0
+   },
+   "robust": true,
+   "levelsByVariant": {
+    "naive": 5,
+    "run1head": 5,
+    "run1": 5,
+    "run2": 5,
+    "run3": 5,
+    "all": 5
+   }
+  },
+  "deepestTrap": {
+   "before": [
+    "v1"
+   ],
+   "served": 1,
+   "losing": "v7",
+   "distance": 7,
+   "stuckAt": 8,
+   "queueOnly": false,
+   "winning": [
+    "v4"
+   ]
+  },
+  "solution": [
+   "v1",
+   "v4",
+   "v6",
+   "v3",
+   "v7",
+   "v0",
+   "v2",
+   "v5"
+  ],
+  "diagram": " vvvvvvv \n#1....44<\n#1666...<\n#1.5..2.<\n#..5..2.<\n#0.5..23<\n#0.....3<\n#0....77<\n ####### ",
+  "note": ""
+ }
+]
