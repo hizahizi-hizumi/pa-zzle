@@ -7,15 +7,15 @@ import {
   exitShuttleParkingCar,
   type ShuttleParkingState,
 } from "@/games/shuttle-parking/puzzle/rules";
-import { shuttleParkingTutorialProblem } from "@/games/shuttle-parking/tutorial/tutorial";
+import {
+  SHUTTLE_PARKING_TUTORIAL_SOLUTION,
+  shuttleParkingTutorialProblem,
+} from "@/games/shuttle-parking/tutorial/tutorial";
 import { ShuttleParkingScene } from "@/games/shuttle-parking/ui/board/ShuttleParkingScene";
 import { prefersReducedMotion } from "@/lib/motion";
 
 /** 始まりの盤面を見せておく間。列と車の色を見比べられる長さにする。 */
 const GOAL_START_HOLD_MS = 1500;
-
-/** チュートリアルで解く1枚を、先頭の乗客が乗れる車から出していく順。 */
-const goalOrder = [3, 1, 0, 2] as const;
 
 type GoalStep = {
   state: ShuttleParkingState;
@@ -30,7 +30,7 @@ const goalSteps: readonly GoalStep[] = listGoalSteps();
 function listGoalSteps(): GoalStep[] {
   let state = createShuttleParkingInitialState(shuttleParkingTutorialProblem);
   const steps: GoalStep[] = [{ state, operation: null }];
-  for (const carId of goalOrder) {
+  for (const carId of SHUTTLE_PARKING_TUTORIAL_SOLUTION) {
     const exit = exitShuttleParkingCar(
       shuttleParkingTutorialProblem,
       state,
@@ -63,7 +63,7 @@ function getStepDelayMs(step: number): number {
 
 /**
  * 入口のゴールの盤面。開いたときに1回、チュートリアルと同じ1枚を、本番と同じ動きで1台ずつ出して全員を送り出し、
- * 空になった駐車場で終える。音は鳴らさない。途中で飛ばすと空の駐車場をすぐ見せ、出し終えた後だけ見せ直せる。
+ * 本番のクリアの動きで空になった駐車場を弾ませて終える。音は鳴らさない。途中で飛ばすと空の駐車場をすぐ見せ、出し終えた後だけ見せ直せる。
  * 動きを減らす設定では、始まりの盤面を短く見せてから、空の駐車場を動かさずに見せる。
  */
 export function GoalPlayback() {
@@ -71,12 +71,15 @@ export function GoalPlayback() {
   const [step, setStep] = useState(0);
   const [stepStartedAt, setStepStartedAt] = useState(0);
   const [settled, setSettled] = useState(false);
+  const [skipped, setSkipped] = useState(false);
 
   const skipToGoal = useCallback(() => {
     setStep(lastStep);
     setStepStartedAt(0);
+    setSkipped(true);
     setSettled(true);
   }, []);
+  const finishClearing = useCallback(() => setSettled(true), []);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: 見せ直した回数は、刻み直す合図としてだけ使う
   useEffect(() => {
@@ -95,7 +98,6 @@ export function GoalPlayback() {
         );
         atMs += getStepDelayMs(next);
       }
-      timers.push(window.setTimeout(() => setSettled(true), atMs));
     }
     return () => {
       for (const timer of timers) window.clearTimeout(timer);
@@ -104,6 +106,7 @@ export function GoalPlayback() {
 
   function replay() {
     setStep(0);
+    setSkipped(false);
     setSettled(false);
     setPlayCount((count) => count + 1);
   }
@@ -127,6 +130,9 @@ export function GoalPlayback() {
             }
             interactionDisabled
             onExitCar={() => {}}
+            // 最後の車を出し終えたら、本番と同じく空になった駐車場を弾ませて終える。
+            clearing={!skipped && !settled && step === lastStep}
+            onClearAnimationComplete={finishClearing}
             layout="figure"
           />
         </div>

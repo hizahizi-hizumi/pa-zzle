@@ -109,66 +109,45 @@ export function judgeShuttleParkingExample(
   hintCarId: ShuttleParkingCarId,
 ): ShuttleParkingExampleVerdict {
   const { operation } = board;
-  if (operation?.type === "exited") {
-    const events = operation.timeline.frames;
-    const boarded = board.state.boardedCount - (events[0]?.boardedCount ?? 0);
-    const departed = events.filter(
-      (frame) => frame.departingCarId !== null,
-    ).length;
+  // 判定は手がかりの車の手の答えにし、ほかの車を押した後は、今の盤面で手がかりの車を出せるかを言い直す。
+  if (operation?.carId === hintCarId && operation.type === "exited") {
+    const { frames } = operation.timeline;
     return {
       exitable: true,
       tried: true,
       reason: null,
-      boardedCount: boarded,
-      departedCount: departed,
-    };
-  }
-  if (operation?.type === "blocked") {
-    return {
-      exitable: false,
-      tried: true,
-      reason: operation.reason,
-      boardedCount: 0,
-      departedCount: 0,
+      boardedCount: board.state.boardedCount - (frames[0]?.boardedCount ?? 0),
+      departedCount: frames.filter((frame) => frame.departingCarId !== null)
+        .length,
     };
   }
   const exit = exitShuttleParkingCar(board.puzzle, board.state, hintCarId);
   return {
     exitable: exit.outcome === "exited",
-    tried: false,
+    tried: operation?.carId === hintCarId,
     reason: exit.outcome === "blocked" ? exit.reason : null,
     boardedCount: 0,
     departedCount: 0,
   };
 }
 
-const lotCars = {
-  redFront: {
-    row: 0,
-    column: 0,
-    orientation: "vertical",
-    capacity: 2,
-    color: "a",
-  },
-  blueBehind: {
-    row: 2,
-    column: 0,
-    orientation: "vertical",
-    capacity: 2,
-    color: "b",
-  },
+const blueVertical = {
+  row: 1,
+  column: 1,
+  orientation: "vertical",
+  capacity: 2,
+  color: "b",
 } as const;
 
-/** 前が空いた車と、前を塞がれた車。上だけが開いた駐車場。 */
+/**
+ * 前が空いた車と、前を塞がれた車。3×3 で上と右が開いた駐車場。
+ * 塞がれた例では、赤の横の車が青の車の前にあり、赤は右へ出られる。
+ */
 export const exitRuleExamples = [
   {
     puzzle: {
-      lot: {
-        size: 4,
-        openSides: ["top"],
-        cars: [lotCars.redFront, lotCars.blueBehind],
-      },
-      passengers: ["a", "a", "b", "b"],
+      lot: { size: 3, openSides: ["top", "right"], cars: [blueVertical] },
+      passengers: ["b", "b"],
       bayCount: 2,
     },
     setup: [],
@@ -177,15 +156,24 @@ export const exitRuleExamples = [
   {
     puzzle: {
       lot: {
-        size: 4,
-        openSides: ["top"],
-        cars: [lotCars.redFront, lotCars.blueBehind],
+        size: 3,
+        openSides: ["top", "right"],
+        cars: [
+          blueVertical,
+          {
+            row: 0,
+            column: 0,
+            orientation: "horizontal",
+            capacity: 2,
+            color: "a",
+          },
+        ],
       },
       passengers: ["a", "a", "b", "b"],
       bayCount: 2,
     },
     setup: [],
-    hintCarId: 1,
+    hintCarId: 0,
   },
 ] as const satisfies readonly ShuttleParkingHowToPlayExample[];
 
@@ -229,22 +217,23 @@ export const boardRuleExample = {
   hintCarId: 0,
 } as const satisfies ShuttleParkingHowToPlayExample;
 
-/** 待機枠1つが黄の車で埋まっていて、前の空いた赤の車も出せない。 */
+/** 待機枠2つが黄と青の車で埋まっていて、前の空いた赤の車も出せない。先頭の赤が乗れる車が無く、詰んでいる。 */
 export const baysRuleExample = {
   puzzle: {
     lot: {
-      size: 4,
+      size: 3,
       openSides: ["top"],
       cars: [
-        { row: 0, column: 0, orientation: "vertical", capacity: 2, color: "a" },
-        { row: 0, column: 2, orientation: "vertical", capacity: 2, color: "c" },
+        { row: 0, column: 0, orientation: "vertical", capacity: 2, color: "c" },
+        { row: 0, column: 1, orientation: "vertical", capacity: 2, color: "b" },
+        { row: 1, column: 2, orientation: "vertical", capacity: 2, color: "a" },
       ],
     },
-    passengers: ["a", "a", "c", "c"],
-    bayCount: 1,
+    passengers: ["a", "a", "b", "b", "c", "c"],
+    bayCount: 2,
   },
-  setup: [1],
-  hintCarId: 0,
+  setup: [0, 1],
+  hintCarId: 2,
 } as const satisfies ShuttleParkingHowToPlayExample;
 
 /** 操作の例。押すと出て、先頭の乗客が乗る。 */

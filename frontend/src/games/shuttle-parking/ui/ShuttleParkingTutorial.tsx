@@ -7,12 +7,14 @@ import {
   type TutorialPlayStart,
   type TutorialStageBoardIntro,
 } from "@/components/TutorialOverlay";
+import { UndoButton } from "@/components/UndoButton";
 import pictogramSvg from "@/games/shuttle-parking/assets/pictogram.svg?raw";
 import { SHUTTLE_PARKING_DISPLAY_NAME } from "@/games/shuttle-parking/display-name";
 import { createShuttleParkingExitTimeline } from "@/games/shuttle-parking/play/exit-timeline";
 import type { ShuttleParkingOperation } from "@/games/shuttle-parking/play/use-shuttle-parking-play";
 import type { ShuttleParkingCarId } from "@/games/shuttle-parking/puzzle/lot";
 import {
+  canUndoShuttleParkingTutorial,
   findShuttleParkingTutorialHintCarId,
   getShuttleParkingTutorialProgressRatio,
   getShuttleParkingTutorialStepCarId,
@@ -25,6 +27,7 @@ import {
 import { ShuttleParkingScene } from "@/games/shuttle-parking/ui/board/ShuttleParkingScene";
 import { ShuttleParkingGround } from "@/games/shuttle-parking/ui/ShuttleParkingGround";
 import { ShuttleParkingHowToPlayDialog } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog";
+import { ShuttleParkingStuckNotice } from "@/games/shuttle-parking/ui/ShuttleParkingStuckNotice";
 import {
   completeTutorial,
   finishTutorialIntro,
@@ -109,6 +112,8 @@ export function ShuttleParkingTutorial({
   const recallId = recall?.progress === progress ? recall.id : null;
   const shownProgress = progressBeforeExit ?? progress;
   const operation = createOperation(progress.boardState, exitStartedAt);
+  const lastMove = progress.boardState.lastMove;
+  const lastMoveStuck = lastMove?.type === "exited" && lastMove.stuck;
 
   useEffect(
     () => () => {
@@ -125,6 +130,7 @@ export function ShuttleParkingTutorial({
 
   function handleExitCar(carId: ShuttleParkingCarId): void {
     const next = performTutorialAction(shuttleParkingTutorial, progress, {
+      type: "exit",
       carId,
     });
     if (next === progress) return;
@@ -150,6 +156,12 @@ export function ShuttleParkingTutorial({
       operationTimeline?.type === "exited"
         ? operationTimeline.timeline.durationMs
         : 0,
+    );
+  }
+
+  function handleUndo(): void {
+    setProgress((current) =>
+      performTutorialAction(shuttleParkingTutorial, current, { type: "undo" }),
     );
   }
 
@@ -235,6 +247,29 @@ export function ShuttleParkingTutorial({
                     recallId={recallId}
                   />
                 ) : null
+              }
+              leadingAction={
+                <UndoButton
+                  disabled={
+                    showsGoal ||
+                    !solving ||
+                    !canUndoShuttleParkingTutorial(progress.boardState)
+                  }
+                  onUndo={handleUndo}
+                />
+              }
+              renderLotOverlay={
+                !showsGoal && solving && lastMoveStuck
+                  ? () => (
+                      <ShuttleParkingStuckNotice
+                        canUndo={canUndoShuttleParkingTutorial(
+                          progress.boardState,
+                        )}
+                        onUndo={handleUndo}
+                        onRestart={handleRestart}
+                      />
+                    )
+                  : undefined
               }
               clearing={!showsGoal && progress.phase === "solved"}
               onClearAnimationComplete={handleClearAnimationComplete}

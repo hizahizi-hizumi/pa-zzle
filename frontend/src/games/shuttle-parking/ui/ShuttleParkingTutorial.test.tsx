@@ -73,15 +73,15 @@ describe("ShuttleParkingTutorial", () => {
   });
 
   test("前を塞がれた車を押すと、出られないわけを返すこと", () => {
-    press(1);
+    press(2);
 
     expect(within(getScreen()).getByText(/前に車があるので/)).toBeTruthy();
   });
 
   describe("印の車を2台出した場合", () => {
     beforeEach(() => {
-      press(3);
-      press(1);
+      press(5);
+      press(2);
     });
 
     test("読みの手順では印を付けないこと", () => {
@@ -91,17 +91,35 @@ describe("ShuttleParkingTutorial", () => {
       ).toBeTruthy();
     });
 
-    test("先頭の乗客が乗れない車を押すと、盤面を変えずにわけを返すこと", () => {
-      press(2);
+    describe("先頭の乗客が乗れない車を押した場合", () => {
+      beforeEach(() => {
+        press(4);
+      });
 
-      expect(getCar(2)).toBeTruthy();
-      expect(within(getScreen()).getByText(/先頭の乗客が乗れず/)).toBeTruthy();
+      test("詰みの知らせと「待った」で戻す一言を出すこと", () => {
+        expect(within(getScreen()).getByRole("status")).toBeTruthy();
+        expect(
+          within(getScreen()).getByText(/出せる車もなくなりました/),
+        ).toBeTruthy();
+      });
+
+      test("知らせの「待った」で戻すと、その車が駐車場に戻ること", () => {
+        fireEvent.click(
+          within(within(getScreen()).getByRole("status")).getByRole("button", {
+            name: "待った",
+          }),
+        );
+
+        expect(getCar(4)).toBeTruthy();
+        expect(
+          within(getScreen()).getByText(shown(steps[2]!.message.headline)),
+        ).toBeTruthy();
+      });
     });
 
     describe("残りを解いた場合", () => {
       beforeEach(() => {
-        press(0);
-        press(2);
+        for (const carId of [0, 3, 1, 4]) press(carId);
         act(() => {
           vi.advanceTimersByTime(1_000);
         });

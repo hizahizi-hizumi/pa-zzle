@@ -7,7 +7,7 @@ import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 export const STUCK_NOTICE_LABEL = "出せる車がありません";
 
 /** 原因は何台か前の出し方のことがあるので、1台だけ戻せば済むとは言わない。 */
-export const STUCK_NOTICE_HINT = "何台か戻すか 最初の盤面から出し直します";
+export const STUCK_NOTICE_HINT = "何台か戻して出し直せます";
 
 /** 盤面を戻すボタンは、メニューの「盤面を戻す」と同じアイコンにする。 */
 const RestartIcon = playMenuOperationItems.restart.icon;

@@ -58,11 +58,19 @@ describe("GoalPlayback", () => {
     expect(replay.disabled).toBe(false);
   });
 
-  test("時間がたつと1台ずつ出して空の駐車場で終えること", () => {
-    act(() => {
-      vi.advanceTimersByTime(20_000);
+  test("時間がたつと1台ずつ出し、クリアの動きを終えてから見せ直せるようにすること", () => {
+    const replay = screen.getByRole<HTMLButtonElement>("button", {
+      name: "始まりの盤面から見せ直す",
     });
+    const disabledWhilePlaying = replay.disabled;
+    for (let elapsed = 0; elapsed < 30_000; elapsed += 500) {
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+    }
 
+    expect(disabledWhilePlaying).toBe(true);
     expect(countParkedCars()).toBe(0);
+    expect(replay.disabled).toBe(false);
   });
 });

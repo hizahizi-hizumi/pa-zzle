@@ -42,7 +42,7 @@ type ShuttleParkingHowToPlayDialogProps = {
 
 const game = { name: SHUTTLE_PARKING_DISPLAY_NAME, pictogramSvg };
 
-const { undo } = PLAY_OPERATION_LABELS;
+const { undo, restart } = PLAY_OPERATION_LABELS;
 
 function ignoreFigurePress() {}
 
@@ -67,7 +67,7 @@ const scoreItems = Object.entries(SHUTTLE_PARKING_SCORE_MAXIMUMS) as [
 ][];
 
 const scoreLeads = {
-  accuracy: `全員を/送り出せなくなる車を/出すたびに/${SHUTTLE_PARKING_TRAP_PENALTY}点/下がります。`,
+  accuracy: `満点から/引いていきます。/${Math.ceil(SHUTTLE_PARKING_SCORE_MAXIMUMS.accuracy / SHUTTLE_PARKING_TRAP_PENALTY)}回で/0点です。`,
   speed: `問題ごとの/基準時間以内なら/満点です。/超えると/下がります。/基準時間の/${SHUTTLE_PARKING_SPEED_ZERO_SCORE_RATIO}倍で/0点です。`,
 } as const satisfies Record<
   keyof typeof SHUTTLE_PARKING_SCORE_MAXIMUMS,
@@ -78,10 +78,17 @@ function renderScoreRows(item: keyof typeof SHUTTLE_PARKING_SCORE_MAXIMUMS) {
   switch (item) {
     case "accuracy":
       return (
-        <HowToPlayScoreRow
-          measure="罠"
-          text="まだ全員を/送り出せる盤面から/もう送り出せない盤面に/変えた出庫を/出した時点で/数えます。/あとで/「待った」や/「盤面を戻す」で/戻しても/減りません。"
-        />
+        <>
+          <HowToPlayScoreRow
+            measure="罠"
+            deduction={`1回 −${SHUTTLE_PARKING_TRAP_PENALTY}点`}
+            text="まだ全員を/送り出せる盤面で/送り出せなくなる車を/出した回数です。/出した時点で/数えます。/「待った」や/「盤面を戻す」で/戻しても/減りません。/戻して/同じ車を/また出すと/もう1回/数えます。/詰んだ後に/出した車は/数えません。"
+          />
+          <HowToPlayScoreRow
+            measure={`「${undo}」・/「${restart}」`}
+            text="押した回数では/下がりません。"
+          />
+        </>
       );
     case "speed":
       return (
@@ -109,7 +116,7 @@ export function ShuttleParkingHowToPlayDialog({
       rules={
         <>
           <HowToPlayRule
-            text="車は/向いている方へ/まっすぐ進み/出口の辺から出て/待機枠に/入ります。/前に車があると/出られません。"
+            text="車は/向いている方へ/まっすぐ進み/矢印の道路から/出て/待機枠に/入ります。/前に車があると/出られません。"
             examples={
               <>
                 <TouchableExample
@@ -124,14 +131,14 @@ export function ShuttleParkingHowToPlayDialog({
             }
           />
           <HowToPlayRule
-            text="乗客は/列の先頭から/順に/同じ色の/待っている車に/1人ずつ/乗ります。/席が埋まった車は/出発して/枠が空きます。"
+            text="乗客は/列の先頭から/順に/同じ色の/待っている車に/1人ずつ/乗ります。/同じ色の車が/2台あれば/先に入った車に/乗ります。/席が埋まった車は/出発して/枠が空きます。"
             arrangement="stacked"
             examples={
               <TouchableExample example={boardRuleExample} caption="board" />
             }
           />
           <HowToPlayRule
-            text="待機枠が/埋まっていると/次の車を/出せません。"
+            text="待機枠が/埋まっていると/次の車を/出せません。/先頭の乗客が/乗れる車が/無いまま/埋まると/詰みです。"
             arrangement="stacked"
             examples={
               <TouchableExample example={baysRuleExample} caption="exit" />
@@ -145,7 +152,7 @@ export function ShuttleParkingHowToPlayDialog({
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="車を/タップすると/出せる車は/待機枠へ/出ます。"
+                text="車を/タップすると/前が/空いていれば/待機枠へ/出ます。"
                 arrangement="stacked"
                 examples={
                   <TouchableExample
@@ -164,7 +171,7 @@ export function ShuttleParkingHowToPlayDialog({
                 </span>
               }
               text={`「${undo}」で/最後に出した/1台を/駐車場に/戻します。`}
-              note="時間は/そのままで/押した回数が/増えます。"
+              note="時間は/そのままで/「待った」の/回数が/増えます。"
             />
             <HowToPlayMenuOperations operations={menuOperations} />
           </HowToPlaySection>
@@ -172,7 +179,7 @@ export function ShuttleParkingHowToPlayDialog({
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="どの車も/出せなくなると/駐車場の上に/出ます。/原因が/何台か前の/出し方の/こともあります。"
+                text="どの車も/出せなくなると/駐車場の上に/出ます。/原因は/何台か前の/出し方の/こともあります。"
                 arrangement="stacked"
                 examples={
                   <span aria-hidden="true" inert className="flex">

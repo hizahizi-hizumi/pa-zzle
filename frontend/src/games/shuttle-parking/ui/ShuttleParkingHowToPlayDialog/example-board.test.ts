@@ -49,6 +49,22 @@ describe("tapShuttleParkingExampleCar", () => {
     });
   });
 
+  test("塞がれた例で前の車を出すと、手がかりの車は出られる判定に変わること", () => {
+    const tapped = tapShuttleParkingExampleCar(
+      createShuttleParkingExampleBoard(exitRuleExamples[1]),
+      1,
+      1,
+      0,
+    );
+
+    const verdict = judgeShuttleParkingExample(
+      tapped,
+      exitRuleExamples[1].hintCarId,
+    );
+
+    expect(verdict).toMatchObject({ exitable: true, tried: false });
+  });
+
   test("乗る例の車を押すと、4人が乗り2台が出発すること", () => {
     const tapped = tapHint(boardRuleExample);
 

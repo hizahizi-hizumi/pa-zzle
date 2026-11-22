@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HowToPlayCaptionLayers } from "@/components/HowToPlayCaptionLayers";
 import { HowToPlayExample } from "@/components/HowToPlayExample";
 import { useReportHowToPlayExampleChange } from "@/components/HowToPlayExamplePanel";
@@ -7,6 +7,7 @@ import {
   HowToPlayVerdict,
   type HowToPlayVerdictLabels,
 } from "@/components/HowToPlayVerdict";
+import type { ShuttleParkingOperation } from "@/games/shuttle-parking/play/use-shuttle-parking-play";
 import type { ShuttleParkingCarId } from "@/games/shuttle-parking/puzzle/lot";
 import { ShuttleParkingScene } from "@/games/shuttle-parking/ui/board/ShuttleParkingScene";
 import {
@@ -17,6 +18,7 @@ import {
   type ShuttleParkingHowToPlayExample,
   tapShuttleParkingExampleCar,
 } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog/example-board";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /**
  * 例の下に添える言葉の種類。
@@ -71,6 +73,28 @@ function renderCaption(
   );
 }
 
+/**
+ * 乗る例の言葉は、乗車と出発の動きを見せ終えてから出す。動きの途中で結果の人数を言うと、盤面と食い違うため。
+ * 出せなかった手と、動かさない設定では、すぐ出す。
+ */
+function useSettledOperation(
+  operation: ShuttleParkingOperation | null,
+): boolean {
+  const [settledId, setSettledId] = useState<number | null>(null);
+  const exited = operation?.type === "exited" ? operation : null;
+  useEffect(() => {
+    if (exited === null) return;
+    const remaining =
+      exited.startedAt + exited.timeline.durationMs - Date.now();
+    const timer = window.setTimeout(
+      () => setSettledId(exited.id),
+      prefersReducedMotion() ? 0 : Math.max(0, remaining),
+    );
+    return () => window.clearTimeout(timer);
+  }, [exited]);
+  return exited === null || settledId === exited.id;
+}
+
 type TouchableExampleProps = {
   example: ShuttleParkingHowToPlayExample;
   caption: ShuttleParkingExampleCaption;
@@ -87,6 +111,7 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
   const operationIdRef = useRef(1);
   const reportChange = useReportHowToPlayExampleChange();
   const verdict = judgeShuttleParkingExample(board, example.hintCarId);
+  const settled = useSettledOperation(board.operation);
 
   function handleExitCar(carId: ShuttleParkingCarId): void {
     const next = tapShuttleParkingExampleCar(
@@ -105,7 +130,7 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
   return (
     <HowToPlayExample
       figure={
-        <div className={caption === "exit" ? "w-36" : "w-48"}>
+        <div style={{ width: `${(board.puzzle.lot.size + 1) * 2.25}rem` }}>
           <ShuttleParkingScene
             problem={board.puzzle}
             state={board.state}
@@ -128,7 +153,10 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
           />
         </div>
       }
-      caption={renderCaption(caption, verdict)}
+      caption={renderCaption(
+        caption,
+        settled ? verdict : { ...verdict, tried: false },
+      )}
     />
   );
 }

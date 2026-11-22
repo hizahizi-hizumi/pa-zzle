@@ -142,7 +142,7 @@ describe("詰んだ場合", () => {
     const notice = screen.getByRole("status");
 
     expect(notice.textContent).toContain("出せる車がありません");
-    expect(notice.textContent).toContain("何台か戻すか");
+    expect(notice.textContent).toContain("何台か戻して");
   });
 
   test("知らせの盤面を戻すボタンで盤面を戻すこと", () => {

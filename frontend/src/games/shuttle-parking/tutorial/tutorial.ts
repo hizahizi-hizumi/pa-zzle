@@ -3,12 +3,14 @@ import type { ShuttleParkingProblem } from "@/games/shuttle-parking/problem/prob
 import { createShuttleParkingClearability } from "@/games/shuttle-parking/puzzle/clearability";
 import type {
   ShuttleParkingCarId,
+  ShuttleParkingColor,
   ShuttleParkingSide,
 } from "@/games/shuttle-parking/puzzle/lot";
 import {
   createShuttleParkingInitialState,
   exitShuttleParkingCar,
   isShuttleParkingCleared,
+  isShuttleParkingStuck,
   type ShuttleParkingBoardingEvent,
   type ShuttleParkingExitBlock,
   type ShuttleParkingState,
@@ -23,11 +25,15 @@ import type {
 
 /**
  * - `board`: 乗客は列の先頭から順に、同じ色の待っている車へ1人ずつ乗り、席が埋まった車は出発する。
+ * - `path`: 前に車があると出られない。
  * - `bays`: 待機枠が埋まると次の車を出せないので、先頭の乗客が乗れる車を出す。
  */
-export type ShuttleParkingTutorialRuleId = "board" | "bays";
+export type ShuttleParkingTutorialRuleId = "board" | "path" | "bays";
 
-export type ShuttleParkingTutorialAction = { carId: ShuttleParkingCarId };
+/** 車を押すか、詰んだときに「待った」で1台戻す。 */
+export type ShuttleParkingTutorialAction =
+  | { type: "exit"; carId: ShuttleParkingCarId }
+  | { type: "undo" };
 
 /** `carId` は印を付けて押させる車。読みの手順では `null` で、どの車を出すかを自分で選ばせる。 */
 export type ShuttleParkingTutorialStep =
@@ -37,10 +43,10 @@ export type ShuttleParkingTutorialStep =
 
 /**
  * 直前の手。盤面の動きと一言に使う。
- * - `exited`: 車を出した。`before` は出す前の盤面。
+ * - `exited`: 車を出した。`before` は出す前の盤面。`stuck` は出した後に出せる車が無くなったか。
  * - `blocked`: 出せない車を押した。盤面は変わらない。
- * - `off-step`: 手順と違う車を押した。盤面は変わらない。
- * - `stranding`: 読みの手順で、出すと先頭の乗客が乗れず待機枠が埋まる車を押した。盤面は変わらない。
+ * - `off-step`: 印と違う車を押した。盤面は変わらない。
+ * - `undone`: 「待った」で1台戻した。
  */
 export type ShuttleParkingTutorialMove =
   | {
@@ -50,20 +56,20 @@ export type ShuttleParkingTutorialMove =
       side: ShuttleParkingSide;
       before: ShuttleParkingState;
       events: readonly ShuttleParkingBoardingEvent[];
+      stuck: boolean;
     }
   | ({
       type: "blocked";
       id: number;
       carId: ShuttleParkingCarId;
     } & ShuttleParkingExitBlock)
-  | {
-      type: "off-step" | "stranding";
-      id: number;
-      carId: ShuttleParkingCarId;
-    };
+  | { type: "off-step"; id: number; carId: ShuttleParkingCarId }
+  | { type: "undone"; id: number };
 
+/** `history` は出す前の盤面を出した順に並べたもの。「待った」で戻すのに使う。 */
 export type ShuttleParkingTutorialBoardState = {
   state: ShuttleParkingState;
+  history: readonly ShuttleParkingState[];
   lastMove: ShuttleParkingTutorialMove | null;
 };
 
@@ -73,68 +79,77 @@ export type ShuttleParkingTutorialSituation = TutorialSituation<
 >;
 
 /**
- * 4×4 で上だけが開いた駐車場に4台。待機枠は2つ。
+ * 5×5 で上だけが開いた駐車場に6台。待機枠は2つ。
  *
  * ```text
- *  vvvv      車0 赤3人  車1 黄2人（車3の後ろ）
- * 02.3      車2 青2人  車3 赤2人
- * 02.3      列: 赤 赤 黄 赤 黄 赤 青 赤 青
- * 0..1
- * ...1
+ *  vvvvv     車0 赤3人  車1 青2人（車0の後ろ）  車2 黄3人（車5の後ろ）
+ * 450..     車3 黄3人  車4 黄2人  車5 黄2人
+ * 450..     列: 黄 黄 黄 赤 黄 黄 赤 黄 黄 赤 青 黄 青 黄 黄
+ * .203.
+ * .213.
+ * .213.
  * ```
  *
- * 車3を出すと先頭の赤2人が乗って出発し、塞がれていた車1が出られる。車1を出すと黄が1人乗り、車1は待つ。
- * 次の先頭は赤なので、ここで車0（赤）を出すと続けられ、車2（青）を出すと待機枠が埋まって詰む。
- * 車0を出した後は、どの順で出しても全員を送り出せる。
+ * 車5（黄）を出すと先頭の黄2人が乗って出発し、塞がれていた車2が出られる。車2を出すと黄が1人乗って待つ。
+ * 次の先頭は赤なので、ここで車0（赤）を出すと続けられ、黄の車3・4を出すと待機枠が埋まって詰む。
+ * 車0を出した後は先頭が黄になり、青の車1を先に出すとまた詰む。先頭に合わせて黄・青・黄の順に出すと全員を送り出せる。
  */
 export const shuttleParkingTutorialProblem: ShuttleParkingProblem = {
   lot: {
-    size: 4,
+    size: 5,
     openSides: ["top"],
     cars: [
-      { row: 0, column: 0, orientation: "vertical", capacity: 3, color: "a" },
-      { row: 2, column: 3, orientation: "vertical", capacity: 2, color: "c" },
-      { row: 0, column: 1, orientation: "vertical", capacity: 2, color: "b" },
-      { row: 0, column: 3, orientation: "vertical", capacity: 2, color: "a" },
+      { row: 0, column: 2, orientation: "vertical", capacity: 3, color: "a" },
+      { row: 3, column: 2, orientation: "vertical", capacity: 2, color: "b" },
+      { row: 2, column: 1, orientation: "vertical", capacity: 3, color: "c" },
+      { row: 2, column: 3, orientation: "vertical", capacity: 3, color: "c" },
+      { row: 0, column: 0, orientation: "vertical", capacity: 2, color: "c" },
+      { row: 0, column: 1, orientation: "vertical", capacity: 2, color: "c" },
     ],
   },
-  passengers: ["a", "a", "c", "a", "c", "a", "b", "a", "b"],
+  passengers: Array.from("cccaccaccabcbcc") as ShuttleParkingColor[],
   bayCount: 2,
 };
+
+/** 先頭に合わせて出していく、ゴールまでの順。 */
+export const SHUTTLE_PARKING_TUTORIAL_SOLUTION = [5, 2, 0, 3, 1, 4] as const;
 
 const steps: readonly ShuttleParkingTutorialStep[] = [
   {
     message: {
-      headline: "車をタップすると\n向いている方へ進んで待機枠に入ります",
-      detail: null,
-    },
-    introducedRuleId: null,
-    carId: 3,
-  },
-  {
-    message: {
-      headline: "乗客は列の先頭から順に\n同じ色の車に1人ずつ乗ります",
-      detail: "席が埋まった車は出発して枠が空きます",
+      headline: "車をタップして待機枠へ出します",
+      detail: "列の先頭から順に同じ色の乗客が乗ります",
     },
     introducedRuleId: "board",
-    carId: 1,
+    carId: 5,
   },
   {
     message: {
-      headline: "待機枠が埋まると\n次の車を出せません",
-      detail: "先頭の乗客が乗れる車を選んで出します",
+      headline: "前に車があると出られません\n前が空いた黄の車を出します",
+      detail: null,
+    },
+    introducedRuleId: "path",
+    carId: 2,
+  },
+  {
+    message: {
+      headline: "待機枠は2台までです\n先頭の乗客が乗れる車を選んで出します",
+      detail: "埋まると次の車を出せません",
     },
     introducedRuleId: "bays",
     carId: null,
   },
 ];
 
+/** 印を付けて出させる車の数。この分は「待った」で戻させない。 */
+const GUIDED_EXIT_COUNT = steps.filter(({ carId }) => carId !== null).length;
+
 const clearability = createShuttleParkingClearability(
   shuttleParkingTutorialProblem,
 );
 
 function createGoalState(): ShuttleParkingState {
-  return [3, 1, 0, 2].reduce((state, carId) => {
+  return SHUTTLE_PARKING_TUTORIAL_SOLUTION.reduce((state, carId) => {
     const exit = exitShuttleParkingCar(
       shuttleParkingTutorialProblem,
       state,
@@ -147,15 +162,37 @@ function createGoalState(): ShuttleParkingState {
   }, createShuttleParkingInitialState(shuttleParkingTutorialProblem));
 }
 
+/** 詰んだときに「待った」で戻せるか。印の車を出した分は戻させない。 */
+export function canUndoShuttleParkingTutorial(
+  board: ShuttleParkingTutorialBoardState,
+): boolean {
+  return board.history.length > GUIDED_EXIT_COUNT;
+}
+
 function perform(
   situation: ShuttleParkingTutorialSituation,
   board: ShuttleParkingTutorialBoardState,
-  { carId }: ShuttleParkingTutorialAction,
+  action: ShuttleParkingTutorialAction,
 ): {
   state: ShuttleParkingTutorialBoardState;
   outcome: TutorialMoveOutcome;
 } {
   const id = (board.lastMove?.id ?? 0) + 1;
+  if (action.type === "undo") {
+    if (!canUndoShuttleParkingTutorial(board)) {
+      return { state: board, outcome: "ignored" };
+    }
+    return {
+      state: {
+        state: board.history.at(-1)!,
+        history: board.history.slice(0, -1),
+        lastMove: { type: "undone", id },
+      },
+      outcome: "continued",
+    };
+  }
+
+  const { carId } = action;
   const exit = exitShuttleParkingCar(
     shuttleParkingTutorialProblem,
     board.state,
@@ -173,25 +210,21 @@ function perform(
   }
 
   const { step } = situation;
-  if (
-    step?.carId !== null &&
-    step?.carId !== undefined &&
-    step.carId !== carId
-  ) {
+  const stepCarId = step?.carId ?? null;
+  if (stepCarId !== null && stepCarId !== carId) {
     return {
       state: { ...board, lastMove: { type: "off-step", id, carId } },
       outcome: "violated",
     };
   }
-  if (step?.carId === null && !clearability.canClear(exit.state)) {
-    return {
-      state: { ...board, lastMove: { type: "stranding", id, carId } },
-      outcome: "violated",
-    };
-  }
 
+  const stuck = isShuttleParkingStuck(
+    shuttleParkingTutorialProblem,
+    exit.state,
+  );
   const state: ShuttleParkingTutorialBoardState = {
     state: exit.state,
+    history: [...board.history, board.state],
     lastMove: {
       type: "exited",
       id,
@@ -199,53 +232,62 @@ function perform(
       side: exit.side,
       before: board.state,
       events: exit.events,
+      stuck,
     },
   };
   if (isShuttleParkingCleared(shuttleParkingTutorialProblem, exit.state)) {
     return { state, outcome: "solved" };
   }
-  return { state, outcome: step ? "stepped" : "continued" };
+  if (stuck) {
+    return { state, outcome: "violated" };
+  }
+  if (step && (stepCarId !== null || clearability.canClear(exit.state))) {
+    return { state, outcome: "stepped" };
+  }
+  return { state, outcome: "continued" };
 }
+
+const freePlay: TutorialMessage = {
+  headline: "先頭の乗客に合わせて残りの車も出し\n全員を送り出します",
+  detail: null,
+};
 
 function describeViolation(
   situation: ShuttleParkingTutorialSituation,
   board: ShuttleParkingTutorialBoardState,
 ): TutorialMessage {
   const move = board.lastMove;
-  if (move?.type === "blocked" && move.reason === "bays-full") {
-    return {
-      headline: "待機枠が埋まっているので\n次の車を出せません",
-      detail: null,
-    };
+  switch (move?.type) {
+    case "blocked":
+      return move.reason === "bays-full"
+        ? {
+            headline: "待機枠が埋まっているので\n次の車を出せません",
+            detail: null,
+          }
+        : {
+            headline: "前に車があるので\nこの車はまだ出られません",
+            detail: null,
+          };
+    case "exited":
+      return {
+        headline: "先頭の乗客が乗れる車がなく\n出せる車もなくなりました",
+        detail: "「待った」で戻して出し直します",
+      };
+    case "off-step":
+      return { headline: "指さしている車をタップします", detail: null };
+    default:
+      return situation.step?.message ?? freePlay;
   }
-  if (move?.type === "blocked") {
-    return {
-      headline: "前に車があるので\nこの車はまだ出られません",
-      detail: null,
-    };
-  }
-  if (move?.type === "stranding") {
-    return {
-      headline:
-        "その車には先頭の乗客が乗れず\n待機枠が埋まって次を出せなくなります",
-      detail: "先頭の乗客が乗れる車を出します",
-    };
-  }
-  return situation.step?.message ?? freePlay;
 }
-
-const freePlay: TutorialMessage = {
-  headline: "残りの車も出して\n全員を送り出します",
-  detail: null,
-};
 
 export const shuttleParkingTutorial = {
   intro: {
-    purpose: `駐車場の車を出して\n列の乗客を同じ色の車で送り出すパズルです`,
+    purpose: "駐車場の車を出して\n列の乗客を同じ色の車で送り出すパズルです",
     goalCaption: "全員を送り出せばクリアです",
   },
   rules: [
     { id: "board", label: "乗客は列の先頭から順に同じ色の車に乗る" },
+    { id: "path", label: "前に車があると出られない" },
     { id: "bays", label: "待機枠が埋まると次の車を出せない" },
   ],
   steps,
@@ -262,9 +304,10 @@ export const shuttleParkingTutorial = {
   },
   start: () => ({
     state: createShuttleParkingInitialState(shuttleParkingTutorialProblem),
+    history: [],
     lastMove: null,
   }),
-  goal: () => ({ state: createGoalState(), lastMove: null }),
+  goal: () => ({ state: createGoalState(), history: [], lastMove: null }),
   perform,
   describeViolation,
 } as const satisfies Tutorial<
@@ -281,7 +324,7 @@ export function getShuttleParkingTutorialStepCarId(
   return situation.step?.carId ?? null;
 }
 
-/** 手を離した後に「ヒント」で示す車。先頭の乗客が乗れて、全員を送り出せる車。 */
+/** 「ヒント」で示す車。出しても全員を送り出せる車。 */
 export function findShuttleParkingTutorialHintCarId(
   board: ShuttleParkingTutorialBoardState,
 ): ShuttleParkingCarId | null {
@@ -301,7 +344,6 @@ export function findShuttleParkingTutorialHintCarId(
 export const SHUTTLE_PARKING_TUTORIAL_PROGRESS_STEP_COUNT =
   shuttleParkingTutorialProblem.lot.cars.length;
 
-/** 出た車は戻らないので、後戻りしない。 */
 export function getShuttleParkingTutorialProgressRatio({
   state,
 }: ShuttleParkingTutorialBoardState): number {

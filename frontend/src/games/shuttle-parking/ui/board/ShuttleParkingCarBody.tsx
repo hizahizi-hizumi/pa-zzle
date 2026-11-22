@@ -33,7 +33,7 @@ const frontArrowRotations = {
 
 /**
  * 車1台の姿。前の端に窓と進む向きの矢印を置き、残りに座席を定員の数だけ並べる。
- * 座席は空きを暗い穴、乗った席を白い丸で描き、色によらず同じ見分け方にする。
+ * 座席は空きを暗い穴、乗った席を穴に座った白い人の形で描き、色によらず同じ見分け方にする。
  */
 export function ShuttleParkingCarBody({
   car,
@@ -88,14 +88,21 @@ export function ShuttleParkingCarBody({
           <span
             // biome-ignore lint/suspicious/noArrayIndexKey: 座席は位置で決まる
             key={seat}
-            className={cn(
-              "aspect-square rounded-full",
-              seat < seatedCount
-                ? "shuttle-parking-seat-filled bg-white shadow-[0_0_0_1.5px_rgb(0_0_0/0.35)]"
-                : "bg-black/25",
-            )}
-            style={vertical ? { width: "42%" } : { height: "42%" }}
-          />
+            className="relative aspect-square overflow-hidden rounded-full bg-black/25"
+            style={vertical ? { width: "46%" } : { height: "46%" }}
+          >
+            {seat < seatedCount ? (
+              // 乗った席には、列と同じ人の形を白で描き、空いた席（暗い穴）と取り違えないようにする。
+              <svg
+                viewBox="0 0 20 20"
+                aria-hidden="true"
+                className="shuttle-parking-seat-filled absolute inset-[8%] fill-white"
+              >
+                <circle cx="10" cy="7" r="4.5" />
+                <path d="M2 20C2 14 5.5 12.5 10 12.5S18 14 18 20Z" />
+              </svg>
+            ) : null}
+          </span>
         ))}
       </span>
     </span>

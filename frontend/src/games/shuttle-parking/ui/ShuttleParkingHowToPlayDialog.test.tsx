@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -66,16 +67,57 @@ describe("ShuttleParkingHowToPlayDialog", () => {
     );
   });
 
-  test("前の空いた例の車を押すと、出られたと言い直すこと", () => {
-    const panel = openTab("ルール");
-    const [firstLot] = within(panel).getAllByRole("group", {
-      name: "送迎パーキングの駐車場",
+  describe("ルールの例を押した場合", () => {
+    let panel: HTMLElement;
+    let lots: HTMLElement[];
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      panel = openTab("ルール");
+      lots = within(panel).getAllByRole("group", {
+        name: "送迎パーキングの駐車場",
+      });
     });
-    const car = firstLot?.querySelector('button[data-car-id="0"]');
 
-    fireEvent.click(car as HTMLElement);
+    afterEach(() => {
+      vi.useRealTimers();
+    });
 
-    expect(within(panel).getByText("出られた")).toBeTruthy();
+    function pressCar(lot: HTMLElement | undefined, carId: number): void {
+      fireEvent.click(
+        lot?.querySelector(`button[data-car-id="${carId}"]`) as HTMLElement,
+      );
+    }
+
+    test("前の空いた車を押すと、動きを見せ終えてから出られたと言い直すこと", () => {
+      pressCar(lots[0], 0);
+      const duringExit = within(panel).queryByText("出られた");
+      act(() => {
+        vi.advanceTimersByTime(5_000);
+      });
+
+      expect(duringExit).toBeNull();
+      expect(within(panel).getByText("出られた")).toBeTruthy();
+    });
+
+    test("塞がれた例で前の車を出すと、手がかりの車は出られると言い直すこと", () => {
+      const figure = lots[1]?.closest("figure") as HTMLElement;
+      const reasonBefore = within(figure).queryByText("前に車がある");
+
+      pressCar(lots[1], 1);
+
+      expect(reasonBefore).not.toBeNull();
+      expect(within(figure).queryByText("前に車がある")).toBeNull();
+    });
+
+    test("乗る例の車を押すと、動きを見せ終えてから乗った人数と出発した台数を言うこと", () => {
+      pressCar(lots[2], 0);
+      act(() => {
+        vi.advanceTimersByTime(5_000);
+      });
+
+      expect(within(panel).getByText("4人が乗り 2台が出発")).toBeTruthy();
+    });
   });
 
   test("操作のタブに、詰みの知らせを押せない図で載せること", () => {
