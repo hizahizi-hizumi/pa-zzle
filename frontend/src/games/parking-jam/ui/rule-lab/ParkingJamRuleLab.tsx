@@ -154,9 +154,10 @@ export function ParkingJamRuleLab() {
     setNotice(null);
   }
 
+  const nextProblem = problem
+    ? problems[problems.indexOf(problem) + 1]
+    : undefined;
   const queueNoun = scenario.mode === "passengers" ? "乗客の列" : "出庫指令";
-  const exitedCount =
-    scenario.board.vehicles.length - state.remainingVehicleIds.length;
 
   return (
     <main className="min-h-dvh bg-[#f5f6f4] px-1 py-3 text-[#243139] sm:px-8 sm:py-7">
@@ -266,13 +267,16 @@ export function ParkingJamRuleLab() {
         >
           <section
             aria-label="出庫先とプレイ状況"
-            className="space-y-2 rounded-xl bg-white p-2 shadow-sm lg:order-2 lg:p-4"
+            className="space-y-1.5 rounded-xl bg-white p-2 shadow-sm lg:order-2 lg:p-4"
           >
             {(scenario.mode === "passengers" ||
               scenario.mode === "dispatch") && (
               <div>
                 <h2 className="mb-1 flex items-baseline justify-between text-xs font-semibold text-slate-600">
-                  <span>{queueNoun}（左から順）</span>
+                  <span>
+                    {problem ? `${problem.title}｜` : ""}
+                    {queueNoun}（左から順）
+                  </span>
                   <span className="tabular-nums font-normal">
                     {state.nextPassengerIndex} / {scenario.queue.length}
                   </span>
@@ -298,7 +302,12 @@ export function ParkingJamRuleLab() {
             {scenario.mode !== "standard" && (
               <div>
                 <h2 className="mb-1 flex items-baseline justify-between text-xs font-semibold text-slate-600">
-                  <span>待機枠</span>
+                  <span>
+                    {problem && scenario.queue.length === 0
+                      ? `${problem.title}｜`
+                      : ""}
+                    待機枠
+                  </span>
                   <span className="tabular-nums font-normal">
                     {state.waiting.length} / {scenario.bayCount} 枠使用中
                   </span>
@@ -322,7 +331,7 @@ export function ParkingJamRuleLab() {
                     return (
                       <div
                         key={BAY_SLOT_IDS[index]}
-                        className="flex h-10 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-[#f1f3f3] text-center text-xs lg:h-16 lg:text-sm"
+                        className="flex h-9 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-[#f1f3f3] text-center text-xs lg:h-16 lg:text-sm"
                       >
                         {waiting && color ? (
                           <span
@@ -334,7 +343,7 @@ export function ParkingJamRuleLab() {
                             {labelOfVehicle(waiting.vehicleId)}・{color}
                             {scenario.mode === "passengers" && (
                               <span className="tabular-nums font-normal">
-                                {waiting.boarded}/{vehicle?.length ?? 0}人
+                                {waiting.boarded}/{vehicle?.length ?? 0}
                               </span>
                             )}
                           </span>
@@ -349,19 +358,36 @@ export function ParkingJamRuleLab() {
             )}
             <p
               aria-live="polite"
-              className={`rounded-md px-2 py-1 text-sm font-semibold ${won ? "bg-emerald-50 text-emerald-800" : stuck ? "bg-rose-50 text-rose-800" : "text-slate-700"}`}
+              className={`flex min-h-8 items-center rounded-md px-2 text-xs font-semibold leading-tight ${won ? "bg-emerald-50 text-emerald-800" : stuck || notice ? "bg-rose-50 text-rose-800" : "text-slate-700"}`}
             >
               {won
                 ? "クリア：すべて出発しました"
                 : stuck
-                  ? "詰み：もう出庫できません。原因は何手か前にあることがあります。戻して考え直してください。"
-                  : `出庫 ${exitedCount} / ${scenario.board.vehicles.length}　今出せる車 ${legal.length} 台`}
+                  ? "詰み：もう出庫できません。原因は何手か前のこともあります。戻して考え直してください。"
+                  : (notice ?? `今出せる車 ${legal.length} 台`)}
             </p>
-            {notice && (
-              <p role="status" className="px-2 text-sm text-rose-700">
-                {notice}
-              </p>
-            )}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                disabled={history.length === 0}
+                onClick={undo}
+                className="h-10 flex-1"
+              >
+                1手戻す
+              </Button>
+              <Button variant="outline" onClick={reset} className="h-10 flex-1">
+                最初から
+              </Button>
+              {nextProblem && (
+                <Button
+                  variant={won ? "default" : "outline"}
+                  onClick={() => changeProblem(nextProblem.id)}
+                  className="h-10 flex-1"
+                >
+                  次の問題
+                </Button>
+              )}
+            </div>
             {result && (
               <div className="border-t border-slate-200 px-2 pt-2 text-xs">
                 <p>
@@ -390,18 +416,7 @@ export function ParkingJamRuleLab() {
                 outcomeByVehicle={outcomeByVehicle}
               />
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                disabled={history.length === 0}
-                onClick={undo}
-                className="h-11"
-              >
-                1手戻す
-              </Button>
-              <Button variant="outline" onClick={reset} className="h-11">
-                最初から
-              </Button>
+            <div className="mt-1 flex items-center">
               <label className="ml-auto flex h-11 cursor-pointer items-center gap-2 text-xs text-slate-600">
                 <input
                   type="checkbox"
