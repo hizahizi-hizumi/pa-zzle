@@ -70,6 +70,21 @@ function isMagicSquarePerformance(
   );
 }
 
+function copyPerformance({
+  elapsedMs,
+  withdrawalCount,
+  undoCount,
+  restartCount,
+}: MagicSquareSessionResult): MagicSquareSessionResult {
+  return { elapsedMs, withdrawalCount, undoCount, restartCount };
+}
+
+function copyWorkload({
+  emptyCellCount,
+}: MagicSquareSolveWorkload): MagicSquareSolveWorkload {
+  return { emptyCellCount };
+}
+
 export function isMagicSquarePlayRecord(
   record: PlayRecord,
 ): record is MagicSquarePlayRecord {
@@ -116,13 +131,8 @@ export function createMagicSquarePlayRecord({
         ...problemIdentity,
         conditions: { ...problemIdentity.conditions },
       },
-      workload: { emptyCellCount: workload.emptyCellCount },
-      performance: {
-        elapsedMs: result.elapsedMs,
-        withdrawalCount: result.withdrawalCount,
-        undoCount: result.undoCount,
-        restartCount: result.restartCount,
-      },
+      workload: copyWorkload(workload),
+      performance: copyPerformance(result),
     },
   };
 }
@@ -148,7 +158,10 @@ export function restoreMagicSquareRecordedResult(
   return {
     difficulty,
     problemIdentity,
-    result: createMagicSquareResult(performance, workload),
+    result: createMagicSquareResult(
+      copyPerformance(performance),
+      copyWorkload(workload),
+    ),
   };
 }
 

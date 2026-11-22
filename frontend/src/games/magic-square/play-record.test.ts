@@ -119,6 +119,10 @@ describe("restoreMagicSquareRecordedResult", () => {
   const otherVersionRecord = withPayload({
     problemIdentity: { generatorVersion: "0", seed: "old", conditions: {} },
   });
+  const recordWithExtraFields = withPayload({
+    workload: { ...workload, extra: "workload" },
+    performance: { ...performance, extra: "performance" },
+  });
 
   test("今の版の記録から、プレイ中と同じ結果を作り直すこと", () => {
     const restored = restoreMagicSquareRecordedResult(record);
@@ -136,6 +140,15 @@ describe("restoreMagicSquareRecordedResult", () => {
       timeDeltaMs: 20_000,
       withdrawalCount: 2,
     });
+  });
+
+  test("読み戻した作業の量とプレイの事実のうち、評価に使う項目だけを結果へ写すこと", () => {
+    const restored = restoreMagicSquareRecordedResult(recordWithExtraFields);
+
+    expect([
+      restored?.result.workload,
+      Object.hasOwn(restored?.result ?? {}, "extra"),
+    ]).toEqual([workload, false]);
   });
 
   test("生成器の版が今と違う記録からは作り直さないこと", () => {
