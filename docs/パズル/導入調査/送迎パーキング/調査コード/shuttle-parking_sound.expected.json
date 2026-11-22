@@ -1,0 +1,316 @@
+{
+ "sounds": {
+  "owners": {
+   "app": {
+    "count": 7,
+    "bytes": 135927,
+    "longest_seconds": 1.72,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   },
+   "bridges": {
+    "count": 10,
+    "bytes": 148878,
+    "longest_seconds": 1.0,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   },
+   "hitofude-puzzle": {
+    "count": 9,
+    "bytes": 53510,
+    "longest_seconds": 0.92,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   },
+   "ice-floor-maze": {
+    "count": 12,
+    "bytes": 66498,
+    "longest_seconds": 0.518,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   },
+   "minesweeper": {
+    "count": 8,
+    "bytes": 21924,
+    "longest_seconds": 0.72,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   },
+   "nanpure": {
+    "count": 8,
+    "bytes": 20138,
+    "longest_seconds": 0.44,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   },
+   "parking-jam": {
+    "count": 3,
+    "bytes": 19524,
+    "longest_seconds": 0.4,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   },
+   "reflection": {
+    "count": 7,
+    "bytes": 28724,
+    "longest_seconds": 0.62,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   },
+   "slide-puzzle": {
+    "count": 10,
+    "bytes": 17660,
+    "longest_seconds": 0.12,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   },
+   "takuzu": {
+    "count": 10,
+    "bytes": 17923,
+    "longest_seconds": 0.34,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   },
+   "tsume-shogi": {
+    "count": 14,
+    "bytes": 81836,
+    "longest_seconds": 0.517,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   },
+   "water-sort": {
+    "count": 8,
+    "bytes": 18723,
+    "longest_seconds": 0.56,
+    "formats": [
+     "1ch/16bit/48000Hz"
+    ]
+   }
+  },
+  "total_count": 106,
+  "total_bytes": 631265,
+  "game_count": 11,
+  "game_files_median": 9,
+  "game_files_min_max": [
+   3,
+   14
+  ],
+  "game_bytes_median": 21924,
+  "game_bytes_min_max": [
+   17660,
+   148878
+  ]
+ },
+ "chains": {
+  "problems": 23,
+  "per_problem": [
+   {
+    "id": "plv-lv1-rep1",
+    "solutions": 1080,
+    "reachable_states": 515
+   },
+   {
+    "id": "plv-lv1-rep2",
+    "solutions": 2076,
+    "reachable_states": 1599
+   },
+   {
+    "id": "plv-lv2-rep1",
+    "solutions": 30,
+    "reachable_states": 149
+   },
+   {
+    "id": "plv-lv2-rep2",
+    "solutions": 8,
+    "reachable_states": 107
+   },
+   {
+    "id": "plv-lv3-rep1",
+    "solutions": 468,
+    "reachable_states": 863
+   },
+   {
+    "id": "plv-lv3-rep2",
+    "solutions": 264,
+    "reachable_states": 229
+   },
+   {
+    "id": "plv-lv4-rep1",
+    "solutions": 96,
+    "reachable_states": 1012
+   },
+   {
+    "id": "plv-lv4-rep2",
+    "solutions": 99,
+    "reachable_states": 101
+   },
+   {
+    "id": "plv-lv5-rep1",
+    "solutions": 276,
+    "reachable_states": 313
+   },
+   {
+    "id": "plv-lv5-rep2",
+    "solutions": 12,
+    "reachable_states": 227
+   },
+   {
+    "id": "plv-lv1-boundary",
+    "solutions": 8,
+    "reachable_states": 80
+   },
+   {
+    "id": "plv-lv2-boundary",
+    "solutions": 234,
+    "reachable_states": 188
+   },
+   {
+    "id": "plv-lv3-boundary",
+    "solutions": 33,
+    "reachable_states": 158
+   },
+   {
+    "id": "plv-lv4-boundary",
+    "solutions": 474,
+    "reachable_states": 283
+   },
+   {
+    "id": "plv-lv5-boundary",
+    "solutions": 12,
+    "reachable_states": 118
+   },
+   {
+    "id": "passengers-blocking",
+    "solutions": 36,
+    "reachable_states": 51
+   },
+   {
+    "id": "passengers-queue",
+    "solutions": 30,
+    "reachable_states": 81
+   },
+   {
+    "id": "passengers-boundary",
+    "solutions": 24,
+    "reachable_states": 68
+   },
+   {
+    "id": "passengers-counter",
+    "solutions": 1592,
+    "reachable_states": 2117
+   },
+   {
+    "id": "passengers-capacity-blocking-1",
+    "solutions": 12,
+    "reachable_states": 79
+   },
+   {
+    "id": "passengers-capacity-blocking-2",
+    "solutions": 189,
+    "reachable_states": 219
+   },
+   {
+    "id": "passengers-same-capacity",
+    "solutions": 200,
+    "reachable_states": 473
+   },
+   {
+    "id": "passengers-boundary-queue",
+    "solutions": 16,
+    "reachable_states": 202
+   }
+  ],
+  "winning_taps_boardings": {
+   "distribution": {
+    "0": 22073,
+    "1": 4776,
+    "2": 5680,
+    "3": 6788,
+    "4": 7240,
+    "5": 3659,
+    "6": 2399,
+    "7": 2735,
+    "8": 1536,
+    "9": 660,
+    "10": 606
+   },
+   "mean": 2.43,
+   "p90": 6,
+   "max": 10,
+   "share_zero": 0.38
+  },
+  "winning_taps_departures": {
+   "distribution": {
+    "0": 28815,
+    "1": 13008,
+    "2": 8043,
+    "3": 4086,
+    "4": 4200
+   },
+   "mean": 1.0,
+   "p90": 3,
+   "max": 4,
+   "share_zero": 0.496
+  },
+  "winning_final_tap_boardings": {
+   "distribution": {
+    "2": 33,
+    "3": 615,
+    "4": 2052,
+    "5": 1139,
+    "6": 624,
+    "7": 1660,
+    "8": 576,
+    "9": 306,
+    "10": 264
+   },
+   "mean": 5.67,
+   "p90": 8,
+   "max": 10,
+   "share_zero": 0.0
+  },
+  "any_taps_boardings": {
+   "distribution": {
+    "0": 7182,
+    "1": 724,
+    "2": 971,
+    "3": 941,
+    "4": 723,
+    "5": 481,
+    "6": 240,
+    "7": 225,
+    "8": 149,
+    "9": 49,
+    "10": 38
+   },
+   "mean": 1.35,
+   "p90": 5,
+   "max": 10,
+   "share_zero": 0.613
+  },
+  "any_taps_departures": {
+   "distribution": {
+    "0": 8235,
+    "1": 2158,
+    "2": 920,
+    "3": 235,
+    "4": 175
+   },
+   "mean": 0.46,
+   "p90": 2,
+   "max": 4,
+   "share_zero": 0.702
+  }
+ }
+}
