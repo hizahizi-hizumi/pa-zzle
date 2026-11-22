@@ -1,13 +1,10 @@
 import { useRef } from "react";
+import { useWaterSortArt } from "@/games/water-sort/ui/art/art-registry";
 import { getDestinationFill } from "@/games/water-sort/ui/board/pour/destination-fill";
 import type { PourClocks } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
 import { getStreamRatioInBox } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/PourDestination/stream-geometry";
 import type { PourAnimation } from "@/games/water-sort/ui/board/pour/pour-animation";
 import { useAnimationFrame } from "@/games/water-sort/ui/board/pour/use-animation-frame";
-import {
-  getReagentFill,
-  getReagentSurfaceShade,
-} from "@/games/water-sort/ui/board/test-tube/reagent";
 
 type IncomingLiquidProps = {
   /** 同じ注ぎ先への注ぎ。成り立った順。 */
@@ -18,8 +15,7 @@ type IncomingLiquidProps = {
 /** 流れが届いてから、それまでの液面の線がほどけて消えるまでの長さ。 */
 const SURFACE_SETTLE_MS = 260;
 
-function getMeniscusImage(colorIndex: number): string {
-  const shade = getReagentSurfaceShade(colorIndex);
+function getMeniscusImage(shade: number): string {
   return `linear-gradient(180deg, rgba(20,30,35,${shade}) 0, rgba(20,30,35,${shade}) 1px, rgba(255,255,255,0.6) 1px, rgba(255,255,255,0.15) 2.5px, transparent 4px)`;
 }
 
@@ -32,6 +28,7 @@ function easeOutCubic(value: number): number {
  * 流れが当たった瞬間、それまでの液面の線が当たった所から左右へほどけて消え、ひとつの液になる。
  */
 export function IncomingLiquid({ animations, clocks }: IncomingLiquidProps) {
+  const reagentArt = useWaterSortArt().reagent;
   const liquidRef = useRef<HTMLSpanElement>(null);
   const formerSurfaceRef = useRef<HTMLSpanElement>(null);
   const first = animations[0];
@@ -75,11 +72,15 @@ export function IncomingLiquid({ animations, clocks }: IncomingLiquidProps) {
       <span
         ref={liquidRef}
         className="absolute inset-x-0 invisible"
-        style={getReagentFill(first.colorIndex)}
+        style={reagentArt.fill(first.colorIndex)}
       >
         <span
           className="absolute inset-x-0 top-0 h-[4px]"
-          style={{ backgroundImage: getMeniscusImage(first.colorIndex) }}
+          style={{
+            backgroundImage: getMeniscusImage(
+              reagentArt.surfaceShade(first.colorIndex),
+            ),
+          }}
         />
       </span>
       {base.length > 0 && (
@@ -88,7 +89,9 @@ export function IncomingLiquid({ animations, clocks }: IncomingLiquidProps) {
           className="absolute inset-x-0 h-[4px] translate-y-full"
           style={{
             bottom: `${base.length * 25}%`,
-            backgroundImage: getMeniscusImage(first.colorIndex),
+            backgroundImage: getMeniscusImage(
+              reagentArt.surfaceShade(first.colorIndex),
+            ),
           }}
         />
       )}

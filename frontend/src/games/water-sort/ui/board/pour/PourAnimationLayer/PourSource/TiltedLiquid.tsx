@@ -1,6 +1,7 @@
 import { useId, useRef } from "react";
 
 import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
+import { useWaterSortArt } from "@/games/water-sort/ui/art/art-registry";
 import {
   getSourcePose,
   type PourPath,
@@ -13,10 +14,6 @@ import {
   type TubeSegment,
 } from "@/games/water-sort/ui/board/pour/tilted-liquid";
 import { useAnimationFrame } from "@/games/water-sort/ui/board/pour/use-animation-frame";
-import {
-  getReagentFill,
-  getReagentSurfaceShade,
-} from "@/games/water-sort/ui/board/test-tube/reagent";
 import {
   TUBE_INNER,
   TUBE_VIEW_BOX,
@@ -78,6 +75,7 @@ export function TiltedLiquid({
   path,
   getElapsedMs,
 }: TiltedLiquidProps) {
+  const reagentArt = useWaterSortArt().reagent;
   const clipId = useId();
   const runs = getTiltedLiquidRuns(contents);
   const layerRefs = useRef<Array<HTMLSpanElement | null>>([]);
@@ -100,7 +98,7 @@ export function TiltedLiquid({
     const top = liquid.layers.findLast((layer) => layer.points.length > 0);
     surfaceShadeRef.current?.setAttribute(
       "stroke",
-      `rgba(20,30,35,${top ? getReagentSurfaceShade(top.colorIndex) : 0})`,
+      `rgba(20,30,35,${top ? reagentArt.surfaceShade(top.colorIndex) : 0})`,
     );
     setLine(surfaceShadeRef.current, liquid.surface);
     const radian = (pose.tiltDeg * Math.PI) / 180;
@@ -127,7 +125,7 @@ export function TiltedLiquid({
             left: `${(TUBE_INNER.left / VIEW_WIDTH) * 100}%`,
             right: `${((VIEW_WIDTH - TUBE_INNER.right) / VIEW_WIDTH) * 100}%`,
             clipPath: toClipPath([]),
-            ...getReagentFill(run.colorIndex),
+            ...reagentArt.fill(run.colorIndex),
           }}
         />
       ))}

@@ -1,8 +1,8 @@
 import { DeadlockNotice } from "@/games/water-sort/ui/DeadlockNotice";
-import { waterSortGroundClassName } from "@/games/water-sort/ui/WaterSortGround";
 import { BottleSizeScope } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/BottleSizeScope";
 import { deadlockFigure } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/figure-boards";
 import { HowToPlayFigure } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/HowToPlayFigure";
+import { waterSortGroundClassName } from "@/games/water-sort/ui/water-sort-ground-color";
 import { cn } from "@/lib/utils";
 
 function ignoreNoticePress() {}

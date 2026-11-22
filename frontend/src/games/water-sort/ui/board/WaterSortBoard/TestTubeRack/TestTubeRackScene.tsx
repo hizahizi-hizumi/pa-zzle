@@ -5,7 +5,7 @@ import { WATER_SORT_RACK_OVERHANG_RATIO } from "@/games/water-sort/ui/board/rack
 import { getReagentCausticColor } from "@/games/water-sort/ui/board/test-tube/reagent";
 import type { RackLayout } from "@/games/water-sort/ui/board/WaterSortBoard/TestTubeRack/rack-layout";
 
-type TestTubeRackSceneProps = {
+export type TestTubeRackSceneProps = {
   layout: RackLayout;
   state: WaterSortState;
 };

@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useWaterSortArt } from "@/games/water-sort/ui/art/art-registry";
 import { getDestinationFill } from "@/games/water-sort/ui/board/pour/destination-fill";
 import type { PourClocks } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
 import {
@@ -11,7 +12,6 @@ import {
   POUR_FALL_MS,
 } from "@/games/water-sort/ui/board/pour/pour-timing";
 import { useAnimationFrame } from "@/games/water-sort/ui/board/pour/use-animation-frame";
-import { getReagentStreamFill } from "@/games/water-sort/ui/board/test-tube/reagent";
 
 type PourStreamProps = {
   animation: PourAnimation;
@@ -50,6 +50,7 @@ function getMaxStreamWidth(animation: PourAnimation): number {
  * 注ぎ先のガラスの奥に描き、口から上は注ぎ元の試験管の陰に入る。
  */
 export function PourStream({ animation, animations, clocks }: PourStreamProps) {
+  const reagentArt = useWaterSortArt().reagent;
   const streamRef = useRef<HTMLSpanElement>(null);
   const { timing, path, destination } = animation;
   const maxWidth = getMaxStreamWidth(animation);
@@ -96,7 +97,7 @@ export function PourStream({ animation, animations, clocks }: PourStreamProps) {
         top: `${top}px`,
         width: `${maxWidth}px`,
         height: `${Math.max(0, height)}px`,
-        ...getReagentStreamFill(animation.colorIndex),
+        ...reagentArt.streamFill(animation.colorIndex),
       }}
     />
   );

@@ -1,11 +1,11 @@
 import { type RefObject, useLayoutEffect, useRef, useState } from "react";
 
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
+import { useWaterSortArt } from "@/games/water-sort/ui/art/art-registry";
 import {
   measureRackLayout,
   type RackLayout,
 } from "@/games/water-sort/ui/board/WaterSortBoard/TestTubeRack/rack-layout";
-import { TestTubeRackScene } from "@/games/water-sort/ui/board/WaterSortBoard/TestTubeRack/TestTubeRackScene";
 
 type TestTubeRackProps = {
   state: WaterSortState;
@@ -15,6 +15,7 @@ type TestTubeRackProps = {
 
 /** 試験管を立てる木の試験管立てと、それを置く黒い実験台・流しの戸棚。置いた入れ物いっぱいに重ね、操作を受けない。 */
 export function TestTubeRack({ state, bottleRefs }: TestTubeRackProps) {
+  const { RackScene } = useWaterSortArt();
   const containerRef = useRef<HTMLDivElement>(null);
   const [layout, setLayout] = useState<RackLayout | null>(null);
   const bottleCount = state.length;
@@ -52,7 +53,7 @@ export function TestTubeRack({ state, bottleRefs }: TestTubeRackProps) {
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 -z-10"
     >
-      {layout && <TestTubeRackScene layout={layout} state={state} />}
+      {layout && <RackScene layout={layout} state={state} />}
     </div>
   );
 }
