@@ -14,6 +14,7 @@ import {
   listMagicSquareLineEvaluations,
   listMagicSquareValueStates,
 } from "@/games/magic-square/puzzle/rules";
+import type { MagicSquareState } from "@/games/magic-square/puzzle/state";
 import { MagicSquarePlay } from "@/games/magic-square/ui/MagicSquarePlay";
 import type { GameProgress } from "@/games/play";
 
@@ -28,12 +29,17 @@ const givens = parseMagicSquareBoard([
   ". . 12 1",
   "3 . 10 6",
 ]);
-const board = parseMagicSquareBoard([
+const cells = parseMagicSquareBoard([
   "14 4 5 .",
   ". 2 . .",
   ". . 12 1",
   "3 . 10 6",
 ]);
+/** 1行4列の空きマスに、メモ 9・11 を書いた盤面。 */
+const board: MagicSquareState = {
+  ...cells,
+  memos: cells.cells.map((_, cellIndex) => (cellIndex === 3 ? [9, 11] : [])),
+};
 
 /** 基準時間 01:40（20秒 + 8 × 10秒）の問題を 02:00 で、取り下げ2回で解いた結果。 */
 const result: MagicSquareResult = {
@@ -53,6 +59,7 @@ describe("MagicSquarePlay", () => {
   const callbacks = {
     onSelectCell: vi.fn(),
     onEnterValue: vi.fn(),
+    onToggleMemoInput: vi.fn(),
     onUndo: vi.fn(),
     onRestart: vi.fn(),
     onReplay: vi.fn(),
@@ -78,8 +85,10 @@ describe("MagicSquarePlay", () => {
         board={board}
         selectedCellIndex={0}
         lineEvaluations={listMagicSquareLineEvaluations(board)}
+        inputMode="value"
         valueStates={listMagicSquareValueStates(givens, board, 0)}
         withdrawalCount={2}
+        operation={null}
         canUndo
         canRestart
         {...callbacks}
@@ -107,7 +116,9 @@ describe("MagicSquarePlay", () => {
     });
 
     test("盤面のマスを押すとそのマスを選ぶ操作を知らせること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "1行4列 空き" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "1行4列 空き メモ 9 11" }),
+      );
 
       expect(callbacks.onSelectCell).toHaveBeenCalledWith(3);
     });
@@ -130,6 +141,17 @@ describe("MagicSquarePlay", () => {
 
       expect(callbacks.onUndo).toHaveBeenCalledTimes(1);
     });
+
+    test("待ったの後ろのメモで、入れ方の切り替えを知らせること", () => {
+      fireEvent.click(
+        within(screen.getByRole("group", { name: "数の欄" })).getByRole(
+          "button",
+          { name: "メモ" },
+        ),
+      );
+
+      expect(callbacks.onToggleMemoInput).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("完成演出の場合", () => {
@@ -138,7 +160,9 @@ describe("MagicSquarePlay", () => {
     });
 
     test("盤面のマスを押しても選ぶ操作を知らせないこと", () => {
-      fireEvent.click(screen.getByRole("button", { name: "1行4列 空き" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "1行4列 空き メモ 9 11" }),
+      );
 
       expect(callbacks.onSelectCell).not.toHaveBeenCalled();
     });

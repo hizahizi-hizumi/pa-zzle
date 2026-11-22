@@ -74,10 +74,13 @@ export function PlayableMagicSquare({
         board={play.board}
         selectedCellIndex={play.selectedCellIndex}
         lineEvaluations={play.lineEvaluations}
+        inputMode={play.inputMode}
         valueStates={play.valueStates}
         withdrawalCount={play.withdrawalCount}
+        operation={play.operation}
         onSelectCell={play.selectCell}
         onEnterValue={play.enterValue}
+        onToggleMemoInput={play.toggleMemoInput}
         canUndo={play.canUndo}
         onUndo={play.undo}
         canRestart={play.canRestart}

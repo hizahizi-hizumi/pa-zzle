@@ -28,12 +28,19 @@ describe("MagicSquareNumberPad", () => {
         valueStates={valueStates}
         interactionDisabled={false}
         onEnterValue={onEnterValue}
-        trailingAction={<button type="button">待った</button>}
+        trailingActions={[
+          <button key="undo" type="button">
+            待った
+          </button>,
+          <button key="memo" type="button">
+            メモ
+          </button>,
+        ]}
       />,
     );
   });
 
-  test("1 から 16 までを小さい順に並べ、最後の数の後ろに操作を置くこと", () => {
+  test("1 から 16 までを小さい順に並べ、最後の数の後ろに操作を順に置くこと", () => {
     const pad = screen.getByRole("group", { name: "数の欄" });
 
     const labels = within(pad)
@@ -43,6 +50,7 @@ describe("MagicSquareNumberPad", () => {
     expect(labels).toEqual([
       ...Array.from({ length: 16 }, (_, index) => String(index + 1)),
       "待った",
+      "メモ",
     ]);
   });
 

@@ -36,11 +36,13 @@ describe("MagicSquareBoard", () => {
   function renderBoard(props: {
     clearing?: boolean;
     interactionDisabled?: boolean;
+    memos?: readonly (readonly number[])[];
   }) {
     render(
       <MagicSquareBoard
         givens={givens}
         board={board}
+        memos={props.memos}
         lineEvaluations={listMagicSquareLineEvaluations(board)}
         selectedCellIndex={0}
         interactionDisabled={props.interactionDisabled ?? false}
@@ -93,6 +95,25 @@ describe("MagicSquareBoard", () => {
       fireEvent.click(screen.getByRole("button", { name: "2行1列 空き" }));
 
       expect(onSelectCell).toHaveBeenCalledWith(4);
+    });
+  });
+
+  describe("メモを書いたマスがある場合", () => {
+    beforeEach(() => {
+      renderBoard({
+        memos: board.cells.map((_, cellIndex) =>
+          cellIndex === 4 ? [9, 11] : cellIndex === 0 ? [7] : [],
+        ),
+      });
+    });
+
+    test("空きマスにメモの数を小さく書き、数を置いたマスに残したメモは書かないこと", () => {
+      const cells = [
+        screen.getByRole("button", { name: "2行1列 空き メモ 9 11" }),
+        screen.getByRole("button", { name: "1行1列 14" }),
+      ];
+
+      expect(cells.map((cell) => cell.textContent)).toEqual(["911", "14"]);
     });
   });
 

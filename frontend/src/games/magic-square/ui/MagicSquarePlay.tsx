@@ -2,16 +2,28 @@ import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
 import type { MagicSquareDifficulty } from "@/games/magic-square/difficulty";
 import { MAGIC_SQUARE_DISPLAY_NAME } from "@/games/magic-square/display-name";
-import type { MagicSquareResult } from "@/games/magic-square/play/use-magic-square-play";
+import type {
+  MagicSquareOperation,
+  MagicSquareResult,
+} from "@/games/magic-square/play/use-magic-square-play";
 import type { MagicSquareBoard as MagicSquareBoardCells } from "@/games/magic-square/puzzle/board";
 import type {
   MagicSquareLineEvaluation,
   MagicSquareValueState,
 } from "@/games/magic-square/puzzle/rules";
-import { MagicSquareBoard } from "@/games/magic-square/ui/board/MagicSquareBoard";
+import type { MagicSquareState } from "@/games/magic-square/puzzle/state";
+import type { MagicSquareInputMode } from "@/games/magic-square/session/session";
+import {
+  MagicSquareBoard,
+  type MagicSquareCellRejection,
+} from "@/games/magic-square/ui/board/MagicSquareBoard";
 import { MagicSquareGround } from "@/games/magic-square/ui/MagicSquareGround";
 import { MagicSquareHowToPlayDialog } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog";
-import { MagicSquareNumberPad } from "@/games/magic-square/ui/MagicSquareNumberPad";
+import { MagicSquareMemoToggle } from "@/games/magic-square/ui/MagicSquareMemoToggle";
+import {
+  MagicSquareNumberPad,
+  type MagicSquareValueRejection,
+} from "@/games/magic-square/ui/MagicSquareNumberPad";
 import { MagicSquareTutorial } from "@/games/magic-square/ui/MagicSquareTutorial";
 import { MagicSquareResultScreen } from "@/games/magic-square/ui/result/MagicSquareResultScreen";
 import type {
@@ -27,15 +39,34 @@ type MagicSquarePlayProps = GamePlayScreenProps<
   RestartableGamePlayScreenProps &
   UndoableGamePlayScreenProps & {
     givens: MagicSquareBoardCells;
-    /** 最初から置いてある数を含む今の盤面。 */
-    board: MagicSquareBoardCells;
+    /** 最初から置いてある数を含む今の盤面と、マスごとのメモ。 */
+    board: MagicSquareState;
     selectedCellIndex: number | null;
     lineEvaluations: readonly MagicSquareLineEvaluation[];
+    inputMode: MagicSquareInputMode;
     valueStates: readonly MagicSquareValueState[];
     withdrawalCount: number;
+    operation: MagicSquareOperation | null;
     onSelectCell: (cellIndex: number) => void;
     onEnterValue: (value: number) => void;
+    onToggleMemoInput: () => void;
   };
+
+/** 受け付けなかった押し方を、選んでいたマスがあればそのマスで、無ければ押した数の札で揺らして返す。 */
+function splitRejection(operation: MagicSquareOperation | null): {
+  cell: MagicSquareCellRejection | null;
+  value: MagicSquareValueRejection | null;
+} {
+  if (operation?.type !== "rejected") {
+    return { cell: null, value: null };
+  }
+  return operation.cellIndex === null
+    ? { cell: null, value: { id: operation.id, value: operation.value } }
+    : {
+        cell: { id: operation.id, cellIndex: operation.cellIndex },
+        value: null,
+      };
+}
 
 export function MagicSquarePlay({
   difficulty,
@@ -47,10 +78,13 @@ export function MagicSquarePlay({
   board,
   selectedCellIndex,
   lineEvaluations,
+  inputMode,
   valueStates,
   withdrawalCount,
+  operation,
   onSelectCell,
   onEnterValue,
+  onToggleMemoInput,
   canUndo,
   onUndo,
   canRestart,
@@ -66,6 +100,7 @@ export function MagicSquarePlay({
   renderSettingsDialog,
 }: MagicSquarePlayProps) {
   const playing = progress === "playing";
+  const rejection = splitRejection(operation);
 
   return (
     <GamePlayFrame
@@ -113,10 +148,12 @@ export function MagicSquarePlay({
         <MagicSquareBoard
           givens={givens}
           board={board}
+          memos={board.memos}
           lineEvaluations={lineEvaluations}
           selectedCellIndex={selectedCellIndex}
           interactionDisabled={!playing}
           clearing={progress === "clearing"}
+          rejection={rejection.cell}
           onSelectCell={onSelectCell}
           onClearAnimationComplete={onClearAnimationComplete}
         />
@@ -125,9 +162,19 @@ export function MagicSquarePlay({
         <MagicSquareNumberPad
           size={board.size}
           valueStates={valueStates}
+          memoInput={inputMode === "memo"}
           interactionDisabled={!playing}
+          rejection={rejection.value}
           onEnterValue={onEnterValue}
-          trailingAction={<UndoButton disabled={!canUndo} onUndo={onUndo} />}
+          trailingActions={[
+            <UndoButton key="undo" disabled={!canUndo} onUndo={onUndo} />,
+            <MagicSquareMemoToggle
+              key="memo"
+              active={inputMode === "memo"}
+              disabled={!playing}
+              onToggle={onToggleMemoInput}
+            />,
+          ]}
         />
       </footer>
     </GamePlayFrame>

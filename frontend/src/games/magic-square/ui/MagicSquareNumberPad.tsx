@@ -1,9 +1,15 @@
-import type { ReactNode } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useLayoutEffect,
+  useRef,
+} from "react";
 
 import { TutorialCue } from "@/components/TutorialCue";
 import { useTouchTap } from "@/components/touch-tap";
 import type { MagicSquareValueState } from "@/games/magic-square/puzzle/rules";
 import { magicSquareTone } from "@/games/magic-square/ui/magic-square-tone";
+import { playRejectionShake } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 /** チュートリアルで次に押す数に付ける指の印。`recallId` は `TutorialCue` と同じ。 */
@@ -12,21 +18,30 @@ export type MagicSquareValueCue = {
   recallId: number | null;
 };
 
+/** 受け付けなかった操作の知らせ。`id` が変わるたびに、押した数の札を揺らす。 */
+export type MagicSquareValueRejection = {
+  id: number;
+  value: number;
+};
+
 type MagicSquareNumberPadProps = {
   size: number;
   /** 1 から n² までの数の状態。並びは数の小さい順。 */
   valueStates: readonly MagicSquareValueState[];
+  /** メモを書く入れ方のとき `true`。数を小さく石墨の色で描く。 */
+  memoInput?: boolean;
   interactionDisabled: boolean;
   onEnterValue: (value: number) => void;
-  /** 最後の数のすぐ後ろの枠に置く操作。 */
-  trailingAction?: ReactNode;
+  /** 最後の数のすぐ後ろの枠から順に置く操作。 */
+  trailingActions?: readonly ReactNode[];
+  rejection?: MagicSquareValueRejection | null;
   /** チュートリアルだけが渡す。渡さなければ本番と同じに描く。 */
   cue?: MagicSquareValueCue | null;
 };
 
 /**
  * 盤面の一辺ごとの列の数。数は問題が変わっても同じ位置に並べる。4×4 は盤面と同じ4列にすると2つ目の盤面に見えるので8列にし、
- * 5×5 と 6×6 は最後の行に枠が余り、そこに待ったが入る列の数にする。
+ * 5×5 と 6×6 は最後の行に枠が余り、そこに待ったとメモの切り替えが入る列の数にする。
  */
 const columnCountBySize: Readonly<Record<number, number>> = {
   4: 8,
@@ -34,23 +49,72 @@ const columnCountBySize: Readonly<Record<number, number>> = {
   6: 8,
 };
 
+const valueShakeKeyframes: Keyframe[] = [
+  { transform: "translateX(0)" },
+  { transform: "translateX(-8%)" },
+  { transform: "translateX(8%)" },
+  { transform: "translateX(-4%)" },
+  { transform: "translateX(0)" },
+];
+
 function getColumnCount(size: number): number {
   return columnCountBySize[size] ?? size;
 }
 
+/** まだ置いていない数は札、選んだマスに入っている数は縁取った札、使った数は札を取った跡のくぼみに薄く刻んだ数で描く。 */
+function getValueFaceStyle(state: MagicSquareValueState): CSSProperties {
+  switch (state) {
+    case "available":
+      return {
+        backgroundColor: magicSquareTone.tablet,
+        boxShadow:
+          "inset 0 -3px 0 rgba(43,39,34,0.14), 0 1px 2px rgba(43,39,34,0.38)",
+      };
+    case "selected":
+      return {
+        backgroundColor: magicSquareTone.tablet,
+        boxShadow: `inset 0 0 0 3px ${magicSquareTone.selection}, 0 1px 2px rgba(43,39,34,0.38)`,
+      };
+    case "used":
+      return {
+        backgroundColor: magicSquareTone.recess,
+        boxShadow:
+          "inset 0 2px 3px rgba(43,39,34,0.3), inset 0 -1px 0 rgba(255,255,255,0.3)",
+        color: magicSquareTone.usedInk,
+      };
+  }
+}
+
 /**
- * 数の欄。1 から n² までを小さい順に、使った数（最初から置いてある数を含む）も同じ位置で薄くして並べる。
- * 選んだマスに置いてある数は縁取りし、押すとそのマスから外す。
+ * 数の欄。1 から n² までを小さい順に、使った数（最初から置いてある数を含む）も同じ位置に札を取った跡として並べる。
+ * 選んだマスに入っている数は縁取り、押すとそのマスから外す・メモから消す。
  */
 export function MagicSquareNumberPad({
   size,
   valueStates,
+  memoInput = false,
   interactionDisabled,
   onEnterValue,
-  trailingAction,
+  trailingActions = [],
+  rejection = null,
   cue = null,
 }: MagicSquareNumberPadProps) {
   const { getTapHandlers } = useTouchTap();
+  const valueElementRefs = useRef(new Map<number, HTMLButtonElement>());
+  // 同じ知らせは描き直しても一度だけ揺らす。描き始めにある知らせは、再読み込みで戻した前の操作なので揺らさない。
+  const shownRejectionIdRef = useRef(rejection?.id ?? null);
+
+  useLayoutEffect(() => {
+    if (!rejection || shownRejectionIdRef.current === rejection.id) {
+      return;
+    }
+    shownRejectionIdRef.current = rejection.id;
+    playRejectionShake(
+      valueElementRefs.current.get(rejection.value),
+      valueShakeKeyframes,
+      { durationMs: 220, easing: "ease-out" },
+    );
+  }, [rejection]);
 
   return (
     <div
@@ -63,24 +127,30 @@ export function MagicSquareNumberPad({
     >
       {valueStates.map((state, index) => {
         const value = index + 1;
-        const used = state === "used";
-        const selected = state === "selected";
         return (
           <button
             key={value}
+            ref={(element) => {
+              if (!element) {
+                return;
+              }
+              valueElementRefs.current.set(value, element);
+              return () => {
+                valueElementRefs.current.delete(value);
+              };
+            }}
             type="button"
-            aria-pressed={selected}
-            disabled={used}
+            aria-pressed={state === "selected"}
+            disabled={state === "used"}
             className={cn(
-              "relative flex h-11 items-center justify-center rounded-md text-lg font-semibold tabular-nums leading-none outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-              used && "opacity-30",
+              "relative flex h-11 items-center justify-center rounded-md tabular-nums leading-none outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+              memoInput ? "text-base font-medium" : "text-lg font-semibold",
             )}
             style={{
-              backgroundColor: magicSquareTone.tablet,
-              color: magicSquareTone.placedInk,
-              boxShadow: selected
-                ? `inset 0 0 0 3px ${magicSquareTone.selection}`
-                : `inset 0 0 0 1px ${magicSquareTone.tabletEdge}`,
+              color: memoInput
+                ? magicSquareTone.memoInk
+                : magicSquareTone.placedInk,
+              ...getValueFaceStyle(state),
             }}
             {...getTapHandlers(() => {
               if (!interactionDisabled) {
@@ -95,9 +165,12 @@ export function MagicSquareNumberPad({
           </button>
         );
       })}
-      {trailingAction && (
-        <div className="flex items-center justify-center">{trailingAction}</div>
-      )}
+      {trailingActions.map((action, slot) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: 最後の数の後ろの枠の順そのものが識別になる
+        <div key={slot} className="flex items-center justify-center">
+          {action}
+        </div>
+      ))}
     </div>
   );
 }
