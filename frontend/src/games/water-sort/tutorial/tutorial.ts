@@ -123,9 +123,9 @@ const goalState: WaterSortState = [
  */
 const steps: readonly WaterSortTutorialStep[] = [
   {
-    message: { headline: "注ぐボトルをタップして選択します", detail: null },
+    message: { headline: "注ぐ試験管をタップして選択します", detail: null },
     destinationMessage: {
-      headline: "空のボトルをタップして注ぎます",
+      headline: "空の試験管をタップして注ぎます",
       detail: null,
     },
     introducedRuleId: null,
@@ -133,7 +133,7 @@ const steps: readonly WaterSortTutorialStep[] = [
   },
   {
     message: {
-      headline: "空のボトルだけでなく同じ色の上にも注げます",
+      headline: "空の試験管だけでなく同じ色の上にも注げます",
       detail: null,
     },
     destinationMessage: null,
@@ -419,11 +419,11 @@ function performWaterSortTutorialAction(
 }
 
 const rejectionMessages = {
-  empty: "空のボトルからは注げません",
-  complete: "そろったボトルからは注げません",
-  "no-destination": "このボトルは\nいまどこにも注げません",
-  "no-room": "同じ色が上にあるボトルがいっぱいでいまは注げません",
-  full: "いっぱいのボトルには注げません",
+  empty: "空の試験管からは注げません",
+  complete: "栓をした試験管からは注げません",
+  "no-destination": "この試験管は\nいまどこにも注げません",
+  "no-room": "同じ色が上にある試験管がいっぱいでいまは注げません",
+  full: "いっぱいの試験管には注げません",
   "different-color": "違う色の上には注げません",
 } as const satisfies Record<WaterSortTutorialRejection, string>;
 
@@ -440,7 +440,7 @@ function describeWaterSortTutorialViolation(
 ): TutorialMessage {
   return lastMove?.type === "rejected"
     ? describeRejection(lastMove.rejection)
-    : { headline: "そのボトルには注げません", detail: null };
+    : { headline: "その試験管には注げません", detail: null };
 }
 
 export function listWaterSortTutorialCompletedBottleIndices({
@@ -478,7 +478,7 @@ export function describeWaterSortTutorialFreePlay({
 }: WaterSortTutorialBoardState): TutorialMessage {
   // 入りきらない注ぎで色がそろうことは無いので、そろった数より先に言っても食い違わない。
   if (lastMove?.type === "poured" && lastMove.leftover) {
-    return { headline: "入りきらない分は\n元のボトルに残ります", detail: null };
+    return { headline: "入りきらない分は\n元の試験管に残ります", detail: null };
   }
   const completedCount = countCompletedBottles(bottles);
   return completedCount === 0
@@ -530,11 +530,11 @@ export const waterSortTutorial: Tutorial<
   WaterSortTutorialAction
 > = {
   intro: {
-    purpose: "ボトルからボトルへ水を注いで同じ色を1本にまとめるパズルです",
+    purpose: "試験管から試験管へ液を注いで同じ色を1本にまとめるパズルです",
     goalCaption: "全部そろえると完成です",
   },
   rules: [
-    { id: "where", label: "空のボトルか同じ色の上に注げます" },
+    { id: "where", label: "空の試験管か同じ色の上に注げます" },
     {
       id: "together",
       label: "同じ色は入るぶんだけまとめて注げます",

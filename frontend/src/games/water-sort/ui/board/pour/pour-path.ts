@@ -3,6 +3,7 @@ import {
   type PourTiming,
 } from "@/games/water-sort/ui/board/pour/pour-timing";
 import { getLipReachingTiltDeg } from "@/games/water-sort/ui/board/pour/tilted-liquid";
+import { CLAMP_HANDLE_TIP_POINTS } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 
 /**
  * 注ぎ元の試験管の道筋。持ち上げた所から傾けながら注ぎ先の口へ運び、口の縁を注ぎ先の口に当てたまま、
@@ -84,10 +85,6 @@ const EXTENT_POINTS = [
   [3.6, 88],
   [32.4, 88],
   [18, 97.6],
-] as const;
-const CLAMP_HANDLE_POINTS = [
-  [54.6, -18.4],
-  [49.6, -20.6],
 ] as const;
 const BOUNDS_SAMPLE_COUNT = 48;
 /** はみ出しとみなさない量（px）。 */
@@ -236,7 +233,7 @@ function getOverflow(
   bounds: PourBounds,
   startMs = path.timing.touchMs / 2,
 ): Overflow {
-  const handle = CLAMP_HANDLE_POINTS.map(([x, y]) =>
+  const handle = CLAMP_HANDLE_TIP_POINTS.map(([x, y]) =>
     // 柄は傾ける向きと逆の側に出す。
     path.direction > 0
       ? ([TUBE_VIEW_WIDTH - x, y] as const)

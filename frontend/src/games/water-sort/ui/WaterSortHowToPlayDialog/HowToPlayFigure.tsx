@@ -6,6 +6,7 @@ import {
   getBottleRowWidth,
 } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/bottle-size";
 import type { WaterSortHowToPlayFrame } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/figure-boards";
+import { LabFigureGround } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/LabFigureGround";
 import { cn } from "@/lib/utils";
 
 type HowToPlayFigureProps = {
@@ -23,13 +24,14 @@ export function HowToPlayFigure({ frame }: HowToPlayFigureProps) {
   return (
     <span
       aria-hidden="true"
-      className="grid shrink-0 items-end [--selected-bottle-lift:--spacing(3.5)]"
+      className="relative grid shrink-0 items-end [--selected-bottle-lift:--spacing(3.5)]"
       style={{
         width: getBottleRowWidth(bottles.length),
         gridTemplateColumns: `repeat(${bottles.length}, minmax(0, 1fr))`,
         columnGap: getBottleRowGap(bottles.length),
       }}
     >
+      <LabFigureGround />
       {bottles.map((contents, bottleIndex) => (
         <span
           // biome-ignore lint/suspicious/noArrayIndexKey: ボトルの並び順で決まる

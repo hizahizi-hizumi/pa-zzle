@@ -84,7 +84,7 @@ export function DestinationVerdicts({ answers }: DestinationVerdictsProps) {
                   }
                 />
                 <span className="sr-only">
-                  {`ボトル ${position}: ${answerWords[answer.result]}`}
+                  {`試験管 ${position}: ${answerWords[answer.result]}`}
                 </span>
               </span>
             )}

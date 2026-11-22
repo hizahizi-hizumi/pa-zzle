@@ -33,6 +33,7 @@ import {
   waterSortTutorial,
 } from "@/games/water-sort/tutorial/tutorial";
 import type { WaterSortBottleCue } from "@/games/water-sort/ui/board/bottle-cue";
+import { WATER_SORT_RACK_OVERHANG_RATIO } from "@/games/water-sort/ui/board/rack-extent";
 import {
   WATER_SORT_SINGLE_ROW_GAP_PX,
   WaterSortBoard,
@@ -59,17 +60,20 @@ const goalBottles = waterSortTutorial.goal().bottles;
 const BOTTLE_COUNT = waterSortTutorial.start().bottles.length;
 const BOTTLE_GAPS = `${WATER_SORT_SINGLE_ROW_GAP_PX * (BOTTLE_COUNT - 1)}px`;
 
-/** ボトルの下から指す指の場所。 */
+/** 試験管の下から指す指の場所。 */
 const POINTER_ROOM = "3rem";
 
+/** 横に並べた試験管の幅の和に足す、試験管立てが両端の外へ張り出す分と、側板と画面の端の間（試験管の幅に対する比）。 */
+const RACK_WIDTH_RATIO = WATER_SORT_RACK_OVERHANG_RATIO * 2 + 0.2;
+
 /**
- * 盤面を1段に並べ、本番と同じく画面の幅いっぱいに大きく見せる。
- * 注ぐボトルは注ぎ先の口の上（ボトルの高さの0.55倍上）へ移って傾き、口から上へボトルの幅の約2倍まで届くので、
- * ボトルの幅を `--bottle` とし、上に2.1倍の余白を取って、注ぐ動きと選んだボトルの持ち上げを上の見出しにかけない。
- * ボトルの高さは幅の 1/0.36 倍（約2.78倍）。
+ * 盤面を1段に並べ、本番と同じく画面の幅いっぱいに大きく見せる。試験管立ての側板まで画面の中に収める。
+ * 注ぐ試験管は注ぎ先の口の上（試験管の高さの0.55倍上）へ移って傾き、口から上へ試験管の幅の約2倍まで届くので、
+ * 試験管の幅を `--bottle` とし、上に2.1倍の余白を取って、注ぐ動きと持った試験管の持ち上げを上の見出しにかけない。
+ * 試験管の高さは幅の 1/0.36 倍（約2.78倍）。
  */
 const boardFrameStyle = {
-  "--bottle": `min(calc((100cqw - ${BOTTLE_GAPS}) / ${BOTTLE_COUNT}), calc((100cqh - ${POINTER_ROOM}) / 4.9), 6rem)`,
+  "--bottle": `min(calc((100cqw - ${BOTTLE_GAPS}) / ${BOTTLE_COUNT + RACK_WIDTH_RATIO}), calc((100cqh - ${POINTER_ROOM}) / 4.9), 6rem)`,
   width: `calc(var(--bottle) * ${BOTTLE_COUNT} + ${BOTTLE_GAPS})`,
   boxSizing: "content-box",
   paddingTop: "calc(var(--bottle) * 2.1)",

@@ -18,7 +18,7 @@ import {
   type WaterSortExampleBoard,
 } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/TouchableExample/example-board";
 
-/** 例を、`taps` のボトル（0から）を順に押した姿にする。 */
+/** 例を、`taps` の試験管（0から）を順に押した姿にする。 */
 function tapAll(
   board: WaterSortExampleBoard,
   taps: readonly number[],
@@ -30,7 +30,7 @@ function tapAll(
   );
 }
 
-/** 本番の盤面で、`sourceBottleIndex` を選んだまま各ボトルを押したときに注ぐか。選んだボトル自身は `null`。 */
+/** 本番の盤面で、`sourceBottleIndex` を選んだまま各試験管を押したときに注ぐか。選んだ試験管自身は `null`。 */
 function answerByProduction(
   bottles: WaterSortState,
   sourceBottleIndex: number,
@@ -52,7 +52,7 @@ describe("createWaterSortExampleBoard", () => {
       selectedBottleIndex,
     ).type;
 
-    test("本番でも選べる左のボトルを、注ぐボトルに選んだ姿から始めること", () => {
+    test("本番でも選べる左の試験管を、注ぐ試験管に選んだ姿から始めること", () => {
       const board = createWaterSortExampleBoard(pourDestinationExample);
 
       expect(board.sourceBottleIndex).toBe(selectedBottleIndex);
@@ -70,21 +70,21 @@ describe("judgeWaterSortExampleDestinations", () => {
 
   const cases = [
     {
-      title: "最初の姿では、選んでいる左のボトルから各ボトルへ注げるかを返す",
+      title: "最初の姿では、選んでいる左の試験管から各試験管へ注げるかを返す",
       taps: [],
       bottles: pourDestinationExample.bottles,
       sourceBottleIndex: 0,
       expected: [null, true, false, true, false],
     },
     {
-      title: "注げないボトルを押して弾かれても、選んだままの答えを返す",
+      title: "注げない試験管を押して弾かれても、選んだままの答えを返す",
       taps: [2],
       bottles: pourDestinationExample.bottles,
       sourceBottleIndex: 0,
       expected: [null, true, false, true, false],
     },
     {
-      title: "選び直したら、選んだボトルからの答えに替える",
+      title: "選び直したら、選んだ試験管からの答えに替える",
       taps: [0, 1],
       bottles: pourDestinationExample.bottles,
       sourceBottleIndex: 1,
@@ -122,7 +122,7 @@ describe("judgeWaterSortExampleDestinations", () => {
 });
 
 describe("tapWaterSortExampleBottle", () => {
-  describe("どこに注げるかの例で、左のボトルを選んだまま候補を押した場合", () => {
+  describe("どこに注げるかの例で、左の試験管を選んだまま候補を押した場合", () => {
     const { bottles } = pourDestinationExample;
     const selected = createWaterSortExampleBoard(pourDestinationExample);
     const cases = [1, 2, 3, 4].map((destination) => {
@@ -161,12 +161,12 @@ describe("getWaterSortExampleHintBottleIndex", () => {
     const board = createWaterSortExampleBoard(example);
 
     const cases = [
-      ["最初の形では、注ぐボトルに付ける", [], 0],
-      ["注ぐボトルを選んだら、注ぎ先に付ける", [0], 1],
+      ["最初の形では、注ぐ試験管に付ける", [], 0],
+      ["注ぐ試験管を選んだら、注ぎ先に付ける", [0], 1],
       ["手がかりの注ぎ先を押して弾かれたら、消す", [0, 1], null],
-      ["手がかりの無い空のボトルを押して弾かれても、消す", [2], null],
+      ["手がかりの無い空の試験管を押して弾かれても、消す", [2], null],
       [
-        "空のボトルで弾かれた後に注ぐボトルを選んだら、注ぎ先に付ける",
+        "空の試験管で弾かれた後に注ぐ試験管を選んだら、注ぎ先に付ける",
         [2, 0],
         1,
       ],
@@ -190,9 +190,9 @@ describe("getWaterSortExampleHintBottleIndex", () => {
     const cases = [
       ["最初の姿では、✓ の候補に付ける", [], 1],
       ["✕ の候補を押して弾かれたら、消す", [2], null],
-      ["✕ の候補で弾かれた後に選ぶのをやめたら、注ぐボトルに付ける", [2, 0], 0],
+      ["✕ の候補で弾かれた後に選ぶのをやめたら、注ぐ試験管に付ける", [2, 0], 0],
       ["✕ の候補で弾かれた後に選び直したら、✓ の候補に戻す", [2, 0, 0], 1],
-      ["選ぶのをやめたら、注ぐボトルに付ける", [0], 0],
+      ["選ぶのをやめたら、注ぐ試験管に付ける", [0], 0],
       ["選び直したら、✓ の候補に戻す", [0, 0], 1],
       ["注いで形が変わったら、付けない", [1], null],
     ] as const;
@@ -212,7 +212,7 @@ describe("listWaterSortExampleDestinationRejections", () => {
   const { bottles } = pourDestinationExample;
   const board = createWaterSortExampleBoard(pourDestinationExample);
 
-  test("押す前から、選んでいる左のボトルから各ボトルへ注げないわけを、本番の判定で返すこと", () => {
+  test("押す前から、選んでいる左の試験管から各試験管へ注げないわけを、本番の判定で返すこと", () => {
     const rejections = listWaterSortExampleDestinationRejections(board);
 
     expect(rejections).toEqual(
@@ -228,7 +228,7 @@ describe("listWaterSortExampleDestinationRejections", () => {
     expect(rejections).toEqual([null, [], ["different-color"], [], ["full"]]);
   });
 
-  test("選び直したら、選んだボトルから注げないわけに替えること", () => {
+  test("選び直したら、選んだ試験管から注げないわけに替えること", () => {
     const rejections = listWaterSortExampleDestinationRejections(
       tapAll(board, [0, 2]),
     );
@@ -258,13 +258,13 @@ describe("judgeWaterSortExampleSelection", () => {
 
   const cases = [
     [
-      "試す前は、左のボトルを選べるかを判定する",
+      "試す前は、左の試験管を選べるかを判定する",
       complete,
       [],
       { allowed: false, rejections: ["complete"] },
     ],
     [
-      "左のボトルを選んだら、選べたことを示す",
+      "左の試験管を選んだら、選べたことを示す",
       selectable,
       [0],
       { allowed: true, rejections: [] },
@@ -276,19 +276,19 @@ describe("judgeWaterSortExampleSelection", () => {
       { allowed: true, rejections: [] },
     ],
     [
-      "空のボトルを押して弾かれたら、選べないわけを示す",
+      "空の試験管を押して弾かれたら、選べないわけを示す",
       selectable,
       [1],
       { allowed: false, rejections: ["empty"] },
     ],
     [
-      "選んだまま注げないボトルを押して弾かれても、選べたことを示す",
+      "選んだまま注げない試験管を押して弾かれても、選べたことを示す",
       selected,
       [2],
       { allowed: true, rejections: [] },
     ],
     [
-      "注いだ後に、選べないボトルを押して弾かれたら、選べないわけを示す",
+      "注いだ後に、選べない試験管を押して弾かれたら、選べないわけを示す",
       selectable,
       [0, 1, 1],
       { allowed: false, rejections: ["no-destination"] },

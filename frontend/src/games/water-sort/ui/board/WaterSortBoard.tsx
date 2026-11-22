@@ -1,4 +1,10 @@
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import {
@@ -118,6 +124,16 @@ const reducedMotionRejectionKeyframes: Keyframe[] = [
   { filter: "brightness(1)" },
 ];
 
+/**
+ * 段に分けた盤面で、上の段の試験管の上に、持ち上げに足して取る高さ（試験管の幅に対する比）。
+ * 上の段で注ぐ試験管は深く傾き、試験管ばさみの柄が口より上へ出るので、その柄が見出しにかからない高さにする。
+ */
+const TOP_ROW_HEADROOM_RATIO = 0.55;
+
+/** 持った試験管を、試験管ばさみの所を中心に少し傾ける。 */
+const heldTiltClassName =
+  "origin-[50%_14%] transition-[rotate] duration-(--duration-normal) ease-standard data-held:-rotate-3 motion-reduce:transition-none";
+
 /** ボトルの幅と高さの比。遊び方の図も、この比で本番と同じ形に描く。 */
 export const WATER_SORT_BOTTLE_ASPECT_RATIO = 0.36;
 
@@ -211,9 +227,10 @@ export function WaterSortBoard({
       ? `var(${WATER_SORT_HOW_TO_PLAY_GAP_PROPERTY})`
       : `${layout.columnGap}px`;
   const rowCount = Math.ceil(state.length / layout.columnCount);
-  // ボトルの縦横比と隙間を保ったまま、見出し・下端を除いた高さにも収める。
-  // 上の段のボトルを選ぶと持ち上げるので、その分の高さは盤面の上に取っておく。
-  const widthForAvailableHeight = `calc((100cqh - var(--selected-bottle-lift) - ${layout.rowGap * (rowCount - 1)}px) * ${(WATER_SORT_BOTTLE_ASPECT_RATIO * layout.columnCount) / rowCount} + ${layout.columnGap * (layout.columnCount - 1)}px)`;
+  const columnGaps = layout.columnGap * (layout.columnCount - 1);
+  // 段に分けるときは、試験管の縦横比と隙間を保ったまま、見出し・下端を除いた高さにも収める。
+  // 上の段の試験管は、持つと持ち上がり、注ぐと試験管ばさみの柄が口より上へ出るので、その分の高さを盤面の上に取っておく。
+  const rowsTubeWidth = `min(calc((${layout.width} - ${columnGaps}px) / ${layout.columnCount}), calc((100cqh - var(--selected-bottle-lift) - ${layout.rowGap * (rowCount - 1)}px) / ${rowCount / WATER_SORT_BOTTLE_ASPECT_RATIO + TOP_ROW_HEADROOM_RATIO}))`;
 
   const bottles = (
     <fieldset
@@ -224,20 +241,26 @@ export function WaterSortBoard({
       }
       className={cn(
         "grid w-full items-end justify-center border-0 p-0 [--selected-bottle-lift:--spacing(5)]",
-        layoutKind === "rows" && "pt-(--selected-bottle-lift)",
+        layoutKind === "rows" &&
+          "pt-[calc(var(--selected-bottle-lift)+var(--tube-width)*var(--top-row-headroom))]",
       )}
-      style={{
-        gridTemplateColumns: `repeat(${layout.columnCount}, minmax(0, 1fr))`,
-        columnGap,
-        rowGap: layout.rowGap,
-        width:
-          layoutKind === "single-row"
-            ? layout.width
-            : `min(${layout.width}, ${widthForAvailableHeight})`,
-      }}
+      style={
+        {
+          gridTemplateColumns: `repeat(${layout.columnCount}, minmax(0, 1fr))`,
+          columnGap,
+          rowGap: layout.rowGap,
+          ...(layoutKind === "single-row"
+            ? { width: layout.width }
+            : {
+                "--tube-width": rowsTubeWidth,
+                "--top-row-headroom": TOP_ROW_HEADROOM_RATIO,
+                width: `calc(var(--tube-width) * ${layout.columnCount} + ${columnGaps}px)`,
+              }),
+        } as CSSProperties
+      }
     >
       {state.map((bottle, bottleIndex) => {
-        const bottleLabel = `ボトル ${bottleIndex + 1}`;
+        const bottleLabel = `試験管 ${bottleIndex + 1}`;
         const contents =
           bottle.length === 0
             ? "空"
@@ -256,7 +279,7 @@ export function WaterSortBoard({
             aria-label={`${bottleLabel}: ${contents}`}
             aria-pressed={isSource}
             onClick={() => selectBottle(bottleIndex)}
-            className="relative w-full origin-top cursor-pointer touch-manipulation disabled:cursor-default rounded-b-[1.45rem] transition-transform duration-(--duration-normal) ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 aria-pressed:-translate-y-(--selected-bottle-lift) motion-reduce:transition-none"
+            className="relative w-full origin-top cursor-pointer touch-manipulation disabled:cursor-default rounded-b-[50%_11%] transition-transform duration-(--duration-normal) ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 aria-pressed:-translate-y-(--selected-bottle-lift) motion-reduce:transition-none"
             style={{ aspectRatio: WATER_SORT_BOTTLE_ASPECT_RATIO }}
             disabled={interactionDisabled}
           >
@@ -268,7 +291,7 @@ export function WaterSortBoard({
                   tubeRefs.current[bottleIndex] = element;
                 }}
                 data-held={isSource ? "" : undefined}
-                className="absolute inset-0 origin-[50%_14%] transition-[rotate] duration-(--duration-normal) ease-standard data-held:-rotate-3 motion-reduce:transition-none"
+                className={cn("absolute inset-0", heldTiltClassName)}
               >
                 <TestTube
                   contents={bottle}
@@ -277,7 +300,18 @@ export function WaterSortBoard({
                 />
               </span>
             </span>
-            {cue && <BottleCue cue={cue} />}
+            {cue && (
+              // 印と合図は、持った試験管と一緒に傾けて、試験管の形からずらさない。
+              <span
+                data-held={isSource ? "" : undefined}
+                className={cn(
+                  "pointer-events-none absolute inset-0",
+                  heldTiltClassName,
+                )}
+              >
+                <BottleCue cue={cue} />
+              </span>
+            )}
           </button>
         );
       })}

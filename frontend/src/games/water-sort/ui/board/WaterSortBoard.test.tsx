@@ -40,7 +40,7 @@ function getBottle(name: string): HTMLElement {
   return screen.getByRole("button", { name });
 }
 
-/** 動かした要素が、そのボトルか、そのボトルの中の試験管か。 */
+/** 動かした要素が、その試験管か、その試験管の中の試験管か。 */
 function isInside(target: Element, bottle: HTMLElement): boolean {
   return bottle.contains(target);
 }
@@ -70,7 +70,7 @@ afterEach(() => {
 });
 
 describe("WaterSortBoard", () => {
-  describe("注水が終わる前に次のボトルを選ぶ場合", () => {
+  describe("注水が終わる前に次の試験管を選ぶ場合", () => {
     let onSelectBottle: (bottleIndex: number) => void;
     let board: ReturnType<typeof render>;
 
@@ -89,7 +89,7 @@ describe("WaterSortBoard", () => {
     });
 
     test("注水アニメーションの完了を待たずに次の操作を通知できること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "ボトル 2: 空" }));
+      fireEvent.click(screen.getByRole("button", { name: "試験管 2: 空" }));
       board.rerender(
         <WaterSortBoard
           interactionDisabled={false}
@@ -107,7 +107,7 @@ describe("WaterSortBoard", () => {
           onSelectBottle={onSelectBottle}
         />,
       );
-      fireEvent.click(screen.getByRole("button", { name: "ボトル 4: 空" }));
+      fireEvent.click(screen.getByRole("button", { name: "試験管 4: 空" }));
 
       expect(onSelectBottle).toHaveBeenNthCalledWith(1, 1);
       expect(onSelectBottle).toHaveBeenNthCalledWith(2, 3);
@@ -139,10 +139,10 @@ describe("WaterSortBoard", () => {
       );
     });
 
-    test("注水中もボトルの操作領域を残して実盤面の見た目だけ隠すこと", () => {
-      const sourceBottle = screen.getByRole("button", { name: "ボトル 1: 空" });
+    test("注水中も試験管の操作領域を残して実盤面の見た目だけ隠すこと", () => {
+      const sourceBottle = screen.getByRole("button", { name: "試験管 1: 空" });
       const destinationBottle = screen.getByRole("button", {
-        name: "ボトル 2: 赤、赤、赤、赤",
+        name: "試験管 2: 赤、赤、赤、赤",
       });
       expect(sourceBottle.style.visibility).toBe("");
       expect(destinationBottle.style.visibility).toBe("");
@@ -195,9 +195,9 @@ describe("WaterSortBoard", () => {
           onSelectBottle={onSelectBottle}
         />,
       );
-      const sourceBottle = screen.getByRole("button", { name: "ボトル 1: 赤" });
+      const sourceBottle = screen.getByRole("button", { name: "試験管 1: 赤" });
       const destinationBottle = screen.getByRole("button", {
-        name: "ボトル 2: 空",
+        name: "試験管 2: 空",
       });
 
       expect(
@@ -301,9 +301,9 @@ describe("WaterSortBoard", () => {
         />,
       );
 
-      const sourceBottle = screen.getByRole("button", { name: "ボトル 1: 空" });
+      const sourceBottle = screen.getByRole("button", { name: "試験管 1: 空" });
       const destinationBottle = screen.getByRole("button", {
-        name: "ボトル 2: 赤",
+        name: "試験管 2: 赤",
       });
       expect(
         sourceBottle.firstElementChild?.classList.contains("invisible"),
@@ -426,11 +426,11 @@ describe("WaterSortBoard", () => {
 
     test("そろった試験管にだけ栓をして描くこと", () => {
       const stopperedBottles = screen
-        .getAllByRole("button", { name: /^ボトル/ })
+        .getAllByRole("button", { name: /^試験管/ })
         .filter((bottle) => bottle.querySelector("[data-rubber-stopper]"))
         .map((bottle) => bottle.getAttribute("aria-label"));
 
-      expect(stopperedBottles).toEqual(["ボトル 1: 赤、赤、赤、赤"]);
+      expect(stopperedBottles).toEqual(["試験管 1: 赤、赤、赤、赤"]);
     });
   });
 
@@ -451,8 +451,8 @@ describe("WaterSortBoard", () => {
     });
 
     test("押した試験管だけを、試験管立ての中で底を支点に揺らすこと", () => {
-      const rejected = getBottle("ボトル 2: 空");
-      const other = getBottle("ボトル 1: 赤、青");
+      const rejected = getBottle("試験管 2: 空");
+      const other = getBottle("試験管 1: 赤、青");
 
       expect(calls).toHaveLength(1);
       expect(isInside(calls[0]?.target as Element, rejected)).toBe(true);
@@ -481,8 +481,8 @@ describe("WaterSortBoard", () => {
     });
 
     test("押した試験管を揺らし、持っている試験管を傾けかけて引き戻すこと", () => {
-      const rejected = getBottle("ボトル 2: 青");
-      const held = getBottle("ボトル 1: 赤");
+      const rejected = getBottle("試験管 2: 青");
+      const held = getBottle("試験管 1: 赤");
       const rattle = calls.find((call) => isInside(call.target, rejected));
       const withdraw = calls.find((call) => isInside(call.target, held));
 
@@ -520,7 +520,7 @@ describe("WaterSortBoard", () => {
     });
 
     test("試験管を動かさず、押した試験管を一度暗くするだけにすること", () => {
-      const rejected = getBottle("ボトル 2: 青");
+      const rejected = getBottle("試験管 2: 青");
 
       expect(calls).toHaveLength(1);
       expect(isInside(calls[0]?.target as Element, rejected)).toBe(true);
@@ -546,11 +546,42 @@ describe("WaterSortBoard", () => {
 
     test("持っている試験管にだけ試験管ばさみを描くこと", () => {
       const clampedBottles = screen
-        .getAllByRole("button", { name: /^ボトル/ })
+        .getAllByRole("button", { name: /^試験管/ })
         .filter((bottle) => bottle.querySelector("[data-test-tube-clamp]"))
         .map((bottle) => bottle.getAttribute("aria-label"));
 
-      expect(clampedBottles).toEqual(["ボトル 1: 赤、青"]);
+      expect(clampedBottles).toEqual(["試験管 1: 赤、青"]);
+    });
+  });
+
+  describe("持っている試験管にチュートリアルの合図を重ねる場合", () => {
+    beforeEach(() => {
+      render(
+        <WaterSortBoard
+          interactionDisabled={false}
+          state={[[0, 1], [1], []]}
+          sourceBottleIndex={0}
+          operation={null}
+          onSelectBottle={vi.fn()}
+          cues={[
+            { bottleIndex: 0, kind: "hint", id: 0 },
+            { bottleIndex: 1, kind: "hint", id: 0 },
+          ]}
+        />,
+      );
+    });
+
+    test("持っている試験管の合図だけを、試験管と一緒に傾けること", () => {
+      const tiltedCues = screen
+        .getAllByRole("button", { name: /^試験管/ })
+        .filter(
+          (bottle) =>
+            bottle.querySelector("[data-bottle-cue]")?.closest("[data-held]") !=
+            null,
+        )
+        .map((bottle) => bottle.getAttribute("aria-label"));
+
+      expect(tiltedCues).toEqual(["試験管 1: 赤、青"]);
     });
   });
 

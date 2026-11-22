@@ -107,7 +107,7 @@ describe("WaterSortPlay", () => {
   test("プレイ中はゲーム名と主要な計測値をミニマルに表示すること", () => {
     const selectBottle = vi.fn();
     render(<WaterSortPlay {...baseProps} onSelectBottle={selectBottle} />);
-    const bottle = screen.getByRole("button", { name: "ボトル 1: 赤、青" });
+    const bottle = screen.getByRole("button", { name: "試験管 1: 赤、青" });
     fireEvent.click(bottle);
     expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
     expect(
@@ -126,16 +126,16 @@ describe("WaterSortPlay", () => {
   test("選択中の注ぎ元だけを選択状態として表すこと", () => {
     render(<WaterSortPlay {...baseProps} sourceBottleIndex={0} />);
     const sourceBottle = screen.getByRole("button", {
-      name: "ボトル 1: 赤、青",
+      name: "試験管 1: 赤、青",
     });
     expect(sourceBottle.getAttribute("aria-pressed")).toBe("true");
     expect(screen.queryByText("注ぎ元")).toBeNull();
   });
 
-  test("合法手を教えるためにボトル操作を無効化しないこと", () => {
+  test("合法手を教えるために試験管操作を無効化しないこと", () => {
     const selectBottle = vi.fn();
     render(<WaterSortPlay {...baseProps} onSelectBottle={selectBottle} />);
-    const bottle = screen.getByRole("button", { name: "ボトル 2: 空" });
+    const bottle = screen.getByRole("button", { name: "試験管 2: 空" });
     fireEvent.click(bottle);
     expect((bottle as HTMLButtonElement).disabled).toBe(false);
     expect(selectBottle).toHaveBeenCalledWith(1);
@@ -416,11 +416,11 @@ describe("WaterSortPlay", () => {
 
       const dialog = screen.queryByRole("dialog", { name: "ウォーターソート" });
       const firstBottle = screen
-        .getByRole("button", { name: /^ボトル 1:/ })
+        .getByRole("button", { name: /^試験管 1:/ })
         .getAttribute("aria-label");
 
       expect(dialog).toBeNull();
-      expect(firstBottle).toBe("ボトル 1: 赤、青");
+      expect(firstBottle).toBe("試験管 1: 赤、青");
       expect(baseProps.onReplay).not.toHaveBeenCalled();
     });
   });

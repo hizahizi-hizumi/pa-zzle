@@ -12,6 +12,7 @@ import {
   getBottleRowGap,
   getBottleRowWidth,
 } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/bottle-size";
+import { LabFigureGround } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/LabFigureGround";
 import { cn } from "@/lib/utils";
 
 type HowToPlayBoardProps = {
@@ -75,6 +76,7 @@ export function HowToPlayBoard({
         } as CSSProperties
       }
     >
+      <LabFigureGround />
       <WaterSortBoard
         state={bottles}
         sourceBottleIndex={sourceBottleIndex}

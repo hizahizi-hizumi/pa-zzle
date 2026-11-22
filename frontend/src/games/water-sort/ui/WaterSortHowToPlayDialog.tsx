@@ -160,7 +160,7 @@ function renderScoreRows(item: keyof typeof WATER_SORT_SCORE_MAXIMUMS) {
 }
 
 /**
- * 遊び方。ルール・操作・採点のタブで、本番と同じボトルの触れる例と話し言葉の一文を並べる。
+ * 遊び方。ルール・操作・採点のタブで、本番と同じ試験管の触れる例と話し言葉の一文を並べる。
  * ルールの例は、本番の盤面と同じく選び・注ぎ・揺れ、どこに注げるかの答えや、選べるかの判定を、本番の判定から求めて添える。
  */
 export function WaterSortHowToPlayDialog({
@@ -172,14 +172,14 @@ export function WaterSortHowToPlayDialog({
     <HowToPlayOverlay
       open={open}
       game={game}
-      description="ボトルの水を/注ぎ分けて/色ごとに/1本のボトルに/そろえる/パズルです。"
+      description="試験管の液を/注ぎ分けて/色ごとに/1本の試験管に/そろえる/パズルです。"
       goal={<GoalPlayback />}
       onClose={onClose}
       onOpenTutorial={onOpenTutorial}
       rules={
         <>
           <HowToPlayRule
-            text="いちばん上の色が/同じで/まだ入るボトルに/注げます。/空のボトルにも/注げます。"
+            text="いちばん上の色が/同じで/まだ入る試験管に/注げます。/空の試験管にも/注げます。"
             arrangement="stacked"
             examples={
               <TouchableExample
@@ -194,12 +194,12 @@ export function WaterSortHowToPlayDialog({
             { kind: "amount" },
           )}
           {renderRule(
-            "1色で/いっぱいになった/ボトルは/もう選べません。",
+            "1色で/いっぱいになった/試験管は/栓が閉まり/もう選べません。",
             completeRuleExamples,
             { kind: "selection", rule: "complete" },
           )}
           {renderRule(
-            "どこにも/注げない/ボトルは/選べません。",
+            "どこにも/注げない/試験管は/選べません。",
             destinationRuleExamples,
             { kind: "selection", rule: "no-destination" },
           )}
@@ -211,7 +211,7 @@ export function WaterSortHowToPlayDialog({
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="注ぐ元のボトルを/押して選んでから/注ぐ先のボトルを/押します。/同じボトルを/もう一度押すと/選ぶ前に/戻ります。"
+                text="注ぐ元の/試験管を/押して持ってから/注ぐ先の/試験管を/押します。/持っている/試験管を/もう一度押すと/元に戻します。/注げない/試験管を/押すと/かたかた揺れ、/持っている/試験管は/傾きかけて/戻ります。"
                 arrangement="stacked"
                 examples={<TouchableExample example={pourOperationExample} />}
               />

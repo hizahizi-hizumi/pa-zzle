@@ -15,7 +15,7 @@ export const waterSortProblemFeatureAxisDisplays = {
     valueFormat: { kind: "count", unit: "種類", rangeWidth: 3 },
   },
   "empty-bottle-count": {
-    label: "空ボトル",
+    label: "空の試験管",
     valueFormat: { kind: "count", unit: "本", rangeWidth: 2 },
   },
 } as const satisfies Record<

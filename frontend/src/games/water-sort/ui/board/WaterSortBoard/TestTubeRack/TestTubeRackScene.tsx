@@ -1,6 +1,7 @@
 import { useId } from "react";
 
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
+import { WATER_SORT_RACK_OVERHANG_RATIO } from "@/games/water-sort/ui/board/rack-extent";
 import { getReagentCausticColor } from "@/games/water-sort/ui/board/test-tube/reagent";
 import type { RackLayout } from "@/games/water-sort/ui/board/WaterSortBoard/TestTubeRack/rack-layout";
 
@@ -35,8 +36,8 @@ export function TestTubeRackScene({ layout, state }: TestTubeRackSceneProps) {
     return null;
   }
 
-  const rackLeft = layout.left - w * 0.42;
-  const rackRight = layout.right + w * 0.42;
+  const rackLeft = layout.left - w * WATER_SORT_RACK_OVERHANG_RATIO;
+  const rackRight = layout.right + w * WATER_SORT_RACK_OVERHANG_RATIO;
   const postWidth = Math.max(6, w * 0.22);
   const plankFace = h * 0.065;
   const plankTop = h * 0.03;

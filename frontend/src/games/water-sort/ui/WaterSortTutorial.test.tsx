@@ -30,20 +30,20 @@ vi.mock("@/lib/audio/sound-effects", () => ({
 
 const { intro, steps, freePlay, completion } = waterSortTutorial;
 
-/** 手順ごとに、注ぎ元、注ぎ先の順に印を付けるボトル（1始まり）。 */
+/** 手順ごとに、注ぎ元、注ぎ先の順に印を付ける試験管（1始まり）。 */
 const stepBottles = steps.map(({ move }) => [
   move.sourceBottleIndex + 1,
   move.destinationBottleIndex + 1,
 ]);
 
-/** 手を離した後、青を空のボトルへよけて、最短の5手でそろえるボトル（1始まり）。 */
+/** 手を離した後、青を空の試験管へよけて、最短の5手でそろえる試験管（1始まり）。 */
 const solvingBottles = [3, 5, 3, 4, 3, 5, 1, 5, 2, 1] as const;
 
 /** 手を離した後に止まっていても、手がかりを勝手に出さないことを確かめる長さ。 */
 const longIdleMs = 60_000;
 
-const goalFirstBottle = "ボトル 1: 赤、赤、赤、赤";
-const startFirstBottle = "ボトル 1: 赤、赤、赤、青";
+const goalFirstBottle = "試験管 1: 赤、赤、赤、赤";
+const startFirstBottle = "試験管 1: 赤、赤、赤、青";
 
 afterEach(() => {
   cleanup();
@@ -84,7 +84,7 @@ function getScreen(): HTMLElement {
 
 function getBottle(bottleNumber: number): HTMLElement {
   return within(getScreen()).getByRole("button", {
-    name: new RegExp(`^ボトル ${bottleNumber}:`),
+    name: new RegExp(`^試験管 ${bottleNumber}:`),
   });
 }
 
@@ -124,7 +124,7 @@ const pointerSelector =
 const recallSelector = '[data-tutorial-cue="recall"]';
 const completedSelector = '[data-bottle-cue="completed"]';
 
-/** 合図を重ねているボトル（1始まり）。 */
+/** 合図を重ねている試験管（1始まり）。 */
 function getCuedBottles(selector: string = pointerSelector): number[] {
   return [1, 2, 3, 4, 5].filter((bottleNumber) =>
     getBottle(bottleNumber).querySelector(selector),
@@ -223,7 +223,7 @@ describe("WaterSortTutorial", () => {
       expect(hintButton).toBeNull();
     });
 
-    test("入口でボトルを押しても、ゴールの盤面を見せたまま、はじめるを待つこと", () => {
+    test("入口で試験管を押しても、ゴールの盤面を見せたまま、はじめるを待つこと", () => {
       tapBottles([1]);
 
       const startButton = within(getScreen()).queryByRole("button", {
@@ -295,7 +295,7 @@ describe("WaterSortTutorial", () => {
       pressStart();
     });
 
-    test("印の無いボトルを押すたびに、選ばず、一言を変えず、鳴らさずに、印の線を濃くし直すこと", () => {
+    test("印の無い試験管を押すたびに、選ばず、一言を変えず、鳴らさずに、印の線を濃くし直すこと", () => {
       tapBottles([1]);
       const firstRecall = getBottle(3).querySelector(recallSelector);
       tapBottles([2]);
@@ -312,7 +312,7 @@ describe("WaterSortTutorial", () => {
       expect(playLayeredSound).not.toHaveBeenCalled();
     });
 
-    test("印のボトルを選ぶと、注ぎ先を指さし、注ぎ先の一言に替えること", () => {
+    test("印の試験管を選ぶと、注ぎ先を指さし、注ぎ先の一言に替えること", () => {
       tapBottles([3]);
 
       const headline = queryShownText(
@@ -329,7 +329,7 @@ describe("WaterSortTutorial", () => {
 
       const headline = queryShownText(steps[1]?.message.headline ?? "");
 
-      expect(getBottleLabel(4)).toBe("ボトル 4: 緑");
+      expect(getBottleLabel(4)).toBe("試験管 4: 緑");
       expect(countPouredSounds()).toBe(1);
       expect(Number(getProgressValue())).toBeGreaterThan(0);
       expect(headline).not.toBeNull();
@@ -356,7 +356,7 @@ describe("WaterSortTutorial", () => {
           getViolationHeadline("different-color"),
         );
 
-        expect(getBottleLabel(2)).toBe("ボトル 2: 赤、緑、緑、青");
+        expect(getBottleLabel(2)).toBe("試験管 2: 赤、緑、緑、青");
         expect(getBottle(2).getAttribute("aria-pressed")).toBe("true");
         expect(violation).not.toBeNull();
         expect(getPlayedSoundNames().at(-1)).toBe("tube-rattle.flac");
@@ -416,27 +416,27 @@ describe("WaterSortTutorial", () => {
         expect(hintButton).not.toBeNull();
       });
 
-      test("1色そろうと、そのボトルにだけ応え、そろった数と残りの数を言うこと", () => {
+      test("1色そろうと、その試験管にだけ応え、そろった数と残りの数を言うこと", () => {
         tapBottles(solvingBottles.slice(0, 4));
 
         const headline = queryShownText("1色そろいました\nあと2色です");
 
-        expect(getBottleLabel(4)).toBe("ボトル 4: 緑、緑、緑、緑");
+        expect(getBottleLabel(4)).toBe("試験管 4: 緑、緑、緑、緑");
         expect(getCuedBottles(completedSelector)).toEqual([4]);
         expect(headline).not.toBeNull();
       });
 
       const rejectionCases = [
-        ["注げる先が無いボトル", [3, 5, 2], "no-destination"],
+        ["注げる先が無い試験管", [3, 5, 2], "no-destination"],
         [
-          "同じ色が上にあるボトルが満杯で、ほかに注げる先も無いボトル",
+          "同じ色が上にある試験管が満杯で、ほかに注げる先も無い試験管",
           [3, 5, 4, 3, 4],
           "no-room",
         ],
-        ["そろったボトル", [3, 5, 3, 4, 4], "complete"],
-        ["空のボトル", [5], "empty"],
+        ["そろった試験管", [3, 5, 3, 4, 4], "complete"],
+        ["空の試験管", [5], "empty"],
         ["違う色の上", [1, 4], "different-color"],
-        ["満杯のボトル", [3, 1], "full"],
+        ["満杯の試験管", [3, 1], "full"],
       ] as const;
 
       test.each(rejectionCases)(
@@ -450,6 +450,14 @@ describe("WaterSortTutorial", () => {
           expect(getPlayedSoundNames().at(-1)).toBe("tube-rattle.flac");
         },
       );
+
+      test("そろって栓をした試験管を押すと、盤面の栓を手がかりに注げないわけを言うこと", () => {
+        tapBottles([3, 5, 3, 4, 4]);
+
+        const violation = queryShownText("栓をした試験管からは注げません");
+
+        expect(violation).not.toBeNull();
+      });
 
       test("注ぎ元を選んだまま手が止まっても、指ささずに違反の一言を残すこと", () => {
         tapBottles([2, 4]);
@@ -648,7 +656,7 @@ describe("WaterSortTutorial", () => {
       expect(getCuedBottles()).toEqual([3]);
     });
 
-    test("印の無いボトルを押すと、印の線を濃くし直すこと", () => {
+    test("印の無い試験管を押すと、印の線を濃くし直すこと", () => {
       tapBottles([1]);
 
       expect(getCuedBottles(recallSelector)).toEqual([3]);

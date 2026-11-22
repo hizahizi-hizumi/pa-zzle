@@ -102,9 +102,8 @@ function playOperationSound(operation: WaterSortOperation) {
       });
       return;
     case "invalid":
-      if (!prefersReducedMotion()) {
-        playSound(tubeRattleSound, { variation: REPEATED_SOUND_VARIATION });
-      }
+      // 動きを減らす設定でも、注げなかった試験管は一度暗くなって画面が変わるので、同じ音を鳴らす。
+      playSound(tubeRattleSound, { variation: REPEATED_SOUND_VARIATION });
       return;
     case "poured": {
       const slotCount = getPouredSlotCount(operation);

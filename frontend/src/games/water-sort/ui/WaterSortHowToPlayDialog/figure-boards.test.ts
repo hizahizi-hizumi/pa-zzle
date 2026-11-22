@@ -66,7 +66,7 @@ function listReachableStates(
   return reached;
 }
 
-/** 2手が、どちらも注ぎ先にするボトルのほかに、同じボトルを動かすか。 */
+/** 2手が、どちらも注ぎ先にする試験管のほかに、同じ試験管を動かすか。 */
 function sharesMovingBottle(
   left: WaterSortMove,
   right: WaterSortMove,
@@ -100,7 +100,7 @@ describe("goalFigure", () => {
     expect(cleared).toBe(false);
   });
 
-  test("続けて注ぐ2手が、同じ注ぎ先へ注ぐほかは同じボトルを動かさないこと", () => {
+  test("続けて注ぐ2手が、同じ注ぎ先へ注ぐほかは同じ試験管を動かさないこと", () => {
     const overlapping = goalFigure.moves.slice(1).filter((move, index) => {
       const previous = goalFigure.moves[index];
       return previous !== undefined && sharesMovingBottle(previous, move);
@@ -114,13 +114,13 @@ describe("pourDestinationExample", () => {
   const { bottles, selectedBottleIndex } = pourDestinationExample;
   const candidates = [1, 2, 3, 4];
 
-  test("最初に選んでおく左のボトルを、本番の盤面でも選べること", () => {
+  test("最初に選んでおく左の試験管を、本番の盤面でも選べること", () => {
     const selection = selectWaterSortBottle(bottles, null, selectedBottleIndex);
 
     expect(selection.type).toBe("source-selected");
   });
 
-  test("左のボトルから右の候補へ、本番の盤面で順に、注げる・上の色が違って注げない・注げる・いっぱいで注げないこと", () => {
+  test("左の試験管から右の候補へ、本番の盤面で順に、注げる・上の色が違って注げない・注げる・いっぱいで注げないこと", () => {
     const rejections = candidates.map((destination) =>
       listWaterSortPourRejections(bottles, {
         sourceBottleIndex: selectedBottleIndex,
@@ -131,7 +131,7 @@ describe("pourDestinationExample", () => {
     expect(rejections).toEqual([[], ["different-color"], [], ["full"]]);
   });
 
-  test("注げる候補は、いちばん上が左のボトルと同じ色のボトルと、空のボトルであること", () => {
+  test("注げる候補は、いちばん上が左の試験管と同じ色の試験管と、空の試験管であること", () => {
     const tops = [1, 3].map(
       (destination) => bottles[destination]?.at(-1) ?? null,
     );
@@ -151,7 +151,7 @@ describe("completeRuleExamples・destinationRuleExamples", () => {
   ];
 
   test.each(cases)(
-    "%s のルールで、左の例は本番の盤面で左のボトルを選べ、右の例は教えるルールで選べないこと",
+    "%s のルールで、左の例は本番の盤面で左の試験管を選べ、右の例は教えるルールで選べないこと",
     (_, rule, [allowed, denied]) => {
       const rejections = [allowed, denied].map((example) =>
         listWaterSortSourceRejections(example?.bottles ?? [], 0),
@@ -299,7 +299,7 @@ describe("backtrackFigures", () => {
       expect(reachableEarlier).toEqual(reachableEarlier.map(() => false));
     });
 
-    test("注ぐ元を選んで見せるコマでは、そのボトルが次の操作で最初に注ぐボトルで、本番でも選べること", () => {
+    test("注ぐ元を選んで見せるコマでは、その試験管が次の操作で最初に注ぐ試験管で、本番でも選べること", () => {
       const checks = selectedFrames.map(({ frame, selected, next }) => ({
         firstSource:
           next?.kind === "pour" ? next.moves[0]?.sourceBottleIndex : undefined,

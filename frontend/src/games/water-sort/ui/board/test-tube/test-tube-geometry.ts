@@ -35,3 +35,12 @@ export function getSurfaceRatio(filledSlots: number): number {
 
 /** 口の縁の高さ（箱の上端からの割合）。 */
 export const TUBE_MOUTH_RATIO = 0.05;
+
+/**
+ * 右に柄を出した試験管ばさみの、柄の先の2つの角（下の角、上の角）。試験管ばさみは柄をこの2点へ描き、
+ * 注ぐ動きは、この2点で見出しや画面の端にはみ出さないかを確かめる。
+ */
+export const CLAMP_HANDLE_TIP_POINTS = [
+  [57.6, 6],
+  [55.6, 1.4],
+] as const;

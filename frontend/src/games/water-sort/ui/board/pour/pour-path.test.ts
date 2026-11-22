@@ -148,4 +148,36 @@ describe("planPourPath", () => {
       expect(path.direction).toBe(-1);
     });
   });
+
+  describe("iPhone の幅に6本を2段に並べた盤面の、上の段どうしで注ぐ場合", () => {
+    // 見出しの下端と、持ち上げと試験管ばさみの柄の分を上に取った上の段の試験管。
+    const headerBounds = { top: 104, left: 4, right: 386 };
+    const topRowTube = { width: 59, height: 165 };
+    const cases = [
+      ["隣へ1段", 242, 165, 4, 3],
+      ["隣へ3段", 88, 165, 4, 1],
+      ["2本先へ空になるまで2段", 88, 242, 2, 0],
+      ["2本先へ空になるまで4段", 242, 88, 4, 0],
+    ] as const;
+
+    test.each(cases)(
+      "持ってから戻すまで、試験管ばさみの柄も見出しにかからないこと: %s",
+      (_label, sourceLeft, destinationLeft, before, after) => {
+        const path = planPourPath(
+          input({
+            source: { left: sourceLeft, top: 158, ...topRowTube },
+            destination: { left: destinationLeft, top: 158, ...topRowTube },
+            bounds: headerBounds,
+            sourceSlotsBefore: before,
+            sourceSlotsAfter: after,
+            timing: getPourTiming(before - after),
+          }),
+        );
+
+        const overflow = getOverflow(path, headerBounds);
+
+        expect(overflow.top).toBeLessThanOrEqual(0.5);
+      },
+    );
+  });
 });

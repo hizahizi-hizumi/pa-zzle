@@ -1,6 +1,12 @@
 import { useId } from "react";
 
-import { TUBE_VIEW_BOX } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
+import {
+  CLAMP_HANDLE_TIP_POINTS,
+  TUBE_VIEW_BOX,
+} from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
+
+const [[tipBottomX, tipBottomY], [tipTopX, tipTopY]] = CLAMP_HANDLE_TIP_POINTS;
+const CLAMP_ARM_PATH = `M31 10.6 L37.6 17.8 L${tipBottomX} ${tipBottomY} L${tipTopX} ${tipTopY} Z`;
 
 type TestTubeClampProps = {
   /** 柄を出す向き。 */
@@ -43,22 +49,22 @@ export function TestTubeClamp({ side }: TestTubeClampProps) {
           rx="1.2"
           fill="rgba(40,22,6,0.32)"
         />
-        {/* 柄（2本の腕） */}
+        {/* 柄（2本の腕）。並んだ隣の試験管の口の上と、上の見出しにかからないよう、試験管の幅ほどの長さで浅く上げる。 */}
         <path
-          d="M30.6 10.4 L36.2 17.4 L57.4 -5.2 L53 -8.6 Z"
+          d={CLAMP_ARM_PATH}
           fill={`url(#${armId})`}
           stroke="rgba(80,45,15,0.55)"
           strokeWidth="0.5"
         />
         <path
-          d="M33.4 14 L55.2 -6.9"
+          d="M34.2 14.2 L56.6 3.7"
           stroke="rgba(70,40,15,0.5)"
           strokeWidth="0.6"
         />
         {/* ばね */}
         <g fill="none" stroke="#7e898f" strokeWidth="0.9">
-          <ellipse cx="39.8" cy="7.2" rx="2.4" ry="1.6" />
-          <ellipse cx="41" cy="4.8" rx="2.4" ry="1.6" />
+          <ellipse cx="40.4" cy="10.2" rx="2.3" ry="1.5" />
+          <ellipse cx="41.8" cy="8" rx="2.3" ry="1.5" />
         </g>
         {/* 首を挟む口 */}
         <rect

@@ -83,6 +83,15 @@ describe("WaterSortHowToPlayDialog", () => {
     expect(goals).toHaveLength(1);
   });
 
+  test("何のパズルかを、盤面と同じ試験管と液の言葉で言うこと", () => {
+    const dialog = screen.queryByRole("dialog", {
+      description:
+        "試験管の液を注ぎ分けて色ごとに1本の試験管にそろえるパズルです。",
+    });
+
+    expect(dialog).not.toBeNull();
+  });
+
   describe("ルールのタブの場合", () => {
     let panel: HTMLElement;
 
@@ -94,11 +103,24 @@ describe("WaterSortHowToPlayDialog", () => {
       const rules = listHeadings(panel, 3);
 
       expect(rules).toEqual([
-        "いちばん上の色が同じでまだ入るボトルに注げます。空のボトルにも注げます。",
+        "いちばん上の色が同じでまだ入る試験管に注げます。空の試験管にも注げます。",
         "上から同じ色が重なっていれば入るだけまとめて注ぎます。",
-        "1色でいっぱいになったボトルはもう選べません。",
-        "どこにも注げないボトルは選べません。",
+        "1色でいっぱいになった試験管は栓が閉まりもう選べません。",
+        "どこにも注げない試験管は選べません。",
       ]);
+    });
+
+    test("ゴールと例の試験管の後ろに、プレイ画面と同じ理科室の壁と実験台の地を敷くこと", () => {
+      const boards = [
+        within(getDialog()).getByRole("img", { name: "ゴールの盤面" }),
+        ...within(panel).getAllByRole("figure"),
+      ];
+
+      const grounded = boards.map(
+        (board) => board.querySelector("[data-lab-figure-ground]") !== null,
+      );
+
+      expect(grounded).toEqual(boards.map(() => true));
     });
   });
 
@@ -113,6 +135,14 @@ describe("WaterSortHowToPlayDialog", () => {
       const titles = listHeadings(panel, 3);
 
       expect(titles).toEqual(["注ぎ方", "やり直し", "手詰まり"]);
+    });
+
+    test("注ぎ方を、持つ・注ぐ・戻す操作と、注げないときの盤面の反応の順に言うこと", () => {
+      const pourOperation = listHeadings(panel, 4)[0];
+
+      expect(pourOperation).toBe(
+        "注ぐ元の試験管を押して持ってから注ぐ先の試験管を押します。持っている試験管をもう一度押すと元に戻します。注げない試験管を押すとかたかた揺れ、持っている試験管は傾きかけて戻ります。",
+      );
     });
 
     test("手詰まりの知らせを、押せない1枚の絵として、プレイ画面と同じ姿で見せること", () => {
@@ -221,16 +251,16 @@ describe("WaterSortHowToPlayDialog", () => {
     });
   });
 
-  describe("例で注ぐボトルを選んでいる場合", () => {
+  describe("例で注ぐ試験管を選んでいる場合", () => {
     function getSelectedBottle(): HTMLElement {
       const panel = within(getDialog()).getByRole("tabpanel", {
         name: "操作",
       });
       const [bottle] = within(panel).getAllByRole("button", {
-        name: /^ボトル 1:/,
+        name: /^試験管 1:/,
       });
       if (bottle === undefined) {
-        throw new Error("操作の例のボトルがありません");
+        throw new Error("操作の例の試験管がありません");
       }
       return bottle;
     }

@@ -32,7 +32,7 @@ vi.mock("@/lib/audio/sound-effects", () => ({
   prepareSoundEffects: vi.fn(),
 }));
 
-/** ボトルの揺れ。動かした要素を記録する。注ぐ動きは、終わらないまま止められたことだけを記録する。 */
+/** 試験管の揺れ。動かした要素を記録する。注ぐ動きは、終わらないまま止められたことだけを記録する。 */
 const animate = vi.fn(function createUnfinishedAnimation(): Animation {
   return {
     finished: new Promise(() => {}),
@@ -59,7 +59,7 @@ function renderInPanel(example: ReactElement): void {
 }
 
 /**
- * 例の図を、読み上げの名前で探す。図の名前は、図に添えた言葉（判定・わけ・量・各ボトルの答え）のうち、見えているものから付く。
+ * 例の図を、読み上げの名前で探す。図の名前は、図に添えた言葉（判定・わけ・量・各試験管の答え）のうち、見えているものから付く。
  * 見つからなければ `null`。
  */
 function queryFigure(name: string): HTMLElement | null {
@@ -69,7 +69,7 @@ function queryFigure(name: string): HTMLElement | null {
 /** 各候補の下に添えた、注げるかの答え。 */
 function readDestinationAnswers(): (string | null)[] {
   return within(screen.getByRole("figure"))
-    .queryAllByText(/^ボトル \d+: 注げ/)
+    .queryAllByText(/^試験管 \d+: 注げ/)
     .map((answer) => answer.textContent);
 }
 
@@ -83,17 +83,17 @@ function readShownDestinationLegend(): string[] {
 
 function getBottle(position: number): HTMLElement {
   return screen.getByRole("button", {
-    name: new RegExp(`^ボトル ${position}:`),
+    name: new RegExp(`^試験管 ${position}:`),
   });
 }
 
 function readBottleNames(): (string | null)[] {
   return screen
-    .getAllByRole("button", { name: /^ボトル/ })
+    .getAllByRole("button", { name: /^試験管/ })
     .map((button) => button.getAttribute("aria-label"));
 }
 
-/** 押す所の手がかりを付けたボトルの番号（1から）。 */
+/** 押す所の手がかりを付けた試験管の番号（1から）。 */
 function readHintedBottle(): number | null {
   const hint = document
     .querySelector("[data-hinted-bottle]")
@@ -137,21 +137,21 @@ function countSounds(): { invalid: number; poured: number } {
 describe("TouchableExample", () => {
   describe("どこに注げるかの例の場合", () => {
     const initialBottles = [
-      "ボトル 1: 青、赤",
-      "ボトル 2: 緑、赤",
-      "ボトル 3: 緑、青",
-      "ボトル 4: 空",
-      "ボトル 5: 青、緑、赤、赤",
+      "試験管 1: 青、赤",
+      "試験管 2: 緑、赤",
+      "試験管 3: 緑、青",
+      "試験管 4: 空",
+      "試験管 5: 青、緑、赤、赤",
     ];
     const answers = [
-      "ボトル 2: 注げる",
-      "ボトル 3: 注げない",
-      "ボトル 4: 注げる",
-      "ボトル 5: 注げない",
+      "試験管 2: 注げる",
+      "試験管 3: 注げない",
+      "試験管 4: 注げる",
+      "試験管 5: 注げない",
     ];
-    /** 各ボトルの答えと、✕ の真下のわけを、ボトルの順に読み上げる名前。 */
+    /** 各試験管の答えと、✕ の真下のわけを、試験管の順に読み上げる名前。 */
     const initialName =
-      "ボトル 2: 注げる。ボトル 3: 注げない・色違い。ボトル 4: 注げる。ボトル 5: 注げない・満杯。";
+      "試験管 2: 注げる。試験管 3: 注げない・色違い。試験管 4: 注げる。試験管 5: 注げない・満杯。";
 
     beforeEach(() => {
       renderInPanel(
@@ -162,7 +162,7 @@ describe("TouchableExample", () => {
       );
     });
 
-    test("左のボトルを本番と同じく選んだ姿から始め、各ボトルの下に左のボトルから注げるかを添え、✓ の候補に押す所の手がかりを付けること", () => {
+    test("左の試験管を本番と同じく選んだ姿から始め、各試験管の下に左の試験管から注げるかを添え、✓ の候補に押す所の手がかりを付けること", () => {
       const pressed = getBottle(1).getAttribute("aria-pressed");
       const shown = readDestinationAnswers();
       const hinted = readHintedBottle();
@@ -178,7 +178,7 @@ describe("TouchableExample", () => {
       expect(figure).not.toBeNull();
     });
 
-    test("各ボトルの答えの下に、✓ と ✕ の言葉を1行で添えること", () => {
+    test("各試験管の答えの下に、✓ と ✕ の言葉を1行で添えること", () => {
       const legend = readShownDestinationLegend();
 
       expect(legend).toEqual(["注げる", "注げない"]);
@@ -188,33 +188,33 @@ describe("TouchableExample", () => {
       {
         destination: 2,
         bottlesAfterPour: [
-          "ボトル 1: 青",
-          "ボトル 2: 緑、赤、赤",
-          "ボトル 3: 緑、青",
-          "ボトル 4: 空",
-          "ボトル 5: 青、緑、赤、赤",
+          "試験管 1: 青",
+          "試験管 2: 緑、赤、赤",
+          "試験管 3: 緑、青",
+          "試験管 4: 空",
+          "試験管 5: 青、緑、赤、赤",
         ],
       },
       {
         destination: 4,
         bottlesAfterPour: [
-          "ボトル 1: 青",
-          "ボトル 2: 緑、赤",
-          "ボトル 3: 緑、青",
-          "ボトル 4: 赤",
-          "ボトル 5: 青、緑、赤、赤",
+          "試験管 1: 青",
+          "試験管 2: 緑、赤",
+          "試験管 3: 緑、青",
+          "試験管 4: 赤",
+          "試験管 5: 青、緑、赤、赤",
         ],
       },
     ])(
       "✓ の $destination 本目を押した場合",
       ({ destination, bottlesAfterPour }) => {
-        test("本番と同じく注いで流れ込む音を鳴らし、選ぶのをやめるので答え・わけ・手がかり・凡例を消して、注いだボトルにだけ注げたことを添え、元に戻すを出すこと", () => {
+        test("本番と同じく注いで流れ込む音を鳴らし、選ぶのをやめるので答え・わけ・手がかり・凡例を消して、注いだ試験管にだけ注げたことを添え、元に戻すを出すこと", () => {
           fireEvent.click(getBottle(destination));
 
           const bottles = readBottleNames();
           const pressed = getBottle(1).getAttribute("aria-pressed");
           const shown = readDestinationAnswers();
-          const figure = queryFigure(`ボトル ${destination}: 注げた。`);
+          const figure = queryFigure(`試験管 ${destination}: 注げた。`);
           const hinted = readHintedBottle();
           const sounds = countSounds();
           const resetVisible = isResetVisible();
@@ -222,7 +222,7 @@ describe("TouchableExample", () => {
 
           expect(bottles).toEqual(bottlesAfterPour);
           expect(pressed).toBe("false");
-          expect(shown).toEqual([`ボトル ${destination}: 注げた`]);
+          expect(shown).toEqual([`試験管 ${destination}: 注げた`]);
           expect(figure).not.toBeNull();
           expect(legend).toEqual([]);
           expect(hinted).toBeNull();
@@ -233,7 +233,7 @@ describe("TouchableExample", () => {
     );
 
     test.each([3, 5])(
-      "✕ の %i 本目を押すと、本番と同じく押したボトルが揺れて通らない音を鳴らし、選んだまま盤面・答え・わけを変えず、手がかりを消すこと",
+      "✕ の %i 本目を押すと、本番と同じく押した試験管が揺れて通らない音を鳴らし、選んだまま盤面・答え・わけを変えず、手がかりを消すこと",
       (destination) => {
         fireEvent.click(getBottle(destination));
 
@@ -253,12 +253,12 @@ describe("TouchableExample", () => {
       },
     );
 
-    describe("✕ のボトルで弾かれた場合", () => {
+    describe("✕ の試験管で弾かれた場合", () => {
       beforeEach(() => {
         fireEvent.click(getBottle(3));
       });
 
-      test("左のボトルを押して選ぶのをやめると、答えとわけを消し、手がかりを左のボトルに戻すこと", () => {
+      test("左の試験管を押して選ぶのをやめると、答えとわけを消し、手がかりを左の試験管に戻すこと", () => {
         fireEvent.click(getBottle(1));
 
         const unnamed = queryFigure("");
@@ -269,7 +269,7 @@ describe("TouchableExample", () => {
       });
     });
 
-    test("左のボトルをもう一度押すと、選ぶのをやめて答えと凡例を消し、手がかりを左のボトルへ移すこと", () => {
+    test("左の試験管をもう一度押すと、選ぶのをやめて答えと凡例を消し、手がかりを左の試験管へ移すこと", () => {
       fireEvent.click(getBottle(1));
 
       const pressed = getBottle(1).getAttribute("aria-pressed");
@@ -288,23 +288,23 @@ describe("TouchableExample", () => {
         fireEvent.click(getBottle(1));
       });
 
-      test("ほかのボトルを選ぶと、そのボトルから各ボトルへ注げるかと注げないわけに替え、隣り合う ✕ のわけも1行に並べること", () => {
+      test("ほかの試験管を選ぶと、その試験管から各試験管へ注げるかと注げないわけに替え、隣り合う ✕ のわけも1行に並べること", () => {
         fireEvent.click(getBottle(3));
 
         const figure = queryFigure(
-          "ボトル 1: 注げない・色違い。ボトル 2: 注げない・色違い。ボトル 4: 注げる。ボトル 5: 注げない・満杯。",
+          "試験管 1: 注げない・色違い。試験管 2: 注げない・色違い。試験管 4: 注げる。試験管 5: 注げない・満杯。",
         );
 
         expect(figure).not.toBeNull();
       });
     });
 
-    describe("空のボトルへ注いだ場合", () => {
+    describe("空の試験管へ注いだ場合", () => {
       beforeEach(() => {
         fireEvent.click(getBottle(4));
       });
 
-      test("ボトルを選び直すと、注いだ後の盤面で、そのボトルから各ボトルへ注げるかを凡例と添えること", () => {
+      test("試験管を選び直すと、注いだ後の盤面で、その試験管から各試験管へ注げるかを凡例と添えること", () => {
         fireEvent.click(getBottle(2));
 
         const shown = readDestinationAnswers();
@@ -312,10 +312,10 @@ describe("TouchableExample", () => {
 
         expect(legend).toEqual(["注げる", "注げない"]);
         expect(shown).toEqual([
-          "ボトル 1: 注げない",
-          "ボトル 3: 注げない",
-          "ボトル 4: 注げる",
-          "ボトル 5: 注げない",
+          "試験管 1: 注げない",
+          "試験管 3: 注げない",
+          "試験管 4: 注げる",
+          "試験管 5: 注げない",
         ]);
       });
     });
@@ -345,7 +345,7 @@ describe("TouchableExample", () => {
         vi.mocked(playLayeredSound).mockClear();
       });
 
-      test("元に戻すと、左のボトルを選んだ最初の姿・答え・手がかりに戻り、音は鳴らさないこと", () => {
+      test("元に戻すと、左の試験管を選んだ最初の姿・答え・手がかりに戻り、音は鳴らさないこと", () => {
         fireEvent.click(screen.getByRole("button", { name: "例を元に戻す" }));
 
         const bottles = readBottleNames();
@@ -363,7 +363,7 @@ describe("TouchableExample", () => {
     });
   });
 
-  describe("いっぱいで、いちばん上の色も違うボトルが候補にある場合", () => {
+  describe("いっぱいで、いちばん上の色も違う試験管が候補にある場合", () => {
     beforeEach(() => {
       renderInPanel(
         <TouchableExample
@@ -378,7 +378,7 @@ describe("TouchableExample", () => {
 
     test("わけを1つにし、満杯を先にすること", () => {
       const figure = queryFigure(
-        "ボトル 2: 注げない・満杯。ボトル 3: 注げる。",
+        "試験管 2: 注げない・満杯。試験管 3: 注げる。",
       );
 
       expect(figure).not.toBeNull();
@@ -406,13 +406,13 @@ describe("TouchableExample", () => {
       );
     });
 
-    test("触る前は、左のボトルに押す所の手がかりを付けること", () => {
+    test("触る前は、左の試験管に押す所の手がかりを付けること", () => {
       const hinted = readHintedBottle();
 
       expect(hinted).toBe(1);
     });
 
-    test("手がかりを付けた左のボトルを押して弾かれると、手の続きが無いので手がかりを消し、✕ 選べない のままにすること", () => {
+    test("手がかりを付けた左の試験管を押して弾かれると、手の続きが無いので手がかりを消し、✕ 選べない のままにすること", () => {
       fireEvent.click(getBottle(1));
 
       const hinted = readHintedBottle();
@@ -433,7 +433,7 @@ describe("TouchableExample", () => {
       );
     });
 
-    test("選ぶ前に右の空のボトルを押すと、本番と同じく選べずに弾かれ、✕ 選べない に、教えるルールと別のわけの、空っぽであることを添え、左のボトルの手がかりを消すこと", () => {
+    test("選ぶ前に右の空の試験管を押すと、本番と同じく選べずに弾かれ、✕ 選べない に、教えるルールと別のわけの、空っぽであることを添え、左の試験管の手がかりを消すこと", () => {
       fireEvent.click(getBottle(2));
 
       const figure = queryFigure("選べない・空っぽ");
@@ -443,23 +443,23 @@ describe("TouchableExample", () => {
       expect(hinted).toBeNull();
     });
 
-    test("注ぐと、上に続く赤が空のボトルへ移り、試した手の結果として ✓ 選べた にすること", () => {
+    test("注ぐと、上に続く赤が空の試験管へ移り、試した手の結果として ✓ 選べた にすること", () => {
       fireEvent.click(getBottle(1));
       fireEvent.click(getBottle(2));
 
       const bottles = readBottleNames();
       const figure = queryFigure("選べた");
 
-      expect(bottles).toEqual(["ボトル 1: 青", "ボトル 2: 赤、赤、赤"]);
+      expect(bottles).toEqual(["試験管 1: 青", "試験管 2: 赤、赤、赤"]);
       expect(figure).not.toBeNull();
     });
 
-    describe("選ぶ前に右の空のボトルを押して弾かれた場合", () => {
+    describe("選ぶ前に右の空の試験管を押して弾かれた場合", () => {
       beforeEach(() => {
         fireEvent.click(getBottle(2));
       });
 
-      test("左のボトルを選ぶと、✓ 選べる に戻し、手がかりを注ぎ先に付けること", () => {
+      test("左の試験管を選ぶと、✓ 選べる に戻し、手がかりを注ぎ先に付けること", () => {
         fireEvent.click(getBottle(1));
 
         const figure = queryFigure("選べる");
@@ -469,7 +469,7 @@ describe("TouchableExample", () => {
         expect(hinted).toBe(2);
       });
 
-      test("注ぐボトルを選び直すと、弾かれた ✕ を消して ✓ 選べる に戻すこと", () => {
+      test("注ぐ試験管を選び直すと、弾かれた ✕ を消して ✓ 選べる に戻すこと", () => {
         fireEvent.click(getBottle(1));
         fireEvent.click(getBottle(1));
 
@@ -485,7 +485,7 @@ describe("TouchableExample", () => {
         fireEvent.click(getBottle(2));
       });
 
-      test("今の盤面では選べないボトルを押すと、その手の結果の ✕ 選べない にすること", () => {
+      test("今の盤面では選べない試験管を押すと、その手の結果の ✕ 選べない にすること", () => {
         fireEvent.click(getBottle(2));
 
         const figure = queryFigure("選べない・どこにも注げない");
@@ -511,7 +511,7 @@ describe("TouchableExample", () => {
       expect(figure).not.toBeNull();
     });
 
-    test("注ぐボトルを押すと、本番と同じく選べずに揺れて通らない音を鳴らすこと", () => {
+    test("注ぐ試験管を押すと、本番と同じく選べずに揺れて通らない音を鳴らすこと", () => {
       fireEvent.click(getBottle(1));
 
       const pressed = getBottle(1).getAttribute("aria-pressed");
@@ -524,7 +524,7 @@ describe("TouchableExample", () => {
     });
   });
 
-  describe("注げるボトルがある例の場合", () => {
+  describe("注げる試験管がある例の場合", () => {
     beforeEach(() => {
       renderInPanel(
         <TouchableExample
@@ -534,7 +534,7 @@ describe("TouchableExample", () => {
       );
     });
 
-    test("注ぐボトルを押すと、本番と同じく選べること", () => {
+    test("注ぐ試験管を押すと、本番と同じく選べること", () => {
       fireEvent.click(getBottle(1));
 
       const pressed = getBottle(1).getAttribute("aria-pressed");
@@ -563,14 +563,23 @@ describe("TouchableExample", () => {
       );
     });
 
-    test("本番と同じく揺らさず、画面が何も変わらないので通らない音も鳴らさないこと", () => {
+    test("本番と同じく揺らさずに押した試験管を一度暗くし、通らない音を鳴らすこと", () => {
       fireEvent.click(getBottle(1));
 
-      const shaken = animate.mock.contexts.includes(getBottle(1));
+      const bottle = getBottle(1);
+      const shaken = animate.mock.contexts.includes(bottle);
+      const dimmed = (animate.mock.calls as unknown as [Keyframe[]][]).some(
+        ([keyframes], index) =>
+          bottle.contains(animate.mock.contexts[index] as Node) &&
+          keyframes.some((keyframe) =>
+            String(keyframe.filter).startsWith("brightness("),
+          ),
+      );
       const sounds = countSounds();
 
       expect(shaken).toBe(false);
-      expect(sounds).toEqual({ invalid: 0, poured: 0 });
+      expect(dimmed).toBe(true);
+      expect(sounds).toEqual({ invalid: 1, poured: 0 });
     });
   });
 
@@ -584,7 +593,7 @@ describe("TouchableExample", () => {
       );
     });
 
-    test("空のボトルがあっても、本番と同じく選べずに揺れること", () => {
+    test("空の試験管があっても、本番と同じく選べずに揺れること", () => {
       fireEvent.click(getBottle(1));
 
       const pressed = getBottle(1).getAttribute("aria-pressed");
@@ -599,12 +608,12 @@ describe("TouchableExample", () => {
     {
       example: amountRuleExamples[0],
       amount: "2つとも入る",
-      bottlesAfterPour: ["ボトル 1: 青", "ボトル 2: 赤、赤"],
+      bottlesAfterPour: ["試験管 1: 青", "試験管 2: 赤、赤"],
     },
     {
       example: amountRuleExamples[1],
       amount: "1つだけ入る",
-      bottlesAfterPour: ["ボトル 1: 青、赤", "ボトル 2: 緑、緑、赤、赤"],
+      bottlesAfterPour: ["試験管 1: 青、赤", "試験管 2: 緑、緑、赤、赤"],
     },
   ])(
     "入るだけまとめて注ぐ例（$amount）の場合",
@@ -638,7 +647,7 @@ describe("TouchableExample", () => {
           fireEvent.click(getBottle(2));
         });
 
-        test("左のボトルを押して弾かれても、入った量を添えたままにすること", () => {
+        test("左の試験管を押して弾かれても、入った量を添えたままにすること", () => {
           fireEvent.click(getBottle(1));
 
           const figure = queryFigure(amount);

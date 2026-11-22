@@ -82,7 +82,7 @@ describe("addPourAnimation", () => {
 });
 
 describe("interruptPourAnimationsForBottle", () => {
-  test("操作対象のボトルが関与する注水だけを終了すること", () => {
+  test("操作対象の試験管が関与する注水だけを終了すること", () => {
     const animations = [
       animation(1, 0, 2),
       animation(2, 1, 3),

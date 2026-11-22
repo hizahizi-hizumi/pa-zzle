@@ -13,7 +13,7 @@ import {
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import { applyWaterSortMove } from "@/games/water-sort/puzzle/rules";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
-import { LONGEST_POUR_DURATION_MS } from "@/games/water-sort/ui/board/pour/pour-timing";
+import { getPourTiming } from "@/games/water-sort/ui/board/pour/pour-timing";
 import { WATER_SORT_BOTTLE_ASPECT_RATIO } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { BottleSizeScope } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/BottleSizeScope";
 import { getBottleRowWidthRatio } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/bottle-size";
@@ -26,10 +26,10 @@ import { prefersReducedMotion } from "@/lib/motion";
 const GOAL_START_HOLD_MS = 700;
 
 /**
- * 1手ずつ注ぎ始める間。前の手のボトルが元の場所へ戻り切ってから次の手を始め、動くボトルを1本ずつにする。
- * 2本を同時に動かすと、傾いたボトルや戻るボトルが重なって、どこからどこへ注いだのか追えないため。
+ * 1手を注ぎ終えてから次の手を注ぎ始めるまでの間。前の手の試験管が元の場所へ戻り切ってから次の手を始め、動く試験管を1本ずつにする。
+ * 2本を同時に動かすと、傾いた試験管や戻る試験管が重なって、どこからどこへ注いだのか追えないため。
  */
-const GOAL_POUR_INTERVAL_MS = LONGEST_POUR_DURATION_MS + 100;
+const GOAL_POUR_GAP_MS = 100;
 
 /** 始まりの盤面から1手ずつ注いだ盤面。最後がゴールの盤面。 */
 const goalStates: readonly WaterSortState[] = listGoalStates();
@@ -41,6 +41,25 @@ function listGoalStates(): WaterSortState[] {
     states.push(applyWaterSortMove(previous, move) ?? previous);
   }
   return states;
+}
+
+/**
+ * 各手を注ぎ始める時刻（開いてからの ms）。`index` 番目が `index + 1` 手目。
+ * 本番の盤面は移る量で注ぐ長さを変えるので、前の手が実際に注ぎ終える時刻に間を足して、次の手を始める。
+ */
+const goalPourStartTimes: readonly number[] = listGoalPourStartTimes();
+
+function listGoalPourStartTimes(): number[] {
+  const times: number[] = [];
+  let next = GOAL_START_HOLD_MS;
+  goalFigure.moves.forEach((move, index) => {
+    times.push(next);
+    const before = goalStates[index]?.[move.destinationBottleIndex] ?? [];
+    const after = goalStates[index + 1]?.[move.destinationBottleIndex] ?? [];
+    next +=
+      getPourTiming(after.length - before.length).durationMs + GOAL_POUR_GAP_MS;
+  });
+  return times;
 }
 
 const pourCount = goalFigure.moves.length;
@@ -110,14 +129,9 @@ export function GoalPlayback() {
         }, GOAL_START_HOLD_MS),
       );
     } else {
-      for (let next = 1; next <= pourCount; next += 1) {
-        timers.push(
-          window.setTimeout(
-            () => setStep(next),
-            GOAL_START_HOLD_MS + (next - 1) * GOAL_POUR_INTERVAL_MS,
-          ),
-        );
-      }
+      goalPourStartTimes.forEach((startMs, index) => {
+        timers.push(window.setTimeout(() => setStep(index + 1), startMs));
+      });
     }
     return () => {
       for (const timer of timers) {
@@ -173,6 +187,6 @@ export function GoalPlayback() {
 
 export const _private = {
   GOAL_START_HOLD_MS,
-  GOAL_POUR_INTERVAL_MS,
+  goalPourStartTimes,
   getPourOperation,
 };
