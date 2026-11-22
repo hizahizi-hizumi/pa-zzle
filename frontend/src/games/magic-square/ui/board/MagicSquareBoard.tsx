@@ -52,6 +52,12 @@ export type MagicSquareCellCue = {
   pointer: boolean;
 };
 
+/** チュートリアルで、手順を終えた手のマスに返す合図。`id` が変わるたびにやり直す。 */
+export type MagicSquareCellAcknowledgement = {
+  cellIndex: number;
+  id: number;
+};
+
 /** 受け付けなかった操作の知らせ。`id` が変わるたびに、そのマスを揺らす。 */
 export type MagicSquareCellRejection = {
   id: number;
@@ -74,6 +80,8 @@ type MagicSquareBoardProps = {
   rejection?: MagicSquareCellRejection | null;
   /** チュートリアルだけが渡す。渡さなければ本番と同じに描く。 */
   cue?: MagicSquareCellCue | null;
+  /** チュートリアルだけが渡す。 */
+  acknowledgement?: MagicSquareCellAcknowledgement | null;
   /**
    * チュートリアルで、覆いから抜いて元の明るさで見せる列（決め手）。列のマスと端の合計、そろえる合計を抜く。
    * 渡さないか空なら覆わない。覆っている間は、選んだマスを通る列の薄い色を、抜いた列にだけ付ける。
@@ -255,6 +263,7 @@ export function MagicSquareBoard({
   onClearAnimationComplete,
   rejection = null,
   cue = null,
+  acknowledgement = null,
   spotlightLines = [],
 }: MagicSquareBoardProps) {
   const frameRef = useRef<HTMLDivElement>(null);
@@ -464,6 +473,12 @@ export function MagicSquareBoard({
                     </span>
                   )}
                   {memo.length > 0 && <CellMemo memo={memo} />}
+                  {acknowledgement?.cellIndex === cellIndex && (
+                    <TutorialCue
+                      kind="acknowledgement"
+                      id={acknowledgement.id}
+                    />
+                  )}
                   {cue?.cellIndex === cellIndex &&
                     (cue.pointer ? (
                       <TutorialCue

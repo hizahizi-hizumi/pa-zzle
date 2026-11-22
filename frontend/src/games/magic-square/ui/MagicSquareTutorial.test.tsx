@@ -88,6 +88,20 @@ function hasPointer(element: HTMLElement): boolean {
   return element.querySelector(`[${TUTORIAL_CUE_HAND_ATTRIBUTE}]`) !== null;
 }
 
+function hasRecall(element: HTMLElement): boolean {
+  return element.querySelector('[data-tutorial-cue="recall"]') !== null;
+}
+
+function hasAcknowledgement(element: HTMLElement): boolean {
+  return (
+    element.querySelector('[data-tutorial-cue="acknowledgement"]') !== null
+  );
+}
+
+function getHintButton(): HTMLElement {
+  return within(getScreen()).getByRole("button", { name: "ヒント" });
+}
+
 /** 盤面の中で覆いから抜いている所の数。 */
 function countSpotlights(): number {
   return screen
@@ -156,21 +170,58 @@ describe("MagicSquareTutorial", () => {
       }).toEqual({ pressed: "false", message: true });
     });
 
-    test("印のマスを選ぶと、押す数に指を添えること", () => {
+    test("印の付いたマスを選ぶと、押す数に指を添えること", () => {
       fireEvent.click(getCell(1, 1));
 
       expect(hasPointer(getValueButton(14))).toBe(true);
     });
 
-    test("印の数を入れると、横の列を覆いから抜き、次のマスに指の無い印を付けること", () => {
+    test("印の付いたマスを選んでからほかのマスを押すと、選んだマスに印を出し直すこと", () => {
+      fireEvent.click(getCell(1, 1));
+      fireEvent.click(getCell(2, 2));
+
+      expect({
+        selected: getCell(1, 1).getAttribute("aria-pressed"),
+        mark: hasMark(getCell(1, 1)),
+        recall: hasRecall(getCell(1, 1)),
+        pointer: hasPointer(getCell(1, 1)),
+      }).toEqual({
+        selected: "true",
+        mark: true,
+        recall: true,
+        pointer: false,
+      });
+    });
+
+    test("印の数を入れると、入れたマスに合図を返し、横の列を覆いから抜いて、次のマスに指の無い印を付けること", () => {
       enter([1, 1, 14]);
 
       expect({
+        acknowledgement: hasAcknowledgement(getCell(1, 1)),
         message: queryMessage(steps[1]?.message) !== null,
         mark: hasMark(getCell(1, 4)),
         pointer: hasPointer(getCell(1, 4)),
         spotlights: countSpotlights(),
-      }).toEqual({ message: true, mark: true, pointer: false, spotlights: 6 });
+      }).toEqual({
+        acknowledgement: true,
+        message: true,
+        mark: true,
+        pointer: false,
+        spotlights: 6,
+      });
+    });
+
+    test("横の列の手順で印の付いたマスを選んでからほかのマスを押すと、印を出し直すこと", () => {
+      finishSteps(1);
+      fireEvent.click(getCell(1, 4));
+      const markedWhileSelected = hasMark(getCell(1, 4));
+      fireEvent.click(getCell(2, 2));
+
+      expect({
+        markedWhileSelected,
+        mark: hasMark(getCell(1, 4)),
+        recall: hasRecall(getCell(1, 4)),
+      }).toEqual({ markedWhileSelected: false, mark: true, recall: true });
     });
 
     describe("横の列の手順で違う数を入れた場合", () => {
@@ -221,24 +272,43 @@ describe("MagicSquareTutorial", () => {
         }).toEqual({ message: true, marks: 0, spotlights: 0 });
       });
 
-      test("空いたマスが2つ以上の列だけを通るマスを選ぶと、そのことを言い、数を押しても入れないこと", () => {
+      test("空いたマスが2つ以上の列だけを通るマスを選ぶと、そのことを言うこと", () => {
+        fireEvent.click(getCell(4, 3));
+
+        expect(
+          queryShownText(
+            "選んだマスの横の列と縦の列には\n空いたマスが2つ以上あります",
+          ),
+        ).not.toBeNull();
+      });
+
+      test("空いたマスが2つ以上の列だけを通るマスに数を押すと、入れずに、まだ決まらないことを言うこと", () => {
         fireEvent.click(getCell(4, 3));
         fireEvent.click(getValueButton(10));
 
         expect({
           message:
-            queryShownText(
-              "このマスを通る横の列と縦の列は\n空いたマスが2つ以上あります",
-            ) !== null,
+            queryShownText("選んだマスに入る数はまだ決まりません") !== null,
           cell: getCell(4, 3).getAttribute("aria-label"),
         }).toEqual({ message: true, cell: "4行3列 空き" });
       });
 
-      test("空いたマスが1つの列のマスを選ぶと、その列を覆いから抜いて、その列の一言を見せること", () => {
+      test("最初から置いてある数のマスを押すと、選んでそのことを言うこと", () => {
+        fireEvent.click(getCell(1, 2));
+
+        expect({
+          selected: getCell(1, 2).getAttribute("aria-pressed"),
+          message:
+            queryShownText("選んだマスには最初から数が入っています") !== null,
+        }).toEqual({ selected: "true", message: true });
+      });
+
+      test("空いたマスが1つだけ残った列のマスを選ぶと、その列を覆いから抜いて、その列の一言を見せること", () => {
         fireEvent.click(getCell(4, 2));
 
         expect({
-          message: queryShownText("縦の4つの数も足すと34になります") !== null,
+          message:
+            queryShownText("縦の列の4つの数を足すと34になります") !== null,
           spotlights: countSpotlights(),
         }).toEqual({ message: true, spotlights: 6 });
       });
@@ -261,16 +331,82 @@ describe("MagicSquareTutorial", () => {
         }).toEqual({ message: true, hint: true, marks: 0 });
       });
 
-      test("ヒントを押すと、空いたマスが1つの列を覆いから抜き、そのマスに印を付けること", () => {
-        fireEvent.click(
-          within(getScreen()).getByRole("button", { name: "ヒント" }),
-        );
+      test("ヒントを押すと、空いたマスが1つだけ残った列を覆いから抜き、そのマスに印を付けること", () => {
+        fireEvent.click(getHintButton());
 
         expect({
-          message: queryShownText("横の4つの数を足すと34になります") !== null,
+          message:
+            queryShownText("横の列の4つの数を足すと34になります") !== null,
           mark: hasMark(getCell(3, 4)),
           spotlights: countSpotlights(),
         }).toEqual({ message: true, mark: true, spotlights: 6 });
+      });
+
+      test("ヒントで示したマスを選んでも手がかりを残し、数を入れると消すこと", () => {
+        fireEvent.click(getHintButton());
+        fireEvent.click(getCell(3, 4));
+        const kept = {
+          message:
+            queryShownText("横の列の4つの数を足すと34になります") !== null,
+          spotlights: countSpotlights(),
+        };
+        fireEvent.click(getValueButton(1));
+
+        expect({
+          kept,
+          message:
+            queryShownText("横の列の4つの数を足すと34になります") !== null,
+          spotlights: countSpotlights(),
+        }).toEqual({
+          kept: { message: true, spotlights: 6 },
+          message: false,
+          spotlights: 0,
+        });
+      });
+
+      test("同じ違反になった横の列と縦の列を、どちらも言うこと", () => {
+        enter([3, 4, 10]);
+
+        expect(
+          queryShownText("この横の列と縦の列は合計が34になっていません"),
+        ).not.toBeNull();
+      });
+
+      describe("本番でも受け付けない押し方の場合", () => {
+        let animate: ReturnType<typeof vi.fn>;
+
+        beforeEach(() => {
+          animate = vi.fn();
+          Object.defineProperty(Element.prototype, "animate", {
+            configurable: true,
+            value: animate,
+          });
+        });
+
+        afterEach(() => {
+          Reflect.deleteProperty(Element.prototype, "animate");
+        });
+
+        test("マスを選ばずに数を押すと、本番と同じく押した数の札を揺らすこと", () => {
+          fireEvent.click(getValueButton(1));
+          const shaken = animate.mock.contexts[0] as Element | undefined;
+
+          expect({
+            calls: animate.mock.calls.length,
+            shaken: shaken === getValueButton(1),
+          }).toEqual({ calls: 1, shaken: true });
+        });
+
+        test("最初から置いてある数のマスに数を押すと、本番と同じくそのマスを揺らすこと", () => {
+          fireEvent.click(getCell(1, 2));
+          fireEvent.click(getValueButton(1));
+          const shaken = animate.mock.contexts[0] as Element | undefined;
+
+          expect({
+            calls: animate.mock.calls.length,
+            shaken: shaken === getCell(1, 2),
+          }).toEqual({ calls: 1, shaken: true });
+        });
       });
 
       test("残りを埋めると、完成を伝えて覚えたルールを並べること", () => {

@@ -6,12 +6,14 @@ import {
   isMagicSquareLineViolation,
   isMagicSquareSolved,
   listMagicSquareLineEvaluations,
+  listMagicSquareValueStates,
 } from "@/games/magic-square/puzzle/rules";
 import {
   _private,
   describeMagicSquareTutorialSelection,
   findMagicSquareTutorialDecidingLine,
   findMagicSquareTutorialHint,
+  getMagicSquareTutorialEntryRefusal,
   listMagicSquareTutorialLineEvaluations,
   type MagicSquareTutorialAction,
   type MagicSquareTutorialBoardState,
@@ -62,13 +64,22 @@ function placeActions(cellIndex: number): MagicSquareTutorialAction[] {
   ];
 }
 
-/** 探す手順で入れるマス。手順の前の盤面で、空いたマスが1つの列のマスのうち最初のもの。 */
-function findSearchCellIndex(board: MagicSquareBoard): number {
-  return board.cells.findIndex(
-    (_, cellIndex) =>
-      findMagicSquareTutorialDecidingLine(board, allRuleIds, cellIndex) !==
-      null,
+/** 空いたマスのうち、手に入れたルールの列で数が決まるマス。 */
+function listDecidedCellIndices(
+  board: MagicSquareBoard,
+  earnedRuleIds: readonly MagicSquareTutorialRuleId[] = allRuleIds,
+): number[] {
+  return board.cells.flatMap((_, cellIndex) =>
+    findMagicSquareTutorialDecidingLine(board, earnedRuleIds, cellIndex) ===
+    null
+      ? []
+      : [cellIndex],
   );
+}
+
+/** 探す手順で入れるマス。手順の前の盤面で、空いたマスが1つだけ残った列のマスのうち最初のもの。 */
+function findSearchCellIndex(board: MagicSquareBoard): number {
+  return listDecidedCellIndices(board)[0] ?? -1;
 }
 
 function getStepCellIndex(
@@ -107,7 +118,7 @@ function listEmptyCellIndices(board: MagicSquareBoard): number[] {
   );
 }
 
-/** 手に入れたルールの列だけで、空いたマスが1つの列を埋め続けたときの盤面。 */
+/** 手に入れたルールの列だけで、空いたマスが1つだけ残った列を埋め続けたときの盤面。 */
 function fillByEarnedLines(
   board: MagicSquareBoard,
   earnedRuleIds: readonly MagicSquareTutorialRuleId[],
@@ -217,16 +228,44 @@ describe("手を引く間", () => {
     expect(kinds).toEqual(["line", "line", "line", "search"]);
   });
 
-  test("探す手順では、空いたマスが1つの列のマスが2つ以上あること", () => {
+  test("探す手順では、空いたマスが1つだけ残った列のマスが2つ以上あり、入れるマスを自分で選べること", () => {
     const search = ruleAndReadingMoves.at(-1);
     const board = search?.before.boardState.puzzleState ?? givens;
-    const candidates = listEmptyCellIndices(board).filter(
-      (cellIndex) =>
-        findMagicSquareTutorialDecidingLine(board, allRuleIds, cellIndex) !==
-        null,
+
+    expect(listDecidedCellIndices(board).length).toBeGreaterThanOrEqual(2);
+  });
+
+  test("ルールを伝える手順では、印のマスに置ける数が2つ以上あり、答えのほかはどれも違反になること", () => {
+    const choices = ruleAndReadingMoves.flatMap(
+      ({ step, before, cellIndex }) => {
+        if (step.kind !== "line") {
+          return [];
+        }
+        const selected = perform([{ type: "select", cellIndex }], before);
+        const values = listMagicSquareValueStates(
+          givens,
+          selected.boardState.puzzleState,
+          cellIndex,
+        ).flatMap((state, index) => (state === "available" ? [index + 1] : []));
+        const others = values.filter(
+          (value) => value !== solutionValue(cellIndex),
+        );
+        return [
+          {
+            choices: values.length >= 2,
+            othersViolate: others.every(
+              (value) => perform([{ type: "enter", value }], selected).violated,
+            ),
+          },
+        ];
+      },
     );
 
-    expect(candidates.length).toBeGreaterThanOrEqual(2);
+    expect(choices).toEqual([
+      { choices: true, othersViolate: true },
+      { choices: true, othersViolate: true },
+      { choices: true, othersViolate: true },
+    ]);
   });
 
   test("手順の途中の盤面に、まだ伝えていない向きの列の違反が無いこと", () => {
@@ -241,19 +280,41 @@ describe("手を引く間", () => {
 });
 
 describe("手を離した後", () => {
-  const { board, moveCount } = fillByEarnedLines(
-    freePlay.boardState.puzzleState,
-    freePlay.earnedRuleIds,
-  );
-
-  test("空いたマスが1つの列を埋め続けるだけで解き切れること", () => {
-    const solved = isMagicSquareSolved(board);
-
-    expect(solved).toBe(true);
+  const searchMove = guidedMoves.moves.at(-1);
+  const searchBefore = searchMove?.before ?? freePlay;
+  /** 探す手順でどのマスを選んでも、手を離した後の盤面。 */
+  const freePlayBySearchCell = listDecidedCellIndices(
+    searchBefore.boardState.puzzleState,
+  ).map((cellIndex) => {
+    const progress = perform(placeActions(cellIndex), searchBefore);
+    return {
+      cellIndex,
+      stepIndex: progress.stepIndex,
+      ...fillByEarnedLines(
+        progress.boardState.puzzleState,
+        progress.earnedRuleIds,
+      ),
+    };
   });
 
-  test("空いたマスが1つの列を探す読みが、もう一度以上要ること", () => {
-    expect(moveCount).toBeGreaterThanOrEqual(2);
+  test("探す手順でどのマスを選んでも、手を離すこと", () => {
+    const stepIndices = freePlayBySearchCell.map(({ stepIndex }) => stepIndex);
+
+    expect(stepIndices).toEqual(freePlayBySearchCell.map(() => steps.length));
+  });
+
+  test("探す手順でどのマスを選んでも、空いたマスが1つだけ残った列を埋め続けるだけで解き切れること", () => {
+    const solved = freePlayBySearchCell.map(({ board }) =>
+      isMagicSquareSolved(board),
+    );
+
+    expect(solved).toEqual(freePlayBySearchCell.map(() => true));
+  });
+
+  test("探す手順でどのマスを選んでも、空いたマスが1つだけ残った列を探す読みが、もう一度以上要ること", () => {
+    const moveCounts = freePlayBySearchCell.map(({ moveCount }) => moveCount);
+
+    expect(moveCounts.every((count) => count >= 2)).toBe(true);
   });
 
   test("残りを答えの数で埋めると解けること", () => {
@@ -284,7 +345,7 @@ describe("magicSquareTutorial.perform", () => {
       ["印の無いマスを選ぶ", [{ type: "select", cellIndex: cellAt(1, 4) }]],
       ["マスを選ぶ前に数を押す", [{ type: "enter", value: 14 }]],
       [
-        "印のマスを選んで印の無い数を押す",
+        "印の付いたマスを選んで印の無い数を押す",
         [
           { type: "select", cellIndex: operationCellIndex },
           { type: "enter", value: 1 },
@@ -357,13 +418,20 @@ describe("magicSquareTutorial.perform", () => {
       search,
     );
 
-    test("空いたマスが2つ以上の列だけを通るマスには数を入れられないこと", () => {
+    test("空いたマスが2つ以上の列だけを通るマスには数を入れず、そのことを一言で返すこと", () => {
       const progress = perform(
         [{ type: "enter", value: solutionValue(undecided ?? -1) }],
         undecidedSelected,
       );
+      const refusal = getMagicSquareTutorialEntryRefusal(
+        getTutorialSituation(magicSquareTutorial, undecidedSelected),
+        undecidedSelected.boardState,
+      );
 
-      expect(progress).toBe(undecidedSelected);
+      expect({ unchanged: progress === undecidedSelected, refusal }).toEqual({
+        unchanged: true,
+        refusal: "undecided",
+      });
     });
 
     test("空いたマスが2つ以上の列だけを通るマスを選ぶと、そのことと探し方を言うこと", () => {
@@ -373,17 +441,144 @@ describe("magicSquareTutorial.perform", () => {
       );
 
       expect(message).toEqual({
-        headline: "このマスを通る横の列と縦の列は\n空いたマスが2つ以上あります",
-        detail: "空いたマスが1つの列を探します",
+        headline: "選んだマスの横の列と縦の列には\n空いたマスが2つ以上あります",
+        detail: "空いたマスが1つだけ残った列を探します",
       });
     });
+
+    const filledCases = [
+      [
+        "最初から置いてある数",
+        cellAt(1, 2),
+        "選んだマスには最初から数が入っています",
+      ],
+      ["置いた数", cellAt(1, 1), "選んだマスにはもう数が入っています"],
+    ] as const;
+
+    test.each(filledCases)(
+      "%sのマスも選べて、そのことと探し方を言うこと",
+      (_, cellIndex, headline) => {
+        const selected = perform([{ type: "select", cellIndex }], search);
+        const message = describeMagicSquareTutorialSelection(
+          getTutorialSituation(magicSquareTutorial, selected),
+          selected.boardState,
+        );
+
+        expect({
+          selected: selected.boardState.selectedCellIndex,
+          message,
+        }).toEqual({
+          selected: cellIndex,
+          message: {
+            headline,
+            detail: "空いたマスが1つだけ残った列を探します",
+          },
+        });
+      },
+    );
+
+    test("最初から置いてある数のマスに数を押すと、本番と同じく受け付けないこと", () => {
+      const selected = perform(
+        [{ type: "select", cellIndex: cellAt(1, 2) }],
+        search,
+      );
+      const progress = perform([{ type: "enter", value: 1 }], selected);
+      const refusal = getMagicSquareTutorialEntryRefusal(
+        getTutorialSituation(magicSquareTutorial, selected),
+        selected.boardState,
+      );
+
+      expect({ unchanged: progress === selected, refusal }).toEqual({
+        unchanged: true,
+        refusal: "rejected",
+      });
+    });
+
+    test("マスを選ばずに数を押すと、本番と同じく受け付けないこと", () => {
+      const refusal = getMagicSquareTutorialEntryRefusal(
+        getTutorialSituation(magicSquareTutorial, search),
+        search.boardState,
+      );
+
+      expect(refusal).toBe("rejected");
+    });
+
+    test("置いた数のマスで同じ数を押すと、本番と同じく外すこと", () => {
+      const progress = perform(placeActions(cellAt(1, 1)), search);
+
+      expect(progress.boardState.puzzleState.cells[cellAt(1, 1)]).toBeNull();
+    });
+  });
+
+  describe("印のある手順で受け付けなかった数の場合", () => {
+    test.each([
+      ["操作を教える手順", start],
+      ["ルールを伝える手順", rowStep],
+    ])("%sでは、印を濃くし直すこと", (_, progress) => {
+      const refusal = getMagicSquareTutorialEntryRefusal(
+        getTutorialSituation(magicSquareTutorial, progress),
+        progress.boardState,
+      );
+
+      expect(refusal).toBe("recall");
+    });
+  });
+
+  describe("違反を言う場合", () => {
+    const columnStep = guidedMoves.moves[2]?.before ?? start;
+    const diagonalStep = guidedMoves.moves[3]?.before ?? start;
+    const cases = [
+      [
+        "縦の列の手順で、横の列にも違反が出た",
+        columnStep,
+        [3, 1, 10],
+        "この縦の列は合計が34になっていません",
+      ],
+      [
+        "斜めの列の手順で、横の列にも違反が出た",
+        diagonalStep,
+        [2, 2, 15],
+        "この斜めの列は合計が34になっていません",
+      ],
+      [
+        "手を離した後に、横の列と縦の列が同じ違反になった",
+        freePlay,
+        [3, 4, 10],
+        "この横の列と縦の列は合計が34になっていません",
+      ],
+    ] as const;
+
+    test.each(cases)(
+      "%sときは、覆いから抜いた列か、同じ違反の列を全部言うこと",
+      (_, before, [row, column, value], headline) => {
+        const progress = perform(
+          [
+            { type: "select", cellIndex: cellAt(row, column) },
+            { type: "enter", value },
+          ],
+          before,
+        );
+        const message = magicSquareTutorial.describeViolation(
+          getTutorialSituation(magicSquareTutorial, progress),
+          progress.boardState,
+        );
+
+        expect({
+          violated: progress.violated,
+          headline: message.headline,
+        }).toEqual({
+          violated: true,
+          headline,
+        });
+      },
+    );
   });
 });
 
 describe("findMagicSquareTutorialHint", () => {
   const situation = getTutorialSituation(magicSquareTutorial, freePlay);
 
-  test("空いたマスが1つの列と、そのマスを示すこと", () => {
+  test("空いたマスが1つだけ残った列と、そのマスを示すこと", () => {
     const hint = findMagicSquareTutorialHint(situation, freePlay.boardState);
     const emptyCells =
       hint?.kind === "line"
@@ -420,8 +615,8 @@ describe("findMagicSquareTutorialHint", () => {
         kind: "wrong-value",
         cellIndex: freeCellIndex,
         message: {
-          headline: "印のマスの数が違います",
-          detail: "印のマスを選んで\n別の数を押すと入れ直せます",
+          headline: "印の付いたマスの数が違います",
+          detail: "そのマスを選んで\n別の数を押すと入れ直せます",
         },
       });
     });

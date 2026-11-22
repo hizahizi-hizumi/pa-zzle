@@ -1,7 +1,9 @@
+import { magicSquareBoardSizes } from "@/games/magic-square/problem/problem";
 import {
   getMagicSquareLineCellIndices,
   getMagicSquareMagicSum,
   getMagicSquareMaxValue,
+  isSameMagicSquareLine,
   listMagicSquareLines,
   listMagicSquareLinesThroughCell,
   type MagicSquareBoard,
@@ -38,7 +40,7 @@ export type MagicSquareTutorialAction =
 /**
  * - `operation`: 印のマスを選び、印の数を押させる。操作を教える。
  * - `line`: `line` の空いたマスが1つになった所で、印のマスに足りない数を自分で選ばせる。
- * - `search`: 空いたマスが1つの列を自分で探させる。どの列で見つけてもよい。
+ * - `search`: 空いたマスが1つだけ残った列を自分で探させる。どの列で見つけてもよい。
  */
 export type MagicSquareTutorialStep = TutorialStep<MagicSquareTutorialRuleId> &
   (
@@ -110,24 +112,47 @@ const lineKindNames = {
   diagonal: "斜めの列",
 } as const satisfies Record<MagicSquareTutorialRuleId, string>;
 
-const lineStepMessages = {
-  row: {
-    headline: `横の4つの数を足すと${magicSum}になります`,
-    detail: `右に今の合計が出ます\n${magicSum}に足りない数を入れます`,
-  },
-  column: {
-    headline: `縦の4つの数も足すと${magicSum}になります`,
-    detail: `下に今の合計が出ます\n${magicSum}に足りない数を入れます`,
-  },
-  diagonal: {
-    headline: `斜めの4つの数も足すと${magicSum}になります`,
-    detail: `右下の角に今の合計が出ます\n${magicSum}に足りない数を入れます`,
-  },
-} as const satisfies Record<MagicSquareTutorialRuleId, TutorialMessage>;
+/** 列の4つの数を足すと合計になること。振り返りと、決め手の列を言う一言に使う。 */
+function describeLineRule(kind: MagicSquareTutorialRuleId): string {
+  return `${lineKindNames[kind]}の${size}つの数を足すと${magicSum}になります`;
+}
+
+/** 列の端の、今の合計が出る所。斜めの列は、斜めの続きの角に出る。 */
+function describeLineSumPlace(line: MagicSquareLine): string {
+  switch (line.kind) {
+    case "row":
+      return "右";
+    case "column":
+      return "下";
+    case "diagonal":
+      return line.from === "top-left" ? "右下の角" : "左下の角";
+  }
+}
+
+function describeLineFill(line: MagicSquareLine): string {
+  return `${describeLineSumPlace(line)}に今の合計が出ます\n${magicSum}に足りない分を空いたマスに入れます`;
+}
+
+/** 探す手順とヒントで、そのマスの数を決める列を言う一言。 */
+function describeDecidingLine(line: MagicSquareLine): TutorialMessage {
+  return {
+    headline: describeLineRule(line.kind),
+    detail: describeLineFill(line),
+  };
+}
+
+/** ルールを伝える手順の一言。前の手順で伝えた向きの列に重ねて、同じ決まりが次の向きにもあると言う。 */
+const lineIntroductions = {
+  row: describeLineRule("row"),
+  column: `横の列と同じく縦の列も\n${size}つの数を足すと${magicSum}になります`,
+  diagonal: `横や縦の列と同じく斜めの列も\n${size}つの数を足すと${magicSum}になります`,
+} as const satisfies Record<MagicSquareTutorialRuleId, string>;
+
+const searchHeadline = "空いたマスが1つだけ残った列を探します";
 
 const searchMessage: TutorialMessage = {
-  headline: "空いたマスが1つの列を探します",
-  detail: `その列で${magicSum}に足りない数を入れます`,
+  headline: searchHeadline,
+  detail: `その列の空いたマスに${magicSum}に足りない分を入れます`,
 };
 
 function createLineStep(
@@ -136,7 +161,10 @@ function createLineStep(
 ): MagicSquareTutorialStep {
   return {
     kind: "line",
-    message: lineStepMessages[line.kind],
+    message: {
+      headline: lineIntroductions[line.kind],
+      detail: describeLineFill(line),
+    },
     introducedRuleId: line.kind,
     cellIndex,
     line,
@@ -150,8 +178,9 @@ const steps: readonly MagicSquareTutorialStep[] = [
   {
     kind: "operation",
     message: {
-      headline: "マスを選んで下の数を押します",
-      detail: `印のマスに${operationValue}を入れます`,
+      headline:
+        "マスを選んで盤面の下に並んだ数を押すと\nその数がマスに入ります",
+      detail: `印の付いたマスに${operationValue}を入れます`,
     },
     introducedRuleId: null,
     cellIndex: operationCellIndex,
@@ -162,6 +191,12 @@ const steps: readonly MagicSquareTutorialStep[] = [
   createLineStep(cellAt(2, 2), { kind: "diagonal", from: "top-left" }),
   { kind: "search", message: searchMessage, introducedRuleId: null },
 ];
+
+/** チュートリアルで解く盤面のほかに、本番で出る盤面の大きさ。合計は遊び方に任せる。 */
+const otherBoardSizeNames = magicSquareBoardSizes
+  .filter((boardSize) => boardSize !== size)
+  .map((boardSize) => `${boardSize}×${boardSize}`)
+  .join("と");
 
 function isEarnedLine(
   earnedRuleIds: readonly MagicSquareTutorialRuleId[],
@@ -233,20 +268,22 @@ export function listMagicSquareTutorialLineEvaluations(
   );
 }
 
-function findVisibleViolation(
+/** 手に入れたルールの列のうち、盤面に違反として見せる列。 */
+function listVisibleViolations(
   earnedRuleIds: readonly MagicSquareTutorialRuleId[],
   puzzleState: MagicSquareState,
-): MagicSquareLineEvaluation | null {
-  return (
-    listMagicSquareLineEvaluations(puzzleState).find(
-      ({ line, status }) =>
-        isEarnedLine(earnedRuleIds, line) && isMagicSquareLineViolation(status),
-    ) ?? null
+): MagicSquareLineEvaluation[] {
+  return listMagicSquareLineEvaluations(puzzleState).filter(
+    ({ line, status }) =>
+      isEarnedLine(earnedRuleIds, line) && isMagicSquareLineViolation(status),
   );
 }
 
-/** 手順の間に選べるマス。違う数が入っている間は、そのマスを直させる。 */
-export function isMagicSquareTutorialCellSelectable(
+/**
+ * 手順の間に選べるマス。違う数が入っている間は、そのマスを直させる。
+ * 印のある手順では印のマスだけ、探す手順では本番と同じくどのマスも選べる。
+ */
+function isCellSelectable(
   { step }: MagicSquareTutorialSituation,
   state: MagicSquareTutorialBoardState,
   cellIndex: number,
@@ -258,12 +295,22 @@ export function isMagicSquareTutorialCellSelectable(
   if (wrongCellIndices.length > 0) {
     return wrongCellIndices.includes(cellIndex);
   }
-  if (step.kind !== "search") {
-    return step.cellIndex === cellIndex;
-  }
+  return step.kind === "search" || step.cellIndex === cellIndex;
+}
+
+/** 探す手順で、空いたマスのうち、手に入れたルールの列でまだ数が決まらないマスか。 */
+function isUndecidedEmptyCell(
+  earnedRuleIds: readonly MagicSquareTutorialRuleId[],
+  state: MagicSquareTutorialBoardState,
+  cellIndex: number,
+): boolean {
   return (
     state.puzzleState.cells[cellIndex] === null &&
-    !isMagicSquareGivenCell(givens, cellIndex)
+    findMagicSquareTutorialDecidingLine(
+      keepCorrectCells(state.puzzleState),
+      earnedRuleIds,
+      cellIndex,
+    ) === null
   );
 }
 
@@ -304,7 +351,7 @@ function selectCell(
 ): { state: MagicSquareTutorialBoardState; outcome: TutorialMoveOutcome } {
   if (
     cellIndex === state.selectedCellIndex ||
-    !isMagicSquareTutorialCellSelectable(situation, state, cellIndex)
+    !isCellSelectable(situation, state, cellIndex)
   ) {
     return { state, outcome: "ignored" };
   }
@@ -312,12 +359,17 @@ function selectCell(
   return {
     state: next,
     outcome:
-      findVisibleViolation(situation.earnedRuleIds, state.puzzleState) === null
+      listVisibleViolations(situation.earnedRuleIds, state.puzzleState)
+        .length === 0
         ? "continued"
         : "violated",
   };
 }
 
+/**
+ * 選んだマスに数を入れる。探す手順では、まだ数が決まらない空いたマスには入れさせない。
+ * 置いた数のマスは、本番と同じく外したり置き換えたりできる。
+ */
 function enterValue(
   { step, earnedRuleIds }: MagicSquareTutorialSituation,
   state: MagicSquareTutorialBoardState,
@@ -327,18 +379,9 @@ function enterValue(
   if (
     cellIndex === null ||
     (step?.kind === "operation" && value !== step.value) ||
-    !isMagicSquareTutorialCellSelectable(
-      { step, earnedRuleIds },
-      state,
-      cellIndex,
-    ) ||
+    !isCellSelectable({ step, earnedRuleIds }, state, cellIndex) ||
     (step?.kind === "search" &&
-      !isWrongCell(state.puzzleState, cellIndex) &&
-      findMagicSquareTutorialDecidingLine(
-        keepCorrectCells(state.puzzleState),
-        earnedRuleIds,
-        cellIndex,
-      ) === null)
+      isUndecidedEmptyCell(earnedRuleIds, state, cellIndex))
   ) {
     return { state, outcome: "ignored" };
   }
@@ -368,7 +411,7 @@ function enterValue(
       outcome: "solved",
     };
   }
-  if (findVisibleViolation(earnedRuleIds, puzzleState) !== null) {
+  if (listVisibleViolations(earnedRuleIds, puzzleState).length > 0) {
     return { state: next, outcome: "violated" };
   }
   return { state: next, outcome: fitsStep ? "stepped" : "continued" };
@@ -379,37 +422,132 @@ function describeLines(lineKinds: readonly MagicSquareTutorialRuleId[]) {
 }
 
 /**
+ * 違反の言い方。空いたマスがあるのに合計に届いた列は、ちょうど届いたか超えたかで言い分ける。
+ */
+type ViolationPhrase = "unmatched" | "reached" | "exceeded";
+
+function getViolationPhrase({
+  status,
+  sum,
+}: MagicSquareLineEvaluation): ViolationPhrase {
+  if (status !== "overreached") {
+    return "unmatched";
+  }
+  return sum > magicSum ? "exceeded" : "reached";
+}
+
+/**
+ * 違う数を入れたマス。違反の出た列にあるマスを先に、その中でも直前の手のマスを先に返す。無ければ `null`。
+ */
+export function findMagicSquareTutorialWrongCellIndex(
+  { earnedRuleIds }: MagicSquareTutorialSituation,
+  state: MagicSquareTutorialBoardState,
+): number | null {
+  const wrongCellIndices = listWrongCellIndices(state.puzzleState);
+  const lastCellIndex = state.lastMove?.cellIndex;
+  const ordered =
+    lastCellIndex !== undefined && wrongCellIndices.includes(lastCellIndex)
+      ? [
+          lastCellIndex,
+          ...wrongCellIndices.filter(
+            (cellIndex) => cellIndex !== lastCellIndex,
+          ),
+        ]
+      : wrongCellIndices;
+  const violatedCellIndices = new Set(
+    listVisibleViolations(earnedRuleIds, state.puzzleState).flatMap(
+      ({ line }) => getMagicSquareLineCellIndices(size, line),
+    ),
+  );
+  return (
+    ordered.find((cellIndex) => violatedCellIndices.has(cellIndex)) ??
+    ordered[0] ??
+    null
+  );
+}
+
+/**
+ * 違反の一言で言う列。直すマスを通る違反の列のうち、ルールを伝える手順で覆いから抜いている列を先にし、
+ * それと同じ言い方になる列をまとめる。
+ */
+function listDescribedViolations(
+  situation: MagicSquareTutorialSituation,
+  state: MagicSquareTutorialBoardState,
+  wrongCellIndex: number | null,
+): MagicSquareLineEvaluation[] {
+  const { step, earnedRuleIds } = situation;
+  const violations = listVisibleViolations(
+    earnedRuleIds,
+    state.puzzleState,
+  ).filter(
+    ({ line }) =>
+      wrongCellIndex === null ||
+      getMagicSquareLineCellIndices(size, line).includes(wrongCellIndex),
+  );
+  const spotlit = violations.filter(
+    ({ line }) =>
+      step?.kind === "line" && isSameMagicSquareLine(line, step.line),
+  );
+  const ordered = [
+    ...spotlit,
+    ...violations.filter((violation) => !spotlit.includes(violation)),
+  ];
+  const [first] = ordered;
+  return first === undefined
+    ? []
+    : ordered.filter(
+        (violation) =>
+          getViolationPhrase(violation) === getViolationPhrase(first),
+      );
+}
+
+/**
  * 違反の一言。何に当たったかを、違反の出た列と合計で言う。
  * 直すマスを選んでいなければ、印を付けたそのマスを選ぶところから言う。
  */
 function describeMagicSquareTutorialViolation(
-  { earnedRuleIds }: MagicSquareTutorialSituation,
+  situation: MagicSquareTutorialSituation,
   state: MagicSquareTutorialBoardState,
 ): TutorialMessage {
-  const violation = findVisibleViolation(earnedRuleIds, state.puzzleState);
-  const lineName = violation ? lineKindNames[violation.line.kind] : "列";
-  const wrongCellSelected =
+  const wrongCellIndex = findMagicSquareTutorialWrongCellIndex(
+    situation,
+    state,
+  );
+  const violations = listDescribedViolations(situation, state, wrongCellIndex);
+  const lineNames =
+    violations.length > 0
+      ? describeLines(violations.map(({ line }) => line.kind))
+      : "列";
+  const detail =
     state.selectedCellIndex !== null &&
-    state.selectedCellIndex === findMagicSquareTutorialWrongCellIndex(state);
-  const detail = wrongCellSelected
-    ? "別の数を押すと入れ直せます"
-    : "印のマスを選んで\n別の数を押すと入れ直せます";
-  if (violation?.status === "overreached") {
-    const reached = violation.sum > magicSum ? "を超えました" : "になりました";
-    return {
-      headline: `この${lineName}は空いたマスがあるのに\n合計が${magicSum}${reached}`,
-      detail,
-    };
+    state.selectedCellIndex === wrongCellIndex
+      ? "別の数を押すと入れ直せます"
+      : "印の付いたマスを選んで\n別の数を押すと入れ直せます";
+  const [first] = violations;
+  switch (first ? getViolationPhrase(first) : "unmatched") {
+    case "unmatched":
+      return {
+        headline: `この${lineNames}は合計が${magicSum}になっていません`,
+        detail,
+      };
+    case "reached":
+      return {
+        headline: `この${lineNames}はまだ空いたマスがあるのに\n合計がもう${magicSum}になりました`,
+        detail,
+      };
+    case "exceeded":
+      return {
+        headline: `この${lineNames}はまだ空いたマスがあるのに\n合計がもう${magicSum}を超えました`,
+        detail,
+      };
   }
-  return {
-    headline: `この${lineName}は合計が${magicSum}になっていません`,
-    detail,
-  };
 }
 
 /**
- * 探す手順で選んだマスへの一言。空いたマスが1つの列のマスなら、その列の向きの手順と同じ一言にする。
- * どの列も空いたマスが2つ以上なら、そのことと探し方を言う。マスを選んでいなければ `null`。
+ * 探す手順で選んだマスへの一言。マスを選んでいなければ `null`。
+ * - 空いたマスが1つだけ残った列のマス: その列の決まりと、足りない分を入れること。
+ * - どの列も空いたマスが2つ以上のマス: そのことと、探し方。
+ * - 数の入ったマス: そのことと、探し方。
  */
 export function describeMagicSquareTutorialSelection(
   { step, earnedRuleIds }: MagicSquareTutorialSituation,
@@ -419,17 +557,26 @@ export function describeMagicSquareTutorialSelection(
   if (step?.kind !== "search" || selectedCellIndex === null) {
     return null;
   }
+  if (isMagicSquareGivenCell(givens, selectedCellIndex)) {
+    return {
+      headline: "選んだマスには最初から数が入っています",
+      detail: searchHeadline,
+    };
+  }
   const board = keepCorrectCells(state.puzzleState);
+  if (board.cells[selectedCellIndex] !== null) {
+    return {
+      headline: "選んだマスにはもう数が入っています",
+      detail: searchHeadline,
+    };
+  }
   const decidingLine = findMagicSquareTutorialDecidingLine(
     board,
     earnedRuleIds,
     selectedCellIndex,
   );
   if (decidingLine !== null) {
-    return lineStepMessages[decidingLine.kind];
-  }
-  if (board.cells[selectedCellIndex] !== null) {
-    return null;
+    return describeDecidingLine(decidingLine);
   }
   const lineNames = describeLines(
     listMagicSquareLinesThroughCell(size, selectedCellIndex).map(
@@ -437,21 +584,41 @@ export function describeMagicSquareTutorialSelection(
     ),
   );
   return {
-    headline: `このマスを通る${lineNames}は\n空いたマスが2つ以上あります`,
-    detail: "空いたマスが1つの列を探します",
+    headline: `選んだマスの${lineNames}には\n空いたマスが2つ以上あります`,
+    detail: searchHeadline,
   };
 }
 
-/** 違う数を入れたマス。直前の手のマスを先に返す。無ければ `null`。 */
-export function findMagicSquareTutorialWrongCellIndex(
-  state: MagicSquareTutorialBoardState,
-): number | null {
-  const wrongCellIndices = listWrongCellIndices(state.puzzleState);
-  const lastCellIndex = state.lastMove?.cellIndex;
-  return lastCellIndex !== undefined && wrongCellIndices.includes(lastCellIndex)
-    ? lastCellIndex
-    : (wrongCellIndices[0] ?? null);
+/**
+ * 盤面を変えなかった数の押し方への応え方。
+ * - `recall`: 印のある手順で、印と違う所を押した。印を濃くし直して目を向けさせる。
+ * - `undecided`: 探す手順で、手に入れたルールの列ではまだ数が決まらない空いたマスに押した。そのことを一言で言う。
+ * - `rejected`: 本番でも受け付けない押し方（マスを選んでいない、最初から置いてある数のマス）。本番と同じく返す。
+ */
+export type MagicSquareTutorialEntryRefusal =
+  | "recall"
+  | "undecided"
+  | "rejected";
+
+export function getMagicSquareTutorialEntryRefusal(
+  { step }: MagicSquareTutorialSituation,
+  { selectedCellIndex, puzzleState }: MagicSquareTutorialBoardState,
+): MagicSquareTutorialEntryRefusal {
+  if (step?.kind === "operation" || step?.kind === "line") {
+    return "recall";
+  }
+  return step?.kind === "search" &&
+    selectedCellIndex !== null &&
+    puzzleState.cells[selectedCellIndex] === null
+    ? "undecided"
+    : "rejected";
 }
+
+/** 探す手順で、まだ数が決まらない空いたマスに数を押したときの一言。 */
+export const magicSquareTutorialUndecidedEntryMessage: TutorialMessage = {
+  headline: "選んだマスに入る数はまだ決まりません",
+  detail: searchHeadline,
+};
 
 export type MagicSquareTutorialHint =
   | { kind: "wrong-value"; cellIndex: number; message: TutorialMessage }
@@ -463,27 +630,30 @@ export type MagicSquareTutorialHint =
     };
 
 /**
- * 手を離した後に「ヒント」で見せる手がかり。違う数があればそのマス、無ければ空いたマスが1つの列。
+ * 手を離した後に「ヒント」で見せる手がかり。違う数があればそのマス、無ければ空いたマスが1つだけ残った列。
  * 違う数は、列の合計に表れないまま残っていると、ほかのマスの読みを狂わせるので先に直させる。
  */
 export function findMagicSquareTutorialHint(
-  { earnedRuleIds }: MagicSquareTutorialSituation,
+  situation: MagicSquareTutorialSituation,
   state: MagicSquareTutorialBoardState,
 ): MagicSquareTutorialHint | null {
-  const wrongCellIndex = findMagicSquareTutorialWrongCellIndex(state);
+  const wrongCellIndex = findMagicSquareTutorialWrongCellIndex(
+    situation,
+    state,
+  );
   if (wrongCellIndex !== null) {
     return {
       kind: "wrong-value",
       cellIndex: wrongCellIndex,
       message: {
-        headline: "印のマスの数が違います",
-        detail: "印のマスを選んで\n別の数を押すと入れ直せます",
+        headline: "印の付いたマスの数が違います",
+        detail: "そのマスを選んで\n別の数を押すと入れ直せます",
       },
     };
   }
   const board = keepCorrectCells(state.puzzleState);
   for (const line of lines) {
-    if (!isEarnedLine(earnedRuleIds, line)) {
+    if (!isEarnedLine(situation.earnedRuleIds, line)) {
       continue;
     }
     const [cellIndex, ...others] = getMagicSquareLineCellIndices(
@@ -495,7 +665,7 @@ export function findMagicSquareTutorialHint(
         kind: "line",
         cellIndex,
         line,
-        message: lineStepMessages[line.kind],
+        message: describeDecidingLine(line),
       };
     }
   }
@@ -538,27 +708,26 @@ export const magicSquareTutorial: Tutorial<
   MagicSquareTutorialAction
 > = {
   intro: {
-    purpose: `1〜${maxValue}を1つずつ入れて\n縦・横・斜めの合計を全て同じにするパズルです`,
-    goalCaption: `列の端に合計が出ます\n全て${magicSum}になると完成です`,
+    purpose: `1〜${maxValue}の数を1つずつマスに入れて\n縦・横・斜めの列の合計を全て同じにするパズルです`,
+    goalCaption: `列の端に今の合計が出ます\n全て${magicSum}になると完成です`,
   },
-  rules: [
-    { id: "row", label: `横の4つの数を足すと${magicSum}になります` },
-    { id: "column", label: `縦の4つの数を足すと${magicSum}になります` },
-    { id: "diagonal", label: `斜めの4つの数を足すと${magicSum}になります` },
-  ],
+  rules: (["row", "column", "diagonal"] as const).map((id) => ({
+    id,
+    label: describeLineRule(id),
+  })),
   steps,
   freePlay: {
-    headline: "残りも埋めてみましょう",
-    detail: `空いたマスが1つの列を探して\n${magicSum}に足りない数を入れます`,
+    headline: "残りのマスも埋めてみましょう",
+    detail: `空いたマスが1つだけ残った列を探して\n${magicSum}に足りない分を入れます`,
   },
   completion: {
     home: {
       headline: "完成です",
-      detail: "本番も空いたマスが1つの列から埋めていくと進められます",
+      detail: `${otherBoardSizeNames}の盤面の合計は\n「遊び方」で見られます`,
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面と同じルールです",
+      detail: `遊んでいた盤面も同じルールです\n${otherBoardSizeNames}の合計は「遊び方」で見られます`,
     },
   },
   start: () => createBoardState(givens.cells),

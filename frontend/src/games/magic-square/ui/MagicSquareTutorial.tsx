@@ -12,11 +12,13 @@ import { MAGIC_SQUARE_DISPLAY_NAME } from "@/games/magic-square/display-name";
 import type { MagicSquareOperation } from "@/games/magic-square/play/use-magic-square-play";
 import type { MagicSquareLine } from "@/games/magic-square/puzzle/board";
 import { listMagicSquareValueStates } from "@/games/magic-square/puzzle/rules";
+import type { MagicSquareState } from "@/games/magic-square/puzzle/state";
 import {
   describeMagicSquareTutorialSelection,
   findMagicSquareTutorialDecidingLine,
   findMagicSquareTutorialHint,
   findMagicSquareTutorialWrongCellIndex,
+  getMagicSquareTutorialEntryRefusal,
   getMagicSquareTutorialProgressRatio,
   listMagicSquareTutorialLineEvaluations,
   MAGIC_SQUARE_TUTORIAL_PROGRESS_STEP_COUNT,
@@ -26,9 +28,11 @@ import {
   type MagicSquareTutorialRuleId,
   magicSquareTutorial,
   magicSquareTutorialPuzzle,
+  magicSquareTutorialUndecidedEntryMessage,
 } from "@/games/magic-square/tutorial/tutorial";
 import {
   MagicSquareBoard,
+  type MagicSquareCellAcknowledgement,
   type MagicSquareCellCue,
 } from "@/games/magic-square/ui/board/MagicSquareBoard";
 import { MagicSquareGround } from "@/games/magic-square/ui/MagicSquareGround";
@@ -37,6 +41,7 @@ import {
   MagicSquareNumberPad,
   type MagicSquareValueCue,
 } from "@/games/magic-square/ui/MagicSquareNumberPad";
+import { splitMagicSquareRejection } from "@/games/magic-square/ui/magic-square-rejection";
 import { useMagicSquareSoundEffects } from "@/games/magic-square/ui/use-magic-square-sound-effects";
 import type { GameProgress } from "@/games/play";
 import {
@@ -110,8 +115,15 @@ export function MagicSquareTutorial({
   } | null>(null);
   const [heldProgress, setHeldProgress] =
     useState<MagicSquareTutorialProgress | null>(null);
-  const [hintRequestedProgress, setHintRequestedProgress] =
+  // 手がかりは、マスを選び直しても残し、次に数を押して盤面が変わったら消す。
+  const [hintRequestedBoard, setHintRequestedBoard] =
+    useState<MagicSquareState | null>(null);
+  const [undecidedProgress, setUndecidedProgress] =
     useState<MagicSquareTutorialProgress | null>(null);
+  const [acknowledgement, setAcknowledgement] = useState<{
+    progress: MagicSquareTutorialProgress;
+    cue: MagicSquareCellAcknowledgement;
+  } | null>(null);
   // `id` は、もう一度始めても本番の効果音が同じ知らせとみなさないよう、開いている間ずっと増やす。
   const [operation, setOperation] = useState<MagicSquareOperation | null>(null);
   const nextOperationIdRef = useRef(0);
@@ -127,14 +139,20 @@ export function MagicSquareTutorial({
     : null;
   const wrongCellIndex =
     playing && progress.violated
-      ? findMagicSquareTutorialWrongCellIndex(boardState)
+      ? findMagicSquareTutorialWrongCellIndex(situation, boardState)
       : null;
   // 手を離した後は、自分で解いている間に割り込まないよう、手がかりは求められたときだけ見せる。
   const hintRequestable =
     playing && step === null && !holding && wrongCellIndex === null;
   const hint =
-    hintRequestable && hintRequestedProgress === progress
+    hintRequestable && hintRequestedBoard === boardState.puzzleState
       ? findMagicSquareTutorialHint(situation, boardState)
+      : null;
+  const undecided = playing && undecidedProgress === progress;
+  const rejection = splitMagicSquareRejection(operation);
+  const acknowledgementCue =
+    playing && acknowledgement?.progress === progress
+      ? acknowledgement.cue
       : null;
   const cellCue = getCellCue();
   const valueCue: MagicSquareValueCue | null =
@@ -159,31 +177,36 @@ export function MagicSquareTutorial({
     return () => window.clearTimeout(timer);
   }, [open, progress]);
 
+  // 印のマスを選んでいる間は、選んだ縁で分かるので印を外す。
+  // 印と違う所を押されたときは、選んだままでも印を出し直して、そのマスへ目を向けさせる。
   function getCellCue(): MagicSquareCellCue | null {
     if (!playing || holding) {
       return null;
     }
+    const { selectedCellIndex } = boardState;
     // 違う数を入れたマスは、選び直して直すまで印を付ける。
     if (wrongCellIndex !== null) {
-      return boardState.selectedCellIndex === wrongCellIndex
+      return selectedCellIndex === wrongCellIndex && recallId === null
         ? null
         : { cellIndex: wrongCellIndex, recallId, pointer: false };
     }
     if (hint !== null) {
-      return { cellIndex: hint.cellIndex, recallId: null, pointer: false };
+      return selectedCellIndex === hint.cellIndex
+        ? null
+        : { cellIndex: hint.cellIndex, recallId: null, pointer: false };
     }
-    if (
-      step === null ||
-      step.kind === "search" ||
-      boardState.selectedCellIndex === step.cellIndex
-    ) {
+    if (step === null || step.kind === "search") {
       return null;
     }
-    // 列で決まる手順では、指がマスの周りの数を隠すので、輪郭だけにする。
+    const stepCellSelected = selectedCellIndex === step.cellIndex;
+    if (stepCellSelected && recallId === null) {
+      return null;
+    }
+    // 列で決まる手順では、指がマスの周りの数を隠すので、輪郭だけにする。選んだ後は、指を数の欄へ移す。
     return {
       cellIndex: step.cellIndex,
       recallId,
-      pointer: step.kind === "operation",
+      pointer: step.kind === "operation" && !stepCellSelected,
     };
   }
 
@@ -214,32 +237,68 @@ export function MagicSquareTutorial({
     setProgress(completeTutorial);
   }, []);
 
+  // 印の無い所を押されたら、盤面は変えず、印の線を短く濃くして目を向けさせる。
+  function recallCue(): void {
+    setRecall((current) => ({
+      progress,
+      id: current?.progress === progress ? current.id + 1 : 0,
+    }));
+  }
+
+  /** 盤面を変えなかった数の押し方に、黙らずに応える。 */
+  function respondToRefusedEntry(value: number): void {
+    switch (getMagicSquareTutorialEntryRefusal(situation, boardState)) {
+      case "recall":
+        recallCue();
+        return;
+      case "undecided":
+        setUndecidedProgress(progress);
+        return;
+      case "rejected":
+        // 本番と同じく、選んでいたマスか押した数の札を揺らし、受け付けない音を鳴らす。
+        setOperation({
+          id: nextOperationIdRef.current++,
+          type: "rejected",
+          cellIndex: boardState.selectedCellIndex,
+          value,
+        });
+        return;
+    }
+  }
+
   function perform(action: MagicSquareTutorialAction): void {
     if (!playing) {
       return;
     }
     const next = performTutorialAction(magicSquareTutorial, progress, action);
-    // 手を引いている間に印の無い所を押されたら、盤面は変えず、印の線を短く濃くして目を向けさせる。
     if (next === progress) {
-      if (step !== null) {
-        setRecall((current) => ({
-          progress,
-          id: current?.progress === progress ? current.id + 1 : 0,
-        }));
+      if (action.type === "enter") {
+        respondToRefusedEntry(action.value);
+      } else if (step !== null) {
+        recallCue();
       }
       return;
     }
     setProgress(next);
     const { selectedCellIndex } = progress.boardState;
-    if (action.type === "enter" && selectedCellIndex !== null) {
-      setOperation({
-        id: nextOperationIdRef.current++,
-        type:
-          next.boardState.puzzleState.cells[selectedCellIndex] === action.value
-            ? "placed"
-            : "removed",
-        cellIndex: selectedCellIndex,
-        value: action.value,
+    if (action.type !== "enter" || selectedCellIndex === null) {
+      return;
+    }
+    const operationId = nextOperationIdRef.current++;
+    setOperation({
+      id: operationId,
+      type:
+        next.boardState.puzzleState.cells[selectedCellIndex] === action.value
+          ? "placed"
+          : "removed",
+      cellIndex: selectedCellIndex,
+      value: action.value,
+    });
+    // 手順を終えた手には、入れたマスに合図を返す。
+    if (next.boardState.lastMove?.fitsStep) {
+      setAcknowledgement({
+        progress: next,
+        cue: { cellIndex: selectedCellIndex, id: operationId },
       });
     }
   }
@@ -247,7 +306,9 @@ export function MagicSquareTutorial({
   function restart(): void {
     setRecall(null);
     setHeldProgress(null);
-    setHintRequestedProgress(null);
+    setHintRequestedBoard(null);
+    setUndecidedProgress(null);
+    setAcknowledgement(null);
     setProgress(startTutorial(magicSquareTutorial));
   }
 
@@ -278,6 +339,7 @@ export function MagicSquareTutorial({
   const message =
     heldStep?.message ??
     hint?.message ??
+    (undecided ? magicSquareTutorialUndecidedEntryMessage : null) ??
     (progress.violated
       ? null
       : describeMagicSquareTutorialSelection(situation, boardState)) ??
@@ -319,6 +381,10 @@ export function MagicSquareTutorial({
                   interactionDisabled={!solving}
                   clearing={!showsGoal && progress.phase === "solved"}
                   cue={showsGoal || scene !== null ? null : cellCue}
+                  acknowledgement={
+                    showsGoal || scene !== null ? null : acknowledgementCue
+                  }
+                  rejection={showsGoal ? null : rejection.cell}
                   spotlightLines={
                     showsGoal || scene !== null ? [] : spotlightLines
                   }
@@ -344,6 +410,7 @@ export function MagicSquareTutorial({
           )}
           interactionDisabled={!solving}
           cue={scene === null ? valueCue : null}
+          rejection={rejection.value}
           onEnterValue={(value) => perform({ type: "enter", value })}
         />
       </div>
@@ -377,7 +444,7 @@ export function MagicSquareTutorial({
       )}
       onRequestHint={
         hintRequestable && hint === null
-          ? () => setHintRequestedProgress(progress)
+          ? () => setHintRequestedBoard(boardState.puzzleState)
           : null
       }
       onClose={handleClose}
