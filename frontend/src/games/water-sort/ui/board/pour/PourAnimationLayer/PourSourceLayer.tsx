@@ -148,6 +148,7 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
       >
         <WaterBottle
           contents={animation.source.after}
+          role="pour-source"
           waterOverlay={
             <TransferLiquidView
               transfer={{

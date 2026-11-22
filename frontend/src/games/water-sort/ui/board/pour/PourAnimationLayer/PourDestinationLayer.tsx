@@ -29,6 +29,7 @@ export function PourDestinationLayer({
     >
       <WaterBottle
         contents={firstAnimation.destination.before}
+        role="pour-destination"
         waterOverlay={animations.map((animation) => (
           <AnimatedDestinationTransfer
             key={animation.id}

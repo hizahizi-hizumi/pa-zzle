@@ -8,6 +8,7 @@ import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-ani
 import { BottleCue } from "@/games/water-sort/ui/board/WaterSortBoard/BottleCue";
 import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
+import { useWaterSortIdea } from "@/games/water-sort/ui/ideas/IdeaContext";
 import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -64,6 +65,8 @@ export function WaterSortBoard({
   spacing = "play",
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const IdeaPourAnimationLayer =
+    useWaterSortIdea().overrides.PourAnimationLayer ?? PourAnimationLayer;
   const { animations, finishAnimation, interruptForBottleInteraction } =
     usePourAnimations({
       operation,
@@ -113,6 +116,7 @@ export function WaterSortBoard({
 
   const bottles = (
     <fieldset
+      data-water-sort-board=""
       className={cn(
         "grid w-full items-end justify-center border-0 p-0 [--selected-bottle-lift:--spacing(3.5)]",
         layoutKind === "rows" && "pt-(--selected-bottle-lift)",
@@ -156,7 +160,12 @@ export function WaterSortBoard({
             <span
               className={`absolute inset-0 ${isAnimated ? "invisible" : ""}`}
             >
-              <WaterBottle contents={bottle} selected={isSource} />
+              <WaterBottle
+                contents={bottle}
+                selected={isSource}
+                role="board"
+                concealed={isAnimated}
+              />
             </span>
             {cue && <BottleCue cue={cue} />}
           </button>
@@ -177,7 +186,10 @@ export function WaterSortBoard({
       )}
 
       {/* 注ぐ演出はviewport座標を使うので、サイズを制約するコンテナの外へ置く。 */}
-      <PourAnimationLayer animations={animations} onFinish={finishAnimation} />
+      <IdeaPourAnimationLayer
+        animations={animations}
+        onFinish={finishAnimation}
+      />
     </>
   );
 }
