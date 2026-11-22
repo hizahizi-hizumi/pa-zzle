@@ -127,7 +127,7 @@ describe("useShuttleParkingPlay", () => {
       expect(result.current.operation).toBeNull();
     });
 
-    test("新しい問題は開始時のレベルの問題集から選ぶこと", () => {
+    test("新しい問題は始めたレベルの問題集から選ぶこと", () => {
       vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue("next");
 
       act(() => result.current.startNewProblem());

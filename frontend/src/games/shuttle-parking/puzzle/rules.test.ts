@@ -200,6 +200,10 @@ describe("assertShuttleParkingPuzzle", () => {
   test.each([
     ["乗客と座席の数が色ごとに合わない", { ...puzzle, passengers: ["a", "b"] }],
     ["待機枠が無い", { ...puzzle, bayCount: 0 }],
+    [
+      "車が無い",
+      { ...puzzle, lot: { ...puzzle.lot, cars: [] }, passengers: [] },
+    ],
   ] as const satisfies readonly (readonly [string, ShuttleParkingPuzzle])[])(
     "%s問題を受け付けないこと",
     (_, target) => {

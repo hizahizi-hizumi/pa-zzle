@@ -3,6 +3,7 @@ import {
   type RecordedProblemIdentity,
 } from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
+import { countShuttleParkingStates } from "@/games/shuttle-parking/puzzle/clearability";
 import {
   SHUTTLE_PARKING_SIDES,
   type ShuttleParkingCapacity,
@@ -43,8 +44,11 @@ export type ShuttleParkingIdentifiedProblem = {
   identity: ShuttleParkingProblemIdentity;
 };
 
+// 確かめた範囲（車8台・6×6〜7×7・待機枠2〜4）を含み、説明の例に使う小さな駐車場も受け付ける範囲。
 const minimumLotSize = 4;
-const maximumLotSize = 9;
+const maximumLotSize = 7;
+const maximumCarCount = 8;
+const maximumBayCount = 4;
 const sideCodes = {
   top: "t",
   right: "r",
@@ -73,7 +77,16 @@ export function assertShuttleParkingProblem(
       `Unsupported shuttle parking lot size: ${problem.lot.size}`,
     );
   }
+  if (
+    problem.lot.cars.length > maximumCarCount ||
+    problem.bayCount > maximumBayCount
+  ) {
+    throw new RangeError(
+      `Unsupported shuttle parking problem size: ${problem.lot.cars.length} cars, ${problem.bayCount} bays`,
+    );
+  }
   assertShuttleParkingPuzzle(problem);
+  countShuttleParkingStates(problem);
 }
 
 function encodeCar(car: ShuttleParkingCar): string {

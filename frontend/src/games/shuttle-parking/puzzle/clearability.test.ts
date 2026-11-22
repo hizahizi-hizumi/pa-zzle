@@ -1,6 +1,8 @@
 import {
+  countShuttleParkingStates,
   createShuttleParkingClearability,
   createShuttleParkingStateKey,
+  SHUTTLE_PARKING_STATE_LIMIT,
 } from "@/games/shuttle-parking/puzzle/clearability";
 import type {
   ShuttleParkingCapacity,
@@ -121,5 +123,38 @@ describe("createShuttleParkingClearability", () => {
 
       expect(clearable).toBe(false);
     });
+  });
+});
+
+describe("countShuttleParkingStates", () => {
+  const [problem] = reference.problems;
+  const puzzle = toPuzzle(problem!);
+
+  test("調査コードの問題例はどれも上限に収まること", () => {
+    const counts = reference.problems.map((example) =>
+      countShuttleParkingStates(toPuzzle(example)),
+    );
+
+    expect(Math.max(...counts)).toBeLessThanOrEqual(
+      SHUTTLE_PARKING_STATE_LIMIT,
+    );
+  });
+
+  test("上限を超える問題では RangeError を投げること", () => {
+    function count() {
+      return countShuttleParkingStates(puzzle, 3);
+    }
+
+    expect(count).toThrow(RangeError);
+  });
+
+  test("上限を超えてたどる判定も RangeError を投げること", () => {
+    function judge() {
+      return createShuttleParkingClearability(puzzle, 1).canClear(
+        createShuttleParkingInitialState(puzzle),
+      );
+    }
+
+    expect(judge).toThrow(RangeError);
   });
 });

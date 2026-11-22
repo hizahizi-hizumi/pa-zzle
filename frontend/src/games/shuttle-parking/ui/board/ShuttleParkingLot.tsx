@@ -12,7 +12,7 @@ import {
 import {
   shuttleParkingColorFills,
   shuttleParkingColorNames,
-} from "@/games/shuttle-parking/ui/shuttle-parking-colors";
+} from "@/games/shuttle-parking/ui/board/shuttle-parking-colors";
 import { playRejectionShake } from "@/lib/motion";
 
 type ShuttleParkingLotProps = {

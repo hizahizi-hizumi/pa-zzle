@@ -1,5 +1,6 @@
 import {
   _private,
+  assertShuttleParkingProblem,
   createShuttleParkingProblemIdentity,
   createShuttleParkingProblemSeed,
   isCurrentShuttleParkingProblemIdentity,
@@ -112,4 +113,41 @@ describe("isShuttleParkingRecordedProblemIdentity", () => {
 
     expect(generatorVersion).toBe(SHUTTLE_PARKING_GENERATOR_VERSION);
   });
+});
+
+describe("assertShuttleParkingProblem", () => {
+  const car = problem.lot.cars[1]!;
+  test.each([
+    [
+      "確かめた範囲より大きい駐車場",
+      { ...problem, lot: { ...problem.lot, size: 8 } },
+    ],
+    ["待機枠が5つ以上", { ...problem, bayCount: 5 }],
+    [
+      "車が9台以上",
+      {
+        lot: {
+          size: 7,
+          openSides: ["top"],
+          cars: Array.from({ length: 9 }, (_, index) => ({
+            ...car,
+            row: index < 7 ? 0 : 4,
+            column: index % 7,
+            capacity: 2 as const,
+          })),
+        },
+        passengers: Array.from({ length: 18 }, () => "b" as const),
+        bayCount: 3,
+      },
+    ],
+  ] as const satisfies readonly (readonly [string, ShuttleParkingProblem])[])(
+    "%s問題を受け付けないこと",
+    (_, target) => {
+      function assertProblem() {
+        assertShuttleParkingProblem(target);
+      }
+
+      expect(assertProblem).toThrow(RangeError);
+    },
+  );
 });

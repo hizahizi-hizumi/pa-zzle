@@ -199,22 +199,26 @@ describe("getShuttleParkingSessionResult", () => {
     expect(result).toBeNull();
   });
 
-  test("クリアまでの時間と回数を返すこと", () => {
-    const session = undoShuttleParkingSession(
-      exitInOrder(createShuttleParkingSession(problem, startedAt), [2]),
+  describe("罠に入って待ったで戻してからクリアした場合", () => {
+    const session = exitInOrder(
+      undoShuttleParkingSession(
+        exitInOrder(createShuttleParkingSession(problem, startedAt), [2]),
+      ),
+      [0, 2, 1],
+      startedAt + 20_000,
     );
 
-    const result = getShuttleParkingSessionResult(
-      exitInOrder(session, [0, 2, 1], startedAt + 20_000),
-    );
+    test("クリアまでの時間と回数を返すこと", () => {
+      const result = getShuttleParkingSessionResult(session);
 
-    expect(result).toEqual({
-      elapsedMs: 20_000,
-      exitCount: 4,
-      blockedExitCount: 0,
-      trapCount: 1,
-      undoCount: 1,
-      restartCount: 0,
+      expect(result).toEqual({
+        elapsedMs: 20_000,
+        exitCount: 4,
+        blockedExitCount: 0,
+        trapCount: 1,
+        undoCount: 1,
+        restartCount: 0,
+      });
     });
   });
 });

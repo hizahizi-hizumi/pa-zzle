@@ -79,6 +79,26 @@ function findClearingOrder(puzzle: ShuttleParkingPuzzle): number[] {
   return order;
 }
 
+/** 勝ち筋をたどり、最初に出会う罠の車までの出す順。 */
+function findTrapOrder(puzzle: ShuttleParkingPuzzle): number[] {
+  const { canClear } = createShuttleParkingClearability(puzzle);
+  const order: number[] = [];
+  let state = createShuttleParkingInitialState(puzzle);
+  while (state.parkedCarIds.length > 0) {
+    let next = null;
+    for (const carId of listShuttleParkingExitableCarIds(puzzle, state)) {
+      const exit = exitShuttleParkingCar(puzzle, state, carId);
+      if (exit.outcome !== "exited") continue;
+      if (!canClear(exit.state)) return [...order, carId];
+      next ??= { carId, state: exit.state };
+    }
+    if (!next) break;
+    order.push(next.carId);
+    state = next.state;
+  }
+  throw new Error("No trap on the clearing path");
+}
+
 function pressCar(carId: number): void {
   const lot = screen.getByRole("group", { name: "送迎パーキングの駐車場" });
   const car = lot.querySelector(`[data-car-id="${carId}"]`);
@@ -193,6 +213,37 @@ describe("ShuttleParkingPlayView", () => {
         start: { difficulty: "1" },
         abandonment: { progress: { exitCount: 1, undoCount: 0 } },
       });
+    });
+  });
+
+  describe("罠の車を出してからリセットした場合", () => {
+    const [trappedProblemId] =
+      shuttleParkingCatalogEntry.listPoolProblemIds("5");
+    const trapped = selectShuttleParkingProblemById("5", trappedProblemId!)!;
+
+    beforeEach(async () => {
+      renderAt(trappedProblemId!);
+      for (const carId of findTrapOrder(trapped.problem)) {
+        pressCar(carId);
+      }
+      openMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
+      await act(async () => {
+        await Promise.resolve();
+      });
+    });
+
+    test("罠に入ったプレイを途中で終えた挑戦として残し、新しいプレイを始めること", () => {
+      const [attempt] = readPlayAttempts();
+      const lot = screen.getByRole("group", { name: "送迎パーキングの駐車場" });
+
+      expect(attempt).toMatchObject({
+        gameId: "shuttle-parking",
+        abandonment: { progress: { trapCount: 1 } },
+      });
+      expect(within(lot).getAllByRole("button")).toHaveLength(
+        trapped.problem.lot.cars.length,
+      );
     });
   });
 

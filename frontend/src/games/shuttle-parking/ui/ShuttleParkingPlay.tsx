@@ -16,12 +16,12 @@ import type {
 import type { ShuttleParkingProblem } from "@/games/shuttle-parking/problem/problem";
 import type { ShuttleParkingCarId } from "@/games/shuttle-parking/puzzle/lot";
 import type { ShuttleParkingState } from "@/games/shuttle-parking/puzzle/rules";
+import { ShuttleParkingBays } from "@/games/shuttle-parking/ui/board/ShuttleParkingBays";
 import { ShuttleParkingLot } from "@/games/shuttle-parking/ui/board/ShuttleParkingLot";
+import { ShuttleParkingQueue } from "@/games/shuttle-parking/ui/board/ShuttleParkingQueue";
 import { ShuttleParkingResultScreen } from "@/games/shuttle-parking/ui/result/ShuttleParkingResultScreen";
-import { ShuttleParkingBays } from "@/games/shuttle-parking/ui/ShuttleParkingBays";
 import { ShuttleParkingGround } from "@/games/shuttle-parking/ui/ShuttleParkingGround";
 import { ShuttleParkingHowToPlayDialog } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog";
-import { ShuttleParkingQueue } from "@/games/shuttle-parking/ui/ShuttleParkingQueue";
 import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
 type ShuttleParkingPlayProps = GamePlayScreenProps<

@@ -221,9 +221,12 @@ export function isShuttleParkingStuck(
   );
 }
 
-/** 色ごとに、乗客の数が座席の数と同じであること。 */
+/** 車と乗客が1つ以上あり、色ごとに乗客の数が座席の数と同じであること。 */
 export function assertShuttleParkingPuzzle(puzzle: ShuttleParkingPuzzle): void {
   assertShuttleParkingLot(puzzle.lot);
+  if (puzzle.lot.cars.length === 0 || puzzle.passengers.length === 0) {
+    throw new RangeError("Shuttle parking puzzle needs cars and passengers");
+  }
   if (!Number.isInteger(puzzle.bayCount) || puzzle.bayCount < 1) {
     throw new RangeError(
       `Invalid shuttle parking bay count: ${puzzle.bayCount}`,

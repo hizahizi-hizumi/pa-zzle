@@ -76,7 +76,7 @@ function renderScoreRows(item: keyof typeof SHUTTLE_PARKING_SCORE_MAXIMUMS) {
       return (
         <HowToPlayScoreRow
           measure="罠"
-          text="まだ全員を/送り出せる盤面から/もう送り出せない盤面に/変えた出庫を/数えます。/戻した手数は/数えません。"
+          text="まだ全員を/送り出せる盤面から/もう送り出せない盤面に/変えた出庫を/出した時点で/数えます。/あとで/「待った」や/「盤面を戻す」で/戻しても/減りません。"
         />
       );
     case "speed":

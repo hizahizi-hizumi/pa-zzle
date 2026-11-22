@@ -6,7 +6,7 @@ import type { ShuttleParkingWaitingCar } from "@/games/shuttle-parking/puzzle/ru
 import {
   shuttleParkingColorFills,
   shuttleParkingColorNames,
-} from "@/games/shuttle-parking/ui/shuttle-parking-colors";
+} from "@/games/shuttle-parking/ui/board/shuttle-parking-colors";
 
 type ShuttleParkingBaysProps = {
   cars: readonly ShuttleParkingCar[];

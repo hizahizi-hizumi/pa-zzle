@@ -1,6 +1,6 @@
 import type { ShuttleParkingColor } from "@/games/shuttle-parking/puzzle/lot";
-import { ShuttleParkingPassenger } from "@/games/shuttle-parking/ui/ShuttleParkingPassenger";
-import { shuttleParkingColorNames } from "@/games/shuttle-parking/ui/shuttle-parking-colors";
+import { ShuttleParkingPassenger } from "@/games/shuttle-parking/ui/board/ShuttleParkingPassenger";
+import { shuttleParkingColorNames } from "@/games/shuttle-parking/ui/board/shuttle-parking-colors";
 
 type ShuttleParkingQueueProps = {
   passengers: readonly ShuttleParkingColor[];

@@ -1,7 +1,7 @@
+import { ShuttleParkingBays } from "@/games/shuttle-parking/ui/board/ShuttleParkingBays";
 import { ShuttleParkingLot } from "@/games/shuttle-parking/ui/board/ShuttleParkingLot";
-import { ShuttleParkingBays } from "@/games/shuttle-parking/ui/ShuttleParkingBays";
+import { ShuttleParkingQueue } from "@/games/shuttle-parking/ui/board/ShuttleParkingQueue";
 import type { ShuttleParkingExampleFigure } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog/example-board";
-import { ShuttleParkingQueue } from "@/games/shuttle-parking/ui/ShuttleParkingQueue";
 
 function ignoreExit() {}
 
