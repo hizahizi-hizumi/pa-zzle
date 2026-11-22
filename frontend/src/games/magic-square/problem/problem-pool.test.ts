@@ -11,19 +11,21 @@ import { createProblemId } from "@/games/problem-id";
 
 const levels = difficultyLevels.map(({ id }) => id);
 
-describe("問題集", () => {
-  const entries = levels.flatMap((level) =>
-    listMagicSquarePoolEntries(level).map((entry) => ({ level, entry })),
-  );
+const entries = levels.flatMap((level) =>
+  listMagicSquarePoolEntries(level).map((entry) => ({ level, entry })),
+);
 
-  test("どのレベルにも問題があること", () => {
+describe("listMagicSquarePoolEntries", () => {
+  test("どのレベルにも問題を返すこと", () => {
     const counts = levels.map(
       (level) => listMagicSquarePoolEntries(level).length,
     );
 
     expect(counts.every((count) => count > 0)).toBe(true);
   });
+});
 
+describe("restoreMagicSquarePoolEntry", () => {
   test("どの問題も復元でき、作業の量に空きマスの数を添えること", () => {
     const restored = entries.map(({ entry }) => {
       const { problem, workload } = restoreMagicSquarePoolEntry(entry);
@@ -35,8 +37,10 @@ describe("問題集", () => {
 
     expect(restored.every(Boolean)).toBe(true);
   });
+});
 
-  test("盤面の一辺は 4・5・6 のどれかであること", () => {
+describe("toMagicSquarePoolIdentity", () => {
+  test("盤面の一辺を 4・5・6 のどれかにすること", () => {
     const sizes = new Set(
       entries.map(
         ({ entry }) => toMagicSquarePoolIdentity(entry).conditions.size,

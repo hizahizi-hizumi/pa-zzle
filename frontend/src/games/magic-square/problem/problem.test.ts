@@ -1,7 +1,6 @@
 import {
   _private,
   assertMagicSquareProblem,
-  createMagicSquareProblemIdentity,
   createMagicSquareSolveWorkload,
   isCurrentMagicSquareProblemIdentity,
   isMagicSquareRecordedProblemIdentity,
@@ -10,10 +9,11 @@ import {
   type MagicSquareProblem,
   type MagicSquareProblemIdentity,
   restoreMagicSquareProblem,
+  summarizeMagicSquareSeed,
 } from "@/games/magic-square/problem/problem";
 import { parseMagicSquareBoard } from "@/games/magic-square/puzzle/board";
 
-const { decodeMagicSquareProblem } = _private;
+const { createMagicSquareProblemIdentity, decodeMagicSquareProblem } = _private;
 
 const problem: MagicSquareProblem = {
   givens: parseMagicSquareBoard([". 4 5 .", ". 2 . .", ". . 12 1", "3 . 10 6"]),
@@ -114,6 +114,16 @@ describe("isCurrentMagicSquareProblemIdentity", () => {
       false,
     ],
     ["復号できない seed の identity", { ...identity, seed: "1.2" }, false],
+    [
+      "空きの無い seed の identity",
+      { ...identity, seed: "14.4.5.11.9.2.7.16.8.13.12.1.3.15.10.6" },
+      false,
+    ],
+    [
+      "最初から置いてある数だけで違反の列がある seed の identity",
+      { ...identity, seed: "1.2.3.4.0.0.0.0.0.0.0.0.0.0.0.0" },
+      false,
+    ],
     ["オブジェクトでない値", "magic-square", false],
   ] as const;
 
@@ -121,6 +131,14 @@ describe("isCurrentMagicSquareProblemIdentity", () => {
     const current = isCurrentMagicSquareProblemIdentity(value);
 
     expect(current).toBe(expected);
+  });
+});
+
+describe("summarizeMagicSquareSeed", () => {
+  test("seed から盤面の一辺と最初から置いてある数の個数を読むこと", () => {
+    const summary = summarizeMagicSquareSeed(seed);
+
+    expect(summary).toEqual({ size: 4, givenCount: 8 });
   });
 });
 

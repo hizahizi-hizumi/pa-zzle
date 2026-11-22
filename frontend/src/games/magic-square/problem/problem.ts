@@ -35,6 +35,16 @@ export function isMagicSquareBoardSize(
   return magicSquareBoardSizes.some((size) => size === value);
 }
 
+function hasEmptyCell(givens: MagicSquareBoard): boolean {
+  return givens.cells.includes(null);
+}
+
+function hasViolatedLine(givens: MagicSquareBoard): boolean {
+  return listMagicSquareLineEvaluations(givens).some(({ status }) =>
+    isMagicSquareLineViolation(status),
+  );
+}
+
 /**
  * 盤面の形、置いてある数、空きがあること、最初から置いてある数だけで違反の列が無いことを確かめる。
  * 答えが1つで推理だけで解けることは、問題を作るときに確かめるので、ここでは確かめない。
@@ -48,13 +58,10 @@ export function assertMagicSquareProblem(problem: MagicSquareProblem): void {
       `Unsupported magic square board size: ${givens.size}×${givens.size}`,
     );
   }
-  if (!givens.cells.includes(null)) {
+  if (!hasEmptyCell(givens)) {
     throw new RangeError("Magic square problem must have an empty cell");
   }
-  const violated = listMagicSquareLineEvaluations(givens).some(({ status }) =>
-    isMagicSquareLineViolation(status),
-  );
-  if (violated) {
+  if (hasViolatedLine(givens)) {
     throw new RangeError("Magic square givens must not violate any line");
   }
 }
@@ -97,6 +104,22 @@ function encodeGivens(cells: readonly MagicSquareCell[]): string {
   return cells.map((cell) => cell ?? emptyCellNotation).join(cellSeparator);
 }
 
+/**
+ * `seed` の記法だけから読める、盤面の一辺と最初から置いてある数の個数。問題を復号せずに数えるときに使い、
+ * 数の範囲・重なりと、一辺が出す大きさかは確かめない。
+ */
+export function summarizeMagicSquareSeed(seed: string): {
+  size: number;
+  givenCount: number;
+} {
+  const notations = seed.split(cellSeparator);
+  return {
+    size: Math.sqrt(notations.length),
+    givenCount: notations.filter((notation) => notation !== emptyCellNotation)
+      .length,
+  };
+}
+
 /** 符号化と置いてある数（範囲と重なり）が正しくなければ `null`。空きの有無と列の違反は確かめない。 */
 function decodeMagicSquareProblem(
   seed: string,
@@ -120,7 +143,7 @@ function decodeMagicSquareProblem(
   return valid ? { givens: { size, cells } } : null;
 }
 
-export function createMagicSquareProblemIdentity(
+function createMagicSquareProblemIdentity(
   problem: MagicSquareProblem,
 ): MagicSquareProblemIdentity {
   const { size, cells } = problem.givens;
@@ -154,19 +177,27 @@ export function restoreMagicSquareProblem(
   return { problem, identity };
 }
 
-/** 記録・診断など外部から読み戻した値が、今の生成器で復元できる識別情報かを確かめる。 */
+/**
+ * 記録・診断など外部から読み戻した値が、今の生成器で復元できる識別情報かを確かめる。
+ * `restoreMagicSquareProblem` が受け付けるもの（今の版で、`seed` を復号でき、空きがあり、最初から置いてある数だけで違反の列が無い）だけを真にする。
+ */
 export function isCurrentMagicSquareProblemIdentity(
   value: unknown,
 ): value is MagicSquareProblemIdentity {
-  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
+  if (
+    !isRecordObject(value) ||
+    !isRecordObject(value.conditions) ||
+    value.generatorVersion !== MAGIC_SQUARE_GENERATOR_VERSION ||
+    !isNonEmptyString(value.seed) ||
+    !isMagicSquareBoardSize(value.conditions.size)
+  ) {
     return false;
   }
-  const { size } = value.conditions;
+  const problem = decodeMagicSquareProblem(value.seed, value.conditions.size);
   return (
-    value.generatorVersion === MAGIC_SQUARE_GENERATOR_VERSION &&
-    isNonEmptyString(value.seed) &&
-    isMagicSquareBoardSize(size) &&
-    decodeMagicSquareProblem(value.seed, size) !== null
+    problem !== null &&
+    hasEmptyCell(problem.givens) &&
+    !hasViolatedLine(problem.givens)
   );
 }
 
@@ -194,5 +225,6 @@ export function isMagicSquareSolveWorkload(
 }
 
 export const _private = {
+  createMagicSquareProblemIdentity,
   decodeMagicSquareProblem,
 };

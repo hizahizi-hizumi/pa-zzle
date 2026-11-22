@@ -7,6 +7,7 @@ import {
   type MagicSquareProblemIdentity,
   type MagicSquareSolveWorkload,
   restoreMagicSquareProblem,
+  summarizeMagicSquareSeed,
 } from "@/games/magic-square/problem/problem";
 import {
   createBoardSizeFeatureValue,
@@ -15,7 +16,7 @@ import {
 } from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
-/** 問題集の1問。問題の identity の `seed`（最初から置いてある数を行優先で `.` でつなぎ、空きは `0`）。 */
+/** 問題集の1問。問題の identity の `seed`（記法は `MagicSquareProblemIdentity`）。 */
 export type MagicSquareProblemPoolEntry = string;
 
 export type MagicSquarePooledProblem = MagicSquareIdentifiedProblem & {
@@ -46,14 +47,10 @@ const problemPoolLevels = {
   readonly MagicSquareProblemPoolEntry[]
 >;
 
-function readBoardSize(entry: MagicSquareProblemPoolEntry): number {
-  return Math.sqrt(entry.split(".").length);
-}
-
 export function toMagicSquarePoolIdentity(
   entry: MagicSquareProblemPoolEntry,
 ): MagicSquareProblemIdentity {
-  const size = readBoardSize(entry);
+  const { size } = summarizeMagicSquareSeed(entry);
   if (!isMagicSquareBoardSize(size)) {
     throw new RangeError(`Unsupported magic square pool entry: ${entry}`);
   }
@@ -114,14 +111,7 @@ export function findMagicSquarePoolProblemFeatures(
   problemId: string,
 ): MagicSquareProblemFeatures | null {
   const entry = findMagicSquarePoolEntryByProblemId(difficulty, problemId);
-  if (entry === null) {
-    return null;
-  }
-  const cells = entry.split(".");
-  return {
-    size: readBoardSize(entry),
-    givenCount: cells.filter((cell) => cell !== "0").length,
-  };
+  return entry === null ? null : summarizeMagicSquareSeed(entry);
 }
 
 export const magicSquareProblemFeatureAxes = [
