@@ -1,6 +1,7 @@
 import {
   getMagicSquareLineCellIndices,
   getMagicSquareMagicSum,
+  getMagicSquareMaxValue,
   isMagicSquareCellIndex,
   isMagicSquareValue,
   listMagicSquareLines,
@@ -25,6 +26,14 @@ export type MagicSquareLineStatus =
   | "matched"
   | "unmatched"
   | "overreached";
+
+/**
+ * 数の欄の1つの数の今の状態。
+ * - `available`: まだどこにも置いていない。
+ * - `selected`: 選んだマスに置いてある。押すとそのマスから外す。
+ * - `used`: ほかのマス（最初から置いてある数のマスを含む）に置いてある。押せない。
+ */
+export type MagicSquareValueState = "available" | "selected" | "used";
 
 export type MagicSquareLineEvaluation = {
   line: MagicSquareLine;
@@ -65,6 +74,32 @@ function isEditableCell(
   return (
     isMagicSquareCellIndex(state.size, cellIndex) &&
     !isMagicSquareGivenCell(givens, cellIndex)
+  );
+}
+
+/** 1 から n² までの数ごとの状態。並びは数の小さい順。 */
+export function listMagicSquareValueStates(
+  givens: MagicSquareBoard,
+  board: MagicSquareBoard,
+  selectedCellIndex: number | null,
+): MagicSquareValueState[] {
+  const cellByValue = new Map(
+    board.cells.flatMap((cell, cellIndex) =>
+      cell === null ? [] : [[cell, cellIndex] as const],
+    ),
+  );
+  return Array.from(
+    { length: getMagicSquareMaxValue(board.size) },
+    (_, index): MagicSquareValueState => {
+      const cellIndex = cellByValue.get(index + 1);
+      if (cellIndex === undefined) {
+        return "available";
+      }
+      return cellIndex === selectedCellIndex &&
+        !isMagicSquareGivenCell(givens, cellIndex)
+        ? "selected"
+        : "used";
+    },
   );
 }
 
@@ -137,6 +172,21 @@ export function removeMagicSquareValue(
     return state;
   }
   return { ...state, cells: withCell(state.cells, cellIndex, null) };
+}
+
+/**
+ * 数の欄で押した数を入れる。そのマスに同じ数が置いてあれば外し、違えば置く（置き換える）。
+ * 入れられないときは、受け取った状態をそのまま返す。
+ */
+export function enterMagicSquareValue(
+  givens: MagicSquareBoard,
+  state: MagicSquareState,
+  cellIndex: number,
+  value: number,
+): MagicSquareState {
+  return state.cells[cellIndex] === value
+    ? removeMagicSquareValue(givens, state, cellIndex)
+    : placeMagicSquareValue(givens, state, cellIndex, value);
 }
 
 /** 空きマスのメモに数を書けるか。盤面に置いてある数は、もうほかのマスの候補にならないので書けない。 */

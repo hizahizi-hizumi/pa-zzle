@@ -1,0 +1,304 @@
+import {
+  assertMagicSquareProblem,
+  type MagicSquareProblem,
+} from "@/games/magic-square/problem/problem";
+import {
+  isMagicSquareCellIndex,
+  type MagicSquareCell,
+} from "@/games/magic-square/puzzle/board";
+import {
+  enterMagicSquareValue,
+  isMagicSquareGivenCell,
+  isMagicSquareSolved,
+  listMagicSquareValueStates,
+  type MagicSquareValueState,
+  toggleMagicSquareMemo,
+} from "@/games/magic-square/puzzle/rules";
+import {
+  createMagicSquareInitialState,
+  isSameMagicSquareState,
+  type MagicSquareState,
+} from "@/games/magic-square/puzzle/state";
+import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
+
+/** 待ったで戻れる1つ前の盤面と、その盤面から変えたマス。 */
+type MagicSquareSessionHistoryEntry = {
+  puzzleState: MagicSquareState;
+  cellIndex: number;
+};
+
+/**
+ * ほかのマスに触れずに同じマスを変え続けている間の記録。`valueBeforeEditing` は変え始める前のそのマスの数。
+ * 同じマスですぐ置き換えた・外した数をすぐ戻したのは押し間違いの直しで、変え終えた数が変え始める前の数と違うときだけ取り下げとする。
+ */
+type MagicSquareEditingCell = {
+  cellIndex: number;
+  valueBeforeEditing: MagicSquareCell;
+};
+
+export type MagicSquareSession = GameSession<
+  MagicSquareProblem,
+  MagicSquareState
+> & {
+  /** 数の欄で押した数を入れるマス。どのマスも選んでいなければ `null`。最初から置いてある数のマスも選べる。 */
+  selectedCellIndex: number | null;
+  /** 待ったで戻れる盤面。最後が直前の盤面。盤面を戻すと空になる。 */
+  history: readonly MagicSquareSessionHistoryEntry[];
+  /** 確かめ終えた取り下げの回数。変えている途中のマスの分は `editingCell` から数える。 */
+  settledWithdrawalCount: number;
+  editingCell: MagicSquareEditingCell | null;
+  undoCount: number;
+  restartCount: number;
+};
+
+/**
+ * - `withdrawalCount`: 置いた数をそのマスから取り下げた回数。外す・置き換える・待った・盤面を戻すのどれで外れても数え、
+ *   ほかのマスに触れる前の同じマスでの直しは数えない。
+ */
+export type MagicSquareSessionResult = {
+  elapsedMs: number;
+  withdrawalCount: number;
+  undoCount: number;
+  restartCount: number;
+};
+
+function countEditingWithdrawal(
+  puzzleState: MagicSquareState,
+  editingCell: MagicSquareEditingCell | null,
+): number {
+  if (!editingCell || editingCell.valueBeforeEditing === null) {
+    return 0;
+  }
+  return puzzleState.cells[editingCell.cellIndex] ===
+    editingCell.valueBeforeEditing
+    ? 0
+    : 1;
+}
+
+function settleEditingCell(session: MagicSquareSession): MagicSquareSession {
+  return session.editingCell === null
+    ? session
+    : {
+        ...session,
+        settledWithdrawalCount: getMagicSquareSessionWithdrawalCount(session),
+        editingCell: null,
+      };
+}
+
+/** そのマスを変える前に、ほかのマスを変えていた記録を確かめ終え、そのマスを変え始めた記録にする。 */
+function beginEditingCell(
+  session: MagicSquareSession,
+  cellIndex: number,
+): MagicSquareSession {
+  if (session.editingCell?.cellIndex === cellIndex) {
+    return session;
+  }
+  return {
+    ...settleEditingCell(session),
+    editingCell: {
+      cellIndex,
+      valueBeforeEditing: session.puzzleState.cells[cellIndex] ?? null,
+    },
+  };
+}
+
+function editCell(
+  session: MagicSquareSession,
+  cellIndex: number,
+  puzzleState: MagicSquareState,
+  editedAt: number,
+): MagicSquareSession {
+  if (puzzleState === session.puzzleState) {
+    return session;
+  }
+  const edited: MagicSquareSession = {
+    ...beginEditingCell(session, cellIndex),
+    puzzleState,
+    history: [
+      ...session.history,
+      { puzzleState: session.puzzleState, cellIndex },
+    ],
+  };
+  if (!isMagicSquareSolved(puzzleState)) {
+    return edited;
+  }
+  return {
+    ...settleEditingCell(edited),
+    status: "cleared",
+    clearedAt: editedAt,
+    selectedCellIndex: null,
+  };
+}
+
+export function createMagicSquareSession(
+  problem: MagicSquareProblem,
+  startedAt: number,
+): MagicSquareSession {
+  assertMagicSquareProblem(problem);
+
+  return {
+    status: "playing",
+    problem,
+    puzzleState: createMagicSquareInitialState(problem.givens),
+    startedAt,
+    clearedAt: null,
+    selectedCellIndex: null,
+    history: [],
+    settledWithdrawalCount: 0,
+    editingCell: null,
+    undoCount: 0,
+    restartCount: 0,
+  };
+}
+
+/** マスを選ぶ。置いた数のマスを押しても選ぶだけにする。ほかのマスに触れたので、変えていたマスの記録を確かめ終える。 */
+export function selectMagicSquareSessionCell(
+  session: MagicSquareSession,
+  cellIndex: number,
+): MagicSquareSession {
+  if (
+    session.status !== "playing" ||
+    !isMagicSquareCellIndex(session.problem.givens.size, cellIndex) ||
+    session.selectedCellIndex === cellIndex
+  ) {
+    return session;
+  }
+  const touched =
+    session.editingCell !== null && session.editingCell.cellIndex !== cellIndex
+      ? settleEditingCell(session)
+      : session;
+  return { ...touched, selectedCellIndex: cellIndex };
+}
+
+/**
+ * 選んだマスに、数の欄で押した数を入れる。選んだマスに同じ数が置いてあれば外し、別の数なら置き換える。
+ * マスを選んでいない・最初から置いてある数のマス・ほかのマスに置いた数では、受け取った session をそのまま返す。
+ */
+export function enterMagicSquareSessionValue(
+  session: MagicSquareSession,
+  value: number,
+  enteredAt: number,
+): MagicSquareSession {
+  const { selectedCellIndex: cellIndex, problem, puzzleState } = session;
+  if (session.status !== "playing" || cellIndex === null) {
+    return session;
+  }
+  return editCell(
+    session,
+    cellIndex,
+    enterMagicSquareValue(problem.givens, puzzleState, cellIndex, value),
+    enteredAt,
+  );
+}
+
+/** 選んだ空きマスのメモに数を書く。書いてあれば消す。書けないときは、受け取った session をそのまま返す。 */
+export function toggleMagicSquareSessionMemo(
+  session: MagicSquareSession,
+  value: number,
+  editedAt: number,
+): MagicSquareSession {
+  const { selectedCellIndex: cellIndex, problem, puzzleState } = session;
+  if (session.status !== "playing" || cellIndex === null) {
+    return session;
+  }
+  return editCell(
+    session,
+    cellIndex,
+    toggleMagicSquareMemo(problem.givens, puzzleState, cellIndex, value),
+    editedAt,
+  );
+}
+
+/** 直前の盤面操作を取り消す。取り消しでそのマスから外れた置いた数も、ほかの操作で外れたときと同じに取り下げとして数える。 */
+export function undoMagicSquareSession(
+  session: MagicSquareSession,
+): MagicSquareSession {
+  if (!canUndoMagicSquareSession(session)) {
+    return session;
+  }
+  const { puzzleState, cellIndex } = session.history.at(-1)!;
+  return {
+    ...beginEditingCell(session, cellIndex),
+    puzzleState,
+    history: session.history.slice(0, -1),
+    undoCount: session.undoCount + 1,
+  };
+}
+
+/**
+ * 同じプレイのまま盤面を初期状態へ戻す（盤面を戻す）。経過時間と計数は引き継ぎ、盤面にあった置いた数はどれも取り下げとして数える。
+ * 戻す前の操作は待ったで戻せない。
+ */
+export function restartMagicSquareSession(
+  session: MagicSquareSession,
+): MagicSquareSession {
+  if (!canRestartMagicSquareSession(session)) {
+    return session;
+  }
+  const settled = settleEditingCell(session);
+  const { givens } = session.problem;
+  const placedCount = session.puzzleState.cells.filter(
+    (cell, cellIndex) =>
+      cell !== null && !isMagicSquareGivenCell(givens, cellIndex),
+  ).length;
+  return {
+    ...settled,
+    puzzleState: createMagicSquareInitialState(givens),
+    history: [],
+    settledWithdrawalCount: settled.settledWithdrawalCount + placedCount,
+    restartCount: session.restartCount + 1,
+  };
+}
+
+export function canUndoMagicSquareSession(
+  session: MagicSquareSession,
+): boolean {
+  return session.status === "playing" && session.history.length > 0;
+}
+
+export function canRestartMagicSquareSession(
+  session: MagicSquareSession,
+): boolean {
+  return (
+    session.status === "playing" &&
+    !isSameMagicSquareState(
+      session.puzzleState,
+      createMagicSquareInitialState(session.problem.givens),
+    )
+  );
+}
+
+export function getMagicSquareSessionWithdrawalCount(
+  session: MagicSquareSession,
+): number {
+  return (
+    session.settledWithdrawalCount +
+    countEditingWithdrawal(session.puzzleState, session.editingCell)
+  );
+}
+
+/** 数の欄の 1 から n² までの状態。並びは数の小さい順。 */
+export function listMagicSquareSessionValueStates(
+  session: MagicSquareSession,
+): MagicSquareValueState[] {
+  return listMagicSquareValueStates(
+    session.problem.givens,
+    session.puzzleState,
+    session.selectedCellIndex,
+  );
+}
+
+export function getMagicSquareSessionResult(
+  session: MagicSquareSession,
+): MagicSquareSessionResult | null {
+  const elapsedMs = getClearedSessionElapsedMs(session);
+  if (elapsedMs === null) {
+    return null;
+  }
+  return {
+    elapsedMs,
+    withdrawalCount: getMagicSquareSessionWithdrawalCount(session),
+    undoCount: session.undoCount,
+    restartCount: session.restartCount,
+  };
+}

@@ -9,12 +9,14 @@ import {
 } from "@/games/magic-square/puzzle/board";
 import {
   canPlaceMagicSquareValue,
+  enterMagicSquareValue,
   evaluateMagicSquareLine,
   findMagicSquareValueCell,
   isMagicSquareLineViolation,
   isMagicSquareSolved,
   listMagicSquareLineEvaluations,
   listMagicSquareUsedValues,
+  listMagicSquareValueStates,
   type MagicSquareLineStatus,
   placeMagicSquareValue,
   removeMagicSquareValue,
@@ -544,6 +546,57 @@ describe("盤面の操作", () => {
         expect(next).toBe(state);
       },
     );
+  });
+
+  describe("enterMagicSquareValue", () => {
+    const cases = [
+      ["空きマスにまだ置いていない数を押すと置く", initial, emptyCell, 14, 14],
+      ["置いた数のマスで別の数を押すと置き換える", placed, emptyCell, 11, 11],
+      ["置いた数のマスで同じ数を押すと外す", placed, emptyCell, 14, null],
+    ] as const;
+
+    test.each(cases)("%sこと", (_, state, cellIndex, value, expected) => {
+      const next = enterMagicSquareValue(givens, state, cellIndex, value);
+
+      expect(next.cells[cellIndex]).toBe(expected);
+    });
+
+    test("最初から置いてある数のマスで同じ数を押しても外さないこと", () => {
+      const next = enterMagicSquareValue(givens, initial, givenCell, 4);
+
+      expect(next).toBe(initial);
+    });
+  });
+
+  describe("listMagicSquareValueStates", () => {
+    test("選んだマスの数を selected、ほかに置いた数と最初から置いてある数を used、残りを available にすること", () => {
+      const states = listMagicSquareValueStates(givens, placed, emptyCell);
+
+      expect(states).toEqual([
+        "used",
+        "used",
+        "used",
+        "used",
+        "used",
+        "used",
+        "available",
+        "available",
+        "available",
+        "used",
+        "available",
+        "used",
+        "available",
+        "selected",
+        "available",
+        "available",
+      ]);
+    });
+
+    test("最初から置いてある数のマスを選んでも、その数を used にすること", () => {
+      const states = listMagicSquareValueStates(givens, placed, givenCell);
+
+      expect(states[3]).toBe("used");
+    });
   });
 
   describe("listMagicSquareUsedValues", () => {
