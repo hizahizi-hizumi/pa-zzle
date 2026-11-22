@@ -1,0 +1,257 @@
+import type { HakoiriMusumeDifficulty } from "@/games/hakoiri-musume/difficulty";
+import {
+  countHakoiriMusumeProblemEmptyCells,
+  createHakoiriMusumeProblemIdentity,
+  type HAKOIRI_MUSUME_GENERATOR_VERSION,
+  type HakoiriMusumeIdentifiedProblem,
+  type HakoiriMusumeProblem,
+  type HakoiriMusumeProblemIdentity,
+  restoreHakoiriMusumeProblem,
+} from "@/games/hakoiri-musume/problem/problem";
+import problemPoolJson from "@/games/hakoiri-musume/problem/problem-pool.json";
+import {
+  countHakoiriMusumeCells,
+  getHakoiriMusumeCell,
+  getHakoiriMusumeCellPosition,
+  type HakoiriMusumeExitSide,
+  type HakoiriMusumePieceKind,
+  listHakoiriMusumePieceCells,
+} from "@/games/hakoiri-musume/puzzle/board";
+import {
+  createBoardSizeFeatureValue,
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
+import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
+
+/**
+ * - `board`: 問題の identity の `seed`（`formatHakoiriMusumeProblemSeed`）。
+ * - `daughterDetourCount`・`shortestPreparationLength`: 検証情報に出す。
+ * - `family`: 画面には出さない。
+ */
+export type HakoiriMusumeProblemPoolEntry = readonly [
+  board: string,
+  optimalMoveCount: number,
+  preparationLength: number,
+  daughterDetourCount: number,
+  shortestPreparationLength: number,
+  family: string,
+];
+
+export type HakoiriMusumeProblemPool = {
+  generatorVersion: typeof HAKOIRI_MUSUME_GENERATOR_VERSION;
+  levels: Record<
+    HakoiriMusumeDifficulty,
+    readonly HakoiriMusumeProblemPoolEntry[]
+  >;
+};
+
+export type HakoiriMusumeWorkload = {
+  optimalMoveCount: number;
+  preparationLength: number;
+};
+
+type HakoiriMusumeDecodedPoolEntry = {
+  identity: HakoiriMusumeProblemIdentity;
+  workload: HakoiriMusumeWorkload;
+};
+
+export type HakoiriMusumePooledProblem = HakoiriMusumeIdentifiedProblem & {
+  workload: HakoiriMusumeWorkload;
+};
+
+const problemPool = problemPoolJson as unknown as HakoiriMusumeProblemPool;
+
+export function decodeHakoiriMusumePoolEntry([
+  board,
+  optimalMoveCount,
+  preparationLength,
+]: HakoiriMusumeProblemPoolEntry): HakoiriMusumeDecodedPoolEntry {
+  return {
+    identity: createHakoiriMusumeProblemIdentity(board),
+    workload: { optimalMoveCount, preparationLength },
+  };
+}
+
+export function restoreHakoiriMusumePoolEntry(
+  entry: HakoiriMusumeProblemPoolEntry,
+): HakoiriMusumePooledProblem {
+  const { identity, workload } = decodeHakoiriMusumePoolEntry(entry);
+  return { ...restoreHakoiriMusumeProblem(identity), workload };
+}
+
+export function listHakoiriMusumePoolEntries(
+  difficulty: HakoiriMusumeDifficulty,
+): readonly HakoiriMusumeProblemPoolEntry[] {
+  return problemPool.levels[difficulty];
+}
+
+const poolIndex = createProblemPoolIndex(
+  problemPool.levels,
+  (entry) => decodeHakoiriMusumePoolEntry(entry).identity,
+);
+
+/** 問題 ID を、問題集の並び順で返す。 */
+export function listHakoiriMusumePoolProblemIds(
+  difficulty: HakoiriMusumeDifficulty,
+): readonly ProblemId[] {
+  return poolIndex.listProblemIds(difficulty);
+}
+
+/** 問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findHakoiriMusumePoolEntryByProblemId(
+  difficulty: HakoiriMusumeDifficulty,
+  problemId: string,
+): HakoiriMusumeProblemPoolEntry | null {
+  return poolIndex.findPositionById(difficulty, problemId)?.entry ?? null;
+}
+
+/**
+ * - `exitWidth`: 1人目の娘の出口の幅。
+ * - `horizontalCount`・`verticalCount`・`smallCount`・`squareCount`: 娘でない駒だけを数える。
+ * - `emptyCellCount`: 壁は入れない。
+ */
+export type HakoiriMusumeProblemFeatures = {
+  rows: number;
+  columns: number;
+  targetCount: number;
+  bendCount: number;
+  wallCount: number;
+  exitWidth: number;
+  exits: readonly { side: HakoiriMusumeExitSide; width: number }[];
+  horizontalCount: number;
+  verticalCount: number;
+  smallCount: number;
+  squareCount: number;
+  emptyCellCount: number;
+  emptyGroupCount: number;
+};
+
+/** 上下左右でつながった空きを1つと数える。 */
+function countEmptyGroups({ layout, pieces }: HakoiriMusumeProblem): number {
+  const occupied = new Set([
+    ...layout.walls,
+    ...pieces.flatMap((piece) => listHakoiriMusumePieceCells(layout, piece)),
+  ]);
+  const seen = new Set<number>();
+  let groups = 0;
+  for (let cell = 0; cell < countHakoiriMusumeCells(layout); cell += 1) {
+    if (occupied.has(cell) || seen.has(cell)) {
+      continue;
+    }
+    groups += 1;
+    const stack = [cell];
+    seen.add(cell);
+    while (stack.length > 0) {
+      const { row, column } = getHakoiriMusumeCellPosition(
+        layout,
+        stack.pop()!,
+      );
+      for (const [nextRow, nextColumn] of [
+        [row - 1, column],
+        [row + 1, column],
+        [row, column - 1],
+        [row, column + 1],
+      ] as const) {
+        if (
+          nextRow < 0 ||
+          nextRow >= layout.rows ||
+          nextColumn < 0 ||
+          nextColumn >= layout.columns
+        ) {
+          continue;
+        }
+        const next = getHakoiriMusumeCell(layout, {
+          row: nextRow,
+          column: nextColumn,
+        });
+        if (!occupied.has(next) && !seen.has(next)) {
+          seen.add(next);
+          stack.push(next);
+        }
+      }
+    }
+  }
+  return groups;
+}
+
+function measureHakoiriMusumeProblemFeatures(
+  problem: HakoiriMusumeProblem,
+): HakoiriMusumeProblemFeatures {
+  const { layout, pieces } = problem;
+  const others = pieces.filter((piece) => piece.target === null);
+  function countKind(kind: HakoiriMusumePieceKind) {
+    return others.filter((piece) => piece.kind === kind).length;
+  }
+  const exits = layout.goals.map((goal) => ({
+    side: goal.exitSide,
+    width: goal.exitCells.length,
+  }));
+  return {
+    rows: layout.rows,
+    columns: layout.columns,
+    targetCount: layout.goals.length,
+    bendCount: others.filter((piece) => piece.kind.startsWith("bend-")).length,
+    wallCount: layout.walls.length,
+    exitWidth: exits[0]!.width,
+    exits,
+    horizontalCount: countKind("horizontal"),
+    verticalCount: countKind("vertical"),
+    smallCount: countKind("small"),
+    squareCount: countKind("square"),
+    emptyCellCount: countHakoiriMusumeProblemEmptyCells(problem),
+    emptyGroupCount: countEmptyGroups(problem),
+  };
+}
+
+/** 問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findHakoiriMusumePoolProblemFeatures(
+  difficulty: HakoiriMusumeDifficulty,
+  problemId: string,
+): HakoiriMusumeProblemFeatures | null {
+  const entry = findHakoiriMusumePoolEntryByProblemId(difficulty, problemId);
+  return entry
+    ? measureHakoiriMusumeProblemFeatures(
+        restoreHakoiriMusumePoolEntry(entry).problem,
+      )
+    : null;
+}
+
+/** 最短手数は解かないと分からないので軸にしない。 */
+export const hakoiriMusumeProblemFeatureAxes = [
+  {
+    id: "board-size",
+    getValue({ rows, columns }) {
+      return createBoardSizeFeatureValue(rows, columns);
+    },
+  },
+  {
+    id: "target-count",
+    getValue({ targetCount }) {
+      return createCountFeatureValue(targetCount);
+    },
+  },
+  {
+    id: "exit-width",
+    getValue({ exitWidth }) {
+      return createCountFeatureValue(exitWidth);
+    },
+  },
+  {
+    id: "bend-count",
+    getValue({ bendCount }) {
+      return createCountFeatureValue(bendCount);
+    },
+  },
+  {
+    id: "wall-count",
+    getValue({ wallCount }) {
+      return createCountFeatureValue(wallCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<HakoiriMusumeProblemFeatures>[];
+
+export type HakoiriMusumeProblemFeatureAxisId =
+  (typeof hakoiriMusumeProblemFeatureAxes)[number]["id"];
+
+export const _private = { measureHakoiriMusumeProblemFeatures };
