@@ -150,7 +150,7 @@ describe("enterMagicSquareSessionValue", () => {
   });
 });
 
-describe("取り下げの回数", () => {
+describe("getMagicSquareSessionWithdrawalCount", () => {
   const cases: readonly [string, readonly Operation[], number][] = [
     [
       "ほかのマスに触れる前の同じマスでの置き換えは押し間違いの直しとして数えない",

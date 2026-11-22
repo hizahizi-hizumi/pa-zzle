@@ -308,6 +308,55 @@ describe("ランダムな途中の盤面の場合", () => {
 
     expect(unchanged.every(Boolean)).toBe(true);
   });
+
+  describe("盤面の数を最初から置いてある数とみなした場合", () => {
+    const operationRandom = createProblemSeededRandom(
+      "magic-square-rules-givens",
+    );
+    const givenCellOperations = samples.map(({ board: givens }) => ({
+      givens,
+      state: createMagicSquareInitialState(givens),
+      operations: givens.cells.flatMap((cell, cellIndex) =>
+        cell === null
+          ? []
+          : [
+              {
+                cellIndex,
+                value:
+                  Math.floor(
+                    operationRandom() * getMagicSquareMaxValue(givens.size),
+                  ) + 1,
+              },
+            ],
+      ),
+    }));
+    type Operate = (
+      givens: MagicSquareBoard,
+      state: MagicSquareState,
+      cellIndex: number,
+      value: number,
+    ) => MagicSquareState;
+    const operates: readonly Operate[] = [
+      placeMagicSquareValue,
+      (givens, state, cellIndex) =>
+        removeMagicSquareValue(givens, state, cellIndex),
+      enterMagicSquareValue,
+      toggleMagicSquareMemo,
+    ];
+
+    test("最初からある全部のマスで、置く・外す・入れる・メモを書く操作が受け取った状態をそのまま返すこと", () => {
+      const changed = givenCellOperations.flatMap(
+        ({ givens, state, operations }) =>
+          operations.flatMap(({ cellIndex, value }) =>
+            operates.filter(
+              (operate) => operate(givens, state, cellIndex, value) !== state,
+            ),
+          ),
+      );
+
+      expect(changed).toEqual([]);
+    });
+  });
 });
 
 describe("evaluateMagicSquareLine", () => {
@@ -381,7 +430,7 @@ describe("isMagicSquareSolved", () => {
   });
 });
 
-describe("盤面の操作", () => {
+describe("最初から置いてある数がある 4×4 の盤面を操作する場合", () => {
   const givens = parseMagicSquareBoard([
     ". 4 5 .",
     ". 2 . .",
