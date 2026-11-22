@@ -9,6 +9,10 @@ import {
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router";
 import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
+import {
+  CLEAR_FINALE_HOLD_MS,
+  CLEAR_FINALE_REDUCED_MOTION_HOLD_MS,
+} from "@/games/water-sort/ui/board/clear-finale-timing";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
 
@@ -21,7 +25,35 @@ afterEach(() => {
   cleanup();
   delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
   vi.restoreAllMocks();
+  vi.clearAllMocks();
 });
+
+/** 動かした演出を、`finishRunning` を呼ぶまで終わらせない。呼んだ後に始めた演出は、次に呼ぶまで終わらない。 */
+function installStagedAnimations() {
+  let finishStage: () => void = () => undefined;
+  let stage = new Promise<void>((resolve) => {
+    finishStage = resolve;
+  });
+  Object.defineProperty(HTMLElement.prototype, "animate", {
+    configurable: true,
+    value: vi.fn(
+      () => ({ finished: stage, cancel: vi.fn() }) as unknown as Animation,
+    ),
+  });
+  return {
+    async finishRunning() {
+      const finishing = stage;
+      const finish = finishStage;
+      stage = new Promise<void>((resolve) => {
+        finishStage = resolve;
+      });
+      await act(async () => {
+        finish();
+        await finishing;
+      });
+    },
+  };
+}
 
 const baseProps = {
   difficulty: "3" as const,
@@ -473,70 +505,176 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("100点（100点満点）")).toBeTruthy();
   });
 
-  test("最後の注水演出が完了してから結果画面を表示すること", async () => {
-    let resolveAnimation: (() => void) | undefined;
-    const animationFinished = new Promise<void>((resolve) => {
-      resolveAnimation = resolve;
-    });
-    Object.defineProperty(HTMLElement.prototype, "animate", {
-      configurable: true,
-      value: vi.fn(
+  describe("注いでいる間に経過時間の表示で描き直した場合", () => {
+    const pourOperation = {
+      id: 1,
+      type: "poured",
+      sourceBottleIndex: 0,
+      destinationBottleIndex: 1,
+      stateBefore: [[0, 1], []],
+      stateAfter: [[0], [1]],
+      isClearingMove: false,
+    } as const;
+    let animate: ReturnType<typeof vi.fn>;
+    let rerender: ReturnType<typeof render>["rerender"];
+
+    beforeEach(() => {
+      animate = vi.fn(
         () =>
           ({
-            finished: animationFinished,
+            finished: new Promise(() => undefined),
             cancel: vi.fn(),
           }) as unknown as Animation,
-      ),
+      );
+      Object.defineProperty(HTMLElement.prototype, "animate", {
+        configurable: true,
+        value: animate,
+      });
+      ({ rerender } = render(
+        <WaterSortPlay
+          {...baseProps}
+          state={pourOperation.stateAfter}
+          operation={pourOperation}
+        />,
+      ));
     });
-    const result = createResult({
-      moveCount: 12,
-      completionMoveCount: 12,
-      undoCount: 0,
-      optimalMoveCount: 12,
-      moveDelta: 0,
-      timeDeltaMs: -9_000,
-      backtrackMoveCount: 0,
-      speedRule: { fullScoreMs: 74_000, zeroScoreMs: 148_000 },
-      score: {
-        total: 100,
-        breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
-      },
+
+    test("注ぐ動きをやり直さないこと", () => {
+      const startedAnimationCount = animate.mock.calls.length;
+      rerender(
+        <WaterSortPlay
+          {...baseProps}
+          elapsedMs={baseProps.elapsedMs + 1000}
+          state={pourOperation.stateAfter}
+          operation={pourOperation}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+
+      expect(startedAnimationCount).toBeGreaterThan(0);
+      expect(animate).toHaveBeenCalledTimes(startedAnimationCount);
     });
-    const { rerender } = render(
-      <WaterSortPlay
-        {...baseProps}
-        state={[[0], [0, 0, 0]]}
-        sourceBottleIndex={0}
-      />,
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: "ボトル 2: 赤、赤、赤" }),
-    );
-    rerender(
-      <WaterSortPlay
-        {...baseProps}
-        progress="clearing"
-        state={[[], [0, 0, 0, 0]]}
-        sourceBottleIndex={null}
-        operation={{
-          id: 1,
-          type: "poured",
-          sourceBottleIndex: 0,
-          destinationBottleIndex: 1,
-          stateBefore: [[0], [0, 0, 0]],
-          stateAfter: [[], [0, 0, 0, 0]],
-          isClearingMove: true,
-        }}
-        canUndo={false}
-        result={result}
-      />,
-    );
-    expect(screen.queryByRole("heading", { name: "プレイ結果" })).toBeNull();
-    await act(async () => {
-      resolveAnimation?.();
-      await animationFinished;
+  });
+
+  describe("最後の手で盤面をそろえた場合", () => {
+    const clearingOperation = {
+      id: 1,
+      type: "poured",
+      sourceBottleIndex: 0,
+      destinationBottleIndex: 1,
+      stateBefore: [[0], [0, 0, 0], []],
+      stateAfter: [[], [0, 0, 0, 0], []],
+      isClearingMove: true,
+    } as const;
+    const clearingProps = {
+      ...baseProps,
+      progress: "clearing",
+      state: clearingOperation.stateAfter,
+      operation: clearingOperation,
+      canUndo: false,
+      onClearAnimationComplete: vi.fn(),
+    } as const;
+
+    describe("動きを見せる場合", () => {
+      let animations: ReturnType<typeof installStagedAnimations>;
+      let rerender: ReturnType<typeof render>["rerender"];
+
+      beforeEach(() => {
+        vi.useFakeTimers();
+        animations = installStagedAnimations();
+        ({ rerender } = render(
+          <WaterSortPlay
+            {...baseProps}
+            state={clearingOperation.stateBefore}
+            sourceBottleIndex={0}
+          />,
+        ));
+        rerender(<WaterSortPlay {...clearingProps} />);
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      test("注ぐ動きを終えても、空の試験管を片付ける演出を終えるまで結果へ進まないこと", async () => {
+        await animations.finishRunning();
+        const completedAfterPour =
+          clearingProps.onClearAnimationComplete.mock.calls.length;
+        await animations.finishRunning();
+        act(() => {
+          vi.advanceTimersByTime(CLEAR_FINALE_HOLD_MS);
+        });
+
+        expect(completedAfterPour).toBe(0);
+        expect(clearingProps.onClearAnimationComplete).toHaveBeenCalledOnce();
+      });
+
+      test("片付ける演出の途中に触れると、残りを飛ばして結果へ進むこと", async () => {
+        await animations.finishRunning();
+        fireEvent.click(screen.getByRole("button", { name: "演出を飛ばす" }));
+
+        expect(clearingProps.onClearAnimationComplete).toHaveBeenCalledOnce();
+      });
+
+      describe("片付ける演出の途中にリセットした場合", () => {
+        beforeEach(async () => {
+          await animations.finishRunning();
+        });
+
+        test("前の盤面の演出を残さず、結果へ進まないこと", async () => {
+          rerender(
+            <WaterSortPlay
+              {...baseProps}
+              state={clearingOperation.stateBefore}
+              onClearAnimationComplete={clearingProps.onClearAnimationComplete}
+            />,
+          );
+          await animations.finishRunning();
+          act(() => {
+            vi.advanceTimersByTime(CLEAR_FINALE_HOLD_MS);
+          });
+
+          expect(
+            screen.queryByRole("button", { name: "演出を飛ばす" }),
+          ).toBeNull();
+          expect(clearingProps.onClearAnimationComplete).not.toHaveBeenCalled();
+        });
+      });
     });
-    expect(baseProps.onClearAnimationComplete).toHaveBeenCalledOnce();
+
+    describe("動きを減らす設定の場合", () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+        vi.stubGlobal(
+          "matchMedia",
+          vi.fn(() => ({ matches: true }) as MediaQueryList),
+        );
+        const { rerender } = render(
+          <WaterSortPlay
+            {...baseProps}
+            state={clearingOperation.stateBefore}
+            sourceBottleIndex={0}
+          />,
+        );
+        rerender(<WaterSortPlay {...clearingProps} />);
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+      });
+
+      test("そろった姿を見せてから結果へ進むこと", () => {
+        const completedAtOnce =
+          clearingProps.onClearAnimationComplete.mock.calls.length;
+        act(() => {
+          vi.advanceTimersByTime(CLEAR_FINALE_REDUCED_MOTION_HOLD_MS);
+        });
+
+        expect(completedAtOnce).toBe(0);
+        expect(clearingProps.onClearAnimationComplete).toHaveBeenCalledOnce();
+      });
+    });
   });
 
   test("クリア後に次の問題・ゲームのホームへの移動・再挑戦を通知すること", () => {

@@ -1,4 +1,5 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
+import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";
 import { useWaterSortPlay } from "@/games/water-sort/play/use-water-sort-play";
 import {
@@ -51,6 +52,48 @@ function solveCurrentProblem(result: { current: HookResult }) {
 }
 
 describe("useWaterSortPlay", () => {
+  describe("手を入れた問題を開き直した場合", () => {
+    const seed = "water-sort-reopened";
+    const problemId = createProblemId({
+      generatorVersion: "1",
+      seed,
+      conditions: { colorCount: 2, capacity: 4, emptyBottleCount: 2 },
+      generationAttempt: 1,
+    });
+    const [firstMove, secondMove] = solutionMoves as [
+      WaterSortMove,
+      WaterSortMove,
+    ];
+    let reopenedOperationId: number | undefined;
+    let result: { current: HookResult };
+
+    beforeEach(() => {
+      window.sessionStorage.clear();
+      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(seed);
+      const firstPlay = renderHook(() =>
+        useWaterSortPlay("1", undefined, undefined, problemId),
+      );
+      performMove(firstPlay.result, firstMove);
+      firstPlay.unmount();
+      ({ result } = renderHook(() =>
+        useWaterSortPlay("1", undefined, undefined, problemId),
+      ));
+      reopenedOperationId = result.current.operation?.id;
+    });
+
+    afterEach(() => {
+      window.sessionStorage.clear();
+    });
+
+    test("次に注いだ手の知らせに、戻った直前の手と別の番号を付けること", () => {
+      performMove(result, secondMove);
+
+      expect(reopenedOperationId).toBeDefined();
+      expect(result.current.operation?.type).toBe("poured");
+      expect(result.current.operation?.id).not.toBe(reopenedOperationId);
+    });
+  });
+
   describe("別の問題で最初に引いた seed が今と同じ問題を指す場合", () => {
     let result: { current: HookResult };
 

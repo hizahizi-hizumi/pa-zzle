@@ -1,5 +1,5 @@
-import { PourDestinationLayer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/PourDestinationLayer";
-import { PourSourceLayer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/PourSourceLayer";
+import { PourDestination } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/PourDestination";
+import { PourSource } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/PourSource";
 import {
   groupPourAnimationsByDestination,
   type PourAnimation,
@@ -10,6 +10,7 @@ type PourAnimationLayerProps = {
   onFinish: (animationId: number) => void;
 };
 
+/** 試験管ばさみで持った試験管を傾け、口を注ぎ先の口に当てて細く流す。 */
 export function PourAnimationLayer({
   animations,
   onFinish,
@@ -17,20 +18,24 @@ export function PourAnimationLayer({
   return (
     <>
       {animations.map((animation) => (
-        <PourSourceLayer
+        <PourSource
           key={animation.id}
           animation={animation}
           onFinish={onFinish}
         />
       ))}
-      {groupPourAnimationsByDestination(animations).map(
-        (destinationAnimations) => (
-          <PourDestinationLayer
-            key={destinationAnimations[0]?.destination.bottleIndex}
-            animations={destinationAnimations}
-          />
-        ),
-      )}
+      {groupPourAnimationsByDestination(animations).map((group) => {
+        // 同じ注ぎ先へ続けて注いだときは、最後の注ぎの前の姿がそれまでの液を含むので、最後の注ぎだけを描く。
+        const latest = group[group.length - 1];
+        return (
+          latest && (
+            <PourDestination
+              key={`${latest.destination.bottleIndex}-${latest.id}`}
+              animation={latest}
+            />
+          )
+        );
+      })}
     </>
   );
 }

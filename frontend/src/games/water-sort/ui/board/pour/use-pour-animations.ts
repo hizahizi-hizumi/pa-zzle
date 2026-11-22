@@ -20,14 +20,15 @@ type UsePourAnimationsOptions = {
   operation: WaterSortOperation | null;
   bottleRefs: RefObject<Array<HTMLButtonElement | null>>;
   onActivityChange?: (active: boolean) => void;
-  onClearAnimationComplete?: () => void;
+  /** 盤面をそろえた手の注ぐ動きを終えたとき（動かせないときは、その手を受け取ったとき）に、その手の番号で呼ぶ。 */
+  onClearingPourEnd: (operationId: number) => void;
 };
 
 export function usePourAnimations({
   operation,
   bottleRefs,
   onActivityChange,
-  onClearAnimationComplete,
+  onClearingPourEnd,
 }: UsePourAnimationsOptions) {
   const [animations, setAnimations] = useState<readonly PourAnimation[]>([]);
   const animationsRef = useRef<readonly PourAnimation[]>([]);
@@ -58,10 +59,10 @@ export function usePourAnimations({
 
       replaceAnimations(current.filter(({ id }) => id !== animationId));
       if (animation.isClearingMove) {
-        onClearAnimationComplete?.();
+        onClearingPourEnd(animation.id);
       }
     },
-    [onClearAnimationComplete, replaceAnimations],
+    [onClearingPourEnd, replaceAnimations],
   );
 
   const interruptForBottleInteraction = useCallback(
@@ -98,7 +99,7 @@ export function usePourAnimations({
 
     if (cannotAnimate) {
       if (operation.isClearingMove) {
-        onClearAnimationComplete?.();
+        onClearingPourEnd(operation.id);
       }
       return;
     }
@@ -111,7 +112,7 @@ export function usePourAnimations({
     );
     if (!sourceRect || !destinationRect) {
       if (operation.isClearingMove) {
-        onClearAnimationComplete?.();
+        onClearingPourEnd(operation.id);
       }
       return;
     }
@@ -124,13 +125,13 @@ export function usePourAnimations({
     );
     if (!animation) {
       if (operation.isClearingMove) {
-        onClearAnimationComplete?.();
+        onClearingPourEnd(operation.id);
       }
       return;
     }
 
     replaceAnimations(addPourAnimation(animationsRef.current, animation));
-  }, [bottleRefs, onClearAnimationComplete, operation, replaceAnimations]);
+  }, [bottleRefs, onClearingPourEnd, operation, replaceAnimations]);
 
   return {
     animations,

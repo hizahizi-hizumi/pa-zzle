@@ -9,7 +9,8 @@ import {
 
 import { applyWaterSortMove } from "@/games/water-sort/puzzle/rules";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
-import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
+import { CLEAR_FINALE_REDUCED_MOTION_HOLD_MS } from "@/games/water-sort/ui/board/clear-finale-timing";
+import { getReagentName } from "@/games/water-sort/ui/board/test-tube/reagent";
 import { goalFigure } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/figure-boards";
 import {
   _private,
@@ -31,7 +32,7 @@ function describeBottles(state: WaterSortState): string[] {
     const contents =
       bottle.length === 0
         ? "空"
-        : bottle.map((color) => getWaterColorView(color).name).join("、");
+        : bottle.map((color) => getReagentName(color)).join("、");
     return `ボトル ${bottleIndex + 1}: ${contents}`;
   });
 }
@@ -77,6 +78,12 @@ const bottlesBySteps = goalFigure.moves.map((_, index) =>
 
 const lastPourAt =
   GOAL_START_HOLD_MS + (goalFigure.moves.length - 1) * GOAL_POUR_INTERVAL_MS;
+
+/** 最後の手を注ぎ、本番の片付ける演出を終えるまで進める。この環境では動きを再生できないので、演出は動かせない環境で見せる長さで終える。 */
+function advanceUntilSettled(): void {
+  advance(lastPourAt);
+  advance(CLEAR_FINALE_REDUCED_MOTION_HOLD_MS);
+}
 
 afterEach(() => {
   cleanup();
@@ -131,7 +138,7 @@ describe("GoalPlayback", () => {
     });
 
     test("最後の手の完成の動きを終えると、見せ直すボタンを出し、飛ばす所を除くこと", () => {
-      advance(lastPourAt);
+      advanceUntilSettled();
 
       const replayDisabled = getReplayButton().disabled;
       const skipTarget = querySkipTarget();
@@ -190,7 +197,7 @@ describe("GoalPlayback", () => {
 
     describe("そろえ終えた場合", () => {
       beforeEach(() => {
-        advance(lastPourAt);
+        advanceUntilSettled();
       });
 
       test("見せ直すと、始まりの盤面に戻り、見せ直すボタンを消すこと", () => {

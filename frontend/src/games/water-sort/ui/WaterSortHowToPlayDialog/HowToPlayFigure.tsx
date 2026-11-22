@@ -1,5 +1,6 @@
+import { isCompleteWaterSortBottle } from "@/games/water-sort/puzzle/state";
+import { TestTube } from "@/games/water-sort/ui/board/test-tube/TestTube";
 import { WATER_SORT_BOTTLE_ASPECT_RATIO } from "@/games/water-sort/ui/board/WaterSortBoard";
-import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
 import {
   getBottleRowGap,
   getBottleRowWidth,
@@ -40,9 +41,10 @@ export function HowToPlayFigure({ frame }: HowToPlayFigureProps) {
           )}
           style={{ aspectRatio: WATER_SORT_BOTTLE_ASPECT_RATIO }}
         >
-          <WaterBottle
+          <TestTube
             contents={contents}
-            selected={bottleIndex === selectedBottleIndex}
+            heldBy={bottleIndex === selectedBottleIndex ? "right" : undefined}
+            stoppered={isCompleteWaterSortBottle(contents)}
           />
         </span>
       ))}

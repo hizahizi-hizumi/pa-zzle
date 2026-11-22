@@ -12,13 +12,13 @@ import {
   type WaterSortTutorialRejection,
   waterSortTutorial,
 } from "@/games/water-sort/tutorial/tutorial";
+import { CLEAR_FINALE_REDUCED_MOTION_HOLD_MS } from "@/games/water-sort/ui/board/clear-finale-timing";
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
-import { playLayeredSound, playSound } from "@/lib/audio/sound-effects";
+import { playSound } from "@/lib/audio/sound-effects";
 
 vi.mock("@/lib/audio/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),
   playSound: vi.fn(),
-  playLayeredSound: vi.fn(),
   prepareSoundEffects: vi.fn(),
   REPEATED_SOUND_VARIATION: {},
 }));
@@ -313,7 +313,9 @@ describe("WaterSortTutorial", () => {
       const headline = queryShownText(steps[1]?.message.headline ?? "");
 
       expect(getBottleLabel(4)).toBe("ボトル 4: 緑");
-      expect(playLayeredSound).toHaveBeenCalledOnce();
+      expect(
+        getPlayedSoundNames().filter((name) => name === "pour-trickle.flac"),
+      ).toHaveLength(1);
       expect(Number(getProgressValue())).toBeGreaterThan(0);
       expect(headline).not.toBeNull();
       expect(getCuedBottles()).toEqual([2]);
@@ -342,7 +344,7 @@ describe("WaterSortTutorial", () => {
         expect(getBottleLabel(2)).toBe("ボトル 2: 赤、緑、緑、青");
         expect(getBottle(2).getAttribute("aria-pressed")).toBe("true");
         expect(violation).not.toBeNull();
-        expect(getPlayedSoundNames()).toEqual(["invalid.flac"]);
+        expect(getPlayedSoundNames().at(-1)).toBe("tube-rattle.flac");
         expect(getCuedBottles()).toEqual([3]);
       });
 
@@ -430,7 +432,7 @@ describe("WaterSortTutorial", () => {
           const violation = queryShownText(getViolationHeadline(rejection));
 
           expect(violation).not.toBeNull();
-          expect(getPlayedSoundNames().at(-1)).toBe("invalid.flac");
+          expect(getPlayedSoundNames().at(-1)).toBe("tube-rattle.flac");
         },
       );
 
@@ -463,6 +465,7 @@ describe("WaterSortTutorial", () => {
       describe("残りをそろえた場合", () => {
         beforeEach(() => {
           tapBottles(solvingBottles);
+          advanceTime(CLEAR_FINALE_REDUCED_MOTION_HOLD_MS);
         });
 
         test("完成を伝え、覚えたルールを並べ、進み具合を満たすこと", () => {
@@ -490,7 +493,7 @@ describe("WaterSortTutorial", () => {
 
         test("本番と同じ完成の音を1回鳴らすこと", () => {
           const clearedSounds = getPlayedSoundNames().filter(
-            (name) => name === "cleared.flac",
+            (name) => name === "rack-chime.flac",
           );
 
           expect(clearedSounds).toHaveLength(1);
@@ -531,6 +534,7 @@ describe("WaterSortTutorial", () => {
       render(<WaterSortTutorial open={true} onClose={onClose} />);
       pressStart();
       tapBottles([...stepBottles.flat(), ...solvingBottles]);
+      advanceTime(CLEAR_FINALE_REDUCED_MOTION_HOLD_MS);
     });
 
     test("いまの問題も同じルールだと伝え、プレイに戻れること", () => {

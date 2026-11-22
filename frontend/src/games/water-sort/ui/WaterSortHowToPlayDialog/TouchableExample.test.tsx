@@ -17,16 +17,11 @@ import {
   pourOperationExample,
 } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/figure-boards";
 import { TouchableExample } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/TouchableExample";
-import {
-  playLayeredSound,
-  playSound,
-  type SoundEffect,
-} from "@/lib/audio/sound-effects";
+import { playSound, type SoundEffect } from "@/lib/audio/sound-effects";
 
 vi.mock("@/lib/audio/sound-effects", () => ({
   REPEATED_SOUND_VARIATION: {},
   defineSoundEffect: (url: string) => ({ url }),
-  playLayeredSound: vi.fn(),
   playSound: vi.fn(),
   prepareSoundEffects: vi.fn(),
 }));
@@ -48,7 +43,6 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.mocked(playSound).mockClear();
-  vi.mocked(playLayeredSound).mockClear();
   Reflect.deleteProperty(Element.prototype, "animate");
 });
 
@@ -106,15 +100,19 @@ function isResetVisible(): boolean {
   }).disabled;
 }
 
-/** 鳴らした通らない音の数と、注いだ泡の音の数。 */
+function countPlayedSounds(fileName: string): number {
+  return vi
+    .mocked(playSound)
+    .mock.calls.filter(([sound]) =>
+      (sound as SoundEffect & { url: string }).url.endsWith(fileName),
+    ).length;
+}
+
+/** 鳴らした、注げない試験管が揺れる音の数と、口から流れ込む音の数。 */
 function countSounds(): { invalid: number; poured: number } {
   return {
-    invalid: vi
-      .mocked(playSound)
-      .mock.calls.filter(([sound]) =>
-        (sound as SoundEffect & { url: string }).url.includes("invalid"),
-      ).length,
-    poured: vi.mocked(playLayeredSound).mock.calls.length,
+    invalid: countPlayedSounds("tube-rattle.flac"),
+    poured: countPlayedSounds("pour-trickle.flac"),
   };
 }
 
@@ -192,7 +190,7 @@ describe("TouchableExample", () => {
     ])(
       "✓ の $destination 本目を押した場合",
       ({ destination, bottlesAfterPour }) => {
-        test("本番と同じく注いで泡の音を鳴らし、選ぶのをやめるので答え・わけ・手がかり・凡例を消して、注いだボトルにだけ注げたことを添え、元に戻すを出すこと", () => {
+        test("本番と同じく注いで流れ込む音を鳴らし、選ぶのをやめるので答え・わけ・手がかり・凡例を消して、注いだボトルにだけ注げたことを添え、元に戻すを出すこと", () => {
           fireEvent.click(getBottle(destination));
 
           const bottles = readBottleNames();
@@ -325,7 +323,7 @@ describe("TouchableExample", () => {
     describe("注いだ後の場合", () => {
       beforeEach(() => {
         fireEvent.click(getBottle(2));
-        vi.mocked(playLayeredSound).mockClear();
+        vi.mocked(playSound).mockClear();
       });
 
       test("元に戻すと、左のボトルを選んだ最初の姿・答え・手がかりに戻り、音は鳴らさないこと", () => {

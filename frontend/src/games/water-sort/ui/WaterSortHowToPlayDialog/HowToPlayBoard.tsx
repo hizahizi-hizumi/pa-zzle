@@ -84,6 +84,8 @@ export function HowToPlayBoard({
         onClearAnimationComplete={onClearAnimationComplete}
         layout="single-row"
         spacing="howToPlay"
+        stand="none"
+        clearFinaleSkippableByTouch={false}
       />
       {hintedBottleIndex === null ? null : (
         <span

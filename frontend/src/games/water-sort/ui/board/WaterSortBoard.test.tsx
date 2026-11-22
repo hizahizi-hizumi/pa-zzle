@@ -1,5 +1,12 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 
+import { CLEAR_FINALE_REDUCED_MOTION_HOLD_MS } from "@/games/water-sort/ui/board/clear-finale-timing";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 
 function installPendingAnimations() {
@@ -23,6 +30,7 @@ afterEach(() => {
   delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe("WaterSortBoard", () => {
@@ -194,7 +202,7 @@ describe("WaterSortBoard", () => {
       firstPourAnimations = animations.cancelAnimations.slice();
     });
 
-    test("同じ注ぎ先への後続注水を開始しても先行注水を終了しないこと", () => {
+    test("同じ注ぎ先への後続注水を開始しても先行注水の注ぎ元を止めないこと", () => {
       board.rerender(
         <WaterSortBoard
           interactionDisabled={false}
@@ -213,9 +221,12 @@ describe("WaterSortBoard", () => {
         />,
       );
 
+      // 注ぎ元・液の筋・注ぎ元から減る液の3つを、注ぎ先へ増える液より先に動かす。
+      const firstSourceAnimations = firstPourAnimations.slice(0, 3);
+
       expect(animations.animate).toHaveBeenCalledTimes(8);
       expect(firstPourAnimations).toHaveLength(4);
-      for (const cancelAnimation of firstPourAnimations) {
+      for (const cancelAnimation of firstSourceAnimations) {
         expect(cancelAnimation).not.toHaveBeenCalled();
       }
     });
@@ -276,6 +287,7 @@ describe("WaterSortBoard", () => {
     let animate: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
+      vi.useFakeTimers();
       animate = vi.fn();
       Object.defineProperty(HTMLElement.prototype, "animate", {
         configurable: true,
@@ -307,9 +319,19 @@ describe("WaterSortBoard", () => {
       );
     });
 
-    test("動きを減らす設定では最終注水を待たずに完了通知すること", () => {
-      expect(animate).not.toHaveBeenCalled();
+    test("注ぐ動きを見せず、片付いた姿を見せてから完了を知らせること", () => {
+      const notifiedBeforeHold = vi.mocked(onClearAnimationComplete).mock.calls
+        .length;
+      act(() => {
+        vi.advanceTimersByTime(CLEAR_FINALE_REDUCED_MOTION_HOLD_MS);
+      });
+
+      expect(notifiedBeforeHold).toBe(0);
       expect(onClearAnimationComplete).toHaveBeenCalledOnce();
+      // 空の試験管を動かさずに消すだけで、注ぐ動きと片付ける動きを再生しない。
+      expect(animate.mock.calls.map(([keyframes]) => keyframes)).toEqual([
+        [{ opacity: 0 }],
+      ]);
     });
   });
 
@@ -317,6 +339,7 @@ describe("WaterSortBoard", () => {
     let onClearAnimationComplete: () => void;
 
     beforeEach(() => {
+      vi.useFakeTimers();
       Object.defineProperty(HTMLElement.prototype, "animate", {
         configurable: true,
         value: vi.fn(),
@@ -344,7 +367,38 @@ describe("WaterSortBoard", () => {
     });
 
     test("注水対象のDOMを取得できなくても最終注水の進行を停止しないこと", () => {
+      act(() => {
+        vi.advanceTimersByTime(CLEAR_FINALE_REDUCED_MOTION_HOLD_MS);
+      });
+
       expect(onClearAnimationComplete).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("1色でそろった試験管がある場合", () => {
+    beforeEach(() => {
+      render(
+        <WaterSortBoard
+          interactionDisabled={false}
+          state={[
+            [0, 0, 0, 0],
+            [1, 1, 1],
+            [1, 0],
+          ]}
+          sourceBottleIndex={null}
+          operation={null}
+          onSelectBottle={vi.fn()}
+        />,
+      );
+    });
+
+    test("そろった試験管にだけ栓をして描くこと", () => {
+      const stopperedBottles = screen
+        .getAllByRole("button", { name: /^ボトル/ })
+        .filter((bottle) => bottle.querySelector("[data-rubber-stopper]"))
+        .map((bottle) => bottle.getAttribute("aria-label"));
+
+      expect(stopperedBottles).toEqual(["ボトル 1: 赤、赤、赤、赤"]);
     });
   });
 });

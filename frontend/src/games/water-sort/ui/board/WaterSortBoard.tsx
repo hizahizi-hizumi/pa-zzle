@@ -1,14 +1,18 @@
-import { useLayoutEffect, useRef } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
-import type { WaterSortState } from "@/games/water-sort/puzzle/state";
+import {
+  isCompleteWaterSortBottle,
+  type WaterSortState,
+} from "@/games/water-sort/puzzle/state";
 import type { WaterSortBottleCue } from "@/games/water-sort/ui/board/bottle-cue";
 import { PourAnimationLayer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer";
 import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-animations";
+import { getReagentName } from "@/games/water-sort/ui/board/test-tube/reagent";
+import { TestTube } from "@/games/water-sort/ui/board/test-tube/TestTube";
 import { BottleCue } from "@/games/water-sort/ui/board/WaterSortBoard/BottleCue";
-import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
-import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
-import { useWaterSortIdea } from "@/games/water-sort/ui/ideas/IdeaContext";
+import { ClearFinale } from "@/games/water-sort/ui/board/WaterSortBoard/ClearFinale";
+import { TestTubeRack } from "@/games/water-sort/ui/board/WaterSortBoard/TestTubeRack";
 import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +23,7 @@ type WaterSortBoardProps = {
   onSelectBottle: (bottleIndex: number) => void;
   interactionDisabled: boolean;
   onPourAnimationActivityChange?: (active: boolean) => void;
+  /** 盤面をそろえた手の注ぐ動きと、その後の片付ける演出を終えたときに呼ぶ。 */
   onClearAnimationComplete?: () => void;
   /** チュートリアルだけが渡す。 */
   cues?: readonly WaterSortBottleCue[];
@@ -34,6 +39,14 @@ type WaterSortBoardProps = {
    * - `howToPlay`: 遊び方の図。置き場所が CSS 変数 `WATER_SORT_HOW_TO_PLAY_GAP_PROPERTY` で渡す、遊び方の図と同じ間にする。
    */
   spacing?: "play" | "howToPlay";
+  /**
+   * 試験管を立てる所。
+   * - `rack-on-bench`: 実験台に置いた試験管立てに立てる。試験管立てと実験台は盤面の後ろに、置いた入れ物いっぱいに描く。
+   * - `none`: 試験管だけを並べる。遊び方の図が、まわりの説明の中に盤面だけを置くときに使う。
+   */
+  stand?: "rack-on-bench" | "none";
+  /** そろえた後の演出を、画面のどこかに触れて飛ばせるか。遊び方のゴールの盤面は、自分の飛ばすボタンを持つので外す。 */
+  clearFinaleSkippableByTouch?: boolean;
 };
 
 const invalidBottleShakeKeyframes: Keyframe[] = [
@@ -63,17 +76,38 @@ export function WaterSortBoard({
   cues = [],
   layout: layoutKind = "rows",
   spacing = "play",
+  stand = "rack-on-bench",
+  clearFinaleSkippableByTouch = true,
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const IdeaPourAnimationLayer =
-    useWaterSortIdea().overrides.PourAnimationLayer ?? PourAnimationLayer;
+  // 演出を終えるときに呼ぶ関数は描き直しで替わってよいので、注ぐ動きと演出には替わらない関数だけを渡す。
+  const latestRef = useRef({ state, onClearAnimationComplete });
+  useLayoutEffect(() => {
+    latestRef.current = { state, onClearAnimationComplete };
+  });
+  const [clearFinale, setClearFinale] = useState<ClearFinaleRun | null>(null);
+  const startClearFinale = useCallback((operationId: number) => {
+    setClearFinale({ operationId, settledState: null });
+  }, []);
   const { animations, finishAnimation, interruptForBottleInteraction } =
     usePourAnimations({
       operation,
       bottleRefs,
       onActivityChange: onPourAnimationActivityChange,
-      onClearAnimationComplete,
+      onClearingPourEnd: startClearFinale,
     });
+  const completeClearFinale = useCallback(() => {
+    const { state: settledState, onClearAnimationComplete: complete } =
+      latestRef.current;
+    setClearFinale((current) => current && { ...current, settledState });
+    complete?.();
+  }, []);
+  // 演出の後、完了を受けて手の知らせが消えても、同じ盤面のうちは片付いた姿を保つ。
+  // リセット・待った・別の問題で手か盤面が替わったら、前の盤面の演出は残さない。
+  const showsClearFinale =
+    clearFinale !== null &&
+    (clearFinale.operationId === operation?.id ||
+      (operation === null && clearFinale.settledState === state));
 
   useLayoutEffect(() => {
     if (operation?.type === "invalid") {
@@ -116,7 +150,6 @@ export function WaterSortBoard({
 
   const bottles = (
     <fieldset
-      data-water-sort-board=""
       className={cn(
         "grid w-full items-end justify-center border-0 p-0 [--selected-bottle-lift:--spacing(3.5)]",
         layoutKind === "rows" && "pt-(--selected-bottle-lift)",
@@ -136,9 +169,7 @@ export function WaterSortBoard({
         const contents =
           bottle.length === 0
             ? "空"
-            : bottle
-                .map((colorIndex) => getWaterColorView(colorIndex).name)
-                .join("、");
+            : bottle.map((colorIndex) => getReagentName(colorIndex)).join("、");
         const isSource = bottleIndex === sourceBottleIndex;
         const isAnimated = animatedBottleIndexes.has(bottleIndex);
         const cue = cues.find((item) => item.bottleIndex === bottleIndex);
@@ -160,11 +191,10 @@ export function WaterSortBoard({
             <span
               className={`absolute inset-0 ${isAnimated ? "invisible" : ""}`}
             >
-              <WaterBottle
+              <TestTube
                 contents={bottle}
-                selected={isSource}
-                role="board"
-                concealed={isAnimated}
+                heldBy={isSource ? "right" : undefined}
+                stoppered={isCompleteWaterSortBottle(bottle)}
               />
             </span>
             {cue && <BottleCue cue={cue} />}
@@ -174,25 +204,48 @@ export function WaterSortBoard({
     </fieldset>
   );
 
+  const rack = stand === "rack-on-bench" && (
+    <TestTubeRack state={state} bottleRefs={bottleRefs} />
+  );
+
   return (
     <>
       {/* 1段に並べるときは、大きさを置く側が決めるので、高さに収める入れ物に入れない。 */}
       {layoutKind === "single-row" ? (
-        bottles
+        rack ? (
+          <div className="relative w-full">
+            {rack}
+            {bottles}
+          </div>
+        ) : (
+          bottles
+        )
       ) : (
-        <div className="flex size-full items-center justify-center [container-type:size]">
+        <div className="relative flex size-full items-center justify-center [container-type:size]">
+          {rack}
           {bottles}
         </div>
       )}
 
-      {/* 注ぐ演出はviewport座標を使うので、サイズを制約するコンテナの外へ置く。 */}
-      <IdeaPourAnimationLayer
-        animations={animations}
-        onFinish={finishAnimation}
-      />
+      {/* 注ぐ演出と片付ける演出はviewport座標を使うので、サイズを制約するコンテナの外へ置く。 */}
+      <PourAnimationLayer animations={animations} onFinish={finishAnimation} />
+      {showsClearFinale && (
+        <ClearFinale
+          state={state}
+          bottleRefs={bottleRefs}
+          skippableByTouch={clearFinaleSkippableByTouch}
+          onDone={completeClearFinale}
+        />
+      )}
     </>
   );
 }
+
+type ClearFinaleRun = {
+  operationId: number;
+  /** 演出を終えたときの盤面。終える前は `null`。 */
+  settledState: WaterSortState | null;
+};
 
 /** 遊び方の図が、1段に並べるボトルの間を渡す CSS 変数。 */
 export const WATER_SORT_HOW_TO_PLAY_GAP_PROPERTY =
