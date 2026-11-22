@@ -6,6 +6,7 @@ import {
 import { RecordedMagicSquareResult } from "@/app/game-integration/magic-square/RecordedMagicSquareResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/magic-square/assets/pictogram.svg?raw";
+import pictogramShowcaseSvg from "@/games/magic-square/assets/pictogram-showcase.svg?raw";
 import { MAGIC_SQUARE_DISPLAY_NAME } from "@/games/magic-square/display-name";
 import {
   isMagicSquarePlayRecord,
@@ -28,6 +29,7 @@ export const magicSquareCatalogEntry = {
   id: magicSquarePlayRecordDefinition.gameId,
   name: MAGIC_SQUARE_DISPLAY_NAME,
   pictogramSvg,
+  pictogramShowcaseSvg,
   homePath: "/puzzles/magic-square",
   playPath: "/puzzles/magic-square/play/:problemId",
   playRecordDisplay: magicSquarePlayRecordDisplay,
