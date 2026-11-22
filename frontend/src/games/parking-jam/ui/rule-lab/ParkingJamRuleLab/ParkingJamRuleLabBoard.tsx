@@ -82,7 +82,7 @@ export function ParkingJamRuleLabBoard({
   const walls = wallSegments(board);
   return (
     <div
-      className="relative aspect-square w-full max-w-[470px] overflow-hidden rounded-2xl border-[7px] border-[#cbd5d1] bg-[#e4e9e8] shadow-inner"
+      className="relative aspect-square w-full max-w-[470px] overflow-hidden rounded-xl border-[5px] border-[#cbd5d1] bg-[#e4e9e8] shadow-inner"
       aria-label="試作パーキングジャムの盤面"
     >
       <div
@@ -121,10 +121,10 @@ export function ParkingJamRuleLabBoard({
             aria-label={`車${index + 1}・色${color}を出庫`}
             onClick={() => onExit(vehicle.id)}
             style={style}
-            className="absolute flex items-center justify-center gap-1 rounded-lg border-2 border-[#334155] font-bold text-slate-950 shadow-[inset_0_-4px_0_#0002] outline-offset-2 hover:brightness-105 focus-visible:outline-2 focus-visible:outline-blue-700"
+            className={`absolute flex items-center justify-center rounded-lg border-2 border-[#334155] font-bold text-slate-950 shadow-[inset_0_-4px_0_#0002] outline-offset-2 hover:brightness-105 focus-visible:outline-2 focus-visible:outline-blue-700 ${horizontal ? "gap-1" : "flex-col leading-none"}`}
           >
-            <span className="text-[10px] sm:text-xs">{color}</span>
-            <span className="text-sm sm:text-lg">{index + 1}</span>
+            <span className="text-[11px] sm:text-xs">{color}</span>
+            <span className="text-base sm:text-lg">{index + 1}</span>
             <span className="text-[11px] opacity-65">
               {horizontal ? "↔" : "↕"}
             </span>
