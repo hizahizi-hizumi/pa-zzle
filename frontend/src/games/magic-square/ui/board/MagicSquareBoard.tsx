@@ -76,7 +76,7 @@ type MagicSquareBoardProps = {
   cue?: MagicSquareCellCue | null;
   /**
    * チュートリアルで、覆いから抜いて元の明るさで見せる列（決め手）。列のマスと端の合計、そろえる合計を抜く。
-   * 渡さないか空なら覆わない。
+   * 渡さないか空なら覆わない。覆っている間は、選んだマスを通る列の薄い色を、抜いた列にだけ付ける。
    */
   spotlightLines?: readonly MagicSquareLine[];
 };
@@ -264,16 +264,22 @@ export function MagicSquareBoard({
   const { getTapHandlers } = useTouchTap();
   const { size } = board;
   const units = getMagicSquareFrameUnits(size);
-  const selectedLines =
+  const spotlighting = spotlightLines.length > 0;
+  const isSpotlit = (line: MagicSquareLine) =>
+    spotlightLines.some((spotlightLine) =>
+      isSameMagicSquareLine(spotlightLine, line),
+    );
+  // 覆いの下に列の薄い色が残ると、暗い覆いと混ざって濁り、どの列を抜いたのか読みにくくなる。
+  const selectedLines = (
     selectedCellIndex === null
       ? []
-      : listMagicSquareLinesThroughCell(size, selectedCellIndex);
+      : listMagicSquareLinesThroughCell(size, selectedCellIndex)
+  ).filter((line) => !spotlighting || isSpotlit(line));
   const selectedLineCells = new Set(
     selectedLines.flatMap((line) => getMagicSquareLineCellIndices(size, line)),
   );
   const slabArea = getMagicSquareSlabArea(size);
   const magicSum = getMagicSquareMagicSum(size);
-  const spotlighting = spotlightLines.length > 0;
   const spotlitCells = new Set(
     spotlightLines.flatMap((line) => getMagicSquareLineCellIndices(size, line)),
   );
@@ -338,10 +344,7 @@ export function MagicSquareBoard({
             gridColumn: MAGIC_SQUARE_MAGIC_SUM_AREA.column,
           }}
         >
-          <TutorialSpotlight
-            active={spotlighting}
-            className="inset-[8%] rounded-md"
-          />
+          <TutorialSpotlight active={spotlighting} className="inset-0" />
           <span className="sr-only">{`そろえる合計 ${magicSum}`}</span>
           <span
             aria-hidden="true"
@@ -392,6 +395,7 @@ export function MagicSquareBoard({
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: マスの番号そのものが識別になる
                 key={cellIndex}
+                className="relative"
                 style={{
                   padding: scaleByCell(MAGIC_SQUARE_CELL_INSET_RATIO),
                   backgroundImage: onSelectedLine
@@ -460,10 +464,6 @@ export function MagicSquareBoard({
                     </span>
                   )}
                   {memo.length > 0 && <CellMemo memo={memo} />}
-                  <TutorialSpotlight
-                    active={spotlitCells.has(cellIndex)}
-                    className="inset-0 rounded-[inherit]"
-                  />
                   {cue?.cellIndex === cellIndex &&
                     (cue.pointer ? (
                       <TutorialCue
@@ -475,6 +475,11 @@ export function MagicSquareBoard({
                       <TutorialCue kind="mark" recallId={cue.recallId} />
                     ))}
                 </button>
+                {/* 最初から置いてある数は盤の面に刻んだ字で面を持たないので、列は盤の面ごと、マスの枠の形で抜く。 */}
+                <TutorialSpotlight
+                  active={spotlitCells.has(cellIndex)}
+                  className="inset-0"
+                />
               </div>
             );
           })}
@@ -485,9 +490,7 @@ export function MagicSquareBoard({
           const onSelectedLine = selectedLines.some((selectedLine) =>
             isSameMagicSquareLine(selectedLine, line),
           );
-          const spotlit = spotlightLines.some((spotlightLine) =>
-            isSameMagicSquareLine(spotlightLine, line),
-          );
+          const spotlit = isSpotlit(line);
           const diagonalFrom = line.kind === "diagonal" ? line.from : null;
           const sumOffset =
             diagonalFrom === null
@@ -499,6 +502,8 @@ export function MagicSquareBoard({
               className="relative flex items-center justify-center"
               style={{ gridRow: area.row, gridColumn: area.column }}
             >
+              {/* 列の端の合計は、合計を置く枠ごと抜く。 */}
+              <TutorialSpotlight active={spotlit} className="inset-0" />
               {onSelectedLine && (
                 <span
                   aria-hidden="true"
@@ -530,10 +535,6 @@ export function MagicSquareBoard({
                 }}
               >
                 {sum}
-                <TutorialSpotlight
-                  active={spotlit}
-                  className="-inset-x-[0.3em] -inset-y-[0.25em] rounded-md"
-                />
               </span>
             </div>
           );
