@@ -7,6 +7,8 @@ import { HitofudePuzzleHowToPlayDialog } from "@/games/hitofude-puzzle/ui/Hitofu
 import { HitofudePuzzleTutorial } from "@/games/hitofude-puzzle/ui/HitofudePuzzleTutorial";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
 import { IceFloorMazeTutorial } from "@/games/ice-floor-maze/ui/IceFloorMazeTutorial";
+import { MagicSquareHowToPlayDialog } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog";
+import { MagicSquareTutorial } from "@/games/magic-square/ui/MagicSquareTutorial";
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
 import { MinesweeperTutorial } from "@/games/minesweeper/ui/MinesweeperTutorial";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
@@ -40,6 +42,10 @@ const guides: Record<string, GuideComponents> = {
   "ice-floor-maze": {
     HowToPlay: IceFloorMazeHowToPlayDialog,
     Tutorial: IceFloorMazeTutorial,
+  },
+  "magic-square": {
+    HowToPlay: MagicSquareHowToPlayDialog,
+    Tutorial: MagicSquareTutorial,
   },
   minesweeper: {
     HowToPlay: MinesweeperHowToPlayDialog,

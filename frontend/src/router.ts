@@ -14,6 +14,8 @@ export type Path =
   | `/puzzles/hitofude-puzzle/play/:problemId`
   | `/puzzles/ice-floor-maze`
   | `/puzzles/ice-floor-maze/play/:problemId`
+  | `/puzzles/magic-square`
+  | `/puzzles/magic-square/play/:problemId`
   | `/puzzles/minesweeper`
   | `/puzzles/minesweeper/play/:problemId`
   | `/puzzles/nanpure`
@@ -39,6 +41,7 @@ export type Params = {
   '/puzzles/bridges/play/:problemId': { problemId: string }
   '/puzzles/hitofude-puzzle/play/:problemId': { problemId: string }
   '/puzzles/ice-floor-maze/play/:problemId': { problemId: string }
+  '/puzzles/magic-square/play/:problemId': { problemId: string }
   '/puzzles/minesweeper/play/:problemId': { problemId: string }
   '/puzzles/nanpure/play/:problemId': { problemId: string }
   '/puzzles/parking-jam/play/:problemId': { problemId: string }

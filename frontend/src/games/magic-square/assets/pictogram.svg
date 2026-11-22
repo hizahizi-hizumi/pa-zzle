@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="魔方陣">
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M34 16v72M52 16v72M70 16v72M16 34h72M16 52h72M16 70h72"/>
+  <rect x="16" y="16" width="72" height="72" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="3" stroke-linecap="round"><path d="M25 43h54M61 25v54M25 25l54 54"/></g>
+  <g fill="var(--game-pictogram-strong)"><circle cx="102" cy="43" r="5"/><circle cx="61" cy="102" r="5"/><circle cx="100" cy="100" r="5"/></g>
+</svg>
