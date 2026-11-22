@@ -1,0 +1,398 @@
+[
+  {
+    "id": "two-bays",
+    "title": "2枠：判断が無い",
+    "kind": "限界",
+    "bayCount": 2,
+    "solutions": 24,
+    "queue": [],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 2,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v2",
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 2,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 0,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 3,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v7",
+          "row": 2,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 7
+        },
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "lure-only",
+    "title": "3枠：負ける手は理由の無い保留だけ",
+    "kind": "限界",
+    "bayCount": 3,
+    "solutions": 216,
+    "queue": [],
+    "board": {
+      "width": 6,
+      "height": 6,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 5,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 4,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v2",
+          "row": 2,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "C"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 5,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 1,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v7",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 6
+        },
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 6
+        }
+      ]
+    }
+  },
+  {
+    "id": "one-decision",
+    "title": "3枠：判断1つ（典型）",
+    "kind": "代表",
+    "bayCount": 3,
+    "solutions": 45,
+    "queue": [],
+    "board": {
+      "width": 7,
+      "height": 7,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 5,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "B"
+        },
+        {
+          "id": "v1",
+          "row": 1,
+          "column": 3,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v2",
+          "row": 1,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v3",
+          "row": 0,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v4",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v5",
+          "row": 0,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "A"
+        },
+        {
+          "id": "v6",
+          "row": 0,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v7",
+          "row": 1,
+          "column": 2,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "C"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 7
+        },
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "deepest",
+    "title": "最も深い問題（山登り）",
+    "kind": "上限",
+    "bayCount": 4,
+    "solutions": 13248,
+    "queue": [],
+    "board": {
+      "width": 8,
+      "height": 8,
+      "vehicles": [
+        {
+          "id": "v0",
+          "row": 4,
+          "column": 3,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v1",
+          "row": 1,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "E"
+        },
+        {
+          "id": "v2",
+          "row": 2,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "A"
+        },
+        {
+          "id": "v3",
+          "row": 7,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "D"
+        },
+        {
+          "id": "v4",
+          "row": 3,
+          "column": 5,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "F"
+        },
+        {
+          "id": "v5",
+          "row": 7,
+          "column": 4,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v6",
+          "row": 1,
+          "column": 0,
+          "orientation": "vertical",
+          "length": 3,
+          "color": "E"
+        },
+        {
+          "id": "v7",
+          "row": 4,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 3,
+          "color": "C"
+        },
+        {
+          "id": "v8",
+          "row": 0,
+          "column": 6,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "B"
+        },
+        {
+          "id": "v9",
+          "row": 2,
+          "column": 2,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "F"
+        },
+        {
+          "id": "v10",
+          "row": 2,
+          "column": 1,
+          "orientation": "vertical",
+          "length": 2,
+          "color": "D"
+        },
+        {
+          "id": "v11",
+          "row": 6,
+          "column": 0,
+          "orientation": "horizontal",
+          "length": 2,
+          "color": "B"
+        }
+      ],
+      "fixedAreas": [],
+      "roadOpenings": [
+        {
+          "side": "right",
+          "startOffset": 0,
+          "length": 8
+        },
+        {
+          "side": "up",
+          "startOffset": 0,
+          "length": 8
+        }
+      ]
+    }
+  }
+]

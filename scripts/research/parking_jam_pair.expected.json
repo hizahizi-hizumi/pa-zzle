@@ -1,0 +1,1400 @@
+{
+ "survey": {
+  "seed": 740,
+  "problems": 3600,
+  "kMinByCars": {
+   "10": {
+    "2": 993,
+    "3": 203,
+    "4": 4
+   },
+   "12": {
+    "2": 983,
+    "3": 207,
+    "4": 10
+   },
+   "8": {
+    "2": 1034,
+    "3": 157,
+    "4": 9
+   }
+  },
+  "kMinByOpening": {
+   "adjacent2": {
+    "2": 473,
+    "3": 404,
+    "4": 23
+   },
+   "all4": {
+    "2": 889,
+    "3": 11
+   },
+   "one": {
+    "2": 748,
+    "3": 152
+   },
+   "opposite2": {
+    "2": 900
+   }
+  },
+  "kMinUnblocked": {
+   "2": 3600
+  },
+  "cells": {
+   "2bays/slack0": {
+    "problems": 3010,
+    "withMoveDecision": 0.8312,
+    "withDelayedLosingMove": 0.0,
+    "withDecision": 0.0,
+    "withEssential": 0.0,
+    "essentialCount": {
+     "0": 3010
+    },
+    "byCars": {
+     "8": {
+      "problems": 1034,
+      "withDecision": 0.0,
+      "withEssential": 0.0
+     },
+     "10": {
+      "problems": 993,
+      "withDecision": 0.0,
+      "withEssential": 0.0
+     },
+     "12": {
+      "problems": 983,
+      "withDecision": 0.0,
+      "withEssential": 0.0
+     }
+    },
+    "byOpening": {
+     "adjacent2": {
+      "problems": 473,
+      "withEssential": 0.0
+     },
+     "all4": {
+      "problems": 889,
+      "withEssential": 0.0
+     },
+     "one": {
+      "problems": 748,
+      "withEssential": 0.0
+     },
+     "opposite2": {
+      "problems": 900,
+      "withEssential": 0.0
+     }
+    },
+    "losingMovesExitsMax": {
+     "0": 1.0
+    },
+    "losingMoves": 23487,
+    "essentialLosingExitsMax": {},
+    "essentialDistanceDeparturesMax": {},
+    "essentialHeld": {},
+    "essentialWaitingBefore": {},
+    "losingPlanKinds": {},
+    "essentialLosingPlanKinds": {},
+    "blockingDecides": null,
+    "widerWins": null,
+    "solutionsMedian": [
+     384,
+     14016,
+     46080
+    ]
+   },
+   "3bays/slack0": {
+    "problems": 567,
+    "withMoveDecision": 0.9153,
+    "withDelayedLosingMove": 0.2222,
+    "withDecision": 0.0582,
+    "withEssential": 0.0582,
+    "essentialCount": {
+     "0": 534,
+     "1": 32,
+     "2": 1
+    },
+    "byCars": {
+     "8": {
+      "problems": 157,
+      "withDecision": 0.0318,
+      "withEssential": 0.0318
+     },
+     "10": {
+      "problems": 203,
+      "withDecision": 0.0394,
+      "withEssential": 0.0394
+     },
+     "12": {
+      "problems": 207,
+      "withDecision": 0.0966,
+      "withEssential": 0.0966
+     }
+    },
+    "byOpening": {
+     "adjacent2": {
+      "problems": 404,
+      "withEssential": 0.0817
+     },
+     "all4": {
+      "problems": 11,
+      "withEssential": 0.0
+     },
+     "one": {
+      "problems": 152,
+      "withEssential": 0.0
+     },
+     "opposite2": {
+      "problems": 0,
+      "withEssential": null
+     }
+    },
+    "losingMovesExitsMax": {
+     "0": 0.8515,
+     "1": 0.0269,
+     "2": 0.0429,
+     "3": 0.0276,
+     "4": 0.0294,
+     "5": 0.0218
+    },
+    "losingMoves": 7111,
+    "essentialLosingExitsMax": {
+     "1": 0.8919,
+     "3": 0.1081
+    },
+    "essentialDistanceDeparturesMax": {
+     "1": 33,
+     "2": 4
+    },
+    "essentialHeld": {
+     "2": 37
+    },
+    "essentialWaitingBefore": {
+     "0": 34
+    },
+    "losingPlanKinds": {
+     "color": 58
+    },
+    "essentialLosingPlanKinds": {
+     "color": 37
+    },
+    "blockingDecides": 1.0,
+    "widerWins": 1.0,
+    "solutionsMedian": [
+     1476,
+     42768,
+     346986
+    ]
+   },
+   "3bays/slack1": {
+    "problems": 3010,
+    "withMoveDecision": 0.4897,
+    "withDelayedLosingMove": 0.0,
+    "withDecision": 0.0,
+    "withEssential": 0.0,
+    "essentialCount": {
+     "0": 3010
+    },
+    "byCars": {
+     "8": {
+      "problems": 1034,
+      "withDecision": 0.0,
+      "withEssential": 0.0
+     },
+     "10": {
+      "problems": 993,
+      "withDecision": 0.0,
+      "withEssential": 0.0
+     },
+     "12": {
+      "problems": 983,
+      "withDecision": 0.0,
+      "withEssential": 0.0
+     }
+    },
+    "byOpening": {
+     "adjacent2": {
+      "problems": 473,
+      "withEssential": 0.0
+     },
+     "all4": {
+      "problems": 889,
+      "withEssential": 0.0
+     },
+     "one": {
+      "problems": 748,
+      "withEssential": 0.0
+     },
+     "opposite2": {
+      "problems": 900,
+      "withEssential": 0.0
+     }
+    },
+    "losingMovesExitsMax": {
+     "0": 1.0
+    },
+    "losingMoves": 13333,
+    "essentialLosingExitsMax": {},
+    "essentialDistanceDeparturesMax": {},
+    "essentialHeld": {},
+    "essentialWaitingBefore": {},
+    "losingPlanKinds": {},
+    "essentialLosingPlanKinds": {},
+    "blockingDecides": null,
+    "widerWins": null,
+    "solutionsMedian": [
+     39600,
+     3487836,
+     11197440
+    ]
+   },
+   "4bays/slack0": {
+    "problems": 23,
+    "withMoveDecision": 0.6087,
+    "withDelayedLosingMove": 0.1304,
+    "withDecision": 0.0,
+    "withEssential": 0.0,
+    "essentialCount": {
+     "0": 23
+    },
+    "byCars": {
+     "8": {
+      "problems": 9,
+      "withDecision": 0.0,
+      "withEssential": 0.0
+     },
+     "10": {
+      "problems": 4,
+      "withDecision": 0.0,
+      "withEssential": 0.0
+     },
+     "12": {
+      "problems": 10,
+      "withDecision": 0.0,
+      "withEssential": 0.0
+     }
+    },
+    "byOpening": {
+     "adjacent2": {
+      "problems": 23,
+      "withEssential": 0.0
+     },
+     "all4": {
+      "problems": 0,
+      "withEssential": null
+     },
+     "one": {
+      "problems": 0,
+      "withEssential": null
+     },
+     "opposite2": {
+      "problems": 0,
+      "withEssential": null
+     }
+    },
+    "losingMovesExitsMax": {
+     "0": 0.7473,
+     "1": 0.1209,
+     "2": 0.0659,
+     "3": 0.0385,
+     "4": 0.022,
+     "5": 0.0055
+    },
+    "losingMoves": 182,
+    "essentialLosingExitsMax": {},
+    "essentialDistanceDeparturesMax": {},
+    "essentialHeld": {},
+    "essentialWaitingBefore": {},
+    "losingPlanKinds": {},
+    "essentialLosingPlanKinds": {},
+    "blockingDecides": null,
+    "widerWins": null,
+    "solutionsMedian": [
+     504,
+     11800,
+     54992
+    ]
+   },
+   "4bays/slack1": {
+    "problems": 567,
+    "withMoveDecision": 0.4427,
+    "withDelayedLosingMove": 0.0441,
+    "withDecision": 0.0018,
+    "withEssential": 0.0018,
+    "essentialCount": {
+     "0": 566,
+     "2": 1
+    },
+    "byCars": {
+     "8": {
+      "problems": 157,
+      "withDecision": 0.0,
+      "withEssential": 0.0
+     },
+     "10": {
+      "problems": 203,
+      "withDecision": 0.0,
+      "withEssential": 0.0
+     },
+     "12": {
+      "problems": 207,
+      "withDecision": 0.0048,
+      "withEssential": 0.0048
+     }
+    },
+    "byOpening": {
+     "adjacent2": {
+      "problems": 404,
+      "withEssential": 0.0025
+     },
+     "all4": {
+      "problems": 11,
+      "withEssential": 0.0
+     },
+     "one": {
+      "problems": 152,
+      "withEssential": 0.0
+     },
+     "opposite2": {
+      "problems": 0,
+      "withEssential": null
+     }
+    },
+    "losingMovesExitsMax": {
+     "0": 0.8771,
+     "1": 0.0285,
+     "2": 0.0365,
+     "3": 0.027,
+     "4": 0.019,
+     "5": 0.0118
+    },
+    "losingMoves": 2629,
+    "essentialLosingExitsMax": {
+     "1": 1.0
+    },
+    "essentialDistanceDeparturesMax": {
+     "1": 2
+    },
+    "essentialHeld": {
+     "2": 2
+    },
+    "essentialWaitingBefore": {
+     "1": 2
+    },
+    "losingPlanKinds": {
+     "color": 2
+    },
+    "essentialLosingPlanKinds": {
+     "color": 2
+    },
+    "blockingDecides": 1.0,
+    "widerWins": 1.0,
+    "solutionsMedian": [
+     20880,
+     880608,
+     5459808
+    ]
+   }
+  },
+  "dependencies": {
+   "chain0/acyclic": {
+    "problems": 1385,
+    "kMin": {
+     "2": 1383,
+     "3": 2
+    },
+    "withEssential": 0.0,
+    "essentialMean": 0.0
+   },
+   "chain1/acyclic": {
+    "problems": 709,
+    "kMin": {
+     "2": 701,
+     "3": 8
+    },
+    "withEssential": 0.0,
+    "essentialMean": 0.0
+   },
+   "chain1/cycle": {
+    "problems": 68,
+    "kMin": {
+     "3": 68
+    },
+    "withEssential": 0.0,
+    "essentialMean": 0.0
+   },
+   "chain2/acyclic": {
+    "problems": 525,
+    "kMin": {
+     "2": 525
+    },
+    "withEssential": 0.0,
+    "essentialMean": 0.0
+   },
+   "chain2/cycle": {
+    "problems": 178,
+    "kMin": {
+     "3": 172,
+     "4": 6
+    },
+    "withEssential": 0.0,
+    "essentialMean": 0.0
+   },
+   "chain3/acyclic": {
+    "problems": 301,
+    "kMin": {
+     "2": 301
+    },
+    "withEssential": 0.0,
+    "essentialMean": 0.0
+   },
+   "chain3/cycle": {
+    "problems": 218,
+    "kMin": {
+     "3": 210,
+     "4": 8
+    },
+    "withEssential": 0.0872,
+    "essentialMean": 0.092
+   },
+   "chain4/acyclic": {
+    "problems": 93,
+    "kMin": {
+     "2": 93
+    },
+    "withEssential": 0.0,
+    "essentialMean": 0.0
+   },
+   "chain4/cycle": {
+    "problems": 84,
+    "kMin": {
+     "3": 83,
+     "4": 1
+    },
+    "withEssential": 0.1429,
+    "essentialMean": 0.143
+   },
+   "chain5/acyclic": {
+    "problems": 7,
+    "kMin": {
+     "2": 7
+    },
+    "withEssential": 0.0,
+    "essentialMean": 0.0
+   },
+   "chain5/cycle": {
+    "problems": 32,
+    "kMin": {
+     "3": 24,
+     "4": 8
+    },
+    "withEssential": 0.0625,
+    "essentialMean": 0.062
+   }
+  }
+ },
+ "climb": {
+  "seed": 740,
+  "cpuSeconds": 480,
+  "climbs": 689,
+  "reached": {
+   "10/adjacent2": {
+    "decisions>=1": 87,
+    "none": 10
+   },
+   "10/all4": {
+    "none": 6
+   },
+   "10/one": {
+    "none": 48,
+    "decisions>=1": 14
+   },
+   "12/adjacent2": {
+    "decisions>=2,exits>=3": 14,
+    "decisions>=1": 25,
+    "decisions>=3,exits>=3": 1
+   },
+   "12/all4": {
+    "none": 2
+   },
+   "12/one": {
+    "decisions>=1": 16,
+    "none": 8
+   },
+   "8/adjacent2": {
+    "decisions>=1": 159,
+    "none": 93
+   },
+   "8/all4": {
+    "none": 8
+   },
+   "8/one": {
+    "none": 171,
+    "decisions>=1": 27
+   }
+  },
+  "reachedTotal": {
+   "decisions>=1": 328,
+   "none": 346,
+   "decisions>=2,exits>=3": 14,
+   "decisions>=3,exits>=3": 1
+  },
+  "kMin": {
+   "3": 652,
+   "4": 37
+  },
+  "essentialDecisionsMax": 3,
+  "best": [
+   {
+    "cars": 12,
+    "opening": "adjacent2",
+    "score": [
+     3,
+     2,
+     4
+    ],
+    "kMin": 4,
+    "dependencies": {
+     "edges": 7,
+     "cyclicColors": 4,
+     "longestChain": 4
+    },
+    "essentialKinds": {
+     "color": 3
+    },
+    "essentialHeld": [
+     2,
+     2,
+     2
+    ],
+    "widerWins": 3,
+    "losingOptions": 3
+   },
+   {
+    "cars": 12,
+    "opening": "adjacent2",
+    "score": [
+     2,
+     2,
+     4
+    ],
+    "kMin": 4,
+    "dependencies": {
+     "edges": 10,
+     "cyclicColors": 6,
+     "longestChain": 5
+    },
+    "essentialKinds": {
+     "color": 2
+    },
+    "essentialHeld": [
+     2,
+     2
+    ],
+    "widerWins": 2,
+    "losingOptions": 2
+   },
+   {
+    "cars": 12,
+    "opening": "adjacent2",
+    "score": [
+     2,
+     2,
+     4
+    ],
+    "kMin": 4,
+    "dependencies": {
+     "edges": 10,
+     "cyclicColors": 6,
+     "longestChain": 5
+    },
+    "essentialKinds": {
+     "color": 2
+    },
+    "essentialHeld": [
+     2,
+     2
+    ],
+    "widerWins": 2,
+    "losingOptions": 2
+   },
+   {
+    "cars": 12,
+    "opening": "adjacent2",
+    "score": [
+     2,
+     2,
+     4
+    ],
+    "kMin": 4,
+    "dependencies": {
+     "edges": 8,
+     "cyclicColors": 4,
+     "longestChain": 4
+    },
+    "essentialKinds": {
+     "color": 2
+    },
+    "essentialHeld": [
+     2,
+     2
+    ],
+    "widerWins": 2,
+    "losingOptions": 2
+   },
+   {
+    "cars": 12,
+    "opening": "adjacent2",
+    "score": [
+     2,
+     2,
+     4
+    ],
+    "kMin": 4,
+    "dependencies": {
+     "edges": 8,
+     "cyclicColors": 5,
+     "longestChain": 5
+    },
+    "essentialKinds": {
+     "color": 2
+    },
+    "essentialHeld": [
+     2,
+     2
+    ],
+    "widerWins": 2,
+    "losingOptions": 2
+   }
+  ],
+  "reachedPerCpuMinute": {
+   "decisions>=1": 41.0,
+   "none": 43.25,
+   "decisions>=2,exits>=3": 1.75,
+   "decisions>=3,exits>=3": 0.125
+  }
+ },
+ "variants": {
+  "perColor3/groupall": {
+   "seed": 740,
+   "problems": 1800,
+   "kMinByCars": {
+    "10": {
+     "4": 539,
+     "5": 57,
+     "6": 4
+    },
+    "12": {
+     "3": 390,
+     "4": 187,
+     "5": 19,
+     "6": 4
+    },
+    "8": {
+     "3": 517,
+     "4": 77,
+     "5": 6
+    }
+   },
+   "kMinByOpening": {
+    "adjacent2": {
+     "3": 128,
+     "4": 246,
+     "5": 68,
+     "6": 8
+    },
+    "all4": {
+     "3": 275,
+     "4": 175
+    },
+    "one": {
+     "3": 204,
+     "4": 232,
+     "5": 14
+    },
+    "opposite2": {
+     "3": 300,
+     "4": 150
+    }
+   },
+   "kMinUnblocked": {
+    "3": 1200,
+    "4": 600
+   },
+   "cells": {
+    "3bays/slack0": {
+     "problems": 907,
+     "withMoveDecision": 1.0,
+     "withDelayedLosingMove": 0.14,
+     "withDecision": 0.032,
+     "withEssential": 0.0,
+     "essentialCount": {
+      "0": 907
+     },
+     "byCars": {
+      "8": {
+       "problems": 517,
+       "withDecision": 0.0561,
+       "withEssential": 0.0
+      },
+      "10": {
+       "problems": 0,
+       "withDecision": null,
+       "withEssential": null
+      },
+      "12": {
+       "problems": 390,
+       "withDecision": 0.0,
+       "withEssential": 0.0
+      }
+     },
+     "byOpening": {
+      "adjacent2": {
+       "problems": 128,
+       "withEssential": 0.0
+      },
+      "all4": {
+       "problems": 275,
+       "withEssential": 0.0
+      },
+      "one": {
+       "problems": 204,
+       "withEssential": 0.0
+      },
+      "opposite2": {
+       "problems": 300,
+       "withEssential": 0.0
+      }
+     },
+     "losingMovesExitsMax": {
+      "0": 0.9594,
+      "1": 0.0348,
+      "2": 0.0035,
+      "3": 0.0024
+     },
+     "losingMoves": 78955,
+     "essentialLosingExitsMax": {},
+     "essentialDistanceDeparturesMax": {},
+     "essentialHeld": {},
+     "essentialWaitingBefore": {},
+     "losingPlanKinds": {
+      "color": 27,
+      "route": 2
+     },
+     "essentialLosingPlanKinds": {},
+     "blockingDecides": 1.0,
+     "widerWins": 1.0,
+     "solutionsMedian": [
+      972,
+      15552,
+      31104
+     ]
+    },
+    "4bays/slack0": {
+     "problems": 803,
+     "withMoveDecision": 0.995,
+     "withDelayedLosingMove": 0.1818,
+     "withDecision": 0.0349,
+     "withEssential": 0.0324,
+     "essentialCount": {
+      "0": 777,
+      "1": 26
+     },
+     "byCars": {
+      "8": {
+       "problems": 77,
+       "withDecision": 0.039,
+       "withEssential": 0.039
+      },
+      "10": {
+       "problems": 539,
+       "withDecision": 0.0241,
+       "withEssential": 0.0204
+      },
+      "12": {
+       "problems": 187,
+       "withDecision": 0.0642,
+       "withEssential": 0.0642
+      }
+     },
+     "byOpening": {
+      "adjacent2": {
+       "problems": 246,
+       "withEssential": 0.0691
+      },
+      "all4": {
+       "problems": 175,
+       "withEssential": 0.0057
+      },
+      "one": {
+       "problems": 232,
+       "withEssential": 0.0345
+      },
+      "opposite2": {
+       "problems": 150,
+       "withEssential": 0.0
+      }
+     },
+     "losingMovesExitsMax": {
+      "0": 0.8964,
+      "1": 0.0887,
+      "2": 0.0052,
+      "3": 0.0041,
+      "4": 0.0032,
+      "5": 0.0024
+     },
+     "losingMoves": 96333,
+     "essentialLosingExitsMax": {
+      "1": 0.0769,
+      "2": 0.8846,
+      "5": 0.0385
+     },
+     "essentialDistanceDeparturesMax": {
+      "1": 25,
+      "2": 1
+     },
+     "essentialHeld": {
+      "2": 1,
+      "3": 25
+     },
+     "essentialWaitingBefore": {
+      "0": 26
+     },
+     "losingPlanKinds": {
+      "color": 27,
+      "route": 1
+     },
+     "essentialLosingPlanKinds": {
+      "color": 25,
+      "route": 1
+     },
+     "blockingDecides": 1.0,
+     "widerWins": 1.0,
+     "solutionsMedian": [
+      5184,
+      33696,
+      150624
+     ]
+    },
+    "4bays/slack1": {
+     "problems": 907,
+     "withMoveDecision": 0.7949,
+     "withDelayedLosingMove": 0.0066,
+     "withDecision": 0.0,
+     "withEssential": 0.0,
+     "essentialCount": {
+      "0": 907
+     },
+     "byCars": {
+      "8": {
+       "problems": 517,
+       "withDecision": 0.0,
+       "withEssential": 0.0
+      },
+      "10": {
+       "problems": 0,
+       "withDecision": null,
+       "withEssential": null
+      },
+      "12": {
+       "problems": 390,
+       "withDecision": 0.0,
+       "withEssential": 0.0
+      }
+     },
+     "byOpening": {
+      "adjacent2": {
+       "problems": 128,
+       "withEssential": 0.0
+      },
+      "all4": {
+       "problems": 275,
+       "withEssential": 0.0
+      },
+      "one": {
+       "problems": 204,
+       "withEssential": 0.0
+      },
+      "opposite2": {
+       "problems": 300,
+       "withEssential": 0.0
+      }
+     },
+     "losingMovesExitsMax": {
+      "0": 0.9831,
+      "1": 0.0166,
+      "2": 0.0001,
+      "3": 0.0001
+     },
+     "losingMoves": 129308,
+     "essentialLosingExitsMax": {},
+     "essentialDistanceDeparturesMax": {},
+     "essentialHeld": {},
+     "essentialWaitingBefore": {},
+     "losingPlanKinds": {},
+     "essentialLosingPlanKinds": {},
+     "blockingDecides": null,
+     "widerWins": null,
+     "solutionsMedian": [
+      9216,
+      1025280,
+      1990656
+     ]
+    }
+   },
+   "dependencies": {
+    "chain0/acyclic": {
+     "problems": 601,
+     "kMin": {
+      "3": 405,
+      "4": 196
+     },
+     "withEssential": 0.0,
+     "essentialMean": 0.0
+    },
+    "chain1/acyclic": {
+     "problems": 428,
+     "kMin": {
+      "3": 283,
+      "4": 145
+     },
+     "withEssential": 0.0,
+     "essentialMean": 0.0
+    },
+    "chain1/cycle": {
+     "problems": 47,
+     "kMin": {
+      "3": 6,
+      "4": 41
+     },
+     "withEssential": 0.0,
+     "essentialMean": 0.0
+    },
+    "chain2/acyclic": {
+     "problems": 241,
+     "kMin": {
+      "3": 153,
+      "4": 88
+     },
+     "withEssential": 0.0,
+     "essentialMean": 0.0
+    },
+    "chain2/cycle": {
+     "problems": 238,
+     "kMin": {
+      "3": 21,
+      "4": 217
+     },
+     "withEssential": 0.063,
+     "essentialMean": 0.063
+    },
+    "chain3/acyclic": {
+     "problems": 39,
+     "kMin": {
+      "3": 39
+     },
+     "withEssential": 0.0,
+     "essentialMean": 0.0
+    },
+    "chain3/cycle": {
+     "problems": 116,
+     "kMin": {
+      "4": 116
+     },
+     "withEssential": 0.0948,
+     "essentialMean": 0.095
+    }
+   }
+  },
+  "perColor4/group2": {
+   "seed": 740,
+   "problems": 1800,
+   "kMinByCars": {
+    "10": {
+     "2": 588,
+     "3": 12
+    },
+    "12": {
+     "2": 593,
+     "3": 7
+    },
+    "8": {
+     "2": 597,
+     "3": 3
+    }
+   },
+   "kMinByOpening": {
+    "adjacent2": {
+     "2": 428,
+     "3": 22
+    },
+    "all4": {
+     "2": 450
+    },
+    "one": {
+     "2": 450
+    },
+    "opposite2": {
+     "2": 450
+    }
+   },
+   "kMinUnblocked": {
+    "2": 1800
+   },
+   "cells": {
+    "2bays/slack0": {
+     "problems": 1778,
+     "withMoveDecision": 0.7469,
+     "withDelayedLosingMove": 0.1665,
+     "withDecision": 0.2458,
+     "withEssential": 0.2458,
+     "essentialCount": {
+      "0": 1341,
+      "1": 76,
+      "2": 186,
+      "3": 53,
+      "4": 122
+     },
+     "byCars": {
+      "8": {
+       "problems": 597,
+       "withDecision": 0.1759,
+       "withEssential": 0.1759
+      },
+      "10": {
+       "problems": 588,
+       "withDecision": 0.2313,
+       "withEssential": 0.2313
+      },
+      "12": {
+       "problems": 593,
+       "withDecision": 0.3305,
+       "withEssential": 0.3305
+      }
+     },
+     "byOpening": {
+      "adjacent2": {
+       "problems": 428,
+       "withEssential": 0.5304
+      },
+      "all4": {
+       "problems": 450,
+       "withEssential": 0.0222
+      },
+      "one": {
+       "problems": 450,
+       "withEssential": 0.4444
+      },
+      "opposite2": {
+       "problems": 450,
+       "withEssential": 0.0
+      }
+     },
+     "losingMovesExitsMax": {
+      "0": 0.9115,
+      "1": 0.0314,
+      "2": 0.0025,
+      "3": 0.0354,
+      "4": 0.0053,
+      "5": 0.0139
+     },
+     "losingMoves": 42738,
+     "essentialLosingExitsMax": {
+      "1": 0.6011,
+      "3": 0.2723,
+      "5": 0.1266
+     },
+     "essentialDistanceDeparturesMax": {
+      "1": 850,
+      "2": 385,
+      "3": 155,
+      "4": 24
+     },
+     "essentialHeld": {
+      "1": 1414
+     },
+     "essentialWaitingBefore": {
+      "0": 1302
+     },
+     "losingPlanKinds": {
+      "route": 2039,
+      "color": 111
+     },
+     "essentialLosingPlanKinds": {
+      "route": 1365,
+      "color": 49
+     },
+     "blockingDecides": 1.0,
+     "widerWins": 1.0,
+     "solutionsMedian": [
+      3456,
+      219328,
+      1244160
+     ]
+    },
+    "3bays/slack0": {
+     "problems": 22,
+     "withMoveDecision": 0.7727,
+     "withDelayedLosingMove": 0.0455,
+     "withDecision": 0.0,
+     "withEssential": 0.0,
+     "essentialCount": {
+      "0": 22
+     },
+     "byCars": {
+      "8": {
+       "problems": 3,
+       "withDecision": 0.0,
+       "withEssential": 0.0
+      },
+      "10": {
+       "problems": 12,
+       "withDecision": 0.0,
+       "withEssential": 0.0
+      },
+      "12": {
+       "problems": 7,
+       "withDecision": 0.0,
+       "withEssential": 0.0
+      }
+     },
+     "byOpening": {
+      "adjacent2": {
+       "problems": 22,
+       "withEssential": 0.0
+      },
+      "all4": {
+       "problems": 0,
+       "withEssential": null
+      },
+      "one": {
+       "problems": 0,
+       "withEssential": null
+      },
+      "opposite2": {
+       "problems": 0,
+       "withEssential": null
+      }
+     },
+     "losingMovesExitsMax": {
+      "0": 0.8899,
+      "1": 0.0734,
+      "2": 0.0183,
+      "3": 0.0183
+     },
+     "losingMoves": 109,
+     "essentialLosingExitsMax": {},
+     "essentialDistanceDeparturesMax": {},
+     "essentialHeld": {},
+     "essentialWaitingBefore": {},
+     "losingPlanKinds": {},
+     "essentialLosingPlanKinds": {},
+     "blockingDecides": null,
+     "widerWins": null,
+     "solutionsMedian": [
+      3280,
+      25920,
+      91617
+     ]
+    },
+    "3bays/slack1": {
+     "problems": 1778,
+     "withMoveDecision": 0.1912,
+     "withDelayedLosingMove": 0.0039,
+     "withDecision": 0.0028,
+     "withEssential": 0.0028,
+     "essentialCount": {
+      "0": 1773,
+      "1": 1,
+      "2": 2,
+      "3": 1,
+      "4": 1
+     },
+     "byCars": {
+      "8": {
+       "problems": 597,
+       "withDecision": 0.0,
+       "withEssential": 0.0
+      },
+      "10": {
+       "problems": 588,
+       "withDecision": 0.0017,
+       "withEssential": 0.0017
+      },
+      "12": {
+       "problems": 593,
+       "withDecision": 0.0067,
+       "withEssential": 0.0067
+      }
+     },
+     "byOpening": {
+      "adjacent2": {
+       "problems": 428,
+       "withEssential": 0.0117
+      },
+      "all4": {
+       "problems": 450,
+       "withEssential": 0.0
+      },
+      "one": {
+       "problems": 450,
+       "withEssential": 0.0
+      },
+      "opposite2": {
+       "problems": 450,
+       "withEssential": 0.0
+      }
+     },
+     "losingMovesExitsMax": {
+      "0": 0.8857,
+      "1": 0.0709,
+      "2": 0.0271,
+      "3": 0.0127,
+      "4": 0.0029,
+      "5": 0.0007
+     },
+     "losingMoves": 3061,
+     "essentialLosingExitsMax": {
+      "1": 0.1667,
+      "2": 0.6111,
+      "4": 0.2222
+     },
+     "essentialDistanceDeparturesMax": {
+      "1": 14,
+      "2": 4
+     },
+     "essentialHeld": {
+      "0": 1,
+      "1": 16,
+      "2": 1
+     },
+     "essentialWaitingBefore": {
+      "0": 13,
+      "1": 3
+     },
+     "losingPlanKinds": {
+      "route": 12,
+      "color": 2,
+      "other": 4
+     },
+     "essentialLosingPlanKinds": {
+      "route": 12,
+      "color": 2,
+      "other": 4
+     },
+     "blockingDecides": 1.0,
+     "widerWins": 1.0,
+     "solutionsMedian": [
+      156120,
+      25103364,
+      140590080
+     ]
+    },
+    "4bays/slack1": {
+     "problems": 22,
+     "withMoveDecision": 0.0,
+     "withDelayedLosingMove": 0.0,
+     "withDecision": 0.0,
+     "withEssential": 0.0,
+     "essentialCount": {
+      "0": 22
+     },
+     "byCars": {
+      "8": {
+       "problems": 3,
+       "withDecision": 0.0,
+       "withEssential": 0.0
+      },
+      "10": {
+       "problems": 12,
+       "withDecision": 0.0,
+       "withEssential": 0.0
+      },
+      "12": {
+       "problems": 7,
+       "withDecision": 0.0,
+       "withEssential": 0.0
+      }
+     },
+     "byOpening": {
+      "adjacent2": {
+       "problems": 22,
+       "withEssential": 0.0
+      },
+      "all4": {
+       "problems": 0,
+       "withEssential": null
+      },
+      "one": {
+       "problems": 0,
+       "withEssential": null
+      },
+      "opposite2": {
+       "problems": 0,
+       "withEssential": null
+      }
+     },
+     "losingMovesExitsMax": {},
+     "losingMoves": 0,
+     "essentialLosingExitsMax": {},
+     "essentialDistanceDeparturesMax": {},
+     "essentialHeld": {},
+     "essentialWaitingBefore": {},
+     "losingPlanKinds": {},
+     "essentialLosingPlanKinds": {},
+     "blockingDecides": null,
+     "widerWins": null,
+     "solutionsMedian": [
+      22680,
+      159720,
+      541728
+     ]
+    }
+   },
+   "dependencies": {
+    "chain0/acyclic": {
+     "problems": 571,
+     "kMin": {
+      "2": 571
+     },
+     "withEssential": 0.0,
+     "essentialMean": 0.0
+    },
+    "chain1/acyclic": {
+     "problems": 528,
+     "kMin": {
+      "2": 528
+     },
+     "withEssential": 0.0038,
+     "essentialMean": 0.009
+    },
+    "chain1/cycle": {
+     "problems": 183,
+     "kMin": {
+      "2": 180,
+      "3": 3
+     },
+     "withEssential": 0.7377,
+     "essentialMean": 1.492
+    },
+    "chain2/acyclic": {
+     "problems": 154,
+     "kMin": {
+      "2": 154
+     },
+     "withEssential": 0.0065,
+     "essentialMean": 0.019
+    },
+    "chain2/cycle": {
+     "problems": 364,
+     "kMin": {
+      "2": 345,
+      "3": 19
+     },
+     "withEssential": 0.8214,
+     "essentialMean": 2.805
+    }
+   }
+  }
+ }
+}

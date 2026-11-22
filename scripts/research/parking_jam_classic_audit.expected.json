@@ -1,0 +1,700 @@
+{
+  "total": 5000,
+  "allLevels": {
+    "deadStates": 0,
+    "judgmentStates": 0,
+    "monotonicityViolations": 0,
+    "reachableStates": 3414667,
+    "problemsWithFixedArea": 2425,
+    "problemsWithWallDirection": 4996,
+    "problemsWithFixedDirection": 630
+  },
+  "byLevel": {
+    "1": {
+      "n": 1000,
+      "vehicles": {
+        "8": 850,
+        "11": 148,
+        "14": 2
+      },
+      "cells": {
+        "36": 149,
+        "48": 407,
+        "64": 444
+      },
+      "depth": {
+        "2": 1000
+      },
+      "deadStates": 0,
+      "judgmentStates": 0,
+      "initialLegal_p10_med_p90": [
+        5,
+        6.0,
+        7
+      ],
+      "initialLegalRatio_p10_med_p90": [
+        0.545,
+        0.727,
+        0.75
+      ],
+      "initialTapSuccess_p10_med_p90": [
+        0.273,
+        0.364,
+        0.375
+      ],
+      "randomLegalRatio_p10_med_p90": [
+        0.763,
+        0.81,
+        0.827
+      ],
+      "randomTapSuccess_p10_med_p90": [
+        0.381,
+        0.414,
+        0.43
+      ],
+      "randomSingleLegalSteps_p10_med_p90": [
+        1.222,
+        1.237,
+        1.298
+      ],
+      "wallDirectionsPerVehicle_p10_med_p90": [
+        0.75,
+        1.0,
+        1.0
+      ],
+      "twoWayVehicleRatio_p10_med_p90": [
+        0.0,
+        0.0,
+        0.125
+      ],
+      "fixedDirectionProblems": 104,
+      "firstLayerShare_p10_med_p90": [
+        0.545,
+        0.727,
+        0.75
+      ],
+      "remainingAfterFirstLayer_p10_med_p90": [
+        2,
+        3.0,
+        4
+      ],
+      "remainingAfterSecondLayer_p10_med_p90": [
+        0,
+        0.0,
+        0
+      ],
+      "prodDepthMatches": 1000,
+      "prodInitialLegalMatches": 1000,
+      "misreadRatio_p10_med_p90": [
+        0.0,
+        0.0,
+        0.125
+      ],
+      "maxPrereq_p10_med_p90": [
+        1,
+        1.0,
+        1
+      ],
+      "prodAverageLegalRatio_p10_med_p90": [
+        0.778,
+        0.849,
+        0.855
+      ]
+    },
+    "2": {
+      "n": 1000,
+      "vehicles": {
+        "8": 743,
+        "11": 250,
+        "14": 7
+      },
+      "cells": {
+        "36": 219,
+        "48": 424,
+        "64": 357
+      },
+      "depth": {
+        "2": 1000
+      },
+      "deadStates": 0,
+      "judgmentStates": 0,
+      "initialLegal_p10_med_p90": [
+        5,
+        6.0,
+        8
+      ],
+      "initialLegalRatio_p10_med_p90": [
+        0.625,
+        0.75,
+        0.75
+      ],
+      "initialTapSuccess_p10_med_p90": [
+        0.312,
+        0.375,
+        0.409
+      ],
+      "randomLegalRatio_p10_med_p90": [
+        0.763,
+        0.827,
+        0.864
+      ],
+      "randomTapSuccess_p10_med_p90": [
+        0.382,
+        0.43,
+        0.499
+      ],
+      "randomSingleLegalSteps_p10_med_p90": [
+        1.118,
+        1.237,
+        1.298
+      ],
+      "wallDirectionsPerVehicle_p10_med_p90": [
+        0.5,
+        0.818,
+        1.0
+      ],
+      "twoWayVehicleRatio_p10_med_p90": [
+        0.0,
+        0.125,
+        0.455
+      ],
+      "fixedDirectionProblems": 164,
+      "firstLayerShare_p10_med_p90": [
+        0.625,
+        0.75,
+        0.75
+      ],
+      "remainingAfterFirstLayer_p10_med_p90": [
+        2,
+        2.0,
+        4
+      ],
+      "remainingAfterSecondLayer_p10_med_p90": [
+        0,
+        0.0,
+        0
+      ],
+      "prodDepthMatches": 1000,
+      "prodInitialLegalMatches": 1000,
+      "misreadRatio_p10_med_p90": [
+        0.25,
+        0.375,
+        0.455
+      ],
+      "maxPrereq_p10_med_p90": [
+        1,
+        1.0,
+        1
+      ],
+      "prodAverageLegalRatio_p10_med_p90": [
+        0.78,
+        0.855,
+        0.896
+      ]
+    },
+    "3": {
+      "n": 1000,
+      "vehicles": {
+        "8": 510,
+        "11": 380,
+        "14": 110
+      },
+      "cells": {
+        "36": 164,
+        "48": 288,
+        "64": 548
+      },
+      "depth": {
+        "2": 239,
+        "3": 761
+      },
+      "deadStates": 0,
+      "judgmentStates": 0,
+      "initialLegal_p10_med_p90": [
+        4,
+        6.0,
+        8
+      ],
+      "initialLegalRatio_p10_med_p90": [
+        0.5,
+        0.625,
+        0.75
+      ],
+      "initialTapSuccess_p10_med_p90": [
+        0.25,
+        0.312,
+        0.375
+      ],
+      "randomLegalRatio_p10_med_p90": [
+        0.663,
+        0.716,
+        0.791
+      ],
+      "randomTapSuccess_p10_med_p90": [
+        0.334,
+        0.381,
+        0.447
+      ],
+      "randomSingleLegalSteps_p10_med_p90": [
+        1.253,
+        1.439,
+        1.597
+      ],
+      "wallDirectionsPerVehicle_p10_med_p90": [
+        0.545,
+        0.818,
+        1.0
+      ],
+      "twoWayVehicleRatio_p10_med_p90": [
+        0.0,
+        0.143,
+        0.455
+      ],
+      "fixedDirectionProblems": 149,
+      "firstLayerShare_p10_med_p90": [
+        0.5,
+        0.625,
+        0.75
+      ],
+      "remainingAfterFirstLayer_p10_med_p90": [
+        2,
+        4.0,
+        5
+      ],
+      "remainingAfterSecondLayer_p10_med_p90": [
+        0,
+        1.0,
+        2
+      ],
+      "prodDepthMatches": 1000,
+      "prodInitialLegalMatches": 1000,
+      "misreadRatio_p10_med_p90": [
+        0.25,
+        0.364,
+        0.455
+      ],
+      "maxPrereq_p10_med_p90": [
+        2,
+        2.0,
+        3
+      ],
+      "prodAverageLegalRatio_p10_med_p90": [
+        0.69,
+        0.768,
+        0.844
+      ]
+    },
+    "4": {
+      "n": 1000,
+      "vehicles": {
+        "8": 294,
+        "11": 483,
+        "14": 223
+      },
+      "cells": {
+        "48": 386,
+        "64": 614
+      },
+      "depth": {
+        "2": 298,
+        "3": 702
+      },
+      "deadStates": 0,
+      "judgmentStates": 0,
+      "initialLegal_p10_med_p90": [
+        5,
+        7.0,
+        9
+      ],
+      "initialLegalRatio_p10_med_p90": [
+        0.5,
+        0.636,
+        0.786
+      ],
+      "initialTapSuccess_p10_med_p90": [
+        0.273,
+        0.321,
+        0.409
+      ],
+      "randomLegalRatio_p10_med_p90": [
+        0.673,
+        0.747,
+        0.817
+      ],
+      "randomTapSuccess_p10_med_p90": [
+        0.354,
+        0.415,
+        0.485
+      ],
+      "randomSingleLegalSteps_p10_med_p90": [
+        1.224,
+        1.395,
+        1.57
+      ],
+      "wallDirectionsPerVehicle_p10_med_p90": [
+        0.364,
+        0.636,
+        0.875
+      ],
+      "twoWayVehicleRatio_p10_med_p90": [
+        0.091,
+        0.357,
+        0.636
+      ],
+      "fixedDirectionProblems": 117,
+      "firstLayerShare_p10_med_p90": [
+        0.5,
+        0.636,
+        0.786
+      ],
+      "remainingAfterFirstLayer_p10_med_p90": [
+        2,
+        4.0,
+        5
+      ],
+      "remainingAfterSecondLayer_p10_med_p90": [
+        0,
+        1.0,
+        2
+      ],
+      "prodDepthMatches": 1000,
+      "prodInitialLegalMatches": 1000,
+      "misreadRatio_p10_med_p90": [
+        0.5,
+        0.625,
+        0.818
+      ],
+      "maxPrereq_p10_med_p90": [
+        2,
+        2.0,
+        3
+      ],
+      "prodAverageLegalRatio_p10_med_p90": [
+        0.705,
+        0.781,
+        0.851
+      ]
+    },
+    "5": {
+      "n": 1000,
+      "vehicles": {
+        "8": 217,
+        "11": 495,
+        "14": 288
+      },
+      "cells": {
+        "48": 374,
+        "64": 626
+      },
+      "depth": {
+        "3": 443,
+        "4": 449,
+        "5": 88,
+        "6": 20
+      },
+      "deadStates": 0,
+      "judgmentStates": 0,
+      "initialLegal_p10_med_p90": [
+        4,
+        7.0,
+        9
+      ],
+      "initialLegalRatio_p10_med_p90": [
+        0.455,
+        0.625,
+        0.727
+      ],
+      "initialTapSuccess_p10_med_p90": [
+        0.227,
+        0.312,
+        0.364
+      ],
+      "randomLegalRatio_p10_med_p90": [
+        0.557,
+        0.65,
+        0.738
+      ],
+      "randomTapSuccess_p10_med_p90": [
+        0.288,
+        0.351,
+        0.42
+      ],
+      "randomSingleLegalSteps_p10_med_p90": [
+        1.462,
+        1.852,
+        2.639
+      ],
+      "wallDirectionsPerVehicle_p10_med_p90": [
+        0.455,
+        0.714,
+        0.909
+      ],
+      "twoWayVehicleRatio_p10_med_p90": [
+        0.091,
+        0.273,
+        0.545
+      ],
+      "fixedDirectionProblems": 96,
+      "firstLayerShare_p10_med_p90": [
+        0.455,
+        0.625,
+        0.727
+      ],
+      "remainingAfterFirstLayer_p10_med_p90": [
+        3,
+        4.0,
+        6
+      ],
+      "remainingAfterSecondLayer_p10_med_p90": [
+        1,
+        2.0,
+        3
+      ],
+      "prodDepthMatches": 1000,
+      "prodInitialLegalMatches": 1000,
+      "misreadRatio_p10_med_p90": [
+        0.5,
+        0.598,
+        0.818
+      ],
+      "maxPrereq_p10_med_p90": [
+        3,
+        4.0,
+        6
+      ],
+      "prodAverageLegalRatio_p10_med_p90": [
+        0.59,
+        0.695,
+        0.772
+      ]
+    }
+  },
+  "sameScaleByLevel": {
+    "36cells_8vehicles": {
+      "1": {
+        "count": 144,
+        "randomLegalRatioMedian": 0.827,
+        "randomTapSuccessMedian": 0.414,
+        "depthMedian": 2.0,
+        "initialLegalMedian": 6.0
+      },
+      "2": {
+        "count": 198,
+        "randomLegalRatioMedian": 0.827,
+        "randomTapSuccessMedian": 0.428,
+        "depthMedian": 2.0,
+        "initialLegalMedian": 6.0
+      },
+      "3": {
+        "count": 138,
+        "randomLegalRatioMedian": 0.719,
+        "randomTapSuccessMedian": 0.38,
+        "depthMedian": 3.0,
+        "initialLegalMedian": 5.0
+      }
+    },
+    "36cells_11vehicles": {
+      "2": {
+        "count": 21,
+        "randomLegalRatioMedian": 0.829,
+        "randomTapSuccessMedian": 0.439,
+        "depthMedian": 2,
+        "initialLegalMedian": 8
+      },
+      "3": {
+        "count": 26,
+        "randomLegalRatioMedian": 0.721,
+        "randomTapSuccessMedian": 0.37,
+        "depthMedian": 3.0,
+        "initialLegalMedian": 7.0
+      }
+    },
+    "48cells_8vehicles": {
+      "1": {
+        "count": 319,
+        "randomLegalRatioMedian": 0.827,
+        "randomTapSuccessMedian": 0.414,
+        "depthMedian": 2,
+        "initialLegalMedian": 6
+      },
+      "2": {
+        "count": 275,
+        "randomLegalRatioMedian": 0.827,
+        "randomTapSuccessMedian": 0.416,
+        "depthMedian": 2,
+        "initialLegalMedian": 6
+      },
+      "3": {
+        "count": 151,
+        "randomLegalRatioMedian": 0.714,
+        "randomTapSuccessMedian": 0.376,
+        "depthMedian": 3,
+        "initialLegalMedian": 5
+      },
+      "4": {
+        "count": 132,
+        "randomLegalRatioMedian": 0.744,
+        "randomTapSuccessMedian": 0.41,
+        "depthMedian": 3.0,
+        "initialLegalMedian": 5.0
+      },
+      "5": {
+        "count": 93,
+        "randomLegalRatioMedian": 0.628,
+        "randomTapSuccessMedian": 0.336,
+        "depthMedian": 4,
+        "initialLegalMedian": 4
+      }
+    },
+    "48cells_11vehicles": {
+      "1": {
+        "count": 86,
+        "randomLegalRatioMedian": 0.81,
+        "randomTapSuccessMedian": 0.405,
+        "depthMedian": 2.0,
+        "initialLegalMedian": 8.0
+      },
+      "2": {
+        "count": 142,
+        "randomLegalRatioMedian": 0.813,
+        "randomTapSuccessMedian": 0.451,
+        "depthMedian": 2.0,
+        "initialLegalMedian": 8.0
+      },
+      "3": {
+        "count": 123,
+        "randomLegalRatioMedian": 0.734,
+        "randomTapSuccessMedian": 0.396,
+        "depthMedian": 3,
+        "initialLegalMedian": 7
+      },
+      "4": {
+        "count": 207,
+        "randomLegalRatioMedian": 0.768,
+        "randomTapSuccessMedian": 0.435,
+        "depthMedian": 3,
+        "initialLegalMedian": 8
+      },
+      "5": {
+        "count": 220,
+        "randomLegalRatioMedian": 0.66,
+        "randomTapSuccessMedian": 0.358,
+        "depthMedian": 4.0,
+        "initialLegalMedian": 7.0
+      }
+    },
+    "48cells_14vehicles": {
+      "4": {
+        "count": 47,
+        "randomLegalRatioMedian": 0.757,
+        "randomTapSuccessMedian": 0.419,
+        "depthMedian": 3,
+        "initialLegalMedian": 9
+      },
+      "5": {
+        "count": 61,
+        "randomLegalRatioMedian": 0.687,
+        "randomTapSuccessMedian": 0.368,
+        "depthMedian": 4,
+        "initialLegalMedian": 9
+      }
+    },
+    "64cells_8vehicles": {
+      "1": {
+        "count": 387,
+        "randomLegalRatioMedian": 0.812,
+        "randomTapSuccessMedian": 0.414,
+        "depthMedian": 2,
+        "initialLegalMedian": 5
+      },
+      "2": {
+        "count": 270,
+        "randomLegalRatioMedian": 0.827,
+        "randomTapSuccessMedian": 0.42,
+        "depthMedian": 2.0,
+        "initialLegalMedian": 6.0
+      },
+      "3": {
+        "count": 221,
+        "randomLegalRatioMedian": 0.714,
+        "randomTapSuccessMedian": 0.373,
+        "depthMedian": 3,
+        "initialLegalMedian": 5
+      },
+      "4": {
+        "count": 162,
+        "randomLegalRatioMedian": 0.715,
+        "randomTapSuccessMedian": 0.402,
+        "depthMedian": 3.0,
+        "initialLegalMedian": 5.0
+      },
+      "5": {
+        "count": 124,
+        "randomLegalRatioMedian": 0.608,
+        "randomTapSuccessMedian": 0.325,
+        "depthMedian": 4.0,
+        "initialLegalMedian": 4.0
+      }
+    },
+    "64cells_11vehicles": {
+      "1": {
+        "count": 57,
+        "randomLegalRatioMedian": 0.81,
+        "randomTapSuccessMedian": 0.405,
+        "depthMedian": 2,
+        "initialLegalMedian": 8
+      },
+      "2": {
+        "count": 87,
+        "randomLegalRatioMedian": 0.81,
+        "randomTapSuccessMedian": 0.443,
+        "depthMedian": 2,
+        "initialLegalMedian": 8
+      },
+      "3": {
+        "count": 231,
+        "randomLegalRatioMedian": 0.724,
+        "randomTapSuccessMedian": 0.386,
+        "depthMedian": 3,
+        "initialLegalMedian": 7
+      },
+      "4": {
+        "count": 276,
+        "randomLegalRatioMedian": 0.745,
+        "randomTapSuccessMedian": 0.407,
+        "depthMedian": 3.0,
+        "initialLegalMedian": 7.0
+      },
+      "5": {
+        "count": 275,
+        "randomLegalRatioMedian": 0.644,
+        "randomTapSuccessMedian": 0.351,
+        "depthMedian": 4,
+        "initialLegalMedian": 6
+      }
+    },
+    "64cells_14vehicles": {
+      "3": {
+        "count": 96,
+        "randomLegalRatioMedian": 0.713,
+        "randomTapSuccessMedian": 0.372,
+        "depthMedian": 3.0,
+        "initialLegalMedian": 9.0
+      },
+      "4": {
+        "count": 176,
+        "randomLegalRatioMedian": 0.747,
+        "randomTapSuccessMedian": 0.416,
+        "depthMedian": 3.0,
+        "initialLegalMedian": 9.0
+      },
+      "5": {
+        "count": 227,
+        "randomLegalRatioMedian": 0.664,
+        "randomTapSuccessMedian": 0.357,
+        "depthMedian": 4,
+        "initialLegalMedian": 9
+      }
+    }
+  }
+}

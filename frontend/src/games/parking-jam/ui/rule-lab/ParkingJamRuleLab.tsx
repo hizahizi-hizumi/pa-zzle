@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { dispatchLevelProblems } from "@/games/parking-jam/rule-lab/dispatch-levels";
+import {
+  dispatchLevelProblems,
+  pairProblems,
+  passengerProblems,
+} from "@/games/parking-jam/rule-lab/dispatch-levels";
 import {
   analyzeRuleLab,
   applyRuleLabExit,
@@ -38,7 +42,7 @@ const descriptions: Record<RuleLabMode, string> = {
   standard:
     "車をタップして出庫させ、すべての車を出せばクリアです。出せる車を選ぶ限り、間違った順序はありません。",
   passengers:
-    "車を出庫させると3つの乗り場の空き枠に入ります。左から順に並ぶ乗客は、色が合う車に1人ずつ乗り込みます。車体の長さ（2または3人分）だけ乗ると出発し、枠が空きます。すべての乗客と車を送り出せばクリア。",
+    "車を出庫させると乗り場の空き枠に入ります。左から順に並ぶ乗客は、色が合う車に1人ずつ乗り込みます。車体の長さ（2または3人分）だけ乗ると出発し、枠が空きます。すべての乗客と車を送り出せばクリア。",
   pairs:
     "車を出庫させると待機枠に入ります。同色2台がそろった瞬間に出発して枠が空きます。2枠ではペアを連続して完成させます。3枠では1台を一時待機させ、別のペアを先に完成させることもできます。",
   dispatch:
@@ -60,10 +64,15 @@ export function ParkingJamRuleLab() {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [problemId, setProblemId] = useState<string | null>(null);
-  const problem =
+  const problems =
     mode === "dispatch"
-      ? dispatchLevelProblems.find((item) => item.id === problemId)
-      : undefined;
+      ? dispatchLevelProblems
+      : mode === "passengers"
+        ? passengerProblems
+        : mode === "pairs"
+          ? pairProblems
+          : [];
+  const problem = problems.find((item) => item.id === problemId);
   const scenario =
     problem?.scenario ?? getRuleLabScenario(mode, size, bayCount);
   const legal = legalRuleLabExits(scenario, state);
@@ -74,8 +83,10 @@ export function ParkingJamRuleLab() {
     result?.exits.map(({ vehicleId, canWin }) => [vehicleId, canWin]) ?? [],
   );
 
+  const playAreaRef = useRef<HTMLDivElement>(null);
+
   function changeProblem(nextId: string | null) {
-    const next = dispatchLevelProblems.find((item) => item.id === nextId);
+    const next = problems.find((item) => item.id === nextId);
     setProblemId(next ? next.id : null);
     setState(
       createRuleLabState(
@@ -85,6 +96,7 @@ export function ParkingJamRuleLab() {
     setHistory([]);
     setNotice(null);
     setShowAnalysis(false);
+    if (next) playAreaRef.current?.scrollIntoView({ block: "start" });
   }
 
   function changeMode(nextMode: RuleLabMode) {
@@ -142,22 +154,24 @@ export function ParkingJamRuleLab() {
     setNotice(null);
   }
 
+  const nextProblem = problem
+    ? problems[problems.indexOf(problem) + 1]
+    : undefined;
+  const queueNoun = scenario.mode === "passengers" ? "乗客の列" : "出庫指令";
+
   return (
-    <main className="min-h-dvh bg-[#f5f6f4] px-4 py-7 text-[#243139] sm:px-8">
+    <main className="min-h-dvh bg-[#f5f6f4] px-1 py-3 text-[#243139] sm:px-8 sm:py-7">
       <div className="mx-auto max-w-[1050px]">
-        <div className="mb-5">
+        <div className="mb-3">
           <p className="text-xs font-semibold tracking-wider text-slate-500">
             ISSUE #727 / 比較試作
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="mt-1 text-xl font-bold tracking-tight sm:text-3xl">
             パーキングジャムのルール比較
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
-            ゲーム本体には影響しない検証画面です。車を選び、出庫順を考えてください。共通盤面では、同一の車両配置で出庫後の規則による選択の違いを比較できます。
-          </p>
         </div>
         <div
-          className="mb-5 flex flex-wrap gap-2"
+          className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
           role="group"
           aria-label="試すルール"
         >
@@ -168,44 +182,32 @@ export function ParkingJamRuleLab() {
               variant={mode === id ? "default" : "outline"}
               onClick={() => changeMode(id)}
               aria-pressed={mode === id}
+              className="h-11 whitespace-normal text-xs sm:h-9 sm:text-sm"
             >
               {title}
             </Button>
           ))}
         </div>
-        {mode === "dispatch" && (
-          <div
-            className="mb-5 flex flex-wrap items-center gap-2"
-            role="group"
-            aria-label="レベル別の問題例"
-          >
-            <span className="mr-1 text-xs font-medium text-slate-600">
-              問題
-            </span>
-            <Button
-              size="sm"
-              variant={problem ? "outline" : "default"}
-              aria-pressed={!problem}
-              onClick={() => changeProblem(null)}
+        {problems.length > 0 && (
+          <label className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-700">
+            問題
+            <select
+              className="h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-base sm:max-w-sm"
+              value={problem?.id ?? ""}
+              onChange={(event) => changeProblem(event.target.value || null)}
             >
-              共通盤面
-            </Button>
-            {dispatchLevelProblems.map((item) => (
-              <Button
-                key={item.id}
-                size="sm"
-                variant={problem?.id === item.id ? "default" : "outline"}
-                aria-pressed={problem?.id === item.id}
-                onClick={() => changeProblem(item.id)}
-              >
-                {item.title}
-              </Button>
-            ))}
-          </div>
+              <option value="">共通盤面</option>
+              {problems.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
         {!problem && (
           <div
-            className="mb-5 flex items-center gap-2"
+            className="mb-3 flex items-center gap-2"
             role="group"
             aria-label="比較盤面の規模"
           >
@@ -232,7 +234,7 @@ export function ParkingJamRuleLab() {
         )}
         {!problem && (mode === "pairs" || mode === "dispatch") && (
           <div
-            className="mb-5 flex items-center gap-2"
+            className="mb-3 flex items-center gap-2"
             role="group"
             aria-label="比較方式の待機枠数"
           >
@@ -252,102 +254,66 @@ export function ParkingJamRuleLab() {
             ))}
           </div>
         )}
-        <div className="mb-5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-700">
-          {descriptions[mode]}
-        </div>
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]">
+        <details className="mb-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm leading-relaxed text-slate-700">
+          <summary className="cursor-pointer font-medium">ルール</summary>
+          <p className="mt-2">{descriptions[mode]}</p>
+          <p className="mt-2 text-xs text-slate-500">
+            車は向きに沿って盤外へ出ます。濃い線の辺は壁で、そこからは出られません。ゲーム本体には影響しない検証画面です。
+          </p>
+        </details>
+        <div
+          ref={playAreaRef}
+          className="grid scroll-mt-2 items-start gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:gap-6"
+        >
           <section
-            aria-label="試作盤面"
-            className="min-w-0 rounded-2xl bg-white p-3 shadow-sm sm:p-5"
+            aria-label="出庫先とプレイ状況"
+            className="space-y-1.5 rounded-xl bg-white p-2 shadow-sm lg:order-2 lg:p-4"
           >
-            <div className="mb-3 flex items-center justify-between gap-3 text-sm">
-              <span className="font-semibold">
-                駐車場 · {scenario.board.width}×{scenario.board.height} /{" "}
-                {scenario.board.vehicles.length}台
-              </span>
-              <span className="tabular-nums text-slate-500">
-                出庫{" "}
-                {scenario.board.vehicles.length -
-                  state.remainingVehicleIds.length}{" "}
-                / {scenario.board.vehicles.length}
-              </span>
-            </div>
-            <div className="flex justify-center">
-              <ParkingJamRuleLabBoard
-                scenario={scenario}
-                state={state}
-                onExit={exitVehicle}
-                showAnalysis={showAnalysis}
-                outcomeByVehicle={outcomeByVehicle}
-              />
-            </div>
-            <p className="mt-3 text-xs text-slate-500">
-              車は向きに沿って盤外へ出ます。濃い線の辺は壁で、そこからは出られません。出庫できない車を選んでも盤面は変わりません。
-            </p>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={history.length === 0}
-                onClick={undo}
-              >
-                1手戻す
-              </Button>
-              <Button variant="outline" size="sm" onClick={reset}>
-                最初から
-              </Button>
-              <label className="ml-auto flex cursor-pointer items-center gap-2 text-xs text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={showAnalysis}
-                  onChange={(event) => setShowAnalysis(event.target.checked)}
-                  className="size-4 accent-slate-800"
-                />
-                分岐の答えを表示
-              </label>
-            </div>
-          </section>
-          <section aria-label="出庫先と検証結果" className="space-y-4">
             {(scenario.mode === "passengers" ||
               scenario.mode === "dispatch") && (
-              <div className="rounded-2xl bg-white p-4 shadow-sm">
-                <h2 className="mb-3 font-semibold">
-                  {scenario.mode === "passengers" ? "乗客の列" : "出庫指令"}{" "}
-                  <span className="text-xs font-normal text-slate-500">
-                    {scenario.mode === "passengers"
-                      ? "左から順に乗車"
-                      : "左から順に配車"}
+              <div>
+                <h2 className="mb-1 flex items-baseline justify-between text-xs font-semibold text-slate-600">
+                  <span>
+                    {problem ? `${problem.title}｜` : ""}
+                    {queueNoun}（左から順）
+                  </span>
+                  <span className="tabular-nums font-normal">
+                    {state.nextPassengerIndex} / {scenario.queue.length}
                   </span>
                 </h2>
-                <div className="flex flex-wrap gap-1.5">
-                  {scenario.queue.map((color, index) => (
-                    <span
-                      key={QUEUE_SLOT_IDS[index]}
-                      className={`flex size-8 items-center justify-center rounded-md border border-slate-600/30 text-sm font-bold text-slate-900 ${index < state.nextPassengerIndex ? "opacity-20" : ""}`}
-                      style={{ backgroundColor: ruleLabColorStyle(color) }}
-                      aria-label={`${index + 1}${scenario.mode === "dispatch" ? "番目の指令" : "人目"}・色${color}${index < state.nextPassengerIndex ? "（処理済）" : ""}`}
-                    >
-                      {color}
-                    </span>
-                  ))}
+                <div className="flex flex-wrap gap-1">
+                  {scenario.queue.map((color, index) => {
+                    const done = index < state.nextPassengerIndex;
+                    const head = index === state.nextPassengerIndex;
+                    return (
+                      <span
+                        key={QUEUE_SLOT_IDS[index]}
+                        className={`flex size-6 items-center justify-center rounded border text-xs font-bold text-slate-900 ${done ? "border-slate-600/30 opacity-20" : head ? "border-slate-900 ring-2 ring-slate-900" : "border-slate-600/30"}`}
+                        style={{ backgroundColor: ruleLabColorStyle(color) }}
+                        aria-label={`${index + 1}${scenario.mode === "dispatch" ? "番目の指令" : "人目"}・色${color}${done ? "（処理済）" : head ? "（先頭）" : ""}`}
+                      >
+                        {color}
+                      </span>
+                    );
+                  })}
                 </div>
-                <p className="mt-2 text-sm tabular-nums text-slate-500">
-                  {scenario.mode === "passengers" ? "乗車済" : "指令完了"}{" "}
-                  {state.nextPassengerIndex} / {scenario.queue.length}{" "}
-                  {scenario.mode === "passengers" ? "人" : "件"}
-                </p>
               </div>
             )}
             {scenario.mode !== "standard" && (
-              <div className="rounded-2xl bg-white p-4 shadow-sm">
-                <h2 className="mb-3 font-semibold">
-                  出庫先の待機枠{" "}
-                  <span className="text-xs font-normal text-slate-500">
-                    {state.waiting.length}/{scenario.bayCount} 枠使用中
+              <div>
+                <h2 className="mb-1 flex items-baseline justify-between text-xs font-semibold text-slate-600">
+                  <span>
+                    {problem && scenario.queue.length === 0
+                      ? `${problem.title}｜`
+                      : ""}
+                    待機枠
+                  </span>
+                  <span className="tabular-nums font-normal">
+                    {state.waiting.length} / {scenario.bayCount} 枠使用中
                   </span>
                 </h2>
                 <div
-                  className="grid gap-2"
+                  className="grid gap-1.5"
                   style={{
                     gridTemplateColumns: `repeat(${scenario.bayCount}, minmax(0, 1fr))`,
                   }}
@@ -365,24 +331,22 @@ export function ParkingJamRuleLab() {
                     return (
                       <div
                         key={BAY_SLOT_IDS[index]}
-                        className="flex min-h-24 flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-[#f1f3f3] px-1 text-center text-sm"
+                        className="flex h-9 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-[#f1f3f3] text-center text-xs lg:h-16 lg:text-sm"
                       >
                         {waiting && color ? (
-                          <>
-                            <span
-                              className="w-full rounded-lg border border-slate-600/30 px-2 py-2 font-bold"
-                              style={{
-                                backgroundColor: ruleLabColorStyle(color),
-                              }}
-                            >
-                              {labelOfVehicle(waiting.vehicleId)} · {color}
-                            </span>
+                          <span
+                            className="flex size-full items-center justify-center gap-1 rounded-md border border-slate-600/30 font-bold"
+                            style={{
+                              backgroundColor: ruleLabColorStyle(color),
+                            }}
+                          >
+                            {labelOfVehicle(waiting.vehicleId)}・{color}
                             {scenario.mode === "passengers" && (
-                              <span className="mt-1 text-xs tabular-nums">
-                                {waiting.boarded} / {vehicle?.length ?? 0} 人
+                              <span className="tabular-nums font-normal">
+                                {waiting.boarded}/{vehicle?.length ?? 0}
                               </span>
                             )}
-                          </>
+                          </span>
                         ) : (
                           <span className="text-slate-400">空き</span>
                         )}
@@ -390,53 +354,86 @@ export function ParkingJamRuleLab() {
                     );
                   })}
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
-                  出発条件を満たした車は自動で消え、枠が解放されます。
+              </div>
+            )}
+            <p
+              aria-live="polite"
+              className={`flex min-h-8 items-center rounded-md px-2 text-xs font-semibold leading-tight ${won ? "bg-emerald-50 text-emerald-800" : stuck || notice ? "bg-rose-50 text-rose-800" : "text-slate-700"}`}
+            >
+              {won
+                ? "クリア：すべて出発しました"
+                : stuck
+                  ? "詰み：もう出庫できません。原因は何手か前のこともあります。戻して考え直してください。"
+                  : (notice ?? `今出せる車 ${legal.length} 台`)}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                disabled={history.length === 0}
+                onClick={undo}
+                className="h-10 flex-1"
+              >
+                1手戻す
+              </Button>
+              <Button variant="outline" onClick={reset} className="h-10 flex-1">
+                最初から
+              </Button>
+              {nextProblem && (
+                <Button
+                  variant={won ? "default" : "outline"}
+                  onClick={() => changeProblem(nextProblem.id)}
+                  className="h-10 flex-1"
+                >
+                  次の問題
+                </Button>
+              )}
+            </div>
+            {result && (
+              <div className="border-t border-slate-200 px-2 pt-2 text-xs">
+                <p>
+                  ここからクリアできる出庫順：
+                  <strong className="tabular-nums">
+                    {result.totalWinningSequences.toLocaleString()}
+                  </strong>{" "}
+                  通り
+                </p>
+                <p className="mt-1">
+                  ○：この車からでも解ける / ×：この車を出すと詰む
                 </p>
               </div>
             )}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h2 className="font-semibold">プレイ状況</h2>
-              <p
-                aria-live="polite"
-                className={`mt-2 text-sm font-semibold ${won ? "text-emerald-700" : stuck ? "text-rose-700" : "text-slate-700"}`}
-              >
-                {won
-                  ? "クリア：すべて出発しました"
-                  : stuck
-                    ? "詰み：これ以上出庫できません。原因は何手か前にあることがあります。戻して再検討してください。"
-                    : `進行中：現在出庫できる車は ${legal.length} 台です。`}
-              </p>
-              {notice && (
-                <p role="status" className="mt-2 text-sm text-rose-700">
-                  {notice}
-                </p>
-              )}
-              {result && (
-                <div className="mt-3 border-t border-slate-200 pt-3 text-sm">
-                  <p>
-                    ここからクリアできる出庫順：
-                    <strong className="tabular-nums">
-                      {result.totalWinningSequences.toLocaleString()}
-                    </strong>{" "}
-                    通り
-                  </p>
-                  <p className="mt-1">
-                    ○：この車からでも解ける / ×：この車を出すと詰む
-                  </p>
-                  <p className="mt-1 text-slate-500">
-                    分岐は試作ルールの全探索結果です。
-                  </p>
-                </div>
-              )}
+          </section>
+          <section
+            aria-label="試作盤面"
+            className="min-w-0 lg:order-1 lg:rounded-2xl lg:bg-white lg:p-5 lg:shadow-sm"
+          >
+            <div className="flex justify-center">
+              <ParkingJamRuleLabBoard
+                scenario={scenario}
+                state={state}
+                onExit={exitVehicle}
+                showAnalysis={showAnalysis}
+                outcomeByVehicle={outcomeByVehicle}
+              />
             </div>
-            <p className="text-xs leading-relaxed text-slate-500">
-              {problem
-                ? "この問題は出庫指令型だけの盤面です。レベルは機械的な基準による仮のもので、人間の体感で確かめたものではありません。"
-                : "4方式は各盤面規模で同一の車両配置・色を使います。数値は試作の全探索結果で、人間の面白さの評価ではありません。"}
-            </p>
+            <div className="mt-1 flex items-center">
+              <label className="ml-auto flex h-11 cursor-pointer items-center gap-2 text-xs text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={showAnalysis}
+                  onChange={(event) => setShowAnalysis(event.target.checked)}
+                  className="size-5 accent-slate-800"
+                />
+                分岐の答えを表示
+              </label>
+            </div>
           </section>
         </div>
+        <p className="mt-3 text-xs leading-relaxed text-slate-500">
+          {problem
+            ? "この問題はこの方式だけの盤面です。レベルや分類は機械的な基準による仮のもので、人間の体感で確かめたものではありません。"
+            : "4方式は各盤面規模で同一の車両配置・色を使います。数値は試作の全探索結果で、人間の面白さの評価ではありません。"}
+        </p>
       </div>
     </main>
   );
