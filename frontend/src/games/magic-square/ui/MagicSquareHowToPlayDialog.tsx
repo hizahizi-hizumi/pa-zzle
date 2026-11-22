@@ -13,7 +13,15 @@ import { playMenuOperationItems } from "@/components/play-menu-operations";
 import { UndoButton } from "@/components/UndoButton";
 import pictogramSvg from "@/games/magic-square/assets/pictogram.svg?raw";
 import { MAGIC_SQUARE_DISPLAY_NAME } from "@/games/magic-square/display-name";
-import { listMagicSquareValueStates } from "@/games/magic-square/puzzle/rules";
+import { magicSquareBoardSizes } from "@/games/magic-square/problem/problem";
+import {
+  getMagicSquareMagicSum,
+  getMagicSquareMaxValue,
+} from "@/games/magic-square/puzzle/board";
+import {
+  evaluateMagicSquareLine,
+  listMagicSquareValueStates,
+} from "@/games/magic-square/puzzle/rules";
 import {
   MAGIC_SQUARE_SCORE_MAXIMUMS,
   MAGIC_SQUARE_SPEED_ZERO_SCORE_RATIO,
@@ -62,6 +70,17 @@ const menuOperations: readonly HowToPlayMenuOperation[] = [
     text: "同じレベルの/別の問題に/変えます。",
   },
 ];
+
+/** 図の盤面の一辺。図はどれも同じ大きさで描く。 */
+const figureSize = goalFigureBoard.board.size;
+const figureMagicSum = getMagicSquareMagicSum(figureSize);
+const magicSumPhrases = magicSquareBoardSizes
+  .map((size) => `${size}×${size}なら${getMagicSquareMagicSum(size)}`)
+  .join("、/");
+const unmatchedRowSum = evaluateMagicSquareLine(unmatchedFigureBoard.board, {
+  kind: "row",
+  index: 0,
+}).sum;
 
 /** 結果画面と同じ順に、評価の項目を満点と並べる。 */
 const scoreItems = Object.entries(MAGIC_SQUARE_SCORE_MAXIMUMS) as [
@@ -114,7 +133,7 @@ export function MagicSquareHowToPlayDialog({
       rules={
         <>
           <HowToPlayRule
-            text="縦・横・斜めの/どの列も/合計を/そろえれば/完成です。/合計は/4×4なら34、/5×5なら65、/6×6なら111で/盤面の左上に/出ています。"
+            text={`縦・横・斜めの/どの列も/合計を/そろえれば/完成です。/合計は/${magicSumPhrases}で/盤面の左上に/出ています。`}
             examples={
               <HowToPlayExample
                 figure={
@@ -130,14 +149,14 @@ export function MagicSquareHowToPlayDialog({
             }
           />
           <HowToPlayRule
-            text="4×4なら/1から16までの/数を/1回ずつ/使います。/使った数は/数の欄で/薄くなり/ほかのマスには/置けません。"
+            text={`${figureSize}×${figureSize}なら/1から${getMagicSquareMaxValue(figureSize)}までの/数を/1回ずつ/使います。/使った数は/数の欄で/薄くなり/ほかのマスには/置けません。`}
             arrangement="stacked"
             examples={
               <HowToPlayExample
                 figure={
                   <div inert className="w-[min(100cqw,22rem)]">
                     <MagicSquareNumberPad
-                      size={selectedFigureBoard.board.size}
+                      size={figureSize}
                       valueStates={listMagicSquareValueStates(
                         selectedFigureBoard.givens,
                         selectedFigureBoard.board,
@@ -162,7 +181,11 @@ export function MagicSquareHowToPlayDialog({
                       size="example"
                     />
                   }
-                  caption={<HowToPlayPhrases text="1行目が/埋まって/36" />}
+                  caption={
+                    <HowToPlayPhrases
+                      text={`1行目が/埋まって/${unmatchedRowSum}`}
+                    />
+                  }
                 />
                 <HowToPlayExample
                   figure={
@@ -172,7 +195,9 @@ export function MagicSquareHowToPlayDialog({
                     />
                   }
                   caption={
-                    <HowToPlayPhrases text="1列目に/空きが/あるのに/34" />
+                    <HowToPlayPhrases
+                      text={`1列目に/空きが/あるのに/${figureMagicSum}`}
+                    />
                   }
                 />
               </>

@@ -45,23 +45,29 @@ describe("MagicSquareHowToPlayDialog", () => {
       ]);
     });
 
-    test("ルールの図を、本番の盤面部品で描き、違反の列を違反として描くこと", () => {
+    test("ルールの図を本番の盤面部品で描き、違反の2種を違反として描くこと", () => {
       const panel = within(getDialog()).getByRole("tabpanel", {
         name: "ルール",
       });
 
-      const statuses = new Set(
-        ["1行目の合計 36", "1列目の合計 34"].flatMap((label) =>
-          within(panel)
-            .getAllByLabelText(label)
-            .map((sum) => sum.getAttribute("data-line-status")),
-        ),
+      const violations = [
+        "1行目の合計 36 埋まって合計と違う",
+        "1列目の合計 34 空きがあるのに合計に届いた",
+      ].map((text) => within(panel).queryAllByText(text).length);
+
+      expect(violations.every((count) => count > 0)).toBe(true);
+    });
+
+    test("ルールで、出す盤面の大きさごとのそろえる合計を言うこと", () => {
+      const panel = within(getDialog()).getByRole("tabpanel", {
+        name: "ルール",
+      });
+
+      const phrases = ["4×4なら34、", "5×5なら65、", "6×6なら111で"].map(
+        (text) => within(panel).queryAllByText(text).length,
       );
 
-      expect([statuses.has("unmatched"), statuses.has("overreached")]).toEqual([
-        true,
-        true,
-      ]);
+      expect(phrases.every((count) => count > 0)).toBe(true);
     });
 
     test("採点のタブで、結果画面と同じ順と満点の見出しを並べること", () => {

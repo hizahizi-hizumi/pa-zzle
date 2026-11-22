@@ -110,9 +110,15 @@ describe("MagicSquarePlay", () => {
     });
 
     test("見出しに取り下げの回数と経過時間を出すこと", () => {
-      const texts = [screen.getByText("取り下げ"), screen.getByText("01:05")];
+      const withdrawalMetric = screen.getByText("取り下げ").parentElement!;
+      const elapsedMetric = screen.getByText("時間").parentElement!;
 
-      expect(texts.every(Boolean)).toBe(true);
+      const values = [
+        within(withdrawalMetric).queryByText("2"),
+        within(elapsedMetric).queryByText("01:05"),
+      ];
+
+      expect(values.every((value) => value !== null)).toBe(true);
     });
 
     test("盤面のマスを押すとそのマスを選ぶ操作を知らせること", () => {
@@ -174,9 +180,16 @@ describe("MagicSquarePlay", () => {
     });
 
     test("結果画面に難易度と取り下げの回数を出すこと", () => {
-      const texts = [screen.getByText("レベル 1"), screen.getByText("2回")];
+      const withdrawalMetric = screen.getByText("取り下げ", {
+        selector: "dt",
+      }).parentElement!;
 
-      expect(texts.every(Boolean)).toBe(true);
+      const texts = [
+        screen.queryByText("レベル 1"),
+        within(withdrawalMetric).queryByText("2回"),
+      ];
+
+      expect(texts.every((text) => text !== null)).toBe(true);
     });
   });
 });

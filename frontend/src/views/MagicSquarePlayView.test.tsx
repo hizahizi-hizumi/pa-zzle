@@ -115,8 +115,14 @@ describe("MagicSquarePlayView", () => {
           { name: "プレイ結果" },
           { timeout: 3_000 },
         );
+        const withdrawalMetric = screen.getByText("取り下げ", {
+          selector: "dt",
+        }).parentElement!;
 
-        expect([heading, screen.getByText("0回")].every(Boolean)).toBe(true);
+        expect([
+          heading,
+          within(withdrawalMetric).queryByText("0回"),
+        ]).not.toContain(null);
       });
 
       test("遊んだ問題とプレイの事実を記録へ保存すること", async () => {

@@ -66,23 +66,22 @@ describe("MagicSquareBoard", () => {
     test("そろえる合計を盤面のそばに出すこと", () => {
       const boardGroup = screen.getByRole("group", { name: "魔方陣の盤面" });
 
-      expect(
-        within(boardGroup).getByText("合計").nextSibling?.textContent,
-      ).toBe("34");
+      const magicSum = within(boardGroup).getByText("そろえる合計 34");
+
+      expect(magicSum).toBeTruthy();
     });
 
-    test("列ごとに今の合計と状態を出すこと", () => {
-      const sums = [
-        screen.getByLabelText("1行目の合計 36"),
-        screen.getByLabelText("1列目の合計 17"),
-        screen.getByLabelText("右上からの斜めの合計 16"),
-      ];
+    test("列ごとに、今の合計と、そろった・違反の状態を読み上げに出すこと", () => {
+      const boardGroup = screen.getByRole("group", { name: "魔方陣の盤面" });
 
-      expect(sums.map((sum) => sum.getAttribute("data-line-status"))).toEqual([
-        "unmatched",
-        "incomplete",
-        "incomplete",
-      ]);
+      const sums = [
+        "1行目の合計 36 埋まって合計と違う",
+        "1列目の合計 17",
+        "右上からの斜めの合計 16",
+        "左上からの斜めの合計 34 そろった",
+      ].map((text) => within(boardGroup).queryByText(text));
+
+      expect(sums.every((sum) => sum !== null)).toBe(true);
     });
 
     test("選んだマスを押された状態にすること", () => {

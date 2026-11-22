@@ -94,6 +94,14 @@ const lineSumColors = {
   overreached: magicSquareTone.violated,
 } as const satisfies Record<MagicSquareLineStatus, string>;
 
+/** 読み上げで、色と波線の代わりに伝える列の状態。そろっていないだけの列には付けない。 */
+const lineStatusPhrases = {
+  incomplete: null,
+  matched: "そろった",
+  unmatched: "埋まって合計と違う",
+  overreached: "空きがあるのに合計に届いた",
+} as const satisfies Record<MagicSquareLineStatus, string | null>;
+
 const selectedLineImage = `linear-gradient(${magicSquareTone.selectedLine}, ${magicSquareTone.selectedLine})`;
 
 function describeLine(line: MagicSquareLine): string {
@@ -105,6 +113,16 @@ function describeLine(line: MagicSquareLine): string {
     case "diagonal":
       return line.from === "top-left" ? "左上からの斜め" : "右上からの斜め";
   }
+}
+
+function describeLineSum(
+  line: MagicSquareLine,
+  sum: number,
+  status: MagicSquareLineStatus,
+): string {
+  const phrase = lineStatusPhrases[status];
+  const description = `${describeLine(line)}の合計 ${sum}`;
+  return phrase === null ? description : `${description} ${phrase}`;
 }
 
 function getLineKey(line: MagicSquareLine): string {
@@ -240,6 +258,7 @@ export function MagicSquareBoard({
     selectedLines.flatMap((line) => getMagicSquareLineCellIndices(size, line)),
   );
   const slabArea = getMagicSquareSlabArea(size);
+  const magicSum = getMagicSquareMagicSum(size);
 
   useLayoutEffect(() => {
     if (!rejection || shownRejectionIdRef.current === rejection.id) {
@@ -300,7 +319,9 @@ export function MagicSquareBoard({
             gridColumn: MAGIC_SQUARE_MAGIC_SUM_AREA.column,
           }}
         >
+          <span className="sr-only">{`そろえる合計 ${magicSum}`}</span>
           <span
+            aria-hidden="true"
             style={{
               color: magicSquareTone.magicSumLabel,
               fontSize: `max(${MAGIC_SUM_LABEL_MIN_FONT_PX}px, ${scaleByCell(MAGIC_SUM_LABEL_FONT_RATIO)})`,
@@ -309,6 +330,7 @@ export function MagicSquareBoard({
             合計
           </span>
           <span
+            aria-hidden="true"
             data-magic-sum=""
             className="font-bold tabular-nums"
             style={{
@@ -317,7 +339,7 @@ export function MagicSquareBoard({
               marginTop: scaleByCell(0.06),
             }}
           >
-            {getMagicSquareMagicSum(size)}
+            {magicSum}
           </span>
         </div>
         <div
@@ -457,10 +479,12 @@ export function MagicSquareBoard({
                 />
               )}
               {diagonalFrom && <DiagonalMark from={diagonalFrom} />}
+              <span className="sr-only">
+                {describeLineSum(line, sum, status)}
+              </span>
               <span
-                aria-label={`${describeLine(line)}の合計 ${sum}`}
+                aria-hidden="true"
                 data-line-kind={line.kind}
-                data-line-status={status}
                 className={cn(
                   "relative font-semibold tabular-nums leading-none",
                   violated &&
