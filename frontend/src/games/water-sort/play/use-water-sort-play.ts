@@ -172,7 +172,8 @@ export function useWaterSortPlay(
   );
   const { session, problemIdentity, optimalMoveCount } = play;
   const elapsedMs = useSessionElapsedMs(session);
-  const nextOperationId = useRef(0);
+  // 開き直したときは直前の手の知らせも戻るので、盤面が同じ手として読み飛ばさないよう、その続きから数える。
+  const nextOperationId = useRef((play.operation?.id ?? -1) + 1);
 
   const selectBottle = useCallback((bottleIndex: number) => {
     const selectedAt = Date.now();
