@@ -22,6 +22,8 @@ export type Path =
   | `/puzzles/parking-jam/play/:problemId`
   | `/puzzles/reflection`
   | `/puzzles/reflection/play/:problemId`
+  | `/puzzles/shuttle-parking`
+  | `/puzzles/shuttle-parking/play/:problemId`
   | `/puzzles/slide-puzzle`
   | `/puzzles/slide-puzzle/play/:problemId`
   | `/puzzles/takuzu`
@@ -43,6 +45,7 @@ export type Params = {
   '/puzzles/nanpure/play/:problemId': { problemId: string }
   '/puzzles/parking-jam/play/:problemId': { problemId: string }
   '/puzzles/reflection/play/:problemId': { problemId: string }
+  '/puzzles/shuttle-parking/play/:problemId': { problemId: string }
   '/puzzles/slide-puzzle/play/:problemId': { problemId: string }
   '/puzzles/takuzu/play/:problemId': { problemId: string }
   '/puzzles/tsume-shogi/play/:problemId': { problemId: string }
