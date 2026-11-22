@@ -6,6 +6,7 @@ import {
 import { RecordedShuttleParkingResult } from "@/app/game-integration/shuttle-parking/RecordedShuttleParkingResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/shuttle-parking/assets/pictogram.svg?raw";
+import pictogramShowcaseSvg from "@/games/shuttle-parking/assets/pictogram-showcase.svg?raw";
 import { SHUTTLE_PARKING_DISPLAY_NAME } from "@/games/shuttle-parking/display-name";
 import {
   isShuttleParkingPlayRecord,
@@ -28,6 +29,7 @@ export const shuttleParkingCatalogEntry = {
   id: shuttleParkingPlayRecordDefinition.gameId,
   name: SHUTTLE_PARKING_DISPLAY_NAME,
   pictogramSvg,
+  pictogramShowcaseSvg,
   homePath: "/puzzles/shuttle-parking",
   playPath: "/puzzles/shuttle-parking/play/:problemId",
   playRecordDisplay: shuttleParkingPlayRecordDisplay,
