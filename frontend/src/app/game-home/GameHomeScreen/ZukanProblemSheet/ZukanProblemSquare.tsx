@@ -9,6 +9,10 @@ import {
   getZukanProblemStatusColorClassName,
 } from "@/app/game-home/GameHomeScreen/zukan-problem-appearance";
 import {
+  getZukanSheetPieceFaceId,
+  ZUKAN_SHEET_PIECE_GROOVE_ID,
+} from "@/features/zukan/ui/zukan-piece-material";
+import {
   getZukanPiecePath,
   ZUKAN_PIECE_GROOVE_WIDTH,
   ZUKAN_PIECE_VIEW_BOX,
@@ -17,8 +21,10 @@ import {
 import {
   getZukanProblemStatus,
   type ZukanProblem,
+  type ZukanProblemStatus,
 } from "@/features/zukan/zukan-collection";
 import type { ZukanProblemChange } from "@/features/zukan/zukan-last-viewed";
+import type { GameResultLevel } from "@/games/result";
 
 type ZukanProblemSquareProps = {
   problem: ZukanProblem;
@@ -37,6 +43,10 @@ type ZukanProblemSquareProps = {
 const SELECTION_HALO_WIDTH = 0.2;
 const SELECTION_LINE_WIDTH = 0.083;
 const HOVER_LINE_WIDTH = 0.11;
+
+function isSolvedStatus(status: ZukanProblemStatus): status is GameResultLevel {
+  return status !== "untouched" && status !== "attempted";
+}
 
 const PIECE_LAYER_CLASS_NAME =
   "pointer-events-none absolute -top-1/2 -left-1/2 size-[200%] overflow-visible";
@@ -106,13 +116,23 @@ function ZukanProblemSquareContent({
             strokeLinejoin="round"
           />
         )}
-        <path
-          d={path}
-          fill="currentColor"
-          className="stroke-background"
-          strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
-          strokeLinejoin="round"
-        />
+        {isSolvedStatus(shownStatus) ? (
+          <path
+            d={path}
+            fill={`url(#${getZukanSheetPieceFaceId(shownStatus)})`}
+            stroke={`url(#${ZUKAN_SHEET_PIECE_GROOVE_ID})`}
+            strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
+            strokeLinejoin="round"
+          />
+        ) : (
+          <path
+            d={path}
+            fill="currentColor"
+            className="stroke-background"
+            strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
+            strokeLinejoin="round"
+          />
+        )}
         <path
           d={path}
           fill="none"
@@ -137,31 +157,32 @@ function ZukanProblemSquareContent({
           <path d={path} fill="currentColor" />
         </svg>
       )}
-      {hasStamp && (
+      {hasStamp && stamp !== null && (
         <span
           aria-hidden="true"
           data-stamp-part="face"
-          className={`${PIECE_LAYER_CLASS_NAME} opacity-0 ${getZukanProblemStatusColorClassName(status)}`}
+          className={`${PIECE_LAYER_CLASS_NAME} opacity-0`}
         >
           <svg viewBox={ZUKAN_PIECE_VIEW_BOX} className="size-full">
             <path
               d={path}
-              fill="currentColor"
-              className="stroke-background"
-              strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
-              strokeLinejoin="round"
+              fill={`url(#${getZukanSheetPieceFaceId(stamp.level)})`}
             />
             {/* 段階が上がったマスは、押す姿に前の段階の色を重ね、落ちながら今の色へ塗り替えられるようにする。 */}
             {change?.kind === "raised" && (
               <path
                 data-stamp-part="previous"
                 d={path}
-                fill="currentColor"
-                className={getZukanProblemStatusColorClassName(
-                  change.previousStatus,
-                )}
+                fill={`url(#${getZukanSheetPieceFaceId(change.previousStatus)})`}
               />
             )}
+            <path
+              d={path}
+              fill="none"
+              stroke={`url(#${ZUKAN_SHEET_PIECE_GROOVE_ID})`}
+              strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
+              strokeLinejoin="round"
+            />
           </svg>
         </span>
       )}

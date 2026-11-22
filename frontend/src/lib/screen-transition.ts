@@ -176,6 +176,8 @@ export async function runScreenTransition(
     carried = carrier.after?.();
     root.setAttribute(ARRIVED_ATTRIBUTE, "");
   });
+  // 動きが始まる前に飛ばすと `ready` が拒否される。動きの始まりは待たないので、拒否を受けて捨てる。
+  transition.ready.catch(() => {});
   if (skipsOnStart) transition.skipTransition();
   void Promise.allSettled([
     transition.finished,

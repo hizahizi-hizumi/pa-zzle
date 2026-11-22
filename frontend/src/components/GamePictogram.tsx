@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 
 import { startShowcaseAtRest } from "@/components/GamePictogram/game-pictogram-motion";
 import { subscribePrefersReducedMotion } from "@/lib/motion";
@@ -43,7 +43,8 @@ export function GamePictogram({
 }: GamePictogramProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
+  // 描いた最初の描画から絵が見えるよう、描画の前に入れる。
+  useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 

@@ -14,6 +14,7 @@ import {
   useState,
 } from "react";
 import { ZukanProblemSquare } from "@/app/game-home/GameHomeScreen/ZukanProblemSheet/ZukanProblemSquare";
+import { ZukanSheetPieceMaterialDefs } from "@/app/game-home/GameHomeScreen/ZukanProblemSheet/ZukanSheetPieceMaterialDefs";
 import type { ZukanChangeStage } from "@/app/game-home/GameHomeScreen/zukan-change-reveal";
 import { findZukanPieceShape } from "@/features/zukan/ui/zukan-piece-shape";
 import {
@@ -349,6 +350,10 @@ function ZukanProblemSheetContent({
         aria-hidden="true"
         className="pointer-events-none sticky -top-4 z-10 -mt-4 mb-1 h-3 bg-linear-to-b from-background"
       />
+      {/* 解いたピースが共有する質感の定義。`display: none` の中の定義は参照できないブラウザがあるので、大きさの無い SVG に置く。 */}
+      <svg aria-hidden="true" className="absolute size-0">
+        <ZukanSheetPieceMaterialDefs />
+      </svg>
       <div
         ref={gridRef}
         data-screen-shared="sheet"

@@ -69,8 +69,17 @@ export function PuzzleSelectionView() {
     fallbackGameId: visibleIds[0],
   });
   const selectedId = visibleCatalog[selectedGameIndex]?.id;
+  // 並び順が同じなら、同じ並びを渡して台紙を求め直させない。
+  const orderedCatalog = useMemo(
+    () =>
+      visibleIds.flatMap((id) => {
+        const game = gameCatalog.find((entry) => entry.id === id);
+        return game ? [game] : [];
+      }),
+    [visibleIds],
+  );
   const sheetPreviews = useGameSheetPreviews(
-    visibleCatalog,
+    orderedCatalog,
     selectedId,
     records,
     attempts,

@@ -4,6 +4,7 @@ import {
   zukanPieceSettleCarrier,
   zukanPieceStowCarrier,
 } from "@/app/shell/zukan-piece-transit";
+import { registerZukanResultPieceFrontAligner } from "@/features/zukan/ui/zukan-result-piece-pose";
 
 const RESULT_HTML = `
   <span data-result-emblem="">
@@ -12,7 +13,7 @@ const RESULT_HTML = `
 `;
 
 function stubAnimate() {
-  const animate = vi.fn(() => ({
+  const animate = vi.fn((_keyframes: Keyframe[]) => ({
     finished: Promise.resolve(),
     cancel: vi.fn(),
   }));
@@ -176,6 +177,62 @@ describe("zukanPieceReturnCarrier", () => {
     });
   });
 
+  describe("結果のピースを立体で回している場合", () => {
+    const order: string[] = [];
+    let unregister: () => void;
+
+    beforeEach(() => {
+      stubAnimate();
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn(() => ({ matches: false })),
+      );
+      document.body.innerHTML = RESULT_HTML;
+      order.length = 0;
+      unregister = registerZukanResultPieceFrontAligner(async () => {
+        order.push(carriedPiece() === null ? "aligned" : "aligned-after-lift");
+      });
+    });
+
+    afterEach(() => {
+      unregister();
+      zukanPieceReturnCarrier.skip?.();
+    });
+
+    test("正面を向いた姿へ揃えてから、ピースを写すこと", async () => {
+      await zukanPieceReturnCarrier.before?.();
+
+      expect(order).toEqual(["aligned"]);
+      expect(carriedPiece()).not.toBeNull();
+    });
+
+    describe("正面へ揃えている間に飛ばされた場合", () => {
+      let finishAligning: () => void;
+      let lifting: Promise<void> | void;
+
+      beforeEach(() => {
+        unregister();
+        unregister = registerZukanResultPieceFrontAligner(
+          () =>
+            new Promise<void>((resolve) => {
+              finishAligning = resolve;
+            }),
+        );
+        lifting = zukanPieceReturnCarrier.before?.();
+      });
+
+      test("揃え終えても、ピースを写さずに終えること", async () => {
+        zukanPieceReturnCarrier.skip?.();
+        finishAligning();
+        await lifting;
+        const emblemVisibility = resultEmblem().style.visibility;
+
+        expect(carriedPiece()).toBeNull();
+        expect(emblemVisibility).toBe("");
+      });
+    });
+  });
+
   describe("ピースを動かせない場合", () => {
     beforeEach(() => {
       document.body.innerHTML = RESULT_HTML;
@@ -192,6 +249,7 @@ describe("zukanPieceReturnCarrier", () => {
 });
 
 describe("zukanPieceStowCarrier", () => {
+  const iconRect = { left: 100, top: 200, width: 20, height: 20 };
   let animate: ReturnType<typeof stubAnimate>;
 
   beforeEach(() => {
@@ -200,7 +258,11 @@ describe("zukanPieceStowCarrier", () => {
       "matchMedia",
       vi.fn(() => ({ matches: false })),
     );
-    document.body.innerHTML = `${RESULT_HTML}<button type="button" data-result-collection="">問題選択</button>`;
+    document.body.innerHTML = `${RESULT_HTML}<button type="button" data-result-collection=""><svg data-collection-icon=""></svg>問題選択</button>`;
+    const icon = document.querySelector("[data-collection-icon]") as Element;
+    vi.spyOn(icon, "getBoundingClientRect").mockReturnValue(
+      iconRect as DOMRect,
+    );
   });
 
   test("次のプレイへ進む前に、結果のピースを「問題選択」へしまい終えて、運んだ層を残さないこと", async () => {
@@ -210,5 +272,14 @@ describe("zukanPieceStowCarrier", () => {
     expect(animate).toHaveBeenCalledOnce();
     expect(carriedPiece()).toBeNull();
     expect(emblemVisibility).toBe("hidden");
+  });
+
+  test("ピースを「問題選択」のアイコンの中心へ動かすこと", async () => {
+    await zukanPieceStowCarrier.before?.();
+    const keyframes = animate.mock.calls[0]?.[0];
+
+    expect(keyframes?.at(-1)?.transform).toBe(
+      "translate(110px, 210px) scale(0.3)",
+    );
   });
 });

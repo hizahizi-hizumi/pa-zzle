@@ -1,9 +1,11 @@
+import { drawZukanPieceSvgContent } from "@/features/zukan/ui/zukan-piece-material";
 import {
   findZukanPieceShape,
   getZukanPiecePath,
   ZUKAN_PIECE_VIEW_BOX,
 } from "@/features/zukan/ui/zukan-piece-shape";
 import { getZukanSolvedPiecePath } from "@/features/zukan/ui/zukan-play-piece";
+import { alignZukanResultPieceToFront } from "@/features/zukan/ui/zukan-result-piece-pose";
 import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 import type { ScreenTransitionCarrier } from "@/lib/screen-transition";
 
@@ -15,8 +17,8 @@ const ZUKAN_PIECE_TRANSIT_DURATION_MS = {
   press: 180,
   /** はめたピースを、台紙のマスへ替える。 */
   settle: 140,
-  /** 次のプレイへ進むときに、ピースを「問題選択」へしまう。 */
-  stow: 320,
+  /** 次のプレイへ進むときに、ピースを真下の「問題選択」へ静かに降ろしてしまう。 */
+  stow: 420,
 } as const;
 
 /** 台紙のマスは、画面の行き来の動きの後ろで描かれる。戻る先のマスが描かれるのを待つ長さの上限（ms）。 */
@@ -32,6 +34,8 @@ const PRESS_SCALE = 0.88;
 const SQUARE_SETTLE_WAIT_MS = 400;
 /** はめたピースを、マスに色が入るのを待って置いておく長さの上限（ms）。前回からの変化を見せる演出が始まらなかったときに、ピースを残さない。 */
 const SQUARE_COLOR_WAIT_MS = 1600;
+/** しまう動きのイージング。浮いていたピースが、そっと降りて収まるように、終わりを長くゆっくりにする。 */
+const STOW_EASING = "cubic-bezier(0.45, 0, 0.2, 1)";
 /** しまうときに縮める倍率。 */
 const STOW_SCALE = 0.3;
 /** しまう動きのうち、ピースを薄くし始めるところ。届く先が分かるまで、はっきり見せる。 */
@@ -73,17 +77,11 @@ export function subscribeZukanPieceFramed(
 }
 
 let carried: CarriedPiece | null = null;
+// 正面へ揃えるのを待つ間はまだ運ぶものが無いので、その間に飛ばされたことを覚えておき、揃えた後に写さない。
+let carryingSkipped = false;
 
 function canAnimate(): boolean {
   return typeof document.body.animate === "function" && !prefersReducedMotion();
-}
-
-/** 結果に添えたピースの枠。ピースを添えない高さの画面では、枠があっても描かれないので `null`。 */
-function findShownResultEmblem(): HTMLElement | null {
-  const emblem = document.querySelector<HTMLElement>(RESULT_EMBLEM_SELECTOR);
-  return emblem !== null && getComputedStyle(emblem).display !== "none"
-    ? emblem
-    : null;
 }
 
 async function settled(animation: Animation): Promise<void> {
@@ -106,7 +104,7 @@ function dropCarried(): void {
  */
 function liftResultPiece(): CarriedPiece | null {
   dropCarried();
-  const emblem = findShownResultEmblem();
+  const emblem = document.querySelector<HTMLElement>(RESULT_EMBLEM_SELECTOR);
   const piece = emblem?.querySelector(RESULT_PIECE_SELECTOR);
   if (!emblem || !piece || !canAnimate()) return null;
   const { left, top, width, height } = emblem.getBoundingClientRect();
@@ -114,6 +112,8 @@ function liftResultPiece(): CarriedPiece | null {
   layer.removeAttribute("class");
   layer.removeAttribute("data-zukan-result-piece");
   layer.dataset.zukanCarriedPiece = "";
+  const path = piece.querySelector("clipPath > path")?.getAttribute("d");
+  if (path) drawCarried(layer, path);
   const { color } = getComputedStyle(piece);
   Object.assign(layer.style, {
     position: "fixed",
@@ -126,12 +126,6 @@ function liftResultPiece(): CarriedPiece | null {
     color,
     zIndex: "var(--layer-overlay)",
   });
-  // 絵柄の色は結果画面の中でだけ決まるので、決まった値を層へ写す。
-  const markColor = getComputedStyle(piece).getPropertyValue(
-    "--game-pictogram-strong",
-  );
-  layer.style.setProperty("--game-pictogram-strong", markColor);
-  layer.style.setProperty("--game-pictogram-soft", markColor);
   document.body.append(layer);
   emblem.style.visibility = "hidden";
   const { sheetGameId, sheetDifficulty, sheetIndex } = (piece as SVGElement)
@@ -355,7 +349,39 @@ async function landPiece(): Promise<void> {
 
 /** 運ぶピースの輪郭を、はめる場所の形へ替える。 */
 function reshapeCarried(layer: SVGSVGElement, shape: string): void {
-  layer.querySelector("path")?.setAttribute("d", getZukanPiecePath(shape));
+  drawCarried(layer, getZukanPiecePath(shape));
+}
+
+/**
+ * 運ぶピースを、`path` の輪郭で描き直す。
+ * 写した結果のピースの切り抜きと階調の ID は、隠した結果のピースと同じで、隠した側の切り抜きが使われると何も描かれないので、運ぶピース自身の ID で描く。
+ */
+function drawCarried(layer: SVGSVGElement, path: string): void {
+  layer.innerHTML = drawZukanPieceSvgContent({
+    path,
+    idPrefix: "zukan-carried-piece",
+    face: "currentColor",
+  });
+}
+
+/**
+ * 結果のピースを立体で回していれば、正面を向いた平面の姿へ揃えてから写す。姿が跳ばないようにする。
+ * 揃える必要が無ければ、その場で写す。
+ */
+function liftAlignedResultPiece():
+  | Promise<CarriedPiece | null>
+  | CarriedPiece
+  | null {
+  carryingSkipped = false;
+  const aligning = alignZukanResultPieceToFront();
+  if (aligning === null) return liftResultPiece();
+  return aligning.then(() => (carryingSkipped ? null : liftResultPiece()));
+}
+
+/** 運ぶ動きを飛ばされたとき。運んでいるピースを取り除き、まだ写していなければ写さない。 */
+function skipCarrying(): void {
+  carryingSkipped = true;
+  dropCarried();
 }
 
 async function fadeCarried(piece: CarriedPiece): Promise<void> {
@@ -445,12 +471,13 @@ async function landPieceInFrame(): Promise<void> {
   await fadeCarried(piece);
 }
 
-/** 次のプレイへ進む前に、結果のピースを「問題選択」へしまう。 */
+/** 次のプレイへ進む前に、結果のピースを、真下の「問題選択」のアイコンへ降ろしてしまう。 */
 async function stowPiece(): Promise<void> {
   const collection = document.querySelector(RESULT_COLLECTION_SELECTOR);
-  const piece = collection === null ? null : liftResultPiece();
+  const piece = collection === null ? null : await liftAlignedResultPiece();
   if (collection === null || piece === null) return;
-  const { left, top, width, height } = collection.getBoundingClientRect();
+  const target = collection.querySelector(":scope > svg") ?? collection;
+  const { left, top, width, height } = target.getBoundingClientRect();
   const dx = left + width / 2 - piece.centerX;
   const dy = top + height / 2 - piece.centerY;
   await settled(
@@ -465,7 +492,7 @@ async function stowPiece(): Promise<void> {
       ],
       {
         duration: ZUKAN_PIECE_TRANSIT_DURATION_MS.stow,
-        easing: MOTION_EASING.standard,
+        easing: STOW_EASING,
         fill: "forwards",
       },
     ),
@@ -483,7 +510,7 @@ function pieceMask(piecePath: string): string {
  * ピースの形・位置・大きさを渡す。
  */
 function pointSettleAtResultPiece(): void {
-  const emblem = findShownResultEmblem();
+  const emblem = document.querySelector<HTMLElement>(RESULT_EMBLEM_SELECTOR);
   const style = document.documentElement.style;
   if (emblem === null) {
     style.removeProperty("--screen-piece-mask");
@@ -522,10 +549,11 @@ export const zukanPieceSettleCarrier: ScreenTransitionCarrier = {
 /** 結果からゲームのホームへ戻る行き来。結果のピースを、台紙の元の場所へ運んではめる。 */
 export const zukanPieceReturnCarrier: ScreenTransitionCarrier = {
   before() {
-    liftResultPiece();
+    const lifted = liftAlignedResultPiece();
+    if (lifted instanceof Promise) return lifted.then(() => {});
   },
   after: landPiece,
-  skip: dropCarried,
+  skip: skipCarrying,
 };
 
 /**
@@ -534,18 +562,23 @@ export const zukanPieceReturnCarrier: ScreenTransitionCarrier = {
  */
 export const zukanPieceHomeCarrier: ScreenTransitionCarrier = {
   before() {
-    if (liftResultPiece()?.place != null) {
-      document.documentElement.setAttribute(CARRIES_TO_FRAME_ATTRIBUTE, "");
+    function markCarried(piece: CarriedPiece | null) {
+      if (piece?.place != null) {
+        document.documentElement.setAttribute(CARRIES_TO_FRAME_ATTRIBUTE, "");
+      }
     }
+    const lifted = liftAlignedResultPiece();
+    if (lifted instanceof Promise) return lifted.then(markCarried);
+    markCarried(lifted);
   },
   after: landPieceInFrame,
-  skip: dropCarried,
+  skip: skipCarrying,
 };
 
 /** 結果から次のプレイへ進む行き来。結果のピースを「問題選択」へしまってから進む。 */
 export const zukanPieceStowCarrier: ScreenTransitionCarrier = {
   before: stowPiece,
-  skip: dropCarried,
+  skip: skipCarrying,
 };
 
 const PLAY_ENTRY_PIECE_SELECTOR = "[data-zukan-play-entry-dive]";

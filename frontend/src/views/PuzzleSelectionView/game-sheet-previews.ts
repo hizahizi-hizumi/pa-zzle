@@ -22,6 +22,7 @@ import {
 } from "@/features/zukan/zukan-viewed-history";
 import type { DifficultyLevel } from "@/games/difficulty";
 import { scheduleIdleTask } from "@/lib/idle-task";
+import { orderFromSelected } from "@/views/PuzzleSelectionView/carousel-order";
 
 type Plays = {
   records: readonly PlayRecord[];
@@ -88,13 +89,20 @@ function hasSheet(game: GameCatalogEntry, plays: Plays): boolean {
   return sheets.has(game.id);
 }
 
-/** 台紙を求めるには問題集の全問を並べるので重い。空いている時間に1ゲームずつ求め、求め終えたら `onDone` を呼ぶ。 */
+/**
+ * 台紙を求めるには問題集の全問を並べるので、空いている時間に1ゲームずつ求め、1つ求めるたびに `onFound` を呼ぶ。
+ * 送ったときに先に通る、選んでいるゲームの両隣から求める。
+ */
 function findOpenSheetsWhenIdle(
   games: readonly GameCatalogEntry[],
+  selectedGameId: string,
   plays: Plays,
-  onDone: () => void,
+  onFound: () => void,
 ): () => void {
-  const pending = games.filter((game) => !hasSheet(game, plays));
+  const pending = orderFromSelected(
+    games,
+    games.findIndex(({ id }) => id === selectedGameId),
+  ).filter((game) => !hasSheet(game, plays));
   if (pending.length === 0) {
     return function cancelNothing() {};
   }
@@ -102,10 +110,10 @@ function findOpenSheetsWhenIdle(
   function findNext() {
     const game = pending.shift();
     if (game === undefined) {
-      onDone();
       return;
     }
     findOpenSheet(game, plays);
+    onFound();
     cancel = scheduleIdleTask(findNext);
   }
   cancel = scheduleIdleTask(findNext);
@@ -121,17 +129,43 @@ function getViewportSize(): string {
   return `${window.innerWidth}x${window.innerHeight}`;
 }
 
-/** パズル選択の額に敷く、そのゲームの台紙の絵と、台紙の難易度。 */
+/** パズル選択の額に敷く、そのゲームの台紙の絵の元と、台紙の難易度。 */
 export type GameSheetPreview = ZukanSheetPreview & {
   gameId: string;
   difficulty: DifficultyLevel;
   problemCount: number;
 };
 
+// 額は同じ元のあいだ絵を描き直さないので、元が同じなら同じものを返す。
+const gamePreviews = new Map<string, GameSheetPreview>();
+
+function toGameSheetPreview(
+  gameId: string,
+  difficulty: DifficultyLevel,
+  preview: ZukanSheetPreview,
+): GameSheetPreview {
+  const cached = gamePreviews.get(gameId);
+  if (
+    cached !== undefined &&
+    cached.difficulty === difficulty &&
+    cached.appearanceKey === preview.appearanceKey
+  ) {
+    return cached;
+  }
+  const gamePreview = {
+    ...preview,
+    gameId,
+    difficulty,
+    problemCount: preview.statuses.length,
+  };
+  gamePreviews.set(gameId, gamePreview);
+  return gamePreview;
+}
+
 /**
- * ゲームごとの、ゲームのホームを開いたときに開く台紙の絵。解いた問題のピースには評価の色が付き、最後に解いた問題のあたりを描く。
- * 選んでいるゲームの分はすぐ求め、ほかのゲームの分は空いている時間に求める。求め終えるまでは、選んでいるゲームの分だけ返す。
- * `selectedGameId` が `undefined` の間は、何も求めない。
+ * ゲームごとの、ゲームのホームを開いたときに開く台紙の絵の元。解いた問題のピースには評価の色が付き、最後に解いた問題のあたりを初めに見せる。
+ * 選んでいるゲームの分はすぐ求め、ほかのゲームの分は空いている時間に1つずつ求め、求め終えたものから返す。
+ * `games` はカルーセルに並べる順にする。`selectedGameId` が `undefined` の間は、何も求めない。
  */
 export function useGameSheetPreviews(
   games: readonly GameCatalogEntry[],
@@ -144,7 +178,7 @@ export function useGameSheetPreviews(
     getViewportSize,
   );
   const plays = useMemo(() => ({ records, attempts }), [records, attempts]);
-  const [idlePlays, setIdlePlays] = useState<Plays | null>(null);
+  const [foundCount, setFoundCount] = useState(0);
   const [framedCount, setFramedCount] = useState(0);
   const selectedGame = games.find(({ id }) => id === selectedGameId);
 
@@ -160,41 +194,42 @@ export function useGameSheetPreviews(
       setFramedCount((count) => count + 1);
     });
   }, [selectedGame, plays]);
-  const hasFoundAll =
-    idlePlays === plays || games.every((game) => hasSheet(game, plays));
-
   useEffect(() => {
     if (selectedGameId === undefined) {
       return;
     }
-    return findOpenSheetsWhenIdle(games, plays, () => setIdlePlays(plays));
+    return findOpenSheetsWhenIdle(games, selectedGameId, plays, () =>
+      setFoundCount((count) => count + 1),
+    );
   }, [games, plays, selectedGameId]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: ピースが額の台紙にはまるたびに、見せる状態を求め直す。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: ほかのゲームの台紙を1つ求め終えるたびと、ピースが額の台紙にはまるたびに、見せるものを求め直す。
   return useMemo(() => {
     const [viewportWidthPx = 0, viewportHeightPx = 0] = viewportSize
       .split("x")
       .map(Number);
     const previews = new Map<string, GameSheetPreview>();
     for (const game of games) {
-      if (game.id !== selectedGameId && !hasFoundAll) {
+      if (game.id !== selectedGameId && !hasSheet(game, plays)) {
         continue;
       }
       const sheet = findOpenSheet(game, plays);
       if (sheet !== null) {
-        previews.set(game.id, {
-          ...getZukanSheetPreview(
-            sheet.statuses,
-            sheet.latestSolvedIndex,
-            viewportWidthPx,
-            viewportHeightPx,
+        previews.set(
+          game.id,
+          toGameSheetPreview(
+            game.id,
+            sheet.difficulty,
+            getZukanSheetPreview(
+              sheet.statuses,
+              sheet.latestSolvedIndex,
+              viewportWidthPx,
+              viewportHeightPx,
+            ),
           ),
-          gameId: game.id,
-          difficulty: sheet.difficulty,
-          problemCount: sheet.statuses.length,
-        });
+        );
       }
     }
     return previews;
-  }, [games, selectedGameId, plays, hasFoundAll, viewportSize, framedCount]);
+  }, [games, selectedGameId, plays, foundCount, viewportSize, framedCount]);
 }

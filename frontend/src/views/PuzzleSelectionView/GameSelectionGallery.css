@@ -109,7 +109,8 @@
 }
 /*
  * 額の中の絵は、そのゲームの台紙と、台紙に刷ったピクトグラム。
- * 台紙は額より縦に長く、額の中で縦に送って下まで見られる。ピクトグラムは、送っても額の中央に留める。
+ * 止まっている額では、台紙は額より縦に長く、額の中で縦に送って下まで見られる。ピクトグラムは、送っても額の中央に留める。
+ * 送っている間に通り過ぎる額は、初めに見せる所の絵だけを、送らずに敷く。
  */
 .game-selection__paper {
   --foreground: #1c2327;
@@ -118,42 +119,86 @@
   display: block;
   width: 100%;
   height: 100%;
-  overflow: hidden auto;
-  overscroll-behavior-y: contain;
+  overflow: hidden;
   background: var(--selection-paper);
   container-type: size;
+}
+.game-selection__paper[data-resting="true"] {
+  overflow: hidden auto;
+  overscroll-behavior-y: contain;
   scrollbar-width: none;
 }
 .game-selection__paper::-webkit-scrollbar {
   display: none;
 }
-/* 台紙は、額の幅に合わせて敷く。台紙の絵が無い間は、額の大きさの白紙にする。 */
 .game-selection__sheet {
   position: relative;
   display: block;
   width: 100%;
+  height: 100%;
+}
+/*
+ * 初めに見せる所の絵を描き終えるまでは、同じ列の数で、解いていないピースの面と溝だけを軽く敷く。
+ * 色は `paintZukanSheet` の解いていないピースの面と溝の色に、溝の太さはマスの両端に `ZUKAN_PIECE_GROOVE_WIDTH` の半分ずつに合わせる。
+ */
+.game-selection__sheet[data-pending="true"] {
+  --square: calc(100cqw / var(--sheet-columns, 1));
+  --groove: calc(var(--square) * 0.039);
+  background-color: oklch(0.95 0 0);
+  background-image:
+    linear-gradient(
+      90deg,
+      #fff var(--groove),
+      transparent var(--groove) calc(100% - var(--groove)),
+      #fff calc(100% - var(--groove))
+    ),
+    linear-gradient(
+      #fff var(--groove),
+      transparent var(--groove) calc(100% - var(--groove)),
+      #fff calc(100% - var(--groove))
+    );
+  background-size: var(--square) var(--square);
+}
+/* 止まっている額の台紙は、額の幅に合わせて全部の行を敷く。 */
+.game-selection__paper[data-resting="true"] .game-selection__sheet {
+  height: auto;
   min-height: 100%;
   aspect-ratio: var(--sheet-columns, 1) / var(--sheet-rows, 1);
-  background: var(--sheet-image, none) 0 0 / 100% 100% no-repeat;
 }
+.game-selection__view,
+.game-selection__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* 置き場所と大きさは、溝の絵を描く範囲（`FRAMED_PICTURE_INSET`）と合わせる。 */
 .game-selection__picture {
-  position: sticky;
+  position: absolute;
   top: 16cqh;
+  left: 16cqw;
   display: block;
   width: 68cqw;
   height: 68cqh;
+}
+.game-selection__paper[data-resting="true"] .game-selection__picture {
+  position: sticky;
+  left: auto;
   margin-inline: auto;
 }
 /*
  * ピクトグラムは、台紙に載せた別の絵ではなく、ジグソーに刷った絵として見せる。ピースの間の溝を、ピクトグラムの上にも通す。
  * 絵柄を読みにくくしないよう、絵柄の上の溝は台紙の溝より細く見える濃さに抑える。
  */
+.game-selection__grooves,
+.game-selection__view--grooves {
+  opacity: 0.6;
+  pointer-events: none;
+}
 .game-selection__grooves {
   position: absolute;
   inset: 0;
-  background: var(--sheet-grooves-image) 0 0 / 100% 100% no-repeat;
-  opacity: 0.6;
-  pointer-events: none;
 }
 /* 題名は、額の下の壁に置く。 */
 .game-selection__details {

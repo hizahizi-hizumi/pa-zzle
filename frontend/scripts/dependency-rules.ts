@@ -89,8 +89,10 @@ export const featurePublicModules: Record<FeatureArea, readonly string[]> = {
   zukan: [
     "ui/ZukanResultPiece",
     "ui/zukan-number-format",
+    "ui/zukan-piece-material",
     "ui/zukan-piece-shape",
     "ui/zukan-play-piece",
+    "ui/zukan-result-piece-pose",
     "ui/zukan-sheet-layout",
     "ui/zukan-sheet-preview",
     "zukan-collection",

@@ -214,6 +214,66 @@ describe("runScreenTransition", () => {
           expect(skipCarrier).toHaveBeenCalledOnce();
         });
       });
+
+      describe("動きが始まる前に飛ばした場合", () => {
+        const unhandledRejections: unknown[] = [];
+        let finishBefore: () => void;
+        let running: Promise<void>;
+
+        function recordUnhandledRejection(reason: unknown) {
+          unhandledRejections.push(reason);
+        }
+
+        beforeEach(async () => {
+          unhandledRejections.length = 0;
+          // ブラウザと同じく、動きが始まる前に飛ばすと `ready` を拒否する。
+          Object.defineProperty(document, "startViewTransition", {
+            configurable: true,
+            value: (update: () => Promise<void>): ViewTransitionStub => {
+              const updateCallbackDone = update();
+              let skip = () => {};
+              const ready = new Promise<void>((_, reject) => {
+                skip = () =>
+                  reject(
+                    new DOMException("Transition was skipped", "AbortError"),
+                  );
+              });
+              return {
+                ready,
+                finished: updateCallbackDone,
+                updateCallbackDone,
+                skipTransition: skip,
+              };
+            },
+          });
+          process.on("unhandledRejection", recordUnhandledRejection);
+          running = runScreenTransition("return", navigate, {
+            before: () =>
+              new Promise<void>((resolve) => {
+                finishBefore = resolve;
+              }),
+          });
+          await vi.waitFor(() =>
+            expect(
+              document.documentElement.getAttribute("data-screen-transition"),
+            ).toBe("return"),
+          );
+        });
+
+        afterEach(() => {
+          process.off("unhandledRejection", recordUnhandledRejection);
+        });
+
+        test("動きの始まりの拒否を受けて、行き来を終えること", async () => {
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+          finishBefore();
+          await running;
+          await new Promise((resolve) => setTimeout(resolve, 0));
+
+          expect(navigate).toHaveBeenCalledOnce();
+          expect(unhandledRejections).toEqual([]);
+        });
+      });
     });
   });
 });

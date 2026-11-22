@@ -1,6 +1,5 @@
 import { Award } from "lucide-react";
-import { useContext, useEffect, useState } from "react";
-import { ResultEmblemContext } from "@/components/GameResultScreen/result-emblem";
+import { useEffect, useState } from "react";
 import { describeResultRecordComparison } from "@/components/GameResultScreen/result-record-comparison";
 import { getGameResultStyle } from "@/components/game-result-style";
 import type {
@@ -66,15 +65,8 @@ export function GameResultGrade({
     };
   }, [score, countUp]);
 
-  const emblem = useContext(ResultEmblemContext);
-
   return (
     <div className="result-grade" role="region" aria-label="スコア">
-      {emblem !== null && (
-        <span className="result-grade-emblem" data-result-emblem="">
-          {emblem}
-        </span>
-      )}
       <strong className="result-grade-name">{message}</strong>
       <div className="result-grade-score">
         {countUp && <span className="sr-only">{score}点（100点満点）</span>}

@@ -85,14 +85,7 @@ export function PlayResultView() {
 
   return (
     <ResultEmblemContext
-      value={
-        game && (
-          <ZukanResultPiece
-            pictogramSvg={game.pictogramSvg}
-            sheetPlace={sheetPlace}
-          />
-        )
-      }
+      value={game && <ZukanResultPiece sheetPlace={sheetPlace} />}
     >
       {resultScreen}
     </ResultEmblemContext>

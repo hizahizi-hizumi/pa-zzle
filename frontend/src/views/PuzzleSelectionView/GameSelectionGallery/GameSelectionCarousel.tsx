@@ -3,13 +3,16 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 import { playCarouselMoveSound } from "@/components/app-decision-sound";
 import type { DifficultyLevel } from "@/games/difficulty";
 import { prefersReducedMotion } from "@/lib/motion";
 import type { Path } from "@/router";
+import { useFramedSheetPictures } from "@/views/PuzzleSelectionView/GameSelectionGallery/GameSelectionCarousel/framed-sheet-pictures";
 import { GameSelectionSlide } from "@/views/PuzzleSelectionView/GameSelectionGallery/GameSelectionCarousel/GameSelectionSlide";
 import type { GameSelectionSheetPreview } from "@/views/PuzzleSelectionView/GameSelectionGallery/game-selection-sheet-preview";
 
@@ -174,9 +177,20 @@ export function GameSelectionCarousel({
   const [activeSlide, setActiveSlide] = useState(
     middleLapSlide(selectedIndex, games.length),
   );
+  // 台紙の全体を描くのは、送り終えて止まった額だけにする。送る間に通り過ぎる額は描き置いた絵を貼る。390×844・dsf3 の計測で、額の見えている範囲を SVG から描き直すと 22ms、描き置いた絵を貼ると 0.4ms かかる。
+  const [restingSlide, setRestingSlide] = useState(activeSlide);
   const [mouseDragging, setMouseDragging] = useState(false);
   const count = games.length;
   const orderKey = games.map(({ to }) => to).join("|");
+  const sheetPreviews = useMemo(
+    () => games.map(({ sheetPreview }) => sheetPreview),
+    [games],
+  );
+  const sheetPictures = useFramedSheetPictures(
+    scrollerRef,
+    sheetPreviews,
+    selectedIndex,
+  );
 
   const scrollToSlide = useCallback(
     (index: number, behavior: ScrollBehavior) => {
@@ -238,6 +252,7 @@ export function GameSelectionCarousel({
     if (mouseGesture.current?.dragged) return;
     const physicalIndex = recenterScroll(scroller);
     focusSlide(physicalIndex);
+    setRestingSlide(physicalIndex);
     isNavigating.current = false;
     const logicalIndex = physicalIndex % count;
     if (selectedGameIndex.current !== logicalIndex) {
@@ -255,6 +270,7 @@ export function GameSelectionCarousel({
       const initial = middleLapSlide(selectedIndex, count);
       focusedSlide.current = initial;
       setActiveSlide(initial);
+      setRestingSlide(initial);
       if (scrollerRef.current) clearVisualProximity(scrollerRef.current);
       scrollToSlide(initial, "instant");
       return;
@@ -292,6 +308,7 @@ export function GameSelectionCarousel({
       scrollToSlide(index, "instant");
       focusedSlide.current = index;
       setActiveSlide(index);
+      setRestingSlide(index);
     }
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -361,6 +378,11 @@ export function GameSelectionCarousel({
     setMouseDragging(false);
     scrollToSlide(target, "smooth");
   }
+
+  // ゲームのホームへ入る動きは、止まった額の台紙を寄せるので、止まり切る前に押されたら、中央の額をすぐに止まった姿にする。
+  const openSlide = useCallback(function openSlide() {
+    flushSync(() => setRestingSlide(focusedSlide.current));
+  }, []);
 
   if (!count) return null;
   const lapCount = count > 1 ? LAP_COUNT : 1;
@@ -463,12 +485,18 @@ export function GameSelectionCarousel({
                 count={count}
                 active={active}
                 selected={selected}
+                resting={restingSlide === physicalIndex}
                 isCovered={isCovered}
                 colorsIn={colorsInGame === game.to && selectedIndex === index}
                 continuation={showsContinuation ? continuation : null}
                 continuationId={continuationId}
                 sheetPreview={game.sheetPreview}
+                sheetPictures={
+                  game.sheetPreview &&
+                  sheetPictures.get(game.sheetPreview.gameId)
+                }
                 onChoose={slideTo}
+                onOpen={openSlide}
               />
             );
           }),
