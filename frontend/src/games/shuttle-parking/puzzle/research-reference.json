@@ -1,0 +1,1390 @@
+{
+  "problems": [
+    {
+      "seed": "shuttle-expected:988:8:0",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 0, "v", 3, "a"],
+        [2, 0, "h", 3, "a"],
+        [1, 5, "v", 2, "c"],
+        [0, 3, "h", 3, "b"],
+        [3, 3, "h", 3, "a"],
+        [5, 3, "h", 2, "c"],
+        [4, 1, "h", 3, "b"],
+        [4, 4, "h", 2, "b"]
+      ],
+      "passengers": "bcabbbbcabaaacabaabca",
+      "bayCount": 3,
+      "solutionCount": 50
+    },
+    {
+      "seed": "shuttle-expected:988:8:1",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 3, "v", 2, "b"],
+        [0, 3, "v", 3, "d"],
+        [4, 0, "v", 2, "c"],
+        [1, 6, "v", 3, "a"],
+        [1, 0, "v", 3, "c"],
+        [1, 4, "v", 2, "d"],
+        [0, 1, "v", 2, "b"],
+        [0, 5, "v", 3, "a"]
+      ],
+      "passengers": "dacbbcadcaddbdbacaca",
+      "bayCount": 4,
+      "solutionCount": 2304
+    },
+    {
+      "seed": "shuttle-expected:988:8:2",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 0, "v", 2, "b"],
+        [4, 1, "v", 3, "b"],
+        [0, 1, "v", 3, "c"],
+        [5, 4, "v", 2, "c"],
+        [3, 4, "v", 2, "d"],
+        [0, 4, "v", 3, "a"],
+        [5, 3, "v", 2, "a"],
+        [1, 3, "v", 2, "d"]
+      ],
+      "passengers": "cbbdaccbcaaacdbbdad",
+      "bayCount": 4,
+      "solutionCount": 24
+    },
+    {
+      "seed": "shuttle-expected:988:8:3",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 3, "v", 3, "c"],
+        [1, 3, "v", 3, "a"],
+        [0, 2, "v", 2, "c"],
+        [0, 1, "v", 3, "d"],
+        [5, 5, "v", 2, "d"],
+        [0, 4, "v", 2, "a"],
+        [0, 5, "v", 3, "b"],
+        [0, 0, "v", 2, "b"]
+      ],
+      "passengers": "dcadbaccbbadabdbcdac",
+      "bayCount": 4,
+      "solutionCount": 1032
+    },
+    {
+      "seed": "shuttle-expected:988:8:4",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 6, "v", 2, "b"],
+        [0, 6, "v", 3, "a"],
+        [1, 2, "v", 2, "c"],
+        [4, 0, "v", 2, "a"],
+        [2, 0, "v", 2, "d"],
+        [0, 0, "v", 2, "d"],
+        [2, 1, "v", 2, "b"],
+        [0, 1, "v", 2, "c"]
+      ],
+      "passengers": "daaddabcbbccdbaac",
+      "bayCount": 3,
+      "solutionCount": 24
+    },
+    {
+      "seed": "shuttle-expected:988:8:5",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 3, "v", 3, "a"],
+        [0, 4, "h", 2, "b"],
+        [0, 6, "v", 2, "d"],
+        [4, 2, "v", 3, "d"],
+        [3, 1, "h", 3, "a"],
+        [3, 5, "h", 2, "c"],
+        [2, 4, "h", 2, "b"],
+        [0, 1, "v", 2, "c"]
+      ],
+      "passengers": "adabdbaadbcadbaccdc",
+      "bayCount": 4,
+      "solutionCount": 236
+    },
+    {
+      "seed": "shuttle-expected:988:8:6",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 0, "h", 3, "c"],
+        [4, 5, "v", 2, "d"],
+        [0, 5, "v", 3, "a"],
+        [1, 0, "v", 3, "b"],
+        [1, 3, "v", 2, "b"],
+        [3, 1, "h", 3, "c"],
+        [0, 2, "v", 2, "a"],
+        [3, 4, "v", 2, "d"]
+      ],
+      "passengers": "dcdbbacdcdbacaaabbcc",
+      "bayCount": 3,
+      "solutionCount": 12
+    },
+    {
+      "seed": "shuttle-expected:988:8:7",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 1, "v", 3, "d"],
+        [1, 1, "v", 2, "c"],
+        [0, 4, "v", 3, "a"],
+        [3, 5, "v", 3, "b"],
+        [0, 5, "v", 3, "b"],
+        [2, 3, "v", 2, "a"],
+        [2, 2, "v", 2, "c"],
+        [0, 0, "v", 3, "d"]
+      ],
+      "passengers": "ccbdcdabbbdaacdbabdda",
+      "bayCount": 4,
+      "solutionCount": 720
+    },
+    {
+      "seed": "shuttle-expected:988:8:8",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 4, "h", 2, "b"],
+        [1, 0, "h", 3, "a"],
+        [0, 5, "v", 3, "a"],
+        [3, 1, "h", 3, "b"],
+        [2, 4, "v", 2, "d"],
+        [0, 4, "v", 2, "c"],
+        [4, 0, "h", 2, "c"],
+        [4, 4, "h", 2, "d"]
+      ],
+      "passengers": "bbdbdabacdaacadbcca",
+      "bayCount": 4,
+      "solutionCount": 48
+    },
+    {
+      "seed": "shuttle-expected:988:8:9",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 2, "v", 3, "a"],
+        [0, 0, "h", 3, "b"],
+        [5, 3, "h", 3, "d"],
+        [0, 3, "h", 3, "d"],
+        [4, 4, "h", 2, "b"],
+        [2, 3, "h", 3, "c"],
+        [3, 4, "h", 2, "a"],
+        [1, 4, "h", 2, "c"]
+      ],
+      "passengers": "dabdcaddcacccabbadbbd",
+      "bayCount": 4,
+      "solutionCount": 104
+    },
+    {
+      "seed": "shuttle-expected:988:8:10",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 2, "v", 2, "b"],
+        [0, 2, "v", 3, "a"],
+        [3, 5, "v", 2, "a"],
+        [0, 5, "v", 3, "a"],
+        [0, 0, "v", 2, "c"],
+        [0, 3, "v", 2, "c"],
+        [2, 4, "v", 2, "b"],
+        [3, 1, "v", 3, "b"]
+      ],
+      "passengers": "bcccabaaaabcabbabab",
+      "bayCount": 3,
+      "solutionCount": 642
+    },
+    {
+      "seed": "shuttle-expected:988:8:11",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 0, "v", 2, "d"],
+        [3, 5, "v", 3, "b"],
+        [1, 5, "v", 2, "a"],
+        [1, 4, "v", 2, "d"],
+        [4, 2, "v", 2, "a"],
+        [2, 2, "v", 2, "c"],
+        [0, 2, "v", 2, "b"],
+        [1, 3, "v", 3, "c"]
+      ],
+      "passengers": "abdcbaabccbddabccd",
+      "bayCount": 4,
+      "solutionCount": 56
+    },
+    {
+      "seed": "shuttle-expected:988:8:12",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 3, "h", 3, "c"],
+        [1, 6, "v", 3, "b"],
+        [0, 4, "h", 3, "d"],
+        [1, 2, "v", 3, "d"],
+        [5, 3, "h", 3, "a"],
+        [4, 1, "h", 2, "c"],
+        [6, 4, "h", 3, "a"],
+        [4, 4, "h", 3, "b"]
+      ],
+      "passengers": "abaaaccacbdddbdbdbbdcca",
+      "bayCount": 4,
+      "solutionCount": 60
+    },
+    {
+      "seed": "shuttle-expected:988:8:13",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 4, "v", 2, "b"],
+        [4, 1, "v", 3, "a"],
+        [0, 1, "v", 2, "d"],
+        [3, 0, "v", 3, "c"],
+        [0, 0, "v", 3, "d"],
+        [2, 3, "v", 3, "a"],
+        [0, 3, "v", 2, "c"],
+        [3, 2, "v", 3, "b"]
+      ],
+      "passengers": "addccdbabcadaacbdabbc",
+      "bayCount": 4,
+      "solutionCount": 669
+    },
+    {
+      "seed": "shuttle-expected:988:8:14",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 5, "v", 3, "d"],
+        [3, 4, "v", 3, "c"],
+        [0, 4, "v", 2, "a"],
+        [0, 5, "v", 3, "b"],
+        [3, 2, "v", 2, "c"],
+        [0, 2, "v", 3, "d"],
+        [2, 0, "v", 2, "b"],
+        [1, 1, "v", 3, "a"]
+      ],
+      "passengers": "cdadbcbddbcadaacdcabb",
+      "bayCount": 4,
+      "solutionCount": 288
+    },
+    {
+      "seed": "shuttle-expected:988:8:15",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 1, "v", 2, "a"],
+        [0, 1, "v", 2, "a"],
+        [3, 3, "h", 3, "c"],
+        [5, 1, "h", 2, "b"],
+        [5, 3, "h", 2, "b"],
+        [2, 2, "h", 3, "c"],
+        [0, 5, "v", 3, "b"],
+        [0, 3, "v", 2, "a"]
+      ],
+      "passengers": "cccbcbabaabbbbccaaa",
+      "bayCount": 3,
+      "solutionCount": 84
+    },
+    {
+      "seed": "shuttle-expected:988:8:16",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 3, "v", 3, "c"],
+        [1, 1, "h", 3, "b"],
+        [1, 4, "h", 2, "b"],
+        [0, 6, "v", 3, "b"],
+        [2, 0, "v", 2, "a"],
+        [3, 3, "h", 3, "c"],
+        [5, 4, "h", 3, "a"],
+        [6, 4, "h", 3, "a"]
+      ],
+      "passengers": "caabbbcacbacbcababaacb",
+      "bayCount": 4,
+      "solutionCount": 264
+    },
+    {
+      "seed": "shuttle-expected:988:8:17",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 1, "v", 3, "a"],
+        [2, 0, "v", 3, "c"],
+        [0, 0, "v", 2, "c"],
+        [0, 5, "v", 2, "b"],
+        [3, 2, "v", 3, "b"],
+        [0, 2, "v", 3, "d"],
+        [3, 4, "v", 3, "d"],
+        [2, 3, "v", 3, "a"]
+      ],
+      "passengers": "accdcbaaabdbbdcdabcdad",
+      "bayCount": 4,
+      "solutionCount": 144
+    },
+    {
+      "seed": "shuttle-expected:988:8:18",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 5, "v", 3, "d"],
+        [3, 1, "v", 2, "c"],
+        [1, 1, "v", 2, "b"],
+        [0, 1, "h", 3, "b"],
+        [0, 4, "v", 2, "d"],
+        [1, 0, "v", 3, "a"],
+        [5, 4, "h", 2, "a"],
+        [4, 4, "h", 2, "c"]
+      ],
+      "passengers": "ddacaabbadbcbccdbda",
+      "bayCount": 4,
+      "solutionCount": 200
+    },
+    {
+      "seed": "shuttle-expected:988:8:19",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 2, "h", 3, "c"],
+        [4, 6, "v", 2, "d"],
+        [1, 5, "h", 2, "c"],
+        [3, 1, "h", 3, "a"],
+        [3, 4, "v", 2, "b"],
+        [2, 2, "h", 3, "b"],
+        [0, 0, "v", 3, "a"],
+        [0, 4, "h", 3, "d"]
+      ],
+      "passengers": "cbdddbadcbadccaabaacb",
+      "bayCount": 4,
+      "solutionCount": 96
+    },
+    {
+      "seed": "shuttle-expected:988:8:20",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [0, 3, "v", 3, "c"],
+        [2, 6, "v", 3, "c"],
+        [0, 4, "v", 3, "a"],
+        [3, 2, "v", 3, "d"],
+        [1, 2, "v", 2, "a"],
+        [4, 5, "v", 2, "d"],
+        [0, 5, "v", 3, "b"],
+        [0, 6, "v", 2, "b"]
+      ],
+      "passengers": "cbcdbcdaaabadbabddccc",
+      "bayCount": 3,
+      "solutionCount": 27
+    },
+    {
+      "seed": "shuttle-expected:988:8:21",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 2, "v", 3, "b"],
+        [0, 4, "v", 2, "a"],
+        [0, 2, "v", 2, "b"],
+        [5, 6, "v", 2, "d"],
+        [0, 6, "v", 3, "d"],
+        [2, 5, "v", 2, "a"],
+        [4, 0, "v", 3, "c"],
+        [1, 0, "v", 3, "c"]
+      ],
+      "passengers": "baaccbccdccdadbbaddb",
+      "bayCount": 2,
+      "solutionCount": 8
+    },
+    {
+      "seed": "shuttle-expected:988:8:22",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 2, "h", 2, "d"],
+        [3, 5, "v", 2, "c"],
+        [1, 5, "v", 2, "b"],
+        [0, 4, "h", 2, "a"],
+        [0, 2, "v", 3, "a"],
+        [3, 1, "v", 2, "c"],
+        [1, 1, "v", 2, "b"],
+        [5, 4, "h", 2, "d"]
+      ],
+      "passengers": "ccadadbabadbbaccd",
+      "bayCount": 3,
+      "solutionCount": 8
+    },
+    {
+      "seed": "shuttle-expected:988:8:23",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 0, "v", 2, "b"],
+        [0, 0, "v", 3, "a"],
+        [2, 1, "v", 2, "c"],
+        [0, 1, "v", 2, "d"],
+        [1, 2, "v", 2, "c"],
+        [1, 4, "v", 2, "a"],
+        [2, 5, "v", 3, "d"],
+        [0, 3, "v", 3, "b"]
+      ],
+      "passengers": "ccabaddbabdbadccbda",
+      "bayCount": 4,
+      "solutionCount": 4352
+    },
+    {
+      "seed": "shuttle-expected:988:8:24",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 3, "v", 3, "d"],
+        [1, 3, "v", 2, "c"],
+        [3, 6, "v", 2, "d"],
+        [0, 6, "v", 3, "c"],
+        [1, 0, "v", 3, "b"],
+        [2, 4, "v", 2, "b"],
+        [0, 4, "v", 2, "a"],
+        [2, 2, "v", 3, "a"]
+      ],
+      "passengers": "bcacbbddcbbacdacaadd",
+      "bayCount": 3,
+      "solutionCount": 48
+    },
+    {
+      "seed": "shuttle-expected:988:8:25",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 0, "v", 2, "b"],
+        [1, 0, "v", 3, "a"],
+        [4, 5, "v", 2, "a"],
+        [1, 5, "v", 2, "c"],
+        [2, 6, "v", 3, "b"],
+        [0, 6, "v", 2, "c"],
+        [3, 2, "v", 3, "b"],
+        [0, 2, "v", 3, "a"]
+      ],
+      "passengers": "bbbbaacbbbccaaaaaabc",
+      "bayCount": 4,
+      "solutionCount": 90
+    },
+    {
+      "seed": "shuttle-expected:988:8:26",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 6, "v", 2, "b"],
+        [4, 0, "h", 2, "a"],
+        [4, 4, "h", 2, "b"],
+        [3, 2, "v", 2, "d"],
+        [0, 2, "v", 2, "a"],
+        [6, 5, "h", 2, "c"],
+        [0, 4, "v", 3, "d"],
+        [5, 5, "h", 2, "c"]
+      ],
+      "passengers": "bbdcabdaccddabacd",
+      "bayCount": 4,
+      "solutionCount": 1200
+    },
+    {
+      "seed": "shuttle-expected:988:8:27",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 1, "h", 2, "b"],
+        [1, 4, "h", 2, "a"],
+        [5, 3, "h", 3, "a"],
+        [2, 3, "v", 3, "a"],
+        [0, 0, "v", 2, "b"],
+        [0, 3, "h", 2, "b"],
+        [1, 1, "v", 3, "c"],
+        [2, 2, "v", 2, "c"]
+      ],
+      "passengers": "acbacaabcabccaabbba",
+      "bayCount": 3,
+      "solutionCount": 1182
+    },
+    {
+      "seed": "shuttle-expected:988:8:28",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 2, "v", 3, "d"],
+        [2, 2, "h", 3, "b"],
+        [0, 5, "v", 3, "a"],
+        [5, 5, "h", 2, "c"],
+        [6, 5, "h", 2, "d"],
+        [4, 5, "h", 2, "b"],
+        [3, 3, "h", 2, "a"],
+        [1, 6, "v", 3, "c"]
+      ],
+      "passengers": "adcbcbadadbacbccddab",
+      "bayCount": 4,
+      "solutionCount": 256
+    },
+    {
+      "seed": "shuttle-expected:988:8:29",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [2, 0, "v", 2, "c"],
+        [0, 0, "v", 2, "d"],
+        [0, 1, "v", 3, "c"],
+        [2, 3, "v", 2, "b"],
+        [4, 2, "v", 2, "d"],
+        [0, 2, "v", 2, "a"],
+        [0, 3, "v", 2, "b"],
+        [2, 5, "v", 3, "a"]
+      ],
+      "passengers": "ccabdcbbdcaaacabdd",
+      "bayCount": 4,
+      "solutionCount": 372
+    },
+    {
+      "seed": "shuttle-expected:988:8:30",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 4, "v", 3, "a"],
+        [3, 1, "v", 3, "c"],
+        [0, 4, "v", 3, "a"],
+        [0, 1, "v", 3, "b"],
+        [4, 5, "v", 2, "d"],
+        [2, 5, "v", 2, "b"],
+        [3, 3, "v", 3, "c"],
+        [0, 3, "v", 3, "d"]
+      ],
+      "passengers": "dbaabcacccbdbaddabdcca",
+      "bayCount": 4,
+      "solutionCount": 204
+    },
+    {
+      "seed": "shuttle-expected:988:8:31",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 3, "h", 2, "b"],
+        [3, 5, "v", 3, "c"],
+        [2, 3, "v", 3, "d"],
+        [1, 5, "v", 2, "d"],
+        [0, 3, "v", 2, "b"],
+        [0, 2, "v", 3, "a"],
+        [0, 4, "v", 3, "c"],
+        [4, 1, "v", 2, "a"]
+      ],
+      "passengers": "cbbadcbdcddaaaccbacd",
+      "bayCount": 4,
+      "solutionCount": 160
+    },
+    {
+      "seed": "shuttle-expected:988:8:32",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 0, "h", 2, "c"],
+        [2, 2, "h", 3, "a"],
+        [1, 6, "v", 2, "d"],
+        [0, 3, "h", 3, "d"],
+        [4, 2, "h", 2, "c"],
+        [4, 4, "h", 3, "a"],
+        [0, 2, "v", 2, "b"],
+        [3, 2, "h", 3, "b"]
+      ],
+      "passengers": "aabcaacdddbdbdbacbac",
+      "bayCount": 4,
+      "solutionCount": 128
+    },
+    {
+      "seed": "shuttle-expected:988:8:33",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 0, "v", 3, "b"],
+        [1, 0, "v", 2, "a"],
+        [4, 4, "v", 2, "b"],
+        [0, 4, "v", 2, "b"],
+        [0, 2, "v", 2, "a"],
+        [2, 5, "v", 2, "c"],
+        [0, 3, "v", 3, "c"],
+        [0, 5, "v", 2, "a"]
+      ],
+      "passengers": "aabababcaabcbccbcb",
+      "bayCount": 2,
+      "solutionCount": 42
+    },
+    {
+      "seed": "shuttle-expected:988:8:34",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 3, "h", 3, "d"],
+        [3, 2, "v", 2, "c"],
+        [2, 0, "h", 3, "c"],
+        [2, 3, "h", 3, "a"],
+        [0, 0, "v", 2, "a"],
+        [5, 2, "h", 2, "b"],
+        [0, 1, "h", 3, "b"],
+        [4, 3, "h", 3, "d"]
+      ],
+      "passengers": "dddcaaaddabcccbdabbbc",
+      "bayCount": 4,
+      "solutionCount": 216
+    },
+    {
+      "seed": "shuttle-expected:988:8:35",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 1, "v", 3, "a"],
+        [3, 2, "v", 2, "c"],
+        [1, 2, "h", 2, "b"],
+        [0, 5, "v", 3, "b"],
+        [0, 1, "v", 2, "a"],
+        [5, 0, "h", 3, "d"],
+        [5, 3, "h", 2, "d"],
+        [2, 4, "v", 3, "c"]
+      ],
+      "passengers": "cbbcdadcbaadbdccbdaa",
+      "bayCount": 4,
+      "solutionCount": 304
+    },
+    {
+      "seed": "shuttle-expected:988:8:36",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 1, "v", 3, "b"],
+        [2, 0, "v", 3, "c"],
+        [1, 1, "h", 3, "a"],
+        [0, 0, "v", 2, "a"],
+        [0, 5, "v", 3, "c"],
+        [4, 2, "h", 3, "b"],
+        [3, 3, "h", 3, "b"],
+        [5, 3, "h", 2, "a"]
+      ],
+      "passengers": "bbcbcabacccbcababbaaab",
+      "bayCount": 3,
+      "solutionCount": 150
+    },
+    {
+      "seed": "shuttle-expected:988:8:37",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 5, "v", 3, "a"],
+        [1, 5, "v", 2, "b"],
+        [0, 5, "h", 2, "b"],
+        [5, 4, "v", 2, "c"],
+        [0, 4, "v", 3, "c"],
+        [0, 0, "v", 3, "a"],
+        [2, 1, "v", 2, "d"],
+        [2, 3, "v", 2, "d"]
+      ],
+      "passengers": "acbcbdaaddbccdabaca",
+      "bayCount": 3,
+      "solutionCount": 24
+    },
+    {
+      "seed": "shuttle-expected:988:8:38",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 3, "v", 2, "b"],
+        [0, 3, "v", 3, "b"],
+        [4, 4, "v", 3, "c"],
+        [0, 4, "v", 2, "d"],
+        [4, 6, "v", 3, "a"],
+        [0, 6, "v", 2, "a"],
+        [0, 0, "v", 2, "c"],
+        [1, 1, "v", 3, "d"]
+      ],
+      "passengers": "abaddbabcabacdcccbdd",
+      "bayCount": 3,
+      "solutionCount": 111
+    },
+    {
+      "seed": "shuttle-expected:988:8:39",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 0, "v", 2, "c"],
+        [0, 0, "h", 3, "c"],
+        [0, 3, "h", 2, "d"],
+        [0, 5, "v", 3, "d"],
+        [5, 2, "h", 2, "a"],
+        [4, 2, "h", 3, "b"],
+        [3, 3, "h", 3, "b"],
+        [5, 4, "h", 2, "a"]
+      ],
+      "passengers": "bbbcadaaddcdcbbcabdc",
+      "bayCount": 4,
+      "solutionCount": 64
+    },
+    {
+      "seed": "shuttle-expected:988:8:40",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 0, "v", 3, "a"],
+        [1, 0, "v", 2, "a"],
+        [4, 4, "v", 2, "c"],
+        [0, 4, "v", 3, "a"],
+        [2, 5, "v", 2, "b"],
+        [0, 5, "v", 2, "b"],
+        [4, 2, "v", 2, "c"],
+        [1, 2, "v", 3, "b"]
+      ],
+      "passengers": "acbabbaabcbcbaaaabc",
+      "bayCount": 3,
+      "solutionCount": 45
+    },
+    {
+      "seed": "shuttle-expected:988:8:41",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 5, "v", 3, "a"],
+        [1, 2, "v", 2, "c"],
+        [3, 3, "h", 2, "d"],
+        [0, 1, "v", 2, "b"],
+        [5, 2, "h", 3, "d"],
+        [1, 3, "v", 2, "a"],
+        [1, 4, "v", 2, "c"],
+        [2, 0, "v", 2, "b"]
+      ],
+      "passengers": "caaaddcdcbabdbcabd",
+      "bayCount": 4,
+      "solutionCount": 6672
+    },
+    {
+      "seed": "shuttle-expected:988:8:42",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 1, "v", 3, "a"],
+        [0, 5, "v", 3, "c"],
+        [3, 0, "v", 3, "c"],
+        [3, 4, "v", 2, "b"],
+        [0, 4, "v", 3, "b"],
+        [2, 3, "v", 3, "b"],
+        [0, 0, "v", 3, "a"],
+        [3, 2, "v", 3, "a"]
+      ],
+      "passengers": "bccbabbaaacbbbbaaaacacc",
+      "bayCount": 3,
+      "solutionCount": 432
+    },
+    {
+      "seed": "shuttle-expected:988:8:43",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 4, "v", 2, "a"],
+        [2, 4, "h", 2, "b"],
+        [0, 0, "v", 3, "a"],
+        [1, 2, "v", 3, "c"],
+        [0, 1, "h", 2, "c"],
+        [0, 3, "h", 3, "b"],
+        [3, 3, "h", 3, "b"],
+        [1, 3, "h", 3, "a"]
+      ],
+      "passengers": "abbbbaaabacbcbcacabca",
+      "bayCount": 3,
+      "solutionCount": 246
+    },
+    {
+      "seed": "shuttle-expected:988:8:44",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [0, 0, "v", 3, "a"],
+        [1, 3, "v", 2, "b"],
+        [1, 2, "v", 3, "c"],
+        [4, 6, "v", 3, "c"],
+        [2, 6, "v", 2, "b"],
+        [0, 6, "v", 2, "d"],
+        [3, 4, "v", 2, "a"],
+        [0, 4, "v", 3, "d"]
+      ],
+      "passengers": "dbddccaaacdbcacbbacd",
+      "bayCount": 4,
+      "solutionCount": 776
+    },
+    {
+      "seed": "shuttle-expected:988:8:45",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 5, "v", 2, "c"],
+        [0, 4, "h", 3, "b"],
+        [4, 4, "h", 3, "a"],
+        [1, 2, "h", 2, "c"],
+        [1, 4, "h", 2, "b"],
+        [5, 1, "v", 2, "d"],
+        [2, 1, "h", 3, "d"],
+        [2, 5, "h", 2, "a"]
+      ],
+      "passengers": "cbdaadcbaddcdabcabb",
+      "bayCount": 4,
+      "solutionCount": 48
+    },
+    {
+      "seed": "shuttle-expected:988:8:46",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 2, "v", 2, "a"],
+        [0, 2, "v", 3, "d"],
+        [0, 0, "v", 3, "c"],
+        [5, 6, "v", 2, "c"],
+        [2, 6, "v", 2, "a"],
+        [0, 6, "v", 2, "d"],
+        [2, 4, "v", 2, "b"],
+        [3, 1, "v", 3, "b"]
+      ],
+      "passengers": "adbcdcbabcbabcddadc",
+      "bayCount": 4,
+      "solutionCount": 408
+    },
+    {
+      "seed": "shuttle-expected:988:8:47",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 1, "v", 2, "a"],
+        [0, 1, "v", 3, "c"],
+        [4, 4, "v", 2, "c"],
+        [1, 4, "v", 3, "a"],
+        [4, 5, "v", 2, "b"],
+        [0, 5, "v", 3, "b"],
+        [2, 2, "v", 3, "a"],
+        [2, 3, "v", 3, "b"]
+      ],
+      "passengers": "bbbcaccabbbaabacabaac",
+      "bayCount": 3,
+      "solutionCount": 1245
+    },
+    {
+      "seed": "shuttle-expected:988:8:48",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 6, "v", 3, "a"],
+        [0, 6, "v", 2, "d"],
+        [5, 4, "v", 2, "b"],
+        [3, 4, "v", 2, "c"],
+        [0, 4, "v", 3, "a"],
+        [1, 5, "v", 3, "b"],
+        [5, 0, "v", 2, "c"],
+        [0, 0, "v", 3, "d"]
+      ],
+      "passengers": "abcdaabbbdccadcbadda",
+      "bayCount": 4,
+      "solutionCount": 96
+    },
+    {
+      "seed": "shuttle-expected:988:8:49",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 1, "v", 2, "a"],
+        [0, 1, "v", 2, "c"],
+        [0, 5, "v", 3, "b"],
+        [0, 6, "v", 3, "d"],
+        [2, 2, "v", 2, "a"],
+        [1, 3, "v", 3, "c"],
+        [3, 4, "v", 3, "d"],
+        [0, 2, "v", 2, "b"]
+      ],
+      "passengers": "cbddbabbacacddccaddb",
+      "bayCount": 4,
+      "solutionCount": 240
+    },
+    {
+      "seed": "shuttle-expected:988:8:51",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [0, 2, "v", 3, "c"],
+        [3, 3, "v", 3, "a"],
+        [5, 6, "v", 2, "b"],
+        [1, 6, "v", 3, "a"],
+        [0, 3, "v", 2, "c"],
+        [1, 5, "v", 2, "b"],
+        [0, 4, "v", 2, "d"],
+        [0, 1, "v", 3, "d"]
+      ],
+      "passengers": "abddcacbacacdbacadbd",
+      "bayCount": 4,
+      "solutionCount": 2466
+    },
+    {
+      "seed": "shuttle-expected:988:8:52",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 3, "h", 2, "c"],
+        [0, 6, "v", 3, "c"],
+        [5, 5, "v", 2, "b"],
+        [0, 2, "v", 2, "d"],
+        [0, 5, "v", 2, "b"],
+        [0, 1, "v", 3, "d"],
+        [0, 0, "v", 3, "a"],
+        [4, 3, "h", 3, "a"]
+      ],
+      "passengers": "dbbaccdabacdaadcacbd",
+      "bayCount": 4,
+      "solutionCount": 688
+    },
+    {
+      "seed": "shuttle-expected:988:8:53",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 3, "v", 2, "a"],
+        [0, 3, "v", 2, "a"],
+        [1, 6, "v", 3, "b"],
+        [6, 0, "h", 3, "c"],
+        [6, 3, "h", 3, "a"],
+        [0, 4, "h", 3, "b"],
+        [5, 5, "h", 2, "c"],
+        [3, 1, "v", 2, "b"]
+      ],
+      "passengers": "acbbcbbacbaacaaabbbc",
+      "bayCount": 3,
+      "solutionCount": 204
+    },
+    {
+      "seed": "shuttle-expected:988:8:55",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 1, "h", 3, "d"],
+        [3, 4, "v", 3, "c"],
+        [0, 3, "h", 2, "b"],
+        [0, 5, "v", 2, "d"],
+        [1, 0, "v", 2, "c"],
+        [0, 2, "v", 3, "a"],
+        [2, 4, "h", 2, "a"],
+        [0, 1, "v", 3, "b"]
+      ],
+      "passengers": "cbbbddcbacbdcdaaacda",
+      "bayCount": 3,
+      "solutionCount": 21
+    },
+    {
+      "seed": "shuttle-expected:988:8:56",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 0, "v", 3, "b"],
+        [0, 4, "v", 3, "a"],
+        [2, 1, "v", 3, "b"],
+        [3, 5, "v", 3, "c"],
+        [1, 5, "v", 2, "a"],
+        [0, 2, "v", 3, "c"],
+        [0, 3, "v", 3, "d"],
+        [0, 1, "v", 2, "d"]
+      ],
+      "passengers": "bdaaabbdaddbccdcabcbcc",
+      "bayCount": 4,
+      "solutionCount": 1576
+    },
+    {
+      "seed": "shuttle-expected:988:8:57",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 6, "v", 3, "b"],
+        [0, 6, "v", 2, "d"],
+        [3, 4, "v", 2, "d"],
+        [0, 4, "v", 3, "a"],
+        [0, 1, "v", 3, "b"],
+        [2, 5, "v", 2, "a"],
+        [4, 2, "v", 3, "c"],
+        [1, 2, "v", 2, "c"]
+      ],
+      "passengers": "abdbdcbdcbbaadaacccb",
+      "bayCount": 3,
+      "solutionCount": 24
+    },
+    {
+      "seed": "shuttle-expected:988:8:58",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [2, 3, "v", 3, "b"],
+        [0, 3, "v", 2, "b"],
+        [0, 0, "v", 2, "b"],
+        [4, 4, "v", 2, "c"],
+        [1, 2, "v", 3, "c"],
+        [2, 1, "v", 3, "a"],
+        [1, 4, "v", 3, "a"],
+        [0, 5, "v", 3, "a"]
+      ],
+      "passengers": "abcbabbabbaaaaccacbca",
+      "bayCount": 3,
+      "solutionCount": 252
+    },
+    {
+      "seed": "shuttle-expected:988:8:59",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 2, "v", 3, "d"],
+        [0, 3, "v", 2, "c"],
+        [3, 6, "v", 3, "a"],
+        [0, 6, "v", 3, "b"],
+        [0, 2, "v", 3, "c"],
+        [0, 1, "v", 2, "b"],
+        [1, 5, "v", 3, "d"],
+        [2, 0, "v", 3, "a"]
+      ],
+      "passengers": "bcdaabdcadcadbcbaaddbc",
+      "bayCount": 4,
+      "solutionCount": 1332
+    },
+    {
+      "seed": "shuttle-expected:988:8:60",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 2, "v", 3, "c"],
+        [1, 5, "v", 2, "a"],
+        [0, 0, "v", 2, "c"],
+        [1, 4, "v", 2, "a"],
+        [2, 3, "v", 3, "b"],
+        [0, 3, "v", 2, "b"],
+        [3, 1, "v", 2, "a"],
+        [1, 1, "v", 2, "b"]
+      ],
+      "passengers": "ccabbbbaacabbaaccb",
+      "bayCount": 3,
+      "solutionCount": 2004
+    },
+    {
+      "seed": "shuttle-expected:988:8:61",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 4, "v", 3, "c"],
+        [0, 2, "v", 3, "b"],
+        [1, 1, "v", 2, "b"],
+        [5, 6, "v", 2, "a"],
+        [3, 6, "v", 2, "c"],
+        [0, 6, "v", 3, "b"],
+        [1, 0, "v", 3, "a"],
+        [3, 5, "v", 3, "a"]
+      ],
+      "passengers": "abaccbbaacbabcaabbbac",
+      "bayCount": 3,
+      "solutionCount": 552
+    },
+    {
+      "seed": "shuttle-expected:988:8:62",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 1, "v", 2, "c"],
+        [2, 5, "v", 2, "b"],
+        [0, 5, "v", 2, "b"],
+        [3, 0, "v", 3, "b"],
+        [0, 0, "v", 3, "a"],
+        [4, 3, "v", 3, "a"],
+        [0, 3, "v", 3, "a"],
+        [3, 2, "v", 2, "c"]
+      ],
+      "passengers": "bbcaabaaabacabcacbab",
+      "bayCount": 3,
+      "solutionCount": 472
+    },
+    {
+      "seed": "shuttle-expected:988:8:63",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 4, "v", 3, "d"],
+        [0, 4, "v", 2, "c"],
+        [0, 0, "v", 2, "d"],
+        [3, 2, "v", 2, "b"],
+        [0, 2, "v", 3, "b"],
+        [3, 1, "v", 2, "a"],
+        [4, 3, "v", 3, "c"],
+        [2, 3, "v", 2, "a"]
+      ],
+      "passengers": "caddabdbbddaccbcacb",
+      "bayCount": 3,
+      "solutionCount": 126
+    },
+    {
+      "seed": "shuttle-expected:988:8:64",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 4, "v", 2, "b"],
+        [0, 4, "v", 2, "b"],
+        [5, 0, "h", 2, "b"],
+        [5, 2, "h", 2, "c"],
+        [3, 5, "v", 3, "c"],
+        [0, 5, "v", 2, "a"],
+        [0, 2, "v", 2, "a"],
+        [1, 1, "v", 2, "a"]
+      ],
+      "passengers": "cabaacabcbaabbcbc",
+      "bayCount": 3,
+      "solutionCount": 54
+    },
+    {
+      "seed": "shuttle-expected:988:8:65",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 4, "h", 3, "c"],
+        [2, 1, "v", 2, "d"],
+        [0, 1, "h", 3, "a"],
+        [0, 5, "h", 2, "b"],
+        [4, 1, "h", 3, "b"],
+        [4, 4, "h", 2, "d"],
+        [5, 0, "v", 2, "c"],
+        [2, 0, "v", 3, "a"]
+      ],
+      "passengers": "dcdbaaacadcbdacbbcab",
+      "bayCount": 4,
+      "solutionCount": 152
+    },
+    {
+      "seed": "shuttle-expected:988:8:66",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 2, "v", 2, "a"],
+        [0, 2, "v", 2, "c"],
+        [3, 4, "v", 2, "b"],
+        [0, 4, "v", 2, "b"],
+        [1, 5, "v", 3, "c"],
+        [0, 1, "v", 3, "b"],
+        [0, 6, "v", 2, "a"],
+        [0, 0, "v", 3, "a"]
+      ],
+      "passengers": "cbaaaccbbcabbaaabbc",
+      "bayCount": 3,
+      "solutionCount": 678
+    },
+    {
+      "seed": "shuttle-expected:988:8:68",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 1, "h", 3, "c"],
+        [2, 4, "h", 2, "c"],
+        [1, 2, "h", 3, "b"],
+        [0, 0, "h", 3, "a"],
+        [0, 3, "h", 3, "b"],
+        [3, 1, "h", 3, "b"],
+        [5, 2, "h", 3, "a"],
+        [3, 4, "h", 2, "a"]
+      ],
+      "passengers": "bbabbaaaabccaaabccbbbc",
+      "bayCount": 2,
+      "solutionCount": 38
+    },
+    {
+      "seed": "shuttle-expected:988:8:69",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 1, "h", 2, "d"],
+        [3, 4, "v", 2, "a"],
+        [0, 4, "v", 3, "b"],
+        [3, 0, "v", 3, "a"],
+        [3, 3, "v", 3, "b"],
+        [0, 0, "v", 3, "d"],
+        [0, 3, "v", 3, "c"],
+        [2, 5, "v", 2, "c"]
+      ],
+      "passengers": "ccbdaddbbacdbbbccaada",
+      "bayCount": 3,
+      "solutionCount": 9
+    },
+    {
+      "seed": "shuttle-expected:988:8:70",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 1, "h", 2, "c"],
+        [3, 5, "v", 3, "a"],
+        [0, 3, "h", 3, "b"],
+        [0, 6, "v", 3, "d"],
+        [1, 2, "v", 2, "d"],
+        [0, 0, "v", 3, "b"],
+        [6, 4, "h", 2, "c"],
+        [2, 1, "v", 2, "a"]
+      ],
+      "passengers": "bcbaadcbddacdbdbaabc",
+      "bayCount": 4,
+      "solutionCount": 384
+    },
+    {
+      "seed": "shuttle-expected:988:8:71",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [2, 1, "v", 2, "a"],
+        [0, 1, "v", 2, "a"],
+        [0, 0, "v", 3, "b"],
+        [0, 5, "v", 3, "b"],
+        [3, 4, "v", 3, "a"],
+        [1, 4, "v", 2, "c"],
+        [2, 2, "v", 2, "b"],
+        [0, 2, "v", 2, "c"]
+      ],
+      "passengers": "aabcbbcbbacbbacaaab",
+      "bayCount": 3,
+      "solutionCount": 1032
+    },
+    {
+      "seed": "shuttle-expected:988:8:72",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 3, "v", 3, "a"],
+        [1, 3, "h", 3, "c"],
+        [0, 2, "v", 3, "b"],
+        [0, 3, "h", 3, "b"],
+        [1, 1, "v", 3, "c"],
+        [3, 0, "v", 2, "d"],
+        [0, 0, "v", 3, "d"],
+        [5, 2, "h", 2, "a"]
+      ],
+      "passengers": "bbccbdabcacbdaaabdcddc",
+      "bayCount": 4,
+      "solutionCount": 328
+    },
+    {
+      "seed": "shuttle-expected:988:8:73",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 3, "v", 3, "c"],
+        [4, 4, "v", 2, "d"],
+        [1, 4, "v", 2, "d"],
+        [0, 2, "v", 3, "c"],
+        [1, 0, "v", 3, "a"],
+        [0, 6, "v", 2, "b"],
+        [4, 1, "v", 3, "b"],
+        [2, 5, "v", 3, "a"]
+      ],
+      "passengers": "badadaacbcdcdacabcbbc",
+      "bayCount": 3,
+      "solutionCount": 96
+    },
+    {
+      "seed": "shuttle-expected:988:8:74",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 1, "v", 3, "b"],
+        [3, 5, "v", 3, "a"],
+        [3, 4, "v", 3, "d"],
+        [0, 4, "v", 2, "d"],
+        [3, 3, "v", 2, "c"],
+        [3, 0, "v", 3, "b"],
+        [0, 5, "v", 3, "a"],
+        [0, 3, "v", 2, "c"]
+      ],
+      "passengers": "cddbabdccbaaaddabcbab",
+      "bayCount": 4,
+      "solutionCount": 192
+    },
+    {
+      "seed": "shuttle-expected:988:8:75",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 5, "v", 2, "a"],
+        [0, 3, "h", 3, "b"],
+        [3, 0, "h", 2, "d"],
+        [2, 2, "v", 3, "d"],
+        [0, 2, "v", 2, "b"],
+        [5, 2, "h", 3, "c"],
+        [0, 1, "v", 3, "c"],
+        [4, 3, "h", 2, "a"]
+      ],
+      "passengers": "abbbaddbddcccccacdab",
+      "bayCount": 4,
+      "solutionCount": 1032
+    },
+    {
+      "seed": "shuttle-expected:988:8:76",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 2, "v", 3, "a"],
+        [4, 5, "v", 2, "c"],
+        [0, 5, "v", 2, "d"],
+        [0, 0, "v", 2, "b"],
+        [5, 3, "v", 2, "a"],
+        [0, 3, "v", 3, "c"],
+        [3, 6, "v", 3, "d"],
+        [0, 6, "v", 2, "b"]
+      ],
+      "passengers": "ddcdabbacadbbccdaac",
+      "bayCount": 3,
+      "solutionCount": 12
+    },
+    {
+      "seed": "shuttle-expected:988:8:77",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 2, "v", 3, "a"],
+        [2, 3, "v", 3, "b"],
+        [1, 1, "v", 3, "a"],
+        [0, 4, "v", 2, "c"],
+        [3, 0, "v", 3, "d"],
+        [0, 5, "v", 3, "b"],
+        [0, 0, "v", 3, "c"],
+        [0, 3, "v", 2, "d"]
+      ],
+      "passengers": "dbadbccbbcabddbaacdaca",
+      "bayCount": 3,
+      "solutionCount": 36
+    },
+    {
+      "seed": "shuttle-expected:988:8:78",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 2, "h", 3, "b"],
+        [2, 5, "v", 3, "d"],
+        [3, 1, "v", 3, "b"],
+        [1, 3, "h", 3, "c"],
+        [0, 1, "h", 2, "a"],
+        [5, 2, "h", 2, "c"],
+        [0, 3, "h", 3, "a"],
+        [5, 4, "h", 2, "d"]
+      ],
+      "passengers": "abdccdcababdcaabdbdbc",
+      "bayCount": 4,
+      "solutionCount": 12
+    },
+    {
+      "seed": "shuttle-expected:988:8:79",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 5, "v", 3, "c"],
+        [0, 4, "h", 2, "b"],
+        [3, 3, "v", 3, "b"],
+        [0, 3, "v", 2, "a"],
+        [0, 2, "v", 3, "d"],
+        [0, 0, "v", 2, "d"],
+        [0, 1, "v", 2, "c"],
+        [5, 4, "h", 2, "a"]
+      ],
+      "passengers": "ccacadbdbdbcbdaabcd",
+      "bayCount": 4,
+      "solutionCount": 2296
+    }
+  ]
+}
