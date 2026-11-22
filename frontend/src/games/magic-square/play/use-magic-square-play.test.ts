@@ -102,6 +102,104 @@ describe("useMagicSquarePlay", () => {
           [initial.problem.givens.cells, false],
         );
       });
+
+      test("置いた知らせを返すこと", () => {
+        const { operation } = result.current;
+
+        expect(operation).toMatchObject({
+          type: "placed",
+          cellIndex: 0,
+          value: 14,
+        });
+      });
+
+      test("同じ数をもう一度押すと、外した知らせを返すこと", () => {
+        act(() => result.current.enterValue(14));
+
+        expect(result.current.operation).toMatchObject({
+          type: "removed",
+          cellIndex: 0,
+          value: 14,
+        });
+      });
+    });
+
+    describe("受け付けない数を押した場合", () => {
+      const givenCell = 1;
+
+      test("マスを選んでいなければ、選んだマスの無い不成立の知らせを返すこと", () => {
+        act(() => result.current.enterValue(14));
+
+        expect(result.current.operation).toMatchObject({
+          type: "rejected",
+          cellIndex: null,
+          value: 14,
+        });
+      });
+
+      test("最初から置いてある数のマスでは、そのマスの不成立の知らせを返し、盤面を変えないこと", () => {
+        place(result, givenCell, 14);
+
+        expect([
+          result.current.operation,
+          result.current.board.cells[givenCell],
+        ]).toMatchObject([
+          { type: "rejected", cellIndex: givenCell, value: 14 },
+          initial.problem.givens.cells[givenCell],
+        ]);
+      });
+
+      test("押すたびに知らせの番号を変えること", () => {
+        act(() => result.current.enterValue(14));
+        const firstId = result.current.operation?.id;
+        act(() => result.current.enterValue(14));
+
+        expect(result.current.operation?.id).not.toBe(firstId);
+      });
+    });
+
+    describe("メモに切り替えた場合", () => {
+      beforeEach(() => {
+        act(() => result.current.toggleMemoInput());
+        place(result, 0, 9);
+      });
+
+      test("押した数を選んだマスのメモに書き、数の欄でメモの数を selected にすること", () => {
+        const { inputMode, board, valueStates, operation } = result.current;
+
+        expect({
+          inputMode,
+          cell: board.cells[0],
+          memo: board.memos[0],
+          state: valueStates[8],
+          operation: operation?.type,
+        }).toEqual({
+          inputMode: "memo",
+          cell: null,
+          memo: [9],
+          state: "selected",
+          operation: "memo-written",
+        });
+      });
+
+      test("同じ数をもう一度押すとメモから消すこと", () => {
+        act(() => result.current.enterValue(9));
+
+        expect([
+          result.current.board.memos[0],
+          result.current.operation?.type,
+        ]).toEqual([[], "memo-erased"]);
+      });
+
+      test("もう一度切り替えると、押した数をマスに置くこと", () => {
+        act(() => result.current.toggleMemoInput());
+        act(() => result.current.enterValue(9));
+
+        expect([
+          result.current.inputMode,
+          result.current.board.cells[0],
+        ]).toEqual(["value", 9]);
+      });
     });
 
     describe("全部の空きを答えの数で埋めた場合", () => {
@@ -135,13 +233,15 @@ describe("useMagicSquarePlay", () => {
         expect(result.current.progress).toBe("result");
       });
 
-      test("同じ問題をもう一度始めると最初の盤面のプレイ中へ戻ること", () => {
+      test("同じ問題をもう一度始めると、最初の盤面のプレイ中へ、数を置く入れ方で戻ること", () => {
         act(() => result.current.replay());
 
-        expect([result.current.progress, result.current.board.cells]).toEqual([
-          "playing",
-          initial.problem.givens.cells,
-        ]);
+        expect([
+          result.current.progress,
+          result.current.board.cells,
+          result.current.inputMode,
+          result.current.operation,
+        ]).toEqual(["playing", initial.problem.givens.cells, "value", null]);
       });
 
       test("クリア後はマスを選ばないこと", () => {

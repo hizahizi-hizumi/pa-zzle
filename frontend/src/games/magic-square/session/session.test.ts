@@ -369,12 +369,26 @@ describe("getMagicSquareSessionResult", () => {
 });
 
 describe("listMagicSquareSessionValueStates", () => {
-  test("選んだマスの数を押せる数として、ほかに置いた数を使った数として返すこと", () => {
+  test("数を入れるときは、選んだマスに置いた数を selected、ほかに置いた数を used として返すこと", () => {
     const states = listMagicSquareSessionValueStates(
       play([{ select: topRight }, 11, { select: topLeft }, 14]),
+      "value",
     );
 
     expect([states[10], states[13], states[8]]).toEqual([
+      "used",
+      "selected",
+      "available",
+    ]);
+  });
+
+  test("メモを書くときは、選んだマスのメモにある数を selected、盤面に置いた数を used として返すこと", () => {
+    const states = listMagicSquareSessionValueStates(
+      play([{ select: topRight }, 11, { select: topLeft }, "memo:9"]),
+      "memo",
+    );
+
+    expect([states[10], states[8], states[13]]).toEqual([
       "used",
       "selected",
       "available",

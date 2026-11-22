@@ -10,6 +10,7 @@ import {
   enterMagicSquareValue,
   isMagicSquareGivenCell,
   isMagicSquareSolved,
+  listMagicSquareMemoValueStates,
   listMagicSquareValueStates,
   type MagicSquareValueState,
   toggleMagicSquareMemo,
@@ -20,6 +21,9 @@ import {
   type MagicSquareState,
 } from "@/games/magic-square/puzzle/state";
 import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
+
+/** 数の欄で押した数を、選んだマスに置くか（`value`）、選んだマスのメモに書くか（`memo`）。 */
+export type MagicSquareInputMode = "value" | "memo";
 
 /** 待ったで戻れる1つ前の盤面と、その盤面から変えたマス。 */
 type MagicSquareSessionHistoryEntry = {
@@ -277,15 +281,21 @@ export function getMagicSquareSessionWithdrawalCount(
   );
 }
 
-/** 数の欄の 1 から n² までの状態。並びは数の小さい順。 */
+/** 数の欄の 1 から n² までの、その入れ方での状態。並びは数の小さい順。 */
 export function listMagicSquareSessionValueStates(
   session: MagicSquareSession,
+  inputMode: MagicSquareInputMode,
 ): MagicSquareValueState[] {
-  return listMagicSquareValueStates(
-    session.problem.givens,
-    session.puzzleState,
-    session.selectedCellIndex,
-  );
+  return inputMode === "memo"
+    ? listMagicSquareMemoValueStates(
+        session.puzzleState,
+        session.selectedCellIndex,
+      )
+    : listMagicSquareValueStates(
+        session.problem.givens,
+        session.puzzleState,
+        session.selectedCellIndex,
+      );
 }
 
 export function getMagicSquareSessionResult(

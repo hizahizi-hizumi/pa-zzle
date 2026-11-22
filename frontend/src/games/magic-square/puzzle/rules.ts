@@ -30,10 +30,14 @@ export type MagicSquareLineStatus =
 /**
  * 数の欄の1つの数の今の状態。
  * - `available`: まだどこにも置いていない。
- * - `selected`: 選んだマスに置いてある。押すとそのマスから外す。
- * - `used`: ほかのマス（最初から置いてある数のマスを含む）に置いてある。押せない。
+ * - `selected`: 選んだマスに入っている。数を入れるときは選んだマスに置いてある数、メモを書くときは選んだマスのメモにある数。
+ *   押すとそのマスから外す・消す。
+ * - `used`: 盤面のほかのマス（最初から置いてある数のマスを含む）に置いてある。メモを書くときは選んだマスに置いた数も含む。押せない。
  */
 export type MagicSquareValueState = "available" | "selected" | "used";
+
+/** 1マスのメモに書ける数の上限。6×6 の小さいマスにも、2桁の数を読める大きさで並べられるだけにする。 */
+export const MAGIC_SQUARE_MEMO_CAPACITY = 4;
 
 export type MagicSquareLineEvaluation = {
   line: MagicSquareLine;
@@ -77,7 +81,7 @@ function isEditableCell(
   );
 }
 
-/** 1 から n² までの数ごとの状態。並びは数の小さい順。 */
+/** 数を入れるときの、1 から n² までの数ごとの状態。並びは数の小さい順。 */
 export function listMagicSquareValueStates(
   givens: MagicSquareBoard,
   board: MagicSquareBoard,
@@ -99,6 +103,28 @@ export function listMagicSquareValueStates(
         !isMagicSquareGivenCell(givens, cellIndex)
         ? "selected"
         : "used";
+    },
+  );
+}
+
+/** メモを書くときの、1 から n² までの数ごとの状態。並びは数の小さい順。数を置いたマスに残したメモは数えない。 */
+export function listMagicSquareMemoValueStates(
+  board: MagicSquareState,
+  selectedCellIndex: number | null,
+): MagicSquareValueState[] {
+  const usedValues = listMagicSquareUsedValues(board);
+  const memo =
+    selectedCellIndex === null || board.cells[selectedCellIndex] !== null
+      ? []
+      : (board.memos[selectedCellIndex] ?? []);
+  return Array.from(
+    { length: getMagicSquareMaxValue(board.size) },
+    (_, index): MagicSquareValueState => {
+      const value = index + 1;
+      if (usedValues.has(value)) {
+        return "used";
+      }
+      return memo.includes(value) ? "selected" : "available";
     },
   );
 }
@@ -189,19 +215,26 @@ export function enterMagicSquareValue(
     : placeMagicSquareValue(givens, state, cellIndex, value);
 }
 
-/** 空きマスのメモに数を書けるか。盤面に置いてある数は、もうほかのマスの候補にならないので書けない。 */
+/**
+ * 空きマスのメモに数を書けるか・書いてある数を消せるか。盤面に置いてある数は、もうほかのマスの候補にならないので書けない。
+ * メモが上限まで埋まったマスには、書いてある数を消すまで新しい数を書けない。
+ */
 export function canToggleMagicSquareMemo(
   givens: MagicSquareBoard,
   state: MagicSquareState,
   cellIndex: number,
   value: number,
 ): boolean {
-  return (
-    isEditableCell(givens, state, cellIndex) &&
-    state.cells[cellIndex] === null &&
-    isMagicSquareValue(state.size, value) &&
-    findMagicSquareValueCell(state, value) === null
-  );
+  if (
+    !isEditableCell(givens, state, cellIndex) ||
+    state.cells[cellIndex] !== null ||
+    !isMagicSquareValue(state.size, value) ||
+    findMagicSquareValueCell(state, value) !== null
+  ) {
+    return false;
+  }
+  const memo = state.memos[cellIndex] ?? [];
+  return memo.includes(value) || memo.length < MAGIC_SQUARE_MEMO_CAPACITY;
 }
 
 /** 空きマスのメモに数を書く。書いてあれば消す。書けないときは、受け取った状態をそのまま返す。 */

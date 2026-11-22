@@ -15,8 +15,10 @@ import {
   isMagicSquareLineViolation,
   isMagicSquareSolved,
   listMagicSquareLineEvaluations,
+  listMagicSquareMemoValueStates,
   listMagicSquareUsedValues,
   listMagicSquareValueStates,
+  MAGIC_SQUARE_MEMO_CAPACITY,
   type MagicSquareLineStatus,
   placeMagicSquareValue,
   removeMagicSquareValue,
@@ -546,6 +548,32 @@ describe("盤面の操作", () => {
         expect(next).toBe(state);
       },
     );
+
+    describe("メモが上限まで埋まったマスの場合", () => {
+      const fullValues = [7, 8, 9, 11, 13].slice(0, MAGIC_SQUARE_MEMO_CAPACITY);
+      const full = fullValues.reduce(
+        (current, value) =>
+          toggleMagicSquareMemo(givens, current, emptyCell, value),
+        initial,
+      );
+
+      test("新しい数を書かないこと", () => {
+        const next = toggleMagicSquareMemo(givens, full, emptyCell, 15);
+
+        expect(next).toBe(full);
+      });
+
+      test("書いてある数は消せること", () => {
+        const next = toggleMagicSquareMemo(
+          givens,
+          full,
+          emptyCell,
+          fullValues[0]!,
+        );
+
+        expect(next.memos[emptyCell]).toEqual(fullValues.slice(1));
+      });
+    });
   });
 
   describe("enterMagicSquareValue", () => {
@@ -596,6 +624,56 @@ describe("盤面の操作", () => {
       const states = listMagicSquareValueStates(givens, placed, givenCell);
 
       expect(states[3]).toBe("used");
+    });
+  });
+
+  describe("listMagicSquareMemoValueStates", () => {
+    const memoed = [9, 13].reduce(
+      (current, value) =>
+        toggleMagicSquareMemo(givens, current, otherEmptyCell, value),
+      placed,
+    );
+    const placedOnMemo = placeMagicSquareValue(
+      givens,
+      memoed,
+      otherEmptyCell,
+      11,
+    );
+
+    test("選んだ空きマスのメモにある数を selected、盤面に置いてある数を used、残りを available にすること", () => {
+      const states = listMagicSquareMemoValueStates(memoed, otherEmptyCell);
+
+      expect(states).toEqual([
+        "used",
+        "used",
+        "used",
+        "used",
+        "used",
+        "used",
+        "available",
+        "available",
+        "selected",
+        "used",
+        "available",
+        "used",
+        "selected",
+        "used",
+        "available",
+        "available",
+      ]);
+    });
+
+    test("数を置いたマスを選ぶと、そのマスの数も used にし、メモの数を selected にしないこと", () => {
+      const states = listMagicSquareMemoValueStates(
+        placedOnMemo,
+        otherEmptyCell,
+      );
+
+      expect([states[8], states[10], states[12]]).toEqual([
+        "available",
+        "used",
+        "available",
+      ]);
     });
   });
 

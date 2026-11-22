@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MagicSquareDifficulty } from "@/games/magic-square/difficulty";
 import type {
   MagicSquareProblemIdentity,
@@ -26,10 +26,12 @@ import {
   getMagicSquareSessionResult,
   getMagicSquareSessionWithdrawalCount,
   listMagicSquareSessionValueStates,
+  type MagicSquareInputMode,
   type MagicSquareSession,
   type MagicSquareSessionResult,
   restartMagicSquareSession,
   selectMagicSquareSessionCell,
+  toggleMagicSquareSessionMemo,
   undoMagicSquareSession,
 } from "@/games/magic-square/session/session";
 import {
@@ -49,6 +51,22 @@ import {
 import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
+
+/**
+ * 数の欄を押した結果の知らせ。効果音と、受け付けなかったときの盤面の反応に使う。`id` は押すたびに増える。
+ * - `placed`: 選んだマスに数を置いた（置き換えを含む）。
+ * - `removed`: 選んだマスに置いてあった同じ数を外した。
+ * - `memo-written`・`memo-erased`: 選んだマスのメモに数を書いた・消した。
+ * - `rejected`: 受け付けなかった。`cellIndex` は選んでいたマスで、どのマスも選んでいなければ `null`。
+ */
+export type MagicSquareOperation =
+  | {
+      id: number;
+      type: "placed" | "removed" | "memo-written" | "memo-erased";
+      cellIndex: number;
+      value: number;
+    }
+  | { id: number; type: "rejected"; cellIndex: number | null; value: number };
 
 export type MagicSquareResult = MagicSquareSessionResult & {
   workload: MagicSquareSolveWorkload;
@@ -86,12 +104,16 @@ export type MagicSquarePlay = GamePlay<
     selectedCellIndex: number | null;
     /** 列ごとの今の合計と状態。並びは `listMagicSquareLines` と同じ。 */
     lineEvaluations: readonly MagicSquareLineEvaluation[];
-    /** 数の欄の 1 から n² までの状態。 */
+    inputMode: MagicSquareInputMode;
+    /** 数の欄の 1 から n² までの、今の入れ方での状態。 */
     valueStates: readonly MagicSquareValueState[];
     withdrawalCount: number;
+    operation: MagicSquareOperation | null;
     selectCell: (cellIndex: number) => void;
-    /** 選んだマスに数を入れる。同じ数が置いてあれば外す。 */
+    /** 数の欄で押した数を、今の入れ方で選んだマスに入れる。同じ数が入っていれば外す・消す。 */
     enterValue: (value: number) => void;
+    /** 数を置く入れ方と、メモを書く入れ方を切り替える。 */
+    toggleMemoInput: () => void;
   };
 
 type MagicSquarePlayState = {
@@ -99,6 +121,8 @@ type MagicSquarePlayState = {
   problemIdentity: MagicSquareProblemIdentity;
   workload: MagicSquareSolveWorkload;
   progress: GameProgress;
+  inputMode: MagicSquareInputMode;
+  operation: MagicSquareOperation | null;
 };
 
 function createPlayState(
@@ -110,6 +134,8 @@ function createPlayState(
     problemIdentity: identity,
     workload,
     progress: "playing",
+    inputMode: "value",
+    operation: null,
   };
 }
 
@@ -123,13 +149,61 @@ function selectProblem(
   ).problem;
 }
 
+/** 数の欄を押す以外の操作。盤面が変わったら、前の押した結果の知らせを消す。 */
 function operateInPlay(
   current: MagicSquarePlayState,
   operate: (session: MagicSquareSession) => MagicSquareSession,
 ): MagicSquarePlayState {
-  return current.progress === "playing"
-    ? applyPlaySession(current, operate(current.session))
-    : current;
+  if (current.progress !== "playing") {
+    return current;
+  }
+  const next = applyPlaySession(current, operate(current.session));
+  return next === current ? current : { ...next, operation: null };
+}
+
+function describeAcceptedInput(
+  inputMode: MagicSquareInputMode,
+  session: MagicSquareSession,
+  cellIndex: number,
+  value: number,
+): MagicSquareOperation["type"] {
+  const { cells, memos } = session.puzzleState;
+  if (inputMode === "memo") {
+    return memos[cellIndex]?.includes(value) ? "memo-written" : "memo-erased";
+  }
+  return cells[cellIndex] === value ? "placed" : "removed";
+}
+
+function inputValueInPlay(
+  current: MagicSquarePlayState,
+  value: number,
+  inputAt: number,
+  operationId: number,
+): MagicSquarePlayState {
+  if (current.progress !== "playing") {
+    return current;
+  }
+  const { session, inputMode } = current;
+  const { selectedCellIndex: cellIndex } = session;
+  const operated =
+    inputMode === "memo"
+      ? toggleMagicSquareSessionMemo(session, value, inputAt)
+      : enterMagicSquareSessionValue(session, value, inputAt);
+  if (operated === session || cellIndex === null) {
+    return {
+      ...current,
+      operation: { id: operationId, type: "rejected", cellIndex, value },
+    };
+  }
+  return {
+    ...applyPlaySession(current, operated),
+    operation: {
+      id: operationId,
+      type: describeAcceptedInput(inputMode, operated, cellIndex, value),
+      cellIndex,
+      value,
+    },
+  };
 }
 
 /** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
@@ -151,8 +225,10 @@ export function useMagicSquarePlay(
     () => savePlayState("magic-square", playProblemId, play),
     [playProblemId, play],
   );
-  const { session, problemIdentity, workload } = play;
+  const { session, problemIdentity, workload, inputMode } = play;
   const elapsedMs = useSessionElapsedMs(session);
+  // 復元した知らせと同じ番号を次の操作に付けると、その操作の音と反応が出ないので、続きの番号から振る。
+  const nextOperationId = useRef((play.operation?.id ?? -1) + 1);
 
   const selectCell = useCallback((cellIndex: number) => {
     setPlay((current) =>
@@ -164,10 +240,20 @@ export function useMagicSquarePlay(
 
   const enterValue = useCallback((value: number) => {
     const enteredAt = Date.now();
+    const operationId = nextOperationId.current++;
     setPlay((current) =>
-      operateInPlay(current, (operated) =>
-        enterMagicSquareSessionValue(operated, value, enteredAt),
-      ),
+      inputValueInPlay(current, value, enteredAt, operationId),
+    );
+  }, []);
+
+  const toggleMemoInput = useCallback(() => {
+    setPlay((current) =>
+      current.progress === "playing"
+        ? {
+            ...current,
+            inputMode: current.inputMode === "memo" ? "value" : "memo",
+          }
+        : current,
     );
   }, []);
 
@@ -181,12 +267,14 @@ export function useMagicSquarePlay(
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setPlay((current) =>
-      startPlaySession(
+    setPlay((current) => ({
+      ...startPlaySession(
         current,
         createMagicSquareSession(current.session.problem, startedAt),
       ),
-    );
+      inputMode: "value",
+      operation: null,
+    }));
   }, []);
 
   const startNewProblem = useCallback(() => {
@@ -213,8 +301,8 @@ export function useMagicSquarePlay(
     [session.puzzleState],
   );
   const valueStates = useMemo(
-    () => listMagicSquareSessionValueStates(session),
-    [session],
+    () => listMagicSquareSessionValueStates(session, inputMode),
+    [session, inputMode],
   );
 
   return {
@@ -231,12 +319,15 @@ export function useMagicSquarePlay(
     board: session.puzzleState,
     selectedCellIndex: session.selectedCellIndex,
     lineEvaluations,
+    inputMode,
     valueStates,
     withdrawalCount: getMagicSquareSessionWithdrawalCount(session),
+    operation: play.operation,
     canUndo: canUndoMagicSquareSession(session),
     canRestart: canRestartMagicSquareSession(session),
     selectCell,
     enterValue,
+    toggleMemoInput,
     undo,
     restart,
     replay,
