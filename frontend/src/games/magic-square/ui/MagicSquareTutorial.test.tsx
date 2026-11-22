@@ -10,11 +10,14 @@ import {
 import { TUTORIAL_CUE_HAND_ATTRIBUTE } from "@/components/TutorialCue";
 import { TUTORIAL_SPOTLIGHT_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import { MAGIC_SQUARE_DISPLAY_NAME } from "@/games/magic-square/display-name";
-import { magicSquareTutorial } from "@/games/magic-square/tutorial/tutorial";
+import {
+  MAGIC_SQUARE_TUTORIAL_RECAP,
+  magicSquareTutorial,
+} from "@/games/magic-square/tutorial/tutorial";
 import { MagicSquareTutorial } from "@/games/magic-square/ui/MagicSquareTutorial";
 import type { TutorialMessage } from "@/games/tutorial";
 
-const { intro, steps, freePlay, completion, rules } = magicSquareTutorial;
+const { intro, steps, freePlay, completion } = magicSquareTutorial;
 
 /** 決め手の列を見せてから次の手順へ替えるまでの間より長い時間。 */
 const holdEnoughMs = 1_000;
@@ -176,22 +179,28 @@ describe("MagicSquareTutorial", () => {
       expect(hasPointer(getValueButton(14))).toBe(true);
     });
 
-    test("印の付いたマスを選んでからほかのマスを押すと、選んだマスに印を出し直すこと", () => {
-      fireEvent.click(getCell(1, 1));
-      fireEvent.click(getCell(2, 2));
+    test.each([
+      ["ほかのマスを押す", () => fireEvent.click(getCell(2, 2))],
+      ["印の無い数を押す", () => fireEvent.click(getValueButton(1))],
+    ])(
+      "印の付いたマスを選んでから%sと、選んだマスの見え方を変えずに、押す数の指を出し直すこと",
+      (_, pressElsewhere) => {
+        fireEvent.click(getCell(1, 1));
+        pressElsewhere();
 
-      expect({
-        selected: getCell(1, 1).getAttribute("aria-pressed"),
-        mark: hasMark(getCell(1, 1)),
-        recall: hasRecall(getCell(1, 1)),
-        pointer: hasPointer(getCell(1, 1)),
-      }).toEqual({
-        selected: "true",
-        mark: true,
-        recall: true,
-        pointer: false,
-      });
-    });
+        expect({
+          selected: getCell(1, 1).getAttribute("aria-pressed"),
+          cellMark: hasMark(getCell(1, 1)),
+          valuePointer: hasPointer(getValueButton(14)),
+          valueRecall: hasRecall(getValueButton(14)),
+        }).toEqual({
+          selected: "true",
+          cellMark: false,
+          valuePointer: true,
+          valueRecall: true,
+        });
+      },
+    );
 
     test("印の数を入れると、入れたマスに合図を返し、横の列を覆いから抜いて、次のマスに指の無い印を付けること", () => {
       enter([1, 1, 14]);
@@ -231,7 +240,9 @@ describe("MagicSquareTutorial", () => {
       });
 
       test("その列の違反を言い、入れ直し方を添えること", () => {
-        const message = queryShownText("この横の列は合計が34になっていません");
+        const message = queryShownText(
+          "選んだマスの横の列は\n合計が34になっていません",
+        );
 
         expect({
           message: message !== null,
@@ -277,7 +288,7 @@ describe("MagicSquareTutorial", () => {
 
         expect(
           queryShownText(
-            "選んだマスの横の列と縦の列には\n空いたマスが2つ以上あります",
+            "選んだマスの横と縦の列には\n空いたマスが2つ以上あります",
           ),
         ).not.toBeNull();
       });
@@ -368,8 +379,46 @@ describe("MagicSquareTutorial", () => {
         enter([3, 4, 10]);
 
         expect(
-          queryShownText("この横の列と縦の列は合計が34になっていません"),
+          queryShownText("選んだマスの横と縦の列は\n合計が34になっていません"),
         ).not.toBeNull();
+      });
+
+      test("違反を残したまま別のマスを選ぶと、印の付いたマスから違反の列を言うこと", () => {
+        enter([3, 4, 10]);
+        fireEvent.click(getCell(4, 3));
+
+        expect({
+          message:
+            queryShownText(
+              "印の付いたマスの横と縦の列は\n合計が34になっていません",
+            ) !== null,
+          mark: hasMark(getCell(3, 4)),
+        }).toEqual({ message: true, mark: true });
+      });
+
+      describe("違反にならない違う数を入れてヒントを押した場合", () => {
+        beforeEach(() => {
+          // 2行3列の数を外して3列目の空いたマスを2つにし、4行3列に違う数の1を入れる。
+          enter([2, 3, 7]);
+          enter([4, 3, 1]);
+          fireEvent.click(getHintButton());
+        });
+
+        test("そのマスを選んだままなら、印を付けずに、選んだマスの数が違うと言うこと", () => {
+          expect({
+            message: queryShownText("選んだマスの数が違います") !== null,
+            mark: hasMark(getCell(4, 3)),
+          }).toEqual({ message: true, mark: false });
+        });
+
+        test("ほかのマスを選ぶと、印を付けて、印の付いたマスの数が違うと言うこと", () => {
+          fireEvent.click(getCell(3, 4));
+
+          expect({
+            message: queryShownText("印の付いたマスの数が違います") !== null,
+            mark: hasMark(getCell(4, 3)),
+          }).toEqual({ message: true, mark: true });
+        });
       });
 
       describe("本番でも受け付けない押し方の場合", () => {
@@ -417,8 +466,13 @@ describe("MagicSquareTutorial", () => {
 
         expect({
           completion: queryMessage(completion.play) !== null,
-          rules: rules.map(({ label }) => queryShownText(label) !== null),
-        }).toEqual({ completion: true, rules: [true, true, true] });
+          recap: MAGIC_SQUARE_TUTORIAL_RECAP.map(
+            (label) => queryShownText(label) !== null,
+          ),
+        }).toEqual({
+          completion: true,
+          recap: MAGIC_SQUARE_TUTORIAL_RECAP.map(() => true),
+        });
       });
     });
   });

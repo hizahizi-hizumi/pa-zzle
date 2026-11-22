@@ -15,6 +15,7 @@ import {
   findMagicSquareTutorialHint,
   getMagicSquareTutorialEntryRefusal,
   listMagicSquareTutorialLineEvaluations,
+  MAGIC_SQUARE_TUTORIAL_RECAP,
   type MagicSquareTutorialAction,
   type MagicSquareTutorialBoardState,
   type MagicSquareTutorialRuleId,
@@ -372,7 +373,7 @@ describe("magicSquareTutorial.perform", () => {
       expect({ violated: wrongInRow.violated, message }).toEqual({
         violated: true,
         message: {
-          headline: "この横の列は合計が34になっていません",
+          headline: "選んだマスの横の列は\n合計が34になっていません",
           detail: "別の数を押すと入れ直せます",
         },
       });
@@ -441,7 +442,7 @@ describe("magicSquareTutorial.perform", () => {
       );
 
       expect(message).toEqual({
-        headline: "選んだマスの横の列と縦の列には\n空いたマスが2つ以上あります",
+        headline: "選んだマスの横と縦の列には\n空いたマスが2つ以上あります",
         detail: "空いたマスが1つだけ残った列を探します",
       });
     });
@@ -527,51 +528,98 @@ describe("magicSquareTutorial.perform", () => {
   describe("違反を言う場合", () => {
     const columnStep = guidedMoves.moves[2]?.before ?? start;
     const diagonalStep = guidedMoves.moves[3]?.before ?? start;
+    const searchBefore = guidedMoves.moves[4]?.before ?? start;
+    /** 探す手順で4行2列を埋めて手を離した後、4行3列に違う数の7を入れて4行目を違反にした盤面。 */
+    const rowViolated = perform(
+      [
+        ...placeActions(cellAt(4, 2)),
+        { type: "select", cellIndex: cellAt(4, 3) },
+        { type: "enter", value: 7 },
+      ],
+      searchBefore,
+    );
+    const otherCellSelected = perform(
+      [{ type: "select", cellIndex: cellAt(2, 3) }],
+      rowViolated,
+    );
+
+    function enterAt(
+      before: Progress,
+      [row, column, value]: readonly [number, number, number],
+    ): Progress {
+      return perform(
+        [
+          { type: "select", cellIndex: cellAt(row, column) },
+          { type: "enter", value },
+        ],
+        before,
+      );
+    }
+
+    function describeViolationOf(progress: Progress) {
+      return {
+        violated: progress.violated,
+        message: magicSquareTutorial.describeViolation(
+          getTutorialSituation(magicSquareTutorial, progress),
+          progress.boardState,
+        ),
+      };
+    }
+
+    const selectedFix = "別の数を押すと入れ直せます";
     const cases = [
       [
-        "縦の列の手順で、横の列にも違反が出た",
-        columnStep,
-        [3, 1, 10],
-        "この縦の列は合計が34になっていません",
+        "縦の列の手順で横の列にも違反が出た",
+        enterAt(columnStep, [3, 1, 10]),
+        "選んだマスの縦の列は\n合計が34になっていません",
+        selectedFix,
       ],
       [
-        "斜めの列の手順で、横の列にも違反が出た",
-        diagonalStep,
-        [2, 2, 15],
-        "この斜めの列は合計が34になっていません",
+        "斜めの列の手順で横の列にも違反が出た",
+        enterAt(diagonalStep, [2, 2, 15]),
+        "選んだマスの斜めの列は\n合計が34になっていません",
+        selectedFix,
       ],
       [
-        "手を離した後に、横の列と縦の列が同じ違反になった",
-        freePlay,
-        [3, 4, 10],
-        "この横の列と縦の列は合計が34になっていません",
+        "手を離した後に横の列と縦の列が同じ違反になった",
+        enterAt(freePlay, [3, 4, 10]),
+        "選んだマスの横と縦の列は\n合計が34になっていません",
+        selectedFix,
+      ],
+      [
+        "手を離した後に違反を残したまま別のマスを選んだ",
+        otherCellSelected,
+        "印の付いたマスの横の列は\n合計が34になっていません",
+        "そのマスを選んで\n別の数を押すと入れ直せます",
+      ],
+      [
+        "手を離した後に横と縦と斜めの列が同じ違反になった",
+        perform([{ type: "enter", value: 1 }], otherCellSelected),
+        "選んだマスの横と縦と斜めの列は\n合計が34になっていません",
+        selectedFix,
       ],
     ] as const;
 
     test.each(cases)(
-      "%sときは、覆いから抜いた列か、同じ違反の列を全部言うこと",
-      (_, before, [row, column, value], headline) => {
-        const progress = perform(
-          [
-            { type: "select", cellIndex: cellAt(row, column) },
-            { type: "enter", value },
-          ],
-          before,
-        );
-        const message = magicSquareTutorial.describeViolation(
-          getTutorialSituation(magicSquareTutorial, progress),
-          progress.boardState,
-        );
-
-        expect({
-          violated: progress.violated,
-          headline: message.headline,
-        }).toEqual({
+      "%sときは、直すマスから、そのマスを通る違反の列を言うこと",
+      (_, progress, headline, detail) => {
+        expect(describeViolationOf(progress)).toEqual({
           violated: true,
-          headline,
+          message: { headline, detail },
         });
       },
     );
+  });
+});
+
+describe("MAGIC_SQUARE_TUTORIAL_RECAP", () => {
+  test("伝えた3つの向きの列の決まりに、空いたマスが1つだけ残った列の読みを添えること", () => {
+    expect(MAGIC_SQUARE_TUTORIAL_RECAP).toEqual([
+      "横の列の4つの数を足すと34になります",
+      "縦の列の4つの数を足すと34になります",
+      "斜めの列の4つの数を足すと34になります",
+      "空いたマスが1つだけ残った列には34に足りない分が入ります",
+    ]);
   });
 });
 
@@ -591,34 +639,58 @@ describe("findMagicSquareTutorialHint", () => {
     expect(emptyCells).toEqual(hint?.kind === "line" ? [hint.cellIndex] : [-1]);
   });
 
-  describe("違う数が入っている場合", () => {
-    const freeCellIndex =
-      listEmptyCellIndices(freePlay.boardState.puzzleState)[0] ?? -1;
-    const wrongValue = listEmptyCellIndices(freePlay.boardState.puzzleState)
-      .map(solutionValue)
-      .find((value) => value !== solutionValue(freeCellIndex));
-    const withWrongValue = perform(
+  describe("違反にならない違う数が入っている場合", () => {
+    // 2行3列の数を外して3列目の空いたマスを2つにし、4行3列に違う数の1を入れる。
+    const wrongCellIndex = cellAt(4, 3);
+    const wrongSelected = perform(
       [
-        { type: "select", cellIndex: freeCellIndex },
-        { type: "enter", value: wrongValue ?? -1 },
+        ...placeActions(cellAt(2, 3)),
+        { type: "select", cellIndex: wrongCellIndex },
+        { type: "enter", value: 1 },
       ],
       freePlay,
     );
+    const otherSelected = perform(
+      [{ type: "select", cellIndex: cellAt(3, 4) }],
+      wrongSelected,
+    );
 
-    test("違う数のマスを示すこと", () => {
-      const hint = findMagicSquareTutorialHint(
-        getTutorialSituation(magicSquareTutorial, withWrongValue),
-        withWrongValue.boardState,
+    function findHint(progress: Progress) {
+      return findMagicSquareTutorialHint(
+        getTutorialSituation(magicSquareTutorial, progress),
+        progress.boardState,
       );
+    }
 
-      expect(hint).toEqual({
-        kind: "wrong-value",
-        cellIndex: freeCellIndex,
-        message: {
-          headline: "印の付いたマスの数が違います",
-          detail: "そのマスを選んで\n別の数を押すと入れ直せます",
-        },
-      });
+    test("違反にしないこと", () => {
+      expect({
+        wrong: wrongSelected.boardState.puzzleState.cells[wrongCellIndex],
+        violated: wrongSelected.violated,
+      }).toEqual({ wrong: 1, violated: false });
     });
+
+    test.each([
+      [
+        "そのマスを選んだまま",
+        wrongSelected,
+        "選んだマスの数が違います",
+        "別の数を押すと入れ直せます",
+      ],
+      [
+        "ほかのマスを選んで",
+        otherSelected,
+        "印の付いたマスの数が違います",
+        "そのマスを選んで\n別の数を押すと入れ直せます",
+      ],
+    ])(
+      "%sヒントを求めると、違う数のマスを示し、見分け方に合わせて言うこと",
+      (_, progress, headline, detail) => {
+        expect(findHint(progress)).toEqual({
+          kind: "wrong-value",
+          cellIndex: wrongCellIndex,
+          message: { headline, detail },
+        });
+      },
+    );
   });
 });

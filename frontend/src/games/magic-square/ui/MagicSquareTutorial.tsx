@@ -22,6 +22,7 @@ import {
   getMagicSquareTutorialProgressRatio,
   listMagicSquareTutorialLineEvaluations,
   MAGIC_SQUARE_TUTORIAL_PROGRESS_STEP_COUNT,
+  MAGIC_SQUARE_TUTORIAL_RECAP,
   type MagicSquareTutorialAction,
   type MagicSquareTutorialBoardState,
   type MagicSquareTutorialHint,
@@ -69,7 +70,6 @@ type MagicSquareTutorialProgress = TutorialProgress<
 
 const { givens } = magicSquareTutorialPuzzle;
 const goalBoardState = magicSquareTutorial.goal();
-const recap = magicSquareTutorial.rules.map(({ label }) => label);
 
 /** 決め手の列で数を入れた後、その列がそろったのを見せてから、次の印と一言に替える。 */
 const NEXT_STEP_CUE_DELAY_MS = 900;
@@ -178,7 +178,8 @@ export function MagicSquareTutorial({
   }, [open, progress]);
 
   // 印のマスを選んでいる間は、選んだ縁で分かるので印を外す。
-  // 印と違う所を押されたときは、選んだままでも印を出し直して、そのマスへ目を向けさせる。
+  // 印と違う所を押されたときは、今の印を濃くし直す。操作を教える手順では、選んだ後の印は押す数の指なので、マスには印を出さない。
+  // ほかの手順では、選んだマスの印を出し直す。印は選んだ縁の内側に描き、選んだ見え方を変えない。
   function getCellCue(): MagicSquareCellCue | null {
     if (!playing || holding) {
       return null;
@@ -199,14 +200,14 @@ export function MagicSquareTutorial({
       return null;
     }
     const stepCellSelected = selectedCellIndex === step.cellIndex;
-    if (stepCellSelected && recallId === null) {
+    if (stepCellSelected && (step.kind === "operation" || recallId === null)) {
       return null;
     }
-    // 列で決まる手順では、指がマスの周りの数を隠すので、輪郭だけにする。選んだ後は、指を数の欄へ移す。
+    // 列で決まる手順では、指がマスの周りの数を隠すので、輪郭だけにする。
     return {
       cellIndex: step.cellIndex,
       recallId,
-      pointer: step.kind === "operation" && !stepCellSelected,
+      pointer: step.kind === "operation",
     };
   }
 
@@ -425,7 +426,7 @@ export function MagicSquareTutorial({
       pictogramSvg={pictogramSvg}
       background={<MagicSquareGround />}
       intro={magicSquareTutorial.intro}
-      recap={recap}
+      recap={MAGIC_SQUARE_TUTORIAL_RECAP}
       message={message}
       phase={progress.phase}
       spotlighting={spotlightLines.length > 0}

@@ -92,6 +92,8 @@ type MagicSquareBoardProps = {
 /** マスの一辺に対する、角丸と字の大きさ。 */
 const SLAB_RADIUS_RATIO = 0.16;
 const CELL_RADIUS_RATIO = 0.12;
+/** 選んだマスの縁の太さ。チュートリアルの印は、この内側に置く。 */
+const SELECTION_OUTLINE_WIDTH_PX = 3;
 const CELL_FONT_RATIO = 0.42;
 const MEMO_FONT_RATIO = 0.26;
 const SUM_FONT_RATIO = 0.34;
@@ -431,7 +433,7 @@ export function MagicSquareBoard({
                     ...getCellFaceStyle(faceKind, onSelectedLine),
                     borderRadius: scaleByCell(CELL_RADIUS_RATIO),
                     outline: selected
-                      ? `3px solid ${magicSquareTone.selection}`
+                      ? `${SELECTION_OUTLINE_WIDTH_PX}px solid ${magicSquareTone.selection}`
                       : undefined,
                     outlineOffset: selected ? "-1px" : undefined,
                   }}
@@ -479,16 +481,25 @@ export function MagicSquareBoard({
                       id={acknowledgement.id}
                     />
                   )}
-                  {cue?.cellIndex === cellIndex &&
-                    (cue.pointer ? (
-                      <TutorialCue
-                        kind="pointer"
-                        recallId={cue.recallId}
-                        placement="center"
-                      />
-                    ) : (
-                      <TutorialCue kind="mark" recallId={cue.recallId} />
-                    ))}
+                  {cue?.cellIndex === cellIndex && (
+                    // 選んだマスの印は、選んだ縁を覆わないよう、縁の内側に置く。
+                    <span
+                      className="pointer-events-none absolute rounded-[inherit]"
+                      style={{
+                        inset: selected ? SELECTION_OUTLINE_WIDTH_PX : 0,
+                      }}
+                    >
+                      {cue.pointer ? (
+                        <TutorialCue
+                          kind="pointer"
+                          recallId={cue.recallId}
+                          placement="center"
+                        />
+                      ) : (
+                        <TutorialCue kind="mark" recallId={cue.recallId} />
+                      )}
+                    </span>
+                  )}
                 </button>
                 {/* 最初から置いてある数は盤の面に刻んだ字で面を持たないので、列は盤の面ごと、マスの枠の形で抜く。 */}
                 <TutorialSpotlight
