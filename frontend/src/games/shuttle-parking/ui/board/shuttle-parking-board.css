@@ -1,0 +1,55 @@
+@keyframes shuttle-parking-exit {
+  to {
+    transform: translate(var(--exit-x, 0), var(--exit-y, 0));
+  }
+}
+
+@keyframes shuttle-parking-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-40%) scale(0.9);
+  }
+}
+
+@keyframes shuttle-parking-depart {
+  to {
+    opacity: 0;
+    transform: translateY(-80%);
+  }
+}
+
+@keyframes shuttle-parking-board {
+  50% {
+    transform: scale(1.35);
+  }
+}
+
+.shuttle-parking-exiting-car {
+  animation: shuttle-parking-exit var(--exit-ms) cubic-bezier(0.4, 0, 1, 1)
+    forwards;
+}
+
+.shuttle-parking-arriving-car {
+  animation: shuttle-parking-arrive 180ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.shuttle-parking-departing-car {
+  animation: shuttle-parking-depart var(--depart-ms) cubic-bezier(0.4, 0, 1, 1)
+    forwards;
+}
+
+.shuttle-parking-seat-filled {
+  animation: shuttle-parking-board 160ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shuttle-parking-exiting-car {
+    display: none;
+  }
+
+  .shuttle-parking-arriving-car,
+  .shuttle-parking-departing-car,
+  .shuttle-parking-seat-filled {
+    animation: none;
+  }
+}

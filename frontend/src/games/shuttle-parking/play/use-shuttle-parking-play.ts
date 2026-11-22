@@ -17,16 +17,22 @@ import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 import type { ShuttleParkingDifficulty } from "@/games/shuttle-parking/difficulty";
+import {
+  createShuttleParkingExitTimeline,
+  type ShuttleParkingExitTimeline,
+} from "@/games/shuttle-parking/play/exit-timeline";
 import type {
   ShuttleParkingIdentifiedProblem,
   ShuttleParkingProblem,
   ShuttleParkingProblemIdentity,
 } from "@/games/shuttle-parking/problem/problem";
 import { selectShuttleParkingProblemForDifficulty } from "@/games/shuttle-parking/problem-selection";
-import type { ShuttleParkingCarId } from "@/games/shuttle-parking/puzzle/lot";
+import type {
+  ShuttleParkingCarId,
+  ShuttleParkingSide,
+} from "@/games/shuttle-parking/puzzle/lot";
 import {
   isShuttleParkingStuck,
-  type ShuttleParkingBoardingEvent,
   type ShuttleParkingExitBlock,
   type ShuttleParkingState,
 } from "@/games/shuttle-parking/puzzle/rules";
@@ -55,7 +61,10 @@ export type ShuttleParkingOperation =
       id: number;
       type: "exited";
       carId: ShuttleParkingCarId;
-      events: readonly ShuttleParkingBoardingEvent[];
+      side: ShuttleParkingSide;
+      timeline: ShuttleParkingExitTimeline;
+      /** 出庫した時刻。演出と音は、この時刻から `timeline` の時刻を数える。 */
+      startedAt: number;
     }
   | ({
       id: number;
@@ -184,7 +193,13 @@ export function useShuttleParkingPlay(
               id: operationId,
               type: "exited",
               carId,
-              events: attempt.events,
+              side: attempt.side,
+              timeline: createShuttleParkingExitTimeline(
+                current.session.puzzleState,
+                carId,
+                attempt.events,
+              ),
+              startedAt: attemptedAt,
             },
           };
         case "blocked": {

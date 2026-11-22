@@ -76,6 +76,7 @@ export function PlayableShuttleParking({
         problem={play.problem}
         state={play.state}
         operation={play.operation}
+        isStuck={play.isStuck}
         undoCount={play.undoCount}
         canUndo={play.canUndo}
         canRestart={play.canRestart}

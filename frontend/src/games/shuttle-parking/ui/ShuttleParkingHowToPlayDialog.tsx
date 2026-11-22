@@ -1,4 +1,3 @@
-import { HowToPlayExample } from "@/components/HowToPlayExample";
 import {
   type HowToPlayMenuOperation,
   HowToPlayMenuOperations,
@@ -21,24 +20,29 @@ import {
   SHUTTLE_PARKING_SPEED_ZERO_SCORE_RATIO,
   SHUTTLE_PARKING_TRAP_PENALTY,
 } from "@/games/shuttle-parking/score";
-import { ExampleFigure } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog/ExampleFigure";
 import {
-  type ShuttleParkingExampleFigure,
-  shuttleParkingExampleFigures,
+  baysRuleExample,
+  boardRuleExample,
+  exitOperationExample,
+  exitRuleExamples,
 } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog/example-board";
+import { GoalPlayback } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog/GoalPlayback";
+import { TouchableExample } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog/TouchableExample";
+import {
+  ShuttleParkingStuckNotice,
+  STUCK_NOTICE_LABEL,
+} from "@/games/shuttle-parking/ui/ShuttleParkingStuckNotice";
 
 type ShuttleParkingHowToPlayDialogProps = {
   open: boolean;
   onClose: () => void;
+  /** 遊び方を閉じてチュートリアルを開く。開いた画面が渡す。 */
+  onOpenTutorial?: () => void;
 };
 
 const game = { name: SHUTTLE_PARKING_DISPLAY_NAME, pictogramSvg };
 
 const { undo } = PLAY_OPERATION_LABELS;
-
-function renderExample(figure: ShuttleParkingExampleFigure) {
-  return <HowToPlayExample figure={<ExampleFigure {...figure} />} />;
-}
 
 function ignoreFigurePress() {}
 
@@ -92,30 +96,46 @@ function renderScoreRows(item: keyof typeof SHUTTLE_PARKING_SCORE_MAXIMUMS) {
 export function ShuttleParkingHowToPlayDialog({
   open,
   onClose,
+  onOpenTutorial,
 }: ShuttleParkingHowToPlayDialogProps) {
   return (
     <HowToPlayOverlay
       open={open}
       game={game}
       description="駐車場の車を/待機枠へ出して/列の乗客を/同じ色の車に/乗せて/全員を/送り出す/パズルです。"
-      goal={<ExampleFigure {...shuttleParkingExampleFigures.cleared} />}
+      goal={<GoalPlayback />}
       onClose={onClose}
+      onOpenTutorial={onOpenTutorial}
       rules={
         <>
           <HowToPlayRule
-            text="車は/向いている方向に/まっすぐ進み/出口のある辺から/出て/待機枠に/入ります。/前に車があると/出られません。"
-            arrangement="stacked"
-            examples={renderExample(shuttleParkingExampleFigures.waiting)}
+            text="車は/向いている方へ/まっすぐ進み/出口の辺から出て/待機枠に/入ります。/前に車があると/出られません。"
+            examples={
+              <>
+                <TouchableExample
+                  example={exitRuleExamples[0]}
+                  caption="exit"
+                />
+                <TouchableExample
+                  example={exitRuleExamples[1]}
+                  caption="exit"
+                />
+              </>
+            }
           />
           <HowToPlayRule
-            text="列の先頭から/順に/同じ色の/待っている車に/1人ずつ/乗ります。/席が埋まった車は/出発して/枠が/空きます。"
+            text="乗客は/列の先頭から/順に/同じ色の/待っている車に/1人ずつ/乗ります。/席が埋まった車は/出発して/枠が空きます。"
             arrangement="stacked"
-            examples={renderExample(shuttleParkingExampleFigures.departed)}
+            examples={
+              <TouchableExample example={boardRuleExample} caption="board" />
+            }
           />
           <HowToPlayRule
             text="待機枠が/埋まっていると/次の車を/出せません。"
             arrangement="stacked"
-            examples={renderExample(shuttleParkingExampleFigures.baysFull)}
+            examples={
+              <TouchableExample example={baysRuleExample} caption="exit" />
+            }
           />
         </>
       }
@@ -125,9 +145,14 @@ export function ShuttleParkingHowToPlayDialog({
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="車を/押すと/出せる車は/待機枠へ/出ます。"
+                text="車を/タップすると/出せる車は/待機枠へ/出ます。"
                 arrangement="stacked"
-                examples={renderExample(shuttleParkingExampleFigures.start)}
+                examples={
+                  <TouchableExample
+                    example={exitOperationExample}
+                    caption="none"
+                  />
+                }
               />
             </li>
           </HowToPlaySection>
@@ -142,6 +167,24 @@ export function ShuttleParkingHowToPlayDialog({
               note="時間は/そのままで/押した回数が/増えます。"
             />
             <HowToPlayMenuOperations operations={menuOperations} />
+          </HowToPlaySection>
+          <HowToPlaySection title={STUCK_NOTICE_LABEL}>
+            <li>
+              <HowToPlayRule
+                headingLevel={4}
+                text="どの車も/出せなくなると/駐車場の上に/出ます。/原因が/何台か前の/出し方の/こともあります。"
+                arrangement="stacked"
+                examples={
+                  <span aria-hidden="true" inert className="flex">
+                    <ShuttleParkingStuckNotice
+                      canUndo
+                      onUndo={ignoreFigurePress}
+                      onRestart={ignoreFigurePress}
+                    />
+                  </span>
+                }
+              />
+            </li>
           </HowToPlaySection>
         </>
       }

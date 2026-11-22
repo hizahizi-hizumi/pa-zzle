@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
 import type {
@@ -16,13 +15,12 @@ import type {
 import type { ShuttleParkingProblem } from "@/games/shuttle-parking/problem/problem";
 import type { ShuttleParkingCarId } from "@/games/shuttle-parking/puzzle/lot";
 import type { ShuttleParkingState } from "@/games/shuttle-parking/puzzle/rules";
-import { ShuttleParkingBays } from "@/games/shuttle-parking/ui/board/ShuttleParkingBays";
-import { ShuttleParkingLot } from "@/games/shuttle-parking/ui/board/ShuttleParkingLot";
-import { ShuttleParkingQueue } from "@/games/shuttle-parking/ui/board/ShuttleParkingQueue";
+import { ShuttleParkingScene } from "@/games/shuttle-parking/ui/board/ShuttleParkingScene";
 import { ShuttleParkingResultScreen } from "@/games/shuttle-parking/ui/result/ShuttleParkingResultScreen";
 import { ShuttleParkingGround } from "@/games/shuttle-parking/ui/ShuttleParkingGround";
 import { ShuttleParkingHowToPlayDialog } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog";
-import { MOTION_EASING, playAnimations } from "@/lib/motion";
+import { ShuttleParkingStuckNotice } from "@/games/shuttle-parking/ui/ShuttleParkingStuckNotice";
+import { ShuttleParkingTutorial } from "@/games/shuttle-parking/ui/ShuttleParkingTutorial";
 
 type ShuttleParkingPlayProps = GamePlayScreenProps<
   ShuttleParkingDifficulty,
@@ -33,12 +31,10 @@ type ShuttleParkingPlayProps = GamePlayScreenProps<
     problem: ShuttleParkingProblem;
     state: ShuttleParkingState;
     operation: ShuttleParkingOperation | null;
+    isStuck: boolean;
     undoCount: number;
     onExitCar: (carId: ShuttleParkingCarId) => void;
   };
-
-const clearPulseMs = 480;
-const clearHoldMs = 240;
 
 export function ShuttleParkingPlay({
   difficulty,
@@ -49,6 +45,7 @@ export function ShuttleParkingPlay({
   problem,
   state,
   operation,
+  isStuck,
   undoCount,
   canUndo,
   canRestart,
@@ -65,30 +62,6 @@ export function ShuttleParkingPlay({
   onOpenDiagnostics,
   renderSettingsDialog,
 }: ShuttleParkingPlayProps) {
-  const lotAreaRef = useRef<HTMLDivElement>(null);
-  const clearing = progress === "clearing";
-
-  useEffect(() => {
-    if (!clearing) return;
-    return playAnimations({
-      animate() {
-        const animation = lotAreaRef.current?.animate?.(
-          [
-            { transform: "scale(1)" },
-            { transform: "scale(1.03)" },
-            { transform: "scale(1)" },
-          ],
-          { duration: clearPulseMs, easing: MOTION_EASING.celebrate },
-        );
-        return animation ? [animation] : [];
-      },
-      completion: { type: "after-animations", holdMs: clearHoldMs },
-      reducedMotionHoldMs: clearHoldMs,
-      unanimatedHoldMs: clearHoldMs,
-      onFinished: onClearAnimationComplete,
-    });
-  }, [clearing, onClearAnimationComplete]);
-
   return (
     <GamePlayFrame
       progress={progress}
@@ -109,8 +82,15 @@ export function ShuttleParkingPlay({
       onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
       renderSettingsDialog={renderSettingsDialog}
-      renderHowToPlayDialog={({ open, onClose }) => (
-        <ShuttleParkingHowToPlayDialog open={open} onClose={onClose} />
+      renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
+        <ShuttleParkingHowToPlayDialog
+          open={open}
+          onClose={onClose}
+          onOpenTutorial={onOpenTutorial}
+        />
+      )}
+      renderTutorial={({ open, onClose }) => (
+        <ShuttleParkingTutorial open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <ShuttleParkingResultScreen
@@ -124,33 +104,28 @@ export function ShuttleParkingPlay({
         />
       )}
     >
-      <main className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col gap-3 overflow-hidden px-4 pt-2 pb-4">
-        <ShuttleParkingQueue
-          passengers={problem.passengers}
-          boardedCount={state.boardedCount}
+      <main className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden px-4 pt-2 pb-4">
+        <ShuttleParkingScene
+          problem={problem}
+          state={state}
+          operation={operation}
+          interactionDisabled={progress !== "playing"}
+          onExitCar={onExitCar}
+          leadingAction={<UndoButton disabled={!canUndo} onUndo={onUndo} />}
+          renderLotOverlay={
+            isStuck && progress === "playing"
+              ? () => (
+                  <ShuttleParkingStuckNotice
+                    canUndo={canUndo}
+                    onUndo={onUndo}
+                    onRestart={onRestart}
+                  />
+                )
+              : undefined
+          }
+          clearing={progress === "clearing"}
+          onClearAnimationComplete={onClearAnimationComplete}
         />
-        <div className="flex items-center gap-3">
-          <UndoButton disabled={!canUndo} onUndo={onUndo} />
-          <ShuttleParkingBays
-            cars={problem.lot.cars}
-            bayCount={problem.bayCount}
-            waitingCars={state.waitingCars}
-          />
-        </div>
-        <div
-          className="flex min-h-0 flex-1 items-start justify-center"
-          style={{ containerType: "size" }}
-        >
-          <div ref={lotAreaRef} style={{ width: "min(100cqw, 100cqh)" }}>
-            <ShuttleParkingLot
-              lot={problem.lot}
-              parkedCarIds={state.parkedCarIds}
-              operation={operation}
-              interactionDisabled={progress !== "playing"}
-              onExitCar={onExitCar}
-            />
-          </div>
-        </div>
       </main>
     </GamePlayFrame>
   );

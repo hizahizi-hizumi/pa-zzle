@@ -70,18 +70,30 @@ describe("useShuttleParkingPlay", () => {
       expect(result.current.state.parkedCarIds).toEqual([0, 1, 2]);
     });
 
-    test("車を出すと、乗った乗客と出発を知らせること", () => {
+    test("車を出すと、乗車と出発を時刻順に並べた知らせを返すこと", () => {
       act(() => result.current.exitCar(0));
 
-      expect(result.current.operation).toMatchObject({
+      const { operation } = result.current;
+
+      expect(operation).toMatchObject({
         type: "exited",
         carId: 0,
-        events: [
-          { type: "boarded", passengerIndex: 0, carId: 0 },
-          { type: "boarded", passengerIndex: 1, carId: 0 },
-          { type: "departed", carId: 0 },
-        ],
+        side: "top",
       });
+      expect(
+        operation?.type === "exited" &&
+          operation.timeline.frames.map(({ boardedCount, departingCarId }) => [
+            boardedCount,
+            departingCarId,
+          ]),
+      ).toEqual([
+        [0, null],
+        [0, null],
+        [1, null],
+        [2, null],
+        [2, 0],
+        [2, null],
+      ]);
       expect(result.current.canUndo).toBe(true);
     });
 

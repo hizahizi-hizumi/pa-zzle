@@ -45,6 +45,10 @@ describe("ShuttleParkingHomeView", () => {
         },
         { path: "/puzzles/:game/how-to", element: <GameHowToView /> },
         {
+          path: "/puzzles/shuttle-parking/tutorial",
+          element: <p>チュートリアルの画面</p>,
+        },
+        {
           path: "/puzzles/shuttle-parking/play/:problemId",
           element: <p>プレイ画面</p>,
         },
@@ -81,6 +85,25 @@ describe("ShuttleParkingHomeView", () => {
     expect(
       await screen.findByRole("dialog", { name: "送迎パーキングの遊び方" }),
     ).toBeTruthy();
+  });
+
+  test("遊び方からチュートリアルを開けること", async () => {
+    fireEvent.pointerDown(screen.getByRole("button", { name: "メニュー" }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "チュートリアルで遊んで覚える",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/puzzles/shuttle-parking/tutorial",
+      ),
+    );
   });
 
   test("戻るリンクでホームへ戻れること", () => {

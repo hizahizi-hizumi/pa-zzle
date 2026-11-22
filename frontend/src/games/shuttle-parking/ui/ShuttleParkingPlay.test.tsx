@@ -52,6 +52,7 @@ function createProps(): ComponentProps<typeof ShuttleParkingPlay> {
       boardedCount: 0,
     },
     operation: null,
+    isStuck: false,
     elapsedMs: 65_000,
     undoCount: 1,
     canUndo: true,
@@ -91,8 +92,8 @@ describe("ShuttleParkingPlay", () => {
     const cars = lot.getAllByRole("button");
 
     expect(cars.map((car) => car.getAttribute("aria-label"))).toEqual([
-      "青の2人乗りの車",
-      "青の2人乗りの車",
+      "青の2人乗りの車 上向き",
+      "青の2人乗りの車 上向き",
     ]);
   });
 
@@ -126,6 +127,32 @@ describe("ShuttleParkingPlay", () => {
     fireEvent.click(screen.getByRole("button", { name: "待った" }));
 
     expect(props.onUndo).toHaveBeenCalledOnce();
+  });
+});
+
+describe("詰んだ場合", () => {
+  let props: ComponentProps<typeof ShuttleParkingPlay>;
+
+  beforeEach(() => {
+    props = { ...createProps(), isStuck: true };
+    render(<ShuttleParkingPlay {...props} />);
+  });
+
+  test("出せる車が無いことと、何台か戻してやり直せることを駐車場の上に知らせること", () => {
+    const notice = screen.getByRole("status");
+
+    expect(notice.textContent).toContain("出せる車がありません");
+    expect(notice.textContent).toContain("何台か戻すか");
+  });
+
+  test("知らせの盤面を戻すボタンで盤面を戻すこと", () => {
+    fireEvent.click(
+      within(screen.getByRole("status")).getByRole("button", {
+        name: "盤面を戻す",
+      }),
+    );
+
+    expect(props.onRestart).toHaveBeenCalledOnce();
   });
 });
 
