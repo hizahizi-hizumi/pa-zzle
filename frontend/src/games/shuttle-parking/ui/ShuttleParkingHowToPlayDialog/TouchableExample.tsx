@@ -18,6 +18,7 @@ import {
   type ShuttleParkingHowToPlayExample,
   tapShuttleParkingExampleCar,
 } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog/example-board";
+import { useShuttleParkingSoundEffects } from "@/games/shuttle-parking/ui/use-shuttle-parking-sound-effects";
 import { prefersReducedMotion } from "@/lib/motion";
 
 /**
@@ -112,6 +113,8 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
   const reportChange = useReportHowToPlayExampleChange();
   const verdict = judgeShuttleParkingExample(board, example.hintCarId);
   const settled = useSettledOperation(board.operation);
+  // 例は解き終える盤面ではないので、本番と同じ盤面操作の音だけを鳴らし、クリアの音は鳴らさない。
+  useShuttleParkingSoundEffects(board.operation, "playing");
 
   function handleExitCar(carId: ShuttleParkingCarId): void {
     const next = tapShuttleParkingExampleCar(

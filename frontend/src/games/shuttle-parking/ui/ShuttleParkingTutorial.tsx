@@ -8,6 +8,7 @@ import {
   type TutorialStageBoardIntro,
 } from "@/components/TutorialOverlay";
 import { UndoButton } from "@/components/UndoButton";
+import type { GameProgress } from "@/games/play";
 import pictogramSvg from "@/games/shuttle-parking/assets/pictogram.svg?raw";
 import { SHUTTLE_PARKING_DISPLAY_NAME } from "@/games/shuttle-parking/display-name";
 import { createShuttleParkingExitTimeline } from "@/games/shuttle-parking/play/exit-timeline";
@@ -28,6 +29,7 @@ import { ShuttleParkingScene } from "@/games/shuttle-parking/ui/board/ShuttlePar
 import { ShuttleParkingGround } from "@/games/shuttle-parking/ui/ShuttleParkingGround";
 import { ShuttleParkingHowToPlayDialog } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog";
 import { ShuttleParkingStuckNotice } from "@/games/shuttle-parking/ui/ShuttleParkingStuckNotice";
+import { useShuttleParkingSoundEffects } from "@/games/shuttle-parking/ui/use-shuttle-parking-sound-effects";
 import {
   completeTutorial,
   finishTutorialIntro,
@@ -52,6 +54,17 @@ type ShuttleParkingTutorialProgress = TutorialProgress<
 >;
 
 const goalBoard = shuttleParkingTutorial.goal();
+
+/** 解けた盤面の演出の間を完成演出として、本番と同じくクリアの音を鳴らす。 */
+const gameProgressByPhase = {
+  intro: "playing",
+  playing: "playing",
+  solved: "clearing",
+  completed: "result",
+} as const satisfies Record<
+  ShuttleParkingTutorialProgress["phase"],
+  GameProgress
+>;
 
 /** 本番の盤面部品へ渡す、直前の手の知らせ。 */
 function createOperation(
@@ -113,6 +126,7 @@ export function ShuttleParkingTutorial({
   const shownProgress = progressBeforeExit ?? progress;
   const operation = createOperation(progress.boardState, exitStartedAt);
   const lastMove = progress.boardState.lastMove;
+  useShuttleParkingSoundEffects(operation, gameProgressByPhase[progress.phase]);
   const lastMoveStuck = lastMove?.type === "exited" && lastMove.stuck;
 
   useEffect(

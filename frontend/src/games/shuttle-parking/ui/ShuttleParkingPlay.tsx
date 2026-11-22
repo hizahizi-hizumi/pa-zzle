@@ -21,6 +21,7 @@ import { ShuttleParkingGround } from "@/games/shuttle-parking/ui/ShuttleParkingG
 import { ShuttleParkingHowToPlayDialog } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog";
 import { ShuttleParkingStuckNotice } from "@/games/shuttle-parking/ui/ShuttleParkingStuckNotice";
 import { ShuttleParkingTutorial } from "@/games/shuttle-parking/ui/ShuttleParkingTutorial";
+import { useShuttleParkingSoundEffects } from "@/games/shuttle-parking/ui/use-shuttle-parking-sound-effects";
 
 type ShuttleParkingPlayProps = GamePlayScreenProps<
   ShuttleParkingDifficulty,
@@ -62,6 +63,8 @@ export function ShuttleParkingPlay({
   onOpenDiagnostics,
   renderSettingsDialog,
 }: ShuttleParkingPlayProps) {
+  useShuttleParkingSoundEffects(operation, progress);
+
   return (
     <GamePlayFrame
       progress={progress}
