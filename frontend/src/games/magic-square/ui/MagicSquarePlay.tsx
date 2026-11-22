@@ -26,6 +26,7 @@ import {
 } from "@/games/magic-square/ui/MagicSquareNumberPad";
 import { MagicSquareTutorial } from "@/games/magic-square/ui/MagicSquareTutorial";
 import { MagicSquareResultScreen } from "@/games/magic-square/ui/result/MagicSquareResultScreen";
+import { useMagicSquareSoundEffects } from "@/games/magic-square/ui/use-magic-square-sound-effects";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,
@@ -101,6 +102,7 @@ export function MagicSquarePlay({
 }: MagicSquarePlayProps) {
   const playing = progress === "playing";
   const rejection = splitRejection(operation);
+  useMagicSquareSoundEffects(operation, progress);
 
   return (
     <GamePlayFrame

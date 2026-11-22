@@ -8,11 +8,12 @@ import { MOTION_EASING } from "@/lib/motion";
  * - 1枚目: 行の段と斜めの段。行の光が消えてから斜めの段が始まる。
  * - 2枚目: 縦の列の段と仕上げ。縦の光が消えてから仕上げが始まる。
  */
-const CLEAR_STAGE_INTERVAL_MS = 300;
+/** 3段がそれぞれ始まる間隔と、仕上げが始まる時刻。効果音もこの時刻に合わせて鳴らす。 */
+export const MAGIC_SQUARE_CLEAR_STAGE_INTERVAL_MS = 300;
+export const MAGIC_SQUARE_CLEAR_FINISH_DELAY_MS = 1_000;
 const CLEAR_SWEEP_MS = 180;
 const CLEAR_GLINT_MS = 220;
 const CLEAR_SUM_POP_MS = 360;
-const CLEAR_FINISH_DELAY_MS = 1_000;
 const CLEAR_FINISH_MS = 520;
 export const MAGIC_SQUARE_CLEAR_HOLD_MS = 280;
 /** 動きを減らす設定と動かせない環境で、そろった盤面を見せてから結果へ進むまでの時間。 */
@@ -86,7 +87,7 @@ export function animateMagicSquareClear(
 ): Animation[] {
   const sweepStepMs = CLEAR_SWEEP_MS / size;
   const stageAnimations = clearStages.flatMap((stage, stageIndex) => {
-    const stageStartMs = stageIndex * CLEAR_STAGE_INTERVAL_MS;
+    const stageStartMs = stageIndex * MAGIC_SQUARE_CLEAR_STAGE_INTERVAL_MS;
     const glints = Array.from(
       frame.querySelectorAll<HTMLElement>(
         `[data-clear-glint="${stage.layer}"]`,
@@ -135,7 +136,7 @@ export function animateMagicSquareClear(
     (glint) =>
       glint.animate(finishGlintKeyframes, {
         duration: CLEAR_FINISH_MS,
-        delay: CLEAR_FINISH_DELAY_MS,
+        delay: MAGIC_SQUARE_CLEAR_FINISH_DELAY_MS,
         easing: MOTION_EASING.standard,
       }),
   );
@@ -144,7 +145,7 @@ export function animateMagicSquareClear(
     ? [
         magicSum.animate(sumPopKeyframes, {
           duration: CLEAR_FINISH_MS,
-          delay: CLEAR_FINISH_DELAY_MS,
+          delay: MAGIC_SQUARE_CLEAR_FINISH_DELAY_MS,
           easing: MOTION_EASING.celebrate,
         }),
       ]
