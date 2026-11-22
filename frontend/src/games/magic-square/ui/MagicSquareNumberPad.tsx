@@ -12,7 +12,7 @@ import { magicSquareTone } from "@/games/magic-square/ui/magic-square-tone";
 import { playRejectionShake } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
-/** チュートリアルで次に押す数に付ける指の印。`recallId` は `TutorialCue` と同じ。 */
+/** チュートリアルで次に押す数に付ける指の印。数の札が2行以上に詰まるので、指は札の中に置く。`recallId` は `TutorialCue` と同じ。 */
 export type MagicSquareValueCue = {
   value: number;
   recallId: number | null;
@@ -185,7 +185,11 @@ export function MagicSquareNumberPad({
           >
             {value}
             {cue?.value === value && (
-              <TutorialCue kind="pointer" recallId={cue.recallId} />
+              <TutorialCue
+                kind="pointer"
+                placement="center"
+                recallId={cue.recallId}
+              />
             )}
           </button>
         );
