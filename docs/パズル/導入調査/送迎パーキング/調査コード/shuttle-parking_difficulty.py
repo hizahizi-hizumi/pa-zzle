@@ -11,28 +11,30 @@
 claude/wizardly-darwin-yvsr1u）を移したもの。状態は（残りの車の集合, 色ごとの待機車の長さの到着順）。
 読み手（tier の読み手）と罠の深さ・勝率の曲線は `parking_jam_passenger_levels.py` を移したもの。
 ここで足したもの（案の名前は `../送迎パーキング難易度.md` §13 と同じ）:
-- 案B 窓の読み手、案C 必ず出会う罠、案E（A と B の一致）、案F（規則の組・狭い窓・深さ2つ・重なり）。比較の再現用。
-- 案G（採用）: 先頭に合わせる人の勝ち筋の上で「どの勝ち筋でも出会う罠の回数」を、罠の重さ（結果が何人先に
-  出るか）の段ごとに数え、回数と重さでレベルを決める。深さの2つの取り方と、先回りする人（窓5人）で同じレベルの
-  問題だけを採る。前もって固定した素朴な規則の組（8つ）は、上位を止める条件にだけ使う。待機枠は解ける最小の数だけ。
-- 1手戻す人（4種）、意味のない好みの人（8通り）、数え方の変種、供給の計測。
+- 案B〜G は比較の再現用（B 窓の読み手、C 必ず出会う罠、E A と B の一致、F 規則の組・狭い窓・深さ2つ、G 局面ごとの罠の回数）。
+- 案H（採用）: 罠を「判断」で数える（勝ち筋の上で同じ車が罠のまま続く局面の並びを1つの判断とする）。
+  どの勝ち筋でも出会う判断のうち最も重いものの段（結果が 5・8・10 人以上先）でレベルを決める。
+  勝ち筋の最小と最大で同じレベル、深さの2つの取り方と先回りする人（窓5人）でも同じレベルの問題だけを採る。
+  素朴な規則の組（8つ、`G_RULES`）は上位を止める条件にだけ使う。待機枠は解ける最小の数だけ。
+- 1手戻す人（4種）、意味のない好みの人（8通り）、h 人先まで読む人の勝率、数え方の変種、供給の計測。
 
-サブコマンド（案G）:
-  gsurvey --seed S --cars 8 --count N           無作為な問題を作り、案G と変種の特徴を測る（JSON Lines）
-  gdigest --surveys ... --undo-per-level K      レベルごとの表、変種、1手戻す人と意味のない好みの人
-  supply  --seed S --seconds T --cars 8         案G だけで、レベルごとの CPU 1分あたりの採用数
-  expected --seed S --count N --cars 8          案G の seed ごとの結果（移植の期待値）
-  show    --surveys ... --index I               1問を文字の格子で書き出す（gsurvey・fsurvey・survey の出力を読める）
-サブコマンド（前の案の比較の再現用）: fsurvey・fdigest（案F）、survey・digest・naive（案A〜E）
+サブコマンド（案H）:
+  hsurvey --seed S --cars 8 --count N           無作為な問題（案G と同じ問題）を作り、案H と変種の特徴を測る
+  hdigest --surveys ... --undo-per-level K      レベルごとの表、変種、1手戻す人・読む人・意味のない好みの人の順
+  supply  --seed S --seconds T --cars 8         案H だけで、レベルごとの CPU 1分あたりの採用数
+  expected --seed S --count N --cars 8          案H の seed ごとの結果（移植の期待値）
+  show    --surveys ... --index I               1問を文字の格子で書き出す
+サブコマンド（前の案の再現用）: gsurvey・gdigest（G）、fsurvey・fdigest（F）、survey・digest・naive（A〜E）
 
-判定の入口: analyze_G(problem, bays, variants) で特徴を測り、level_G(row) が (レベル, 範囲外の理由) を返す。
-供給と期待値は assess_chosen(problem) -> (解ける最小の待機枠, [{bays, level, why, policies, best, cont, window}])。
+判定の入口: analyze_H(problem, bays, variants) で特徴を測り、level_H(row) が (レベル, 範囲外の理由) を返す。
+供給と期待値は assess_chosen(problem) -> (解ける最小の待機枠, [{bays, level, level4, why, policies, best, cont, window}])。
+level4 は Lv4 と Lv5 を1つにまとめた4段階（人に残す別案）。
 
-再現（案G の数値）:
-  gsurvey --seed 988 --cars 8 --count 3000 / 2026・3141・5926 も同じ
-  gdigest --surveys <上の4つ> --undo-per-level 300
+再現（案H の数値）:
+  hsurvey --seed 988 --cars 8 --count 3000 / 2026・3141・5926 も同じ
+  hdigest --surveys <上の4つ> --undo-per-level 300
   supply --seed 988 --seconds 60 --cars 8 / --seed 2026 同じ（CPU 時間で区切るので候補数は機械で変わる）
-  expected --seed 988 --count 80 --cars 8
+  expected --seed 988 --count 150 --cars 8
 """
 from __future__ import annotations
 
@@ -1823,6 +1825,356 @@ def cmd_gdigest(args):
         handle.write("\n")
 
 
+# ---------------------------------------------------------------- 案H（採用。案G を直したもの）
+#
+# 案G は罠を「局面」の数で数えていたので、先頭の色の車を出すために塞ぐ車を1台ずつ出している間、
+# 同じ「その車を先に出してはいけない」罠が局面ごとに数え直され、回数が掘る台数（作業量）で増えた。
+# 案H は罠を「判断」で数える: 勝ち筋の上で、同じ車が罠のまま続く局面の並びを1つの判断とする。
+# 量の取り方は全レベルで「どの勝ち筋でも」にそろえ、勝ち筋の最小と最大で同じレベルになる問題だけを採る。
+# 深さと回数は、どちらも上のレベルで下がらない格子に組む。
+
+H_THRESHOLDS = (1, 5, 8, 10)
+
+
+def h_counts(model: Model, widen=("headFirst", "run1", "run2", "run3", "all"), thresholds=H_THRESHOLDS) -> dict:
+    """勝ち筋の上の判断を、重さの段ごとに数える。
+
+    局面ごとの候補と罠の重さは案G と同じ（`g_counts`）。段 θ ごとに、その局面で重さ θ 以上の罠になっている車の
+    集合 T_θ を取る（罠の重さ = その車の深さ + 1）。勝ち筋の上で、T_θ が空でなく、直前の局面の T_θ と共通の車が
+    無いとき、新しい判断として1回数える（共通の車があれば、同じ判断が続いているとみなす）。
+    返り値: 段ごとの、どの勝ち筋でも出会う判断の回数の最小（D1・D5・D8）と最大（D1max・D5max・D8max）、
+    通った（局面, 直前の罠の集合）の組の数 states。"""
+    game = model.game
+    memo = {}
+    n = len(thresholds)
+
+    def options(s):
+        for tier in widen:
+            opts = model.tier(s, tier)
+            if any(game.wins(game.step(s, i)) for i in opts):
+                return opts
+        raise ValueError("winning state without a winning move")
+
+    def visit(s, previous):
+        if s[0] == 0:
+            return (0,) * (2 * n)
+        key = (s, previous)
+        cached = memo.get(key)
+        if cached is None:
+            opts = options(s)
+            masks = [0] * n
+            winners = []
+            for i in opts:
+                child = game.step(s, i)
+                if game.wins(child):
+                    winners.append(child)
+                    continue
+                weight = model.distance(s, i) + 1
+                for k, t in enumerate(thresholds):
+                    if weight >= t:
+                        masks[k] |= 1 << i
+            new = [int(bool(m) and not m & p) for m, p in zip(masks, previous)]
+            kids = [visit(c, tuple(masks)) for c in winners]
+            cached = (tuple(new[k] + min(x[k] for x in kids) for k in range(n))
+                      + tuple(new[k] + max(x[n + k] for x in kids) for k in range(n)))
+            memo[key] = cached
+        return cached
+
+    c = visit(game.start, (0,) * n)
+    out = {f"D{t}": c[k] for k, t in enumerate(thresholds)}
+    out.update({f"D{t}max": c[n + k] for k, t in enumerate(thresholds)})
+    out["states"] = len(memo)
+    return out
+
+
+def h_level(d1, d5, d8) -> int:
+    """判断の回数（重さ 1・5・8 以上）からレベル。深さも回数も上のレベルで下がらない格子。
+    Lv1: 判断なし。Lv2: 判断はあるが、どれも結果が4人先まで。Lv3: 5〜7人先の判断が1つ（8人以上先なし）。
+    Lv4: 5人以上先の判断が2つで8人以上先なし、または5人以上先の判断が1つでそれが8人以上先。
+    Lv5: 5人以上先の判断が3つ以上、または2つ以上でうち1つ以上が8人以上先。"""
+    if d1 == 0:
+        return 1
+    if d5 == 0:
+        return 2
+    if d5 == 1:
+        return 4 if d8 >= 1 else 3
+    if d5 == 2 and d8 == 0:
+        return 4
+    return 5
+
+
+def h_level_depth(d1, d5, d8, d10) -> int:
+    """深さの段（案H の採用）: どの勝ち筋でも出会う判断のうち、最も重いものの段でレベルを決める。
+    Lv1: 判断なし。Lv2: 判断はどれも結果が4人先まで。Lv3: 5〜7人先の判断がある（8人以上先は避けられる）。
+    Lv4: 8〜9人先の判断がある。Lv5: 10人以上先の判断がある。"""
+    if d1 == 0:
+        return 1
+    if d5 == 0:
+        return 2
+    if d8 == 0:
+        return 3
+    if d10 == 0:
+        return 4
+    return 5
+
+
+H_SCHEME = "depth"  # 採用。"lattice" は回数と深さの格子（比較用）
+
+
+def h_family(model: Model, widen=("headFirst", "run1", "run2", "run3", "all"), thresholds=H_THRESHOLDS) -> dict:
+    """thresholds は (1, a, b, c) の4段。レベルの関数には段の値を順に渡す（境目を動かす変種もこの形）。"""
+    c = h_counts(model, widen, thresholds)
+    lo = [c[f"D{t}"] for t in thresholds]
+    hi = [c[f"D{t}max"] for t in thresholds]
+    return {**c, "depthMin": h_level_depth(*lo), "depthMax": h_level_depth(*hi),
+            "latticeMin": h_level(*lo[:3]), "latticeMax": h_level(*hi[:3])}
+
+
+def h_reader_curve(model: Model) -> dict:
+    """記録だけ: 先頭に合わせる人（一様に選ぶ）が h 人先まで見えるときの勝率 p(4)・p(7)（案A の曲線）。"""
+    nodes = model.graph(lambda s: model.tier_candidates(s, "run1head"))
+    return {f"p{h}": round(win_probability(nodes, model.game.start, h), 6) for h in (4, 7)}
+
+
+def analyze_H(problem: Problem, bays: int, variants: bool = True) -> dict:
+    model = Model(problem, bays)
+    cont = ContinuationDepthModel(problem, bays)
+    game = model.game
+    row = {"bays": bays, "policies": {r: round(g_policy_win(game, r), 6) for r in G_RULES},
+           "best": h_family(model), "cont": h_family(cont),
+           "window": h_family(WindowFixedModel(problem, bays, G_WINDOW), widen=("window",))}
+    if variants:
+        row["readers"] = h_reader_curve(model)
+        row["v_low"] = h_family(model, thresholds=(1, 4, 7, 9))
+        row["v_high"] = h_family(model, thresholds=(1, 6, 9, 11))
+        row["v_window3"] = h_family(WindowFixedModel(problem, bays, 3), widen=("window",))
+        row["v_window8"] = h_family(WindowFixedModel(problem, bays, 8), widen=("window",))
+        row["v_widenAll"] = h_family(model, widen=("all",))
+        row["v_meanDepth"] = h_family(MeanDepthModel(problem, bays))
+        row["v_states"] = g_family(model)  # 案G の局面の数え方（比較用）
+        row["solutions"] = game.solution_count()
+    return row
+
+
+def level_H(row: dict, keys=("best", "cont"), window="window", rules=tuple(G_RULES), path_check=True, scheme=None):
+    """案H のレベルと範囲外の理由（判定の順）。
+    1. 先頭に合わせる人で、勝ち筋の最小と最大のレベルが違えば範囲外（pathDependent。進め方でレベルが変わる）。
+    2. 深さの2つの取り方（最善の続き・素朴に続けた場合）でレベルが違えば範囲外（depthDefinitionsDisagree）。
+    3. 先回りする人（窓 G_WINDOW 人）の最小のレベルが違えば範囲外（playStylesDisagree）。Lv1 で先回りする人が Lv2 なのは許す。
+    4. Lv3 以上で規則の組のどれかの勝率が 0.8 以上なら範囲外（naiveCeiling）。
+    5. Lv2 で規則の組がどれも勝率 0 なら範囲外（headPoliciesAllLose）。"""
+    scheme = scheme or H_SCHEME
+    lo, hi = f"{scheme}Min", f"{scheme}Max"
+    fams = [row[k] for k in keys]
+    if path_check and any(f[lo] != f[hi] for f in fams):
+        return None, "pathDependent"
+    levels = {f[lo] for f in fams}
+    if len(levels) > 1:
+        return None, "depthDefinitionsDisagree"
+    level = levels.pop()
+    if window is not None:
+        w = row[window][lo]
+        if not (w == level or (level == 1 and w == 2)):
+            return None, "playStylesDisagree"
+    pmax = max(row["policies"][r] for r in rules)
+    if level >= 3 and pmax >= NAIVE_CEILING:
+        return None, "naiveCeiling"
+    if level == 2 and pmax == 0:
+        return None, "headPoliciesAllLose"
+    return level, None
+
+
+H_VARIANTS = {
+    "thresholds4-7": dict(keys=("v_low", "cont"), window="window"),
+    "thresholds6-9": dict(keys=("v_high", "cont"), window="window"),
+    "window3": dict(window="v_window3"), "window8": dict(window="v_window8"),
+    "widenAll": dict(keys=("v_widenAll", "cont")), "meanDepth": dict(keys=("v_meanDepth", "cont")),
+    "noPathCheck": dict(path_check=False), "lattice": dict(scheme="lattice"),
+}
+H_VARIANT_ALONE = {"thresholds4-7": "v_low", "thresholds6-9": "v_high", "window3": "v_window3", "window8": "v_window8",
+                   "widenAll": "v_widenAll", "meanDepth": "v_meanDepth"}
+
+
+def h_levels(record: dict) -> dict:
+    for row in record["rows"]:
+        row["H"], row["Hwhy"] = level_H(row)
+        row["Hvar"] = {n: level_H(row, **kw)[0] for n, kw in H_VARIANTS.items()
+                       if all(k in row for k in kw.get("keys", ())) and kw.get("window", "window") in row}
+        if "v_low" in row:
+            # 境目から離れているか: 境目を ±1 人動かしても同じレベル
+            row["Hrobust"] = row["H"] is not None and row["Hvar"].get("thresholds4-7") == row["H"] == row["Hvar"].get("thresholds6-9")
+    return record
+
+
+def hsurvey_one(args):
+    seed, index, cars = args
+    begun = time.process_time()
+    rng = random.Random(f"shuttle-g:{seed}:{cars}:{index}")  # 案G と同じ問題を作る
+    cond = draw_supply(rng, cars)
+    problem = build(rng, cond)
+    k_min = minimum_bays(problem)
+    rows = []
+    if k_min is not None and min(BAYS) <= k_min <= max(BAYS):
+        rows.append(analyze_H(problem, k_min))
+    record = {"seed": seed, "index": index, **cond, "kMin": k_min, "queueLength": len(problem.queue), "rows": rows,
+              "seconds": round(time.process_time() - begun, 4), "problem": problem.to_json()}
+    return h_levels(record)
+
+
+def cmd_hsurvey(args):
+    jobs = [(args.seed, i, args.cars) for i in range(args.start, args.start + args.count)]
+    with Pool(args.workers) as pool, open(args.output, "a", encoding="utf-8") as out:
+        for record in pool.imap(hsurvey_one, jobs, chunksize=4):
+            out.write(json.dumps(record, ensure_ascii=False) + "\n")
+            out.flush()
+
+
+def load_h(paths):
+    for path in paths:
+        with open(path, encoding="utf-8") as handle:
+            for line in handle:
+                if line.strip():
+                    yield h_levels(json.loads(line))
+
+
+def trial_undo_look(game: Game, model: Model, rng: random.Random, cap: int, look: int):
+    """1手戻す人（先頭の色を優先）で、負けが look 人以内に見える手（深さ+1 <= look）は試さない人。"""
+    def order(s):
+        moves = list(game.moves(s))
+        rng.shuffle(moves)
+        if s[0] and moves:
+            head = game.queue_colors[game.progress(s)]
+            moves = [i for i in moves if game.wins(game.step(s, i)) or model.distance(s, i) + 1 > look] or moves
+            moves.sort(key=lambda i: game.color_of[i] != head)
+        return iter(moves)
+
+    stack = [(game.start, order(game.start))]
+    undos = 0
+    while stack:
+        state, it = stack[-1]
+        if state[0] == 0:
+            return undos
+        car = next(it, None)
+        if car is None:
+            stack.pop()
+            undos += 1
+            if undos > cap:
+                return undos
+            continue
+        child = game.step(state, car)
+        stack.append((child, order(child)))
+    return undos
+
+
+H_UNDO = ("headFirst", "random", "remember", "look4")
+
+
+def h_undo_one(args):
+    spec, bays, seed, cap = args
+    problem = Problem.from_json(spec)
+    game = problem.game(bays)
+    model = Model(problem, bays)
+    rng = random.Random(f"shuttle-hundo:{seed}:{problem.key()}:{bays}")
+    out = {}
+    for name in H_UNDO:
+        if name == "look4":
+            runs = [trial_undo_look(game, model, rng, cap, 4) for _ in range(7)]
+        else:
+            kind, rem = G_UNDO[name]
+            runs = [trial_undo_g(game, rng, cap, kind, rem) for _ in range(7)]
+        out[name] = sorted(runs)[3]
+    return out
+
+
+def hdigest(records, undo_per_level, seed, workers, cap):
+    rows = [(r, row) for r in records for row in r["rows"]]
+    out = {"rows": len(rows), "problems": len(records), "cpuMinutes": round(sum(r["seconds"] for r in records) / 60, 2)}
+    out["counts"] = dict(sorted(Counter(str(row["H"]) for _, row in rows).items()))
+    out["countsRobust"] = dict(sorted(Counter(str(row["H"]) for _, row in rows if row.get("Hrobust")).items()))
+    out["outReasons"] = dict(Counter(row["Hwhy"] for _, row in rows if row["H"] is None))
+    for name, field in (("countsByColors", "colors"), ("countsByOpening", "opening"), ("countsBySize", "size")):
+        out[name] = {str(v): dict(sorted(Counter(str(row["H"]) for r, row in rows if r[field] == v).items()))
+                     for v in sorted({r[field] for r, _ in rows}, key=str)}
+    out["countsByBays"] = {str(b): dict(sorted(Counter(str(row["H"]) for _, row in rows if row["bays"] == b).items())) for b in BAYS}
+    feats = {}
+    for lv in range(1, 6):
+        sel = [(r, row) for r, row in rows if row["H"] == lv]
+        b = [row["best"] for _, row in sel]
+        g = [row["v_states"] for _, row in sel]
+        feats[str(lv)] = {
+            "count": len(sel), "robust": share(sum(bool(row.get("Hrobust")) for _, row in sel), len(sel)),
+            "D1": q3([x["D1"] for x in b]), "D5": q3([x["D5"] for x in b]), "D8": q3([x["D8"] for x in b]),
+            "D10": q3([x["D10"] for x in b]),
+            "D5pattern": dict(Counter(f"{x['D5']}/{x['D8']}/{x['D10']}" for x in b)),
+            "stateCountsK5": q3([x["K5"] for x in g]),
+            "p4": q3([row["readers"]["p4"] for _, row in sel]), "p7": q3([row["readers"]["p7"] for _, row in sel]),
+            "policyMax": q3([max(row["policies"].values()) for _, row in sel]),
+            "rulesAtLeast08": {r: share(sum(row["policies"][r] >= 0.8 for _, row in sel), len(sel)) for r in G_RULES},
+            "queueLength": q3([r["queueLength"] for r, _ in sel]),
+            "bays": dict(sorted(Counter(str(row["bays"]) for _, row in sel).items())),
+            "solutions": q3([row["solutions"] for _, row in sel]),
+        }
+    out["features"] = feats
+    scoped = [row for _, row in rows if row["H"] is not None]
+    a3 = {}
+    for name in H_VARIANTS:
+        pairs = [(row["H"], row["Hvar"].get(name)) for row in scoped]
+        a3[name] = {"changed": share(sum(a != b for a, b in pairs), len(pairs)),
+                    "twoOrMoreOrOut": share(sum(b is None or abs(a - b) >= 2 for a, b in pairs), len(pairs)),
+                    "byLevel": {str(lv): share(sum(a != b for a, b in pairs if a == lv), sum(1 for a, _ in pairs if a == lv))
+                                for lv in range(1, 6)}}
+        if name in H_VARIANT_ALONE:
+            alone = [(row["H"], row[H_VARIANT_ALONE[name]][f"{H_SCHEME}Min"]) for row in scoped]
+            a3[name]["aloneChanged"] = share(sum(a != b for a, b in alone), len(alone))
+            a3[name]["aloneTwoOrMore"] = share(sum(abs(a - b) >= 2 for a, b in alone), len(alone))
+            a3[name]["aloneCross"] = {str(lv): dict(Counter(str(b) for a, b in alone if a == lv)) for lv in range(1, 6)}
+    out["A3"] = a3
+    rng = random.Random(f"shuttle-hundo-pick:{seed}")
+    picked = {}
+    for lv in range(1, 6):
+        sel = [(r, row) for r, row in rows if row["H"] == lv]
+        rng.shuffle(sel)
+        picked[lv] = sel[:undo_per_level]
+    with Pool(workers) as pool:
+        undos = {lv: pool.map(h_undo_one, [(r["problem"], row["bays"], seed, cap) for r, row in picked[lv]]) for lv in range(1, 6)}
+        placebo = {lv: pool.map(g_placebo_one, [(r["problem"], row["bays"], seed) for r, row in picked[lv]]) for lv in range(1, 6)}
+    out["undo"] = {str(lv): {"n": len(u), **{name: q3([x[name] for x in u]) for name in H_UNDO}} for lv, u in undos.items()}
+    out["undoOrder"] = {f"{lv}-{lv + 1}": {name: ordering([x[name] for x in undos[lv]], [x[name] for x in undos[lv + 1]])
+                                           for name in H_UNDO} for lv in range(1, 5)}
+    readers = {lv: [(row["readers"]["p4"], row["readers"]["p7"]) for _, row in picked[lv]] for lv in range(1, 6)}
+    # 読む人の順: 上のレベルの方が勝率が低い確率（1 - ordering）
+    out["readerOrder"] = {f"{lv}-{lv + 1}": {f"p{h}": round(1 - ordering([x[k] for x in readers[lv]], [x[k] for x in readers[lv + 1]]), 3)
+                                             for k, h in ((0, 4), (1, 7))} for lv in range(1, 5)}
+    out["placebo"] = {str(lv): {"allWin": share(sum(w == 8 for w in p), len(p)), "split": share(sum(0 < w < 8 for w in p), len(p)),
+                                "allLose": share(sum(w == 0 for w in p), len(p))} for lv, p in placebo.items()}
+    # 判断の数の順: 上のレベルの D5 が下より多い確率
+    out["decisionOrder"] = {f"{lv}-{lv + 1}": ordering([row["best"]["D5"] for _, row in picked[lv]], [row["best"]["D5"] for _, row in picked[lv + 1]])
+                            for lv in range(1, 5)}
+    # 境目から離れた問題だけでの戻し回数の順
+    rob = {lv: [u for (r, row), u in zip(picked[lv], undos[lv]) if row.get("Hrobust")] for lv in range(1, 6)}
+    out["undoOrderRobust"] = {f"{lv}-{lv + 1}": {name: ordering([x[name] for x in rob[lv]], [x[name] for x in rob[lv + 1]])
+                                                 for name in H_UNDO} for lv in range(1, 5) if rob[lv] and rob[lv + 1]}
+    by = defaultdict(list)
+    for lv in (3, 4, 5):
+        for (r, row), u in zip(picked[lv], undos[lv]):
+            by[f"{lv}:colors{r['colors']}"].append(u["remember"])
+            by[f"{lv}:bays{row['bays']}"].append(u["remember"])
+            by[f"{lv}:open{r['opening']}"].append(u["remember"])
+    out["undoRememberByGroup"] = {k: {"n": len(v), "q": q3(v)} for k, v in sorted(by.items())}
+    out["undoSample"] = {str(lv): [{"id": f"{r['seed']}:{r['index']}", "bays": row["bays"], "robust": row.get("Hrobust"), **u}
+                                   for (r, row), u in zip(picked[lv], undos[lv])] for lv in range(1, 6)}
+    sc = [(r, row) for r, row in rows if row["H"] is not None]
+    out["rho"] = {"queueLength~level": spearman([r["queueLength"] for r, _ in sc], [row["H"] for _, row in sc])}
+    return out
+
+
+def cmd_hdigest(args):
+    data = hdigest(list(load_h(args.surveys)), args.undo_per_level, args.seed, args.workers, args.cap)
+    with open(args.output, "w", encoding="utf-8") as handle:
+        json.dump(data, handle, ensure_ascii=False, indent=1)
+        handle.write("\n")
+
+
 # ---------------------------------------------------------------- 素朴な解き方（試し置きと1手戻す）
 
 
@@ -1914,19 +2266,21 @@ def cmd_naive(args):
 
 # ---------------------------------------------------------------- 供給（採った案だけ）
 
-CHOSEN = "G"
+CHOSEN = "H"
 
 
 def assess_chosen(problem: Problem):
-    """採った案G だけを測る（変種は測らない）。待機枠は解ける最小の数だけ。"""
+    """採った案H だけを測る（変種は測らない）。待機枠は解ける最小の数だけ。
+    level は5段階（深さの段 5・8・10）、level4 は4段階にまとめたもの（Lv4 と Lv5 を1つにする。人に残す別案）。"""
     k_min = minimum_bays(problem)
     found = []
     if k_min is None or not min(BAYS) <= k_min <= max(BAYS):
         return k_min, found
-    row = analyze_G(problem, k_min, variants=False)
-    level, why = level_G(row)
-    found.append({"bays": k_min, "level": level, "why": why, "policies": row["policies"],
-                  **{k: {c: row[k][c] for c in ("K1", "K5", "K8", "K1max", "states")} for k in ("best", "cont", "window")}})
+    row = analyze_H(problem, k_min, variants=False)
+    level, why = level_H(row)
+    keys = [f"D{t}" for t in H_THRESHOLDS] + [f"D{t}max" for t in H_THRESHOLDS] + ["states"]
+    found.append({"bays": k_min, "level": level, "level4": None if level is None else min(level, 4), "why": why,
+                  "policies": row["policies"], **{k: {c: row[k][c] for c in keys} for k in ("best", "cont", "window")}})
     return k_min, found
 
 
@@ -1993,7 +2347,7 @@ def cmd_expected(args):
             rows.append({**f, "solutions": game.solution_count()})
         entries.append({"seed": f"shuttle-expected:{args.seed}:{args.cars}:{index}", "conditions": cond,
                         "kMin": k_min, "problem": problem.to_json(), "rows": rows})
-    data = {"scheme": CHOSEN, "definitions": {"thresholds": list(G_THRESHOLDS), "naiveCeiling": NAIVE_CEILING,
+    data = {"scheme": CHOSEN, "definitions": {"thresholds": list(H_THRESHOLDS), "naiveCeiling": NAIVE_CEILING,
                                            "window": G_WINDOW, "bays": "kMin only, within " + str(list(BAYS)),
                                            "rules": {k: list(v) for k, v in G_RULES.items()}},
             "entries": entries}
@@ -2003,7 +2357,7 @@ def cmd_expected(args):
 
 
 def cmd_show(args):
-    """1問を文字の格子で書き出す（試遊・反例探しに渡す用）。gsurvey（案G）・fsurvey（案F）・survey の出力を読める。"""
+    """1問を文字の格子で書き出す（試遊・反例探しに渡す用）。hsurvey（案H）・gsurvey（案G）・fsurvey（案F）・survey の出力を読める。"""
     for path in args.surveys:
         with open(path, encoding="utf-8") as handle:
             for line in handle:
@@ -2014,7 +2368,14 @@ def cmd_show(args):
                 print(problem.diagram())
                 print("queue:", "".join(problem.queue))
                 print("cars:", " ".join(f"{i}:{c}{v.length}" for i, (v, c) in enumerate(zip(problem.vehicles, problem.colors))))
-                if record["rows"] and "best" in record["rows"][0]:
+                if record["rows"] and "D1" in record["rows"][0].get("best", {}):
+                    h_levels(record)
+                    for row in record["rows"]:
+                        print("bays", row["bays"], "level", row["H"], row["Hwhy"] or "",
+                              *(f"{k} D1/D5/D8/D10 {row[k]['D1']}/{row[k]['D5']}/{row[k]['D8']}/{row[k]['D10']}"
+                                f" max {row[k]['D1max']}/{row[k]['D5max']}/{row[k]['D8max']}/{row[k]['D10max']}"
+                                for k in ("best", "cont", "window")), "policies", row["policies"])
+                elif record["rows"] and "best" in record["rows"][0]:
                     g_levels(record)
                     for row in record["rows"]:
                         print("bays", row["bays"], "level", row["G"], row["Gwhy"] or "",
@@ -2095,13 +2456,27 @@ def main():
     gd.add_argument("--seed", default="1")
     gd.add_argument("--workers", type=int, default=4)
     gd.add_argument("--output", required=True)
+    hs = sub.add_parser("hsurvey")
+    hs.add_argument("--seed", required=True)
+    hs.add_argument("--cars", type=int, default=8)
+    hs.add_argument("--start", type=int, default=0)
+    hs.add_argument("--count", type=int, default=200)
+    hs.add_argument("--workers", type=int, default=4)
+    hs.add_argument("--output", required=True)
+    hd = sub.add_parser("hdigest")
+    hd.add_argument("--surveys", nargs="+", required=True)
+    hd.add_argument("--undo-per-level", type=int, default=300)
+    hd.add_argument("--cap", type=int, default=5000)
+    hd.add_argument("--seed", default="1")
+    hd.add_argument("--workers", type=int, default=4)
+    hd.add_argument("--output", required=True)
     w = sub.add_parser("show")
     w.add_argument("--surveys", nargs="+", required=True)
     w.add_argument("--population", default="main")
     w.add_argument("--index", type=int, required=True)
     args = parser.parse_args()
     {"survey": cmd_survey, "digest": cmd_digest, "naive": cmd_naive, "supply": cmd_supply,
-     "expected": cmd_expected, "show": cmd_show, "fsurvey": cmd_fsurvey, "fdigest": cmd_fdigest, "gsurvey": cmd_gsurvey, "gdigest": cmd_gdigest}[args.command](args)
+     "expected": cmd_expected, "show": cmd_show, "fsurvey": cmd_fsurvey, "fdigest": cmd_fdigest, "gsurvey": cmd_gsurvey, "gdigest": cmd_gdigest, "hsurvey": cmd_hsurvey, "hdigest": cmd_hdigest}[args.command](args)
 
 
 if __name__ == "__main__":
