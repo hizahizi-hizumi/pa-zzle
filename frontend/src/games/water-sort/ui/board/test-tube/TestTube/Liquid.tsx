@@ -1,31 +1,15 @@
 import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
-import { getReagentFill } from "@/games/water-sort/ui/board/test-tube/reagent";
+import { getLiquidRuns } from "@/games/water-sort/ui/board/test-tube/liquid-runs";
+import {
+  getReagentFill,
+  getReagentSurfaceShade,
+} from "@/games/water-sort/ui/board/test-tube/reagent";
 
 type LiquidProps = {
   contents: WaterSortBottle;
   /** 同じ試薬が上から注がれている間 `true`。いちばん上の液面の線を消し、注がれる液とひとつに見せる。 */
   receivingSameReagent?: boolean;
 };
-
-type LiquidRun = {
-  colorIndex: number;
-  startSlot: number;
-  slotCount: number;
-};
-
-/** 同じ試薬が続く段は、ひとつの液として境目を描かない。 */
-function getLiquidRuns(contents: WaterSortBottle): LiquidRun[] {
-  const runs: LiquidRun[] = [];
-  contents.forEach((colorIndex, slotIndex) => {
-    const last = runs[runs.length - 1];
-    if (last && last.colorIndex === colorIndex) {
-      last.slotCount += 1;
-      return;
-    }
-    runs.push({ colorIndex, startSlot: slotIndex, slotCount: 1 });
-  });
-  return runs;
-}
 
 export function Liquid({
   contents,
@@ -45,14 +29,17 @@ export function Liquid({
           ...getReagentFill(run.colorIndex),
         }}
       >
-        {!(isTop && receivingSameReagent) && (
+        {isTop && !receivingSameReagent && (
+          // 液面のメニスカス。縁の暗い線が、空の管の明るさと液の明るさを分ける。
           <span
-            className={
-              isTop
-                ? "absolute inset-x-0 top-0 h-[3px] bg-linear-to-b from-white/60 via-white/15 to-transparent"
-                : "absolute inset-x-0 top-0 h-px bg-white/45"
-            }
+            className="absolute inset-x-0 top-0 h-[4px]"
+            style={{
+              backgroundImage: `linear-gradient(180deg, rgba(20,30,35,${getReagentSurfaceShade(run.colorIndex)}) 0, rgba(20,30,35,${getReagentSurfaceShade(run.colorIndex)}) 1px, rgba(255,255,255,0.6) 1px, rgba(255,255,255,0.15) 2.5px, transparent 4px)`,
+            }}
           />
+        )}
+        {!isTop && (
+          <span className="absolute inset-x-0 top-0 h-px bg-white/45" />
         )}
       </span>
     );

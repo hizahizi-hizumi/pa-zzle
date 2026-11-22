@@ -8,12 +8,17 @@ import {
 import type { WaterSortBottleCue } from "@/games/water-sort/ui/board/bottle-cue";
 import { PourAnimationLayer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer";
 import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-animations";
+import { WATER_SORT_REJECTION_DURATION_MS } from "@/games/water-sort/ui/board/rejection-timing";
 import { getReagentName } from "@/games/water-sort/ui/board/test-tube/reagent";
 import { TestTube } from "@/games/water-sort/ui/board/test-tube/TestTube";
 import { BottleCue } from "@/games/water-sort/ui/board/WaterSortBoard/BottleCue";
 import { ClearFinale } from "@/games/water-sort/ui/board/WaterSortBoard/ClearFinale";
 import { TestTubeRack } from "@/games/water-sort/ui/board/WaterSortBoard/TestTubeRack";
-import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
+import {
+  playRejectionShake,
+  prefersReducedMotion,
+  type RejectionShakeTiming,
+} from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 type WaterSortBoardProps = {
@@ -49,18 +54,69 @@ type WaterSortBoardProps = {
   clearFinaleSkippableByTouch?: boolean;
 };
 
-const invalidBottleShakeKeyframes: Keyframe[] = [
-  { transform: "translateX(0)" },
-  { transform: "translateX(-4px)" },
-  { transform: "translateX(4px)" },
-  { transform: "translateX(-2px)" },
-  { transform: "translateX(0)" },
+/** 注げない試験管が、試験管立ての穴の中で底を支点にかたかたと揺れる。音の当たる所で少し跳ねる。 */
+const rattleKeyframes: Keyframe[] = [
+  { transform: "rotate(0deg) translateY(0)", transformOrigin: "50% 100%" },
+  {
+    transform: "rotate(-3.4deg) translateY(-1.5px)",
+    transformOrigin: "50% 100%",
+    offset: 0.14,
+  },
+  {
+    transform: "rotate(2.8deg) translateY(0)",
+    transformOrigin: "50% 100%",
+    offset: 0.34,
+  },
+  {
+    transform: "rotate(-2deg) translateY(-1px)",
+    transformOrigin: "50% 100%",
+    offset: 0.54,
+  },
+  {
+    transform: "rotate(1.1deg) translateY(0)",
+    transformOrigin: "50% 100%",
+    offset: 0.74,
+  },
+  { transform: "rotate(0deg) translateY(0)", transformOrigin: "50% 100%" },
 ];
 
-const invalidBottleShakeTiming: RejectionShakeTiming = {
-  durationMs: 220,
-  easing: "ease-out",
+const rattleTiming: RejectionShakeTiming = {
+  durationMs: WATER_SORT_REJECTION_DURATION_MS,
+  easing: "linear",
 };
+
+/** 持っている試験管を注ぎ先へ傾けかけて、注げずに引き戻す。`direction` は注ぎ先のある向き（右が 1）。 */
+function getWithdrawKeyframes(direction: 1 | -1): Keyframe[] {
+  const origin = "50% 14%";
+  return [
+    { transform: "translateX(0) rotate(0deg)", transformOrigin: origin },
+    {
+      transform: `translateX(${direction * 4}px) rotate(${direction * 9}deg)`,
+      transformOrigin: origin,
+      offset: 0.3,
+      easing: "cubic-bezier(.2,0,.4,1)",
+    },
+    {
+      transform: `translateX(${direction * -1.5}px) rotate(${direction * -3}deg)`,
+      transformOrigin: origin,
+      offset: 0.62,
+      easing: "ease-in-out",
+    },
+    { transform: "translateX(0) rotate(0deg)", transformOrigin: origin },
+  ];
+}
+
+const withdrawTiming: RejectionShakeTiming = {
+  durationMs: WATER_SORT_REJECTION_DURATION_MS,
+  easing: "linear",
+};
+
+/** 動きを減らす設定では、注げなかった試験管を動かさずに一度だけ暗くする。 */
+const reducedMotionRejectionKeyframes: Keyframe[] = [
+  { filter: "brightness(1)" },
+  { filter: "brightness(0.55)", offset: 0.25 },
+  { filter: "brightness(1)" },
+];
 
 /** ボトルの幅と高さの比。遊び方の図も、この比で本番と同じ形に描く。 */
 export const WATER_SORT_BOTTLE_ASPECT_RATIO = 0.36;
@@ -80,10 +136,19 @@ export function WaterSortBoard({
   clearFinaleSkippableByTouch = true,
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const tubeRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  const boardAreaRef = useRef<HTMLElement | null>(null);
+  function setBoardArea(element: HTMLElement | null) {
+    boardAreaRef.current = element;
+  }
   // 演出を終えるときに呼ぶ関数は描き直しで替わってよいので、注ぐ動きと演出には替わらない関数だけを渡す。
-  const latestRef = useRef({ state, onClearAnimationComplete });
+  const latestRef = useRef({
+    state,
+    onClearAnimationComplete,
+    sourceBottleIndex,
+  });
   useLayoutEffect(() => {
-    latestRef.current = { state, onClearAnimationComplete };
+    latestRef.current = { state, onClearAnimationComplete, sourceBottleIndex };
   });
   const [clearFinale, setClearFinale] = useState<ClearFinaleRun | null>(null);
   const startClearFinale = useCallback((operationId: number) => {
@@ -110,13 +175,15 @@ export function WaterSortBoard({
       (operation === null && clearFinale.settledState === state));
 
   useLayoutEffect(() => {
-    if (operation?.type === "invalid") {
-      playRejectionShake(
-        bottleRefs.current[operation.bottleIndex],
-        invalidBottleShakeKeyframes,
-        invalidBottleShakeTiming,
-      );
+    if (operation?.type !== "invalid") {
+      return;
     }
+    playRejection(
+      bottleRefs.current,
+      tubeRefs.current,
+      operation.bottleIndex,
+      latestRef.current.sourceBottleIndex,
+    );
   }, [operation]);
 
   function selectBottle(bottleIndex: number) {
@@ -150,8 +217,13 @@ export function WaterSortBoard({
 
   const bottles = (
     <fieldset
+      ref={
+        layoutKind === "single-row" && stand === "none"
+          ? setBoardArea
+          : undefined
+      }
       className={cn(
-        "grid w-full items-end justify-center border-0 p-0 [--selected-bottle-lift:--spacing(3.5)]",
+        "grid w-full items-end justify-center border-0 p-0 [--selected-bottle-lift:--spacing(5)]",
         layoutKind === "rows" && "pt-(--selected-bottle-lift)",
       )}
       style={{
@@ -191,11 +263,19 @@ export function WaterSortBoard({
             <span
               className={`absolute inset-0 ${isAnimated ? "invisible" : ""}`}
             >
-              <TestTube
-                contents={bottle}
-                heldBy={isSource ? "right" : undefined}
-                stoppered={isCompleteWaterSortBottle(bottle)}
-              />
+              <span
+                ref={(element) => {
+                  tubeRefs.current[bottleIndex] = element;
+                }}
+                data-held={isSource ? "" : undefined}
+                className="absolute inset-0 origin-[50%_14%] transition-[rotate] duration-(--duration-normal) ease-standard data-held:-rotate-3 motion-reduce:transition-none"
+              >
+                <TestTube
+                  contents={bottle}
+                  heldBy={isSource ? "right" : undefined}
+                  stoppered={isCompleteWaterSortBottle(bottle)}
+                />
+              </span>
             </span>
             {cue && <BottleCue cue={cue} />}
           </button>
@@ -213,7 +293,7 @@ export function WaterSortBoard({
       {/* 1段に並べるときは、大きさを置く側が決めるので、高さに収める入れ物に入れない。 */}
       {layoutKind === "single-row" ? (
         rack ? (
-          <div className="relative w-full">
+          <div ref={setBoardArea} className="relative w-full">
             {rack}
             {bottles}
           </div>
@@ -221,7 +301,10 @@ export function WaterSortBoard({
           bottles
         )
       ) : (
-        <div className="relative flex size-full items-center justify-center [container-type:size]">
+        <div
+          ref={setBoardArea}
+          className="relative flex size-full items-center justify-center [container-type:size]"
+        >
           {rack}
           {bottles}
         </div>
@@ -233,6 +316,7 @@ export function WaterSortBoard({
         <ClearFinale
           state={state}
           bottleRefs={bottleRefs}
+          boardAreaRef={boardAreaRef}
           skippableByTouch={clearFinaleSkippableByTouch}
           onDone={completeClearFinale}
         />
@@ -296,4 +380,34 @@ function getBoardLayout(bottleCount: number) {
     columnGap: 18,
     rowGap: 44,
   };
+}
+
+/**
+ * 注げなかった試験管を、試験管立ての中でかたかた揺らす。
+ * 試験管を持っていて別の試験管へ注げなかったときは、持っている試験管も注ぎ先へ傾けかけて引き戻す。
+ */
+function playRejection(
+  bottles: readonly (HTMLElement | null)[],
+  tubes: readonly (HTMLElement | null)[],
+  rejectedIndex: number,
+  heldIndex: number | null,
+) {
+  if (prefersReducedMotion()) {
+    tubes[rejectedIndex]?.animate?.(reducedMotionRejectionKeyframes, {
+      duration: WATER_SORT_REJECTION_DURATION_MS,
+      easing: "ease-out",
+    });
+    return;
+  }
+  const rejected = bottles[rejectedIndex];
+  playRejectionShake(rejected, rattleKeyframes, rattleTiming);
+  const held = heldIndex === null ? null : bottles[heldIndex];
+  if (!held || !rejected || heldIndex === rejectedIndex) {
+    return;
+  }
+  const direction =
+    rejected.getBoundingClientRect().left >= held.getBoundingClientRect().left
+      ? 1
+      : -1;
+  playRejectionShake(held, getWithdrawKeyframes(direction), withdrawTiming);
 }

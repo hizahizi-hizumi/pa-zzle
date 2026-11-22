@@ -18,6 +18,7 @@ import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPl
 vi.mock("@/lib/audio/sound-effects", () => ({
   REPEATED_SOUND_VARIATION: {},
   defineSoundEffect: (url: string) => ({ url }),
+  playLayeredSound: vi.fn(),
   playSound: vi.fn(),
   prepareSoundEffects: vi.fn(),
 }));

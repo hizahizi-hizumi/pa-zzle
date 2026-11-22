@@ -17,11 +17,17 @@ import {
   pourOperationExample,
 } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/figure-boards";
 import { TouchableExample } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/TouchableExample";
-import { playSound, type SoundEffect } from "@/lib/audio/sound-effects";
+import {
+  playLayeredSound,
+  playSound,
+  type SoundEffect,
+  type SoundLayer,
+} from "@/lib/audio/sound-effects";
 
 vi.mock("@/lib/audio/sound-effects", () => ({
   REPEATED_SOUND_VARIATION: {},
   defineSoundEffect: (url: string) => ({ url }),
+  playLayeredSound: vi.fn(),
   playSound: vi.fn(),
   prepareSoundEffects: vi.fn(),
 }));
@@ -43,6 +49,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.mocked(playSound).mockClear();
+  vi.mocked(playLayeredSound).mockClear();
   Reflect.deleteProperty(Element.prototype, "animate");
 });
 
@@ -108,11 +115,22 @@ function countPlayedSounds(fileName: string): number {
     ).length;
 }
 
+/** 口から流れ込む音は、液面が上がる段ごとの音を重ねて1回鳴らす。 */
+function countPouredSounds(): number {
+  return vi
+    .mocked(playLayeredSound)
+    .mock.calls.filter(([layers]) =>
+      (layers as readonly SoundLayer[]).some(({ sound }) =>
+        sound.url.includes("pour-trickle-"),
+      ),
+    ).length;
+}
+
 /** 鳴らした、注げない試験管が揺れる音の数と、口から流れ込む音の数。 */
 function countSounds(): { invalid: number; poured: number } {
   return {
     invalid: countPlayedSounds("tube-rattle.flac"),
-    poured: countPlayedSounds("pour-trickle.flac"),
+    poured: countPouredSounds(),
   };
 }
 
@@ -324,6 +342,7 @@ describe("TouchableExample", () => {
       beforeEach(() => {
         fireEvent.click(getBottle(2));
         vi.mocked(playSound).mockClear();
+        vi.mocked(playLayeredSound).mockClear();
       });
 
       test("元に戻すと、左のボトルを選んだ最初の姿・答え・手がかりに戻り、音は鳴らさないこと", () => {

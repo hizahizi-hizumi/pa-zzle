@@ -9,13 +9,13 @@ import {
 
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import {
-  CLEAR_FINALE_GLEAM_DELAY_MS,
   CLEAR_FINALE_GLEAM_DURATION_MS,
-  CLEAR_FINALE_GLEAM_STAGGER_MS,
   CLEAR_FINALE_HOLD_MS,
   CLEAR_FINALE_PUT_AWAY_DURATION_MS,
   CLEAR_FINALE_PUT_AWAY_STAGGER_MS,
   CLEAR_FINALE_REDUCED_MOTION_HOLD_MS,
+  getClearFinaleGleamStaggerMs,
+  getClearFinaleGleamStartMs,
 } from "@/games/water-sort/ui/board/clear-finale-timing";
 import { LIQUID_BOX_STYLE } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 import { playAnimations, prefersReducedMotion } from "@/lib/motion";
@@ -25,7 +25,9 @@ type ClearFinaleProps = {
   state: WaterSortState;
   /** 盤面の試験管の要素（並び順は番号順）。空の試験管はこの要素ごと片付ける。 */
   bottleRefs: RefObject<Array<HTMLElement | null>>;
-  /** 画面のどこかに触れると、残りを飛ばして終える。 */
+  /** 盤面を置いた場所。触れて飛ばせる所は、この上端から下にして、上の見出しとメニューには届くようにする。 */
+  boardAreaRef: RefObject<HTMLElement | null>;
+  /** 盤面から下のどこかに触れると、残りを飛ばして終える。 */
   skippableByTouch: boolean;
   onDone: () => void;
 };
@@ -38,16 +40,18 @@ type SealedTubeRect = {
 };
 
 /**
- * 空の試験管を片付け、栓をした色の列を窓の光が順に撫でてから終える。
+ * 空の試験管を片付け、栓をした色の列を窓の光が順に撫で、整った列を眺める間を置いてから終える。
  * 終えた後も、盤面が替わるまで片付いた姿を保つ。
  */
 export function ClearFinale({
   state,
   bottleRefs,
+  boardAreaRef,
   skippableByTouch,
   onDone,
 }: ClearFinaleProps) {
   const [sealedTubes, setSealedTubes] = useState<SealedTubeRect[] | null>(null);
+  const [skipAreaTop, setSkipAreaTop] = useState(0);
   const [done, setDone] = useState(false);
   const gleamRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const doneRef = useRef(false);
@@ -77,7 +81,10 @@ export function ClearFinale({
         return [{ left, top, width, height }];
       }),
     );
-  }, [bottleRefs, state]);
+    setSkipAreaTop(
+      Math.max(0, boardAreaRef.current?.getBoundingClientRect().top ?? 0),
+    );
+  }, [bottleRefs, boardAreaRef, state]);
 
   useEffect(() => {
     if (!sealedTubes) {
@@ -87,13 +94,8 @@ export function ClearFinale({
       const element = bottleRefs.current[bottleIndex];
       return contents.length === 0 && element ? [element] : [];
     });
-    const putAwayEndMs =
-      emptyElements.length * CLEAR_FINALE_PUT_AWAY_STAGGER_MS +
-      CLEAR_FINALE_PUT_AWAY_DURATION_MS;
-    const gleamStartMs = Math.max(
-      CLEAR_FINALE_GLEAM_DELAY_MS,
-      putAwayEndMs - 200,
-    );
+    const gleamStartMs = getClearFinaleGleamStartMs(emptyElements.length);
+    const gleamStaggerMs = getClearFinaleGleamStaggerMs(sealedTubes.length);
     // 動きを減らす設定では、空の試験管を動かさずに消して、片付いた姿だけを見せる。
     const hiddenEmpties = prefersReducedMotion()
       ? emptyElements.flatMap((element) => {
@@ -132,7 +134,7 @@ export function ClearFinale({
             ],
             {
               duration: CLEAR_FINALE_GLEAM_DURATION_MS,
-              delay: gleamStartMs + index * CLEAR_FINALE_GLEAM_STAGGER_MS,
+              delay: gleamStartMs + index * gleamStaggerMs,
               easing: "cubic-bezier(.45,0,.3,1)",
               fill: "both",
             },
@@ -182,7 +184,9 @@ export function ClearFinale({
         <button
           type="button"
           aria-label="演出を飛ばす"
-          className="fixed inset-0 z-10 cursor-default bg-transparent"
+          data-clear-finale-skip=""
+          className="fixed inset-x-0 bottom-0 z-10 cursor-default bg-transparent"
+          style={{ top: skipAreaTop }}
           onClick={finish}
         />
       )}

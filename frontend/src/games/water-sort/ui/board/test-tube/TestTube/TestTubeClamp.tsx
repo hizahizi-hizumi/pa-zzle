@@ -7,12 +7,13 @@ type TestTubeClampProps = {
   side: "left" | "right";
 };
 
-/** 持っている試験管の首を挟む、木の試験管ばさみ。 */
+/** 持っている試験管の首を挟む、木の試験管ばさみ。並んだ試験管の中でも持っている1本が分かるよう、口と柄を太く描く。 */
 export function TestTubeClamp({ side }: TestTubeClampProps) {
   const woodId = useId();
   const armId = useId();
   return (
     <svg
+      data-test-tube-clamp=""
       viewBox={TUBE_VIEW_BOX}
       preserveAspectRatio="none"
       className="absolute inset-0 size-full overflow-visible animate-in fade-in zoom-in-110 duration-150 ease-out motion-reduce:animate-none"
@@ -20,56 +21,67 @@ export function TestTubeClamp({ side }: TestTubeClampProps) {
     >
       <defs>
         <linearGradient id={woodId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#f1d3a1" />
-          <stop offset="0.45" stopColor="#d6a86a" />
-          <stop offset="1" stopColor="#a9763f" />
+          <stop offset="0" stopColor="#f6dcaa" />
+          <stop offset="0.4" stopColor="#d9a964" />
+          <stop offset="1" stopColor="#9c6a34" />
         </linearGradient>
         <linearGradient id={armId} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#b98448" />
-          <stop offset="0.5" stopColor="#e6c189" />
-          <stop offset="1" stopColor="#a06c37" />
+          <stop offset="0" stopColor="#a8743c" />
+          <stop offset="0.45" stopColor="#ecc68c" />
+          <stop offset="1" stopColor="#94622f" />
         </linearGradient>
       </defs>
       <g
         transform={side === "left" ? "translate(36 0) scale(-1 1)" : undefined}
       >
+        {/* 首に落ちる影 */}
+        <rect
+          x="-1"
+          y="18.4"
+          width="38"
+          height="2.6"
+          rx="1.2"
+          fill="rgba(40,22,6,0.32)"
+        />
         {/* 柄（2本の腕） */}
         <path
-          d="M31.5 11.5 L35.2 16 L47.8 -11 L44.6 -12.4 Z"
+          d="M30.6 10.4 L36.2 17.4 L57.4 -5.2 L53 -8.6 Z"
           fill={`url(#${armId})`}
+          stroke="rgba(80,45,15,0.55)"
+          strokeWidth="0.5"
         />
         <path
-          d="M33.2 13.6 L46.2 -11.7"
-          stroke="rgba(70,40,15,0.45)"
-          strokeWidth="0.45"
+          d="M33.4 14 L55.2 -6.9"
+          stroke="rgba(70,40,15,0.5)"
+          strokeWidth="0.6"
         />
         {/* ばね */}
-        <circle
-          cx="38.4"
-          cy="6.8"
-          r="1.7"
-          fill="none"
-          stroke="#8f9aa0"
-          strokeWidth="0.75"
-        />
+        <g fill="none" stroke="#7e898f" strokeWidth="0.9">
+          <ellipse cx="39.8" cy="7.2" rx="2.4" ry="1.6" />
+          <ellipse cx="41" cy="4.8" rx="2.4" ry="1.6" />
+        </g>
         {/* 首を挟む口 */}
         <rect
-          x="-1.6"
-          y="11.2"
-          width="38.4"
-          height="5.6"
-          rx="1.6"
+          x="-2.6"
+          y="10.2"
+          width="40.6"
+          height="8.4"
+          rx="2.2"
           fill={`url(#${woodId})`}
-          stroke="rgba(90,55,20,0.55)"
-          strokeWidth="0.45"
+          stroke="rgba(80,45,15,0.75)"
+          strokeWidth="0.6"
         />
         <path
-          d="M-0.4 12.2 H35.6"
-          stroke="rgba(255,240,215,0.7)"
-          strokeWidth="0.5"
+          d="M-1.2 11.6 H36.6"
+          stroke="rgba(255,244,222,0.85)"
+          strokeWidth="0.7"
           strokeLinecap="round"
         />
-        <path d="M-1 14 H36" stroke="rgba(90,55,20,0.35)" strokeWidth="0.35" />
+        <path
+          d="M-2 14.4 H37.4"
+          stroke="rgba(80,45,15,0.45)"
+          strokeWidth="0.5"
+        />
       </g>
     </svg>
   );

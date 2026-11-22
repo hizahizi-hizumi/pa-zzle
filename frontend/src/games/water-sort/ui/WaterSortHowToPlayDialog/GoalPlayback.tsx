@@ -13,7 +13,7 @@ import {
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import { applyWaterSortMove } from "@/games/water-sort/puzzle/rules";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
-import { POUR_ANIMATION_DURATION_MS } from "@/games/water-sort/ui/board/pour/pour-animation";
+import { LONGEST_POUR_DURATION_MS } from "@/games/water-sort/ui/board/pour/pour-timing";
 import { WATER_SORT_BOTTLE_ASPECT_RATIO } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { BottleSizeScope } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/BottleSizeScope";
 import { getBottleRowWidthRatio } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/bottle-size";
@@ -29,7 +29,7 @@ const GOAL_START_HOLD_MS = 700;
  * 1手ずつ注ぎ始める間。前の手のボトルが元の場所へ戻り切ってから次の手を始め、動くボトルを1本ずつにする。
  * 2本を同時に動かすと、傾いたボトルや戻るボトルが重なって、どこからどこへ注いだのか追えないため。
  */
-const GOAL_POUR_INTERVAL_MS = POUR_ANIMATION_DURATION_MS + 100;
+const GOAL_POUR_INTERVAL_MS = LONGEST_POUR_DURATION_MS + 100;
 
 /** 始まりの盤面から1手ずつ注いだ盤面。最後がゴールの盤面。 */
 const goalStates: readonly WaterSortState[] = listGoalStates();

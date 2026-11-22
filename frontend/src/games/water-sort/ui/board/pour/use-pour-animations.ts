@@ -9,11 +9,14 @@ import {
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import {
   addPourAnimation,
-  type BottleRect,
   createPourAnimation,
   interruptPourAnimationsForBottle,
   type PourAnimation,
 } from "@/games/water-sort/ui/board/pour/pour-animation";
+import type {
+  BottleRect,
+  PourBounds,
+} from "@/games/water-sort/ui/board/pour/pour-path";
 import { prefersReducedMotion } from "@/lib/motion";
 
 type UsePourAnimationsOptions = {
@@ -119,9 +122,13 @@ export function usePourAnimations({
 
     const animation = createPourAnimation(
       operation,
-      sourceRect,
-      sourceLiftY,
-      destinationRect,
+      {
+        sourceRect,
+        sourceLiftY,
+        destinationRect,
+        bounds: capturePourBounds(sourceBottle),
+      },
+      animationsRef.current,
     );
     if (!animation) {
       if (operation.isClearingMove) {
@@ -171,4 +178,21 @@ function captureRestingRect(
   }
 
   return restingRect;
+}
+
+/** 画面の端から、傾けた試験管の柄までに残す間（px）。 */
+const POUR_EDGE_MARGIN_PX = 4;
+
+/**
+ * 注ぐ動きを収める範囲。上は盤面を置く `main` の上端（プレイ画面とチュートリアルでは見出しの下端）、左右は画面の端。
+ * `main` の外に置く盤面（遊び方の図）は、上も画面の端まで使う。
+ */
+function capturePourBounds(element: HTMLElement): PourBounds {
+  const main = element.closest("main");
+  const viewportWidth = document.documentElement.clientWidth;
+  return {
+    top: (main?.getBoundingClientRect().top ?? 0) + POUR_EDGE_MARGIN_PX,
+    left: POUR_EDGE_MARGIN_PX,
+    right: viewportWidth - POUR_EDGE_MARGIN_PX,
+  };
 }

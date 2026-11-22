@@ -7,7 +7,43 @@ import {
 } from "@testing-library/react";
 
 import { CLEAR_FINALE_REDUCED_MOTION_HOLD_MS } from "@/games/water-sort/ui/board/clear-finale-timing";
+import { WATER_SORT_REJECTION_DURATION_MS } from "@/games/water-sort/ui/board/rejection-timing";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
+
+type AnimateCall = {
+  target: Element;
+  keyframes: Keyframe[];
+  options: KeyframeAnimationOptions | undefined;
+};
+
+/** `animate` を呼んだ要素と、渡した動きを記録する。 */
+function recordAnimations() {
+  const calls: AnimateCall[] = [];
+  Object.defineProperty(HTMLElement.prototype, "animate", {
+    configurable: true,
+    value: function animate(
+      this: Element,
+      keyframes: Keyframe[],
+      options?: KeyframeAnimationOptions,
+    ) {
+      calls.push({ target: this, keyframes, options });
+      return {
+        finished: new Promise<void>(() => undefined),
+        cancel: vi.fn(),
+      } as unknown as Animation;
+    },
+  });
+  return calls;
+}
+
+function getBottle(name: string): HTMLElement {
+  return screen.getByRole("button", { name });
+}
+
+/** 動かした要素が、そのボトルか、そのボトルの中の試験管か。 */
+function isInside(target: Element, bottle: HTMLElement): boolean {
+  return bottle.contains(target);
+}
 
 function installPendingAnimations() {
   const cancelAnimations: Array<ReturnType<typeof vi.fn>> = [];
@@ -221,14 +257,10 @@ describe("WaterSortBoard", () => {
         />,
       );
 
-      // 注ぎ元・液の筋・注ぎ元から減る液の3つを、注ぎ先へ増える液より先に動かす。
-      const firstSourceAnimations = firstPourAnimations.slice(0, 3);
-
-      expect(animations.animate).toHaveBeenCalledTimes(8);
-      expect(firstPourAnimations).toHaveLength(4);
-      for (const cancelAnimation of firstSourceAnimations) {
-        expect(cancelAnimation).not.toHaveBeenCalled();
-      }
+      // 注ぐ動きは注ぎ元の試験管を動かす1つで、液と流れはその進み具合から描く。
+      expect(animations.animate).toHaveBeenCalledTimes(2);
+      expect(firstPourAnimations).toHaveLength(1);
+      expect(firstPourAnimations[0]).not.toHaveBeenCalled();
     });
   });
 
@@ -399,6 +431,169 @@ describe("WaterSortBoard", () => {
         .map((bottle) => bottle.getAttribute("aria-label"));
 
       expect(stopperedBottles).toEqual(["ボトル 1: 赤、赤、赤、赤"]);
+    });
+  });
+
+  describe("試験管を持たずに注げない試験管を押した場合", () => {
+    let calls: AnimateCall[];
+
+    beforeEach(() => {
+      calls = recordAnimations();
+      render(
+        <WaterSortBoard
+          interactionDisabled={false}
+          state={[[0, 1], []]}
+          sourceBottleIndex={null}
+          operation={{ id: 1, type: "invalid", bottleIndex: 1 }}
+          onSelectBottle={vi.fn()}
+        />,
+      );
+    });
+
+    test("押した試験管だけを、試験管立ての中で底を支点に揺らすこと", () => {
+      const rejected = getBottle("ボトル 2: 空");
+      const other = getBottle("ボトル 1: 赤、青");
+
+      expect(calls).toHaveLength(1);
+      expect(isInside(calls[0]?.target as Element, rejected)).toBe(true);
+      expect(isInside(calls[0]?.target as Element, other)).toBe(false);
+      expect(calls[0]?.keyframes[0]?.transformOrigin).toBe("50% 100%");
+      expect(calls[0]?.options?.duration).toBe(
+        WATER_SORT_REJECTION_DURATION_MS,
+      );
+    });
+  });
+
+  describe("試験管を持って、注げない試験管を押した場合", () => {
+    let calls: AnimateCall[];
+
+    beforeEach(() => {
+      calls = recordAnimations();
+      render(
+        <WaterSortBoard
+          interactionDisabled={false}
+          state={[[0], [1], []]}
+          sourceBottleIndex={0}
+          operation={{ id: 1, type: "invalid", bottleIndex: 1 }}
+          onSelectBottle={vi.fn()}
+        />,
+      );
+    });
+
+    test("押した試験管を揺らし、持っている試験管を傾けかけて引き戻すこと", () => {
+      const rejected = getBottle("ボトル 2: 青");
+      const held = getBottle("ボトル 1: 赤");
+      const rattle = calls.find((call) => isInside(call.target, rejected));
+      const withdraw = calls.find((call) => isInside(call.target, held));
+
+      expect(calls).toHaveLength(2);
+      expect(rattle?.keyframes[0]?.transformOrigin).toBe("50% 100%");
+      expect(withdraw?.keyframes.map((keyframe) => keyframe.transform)).toEqual(
+        [
+          "translateX(0) rotate(0deg)",
+          expect.stringContaining("rotate("),
+          expect.stringContaining("rotate("),
+          "translateX(0) rotate(0deg)",
+        ],
+      );
+    });
+  });
+
+  describe("動きを減らす設定で、注げない試験管を押した場合", () => {
+    let calls: AnimateCall[];
+
+    beforeEach(() => {
+      calls = recordAnimations();
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn(() => ({ matches: true }) as MediaQueryList),
+      );
+      render(
+        <WaterSortBoard
+          interactionDisabled={false}
+          state={[[0], [1], []]}
+          sourceBottleIndex={0}
+          operation={{ id: 1, type: "invalid", bottleIndex: 1 }}
+          onSelectBottle={vi.fn()}
+        />,
+      );
+    });
+
+    test("試験管を動かさず、押した試験管を一度暗くするだけにすること", () => {
+      const rejected = getBottle("ボトル 2: 青");
+
+      expect(calls).toHaveLength(1);
+      expect(isInside(calls[0]?.target as Element, rejected)).toBe(true);
+      expect(calls[0]?.keyframes.map((keyframe) => keyframe.transform)).toEqual(
+        [undefined, undefined, undefined],
+      );
+      expect(calls[0]?.keyframes[1]?.filter).toBe("brightness(0.55)");
+    });
+  });
+
+  describe("試験管を持っている場合", () => {
+    beforeEach(() => {
+      render(
+        <WaterSortBoard
+          interactionDisabled={false}
+          state={[[0, 1], [1], []]}
+          sourceBottleIndex={0}
+          operation={null}
+          onSelectBottle={vi.fn()}
+        />,
+      );
+    });
+
+    test("持っている試験管にだけ試験管ばさみを描くこと", () => {
+      const clampedBottles = screen
+        .getAllByRole("button", { name: /^ボトル/ })
+        .filter((bottle) => bottle.querySelector("[data-test-tube-clamp]"))
+        .map((bottle) => bottle.getAttribute("aria-label"));
+
+      expect(clampedBottles).toEqual(["ボトル 1: 赤、青"]);
+    });
+  });
+
+  describe("そろえた後の演出の間", () => {
+    const boardAreaTop = 132;
+
+    beforeEach(() => {
+      installPendingAnimations();
+      // 注ぐ動きを省いて、すぐに片付ける演出へ進める。
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn(() => ({ matches: true }) as MediaQueryList),
+      );
+      vi.spyOn(
+        HTMLElement.prototype,
+        "getBoundingClientRect",
+      ).mockImplementation(function getRect(this: HTMLElement) {
+        const top = this.tagName === "DIV" ? boardAreaTop : 200;
+        return DOMRect.fromRect({ x: 0, y: top, width: 40, height: 110 });
+      });
+      render(
+        <WaterSortBoard
+          interactionDisabled
+          state={[[], [0, 0, 0, 0]]}
+          sourceBottleIndex={null}
+          operation={{
+            id: 1,
+            type: "poured",
+            sourceBottleIndex: 0,
+            destinationBottleIndex: 1,
+            stateBefore: [[0], [0, 0, 0]],
+            stateAfter: [[], [0, 0, 0, 0]],
+            isClearingMove: true,
+          }}
+          onSelectBottle={vi.fn()}
+        />,
+      );
+    });
+
+    test("触れて飛ばせる所を盤面の上端から下に限り、上の見出しとメニューを覆わないこと", () => {
+      const skip = screen.queryByRole("button", { name: "演出を飛ばす" });
+
+      expect(skip?.style.top).toBe(`${boardAreaTop}px`);
     });
   });
 });

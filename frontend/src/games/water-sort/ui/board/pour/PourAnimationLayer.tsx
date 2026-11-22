@@ -1,3 +1,6 @@
+import { useState } from "react";
+
+import { createPourClocks } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
 import { PourDestination } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/PourDestination";
 import { PourSource } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/PourSource";
 import {
@@ -15,23 +18,26 @@ export function PourAnimationLayer({
   animations,
   onFinish,
 }: PourAnimationLayerProps) {
+  const [clocks] = useState(createPourClocks);
   return (
     <>
       {animations.map((animation) => (
         <PourSource
           key={animation.id}
           animation={animation}
+          clocks={clocks}
           onFinish={onFinish}
         />
       ))}
       {groupPourAnimationsByDestination(animations).map((group) => {
-        // 同じ注ぎ先へ続けて注いだときは、最後の注ぎの前の姿がそれまでの液を含むので、最後の注ぎだけを描く。
-        const latest = group[group.length - 1];
+        const first = group[0];
         return (
-          latest && (
+          first && (
             <PourDestination
-              key={`${latest.destination.bottleIndex}-${latest.id}`}
-              animation={latest}
+              // 同じ注ぎ先へ続けて注いでも、先の注ぎの液を描き続けるよう、最初の注ぎで見分ける。
+              key={`${first.destination.bottleIndex}-${first.id}`}
+              animations={group}
+              clocks={clocks}
             />
           )
         );

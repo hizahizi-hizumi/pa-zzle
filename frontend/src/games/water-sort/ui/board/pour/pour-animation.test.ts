@@ -6,7 +6,13 @@ import {
   interruptPourAnimationsForBottle,
 } from "@/games/water-sort/ui/board/pour/pour-animation";
 
-const rect = { left: 0, top: 0, width: 40, height: 120 };
+const rect = { left: 100, top: 300, width: 40, height: 111 };
+const placement = {
+  sourceRect: rect,
+  sourceLiftY: 0,
+  destinationRect: { ...rect, left: 160 },
+  bounds: { top: 0, left: 0, right: 390 },
+};
 
 function pouredOperation(
   id: number,
@@ -43,9 +49,8 @@ function animation(
         index === destinationBottleIndex ? [0] : [],
       ),
     ),
-    rect,
-    0,
-    rect,
+    placement,
+    [],
   );
   if (!result) {
     throw new Error("注水表示を作成できませんでした");

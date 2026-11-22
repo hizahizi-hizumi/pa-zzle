@@ -14,10 +14,15 @@ import {
 } from "@/games/water-sort/tutorial/tutorial";
 import { CLEAR_FINALE_REDUCED_MOTION_HOLD_MS } from "@/games/water-sort/ui/board/clear-finale-timing";
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
-import { playSound } from "@/lib/audio/sound-effects";
+import {
+  playLayeredSound,
+  playSound,
+  type SoundLayer,
+} from "@/lib/audio/sound-effects";
 
 vi.mock("@/lib/audio/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),
+  playLayeredSound: vi.fn(),
   playSound: vi.fn(),
   prepareSoundEffects: vi.fn(),
   REPEATED_SOUND_VARIATION: {},
@@ -130,6 +135,17 @@ function getProgressValue(): string | null {
   return within(getScreen())
     .getByRole("progressbar", { name: "チュートリアルの進み具合" })
     .getAttribute("aria-valuenow");
+}
+
+/** 口から流れ込む音は、液面が上がる段ごとの音を重ねて1回鳴らす。 */
+function countPouredSounds(): number {
+  return vi
+    .mocked(playLayeredSound)
+    .mock.calls.filter(([layers]) =>
+      (layers as readonly SoundLayer[]).some(({ sound }) =>
+        sound.url.includes("pour-trickle-"),
+      ),
+    ).length;
 }
 
 function getPlayedSoundNames(): string[] {
@@ -293,6 +309,7 @@ describe("WaterSortTutorial", () => {
       expect(secondRecall).not.toBeNull();
       expect(secondRecall).not.toBe(firstRecall);
       expect(playSound).not.toHaveBeenCalled();
+      expect(playLayeredSound).not.toHaveBeenCalled();
     });
 
     test("印のボトルを選ぶと、注ぎ先を指さし、注ぎ先の一言に替えること", () => {
@@ -313,9 +330,7 @@ describe("WaterSortTutorial", () => {
       const headline = queryShownText(steps[1]?.message.headline ?? "");
 
       expect(getBottleLabel(4)).toBe("ボトル 4: 緑");
-      expect(
-        getPlayedSoundNames().filter((name) => name === "pour-trickle.flac"),
-      ).toHaveLength(1);
+      expect(countPouredSounds()).toBe(1);
       expect(Number(getProgressValue())).toBeGreaterThan(0);
       expect(headline).not.toBeNull();
       expect(getCuedBottles()).toEqual([2]);

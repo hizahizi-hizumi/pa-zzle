@@ -1,29 +1,15 @@
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
-
-/** 注ぐ動き1回の長さ。盤面の外で、注ぐ動きに合わせて間合いを取るときもこの値を使う。 */
-export const POUR_ANIMATION_DURATION_MS = 1600;
-/** 注ぐ動きの中で、水が移り始める所と移り終える所（動きの長さに対する割合）。注ぐ音もこの間に鳴らす。 */
-export const POUR_TRANSFER_START_OFFSET = 0.38;
-export const POUR_TRANSFER_END_OFFSET = 0.72;
-/** 注ぐ動きの中で、注ぎ元の口が注ぎ先の口の縁に触れる所。ガラスの触れ合う音もここで鳴らす。 */
-export const POUR_TOUCH_OFFSET = 0.34;
-/** そろった注ぎ先にゴム栓を差し込み始める所と、栓が奥まで入る所。栓の鳴る音は入る所に合わせて鳴らす。 */
-export const POUR_STOPPER_START_OFFSET = 0.76;
-export const POUR_STOPPER_SEATED_OFFSET = 0.86;
-/** 注ぐ間、試験管を傾ける角度。口が底より下がり、液が口から流れ出る向き。 */
-export const POUR_TILT_DEG = 98;
-
-export function getPourDelayMs(offset: number): number {
-  return POUR_ANIMATION_DURATION_MS * offset;
-}
-
-export type BottleRect = {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-};
+import {
+  type BottleRect,
+  type PourBounds,
+  type PourPath,
+  planPourPath,
+} from "@/games/water-sort/ui/board/pour/pour-path";
+import {
+  getPourTiming,
+  type PourTiming,
+} from "@/games/water-sort/ui/board/pour/pour-timing";
 
 type PourOperation = Extract<WaterSortOperation, { type: "poured" }>;
 
@@ -37,44 +23,74 @@ type PourAnimationBottle = {
 
 export type PourAnimation = {
   id: number;
-  source: PourAnimationBottle & {
-    /** 注ぎ始めたときに注ぎ元を持ち上げていた量（px、上が負）。注ぐ動きはこの高さから始め、置かれている位置へ戻す。 */
-    liftY: number;
-  };
+  source: PourAnimationBottle;
   destination: PourAnimationBottle;
   colorIndex: number;
   isClearingMove: boolean;
+  timing: PourTiming;
+  path: PourPath;
 };
 
+export type PourPlacement = {
+  sourceRect: BottleRect;
+  /** 注ぎ始めたときに注ぎ元を持ち上げていた量（px、上が負）。注ぐ動きはこの高さから始め、置かれている位置へ戻す。 */
+  sourceLiftY: number;
+  destinationRect: BottleRect;
+  bounds: PourBounds;
+};
+
+/** 1回の注ぎで移る段の数。 */
+export function getPouredSlotCount(operation: PourOperation): number {
+  const before = operation.stateBefore[operation.destinationBottleIndex] ?? [];
+  const after = operation.stateAfter[operation.destinationBottleIndex] ?? [];
+  return after.length - before.length;
+}
+
+/** `active` は今動いている注ぎ。同じ注ぎ先へ注いでいる途中の試験管と重ならない側から注ぐ。 */
 export function createPourAnimation(
   operation: PourOperation,
-  sourceRect: BottleRect,
-  sourceLiftY: number,
-  destinationRect: BottleRect,
+  placement: PourPlacement,
+  active: readonly PourAnimation[],
 ): PourAnimation | null {
   const sourceBefore = operation.stateBefore[operation.sourceBottleIndex] ?? [];
+  const sourceAfter = operation.stateAfter[operation.sourceBottleIndex] ?? [];
   const colorIndex = sourceBefore[sourceBefore.length - 1];
   if (colorIndex === undefined) {
     return null;
   }
+  const timing = getPourTiming(getPouredSlotCount(operation));
+  const occupying = active.findLast(
+    (animation) =>
+      animation.destination.bottleIndex === operation.destinationBottleIndex,
+  );
 
   return {
     id: operation.id,
     source: {
       bottleIndex: operation.sourceBottleIndex,
       before: sourceBefore,
-      after: operation.stateAfter[operation.sourceBottleIndex] ?? [],
-      rect: sourceRect,
-      liftY: sourceLiftY,
+      after: sourceAfter,
+      rect: placement.sourceRect,
     },
     destination: {
       bottleIndex: operation.destinationBottleIndex,
       before: operation.stateBefore[operation.destinationBottleIndex] ?? [],
       after: operation.stateAfter[operation.destinationBottleIndex] ?? [],
-      rect: destinationRect,
+      rect: placement.destinationRect,
     },
     colorIndex,
     isClearingMove: operation.isClearingMove,
+    timing,
+    path: planPourPath({
+      source: placement.sourceRect,
+      liftY: placement.sourceLiftY,
+      destination: placement.destinationRect,
+      bounds: placement.bounds,
+      sourceSlotsBefore: sourceBefore.length,
+      sourceSlotsAfter: sourceAfter.length,
+      timing,
+      occupiedDirection: occupying?.path.direction ?? null,
+    }),
   };
 }
 
@@ -99,6 +115,7 @@ export function interruptPourAnimationsForBottle(
   );
 }
 
+/** 同じ注ぎ先への注ぎを、成り立った順のまままとめる。注ぎ先は、まとめた注ぎの液を順に積んで描く。 */
 export function groupPourAnimationsByDestination(
   animations: readonly PourAnimation[],
 ): readonly (readonly PourAnimation[])[] {
