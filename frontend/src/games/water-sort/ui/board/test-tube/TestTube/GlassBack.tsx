@@ -1,6 +1,17 @@
-import { TUBE_VIEW_BOX } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
+import {
+  TUBE_BOTTOM_ARC_TOP,
+  TUBE_INNER,
+  TUBE_RIM,
+  TUBE_VIEW_BOX,
+} from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 
-/** 液の後ろに見える、管の奥側のガラス。 */
+const { left, right, bottomDepth } = TUBE_INNER;
+const GLASS_BACK_PATH = `M${left} ${TUBE_RIM.bottom} V${TUBE_BOTTOM_ARC_TOP} A${(right - left) / 2} ${bottomDepth} 0 0 0 ${right} ${TUBE_BOTTOM_ARC_TOP} V${TUBE_RIM.bottom} Z`;
+
+/**
+ * 液の後ろに見えるガラス。地より少し明るい、不透明な1色の面。
+ * 注ぐ試験管がほかの試験管の前を通るとき、後ろの液の色が透けて混ざった色の欠片に見えないよう、透かさない。
+ */
 export function GlassBack() {
   return (
     <svg
@@ -10,14 +21,8 @@ export function GlassBack() {
       aria-hidden="true"
     >
       <path
-        d="M4.9 7 V88.2 A13.1 7.4 0 0 0 31.1 88.2 V7 Z"
-        className="fill-[rgba(190,222,220,0.16)] dark:fill-[rgba(170,205,215,0.07)]"
-      />
-      <path
-        d="M24 10 V86"
-        className="stroke-[rgba(255,255,255,0.22)] dark:stroke-[rgba(220,240,255,0.1)]"
-        strokeWidth="2.4"
-        strokeLinecap="round"
+        d={GLASS_BACK_PATH}
+        className="fill-[#f3f7f8] dark:fill-[#2e3a3e]"
       />
     </svg>
   );

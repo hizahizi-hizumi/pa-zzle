@@ -1,22 +1,24 @@
-import { useId } from "react";
-
 import {
   CLAMP_HANDLE_TIP_POINTS,
+  CLAMP_JAW,
+  TUBE_OUTER,
   TUBE_VIEW_BOX,
+  TUBE_VIEW_WIDTH,
 } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 
 const [[tipBottomX, tipBottomY], [tipTopX, tipTopY]] = CLAMP_HANDLE_TIP_POINTS;
-const CLAMP_ARM_PATH = `M31 10.6 L37.6 17.8 L${tipBottomX} ${tipBottomY} L${tipTopX} ${tipTopY} Z`;
+const jawHeight = CLAMP_JAW.bottom - CLAMP_JAW.top;
+// 柄は口の右の端から、右上へ伸ばす。
+const CLAMP_ARM_PATH = `M${TUBE_OUTER.right - 1} ${CLAMP_JAW.top + 0.4} L${TUBE_VIEW_WIDTH + 2} ${CLAMP_JAW.bottom - 0.4} L${tipBottomX} ${tipBottomY} L${tipTopX} ${tipTopY} Z`;
+const SPRING_CENTER = { x: 42, y: 4.9 } as const;
 
 type TestTubeClampProps = {
   /** 柄を出す向き。 */
   side: "left" | "right";
 };
 
-/** 持っている試験管の首を挟む、木の試験管ばさみ。並んだ試験管の中でも持っている1本が分かるよう、口と柄を太く描く。 */
+/** 持っている試験管の首を挟む木の試験管ばさみ。真横から見た、口・柄・ばねの3つの平らな面。 */
 export function TestTubeClamp({ side }: TestTubeClampProps) {
-  const woodId = useId();
-  const armId = useId();
   return (
     <svg
       data-test-tube-clamp=""
@@ -25,68 +27,40 @@ export function TestTubeClamp({ side }: TestTubeClampProps) {
       className="absolute inset-0 size-full overflow-visible animate-in fade-in zoom-in-110 duration-150 ease-out motion-reduce:animate-none"
       aria-hidden="true"
     >
-      <defs>
-        <linearGradient id={woodId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#f6dcaa" />
-          <stop offset="0.4" stopColor="#d9a964" />
-          <stop offset="1" stopColor="#9c6a34" />
-        </linearGradient>
-        <linearGradient id={armId} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#a8743c" />
-          <stop offset="0.45" stopColor="#ecc68c" />
-          <stop offset="1" stopColor="#94622f" />
-        </linearGradient>
-      </defs>
       <g
-        transform={side === "left" ? "translate(36 0) scale(-1 1)" : undefined}
+        transform={
+          side === "left"
+            ? `translate(${TUBE_VIEW_WIDTH} 0) scale(-1 1)`
+            : undefined
+        }
       >
-        {/* 首に落ちる影 */}
-        <rect
-          x="-1"
-          y="18.4"
-          width="38"
-          height="2.6"
-          rx="1.2"
-          fill="rgba(40,22,6,0.32)"
-        />
-        {/* 柄（2本の腕）。並んだ隣の試験管の口の上と、上の見出しにかからないよう、試験管の幅ほどの長さで浅く上げる。 */}
         <path
           d={CLAMP_ARM_PATH}
-          fill={`url(#${armId})`}
-          stroke="rgba(80,45,15,0.55)"
-          strokeWidth="0.5"
+          className="fill-[#b9874d] dark:fill-[#6e5235]"
         />
-        <path
-          d="M34.2 14.2 L56.6 3.7"
-          stroke="rgba(70,40,15,0.5)"
-          strokeWidth="0.6"
-        />
-        {/* ばね */}
-        <g fill="none" stroke="#7e898f" strokeWidth="0.9">
-          <ellipse cx="40.4" cy="10.2" rx="2.3" ry="1.5" />
-          <ellipse cx="41.8" cy="8" rx="2.3" ry="1.5" />
+        {/* ばね。柄に巻いた針金を、柄を横切る細い帯で描く。 */}
+        <g
+          transform={`rotate(-28 ${SPRING_CENTER.x} ${SPRING_CENTER.y})`}
+          className="fill-[#8e999d] dark:fill-[#6c777c]"
+        >
+          {[-1.3, 0, 1.3].map((dx) => (
+            <rect
+              key={dx}
+              x={SPRING_CENTER.x + dx - 0.4}
+              y={SPRING_CENTER.y - 3}
+              width="0.8"
+              height="6"
+              rx="0.4"
+            />
+          ))}
         </g>
-        {/* 首を挟む口 */}
         <rect
-          x="-2.6"
-          y="10.2"
-          width="40.6"
-          height="8.4"
-          rx="2.2"
-          fill={`url(#${woodId})`}
-          stroke="rgba(80,45,15,0.75)"
-          strokeWidth="0.6"
-        />
-        <path
-          d="M-1.2 11.6 H36.6"
-          stroke="rgba(255,244,222,0.85)"
-          strokeWidth="0.7"
-          strokeLinecap="round"
-        />
-        <path
-          d="M-2 14.4 H37.4"
-          stroke="rgba(80,45,15,0.45)"
-          strokeWidth="0.5"
+          x="-1.4"
+          y={CLAMP_JAW.top}
+          width={TUBE_VIEW_WIDTH + 2.8}
+          height={jawHeight}
+          rx="1.4"
+          className="fill-[#d9aa6b] dark:fill-[#94704a]"
         />
       </g>
     </svg>

@@ -40,7 +40,7 @@ type SealedTubeRect = {
 };
 
 /**
- * 空の試験管を片付け、栓をした色の列を窓の光が順に撫で、整った列を眺める間を置いてから終える。
+ * 空の試験管を片付け、栓をした色の列を平らな白い帯が順に撫で、整った列を眺める間を置いてから終える。
  * 終えた後も、盤面が替わるまで片付いた姿を保つ。
  */
 export function ClearFinale({
@@ -127,10 +127,10 @@ export function ClearFinale({
         const gleams = gleamRefs.current.flatMap((element, index) => {
           const animation = element?.animate?.(
             [
-              { transform: "translateX(-160%) skewX(-18deg)", opacity: 0 },
+              { transform: "translateX(-150%) skewX(-18deg)", opacity: 0 },
               { opacity: 1, offset: 0.25 },
               { opacity: 1, offset: 0.75 },
-              { transform: "translateX(260%) skewX(-18deg)", opacity: 0 },
+              { transform: "translateX(450%) skewX(-18deg)", opacity: 0 },
             ],
             {
               duration: CLEAR_FINALE_GLEAM_DURATION_MS,
@@ -175,7 +175,7 @@ export function ClearFinale({
               ref={(element) => {
                 gleamRefs.current[index] = element;
               }}
-              className="absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/70 to-transparent opacity-0"
+              className="absolute inset-y-0 left-0 w-1/4 bg-white/45 opacity-0"
             />
           </span>
         </span>

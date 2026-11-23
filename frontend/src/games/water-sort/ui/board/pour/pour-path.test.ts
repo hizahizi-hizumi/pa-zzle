@@ -5,11 +5,12 @@ import {
   planPourPath,
 } from "@/games/water-sort/ui/board/pour/pour-path";
 import { getPourTiming } from "@/games/water-sort/ui/board/pour/pour-timing";
+import { TUBE_VIEW_WIDTH } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 
 const { getOverflow, getRimLip } = _private;
 
 // iPhone の幅に7本並べた盤面の試験管の大きさ。
-const tubeSize = { width: 38, height: 105 };
+const tubeSize = { width: 46, height: 128 };
 const bounds = { top: 80, left: 4, right: 386 };
 
 function rectAt(left: number, top: number) {
@@ -34,7 +35,7 @@ function input(overrides: Partial<PourPathInput>): PourPathInput {
 function getRimLipPosition(pathInput: PourPathInput, elapsedMs: number) {
   const path = planPourPath(pathInput);
   const pose = getSourcePose(path, elapsedMs);
-  const unit = path.source.width / 36;
+  const unit = path.source.width / TUBE_VIEW_WIDTH;
   const rimLip = getRimLip(path.direction);
   const offsetX = rimLip.x * unit - path.source.width / 2;
   const offsetY = rimLip.y * unit;

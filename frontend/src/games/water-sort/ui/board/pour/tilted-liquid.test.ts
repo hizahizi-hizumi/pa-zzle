@@ -6,7 +6,12 @@ import {
   type TubePoint,
   type TubeSegment,
 } from "@/games/water-sort/ui/board/pour/tilted-liquid";
-import { getSurfaceRatio } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
+import {
+  getSurfaceRatio,
+  TUBE_INNER,
+  TUBE_MOUTH_RATIO,
+  TUBE_SLOT_HEIGHT,
+} from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 
 const { getVolume, areaOf } = _private;
 
@@ -75,6 +80,35 @@ describe("getTiltedLiquid", () => {
     });
   });
 
+  describe.each([1, 2, 3])("%i段を残して注いでいる場合", (slots) => {
+    const pouringRuns = getTiltedLiquidRuns([1, 2, 3, 4].slice(0, slots));
+    const tiltDeg = getLipReachingTiltDeg(slots) + 4;
+
+    test("傾けた液の量の合計を、残っている段の数の液の量にすること", () => {
+      const liquid = getTiltedLiquid(pouringRuns, slots, tiltDeg);
+      const total = liquid.layers.reduce(
+        (sum, layer) => sum + areaOf(layer.points),
+        0,
+      );
+
+      expect(total).toBeCloseTo(getVolume(slots), 1);
+    });
+
+    test("段ごとの色を、下から順に1段ずつの量で残すこと", () => {
+      const liquid = getTiltedLiquid(pouringRuns, slots, tiltDeg);
+
+      expect(liquid.layers.map((layer) => layer.colorIndex)).toEqual(
+        [1, 2, 3].slice(0, slots),
+      );
+      liquid.layers.forEach((layer, index) => {
+        expect(areaOf(layer.points)).toBeCloseTo(
+          getVolume(index + 1) - getVolume(index),
+          1,
+        );
+      });
+    });
+  });
+
   describe("注ぎ出して上の層が無くなった場合", () => {
     test("無くなった層は形を持たず、残りの層の上を液面にすること", () => {
       const liquid = getTiltedLiquid(runs, 3, 70);
@@ -86,6 +120,26 @@ describe("getTiltedLiquid", () => {
       ]);
       expect(liquid.boundaries).toHaveLength(1);
     });
+  });
+});
+
+describe("getVolume", () => {
+  const slotArea = (TUBE_INNER.right - TUBE_INNER.left) * TUBE_SLOT_HEIGHT;
+
+  test("2段目から上は、1段ごとに立てた液の箱の1段分の量を足すこと", () => {
+    for (const slots of [2, 3, 4]) {
+      expect(getVolume(slots) - getVolume(slots - 1)).toBeCloseTo(slotArea, 6);
+    }
+  });
+
+  test("いちばん下の段は、底の丸みの外の分だけ1段分より少ないこと", () => {
+    const radiusX = (TUBE_INNER.right - TUBE_INNER.left) / 2;
+    const cornerArea =
+      2 * radiusX * TUBE_INNER.bottomDepth -
+      (Math.PI * radiusX * TUBE_INNER.bottomDepth) / 2;
+
+    // 底の丸みは折れ線で囲むので、楕円の面積とは 0.5% までの差を許す。
+    expect(getVolume(1) / (slotArea - cornerArea)).toBeCloseTo(1, 2);
   });
 });
 
@@ -114,8 +168,8 @@ describe("getLipReachingTiltDeg", () => {
       const liquid = getTiltedLiquid(sameReagentRuns, 2.5, tiltDeg);
       const surfaceEnd = liquid.surface?.[1];
 
-      expect(surfaceEnd?.[0]).toBeCloseTo(31.1, 1);
-      expect(surfaceEnd?.[1]).toBeCloseTo(5, 1);
+      expect(surfaceEnd?.[0]).toBeCloseTo(TUBE_INNER.right, 1);
+      expect(surfaceEnd?.[1]).toBeCloseTo(TUBE_MOUTH_RATIO * 100, 1);
     });
   });
 });

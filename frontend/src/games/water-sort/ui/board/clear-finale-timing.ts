@@ -3,7 +3,7 @@ export const CLEAR_FINALE_PUT_AWAY_STAGGER_MS = 60;
 export const CLEAR_FINALE_PUT_AWAY_DURATION_MS = 380;
 
 /**
- * 片付け終わる頃から、栓をした試験管の列を窓の光が端から順に撫でていく。撫で始めに試験管どうしが鳴り合う。
+ * 片付け終わる頃から、栓をした試験管の列を白い帯が端から順に撫でていく。撫で始めに試験管どうしが鳴り合う。
  * 本数が多くても列を撫で終える時間が延びないよう、撫で始めの間合いは列全体で `CLEAR_FINALE_GLEAM_SPREAD_MS` に収める。
  */
 export const CLEAR_FINALE_GLEAM_DELAY_MS = 300;
@@ -11,7 +11,7 @@ export const CLEAR_FINALE_GLEAM_MAX_STAGGER_MS = 45;
 export const CLEAR_FINALE_GLEAM_SPREAD_MS = 360;
 export const CLEAR_FINALE_GLEAM_DURATION_MS = 460;
 
-/** 光が撫で終えてから演出を終えるまで、整った列を眺める時間。 */
+/** 白い帯が撫で終えてから演出を終えるまで、整った列を眺める時間。 */
 export const CLEAR_FINALE_HOLD_MS = 600;
 
 /** 動きを減らす設定で、そろった姿を見せておく時間。 */
@@ -25,7 +25,7 @@ export function getClearFinalePutAwayEndMs(emptyCount: number): number {
         CLEAR_FINALE_PUT_AWAY_DURATION_MS;
 }
 
-/** 光が列を撫で始める時刻。片付けの終わり際に重ねる。 */
+/** 白い帯が列を撫で始める時刻。片付けの終わり際に重ねる。 */
 export function getClearFinaleGleamStartMs(emptyCount: number): number {
   return Math.max(
     CLEAR_FINALE_GLEAM_DELAY_MS,
@@ -33,7 +33,7 @@ export function getClearFinaleGleamStartMs(emptyCount: number): number {
   );
 }
 
-/** 栓をした試験管ごとに、光が撫で始める間合い。 */
+/** 栓をした試験管ごとに、白い帯が撫で始める間合い。 */
 export function getClearFinaleGleamStaggerMs(sealedCount: number): number {
   return sealedCount <= 1
     ? 0

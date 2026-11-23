@@ -1,9 +1,12 @@
 import type { PourAnimation } from "@/games/water-sort/ui/board/pour/pour-animation";
 import type { BottleRect } from "@/games/water-sort/ui/board/pour/pour-path";
-import { TUBE_INNER } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
+import {
+  TUBE_INNER,
+  TUBE_SLOT_HEIGHT,
+  TUBE_VIEW_HEIGHT,
+  TUBE_VIEW_WIDTH,
+} from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 
-const VIEW_WIDTH = 36;
-const VIEW_HEIGHT = 100;
 /** 口の縁を離れた液が、注ぐ向きへ少し飛び出してから落ちる量（注ぎ先の幅に対する割合）。 */
 const STREAM_THROW_RATIO = 0.03;
 
@@ -17,13 +20,11 @@ export type LiquidBox = {
 
 export function getLiquidBox(rect: BottleRect): LiquidBox {
   return {
-    left: rect.left + (rect.width * TUBE_INNER.left) / VIEW_WIDTH,
-    width: (rect.width * (TUBE_INNER.right - TUBE_INNER.left)) / VIEW_WIDTH,
-    bottom: rect.top + (rect.height * TUBE_INNER.bottom) / VIEW_HEIGHT,
-    slotHeight:
-      (rect.height * (TUBE_INNER.bottom - TUBE_INNER.slotTop)) /
-      VIEW_HEIGHT /
-      4,
+    left: rect.left + (rect.width * TUBE_INNER.left) / TUBE_VIEW_WIDTH,
+    width:
+      (rect.width * (TUBE_INNER.right - TUBE_INNER.left)) / TUBE_VIEW_WIDTH,
+    bottom: rect.top + (rect.height * TUBE_INNER.bottom) / TUBE_VIEW_HEIGHT,
+    slotHeight: (rect.height * TUBE_SLOT_HEIGHT) / TUBE_VIEW_HEIGHT,
   };
 }
 

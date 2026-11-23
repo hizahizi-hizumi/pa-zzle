@@ -3,14 +3,6 @@ export type RackRow = {
   bottom: number;
 };
 
-export type RackTube = {
-  bottleIndex: number;
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-};
-
 export type RackLayout = {
   width: number;
   height: number;
@@ -19,9 +11,6 @@ export type RackLayout = {
   left: number;
   right: number;
   rows: RackRow[];
-  /** 穴をあける位置（試験管の左端）。どの段も同じ列に穴をあける。 */
-  columnLefts: number[];
-  tubes: RackTube[];
 };
 
 /**
@@ -38,10 +27,9 @@ export function measureRackLayout(
   bottles: readonly HTMLElement[],
 ): RackLayout | null {
   const containerRect = container.getBoundingClientRect();
-  const tubes: RackTube[] = bottles.map((element, bottleIndex) => {
+  const tubes = bottles.map((element) => {
     const rect = element.getBoundingClientRect();
     return {
-      bottleIndex,
       left: rect.left - containerRect.left,
       top: rect.top - getLiftY(element) - containerRect.top,
       width: rect.width,
@@ -62,14 +50,6 @@ export function measureRackLayout(
     rows.push({ top: tube.top, bottom: tube.top + tube.height });
   }
 
-  const columnLefts: number[] = [];
-  for (const tube of [...tubes].sort((a, b) => a.left - b.left)) {
-    const last = columnLefts[columnLefts.length - 1];
-    if (last === undefined || tube.left - last > tube.width / 2) {
-      columnLefts.push(tube.left);
-    }
-  }
-
   return {
     width: containerRect.width,
     height: containerRect.height,
@@ -78,7 +58,5 @@ export function measureRackLayout(
     left: Math.min(...tubes.map((tube) => tube.left)),
     right: Math.max(...tubes.map((tube) => tube.left + tube.width)),
     rows,
-    columnLefts,
-    tubes,
   };
 }

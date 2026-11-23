@@ -1,7 +1,6 @@
 import { useId, useRef } from "react";
 
 import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
-import { useWaterSortArt } from "@/games/water-sort/ui/art/art-registry";
 import {
   getSourcePose,
   type PourPath,
@@ -15,8 +14,14 @@ import {
 } from "@/games/water-sort/ui/board/pour/tilted-liquid";
 import { useAnimationFrame } from "@/games/water-sort/ui/board/pour/use-animation-frame";
 import {
+  LIQUID_BOUNDARY,
+  LIQUID_SURFACE,
+} from "@/games/water-sort/ui/board/test-tube/liquid-surface";
+import { getReagentColor } from "@/games/water-sort/ui/board/test-tube/reagent";
+import {
   TUBE_INNER,
   TUBE_VIEW_BOX,
+  TUBE_VIEW_WIDTH,
 } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 
 type TiltedLiquidProps = {
@@ -25,10 +30,10 @@ type TiltedLiquidProps = {
   getElapsedMs: () => number;
 };
 
-const VIEW_WIDTH = 36;
 const INNER_WIDTH = TUBE_INNER.right - TUBE_INNER.left;
-/** 液面のすぐ下に光る線を置く深さ（px）。立てた試験管の液面の光と同じ所。 */
-const SURFACE_HIGHLIGHT_DEPTH_PX = 1.8;
+/** 液面の明るい帯の中ほどまでの深さ（px）。立てた試験管の液面と同じく、暗い線のすぐ下に明るい帯を置く。 */
+const SURFACE_HIGHLIGHT_DEPTH_PX =
+  LIQUID_SURFACE.shadePx / 2 + LIQUID_SURFACE.highlightPx / 2;
 
 const interiorPoints = TUBE_INTERIOR_POINTS.map(([x, y]) => `${x},${y}`).join(
   " ",
@@ -75,7 +80,6 @@ export function TiltedLiquid({
   path,
   getElapsedMs,
 }: TiltedLiquidProps) {
-  const reagentArt = useWaterSortArt().reagent;
   const clipId = useId();
   const runs = getTiltedLiquidRuns(contents);
   const layerRefs = useRef<Array<HTMLSpanElement | null>>([]);
@@ -95,14 +99,9 @@ export function TiltedLiquid({
     boundaryRefs.current.forEach((element, index) => {
       setLine(element, liquid.boundaries[index] ?? null);
     });
-    const top = liquid.layers.findLast((layer) => layer.points.length > 0);
-    surfaceShadeRef.current?.setAttribute(
-      "stroke",
-      `rgba(20,30,35,${top ? reagentArt.surfaceShade(top.colorIndex) : 0})`,
-    );
     setLine(surfaceShadeRef.current, liquid.surface);
     const radian = (pose.tiltDeg * Math.PI) / 180;
-    const unitPerPx = VIEW_WIDTH / path.source.width;
+    const unitPerPx = TUBE_VIEW_WIDTH / path.source.width;
     const depth = SURFACE_HIGHLIGHT_DEPTH_PX * unitPerPx;
     setLine(surfaceHighlightRef.current, liquid.surface, [
       Math.sin(radian) * depth,
@@ -122,10 +121,10 @@ export function TiltedLiquid({
           }}
           className="absolute inset-y-0"
           style={{
-            left: `${(TUBE_INNER.left / VIEW_WIDTH) * 100}%`,
-            right: `${((VIEW_WIDTH - TUBE_INNER.right) / VIEW_WIDTH) * 100}%`,
+            left: `${(TUBE_INNER.left / TUBE_VIEW_WIDTH) * 100}%`,
+            right: `${((TUBE_VIEW_WIDTH - TUBE_INNER.right) / TUBE_VIEW_WIDTH) * 100}%`,
             clipPath: toClipPath([]),
-            ...reagentArt.fill(run.colorIndex),
+            backgroundColor: getReagentColor(run.colorIndex),
           }}
         />
       ))}
@@ -148,22 +147,23 @@ export function TiltedLiquid({
                 boundaryRefs.current[index] = element;
               }}
               visibility="hidden"
-              stroke="rgba(255,255,255,0.45)"
-              strokeWidth="1"
+              stroke={LIQUID_BOUNDARY.color}
+              strokeWidth={LIQUID_BOUNDARY.px}
               vectorEffect="non-scaling-stroke"
             />
           ))}
           <line
             ref={surfaceHighlightRef}
             visibility="hidden"
-            stroke="rgba(255,255,255,0.5)"
-            strokeWidth="1.6"
+            stroke={LIQUID_SURFACE.highlightColor}
+            strokeWidth={LIQUID_SURFACE.highlightPx}
             vectorEffect="non-scaling-stroke"
           />
           <line
             ref={surfaceShadeRef}
             visibility="hidden"
-            strokeWidth="1"
+            stroke={LIQUID_SURFACE.shadeColor}
+            strokeWidth={LIQUID_SURFACE.shadePx}
             vectorEffect="non-scaling-stroke"
           />
         </g>

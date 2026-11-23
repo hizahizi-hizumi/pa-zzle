@@ -110,14 +110,14 @@ describe("WaterSortHowToPlayDialog", () => {
       ]);
     });
 
-    test("ゴールと例の試験管の後ろに、プレイ画面と同じ理科室の壁と実験台の地を敷くこと", () => {
+    test("ゴールと例の試験管の後ろに、プレイ画面と同じ地を敷くこと", () => {
       const boards = [
         within(getDialog()).getByRole("img", { name: "ゴールの盤面" }),
         ...within(panel).getAllByRole("figure"),
       ];
 
       const grounded = boards.map(
-        (board) => board.querySelector("[data-lab-figure-ground]") !== null,
+        (board) => board.querySelector("[data-figure-ground]") !== null,
       );
 
       expect(grounded).toEqual(boards.map(() => true));

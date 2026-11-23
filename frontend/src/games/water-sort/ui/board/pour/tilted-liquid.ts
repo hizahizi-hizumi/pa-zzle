@@ -1,6 +1,7 @@
 import {
   TUBE_INNER,
   TUBE_MOUTH_RATIO,
+  TUBE_SLOT_HEIGHT,
 } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 
 /**
@@ -14,8 +15,6 @@ type Polygon = readonly TubePoint[];
 
 export type TubeSegment = readonly [TubePoint, TubePoint];
 
-const SLOT_COUNT = 4;
-const SLOT_HEIGHT = (TUBE_INNER.bottom - TUBE_INNER.slotTop) / SLOT_COUNT;
 /** 液が寄れる上の端。傾けると、立てたときの4段目より上の首にも液が寄る。 */
 const NECK_TOP = TUBE_MOUTH_RATIO * 100;
 const BOTTOM_ARC_SEGMENTS = 16;
@@ -93,7 +92,7 @@ const UPRIGHT_DOWN: TubePoint = [0, 1];
 
 /** 立てたときに下から `slots` 段（小数も取る）まで満ちる液の量（面積）。 */
 function getVolume(slots: number): number {
-  const surfaceY = TUBE_INNER.bottom - SLOT_HEIGHT * slots;
+  const surfaceY = TUBE_INNER.bottom - TUBE_SLOT_HEIGHT * slots;
   return areaOf(clipByLevel(interior, UPRIGHT_DOWN, surfaceY, true));
 }
 

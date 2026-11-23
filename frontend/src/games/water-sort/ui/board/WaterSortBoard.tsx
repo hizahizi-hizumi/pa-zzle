@@ -52,10 +52,10 @@ type WaterSortBoardProps = {
   spacing?: "play" | "howToPlay";
   /**
    * 試験管を立てる所。
-   * - `rack-on-bench`: 実験台に置いた試験管立てに立てる。試験管立てと実験台は盤面の後ろに、置いた入れ物いっぱいに描く。
+   * - `rack`: 試験管立てに立てる。試験管立ては盤面の後ろに描く。
    * - `none`: 試験管だけを並べる。遊び方の図が、まわりの説明の中に盤面だけを置くときに使う。
    */
-  stand?: "rack-on-bench" | "none";
+  stand?: "rack" | "none";
   /** そろえた後の演出を、画面のどこかに触れて飛ばせるか。遊び方のゴールの盤面は、自分の飛ばすボタンを持つので外す。 */
   clearFinaleSkippableByTouch?: boolean;
 };
@@ -93,7 +93,7 @@ const rattleTiming: RejectionShakeTiming = {
 
 /** 持っている試験管を注ぎ先へ傾けかけて、注げずに引き戻す。`direction` は注ぎ先のある向き（右が 1）。 */
 function getWithdrawKeyframes(direction: 1 | -1): Keyframe[] {
-  const origin = "50% 14%";
+  const origin = "50% 8%";
   return [
     { transform: "translateX(0) rotate(0deg)", transformOrigin: origin },
     {
@@ -125,14 +125,20 @@ const reducedMotionRejectionKeyframes: Keyframe[] = [
 ];
 
 /**
- * 段に分けた盤面で、上の段の試験管の上に、持ち上げに足して取る高さ（試験管の幅に対する比）。
- * 上の段で注ぐ試験管は深く傾き、試験管ばさみの柄が口より上へ出るので、その柄が見出しにかからない高さにする。
+ * 上の段へ注ぐ試験管が、上の段の口より上へ出る高さ（試験管の幅に対する比）。
+ * 注ぎ先の口の上で深く傾き、満ちた試験管を隣の空の試験管へ注ぎきるときに、底と試験管ばさみの柄がいちばん高く出る。
  */
-const TOP_ROW_HEADROOM_RATIO = 0.55;
+const TOP_ROW_POUR_REACH_RATIO = 0.75;
+
+/**
+ * 段に分けた盤面の上の端より上で、注ぐ動きがかかってよい高さ。プレイ画面の見出しの箱の下の、文字とボタンの無い余白（24px）と、
+ * 盤面を置く場所の上の余白（8px）から、注ぐ動きと見出しの文字の間に残す 4px を除く。
+ */
+const ROOM_ABOVE_ROWS_PX = 28;
 
 /** 持った試験管を、試験管ばさみの所を中心に少し傾ける。 */
 const heldTiltClassName =
-  "origin-[50%_14%] transition-[rotate] duration-(--duration-normal) ease-standard data-held:-rotate-3 motion-reduce:transition-none";
+  "origin-[50%_8%] transition-[rotate] duration-(--duration-normal) ease-standard data-held:-rotate-3 motion-reduce:transition-none";
 
 /** ボトルの幅と高さの比。遊び方の図も、この比で本番と同じ形に描く。 */
 export const WATER_SORT_BOTTLE_ASPECT_RATIO = 0.36;
@@ -148,7 +154,7 @@ export function WaterSortBoard({
   cues = [],
   layout: layoutKind = "rows",
   spacing = "play",
-  stand = "rack-on-bench",
+  stand = "rack",
   clearFinaleSkippableByTouch = true,
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -229,8 +235,10 @@ export function WaterSortBoard({
   const rowCount = Math.ceil(state.length / layout.columnCount);
   const columnGaps = layout.columnGap * (layout.columnCount - 1);
   // 段に分けるときは、試験管の縦横比と隙間を保ったまま、見出し・下端を除いた高さにも収める。
-  // 上の段の試験管は、持つと持ち上がり、注ぐと試験管ばさみの柄が口より上へ出るので、その分の高さを盤面の上に取っておく。
-  const rowsTubeWidth = `min(calc((${layout.width} - ${columnGaps}px) / ${layout.columnCount}), calc((100cqh - var(--selected-bottle-lift) - ${layout.rowGap * (rowCount - 1)}px) / ${rowCount / WATER_SORT_BOTTLE_ASPECT_RATIO + TOP_ROW_HEADROOM_RATIO}))`;
+  // 上の段の試験管は、持つと持ち上がり、注ぐと口より上へ出るので、そのどちらか高いほうを盤面の上に取っておく。
+  const rowGaps = layout.rowGap * (rowCount - 1);
+  const rowsHeightInTubeWidths = rowCount / WATER_SORT_BOTTLE_ASPECT_RATIO;
+  const rowsTubeWidth = `min(calc((100cqw - ${columnGaps}px) / ${layout.columnCount}), calc((100cqh - var(--selected-bottle-lift) - ${rowGaps}px) / ${rowsHeightInTubeWidths}), calc((100cqh + ${ROOM_ABOVE_ROWS_PX - rowGaps}px) / ${rowsHeightInTubeWidths + TOP_ROW_POUR_REACH_RATIO}))`;
 
   const bottles = (
     <fieldset
@@ -242,7 +250,7 @@ export function WaterSortBoard({
       className={cn(
         "grid w-full items-end justify-center border-0 p-0 [--selected-bottle-lift:--spacing(5)]",
         layoutKind === "rows" &&
-          "pt-[calc(var(--selected-bottle-lift)+var(--tube-width)*var(--top-row-headroom))]",
+          "pt-[max(var(--selected-bottle-lift),var(--tube-width)*var(--top-row-pour-reach)-var(--room-above-rows))]",
       )}
       style={
         {
@@ -250,10 +258,11 @@ export function WaterSortBoard({
           columnGap,
           rowGap: layout.rowGap,
           ...(layoutKind === "single-row"
-            ? { width: layout.width }
+            ? { width: "100%" }
             : {
                 "--tube-width": rowsTubeWidth,
-                "--top-row-headroom": TOP_ROW_HEADROOM_RATIO,
+                "--top-row-pour-reach": TOP_ROW_POUR_REACH_RATIO,
+                "--room-above-rows": `${ROOM_ABOVE_ROWS_PX}px`,
                 width: `calc(var(--tube-width) * ${layout.columnCount} + ${columnGaps}px)`,
               }),
         } as CSSProperties
@@ -279,7 +288,7 @@ export function WaterSortBoard({
             aria-label={`${bottleLabel}: ${contents}`}
             aria-pressed={isSource}
             onClick={() => selectBottle(bottleIndex)}
-            className="relative w-full origin-top cursor-pointer touch-manipulation disabled:cursor-default rounded-b-[50%_11%] transition-transform duration-(--duration-normal) ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 aria-pressed:-translate-y-(--selected-bottle-lift) motion-reduce:transition-none"
+            className="relative w-full origin-top cursor-pointer touch-manipulation disabled:cursor-default rounded-b-[50%_9%] transition-transform duration-(--duration-normal) ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 aria-pressed:-translate-y-(--selected-bottle-lift) motion-reduce:transition-none"
             style={{ aspectRatio: WATER_SORT_BOTTLE_ASPECT_RATIO }}
             disabled={interactionDisabled}
           >
@@ -318,8 +327,8 @@ export function WaterSortBoard({
     </fieldset>
   );
 
-  const rack = stand === "rack-on-bench" && (
-    <TestTubeRack state={state} bottleRefs={bottleRefs} />
+  const rack = stand === "rack" && (
+    <TestTubeRack bottleCount={state.length} bottleRefs={bottleRefs} />
   );
 
   return (
@@ -375,45 +384,25 @@ export const WATER_SORT_SINGLE_ROW_GAP_PX = 8;
 function getSingleRowLayout(bottleCount: number) {
   return {
     columnCount: bottleCount,
-    width: "100%",
     columnGap: WATER_SORT_SINGLE_ROW_GAP_PX,
     rowGap: 0,
   };
 }
 
+/** 段に分けるときの、1段の本数と試験管の間。大きさは置いた場所の幅と高さに収まるいっぱいにする。 */
 function getBoardLayout(bottleCount: number) {
   const columnCount = Math.max(3, Math.ceil(bottleCount / 2));
 
   if (columnCount >= 6) {
-    return {
-      columnCount,
-      width: "min(100%, clamp(366px, 48vw, 570px))",
-      columnGap: 10,
-      rowGap: 34,
-    };
+    return { columnCount, columnGap: 8, rowGap: 30 };
   }
   if (columnCount === 5) {
-    return {
-      columnCount,
-      width: "min(100%, clamp(360px, 44vw, 520px))",
-      columnGap: 14,
-      rowGap: 40,
-    };
+    return { columnCount, columnGap: 12, rowGap: 26 };
   }
   if (columnCount === 4) {
-    return {
-      columnCount,
-      width: "min(100%, clamp(320px, 40vw, 450px))",
-      columnGap: 16,
-      rowGap: 42,
-    };
+    return { columnCount, columnGap: 16, rowGap: 22 };
   }
-  return {
-    columnCount,
-    width: "min(100%, clamp(250px, 32vw, 340px))",
-    columnGap: 18,
-    rowGap: 44,
-  };
+  return { columnCount, columnGap: 18, rowGap: 22 };
 }
 
 /**

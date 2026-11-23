@@ -14,7 +14,6 @@ import type {
   WaterSortResult,
 } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
-import { ArtStyleSwitcher } from "@/games/water-sort/ui/art/ArtStyleSwitcher";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { DeadlockNotice } from "@/games/water-sort/ui/DeadlockNotice";
 import { WaterSortResultScreen } from "@/games/water-sort/ui/result/WaterSortResultScreen";
@@ -112,7 +111,7 @@ export function WaterSortPlay({
         />
       )}
     >
-      <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
+      <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-2 sm:px-6">
         <WaterSortBoard
           state={state}
           sourceBottleIndex={sourceBottleIndex}
@@ -123,9 +122,7 @@ export function WaterSortPlay({
           onClearAnimationComplete={onClearAnimationComplete}
         />
       </main>
-      {/* 盤面の後ろの実験台と流しの戸棚がこの下まで続くので、それより手前に重ねる。 */}
-      <footer className="relative grid h-28 shrink-0 items-end px-4 pb-2">
-        {progress === "playing" && <ArtStyleSwitcher />}
+      <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
         {showDeadlockNotice ? (
           <DeadlockNotice
             canUndo={canUndo}

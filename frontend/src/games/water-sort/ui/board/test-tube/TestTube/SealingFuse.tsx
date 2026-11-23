@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import type { TestTubeSealTiming } from "@/games/water-sort/ui/board/test-tube/seal-timing";
 import { prefersReducedMotion } from "@/lib/motion";
 
-/** 液が満ちきる少し前から明るさを昇らせ始め、栓が下り始めて少し経つまでに液面へ抜けさせる。 */
+/** 液が満ちきる少し前から明るい帯を昇らせ始め、栓が下り始めて少し経つまでに液面へ抜けさせる。 */
 const FUSE_LEAD_MS = 220;
 const FUSE_TAIL_MS = 60;
 
@@ -11,10 +11,10 @@ type SealingFuseProps = {
   timing: TestTubeSealTiming;
 };
 
-/** 1種類で満ちた液が、継ぎ目の無いひとつの液に溶け合う光。底から液面へ明るさが昇り、液全体がいちど澄んで明るむ。 */
+/** 1種類で満ちた液が、ひとつの液に溶け合う様子。平らな白い帯が底から液面へ昇り、液全体がいちど平らに明るむ。 */
 export function SealingFuse({ timing }: SealingFuseProps) {
-  const sheenRef = useRef<HTMLSpanElement>(null);
-  const glowRef = useRef<HTMLSpanElement>(null);
+  const bandRef = useRef<HTMLSpanElement>(null);
+  const brightenRef = useRef<HTMLSpanElement>(null);
   const { filledMs, stopperStartMs } = timing;
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export function SealingFuse({ timing }: SealingFuseProps) {
       duration: Math.max(1, stopperStartMs + FUSE_TAIL_MS - startMs),
       fill: "both",
     };
-    const sheen = sheenRef.current?.animate?.(
+    const band = bandRef.current?.animate?.(
       [
         { transform: "translateY(110%)", opacity: 0 },
         { opacity: 1, offset: 0.2 },
@@ -36,13 +36,13 @@ export function SealingFuse({ timing }: SealingFuseProps) {
       ],
       { ...options, easing: "cubic-bezier(.4,0,.3,1)" },
     );
-    const glow = glowRef.current?.animate?.(
+    const brighten = brightenRef.current?.animate?.(
       [{ opacity: 0 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }],
       { ...options, easing: "ease-in-out" },
     );
     return () => {
-      sheen?.cancel();
-      glow?.cancel();
+      band?.cancel();
+      brighten?.cancel();
     };
   }, [filledMs, stopperStartMs]);
 
@@ -53,13 +53,16 @@ export function SealingFuse({ timing }: SealingFuseProps) {
       className="pointer-events-none absolute inset-0"
     >
       <span
-        ref={glowRef}
-        className="absolute inset-0 bg-white/45 opacity-0 mix-blend-soft-light"
+        ref={brightenRef}
+        className="absolute inset-0 bg-white/25 opacity-0"
       />
+      {/* 動かす箱を液の高さの半ば近くにして、帯はその上の端に置く。箱ごと底の下から液面の上まで動かす。 */}
       <span
-        ref={sheenRef}
-        className="absolute inset-x-0 bottom-0 h-[45%] bg-linear-to-b from-transparent via-white/55 to-transparent opacity-0"
-      />
+        ref={bandRef}
+        className="absolute inset-x-0 bottom-0 h-[45%] opacity-0"
+      >
+        <span className="absolute inset-x-0 top-0 h-1/3 bg-white/50" />
+      </span>
     </span>
   );
 }

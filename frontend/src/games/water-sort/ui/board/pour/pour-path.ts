@@ -3,7 +3,14 @@ import {
   type PourTiming,
 } from "@/games/water-sort/ui/board/pour/pour-timing";
 import { getLipReachingTiltDeg } from "@/games/water-sort/ui/board/pour/tilted-liquid";
-import { CLAMP_HANDLE_TIP_POINTS } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
+import {
+  CLAMP_HANDLE_TIP_POINTS,
+  TUBE_INNER,
+  TUBE_OUTLINE_POINTS,
+  TUBE_RIM,
+  TUBE_SLOT_HEIGHT,
+  TUBE_VIEW_WIDTH,
+} from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 
 /**
  * 注ぎ元の試験管の道筋。持ち上げた所から傾けながら注ぎ先の口へ運び、口の縁を注ぎ先の口に当てたまま、
@@ -57,8 +64,7 @@ export type SourcePose = {
 };
 
 /** 試験管の形の座標（幅 36・高さ 100）での、右へ傾けたときにいちばん低くなる口の縁の外側。 */
-const RIM_LIP = { x: 33.8, y: 7 } as const;
-const TUBE_VIEW_WIDTH = 36;
+const RIM_LIP = { x: TUBE_RIM.right - 0.6, y: TUBE_RIM.bottom } as const;
 /** 口の縁を、注ぎ先の口の中ほどより注ぎ元の側へ寄せる量（注ぎ先の幅に対する割合）。 */
 const LIP_INSET_RATIO = 0.1;
 /** 口の縁を当てる高さ（注ぎ先の高さに対する割合、上の端から）。注ぎ先の口の縁にわずかに重ねて、触れて見せる。 */
@@ -71,21 +77,14 @@ const HOVER_RATIO = 0.14;
 /** 注ぎ終えて流れを切るのに起こす角度と長さ。最後のしずくが注ぎ先へ落ちきる間、口を注ぎ先に当てておく。 */
 const FLOW_CUT_TILT_DEG = 10;
 const FLOW_CUT_MS = 60;
-/** 見出しにかからないよう口の縁を注ぎ先の口の中へ下ろすときの、下ろす量の上限（注ぎ先の高さに対する割合）。首の空きの中に収める。 */
-const MAX_EXTRA_DROP_RATIO = 0.2;
+/**
+ * 見出しにかからないよう口の縁を注ぎ先の口の中へ下ろすときの、下ろす量の上限（注ぎ先の高さに対する割合）。
+ * 注ぎ先は満ちていないので4段目は空いており、口の縁をその半ばまでに収める。
+ */
+const MAX_EXTRA_DROP_RATIO =
+  (TUBE_INNER.slotTop + TUBE_SLOT_HEIGHT / 2) / 100 - LIP_DROP_RATIO;
 const RETREAT_RATIO = 0.1;
 const SIDE_RETREAT_RATIO = 0.7;
-/**
- * はみ出しを確かめる試験管の点（試験管の形の座標）。口の縁の両端、底の丸みの両端と底、
- * 右の側に柄を出した試験管ばさみの柄の先。左に柄を出すときは左右を返す。
- */
-const EXTENT_POINTS = [
-  [1.7, 3.4],
-  [34.3, 3.4],
-  [3.6, 88],
-  [32.4, 88],
-  [18, 97.6],
-] as const;
 const BOUNDS_SAMPLE_COUNT = 48;
 /** はみ出しとみなさない量（px）。 */
 const OVERFLOW_TOLERANCE_PX = 0.5;
@@ -239,7 +238,8 @@ function getOverflow(
       ? ([TUBE_VIEW_WIDTH - x, y] as const)
       : ([x, y] as const),
   );
-  const points = [...EXTENT_POINTS, ...handle].map(([x, y]) =>
+  // はみ出しを確かめる点は、試験管の外形と、試験管ばさみの柄の先。
+  const points = [...TUBE_OUTLINE_POINTS, ...handle].map(([x, y]) =>
     toPivotOffset(path.source, x, y),
   );
   const pivotX = path.source.left + path.source.width / 2;

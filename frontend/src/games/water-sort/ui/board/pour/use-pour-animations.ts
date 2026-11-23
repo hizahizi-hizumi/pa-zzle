@@ -184,14 +184,28 @@ function captureRestingRect(
 const POUR_EDGE_MARGIN_PX = 4;
 
 /**
- * 注ぐ動きを収める範囲。上は盤面を置く `main` の上端（プレイ画面とチュートリアルでは見出しの下端）、左右は画面の端。
+ * 盤面を置く `main` の前の見出し（プレイ画面とチュートリアル）の、文字とボタンの下端。
+ * 見出しの箱の下の、何も描かない余白には注ぐ動きがかかってよい。見出しが無ければ `main` の上端。
+ */
+function getHeadingContentBottom(main: HTMLElement): number {
+  const heading = main.parentElement?.querySelector(":scope > header");
+  const bottoms = heading
+    ? [...heading.children].map((child) => child.getBoundingClientRect().bottom)
+    : [];
+  return bottoms.length > 0
+    ? Math.max(...bottoms)
+    : main.getBoundingClientRect().top;
+}
+
+/**
+ * 注ぐ動きを収める範囲。上は見出しの文字とボタンの下端、左右は画面の端。
  * `main` の外に置く盤面（遊び方の図）は、上も画面の端まで使う。
  */
 function capturePourBounds(element: HTMLElement): PourBounds {
   const main = element.closest("main");
   const viewportWidth = document.documentElement.clientWidth;
   return {
-    top: (main?.getBoundingClientRect().top ?? 0) + POUR_EDGE_MARGIN_PX,
+    top: (main ? getHeadingContentBottom(main) : 0) + POUR_EDGE_MARGIN_PX,
     left: POUR_EDGE_MARGIN_PX,
     right: viewportWidth - POUR_EDGE_MARGIN_PX,
   };
