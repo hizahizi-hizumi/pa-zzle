@@ -4,6 +4,8 @@ export type RackRow = {
 };
 
 export type RackLayout = {
+  /** 盤面より上に並ぶ見出しと進み具合の、文字とボタンの下の端（入れ物の座標）。盤面がそれらの下に無ければ、画面の上の端。 */
+  headingBottom: number;
   width: number;
   height: number;
   tubeWidth: number;
@@ -20,6 +22,29 @@ function getLiftY(element: HTMLElement): number {
   const translateY = getComputedStyle(element).translate.split(" ")[1];
   const value = translateY ? Number.parseFloat(translateY) : 0;
   return Number.isFinite(value) ? value : 0;
+}
+
+/**
+ * 盤面を置く `main` より前に並ぶ要素（プレイ画面の見出し、チュートリアルの見出しと進み具合）の、文字とボタンの下の端（viewport の px）。
+ * 見出しの箱の下の、何も描かない余白は含めない。地のように重ねて置いた要素は並びに入らないので除く。`main` の外なら画面の上の端。
+ */
+function getHeadingContentBottom(container: HTMLElement): number {
+  const main = container.closest("main");
+  const bottoms: number[] = [];
+  for (
+    let sibling = main?.previousElementSibling;
+    sibling;
+    sibling = sibling.previousElementSibling
+  ) {
+    const { position } = getComputedStyle(sibling);
+    if (position === "absolute" || position === "fixed") {
+      continue;
+    }
+    for (const child of sibling.children) {
+      bottoms.push(child.getBoundingClientRect().bottom);
+    }
+  }
+  return bottoms.length > 0 ? Math.max(...bottoms) : 0;
 }
 
 export function measureRackLayout(
@@ -51,6 +76,7 @@ export function measureRackLayout(
   }
 
   return {
+    headingBottom: getHeadingContentBottom(container) - containerRect.top,
     width: containerRect.width,
     height: containerRect.height,
     tubeWidth: first.width,

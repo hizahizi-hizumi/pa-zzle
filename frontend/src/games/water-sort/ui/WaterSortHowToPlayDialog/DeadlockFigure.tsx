@@ -1,8 +1,8 @@
 import { DeadlockNotice } from "@/games/water-sort/ui/DeadlockNotice";
+import { labSceneColorClassName } from "@/games/water-sort/ui/lab-scene-colors";
 import { BottleSizeScope } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/BottleSizeScope";
 import { deadlockFigure } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/figure-boards";
 import { HowToPlayFigure } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/HowToPlayFigure";
-import { waterSortGroundClassName } from "@/games/water-sort/ui/water-sort-ground-color";
 import { cn } from "@/lib/utils";
 
 function ignoreNoticePress() {}
@@ -22,12 +22,15 @@ export function DeadlockFigure() {
       <BottleSizeScope size="example">
         <HowToPlayFigure frame={deadlockFigure} />
       </BottleSizeScope>
-      {/* 知らせのボタンの面は例の面と同じ色で見えなくなるので、プレイ画面と同じ地の上に置く。 */}
+      {/* 知らせのボタンの面は例の面と同じ色で見えなくなるので、プレイ画面と同じ壁の色の上に置く。 */}
       {/* ほかの押せない図と同じく、本番の見た目のまま押せなくし、指を重ねても押せる形のカーソルを出さない。 */}
       <span
         aria-hidden="true"
         inert
-        className={cn("flex rounded-md", waterSortGroundClassName)}
+        className={cn(
+          "flex rounded-md bg-(--lab-wall)",
+          labSceneColorClassName,
+        )}
       >
         <DeadlockNotice
           canUndo
