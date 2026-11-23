@@ -1,3 +1,4 @@
+import { magicSquareExampleSquares } from "@/games/magic-square/problem/example-squares";
 import {
   getMagicSquareLineCellIndices,
   type MagicSquareBoard,
@@ -153,6 +154,10 @@ describe("盤面", () => {
     const solved = isMagicSquareSolved(goal);
 
     expect(solved).toBe(true);
+  });
+
+  test("解き終えた盤面が、問題集から除く例の魔方陣と同じこと", () => {
+    expect(goal.cells).toEqual(magicSquareExampleSquares[4]);
   });
 
   test("始めの盤面は、どの列も空いたマスが2つ以上あること", () => {
