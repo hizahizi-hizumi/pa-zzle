@@ -20,6 +20,9 @@ function createFeatures(
     rules: Object.fromEntries(
       Object.keys(SHUTTLE_PARKING_NAIVE_RULES).map((rule) => [rule, 0.5]),
     ) as ShuttleParkingDifficultyFeatures["rules"],
+    bestRules: Object.fromEntries(
+      Object.keys(SHUTTLE_PARKING_NAIVE_RULES).map((rule) => [rule, 0.5]),
+    ) as ShuttleParkingDifficultyFeatures["bestRules"],
     decisions: {
       best: noDecisions,
       continuation: noDecisions,
@@ -131,12 +134,27 @@ describe("assessShuttleParkingDifficulty", () => {
     expect(assessment).toEqual({ status: "classified", difficulty: "2" });
   });
 
-  test("Lv3 以上で、素朴な規則のどれかが 0.8 以上で勝つなら範囲外にすること", () => {
+  test("Lv3 以上で、素朴な規則のどれかが同点のどれかの選び方で 0.8 以上で勝つなら範囲外にすること", () => {
     const features = createFeatures(5);
 
     const assessment = assess({
       ...features,
-      rules: { ...features.rules, deepDig: 0.8 },
+      bestRules: { ...features.bestRules, deepCommit: 0.8 },
+    });
+
+    expect(assessment).toEqual({
+      status: "out-of-range",
+      reason: "naiveCeiling",
+    });
+  });
+
+  test("同点を一様に選んだ勝率だけが 0.8 未満でも、選び方の最大で判定すること", () => {
+    const features = createFeatures(8);
+
+    const assessment = assess({
+      ...features,
+      rules: { ...features.rules, deepDig: 0.5 },
+      bestRules: { ...features.bestRules, deepDig: 1 },
     });
 
     expect(assessment).toEqual({
@@ -150,9 +168,9 @@ describe("assessShuttleParkingDifficulty", () => {
 
     const assessment = assess({
       ...features,
-      rules: Object.fromEntries(
-        Object.keys(features.rules).map((rule) => [rule, 0]),
-      ) as ShuttleParkingDifficultyFeatures["rules"],
+      bestRules: Object.fromEntries(
+        Object.keys(features.bestRules).map((rule) => [rule, 0]),
+      ) as ShuttleParkingDifficultyFeatures["bestRules"],
     });
 
     expect(assessment).toEqual({

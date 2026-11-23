@@ -143,22 +143,27 @@ export function createShuttleParkingPlayKey(
   return `${problem.bayCount}|${[...labels].sort().join(";")}|${passengers}`;
 }
 
-/** 2つの問題が同じ位置・向き・定員で持つ車の台数。色は見ない。 */
+/**
+ * 2つの問題が同じ位置・向き・定員で持つ車の台数。色は見ない。片方を回転・反転した8通りのうち最も多いもの
+ * （回転・反転すると重なる盤面も近い盤面として数える）。
+ */
 export function countSharedShuttleParkingCars(
   problem: ShuttleParkingProblem,
   other: ShuttleParkingProblem,
 ): number {
-  if (problem.lot.size !== other.lot.size) return 0;
-  const placements = new Set(
-    other.lot.cars.map(
-      (car) => `${car.row}:${car.column}:${car.orientation}:${car.capacity}`,
-    ),
+  const { size } = problem.lot;
+  if (size !== other.lot.size) return 0;
+  const placements = problem.lot.cars.map((car) =>
+    transformCar(car, size, transforms[0]!),
   );
-  return problem.lot.cars.filter((car) =>
-    placements.has(
-      `${car.row}:${car.column}:${car.orientation}:${car.capacity}`,
-    ),
-  ).length;
+  return Math.max(
+    ...transforms.map((transform) => {
+      const moved = new Set(
+        other.lot.cars.map((car) => transformCar(car, size, transform)),
+      );
+      return placements.filter((placement) => moved.has(placement)).length;
+    }),
+  );
 }
 
 /** 出せる車を一様に無作為に選び続けても、必ず全員を送り出せる問題。 */

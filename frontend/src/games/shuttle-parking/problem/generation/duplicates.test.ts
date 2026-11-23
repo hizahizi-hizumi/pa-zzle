@@ -163,6 +163,14 @@ describe("countSharedShuttleParkingCars", () => {
   });
 });
 
+describe("countSharedShuttleParkingCars の回転・反転", () => {
+  test("左右を反転すると重なる盤面の車を数えること", () => {
+    const shared = countSharedShuttleParkingCars(problem, mirrored);
+
+    expect(shared).toBe(3);
+  });
+});
+
 describe("isShuttleParkingTrivial", () => {
   test("先に青を出すと詰む問題は、無作為に出すと負けうるので自明ではないこと", () => {
     expect(isShuttleParkingTrivial(problem)).toBe(false);

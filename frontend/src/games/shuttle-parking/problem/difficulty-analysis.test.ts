@@ -41,6 +41,7 @@ function toProblem(
 
 const researchRules = {
   rules: SHUTTLE_PARKING_RESEARCH_RULES,
+  tieBreaks: "uniform" as const,
   checksFreePath: false,
 };
 

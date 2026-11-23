@@ -1,4 +1,5 @@
 import {
+  measureShuttleParkingRuleBestWinProbability,
   measureShuttleParkingRuleWinProbability,
   SHUTTLE_PARKING_NAIVE_RULES,
   type ShuttleParkingNaiveRule,
@@ -23,7 +24,8 @@ import type { ShuttleParkingProblem } from "@/games/shuttle-parking/problem/prob
  *   `best` は罠の深さを最善の続きで、`continuation` は罠に気づかず先頭に合わせて続けた場合で取る。
  * - `window`: 先回りする人（先頭から5人に出てくる色の車とそれを塞ぐ車を候補にする）の同じ量。
  * - `freePath`: 罠は先頭に合わせる人の候補で数え、進め方は勝つ手ならどれでもよいとしたときの同じ量の最小。
- * - `rules`: 前もって固定した素朴な規則ごとの勝率。
+ * - `rules`: 前もって固定した素朴な規則ごとの、同点を一様に選んだ勝率。
+ * - `bestRules`: 同じ規則の、同点の選び方（`SHUTTLE_PARKING_TIE_BREAKS`）ごとの勝率の最大。上位を止める条件はこちらで見る。
  * - `decisions`: 記録だけ。勝ち筋の上で出会う判断（同じ車が罠のまま続く局面の並びを1つ）の回数。
  */
 export type ShuttleParkingDifficultyFeatures = {
@@ -35,6 +37,7 @@ export type ShuttleParkingDifficultyFeatures = {
   window: ShuttleParkingWeightBounds;
   freePathMinimumWeight: number;
   rules: Record<ShuttleParkingNaiveRule, number>;
+  bestRules: Record<ShuttleParkingNaiveRule, number>;
   decisions: {
     best: ShuttleParkingDecisionCounts;
     continuation: ShuttleParkingDecisionCounts;
@@ -52,6 +55,17 @@ export type ShuttleParkingDifficultyAnalysis =
 
 function roundProbability(value: number): number {
   return Math.round(value * 1_000_000) / 1_000_000;
+}
+
+function measureRules(
+  game: AnalysisGame,
+  measure: (game: AnalysisGame, rule: ShuttleParkingNaiveRule) => number,
+): Record<ShuttleParkingNaiveRule, number> {
+  return Object.fromEntries(
+    (Object.keys(SHUTTLE_PARKING_NAIVE_RULES) as ShuttleParkingNaiveRule[]).map(
+      (rule) => [rule, roundProbability(measure(game, rule))],
+    ),
+  ) as Record<ShuttleParkingNaiveRule, number>;
 }
 
 export function analyzeShuttleParkingDifficulty(
@@ -86,14 +100,11 @@ export function analyzeShuttleParkingDifficulty(
         SHUTTLE_PARKING_HEAD_FIRST_WIDEN,
         { freePath: true },
       ).minimum,
-      rules: Object.fromEntries(
-        (
-          Object.keys(SHUTTLE_PARKING_NAIVE_RULES) as ShuttleParkingNaiveRule[]
-        ).map((rule) => [
-          rule,
-          roundProbability(measureShuttleParkingRuleWinProbability(game, rule)),
-        ]),
-      ) as Record<ShuttleParkingNaiveRule, number>,
+      rules: measureRules(game, measureShuttleParkingRuleWinProbability),
+      bestRules: measureRules(
+        game,
+        measureShuttleParkingRuleBestWinProbability,
+      ),
       decisions: {
         best: countShuttleParkingDecisions(
           best,

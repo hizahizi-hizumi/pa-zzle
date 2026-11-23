@@ -28,6 +28,12 @@ import {
   countShuttleParkingBacktracks,
   SHUTTLE_PARKING_RESEARCH_RULES,
 } from "@/games/shuttle-parking/problem/generation/naive-rules";
+import {
+  measureShuttleParkingLookAheadWinProbability,
+  measureShuttleParkingTrapMoves,
+  measureShuttleParkingWeightBounds,
+  ShuttleParkingReader,
+} from "@/games/shuttle-parking/problem/generation/readers";
 import { AnalysisGame } from "@/games/shuttle-parking/problem/generation/state-game";
 import {
   generateShuttleParkingCandidate,
@@ -52,7 +58,7 @@ function formatUsage(): string {
 
 生成条件（駐車場の大きさ × 出口の辺）の4組ごとに候補を番号順に作って分析し、結果を候補ごとに保存する（--cache）。
 保存した候補から、各組の中では候補番号の順に、分類され、どう出しても必ず勝つ問題でなく、見た目のキー・解き味のキーが
-採った問題と重ならず、同じレベルの採った問題と車を7台以上共有しない問題を採る。各レベルでは組を巡回して並べる。
+採った問題と重ならず、同じレベルの採った問題と（回転・反転して）車を7台以上共有しない問題を採る。各レベルでは組を巡回して並べる。
 採る問題は保存の順やワーカー数に依存しない。止めても、同じ --cache で流し直せば続きから作る。
 
 Options:
@@ -62,14 +68,17 @@ Options:
   --batch <n>          1つのワーカーに渡す候補の数 (default: 500)
   --jobs <n>           並列ワーカー数 (default: 4)
   --seconds <n>        この秒数を過ぎたら、渡したバッチを終えて止める（続きは流し直す） (default: 無制限)
-  --stats              問題集を書かず、保存した候補の分布を出す
+  --pool <file>        書く・読む問題集のファイル (default: src/games/shuttle-parking/problem/problem-pool.json)
+  --stats              問題集を書かず、保存した候補と問題集の分布を出す
   --verify             問題集を書かず、今の問題集の全問を分析し直して確かめる`;
 }
 
-const outputPath = new URL(
-  "../src/games/shuttle-parking/problem/problem-pool.json",
-  import.meta.url,
-);
+const outputPath =
+  readOption("pool") ??
+  new URL(
+    "../src/games/shuttle-parking/problem/problem-pool.json",
+    import.meta.url,
+  ).pathname;
 const defaultCacheDirectory = path.join(tmpdir(), "shuttle-parking-pool-cache");
 
 /** 生成条件の組。この順に巡回して並べる。 */
@@ -162,6 +171,7 @@ function analyzeCandidate(comboIndex: number, index: number): CandidateResult {
   const assessment = assessShuttleParkingDifficulty(analysis);
   const research = assessShuttleParkingDifficulty(analysis, {
     rules: SHUTTLE_PARKING_RESEARCH_RULES,
+    tieBreaks: "uniform",
     checksFreePath: false,
   });
   return {
@@ -266,21 +276,6 @@ type Selection = {
   contiguous: number[];
 };
 
-/** 問題の符号から、車ごとの位置・向き・定員の書き方（色を除く）。 */
-function listPlacements(entry: string): string[] {
-  const cars = entry.split("-")[1] ?? "";
-  return Array.from({ length: cars.length / 5 }, (_, index) =>
-    cars.slice(index * 5, index * 5 + 4),
-  );
-}
-
-function countSharedPlacements(
-  placements: readonly string[],
-  other: ReadonlySet<string>,
-): number {
-  return placements.filter((placement) => other.has(placement)).length;
-}
-
 /**
  * 保存した候補から採る。組の中は候補番号順に、全組をまたいで「組0の0番、組1の0番、…、組0の1番…」の順で重なりを見る。
  * 番号の抜けがある所から先はまだ見ない（分析し終えた範囲だけで決める）。1つの組の1つのレベルからは、多くても `perLevel` 問。
@@ -303,9 +298,9 @@ function select(
   );
   const visualKeys = new Set<string>();
   const playKeys = new Set<string>();
-  const placementsByLevel = new Map<
+  const problemsByLevel = new Map<
     ShuttleParkingDifficulty,
-    { size: string; placements: Set<string> }[]
+    ShuttleParkingProblem[]
   >(difficultyLevels.map(({ id }) => [id, []]));
   const longest = Math.max(...contiguous);
   for (let index = 0; index < longest; index += 1) {
@@ -325,25 +320,20 @@ function select(
       if (levelAccepted[comboIndex]!.length >= perLevel) return;
       const [visual, play] = result.keys;
       if (visualKeys.has(visual) || playKeys.has(play)) return;
-      const size = result.entry[0]!;
-      const placements = listPlacements(result.entry);
+      const { problem } = restoreShuttleParkingPoolEntry(result.entry);
       if (
-        placementsByLevel
+        problemsByLevel
           .get(level)!
           .some(
             (other) =>
-              other.size === size &&
-              countSharedPlacements(placements, other.placements) >=
-                SHARED_CAR_LIMIT,
+              countSharedShuttleParkingCars(problem, other) >= SHARED_CAR_LIMIT,
           )
       ) {
         return;
       }
       visualKeys.add(visual);
       playKeys.add(play);
-      placementsByLevel
-        .get(level)!
-        .push({ size, placements: new Set(placements) });
+      problemsByLevel.get(level)!.push(problem);
       levelAccepted[comboIndex]!.push(result);
     });
   }
@@ -542,6 +532,39 @@ type PoolRow = {
   values: Record<string, number>;
 };
 
+const LOOK_AHEAD_MOVES = 4;
+
+/** 隣のレベルで、上のレベルの問題が下のレベルの問題より「難しい側」に出る確率（同点は半分）。 */
+function printLevelOrder(rows: readonly PoolRow[]): void {
+  const measures: [string, (row: PoolRow) => number][] = [
+    ["戻す回数", (row) => row.values.試し出しで戻す回数!],
+    [
+      "規則で負ける",
+      (row) => -row.values["素朴な規則の最高勝率（同点の選び方の最大）"]!,
+    ],
+    ["無作為で負ける", (row) => -row.values.一様に無作為な人の勝率!],
+  ];
+  for (let index = 0; index + 1 < difficultyLevels.length; index += 1) {
+    const lower = rows.filter(
+      (row) => row.level === difficultyLevels[index]!.id,
+    );
+    const upper = rows.filter(
+      (row) => row.level === difficultyLevels[index + 1]!.id,
+    );
+    const text = measures.map(([name, measure]) => {
+      let score = 0;
+      for (const low of lower) {
+        for (const high of upper) {
+          const difference = measure(high) - measure(low);
+          score += difference > 0 ? 1 : difference === 0 ? 0.5 : 0;
+        }
+      }
+      return `${name} ${(score / lower.length / upper.length).toFixed(2)}`;
+    });
+    console.log(`隣のレベル ${index + 1}-${index + 2}: ${text.join("、")}`);
+  }
+}
+
 /** 問題集の全問を分析し直し、レベルごとの分布（最小/10/50/90/最大）を出す（検査 B1・B2・C1・D1）。 */
 function printPoolStats(): void {
   const pool = JSON.parse(
@@ -562,8 +585,25 @@ function printPoolStats(): void {
           "重さ（気づかず続けた場合）": features.headFirst.continuation.minimum,
           先回りする人の重さ: features.window.minimum,
           進め方を広げた重さ: features.freePathMinimumWeight,
-          素朴な規則の最高勝率: Math.max(...Object.values(features.rules)),
-          deepDig: features.rules.deepDig,
+          "素朴な規則の最高勝率（同点は一様）": Math.max(
+            ...Object.values(features.rules),
+          ),
+          "素朴な規則の最高勝率（同点の選び方の最大）": Math.max(
+            ...Object.values(features.bestRules),
+          ),
+          "罠の重さを手数で（記録だけ）": measureShuttleParkingTrapMoves(
+            new ShuttleParkingReader(game, "best"),
+          ),
+          "4手先まで読む人の勝率（記録だけ）":
+            measureShuttleParkingLookAheadWinProbability(
+              new ShuttleParkingReader(game, "best"),
+              LOOK_AHEAD_MOVES,
+            ),
+          "出せる車すべてを候補にした重さ（記録だけ）":
+            measureShuttleParkingWeightBounds(
+              new ShuttleParkingReader(game, "best"),
+              ["all"],
+            ).minimum,
           一様に無作為な人の勝率: game.uniformWinProbability(),
           試し出しで戻す回数: countShuttleParkingBacktracks(game).backtracks,
           "判断の回数（重さ1以上・記録だけ）":
@@ -587,6 +627,41 @@ function printPoolStats(): void {
         .join(" | ")}`,
     );
   }
+  printLevelOrder(rows);
+  for (const { id } of difficultyLevels) {
+    const levelRows = rows.filter((row) => row.level === id);
+    const share = (predicate: (row: PoolRow) => boolean) =>
+      `${((levelRows.filter(predicate).length / levelRows.length) * 100).toFixed(0)}%`;
+    const colors = new Map<number, number>();
+    for (const row of levelRows) {
+      const count = new Set(row.problem.lot.cars.map(({ color }) => color))
+        .size;
+      colors.set(count, (colors.get(count) ?? 0) + 1);
+    }
+    console.log(
+      `Lv${id}: 4手先まで読む人が勝率0.8以上 ${share((row) => row.values["4手先まで読む人の勝率（記録だけ）"]! >= 0.8)}、出せる車すべてで5人以上先の罠 ${share((row) => row.values["出せる車すべてを候補にした重さ（記録だけ）"]! >= 5)}、色の数 ${[
+        ...colors,
+      ]
+        .sort()
+        .map(([count, value]) => `${count}色 ${value}`)
+        .join(", ")}`,
+    );
+  }
+  let crossLevelPairs = 0;
+  rows.forEach((row, index) => {
+    for (const other of rows.slice(index + 1)) {
+      if (
+        other.level !== row.level &&
+        countSharedShuttleParkingCars(row.problem, other.problem) >=
+          SHARED_CAR_LIMIT
+      ) {
+        crossLevelPairs += 1;
+      }
+    }
+  });
+  console.log(
+    `レベルをまたいで車を7台以上共有する組（除かない）: ${crossLevelPairs}`,
+  );
   for (const size of SHUTTLE_PARKING_LOT_SIZES) {
     console.log(
       `${size}×${size} の重さ: ${difficultyLevels

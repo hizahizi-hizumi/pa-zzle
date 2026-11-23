@@ -13,13 +13,22 @@ import {
 
 /**
  * 先読みせず、前もって固定した規則だけで出す人（素朴な解き方の組）。上位の問題が規則だけで勝ててしまわないかを測るのに使う。
- * 規則は「候補の作り方」と「候補の中の選び方（鍵の小さい車、同じなら一様に）」の組。
+ * 規則は「候補の作り方」と「候補の中の選び方（鍵の小さい車）」の組。鍵が並んだ車の選び方（同点の選び方）は別に決める。
  * - 候補 `cheapest`: 素朴な解き方（先頭の色の車をすぐ出せれば出し、無ければ塞ぎの最も少ない先頭の色の車を掘る）。
  * - 候補 `wide`: 掘る場面で、どの先頭の色の車を掘ってもよい。
  * - 候補 `deep`: 先頭の色の車のうち、出すのに要る台数が空いている待機枠に収まる中で、最も深く埋まった車を掘る。
+ * - 候補 `all`: 待機枠がすぐ埋まる手を除いた、出せる車すべて。
+ * `deepCommit` は `deep` と同じ目標を選び、選んだ目標の車を出すまで目標を変えない（掘った車を使い切る）。
  */
-type CandidateBase = "cheapest" | "wide" | "deep";
-type RuleKey = "any" | "small" | "big" | "unblock" | "needed" | "fill";
+type CandidateBase = "cheapest" | "wide" | "deep" | "all";
+type RuleKey =
+  | "any"
+  | "small"
+  | "big"
+  | "unblock"
+  | "needed"
+  | "fill"
+  | "untangle";
 
 export const SHUTTLE_PARKING_NAIVE_RULES = {
   any: ["cheapest", "any"],
@@ -31,9 +40,26 @@ export const SHUTTLE_PARKING_NAIVE_RULES = {
   wideNeeded: ["wide", "needed"],
   wideFill: ["wide", "fill"],
   deepDig: ["deep", "any"],
+  deepCommit: ["deep", "any"],
+  untangle: ["all", "untangle"],
 } as const satisfies Record<string, readonly [CandidateBase, RuleKey]>;
 
 export type ShuttleParkingNaiveRule = keyof typeof SHUTTLE_PARKING_NAIVE_RULES;
+
+/**
+ * 鍵が並んだ車の選び方。`uniform` は一様に選ぶ（勝率はその平均）。ほかは、並んだ車をこの鍵（規則の鍵と同じ定義）で
+ * さらに絞り、それでも並べば一様に選ぶ。素朴な規則の上限は、規則ごと・選び方ごとの勝率の最大で見る。
+ */
+export const SHUTTLE_PARKING_TIE_BREAKS = [
+  "uniform",
+  "needed",
+  "unblock",
+  "fill",
+  "small",
+  "big",
+] as const;
+export type ShuttleParkingTieBreak =
+  (typeof SHUTTLE_PARKING_TIE_BREAKS)[number];
 
 /** 調査コード（`shuttle-parking_difficulty.py`）が持つ8つの規則。移植の確かめに使う。 */
 export const SHUTTLE_PARKING_RESEARCH_RULES = [
@@ -120,6 +146,15 @@ const ruleKeys = {
     }
     return [NO_SHORTAGE];
   },
+  // 進路をふさいでいる「いま出られない車」が最も多い車を先に。並べば、その色が列の先頭から最初に現れる位置が前の車。
+  untangle: (game, state, carId) => {
+    const head = game.progress(state);
+    const first = game.queueColors.indexOf(game.colorOf[carId]!, head);
+    return [
+      -listBlockedBy(game, state, carId).length,
+      first < 0 ? NO_SHORTAGE : first,
+    ];
+  },
 } as const satisfies Record<
   RuleKey,
   (game: AnalysisGame, state: AnalysisState, carId: number) => number[]
@@ -163,44 +198,63 @@ function closeExit(game: AnalysisGame, mask: number, carId: number): number {
   return best ?? 1 << carId;
 }
 
-function listDeepMoves(game: AnalysisGame, state: AnalysisState): number[] {
-  const moves = listSafeMoves(game, state);
-  if (moves.length === 0) return [];
+/** `deep` の目標: 先頭の色の車のうち、出すのに出す車の台数が空いている待機枠以下で、その台数が最も多い車（並べば全部）。 */
+function listDeepTargets(game: AnalysisGame, state: AnalysisState): number[] {
   const { mask } = state;
   const headMask =
     game.colorMasks[game.queueColors[game.progress(state)]!]! & mask;
   const freeBays = game.bays - game.waiting(state);
   const fitting = [...iterateBits(headMask)]
-    .map((carId) => closeExit(game, mask, carId))
-    .filter((closure) => countBits(closure) <= freeBays);
-  if (fitting.length) {
-    const deepest = Math.max(...fitting.map(countBits));
-    const dig = fitting
-      .filter((closure) => countBits(closure) === deepest)
-      .reduce((union, closure) => union | closure, 0);
-    const digging = moves.filter((carId) => (dig >> carId) & 1);
-    if (digging.length) return digging;
-  }
-  return listNaiveMoves(game, state);
+    .map((carId) => ({ carId, closure: closeExit(game, mask, carId) }))
+    .filter(({ closure }) => countBits(closure) <= freeBays);
+  if (fitting.length === 0) return [];
+  const deepest = Math.max(...fitting.map(({ closure }) => countBits(closure)));
+  return fitting
+    .filter(({ closure }) => countBits(closure) === deepest)
+    .map(({ carId }) => carId);
+}
+
+/** `targets` を出すのに出す車のうち、いま出せる安全な手。無ければ素朴の候補。 */
+function listDiggingMoves(
+  game: AnalysisGame,
+  state: AnalysisState,
+  moves: readonly number[],
+  targets: readonly number[],
+): number[] {
+  const dig = targets.reduce(
+    (union, carId) => union | closeExit(game, state.mask, carId),
+    0,
+  );
+  const digging = moves.filter((carId) => (dig >> carId) & 1);
+  return digging.length ? digging : listNaiveMoves(game, state);
+}
+
+function listDeepMoves(game: AnalysisGame, state: AnalysisState): number[] {
+  const moves = listSafeMoves(game, state);
+  if (moves.length === 0) return [];
+  const targets = listDeepTargets(game, state);
+  return targets.length
+    ? listDiggingMoves(game, state, moves, targets)
+    : listNaiveMoves(game, state);
 }
 
 const candidateBases = {
   cheapest: listNaiveMoves,
   wide: listWideMoves,
   deep: listDeepMoves,
+  all: listSafeMoves,
 } as const satisfies Record<
   CandidateBase,
   (game: AnalysisGame, state: AnalysisState) => number[]
 >;
 
-function listRuleMoves(
+function filterByKey(
   game: AnalysisGame,
   state: AnalysisState,
-  rule: ShuttleParkingNaiveRule,
+  options: readonly number[],
+  keyName: RuleKey,
 ): number[] {
-  const [base, keyName] = SHUTTLE_PARKING_NAIVE_RULES[rule];
-  const options = candidateBases[base](game, state);
-  if (options.length === 0) return [];
+  if (options.length <= 1) return [...options];
   const keys = options.map((carId) => ruleKeys[keyName](game, state, carId));
   const best = keys.reduce((lowest, key) =>
     compareKeys(key, lowest) < 0 ? key : lowest,
@@ -208,29 +262,123 @@ function listRuleMoves(
   return options.filter((_, index) => compareKeys(keys[index]!, best) === 0);
 }
 
-/** 規則だけで出す人の勝率（候補が同点なら一様に選ぶ）。 */
+function breakTies(
+  game: AnalysisGame,
+  state: AnalysisState,
+  options: readonly number[],
+  tieBreak: ShuttleParkingTieBreak,
+): number[] {
+  return tieBreak === "uniform"
+    ? [...options]
+    : filterByKey(game, state, options, tieBreak);
+}
+
+function listRuleMoves(
+  game: AnalysisGame,
+  state: AnalysisState,
+  rule: ShuttleParkingNaiveRule,
+  tieBreak: ShuttleParkingTieBreak,
+): number[] {
+  const [base, keyName] = SHUTTLE_PARKING_NAIVE_RULES[rule];
+  const options = candidateBases[base](game, state);
+  if (options.length === 0) return [];
+  return breakTies(
+    game,
+    state,
+    filterByKey(game, state, options, keyName),
+    tieBreak,
+  );
+}
+
+const NO_TARGET = -1;
+
+/** `deepCommit` の候補と、それぞれの手の後の目標。目標の車が残っていて先頭の色なら、目標を変えない。 */
+function listCommittedMoves(
+  game: AnalysisGame,
+  state: AnalysisState,
+  target: number,
+  tieBreak: ShuttleParkingTieBreak,
+): { carId: number; next: number }[][] {
+  const moves = listSafeMoves(game, state);
+  if (moves.length === 0) return [];
+  const headMask =
+    game.colorMasks[game.queueColors[game.progress(state)]!]! & state.mask;
+  const kept = target !== NO_TARGET && (headMask >> target) & 1;
+  const targets = kept ? [target] : listDeepTargets(game, state);
+  if (targets.length === 0) {
+    return [
+      breakTies(game, state, listNaiveMoves(game, state), tieBreak).map(
+        (carId) => ({ carId, next: NO_TARGET }),
+      ),
+    ];
+  }
+  return targets.map((goal) => {
+    const digging = moves.includes(goal)
+      ? [goal]
+      : listDiggingMoves(game, state, moves, [goal]);
+    return breakTies(game, state, digging, tieBreak).map((carId) => ({
+      carId,
+      next: carId === goal ? NO_TARGET : goal,
+    }));
+  });
+}
+
+/**
+ * 規則だけで出す人の勝率。`tieBreak` が `uniform` なら並んだ車を一様に選ぶ。
+ * `deepCommit` は、目標が並べば目標を一様に選び、目標ごとの候補をさらに `tieBreak` で選ぶ。
+ */
 export function measureShuttleParkingRuleWinProbability(
   game: AnalysisGame,
   rule: ShuttleParkingNaiveRule,
+  tieBreak: ShuttleParkingTieBreak = "uniform",
 ): number {
   const cache = new Map<string, number>();
-  const value = (state: AnalysisState): number => {
+  const average = (values: readonly number[]) =>
+    values.length
+      ? values.reduce((sum, value) => sum + value, 0) / values.length
+      : 0;
+  const value = (state: AnalysisState, target: number): number => {
     if (state.mask === 0) return 1;
     if (!game.wins(state)) return 0;
-    const key = createAnalysisStateKey(state);
+    const key = `${createAnalysisStateKey(state)}|${target}`;
     const cached = cache.get(key);
     if (cached !== undefined) return cached;
-    const options = listRuleMoves(game, state, rule);
-    const result = options.length
-      ? options.reduce(
-          (sum, carId) => sum + value(game.step(state, carId)),
-          0,
-        ) / options.length
-      : 0;
+    const result =
+      rule === "deepCommit"
+        ? average(
+            listCommittedMoves(game, state, target, tieBreak).map((options) =>
+              average(
+                options.map(({ carId, next }) =>
+                  value(game.step(state, carId), next),
+                ),
+              ),
+            ),
+          )
+        : average(
+            listRuleMoves(game, state, rule, tieBreak).map((carId) =>
+              value(game.step(state, carId), NO_TARGET),
+            ),
+          );
     cache.set(key, result);
     return result;
   };
-  return value(game.start);
+  return value(game.start, NO_TARGET);
+}
+
+/** 規則の、同点の選び方ごとの勝率の最大。 */
+export function measureShuttleParkingRuleBestWinProbability(
+  game: AnalysisGame,
+  rule: ShuttleParkingNaiveRule,
+): number {
+  let best = 0;
+  for (const tieBreak of SHUTTLE_PARKING_TIE_BREAKS) {
+    best = Math.max(
+      best,
+      measureShuttleParkingRuleWinProbability(game, rule, tieBreak),
+    );
+    if (best >= 1) break;
+  }
+  return best;
 }
 
 /**

@@ -344,3 +344,90 @@ export function countShuttleParkingDecisions(
     states: memo.size,
   };
 }
+
+/** この状態から、どう出しても出し続けられる車の台数の最大（詰むまでの手数の最大）。 */
+function createMaximumMoves(
+  game: AnalysisGame,
+): (state: AnalysisState) => number {
+  const memo = new Map<string, number>();
+  const visit = (state: AnalysisState): number => {
+    const key = createAnalysisStateKey(state);
+    const cached = memo.get(key);
+    if (cached !== undefined) return cached;
+    const moves = game.moves(state);
+    const result = moves.length
+      ? 1 + Math.max(...moves.map((carId) => visit(game.step(state, carId))))
+      : 0;
+    memo.set(key, result);
+    return result;
+  };
+  return visit;
+}
+
+/**
+ * 記録だけ: 罠の重さを人数ではなく手数（罠の手を含め、詰むまでに出せる車の台数の最大）で数えた、
+ * 先頭に合わせる人の勝ち筋の重さの最小。
+ */
+export function measureShuttleParkingTrapMoves(
+  reader: ShuttleParkingReader,
+): number {
+  const { game } = reader;
+  const maximumMoves = createMaximumMoves(game);
+  const memo = new Map<string, number>();
+  const visit = (state: AnalysisState): number => {
+    if (state.mask === 0) return 0;
+    const key = createAnalysisStateKey(state);
+    const cached = memo.get(key);
+    if (cached !== undefined) return cached;
+    let weight = 0;
+    const kids: number[] = [];
+    for (const carId of reader.widenedCandidates(
+      state,
+      SHUTTLE_PARKING_HEAD_FIRST_WIDEN,
+    )) {
+      const child = game.step(state, carId);
+      if (game.wins(child)) kids.push(visit(child));
+      else weight = Math.max(weight, maximumMoves(child) + 1);
+    }
+    const result = Math.max(weight, Math.min(...kids));
+    memo.set(key, result);
+    return result;
+  };
+  return visit(game.start);
+}
+
+/**
+ * 記録だけ: 先頭に合わせる候補の段を順に見て、`depth` 手以内に詰むと見える手を外し、残る最初の段から一様に選ぶ人の勝率。
+ */
+export function measureShuttleParkingLookAheadWinProbability(
+  reader: ShuttleParkingReader,
+  depth: number,
+): number {
+  const { game } = reader;
+  const maximumMoves = createMaximumMoves(game);
+  const memo = new Map<string, number>();
+  const value = (state: AnalysisState): number => {
+    if (state.mask === 0) return 1;
+    if (!game.wins(state)) return 0;
+    const key = createAnalysisStateKey(state);
+    const cached = memo.get(key);
+    if (cached !== undefined) return cached;
+    let options: number[] = [];
+    for (const tier of SHUTTLE_PARKING_HEAD_FIRST_WIDEN) {
+      options = reader.candidates(state, tier).filter((carId) => {
+        const child = game.step(state, carId);
+        return game.wins(child) || maximumMoves(child) + 1 > depth;
+      });
+      if (options.length) break;
+    }
+    const result = options.length
+      ? options.reduce(
+          (sum, carId) => sum + value(game.step(state, carId)),
+          0,
+        ) / options.length
+      : 0;
+    memo.set(key, result);
+    return result;
+  };
+  return value(game.start);
+}
