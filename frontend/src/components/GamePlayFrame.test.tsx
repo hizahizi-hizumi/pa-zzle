@@ -18,19 +18,19 @@ function openHowToPlay(): void {
   fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 }
 
+type GamePlayFrameProps = ComponentProps<typeof GamePlayFrame<string>>;
+
 function renderFrame(
   progress: GameProgress,
   result: string | null,
-  renderTutorial?: ComponentProps<
-    typeof GamePlayFrame<string>
-  >["renderTutorial"],
-  entryAnimation?: boolean,
+  overrides: Partial<
+    Pick<GamePlayFrameProps, "renderTutorial" | "entryAnimation" | "onReplay">
+  > = {},
 ): void {
-  const props: ComponentProps<typeof GamePlayFrame<string>> = {
+  const props: GamePlayFrameProps = {
     progress,
     result,
     title: "テストパズル",
-    entryAnimation,
     metrics: [{ type: "elapsed-time", elapsedMs: 0 }],
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
@@ -47,7 +47,6 @@ function renderFrame(
           ) : null}
         </section>
       ) : null,
-    renderTutorial,
     renderSettingsDialog: ({ open, onClose }) =>
       open ? (
         <button type="button" onClick={onClose}>
@@ -55,6 +54,7 @@ function renderFrame(
         </button>
       ) : null,
     children: <main>盤面</main>,
+    ...overrides,
   };
   render(<GamePlayFrame {...props} />);
 }
@@ -111,7 +111,7 @@ describe("GamePlayFrame", () => {
 
   describe("入場演出を無効にした場合", () => {
     beforeEach(() => {
-      renderFrame("playing", null, undefined, false);
+      renderFrame("playing", null, { entryAnimation: false });
     });
 
     test("盤面をフェードさせずに表示すること", () => {
@@ -119,6 +119,35 @@ describe("GamePlayFrame", () => {
 
       expect(content?.classList.contains("animate-in")).toBe(false);
       expect(content?.classList.contains("fade-in")).toBe(false);
+    });
+  });
+
+  describe("リセットを渡した場合", () => {
+    const onReplay = vi.fn();
+
+    beforeEach(() => {
+      renderFrame("playing", null, { onReplay });
+    });
+
+    test("メニューのリセットで、リセットを通知すること", () => {
+      openPlayMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
+
+      expect(onReplay).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("リセットを渡さない場合", () => {
+    beforeEach(() => {
+      renderFrame("playing", null, { onReplay: undefined });
+    });
+
+    test("メニューにリセットを出さないこと", () => {
+      openPlayMenu();
+
+      const item = screen.queryByRole("menuitem", { name: "リセット" });
+
+      expect(item).toBeNull();
     });
   });
 
@@ -159,13 +188,14 @@ describe("GamePlayFrame", () => {
 
   describe("チュートリアルを渡した場合", () => {
     beforeEach(() => {
-      renderFrame("playing", null, ({ open, onClose }) =>
-        open ? (
-          <button type="button" onClick={onClose}>
-            チュートリアルを閉じる
-          </button>
-        ) : null,
-      );
+      renderFrame("playing", null, {
+        renderTutorial: ({ open, onClose }) =>
+          open ? (
+            <button type="button" onClick={onClose}>
+              チュートリアルを閉じる
+            </button>
+          ) : null,
+      });
     });
 
     test("チュートリアルを最初は開かないこと", () => {

@@ -10,7 +10,54 @@ import { SolitaireBoard } from "@/games/solitaire/ui/board/SolitaireBoard";
 
 const { parseSolitaireCard } = cardPrivate;
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  Reflect.deleteProperty(HTMLElement.prototype, "animate");
+  Reflect.deleteProperty(window, "ResizeObserver");
+  vi.unstubAllGlobals();
+});
+
+/** 盤面を 320×900px と測らせ、札の位置が決まるようにする。 */
+function installBoardSize() {
+  window.ResizeObserver = vi.fn(function ResizeObserver(
+    callback: ResizeObserverCallback,
+  ) {
+    return {
+      observe() {
+        callback(
+          [{ contentRect: { width: 320, height: 900 } } as ResizeObserverEntry],
+          this as unknown as ResizeObserver,
+        );
+      },
+      unobserve() {},
+      disconnect() {},
+    };
+  }) as unknown as typeof ResizeObserver;
+}
+
+/** 要素ごとに、`animate` に渡した最初の形を記録する。 */
+function installAnimations() {
+  const animated: { element: HTMLElement; keyframes: Keyframe[] }[] = [];
+  Object.defineProperty(HTMLElement.prototype, "animate", {
+    configurable: true,
+    value(this: HTMLElement, keyframes: Keyframe[]) {
+      animated.push({ element: this, keyframes });
+      return {
+        finished: new Promise<void>(() => undefined),
+        finish() {},
+        cancel() {},
+      } as unknown as Animation;
+    },
+  });
+  return animated;
+}
+
+function stubReducedMotion(reduced: boolean) {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn(() => ({ matches: reduced })),
+  );
+}
 
 function parseCards(text: string) {
   return text === ""
@@ -91,6 +138,143 @@ describe("SolitaireBoard", () => {
       fireEvent.click(screen.getByRole("button", { name: "山札、残り2枚" }));
 
       expect(props.onSelectPile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("列から列へ並びを動かした場合", () => {
+    const after: SolitaireState = {
+      ...state,
+      columns: [
+        parseCards("5D"),
+        parseCards("10H 9C 8H"),
+        ...state.columns.slice(2),
+      ],
+    };
+    let animated: ReturnType<typeof installAnimations>;
+
+    beforeEach(() => {
+      installBoardSize();
+      animated = installAnimations();
+    });
+
+    const operation = {
+      id: 1,
+      type: "moved",
+      move: {
+        kind: "transfer",
+        source: { pile: "column", columnIndex: 0 },
+        destination: { pile: "column", columnIndex: 1 },
+        cardCount: 2,
+      },
+      stateBefore: state,
+      isClearingMove: false,
+    } as const;
+
+    /** 盤面の大きさを測ってから手を打つ。 */
+    function renderMove() {
+      const { rerender } = render(<SolitaireBoard {...createProps()} />);
+      rerender(
+        <SolitaireBoard
+          {...createProps()}
+          state={after}
+          operation={operation}
+        />,
+      );
+    }
+
+    describe("動きを減らす設定でない場合", () => {
+      beforeEach(() => {
+        stubReducedMotion(false);
+        renderMove();
+      });
+
+      test("動かした2枚を、置き元の列の位置から置き先の列へ移すこと", () => {
+        const starts = animated.map(({ keyframes }) => keyframes[0]?.transform);
+
+        expect(starts).toEqual([
+          "translate(-44px, 0px)",
+          "translate(-44px, 0px)",
+        ]);
+      });
+    });
+
+    describe("動きを減らす設定の場合", () => {
+      beforeEach(() => {
+        stubReducedMotion(true);
+        renderMove();
+      });
+
+      test("札を動かさないこと", () => {
+        expect(animated).toEqual([]);
+      });
+    });
+  });
+
+  describe("置けない山を選んだ場合", () => {
+    let animated: ReturnType<typeof installAnimations>;
+
+    beforeEach(() => {
+      installBoardSize();
+      stubReducedMotion(false);
+      animated = installAnimations();
+    });
+
+    describe("置き元を選んでいる場合", () => {
+      beforeEach(() => {
+        const { rerender } = render(
+          <SolitaireBoard
+            {...createProps()}
+            selectedSource={{ pile: "column", columnIndex: 0 }}
+          />,
+        );
+        rerender(
+          <SolitaireBoard
+            {...createProps()}
+            selectedSource={{ pile: "column", columnIndex: 0 }}
+            operation={{
+              id: 1,
+              type: "invalid",
+              pile: { pile: "column", columnIndex: 3 },
+            }}
+          />,
+        );
+      });
+
+      test("選んだ並びの札と囲む枠を置けない列へ向けて戻し、置けない列を当たった向きへ押すこと", () => {
+        const targets = animated.map(({ element }) =>
+          element.closest("button")?.getAttribute("aria-label"),
+        );
+
+        expect(targets).toEqual([
+          "列1、♦5 ♣9 ♥8",
+          "列1、♦5 ♣9 ♥8",
+          "列1、♦5 ♣9 ♥8",
+          "列4、♣3",
+        ]);
+      });
+    });
+
+    describe("置き元を選んでいない場合", () => {
+      beforeEach(() => {
+        render(
+          <SolitaireBoard
+            {...createProps()}
+            operation={{
+              id: 1,
+              type: "invalid",
+              pile: { pile: "column", columnIndex: 2 },
+            }}
+          />,
+        );
+      });
+
+      test("押した山を横に揺らすこと", () => {
+        const targets = animated.map(({ element }) =>
+          element.getAttribute("aria-label"),
+        );
+
+        expect(targets).toEqual(["列3、空"]);
+      });
     });
   });
 

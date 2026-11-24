@@ -128,6 +128,14 @@ describe("SolitairePlay", () => {
 
       expect(props.onRestart).toHaveBeenCalledOnce();
     });
+
+    test("メニューにリセットを出さないこと", () => {
+      openPlayMenu();
+
+      const item = screen.queryByRole("menuitem", { name: "リセット" });
+
+      expect(item).toBeNull();
+    });
   });
 
   describe("どの手順でも組札を増やせない場合", () => {

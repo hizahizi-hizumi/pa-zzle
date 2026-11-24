@@ -14,9 +14,6 @@ export const solitaireTone = {
   black: "#1c2229",
   cardBack: "#2f5f86",
   cardBackStripe: "#4b7ca5",
-  /** 札の無い山の跡。卓の地の上に、紙の札と見分けられる薄い枠で描く。 */
-  emptySlotEdge: "rgba(36,72,52,0.28)",
-  emptySlotMark: "rgba(36,72,52,0.32)",
   /** 置き元に選んだ札を囲む縁。 */
   selection: "#e0a400",
 } as const;
@@ -24,3 +21,12 @@ export const solitaireTone = {
 export function getSolitaireSuitColor(suit: SolitaireSuit): string {
   return isRedSolitaireSuit(suit) ? solitaireTone.red : solitaireTone.black;
 }
+
+/** 画面の明暗の設定で変える、卓の色。 */
+export const solitaireToneClassNames = {
+  /** 盤の周囲の地。札を広げるフェルトの卓。 */
+  ground: "bg-[#8fbf9f] dark:bg-[#183a29]",
+  /** 札の無い山の跡。卓を少し沈めた面と細い縁で、紙の札と見分ける。 */
+  emptySlot:
+    "bg-[#0f3a22]/12 text-[#0f3a22]/45 shadow-[inset_0_0_0_1px_rgb(15_58_34/0.3)] dark:bg-white/5 dark:text-white/35 dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.2)]",
+} as const;

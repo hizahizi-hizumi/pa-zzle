@@ -1,6 +1,12 @@
 import {
+  emptySolitaireFoundations,
+  type SolitaireState,
+} from "@/games/solitaire/puzzle/state";
+import {
   getSolitaireBoardGeometry,
+  getSolitairePileTopPosition,
   getSolitaireSlotLeft,
+  getSolitaireTopRowSlotIndex,
 } from "@/games/solitaire/ui/board/board-geometry";
 
 const shortColumns = [1, 2, 3, 4, 5, 6, 7];
@@ -85,5 +91,57 @@ describe("getSolitaireSlotLeft", () => {
     const lefts = [0, 3, 6].map((slot) => getSolitaireSlotLeft(geometry, slot));
 
     expect(lefts).toEqual([0, 132, 264]);
+  });
+});
+
+describe("getSolitaireTopRowSlotIndex", () => {
+  const cases = [
+    ["山札", { pile: "stock" }, 0],
+    ["捨て札", { pile: "waste" }, 1],
+    ["♠ の組札", { pile: "foundation", suit: "spades" }, 3],
+    ["♣ の組札", { pile: "foundation", suit: "clubs" }, 6],
+  ] as const;
+
+  test.each(cases)("%sを7列の格子の %i 番目に置くこと", (_, pile, expected) => {
+    const slotIndex = getSolitaireTopRowSlotIndex(pile);
+
+    expect(slotIndex).toBe(expected);
+  });
+});
+
+describe("getSolitairePileTopPosition", () => {
+  // 320px 幅では札は 40×56px、列の間は 4px、列の一番奥の札の上端は 64px、ずらし幅は 16.8px。
+  const geometryInput = {
+    width: 320,
+    height: 900,
+    columnLengths: [3, 0, 1, 1, 1, 1, 1],
+  };
+  const state: SolitaireState = {
+    columns: [[0, 1, 2], [], [3], [4], [5], [6], [7]],
+    stock: [],
+    waste: [],
+    foundations: emptySolitaireFoundations,
+  };
+  const cases = [
+    [
+      "3枚の列は一番手前の札",
+      { pile: "column", columnIndex: 0 },
+      0,
+      64 + 2 * 16.8,
+    ],
+    ["空いた列は札を置く跡", { pile: "column", columnIndex: 1 }, 44, 64],
+    ["捨て札は上の段の2番目", { pile: "waste" }, 44, 0],
+    ["♥ の組札は上の段の5番目", { pile: "foundation", suit: "hearts" }, 176, 0],
+  ] as const;
+
+  test.each(cases)("%sの位置を返すこと", (_, pile, left, top) => {
+    const position = getSolitairePileTopPosition(
+      getSolitaireBoardGeometry(geometryInput),
+      state,
+      pile,
+    );
+
+    expect(position.left).toBe(left);
+    expect(position.top).toBeCloseTo(top);
   });
 });

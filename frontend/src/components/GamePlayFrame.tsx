@@ -15,7 +15,6 @@ type GamePlayFrameProps<Result> = Pick<
   GamePlayScreenProps<unknown, Result>,
   | "progress"
   | "result"
-  | "onReplay"
   | "onStartNewProblem"
   | "onOpenGameHome"
   | "onBackToAppHome"
@@ -26,6 +25,8 @@ type GamePlayFrameProps<Result> = Pick<
 > &
   Partial<RestartableGamePlayScreenProps> & {
     title: string;
+    /** プレイ中のリセット。省略すると、プレイ中のメニューにリセットを出さない。結果画面のリセットは `renderResultScreen` が持つ。 */
+    onReplay?: () => void;
     entryAnimation?: boolean;
     background?: ReactNode;
     metrics: readonly PlayHeaderMetric[];

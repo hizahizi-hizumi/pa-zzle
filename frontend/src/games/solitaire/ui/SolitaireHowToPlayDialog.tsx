@@ -150,9 +150,7 @@ export function SolitaireHowToPlayDialog({
             arrangement="stacked"
             examples={
               <HowToPlayExample
-                figure={
-                  <FigureColumn cards={runColumn} selectedFrom={runStart} />
-                }
+                figure={<FigureColumn cards={runColumn} selected />}
                 caption={`${runColumn.length - runStart}枚まで、まとめて動かせる`}
               />
             }
@@ -208,10 +206,7 @@ export function SolitaireHowToPlayDialog({
                   <HowToPlayExample
                     figure={
                       <span className="flex items-start gap-3">
-                        <FigureColumn
-                          cards={runColumn}
-                          selectedFrom={runStart}
-                        />
+                        <FigureColumn cards={runColumn} selected />
                         <FigureColumn cards={[heartTen]} />
                       </span>
                     }

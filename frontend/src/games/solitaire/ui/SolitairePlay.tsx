@@ -73,7 +73,6 @@ export function SolitairePlay({
       ]}
       canRestart={canRestart}
       onRestart={onRestart}
-      onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}

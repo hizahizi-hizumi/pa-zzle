@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 
 import { SOLITAIRE_CARD_ASPECT_RATIO } from "@/games/solitaire/ui/board/board-geometry";
-import { solitaireTone } from "@/games/solitaire/ui/solitaire-tone";
+import { solitaireToneClassNames } from "@/games/solitaire/ui/solitaire-tone";
+import { cn } from "@/lib/utils";
 
 type SolitaireEmptySlotProps = {
   /** 札の幅（px）。高さは縦横比から決まる。 */
@@ -18,13 +19,14 @@ export function SolitaireEmptySlot({
   return (
     <span
       aria-hidden="true"
-      className="flex items-center justify-center font-sans leading-none"
+      className={cn(
+        "flex items-center justify-center font-sans leading-none",
+        solitaireToneClassNames.emptySlot,
+      )}
       style={{
         width,
         height: width * SOLITAIRE_CARD_ASPECT_RATIO,
         borderRadius: width * 0.1,
-        boxShadow: `inset 0 0 0 1px ${solitaireTone.emptySlotEdge}`,
-        color: solitaireTone.emptySlotMark,
         fontSize: width * 0.5,
       }}
     >

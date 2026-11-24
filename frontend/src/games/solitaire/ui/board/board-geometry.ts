@@ -1,4 +1,9 @@
-import { SOLITAIRE_COLUMN_COUNT } from "@/games/solitaire/puzzle/state";
+import { solitaireSuits } from "@/games/solitaire/puzzle/card";
+import type { SolitairePile } from "@/games/solitaire/puzzle/pile-selection";
+import {
+  SOLITAIRE_COLUMN_COUNT,
+  type SolitaireState,
+} from "@/games/solitaire/puzzle/state";
 
 const SOLITAIRE_BOARD_SIDE_PADDING_PX = 8;
 const SOLITAIRE_COLUMN_GAP_PX = 4;
@@ -83,4 +88,55 @@ export function getSolitaireSlotLeft(
   slotIndex: number,
 ): number {
   return slotIndex * (geometry.cardWidth + SOLITAIRE_COLUMN_GAP_PX);
+}
+
+/** 上の段の山の、7列の格子での位置。左から山札・捨て札・空き・組札4つ（`solitaireSuits` の順）。 */
+export function getSolitaireTopRowSlotIndex(
+  pile: Exclude<SolitairePile, { pile: "column" }>,
+): number {
+  switch (pile.pile) {
+    case "stock":
+      return 0;
+    case "waste":
+      return 1;
+    case "foundation":
+      return 3 + solitaireSuits.indexOf(pile.suit);
+  }
+}
+
+/** 盤面の札の左上の位置（px）。`left` は7列の格子の左端から、`top` は上の段の上端から。 */
+export type SolitaireCardPosition = { left: number; top: number };
+
+/** 列 `columnIndex` の奥から `cardIndex` 番目（0始まり）の札の位置。 */
+export function getSolitaireColumnCardPosition(
+  geometry: SolitaireBoardGeometry,
+  columnIndex: number,
+  cardIndex: number,
+): SolitaireCardPosition {
+  return {
+    left: getSolitaireSlotLeft(geometry, columnIndex),
+    top:
+      geometry.columnTop +
+      cardIndex * (geometry.columnOffsets[columnIndex] ?? 0),
+  };
+}
+
+/** 山の一番上（列は一番手前）の札の位置。札の無い山は、札を置く跡の位置。 */
+export function getSolitairePileTopPosition(
+  geometry: SolitaireBoardGeometry,
+  state: SolitaireState,
+  pile: SolitairePile,
+): SolitaireCardPosition {
+  if (pile.pile === "column") {
+    const length = state.columns[pile.columnIndex]?.length ?? 0;
+    return getSolitaireColumnCardPosition(
+      geometry,
+      pile.columnIndex,
+      Math.max(0, length - 1),
+    );
+  }
+  return {
+    left: getSolitaireSlotLeft(geometry, getSolitaireTopRowSlotIndex(pile)),
+    top: 0,
+  };
 }

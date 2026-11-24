@@ -1,11 +1,5 @@
 import { RotateCcw } from "lucide-react";
-import {
-  useEffect,
-  useEffectEvent,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { useTouchTap } from "@/components/touch-tap";
 import type { SolitaireOperation } from "@/games/solitaire/play/use-solitaire-play";
@@ -16,28 +10,30 @@ import {
 } from "@/games/solitaire/puzzle/pile-selection";
 import type { SolitaireSource } from "@/games/solitaire/puzzle/rules";
 import {
-  findSolitaireRunStart,
   getSolitaireFoundationTop,
   type SolitaireState,
 } from "@/games/solitaire/puzzle/state";
 import {
   getSolitaireBoardGeometry,
   getSolitaireSlotLeft,
-  type SolitaireBoardGeometry,
+  getSolitaireTopRowSlotIndex,
 } from "@/games/solitaire/ui/board/board-geometry";
+import {
+  getSolitaireCardMotionKey,
+  type SolitaireCardMotionKey,
+} from "@/games/solitaire/ui/board/card-motion";
 import { SolitaireCardBack } from "@/games/solitaire/ui/board/SolitaireCardBack";
 import { SolitaireCardFace } from "@/games/solitaire/ui/board/SolitaireCardFace";
 import { SolitaireEmptySlot } from "@/games/solitaire/ui/board/SolitaireEmptySlot";
-import { getSolitaireSelectionFrameStyle } from "@/games/solitaire/ui/board/selection-frame";
+import {
+  getSolitaireColumnSelectionFrame,
+  getSolitaireSelectionFrameStyle,
+} from "@/games/solitaire/ui/board/selection-frame";
+import { useSolitaireBoardMotion } from "@/games/solitaire/ui/board/use-solitaire-board-motion";
 import {
   formatSolitaireCardName,
   solitaireSuitSymbols,
 } from "@/games/solitaire/ui/card-text";
-import {
-  playAnimations,
-  playRejectionShake,
-  type RejectionShakeTiming,
-} from "@/lib/motion";
 
 type SolitaireBoardProps = {
   state: SolitaireState;
@@ -47,35 +43,6 @@ type SolitaireBoardProps = {
   onSelectPile: (pile: SolitairePile) => void;
   onClearAnimationComplete?: () => void;
 };
-
-const invalidPileShakeKeyframes: Keyframe[] = [
-  { transform: "translateX(0)" },
-  { transform: "translateX(-4px)" },
-  { transform: "translateX(4px)" },
-  { transform: "translateX(-2px)" },
-  { transform: "translateX(0)" },
-];
-
-const invalidPileShakeTiming: RejectionShakeTiming = {
-  durationMs: 220,
-  easing: "ease-out",
-};
-
-/** クリアしたとき、組札をマークの順に1つずつ照らす。 */
-const clearGlowKeyframes: Keyframe[] = [
-  { transform: "scale(1)", filter: "brightness(1)" },
-  { transform: "scale(1.08)", filter: "brightness(1.2)" },
-  { transform: "scale(1)", filter: "brightness(1)" },
-];
-const clearGlowDurationMs = 360;
-const clearGlowStaggerMs = 140;
-const clearHoldMs = 400;
-
-const topRowSlots = {
-  stock: 0,
-  waste: 1,
-  firstFoundation: 3,
-} as const;
 
 function getPileKey(pile: SolitairePile): string {
   switch (pile.pile) {
@@ -121,21 +88,6 @@ function useBoardSize() {
   return { ref, size };
 }
 
-/** 選んだ置き元で、動かせる札を囲む枠の位置と高さ（列の中の座標）。列は手前から続く並び全体を囲む。 */
-function getColumnSelectionFrame(
-  state: SolitaireState,
-  columnIndex: number,
-  geometry: SolitaireBoardGeometry,
-) {
-  const column = state.columns[columnIndex] ?? [];
-  const runStart = findSolitaireRunStart(column);
-  const offset = geometry.columnOffsets[columnIndex] ?? 0;
-  return {
-    top: runStart * offset,
-    height: (column.length - 1 - runStart) * offset + geometry.cardHeight,
-  };
-}
-
 /**
  * ソリティアの盤面。上の段に左から山札・捨て札・空き・組札4つ（マークの順）を、その下に7列を、同じ7列の格子に並べる。
  * 山（山札・捨て札・組札・列）を押すと `onSelectPile` で知らせる。列は札の無い所を含む列の範囲全体が押す所。
@@ -160,47 +112,29 @@ export function SolitaireBoard({
   const { cardWidth, cardHeight } = geometry;
   const contentLeft = Math.max(0, (size.width - geometry.contentWidth) / 2);
 
-  useLayoutEffect(() => {
-    if (operation?.type === "invalid") {
-      playRejectionShake(
-        pileRefs.current.get(getPileKey(operation.pile)),
-        invalidPileShakeKeyframes,
-        invalidPileShakeTiming,
-      );
-    }
-  }, [operation]);
-
-  const clearingOperationId =
-    operation?.type === "moved" && operation.isClearingMove
-      ? operation.id
-      : null;
-  const finishClearAnimation = useEffectEvent(function finishClearAnimation() {
-    onClearAnimationComplete?.();
+  const cardElements = useRef(new Map<SolitaireCardMotionKey, HTMLElement>());
+  const selectionFrameRef = useRef<HTMLSpanElement>(null);
+  useSolitaireBoardMotion({
+    state,
+    selectedSource,
+    operation,
+    size,
+    geometry,
+    getCardElement: (key) => cardElements.current.get(key),
+    getPileElement: (pile) => pileRefs.current.get(getPileKey(pile)),
+    getSelectionFrameElement: () => selectionFrameRef.current ?? undefined,
+    onClearAnimationComplete,
   });
-  useEffect(() => {
-    if (clearingOperationId === null) {
-      return;
-    }
-    return playAnimations({
-      animate: () =>
-        solitaireSuits.flatMap((suit, index) => {
-          const element = pileRefs.current.get(`foundation-${suit}`);
-          return typeof element?.animate === "function"
-            ? [
-                element.animate(clearGlowKeyframes, {
-                  duration: clearGlowDurationMs,
-                  delay: index * clearGlowStaggerMs,
-                  easing: "ease-out",
-                }),
-              ]
-            : [];
-        }),
-      completion: { type: "after-animations", holdMs: clearHoldMs },
-      reducedMotionHoldMs: clearHoldMs,
-      unanimatedHoldMs: clearHoldMs,
-      onFinished: finishClearAnimation,
-    });
-  }, [clearingOperationId]);
+
+  function registerCard(key: SolitaireCardMotionKey) {
+    return (element: HTMLElement | null) => {
+      if (element) {
+        cardElements.current.set(key, element);
+      } else {
+        cardElements.current.delete(key);
+      }
+    };
+  }
 
   function registerPile(pile: SolitairePile) {
     return (element: HTMLButtonElement | null) => {
@@ -243,14 +177,19 @@ export function SolitaireBoard({
         <button
           {...getPileProps(stockPile, describeStock(state))}
           style={{
-            left: getSolitaireSlotLeft(geometry, topRowSlots.stock),
+            left: getSolitaireSlotLeft(
+              geometry,
+              getSolitaireTopRowSlotIndex(stockPile),
+            ),
             top: 0,
             width: cardWidth,
             height: cardHeight,
           }}
         >
           {state.stock.length > 0 ? (
-            <SolitaireCardBack width={cardWidth} />
+            <span ref={registerCard("stock")} className="relative block">
+              <SolitaireCardBack width={cardWidth} />
+            </span>
           ) : (
             <SolitaireEmptySlot width={cardWidth}>
               {state.waste.length > 0 ? (
@@ -264,7 +203,10 @@ export function SolitaireBoard({
         <button
           {...getPileProps(wastePile, describeWaste(state))}
           style={{
-            left: getSolitaireSlotLeft(geometry, topRowSlots.waste),
+            left: getSolitaireSlotLeft(
+              geometry,
+              getSolitaireTopRowSlotIndex(wastePile),
+            ),
             top: 0,
             width: cardWidth,
             height: cardHeight,
@@ -273,17 +215,24 @@ export function SolitaireBoard({
           {wasteTop === undefined ? (
             <SolitaireEmptySlot width={cardWidth} />
           ) : (
-            <SolitaireCardFace card={wasteTop} width={cardWidth} />
+            <span
+              key={wasteTop}
+              ref={registerCard(getSolitaireCardMotionKey(wasteTop))}
+              className="relative block"
+            >
+              <SolitaireCardFace card={wasteTop} width={cardWidth} />
+            </span>
           )}
           {selectedSource?.pile === "waste" ? (
             <span
+              ref={selectionFrameRef}
               aria-hidden="true"
               className="pointer-events-none absolute inset-0"
               style={selectionFrameStyle}
             />
           ) : null}
         </button>
-        {solitaireSuits.map((suit, index) => {
+        {solitaireSuits.map((suit) => {
           const top = getSolitaireFoundationTop(state.foundations, suit);
           const pile: SolitairePile = { pile: "foundation", suit };
           return (
@@ -296,7 +245,7 @@ export function SolitaireBoard({
               style={{
                 left: getSolitaireSlotLeft(
                   geometry,
-                  topRowSlots.firstFoundation + index,
+                  getSolitaireTopRowSlotIndex(pile),
                 ),
                 top: 0,
                 width: cardWidth,
@@ -308,11 +257,18 @@ export function SolitaireBoard({
                   {solitaireSuitSymbols[suit]}
                 </SolitaireEmptySlot>
               ) : (
-                <SolitaireCardFace card={top} width={cardWidth} />
+                <span
+                  key={top}
+                  ref={registerCard(getSolitaireCardMotionKey(top))}
+                  className="relative block"
+                >
+                  <SolitaireCardFace card={top} width={cardWidth} />
+                </span>
               )}
               {selectedSource?.pile === "foundation" &&
               selectedSource.suit === suit ? (
                 <span
+                  ref={selectionFrameRef}
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-0"
                   style={selectionFrameStyle}
@@ -349,6 +305,7 @@ export function SolitaireBoard({
                 column.map((card, cardIndex) => (
                   <span
                     key={card}
+                    ref={registerCard(getSolitaireCardMotionKey(card))}
                     className="absolute left-0"
                     style={{ top: cardIndex * offset }}
                   >
@@ -358,11 +315,16 @@ export function SolitaireBoard({
               )}
               {selected && column.length > 0 ? (
                 <span
+                  ref={selectionFrameRef}
                   aria-hidden="true"
                   className="pointer-events-none absolute left-0"
                   style={{
                     ...selectionFrameStyle,
-                    ...getColumnSelectionFrame(state, columnIndex, geometry),
+                    ...getSolitaireColumnSelectionFrame({
+                      column,
+                      offset,
+                      cardHeight,
+                    }),
                     width: cardWidth,
                   }}
                 />
