@@ -209,3 +209,19 @@ describe("goal", () => {
     );
   });
 });
+
+describe("rules", () => {
+  test("振り返りの最後で、同じ色が2台なら先に入った車から乗ることを見せること", () => {
+    const labels = shuttleParkingTutorial.rules.map(({ label }) => label);
+
+    expect(labels.at(-1)).toBe("同じ色が2台なら先に入った車から乗る");
+  });
+
+  test("先に入った車から乗ることは、手順では示さないこと", () => {
+    const introduced = shuttleParkingTutorial.steps.map(
+      ({ introducedRuleId }) => introducedRuleId,
+    );
+
+    expect(introduced).not.toContain("sameColor");
+  });
+});

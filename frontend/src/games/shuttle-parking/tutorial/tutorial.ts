@@ -27,8 +27,14 @@ import type {
  * - `board`: 乗客は列の先頭から順に、同じ色の待っている車へ1人ずつ乗り、席が埋まった車は出発する。
  * - `path`: 前に車があると出られない。
  * - `bays`: 待機枠が埋まると次の車を出せないので、先頭の乗客が乗れる車を出す。
+ * - `sameColor`: 同じ色の車が2台待っていれば、先に入った車から乗る。手順は足さず、解き終えたときの振り返りでだけ見せる
+ *   （上のレベルでは、どちらの車に乗るかを読んで出す順を決める）。
  */
-export type ShuttleParkingTutorialRuleId = "board" | "path" | "bays";
+export type ShuttleParkingTutorialRuleId =
+  | "board"
+  | "path"
+  | "bays"
+  | "sameColor";
 
 /** 車を押すか、詰んだときに「待った」で1台戻す。 */
 export type ShuttleParkingTutorialAction =
@@ -289,6 +295,7 @@ export const shuttleParkingTutorial = {
     { id: "board", label: "乗客は列の先頭から順に同じ色の車に乗る" },
     { id: "path", label: "前に車があると出られない" },
     { id: "bays", label: "待機枠が埋まると次の車を出せない" },
+    { id: "sameColor", label: "同じ色が2台なら先に入った車から乗る" },
   ],
   steps,
   freePlay,
