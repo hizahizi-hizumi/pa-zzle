@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import {
   type FukumenzanDigit,
   type FukumenzanPuzzleState,
@@ -20,10 +22,19 @@ type FukumenzanCardRowProps = {
   interactionDisabled: boolean;
   getCardHandlers: (digit: FukumenzanDigit) => FukumenzanInputHandlers;
   getEmptySlotHandlers: () => FukumenzanInputHandlers;
+  /** 遊び方の例で、札かその札の空いた場所に重ねる、押す所の手がかり。 */
+  hint?: { digit: FukumenzanDigit; content: ReactNode } | null;
+  /** 遊び方の例で見せる、列の片方の段の5枚。渡さなければ10枚を並べる。 */
+  shownDigits?: readonly FukumenzanDigit[];
+  /**
+   * 指のスクロールを止める所。渡さなければ札と空いた場所の全部で止める。
+   * `cards` は運べる札だけで止め、押すだけの空いた場所では止めない（遊び方の例）。
+   */
+  scrollLock?: "all-slots" | "cards";
 };
 
 const slotClassName =
-  "relative flex h-full min-w-0 touch-none select-none items-center justify-center [-webkit-touch-callout:none] [container-type:size] rounded-[14%] outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-solid";
+  "relative flex h-full min-w-0 select-none items-center justify-center [-webkit-touch-callout:none] [container-type:size] rounded-[14%] outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-solid";
 
 /**
  * 0〜9 の札を、数字の順に決まった場所へ並べる。スマホの幅では 0〜4 と 5〜9 の2段、広い画面では1段にする。
@@ -37,6 +48,9 @@ export function FukumenzanCardRow({
   interactionDisabled,
   getCardHandlers,
   getEmptySlotHandlers,
+  hint = null,
+  shownDigits = fukumenzanDigits,
+  scrollLock = "all-slots",
 }: FukumenzanCardRowProps) {
   const crossedDigits =
     selection?.kind === "letter"
@@ -48,10 +62,15 @@ export function FukumenzanCardRow({
       role="group"
       aria-label="札"
       {...fukumenzanDropTargetAttributes.cardRow}
-      // 1段に10枚だと 320px の幅で札が約26px と押しにくいので、狭い画面では2段にして札の幅を指の大きさに近づける。
-      className="grid auto-rows-[3.25rem] grid-cols-5 gap-1.5 sm:auto-rows-[4.5rem] sm:grid-cols-10 sm:gap-2"
+      className={cn(
+        "grid auto-rows-[3.25rem] grid-cols-5 gap-1.5",
+        // 1段に10枚だと 320px の幅で札が約26px と押しにくいので、狭い画面では2段にして札の幅を指の大きさに近づける。
+        shownDigits.length > 5 &&
+          "sm:auto-rows-[4.5rem] sm:grid-cols-10 sm:gap-2",
+      )}
     >
-      {fukumenzanDigits.map((digit) => {
+      {shownDigits.map((digit) => {
+        const hintContent = hint?.digit === digit ? hint.content : null;
         if (puzzleState.placedDigits.includes(digit)) {
           return (
             <button
@@ -64,9 +83,12 @@ export function FukumenzanCardRow({
                 fukumenzanToneClassNames.selection,
                 "border-2 border-dashed",
                 fukumenzanToneClassNames.cardSlot,
+                scrollLock === "cards" ? "touch-manipulation" : "touch-none",
               )}
               {...getEmptySlotHandlers()}
-            />
+            >
+              {hintContent}
+            </button>
           );
         }
         const crossed = crossedDigits.includes(digit);
@@ -81,6 +103,7 @@ export function FukumenzanCardRow({
             aria-disabled={interactionDisabled}
             className={cn(
               slotClassName,
+              "touch-none",
               fukumenzanToneClassNames.selection,
               selected && "-translate-y-1 outline-3 outline-solid",
             )}
@@ -110,6 +133,7 @@ export function FukumenzanCardRow({
                 />
               </svg>
             )}
+            {hintContent}
           </button>
         );
       })}

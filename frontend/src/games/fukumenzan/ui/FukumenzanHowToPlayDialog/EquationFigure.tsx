@@ -1,87 +1,71 @@
-import type { FukumenzanProblem } from "@/games/fukumenzan/problem/problem";
+import type { CSSProperties } from "react";
+
 import { listFukumenzanLetters } from "@/games/fukumenzan/puzzle/equation";
 import {
   listFukumenzanLeadingZeroLetters,
   listFukumenzanMiscalculatedColumns,
 } from "@/games/fukumenzan/puzzle/rules";
-import type {
-  FukumenzanDigit,
-  FukumenzanPuzzleState,
-} from "@/games/fukumenzan/puzzle/state";
 import { FukumenzanEquationBoard } from "@/games/fukumenzan/ui/board/FukumenzanEquationBoard";
-import type { FukumenzanInputHandlers } from "@/games/fukumenzan/ui/board/use-fukumenzan-input";
+import { ExampleGround } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/ExampleGround";
+import { createExamplePuzzleState } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-board";
+import {
+  type FukumenzanHowToPlayExample,
+  howToPlayProblem,
+} from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
+import { HOW_TO_PLAY_TILE_REM } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/figure-size";
+import {
+  getStaticLetterHandlers,
+  ignoreFigureEvent,
+} from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/static-input";
 
 type EquationFigureProps = {
-  problem: FukumenzanProblem;
-  /** 文字ごとに入れた札。書かない文字は空。 */
-  placed: Readonly<Record<string, FukumenzanDigit>>;
-  /** 式のマス1つの一辺（rem）。 */
-  tileRem: number;
+  figure: Pick<FukumenzanHowToPlayExample, "placed" | "crossed">;
   label: string;
 };
 
-function ignore() {}
+const letters = listFukumenzanLetters(howToPlayProblem);
+const columnCount = howToPlayProblem.result.length + 1;
+const rowCount = howToPlayProblem.addends.length + 1;
 
-const staticHandlers: FukumenzanInputHandlers = {
-  onPointerDown: ignore,
-  onPointerMove: ignore,
-  onPointerUp: ignore,
-  onPointerCancel: ignore,
-  onClick: ignore,
-};
+// 本番の盤面はマスの大きさを置き場所の大きさから決めるので、マスの大きさから置き場所の大きさを決めて渡す。
+const equationStyle = {
+  width: `${columnCount * HOW_TO_PLAY_TILE_REM}rem`,
+  height: `${rowCount * HOW_TO_PLAY_TILE_REM + 1}rem`,
+} satisfies CSSProperties;
 
-function getStaticHandlers() {
-  return staticHandlers;
-}
-
-/**
- * 遊び方の図にする、本番の盤面部品で描いた押しても何も起きない式。先頭の0と計算違いの知らせは本番と同じ規則で求める。
- * 本番の盤面はマスの大きさを置き場所の大きさから決めるので、マスの大きさから置き場所の大きさを決めて渡す。
- */
-export function EquationFigure({
-  problem,
-  placed,
-  tileRem,
-  label,
-}: EquationFigureProps) {
-  const letters = listFukumenzanLetters(problem);
-  const puzzleState: FukumenzanPuzzleState = {
-    placedDigits: letters.map((letter) => placed[letter] ?? null),
-    crossedDigits: letters.map(() => []),
-  };
-  const columnCount = problem.result.length + 1;
-  const rowCount = problem.addends.length + 1;
+/** 押せない図にする、本番の盤面部品で描いた式。先頭の0と計算違いの知らせは本番と同じ関数で求める。 */
+export function EquationFigure({ figure, label }: EquationFigureProps) {
+  const puzzleState = createExamplePuzzleState(figure);
 
   return (
-    <div
-      role="img"
-      aria-label={label}
-      inert
-      className="[container-type:size]"
-      style={{
-        width: `${columnCount * tileRem}rem`,
-        height: `${rowCount * tileRem + 1}rem`,
-      }}
-    >
-      <FukumenzanEquationBoard
-        problem={problem}
-        letters={letters}
-        puzzleState={puzzleState}
-        leadingZeroLetters={listFukumenzanLeadingZeroLetters(
-          problem,
-          puzzleState,
-        )}
-        miscalculatedColumns={listFukumenzanMiscalculatedColumns(
-          problem,
-          puzzleState,
-        )}
-        selection={null}
-        drag={null}
-        clearing={false}
-        interactionDisabled
-        getLetterHandlers={getStaticHandlers}
-        onClearAnimationComplete={ignore}
-      />
-    </div>
+    <ExampleGround>
+      <div
+        role="img"
+        aria-label={label}
+        inert
+        className="[container-type:size]"
+        style={equationStyle}
+      >
+        <FukumenzanEquationBoard
+          problem={howToPlayProblem}
+          letters={letters}
+          puzzleState={puzzleState}
+          leadingZeroLetters={listFukumenzanLeadingZeroLetters(
+            howToPlayProblem,
+            puzzleState,
+          )}
+          miscalculatedColumns={listFukumenzanMiscalculatedColumns(
+            howToPlayProblem,
+            puzzleState,
+          )}
+          selection={null}
+          drag={null}
+          clearing={false}
+          interactionDisabled
+          getLetterHandlers={getStaticLetterHandlers}
+          onClearAnimationComplete={ignoreFigureEvent}
+        />
+      </div>
+    </ExampleGround>
   );
 }

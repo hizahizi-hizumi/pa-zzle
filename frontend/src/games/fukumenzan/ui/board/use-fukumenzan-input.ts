@@ -1,6 +1,7 @@
 import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type RefObject,
   useRef,
   useState,
 } from "react";
@@ -69,8 +70,13 @@ export const fukumenzanDropTargetAttributes = {
 
 type DropTarget = { kind: "letter"; letter: number } | { kind: "card-row" };
 
-function findDropTarget(x: number, y: number): DropTarget | null {
-  const element = document.elementFromPoint?.(x, y) ?? null;
+function findDropTarget(
+  x: number,
+  y: number,
+  scope: HTMLElement | null,
+): DropTarget | null {
+  const pointed = document.elementFromPoint?.(x, y) ?? null;
+  const element = scope === null || scope.contains(pointed) ? pointed : null;
   const letterElement = element?.closest(`[${LETTER_ATTRIBUTE}]`);
   if (letterElement) {
     return {
@@ -90,6 +96,10 @@ type FukumenzanInputOptions = {
   onPlaceDigit: (letter: number, digit: FukumenzanDigit) => void;
   onReturnDigit: (letter: number) => void;
   onToggleCross: (letter: number, digit: FukumenzanDigit) => void;
+  /**
+   * 落とし先を探す範囲。渡さなければ画面全体から探す。同じ式を並べる遊び方の例が、ほかの例の文字へ札を落とさないよう渡す。
+   */
+  dropScopeRef?: RefObject<HTMLElement | null>;
 };
 
 /**
@@ -104,6 +114,7 @@ export function useFukumenzanInput({
   onPlaceDigit,
   onReturnDigit,
   onToggleCross,
+  dropScopeRef,
 }: FukumenzanInputOptions) {
   const { getTapHandlers } = useTouchTap();
   const [selection, setSelection] = useState<FukumenzanSelection>(null);
@@ -123,7 +134,7 @@ export function useFukumenzanInput({
   const shownSelection = interactionDisabled ? null : selection;
 
   function drop(pending: PendingDrag, x: number, y: number) {
-    const target = findDropTarget(x, y);
+    const target = findDropTarget(x, y, dropScopeRef?.current ?? null);
     if (target?.kind === "letter") {
       onPlaceDigit(target.letter, pending.digit);
     } else if (target?.kind === "card-row" && pending.fromLetter !== null) {
@@ -168,7 +179,11 @@ export function useFukumenzanInput({
           return;
         }
         pending.active = true;
-        const target = findDropTarget(event.clientX, event.clientY);
+        const target = findDropTarget(
+          event.clientX,
+          event.clientY,
+          dropScopeRef?.current ?? null,
+        );
         setDrag({
           digit: pending.digit,
           fromLetter: pending.fromLetter,

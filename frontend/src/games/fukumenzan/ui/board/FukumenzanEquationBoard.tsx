@@ -1,4 +1,10 @@
-import { type CSSProperties, useEffect, useEffectEvent, useRef } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useEffectEvent,
+  useRef,
+} from "react";
 
 import type { FukumenzanProblem } from "@/games/fukumenzan/problem/problem";
 import {
@@ -28,6 +34,13 @@ type FukumenzanEquationBoardProps = {
   interactionDisabled: boolean;
   getLetterHandlers: (letter: number) => FukumenzanInputHandlers;
   onClearAnimationComplete: () => void;
+  /** 遊び方の例で、文字の最初のマス（上の行から読んだ順）に重ねる、押す所の手がかり。 */
+  hint?: { letter: number; content: ReactNode } | null;
+  /**
+   * 指のスクロールを止める文字。渡さなければ全部の文字で止める。
+   * `placed-letters` は札を運び出せる札の入った文字だけで止め、押すだけの空の文字では止めない（遊び方の例）。
+   */
+  scrollLock?: "all-letters" | "placed-letters";
 };
 
 /** 答えの桁を、一の位から順に1つずつ跳ねさせる間隔と長さ。筆算を右から確かめ終える手つき。 */
@@ -55,6 +68,8 @@ export function FukumenzanEquationBoard({
   interactionDisabled,
   getLetterHandlers,
   onClearAnimationComplete,
+  hint = null,
+  scrollLock = "all-letters",
 }: FukumenzanEquationBoardProps) {
   const { addends, result } = problem;
   const columnCount = result.length + 1;
@@ -97,6 +112,7 @@ export function FukumenzanEquationBoard({
     });
   }, [clearing, result.length]);
 
+  let hintShown = false;
   const highlightedLetter =
     drag?.overLetter ??
     (selection?.kind === "letter" ? selection.letter : null);
@@ -118,6 +134,8 @@ export function FukumenzanEquationBoard({
       placed === null && crossedCount > 0
         ? fukumenzanDigits.length - crossedCount
         : null;
+    const hinted = !hintShown && hint?.letter === letter;
+    hintShown ||= hinted;
     return (
       <button
         key={key}
@@ -141,7 +159,10 @@ export function FukumenzanEquationBoard({
         aria-pressed={highlightedLetter === letter}
         aria-disabled={interactionDisabled}
         className={cn(
-          "relative flex touch-none select-none items-center justify-center p-[6%] [-webkit-touch-callout:none] [container-type:size]",
+          "relative flex select-none items-center justify-center p-[6%] [-webkit-touch-callout:none] [container-type:size]",
+          scrollLock === "placed-letters" && placed === null
+            ? "touch-manipulation"
+            : "touch-none",
           "rounded-[18%] outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-solid",
           fukumenzanToneClassNames.selection,
           highlightedLetter === letter && "outline-3 outline-solid",
@@ -177,6 +198,7 @@ export function FukumenzanEquationBoard({
             {candidateCount}
           </span>
         )}
+        {hinted && hint.content}
         {underlined && (
           <span
             aria-hidden="true"
