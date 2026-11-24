@@ -1,6 +1,7 @@
 import {
   assessShuttleParkingDifficulty,
   SHUTTLE_PARKING_CLASSIFICATION_RULES,
+  type ShuttleParkingUnsupportedReason,
 } from "@/games/shuttle-parking/difficulty";
 import { analyzeShuttleParkingDifficulty } from "@/games/shuttle-parking/problem/difficulty-analysis";
 import { SHUTTLE_PARKING_RESEARCH_RULES } from "@/games/shuttle-parking/problem/generation/naive-rules";
@@ -46,6 +47,13 @@ const researchRules = {
   checksNaiveReader: false,
 };
 
+// 調査コードは、レベルが1つに定まらない問題も範囲外の理由として返す。製品の判定では評価できない問題にあたる。
+const unsupportedReasons = new Set<string | null>([
+  "pathDependent",
+  "depthDefinitionsDisagree",
+  "playStylesDisagree",
+] satisfies ShuttleParkingUnsupportedReason[]);
+
 const analyzedProblems = reference.problems.flatMap((problem) =>
   "rules" in problem && problem.rules !== undefined ? [problem] : [],
 );
@@ -90,7 +98,7 @@ describe("analyzeShuttleParkingDifficulty", () => {
       expect(decisions).toMatchObject(problem.decisions);
     });
 
-    test("調査コードと同じ決まりの判定で、レベルと範囲外のわけが調査コードと一致すること", () => {
+    test("調査コードと同じ決まりの判定で、レベルと、分類しないわけが調査コードと一致すること", () => {
       const assessment = assessShuttleParkingDifficulty(
         analysis,
         researchRules,
@@ -98,7 +106,12 @@ describe("analyzeShuttleParkingDifficulty", () => {
 
       expect(assessment).toEqual(
         problem.level === null
-          ? { status: "out-of-range", reason: problem.reason }
+          ? {
+              status: unsupportedReasons.has(problem.reason)
+                ? "unsupported"
+                : "out-of-range",
+              reason: problem.reason,
+            }
           : { status: "classified", difficulty: String(problem.level) },
       );
     });

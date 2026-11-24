@@ -69,7 +69,7 @@ describe("assessShuttleParkingDifficulty", () => {
     });
   });
 
-  test("勝ち筋の選び方で段が変わるなら範囲外にすること", () => {
+  test("勝ち筋の選び方で段が変わるなら評価できないとすること", () => {
     const assessment = assess(
       createFeatures(8, {
         headFirst: {
@@ -80,12 +80,12 @@ describe("assessShuttleParkingDifficulty", () => {
     );
 
     expect(assessment).toEqual({
-      status: "out-of-range",
+      status: "unsupported",
       reason: "pathDependent",
     });
   });
 
-  test("罠の深さの取り方で段が変わるなら範囲外にすること", () => {
+  test("罠の深さの取り方で段が変わるなら評価できないとすること", () => {
     const assessment = assess(
       createFeatures(8, {
         headFirst: {
@@ -96,18 +96,18 @@ describe("assessShuttleParkingDifficulty", () => {
     );
 
     expect(assessment).toEqual({
-      status: "out-of-range",
+      status: "unsupported",
       reason: "depthDefinitionsDisagree",
     });
   });
 
-  test("先回りする人で段が変わるなら範囲外にすること", () => {
+  test("先回りする人で段が変わるなら評価できないとすること", () => {
     const assessment = assess(
       createFeatures(8, { window: { minimum: 5, maximum: 5 } }),
     );
 
     expect(assessment).toEqual({
-      status: "out-of-range",
+      status: "unsupported",
       reason: "playStylesDisagree",
     });
   });
@@ -211,6 +211,10 @@ describe("assessShuttleParkingDifficulty", () => {
       minimumBayCount: 2,
     });
 
-    expect(assessment).toEqual({ status: "unsupported", minimumBayCount: 2 });
+    expect(assessment).toEqual({
+      status: "unsupported",
+      reason: "bayCountNotMinimum",
+      minimumBayCount: 2,
+    });
   });
 });

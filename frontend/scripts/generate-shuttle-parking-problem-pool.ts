@@ -181,11 +181,10 @@ function analyzeCandidate(comboIndex: number, index: number): CandidateResult {
     entry: createShuttleParkingProblemSeed(problem),
     level: assessment.status === "classified" ? assessment.difficulty : null,
     reason:
-      assessment.status === "out-of-range"
+      assessment.status === "out-of-range" ||
+      assessment.status === "unsupported"
         ? assessment.reason
-        : assessment.status === "classified"
-          ? null
-          : assessment.status,
+        : null,
     researchLevel:
       research.status === "classified" ? research.difficulty : null,
     trivial:

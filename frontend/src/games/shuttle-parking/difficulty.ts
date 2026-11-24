@@ -41,11 +41,22 @@ export const SHUTTLE_PARKING_BAY_COUNT_RANGE = {
 } as const satisfies NumericRange;
 
 /**
- * 範囲外のわけ（判定の順）。
- * - `bayCountOutOfRange`: 解ける最小の待機枠が範囲の外。
+ * 挑戦の強さを評価できないわけ（判定の順）。レベルは、どう進めても出会う最も重い罠で決めるので、
+ * 進め方・罠の深さの取り方・遊び方でその罠が変わる問題には、1つの挑戦の強さが無い。
+ * - `bayCountNotMinimum`: 待機枠が、解ける最小の数でない。生成は最小の数だけを出す。
  * - `pathDependent`: 先頭に合わせる人の勝ち筋の選び方で、レベルが変わる。
  * - `depthDefinitionsDisagree`: 罠の深さの2つの取り方でレベルが変わる。
  * - `playStylesDisagree`: 先回りする人ではレベルが変わる（Lv1 で先回りする人が浅い罠に出会うのは許す）。
+ */
+export type ShuttleParkingUnsupportedReason =
+  | "bayCountNotMinimum"
+  | "pathDependent"
+  | "depthDefinitionsDisagree"
+  | "playStylesDisagree";
+
+/**
+ * 評価できるが提供しないわけ（判定の順）。
+ * - `bayCountOutOfRange`: 解ける最小の待機枠が範囲の外。
  * - `freePathEscapes`: Lv3 以上で、候補の外の勝つ手から進めると重い罠を避けて通れる。
  * - `naiveCeiling`: Lv3 以上で、素朴な規則のどれかが、同点のどれかの選び方で勝率 0.8 以上。
  * - `naiveReaderWins`: Lv3 以上で、素朴な解き方の候補から、そのレベルの重さの下限より1人少なく読む人が勝率 0.8 以上。
@@ -53,9 +64,6 @@ export const SHUTTLE_PARKING_BAY_COUNT_RANGE = {
  */
 export type ShuttleParkingOutOfRangeReason =
   | "bayCountOutOfRange"
-  | "pathDependent"
-  | "depthDefinitionsDisagree"
-  | "playStylesDisagree"
   | "freePathEscapes"
   | "naiveCeiling"
   | "naiveReaderWins"
@@ -64,7 +72,11 @@ export type ShuttleParkingOutOfRangeReason =
 export type ShuttleParkingDifficultyAssessment = DifficultyAssessment<{
   classified: object;
   outOfRange: { reason: ShuttleParkingOutOfRangeReason };
-  unsupported: { minimumBayCount: number | null };
+  unsupported:
+    | { reason: "bayCountNotMinimum"; minimumBayCount: number | null }
+    | {
+        reason: Exclude<ShuttleParkingUnsupportedReason, "bayCountNotMinimum">;
+      };
   invalid: never;
 }>;
 
@@ -115,7 +127,11 @@ export function assessShuttleParkingDifficulty(
   }: ShuttleParkingClassificationRules = SHUTTLE_PARKING_CLASSIFICATION_RULES,
 ): ShuttleParkingDifficultyAssessment {
   if (analysis.status === "unsupported") {
-    return { status: "unsupported", minimumBayCount: analysis.minimumBayCount };
+    return {
+      status: "unsupported",
+      reason: "bayCountNotMinimum",
+      minimumBayCount: analysis.minimumBayCount,
+    };
   }
   const { features } = analysis;
   if (!isInNumericRange(features.bayCount, SHUTTLE_PARKING_BAY_COUNT_RANGE)) {
@@ -123,15 +139,15 @@ export function assessShuttleParkingDifficulty(
   }
   const { best, continuation } = features.headFirst;
   if (!isPathIndependent(best) || !isPathIndependent(continuation)) {
-    return { status: "out-of-range", reason: "pathDependent" };
+    return { status: "unsupported", reason: "pathDependent" };
   }
   const level = getShuttleParkingWeightLevel(best.minimum);
   if (getShuttleParkingWeightLevel(continuation.minimum) !== level) {
-    return { status: "out-of-range", reason: "depthDefinitionsDisagree" };
+    return { status: "unsupported", reason: "depthDefinitionsDisagree" };
   }
   const windowLevel = getShuttleParkingWeightLevel(features.window.minimum);
   if (windowLevel !== level && !(level === "1" && windowLevel === "2")) {
-    return { status: "out-of-range", reason: "playStylesDisagree" };
+    return { status: "unsupported", reason: "playStylesDisagree" };
   }
   const upper = level !== "1" && level !== "2";
   if (
