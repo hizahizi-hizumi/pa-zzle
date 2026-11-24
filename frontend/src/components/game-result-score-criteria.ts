@@ -16,7 +16,8 @@ type ScoreCriterionUnit =
   | "台"
   | "マス"
   | "色"
-  | "か所";
+  | "か所"
+  | "人";
 
 export type ScorePenalty = {
   subject: string;

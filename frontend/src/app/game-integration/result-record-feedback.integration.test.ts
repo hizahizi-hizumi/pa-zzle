@@ -118,6 +118,31 @@ describe("過去の自己ベストとの比較", () => {
     });
   });
 
+  test("時間の差を、秒未満を切り捨てた秒で示すこと", () => {
+    const slightlySlowerRecord = {
+      ...bestRecord,
+      id: "slightly-slower-record",
+      payload: {
+        ...bestRecord.payload,
+        performance: { ...bestRecord.payload.performance, elapsedMs: 64_341 },
+      },
+    };
+
+    const feedback = createResultRecordFeedback(
+      { status: "recorded" },
+      display,
+      { currentRecord: slightlySlowerRecord, previousRecords: [bestRecord] },
+    );
+
+    expect(feedback).toMatchObject({
+      comparisons: [
+        { id: "play-score" },
+        { id: "time-delta-ms", delta: "+4秒" },
+        { id: "mistake-count" },
+      ],
+    });
+  });
+
   test("同値の指標を更新扱いせずに自己ベストと同じと示すこと", () => {
     const tiedRecord = {
       ...bestRecord,
