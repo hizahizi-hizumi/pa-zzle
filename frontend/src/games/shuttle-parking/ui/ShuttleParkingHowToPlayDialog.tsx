@@ -95,7 +95,7 @@ function renderScoreRows(item: keyof typeof SHUTTLE_PARKING_SCORE_MAXIMUMS) {
       return (
         <HowToPlayScoreRow
           measure="基準時間"
-          text="車と乗客が/多く、/罠の結果が/先に出る問題ほど/長くなります。"
+          text="車と乗客が/多く、/罠の結果が/何人も後で/表れる問題/（先読みが/深い問題）ほど/長くなります。"
         />
       );
   }

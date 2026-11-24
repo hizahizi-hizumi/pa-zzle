@@ -1,5 +1,4 @@
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
-import { SHUTTLE_PARKING_DISPLAY_NAME } from "@/games/shuttle-parking/display-name";
 import type { ShuttleParkingProblem } from "@/games/shuttle-parking/problem/problem";
 import { createShuttleParkingClearability } from "@/games/shuttle-parking/puzzle/clearability";
 import type {
@@ -303,7 +302,7 @@ export const shuttleParkingTutorial = {
   completion: {
     home: {
       headline: "全員を送り出しました",
-      detail: `${SHUTTLE_PARKING_DISPLAY_NAME}のレベル1を遊んでみましょう`,
+      detail: "本番は列がもっと長く、\n先まで読んで出す順を決めます",
     },
     play: {
       headline: "全員を送り出しました",

@@ -246,7 +246,7 @@ export function ShuttleParkingTutorial({
         onSceneEnd={onSceneEnd}
       >
         {(showsGoal) => (
-          <div className="mx-auto flex size-full max-w-md flex-col px-4 pb-4">
+          <div className="mx-auto flex size-full max-w-md flex-col">
             <ShuttleParkingScene
               problem={shuttleParkingTutorialProblem}
               state={showsGoal ? goalBoard.state : progress.boardState.state}

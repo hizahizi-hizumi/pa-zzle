@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
 import type {
@@ -64,6 +65,23 @@ export function ShuttleParkingPlay({
   renderSettingsDialog,
 }: ShuttleParkingPlayProps) {
   useShuttleParkingSoundEffects(operation, progress);
+  const mainRef = useRef<HTMLElement>(null);
+
+  // 詰みの知らせは待ったで消えるので、押した後のフォーカスを待機枠の行の待ったへ移す。押せなければ盤面の最初の車へ。
+  function undoFromStuckNotice() {
+    onUndo();
+    requestAnimationFrame(() => {
+      const main = mainRef.current;
+      const target =
+        main?.querySelector<HTMLButtonElement>(
+          "[data-undo-area] button:not(:disabled)",
+        ) ??
+        main?.querySelector<HTMLButtonElement>(
+          "button[data-car-id]:not(:disabled)",
+        );
+      target?.focus();
+    });
+  }
 
   return (
     <GamePlayFrame
@@ -107,20 +125,27 @@ export function ShuttleParkingPlay({
         />
       )}
     >
-      <main className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden px-4 pt-2 pb-4">
+      <main
+        ref={mainRef}
+        className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden px-4 pt-2 pb-4"
+      >
         <ShuttleParkingScene
           problem={problem}
           state={state}
           operation={operation}
           interactionDisabled={progress !== "playing"}
           onExitCar={onExitCar}
-          leadingAction={<UndoButton disabled={!canUndo} onUndo={onUndo} />}
+          leadingAction={
+            <span data-undo-area="" className="contents">
+              <UndoButton disabled={!canUndo} onUndo={onUndo} />
+            </span>
+          }
           renderLotNotice={
             isStuck && progress === "playing"
               ? () => (
                   <ShuttleParkingStuckNotice
                     canUndo={canUndo}
-                    onUndo={onUndo}
+                    onUndo={undoFromStuckNotice}
                     onRestart={onRestart}
                   />
                 )

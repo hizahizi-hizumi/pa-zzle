@@ -27,7 +27,7 @@ export function ShuttleParkingStuckNotice({
   return (
     <div
       role="status"
-      className="mx-auto flex w-fit max-w-full flex-wrap items-center justify-center gap-x-1.5 gap-y-1 rounded-lg bg-background/95 px-2 py-1.5 shadow-md"
+      className="mx-auto flex w-fit max-w-full flex-wrap items-center justify-center gap-x-1.5 gap-y-1 rounded-lg bg-background/95 px-2 py-1.5 shadow-raised"
     >
       <p className="text-play-context">{STUCK_NOTICE_LABEL}</p>
       <div className="flex gap-1">

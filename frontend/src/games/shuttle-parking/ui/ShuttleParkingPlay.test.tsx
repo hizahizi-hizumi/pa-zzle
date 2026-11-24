@@ -98,13 +98,29 @@ describe("ShuttleParkingPlay", () => {
   });
 
   test("車を押すとその車を出す操作を通知すること", () => {
-    const [, car] = within(
+    const car = within(
       screen.getByRole("group", { name: "送迎パーキングの駐車場" }),
-    ).getAllByRole("button");
+    )
+      .getAllByRole("button")
+      .find((button) => button.dataset.carId === "2");
 
     fireEvent.click(car!);
 
     expect(props.onExitCar).toHaveBeenCalledWith(2);
+  });
+
+  test("駐車場の車を、左上から行ごとの順に並べること", () => {
+    const cars = within(
+      screen.getByRole("group", { name: "送迎パーキングの駐車場" }),
+    ).getAllByRole("button");
+    const { cars: lotCars } = props.problem.lot;
+
+    const positions = cars.map((button) => {
+      const { row, column } = lotCars[Number(button.dataset.carId)]!;
+      return row * props.problem.lot.size + column;
+    });
+
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 
   test("待機枠の数と待っている車の座席を示すこと", () => {
@@ -152,6 +168,22 @@ describe("詰んだ場合", () => {
     );
 
     expect(props.onUndo).toHaveBeenCalledOnce();
+  });
+
+  test("知らせの待ったを押した後、待機枠の行の待ったへフォーカスを移すこと", async () => {
+    fireEvent.click(
+      within(screen.getByRole("status")).getByRole("button", {
+        name: "待った",
+      }),
+    );
+
+    await vi.waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen
+          .getAllByRole("button", { name: "待った" })
+          .find((button) => !screen.getByRole("status").contains(button)),
+      );
+    });
   });
 
   test("知らせの盤面を戻すボタンで盤面を戻すこと", () => {

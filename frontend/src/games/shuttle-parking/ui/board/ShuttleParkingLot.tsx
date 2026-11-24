@@ -13,7 +13,7 @@ import {
 } from "@/games/shuttle-parking/puzzle/lot";
 import { ShuttleParkingCarBody } from "@/games/shuttle-parking/ui/board/ShuttleParkingCarBody";
 import { shuttleParkingColorNames } from "@/games/shuttle-parking/ui/board/shuttle-parking-colors";
-import { playRejectionShake } from "@/lib/motion";
+import { playRejectionShake, prefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import "@/games/shuttle-parking/ui/board/shuttle-parking-board.css";
 
@@ -144,6 +144,12 @@ const blockerFlashKeyframes = [
   { outlineColor: "rgb(255 255 255 / 0)", outlineWidth: "2px", filter: "none" },
 ];
 
+/** 動きを減らす設定では、塞いでいる車に点滅しない白い縁を同じ長さだけ出し、原因を動かさずに見せる。 */
+const staticOutlineKeyframes = [
+  { outline: "3px solid rgb(255 255 255)" },
+  { outline: "3px solid rgb(255 255 255)" },
+];
+
 /** 進路を塞がれた車が前へ出ようとして、塞いでいる車にぶつかって戻る動き。 */
 const BLOCKED_BUMP_CELLS = 0.3;
 
@@ -169,7 +175,7 @@ function createBlockedBumpKeyframes(
  * 駐車場。開いた辺は出口の道路として矢印で、閉じた辺は壁として描く。車は前の端に進む向きの矢印を付ける。
  * 押す範囲は車の占めるマス全体。出た車は、待機枠へ移る間だけ出口へ走り抜ける姿で残す。
  * 進路を塞がれた車を押すと、その車が前へ出ようとしてぶつかって戻り、塞いでいる車の縁を2回光らせる。
- * 待機枠が満杯で出せない車を押すと、その車を揺らす。
+ * 待機枠が満杯で出せない車を押すと、その車を揺らす。動きを減らす設定では、塞いでいる車に点滅しない縁だけを出す。
  */
 export function ShuttleParkingLot({
   lot,
@@ -184,6 +190,13 @@ export function ShuttleParkingLot({
   const band = toPercent(roadBandCells, lot.size);
   const exitingCar =
     operation?.type === "exited" ? lot.cars[operation.carId] : undefined;
+  const readingOrder = lot.cars
+    .map((_, carId) => carId)
+    .sort(
+      (a, b) =>
+        lot.cars[a]!.row - lot.cars[b]!.row ||
+        lot.cars[a]!.column - lot.cars[b]!.column,
+    );
 
   useEffect(() => {
     if (operation?.type !== "blocked") return;
@@ -206,6 +219,11 @@ export function ShuttleParkingLot({
       },
     );
     for (const blockerId of operation.blockerIds) {
+      const blocker = carRefs.current.get(blockerId);
+      if (prefersReducedMotion()) {
+        blocker?.animate?.(staticOutlineKeyframes, 900);
+        continue;
+      }
       playRejectionShake(
         carRefs.current.get(blockerId),
         blockerFlashKeyframes,
@@ -264,12 +282,13 @@ export function ShuttleParkingLot({
           backgroundSize: `${100 / lot.size}% ${100 / lot.size}%`,
         }}
       />
-      {lot.cars.map((car, carId) => {
+      {/* Tab で盤面を左上から行ごとに進めるよう、車の左上のマスの順に並べる。 */}
+      {readingOrder.map((carId) => {
+        const car = lot.cars[carId]!;
         if (!parkedCarIds.includes(carId)) return null;
         const front = findFront(lot, car);
         return (
           <button
-            // biome-ignore lint/suspicious/noArrayIndexKey: 車の ID は駐車場の並びの位置
             key={carId}
             ref={(element) => {
               if (element) carRefs.current.set(carId, element);
@@ -279,7 +298,7 @@ export function ShuttleParkingLot({
             data-car-id={carId}
             aria-label={describeCar(car, front)}
             disabled={interactionDisabled}
-            className="absolute flex items-center justify-center rounded-[0.5rem] p-[3px] outline-2 outline-transparent outline-offset-[-1px] focus-visible:outline-ring disabled:cursor-default"
+            className="absolute flex cursor-pointer items-center justify-center rounded-[0.5rem] p-[3px] outline-2 outline-transparent outline-offset-[-1px] focus-visible:outline-ring disabled:cursor-default"
             style={getCarBox(car, lot.size)}
             {...getTapHandlers(() => onExitCar(carId))}
           >

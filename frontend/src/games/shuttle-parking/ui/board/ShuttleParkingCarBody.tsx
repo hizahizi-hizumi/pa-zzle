@@ -44,6 +44,10 @@ export function ShuttleParkingCarBody({
   className,
 }: ShuttleParkingCarBodyProps) {
   const vertical = orientation === "vertical";
+  // 座席は車の幅の46%を基本にし、定員の数が並ぶ長さに収まらなければ長さで決める（待機枠の短い3人乗りの車など）。
+  const seatSize = vertical
+    ? `min(46cqw, ${86 / car.capacity}cqh)`
+    : `min(46cqh, ${86 / car.capacity}cqw)`;
   return (
     <span
       role={label === undefined ? undefined : "img"}
@@ -83,13 +87,14 @@ export function ShuttleParkingCarBody({
           flexDirections[front].includes("reverse") &&
             (vertical ? "flex-col-reverse" : "flex-row-reverse"),
         )}
+        style={{ containerType: "size" }}
       >
         {Array.from({ length: car.capacity }, (_, seat) => (
           <span
             // biome-ignore lint/suspicious/noArrayIndexKey: 座席は位置で決まる
             key={seat}
-            className="relative aspect-square overflow-hidden rounded-full bg-black/25"
-            style={vertical ? { width: "46%" } : { height: "46%" }}
+            className="relative shrink-0 overflow-hidden rounded-full bg-black/25"
+            style={{ width: seatSize, height: seatSize }}
           >
             {seat < seatedCount ? (
               // 乗った席には、列と同じ人の形を白で描き、空いた席（暗い穴）と取り違えないようにする。

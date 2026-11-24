@@ -37,6 +37,11 @@ function describeWaitingCar(
 
 const slideMs = 200;
 
+const fullBaysOutlineKeyframes = [
+  { outline: "2px solid var(--foreground)", outlineOffset: "2px" },
+  { outline: "2px solid var(--foreground)", outlineOffset: "2px" },
+];
+
 /**
  * 待機枠。入った順に左から並べ、先に入った車ほど先に乗せることを並びで見せる。
  * 車が出発すると、残った車は左へ詰めて動き、どの車が残ったかを目で追えるようにする。
@@ -80,7 +85,12 @@ export function ShuttleParkingBays({
   useLayoutEffect(() => {
     if (fullNoticeKey === null) return;
     const list = listRef.current;
-    if (typeof list?.animate !== "function" || prefersReducedMotion()) return;
+    if (typeof list?.animate !== "function") return;
+    if (prefersReducedMotion()) {
+      // 揺らさずに、待機枠の行に点滅しない縁を短く出して、満杯が原因だと見せる。地が明るいので文字の色で描く。
+      list.animate(fullBaysOutlineKeyframes, 600);
+      return;
+    }
     list.animate(
       [
         { transform: "translateX(0)" },
