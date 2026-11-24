@@ -1,12 +1,14 @@
 import { useRef, useState } from "react";
 
 import { useReportHowToPlayExampleChange } from "@/components/HowToPlayExamplePanel";
-import type { MagicSquareOperation } from "@/games/magic-square/play/use-magic-square-play";
+import {
+  inputMagicSquareValue,
+  type MagicSquareOperation,
+} from "@/games/magic-square/play/use-magic-square-play";
 import type { MagicSquareValueState } from "@/games/magic-square/puzzle/rules";
 import {
   canUndoMagicSquareSession,
   deselectMagicSquareSessionCell,
-  inputMagicSquareSessionValue,
   listMagicSquareSessionValueStates,
   type MagicSquareSession,
   selectMagicSquareSessionCell,
@@ -25,6 +27,7 @@ import {
   type MagicSquareExampleHintProgress,
   type MagicSquareExamplePress,
 } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-hint";
+import { useMagicSquareExampleSelection } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-selection";
 import { useMagicSquareSoundEffects } from "@/games/magic-square/ui/use-magic-square-sound-effects";
 
 type MagicSquareTouchableExample = {
@@ -87,7 +90,7 @@ function replaceSession(
 
 /**
  * 触れる例の面の状態。面に並べた盤面ごとに、本番の画面を1つずつ並べた形で、その盤面の選んだマスと、盤面の下に並んだ数と待ったを持つ。
- * 選んだマスは、本番と同じく面の中で1つだけにする。メモの切り替えは面に1つ持つ。本番と同じく、マスを選んでから数を押して置く・外す・メモを書く。盤面の下に並んだ数と待ったは
+ * 選んだマスは、本番と同じく遊び方の中で1つだけにし、ほかの盤面やほかの例でマスを選んだら、この例の選びを外す。メモの切り替えは面に1つ持つ。本番と同じく、マスを選んでから数を押して置く・外す・メモを書く。盤面の下に並んだ数と待ったは
  * その盤面に効き、その盤面のマスを選ばずに数を押すと、本番でマスを選ばずに数を押したときと同じく受け付けない。
  * 遷移・受け付けない押し方・音は、本番のプレイと同じ関数と効果音のフックで求める。盤面を解き終えたら、本番と同じくクリアの音を鳴らし、
  * その後は押しても何も起きない。
@@ -135,11 +138,30 @@ export function useTouchableExample(
     return operationIdRef.current;
   }
 
+  // ほかの例でマスを選んだら、この例の選びを外す。本番と同じく、マスを選び直したら前の押した結果の知らせを消す。
+  const announceSelection = useMagicSquareExampleSelection(() => {
+    if (
+      state.sessions.every(
+        ({ selectedCellIndex }) => selectedCellIndex === null,
+      )
+    ) {
+      return;
+    }
+    const next = {
+      ...state,
+      sessions: state.sessions.map(deselectMagicSquareSessionCell),
+    };
+    setState(next);
+    setOperation(null);
+    reportChange(differsFromInitial(next, initial));
+  });
+
   // 本番の画面で選べるマスは1つなので、ほかの盤面のマスを選んだら、前に選んでいた盤面の選びを外す。
   function selectCell(board: number, cellIndex: number) {
     if (cleared || state.sessions[board] === undefined) {
       return;
     }
+    announceSelection();
     // 本番と同じく、盤面の操作が変わったら前の押した結果の知らせを消す。
     setOperation(null);
     apply(
@@ -160,33 +182,20 @@ export function useTouchableExample(
     if (cleared || session === undefined) {
       return;
     }
-    const { selectedCellIndex } = session;
-    const input = inputMagicSquareSessionValue(
+    const input = inputMagicSquareValue(
       session,
       state.inputMode,
       value,
       0,
+      nextOperationId(),
     );
     setOperationBoard(board);
-    if (input.type === "rejected" || selectedCellIndex === null) {
-      setOperation({
-        id: nextOperationId(),
-        type: "rejected",
-        cellIndex: selectedCellIndex,
-        value,
-      });
-      apply({ kind: "value", board, value }, state);
-      return;
-    }
-    setOperation({
-      id: nextOperationId(),
-      type: input.type,
-      cellIndex: selectedCellIndex,
-      value,
-    });
+    setOperation(input.operation);
     apply(
       { kind: "value", board, value },
-      replaceSession(state, board, input.session),
+      input.operation.type === "rejected"
+        ? state
+        : replaceSession(state, board, input.session),
     );
   }
 

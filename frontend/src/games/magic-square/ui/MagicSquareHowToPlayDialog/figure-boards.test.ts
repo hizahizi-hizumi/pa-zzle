@@ -127,14 +127,15 @@ describe("例の盤面", () => {
     expect(violated).toBe(false);
   });
 
-  test("1回ずつのルールの例は、最初から置いてある14を選ぶ手で終わり、14の札を盤面にある数のままにすること", () => {
+  test("1回ずつのルールの例は、最初から置いてある数でない置いた4のマスを選ぶ手で終わること", () => {
     const [last] = followHints(usedValueRuleExample).at(-1) ?? [];
-    const topLeft = getMagicSquareExampleCellIndex([0, 0]);
+    const placedCell = getMagicSquareExampleCellIndex([0, 1]);
 
     expect({
-      given: last?.problem.givens.cells[topLeft],
       selected: last?.selectedCellIndex,
-    }).toEqual({ given: 14, selected: topLeft });
+      placed: last?.puzzleState.cells[placedCell],
+      given: last?.problem.givens.cells[placedCell],
+    }).toEqual({ selected: placedCell, placed: 4, given: null });
   });
 
   test("最初から置いてある数のルールの例は、最初から置いてある数で受け付けられず、置いた数では置き換わること", () => {

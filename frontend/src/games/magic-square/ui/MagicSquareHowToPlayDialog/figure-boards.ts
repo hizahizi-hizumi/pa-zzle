@@ -102,13 +102,14 @@ export const lineRuleExample: MagicSquareHowToPlayExample = {
  * 行は、最初から置いてある14と、置いた4と5と、空き。最初から置いてある数も、置いた数と同じく盤面にある数として ✕ にする。
  * 手がかりは、空いたマスに残りの数を置き、ほかのマスを選んで、置いた数も ✕ のくぼみに変わる所まで見せる手にする
  * （置いた数は、そのマスを選んでいる間は、押すと外せる数として縁取った札になり、印を付けない）。
- * ほかのマスには最初から置いてある14を選ぶので、選んでも14の札は ✕ のくぼみのまま変わらない。
+ * ほかのマスには置いた4を選び、押し終えた姿でも ✓ の札を押せば4と置き換わるようにする（最初から置いてある数のマスを選ぶと、
+ * ✓ の札を押しても受け付けられない姿で終わるため）。
  */
 export const usedValueRuleExample: MagicSquareHowToPlayExample = {
   boards: [onFirstRow("14 +4 +5 .")],
   arrangement: "stacked",
   controls: [],
-  hints: [cellAt(0, [0, 3]), value(11), cellAt(0, [0, 0])],
+  hints: [cellAt(0, [0, 3]), value(11), cellAt(0, [0, 1])],
 };
 
 /**

@@ -12,6 +12,7 @@ import {
 } from "@/components/HowToPlayVerdictMark";
 import { UndoButton } from "@/components/UndoButton";
 import {
+  findMagicSquareMemoRejection,
   isMagicSquareGivenCell,
   MAGIC_SQUARE_MEMO_CAPACITY,
   type MagicSquareValueState,
@@ -27,7 +28,6 @@ import {
 } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/ExampleBoard";
 import {
   getMagicSquareExampleCellIndex,
-  isMagicSquareExampleMemoFull,
   judgeMagicSquareExampleCell,
   judgeMagicSquareExampleRow,
   MAGIC_SQUARE_EXAMPLE_SIZE,
@@ -36,7 +36,6 @@ import type { MagicSquareHowToPlayExample } from "@/games/magic-square/ui/MagicS
 import {
   magicSquareCellHintPlacement,
   magicSquareControlHintPlacement,
-  magicSquareMarkedCellHintPlacement,
 } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/press-hint-placement";
 import { useTouchableExample } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/use-touchable-example";
 import { MagicSquareMemoToggle } from "@/games/magic-square/ui/MagicSquareMemoToggle";
@@ -47,11 +46,12 @@ import { splitMagicSquareRejection } from "@/games/magic-square/ui/magic-square-
  * 例の下に添える言葉。
  * - `line`: 形のルールの判定（✓ そろう / ✕ そろわない / 途中）と ✕ のわけ。盤面ごとに、その行の列で判定する。
  * - `given`: 最初から置いてある数のルールの、数のあるマスごとの ✓ / ✕ の印と、その凡例（✓ 変えられる / ✕ 変えられない）。
- *   最初から置いてある数のマスで数を押して受け付けられなかった間は、凡例の場所にそのわけを出す（本番の揺れが小さく、音を切ると分からないため）。
  * - `used-values`: 盤面の下に並んだ数ごとの ✓ / ✕ の印と、その凡例（✓ まだ置ける / ✕ もう置いてある）。
- * - `memo-limit`: メモが4つ書いてあるマスに5つ目を書こうとして受け付けられなかったときだけ、そのわけを出す。
+ * - `memo`: メモを書こうとして受け付けられなかったときだけ、そのわけ（メモが4つ書いてあるマスに5つ目・数のあるマス）を出す。
+ * `given` と `used-values` では、最初から置いてある数のマスで数を押して受け付けられなかった間、凡例の場所にそのわけを出す。
+ * 受け付けなかったわけは、本番の揺れが小さく音を切ると分からないので、例の下で言う。
  */
-type TouchableExampleCaption = "line" | "given" | "used-values" | "memo-limit";
+type TouchableExampleCaption = "line" | "given" | "used-values" | "memo";
 
 type TouchableExampleProps = {
   example: MagicSquareHowToPlayExample;
@@ -69,14 +69,16 @@ const valueUnitStyle = {
 } as CSSProperties;
 
 /**
- * マスの右上の角の内側に置く ✓ / ✕ の印。大きさは単位（マスの短い辺）の 0.28 倍にし、12〜20px に収める。
- * 中央の数にかからず、隣のマスとの間にもはみ出さない。単位は、マスの箱をコンテナにして受け取る。
+ * マスの上の、マスの外に置く ✓ / ✕ の印。大きさは単位（マスの短い辺）の 0.28 倍にし、12〜18px に収める。
+ * 2桁の数は狭い画面でマスの幅いっぱいに近づき、角の内側に置くと字にかかるので、マスの中央の真上に、マスの縁から 4px 離して置く。
+ * 押す所の手がかりの枠（マスの縁の上）と指（下の縁）にもかからない。単位は、マスの箱をコンテナにして受け取る。
  */
 const cellMarkStyle = {
-  width: "clamp(12px, 28cqmin, 20px)",
-  height: "clamp(12px, 28cqmin, 20px)",
-  top: "max(2px, 4cqmin)",
-  right: "max(2px, 4cqmin)",
+  width: "clamp(12px, 28cqmin, 18px)",
+  height: "clamp(12px, 28cqmin, 18px)",
+  left: "50%",
+  bottom: "calc(100% + 4px)",
+  transform: "translateX(-50%)",
 } as const satisfies CSSProperties;
 
 /**
@@ -186,23 +188,26 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
           caption === "used-values"
             ? valueStates.map((valueState) => valueVerdicts[valueState])
             : [];
+        const rejectedCellIndex =
+          operation?.type === "rejected" && operationBoard === boardIndex
+            ? operation.cellIndex
+            : null;
         const givenRejected =
-          caption === "given" &&
-          operation?.type === "rejected" &&
-          operation.cellIndex !== null &&
-          operationBoard === boardIndex &&
-          isMagicSquareGivenCell(session.problem.givens, operation.cellIndex);
-        const memoLimitShown =
-          caption === "memo-limit" &&
-          operation?.type === "rejected" &&
-          operation.cellIndex !== null &&
-          operationBoard === boardIndex &&
-          state.inputMode === "memo" &&
-          isMagicSquareExampleMemoFull(
-            session,
-            operation.cellIndex,
-            operation.value,
-          );
+          (caption === "given" || caption === "used-values") &&
+          rejectedCellIndex !== null &&
+          isMagicSquareGivenCell(session.problem.givens, rejectedCellIndex);
+        const memoRejection =
+          caption === "memo" &&
+          rejectedCellIndex !== null &&
+          operation !== null &&
+          state.inputMode === "memo"
+            ? findMagicSquareMemoRejection(
+                session.problem.givens,
+                session.puzzleState,
+                rejectedCellIndex,
+                operation.value,
+              )
+            : null;
         const trailingActions = example.controls.map((control) =>
           control === "undo" ? (
             <UndoButton
@@ -257,9 +262,7 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
                         ) : null}
                         {cellIndex === hintedCellIndex ? (
                           <HowToPlayPressHint
-                            {...(mark === undefined
-                              ? magicSquareCellHintPlacement
-                              : magicSquareMarkedCellHintPlacement)}
+                            {...magicSquareCellHintPlacement}
                           />
                         ) : null}
                       </span>
@@ -310,25 +313,34 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
                   labels={shapeLabels}
                   ruleReason={row.reason ?? undefined}
                 />
-              ) : caption === "given" ? (
+              ) : caption === "given" || caption === "used-values" ? (
                 <HowToPlayCaptionLayers
                   layers={[
                     {
                       id: "legend",
                       shown: !givenRejected,
-                      content: (
-                        <HowToPlayMarkLegend
-                          labels={givenLabels}
-                          shownMarks={{
-                            allowed: cellMarks.some(
-                              ({ verdict }) => verdict === "allowed",
-                            ),
-                            disallowed: cellMarks.some(
-                              ({ verdict }) => verdict === "disallowed",
-                            ),
-                          }}
-                        />
-                      ),
+                      content:
+                        caption === "given" ? (
+                          <HowToPlayMarkLegend
+                            labels={givenLabels}
+                            shownMarks={{
+                              allowed: cellMarks.some(
+                                ({ verdict }) => verdict === "allowed",
+                              ),
+                              disallowed: cellMarks.some(
+                                ({ verdict }) => verdict === "disallowed",
+                              ),
+                            }}
+                          />
+                        ) : (
+                          <HowToPlayMarkLegend
+                            labels={valueLabels}
+                            shownMarks={{
+                              allowed: valueMarks.includes("allowed"),
+                              disallowed: valueMarks.includes("disallowed"),
+                            }}
+                          />
+                        ),
                     },
                     {
                       id: "given-rejected",
@@ -343,25 +355,28 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
                     },
                   ]}
                 />
-              ) : caption === "used-values" ? (
-                <HowToPlayMarkLegend
-                  labels={valueLabels}
-                  shownMarks={{
-                    allowed: valueMarks.includes("allowed"),
-                    disallowed: valueMarks.includes("disallowed"),
-                  }}
-                />
-              ) : caption === "memo-limit" ? (
+              ) : caption === "memo" ? (
                 <HowToPlayCaptionLayers
                   layers={[
                     {
-                      id: "memo-limit",
-                      shown: memoLimitShown,
+                      id: "memo-full",
+                      shown: memoRejection === "full",
                       content: (
                         <HowToPlayVerdictLine
                           mark={<HowToPlayVerdictMark verdict="disallowed" />}
                         >
                           {`メモは${MAGIC_SQUARE_MEMO_CAPACITY}つまで`}
+                        </HowToPlayVerdictLine>
+                      ),
+                    },
+                    {
+                      id: "memo-not-empty-cell",
+                      shown: memoRejection === "not-empty-cell",
+                      content: (
+                        <HowToPlayVerdictLine
+                          mark={<HowToPlayVerdictMark verdict="disallowed" />}
+                        >
+                          メモは空いたマスだけ
                         </HowToPlayVerdictLine>
                       ),
                     },

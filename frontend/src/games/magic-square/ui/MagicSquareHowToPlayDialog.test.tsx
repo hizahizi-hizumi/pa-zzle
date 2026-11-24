@@ -156,7 +156,7 @@ describe("MagicSquareHowToPlayDialog", () => {
       );
     });
 
-    test("操作のタブで、置き方・やり直し・メモの順にまとまりを並べ、待ったの図を押せない図にすること", () => {
+    test("操作のタブで、置き方・メモ・やり直しの順にまとまりを並べ、待ったの図を押せない図にすること", () => {
       const panel = openTab("操作");
 
       const titles = within(panel)
@@ -166,8 +166,39 @@ describe("MagicSquareHowToPlayDialog", () => {
         .getAllByRole("button", { name: "待った", hidden: true })
         .find((button) => button.closest("[inert]") !== null);
 
-      expect(titles).toEqual(["置き方", "やり直し", "メモ"]);
+      expect(titles).toEqual(["置き方", "メモ", "やり直し"]);
       expect(undoFigure?.closest('[aria-hidden="true"]')).not.toBeNull();
+    });
+
+    test("操作のタブで、待ったの補足が置き直しをプレイ画面の上の回数として言うこと", () => {
+      const panel = openTab("操作");
+
+      expect(panel.textContent).toContain(
+        "「待った」で外れた数も画面の上の「置き直し」に数えます。",
+      );
+    });
+
+    test("ある例でマスを選んでから別の例のマスを選ぶと、本番と同じく選んだマスを1つにし、前の例の選びを外すこと", () => {
+      const panel = openTab("操作");
+      const [memoBoard, memoClearedBoard] = within(panel)
+        .getAllByRole("group", { name: "魔方陣の盤面" })
+        .slice(2);
+      const memoCell = within(memoBoard as HTMLElement).getByRole("button", {
+        name: /^1行3列/,
+      });
+      const memoClearedCell = within(memoClearedBoard as HTMLElement).getByRole(
+        "button",
+        { name: /^1行3列/ },
+      );
+
+      fireEvent.click(memoCell);
+      fireEvent.click(memoClearedCell);
+
+      expect(
+        [memoCell, memoClearedCell].map((cell) =>
+          cell.getAttribute("aria-pressed"),
+        ),
+      ).toEqual(["false", "true"]);
     });
 
     test("操作のタブで、メモを書ける数を本番の上限と同じ値で言うこと", () => {

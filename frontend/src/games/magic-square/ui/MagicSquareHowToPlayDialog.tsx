@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   type HowToPlayMenuOperation,
   HowToPlayMenuOperations,
@@ -27,6 +28,10 @@ import {
 } from "@/games/magic-square/score";
 import { CorrectionCountExamples } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/CorrectionCountExamples";
 import { MAGIC_SQUARE_EXAMPLE_SIZE } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
+import {
+  createMagicSquareExampleSelections,
+  MagicSquareExampleSelectionsContext,
+} from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-selection";
 import {
   correctionCountFlows,
   givenRuleExample,
@@ -153,130 +158,138 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
 /**
  * 遊び方。ルール・操作・採点のタブで、本番の盤面部品と盤面の下に並んだ数で描いた触れる例と、話し言葉の一文を並べる。
  * 例は本番と同じく、マスを選んで数を押すと置き・置き換え・外し、列の端の合計と色・受け付けない押し方の揺れと音をその場で返す。
+ * 選べるマスは本番の画面と同じく遊び方の中で1つにし、ある例でマスを選んだら、ほかの例の選びを外す。
  * 例はどれもレベル1と同じ 4×4 の盤面か、その1行か1列だけで描き、5×5・6×6 の数と合計はルールの後ろのまとまりで言う。
+ * 操作のタブは、置き方・メモ・やり直しの順にし、やり直しの文が言うメモを先に説明する。
  */
 export function MagicSquareHowToPlayDialog({
   open,
   onClose,
   onOpenTutorial,
 }: MagicSquareHowToPlayDialogProps) {
+  const [exampleSelections] = useState(createMagicSquareExampleSelections);
   return (
-    <HowToPlayOverlay
-      open={open}
-      game={game}
-      description="1・2・3…と続く数を/1回ずつ/マスに/置いて/縦・横・斜めのどの列も/同じ合計に/そろえる/パズルです。"
-      goal={<GoalPlayback />}
-      onClose={onClose}
-      onOpenTutorial={onOpenTutorial}
-      rules={
-        <>
-          <HowToPlayRule
-            text="縦・横・斜めのどの列も/足して/左上の合計に/なれば/完成です。/列の端の合計は/そろうと/緑に/なります。/埋まって/合計が/合わないときと/空きがあるのに/左上の合計に/届いたときは/赤に/なります。"
-            arrangement={lineRuleExample.arrangement}
-            examples={
-              <TouchableExample example={lineRuleExample} caption="line" />
-            }
-          />
-          <HowToPlayRule
-            text="盤面に/まだ無い数を/置けます。"
-            arrangement={usedValueRuleExample.arrangement}
-            examples={
-              <TouchableExample
-                example={usedValueRuleExample}
-                caption="used-values"
-              />
-            }
-          />
-          <HowToPlayRule
-            text="最初から/置いてある数は/変えられません。"
-            arrangement={givenRuleExample.arrangement}
-            examples={
-              <TouchableExample example={givenRuleExample} caption="given" />
-            }
-          />
-          <HowToPlaySection title={otherBoardSizesTitle}>
-            <li>
-              <HowToPlayValueTable
-                columns={otherBoardSizesColumns}
-                rows={otherBoardSizesRows}
-              />
-            </li>
-          </HowToPlaySection>
-        </>
-      }
-      operations={
-        <>
-          <HowToPlaySection title="置き方">
-            <li>
-              <HowToPlayRule
-                headingLevel={4}
-                text="マスを押して/選ぶと/そのマスを通る/列が/濃くなります。/盤面の下に/並んだ数を/押すと/そのマスに/置けます。"
-                arrangement={placeOperationExample.arrangement}
-                examples={<TouchableExample example={placeOperationExample} />}
-              />
-            </li>
-            <li>
-              <HowToPlayRule
-                headingLevel={4}
-                text="置いた数を/選んで/別の数を/押すと/置き換えられます。/同じ数を/もう一度/押すと/外せます。"
-                arrangement={replaceOperationExample.arrangement}
-                examples={
-                  <TouchableExample example={replaceOperationExample} />
-                }
-              />
-            </li>
-          </HowToPlaySection>
-          <HowToPlaySection title="やり直し">
-            <HowToPlayOperationRow
-              visual={
-                // 本番の待ったのボタンそのままの、押しても何も起きない静止の図。
-                <span aria-hidden="true" inert className="flex">
-                  <UndoButton disabled={false} onUndo={ignoreFigurePress} />
-                </span>
+    <MagicSquareExampleSelectionsContext value={exampleSelections}>
+      <HowToPlayOverlay
+        open={open}
+        game={game}
+        description="1・2・3…と続く数を/1回ずつ/マスに/置いて/縦・横・斜めのどの列も/同じ合計に/そろえる/パズルです。"
+        goal={<GoalPlayback />}
+        onClose={onClose}
+        onOpenTutorial={onOpenTutorial}
+        rules={
+          <>
+            <HowToPlayRule
+              text="縦・横・斜めのどの列も/足して/左上の合計に/なれば/完成です。/列の端の合計は/そろうと/緑に/なります。/埋まって/合計が/合わないときと/空きがあるのに/左上の合計に/届いたときは/赤に/なります。"
+              arrangement={lineRuleExample.arrangement}
+              examples={
+                <TouchableExample example={lineRuleExample} caption="line" />
               }
-              text={`「${undo}」で/置いた数も/メモも/1つ前に/戻せます。`}
-              // 待ったで外れた数を置き直しに数えるかは、外す・置き換えると同じく採点のタブの例外に当たるかで決まる。
-              note={`「${undo}」で/外れた数も/置き直しに/数えます。`}
             />
-            <HowToPlayMenuOperations operations={menuOperations} />
-          </HowToPlaySection>
-          <HowToPlaySection title="メモ">
-            <li>
-              <HowToPlayRule
-                headingLevel={4}
-                text={`空いたマスを/選んで/鉛筆のボタンを/押してから/数を/押すと/メモを/1マスに/${MAGIC_SQUARE_MEMO_CAPACITY}つまで/書けます。/同じ数を/もう一度/押すと/消えます。/鉛筆のボタンを/もう一度/押すと/また/数を/置けます。`}
-                arrangement={memoOperationExample.arrangement}
-                examples={
-                  <TouchableExample
-                    example={memoOperationExample}
-                    caption="memo-limit"
-                  />
+            <HowToPlayRule
+              text="盤面に/まだ無い数を/置けます。"
+              arrangement={usedValueRuleExample.arrangement}
+              examples={
+                <TouchableExample
+                  example={usedValueRuleExample}
+                  caption="used-values"
+                />
+              }
+            />
+            <HowToPlayRule
+              text="最初から/置いてある数は/変えられません。"
+              arrangement={givenRuleExample.arrangement}
+              examples={
+                <TouchableExample example={givenRuleExample} caption="given" />
+              }
+            />
+            <HowToPlaySection title={otherBoardSizesTitle}>
+              <li>
+                <HowToPlayValueTable
+                  columns={otherBoardSizesColumns}
+                  rows={otherBoardSizesRows}
+                />
+              </li>
+            </HowToPlaySection>
+          </>
+        }
+        operations={
+          <>
+            <HowToPlaySection title="置き方">
+              <li>
+                <HowToPlayRule
+                  headingLevel={4}
+                  text="マスを押して/選ぶと/そのマスを通る/列が/濃くなります。/盤面の下に/並んだ数を/押すと/そのマスに/置けます。"
+                  arrangement={placeOperationExample.arrangement}
+                  examples={
+                    <TouchableExample example={placeOperationExample} />
+                  }
+                />
+              </li>
+              <li>
+                <HowToPlayRule
+                  headingLevel={4}
+                  text="置いた数を/選んで/別の数を/押すと/置き換えられます。/同じ数を/もう一度/押すと/外せます。"
+                  arrangement={replaceOperationExample.arrangement}
+                  examples={
+                    <TouchableExample example={replaceOperationExample} />
+                  }
+                />
+              </li>
+            </HowToPlaySection>
+            <HowToPlaySection title="メモ">
+              <li>
+                <HowToPlayRule
+                  headingLevel={4}
+                  text={`空いたマスを/選んで/鉛筆のボタンを/押してから/数を/押すと/メモを/1マスに/${MAGIC_SQUARE_MEMO_CAPACITY}つまで/書けます。/同じ数を/もう一度/押すと/消えます。/鉛筆のボタンを/もう一度/押すと/また/数を/置けます。`}
+                  arrangement={memoOperationExample.arrangement}
+                  examples={
+                    <TouchableExample
+                      example={memoOperationExample}
+                      caption="memo"
+                    />
+                  }
+                />
+              </li>
+              <li>
+                <HowToPlayRule
+                  headingLevel={4}
+                  text="数を/置くと/同じ数のメモは/どのマスからも/消えます。/置いたマスに/残っていた/メモは/数を/外すと/戻ります。"
+                  arrangement={memoClearedOperationExample.arrangement}
+                  examples={
+                    <TouchableExample example={memoClearedOperationExample} />
+                  }
+                />
+              </li>
+            </HowToPlaySection>
+            <HowToPlaySection title="やり直し">
+              <HowToPlayOperationRow
+                visual={
+                  // 本番の待ったのボタンそのままの、押しても何も起きない静止の図。
+                  <span aria-hidden="true" inert className="flex">
+                    <UndoButton disabled={false} onUndo={ignoreFigurePress} />
+                  </span>
                 }
+                text={`「${undo}」で/置いた数も/メモも/1つ前に/戻せます。`}
+                // 待ったで外れた数を置き直しに数えるかは、外す・置き換えると同じく採点のタブの例外に当たるかで決まる。
+                // 置き直しは採点のタブで説明するので、ここで初めて出るときは、プレイ画面の上に出る回数だと分かる呼び方にする。
+                note={`「${undo}」で/外れた数も/画面の上の「置き直し」に/数えます。`}
               />
-            </li>
-            <li>
-              <HowToPlayRule
-                headingLevel={4}
-                text="数を/置くと/同じ数のメモは/どのマスからも/消えます。/置いたマスに/残っていた/メモは/数を/外すと/戻ります。"
-                arrangement={memoClearedOperationExample.arrangement}
-                examples={
-                  <TouchableExample example={memoClearedOperationExample} />
-                }
-              />
-            </li>
+              <HowToPlayMenuOperations operations={menuOperations} />
+            </HowToPlaySection>
+          </>
+        }
+        scoring={scoreItems.map(([item, maximum]) => (
+          <HowToPlaySection
+            key={item}
+            title={SCORE_ITEM_LABELS[item]}
+            value={`${maximum}点`}
+            lead={scoreLeads[item]}
+          >
+            {renderScoreRows(item)}
           </HowToPlaySection>
-        </>
-      }
-      scoring={scoreItems.map(([item, maximum]) => (
-        <HowToPlaySection
-          key={item}
-          title={SCORE_ITEM_LABELS[item]}
-          value={`${maximum}点`}
-          lead={scoreLeads[item]}
-        >
-          {renderScoreRows(item)}
-        </HowToPlaySection>
-      ))}
-    />
+        ))}
+      />
+    </MagicSquareExampleSelectionsContext>
   );
 }

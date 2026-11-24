@@ -5,7 +5,6 @@ import type {
 import {
   evaluateMagicSquareLine,
   isMagicSquareGivenCell,
-  MAGIC_SQUARE_MEMO_CAPACITY,
   type MagicSquareLineStatus,
 } from "@/games/magic-square/puzzle/rules";
 import { isSameMagicSquareState } from "@/games/magic-square/puzzle/state";
@@ -17,6 +16,7 @@ import {
   toggleMagicSquareSessionMemo,
 } from "@/games/magic-square/session/session";
 import type { MagicSquareBoardRegion } from "@/games/magic-square/ui/board/board-layout";
+import { magicSquareLineStatusPhrases } from "@/games/magic-square/ui/board/MagicSquareBoard";
 
 /** 例の盤面の一辺。どの例も、レベル1と同じ 4×4 の盤面か、その一部を見せる。 */
 export const MAGIC_SQUARE_EXAMPLE_SIZE = 4;
@@ -164,15 +164,7 @@ const lineVerdicts = {
   overreached: "disallowed",
 } as const satisfies Record<MagicSquareLineStatus, MagicSquareExampleVerdict>;
 
-/** ✕ の列のわけ。本番の盤面が読み上げで言う列の状態と同じ言葉にする。 */
-const lineReasons = {
-  incomplete: null,
-  matched: null,
-  unmatched: "埋まって合計が合わない",
-  overreached: "空きがあるのに合計に届いた",
-} as const satisfies Record<MagicSquareLineStatus, string | null>;
-
-/** 例の範囲の1行目の列の判定と、✕ のわけ。 */
+/** 例の範囲の1行目の列の判定と、✕ のわけ。わけは、本番の盤面が読み上げで言う列の状態の言葉にする。 */
 export function judgeMagicSquareExampleRow(
   session: MagicSquareSession,
   region: MagicSquareBoardRegion,
@@ -181,7 +173,12 @@ export function judgeMagicSquareExampleRow(
     kind: "row",
     index: region.row,
   });
-  return { verdict: lineVerdicts[status], reason: lineReasons[status] };
+  const verdict = lineVerdicts[status];
+  return {
+    verdict,
+    reason:
+      verdict === "disallowed" ? magicSquareLineStatusPhrases[status] : null,
+  };
 }
 
 /** マスの数を変えられるか。最初から置いてある数は変えられず、置いた数は変えられる。空きのマスは `null`。 */
@@ -195,19 +192,4 @@ export function judgeMagicSquareExampleCell(
   return isMagicSquareGivenCell(session.problem.givens, cellIndex)
     ? "disallowed"
     : "allowed";
-}
-
-/** 空いたマスのメモが上限まで書いてあり、まだ書いていない数のメモは書けないか。 */
-export function isMagicSquareExampleMemoFull(
-  session: MagicSquareSession,
-  cellIndex: number,
-  value: number,
-): boolean {
-  const { cells, memos } = session.puzzleState;
-  const memo = memos[cellIndex] ?? [];
-  return (
-    cells[cellIndex] === null &&
-    !memo.includes(value) &&
-    memo.length >= MAGIC_SQUARE_MEMO_CAPACITY
-  );
 }

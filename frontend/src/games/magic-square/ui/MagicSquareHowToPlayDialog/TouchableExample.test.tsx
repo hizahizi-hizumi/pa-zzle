@@ -20,6 +20,7 @@ import {
 } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/figure-boards";
 import { TouchableExample } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/TouchableExample";
 import { playLayeredSound, playSound } from "@/lib/audio/sound-effects";
+import { playRejectionShake } from "@/lib/motion";
 
 vi.mock("@/lib/audio/sound-effects", () => ({
   REPEATED_SOUND_VARIATION: {},
@@ -29,11 +30,22 @@ vi.mock("@/lib/audio/sound-effects", () => ({
   prepareSoundEffects: vi.fn(),
 }));
 
+vi.mock("@/lib/motion", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/motion")>()),
+  playRejectionShake: vi.fn(),
+}));
+
 afterEach(() => {
   cleanup();
   vi.mocked(playSound).mockClear();
   vi.mocked(playLayeredSound).mockClear();
+  vi.mocked(playRejectionShake).mockClear();
 });
+
+/** 受け付けなかった押し方で揺らした要素（マスか数の札）。 */
+function readShaken(): (Element | null | undefined)[] {
+  return vi.mocked(playRejectionShake).mock.calls.map(([element]) => element);
+}
 
 function readPlayedSounds(): string[] {
   return vi
@@ -153,7 +165,7 @@ function getResetButton(): HTMLButtonElement {
 
 function renderExample(
   example: MagicSquareHowToPlayExample,
-  caption?: "line" | "given" | "used-values" | "memo-limit",
+  caption?: "line" | "given" | "used-values" | "memo",
 ) {
   render(
     <HowToPlayExamplePanel resettable>
@@ -200,6 +212,12 @@ describe("列の合計のルールの例を描いた場合", () => {
       expect(readRowSum(1)).toBe("1行目の合計 34 空きがあるのに合計に届いた");
       expect(readPlayedSounds()).toEqual([expect.stringContaining("rejected")]);
       expect(findHinted()).toEqual([getValue(12, 0)]);
+    });
+
+    test("ほかの盤面の下に並んだ数を押すと、本番でマスを選ばずに押したときと同じく、押した盤面の下の数の札だけを揺らすこと", () => {
+      fireEvent.click(getValue(12, 1));
+
+      expect(readShaken()).toEqual([getValue(12, 1)]);
     });
 
     describe("手がかりの数を押した場合", () => {
@@ -302,12 +320,61 @@ describe("数を1回ずつ使うルールの例を描いた場合", () => {
       expect(readMarks().filter((mark) => mark.startsWith("11 "))).toEqual([]);
     });
 
-    test("最初から置いてある数のマスを選ぶと、置いた数の札にも ✕ を付け、最初から置いてある数の札は ✕ のままにすること", () => {
-      fireEvent.click(getCell(0, 1, 1));
+    test("置いた4のマスを選ぶと、置いた11の札にも ✕ を付け、選んだマスの4の札を縁取って印を外すこと", () => {
+      fireEvent.click(getCell(0, 1, 2));
 
-      expect(readMarks().filter((mark) => mark.endsWith("disallowed"))).toEqual(
-        ["4 disallowed", "5 disallowed", "11 disallowed", "14 disallowed"],
-      );
+      expect({
+        disallowed: readMarks().filter((mark) => mark.endsWith("disallowed")),
+        selected: getValue(4).getAttribute("aria-pressed"),
+      }).toEqual({
+        disallowed: ["5 disallowed", "11 disallowed", "14 disallowed"],
+        selected: "true",
+      });
+    });
+  });
+
+  describe("手がかりの手を押し終えた場合", () => {
+    beforeEach(() => {
+      pressHints(usedValueRuleExample.hints);
+    });
+
+    test("✓ の札を押すと、選んだマスの置いた数と置き換え、凡例を出したままにすること", () => {
+      fireEvent.click(getValue(6));
+
+      expect({
+        cell: getCell(0, 1, 2).getAttribute("aria-label"),
+        sound: readPlayedSounds().at(-1),
+        captions: readCaptions(),
+      }).toEqual({
+        cell: "1行2列 6",
+        sound: expect.stringContaining("placed"),
+        captions: ["まだ置ける、もう置いてある"],
+      });
+    });
+  });
+
+  describe("最初から置いてある数のマスを選んで ✓ の札を押した場合", () => {
+    beforeEach(() => {
+      fireEvent.click(getCell(0, 1, 1));
+      fireEvent.click(getValue(6));
+    });
+
+    test("受け付けずにそのマスを揺らし、凡例の場所に最初から置いてある数と出すこと", () => {
+      expect({
+        cell: getCell(0, 1, 1).getAttribute("aria-label"),
+        shaken: readShaken(),
+        captions: readCaptions(),
+      }).toEqual({
+        cell: "1行1列 14",
+        shaken: [getCell(0, 1, 1)],
+        captions: ["最初から置いてある数"],
+      });
+    });
+
+    test("置いた数のマスを選ぶと、わけを消して凡例に戻すこと", () => {
+      fireEvent.click(getCell(0, 1, 2));
+
+      expect(readCaptions()).toEqual(["まだ置ける、もう置いてある"]);
     });
   });
 });
@@ -333,8 +400,9 @@ describe("最初から置いてある数のルールの例を描いた場合", (
       fireEvent.click(getValue(6));
     });
 
-    test("数を変えずに受け付けない音を鳴らし、凡例の場所にわけを出し、手がかりを置いた数のマスへ移すこと", () => {
+    test("数を変えずにそのマスを揺らして受け付けない音を鳴らし、凡例の場所にわけを出し、手がかりを置いた数のマスへ移すこと", () => {
       expect(getCell(0, 1, 1).getAttribute("aria-label")).toBe("1行1列 14");
+      expect(readShaken()).toEqual([getCell(0, 1, 1)]);
       expect(readPlayedSounds()).toEqual([expect.stringContaining("rejected")]);
       expect(readCaptions()).toEqual(["最初から置いてある数"]);
       expect(findHinted()).toEqual([getCell(0, 1, 3)]);
@@ -436,7 +504,7 @@ describe("メモの操作の例を描いてマスを選んだ場合", () => {
 
 describe("メモの例で、4つ書いたマスに5つ目を書こうとした場合", () => {
   beforeEach(() => {
-    renderExample(memoOperationExample, "memo-limit");
+    renderExample(memoOperationExample, "memo");
     fireEvent.click(getCell(0, 1, 3));
     fireEvent.click(screen.getByRole("button", { name: "メモ" }));
   });
@@ -453,7 +521,7 @@ describe("メモの例で、4つ書いたマスに5つ目を書こうとした�
     expect(readShownCaption()).toBe("");
   });
 
-  test("5つ目は本番と同じく受け付けずに受け付けない音を鳴らし、例の下にメモは4つまでと出すこと", () => {
+  test("5つ目は本番と同じく受け付けずにそのマスを揺らして受け付けない音を鳴らし、例の下にメモは4つまでと出すこと", () => {
     for (const value of [1, 2, 3, 5, 6]) {
       fireEvent.click(getValue(value));
     }
@@ -461,8 +529,31 @@ describe("メモの例で、4つ書いたマスに5つ目を書こうとした�
     expect(getCell(0, 1, 3).getAttribute("aria-label")).toBe(
       "1行3列 空き メモ 1 2 3 5",
     );
+    expect(readShaken()).toEqual([getCell(0, 1, 3)]);
     expect(readPlayedSounds().at(-1)).toContain("rejected");
     expect(readShownCaption()).toBe("メモは4つまで");
+  });
+});
+
+describe("メモの例で、メモを書く入れ方のまま置いた数のマスに数を押した場合", () => {
+  beforeEach(() => {
+    renderExample(memoOperationExample, "memo");
+    fireEvent.click(getCell(0, 1, 3));
+    fireEvent.click(screen.getByRole("button", { name: "メモ" }));
+    fireEvent.click(getCell(0, 1, 1));
+    fireEvent.click(getValue(5));
+  });
+
+  test("本番と同じく受け付けずにそのマスを揺らし、例の下にメモは空いたマスだけと出すこと", () => {
+    expect({
+      cell: getCell(0, 1, 1).getAttribute("aria-label"),
+      shaken: readShaken(),
+      caption: readCaptions()[0],
+    }).toEqual({
+      cell: "1行1列 14",
+      shaken: [getCell(0, 1, 1)],
+      caption: "メモは空いたマスだけ",
+    });
   });
 });
 

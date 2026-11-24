@@ -18,20 +18,6 @@ export const magicSquareCellHintPlacement = {
   pointer: HowToPlayPressHintPointer;
 };
 
-/**
- * ✓ / ✕ の印を角に付けたマスの手がかり。印はマスの右上の角の内側に置くので、枠はマスの外に引き、
- * 角の印と重ならないようにする。マスどうしの間は盤の面なので、外の枠は隣のマスにかからない。
- */
-export const magicSquareMarkedCellHintPlacement = {
-  frame: "outside",
-  outline: "rounded",
-  pointer: "bottom-edge",
-} as const satisfies {
-  frame: HowToPlayPressHintFrame;
-  outline: HowToPlayPressHintOutline;
-  pointer: HowToPlayPressHintPointer;
-};
-
 /** メモの切り替えの手がかり。丸いボタンで中身が鉛筆の絵なので、丸い枠を外に引き、指は右下の角に半分を外へ出す。 */
 export const magicSquareControlHintPlacement = {
   frame: "outside",
