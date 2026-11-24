@@ -6,11 +6,20 @@ import {
   within,
 } from "@testing-library/react";
 
+import { magicSquareBoardSizes } from "@/games/magic-square/problem/problem";
+import {
+  getMagicSquareMagicSum,
+  getMagicSquareMaxValue,
+} from "@/games/magic-square/puzzle/board";
+import { MAGIC_SQUARE_MEMO_CAPACITY } from "@/games/magic-square/puzzle/rules";
 import {
   MAGIC_SQUARE_CORRECTION_PENALTY,
   MAGIC_SQUARE_SCORE_MAXIMUMS,
+  MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS,
+  MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS,
 } from "@/games/magic-square/score";
 import { MagicSquareHowToPlayDialog } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog";
+import { MAGIC_SQUARE_EXAMPLE_SIZE } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
 import { SCORE_ITEM_LABELS } from "@/games/play-vocabulary";
 
 afterEach(cleanup);
@@ -45,29 +54,37 @@ describe("MagicSquareHowToPlayDialog", () => {
       ]);
     });
 
-    test("ルールの図を本番の盤面部品で描き、違反の2種を違反として描くこと", () => {
+    test("ルールで、例の盤面と違う大きさの盤面ごとに、使う数とそろえる合計を本番の盤面と同じ値で言うこと", () => {
       const panel = within(getDialog()).getByRole("tabpanel", {
         name: "ルール",
       });
 
-      const violations = [
-        "1行目の合計 36 埋まって合計と違う",
-        "1列目の合計 34 空きがあるのに合計に届いた",
-      ].map((text) => within(panel).queryAllByText(text).length);
+      const phrases = magicSquareBoardSizes
+        .filter((size) => size !== MAGIC_SQUARE_EXAMPLE_SIZE)
+        .map(
+          (size) =>
+            `${size}×${size}は1から${getMagicSquareMaxValue(size)}までで合計${getMagicSquareMagicSum(size)}`,
+        );
 
-      expect(violations.every((count) => count > 0)).toBe(true);
+      expect(
+        phrases.every((phrase) => panel.textContent?.includes(phrase)),
+      ).toBe(true);
     });
 
-    test("ルールで、出す盤面の大きさごとのそろえる合計を言うこと", () => {
+    test("ルールの例を、本番の盤面部品で描いた触れる例として、元に戻すボタンのある面に置くこと", () => {
       const panel = within(getDialog()).getByRole("tabpanel", {
         name: "ルール",
       });
 
-      const phrases = ["4×4なら34、", "5×5なら65、", "6×6なら111で"].map(
-        (text) => within(panel).queryAllByText(text).length,
-      );
+      const resetButtons = within(panel).getAllByRole("button", {
+        name: "例を元に戻す",
+      });
+      const boards = within(panel).getAllByRole("group", {
+        name: "魔方陣の盤面",
+      });
 
-      expect(phrases.every((count) => count > 0)).toBe(true);
+      expect(resetButtons).toHaveLength(3);
+      expect(boards).toHaveLength(4);
     });
 
     test("採点のタブで、結果画面と同じ順と満点の見出しを並べること", () => {
@@ -95,6 +112,16 @@ describe("MagicSquareHowToPlayDialog", () => {
       expect(deduction).toBeTruthy();
     });
 
+    test("採点のタブで、基準時間の決まり方を score.ts の式と同じ値で言うこと", () => {
+      const panel = openTab("採点");
+
+      const [row] = within(panel).getAllByRole("listitem");
+
+      expect(row?.textContent).toBe(
+        `基準時間読み始めの${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒に空きマス1つにつき${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / 1000}秒を足した時間です。`,
+      );
+    });
+
     test("採点のタブで、置き直しの数え方と、待った・盤面を戻すの回数では点が下がらないことを言うこと", () => {
       const panel = openTab("採点");
 
@@ -102,11 +129,18 @@ describe("MagicSquareHowToPlayDialog", () => {
         .getAllByRole("listitem")
         .map((row) => row.textContent);
 
-      expect(rows).toEqual([
-        "基準時間空きマスが多い問題ほど長くなります。",
-        `置き直し 1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点置いた数を外す・置き換える・「待った」・「盤面を戻す」のどれで外しても1回です。置いても列の端の数の色が変わらなかった数はほかのマスを選ぶ前に直せば数えません。数の欄で隣の数を押し間違えてすぐ直したときも数えません。`,
-        "「待った」・「盤面を戻す」使った回数では点は下がりません。",
+      expect(rows.slice(1).map((row) => row?.split("。")[0])).toEqual([
+        `置き直し 1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点置いた数を外す・置き換える・「待った」・「盤面を戻す」のどれで外しても1回です`,
+        "「待った」・「盤面を戻す」使った回数では点は下がりません",
       ]);
+    });
+
+    test("操作のタブで、メモを書ける数を本番の上限と同じ値で言うこと", () => {
+      const panel = openTab("操作");
+
+      expect(panel.textContent).toContain(
+        `${MAGIC_SQUARE_MEMO_CAPACITY}つまでメモを書けます。`,
+      );
     });
   });
 });

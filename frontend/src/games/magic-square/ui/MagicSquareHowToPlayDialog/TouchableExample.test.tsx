@@ -1,0 +1,393 @@
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
+
+import { HowToPlayExamplePanel } from "@/components/HowToPlayExamplePanel";
+import type { MagicSquareExamplePress } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-hint";
+import {
+  givenRuleExample,
+  lineRuleExample,
+  type MagicSquareHowToPlayExample,
+  memoClearedOperationExample,
+  memoOperationExample,
+  placeOperationExample,
+  replaceOperationExample,
+  usedValueRuleExample,
+} from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/figure-boards";
+import { TouchableExample } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/TouchableExample";
+import { playSound } from "@/lib/audio/sound-effects";
+
+vi.mock("@/lib/audio/sound-effects", () => ({
+  REPEATED_SOUND_VARIATION: {},
+  defineSoundEffect: (url: string) => ({ url }),
+  playLayeredSound: vi.fn(),
+  playSound: vi.fn(),
+  prepareSoundEffects: vi.fn(),
+}));
+
+afterEach(() => {
+  cleanup();
+  vi.mocked(playSound).mockClear();
+});
+
+function readPlayedSounds(): string[] {
+  return vi
+    .mocked(playSound)
+    .mock.calls.map(([sound]) => (sound as unknown as { url: string }).url);
+}
+
+/**
+ * 例ごとの、見えている判定の言葉と、判定の下に添えたわけ。判定の言葉はどれも同じ場所に重ね、見えていない言葉は読み上げから外す。
+ * わけは、判定の言葉の後ろに空白で区切って続ける。
+ */
+function readCaptions(): string[] {
+  return screen.getAllByRole("figure").map((figure) => {
+    const caption = figure.querySelector("figcaption");
+    const shown = [
+      ...(caption?.querySelectorAll('[aria-hidden="false"]') ?? []),
+    ].map((layer) => layer.textContent);
+    const reason = caption
+      ?.querySelector("[data-how-to-play-verdict-reason]")
+      ?.textContent?.replace("・", "");
+    return [...shown, ...(reason ? [reason] : [])].join(" ");
+  });
+}
+
+function getBoard(index: number): HTMLElement {
+  const board = screen.getAllByRole("group", { name: "魔方陣の盤面" })[index];
+  if (board === undefined) {
+    throw new Error(`board ${index} is missing`);
+  }
+  return board;
+}
+
+function getCell(board: number, row: number, column: number): HTMLElement {
+  return within(getBoard(board)).getByRole("button", {
+    name: new RegExp(`^${row}行${column}列`),
+  });
+}
+
+function getValue(value: number): HTMLButtonElement {
+  return within(screen.getByRole("group", { name: "数の欄" })).getByRole(
+    "button",
+    { name: String(value) },
+  );
+}
+
+function readRowSum(board: number): string | undefined {
+  return within(getBoard(board))
+    .getAllByText(/^1行目の合計/)
+    .map((label) => label.textContent ?? "")[0];
+}
+
+/** 手がかり（破線の枠と指）を付けた所の要素。 */
+function findHinted(): Element[] {
+  return [...document.querySelectorAll("[data-how-to-play-press-hint]")].map(
+    (hint) => hint.closest("button") ?? hint,
+  );
+}
+
+/** ✓ / ✕ の印を付けた所（マスか数の札）の読み上げ名と、印の向き。 */
+function readMarks(): string[] {
+  return [...document.querySelectorAll("[data-how-to-play-verdict-mark]")]
+    .flatMap((mark) => {
+      const button = mark.closest("button");
+      return button === null
+        ? []
+        : [
+            `${button.getAttribute("aria-label") ?? button.textContent} ${mark.getAttribute("data-how-to-play-verdict-mark")}`,
+          ];
+    })
+    .map((text) => text.replace(/\s+/g, " "));
+}
+
+/** 手がかりの手が押す所の要素。マスは、盤面での行と列の読み上げ名で探す。 */
+function findPressTarget(press: MagicSquareExamplePress): Element {
+  switch (press.kind) {
+    case "cell":
+      return getCell(
+        press.board,
+        Math.floor(press.cellIndex / 4) + 1,
+        (press.cellIndex % 4) + 1,
+      );
+    case "value":
+      return getValue(press.value);
+    case "memo":
+      return screen.getByRole("button", { name: "メモ" });
+  }
+}
+
+function getResetButton(): HTMLButtonElement {
+  return screen.getByRole<HTMLButtonElement>("button", {
+    name: "例を元に戻す",
+  });
+}
+
+function renderExample(
+  example: MagicSquareHowToPlayExample,
+  caption?: "line" | "given" | "used-values",
+) {
+  render(
+    <HowToPlayExamplePanel resettable>
+      <TouchableExample example={example} caption={caption} />
+    </HowToPlayExamplePanel>,
+  );
+}
+
+describe("列の合計のルールの例を描いた場合", () => {
+  beforeEach(() => {
+    renderExample(lineRuleExample, "line");
+  });
+
+  test("最初は、そろった行をできる、空きがあるのに合計に届いた行をできないとし、そろった行の右端に手がかりを付けること", () => {
+    const captions = readCaptions();
+
+    expect(captions).toEqual(["できる", "できない 空きがあるのに合計に届いた"]);
+    expect(readRowSum(1)).toBe("1行目の合計 34 空きがあるのに合計に届いた");
+    expect(findHinted()).toEqual([getCell(0, 1, 4)]);
+    expect(getResetButton().disabled).toBe(true);
+  });
+
+  describe("手がかりのマスを選んだ場合", () => {
+    beforeEach(() => {
+      fireEvent.click(getCell(0, 1, 4));
+    });
+
+    test("マスを選んだ姿にし、手がかりを数の欄の札へ移し、元に戻すボタンを出すこと", () => {
+      expect(getCell(0, 1, 4).getAttribute("aria-pressed")).toBe("true");
+      expect(findHinted()).toEqual([getValue(13)]);
+      expect(getResetButton().disabled).toBe(false);
+    });
+
+    describe("手がかりの数を押した場合", () => {
+      beforeEach(() => {
+        fireEvent.click(getValue(13));
+      });
+
+      test("置き換えた数で行の合計を出し直し、埋まって合計と違うとしてできないにし、手がかりを消すこと", () => {
+        expect(readRowSum(0)).toBe("1行目の合計 36 埋まって合計と違う");
+        expect(readCaptions()[0]).toBe("できない 埋まって合計と違う");
+        expect(findHinted()).toEqual([]);
+      });
+
+      test("本番の数を置く音を鳴らすこと", () => {
+        const played = readPlayedSounds();
+
+        expect(played).toHaveLength(1);
+        expect(played[0]).toContain("placed");
+      });
+
+      test("元に戻すと、最初の判定と手がかりに戻ること", () => {
+        fireEvent.click(getResetButton());
+
+        expect(readCaptions()).toEqual([
+          "できる",
+          "できない 空きがあるのに合計に届いた",
+        ]);
+        expect(findHinted()).toEqual([getCell(0, 1, 4)]);
+        expect(getResetButton().disabled).toBe(true);
+      });
+    });
+  });
+
+  test("できない行の空きに数を置いて埋めると、埋まって合計と違う行として判定し直すこと", () => {
+    fireEvent.click(getCell(1, 1, 3));
+    fireEvent.click(getValue(1));
+
+    expect(readCaptions()[1]).toBe("できない 埋まって合計と違う");
+  });
+
+  test("マスを選ぶ前に数を押すと、本番と同じく受け付けずに受け付けない音を鳴らすこと", () => {
+    fireEvent.click(getValue(13));
+
+    expect(readRowSum(0)).toBe("1行目の合計 34 そろった");
+    expect(readPlayedSounds()).toEqual([expect.stringContaining("rejected")]);
+  });
+});
+
+describe("数を1回ずつ使うルールの例を描いた場合", () => {
+  beforeEach(() => {
+    renderExample(usedValueRuleExample, "used-values");
+  });
+
+  test("最初は、盤面にある数の札だけに ✕ を付けて押せなくし、置けないの凡例を出すこと", () => {
+    expect(readMarks()).toEqual([
+      "4 disallowed",
+      "5 disallowed",
+      "14 disallowed",
+    ]);
+    expect(getValue(4).disabled).toBe(true);
+    expect(readCaptions()).toEqual(["", "置けない"]);
+  });
+
+  describe("空きのマスに手がかりの数を置いた場合", () => {
+    beforeEach(() => {
+      fireEvent.click(getCell(0, 1, 4));
+      fireEvent.click(getValue(11));
+    });
+
+    test("行をそろった合計にし、置いた数の札を本番と同じく選んだマスの数として縁取ること", () => {
+      expect(readRowSum(0)).toBe("1行目の合計 34 そろった");
+      expect(getValue(11).getAttribute("aria-pressed")).toBe("true");
+      expect(readMarks()).not.toContain("11 disallowed");
+    });
+
+    test("ほかのマスを選ぶと、置いた数の札にも ✕ を付け、選んだマスの数の札からは ✕ を外すこと", () => {
+      fireEvent.click(getCell(0, 1, 1));
+
+      expect(readMarks()).toEqual([
+        "4 disallowed",
+        "5 disallowed",
+        "11 disallowed",
+      ]);
+    });
+  });
+});
+
+describe("最初から置いてある数のルールの例を描いた場合", () => {
+  beforeEach(() => {
+    renderExample(givenRuleExample, "given");
+  });
+
+  test("最初は、最初から置いてある数に ✕、置いた数に ✓ を付け、両方の凡例を出し、最初から置いてある数に手がかりを付けること", () => {
+    expect(readMarks()).toEqual([
+      "1行1列 14 disallowed",
+      "1行2列 4 disallowed",
+      "1行3列 5 allowed",
+    ]);
+    expect(readCaptions()).toEqual(["変えられる、変えられない"]);
+    expect(findHinted()).toEqual([getCell(0, 1, 1)]);
+  });
+
+  describe("最初から置いてある数を選んで手がかりの数を押した場合", () => {
+    beforeEach(() => {
+      fireEvent.click(getCell(0, 1, 1));
+      fireEvent.click(getValue(6));
+    });
+
+    test("数を変えずに受け付けない音を鳴らし、手がかりを消すこと", () => {
+      expect(getCell(0, 1, 1).getAttribute("aria-label")).toBe("1行1列 14");
+      expect(readPlayedSounds()).toEqual([expect.stringContaining("rejected")]);
+      expect(findHinted()).toEqual([]);
+    });
+  });
+
+  test("置いた数を選んで別の数を押すと、置き換えて ✓ を付けたままにすること", () => {
+    fireEvent.click(getCell(0, 1, 3));
+    fireEvent.click(getValue(6));
+
+    expect(readMarks()).toContain("1行3列 6 allowed");
+  });
+});
+
+describe("メモの操作の例を描いてマスを選んだ場合", () => {
+  beforeEach(() => {
+    renderExample(memoOperationExample);
+    fireEvent.click(getCell(0, 1, 3));
+  });
+
+  test("手がかりをメモのボタンへ移すこと", () => {
+    expect(findHinted()).toEqual([
+      screen.getByRole("button", { name: "メモ" }),
+    ]);
+  });
+
+  describe("メモに切り替えて数を押した場合", () => {
+    beforeEach(() => {
+      fireEvent.click(screen.getByRole("button", { name: "メモ" }));
+      fireEvent.click(getValue(5));
+    });
+
+    test("1回目でメモを書き、本番のメモを書く音を鳴らし、同じ数に手がかりを残すこと", () => {
+      expect(getCell(0, 1, 3).getAttribute("aria-label")).toBe(
+        "1行3列 空き メモ 5",
+      );
+      expect(readPlayedSounds().at(-1)).toContain("memo-written");
+      expect(findHinted()).toEqual([getValue(5)]);
+    });
+
+    test("2回目でメモを消し、本番のメモを消す音を鳴らし、手がかりを消すこと", () => {
+      fireEvent.click(getValue(5));
+
+      expect(getCell(0, 1, 3).getAttribute("aria-label")).toBe("1行3列 空き");
+      expect(readPlayedSounds().at(-1)).toContain("memo-erased");
+      expect(findHinted()).toEqual([]);
+    });
+  });
+});
+
+describe("数を置くとメモが消える例を描いた場合", () => {
+  beforeEach(() => {
+    renderExample(memoClearedOperationExample);
+    fireEvent.click(getCell(0, 1, 3));
+    fireEvent.click(getValue(5));
+  });
+
+  test("置いた数と同じ数のメモを、ほかのマスからも消すこと", () => {
+    expect(getCell(0, 1, 4).getAttribute("aria-label")).toBe(
+      "1行4列 空き メモ 11",
+    );
+  });
+});
+
+describe("置き換えの例で、手がかりどおりに置き換えてから同じ数を押した場合", () => {
+  beforeEach(() => {
+    renderExample(replaceOperationExample);
+    fireEvent.click(getCell(0, 1, 4));
+    fireEvent.click(getValue(11));
+    fireEvent.click(getValue(11));
+  });
+
+  test("数を外して空きにし、外すときは本番と同じく音を鳴らさないこと", () => {
+    expect(getCell(0, 1, 4).getAttribute("aria-label")).toBe("1行4列 空き");
+    expect(readPlayedSounds()).toEqual([expect.stringContaining("placed")]);
+  });
+});
+
+describe.each([
+  { name: "置き方", example: placeOperationExample },
+  { name: "置き換え", example: replaceOperationExample },
+  { name: "メモ", example: memoOperationExample },
+  { name: "メモが消える", example: memoClearedOperationExample },
+  { name: "列の合計", example: lineRuleExample },
+  { name: "数を1回ずつ", example: usedValueRuleExample },
+])("$name の例を描いた場合", ({ example }) => {
+  beforeEach(() => {
+    renderExample(example);
+  });
+
+  test("手がかりの手を順に押すと、手がかりが押す所へ1つずつ移り、押し終えると消えること", () => {
+    const hintedBeforeEachPress = example.hints.map((press) => {
+      const target = findPressTarget(press);
+      const hinted = findHinted();
+      fireEvent.click(target);
+      return hinted.length === 1 && hinted[0] === target;
+    });
+
+    expect(hintedBeforeEachPress.every(Boolean)).toBe(true);
+    expect(findHinted()).toEqual([]);
+    expect(getResetButton().disabled).toBe(false);
+  });
+
+  describe("手がかりの手を押し終えた場合", () => {
+    beforeEach(() => {
+      for (const press of example.hints) {
+        fireEvent.click(findPressTarget(press));
+      }
+    });
+
+    test("元に戻すと、元に戻すボタンを押せなくし、最初の手がかりに戻ること", () => {
+      fireEvent.click(getResetButton());
+
+      const [first] = example.hints;
+      expect(getResetButton().disabled).toBe(true);
+      expect(findHinted()).toEqual(
+        first === undefined ? [] : [findPressTarget(first)],
+      );
+    });
+  });
+});
