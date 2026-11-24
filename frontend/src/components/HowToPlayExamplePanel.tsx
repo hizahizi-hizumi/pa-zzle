@@ -366,7 +366,8 @@ export function HowToPlayExamplePanel({
         resettable ? resetButtonPosition.placement : undefined
       }
       className={cn(
-        "relative rounded-lg px-4",
+        // 例は押したり運んだりして触る物なので、マウスで運ぶ間や長押しで、例の文字と判定の言葉を選ばない。
+        "relative select-none rounded-lg px-4 [-webkit-touch-callout:none]",
         // 地は面の中身の下に敷くので、地を渡した面だけを重なりの単位にする。
         ground === undefined ? "bg-muted" : "isolate",
         placement.panel,
