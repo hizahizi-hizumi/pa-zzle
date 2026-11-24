@@ -1,0 +1,5146 @@
+{
+  "problems": [
+    {
+      "seed": "shuttle-expected:988:8:0",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 0, "v", 3, "a"],
+        [2, 0, "h", 3, "a"],
+        [1, 5, "v", 2, "c"],
+        [0, 3, "h", 3, "b"],
+        [3, 3, "h", 3, "a"],
+        [5, 3, "h", 2, "c"],
+        [4, 1, "h", 3, "b"],
+        [4, 4, "h", 2, "b"]
+      ],
+      "passengers": "bcabbbbcabaaacabaabca",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 50
+    },
+    {
+      "seed": "shuttle-expected:988:8:1",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 3, "v", 2, "b"],
+        [0, 3, "v", 3, "d"],
+        [4, 0, "v", 2, "c"],
+        [1, 6, "v", 3, "a"],
+        [1, 0, "v", 3, "c"],
+        [1, 4, "v", 2, "d"],
+        [0, 1, "v", 2, "b"],
+        [0, 5, "v", 3, "a"]
+      ],
+      "passengers": "dacbbcadcaddbdbacaca",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] }
+      },
+      "solutionCount": 2304
+    },
+    {
+      "seed": "shuttle-expected:988:8:2",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 0, "v", 2, "b"],
+        [4, 1, "v", 3, "b"],
+        [0, 1, "v", 3, "c"],
+        [5, 4, "v", 2, "c"],
+        [3, 4, "v", 2, "d"],
+        [0, 4, "v", 3, "a"],
+        [5, 3, "v", 2, "a"],
+        [1, 3, "v", 2, "d"]
+      ],
+      "passengers": "cbbdaccbcaaacdbbdad",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.25,
+        "small": 0.0,
+        "big": 1.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [2, 2, 1, 1], "maximum": [2, 2, 1, 1] },
+        "cont": { "minimum": [2, 2, 1, 0], "maximum": [2, 2, 1, 0] },
+        "window": { "minimum": [2, 1, 1, 1], "maximum": [3, 2, 1, 1] }
+      },
+      "solutionCount": 24
+    },
+    {
+      "seed": "shuttle-expected:988:8:3",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 3, "v", 3, "c"],
+        [1, 3, "v", 3, "a"],
+        [0, 2, "v", 2, "c"],
+        [0, 1, "v", 3, "d"],
+        [5, 5, "v", 2, "d"],
+        [0, 4, "v", 2, "a"],
+        [0, 5, "v", 3, "b"],
+        [0, 0, "v", 2, "b"]
+      ],
+      "passengers": "dcadbaccbbadabdbcdac",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 1, 0, 0] }
+      },
+      "solutionCount": 1032
+    },
+    {
+      "seed": "shuttle-expected:988:8:4",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 6, "v", 2, "b"],
+        [0, 6, "v", 3, "a"],
+        [1, 2, "v", 2, "c"],
+        [4, 0, "v", 2, "a"],
+        [2, 0, "v", 2, "d"],
+        [0, 0, "v", 2, "d"],
+        [2, 1, "v", 2, "b"],
+        [0, 1, "v", 2, "c"]
+      ],
+      "passengers": "daaddabcbbccdbaac",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 0.5,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.5,
+        "wideNeeded": 1.0,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [2, 1, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 24
+    },
+    {
+      "seed": "shuttle-expected:988:8:5",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 3, "v", 3, "a"],
+        [0, 4, "h", 2, "b"],
+        [0, 6, "v", 2, "d"],
+        [4, 2, "v", 3, "d"],
+        [3, 1, "h", 3, "a"],
+        [3, 5, "h", 2, "c"],
+        [2, 4, "h", 2, "b"],
+        [0, 1, "v", 2, "c"]
+      ],
+      "passengers": "adabdbaadbcadbaccdc",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 236
+    },
+    {
+      "seed": "shuttle-expected:988:8:6",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 0, "h", 3, "c"],
+        [4, 5, "v", 2, "d"],
+        [0, 5, "v", 3, "a"],
+        [1, 0, "v", 3, "b"],
+        [1, 3, "v", 2, "b"],
+        [3, 1, "h", 3, "c"],
+        [0, 2, "v", 2, "a"],
+        [3, 4, "v", 2, "d"]
+      ],
+      "passengers": "dcdbbacdcdbacaaabbcc",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.25,
+        "small": 0.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.0,
+        "wideNeeded": 1.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [2, 1, 0, 0], "maximum": [2, 1, 0, 0] },
+        "cont": { "minimum": [2, 0, 0, 0], "maximum": [2, 0, 0, 0] },
+        "window": { "minimum": [1, 1, 1, 0], "maximum": [1, 2, 1, 0] }
+      },
+      "solutionCount": 12
+    },
+    {
+      "seed": "shuttle-expected:988:8:7",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 1, "v", 3, "d"],
+        [1, 1, "v", 2, "c"],
+        [0, 4, "v", 3, "a"],
+        [3, 5, "v", 3, "b"],
+        [0, 5, "v", 3, "b"],
+        [2, 3, "v", 2, "a"],
+        [2, 2, "v", 2, "c"],
+        [0, 0, "v", 3, "d"]
+      ],
+      "passengers": "ccbdcdabbbdaacdbabdda",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [1, 1, 0, 0] }
+      },
+      "solutionCount": 720
+    },
+    {
+      "seed": "shuttle-expected:988:8:8",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 4, "h", 2, "b"],
+        [1, 0, "h", 3, "a"],
+        [0, 5, "v", 3, "a"],
+        [3, 1, "h", 3, "b"],
+        [2, 4, "v", 2, "d"],
+        [0, 4, "v", 2, "c"],
+        [4, 0, "h", 2, "c"],
+        [4, 4, "h", 2, "d"]
+      ],
+      "passengers": "bbdbdabacdaacadbcca",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 48
+    },
+    {
+      "seed": "shuttle-expected:988:8:9",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 2, "v", 3, "a"],
+        [0, 0, "h", 3, "b"],
+        [5, 3, "h", 3, "d"],
+        [0, 3, "h", 3, "d"],
+        [4, 4, "h", 2, "b"],
+        [2, 3, "h", 3, "c"],
+        [3, 4, "h", 2, "a"],
+        [1, 4, "h", 2, "c"]
+      ],
+      "passengers": "dabdcaddcacccabbadbbd",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "naiveCeiling",
+      "rules": {
+        "any": 0.25,
+        "small": 0.0,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.0,
+        "wideNeeded": 1.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [2, 2, 2, 1], "maximum": [2, 2, 2, 1] },
+        "cont": { "minimum": [2, 2, 2, 1], "maximum": [2, 2, 2, 1] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [3, 1, 1, 1] }
+      },
+      "solutionCount": 104
+    },
+    {
+      "seed": "shuttle-expected:988:8:10",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 2, "v", 2, "b"],
+        [0, 2, "v", 3, "a"],
+        [3, 5, "v", 2, "a"],
+        [0, 5, "v", 3, "a"],
+        [0, 0, "v", 2, "c"],
+        [0, 3, "v", 2, "c"],
+        [2, 4, "v", 2, "b"],
+        [3, 1, "v", 3, "b"]
+      ],
+      "passengers": "bcccabaaaabcabbabab",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 642
+    },
+    {
+      "seed": "shuttle-expected:988:8:11",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 0, "v", 2, "d"],
+        [3, 5, "v", 3, "b"],
+        [1, 5, "v", 2, "a"],
+        [1, 4, "v", 2, "d"],
+        [4, 2, "v", 2, "a"],
+        [2, 2, "v", 2, "c"],
+        [0, 2, "v", 2, "b"],
+        [1, 3, "v", 3, "c"]
+      ],
+      "passengers": "abdcbaabccbddabccd",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.25,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [2, 2, 0, 0], "maximum": [2, 2, 0, 0] },
+        "cont": { "minimum": [2, 1, 0, 0], "maximum": [2, 1, 0, 0] },
+        "window": { "minimum": [1, 1, 1, 0], "maximum": [2, 1, 1, 0] }
+      },
+      "solutionCount": 56
+    },
+    {
+      "seed": "shuttle-expected:988:8:12",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 3, "h", 3, "c"],
+        [1, 6, "v", 3, "b"],
+        [0, 4, "h", 3, "d"],
+        [1, 2, "v", 3, "d"],
+        [5, 3, "h", 3, "a"],
+        [4, 1, "h", 2, "c"],
+        [6, 4, "h", 3, "a"],
+        [4, 4, "h", 3, "b"]
+      ],
+      "passengers": "abaaaccacbdddbdbdbbdcca",
+      "minimumBayCount": 4,
+      "level": 4,
+      "reason": null,
+      "rules": {
+        "any": 0.0,
+        "small": 0.0,
+        "big": 0.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "cont": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "window": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] }
+      },
+      "solutionCount": 60
+    },
+    {
+      "seed": "shuttle-expected:988:8:13",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 4, "v", 2, "b"],
+        [4, 1, "v", 3, "a"],
+        [0, 1, "v", 2, "d"],
+        [3, 0, "v", 3, "c"],
+        [0, 0, "v", 3, "d"],
+        [2, 3, "v", 3, "a"],
+        [0, 3, "v", 2, "c"],
+        [3, 2, "v", 3, "b"]
+      ],
+      "passengers": "addccdbabcadaacbdabbc",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 669
+    },
+    {
+      "seed": "shuttle-expected:988:8:14",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 5, "v", 3, "d"],
+        [3, 4, "v", 3, "c"],
+        [0, 4, "v", 2, "a"],
+        [0, 5, "v", 3, "b"],
+        [3, 2, "v", 2, "c"],
+        [0, 2, "v", 3, "d"],
+        [2, 0, "v", 2, "b"],
+        [1, 1, "v", 3, "a"]
+      ],
+      "passengers": "cdadbcbddbcadaacdcabb",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.875,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 1, 1, 1] }
+      },
+      "solutionCount": 288
+    },
+    {
+      "seed": "shuttle-expected:988:8:15",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 1, "v", 2, "a"],
+        [0, 1, "v", 2, "a"],
+        [3, 3, "h", 3, "c"],
+        [5, 1, "h", 2, "b"],
+        [5, 3, "h", 2, "b"],
+        [2, 2, "h", 3, "c"],
+        [0, 5, "v", 3, "b"],
+        [0, 3, "v", 2, "a"]
+      ],
+      "passengers": "cccbcbabaabbbbccaaa",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [2, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 84
+    },
+    {
+      "seed": "shuttle-expected:988:8:16",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 3, "v", 3, "c"],
+        [1, 1, "h", 3, "b"],
+        [1, 4, "h", 2, "b"],
+        [0, 6, "v", 3, "b"],
+        [2, 0, "v", 2, "a"],
+        [3, 3, "h", 3, "c"],
+        [5, 4, "h", 3, "a"],
+        [6, 4, "h", 3, "a"]
+      ],
+      "passengers": "caabbbcacbacbcababaacb",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 1, 1, 1] }
+      },
+      "solutionCount": 264
+    },
+    {
+      "seed": "shuttle-expected:988:8:17",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 1, "v", 3, "a"],
+        [2, 0, "v", 3, "c"],
+        [0, 0, "v", 2, "c"],
+        [0, 5, "v", 2, "b"],
+        [3, 2, "v", 3, "b"],
+        [0, 2, "v", 3, "d"],
+        [3, 4, "v", 3, "d"],
+        [2, 3, "v", 3, "a"]
+      ],
+      "passengers": "accdcbaaabdbbdcdabcdad",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 0.5,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.5,
+        "wideNeeded": 1.0,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "cont": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [3, 1, 1, 1] }
+      },
+      "solutionCount": 144
+    },
+    {
+      "seed": "shuttle-expected:988:8:18",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 5, "v", 3, "d"],
+        [3, 1, "v", 2, "c"],
+        [1, 1, "v", 2, "b"],
+        [0, 1, "h", 3, "b"],
+        [0, 4, "v", 2, "d"],
+        [1, 0, "v", 3, "a"],
+        [5, 4, "h", 2, "a"],
+        [4, 4, "h", 2, "c"]
+      ],
+      "passengers": "ddacaabbadbcbccdbda",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 1, 1, 0], "maximum": [2, 2, 2, 0] }
+      },
+      "solutionCount": 200
+    },
+    {
+      "seed": "shuttle-expected:988:8:19",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 2, "h", 3, "c"],
+        [4, 6, "v", 2, "d"],
+        [1, 5, "h", 2, "c"],
+        [3, 1, "h", 3, "a"],
+        [3, 4, "v", 2, "b"],
+        [2, 2, "h", 3, "b"],
+        [0, 0, "v", 3, "a"],
+        [0, 4, "h", 3, "d"]
+      ],
+      "passengers": "cbdddbadcbadccaabaacb",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [1, 1, 1, 0] }
+      },
+      "solutionCount": 96
+    },
+    {
+      "seed": "shuttle-expected:988:8:20",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [0, 3, "v", 3, "c"],
+        [2, 6, "v", 3, "c"],
+        [0, 4, "v", 3, "a"],
+        [3, 2, "v", 3, "d"],
+        [1, 2, "v", 2, "a"],
+        [4, 5, "v", 2, "d"],
+        [0, 5, "v", 3, "b"],
+        [0, 6, "v", 2, "b"]
+      ],
+      "passengers": "cbcdbcdaaabadbabddccc",
+      "minimumBayCount": 3,
+      "level": 2,
+      "reason": null,
+      "rules": {
+        "any": 0.5,
+        "small": 0.0,
+        "big": 1.0,
+        "unblock": 0.0,
+        "needed": 1.0,
+        "fill": 0.0,
+        "wideNeeded": 1.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 27
+    },
+    {
+      "seed": "shuttle-expected:988:8:21",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 2, "v", 3, "b"],
+        [0, 4, "v", 2, "a"],
+        [0, 2, "v", 2, "b"],
+        [5, 6, "v", 2, "d"],
+        [0, 6, "v", 3, "d"],
+        [2, 5, "v", 2, "a"],
+        [4, 0, "v", 3, "c"],
+        [1, 0, "v", 3, "c"]
+      ],
+      "passengers": "baaccbccdccdadbbaddb",
+      "minimumBayCount": 2,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [2, 0, 0, 0], "maximum": [4, 0, 0, 0] }
+      },
+      "solutionCount": 8
+    },
+    {
+      "seed": "shuttle-expected:988:8:22",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 2, "h", 2, "d"],
+        [3, 5, "v", 2, "c"],
+        [1, 5, "v", 2, "b"],
+        [0, 4, "h", 2, "a"],
+        [0, 2, "v", 3, "a"],
+        [3, 1, "v", 2, "c"],
+        [1, 1, "v", 2, "b"],
+        [5, 4, "h", 2, "d"]
+      ],
+      "passengers": "ccadadbabadbbaccd",
+      "minimumBayCount": 3,
+      "level": 5,
+      "reason": null,
+      "rules": {
+        "any": 0.0,
+        "small": 0.0,
+        "big": 0.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.25,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "cont": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [3, 1, 1, 1] }
+      },
+      "solutionCount": 8
+    },
+    {
+      "seed": "shuttle-expected:988:8:23",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 0, "v", 2, "b"],
+        [0, 0, "v", 3, "a"],
+        [2, 1, "v", 2, "c"],
+        [0, 1, "v", 2, "d"],
+        [1, 2, "v", 2, "c"],
+        [1, 4, "v", 2, "a"],
+        [2, 5, "v", 3, "d"],
+        [0, 3, "v", 3, "b"]
+      ],
+      "passengers": "ccabaddbabdbadccbda",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 4352
+    },
+    {
+      "seed": "shuttle-expected:988:8:24",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 3, "v", 3, "d"],
+        [1, 3, "v", 2, "c"],
+        [3, 6, "v", 2, "d"],
+        [0, 6, "v", 3, "c"],
+        [1, 0, "v", 3, "b"],
+        [2, 4, "v", 2, "b"],
+        [0, 4, "v", 2, "a"],
+        [2, 2, "v", 3, "a"]
+      ],
+      "passengers": "bcacbbddcbbacdacaadd",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.25,
+        "small": 0.0,
+        "big": 0.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 0], "maximum": [2, 1, 1, 1] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [2, 1, 1, 1] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [2, 2, 2, 1] }
+      },
+      "solutionCount": 48
+    },
+    {
+      "seed": "shuttle-expected:988:8:25",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 0, "v", 2, "b"],
+        [1, 0, "v", 3, "a"],
+        [4, 5, "v", 2, "a"],
+        [1, 5, "v", 2, "c"],
+        [2, 6, "v", 3, "b"],
+        [0, 6, "v", 2, "c"],
+        [3, 2, "v", 3, "b"],
+        [0, 2, "v", 3, "a"]
+      ],
+      "passengers": "bbbbaacbbbccaaaaaabc",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.833333,
+        "small": 1.0,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] }
+      },
+      "solutionCount": 90
+    },
+    {
+      "seed": "shuttle-expected:988:8:26",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 6, "v", 2, "b"],
+        [4, 0, "h", 2, "a"],
+        [4, 4, "h", 2, "b"],
+        [3, 2, "v", 2, "d"],
+        [0, 2, "v", 2, "a"],
+        [6, 5, "h", 2, "c"],
+        [0, 4, "v", 3, "d"],
+        [5, 5, "h", 2, "c"]
+      ],
+      "passengers": "bbdcabdaccddabacd",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 1, 0, 0] }
+      },
+      "solutionCount": 1200
+    },
+    {
+      "seed": "shuttle-expected:988:8:27",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 1, "h", 2, "b"],
+        [1, 4, "h", 2, "a"],
+        [5, 3, "h", 3, "a"],
+        [2, 3, "v", 3, "a"],
+        [0, 0, "v", 2, "b"],
+        [0, 3, "h", 2, "b"],
+        [1, 1, "v", 3, "c"],
+        [2, 2, "v", 2, "c"]
+      ],
+      "passengers": "acbacaabcabccaabbba",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 1182
+    },
+    {
+      "seed": "shuttle-expected:988:8:28",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 2, "v", 3, "d"],
+        [2, 2, "h", 3, "b"],
+        [0, 5, "v", 3, "a"],
+        [5, 5, "h", 2, "c"],
+        [6, 5, "h", 2, "d"],
+        [4, 5, "h", 2, "b"],
+        [3, 3, "h", 2, "a"],
+        [1, 6, "v", 3, "c"]
+      ],
+      "passengers": "adcbcbadadbacbccddab",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 256
+    },
+    {
+      "seed": "shuttle-expected:988:8:29",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [2, 0, "v", 2, "c"],
+        [0, 0, "v", 2, "d"],
+        [0, 1, "v", 3, "c"],
+        [2, 3, "v", 2, "b"],
+        [4, 2, "v", 2, "d"],
+        [0, 2, "v", 2, "a"],
+        [0, 3, "v", 2, "b"],
+        [2, 5, "v", 3, "a"]
+      ],
+      "passengers": "ccabdcbbdcaaacabdd",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 2, 0, 0] }
+      },
+      "solutionCount": 372
+    },
+    {
+      "seed": "shuttle-expected:988:8:30",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 4, "v", 3, "a"],
+        [3, 1, "v", 3, "c"],
+        [0, 4, "v", 3, "a"],
+        [0, 1, "v", 3, "b"],
+        [4, 5, "v", 2, "d"],
+        [2, 5, "v", 2, "b"],
+        [3, 3, "v", 3, "c"],
+        [0, 3, "v", 3, "d"]
+      ],
+      "passengers": "dbaabcacccbdbaddabdcca",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 2, 0, 0] }
+      },
+      "solutionCount": 204
+    },
+    {
+      "seed": "shuttle-expected:988:8:31",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 3, "h", 2, "b"],
+        [3, 5, "v", 3, "c"],
+        [2, 3, "v", 3, "d"],
+        [1, 5, "v", 2, "d"],
+        [0, 3, "v", 2, "b"],
+        [0, 2, "v", 3, "a"],
+        [0, 4, "v", 3, "c"],
+        [4, 1, "v", 2, "a"]
+      ],
+      "passengers": "cbbadcbdcddaaaccbacd",
+      "minimumBayCount": 4,
+      "level": 3,
+      "reason": null,
+      "rules": {
+        "any": 0.0,
+        "small": 0.0,
+        "big": 0.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] }
+      },
+      "solutionCount": 160
+    },
+    {
+      "seed": "shuttle-expected:988:8:32",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 0, "h", 2, "c"],
+        [2, 2, "h", 3, "a"],
+        [1, 6, "v", 2, "d"],
+        [0, 3, "h", 3, "d"],
+        [4, 2, "h", 2, "c"],
+        [4, 4, "h", 3, "a"],
+        [0, 2, "v", 2, "b"],
+        [3, 2, "h", 3, "b"]
+      ],
+      "passengers": "aabcaacdddbdbdbacbac",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 1, 0, 0] }
+      },
+      "solutionCount": 128
+    },
+    {
+      "seed": "shuttle-expected:988:8:33",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 0, "v", 3, "b"],
+        [1, 0, "v", 2, "a"],
+        [4, 4, "v", 2, "b"],
+        [0, 4, "v", 2, "b"],
+        [0, 2, "v", 2, "a"],
+        [2, 5, "v", 2, "c"],
+        [0, 3, "v", 3, "c"],
+        [0, 5, "v", 2, "a"]
+      ],
+      "passengers": "aabababcaabcbccbcb",
+      "minimumBayCount": 2,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.166667,
+        "small": 0.0,
+        "big": 0.333333,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 1, 1, 0], "maximum": [2, 1, 1, 0] }
+      },
+      "solutionCount": 42
+    },
+    {
+      "seed": "shuttle-expected:988:8:34",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 3, "h", 3, "d"],
+        [3, 2, "v", 2, "c"],
+        [2, 0, "h", 3, "c"],
+        [2, 3, "h", 3, "a"],
+        [0, 0, "v", 2, "a"],
+        [5, 2, "h", 2, "b"],
+        [0, 1, "h", 3, "b"],
+        [4, 3, "h", 3, "d"]
+      ],
+      "passengers": "dddcaaaddabcccbdabbbc",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.5,
+        "small": 0.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.0,
+        "wideNeeded": 1.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 216
+    },
+    {
+      "seed": "shuttle-expected:988:8:35",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 1, "v", 3, "a"],
+        [3, 2, "v", 2, "c"],
+        [1, 2, "h", 2, "b"],
+        [0, 5, "v", 3, "b"],
+        [0, 1, "v", 2, "a"],
+        [5, 0, "h", 3, "d"],
+        [5, 3, "h", 2, "d"],
+        [2, 4, "v", 3, "c"]
+      ],
+      "passengers": "cbbcdadcbaadbdccbdaa",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [1, 2, 0, 0] }
+      },
+      "solutionCount": 304
+    },
+    {
+      "seed": "shuttle-expected:988:8:36",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 1, "v", 3, "b"],
+        [2, 0, "v", 3, "c"],
+        [1, 1, "h", 3, "a"],
+        [0, 0, "v", 2, "a"],
+        [0, 5, "v", 3, "c"],
+        [4, 2, "h", 3, "b"],
+        [3, 3, "h", 3, "b"],
+        [5, 3, "h", 2, "a"]
+      ],
+      "passengers": "bbcbcabacccbcababbaaab",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.666667,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 1, 1, 1] }
+      },
+      "solutionCount": 150
+    },
+    {
+      "seed": "shuttle-expected:988:8:37",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 5, "v", 3, "a"],
+        [1, 5, "v", 2, "b"],
+        [0, 5, "h", 2, "b"],
+        [5, 4, "v", 2, "c"],
+        [0, 4, "v", 3, "c"],
+        [0, 0, "v", 3, "a"],
+        [2, 1, "v", 2, "d"],
+        [2, 3, "v", 2, "d"]
+      ],
+      "passengers": "acbcbdaaddbccdabaca",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [3, 0, 0, 0], "maximum": [4, 0, 0, 0] }
+      },
+      "solutionCount": 24
+    },
+    {
+      "seed": "shuttle-expected:988:8:38",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 3, "v", 2, "b"],
+        [0, 3, "v", 3, "b"],
+        [4, 4, "v", 3, "c"],
+        [0, 4, "v", 2, "d"],
+        [4, 6, "v", 3, "a"],
+        [0, 6, "v", 2, "a"],
+        [0, 0, "v", 2, "c"],
+        [1, 1, "v", 3, "d"]
+      ],
+      "passengers": "abaddbabcabacdcccbdd",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [3, 2, 2, 1] }
+      },
+      "solutionCount": 111
+    },
+    {
+      "seed": "shuttle-expected:988:8:39",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 0, "v", 2, "c"],
+        [0, 0, "h", 3, "c"],
+        [0, 3, "h", 2, "d"],
+        [0, 5, "v", 3, "d"],
+        [5, 2, "h", 2, "a"],
+        [4, 2, "h", 3, "b"],
+        [3, 3, "h", 3, "b"],
+        [5, 4, "h", 2, "a"]
+      ],
+      "passengers": "bbbcadaaddcdcbbcabdc",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 64
+    },
+    {
+      "seed": "shuttle-expected:988:8:40",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 0, "v", 3, "a"],
+        [1, 0, "v", 2, "a"],
+        [4, 4, "v", 2, "c"],
+        [0, 4, "v", 3, "a"],
+        [2, 5, "v", 2, "b"],
+        [0, 5, "v", 2, "b"],
+        [4, 2, "v", 2, "c"],
+        [1, 2, "v", 3, "b"]
+      ],
+      "passengers": "acbabbaabcbcbaaaabc",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.625,
+        "small": 0.25,
+        "big": 1.0,
+        "unblock": 0.5,
+        "needed": 1.0,
+        "fill": 0.5,
+        "wideNeeded": 1.0,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [2, 1, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [2, 1, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [4, 1, 0, 0] }
+      },
+      "solutionCount": 45
+    },
+    {
+      "seed": "shuttle-expected:988:8:41",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 5, "v", 3, "a"],
+        [1, 2, "v", 2, "c"],
+        [3, 3, "h", 2, "d"],
+        [0, 1, "v", 2, "b"],
+        [5, 2, "h", 3, "d"],
+        [1, 3, "v", 2, "a"],
+        [1, 4, "v", 2, "c"],
+        [2, 0, "v", 2, "b"]
+      ],
+      "passengers": "caaaddcdcbabdbcabd",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 6672
+    },
+    {
+      "seed": "shuttle-expected:988:8:42",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 1, "v", 3, "a"],
+        [0, 5, "v", 3, "c"],
+        [3, 0, "v", 3, "c"],
+        [3, 4, "v", 2, "b"],
+        [0, 4, "v", 3, "b"],
+        [2, 3, "v", 3, "b"],
+        [0, 0, "v", 3, "a"],
+        [3, 2, "v", 3, "a"]
+      ],
+      "passengers": "bccbabbaaacbbbbaaaacacc",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 432
+    },
+    {
+      "seed": "shuttle-expected:988:8:43",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 4, "v", 2, "a"],
+        [2, 4, "h", 2, "b"],
+        [0, 0, "v", 3, "a"],
+        [1, 2, "v", 3, "c"],
+        [0, 1, "h", 2, "c"],
+        [0, 3, "h", 3, "b"],
+        [3, 3, "h", 3, "b"],
+        [1, 3, "h", 3, "a"]
+      ],
+      "passengers": "abbbbaaabacbcbcacabca",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 246
+    },
+    {
+      "seed": "shuttle-expected:988:8:44",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [0, 0, "v", 3, "a"],
+        [1, 3, "v", 2, "b"],
+        [1, 2, "v", 3, "c"],
+        [4, 6, "v", 3, "c"],
+        [2, 6, "v", 2, "b"],
+        [0, 6, "v", 2, "d"],
+        [3, 4, "v", 2, "a"],
+        [0, 4, "v", 3, "d"]
+      ],
+      "passengers": "dbddccaaacdbcacbbacd",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 776
+    },
+    {
+      "seed": "shuttle-expected:988:8:45",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 5, "v", 2, "c"],
+        [0, 4, "h", 3, "b"],
+        [4, 4, "h", 3, "a"],
+        [1, 2, "h", 2, "c"],
+        [1, 4, "h", 2, "b"],
+        [5, 1, "v", 2, "d"],
+        [2, 1, "h", 3, "d"],
+        [2, 5, "h", 2, "a"]
+      ],
+      "passengers": "cbdaadcbaddcdabcabb",
+      "minimumBayCount": 4,
+      "level": 2,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] }
+      },
+      "solutionCount": 48
+    },
+    {
+      "seed": "shuttle-expected:988:8:46",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 2, "v", 2, "a"],
+        [0, 2, "v", 3, "d"],
+        [0, 0, "v", 3, "c"],
+        [5, 6, "v", 2, "c"],
+        [2, 6, "v", 2, "a"],
+        [0, 6, "v", 2, "d"],
+        [2, 4, "v", 2, "b"],
+        [3, 1, "v", 3, "b"]
+      ],
+      "passengers": "adbcdcbabcbabcddadc",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 408
+    },
+    {
+      "seed": "shuttle-expected:988:8:47",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 1, "v", 2, "a"],
+        [0, 1, "v", 3, "c"],
+        [4, 4, "v", 2, "c"],
+        [1, 4, "v", 3, "a"],
+        [4, 5, "v", 2, "b"],
+        [0, 5, "v", 3, "b"],
+        [2, 2, "v", 3, "a"],
+        [2, 3, "v", 3, "b"]
+      ],
+      "passengers": "bbbcaccabbbaabacabaac",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 1245
+    },
+    {
+      "seed": "shuttle-expected:988:8:48",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 6, "v", 3, "a"],
+        [0, 6, "v", 2, "d"],
+        [5, 4, "v", 2, "b"],
+        [3, 4, "v", 2, "c"],
+        [0, 4, "v", 3, "a"],
+        [1, 5, "v", 3, "b"],
+        [5, 0, "v", 2, "c"],
+        [0, 0, "v", 3, "d"]
+      ],
+      "passengers": "abcdaabbbdccadcbadda",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "naiveCeiling",
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 0.0,
+        "fill": 1.0,
+        "wideNeeded": 0.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "cont": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [2, 1, 1, 1] }
+      },
+      "solutionCount": 96
+    },
+    {
+      "seed": "shuttle-expected:988:8:49",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 1, "v", 2, "a"],
+        [0, 1, "v", 2, "c"],
+        [0, 5, "v", 3, "b"],
+        [0, 6, "v", 3, "d"],
+        [2, 2, "v", 2, "a"],
+        [1, 3, "v", 3, "c"],
+        [3, 4, "v", 3, "d"],
+        [0, 2, "v", 2, "b"]
+      ],
+      "passengers": "cbddbabbacacddccaddb",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "cont": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "window": { "minimum": [2, 1, 1, 1], "maximum": [4, 2, 1, 1] }
+      },
+      "solutionCount": 240
+    },
+    {
+      "seed": "shuttle-expected:988:8:50",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 1, "v", 2, "c"],
+        [6, 1, "h", 3, "c"],
+        [1, 0, "h", 3, "d"],
+        [6, 4, "h", 2, "a"],
+        [4, 6, "v", 3, "b"],
+        [1, 4, "v", 2, "d"],
+        [0, 6, "v", 3, "b"],
+        [3, 5, "v", 3, "a"]
+      ],
+      "passengers": "cdadbcdacbacbabdabbcd",
+      "minimumBayCount": 5
+    },
+    {
+      "seed": "shuttle-expected:988:8:51",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [0, 2, "v", 3, "c"],
+        [3, 3, "v", 3, "a"],
+        [5, 6, "v", 2, "b"],
+        [1, 6, "v", 3, "a"],
+        [0, 3, "v", 2, "c"],
+        [1, 5, "v", 2, "b"],
+        [0, 4, "v", 2, "d"],
+        [0, 1, "v", 3, "d"]
+      ],
+      "passengers": "abddcacbacacdbacadbd",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 2466
+    },
+    {
+      "seed": "shuttle-expected:988:8:52",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 3, "h", 2, "c"],
+        [0, 6, "v", 3, "c"],
+        [5, 5, "v", 2, "b"],
+        [0, 2, "v", 2, "d"],
+        [0, 5, "v", 2, "b"],
+        [0, 1, "v", 3, "d"],
+        [0, 0, "v", 3, "a"],
+        [4, 3, "h", 3, "a"]
+      ],
+      "passengers": "dbbaccdabacdaadcacbd",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.75,
+        "small": 1.0,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 2, 1, 0] }
+      },
+      "solutionCount": 688
+    },
+    {
+      "seed": "shuttle-expected:988:8:53",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 3, "v", 2, "a"],
+        [0, 3, "v", 2, "a"],
+        [1, 6, "v", 3, "b"],
+        [6, 0, "h", 3, "c"],
+        [6, 3, "h", 3, "a"],
+        [0, 4, "h", 3, "b"],
+        [5, 5, "h", 2, "c"],
+        [3, 1, "v", 2, "b"]
+      ],
+      "passengers": "acbbcbbacbaacaaabbbc",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 204
+    },
+    {
+      "seed": "shuttle-expected:988:8:54",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 1, "h", 3, "d"],
+        [0, 4, "v", 2, "c"],
+        [5, 3, "h", 2, "b"],
+        [4, 3, "h", 2, "c"],
+        [2, 6, "v", 3, "d"],
+        [4, 5, "v", 2, "a"],
+        [0, 5, "v", 3, "a"],
+        [2, 0, "v", 3, "b"]
+      ],
+      "passengers": "bcddcbabbddadccabada",
+      "minimumBayCount": 5
+    },
+    {
+      "seed": "shuttle-expected:988:8:55",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 1, "h", 3, "d"],
+        [3, 4, "v", 3, "c"],
+        [0, 3, "h", 2, "b"],
+        [0, 5, "v", 2, "d"],
+        [1, 0, "v", 2, "c"],
+        [0, 2, "v", 3, "a"],
+        [2, 4, "h", 2, "a"],
+        [0, 1, "v", 3, "b"]
+      ],
+      "passengers": "cbbbddcbacbdcdaaacda",
+      "minimumBayCount": 3,
+      "level": 2,
+      "reason": null,
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [2, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 21
+    },
+    {
+      "seed": "shuttle-expected:988:8:56",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 0, "v", 3, "b"],
+        [0, 4, "v", 3, "a"],
+        [2, 1, "v", 3, "b"],
+        [3, 5, "v", 3, "c"],
+        [1, 5, "v", 2, "a"],
+        [0, 2, "v", 3, "c"],
+        [0, 3, "v", 3, "d"],
+        [0, 1, "v", 2, "d"]
+      ],
+      "passengers": "bdaaabbdaddbccdcabcbcc",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 1576
+    },
+    {
+      "seed": "shuttle-expected:988:8:57",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 6, "v", 3, "b"],
+        [0, 6, "v", 2, "d"],
+        [3, 4, "v", 2, "d"],
+        [0, 4, "v", 3, "a"],
+        [0, 1, "v", 3, "b"],
+        [2, 5, "v", 2, "a"],
+        [4, 2, "v", 3, "c"],
+        [1, 2, "v", 2, "c"]
+      ],
+      "passengers": "abdbdcbdcbbaadaacccb",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "naiveCeiling",
+      "rules": {
+        "any": 0.5,
+        "small": 0.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.0,
+        "wideNeeded": 1.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "cont": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "window": { "minimum": [1, 1, 1, 0], "maximum": [4, 1, 1, 0] }
+      },
+      "solutionCount": 24
+    },
+    {
+      "seed": "shuttle-expected:988:8:58",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [2, 3, "v", 3, "b"],
+        [0, 3, "v", 2, "b"],
+        [0, 0, "v", 2, "b"],
+        [4, 4, "v", 2, "c"],
+        [1, 2, "v", 3, "c"],
+        [2, 1, "v", 3, "a"],
+        [1, 4, "v", 3, "a"],
+        [0, 5, "v", 3, "a"]
+      ],
+      "passengers": "abcbabbabbaaaaccacbca",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [4, 0, 0, 0] }
+      },
+      "solutionCount": 252
+    },
+    {
+      "seed": "shuttle-expected:988:8:59",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 2, "v", 3, "d"],
+        [0, 3, "v", 2, "c"],
+        [3, 6, "v", 3, "a"],
+        [0, 6, "v", 3, "b"],
+        [0, 2, "v", 3, "c"],
+        [0, 1, "v", 2, "b"],
+        [1, 5, "v", 3, "d"],
+        [2, 0, "v", 3, "a"]
+      ],
+      "passengers": "bcdaabdcadcadbcbaaddbc",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 1332
+    },
+    {
+      "seed": "shuttle-expected:988:8:60",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 2, "v", 3, "c"],
+        [1, 5, "v", 2, "a"],
+        [0, 0, "v", 2, "c"],
+        [1, 4, "v", 2, "a"],
+        [2, 3, "v", 3, "b"],
+        [0, 3, "v", 2, "b"],
+        [3, 1, "v", 2, "a"],
+        [1, 1, "v", 2, "b"]
+      ],
+      "passengers": "ccabbbbaacabbaaccb",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 2004
+    },
+    {
+      "seed": "shuttle-expected:988:8:61",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 4, "v", 3, "c"],
+        [0, 2, "v", 3, "b"],
+        [1, 1, "v", 2, "b"],
+        [5, 6, "v", 2, "a"],
+        [3, 6, "v", 2, "c"],
+        [0, 6, "v", 3, "b"],
+        [1, 0, "v", 3, "a"],
+        [3, 5, "v", 3, "a"]
+      ],
+      "passengers": "abaccbbaacbabcaabbbac",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [4, 0, 0, 0] }
+      },
+      "solutionCount": 552
+    },
+    {
+      "seed": "shuttle-expected:988:8:62",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 1, "v", 2, "c"],
+        [2, 5, "v", 2, "b"],
+        [0, 5, "v", 2, "b"],
+        [3, 0, "v", 3, "b"],
+        [0, 0, "v", 3, "a"],
+        [4, 3, "v", 3, "a"],
+        [0, 3, "v", 3, "a"],
+        [3, 2, "v", 2, "c"]
+      ],
+      "passengers": "bbcaabaaabacabcacbab",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [4, 1, 0, 0] }
+      },
+      "solutionCount": 472
+    },
+    {
+      "seed": "shuttle-expected:988:8:63",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 4, "v", 3, "d"],
+        [0, 4, "v", 2, "c"],
+        [0, 0, "v", 2, "d"],
+        [3, 2, "v", 2, "b"],
+        [0, 2, "v", 3, "b"],
+        [3, 1, "v", 2, "a"],
+        [4, 3, "v", 3, "c"],
+        [2, 3, "v", 2, "a"]
+      ],
+      "passengers": "caddabdbbddaccbcacb",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [4, 1, 0, 0] }
+      },
+      "solutionCount": 126
+    },
+    {
+      "seed": "shuttle-expected:988:8:64",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 4, "v", 2, "b"],
+        [0, 4, "v", 2, "b"],
+        [5, 0, "h", 2, "b"],
+        [5, 2, "h", 2, "c"],
+        [3, 5, "v", 3, "c"],
+        [0, 5, "v", 2, "a"],
+        [0, 2, "v", 2, "a"],
+        [1, 1, "v", 2, "a"]
+      ],
+      "passengers": "cabaacabcbaabbcbc",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 54
+    },
+    {
+      "seed": "shuttle-expected:988:8:65",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 4, "h", 3, "c"],
+        [2, 1, "v", 2, "d"],
+        [0, 1, "h", 3, "a"],
+        [0, 5, "h", 2, "b"],
+        [4, 1, "h", 3, "b"],
+        [4, 4, "h", 2, "d"],
+        [5, 0, "v", 2, "c"],
+        [2, 0, "v", 3, "a"]
+      ],
+      "passengers": "dcdbaaacadcbdacbbcab",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 1, 1, 1] }
+      },
+      "solutionCount": 152
+    },
+    {
+      "seed": "shuttle-expected:988:8:66",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 2, "v", 2, "a"],
+        [0, 2, "v", 2, "c"],
+        [3, 4, "v", 2, "b"],
+        [0, 4, "v", 2, "b"],
+        [1, 5, "v", 3, "c"],
+        [0, 1, "v", 3, "b"],
+        [0, 6, "v", 2, "a"],
+        [0, 0, "v", 3, "a"]
+      ],
+      "passengers": "cbaaaccbbcabbaaabbc",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [4, 0, 0, 0] }
+      },
+      "solutionCount": 678
+    },
+    {
+      "seed": "shuttle-expected:988:8:67",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 6, "v", 2, "d"],
+        [0, 6, "v", 3, "d"],
+        [2, 1, "v", 2, "c"],
+        [0, 1, "v", 2, "b"],
+        [4, 3, "v", 2, "a"],
+        [2, 2, "v", 3, "a"],
+        [3, 3, "h", 3, "c"],
+        [0, 2, "v", 2, "b"]
+      ],
+      "passengers": "acddcacdcadabbadbcb",
+      "minimumBayCount": 5
+    },
+    {
+      "seed": "shuttle-expected:988:8:68",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 1, "h", 3, "c"],
+        [2, 4, "h", 2, "c"],
+        [1, 2, "h", 3, "b"],
+        [0, 0, "h", 3, "a"],
+        [0, 3, "h", 3, "b"],
+        [3, 1, "h", 3, "b"],
+        [5, 2, "h", 3, "a"],
+        [3, 4, "h", 2, "a"]
+      ],
+      "passengers": "bbabbaaaabccaaabccbbbc",
+      "minimumBayCount": 2,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.875,
+        "small": 0.75,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.75,
+        "wideNeeded": 1.0,
+        "wideFill": 0.75
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 1, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 1, 0] },
+        "window": { "minimum": [2, 0, 0, 0], "maximum": [5, 1, 1, 0] }
+      },
+      "solutionCount": 38
+    },
+    {
+      "seed": "shuttle-expected:988:8:69",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 1, "h", 2, "d"],
+        [3, 4, "v", 2, "a"],
+        [0, 4, "v", 3, "b"],
+        [3, 0, "v", 3, "a"],
+        [3, 3, "v", 3, "b"],
+        [0, 0, "v", 3, "d"],
+        [0, 3, "v", 3, "c"],
+        [2, 5, "v", 2, "c"]
+      ],
+      "passengers": "ccbdaddbbacdbbbccaada",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.25,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [2, 2, 1, 0], "maximum": [2, 2, 1, 0] },
+        "cont": { "minimum": [2, 1, 1, 0], "maximum": [2, 1, 1, 0] },
+        "window": { "minimum": [1, 1, 0, 0], "maximum": [1, 2, 2, 1] }
+      },
+      "solutionCount": 9
+    },
+    {
+      "seed": "shuttle-expected:988:8:70",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 1, "h", 2, "c"],
+        [3, 5, "v", 3, "a"],
+        [0, 3, "h", 3, "b"],
+        [0, 6, "v", 3, "d"],
+        [1, 2, "v", 2, "d"],
+        [0, 0, "v", 3, "b"],
+        [6, 4, "h", 2, "c"],
+        [2, 1, "v", 2, "a"]
+      ],
+      "passengers": "bcbaadcbddacdbdbaabc",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] }
+      },
+      "solutionCount": 384
+    },
+    {
+      "seed": "shuttle-expected:988:8:71",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [2, 1, "v", 2, "a"],
+        [0, 1, "v", 2, "a"],
+        [0, 0, "v", 3, "b"],
+        [0, 5, "v", 3, "b"],
+        [3, 4, "v", 3, "a"],
+        [1, 4, "v", 2, "c"],
+        [2, 2, "v", 2, "b"],
+        [0, 2, "v", 2, "c"]
+      ],
+      "passengers": "aabcbbcbbacbbacaaab",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 1032
+    },
+    {
+      "seed": "shuttle-expected:988:8:72",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 3, "v", 3, "a"],
+        [1, 3, "h", 3, "c"],
+        [0, 2, "v", 3, "b"],
+        [0, 3, "h", 3, "b"],
+        [1, 1, "v", 3, "c"],
+        [3, 0, "v", 2, "d"],
+        [0, 0, "v", 3, "d"],
+        [5, 2, "h", 2, "a"]
+      ],
+      "passengers": "bbccbdabcacbdaaabdcddc",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 1, 1, 0] }
+      },
+      "solutionCount": 328
+    },
+    {
+      "seed": "shuttle-expected:988:8:73",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 3, "v", 3, "c"],
+        [4, 4, "v", 2, "d"],
+        [1, 4, "v", 2, "d"],
+        [0, 2, "v", 3, "c"],
+        [1, 0, "v", 3, "a"],
+        [0, 6, "v", 2, "b"],
+        [4, 1, "v", 3, "b"],
+        [2, 5, "v", 3, "a"]
+      ],
+      "passengers": "badadaacbcdcdacabcbbc",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "cont": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [4, 1, 1, 1] }
+      },
+      "solutionCount": 96
+    },
+    {
+      "seed": "shuttle-expected:988:8:74",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 1, "v", 3, "b"],
+        [3, 5, "v", 3, "a"],
+        [3, 4, "v", 3, "d"],
+        [0, 4, "v", 2, "d"],
+        [3, 3, "v", 2, "c"],
+        [3, 0, "v", 3, "b"],
+        [0, 5, "v", 3, "a"],
+        [0, 3, "v", 2, "c"]
+      ],
+      "passengers": "cddbabdccbaaaddabcbab",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [1, 1, 0, 0] }
+      },
+      "solutionCount": 192
+    },
+    {
+      "seed": "shuttle-expected:988:8:75",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 5, "v", 2, "a"],
+        [0, 3, "h", 3, "b"],
+        [3, 0, "h", 2, "d"],
+        [2, 2, "v", 3, "d"],
+        [0, 2, "v", 2, "b"],
+        [5, 2, "h", 3, "c"],
+        [0, 1, "v", 3, "c"],
+        [4, 3, "h", 2, "a"]
+      ],
+      "passengers": "abbbaddbddcccccacdab",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] }
+      },
+      "solutionCount": 1032
+    },
+    {
+      "seed": "shuttle-expected:988:8:76",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 2, "v", 3, "a"],
+        [4, 5, "v", 2, "c"],
+        [0, 5, "v", 2, "d"],
+        [0, 0, "v", 2, "b"],
+        [5, 3, "v", 2, "a"],
+        [0, 3, "v", 3, "c"],
+        [3, 6, "v", 3, "d"],
+        [0, 6, "v", 2, "b"]
+      ],
+      "passengers": "ddcdabbacadbbccdaac",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.0,
+        "small": 0.0,
+        "big": 0.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [2, 2, 1, 0], "maximum": [2, 2, 1, 0] },
+        "cont": { "minimum": [2, 1, 0, 0], "maximum": [2, 1, 0, 0] },
+        "window": { "minimum": [1, 2, 1, 0], "maximum": [2, 2, 1, 0] }
+      },
+      "solutionCount": 12
+    },
+    {
+      "seed": "shuttle-expected:988:8:77",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 2, "v", 3, "a"],
+        [2, 3, "v", 3, "b"],
+        [1, 1, "v", 3, "a"],
+        [0, 4, "v", 2, "c"],
+        [3, 0, "v", 3, "d"],
+        [0, 5, "v", 3, "b"],
+        [0, 0, "v", 3, "c"],
+        [0, 3, "v", 2, "d"]
+      ],
+      "passengers": "dbadbccbbcabddbaacdaca",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 0.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.0,
+        "wideNeeded": 1.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 1, 1, 0], "maximum": [2, 1, 1, 0] }
+      },
+      "solutionCount": 36
+    },
+    {
+      "seed": "shuttle-expected:988:8:78",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 2, "h", 3, "b"],
+        [2, 5, "v", 3, "d"],
+        [3, 1, "v", 3, "b"],
+        [1, 3, "h", 3, "c"],
+        [0, 1, "h", 2, "a"],
+        [5, 2, "h", 2, "c"],
+        [0, 3, "h", 3, "a"],
+        [5, 4, "h", 2, "d"]
+      ],
+      "passengers": "abdccdcababdcaabdbdbc",
+      "minimumBayCount": 4,
+      "level": 2,
+      "reason": null,
+      "rules": {
+        "any": 0.25,
+        "small": 0.0,
+        "big": 1.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 1.0,
+        "wideNeeded": 0.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] }
+      },
+      "solutionCount": 12
+    },
+    {
+      "seed": "shuttle-expected:988:8:79",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 5, "v", 3, "c"],
+        [0, 4, "h", 2, "b"],
+        [3, 3, "v", 3, "b"],
+        [0, 3, "v", 2, "a"],
+        [0, 2, "v", 3, "d"],
+        [0, 0, "v", 2, "d"],
+        [0, 1, "v", 2, "c"],
+        [5, 4, "h", 2, "a"]
+      ],
+      "passengers": "ccacadbdbdbcbdaabcd",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 2296
+    },
+    {
+      "seed": "shuttle-expected:988:8:80",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 2, "v", 3, "c"],
+        [1, 1, "h", 3, "c"],
+        [1, 5, "h", 2, "a"],
+        [2, 4, "v", 2, "a"],
+        [0, 4, "h", 2, "b"],
+        [5, 1, "h", 3, "b"],
+        [5, 4, "h", 3, "b"],
+        [2, 5, "h", 2, "a"]
+      ],
+      "passengers": "bcaabababcbcacacbbbc",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.75,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 1, 0, 0] }
+      },
+      "solutionCount": 96
+    },
+    {
+      "seed": "shuttle-expected:988:8:81",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 2, "v", 3, "b"],
+        [0, 2, "v", 3, "a"],
+        [4, 0, "v", 3, "c"],
+        [0, 0, "v", 3, "b"],
+        [5, 5, "v", 2, "a"],
+        [0, 5, "v", 3, "a"],
+        [3, 4, "v", 3, "b"],
+        [0, 4, "v", 2, "c"]
+      ],
+      "passengers": "ccbbaabbcaabbbaacbacba",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.625,
+        "small": 0.375,
+        "big": 0.875,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.375,
+        "wideNeeded": 1.0,
+        "wideFill": 0.375
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [4, 2, 2, 0] }
+      },
+      "solutionCount": 63
+    },
+    {
+      "seed": "shuttle-expected:988:8:82",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [0, 2, "v", 3, "d"],
+        [0, 4, "v", 3, "c"],
+        [4, 0, "v", 2, "c"],
+        [0, 0, "v", 3, "b"],
+        [1, 3, "v", 3, "a"],
+        [4, 5, "v", 2, "b"],
+        [0, 5, "v", 3, "a"],
+        [1, 1, "v", 2, "d"]
+      ],
+      "passengers": "cdbacbdcaacbdcdadabba",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 1620
+    },
+    {
+      "seed": "shuttle-expected:988:8:83",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 3, "v", 3, "c"],
+        [1, 1, "v", 3, "a"],
+        [2, 2, "v", 2, "b"],
+        [1, 6, "v", 3, "d"],
+        [0, 2, "v", 2, "c"],
+        [2, 4, "v", 2, "b"],
+        [0, 0, "v", 2, "d"],
+        [0, 4, "v", 2, "a"]
+      ],
+      "passengers": "caddaaccdcadbabbbdc",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 2496
+    },
+    {
+      "seed": "shuttle-expected:988:8:84",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 3, "h", 3, "c"],
+        [3, 6, "v", 3, "b"],
+        [0, 6, "v", 3, "a"],
+        [6, 3, "h", 2, "a"],
+        [1, 4, "v", 3, "a"],
+        [2, 3, "v", 3, "c"],
+        [0, 0, "v", 3, "b"],
+        [4, 2, "v", 3, "b"]
+      ],
+      "passengers": "abaccccbabacaabbbbbacba",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "naiveCeiling",
+      "rules": {
+        "any": 0.111111,
+        "small": 0.0,
+        "big": 0.166667,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.0,
+        "wideNeeded": 1.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [2, 2, 0, 0], "maximum": [2, 2, 0, 0] },
+        "cont": { "minimum": [2, 2, 0, 0], "maximum": [2, 2, 0, 0] },
+        "window": { "minimum": [1, 1, 0, 0], "maximum": [2, 1, 0, 0] }
+      },
+      "solutionCount": 72
+    },
+    {
+      "seed": "shuttle-expected:988:8:85",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 0, "v", 3, "b"],
+        [1, 0, "v", 2, "b"],
+        [2, 1, "v", 2, "a"],
+        [0, 3, "v", 3, "b"],
+        [3, 5, "v", 3, "c"],
+        [1, 5, "v", 2, "a"],
+        [2, 2, "v", 3, "a"],
+        [4, 4, "v", 3, "c"]
+      ],
+      "passengers": "ababcccacbbabbabbcaca",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.833333,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 2, 1, 0] }
+      },
+      "solutionCount": 888
+    },
+    {
+      "seed": "shuttle-expected:988:8:86",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 4, "h", 2, "a"],
+        [5, 1, "h", 3, "a"],
+        [4, 1, "h", 3, "c"],
+        [3, 2, "h", 3, "c"],
+        [1, 0, "v", 3, "d"],
+        [0, 0, "h", 2, "b"],
+        [2, 3, "h", 3, "b"],
+        [0, 2, "h", 3, "d"]
+      ],
+      "passengers": "bdbaacaddddcbcccdabacb",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.0,
+        "small": 0.0,
+        "big": 0.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [2, 2, 1, 1], "maximum": [2, 2, 1, 1] },
+        "cont": { "minimum": [2, 2, 0, 0], "maximum": [2, 2, 0, 0] },
+        "window": { "minimum": [2, 1, 1, 1], "maximum": [3, 1, 1, 1] }
+      },
+      "solutionCount": 24
+    },
+    {
+      "seed": "shuttle-expected:988:8:87",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 4, "h", 2, "d"],
+        [5, 1, "h", 3, "c"],
+        [2, 0, "v", 3, "c"],
+        [1, 0, "h", 3, "d"],
+        [1, 3, "v", 3, "b"],
+        [4, 3, "h", 3, "a"],
+        [0, 3, "h", 2, "b"],
+        [0, 5, "v", 3, "a"]
+      ],
+      "passengers": "cbdbcbdaacdbadacbadcca",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 36
+    },
+    {
+      "seed": "shuttle-expected:988:8:88",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 0, "v", 2, "a"],
+        [4, 2, "v", 2, "b"],
+        [1, 1, "v", 2, "b"],
+        [1, 2, "v", 3, "b"],
+        [1, 0, "v", 2, "a"],
+        [4, 5, "v", 3, "c"],
+        [1, 5, "v", 2, "c"],
+        [1, 4, "v", 3, "a"]
+      ],
+      "passengers": "acbacaabbbacbacbbac",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 648
+    },
+    {
+      "seed": "shuttle-expected:988:8:89",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [0, 1, "v", 3, "c"],
+        [0, 3, "v", 2, "d"],
+        [1, 2, "v", 2, "a"],
+        [3, 4, "v", 3, "a"],
+        [0, 4, "v", 3, "b"],
+        [1, 5, "v", 3, "d"],
+        [2, 0, "v", 2, "c"],
+        [0, 0, "v", 2, "b"]
+      ],
+      "passengers": "bcbadabccbcddabdcaad",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.25,
+        "small": 0.0,
+        "big": 0.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [2, 2, 1, 1], "maximum": [2, 2, 1, 1] },
+        "cont": { "minimum": [2, 1, 1, 0], "maximum": [2, 1, 1, 0] },
+        "window": { "minimum": [2, 1, 1, 1], "maximum": [2, 2, 2, 2] }
+      },
+      "solutionCount": 18
+    },
+    {
+      "seed": "shuttle-expected:988:8:90",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [0, 3, "v", 2, "d"],
+        [4, 5, "v", 3, "c"],
+        [4, 2, "v", 2, "d"],
+        [1, 2, "v", 3, "a"],
+        [1, 5, "v", 2, "b"],
+        [3, 6, "v", 3, "b"],
+        [0, 6, "v", 2, "a"],
+        [0, 0, "v", 3, "c"]
+      ],
+      "passengers": "cbbbdccdaadbbdacaacc",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.0,
+        "small": 0.0,
+        "big": 0.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] }
+      },
+      "solutionCount": 9
+    },
+    {
+      "seed": "shuttle-expected:988:8:91",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 2, "h", 2, "a"],
+        [2, 4, "v", 3, "c"],
+        [1, 2, "h", 3, "c"],
+        [0, 5, "v", 2, "a"],
+        [5, 3, "h", 3, "a"],
+        [1, 0, "v", 3, "b"],
+        [4, 1, "v", 2, "b"],
+        [2, 1, "v", 2, "b"]
+      ],
+      "passengers": "acbaabcacbbcabbabcca",
+      "minimumBayCount": 3,
+      "level": 2,
+      "reason": null,
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 39
+    },
+    {
+      "seed": "shuttle-expected:988:8:92",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 0, "h", 3, "b"],
+        [1, 5, "v", 3, "b"],
+        [0, 4, "h", 2, "a"],
+        [1, 3, "v", 2, "a"],
+        [5, 2, "h", 2, "d"],
+        [4, 0, "h", 3, "c"],
+        [4, 3, "h", 3, "c"],
+        [0, 2, "v", 3, "d"]
+      ],
+      "passengers": "abdccdadabbbabbdcdccc",
+      "minimumBayCount": 4,
+      "level": 2,
+      "reason": null,
+      "rules": {
+        "any": 0.5,
+        "small": 0.5,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.5,
+        "wideNeeded": 1.0,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 120
+    },
+    {
+      "seed": "shuttle-expected:988:8:93",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [2, 2, "v", 3, "d"],
+        [3, 5, "v", 3, "a"],
+        [0, 5, "v", 3, "c"],
+        [3, 1, "v", 3, "d"],
+        [0, 1, "v", 2, "c"],
+        [0, 2, "v", 2, "b"],
+        [4, 3, "v", 2, "a"],
+        [0, 3, "v", 2, "b"]
+      ],
+      "passengers": "cbddabccbacdadbddaac",
+      "minimumBayCount": 4,
+      "level": 2,
+      "reason": null,
+      "rules": {
+        "any": 0.5,
+        "small": 0.5,
+        "big": 0.5,
+        "unblock": 0.5,
+        "needed": 1.0,
+        "fill": 0.5,
+        "wideNeeded": 1.0,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [2, 0, 0, 0], "maximum": [2, 1, 0, 0] }
+      },
+      "solutionCount": 48
+    },
+    {
+      "seed": "shuttle-expected:988:8:94",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 1, "h", 2, "b"],
+        [2, 4, "v", 3, "a"],
+        [0, 2, "h", 3, "c"],
+        [0, 5, "v", 3, "b"],
+        [0, 1, "v", 2, "c"],
+        [5, 0, "h", 3, "a"],
+        [5, 3, "h", 3, "a"],
+        [0, 0, "v", 2, "b"]
+      ],
+      "passengers": "baaababbacbcbcacbcaaa",
+      "minimumBayCount": 3,
+      "level": 4,
+      "reason": null,
+      "rules": {
+        "any": 0.0,
+        "small": 0.0,
+        "big": 0.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "cont": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "window": { "minimum": [1, 1, 1, 0], "maximum": [2, 2, 2, 1] }
+      },
+      "solutionCount": 22
+    },
+    {
+      "seed": "shuttle-expected:988:8:95",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 3, "v", 2, "c"],
+        [0, 3, "v", 3, "b"],
+        [2, 6, "v", 3, "d"],
+        [3, 2, "v", 3, "d"],
+        [1, 4, "v", 3, "b"],
+        [5, 1, "v", 2, "a"],
+        [0, 6, "v", 2, "c"],
+        [0, 2, "v", 3, "a"]
+      ],
+      "passengers": "adadacbbdabcbbccbddda",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "naiveCeiling",
+      "rules": {
+        "any": 0.5,
+        "small": 0.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.0,
+        "wideNeeded": 1.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 1, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 33
+    },
+    {
+      "seed": "shuttle-expected:988:8:96",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [2, 5, "v", 2, "a"],
+        [1, 3, "v", 3, "c"],
+        [0, 5, "v", 2, "c"],
+        [4, 2, "v", 2, "b"],
+        [3, 0, "v", 3, "d"],
+        [1, 2, "v", 3, "a"],
+        [0, 0, "v", 3, "b"],
+        [0, 1, "v", 3, "d"]
+      ],
+      "passengers": "aaddbbccbacdbdadcdcab",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 1551
+    },
+    {
+      "seed": "shuttle-expected:988:8:97",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 0, "v", 2, "b"],
+        [1, 1, "h", 3, "c"],
+        [0, 5, "v", 3, "b"],
+        [0, 4, "v", 2, "d"],
+        [5, 3, "h", 3, "d"],
+        [4, 2, "h", 2, "a"],
+        [4, 4, "h", 2, "a"],
+        [3, 0, "h", 3, "c"]
+      ],
+      "passengers": "acabdbdcbcbadcccdbda",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 1920
+    },
+    {
+      "seed": "shuttle-expected:988:8:98",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 2, "v", 2, "a"],
+        [4, 1, "v", 2, "c"],
+        [0, 1, "v", 3, "b"],
+        [2, 4, "v", 2, "c"],
+        [3, 3, "v", 3, "d"],
+        [0, 3, "v", 2, "b"],
+        [1, 5, "v", 3, "a"],
+        [0, 4, "v", 2, "d"]
+      ],
+      "passengers": "acddcaaaddbabbcdbcb",
+      "minimumBayCount": 3,
+      "level": 2,
+      "reason": null,
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] }
+      },
+      "solutionCount": 18
+    },
+    {
+      "seed": "shuttle-expected:988:8:99",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 5, "v", 3, "a"],
+        [0, 5, "v", 3, "a"],
+        [2, 1, "v", 3, "b"],
+        [0, 1, "v", 2, "c"],
+        [3, 4, "v", 3, "c"],
+        [0, 4, "v", 3, "b"],
+        [1, 0, "v", 2, "a"],
+        [2, 2, "v", 3, "b"]
+      ],
+      "passengers": "ababcbbbabacccabbaaacb",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [4, 1, 0, 0] }
+      },
+      "solutionCount": 582
+    },
+    {
+      "seed": "shuttle-expected:988:8:100",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 5, "v", 3, "a"],
+        [0, 5, "v", 3, "b"],
+        [1, 0, "v", 3, "c"],
+        [0, 4, "v", 3, "b"],
+        [2, 1, "v", 3, "c"],
+        [0, 1, "v", 2, "a"],
+        [1, 3, "v", 3, "b"],
+        [3, 2, "v", 3, "a"]
+      ],
+      "passengers": "caabbabbcabcabaaabcbbcc",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 1104
+    },
+    {
+      "seed": "shuttle-expected:988:8:101",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 6, "v", 2, "d"],
+        [0, 6, "v", 3, "d"],
+        [3, 4, "v", 3, "b"],
+        [0, 4, "v", 3, "a"],
+        [2, 1, "v", 3, "c"],
+        [1, 3, "v", 2, "b"],
+        [0, 1, "v", 2, "c"],
+        [0, 5, "v", 3, "a"]
+      ],
+      "passengers": "bdaccaabcbbaddbadccad",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 264
+    },
+    {
+      "seed": "shuttle-expected:988:8:102",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 3, "v", 2, "c"],
+        [4, 5, "v", 3, "c"],
+        [1, 5, "v", 2, "a"],
+        [3, 0, "v", 3, "b"],
+        [0, 3, "v", 2, "a"],
+        [0, 0, "v", 3, "a"],
+        [4, 4, "v", 2, "b"],
+        [1, 4, "v", 3, "b"]
+      ],
+      "passengers": "bccbabacabaccbababba",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.75,
+        "small": 1.0,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 30
+    },
+    {
+      "seed": "shuttle-expected:988:8:103",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 4, "v", 2, "c"],
+        [3, 2, "v", 2, "a"],
+        [2, 3, "v", 3, "a"],
+        [0, 2, "v", 3, "c"],
+        [0, 3, "v", 2, "b"],
+        [0, 0, "v", 2, "b"],
+        [5, 0, "h", 2, "a"],
+        [0, 1, "v", 3, "b"]
+      ],
+      "passengers": "bbbaacbbaaaaccaccbb",
+      "minimumBayCount": 2,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.166667,
+        "small": 0.0,
+        "big": 0.5,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [3, 2, 1, 1], "maximum": [3, 3, 1, 1] },
+        "cont": { "minimum": [3, 2, 1, 0], "maximum": [3, 3, 1, 0] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [2, 2, 1, 1] }
+      },
+      "solutionCount": 48
+    },
+    {
+      "seed": "shuttle-expected:988:8:104",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [0, 4, "v", 3, "a"],
+        [2, 0, "v", 3, "b"],
+        [0, 1, "v", 3, "d"],
+        [1, 3, "v", 3, "d"],
+        [0, 0, "v", 2, "b"],
+        [3, 5, "v", 3, "c"],
+        [0, 5, "v", 3, "a"],
+        [0, 2, "v", 2, "c"]
+      ],
+      "passengers": "adcaddbbcbcacdcaaddabb",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "naiveCeiling",
+      "rules": {
+        "any": 0.5,
+        "small": 0.5,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.5,
+        "wideNeeded": 1.0,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "cont": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [3, 1, 1, 1] }
+      },
+      "solutionCount": 36
+    },
+    {
+      "seed": "shuttle-expected:988:8:105",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 3, "v", 2, "c"],
+        [4, 4, "v", 2, "d"],
+        [3, 2, "h", 3, "b"],
+        [3, 5, "h", 2, "b"],
+        [6, 4, "h", 3, "d"],
+        [1, 0, "v", 2, "a"],
+        [5, 1, "v", 2, "c"],
+        [2, 1, "h", 3, "a"]
+      ],
+      "passengers": "ccbabbcaadaddcbadbd",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 520
+    },
+    {
+      "seed": "shuttle-expected:988:8:106",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 3, "v", 3, "b"],
+        [4, 5, "v", 3, "a"],
+        [0, 5, "v", 3, "c"],
+        [2, 4, "v", 2, "a"],
+        [1, 0, "v", 3, "b"],
+        [2, 1, "v", 3, "a"],
+        [0, 4, "v", 2, "b"],
+        [0, 1, "v", 2, "c"]
+      ],
+      "passengers": "bbaccabaaacbbacbcaabb",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.777778,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 1, 1, 0] }
+      },
+      "solutionCount": 680
+    },
+    {
+      "seed": "shuttle-expected:988:8:107",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 1, "h", 3, "b"],
+        [1, 4, "v", 3, "c"],
+        [4, 5, "v", 2, "c"],
+        [1, 5, "v", 3, "b"],
+        [1, 0, "v", 2, "d"],
+        [0, 0, "h", 3, "a"],
+        [0, 3, "v", 3, "a"],
+        [0, 4, "h", 2, "d"]
+      ],
+      "passengers": "adbdbbcaadcaabbcdbacc",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "cont": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 2, 2, 1] }
+      },
+      "solutionCount": 54
+    },
+    {
+      "seed": "shuttle-expected:988:8:108",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 1, "h", 3, "a"],
+        [0, 3, "h", 2, "c"],
+        [1, 6, "v", 2, "b"],
+        [0, 5, "v", 3, "a"],
+        [6, 2, "h", 2, "d"],
+        [6, 5, "h", 2, "d"],
+        [2, 0, "v", 3, "b"],
+        [0, 0, "v", 2, "c"]
+      ],
+      "passengers": "dbbbacdcaadbdaccaab",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.0,
+        "small": 0.0,
+        "big": 0.0,
+        "unblock": 0.0,
+        "needed": 0.0,
+        "fill": 0.0,
+        "wideNeeded": 0.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 1, 0, 0], "maximum": [2, 1, 0, 0] }
+      },
+      "solutionCount": 27
+    },
+    {
+      "seed": "shuttle-expected:988:8:109",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 3, "h", 2, "c"],
+        [4, 1, "h", 3, "b"],
+        [1, 3, "h", 3, "d"],
+        [0, 2, "h", 3, "d"],
+        [4, 4, "h", 2, "b"],
+        [0, 0, "v", 3, "a"],
+        [5, 2, "h", 3, "c"],
+        [0, 1, "v", 3, "a"]
+      ],
+      "passengers": "addbbddabbbccaccdaaadc",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [4, 0, 0, 0] }
+      },
+      "solutionCount": 192
+    },
+    {
+      "seed": "shuttle-expected:988:8:110",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 1, "h", 3, "d"],
+        [2, 4, "v", 2, "b"],
+        [5, 3, "h", 3, "c"],
+        [1, 3, "h", 3, "a"],
+        [0, 3, "h", 3, "b"],
+        [4, 1, "h", 2, "c"],
+        [4, 3, "h", 2, "a"],
+        [0, 2, "v", 2, "d"]
+      ],
+      "passengers": "bdaccacdbbcaddcabbda",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 192
+    },
+    {
+      "seed": "shuttle-expected:988:8:111",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 0, "v", 3, "a"],
+        [0, 0, "h", 2, "b"],
+        [0, 4, "h", 2, "b"],
+        [2, 4, "h", 2, "a"],
+        [1, 2, "h", 3, "a"],
+        [3, 1, "h", 3, "c"],
+        [5, 0, "h", 3, "c"],
+        [4, 2, "h", 2, "b"]
+      ],
+      "passengers": "babcabbbaaccbaacacca",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 692
+    },
+    {
+      "seed": "shuttle-expected:988:8:112",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 4, "v", 3, "c"],
+        [3, 5, "v", 3, "d"],
+        [0, 5, "v", 3, "b"],
+        [0, 3, "v", 3, "a"],
+        [5, 6, "v", 2, "c"],
+        [2, 6, "v", 3, "b"],
+        [0, 6, "v", 2, "d"],
+        [0, 2, "v", 2, "a"]
+      ],
+      "passengers": "ccccddadbabacbdaabdbb",
+      "minimumBayCount": 5
+    },
+    {
+      "seed": "shuttle-expected:988:8:113",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 5, "v", 3, "a"],
+        [5, 2, "h", 3, "b"],
+        [3, 3, "h", 3, "c"],
+        [0, 3, "v", 2, "a"],
+        [2, 2, "v", 3, "b"],
+        [3, 0, "v", 3, "c"],
+        [0, 2, "v", 2, "a"],
+        [1, 0, "v", 2, "b"]
+      ],
+      "passengers": "cbaaaabcbabbcacabbcbc",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.833333,
+        "small": 1.0,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 654
+    },
+    {
+      "seed": "shuttle-expected:988:8:114",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [0, 4, "v", 2, "c"],
+        [4, 5, "v", 2, "b"],
+        [0, 1, "v", 3, "a"],
+        [4, 0, "v", 2, "a"],
+        [2, 5, "v", 2, "b"],
+        [2, 0, "v", 2, "d"],
+        [0, 0, "v", 2, "d"],
+        [2, 3, "v", 3, "c"]
+      ],
+      "passengers": "ddbadabcadccaabccb",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 1, 0, 0] }
+      },
+      "solutionCount": 176
+    },
+    {
+      "seed": "shuttle-expected:988:8:115",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 1, "h", 2, "d"],
+        [1, 4, "h", 2, "c"],
+        [1, 6, "v", 3, "b"],
+        [3, 3, "v", 3, "b"],
+        [2, 0, "v", 3, "a"],
+        [0, 0, "h", 2, "c"],
+        [6, 2, "h", 3, "a"],
+        [6, 5, "h", 2, "d"]
+      ],
+      "passengers": "cdaabbacacdbabadbdbc",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 0.5,
+        "big": 0.5,
+        "unblock": 0.5,
+        "needed": 1.0,
+        "fill": 0.5,
+        "wideNeeded": 1.0,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] }
+      },
+      "solutionCount": 54
+    },
+    {
+      "seed": "shuttle-expected:988:8:116",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 2, "v", 3, "b"],
+        [3, 0, "v", 3, "a"],
+        [0, 0, "v", 3, "c"],
+        [0, 5, "v", 3, "d"],
+        [3, 3, "v", 3, "a"],
+        [0, 3, "v", 3, "c"],
+        [0, 1, "v", 3, "b"],
+        [3, 4, "v", 2, "d"]
+      ],
+      "passengers": "caaadbbcadcacdbbddcbabc",
+      "minimumBayCount": 5
+    },
+    {
+      "seed": "shuttle-expected:988:8:117",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 4, "v", 3, "c"],
+        [0, 3, "h", 3, "a"],
+        [5, 1, "h", 2, "b"],
+        [5, 4, "h", 2, "c"],
+        [3, 2, "v", 2, "b"],
+        [0, 2, "v", 3, "d"],
+        [4, 0, "v", 2, "d"],
+        [0, 0, "v", 2, "a"]
+      ],
+      "passengers": "dcaaddbabadccbcdabc",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 825
+    },
+    {
+      "seed": "shuttle-expected:988:8:118",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 3, "v", 3, "a"],
+        [0, 2, "h", 2, "b"],
+        [3, 0, "v", 2, "a"],
+        [0, 6, "v", 3, "c"],
+        [0, 0, "v", 3, "b"],
+        [3, 1, "v", 3, "d"],
+        [0, 5, "v", 2, "d"],
+        [0, 1, "v", 3, "c"]
+      ],
+      "passengers": "acbdcacabbabaccdbddcd",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.75,
+        "small": 0.75,
+        "big": 0.75,
+        "unblock": 0.75,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] }
+      },
+      "solutionCount": 18
+    },
+    {
+      "seed": "shuttle-expected:988:8:119",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [3, 5, "v", 3, "b"],
+        [1, 4, "v", 3, "a"],
+        [0, 5, "v", 3, "b"],
+        [4, 1, "v", 3, "d"],
+        [1, 0, "v", 2, "c"],
+        [0, 1, "v", 3, "c"],
+        [0, 6, "v", 2, "d"],
+        [0, 3, "v", 3, "a"]
+      ],
+      "passengers": "acbdbaadbbddaabcdccbca",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "naiveCeiling",
+      "rules": {
+        "any": 0.5,
+        "small": 0.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.0,
+        "wideNeeded": 1.0,
+        "wideFill": 0.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "cont": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [4, 1, 1, 1] }
+      },
+      "solutionCount": 384
+    },
+    {
+      "seed": "shuttle-expected:988:8:120",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 3, "v", 3, "a"],
+        [0, 1, "v", 3, "c"],
+        [0, 2, "h", 3, "b"],
+        [0, 5, "v", 3, "a"],
+        [5, 0, "h", 3, "b"],
+        [0, 0, "v", 3, "c"],
+        [5, 3, "h", 3, "b"],
+        [4, 3, "h", 3, "a"]
+      ],
+      "passengers": "aababccabcbbbaabacacbbca",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 1, 1, 0] }
+      },
+      "solutionCount": 632
+    },
+    {
+      "seed": "shuttle-expected:988:8:121",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 6, "v", 3, "d"],
+        [4, 0, "v", 3, "c"],
+        [0, 0, "v", 3, "b"],
+        [3, 1, "v", 3, "b"],
+        [0, 1, "v", 2, "a"],
+        [0, 3, "v", 3, "c"],
+        [4, 2, "h", 3, "a"],
+        [3, 5, "v", 2, "d"]
+      ],
+      "passengers": "bdadabdaadbccbbcccdacb",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 683
+    },
+    {
+      "seed": "shuttle-expected:988:8:122",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [2, 2, "v", 2, "d"],
+        [3, 1, "v", 2, "b"],
+        [0, 1, "v", 3, "a"],
+        [3, 0, "v", 2, "b"],
+        [0, 2, "v", 2, "c"],
+        [2, 3, "v", 2, "a"],
+        [0, 0, "v", 3, "d"],
+        [1, 5, "v", 3, "c"]
+      ],
+      "passengers": "cdcdaddcadacbabbacb",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "naiveCeiling",
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 1, 0, 0], "maximum": [5, 1, 0, 0] }
+      },
+      "solutionCount": 203
+    },
+    {
+      "seed": "shuttle-expected:988:8:123",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 0, "v", 2, "b"],
+        [0, 0, "h", 3, "a"],
+        [0, 5, "v", 3, "c"],
+        [5, 1, "h", 2, "c"],
+        [4, 3, "v", 2, "a"],
+        [5, 5, "h", 2, "b"],
+        [1, 3, "v", 3, "b"],
+        [1, 4, "v", 2, "a"]
+      ],
+      "passengers": "bbcbccaaaaabbaccbab",
+      "minimumBayCount": 2,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.75,
+        "small": 1.0,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [2, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 84
+    },
+    {
+      "seed": "shuttle-expected:988:8:124",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 1, "v", 3, "a"],
+        [3, 2, "v", 3, "a"],
+        [0, 2, "v", 3, "b"],
+        [2, 0, "v", 3, "c"],
+        [1, 6, "v", 2, "b"],
+        [0, 0, "v", 2, "c"],
+        [0, 5, "v", 3, "b"],
+        [1, 4, "v", 3, "a"]
+      ],
+      "passengers": "accacbbcaaabbabaababcb",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [5, 1, 0, 0] }
+      },
+      "solutionCount": 306
+    },
+    {
+      "seed": "shuttle-expected:988:8:125",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 1, "v", 2, "a"],
+        [0, 1, "h", 3, "c"],
+        [0, 4, "v", 3, "b"],
+        [2, 0, "v", 3, "b"],
+        [0, 0, "v", 2, "d"],
+        [5, 1, "h", 3, "d"],
+        [3, 5, "v", 3, "c"],
+        [0, 5, "v", 2, "a"]
+      ],
+      "passengers": "bbcadcccdbccaadbdbadb",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 1, 1, 0] }
+      },
+      "solutionCount": 132
+    },
+    {
+      "seed": "shuttle-expected:988:8:126",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 3, "v", 3, "b"],
+        [3, 0, "v", 3, "b"],
+        [4, 5, "v", 2, "d"],
+        [0, 5, "v", 3, "c"],
+        [1, 0, "v", 2, "c"],
+        [1, 4, "v", 2, "a"],
+        [0, 1, "v", 2, "d"],
+        [3, 2, "v", 3, "a"]
+      ],
+      "passengers": "accdbcaddbabdabcacbb",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [2, 1, 0, 0] }
+      },
+      "solutionCount": 864
+    },
+    {
+      "seed": "shuttle-expected:988:8:127",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 5, "v", 2, "c"],
+        [0, 5, "v", 3, "b"],
+        [2, 1, "v", 2, "d"],
+        [3, 2, "v", 3, "b"],
+        [1, 4, "v", 3, "a"],
+        [0, 1, "v", 2, "d"],
+        [0, 2, "v", 2, "c"],
+        [2, 3, "v", 3, "a"]
+      ],
+      "passengers": "cabcbdbabcadadbaadcb",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 2, 1, 1] }
+      },
+      "solutionCount": 384
+    },
+    {
+      "seed": "shuttle-expected:988:8:128",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 2, "h", 2, "a"],
+        [3, 3, "h", 3, "c"],
+        [0, 4, "v", 3, "d"],
+        [3, 1, "v", 3, "d"],
+        [0, 1, "v", 2, "b"],
+        [0, 5, "v", 2, "c"],
+        [5, 2, "h", 3, "a"],
+        [4, 0, "v", 2, "b"]
+      ],
+      "passengers": "bcdadcacdbdbcdcaaadb",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 0, 0, 0] }
+      },
+      "solutionCount": 528
+    },
+    {
+      "seed": "shuttle-expected:988:8:129",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 5, "v", 2, "b"],
+        [3, 5, "v", 2, "c"],
+        [0, 5, "v", 2, "b"],
+        [5, 2, "v", 2, "b"],
+        [3, 0, "v", 2, "a"],
+        [2, 0, "h", 2, "c"],
+        [1, 6, "v", 2, "a"],
+        [3, 3, "v", 3, "a"]
+      ],
+      "passengers": "abaabcbabaaccbbac",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [4, 0, 0, 0] }
+      },
+      "solutionCount": 156
+    },
+    {
+      "seed": "shuttle-expected:988:8:130",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 1, "v", 3, "a"],
+        [0, 5, "v", 3, "b"],
+        [3, 6, "v", 3, "d"],
+        [0, 6, "v", 3, "c"],
+        [1, 3, "v", 3, "a"],
+        [3, 0, "v", 3, "b"],
+        [0, 0, "v", 3, "c"],
+        [0, 1, "v", 2, "d"]
+      ],
+      "passengers": "daccacdcbbbbbdacddabaac",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 1, 1, 1] }
+      },
+      "solutionCount": 561
+    },
+    {
+      "seed": "shuttle-expected:988:8:131",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [4, 0, "v", 2, "a"],
+        [1, 0, "v", 3, "c"],
+        [1, 5, "v", 2, "b"],
+        [0, 4, "v", 3, "c"],
+        [3, 3, "v", 3, "a"],
+        [0, 3, "v", 3, "d"],
+        [2, 2, "v", 2, "d"],
+        [0, 2, "v", 2, "b"]
+      ],
+      "passengers": "ddcadcacadabccbbadcb",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 2, 0, 0] }
+      },
+      "solutionCount": 305
+    },
+    {
+      "seed": "shuttle-expected:988:8:132",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 6, "v", 3, "a"],
+        [0, 6, "v", 2, "c"],
+        [4, 1, "v", 2, "b"],
+        [1, 1, "v", 2, "a"],
+        [4, 3, "v", 3, "a"],
+        [0, 3, "v", 3, "b"],
+        [2, 5, "v", 2, "b"],
+        [0, 5, "v", 2, "c"]
+      ],
+      "passengers": "abaaaabcababccacbbb",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.625,
+        "small": 1.0,
+        "big": 0.5,
+        "unblock": 0.5,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 1, 1, 0], "maximum": [1, 1, 1, 0] }
+      },
+      "solutionCount": 31
+    },
+    {
+      "seed": "shuttle-expected:988:8:133",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [5, 0, "h", 2, "a"],
+        [5, 4, "v", 2, "b"],
+        [4, 3, "h", 2, "d"],
+        [3, 5, "v", 2, "b"],
+        [2, 5, "h", 2, "c"],
+        [1, 3, "h", 3, "d"],
+        [0, 3, "h", 3, "c"],
+        [0, 6, "v", 2, "a"]
+      ],
+      "passengers": "ddbcbccdcbadcadaba",
+      "minimumBayCount": 5
+    },
+    {
+      "seed": "shuttle-expected:988:8:134",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [0, 3, "h", 2, "a"],
+        [0, 5, "v", 3, "b"],
+        [4, 2, "h", 2, "c"],
+        [3, 1, "h", 3, "a"],
+        [3, 0, "v", 3, "b"],
+        [4, 4, "h", 2, "b"],
+        [0, 0, "v", 3, "c"],
+        [0, 2, "v", 2, "a"]
+      ],
+      "passengers": "bbaacaacbbaacbbcbbca",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.875,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [4, 2, 0, 0] }
+      },
+      "solutionCount": 465
+    },
+    {
+      "seed": "shuttle-expected:988:8:135",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [3, 0, "v", 2, "a"],
+        [5, 3, "h", 2, "b"],
+        [1, 0, "h", 3, "c"],
+        [5, 6, "v", 2, "b"],
+        [0, 5, "v", 2, "b"],
+        [1, 6, "v", 3, "a"],
+        [2, 4, "v", 2, "c"],
+        [0, 4, "v", 2, "a"]
+      ],
+      "passengers": "cbaccabbacabbaacab",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 80
+    },
+    {
+      "seed": "shuttle-expected:988:8:136",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [1, 4, "v", 3, "b"],
+        [0, 3, "v", 3, "a"],
+        [2, 5, "v", 3, "b"],
+        [2, 0, "v", 3, "a"],
+        [0, 1, "v", 3, "d"],
+        [2, 2, "v", 3, "d"],
+        [0, 2, "v", 2, "c"],
+        [0, 0, "v", 2, "c"]
+      ],
+      "passengers": "bddccabacbbaaaddcbddba",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 1, 1, 0] }
+      },
+      "solutionCount": 288
+    },
+    {
+      "seed": "shuttle-expected:988:8:137",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [3, 0, "v", 3, "a"],
+        [1, 3, "v", 3, "c"],
+        [1, 0, "v", 2, "c"],
+        [0, 5, "v", 3, "d"],
+        [3, 2, "v", 2, "a"],
+        [0, 2, "v", 3, "d"],
+        [4, 4, "v", 2, "b"],
+        [0, 1, "v", 3, "b"]
+      ],
+      "passengers": "aaaccdbbaccdbddcabbdd",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.75,
+        "small": 0.5,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.5,
+        "wideNeeded": 1.0,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 1, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [2, 2, 1, 1] }
+      },
+      "solutionCount": 350
+    },
+    {
+      "seed": "shuttle-expected:988:8:138",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [0, 6, "v", 2, "b"],
+        [5, 2, "v", 2, "a"],
+        [2, 2, "v", 2, "a"],
+        [4, 3, "v", 3, "a"],
+        [0, 2, "v", 2, "b"],
+        [1, 3, "v", 2, "c"],
+        [3, 4, "v", 2, "c"],
+        [0, 4, "v", 3, "b"]
+      ],
+      "passengers": "cabbabacabbabccbaa",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 216
+    },
+    {
+      "seed": "shuttle-expected:988:8:139",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 5, "v", 3, "d"],
+        [0, 3, "h", 3, "c"],
+        [1, 2, "v", 3, "b"],
+        [0, 0, "v", 3, "d"],
+        [5, 3, "h", 2, "a"],
+        [4, 4, "h", 2, "a"],
+        [2, 1, "v", 3, "c"],
+        [0, 1, "v", 2, "b"]
+      ],
+      "passengers": "cacdbbcdbbcddbdcacaad",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [2, 0, 0, 0], "maximum": [4, 1, 0, 0] }
+      },
+      "solutionCount": 264
+    },
+    {
+      "seed": "shuttle-expected:988:8:140",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [4, 0, "h", 3, "b"],
+        [6, 0, "h", 2, "b"],
+        [2, 6, "v", 3, "a"],
+        [0, 3, "v", 3, "c"],
+        [0, 4, "h", 3, "c"],
+        [6, 2, "h", 2, "b"],
+        [6, 4, "h", 3, "a"],
+        [5, 5, "h", 2, "a"]
+      ],
+      "passengers": "bcbbcacacaabacacbbbaa",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.875,
+        "small": 0.75,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.5,
+        "wideNeeded": 1.0,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 0, 0, 0] }
+      },
+      "solutionCount": 22
+    },
+    {
+      "seed": "shuttle-expected:988:8:141",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 0, "v", 3, "d"],
+        [0, 0, "h", 3, "c"],
+        [0, 3, "v", 3, "d"],
+        [2, 5, "h", 2, "a"],
+        [4, 2, "h", 3, "b"],
+        [5, 0, "h", 3, "a"],
+        [5, 4, "h", 2, "b"],
+        [4, 5, "h", 2, "c"]
+      ],
+      "passengers": "bbccadabccdcbadadbdad",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [3, 2, 1, 0] }
+      },
+      "solutionCount": 70
+    },
+    {
+      "seed": "shuttle-expected:988:8:142",
+      "size": 7,
+      "openSides": ["top", "right"],
+      "cars": [
+        [2, 4, "v", 2, "b"],
+        [5, 1, "h", 3, "b"],
+        [0, 3, "h", 3, "a"],
+        [5, 4, "h", 3, "c"],
+        [0, 6, "v", 2, "a"],
+        [3, 2, "v", 2, "b"],
+        [4, 3, "h", 3, "c"],
+        [0, 2, "v", 3, "a"]
+      ],
+      "passengers": "acacaaacbbabbbababccc",
+      "minimumBayCount": 2,
+      "level": null,
+      "reason": "naiveCeiling",
+      "rules": {
+        "any": 0.5,
+        "small": 0.5,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.5,
+        "wideNeeded": 1.0,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "cont": { "minimum": [1, 1, 1, 1], "maximum": [1, 1, 1, 1] },
+        "window": { "minimum": [1, 1, 1, 1], "maximum": [3, 1, 1, 1] }
+      },
+      "solutionCount": 66
+    },
+    {
+      "seed": "shuttle-expected:988:8:143",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [0, 4, "v", 2, "b"],
+        [1, 1, "v", 3, "b"],
+        [2, 0, "v", 3, "c"],
+        [0, 5, "v", 3, "a"],
+        [0, 3, "v", 3, "a"],
+        [2, 2, "v", 3, "c"],
+        [0, 2, "v", 2, "a"],
+        [0, 0, "v", 2, "b"]
+      ],
+      "passengers": "cbcaacaccbbbaacbaabab",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.666667,
+        "small": 0.75,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.5,
+        "wideNeeded": 1.0,
+        "wideFill": 0.5
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [2, 1, 1, 0], "maximum": [3, 1, 1, 0] }
+      },
+      "solutionCount": 120
+    },
+    {
+      "seed": "shuttle-expected:988:8:144",
+      "size": 6,
+      "openSides": ["top"],
+      "cars": [
+        [2, 0, "v", 3, "a"],
+        [0, 0, "v", 2, "d"],
+        [3, 4, "v", 3, "c"],
+        [2, 5, "v", 2, "b"],
+        [4, 2, "v", 2, "c"],
+        [0, 4, "v", 2, "a"],
+        [1, 2, "v", 3, "b"],
+        [3, 1, "v", 3, "d"]
+      ],
+      "passengers": "bbadcbadcbadacbcdadc",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.625,
+        "small": 1.0,
+        "big": 0.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 2, 1, 1] }
+      },
+      "solutionCount": 680
+    },
+    {
+      "seed": "shuttle-expected:988:8:145",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [2, 0, "v", 3, "a"],
+        [4, 5, "v", 3, "b"],
+        [2, 5, "v", 2, "b"],
+        [2, 4, "v", 3, "a"],
+        [0, 3, "v", 2, "c"],
+        [3, 1, "v", 3, "b"],
+        [0, 1, "v", 3, "a"],
+        [2, 6, "v", 3, "c"]
+      ],
+      "passengers": "bbbabbacbaaccaacbcabaa",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "playStylesDisagree",
+      "rules": {
+        "any": 0.333333,
+        "small": 0.333333,
+        "big": 0.333333,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 0.333333,
+        "wideNeeded": 1.0,
+        "wideFill": 0.333333
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "window": { "minimum": [1, 1, 1, 0], "maximum": [3, 1, 1, 0] }
+      },
+      "solutionCount": 180
+    },
+    {
+      "seed": "shuttle-expected:988:8:146",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [0, 3, "v", 2, "a"],
+        [4, 4, "v", 3, "b"],
+        [1, 4, "v", 3, "b"],
+        [4, 2, "v", 2, "a"],
+        [0, 6, "v", 3, "c"],
+        [2, 2, "v", 2, "b"],
+        [0, 2, "v", 2, "c"],
+        [3, 1, "v", 3, "a"]
+      ],
+      "passengers": "bbbbabbbcacacbaaacac",
+      "minimumBayCount": 3,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [2, 1, 1, 0] }
+      },
+      "solutionCount": 208
+    },
+    {
+      "seed": "shuttle-expected:988:8:147",
+      "size": 6,
+      "openSides": ["top", "right"],
+      "cars": [
+        [1, 4, "h", 2, "d"],
+        [0, 0, "h", 3, "b"],
+        [0, 3, "h", 2, "c"],
+        [2, 2, "h", 2, "a"],
+        [2, 4, "h", 2, "c"],
+        [4, 0, "h", 2, "d"],
+        [4, 2, "h", 2, "a"],
+        [4, 4, "h", 2, "b"]
+      ],
+      "passengers": "abbbdbbdcddaccaac",
+      "minimumBayCount": 4,
+      "level": null,
+      "reason": "depthDefinitionsDisagree",
+      "rules": {
+        "any": 0.5,
+        "small": 0.5,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 0.5,
+        "fill": 1.0,
+        "wideNeeded": 0.5,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [1, 1, 0, 0], "maximum": [1, 1, 0, 0] },
+        "cont": { "minimum": [1, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 1, 0, 0], "maximum": [3, 1, 0, 0] }
+      },
+      "solutionCount": 56
+    },
+    {
+      "seed": "shuttle-expected:988:8:148",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [4, 6, "v", 2, "b"],
+        [0, 6, "v", 3, "a"],
+        [0, 5, "v", 2, "c"],
+        [2, 4, "v", 2, "c"],
+        [0, 4, "v", 2, "d"],
+        [0, 2, "v", 3, "b"],
+        [3, 0, "v", 3, "a"],
+        [1, 0, "v", 2, "d"]
+      ],
+      "passengers": "cdacabababdbcdbacad",
+      "minimumBayCount": 4,
+      "level": 1,
+      "reason": null,
+      "rules": {
+        "any": 1.0,
+        "small": 1.0,
+        "big": 1.0,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [0, 0, 0, 0] },
+        "window": { "minimum": [0, 0, 0, 0], "maximum": [3, 1, 1, 0] }
+      },
+      "solutionCount": 642
+    },
+    {
+      "seed": "shuttle-expected:988:8:149",
+      "size": 7,
+      "openSides": ["top"],
+      "cars": [
+        [1, 6, "v", 3, "a"],
+        [1, 4, "v", 3, "c"],
+        [1, 5, "v", 2, "a"],
+        [2, 0, "v", 3, "d"],
+        [0, 0, "v", 2, "c"],
+        [4, 2, "v", 3, "d"],
+        [2, 3, "v", 3, "b"],
+        [0, 2, "v", 3, "b"]
+      ],
+      "passengers": "bcbdccddacacabdbbdaabd",
+      "minimumBayCount": 3,
+      "level": null,
+      "reason": "pathDependent",
+      "rules": {
+        "any": 0.75,
+        "small": 1.0,
+        "big": 0.5,
+        "unblock": 1.0,
+        "needed": 1.0,
+        "fill": 1.0,
+        "wideNeeded": 1.0,
+        "wideFill": 1.0
+      },
+      "decisions": {
+        "best": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "cont": { "minimum": [0, 0, 0, 0], "maximum": [1, 0, 0, 0] },
+        "window": { "minimum": [1, 0, 0, 0], "maximum": [4, 0, 0, 0] }
+      },
+      "solutionCount": 135
+    }
+  ]
+}
