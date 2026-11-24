@@ -174,6 +174,30 @@ function describeAcceptedInput(
   return cells[cellIndex] === value ? "placed" : "removed";
 }
 
+/**
+ * 数の欄で数を押した後の session と、その知らせの種類。受け付けなかったときは、受け取った session と `rejected` を返す。
+ * プレイ中と遊び方の例で同じに求める。
+ */
+export function inputMagicSquareValue(
+  session: MagicSquareSession,
+  inputMode: MagicSquareInputMode,
+  value: number,
+  inputAt: number,
+): { session: MagicSquareSession; type: MagicSquareOperation["type"] } {
+  const { selectedCellIndex: cellIndex } = session;
+  const operated =
+    inputMode === "memo"
+      ? toggleMagicSquareSessionMemo(session, value, inputAt)
+      : enterMagicSquareSessionValue(session, value, inputAt);
+  if (operated === session || cellIndex === null) {
+    return { session, type: "rejected" };
+  }
+  return {
+    session: operated,
+    type: describeAcceptedInput(inputMode, operated, cellIndex, value),
+  };
+}
+
 function inputValueInPlay(
   current: MagicSquarePlayState,
   value: number,
@@ -185,24 +209,16 @@ function inputValueInPlay(
   }
   const { session, inputMode } = current;
   const { selectedCellIndex: cellIndex } = session;
-  const operated =
-    inputMode === "memo"
-      ? toggleMagicSquareSessionMemo(session, value, inputAt)
-      : enterMagicSquareSessionValue(session, value, inputAt);
-  if (operated === session || cellIndex === null) {
+  const input = inputMagicSquareValue(session, inputMode, value, inputAt);
+  if (input.type === "rejected" || cellIndex === null) {
     return {
       ...current,
       operation: { id: operationId, type: "rejected", cellIndex, value },
     };
   }
   return {
-    ...applyPlaySession(current, operated),
-    operation: {
-      id: operationId,
-      type: describeAcceptedInput(inputMode, operated, cellIndex, value),
-      cellIndex,
-      value,
-    },
+    ...applyPlaySession(current, input.session),
+    operation: { id: operationId, type: input.type, cellIndex, value },
   };
 }
 

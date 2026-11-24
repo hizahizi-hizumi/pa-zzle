@@ -7,8 +7,11 @@ import {
   within,
 } from "@testing-library/react";
 
+import type { ReactNode } from "react";
+
 import { parseMagicSquareBoard } from "@/games/magic-square/puzzle/board";
 import { listMagicSquareLineEvaluations } from "@/games/magic-square/puzzle/rules";
+import type { MagicSquareBoardRegion } from "@/games/magic-square/ui/board/board-layout";
 import { MagicSquareBoard } from "@/games/magic-square/ui/board/MagicSquareBoard";
 
 const givens = parseMagicSquareBoard([
@@ -37,6 +40,8 @@ describe("MagicSquareBoard", () => {
     clearing?: boolean;
     interactionDisabled?: boolean;
     memos?: readonly (readonly number[])[];
+    region?: MagicSquareBoardRegion;
+    renderCellOverlay?: (cellIndex: number) => ReactNode;
   }) {
     render(
       <MagicSquareBoard
@@ -47,6 +52,8 @@ describe("MagicSquareBoard", () => {
         selectedCellIndex={0}
         interactionDisabled={props.interactionDisabled ?? false}
         clearing={props.clearing ?? false}
+        region={props.region}
+        renderCellOverlay={props.renderCellOverlay}
         onSelectCell={onSelectCell}
         onClearAnimationComplete={onClearAnimationComplete}
       />,
@@ -113,6 +120,66 @@ describe("MagicSquareBoard", () => {
       ];
 
       expect(cells.map((cell) => cell.textContent)).toEqual(["911", "14"]);
+    });
+  });
+
+  /** 盤面に描いたマスの読み上げ名と、列の端の合計の読み上げ。 */
+  function readDrawn(): { cells: string[]; sums: string[] } {
+    const boardGroup = screen.getByRole("group", { name: "魔方陣の盤面" });
+    return {
+      cells: within(boardGroup)
+        .getAllByRole("button")
+        .map((cell) => cell.getAttribute("aria-label") ?? ""),
+      sums: [...boardGroup.querySelectorAll(".sr-only")].map(
+        (label) => label.textContent ?? "",
+      ),
+    };
+  }
+
+  describe("左端を含む1行だけの範囲を渡した場合", () => {
+    beforeEach(() => {
+      renderBoard({
+        region: { row: 0, column: 0, rowCount: 1, columnCount: 4 },
+      });
+    });
+
+    test("範囲のマスと、その行の合計と、そろえる合計だけを描くこと", () => {
+      expect(readDrawn()).toEqual({
+        cells: ["1行1列 14", "1行2列 4", "1行3列 5", "1行4列 13"],
+        sums: ["そろえる合計 34", "1行目の合計 36 埋まって合計と違う"],
+      });
+    });
+  });
+
+  describe("左端を含まない1マスだけの範囲を渡した場合", () => {
+    beforeEach(() => {
+      renderBoard({
+        region: { row: 2, column: 3, rowCount: 1, columnCount: 1 },
+      });
+    });
+
+    test("そろえる合計を描かず、そのマスとその行の合計だけを描くこと", () => {
+      expect(readDrawn()).toEqual({
+        cells: ["3行4列 1"],
+        sums: ["3行目の合計 13"],
+      });
+    });
+  });
+
+  describe("マスに重ねる物を渡した場合", () => {
+    beforeEach(() => {
+      renderBoard({
+        renderCellOverlay: (cellIndex) =>
+          cellIndex === 5 ? <span data-testid="overlay" /> : null,
+      });
+    });
+
+    test("そのマスのボタンの中に重ねること", () => {
+      const overlay = screen.getByTestId("overlay");
+
+      expect(overlay.closest("button")?.getAttribute("aria-label")).toBe(
+        "2行2列 2",
+      );
     });
   });
 

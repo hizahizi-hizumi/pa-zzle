@@ -1,4 +1,5 @@
 import { Pencil } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { useTouchTap } from "@/components/touch-tap";
 import { magicSquareTone } from "@/games/magic-square/ui/magic-square-tone";
@@ -8,6 +9,8 @@ type MagicSquareMemoToggleProps = {
   active: boolean;
   disabled: boolean;
   onToggle: () => void;
+  /** 遊び方だけが渡す。ボタンの上に重ねる物（押す所の手がかり）。 */
+  overlay?: ReactNode;
 };
 
 /**
@@ -17,6 +20,7 @@ export function MagicSquareMemoToggle({
   active,
   disabled,
   onToggle,
+  overlay = null,
 }: MagicSquareMemoToggleProps) {
   const { getTapHandlers } = useTouchTap();
 
@@ -27,7 +31,7 @@ export function MagicSquareMemoToggle({
       aria-pressed={active}
       disabled={disabled}
       className={cn(
-        "inline-flex size-12 items-center justify-center rounded-full border-(length:--border-width-normal) outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50",
+        "relative inline-flex size-12 items-center justify-center rounded-full border-(length:--border-width-normal) outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50",
         !active && "bg-background hover:bg-accent hover:text-accent-foreground",
       )}
       style={
@@ -42,6 +46,7 @@ export function MagicSquareMemoToggle({
       {...getTapHandlers(onToggle)}
     >
       <Pencil aria-hidden="true" className="size-5" />
+      {overlay}
     </button>
   );
 }

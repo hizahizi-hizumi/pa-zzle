@@ -1,4 +1,10 @@
-import { type CSSProperties, useEffect, useLayoutEffect, useRef } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 
 import { TutorialCue } from "@/components/TutorialCue";
 import {
@@ -27,11 +33,16 @@ import type { MagicSquareMemo } from "@/games/magic-square/puzzle/state";
 import {
   getMagicSquareFrameUnits,
   getMagicSquareLineSumArea,
+  getMagicSquareRegionBands,
   getMagicSquareSlabArea,
+  getMagicSquareWholeRegion,
+  isMagicSquareCellInRegion,
+  isMagicSquareLineSumInRegion,
   MAGIC_SQUARE_CELL_INSET_RATIO,
   MAGIC_SQUARE_MAGIC_SUM_AREA,
   MAGIC_SQUARE_SLAB_RIM_RATIO,
   MAGIC_SQUARE_SUM_BAND_RATIO,
+  type MagicSquareBoardRegion,
 } from "@/games/magic-square/ui/board/board-layout";
 import {
   animateMagicSquareClear,
@@ -87,6 +98,13 @@ type MagicSquareBoardProps = {
    * 渡さないか空なら覆わない。覆っている間は、選んだマスを通る列の薄い色を、抜いた列にだけ付ける。
    */
   spotlightLines?: readonly MagicSquareLine[];
+  /**
+   * 遊び方だけが渡す。描くマスの範囲。範囲を描くときは、範囲の行の合計を右の帯に、そろえる合計を左の帯に、
+   * 範囲がその端の列を含むときだけ描く（`getMagicSquareRegionBands`）。渡さなければ盤面の全体を描く。
+   */
+  region?: MagicSquareBoardRegion;
+  /** 遊び方だけが渡す。マスの上に重ねる物（押す所の手がかり）。マスのボタンの中に置く。 */
+  renderCellOverlay?: (cellIndex: number) => ReactNode;
 };
 
 /** マスの一辺に対する、角丸と字の大きさ。 */
@@ -267,6 +285,8 @@ export function MagicSquareBoard({
   cue = null,
   acknowledgement = null,
   spotlightLines = [],
+  region: regionProp,
+  renderCellOverlay,
 }: MagicSquareBoardProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const cellElementRefs = useRef(new Map<number, HTMLButtonElement>());
@@ -274,7 +294,9 @@ export function MagicSquareBoard({
   const shownRejectionIdRef = useRef(rejection?.id ?? null);
   const { getTapHandlers } = useTouchTap();
   const { size } = board;
-  const units = getMagicSquareFrameUnits(size);
+  const region = regionProp ?? getMagicSquareWholeRegion(size);
+  const bands = getMagicSquareRegionBands(size, region);
+  const units = getMagicSquareFrameUnits(size, region);
   const spotlighting = spotlightLines.length > 0;
   const isSpotlit = (line: MagicSquareLine) =>
     spotlightLines.some((spotlightLine) =>
@@ -289,7 +311,7 @@ export function MagicSquareBoard({
   const selectedLineCells = new Set(
     selectedLines.flatMap((line) => getMagicSquareLineCellIndices(size, line)),
   );
-  const slabArea = getMagicSquareSlabArea(size);
+  const slabArea = getMagicSquareSlabArea(size, region);
   const magicSum = getMagicSquareMagicSum(size);
   const spotlitCells = new Set(
     spotlightLines.flatMap((line) => getMagicSquareLineCellIndices(size, line)),
@@ -334,8 +356,19 @@ export function MagicSquareBoard({
     width: scaleByCell(units.columns),
     height: scaleByCell(units.rows),
     paddingTop: scaleByCell(MAGIC_SQUARE_SLAB_RIM_RATIO),
-    gridTemplateColumns: `${MAGIC_SQUARE_SUM_BAND_RATIO}fr repeat(${size}, 1fr) ${MAGIC_SQUARE_SUM_BAND_RATIO}fr`,
-    gridTemplateRows: `repeat(${size}, 1fr) ${MAGIC_SQUARE_SUM_BAND_RATIO}fr`,
+    gridTemplateColumns: [
+      bands.left ? `${MAGIC_SQUARE_SUM_BAND_RATIO}fr` : null,
+      `repeat(${region.columnCount}, 1fr)`,
+      bands.right ? `${MAGIC_SQUARE_SUM_BAND_RATIO}fr` : null,
+    ]
+      .filter((track) => track !== null)
+      .join(" "),
+    gridTemplateRows: [
+      `repeat(${region.rowCount}, 1fr)`,
+      bands.bottom ? `${MAGIC_SQUARE_SUM_BAND_RATIO}fr` : null,
+    ]
+      .filter((track) => track !== null)
+      .join(" "),
   } as CSSProperties;
 
   return (
@@ -348,44 +381,46 @@ export function MagicSquareBoard({
         style={frameStyle}
         {...(spotlighting && { [TUTORIAL_SPOTLIGHT_AREA_ATTRIBUTE]: "" })}
       >
-        <div
-          className="relative flex flex-col items-center justify-center leading-none"
-          style={{
-            gridRow: MAGIC_SQUARE_MAGIC_SUM_AREA.row,
-            gridColumn: MAGIC_SQUARE_MAGIC_SUM_AREA.column,
-          }}
-        >
-          <TutorialSpotlight active={spotlighting} className="inset-0" />
-          <span className="sr-only">{`そろえる合計 ${magicSum}`}</span>
-          <span
-            aria-hidden="true"
+        {bands.left && (
+          <div
+            className="relative flex flex-col items-center justify-center leading-none"
             style={{
-              color: magicSquareTone.magicSumLabel,
-              fontSize: `max(${MAGIC_SUM_LABEL_MIN_FONT_PX}px, ${scaleByCell(MAGIC_SUM_LABEL_FONT_RATIO)})`,
+              gridRow: MAGIC_SQUARE_MAGIC_SUM_AREA.row,
+              gridColumn: MAGIC_SQUARE_MAGIC_SUM_AREA.column,
             }}
           >
-            合計
-          </span>
-          <span
-            aria-hidden="true"
-            data-magic-sum=""
-            className="font-bold tabular-nums"
-            style={{
-              color: magicSquareTone.givenInk,
-              fontSize: scaleByCell(SUM_FONT_RATIO),
-              marginTop: scaleByCell(0.06),
-            }}
-          >
-            {magicSum}
-          </span>
-        </div>
+            <TutorialSpotlight active={spotlighting} className="inset-0" />
+            <span className="sr-only">{`そろえる合計 ${magicSum}`}</span>
+            <span
+              aria-hidden="true"
+              style={{
+                color: magicSquareTone.magicSumLabel,
+                fontSize: `max(${MAGIC_SUM_LABEL_MIN_FONT_PX}px, ${scaleByCell(MAGIC_SUM_LABEL_FONT_RATIO)})`,
+              }}
+            >
+              合計
+            </span>
+            <span
+              aria-hidden="true"
+              data-magic-sum=""
+              className="font-bold tabular-nums"
+              style={{
+                color: magicSquareTone.givenInk,
+                fontSize: scaleByCell(SUM_FONT_RATIO),
+                marginTop: scaleByCell(0.06),
+              }}
+            >
+              {magicSum}
+            </span>
+          </div>
+        )}
         <div
           className="grid"
           style={{
             gridRow: slabArea.row,
             gridColumn: slabArea.column,
-            gridTemplateColumns: `repeat(${size}, 1fr)`,
-            gridTemplateRows: `repeat(${size}, 1fr)`,
+            gridTemplateColumns: `repeat(${region.columnCount}, 1fr)`,
+            gridTemplateRows: `repeat(${region.rowCount}, 1fr)`,
             margin: scaleByCell(-MAGIC_SQUARE_SLAB_RIM_RATIO),
             padding: scaleByCell(MAGIC_SQUARE_SLAB_RIM_RATIO),
             borderRadius: scaleByCell(SLAB_RADIUS_RATIO),
@@ -395,6 +430,9 @@ export function MagicSquareBoard({
           }}
         >
           {board.cells.map((cell, cellIndex) => {
+            if (!isMagicSquareCellInRegion(size, cellIndex, region)) {
+              return null;
+            }
             const { row, column } = getMagicSquareCellPosition(size, cellIndex);
             const given = isMagicSquareGivenCell(givens, cellIndex);
             const selected = cellIndex === selectedCellIndex;
@@ -475,6 +513,7 @@ export function MagicSquareBoard({
                     </span>
                   )}
                   {memo.length > 0 && <CellMemo memo={memo} />}
+                  {renderCellOverlay?.(cellIndex)}
                   {acknowledgement?.cellIndex === cellIndex && (
                     <TutorialCue
                       kind="acknowledgement"
@@ -511,7 +550,10 @@ export function MagicSquareBoard({
           })}
         </div>
         {lineEvaluations.map(({ line, sum, status }) => {
-          const area = getMagicSquareLineSumArea(size, line);
+          if (!isMagicSquareLineSumInRegion(size, line, region)) {
+            return null;
+          }
+          const area = getMagicSquareLineSumArea(size, line, region);
           const violated = isMagicSquareLineViolation(status);
           const onSelectedLine = selectedLines.some((selectedLine) =>
             isSameMagicSquareLine(selectedLine, line),

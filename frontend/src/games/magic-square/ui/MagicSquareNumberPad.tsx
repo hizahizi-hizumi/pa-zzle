@@ -38,6 +38,8 @@ type MagicSquareNumberPadProps = {
   rejection?: MagicSquareValueRejection | null;
   /** チュートリアルだけが渡す。渡さなければ本番と同じに描く。 */
   cue?: MagicSquareValueCue | null;
+  /** 遊び方だけが渡す。数の札の上に重ねる物（押す所の手がかり・判定の印）。札のボタンの中に置く。 */
+  renderValueOverlay?: (value: number) => ReactNode;
 };
 
 const valueShakeKeyframes: Keyframe[] = [
@@ -61,7 +63,7 @@ function getTrailingSlotCount(valueCount: number, columnCount: number): number {
 const SHORT_SCREEN_COMPACT_ROW_COUNT = 5;
 const shortScreenCompactValueClassName = "[@media(max-height:600px)]:h-9";
 
-/** まだ置いていない数は札、選んだマスに入っている数は縁取った札、使った数は札を取った跡のくぼみに薄く刻んだ数で描く。 */
+/** まだ置いていない数は札、選んだマスに置いてある数は縁取った札、使った数は札を取った跡のくぼみに薄く刻んだ数で描く。 */
 function getValueFaceStyle(state: MagicSquareValueState): CSSProperties {
   switch (state) {
     case "available":
@@ -87,7 +89,7 @@ function getValueFaceStyle(state: MagicSquareValueState): CSSProperties {
 
 /**
  * 数の欄。1 から n² までを小さい順に、使った数（最初から置いてある数を含む）も同じ位置に札を取った跡として並べる。
- * 選んだマスに入っている数は縁取り、押すとそのマスから外す・メモから消す。
+ * 選んだマスに置いてある数は縁取り、押すとそのマスから外す・メモから消す。
  */
 export function MagicSquareNumberPad({
   size,
@@ -98,6 +100,7 @@ export function MagicSquareNumberPad({
   trailingActions = [],
   rejection = null,
   cue = null,
+  renderValueOverlay,
 }: MagicSquareNumberPadProps) {
   const { getTapHandlers } = useTouchTap();
   const valueElementRefs = useRef(new Map<number, HTMLButtonElement>());
@@ -178,6 +181,7 @@ export function MagicSquareNumberPad({
                 recallId={cue.recallId}
               />
             )}
+            {renderValueOverlay?.(value)}
           </button>
         );
       })}
