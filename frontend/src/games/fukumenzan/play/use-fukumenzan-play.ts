@@ -147,14 +147,16 @@ export function useFukumenzanPlay(
   avoidedProblemId?: ProblemId,
   playProblemId?: ProblemId,
 ): FukumenzanPlay {
-  const [play, setPlay] = useState(() =>
-    restorePlayState("fukumenzan", playProblemId, () =>
+  // 待ったの知らせはその操作のときだけ盤面が受けるので、戻したプレイには持ち込まない。
+  const [play, setPlay] = useState<FukumenzanPlayState>(() => ({
+    ...restorePlayState("fukumenzan", playProblemId, () =>
       createPlayState(
         initialProblem ?? selectProblem(difficulty, avoidedProblemId),
         Date.now(),
       ),
     ),
-  );
+    crossUndoNotice: null,
+  }));
   useEffect(
     () => savePlayState("fukumenzan", playProblemId, play),
     [playProblemId, play],

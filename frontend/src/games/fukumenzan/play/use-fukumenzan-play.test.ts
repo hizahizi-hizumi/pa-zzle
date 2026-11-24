@@ -290,3 +290,33 @@ describe("seed で問題を選んで始めた場合", () => {
     });
   });
 });
+
+describe("× を戻した知らせを持たずに保存した進行中のプレイを開き直した場合", () => {
+  let hook: HookResult;
+
+  beforeEach(() => {
+    const saved = renderHook(() =>
+      useFukumenzanPlay("1", pooled, undefined, problemId),
+    );
+    act(() => {
+      saved.result.current.placeDigit(0, 9);
+    });
+    saved.unmount();
+    const key = "pa-zzle.active-play.v1.fukumenzan";
+    const stored = JSON.parse(window.sessionStorage.getItem(key)!);
+    delete stored.state.crossUndoNotice;
+    window.sessionStorage.setItem(key, JSON.stringify(stored));
+    hook = renderHook(() =>
+      useFukumenzanPlay("1", pooled, undefined, problemId),
+    ).result;
+  });
+
+  test("入れた札を戻し、知らせは持たないこと", () => {
+    const { puzzleState, crossUndoNotice } = hook.current;
+
+    expect({ placed: puzzleState.placedDigits[0], crossUndoNotice }).toEqual({
+      placed: 9,
+      crossUndoNotice: null,
+    });
+  });
+});
