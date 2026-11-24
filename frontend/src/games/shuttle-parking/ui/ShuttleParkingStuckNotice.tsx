@@ -6,9 +6,6 @@ import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 /** 詰んだときの知らせの言葉。遊び方の見出しも、この言葉にそろえる。 */
 export const STUCK_NOTICE_LABEL = "出せる車がありません";
 
-/** 原因は何台か前の出し方のことがあるので、1台だけ戻せば済むとは言わない。 */
-export const STUCK_NOTICE_HINT = "何台か戻して出し直せます";
-
 /** 盤面を戻すボタンは、メニューの「盤面を戻す」と同じアイコンにする。 */
 const RestartIcon = playMenuOperationItems.restart.icon;
 
@@ -18,7 +15,10 @@ type ShuttleParkingStuckNoticeProps = {
   onRestart: () => void;
 };
 
-/** 詰みの知らせ。駐車場の上に重ねて出し、遊び方では同じ姿を押しても何も起きない図で見せる。 */
+/**
+ * 詰みの知らせ。原因を探すときに駐車場を見られるよう、言葉と2つのボタンを1行に詰めて駐車場の下に出す。
+ * 待ったは待機枠の行の待ったと同じアイコンだけのボタンにする。遊び方では同じ姿を押しても何も起きない図で見せる。
+ */
 export function ShuttleParkingStuckNotice({
   canUndo,
   onUndo,
@@ -27,25 +27,26 @@ export function ShuttleParkingStuckNotice({
   return (
     <div
       role="status"
-      className="mx-auto w-fit max-w-full rounded-lg bg-background/95 px-4 py-3 text-center shadow-md"
+      className="mx-auto flex w-fit max-w-full flex-wrap items-center justify-center gap-x-1.5 gap-y-1 rounded-lg bg-background/95 px-2 py-1.5 shadow-md"
     >
       <p className="text-play-context">{STUCK_NOTICE_LABEL}</p>
-      <p className="text-play-context text-muted-foreground">
-        {STUCK_NOTICE_HINT}
-      </p>
-      <div className="mt-2 flex justify-center gap-1">
+      <div className="flex gap-1">
         <Button
           type="button"
           variant="secondary"
+          size="icon"
+          aria-label={PLAY_OPERATION_LABELS.undo}
           onClick={onUndo}
           disabled={!canUndo}
         >
           <Undo2 />
-          {PLAY_OPERATION_LABELS.undo}
         </Button>
         <Button type="button" variant="secondary" onClick={onRestart}>
           <RestartIcon />
-          {PLAY_OPERATION_LABELS.restart}
+          {/* 1行に収まらない狭い画面では、メニューと同じアイコンだけを見せる。遊び方の見本も同じ姿になる。 */}
+          <span className="max-[24rem]:sr-only">
+            {PLAY_OPERATION_LABELS.restart}
+          </span>
         </Button>
       </div>
     </div>

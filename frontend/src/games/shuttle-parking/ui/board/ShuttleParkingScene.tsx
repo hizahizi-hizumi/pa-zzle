@@ -18,8 +18,11 @@ type ShuttleParkingSceneProps = {
   onExitCar: (carId: ShuttleParkingCarId) => void;
   /** 待機枠と同じ行の左に置く操作。 */
   leadingAction?: ReactNode;
-  /** 出庫の動きを見せ終えてから、駐車場の上に重ねる物（詰みの知らせなど）。 */
-  renderLotOverlay?: () => ReactNode;
+  /**
+   * 出庫の動きを見せ終えてから、駐車場のすぐ下に出す知らせ（詰みの知らせ）。駐車場を隠さないよう下の空きに置き、
+   * 空きに収まらない画面（横長・狭い縦長）では駐車場の下端に重ねる。
+   */
+  renderLotNotice?: () => ReactNode;
   /** 車の上に重ねる物（チュートリアルの印・遊び方の押す所の手がかり）。本番では渡さない。 */
   renderCarOverlay?: (carId: ShuttleParkingCarId) => ReactNode;
   clearing?: boolean;
@@ -41,7 +44,7 @@ export function ShuttleParkingScene({
   interactionDisabled,
   onExitCar,
   leadingAction,
-  renderLotOverlay,
+  renderLotNotice,
   renderCarOverlay,
   clearing = false,
   onClearAnimationComplete = ignoreClearAnimationComplete,
@@ -78,13 +81,9 @@ export function ShuttleParkingScene({
         renderCarOverlay={renderCarOverlay}
         onExitCar={onExitCar}
       />
-      {frame === null && renderLotOverlay ? (
-        <div className="absolute top-1/2 left-1/2 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2">
-          {renderLotOverlay()}
-        </div>
-      ) : null}
     </div>
   );
+  const notice = frame === null && renderLotNotice ? renderLotNotice() : null;
 
   return (
     <div
@@ -111,13 +110,28 @@ export function ShuttleParkingScene({
       />
       {layout === "fill" ? (
         <div
-          className="flex min-h-0 flex-1 items-start justify-center"
+          className="relative flex min-h-0 flex-1 items-start justify-center"
           style={{ containerType: "size" }}
         >
           {lot}
+          {notice ? (
+            // 駐車場の下端から画面の下の余白までを置き場にする。収まれば駐車場のすぐ下（mb-auto）に、
+            // 収まらなければ置き場の下端にそろえて上へはみ出し、駐車場の下端に重なる（justify-end）。
+            <div
+              className="pointer-events-none absolute inset-x-0 -bottom-4 flex flex-col items-center justify-end"
+              style={{ top: "calc(min(100cqw, 100cqh) + 0.5rem)" }}
+            >
+              <div className="pointer-events-auto mb-auto max-w-full">
+                {notice}
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : (
-        lot
+        <>
+          {lot}
+          {notice}
+        </>
       )}
     </div>
   );

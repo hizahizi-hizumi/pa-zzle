@@ -272,7 +272,7 @@ export function ShuttleParkingTutorial({
                   onUndo={handleUndo}
                 />
               }
-              renderLotOverlay={
+              renderLotNotice={
                 !showsGoal && solving && lastMoveStuck
                   ? () => (
                       <ShuttleParkingStuckNotice

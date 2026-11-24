@@ -183,7 +183,7 @@ export function ShuttleParkingHowToPlayDialog({
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="どの車も/出せなくなると/駐車場の上に/出ます。/原因は/何台か前の/出し方の/こともあります。"
+                text="どの車も/出せなくなると/駐車場の下に/出ます。/原因は/何台か前の/出し方の/こともあります。/何台か戻して/出し直せます。"
                 arrangement="stacked"
                 examples={
                   <span aria-hidden="true" inert className="flex">

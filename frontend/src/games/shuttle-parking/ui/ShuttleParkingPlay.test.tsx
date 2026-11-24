@@ -138,11 +138,20 @@ describe("詰んだ場合", () => {
     render(<ShuttleParkingPlay {...props} />);
   });
 
-  test("出せる車が無いことと、何台か戻してやり直せることを駐車場の上に知らせること", () => {
+  test("出せる車が無いことを知らせること", () => {
     const notice = screen.getByRole("status");
 
-    expect(notice.textContent).toContain("出せる車がありません");
-    expect(notice.textContent).toContain("何台か戻して");
+    expect(notice.textContent).toBe("出せる車がありません盤面を戻す");
+  });
+
+  test("知らせの待ったで1台戻すこと", () => {
+    fireEvent.click(
+      within(screen.getByRole("status")).getByRole("button", {
+        name: "待った",
+      }),
+    );
+
+    expect(props.onUndo).toHaveBeenCalledOnce();
   });
 
   test("知らせの盤面を戻すボタンで盤面を戻すこと", () => {

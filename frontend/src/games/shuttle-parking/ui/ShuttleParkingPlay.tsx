@@ -115,7 +115,7 @@ export function ShuttleParkingPlay({
           interactionDisabled={progress !== "playing"}
           onExitCar={onExitCar}
           leadingAction={<UndoButton disabled={!canUndo} onUndo={onUndo} />}
-          renderLotOverlay={
+          renderLotNotice={
             isStuck && progress === "playing"
               ? () => (
                   <ShuttleParkingStuckNotice
