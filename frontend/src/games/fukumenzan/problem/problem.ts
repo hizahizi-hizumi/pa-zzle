@@ -128,3 +128,44 @@ export function isFukumenzanRecordedProblemIdentity(
     isProblemIdentity: isCurrentFukumenzanProblemIdentity,
   });
 }
+
+function listPermutations<T>(values: readonly T[]): T[][] {
+  if (values.length <= 1) {
+    return [[...values]];
+  }
+  return values.flatMap((value, index) =>
+    listPermutations(values.toSpliced(index, 1)).map((rest) => [
+      value,
+      ...rest,
+    ]),
+  );
+}
+
+/**
+ * 同じ問題のキー。足す数の並べ替えと文字の付け替えで重なる式は、解き方も答えの数字の並びも同じ問題になる。
+ * 足す数の並べ方ごとに、文字を出た順に A・B・C… へ付け替えた式の文字列を作り、いちばん小さいものをキーにする。
+ */
+export function getFukumenzanSameProblemKey({
+  addends,
+  result,
+}: FukumenzanProblem): string {
+  const keys = listPermutations(addends).map((ordered) => {
+    const relabeled = new Map<string, string>();
+    function relabel(word: string): string {
+      return [...word]
+        .map((letter) => {
+          if (!relabeled.has(letter)) {
+            relabeled.set(letter, String.fromCharCode(65 + relabeled.size));
+          }
+          return relabeled.get(letter)!;
+        })
+        .join("");
+    }
+    const relabeledAddends = ordered.map(relabel);
+    return formatFukumenzanEquation({
+      addends: relabeledAddends,
+      result: relabel(result),
+    });
+  });
+  return keys.toSorted()[0]!;
+}

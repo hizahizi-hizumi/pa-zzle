@@ -13,7 +13,7 @@ import { playMenuOperationItems } from "@/components/play-menu-operations";
 import { UndoButton } from "@/components/UndoButton";
 import pictogramSvg from "@/games/fukumenzan/assets/pictogram.svg?raw";
 import { FUKUMENZAN_DISPLAY_NAME } from "@/games/fukumenzan/display-name";
-import type { FukumenzanProblem } from "@/games/fukumenzan/problem/problem";
+import { fukumenzanGuideExampleProblems } from "@/games/fukumenzan/problem/guide-examples";
 import {
   FUKUMENZAN_SCORE_MAXIMUMS,
   FUKUMENZAN_SPEED_ZERO_SCORE_RATIO,
@@ -35,12 +35,8 @@ const game = { name: FUKUMENZAN_DISPLAY_NAME, pictogramSvg };
 
 const { undo, restart } = PLAY_OPERATION_LABELS;
 
-/** レベル1の問題集の1問。985 + 515 = 1500 で解ける。 */
-const exampleProblem: FukumenzanProblem = {
-  addends: ["BYK", "KTK"],
-  result: "TKHH",
-};
-const solution = { B: 9, Y: 8, K: 5, T: 1, H: 0 } as const;
+const exampleProblem = fukumenzanGuideExampleProblems.howToPlay;
+const solution = { M: 1, R: 9, D: 8, X: 2, U: 0 } as const;
 const figureTileRem = 2.25;
 
 function ignoreFigurePress() {}
@@ -93,7 +89,7 @@ export function FukumenzanHowToPlayDialog({
           problem={exampleProblem}
           placed={solution}
           tileRem={3}
-          label="985 + 515 = 1500 と、全部の文字に札が入った式"
+          label="198 + 882 = 1080 と、全部の文字に札が入った式"
         />
       }
       onClose={onClose}
@@ -107,9 +103,9 @@ export function FukumenzanHowToPlayDialog({
                 figure={
                   <EquationFigure
                     problem={exampleProblem}
-                    placed={{ K: 5, B: 9 }}
+                    placed={{ D: 8, M: 1 }}
                     tileRem={figureTileRem}
-                    label="K の全部の場所に 5、B に 9 が入った式"
+                    label="D の全部の場所に 8、M の全部の場所に 1 が入った式"
                   />
                 }
               />
@@ -122,9 +118,9 @@ export function FukumenzanHowToPlayDialog({
                 figure={
                   <EquationFigure
                     problem={exampleProblem}
-                    placed={{ T: 0 }}
+                    placed={{ D: 0 }}
                     tileRem={figureTileRem}
-                    label="答えの先頭の T に 0 が入り、赤くなった式"
+                    label="2つ目の数の先頭の D に 0 が入り、赤くなった式"
                   />
                 }
                 caption="先頭の0は札が赤くなります。"
@@ -138,7 +134,7 @@ export function FukumenzanHowToPlayDialog({
                 figure={
                   <EquationFigure
                     problem={exampleProblem}
-                    placed={{ Y: 8, K: 5, T: 2, H: 0 }}
+                    placed={{ D: 8, X: 2, U: 0, R: 3 }}
                     tileRem={figureTileRem}
                     label="十の位の足し算が合わず、答えの十の位の下に赤い線が出た式"
                   />

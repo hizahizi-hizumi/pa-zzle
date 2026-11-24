@@ -3,6 +3,7 @@ import {
   FUKUMENZAN_GENERATOR_VERSION,
   type FukumenzanProblem,
   formatFukumenzanEquation,
+  getFukumenzanSameProblemKey,
   isCurrentFukumenzanProblemIdentity,
   isFukumenzanRecordedProblemIdentity,
   parseFukumenzanEquation,
@@ -89,5 +90,31 @@ describe("isFukumenzanRecordedProblemIdentity", () => {
     const isRecorded = isFukumenzanRecordedProblemIdentity(olderIdentity);
 
     expect(isRecorded).toBe(true);
+  });
+});
+
+describe("getFukumenzanSameProblemKey", () => {
+  const relabeledCases = [
+    ["文字を付け替えた式", { addends: ["XXK", "PRX", "XTT"], result: "XRKT" }],
+    [
+      "足す数を並べ替えた式",
+      { addends: ["NTT", "NNV", "UFN"], result: "NFVT" },
+    ],
+  ] as const;
+  const differentProblem: FukumenzanProblem = {
+    addends: ["NNV", "UFN", "NTV"],
+    result: "NFVT",
+  };
+
+  test.each(relabeledCases)("%s を同じ問題にすること", (_, relabeled) => {
+    const keys = [problem, relabeled].map(getFukumenzanSameProblemKey);
+
+    expect(keys[0]).toBe(keys[1]);
+  });
+
+  test("文字の並びが違う式を別の問題にすること", () => {
+    const keys = [problem, differentProblem].map(getFukumenzanSameProblemKey);
+
+    expect(keys[0]).not.toBe(keys[1]);
   });
 });

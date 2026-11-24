@@ -1,5 +1,9 @@
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
-import { createFukumenzanProblemIdentity } from "@/games/fukumenzan/problem/problem";
+import { fukumenzanGuideExampleProblems } from "@/games/fukumenzan/problem/guide-examples";
+import {
+  createFukumenzanProblemIdentity,
+  getFukumenzanSameProblemKey,
+} from "@/games/fukumenzan/problem/problem";
 import {
   decodeFukumenzanPoolProblem,
   findFukumenzanPoolEntry,
@@ -101,6 +105,30 @@ describe("listFukumenzanPoolEntries", () => {
     (_, entry) => {
       const problem = decodeFukumenzanPoolProblem(entry);
       const solutionCount = countSolutions(problem, 2);
+
+      expect(solutionCount).toBe(1);
+    },
+  );
+});
+
+describe("遊び方とチュートリアルの例の式", () => {
+  const exampleKeys = Object.values(fukumenzanGuideExampleProblems).map(
+    getFukumenzanSameProblemKey,
+  );
+  const poolKeys = entries.map(([, entry]) =>
+    getFukumenzanSameProblemKey(decodeFukumenzanPoolProblem(entry)),
+  );
+
+  test("問題集に同じ問題が無いこと", () => {
+    const included = exampleKeys.filter((key) => poolKeys.includes(key));
+
+    expect(included).toEqual([]);
+  });
+
+  test.each(Object.entries(fukumenzanGuideExampleProblems))(
+    "%s の例の式が一意解であること",
+    (_, example) => {
+      const solutionCount = countSolutions(example, 2);
 
       expect(solutionCount).toBe(1);
     },
