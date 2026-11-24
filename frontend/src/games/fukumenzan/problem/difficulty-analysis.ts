@@ -88,7 +88,8 @@ export type FukumenzanAnalysisScope = {
 /**
  * 1問の分析。
  * - `invalid`: 解が1つでない。
- * - `unsupported`: 場合分けの重さを測れない。枝を閉包で読んでも許した場合分けで進めないか、調べる盤面が上限を超えた。
+ * - `unsupported`: 場合分けの重さを測れない。`cause` は、枝を閉包で読んでも許した場合分けで進めない（`stalled`）か、
+ *   調べる盤面が上限を超えた（`frontier-cap`）か。
  * - `analyzed`: `splitCount` は、場合分けを測る規模の H2 で、枝を閉包で読む人と18手で追う人のどちらも上限の回数までで解けた
  *   ときの、18手で追う人の回数。どちらかが上限を超えたか進めなかったら `exceeded`。
  */
@@ -96,6 +97,7 @@ export type FukumenzanDifficultyAnalysis =
   | { status: "invalid" }
   | {
       status: "unsupported";
+      cause: "stalled" | "frontier-cap";
       scale: FukumenzanScaleFeatures;
       readers: FukumenzanReaderResults;
     }
@@ -338,12 +340,11 @@ export function analyzeFukumenzanDifficulty(
   const scale = getFukumenzanScale(problem);
   const readers = measureReaders(model, scale.scale, scope);
   const { splitsByClosure, splitsBySteps } = readers;
-  if (
-    splitsByClosure === "stalled" ||
-    splitsByClosure === "frontier-cap" ||
-    splitsBySteps === "frontier-cap"
-  ) {
-    return { status: "unsupported", scale, readers };
+  if (splitsByClosure === "stalled") {
+    return { status: "unsupported", cause: "stalled", scale, readers };
+  }
+  if (splitsByClosure === "frontier-cap" || splitsBySteps === "frontier-cap") {
+    return { status: "unsupported", cause: "frontier-cap", scale, readers };
   }
   return {
     status: "analyzed",

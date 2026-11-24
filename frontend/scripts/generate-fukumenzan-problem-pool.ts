@@ -8,11 +8,16 @@ import {
 import { gzipSync } from "node:zlib";
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
 import {
+  assessFukumenzanDifficulty,
   classifyFukumenzanProblem,
   type FukumenzanDifficulty,
   type FukumenzanDifficultyAssessment,
+  fukumenzanAnalysisScope,
 } from "@/games/fukumenzan/difficulty";
-import { countFukumenzanOpeningLetters } from "@/games/fukumenzan/problem/difficulty-analysis";
+import {
+  analyzeFukumenzanDifficulty,
+  countFukumenzanOpeningLetters,
+} from "@/games/fukumenzan/problem/difficulty-analysis";
 import { countFukumenzanSolutions } from "@/games/fukumenzan/problem/generation/exact-solver";
 import { tryFukumenzanNaively } from "@/games/fukumenzan/problem/generation/naive-trial";
 import { listFukumenzanNearProblemKeys } from "@/games/fukumenzan/problem/generation/near-problem-keys";
@@ -231,7 +236,10 @@ type CandidateSpec = {
 type CandidateRecord = {
   seed: string;
   equation: string | null;
-  /** レベル（`1`〜`5`）、提供範囲外の理由、`unsupported`・`invalid`、作れなければ `no-problem`。 */
+  /**
+   * レベル（`1`〜`5`）、提供範囲外の理由、`unsupported:stalled`・`unsupported:frontier-cap`・`invalid`、作れなければ
+   * `no-problem`。
+   */
   outcome: string;
   milliseconds: number;
 };
@@ -265,7 +273,14 @@ function evaluateCandidate({
       milliseconds: performance.now() - started,
     };
   }
-  const outcome = describeOutcome(classifyFukumenzanProblem(generated.problem));
+  const analysis = analyzeFukumenzanDifficulty(
+    generated.problem,
+    fukumenzanAnalysisScope,
+  );
+  const outcome =
+    analysis.status === "unsupported"
+      ? `unsupported:${analysis.cause}`
+      : describeOutcome(assessFukumenzanDifficulty(analysis));
   return {
     seed,
     equation: formatFukumenzanEquation(generated.problem),

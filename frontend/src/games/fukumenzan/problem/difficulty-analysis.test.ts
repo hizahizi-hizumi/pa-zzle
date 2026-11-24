@@ -73,6 +73,22 @@ describe("analyzeFukumenzanDifficulty", () => {
     });
   });
 
+  describe("許した場合分けでは進めない式の場合", () => {
+    const problem = parseFukumenzanEquation("PHVPN+XUCXP+VCBH=JBNPUP")!;
+
+    test("場合分けの重さを測れない理由を、進めないと返すこと", () => {
+      const analysis = analyzeFukumenzanDifficulty(
+        problem,
+        fukumenzanAnalysisScope,
+      );
+
+      expect(analysis).toMatchObject({
+        status: "unsupported",
+        cause: "stalled",
+      });
+    });
+  });
+
   describe("解が2つある式の場合", () => {
     const problem = parseFukumenzanEquation("AB+BA=CC")!;
 
