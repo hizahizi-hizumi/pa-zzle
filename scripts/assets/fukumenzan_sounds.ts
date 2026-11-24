@@ -8,9 +8,9 @@
  * - uncrossed.flac: × を外す、消しゴムの柔らかい擦れ。
  * - returned.flac: 札を列へ戻す、厚紙が紙の上を滑って止まる音。
  * - cleared-step-1〜3.flac: 答えの桁が一の位から跳ねていく段ごとの、鉛筆の小さな印と澄んだ音。段ごとに音を上げる。
- * - cleared-chord.flac: 最後の桁が跳ねたときの和音に、花丸を描く鉛筆の擦れを重ねた音。
+ * - cleared-chord.flac: 最後の桁が跳ねたときの、ド・ミ・ソ・ドの澄んだ和音。
  *
- * 録音は使わず、Chromium の OfflineAudioContext で、種を決めた乱数の雑音と減衰する正弦波から作る。
+ * 録音は使わず、Chromium の OfflineAudioContext で、種を決めた乱数の雑音を帯域で絞った擦れと、ここで計算した減衰する正弦波から作る。
  * 同じ版の Chromium と ffmpeg なら同じ音になる。playwright（Chromium を入れたもの）と ffmpeg が要る。
  * playwright はリポジトリの依存に無いので、NODE_PATH か /opt/node* の全体インストールから読む。
  *
@@ -64,7 +64,7 @@ const finishes = {
   "cleared-step-2": { seconds: 0.11, rms50Db: -35.2 },
   "cleared-step-3": { seconds: 0.11, rms50Db: -35.2 },
   // ナンプレ・タクズ・マインスイーパーのクリアの和音が -29〜-30。
-  "cleared-chord": { seconds: 0.4, rms50Db: -29.5 },
+  "cleared-chord": { seconds: 0.34, rms50Db: -29.5 },
 } as const;
 
 type SoundName = keyof typeof finishes;
@@ -181,6 +181,23 @@ async function renderInBrowser({
     source.start(start);
   }
 
+  // OscillatorNode や、ずらして始める複数のバッファは、描くたびに端数が変わり同じ書き出しにならない。
+  // 正弦波は音ごとに1つのバッファへここで足し合わせ、最初から1本で鳴らす。
+  const toneBuffers = new Map<OfflineAudioContext, AudioBuffer>();
+
+  function toneData(context: OfflineAudioContext): Float32Array {
+    let buffer = toneBuffers.get(context);
+    if (buffer === undefined) {
+      buffer = context.createBuffer(1, context.length, sampleRate);
+      toneBuffers.set(context, buffer);
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(context.destination);
+      source.start(0);
+    }
+    return buffer.getChannelData(0);
+  }
+
   /** 減衰する正弦波。`overtones` は倍音の大きさ（2倍・3倍…）。 */
   function tone(
     context: OfflineAudioContext,
@@ -202,22 +219,30 @@ async function renderInBrowser({
       overtones?: readonly number[];
     },
   ): void {
+    const data = toneData(context);
+    const first = Math.round(start * sampleRate);
+    const length = Math.min(
+      data.length - first,
+      Math.ceil((attack + decay) * sampleRate),
+    );
+    const glide = Math.log(endFrequency / frequency) / (attack + decay);
     for (const [index, level] of [1, ...overtones].entries()) {
-      const oscillator = context.createOscillator();
-      oscillator.type = "sine";
       const multiple = index + 1;
-      oscillator.frequency.setValueAtTime(frequency * multiple, start);
-      oscillator.frequency.exponentialRampToValueAtTime(
-        endFrequency * multiple,
-        start + attack + decay,
-      );
-      connect(
-        oscillator,
-        envelope(context, start, attack, decay / multiple, peak * level),
-        context.destination,
-      );
-      oscillator.start(start);
-      oscillator.stop(start + attack + decay + 0.005);
+      const partialDecay = decay / multiple;
+      let phase = 0;
+      for (let sample = 0; sample < length; sample += 1) {
+        const time = sample / sampleRate;
+        const amplitude =
+          time < attack
+            ? time / attack
+            : time < attack + partialDecay
+              ? 0.001 ** ((time - attack) / partialDecay)
+              : 0;
+        data[first + sample]! += peak * level * amplitude * Math.sin(phase);
+        phase +=
+          (2 * Math.PI * frequency * multiple * Math.exp(glide * time)) /
+          sampleRate;
+      }
     }
   }
 
@@ -324,30 +349,11 @@ async function renderInBrowser({
           start: index * 0.012,
           frequency,
           attack: 0.006,
-          decay: 0.37,
+          decay: 0.3,
           peak: 0.28,
-          overtones: [0.15, 0.04],
+          overtones: [0.12],
         });
       }
-      const source = noise(context, 0.2, 61);
-      const band = filter(context, "bandpass", 3200, 1.4);
-      band.frequency.setValueAtTime(3200, 0);
-      band.frequency.linearRampToValueAtTime(5000, 0.18);
-      const swirl = context.createGain();
-      swirl.gain.setValueAtTime(0, 0);
-      for (let step = 0; step < 3; step += 1) {
-        swirl.gain.linearRampToValueAtTime(0.035, step * 0.06 + 0.02);
-        swirl.gain.linearRampToValueAtTime(0.012, step * 0.06 + 0.05);
-      }
-      swirl.gain.linearRampToValueAtTime(0, 0.19);
-      connect(
-        source,
-        filter(context, "highpass", 1500),
-        band,
-        swirl,
-        context.destination,
-      );
-      source.start(0);
     },
   };
 
