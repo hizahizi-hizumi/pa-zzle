@@ -30,18 +30,8 @@ const readingFeatureKeys = {
   combos_max: "combinationCountMax",
 } as const satisfies Record<string, keyof MagicSquareReadingFeatures>;
 
-/**
- * 製品が持たない調査コードの特徴。first_vdeep・is_vdeep（版 8 の深い所）は分類の方針なので difficulty.test.ts で比べる。
- * first_hard・is_deep（段2で2巡以上を深いとした前の版の特徴）と t1depth（段1だけで解ける問題の所の数）は、版 8 の分類にも
- * 記録にも使わない。
- */
-const featureKeysOutsideAnalysis = new Set([
-  "first_vdeep",
-  "is_vdeep",
-  "first_hard",
-  "is_deep",
-  "t1depth",
-]);
+/** 版 8 の深い所（`first_vdeep`・`is_vdeep`）は分類の方針なので、difficulty.test.ts で比べる。 */
+const featureKeysOutsideAnalysis = new Set(["first_vdeep", "is_vdeep"]);
 
 /** 答えが1つの問題を解析する。調査の候補はどれも答えが1つ。 */
 function analyzeValidProblem(
@@ -65,6 +55,15 @@ function toReferenceFeatures(
     n: boardSize,
     givens: givenCount,
     empties: emptyCellCount,
+    // 段2で2巡以上を深いとした前の版の量と、段1だけで解ける問題の所の数。製品は持たないので、調査コードの定義で求める。
+    first_hard: Number(
+      reading.firstTier >= 3 ||
+        (reading.firstTier === 2 && reading.firstSweeps >= 2),
+    ),
+    is_deep: Number(
+      reading.tier2SweepsMax >= 2 || reading.tier3PlaceCount >= 1,
+    ),
+    t1depth: reading.tierMax === 1 ? reading.placeCount : 0,
     ...Object.fromEntries(
       Object.entries(readingFeatureKeys).map(([researchKey, key]) => [
         researchKey,
