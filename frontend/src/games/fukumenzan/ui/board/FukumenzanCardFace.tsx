@@ -6,6 +6,8 @@ type FukumenzanCardFaceProps = {
   digit: FukumenzanDigit;
   /** 先頭の0の知らせ。 */
   noticed?: boolean;
+  /** 選んでいる文字に × を付けた札。上に描く × が読めるよう、数字を薄くする。 */
+  crossed?: boolean;
   /** 運んでいる間、元の場所に残す薄い姿。 */
   lifted?: boolean;
 };
@@ -14,6 +16,7 @@ type FukumenzanCardFaceProps = {
 export function FukumenzanCardFace({
   digit,
   noticed = false,
+  crossed = false,
   lifted = false,
 }: FukumenzanCardFaceProps) {
   return (
@@ -34,7 +37,7 @@ export function FukumenzanCardFace({
           )}
         />
       )}
-      <span className="relative">{digit}</span>
+      <span className={cn("relative", crossed && "opacity-40")}>{digit}</span>
     </span>
   );
 }

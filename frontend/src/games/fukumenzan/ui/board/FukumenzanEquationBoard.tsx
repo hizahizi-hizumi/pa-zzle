@@ -170,7 +170,7 @@ export function FukumenzanEquationBoard({
             aria-hidden="true"
             className={cn(
               // 入れた札は文字のマス全体を札の面にするので、メモは右上の肩に小さく、札の実線の縁と違う点線で書き、数字の札と見分ける。
-              "absolute top-[3%] right-[3%] flex size-[32%] items-center justify-center rounded-full border border-dashed font-sans leading-none [font-size:20cqh]",
+              "absolute top-[2%] right-[2%] flex size-[40%] items-center justify-center rounded-full border border-dashed font-sans leading-none [font-size:26cqh]",
               fukumenzanToneClassNames.candidateCount,
             )}
           >
@@ -209,7 +209,7 @@ export function FukumenzanEquationBoard({
       className="grid"
       style={{
         // 罫線の行は細いので、マスの大きさは文字の行の数と + の列を含めた桁の数で決める。
-        ["--fukumenzan-tile" as string]: `min(calc(100cqw / ${columnCount}), calc((100cqh - 1rem) / ${rowCount}), 4.5rem)`,
+        ["--fukumenzan-tile" as string]: `min(calc(100cqw / ${columnCount}), calc((100cqh - 1rem) / ${rowCount}), 6rem)`,
         gridTemplateColumns: `repeat(${columnCount}, var(--fukumenzan-tile))`,
         gridTemplateRows: `repeat(${addends.length}, var(--fukumenzan-tile)) 1rem var(--fukumenzan-tile)`,
       }}

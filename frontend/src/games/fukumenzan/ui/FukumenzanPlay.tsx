@@ -138,7 +138,7 @@ export function FukumenzanPlay({
           onClearAnimationComplete={onClearAnimationComplete}
         />
       </main>
-      <footer className="mx-auto grid w-full max-w-xl shrink-0 gap-2 px-3 pb-2">
+      <footer className="mx-auto grid w-full max-w-sm shrink-0 gap-2 px-3 pb-2 sm:max-w-3xl">
         <FukumenzanCardRow
           puzzleState={puzzleState}
           selection={input.selection}

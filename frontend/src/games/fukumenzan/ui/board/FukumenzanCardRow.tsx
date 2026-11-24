@@ -26,8 +26,9 @@ const slotClassName =
   "relative flex h-full min-w-0 touch-none select-none items-center justify-center [-webkit-touch-callout:none] [container-type:size] rounded-[14%] outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-solid";
 
 /**
- * 0〜9 の札を、数字の順に決まった場所へ1段に並べる。文字に入れた札は列から抜け、その場所は空いた枠になる。
- * 文字を選んでいる間は、その文字に × を付けた札に × を描く。
+ * 0〜9 の札を、数字の順に決まった場所へ並べる。スマホの幅では 0〜4 と 5〜9 の2段、広い画面では1段にする。
+ * 文字に入れた札は列から抜け、その場所は空いた枠になる。
+ * 文字を選んでいる間は、その文字に × を付けた札に × を描き、札の数字を薄くする。
  */
 export function FukumenzanCardRow({
   puzzleState,
@@ -47,7 +48,8 @@ export function FukumenzanCardRow({
       role="group"
       aria-label="札"
       {...fukumenzanDropTargetAttributes.cardRow}
-      className="grid h-14 grid-cols-10 gap-1"
+      // 1段に10枚だと 320px の幅で札が約26px と押しにくいので、狭い画面では2段にして札の幅を指の大きさに近づける。
+      className="grid auto-rows-[3.25rem] grid-cols-5 gap-1.5 sm:auto-rows-[4.5rem] sm:grid-cols-10 sm:gap-2"
     >
       {fukumenzanDigits.map((digit) => {
         if (puzzleState.placedDigits.includes(digit)) {
@@ -86,6 +88,7 @@ export function FukumenzanCardRow({
           >
             <FukumenzanCardFace
               digit={digit}
+              crossed={crossed}
               lifted={
                 drag !== null &&
                 drag.fromLetter === null &&
@@ -96,12 +99,12 @@ export function FukumenzanCardRow({
               <svg
                 aria-hidden="true"
                 viewBox="0 0 10 10"
-                className="pointer-events-none absolute inset-[12%] size-[76%]"
+                className="pointer-events-none absolute inset-[10%] size-[80%]"
               >
                 <path
                   d="M 1.5 1.5 L 8.5 8.5 M 8.5 1.5 L 1.5 8.5"
                   fill="none"
-                  strokeWidth={1}
+                  strokeWidth={1.4}
                   strokeLinecap="round"
                   className={fukumenzanToneClassNames.cross}
                 />
