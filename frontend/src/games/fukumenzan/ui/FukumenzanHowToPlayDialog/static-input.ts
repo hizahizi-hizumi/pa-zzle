@@ -10,7 +10,7 @@ const staticHandlers: FukumenzanInputHandlers = {
   onClick: ignore,
 };
 
-/** 押せない図とゴールの盤面の文字。押しても何も起きない。 */
+/** 押せない図とゴールの盤面の文字と札。押しても何も起きない。 */
 export function getStaticLetterHandlers(): FukumenzanInputHandlers {
   return staticHandlers;
 }

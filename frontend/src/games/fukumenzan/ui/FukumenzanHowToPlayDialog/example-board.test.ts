@@ -18,14 +18,15 @@ import {
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-board";
 import {
   crossOperationExample,
-  dragOperationExample,
+  crossShownOperationExample,
   goalSteps,
   howToPlayProblem,
   leadingZeroRuleExamples,
   moveOperationExample,
+  placeOperationExample,
   returnOperationExample,
+  sameLetterRuleExample,
   sumRuleExamples,
-  tapOperationExample,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
 
 const D = getExampleLetterIndex("D");
@@ -47,18 +48,18 @@ describe("遊び方の式", () => {
 
 describe("findExampleHint", () => {
   describe("押してから押す手の場合", () => {
-    const initial = createExamplePuzzleState(tapOperationExample);
+    const initial = createExamplePuzzleState(placeOperationExample);
 
     test("触る前は札を示すこと", () => {
-      expect(findExampleHint(tapOperationExample, initial, null, null)).toEqual(
-        { kind: "card", digit: 8 },
-      );
+      expect(
+        findExampleHint(placeOperationExample, initial, null, null),
+      ).toEqual({ kind: "card", digit: 8 });
     });
 
     test("札を選ぶと文字を示すこと", () => {
       expect(
         findExampleHint(
-          tapOperationExample,
+          placeOperationExample,
           initial,
           { kind: "card", digit: 8 },
           null,
@@ -69,7 +70,7 @@ describe("findExampleHint", () => {
     test("ほかの札を選ぶと手がかりを消すこと", () => {
       expect(
         findExampleHint(
-          tapOperationExample,
+          placeOperationExample,
           initial,
           { kind: "card", digit: 5 },
           null,
@@ -80,7 +81,7 @@ describe("findExampleHint", () => {
     test("札を入れると手がかりを消すこと", () => {
       expect(
         findExampleHint(
-          tapOperationExample,
+          placeOperationExample,
           placeFukumenzanDigit(initial, D, 8),
           null,
           null,
@@ -89,23 +90,12 @@ describe("findExampleHint", () => {
     });
   });
 
-  describe("運ぶ手の場合", () => {
-    const initial = createExamplePuzzleState(dragOperationExample);
+  describe("押すか運ぶ手の場合", () => {
+    const initial = createExamplePuzzleState(placeOperationExample);
 
-    test("札を押して選んだだけなら札を示したままにすること", () => {
+    test("札を運び始めても落とし先の文字を示すこと", () => {
       expect(
-        findExampleHint(
-          dragOperationExample,
-          initial,
-          { kind: "card", digit: 8 },
-          null,
-        ),
-      ).toEqual({ kind: "card", digit: 8 });
-    });
-
-    test("札を運び始めると落とし先の文字を示すこと", () => {
-      expect(
-        findExampleHint(dragOperationExample, initial, null, {
+        findExampleHint(placeOperationExample, initial, null, {
           digit: 8,
           fromLetter: null,
           x: 0,
@@ -117,7 +107,7 @@ describe("findExampleHint", () => {
 
     test("ほかの札を運ぶと手がかりを消すこと", () => {
       expect(
-        findExampleHint(dragOperationExample, initial, null, {
+        findExampleHint(placeOperationExample, initial, null, {
           digit: 5,
           fromLetter: null,
           x: 0,
@@ -125,6 +115,50 @@ describe("findExampleHint", () => {
           overLetter: null,
         }),
       ).toBeNull();
+    });
+  });
+
+  describe("運ぶ手の場合", () => {
+    const initial = createExamplePuzzleState(sameLetterRuleExample);
+    const X = getExampleLetterIndex("X");
+
+    test("文字を押して選んだだけなら運び始める文字を示したままにすること", () => {
+      expect(
+        findExampleHint(
+          sameLetterRuleExample,
+          initial,
+          { kind: "letter", letter: X },
+          null,
+        ),
+      ).toEqual({ kind: "letter", letter: "X" });
+    });
+
+    test("文字から運び始めると落とし先の文字を示すこと", () => {
+      expect(
+        findExampleHint(sameLetterRuleExample, initial, null, {
+          digit: 8,
+          fromLetter: X,
+          x: 0,
+          y: 0,
+          overLetter: null,
+        }),
+      ).toEqual({ kind: "letter", letter: "D" });
+    });
+  });
+
+  describe("選ぶだけの手の場合", () => {
+    const initial = createExamplePuzzleState(crossShownOperationExample);
+
+    test("触る前は文字を示し、選んだら手がかりを消すこと", () => {
+      expect([
+        findExampleHint(crossShownOperationExample, initial, null, null),
+        findExampleHint(
+          crossShownOperationExample,
+          initial,
+          { kind: "letter", letter: U },
+          null,
+        ),
+      ]).toEqual([{ kind: "letter", letter: "U" }, null]);
     });
   });
 
@@ -197,10 +231,10 @@ describe("findExampleHint", () => {
 
 describe("isExampleChanged", () => {
   test("札を入れて戻すと触る前と同じ姿と見ること", () => {
-    const initial = createExamplePuzzleState(tapOperationExample);
+    const initial = createExamplePuzzleState(placeOperationExample);
     const back = returnFukumenzanDigit(placeFukumenzanDigit(initial, D, 8), D);
 
-    expect(isExampleChanged(tapOperationExample, back)).toBe(false);
+    expect(isExampleChanged(placeOperationExample, back)).toBe(false);
   });
 });
 

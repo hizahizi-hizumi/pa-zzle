@@ -36,7 +36,6 @@ import {
   type FukumenzanSelection,
   useFukumenzanInput,
 } from "@/games/fukumenzan/ui/board/use-fukumenzan-input";
-import { ExampleGround } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/ExampleGround";
 import {
   createExamplePuzzleState,
   describeOtherRuleMark,
@@ -51,26 +50,24 @@ import {
   type FukumenzanHowToPlayExample,
   howToPlayProblem,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
-import { HOW_TO_PLAY_TILE_REM } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/figure-size";
+import {
+  exampleEquationStyle,
+  exampleUnitClassName,
+} from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/figure-size";
 import { useFukumenzanSoundEffects } from "@/games/fukumenzan/ui/use-fukumenzan-sound-effects";
+import { cn } from "@/lib/utils";
 
 const letters = listFukumenzanLetters(howToPlayProblem);
-const columnCount = howToPlayProblem.result.length + 1;
-const rowCount = howToPlayProblem.addends.length + 1;
 
-const verdictLabels = {
+/** 判定の言葉。押せない図の判定も同じ言葉で言う。 */
+export const verdictLabels = {
   "leading-zero": { allowed: "できる", disallowed: "できない" },
   sum: { allowed: "合う", disallowed: "合わない" },
 } as const satisfies Record<FukumenzanExampleVerdict, HowToPlayVerdictLabels>;
 
 const exampleStyle = {
-  "--how-to-play-unit": `${HOW_TO_PLAY_TILE_REM}rem`,
+  "--how-to-play-unit": "var(--fukumenzan-example-unit)",
 } as CSSProperties;
-
-const equationStyle = {
-  width: `${columnCount * HOW_TO_PLAY_TILE_REM}rem`,
-  height: `${rowCount * HOW_TO_PLAY_TILE_REM + 1}rem`,
-} satisfies CSSProperties;
 
 function renderHint(pointer: HowToPlayPressHintPointer) {
   return <HowToPlayPressHint frame="inside" pointer={pointer} />;
@@ -170,73 +167,72 @@ export function TouchableExample({ example }: TouchableExampleProps) {
   return (
     <HowToPlayExample
       figure={
-        <ExampleGround>
-          <div
-            ref={scopeRef}
-            className="grid w-60 justify-items-center gap-3"
-            style={exampleStyle}
-          >
-            <div className="[container-type:size]" style={equationStyle}>
-              <FukumenzanEquationBoard
-                problem={howToPlayProblem}
-                letters={letters}
-                puzzleState={puzzleState}
-                leadingZeroLetters={listFukumenzanLeadingZeroLetters(
-                  howToPlayProblem,
-                  puzzleState,
-                )}
-                miscalculatedColumns={listFukumenzanMiscalculatedColumns(
-                  howToPlayProblem,
-                  puzzleState,
-                )}
-                selection={input.selection}
-                drag={input.drag}
-                clearing={clearing}
-                interactionDisabled={solved}
-                getLetterHandlers={input.getLetterHandlers}
-                onClearAnimationComplete={completeClearAnimation}
-                hint={
-                  hint?.kind === "letter"
-                    ? {
-                        letter: getExampleLetterIndex(hint.letter),
-                        content: renderHint("inside-corner"),
-                      }
-                    : null
-                }
-                scrollLock="placed-letters"
-              />
-            </div>
-            <div className="w-full">
-              <FukumenzanCardRow
-                puzzleState={puzzleState}
-                selection={input.selection}
-                drag={input.drag}
-                interactionDisabled={solved}
-                getCardHandlers={input.getCardHandlers}
-                getEmptySlotHandlers={input.getEmptySlotHandlers}
-                hint={
-                  hint?.kind === "card"
-                    ? {
-                        digit: hint.digit,
-                        content: renderHint(
-                          getCardHintPointer(
-                            puzzleState,
-                            input.selection,
-                            hint.digit,
-                          ),
-                        ),
-                      }
-                    : null
-                }
-                shownDigits={exampleCardRows[example.cardRow]}
-                scrollLock="cards"
-              />
-            </div>
-            {input.drag && (
-              <FukumenzanDraggedCard drag={input.drag} size="compact" />
-            )}
+        <div
+          ref={scopeRef}
+          className={cn("grid gap-3", exampleUnitClassName)}
+          style={exampleStyle}
+        >
+          <div className="[container-type:size]" style={exampleEquationStyle}>
+            <FukumenzanEquationBoard
+              problem={howToPlayProblem}
+              letters={letters}
+              puzzleState={puzzleState}
+              leadingZeroLetters={listFukumenzanLeadingZeroLetters(
+                howToPlayProblem,
+                puzzleState,
+              )}
+              miscalculatedColumns={listFukumenzanMiscalculatedColumns(
+                howToPlayProblem,
+                puzzleState,
+              )}
+              selection={input.selection}
+              drag={input.drag}
+              clearing={clearing}
+              interactionDisabled={solved}
+              getLetterHandlers={input.getLetterHandlers}
+              onClearAnimationComplete={completeClearAnimation}
+              hint={
+                hint?.kind === "letter"
+                  ? {
+                      letter: getExampleLetterIndex(hint.letter),
+                      content: renderHint("inside-corner"),
+                    }
+                  : null
+              }
+              scrollLock="placed-letters"
+            />
           </div>
-        </ExampleGround>
+          <div style={{ width: exampleEquationStyle.width }}>
+            <FukumenzanCardRow
+              puzzleState={puzzleState}
+              selection={input.selection}
+              drag={input.drag}
+              interactionDisabled={solved}
+              getCardHandlers={input.getCardHandlers}
+              getEmptySlotHandlers={input.getEmptySlotHandlers}
+              hint={
+                hint?.kind === "card"
+                  ? {
+                      digit: hint.digit,
+                      content: renderHint(
+                        getCardHintPointer(
+                          puzzleState,
+                          input.selection,
+                          hint.digit,
+                        ),
+                      ),
+                    }
+                  : null
+              }
+              shownDigits={exampleCardRows[example.cardRow]}
+              scrollLock="cards"
+              layout="two-rows"
+            />
+          </div>
+          {input.drag && (
+            <FukumenzanDraggedCard drag={input.drag} size="compact" />
+          )}
+        </div>
       }
       caption={
         example.verdict === undefined ? undefined : (

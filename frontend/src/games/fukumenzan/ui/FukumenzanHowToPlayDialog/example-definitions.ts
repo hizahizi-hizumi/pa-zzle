@@ -20,12 +20,15 @@ export type FukumenzanExampleTarget =
  * - `drag`: 1つ目から2つ目へ運ぶ。手がかりは運び始めたときだけ2つ目へ進める。
  * - `toggle`: 1つ目を押してから2つ目を押す。2つ目は押すたびに付け外しするので、1つ目を選んでいる間は2つ目を示し続ける。
  * - `tap-or-drag`: 1つ目を押してから2つ目を押すか、1つ目から2つ目へ運ぶ。押して選んでも、運び始めても2つ目を示す。
+ * - `select`: 1つ目を押して選ぶだけ。選んだら手がかりを消す。
  */
-export type FukumenzanExampleMove = {
-  gesture: "tap" | "drag" | "toggle" | "tap-or-drag";
-  from: FukumenzanExampleTarget;
-  to: FukumenzanExampleTarget;
-};
+export type FukumenzanExampleMove =
+  | {
+      gesture: "tap" | "drag" | "toggle" | "tap-or-drag";
+      from: FukumenzanExampleTarget;
+      to: FukumenzanExampleTarget;
+    }
+  | { gesture: "select"; from: FukumenzanExampleTarget };
 
 /** 例の図の下に添える判定。`leading-zero` は先頭の0のルール、`sum` は足し算のルール。 */
 export type FukumenzanExampleVerdict = "leading-zero" | "sum";
@@ -33,8 +36,8 @@ export type FukumenzanExampleVerdict = "leading-zero" | "sum";
 export type FukumenzanHowToPlayExample = {
   placed: FukumenzanLetterDigits;
   crossed?: Readonly<Partial<Record<string, readonly FukumenzanDigit[]>>>;
-  /** 例で見せる札の列の段。例が使う札の段だけを見せる。 */
-  cardRow: "low" | "high";
+  /** 例で見せる札。例が使う札の段だけか、× の数を見せる例では 0〜9 の全部。 */
+  cardRow: "low" | "high" | "all";
   /** 押す所の手がかりで見せる手。できない形の例は最初から静止させるので持たない。 */
   move: FukumenzanExampleMove | null;
   verdict?: FukumenzanExampleVerdict;
@@ -46,6 +49,7 @@ const highCards = [5, 6, 7, 8, 9] as const satisfies FukumenzanDigit[];
 export const exampleCardRows = {
   low: lowCards,
   high: highCards,
+  all: [...lowCards, ...highCards],
 } as const;
 
 function letter(text: string): FukumenzanExampleTarget {
@@ -107,18 +111,11 @@ export const sumRuleExamples = [
   },
 ] as const satisfies readonly FukumenzanHowToPlayExample[];
 
-/** 札を文字へ運ぶ。 */
-export const dragOperationExample: FukumenzanHowToPlayExample = {
+/** 札を文字へ運ぶか、札を押してから文字を押して、札を入れる。始まりの盤面が同じ2つの手を、1つの例で見せる。 */
+export const placeOperationExample: FukumenzanHowToPlayExample = {
   placed: {},
   cardRow: "high",
-  move: { gesture: "drag", from: card(8), to: letter("D") },
-};
-
-/** 札を押してから文字を押す。 */
-export const tapOperationExample: FukumenzanHowToPlayExample = {
-  placed: {},
-  cardRow: "high",
-  move: { gesture: "tap", from: card(8), to: letter("D") },
+  move: { gesture: "tap-or-drag", from: card(8), to: letter("D") },
 };
 
 /** 札の入った文字へ別の札を入れる。 */
@@ -142,6 +139,14 @@ export const crossOperationExample: FukumenzanHowToPlayExample = {
   move: { gesture: "toggle", from: letter("U"), to: card(5) },
 };
 
+/** × を付けた U を押して選ぶと、札に × が出る。U をもう一度押すか、式と札の外を押すと、選ぶのをやめて × が消える。 */
+export const crossShownOperationExample: FukumenzanHowToPlayExample = {
+  placed: {},
+  crossed: { U: [5, 6, 7] },
+  cardRow: "all",
+  move: { gesture: "select", from: letter("U") },
+};
+
 /** 札の入った文字を押してから列の空いた場所を押すか、札の並びへ運んで、札を列へ戻す。 */
 export const returnOperationExample: FukumenzanHowToPlayExample = {
   placed: { D: 8 },
@@ -149,8 +154,11 @@ export const returnOperationExample: FukumenzanHowToPlayExample = {
   move: { gesture: "tap-or-drag", from: letter("D"), to: card(8) },
 };
 
-/** × の跡の図。U に 2〜9 の × を付け、残りの候補を 0 と 1 の2つにした式。 */
+/**
+ * × の跡の図。D に 8 を入れ、U を選んで 2〜7 と 9 に × を付けた式。U の右上の丸は、× の付いていない 0・1・8 の3。
+ * D に入った 8 も、U に × を付けていないので数に入る。
+ */
 export const candidateCountFigure = {
-  placed: {},
-  crossed: { U: [2, 3, 4, 5, 6, 7, 8, 9] },
+  placed: { D: 8 },
+  crossed: { U: [2, 3, 4, 5, 6, 7, 9] },
 } as const satisfies Pick<FukumenzanHowToPlayExample, "placed" | "crossed">;

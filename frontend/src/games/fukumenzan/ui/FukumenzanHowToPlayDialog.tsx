@@ -8,6 +8,7 @@ import { HowToPlayOverlay } from "@/components/HowToPlayOverlay";
 import { HowToPlayRule } from "@/components/HowToPlayRule";
 import { HowToPlayScoreRow } from "@/components/HowToPlayScoreRow";
 import { HowToPlaySection } from "@/components/HowToPlaySection";
+import { HowToPlayVerdict } from "@/components/HowToPlayVerdict";
 import { playMenuOperationItems } from "@/components/play-menu-operations";
 import { UndoButton } from "@/components/UndoButton";
 import pictogramSvg from "@/games/fukumenzan/assets/pictogram.svg?raw";
@@ -17,22 +18,31 @@ import {
   FUKUMENZAN_SPEED_ZERO_SCORE_RATIO,
 } from "@/games/fukumenzan/score";
 import { EquationFigure } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/EquationFigure";
+import { PanelGround } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/ExampleGround";
+import {
+  createExamplePuzzleState,
+  judgeExample,
+} from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-board";
 import {
   candidateCountFigure,
   crossOperationExample,
-  dragOperationExample,
+  crossShownOperationExample,
+  type FukumenzanExampleVerdict,
   type FukumenzanHowToPlayExample,
   leadingZeroRuleExamples,
   moveOperationExample,
+  placeOperationExample,
   replaceOperationExample,
   returnOperationExample,
   sameLetterRuleExample,
   sumRuleExamples,
-  tapOperationExample,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
 import { GoalPlayback } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/GoalPlayback";
 import { ignoreFigureEvent } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/static-input";
-import { TouchableExample } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/TouchableExample";
+import {
+  TouchableExample,
+  verdictLabels,
+} from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/TouchableExample";
 import {
   PLAY_OPERATION_LABELS,
   SCORE_ITEM_LABELS,
@@ -49,20 +59,44 @@ const game = { name: FUKUMENZAN_DISPLAY_NAME, pictogramSvg };
 
 const { undo, restart } = PLAY_OPERATION_LABELS;
 
-/** 形のルール。できる形とできない形の対を並べる。 */
+/** 例と図を並べる面に敷く地。式のマスは地を透かして描くので、面そのものを本番と同じ方眼の紙にする。 */
+const panelGround = <PanelGround />;
+
+/**
+ * 形のルール。できる形を触れる例、できない形を押せない図にして対で並べる。できない形は最初から崩れた盤面なので、触る手が無い。
+ * 図は札の並びを持たないので、対を短くして見比べやすくする。
+ */
 function renderPairRule(
   text: string,
-  examples: readonly FukumenzanHowToPlayExample[],
+  [allowed, disallowed]: readonly [
+    FukumenzanHowToPlayExample & { verdict: FukumenzanExampleVerdict },
+    FukumenzanHowToPlayExample & { verdict: FukumenzanExampleVerdict },
+  ],
+  disallowedLabel: string,
 ) {
   return (
     <HowToPlayRule
       text={text}
-      examples={examples.map((example) => (
-        <TouchableExample
-          key={JSON.stringify(example.placed)}
-          example={example}
-        />
-      ))}
+      ground={panelGround}
+      examples={
+        <>
+          <TouchableExample example={allowed} />
+          <HowToPlayExample
+            figure={
+              <EquationFigure figure={disallowed} label={disallowedLabel} />
+            }
+            caption={
+              <HowToPlayVerdict
+                verdict={judgeExample(
+                  disallowed.verdict,
+                  createExamplePuzzleState(disallowed),
+                )}
+                labels={verdictLabels[disallowed.verdict]}
+              />
+            }
+          />
+        </>
+      }
     />
   );
 }
@@ -75,6 +109,7 @@ function renderOperation(text: string, example: FukumenzanHowToPlayExample) {
         headingLevel={4}
         text={text}
         arrangement="stacked"
+        ground={panelGround}
         examples={<TouchableExample example={example} />}
       />
     </li>
@@ -125,15 +160,18 @@ export function FukumenzanHowToPlayDialog({
           <HowToPlayRule
             text="同じ文字には/同じ数字を/入れます。/札は/0〜9が/1枚ずつしか/ないので/違う文字には/違う数字が/入ります。"
             arrangement="stacked"
+            ground={panelGround}
             examples={<TouchableExample example={sameLetterRuleExample} />}
           />
           {renderPairRule(
             "2桁以上の数の/いちばん左には/1〜9を/入れます。",
             leadingZeroRuleExamples,
+            "D に 0 を入れて DDX の先頭が 0 になった式",
           )}
           {renderPairRule(
-            "どの桁も/上の数字と/右の桁からの繰り上がりを/足すと/答えの数字に/なるように/します。/全部の桁が/合えば/クリアです。",
+            "どの桁も/上の数字と/右の桁からの繰り上がりを/足すと/答えの数字に/なるように/します。/3つの数の足し算では/繰り上がりが/2に/なることも/あります。",
             sumRuleExamples,
+            "R に 7 を入れて十の位が合わない式",
           )}
         </>
       }
@@ -141,12 +179,8 @@ export function FukumenzanHowToPlayDialog({
         <>
           <HowToPlaySection title="札の入れ方">
             {renderOperation(
-              "札を/文字へ/運ぶと/同じ文字の所に/まとめて/入ります。",
-              dragOperationExample,
-            )}
-            {renderOperation(
-              "札を/押してから/文字を/押しても/入ります。",
-              tapOperationExample,
+              "札を/文字へ/運ぶと/同じ文字の所に/まとめて/入ります。/札を/押してから/文字を/押しても/入ります。",
+              placeOperationExample,
             )}
             {renderOperation(
               "札の入った文字に/別の札を/入れると/前の札は/元の所へ/戻ります。",
@@ -166,18 +200,24 @@ export function FukumenzanHowToPlayDialog({
               "文字を/押してから/札を/押すと/その札に/×が/付きます。/もう一度/押すと/外れます。",
               crossOperationExample,
             )}
+            {renderOperation(
+              "×は/その文字を/選んでいる間だけ/札に/出ます。/同じ文字を/もう一度/押すか/式と札の/外を/押すと/選ぶのを/やめます。",
+              crossShownOperationExample,
+            )}
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="×は/その文字を/選んでいる間だけ/札に/出ます。/札の入っていない文字の/右上の点線の丸には/×の付いていない札の数が/出ます。"
+                text="×を/付けた/空の文字の/右上の/点線の丸には/×の付いていない/札の数が/出ます。/ほかの文字に/入った札も/数に/入ります。"
                 arrangement="stacked"
                 resettable={false}
+                ground={panelGround}
                 examples={
                   <HowToPlayExample
                     figure={
                       <EquationFigure
                         figure={candidateCountFigure}
-                        label="U に 2〜9 の × を付け、U の右上に 2 と出た式"
+                        selectedLetter="U"
+                        label="D に 8 を入れ U を選んで 2〜7 と 9 に × を付けた式。U の右上に 3"
                       />
                     }
                   />

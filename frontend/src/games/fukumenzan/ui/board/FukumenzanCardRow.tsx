@@ -31,6 +31,11 @@ type FukumenzanCardRowProps = {
    * `cards` は運べる札だけで止め、押すだけの空いた場所では止めない（遊び方の例）。
    */
   scrollLock?: "all-slots" | "cards";
+  /**
+   * 札の段の組み方。`fit` は画面の幅で決める（スマホの幅では2段、広い画面では1段）。`two-rows` は画面の幅によらず5枚ずつの段にし、
+   * 札の並びを式の幅にそろえる遊び方の例が使う。
+   */
+  layout?: "fit" | "two-rows";
 };
 
 const slotClassName =
@@ -51,6 +56,7 @@ export function FukumenzanCardRow({
   hint = null,
   shownDigits = fukumenzanDigits,
   scrollLock = "all-slots",
+  layout = "fit",
 }: FukumenzanCardRowProps) {
   const crossedDigits =
     selection?.kind === "letter"
@@ -63,10 +69,16 @@ export function FukumenzanCardRow({
       aria-label="札"
       {...fukumenzanDropTargetAttributes.cardRow}
       className={cn(
-        "grid auto-rows-[3.25rem] grid-cols-5 gap-1.5",
-        // 1段に10枚だと 320px の幅で札が約26px と押しにくいので、狭い画面では2段にして札の幅を指の大きさに近づける。
-        shownDigits.length > 5 &&
-          "sm:auto-rows-[4.5rem] sm:grid-cols-10 sm:gap-2",
+        "grid grid-cols-5",
+        layout === "fit"
+          ? [
+              "auto-rows-[3.25rem] gap-1.5",
+              // 1段に10枚だと 320px の幅で札が約26px と押しにくいので、狭い画面では2段にして札の幅を指の大きさに近づける。
+              shownDigits.length > 5 &&
+                "sm:auto-rows-[4.5rem] sm:grid-cols-10 sm:gap-2",
+            ]
+          : // 式のマスの 48px の幅にそろえた並びで、札の幅を 44px 以上に保つよう、札の間を狭くする。
+            "auto-rows-[3.25rem] gap-1 lg:auto-rows-[3.75rem] lg:gap-1.5",
       )}
     >
       {shownDigits.map((digit) => {

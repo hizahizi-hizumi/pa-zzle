@@ -46,10 +46,10 @@ function getStateAfter(stepCount: number): FukumenzanPuzzleState {
 
 /**
  * 式のマスの一辺。置き場所の幅と、高さ（広い画面で渡される）から見せ直すボタンの段と遊び方の層が盤面の下に置くボタンの段を除いた高さの、
- * 小さい方に合わせ、広い画面ではマスを 4rem までにする。
+ * 小さい方に合わせる。マスはスマホの幅では 4rem まで、広い画面では左の列の幅に合わせて 6rem までにする。
  */
 const goalTileStyle = {
-  "--fukumenzan-goal-tile": `min((min(100cqw, var(--how-to-play-goal-board-max, 100cqw)) - ${GOAL_GROUND_PADDING_PX}px) / ${columnCount}, (100cqh - ${HOW_TO_PLAY_GOAL_REPLAY_ROW_HEIGHT_PX + GOAL_GROUND_PADDING_PX}px - var(--how-to-play-goal-below, 0px) - 1rem) / ${rowCount}, 4rem)`,
+  "--fukumenzan-goal-tile": `min((min(100cqw, var(--how-to-play-goal-board-max, 100cqw)) - ${GOAL_GROUND_PADDING_PX}px) / ${columnCount}, (100cqh - ${HOW_TO_PLAY_GOAL_REPLAY_ROW_HEIGHT_PX + GOAL_GROUND_PADDING_PX}px - var(--how-to-play-goal-below, 0px) - 1rem) / ${rowCount}, var(--fukumenzan-goal-tile-max))`,
 } as CSSProperties;
 
 const equationStyle = {
@@ -124,7 +124,10 @@ export function GoalPlayback() {
   }
 
   return (
-    <div style={goalTileStyle}>
+    <div
+      className="flex justify-center [--fukumenzan-goal-tile-max:4rem] lg:[--fukumenzan-goal-tile-max:6rem]"
+      style={goalTileStyle}
+    >
       <HowToPlayGoalFrame
         board={
           <ExampleGround>
