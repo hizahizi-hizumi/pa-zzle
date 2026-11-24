@@ -7,7 +7,7 @@ import {
   type ShuttleParkingProblemFeatureAxisId,
   type ShuttleParkingProblemFeatures,
   shuttleParkingProblemFeatureAxes,
-} from "@/games/shuttle-parking/problem-features";
+} from "@/games/shuttle-parking/problem/problem-pool";
 
 export const shuttleParkingProblemFeatureAxisDisplays = {
   "lot-size": {

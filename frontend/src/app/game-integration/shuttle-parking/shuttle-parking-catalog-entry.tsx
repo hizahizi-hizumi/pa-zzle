@@ -13,11 +13,11 @@ import {
   restoreShuttleParkingRecordedResult,
   shuttleParkingPlayRecordDefinition,
 } from "@/games/shuttle-parking/play-record";
-import { listShuttleParkingPoolProblemIds } from "@/games/shuttle-parking/problem/problem-pool";
 import {
   findShuttleParkingPoolProblemFeatures,
+  listShuttleParkingPoolProblemIds,
   shuttleParkingProblemFeatureAxes,
-} from "@/games/shuttle-parking/problem-features";
+} from "@/games/shuttle-parking/problem/problem-pool";
 import { canSelectShuttleParkingProblemById } from "@/games/shuttle-parking/problem-selection";
 import { shuttleParkingPlayRecordDisplay } from "@/games/shuttle-parking/ui/play-record-display";
 import {

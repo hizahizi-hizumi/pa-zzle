@@ -1,3 +1,8 @@
+import {
+  createBoardSizeFeatureValue,
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 import type {
   SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION,
@@ -99,3 +104,54 @@ export function findShuttleParkingPoolEntryByProblemId(
 ): ShuttleParkingProblemPoolEntry | null {
   return poolIndex.findPositionById(difficulty, problemId)?.entry ?? null;
 }
+
+/** 始めたときの盤面を見れば分かる、問題の特徴。乗客の人数は3人乗りの台数と同じ量なので、台数は持たない。 */
+export type ShuttleParkingProblemFeatures = {
+  lotSize: number;
+  bayCount: number;
+  passengerCount: number;
+};
+
+const featurePattern = /^([0-9])[trbl]+([0-9])-[^-]+-([a-d]+)$/;
+
+/** 問題の符号から直接読む。図鑑は1レベル500問をまとめて読むので、問題を復元しない。 */
+export function findShuttleParkingPoolProblemFeatures(
+  difficulty: ShuttleParkingDifficulty,
+  problemId: string,
+): ShuttleParkingProblemFeatures | null {
+  const entry = findShuttleParkingPoolEntryByProblemId(difficulty, problemId);
+  const matched = entry ? featurePattern.exec(entry[0]) : null;
+  if (!matched) {
+    return null;
+  }
+  const [, lotSize = "", bayCount = "", passengers = ""] = matched;
+  return {
+    lotSize: Number(lotSize),
+    bayCount: Number(bayCount),
+    passengerCount: passengers.length,
+  };
+}
+
+export const shuttleParkingProblemFeatureAxes = [
+  {
+    id: "lot-size",
+    getValue({ lotSize }) {
+      return createBoardSizeFeatureValue(lotSize, lotSize);
+    },
+  },
+  {
+    id: "bay-count",
+    getValue({ bayCount }) {
+      return createCountFeatureValue(bayCount);
+    },
+  },
+  {
+    id: "passenger-count",
+    getValue({ passengerCount }) {
+      return createCountFeatureValue(passengerCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<ShuttleParkingProblemFeatures>[];
+
+export type ShuttleParkingProblemFeatureAxisId =
+  (typeof shuttleParkingProblemFeatureAxes)[number]["id"];
