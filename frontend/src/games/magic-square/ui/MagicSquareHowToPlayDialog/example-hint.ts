@@ -4,11 +4,12 @@ import type {
 } from "@/games/magic-square/session/session";
 import { isSameMagicSquareExampleBoard } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
 
-/** 例で押す所。マスは、面に並べた盤面の番号と、盤面でのマスの番号で指す。`memo` はメモの切り替え。 */
+/** 例で押す所。マスは、面に並べた盤面の番号と、盤面でのマスの番号で指す。`memo` はメモの切り替え、`undo` は待った。 */
 export type MagicSquareExamplePress =
   | { kind: "cell"; board: number; cellIndex: number }
   | { kind: "value"; value: number }
-  | { kind: "memo" };
+  | { kind: "memo" }
+  | { kind: "undo" };
 
 /** 例の面の、押して変わるもの全体。マスを選んでいるのは、面の中で1つの盤面だけ。 */
 export type MagicSquareExampleGroupState = {
@@ -62,7 +63,8 @@ function isSamePress(
     case "value":
       return right.kind === "value" && right.value === left.value;
     case "memo":
-      return right.kind === "memo";
+    case "undo":
+      return right.kind === left.kind;
   }
 }
 
@@ -117,7 +119,7 @@ function restartHint(
 
 /**
  * 押した後の手がかりの進み具合。手がかりの次の手を押して盤面が変わったら（マスを選ぶ手では選んだら）進める。
- * 手がかりの手が受け付けられなかったら、進めずに手がかりを隠し、マスを選び直すか盤面が変わったら出し直す。
+ * 手がかりの手が受け付けられなかったら、進めずに手がかりを隠し、マスを選び直すか盤面が変わるまで、ほかの手が受け付けられなくても隠したままにする。
  * ほかの手で盤面か入れ方を変えたら進めず、手がかりを出さない。最初の盤面に戻ったら、最初の手から出し直す（最初の手のマスを選んだままなら次の手から）。
  */
 export function followMagicSquareExampleHint(
@@ -142,7 +144,10 @@ export function followMagicSquareExampleHint(
     };
   }
   if (boardsKept) {
-    return { ...progress, rejected: press.kind !== "cell" && onTrack };
+    return {
+      ...progress,
+      rejected: press.kind !== "cell" && (progress.rejected || onTrack),
+    };
   }
   if (isSameBoards(toBoards(next), toBoards(initial))) {
     return restartHint(hints, initial, next);

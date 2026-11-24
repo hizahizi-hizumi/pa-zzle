@@ -99,7 +99,8 @@ function createGivens(cells: readonly ParsedExampleCell[]): MagicSquareBoard {
 
 /**
  * 例の盤面の、本番と同じプレイの状態。最初から置いてある数を問題にし、置いた数とメモは本番の session の操作で書き込む。
- * 経過時間と回数は使わない。どのマスも選んでいない姿にする。
+ * 書き込んだ後の盤面を例の始まりにするので、待ったで戻せる盤面操作と、置き直しの回数と変えている途中のマスの記録は持たない。
+ * 経過時間は使わない。どのマスも選んでいない姿にする。
  */
 export function createMagicSquareExampleSession({
   rows,
@@ -131,7 +132,13 @@ export function createMagicSquareExampleSession({
       ),
     placed,
   );
-  return { ...written, selectedCellIndex: null };
+  return {
+    ...written,
+    selectedCellIndex: null,
+    history: [],
+    settledCorrectionCount: 0,
+    editingCell: null,
+  };
 }
 
 /** 盤面の行と列（0始まり）のマスの番号。 */

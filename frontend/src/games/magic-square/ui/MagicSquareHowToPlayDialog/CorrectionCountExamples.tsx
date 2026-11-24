@@ -2,10 +2,14 @@ import { HowToPlayFlowFigures } from "@/components/HowToPlayFlowFigures";
 import { getMagicSquareFrameUnits } from "@/games/magic-square/ui/board/board-layout";
 import {
   ExampleBoard,
-  MAGIC_SQUARE_EXAMPLE_CELL_MAX_PX,
+  MAGIC_SQUARE_EXAMPLE_CELL,
 } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/ExampleBoard";
 import { MAGIC_SQUARE_EXAMPLE_SIZE } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
-import type { MagicSquareHowToPlayFlowFigure } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/figure-boards";
+import {
+  flowCellIndex,
+  type MagicSquareHowToPlayFlowFigure,
+} from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/figure-boards";
+import { magicSquareTone } from "@/games/magic-square/ui/magic-square-tone";
 
 type CorrectionCountExample = {
   figure: MagicSquareHowToPlayFlowFigure;
@@ -30,12 +34,29 @@ function getFrameWidth(
   const arrowCount = frameCount - 1;
   const arrowWidth = `max(${stepChars} * var(--text-supporting), 1.75rem)`;
   const gaps = `${frameCount + arrowCount - 1} * 0.5rem`;
-  return `min(${MAGIC_SQUARE_EXAMPLE_CELL_MAX_PX * columns}px, (100cqw - ${arrowCount} * ${arrowWidth} - ${gaps}) / ${frameCount})`;
+  return `min(${columns} * ${MAGIC_SQUARE_EXAMPLE_CELL}, (100cqw - ${arrowCount} * ${arrowWidth} - ${gaps}) / ${frameCount})`;
 }
 
 /**
- * 置き直しに数える直し方と数えない直し方を、ルールの例と同じ面に、置く前から直した後までの姿の流れで並べる。
- * どの姿も、操作するマス1つとその縦の列の合計だけを見せ、操作したマスは本番の選んだマスと同じ縁で示す。
+ * 数を置いたマスの印。押せない図なので、本番の選んだマスの縁と通る列の帯は描かず、テーマによらない盤の色のうち、
+ * そろっていない合計の字と同じ無彩に近い色の枠で囲む。枠はマスの角の丸みに沿わせる。
+ */
+const operatedCellFrameStyle = {
+  boxShadow: `inset 0 0 0 var(--border-width-strong) ${magicSquareTone.sumInk}`,
+};
+
+function renderOperatedCellFrame(cellIndex: number) {
+  return cellIndex === flowCellIndex ? (
+    <span
+      className="pointer-events-none absolute inset-0 rounded-[inherit]"
+      style={operatedCellFrameStyle}
+    />
+  ) : null;
+}
+
+/**
+ * 置き直しに数える直し方と数えない直し方を、置く前から直した後までの姿の流れで並べる。
+ * どの姿も、数を置くマスを含む縦の列と、その下の端の合計だけを見せ、数を置くマスを無彩の枠で示す。
  * 図の下に、流れと、本番の数え方で数えた置き直しの回数を「→ 置き直し 1回」の形で添える。
  */
 export function CorrectionCountExamples({
@@ -58,7 +79,8 @@ export function CorrectionCountExamples({
           <ExampleBoard
             session={session}
             region={region}
-            selectedCellIndex={session.selectedCellIndex}
+            selectedCellIndex={null}
+            renderCellOverlay={renderOperatedCellFrame}
             width={getFrameWidth(
               getMagicSquareFrameUnits(MAGIC_SQUARE_EXAMPLE_SIZE, region)
                 .columns,

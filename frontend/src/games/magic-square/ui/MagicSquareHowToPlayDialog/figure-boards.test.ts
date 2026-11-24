@@ -15,6 +15,7 @@ import {
   inputMagicSquareSessionValue,
   type MagicSquareSession,
   selectMagicSquareSessionCell,
+  undoMagicSquareSession,
 } from "@/games/magic-square/session/session";
 import { magicSquareTutorialPuzzle } from "@/games/magic-square/tutorial/tutorial";
 import {
@@ -78,6 +79,11 @@ function followHints(example: MagicSquareHowToPlayExample) {
             : session,
         );
         break;
+      case "undo":
+        sessions = sessions.map((session, index) =>
+          index === selectedBoard ? undoMagicSquareSession(session) : session,
+        );
+        break;
     }
     return sessions;
   });
@@ -121,6 +127,27 @@ describe("例の盤面", () => {
     );
 
     expect(violated).toBe(false);
+  });
+
+  test("置き方の例は、手がかりどおりに置くと空きが1つ残り、そこに答えの数を置くと本番と同じく解き終えること", () => {
+    const [placed] = followHints(placeOperationExample).at(-1) ?? [];
+    const emptyCells =
+      placed?.puzzleState.cells.flatMap((cell, cellIndex) =>
+        cell === null ? [cellIndex] : [],
+      ) ?? [];
+    const [lastEmpty] = emptyCells;
+    const solved =
+      placed &&
+      lastEmpty !== undefined &&
+      inputMagicSquareSessionValue(
+        selectMagicSquareSessionCell(placed, lastEmpty),
+        "value",
+        12,
+        0,
+      ).session;
+
+    expect(emptyCells).toHaveLength(1);
+    expect(solved ? solved.status : null).toBe("cleared");
   });
 
   test("列の合計のルールの例は、手がかりどおりに押すと、そろった行が埋まったまま合計と違う行になること", () => {
@@ -193,13 +220,24 @@ describe("置き直しの数え方の流れ", () => {
     );
   }
 
-  /** 流れで置いた2つの数が、盤面の下に並んだ数で隣り合うか。 */
-  function arePlacedValuesNeighbors(flow: MagicSquareHowToPlayFlowFigure) {
+  /** 流れで置いた2つの数。 */
+  function readPlacedValues(flow: MagicSquareHowToPlayFlowFigure) {
     const [, first, second] = flow.frames.map((session) =>
       session.selectedCellIndex === null
         ? null
         : (session.puzzleState.cells[session.selectedCellIndex] ?? null),
     );
+    return { first, second };
+  }
+
+  function readPlacedValueGap(flow: MagicSquareHowToPlayFlowFigure): number {
+    const { first, second } = readPlacedValues(flow);
+    return Math.abs((first ?? 0) - (second ?? 0));
+  }
+
+  /** 流れで置いた2つの数が、盤面の下に並んだ数で隣り合うか。 */
+  function arePlacedValuesNeighbors(flow: MagicSquareHowToPlayFlowFigure) {
+    const { first, second } = readPlacedValues(flow);
     return (
       first !== null &&
       first !== undefined &&
@@ -232,7 +270,7 @@ describe("置き直しの数え方の流れ", () => {
     expect(flow.correctionCount).toBe(0);
   });
 
-  test("隣の数を押し間違えた流れは、列の端の色を変えた数を隣り合う数にすぐ置き換えて数えないこと", () => {
+  test("隣の数を押し間違えた流れは、列の端の色を変えた数を、盤面の下に並んだ数で隣り合い、数の大きさでは離れた数にすぐ置き換えて数えないこと", () => {
     const flow = correctionCountFlows.mistyped;
 
     expect(readColumnStatuses(flow)).toEqual([
@@ -241,6 +279,7 @@ describe("置き直しの数え方の流れ", () => {
       "incomplete",
     ]);
     expect(arePlacedValuesNeighbors(flow)).toBe(true);
+    expect(readPlacedValueGap(flow)).toBeGreaterThan(1);
     expect(flow.correctionCount).toBe(0);
   });
 

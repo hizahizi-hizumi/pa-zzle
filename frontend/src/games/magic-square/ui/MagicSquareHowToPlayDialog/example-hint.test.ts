@@ -1,4 +1,7 @@
-import { inputMagicSquareSessionValue } from "@/games/magic-square/session/session";
+import {
+  inputMagicSquareSessionValue,
+  undoMagicSquareSession,
+} from "@/games/magic-square/session/session";
 import { createMagicSquareExampleSession } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
 import {
   createMagicSquareExampleHintProgress,
@@ -49,6 +52,15 @@ function press(
         ...state,
         inputMode: state.inputMode === "memo" ? "value" : "memo",
       };
+    case "undo": {
+      const board = state.selection?.board ?? 0;
+      return {
+        ...state,
+        sessions: state.sessions.map((current, index) =>
+          index === board ? undoMagicSquareSession(current) : current,
+        ),
+      };
+    }
     case "value": {
       const { selection } = state;
       const session =
@@ -169,6 +181,12 @@ describe("受け付けられない手がかりの手を押した場合", () => {
     expect(findGivenHint(givenHints)).toBeNull();
   });
 
+  test("続けて手がかりの外の数を押して、また受け付けられなくても、出さないままにすること", () => {
+    const hint = findGivenHint([...givenHints, { kind: "value", value: 7 }]);
+
+    expect(hint).toBeNull();
+  });
+
   test("マスを選び直すと、また出すこと", () => {
     const hint = findGivenHint([
       ...givenHints,
@@ -176,5 +194,17 @@ describe("受け付けられない手がかりの手を押した場合", () => {
     ]);
 
     expect(hint).toEqual(givenHints[1]);
+  });
+});
+
+describe("待ったで手がかりの姿へ戻した場合", () => {
+  test("手がかりから外れた数を待ったで外すと、選んだままのマスの次の手から出し直すこと", () => {
+    const hint = findHint([
+      selectEmptyCell,
+      { kind: "value", value: 12 },
+      { kind: "undo" },
+    ]);
+
+    expect(hint).toEqual(placeAnswer);
   });
 });
