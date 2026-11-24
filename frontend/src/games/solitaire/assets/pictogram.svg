@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ソリティア">
+  <path fill="var(--game-pictogram-soft)" d="M34 44V22A6 6 0 0 1 40 16H80A6 6 0 0 1 86 22V44Z"/>
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round">
+    <path d="M34 30V22A6 6 0 0 1 40 16H80A6 6 0 0 1 86 22V30"/>
+    <path d="M34 44V36A6 6 0 0 1 40 30H80A6 6 0 0 1 86 36V44"/>
+    <rect x="34" y="44" width="52" height="60" rx="6"/>
+  </g>
+  <path fill="var(--game-pictogram-strong)" d="M60 92C47 83 45 76 45 71.5C45 66.5 48.5 63 53 63C56 63 58.5 64.8 60 67.5C61.5 64.8 64 63 67 63C71.5 63 75 66.5 75 71.5C75 76 73 83 60 92Z"/>
+</svg>
