@@ -1,9 +1,9 @@
 import { SOLITAIRE_COLUMN_COUNT } from "@/games/solitaire/puzzle/state";
 
-export const SOLITAIRE_BOARD_SIDE_PADDING_PX = 8;
-export const SOLITAIRE_COLUMN_GAP_PX = 4;
+const SOLITAIRE_BOARD_SIDE_PADDING_PX = 8;
+const SOLITAIRE_COLUMN_GAP_PX = 4;
 /** 上の段（山札・捨て札・組札）と列の間。 */
-export const SOLITAIRE_ROW_GAP_PX = 8;
+const SOLITAIRE_ROW_GAP_PX = 8;
 /** 札の高さ ÷ 幅。 */
 export const SOLITAIRE_CARD_ASPECT_RATIO = 1.4;
 /** 列で重ねた札の、手前の札をずらす幅 ÷ 札の高さ。長い列で入りきらないときだけ、その列を詰める。 */

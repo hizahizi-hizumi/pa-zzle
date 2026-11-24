@@ -43,7 +43,7 @@ export type SolitaireStockTurn = { kind: "draw" } | { kind: "recycle" };
 
 export type SolitaireMove = SolitaireTransfer | SolitaireStockTurn;
 
-export const solitaireSources: readonly SolitaireSource[] = [
+const solitaireSources: readonly SolitaireSource[] = [
   ...Array.from(
     { length: SOLITAIRE_COLUMN_COUNT },
     (_, columnIndex): SolitaireSource => ({ pile: "column", columnIndex }),
@@ -54,7 +54,7 @@ export const solitaireSources: readonly SolitaireSource[] = [
   ),
 ];
 
-export const solitaireDestinations: readonly SolitaireDestination[] = [
+const solitaireDestinations: readonly SolitaireDestination[] = [
   ...Array.from(
     { length: SOLITAIRE_COLUMN_COUNT },
     (_, columnIndex): SolitaireDestination => ({ pile: "column", columnIndex }),
@@ -175,7 +175,7 @@ export function getSolitaireStockTurn(
 }
 
 /** 今の盤面で打てる手のすべて。置き元の山と置き先の山の組ごとに1つずつと、山札を押す手。 */
-export function listSolitaireMoves(state: SolitaireState): SolitaireMove[] {
+function listSolitaireMoves(state: SolitaireState): SolitaireMove[] {
   const moves: SolitaireMove[] = [];
   for (const source of solitaireSources) {
     for (const destination of solitaireDestinations) {
@@ -271,3 +271,5 @@ export function applySolitaireMove(
     ? applySolitaireTransfer(state, transfer)
     : null;
 }
+
+export const _private = { listSolitaireMoves };

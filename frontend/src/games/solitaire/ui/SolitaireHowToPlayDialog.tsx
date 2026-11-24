@@ -8,33 +8,15 @@ import { HowToPlayOverlay } from "@/components/HowToPlayOverlay";
 import { HowToPlayRule } from "@/components/HowToPlayRule";
 import { HowToPlayScoreRow } from "@/components/HowToPlayScoreRow";
 import { HowToPlaySection } from "@/components/HowToPlaySection";
-import {
-  HowToPlayVerdict,
-  type HowToPlayVerdictLabels,
-} from "@/components/HowToPlayVerdict";
 import { playMenuOperationItems } from "@/components/play-menu-operations";
 import { UndoButton } from "@/components/UndoButton";
 import {
   PLAY_OPERATION_LABELS,
+  PLAY_OPERATION_PHRASES,
   SCORE_ITEM_LABELS,
 } from "@/games/play-vocabulary";
 import pictogramSvg from "@/games/solitaire/assets/pictogram.svg?raw";
 import { SOLITAIRE_DISPLAY_NAME } from "@/games/solitaire/display-name";
-import {
-  createSolitaireCard,
-  getSolitaireCardSuit,
-  type SolitaireCard,
-} from "@/games/solitaire/puzzle/card";
-import {
-  canPlaceSolitaireCardOnColumn,
-  canPlaceSolitaireCardOnFoundation,
-} from "@/games/solitaire/puzzle/rules";
-import {
-  emptySolitaireFoundations,
-  findSolitaireRunStart,
-  getSolitaireFoundationTop,
-  type SolitaireColumn,
-} from "@/games/solitaire/puzzle/state";
 import {
   SOLITAIRE_RETRACTED_MOVE_PENALTY,
   SOLITAIRE_SCORE_MAXIMUMS,
@@ -43,16 +25,30 @@ import {
 } from "@/games/solitaire/score";
 import { SolitaireCardBack } from "@/games/solitaire/ui/board/SolitaireCardBack";
 import { SolitaireCardFace } from "@/games/solitaire/ui/board/SolitaireCardFace";
-import { SolitaireEmptySlot } from "@/games/solitaire/ui/board/SolitaireEmptySlot";
+import { ColumnPlacementExample } from "@/games/solitaire/ui/SolitaireHowToPlayDialog/ColumnPlacementExample";
+import { FigureColumn } from "@/games/solitaire/ui/SolitaireHowToPlayDialog/FigureColumn";
+import { FoundationPlacementExample } from "@/games/solitaire/ui/SolitaireHowToPlayDialog/FoundationPlacementExample";
 import {
-  FIGURE_CARD_WIDTH,
-  FigureColumn,
-} from "@/games/solitaire/ui/SolitaireHowToPlayDialog/FigureColumn";
+  clubSeven,
+  heartFive,
+  heartFour,
+  heartJack,
+  heartKing,
+  heartSeven,
+  heartsUpToThree,
+  heartTen,
+  placeLabels,
+  runColumn,
+  runStart,
+  spadeAce,
+  spadeEight,
+  spadeQueen,
+  stackLabels,
+} from "@/games/solitaire/ui/SolitaireHowToPlayDialog/figure-examples";
 import { GoalFigure } from "@/games/solitaire/ui/SolitaireHowToPlayDialog/GoalFigure";
-import { PlacementFigure } from "@/games/solitaire/ui/SolitaireHowToPlayDialog/PlacementFigure";
 import { StockFigure } from "@/games/solitaire/ui/SolitaireHowToPlayDialog/StockFigure";
-import { SOLITAIRE_STUCK_NOTICE_LABEL } from "@/games/solitaire/ui/SolitaireStuckNotice";
 import { SOLITAIRE_RETRACTED_MOVE_LABEL } from "@/games/solitaire/ui/score-vocabulary";
+import { SOLITAIRE_STUCK_NOTICE_LABEL } from "@/games/solitaire/ui/stuck-notice";
 
 type SolitaireHowToPlayDialogProps = {
   open: boolean;
@@ -62,101 +58,6 @@ type SolitaireHowToPlayDialogProps = {
 const game = { name: SOLITAIRE_DISPLAY_NAME, pictogramSvg };
 
 const { undo } = PLAY_OPERATION_LABELS;
-
-const spadeEight = createSolitaireCard("spades", 8);
-const heartSeven = createSolitaireCard("hearts", 7);
-const clubSeven = createSolitaireCard("clubs", 7);
-const heartKing = createSolitaireCard("hearts", 13);
-const spadeQueen = createSolitaireCard("spades", 12);
-const heartJack = createSolitaireCard("hearts", 11);
-
-const stackLabels: HowToPlayVerdictLabels = {
-  allowed: "重ねられる",
-  disallowed: "重ねられない",
-};
-const placeLabels: HowToPlayVerdictLabels = {
-  allowed: "置ける",
-  disallowed: "置けない",
-};
-
-/** 列 `base` の一番手前に `placed` の並びを置こうとする姿と、置けるかの判定。判定はプレイと同じ規則で求める。 */
-function ColumnPlacementExample({
-  base,
-  placed,
-  labels,
-}: {
-  base: SolitaireColumn;
-  placed: SolitaireColumn;
-  labels: HowToPlayVerdictLabels;
-}) {
-  const [first] = placed;
-  const allowed =
-    first !== undefined && canPlaceSolitaireCardOnColumn(first, base);
-  return (
-    <HowToPlayExample
-      figure={
-        <PlacementFigure
-          destination={
-            base.length === 0 ? (
-              <SolitaireEmptySlot width={FIGURE_CARD_WIDTH} />
-            ) : (
-              <FigureColumn cards={base} />
-            )
-          }
-          moved={<FigureColumn cards={placed} />}
-        />
-      }
-      caption={
-        <HowToPlayVerdict
-          verdict={allowed ? "allowed" : "disallowed"}
-          labels={labels}
-        />
-      }
-    />
-  );
-}
-
-const heartsUpToThree = { ...emptySolitaireFoundations, hearts: 3 };
-
-/** 3まで積んだ ♥ の組札に `card` を置こうとする姿と、置けるかの判定。判定はプレイと同じ規則で求める。 */
-function FoundationPlacementExample({ card }: { card: SolitaireCard }) {
-  const top = getSolitaireFoundationTop(
-    heartsUpToThree,
-    getSolitaireCardSuit(card),
-  );
-  const allowed = canPlaceSolitaireCardOnFoundation(heartsUpToThree, card);
-  return (
-    <HowToPlayExample
-      figure={
-        <PlacementFigure
-          destination={
-            top === null ? (
-              <SolitaireEmptySlot width={FIGURE_CARD_WIDTH} />
-            ) : (
-              <SolitaireCardFace card={top} width={FIGURE_CARD_WIDTH} />
-            )
-          }
-          moved={<SolitaireCardFace card={card} width={FIGURE_CARD_WIDTH} />}
-        />
-      }
-      caption={
-        <HowToPlayVerdict
-          verdict={allowed ? "allowed" : "disallowed"}
-          labels={placeLabels}
-        />
-      }
-    />
-  );
-}
-
-/** 並んだ札の手前から、まとめて動かせる所までを、置き元に選んだ枠で囲む。 */
-const runColumn: SolitaireColumn = [
-  createSolitaireCard("diamonds", 5),
-  createSolitaireCard("clubs", 9),
-  createSolitaireCard("hearts", 8),
-  createSolitaireCard("spades", 7),
-];
-const runStart = findSolitaireRunStart(runColumn);
 
 function ignoreFigurePress() {}
 
@@ -197,7 +98,7 @@ function renderScoreRows(item: keyof typeof SOLITAIRE_SCORE_MAXIMUMS) {
         <HowToPlayScoreRow
           measure={SOLITAIRE_RETRACTED_MOVE_LABEL}
           deduction={`1手 −${SOLITAIRE_RETRACTED_MOVE_PENALTY}点`}
-          text="「待った」で/戻した手と、/盤面を戻して/なくなった手を/数えます。"
+          text={`「${PLAY_OPERATION_PHRASES.undo}」で/戻した手と、/「${PLAY_OPERATION_PHRASES.restart}」で/なくなった手を/数えます。`}
         />
       );
     case "speed":
@@ -278,10 +179,12 @@ export function SolitaireHowToPlayDialog({
             examples={
               <>
                 <FoundationPlacementExample
-                  card={createSolitaireCard("hearts", 4)}
+                  foundations={heartsUpToThree}
+                  card={heartFour}
                 />
                 <FoundationPlacementExample
-                  card={createSolitaireCard("hearts", 5)}
+                  foundations={heartsUpToThree}
+                  card={heartFive}
                 />
               </>
             }
@@ -309,9 +212,7 @@ export function SolitaireHowToPlayDialog({
                           cards={runColumn}
                           selectedFrom={runStart}
                         />
-                        <FigureColumn
-                          cards={[createSolitaireCard("hearts", 10)]}
-                        />
+                        <FigureColumn cards={[heartTen]} />
                       </span>
                     }
                   />
@@ -329,10 +230,7 @@ export function SolitaireHowToPlayDialog({
             <HowToPlayOperationRow
               visual={
                 <span aria-hidden="true" className="flex">
-                  <SolitaireCardFace
-                    card={createSolitaireCard("spades", 1)}
-                    width={34}
-                  />
+                  <SolitaireCardFace card={spadeAce} width={34} />
                 </span>
               }
               text="組札へ置くときは、/4つの組札の/どれを押しても、/札のマークの/組札へ置きます。"

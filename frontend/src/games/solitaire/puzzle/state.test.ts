@@ -1,5 +1,5 @@
 import {
-  parseSolitaireCard,
+  _private as cardPrivate,
   type SolitaireCard,
 } from "@/games/solitaire/puzzle/card";
 import {
@@ -12,6 +12,8 @@ import {
   isSolitaireCleared,
   type SolitaireState,
 } from "@/games/solitaire/puzzle/state";
+
+const { parseSolitaireCard } = cardPrivate;
 
 function cards(text: string): SolitaireCard[] {
   return text

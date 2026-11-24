@@ -85,7 +85,7 @@ export type SolitaireProblemFeatures = {
   cardsBelowKing: number;
 };
 
-export function measureSolitaireProblemFeatures({
+function measureSolitaireProblemFeatures({
   columns,
 }: SolitaireProblem): SolitaireProblemFeatures {
   let cardsAboveAce = 0;
@@ -127,3 +127,5 @@ export const solitaireProblemFeatureAxes = [
 
 export type SolitaireProblemFeatureAxisId =
   (typeof solitaireProblemFeatureAxes)[number]["id"];
+
+export const _private = { measureSolitaireProblemFeatures };

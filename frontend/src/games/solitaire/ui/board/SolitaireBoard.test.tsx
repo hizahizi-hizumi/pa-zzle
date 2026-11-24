@@ -1,12 +1,14 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 
-import { parseSolitaireCard } from "@/games/solitaire/puzzle/card";
+import { _private as cardPrivate } from "@/games/solitaire/puzzle/card";
 import {
   emptySolitaireFoundations,
   type SolitaireState,
 } from "@/games/solitaire/puzzle/state";
 import { SolitaireBoard } from "@/games/solitaire/ui/board/SolitaireBoard";
+
+const { parseSolitaireCard } = cardPrivate;
 
 afterEach(cleanup);
 
@@ -37,7 +39,7 @@ function createProps(): ComponentProps<typeof SolitaireBoard> {
     selectedSource: null,
     operation: null,
     interactionDisabled: false,
-    onPressPile: vi.fn(),
+    onSelectPile: vi.fn(),
   };
 }
 
@@ -64,7 +66,7 @@ describe("SolitaireBoard", () => {
       (name, pile) => {
         fireEvent.click(screen.getByRole("button", { name }));
 
-        expect(props.onPressPile).toHaveBeenCalledWith(pile);
+        expect(props.onSelectPile).toHaveBeenCalledWith(pile);
       },
     );
 
@@ -88,7 +90,7 @@ describe("SolitaireBoard", () => {
     test("山を押しても知らせないこと", () => {
       fireEvent.click(screen.getByRole("button", { name: "山札、残り2枚" }));
 
-      expect(props.onPressPile).not.toHaveBeenCalled();
+      expect(props.onSelectPile).not.toHaveBeenCalled();
     });
   });
 

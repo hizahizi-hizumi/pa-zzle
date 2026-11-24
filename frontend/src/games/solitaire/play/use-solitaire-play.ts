@@ -25,8 +25,8 @@ import {
   type SolitaireFoundationProgress,
 } from "@/games/solitaire/puzzle/foundation-progress";
 import {
-  pressSolitairePile,
   type SolitairePile,
+  selectSolitairePile,
 } from "@/games/solitaire/puzzle/pile-selection";
 import type {
   SolitaireMove,
@@ -109,7 +109,7 @@ export type SolitairePlay = GamePlay<
     operation: SolitaireOperation | null;
     /** どの手順でも今より多くの札を組札に置けないことを知らせる、プレイ中だけ `true`。 */
     isStuck: boolean;
-    pressPile: (pile: SolitairePile) => void;
+    selectPile: (pile: SolitairePile) => void;
   };
 
 type SolitairePlayState = {
@@ -143,10 +143,10 @@ function selectProblem(
   ).problem;
 }
 
-function pressPileInPlay(
+function selectPileInPlay(
   current: SolitairePlayState,
   pile: SolitairePile,
-  pressedAt: number,
+  selectedAt: number,
   operationId: number,
 ): SolitairePlayState {
   const { session } = current;
@@ -154,31 +154,31 @@ function pressPileInPlay(
     return current;
   }
 
-  const press = pressSolitairePile(
+  const selection = selectSolitairePile(
     session.puzzleState,
     current.selectedSource,
     pile,
   );
-  switch (press.type) {
+  switch (selection.type) {
     case "source-selected":
       return {
         ...current,
-        selectedSource: press.source,
-        operation: { id: operationId, ...press },
+        selectedSource: selection.source,
+        operation: { id: operationId, ...selection },
       };
     case "source-deselected":
       return {
         ...current,
         selectedSource: null,
-        operation: { id: operationId, ...press },
+        operation: { id: operationId, ...selection },
       };
     case "invalid":
-      return { ...current, operation: { id: operationId, ...press } };
+      return { ...current, operation: { id: operationId, ...selection } };
     case "move": {
       const nextSession = applySolitaireSessionMove(
         session,
-        press.move,
-        pressedAt,
+        selection.move,
+        selectedAt,
       );
       return {
         ...applyPlaySession(current, nextSession),
@@ -186,7 +186,7 @@ function pressPileInPlay(
         operation: {
           id: operationId,
           type: "moved",
-          move: press.move,
+          move: selection.move,
           stateBefore: session.puzzleState,
           isClearingMove: nextSession.status === "cleared",
         },
@@ -253,11 +253,11 @@ export function useSolitairePlay(
   const elapsedMs = useSessionElapsedMs(session);
   const nextOperationId = useRef(0);
 
-  const pressPile = useCallback((pile: SolitairePile) => {
-    const pressedAt = Date.now();
+  const selectPile = useCallback((pile: SolitairePile) => {
+    const selectedAt = Date.now();
     const operationId = nextOperationId.current++;
     setPlay((current) =>
-      pressPileInPlay(current, pile, pressedAt, operationId),
+      selectPileInPlay(current, pile, selectedAt, operationId),
     );
   }, []);
 
@@ -324,7 +324,7 @@ export function useSolitairePlay(
     isStuck,
     canUndo: canUndoSolitaireSession(session),
     canRestart: canRestartSolitaireSession(session),
-    pressPile,
+    selectPile,
     undo,
     restart,
     replay,

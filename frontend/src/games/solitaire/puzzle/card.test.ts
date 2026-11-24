@@ -1,14 +1,15 @@
 import {
+  _private,
   canStackSolitaireCard,
   createSolitaireCard,
-  formatSolitaireCard,
   getSolitaireCardRank,
   getSolitaireCardSuit,
   isRedSolitaireCard,
   isSolitaireCard,
-  parseSolitaireCard,
   SOLITAIRE_CARD_COUNT,
 } from "@/games/solitaire/puzzle/card";
+
+const { formatSolitaireCard, parseSolitaireCard } = _private;
 
 const allCards = Array.from(
   { length: SOLITAIRE_CARD_COUNT },

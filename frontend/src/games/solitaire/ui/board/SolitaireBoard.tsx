@@ -44,7 +44,7 @@ type SolitaireBoardProps = {
   selectedSource: SolitaireSource | null;
   operation: SolitaireOperation | null;
   interactionDisabled: boolean;
-  onPressPile: (pile: SolitairePile) => void;
+  onSelectPile: (pile: SolitairePile) => void;
   onClearAnimationComplete?: () => void;
 };
 
@@ -138,7 +138,7 @@ function getColumnSelectionFrame(
 
 /**
  * ソリティアの盤面。上の段に左から山札・捨て札・空き・組札4つ（マークの順）を、その下に7列を、同じ7列の格子に並べる。
- * 山（山札・捨て札・組札・列）を押すと `onPressPile` で知らせる。列は札の無い所を含む列の範囲全体が押す所。
+ * 山（山札・捨て札・組札・列）を押すと `onSelectPile` で知らせる。列は札の無い所を含む列の範囲全体が押す所。
  * 置き元に選んだ山は、持ち上げずに、動かせる札を枠で囲んで示す。
  */
 export function SolitaireBoard({
@@ -146,7 +146,7 @@ export function SolitaireBoard({
   selectedSource,
   operation,
   interactionDisabled,
-  onPressPile,
+  onSelectPile,
   onClearAnimationComplete,
 }: SolitaireBoardProps) {
   const { ref: boardRef, size } = useBoardSize();
@@ -224,7 +224,7 @@ export function SolitaireBoard({
       disabled: interactionDisabled,
       className:
         "absolute cursor-pointer touch-manipulation select-none outline-none disabled:cursor-default focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      ...getTapHandlers(() => onPressPile(pile)),
+      ...getTapHandlers(() => onSelectPile(pile)),
     };
   }
 
@@ -342,10 +342,9 @@ export function SolitaireBoard({
               }}
             >
               {column.length === 0 ? (
-                <SolitaireEmptySlot
-                  width={cardWidth}
-                  className="absolute top-0 left-0"
-                />
+                <span className="absolute top-0 left-0">
+                  <SolitaireEmptySlot width={cardWidth} />
+                </span>
               ) : (
                 column.map((card, cardIndex) => (
                   <span

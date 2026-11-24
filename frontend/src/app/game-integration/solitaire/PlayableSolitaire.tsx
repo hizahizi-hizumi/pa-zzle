@@ -55,7 +55,7 @@ export function PlayableSolitaire({
         selectedSource={play.selectedSource}
         operation={play.operation}
         isStuck={play.isStuck}
-        onPressPile={play.pressPile}
+        onSelectPile={play.selectPile}
         canUndo={play.canUndo}
         onUndo={play.undo}
         canRestart={play.canRestart}

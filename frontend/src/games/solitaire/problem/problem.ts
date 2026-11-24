@@ -104,7 +104,7 @@ function decodeSolitaireProblem(seed: string): SolitaireProblem | null {
  * 問題から identity を作る。`seed` は、列を左から順に各列の一番奥から手前へ、続けて山札を最初にめくる札から並べ、
  * 札を1文字ずつ（`cardCodeAlphabet`）にした52文字。
  */
-export function createSolitaireProblemIdentity(
+function createSolitaireProblemIdentity(
   problem: SolitaireProblem,
 ): SolitaireProblemIdentity {
   assertSolitaireProblem(problem);
@@ -156,4 +156,7 @@ export function isSolitaireRecordedProblemIdentity(
   });
 }
 
-export const _private = { decodeSolitaireProblem };
+export const _private = {
+  createSolitaireProblemIdentity,
+  decodeSolitaireProblem,
+};

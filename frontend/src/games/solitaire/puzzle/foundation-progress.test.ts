@@ -16,7 +16,7 @@ import {
 } from "@/games/solitaire/puzzle/foundation-progress";
 import {
   applySolitaireMove,
-  listSolitaireMoves,
+  _private as rulesPrivate,
 } from "@/games/solitaire/puzzle/rules";
 import {
   countSolitaireFoundationCards,
@@ -24,6 +24,8 @@ import {
   type SolitaireFoundations,
   type SolitaireState,
 } from "@/games/solitaire/puzzle/state";
+
+const { listSolitaireMoves } = rulesPrivate;
 
 const { searchSolitaireFoundationCount } = _private;
 
@@ -176,7 +178,7 @@ describe("findSolitaireFoundationProgress", () => {
     },
   );
 
-  describe("組札から戻して置き直すだけの手が残る局面", () => {
+  describe("組札から戻して置き直すだけの手が残る局面の場合", () => {
     // 組札は ♠K・♥Q・♦K まで。♣A は ♣2 の下に、♥K は ♣5 の下にあり、空いた列が無いので、どちらの上の札も動かせない。
     // 組札の ♥Q は列の ♣K の上へ戻せるが、戻しても組札は増えない。
     const state: SolitaireState = {
@@ -214,7 +216,7 @@ describe("findSolitaireFoundationProgress", () => {
     });
   });
 
-  describe("クリアした盤面", () => {
+  describe("クリアした盤面の場合", () => {
     const state: SolitaireState = {
       columns: [[], [], [], [], [], [], []],
       stock: [],
@@ -229,7 +231,7 @@ describe("findSolitaireFoundationProgress", () => {
     });
   });
 
-  describe("調べる局面の数の上限で決まらない局面", () => {
+  describe("調べる局面の数の上限で決まらない局面の場合", () => {
     const researchCase = researchCases[2];
     const state: SolitaireState = {
       columns: researchCase.columns,
@@ -411,40 +413,30 @@ describe("searchSolitaireFoundationCount", () => {
     createRandomScatteredState(random),
   );
   const maxVisitedStates = 5_000;
-  const goals = [
-    ["解けるか", () => SOLITAIRE_CARD_COUNT, ["unreachable"]],
-    [
-      "組札を増やせるか",
-      (state: SolitaireState) =>
-        countSolitaireFoundationCards(state.foundations) + 1,
-      ["reached", "unreachable"],
-    ],
-  ] as const;
 
-  test.each(goals)(
-    "無作為に積んだ盤面で、山札を札の集まりとして扱っても、並びのまま扱っても、決まった%sの答えが同じであること",
-    (_, targetCountOf, expectedOutcomes) => {
-      const answers = states.map((state) => {
-        const targetCount = targetCountOf(state);
-        return {
-          pooled: searchSolitaireFoundationCount(
-            state,
-            targetCount,
-            maxVisitedStates,
-          ).outcome,
-          ordered: searchWithOrderedStock(state, targetCount, maxVisitedStates),
-        };
-      });
-      const determined = answers.filter(
-        ({ pooled, ordered }) => pooled !== "unknown" && ordered !== "unknown",
-      );
+  // 解けるかは、組札の札を列へ戻す手で調べる局面がすぐ上限を超え、無作為な盤面では答えがほとんど決まらないので、組札を増やせるかで突き合わせる。
+  // 解けるかも含めて答えが同じであることの根拠は、1手で行ける列と組札が同じこと（listPooledNextStates のテスト）。
+  test("無作為に積んだ盤面で、山札を札の集まりとして扱っても、並びのまま扱っても、決まった組札を増やせるかの答えが同じであること", () => {
+    const answers = states.map((state) => {
+      const targetCount = countSolitaireFoundationCards(state.foundations) + 1;
+      return {
+        pooled: searchSolitaireFoundationCount(
+          state,
+          targetCount,
+          maxVisitedStates,
+        ).outcome,
+        ordered: searchWithOrderedStock(state, targetCount, maxVisitedStates),
+      };
+    });
+    const determined = answers.filter(
+      ({ pooled, ordered }) => pooled !== "unknown" && ordered !== "unknown",
+    );
 
-      expect({
-        mismatched: determined.filter(
-          ({ pooled, ordered }) => pooled !== ordered,
-        ),
-        outcomes: [...new Set(determined.map(({ pooled }) => pooled))].sort(),
-      }).toEqual({ mismatched: [], outcomes: expectedOutcomes });
-    },
-  );
+    expect({
+      mismatched: determined.filter(
+        ({ pooled, ordered }) => pooled !== ordered,
+      ),
+      outcomes: [...new Set(determined.map(({ pooled }) => pooled))].sort(),
+    }).toEqual({ mismatched: [], outcomes: ["reached", "unreachable"] });
+  });
 });

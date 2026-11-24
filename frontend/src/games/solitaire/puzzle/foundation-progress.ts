@@ -26,7 +26,7 @@ export type SolitaireFoundationProgress =
 /** 状態の知らせの判定で調べる局面の数の上限。上限で決まらなければ知らせない。 */
 // 判定は手を打つたびに走るので、上限まで探しても止まって見えない長さに収める。2万局面は bun（2.1GHz の Xeon）で約0.1〜0.2秒。
 // 調査コードの素朴な解き方が詰んだ局面で、組札を増やせないと決まった428局面のうち427局面は、2万局面までに決まった。
-export const SOLITAIRE_FOUNDATION_PROGRESS_STATE_LIMIT = 20_000;
+const SOLITAIRE_FOUNDATION_PROGRESS_STATE_LIMIT = 20_000;
 
 /**
  * 探す局面。山札と捨て札は、何周でもめくれるのでどの札もいつでも取り出せ、並びは行ける局面を変えない。
@@ -405,7 +405,7 @@ class FoundationCountSearch {
   }
 }
 
-export type SolitaireFoundationCountSearch = {
+type SolitaireFoundationCountSearch = {
   outcome: "reached" | "unreachable" | "unknown";
   /** 調べた局面の数。列の並び替えで同じになる局面は1つと数える。 */
   visitedStateCount: number;

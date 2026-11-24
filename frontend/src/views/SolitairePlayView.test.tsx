@@ -16,7 +16,7 @@ import { selectSolitaireProblemById } from "@/games/solitaire/problem-selection"
 import type { SolitairePile } from "@/games/solitaire/puzzle/pile-selection";
 import {
   applySolitaireMove,
-  listSolitaireMoves,
+  _private as rulesPrivate,
   type SolitaireMove,
 } from "@/games/solitaire/puzzle/rules";
 import {
@@ -28,6 +28,8 @@ import {
 import { solitaireSuitSymbols } from "@/games/solitaire/ui/card-text";
 import { PlayResultView } from "@/views/PlayResultView";
 import { SolitairePlayView } from "@/views/SolitairePlayView";
+
+const { listSolitaireMoves } = rulesPrivate;
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
 
@@ -92,7 +94,7 @@ function getPileNamePattern(pile: SolitairePile): RegExp {
   }
 }
 
-function pressPiles(piles: readonly SolitairePile[]): void {
+function selectPiles(piles: readonly SolitairePile[]): void {
   for (const pile of piles) {
     fireEvent.click(
       screen.getByRole("button", { name: getPileNamePattern(pile) }),
@@ -210,7 +212,7 @@ describe("SolitairePlayView", () => {
 
     beforeEach(async () => {
       router = renderAt(`/puzzles/solitaire/play/${level1ProblemId}`);
-      pressPiles(solution);
+      selectPiles(solution);
       await screen.findByRole("region", { name: "プレイ結果" });
     });
 
@@ -249,7 +251,7 @@ describe("SolitairePlayView", () => {
   describe("途中でプレイを離れた場合", () => {
     beforeEach(async () => {
       renderAt(`/puzzles/solitaire/play/${level1ProblemId}`);
-      pressPiles([{ pile: "stock" }, { pile: "stock" }]);
+      selectPiles([{ pile: "stock" }, { pile: "stock" }]);
       fireEvent.click(screen.getByRole("button", { name: "問題選択へ戻る" }));
       await act(async () => {
         await Promise.resolve();

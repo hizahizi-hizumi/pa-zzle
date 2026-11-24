@@ -134,6 +134,17 @@ describe("restoreSolitaireRecordedResult", () => {
     });
   });
 
+  describe("読み戻した成績に余分な項目がある場合", () => {
+    const recordWithExtra = withPerformance({ bonus: 10 });
+
+    test("余分な項目を結果へ持ち込まないこと", () => {
+      const recorded = restoreSolitaireRecordedResult(recordWithExtra);
+
+      expect(recorded).not.toBeNull();
+      expect(Object.hasOwn(recorded!.result, "bonus")).toBe(false);
+    });
+  });
+
   describe("別の生成器の版の記録の場合", () => {
     const otherGeneratorRecord: PlayRecord = {
       ...record,

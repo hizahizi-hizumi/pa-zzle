@@ -1,14 +1,16 @@
-import { parseSolitaireCard } from "@/games/solitaire/puzzle/card";
+import { _private as cardPrivate } from "@/games/solitaire/puzzle/card";
 import {
   isSameSolitairePile,
-  pressSolitairePile,
   type SolitairePile,
+  selectSolitairePile,
 } from "@/games/solitaire/puzzle/pile-selection";
 import type { SolitaireSource } from "@/games/solitaire/puzzle/rules";
 import {
   emptySolitaireFoundations,
   type SolitaireState,
 } from "@/games/solitaire/puzzle/state";
+
+const { parseSolitaireCard } = cardPrivate;
 
 function parseCards(text: string) {
   return text === ""
@@ -38,8 +40,8 @@ const column = (columnIndex: number) =>
 const foundation = (suit: "spades" | "hearts" | "diamonds" | "clubs") =>
   ({ pile: "foundation", suit }) as const;
 
-describe("pressSolitairePile", () => {
-  describe("山札を押す", () => {
+describe("selectSolitairePile", () => {
+  describe("山札を押した場合", () => {
     const cases: [string, SolitaireState, SolitaireSource | null, unknown][] = [
       [
         "山札が残っていれば1枚めくる",
@@ -68,13 +70,13 @@ describe("pressSolitairePile", () => {
     ];
 
     test.each(cases)("%sこと", (_, current, selected, expected) => {
-      const press = pressSolitairePile(current, selected, stock);
+      const selection = selectSolitairePile(current, selected, stock);
 
-      expect(press).toEqual(expected);
+      expect(selection).toEqual(expected);
     });
   });
 
-  describe("置き元を選んでいない", () => {
+  describe("置き元を選んでいない場合", () => {
     const cases = [
       ["札のある列", column(0), { type: "source-selected", source: column(0) }],
       ["捨て札", waste, { type: "source-selected", source: waste }],
@@ -92,13 +94,13 @@ describe("pressSolitairePile", () => {
     ] as const;
 
     test.each(cases)("%sを押した結果を返すこと", (_, pile, expected) => {
-      const press = pressSolitairePile(state, null, pile);
+      const selection = selectSolitairePile(state, null, pile);
 
-      expect(press).toEqual(expected);
+      expect(selection).toEqual(expected);
     });
   });
 
-  describe("置き元を選んでいる", () => {
+  describe("置き元を選んでいる場合", () => {
     const cases = [
       [
         "同じ山を押すと選ぶのをやめる",
@@ -149,9 +151,9 @@ describe("pressSolitairePile", () => {
     ] as const;
 
     test.each(cases)("%sこと", (_, selected, pile, expected) => {
-      const press = pressSolitairePile(state, selected, pile);
+      const selection = selectSolitairePile(state, selected, pile);
 
-      expect(press).toEqual(expected);
+      expect(selection).toEqual(expected);
     });
   });
 });

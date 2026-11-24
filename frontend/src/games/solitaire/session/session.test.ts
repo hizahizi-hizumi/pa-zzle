@@ -83,7 +83,7 @@ describe("applySolitaireSessionMove", () => {
     expect(next).toMatchObject({ moveCount: 1, puzzleState: { waste: [42] } });
   });
 
-  describe("打てない手", () => {
+  describe("打てない手の場合", () => {
     const illegalMove: SolitaireMove = {
       kind: "transfer",
       source: { pile: "column", columnIndex: 1 },
@@ -98,7 +98,7 @@ describe("applySolitaireSessionMove", () => {
     });
   });
 
-  describe("最後の1枚を組札へ送る手", () => {
+  describe("最後の1枚を組札へ送る手の場合", () => {
     const lastCardState: SolitaireState = {
       columns: [[], [], [], [], [], [], [51]],
       stock: [],
@@ -123,7 +123,7 @@ describe("applySolitaireSessionMove", () => {
     });
   });
 
-  describe("クリアした後", () => {
+  describe("クリアした後の場合", () => {
     const cleared: SolitaireSession = {
       ...session,
       status: "cleared",
@@ -158,7 +158,7 @@ describe("undoSolitaireSession", () => {
     });
   });
 
-  describe("直前の手が山札をめくる手", () => {
+  describe("直前の手が山札をめくる手の場合", () => {
     const drawn = applySolitaireSessionMove(initial, draw, 2_000);
 
     test("待ったの回数は数え、取り消した手には数えないこと", () => {
@@ -168,7 +168,7 @@ describe("undoSolitaireSession", () => {
     });
   });
 
-  describe("配った直後", () => {
+  describe("配った直後の場合", () => {
     test("待ったできず、session を変えないこと", () => {
       const result = {
         canUndo: canUndoSolitaireSession(initial),
@@ -206,7 +206,7 @@ describe("restartSolitaireSession", () => {
     expect(restarted.retractedMoveCount).toBe(1);
   });
 
-  describe("配った直後の盤面", () => {
+  describe("配った直後の盤面の場合", () => {
     test("盤面を戻せず、回数も数えないこと", () => {
       const result = {
         canRestart: canRestartSolitaireSession(initial),
@@ -217,7 +217,7 @@ describe("restartSolitaireSession", () => {
     });
   });
 
-  describe("待ったで配った直後へ戻った盤面", () => {
+  describe("待ったで配った直後へ戻った盤面の場合", () => {
     const undone = undoSolitaireSession(
       applySolitaireSessionMove(initial, draw, 2_000),
     );

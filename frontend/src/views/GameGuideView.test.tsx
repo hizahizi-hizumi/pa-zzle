@@ -74,6 +74,24 @@ describe("GameHowToView", () => {
 
     await waitFor(() => expect(router.state.location.pathname).toBe(playPath));
   });
+
+  describe("チュートリアルを持たないゲームの場合", () => {
+    beforeEach(() => {
+      renderGuide("/puzzles/solitaire/how-to");
+    });
+
+    test("チュートリアルを始める操作を出さないこと", () => {
+      const dialog = screen.getByRole("dialog", {
+        name: "ソリティアの遊び方",
+      });
+
+      const tutorialButton = within(dialog).queryByRole("button", {
+        name: "チュートリアルで遊んで覚える",
+      });
+
+      expect(tutorialButton).toBeNull();
+    });
+  });
 });
 
 describe("GameTutorialView", () => {
@@ -98,22 +116,8 @@ describe("GameTutorialView", () => {
 
     expect(router.state.location.pathname).toBe(playPath);
   });
-});
 
-describe("チュートリアルを持たないゲームの場合", () => {
-  test("遊び方を開き、チュートリアルを始める操作を出さないこと", () => {
-    renderGuide("/puzzles/solitaire/how-to");
-
-    const dialog = screen.getByRole("dialog", { name: "ソリティアの遊び方" });
-
-    expect(
-      within(dialog).queryByRole("button", {
-        name: "チュートリアルで遊んで覚える",
-      }),
-    ).toBeNull();
-  });
-
-  describe("チュートリアルの画面を開いた場合", () => {
+  describe("チュートリアルを持たないゲームの場合", () => {
     beforeEach(() => {
       renderGuide("/puzzles/solitaire/tutorial");
     });

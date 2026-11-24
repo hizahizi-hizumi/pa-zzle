@@ -24,7 +24,7 @@ export type SolitairePile =
  * - `invalid`: 札の無い山を置き元に選ぼうとしたか、選んだ置き元から押した山へ置けない。
  * - `move`: 手を打つ。山札を押したときと、選んだ置き元から押した山へ置けるとき。
  */
-export type SolitairePilePress =
+export type SolitairePileSelection =
   | { type: "source-selected" | "source-deselected"; source: SolitaireSource }
   | { type: "invalid"; pile: SolitairePile }
   | { type: "move"; move: SolitaireMove };
@@ -74,11 +74,11 @@ function toDestination(pile: SolitaireSource): SolitaireDestination | null {
  * 山札を押すと、選んでいるかどうかに関わらず、めくるか捨て札を戻す。札のある山はどれも置き元に選べ、置けるかは置き先を押したときに決まる。
  * 組札は、どのマークの組札を押しても、置き先は札のマークの組札になる。
  */
-export function pressSolitairePile(
+export function selectSolitairePile(
   state: SolitaireState,
   selectedSource: SolitaireSource | null,
   pile: SolitairePile,
-): SolitairePilePress {
+): SolitairePileSelection {
   if (pile.pile === "stock") {
     const stockTurn = getSolitaireStockTurn(state);
     return stockTurn

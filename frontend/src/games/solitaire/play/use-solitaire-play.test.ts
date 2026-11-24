@@ -1,5 +1,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
+import { createProblemId } from "@/games/problem-id";
+import { createProblemSeed } from "@/games/problem-seed";
 import { useSolitairePlay } from "@/games/solitaire/play/use-solitaire-play";
 import {
   listSolitairePoolEntries,
@@ -8,7 +10,7 @@ import {
 import type { SolitairePile } from "@/games/solitaire/puzzle/pile-selection";
 import {
   applySolitaireMove,
-  listSolitaireMoves,
+  _private as rulesPrivate,
   type SolitaireMove,
 } from "@/games/solitaire/puzzle/rules";
 import {
@@ -17,6 +19,8 @@ import {
   isSolitaireCleared,
   type SolitaireState,
 } from "@/games/solitaire/puzzle/state";
+
+const { listSolitaireMoves } = rulesPrivate;
 
 /** 状態の知らせの判定の答えを、テストごとに決められるようにする。`null` なら本当の判定を使う。 */
 const progressOverride = vi.hoisted(() => ({
@@ -44,9 +48,34 @@ vi.mock(
   },
 );
 
+vi.mock("@/games/problem-seed", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/games/problem-seed")>()),
+  createProblemSeed: vi.fn(),
+}));
+
+/** 各レベルの問題集は1問なので、seed で選ぶ場合は、`otherSeed` だけレベル2 の問題を選ぶ問題集にする。 */
+const { initialSeed, otherSeed } = vi.hoisted(() => ({
+  initialSeed: "use-solitaire-play-a",
+  otherSeed: "use-solitaire-play-b",
+}));
+
+vi.mock("@/games/solitaire/problem-selection", async () => {
+  const { listSolitairePoolEntries, restoreSolitairePoolEntry } = await import(
+    "@/games/solitaire/problem/problem-pool"
+  );
+  return {
+    selectSolitaireProblemForDifficulty(_difficulty: string, seed: string) {
+      return restoreSolitairePoolEntry(
+        listSolitairePoolEntries(seed === otherSeed ? "2" : "1")[0]!,
+      );
+    },
+  };
+});
+
 afterEach(() => {
   cleanup();
   progressOverride.value = null;
+  vi.mocked(createProblemSeed).mockReset();
 });
 
 type HookResult = ReturnType<typeof useSolitairePlay>;
@@ -116,12 +145,12 @@ function renderPlay(problem = pooled) {
   return renderHook(() => useSolitairePlay("1", problem));
 }
 
-function press(
+function selectPiles(
   result: { current: HookResult },
   piles: readonly SolitairePile[],
 ) {
   for (const pile of piles) {
-    act(() => result.current.pressPile(pile));
+    act(() => result.current.selectPile(pile));
   }
 }
 
@@ -146,7 +175,7 @@ describe("useSolitairePlay", () => {
     });
 
     test("札のある列を押すと置き元に選ぶこと", () => {
-      press(result, [column(2)]);
+      selectPiles(result, [column(2)]);
 
       expect(result.current.selectedSource).toEqual(column(2));
       expect(result.current.operation).toMatchObject({
@@ -155,7 +184,7 @@ describe("useSolitairePlay", () => {
     });
 
     test("選んだ列をもう一度押すと選ぶのをやめること", () => {
-      press(result, [column(2), column(2)]);
+      selectPiles(result, [column(2), column(2)]);
 
       expect(result.current.selectedSource).toBeNull();
       expect(result.current.operation).toMatchObject({
@@ -166,7 +195,7 @@ describe("useSolitairePlay", () => {
     test("置けない所を押すと盤面を変えずに、置けないことを知らせること", () => {
       const before = result.current.state;
 
-      press(result, [column(2), column(3)]);
+      selectPiles(result, [column(2), column(3)]);
 
       expect(result.current.state).toBe(before);
       expect(result.current.selectedSource).toEqual(column(2));
@@ -177,7 +206,7 @@ describe("useSolitairePlay", () => {
     });
 
     test("置き元から組札を押すと札を組札へ置き、選んだ置き元を消すこと", () => {
-      press(result, [column(2), anyFoundation]);
+      selectPiles(result, [column(2), anyFoundation]);
 
       expect(result.current.state.foundations.diamonds).toBe(1);
       expect(result.current.selectedSource).toBeNull();
@@ -189,7 +218,7 @@ describe("useSolitairePlay", () => {
     });
 
     test("山札を押すと1枚めくって捨て札に置くこと", () => {
-      press(result, [{ pile: "stock" }]);
+      selectPiles(result, [{ pile: "stock" }]);
 
       expect(result.current.state.waste).toHaveLength(1);
       expect(result.current.state.stock).toHaveLength(23);
@@ -203,7 +232,7 @@ describe("useSolitairePlay", () => {
     beforeEach(() => {
       ({ result } = renderPlay());
       initialState = result.current.state;
-      press(result, [column(2), anyFoundation, { pile: "stock" }]);
+      selectPiles(result, [column(2), anyFoundation, { pile: "stock" }]);
     });
 
     test("待ったで直前の手を1つ戻し、待ったの回数を数えること", () => {
@@ -227,19 +256,91 @@ describe("useSolitairePlay", () => {
 
     beforeEach(() => {
       ({ result } = renderPlay());
+      selectPiles(result, solution);
     });
 
-    test("クリア演出の後に結果へ進み、取り消した手の無い結果を作ること", () => {
-      press(result, solution);
-      const clearing = result.current.progress;
-      act(() => result.current.completeClearAnimation());
+    test("クリアして完成演出の段へ進み、取り消した手の無い結果を作ること", () => {
+      const { status, progress, isStuck, result: playResult } = result.current;
 
-      expect(clearing).toBe("clearing");
-      expect(result.current.progress).toBe("result");
-      expect(result.current.isStuck).toBe(false);
-      expect(result.current.result).toMatchObject({
+      expect({ status, progress, isStuck }).toEqual({
+        status: "cleared",
+        progress: "clearing",
+        isStuck: false,
+      });
+      expect(playResult).toMatchObject({
         retractedMoveCount: 0,
         score: { breakdown: { stability: 60 } },
+      });
+    });
+
+    test("クリア演出の完了で結果へ進むこと", () => {
+      act(() => result.current.completeClearAnimation());
+
+      expect(result.current.progress).toBe("result");
+    });
+
+    test("リセットで同じ問題を配った直後の盤面から始め直すこと", () => {
+      act(() => result.current.replay());
+      const { problemIdentity, status, state, moveCount } = result.current;
+
+      expect({
+        problemId: createProblemId(problemIdentity),
+        status,
+        state,
+        moveCount,
+      }).toEqual({
+        problemId: createProblemId(pooled.identity),
+        status: "playing",
+        state: createSolitaireInitialState(
+          pooled.problem.columns,
+          pooled.problem.stock,
+        ),
+        moveCount: 0,
+      });
+    });
+  });
+
+  describe("seed で問題を選んで始めた場合", () => {
+    const other = restoreSolitairePoolEntry(listSolitairePoolEntries("2")[0]!);
+    let result: { current: HookResult };
+
+    beforeEach(() => {
+      vi.mocked(createProblemSeed)
+        .mockReturnValueOnce(initialSeed)
+        .mockReturnValue(otherSeed);
+      ({ result } = renderHook(() => useSolitairePlay("1")));
+    });
+
+    test("seed で選んだ問題を、配った直後の盤面で始めること", () => {
+      const { problemIdentity, state, progress } = result.current;
+
+      expect({ problemIdentity, state, progress }).toEqual({
+        problemIdentity: pooled.identity,
+        state: createSolitaireInitialState(
+          pooled.problem.columns,
+          pooled.problem.stock,
+        ),
+        progress: "playing",
+      });
+    });
+
+    describe("別の問題を始めた場合", () => {
+      beforeEach(() => {
+        selectPiles(result, [column(2), anyFoundation]);
+        act(() => result.current.startNewProblem());
+      });
+
+      test("今の問題を避けて選んだ問題を、配った直後の盤面で始めること", () => {
+        const { problemIdentity, state, moveCount } = result.current;
+
+        expect({ problemIdentity, state, moveCount }).toEqual({
+          problemIdentity: other.identity,
+          state: createSolitaireInitialState(
+            other.problem.columns,
+            other.problem.stock,
+          ),
+          moveCount: 0,
+        });
       });
     });
   });

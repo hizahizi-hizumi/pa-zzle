@@ -251,7 +251,7 @@ frontend/src/app/
 ```
 
 - `game-catalog-entry.ts` はゲームごとの表示・遷移・問題供給・記録の再プレイ・記録から作る結果画面の接続契約 `GameCatalogEntry` を持つ。
-- `game-catalog.ts` は11ゲームの登録と並び順の正本 `gameCatalog` を持つ。選択・記録・結果画面はゲームの一覧を複製しない。
+- `game-catalog.ts` は12ゲームの登録と並び順の正本 `gameCatalog` を持つ。選択・記録・結果画面はゲームの一覧を複製しない。
 - `game-navigation.ts` はゲームのホーム・次の問題・記録からの遊び直しを、登録済みゲームの `homePath`・`playPath` に基づいて開く。履歴を置き換える必要がある戻り遷移は `replacesHistory` を指定する。
 - `play-timeline.ts` は記録の時系列へゲーム名・難易度・図鑑番号・遷移先を接続する。記録の正本と横断集計の規則は `features/records/` と `features/collection/` が持つ。
 - `playable-game.tsx` は問題ID・完了記録・離脱記録・結果への遷移・診断情報を接続する。結果画面に保存済み記録を表示できる場合は記録IDのパスへ移動する。

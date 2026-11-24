@@ -1,7 +1,6 @@
 import {
   _private,
   assertSolitaireProblem,
-  createSolitaireProblemIdentity,
   isCurrentSolitaireProblemIdentity,
   isSolitaireRecordedProblemIdentity,
   restoreSolitaireProblem,
@@ -9,7 +8,7 @@ import {
   type SolitaireProblem,
 } from "@/games/solitaire/problem/problem";
 
-const { decodeSolitaireProblem } = _private;
+const { decodeSolitaireProblem, createSolitaireProblemIdentity } = _private;
 
 // 調査コード solitaire_difficulty.py の deal(3)。
 const problem: SolitaireProblem = {
@@ -50,7 +49,7 @@ describe("restoreSolitaireProblem", () => {
     expect(restored).toEqual({ problem, identity });
   });
 
-  describe("読めない seed", () => {
+  describe("読めない seed の場合", () => {
     const invalidIdentity = { ...identity, seed: "A".repeat(52) };
 
     test("拒否すること", () => {

@@ -19,7 +19,7 @@ import { SolitaireBoard } from "@/games/solitaire/ui/board/SolitaireBoard";
 import { SolitaireResultScreen } from "@/games/solitaire/ui/result/SolitaireResultScreen";
 import { SolitaireGround } from "@/games/solitaire/ui/SolitaireGround";
 import { SolitaireHowToPlayDialog } from "@/games/solitaire/ui/SolitaireHowToPlayDialog";
-import { SolitaireStuckNotice } from "@/games/solitaire/ui/SolitaireStuckNotice";
+import { SolitaireStuckNotice } from "@/games/solitaire/ui/SolitairePlay/SolitaireStuckNotice";
 
 type SolitairePlayProps = GamePlayScreenProps<
   SolitaireDifficulty,
@@ -32,7 +32,7 @@ type SolitairePlayProps = GamePlayScreenProps<
     selectedSource: SolitaireSource | null;
     operation: SolitaireOperation | null;
     isStuck: boolean;
-    onPressPile: (pile: SolitairePile) => void;
+    onSelectPile: (pile: SolitairePile) => void;
   };
 
 export function SolitairePlay({
@@ -46,7 +46,7 @@ export function SolitairePlay({
   selectedSource,
   operation,
   isStuck,
-  onPressPile,
+  onSelectPile,
   canUndo,
   onUndo,
   canRestart,
@@ -103,7 +103,7 @@ export function SolitairePlay({
           selectedSource={selectedSource}
           operation={operation}
           interactionDisabled={progress !== "playing"}
-          onPressPile={onPressPile}
+          onSelectPile={onSelectPile}
           onClearAnimationComplete={onClearAnimationComplete}
         />
       </main>

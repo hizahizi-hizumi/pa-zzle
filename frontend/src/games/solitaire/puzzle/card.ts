@@ -77,12 +77,12 @@ const rankTexts = [
 const suitTexts = ["S", "H", "D", "C"] as const;
 
 /** 札を `<数><マーク>` の字にする（`AS`・`10H`・`KC`）。導入調査の資料と同じ書き方。 */
-export function formatSolitaireCard(card: SolitaireCard): string {
+function formatSolitaireCard(card: SolitaireCard): string {
   return `${rankTexts[getSolitaireCardRank(card) - 1]}${suitTexts[Math.floor(card / SOLITAIRE_RANK_COUNT)]}`;
 }
 
 /** `formatSolitaireCard` の書き方の札を読む。読めなければ `null`。 */
-export function parseSolitaireCard(text: string): SolitaireCard | null {
+function parseSolitaireCard(text: string): SolitaireCard | null {
   const rankIndex = rankTexts.indexOf(
     text.slice(0, -1) as (typeof rankTexts)[number],
   );
@@ -93,3 +93,5 @@ export function parseSolitaireCard(text: string): SolitaireCard | null {
     ? null
     : suitIndex * SOLITAIRE_RANK_COUNT + rankIndex;
 }
+
+export const _private = { formatSolitaireCard, parseSolitaireCard };

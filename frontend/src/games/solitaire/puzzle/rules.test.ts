@@ -5,15 +5,15 @@ import {
   shuffleProblemValues,
 } from "@/games/problem-seed";
 import {
-  parseSolitaireCard,
+  _private as cardPrivate,
   SOLITAIRE_CARD_COUNT,
   type SolitaireCard,
   solitaireSuits,
 } from "@/games/solitaire/puzzle/card";
 import {
+  _private,
   applySolitaireMove,
   findSolitaireTransfer,
-  listSolitaireMoves,
   type SolitaireDestination,
   type SolitaireMove,
   type SolitaireSource,
@@ -27,6 +27,10 @@ import {
   type SolitaireFoundations,
   type SolitaireState,
 } from "@/games/solitaire/puzzle/state";
+
+const { listSolitaireMoves } = _private;
+
+const { parseSolitaireCard } = cardPrivate;
 
 function cards(text: string): SolitaireCard[] {
   return text
@@ -203,7 +207,7 @@ describe("findSolitaireTransfer", () => {
 });
 
 describe("applySolitaireMove", () => {
-  describe("山札をめくる手", () => {
+  describe("山札をめくる手の場合", () => {
     const state = createState({ stock: "3C 4C", waste: "2C" });
 
     test("山札の先頭の札を捨て札の一番上へ移すこと", () => {
@@ -213,7 +217,7 @@ describe("applySolitaireMove", () => {
     });
   });
 
-  describe("捨て札を山札へ戻す手", () => {
+  describe("捨て札を山札へ戻す手の場合", () => {
     const state = createState({ waste: "2C 3C 4C" });
 
     test("捨て札をめくった順のまま山札へ戻すこと", () => {
@@ -223,7 +227,7 @@ describe("applySolitaireMove", () => {
     });
   });
 
-  describe("打てない手", () => {
+  describe("打てない手の場合", () => {
     const cases: readonly (readonly [string, SolitaireState, SolitaireMove])[] =
       [
         [
@@ -256,7 +260,7 @@ describe("applySolitaireMove", () => {
     });
   });
 
-  describe("列から列へ並びを動かす手", () => {
+  describe("列から列へ並びを動かす手の場合", () => {
     const state = createState({ columns: ["10S 9H 8C 7D", "9D"] });
     const move: SolitaireTransfer = {
       kind: "transfer",
@@ -275,7 +279,7 @@ describe("applySolitaireMove", () => {
     });
   });
 
-  describe("組札の札を列へ戻す手", () => {
+  describe("組札の札を列へ戻す手の場合", () => {
     const state = createState({
       columns: ["6S"],
       foundations: { hearts: 5 },

@@ -94,6 +94,17 @@ export function isSolitairePlayRecord(
   );
 }
 
+/** 読み戻した記録に余分な項目があっても結果へ持ち込まない。 */
+function copyPerformance({
+  elapsedMs,
+  moveCount,
+  undoCount,
+  restartCount,
+  retractedMoveCount,
+}: SolitairePlayPerformance): SolitairePlayPerformance {
+  return { elapsedMs, moveCount, undoCount, restartCount, retractedMoveCount };
+}
+
 export function createSolitairePlayRecord({
   difficulty,
   problemIdentity,
@@ -118,13 +129,7 @@ export function createSolitairePlayRecord({
         ...problemIdentity,
         conditions: { ...problemIdentity.conditions },
       },
-      performance: {
-        elapsedMs: result.elapsedMs,
-        moveCount: result.moveCount,
-        undoCount: result.undoCount,
-        restartCount: result.restartCount,
-        retractedMoveCount: result.retractedMoveCount,
-      },
+      performance: copyPerformance(result),
     },
   };
 }
@@ -150,7 +155,7 @@ export function restoreSolitaireRecordedResult(
   return {
     difficulty,
     problemIdentity,
-    result: createSolitaireResult(performance),
+    result: createSolitaireResult(copyPerformance(performance)),
   };
 }
 

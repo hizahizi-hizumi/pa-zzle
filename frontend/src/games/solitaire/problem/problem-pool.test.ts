@@ -1,13 +1,17 @@
 import { difficultyLevels } from "@/games/difficulty";
 import {
+  _private,
   findSolitairePoolEntryByProblemId,
   findSolitairePoolProblemFeatures,
   listSolitairePoolEntries,
   listSolitairePoolProblemIds,
-  measureSolitaireProblemFeatures,
   restoreSolitairePoolEntry,
 } from "@/games/solitaire/problem/problem-pool";
-import { parseSolitaireCard } from "@/games/solitaire/puzzle/card";
+import { _private as cardPrivate } from "@/games/solitaire/puzzle/card";
+
+const { parseSolitaireCard } = cardPrivate;
+
+const { measureSolitaireProblemFeatures } = _private;
 
 const difficulties = difficultyLevels.map(({ id }) => id);
 
@@ -17,13 +21,23 @@ function parseCards(text: string) {
 
 describe("listSolitairePoolEntries", () => {
   test.each(difficulties)(
-    "レベル %s の問題がどれも52枚を1回ずつ配った問題として復元できること",
+    "レベル %s の問題がどれも、列に1〜7枚と山札24枚で52枚を1回ずつ配った問題として復元できること",
     (difficulty) => {
       const entries = listSolitairePoolEntries(difficulty);
 
-      const restored = entries.map(restoreSolitairePoolEntry);
+      const problems = entries.map(
+        (entry) => restoreSolitairePoolEntry(entry).problem,
+      );
 
-      expect(restored.length).toBeGreaterThan(0);
+      expect(problems.length).toBeGreaterThan(0);
+      for (const { columns, stock } of problems) {
+        const cards = [...columns.flat(), ...stock];
+        expect(columns.map((column) => column.length)).toEqual([
+          1, 2, 3, 4, 5, 6, 7,
+        ]);
+        expect(stock).toHaveLength(24);
+        expect(new Set(cards).size).toBe(52);
+      }
     },
   );
 });

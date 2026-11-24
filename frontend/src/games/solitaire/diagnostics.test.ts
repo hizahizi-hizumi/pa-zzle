@@ -16,14 +16,15 @@ const selected = selectSolitaireProblemForDifficulty(
 );
 
 describe("createSolitaireDiagnosticSnapshot", () => {
-  const snapshot = createSolitaireDiagnosticSnapshot({
+  const input = {
     difficulty: "3",
     problemIdentity: selected.identity,
     buildRevision: "test-revision",
-  });
+  } as const;
 
   test("問題の identity と難易度とビルドの版を保持すること", () => {
-    const { game, difficulty, problemIdentity, buildRevision } = snapshot;
+    const { game, difficulty, problemIdentity, buildRevision } =
+      createSolitaireDiagnosticSnapshot(input);
 
     expect({ game, difficulty, problemIdentity, buildRevision }).toEqual({
       game: "solitaire",
