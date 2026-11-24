@@ -23,9 +23,9 @@ import {
   listMagicSquareValueStates,
 } from "@/games/magic-square/puzzle/rules";
 import {
+  MAGIC_SQUARE_CORRECTION_PENALTY,
   MAGIC_SQUARE_SCORE_MAXIMUMS,
   MAGIC_SQUARE_SPEED_ZERO_SCORE_RATIO,
-  MAGIC_SQUARE_WITHDRAWAL_PENALTY,
 } from "@/games/magic-square/score";
 import {
   goalFigureBoard,
@@ -53,17 +53,17 @@ const { undo, restart } = PLAY_OPERATION_LABELS;
 
 function ignoreFigurePress(): void {}
 
-// 何が残り何が0に戻るかは、本番の session に合わせる。盤面を戻すは経過時間と取り下げの回数を引き継ぎ、
+// 何が残り何が0に戻るかは、本番の session に合わせる。盤面を戻すは経過時間と置き直しの回数を引き継ぎ、
 // リセットと別の問題は新しいプレイを始める。
 const menuOperations: readonly HowToPlayMenuOperation[] = [
   {
     item: playMenuOperationItems.restart,
-    text: "時間と/取り下げの回数は/そのままで/最初の盤面に/戻します。",
-    note: "盤面にあった/置いた数は/どれも/取り下げに/数えます。",
+    text: "時間と/置き直しの回数は/そのままで/最初の盤面に/戻します。",
+    note: "盤面にあった/置いた数は/どれも/置き直しに/数えます。",
   },
   {
     item: playMenuOperationItems.replay,
-    text: "時間と/取り下げの回数も/0に戻して/同じ問題を/最初から/やり直します。",
+    text: "時間と/置き直しの回数も/0に戻して/同じ問題を/最初から/やり直します。",
   },
   {
     item: playMenuOperationItems.startNewProblem,
@@ -90,7 +90,7 @@ const scoreItems = Object.entries(MAGIC_SQUARE_SCORE_MAXIMUMS) as [
 
 const scoreLeads = {
   speed: `問題ごとの/基準時間以内なら/満点です。/超えるほど/点が下がり/基準時間の${MAGIC_SQUARE_SPEED_ZERO_SCORE_RATIO}倍で/0点です。`,
-  accuracy: `置いた数を/取り下げるたびに/${MAGIC_SQUARE_WITHDRAWAL_PENALTY}点/下がります。`,
+  accuracy: `置いた数を/置き直すたびに/${MAGIC_SQUARE_CORRECTION_PENALTY}点/下がります。`,
 } as const satisfies Record<keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS, string>;
 
 function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
@@ -104,12 +104,20 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
     );
   }
   return (
-    <HowToPlayScoreRow
-      measure="取り下げ"
-      deduction={`1回 −${MAGIC_SQUARE_WITHDRAWAL_PENALTY}点`}
-      // 本番の session は、置いた数がそのマスから外れた事実を数え、ほかのマスに触れる前の同じマスでの直しを除く。
-      text={`外す・/置き換える・/「${undo}」・/「${restart}」の/どれで/外れても/数えます。/同じマスで/ほかのマスに/触れる前に/直した数は/数えません。`}
-    />
+    <>
+      <HowToPlayScoreRow
+        measure="置き直し"
+        deduction={`1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点`}
+        // 本番の session は、置いた数がそのマスから外れた事実を数える。列の端の数の色を変えなかった数のほかのマスを選ぶ前の直しと、
+        // 色を変えた数を数の欄の隣り合う数へすぐ直した1回は、押し間違いの直しとして除く。
+        text={`置いた数を/外す・/置き換える・/「${undo}」・/「${restart}」の/どれで/外しても/1回です。/置いても/列の端の数の/色が/変わらなかった数は/ほかのマスを/選ぶ前に/直せば/数えません。/数の欄で/隣の数を/押し間違えて/すぐ直したときも/数えません。`}
+      />
+      <HowToPlayScoreRow
+        measure={`「${undo}」・/「${restart}」`}
+        // 正確さは置き直しの回数だけで決まり、待った・盤面を戻すを使った回数では点を引かない（score.ts）。
+        text="使った回数では/点は下がりません。"
+      />
+    </>
   );
 }
 

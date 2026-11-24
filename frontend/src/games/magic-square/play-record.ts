@@ -29,7 +29,7 @@ import {
 } from "@/lib/type-guards";
 
 const MAGIC_SQUARE_GAME_ID = "magic-square";
-const MAGIC_SQUARE_PLAY_RECORD_PAYLOAD_VERSION = 1;
+const MAGIC_SQUARE_PLAY_RECORD_PAYLOAD_VERSION = 2;
 
 /**
  * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
@@ -49,6 +49,28 @@ export type MagicSquarePlayRecord = PlayRecord & {
   payload: MagicSquarePlayRecordPayload;
 };
 
+// payloadVersion 1 の `withdrawalCount` は、同じマスでほかのマスに触れる前に直した数を、盤面の知らせを見てから直したものも含めて
+// 数えなかった。今の置き直しと意味が違うので、記録一覧と時間の自己ベストに残し、評価点・置き直しの自己ベスト・図鑑には使わず、
+// 結果画面も作り直さない。
+type MagicSquarePerformanceV1 = Omit<
+  MagicSquareSessionResult,
+  "correctionCount"
+> & {
+  withdrawalCount: number;
+};
+
+type MagicSquarePlayRecordV1 = PlayRecord & {
+  gameId: typeof MAGIC_SQUARE_GAME_ID;
+  payloadVersion: 1;
+  payload: Omit<MagicSquarePlayRecordPayload, "performance"> & {
+    performance: MagicSquarePerformanceV1;
+  };
+};
+
+type RecognizedMagicSquarePlayRecord =
+  | MagicSquarePlayRecordV1
+  | MagicSquarePlayRecord;
+
 type CreateMagicSquarePlayRecordInput = {
   difficulty: MagicSquareDifficulty;
   problemIdentity: MagicSquareProblemIdentity;
@@ -58,13 +80,23 @@ type CreateMagicSquarePlayRecordInput = {
   result: MagicSquareSessionResult;
 };
 
+/** 置き直しの回数の項目は、版 1 では `withdrawalCount`、今の版では `correctionCount`。 */
 function isMagicSquarePerformance(
   value: unknown,
-): value is MagicSquareSessionResult {
+  payloadVersion: number,
+): boolean {
+  if (!isRecordObject(value)) {
+    return false;
+  }
+  const correctionCount =
+    payloadVersion === 1
+      ? value.withdrawalCount
+      : payloadVersion === MAGIC_SQUARE_PLAY_RECORD_PAYLOAD_VERSION
+        ? value.correctionCount
+        : undefined;
   return (
-    isRecordObject(value) &&
     isNonNegativeFiniteNumber(value.elapsedMs) &&
-    isNonNegativeInteger(value.withdrawalCount) &&
+    isNonNegativeInteger(correctionCount) &&
     isNonNegativeInteger(value.undoCount) &&
     isNonNegativeInteger(value.restartCount)
   );
@@ -72,11 +104,11 @@ function isMagicSquarePerformance(
 
 function copyPerformance({
   elapsedMs,
-  withdrawalCount,
+  correctionCount,
   undoCount,
   restartCount,
 }: MagicSquareSessionResult): MagicSquareSessionResult {
-  return { elapsedMs, withdrawalCount, undoCount, restartCount };
+  return { elapsedMs, correctionCount, undoCount, restartCount };
 }
 
 function copyWorkload({
@@ -85,12 +117,12 @@ function copyWorkload({
   return { emptyCellCount };
 }
 
+/** 前の版を含め、読み込める記録か。今の版かは `isCurrentMagicSquarePlayRecord` で確かめる。 */
 export function isMagicSquarePlayRecord(
   record: PlayRecord,
-): record is MagicSquarePlayRecord {
+): record is RecognizedMagicSquarePlayRecord {
   if (
     record.gameId !== MAGIC_SQUARE_GAME_ID ||
-    record.payloadVersion !== MAGIC_SQUARE_PLAY_RECORD_PAYLOAD_VERSION ||
     !isRecordObject(record.payload)
   ) {
     return false;
@@ -102,7 +134,16 @@ export function isMagicSquarePlayRecord(
     parseDifficultyLevel(difficulty) !== undefined &&
     isMagicSquareRecordedProblemIdentity(problemIdentity) &&
     isMagicSquareSolveWorkload(workload) &&
-    isMagicSquarePerformance(performance)
+    isMagicSquarePerformance(performance, record.payloadVersion)
+  );
+}
+
+function isCurrentMagicSquarePlayRecord(
+  record: PlayRecord,
+): record is MagicSquarePlayRecord {
+  return (
+    isMagicSquarePlayRecord(record) &&
+    record.payloadVersion === MAGIC_SQUARE_PLAY_RECORD_PAYLOAD_VERSION
   );
 }
 
@@ -148,7 +189,7 @@ export function restoreMagicSquareRecordedResult(
   record: PlayRecord,
 ): MagicSquareRecordedResult | null {
   if (
-    !isMagicSquarePlayRecord(record) ||
+    !isCurrentMagicSquarePlayRecord(record) ||
     !isCurrentMagicSquareProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
@@ -166,7 +207,7 @@ export function restoreMagicSquareRecordedResult(
 }
 
 function getMagicSquarePlayRecordScore(record: PlayRecord): number | null {
-  if (!isMagicSquarePlayRecord(record)) {
+  if (!isCurrentMagicSquarePlayRecord(record)) {
     return null;
   }
   const { workload, performance } = record.payload;
@@ -187,7 +228,7 @@ function getMagicSquarePlayRecordTimeDelta(record: PlayRecord): number | null {
 export type MagicSquarePlayRecordMetricId =
   | "play-score"
   | "time-delta-ms"
-  | "withdrawal-count";
+  | "correction-count";
 
 export const magicSquarePlayRecordDefinition = {
   gameId: MAGIC_SQUARE_GAME_ID,
@@ -212,11 +253,11 @@ export const magicSquarePlayRecordDefinition = {
       getValue: getMagicSquarePlayRecordTimeDelta,
     },
     {
-      id: "withdrawal-count",
+      id: "correction-count",
       direction: "lower",
       getValue(record) {
-        return isMagicSquarePlayRecord(record)
-          ? record.payload.performance.withdrawalCount
+        return isCurrentMagicSquarePlayRecord(record)
+          ? record.payload.performance.correctionCount
           : null;
       },
     },

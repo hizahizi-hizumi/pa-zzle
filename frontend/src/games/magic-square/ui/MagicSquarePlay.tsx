@@ -41,7 +41,7 @@ type MagicSquarePlayProps = GamePlayScreenProps<
     lineEvaluations: readonly MagicSquareLineEvaluation[];
     inputMode: MagicSquareInputMode;
     valueStates: readonly MagicSquareValueState[];
-    withdrawalCount: number;
+    correctionCount: number;
     operation: MagicSquareOperation | null;
     onSelectCell: (cellIndex: number) => void;
     onEnterValue: (value: number) => void;
@@ -60,7 +60,7 @@ export function MagicSquarePlay({
   lineEvaluations,
   inputMode,
   valueStates,
-  withdrawalCount,
+  correctionCount,
   operation,
   onSelectCell,
   onEnterValue,
@@ -90,7 +90,7 @@ export function MagicSquarePlay({
       title={MAGIC_SQUARE_DISPLAY_NAME}
       background={<MagicSquareGround />}
       metrics={[
-        { type: "count", label: "取り下げ", count: withdrawalCount },
+        { type: "count", label: "置き直し", count: correctionCount },
         { type: "elapsed-time", elapsedMs },
       ]}
       canRestart={canRestart}

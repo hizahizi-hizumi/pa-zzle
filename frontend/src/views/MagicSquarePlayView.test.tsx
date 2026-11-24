@@ -109,19 +109,19 @@ describe("MagicSquarePlayView", () => {
         }
       });
 
-      test("完成演出の後に記録の結果画面へ移り、取り下げの回数を示すこと", async () => {
+      test("完成演出の後に記録の結果画面へ移り、置き直しの回数を示すこと", async () => {
         const heading = await screen.findByRole(
           "heading",
           { name: "プレイ結果" },
           { timeout: 3_000 },
         );
-        const withdrawalMetric = screen.getByText("取り下げ", {
+        const correctionMetric = screen.getByText("置き直し", {
           selector: "dt",
         }).parentElement!;
 
         expect([
           heading,
-          within(withdrawalMetric).queryByText("0回"),
+          within(correctionMetric).queryByText("0回"),
         ]).not.toContain(null);
       });
 
@@ -139,7 +139,7 @@ describe("MagicSquarePlayView", () => {
           payload: {
             difficulty: "1",
             workload: { emptyCellCount: 8 },
-            performance: { withdrawalCount: 0, undoCount: 0, restartCount: 0 },
+            performance: { correctionCount: 0, undoCount: 0, restartCount: 0 },
           },
         });
       });

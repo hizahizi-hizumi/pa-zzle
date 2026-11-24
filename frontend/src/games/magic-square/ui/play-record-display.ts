@@ -16,6 +16,6 @@ export const magicSquarePlayRecordDisplay = createPlayRecordDisplay({
   metrics: {
     "play-score": playScoreMetricPresentation,
     "time-delta-ms": timeDeltaMetricPresentation,
-    "withdrawal-count": createCountMetricPresentation("取り下げ", "回"),
+    "correction-count": createCountMetricPresentation("置き直し", "回"),
   },
 });

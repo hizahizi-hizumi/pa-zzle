@@ -13,10 +13,10 @@ describe("magicSquarePlayRecordDisplay", () => {
     expect(metricIds).toEqual(personalBestMetricIds);
   });
 
-  test("取り下げの回数を回で書くこと", () => {
+  test("置き直しの回数を回で書くこと", () => {
     const text = getPlayRecordMetricDisplay(
       magicSquarePlayRecordDisplay,
-      "withdrawal-count",
+      "correction-count",
     )?.formatValue(2);
 
     expect(text).toBe("2回");

@@ -7,10 +7,10 @@ import {
 } from "@/components/game-result-score-criteria";
 import type { MagicSquareResult } from "@/games/magic-square/play/use-magic-square-play";
 import {
+  MAGIC_SQUARE_CORRECTION_PENALTY,
   MAGIC_SQUARE_SCORE_MAXIMUMS,
   MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS,
   MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS,
-  MAGIC_SQUARE_WITHDRAWAL_PENALTY,
 } from "@/games/magic-square/score";
 
 export function getMagicSquareScoreCriteria(
@@ -42,13 +42,16 @@ export function getMagicSquareScoreCriteria(
         MAGIC_SQUARE_SCORE_MAXIMUMS.accuracy,
         [
           {
-            subject: "置いた数の取り下げ",
+            subject: "置き直し",
             unit: "回",
-            points: MAGIC_SQUARE_WITHDRAWAL_PENALTY,
+            points: MAGIC_SQUARE_CORRECTION_PENALTY,
           },
         ],
         [
-          `外す・置き換える・${formatOperationName("undo")}・${formatOperationName("restart")}のどれで外れても数える。同じマスでほかのマスに触れる前に直した数は数えない。`,
+          `置き直しは、置いた数を外した・別の数に替えた回数で、外す・置き換える・${formatOperationName("undo")}・${formatOperationName("restart")}のどれで外れても数える。`,
+          "置いても列の端の数の色が変わらなかった数は、ほかのマスを選ぶ前に直せば数えない。",
+          "数の欄で隣の数を押し間違えて、すぐ直したときも数えない。",
+          `${formatOperationName("undo")}・${formatOperationName("restart")}を使った回数では減らさない。`,
         ],
       ),
     ),

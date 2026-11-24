@@ -41,10 +41,10 @@ const board: MagicSquareState = {
   memos: cells.cells.map((_, cellIndex) => (cellIndex === 3 ? [9, 11] : [])),
 };
 
-/** 基準時間 01:40（20秒 + 8 × 10秒）の問題を 02:00 で、取り下げ2回で解いた結果。 */
+/** 基準時間 01:40（20秒 + 8 × 10秒）の問題を 02:00 で、置き直し2回で解いた結果。 */
 const result: MagicSquareResult = {
   elapsedMs: 120_000,
-  withdrawalCount: 2,
+  correctionCount: 2,
   undoCount: 1,
   restartCount: 0,
   workload: { emptyCellCount: 8 },
@@ -87,7 +87,7 @@ describe("MagicSquarePlay", () => {
         lineEvaluations={listMagicSquareLineEvaluations(board)}
         inputMode="value"
         valueStates={listMagicSquareValueStates(givens, board, 0)}
-        withdrawalCount={2}
+        correctionCount={2}
         operation={null}
         canUndo
         canRestart
@@ -109,12 +109,12 @@ describe("MagicSquarePlay", () => {
       renderPlay("playing");
     });
 
-    test("見出しに取り下げの回数と経過時間を出すこと", () => {
-      const withdrawalMetric = screen.getByText("取り下げ").parentElement!;
+    test("見出しに置き直しの回数と経過時間を出すこと", () => {
+      const correctionMetric = screen.getByText("置き直し").parentElement!;
       const elapsedMetric = screen.getByText("時間").parentElement!;
 
       const values = [
-        within(withdrawalMetric).queryByText("2"),
+        within(correctionMetric).queryByText("2"),
         within(elapsedMetric).queryByText("01:05"),
       ];
 
@@ -179,17 +179,26 @@ describe("MagicSquarePlay", () => {
       renderPlay("result", result);
     });
 
-    test("結果画面に難易度と取り下げの回数を出すこと", () => {
-      const withdrawalMetric = screen.getByText("取り下げ", {
+    test("結果画面に難易度と置き直しの回数を出すこと", () => {
+      const correctionMetric = screen.getByText("置き直し", {
         selector: "dt",
       }).parentElement!;
 
       const texts = [
         screen.queryByText("レベル 1"),
-        within(withdrawalMetric).queryByText("2回"),
+        within(correctionMetric).queryByText("2回"),
       ];
 
       expect(texts.every((text) => text !== null)).toBe(true);
+    });
+
+    test("採点内訳を開くと、置き直しの減点と数え方を書くこと", () => {
+      fireEvent.click(screen.getByRole("button", { name: "採点内訳" }));
+      const criteria = screen.getByText(/置き直し1回につき/);
+
+      expect(criteria.textContent).toBe(
+        "30点から、置き直し1回につき3点を減らす。置き直しは、置いた数を外した・別の数に替えた回数で、外す・置き換える・「待った」・「盤面を戻す」のどれで外れても数える。置いても列の端の数の色が変わらなかった数は、ほかのマスを選ぶ前に直せば数えない。数の欄で隣の数を押し間違えて、すぐ直したときも数えない。「待った」・「盤面を戻す」を使った回数では減らさない。",
+      );
     });
   });
 });

@@ -7,8 +7,8 @@ import {
 } from "@testing-library/react";
 
 import {
+  MAGIC_SQUARE_CORRECTION_PENALTY,
   MAGIC_SQUARE_SCORE_MAXIMUMS,
-  MAGIC_SQUARE_WITHDRAWAL_PENALTY,
 } from "@/games/magic-square/score";
 import { MagicSquareHowToPlayDialog } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog";
 import { SCORE_ITEM_LABELS } from "@/games/play-vocabulary";
@@ -85,14 +85,28 @@ describe("MagicSquareHowToPlayDialog", () => {
       );
     });
 
-    test("採点のタブで、取り下げ1回ごとの減点を score.ts と同じ値で添えること", () => {
+    test("採点のタブで、置き直し1回ごとの減点を score.ts と同じ値で添えること", () => {
       const panel = openTab("採点");
 
       const deduction = within(panel).getByText(
-        `1回 −${MAGIC_SQUARE_WITHDRAWAL_PENALTY}点`,
+        `1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点`,
       );
 
       expect(deduction).toBeTruthy();
+    });
+
+    test("採点のタブで、置き直しの数え方と、待った・盤面を戻すの回数では点が下がらないことを言うこと", () => {
+      const panel = openTab("採点");
+
+      const rows = within(panel)
+        .getAllByRole("listitem")
+        .map((row) => row.textContent);
+
+      expect(rows).toEqual([
+        "基準時間空きマスが多い問題ほど長くなります。",
+        `置き直し 1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点置いた数を外す・置き換える・「待った」・「盤面を戻す」のどれで外しても1回です。置いても列の端の数の色が変わらなかった数はほかのマスを選ぶ前に直せば数えません。数の欄で隣の数を押し間違えてすぐ直したときも数えません。`,
+        "「待った」・「盤面を戻す」使った回数では点は下がりません。",
+      ]);
     });
   });
 });

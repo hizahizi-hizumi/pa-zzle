@@ -64,12 +64,12 @@ describe("useMagicSquarePlay", () => {
       });
     });
 
-    test("ほかのマスを選んでから戻って置き換えると取り下げを数えること", () => {
+    test("ほかのマスを選んでから戻って置き換えると置き直しを数えること", () => {
       place(result, 0, 13);
       act(() => result.current.selectCell(3));
       place(result, 0, 14);
 
-      expect(result.current.withdrawalCount).toBe(1);
+      expect(result.current.correctionCount).toBe(1);
     });
 
     describe("左上のマスに14を置いた場合", () => {
@@ -215,13 +215,13 @@ describe("useMagicSquarePlay", () => {
         expect({
           progress,
           status,
-          withdrawalCount: playResult?.withdrawalCount,
+          correctionCount: playResult?.correctionCount,
           speedRule: playResult?.speedRule,
           workload: playResult?.workload,
         }).toEqual({
           progress: "clearing",
           status: "cleared",
-          withdrawalCount: 0,
+          correctionCount: 0,
           speedRule: calculateMagicSquareSpeedScoreRule({ emptyCellCount: 8 }),
           workload: { emptyCellCount: 8 },
         });

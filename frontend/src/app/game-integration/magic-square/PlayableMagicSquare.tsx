@@ -76,7 +76,7 @@ export function PlayableMagicSquare({
         lineEvaluations={play.lineEvaluations}
         inputMode={play.inputMode}
         valueStates={play.valueStates}
-        withdrawalCount={play.withdrawalCount}
+        correctionCount={play.correctionCount}
         operation={play.operation}
         onSelectCell={play.selectCell}
         onEnterValue={play.enterValue}

@@ -23,7 +23,7 @@ const workload = { emptyCellCount: 8 };
 
 const performance = {
   elapsedMs: 120_000,
-  withdrawalCount: 2,
+  correctionCount: 2,
   undoCount: 1,
   restartCount: 0,
 };
@@ -40,6 +40,21 @@ const record = createMagicSquarePlayRecord({
 function withPayload(overrides: Record<string, unknown>) {
   return { ...record, payload: { ...record.payload, ...overrides } };
 }
+
+/** 置き直しを `withdrawalCount` として、今と違う数え方で保存した版 1 の記録。 */
+const firstVersionRecord = {
+  ...record,
+  payloadVersion: 1,
+  payload: {
+    ...record.payload,
+    performance: {
+      elapsedMs: 120_000,
+      withdrawalCount: 2,
+      undoCount: 1,
+      restartCount: 0,
+    },
+  },
+};
 
 describe("createMagicSquarePlayRecord", () => {
   test("完了プレイと遊んだ問題の事実だけを保存用記録へ写すこと", () => {
@@ -75,6 +90,7 @@ describe("getMagicSquarePlayRecordTimeDelta", () => {
 describe("isMagicSquarePlayRecord", () => {
   const validCases = [
     ["作成した記録", record],
+    ["版 1 の記録", firstVersionRecord],
     [
       "生成器の版が今と違う記録",
       withPayload({
@@ -89,12 +105,16 @@ describe("isMagicSquarePlayRecord", () => {
 
   const invalidCases = [
     ["別のゲームの記録", { ...record, gameId: "nanpure" }],
-    ["未知の payload の版", { ...record, payloadVersion: 2 }],
+    ["未知の payload の版", { ...record, payloadVersion: 3 }],
     ["未知の難易度", withPayload({ difficulty: "6" })],
     ["作業の量の無い記録", withPayload({ workload: undefined })],
     [
-      "取り下げの回数が負の記録",
-      withPayload({ performance: { ...performance, withdrawalCount: -1 } }),
+      "置き直しの回数が負の記録",
+      withPayload({ performance: { ...performance, correctionCount: -1 } }),
+    ],
+    [
+      "置き直しの回数を版 1 の項目で持つ今の版の記録",
+      withPayload({ performance: firstVersionRecord.payload.performance }),
     ],
     [
       "経過時間の無い記録",
@@ -132,13 +152,13 @@ describe("restoreMagicSquareRecordedResult", () => {
       problemIdentity: restored?.problemIdentity,
       score: restored?.result.score.total,
       timeDeltaMs: restored?.result.timeDeltaMs,
-      withdrawalCount: restored?.result.withdrawalCount,
+      correctionCount: restored?.result.correctionCount,
     }).toEqual({
       difficulty: "1",
       problemIdentity,
       score: 80,
       timeDeltaMs: 20_000,
-      withdrawalCount: 2,
+      correctionCount: 2,
     });
   });
 
@@ -151,8 +171,11 @@ describe("restoreMagicSquareRecordedResult", () => {
     ]).toEqual([workload, false]);
   });
 
-  test("生成器の版が今と違う記録からは作り直さないこと", () => {
-    const restored = restoreMagicSquareRecordedResult(otherVersionRecord);
+  test.each([
+    ["生成器の版が今と違う記録", otherVersionRecord],
+    ["版 1 の記録", firstVersionRecord],
+  ] as const)("%sからは作り直さないこと", (_, value) => {
+    const restored = restoreMagicSquareRecordedResult(value);
 
     expect(restored).toBeNull();
   });
@@ -162,7 +185,7 @@ describe("magicSquarePlayRecordDefinition", () => {
   const cases = [
     ["play-score", 80],
     ["time-delta-ms", 20_000],
-    ["withdrawal-count", 2],
+    ["correction-count", 2],
   ] as const;
 
   test.each(cases)(
@@ -177,6 +200,19 @@ describe("magicSquarePlayRecordDefinition", () => {
       expect(value).toBe(expected);
     },
   );
+
+  test("版 1 の記録は、時間の差だけを指標にし、評価点と置き直しには使わないこと", () => {
+    const values = ["play-score", "time-delta-ms", "correction-count"].map(
+      (metricId) =>
+        getPlayRecordMetricValue(
+          firstVersionRecord,
+          magicSquarePlayRecordDefinition,
+          metricId,
+        ),
+    );
+
+    expect(values).toEqual([null, 20_000, null]);
+  });
 
   test("難易度ごとに自己ベストを比べること", () => {
     const key = magicSquarePlayRecordDefinition.getComparisonKey(record);

@@ -36,10 +36,10 @@ export function MagicSquareResultScreen({
       metrics={[
         createElapsedTimeMetric(result),
         createCountMetric(
-          "取り下げ",
-          result.withdrawalCount,
+          "置き直し",
+          result.correctionCount,
           "回",
-          "withdrawal-count",
+          "correction-count",
         ),
       ]}
       recordFeedback={recordFeedback}

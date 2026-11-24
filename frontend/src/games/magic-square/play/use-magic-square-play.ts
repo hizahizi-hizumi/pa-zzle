@@ -23,8 +23,8 @@ import {
   canUndoMagicSquareSession,
   createMagicSquareSession,
   enterMagicSquareSessionValue,
+  getMagicSquareSessionCorrectionCount,
   getMagicSquareSessionResult,
-  getMagicSquareSessionWithdrawalCount,
   listMagicSquareSessionValueStates,
   type MagicSquareInputMode,
   type MagicSquareSession,
@@ -107,7 +107,7 @@ export type MagicSquarePlay = GamePlay<
     inputMode: MagicSquareInputMode;
     /** 数の欄の 1 から n² までの、今の入れ方での状態。 */
     valueStates: readonly MagicSquareValueState[];
-    withdrawalCount: number;
+    correctionCount: number;
     operation: MagicSquareOperation | null;
     selectCell: (cellIndex: number) => void;
     /** 数の欄で押した数を、今の入れ方で選んだマスに入れる。同じ数が入っていれば外す・消す。 */
@@ -321,7 +321,7 @@ export function useMagicSquarePlay(
     lineEvaluations,
     inputMode,
     valueStates,
-    withdrawalCount: getMagicSquareSessionWithdrawalCount(session),
+    correctionCount: getMagicSquareSessionCorrectionCount(session),
     operation: play.operation,
     canUndo: canUndoMagicSquareSession(session),
     canRestart: canRestartMagicSquareSession(session),

@@ -10,14 +10,14 @@ import {
   sumPlayScore,
 } from "@/games/score";
 
-/** 速さを主に、置いた数の取り下げを補助にする。並びは結果画面に出す順。 */
+/** 速さを主に、置いた数の置き直しを補助にする。並びは結果画面に出す順。 */
 export const MAGIC_SQUARE_SCORE_MAXIMUMS = {
   speed: 70,
   accuracy: 30,
 } as const satisfies ScoreMaximums<"speed" | "accuracy">;
 
-/** 取り下げ1回の減点。正確さは取り下げ10回で0点になる。 */
-export const MAGIC_SQUARE_WITHDRAWAL_PENALTY = 3;
+/** 置き直し1回の減点。正確さは置き直し10回で0点になる。 */
+export const MAGIC_SQUARE_CORRECTION_PENALTY = 3;
 
 /** 基準時間の、盤面と合計を読み始めるまでの時間。 */
 export const MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS = 20_000;
@@ -36,7 +36,7 @@ type MagicSquareTimeDeltaInput = {
 };
 
 type MagicSquarePlayScoreInput = MagicSquareTimeDeltaInput & {
-  withdrawalCount: number;
+  correctionCount: number;
 };
 
 export function calculateMagicSquareSpeedFullScoreMs({
@@ -68,10 +68,13 @@ export function calculateMagicSquareTimeDeltaMs({
   );
 }
 
-/** 正確さは置いた数の取り下げで減らす。答えとの照合は使わない。待った・盤面を戻すは、それで外れた数の取り下げとして数える。 */
+/**
+ * 正確さは置いた数の置き直しで減らす。答えとの照合は使わない。待った・盤面を戻すは使った回数では減らさず、それで外れた数を
+ * 置き直しとして数える。
+ */
 export function calculateMagicSquarePlayScore({
   elapsedMs,
-  withdrawalCount,
+  correctionCount,
   workload,
 }: MagicSquarePlayScoreInput): MagicSquarePlayScore {
   const speed = calculateSpeedScore(
@@ -81,7 +84,7 @@ export function calculateMagicSquarePlayScore({
   );
   const accuracy = subtractWithFloor(
     MAGIC_SQUARE_SCORE_MAXIMUMS.accuracy,
-    withdrawalCount * MAGIC_SQUARE_WITHDRAWAL_PENALTY,
+    correctionCount * MAGIC_SQUARE_CORRECTION_PENALTY,
   );
   return sumPlayScore({ speed, accuracy });
 }

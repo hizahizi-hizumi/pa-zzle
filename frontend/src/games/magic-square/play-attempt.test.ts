@@ -15,7 +15,7 @@ describe("createMagicSquarePlayAttemptProgress", () => {
     listMagicSquarePoolEntries("1")[0]!,
   );
   const initial = createMagicSquareSession(problem, 1_000);
-  // 左上に置き、右上を選んでから待ったで左上の数を外すので、取り下げが1回になる。
+  // 左上に置き、右上を選んでから待ったで左上の数を外すので、置き直しが1回になる。
   const session = undoMagicSquareSession(
     selectMagicSquareSessionCell(
       enterMagicSquareSessionValue(
@@ -27,12 +27,12 @@ describe("createMagicSquarePlayAttemptProgress", () => {
     ),
   );
 
-  test("離れた時点までの経過時間と、取り下げ・待った・盤面を戻した回数を返すこと", () => {
+  test("離れた時点までの経過時間と、置き直し・待った・盤面を戻した回数を返すこと", () => {
     const progress = createMagicSquarePlayAttemptProgress(session, 31_000);
 
     expect(progress).toEqual({
       elapsedMs: 30_000,
-      withdrawalCount: 1,
+      correctionCount: 1,
       undoCount: 1,
       restartCount: 0,
     });

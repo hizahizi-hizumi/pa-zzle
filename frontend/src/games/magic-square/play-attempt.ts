@@ -1,6 +1,6 @@
 import type { PlayAttemptProgress } from "@/features/records/play-attempt";
 import {
-  getMagicSquareSessionWithdrawalCount,
+  getMagicSquareSessionCorrectionCount,
   type MagicSquareSession,
 } from "@/games/magic-square/session/session";
 import { getSessionElapsedMs } from "@/games/session";
@@ -12,7 +12,7 @@ export function createMagicSquarePlayAttemptProgress(
 ) {
   return {
     elapsedMs: getSessionElapsedMs(session, abandonedAt),
-    withdrawalCount: getMagicSquareSessionWithdrawalCount(session),
+    correctionCount: getMagicSquareSessionCorrectionCount(session),
     undoCount: session.undoCount,
     restartCount: session.restartCount,
   } satisfies PlayAttemptProgress;
