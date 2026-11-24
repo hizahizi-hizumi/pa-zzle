@@ -5,13 +5,14 @@ import { selectShuttleParkingProblemById } from "@/games/shuttle-parking/problem
 describe("findShuttleParkingPoolProblemFeatures", () => {
   const [problemId] = listShuttleParkingPoolProblemIds("5");
 
-  test("問題集の問題の駐車場の大きさと待機枠の数を返すこと", () => {
+  test("問題集の問題の駐車場の大きさ・待機枠の数・乗客の人数を返すこと", () => {
     const features = findShuttleParkingPoolProblemFeatures("5", problemId!);
     const { problem } = selectShuttleParkingProblemById("5", problemId!)!;
 
     expect(features).toEqual({
       lotSize: problem.lot.size,
       bayCount: problem.bayCount,
+      passengerCount: problem.passengers.length,
     });
   });
 
