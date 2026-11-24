@@ -22,16 +22,16 @@ import {
   canRestartMagicSquareSession,
   canUndoMagicSquareSession,
   createMagicSquareSession,
-  enterMagicSquareSessionValue,
   getMagicSquareSessionCorrectionCount,
   getMagicSquareSessionResult,
+  inputMagicSquareSessionValue,
   listMagicSquareSessionValueStates,
   type MagicSquareInputMode,
+  type MagicSquareInputType,
   type MagicSquareSession,
   type MagicSquareSessionResult,
   restartMagicSquareSession,
   selectMagicSquareSessionCell,
-  toggleMagicSquareSessionMemo,
   undoMagicSquareSession,
 } from "@/games/magic-square/session/session";
 import {
@@ -62,7 +62,7 @@ import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 export type MagicSquareOperation =
   | {
       id: number;
-      type: "placed" | "removed" | "memo-written" | "memo-erased";
+      type: Exclude<MagicSquareInputType, "rejected">;
       cellIndex: number;
       value: number;
     }
@@ -161,43 +161,6 @@ function operateInPlay(
   return next === current ? current : { ...next, operation: null };
 }
 
-function describeAcceptedInput(
-  inputMode: MagicSquareInputMode,
-  session: MagicSquareSession,
-  cellIndex: number,
-  value: number,
-): MagicSquareOperation["type"] {
-  const { cells, memos } = session.puzzleState;
-  if (inputMode === "memo") {
-    return memos[cellIndex]?.includes(value) ? "memo-written" : "memo-erased";
-  }
-  return cells[cellIndex] === value ? "placed" : "removed";
-}
-
-/**
- * 数の欄で数を押した後の session と、その知らせの種類。受け付けなかったときは、受け取った session と `rejected` を返す。
- * プレイ中と遊び方の例で同じに求める。
- */
-export function inputMagicSquareValue(
-  session: MagicSquareSession,
-  inputMode: MagicSquareInputMode,
-  value: number,
-  inputAt: number,
-): { session: MagicSquareSession; type: MagicSquareOperation["type"] } {
-  const { selectedCellIndex: cellIndex } = session;
-  const operated =
-    inputMode === "memo"
-      ? toggleMagicSquareSessionMemo(session, value, inputAt)
-      : enterMagicSquareSessionValue(session, value, inputAt);
-  if (operated === session || cellIndex === null) {
-    return { session, type: "rejected" };
-  }
-  return {
-    session: operated,
-    type: describeAcceptedInput(inputMode, operated, cellIndex, value),
-  };
-}
-
 function inputValueInPlay(
   current: MagicSquarePlayState,
   value: number,
@@ -209,7 +172,12 @@ function inputValueInPlay(
   }
   const { session, inputMode } = current;
   const { selectedCellIndex: cellIndex } = session;
-  const input = inputMagicSquareValue(session, inputMode, value, inputAt);
+  const input = inputMagicSquareSessionValue(
+    session,
+    inputMode,
+    value,
+    inputAt,
+  );
   if (input.type === "rejected" || cellIndex === null) {
     return {
       ...current,

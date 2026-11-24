@@ -1,5 +1,4 @@
 import { difficultyLevels } from "@/games/difficulty";
-import { inputMagicSquareValue } from "@/games/magic-square/play/use-magic-square-play";
 import { magicSquareExampleSquares } from "@/games/magic-square/problem/example-squares";
 import { countMagicSquareSolutions } from "@/games/magic-square/problem/generation/solver";
 import {
@@ -13,6 +12,7 @@ import {
 } from "@/games/magic-square/puzzle/rules";
 import { areMagicSquareNumberPadNeighbors } from "@/games/magic-square/session/number-pad";
 import {
+  inputMagicSquareSessionValue,
   type MagicSquareSession,
   selectMagicSquareSessionCell,
 } from "@/games/magic-square/session/session";
@@ -73,7 +73,8 @@ function followHints(example: MagicSquareHowToPlayExample) {
       case "value":
         sessions = sessions.map((session, index) =>
           index === selectedBoard
-            ? inputMagicSquareValue(session, inputMode, press.value, 0).session
+            ? inputMagicSquareSessionValue(session, inputMode, press.value, 0)
+                .session
             : session,
         );
         break;

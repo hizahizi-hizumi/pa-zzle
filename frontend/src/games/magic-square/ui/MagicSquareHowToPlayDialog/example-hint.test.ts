@@ -1,4 +1,4 @@
-import { inputMagicSquareValue } from "@/games/magic-square/play/use-magic-square-play";
+import { inputMagicSquareSessionValue } from "@/games/magic-square/session/session";
 import { createMagicSquareExampleSession } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
 import {
   createMagicSquareExampleHintProgress,
@@ -56,7 +56,7 @@ function press(
       if (selection === null || session === undefined) {
         return state;
       }
-      const { session: next } = inputMagicSquareValue(
+      const { session: next } = inputMagicSquareSessionValue(
         withExampleSelection(session, state, selection.board),
         state.inputMode,
         pressed.value,

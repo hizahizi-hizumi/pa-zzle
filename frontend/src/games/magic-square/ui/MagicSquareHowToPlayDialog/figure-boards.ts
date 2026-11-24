@@ -1,5 +1,4 @@
 import type { HowToPlayExampleArrangement } from "@/components/HowToPlayExamplePanel";
-import { inputMagicSquareValue } from "@/games/magic-square/play/use-magic-square-play";
 import { magicSquareExampleSquares } from "@/games/magic-square/problem/example-squares";
 import {
   getMagicSquareLineCellIndices,
@@ -8,6 +7,7 @@ import {
 } from "@/games/magic-square/puzzle/board";
 import {
   getMagicSquareSessionCorrectionCount,
+  inputMagicSquareSessionValue,
   type MagicSquareSession,
   selectMagicSquareSessionCell,
 } from "@/games/magic-square/session/session";
@@ -241,7 +241,7 @@ const flowStart = selectMagicSquareSessionCell(
 );
 
 function place(session: MagicSquareSession, value: number) {
-  return inputMagicSquareValue(session, "value", value, 0).session;
+  return inputMagicSquareSessionValue(session, "value", value, 0).session;
 }
 
 /** 始まりから、同じマスに `first` を置いてから `second` を置いて置き換える流れ。 */

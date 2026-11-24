@@ -293,6 +293,54 @@ export function toggleMagicSquareSessionMemo(
   );
 }
 
+/**
+ * 数の欄で数を押した結果。`placed`・`removed` は数を置いた・外した、`memo-written`・`memo-erased` はメモを書いた・消した、
+ * `rejected` は受け付けなかった（マスを選んでいない・最初から置いてある数のマス・書けないメモなど）。
+ */
+export type MagicSquareInputType =
+  | "placed"
+  | "removed"
+  | "memo-written"
+  | "memo-erased"
+  | "rejected";
+
+function describeAcceptedInput(
+  inputMode: MagicSquareInputMode,
+  session: MagicSquareSession,
+  cellIndex: number,
+  value: number,
+): Exclude<MagicSquareInputType, "rejected"> {
+  const { cells, memos } = session.puzzleState;
+  if (inputMode === "memo") {
+    return memos[cellIndex]?.includes(value) ? "memo-written" : "memo-erased";
+  }
+  return cells[cellIndex] === value ? "placed" : "removed";
+}
+
+/**
+ * 数の欄で数を押した後の session と、その結果。入れ方がメモならメモを書く・消し、数なら置く・置き換える・外す。
+ * 受け付けなかったときは、受け取った session と `rejected` を返す。プレイ中と遊び方の例で同じに求める。
+ */
+export function inputMagicSquareSessionValue(
+  session: MagicSquareSession,
+  inputMode: MagicSquareInputMode,
+  value: number,
+  inputAt: number,
+): { session: MagicSquareSession; type: MagicSquareInputType } {
+  const { selectedCellIndex: cellIndex } = session;
+  const operated =
+    inputMode === "memo"
+      ? toggleMagicSquareSessionMemo(session, value, inputAt)
+      : enterMagicSquareSessionValue(session, value, inputAt);
+  if (operated === session || cellIndex === null) {
+    return { session, type: "rejected" };
+  }
+  return {
+    session: operated,
+    type: describeAcceptedInput(inputMode, operated, cellIndex, value),
+  };
+}
+
 /** 直前の盤面操作を取り消す。取り消しでそのマスから外れた置いた数も、ほかの操作で外れたときと同じに置き直しとして数える。 */
 export function undoMagicSquareSession(
   session: MagicSquareSession,

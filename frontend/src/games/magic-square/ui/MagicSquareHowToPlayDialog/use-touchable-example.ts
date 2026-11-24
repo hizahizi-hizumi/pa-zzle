@@ -1,12 +1,10 @@
 import { useRef, useState } from "react";
 
 import { useReportHowToPlayExampleChange } from "@/components/HowToPlayExamplePanel";
-import {
-  inputMagicSquareValue,
-  type MagicSquareOperation,
-} from "@/games/magic-square/play/use-magic-square-play";
+import type { MagicSquareOperation } from "@/games/magic-square/play/use-magic-square-play";
 import type { MagicSquareValueState } from "@/games/magic-square/puzzle/rules";
 import {
+  inputMagicSquareSessionValue,
   listMagicSquareSessionValueStates,
   type MagicSquareSession,
   selectMagicSquareSessionCell,
@@ -139,7 +137,7 @@ export function useTouchableExample(
       apply({ kind: "value", value }, state);
       return;
     }
-    const input = inputMagicSquareValue(
+    const input = inputMagicSquareSessionValue(
       withExampleSelection(session, state, selection.board),
       state.inputMode,
       value,

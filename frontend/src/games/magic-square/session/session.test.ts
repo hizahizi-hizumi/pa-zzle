@@ -7,6 +7,7 @@ import {
   enterMagicSquareSessionValue,
   getMagicSquareSessionCorrectionCount,
   getMagicSquareSessionResult,
+  inputMagicSquareSessionValue,
   listMagicSquareSessionValueStates,
   type MagicSquareSession,
   restartMagicSquareSession,
@@ -152,6 +153,72 @@ describe("enterMagicSquareSessionValue", () => {
     const session = play([{ select: givenCell }, 4]);
 
     expect(session.puzzleState.cells[givenCell]).toBe(4);
+  });
+});
+
+describe("inputMagicSquareSessionValue", () => {
+  const cases: readonly [
+    string,
+    readonly Operation[],
+    "value" | "memo",
+    number,
+    string,
+  ][] = [
+    [
+      "空きマスに数を押すと置いた",
+      [{ select: topLeft }],
+      "value",
+      14,
+      "placed",
+    ],
+    [
+      "置いた数と同じ数を押すと外した",
+      [{ select: topLeft }, 14],
+      "value",
+      14,
+      "removed",
+    ],
+    [
+      "メモの入れ方で空きマスに数を押すとメモを書いた",
+      [{ select: topLeft }],
+      "memo",
+      9,
+      "memo-written",
+    ],
+    [
+      "メモにある数を押すとメモを消した",
+      [{ select: topLeft }, "memo:9"],
+      "memo",
+      9,
+      "memo-erased",
+    ],
+    [
+      "最初から置いてある数のマスに押すと受け付けなかった",
+      [{ select: givenCell }],
+      "value",
+      9,
+      "rejected",
+    ],
+    ["マスを選ばずに押すと受け付けなかった", [], "value", 9, "rejected"],
+  ];
+
+  test.each(cases)("%sと返すこと", (_, operations, inputMode, value, type) => {
+    const input = inputMagicSquareSessionValue(
+      play(operations),
+      inputMode,
+      value,
+      startedAt,
+    );
+
+    expect(input.type).toBe(type);
+  });
+
+  test("受け付けなかったときは、受け取った session をそのまま返すこと", () => {
+    const session = play([{ select: givenCell }]);
+
+    const input = inputMagicSquareSessionValue(session, "value", 9, startedAt);
+
+    expect(input.session).toBe(session);
   });
 });
 
