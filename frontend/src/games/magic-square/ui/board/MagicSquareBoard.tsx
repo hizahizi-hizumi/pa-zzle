@@ -136,8 +136,11 @@ const lineSumColors = {
   overreached: magicSquareTone.violated,
 } as const satisfies Record<MagicSquareLineStatus, string>;
 
-/** 読み上げで、色と波線の代わりに伝える列の状態。そろっていないだけの列には付けない。 */
-const lineStatusPhrases = {
+/**
+ * 読み上げで、色と波線の代わりに伝える列の状態。そろっていないだけの列には付けない。
+ * 遊び方の例も、赤くなった列のわけをこの言葉で言う。
+ */
+export const magicSquareLineStatusPhrases = {
   incomplete: null,
   matched: "そろった",
   unmatched: "埋まって合計が合わない",
@@ -162,7 +165,7 @@ function describeLineSum(
   sum: number,
   status: MagicSquareLineStatus,
 ): string {
-  const phrase = lineStatusPhrases[status];
+  const phrase = magicSquareLineStatusPhrases[status];
   const description = `${describeLine(line)}の合計 ${sum}`;
   return phrase === null ? description : `${description} ${phrase}`;
 }

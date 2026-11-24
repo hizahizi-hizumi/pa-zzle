@@ -161,16 +161,17 @@ function operateInPlay(
   return next === current ? current : { ...next, operation: null };
 }
 
-function inputValueInPlay(
-  current: MagicSquarePlayState,
+/**
+ * 選んだマスに、今の入れ方で数を入れた結果。受け付けたら入れた後の session とその知らせ、受け付けなかったら元の session と
+ * 受け付けなかった知らせを返す。マスを選んでいないときも受け付けない。
+ */
+export function inputMagicSquareValue(
+  session: MagicSquareSession,
+  inputMode: MagicSquareInputMode,
   value: number,
   inputAt: number,
   operationId: number,
-): MagicSquarePlayState {
-  if (current.progress !== "playing") {
-    return current;
-  }
-  const { session, inputMode } = current;
+): { session: MagicSquareSession; operation: MagicSquareOperation } {
   const { selectedCellIndex: cellIndex } = session;
   const input = inputMagicSquareSessionValue(
     session,
@@ -180,14 +181,35 @@ function inputValueInPlay(
   );
   if (input.type === "rejected" || cellIndex === null) {
     return {
-      ...current,
+      session,
       operation: { id: operationId, type: "rejected", cellIndex, value },
     };
   }
   return {
-    ...applyPlaySession(current, input.session),
+    session: input.session,
     operation: { id: operationId, type: input.type, cellIndex, value },
   };
+}
+
+function inputValueInPlay(
+  current: MagicSquarePlayState,
+  value: number,
+  inputAt: number,
+  operationId: number,
+): MagicSquarePlayState {
+  if (current.progress !== "playing") {
+    return current;
+  }
+  const { session, operation } = inputMagicSquareValue(
+    current.session,
+    current.inputMode,
+    value,
+    inputAt,
+    operationId,
+  );
+  return operation.type === "rejected"
+    ? { ...current, operation }
+    : { ...applyPlaySession(current, session), operation };
 }
 
 /** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */

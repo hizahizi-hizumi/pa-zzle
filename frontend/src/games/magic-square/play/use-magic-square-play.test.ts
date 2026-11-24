@@ -1,8 +1,15 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
-import { useMagicSquarePlay } from "@/games/magic-square/play/use-magic-square-play";
+import {
+  inputMagicSquareValue,
+  useMagicSquarePlay,
+} from "@/games/magic-square/play/use-magic-square-play";
 import { selectMagicSquareProblemForDifficulty } from "@/games/magic-square/problem-selection";
 import { calculateMagicSquareSpeedScoreRule } from "@/games/magic-square/score";
+import {
+  createMagicSquareSession,
+  selectMagicSquareSessionCell,
+} from "@/games/magic-square/session/session";
 import { createProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
 
@@ -294,6 +301,47 @@ describe("useMagicSquarePlay", () => {
         problemIdentity,
         vi.mocked(createProblemSeed).mock.calls,
       ]).toEqual([restored.identity, []]);
+    });
+  });
+});
+
+describe("inputMagicSquareValue", () => {
+  const session = createMagicSquareSession(initial.problem, 0);
+
+  test.each([
+    ["どのマスも選んでいない", session, null],
+    [
+      "最初から置いてある数のマスを選んだ",
+      selectMagicSquareSessionCell(session, 1),
+      1,
+    ],
+  ] as const)(
+    "%sときは、session を変えずに受け付けない知らせを返すこと",
+    (_, selected, cellIndex) => {
+      const input = inputMagicSquareValue(selected, "value", 14, 0, 7);
+
+      expect(input).toEqual({
+        session: selected,
+        operation: { id: 7, type: "rejected", cellIndex, value: 14 },
+      });
+    },
+  );
+
+  test("空きマスを選んだときは、数を置いた session と置いた知らせを返すこと", () => {
+    const input = inputMagicSquareValue(
+      selectMagicSquareSessionCell(session, 0),
+      "value",
+      14,
+      0,
+      7,
+    );
+
+    expect({
+      cell: input.session.puzzleState.cells[0],
+      operation: input.operation,
+    }).toEqual({
+      cell: 14,
+      operation: { id: 7, type: "placed", cellIndex: 0, value: 14 },
     });
   });
 });

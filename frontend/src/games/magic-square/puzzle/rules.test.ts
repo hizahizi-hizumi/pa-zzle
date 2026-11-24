@@ -12,6 +12,7 @@ import {
   changesMagicSquareLineVerdict,
   enterMagicSquareValue,
   evaluateMagicSquareLine,
+  findMagicSquareMemoRejection,
   findMagicSquareValueCell,
   isMagicSquareLineViolation,
   isMagicSquareSolved,
@@ -21,6 +22,7 @@ import {
   listMagicSquareValueStates,
   MAGIC_SQUARE_MEMO_CAPACITY,
   type MagicSquareLineStatus,
+  type MagicSquareMemoRejection,
   placeMagicSquareValue,
   removeMagicSquareValue,
   toggleMagicSquareMemo,
@@ -672,6 +674,48 @@ describe("最初から置いてある数がある 4×4 の盤面を操作する�
         expect(next.memos[emptyCell]).toEqual(fullValues.slice(1));
       });
     });
+  });
+
+  describe("findMagicSquareMemoRejection", () => {
+    const full = [7, 8, 9, 11, 13]
+      .slice(0, MAGIC_SQUARE_MEMO_CAPACITY)
+      .reduce(
+        (current, value) =>
+          toggleMagicSquareMemo(givens, current, otherEmptyCell, value),
+        placed,
+      );
+    const cases: readonly [
+      string,
+      number,
+      number,
+      MagicSquareMemoRejection | null,
+    ][] = [
+      ["メモの無い空きマス", 4, 7, null],
+      ["メモが上限まで埋まったマスに書いてある数", otherEmptyCell, 7, null],
+      [
+        "メモが上限まで埋まったマスにまだ書いていない数",
+        otherEmptyCell,
+        15,
+        "full",
+      ],
+      ["数を置いたマス", emptyCell, 7, "not-empty-cell"],
+      ["最初から置いてある数のマス", givenCell, 7, "not-empty-cell"],
+      ["盤面に置いてある数", otherEmptyCell, 14, "used-value"],
+    ];
+
+    test.each(cases)(
+      "%sでは、メモに書けない・消せないわけを返し、書ける・消せるときは null を返すこと",
+      (_, cellIndex, value, expected) => {
+        const rejection = findMagicSquareMemoRejection(
+          givens,
+          full,
+          cellIndex,
+          value,
+        );
+
+        expect(rejection).toBe(expected);
+      },
+    );
   });
 
   describe("enterMagicSquareValue", () => {

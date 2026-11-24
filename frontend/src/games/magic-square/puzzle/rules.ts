@@ -217,25 +217,46 @@ export function enterMagicSquareValue(
 }
 
 /**
- * 空きマスのメモに数を書けるか・書いてある数を消せるか。盤面に置いてある数は、もうほかのマスの候補にならないので書けない。
- * メモが上限まで埋まったマスには、書いてある数を消すまで新しい数を書けない。
+ * メモに数を書けない・消せないわけ。
+ * - `not-empty-cell`: 空きマスでない（最初から置いてある数か置いた数のあるマス）。メモは空きマスにだけ書く。
+ * - `used-value`: 盤面に置いてある数。もうほかのマスの候補にならない。
+ * - `full`: メモが上限まで埋まったマスに、まだ書いていない数を書こうとした。書いてある数を消すまで書けない。
  */
+export type MagicSquareMemoRejection = "not-empty-cell" | "used-value" | "full";
+
+/** 空きマスのメモに数を書けない・書いてある数を消せないわけ。書ける・消せるときは `null`。 */
+export function findMagicSquareMemoRejection(
+  givens: MagicSquareBoard,
+  state: MagicSquareState,
+  cellIndex: number,
+  value: number,
+): MagicSquareMemoRejection | null {
+  if (
+    !isEditableCell(givens, state, cellIndex) ||
+    state.cells[cellIndex] !== null
+  ) {
+    return "not-empty-cell";
+  }
+  if (
+    !isMagicSquareValue(state.size, value) ||
+    findMagicSquareValueCell(state, value) !== null
+  ) {
+    return "used-value";
+  }
+  const memo = state.memos[cellIndex] ?? [];
+  return memo.includes(value) || memo.length < MAGIC_SQUARE_MEMO_CAPACITY
+    ? null
+    : "full";
+}
+
+/** 空きマスのメモに数を書けるか・書いてある数を消せるか（`findMagicSquareMemoRejection` のわけが無いか）。 */
 export function canToggleMagicSquareMemo(
   givens: MagicSquareBoard,
   state: MagicSquareState,
   cellIndex: number,
   value: number,
 ): boolean {
-  if (
-    !isEditableCell(givens, state, cellIndex) ||
-    state.cells[cellIndex] !== null ||
-    !isMagicSquareValue(state.size, value) ||
-    findMagicSquareValueCell(state, value) !== null
-  ) {
-    return false;
-  }
-  const memo = state.memos[cellIndex] ?? [];
-  return memo.includes(value) || memo.length < MAGIC_SQUARE_MEMO_CAPACITY;
+  return findMagicSquareMemoRejection(givens, state, cellIndex, value) === null;
 }
 
 /** 空きマスのメモに数を書く。書いてあれば消す。書けないときは、受け取った状態をそのまま返す。 */
