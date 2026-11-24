@@ -28,7 +28,8 @@ type GuideControl = { open: boolean; onClose: () => void };
 type TutorialControl = GuideControl & { playStart?: TutorialPlayStart };
 type GuideComponents = {
   HowToPlay: ComponentType<HowToPlayDialogControl>;
-  Tutorial: ComponentType<TutorialControl>;
+  /** チュートリアルを持たないゲームは省く。 */
+  Tutorial?: ComponentType<TutorialControl>;
 };
 
 const guides: Record<string, GuideComponents> = {

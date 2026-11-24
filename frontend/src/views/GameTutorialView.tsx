@@ -27,7 +27,8 @@ export function GameTutorialView() {
       readGameGuideDifficulty(location.state) ?? undefined,
     ) ?? "1";
 
-  if (!game || !guide) return <NotFoundView />;
+  if (!game || !guide?.Tutorial) return <NotFoundView />;
+  const { Tutorial } = guide;
   const homePath = game.homePath;
   function close() {
     if (returnTo !== null) navigate(-1);
@@ -49,7 +50,7 @@ export function GameTutorialView() {
   return (
     <section className="mx-auto max-w-3xl py-8 text-center">
       <h1 className="text-heading">{game.name}のチュートリアル</h1>
-      <guide.Tutorial
+      <Tutorial
         open={true}
         onClose={close}
         playStart={fromPlay ? undefined : { difficulty, onStart: startPlay }}

@@ -15,7 +15,6 @@ type GamePlayFrameProps<Result> = Pick<
   GamePlayScreenProps<unknown, Result>,
   | "progress"
   | "result"
-  | "onReplay"
   | "onStartNewProblem"
   | "onOpenGameHome"
   | "onBackToAppHome"
@@ -26,6 +25,8 @@ type GamePlayFrameProps<Result> = Pick<
 > &
   Partial<RestartableGamePlayScreenProps> & {
     title: string;
+    /** リセットを提供しないゲームは省き、メニューに出さない。 */
+    onReplay?: () => void;
     entryAnimation?: boolean;
     background?: ReactNode;
     metrics: readonly PlayHeaderMetric[];
