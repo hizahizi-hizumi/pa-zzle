@@ -31,7 +31,7 @@ const menuItemColumnsClassName =
 /**
  * プレイ中の「…」メニューから使う操作の一覧。本番の「…」ボタンと、その下に開くメニューの面1枚を、
  * 押しても何も起きない静止の図で描き、面の中に項目ごとの名前と説明を並べる。
- * 「…」ボタンの右には、本番のボタンの名前で、そこから選ぶことを一文で言う。
+ * 「…」ボタンの右には、ボタンの置き場所と本番のボタンの名前で、そこから下の操作を選ぶことを一文で言う。
  * 項目の名前は本番と同じアイコンと色（取り消しの色を含む）で示し、遊び方の文字の段に合わせて太字の本文にする。
  * 説明は普通の太さの本文にする。「…」ボタン・項目のアイコン・名前と説明の書き出しは、待ったの行と同じ2列にそろえる。
  */
@@ -48,10 +48,11 @@ export function HowToPlayMenuOperations({
           </Button>
         </span>
         <p className="text-body">
-          <HowToPlayPhrases text="「…」を/押して/選びます。" />
+          <HowToPlayPhrases text="画面の右上の/「…」を/押すと/次の操作を/選べます。" />
         </p>
       </div>
-      <DropdownMenuStaticSurface>
+      {/* 面を列の幅いっぱいに広げると本番の小さなメニューに見えないので、スマホの幅の列と同じ幅までにする。 */}
+      <DropdownMenuStaticSurface className="max-w-sm">
         {operations.map(({ item, text, note }) => (
           <div
             key={item.label}
