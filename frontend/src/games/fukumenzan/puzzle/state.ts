@@ -16,10 +16,6 @@ export type FukumenzanPuzzleState = {
   crossedDigits: readonly (readonly FukumenzanDigit[])[];
 };
 
-export function isFukumenzanDigit(value: unknown): value is FukumenzanDigit {
-  return fukumenzanDigits.some((digit) => digit === value);
-}
-
 export function createInitialFukumenzanState(
   equation: FukumenzanEquation,
 ): FukumenzanPuzzleState {
@@ -28,15 +24,6 @@ export function createInitialFukumenzanState(
     placedDigits: letters.map(() => null),
     crossedDigits: letters.map(() => []),
   };
-}
-
-/** 札が入っている文字の番号。列にある札は `null`。 */
-export function findFukumenzanDigitHolder(
-  state: FukumenzanPuzzleState,
-  digit: FukumenzanDigit,
-): number | null {
-  const holder = state.placedDigits.indexOf(digit);
-  return holder < 0 ? null : holder;
 }
 
 export function isInitialFukumenzanState(

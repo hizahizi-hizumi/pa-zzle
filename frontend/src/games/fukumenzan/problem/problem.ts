@@ -128,15 +128,3 @@ export function isFukumenzanRecordedProblemIdentity(
     isProblemIdentity: isCurrentFukumenzanProblemIdentity,
   });
 }
-
-/** 今の版の identity から問題を作り直す。 */
-export function restoreFukumenzanProblemFromIdentity(
-  identity: FukumenzanProblemIdentity,
-): FukumenzanProblem {
-  const problem = parseFukumenzanEquation(identity.seed);
-  if (problem === null) {
-    throw new RangeError(`Invalid Fukumenzan equation: ${identity.seed}`);
-  }
-  assertFukumenzanProblem(problem);
-  return problem;
-}

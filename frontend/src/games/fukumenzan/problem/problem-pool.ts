@@ -46,7 +46,7 @@ export function decodeFukumenzanPoolProblem(
   return problem;
 }
 
-export function toFukumenzanPoolIdentity(
+function toFukumenzanPoolIdentity(
   entry: FukumenzanProblemPoolEntry,
 ): FukumenzanProblemIdentity {
   return createFukumenzanProblemIdentity(decodeFukumenzanPoolProblem(entry));

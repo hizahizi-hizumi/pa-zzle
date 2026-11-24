@@ -3,7 +3,6 @@ import {
   createInitialFukumenzanState,
   type FukumenzanDigit,
   type FukumenzanPuzzleState,
-  findFukumenzanDigitHolder,
   fukumenzanDigits,
 } from "@/games/fukumenzan/puzzle/state";
 import {
@@ -53,7 +52,6 @@ describe("placeFukumenzanDigit", () => {
       const state = placeFukumenzanDigit(placed, 2, 1);
 
       expect(state.placedDigits).toEqual([9, null, 1, null, null]);
-      expect(findFukumenzanDigitHolder(state, 5)).toBeNull();
     });
   });
 

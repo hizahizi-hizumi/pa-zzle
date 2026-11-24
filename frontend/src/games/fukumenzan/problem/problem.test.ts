@@ -6,7 +6,6 @@ import {
   isCurrentFukumenzanProblemIdentity,
   isFukumenzanRecordedProblemIdentity,
   parseFukumenzanEquation,
-  restoreFukumenzanProblemFromIdentity,
 } from "@/games/fukumenzan/problem/problem";
 
 const problem: FukumenzanProblem = {
@@ -90,15 +89,5 @@ describe("isFukumenzanRecordedProblemIdentity", () => {
     const isRecorded = isFukumenzanRecordedProblemIdentity(olderIdentity);
 
     expect(isRecorded).toBe(true);
-  });
-});
-
-describe("restoreFukumenzanProblemFromIdentity", () => {
-  const identity = createFukumenzanProblemIdentity(problem);
-
-  test("identity の式から問題を作り直すこと", () => {
-    const restored = restoreFukumenzanProblemFromIdentity(identity);
-
-    expect(restored).toEqual(problem);
   });
 });
