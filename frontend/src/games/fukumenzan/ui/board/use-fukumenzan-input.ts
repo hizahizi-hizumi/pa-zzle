@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import { useTouchTap } from "@/components/touch-tap";
+import type { FukumenzanCrossUndoNotice } from "@/games/fukumenzan/play/use-fukumenzan-play";
 import type {
   FukumenzanDigit,
   FukumenzanPuzzleState,
@@ -84,6 +85,7 @@ function findDropTarget(x: number, y: number): DropTarget | null {
 
 type FukumenzanInputOptions = {
   puzzleState: FukumenzanPuzzleState;
+  crossUndoNotice: FukumenzanCrossUndoNotice | null;
   interactionDisabled: boolean;
   onPlaceDigit: (letter: number, digit: FukumenzanDigit) => void;
   onReturnDigit: (letter: number) => void;
@@ -97,6 +99,7 @@ type FukumenzanInputOptions = {
  */
 export function useFukumenzanInput({
   puzzleState,
+  crossUndoNotice,
   interactionDisabled,
   onPlaceDigit,
   onReturnDigit,
@@ -104,6 +107,15 @@ export function useFukumenzanInput({
 }: FukumenzanInputOptions) {
   const { getTapHandlers } = useTouchTap();
   const [selection, setSelection] = useState<FukumenzanSelection>(null);
+  const [shownCrossUndoId, setShownCrossUndoId] = useState(
+    crossUndoNotice?.id ?? null,
+  );
+
+  // 待ったで × を戻した文字を選び、札の上で戻った × を見せる。
+  if (crossUndoNotice !== null && crossUndoNotice.id !== shownCrossUndoId) {
+    setShownCrossUndoId(crossUndoNotice.id);
+    setSelection({ kind: "letter", letter: crossUndoNotice.letter });
+  }
   const [drag, setDrag] = useState<FukumenzanCardDrag | null>(null);
   const pendingRef = useRef<PendingDrag | null>(null);
   const draggedRef = useRef(false);

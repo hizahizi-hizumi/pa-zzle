@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FukumenzanDifficulty } from "@/games/fukumenzan/difficulty";
 import type {
   FukumenzanProblem,
@@ -15,9 +15,10 @@ import {
   listFukumenzanLeadingZeroLetters,
   listFukumenzanMiscalculatedColumns,
 } from "@/games/fukumenzan/puzzle/rules";
-import type {
-  FukumenzanDigit,
-  FukumenzanPuzzleState,
+import {
+  type FukumenzanDigit,
+  type FukumenzanPuzzleState,
+  findFukumenzanCrossChangedLetter,
 } from "@/games/fukumenzan/puzzle/state";
 import {
   calculateFukumenzanPlayScore,
@@ -62,6 +63,12 @@ export type FukumenzanResult = FukumenzanSessionResult & {
   score: FukumenzanPlayScore;
 };
 
+/**
+ * 待ったで × の付け外しを戻した文字。盤面がその文字を選び、戻った × を見せる。
+ * `id` は待ったごとに変わり、同じ文字が続いても別の待ったとして見分けられるようにする。
+ */
+export type FukumenzanCrossUndoNotice = { id: number; letter: number };
+
 export type FukumenzanPlay = GamePlay<
   FukumenzanDifficulty,
   FukumenzanProblemIdentity,
@@ -78,6 +85,8 @@ export type FukumenzanPlay = GamePlay<
     /** 一の位から数えた位。 */
     miscalculatedColumns: readonly number[];
     undoCount: number;
+    /** 最後の待ったが × を戻さなかったときと、盤面を戻した後は `null`。 */
+    crossUndoNotice: FukumenzanCrossUndoNotice | null;
     placeDigit: (letter: number, digit: FukumenzanDigit) => void;
     returnDigit: (letter: number) => void;
     toggleCross: (letter: number, digit: FukumenzanDigit) => void;
@@ -88,6 +97,7 @@ type FukumenzanPlayState = {
   workload: FukumenzanWorkload;
   session: FukumenzanSession;
   progress: GameProgress;
+  crossUndoNotice: FukumenzanCrossUndoNotice | null;
 };
 
 function createPlayState(
@@ -99,6 +109,7 @@ function createPlayState(
     workload: measureFukumenzanWorkload(problem),
     session: createFukumenzanSession(problem, startedAt),
     progress: "playing",
+    crossUndoNotice: null,
   };
 }
 
@@ -180,26 +191,48 @@ export function useFukumenzanPlay(
     );
   }, []);
 
+  const nextUndoId = useRef(0);
+
   const undo = useCallback(() => {
-    setPlay((current) =>
-      applyPlaySession(current, undoFukumenzanSession(current.session)),
-    );
+    const id = nextUndoId.current++;
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        undoFukumenzanSession(current.session),
+      );
+      if (next === current) {
+        return current;
+      }
+      const letter = findFukumenzanCrossChangedLetter(
+        current.session.puzzleState,
+        next.session.puzzleState,
+      );
+      return {
+        ...next,
+        crossUndoNotice: letter === null ? null : { id, letter },
+      };
+    });
   }, []);
 
   const restart = useCallback(() => {
-    setPlay((current) =>
-      applyPlaySession(current, restartFukumenzanSession(current.session)),
-    );
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        restartFukumenzanSession(current.session),
+      );
+      return next === current ? current : { ...next, crossUndoNotice: null };
+    });
   }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setPlay((current) =>
-      startPlaySession(
+    setPlay((current) => ({
+      ...startPlaySession(
         current,
         createFukumenzanSession(current.session.problem, startedAt),
       ),
-    );
+      crossUndoNotice: null,
+    }));
   }, []);
 
   const startNewProblem = useCallback(() => {
@@ -248,6 +281,7 @@ export function useFukumenzanPlay(
     leadingZeroLetters,
     miscalculatedColumns,
     undoCount: session.undoCount,
+    crossUndoNotice: play.crossUndoNotice,
     canUndo: canUndoFukumenzanSession(session),
     canRestart: canRestartFukumenzanSession(session),
     placeDigit,

@@ -1,7 +1,10 @@
 import { type CSSProperties, useEffect, useEffectEvent, useRef } from "react";
 
 import type { FukumenzanProblem } from "@/games/fukumenzan/problem/problem";
-import type { FukumenzanPuzzleState } from "@/games/fukumenzan/puzzle/state";
+import {
+  type FukumenzanPuzzleState,
+  fukumenzanDigits,
+} from "@/games/fukumenzan/puzzle/state";
 import { FukumenzanCardFace } from "@/games/fukumenzan/ui/board/FukumenzanCardFace";
 import {
   type FukumenzanCardDrag,
@@ -36,6 +39,7 @@ const CLEAR_REDUCED_MOTION_HOLD_MS = 700;
 /**
  * 筆算の形の式。足す数を右をそろえて上から並べ、最後の足す数の左に + を書き、線を引いて答えを書く。
  * 文字のマスは、空なら文字を、札を入れたら札の面だけを描く。同じ文字のマスは全部同じ札になる。
+ * 空の文字に × を付けていれば、マスの隅に残りの候補の数を丸で囲んで小さく書き、選んでいないときもメモの跡を残す。
  * 選んでいる文字と、運んでいる札の下にある文字は、その文字の全部のマスを輪郭で示す。
  * 先頭の0は先頭のマスの札を赤く、計算違いの桁は答えのマスの下に赤い線を引く。
  */
@@ -109,6 +113,11 @@ export function FukumenzanEquationBoard({
     const handlers = getLetterHandlers(letter);
     const underlined =
       resultPlace !== null && miscalculatedColumns.includes(resultPlace);
+    const crossedCount = puzzleState.crossedDigits[letter]?.length ?? 0;
+    const candidateCount =
+      placed === null && crossedCount > 0
+        ? fukumenzanDigits.length - crossedCount
+        : null;
     return (
       <button
         key={key}
@@ -122,7 +131,13 @@ export function FukumenzanEquationBoard({
               }
         }
         {...fukumenzanDropTargetAttributes.letter(letter)}
-        aria-label={placed === null ? letterText : `${letterText} に ${placed}`}
+        aria-label={
+          placed !== null
+            ? `${letterText} に ${placed}`
+            : candidateCount !== null
+              ? `${letterText}（候補 ${candidateCount}）`
+              : letterText
+        }
         aria-pressed={highlightedLetter === letter}
         aria-disabled={interactionDisabled}
         className={cn(
@@ -149,6 +164,17 @@ export function FukumenzanEquationBoard({
             noticed={leading && leadingZeroLetters.includes(letter)}
             lifted={drag !== null && drag.fromLetter === letter}
           />
+        )}
+        {candidateCount !== null && (
+          <span
+            aria-hidden="true"
+            className={cn(
+              "absolute right-[4%] bottom-[4%] flex size-[34%] items-center justify-center rounded-full border font-sans leading-none [font-size:22cqh]",
+              fukumenzanToneClassNames.candidateCount,
+            )}
+          >
+            {candidateCount}
+          </span>
         )}
         {underlined && (
           <span

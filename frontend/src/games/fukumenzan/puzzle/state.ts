@@ -34,3 +34,14 @@ export function isInitialFukumenzanState(
     state.crossedDigits.every((digits) => digits.length === 0)
   );
 }
+
+/** 2つの状態で × が違う文字。1回の操作で × が変わるのは1文字だけなので、最初の1つを返す。違いが無ければ `null`。 */
+export function findFukumenzanCrossChangedLetter(
+  before: FukumenzanPuzzleState,
+  after: FukumenzanPuzzleState,
+): number | null {
+  const letter = before.crossedDigits.findIndex(
+    (digits, index) => digits.join() !== after.crossedDigits[index]?.join(),
+  );
+  return letter < 0 ? null : letter;
+}

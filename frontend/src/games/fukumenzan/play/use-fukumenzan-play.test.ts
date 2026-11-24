@@ -2,9 +2,21 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 
 import { useFukumenzanPlay } from "@/games/fukumenzan/play/use-fukumenzan-play";
 import { createFukumenzanProblemIdentity } from "@/games/fukumenzan/problem/problem";
-import type { FukumenzanPooledProblem } from "@/games/fukumenzan/problem/problem-pool";
-import { selectFukumenzanProblemById } from "@/games/fukumenzan/problem-selection";
+import {
+  type FukumenzanPooledProblem,
+  listFukumenzanPoolProblemIds,
+} from "@/games/fukumenzan/problem/problem-pool";
+import {
+  selectFukumenzanProblemById,
+  selectFukumenzanProblemForDifficulty,
+} from "@/games/fukumenzan/problem-selection";
 import { createProblemId } from "@/games/problem-id";
+import { createProblemSeed } from "@/games/problem-seed";
+
+vi.mock("@/games/problem-seed", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/games/problem-seed")>()),
+  createProblemSeed: vi.fn(),
+}));
 
 type HookResult = { current: ReturnType<typeof useFukumenzanPlay> };
 
@@ -32,7 +44,19 @@ function placeSolution(result: HookResult, skipLast = false): void {
 afterEach(() => {
   cleanup();
   window.sessionStorage.clear();
+  vi.mocked(createProblemSeed).mockReset();
 });
+
+/** レベル1の問題集から、その問題を選ぶ seed を探す。 */
+function findSeedSelecting(problemIdToSelect: string): string {
+  for (let index = 0; ; index += 1) {
+    const seed = `use-fukumenzan-play-${index}`;
+    const { identity } = selectFukumenzanProblemForDifficulty("1", seed);
+    if (createProblemId(identity) === problemIdToSelect) {
+      return seed;
+    }
+  }
+}
 
 describe("useFukumenzanPlay", () => {
   let hook: HookResult;
@@ -86,13 +110,31 @@ describe("useFukumenzanPlay", () => {
       });
     });
 
-    test("× を外し、待ったを数えること", () => {
-      const { puzzleState, undoCount } = hook.current;
+    test("× を外し、待ったを数え、× を戻した文字を知らせること", () => {
+      const { puzzleState, undoCount, crossUndoNotice } = hook.current;
 
-      expect({ crossed: puzzleState.crossedDigits[0], undoCount }).toEqual({
-        crossed: [],
-        undoCount: 1,
+      expect({
+        crossed: puzzleState.crossedDigits[0],
+        undoCount,
+        letter: crossUndoNotice?.letter,
+      }).toEqual({ crossed: [], undoCount: 1, letter: 0 });
+    });
+  });
+
+  describe("札を入れて待ったをした場合", () => {
+    beforeEach(() => {
+      act(() => {
+        hook.current.placeDigit(0, 9);
       });
+      act(() => {
+        hook.current.undo();
+      });
+    });
+
+    test("× を戻した文字を知らせないこと", () => {
+      const { crossUndoNotice } = hook.current;
+
+      expect(crossUndoNotice).toBeNull();
     });
   });
 
@@ -125,6 +167,33 @@ describe("useFukumenzanPlay", () => {
           placeCount: 5,
           workload: { letterCount: 5, letterCellCount: 10 },
           score: { total: 100 },
+        });
+      });
+
+      describe("リセットした場合", () => {
+        beforeEach(() => {
+          act(() => {
+            hook.current.replay();
+          });
+        });
+
+        test("同じ問題を空の盤面から、回数0で始め直すこと", () => {
+          const { problemIdentity, status, puzzleState, session } =
+            hook.current;
+
+          expect({
+            problemId: createProblemId(problemIdentity),
+            status,
+            placedDigits: puzzleState.placedDigits,
+            placeCount: session.placeCount,
+            undoCount: session.undoCount,
+          }).toEqual({
+            problemId,
+            status: "playing",
+            placedDigits: [null, null, null, null, null],
+            placeCount: 0,
+            undoCount: 0,
+          });
         });
       });
 
@@ -166,6 +235,58 @@ describe("useFukumenzanPlay", () => {
         canUndo: false,
         restartCount: 1,
       });
+    });
+  });
+
+  describe("別の問題を始めた場合", () => {
+    const otherProblemId = listFukumenzanPoolProblemIds("1").find(
+      (id) => id !== problemId,
+    )!;
+
+    beforeEach(() => {
+      vi.mocked(createProblemSeed)
+        .mockReturnValueOnce(findSeedSelecting(problemId))
+        .mockReturnValueOnce(findSeedSelecting(otherProblemId));
+      act(() => {
+        hook.current.placeDigit(0, 9);
+      });
+      act(() => {
+        hook.current.startNewProblem();
+      });
+    });
+
+    test("今の問題を避けて選んだ問題を、空の盤面で始めること", () => {
+      const { problemIdentity, puzzleState } = hook.current;
+
+      expect({
+        problemId: createProblemId(problemIdentity),
+        empty: puzzleState.placedDigits.every((digit) => digit === null),
+      }).toEqual({ problemId: otherProblemId, empty: true });
+    });
+  });
+});
+
+describe("seed で問題を選んで始めた場合", () => {
+  const seed = "use-fukumenzan-play-seeded";
+  const selected = selectFukumenzanProblemForDifficulty("3", seed);
+  let hook: HookResult;
+
+  beforeEach(() => {
+    vi.mocked(createProblemSeed).mockReturnValue(seed);
+    hook = renderHook(() => useFukumenzanPlay("3")).result;
+  });
+
+  test("seed で選んだ問題を、空の盤面で始めること", () => {
+    const { problemIdentity, problem, puzzleState } = hook.current;
+
+    expect({
+      problemIdentity,
+      problem,
+      empty: puzzleState.placedDigits.every((digit) => digit === null),
+    }).toEqual({
+      problemIdentity: selected.identity,
+      problem: selected.problem,
+      empty: true,
     });
   });
 });

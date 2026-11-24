@@ -2,7 +2,10 @@ import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
 import type { FukumenzanDifficulty } from "@/games/fukumenzan/difficulty";
 import { FUKUMENZAN_DISPLAY_NAME } from "@/games/fukumenzan/display-name";
-import type { FukumenzanResult } from "@/games/fukumenzan/play/use-fukumenzan-play";
+import type {
+  FukumenzanCrossUndoNotice,
+  FukumenzanResult,
+} from "@/games/fukumenzan/play/use-fukumenzan-play";
 import type { FukumenzanProblem } from "@/games/fukumenzan/problem/problem";
 import type {
   FukumenzanDigit,
@@ -34,6 +37,7 @@ type FukumenzanPlayProps = GamePlayScreenProps<
     leadingZeroLetters: readonly number[];
     miscalculatedColumns: readonly number[];
     undoCount: number;
+    crossUndoNotice: FukumenzanCrossUndoNotice | null;
     onPlaceDigit: (letter: number, digit: FukumenzanDigit) => void;
     onReturnDigit: (letter: number) => void;
     onToggleCross: (letter: number, digit: FukumenzanDigit) => void;
@@ -51,6 +55,7 @@ export function FukumenzanPlay({
   leadingZeroLetters,
   miscalculatedColumns,
   undoCount,
+  crossUndoNotice,
   canUndo,
   canRestart,
   onPlaceDigit,
@@ -71,6 +76,7 @@ export function FukumenzanPlay({
   const interactionDisabled = progress !== "playing";
   const input = useFukumenzanInput({
     puzzleState,
+    crossUndoNotice,
     interactionDisabled,
     onPlaceDigit,
     onReturnDigit,
@@ -89,7 +95,7 @@ export function FukumenzanPlay({
       ]}
       canRestart={canRestart}
       onRestart={onRestart}
-      // やり直しは待ったと盤面を戻すにし、点に入る事実を数え直すリセットはプレイ中に出さない。
+      // onReplay は渡さない。やり直しは待ったと盤面を戻すにし、点に入る事実を数え直すリセットはプレイ中に出さない。
       onStartNewProblem={onStartNewProblem}
       onOpenGameHome={onOpenGameHome}
       onBackToAppHome={onBackToAppHome}
