@@ -1,3 +1,4 @@
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 import { SHUTTLE_PARKING_DISPLAY_NAME } from "@/games/shuttle-parking/display-name";
 import type { ShuttleParkingProblem } from "@/games/shuttle-parking/problem/problem";
 import { createShuttleParkingClearability } from "@/games/shuttle-parking/puzzle/clearability";
@@ -277,7 +278,7 @@ function describeViolation(
     case "exited":
       return {
         headline: "先頭の乗客が乗れる車がなく\n出せる車もなくなりました",
-        detail: "「待った」で戻して出し直します",
+        detail: `「${PLAY_OPERATION_LABELS.undo}」で戻して出し直します`,
       };
     case "off-step":
       return { headline: "指さしている車をタップします", detail: null };

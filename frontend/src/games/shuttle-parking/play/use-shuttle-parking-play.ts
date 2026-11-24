@@ -98,7 +98,7 @@ export function createShuttleParkingResult(
   };
 }
 
-export function getShuttleParkingSpeedReference({
+function getShuttleParkingSpeedReference({
   problem,
   trapWeight,
 }: ShuttleParkingPooledProblem): ShuttleParkingSpeedReference {

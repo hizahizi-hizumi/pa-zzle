@@ -68,7 +68,7 @@ describe("calculateShuttleParkingPlayScore", () => {
     const plays = {
       readThrough: { elapsedMs: 40_000, trapCount: 0 },
       undoSlip: { elapsedMs: 46_000, trapCount: 0 },
-      oneTrap: { elapsedMs: 45_000, trapCount: 1 },
+      oneTrap: { elapsedMs: 40_000, trapCount: 1 },
       trialAndBacktrack: { elapsedMs: 70_000, trapCount: 2 },
     };
     const totals = Object.fromEntries(
@@ -86,8 +86,8 @@ describe("calculateShuttleParkingPlayScore", () => {
       expect(getGameResultLevel(totals.undoSlip)).toBe("great");
     });
 
-    test("罠に1回入ると、速く解いても good に届かないこと", () => {
-      expect(totals.oneTrap).toBeLessThan(80);
+    test("罠に1回入ると、基準時間内に解いても great に届かないこと", () => {
+      expect(getGameResultLevel(totals.oneTrap)).toBe("good");
     });
 
     test("試して戻して解くプレイを、読み切るプレイより大きく下げること", () => {

@@ -83,7 +83,7 @@ function renderScoreRows(item: keyof typeof SHUTTLE_PARKING_SCORE_MAXIMUMS) {
           <HowToPlayScoreRow
             measure="罠"
             deduction={`1回 −${SHUTTLE_PARKING_TRAP_PENALTY}点`}
-            text="まだ全員を/送り出せる盤面で/送り出せなくなる車を/出した回数です。/出した時点で/数えます。/「待った」や/「盤面を戻す」で/戻しても/減りません。/戻して/同じ盤面から/同じ車を/また出しても/増えません。/詰んだ後に/出した車は/数えません。"
+            text={`まだ全員を/送り出せる盤面で/送り出せなくなる車を/出した回数です。/出した時点で/数えます。/「${undo}」や/「${restart}」で/戻しても/減りません。/戻して/同じ盤面から/同じ車を/また出しても/増えません。/詰んだ後に/出した車は/数えません。`}
           />
           <HowToPlayScoreRow
             measure={`「${undo}」・/「${restart}」`}
@@ -175,7 +175,7 @@ export function ShuttleParkingHowToPlayDialog({
                 </span>
               }
               text={`「${undo}」で/最後に出した/1台を/駐車場に/戻します。`}
-              note="時間は/そのままで/「待った」の/回数が/増えます。"
+              note={`時間は/そのままで/「${undo}」の/回数が/増えます。`}
             />
             <HowToPlayMenuOperations operations={menuOperations} />
           </HowToPlaySection>

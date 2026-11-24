@@ -1,7 +1,7 @@
 /**
  * 送迎パーキングの効果音を描いて FLAC に書き出す。
  *
- * 使い方（リポジトリのルートから）: bun scripts/assets/shuttle-parking_sounds.ts
+ * 使い方（リポジトリのルートから）: bun scripts/assets/shuttle_parking_sounds.ts
  *
  * 音は Chromium の `OfflineAudioContext` で描く（Playwright で Chromium を開き、ページの中で描いた波形を受け取る）。
  * 受け取った波形は、ffmpeg の `ebur128` で測った 400ms 窓の最大ラウドネスを音ごとの値にそろえ、

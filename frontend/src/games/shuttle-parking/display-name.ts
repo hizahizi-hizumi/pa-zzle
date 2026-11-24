@@ -1,5 +1,2 @@
-/**
- * 利用者に見せるゲーム名。画面に出すゲーム名はここだけを参照する。内部ID・ディレクトリ・ルートの `shuttle-parking` とは分けて扱う。
- * 公開前に商標を確かめるまで、公開名としては確定していない。
- */
+/** 内部ID・ディレクトリ・ルートの `shuttle-parking` とは分けて扱う。 */
 export const SHUTTLE_PARKING_DISPLAY_NAME = "送迎パーキング";
