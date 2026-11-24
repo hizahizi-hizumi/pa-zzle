@@ -225,6 +225,31 @@ describe("FukumenzanPlay", () => {
     });
   });
 
+  describe("文字を選んだ場合", () => {
+    beforeEach(() => {
+      renderPlay({});
+      fireEvent.click(getEquation().getAllByRole("button", { name: "K" })[0]!);
+    });
+
+    test("式と札の列の外を押すと、選びを外すこと", () => {
+      fireEvent.pointerDown(document.body);
+
+      expect(getEquation().queryAllByRole("button", { pressed: true })).toEqual(
+        [],
+      );
+    });
+
+    test("札の列を押しても、選びを外さないこと", () => {
+      fireEvent.pointerDown(
+        getCardRow().getByRole("button", { name: "2 の札" }),
+      );
+
+      expect(
+        getEquation().getAllByRole("button", { pressed: true }).length,
+      ).toBeGreaterThan(0);
+    });
+  });
+
   describe("待ったで × を戻した知らせを受けた場合", () => {
     beforeEach(() => {
       const crossed: FukumenzanPuzzleState = {

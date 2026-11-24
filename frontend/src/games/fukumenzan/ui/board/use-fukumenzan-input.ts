@@ -2,6 +2,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type RefObject,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -103,7 +104,7 @@ type FukumenzanInputOptions = {
 };
 
 /**
- * 式の文字・列の札・列の空いた所への、押す操作と札を運ぶ操作。
+ * 式の文字・列の札・列の空いた所への、押す操作と札を運ぶ操作。選んでいる間に式と札の列の外を押すと、選びを外す。
  * 押す操作は、隣の札を続けて素早く押しても押した札で受けるよう `useTouchTap` で受ける。
  * 札は押したまま動かすと運べる。運んだ後に同じ押し方から届く click は捨てる。
  */
@@ -132,6 +133,31 @@ export function useFukumenzanInput({
   const draggedRef = useRef(false);
 
   const shownSelection = interactionDisabled ? null : selection;
+  const selecting = selection !== null;
+
+  // 式と札の列の外（例では、その例の式と札の列の外）を押したら、選びを外す。
+  useEffect(() => {
+    if (!selecting) {
+      return;
+    }
+    function releaseOnOutsidePress(event: PointerEvent) {
+      const pressed =
+        event.target instanceof Element
+          ? event.target.closest(
+              `[${LETTER_ATTRIBUTE}], [${CARD_ROW_ATTRIBUTE}]`,
+            )
+          : null;
+      const scope = dropScopeRef?.current ?? null;
+      if (pressed !== null && (scope === null || scope.contains(pressed))) {
+        return;
+      }
+      setSelection(null);
+    }
+    document.addEventListener("pointerdown", releaseOnOutsidePress, true);
+    return () => {
+      document.removeEventListener("pointerdown", releaseOnOutsidePress, true);
+    };
+  }, [selecting, dropScopeRef]);
 
   function drop(pending: PendingDrag, x: number, y: number) {
     const target = findDropTarget(x, y, dropScopeRef?.current ?? null);
