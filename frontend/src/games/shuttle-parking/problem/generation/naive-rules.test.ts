@@ -51,6 +51,14 @@ const deepTieProblem = restoreShuttleParkingPoolEntry(
 const untangleProblem = restoreShuttleParkingPoolEntry(
   "6tr3-04v2b31h2a35v3b05v3c23v3d03v2a10v3c12v2d-dcccadbbacdaabbcbcdd",
 ).problem;
+// ふさぎを何段もたどった台数で選べば勝ち、直接ふさぐ台数で選ぶと半分しか勝てない問題。
+const deepUntangleProblem = restoreShuttleParkingPoolEntry(
+  "6tr3-30v2b00v2a22v2c51h3a11h3b14v2a03h2c05v2b-bbbcbababcacabcaaa",
+).problem;
+// 掘る目標が並び、定員の大きい車を目標にすれば勝つ問題。
+const commitTargetTieProblem = restoreShuttleParkingPoolEntry(
+  "7tr4-52h2a55v2b25v3c15h2d04v3a31v3d01v3c10v3b-cbbdabcbaadddcdaabccc",
+).problem;
 
 describe("measureShuttleParkingRuleWinProbability", () => {
   test("深く掘る規則は、同点を一様に選ぶと半分しか勝てないこと", () => {
@@ -84,6 +92,39 @@ describe("measureShuttleParkingRuleWinProbability", () => {
     );
 
     expect(probability).toBe(1);
+  });
+});
+
+describe("measureShuttleParkingRuleWinProbability の渋滞をほどく規則", () => {
+  test("ふさぎを何段もたどった台数で選ぶと勝ち、直接ふさぐ台数では半分しか勝てないこと", () => {
+    const game = new AnalysisGame(deepUntangleProblem);
+
+    const probabilities = {
+      untangle: measureShuttleParkingRuleWinProbability(game, "untangle"),
+      untangleDeep: measureShuttleParkingRuleWinProbability(
+        game,
+        "untangleDeep",
+      ),
+    };
+
+    expect(probabilities).toEqual({ untangle: 0.5, untangleDeep: 1 });
+  });
+});
+
+describe("measureShuttleParkingRuleWinProbability の掘った車を使い切る規則", () => {
+  test("並んだ目標も同点の選び方で絞り、定員の大きい車を目標にすると必ず勝つこと", () => {
+    const game = new AnalysisGame(commitTargetTieProblem);
+
+    const probabilities = {
+      uniform: measureShuttleParkingRuleWinProbability(
+        game,
+        "deepCommit",
+        "uniform",
+      ),
+      big: measureShuttleParkingRuleWinProbability(game, "deepCommit", "big"),
+    };
+
+    expect(probabilities).toEqual({ uniform: 0.75, big: 1 });
   });
 });
 

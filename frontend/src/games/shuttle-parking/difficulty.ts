@@ -4,7 +4,10 @@ import {
   isInNumericRange,
   type NumericRange,
 } from "@/games/difficulty";
-import type { ShuttleParkingDifficultyAnalysis } from "@/games/shuttle-parking/problem/difficulty-analysis";
+import {
+  type ShuttleParkingDifficultyAnalysis,
+  SHUTTLE_PARKING_UPPER_LEVEL_MINIMUM_WEIGHTS as upperMinimum,
+} from "@/games/shuttle-parking/problem/difficulty-analysis";
 import {
   SHUTTLE_PARKING_NAIVE_RULES,
   type ShuttleParkingNaiveRule,
@@ -14,7 +17,7 @@ import type { ShuttleParkingWeightBounds } from "@/games/shuttle-parking/problem
 export type ShuttleParkingDifficulty = DifficultyLevel;
 
 /** 判定の決まり（レベルの段・範囲外の条件）が変わったら上げる。記録と診断に写す。 */
-export const SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION = "2";
+export const SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION = "3";
 
 /**
  * レベルごとの、どの勝ち筋でも出会う最も重い罠の重さ（罠の結果が何人先に出るか）。
@@ -23,12 +26,12 @@ export const SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION = "2";
 export const SHUTTLE_PARKING_WEIGHT_BY_LEVEL = {
   "1": { minimum: 0, maximum: 0 },
   "2": { minimum: 1, maximum: 4 },
-  "3": { minimum: 5, maximum: 7 },
-  "4": { minimum: 8, maximum: 9 },
-  "5": { minimum: 10, maximum: Number.POSITIVE_INFINITY },
+  "3": { minimum: upperMinimum["3"], maximum: upperMinimum["4"] - 1 },
+  "4": { minimum: upperMinimum["4"], maximum: upperMinimum["5"] - 1 },
+  "5": { minimum: upperMinimum["5"], maximum: Number.POSITIVE_INFINITY },
 } as const satisfies Record<ShuttleParkingDifficulty, NumericRange>;
 
-/** 素朴な規則のどれかがこの勝率以上で勝てる問題は、Lv3 以上に置かない。 */
+/** 素朴な規則のどれか、または素朴な解き方の候補から下限より1人少なく読む人が、この勝率以上で勝てる問題は、Lv3 以上に置かない。 */
 export const SHUTTLE_PARKING_NAIVE_CEILING = 0.8;
 
 /** 待機枠の数の範囲。解ける最小の数がこの外の問題は出さない。 */
@@ -45,6 +48,7 @@ export const SHUTTLE_PARKING_BAY_COUNT_RANGE = {
  * - `playStylesDisagree`: 先回りする人ではレベルが変わる（Lv1 で先回りする人が浅い罠に出会うのは許す）。
  * - `freePathEscapes`: Lv3 以上で、候補の外の勝つ手から進めると重い罠を避けて通れる。
  * - `naiveCeiling`: Lv3 以上で、素朴な規則のどれかが、同点のどれかの選び方で勝率 0.8 以上。
+ * - `naiveReaderWins`: Lv3 以上で、素朴な解き方の候補から、そのレベルの重さの下限より1人少なく読む人が勝率 0.8 以上。
  * - `headPoliciesAllLose`: Lv2 で、素朴な規則がどれも、同点をどう選んでも必ず負ける。
  */
 export type ShuttleParkingOutOfRangeReason =
@@ -54,6 +58,7 @@ export type ShuttleParkingOutOfRangeReason =
   | "playStylesDisagree"
   | "freePathEscapes"
   | "naiveCeiling"
+  | "naiveReaderWins"
   | "headPoliciesAllLose";
 
 export type ShuttleParkingDifficultyAssessment = DifficultyAssessment<{
@@ -65,18 +70,20 @@ export type ShuttleParkingDifficultyAssessment = DifficultyAssessment<{
 
 /**
  * 判定の決まりの組。`tieBreaks` が `uniform` なら規則の勝率を同点を一様に選んだ値で、`best` なら同点の選び方ごとの最大で見る。
- * 規則8つ・一様・進め方を広げた確かめなしの組は調査コードの判定と同じで、移植の確かめに使う。
+ * 規則8つ・一様・進め方を広げた確かめなし・読む人の確かめなしの組は調査コードの判定と同じで、移植の確かめに使う。
  */
 export type ShuttleParkingClassificationRules = {
   rules: readonly ShuttleParkingNaiveRule[];
   tieBreaks: "uniform" | "best";
   checksFreePath: boolean;
+  checksNaiveReader: boolean;
 };
 
 export const SHUTTLE_PARKING_CLASSIFICATION_RULES = {
   rules: Object.keys(SHUTTLE_PARKING_NAIVE_RULES) as ShuttleParkingNaiveRule[],
   tieBreaks: "best",
   checksFreePath: true,
+  checksNaiveReader: true,
 } as const satisfies ShuttleParkingClassificationRules;
 
 export function getShuttleParkingWeightLevel(
@@ -104,6 +111,7 @@ export function assessShuttleParkingDifficulty(
     rules,
     tieBreaks,
     checksFreePath,
+    checksNaiveReader,
   }: ShuttleParkingClassificationRules = SHUTTLE_PARKING_CLASSIFICATION_RULES,
 ): ShuttleParkingDifficultyAssessment {
   if (analysis.status === "unsupported") {
@@ -137,6 +145,13 @@ export function assessShuttleParkingDifficulty(
   const bestRule = Math.max(...rules.map((rule) => winRates[rule]));
   if (upper && bestRule >= SHUTTLE_PARKING_NAIVE_CEILING) {
     return { status: "out-of-range", reason: "naiveCeiling" };
+  }
+  if (
+    checksNaiveReader &&
+    upper &&
+    features.naiveReader[level] >= SHUTTLE_PARKING_NAIVE_CEILING
+  ) {
+    return { status: "out-of-range", reason: "naiveReaderWins" };
   }
   if (level === "2" && bestRule === 0) {
     return { status: "out-of-range", reason: "headPoliciesAllLose" };

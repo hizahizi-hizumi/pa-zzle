@@ -43,6 +43,7 @@ const researchRules = {
   rules: SHUTTLE_PARKING_RESEARCH_RULES,
   tieBreaks: "uniform" as const,
   checksFreePath: false,
+  checksNaiveReader: false,
 };
 
 const analyzedProblems = reference.problems.flatMap((problem) =>
@@ -105,7 +106,7 @@ describe("analyzeShuttleParkingDifficulty", () => {
 });
 
 describe("assessShuttleParkingDifficulty", () => {
-  test("製品の判定は、調査の判定で分類した問題を、低いレベルへ動かさないこと", () => {
+  test("製品の判定は、調査の判定で分類した問題を、別のレベルへ動かさないこと", () => {
     const moved = analyzedProblems.flatMap((problem) => {
       const analysis = analyzeShuttleParkingDifficulty(
         toProblem(problem, problem.minimumBayCount),

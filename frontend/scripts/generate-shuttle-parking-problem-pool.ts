@@ -173,6 +173,7 @@ function analyzeCandidate(comboIndex: number, index: number): CandidateResult {
     rules: SHUTTLE_PARKING_RESEARCH_RULES,
     tieBreaks: "uniform",
     checksFreePath: false,
+    checksNaiveReader: false,
   });
   return {
     combo: comboIndex,

@@ -19,6 +19,7 @@ import {
  * - 候補 `deep`: 先頭の色の車のうち、出すのに要る台数が空いている待機枠に収まる中で、最も深く埋まった車を掘る。
  * - 候補 `all`: 待機枠がすぐ埋まる手を除いた、出せる車すべて。
  * `deepCommit` は `deep` と同じ目標を選び、選んだ目標の車を出すまで目標を変えない（掘った車を使い切る）。
+ * `untangle` は直接ふさいでいる車の台数で、`untangleDeep` はふさぎを何段もたどった台数（その車がいないと出られない車の台数）で選ぶ。
  */
 type CandidateBase = "cheapest" | "wide" | "deep" | "all";
 type RuleKey =
@@ -28,7 +29,9 @@ type RuleKey =
   | "unblock"
   | "needed"
   | "fill"
-  | "untangle";
+  | "untangle"
+  | "untangleDeep"
+  | "unblockDeep";
 
 export const SHUTTLE_PARKING_NAIVE_RULES = {
   any: ["cheapest", "any"],
@@ -42,18 +45,21 @@ export const SHUTTLE_PARKING_NAIVE_RULES = {
   deepDig: ["deep", "any"],
   deepCommit: ["deep", "any"],
   untangle: ["all", "untangle"],
+  untangleDeep: ["all", "untangleDeep"],
 } as const satisfies Record<string, readonly [CandidateBase, RuleKey]>;
 
 export type ShuttleParkingNaiveRule = keyof typeof SHUTTLE_PARKING_NAIVE_RULES;
 
 /**
  * 鍵が並んだ車の選び方。`uniform` は一様に選ぶ（勝率はその平均）。ほかは、並んだ車をこの鍵（規則の鍵と同じ定義）で
- * さらに絞り、それでも並べば一様に選ぶ。素朴な規則の上限は、規則ごと・選び方ごとの勝率の最大で見る。
+ * さらに絞り、それでも並べば一様に選ぶ。`unblockDeep` は `unblock` のふさぐ台数を、何段もたどった台数にしたもの。
+ * 素朴な規則の上限は、規則ごと・選び方ごとの勝率の最大で見る。
  */
 export const SHUTTLE_PARKING_TIE_BREAKS = [
   "uniform",
   "needed",
   "unblock",
+  "unblockDeep",
   "fill",
   "small",
   "big",
@@ -74,6 +80,44 @@ export const SHUTTLE_PARKING_RESEARCH_RULES = [
 ] as const satisfies readonly ShuttleParkingNaiveRule[];
 
 const NO_SHORTAGE = 10 ** 6;
+
+/** `carId` を出すのに出す車（`carId` を含む）。進路ごとに求めて最も少ないもの。 */
+function closeExit(game: AnalysisGame, mask: number, carId: number): number {
+  let best: number | null = null;
+  for (const ray of game.sides[carId]!) {
+    const closure = closeBlockers(game.sides, mask, ray & mask) | (1 << carId);
+    if (best === null || countBits(closure) < countBits(best)) best = closure;
+  }
+  return best ?? 1 << carId;
+}
+
+/** 残っている車のうち、出すのに `carId` を出す必要がある車（ふさぎを何段もたどる）。 */
+function countDependents(
+  game: AnalysisGame,
+  state: AnalysisState,
+  carId: number,
+): number {
+  const { mask } = state;
+  let count = 0;
+  for (const other of iterateBits(mask)) {
+    if (other !== carId && (closeExit(game, mask, other) >> carId) & 1) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+function firstAppearance(
+  game: AnalysisGame,
+  state: AnalysisState,
+  carId: number,
+): number {
+  const first = game.queueColors.indexOf(
+    game.colorOf[carId]!,
+    game.progress(state),
+  );
+  return first < 0 ? NO_SHORTAGE : first;
+}
 
 /** 残っている車のうち、いま出られず、`carId` がその進路の上にいる車。 */
 function listBlockedBy(
@@ -147,14 +191,19 @@ const ruleKeys = {
     return [NO_SHORTAGE];
   },
   // 進路をふさいでいる「いま出られない車」が最も多い車を先に。並べば、その色が列の先頭から最初に現れる位置が前の車。
-  untangle: (game, state, carId) => {
-    const head = game.progress(state);
-    const first = game.queueColors.indexOf(game.colorOf[carId]!, head);
-    return [
-      -listBlockedBy(game, state, carId).length,
-      first < 0 ? NO_SHORTAGE : first,
-    ];
-  },
+  untangle: (game, state, carId) => [
+    -listBlockedBy(game, state, carId).length,
+    firstAppearance(game, state, carId),
+  ],
+  // 出すのにその車を出す必要がある車（ふさぎを何段もたどる）が最も多い車を先に。並べば `untangle` と同じ。
+  untangleDeep: (game, state, carId) => [
+    -countDependents(game, state, carId),
+    firstAppearance(game, state, carId),
+  ],
+  unblockDeep: (game, state, carId) => [
+    -countDependents(game, state, carId),
+    game.lengths[carId]!,
+  ],
 } as const satisfies Record<
   RuleKey,
   (game: AnalysisGame, state: AnalysisState, carId: number) => number[]
@@ -186,16 +235,6 @@ function listWideMoves(game: AnalysisGame, state: AnalysisState): number[] {
   const dig = closeBlockers(game.sides, mask, seeds);
   const digging = moves.filter((carId) => (dig >> carId) & 1);
   return digging.length ? digging : moves;
-}
-
-/** `carId` を出すのに出す車（`carId` を含む）。進路ごとに求めて最も少ないもの。 */
-function closeExit(game: AnalysisGame, mask: number, carId: number): number {
-  let best: number | null = null;
-  for (const ray of game.sides[carId]!) {
-    const closure = closeBlockers(game.sides, mask, ray & mask) | (1 << carId);
-    if (best === null || countBits(closure) < countBits(best)) best = closure;
-  }
-  return best ?? 1 << carId;
 }
 
 /** `deep` の目標: 先頭の色の車のうち、出すのに出す車の台数が空いている待機枠以下で、その台数が最も多い車（並べば全部）。 */
@@ -292,7 +331,10 @@ function listRuleMoves(
 
 const NO_TARGET = -1;
 
-/** `deepCommit` の候補と、それぞれの手の後の目標。目標の車が残っていて先頭の色なら、目標を変えない。 */
+/**
+ * `deepCommit` の候補と、それぞれの手の後の目標。目標の車が残っていて先頭の色なら、目標を変えない。
+ * 新しく選ぶ目標が並べば、同点の選び方で絞る。
+ */
 function listCommittedMoves(
   game: AnalysisGame,
   state: AnalysisState,
@@ -304,7 +346,9 @@ function listCommittedMoves(
   const headMask =
     game.colorMasks[game.queueColors[game.progress(state)]!]! & state.mask;
   const kept = target !== NO_TARGET && (headMask >> target) & 1;
-  const targets = kept ? [target] : listDeepTargets(game, state);
+  const targets = kept
+    ? [target]
+    : breakTies(game, state, listDeepTargets(game, state), tieBreak);
   if (targets.length === 0) {
     return [
       breakTies(game, state, listNaiveMoves(game, state), tieBreak).map(
@@ -325,7 +369,7 @@ function listCommittedMoves(
 
 /**
  * 規則だけで出す人の勝率。`tieBreak` が `uniform` なら並んだ車を一様に選ぶ。
- * `deepCommit` は、目標が並べば目標を一様に選び、目標ごとの候補をさらに `tieBreak` で選ぶ。
+ * `deepCommit` は、並んだ目標を `tieBreak` で絞って残りを一様に選び、目標ごとの候補をさらに `tieBreak` で選ぶ。
  */
 export function measureShuttleParkingRuleWinProbability(
   game: AnalysisGame,

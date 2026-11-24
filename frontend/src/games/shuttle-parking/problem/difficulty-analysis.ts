@@ -6,6 +6,7 @@ import {
 } from "@/games/shuttle-parking/problem/generation/naive-rules";
 import {
   countShuttleParkingDecisions,
+  measureShuttleParkingNaiveReaderWinProbability,
   measureShuttleParkingWeightBounds,
   SHUTTLE_PARKING_HEAD_FIRST_WIDEN,
   type ShuttleParkingDecisionCounts,
@@ -26,6 +27,7 @@ import type { ShuttleParkingProblem } from "@/games/shuttle-parking/problem/prob
  * - `freePath`: 罠は先頭に合わせる人の候補で数え、進め方は勝つ手ならどれでもよいとしたときの同じ量の最小。
  * - `rules`: 前もって固定した素朴な規則ごとの、同点を一様に選んだ勝率。
  * - `bestRules`: 同じ規則の、同点の選び方（`SHUTTLE_PARKING_TIE_BREAKS`）ごとの勝率の最大。上位を止める条件はこちらで見る。
+ * - `naiveReader`: Lv3〜5 ごとに、素朴な解き方の候補から、そのレベルの重さの下限より1人少なく読む人の勝率。
  * - `decisions`: 記録だけ。勝ち筋の上で出会う判断（同じ車が罠のまま続く局面の並びを1つ）の回数。
  */
 export type ShuttleParkingDifficultyFeatures = {
@@ -38,12 +40,22 @@ export type ShuttleParkingDifficultyFeatures = {
   freePathMinimumWeight: number;
   rules: Record<ShuttleParkingNaiveRule, number>;
   bestRules: Record<ShuttleParkingNaiveRule, number>;
+  naiveReader: Record<ShuttleParkingUpperLevel, number>;
   decisions: {
     best: ShuttleParkingDecisionCounts;
     continuation: ShuttleParkingDecisionCounts;
     window: ShuttleParkingDecisionCounts;
   };
 };
+
+/** 素朴な規則と読む人で上限を確かめるレベルと、その罠の重さの下限。 */
+export const SHUTTLE_PARKING_UPPER_LEVEL_MINIMUM_WEIGHTS = {
+  "3": 5,
+  "4": 8,
+  "5": 10,
+} as const;
+export type ShuttleParkingUpperLevel =
+  keyof typeof SHUTTLE_PARKING_UPPER_LEVEL_MINIMUM_WEIGHTS;
 
 /**
  * - `analyzed`: 特徴を測れた。
@@ -105,6 +117,16 @@ export function analyzeShuttleParkingDifficulty(
         game,
         measureShuttleParkingRuleBestWinProbability,
       ),
+      naiveReader: Object.fromEntries(
+        Object.entries(SHUTTLE_PARKING_UPPER_LEVEL_MINIMUM_WEIGHTS).map(
+          ([level, minimum]) => [
+            level,
+            roundProbability(
+              measureShuttleParkingNaiveReaderWinProbability(game, minimum - 1),
+            ),
+          ],
+        ),
+      ) as Record<ShuttleParkingUpperLevel, number>,
       decisions: {
         best: countShuttleParkingDecisions(
           best,

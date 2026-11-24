@@ -23,6 +23,7 @@ function createFeatures(
     bestRules: Object.fromEntries(
       Object.keys(SHUTTLE_PARKING_NAIVE_RULES).map((rule) => [rule, 0.5]),
     ) as ShuttleParkingDifficultyFeatures["bestRules"],
+    naiveReader: { "3": 0.5, "4": 0.5, "5": 0.5 },
     decisions: {
       best: noDecisions,
       continuation: noDecisions,
@@ -161,6 +162,31 @@ describe("assessShuttleParkingDifficulty", () => {
       status: "out-of-range",
       reason: "naiveCeiling",
     });
+  });
+
+  test("Lv3 以上で、素朴な解き方の候補からそのレベルの下限より1人少なく読む人が 0.8 以上で勝つなら範囲外にすること", () => {
+    const features = createFeatures(8);
+
+    const assessment = assess({
+      ...features,
+      naiveReader: { ...features.naiveReader, "4": 0.8 },
+    });
+
+    expect(assessment).toEqual({
+      status: "out-of-range",
+      reason: "naiveReaderWins",
+    });
+  });
+
+  test("読む人の勝率は、判定したレベルの値で見ること", () => {
+    const features = createFeatures(8);
+
+    const assessment = assess({
+      ...features,
+      naiveReader: { ...features.naiveReader, "3": 1 },
+    });
+
+    expect(assessment).toEqual({ status: "classified", difficulty: "4" });
   });
 
   test("Lv2 で、素朴な規則がどれも必ず負けるなら範囲外にすること", () => {

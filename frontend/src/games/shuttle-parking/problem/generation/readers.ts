@@ -397,6 +397,49 @@ export function measureShuttleParkingTrapMoves(
 }
 
 /**
+ * 素朴な解き方の候補から読む人の勝率。素朴な解き方の候補、待機枠がすぐ埋まる手を除いた手、出せる手すべての順に見て、
+ * 重さ `visibleWeight` 以下の罠（`visibleWeight` 人先までに負けが見える手）を外し、残る最初の段から一様に選ぶ。
+ */
+export function measureShuttleParkingNaiveReaderWinProbability(
+  game: AnalysisGame,
+  visibleWeight: number,
+): number {
+  const memo = new Map<string, number>();
+  const value = (state: AnalysisState): number => {
+    if (state.mask === 0) return 1;
+    if (!game.wins(state)) return 0;
+    const key = createAnalysisStateKey(state);
+    const cached = memo.get(key);
+    if (cached !== undefined) return cached;
+    const head = game.progress(state);
+    const tiers = [
+      () => listNaiveMoves(game, state),
+      () => listSafeMoves(game, state),
+      () => game.moves(state),
+    ];
+    let options: number[] = [];
+    for (const tier of tiers) {
+      options = tier().filter((carId) => {
+        const child = game.step(state, carId);
+        return (
+          game.wins(child) || game.maxReach(child) - head + 1 > visibleWeight
+        );
+      });
+      if (options.length) break;
+    }
+    const result = options.length
+      ? options.reduce(
+          (sum, carId) => sum + value(game.step(state, carId)),
+          0,
+        ) / options.length
+      : 0;
+    memo.set(key, result);
+    return result;
+  };
+  return value(game.start);
+}
+
+/**
  * 記録だけ: 先頭に合わせる候補の段を順に見て、`depth` 手以内に詰むと見える手を外し、残る最初の段から一様に選ぶ人の勝率。
  */
 export function measureShuttleParkingLookAheadWinProbability(
