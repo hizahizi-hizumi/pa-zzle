@@ -1,0 +1,462 @@
+{
+ "rows": [
+  {
+   "id": "plv-lv1-rep1",
+   "level": 1,
+   "cars": 8,
+   "bays": 4,
+   "queue": 20,
+   "states": 515,
+   "solutions": 1080,
+   "solutionsMatchPrototype": true,
+   "trapCount": 165,
+   "trapImmediateShare": 0.782,
+   "trapDistanceMax": 3,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 2,
+   "randomWin": 0.1446,
+   "backtrackerTraps": 3.469,
+   "backtrackerUndos": 4.611,
+   "undosPerTrap": 1.33
+  },
+  {
+   "id": "plv-lv1-rep2",
+   "level": 1,
+   "cars": 8,
+   "bays": 4,
+   "queue": 21,
+   "states": 1599,
+   "solutions": 2076,
+   "solutionsMatchPrototype": true,
+   "trapCount": 741,
+   "trapImmediateShare": 0.811,
+   "trapDistanceMax": 10,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 5,
+   "randomWin": 0.0865,
+   "backtrackerTraps": 4.961,
+   "backtrackerUndos": 7.077,
+   "undosPerTrap": 1.43
+  },
+  {
+   "id": "plv-lv2-rep1",
+   "level": 2,
+   "cars": 8,
+   "bays": 3,
+   "queue": 19,
+   "states": 149,
+   "solutions": 30,
+   "solutionsMatchPrototype": true,
+   "trapCount": 38,
+   "trapImmediateShare": 0.658,
+   "trapDistanceMax": 2,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 2,
+   "randomWin": 0.01,
+   "backtrackerTraps": 8.444,
+   "backtrackerUndos": 12.917,
+   "undosPerTrap": 1.53
+  },
+  {
+   "id": "plv-lv2-rep2",
+   "level": 2,
+   "cars": 8,
+   "bays": 3,
+   "queue": 19,
+   "states": 107,
+   "solutions": 8,
+   "solutionsMatchPrototype": true,
+   "trapCount": 20,
+   "trapImmediateShare": 0.4,
+   "trapDistanceMax": 3,
+   "trapRandomExitsMedian": 1.0,
+   "trapMaxExitsMax": 3,
+   "randomWin": 0.001,
+   "backtrackerTraps": 14.167,
+   "backtrackerUndos": 25.417,
+   "undosPerTrap": 1.79
+  },
+  {
+   "id": "plv-lv3-rep1",
+   "level": 3,
+   "cars": 8,
+   "bays": 4,
+   "queue": 20,
+   "states": 863,
+   "solutions": 468,
+   "solutionsMatchPrototype": true,
+   "trapCount": 266,
+   "trapImmediateShare": 0.729,
+   "trapDistanceMax": 9,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 6,
+   "randomWin": 0.0385,
+   "backtrackerTraps": 5.435,
+   "backtrackerUndos": 9.697,
+   "undosPerTrap": 1.78
+  },
+  {
+   "id": "plv-lv3-rep2",
+   "level": 3,
+   "cars": 8,
+   "bays": 3,
+   "queue": 20,
+   "states": 229,
+   "solutions": 264,
+   "solutionsMatchPrototype": true,
+   "trapCount": 81,
+   "trapImmediateShare": 0.642,
+   "trapDistanceMax": 12,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 4,
+   "randomWin": 0.0992,
+   "backtrackerTraps": 3.662,
+   "backtrackerUndos": 6.491,
+   "undosPerTrap": 1.77
+  },
+  {
+   "id": "plv-lv4-rep1",
+   "level": 4,
+   "cars": 8,
+   "bays": 4,
+   "queue": 22,
+   "states": 1012,
+   "solutions": 96,
+   "solutionsMatchPrototype": true,
+   "trapCount": 112,
+   "trapImmediateShare": 0.634,
+   "trapDistanceMax": 8,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 4,
+   "randomWin": 0.0047,
+   "backtrackerTraps": 10.889,
+   "backtrackerUndos": 23.439,
+   "undosPerTrap": 2.15
+  },
+  {
+   "id": "plv-lv4-rep2",
+   "level": 4,
+   "cars": 8,
+   "bays": 3,
+   "queue": 19,
+   "states": 101,
+   "solutions": 99,
+   "solutionsMatchPrototype": true,
+   "trapCount": 34,
+   "trapImmediateShare": 0.824,
+   "trapDistanceMax": 8,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 5,
+   "randomWin": 0.0898,
+   "backtrackerTraps": 4.69,
+   "backtrackerUndos": 6.727,
+   "undosPerTrap": 1.43
+  },
+  {
+   "id": "plv-lv5-rep1",
+   "level": 5,
+   "cars": 8,
+   "bays": 3,
+   "queue": 19,
+   "states": 313,
+   "solutions": 276,
+   "solutionsMatchPrototype": true,
+   "trapCount": 104,
+   "trapImmediateShare": 0.606,
+   "trapDistanceMax": 12,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 6,
+   "randomWin": 0.0324,
+   "backtrackerTraps": 5.555,
+   "backtrackerUndos": 10.397,
+   "undosPerTrap": 1.87
+  },
+  {
+   "id": "plv-lv5-rep2",
+   "level": 5,
+   "cars": 8,
+   "bays": 3,
+   "queue": 20,
+   "states": 227,
+   "solutions": 12,
+   "solutionsMatchPrototype": true,
+   "trapCount": 43,
+   "trapImmediateShare": 0.535,
+   "trapDistanceMax": 9,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 4,
+   "randomWin": 0.0054,
+   "backtrackerTraps": 9.333,
+   "backtrackerUndos": 15.292,
+   "undosPerTrap": 1.64
+  },
+  {
+   "id": "plv-lv1-boundary",
+   "level": 1,
+   "cars": 8,
+   "bays": 3,
+   "queue": 18,
+   "states": 80,
+   "solutions": 8,
+   "solutionsMatchPrototype": true,
+   "trapCount": 18,
+   "trapImmediateShare": 0.556,
+   "trapDistanceMax": 1,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 2,
+   "randomWin": 0.0015,
+   "backtrackerTraps": 13.167,
+   "backtrackerUndos": 23.167,
+   "undosPerTrap": 1.76
+  },
+  {
+   "id": "plv-lv2-boundary",
+   "level": 2,
+   "cars": 8,
+   "bays": 3,
+   "queue": 22,
+   "states": 188,
+   "solutions": 234,
+   "solutionsMatchPrototype": true,
+   "trapCount": 78,
+   "trapImmediateShare": 0.859,
+   "trapDistanceMax": 3,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 1,
+   "randomWin": 0.1051,
+   "backtrackerTraps": 3.75,
+   "backtrackerUndos": 4.553,
+   "undosPerTrap": 1.21
+  },
+  {
+   "id": "plv-lv3-boundary",
+   "level": 3,
+   "cars": 8,
+   "bays": 3,
+   "queue": 17,
+   "states": 158,
+   "solutions": 33,
+   "solutionsMatchPrototype": true,
+   "trapCount": 46,
+   "trapImmediateShare": 0.609,
+   "trapDistanceMax": 4,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 3,
+   "randomWin": 0.0121,
+   "backtrackerTraps": 7.062,
+   "backtrackerUndos": 11.417,
+   "undosPerTrap": 1.62
+  },
+  {
+   "id": "plv-lv4-boundary",
+   "level": 4,
+   "cars": 8,
+   "bays": 3,
+   "queue": 20,
+   "states": 283,
+   "solutions": 474,
+   "solutionsMatchPrototype": true,
+   "trapCount": 152,
+   "trapImmediateShare": 0.875,
+   "trapDistanceMax": 9,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 3,
+   "randomWin": 0.0354,
+   "backtrackerTraps": 6.894,
+   "backtrackerUndos": 8.659,
+   "undosPerTrap": 1.26
+  },
+  {
+   "id": "plv-lv5-boundary",
+   "level": 5,
+   "cars": 8,
+   "bays": 3,
+   "queue": 21,
+   "states": 118,
+   "solutions": 12,
+   "solutionsMatchPrototype": true,
+   "trapCount": 46,
+   "trapImmediateShare": 0.739,
+   "trapDistanceMax": 10,
+   "trapRandomExitsMedian": 0.0,
+   "trapMaxExitsMax": 4,
+   "randomWin": 0.0013,
+   "backtrackerTraps": 14.167,
+   "backtrackerUndos": 17.019,
+   "undosPerTrap": 1.2
+  }
+ ],
+ "byLevel": {
+  "1": {
+   "problems": 3,
+   "randomWin": [
+    0.1446,
+    0.0865,
+    0.0015
+   ],
+   "backtrackerTraps": [
+    3.469,
+    4.961,
+    13.167
+   ],
+   "undosPerTrap": [
+    1.33,
+    1.43,
+    1.76
+   ],
+   "trapDistanceMax": [
+    3,
+    10,
+    1
+   ],
+   "trapImmediateShare": [
+    0.782,
+    0.811,
+    0.556
+   ]
+  },
+  "2": {
+   "problems": 3,
+   "randomWin": [
+    0.01,
+    0.001,
+    0.1051
+   ],
+   "backtrackerTraps": [
+    8.444,
+    14.167,
+    3.75
+   ],
+   "undosPerTrap": [
+    1.53,
+    1.79,
+    1.21
+   ],
+   "trapDistanceMax": [
+    2,
+    3,
+    3
+   ],
+   "trapImmediateShare": [
+    0.658,
+    0.4,
+    0.859
+   ]
+  },
+  "3": {
+   "problems": 3,
+   "randomWin": [
+    0.0385,
+    0.0992,
+    0.0121
+   ],
+   "backtrackerTraps": [
+    5.435,
+    3.662,
+    7.062
+   ],
+   "undosPerTrap": [
+    1.78,
+    1.77,
+    1.62
+   ],
+   "trapDistanceMax": [
+    9,
+    12,
+    4
+   ],
+   "trapImmediateShare": [
+    0.729,
+    0.642,
+    0.609
+   ]
+  },
+  "4": {
+   "problems": 3,
+   "randomWin": [
+    0.0047,
+    0.0898,
+    0.0354
+   ],
+   "backtrackerTraps": [
+    10.889,
+    4.69,
+    6.894
+   ],
+   "undosPerTrap": [
+    2.15,
+    1.43,
+    1.26
+   ],
+   "trapDistanceMax": [
+    8,
+    8,
+    9
+   ],
+   "trapImmediateShare": [
+    0.634,
+    0.824,
+    0.875
+   ]
+  },
+  "5": {
+   "problems": 3,
+   "randomWin": [
+    0.0324,
+    0.0054,
+    0.0013
+   ],
+   "backtrackerTraps": [
+    5.555,
+    9.333,
+    14.167
+   ],
+   "undosPerTrap": [
+    1.87,
+    1.64,
+    1.2
+   ],
+   "trapDistanceMax": [
+    12,
+    9,
+    10
+   ],
+   "trapImmediateShare": [
+    0.606,
+    0.535,
+    0.739
+   ]
+  }
+ },
+ "trapsByDistance": {
+  "0": {
+   "traps": 1515,
+   "immediateShare": 0.964,
+   "minExitsMedian": 0,
+   "maxExitsMedian": 0,
+   "randomExitsMean": 0.04
+  },
+  "1-4": {
+   "traps": 232,
+   "immediateShare": 0.026,
+   "minExitsMedian": 1.0,
+   "maxExitsMedian": 1.0,
+   "randomExitsMean": 1.21
+  },
+  "5-7": {
+   "traps": 102,
+   "immediateShare": 0.0,
+   "minExitsMedian": 1.5,
+   "maxExitsMedian": 2.5,
+   "randomExitsMean": 2.01
+  },
+  "8+": {
+   "traps": 95,
+   "immediateShare": 0.0,
+   "minExitsMedian": 1,
+   "maxExitsMedian": 3,
+   "randomExitsMean": 1.95
+  }
+ },
+ "cleanExitsEqualCars": true
+}

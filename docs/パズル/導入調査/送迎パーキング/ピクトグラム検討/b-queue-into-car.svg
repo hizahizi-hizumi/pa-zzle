@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="送迎パーキング">
+<circle cx="22" cy="50" r="8" fill="var(--game-pictogram-soft)"/><path d="M8 78.8C8 63.5 14.3 60.5 22 60.5S36 63.5 36 78.8Z" fill="var(--game-pictogram-soft)"/><circle cx="48" cy="50" r="8" fill="var(--game-pictogram-strong)"/><path d="M34 78.8C34 63.5 40.3 60.5 48 60.5S62 63.5 62 78.8Z" fill="var(--game-pictogram-strong)"/>
+<rect x="70" y="14" width="34" height="92" rx="12" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+<rect x="77" y="21" width="20" height="14" rx="5" fill="var(--game-pictogram-soft)"/>
+<circle cx="87" cy="52" r="7" fill="var(--game-pictogram-strong)"/>
+<circle cx="87" cy="72" r="6" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+<circle cx="87" cy="92" r="6" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+</svg>
