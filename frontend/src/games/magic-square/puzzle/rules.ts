@@ -5,6 +5,7 @@ import {
   isMagicSquareCellIndex,
   isMagicSquareValue,
   listMagicSquareLines,
+  listMagicSquareLinesThroughCell,
   type MagicSquareBoard,
   type MagicSquareCell,
   type MagicSquareLine,
@@ -300,6 +301,35 @@ export function isMagicSquareLineViolation(
   status: MagicSquareLineStatus,
 ): boolean {
   return status === "unmatched" || status === "overreached";
+}
+
+/** 列の端の数の見え方。一致は緑、違反（`isMagicSquareLineViolation`）は赤、どちらでもなければ色を付けない。 */
+function getLineVerdict(
+  status: MagicSquareLineStatus,
+): "matched" | "violation" | "none" {
+  if (status === "matched") {
+    return "matched";
+  }
+  return isMagicSquareLineViolation(status) ? "violation" : "none";
+}
+
+/**
+ * マスに置いてある数で、そのマスを通る列のどれかの端の数の見え方（一致・違反・どちらでもない）が、そのマスが空きのときと変わるか。
+ * 列が埋まって一致・違反になった、空きがあるのに合計に届いたときに変わる。空きマスでは `false`。
+ */
+export function changesMagicSquareLineVerdict(
+  board: MagicSquareBoard,
+  cellIndex: number,
+): boolean {
+  if ((board.cells[cellIndex] ?? null) === null) {
+    return false;
+  }
+  const emptied = { ...board, cells: board.cells.with(cellIndex, null) };
+  return listMagicSquareLinesThroughCell(board.size, cellIndex).some(
+    (line) =>
+      getLineVerdict(evaluateMagicSquareLine(board, line).status) !==
+      getLineVerdict(evaluateMagicSquareLine(emptied, line).status),
+  );
 }
 
 /** 全部のマスが埋まり、全部の列がそろえる合計と一致したか。 */

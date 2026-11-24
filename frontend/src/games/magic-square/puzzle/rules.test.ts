@@ -9,6 +9,7 @@ import {
 } from "@/games/magic-square/puzzle/board";
 import {
   canPlaceMagicSquareValue,
+  changesMagicSquareLineVerdict,
   enterMagicSquareValue,
   evaluateMagicSquareLine,
   findMagicSquareValueCell,
@@ -412,6 +413,54 @@ describe("isMagicSquareLineViolation", () => {
 
     expect(violation).toBe(expected);
   });
+});
+
+describe("changesMagicSquareLineVerdict", () => {
+  const cases = [
+    ["空きマス", [". 4 5 .", ". 2 . .", ". . 12 1", "3 . 10 6"], 0, false],
+    [
+      "埋めた列が一致したマス",
+      ["14 4 5 .", ". 2 . .", ". . 12 1", "3 . 10 6"],
+      0,
+      true,
+    ],
+    [
+      "埋めた列が違反になったマス",
+      ["9 4 5 .", ". 2 . .", ". . 12 1", "3 . 10 6"],
+      0,
+      true,
+    ],
+    [
+      "空きのある列を合計に届かせたマス",
+      ["16 15 14 .", ". . . .", ". . . .", ". . . ."],
+      2,
+      true,
+    ],
+    [
+      "どの列も埋めず合計にも届かせないマス",
+      [". 4 5 .", "9 2 . .", ". . 12 1", "3 . 10 6"],
+      4,
+      false,
+    ],
+    [
+      "前から合計に届いていた列を埋めて違反のままのマス",
+      ["16 15 14 1", ". . . .", ". . . .", ". . . ."],
+      3,
+      false,
+    ],
+  ] as const;
+
+  test.each(cases)(
+    "%sで、列の端の数の見え方が変わるかを返すこと",
+    (_, rows, cellIndex, expected) => {
+      const changed = changesMagicSquareLineVerdict(
+        parseMagicSquareBoard(rows),
+        cellIndex,
+      );
+
+      expect(changed).toBe(expected);
+    },
+  );
 });
 
 describe("isMagicSquareSolved", () => {
