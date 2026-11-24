@@ -1,0 +1,1269 @@
+{
+ "conditions": {
+  "frameTop": 100,
+  "frameBottom": 12,
+  "mainPadX": 12,
+  "mainPadY": 8,
+  "gap": 8,
+  "bayRow": 48,
+  "carShortRatio": 0.8,
+  "existingMinCarShort": 24.2,
+  "margins": {
+   "play": 0.9,
+   "figure": 0.5
+  }
+ },
+ "queue20": [
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "board": 5,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    324
+   ],
+   "cell": 43.5,
+   "carShort": 34.8,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "board": 5,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    212
+   ],
+   "cell": 31.2,
+   "carShort": 24.9,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "board": 6,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    324
+   ],
+   "cell": 37.9,
+   "carShort": 30.4,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "board": 6,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    212
+   ],
+   "cell": 27.2,
+   "carShort": 21.7,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "board": 7,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    324
+   ],
+   "cell": 33.6,
+   "carShort": 26.9,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "board": 7,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    212
+   ],
+   "cell": 24.1,
+   "carShort": 19.3,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "board": 8,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    324
+   ],
+   "cell": 30.2,
+   "carShort": 24.2,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "board": 8,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    212
+   ],
+   "cell": 21.6,
+   "carShort": 17.3,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "board": 9,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    324
+   ],
+   "cell": 27.4,
+   "carShort": 21.9,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "board": 9,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    212
+   ],
+   "cell": 19.6,
+   "carShort": 15.7,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "board": 5,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    324
+   ],
+   "cell": 49.3,
+   "carShort": 39.5,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "board": 5,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    212
+   ],
+   "cell": 35.3,
+   "carShort": 28.3,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "board": 6,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    324
+   ],
+   "cell": 42.3,
+   "carShort": 33.8,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "board": 6,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    212
+   ],
+   "cell": 30.3,
+   "carShort": 24.2,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "board": 7,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    324
+   ],
+   "cell": 37.0,
+   "carShort": 29.6,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "board": 7,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    212
+   ],
+   "cell": 26.5,
+   "carShort": 21.2,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "board": 8,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    324
+   ],
+   "cell": 32.9,
+   "carShort": 26.3,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "board": 8,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    212
+   ],
+   "cell": 23.6,
+   "carShort": 18.8,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "board": 9,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    324
+   ],
+   "cell": 29.6,
+   "carShort": 23.7,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "board": 9,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    296,
+    212
+   ],
+   "cell": 21.2,
+   "carShort": 17.0,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "board": 5,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    420
+   ],
+   "cell": 53.8,
+   "carShort": 43.1,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "board": 5,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    308
+   ],
+   "cell": 45.3,
+   "carShort": 36.2,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "board": 6,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    420
+   ],
+   "cell": 46.9,
+   "carShort": 37.5,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "board": 6,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    308
+   ],
+   "cell": 39.5,
+   "carShort": 31.6,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "board": 7,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    420
+   ],
+   "cell": 41.6,
+   "carShort": 33.3,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "board": 7,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    308
+   ],
+   "cell": 35.0,
+   "carShort": 28.0,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "board": 8,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    420
+   ],
+   "cell": 37.3,
+   "carShort": 29.9,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "board": 8,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    308
+   ],
+   "cell": 31.4,
+   "carShort": 25.1,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "board": 9,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    420
+   ],
+   "cell": 33.9,
+   "carShort": 27.1,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "board": 9,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    308
+   ],
+   "cell": 28.5,
+   "carShort": 22.8,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "board": 5,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    420
+   ],
+   "cell": 61.0,
+   "carShort": 48.8,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "board": 5,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    308
+   ],
+   "cell": 51.3,
+   "carShort": 41.1,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "board": 6,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    420
+   ],
+   "cell": 52.3,
+   "carShort": 41.8,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "board": 6,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    308
+   ],
+   "cell": 44.0,
+   "carShort": 35.2,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "board": 7,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    420
+   ],
+   "cell": 45.8,
+   "carShort": 36.6,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "board": 7,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    308
+   ],
+   "cell": 38.5,
+   "carShort": 30.8,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "board": 8,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    420
+   ],
+   "cell": 40.7,
+   "carShort": 32.5,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "board": 8,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    308
+   ],
+   "cell": 34.2,
+   "carShort": 27.4,
+   "boardLimitedBy": "height"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "board": 9,
+   "undo": "bayRow",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    420
+   ],
+   "cell": 36.6,
+   "carShort": 29.3,
+   "boardLimitedBy": "width"
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "board": 9,
+   "undo": "footer",
+   "queueRows": 2,
+   "queueHeight": 52,
+   "boardBox": [
+    366,
+    308
+   ],
+   "cell": 30.8,
+   "carShort": 24.6,
+   "boardLimitedBy": "height"
+  }
+ ],
+ "maxQueueAtExistingMin": [
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 24,
+   "board": 5,
+   "undo": "bayRow",
+   "maxQueue": 60
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 24,
+   "board": 5,
+   "undo": "footer",
+   "maxQueue": 20
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 24,
+   "board": 6,
+   "undo": "bayRow",
+   "maxQueue": 50
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 24,
+   "board": 6,
+   "undo": "footer",
+   "maxQueue": 10
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 24,
+   "board": 7,
+   "undo": "bayRow",
+   "maxQueue": 40
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 24,
+   "board": 7,
+   "undo": "footer",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 24,
+   "board": 8,
+   "undo": "bayRow",
+   "maxQueue": 30
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 24,
+   "board": 8,
+   "undo": "footer",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 24,
+   "board": 9,
+   "undo": "bayRow",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 24,
+   "board": 9,
+   "undo": "footer",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 20,
+   "board": 5,
+   "undo": "bayRow",
+   "maxQueue": 91
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 20,
+   "board": 5,
+   "undo": "footer",
+   "maxQueue": 26
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 20,
+   "board": 6,
+   "undo": "bayRow",
+   "maxQueue": 78
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 20,
+   "board": 6,
+   "undo": "footer",
+   "maxQueue": 13
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 20,
+   "board": 7,
+   "undo": "bayRow",
+   "maxQueue": 52
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 20,
+   "board": 7,
+   "undo": "footer",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 20,
+   "board": 8,
+   "undo": "bayRow",
+   "maxQueue": 39
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 20,
+   "board": 8,
+   "undo": "footer",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 20,
+   "board": 9,
+   "undo": "bayRow",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "play",
+   "chip": 20,
+   "board": 9,
+   "undo": "footer",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 24,
+   "board": 5,
+   "undo": "bayRow",
+   "maxQueue": 70
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 24,
+   "board": 5,
+   "undo": "footer",
+   "maxQueue": 30
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 24,
+   "board": 6,
+   "undo": "bayRow",
+   "maxQueue": 60
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 24,
+   "board": 6,
+   "undo": "footer",
+   "maxQueue": 20
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 24,
+   "board": 7,
+   "undo": "bayRow",
+   "maxQueue": 40
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 24,
+   "board": 7,
+   "undo": "footer",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 24,
+   "board": 8,
+   "undo": "bayRow",
+   "maxQueue": 30
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 24,
+   "board": 8,
+   "undo": "footer",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 24,
+   "board": 9,
+   "undo": "bayRow",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 24,
+   "board": 9,
+   "undo": "footer",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 20,
+   "board": 5,
+   "undo": "bayRow",
+   "maxQueue": 104
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 20,
+   "board": 5,
+   "undo": "footer",
+   "maxQueue": 39
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 20,
+   "board": 6,
+   "undo": "bayRow",
+   "maxQueue": 91
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 20,
+   "board": 6,
+   "undo": "footer",
+   "maxQueue": 26
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 20,
+   "board": 7,
+   "undo": "bayRow",
+   "maxQueue": 65
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 20,
+   "board": 7,
+   "undo": "footer",
+   "maxQueue": 13
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 20,
+   "board": 8,
+   "undo": "bayRow",
+   "maxQueue": 52
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 20,
+   "board": 8,
+   "undo": "footer",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 20,
+   "board": 9,
+   "undo": "bayRow",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone SE",
+   "margin": "figure",
+   "chip": 20,
+   "board": 9,
+   "undo": "footer",
+   "maxQueue": 0
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 24,
+   "board": 5,
+   "undo": "bayRow",
+   "maxQueue": 117
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 24,
+   "board": 5,
+   "undo": "footer",
+   "maxQueue": 65
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 24,
+   "board": 6,
+   "undo": "bayRow",
+   "maxQueue": 104
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 24,
+   "board": 6,
+   "undo": "footer",
+   "maxQueue": 52
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 24,
+   "board": 7,
+   "undo": "bayRow",
+   "maxQueue": 91
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 24,
+   "board": 7,
+   "undo": "footer",
+   "maxQueue": 39
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 24,
+   "board": 8,
+   "undo": "bayRow",
+   "maxQueue": 78
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 24,
+   "board": 8,
+   "undo": "footer",
+   "maxQueue": 26
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 24,
+   "board": 9,
+   "undo": "bayRow",
+   "maxQueue": 65
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 24,
+   "board": 9,
+   "undo": "footer",
+   "maxQueue": 13
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 20,
+   "board": 5,
+   "undo": "bayRow",
+   "maxQueue": 176
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 20,
+   "board": 5,
+   "undo": "footer",
+   "maxQueue": 96
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 20,
+   "board": 6,
+   "undo": "bayRow",
+   "maxQueue": 160
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 20,
+   "board": 6,
+   "undo": "footer",
+   "maxQueue": 80
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 20,
+   "board": 7,
+   "undo": "bayRow",
+   "maxQueue": 144
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 20,
+   "board": 7,
+   "undo": "footer",
+   "maxQueue": 64
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 20,
+   "board": 8,
+   "undo": "bayRow",
+   "maxQueue": 112
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 20,
+   "board": 8,
+   "undo": "footer",
+   "maxQueue": 32
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 20,
+   "board": 9,
+   "undo": "bayRow",
+   "maxQueue": 96
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "play",
+   "chip": 20,
+   "board": 9,
+   "undo": "footer",
+   "maxQueue": 16
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 24,
+   "board": 5,
+   "undo": "bayRow",
+   "maxQueue": 130
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 24,
+   "board": 5,
+   "undo": "footer",
+   "maxQueue": 78
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 24,
+   "board": 6,
+   "undo": "bayRow",
+   "maxQueue": 117
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 24,
+   "board": 6,
+   "undo": "footer",
+   "maxQueue": 65
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 24,
+   "board": 7,
+   "undo": "bayRow",
+   "maxQueue": 104
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 24,
+   "board": 7,
+   "undo": "footer",
+   "maxQueue": 52
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 24,
+   "board": 8,
+   "undo": "bayRow",
+   "maxQueue": 91
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 24,
+   "board": 8,
+   "undo": "footer",
+   "maxQueue": 39
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 24,
+   "board": 9,
+   "undo": "bayRow",
+   "maxQueue": 78
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 24,
+   "board": 9,
+   "undo": "footer",
+   "maxQueue": 26
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 20,
+   "board": 5,
+   "undo": "bayRow",
+   "maxQueue": 192
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 20,
+   "board": 5,
+   "undo": "footer",
+   "maxQueue": 112
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 20,
+   "board": 6,
+   "undo": "bayRow",
+   "maxQueue": 176
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 20,
+   "board": 6,
+   "undo": "footer",
+   "maxQueue": 96
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 20,
+   "board": 7,
+   "undo": "bayRow",
+   "maxQueue": 160
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 20,
+   "board": 7,
+   "undo": "footer",
+   "maxQueue": 80
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 20,
+   "board": 8,
+   "undo": "bayRow",
+   "maxQueue": 128
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 20,
+   "board": 8,
+   "undo": "footer",
+   "maxQueue": 48
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 20,
+   "board": 9,
+   "undo": "bayRow",
+   "maxQueue": 112
+  },
+  {
+   "device": "iPhone 13",
+   "margin": "figure",
+   "chip": 20,
+   "board": 9,
+   "undo": "footer",
+   "maxQueue": 32
+  }
+ ],
+ "queueRowsSE": {
+  "16": 2,
+  "20": 2,
+  "24": 3,
+  "30": 3,
+  "36": 4,
+  "40": 4,
+  "48": 5
+ }
+}
