@@ -280,7 +280,7 @@ describe("数を1回ずつ使うルールの例を描いた場合", () => {
     ]);
     expect(marks.filter((mark) => mark.endsWith(" allowed"))).toHaveLength(13);
     expect(getValue(4).disabled).toBe(true);
-    expect(readCaptions()).toEqual(["置ける、置けない"]);
+    expect(readCaptions()).toEqual(["まだ置ける、もう置いてある"]);
   });
 
   describe("空きのマスに手がかりの数を置いた場合", () => {

@@ -46,7 +46,7 @@ import { splitMagicSquareRejection } from "@/games/magic-square/ui/magic-square-
  * 例の下に添える言葉。
  * - `line`: 形のルールの判定（✓ そろう / ✕ そろわない / 途中）と ✕ のわけ。盤面ごとに、その行の列で判定する。
  * - `given`: 最初から置いてある数のルールの、数のあるマスごとの ✓ / ✕ の印と、その凡例（✓ 変えられる / ✕ 変えられない）。
- * - `used-values`: 盤面の下に並んだ数ごとの ✓ / ✕ の印と、その凡例（✓ 置ける / ✕ 置けない）。
+ * - `used-values`: 盤面の下に並んだ数ごとの ✓ / ✕ の印と、その凡例（✓ まだ置ける / ✕ もう置いてある）。
  * - `memo-limit`: メモが4つ書いてあるマスに5つ目を書こうとして受け付けられなかったときだけ、そのわけを出す。
  */
 type TouchableExampleCaption = "line" | "given" | "used-values" | "memo-limit";
@@ -58,7 +58,8 @@ type TouchableExampleProps = {
 
 const shapeLabels = { allowed: "そろう", disallowed: "そろわない" };
 const givenLabels = { allowed: "変えられる", disallowed: "変えられない" };
-const valueLabels = { allowed: "置ける", disallowed: "置けない" };
+/** 札の今の状態を言う凡例。例の下の言葉が、今した手の結果ではなく札の印の意味だと読めるよう、「まだ」「もう」で言う。 */
+const valueLabels = { allowed: "まだ置ける", disallowed: "もう置いてある" };
 
 /** 数の札の手がかりの単位。札の高さ（本番と同じ 44px）にする。 */
 const valueUnitStyle = {

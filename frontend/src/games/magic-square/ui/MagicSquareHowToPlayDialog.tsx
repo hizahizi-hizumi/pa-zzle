@@ -64,7 +64,7 @@ function ignoreFigurePress(): void {}
 const menuOperations: readonly HowToPlayMenuOperation[] = [
   {
     item: playMenuOperationItems.restart,
-    text: "置いた数を/外して/メモも/消して/最初の盤面に/戻します。/時間は/そのままで/外した数の分だけ/置き直しが/増えます。",
+    text: "置いた数を/外して/メモも/消して/最初の盤面に/戻します。/時間は/戻りません。/外した数の分だけ/置き直しが/増えます。",
   },
   {
     item: playMenuOperationItems.replay,
@@ -106,11 +106,12 @@ const scoreLeads = {
 /** 点ごとに、数えるものを結果画面の採点基準と同じ呼び名で並べる。速さには基準時間の決まり方を置く。 */
 function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
   if (item === "speed") {
-    // score.ts の基準時間は、盤面を読み始める時間に、空いたマスごとの時間を足す。式の形（20秒＋空いたマス1つにつき10秒）で言う。
+    // score.ts の基準時間は、盤面を読み始める時間に、空いたマスごとの時間を足す。足していく時間を先に言い、元の時間を後ろに置いて、
+    // どの語も前の語と組に読まれないようにする。
     return (
       <HowToPlayScoreRow
         measure="基準時間"
-        text={`${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / SECOND_MS}秒と/空いたマス/1つにつき/${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / SECOND_MS}秒を/合わせます。`}
+        text={`空いたマス/1つにつき/${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / SECOND_MS}秒を/${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / SECOND_MS}秒に/足します。`}
       />
     );
   }
@@ -123,11 +124,11 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
         // 変えている間は、最後に残った数で数え直し、次の3つを除く。その間に置いて列の端の色を変えなかった数、外してから元に戻した数、
         // 色を変えてすぐ盤面の下に並んだ数で隣り合う数へ置き換えた数。盤面を戻すは同じマスを変える操作ではないので、どれも数える。
         // 文は数え方の決まりと条件を言い、流れの図は数える直し方と、数えない直し方のうち盤面の外の並びで決まる押し間違いを見せる。
-        text={`置いた数が/外れるたびに/画面の上の/「置き直し」が/1回/増えます。/ただし/ほかのマスを/選ぶ前に/同じマスで/外す・置き換える・「${undo}」で/外れた/次の数は/数えません。`}
+        text="置いた数が/外れるたびに/画面の上の/「置き直し」が/1回/増えます。/ただし/同じマスを/選んでいる間に/外れた数のうち/次の3つは/数えません。"
         exceptions={[
           "その間に/置いて/列の端の色を/変えなかった数",
           "その間に/外して/元に戻した数",
-          "色を変えて/すぐ/盤面の下で/上下・左右・斜めに/隣の数へ/置き換えた数",
+          "押し間違えて/すぐ/盤面の下で/上下・左右・斜めに/隣り合う数に/置き換えた数",
         ]}
         figure={
           <CorrectionCountExamples
@@ -142,7 +143,7 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
               },
               {
                 figure: correctionCountFlows.mistyped,
-                flow: "列の端の色を/変えた数を/隣の数へ/すぐ/置き換える",
+                flow: "列の端の色を/変えた数を/隣り合う数に/すぐ/置き換える",
                 showPlacedValues: true,
               },
             ]}
@@ -179,7 +180,7 @@ export function MagicSquareHowToPlayDialog({
       rules={
         <>
           <HowToPlayRule
-            text="縦・横・斜めのどの列も/足して/左上の合計に/なれば/完成です。/列の端の今の合計は/そろうと緑に/もうそろわないと赤に/なります。"
+            text="縦・横・斜めのどの列も/足して/左上の合計に/なれば/完成です。/列の端の合計は/そろうと/緑に/なります。/このままでは/そろわないと/赤に/なります。"
             arrangement={lineRuleExample.arrangement}
             examples={
               <TouchableExample example={lineRuleExample} caption="line" />
@@ -252,7 +253,7 @@ export function MagicSquareHowToPlayDialog({
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text={`空いたマスを/選んで/鉛筆のボタンを/押してから/数を/押すと/メモを/${MAGIC_SQUARE_MEMO_CAPACITY}つまで/書けます。/同じ数を/もう一度/押すと/消えます。/鉛筆のボタンを/もう一度/押すと/また/数を/置けます。`}
+                text={`空いたマスを/選んで/鉛筆のボタンを/押してから/数を/押すと/メモを/1マスに/${MAGIC_SQUARE_MEMO_CAPACITY}つまで/書けます。/同じ数を/もう一度/押すと/消えます。/鉛筆のボタンを/もう一度/押すと/また/数を/置けます。`}
                 arrangement={memoOperationExample.arrangement}
                 examples={
                   <TouchableExample

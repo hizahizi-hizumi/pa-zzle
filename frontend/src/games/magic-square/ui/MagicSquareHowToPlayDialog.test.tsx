@@ -135,7 +135,7 @@ describe("MagicSquareHowToPlayDialog", () => {
       const [row] = within(panel).getAllByRole("listitem");
 
       expect(row?.textContent).toBe(
-        `基準時間${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒と空いたマス1つにつき${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / 1000}秒を合わせます。`,
+        `基準時間空いたマス1つにつき${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / 1000}秒を${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒に足します。`,
       );
     });
 
@@ -160,7 +160,7 @@ describe("MagicSquareHowToPlayDialog", () => {
       expect(exceptions).toEqual([
         "・その間に置いて列の端の色を変えなかった数",
         "・その間に外して元に戻した数",
-        "・色を変えてすぐ盤面の下で上下・左右・斜めに隣の数へ置き換えた数",
+        "・押し間違えてすぐ盤面の下で上下・左右・斜めに隣り合う数に置き換えた数",
       ]);
       expect(pressed).toBe(
         "「待った」・「盤面を戻す」押しただけでは点は下がりません。",
@@ -185,7 +185,7 @@ describe("MagicSquareHowToPlayDialog", () => {
       const panel = openTab("操作");
 
       expect(panel.textContent).toContain(
-        `メモを${MAGIC_SQUARE_MEMO_CAPACITY}つまで書けます。`,
+        `メモを1マスに${MAGIC_SQUARE_MEMO_CAPACITY}つまで書けます。`,
       );
     });
   });
