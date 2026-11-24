@@ -11,7 +11,10 @@ import type { GamePlayResultScreenProps } from "@/games/play";
 import type { ShuttleParkingDifficulty } from "@/games/shuttle-parking/difficulty";
 import { SHUTTLE_PARKING_DISPLAY_NAME } from "@/games/shuttle-parking/display-name";
 import type { ShuttleParkingResult } from "@/games/shuttle-parking/play/use-shuttle-parking-play";
-import { SHUTTLE_PARKING_SCORE_MAXIMUMS } from "@/games/shuttle-parking/score";
+import {
+  countShuttleParkingSpeedTrapWeight,
+  SHUTTLE_PARKING_SCORE_MAXIMUMS,
+} from "@/games/shuttle-parking/score";
 import { getShuttleParkingScoreCriteria } from "@/games/shuttle-parking/ui/result/ShuttleParkingResultScreen/score-criteria";
 
 type ShuttleParkingResultScreenProps = GamePlayResultScreenProps<
@@ -50,7 +53,9 @@ export function ShuttleParkingResultScreen({
           ? [
               createCountMetric(
                 "先読み",
-                result.speedReference.trapWeight,
+                countShuttleParkingSpeedTrapWeight(
+                  result.speedReference.trapWeight,
+                ),
                 "人",
               ),
             ]

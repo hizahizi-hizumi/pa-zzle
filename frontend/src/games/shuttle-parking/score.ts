@@ -9,7 +9,7 @@ import {
   sumPlayScore,
 } from "@/games/score";
 
-export const SHUTTLE_PARKING_SCORE_MODEL_VERSION = "2";
+export const SHUTTLE_PARKING_SCORE_MODEL_VERSION = "3";
 
 export const SHUTTLE_PARKING_SCORE_MAXIMUMS = {
   accuracy: 60,
@@ -30,6 +30,8 @@ export const SHUTTLE_PARKING_SPEED_PER_CAR_MS = 2_000;
 export const SHUTTLE_PARKING_SPEED_PER_PASSENGER_MS = 500;
 /** 罠を避けるために先まで読む1人あたりの時間。レベルを決める罠の重さ（何人先に結果が出るか）に掛ける。 */
 export const SHUTTLE_PARKING_SPEED_PER_TRAP_WEIGHT_MS = 2_000;
+/** 読む人数の項に数える重さの上限。最も重い問題でも、この項が基準時間の半分を超えないようにする。 */
+export const SHUTTLE_PARKING_SPEED_TRAP_WEIGHT_LIMIT = 14;
 /** 速さが0点になる時間の、基準時間に対する倍率。 */
 export const SHUTTLE_PARKING_SPEED_ZERO_SCORE_RATIO = 2;
 
@@ -61,11 +63,21 @@ export function calculateShuttleParkingSpeedFullScoreMs({
   passengerCount,
   trapWeight,
 }: ShuttleParkingSpeedReference): number {
-  return (
+  const totalMs =
     SHUTTLE_PARKING_SPEED_BOARD_READING_MS +
     Math.max(0, carCount) * SHUTTLE_PARKING_SPEED_PER_CAR_MS +
     Math.max(0, passengerCount) * SHUTTLE_PARKING_SPEED_PER_PASSENGER_MS +
-    Math.max(0, trapWeight) * SHUTTLE_PARKING_SPEED_PER_TRAP_WEIGHT_MS
+    countShuttleParkingSpeedTrapWeight(trapWeight) *
+      SHUTTLE_PARKING_SPEED_PER_TRAP_WEIGHT_MS;
+  // 結果は秒の単位で見せるので、基準時間も秒に切り上げる（0.5秒の端数で「基準差 -00:00」と出さない）。
+  return Math.ceil(totalMs / 1_000) * 1_000;
+}
+
+/** 基準時間の読む人数の項に数える重さ。 */
+export function countShuttleParkingSpeedTrapWeight(trapWeight: number): number {
+  return Math.min(
+    Math.max(0, trapWeight),
+    SHUTTLE_PARKING_SPEED_TRAP_WEIGHT_LIMIT,
   );
 }
 

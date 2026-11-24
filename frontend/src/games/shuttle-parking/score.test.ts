@@ -4,6 +4,7 @@ import {
   calculateShuttleParkingSpeedFullScoreMs,
   calculateShuttleParkingTimeDeltaMs,
   SHUTTLE_PARKING_SCORE_MAXIMUMS,
+  SHUTTLE_PARKING_SPEED_TRAP_WEIGHT_LIMIT,
 } from "@/games/shuttle-parking/score";
 
 // レベル3の中ほどの問題: 車8台・列20人・罠の結果が6人先に出る。基準時間は 5 + 8×2 + 20×0.5 + 6×2 = 43秒。
@@ -25,6 +26,27 @@ describe("calculateShuttleParkingSpeedFullScoreMs", () => {
     );
 
     expect(level5! - level1!).toBe(24_000);
+  });
+});
+
+describe("calculateShuttleParkingSpeedFullScoreMs の端と上限", () => {
+  test("基準時間を秒に切り上げること", () => {
+    const fullScoreMs = calculateShuttleParkingSpeedFullScoreMs({
+      ...speedReference,
+      passengerCount: 21,
+    });
+
+    expect(fullScoreMs).toBe(44_000);
+  });
+
+  test("先読みの人数は上限までを数え、その項が基準時間の半分を超えないこと", () => {
+    const heaviest = { carCount: 8, passengerCount: 16, trapWeight: 17 };
+
+    const fullScoreMs = calculateShuttleParkingSpeedFullScoreMs(heaviest);
+    const trapTermMs = SHUTTLE_PARKING_SPEED_TRAP_WEIGHT_LIMIT * 2_000;
+
+    expect(fullScoreMs).toBe(5_000 + 16_000 + 8_000 + trapTermMs);
+    expect(trapTermMs / fullScoreMs).toBeLessThan(0.5);
   });
 });
 
