@@ -46,7 +46,7 @@ export function HowToPlayScoreRow({
       </p>
       {text ? (
         <p className="mt-1 text-body">
-          <HowToPlayPhrases text={text} />
+          <HowToPlayPhrases text={text} avoidShortLastLine />
         </p>
       ) : null}
       {exceptions.length > 0 ? (

@@ -77,3 +77,34 @@ describe("HowToPlayPhrases", () => {
     });
   });
 });
+
+describe("HowToPlayPhrases で最後の行に短い文節だけを残さない場合", () => {
+  test.each([
+    [
+      "最後の文節が短いときは、前の文節と合わせて、短くなくなるまでまとめること",
+      "時間も/0に戻して/同じ問題を/最初から/やり直します。",
+      ["時間も", "0に戻して", "同じ問題を", "最初からやり直します。"],
+    ],
+    [
+      "最後の文節が短くなければ、まとめないこと",
+      "同じレベルのまま/問題を/変えずに遊べます。",
+      ["同じレベルのまま", "問題を", "変えずに遊べます。"],
+    ],
+    [
+      "まとめると長い塊になるときは、まとめないこと",
+      "時間・ミス・/「待った」の回数も/0に戻します。",
+      ["時間・ミス・", "「待った」の回数も", "0に戻します。"],
+    ],
+    ["文全体が短いときは、1つにまとめること", "押す/だけ", ["押すだけ"]],
+  ])("%s", (_, text, expected) => {
+    const { container } = render(
+      <p>
+        <HowToPlayPhrases text={text} avoidShortLastLine />
+      </p>,
+    );
+
+    const phrases = listPhrases(container).map((phrase) => phrase.textContent);
+
+    expect(phrases).toEqual(expected);
+  });
+});

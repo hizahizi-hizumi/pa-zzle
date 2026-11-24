@@ -49,7 +49,7 @@ export function HowToPlayMenuOperations({
           </Button>
         </span>
         <p className="text-body">
-          <HowToPlayPhrases text="画面の右上の/「…」から/選べます。" />
+          <HowToPlayPhrases text="画面の右上の「…」から/選べます。" />
         </p>
       </div>
       <DropdownMenuStaticSurface>
@@ -80,7 +80,7 @@ export function HowToPlayMenuOperations({
               </span>
               <span className="sr-only">：</span>
               <span className="block text-supporting">
-                <HowToPlayPhrases text={text} />
+                <HowToPlayPhrases text={text} avoidShortLastLine />
               </span>
               {note ? (
                 <span className="mt-1 block text-muted-foreground text-supporting">
