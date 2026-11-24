@@ -6,7 +6,7 @@ type FukumenzanCardFaceProps = {
   digit: FukumenzanDigit;
   /** 先頭の0の知らせ。 */
   noticed?: boolean;
-  /** 選んでいる文字に × を付けた札。上に描く × が読めるよう、数字を薄くする。 */
+  /** 選んでいる文字に × を付けた札。× は数字の後ろに細く淡く描き、数字を読めるまま付けたと分かるようにする。 */
   crossed?: boolean;
   /** 運んでいる間、元の場所に残す薄い姿。 */
   lifted?: boolean;
@@ -37,7 +37,22 @@ export function FukumenzanCardFace({
           )}
         />
       )}
-      <span className={cn("relative", crossed && "opacity-40")}>{digit}</span>
+      {crossed && (
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 10 10"
+          className="pointer-events-none absolute inset-[12%] size-[76%]"
+        >
+          <path
+            d="M 1 1 L 9 9 M 9 1 L 1 9"
+            fill="none"
+            strokeWidth={0.8}
+            strokeLinecap="round"
+            className={fukumenzanToneClassNames.cross}
+          />
+        </svg>
+      )}
+      <span className="relative">{digit}</span>
     </span>
   );
 }

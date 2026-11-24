@@ -45,7 +45,7 @@ const slotClassName =
 /**
  * 0〜9 の札を、数字の順に決まった場所へ並べる。スマホの幅では 0〜4 と 5〜9 の2段、広い画面では1段にする。
  * 文字に入れた札は列から抜け、その場所は空いた枠になる。
- * 文字を選んでいる間は、その文字に × を付けた札に × を描き、札の数字を薄くする。
+ * 文字を選んでいる間は、その文字に × を付けた札に × を描く。
  */
 export function FukumenzanCardRow({
   puzzleState,
@@ -144,21 +144,6 @@ export function FukumenzanCardRow({
                 drag.digit === digit
               }
             />
-            {crossed && (
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 10 10"
-                className="pointer-events-none absolute inset-[10%] size-[80%]"
-              >
-                <path
-                  d="M 1.5 1.5 L 8.5 8.5 M 8.5 1.5 L 1.5 8.5"
-                  fill="none"
-                  strokeWidth={1.4}
-                  strokeLinecap="round"
-                  className={fukumenzanToneClassNames.cross}
-                />
-              </svg>
-            )}
             {hintContent}
           </button>
         );
