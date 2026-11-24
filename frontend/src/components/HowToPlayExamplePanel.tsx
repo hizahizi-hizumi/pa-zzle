@@ -366,8 +366,9 @@ export function HowToPlayExamplePanel({
         resettable ? resetButtonPosition.placement : undefined
       }
       className={cn(
-        "relative isolate rounded-lg px-4",
-        ground === undefined && "bg-muted",
+        "relative rounded-lg px-4",
+        // 地は面の中身の下に敷くので、地を渡した面だけを重なりの単位にする。
+        ground === undefined ? "bg-muted" : "isolate",
         placement.panel,
       )}
       style={
