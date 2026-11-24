@@ -84,13 +84,13 @@ describe("HowToPlayMenuOperations", () => {
     );
   });
 
-  test("「…」ボタンを本番の名前で呼ぶ一文に続けて、文を本番のメニューの項目の名前と組にして読み上げること", () => {
+  test("「…」ボタンの画面の中の場所を言う一文に続けて、文を本番のメニューの項目の名前と組にして読み上げること", () => {
     const texts = screen
       .getAllByRole("paragraph")
       .map((paragraph) => paragraph.textContent);
 
     expect(texts).toEqual([
-      "「…」を押して選びます。",
+      "画面の右上の「…」から選べます。",
       "盤面を戻す：戻す。",
       "リセット：やり直す。",
       "別の問題：変える。",

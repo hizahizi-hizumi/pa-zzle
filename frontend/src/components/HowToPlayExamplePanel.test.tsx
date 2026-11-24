@@ -34,8 +34,8 @@ describe("findResetButtonPosition", () => {
   });
 
   /**
-   * 面の内側。右端 300px、上端 0、下端 200px。ボタンは右端から 44px の列に置き、
-   * 下の角では下端から上へ 30px・下へ 6px、上の角では上端から下へ 30px・上へ 6px に届く。
+   * 面の内側。右端 300px、上端 0、下端 200px。ボタンは右端から 40px の列に置き、
+   * 下の角では下端から上へ 28px・下へ 8px、上の角では上端から下へ 20px・上へ 16px に届く。
    */
   const content = { left: 0, right: 300, top: 0, bottom: 200 };
   const cases = [
@@ -78,6 +78,33 @@ describe("findResetButtonPosition", () => {
       expect(result).toBe(placement);
     },
   );
+
+  describe("例が2つある面の場合", () => {
+    const pair = [
+      { left: 0, right: 140, top: 40, bottom: 200 },
+      { left: 160, right: 250, top: 40, bottom: 200 },
+    ];
+
+    test("言葉の行の右が空いていても、最後の例の横ではなく右上の角を選ぶこと", () => {
+      const result = findResetButtonPosition(content, pair, 2).placement;
+
+      expect(result).toBe("top-corner");
+    });
+
+    test("右上の角に例が届けば、例の下を選び、ボタンの列の外の言葉も数えて、どの言葉より下に置くこと", () => {
+      const result = findResetButtonPosition(
+        content,
+        [
+          { left: 0, right: 300, top: 0, bottom: 90 },
+          { left: 100, right: 200, top: 100, bottom: 200 },
+          { left: 120, right: 180, top: 200, bottom: 220 },
+        ],
+        2,
+      );
+
+      expect(result).toEqual({ placement: "below-examples", inkBelowPx: 20 });
+    });
+  });
 });
 
 /** 押すと、例の下に面の幅いっぱいの言葉を出す例。 */

@@ -1,7 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 
-import { HowToPlayExamplePanel } from "@/components/HowToPlayExamplePanel";
 import { HowToPlayPhrases } from "@/components/HowToPlayPhrases";
 
 /** 流れの数え方。図の下の流れの右に「→ 名前 値」と添える。 */
@@ -26,6 +25,11 @@ type HowToPlayFlowFigure<Frame> = {
   caption: string;
   /** 流れの右に添える数え方。 */
   count: HowToPlayFlowCount;
+  /**
+   * コマの下、流れの言葉の上に添える押せない図。コマの盤面の外にある、数え方の条件に関わる物（押した2つのボタンの並びなど）を
+   * 本番と同じ見た目で見せる。幅はコマと矢印を並べた図の幅に収め、その中央に置く。
+   */
+  detail?: ReactNode;
 };
 
 type HowToPlayFlowFiguresProps<Frame> = {
@@ -39,7 +43,8 @@ type HowToPlayFlowFiguresProps<Frame> = {
 };
 
 /**
- * 採点の数え方を、操作の流れで見せる押せない図。ルールの例と同じ面に、流れを縦に並べる。押す所の手がかりや指のアイコンは付けない。
+ * 採点の数え方を、操作の流れで見せる押せない図。触れる例の地の面（`HowToPlayExamplePanel`）と見分けられるよう、地を敷かずに
+ * 縁の線で囲んだ面に、流れを縦に並べる。面の余白は触れる例の面と同じにする。押す所の手がかりや指のアイコンは付けない。
  * コマの盤面の大きさは、ゲームが図を置く所で CSS 変数として決め、コマはそれを読む。
  * どの流れも、操作の前から後までの姿を左から順に並べ、間に操作の名前を添えた矢印を、盤面の高さの中央にそろえて置く。
  * 流れどうしの姿と矢印は同じ列にそろえ、最初の姿の左端を合わせる。
@@ -71,61 +76,77 @@ export function HowToPlayFlowFigures<Frame>({
   const spanAllColumns = { gridColumn: `span ${columnCount}` };
   const captionColumns = { gridColumn: `1 / span ${columnCount}` };
   return (
-    <HowToPlayExamplePanel arrangement="stacked">
-      <div
-        className="grid justify-center gap-x-2 gap-y-10"
-        style={{ gridTemplateColumns: columnTemplate }}
-      >
-        {figures.map(({ frames, steps, caption, count }) => (
-          <figure
-            key={caption}
-            className="grid grid-cols-subgrid items-center gap-y-3"
-            style={spanAllColumns}
-          >
-            {frames.map((frame, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: 操作の順の姿は、並び順そのものが識別になる
-              <Fragment key={index}>
-                {index > 0 ? (
-                  <span
-                    aria-hidden="true"
-                    className="flex min-w-7 flex-col items-center text-muted-foreground text-supporting"
-                  >
-                    <span
-                      className="flex flex-col items-center justify-end"
-                      style={stepNameBox}
-                    >
-                      {(steps[index - 1] ?? "").split("/").map((line) => (
-                        <span key={line} className="block whitespace-nowrap">
-                          {line}
-                        </span>
-                      ))}
-                    </span>
-                    <ArrowRight className="size-5 shrink-0" strokeWidth={2.5} />
-                  </span>
-                ) : null}
-                <span aria-hidden="true" className="flex">
-                  {renderFrame(frame, frames[index - 1])}
-                </span>
-              </Fragment>
-            ))}
-            {/* 流れは図の左端に、数え方は図の右端にそろえた2列にする。数え方は途中で折り返さず、流れだけを折り返す。 */}
-            {/* 言葉で列の幅を広げないよう、幅を取らずに図の幅いっぱいへ広げ、図の幅の中で折り返す。 */}
-            <figcaption
-              className="grid w-0 min-w-full grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-supporting"
-              style={captionColumns}
+    <div className="rounded-lg border px-4 py-8">
+      {/* コマの大きさを面の内側の幅に合わせて決められるよう、余白の内側をコンテナにする。 */}
+      <div className="@container">
+        <div
+          className="grid justify-center gap-x-2 gap-y-10"
+          style={{ gridTemplateColumns: columnTemplate }}
+        >
+          {figures.map(({ frames, steps, caption, count, detail }) => (
+            <figure
+              key={caption}
+              className="grid grid-cols-subgrid items-center gap-y-3"
+              style={spanAllColumns}
             >
-              <span>
-                <HowToPlayPhrases text={caption} />
-              </span>
-              {/* 読み上げと文字の取り出しで、流れと数え方を続けて読ませないための空白。格子の中では場所を取らない。 */}{" "}
-              <span className="whitespace-nowrap">
-                {`→ ${count.label} `}
-                <span className="font-semibold text-body">{count.value}</span>
-              </span>
-            </figcaption>
-          </figure>
-        ))}
+              {frames.map((frame, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: 操作の順の姿は、並び順そのものが識別になる
+                <Fragment key={index}>
+                  {index > 0 ? (
+                    <span
+                      aria-hidden="true"
+                      className="flex min-w-7 flex-col items-center text-muted-foreground text-supporting"
+                    >
+                      <span
+                        className="flex flex-col items-center justify-end"
+                        style={stepNameBox}
+                      >
+                        {(steps[index - 1] ?? "").split("/").map((line) => (
+                          <span key={line} className="block whitespace-nowrap">
+                            {line}
+                          </span>
+                        ))}
+                      </span>
+                      <ArrowRight
+                        className="size-5 shrink-0"
+                        strokeWidth={2.5}
+                      />
+                    </span>
+                  ) : null}
+                  <span aria-hidden="true" className="flex">
+                    {renderFrame(frame, frames[index - 1])}
+                  </span>
+                </Fragment>
+              ))}
+              {detail === undefined ? null : (
+                // 添える図で列の幅を広げないよう、幅を取らずに図の幅いっぱいへ広げる。
+                <div
+                  aria-hidden="true"
+                  className="flex w-0 min-w-full justify-center"
+                  style={captionColumns}
+                >
+                  {detail}
+                </div>
+              )}
+              {/* 流れは図の左端に、数え方は図の右端にそろえた2列にする。数え方は途中で折り返さず、流れだけを折り返す。 */}
+              {/* 言葉で列の幅を広げないよう、幅を取らずに図の幅いっぱいへ広げ、図の幅の中で折り返す。 */}
+              <figcaption
+                className="grid w-0 min-w-full grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-supporting"
+                style={captionColumns}
+              >
+                <span>
+                  <HowToPlayPhrases text={caption} />
+                </span>
+                {/* 読み上げと文字の取り出しで、流れと数え方を続けて読ませないための空白。格子の中では場所を取らない。 */}{" "}
+                <span className="whitespace-nowrap">
+                  {`→ ${count.label} `}
+                  <span className="font-semibold text-body">{count.value}</span>
+                </span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
       </div>
-    </HowToPlayExamplePanel>
+    </div>
   );
 }

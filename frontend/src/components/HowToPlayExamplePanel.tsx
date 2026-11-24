@@ -26,7 +26,7 @@ type HowToPlayExamplePanelProps = {
   children: ReactNode;
   arrangement?: HowToPlayExampleArrangement;
   /**
-   * 触れる例を置く面か。置くときは、面の例をまとめて最初の姿に戻すボタンを面の右下の角に置く。
+   * 触れる例を置く面か。置くときは、面の例をまとめて最初の姿に戻すボタンを面の右の縁に置く。
    * 例は `useReportHowToPlayExampleChange` で、最初の姿から変わったかを面に知らせる。
    */
   resettable?: boolean;
@@ -35,7 +35,8 @@ type HowToPlayExamplePanelProps = {
 /**
  * 元に戻すボタンを置く所。上から順に、例と言葉に重ならない所を選ぶ。
  * - `beside-caption`: 例の下の言葉の1行目の右（言葉の無い面では、例の下端の右）。ボタンのために高さを取らない。
- * - `top-corner`: 面の右上の角。例の下の右に置くと例か言葉に届き、右上には例が届かない面で、ボタンのために高さを取らない。
+ *   例が1つの面でだけ選ぶ。例が2つ以上ある面では、最後の例の横に置くとその例だけを戻すボタンに見えるため。
+ * - `top-corner`: 面の右上の角。ボタンのために高さを取らない。
  * - `below-examples`: 例の下。どちらの角にも例か言葉が届く面で、ボタンの列にある例と言葉の下にボタンの分の高さを取る。
  */
 type ResetButtonPlacement = "beside-caption" | "top-corner" | "below-examples";
@@ -62,26 +63,25 @@ const arrangementClassNames = {
 
 /**
  * 面の上下の内側の余白（`--how-to-play-panel-padding-block` は上の余白）と、元に戻すボタンの置き場所。
- * - 言葉の行の右と右上の角: 上下を 32px にそろえる。ボタン（36px）の縦の中心を、下では言葉の1行目（下の余白の上の 24px の行）の
- *   中心に、上では同じ間だけ上の余白から下げた所にそろえ、どちらの角でも面の縁から同じ所に置く。
- * - 例の下: ボタンの列で面の内側の下端より下に描かれる言葉（`--how-to-play-reset-ink-below`）の下に、4px 空けてボタンを置き、
- *   その下に 6px を残す（下の余白は 46px からになる）。言葉の無い面では、上の余白も同じにしてそろえる。
+ * どの置き場所でも上の余白は 32px にし、面ごとに例の始まる高さを変えない。ボタンは面の右の縁から 16px に置く。
+ * - 言葉の行の右: 下の余白を 32px にし、ボタン（36px）を下の縁から 24px に置いて、縦の中心を言葉の1行目（下の余白の上の 24px の行）の
+ *   中心にほぼそろえる。
+ * - 右上の角: 下の余白を 32px にし、ボタンを上の縁から右と同じ 16px に置く。
+ * - 例の下: 下にだけボタンの分の高さを取る。ボタンの列で面の内側の下端より下に描かれる言葉（`--how-to-play-reset-ink-below`）の下に
+ *   4px 空けてボタンを置き、その下に 8px を残す（下の余白は 48px からになる）。
  */
 const placementClassNames = {
   "beside-caption": {
-    panel:
-      "py-(--how-to-play-panel-padding-block) [--how-to-play-panel-padding-block:--spacing(8)]",
-    button: "bottom-[calc(var(--how-to-play-panel-padding-block)-6px)]",
+    panel: "py-8",
+    button: "bottom-6",
   },
   "top-corner": {
-    panel:
-      "py-(--how-to-play-panel-padding-block) [--how-to-play-panel-padding-block:--spacing(8)]",
-    button: "top-[calc(var(--how-to-play-panel-padding-block)-6px)]",
+    panel: "py-8",
+    button: "top-4",
   },
   "below-examples": {
-    panel:
-      "pt-(--how-to-play-panel-padding-block) pb-[calc(var(--how-to-play-reset-ink-below)+46px)] [--how-to-play-panel-padding-block:calc(var(--how-to-play-reset-ink-below)+46px)] has-[figcaption]:[--how-to-play-panel-padding-block:--spacing(8)]",
-    button: "bottom-1.5",
+    panel: "pt-8 pb-[calc(var(--how-to-play-reset-ink-below)+--spacing(12))]",
+    button: "bottom-2",
   },
 } as const satisfies Record<
   ResetButtonPlacement,
@@ -92,9 +92,14 @@ const placementClassNames = {
 const RESET_BUTTON_SIZE_PX = 36;
 const RESET_BUTTON_CLEARANCE_PX = 4;
 
-/** 角に置いたボタンが、面の内側の上端・下端から内へ届く高さと、外へはみ出す高さ（px）。 */
-const RESET_BUTTON_REACH_INSIDE_PX = 30;
-const RESET_BUTTON_REACH_OUTSIDE_PX = 6;
+/**
+ * 角に置いたボタンが、面の内側の端から内へ届く高さと、外へはみ出す高さ（px）。面の上下の余白は 32px。
+ * 下の角は下の縁から 24px（内へ 28px・外へ 8px）、上の角は上の縁から 16px（内へ 20px・外へ 16px）に置く。
+ */
+const RESET_BUTTON_REACH = {
+  "beside-caption": { inside: 28, outside: 8 },
+  "top-corner": { inside: 20, outside: 16 },
+} as const;
 
 type Box = { left: number; right: number; top: number; bottom: number };
 
@@ -104,19 +109,20 @@ function getResetButtonBox(
   placement: Exclude<ResetButtonPlacement, "below-examples">,
 ): Box {
   const left = content.right - RESET_BUTTON_SIZE_PX - RESET_BUTTON_CLEARANCE_PX;
+  const { inside, outside } = RESET_BUTTON_REACH[placement];
   if (placement === "beside-caption") {
     return {
       left,
       right: content.right,
-      top: content.bottom - RESET_BUTTON_REACH_INSIDE_PX,
-      bottom: content.bottom + RESET_BUTTON_REACH_OUTSIDE_PX,
+      top: content.bottom - inside,
+      bottom: content.bottom + outside,
     };
   }
   return {
     left,
     right: content.right,
-    top: content.top - RESET_BUTTON_REACH_OUTSIDE_PX,
-    bottom: content.top + RESET_BUTTON_REACH_INSIDE_PX,
+    top: content.top - outside,
+    bottom: content.top + inside,
   };
 }
 
@@ -131,15 +137,20 @@ function overlaps(box: Box, examples: readonly Box[]): boolean {
 }
 
 /**
- * 元に戻すボタンの置き場所。`content` は面の内側の矩形、`examples` は例の盤面と言葉の矩形。
- * 高さを取らない角（言葉の行の右、次に右上）のうち、例と言葉に重ならない所を選ぶ。
- * どちらも重なれば例の下にし、ボタンの列で面の内側の下端より下に描かれる言葉の高さを返す。
+ * 元に戻すボタンの置き場所。`content` は面の内側の矩形、`examples` は例の盤面と言葉の矩形、`exampleCount` は面の例の数。
+ * 高さを取らない角（例が1つなら言葉の行の右、次に右上）のうち、例と言葉に重ならない所を選ぶ。
+ * どれも重なれば例の下にし、面の内側の下端より下に描かれる言葉の高さを返す。例が1つならボタンの列に描かれる言葉だけを数え、
+ * 2つ以上なら、ボタンが最後の例の言葉の横に並んでその例だけを戻すボタンに見えないよう、どの列の言葉も数えて、言葉の下に置く。
  */
 function findResetButtonPosition(
   content: Box,
   examples: readonly Box[],
+  exampleCount = 1,
 ): ResetButtonPosition {
-  const corners = ["beside-caption", "top-corner"] as const;
+  const corners =
+    exampleCount > 1
+      ? (["top-corner"] as const)
+      : (["beside-caption", "top-corner"] as const);
   const corner = corners.find(
     (candidate) => !overlaps(getResetButtonBox(content, candidate), examples),
   );
@@ -147,7 +158,9 @@ function findResetButtonPosition(
     return { placement: corner, inkBelowPx: 0 };
   }
   const columnLeft =
-    content.right - RESET_BUTTON_SIZE_PX - RESET_BUTTON_CLEARANCE_PX;
+    exampleCount > 1
+      ? content.left
+      : content.right - RESET_BUTTON_SIZE_PX - RESET_BUTTON_CLEARANCE_PX;
   const inkBelowPx = Math.max(
     0,
     ...examples
@@ -260,9 +273,10 @@ export function useReportHowToPlayExampleChange(): (changed: boolean) => void {
 /**
  * 例を並べる、背景差だけの面。面はどこでも置き場所の幅いっぱいにそろえ、図は面の中で中央に置く。
  * 図が面の内側の幅に合わせて大きさを決められるよう、余白の内側をコンテナにする。
- * 上の余白は `--how-to-play-panel-padding-block` で中の図に渡し、図が面の中に動く場所を取るときに使えるようにする。
- * 触れる例の面では、面の中のどれかの例が最初の姿と違う間だけ、面の右下の角に元に戻すボタンを出す。
- * ボタンは面の内側の右端にそろえ、言葉の行の右か面の右上の角に、例と言葉に重ならなければ高さを取らずに重ね、どちらも重なれば例の下に置く。
+ * 上の余白（32px）は `--how-to-play-panel-padding-block` で中の図に渡し、図が面の中に動く場所を取るときに使えるようにする。
+ * 触れる例の面では、面の中のどれかの例が最初の姿と違う間だけ、元に戻すボタンを出す。
+ * ボタンは面の右の縁から 16px に置き、例が1つなら言葉の行の右、次に面の右上の角に、例と言葉に重ならなければ高さを取らずに重ね、
+ * どちらも重なれば例の下に置く。
  * 置き場所は例と面の大きさから決め、ボタンを出し入れしても変えない。戻すときは面の例を作り直して、最初の姿にする。
  */
 export function HowToPlayExamplePanel({
@@ -298,6 +312,7 @@ export function HowToPlayExamplePanel({
       const next = findResetButtonPosition(
         content.getBoundingClientRect(),
         measureExampleBoxes(listExampleParts(examples)),
+        examples.querySelectorAll("figure").length,
       );
       setResetButtonPosition((current) =>
         current.placement === next.placement &&
@@ -359,7 +374,10 @@ export function HowToPlayExamplePanel({
       data-reset-button-placement={
         resettable ? resetButtonPosition.placement : undefined
       }
-      className={cn("relative rounded-lg bg-muted px-4", placement.panel)}
+      className={cn(
+        "relative rounded-lg bg-muted px-4 [--how-to-play-panel-padding-block:--spacing(8)]",
+        placement.panel,
+      )}
       style={
         {
           "--how-to-play-reset-ink-below": `${resetButtonPosition.inkBelowPx}px`,

@@ -7,20 +7,27 @@ type HowToPlayScoreRowProps = {
   measure: string;
   /** 1回ごとに下がる点など、数えるものが点にどう効くか（「1回 −5点」など）。名前の行の右端に置く。 */
   deduction?: string;
-  /** 数え方の補足。`/` で区切った所の間でだけ折り返す。 */
+  /** 何を1回と数えるかの文。`/` で区切った所の間でだけ折り返す。 */
   text?: string;
-  /** 補足の下に添える図。数えない操作などを、本番と同じ見え方で見せる。 */
+  /**
+   * 文が「次の〜は数えません」のように指す、数えない場合の短い言葉。文の下に1つずつ行を分けて並べ、条件を文の中に続けない。
+   * どれも `/` で区切った所の間でだけ折り返す。
+   */
+  exceptions?: readonly string[];
+  /** 文の下に添える図。数えない操作などを、本番と同じ見え方で見せる。 */
   figure?: ReactNode;
 };
 
 /**
  * 採点の項目1つ。名前と点への効き方を太字の本文で1行に並べ、名前を見出しのように拾えるようにする。
- * 数え方の補足は、項目の名前より一段下げた説明の段にする。
+ * 何を数えるかの文は、項目の見出しの下の一文と同じ普通の太さの本文にし、数え方を見出しの一文より小さく組まない。
+ * 数えない場合は、文の下に頭をそろえた短い行の並びにし、条件を目で拾えるようにする。
  */
 export function HowToPlayScoreRow({
   measure,
   deduction,
   text,
+  exceptions = [],
   figure,
 }: HowToPlayScoreRowProps) {
   return (
@@ -38,9 +45,21 @@ export function HowToPlayScoreRow({
         ) : null}
       </p>
       {text ? (
-        <p className="mt-1 text-supporting">
+        <p className="mt-1 text-body">
           <HowToPlayPhrases text={text} />
         </p>
+      ) : null}
+      {exceptions.length > 0 ? (
+        <ul className="mt-2 space-y-1 text-body">
+          {exceptions.map((exception) => (
+            <li key={exception} className="flex gap-x-1">
+              <span aria-hidden="true">・</span>
+              <span>
+                <HowToPlayPhrases text={exception} />
+              </span>
+            </li>
+          ))}
+        </ul>
       ) : null}
       {figure ? <div className="mt-3">{figure}</div> : null}
     </li>

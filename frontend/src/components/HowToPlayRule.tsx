@@ -12,14 +12,14 @@ type HowToPlayRuleProps = {
   /** 例を `HowToPlayExample` で、できる形、できない形の順に渡す。 */
   examples: ReactNode;
   arrangement?: HowToPlayExampleArrangement;
-  /** 文の見出しの段。まとまりの見出しの下に置くときは 4 にする。 */
+  /** 文の見出しの段。まとまりの見出しの下に置くときは 4 にする。文字の大きさと太さは段によらない。 */
   headingLevel?: 3 | 4;
 };
 
 /**
  * 遊び方のルールや操作の例1つ。一文の下に、触れる例を背景差だけの面の中に並べる。
- * 一文がルールの見出しを兼ねるときは、本文の大きさの太字にし、帯の名前とまとまりの見出しより一段退かせる。
- * まとまりの見出しの下では、普通の太さの本文にする。
+ * 一文は項目の名前を兼ねるので、どの段でも本文の大きさの太字にし、帯の名前とまとまりの見出し（`text-section-title`）より
+ * 一段退かせる。ルールのタブと操作のタブで、同じ働きの一文を同じ大きさにそろえる。
  */
 export function HowToPlayRule({
   text,
@@ -30,11 +30,7 @@ export function HowToPlayRule({
   const Heading = headingLevel === 3 ? "h3" : "h4";
   return (
     <section className="space-y-3">
-      <Heading
-        className={
-          headingLevel === 3 ? "text-section-title" : "font-semibold text-body"
-        }
-      >
+      <Heading className="font-semibold text-body">
         <HowToPlayPhrases text={text} />
       </Heading>
       <HowToPlayExamplePanel arrangement={arrangement} resettable>
