@@ -22,7 +22,14 @@ import {
   formatElapsedTimeDelta,
 } from "@/lib/format-performance-delta";
 
-export type GameResultCountUnit = "回" | "手" | "個" | "本" | "台" | "マス";
+export type GameResultCountUnit =
+  | "回"
+  | "手"
+  | "個"
+  | "本"
+  | "台"
+  | "マス"
+  | "人";
 
 /** 基準時間は秒未満を含む式から求まるので、全ゲームで1/10秒まで示す。 */
 export function formatScoreReferenceTime(milliseconds: number): string {

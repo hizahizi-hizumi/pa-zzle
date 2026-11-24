@@ -13,7 +13,8 @@ export type ProblemFeatureCountUnit =
   | "か所"
   | "種類"
   | "手"
-  | "枚";
+  | "枚"
+  | "人";
 
 export type ProblemFeatureAxisDisplay = {
   label: string;

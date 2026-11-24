@@ -87,15 +87,18 @@ export const playScoreMetricPresentation: PlayRecordMetricPresentation = {
   axis: { kind: "integer", minimum: 0, maximum: 100 },
 };
 
+function floorToWholeSecondsMs(milliseconds: number): number {
+  return Math.floor(milliseconds / 1_000) * 1_000;
+}
+
 export const timeDeltaMetricPresentation: PlayRecordMetricPresentation = {
   label: "基準時間との差",
   formatValue: formatElapsedTimeDelta,
   formatImprovement(amount: number) {
-    const wholeSecondsMs = Math.floor(amount / 1_000) * 1_000;
-    return `${formatDurationInWords(wholeSecondsMs)}短縮`;
+    return `${formatDurationInWords(floorToWholeSecondsMs(amount))}短縮`;
   },
   formatGap(amount: number) {
-    return formatDurationInWords(amount);
+    return formatDurationInWords(floorToWholeSecondsMs(amount));
   },
   referenceValue: 0,
   axis: { kind: "duration-ms" },

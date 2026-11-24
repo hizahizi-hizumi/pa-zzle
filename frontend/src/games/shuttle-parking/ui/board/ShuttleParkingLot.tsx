@@ -1,0 +1,339 @@
+import { type CSSProperties, type ReactNode, useEffect, useRef } from "react";
+import { useTouchTap } from "@/components/touch-tap";
+import { SHUTTLE_PARKING_DISPLAY_NAME } from "@/games/shuttle-parking/display-name";
+import { SHUTTLE_PARKING_EXIT_MS } from "@/games/shuttle-parking/play/exit-timeline";
+import type { ShuttleParkingOperation } from "@/games/shuttle-parking/play/use-shuttle-parking-play";
+import {
+  listShuttleParkingCarExitSides,
+  SHUTTLE_PARKING_SIDES,
+  type ShuttleParkingCar,
+  type ShuttleParkingCarId,
+  type ShuttleParkingLot as ShuttleParkingLotDefinition,
+  type ShuttleParkingSide,
+} from "@/games/shuttle-parking/puzzle/lot";
+import { ShuttleParkingCarBody } from "@/games/shuttle-parking/ui/board/ShuttleParkingCarBody";
+import { shuttleParkingColorNames } from "@/games/shuttle-parking/ui/board/shuttle-parking-colors";
+import { playRejectionShake, prefersReducedMotion } from "@/lib/motion";
+import { cn } from "@/lib/utils";
+import "@/games/shuttle-parking/ui/board/shuttle-parking-board.css";
+
+type ShuttleParkingLotProps = {
+  lot: ShuttleParkingLotDefinition;
+  parkedCarIds: readonly ShuttleParkingCarId[];
+  operation: ShuttleParkingOperation | null;
+  interactionDisabled: boolean;
+  /** 車の上に重ねる物（チュートリアルの印・遊び方の押す所の手がかり）。受け取らないときは本番と同じに描く。 */
+  renderCarOverlay?: (carId: ShuttleParkingCarId) => ReactNode;
+  onExitCar: (carId: ShuttleParkingCarId) => void;
+};
+
+/** 駐車場の外周に、出口の道路か壁を描く半マスの帯を取る。 */
+const roadBandCells = 0.5;
+
+function toPercent(cells: number, size: number): string {
+  return `${((cells / (size + roadBandCells * 2)) * 100).toFixed(4)}%`;
+}
+
+function getCarBox(car: ShuttleParkingCar, size: number): CSSProperties {
+  const columns = car.orientation === "horizontal" ? car.capacity : 1;
+  const rows = car.orientation === "vertical" ? car.capacity : 1;
+  return {
+    left: toPercent(roadBandCells + car.column, size),
+    top: toPercent(roadBandCells + car.row, size),
+    width: toPercent(columns, size),
+    height: toPercent(rows, size),
+  };
+}
+
+const sideBandClassNames = {
+  top: "inset-x-(--band) top-0 h-(--band)",
+  right: "inset-y-(--band) right-0 w-(--band)",
+  bottom: "inset-x-(--band) bottom-0 h-(--band)",
+  left: "inset-y-(--band) left-0 w-(--band)",
+} as const satisfies Record<ShuttleParkingSide, string>;
+
+const exitArrowRotations = {
+  top: "rotate-0",
+  right: "rotate-90",
+  bottom: "rotate-180",
+  left: "-rotate-90",
+} as const satisfies Record<ShuttleParkingSide, string>;
+
+/** 出ていく車が、出口の道路の外まで走り抜ける移動。車自身の大きさに対する割合で返す。 */
+function getExitTranslation(
+  lot: ShuttleParkingLotDefinition,
+  car: ShuttleParkingCar,
+  side: ShuttleParkingSide,
+): { x: string; y: string } {
+  const length = car.capacity;
+  const beyond = roadBandCells + length;
+  const cells = {
+    top: car.row + beyond,
+    bottom: lot.size - car.row - length + beyond,
+    left: car.column + beyond,
+    right: lot.size - car.column - length + beyond,
+  }[side];
+  const ratio = `${((cells / length) * 100).toFixed(2)}%`;
+  const negative = `-${ratio}`;
+  switch (side) {
+    case "top":
+      return { x: "0%", y: negative };
+    case "bottom":
+      return { x: "0%", y: ratio };
+    case "left":
+      return { x: negative, y: "0%" };
+    case "right":
+      return { x: ratio, y: "0%" };
+  }
+}
+
+function findFront(
+  lot: ShuttleParkingLotDefinition,
+  car: ShuttleParkingCar,
+): ShuttleParkingSide {
+  return (
+    listShuttleParkingCarExitSides(lot, car)[0] ??
+    (car.orientation === "vertical" ? "top" : "right")
+  );
+}
+
+function describeCar(
+  car: ShuttleParkingCar,
+  front: ShuttleParkingSide,
+): string {
+  const direction = { top: "上", right: "右", bottom: "下", left: "左" }[front];
+  return `${shuttleParkingColorNames[car.color]}の${car.capacity}人乗りの車 ${direction}向き`;
+}
+
+const blockedShakeKeyframes = {
+  horizontal: [
+    { transform: "translateX(0)" },
+    { transform: "translateX(-5%)" },
+    { transform: "translateX(5%)" },
+    { transform: "translateX(0)" },
+  ],
+  vertical: [
+    { transform: "translateY(0)" },
+    { transform: "translateY(-5%)" },
+    { transform: "translateY(5%)" },
+    { transform: "translateY(0)" },
+  ],
+} as const;
+
+/** 塞いでいる車の縁を2回光らせ、少し明るくする。押した車のぶつかる動きより長く残し、どの車が塞いでいるかを読ませる。 */
+const blockerFlashKeyframes = [
+  { outlineColor: "rgb(255 255 255 / 0)", outlineWidth: "2px", filter: "none" },
+  {
+    outlineColor: "rgb(255 255 255 / 1)",
+    outlineWidth: "3px",
+    filter: "brightness(1.2)",
+    offset: 0.2,
+  },
+  {
+    outlineColor: "rgb(255 255 255 / 0.25)",
+    outlineWidth: "3px",
+    filter: "none",
+    offset: 0.45,
+  },
+  {
+    outlineColor: "rgb(255 255 255 / 1)",
+    outlineWidth: "3px",
+    filter: "brightness(1.2)",
+    offset: 0.7,
+  },
+  { outlineColor: "rgb(255 255 255 / 0)", outlineWidth: "2px", filter: "none" },
+];
+
+/** 動きを減らす設定では、塞いでいる車に点滅しない白い縁を同じ長さだけ出し、原因を動かさずに見せる。 */
+const staticOutlineKeyframes = [
+  { outline: "3px solid rgb(255 255 255)" },
+  { outline: "3px solid rgb(255 255 255)" },
+];
+
+/** 進路を塞がれた車が前へ出ようとして、塞いでいる車にぶつかって戻る動き。 */
+const BLOCKED_BUMP_CELLS = 0.3;
+
+function createBlockedBumpKeyframes(
+  car: ShuttleParkingCar,
+  front: ShuttleParkingSide,
+): Keyframe[] {
+  const ratio = `${((BLOCKED_BUMP_CELLS / car.capacity) * 100).toFixed(2)}%`;
+  const toward = {
+    top: `translateY(-${ratio})`,
+    bottom: `translateY(${ratio})`,
+    left: `translateX(-${ratio})`,
+    right: `translateX(${ratio})`,
+  }[front];
+  return [
+    { transform: "none", easing: "cubic-bezier(0.3, 0, 0.6, 1)" },
+    { transform: toward, offset: 0.4, easing: "ease-out" },
+    { transform: "none" },
+  ];
+}
+
+/**
+ * 駐車場。開いた辺は出口の道路として矢印で、閉じた辺は壁として描く。車は前の端に進む向きの矢印を付ける。
+ * 押す範囲は車の占めるマス全体。出た車は、待機枠へ移る間だけ出口へ走り抜ける姿で残す。
+ * 進路を塞がれた車を押すと、その車が前へ出ようとしてぶつかって戻り、塞いでいる車の縁を2回光らせる。
+ * 待機枠が満杯で出せない車を押すと、その車を揺らす。動きを減らす設定では、塞いでいる車に点滅しない縁だけを出す。
+ */
+export function ShuttleParkingLot({
+  lot,
+  parkedCarIds,
+  operation,
+  interactionDisabled,
+  renderCarOverlay,
+  onExitCar,
+}: ShuttleParkingLotProps) {
+  const { getTapHandlers } = useTouchTap();
+  const carRefs = useRef(new Map<ShuttleParkingCarId, HTMLElement>());
+  const band = toPercent(roadBandCells, lot.size);
+  const exitingCar =
+    operation?.type === "exited" ? lot.cars[operation.carId] : undefined;
+  const readingOrder = lot.cars
+    .map((_, carId) => carId)
+    .sort(
+      (a, b) =>
+        lot.cars[a]!.row - lot.cars[b]!.row ||
+        lot.cars[a]!.column - lot.cars[b]!.column,
+    );
+
+  useEffect(() => {
+    if (operation?.type !== "blocked") return;
+    const car = lot.cars[operation.carId];
+    if (!car) return;
+    const element = carRefs.current.get(operation.carId);
+    if (operation.reason !== "path-blocked") {
+      playRejectionShake(element, [...blockedShakeKeyframes[car.orientation]], {
+        durationMs: 240,
+        easing: "ease-in-out",
+      });
+      return;
+    }
+    playRejectionShake(
+      element,
+      createBlockedBumpKeyframes(car, findFront(lot, car)),
+      {
+        durationMs: 300,
+        easing: "linear",
+      },
+    );
+    for (const blockerId of operation.blockerIds) {
+      const blocker = carRefs.current.get(blockerId);
+      if (prefersReducedMotion()) {
+        blocker?.animate?.(staticOutlineKeyframes, 900);
+        continue;
+      }
+      playRejectionShake(
+        carRefs.current.get(blockerId),
+        blockerFlashKeyframes,
+        { durationMs: 900, easing: "linear", delayMs: 100 },
+      );
+    }
+  }, [operation, lot]);
+
+  return (
+    <div
+      role="group"
+      aria-label={`${SHUTTLE_PARKING_DISPLAY_NAME}の駐車場`}
+      className="relative aspect-square w-full touch-manipulation select-none overflow-hidden rounded-lg bg-[#3f4347] dark:bg-[#2c2f33]"
+      style={{ "--band": band } as CSSProperties}
+    >
+      {SHUTTLE_PARKING_SIDES.filter((side) => lot.openSides.includes(side)).map(
+        (side) => (
+          <div
+            key={side}
+            data-exit-side={side}
+            aria-hidden="true"
+            className={cn(
+              "absolute flex items-center justify-around bg-[#5b6066] dark:bg-[#454a50]",
+              sideBandClassNames[side],
+              (side === "left" || side === "right") && "flex-col",
+            )}
+          >
+            {Array.from({ length: lot.size }, (_, index) => (
+              <svg
+                // biome-ignore lint/suspicious/noArrayIndexKey: 印は位置で決まる
+                key={index}
+                viewBox="0 0 10 10"
+                className={cn(
+                  "size-[38%] max-h-3 max-w-3 fill-white/75",
+                  exitArrowRotations[side],
+                )}
+                style={
+                  side === "left" || side === "right"
+                    ? { width: "60%", height: "auto" }
+                    : { height: "60%", width: "auto" }
+                }
+              >
+                <path d="M5 1.5 9 8H1Z" />
+              </svg>
+            ))}
+          </div>
+        ),
+      )}
+      <div
+        aria-hidden="true"
+        className="absolute bg-[#dcd8cf] dark:bg-[#4b4943]"
+        style={{
+          inset: band,
+          backgroundImage:
+            "linear-gradient(to right, rgb(0 0 0 / 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgb(0 0 0 / 0.1) 1px, transparent 1px)",
+          backgroundSize: `${100 / lot.size}% ${100 / lot.size}%`,
+        }}
+      />
+      {/* Tab で盤面を左上から行ごとに進めるよう、車の左上のマスの順に並べる。 */}
+      {readingOrder.map((carId) => {
+        const car = lot.cars[carId]!;
+        if (!parkedCarIds.includes(carId)) return null;
+        const front = findFront(lot, car);
+        return (
+          <button
+            key={carId}
+            ref={(element) => {
+              if (element) carRefs.current.set(carId, element);
+              else carRefs.current.delete(carId);
+            }}
+            type="button"
+            data-car-id={carId}
+            aria-label={describeCar(car, front)}
+            disabled={interactionDisabled}
+            className="absolute flex cursor-pointer items-center justify-center rounded-[0.5rem] p-[3px] outline-2 outline-transparent outline-offset-[-1px] focus-visible:outline-ring disabled:cursor-default"
+            style={getCarBox(car, lot.size)}
+            {...getTapHandlers(() => onExitCar(carId))}
+          >
+            <ShuttleParkingCarBody
+              car={car}
+              orientation={car.orientation}
+              front={front}
+              seatedCount={0}
+            />
+            {renderCarOverlay?.(carId)}
+          </button>
+        );
+      })}
+      {exitingCar && operation?.type === "exited" ? (
+        <span
+          key={operation.id}
+          aria-hidden="true"
+          className="shuttle-parking-exiting-car pointer-events-none absolute p-[3px]"
+          style={
+            {
+              ...getCarBox(exitingCar, lot.size),
+              "--exit-x": getExitTranslation(lot, exitingCar, operation.side).x,
+              "--exit-y": getExitTranslation(lot, exitingCar, operation.side).y,
+              "--exit-ms": `${SHUTTLE_PARKING_EXIT_MS}ms`,
+            } as CSSProperties
+          }
+        >
+          <ShuttleParkingCarBody
+            car={exitingCar}
+            orientation={exitingCar.orientation}
+            front={operation.side}
+            seatedCount={0}
+          />
+        </span>
+      ) : null}
+    </div>
+  );
+}
