@@ -324,3 +324,29 @@ export function countZukanProblemsByStatus(
   }
   return counts;
 }
+
+/** 1問の、図鑑の台紙の中の場所。どのゲームの、どの難易度の台紙の、番号の順で何番目の問題か。 */
+export type ZukanSheetPlace = {
+  gameId: string;
+  difficulty: DifficultyLevel;
+  problemId: ProblemId;
+  index: number;
+};
+
+/** 完了記録の問題の、台紙の中の場所。今の問題集で引けない記録には `null` を返す。 */
+export function findZukanSheetPlace(
+  game: ZukanGameSource,
+  record: PlayRecord,
+): ZukanSheetPlace | null {
+  const target = game.recordProblemPlayTarget(record);
+  const difficulty = difficultyLevels.find(
+    ({ id }) => id === target?.difficulty,
+  )?.id;
+  if (target === null || difficulty === undefined) {
+    return null;
+  }
+  const index = game.listPoolProblemIds(difficulty).indexOf(target.problemId);
+  return index === -1
+    ? null
+    : { gameId: game.id, difficulty, problemId: target.problemId, index };
+}

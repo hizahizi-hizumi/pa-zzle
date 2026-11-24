@@ -560,3 +560,52 @@ describe("設定", () => {
     expect(playSound).not.toHaveBeenCalled();
   });
 });
+
+describe("額に台紙の絵の元がある場合", () => {
+  const sheetGames = games.map((game, index) => ({
+    ...game,
+    sheetPreview: {
+      statuses: Array.from({ length: 40 }, () => "untouched" as const),
+      columnCount: 8,
+      rowCount: 5,
+      firstRow: 0,
+      lastOpenableRow: 0,
+      appearanceKey: `sheet-${index}`,
+      gameId: game.to,
+      problemCount: 40,
+      difficulty: "1",
+    },
+  }));
+
+  function sheetGameIdsShown() {
+    return Array.from(
+      getCarousel().querySelectorAll<HTMLElement>("[data-sheet-game-id]"),
+    ).map((sheet) => sheet.dataset.sheetGameId);
+  }
+
+  beforeEach(() => {
+    render(
+      <MemoryRouter>
+        <GameSelectionGallery
+          games={sheetGames}
+          recordsTo="/records"
+          selectedIndex={0}
+          continuation={null}
+          onSelect={onSelect}
+        />
+      </MemoryRouter>,
+    );
+  });
+
+  test("送っている間は、止まっている額だけに台紙の全体を描くこと", () => {
+    scrollToSlide(1, false);
+
+    expect(sheetGameIdsShown()).toEqual(["/puzzles/water-sort"]);
+  });
+
+  test("送り終えたら、中央に止まった額に台紙の全体を描くこと", () => {
+    scrollToSlide(1);
+
+    expect(sheetGameIdsShown()).toEqual(["/puzzles/nanpure"]);
+  });
+});

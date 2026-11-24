@@ -5,20 +5,26 @@ import {
   type ZukanChangeStage,
 } from "@/app/game-home/GameHomeScreen/zukan-change-reveal";
 import {
-  getZukanPiecePath,
-  ZUKAN_PIECE_GROOVE_WIDTH,
-  ZUKAN_PIECE_VIEW_BOX,
-  type ZukanPieceShape,
-} from "@/app/game-home/GameHomeScreen/zukan-piece-shape";
-import {
   describeZukanProblem,
   getZukanProblemStatusColorClassName,
 } from "@/app/game-home/GameHomeScreen/zukan-problem-appearance";
 import {
+  getZukanSheetPieceFaceId,
+  ZUKAN_SHEET_PIECE_GROOVE_ID,
+} from "@/features/zukan/ui/zukan-piece-material";
+import {
+  getZukanPiecePath,
+  ZUKAN_PIECE_GROOVE_WIDTH,
+  ZUKAN_PIECE_VIEW_BOX,
+  type ZukanPieceShape,
+} from "@/features/zukan/ui/zukan-piece-shape";
+import {
   getZukanProblemStatus,
   type ZukanProblem,
+  type ZukanProblemStatus,
 } from "@/features/zukan/zukan-collection";
 import type { ZukanProblemChange } from "@/features/zukan/zukan-last-viewed";
+import type { GameResultLevel } from "@/games/result";
 
 type ZukanProblemSquareProps = {
   problem: ZukanProblem;
@@ -37,6 +43,10 @@ type ZukanProblemSquareProps = {
 const SELECTION_HALO_WIDTH = 0.2;
 const SELECTION_LINE_WIDTH = 0.083;
 const HOVER_LINE_WIDTH = 0.11;
+
+function isSolvedStatus(status: ZukanProblemStatus): status is GameResultLevel {
+  return status !== "untouched" && status !== "attempted";
+}
 
 const PIECE_LAYER_CLASS_NAME =
   "pointer-events-none absolute -top-1/2 -left-1/2 size-[200%] overflow-visible";
@@ -61,9 +71,11 @@ function ZukanProblemSquareContent({
     change !== null && isPending ? change.previousStatus : status;
   const path = getZukanPiecePath(pieceShape);
 
-  // 選んだピースの囲みとホバー・フォーカスの線は隣のピースへはみ出すので、そのピースを手前に重ねる。選んだピースは、隣のホバーより手前に置く。
+  // 選んだピースの囲みと、ホバー・フォーカス・入るピースの線は隣のピースへはみ出すので、そのピースを手前に重ねる。選んだピースと入るピースは、隣のホバーより手前に置く。
   // 重ね順は台紙の中に閉じ（台紙が `isolate`）、台紙の外の詳細やレベルのカードより手前には出ない。
-  const layerClassName = isSelected ? "z-20" : "hover:z-10 focus-visible:z-10";
+  const layerClassName = isSelected
+    ? "z-20"
+    : "hover:z-10 focus-visible:z-10 data-zukan-play-entry-piece:z-20";
   // 押す姿はマスより大きく浮くので、選んだマスも含めて周りのマスより手前に重ねる。
   const stampClassName = isLifted ? "z-30" : "";
   // 絞り込みの条件に当たらなかったマスは、色を変えずに薄くする。選んでいる間は、選んだことが分かるよう薄くしない。
@@ -104,13 +116,23 @@ function ZukanProblemSquareContent({
             strokeLinejoin="round"
           />
         )}
-        <path
-          d={path}
-          fill="currentColor"
-          className="stroke-background"
-          strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
-          strokeLinejoin="round"
-        />
+        {isSolvedStatus(shownStatus) ? (
+          <path
+            d={path}
+            fill={`url(#${getZukanSheetPieceFaceId(shownStatus)})`}
+            stroke={`url(#${ZUKAN_SHEET_PIECE_GROOVE_ID})`}
+            strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
+            strokeLinejoin="round"
+          />
+        ) : (
+          <path
+            d={path}
+            fill="currentColor"
+            className="stroke-background"
+            strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
+            strokeLinejoin="round"
+          />
+        )}
         <path
           d={path}
           fill="none"
@@ -118,7 +140,7 @@ function ZukanProblemSquareContent({
           className={
             isSelected
               ? "stroke-foreground"
-              : "stroke-ring opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+              : "stroke-ring opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-data-zukan-play-entry-piece:stroke-foreground group-data-zukan-play-entry-piece:opacity-100"
           }
           strokeWidth={isSelected ? SELECTION_LINE_WIDTH : HOVER_LINE_WIDTH}
           strokeLinejoin="round"
@@ -135,31 +157,32 @@ function ZukanProblemSquareContent({
           <path d={path} fill="currentColor" />
         </svg>
       )}
-      {hasStamp && (
+      {hasStamp && stamp !== null && (
         <span
           aria-hidden="true"
           data-stamp-part="face"
-          className={`${PIECE_LAYER_CLASS_NAME} opacity-0 ${getZukanProblemStatusColorClassName(status)}`}
+          className={`${PIECE_LAYER_CLASS_NAME} opacity-0`}
         >
           <svg viewBox={ZUKAN_PIECE_VIEW_BOX} className="size-full">
             <path
               d={path}
-              fill="currentColor"
-              className="stroke-background"
-              strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
-              strokeLinejoin="round"
+              fill={`url(#${getZukanSheetPieceFaceId(stamp.level)})`}
             />
             {/* 段階が上がったマスは、押す姿に前の段階の色を重ね、落ちながら今の色へ塗り替えられるようにする。 */}
             {change?.kind === "raised" && (
               <path
                 data-stamp-part="previous"
                 d={path}
-                fill="currentColor"
-                className={getZukanProblemStatusColorClassName(
-                  change.previousStatus,
-                )}
+                fill={`url(#${getZukanSheetPieceFaceId(change.previousStatus)})`}
               />
             )}
+            <path
+              d={path}
+              fill="none"
+              stroke={`url(#${ZUKAN_SHEET_PIECE_GROOVE_ID})`}
+              strokeWidth={ZUKAN_PIECE_GROOVE_WIDTH}
+              strokeLinejoin="round"
+            />
           </svg>
         </span>
       )}

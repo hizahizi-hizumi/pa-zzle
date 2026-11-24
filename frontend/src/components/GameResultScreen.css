@@ -42,6 +42,8 @@
   --result-motion-score: 1250ms 360ms cubic-bezier(0.11, 0.84, 0.18, 1);
   --result-motion-pulse: 1950ms 120ms cubic-bezier(0.15, 0.7, 0.24, 1);
   --result-motion-second-pulse-delay: 390ms;
+  /* 解いた問題のピースに評価の色が入る動き。解き終えた画面がピースへ絞られ終わるのを待って始める。GameResultActions.css が使う。 */
+  --result-motion-piece: 760ms 500ms var(--ease-celebrate);
 }
 
 .result-screen[data-level="clear"] {

@@ -1,7 +1,6 @@
 import { GameHomeScreen } from "@/app/game-home/GameHomeScreen";
 import { useGameHome } from "@/app/game-home/game-home";
 import { parkingJamCatalogEntry } from "@/app/game-integration/parking-jam/parking-jam-catalog-entry";
-import { ParkingJamGround } from "@/games/parking-jam/ui/ParkingJamGround";
 import { ParkingJamHowToPlayDialog } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialog";
 import { ParkingJamTutorial } from "@/games/parking-jam/ui/ParkingJamTutorial";
 
@@ -11,7 +10,6 @@ export function ParkingJamHomeView() {
   return (
     <GameHomeScreen
       {...screenProps}
-      ground={<ParkingJamGround />}
       renderHowToPlayDialog={({ open, onClose, onOpenTutorial }) => (
         <ParkingJamHowToPlayDialog
           open={open}

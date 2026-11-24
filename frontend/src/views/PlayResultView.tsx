@@ -4,6 +4,7 @@ import {
   findGameCatalogEntry,
   findRecordProblemPlayDestination,
 } from "@/app/game-integration/game-catalog";
+import { toZukanGameSource } from "@/app/game-integration/game-catalog-entry";
 import {
   createGameNavigation,
   openRecordProblemPlay,
@@ -12,11 +13,14 @@ import {
   readRecordSaveOutcome,
   readUnsavedRecord,
 } from "@/app/navigation/record-result-location-state";
+import { ResultEmblemContext } from "@/components/GameResultScreen/result-emblem";
 import {
   findPlayRecord,
   readPlayRecords,
 } from "@/features/records/read-play-history";
 import { createResultRecordFeedback } from "@/features/records/ui/result-record-feedback";
+import { ZukanResultPiece } from "@/features/zukan/ui/ZukanResultPiece";
+import { findZukanSheetPlace } from "@/features/zukan/zukan-collection";
 import { Link, useNavigate, useParams } from "@/router";
 
 export function PlayResultView() {
@@ -37,6 +41,13 @@ export function PlayResultView() {
   const game = findGameCatalogEntry(gameId);
   const replayDestination = record && findRecordProblemPlayDestination(record);
   const noticeOutcome = recordSaveOutcome ?? null;
+  const sheetPlace = useMemo(
+    () =>
+      game && record
+        ? findZukanSheetPlace(toZukanGameSource(game), record)
+        : null,
+    [game, record],
+  );
 
   const resultScreen =
     game && record?.gameId === game.id
@@ -72,5 +83,11 @@ export function PlayResultView() {
     );
   }
 
-  return resultScreen;
+  return (
+    <ResultEmblemContext
+      value={game && <ZukanResultPiece sheetPlace={sheetPlace} />}
+    >
+      {resultScreen}
+    </ResultEmblemContext>
+  );
 }

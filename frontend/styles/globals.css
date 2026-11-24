@@ -11,6 +11,8 @@
   --spacing: 0.25rem;
   --border-width-normal: 1px;
   --border-width-strong: 2px;
+  /* 縁を画素の境目に合わせて描けるよう、太さを 1px の倍数にする。 */
+  --border-width-frame: round(clamp(3px, 1vw, 5px), 1px);
   --layer-overlay: 50;
   --duration-fast: 100ms;
   --duration-normal: 150ms;
@@ -73,6 +75,8 @@
   --color-brand-strong: var(--brand-strong);
   --color-brand-subtle: var(--brand-subtle);
   --color-brand: var(--brand);
+  --color-frame-edge: var(--frame-edge);
+  --color-frame-mat: var(--frame-mat);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -219,6 +223,9 @@
   --brand-strong: #aeb8c2;
   --brand-foreground: #27313a;
   --brand-inverse: #27313a;
+  /* 額。パズル選択の額と、その中に入ったゲームのホームの盤を、同じ縁で囲む。 */
+  --frame-edge: #27313a;
+  --frame-mat: #fdfdfc;
   --brand-inverse-foreground: #fff;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

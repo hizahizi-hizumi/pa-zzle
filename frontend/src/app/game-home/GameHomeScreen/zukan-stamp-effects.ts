@@ -3,12 +3,12 @@ import {
   ZUKAN_STAMP_DURATION_MS,
   type ZukanStamp,
 } from "@/app/game-home/GameHomeScreen/zukan-change-reveal";
+import { zukanProblemStatusOrder } from "@/app/game-home/GameHomeScreen/zukan-problem-appearance";
+import { playZukanStampSound } from "@/app/game-home/GameHomeScreen/zukan-stamp-sound";
 import {
   getZukanPiecePath,
   ZUKAN_PIECE_VIEW_BOX,
-} from "@/app/game-home/GameHomeScreen/zukan-piece-shape";
-import { zukanProblemStatusOrder } from "@/app/game-home/GameHomeScreen/zukan-problem-appearance";
-import { playZukanStampSound } from "@/app/game-home/GameHomeScreen/zukan-stamp-sound";
+} from "@/features/zukan/ui/zukan-piece-shape";
 import type { ZukanProblemStatus } from "@/features/zukan/zukan-collection";
 import type { GameResultLevel } from "@/games/result";
 import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";

@@ -8,6 +8,7 @@
 }
 
 .result-actions--quiet .result-action {
+  position: relative;
   display: flex;
   border: 0;
   background: none;
@@ -26,7 +27,7 @@
   line-height: 1.2;
 }
 
-.result-actions--quiet .result-action svg {
+.result-actions--quiet .result-action > svg {
   width: 23px;
   height: 23px;
   flex: none;
@@ -35,7 +36,7 @@
   transition: transform var(--duration-fast) var(--ease-standard);
 }
 
-.result-actions--quiet .result-action span {
+.result-actions--quiet .result-action > span:not(.result-actions-emblem) {
   white-space: nowrap;
 }
 
@@ -46,7 +47,7 @@
   font-weight: 650;
 }
 
-.result-actions--quiet .result-action--primary svg {
+.result-actions--quiet .result-action--primary > svg {
   width: 32px;
   height: 32px;
   opacity: 0.83;
@@ -57,11 +58,11 @@
   color: var(--foreground);
 }
 
-.result-actions--quiet .result-action:hover:not(:disabled) svg {
+.result-actions--quiet .result-action:hover:not(:disabled) > svg {
   transform: translateY(-3px);
 }
 
-.result-actions--quiet .result-action:active:not(:disabled) svg {
+.result-actions--quiet .result-action:active:not(:disabled) > svg {
   transform: scale(0.92);
 }
 
@@ -74,22 +75,22 @@
   .result-actions--quiet .result-action--primary {
     min-height: 50px;
   }
-  .result-actions--quiet .result-action svg {
+  .result-actions--quiet .result-action > svg {
     width: 21px;
     height: 21px;
   }
-  .result-actions--quiet .result-action--primary svg {
+  .result-actions--quiet .result-action--primary > svg {
     width: 29px;
     height: 29px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .result-actions--quiet .result-action svg {
+  .result-actions--quiet .result-action > svg {
     transition: none;
   }
-  .result-actions--quiet .result-action:hover:not(:disabled) svg,
-  .result-actions--quiet .result-action:active:not(:disabled) svg {
+  .result-actions--quiet .result-action:hover:not(:disabled) > svg,
+  .result-actions--quiet .result-action:active:not(:disabled) > svg {
     transform: none;
   }
 }
@@ -102,4 +103,43 @@
 .result-actions--quiet .result-action:disabled {
   cursor: default;
   opacity: 0.5;
+}
+
+/*
+ * 解いた問題のピース。「問題選択」の上に小さく浮かべる。主役は評価の言葉と点で、ピースは添えるだけの大きさにする。
+ * 箱はピースの面（1辺）で、タブと落ち影は箱の外へ出る。押せる範囲は「問題選択」のまま広げない。
+ */
+.result-actions-emblem {
+  --result-emblem-size: 14px;
+  position: absolute;
+  /* 下のタブと落ち影の分を空けて、アイコンの上に置く。 */
+  bottom: calc(100% + var(--result-emblem-size) * 0.55);
+  left: 50%;
+  display: block;
+  width: var(--result-emblem-size);
+  height: var(--result-emblem-size);
+  translate: -50% 0;
+  pointer-events: none;
+  animation: result-06-piece var(--result-motion-piece) both;
+}
+
+@keyframes result-06-piece {
+  0% {
+    scale: 0.94;
+    filter: grayscale(1) brightness(1.3);
+  }
+  55% {
+    scale: 1.06;
+    filter: none;
+  }
+  100% {
+    scale: 1;
+    filter: none;
+  }
+}
+
+@media (max-height: 600px) {
+  .result-actions-emblem {
+    --result-emblem-size: 12px;
+  }
 }

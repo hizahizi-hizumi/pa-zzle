@@ -408,12 +408,21 @@
                   {
                     "group": [
                       "@/features/zukan/**",
+                      "!@/features/zukan/ui/ZukanResultPiece",
                       "!@/features/zukan/ui/zukan-number-format",
+                      "!@/features/zukan/ui/zukan-piece-material",
+                      "!@/features/zukan/ui/zukan-piece-shape",
+                      "!@/features/zukan/ui/zukan-play-piece",
+                      "!@/features/zukan/ui/zukan-result-piece-pose",
+                      "!@/features/zukan/ui/zukan-sheet-layout",
+                      "!@/features/zukan/ui/zukan-sheet-preview",
                       "!@/features/zukan/zukan-collection",
                       "!@/features/zukan/zukan-continuation",
                       "!@/features/zukan/zukan-filter",
                       "!@/features/zukan/zukan-last-viewed",
                       "!@/features/zukan/zukan-number",
+                      "!@/features/zukan/zukan-open-sheet",
+                      "!@/features/zukan/zukan-sheet-opening",
                       "!@/features/zukan/zukan-viewed-history"
                     ],
                     "message": "[dependency/public-feature-zukan] zukan は公開契約から利用する。"
@@ -545,12 +554,21 @@
                   {
                     "group": [
                       "@/features/zukan/**",
+                      "!@/features/zukan/ui/ZukanResultPiece",
                       "!@/features/zukan/ui/zukan-number-format",
+                      "!@/features/zukan/ui/zukan-piece-material",
+                      "!@/features/zukan/ui/zukan-piece-shape",
+                      "!@/features/zukan/ui/zukan-play-piece",
+                      "!@/features/zukan/ui/zukan-result-piece-pose",
+                      "!@/features/zukan/ui/zukan-sheet-layout",
+                      "!@/features/zukan/ui/zukan-sheet-preview",
                       "!@/features/zukan/zukan-collection",
                       "!@/features/zukan/zukan-continuation",
                       "!@/features/zukan/zukan-filter",
                       "!@/features/zukan/zukan-last-viewed",
                       "!@/features/zukan/zukan-number",
+                      "!@/features/zukan/zukan-open-sheet",
+                      "!@/features/zukan/zukan-sheet-opening",
                       "!@/features/zukan/zukan-viewed-history"
                     ],
                     "message": "[dependency/public-feature-zukan] zukan は公開契約から利用する。"
@@ -680,12 +698,21 @@
                   {
                     "group": [
                       "@/features/zukan/**",
+                      "!@/features/zukan/ui/ZukanResultPiece",
                       "!@/features/zukan/ui/zukan-number-format",
+                      "!@/features/zukan/ui/zukan-piece-material",
+                      "!@/features/zukan/ui/zukan-piece-shape",
+                      "!@/features/zukan/ui/zukan-play-piece",
+                      "!@/features/zukan/ui/zukan-result-piece-pose",
+                      "!@/features/zukan/ui/zukan-sheet-layout",
+                      "!@/features/zukan/ui/zukan-sheet-preview",
                       "!@/features/zukan/zukan-collection",
                       "!@/features/zukan/zukan-continuation",
                       "!@/features/zukan/zukan-filter",
                       "!@/features/zukan/zukan-last-viewed",
                       "!@/features/zukan/zukan-number",
+                      "!@/features/zukan/zukan-open-sheet",
+                      "!@/features/zukan/zukan-sheet-opening",
                       "!@/features/zukan/zukan-viewed-history"
                     ],
                     "message": "[dependency/public-feature-zukan] zukan は公開契約から利用する。"
@@ -805,12 +832,21 @@
                   {
                     "group": [
                       "@/features/zukan/**",
+                      "!@/features/zukan/ui/ZukanResultPiece",
                       "!@/features/zukan/ui/zukan-number-format",
+                      "!@/features/zukan/ui/zukan-piece-material",
+                      "!@/features/zukan/ui/zukan-piece-shape",
+                      "!@/features/zukan/ui/zukan-play-piece",
+                      "!@/features/zukan/ui/zukan-result-piece-pose",
+                      "!@/features/zukan/ui/zukan-sheet-layout",
+                      "!@/features/zukan/ui/zukan-sheet-preview",
                       "!@/features/zukan/zukan-collection",
                       "!@/features/zukan/zukan-continuation",
                       "!@/features/zukan/zukan-filter",
                       "!@/features/zukan/zukan-last-viewed",
                       "!@/features/zukan/zukan-number",
+                      "!@/features/zukan/zukan-open-sheet",
+                      "!@/features/zukan/zukan-sheet-opening",
                       "!@/features/zukan/zukan-viewed-history"
                     ],
                     "message": "[dependency/public-feature-zukan] zukan は公開契約から利用する。"
@@ -930,12 +966,21 @@
                   {
                     "group": [
                       "@/features/zukan/**",
+                      "!@/features/zukan/ui/ZukanResultPiece",
                       "!@/features/zukan/ui/zukan-number-format",
+                      "!@/features/zukan/ui/zukan-piece-material",
+                      "!@/features/zukan/ui/zukan-piece-shape",
+                      "!@/features/zukan/ui/zukan-play-piece",
+                      "!@/features/zukan/ui/zukan-result-piece-pose",
+                      "!@/features/zukan/ui/zukan-sheet-layout",
+                      "!@/features/zukan/ui/zukan-sheet-preview",
                       "!@/features/zukan/zukan-collection",
                       "!@/features/zukan/zukan-continuation",
                       "!@/features/zukan/zukan-filter",
                       "!@/features/zukan/zukan-last-viewed",
                       "!@/features/zukan/zukan-number",
+                      "!@/features/zukan/zukan-open-sheet",
+                      "!@/features/zukan/zukan-sheet-opening",
                       "!@/features/zukan/zukan-viewed-history"
                     ],
                     "message": "[dependency/public-feature-zukan] zukan は公開契約から利用する。"
@@ -1378,12 +1423,21 @@
                   {
                     "group": [
                       "@/features/zukan/**",
+                      "!@/features/zukan/ui/ZukanResultPiece",
                       "!@/features/zukan/ui/zukan-number-format",
+                      "!@/features/zukan/ui/zukan-piece-material",
+                      "!@/features/zukan/ui/zukan-piece-shape",
+                      "!@/features/zukan/ui/zukan-play-piece",
+                      "!@/features/zukan/ui/zukan-result-piece-pose",
+                      "!@/features/zukan/ui/zukan-sheet-layout",
+                      "!@/features/zukan/ui/zukan-sheet-preview",
                       "!@/features/zukan/zukan-collection",
                       "!@/features/zukan/zukan-continuation",
                       "!@/features/zukan/zukan-filter",
                       "!@/features/zukan/zukan-last-viewed",
                       "!@/features/zukan/zukan-number",
+                      "!@/features/zukan/zukan-open-sheet",
+                      "!@/features/zukan/zukan-sheet-opening",
                       "!@/features/zukan/zukan-viewed-history"
                     ],
                     "message": "[dependency/public-feature-zukan] zukan は公開契約から利用する。"

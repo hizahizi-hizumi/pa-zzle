@@ -1,7 +1,9 @@
 import { CircleArrowRight, Grid2X2, House, RotateCcw } from "lucide-react";
+import { useContext } from "react";
 import "@/components/GameResultScreen/GameResultActions.css";
 
 import { withPlayStartSound } from "@/components/app-decision-sound";
+import { ResultEmblemContext } from "@/components/GameResultScreen/result-emblem";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/router";
 
@@ -16,6 +18,7 @@ export function GameResultActions({
   onOpenGameHome,
   onReplay,
 }: GameResultActionsProps) {
+  const emblem = useContext(ResultEmblemContext);
   return (
     <nav className="result-actions--quiet" aria-label="結果からの操作">
       <Button
@@ -31,10 +34,16 @@ export function GameResultActions({
         type="button"
         variant="result-action"
         size="result"
+        data-result-collection=""
         onClick={onOpenGameHome}
       >
         <Grid2X2 aria-hidden="true" />
         <span>問題選択</span>
+        {emblem !== null && (
+          <span className="result-actions-emblem" data-result-emblem="">
+            {emblem}
+          </span>
+        )}
       </Button>
       <Button
         type="button"

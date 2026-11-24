@@ -1,49 +1,46 @@
-import { ZUKAN_PIECE_VIEW_BOX } from "@/app/game-home/GameHomeScreen/zukan-piece-shape";
 import { readZukanSheetView } from "@/app/game-home/GameHomeScreen/zukan-sheet-view";
-import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
+import { rememberZukanPlayPiece } from "@/features/zukan/ui/zukan-play-piece";
+import { prefersReducedMotion } from "@/lib/motion";
 
 const ZUKAN_PLAY_ENTRY_DURATION_MS = {
-  /** 台紙を送って、抜くピースを見える所へ運ぶ。 */
+  /** 台紙を送って、入るピースを見える所へ運ぶ。 */
   spin: 360,
-  /** ピースを台紙から抜き、画面の中央へ大きく運ぶ。同時に、ほかの表示を引く。 */
-  lift: 340,
-  /** プレイ画面の上で、ピースを広げながら消す。 */
-  dissolve: 240,
 } as const;
 
-const LIFTED_PIECE_SIZE_PX = 104;
-const DISSOLVE_SCALE = 1.5;
+/** 入るピースのマスに付ける属性。入るピースが、台紙のどれかを見せる。 */
+const CHOSEN_PIECE_ATTRIBUTE = "data-zukan-play-entry-piece";
+/** 画面の行き来の動きが寄っていくマスに付ける属性。動きを飛ばして始めるときは付けない。 */
+const DIVED_PIECE_ATTRIBUTE = "data-zukan-play-entry-dive";
 
 const SKIP_CLICK_SWALLOW_MS = 500;
 
 const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta"]);
 
-const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
-
 type ZukanPlayEntryControl = { skip: () => void; cancel: () => void };
 
 export type ZukanPlayEntry = {
-  /** 抜くピースのマス。台紙のスクロール領域の中にある。 */
+  /** 入るピースのマス。台紙のスクロール領域の中にある。 */
   square: HTMLElement;
   /** 台紙のスクロール領域。 */
   scroller: HTMLElement;
-  /** ゲームのホームの、地を除く表示全体。 */
-  screen: HTMLElement;
+  /** 入る問題の ID。 */
+  problemId: string;
   /** ピースの輪郭の SVG パス。マスの左上を原点、1辺を 1 とする。 */
   piecePath: string;
-  /** ゲームの濃淡2色のピクトグラム。運ぶピースの面に浮かべ、どのゲームの1問へ入るかを見せる。 */
-  pictogramSvg: string;
   /**
-   * 抜く前に、台紙を送ってピースを見えている高さの中央へ運ぶか。ゲームが選んだ問題を、台紙のどこから抜いたかが分かるようにする。
-   * 運ばないときも、ピースが台紙の見えている範囲の外にあれば、見える所へ送ってから抜く。
+   * 入る前に、台紙を送ってピースを見えている高さの中央へ運ぶか。ゲームが選んだ問題を、台紙のどこのピースかが分かるようにする。
+   * 運ばないときも、ピースが台紙の見えている範囲の外にあれば、見える所へ送ってから入る。
    */
   spinsToPiece: boolean;
-  /** ピースを運び終えて、プレイを始めるとき。演出を飛ばしたときもすぐに呼ぶ。一度だけ呼ぶ。 */
+  /** プレイを始めるとき。演出を飛ばしたときもすぐに呼ぶ。一度だけ呼ぶ。 */
   onEnter: () => void;
 };
 
-function canAnimate(element: Element): boolean {
-  return typeof element.animate === "function" && !prefersReducedMotion();
+function canAnimate(): boolean {
+  return (
+    typeof document.startViewTransition === "function" &&
+    !prefersReducedMotion()
+  );
 }
 
 function findCenteredScrollTop(
@@ -71,87 +68,26 @@ function easeOutCubic(progress: number): number {
   return 1 - (1 - progress) ** 3;
 }
 
-/** 運ぶピースの面に浮かべるピクトグラムの、ピースの1辺に対する大きさ。タブの凹みにかからない大きさにする。 */
-const PIECE_PICTOGRAM_SIZE = 0.5;
-
-function createPieceFace(piecePath: string, pictogramSvg: string): SVGGElement {
-  const face = document.createElementNS(SVG_NAMESPACE, "g");
-  face.dataset.zukanPlayEntryFace = "";
-  face.style.opacity = "0";
-  const surface = document.createElementNS(SVG_NAMESPACE, "path");
-  surface.setAttribute("d", piecePath);
-  surface.setAttribute("fill", "var(--background)");
-  face.append(surface);
-  const pictogram = new DOMParser().parseFromString(
-    pictogramSvg,
-    "image/svg+xml",
-  ).documentElement;
-  if (pictogram.localName === "svg") {
-    const offset = (1 - PIECE_PICTOGRAM_SIZE) / 2;
-    pictogram.setAttribute("x", String(offset));
-    pictogram.setAttribute("y", String(offset));
-    pictogram.setAttribute("width", String(PIECE_PICTOGRAM_SIZE));
-    pictogram.setAttribute("height", String(PIECE_PICTOGRAM_SIZE));
-    face.append(document.importNode(pictogram, true));
-  }
-  return face;
-}
-
-function createPieceLayer(
-  square: HTMLElement,
-  piecePath: string,
-  pictogramSvg: string,
-): SVGElement {
-  const { left, top, width, height } = square.getBoundingClientRect();
-  const layer = document.createElementNS(SVG_NAMESPACE, "svg");
-  layer.setAttribute("aria-hidden", "true");
-  layer.setAttribute("viewBox", ZUKAN_PIECE_VIEW_BOX);
-  layer.dataset.zukanPlayEntryPiece = "";
-  // マスと同じ色で塗るよう、マスの面が継いでいる色（状態の色）を移す。
-  const face = square.querySelector("svg");
-  layer.style.color = face === null ? "" : getComputedStyle(face).color;
-  Object.assign(layer.style, {
-    position: "fixed",
-    left: `${left - width / 2}px`,
-    top: `${top - height / 2}px`,
-    width: `${width * 2}px`,
-    height: `${height * 2}px`,
-    overflow: "visible",
-    pointerEvents: "none",
-    zIndex: "var(--layer-overlay)",
-    filter: `drop-shadow(0 ${width * 0.04}px ${width * 0.05}px rgb(0 0 0 / 0.28))`,
-  });
-  layer.style.setProperty("--game-pictogram-strong", "var(--foreground)");
-  layer.style.setProperty("--game-pictogram-soft", "var(--muted-foreground)");
-  const path = document.createElementNS(SVG_NAMESPACE, "path");
-  path.setAttribute("d", piecePath);
-  path.setAttribute("fill", "currentColor");
-  layer.append(path, createPieceFace(piecePath, pictogramSvg));
-  return layer;
-}
-
 /**
- * 戻り値の `skip` は演出を飛ばしてすぐ始め、`cancel` は始める前なら始めずにやめて、動かしたものを元へ戻す。始めたあとの `cancel` は何もしない。
+ * 戻り値の `skip` は演出を飛ばしてすぐ始め、`cancel` は始める前なら始めずにやめる。始めたあとの `cancel` は何もしない。
  */
 export function playZukanPlayEntry({
   square,
   scroller,
-  screen,
+  problemId,
   piecePath,
-  pictogramSvg,
   spinsToPiece,
   onEnter,
 }: ZukanPlayEntry): ZukanPlayEntryControl {
-  if (!canAnimate(square)) {
+  rememberZukanPlayPiece(problemId, piecePath);
+  if (!canAnimate()) {
     onEnter();
     return { skip() {}, cancel() {} };
   }
 
   let hasEntered = false;
-  let isDissolving = false;
   let spinFrame = 0;
-  let layer: SVGElement | null = null;
-  let screenFade: Animation | null = null;
+  square.setAttribute(CHOSEN_PIECE_ATTRIBUTE, "");
 
   function stopWaiting() {
     cancelAnimationFrame(spinFrame);
@@ -165,10 +101,7 @@ export function playZukanPlayEntry({
     }
     hasEntered = true;
     stopWaiting();
-    layer?.remove();
-    layer = null;
-    screenFade?.cancel();
-    square.style.visibility = "";
+    square.removeAttribute(CHOSEN_PIECE_ATTRIBUTE);
   }
 
   function enter() {
@@ -180,28 +113,12 @@ export function playZukanPlayEntry({
     onEnter();
   }
 
-  function dissolve() {
-    enter();
-    if (layer === null || isDissolving) {
+  function enterIntoPiece() {
+    if (hasEntered) {
       return;
     }
-    isDissolving = true;
-    const dissolving = layer;
-    const { transform } = getComputedStyle(dissolving);
-    const lifted = transform === "none" ? "" : transform;
-    dissolving
-      .animate(
-        [
-          { transform: lifted, opacity: 1 },
-          { transform: `${lifted} scale(${DISSOLVE_SCALE})`, opacity: 0 },
-        ],
-        {
-          duration: ZUKAN_PLAY_ENTRY_DURATION_MS.dissolve,
-          easing: MOTION_EASING.exit,
-          fill: "forwards",
-        },
-      )
-      .finished.finally(() => dissolving.remove());
+    square.setAttribute(DIVED_PIECE_ATTRIBUTE, "");
+    enter();
   }
 
   // 飛ばした押下の続きのクリックが、移った先のプレイ画面の盤面を操作しないよう、そのクリックを1回だけ捨てる。
@@ -221,53 +138,13 @@ export function playZukanPlayEntry({
       () => window.removeEventListener("click", swallowClick, true),
       SKIP_CLICK_SWALLOW_MS,
     );
-    dissolve();
+    enter();
   }
 
   function skipByKey(event: KeyboardEvent) {
     if (!event.repeat && !event.isComposing && !MODIFIER_KEYS.has(event.key)) {
-      dissolve();
+      enter();
     }
-  }
-
-  function lift() {
-    if (hasEntered) {
-      return;
-    }
-    layer = createPieceLayer(square, piecePath, pictogramSvg);
-    layer
-      .querySelector("[data-zukan-play-entry-face]")
-      ?.animate([{ opacity: 0 }, { opacity: 1 }], {
-        duration: ZUKAN_PLAY_ENTRY_DURATION_MS.lift,
-        easing: MOTION_EASING.exit,
-        fill: "forwards",
-      });
-    // ピースの層は、画面を移っても残るよう `document.body` に置き、消し終えたら取り除く。
-    document.body.append(layer);
-    square.style.visibility = "hidden";
-    const { left, top, width, height } = square.getBoundingClientRect();
-    const dx = window.innerWidth / 2 - (left + width / 2);
-    const dy = window.innerHeight / 2 - (top + height / 2);
-    const scale = LIFTED_PIECE_SIZE_PX / width;
-    // ゲームのホームとプレイ画面は同じゲームの地の上にあるので、ピースだけを残してほかの表示を引き、ピースの中へ入っていくように見せる。
-    screenFade = screen.animate([{ opacity: 1 }, { opacity: 0 }], {
-      duration: ZUKAN_PLAY_ENTRY_DURATION_MS.lift,
-      easing: MOTION_EASING.standard,
-      fill: "forwards",
-    });
-    layer
-      .animate(
-        [
-          { transform: "translate(0, 0) scale(1)" },
-          { transform: `translate(${dx}px, ${dy}px) scale(${scale})` },
-        ],
-        {
-          duration: ZUKAN_PLAY_ENTRY_DURATION_MS.lift,
-          easing: MOTION_EASING.standard,
-          fill: "forwards",
-        },
-      )
-      .finished.then(dissolve, () => {});
   }
 
   function spin() {
@@ -277,7 +154,7 @@ export function playZukanPlayEntry({
         ? findCenteredScrollTop(square, scroller)
         : from;
     if (Math.abs(to - from) < 1) {
-      lift();
+      enterIntoPiece();
       return;
     }
     const startedAt = performance.now();
@@ -290,7 +167,7 @@ export function playZukanPlayEntry({
       if (progress < 1) {
         spinFrame = requestAnimationFrame(step);
       } else {
-        lift();
+        enterIntoPiece();
       }
     }
     spinFrame = requestAnimationFrame(step);
@@ -302,7 +179,7 @@ export function playZukanPlayEntry({
 
   spin();
 
-  return { skip: dissolve, cancel };
+  return { skip: enter, cancel };
 }
 
 export const _private = {
