@@ -2,12 +2,13 @@ import type { FukumenzanDifficulty } from "@/games/fukumenzan/difficulty";
 import {
   assertFukumenzanProblem,
   createFukumenzanProblemIdentity,
-  FUKUMENZAN_GENERATOR_VERSION,
+  type FUKUMENZAN_GENERATOR_VERSION,
   type FukumenzanIdentifiedProblem,
   type FukumenzanProblem,
   type FukumenzanProblemIdentity,
   parseFukumenzanEquation,
 } from "@/games/fukumenzan/problem/problem";
+import problemPoolJson from "@/games/fukumenzan/problem/problem-pool.json";
 import { getFukumenzanEquationStructure } from "@/games/fukumenzan/puzzle/equation";
 import {
   createCountFeatureValue,
@@ -20,20 +21,13 @@ export type FukumenzanProblemPoolEntry = string;
 
 export type FukumenzanPooledProblem = FukumenzanIdentifiedProblem;
 
-/** 研究用の難易度判定でそのレベルに入ると確かめた一意解の問題。 */
-const problemPool = {
-  generatorVersion: FUKUMENZAN_GENERATOR_VERSION,
-  levels: {
-    "1": ["BYK+KTK=TKHH", "LLJH+LHW=JAWCJ"],
-    "2": ["NNV+UFN+NTT=NFVT"],
-    "3": ["YFL+YAD+ADY=YLYY", "GHL+LGF+FFF=GHFW"],
-    "4": ["GVANK+FFFGB+VWNN=BGAVKB", "DBRPR+UTTDR+UDDP=DDUURJ"],
-    "5": ["KBBKC+EAWKB+WWKT=AACEBC", "XXXGN+TPGTN+TXTA=GPAAYP"],
-  },
-} as const satisfies {
+export type FukumenzanProblemPool = {
   generatorVersion: typeof FUKUMENZAN_GENERATOR_VERSION;
   levels: Record<FukumenzanDifficulty, readonly FukumenzanProblemPoolEntry[]>;
 };
+
+/** 生成時に一意解とレベルを確かめた問題集（`generate:fukumenzan-pool`）。 */
+const problemPool = problemPoolJson as FukumenzanProblemPool;
 
 export function decodeFukumenzanPoolProblem(
   entry: FukumenzanProblemPoolEntry,

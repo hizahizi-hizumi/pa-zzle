@@ -37,19 +37,19 @@ afterEach(() => {
   Reflect.deleteProperty(document, "elementFromPoint");
 });
 
-// レベル1の問題。985 + 515 = 1500 で解ける。
+// レベル1の問題。121 + 981 = 1102 で解ける。
 const identity = createFukumenzanProblemIdentity({
-  addends: ["BYK", "KTK"],
-  result: "TKHH",
+  addends: ["MBM", "DFM"],
+  result: "MMLB",
 });
 const problemId = createProblemId(identity);
 const playPath = `/puzzles/fukumenzan/play/${problemId}`;
 const solution = [
-  ["B", 9],
-  ["Y", 8],
-  ["K", 5],
-  ["T", 1],
-  ["H", 0],
+  ["M", 1],
+  ["B", 2],
+  ["D", 9],
+  ["F", 8],
+  ["L", 0],
 ] as const;
 const touch = { pointerId: 1, pointerType: "touch", isPrimary: true };
 
@@ -137,24 +137,24 @@ describe("FukumenzanPlayView", () => {
       const cards = getCardRow().getAllByRole("button");
       const path = screen.getByRole("status", { name: "プレイURL" });
 
-      expect(tiles.map((tile) => tile.textContent).join("")).toBe("BYKKTKTKHH");
+      expect(tiles.map((tile) => tile.textContent).join("")).toBe("MBMDFMMMLB");
       expect(cards.map((card) => card.textContent)).toEqual([..."0123456789"]);
       expect(path.textContent).toBe(playPath);
     });
 
     test("札を押してから文字を押すと、その文字の全部の場所に札が入り、列から抜けること", () => {
-      placeByTaps("K", 5);
+      placeByTaps("M", 1);
 
-      const kTiles = readTiles("K");
-      const slot = getCardRow().queryByRole("button", { name: "5 の札の場所" });
+      const mTiles = readTiles("M");
+      const slot = getCardRow().queryByRole("button", { name: "1 の札の場所" });
 
-      expect(kTiles).toEqual(["5", "5", "5", "5"]);
+      expect(mTiles).toEqual(["1", "1", "1", "1", "1"]);
       expect(slot).not.toBeNull();
     });
 
     describe("文字を押して選んでから札を押した場合", () => {
       beforeEach(() => {
-        tapLetter("B");
+        tapLetter("D");
         tapCard(0);
       });
 
@@ -164,7 +164,7 @@ describe("FukumenzanPlayView", () => {
         });
 
         expect(crossed).not.toBeNull();
-        expect(readTiles("B")).toEqual(["B9"]);
+        expect(readTiles("D")).toEqual(["D9"]);
       });
 
       describe("もう一度札を押した場合", () => {
@@ -184,8 +184,8 @@ describe("FukumenzanPlayView", () => {
 
     describe("札の入った文字を選んで列の空いた所を押した場合", () => {
       beforeEach(() => {
-        placeByTaps("B", 9);
-        tapLetter("B");
+        placeByTaps("D", 9);
+        tapLetter("D");
         fireEvent.click(
           getCardRow().getByRole("button", { name: "9 の札の場所" }),
         );
@@ -194,7 +194,7 @@ describe("FukumenzanPlayView", () => {
       test("札が列へ戻ること", () => {
         const card = getCardRow().queryByRole("button", { name: "9 の札" });
 
-        expect(readTiles("B")).toEqual(["B"]);
+        expect(readTiles("D")).toEqual(["D"]);
         expect(card).not.toBeNull();
       });
     });
@@ -202,7 +202,7 @@ describe("FukumenzanPlayView", () => {
     describe("札を押したまま文字へ運んで離した場合", () => {
       beforeEach(() => {
         const card = getCardRow().getByRole("button", { name: "8 の札" });
-        const target = getLetterTiles("Y")[0]!;
+        const target = getLetterTiles("F")[0]!;
         // 指を離した位置の下だけに文字を置く。
         document.elementFromPoint = vi.fn((x: number, y: number) =>
           x === 10 && y === 100 ? target : null,
@@ -218,22 +218,22 @@ describe("FukumenzanPlayView", () => {
       });
 
       test("指の下の文字に札が入ること", () => {
-        const yTiles = readTiles("Y");
+        const fTiles = readTiles("F");
 
-        expect(yTiles).toEqual(["8"]);
+        expect(fTiles).toEqual(["8"]);
       });
     });
 
     describe("札を入れて待ったを押した場合", () => {
       beforeEach(() => {
-        placeByTaps("K", 5);
+        placeByTaps("M", 1);
         fireEvent.click(screen.getByRole("button", { name: "待った" }));
       });
 
       test("入れた札を列へ戻すこと", () => {
-        const kTiles = readTiles("K");
+        const mTiles = readTiles("M");
 
-        expect(kTiles).toEqual(["K", "K", "K", "K"]);
+        expect(mTiles).toEqual(["M", "M", "M", "M", "M"]);
       });
     });
 
@@ -305,7 +305,7 @@ describe("FukumenzanPlayView", () => {
 
     describe("札を1枚入れて別の問題へ移った場合", () => {
       beforeEach(() => {
-        placeByTaps("B", 9);
+        placeByTaps("D", 9);
         openMenu();
         fireEvent.click(screen.getByRole("menuitem", { name: "別の問題" }));
       });
@@ -380,7 +380,7 @@ describe("FukumenzanPlayView", () => {
 
       const dialog = within(screen.getByRole("dialog", { name: "検証情報" }));
 
-      expect(dialog.getByText("BYK+KTK=TKHH")).toBeTruthy();
+      expect(dialog.getByText("MBM+DFM=MMLB")).toBeTruthy();
     });
   });
 });

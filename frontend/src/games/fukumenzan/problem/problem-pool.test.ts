@@ -1,8 +1,10 @@
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
+import researchCases from "@/games/fukumenzan/problem/generation/research-difficulty-cases.json";
 import { fukumenzanGuideExampleProblems } from "@/games/fukumenzan/problem/guide-examples";
 import {
   createFukumenzanProblemIdentity,
   getFukumenzanSameProblemKey,
+  parseFukumenzanEquation,
 } from "@/games/fukumenzan/problem/problem";
 import {
   decodeFukumenzanPoolProblem,
@@ -94,21 +96,30 @@ const entries = levels.flatMap((difficulty) =>
 );
 
 describe("listFukumenzanPoolEntries", () => {
-  test.each(levels)("レベル %s に1問以上の問題があること", (difficulty) => {
+  test.each(levels)("レベル %s に500問の問題があること", (difficulty) => {
     const levelEntries = listFukumenzanPoolEntries(difficulty);
 
-    expect(levelEntries.length).toBeGreaterThan(0);
+    expect(levelEntries).toHaveLength(500);
   });
 
-  test.each(entries)(
-    "レベル %s の %s が、盤面に描ける一意解の問題であること",
-    (_, entry) => {
-      const problem = decodeFukumenzanPoolProblem(entry);
-      const solutionCount = countSolutions(problem, 2);
+  test.each(levels)(
+    "レベル %s の全問が、盤面に描ける一意解の問題であること",
+    (difficulty) => {
+      const notUnique = listFukumenzanPoolEntries(difficulty).filter(
+        (entry) => countSolutions(decodeFukumenzanPoolProblem(entry), 2) !== 1,
+      );
 
-      expect(solutionCount).toBe(1);
+      expect(notUnique).toEqual([]);
     },
   );
+
+  test("同じ問題がレベルをまたいでも重ならないこと", () => {
+    const keys = entries.map(([, entry]) =>
+      getFukumenzanSameProblemKey(decodeFukumenzanPoolProblem(entry)),
+    );
+
+    expect(new Set(keys).size).toBe(keys.length);
+  });
 });
 
 describe("遊び方とチュートリアルの例の式", () => {
@@ -206,6 +217,17 @@ describe("measureFukumenzanProblemFeatures", () => {
 
     expect(features).toEqual(expected);
   });
+
+  test.each(researchCases.features)(
+    "研究用の期待値の $equation で、図鑑の特徴が同じになること",
+    ({ equation, letterCount, sameLetterColumnCount }) => {
+      const features = measureFukumenzanProblemFeatures(
+        parseFukumenzanEquation(equation)!,
+      );
+
+      expect(features).toEqual({ letterCount, sameLetterColumnCount });
+    },
+  );
 });
 
 describe("findFukumenzanPoolProblemFeatures", () => {

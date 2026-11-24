@@ -21,14 +21,14 @@ vi.mock("@/games/problem-seed", async (importOriginal) => ({
 type HookResult = { current: ReturnType<typeof useFukumenzanPlay> };
 
 const problemId = createProblemId(
-  createFukumenzanProblemIdentity({ addends: ["BYK", "KTK"], result: "TKHH" }),
+  createFukumenzanProblemIdentity({ addends: ["MBM", "DFM"], result: "MMLB" }),
 );
 const pooled: FukumenzanPooledProblem = selectFukumenzanProblemById(
   "1",
   problemId,
 )!;
-// 文字は B Y K T H の順。985 + 515 = 1500 で解ける。
-const solution = [9, 8, 5, 1, 0] as const;
+// 文字は M B D F L の順。121 + 981 = 1102 で解ける。
+const solution = [1, 2, 9, 8, 0] as const;
 
 function placeSolution(result: HookResult, skipLast = false): void {
   const placements = solution.map((digit, letter) => [letter, digit] as const);
@@ -74,7 +74,7 @@ describe("useFukumenzanPlay", () => {
       canUndo,
       canRestart,
     }).toEqual({
-      letters: ["B", "Y", "K", "T", "H"],
+      letters: ["M", "B", "D", "F", "L"],
       placedDigits: [null, null, null, null, null],
       canUndo: false,
       canRestart: false,
@@ -84,9 +84,8 @@ describe("useFukumenzanPlay", () => {
   describe("答えの先頭に 0 を入れ、一の位を埋めた場合", () => {
     beforeEach(() => {
       act(() => {
-        hook.current.placeDigit(3, 0);
-        hook.current.placeDigit(2, 5);
-        hook.current.placeDigit(4, 1);
+        hook.current.placeDigit(0, 0);
+        hook.current.placeDigit(1, 1);
       });
     });
 
@@ -94,7 +93,7 @@ describe("useFukumenzanPlay", () => {
       const { leadingZeroLetters, miscalculatedColumns } = hook.current;
 
       expect({ leadingZeroLetters, miscalculatedColumns }).toEqual({
-        leadingZeroLetters: [3],
+        leadingZeroLetters: [0],
         miscalculatedColumns: [0],
       });
     });
