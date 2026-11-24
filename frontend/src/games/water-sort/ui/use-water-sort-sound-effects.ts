@@ -55,7 +55,7 @@ const pourTrickleSounds = [
 ] as const;
 /** ゴム栓がきゅっと入る音。 */
 const stopperSqueakSound = defineSoundEffect(stopperSqueakSoundUrl);
-/** 試験管立ての穴から試験管を抜く、ガラスと木の触れる音。 */
+/** 試験管立ての穴から試験管を抜く、ガラスと木の触れる音。クリアの後に、空の試験管を片付けるときに鳴らす。 */
 const tubeLiftSound = defineSoundEffect(tubeLiftSoundUrl);
 /** 注げない試験管が試験管立ての中でかたかた揺れる音。 */
 const tubeRattleSound = defineSoundEffect(tubeRattleSoundUrl);
@@ -90,17 +90,8 @@ function getPourTrickleLayers(fromSlot: number, slotCount: number) {
 }
 
 function playOperationSound(operation: WaterSortOperation) {
+  // 注ぎ元を選ぶ・選ぶのをやめるのは、次の操作の対象を選ぶだけの操作なので鳴らさず、持ち上げと試験管ばさみの見た目だけで返す。
   switch (operation.type) {
-    case "source-selected":
-      playSound(tubeLiftSound, { variation: REPEATED_SOUND_VARIATION });
-      return;
-    case "source-deselected":
-      playSound(tubeLiftSound, {
-        variation: REPEATED_SOUND_VARIATION,
-        playbackRate: 0.85,
-        volume: 0.7,
-      });
-      return;
     case "invalid":
       // 動きを減らす設定でも、注げなかった試験管は一度暗くなって画面が変わるので、同じ音を鳴らす。
       playSound(tubeRattleSound, { variation: REPEATED_SOUND_VARIATION });

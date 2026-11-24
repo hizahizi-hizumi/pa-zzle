@@ -6,6 +6,8 @@ export type RackRow = {
 export type RackLayout = {
   /** 盤面より上に並ぶ見出しと進み具合の、文字とボタンの下の端（入れ物の座標）。盤面がそれらの下に無ければ、画面の上の端。 */
   headingBottom: number;
+  /** 盤面より下に並ぶ操作と文字（プレイ画面の待った・手詰まりの知らせ、チュートリアルの一言）を置く箱の上の端（入れ物の座標）。盤面がそれらの上に無ければ `null`。 */
+  footerTop: number | null;
   width: number;
   height: number;
   tubeWidth: number;
@@ -47,6 +49,25 @@ function getHeadingContentBottom(container: HTMLElement): number {
   return bottoms.length > 0 ? Math.max(...bottoms) : 0;
 }
 
+/**
+ * 盤面を置く `main` より後ろに並ぶ要素（プレイ画面とチュートリアルの下の操作と文字）の箱の上の端（viewport の px）。
+ * 手詰まりの知らせのように後から出る文字もこの箱の中に出るので、中身ではなく箱で測る。地のように重ねて置いた要素は並びに入らないので除く。
+ */
+function getFooterTop(container: HTMLElement): number | null {
+  const main = container.closest("main");
+  for (
+    let sibling = main?.nextElementSibling;
+    sibling;
+    sibling = sibling.nextElementSibling
+  ) {
+    const { position } = getComputedStyle(sibling);
+    if (position !== "absolute" && position !== "fixed") {
+      return sibling.getBoundingClientRect().top;
+    }
+  }
+  return null;
+}
+
 export function measureRackLayout(
   container: HTMLElement,
   bottles: readonly HTMLElement[],
@@ -65,6 +86,7 @@ export function measureRackLayout(
   if (!first || first.width <= 0) {
     return null;
   }
+  const footerTop = getFooterTop(container);
 
   const rows: RackRow[] = [];
   for (const tube of [...tubes].sort((a, b) => a.top - b.top)) {
@@ -77,6 +99,7 @@ export function measureRackLayout(
 
   return {
     headingBottom: getHeadingContentBottom(container) - containerRect.top,
+    footerTop: footerTop === null ? null : footerTop - containerRect.top,
     width: containerRect.width,
     height: containerRect.height,
     tubeWidth: first.width,

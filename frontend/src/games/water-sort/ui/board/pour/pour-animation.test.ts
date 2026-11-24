@@ -10,6 +10,7 @@ const rect = { left: 100, top: 300, width: 40, height: 111 };
 const placement = {
   sourceRect: rect,
   sourceLiftY: 0,
+  sourceHeldClampSide: "right" as const,
   destinationRect: { ...rect, left: 160 },
   bounds: { top: 0, left: 0, right: 390 },
 };

@@ -1,6 +1,7 @@
-import type { ReactNode, RefObject } from "react";
+import type { ReactNode, Ref, RefObject } from "react";
 
 import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
+import type { ClampSide } from "@/games/water-sort/ui/board/test-tube/clamp-side";
 import type { TestTubeSealTiming } from "@/games/water-sort/ui/board/test-tube/seal-timing";
 import { GlassBack } from "@/games/water-sort/ui/board/test-tube/TestTube/GlassBack";
 import { GlassFront } from "@/games/water-sort/ui/board/test-tube/TestTube/GlassFront";
@@ -13,7 +14,9 @@ import { LIQUID_BOX_STYLE } from "@/games/water-sort/ui/board/test-tube/test-tub
 type TestTubeProps = {
   contents: WaterSortBottle;
   /** 試験管ばさみで持っているとき、その柄を出す向き。 */
-  heldBy?: "left" | "right";
+  heldBy?: ClampSide;
+  /** 盤面で持った試験管ばさみを、注ぐ動きで持ったまま続けて見せるときに渡す。 */
+  continuedClamp?: { swingRef: Ref<SVGGElement> };
   stoppered?: boolean;
   /** 栓を差し込む動きを呼び出し側が動かすときの、栓の要素。 */
   stopperRef?: RefObject<SVGSVGElement | null>;
@@ -28,6 +31,7 @@ type TestTubeProps = {
 export function TestTube({
   contents,
   heldBy,
+  continuedClamp,
   stoppered = false,
   stopperRef,
   sealTiming,
@@ -47,7 +51,13 @@ export function TestTube({
       </span>
       {stoppered && <RubberStopper elementRef={stopperRef} />}
       <GlassFront />
-      {heldBy && <TestTubeClamp side={heldBy} />}
+      {heldBy && (
+        <TestTubeClamp
+          side={heldBy}
+          appears={!continuedClamp}
+          swingRef={continuedClamp?.swingRef}
+        />
+      )}
     </span>
   );
 }

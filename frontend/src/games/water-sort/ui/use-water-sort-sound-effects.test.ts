@@ -1,6 +1,67 @@
-import { _private } from "@/games/water-sort/ui/use-water-sort-sound-effects";
+import { renderHook } from "@testing-library/react";
+
+import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
+import {
+  _private,
+  useWaterSortSoundEffects,
+} from "@/games/water-sort/ui/use-water-sort-sound-effects";
+import { playLayeredSound, playSound } from "@/lib/audio/sound-effects";
+
+vi.mock("@/lib/audio/sound-effects", () => ({
+  defineSoundEffect: (url: string) => ({ url }),
+  playLayeredSound: vi.fn(),
+  playSound: vi.fn(),
+  prepareSoundEffects: vi.fn(),
+  REPEATED_SOUND_VARIATION: {},
+}));
 
 const { getSealRingPlaybackRate } = _private;
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
+function getPlayedSoundNames(): string[] {
+  return vi.mocked(playSound).mock.calls.map(
+    ([sound]) =>
+      String((sound as { url?: string }).url)
+        .split("/")
+        .at(-1) ?? "",
+  );
+}
+
+describe("useWaterSortSoundEffects", () => {
+  function playOperations(operations: readonly WaterSortOperation[]) {
+    const { rerender } = renderHook<
+      void,
+      { operation: WaterSortOperation | null }
+    >(({ operation }) => useWaterSortSoundEffects(operation, "playing"), {
+      initialProps: { operation: null },
+    });
+    for (const operation of operations) {
+      rerender({ operation });
+    }
+  }
+
+  test("注ぎ元を選ぶ手と、選ぶのをやめる手には、音を鳴らさないこと", () => {
+    playOperations([
+      { id: 1, type: "source-selected", bottleIndex: 0 },
+      { id: 2, type: "source-deselected", bottleIndex: 0 },
+    ]);
+
+    expect(playSound).not.toHaveBeenCalled();
+    expect(playLayeredSound).not.toHaveBeenCalled();
+  });
+
+  test("注げなかった手には、試験管が揺れる音を鳴らすこと", () => {
+    playOperations([
+      { id: 1, type: "source-selected", bottleIndex: 0 },
+      { id: 2, type: "invalid", bottleIndex: 1 },
+    ]);
+
+    expect(getPlayedSoundNames()).toEqual(["tube-rattle.flac"]);
+  });
+});
 
 describe("getSealRingPlaybackRate", () => {
   describe("色が音階の段より少ない盤面の場合", () => {

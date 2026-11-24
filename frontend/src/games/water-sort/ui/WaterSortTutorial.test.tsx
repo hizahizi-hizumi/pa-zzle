@@ -324,6 +324,16 @@ describe("WaterSortTutorial", () => {
       expect(headline).not.toBeNull();
     });
 
+    test("印の試験管を注ぎ元に選ぶだけの手には、音を鳴らさないこと", () => {
+      tapBottles([3]);
+
+      const pressed = getBottle(3).getAttribute("aria-pressed");
+
+      expect(pressed).toBe("true");
+      expect(playSound).not.toHaveBeenCalled();
+      expect(playLayeredSound).not.toHaveBeenCalled();
+    });
+
     test("印のとおりに注ぐと、注いで鳴らし、進み具合を進めて次の手順の一言と指さしを出すこと", () => {
       tapBottles(stepBottles[0] ?? []);
 

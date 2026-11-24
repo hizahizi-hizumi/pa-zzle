@@ -1,5 +1,6 @@
 import {
   type CSSProperties,
+  type RefObject,
   useCallback,
   useLayoutEffect,
   useRef,
@@ -12,9 +13,18 @@ import {
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
 import type { WaterSortBottleCue } from "@/games/water-sort/ui/board/bottle-cue";
+import {
+  HELD_TUBE_LIFT_PX,
+  HELD_TUBE_TILT_DEG,
+  HELD_TUBE_TILT_ORIGIN,
+} from "@/games/water-sort/ui/board/held-tube";
 import { PourAnimationLayer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer";
 import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-animations";
 import { WATER_SORT_REJECTION_DURATION_MS } from "@/games/water-sort/ui/board/rejection-timing";
+import {
+  type ClampSide,
+  measureHeldClampSide,
+} from "@/games/water-sort/ui/board/test-tube/clamp-side";
 import { getReagentName } from "@/games/water-sort/ui/board/test-tube/reagent";
 import { TestTube } from "@/games/water-sort/ui/board/test-tube/TestTube";
 import { BottleCue } from "@/games/water-sort/ui/board/WaterSortBoard/BottleCue";
@@ -91,6 +101,10 @@ const rattleTiming: RejectionShakeTiming = {
   easing: "linear",
 };
 
+/** 引き戻す動きの、注ぎ先へ素早く傾けかけて止まる所と、行き過ぎた所から元へ戻る所のイージング。 */
+const WITHDRAW_TILT_EASING = "cubic-bezier(.2,0,.4,1)";
+const WITHDRAW_SETTLE_EASING = "ease-in-out";
+
 /** 持っている試験管を注ぎ先へ傾けかけて、注げずに引き戻す。`direction` は注ぎ先のある向き（右が 1）。 */
 function getWithdrawKeyframes(direction: 1 | -1): Keyframe[] {
   const origin = "50% 8%";
@@ -100,13 +114,13 @@ function getWithdrawKeyframes(direction: 1 | -1): Keyframe[] {
       transform: `translateX(${direction * 4}px) rotate(${direction * 9}deg)`,
       transformOrigin: origin,
       offset: 0.3,
-      easing: "cubic-bezier(.2,0,.4,1)",
+      easing: WITHDRAW_TILT_EASING,
     },
     {
       transform: `translateX(${direction * -1.5}px) rotate(${direction * -3}deg)`,
       transformOrigin: origin,
       offset: 0.62,
-      easing: "ease-in-out",
+      easing: WITHDRAW_SETTLE_EASING,
     },
     { transform: "translateX(0) rotate(0deg)", transformOrigin: origin },
   ];
@@ -118,6 +132,7 @@ const withdrawTiming: RejectionShakeTiming = {
 };
 
 /** 動きを減らす設定では、注げなかった試験管を動かさずに一度だけ暗くする。 */
+const REDUCED_MOTION_REJECTION_EASING = "ease-out";
 const reducedMotionRejectionKeyframes: Keyframe[] = [
   { filter: "brightness(1)" },
   { filter: "brightness(0.55)", offset: 0.25 },
@@ -136,9 +151,16 @@ const TOP_ROW_POUR_REACH_RATIO = 0.75;
  */
 const ROOM_ABOVE_ROWS_PX = 28;
 
-/** 持った試験管を、試験管ばさみの所を中心に少し傾ける。 */
 const heldTiltClassName =
-  "origin-[50%_8%] transition-[rotate] duration-(--duration-normal) ease-standard data-held:-rotate-3 motion-reduce:transition-none";
+  "transition-[rotate] duration-(--duration-normal) ease-standard motion-reduce:transition-none";
+
+/** 持った試験管を、試験管ばさみの所を中心に少し傾ける。 */
+function getHeldTiltStyle(held: boolean): CSSProperties {
+  return {
+    transformOrigin: `${HELD_TUBE_TILT_ORIGIN.x * 100}% ${HELD_TUBE_TILT_ORIGIN.y * 100}%`,
+    rotate: held ? `${-HELD_TUBE_TILT_DEG}deg` : "0deg",
+  };
+}
 
 /** ボトルの幅と高さの比。遊び方の図も、この比で本番と同じ形に描く。 */
 export const WATER_SORT_BOTTLE_ASPECT_RATIO = 0.36;
@@ -180,6 +202,7 @@ export function WaterSortBoard({
     usePourAnimations({
       operation,
       bottleRefs,
+      boardAreaRef,
       onActivityChange: onPourAnimationActivityChange,
       onClearingPourEnd: startClearFinale,
     });
@@ -195,6 +218,12 @@ export function WaterSortBoard({
     clearFinale !== null &&
     (clearFinale.operationId === operation?.id ||
       (operation === null && clearFinale.settledState === state));
+
+  const heldClampSide = useHeldClampSide(
+    sourceBottleIndex,
+    bottleRefs,
+    boardAreaRef,
+  );
 
   useLayoutEffect(() => {
     if (operation?.type !== "invalid") {
@@ -248,7 +277,7 @@ export function WaterSortBoard({
           : undefined
       }
       className={cn(
-        "grid w-full items-end justify-center border-0 p-0 [--selected-bottle-lift:--spacing(5)]",
+        "grid w-full items-end justify-center border-0 p-0",
         layoutKind === "rows" &&
           "pt-[max(var(--selected-bottle-lift),var(--tube-width)*var(--top-row-pour-reach)-var(--room-above-rows))]",
       )}
@@ -257,6 +286,7 @@ export function WaterSortBoard({
           gridTemplateColumns: `repeat(${layout.columnCount}, minmax(0, 1fr))`,
           columnGap,
           rowGap: layout.rowGap,
+          ...{ "--selected-bottle-lift": `${HELD_TUBE_LIFT_PX}px` },
           ...(layoutKind === "single-row"
             ? { width: "100%" }
             : {
@@ -301,10 +331,11 @@ export function WaterSortBoard({
                 }}
                 data-held={isSource ? "" : undefined}
                 className={cn("absolute inset-0", heldTiltClassName)}
+                style={getHeldTiltStyle(isSource)}
               >
                 <TestTube
                   contents={bottle}
-                  heldBy={isSource ? "right" : undefined}
+                  heldBy={isSource ? heldClampSide : undefined}
                   stoppered={isCompleteWaterSortBottle(bottle)}
                 />
               </span>
@@ -317,6 +348,7 @@ export function WaterSortBoard({
                   "pointer-events-none absolute inset-0",
                   heldTiltClassName,
                 )}
+                style={getHeldTiltStyle(isSource)}
               >
                 <BottleCue cue={cue} />
               </span>
@@ -366,6 +398,51 @@ export function WaterSortBoard({
       )}
     </>
   );
+}
+
+/**
+ * 持った試験管の試験管ばさみの柄を出す向き。柄の先が盤面を置いた場所からはみ出すかを、置かれた試験管の位置で確かめる。
+ * 持っている間に盤面の大きさが変わったら確かめ直す。
+ */
+function useHeldClampSide(
+  sourceBottleIndex: number | null,
+  bottleRefs: RefObject<Array<HTMLButtonElement | null>>,
+  boardAreaRef: RefObject<HTMLElement | null>,
+): ClampSide {
+  const [measured, setMeasured] = useState<{
+    bottleIndex: number;
+    side: ClampSide;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    if (sourceBottleIndex === null) {
+      return;
+    }
+    const bottle = bottleRefs.current[sourceBottleIndex];
+    const area = boardAreaRef.current;
+    if (!bottle) {
+      return;
+    }
+    function measure() {
+      if (bottle) {
+        setMeasured({
+          bottleIndex: sourceBottleIndex as number,
+          side: measureHeldClampSide(bottle, area),
+        });
+      }
+    }
+    measure();
+    if (!area || typeof ResizeObserver !== "function") {
+      return;
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(area);
+    return () => observer.disconnect();
+  }, [sourceBottleIndex, bottleRefs, boardAreaRef]);
+
+  return measured !== null && measured.bottleIndex === sourceBottleIndex
+    ? measured.side
+    : "right";
 }
 
 type ClearFinaleRun = {
@@ -418,7 +495,7 @@ function playRejection(
   if (prefersReducedMotion()) {
     tubes[rejectedIndex]?.animate?.(reducedMotionRejectionKeyframes, {
       duration: WATER_SORT_REJECTION_DURATION_MS,
-      easing: "ease-out",
+      easing: REDUCED_MOTION_REJECTION_EASING,
     });
     return;
   }

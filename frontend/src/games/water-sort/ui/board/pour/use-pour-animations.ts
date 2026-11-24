@@ -17,11 +17,14 @@ import type {
   BottleRect,
   PourBounds,
 } from "@/games/water-sort/ui/board/pour/pour-path";
+import { measureHeldClampSide } from "@/games/water-sort/ui/board/test-tube/clamp-side";
 import { prefersReducedMotion } from "@/lib/motion";
 
 type UsePourAnimationsOptions = {
   operation: WaterSortOperation | null;
   bottleRefs: RefObject<Array<HTMLButtonElement | null>>;
+  /** 盤面を置いた場所。注ぎ元を持っていた試験管ばさみの柄の向きを、盤面と同じに求める。 */
+  boardAreaRef: RefObject<HTMLElement | null>;
   onActivityChange?: (active: boolean) => void;
   /** 盤面をそろえた手の注ぐ動きを終えたとき（動かせないときは、その手を受け取ったとき）に、その手の番号で呼ぶ。 */
   onClearingPourEnd: (operationId: number) => void;
@@ -30,6 +33,7 @@ type UsePourAnimationsOptions = {
 export function usePourAnimations({
   operation,
   bottleRefs,
+  boardAreaRef,
   onActivityChange,
   onClearingPourEnd,
 }: UsePourAnimationsOptions) {
@@ -125,6 +129,10 @@ export function usePourAnimations({
       {
         sourceRect,
         sourceLiftY,
+        sourceHeldClampSide: measureHeldClampSide(
+          sourceBottle,
+          boardAreaRef.current,
+        ),
         destinationRect,
         bounds: capturePourBounds(sourceBottle),
       },
@@ -138,7 +146,13 @@ export function usePourAnimations({
     }
 
     replaceAnimations(addPourAnimation(animationsRef.current, animation));
-  }, [bottleRefs, onClearingPourEnd, operation, replaceAnimations]);
+  }, [
+    bottleRefs,
+    boardAreaRef,
+    onClearingPourEnd,
+    operation,
+    replaceAnimations,
+  ]);
 
   return {
     animations,

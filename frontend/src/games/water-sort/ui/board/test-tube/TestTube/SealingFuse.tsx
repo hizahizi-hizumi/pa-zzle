@@ -6,6 +6,9 @@ import { prefersReducedMotion } from "@/lib/motion";
 /** 液が満ちきる少し前から明るい帯を昇らせ始め、栓が下り始めて少し経つまでに液面へ抜けさせる。 */
 const FUSE_LEAD_MS = 220;
 const FUSE_TAIL_MS = 60;
+/** 帯は底でためてから昇り、液面の手前で緩めて抜ける。液全体の明るみは、ゆっくり満ちてゆっくり引く。 */
+const FUSE_BAND_EASING = "cubic-bezier(.4,0,.3,1)";
+const FUSE_BRIGHTEN_EASING = "ease-in-out";
 
 type SealingFuseProps = {
   timing: TestTubeSealTiming;
@@ -34,11 +37,11 @@ export function SealingFuse({ timing }: SealingFuseProps) {
         { opacity: 1, offset: 0.75 },
         { transform: "translateY(-130%)", opacity: 0 },
       ],
-      { ...options, easing: "cubic-bezier(.4,0,.3,1)" },
+      { ...options, easing: FUSE_BAND_EASING },
     );
     const brighten = brightenRef.current?.animate?.(
       [{ opacity: 0 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }],
-      { ...options, easing: "ease-in-out" },
+      { ...options, easing: FUSE_BRIGHTEN_EASING },
     );
     return () => {
       band?.cancel();

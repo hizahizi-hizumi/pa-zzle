@@ -10,6 +10,7 @@ import {
   getPourTiming,
   type PourTiming,
 } from "@/games/water-sort/ui/board/pour/pour-timing";
+import type { ClampSide } from "@/games/water-sort/ui/board/test-tube/clamp-side";
 
 type PourOperation = Extract<WaterSortOperation, { type: "poured" }>;
 
@@ -29,12 +30,15 @@ export type PourAnimation = {
   isClearingMove: boolean;
   timing: PourTiming;
   path: PourPath;
+  /** 注ぎ始めるまで、盤面で注ぎ元の試験管ばさみの柄を出していた向き。 */
+  heldClampSide: ClampSide;
 };
 
 export type PourPlacement = {
   sourceRect: BottleRect;
   /** 注ぎ始めたときに注ぎ元を持ち上げていた量（px、上が負）。注ぐ動きはこの高さから始め、置かれている位置へ戻す。 */
   sourceLiftY: number;
+  sourceHeldClampSide: ClampSide;
   destinationRect: BottleRect;
   bounds: PourBounds;
 };
@@ -81,6 +85,7 @@ export function createPourAnimation(
     colorIndex,
     isClearingMove: operation.isClearingMove,
     timing,
+    heldClampSide: placement.sourceHeldClampSide,
     path: planPourPath({
       source: placement.sourceRect,
       liftY: placement.sourceLiftY,

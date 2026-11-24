@@ -21,7 +21,10 @@ const tickTops = [0, 1, 2, 3].map(
   (index) => TUBE_INNER.slotTop + TUBE_SLOT_HEIGHT * index,
 );
 
-/** 管の壁と口の縁の平らな帯、焼き付けた目盛り。壁は液の外に置き、液の色を覆わない。 */
+/**
+ * 管の壁と口の縁の平らな帯、焼き付けた目盛り。壁は液の外に置き、液の色を覆わない。
+ * 壁の色は、どの液の色の横でも輪郭が消えないよう、いちばん近い薄い灰とも明るさで離す（CIELAB の明るさの差 11）。
+ */
 export function GlassFront() {
   return (
     <svg
@@ -30,7 +33,7 @@ export function GlassFront() {
       className="absolute inset-0 size-full overflow-visible"
       aria-hidden="true"
     >
-      <path d={WALL_PATH} className="fill-[#b5c5cc] dark:fill-[#5b6f77]" />
+      <path d={WALL_PATH} className="fill-[#94a9b4] dark:fill-[#5b6f77]" />
       <g className="fill-white/80 dark:fill-white/40">
         {tickTops.map((y) => (
           <rect
@@ -48,7 +51,7 @@ export function GlassFront() {
         width={TUBE_RIM.right - TUBE_RIM.left}
         height={TUBE_RIM.bottom - TUBE_RIM.top}
         rx="1.4"
-        className="fill-[#b5c5cc] dark:fill-[#5b6f77]"
+        className="fill-[#94a9b4] dark:fill-[#5b6f77]"
       />
     </svg>
   );

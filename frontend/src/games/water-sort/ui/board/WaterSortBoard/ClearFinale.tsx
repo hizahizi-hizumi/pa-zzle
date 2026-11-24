@@ -10,8 +10,10 @@ import {
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import {
   CLEAR_FINALE_GLEAM_DURATION_MS,
+  CLEAR_FINALE_GLEAM_EASING,
   CLEAR_FINALE_HOLD_MS,
   CLEAR_FINALE_PUT_AWAY_DURATION_MS,
+  CLEAR_FINALE_PUT_AWAY_EASING,
   CLEAR_FINALE_PUT_AWAY_STAGGER_MS,
   CLEAR_FINALE_REDUCED_MOTION_HOLD_MS,
   getClearFinaleGleamStaggerMs,
@@ -118,7 +120,7 @@ export function ClearFinale({
             {
               duration: CLEAR_FINALE_PUT_AWAY_DURATION_MS,
               delay: index * CLEAR_FINALE_PUT_AWAY_STAGGER_MS,
-              easing: "cubic-bezier(.4,0,.6,1)",
+              easing: CLEAR_FINALE_PUT_AWAY_EASING,
               fill: "forwards",
             },
           );
@@ -135,7 +137,7 @@ export function ClearFinale({
             {
               duration: CLEAR_FINALE_GLEAM_DURATION_MS,
               delay: gleamStartMs + index * gleamStaggerMs,
-              easing: "cubic-bezier(.45,0,.3,1)",
+              easing: CLEAR_FINALE_GLEAM_EASING,
               fill: "both",
             },
           );

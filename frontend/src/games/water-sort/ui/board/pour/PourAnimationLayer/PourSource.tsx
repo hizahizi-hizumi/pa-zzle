@@ -8,11 +8,14 @@ import {
 import { TiltedLiquid } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/PourSource/TiltedLiquid";
 import type { PourAnimation } from "@/games/water-sort/ui/board/pour/pour-animation";
 import {
+  getClampSwingScale,
+  getPouringClampSide,
   getSourcePose,
   type PourPath,
 } from "@/games/water-sort/ui/board/pour/pour-path";
 import { useAnimationFrame } from "@/games/water-sort/ui/board/pour/use-animation-frame";
 import { TestTube } from "@/games/water-sort/ui/board/test-tube/TestTube";
+import { TUBE_VIEW_WIDTH } from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 import { playAnimations } from "@/lib/motion";
 
 type PourSourceProps = {
@@ -33,9 +36,19 @@ function toTransform(path: PourPath, elapsedMs: number): string {
   return `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) rotate(${tiltDeg.toFixed(2)}deg)`;
 }
 
-/** 注ぎ元。試験管ばさみで持ったまま注ぎ先の口へ運び、液面を水平に保ったまま傾けて注ぎ、起こして戻す。 */
+/** 柄を横に `scale` 倍にする、試験管の中心の縦の線を軸にした変形。 */
+function toClampSwingTransform(scale: number): string {
+  const center = TUBE_VIEW_WIDTH / 2;
+  return `translate(${center} 0) scale(${scale.toFixed(3)} 1) translate(${-center} 0)`;
+}
+
+/**
+ * 注ぎ元。盤面で持った試験管ばさみで持ったまま注ぎ先の口へ運び、液面を水平に保ったまま傾けて注ぎ、起こして戻す。
+ * 柄を注ぐ向きと逆の側に出すので、盤面で持っていた側と違えば、運び始めに柄を試験管の後ろを回して振る。
+ */
 export function PourSource({ animation, clocks, onFinish }: PourSourceProps) {
   const sourceRef = useRef<HTMLDivElement>(null);
+  const clampSwingRef = useRef<SVGGElement>(null);
   const [clampReleased, setClampReleased] = useState(false);
   const { path } = animation;
 
@@ -44,6 +57,12 @@ export function PourSource({ animation, clocks, onFinish }: PourSourceProps) {
     if (sourceRef.current) {
       sourceRef.current.style.transform = toTransform(path, elapsedMs);
     }
+    clampSwingRef.current?.setAttribute(
+      "transform",
+      toClampSwingTransform(
+        getClampSwingScale(path, animation.heldClampSide, elapsedMs),
+      ),
+    );
     const released = elapsedMs >= animation.timing.clampReleaseMs;
     if (released !== clampReleased) {
       setClampReleased(released);
@@ -91,10 +110,8 @@ export function PourSource({ animation, clocks, onFinish }: PourSourceProps) {
     >
       <TestTube
         contents={[]}
-        // 傾けたときに柄が上を向くよう、傾ける向きと逆の側に柄を出す。
-        heldBy={
-          clampReleased ? undefined : path.direction > 0 ? "left" : "right"
-        }
+        heldBy={clampReleased ? undefined : getPouringClampSide(path.direction)}
+        continuedClamp={{ swingRef: clampSwingRef }}
         liquidOverlay={
           <TiltedLiquid
             contents={animation.source.before}

@@ -1,4 +1,9 @@
 import { render } from "@testing-library/react";
+import { getHeldTubeRisePx } from "@/games/water-sort/ui/board/held-tube";
+import {
+  TUBE_VIEW_WIDTH,
+  TUBE_WALL_THICKNESS,
+} from "@/games/water-sort/ui/board/test-tube/test-tube-geometry";
 import { RackScene } from "@/games/water-sort/ui/board/WaterSortBoard/TestTubeRack/RackScene";
 import type { RackLayout } from "@/games/water-sort/ui/board/WaterSortBoard/TestTubeRack/rack-layout";
 
@@ -9,6 +14,7 @@ type Shape = Box & { fill: string };
 /** iPhone で14本を2段に並べたときの、盤面を置く入れ物と試験管の位置。 */
 const twoRowLayout: RackLayout = {
   headingBottom: -36,
+  footerTop: 432,
   width: 374,
   height: 424,
   tubeWidth: 46.6,
@@ -24,6 +30,7 @@ const twoRowLayout: RackLayout = {
 /** iPhone で6本を2段に並べたときの、盤面を置く入れ物と試験管の位置。窓を置ける壁が低い。 */
 const lowHeadroomLayout: RackLayout = {
   headingBottom: -36,
+  footerTop: 432,
   width: 374,
   height: 424,
   tubeWidth: 68.2,
@@ -39,6 +46,7 @@ const lowHeadroomLayout: RackLayout = {
 /** チュートリアルで5本を1段に並べたときの、盤面を置く入れ物と試験管の位置。 */
 const singleRowLayout: RackLayout = {
   headingBottom: -150,
+  footerTop: 183,
   width: 366,
   height: 183,
   tubeWidth: 66,
@@ -49,6 +57,11 @@ const singleRowLayout: RackLayout = {
 };
 
 const WINDOW_FILLS = ["--lab-frame", "--lab-pane", "--lab-tree"];
+const CABINET_FILLS = ["--lab-seam", "--lab-handle"];
+
+function getWallThickness(layout: RackLayout): number {
+  return (layout.tubeWidth * TUBE_WALL_THICKNESS) / TUBE_VIEW_WIDTH;
+}
 
 function readFill(element: Element): string {
   const owner = element.closest("[class*='fill-']");
@@ -162,6 +175,85 @@ describe("RackScene", () => {
         (shape) => shape.bottom <= getTubeArea(twoRowLayout).top,
       ),
     }).toEqual({ drawn: true, belowHeading: true, aboveTubes: true });
+  });
+
+  test("窓台の下の端を、持ち上げた試験管と試験管ばさみの柄より上に置くこと", () => {
+    const { container } = render(<RackScene layout={singleRowLayout} />);
+
+    const windowBottom = Math.max(
+      ...readShapes(container)
+        .filter((shape) => WINDOW_FILLS.includes(shape.fill))
+        .map((shape) => shape.bottom),
+    );
+    const heldTop =
+      (singleRowLayout.rows[0]?.top ?? 0) -
+      getHeldTubeRisePx(singleRowLayout.tubeWidth);
+
+    expect(windowBottom).toBeLessThanOrEqual(heldTop);
+  });
+
+  test("窓の縦の桟と、流しの戸棚の戸の隙間と取っ手を、試験管の壁より太くしないこと", () => {
+    const { container } = render(<RackScene layout={twoRowLayout} />);
+
+    const lineWidths = readShapes(container)
+      .filter(
+        (shape) =>
+          ["--lab-frame", ...CABINET_FILLS].includes(shape.fill) &&
+          shape.bottom - shape.top > (shape.right - shape.left) * 3,
+      )
+      // 位置から幅を引き戻すときの浮動小数点の誤差を除く。
+      .map((shape) => Math.round((shape.right - shape.left) * 1000) / 1000);
+
+    expect(lineWidths.length).toBeGreaterThan(0);
+    expect(Math.max(...lineWidths)).toBeLessThanOrEqual(
+      Math.round(getWallThickness(twoRowLayout) * 1000) / 1000,
+    );
+  });
+
+  test("戸の隙間と取っ手と框を、盤面より下の操作と文字を置く箱より上にだけ描くこと", () => {
+    const { container } = render(<RackScene layout={twoRowLayout} />);
+
+    const doorShapes = readShapes(container).filter((shape) =>
+      CABINET_FILLS.includes(shape.fill),
+    );
+
+    expect(doorShapes.length).toBeGreaterThan(0);
+    expect(Math.max(...doorShapes.map((shape) => shape.bottom))).toBe(
+      twoRowLayout.footerTop,
+    );
+  });
+
+  test.each([
+    ["戸を描く高さのある", twoRowLayout],
+    ["戸を描く高さの無い", lowHeadroomLayout],
+  ])(
+    "%s盤面でも、実験台の下を画面の下の端まで戸棚の前の面で塗ること",
+    (_, layout) => {
+      const { container } = render(<RackScene layout={layout} />);
+
+      const fronts = readShapes(container).filter(
+        (shape) => shape.fill === "--lab-cabinet",
+      );
+      const benchBottom = Math.max(
+        ...readShapes(container)
+          .filter((shape) => shape.fill === "--lab-bench")
+          .map((shape) => shape.bottom),
+      );
+
+      expect(fronts.length).toBe(1);
+      expect(fronts[0]?.top).toBeLessThanOrEqual(benchBottom);
+      expect(fronts[0]?.bottom).toBeGreaterThanOrEqual(layout.height);
+    },
+  );
+
+  test("実験台と盤面より下の操作と文字を置く箱の間に戸を描く高さが無ければ、戸の隙間と取っ手を描かないこと", () => {
+    const { container } = render(<RackScene layout={lowHeadroomLayout} />);
+
+    const doorShapes = readShapes(container).filter((shape) =>
+      CABINET_FILLS.includes(shape.fill),
+    );
+
+    expect(doorShapes).toEqual([]);
   });
 
   test("窓として読める高さの壁が無い盤面には、窓を描かないこと", () => {

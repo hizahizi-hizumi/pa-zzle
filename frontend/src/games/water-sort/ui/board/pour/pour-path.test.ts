@@ -1,5 +1,6 @@
 import {
   _private,
+  getClampSwingScale,
   getSourcePose,
   type PourPathInput,
   planPourPath,
@@ -95,6 +96,36 @@ describe("getSourcePose", () => {
     expect(end.y).toBeCloseTo(0, 6);
     expect(end.tiltDeg).toBeCloseTo(0, 6);
     expect(end.amount).toBe(1);
+  });
+});
+
+describe("getClampSwingScale", () => {
+  const timing = getPourTiming(2);
+
+  describe("盤面で持っていた柄の側が、注ぐ向きと逆の側の場合", () => {
+    const path = { direction: -1 as const, timing };
+
+    test("初めから終わりまで、柄を振らずにそのまま見せること", () => {
+      const scales = [0, timing.touchMs / 4, timing.durationMs].map((ms) =>
+        getClampSwingScale(path, "right", ms),
+      );
+
+      expect(scales).toEqual([1, 1, 1]);
+    });
+  });
+
+  describe("盤面で持っていた柄の側が、注ぐ向きの側の場合", () => {
+    const path = { direction: 1 as const, timing };
+
+    test("持っていた側から振り始め、口に触れる前に注ぐ向きと逆の側へ振り終えること", () => {
+      const start = getClampSwingScale(path, "right", 0);
+      const middle = getClampSwingScale(path, "right", timing.touchMs / 4);
+      const touching = getClampSwingScale(path, "right", timing.touchMs);
+
+      expect(start).toBe(-1);
+      expect(middle).toBeCloseTo(0);
+      expect(touching).toBe(1);
+    });
   });
 });
 

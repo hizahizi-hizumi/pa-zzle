@@ -373,7 +373,7 @@ export function WaterSortTutorial({
       open={open}
       title={WATER_SORT_DISPLAY_NAME}
       pictogramSvg={pictogramSvg}
-      background={<WaterSortGround />}
+      background={<WaterSortGround bottom="cabinet" />}
       intro={waterSortTutorial.intro}
       recap={waterSortTutorial.rules.map((rule) => rule.label)}
       message={message}

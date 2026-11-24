@@ -3,6 +3,7 @@ import {
   type PourTiming,
 } from "@/games/water-sort/ui/board/pour/pour-timing";
 import { getLipReachingTiltDeg } from "@/games/water-sort/ui/board/pour/tilted-liquid";
+import type { ClampSide } from "@/games/water-sort/ui/board/test-tube/clamp-side";
 import {
   CLAMP_HANDLE_TIP_POINTS,
   TUBE_INNER,
@@ -89,6 +90,9 @@ const BOUNDS_SAMPLE_COUNT = 48;
 /** はみ出しとみなさない量（px）。 */
 const OVERFLOW_TOLERANCE_PX = 0.5;
 
+/** 持った試験管ばさみの柄を、注ぐ向きと逆の側へ振り終える所（持って行く長さに対する割合）。はみ出しを確かめ始める所より前にする。 */
+const CLAMP_SWING_END_RATIO = 0.5;
+
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
@@ -158,6 +162,27 @@ function getPouringTilt(path: PourPath, elapsedMs: number) {
     tiltDeg: direction * (getLipReachingTiltDeg(amount) + overTilt),
     amount,
   };
+}
+
+/** 注ぐ間、試験管ばさみの柄を出す向き。傾けたときに柄が上を向くよう、傾ける向きと逆の側に出す。 */
+export function getPouringClampSide(direction: PourDirection): ClampSide {
+  return direction > 0 ? "left" : "right";
+}
+
+/**
+ * 盤面で `heldSide` に柄を出して持っていた試験管ばさみの、注ぐ間の柄の向きを、注ぐ側に出した柄を横に縮めた倍率（-1〜1）で返す。
+ * 持っていた側が注ぐ側と逆なら、持って行き始めに柄を試験管の後ろを回して振り、-1 から 1 へ移る。
+ */
+export function getClampSwingScale(
+  path: Pick<PourPath, "direction" | "timing">,
+  heldSide: ClampSide,
+  elapsedMs: number,
+): number {
+  if (heldSide === getPouringClampSide(path.direction)) {
+    return 1;
+  }
+  const progress = elapsedMs / (path.timing.touchMs * CLAMP_SWING_END_RATIO);
+  return -1 + 2 * easeInOutCubic(progress);
 }
 
 export function getSourcePose(path: PourPath, elapsedMs: number): SourcePose {
@@ -233,8 +258,7 @@ function getOverflow(
   startMs = path.timing.touchMs / 2,
 ): Overflow {
   const handle = CLAMP_HANDLE_TIP_POINTS.map(([x, y]) =>
-    // 柄は傾ける向きと逆の側に出す。
-    path.direction > 0
+    getPouringClampSide(path.direction) === "left"
       ? ([TUBE_VIEW_WIDTH - x, y] as const)
       : ([x, y] as const),
   );

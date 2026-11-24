@@ -26,6 +26,7 @@ describe("useBrowserSurface", () => {
     meta.remove();
     document.documentElement.style.removeProperty("background-color");
     document.documentElement.style.removeProperty("--browser-surface");
+    document.documentElement.style.removeProperty("--browser-surface-bottom");
     document.documentElement.classList.remove("dark");
     document.body.style.removeProperty("background-color");
   });
@@ -56,6 +57,44 @@ describe("useBrowserSurface", () => {
       expect(meta.content).toBe("rgb(39, 49, 58)");
     });
     unmount();
+  });
+
+  test("地が下の端の色を別に示すときは、下の端の面だけをその色にし、上の端とテーマ色は地の色のままにすること", async () => {
+    renderHook(useBrowserSurface);
+    act(() => {
+      document.body.insertAdjacentHTML(
+        "beforeend",
+        '<div data-browser-surface="child"><div style="background-color:rgb(224, 230, 227);--browser-bottom-paint:rgb(214, 221, 218)"></div></div>',
+      );
+    });
+
+    await waitFor(() => {
+      expect({
+        theme: meta.content,
+        top: document.documentElement.style.getPropertyValue(
+          "--browser-surface",
+        ),
+        bottom: document.documentElement.style.getPropertyValue(
+          "--browser-surface-bottom",
+        ),
+      }).toEqual({
+        theme: "rgb(224, 230, 227)",
+        top: "rgb(224, 230, 227)",
+        bottom: "rgb(214, 221, 218)",
+      });
+    });
+
+    act(() =>
+      document.querySelector('[data-browser-surface="child"]')?.remove(),
+    );
+
+    await waitFor(() => {
+      expect(
+        document.documentElement.style.getPropertyValue(
+          "--browser-surface-bottom",
+        ),
+      ).toBe("rgb(39, 49, 58)");
+    });
   });
 
   test("表示モードの変更後の色をbodyへ反映すること", async () => {

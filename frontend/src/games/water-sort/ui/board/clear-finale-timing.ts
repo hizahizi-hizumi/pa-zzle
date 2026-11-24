@@ -1,6 +1,8 @@
 /** 空の試験管を1本ずつ試験管立てから抜いて片付ける間合いと、1本にかける時間。抜く音もこの間合いで鳴らす。 */
 export const CLEAR_FINALE_PUT_AWAY_STAGGER_MS = 60;
 export const CLEAR_FINALE_PUT_AWAY_DURATION_MS = 380;
+/** 空の試験管を抜くとき、ゆっくり持ち上げ始めて、抜けきる前にまた緩める。 */
+export const CLEAR_FINALE_PUT_AWAY_EASING = "cubic-bezier(.4,0,.6,1)";
 
 /**
  * 片付け終わる頃から、栓をした試験管の列を白い帯が端から順に撫でていく。撫で始めに試験管どうしが鳴り合う。
@@ -10,6 +12,8 @@ export const CLEAR_FINALE_GLEAM_DELAY_MS = 300;
 export const CLEAR_FINALE_GLEAM_MAX_STAGGER_MS = 45;
 export const CLEAR_FINALE_GLEAM_SPREAD_MS = 360;
 export const CLEAR_FINALE_GLEAM_DURATION_MS = 460;
+/** 白い帯は、撫で始めをためて、通り過ぎる所で速く抜ける。 */
+export const CLEAR_FINALE_GLEAM_EASING = "cubic-bezier(.45,0,.3,1)";
 
 /** 白い帯が撫で終えてから演出を終えるまで、整った列を眺める時間。 */
 export const CLEAR_FINALE_HOLD_MS = 600;

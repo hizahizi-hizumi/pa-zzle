@@ -24,6 +24,9 @@ export const TUBE_OUTER = {
   bottom: 98,
 } as const;
 
+/** 管の壁の厚さ。 */
+export const TUBE_WALL_THICKNESS = TUBE_INNER.left - TUBE_OUTER.left;
+
 /** 口の縁。管より少し外へ張り出す帯。 */
 export const TUBE_RIM = {
   left: 0.4,

@@ -7,6 +7,8 @@ type LabWindowProps = {
   centerX: number;
   /** 窓を置ける幅（窓台の張り出しを含む）。 */
   maxWidth: number;
+  /** 窓枠と縦の桟の太さ。窓台の厚さと張り出しも、これに比べて決める。 */
+  lineWidth: number;
 };
 
 /**
@@ -19,10 +21,9 @@ const MAX_ASPECT = 2.4;
 /** 縦の桟で仕切るガラス1枚の、幅の高さに対するおおよその比と、仕切る枚数の上限。 */
 const PANE_ASPECT = 1.2;
 const MAX_PANE_COUNT = 3;
-const FRAME_PX = 6;
-const MULLION_PX = 5;
-const SILL_HEIGHT_PX = 8;
-const SILL_OVERHANG_PX = 5;
+/** 窓台の厚さと張り出し（窓枠の太さに対する倍数）。 */
+const SILL_HEIGHT_RATIO = 2.5;
+const SILL_OVERHANG_RATIO = 2;
 /** 窓台の端と、置ける幅の端の間。 */
 const SIDE_MARGIN_PX = 12;
 /** 木立の高さ（ガラスの高さに対する割合）と、樹冠の半径（木立の高さに対する倍数）。 */
@@ -33,11 +34,19 @@ const TREE_CROWN_RADII = [0.9, 0.62, 1.05, 0.58, 0.82, 0.7] as const;
  * 真横から見た理科室の窓。窓枠・ガラス・校庭の木立・縦の桟・窓台の平らな面だけで、壁に近い淡い色で描く。
  * 大きさは置ける場所から決め、窓として読める高さが無ければ描かない。
  */
-export function LabWindow({ top, bottom, centerX, maxWidth }: LabWindowProps) {
+export function LabWindow({
+  top,
+  bottom,
+  centerX,
+  maxWidth,
+  lineWidth,
+}: LabWindowProps) {
   const glassClipId = useId();
+  const sillHeight = lineWidth * SILL_HEIGHT_RATIO;
+  const sillOverhang = lineWidth * SILL_OVERHANG_RATIO;
   const roomHeight = bottom - top;
   const width = Math.min(
-    maxWidth - (SIDE_MARGIN_PX + SILL_OVERHANG_PX) * 2,
+    maxWidth - (SIDE_MARGIN_PX + sillOverhang) * 2,
     roomHeight * MAX_ASPECT,
   );
   const height = Math.min(roomHeight, width / MIN_ASPECT);
@@ -47,11 +56,11 @@ export function LabWindow({ top, bottom, centerX, maxWidth }: LabWindowProps) {
 
   const left = centerX - width / 2;
   const frameTop = bottom - height;
-  const frameBottom = bottom - SILL_HEIGHT_PX;
-  const glassLeft = left + FRAME_PX;
-  const glassTop = frameTop + FRAME_PX;
-  const glassWidth = width - FRAME_PX * 2;
-  const glassBottom = frameBottom - FRAME_PX / 2;
+  const frameBottom = bottom - sillHeight;
+  const glassLeft = left + lineWidth;
+  const glassTop = frameTop + lineWidth;
+  const glassWidth = width - lineWidth * 2;
+  const glassBottom = frameBottom - lineWidth / 2;
   const glassHeight = glassBottom - glassTop;
   const paneCount = Math.min(
     MAX_PANE_COUNT,
@@ -68,7 +77,7 @@ export function LabWindow({ top, bottom, centerX, maxWidth }: LabWindowProps) {
         y={frameTop}
         width={width}
         height={frameBottom - frameTop}
-        rx={2}
+        rx={lineWidth / 2}
         className="fill-(--lab-frame)"
       />
       <clipPath id={glassClipId}>
@@ -117,23 +126,21 @@ export function LabWindow({ top, bottom, centerX, maxWidth }: LabWindowProps) {
             // biome-ignore lint/suspicious/noArrayIndexKey: 縦の桟は並びの位置だけで決まる。
             key={index}
             x={
-              glassLeft +
-              (glassWidth / paneCount) * (index + 1) -
-              MULLION_PX / 2
+              glassLeft + (glassWidth / paneCount) * (index + 1) - lineWidth / 2
             }
             y={glassTop}
-            width={MULLION_PX}
+            width={lineWidth}
             height={glassHeight}
           />
         ))}
       </g>
       {/* 窓台 */}
       <rect
-        x={left - SILL_OVERHANG_PX}
+        x={left - sillOverhang}
         y={frameBottom}
-        width={width + SILL_OVERHANG_PX * 2}
-        height={SILL_HEIGHT_PX}
-        rx={2}
+        width={width + sillOverhang * 2}
+        height={sillHeight}
+        rx={lineWidth / 2}
         className="fill-(--lab-frame)"
       />
     </g>
