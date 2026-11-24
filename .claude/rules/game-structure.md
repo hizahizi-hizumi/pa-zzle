@@ -129,7 +129,8 @@ frontend/src/games/
 - `use<Game>Play` は `games/play.ts` の `GamePlay` に、盤面を戻せるなら `RestartableGamePlay`、待ったがあるなら `UndoableGamePlay` とゲーム固有の値を足した `<Game>Play` を返り値型として注釈する。
 - 進行は `GameProgress`、state の更新は `applyPlaySession`・`startPlaySession`・`completePlayClearAnimation`、表示する経過時間は `useSessionElapsedMs` を使う。
 - 最初の問題と「別の問題」は `games/problem-selection.ts` の `selectProblemAvoiding` で選ぶ。「別の問題」は今の問題の ID（`createProblemId(problemIdentity)`）を避ける。
-- リセットはプレイ中もクリア後も使える。`canUndo`・`canRestart` はプレイフックが返し、UI は合成せずそのまま使う。
+- リセットを提供するゲームでは、リセットはプレイ中もクリア後も使える。提供しないゲームは `GamePlayFrame` の `onReplay` を渡さない（どれを提供するかは GAME-005・パズル仕様）。
+- `canUndo`・`canRestart` はプレイフックが返し、UI は合成せずそのまま使う。
 
 ## プレイ画面と結果画面の共通契約
 
@@ -191,7 +192,8 @@ frontend/src/games/
 - 2つ以上のゲームが使う遊び方の並べ方と見せ方は、`frontend/src/components/` の `HowToPlay` で始まる共通の部品と `how-to-play-` で始まるモジュールに置く。
 - 共通の部品に足す props は任意で受け取る。
 - ゲームのホームへは `views/<Game>HomeView.tsx` から `GameHomeScreen` の `renderHowToPlayDialog` で、プレイ画面へは `ui/<Game>Play.tsx` から `GamePlayFrame` の `renderHowToPlayDialog` で渡す。
-- 遊び方とチュートリアルを開く画面（`views/GameHowToView.tsx`・`views/GameTutorialView.tsx`）へは、`app/game-integration/game-guide.tsx` に `<Game>HowToPlayDialog` と `<Game>Tutorial` を登録して渡す。
+- 遊び方を開く画面（`views/GameHowToView.tsx`）へは、`app/game-integration/game-guide.tsx` に `<Game>HowToPlayDialog` を登録して渡す。
+- チュートリアルを提供するゲームは、チュートリアルを開く画面（`views/GameTutorialView.tsx`）へ渡す `<Game>Tutorial` も `game-guide.tsx` に登録する。
 
 ## 依存方向
 
@@ -251,7 +253,7 @@ frontend/src/app/
 ```
 
 - `game-catalog-entry.ts` はゲームごとの表示・遷移・問題供給・記録の再プレイ・記録から作る結果画面の接続契約 `GameCatalogEntry` を持つ。
-- `game-catalog.ts` は11ゲームの登録と並び順の正本 `gameCatalog` を持つ。選択・記録・結果画面はゲームの一覧を複製しない。
+- `game-catalog.ts` は12ゲームの登録と並び順の正本 `gameCatalog` を持つ。選択・記録・結果画面はゲームの一覧を複製しない。
 - `game-navigation.ts` はゲームのホーム・次の問題・記録からの遊び直しを、登録済みゲームの `homePath`・`playPath` に基づいて開く。履歴を置き換える必要がある戻り遷移は `replacesHistory` を指定する。
 - `play-timeline.ts` は記録の時系列へゲーム名・難易度・図鑑番号・遷移先を接続する。記録の正本と横断集計の規則は `features/records/` と `features/collection/` が持つ。
 - `playable-game.tsx` は問題ID・完了記録・離脱記録・結果への遷移・診断情報を接続する。結果画面に保存済み記録を表示できる場合は記録IDのパスへ移動する。
