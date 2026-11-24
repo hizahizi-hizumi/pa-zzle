@@ -28,36 +28,30 @@ export type FukumenzanColumnTerm = {
   multiplicity: number;
 };
 
-export type FukumenzanModelColumn = {
-  /** 変数の番号の小さい順。 */
+/** 答えの1桁ごとの足し算。一の位から順に、足す側の文字と答えの文字を持つ。 */
+export type FukumenzanSumColumn = {
+  /** 文字の番号の小さい順。 */
   terms: readonly FukumenzanColumnTerm[];
   resultVariable: number;
 };
 
-/**
- * 解法器が読む式の形。変数は、文字（`0`〜`letterCount - 1`。式に初めて出た順）と、繰り上がり
- * （`letterCount + j` が一の位から j 番目の桁に右から入る繰り上がり。`j` は `0`〜`columnCount`）。
- * 各変数の候補は数字のビットの集まり（`number[]`。添字が変数の番号）で持つ。
- */
-export type FukumenzanColumnModel = {
+/** 完全な探索と素朴な解き方が、答えの桁を一の位から順に当てるための式の形。 */
+export type FukumenzanSumColumns = {
   letterCount: number;
-  addendCount: number;
-  columnCount: number;
-  variableCount: number;
-  /** 一の位から順の桁。 */
-  columns: readonly FukumenzanModelColumn[];
   leadingLetters: ReadonlySet<number>;
-  /** 桁ごとの、足す側と答えの文字の集まり（繰り上がりを含まない）。 */
-  columnLetters: readonly ReadonlySet<number>[];
+  /** 答えの桁の数だけ並ぶ。答えが1桁長いとき、最後の桁は足す側の文字を持たない。 */
+  columns: readonly FukumenzanSumColumn[];
 };
 
-export function createFukumenzanColumnModel(
+export function listFukumenzanSumColumns(
   equation: FukumenzanEquation,
-): FukumenzanColumnModel {
+): FukumenzanSumColumns {
   const { letters, leadingLetters, columns } =
     getFukumenzanEquationStructure(equation);
-  const modelColumns = columns.map(
-    ({ addendLetters, resultLetter }): FukumenzanModelColumn => {
+  return {
+    letterCount: letters.length,
+    leadingLetters: new Set(leadingLetters),
+    columns: columns.map(({ addendLetters, resultLetter }) => {
       const multiplicities = new Map<number, number>();
       for (const letter of addendLetters) {
         multiplicities.set(letter, (multiplicities.get(letter) ?? 0) + 1);
@@ -68,38 +62,84 @@ export function createFukumenzanColumnModel(
           .map(([variable, multiplicity]) => ({ variable, multiplicity })),
         resultVariable: resultLetter,
       };
-    },
+    }),
+  };
+}
+
+export type FukumenzanModelColumn = FukumenzanSumColumn & {
+  carryInVariable: number;
+  /** 最上位の桁で答えが1桁長いときは、答えの先頭の文字。 */
+  carryOutVariable: number;
+};
+
+/**
+ * 解法器が読む式の形。桁は足す数のある桁だけで、各桁は「足す文字の和＋右からの繰り上がり＝答えの文字＋10×左への繰り上がり」。
+ * 答えが足す数より1桁長いとき、答えの先頭の文字は最上位の桁の左への繰り上がりそのものとして読む（人が筆算の式を書く形）。
+ * 変数は、文字（`0`〜`letterCount - 1`。式に初めて出た順）と、繰り上がり（`letterCount` から。各桁の
+ * `carryInVariable`・`carryOutVariable` が指す）。各変数の候補は数字のビットの集まり（`number[]`。添字が変数の番号）で持つ。
+ */
+export type FukumenzanColumnModel = {
+  letterCount: number;
+  addendCount: number;
+  columnCount: number;
+  variableCount: number;
+  /** 一の位から順の桁。 */
+  columns: readonly FukumenzanModelColumn[];
+  leadingLetters: ReadonlySet<number>;
+  /** 桁ごとの、足す側と答えと左への繰り上がりの文字の集まり（繰り上がりの変数を含まない）。 */
+  columnLetters: readonly ReadonlySet<number>[];
+  /** 値が0に決まっている繰り上がり（一の位に入る繰り上がりと、答えが伸びないときの最上位から出る繰り上がり）。 */
+  zeroCarries: ReadonlySet<number>;
+};
+
+export function createFukumenzanColumnModel(
+  equation: FukumenzanEquation,
+): FukumenzanColumnModel {
+  const { letterCount, leadingLetters, columns } =
+    listFukumenzanSumColumns(equation);
+  const longestAddendLength = Math.max(
+    ...equation.addends.map((addend) => addend.length),
+  );
+  const columnCount = longestAddendLength;
+  const grows = columns.length > longestAddendLength;
+  const resultHead = columns[columns.length - 1]!.resultVariable;
+  function carryVariable(column: number): number {
+    return letterCount + column;
+  }
+  const topCarryOut = grows ? resultHead : carryVariable(columnCount);
+  const modelColumns = columns.slice(0, columnCount).map(
+    (column, index): FukumenzanModelColumn => ({
+      ...column,
+      carryInVariable: carryVariable(index),
+      carryOutVariable:
+        index === columnCount - 1 ? topCarryOut : carryVariable(index + 1),
+    }),
   );
   return {
-    letterCount: letters.length,
+    letterCount,
     addendCount: equation.addends.length,
-    columnCount: columns.length,
-    variableCount: letters.length + columns.length + 1,
+    columnCount,
+    variableCount: letterCount + columnCount + (grows ? 0 : 1),
     columns: modelColumns,
-    leadingLetters: new Set(leadingLetters),
+    leadingLetters,
     columnLetters: modelColumns.map(
-      ({ terms, resultVariable }) =>
-        new Set([...terms.map(({ variable }) => variable), resultVariable]),
+      ({ terms, resultVariable, carryOutVariable }) =>
+        new Set([
+          ...terms.map(({ variable }) => variable),
+          resultVariable,
+          ...(carryOutVariable < letterCount ? [carryOutVariable] : []),
+        ]),
+    ),
+    zeroCarries: new Set(
+      grows
+        ? [carryVariable(0)]
+        : [carryVariable(0), carryVariable(columnCount)],
     ),
   };
 }
 
-export function getCarryInVariable(
-  model: FukumenzanColumnModel,
-  column: number,
-): number {
-  return model.letterCount + column;
-}
-
-export function getCarryOutVariable(
-  model: FukumenzanColumnModel,
-  column: number,
-): number {
-  return model.letterCount + column + 1;
-}
-
 /**
- * 解き始めの候補。先頭の文字は0にならず、一の位に入る繰り上がりと最上位から出る繰り上がりは0。
+ * 解き始めの候補。先頭の文字は0にならず、値が0に決まっている繰り上がりは0。
  * 途中の繰り上がりは、足す数の数より小さい（3つの足し算の1桁の和は 9×3＋2＝29 まで）。
  */
 export function createInitialDomains(model: FukumenzanColumnModel): number[] {
@@ -110,8 +150,7 @@ export function createInitialDomains(model: FukumenzanColumnModel): number[] {
         ? NONZERO_DIGIT_MASK
         : ANY_DIGIT_MASK;
     }
-    const column = variable - model.letterCount;
-    return column === 0 || column === model.columnCount ? 1 : carryMask;
+    return model.zeroCarries.has(variable) ? 1 : carryMask;
   });
 }
 

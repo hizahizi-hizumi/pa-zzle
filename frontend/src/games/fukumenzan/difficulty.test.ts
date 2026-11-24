@@ -15,7 +15,7 @@ import {
 
 describe("classifyFukumenzanProblem", () => {
   test.each(researchCases.classification)(
-    "研究用の期待値の $equation を $outcome（レベル $level）にすること",
+    "期待値の $equation を $outcome（レベル $level）にすること",
     ({ equation, outcome, level }) => {
       const assessment = classifyFukumenzanProblem(
         parseFukumenzanEquation(equation)!,
@@ -132,11 +132,12 @@ function listThreeDigitPairProblems(): {
 describe("3桁＋3桁の全部の問題の場合", () => {
   const { equationCount, patternCount, uniquePatternCount, problems } =
     listThreeDigitPairProblems();
+  const expected = researchCases.threeDigitPairs;
   const ordered = [...problems].toSorted(([left], [right]) =>
     left < right ? -1 : 1,
   );
 
-  test("式・文字の並び・一意解の問題とレベルの数が研究用の期待値と同じになり、近い問題を飛ばして採れる L1 の数も同じになること", () => {
+  test("式・文字の並び・一意解の問題の数が研究用の期待値と同じになり、レベルの数と近い問題を飛ばして採れる L1 の数が期待値になること", () => {
     const levels = new Map<string, number>();
     const levelOneLetterCounts = new Map<string, number>();
     const takenNearKeys = new Set<string>();
@@ -173,6 +174,14 @@ describe("3桁＋3桁の全部の問題の場合", () => {
       levels: Object.fromEntries(levels),
       levelOneLetterCounts: Object.fromEntries(levelOneLetterCounts),
       levelOneWithoutNearCount,
-    }).toEqual(researchCases.threeDigitPairs);
+    }).toEqual({
+      equationCount: expected.equationCount,
+      patternCount: expected.patternCount,
+      uniquePatternCount: expected.uniquePatternCount,
+      problemCount: expected.problemCount,
+      levels: expected.levels,
+      levelOneLetterCounts: expected.levelOneLetterCounts,
+      levelOneWithoutNearCount: expected.levelOneWithoutNearCount,
+    });
   }, 60_000);
 });

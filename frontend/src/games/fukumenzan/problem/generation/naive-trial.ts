@@ -1,4 +1,4 @@
-import { createFukumenzanColumnModel } from "@/games/fukumenzan/problem/generation/column-model";
+import { listFukumenzanSumColumns } from "@/games/fukumenzan/problem/generation/column-model";
 import type { FukumenzanEquation } from "@/games/fukumenzan/puzzle/equation";
 import { type ProblemRandom, shuffleProblemValues } from "@/games/problem-seed";
 
@@ -22,8 +22,9 @@ export function tryFukumenzanNaively(
   random: ProblemRandom,
   placementLimit: number,
 ): FukumenzanNaiveTrial {
-  const model = createFukumenzanColumnModel(equation);
-  const { columns, columnCount, leadingLetters } = model;
+  const model = listFukumenzanSumColumns(equation);
+  const { columns, leadingLetters } = model;
+  const columnCount = columns.length;
   const assigned = Array.from({ length: model.letterCount }, () => -1);
   const used = Array.from({ length: 10 }, () => false);
   let placementCount = 0;

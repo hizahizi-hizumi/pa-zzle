@@ -19,7 +19,7 @@ const { readerSettings } = _private;
 
 describe("analyzeFukumenzanDifficulty", () => {
   describe.each(researchCases.classification)(
-    "研究用の期待値の $equation の場合",
+    "期待値の $equation の場合",
     ({ equation, scale, readingClass, readers }) => {
       const problem = parseFukumenzanEquation(equation)!;
 
@@ -38,6 +38,23 @@ describe("analyzeFukumenzanDifficulty", () => {
       });
     },
   );
+
+  describe("最上位の桁と隣でない桁が答えの先頭の文字を共有する場合", () => {
+    // 十の位 N＋H＋繰り上がり＝10 と、最上位 2N＋繰り上がり＝G＋10H を突き合わせると H＝2 が消える。
+    const problem = parseFukumenzanEquation("NNKNL+NCDCK+CGHN=HGDHCD")!;
+
+    test("まとめる読みの強い端が、場合分けなしで解くこと", () => {
+      const analysis = analyzeFukumenzanDifficulty(
+        problem,
+        fukumenzanAnalysisScope,
+      );
+
+      expect(analysis).toMatchObject({
+        readingClass: "mH",
+        readers: { strongCombined: "solved" },
+      });
+    });
+  });
 
   describe("解が2つある式の場合", () => {
     const problem = parseFukumenzanEquation("AB+BA=CC")!;

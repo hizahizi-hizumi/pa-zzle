@@ -4,16 +4,13 @@ import {
   digitCountOfMask,
   digitsOfMask,
   type FukumenzanColumnModel,
-  getCarryInVariable,
-  getCarryOutVariable,
 } from "@/games/fukumenzan/problem/generation/column-model";
 
 /**
- * 1つの桁の読み方。
+ * 1つの桁の読み方。決まっていない文字と組は、どれも両辺で消える文字を除いて数える。
  * - `all-tuples`: 桁の式に合う組（足す側の文字・答えの文字・繰り上がりの値の組）を全部書き出す。
  * - `bounds-when-many`: 決まっていない文字が3つ以上で組が `tupleLimit` より多い桁は、和の大きさ（最小と最大）だけで読む。
- * - `skip-when-many`: 両辺で消える文字を除いて、決まっていない文字が3つ以上で組が `tupleLimit` より多い桁は読まない
- *   （組が1つも無いことだけは見る）。
+ * - `skip-when-many`: 決まっていない文字が3つ以上で組が `tupleLimit` より多い桁は読まない（組が1つも無いことだけは見る）。
  */
 export type FukumenzanColumnReading =
   | { kind: "all-tuples" }
@@ -21,7 +18,8 @@ export type FukumenzanColumnReading =
   | { kind: "skip-when-many"; tupleLimit: number };
 
 /**
- * 2つ以上の桁をまとめて読む上限。どちらも上限を超えたら、その組の桁はまとめて読まない。
+ * 2つ以上の桁をまとめて読む上限。どちらも上限を超えたら、その組の桁はまとめて読まない。組の数は、まとめる桁のどれでも
+ * 両辺で消える文字を除いて数える。
  * - `joined`: つないだ後の組の数が `cap` まで。
  * - `small-product-or-joined`: 桁ごとの組の数の積が `productCap` までなら全部をつなぎ、多ければつないだ後の組の数が `joinedCap` まで。
  */
@@ -44,14 +42,12 @@ export type FukumenzanEquationReading = {
  * 読み手の強さ。どの軸も、強める向きに変えると閉包が狭くなる単調な規則にしてある。
  * - `hiddenSingles`: 10文字の式で、1つの文字にしか入らない数字を決める。
  * - `nakedSubsets`: 2つか3つの文字の候補の和がちょうどその数なら、ほかの文字からその数字を消す。
- * - `excludesCancelledLetters`: まとめて読む上限を、両辺に同じ係数で出て消える文字を除いた組の数で数える。
  * - `pairProductLimit`: 2つの桁をまとめて読むのを、桁ごとの組の数（消える文字を除く）の積がこれ以下のときだけにする。
  */
 export type FukumenzanReaderSettings = {
   column: FukumenzanColumnReading;
   hiddenSingles: boolean;
   nakedSubsets: boolean;
-  excludesCancelledLetters: boolean;
   adjacentPairs: FukumenzanGroupLimit | null;
   adjacentTriples: FukumenzanGroupLimit | null;
   sharedLetterPairs: FukumenzanGroupLimit | null;
@@ -93,15 +89,18 @@ export type FukumenzanClosure = {
   domains: number[];
 };
 
-/** 組の1つ。値は4ビットずつ（`letters` の順）、右から入る繰り上がりは16ビット目、左へ出る繰り上がりは20ビット目から。 */
+/**
+ * 桁の組。値は4ビットずつ（`letters` の順。足す側・答え・左への繰り上がりが文字ならその文字の5つまで）、右から入る
+ * 繰り上がりは20ビット目、左へ出る繰り上がりは24ビット目から。
+ */
 type ColumnTuples = {
   letters: readonly number[];
   codes: readonly number[];
   masks: readonly number[];
 };
 
-const CARRY_IN_SHIFT = 16;
-const CARRY_OUT_SHIFT = 20;
+const CARRY_IN_SHIFT = 20;
+const CARRY_OUT_SHIFT = 24;
 const CARRY_BITS = (0xf << CARRY_IN_SHIFT) | (0xf << CARRY_OUT_SHIFT);
 
 function getTupleValue(code: number, position: number): number {
@@ -116,13 +115,14 @@ function createColumnEquation(
   function add(variable: number, coefficient: number): void {
     coefficients.set(variable, (coefficients.get(variable) ?? 0) + coefficient);
   }
-  const { terms, resultVariable } = model.columns[column]!;
+  const { terms, resultVariable, carryInVariable, carryOutVariable } =
+    model.columns[column]!;
   for (const { variable, multiplicity } of terms) {
     add(variable, multiplicity);
   }
   add(resultVariable, -1);
-  add(getCarryInVariable(model, column), 1);
-  add(getCarryOutVariable(model, column), -10);
+  add(carryInVariable, 1);
+  add(carryOutVariable, -10);
   return toLinearEquation(coefficients);
 }
 
@@ -275,21 +275,29 @@ function listColumnTuples(
   column: number,
   domains: readonly number[],
 ): ColumnTuples {
-  const { terms, resultVariable } = model.columns[column]!;
+  const { terms, resultVariable, carryInVariable, carryOutVariable } =
+    model.columns[column]!;
   const termCount = terms.length;
-  const resultPosition = terms.findIndex(
-    ({ variable }) => variable === resultVariable,
-  );
-  const letters =
-    resultPosition >= 0
-      ? terms.map(({ variable }) => variable)
-      : [...terms.map(({ variable }) => variable), resultVariable];
+  const letters = terms.map(({ variable }) => variable);
+  const resultPosition = letters.indexOf(resultVariable);
+  if (resultPosition < 0) {
+    letters.push(resultVariable);
+  }
+  const carryOutIsLetter = carryOutVariable < model.letterCount;
+  const carryOutPosition = carryOutIsLetter
+    ? letters.indexOf(carryOutVariable)
+    : -1;
+  const carryOutLetterPosition =
+    carryOutIsLetter && carryOutPosition < 0 ? letters.length : -1;
+  if (carryOutLetterPosition >= 0) {
+    letters.push(carryOutVariable);
+  }
   const termDigits = terms.map(
     ({ variable }) => digitsOfMask[domains[variable]!]!,
   );
   const multiplicities = terms.map(({ multiplicity }) => multiplicity);
   const resultMask = domains[resultVariable]!;
-  const carryOutMask = domains[getCarryOutVariable(model, column)]!;
+  const carryOutMask = domains[carryOutVariable]!;
   const codes: number[] = [];
   const masks: number[] = [];
 
@@ -321,25 +329,37 @@ function listColumnTuples(
     if (!((carryOutMask >> carryOut) & 1)) {
       return;
     }
-    const carries = (carryIn << CARRY_IN_SHIFT) | (carryOut << CARRY_OUT_SHIFT);
+    let tupleCode =
+      code | (carryIn << CARRY_IN_SHIFT) | (carryOut << CARRY_OUT_SHIFT);
+    let tupleMask = mask;
     if (resultPosition >= 0) {
       if (getTupleValue(code, resultPosition) !== digit) {
         return;
       }
-      codes.push(code | carries);
-      masks.push(mask);
-      return;
+    } else {
+      if (!((resultMask >> digit) & 1) || (mask >> digit) & 1) {
+        return;
+      }
+      tupleCode |= digit << (4 * termCount);
+      tupleMask |= 1 << digit;
     }
-    if (!((resultMask >> digit) & 1) || (mask >> digit) & 1) {
-      return;
+    // 答えの先頭の文字は左への繰り上がりそのものなので、桁のほかの文字と同じ文字ならその値に等しく、違う文字なら違う数字。
+    if (carryOutPosition >= 0) {
+      if (getTupleValue(tupleCode, carryOutPosition) !== carryOut) {
+        return;
+      }
+    } else if (carryOutLetterPosition >= 0) {
+      if ((tupleMask >> carryOut) & 1) {
+        return;
+      }
+      tupleCode |= carryOut << (4 * carryOutLetterPosition);
+      tupleMask |= 1 << carryOut;
     }
-    codes.push(code | (digit << (4 * termCount)) | carries);
-    masks.push(mask | (1 << digit));
+    codes.push(tupleCode);
+    masks.push(tupleMask);
   }
 
-  for (const carryIn of digitsOfMask[
-    domains[getCarryInVariable(model, column)]!
-  ]!) {
+  for (const carryIn of digitsOfMask[domains[carryInVariable]!]!) {
     extend(0, carryIn, carryIn, 0, 0);
   }
   return { letters, codes, masks };
@@ -364,8 +384,9 @@ function collectTupleFacts(
     carryIns |= 1 << ((code >> CARRY_IN_SHIFT) & 0xf);
     carryOuts |= 1 << ((code >> CARRY_OUT_SHIFT) & 0xf);
   }
-  facts[getCarryInVariable(model, column)] = carryIns;
-  facts[getCarryOutVariable(model, column)] = carryOuts;
+  const { carryInVariable, carryOutVariable } = model.columns[column]!;
+  facts[carryInVariable] = carryIns;
+  facts[carryOutVariable] = carryOuts;
   for (const [position, letter] of letters.entries()) {
     facts[letter] = supports[position]!;
   }
@@ -443,8 +464,8 @@ function readColumnBounds(
   const touched = new Set([
     ...equation.variables,
     ...model.columnLetters[column]!,
-    getCarryInVariable(model, column),
-    getCarryOutVariable(model, column),
+    model.columns[column]!.carryInVariable,
+    model.columns[column]!.carryOutVariable,
   ]);
   if ([...touched].some((variable) => domains[variable] === 0)) {
     return null;
@@ -484,33 +505,20 @@ export function readFukumenzanColumn(
 ): FukumenzanFacts {
   const { model, settings } = reader;
   const reading = settings.column;
-  if (
-    reading.kind !== "all-tuples" &&
-    countUndecided(model.columnLetters[column]!, domains) > 2
-  ) {
-    const tuples = listColumnTuples(model, column, domains);
-    if (reading.kind === "bounds-when-many") {
-      return tuples.codes.length > reading.tupleLimit
-        ? readColumnBounds(reader, column, domains)
-        : collectTupleFacts(model, column, tuples);
-    }
-    if (tuples.codes.length === 0) {
-      return null;
-    }
-    const remaining = new Set(reader.columnEquations[column]!.variables);
-    if (
-      countUndecided(model.columnLetters[column]!, domains, remaining) > 2 &&
-      countProjectedTuples(tuples, remaining) > reading.tupleLimit
-    ) {
-      return createUnconstrainedFacts(model);
-    }
+  const tuples = listColumnTuples(model, column, domains);
+  if (reading.kind === "all-tuples" || tuples.codes.length === 0) {
     return collectTupleFacts(model, column, tuples);
   }
-  return collectTupleFacts(
-    model,
-    column,
-    listColumnTuples(model, column, domains),
-  );
+  const remaining = new Set(reader.columnEquations[column]!.variables);
+  const isHeavy =
+    countUndecided(model.columnLetters[column]!, domains, remaining) > 2 &&
+    countProjectedTuples(tuples, remaining) > reading.tupleLimit;
+  if (!isHeavy) {
+    return collectTupleFacts(model, column, tuples);
+  }
+  return reading.kind === "bounds-when-many"
+    ? readColumnBounds(reader, column, domains)
+    : createUnconstrainedFacts(model);
 }
 
 export function readFukumenzanTable(
@@ -658,11 +666,7 @@ export function readFukumenzanGroup(
   let joinedCap: number | null = limit.kind === "joined" ? limit.cap : null;
   if (limit.kind === "small-product-or-joined") {
     const product = tupleLists.reduce(
-      (total, tuples) =>
-        total *
-        (settings.excludesCancelledLetters
-          ? countProjectedTuples(tuples, remaining)
-          : tuples.codes.length),
+      (total, tuples) => total * countProjectedTuples(tuples, remaining),
       1,
     );
     joinedCap = product <= limit.productCap ? null : limit.joinedCap;
@@ -725,14 +729,10 @@ export function readFukumenzanGroup(
         if (joinedCap === null) {
           continue;
         }
-        if (settings.excludesCancelledLetters) {
-          seen.add(
-            `${assigned.map((value, letter) => (cancelled.has(letter) ? -1 : value)).join(",")}|${part.firstCarryIn}|${carryOuts.join(",")}`,
-          );
-          if (seen.size > joinedCap) {
-            return createUnconstrainedFacts(model);
-          }
-        } else if (next.length > joinedCap) {
+        seen.add(
+          `${assigned.map((value, letter) => (cancelled.has(letter) ? -1 : value)).join(",")}|${part.firstCarryIn}|${carryOuts.join(",")}`,
+        );
+        if (seen.size > joinedCap) {
           return createUnconstrainedFacts(model);
         }
       }
@@ -750,8 +750,8 @@ export function readFukumenzanGroup(
   }
   const carryVariables = linked
     ? [
-        getCarryInVariable(model, columns[0]!),
-        ...columns.map((column) => getCarryOutVariable(model, column)),
+        model.columns[columns[0]!]!.carryInVariable,
+        ...columns.map((column) => model.columns[column]!.carryOutVariable),
       ]
     : [];
   for (const variable of carryVariables) {

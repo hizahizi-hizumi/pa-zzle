@@ -1,6 +1,6 @@
 import {
-  createFukumenzanColumnModel,
-  type FukumenzanColumnModel,
+  type FukumenzanSumColumns,
+  listFukumenzanSumColumns,
 } from "@/games/fukumenzan/problem/generation/column-model";
 import type { FukumenzanEquation } from "@/games/fukumenzan/puzzle/equation";
 
@@ -20,14 +20,15 @@ export function countFukumenzanSolutions(
   equation: FukumenzanEquation,
   limit: number,
 ): FukumenzanSolutionCount {
-  return countModelSolutions(createFukumenzanColumnModel(equation), limit);
+  return countModelSolutions(listFukumenzanSumColumns(equation), limit);
 }
 
 function countModelSolutions(
-  model: FukumenzanColumnModel,
+  model: FukumenzanSumColumns,
   limit: number,
 ): FukumenzanSolutionCount {
-  const { columns, columnCount, leadingLetters } = model;
+  const { columns, leadingLetters } = model;
+  const columnCount = columns.length;
   const assigned = Array.from({ length: model.letterCount }, () => -1);
   const used = Array.from({ length: 10 }, () => false);
   let count = 0;

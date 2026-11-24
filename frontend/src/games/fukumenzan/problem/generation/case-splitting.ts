@@ -3,8 +3,6 @@ import {
   createInitialDomains,
   digitCountOfMask,
   digitsOfMask,
-  getCarryInVariable,
-  getCarryOutVariable,
   getDomainsKey,
 } from "@/games/fukumenzan/problem/generation/column-model";
 import {
@@ -68,8 +66,8 @@ function listRules(reader: FukumenzanReader): Rule[] {
   function columnVariables(column: number): number[] {
     return [
       ...model.columnLetters[column]!,
-      getCarryInVariable(model, column),
-      getCarryOutVariable(model, column),
+      model.columns[column]!.carryInVariable,
+      model.columns[column]!.carryOutVariable,
     ];
   }
   return [

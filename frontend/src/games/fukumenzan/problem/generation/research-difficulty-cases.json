@@ -70,11 +70,22 @@
       "solution": "38291",
       "scale": "2s",
       "readingClass": "E",
-      "outcome": "classified",
-      "level": "1",
+      "outcome": "unlisted-combination",
+      "level": null,
       "readers": {
         "weakColumns": "solved",
-        "weakLightColumns": "solved"
+        "weakLightColumns": "stuck",
+        "strongLightColumns": "stuck"
+      },
+      "changedBy": ["top-carry"],
+      "research": {
+        "readingClass": "E",
+        "outcome": "classified",
+        "level": "1",
+        "readers": {
+          "weakColumns": "solved",
+          "weakLightColumns": "solved"
+        }
       }
     },
     {
@@ -96,11 +107,22 @@
       "solution": "61842",
       "scale": "2s",
       "readingClass": "E",
-      "outcome": "classified",
-      "level": "1",
+      "outcome": "margin",
+      "level": null,
       "readers": {
         "weakColumns": "solved",
-        "weakLightColumns": "solved"
+        "weakLightColumns": "stuck",
+        "strongLightColumns": "solved"
+      },
+      "changedBy": ["top-carry"],
+      "research": {
+        "readingClass": "E",
+        "outcome": "classified",
+        "level": "1",
+        "readers": {
+          "weakColumns": "solved",
+          "weakLightColumns": "solved"
+        }
       }
     },
     {
@@ -383,14 +405,25 @@
       "equation": "YYPC+AEAA+YYYM=AMEEP",
       "solution": "530192",
       "scale": "3s",
-      "readingClass": "mH",
-      "outcome": "margin",
-      "level": null,
+      "readingClass": "H1",
+      "outcome": "classified",
+      "level": "3",
       "readers": {
         "weakColumns": "stuck",
         "strongColumns": "stuck",
-        "weakPairs": "stuck",
-        "strongCombined": "solved"
+        "weakPairs": "solved"
+      },
+      "changedBy": ["cancelled-letters"],
+      "research": {
+        "readingClass": "mH",
+        "outcome": "margin",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "solved"
+        }
       }
     },
     {
@@ -398,7 +431,7 @@
       "solution": "367459801",
       "scale": "3l",
       "readingClass": "H2",
-      "outcome": "split-limit",
+      "outcome": "unsupported",
       "level": null,
       "readers": {
         "weakColumns": "stuck",
@@ -406,7 +439,21 @@
         "weakPairs": "stuck",
         "strongCombined": "stuck",
         "strongEquations": "stuck",
-        "splitsByClosure": "exceeded"
+        "splitsByClosure": "stalled"
+      },
+      "changedBy": ["cancelled-letters"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "split-limit",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": "exceeded"
+        }
       }
     },
     {
@@ -425,7 +472,7 @@
       "solution": "624713098",
       "scale": "3l",
       "readingClass": "H2",
-      "outcome": "split-limit",
+      "outcome": "unsupported",
       "level": null,
       "readers": {
         "weakColumns": "stuck",
@@ -433,7 +480,21 @@
         "weakPairs": "stuck",
         "strongCombined": "stuck",
         "strongEquations": "stuck",
-        "splitsByClosure": "exceeded"
+        "splitsByClosure": "stalled"
+      },
+      "changedBy": ["top-carry"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "split-limit",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": "exceeded"
+        }
       }
     },
     {
@@ -639,8 +700,8 @@
       "equation": "WJWTT+JJCJF+JCDN=DFJNCD",
       "scale": "3l",
       "readingClass": "H2",
-      "outcome": "split-limit",
-      "level": null,
+      "outcome": "classified",
+      "level": "5",
       "readers": {
         "weakColumns": "stuck",
         "strongColumns": "stuck",
@@ -648,7 +709,22 @@
         "strongCombined": "stuck",
         "strongEquations": "stuck",
         "splitsByClosure": 2,
-        "splitsBySteps": "exceeded"
+        "splitsBySteps": 2
+      },
+      "changedBy": ["top-carry"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "split-limit",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": 2,
+          "splitsBySteps": "exceeded"
+        }
       }
     },
     {
@@ -749,7 +825,22 @@
         "weakPairs": "stuck",
         "strongCombined": "stuck",
         "strongEquations": "stuck",
-        "splitsByClosure": "exceeded"
+        "splitsByClosure": 2,
+        "splitsBySteps": "exceeded"
+      },
+      "changedBy": ["top-carry"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "split-limit",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": "exceeded"
+        }
       }
     },
     {
@@ -769,24 +860,45 @@
       "equation": "NNV+UFN+NTT=NFVT",
       "scale": "3s",
       "readingClass": "E",
-      "outcome": "classified",
-      "level": "2",
-      "readers": {
-        "weakColumns": "solved",
-        "weakLightColumns": "stuck",
-        "strongLightColumns": "stuck"
-      }
-    },
-    {
-      "equation": "NHW+NGN+GWG=NTWG",
-      "scale": "3s",
-      "readingClass": "E",
       "outcome": "margin",
       "level": null,
       "readers": {
         "weakColumns": "solved",
         "weakLightColumns": "stuck",
         "strongLightColumns": "solved"
+      },
+      "changedBy": ["top-carry"],
+      "research": {
+        "readingClass": "E",
+        "outcome": "classified",
+        "level": "2",
+        "readers": {
+          "weakColumns": "solved",
+          "weakLightColumns": "stuck",
+          "strongLightColumns": "stuck"
+        }
+      }
+    },
+    {
+      "equation": "NHW+NGN+GWG=NTWG",
+      "scale": "3s",
+      "readingClass": "E",
+      "outcome": "unlisted-combination",
+      "level": null,
+      "readers": {
+        "weakColumns": "solved",
+        "weakLightColumns": "solved"
+      },
+      "changedBy": ["top-carry"],
+      "research": {
+        "readingClass": "E",
+        "outcome": "margin",
+        "level": null,
+        "readers": {
+          "weakColumns": "solved",
+          "weakLightColumns": "stuck",
+          "strongLightColumns": "solved"
+        }
       }
     },
     {
@@ -810,22 +922,6 @@
       "scale": "3l",
       "readingClass": "H2",
       "outcome": "classified",
-      "level": "4",
-      "readers": {
-        "weakColumns": "stuck",
-        "strongColumns": "stuck",
-        "weakPairs": "stuck",
-        "strongCombined": "stuck",
-        "strongEquations": "stuck",
-        "splitsByClosure": 1,
-        "splitsBySteps": 1
-      }
-    },
-    {
-      "equation": "KBBKC+EAWKB+WWKT=AACEBC",
-      "scale": "3l",
-      "readingClass": "H2",
-      "outcome": "classified",
       "level": "5",
       "readers": {
         "weakColumns": "stuck",
@@ -835,6 +931,52 @@
         "strongEquations": "stuck",
         "splitsByClosure": 2,
         "splitsBySteps": 2
+      },
+      "changedBy": ["top-carry"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "classified",
+        "level": "4",
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": 1,
+          "splitsBySteps": 1
+        }
+      }
+    },
+    {
+      "equation": "KBBKC+EAWKB+WWKT=AACEBC",
+      "scale": "3l",
+      "readingClass": "H2",
+      "outcome": "classified",
+      "level": "4",
+      "readers": {
+        "weakColumns": "stuck",
+        "strongColumns": "stuck",
+        "weakPairs": "stuck",
+        "strongCombined": "stuck",
+        "strongEquations": "stuck",
+        "splitsByClosure": 1,
+        "splitsBySteps": 1
+      },
+      "changedBy": ["cancelled-letters"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "classified",
+        "level": "5",
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": 2,
+          "splitsBySteps": 2
+        }
       }
     },
     {
@@ -1053,13 +1195,25 @@
     "uniquePatternCount": 2283,
     "problemCount": 1150,
     "levels": {
-      "none": 506,
-      "1": 644
+      "1": 571,
+      "none": 579
     },
     "levelOneLetterCounts": {
-      "5": 642,
+      "5": 569,
       "6": 2
     },
-    "levelOneWithoutNearCount": 222
+    "levelOneWithoutNearCount": 201,
+    "changedBy": ["top-carry", "cancelled-letters"],
+    "research": {
+      "levels": {
+        "none": 506,
+        "1": 644
+      },
+      "levelOneLetterCounts": {
+        "5": 642,
+        "6": 2
+      },
+      "levelOneWithoutNearCount": 222
+    }
   }
 }

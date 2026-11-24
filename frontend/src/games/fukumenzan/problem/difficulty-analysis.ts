@@ -36,17 +36,18 @@ export type FukumenzanReaderOutcome = "solved" | "stuck";
 
 /**
  * 読み手の族の端の結果。どの読み手も、要るときだけ安い順に当てるので、当てなかった読み手は持たない。
+ * どの読み手も、答えの先頭の文字を最上位の桁の左への繰り上がりとして読み、決まっていない文字と組は両辺で消える文字を除いて数える。
  * - `weakColumns`: 1桁ずつの読みの弱い端。1桁は組4まで書き出し、決まっていない文字が3つ以上で組の多い桁は和の大きさだけで読む。
  *   表は決まった数字を消すだけ。
  * - `strongColumns`: 1桁ずつの読みの強い端。1桁は組を全部書き出し、表の隠れた1つと組の消去も使う。
  * - `weakPairs`: まとめる読みの弱い端。`weakColumns` に、隣の2桁のまとめ（つないだ組8まで、かつ探す手間50まで）を足す。
- *   探す手間は、2桁それぞれの組の数（両辺で消える文字を除く）の積。
+ *   探す手間は、2桁それぞれの組の数の積。
  * - `strongCombined`: まとめる読みの強い端。`strongColumns` に、隣の2桁（積200まで、多ければつないだ組50まで）・共通の文字を
- *   持つ隣でない2桁（組50まで）・隣の3桁（組12まで）のまとめを、消える文字を除いて数えて足す。
+ *   持つ隣でない2桁（組50まで）・隣の3桁（組12まで）のまとめを足す。
  * - `strongEquations`: `strongCombined` に、2桁・3桁・全部の桁を桁の重みでまとめた式と、共通の文字を持つ2桁の式の差の読み
  *   （決まっていない変数3つまでは書き出し、多ければ和の大きさ）を足す。
- * - `weakLightColumns`・`strongLightColumns`: 書き出しの多い桁を読まない1桁ずつの読み。両辺で消える文字を除いて、決まって
- *   いない文字が3つ以上で組が4（強い端は12）より多い桁を読まない。強い端は隠れた1つと組の消去も使う。
+ * - `weakLightColumns`・`strongLightColumns`: 書き出しの多い桁を読まない1桁ずつの読み。決まっていない文字が3つ以上で組が4
+ *   （強い端は12）より多い桁を読まない。強い端は隠れた1つと組の消去も使う。
  * - `splitsByClosure`: `weakPairs` から探す手間の上限を外した読み手が、枝を閉包で読む場合分けの回数。
  * - `splitsBySteps`: 同じ読み手が、枝を人の手18手まで追う場合分けの回数。
  */
@@ -127,7 +128,6 @@ const weakColumnsSettings = {
   column: { kind: "bounds-when-many", tupleLimit: 4 },
   hiddenSingles: false,
   nakedSubsets: false,
-  excludesCancelledLetters: false,
 } as const satisfies FukumenzanReaderSettings;
 
 const strongColumnsSettings = {
@@ -135,7 +135,6 @@ const strongColumnsSettings = {
   column: { kind: "all-tuples" },
   hiddenSingles: true,
   nakedSubsets: true,
-  excludesCancelledLetters: false,
 } as const satisfies FukumenzanReaderSettings;
 
 const weakPairsWithoutProductLimitSettings = {
@@ -157,7 +156,6 @@ const strongCombinedSettings = {
   },
   adjacentTriples: { kind: "joined", cap: 12 },
   sharedLetterPairs: { kind: "joined", cap: 50 },
-  excludesCancelledLetters: true,
 } as const satisfies FukumenzanReaderSettings;
 
 const strongEquationsSettings = {
@@ -175,7 +173,6 @@ const weakLightColumnsSettings = {
   column: { kind: "skip-when-many", tupleLimit: 4 },
   hiddenSingles: false,
   nakedSubsets: false,
-  excludesCancelledLetters: false,
 } as const satisfies FukumenzanReaderSettings;
 
 const strongLightColumnsSettings = {
@@ -183,7 +180,6 @@ const strongLightColumnsSettings = {
   column: { kind: "skip-when-many", tupleLimit: 12 },
   hiddenSingles: true,
   nakedSubsets: true,
-  excludesCancelledLetters: false,
 } as const satisfies FukumenzanReaderSettings;
 
 export function getFukumenzanScale(
