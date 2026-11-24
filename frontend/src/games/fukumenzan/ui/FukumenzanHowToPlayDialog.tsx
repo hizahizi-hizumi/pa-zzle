@@ -108,7 +108,7 @@ function renderOperation(text: string, example: FukumenzanHowToPlayExample) {
 const menuOperations: readonly HowToPlayMenuOperation[] = [
   {
     item: playMenuOperationItems.restart,
-    text: `札と×を/全部/外して/最初の式に/戻します。/時間と/「${undo}」の回数は/そのまま/続きます。`,
+    text: `札と×を/全部外して/最初の式に戻します。/時間と/「${undo}」の回数は/そのまま続きます。`,
   },
   {
     item: playMenuOperationItems.startNewProblem,
@@ -123,7 +123,7 @@ const scoreItems = Object.entries(FUKUMENZAN_SCORE_MAXIMUMS) as [
 ][];
 
 const scoreLeads = {
-  speed: "問題ごとの基準時間以内なら/満点です。/超えると/点が/下がります。",
+  speed: `問題ごとの/基準時間以内なら/満点です。/超えると/下がり/基準時間の/${FUKUMENZAN_SPEED_ZERO_SCORE_RATIO}倍で/0点に/なります。`,
 } as const satisfies Record<keyof typeof FUKUMENZAN_SCORE_MAXIMUMS, string>;
 
 /**
@@ -226,7 +226,7 @@ export function FukumenzanHowToPlayDialog({
                 </span>
               }
               text={`「${undo}」を/押すと/最後に/動かした札か/付け外しした×が/元に/戻ります。`}
-              note={`時間は/そのまま/進み/「${undo}」の回数が/増えます。`}
+              note={`時間は/そのまま/進み/「${undo}」の回数が/増えます。/「${restart}」より/前の手には/戻れません。`}
             />
             <HowToPlayMenuOperations operations={menuOperations} />
           </HowToPlaySection>
@@ -244,11 +244,7 @@ export function FukumenzanHowToPlayDialog({
             text="文字の種類が/多く/式の長い問題ほど/長く/なります。"
           />
           <HowToPlayScoreRow
-            measure="0点になる時間"
-            text={`基準時間の${FUKUMENZAN_SPEED_ZERO_SCORE_RATIO}倍です。`}
-          />
-          <HowToPlayScoreRow
-            measure={`「${undo}」・/「${restart}」・/札の入れ直し・/×の付け外し`}
+            measure={`「${undo}」・「${restart}」と/札の入れ直し・×の付け外し`}
             text="何回/しても/点は/下がりません。"
           />
         </HowToPlaySection>
