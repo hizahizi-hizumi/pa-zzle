@@ -24,17 +24,19 @@ type HowToPlayMenuOperationsProps = {
 /**
  * メニューの面の中の、項目のアイコンと文の2列。面の内側の左右の余白（`p-1`）の分だけアイコンの列を狭め、間を広げて、
  * アイコンの中央と文の書き出しを、面の外の操作の行（`howToPlayOperationColumnsClassName`）にそろえる。
- * 文の右には、面の内側の余白と合わせて 16px を空け、文の行末を面の縁に寄せない。
+ * 文の右には、面の内側の余白と合わせて 12px を空け、文の行末を面の縁に寄せない。幅 320px の画面でも、数えるものを並べた文節
+ * （「時間・ミス・」「「待った」の回数は」など）が1行に並ぶ幅を残す。
  */
 const menuItemColumnsClassName =
-  "grid grid-cols-[--spacing(10)_minmax(0,1fr)] gap-x-5 pr-3";
+  "grid grid-cols-[--spacing(10)_minmax(0,1fr)] gap-x-5 pr-2";
 
 /**
  * プレイ中の「…」メニューから使う操作の一覧。本番の「…」ボタンと、その下に開くメニューの面1枚を、
  * 押しても何も起きない静止の図で描き、面の中に項目ごとの名前と説明を並べる。
- * 「…」ボタンの右には、本番のボタンが画面のどこにあるかと、そこから選ぶことを一文で言う。
+ * 「…」ボタンの右には、本番のボタンが画面のどこにあるかと、そこから選ぶことを、幅 320px の画面でも1行に収まる一文で言う。
  * 項目の名前は本番と同じアイコンと色（取り消しの色を含む）で示し、遊び方の文字の段に合わせて太字の本文にする。
  * 説明は普通の太さの本文にする。「…」ボタン・項目のアイコン・名前と説明の書き出しは、待ったの行と同じ2列にそろえる。
+ * 説明の終わりの短い文節は `HowToPlayPhrases` がまとめるかを決めるので、書体の組み方（`text-wrap: pretty`）で行を詰め直さない。
  */
 export function HowToPlayMenuOperations({
   operations,
@@ -49,7 +51,7 @@ export function HowToPlayMenuOperations({
           </Button>
         </span>
         <p className="text-body">
-          <HowToPlayPhrases text="画面の右上の「…」から/選べます。" />
+          <HowToPlayPhrases text="右上の「…」から/選べます。" />
         </p>
       </div>
       <DropdownMenuStaticSurface>
@@ -79,7 +81,7 @@ export function HowToPlayMenuOperations({
                 {item.label}
               </span>
               <span className="sr-only">：</span>
-              <span className="block text-supporting">
+              <span className="block text-wrap text-supporting">
                 <HowToPlayPhrases text={text} avoidShortLastLine />
               </span>
               {note ? (

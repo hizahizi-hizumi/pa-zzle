@@ -90,7 +90,7 @@ describe("HowToPlayMenuOperations", () => {
       .map((paragraph) => paragraph.textContent);
 
     expect(texts).toEqual([
-      "画面の右上の「…」から選べます。",
+      "右上の「…」から選べます。",
       "盤面を戻す：戻す。",
       "リセット：やり直す。",
       "別の問題：変える。",

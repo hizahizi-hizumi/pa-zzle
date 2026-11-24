@@ -1,10 +1,12 @@
-import type { CSSProperties } from "react";
+import { type CSSProperties, useLayoutEffect, useRef, useState } from "react";
 
 type HowToPlayPhrasesProps = {
   /** 文。`/` で区切った文節の間でだけ折り返す。`/` は描かない。 */
   text: string;
   /**
    * 最後の行に短い文節だけが残らないよう（「やり直します。」だけの行など）、文の終わりの短い文節を前の文節とまとめて折り返さないか。
+   * まとめた文節が次の行へ送られ、前の行が文の列の幅の8割に届かずに折れるときは、まとめない。
+   * 渡すときは、文節を並べる要素の組み方を `text-wrap: wrap` にし、書体の組み方で行を詰め直させない。
    * 渡さなければ、どの文節の間でも折り返せる。
    */
   avoidShortLastLine?: boolean;
@@ -16,6 +18,9 @@ type HowToPlayPhrasesProps = {
  */
 const SHORT_LAST_LINE_CHARS = 8;
 const BOUND_PHRASE_MAX_CHARS = 14;
+
+/** まとめた文節の前の行が、文の列の幅のこの割合より短く折れるなら、まとめない。 */
+const MIN_PREVIOUS_LINE_RATIO = 0.8;
 
 /**
  * 始め括弧の字形の左の空き（em）から、ほかの字の左の空き（約 0.06em）を除いた幅。
@@ -62,6 +67,32 @@ function bindLastPhrases(phrases: readonly string[]): string[] {
 }
 
 /**
+ * まとめた文節（`bound`）が前の文節と別の行に送られ、前の行が文の列（文節を並べる要素の内側）の幅の
+ * `MIN_PREVIOUS_LINE_RATIO` に届かずに折れているか。
+ */
+function leavesShortPreviousLine(bound: HTMLElement): boolean {
+  const previous = bound.previousElementSibling;
+  const column = bound.parentElement;
+  if (
+    !(previous instanceof HTMLElement) ||
+    column === null ||
+    bound.offsetTop <= previous.offsetTop
+  ) {
+    return false;
+  }
+  const style = getComputedStyle(column);
+  const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
+  const paddingRight = Number.parseFloat(style.paddingRight) || 0;
+  const left =
+    column.getBoundingClientRect().left + column.clientLeft + paddingLeft;
+  const width = column.clientWidth - paddingLeft - paddingRight;
+  return (
+    previous.getBoundingClientRect().right - left <
+    width * MIN_PREVIOUS_LINE_RATIO
+  );
+}
+
+/**
  * 文を、区切った文節の途中で折り返さないよう、文節ごとにまとめて描く。
  * 幅に余裕があれば1行に並び、足りなければ文節の切れ目で折り返す。
  * 始め括弧で始まる文節は、括弧の左の空きを詰めて、行の頭でも括弧を本文の列にそろえる。
@@ -73,7 +104,44 @@ export function HowToPlayPhrases({
   avoidShortLastLine = false,
 }: HowToPlayPhrasesProps) {
   const split = text.split("/");
-  const phrases = avoidShortLastLine ? bindLastPhrases(split) : split;
+  const bound = avoidShortLastLine ? bindLastPhrases(split) : split;
+  const binds = bound.length < split.length;
+  // まとめると前の行が短くなった文。文の列の幅が変わるまで、その文はまとめずに描く。
+  const [unboundText, setUnboundText] = useState<string | null>(null);
+  const unbinds = unboundText === text;
+  const lastRef = useRef<HTMLSpanElement>(null);
+  const phrases = binds && !unbinds ? bound : split;
+
+  // 行の折れ方は描いた後にしか分からないので、まとめて描いた行を測り、前の行が短くなっていれば、まとめずに描き直す。
+  // 文の列の幅が変わったら、まとめて描き直して測り直す。
+  useLayoutEffect(() => {
+    const last = lastRef.current;
+    const column = last?.parentElement;
+    if (!binds || last === null || column === null || column === undefined) {
+      return;
+    }
+    if (!unbinds && leavesShortPreviousLine(last)) {
+      setUnboundText(text);
+      return;
+    }
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const width = column.clientWidth;
+    const resizes = new ResizeObserver(() => {
+      if (column.clientWidth === width) {
+        return;
+      }
+      if (unbinds) {
+        setUnboundText(null);
+      } else if (leavesShortPreviousLine(last)) {
+        setUnboundText(text);
+      }
+    });
+    resizes.observe(column);
+    return () => resizes.disconnect();
+  }, [binds, text, unbinds]);
+
   return phrases.map((phrase, index) => {
     const indent = findOpeningBracketIndent(phrase);
     const nextIndent = findOpeningBracketIndent(phrases[index + 1]);
@@ -87,6 +155,7 @@ export function HowToPlayPhrases({
       <span
         // biome-ignore lint/suspicious/noArrayIndexKey: 文節は文の中の並び順そのものが識別になる
         key={index}
+        ref={index === phrases.length - 1 ? lastRef : undefined}
         className="inline-block"
         style={indent === null && nextIndent === null ? undefined : style}
       >

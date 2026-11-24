@@ -16,6 +16,7 @@ type HowToPlayScoreRowProps = {
 /**
  * 採点の項目1つ。名前と点への効き方を太字の本文で1行に並べ、名前を見出しのように拾えるようにする。
  * 何を数えるかの文は、項目の見出しの下の一文と同じ普通の太さの本文にし、数え方を見出しの一文より小さく組まない。
+ * 文の終わりの短い文節は `HowToPlayPhrases` がまとめるかを決めるので、書体の組み方（`text-wrap: pretty`）で行を詰め直さない。
  */
 export function HowToPlayScoreRow({
   measure,
@@ -38,7 +39,7 @@ export function HowToPlayScoreRow({
         ) : null}
       </p>
       {text ? (
-        <p className="mt-1 text-body">
+        <p className="mt-1 text-wrap text-body">
           <HowToPlayPhrases text={text} avoidShortLastLine />
         </p>
       ) : null}

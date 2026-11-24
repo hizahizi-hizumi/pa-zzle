@@ -108,3 +108,69 @@ describe("HowToPlayPhrases で最後の行に短い文節だけを残さない�
     expect(phrases).toEqual(expected);
   });
 });
+
+describe("HowToPlayPhrases で終わりの文節をまとめた塊が次の行へ送られる場合", () => {
+  const text =
+    "外周の数字とピースが多くて/解く手間の/かかる問題ほど/長くなります。";
+
+  /**
+   * 文の列（幅 224px）の中で、まとめた塊を3行目に、その前の文節を2行目に描いたときの矩形を返す。
+   * 前の文節の右端は `previousRight`（px）にする。
+   */
+  function mockLines(previousRight: number) {
+    vi.spyOn(HTMLElement.prototype, "offsetTop", "get").mockImplementation(
+      function getTop(this: HTMLElement) {
+        const tops: Record<string, number> = {
+          解く手間の: 24,
+          "かかる問題ほど長くなります。": 48,
+        };
+        return tops[this.textContent ?? ""] ?? 0;
+      },
+    );
+    vi.spyOn(Element.prototype, "clientWidth", "get").mockReturnValue(224);
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      function getRect(this: Element) {
+        return this.textContent === "解く手間の"
+          ? new DOMRect(0, 24, previousRight, 24)
+          : new DOMRect(0, 0, 224, 72);
+      },
+    );
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test.each([
+    [
+      "前の行が列の幅の8割に届かずに折れるときは、まとめないこと",
+      80,
+      [
+        "外周の数字とピースが多くて",
+        "解く手間の",
+        "かかる問題ほど",
+        "長くなります。",
+      ],
+    ],
+    [
+      "前の行が列の幅の8割より長いときは、まとめたままにすること",
+      200,
+      [
+        "外周の数字とピースが多くて",
+        "解く手間の",
+        "かかる問題ほど長くなります。",
+      ],
+    ],
+  ])("%s", (_, previousRight, expected) => {
+    mockLines(previousRight);
+    const { container } = render(
+      <p>
+        <HowToPlayPhrases text={text} avoidShortLastLine />
+      </p>,
+    );
+
+    const phrases = listPhrases(container).map((phrase) => phrase.textContent);
+
+    expect(phrases).toEqual(expected);
+  });
+});

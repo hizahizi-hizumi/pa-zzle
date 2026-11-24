@@ -44,7 +44,8 @@ type HowToPlayFlowFiguresProps<Frame> = {
 
 /**
  * 採点の数え方を、操作の流れで見せる押せない図。触れる例の地の面（`HowToPlayExamplePanel`）と見分けられるよう、地を敷かずに
- * 縁の線で囲んだ面に、流れを縦に並べる。面の余白は触れる例の面と同じにする。押す所の手がかりや指のアイコンは付けない。
+ * 縁の線で囲んだ面に、流れを縦に並べる。面の大きさと内側の幅は触れる例の面と同じにし、縁の線の幅だけ余白を狭める。
+ * 押す所の手がかりや指のアイコンは付けない。
  * コマの盤面の大きさは、ゲームが図を置く所で CSS 変数として決め、コマはそれを読む。
  * どの流れも、操作の前から後までの姿を左から順に並べ、間に操作の名前を添えた矢印を、盤面の高さの中央（または、ゲームが渡した
  * 操作したマスの高さ）にそろえて置く。
@@ -88,7 +89,7 @@ export function HowToPlayFlowFigures<Frame>({
   const spanAllColumns = { gridColumn: `span ${columnCount}` };
   const captionColumns = { gridColumn: `1 / span ${columnCount}` };
   return (
-    <div className="rounded-lg border px-4 py-8">
+    <div className="rounded-lg border-(length:--border-width-normal) px-[calc(--spacing(4)-var(--border-width-normal))] py-[calc(--spacing(8)-var(--border-width-normal))]">
       {/* コマの大きさを面の内側の幅に合わせて決められるよう、余白の内側をコンテナにする。 */}
       <div className="@container">
         <div
