@@ -7,6 +7,7 @@ import {
 import { parseDifficultyLevel } from "@/games/difficulty";
 import {
   assessShuttleParkingDifficulty,
+  SHUTTLE_PARKING_ANALYSIS_LEVEL_WEIGHTS,
   SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION,
   type ShuttleParkingDifficulty,
   type ShuttleParkingDifficultyAssessment,
@@ -73,6 +74,7 @@ export function createShuttleParkingDiagnosticSnapshot(input: {
 }): ShuttleParkingDiagnosticSnapshot {
   const difficultyAnalysis = analyzeShuttleParkingDifficulty(
     restoreShuttleParkingProblem(input.problemIdentity).problem,
+    SHUTTLE_PARKING_ANALYSIS_LEVEL_WEIGHTS,
   );
   return {
     ...createInternalDiagnosticSnapshot(shuttleParkingDiagnosticFormat, input),

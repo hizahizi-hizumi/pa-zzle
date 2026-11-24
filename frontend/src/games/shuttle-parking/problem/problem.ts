@@ -3,7 +3,6 @@ import {
   type RecordedProblemIdentity,
 } from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
-import { countShuttleParkingStates } from "@/games/shuttle-parking/puzzle/clearability";
 import {
   SHUTTLE_PARKING_SIDES,
   type ShuttleParkingCapacity,
@@ -86,7 +85,6 @@ export function assertShuttleParkingProblem(
     );
   }
   assertShuttleParkingPuzzle(problem);
-  countShuttleParkingStates(problem);
 }
 
 function encodeCar(car: ShuttleParkingCar): string {

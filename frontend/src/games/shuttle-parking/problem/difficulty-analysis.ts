@@ -48,14 +48,18 @@ export type ShuttleParkingDifficultyFeatures = {
   };
 };
 
-/** 素朴な規則と読む人で上限を確かめるレベルと、その罠の重さの下限。 */
-export const SHUTTLE_PARKING_UPPER_LEVEL_MINIMUM_WEIGHTS = {
-  "3": 5,
-  "4": 8,
-  "5": 10,
-} as const;
-export type ShuttleParkingUpperLevel =
-  keyof typeof SHUTTLE_PARKING_UPPER_LEVEL_MINIMUM_WEIGHTS;
+/** 素朴な規則と読む人で上限を確かめるレベル。 */
+export type ShuttleParkingUpperLevel = "3" | "4" | "5";
+
+/**
+ * 分析が使うレベルの境目。正本は `difficulty.ts` で、分析は引数で受け取る。
+ * - `upperLevelMinimumWeights`: Lv3〜5 の罠の重さの下限。読む人はそれより1人少なく読む。
+ * - `decisionThresholds`: 判断の回数を数える重さの段（記録だけ）。
+ */
+export type ShuttleParkingAnalysisLevelWeights = {
+  upperLevelMinimumWeights: Readonly<Record<ShuttleParkingUpperLevel, number>>;
+  decisionThresholds: readonly number[];
+};
 
 /**
  * - `analyzed`: 特徴を測れた。
@@ -82,6 +86,10 @@ function measureRules(
 
 export function analyzeShuttleParkingDifficulty(
   problem: ShuttleParkingProblem,
+  {
+    upperLevelMinimumWeights,
+    decisionThresholds,
+  }: ShuttleParkingAnalysisLevelWeights,
 ): ShuttleParkingDifficultyAnalysis {
   const minimumBayCount = findShuttleParkingMinimumBays(problem);
   if (minimumBayCount !== problem.bayCount) {
@@ -118,25 +126,29 @@ export function analyzeShuttleParkingDifficulty(
         measureShuttleParkingRuleBestWinProbability,
       ),
       naiveReader: Object.fromEntries(
-        Object.entries(SHUTTLE_PARKING_UPPER_LEVEL_MINIMUM_WEIGHTS).map(
-          ([level, minimum]) => [
-            level,
-            roundProbability(
-              measureShuttleParkingNaiveReaderWinProbability(game, minimum - 1),
-            ),
-          ],
-        ),
+        Object.entries(upperLevelMinimumWeights).map(([level, minimum]) => [
+          level,
+          roundProbability(
+            measureShuttleParkingNaiveReaderWinProbability(game, minimum - 1),
+          ),
+        ]),
       ) as Record<ShuttleParkingUpperLevel, number>,
       decisions: {
         best: countShuttleParkingDecisions(
           best,
           SHUTTLE_PARKING_HEAD_FIRST_WIDEN,
+          decisionThresholds,
         ),
         continuation: countShuttleParkingDecisions(
           continuation,
           SHUTTLE_PARKING_HEAD_FIRST_WIDEN,
+          decisionThresholds,
         ),
-        window: countShuttleParkingDecisions(window, windowWiden),
+        window: countShuttleParkingDecisions(
+          window,
+          windowWiden,
+          decisionThresholds,
+        ),
       },
     },
   };

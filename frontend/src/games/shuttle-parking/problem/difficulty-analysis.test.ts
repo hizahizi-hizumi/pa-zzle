@@ -1,5 +1,6 @@
 import {
   assessShuttleParkingDifficulty,
+  SHUTTLE_PARKING_ANALYSIS_LEVEL_WEIGHTS,
   SHUTTLE_PARKING_CLASSIFICATION_RULES,
   type ShuttleParkingUnsupportedReason,
 } from "@/games/shuttle-parking/difficulty";
@@ -74,6 +75,7 @@ describe("analyzeShuttleParkingDifficulty", () => {
   )("%s の場合", (_, problem) => {
     const analysis = analyzeShuttleParkingDifficulty(
       toProblem(problem, problem.minimumBayCount),
+      SHUTTLE_PARKING_ANALYSIS_LEVEL_WEIGHTS,
     );
     const features = analysis.status === "analyzed" ? analysis.features : null;
 
@@ -123,6 +125,7 @@ describe("assessShuttleParkingDifficulty", () => {
     const moved = analyzedProblems.flatMap((problem) => {
       const analysis = analyzeShuttleParkingDifficulty(
         toProblem(problem, problem.minimumBayCount),
+        SHUTTLE_PARKING_ANALYSIS_LEVEL_WEIGHTS,
       );
       const research = assessShuttleParkingDifficulty(analysis, researchRules);
       const product = assessShuttleParkingDifficulty(

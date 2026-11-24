@@ -10,6 +10,7 @@ import path from "node:path";
 import { difficultyLevels } from "@/games/difficulty";
 import {
   assessShuttleParkingDifficulty,
+  SHUTTLE_PARKING_ANALYSIS_LEVEL_WEIGHTS,
   SHUTTLE_PARKING_CLASSIFICATION_RULES,
   SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION,
   type ShuttleParkingDifficulty,
@@ -53,6 +54,7 @@ import {
   restoreShuttleParkingSeed,
   type ShuttleParkingProblemPool,
 } from "@/games/shuttle-parking/problem/problem-pool";
+import { countShuttleParkingStates } from "@/games/shuttle-parking/puzzle/clearability";
 
 function formatUsage(): string {
   return `Usage: bun run generate:shuttle-parking-pool -- [options]
@@ -168,7 +170,10 @@ function analyzeCandidate(comboIndex: number, index: number): CandidateResult {
       features: null,
     };
   }
-  const analysis = analyzeShuttleParkingDifficulty(problem);
+  const analysis = analyzeShuttleParkingDifficulty(
+    problem,
+    SHUTTLE_PARKING_ANALYSIS_LEVEL_WEIGHTS,
+  );
   const assessment = assessShuttleParkingDifficulty(analysis);
   const research = assessShuttleParkingDifficulty(analysis, {
     rules: SHUTTLE_PARKING_RESEARCH_RULES,
@@ -577,7 +582,10 @@ function printPoolStats(): void {
   const rows: PoolRow[] = difficultyLevels.flatMap(({ id }) =>
     pool.levels[id].map((entry) => {
       const { problem } = restoreShuttleParkingPoolEntry(entry);
-      const analysis = analyzeShuttleParkingDifficulty(problem);
+      const analysis = analyzeShuttleParkingDifficulty(
+        problem,
+        SHUTTLE_PARKING_ANALYSIS_LEVEL_WEIGHTS,
+      );
       if (analysis.status !== "analyzed") throw new Error(entry[0]);
       const { features } = analysis;
       const game = new AnalysisGame(problem);
@@ -721,7 +729,10 @@ async function verify(): Promise<void> {
       const label = `Lv${id} #${position + 1} ${seed}`;
       if (createShuttleParkingProblemSeed(problem) !== seed)
         failures.push(`${label}: 符号に戻せない`);
-      const analysis = analyzeShuttleParkingDifficulty(problem);
+      const analysis = analyzeShuttleParkingDifficulty(
+        problem,
+        SHUTTLE_PARKING_ANALYSIS_LEVEL_WEIGHTS,
+      );
       const assessment = assessShuttleParkingDifficulty(
         analysis,
         SHUTTLE_PARKING_CLASSIFICATION_RULES,
@@ -736,6 +747,11 @@ async function verify(): Promise<void> {
       }
       if (isShuttleParkingTrivial(problem))
         failures.push(`${label}: どう出しても勝つ`);
+      try {
+        countShuttleParkingStates(problem);
+      } catch {
+        failures.push(`${label}: 状態の数が上限を超える`);
+      }
       const visual = createShuttleParkingVisualKey(problem);
       const play = createShuttleParkingPlayKey(problem);
       const sameVisual = visualKeys.get(visual);

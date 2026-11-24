@@ -237,8 +237,6 @@ export class ShuttleParkingReader {
   }
 }
 
-export const SHUTTLE_PARKING_WEIGHT_THRESHOLDS = [1, 5, 8, 10] as const;
-
 /**
  * 勝ち筋の上の罠の重さ。勝ち筋 = 各局面で候補のうち勝つ手を選び続ける筋（`freePath` なら、候補の外の勝つ手も選べる）。
  * 局面の重さ = 候補のうち負ける手の重さの最大。返すのは、勝ち筋の上の重さの最大の、勝ち筋の中での最小と最大。
@@ -295,7 +293,7 @@ export type ShuttleParkingDecisionCounts = {
 export function countShuttleParkingDecisions(
   reader: ShuttleParkingReader,
   widen: readonly ShuttleParkingTier[],
-  thresholds: readonly number[] = SHUTTLE_PARKING_WEIGHT_THRESHOLDS,
+  thresholds: readonly number[],
 ): ShuttleParkingDecisionCounts {
   const { game } = reader;
   const memo = new Map<string, readonly number[]>();
