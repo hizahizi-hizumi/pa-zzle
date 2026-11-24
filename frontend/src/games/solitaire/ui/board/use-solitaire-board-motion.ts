@@ -5,10 +5,7 @@ import { solitaireSuits } from "@/games/solitaire/puzzle/card";
 import type { SolitairePile } from "@/games/solitaire/puzzle/pile-selection";
 import type { SolitaireSource } from "@/games/solitaire/puzzle/rules";
 import type { SolitaireState } from "@/games/solitaire/puzzle/state";
-import {
-  getSolitaireBoardGeometry,
-  type SolitaireBoardGeometry,
-} from "@/games/solitaire/ui/board/board-geometry";
+import type { SolitaireBoardGeometry } from "@/games/solitaire/ui/board/board-geometry";
 import {
   getSolitaireBump,
   listSolitaireMoveTravels,
@@ -61,8 +58,9 @@ type SolitaireBoardMotionOptions = {
   state: SolitaireState;
   selectedSource: SolitaireSource | null;
   operation: SolitaireOperation | null;
-  size: { width: number; height: number };
   geometry: SolitaireBoardGeometry;
+  /** 列の枚数から盤面の寸法を求める。手を打つ前の札の位置に使う。 */
+  getGeometry: (columnLengths: readonly number[]) => SolitaireBoardGeometry;
   getCardElement: (key: SolitaireCardMotionKey) => HTMLElement | undefined;
   getPileElement: (pile: SolitairePile) => HTMLElement | undefined;
   /** 置き元に選んだ札を囲む枠。札と一緒に向けて戻す。 */
@@ -89,8 +87,8 @@ export function useSolitaireBoardMotion({
   state,
   selectedSource,
   operation,
-  size,
   geometry,
+  getGeometry,
   getCardElement,
   getPileElement,
   getSelectionFrameElement,
@@ -164,12 +162,9 @@ export function useSolitaireBoardMotion({
     }
     const before = {
       state: current.stateBefore,
-      geometry: getSolitaireBoardGeometry({
-        ...size,
-        columnLengths: current.stateBefore.columns.map(
-          (column) => column.length,
-        ),
-      }),
+      geometry: getGeometry(
+        current.stateBefore.columns.map((column) => column.length),
+      ),
     };
     return listSolitaireMoveTravels(current.move, before, {
       state,

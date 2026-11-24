@@ -4,9 +4,10 @@ import {
 } from "@/games/solitaire/puzzle/state";
 import {
   getSolitaireBoardGeometry,
+  getSolitaireFixedBoardGeometry,
+  getSolitairePileSlotIndex,
   getSolitairePileTopPosition,
   getSolitaireSlotLeft,
-  getSolitaireTopRowSlotIndex,
 } from "@/games/solitaire/ui/board/board-geometry";
 
 const shortColumns = [1, 2, 3, 4, 5, 6, 7];
@@ -94,18 +95,74 @@ describe("getSolitaireSlotLeft", () => {
   });
 });
 
-describe("getSolitaireTopRowSlotIndex", () => {
-  const cases = [
-    ["山札", { pile: "stock" }, 0],
-    ["捨て札", { pile: "waste" }, 1],
-    ["♠ の組札", { pile: "foundation", suit: "spades" }, 3],
-    ["♣ の組札", { pile: "foundation", suit: "clubs" }, 6],
-  ] as const;
+describe("getSolitairePileSlotIndex", () => {
+  describe("プレイ画面の盤面の場合", () => {
+    const geometry = getSolitaireBoardGeometry({
+      width: 320,
+      height: 900,
+      columnLengths: shortColumns,
+    });
+    const cases = [
+      ["山札", { pile: "stock" }, 0],
+      ["捨て札", { pile: "waste" }, 1],
+      ["♠ の組札", { pile: "foundation", suit: "spades" }, 3],
+      ["♣ の組札", { pile: "foundation", suit: "clubs" }, 6],
+      ["列5", { pile: "column", columnIndex: 4 }, 4],
+    ] as const;
 
-  test.each(cases)("%sを7列の格子の %i 番目に置くこと", (_, pile, expected) => {
-    const slotIndex = getSolitaireTopRowSlotIndex(pile);
+    test.each(cases)("%sを格子の %i 番目に置くこと", (_, pile, expected) => {
+      const slotIndex = getSolitairePileSlotIndex(geometry, pile);
 
-    expect(slotIndex).toBe(expected);
+      expect(slotIndex).toBe(expected);
+    });
+  });
+
+  describe("並べる山を選んだ盤面の場合", () => {
+    const geometry = getSolitaireFixedBoardGeometry({
+      layout: {
+        topRow: [{ pile: "foundation", suit: "hearts" }],
+        columns: [3, 5],
+      },
+      cardWidth: 40,
+      columnCardCapacity: 3,
+    });
+    const cases = [
+      ["♥ の組札", { pile: "foundation", suit: "hearts" }, 0],
+      ["列4", { pile: "column", columnIndex: 3 }, 0],
+      ["列6", { pile: "column", columnIndex: 5 }, 1],
+      ["並べない列", { pile: "column", columnIndex: 0 }, -1],
+      ["並べない組札", { pile: "foundation", suit: "spades" }, -1],
+    ] as const;
+
+    test.each(cases)(
+      "%sを、並べた順の格子の %i 番目に置くこと",
+      (_, pile, expected) => {
+        const slotIndex = getSolitairePileSlotIndex(geometry, pile);
+
+        expect(slotIndex).toBe(expected);
+      },
+    );
+  });
+});
+
+describe("getSolitaireFixedBoardGeometry", () => {
+  test("並べる山の数の幅と、決めた枚数を詰めずに重ねる列の高さを取ること", () => {
+    const { contentWidth, columnTop, columnHeight, columnOffsets } =
+      getSolitaireFixedBoardGeometry({
+        layout: {
+          topRow: [{ pile: "foundation", suit: "hearts" }],
+          columns: [3, 5],
+        },
+        cardWidth: 40,
+        columnCardCapacity: 3,
+      });
+
+    expect({ contentWidth, columnTop }).toEqual({
+      contentWidth: 84,
+      columnTop: 64,
+    });
+    expect(columnHeight).toBeCloseTo(56 + 2 * 16.8);
+    expect(new Set(columnOffsets)).toEqual(new Set([56 * 0.3]));
   });
 });
 

@@ -1,9 +1,8 @@
 import { RotateCcw } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 
 import { useTouchTap } from "@/components/touch-tap";
 import type { SolitaireOperation } from "@/games/solitaire/play/use-solitaire-play";
-import { solitaireSuits } from "@/games/solitaire/puzzle/card";
 import {
   isSameSolitairePile,
   type SolitairePile,
@@ -14,9 +13,14 @@ import {
   type SolitaireState,
 } from "@/games/solitaire/puzzle/state";
 import {
+  getSolitaireBoardContentHeight,
   getSolitaireBoardGeometry,
+  getSolitaireFixedBoardGeometry,
+  getSolitairePileSlotIndex,
   getSolitaireSlotLeft,
-  getSolitaireTopRowSlotIndex,
+  type SolitaireBoardGeometry,
+  type SolitaireBoardLayout,
+  type SolitaireTopRowPile,
 } from "@/games/solitaire/ui/board/board-geometry";
 import {
   getSolitaireCardMotionKey,
@@ -35,6 +39,18 @@ import {
   solitaireSuitSymbols,
 } from "@/games/solitaire/ui/card-text";
 
+/**
+ * 決まった大きさの札で描く盤面（遊び方の例など）の大きさ。
+ * - `layout`: 並べる山。
+ * - `cardWidth`: 札の幅（px）。
+ * - `columnCardCapacity`: 列に取る高さ（札の枚数）。
+ */
+export type SolitaireFixedBoardSize = {
+  layout: SolitaireBoardLayout;
+  cardWidth: number;
+  columnCardCapacity: number;
+};
+
 type SolitaireBoardProps = {
   state: SolitaireState;
   selectedSource: SolitaireSource | null;
@@ -42,6 +58,10 @@ type SolitaireBoardProps = {
   interactionDisabled: boolean;
   onSelectPile: (pile: SolitairePile) => void;
   onClearAnimationComplete?: () => void;
+  /** 渡すと、盤面の大きさを測らず、その山だけをその大きさの札で描く。渡さなければ、プレイ画面と同じく測った大きさに全部の山を収める。 */
+  fixedSize?: SolitaireFixedBoardSize;
+  /** 盤面の山に重ねて描く物（遊び方の押す所の手がかりなど）。盤面の寸法から、置く所を求められる。 */
+  renderOverlay?: (geometry: SolitaireBoardGeometry) => ReactNode;
 };
 
 function getPileKey(pile: SolitairePile): string {
@@ -65,13 +85,26 @@ function describeWaste(state: SolitaireState): string {
   return `捨て札、${top === undefined ? "なし" : formatSolitaireCardName(top)}`;
 }
 
-/** 盤面の大きさを測る。測れない環境では 0 のまま。 */
-function useBoardSize() {
+function describeFoundation(
+  state: SolitaireState,
+  pile: Extract<SolitairePile, { pile: "foundation" }>,
+): string {
+  const top = getSolitaireFoundationTop(state.foundations, pile.suit);
+  return `${solitaireSuitSymbols[pile.suit]}の組札、${top === null ? "なし" : formatSolitaireCardName(top)}`;
+}
+
+function describeColumn(state: SolitaireState, columnIndex: number): string {
+  const column = state.columns[columnIndex] ?? [];
+  return `列${columnIndex + 1}、${column.length === 0 ? "空" : column.map(formatSolitaireCardName).join(" ")}`;
+}
+
+/** 盤面の大きさを測る。測れない環境と、測らない盤面では 0 のまま。 */
+function useBoardSize(measured: boolean) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   useLayoutEffect(() => {
     const element = ref.current;
-    if (!element || typeof ResizeObserver === "undefined") {
+    if (!measured || !element || typeof ResizeObserver === "undefined") {
       return;
     }
     const observer = new ResizeObserver(([entry]) => {
@@ -84,12 +117,12 @@ function useBoardSize() {
     });
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [measured]);
   return { ref, size };
 }
 
 /**
- * ソリティアの盤面。上の段に左から山札・捨て札・空き・組札4つ（マークの順）を、その下に7列を、同じ7列の格子に並べる。
+ * ソリティアの盤面。上の段に左から山札・捨て札・空き・組札4つ（マークの順）を、その下に7列を、同じ格子に並べる。
  * 山（山札・捨て札・組札・列）を押すと `onSelectPile` で知らせる。列は札の無い所を含む列の範囲全体が押す所。
  * 置き元に選んだ山は、持ち上げずに、動かせる札を枠で囲んで示す。
  */
@@ -100,26 +133,33 @@ export function SolitaireBoard({
   interactionDisabled,
   onSelectPile,
   onClearAnimationComplete,
+  fixedSize,
+  renderOverlay,
 }: SolitaireBoardProps) {
-  const { ref: boardRef, size } = useBoardSize();
+  const { ref: boardRef, size } = useBoardSize(fixedSize === undefined);
   const pileRefs = useRef(new Map<string, HTMLButtonElement>());
-  const { getTapHandlers } = useTouchTap();
-  const geometry = getSolitaireBoardGeometry({
-    width: size.width,
-    height: size.height,
-    columnLengths: state.columns.map((column) => column.length),
-  });
-  const { cardWidth, cardHeight } = geometry;
-  const contentLeft = Math.max(0, (size.width - geometry.contentWidth) / 2);
-
   const cardElements = useRef(new Map<SolitaireCardMotionKey, HTMLElement>());
   const selectionFrameRef = useRef<HTMLSpanElement>(null);
+  const { getTapHandlers } = useTouchTap();
+
+  function getGeometry(columnLengths: readonly number[]) {
+    return fixedSize === undefined
+      ? getSolitaireBoardGeometry({ ...size, columnLengths })
+      : getSolitaireFixedBoardGeometry(fixedSize);
+  }
+  const geometry = getGeometry(state.columns.map((column) => column.length));
+  const { cardWidth, cardHeight } = geometry;
+  const contentLeft =
+    fixedSize === undefined
+      ? Math.max(0, (size.width - geometry.contentWidth) / 2)
+      : 0;
+
   useSolitaireBoardMotion({
     state,
     selectedSource,
     operation,
-    size,
     geometry,
+    getGeometry,
     getCardElement: (key) => cardElements.current.get(key),
     getPileElement: (pile) => pileRefs.current.get(getPileKey(pile)),
     getSelectionFrameElement: () => selectionFrameRef.current ?? undefined,
@@ -164,174 +204,169 @@ export function SolitaireBoard({
 
   const selectionFrameStyle = getSolitaireSelectionFrameStyle(cardWidth);
 
-  const wasteTop = state.waste.at(-1);
-  const stockPile: SolitairePile = { pile: "stock" };
-  const wastePile: SolitairePile = { pile: "waste" };
+  function renderTopRowPile(pile: SolitaireTopRowPile) {
+    const style = {
+      left: getSolitaireSlotLeft(
+        geometry,
+        getSolitairePileSlotIndex(geometry, pile),
+      ),
+      top: 0,
+      width: cardWidth,
+      height: cardHeight,
+    };
+    const selectionFrame =
+      selectedSource !== null && isSameSolitairePile(selectedSource, pile) ? (
+        <span
+          ref={selectionFrameRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={selectionFrameStyle}
+        />
+      ) : null;
+    switch (pile.pile) {
+      case "stock":
+        return (
+          <button
+            key={getPileKey(pile)}
+            {...getPileProps(pile, describeStock(state))}
+            style={style}
+          >
+            {state.stock.length > 0 ? (
+              <span ref={registerCard("stock")} className="relative block">
+                <SolitaireCardBack width={cardWidth} />
+              </span>
+            ) : (
+              <SolitaireEmptySlot width={cardWidth}>
+                {state.waste.length > 0 ? (
+                  <RotateCcw
+                    style={{
+                      width: cardWidth * 0.45,
+                      height: cardWidth * 0.45,
+                    }}
+                  />
+                ) : null}
+              </SolitaireEmptySlot>
+            )}
+          </button>
+        );
+      case "waste":
+      case "foundation": {
+        const top =
+          pile.pile === "waste"
+            ? (state.waste.at(-1) ?? null)
+            : getSolitaireFoundationTop(state.foundations, pile.suit);
+        return (
+          <button
+            key={getPileKey(pile)}
+            {...getPileProps(
+              pile,
+              pile.pile === "waste"
+                ? describeWaste(state)
+                : describeFoundation(state, pile),
+            )}
+            style={style}
+          >
+            {top === null ? (
+              <SolitaireEmptySlot width={cardWidth}>
+                {pile.pile === "foundation"
+                  ? solitaireSuitSymbols[pile.suit]
+                  : null}
+              </SolitaireEmptySlot>
+            ) : (
+              <span
+                key={top}
+                ref={registerCard(getSolitaireCardMotionKey(top))}
+                className="relative block"
+              >
+                <SolitaireCardFace card={top} width={cardWidth} />
+              </span>
+            )}
+            {selectionFrame}
+          </button>
+        );
+      }
+    }
+  }
+
+  function renderColumn(columnIndex: number) {
+    const pile: SolitairePile = { pile: "column", columnIndex };
+    const column = state.columns[columnIndex] ?? [];
+    const offset = geometry.columnOffsets[columnIndex] ?? 0;
+    const selected =
+      selectedSource?.pile === "column" &&
+      selectedSource.columnIndex === columnIndex;
+    return (
+      <button
+        key={getPileKey(pile)}
+        {...getPileProps(pile, describeColumn(state, columnIndex))}
+        style={{
+          left: getSolitaireSlotLeft(
+            geometry,
+            getSolitairePileSlotIndex(geometry, pile),
+          ),
+          top: geometry.columnTop,
+          width: cardWidth,
+          height: geometry.columnHeight,
+        }}
+      >
+        {column.length === 0 ? (
+          <span className="absolute top-0 left-0">
+            <SolitaireEmptySlot width={cardWidth} />
+          </span>
+        ) : (
+          column.map((card, cardIndex) => (
+            <span
+              key={card}
+              ref={registerCard(getSolitaireCardMotionKey(card))}
+              className="absolute left-0"
+              style={{ top: cardIndex * offset }}
+            >
+              <SolitaireCardFace card={card} width={cardWidth} />
+            </span>
+          ))
+        )}
+        {selected && column.length > 0 ? (
+          <span
+            ref={selectionFrameRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute left-0"
+            style={{
+              ...selectionFrameStyle,
+              ...getSolitaireColumnSelectionFrame({
+                column,
+                offset,
+                cardHeight,
+              }),
+              width: cardWidth,
+            }}
+          />
+        ) : null}
+      </button>
+    );
+  }
 
   return (
-    <div ref={boardRef} className="relative size-full">
+    <div
+      ref={boardRef}
+      className={fixedSize === undefined ? "relative size-full" : "relative"}
+      style={
+        fixedSize === undefined
+          ? undefined
+          : {
+              width: geometry.contentWidth,
+              height: getSolitaireBoardContentHeight(geometry),
+            }
+      }
+    >
       <div
         className="absolute inset-y-0"
         style={{ left: contentLeft, width: geometry.contentWidth }}
       >
-        <button
-          {...getPileProps(stockPile, describeStock(state))}
-          style={{
-            left: getSolitaireSlotLeft(
-              geometry,
-              getSolitaireTopRowSlotIndex(stockPile),
-            ),
-            top: 0,
-            width: cardWidth,
-            height: cardHeight,
-          }}
-        >
-          {state.stock.length > 0 ? (
-            <span ref={registerCard("stock")} className="relative block">
-              <SolitaireCardBack width={cardWidth} />
-            </span>
-          ) : (
-            <SolitaireEmptySlot width={cardWidth}>
-              {state.waste.length > 0 ? (
-                <RotateCcw
-                  style={{ width: cardWidth * 0.45, height: cardWidth * 0.45 }}
-                />
-              ) : null}
-            </SolitaireEmptySlot>
-          )}
-        </button>
-        <button
-          {...getPileProps(wastePile, describeWaste(state))}
-          style={{
-            left: getSolitaireSlotLeft(
-              geometry,
-              getSolitaireTopRowSlotIndex(wastePile),
-            ),
-            top: 0,
-            width: cardWidth,
-            height: cardHeight,
-          }}
-        >
-          {wasteTop === undefined ? (
-            <SolitaireEmptySlot width={cardWidth} />
-          ) : (
-            <span
-              key={wasteTop}
-              ref={registerCard(getSolitaireCardMotionKey(wasteTop))}
-              className="relative block"
-            >
-              <SolitaireCardFace card={wasteTop} width={cardWidth} />
-            </span>
-          )}
-          {selectedSource?.pile === "waste" ? (
-            <span
-              ref={selectionFrameRef}
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0"
-              style={selectionFrameStyle}
-            />
-          ) : null}
-        </button>
-        {solitaireSuits.map((suit) => {
-          const top = getSolitaireFoundationTop(state.foundations, suit);
-          const pile: SolitairePile = { pile: "foundation", suit };
-          return (
-            <button
-              key={suit}
-              {...getPileProps(
-                pile,
-                `${solitaireSuitSymbols[suit]}の組札、${top === null ? "なし" : formatSolitaireCardName(top)}`,
-              )}
-              style={{
-                left: getSolitaireSlotLeft(
-                  geometry,
-                  getSolitaireTopRowSlotIndex(pile),
-                ),
-                top: 0,
-                width: cardWidth,
-                height: cardHeight,
-              }}
-            >
-              {top === null ? (
-                <SolitaireEmptySlot width={cardWidth}>
-                  {solitaireSuitSymbols[suit]}
-                </SolitaireEmptySlot>
-              ) : (
-                <span
-                  key={top}
-                  ref={registerCard(getSolitaireCardMotionKey(top))}
-                  className="relative block"
-                >
-                  <SolitaireCardFace card={top} width={cardWidth} />
-                </span>
-              )}
-              {selectedSource?.pile === "foundation" &&
-              selectedSource.suit === suit ? (
-                <span
-                  ref={selectionFrameRef}
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0"
-                  style={selectionFrameStyle}
-                />
-              ) : null}
-            </button>
-          );
-        })}
-        {state.columns.map((column, columnIndex) => {
-          const pile: SolitairePile = { pile: "column", columnIndex };
-          const offset = geometry.columnOffsets[columnIndex] ?? 0;
-          const selected =
-            selectedSource?.pile === "column" &&
-            selectedSource.columnIndex === columnIndex;
-          return (
-            <button
-              key={getPileKey(pile)}
-              {...getPileProps(
-                pile,
-                `列${columnIndex + 1}、${column.length === 0 ? "空" : column.map(formatSolitaireCardName).join(" ")}`,
-              )}
-              style={{
-                left: getSolitaireSlotLeft(geometry, columnIndex),
-                top: geometry.columnTop,
-                width: cardWidth,
-                height: geometry.columnHeight,
-              }}
-            >
-              {column.length === 0 ? (
-                <span className="absolute top-0 left-0">
-                  <SolitaireEmptySlot width={cardWidth} />
-                </span>
-              ) : (
-                column.map((card, cardIndex) => (
-                  <span
-                    key={card}
-                    ref={registerCard(getSolitaireCardMotionKey(card))}
-                    className="absolute left-0"
-                    style={{ top: cardIndex * offset }}
-                  >
-                    <SolitaireCardFace card={card} width={cardWidth} />
-                  </span>
-                ))
-              )}
-              {selected && column.length > 0 ? (
-                <span
-                  ref={selectionFrameRef}
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-0"
-                  style={{
-                    ...selectionFrameStyle,
-                    ...getSolitaireColumnSelectionFrame({
-                      column,
-                      offset,
-                      cardHeight,
-                    }),
-                    width: cardWidth,
-                  }}
-                />
-              ) : null}
-            </button>
-          );
-        })}
+        {geometry.layout.topRow.map((pile) =>
+          pile === null ? null : renderTopRowPile(pile),
+        )}
+        {geometry.layout.columns.map(renderColumn)}
+        {renderOverlay?.(geometry)}
       </div>
     </div>
   );

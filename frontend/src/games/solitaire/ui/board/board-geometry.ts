@@ -1,5 +1,8 @@
 import { solitaireSuits } from "@/games/solitaire/puzzle/card";
-import type { SolitairePile } from "@/games/solitaire/puzzle/pile-selection";
+import {
+  isSameSolitairePile,
+  type SolitairePile,
+} from "@/games/solitaire/puzzle/pile-selection";
 import {
   SOLITAIRE_COLUMN_COUNT,
   type SolitaireState,
@@ -16,15 +19,39 @@ export const SOLITAIRE_CARD_OFFSET_RATIO = 0.3;
 /** 縦に余裕のある画面で札を大きくしすぎないよう、この枚数の列がずらし幅を詰めずに入る大きさまでにする。 */
 const unshrunkColumnCardCount = 13;
 
+export type SolitaireTopRowPile = Exclude<SolitairePile, { pile: "column" }>;
+
 /**
- * 盤面の寸法（px）。横は上の段と列の7列の格子で、上の段は「山札・捨て札・空き・組札4つ」の順。
+ * 盤面に並べる山。上の段と列を同じ格子に左から並べる。
+ * - `topRow`: 上の段の山。`null` は空けておく枠。
+ * - `columns`: 並べる列の番号。
+ */
+export type SolitaireBoardLayout = {
+  topRow: readonly (SolitaireTopRowPile | null)[];
+  columns: readonly number[];
+};
+
+/** プレイ画面の盤面。上の段は「山札・捨て札・空き・組札4つ（`solitaireSuits` の順）」、下に7列。 */
+export const solitaireFullLayout: SolitaireBoardLayout = {
+  topRow: [
+    { pile: "stock" },
+    { pile: "waste" },
+    null,
+    ...solitaireSuits.map((suit) => ({ pile: "foundation", suit }) as const),
+  ],
+  columns: Array.from({ length: SOLITAIRE_COLUMN_COUNT }, (_, index) => index),
+};
+
+/**
+ * 盤面の寸法（px）。
  * - `cardWidth` / `cardHeight`: 札1枚の大きさ。
- * - `contentWidth`: 7列と列の間を合わせた幅。盤面の中央に置く。
- * - `columnTop`: 列の一番奥の札の上端。
+ * - `contentWidth`: 並べる山と山の間を合わせた幅。盤面の中央に置く。
+ * - `columnTop`: 列の一番奥の札の上端。上の段の無い盤面では 0。
  * - `columnHeight`: 列が使える高さ。
- * - `columnOffsets`: 列ごとの、重ねた札をずらす幅。
+ * - `columnOffsets`: 列の番号ごとの、重ねた札をずらす幅。
  */
 export type SolitaireBoardGeometry = {
+  layout: SolitaireBoardLayout;
   cardWidth: number;
   cardHeight: number;
   contentWidth: number;
@@ -33,6 +60,16 @@ export type SolitaireBoardGeometry = {
   columnOffsets: readonly number[];
 };
 
+function getSlotCount({ topRow, columns }: SolitaireBoardLayout): number {
+  return Math.max(topRow.length, columns.length);
+}
+
+function getContentWidth(layout: SolitaireBoardLayout, cardWidth: number) {
+  const slotCount = getSlotCount(layout);
+  return cardWidth * slotCount + SOLITAIRE_COLUMN_GAP_PX * (slotCount - 1);
+}
+
+/** プレイ画面の盤面の寸法。測った盤面の大きさに7列と上の段を収め、入りきらない長い列だけずらし幅を詰める。 */
 export function getSolitaireBoardGeometry({
   width,
   height,
@@ -42,11 +79,13 @@ export function getSolitaireBoardGeometry({
   height: number;
   columnLengths: readonly number[];
 }): SolitaireBoardGeometry {
+  const layout = solitaireFullLayout;
+  const slotCount = getSlotCount(layout);
   const widthLimitedCardWidth =
     (width -
       SOLITAIRE_BOARD_SIDE_PADDING_PX * 2 -
-      SOLITAIRE_COLUMN_GAP_PX * (SOLITAIRE_COLUMN_COUNT - 1)) /
-    SOLITAIRE_COLUMN_COUNT;
+      SOLITAIRE_COLUMN_GAP_PX * (slotCount - 1)) /
+    slotCount;
   const heightLimitedCardHeight =
     (height - SOLITAIRE_ROW_GAP_PX) /
     (2 + (unshrunkColumnCardCount - 1) * SOLITAIRE_CARD_OFFSET_RATIO);
@@ -64,11 +103,10 @@ export function getSolitaireBoardGeometry({
   const columnHeight = Math.max(0, height - columnTop);
   const naturalOffset = cardHeight * SOLITAIRE_CARD_OFFSET_RATIO;
   return {
+    layout,
     cardWidth,
     cardHeight,
-    contentWidth:
-      cardWidth * SOLITAIRE_COLUMN_COUNT +
-      SOLITAIRE_COLUMN_GAP_PX * (SOLITAIRE_COLUMN_COUNT - 1),
+    contentWidth: getContentWidth(layout, cardWidth),
     columnTop,
     columnHeight,
     columnOffsets: columnLengths.map((length) =>
@@ -82,7 +120,44 @@ export function getSolitaireBoardGeometry({
   };
 }
 
-/** 7列の格子で、左から `slotIndex` 番目（0始まり）の札の左端。 */
+/**
+ * 決まった大きさの札で描く盤面（遊び方の例など）の寸法。どの列も詰めずに重ね、列には `columnCardCapacity` 枚が入る高さを取る。
+ */
+export function getSolitaireFixedBoardGeometry({
+  layout,
+  cardWidth,
+  columnCardCapacity,
+}: {
+  layout: SolitaireBoardLayout;
+  cardWidth: number;
+  columnCardCapacity: number;
+}): SolitaireBoardGeometry {
+  const cardHeight = cardWidth * SOLITAIRE_CARD_ASPECT_RATIO;
+  const offset = cardHeight * SOLITAIRE_CARD_OFFSET_RATIO;
+  return {
+    layout,
+    cardWidth,
+    cardHeight,
+    contentWidth: getContentWidth(layout, cardWidth),
+    columnTop: layout.topRow.length > 0 ? cardHeight + SOLITAIRE_ROW_GAP_PX : 0,
+    columnHeight:
+      layout.columns.length > 0
+        ? cardHeight + Math.max(0, columnCardCapacity - 1) * offset
+        : 0,
+    columnOffsets: Array.from({ length: SOLITAIRE_COLUMN_COUNT }, () => offset),
+  };
+}
+
+/** 盤面全体の高さ。上の段だけの盤面は札1枚の高さ。 */
+export function getSolitaireBoardContentHeight(
+  geometry: SolitaireBoardGeometry,
+): number {
+  return geometry.layout.columns.length > 0
+    ? geometry.columnTop + geometry.columnHeight
+    : geometry.cardHeight;
+}
+
+/** 格子の左から `slotIndex` 番目（0始まり）の札の左端。 */
 export function getSolitaireSlotLeft(
   geometry: SolitaireBoardGeometry,
   slotIndex: number,
@@ -90,21 +165,21 @@ export function getSolitaireSlotLeft(
   return slotIndex * (geometry.cardWidth + SOLITAIRE_COLUMN_GAP_PX);
 }
 
-/** 上の段の山の、7列の格子での位置。左から山札・捨て札・空き・組札4つ（`solitaireSuits` の順）。 */
-export function getSolitaireTopRowSlotIndex(
-  pile: Exclude<SolitairePile, { pile: "column" }>,
+/** 山の、格子での位置。盤面に並べない山は -1。 */
+export function getSolitairePileSlotIndex(
+  geometry: SolitaireBoardGeometry,
+  pile: SolitairePile,
 ): number {
-  switch (pile.pile) {
-    case "stock":
-      return 0;
-    case "waste":
-      return 1;
-    case "foundation":
-      return 3 + solitaireSuits.indexOf(pile.suit);
-  }
+  const { layout } = geometry;
+  return pile.pile === "column"
+    ? layout.columns.indexOf(pile.columnIndex)
+    : layout.topRow.findIndex(
+        (topRowPile) =>
+          topRowPile !== null && isSameSolitairePile(topRowPile, pile),
+      );
 }
 
-/** 盤面の札の左上の位置（px）。`left` は7列の格子の左端から、`top` は上の段の上端から。 */
+/** 盤面の札の左上の位置（px）。`left` は格子の左端から、`top` は盤面の上端から。 */
 export type SolitaireCardPosition = { left: number; top: number };
 
 /** 列 `columnIndex` の奥から `cardIndex` 番目（0始まり）の札の位置。 */
@@ -114,7 +189,10 @@ export function getSolitaireColumnCardPosition(
   cardIndex: number,
 ): SolitaireCardPosition {
   return {
-    left: getSolitaireSlotLeft(geometry, columnIndex),
+    left: getSolitaireSlotLeft(
+      geometry,
+      getSolitairePileSlotIndex(geometry, { pile: "column", columnIndex }),
+    ),
     top:
       geometry.columnTop +
       cardIndex * (geometry.columnOffsets[columnIndex] ?? 0),
@@ -136,7 +214,10 @@ export function getSolitairePileTopPosition(
     );
   }
   return {
-    left: getSolitaireSlotLeft(geometry, getSolitaireTopRowSlotIndex(pile)),
+    left: getSolitaireSlotLeft(
+      geometry,
+      getSolitairePileSlotIndex(geometry, pile),
+    ),
     top: 0,
   };
 }

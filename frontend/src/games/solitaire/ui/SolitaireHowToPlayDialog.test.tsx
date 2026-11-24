@@ -22,41 +22,60 @@ function openTab(name: string): HTMLElement {
   return within(getDialog()).getByRole("tabpanel", { name });
 }
 
-function listVerdicts(panel: HTMLElement): (string | null)[] {
-  return within(panel)
-    .getAllByRole("figure")
-    .map((figure) => figure.getAttribute("aria-labelledby"))
-    .filter((id) => id !== null)
-    .map((id) => document.getElementById(id)?.textContent ?? null);
+/** 図の下に見えている言葉。入れ替える言葉の層のうち、見せている層だけを読む。 */
+function readShownCaptions(panel: HTMLElement): string[] {
+  return [
+    ...panel.querySelectorAll<HTMLElement>(
+      '[data-how-to-play-caption-layer]:not([aria-hidden="true"])',
+    ),
+  ].map((layer) => layer.textContent ?? "");
 }
 
 describe("SolitaireHowToPlayDialog", () => {
   beforeEach(() => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: false })),
+    );
     render(<SolitaireHowToPlayDialog open onClose={vi.fn()} />);
   });
 
-  test("ゴールに、4つの組札がKまで積み上がった盤面を見せること", () => {
-    const goal = within(getDialog()).getByRole("img", {
-      name: "4つの組札が、どれもKまで積み上がった盤面",
-    });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test("入口に、本番の盤面部品で描いたゴールの盤面を見せること", () => {
+    const goal = within(getDialog()).getByRole("img", { name: "ゴールの盤面" });
 
     expect(goal).toBeTruthy();
   });
 
-  test("ルールの例の判定を、プレイと同じ規則で添えること", () => {
+  test("ルールの例の言葉を、本番の判定から求めて添えること", () => {
     const rules = openTab("ルール");
 
-    const verdicts = listVerdicts(rules);
+    const captions = readShownCaptions(rules);
 
-    expect(verdicts).toEqual([
-      expect.stringContaining("重ねられる"),
-      expect.stringContaining("重ねられない"),
-      "3枚まで、まとめて動かせる",
-      expect.stringContaining("置ける"),
-      expect.stringContaining("置けない"),
-      expect.stringContaining("置ける"),
-      expect.stringContaining("置けない"),
+    expect(captions).toEqual([
+      "置ける、置けない",
+      "3枚が動く",
+      "2枚が動く",
+      "置ける",
+      "置けない",
+      "置ける",
+      "置けない",
+      "戻せる",
+      "戻せない",
     ]);
+  });
+
+  test("操作のメニューに、盤面を戻すと別の問題だけを載せ、リセットを載せないこと", () => {
+    const operations = openTab("操作");
+
+    const items = ["盤面を戻す", "別の問題", "リセット"].map(
+      (name) => within(operations).queryByText(name) !== null,
+    );
+
+    expect(items).toEqual([true, true, false]);
   });
 
   test("操作に、状態の知らせを、プレイ画面と同じ言葉の見出しで載せること", () => {
