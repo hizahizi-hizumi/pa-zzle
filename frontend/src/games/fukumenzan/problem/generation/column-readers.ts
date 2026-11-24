@@ -454,6 +454,107 @@ function propagateBounds(equation: LinearEquation, domains: number[]): boolean {
   }
 }
 
+type WeightedVariable = { variable: number; coefficient: number };
+
+/**
+ * 違う文字は違う数字として、`Σ 係数 × 文字` の最小と最大を求める。`excluded` の数字はどの文字にも当てない。
+ * 当てられる数字の並びが無ければ `null`。
+ */
+function boundDistinctSum(
+  letters: readonly WeightedVariable[],
+  domains: readonly number[],
+  excluded: number,
+): readonly [number, number] | null {
+  let low = Number.POSITIVE_INFINITY;
+  let high = Number.NEGATIVE_INFINITY;
+  function visit(index: number, used: number, sum: number): void {
+    if (index === letters.length) {
+      low = Math.min(low, sum);
+      high = Math.max(high, sum);
+      return;
+    }
+    const { variable, coefficient } = letters[index]!;
+    for (const digit of digitsOfMask[domains[variable]! & ~used]!) {
+      visit(index + 1, used | (1 << digit), sum + coefficient * digit);
+    }
+  }
+  visit(0, excluded, 0);
+  return low > high ? null : [low, high];
+}
+
+/**
+ * 桁の式 `Σ 係数 × 変数 = 0` を和の大きさで読み、合わない値を `domains` から消す。矛盾なら `false`。
+ * 同じ側（係数の符号が同じ）の違う文字の最小と最大は違う数字で取る（足す文字が2つなら 9＋8 まで）。
+ * 繰り上がりと、反対の側の文字との違いは区間のまま読む。
+ */
+function propagateColumnBounds(
+  equation: LinearEquation,
+  domains: number[],
+  letterCount: number,
+): boolean {
+  const terms = equation.variables.map((variable, index) => ({
+    variable,
+    coefficient: equation.coefficients[index]!,
+  }));
+  const sides = [
+    terms.filter(
+      ({ variable, coefficient }) => variable < letterCount && coefficient > 0,
+    ),
+    terms.filter(
+      ({ variable, coefficient }) => variable < letterCount && coefficient < 0,
+    ),
+  ];
+  const carries = terms.filter(({ variable }) => variable >= letterCount);
+  for (;;) {
+    let moved = false;
+    for (const { variable, coefficient } of terms) {
+      const isLetter = variable < letterCount;
+      let kept = 0;
+      for (const digit of digitsOfMask[domains[variable]!]!) {
+        let low = coefficient * digit;
+        let high = low;
+        let feasible = true;
+        for (const side of sides) {
+          const bound = boundDistinctSum(
+            side.filter((term) => term.variable !== variable),
+            domains,
+            isLetter ? 1 << digit : 0,
+          );
+          if (bound === null) {
+            feasible = false;
+            break;
+          }
+          low += bound[0];
+          high += bound[1];
+        }
+        for (const carry of carries) {
+          if (carry.variable === variable) {
+            continue;
+          }
+          const digits = digitsOfMask[domains[carry.variable]!]!;
+          const first = carry.coefficient * digits[0]!;
+          const last = carry.coefficient * digits[digits.length - 1]!;
+          low += Math.min(first, last);
+          high += Math.max(first, last);
+        }
+        if (feasible && low <= 0 && 0 <= high) {
+          kept |= 1 << digit;
+        }
+      }
+      if (kept === 0) {
+        return false;
+      }
+      if (kept !== domains[variable]) {
+        domains[variable] = kept;
+        moved = true;
+      }
+    }
+    if (!moved) {
+      return true;
+    }
+  }
+}
+
 function readColumnBounds(
   reader: FukumenzanReader,
   column: number,
@@ -471,7 +572,7 @@ function readColumnBounds(
     return null;
   }
   const narrowed = [...domains];
-  if (!propagateBounds(equation, narrowed)) {
+  if (!propagateColumnBounds(equation, narrowed, model.letterCount)) {
     return null;
   }
   const facts = createUnconstrainedFacts(model);

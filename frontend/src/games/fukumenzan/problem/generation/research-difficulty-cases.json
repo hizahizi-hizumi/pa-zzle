@@ -81,14 +81,25 @@
       "equation": "PTEA+TPHE=HEHTE",
       "solution": "83201",
       "scale": "2s",
-      "readingClass": "mH",
-      "outcome": "margin",
+      "readingClass": "H1",
+      "outcome": "unlisted-combination",
       "level": null,
       "readers": {
         "weakColumns": "stuck",
         "strongColumns": "stuck",
-        "weakPairs": "stuck",
-        "strongCombined": "solved"
+        "weakPairs": "solved"
+      },
+      "changedBy": ["distinct-bounds"],
+      "research": {
+        "readingClass": "mH",
+        "outcome": "margin",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "solved"
+        }
       }
     },
     {
@@ -164,12 +175,21 @@
       "equation": "HJWLV+VLVVJ=EWVVHW",
       "solution": "780421",
       "scale": "2l",
-      "readingClass": "mE",
-      "outcome": "margin",
+      "readingClass": "E",
+      "outcome": "unlisted-combination",
       "level": null,
       "readers": {
-        "weakColumns": "stuck",
-        "strongColumns": "solved"
+        "weakColumns": "solved"
+      },
+      "changedBy": ["distinct-bounds"],
+      "research": {
+        "readingClass": "mE",
+        "outcome": "margin",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "solved"
+        }
       }
     },
     {
@@ -585,12 +605,23 @@
     {
       "equation": "GGGN+LYMM+NKY=KNFGN",
       "scale": "3s",
-      "readingClass": "mE",
-      "outcome": "margin",
-      "level": null,
+      "readingClass": "E",
+      "outcome": "classified",
+      "level": "2",
       "readers": {
-        "weakColumns": "stuck",
-        "strongColumns": "solved"
+        "weakColumns": "solved",
+        "weakLightColumns": "stuck",
+        "strongLightColumns": "stuck"
+      },
+      "changedBy": ["distinct-bounds"],
+      "research": {
+        "readingClass": "mE",
+        "outcome": "margin",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "solved"
+        }
       }
     },
     {
@@ -758,7 +789,22 @@
         "weakPairs": "stuck",
         "strongCombined": "stuck",
         "strongEquations": "stuck",
-        "splitsByClosure": "exceeded"
+        "splitsByClosure": 2,
+        "splitsBySteps": "exceeded"
+      },
+      "changedBy": ["distinct-bounds"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "split-limit",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": "exceeded"
+        }
       }
     },
     {
@@ -788,25 +834,40 @@
         "weakPairs": "stuck",
         "strongCombined": "stuck",
         "strongEquations": "stuck",
-        "splitsByClosure": "exceeded"
+        "splitsByClosure": 2,
+        "splitsBySteps": "exceeded"
+      },
+      "changedBy": ["distinct-bounds"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "split-limit",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": "exceeded"
+        }
       }
     },
     {
       "equation": "AHGJL+HXJJJ+LRNL=RXAXGR",
       "scale": "3l",
       "readingClass": "H2",
-      "outcome": "split-limit",
-      "level": null,
+      "outcome": "classified",
+      "level": "5",
       "readers": {
         "weakColumns": "stuck",
         "strongColumns": "stuck",
         "weakPairs": "stuck",
         "strongCombined": "stuck",
         "strongEquations": "stuck",
-        "splitsByClosure": 2,
-        "splitsBySteps": "exceeded"
+        "splitsByClosure": 1,
+        "splitsBySteps": 2
       },
-      "changedBy": ["top-carry"],
+      "changedBy": ["top-carry", "distinct-bounds"],
       "research": {
         "readingClass": "H2",
         "outcome": "split-limit",
@@ -907,10 +968,10 @@
         "weakPairs": "stuck",
         "strongCombined": "stuck",
         "strongEquations": "stuck",
-        "splitsByClosure": 2,
+        "splitsByClosure": 1,
         "splitsBySteps": 2
       },
-      "changedBy": ["top-carry"],
+      "changedBy": ["top-carry", "distinct-bounds"],
       "research": {
         "readingClass": "H2",
         "outcome": "classified",
@@ -977,8 +1038,8 @@
       "equation": "NNYBU+JNNJU+WJBN=XBXUXN",
       "scale": "3l",
       "readingClass": "H2",
-      "outcome": "split-limit",
-      "level": null,
+      "outcome": "classified",
+      "level": "5",
       "readers": {
         "weakColumns": "stuck",
         "strongColumns": "stuck",
@@ -986,7 +1047,22 @@
         "strongCombined": "stuck",
         "strongEquations": "stuck",
         "splitsByClosure": 2,
-        "splitsBySteps": "exceeded"
+        "splitsBySteps": 2
+      },
+      "changedBy": ["distinct-bounds"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "split-limit",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": 2,
+          "splitsBySteps": "exceeded"
+        }
       }
     },
     {
