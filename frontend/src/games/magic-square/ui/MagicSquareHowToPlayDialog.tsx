@@ -164,14 +164,14 @@ export function MagicSquareHowToPlayDialog({
     <HowToPlayOverlay
       open={open}
       game={game}
-      description="マスに/数を/置いて/縦・横・斜めのどの列も/同じ合計に/そろえる/パズルです。"
+      description="1・2・3…と続く数を/1回ずつ/マスに/置いて/縦・横・斜めのどの列も/同じ合計に/そろえる/パズルです。"
       goal={<GoalPlayback />}
       onClose={onClose}
       onOpenTutorial={onOpenTutorial}
       rules={
         <>
           <HowToPlayRule
-            text="縦・横・斜めのどの列も/足して/左上の合計に/なれば/完成です。/列の端の合計は/そろうと/緑に/なります。/このままでは/そろわないと/赤に/なります。"
+            text="縦・横・斜めのどの列も/足して/左上の合計に/なれば/完成です。/列の端の合計は/そろうと/緑に/なります。/埋まって/合計が/合わないときと/空きがあるのに/合計に/届いたときは/赤に/なります。"
             arrangement={lineRuleExample.arrangement}
             examples={
               <TouchableExample example={lineRuleExample} caption="line" />
@@ -257,7 +257,7 @@ export function MagicSquareHowToPlayDialog({
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="数を/置くと/同じ数のメモは/どのマスからも/消えます。"
+                text="数を/置くと/同じ数のメモは/どのマスからも/消えます。/置いたマスの/ほかのメモは/数を/外すと/戻ります。"
                 arrangement={memoClearedOperationExample.arrangement}
                 examples={
                   <TouchableExample example={memoClearedOperationExample} />

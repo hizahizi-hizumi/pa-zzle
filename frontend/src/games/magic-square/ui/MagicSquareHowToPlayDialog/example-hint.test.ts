@@ -84,7 +84,10 @@ function press(
 }
 
 /** 押す手を順に押し、最後の面の状態と手がかりの進み具合を返す。 */
-function pressAll(presses: readonly MagicSquareExamplePress[]): {
+function pressAll(
+  presses: readonly MagicSquareExamplePress[],
+  hintPresses: readonly MagicSquareExamplePress[] = hints,
+): {
   state: MagicSquareExampleGroupState;
   progress: MagicSquareExampleHintProgress;
 } {
@@ -94,9 +97,10 @@ function pressAll(presses: readonly MagicSquareExamplePress[]): {
       return {
         state: next,
         progress: followMagicSquareExampleHint(
-          hints,
+          hintPresses,
           progress,
           pressed,
+          state,
           next,
           initial,
         ),
@@ -109,9 +113,12 @@ function pressAll(presses: readonly MagicSquareExamplePress[]): {
   );
 }
 
-function findHint(presses: readonly MagicSquareExamplePress[]) {
-  const { state, progress } = pressAll(presses);
-  return findMagicSquareExampleHint(hints, progress, state);
+function findHint(
+  presses: readonly MagicSquareExamplePress[],
+  hintPresses: readonly MagicSquareExamplePress[] = hints,
+) {
+  const { state, progress } = pressAll(presses, hintPresses);
+  return findMagicSquareExampleHint(hintPresses, progress, state);
 }
 
 describe("findMagicSquareExampleHint", () => {
@@ -156,47 +163,77 @@ describe("findMagicSquareExampleHint", () => {
   });
 });
 
-describe("受け付けられない手がかりの手を押した場合", () => {
-  const givenHints: readonly MagicSquareExamplePress[] = [
-    { kind: "cell", board: 0, cellIndex: 0 },
-    { kind: "value", board: 0, value: 6 },
+describe("手がかりの手から外れた後に、手がかりの次の手と同じ所を押した場合", () => {
+  const replaceHints: readonly MagicSquareExamplePress[] = [
+    selectEmptyCell,
+    placeAnswer,
+    { kind: "value", board: 0, value: 9 },
   ];
 
-  function findGivenHint(presses: readonly MagicSquareExamplePress[]) {
-    let state = initial;
-    let progress = createMagicSquareExampleHintProgress(initial);
-    for (const pressed of presses) {
-      const next = press(state, pressed);
-      progress = followMagicSquareExampleHint(
-        givenHints,
-        progress,
-        pressed,
-        next,
-        initial,
-      );
-      state = next;
-    }
-    return findMagicSquareExampleHint(givenHints, progress, state);
-  }
-
-  test("盤面が変わらないまま、手がかりを出さないこと", () => {
-    expect(findGivenHint(givenHints)).toBeNull();
-  });
-
-  test("続けて手がかりの外の数を押して、また受け付けられなくても、出さないままにすること", () => {
-    const hint = findGivenHint([
-      ...givenHints,
-      { kind: "value", board: 0, value: 7 },
-    ]);
+  test("外れた盤面のままでは進めず、手がかりを出さないこと", () => {
+    const hint = findHint(
+      [selectEmptyCell, { kind: "value", board: 0, value: 12 }, placeAnswer],
+      replaceHints,
+    );
 
     expect(hint).toBeNull();
   });
 
-  test("マスを選び直すと、また出すこと", () => {
-    const hint = findGivenHint([
-      ...givenHints,
-      { kind: "cell", board: 0, cellIndex: 0 },
-    ]);
+  test("メモの入れ方で外れたメモを書いた後に、手がかりの数を押しても進めないこと", () => {
+    const memoHints: readonly MagicSquareExamplePress[] = [
+      selectEmptyCell,
+      { kind: "memo" },
+      { kind: "value", board: 0, value: 11 },
+      { kind: "value", board: 0, value: 11 },
+    ];
+
+    const hint = findHint(
+      [
+        selectEmptyCell,
+        { kind: "memo" },
+        { kind: "value", board: 0, value: 1 },
+        { kind: "value", board: 0, value: 11 },
+      ],
+      memoHints,
+    );
+
+    expect(hint).toBeNull();
+  });
+
+  test("外れた手を取り消して手がかりの姿に戻ると、同じ手からまた出すこと", () => {
+    const hint = findHint(
+      [
+        selectEmptyCell,
+        placeAnswer,
+        { kind: "value", board: 0, value: 12 },
+        { kind: "undo", board: 0 },
+      ],
+      replaceHints,
+    );
+
+    expect(hint).toEqual(replaceHints[2]);
+  });
+});
+
+describe("受け付けられない手が手がかりの手の場合", () => {
+  const givenHints: readonly MagicSquareExamplePress[] = [
+    { kind: "cell", board: 0, cellIndex: 0 },
+    { kind: "value", board: 0, value: 6 },
+    { kind: "cell", board: 0, cellIndex: 2 },
+    { kind: "value", board: 0, value: 6 },
+  ];
+
+  test("受け付けられなくても進め、次の手を出すこと", () => {
+    const hint = findHint(givenHints.slice(0, 2), givenHints);
+
+    expect(hint).toEqual(givenHints[2]);
+  });
+
+  test("手がかりの外の数を押して受け付けられなかったときは進めないこと", () => {
+    const hint = findHint(
+      [givenHints[0]!, { kind: "value", board: 0, value: 7 }],
+      givenHints,
+    );
 
     expect(hint).toEqual(givenHints[1]);
   });

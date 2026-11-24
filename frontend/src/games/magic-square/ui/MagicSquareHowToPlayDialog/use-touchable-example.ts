@@ -5,6 +5,7 @@ import type { MagicSquareOperation } from "@/games/magic-square/play/use-magic-s
 import type { MagicSquareValueState } from "@/games/magic-square/puzzle/rules";
 import {
   canUndoMagicSquareSession,
+  deselectMagicSquareSessionCell,
   inputMagicSquareSessionValue,
   listMagicSquareSessionValueStates,
   type MagicSquareSession,
@@ -86,7 +87,7 @@ function replaceSession(
 
 /**
  * 触れる例の面の状態。面に並べた盤面ごとに、本番の画面を1つずつ並べた形で、その盤面の選んだマスと、盤面の下に並んだ数と待ったを持つ。
- * メモの切り替えは面に1つ持つ。本番と同じく、マスを選んでから数を押して置く・外す・メモを書く。盤面の下に並んだ数と待ったは
+ * 選んだマスは、本番と同じく面の中で1つだけにする。メモの切り替えは面に1つ持つ。本番と同じく、マスを選んでから数を押して置く・外す・メモを書く。盤面の下に並んだ数と待ったは
  * その盤面に効き、その盤面のマスを選ばずに数を押すと、本番でマスを選ばずに数を押したときと同じく受け付けない。
  * 遷移・受け付けない押し方・音は、本番のプレイと同じ関数と効果音のフックで求める。盤面を解き終えたら、本番と同じくクリアの音を鳴らし、
  * その後は押しても何も起きない。
@@ -117,7 +118,14 @@ export function useTouchableExample(
   ) {
     setState(next);
     setHintProgress(
-      followMagicSquareExampleHint(hints, hintProgress, press, next, initial),
+      followMagicSquareExampleHint(
+        hints,
+        hintProgress,
+        press,
+        state,
+        next,
+        initial,
+      ),
     );
     reportChange(differsFromInitial(next, initial));
   }
@@ -127,20 +135,23 @@ export function useTouchableExample(
     return operationIdRef.current;
   }
 
+  // 本番の画面で選べるマスは1つなので、ほかの盤面のマスを選んだら、前に選んでいた盤面の選びを外す。
   function selectCell(board: number, cellIndex: number) {
-    const session = state.sessions[board];
-    if (cleared || session === undefined) {
+    if (cleared || state.sessions[board] === undefined) {
       return;
     }
     // 本番と同じく、盤面の操作が変わったら前の押した結果の知らせを消す。
     setOperation(null);
     apply(
       { kind: "cell", board, cellIndex },
-      replaceSession(
-        state,
-        board,
-        selectMagicSquareSessionCell(session, cellIndex),
-      ),
+      {
+        ...state,
+        sessions: state.sessions.map((session, index) =>
+          index === board
+            ? selectMagicSquareSessionCell(session, cellIndex)
+            : deselectMagicSquareSessionCell(session),
+        ),
+      },
     );
   }
 

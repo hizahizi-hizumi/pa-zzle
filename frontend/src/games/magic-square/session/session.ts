@@ -181,6 +181,15 @@ export function selectMagicSquareSessionCell(
   };
 }
 
+/** マスの選びを外す。どのマスも選んでいない姿にし、変えていたマスの記録を終える。 */
+export function deselectMagicSquareSessionCell(
+  session: MagicSquareSession,
+): MagicSquareSession {
+  return session.selectedCellIndex === null
+    ? session
+    : { ...session, selectedCellIndex: null, editingCell: null };
+}
+
 /**
  * 選んだマスに、数の欄で押した数を入れる。選んだマスに同じ数が置いてあれば外し、別の数なら置き換える。
  * マスを選んでいない・最初から置いてある数のマス・ほかのマスに置いた数では、受け取った session をそのまま返す。

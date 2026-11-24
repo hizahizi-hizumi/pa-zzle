@@ -4,6 +4,7 @@ import {
   canRestartMagicSquareSession,
   canUndoMagicSquareSession,
   createMagicSquareSession,
+  deselectMagicSquareSessionCell,
   enterMagicSquareSessionValue,
   getMagicSquareSessionCorrectionCount,
   getMagicSquareSessionResult,
@@ -127,6 +128,30 @@ describe("selectMagicSquareSessionCell", () => {
     const session = play([{ select: 16 }]);
 
     expect(session.selectedCellIndex).toBeNull();
+  });
+});
+
+describe("deselectMagicSquareSessionCell", () => {
+  test("どのマスも選んでいない姿にすること", () => {
+    const session = deselectMagicSquareSessionCell(
+      play([{ select: secondRowLeft }]),
+    );
+
+    expect(session.selectedCellIndex).toBeNull();
+  });
+
+  test("選びを外した後に同じマスを選んで直すと、ほかのマスを選んだときと同じに数えること", () => {
+    const selected = play([{ select: secondRowLeft }, 13]);
+    const reselected = selectMagicSquareSessionCell(
+      deselectMagicSquareSessionCell(selected),
+      secondRowLeft,
+    );
+
+    const count = getMagicSquareSessionCorrectionCount(
+      enterMagicSquareSessionValue(reselected, 9, startedAt),
+    );
+
+    expect(count).toBe(1);
   });
 });
 

@@ -11,13 +11,17 @@ import {
   listMagicSquareLineEvaluations,
 } from "@/games/magic-square/puzzle/rules";
 import {
+  deselectMagicSquareSessionCell,
   inputMagicSquareSessionValue,
   type MagicSquareSession,
   selectMagicSquareSessionCell,
   undoMagicSquareSession,
 } from "@/games/magic-square/session/session";
 import { magicSquareTutorialPuzzle } from "@/games/magic-square/tutorial/tutorial";
-import { createMagicSquareExampleSession } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
+import {
+  createMagicSquareExampleSession,
+  getMagicSquareExampleCellIndex,
+} from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
 import {
   correctionCountFlows,
   givenRuleExample,
@@ -49,7 +53,7 @@ function hasViolatedLine(session: MagicSquareSession): boolean {
   );
 }
 
-/** 手がかりの手を本番のプレイと同じ関数で順に押し、押すたびの盤面を返す。 */
+/** 手がかりの手を本番のプレイと同じ関数で順に押し、押すたびの盤面を返す。マスを選ぶと、ほかの盤面の選びは外す。 */
 function followHints(example: MagicSquareHowToPlayExample) {
   let sessions = example.boards.map(createMagicSquareExampleSession);
   let inputMode: "value" | "memo" = "value";
@@ -59,7 +63,7 @@ function followHints(example: MagicSquareHowToPlayExample) {
         sessions = sessions.map((session, index) =>
           index === press.board
             ? selectMagicSquareSessionCell(session, press.cellIndex)
-            : session,
+            : deselectMagicSquareSessionCell(session),
         );
         break;
       case "memo":
@@ -121,6 +125,40 @@ describe("例の盤面", () => {
     );
 
     expect(violated).toBe(false);
+  });
+
+  test("1回ずつのルールの例は、最初から置いてある14を選ぶ手で終わり、14の札を盤面にある数のままにすること", () => {
+    const [last] = followHints(usedValueRuleExample).at(-1) ?? [];
+    const topLeft = getMagicSquareExampleCellIndex([0, 0]);
+
+    expect({
+      given: last?.problem.givens.cells[topLeft],
+      selected: last?.selectedCellIndex,
+    }).toEqual({ given: 14, selected: topLeft });
+  });
+
+  test("最初から置いてある数のルールの例は、最初から置いてある数で受け付けられず、置いた数では置き換わること", () => {
+    const steps = followHints(givenRuleExample).map(
+      ([session]) => session?.puzzleState.cells.slice(0, 4) ?? [],
+    );
+
+    expect([steps[1], steps[3]]).toEqual([
+      [14, 4, 5, null],
+      [14, 4, 6, null],
+    ]);
+  });
+
+  test("メモを消す例は、置いた数を外すと、置いたマスのほかのメモが戻ること", () => {
+    const cellIndex = getMagicSquareExampleCellIndex([0, 2]);
+    const memos = followHints(memoClearedOperationExample).map(([session]) => ({
+      cell: session?.puzzleState.cells[cellIndex] ?? null,
+      memos: session?.puzzleState.memos[cellIndex] ?? [],
+    }));
+
+    expect([memos[1]?.cell, memos[2]]).toEqual([
+      5,
+      { cell: null, memos: [11] },
+    ]);
   });
 
   test("置き方の例は、手がかりどおりに置くと空きが1つ残り、そこに答えの数を置くと本番と同じく解き終えること", () => {

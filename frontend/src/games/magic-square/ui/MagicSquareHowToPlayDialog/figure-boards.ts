@@ -98,12 +98,14 @@ export const lineRuleExample: MagicSquareHowToPlayExample = {
 
 /**
  * 数を1回ずつ使うルール。手のルール（どの数を置けるか）で、本番は盤面にある数をくぼみにして押せなくするだけで弾く反応が無いので、
- * 手がかりを付けず、盤面の下に並んだ数ごとに置けるか（✓）・置けないか（✕）の印で示す。
+ * 盤面の下に並んだ数ごとに、まだ置けるか（✓）・もう置いてあるか（✕）の印で示す。
+ * 行は、最初から置いてある14と、置いた4と5と、空き。最初から置いてある数も、置いた数と同じく盤面にある数として ✕ にする。
  * 手がかりは、空いたマスに残りの数を置き、ほかのマスを選んで、置いた数も ✕ のくぼみに変わる所まで見せる手にする
  * （置いた数は、そのマスを選んでいる間は、押すと外せる数として縁取った札になり、印を付けない）。
+ * ほかのマスには最初から置いてある14を選ぶので、選んでも14の札は ✕ のくぼみのまま変わらない。
  */
 export const usedValueRuleExample: MagicSquareHowToPlayExample = {
-  boards: [onFirstRow("+14 +4 +5 .")],
+  boards: [onFirstRow("14 +4 +5 .")],
   arrangement: "stacked",
   controls: [],
   hints: [cellAt(0, [0, 3]), value(11), cellAt(0, [0, 0])],
@@ -111,13 +113,14 @@ export const usedValueRuleExample: MagicSquareHowToPlayExample = {
 
 /**
  * 最初から置いてある数（左の2つ）と置いた数と空きを混ぜた行。数のあるマスごとに、変えられるかの印を付ける。
- * 手がかりは、最初から置いてある数を選んで別の数を押し、受け付けられない手にする。
+ * 手がかりは、最初から置いてある数を選んで別の数を押して受け付けられない手と、置いた数を選んで同じ数を押して置き換わる手を
+ * 続け、✕ と ✓ のマスの違いを同じ押し方で比べさせる。
  */
 export const givenRuleExample: MagicSquareHowToPlayExample = {
   boards: [onFirstRow("14 4 +5 .")],
   arrangement: "stacked",
   controls: [],
-  hints: [cellAt(0, [0, 0]), value(6)],
+  hints: [cellAt(0, [0, 0]), value(6), cellAt(0, [0, 2]), value(6)],
 };
 
 /**
@@ -161,7 +164,10 @@ export const memoOperationExample: MagicSquareHowToPlayExample = {
   ],
 };
 
-/** 空いた2つのマスのどちらにも5のメモがあり、1つのマスに5を置くと、もう1つのマスのメモから5が消える。 */
+/**
+ * 空いた2つのマスのどちらにも5と11のメモがあり、1つのマスに5を置くと、どちらのマスのメモからも5が消え、置いたマスの11のメモは隠れる。
+ * 手がかりは、5をもう一度押して外し、置いたマスに11のメモが戻る所まで見せる。
+ */
 export const memoClearedOperationExample: MagicSquareHowToPlayExample = {
   boards: [
     onFirstRow("+14 +4 . .", [
@@ -171,7 +177,7 @@ export const memoClearedOperationExample: MagicSquareHowToPlayExample = {
   ],
   arrangement: "stacked",
   controls: [],
-  hints: [cellAt(0, [0, 2]), value(5)],
+  hints: [cellAt(0, [0, 2]), value(5), value(5)],
 };
 
 /**

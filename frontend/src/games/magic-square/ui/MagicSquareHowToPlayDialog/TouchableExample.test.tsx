@@ -43,6 +43,7 @@ function readPlayedSounds(): string[] {
 
 /**
  * 例ごとの、見えている判定の言葉と、判定の下に添えたわけ。判定の言葉はどれも同じ場所に重ね、見えていない言葉は読み上げから外す。
+ * 重ねた言葉の中にさらに重ねた言葉があるときは、いちばん内側の見えている言葉を読む。
  * わけは、判定の言葉の後ろに空白で区切って続ける。
  */
 function readCaptions(): string[] {
@@ -50,7 +51,13 @@ function readCaptions(): string[] {
     const caption = figure.querySelector("figcaption");
     const shown = [
       ...(caption?.querySelectorAll('[aria-hidden="false"]') ?? []),
-    ].map((layer) => layer.textContent);
+    ]
+      .filter(
+        (layer) =>
+          layer.parentElement?.closest('[aria-hidden="true"]') == null &&
+          layer.querySelector('[aria-hidden="false"]') === null,
+      )
+      .map((layer) => layer.textContent);
     const reason = caption
       ?.querySelector("[data-how-to-play-verdict-reason]")
       ?.textContent?.replace("・", "");
@@ -239,7 +246,7 @@ describe("列の合計のルールの例を描いた場合", () => {
     expect(readCaptions()[0]).toBe("途中");
   });
 
-  test("盤面ごとにマスを選び、ほかの盤面のマスを選んでも、前の盤面の選んだマスを保つこと", () => {
+  test("ほかの盤面のマスを選ぶと、本番と同じく選んだマスを1つにし、前の盤面の選びを外すこと", () => {
     fireEvent.click(getCell(0, 1, 4));
     fireEvent.click(getCell(1, 1, 3));
 
@@ -247,7 +254,7 @@ describe("列の合計のルールの例を描いた場合", () => {
       [getCell(0, 1, 4), getCell(1, 1, 3)].map((cell) =>
         cell.getAttribute("aria-pressed"),
       ),
-    ).toEqual(["true", "true"]);
+    ).toEqual(["false", "true"]);
   });
 
   test("そろわない行の空きに数を置いて埋めると、埋まって合計が合わない行として判定し直すこと", () => {
@@ -295,11 +302,11 @@ describe("数を1回ずつ使うルールの例を描いた場合", () => {
       expect(readMarks().filter((mark) => mark.startsWith("11 "))).toEqual([]);
     });
 
-    test("ほかのマスを選ぶと、置いた数の札にも ✕ を付け、選んだマスの数の札からは印を外すこと", () => {
+    test("最初から置いてある数のマスを選ぶと、置いた数の札にも ✕ を付け、最初から置いてある数の札は ✕ のままにすること", () => {
       fireEvent.click(getCell(0, 1, 1));
 
       expect(readMarks().filter((mark) => mark.endsWith("disallowed"))).toEqual(
-        ["4 disallowed", "5 disallowed", "11 disallowed"],
+        ["4 disallowed", "5 disallowed", "11 disallowed", "14 disallowed"],
       );
     });
   });
@@ -326,20 +333,17 @@ describe("最初から置いてある数のルールの例を描いた場合", (
       fireEvent.click(getValue(6));
     });
 
-    test("数を変えずに受け付けない音を鳴らし、手がかりを消すこと", () => {
+    test("数を変えずに受け付けない音を鳴らし、凡例の場所にわけを出し、手がかりを置いた数のマスへ移すこと", () => {
       expect(getCell(0, 1, 1).getAttribute("aria-label")).toBe("1行1列 14");
       expect(readPlayedSounds()).toEqual([expect.stringContaining("rejected")]);
-      expect(findHinted()).toEqual([]);
+      expect(readCaptions()).toEqual(["最初から置いてある数"]);
+      expect(findHinted()).toEqual([getCell(0, 1, 3)]);
     });
 
-    test("続けて別の数を押して、また受け付けられなくても、手がかりを消したままにすること", () => {
-      fireEvent.click(getValue(7));
+    test("置いた数のマスを選ぶと、わけを消して凡例に戻すこと", () => {
+      fireEvent.click(getCell(0, 1, 3));
 
-      expect(readPlayedSounds()).toEqual([
-        expect.stringContaining("rejected"),
-        expect.stringContaining("rejected"),
-      ]);
-      expect(findHinted()).toEqual([]);
+      expect(readCaptions()).toEqual(["変えられる、変えられない"]);
     });
   });
 
@@ -472,6 +476,14 @@ describe("数を置くとメモが消える例を描いた場合", () => {
   test("置いた数と同じ数のメモを、ほかのマスからも消すこと", () => {
     expect(getCell(0, 1, 4).getAttribute("aria-label")).toBe(
       "1行4列 空き メモ 11",
+    );
+  });
+
+  test("置いた数を外すと、そのマスのほかのメモが戻ること", () => {
+    fireEvent.click(getValue(5));
+
+    expect(getCell(0, 1, 3).getAttribute("aria-label")).toBe(
+      "1行3列 空き メモ 11",
     );
   });
 });
