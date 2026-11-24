@@ -29,8 +29,8 @@ export function getMagicSquareWholeRegion(
 }
 
 /**
- * 範囲を描くときに取る帯。左の帯（そろえる合計）は範囲が左端の列を含むとき、右の帯（行の合計）は右端の列を含むときに取る。
- * 下の帯（縦の列と斜めの合計）は、盤面の全体を描くときだけ取る。
+ * 範囲を描くときに取る帯。左の帯（そろえる合計）は範囲が左端の列を含むとき、右の帯（行の合計）は右端の列を含むとき、
+ * 下の帯（縦の列の合計と、角の斜めの合計）は下端の行を含むときに取る。
  */
 export function getMagicSquareRegionBands(
   size: number,
@@ -39,11 +39,7 @@ export function getMagicSquareRegionBands(
   return {
     left: region.column === 0,
     right: region.column + region.columnCount === size,
-    bottom:
-      region.row === 0 &&
-      region.column === 0 &&
-      region.rowCount === size &&
-      region.columnCount === size,
+    bottom: region.row + region.rowCount === size,
   };
 }
 
@@ -88,42 +84,59 @@ export function getMagicSquareSlabArea(
   };
 }
 
-/** 列の合計を置く所。範囲を描くときは、範囲の行の合計だけを右の帯に置く。 */
+/** 列の合計を置く所。範囲を描くときは、範囲のマスから見た格子の行と列にする。 */
 export function getMagicSquareLineSumArea(
   size: number,
   line: MagicSquareLine,
   region: MagicSquareBoardRegion = getMagicSquareWholeRegion(size),
 ): MagicSquareGridArea {
   const { left } = getMagicSquareRegionBands(size, region);
-  const rightBandColumn = region.columnCount + (left ? 2 : 1);
+  const firstCellColumn = left ? 2 : 1;
+  const rightBandColumn = region.columnCount + firstCellColumn;
+  const bottomBandRow = region.rowCount + 1;
   switch (line.kind) {
     case "row":
       return { row: line.index - region.row + 1, column: rightBandColumn };
     case "column":
-      return { row: size + 1, column: line.index + 2 };
+      return {
+        row: bottomBandRow,
+        column: line.index - region.column + firstCellColumn,
+      };
     case "diagonal":
       return line.from === "top-left"
-        ? { row: size + 1, column: size + 2 }
-        : { row: size + 1, column: 1 };
+        ? { row: bottomBandRow, column: rightBandColumn }
+        : { row: bottomBandRow, column: 1 };
   }
 }
 
-/** 描く範囲に合計を置ける列か。範囲を描くときは、範囲の行で、右の帯を取るものだけにする。 */
+/**
+ * 描く範囲に合計を置ける列か。行は範囲の行で右の帯を取るとき、縦の列は範囲の列で下の帯を取るとき、
+ * 斜めは合計を置く角の帯を2つとも取るときに置く。
+ */
 export function isMagicSquareLineSumInRegion(
   size: number,
   line: MagicSquareLine,
   region: MagicSquareBoardRegion,
 ): boolean {
   const bands = getMagicSquareRegionBands(size, region);
-  if (bands.bottom) {
-    return true;
+  switch (line.kind) {
+    case "row":
+      return (
+        bands.right &&
+        line.index >= region.row &&
+        line.index < region.row + region.rowCount
+      );
+    case "column":
+      return (
+        bands.bottom &&
+        line.index >= region.column &&
+        line.index < region.column + region.columnCount
+      );
+    case "diagonal":
+      return (
+        bands.bottom && (line.from === "top-left" ? bands.right : bands.left)
+      );
   }
-  return (
-    bands.right &&
-    line.kind === "row" &&
-    line.index >= region.row &&
-    line.index < region.row + region.rowCount
-  );
 }
 
 /** 範囲のマスか。 */

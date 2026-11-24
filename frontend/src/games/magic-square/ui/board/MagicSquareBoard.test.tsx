@@ -166,6 +166,39 @@ describe("MagicSquareBoard", () => {
     });
   });
 
+  describe("下端の行の1マスだけの範囲を渡した場合", () => {
+    beforeEach(() => {
+      renderBoard({
+        region: { row: 3, column: 1, rowCount: 1, columnCount: 1 },
+      });
+    });
+
+    test("そのマスと、その下の縦の列の合計だけを描くこと", () => {
+      expect(readDrawn()).toEqual({
+        cells: ["4行2列 空き"],
+        sums: ["2列目の合計 6"],
+      });
+    });
+  });
+
+  describe("右下の角のマスだけの範囲を渡した場合", () => {
+    beforeEach(() => {
+      renderBoard({
+        region: { row: 3, column: 3, rowCount: 1, columnCount: 1 },
+      });
+    });
+
+    test("そのマスの行と縦の列の合計と、角に置く左上からの斜めの合計を描くこと", () => {
+      expect(readDrawn().sums.sort()).toEqual(
+        [
+          "4行目の合計 19",
+          "4列目の合計 20",
+          "左上からの斜めの合計 34 そろった",
+        ].sort(),
+      );
+    });
+  });
+
   describe("マスに重ねる物を渡した場合", () => {
     beforeEach(() => {
       renderBoard({

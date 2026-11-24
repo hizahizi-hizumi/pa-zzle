@@ -99,8 +99,9 @@ type MagicSquareBoardProps = {
    */
   spotlightLines?: readonly MagicSquareLine[];
   /**
-   * 遊び方だけが渡す。描くマスの範囲。範囲を描くときは、範囲の行の合計を右の帯に、そろえる合計を左の帯に、
-   * 範囲がその端の列を含むときだけ描く（`getMagicSquareRegionBands`）。渡さなければ盤面の全体を描く。
+   * 遊び方だけが渡す。描くマスの範囲。範囲を描くときは、範囲の行の合計を右の帯に、範囲の縦の列の合計を下の帯に、
+   * そろえる合計を左の帯に、範囲がその端の列や行を含むときだけ描く（`getMagicSquareRegionBands`）。斜めの合計は、
+   * 置く角の帯を2つとも描くときだけ描く。渡さなければ盤面の全体を描く。
    */
   region?: MagicSquareBoardRegion;
   /** 遊び方だけが渡す。マスの上に重ねる物（押す所の手がかり）。マスのボタンの中に置く。 */
