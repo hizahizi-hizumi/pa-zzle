@@ -43,7 +43,7 @@ const defaultPerLevel = 500;
 const defaultJobCount = 1;
 
 /** 生成条件ごとの1巡を何巡まで回すか。 */
-const defaultRoundBudget = 30_000;
+const defaultRoundBudget = 80_000;
 
 /**
  * 1回にまとめて調べる巡の数。どの生成条件を回すかは、まとめの始めに決める。並列の数に依らないので、採る問題は
