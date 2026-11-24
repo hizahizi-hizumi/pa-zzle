@@ -1,0 +1,354 @@
+{
+ "version": 1,
+ "features": {
+  "addends": "足す数の数",
+  "maxLen": "いちばん長い足す数の桁",
+  "resultLen": "答えの桁",
+  "grows": "答えの桁が足す数より増える（0/1）",
+  "cells": "文字のマスの数（足す数と答えの桁の合計）",
+  "letters": "文字の数（＝◯を付ける数）",
+  "unusedDigits": "使われない数字の数（10−文字の数）",
+  "leadLetters": "先頭に来る文字の数（0にならない文字）",
+  "maxOccurrence": "いちばん多く出る文字の回数",
+  "onceLetters": "1回だけ出る文字の数",
+  "resultOnlyLetters": "答えにだけ出る文字の数",
+  "repeatColumns": "同じ文字が2回以上出る列の数",
+  "repeatWords": "同じ文字を2回以上含む数の数",
+  "repeatCells": "2回目以降に出る文字のマスの数（マス−文字）"
+ },
+ "note": "Features visible on the starting board. letters = distinct letters; repeatColumns counts columns (addends and result, right-aligned) where a letter appears twice or more.",
+ "cases": [
+  {
+   "addends": [
+    "EG",
+    "GG"
+   ],
+   "result": "EAC",
+   "features": {
+    "addends": 2,
+    "maxLen": 2,
+    "resultLen": 3,
+    "grows": 1,
+    "cells": 7,
+    "letters": 4,
+    "unusedDigits": 6,
+    "leadLetters": 2,
+    "maxOccurrence": 3,
+    "onceLetters": 2,
+    "resultOnlyLetters": 2,
+    "repeatColumns": 1,
+    "repeatWords": 1,
+    "repeatCells": 3
+   }
+  },
+  {
+   "addends": [
+    "WFX",
+    "TFM"
+   ],
+   "result": "CMMW",
+   "features": {
+    "addends": 2,
+    "maxLen": 3,
+    "resultLen": 4,
+    "grows": 1,
+    "cells": 10,
+    "letters": 6,
+    "unusedDigits": 4,
+    "leadLetters": 3,
+    "maxOccurrence": 3,
+    "onceLetters": 3,
+    "resultOnlyLetters": 1,
+    "repeatColumns": 1,
+    "repeatWords": 1,
+    "repeatCells": 4
+   }
+  },
+  {
+   "addends": [
+    "BYK",
+    "KTK"
+   ],
+   "result": "TKHH",
+   "features": {
+    "addends": 2,
+    "maxLen": 3,
+    "resultLen": 4,
+    "grows": 1,
+    "cells": 10,
+    "letters": 5,
+    "unusedDigits": 5,
+    "leadLetters": 3,
+    "maxOccurrence": 4,
+    "onceLetters": 2,
+    "resultOnlyLetters": 1,
+    "repeatColumns": 2,
+    "repeatWords": 2,
+    "repeatCells": 5
+   }
+  },
+  {
+   "addends": [
+    "NNV",
+    "UFN",
+    "NTT"
+   ],
+   "result": "NFVT",
+   "features": {
+    "addends": 3,
+    "maxLen": 3,
+    "resultLen": 4,
+    "grows": 1,
+    "cells": 13,
+    "letters": 5,
+    "unusedDigits": 5,
+    "leadLetters": 2,
+    "maxOccurrence": 5,
+    "onceLetters": 1,
+    "resultOnlyLetters": 0,
+    "repeatColumns": 2,
+    "repeatWords": 2,
+    "repeatCells": 8
+   }
+  },
+  {
+   "addends": [
+    "YFL",
+    "YAD",
+    "ADY"
+   ],
+   "result": "YLYY",
+   "features": {
+    "addends": 3,
+    "maxLen": 3,
+    "resultLen": 4,
+    "grows": 1,
+    "cells": 13,
+    "letters": 5,
+    "unusedDigits": 5,
+    "leadLetters": 2,
+    "maxOccurrence": 6,
+    "onceLetters": 1,
+    "resultOnlyLetters": 0,
+    "repeatColumns": 2,
+    "repeatWords": 1,
+    "repeatCells": 8
+   }
+  },
+  {
+   "addends": [
+    "GHL",
+    "LGF",
+    "FFF"
+   ],
+   "result": "GHFW",
+   "features": {
+    "addends": 3,
+    "maxLen": 3,
+    "resultLen": 4,
+    "grows": 1,
+    "cells": 13,
+    "letters": 5,
+    "unusedDigits": 5,
+    "leadLetters": 3,
+    "maxOccurrence": 5,
+    "onceLetters": 1,
+    "resultOnlyLetters": 1,
+    "repeatColumns": 2,
+    "repeatWords": 1,
+    "repeatCells": 8
+   }
+  },
+  {
+   "addends": [
+    "NPAPP",
+    "JANJP",
+    "CCKJ"
+   ],
+   "result": "NNAJJD",
+   "features": {
+    "addends": 3,
+    "maxLen": 5,
+    "resultLen": 6,
+    "grows": 1,
+    "cells": 20,
+    "letters": 7,
+    "unusedDigits": 3,
+    "leadLetters": 3,
+    "maxOccurrence": 5,
+    "onceLetters": 2,
+    "resultOnlyLetters": 1,
+    "repeatColumns": 4,
+    "repeatWords": 4,
+    "repeatCells": 13
+   }
+  },
+  {
+   "addends": [
+    "DBRPR",
+    "UTTDR",
+    "UDDP"
+   ],
+   "result": "DDUURJ",
+   "features": {
+    "addends": 3,
+    "maxLen": 5,
+    "resultLen": 6,
+    "grows": 1,
+    "cells": 20,
+    "letters": 7,
+    "unusedDigits": 3,
+    "leadLetters": 2,
+    "maxOccurrence": 6,
+    "onceLetters": 2,
+    "resultOnlyLetters": 1,
+    "repeatColumns": 4,
+    "repeatWords": 4,
+    "repeatCells": 13
+   }
+  },
+  {
+   "addends": [
+    "GVANK",
+    "FFFGB",
+    "VWNN"
+   ],
+   "result": "BGAVKB",
+   "features": {
+    "addends": 3,
+    "maxLen": 5,
+    "resultLen": 6,
+    "grows": 1,
+    "cells": 20,
+    "letters": 8,
+    "unusedDigits": 2,
+    "leadLetters": 4,
+    "maxOccurrence": 3,
+    "onceLetters": 1,
+    "resultOnlyLetters": 0,
+    "repeatColumns": 4,
+    "repeatWords": 3,
+    "repeatCells": 12
+   }
+  },
+  {
+   "addends": [
+    "MKCXE",
+    "MFCXE",
+    "KXXF"
+   ],
+   "result": "YCXMCM",
+   "features": {
+    "addends": 3,
+    "maxLen": 5,
+    "resultLen": 6,
+    "grows": 1,
+    "cells": 20,
+    "letters": 7,
+    "unusedDigits": 3,
+    "leadLetters": 3,
+    "maxOccurrence": 5,
+    "onceLetters": 1,
+    "resultOnlyLetters": 1,
+    "repeatColumns": 5,
+    "repeatWords": 2,
+    "repeatCells": 13
+   }
+  },
+  {
+   "addends": [
+    "AVUCV",
+    "AVPPP",
+    "AAUG"
+   ],
+   "result": "TVPCVV",
+   "features": {
+    "addends": 3,
+    "maxLen": 5,
+    "resultLen": 6,
+    "grows": 1,
+    "cells": 20,
+    "letters": 7,
+    "unusedDigits": 3,
+    "leadLetters": 2,
+    "maxOccurrence": 6,
+    "onceLetters": 2,
+    "resultOnlyLetters": 1,
+    "repeatColumns": 3,
+    "repeatWords": 4,
+    "repeatCells": 13
+   }
+  },
+  {
+   "addends": [
+    "KBBKC",
+    "EAWKB",
+    "WWKT"
+   ],
+   "result": "AACEBC",
+   "features": {
+    "addends": 3,
+    "maxLen": 5,
+    "resultLen": 6,
+    "grows": 1,
+    "cells": 20,
+    "letters": 7,
+    "unusedDigits": 3,
+    "leadLetters": 4,
+    "maxOccurrence": 4,
+    "onceLetters": 1,
+    "resultOnlyLetters": 0,
+    "repeatColumns": 3,
+    "repeatWords": 3,
+    "repeatCells": 13
+   }
+  },
+  {
+   "addends": [
+    "XXXGN",
+    "TPGTN",
+    "TXTA"
+   ],
+   "result": "GPAAYP",
+   "features": {
+    "addends": 3,
+    "maxLen": 5,
+    "resultLen": 6,
+    "grows": 1,
+    "cells": 20,
+    "letters": 7,
+    "unusedDigits": 3,
+    "leadLetters": 3,
+    "maxOccurrence": 4,
+    "onceLetters": 1,
+    "resultOnlyLetters": 1,
+    "repeatColumns": 3,
+    "repeatWords": 4,
+    "repeatCells": 13
+   }
+  },
+  {
+   "addends": [
+    "SEND",
+    "MORE"
+   ],
+   "result": "MONEY",
+   "features": {
+    "addends": 2,
+    "maxLen": 4,
+    "resultLen": 5,
+    "grows": 1,
+    "cells": 13,
+    "letters": 8,
+    "unusedDigits": 2,
+    "leadLetters": 2,
+    "maxOccurrence": 3,
+    "onceLetters": 4,
+    "resultOnlyLetters": 1,
+    "repeatColumns": 0,
+    "repeatWords": 0,
+    "repeatCells": 5
+   }
+  }
+ ]
+}

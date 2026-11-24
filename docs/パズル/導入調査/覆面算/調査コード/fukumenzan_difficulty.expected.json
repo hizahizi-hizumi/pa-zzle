@@ -1,0 +1,1779 @@
+{
+ "version": 6,
+ "generator": "digit-set-first v1",
+ "seedBase": 20261122,
+ "seedRule": "seed = seedBase + cond * 100000 + i",
+ "plan": "P50nk18w",
+ "planParams": {
+  "prod": 50,
+  "split_prod": null,
+  "k": 18,
+  "rule": "weak"
+ },
+ "splitCap": 2,
+ "cells": {
+  "2s/E1": 1,
+  "3s/E2": 2,
+  "3s/H1": 3,
+  "3l/B1": 4,
+  "3l/B2": 5
+ },
+ "letters": {
+  "1": [
+   5,
+   7
+  ],
+  "2": [
+   5,
+   9
+  ],
+  "3": [
+   5,
+   9
+  ],
+  "4": [
+   6,
+   9
+  ],
+  "5": [
+   7,
+   9
+  ]
+ },
+ "readers": {
+  "Llo": {
+   "col_mode": "bt",
+   "col_tcap": 4,
+   "hidden": false,
+   "subsets": false
+  },
+  "Lhi": {
+   "col_mode": "gac",
+   "hidden": true,
+   "subsets": true
+  },
+  "Clo50": {
+   "col_mode": "bt",
+   "col_tcap": 4,
+   "pair_cap": 8,
+   "pair_mode": "joined",
+   "cancel": false,
+   "fl_depth": 0,
+   "hidden": false,
+   "subsets": false,
+   "pair_prod_cap": 50
+  },
+  "Chi": {
+   "col_mode": "gac",
+   "pair_cap": 200,
+   "pair_mode": "or",
+   "pair_join_cap": 50,
+   "cancel": true,
+   "nonadj_cap": 50,
+   "win3_cap": 12,
+   "fl_depth": 0,
+   "hidden": true,
+   "subsets": true,
+   "both": true,
+   "r2_wl": 3
+  },
+  "ChiA": {
+   "col_mode": "gac",
+   "pair_cap": 200,
+   "pair_mode": "or",
+   "pair_join_cap": 50,
+   "cancel": true,
+   "nonadj_cap": 50,
+   "win3_cap": 12,
+   "fl_depth": 0,
+   "hidden": true,
+   "subsets": true,
+   "both": true,
+   "r2_wl": 3,
+   "reader": "Alg6Reader"
+  },
+  "NB6lo": {
+   "col_mode": "bt",
+   "col_tcap": 4,
+   "hidden": false,
+   "subsets": false
+  },
+  "NB6hi": {
+   "col_mode": "bt",
+   "col_tcap": 12,
+   "hidden": true,
+   "subsets": true
+  },
+  "sPcN": {
+   "col_mode": "bt",
+   "col_tcap": 4,
+   "pair_cap": 8,
+   "pair_mode": "joined",
+   "cancel": false,
+   "fl_depth": 0,
+   "hidden": false,
+   "subsets": false,
+   "r2_wl": 2,
+   "split": "seq6 weak_allowed kmax=2 frontier_cap=300"
+  },
+  "sPN_18": {
+   "col_mode": "bt",
+   "col_tcap": 4,
+   "pair_cap": 8,
+   "pair_mode": "joined",
+   "cancel": false,
+   "fl_depth": 0,
+   "hidden": false,
+   "subsets": false,
+   "r2_wl": 2,
+   "reader": "FactStep6Reader step_k=18 whole=True",
+   "split": "seq6 weak_allowed kmax=2 frontier_cap=300"
+  }
+ },
+ "note": "Closure keys (Llo/Lhi/Clo*/Chi/ChiA/NB6*): 0 = solves without case analysis, 1 = stuck. Split keys (sPcN/sPN_k): number of single-variable splits (binary and ternary both count 1) needed by the weak end; 3 = more than 2 after exhausting 2 splits, \"cap\" = the search frontier exceeded 300 before the last split (analysis cut off), null = the allowed splits make no progress. scope: レベル / 余白 (mE, mH, between E1 and E2) / 組み合わせ外 (scale and class not in cells) / 文字の数 / 上限を超える (evaluable, needs more splits or longer branches than promised) / 評価不能 (sPcN null or any \"cap\"). Keys absent = not measured (classify6 stops at the first decisive reader)",
+ "readClass": "E if Llo solves; mE if only Lhi does; H1 if Lhi is stuck and Clo<prod> solves; mH if Clo<prod> is stuck and Chi or ChiA solves; H2 otherwise",
+ "conditions": [
+  "3+3",
+  "4+3",
+  "4+4",
+  "5+4",
+  "5+5",
+  "6+5",
+  "6+6",
+  "3+3+3",
+  "4+4+3",
+  "4+4+4",
+  "5+5+4",
+  "5+5+5",
+  "4+4+4+4"
+ ],
+ "cases": [
+  {
+   "cond": 0,
+   "i": 0,
+   "seed": 20261122,
+   "addends": [
+    "BYK",
+    "KTK"
+   ],
+   "result": "TKHH",
+   "solution": "98510",
+   "letters": "BYKTH",
+   "nonunique": 21,
+   "gen_tries": 638,
+   "scaleCell": "2s",
+   "readClass": "E",
+   "scope": "レベル",
+   "cell": "E1",
+   "level": 1,
+   "f6": {
+    "Llo": 0,
+    "NB6lo": 0
+   }
+  },
+  {
+   "cond": 0,
+   "i": 1,
+   "seed": 20261123,
+   "addends": [
+    "RPL",
+    "RLW"
+   ],
+   "result": "WLWM",
+   "solution": "68314",
+   "letters": "RPLWM",
+   "nonunique": 119,
+   "gen_tries": 4987,
+   "scaleCell": "2s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 0,
+   "i": 2,
+   "seed": 20261124,
+   "addends": [
+    "FYF",
+    "YYJ"
+   ],
+   "result": "JAMM",
+   "solution": "58146",
+   "letters": "FYJAM",
+   "nonunique": 34,
+   "gen_tries": 1152,
+   "scaleCell": "2s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 1,
+   "i": 0,
+   "seed": 20361122,
+   "addends": [
+    "LLJH",
+    "LHW"
+   ],
+   "result": "JAWCJ",
+   "solution": "913805",
+   "letters": "LJHWAC",
+   "nonunique": 13,
+   "gen_tries": 408,
+   "scaleCell": "2s",
+   "readClass": "E",
+   "scope": "レベル",
+   "cell": "E1",
+   "level": 1,
+   "f6": {
+    "Llo": 0,
+    "NB6lo": 0
+   }
+  },
+  {
+   "cond": 1,
+   "i": 1,
+   "seed": 20361123,
+   "status": "nounique"
+  },
+  {
+   "cond": 1,
+   "i": 2,
+   "seed": 20361124,
+   "addends": [
+    "WABN",
+    "XAW"
+   ],
+   "result": "LRNXB",
+   "solution": "9523810",
+   "letters": "WABNXLR",
+   "nonunique": 86,
+   "gen_tries": 2779,
+   "scaleCell": "2s",
+   "readClass": "H1",
+   "scope": "組み合わせ外",
+   "cell": "H1",
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 0
+   }
+  },
+  {
+   "cond": 2,
+   "i": 0,
+   "seed": 20461122,
+   "addends": [
+    "UTTY",
+    "TYAA"
+   ],
+   "result": "HYHTH",
+   "solution": "38291",
+   "letters": "UTYAH",
+   "nonunique": 50,
+   "gen_tries": 1219,
+   "scaleCell": "2s",
+   "readClass": "E",
+   "scope": "レベル",
+   "cell": "E1",
+   "level": 1,
+   "f6": {
+    "Llo": 0,
+    "NB6lo": 0
+   }
+  },
+  {
+   "cond": 2,
+   "i": 1,
+   "seed": 20461123,
+   "addends": [
+    "PTEA",
+    "TPHE"
+   ],
+   "result": "HEHTE",
+   "solution": "83201",
+   "letters": "PTEAH",
+   "nonunique": 22,
+   "gen_tries": 608,
+   "scaleCell": "2s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 2,
+   "i": 2,
+   "seed": 20461124,
+   "addends": [
+    "LKKF",
+    "LKPP"
+   ],
+   "result": "KNNLN",
+   "solution": "61842",
+   "letters": "LKFPN",
+   "nonunique": 19,
+   "gen_tries": 513,
+   "scaleCell": "2s",
+   "readClass": "E",
+   "scope": "レベル",
+   "cell": "E1",
+   "level": 1,
+   "f6": {
+    "Llo": 0,
+    "NB6lo": 0
+   }
+  },
+  {
+   "cond": 3,
+   "i": 0,
+   "seed": 20561122,
+   "addends": [
+    "BPTTR",
+    "XRNT"
+   ],
+   "result": "HMLXHU",
+   "solution": "9786521034",
+   "letters": "BPTRXNHMLU",
+   "nonunique": 25,
+   "gen_tries": 551,
+   "scaleCell": "2l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 3,
+   "i": 1,
+   "seed": 20561123,
+   "addends": [
+    "PPCPH",
+    "XCLP"
+   ],
+   "result": "XHJPC",
+   "solution": "572604",
+   "letters": "PCHXLJ",
+   "nonunique": 74,
+   "gen_tries": 1608,
+   "scaleCell": "2l",
+   "readClass": "H2",
+   "scope": "組み合わせ外",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1
+   }
+  },
+  {
+   "cond": 3,
+   "i": 2,
+   "seed": 20561124,
+   "addends": [
+    "PGGGR",
+    "NULV"
+   ],
+   "result": "VTRHHY",
+   "solution": "9625781043",
+   "letters": "PGRNULVTHY",
+   "nonunique": 3,
+   "gen_tries": 75,
+   "scaleCell": "2l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 4,
+   "i": 0,
+   "seed": 20661122,
+   "addends": [
+    "PXXBR",
+    "TGPNG"
+   ],
+   "result": "VGVVMB",
+   "solution": "567384219",
+   "letters": "PXBRTGNVM",
+   "nonunique": 13,
+   "gen_tries": 292,
+   "scaleCell": "2l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 4,
+   "i": 1,
+   "seed": 20661123,
+   "addends": [
+    "HJWLV",
+    "VLVVJ"
+   ],
+   "result": "EWVVHW",
+   "solution": "780421",
+   "letters": "HJWLVE",
+   "nonunique": 7,
+   "gen_tries": 191,
+   "scaleCell": "2l",
+   "readClass": "mE",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 0
+   }
+  },
+  {
+   "cond": 4,
+   "i": 2,
+   "seed": 20661124,
+   "addends": [
+    "MMAVN",
+    "RAAVV"
+   ],
+   "result": "HARMRR",
+   "solution": "528971",
+   "letters": "MAVNRH",
+   "nonunique": 33,
+   "gen_tries": 675,
+   "scaleCell": "2l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 5,
+   "i": 0,
+   "seed": 20761122,
+   "addends": [
+    "MUURUA",
+    "AHPFH"
+   ],
+   "result": "FTMHRP",
+   "solution": "62094371",
+   "letters": "MURAHPFT",
+   "nonunique": 0,
+   "gen_tries": 34,
+   "scaleCell": "2l",
+   "readClass": "H2",
+   "scope": "組み合わせ外",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1
+   }
+  },
+  {
+   "cond": 5,
+   "i": 1,
+   "seed": 20761123,
+   "addends": [
+    "HKMEKK",
+    "KHUMH"
+   ],
+   "result": "ERKGXG",
+   "solution": "17625483",
+   "letters": "HKMEURGX",
+   "nonunique": 12,
+   "gen_tries": 152,
+   "scaleCell": "2l",
+   "readClass": "H2",
+   "scope": "組み合わせ外",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1
+   }
+  },
+  {
+   "cond": 5,
+   "i": 2,
+   "seed": 20761124,
+   "addends": [
+    "LFXULU",
+    "JJXTV"
+   ],
+   "result": "VVGHAA",
+   "solution": "2856473019",
+   "letters": "LFXUJTVGHA",
+   "nonunique": 8,
+   "gen_tries": 128,
+   "scaleCell": "2l",
+   "readClass": "H2",
+   "scope": "組み合わせ外",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1
+   }
+  },
+  {
+   "cond": 6,
+   "i": 0,
+   "seed": 20861122,
+   "addends": [
+    "RCNRFR",
+    "NCAVVE"
+   ],
+   "result": "EPPPAVN",
+   "solution": "72806915",
+   "letters": "RCNFAVEP",
+   "nonunique": 0,
+   "gen_tries": 8,
+   "scaleCell": "2l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 6,
+   "i": 1,
+   "seed": 20861123,
+   "addends": [
+    "FPFNVN",
+    "FYVYFF"
+   ],
+   "result": "CNNXVPC",
+   "solution": "7345012",
+   "letters": "FPNVYCX",
+   "nonunique": 0,
+   "gen_tries": 11,
+   "scaleCell": "2l",
+   "readClass": "E",
+   "scope": "組み合わせ外",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 0
+   }
+  },
+  {
+   "cond": 6,
+   "i": 2,
+   "seed": 20861124,
+   "addends": [
+    "XYDWWW",
+    "YEXLDH"
+   ],
+   "result": "DDXPENG",
+   "solution": "8315492067",
+   "letters": "XYDWELHPNG",
+   "nonunique": 2,
+   "gen_tries": 19,
+   "scaleCell": "2l",
+   "readClass": "H2",
+   "scope": "組み合わせ外",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1
+   }
+  },
+  {
+   "cond": 7,
+   "i": 0,
+   "seed": 20961122,
+   "addends": [
+    "LFL",
+    "KFG",
+    "FKF"
+   ],
+   "result": "LLEK",
+   "solution": "14503",
+   "letters": "LFKGE",
+   "nonunique": 268,
+   "gen_tries": 5941,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 7,
+   "i": 1,
+   "seed": 20961123,
+   "addends": [
+    "GXD",
+    "GGP",
+    "DXX"
+   ],
+   "result": "PDDT",
+   "solution": "97423",
+   "letters": "GXDPT",
+   "nonunique": 46,
+   "gen_tries": 860,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 7,
+   "i": 2,
+   "seed": 20961124,
+   "addends": [
+    "GHL",
+    "LGF",
+    "FFF"
+   ],
+   "result": "GHFW",
+   "solution": "17694",
+   "letters": "GHLFW",
+   "nonunique": 70,
+   "gen_tries": 1814,
+   "scaleCell": "3s",
+   "readClass": "H1",
+   "scope": "レベル",
+   "cell": "H1",
+   "level": 3,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 0
+   }
+  },
+  {
+   "cond": 8,
+   "i": 0,
+   "seed": 21061122,
+   "addends": [
+    "EABR",
+    "RBYR",
+    "BBV"
+   ],
+   "result": "YBYEE",
+   "solution": "586917",
+   "letters": "EABRYV",
+   "nonunique": 15,
+   "gen_tries": 216,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 8,
+   "i": 1,
+   "seed": 21061123,
+   "addends": [
+    "RFXY",
+    "KKCF",
+    "RCK"
+   ],
+   "result": "XCRVV",
+   "solution": "8215764",
+   "letters": "RFXYKCV",
+   "nonunique": 63,
+   "gen_tries": 995,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 8,
+   "i": 2,
+   "seed": 21061124,
+   "addends": [
+    "BAYA",
+    "AJBA",
+    "AAP"
+   ],
+   "result": "YBBBB",
+   "solution": "68190",
+   "letters": "BAYJP",
+   "nonunique": 19,
+   "gen_tries": 133,
+   "scaleCell": "3s",
+   "readClass": "E",
+   "scope": "組み合わせ外",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 0,
+    "NB6lo": 0
+   }
+  },
+  {
+   "cond": 9,
+   "i": 0,
+   "seed": 21161122,
+   "addends": [
+    "YEWT",
+    "AYTY",
+    "RRRT"
+   ],
+   "result": "YTTAA",
+   "solution": "180374",
+   "letters": "YEWTAR",
+   "nonunique": 48,
+   "gen_tries": 661,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 9,
+   "i": 1,
+   "seed": 21161123,
+   "addends": [
+    "FBBX",
+    "FFXT",
+    "TTBX"
+   ],
+   "result": "TBGBX",
+   "solution": "91823",
+   "letters": "FBXTG",
+   "nonunique": 23,
+   "gen_tries": 348,
+   "scaleCell": "3s",
+   "readClass": "H1",
+   "scope": "レベル",
+   "cell": "H1",
+   "level": 3,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 0
+   }
+  },
+  {
+   "cond": 9,
+   "i": 2,
+   "seed": 21161124,
+   "addends": [
+    "YYPC",
+    "AEAA",
+    "YYYM"
+   ],
+   "result": "AMEEP",
+   "solution": "530192",
+   "letters": "YPCAEM",
+   "nonunique": 2,
+   "gen_tries": 13,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 10,
+   "i": 0,
+   "seed": 21261122,
+   "addends": [
+    "PHVPN",
+    "XUCXP",
+    "VCBH"
+   ],
+   "result": "JBNPUP",
+   "solution": "367459801",
+   "letters": "PHVNXUCBJ",
+   "nonunique": 25,
+   "gen_tries": 234,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "上限を超える",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 3
+   }
+  },
+  {
+   "cond": 10,
+   "i": 1,
+   "seed": 21261123,
+   "addends": [
+    "FGJJC",
+    "DGGVJ",
+    "VDKC"
+   ],
+   "result": "JVVFVC",
+   "solution": "7019528",
+   "letters": "FGJCDVK",
+   "nonunique": 2,
+   "gen_tries": 13,
+   "scaleCell": "3l",
+   "readClass": "E",
+   "scope": "組み合わせ外",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 0
+   }
+  },
+  {
+   "cond": 10,
+   "i": 2,
+   "seed": 21261124,
+   "addends": [
+    "CPCNT",
+    "NMHPT",
+    "NXXW"
+   ],
+   "result": "MXTWBH",
+   "solution": "624713098",
+   "letters": "CPNTMHXWB",
+   "nonunique": 3,
+   "gen_tries": 34,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "上限を超える",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 3
+   }
+  },
+  {
+   "cond": 11,
+   "i": 0,
+   "seed": 21361122,
+   "addends": [
+    "WJFWC",
+    "TTCLJ",
+    "WEJJT"
+   ],
+   "result": "FFCJJW",
+   "solution": "3018562",
+   "letters": "WJFCTLE",
+   "nonunique": 1,
+   "gen_tries": 34,
+   "scaleCell": "3l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "cond": 11,
+   "i": 1,
+   "seed": 21361123,
+   "addends": [
+    "LTFBJ",
+    "JBXTD",
+    "JMJDM"
+   ],
+   "result": "TFXMFF",
+   "solution": "62187504",
+   "letters": "LTFBJXDM",
+   "nonunique": 4,
+   "gen_tries": 28,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "評価不能",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": null
+   }
+  },
+  {
+   "cond": 11,
+   "i": 2,
+   "seed": 21361124,
+   "addends": [
+    "KVVYM",
+    "UUMFM",
+    "UYKTT"
+   ],
+   "result": "FFKUTV",
+   "solution": "4286310",
+   "letters": "KVYMUFT",
+   "nonunique": 21,
+   "gen_tries": 143,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "上限を超える",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 2,
+    "sPN_18": 3
+   }
+  }
+ ],
+ "fixed": [
+  {
+   "addends": [
+    "SEND",
+    "MORE"
+   ],
+   "result": "MONEY",
+   "solutions": 1,
+   "scaleCell": "2s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "EG",
+    "GG"
+   ],
+   "result": "EAC",
+   "solutions": 1,
+   "scaleCell": "2s",
+   "readClass": "E",
+   "scope": "文字の数",
+   "cell": "E1",
+   "level": null,
+   "f6": {
+    "Llo": 0,
+    "NB6lo": 0
+   }
+  },
+  {
+   "addends": [
+    "WFX",
+    "TFM"
+   ],
+   "result": "CMMW",
+   "solutions": 1,
+   "scaleCell": "2s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "DUU",
+    "HXU"
+   ],
+   "result": "HMHD",
+   "solutions": 1,
+   "scaleCell": "2s",
+   "readClass": "H1",
+   "scope": "組み合わせ外",
+   "cell": "H1",
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 0
+   }
+  },
+  {
+   "addends": [
+    "BYK",
+    "KTK"
+   ],
+   "result": "TKHH",
+   "solutions": 1,
+   "scaleCell": "2s",
+   "readClass": "E",
+   "scope": "レベル",
+   "cell": "E1",
+   "level": 1,
+   "f6": {
+    "Llo": 0,
+    "NB6lo": 0
+   }
+  },
+  {
+   "addends": [
+    "NLU",
+    "BDL",
+    "BDD"
+   ],
+   "result": "BLNB",
+   "solutions": 1,
+   "scaleCell": "3s",
+   "readClass": "mE",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 0
+   }
+  },
+  {
+   "addends": [
+    "GGGN",
+    "LYMM",
+    "NKY"
+   ],
+   "result": "KNFGN",
+   "solutions": 1,
+   "scaleCell": "3s",
+   "readClass": "mE",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 0
+   }
+  },
+  {
+   "addends": [
+    "LFL",
+    "KFG",
+    "FKF"
+   ],
+   "result": "LLEK",
+   "solutions": 1,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "GXD",
+    "GGP",
+    "DXX"
+   ],
+   "result": "PDDT",
+   "solutions": 1,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "BGJL",
+    "BBLG",
+    "JGJ"
+   ],
+   "result": "JAJL",
+   "solutions": 1,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "CWE",
+    "CEE",
+    "WFC"
+   ],
+   "result": "EPW",
+   "solutions": 1,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "YTHF",
+    "FTFX",
+    "CTR"
+   ],
+   "result": "CRRYF",
+   "solutions": 1,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "HXAAX",
+    "DHWBW",
+    "AXADB"
+   ],
+   "result": "GGGWWW",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "PTEAY",
+    "PCDTE",
+    "DNDG"
+   ],
+   "result": "ECYEAJ",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "GVANK",
+    "FFFGB",
+    "VWNN"
+   ],
+   "result": "BGAVKB",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "レベル",
+   "cell": "B1",
+   "level": 4,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 1,
+    "sPN_18": 1
+   }
+  },
+  {
+   "addends": [
+    "WJWTT",
+    "JJCJF",
+    "JCDN"
+   ],
+   "result": "DFJNCD",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "上限を超える",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 2,
+    "sPN_18": 3
+   }
+  },
+  {
+   "addends": [
+    "PNAAG",
+    "RFVAA",
+    "GRGV"
+   ],
+   "result": "GVLNLR",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "上限を超える",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 3
+   }
+  },
+  {
+   "addends": [
+    "RJJVD",
+    "RDVHH",
+    "LHRV"
+   ],
+   "result": "HLTLTT",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "AANXN",
+    "UUHAP",
+    "HNAX"
+   ],
+   "result": "PRNRNN",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "XXUUC",
+    "DXWGX",
+    "FXUE"
+   ],
+   "result": "FUEGWD",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "上限を超える",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 3
+   }
+  },
+  {
+   "addends": [
+    "GPMEM",
+    "GMPXG",
+    "XKXK"
+   ],
+   "result": "ECKMPP",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "上限を超える",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 3
+   }
+  },
+  {
+   "addends": [
+    "XGNTD",
+    "FGDTE",
+    "NKTF"
+   ],
+   "result": "XEHFGK",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "上限を超える",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 3
+   }
+  },
+  {
+   "addends": [
+    "AHGJL",
+    "HXJJJ",
+    "LRNL"
+   ],
+   "result": "RXAXGR",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "上限を超える",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 3
+   }
+  },
+  {
+   "addends": [
+    "GKHWJ",
+    "GYXKX",
+    "LCLKX"
+   ],
+   "result": "GHUHKC",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "NNV",
+    "UFN",
+    "NTT"
+   ],
+   "result": "NFVT",
+   "solutions": 1,
+   "scaleCell": "3s",
+   "readClass": "E",
+   "scope": "レベル",
+   "cell": "E2",
+   "level": 2,
+   "f6": {
+    "Llo": 0,
+    "NB6lo": 1,
+    "NB6hi": 1
+   }
+  },
+  {
+   "addends": [
+    "NHW",
+    "NGN",
+    "GWG"
+   ],
+   "result": "NTWG",
+   "solutions": 1,
+   "scaleCell": "3s",
+   "readClass": "E",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 0,
+    "NB6lo": 1,
+    "NB6hi": 0
+   }
+  },
+  {
+   "addends": [
+    "DBRPR",
+    "UTTDR",
+    "UDDP"
+   ],
+   "result": "DDUURJ",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "レベル",
+   "cell": "B1",
+   "level": 4,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 1,
+    "sPN_18": 1
+   }
+  },
+  {
+   "addends": [
+    "MKCXE",
+    "MFCXE",
+    "KXXF"
+   ],
+   "result": "YCXMCM",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "レベル",
+   "cell": "B1",
+   "level": 4,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 1,
+    "sPN_18": 1
+   }
+  },
+  {
+   "addends": [
+    "KBBKC",
+    "EAWKB",
+    "WWKT"
+   ],
+   "result": "AACEBC",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "レベル",
+   "cell": "B2",
+   "level": 5,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 2,
+    "sPN_18": 2
+   }
+  },
+  {
+   "addends": [
+    "AVUCV",
+    "AVPPP",
+    "AAUG"
+   ],
+   "result": "TVPCVV",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "レベル",
+   "cell": "B1",
+   "level": 4,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 1,
+    "sPN_18": 1
+   }
+  },
+  {
+   "addends": [
+    "NNYBU",
+    "JNNJU",
+    "WJBN"
+   ],
+   "result": "XBXUXN",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "上限を超える",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 2,
+    "sPN_18": 3
+   }
+  },
+  {
+   "addends": [
+    "XXXGN",
+    "TPGTN",
+    "TXTA"
+   ],
+   "result": "GPAAYP",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H2",
+   "scope": "レベル",
+   "cell": "B2",
+   "level": 5,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 1,
+    "sPcN": 2,
+    "sPN_18": 2
+   }
+  },
+  {
+   "addends": [
+    "NPAPP",
+    "JANJP",
+    "CCKJ"
+   ],
+   "result": "NNAJJD",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "H1",
+   "scope": "組み合わせ外",
+   "cell": "H1",
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 0
+   }
+  },
+  {
+   "addends": [
+    "HMHWM",
+    "KKWKK",
+    "VKWM"
+   ],
+   "result": "YMXMMV",
+   "solutions": 1,
+   "scaleCell": "3l",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 1,
+    "ChiA": 0
+   }
+  },
+  {
+   "addends": [
+    "MPCM",
+    "NPWN",
+    "MMNW"
+   ],
+   "result": "CPNWM",
+   "solutions": 1,
+   "scaleCell": "3s",
+   "readClass": "mH",
+   "scope": "余白",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 1,
+    "Lhi": 1,
+    "Clo50": 1,
+    "Chi": 0
+   }
+  },
+  {
+   "addends": [
+    "BTJB",
+    "JJVC",
+    "CCVT"
+   ],
+   "result": "JCTTC",
+   "solutions": 1,
+   "scaleCell": "3s",
+   "readClass": "E",
+   "scope": "組み合わせ外",
+   "cell": null,
+   "level": null,
+   "f6": {
+    "Llo": 0,
+    "NB6lo": 0
+   }
+  }
+ ]
+}

@@ -1,0 +1,135 @@
+{
+ "version": 1,
+ "difficultyPlan": "P50nk18w",
+ "canonical": [
+  {
+   "text": "BYK+KTK=TKHH",
+   "key": "ABA+CDA=BAEE",
+   "sameAs": [
+    {
+     "text": "KTK+BYK=TKHH",
+     "key": "ABA+CDA=BAEE"
+    },
+    {
+     "text": "ABC+CDC=DCEE",
+     "key": "ABA+CDA=BAEE"
+    },
+    {
+     "text": "XYZ+ZWZ=WZPP",
+     "key": "ABA+CDA=BAEE"
+    }
+   ]
+  },
+  {
+   "text": "NNV+UFN+NTT=NFVT",
+   "key": "AAB+ACC+DEA=AEBC",
+   "sameAs": [
+    {
+     "text": "NTT+NNV+UFN=NFVT",
+     "key": "AAB+ACC+DEA=AEBC"
+    },
+    {
+     "text": "UFN+NTT+NNV=NFVT",
+     "key": "AAB+ACC+DEA=AEBC"
+    }
+   ]
+  },
+  {
+   "text": "DBRPR+UTTDR+UDDP=DDUURJ",
+   "key": "ABBC+ADDBE+BFECE=BBAAEG",
+   "sameAs": [
+    {
+     "text": "UTTDR+DBRPR+UDDP=DDUURJ",
+     "key": "ABBC+ADDBE+BFECE=BBAAEG"
+    }
+   ]
+  },
+  {
+   "text": "SEND+MORE=MONEY",
+   "key": "ABCD+EDFG=ABFDH",
+   "sameAs": []
+  }
+ ],
+ "near": [
+  {
+   "a": "BYK+KTK=TKHH",
+   "b": "BYK+KTB=TKHH",
+   "near": true,
+   "shared": [
+    "AB*+CDA=BAEE"
+   ]
+  },
+  {
+   "a": "BYK+KTK=TKHH",
+   "b": "BYK+KTK=TKHB",
+   "near": true,
+   "shared": [
+    "ABA+CDA=BAE*"
+   ]
+  },
+  {
+   "a": "BYK+KTK=TKHH",
+   "b": "NNV+UFN=NFVT",
+   "near": false,
+   "shared": []
+  }
+ ],
+ "space2": [
+  {
+   "lens": [
+    3,
+    3
+   ],
+   "letters": [
+    5,
+    7
+   ],
+   "equations": 692059,
+   "patterns": 36685,
+   "uniquePatterns": 2283,
+   "problems": 1150,
+   "byLetters": {
+    "5": 1104,
+    "6": 46
+   },
+   "levels": {
+    "none": 506,
+    "1": 644
+   },
+   "l1ByLetters": {
+    "5": 642,
+    "6": 2
+   },
+   "l1NearFree": {
+    "l1": 644,
+    "keptSkippingNear": 222
+   }
+  }
+ ],
+ "repeat": {
+  "300/50": [
+   0.1538,
+   3.87
+  ],
+  "300/100": [
+   0.2839,
+   14.84
+  ],
+  "500/50": [
+   0.0953,
+   2.37
+  ],
+  "500/100": [
+   0.1814,
+   9.28
+  ],
+  "1000/50": [
+   0.0488,
+   1.21
+  ],
+  "1000/100": [
+   0.0952,
+   4.79
+  ]
+ }
+}
