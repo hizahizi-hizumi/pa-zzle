@@ -17,6 +17,7 @@ const boundsSettings: FukumenzanReaderSettings = {
   adjacentPairs: null,
   adjacentTriples: null,
   sharedLetterPairs: null,
+  separatedTriples: null,
   pairProductLimit: null,
   equations: null,
 };

@@ -51,11 +51,16 @@ export type FukumenzanReaderSettings = {
   adjacentPairs: FukumenzanGroupLimit | null;
   adjacentTriples: FukumenzanGroupLimit | null;
   sharedLetterPairs: FukumenzanGroupLimit | null;
+  /** 隣り合わない3つの桁（一の位・百の位・千の位など）のまとめ。3つの中で隣り合う桁は繰り上がりでつなぐ。 */
+  separatedTriples: FukumenzanGroupLimit | null;
   pairProductLimit: number | null;
   equations: FukumenzanEquationReading | null;
 };
 
-/** まとめて読む桁の組。`linked` は繰り上がりでつながる隣り合う桁の組。 */
+/**
+ * まとめて読む桁の組。`linked` は繰り上がりでつながる隣り合う桁の組。`linked` でない組も、組の中で隣り合う桁の繰り上がりは
+ * 合わせてつなぐ。
+ */
 export type FukumenzanColumnGroup = {
   columns: readonly number[];
   limit: FukumenzanGroupLimit;
@@ -140,7 +145,12 @@ function listGroups(
 ): FukumenzanColumnGroup[] {
   const { columnCount, columnLetters } = model;
   const groups: FukumenzanColumnGroup[] = [];
-  const { adjacentPairs, adjacentTriples, sharedLetterPairs } = settings;
+  const {
+    adjacentPairs,
+    adjacentTriples,
+    sharedLetterPairs,
+    separatedTriples,
+  } = settings;
   if (adjacentPairs !== null) {
     for (let column = 0; column + 1 < columnCount; column += 1) {
       groups.push({
@@ -169,6 +179,22 @@ function listGroups(
           groups.push({
             columns: [left, right],
             limit: sharedLetterPairs,
+            linked: false,
+          });
+        }
+      }
+    }
+  }
+  if (separatedTriples !== null) {
+    for (let first = 0; first < columnCount; first += 1) {
+      for (let second = first + 1; second < columnCount; second += 1) {
+        for (let third = second + 1; third < columnCount; third += 1) {
+          if (second === first + 1 && third === second + 1) {
+            continue;
+          }
+          groups.push({
+            columns: [first, second, third],
+            limit: separatedTriples,
             linked: false,
           });
         }
@@ -787,13 +813,19 @@ export function readFukumenzanGroup(
       carryOuts: [(code >> CARRY_OUT_SHIFT) & 0xf],
     };
   });
-  for (const { letters, codes, masks } of tupleLists.slice(1)) {
+  for (const [listIndex, { letters, codes, masks }] of tupleLists
+    .slice(1)
+    .entries()) {
+    const followsPrevious = columns[listIndex + 1]! === columns[listIndex]! + 1;
     const next: JoinedPart[] = [];
     const seen = new Set<string>();
     for (const part of parts) {
       for (const [index, code] of codes.entries()) {
         const carryIn = (code >> CARRY_IN_SHIFT) & 0xf;
-        if (linked && carryIn !== part.carryOuts[part.carryOuts.length - 1]) {
+        if (
+          followsPrevious &&
+          carryIn !== part.carryOuts[part.carryOuts.length - 1]
+        ) {
           continue;
         }
         let agrees = true;

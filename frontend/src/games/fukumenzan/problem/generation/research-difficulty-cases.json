@@ -943,35 +943,44 @@
     {
       "equation": "DBRPR+UTTDR+UDDP=DDUURJ",
       "scale": "3l",
-      "readingClass": "H2",
-      "outcome": "classified",
-      "level": "4",
+      "readingClass": "mH",
+      "outcome": "margin",
+      "level": null,
       "readers": {
         "weakColumns": "stuck",
         "strongColumns": "stuck",
         "weakPairs": "stuck",
-        "strongCombined": "stuck",
-        "strongEquations": "stuck",
-        "splitsByClosure": 1,
-        "splitsBySteps": 1
+        "strongCombined": "solved"
+      },
+      "changedBy": ["separated-triples"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "classified",
+        "level": "4",
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": 1,
+          "splitsBySteps": 1
+        }
       }
     },
     {
       "equation": "MKCXE+MFCXE+KXXF=YCXMCM",
       "scale": "3l",
-      "readingClass": "H2",
-      "outcome": "classified",
-      "level": "5",
+      "readingClass": "mH",
+      "outcome": "margin",
+      "level": null,
       "readers": {
         "weakColumns": "stuck",
         "strongColumns": "stuck",
         "weakPairs": "stuck",
-        "strongCombined": "stuck",
-        "strongEquations": "stuck",
-        "splitsByClosure": 1,
-        "splitsBySteps": 2
+        "strongCombined": "solved"
       },
-      "changedBy": ["top-carry", "distinct-bounds"],
+      "changedBy": ["top-carry", "distinct-bounds", "separated-triples"],
       "research": {
         "readingClass": "H2",
         "outcome": "classified",
@@ -990,19 +999,16 @@
     {
       "equation": "KBBKC+EAWKB+WWKT=AACEBC",
       "scale": "3l",
-      "readingClass": "H2",
-      "outcome": "classified",
-      "level": "4",
+      "readingClass": "mH",
+      "outcome": "margin",
+      "level": null,
       "readers": {
         "weakColumns": "stuck",
         "strongColumns": "stuck",
         "weakPairs": "stuck",
-        "strongCombined": "stuck",
-        "strongEquations": "stuck",
-        "splitsByClosure": 1,
-        "splitsBySteps": 1
+        "strongCombined": "solved"
       },
-      "changedBy": ["cancelled-letters"],
+      "changedBy": ["cancelled-letters", "separated-triples"],
       "research": {
         "readingClass": "H2",
         "outcome": "classified",
@@ -1021,17 +1027,29 @@
     {
       "equation": "AVUCV+AVPPP+AAUG=TVPCVV",
       "scale": "3l",
-      "readingClass": "H2",
-      "outcome": "classified",
-      "level": "4",
+      "readingClass": "mH",
+      "outcome": "margin",
+      "level": null,
       "readers": {
         "weakColumns": "stuck",
         "strongColumns": "stuck",
         "weakPairs": "stuck",
-        "strongCombined": "stuck",
-        "strongEquations": "stuck",
-        "splitsByClosure": 1,
-        "splitsBySteps": 1
+        "strongCombined": "solved"
+      },
+      "changedBy": ["separated-triples"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "classified",
+        "level": "4",
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": 1,
+          "splitsBySteps": 1
+        }
       }
     },
     {

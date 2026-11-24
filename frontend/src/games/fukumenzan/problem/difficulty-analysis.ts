@@ -43,7 +43,7 @@ export type FukumenzanReaderOutcome = "solved" | "stuck";
  * - `weakPairs`: まとめる読みの弱い端。`weakColumns` に、隣の2桁のまとめ（つないだ組8まで、かつ探す手間50まで）を足す。
  *   探す手間は、2桁それぞれの組の数の積。
  * - `strongCombined`: まとめる読みの強い端。`strongColumns` に、隣の2桁（積200まで、多ければつないだ組50まで）・共通の文字を
- *   持つ隣でない2桁（組50まで）・隣の3桁（組12まで）のまとめを足す。
+ *   持つ隣でない2桁（組50まで）・隣の3桁（組12まで）・隣り合わない3桁（組12まで）のまとめを足す。
  * - `strongEquations`: `strongCombined` に、2桁・3桁・全部の桁を桁の重みでまとめた式と、共通の文字を持つ2桁の式の差の読み
  *   （決まっていない変数3つまでは書き出し、多ければ和の大きさ）を足す。
  * - `weakLightColumns`・`strongLightColumns`: 書き出しの多い桁を読まない1桁ずつの読み。決まっていない文字が3つ以上で組が4
@@ -119,6 +119,7 @@ const noGroups = {
   adjacentPairs: null,
   adjacentTriples: null,
   sharedLetterPairs: null,
+  separatedTriples: null,
   pairProductLimit: null,
   equations: null,
 } as const satisfies Partial<FukumenzanReaderSettings>;
@@ -156,6 +157,7 @@ const strongCombinedSettings = {
   },
   adjacentTriples: { kind: "joined", cap: 12 },
   sharedLetterPairs: { kind: "joined", cap: 50 },
+  separatedTriples: { kind: "joined", cap: 12 },
 } as const satisfies FukumenzanReaderSettings;
 
 const strongEquationsSettings = {

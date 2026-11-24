@@ -56,6 +56,23 @@ describe("analyzeFukumenzanDifficulty", () => {
     });
   });
 
+  describe("隣り合わない3つの桁をまとめれば値を仮に置かずに決まる場合", () => {
+    // 一の位 T＋X＝10 と千の位 K＋X＋繰り上がり＝10 の差 T＝K＋繰り上がりを百の位へ入れると 3K＝G＋7 になる。
+    const problem = parseFukumenzanEquation("BKTBT+LXTLK+BKKX=LJBGKK")!;
+
+    test("まとめる読みの強い端が、場合分けなしで解くこと", () => {
+      const analysis = analyzeFukumenzanDifficulty(
+        problem,
+        fukumenzanAnalysisScope,
+      );
+
+      expect(analysis).toMatchObject({
+        readingClass: "mH",
+        readers: { strongCombined: "solved" },
+      });
+    });
+  });
+
   describe("解が2つある式の場合", () => {
     const problem = parseFukumenzanEquation("AB+BA=CC")!;
 
