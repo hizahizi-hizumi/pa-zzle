@@ -169,7 +169,7 @@ export function FukumenzanHowToPlayDialog({
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="×は/その文字を/選んでいる間だけ/札に/出ます。/空の文字の/右上の/点線の/丸は/×の無い/札の/数です。"
+                text="×は/その文字を/選んでいる間だけ/札に/出ます。/空の文字の/右上には/×の無い/札の/数が/点線の/丸で/出ます。"
                 arrangement="stacked"
                 resettable={false}
                 examples={
