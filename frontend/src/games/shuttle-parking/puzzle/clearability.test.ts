@@ -1,0 +1,165 @@
+import {
+  countShuttleParkingStates,
+  createShuttleParkingClearability,
+  createShuttleParkingStateKey,
+  SHUTTLE_PARKING_STATE_LIMIT,
+} from "@/games/shuttle-parking/puzzle/clearability";
+import type {
+  ShuttleParkingCapacity,
+  ShuttleParkingColor,
+  ShuttleParkingSide,
+} from "@/games/shuttle-parking/puzzle/lot";
+import reference from "@/games/shuttle-parking/puzzle/research-reference.json";
+import {
+  createShuttleParkingInitialState,
+  exitShuttleParkingCar,
+  isShuttleParkingCleared,
+  listShuttleParkingExitableCarIds,
+  type ShuttleParkingPuzzle,
+  type ShuttleParkingState,
+} from "@/games/shuttle-parking/puzzle/rules";
+
+// 期待値は docs/パズル/導入調査/送迎パーキング/調査コード/shuttle-parking_difficulty.expected.json（案H の150問）の、
+// 解ける最小の待機枠で全部の状態をたどった解（出す順）の数。解ける最小の待機枠が範囲外の問題は解の数を持たない。
+
+type ReferenceProblem = (typeof reference.problems)[number];
+
+const solvedProblems = reference.problems.flatMap((problem) =>
+  "solutionCount" in problem && problem.solutionCount !== undefined
+    ? [{ ...problem, solutionCount: problem.solutionCount }]
+    : [],
+);
+
+function toPuzzle(problem: ReferenceProblem): ShuttleParkingPuzzle {
+  return {
+    lot: {
+      size: problem.size,
+      openSides: problem.openSides as ShuttleParkingSide[],
+      cars: problem.cars.map(([row, column, orientation, capacity, color]) => ({
+        row: row as number,
+        column: column as number,
+        orientation: orientation === "h" ? "horizontal" : "vertical",
+        capacity: capacity as ShuttleParkingCapacity,
+        color: color as ShuttleParkingColor,
+      })),
+    },
+    passengers: Array.from(problem.passengers) as ShuttleParkingColor[],
+    bayCount: problem.minimumBayCount,
+  };
+}
+
+function countClearingOrders(puzzle: ShuttleParkingPuzzle): number {
+  const known = new Map<string, number>();
+  function count(state: ShuttleParkingState): number {
+    if (isShuttleParkingCleared(puzzle, state)) return 1;
+    const key = createShuttleParkingStateKey(state);
+    const cached = known.get(key);
+    if (cached !== undefined) return cached;
+    const total = listShuttleParkingExitableCarIds(puzzle, state).reduce(
+      (sum, carId) => {
+        const exit = exitShuttleParkingCar(puzzle, state, carId);
+        return exit.outcome === "exited" ? sum + count(exit.state) : sum;
+      },
+      0,
+    );
+    known.set(key, total);
+    return total;
+  }
+  return count(createShuttleParkingInitialState(puzzle));
+}
+
+describe("調査コードの問題例の場合", () => {
+  test.each(solvedProblems.map((problem) => [problem.seed, problem] as const))(
+    "%s は全部の状態をたどった解の数が調査コードと一致すること",
+    (_, problem) => {
+      const puzzle = toPuzzle(problem);
+
+      const solutionCount = countClearingOrders(puzzle);
+
+      expect(solutionCount).toBe(problem.solutionCount);
+    },
+  );
+
+  test.each(solvedProblems.map((problem) => [problem.seed, problem] as const))(
+    "%s は待機枠を1つ減らすと解けないこと",
+    (_, problem) => {
+      const puzzle = toPuzzle(problem);
+      const narrowPuzzle = { ...puzzle, bayCount: puzzle.bayCount - 1 };
+
+      const clearable = createShuttleParkingClearability(narrowPuzzle).canClear(
+        createShuttleParkingInitialState(narrowPuzzle),
+      );
+
+      expect(clearable).toBe(false);
+    },
+  );
+});
+
+describe("createShuttleParkingClearability", () => {
+  // 4×4、上だけが開いている。車0（a）が車1（b）を塞ぐ。
+  const puzzle: ShuttleParkingPuzzle = {
+    lot: {
+      size: 4,
+      openSides: ["top"],
+      cars: [
+        { row: 0, column: 0, orientation: "vertical", capacity: 2, color: "a" },
+        { row: 2, column: 0, orientation: "vertical", capacity: 2, color: "b" },
+        { row: 0, column: 2, orientation: "vertical", capacity: 2, color: "b" },
+      ],
+    },
+    passengers: ["b", "a", "b", "a", "b", "b"],
+    bayCount: 2,
+  };
+  const { canClear } = createShuttleParkingClearability(puzzle);
+
+  test("最初の盤面から解けること", () => {
+    const clearable = canClear(createShuttleParkingInitialState(puzzle));
+
+    expect(clearable).toBe(true);
+  });
+
+  describe("待機枠が1つの場合", () => {
+    const narrowPuzzle = { ...puzzle, bayCount: 1 };
+
+    test("どの順でも詰むので解けないこと", () => {
+      const clearable = createShuttleParkingClearability(narrowPuzzle).canClear(
+        createShuttleParkingInitialState(narrowPuzzle),
+      );
+
+      expect(clearable).toBe(false);
+    });
+  });
+});
+
+describe("countShuttleParkingStates", () => {
+  const [problem] = reference.problems;
+  const puzzle = toPuzzle(problem!);
+
+  test("調査コードの問題例はどれも上限に収まること", () => {
+    const counts = reference.problems.map((example) =>
+      countShuttleParkingStates(toPuzzle(example)),
+    );
+
+    expect(Math.max(...counts)).toBeLessThanOrEqual(
+      SHUTTLE_PARKING_STATE_LIMIT,
+    );
+  });
+
+  test("上限を超える問題では RangeError を投げること", () => {
+    function count() {
+      return countShuttleParkingStates(puzzle, 3);
+    }
+
+    expect(count).toThrow(RangeError);
+  });
+
+  test("上限を超えてたどる判定も RangeError を投げること", () => {
+    function judge() {
+      return createShuttleParkingClearability(puzzle, 1).canClear(
+        createShuttleParkingInitialState(puzzle),
+      );
+    }
+
+    expect(judge).toThrow(RangeError);
+  });
+});
