@@ -43,6 +43,15 @@ describe("createFukumenzanColumnModel", () => {
     expect(createInitialDomains(model)[3]).toBe(0b110);
   });
 
+  test("3つの足し算でも、最上位の桁で足す文字が違う2文字なら答えの先頭の文字を1から始めること", () => {
+    // 文字は N A T Y G の順。最上位は N＋A＋繰り上がり＝G＋10×T で、9＋8＋2＝19 まで。
+    const model = createFukumenzanColumnModel(
+      parseFukumenzanEquation("NATA+AYYN+AGY=TGNGY")!,
+    );
+
+    expect(createInitialDomains(model)[2]).toBe(0b10);
+  });
+
   describe("答えが足す数と同じ桁の場合", () => {
     const model = createFukumenzanColumnModel(
       parseFukumenzanEquation("AB+BA=CC")!,

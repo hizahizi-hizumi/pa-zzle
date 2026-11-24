@@ -630,14 +630,14 @@
       "equation": "GGGN+LYMM+NKY=KNFGN",
       "scale": "3s",
       "readingClass": "E",
-      "outcome": "classified",
-      "level": "2",
+      "outcome": "margin",
+      "level": null,
       "readers": {
         "weakColumns": "solved",
         "weakLightColumns": "stuck",
-        "strongLightColumns": "stuck"
+        "strongLightColumns": "solved"
       },
-      "changedBy": ["distinct-bounds"],
+      "changedBy": ["distinct-bounds", "head-top-sum"],
       "research": {
         "readingClass": "mE",
         "outcome": "margin",

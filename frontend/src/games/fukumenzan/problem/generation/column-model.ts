@@ -139,17 +139,37 @@ export function createFukumenzanColumnModel(
 }
 
 /**
+ * 最上位の桁の和の最大。足す文字に違う数字を、回数の多い文字から 9・8・… と当て、右からの繰り上がりの最大を足す。
+ * 3つの足し算でも、最上位の桁で足す文字が違う2文字なら 9＋8＋2＝19 まで。
+ */
+function getTopColumnSumMax(model: FukumenzanColumnModel): number {
+  const top = model.columns[model.columnCount - 1]!;
+  const carryInMax = model.columnCount > 1 ? model.addendCount - 1 : 0;
+  return top.terms
+    .map(({ multiplicity }) => multiplicity)
+    .toSorted((left, right) => right - left)
+    .reduce(
+      (sum, multiplicity, index) => sum + multiplicity * (9 - index),
+      carryInMax,
+    );
+}
+
+/**
  * 解き始めの候補。先頭の文字は0にならず、値が0に決まっている繰り上がりは0。
  * 途中の繰り上がりは、足す数の数より小さい（3つの足し算の1桁の和は 9×3＋2＝29 まで）。
- * 答えが1桁長いときの答えの先頭の文字は最上位の繰り上がりなので、ほかの繰り上がりと同じ範囲の0でない値（2つの足し算は1、
- * 3つの足し算は1か2）から始める。
+ * 答えが1桁長いときの答えの先頭の文字は最上位の繰り上がりなので、0でない値の、最上位の桁の和の最大を10で割った値まで
+ * （2つの足し算は1、3つの足し算は最上位の桁で足す文字によって1か、1か2）から始める。
  */
 export function createInitialDomains(model: FukumenzanColumnModel): number[] {
   const carryMask = (1 << model.addendCount) - 1;
   const topCarryOut = model.columns[model.columnCount - 1]!.carryOutVariable;
+  const headMask =
+    carryMask &
+    NONZERO_DIGIT_MASK &
+    ((1 << (Math.floor(getTopColumnSumMax(model) / 10) + 1)) - 1);
   return Array.from({ length: model.variableCount }, (_, variable) => {
     if (variable === topCarryOut && variable < model.letterCount) {
-      return carryMask & NONZERO_DIGIT_MASK;
+      return headMask;
     }
     if (variable < model.letterCount) {
       return model.leadingLetters.has(variable)
