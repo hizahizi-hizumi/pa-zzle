@@ -1,5 +1,6 @@
 import type { PlayRecord } from "@/features/records/play-record";
 import { getPlayRecordMetricValue } from "@/features/records/play-record-definition";
+import { SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION } from "@/games/shuttle-parking/difficulty";
 import {
   createShuttleParkingPlayRecord,
   getShuttleParkingPlayRecordScore,
@@ -40,6 +41,7 @@ describe("createShuttleParkingPlayRecord", () => {
       payloadVersion: 1,
       payload: {
         difficulty: "3",
+        difficultyModelVersion: SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION,
         problemIdentity,
         problemFacts: { carCount: 8, passengerCount: 21, trapWeight: 6 },
         performance: { trapCount: 1, exitCount: 11 },
@@ -79,6 +81,13 @@ describe("isShuttleParkingPlayRecord", () => {
           ...record.payload,
           problemFacts: { carCount: 8, passengerCount: 21 },
         },
+      },
+    ],
+    [
+      "判定モデル版が無い",
+      {
+        ...record,
+        payload: { ...record.payload, difficultyModelVersion: undefined },
       },
     ],
     [

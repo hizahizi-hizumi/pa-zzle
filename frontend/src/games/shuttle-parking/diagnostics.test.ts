@@ -3,6 +3,7 @@ import {
   _private,
   createShuttleParkingDiagnosticSnapshot,
 } from "@/games/shuttle-parking/diagnostics";
+import { SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION } from "@/games/shuttle-parking/difficulty";
 import { selectShuttleParkingProblemForDifficulty } from "@/games/shuttle-parking/problem-selection";
 
 const {
@@ -29,6 +30,19 @@ describe("createShuttleParkingDiagnosticSnapshot", () => {
       buildRevision: "test-revision",
     });
   });
+
+  test("判定モデルの版と、その問題の判定と罠の重さを写すこと", () => {
+    expect(snapshot).toMatchObject({
+      difficultyModelVersion: SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION,
+      difficultyAssessment: { status: "classified", difficulty: "3" },
+      difficultyAnalysis: {
+        status: "analyzed",
+        features: {
+          headFirst: { best: { minimum: selected.trapWeight } },
+        },
+      },
+    });
+  });
 });
 
 describe("parseShuttleParkingDiagnosticSnapshot", () => {
@@ -36,6 +50,7 @@ describe("parseShuttleParkingDiagnosticSnapshot", () => {
   const invalidCases = [
     ["形式の版が違う", { ...snapshot, formatVersion: 2 }],
     ["別のゲーム", { ...snapshot, game: "parking-jam" }],
+    ["別の判定モデルの版", { ...snapshot, difficultyModelVersion: "2" }],
     [
       "復号できない identity",
       {

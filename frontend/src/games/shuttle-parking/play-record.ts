@@ -2,7 +2,10 @@ import type { PlayRecord } from "@/features/records/play-record";
 import { createPlayRecordId } from "@/features/records/play-record";
 import type { PlayRecordDefinition } from "@/features/records/play-record-definition";
 import { parseDifficultyLevel } from "@/games/difficulty";
-import type { ShuttleParkingDifficulty } from "@/games/shuttle-parking/difficulty";
+import {
+  SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION,
+  type ShuttleParkingDifficulty,
+} from "@/games/shuttle-parking/difficulty";
 import {
   createShuttleParkingResult,
   type ShuttleParkingResult,
@@ -32,12 +35,14 @@ const SHUTTLE_PARKING_GAME_ID = "shuttle-parking";
 
 /**
  * 採点の基準時間に使う問題の事実。生成器の版や問題集が変わっても記録だけで評価できるよう、問題と問題集から写して持つ。
+ * 罠の重さは、問題集を作った判定モデル版（`difficultyModelVersion`）の値。
  */
 type ShuttleParkingProblemFacts = ShuttleParkingSpeedReference;
 
 type ShuttleParkingPlayRecordPayload = {
   difficulty: ShuttleParkingDifficulty;
   scoreModelVersion: typeof SHUTTLE_PARKING_SCORE_MODEL_VERSION;
+  difficultyModelVersion: string;
   problemIdentity: ShuttleParkingRecordedProblemIdentity;
   problemFacts: ShuttleParkingProblemFacts;
   performance: ShuttleParkingSessionResult;
@@ -101,6 +106,7 @@ export function isShuttleParkingPlayRecord(
   const {
     difficulty,
     scoreModelVersion,
+    difficultyModelVersion,
     problemIdentity,
     problemFacts,
     performance,
@@ -109,6 +115,7 @@ export function isShuttleParkingPlayRecord(
     typeof difficulty === "string" &&
     parseDifficultyLevel(difficulty) !== undefined &&
     scoreModelVersion === SHUTTLE_PARKING_SCORE_MODEL_VERSION &&
+    typeof difficultyModelVersion === "string" &&
     isShuttleParkingRecordedProblemIdentity(problemIdentity) &&
     isShuttleParkingProblemFacts(problemFacts) &&
     isShuttleParkingPerformance(performance, problemFacts.carCount)
@@ -137,6 +144,7 @@ export function createShuttleParkingPlayRecord({
     payload: {
       difficulty,
       scoreModelVersion: SHUTTLE_PARKING_SCORE_MODEL_VERSION,
+      difficultyModelVersion: SHUTTLE_PARKING_DIFFICULTY_MODEL_VERSION,
       problemIdentity: {
         ...problemIdentity,
         conditions: { ...problemIdentity.conditions },
