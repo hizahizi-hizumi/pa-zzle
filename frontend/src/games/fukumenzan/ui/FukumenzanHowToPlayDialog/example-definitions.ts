@@ -67,19 +67,19 @@ export const goalSteps: readonly {
   { letter: "M", digit: 1 },
 ];
 
-/** 同じ文字の全部の場所に、同じ札が入る。 */
+/** X の 8 を D へ運ぶと、D の全部の場所に 8 が入り、X は空になる。同じ札は2つの文字に入らない。 */
 export const sameLetterRuleExample: FukumenzanHowToPlayExample = {
-  placed: {},
+  placed: { X: 8 },
   cardRow: "high",
-  move: { gesture: "tap", from: card(8), to: letter("D") },
+  move: { gesture: "drag", from: letter("X"), to: letter("D") },
 };
 
-/** 先頭の0のルールの、できる形とできない形。 */
+/** 先頭の0のルールの、できる形とできない形。できる形は、答えに沿って D に 8 を入れる手を示す。 */
 export const leadingZeroRuleExamples = [
   {
-    placed: { M: 1, D: 2 },
-    cardRow: "low",
-    move: { gesture: "tap", from: card(0), to: letter("D") },
+    placed: { M: 1 },
+    cardRow: "high",
+    move: { gesture: "tap", from: card(8), to: letter("D") },
     verdict: "leading-zero",
   },
   {
@@ -90,12 +90,12 @@ export const leadingZeroRuleExamples = [
   },
 ] as const satisfies readonly FukumenzanHowToPlayExample[];
 
-/** 足し算のルールの、一の位と十の位が合う形と、十の位が合わない形。 */
+/** 足し算のルールの、一の位と十の位が合う形と、十の位が合わない形。合う形は、R に 9 を入れる手を示す。 */
 export const sumRuleExamples = [
   {
-    placed: { D: 8, X: 2, U: 0, R: 9 },
+    placed: { D: 8, X: 2, U: 0 },
     cardRow: "high",
-    move: { gesture: "tap", from: card(7), to: letter("R") },
+    move: { gesture: "tap", from: card(9), to: letter("R") },
     verdict: "sum",
   },
   {

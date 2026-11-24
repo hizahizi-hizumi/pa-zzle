@@ -116,13 +116,13 @@ export type FukumenzanExampleJudgement =
   | "disallowed"
   | "incomplete";
 
-/** 足し算の例で確かめる桁。一の位と十の位。 */
+/** 足し算の例で、合うと言うまでに埋める桁。一の位と十の位。 */
 const SUM_JUDGED_COLUMN_COUNT = 2;
 
 /**
  * 今の盤面の判定。どちらも本番の知らせと同じ関数で求める。
  * - 先頭の0: 先頭の文字のどれかが0ならできない。先頭の文字が全部埋まって0が無ければできる。
- * - 足し算: 例で確かめる一の位と十の位のどちらかが合わなければ合わない。両方が埋まって合えば合う。
+ * - 足し算: 本番が計算違いの印を付ける桁が1つでもあれば合わない。印が無く、一の位と十の位が埋まっていれば合う。
  */
 export function judgeExample(
   verdict: FukumenzanExampleVerdict,
@@ -138,11 +138,7 @@ export function judgeExample(
       ? "allowed"
       : "incomplete";
   }
-  if (
-    listFukumenzanMiscalculatedColumns(howToPlayProblem, state).some(
-      (place) => place < SUM_JUDGED_COLUMN_COUNT,
-    )
-  ) {
+  if (listFukumenzanMiscalculatedColumns(howToPlayProblem, state).length > 0) {
     return "disallowed";
   }
   return columns
@@ -154,4 +150,20 @@ export function judgeExample(
     )
     ? "allowed"
     : "incomplete";
+}
+
+/** 例が教えるルールとは別のルールの印が盤面に出ているときに、判定の下に添えるわけ。出ていなければ `undefined`。 */
+export function describeOtherRuleMark(
+  verdict: FukumenzanExampleVerdict,
+  state: FukumenzanPuzzleState,
+): string | undefined {
+  if (verdict === "leading-zero") {
+    return listFukumenzanMiscalculatedColumns(howToPlayProblem, state).length >
+      0
+      ? "足し算の合わない桁に赤い線が出ています"
+      : undefined;
+  }
+  return listFukumenzanLeadingZeroLetters(howToPlayProblem, state).length > 0
+    ? "先頭が0の数のマスが赤くなっています"
+    : undefined;
 }

@@ -10,6 +10,7 @@ import {
 } from "@/games/fukumenzan/puzzle/transitions";
 import {
   createExamplePuzzleState,
+  describeOtherRuleMark,
   findExampleHint,
   getExampleLetterIndex,
   isExampleChanged,
@@ -30,6 +31,7 @@ import {
 const D = getExampleLetterIndex("D");
 const U = getExampleLetterIndex("U");
 const R = getExampleLetterIndex("R");
+const M = getExampleLetterIndex("M");
 
 describe("遊び方の式", () => {
   test("ゴールの盤面の手順を打ち終えると本番の判定で解けていること", () => {
@@ -194,19 +196,20 @@ describe("isExampleChanged", () => {
 describe("judgeExample", () => {
   describe("先頭の0のルールの場合", () => {
     const [allowed, disallowed] = leadingZeroRuleExamples;
+    const initial = createExamplePuzzleState(allowed);
 
-    test("できる形の例はできると判定すること", () => {
+    test("できる形の例は、先頭の文字 D が空なので途中と判定すること", () => {
+      expect(judgeExample("leading-zero", initial)).toBe("incomplete");
+    });
+
+    test("できる形の例で手がかりの手（D に 8）を打つとできると判定すること", () => {
       expect(
-        judgeExample("leading-zero", createExamplePuzzleState(allowed)),
+        judgeExample("leading-zero", placeFukumenzanDigit(initial, D, 8)),
       ).toBe("allowed");
     });
 
-    test("できる形の例で手がかりの手を打つと本番の知らせと同じくできないと判定すること", () => {
-      const state = placeFukumenzanDigit(
-        createExamplePuzzleState(allowed),
-        D,
-        0,
-      );
+    test("できる形の例で D に 0 を入れると本番の知らせと同じくできないと判定すること", () => {
+      const state = placeFukumenzanDigit(initial, D, 0);
 
       expect(listFukumenzanLeadingZeroLetters(howToPlayProblem, state)).toEqual(
         [D],
@@ -219,33 +222,36 @@ describe("judgeExample", () => {
         judgeExample("leading-zero", createExamplePuzzleState(disallowed)),
       ).toBe("disallowed");
     });
-
-    test("先頭の文字が空なら途中と判定すること", () => {
-      const state = returnFukumenzanDigit(createExamplePuzzleState(allowed), D);
-
-      expect(judgeExample("leading-zero", state)).toBe("incomplete");
-    });
   });
 
   describe("足し算のルールの場合", () => {
     const [allowed, disallowed] = sumRuleExamples;
+    const initial = createExamplePuzzleState(allowed);
+    const solvedTens = placeFukumenzanDigit(initial, R, 9);
 
-    test("合う形の例は合うと判定すること", () => {
-      expect(judgeExample("sum", createExamplePuzzleState(allowed))).toBe(
-        "allowed",
-      );
+    test("合う形の例は、十の位の R が空なので途中と判定すること", () => {
+      expect(judgeExample("sum", initial)).toBe("incomplete");
     });
 
-    test("合う形の例で手がかりの手を打つと本番の知らせと同じく十の位が合わないと判定すること", () => {
-      const state = placeFukumenzanDigit(
-        createExamplePuzzleState(allowed),
-        R,
-        7,
-      );
+    test("合う形の例で手がかりの手（R に 9）を打つと合うと判定すること", () => {
+      expect(judgeExample("sum", solvedTens)).toBe("allowed");
+    });
+
+    test("R に 7 を入れると本番の知らせと同じく十の位が合わないと判定すること", () => {
+      const state = placeFukumenzanDigit(initial, R, 7);
 
       expect(
         listFukumenzanMiscalculatedColumns(howToPlayProblem, state),
       ).toEqual([1]);
+      expect(judgeExample("sum", state)).toBe("disallowed");
+    });
+
+    test("十の位まで合っても、本番が百の位から左に計算違いの印を付けたら合わないと判定すること", () => {
+      const state = placeFukumenzanDigit(solvedTens, M, 5);
+
+      expect(
+        listFukumenzanMiscalculatedColumns(howToPlayProblem, state),
+      ).toEqual([2, 3]);
       expect(judgeExample("sum", state)).toBe("disallowed");
     });
 
@@ -254,11 +260,40 @@ describe("judgeExample", () => {
         "disallowed",
       );
     });
+  });
+});
 
-    test("十の位が埋まっていなければ途中と判定すること", () => {
-      const state = returnFukumenzanDigit(createExamplePuzzleState(allowed), R);
+describe("describeOtherRuleMark", () => {
+  test("先頭の0の例で計算違いの印が出たら、足し算の印のわけを返すこと", () => {
+    const state = placeFukumenzanDigit(
+      createExamplePuzzleState(sumRuleExamples[1]),
+      M,
+      1,
+    );
 
-      expect(judgeExample("sum", state)).toBe("incomplete");
-    });
+    expect(describeOtherRuleMark("leading-zero", state)).toBe(
+      "足し算の合わない桁に赤い線が出ています",
+    );
+  });
+
+  test("足し算の例で先頭の0の印が出たら、先頭の0の印のわけを返すこと", () => {
+    const state = placeFukumenzanDigit(
+      createExamplePuzzleState(sumRuleExamples[0]),
+      M,
+      0,
+    );
+
+    expect(describeOtherRuleMark("sum", state)).toBe(
+      "先頭が0の数のマスが赤くなっています",
+    );
+  });
+
+  test("ほかのルールの印が無ければ何も返さないこと", () => {
+    expect(
+      describeOtherRuleMark(
+        "leading-zero",
+        createExamplePuzzleState(leadingZeroRuleExamples[0]),
+      ),
+    ).toBeUndefined();
   });
 });

@@ -228,21 +228,19 @@ describe("TouchableExample", () => {
   });
 
   describe("先頭の0の例の場合", () => {
-    test("できる形の例はできると言い、0 の札に手がかりを付けること", () => {
+    test("できる形の例は、D が空なので途中と言い、8 の札に手がかりを付けること", () => {
       renderInPanel(<TouchableExample example={leadingZeroRuleExamples[0]} />);
 
-      expect([readVerdict(), readHintTarget()]).toEqual(["できる", "0 の札"]);
+      expect([readVerdict(), readHintTarget()]).toEqual(["途中", "8 の札"]);
     });
 
-    test("できる形の例で D に 0 を入れると、本番と同じく先頭の札を赤くしてできないと言うこと", () => {
+    test("できる形の例で手がかりのとおり D に 8 を入れると、できると言うこと", () => {
       renderInPanel(<TouchableExample example={leadingZeroRuleExamples[0]} />);
 
-      fireEvent.click(getCardRow().getByRole("button", { name: "0 の札" }));
-      fireEvent.click(
-        getEquation().getAllByRole("button", { name: "D に 2" })[0]!,
-      );
+      fireEvent.click(getCardRow().getByRole("button", { name: "8 の札" }));
+      fireEvent.click(getEquation().getAllByRole("button", { name: "D" })[0]!);
 
-      expect(readVerdict()).toBe("できない");
+      expect(readVerdict()).toBe("できる");
     });
 
     test("できない形の例はできないと言い、手がかりを付けないこと", () => {
@@ -252,12 +250,29 @@ describe("TouchableExample", () => {
     });
   });
 
-  test("足し算の合わない形の例で R に 9 を入れると合うと言うこと", () => {
-    renderInPanel(<TouchableExample example={sumRuleExamples[1]} />);
+  describe("足し算の例の場合", () => {
+    test("合う形の例は、R が空なので途中と言い、9 の札に手がかりを付けること", () => {
+      renderInPanel(<TouchableExample example={sumRuleExamples[0]} />);
 
-    fireEvent.click(getCardRow().getByRole("button", { name: "9 の札" }));
-    fireEvent.click(getEquation().getByRole("button", { name: "R に 7" }));
+      expect([readVerdict(), readHintTarget()]).toEqual(["途中", "9 の札"]);
+    });
 
-    expect(readVerdict()).toBe("合う");
+    test("合う形の例で手がかりのとおり R に 9 を入れると、合うと言うこと", () => {
+      renderInPanel(<TouchableExample example={sumRuleExamples[0]} />);
+
+      fireEvent.click(getCardRow().getByRole("button", { name: "9 の札" }));
+      fireEvent.click(getEquation().getByRole("button", { name: "R" }));
+
+      expect(readVerdict()).toBe("合う");
+    });
+
+    test("合わない形の例で R に 9 を入れると合うと言うこと", () => {
+      renderInPanel(<TouchableExample example={sumRuleExamples[1]} />);
+
+      fireEvent.click(getCardRow().getByRole("button", { name: "9 の札" }));
+      fireEvent.click(getEquation().getByRole("button", { name: "R に 7" }));
+
+      expect(readVerdict()).toBe("合う");
+    });
   });
 });

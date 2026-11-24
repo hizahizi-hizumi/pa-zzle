@@ -39,6 +39,7 @@ import {
 import { ExampleGround } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/ExampleGround";
 import {
   createExamplePuzzleState,
+  describeOtherRuleMark,
   findExampleHint,
   getExampleLetterIndex,
   isExampleChanged,
@@ -242,6 +243,7 @@ export function TouchableExample({ example }: TouchableExampleProps) {
           <HowToPlayVerdict
             verdict={judgeExample(example.verdict, puzzleState)}
             labels={verdictLabels[example.verdict]}
+            reason={describeOtherRuleMark(example.verdict, puzzleState)}
           />
         )
       }
