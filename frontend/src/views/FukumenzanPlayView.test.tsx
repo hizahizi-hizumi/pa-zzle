@@ -90,7 +90,7 @@ function getCardRow() {
 
 function getLetterTiles(letter: string): HTMLElement[] {
   return getEquation().getAllByRole("button", {
-    name: new RegExp(`^${letter}( に \\d)?$`),
+    name: new RegExp(`^${letter}( に \\d|（候補 \\d+）)?$`),
   });
 }
 
@@ -152,81 +152,104 @@ describe("FukumenzanPlayView", () => {
       expect(slot).not.toBeNull();
     });
 
-    describe("文字を押して選んだ場合", () => {
+    describe("文字を押して選んでから札を押した場合", () => {
       beforeEach(() => {
         tapLetter("B");
+        tapCard(0);
       });
 
-      test("札を押すと × が付き、もう一度押すと外れること", () => {
-        tapCard(0);
+      test("札に × を付け、文字には入れないこと", () => {
         const crossed = getCardRow().queryByRole("button", {
           name: "0 の札（×）",
         });
-        tapCard(0);
-        const uncrossed = getCardRow().queryByRole("button", {
-          name: "0 の札",
-        });
 
         expect(crossed).not.toBeNull();
-        expect(uncrossed).not.toBeNull();
-        expect(readTiles("B")).toEqual(["B"]);
+        expect(readTiles("B")).toEqual(["B9"]);
+      });
+
+      describe("もう一度札を押した場合", () => {
+        beforeEach(() => {
+          tapCard(0);
+        });
+
+        test("× を外すこと", () => {
+          const uncrossed = getCardRow().queryByRole("button", {
+            name: "0 の札",
+          });
+
+          expect(uncrossed).not.toBeNull();
+        });
       });
     });
 
-    describe("札の入った文字を押して選んだ場合", () => {
+    describe("札の入った文字を選んで列の空いた所を押した場合", () => {
       beforeEach(() => {
         placeByTaps("B", 9);
         tapLetter("B");
-      });
-
-      test("列の空いた所を押すと、札が列へ戻ること", () => {
         fireEvent.click(
           getCardRow().getByRole("button", { name: "9 の札の場所" }),
         );
+      });
+
+      test("札が列へ戻ること", () => {
+        const card = getCardRow().queryByRole("button", { name: "9 の札" });
 
         expect(readTiles("B")).toEqual(["B"]);
-        expect(
-          getCardRow().getByRole("button", { name: "9 の札" }),
-        ).toBeTruthy();
+        expect(card).not.toBeNull();
       });
     });
 
-    test("札を押したまま文字へ運ぶと、その文字に札が入ること", () => {
-      const card = getCardRow().getByRole("button", { name: "8 の札" });
-      const target = getLetterTiles("Y")[0]!;
-      document.elementFromPoint = vi.fn(() => target);
-      fireEvent.pointerDown(card, {
-        ...touch,
-        button: 0,
-        clientX: 10,
-        clientY: 300,
+    describe("札を押したまま文字へ運んで離した場合", () => {
+      beforeEach(() => {
+        const card = getCardRow().getByRole("button", { name: "8 の札" });
+        const target = getLetterTiles("Y")[0]!;
+        // 指を離した位置の下だけに文字を置く。
+        document.elementFromPoint = vi.fn((x: number, y: number) =>
+          x === 10 && y === 100 ? target : null,
+        );
+        fireEvent.pointerDown(card, {
+          ...touch,
+          button: 0,
+          clientX: 10,
+          clientY: 300,
+        });
+        fireEvent.pointerMove(card, { ...touch, clientX: 10, clientY: 200 });
+        fireEvent.pointerUp(card, { ...touch, clientX: 10, clientY: 100 });
       });
-      fireEvent.pointerMove(card, { ...touch, clientX: 10, clientY: 200 });
-      fireEvent.pointerUp(card, { ...touch, clientX: 10, clientY: 100 });
 
-      const yTiles = readTiles("Y");
+      test("指の下の文字に札が入ること", () => {
+        const yTiles = readTiles("Y");
 
-      expect(yTiles).toEqual(["8"]);
+        expect(yTiles).toEqual(["8"]);
+      });
     });
 
-    test("待ったで直前に入れた札を列へ戻すこと", () => {
-      placeByTaps("K", 5);
-      fireEvent.click(screen.getByRole("button", { name: "待った" }));
+    describe("札を入れて待ったを押した場合", () => {
+      beforeEach(() => {
+        placeByTaps("K", 5);
+        fireEvent.click(screen.getByRole("button", { name: "待った" }));
+      });
 
-      const kTiles = readTiles("K");
+      test("入れた札を列へ戻すこと", () => {
+        const kTiles = readTiles("K");
 
-      expect(kTiles).toEqual(["K", "K", "K", "K"]);
+        expect(kTiles).toEqual(["K", "K", "K", "K"]);
+      });
     });
 
-    test("メニューにリセットを出さないこと", () => {
-      openMenu();
+    describe("メニューを開いた場合", () => {
+      beforeEach(() => {
+        openMenu();
+      });
 
-      const items = screen
-        .getAllByRole("menuitem")
-        .map((item) => item.textContent);
+      test("盤面を戻すを出し、リセットを出さないこと", () => {
+        const items = screen
+          .getAllByRole("menuitem")
+          .map((item) => item.textContent);
 
-      expect(items).not.toContain("リセット");
-      expect(items).toContain("盤面を戻す");
+        expect(items).not.toContain("リセット");
+        expect(items).toContain("盤面を戻す");
+      });
     });
 
     describe("最後の文字を残して解いた場合", () => {
