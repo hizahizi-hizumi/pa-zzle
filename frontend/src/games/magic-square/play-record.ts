@@ -29,7 +29,7 @@ import {
 } from "@/lib/type-guards";
 
 const MAGIC_SQUARE_GAME_ID = "magic-square";
-const MAGIC_SQUARE_PLAY_RECORD_PAYLOAD_VERSION = 2;
+const MAGIC_SQUARE_PLAY_RECORD_PAYLOAD_VERSION = 3;
 
 /**
  * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
@@ -49,9 +49,12 @@ export type MagicSquarePlayRecord = PlayRecord & {
   payload: MagicSquarePlayRecordPayload;
 };
 
-// payloadVersion 1 の `withdrawalCount` は、同じマスでほかのマスに触れる前に直した数を、盤面の知らせを見てから直したものも含めて
-// 数えなかった。今の置き直しと意味が違うので、記録一覧と時間の自己ベストに残し、評価点・置き直しの自己ベスト・図鑑には使わず、
+// 前の版の置き直しは、今の置き直しと数え方が違うので、記録一覧と時間の自己ベストに残し、評価点・置き直しの自己ベスト・図鑑には使わず、
 // 結果画面も作り直さない。
+// - payloadVersion 1 の `withdrawalCount`: 同じマスでほかのマスに触れる前に直した数を、盤面の知らせを見てから直したものも含めて
+//   数えなかった。
+// - payloadVersion 2 の `correctionCount`: 同じマスを変えている間は最後に残った数で数え直し（元の数に戻すと減る）、列の見え方を
+//   変えた最初の数を数の欄で隣り合う数へ直した1回も数えなかった。
 type MagicSquarePerformanceV1 = Omit<
   MagicSquareSessionResult,
   "correctionCount"
@@ -67,8 +70,13 @@ type MagicSquarePlayRecordV1 = PlayRecord & {
   };
 };
 
+type MagicSquarePlayRecordV2 = Omit<MagicSquarePlayRecord, "payloadVersion"> & {
+  payloadVersion: 2;
+};
+
 type RecognizedMagicSquarePlayRecord =
   | MagicSquarePlayRecordV1
+  | MagicSquarePlayRecordV2
   | MagicSquarePlayRecord;
 
 type CreateMagicSquarePlayRecordInput = {
@@ -80,7 +88,7 @@ type CreateMagicSquarePlayRecordInput = {
   result: MagicSquareSessionResult;
 };
 
-/** 置き直しの回数の項目は、版 1 では `withdrawalCount`、今の版では `correctionCount`。 */
+/** 置き直しの回数の項目は、版 1 では `withdrawalCount`、版 2 と今の版では `correctionCount`。 */
 function isMagicSquarePerformance(
   value: unknown,
   payloadVersion: number,
@@ -91,7 +99,8 @@ function isMagicSquarePerformance(
   const correctionCount =
     payloadVersion === 1
       ? value.withdrawalCount
-      : payloadVersion === MAGIC_SQUARE_PLAY_RECORD_PAYLOAD_VERSION
+      : payloadVersion === 2 ||
+          payloadVersion === MAGIC_SQUARE_PLAY_RECORD_PAYLOAD_VERSION
         ? value.correctionCount
         : undefined;
   return (

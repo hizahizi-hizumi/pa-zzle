@@ -78,3 +78,29 @@ describe("MagicSquareNumberPad", () => {
     expect(onEnterValue).toHaveBeenCalledWith(7);
   });
 });
+
+describe("MagicSquareNumberPad の列", () => {
+  test.each([
+    [4, 8],
+    [5, 7],
+    [6, 8],
+  ])("一辺 %i の盤面の数を %i 列に並べること", (size, columnCount) => {
+    render(
+      <MagicSquareNumberPad
+        size={size}
+        valueStates={Array.from(
+          { length: size * size },
+          (): MagicSquareValueState => "available",
+        )}
+        interactionDisabled={false}
+        onEnterValue={vi.fn()}
+      />,
+    );
+
+    const pad = screen.getByRole("group", { name: "盤面の下に並んだ数" });
+
+    expect(pad.style.gridTemplateColumns).toBe(
+      `repeat(${columnCount}, minmax(0, 1fr))`,
+    );
+  });
+});

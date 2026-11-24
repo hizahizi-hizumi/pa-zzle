@@ -137,7 +137,7 @@ export function createMagicSquareExampleSession({
     ...written,
     selectedCellIndex: null,
     history: [],
-    settledCorrectionCount: 0,
+    correctionCount: 0,
     editingCell: null,
   };
 }

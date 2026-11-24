@@ -60,7 +60,8 @@ const SECOND_MS = 1_000;
 function ignoreFigurePress(): void {}
 
 // 何が残り何が0に戻るかは、本番の session に合わせる。盤面を戻すは経過時間と置き直しの回数を引き継ぎ、置いた数を外してメモも消し、
-// 外した数をどれも置き直しに数える。リセットと別の問題は新しいプレイを始める。
+// 外した数をどれも置き直しに数える。リセットと別の問題は新しいプレイを始める。時間が戻らないことは、待ったではなくここで言う
+// （最初の盤面に戻す操作なので、時間も戻ると読まれやすい）。
 const menuOperations: readonly HowToPlayMenuOperation[] = [
   {
     item: playMenuOperationItems.restart,
@@ -120,16 +121,10 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
       <HowToPlayScoreRow
         measure="置き直し"
         deduction={`1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点`}
-        // 本番の session（countEditingCorrection）は、置いた数がそのマスから外れた事実を数える。ほかのマスを選ぶまで同じマスを
-        // 変えている間は、最後に残った数で数え直し、次の3つを除く。その間に置いて列の端の色を変えなかった数、外してから元に戻した数、
-        // 色を変えてすぐ盤面の下に並んだ数で隣り合う数へ置き換えた数。盤面を戻すは同じマスを変える操作ではないので、どれも数える。
-        // 文は数え方の決まりと条件を言い、流れの図は数える直し方と、数えない直し方のうち盤面の外の並びで決まる押し間違いを見せる。
-        text="置いた数が/外れるたびに/画面の上の/「置き直し」が/1回/増えます。/ただし/同じマスを/選んでいる間に/外れた数のうち/次の3つは/数えません。"
-        exceptions={[
-          "その間に/置いて/列の端の色を/変えなかった数",
-          "その間に/外して/元に戻した数",
-          "押し間違えて/すぐ/盤面の下で/上下・左右・斜めに/隣り合う数に/置き換えた数",
-        ]}
+        // 本番の session は、置いた数がそのマスから外れたときにその場で数え、回数は減らない。ほかのマスを選ぶ前に同じマスで直した数は、
+        // その数で列の端の色が変わっていなければ数えない。文は数え方の決まりと1つの例外を言い、流れの図は例外に当たる直し方と
+        // 当たらない直し方を対で見せる。
+        text="置いた数が/外れるたびに/画面の上の/「置き直し」が/1回/増えます。/ただし/置いてから/ほかのマスを/選ぶ前に/直した数は/その数で/列の端の色が/変わっていなければ/数えません。"
         figure={
           <CorrectionCountExamples
             examples={[
@@ -141,19 +136,15 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
                 figure: correctionCountFlows.unchanged,
                 flow: "列の端の色を/変えなかった数を/置き換える",
               },
-              {
-                figure: correctionCountFlows.mistyped,
-                flow: "列の端の色を/変えた数を/隣り合う数に/すぐ/置き換える",
-                showPlacedValues: true,
-              },
             ]}
           />
         }
       />
       <HowToPlayScoreRow
         measure={`「${undo}」・「${restart}」`}
-        // 正確さは置き直しの回数だけで決まり、待った・盤面を戻すを押した回数では点を引かない（score.ts）。
-        text="押しただけでは/点は/下がりません。"
+        // 待ったは同じマスを直す操作の1つなので、上の例外もそのまま当てはまる。盤面を戻すは同じマスを直す操作ではないので、
+        // 盤面にあった置いた数をどれも数える。押した回数そのものでは点を引かない（score.ts）。
+        text={`「${undo}」で/外れた数も/同じに/数えます。/「${restart}」で/外れた数は/どれも/数えます。`}
       />
     </>
   );
@@ -244,8 +235,8 @@ export function MagicSquareHowToPlayDialog({
                 </span>
               }
               text={`「${undo}」で/置いた数も/メモも/1つ前に/戻せます。`}
-              // 待ったで外れた数を置き直しに数えるかは、採点のタブの例外に当たるかで変わるので、ここでは時間だけを言う。
-              note="時間は/戻りません。"
+              // 待ったで外れた数を置き直しに数えるかは、ほかの外し方と同じく採点のタブの例外に当たるかで決まる。
+              note="外れた数は/ほかの外し方と/同じく/置き直しに/数えます。"
             />
             <HowToPlayMenuOperations operations={menuOperations} />
           </HowToPlaySection>

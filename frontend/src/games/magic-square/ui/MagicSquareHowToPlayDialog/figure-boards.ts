@@ -45,8 +45,6 @@ export type MagicSquareHowToPlayFlowFigure = {
   steps: readonly string[];
   /** 本番の数え方で、最後のコマまでに数えた置き直しの回数。 */
   correctionCount: number;
-  /** 流れで置いた数。置いた順に並べる。 */
-  placedValues: readonly number[];
 };
 
 const firstRow: MagicSquareBoardRegion = {
@@ -270,19 +268,15 @@ function createFlow(
     frames: [flowStart, placed, replaced],
     steps: [`${first}を/置く`, `${second}を/置く`],
     correctionCount: getMagicSquareSessionCorrectionCount(replaced),
-    placedValues: [first, second],
   };
 }
 
 /**
- * 置き直しの数え方の流れ。どれも同じ始まりから、選んだマスに数を置いて、ほかのマスを選ぶ前に置き換える。
- * - `changed`: 列の端の色を変えた16を、盤面の下に並んだ数で隣り合わない11に置き換える。数える。
- * - `unchanged`: 列の端の色を変えなかった9を、11に置き換える。数えない。
- * - `mistyped`: 列の端の色を変えた16を、盤面の下に並んだ数で上下に隣り合う8にすぐ置き換える。押し間違いの直しとして数えない。
- *   8 と 16 は数の大きさでは隣り合わないので、隣が並びの上の隣だと分かる。
+ * 置き直しの数え方の対。どちらも同じ始まりから、選んだマスに数を置いて、ほかのマスを選ぶ前に11に置き換える。
+ * - `changed`: 列の端の色を変えた16を置き換える。数える。
+ * - `unchanged`: 列の端の色を変えなかった9を置き換える。数えない。
  */
 export const correctionCountFlows = {
   changed: createFlow(16, 11),
   unchanged: createFlow(9, 11),
-  mistyped: createFlow(16, 8),
 } as const satisfies Record<string, MagicSquareHowToPlayFlowFigure>;

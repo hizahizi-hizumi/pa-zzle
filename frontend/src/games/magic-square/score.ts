@@ -69,8 +69,8 @@ export function calculateMagicSquareTimeDeltaMs({
 }
 
 /**
- * 正確さは置いた数の置き直しで減らす。答えとの照合は使わない。待った・盤面を戻すは使った回数では減らさず、それで外れた数を
- * 置き直しとして数える。
+ * 正確さは置いた数の置き直しで減らす。答えとの照合は使わない。待った・盤面を戻すは押した回数では減らさず、それで外れた数を
+ * ほかの外し方と同じに置き直しとして数える（`MagicSquareSessionResult` の `correctionCount`）。
  */
 export function calculateMagicSquarePlayScore({
   elapsedMs,

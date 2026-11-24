@@ -8,7 +8,6 @@ import {
 import { TutorialCue } from "@/components/TutorialCue";
 import { useTouchTap } from "@/components/touch-tap";
 import type { MagicSquareValueState } from "@/games/magic-square/puzzle/rules";
-import { getMagicSquareNumberPadColumnCount } from "@/games/magic-square/session/number-pad";
 import { magicSquareTone } from "@/games/magic-square/ui/magic-square-tone";
 import { playRejectionShake } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -49,6 +48,16 @@ const valueShakeKeyframes: Keyframe[] = [
   { transform: "translateX(-4%)" },
   { transform: "translateX(0)" },
 ];
+
+/**
+ * 盤面の一辺ごとの列の数。数は問題が変わっても同じ位置に並べる。4×4 は盤面と同じ4列にすると2つ目の盤面に見えるので8列にし、
+ * 5×5 と 6×6 は最後の行に枠が余り、そこに待ったとメモの切り替えが入る列の数にする。
+ */
+const columnCountBySize: Readonly<Record<number, number>> = {
+  4: 8,
+  5: 7,
+  6: 8,
+};
 
 /** 最後の数の後ろに空く枠の数。最後の行が数で埋まるときは、次の行の全部の枠。 */
 function getTrailingSlotCount(valueCount: number, columnCount: number): number {
@@ -106,7 +115,7 @@ export function MagicSquareNumberPad({
   const valueElementRefs = useRef(new Map<number, HTMLButtonElement>());
   // 同じ知らせは描き直しても一度だけ揺らす。描き始めにある知らせは、再読み込みで戻した前の操作なので揺らさない。
   const shownRejectionIdRef = useRef(rejection?.id ?? null);
-  const columnCount = getMagicSquareNumberPadColumnCount(size);
+  const columnCount = columnCountBySize[size] ?? size;
   const trailingSlotCount = getTrailingSlotCount(
     valueStates.length,
     columnCount,

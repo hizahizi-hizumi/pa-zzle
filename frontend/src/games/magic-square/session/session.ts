@@ -2,10 +2,7 @@ import {
   assertMagicSquareProblem,
   type MagicSquareProblem,
 } from "@/games/magic-square/problem/problem";
-import {
-  isMagicSquareCellIndex,
-  type MagicSquareCell,
-} from "@/games/magic-square/puzzle/board";
+import { isMagicSquareCellIndex } from "@/games/magic-square/puzzle/board";
 import {
   changesMagicSquareLineVerdict,
   enterMagicSquareValue,
@@ -21,7 +18,6 @@ import {
   isSameMagicSquareState,
   type MagicSquareState,
 } from "@/games/magic-square/puzzle/state";
-import { areMagicSquareNumberPadNeighbors } from "@/games/magic-square/session/number-pad";
 import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
 /** 数の欄で押した数を、選んだマスに置くか（`value`）、選んだマスのメモに書くか（`memo`）。 */
@@ -34,22 +30,13 @@ type MagicSquareSessionHistoryEntry = {
 };
 
 /**
- * 同じマスを変えている間にそのマスへ置いた数。`changedLineVerdict` は、その数でそのマスを通る列の端の数の見え方が変わったか
- * （`changesMagicSquareLineVerdict`）。同じマスを変えている間はほかのマスが変わらないので、同じ数ならいつ置いても同じになる。
- */
-type MagicSquareTriedValue = {
-  value: number;
-  changedLineVerdict: boolean;
-};
-
-/**
- * ほかのマスに触れずに同じマスを変え続けている間の記録。`valueBeforeEditing` は変え始める前のそのマスの数、
- * `triedValues` は変えている間に置いた数（初めて置いた順。変え始める前の数と、2度目に置いた数は足さない）。
+ * ほかのマスを選ばずに同じマスを変え続けている間の記録。`quietValues` は、その間にそのマスに入った数（置いた数と、待ったで戻った数）
+ * のうち、その数でそのマスを通る列の端の数の見え方が変わらなかった数（`changesMagicSquareLineVerdict`）。
+ * 同じマスを変えている間はほかのマスが変わらないので、同じ数ならいつ入っても同じになる。
  */
 type MagicSquareEditingCell = {
   cellIndex: number;
-  valueBeforeEditing: MagicSquareCell;
-  triedValues: readonly MagicSquareTriedValue[];
+  quietValues: readonly number[];
 };
 
 export type MagicSquareSession = GameSession<
@@ -60,18 +47,18 @@ export type MagicSquareSession = GameSession<
   selectedCellIndex: number | null;
   /** 待ったで戻れる盤面。最後が直前の盤面。盤面を戻すと空になる。 */
   history: readonly MagicSquareSessionHistoryEntry[];
-  /** 確かめ終えた置き直しの回数。変えている途中のマスの分は `editingCell` から数える。 */
-  settledCorrectionCount: number;
+  /** 置き直しの回数。置いた数がマスから外れたときに、その場で数える。減ることはない。 */
+  correctionCount: number;
   editingCell: MagicSquareEditingCell | null;
   undoCount: number;
   restartCount: number;
 };
 
 /**
- * - `correctionCount`: 置いた数をそのマスから外した・別の数に替えた回数（置き直し）。外す・置き換える・待った・盤面を戻すの
- *   どれで外れても同じに数える。ほかのマスに触れる前に同じマスで直した数は、押し間違いの直しとして数えない。ただし、
- *   列の端の数の見え方を変えた数（列が埋まって一致・違反になった、合計に届いた）は、盤面の知らせを見てから直したので数える。
- *   その中でも、そのマスで初めて見え方を変えた数を、数の欄で隣り合う数へ直したときは、隣の数を押し間違えた形なので数えない。
+ * - `correctionCount`: 置いた数がそのマスから外れた回数（置き直し）。外す・置き換える・待った・盤面を戻すのどれで外れても同じに
+ *   数える。ただし、ほかのマスを選ぶ前に同じマスで直した数のうち、その間にそのマスに入って、列の端の数の見え方を変えなかった数は、
+ *   押し間違いの直しとして数えない。列の端の数の見え方を変えた数（列が埋まって一致・違反になった、合計に届いた）は、盤面の知らせを
+ *   見てから直したので数える。盤面を戻すは同じマスを直す操作ではないので、盤面にあった置いた数をどれも数える。
  */
 export type MagicSquareSessionResult = {
   elapsedMs: number;
@@ -80,109 +67,44 @@ export type MagicSquareSessionResult = {
   restartCount: number;
 };
 
-/** 変えているマスで初めて列の見え方を変えた数と、そのすぐ後に置いた数（無ければ今の数）が、数の欄で隣り合うか。 */
-function isNeighborMistypeCorrected(
-  size: number,
-  triedValues: readonly MagicSquareTriedValue[],
-  currentValue: MagicSquareCell,
-): boolean {
-  const changedIndex = triedValues.findIndex(
-    ({ changedLineVerdict }) => changedLineVerdict,
-  );
-  const mistyped = triedValues[changedIndex];
-  if (!mistyped || mistyped.value === currentValue) {
-    return false;
-  }
-  const corrected = triedValues[changedIndex + 1]?.value ?? currentValue;
-  return (
-    corrected !== null &&
-    areMagicSquareNumberPadNeighbors(size, mistyped.value, corrected)
-  );
-}
-
-function countEditingCorrection(
-  size: number,
-  puzzleState: MagicSquareState,
-  editingCell: MagicSquareEditingCell | null,
-): number {
-  if (!editingCell) {
-    return 0;
-  }
-  const { cellIndex, valueBeforeEditing, triedValues } = editingCell;
-  const currentValue = puzzleState.cells[cellIndex] ?? null;
-  const replacedBeforeValue =
-    valueBeforeEditing !== null && currentValue !== valueBeforeEditing ? 1 : 0;
-  const correctedAfterVerdict = triedValues.filter(
-    ({ value, changedLineVerdict }) =>
-      changedLineVerdict && value !== currentValue,
-  ).length;
-  const forgivenMistype = isNeighborMistypeCorrected(
-    size,
-    triedValues,
-    currentValue,
-  )
-    ? 1
-    : 0;
-  return replacedBeforeValue + correctedAfterVerdict - forgivenMistype;
-}
-
-function settleEditingCell(session: MagicSquareSession): MagicSquareSession {
-  return session.editingCell === null
-    ? session
-    : {
-        ...session,
-        settledCorrectionCount: getMagicSquareSessionCorrectionCount(session),
-        editingCell: null,
-      };
-}
-
-/** そのマスを変える前に、ほかのマスを変えていた記録を確かめ終え、そのマスを変え始めた記録にする。 */
+/** そのマスを変える前に、ほかのマスを変えていた記録を終え、そのマスを変え始めた記録にする。 */
 function beginEditingCell(
+  editingCell: MagicSquareEditingCell | null,
+  cellIndex: number,
+): MagicSquareEditingCell {
+  return editingCell?.cellIndex === cellIndex
+    ? editingCell
+    : { cellIndex, quietValues: [] };
+}
+
+/**
+ * そのマスの盤面を `puzzleState` に替える。外れた置いた数を置き直しに数え（変えている間に入って列の見え方を変えなかった数を除く）、
+ * 入った数が列の見え方を変えなかったなら、変えている間に入った数として覚える。
+ */
+function changeCell(
   session: MagicSquareSession,
   cellIndex: number,
+  puzzleState: MagicSquareState,
 ): MagicSquareSession {
-  if (session.editingCell?.cellIndex === cellIndex) {
-    return session;
+  const editingCell = beginEditingCell(session.editingCell, cellIndex);
+  const departed = session.puzzleState.cells[cellIndex] ?? null;
+  const entered = puzzleState.cells[cellIndex] ?? null;
+  if (departed === entered) {
+    return { ...session, puzzleState, editingCell };
   }
-  return {
-    ...settleEditingCell(session),
-    editingCell: {
-      cellIndex,
-      valueBeforeEditing: session.puzzleState.cells[cellIndex] ?? null,
-      triedValues: [],
-    },
-  };
-}
-
-/** 変えているマスに今ある数を、変えている間に置いた数として覚える。 */
-function recordTriedValue(session: MagicSquareSession): MagicSquareSession {
-  const { editingCell, puzzleState } = session;
-  if (!editingCell) {
-    return session;
-  }
-  const value = puzzleState.cells[editingCell.cellIndex] ?? null;
-  if (
-    value === null ||
-    value === editingCell.valueBeforeEditing ||
-    editingCell.triedValues.some((tried) => tried.value === value)
-  ) {
-    return session;
-  }
+  const counted =
+    departed !== null && !editingCell.quietValues.includes(departed) ? 1 : 0;
+  const quiet =
+    entered !== null &&
+    !editingCell.quietValues.includes(entered) &&
+    !changesMagicSquareLineVerdict(puzzleState, cellIndex);
   return {
     ...session,
-    editingCell: {
-      ...editingCell,
-      triedValues: [
-        ...editingCell.triedValues,
-        {
-          value,
-          changedLineVerdict: changesMagicSquareLineVerdict(
-            puzzleState,
-            editingCell.cellIndex,
-          ),
-        },
-      ],
-    },
+    puzzleState,
+    correctionCount: session.correctionCount + counted,
+    editingCell: quiet
+      ? { cellIndex, quietValues: [...editingCell.quietValues, entered] }
+      : editingCell,
   };
 }
 
@@ -195,22 +117,26 @@ function editCell(
   if (puzzleState === session.puzzleState) {
     return session;
   }
-  const edited = recordTriedValue({
-    ...beginEditingCell(session, cellIndex),
+  const edited = changeCell(
+    {
+      ...session,
+      history: [
+        ...session.history,
+        { puzzleState: session.puzzleState, cellIndex },
+      ],
+    },
+    cellIndex,
     puzzleState,
-    history: [
-      ...session.history,
-      { puzzleState: session.puzzleState, cellIndex },
-    ],
-  });
+  );
   if (!isMagicSquareSolved(puzzleState)) {
     return edited;
   }
   return {
-    ...settleEditingCell(edited),
+    ...edited,
     status: "cleared",
     clearedAt: editedAt,
     selectedCellIndex: null,
+    editingCell: null,
   };
 }
 
@@ -228,14 +154,14 @@ export function createMagicSquareSession(
     clearedAt: null,
     selectedCellIndex: null,
     history: [],
-    settledCorrectionCount: 0,
+    correctionCount: 0,
     editingCell: null,
     undoCount: 0,
     restartCount: 0,
   };
 }
 
-/** マスを選ぶ。置いた数のマスを押しても選ぶだけにする。ほかのマスに触れたので、変えていたマスの記録を確かめ終える。 */
+/** マスを選ぶ。置いた数のマスを押しても選ぶだけにする。ほかのマスを選んだので、変えていたマスの記録を終える。 */
 export function selectMagicSquareSessionCell(
   session: MagicSquareSession,
   cellIndex: number,
@@ -247,11 +173,12 @@ export function selectMagicSquareSessionCell(
   ) {
     return session;
   }
-  const touched =
-    session.editingCell !== null && session.editingCell.cellIndex !== cellIndex
-      ? settleEditingCell(session)
-      : session;
-  return { ...touched, selectedCellIndex: cellIndex };
+  return {
+    ...session,
+    selectedCellIndex: cellIndex,
+    editingCell:
+      session.editingCell?.cellIndex === cellIndex ? session.editingCell : null,
+  };
 }
 
 /**
@@ -341,7 +268,10 @@ export function inputMagicSquareSessionValue(
   };
 }
 
-/** 直前の盤面操作を取り消す。取り消しでそのマスから外れた置いた数も、ほかの操作で外れたときと同じに置き直しとして数える。 */
+/**
+ * 直前の盤面操作を取り消す。取り消しでそのマスから外れた置いた数も、ほかの操作で外れたときと同じに置き直しとして数え、
+ * 戻った数は、そのマスに入った数として扱う。
+ */
 export function undoMagicSquareSession(
   session: MagicSquareSession,
 ): MagicSquareSession {
@@ -349,12 +279,15 @@ export function undoMagicSquareSession(
     return session;
   }
   const { puzzleState, cellIndex } = session.history.at(-1)!;
-  return recordTriedValue({
-    ...beginEditingCell(session, cellIndex),
+  return changeCell(
+    {
+      ...session,
+      history: session.history.slice(0, -1),
+      undoCount: session.undoCount + 1,
+    },
+    cellIndex,
     puzzleState,
-    history: session.history.slice(0, -1),
-    undoCount: session.undoCount + 1,
-  });
+  );
 }
 
 /**
@@ -367,17 +300,17 @@ export function restartMagicSquareSession(
   if (!canRestartMagicSquareSession(session)) {
     return session;
   }
-  const settled = settleEditingCell(session);
   const { givens } = session.problem;
   const placedCount = session.puzzleState.cells.filter(
     (cell, cellIndex) =>
       cell !== null && !isMagicSquareGivenCell(givens, cellIndex),
   ).length;
   return {
-    ...settled,
+    ...session,
     puzzleState: createMagicSquareInitialState(givens),
     history: [],
-    settledCorrectionCount: settled.settledCorrectionCount + placedCount,
+    correctionCount: session.correctionCount + placedCount,
+    editingCell: null,
     restartCount: session.restartCount + 1,
   };
 }
@@ -403,14 +336,7 @@ export function canRestartMagicSquareSession(
 export function getMagicSquareSessionCorrectionCount(
   session: MagicSquareSession,
 ): number {
-  return (
-    session.settledCorrectionCount +
-    countEditingCorrection(
-      session.problem.givens.size,
-      session.puzzleState,
-      session.editingCell,
-    )
-  );
+  return session.correctionCount;
 }
 
 /** 数の欄の 1 から n² までの、その入れ方での状態。並びは数の小さい順。 */

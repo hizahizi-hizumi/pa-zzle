@@ -18,7 +18,7 @@ import {
 
 /**
  * 答えは `14 4 5 11 / 9 2 7 16 / 8 13 12 1 / 3 15 10 6`。左上は右下がりの斜めの最後の空き、右上は1行目の最後の空きで、
- * 置くと列が埋まる。2行目の左端と右端は、始めの盤面ではどの列も埋めない。数の欄は8列で、13 と 14、8 と 7、7 と 14 は隣り合い、9 と 14 は隣り合わない。
+ * 置くと列が埋まる。2行目の左端と右端は、始めの盤面ではどの列も埋めない。
  */
 const problem: MagicSquareProblem = {
   givens: parseMagicSquareBoard([". 4 5 .", ". 2 . .", ". . 12 1", "3 . 10 6"]),
@@ -225,7 +225,7 @@ describe("inputMagicSquareSessionValue", () => {
 describe("getMagicSquareSessionCorrectionCount", () => {
   const cases: readonly [string, readonly Operation[], number][] = [
     [
-      "列の見え方を変えない数を、ほかのマスに触れる前に置き換えても数えない",
+      "列の見え方を変えない数を、ほかのマスを選ぶ前に置き換えても数えない",
       [{ select: secondRowLeft }, 13, 9],
       0,
     ],
@@ -240,7 +240,7 @@ describe("getMagicSquareSessionCorrectionCount", () => {
       0,
     ],
     [
-      "埋めた列が違反になった数を、ほかのマスに触れる前に置き換えても数える",
+      "埋めた列が違反になった数を、ほかのマスを選ぶ前に置き換えても数える",
       [{ select: topLeft }, 9, 14],
       1,
     ],
@@ -260,7 +260,7 @@ describe("getMagicSquareSessionCorrectionCount", () => {
       1,
     ],
     [
-      "空きのある列を合計に届かせた数を、ほかのマスに触れる前に置き換えても数える",
+      "空きのある列を合計に届かせた数を、ほかのマスを選ぶ前に置き換えても数える",
       [{ select: thirdRowLeft }, 16, { select: secondRowLeft }, 15, 9],
       1,
     ],
@@ -270,61 +270,11 @@ describe("getMagicSquareSessionCorrectionCount", () => {
       3,
     ],
     [
-      "列の見え方を変えた数を、数の欄で隣り合う数へ置き換えたのは押し間違いの直しとして数えない",
+      "列の見え方を変えた数は、数の欄で隣り合う数へ置き換えても数える",
       [{ select: topLeft }, 13, 14],
-      0,
-    ],
-    [
-      "列の見え方を変えた数を外してから、数の欄で隣り合う数を置いたのも数えない",
-      [{ select: topLeft }, 13, 13, 14],
-      0,
-    ],
-    [
-      "列の見え方を変えた数を待ったで外してから、数の欄で隣り合う数を置いたのも数えない",
-      [{ select: topLeft }, 13, "undo", 14],
-      0,
-    ],
-    [
-      "隣り合う数へ直すのを続けても、数えないのは1つ目だけ",
-      [{ select: topLeft }, 8, 7, 14],
       1,
     ],
-    [
-      "置いてあった数を隣り合う数へ押し間違えて、すぐ戻したのは数えない",
-      [
-        { select: topLeft },
-        14,
-        { select: topRight },
-        { select: topLeft },
-        13,
-        14,
-      ],
-      0,
-    ],
-    [
-      "外した数をすぐ同じマスへ戻したのは数えない",
-      [
-        { select: topLeft },
-        14,
-        { select: topRight },
-        { select: topLeft },
-        14,
-        14,
-      ],
-      0,
-    ],
-    [
-      "外した数を待ったで戻したのは数えない",
-      [
-        { select: topLeft },
-        14,
-        { select: topRight },
-        { select: topLeft },
-        14,
-        "undo",
-      ],
-      0,
-    ],
+    ["同じ数が外れるたびに数える", [{ select: topLeft }, 9, 14, 9, 14], 3],
     [
       "ほかのマスを選んでから戻って置き換えると数える",
       [
@@ -333,6 +283,43 @@ describe("getMagicSquareSessionCorrectionCount", () => {
         { select: secondRowRight },
         { select: secondRowLeft },
         9,
+      ],
+      1,
+    ],
+    [
+      "ほかのマスを選んでから戻って外した数を、同じマスへ置き直しても減らさない",
+      [
+        { select: topLeft },
+        14,
+        { select: topRight },
+        { select: topLeft },
+        14,
+        14,
+      ],
+      1,
+    ],
+    [
+      "ほかのマスを選んでから戻って外した数を、待ったで戻しても減らさない",
+      [
+        { select: topLeft },
+        14,
+        { select: topRight },
+        { select: topLeft },
+        14,
+        "undo",
+      ],
+      1,
+    ],
+    [
+      "待ったで戻った数も、列の見え方を変えなければ、ほかのマスを選ぶ前に直したときは数えない",
+      [
+        { select: secondRowLeft },
+        13,
+        { select: secondRowRight },
+        { select: secondRowLeft },
+        9,
+        "undo",
+        15,
       ],
       1,
     ],
@@ -366,6 +353,11 @@ describe("getMagicSquareSessionCorrectionCount", () => {
       2,
     ],
     [
+      "盤面を戻すと、選んだマスに置いたばかりの列の見え方を変えない数も数える",
+      [{ select: secondRowLeft }, 9, "restart"],
+      1,
+    ],
+    [
       "置き換えた後に盤面を戻すと、置き換えた数と戻した数を別に数える",
       [
         { select: secondRowLeft },
@@ -393,6 +385,17 @@ describe("getMagicSquareSessionCorrectionCount", () => {
     const count = getMagicSquareSessionCorrectionCount(play(operations));
 
     expect(count).toBe(expected);
+  });
+
+  test("置いた数が外れたときにその場で数え、ほかのマスを選ぶ前でも回数を見せること", () => {
+    const counts = [
+      [{ select: topLeft }, 9],
+      [{ select: topLeft }, 9, 14],
+    ].map((operations) =>
+      getMagicSquareSessionCorrectionCount(play(operations)),
+    );
+
+    expect(counts).toEqual([0, 1]);
   });
 });
 

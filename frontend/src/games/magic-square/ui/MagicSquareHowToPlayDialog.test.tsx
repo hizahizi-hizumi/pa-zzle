@@ -139,31 +139,20 @@ describe("MagicSquareHowToPlayDialog", () => {
       );
     });
 
-    test("採点のタブで、置き直しの数え方と、待った・盤面を戻すの回数では点が下がらないことを言うこと", () => {
+    test("採点のタブで、置き直しの数え方と1つの例外、待った・盤面を戻すで外れた数の数え方を言うこと", () => {
       const panel = openTab("採点");
 
-      const [, correction, , , , pressed] = within(panel)
+      const rows = within(panel)
         .getAllByRole("listitem")
         .map((row) => row.textContent ?? "");
-      const exceptions = within(panel)
-        .getAllByRole("list")
-        .filter((list) => list.tagName === "UL")
-        .flatMap((list) =>
-          within(list)
-            .getAllByRole("listitem")
-            .map((item) => item.textContent),
-        );
+      const correction = rows.find((row) => row.startsWith("置き直し"));
+      const pressed = rows.find((row) => row.startsWith("「待った」"));
 
       expect(correction).toContain(
-        `置き直し 1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点置いた数が外れるたびに画面の上の「置き直し」が1回増えます。`,
+        `置き直し 1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点置いた数が外れるたびに画面の上の「置き直し」が1回増えます。ただし置いてからほかのマスを選ぶ前に直した数はその数で列の端の色が変わっていなければ数えません。`,
       );
-      expect(exceptions).toEqual([
-        "・その間に置いて列の端の色を変えなかった数",
-        "・その間に外して元に戻した数",
-        "・押し間違えてすぐ盤面の下で上下・左右・斜めに隣り合う数に置き換えた数",
-      ]);
       expect(pressed).toBe(
-        "「待った」・「盤面を戻す」押しただけでは点は下がりません。",
+        "「待った」・「盤面を戻す」「待った」で外れた数も同じに数えます。「盤面を戻す」で外れた数はどれも数えます。",
       );
     });
 

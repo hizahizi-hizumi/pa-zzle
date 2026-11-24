@@ -10,7 +10,6 @@ import {
   isMagicSquareLineViolation,
   listMagicSquareLineEvaluations,
 } from "@/games/magic-square/puzzle/rules";
-import { areMagicSquareNumberPadNeighbors } from "@/games/magic-square/session/number-pad";
 import {
   inputMagicSquareSessionValue,
   type MagicSquareSession,
@@ -18,10 +17,7 @@ import {
   undoMagicSquareSession,
 } from "@/games/magic-square/session/session";
 import { magicSquareTutorialPuzzle } from "@/games/magic-square/tutorial/tutorial";
-import {
-  createMagicSquareExampleSession,
-  MAGIC_SQUARE_EXAMPLE_SIZE,
-} from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
+import { createMagicSquareExampleSession } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
 import {
   correctionCountFlows,
   givenRuleExample,
@@ -218,34 +214,7 @@ describe("置き直しの数え方の流れ", () => {
     );
   }
 
-  /** 流れで置いた2つの数。 */
-  function readPlacedValues(flow: MagicSquareHowToPlayFlowFigure) {
-    const [, first, second] = flow.frames.map((session) =>
-      session.selectedCellIndex === null
-        ? null
-        : (session.puzzleState.cells[session.selectedCellIndex] ?? null),
-    );
-    return { first, second };
-  }
-
-  function readPlacedValueGap(flow: MagicSquareHowToPlayFlowFigure): number {
-    const { first, second } = readPlacedValues(flow);
-    return Math.abs((first ?? 0) - (second ?? 0));
-  }
-
-  /** 流れで置いた2つの数が、盤面の下に並んだ数で隣り合うか。 */
-  function arePlacedValuesNeighbors(flow: MagicSquareHowToPlayFlowFigure) {
-    const { first, second } = readPlacedValues(flow);
-    return (
-      first !== null &&
-      first !== undefined &&
-      second !== null &&
-      second !== undefined &&
-      areMagicSquareNumberPadNeighbors(MAGIC_SQUARE_EXAMPLE_SIZE, first, second)
-    );
-  }
-
-  test("色を変えた数を置き換える流れは、合計に届いて列の端の色を変えた数を、隣り合わない数に置き換えて1回と数えること", () => {
+  test("色を変えた数を置き換える流れは、合計に届いて列の端の色を変えた数を置き換えて1回と数えること", () => {
     const flow = correctionCountFlows.changed;
 
     expect(readColumnStatuses(flow)).toEqual([
@@ -253,7 +222,6 @@ describe("置き直しの数え方の流れ", () => {
       "overreached",
       "incomplete",
     ]);
-    expect(arePlacedValuesNeighbors(flow)).toBe(false);
     expect(flow.correctionCount).toBe(1);
   });
 
@@ -265,19 +233,6 @@ describe("置き直しの数え方の流れ", () => {
       "incomplete",
       "incomplete",
     ]);
-    expect(flow.correctionCount).toBe(0);
-  });
-
-  test("隣の数を押し間違えた流れは、列の端の色を変えた数を、盤面の下に並んだ数で隣り合い、数の大きさでは離れた数にすぐ置き換えて数えないこと", () => {
-    const flow = correctionCountFlows.mistyped;
-
-    expect(readColumnStatuses(flow)).toEqual([
-      "incomplete",
-      "overreached",
-      "incomplete",
-    ]);
-    expect(arePlacedValuesNeighbors(flow)).toBe(true);
-    expect(readPlacedValueGap(flow)).toBeGreaterThan(1);
     expect(flow.correctionCount).toBe(0);
   });
 
