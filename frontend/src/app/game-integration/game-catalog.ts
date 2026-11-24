@@ -1,4 +1,5 @@
 import { bridgesCatalogEntry } from "@/app/game-integration/bridges/bridges-catalog-entry";
+import { fukumenzanCatalogEntry } from "@/app/game-integration/fukumenzan/fukumenzan-catalog-entry";
 import type {
   GameCatalogEntry,
   RecordProblemPlayDestination,
@@ -28,6 +29,7 @@ export const gameCatalog = [
   iceFloorMazeCatalogEntry,
   tsumeShogiCatalogEntry,
   bridgesCatalogEntry,
+  fukumenzanCatalogEntry,
 ] as const satisfies readonly [GameCatalogEntry, ...GameCatalogEntry[]];
 
 export function findGameCatalogEntry(

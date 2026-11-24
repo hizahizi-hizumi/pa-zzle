@@ -11,6 +11,7 @@ import {
   gameSelectionOrderSetting,
 } from "@/features/settings/game-selection-order-setting";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
+import { FUKUMENZAN_DISPLAY_NAME } from "@/games/fukumenzan/display-name";
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
@@ -102,6 +103,7 @@ describe("PuzzleSelectionView", () => {
     [ICE_FLOOR_MAZE_DISPLAY_NAME, "/puzzles/ice-floor-maze"],
     [TSUME_SHOGI_DISPLAY_NAME, "/puzzles/tsume-shogi"],
     [BRIDGES_DISPLAY_NAME, "/puzzles/bridges"],
+    [FUKUMENZAN_DISPLAY_NAME, "/puzzles/fukumenzan"],
   ] as const;
 
   describe("タイトルを閉じた後の場合", () => {
@@ -245,14 +247,14 @@ describe("パズルの非表示", () => {
     const carousel = screen.getByRole("group", {
       name: "左右にスライドしてパズルを切り替え",
     });
-    expect(carousel.children.length / lapCount).toBe(10);
+    expect(carousel.children.length / lapCount).toBe(11);
     expect(screen.getByRole("link", { name: "ナンプレを開く" })).toBeTruthy();
     expect(
       screen.queryByRole("link", { name: "ウォーターソートを開く" }),
     ).toBeNull();
 
     act(() => gameSelectionOrderSetting.showAllGames());
-    expect(carousel.children.length / lapCount).toBe(11);
+    expect(carousel.children.length / lapCount).toBe(12);
     expect(
       screen.getByRole("link", { name: "ウォーターソートを開く" }),
     ).toBeTruthy();

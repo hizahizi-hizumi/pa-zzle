@@ -1,0 +1,21 @@
+import { FukumenzanCardFace } from "@/games/fukumenzan/ui/board/FukumenzanCardFace";
+import type { FukumenzanCardDrag } from "@/games/fukumenzan/ui/board/use-fukumenzan-input";
+
+type FukumenzanDraggedCardProps = {
+  drag: FukumenzanCardDrag;
+};
+
+/** 運んでいる札。押した所を受けないので、下にある文字を落とし先として探せる。 */
+export function FukumenzanDraggedCard({ drag }: FukumenzanDraggedCardProps) {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed top-0 left-0 z-10 h-14 w-10 [container-type:size]"
+      style={{
+        transform: `translate(${drag.x}px, ${drag.y}px) translate(-50%, -50%)`,
+      }}
+    >
+      <FukumenzanCardFace digit={drag.digit} />
+    </div>
+  );
+}

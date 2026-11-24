@@ -10,6 +10,11 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { GameHowToView } from "@/views/GameHowToView";
 import { GameTutorialView } from "@/views/GameTutorialView";
 
+// 見つからない画面の盤面はレイアウトを測って描くので、どの画面へ進んだかだけを見分けられる見出しに替える。
+vi.mock("@/views/NotFoundView", () => ({
+  NotFoundView: () => <h1>ページが見つかりません</h1>,
+}));
+
 const homePath = "/puzzles/nanpure";
 const playPath = "/puzzles/nanpure/play/np-example";
 
@@ -90,5 +95,25 @@ describe("GameTutorialView", () => {
     fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
 
     expect(router.state.location.pathname).toBe(playPath);
+  });
+});
+
+describe("チュートリアルを持たないゲームの場合", () => {
+  test("遊び方にチュートリアルを始めるボタンを出さないこと", () => {
+    renderGuide("/puzzles/fukumenzan/how-to");
+
+    const tutorialButton = screen.queryByRole("button", {
+      name: "チュートリアルで遊んで覚える",
+    });
+
+    expect(tutorialButton).toBeNull();
+  });
+
+  test("チュートリアルの URL では見つからないことを示すこと", () => {
+    renderGuide("/puzzles/fukumenzan/tutorial");
+
+    const notFound = screen.getByText("ページが見つかりません");
+
+    expect(notFound).toBeTruthy();
   });
 });

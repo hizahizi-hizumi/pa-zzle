@@ -3,6 +3,7 @@ import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
 import type { TutorialPlayStart } from "@/components/TutorialOverlay";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { BridgesTutorial } from "@/games/bridges/ui/BridgesTutorial";
+import { FukumenzanHowToPlayDialog } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog";
 import { HitofudePuzzleHowToPlayDialog } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog";
 import { HitofudePuzzleTutorial } from "@/games/hitofude-puzzle/ui/HitofudePuzzleTutorial";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
@@ -34,6 +35,7 @@ type GuideComponents = {
 
 const guides: Record<string, GuideComponents> = {
   bridges: { HowToPlay: BridgesHowToPlayDialog, Tutorial: BridgesTutorial },
+  fukumenzan: { HowToPlay: FukumenzanHowToPlayDialog },
   "hitofude-puzzle": {
     HowToPlay: HitofudePuzzleHowToPlayDialog,
     Tutorial: HitofudePuzzleTutorial,
