@@ -141,8 +141,8 @@ export class ShuttleParkingReader {
   }
 
   /**
-   * 罠の深さ。`best` はその手の後に最善を尽くして乗れる人数。`continuation` は罠に気づかず先頭に合わせて出し続けた人が
-   * 詰むまでに乗せる人数の期待値（切り捨て）。勝てる手は `best` と同じ。
+   * 罠の深さ。`best` はその手の後に最善を尽くして乗れる人数。`continuation` は罠に気づかず、素朴な解き方（`listNaiveMoves`）の
+   * 候補から一様に選んで、候補が空になるまで出し続けた人が乗せる人数の期待値（切り捨て）。勝てる手は `best` と同じ。
    */
   distance(state: AnalysisState, carId: number): number {
     const { game } = this;
