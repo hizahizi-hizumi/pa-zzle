@@ -39,7 +39,7 @@ const CLEAR_REDUCED_MOTION_HOLD_MS = 700;
 /**
  * 筆算の形の式。足す数を右をそろえて上から並べ、最後の足す数の左に + を書き、線を引いて答えを書く。
  * 文字のマスは、空なら文字を、札を入れたら札の面だけを描く。同じ文字のマスは全部同じ札になる。
- * 空の文字に × を付けていれば、マスの隅に残りの候補の数を丸で囲んで小さく書き、選んでいないときもメモの跡を残す。
+ * 空の文字に × を付けていれば、マスの右上に残りの候補の数を点線の丸で囲んで小さく書き、選んでいないときもメモの跡を残す。
  * 選んでいる文字と、運んでいる札の下にある文字は、その文字の全部のマスを輪郭で示す。
  * 先頭の0は先頭のマスの札を赤く、計算違いの桁は答えのマスの下に赤い線を引く。
  */
@@ -169,7 +169,8 @@ export function FukumenzanEquationBoard({
           <span
             aria-hidden="true"
             className={cn(
-              "absolute right-[4%] bottom-[4%] flex size-[34%] items-center justify-center rounded-full border font-sans leading-none [font-size:22cqh]",
+              // 入れた札は文字のマス全体を札の面にするので、メモは右上の肩に小さく、札の実線の縁と違う点線で書き、数字の札と見分ける。
+              "absolute top-[3%] right-[3%] flex size-[32%] items-center justify-center rounded-full border border-dashed font-sans leading-none [font-size:20cqh]",
               fukumenzanToneClassNames.candidateCount,
             )}
           >
