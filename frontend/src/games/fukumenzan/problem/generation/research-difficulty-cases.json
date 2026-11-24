@@ -739,16 +739,29 @@
     {
       "equation": "PNAAG+RFVAA+GRGV=GVLNLR",
       "scale": "3l",
-      "readingClass": "H2",
-      "outcome": "split-limit",
+      "readingClass": "mH",
+      "outcome": "margin",
       "level": null,
       "readers": {
         "weakColumns": "stuck",
         "strongColumns": "stuck",
         "weakPairs": "stuck",
         "strongCombined": "stuck",
-        "strongEquations": "stuck",
-        "splitsByClosure": "exceeded"
+        "strongEquations": "solved"
+      },
+      "changedBy": ["equation-distinct-bounds"],
+      "research": {
+        "readingClass": "H2",
+        "outcome": "split-limit",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "stuck",
+          "splitsByClosure": "exceeded"
+        }
       }
     },
     {

@@ -433,87 +433,53 @@ function countProjectedTuples(
   return new Set(codes.map((code) => code & keptBits)).size;
 }
 
-/** 区間の伝播で、式 `Σ 係数 × 変数 = 0` に合わない値を `domains` から消す。矛盾なら `false`。 */
-function propagateBounds(equation: LinearEquation, domains: number[]): boolean {
-  const { variables, coefficients } = equation;
-  const lows = variables.map(() => 0);
-  const highs = variables.map(() => 0);
-  for (;;) {
-    let lowSum = 0;
-    let highSum = 0;
-    for (const [index, variable] of variables.entries()) {
-      const digits = digitsOfMask[domains[variable]!]!;
-      const coefficient = coefficients[index]!;
-      const first = coefficient * digits[0]!;
-      const last = coefficient * digits[digits.length - 1]!;
-      lows[index] = Math.min(first, last);
-      highs[index] = Math.max(first, last);
-      lowSum += lows[index]!;
-      highSum += highs[index]!;
-    }
-    if (lowSum > 0 || highSum < 0) {
-      return false;
-    }
-    let moved = false;
-    for (const [index, variable] of variables.entries()) {
-      const otherLow = lowSum - lows[index]!;
-      const otherHigh = highSum - highs[index]!;
-      const coefficient = coefficients[index]!;
-      let kept = 0;
-      for (const digit of digitsOfMask[domains[variable]!]!) {
-        const needed = -coefficient * digit;
-        if (otherLow <= needed && needed <= otherHigh) {
-          kept |= 1 << digit;
-        }
-      }
-      if (kept === 0) {
-        return false;
-      }
-      if (kept !== domains[variable]) {
-        domains[variable] = kept;
-        moved = true;
-      }
-    }
-    if (!moved) {
-      return true;
-    }
-  }
-}
-
 type WeightedVariable = { variable: number; coefficient: number };
 
 /**
  * 違う文字は違う数字として、`Σ 係数 × 文字` の最小と最大を求める。`excluded` の数字はどの文字にも当てない。
- * 当てられる数字の並びが無ければ `null`。
+ * 当てられる数字の並びが無ければ `null`。文字を順に当て、使った数字の集まりごとに和の最小と最大を持つ。
  */
 function boundDistinctSum(
   letters: readonly WeightedVariable[],
   domains: readonly number[],
   excluded: number,
 ): readonly [number, number] | null {
+  let ranges = new Map<number, [number, number]>([[excluded, [0, 0]]]);
+  for (const { variable, coefficient } of letters) {
+    const next = new Map<number, [number, number]>();
+    for (const [used, [low, high]] of ranges) {
+      for (const digit of digitsOfMask[domains[variable]! & ~used]!) {
+        const key = used | (1 << digit);
+        const value = coefficient * digit;
+        const range = next.get(key);
+        if (range === undefined) {
+          next.set(key, [low + value, high + value]);
+        } else {
+          range[0] = Math.min(range[0], low + value);
+          range[1] = Math.max(range[1], high + value);
+        }
+      }
+    }
+    if (next.size === 0) {
+      return null;
+    }
+    ranges = next;
+  }
   let low = Number.POSITIVE_INFINITY;
   let high = Number.NEGATIVE_INFINITY;
-  function visit(index: number, used: number, sum: number): void {
-    if (index === letters.length) {
-      low = Math.min(low, sum);
-      high = Math.max(high, sum);
-      return;
-    }
-    const { variable, coefficient } = letters[index]!;
-    for (const digit of digitsOfMask[domains[variable]! & ~used]!) {
-      visit(index + 1, used | (1 << digit), sum + coefficient * digit);
-    }
+  for (const range of ranges.values()) {
+    low = Math.min(low, range[0]);
+    high = Math.max(high, range[1]);
   }
-  visit(0, excluded, 0);
-  return low > high ? null : [low, high];
+  return [low, high];
 }
 
 /**
- * 桁の式 `Σ 係数 × 変数 = 0` を和の大きさで読み、合わない値を `domains` から消す。矛盾なら `false`。
+ * 式 `Σ 係数 × 変数 = 0` を和の大きさで読み、合わない値を `domains` から消す。矛盾なら `false`。
  * 同じ側（係数の符号が同じ）の違う文字の最小と最大は違う数字で取る（足す文字が2つなら 9＋8 まで）。
- * 繰り上がりと、反対の側の文字との違いは区間のまま読む。
+ * 文字の値を調べるときは、その数字をほかのどの文字にも当てない。反対の側の文字どうしの違いと、繰り上がりは区間のまま読む。
  */
-function propagateColumnBounds(
+function propagateSumBounds(
   equation: LinearEquation,
   domains: number[],
   letterCount: number,
@@ -598,7 +564,7 @@ function readColumnBounds(
     return null;
   }
   const narrowed = [...domains];
-  if (!propagateColumnBounds(equation, narrowed, model.letterCount)) {
+  if (!propagateSumBounds(equation, narrowed, model.letterCount)) {
     return null;
   }
   const facts = createUnconstrainedFacts(model);
@@ -920,7 +886,7 @@ function readAlgebraicEquation(
   const enumerationLimit = reader.settings.equations!.enumerationLimit;
   if (undecided > enumerationLimit) {
     const narrowed = [...domains];
-    if (!propagateBounds(equation, narrowed)) {
+    if (!propagateSumBounds(equation, narrowed, model.letterCount)) {
       return null;
     }
     for (const variable of variables) {
