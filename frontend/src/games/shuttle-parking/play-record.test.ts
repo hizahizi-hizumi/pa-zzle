@@ -12,6 +12,7 @@ import {
   decodeShuttleParkingPoolEntry,
   listShuttleParkingPoolEntries,
 } from "@/games/shuttle-parking/problem/problem-pool";
+import { calculateShuttleParkingPlayScore } from "@/games/shuttle-parking/score";
 
 const problemIdentity = decodeShuttleParkingPoolEntry(
   listShuttleParkingPoolEntries("3")[0]!,
@@ -19,7 +20,7 @@ const problemIdentity = decodeShuttleParkingPoolEntry(
 const record = createShuttleParkingPlayRecord({
   difficulty: "3",
   problemIdentity,
-  speedReference: { carCount: 8, passengerCount: 21 },
+  speedReference: { carCount: 8, passengerCount: 21, trapWeight: 6 },
   startedAt: 1_000,
   completedAt: 81_000,
   result: {
@@ -40,7 +41,7 @@ describe("createShuttleParkingPlayRecord", () => {
       payload: {
         difficulty: "3",
         problemIdentity,
-        problemFacts: { carCount: 8, passengerCount: 21 },
+        problemFacts: { carCount: 8, passengerCount: 21, trapWeight: 6 },
         performance: { trapCount: 1, exitCount: 11 },
       },
     });
@@ -70,6 +71,20 @@ describe("isShuttleParkingPlayRecord", () => {
       "問題の事実が無い",
       { ...record, payload: { ...record.payload, problemFacts: null } },
     ],
+    [
+      "罠の重さが無い",
+      {
+        ...record,
+        payload: {
+          ...record.payload,
+          problemFacts: { carCount: 8, passengerCount: 21 },
+        },
+      },
+    ],
+    [
+      "別の採点の版",
+      { ...record, payload: { ...record.payload, scoreModelVersion: "1" } },
+    ],
   ];
 
   test.each(invalidCases)("%s 記録を受け付けないこと", (_, value) => {
@@ -90,6 +105,18 @@ describe("restoreShuttleParkingRecordedResult", () => {
     });
     expect(restored?.result.score.total).toBe(
       getShuttleParkingPlayRecordScore(record),
+    );
+  });
+
+  test("保存した事実だけから、今の採点規則で評価を求め直すこと", () => {
+    const restored = restoreShuttleParkingRecordedResult(record);
+
+    expect(restored?.result.score).toEqual(
+      calculateShuttleParkingPlayScore({
+        speedReference: { carCount: 8, passengerCount: 21, trapWeight: 6 },
+        elapsedMs: 80_000,
+        trapCount: 1,
+      }),
     );
   });
 

@@ -15,6 +15,7 @@ import {
   getShuttleParkingPoolDifficultyModelVersion,
   listShuttleParkingPoolEntries,
   listShuttleParkingPoolProblemIds,
+  restoreShuttleParkingPoolEntry,
 } from "@/games/shuttle-parking/problem/problem-pool";
 import { createShuttleParkingClearability } from "@/games/shuttle-parking/puzzle/clearability";
 import { createShuttleParkingInitialState } from "@/games/shuttle-parking/puzzle/rules";
@@ -32,33 +33,39 @@ describe.each(difficultyLevels.map(({ id }) => id))(
     });
 
     // 全問の分析し直しは generate:shuttle-parking-pool -- --verify で行う。ここでは間引いた問題だけを確かめる。
-    test.each(entries.filter((_, index) => index % ANALYSIS_SAMPLE_STEP === 0))(
-      "%s を分析し直すと同じレベルになること",
-      (entry) => {
+    test.each(
+      entries
+        .filter((_, index) => index % ANALYSIS_SAMPLE_STEP === 0)
+        .map((entry) => ({ seed: entry[0], entry })),
+    )("$seed を分析し直すと同じレベルと罠の重さになること", ({ entry }) => {
+      const { problem, trapWeight } = restoreShuttleParkingPoolEntry(entry);
+
+      const analysis = analyzeShuttleParkingDifficulty(problem);
+      const assessment = assessShuttleParkingDifficulty(analysis);
+
+      expect(assessment).toEqual({ status: "classified", difficulty });
+      expect(
+        analysis.status === "analyzed"
+          ? analysis.features.headFirst.best.minimum
+          : null,
+      ).toBe(trapWeight);
+    });
+
+    test.each(entries.map((entry) => ({ seed: entry[0], entry })))(
+      "$seed は復元でき、全員を送り出せること",
+      ({ seed, entry }) => {
         const { problem } = restoreShuttleParkingProblem(
           decodeShuttleParkingPoolEntry(entry),
         );
 
-        const assessment = assessShuttleParkingDifficulty(
-          analyzeShuttleParkingDifficulty(problem),
+        const clearable = createShuttleParkingClearability(problem).canClear(
+          createShuttleParkingInitialState(problem),
         );
 
-        expect(assessment).toEqual({ status: "classified", difficulty });
+        expect(createShuttleParkingProblemSeed(problem)).toBe(seed);
+        expect(clearable).toBe(true);
       },
     );
-
-    test.each(entries)("%s は復元でき、全員を送り出せること", (entry) => {
-      const { problem } = restoreShuttleParkingProblem(
-        decodeShuttleParkingPoolEntry(entry),
-      );
-
-      const clearable = createShuttleParkingClearability(problem).canClear(
-        createShuttleParkingInitialState(problem),
-      );
-
-      expect(createShuttleParkingProblemSeed(problem)).toBe(entry);
-      expect(clearable).toBe(true);
-    });
 
     test("並び順の問題IDでその問題を引けること", () => {
       const problemIds = listShuttleParkingPoolProblemIds(difficulty);

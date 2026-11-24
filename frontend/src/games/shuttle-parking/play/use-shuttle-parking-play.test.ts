@@ -3,6 +3,7 @@ import * as problemSeed from "@/games/problem-seed";
 import { useShuttleParkingPlay } from "@/games/shuttle-parking/play/use-shuttle-parking-play";
 import type { ShuttleParkingIdentifiedProblem } from "@/games/shuttle-parking/problem/problem";
 import { createShuttleParkingProblemIdentity } from "@/games/shuttle-parking/problem/problem";
+import type { ShuttleParkingPooledProblem } from "@/games/shuttle-parking/problem/problem-pool";
 import { selectShuttleParkingProblemForDifficulty } from "@/games/shuttle-parking/problem-selection";
 
 afterEach(() => {
@@ -27,9 +28,10 @@ const problem = {
   passengers: ["a", "a", "b", "b", "b", "b"],
   bayCount: 1,
 } as const satisfies ShuttleParkingIdentifiedProblem["problem"];
-const given: ShuttleParkingIdentifiedProblem = {
+const given: ShuttleParkingPooledProblem = {
   problem,
   identity: createShuttleParkingProblemIdentity(problem),
+  trapWeight: 2,
 };
 
 describe("useShuttleParkingPlay", () => {
@@ -119,7 +121,7 @@ describe("useShuttleParkingPlay", () => {
           exitCount: 4,
           trapCount: 1,
           undoCount: 1,
-          speedReference: { carCount: 3, passengerCount: 6 },
+          speedReference: { carCount: 3, passengerCount: 6, trapWeight: 2 },
         });
       });
 

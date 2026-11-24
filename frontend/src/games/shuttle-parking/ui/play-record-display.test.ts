@@ -11,7 +11,7 @@ const record = createShuttleParkingPlayRecord({
   problemIdentity: decodeShuttleParkingPoolEntry(
     listShuttleParkingPoolEntries("2")[0]!,
   ),
-  speedReference: { carCount: 8, passengerCount: 21 },
+  speedReference: { carCount: 8, passengerCount: 21, trapWeight: 6 },
   startedAt: 1_000,
   completedAt: 91_000,
   result: {
@@ -54,8 +54,8 @@ describe("shuttleParkingPlayRecordDisplay", () => {
     const timeDelta = getFormattedMetric("time-delta-ms");
     const traps = getFormattedMetric("trap-count");
 
-    expect(score).toBe("48点");
-    expect(timeDelta).toBe("+00:40");
+    expect(score).toBe("40点");
+    expect(timeDelta).toBe("+00:46");
     expect(traps).toBe("1回");
   });
 });

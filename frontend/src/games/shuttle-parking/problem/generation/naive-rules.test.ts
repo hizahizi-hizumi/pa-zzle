@@ -5,7 +5,7 @@ import {
 } from "@/games/shuttle-parking/problem/generation/naive-rules";
 import { AnalysisGame } from "@/games/shuttle-parking/problem/generation/state-game";
 import type { ShuttleParkingProblem } from "@/games/shuttle-parking/problem/problem";
-import { restoreShuttleParkingPoolEntry } from "@/games/shuttle-parking/problem/problem-pool";
+import { restoreShuttleParkingSeed } from "@/games/shuttle-parking/problem/problem-pool";
 
 // 4×4・上だけが開いている。どちらの車もすぐ出せる。
 const lot: ShuttleParkingProblem["lot"] = {
@@ -44,19 +44,19 @@ describe("countShuttleParkingBacktracks", () => {
 });
 
 // 奥の先頭の色の車を掘ると、掘った車と最初から出せた先頭の色の車が同点になる問題。
-const deepTieProblem = restoreShuttleParkingPoolEntry(
+const deepTieProblem = restoreShuttleParkingSeed(
   "7tr3-04v2b53h2c46v2b26v2a06v2c51v2a02v3d11v2d-bccdbdaacdaabcdbd",
 ).problem;
 // 進路をふさぐ車から順に出していけば解ける問題。
-const untangleProblem = restoreShuttleParkingPoolEntry(
+const untangleProblem = restoreShuttleParkingSeed(
   "6tr3-04v2b31h2a35v3b05v3c23v3d03v2a10v3c12v2d-dcccadbbacdaabbcbcdd",
 ).problem;
 // ふさぎを何段もたどった台数で選べば勝ち、直接ふさぐ台数で選ぶと半分しか勝てない問題。
-const deepUntangleProblem = restoreShuttleParkingPoolEntry(
+const deepUntangleProblem = restoreShuttleParkingSeed(
   "6tr3-30v2b00v2a22v2c51h3a11h3b14v2a03h2c05v2b-bbbcbababcacabcaaa",
 ).problem;
 // 掘る目標が並び、定員の大きい車を目標にすれば勝つ問題。
-const commitTargetTieProblem = restoreShuttleParkingPoolEntry(
+const commitTargetTieProblem = restoreShuttleParkingSeed(
   "7tr4-52h2a55v2b25v3c15h2d04v3a31v3d01v3c10v3b-cbbdabcbaadddcdaabccc",
 ).problem;
 

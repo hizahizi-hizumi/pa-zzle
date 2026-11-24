@@ -30,7 +30,9 @@ import {
 const SHUTTLE_PARKING_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const SHUTTLE_PARKING_GAME_ID = "shuttle-parking";
 
-/** 採点の基準時間に使う問題の事実。生成器の版が変わっても記録だけで評価できるよう、問題から写して持つ。 */
+/**
+ * 採点の基準時間に使う問題の事実。生成器の版や問題集が変わっても記録だけで評価できるよう、問題と問題集から写して持つ。
+ */
 type ShuttleParkingProblemFacts = ShuttleParkingSpeedReference;
 
 type ShuttleParkingPlayRecordPayload = {
@@ -80,7 +82,8 @@ function isShuttleParkingProblemFacts(
   return (
     isRecordObject(value) &&
     isPositiveInteger(value.carCount) &&
-    isPositiveInteger(value.passengerCount)
+    isPositiveInteger(value.passengerCount) &&
+    isNonNegativeInteger(value.trapWeight)
   );
 }
 
@@ -141,6 +144,7 @@ export function createShuttleParkingPlayRecord({
       problemFacts: {
         carCount: speedReference.carCount,
         passengerCount: speedReference.passengerCount,
+        trapWeight: speedReference.trapWeight,
       },
       performance: {
         elapsedMs: result.elapsedMs,

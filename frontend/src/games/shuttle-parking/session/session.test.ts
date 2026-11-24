@@ -157,6 +157,18 @@ describe("undoShuttleParkingSession", () => {
     expect(undone).toMatchObject({ undoCount: 1, trapCount: 1 });
     expect(canUndoShuttleParkingSession(undone)).toBe(false);
   });
+
+  test("戻して同じ盤面から同じ車をもう一度出しても、罠の回数を増やさないこと", () => {
+    const again = exitInOrder(undoShuttleParkingSession(session), [2]);
+
+    expect(again.trapCount).toBe(1);
+  });
+
+  test("盤面を戻して同じ罠に入っても、罠の回数を増やさないこと", () => {
+    const again = exitInOrder(restartShuttleParkingSession(session), [2]);
+
+    expect(again.trapCount).toBe(1);
+  });
 });
 
 describe("restartShuttleParkingSession", () => {

@@ -46,6 +46,15 @@ export function ShuttleParkingResultScreen({
         createSpeedFullScoreMetric(result.speedRule),
         createCountMetric("車", result.speedReference.carCount, "台"),
         createCountMetric("乗客", result.speedReference.passengerCount, "人"),
+        ...(result.speedReference.trapWeight > 0
+          ? [
+              createCountMetric(
+                "先読み",
+                result.speedReference.trapWeight,
+                "人",
+              ),
+            ]
+          : []),
         createOperationCountMetric("undo", result.undoCount),
         createOperationCountMetric("restart", result.restartCount),
       ]}

@@ -22,10 +22,10 @@ import {
   type ShuttleParkingExitTimeline,
 } from "@/games/shuttle-parking/play/exit-timeline";
 import type {
-  ShuttleParkingIdentifiedProblem,
   ShuttleParkingProblem,
   ShuttleParkingProblemIdentity,
 } from "@/games/shuttle-parking/problem/problem";
+import type { ShuttleParkingPooledProblem } from "@/games/shuttle-parking/problem/problem-pool";
 import { selectShuttleParkingProblemForDifficulty } from "@/games/shuttle-parking/problem-selection";
 import type {
   ShuttleParkingCarId,
@@ -98,12 +98,14 @@ export function createShuttleParkingResult(
   };
 }
 
-export function getShuttleParkingSpeedReference(
-  problem: ShuttleParkingProblem,
-): ShuttleParkingSpeedReference {
+export function getShuttleParkingSpeedReference({
+  problem,
+  trapWeight,
+}: ShuttleParkingPooledProblem): ShuttleParkingSpeedReference {
   return {
     carCount: problem.lot.cars.length,
     passengerCount: problem.passengers.length,
+    trapWeight,
   };
 }
 
@@ -126,17 +128,19 @@ export type ShuttleParkingPlay = GamePlay<
 type ShuttleParkingPlayState = {
   session: ShuttleParkingSession;
   problemIdentity: ShuttleParkingProblemIdentity;
+  speedReference: ShuttleParkingSpeedReference;
   operation: ShuttleParkingOperation | null;
   progress: GameProgress;
 };
 
 function createPlayState(
-  { problem, identity }: ShuttleParkingIdentifiedProblem,
+  pooled: ShuttleParkingPooledProblem,
   startedAt: number,
 ): ShuttleParkingPlayState {
   return {
-    session: createShuttleParkingSession(problem, startedAt),
-    problemIdentity: identity,
+    session: createShuttleParkingSession(pooled.problem, startedAt),
+    problemIdentity: pooled.identity,
+    speedReference: getShuttleParkingSpeedReference(pooled),
     operation: null,
     progress: "playing",
   };
@@ -145,7 +149,7 @@ function createPlayState(
 function selectProblem(
   difficulty: ShuttleParkingDifficulty,
   avoidedProblemId: ProblemId | undefined,
-): ShuttleParkingIdentifiedProblem {
+): ShuttleParkingPooledProblem {
   return selectProblemAvoiding(
     (seed) => selectShuttleParkingProblemForDifficulty(difficulty, seed),
     avoidedProblemId,
@@ -154,7 +158,7 @@ function selectProblem(
 
 export function useShuttleParkingPlay(
   difficulty: ShuttleParkingDifficulty,
-  initialProblem?: ShuttleParkingIdentifiedProblem,
+  initialProblem?: ShuttleParkingPooledProblem,
   avoidedProblemId?: ProblemId,
   playProblemId?: ProblemId,
 ): ShuttleParkingPlay {
@@ -170,7 +174,7 @@ export function useShuttleParkingPlay(
     () => savePlayState(SHUTTLE_PARKING_GAME_ID, playProblemId, play),
     [playProblemId, play],
   );
-  const { session, problemIdentity } = play;
+  const { session, problemIdentity, speedReference } = play;
   const elapsedMs = useSessionElapsedMs(session);
   const nextOperationId = useRef(0);
 
@@ -260,12 +264,9 @@ export function useShuttleParkingPlay(
   const result = useMemo(() => {
     const sessionResult = getShuttleParkingSessionResult(session);
     return sessionResult
-      ? createShuttleParkingResult(
-          sessionResult,
-          getShuttleParkingSpeedReference(session.problem),
-        )
+      ? createShuttleParkingResult(sessionResult, speedReference)
       : null;
-  }, [session]);
+  }, [session, speedReference]);
 
   return {
     difficulty,

@@ -27,8 +27,13 @@ export type ShuttleParkingSession = GameSession<
   history: readonly ShuttleParkingState[];
   exitCount: number;
   blockedExitCount: number;
-  /** 全員を送り出せる状態から、送り出せない状態へ移した出庫の数。 */
+  /**
+   * 全員を送り出せる状態から、送り出せない状態へ移した出庫（罠）の数。待った・盤面を戻すで戻して、同じ盤面から同じ車を
+   * もう一度出したときは数え直さない（詰んだ原因を確かめ直す試行錯誤を、読みの失敗として重ねて数えない）。
+   */
   trapCount: number;
+  /** 数えた罠の、出す前の盤面と出した車の鍵。 */
+  trapKeys: readonly string[];
   undoCount: number;
   restartCount: number;
 };
@@ -77,6 +82,16 @@ function getClearability(
   return created;
 }
 
+function createTrapKey(
+  { parkedCarIds, waitingCars, boardedCount }: ShuttleParkingState,
+  carId: ShuttleParkingCarId,
+): string {
+  const waiting = waitingCars
+    .map(({ carId: waitingId, seatedCount }) => `${waitingId}:${seatedCount}`)
+    .join(",");
+  return `${[...parkedCarIds].sort((a, b) => a - b).join(",")}|${waiting}|${boardedCount}|${carId}`;
+}
+
 export function createShuttleParkingSession(
   problem: ShuttleParkingProblem,
   startedAt: number,
@@ -93,6 +108,7 @@ export function createShuttleParkingSession(
     exitCount: 0,
     blockedExitCount: 0,
     trapCount: 0,
+    trapKeys: [],
     undoCount: 0,
     restartCount: 0,
   };
@@ -129,8 +145,11 @@ export function attemptShuttleParkingSessionExit(
     }
     case "exited": {
       const { canClear } = getClearability(session.problem);
-      const enteredTrap =
-        canClear(session.puzzleState) && !canClear(exit.state);
+      const trapKey = createTrapKey(session.puzzleState, carId);
+      const enteredNewTrap =
+        canClear(session.puzzleState) &&
+        !canClear(exit.state) &&
+        !session.trapKeys.includes(trapKey);
       const cleared = isShuttleParkingCleared(session.problem, exit.state);
       return {
         outcome: "exited",
@@ -144,7 +163,10 @@ export function attemptShuttleParkingSessionExit(
           history: [...session.history, session.puzzleState],
           clearedAt: cleared ? attemptedAt : null,
           exitCount: session.exitCount + 1,
-          trapCount: session.trapCount + (enteredTrap ? 1 : 0),
+          trapCount: session.trapCount + (enteredNewTrap ? 1 : 0),
+          trapKeys: enteredNewTrap
+            ? [...session.trapKeys, trapKey]
+            : session.trapKeys,
         },
       };
     }

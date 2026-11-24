@@ -50,6 +50,7 @@ import {
 import {
   decodeShuttleParkingPoolEntry,
   restoreShuttleParkingPoolEntry,
+  restoreShuttleParkingSeed,
   type ShuttleParkingProblemPool,
 } from "@/games/shuttle-parking/problem/problem-pool";
 
@@ -320,7 +321,7 @@ function select(
       if (levelAccepted[comboIndex]!.length >= perLevel) return;
       const [visual, play] = result.keys;
       if (visualKeys.has(visual) || playKeys.has(play)) return;
-      const { problem } = restoreShuttleParkingPoolEntry(result.entry);
+      const { problem } = restoreShuttleParkingSeed(result.entry);
       if (
         problemsByLevel
           .get(level)!
@@ -467,7 +468,10 @@ function writePool(selection: Selection, perLevel: number): void {
           `Lv${id} の問題が足りない: ${ordered.length}/${perLevel}`,
         );
       }
-      return [id, ordered.map(({ entry }) => entry!)];
+      return [
+        id,
+        ordered.map(({ entry, features }) => [entry!, features!.best[0]]),
+      ];
     }),
   ) as unknown as ShuttleParkingProblemPool["levels"];
   const pool: ShuttleParkingProblemPool = {
@@ -574,7 +578,7 @@ function printPoolStats(): void {
     pool.levels[id].map((entry) => {
       const { problem } = restoreShuttleParkingPoolEntry(entry);
       const analysis = analyzeShuttleParkingDifficulty(problem);
-      if (analysis.status !== "analyzed") throw new Error(entry);
+      if (analysis.status !== "analyzed") throw new Error(entry[0]);
       const { features } = analysis;
       const game = new AnalysisGame(problem);
       return {
@@ -712,14 +716,21 @@ async function verify(): Promise<void> {
       failures.push(`Lv${id}: ${entries.length}問`);
     const problems: ShuttleParkingProblem[] = [];
     entries.forEach((entry, position) => {
-      const { problem } = restoreShuttleParkingPoolEntry(entry);
-      const label = `Lv${id} #${position + 1} ${entry}`;
-      if (createShuttleParkingProblemSeed(problem) !== entry)
+      const { problem, trapWeight } = restoreShuttleParkingPoolEntry(entry);
+      const [seed] = entry;
+      const label = `Lv${id} #${position + 1} ${seed}`;
+      if (createShuttleParkingProblemSeed(problem) !== seed)
         failures.push(`${label}: 符号に戻せない`);
+      const analysis = analyzeShuttleParkingDifficulty(problem);
       const assessment = assessShuttleParkingDifficulty(
-        analyzeShuttleParkingDifficulty(problem),
+        analysis,
         SHUTTLE_PARKING_CLASSIFICATION_RULES,
       );
+      if (
+        analysis.status !== "analyzed" ||
+        analysis.features.headFirst.best.minimum !== trapWeight
+      )
+        failures.push(`${label}: 罠の重さ ${trapWeight}`);
       if (assessment.status !== "classified" || assessment.difficulty !== id) {
         failures.push(`${label}: 判定 ${JSON.stringify(assessment)}`);
       }

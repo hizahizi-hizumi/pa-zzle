@@ -10,6 +10,7 @@ import {
   SHUTTLE_PARKING_SPEED_BOARD_READING_MS,
   SHUTTLE_PARKING_SPEED_PER_CAR_MS,
   SHUTTLE_PARKING_SPEED_PER_PASSENGER_MS,
+  SHUTTLE_PARKING_SPEED_PER_TRAP_WEIGHT_MS,
   SHUTTLE_PARKING_TRAP_PENALTY,
 } from "@/games/shuttle-parking/score";
 
@@ -49,6 +50,17 @@ export function getShuttleParkingScoreCriteria(
             unit: "人",
             durationMsPerUnit: SHUTTLE_PARKING_SPEED_PER_PASSENGER_MS,
           },
+          // 罠の結果が何人先に出るか。レベル1の問題は罠が無いので項を出さない。
+          ...(result.speedReference.trapWeight > 0
+            ? [
+                {
+                  label: "先読み",
+                  count: result.speedReference.trapWeight,
+                  unit: "人",
+                  durationMsPerUnit: SHUTTLE_PARKING_SPEED_PER_TRAP_WEIGHT_MS,
+                } as const,
+              ]
+            : []),
         ],
       }),
     ),
