@@ -30,6 +30,11 @@ type HowToPlayExamplePanelProps = {
    * 例は `useReportHowToPlayExampleChange` で、最初の姿から変わったかを面に知らせる。
    */
   resettable?: boolean;
+  /**
+   * 面に敷く地。渡すと、背景差の色の代わりに、面いっぱいにこの地を敷く。本番の盤面が地の上に描かれるゲームが、例の盤面を
+   * 地の箱で囲まずに、面そのものを盤面の地にするときに渡す。
+   */
+  ground?: ReactNode;
 };
 
 /**
@@ -269,6 +274,7 @@ export function HowToPlayExamplePanel({
   children,
   arrangement = "side-by-side",
   resettable = false,
+  ground,
 }: HowToPlayExamplePanelProps) {
   const [generation, setGeneration] = useState(0);
   const [changedExampleIds, setChangedExampleIds] = useState<
@@ -359,13 +365,25 @@ export function HowToPlayExamplePanel({
       data-reset-button-placement={
         resettable ? resetButtonPosition.placement : undefined
       }
-      className={cn("relative rounded-lg bg-muted px-4", placement.panel)}
+      className={cn(
+        "relative isolate rounded-lg px-4",
+        ground === undefined && "bg-muted",
+        placement.panel,
+      )}
       style={
         {
           "--how-to-play-reset-ink-below": `${resetButtonPosition.inkBelowPx}px`,
         } as CSSProperties
       }
     >
+      {ground === undefined ? null : (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10 overflow-hidden rounded-lg"
+        >
+          {ground}
+        </div>
+      )}
       <div ref={contentRef} className="@container">
         <div ref={examplesRef} className={arrangementClassNames[arrangement]}>
           <ReportChangeContext value={reportChange}>

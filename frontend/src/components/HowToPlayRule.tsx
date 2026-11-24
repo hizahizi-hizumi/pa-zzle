@@ -16,6 +16,8 @@ type HowToPlayRuleProps = {
   headingLevel?: 3 | 4;
   /** 元に戻すボタンを置くか。押せない図だけを並べるときは `false` にする。 */
   resettable?: boolean;
+  /** 面に敷く地。`HowToPlayExamplePanel` の `ground`。 */
+  ground?: ReactNode;
 };
 
 /**
@@ -29,6 +31,7 @@ export function HowToPlayRule({
   arrangement = "side-by-side",
   headingLevel = 3,
   resettable = true,
+  ground,
 }: HowToPlayRuleProps) {
   const Heading = headingLevel === 3 ? "h3" : "h4";
   return (
@@ -40,7 +43,11 @@ export function HowToPlayRule({
       >
         <HowToPlayPhrases text={text} />
       </Heading>
-      <HowToPlayExamplePanel arrangement={arrangement} resettable={resettable}>
+      <HowToPlayExamplePanel
+        arrangement={arrangement}
+        resettable={resettable}
+        ground={ground}
+      >
         {examples}
       </HowToPlayExamplePanel>
     </section>
