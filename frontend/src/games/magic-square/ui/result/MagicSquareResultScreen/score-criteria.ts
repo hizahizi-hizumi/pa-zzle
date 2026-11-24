@@ -49,7 +49,7 @@ export function getMagicSquareScoreCriteria(
         ],
         [
           `置いた数が外れるたびに1回と数える。外す・置き換える・${formatOperationName("undo")}・${formatOperationName("restart")}のどれで外れても同じ。`,
-          `ただし、置いてからほかのマスを選ぶ前に直した数は、その数で列の端の色が変わっていなければ数えない。${formatOperationName("restart")}で外れた数はどれも数える。`,
+          `ただし、列の端の色を変えなかった数は、ほかのマスを選ぶ前に直せば数えない。${formatOperationName("restart")}で外れた数はどれも数える。`,
           `${formatOperationName("undo")}・${formatOperationName("restart")}を押した回数では減らさない。`,
         ],
       ),

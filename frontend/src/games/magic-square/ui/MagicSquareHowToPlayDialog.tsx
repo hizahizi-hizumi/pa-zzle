@@ -112,7 +112,7 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
     return (
       <HowToPlayScoreRow
         measure="基準時間"
-        text={`空いたマス/1つにつき/${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / SECOND_MS}秒を/${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / SECOND_MS}秒に/足します。`}
+        text={`空いたマス/1つにつき/${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / SECOND_MS}秒ずつ/${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / SECOND_MS}秒に/足します。`}
       />
     );
   }
@@ -122,9 +122,9 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
         measure="置き直し"
         deduction={`1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点`}
         // 本番の session は、置いた数がそのマスから外れたときにその場で数え、回数は減らない。ほかのマスを選ぶ前に同じマスで直した数は、
-        // その数で列の端の色が変わっていなければ数えない。文は数え方の決まりと1つの例外を言い、流れの図は例外に当たる直し方と
-        // 当たらない直し方を対で見せる。
-        text="置いた数が/外れるたびに/画面の上の/「置き直し」が/1回/増えます。/ただし/置いてから/ほかのマスを/選ぶ前に/直した数は/その数で/列の端の色が/変わっていなければ/数えません。"
+        // その数で列の端の色が変わっていなければ数えない。文は数え方の決まりと1つの例外を、流れの図と同じ「列の端の色を変えなかった数」
+        // の言い方で言い、流れの図は例外に当たる直し方と当たらない直し方を対で見せる。「直す」は外す・置き換える・待ったをまとめて言う。
+        text="置いた数が/外れるたびに/画面の上の「置き直し」が/増えます。/ただし/列の端の色を/変えなかった数は/ほかのマスを/選ぶ前に/直せば/数えません。"
         figure={
           <CorrectionCountExamples
             examples={[
@@ -144,7 +144,7 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
         measure={`「${undo}」・「${restart}」`}
         // 待ったは同じマスを直す操作の1つなので、上の例外もそのまま当てはまる。盤面を戻すは同じマスを直す操作ではないので、
         // 盤面にあった置いた数をどれも数える。押した回数そのものでは点を引かない（score.ts）。
-        text={`「${undo}」で/外れた数も/同じに/数えます。/「${restart}」で/外れた数は/どれも/数えます。`}
+        text={`「${undo}」で/外れた数も/同じように/数えます。/「${restart}」で/外れた数は/どれも/数えます。`}
       />
     </>
   );
@@ -171,14 +171,14 @@ export function MagicSquareHowToPlayDialog({
       rules={
         <>
           <HowToPlayRule
-            text="縦・横・斜めのどの列も/足して/左上の合計に/なれば/完成です。/列の端の合計は/そろうと/緑に/なります。/埋まって/合計が/合わないときと/空きがあるのに/合計に/届いたときは/赤に/なります。"
+            text="縦・横・斜めのどの列も/足して/左上の合計に/なれば/完成です。/列の端の合計は/そろうと/緑に/なります。/埋まって/合計が/合わないときと/空きがあるのに/左上の合計に/届いたときは/赤に/なります。"
             arrangement={lineRuleExample.arrangement}
             examples={
               <TouchableExample example={lineRuleExample} caption="line" />
             }
           />
           <HowToPlayRule
-            text="盤面の下に/並んだ数を/どれも/1回ずつ/置きます。"
+            text="盤面に/まだ無い数を/置けます。"
             arrangement={usedValueRuleExample.arrangement}
             examples={
               <TouchableExample
@@ -235,8 +235,8 @@ export function MagicSquareHowToPlayDialog({
                 </span>
               }
               text={`「${undo}」で/置いた数も/メモも/1つ前に/戻せます。`}
-              // 待ったで外れた数を置き直しに数えるかは、ほかの外し方と同じく採点のタブの例外に当たるかで決まる。
-              note="外れた数は/ほかの外し方と/同じく/置き直しに/数えます。"
+              // 待ったで外れた数を置き直しに数えるかは、外す・置き換えると同じく採点のタブの例外に当たるかで決まる。
+              note={`「${undo}」で/外れた数も/置き直しに/数えます。`}
             />
             <HowToPlayMenuOperations operations={menuOperations} />
           </HowToPlaySection>
@@ -257,7 +257,7 @@ export function MagicSquareHowToPlayDialog({
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="数を/置くと/同じ数のメモは/どのマスからも/消えます。/置いたマスの/ほかのメモは/数を/外すと/戻ります。"
+                text="数を/置くと/同じ数のメモは/どのマスからも/消えます。/置いたマスに/残っていた/メモは/数を/外すと/戻ります。"
                 arrangement={memoClearedOperationExample.arrangement}
                 examples={
                   <TouchableExample example={memoClearedOperationExample} />

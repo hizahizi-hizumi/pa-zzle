@@ -135,7 +135,7 @@ describe("MagicSquareHowToPlayDialog", () => {
       const [row] = within(panel).getAllByRole("listitem");
 
       expect(row?.textContent).toBe(
-        `基準時間空いたマス1つにつき${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / 1000}秒を${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒に足します。`,
+        `基準時間空いたマス1つにつき${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / 1000}秒ずつ${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒に足します。`,
       );
     });
 
@@ -149,10 +149,10 @@ describe("MagicSquareHowToPlayDialog", () => {
       const pressed = rows.find((row) => row.startsWith("「待った」"));
 
       expect(correction).toContain(
-        `置き直し 1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点置いた数が外れるたびに画面の上の「置き直し」が1回増えます。ただし置いてからほかのマスを選ぶ前に直した数はその数で列の端の色が変わっていなければ数えません。`,
+        `置き直し 1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点置いた数が外れるたびに画面の上の「置き直し」が増えます。ただし列の端の色を変えなかった数はほかのマスを選ぶ前に直せば数えません。`,
       );
       expect(pressed).toBe(
-        "「待った」・「盤面を戻す」「待った」で外れた数も同じに数えます。「盤面を戻す」で外れた数はどれも数えます。",
+        "「待った」・「盤面を戻す」「待った」で外れた数も同じように数えます。「盤面を戻す」で外れた数はどれも数えます。",
       );
     });
 
