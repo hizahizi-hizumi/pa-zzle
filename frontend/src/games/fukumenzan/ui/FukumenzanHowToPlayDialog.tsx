@@ -192,10 +192,6 @@ export function FukumenzanHowToPlayDialog({
               "×は/その文字を/選んでいる間だけ/札に/出ます。/同じ文字を/もう一度/押すか/式と札の/外を/押すと/選ぶのを/やめます。",
               crossShownOperationExample,
             )}
-            {renderOperation(
-              "×を/付けた札も/その文字へ/運べば/入ります。",
-              crossedCardPlaceOperationExample,
-            )}
             <li>
               <HowToPlayRule
                 headingLevel={4}
@@ -216,6 +212,10 @@ export function FukumenzanHowToPlayDialog({
                 }
               />
             </li>
+            {renderOperation(
+              "×を/付けた札も/その文字へ/運べば/入ります。",
+              crossedCardPlaceOperationExample,
+            )}
           </HowToPlaySection>
           <HowToPlaySection title="やり直し">
             <HowToPlayOperationRow
