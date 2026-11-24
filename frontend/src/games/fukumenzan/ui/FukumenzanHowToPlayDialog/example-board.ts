@@ -80,6 +80,7 @@ function isDragged(
 /**
  * 次に押す所。触る前の姿から例の手を打っていく途中でだけ示し、手を打ち終えたら消す。
  * 運ぶ手は運び始めたときだけ落とし先へ進め、押して選んだだけなら運び始める所を示したままにする。
+ * 押すか運ぶ手は、押して選んでも運び始めても2つ目へ進める。
  * 付け外しの手は、1つ目を選んでいる間、付けた後も2つ目を示し続ける。
  */
 export function findExampleHint(
@@ -94,7 +95,9 @@ export function findExampleHint(
   }
   const changed = isExampleChanged(example, state);
   if (drag !== null) {
-    return move.gesture === "drag" && !changed && isDragged(move.from, drag)
+    return (move.gesture === "drag" || move.gesture === "tap-or-drag") &&
+      !changed &&
+      isDragged(move.from, drag)
       ? move.to
       : null;
   }

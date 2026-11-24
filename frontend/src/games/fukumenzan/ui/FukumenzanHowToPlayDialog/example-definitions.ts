@@ -19,9 +19,10 @@ export type FukumenzanExampleTarget =
  * - `tap`: 1つ目を押してから2つ目を押す。
  * - `drag`: 1つ目から2つ目へ運ぶ。手がかりは運び始めたときだけ2つ目へ進める。
  * - `toggle`: 1つ目を押してから2つ目を押す。2つ目は押すたびに付け外しするので、1つ目を選んでいる間は2つ目を示し続ける。
+ * - `tap-or-drag`: 1つ目を押してから2つ目を押すか、1つ目から2つ目へ運ぶ。押して選んでも、運び始めても2つ目を示す。
  */
 export type FukumenzanExampleMove = {
-  gesture: "tap" | "drag" | "toggle";
+  gesture: "tap" | "drag" | "toggle" | "tap-or-drag";
   from: FukumenzanExampleTarget;
   to: FukumenzanExampleTarget;
 };
@@ -141,11 +142,11 @@ export const crossOperationExample: FukumenzanHowToPlayExample = {
   move: { gesture: "toggle", from: letter("U"), to: card(5) },
 };
 
-/** 札の入った文字を押してから列の空いた場所を押して、札を列へ戻す。 */
+/** 札の入った文字を押してから列の空いた場所を押すか、札の並びへ運んで、札を列へ戻す。 */
 export const returnOperationExample: FukumenzanHowToPlayExample = {
   placed: { D: 8 },
   cardRow: "high",
-  move: { gesture: "tap", from: letter("D"), to: card(8) },
+  move: { gesture: "tap-or-drag", from: letter("D"), to: card(8) },
 };
 
 /** × の跡の図。U に 2〜9 の × を付け、残りの候補を 0 と 1 の2つにした式。 */

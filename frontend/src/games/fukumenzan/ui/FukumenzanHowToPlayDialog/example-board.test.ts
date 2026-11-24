@@ -150,6 +150,17 @@ describe("findExampleHint", () => {
     ).toEqual({ kind: "card", digit: 8 });
   });
 
+  test("列へ戻す手では D から運び始めても空いた場所の札を示すこと", () => {
+    expect(
+      findExampleHint(
+        returnOperationExample,
+        createExamplePuzzleState(returnOperationExample),
+        null,
+        { digit: 8, fromLetter: D, x: 0, y: 0, overLetter: null },
+      ),
+    ).toEqual({ kind: "card", digit: 8 });
+  });
+
   describe("付け外しの手の場合", () => {
     const crossed = toggleFukumenzanCross(
       createExamplePuzzleState(crossOperationExample),
