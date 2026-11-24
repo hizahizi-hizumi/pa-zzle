@@ -85,11 +85,11 @@ function renderOperation(text: string, example: FukumenzanHowToPlayExample) {
 const menuOperations: readonly HowToPlayMenuOperation[] = [
   {
     item: playMenuOperationItems.restart,
-    text: `時間と/「${undo}」の回数は/そのままで/札と/×を/全部/外した/最初の式に/戻します。`,
+    text: `札と×を/全部/外して/最初の式に/戻します。/時間と/「${undo}」の回数は/そのまま/続きます。`,
   },
   {
     item: playMenuOperationItems.startNewProblem,
-    text: "同じレベルの/別の問題に/変えます。",
+    text: "同じレベルの別の問題に/変えます。",
   },
 ];
 
@@ -100,7 +100,7 @@ const scoreItems = Object.entries(FUKUMENZAN_SCORE_MAXIMUMS) as [
 ][];
 
 const scoreLeads = {
-  speed: "問題ごとの/基準時間以内なら/満点です。/超えると/点が/下がります。",
+  speed: "問題ごとの基準時間以内なら/満点です。/超えると/点が/下がります。",
 } as const satisfies Record<keyof typeof FUKUMENZAN_SCORE_MAXIMUMS, string>;
 
 /**
@@ -116,23 +116,23 @@ export function FukumenzanHowToPlayDialog({
     <HowToPlayOverlay
       open={open}
       game={game}
-      description="文字ごとに/0〜9の/数字を/1つずつ/当てて/足し算を/成り立たせる/パズルです。"
+      description="文字に/0〜9の数字を/入れて/足し算を/正しい式に/する/パズルです。"
       goal={<GoalPlayback />}
       onClose={onClose}
       onOpenTutorial={onOpenTutorial}
       rules={
         <>
           <HowToPlayRule
-            text="同じ文字には/同じ数字を/当てます。/札は/0〜9が/1枚ずつ/なので/違う文字には/違う数字が/入ります。"
+            text="同じ文字には/同じ数字を/入れます。/札は/0〜9が/1枚ずつしか/ないので/違う文字には/違う数字が/入ります。"
             arrangement="stacked"
             examples={<TouchableExample example={sameLetterRuleExample} />}
           />
           {renderPairRule(
-            "2桁以上の/数の/先頭には/1〜9を/当てます。",
+            "2桁以上の数の/いちばん左には/1〜9を/入れます。",
             leadingZeroRuleExamples,
           )}
           {renderPairRule(
-            "どの桁も/右の桁からの/繰り上がりまで/足して/答えの/数字に/合わせます。/全部の/桁が/合えば/クリアです。",
+            "どの桁も/上の数字と/右の桁からの繰り上がりを/足すと/答えの数字に/なるように/します。/全部の桁が/合えば/クリアです。",
             sumRuleExamples,
           )}
         </>
@@ -141,7 +141,7 @@ export function FukumenzanHowToPlayDialog({
         <>
           <HowToPlaySection title="札の入れ方">
             {renderOperation(
-              "札を/文字へ/運ぶと/その文字の/全部の/場所に/入ります。",
+              "札を/文字へ/運ぶと/同じ文字の所に/まとめて/入ります。",
               dragOperationExample,
             )}
             {renderOperation(
@@ -149,27 +149,27 @@ export function FukumenzanHowToPlayDialog({
               tapOperationExample,
             )}
             {renderOperation(
-              "札の入った/文字へ/別の札を/入れると/前の札は/列へ/戻ります。",
+              "札の入った文字に/別の札を/入れると/前の札は/元の所へ/戻ります。",
               replaceOperationExample,
             )}
             {renderOperation(
-              "札の入った/文字から/別の文字へ/運ぶと/札が/移ります。",
+              "文字に入った札も/別の文字へ/運べます。",
               moveOperationExample,
             )}
             {renderOperation(
-              "札の入った/文字を/押してから/列の/空いた所を/押すと/札が/列へ/戻ります。/列へ/運んでも/戻ります。",
+              "札の入った文字を/押してから/点線の枠を/押すと/札が/元の所へ/戻ります。/札の並びへ/運んでも/戻ります。",
               returnOperationExample,
             )}
           </HowToPlaySection>
           <HowToPlaySection title="×の付け方">
             {renderOperation(
-              "文字を/押してから/札を/押すと/その文字に/入らない/札に/×が/付きます。/もう一度/押すと/外れます。",
+              "文字を/押してから/札を/押すと/その札に/×が/付きます。/もう一度/押すと/外れます。",
               crossOperationExample,
             )}
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="×は/その文字を/選んでいる間だけ/札に/出ます。/空の文字の/右上には/×の無い/札の/数が/点線の/丸で/出ます。"
+                text="×は/その文字を/選んでいる間だけ/札に/出ます。/札の入っていない文字の/右上の点線の丸には/×の付いていない札の数が/出ます。"
                 arrangement="stacked"
                 resettable={false}
                 examples={
@@ -193,8 +193,8 @@ export function FukumenzanHowToPlayDialog({
                   <UndoButton disabled={false} onUndo={ignoreFigureEvent} />
                 </span>
               }
-              text={`「${undo}」を/押すと/最後の/札か/×の/操作が/元に戻ります。`}
-              note={`時間は/そのままで/「${undo}」の回数が/増えます。`}
+              text={`「${undo}」を/押すと/最後に/動かした札か/付け外しした×が/元に/戻ります。`}
+              note={`時間は/そのまま/進み/「${undo}」の回数が/増えます。`}
             />
             <HowToPlayMenuOperations operations={menuOperations} />
           </HowToPlaySection>
@@ -209,14 +209,14 @@ export function FukumenzanHowToPlayDialog({
         >
           <HowToPlayScoreRow
             measure="基準時間"
-            text="文字の/種類と/式に/書かれた/文字が/多い問題ほど/長くなります。"
+            text="文字の種類が/多く/式の長い問題ほど/長く/なります。"
           />
           <HowToPlayScoreRow
             measure="0点になる時間"
-            text={`基準時間の/${FUKUMENZAN_SPEED_ZERO_SCORE_RATIO}倍です。`}
+            text={`基準時間の${FUKUMENZAN_SPEED_ZERO_SCORE_RATIO}倍です。`}
           />
           <HowToPlayScoreRow
-            measure={`「${undo}」・/「${restart}」・/札の入れ直し・/×`}
+            measure={`「${undo}」・/「${restart}」・/札の入れ直し・/×の付け外し`}
             text="何回/しても/点は/下がりません。"
           />
         </HowToPlaySection>
