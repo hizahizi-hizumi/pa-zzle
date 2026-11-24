@@ -72,7 +72,13 @@ const verdictLabels = {
   sum: { allowed: "合う", disallowed: "合わない" },
 } as const satisfies Record<FukumenzanExampleVerdict, HowToPlayVerdictLabels>;
 
-function renderHint(pointer: HowToPlayPressHintPointer) {
+/** 文字の手がかり。枠は文字のマスの縁に引き、右上の肩の × の数の丸と、マスの中の札の面にかけない。 */
+const letterHint = (
+  <HowToPlayPressHint frame="edge" outline="square" pointer="inside-corner" />
+);
+
+/** 札の手がかり。枠は札の内側に引き、札の縁取りにかけない。 */
+function renderCardHint(pointer: HowToPlayPressHintPointer) {
   return <HowToPlayPressHint frame="inside" pointer={pointer} />;
 }
 
@@ -238,7 +244,7 @@ export function TouchableExample({ example, pair }: TouchableExampleProps) {
                 hint?.kind === "letter"
                   ? {
                       letter: getExampleLetterIndex(hint.letter),
-                      content: renderHint("inside-corner"),
+                      content: letterHint,
                     }
                   : null
               }
@@ -257,7 +263,7 @@ export function TouchableExample({ example, pair }: TouchableExampleProps) {
                 hint?.kind === "card"
                   ? {
                       digit: hint.digit,
-                      content: renderHint(
+                      content: renderCardHint(
                         getCardHintPointer(
                           puzzleState,
                           input.selection,
