@@ -59,12 +59,11 @@ const SECOND_MS = 1_000;
 function ignoreFigurePress(): void {}
 
 // 何が残り何が0に戻るかは、本番の session に合わせる。盤面を戻すは経過時間と置き直しの回数を引き継ぎ、置いた数を外してメモも消し、
-// 外れた数を置き直しに数える。リセットと別の問題は新しいプレイを始める。
+// 外した数をどれも置き直しに数える。リセットと別の問題は新しいプレイを始める。
 const menuOperations: readonly HowToPlayMenuOperation[] = [
   {
     item: playMenuOperationItems.restart,
-    text: "置いた数を/外して/メモも/消して/最初の盤面に/戻します。/時間と/置き直しの回数は/そのままです。",
-    note: "外れた数の分だけ/置き直しが/増えます。",
+    text: "置いた数を/外して/メモも/消して/最初の盤面に/戻します。/時間は/そのままで/外した数の分だけ/置き直しが/増えます。",
   },
   {
     item: playMenuOperationItems.replay,
@@ -77,18 +76,18 @@ const menuOperations: readonly HowToPlayMenuOperation[] = [
 ];
 
 /**
- * 使う数のルール。例の盤面（レベル1と同じ大きさ）の数と合計は例が見せるので、ほかの大きさの盤面の数と合計を続けて言う。
+ * 例の盤面（レベル1と同じ大きさ）のほかの大きさの盤面。置く数と合計は例で見せられないので、ルールの後ろにまとめて言う。
  */
 const otherBoardSizes = magicSquareBoardSizes.filter(
   (size) => size !== MAGIC_SQUARE_EXAMPLE_SIZE,
 );
-const valueRangeText = [
-  "盤面の下に/並んだ数を/どれも/1回ずつ/置きます。",
-  ...otherBoardSizes.map(
+const otherBoardSizesTitle = `${otherBoardSizes.map((size) => `${size}×${size}`).join("と")}の盤面`;
+const otherBoardSizesText = otherBoardSizes
+  .map(
     (size) =>
-      `${size}×${size}なら/1から${getMagicSquareMaxValue(size)}までで/左上の合計は/${getMagicSquareMagicSum(size)}です。`,
-  ),
-].join("/");
+      `${size}×${size}なら/1から${getMagicSquareMaxValue(size)}までを/置いて/左上の合計は${getMagicSquareMagicSum(size)}です。`,
+  )
+  .join("/");
 
 /** 結果画面と同じ順に、評価の項目を満点と並べる。 */
 const scoreItems = Object.entries(MAGIC_SQUARE_SCORE_MAXIMUMS) as [
@@ -99,17 +98,17 @@ const scoreItems = Object.entries(MAGIC_SQUARE_SCORE_MAXIMUMS) as [
 const scoreLeads = {
   speed: `問題ごとの基準時間/以内なら/満点です。/超えるほど/下がって/基準時間の${MAGIC_SQUARE_SPEED_ZERO_SCORE_RATIO}倍で/0点に/なります。`,
   // 1回に何点引くかと何を1回と数えるかは直後の行が言うので、何で引くかと引いていく元と下限だけを言う。
-  accuracy: `置き直しのたびに/${MAGIC_SQUARE_SCORE_MAXIMUMS.accuracy}点から/引きます。/0点より/下には/なりません。`,
+  accuracy: `置き直しのたびに/${MAGIC_SQUARE_SCORE_MAXIMUMS.accuracy}点から/引きます。/0点より下には/なりません。`,
 } as const satisfies Record<keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS, string>;
 
 /** 点ごとに、数えるものを結果画面の採点基準と同じ呼び名で並べる。速さには基準時間の決まり方を置く。 */
 function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
   if (item === "speed") {
-    // score.ts の基準時間は、盤面を読み始める時間に、空いたマスごとの時間を足す。
+    // score.ts の基準時間は、盤面を読み始める時間に、空いたマスごとの時間を足す。結果画面の採点内訳と同じ「読み始め」と呼ぶ。
     return (
       <HowToPlayScoreRow
         measure="基準時間"
-        text={`${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / SECOND_MS}秒に/空いたマス/1つにつき/${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / SECOND_MS}秒を/足します。`}
+        text={`空いたマス/1つにつき/${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / SECOND_MS}秒を/読み始めの/${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / SECOND_MS}秒に/足します。`}
       />
     );
   }
@@ -119,9 +118,9 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
         measure="置き直し"
         deduction={`1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点`}
         // 本番の session は、置いた数がそのマスから外れた事実を数え、押し間違いの直しとして2つを除く。
-        // 列の端の色を変えなかった数を、ほかのマスを選ぶ前に外す・置き換えたときと、
-        // 色を変えた数を、盤面の下に並んだ数で隣り合う数へすぐ置き換えたとき。文と流れの図で、同じ言い方で2つとも言う。
-        text={`置いた数は/外しても/置き換えても/「${undo}」・/「${restart}」で/外れても/1回です。/列の端の色を/変えなかった数は/ほかのマスを/選ぶ前なら/外しても/置き換えても/数えません。/隣の数を/押し間違えて/すぐ/置き換えたときも/数えません。`}
+        // 列の端の色を変えなかった数を、ほかのマスを選ぶ前に外す・置き換える・待ったで外すときと、
+        // 色を変えた数を、盤面の下に並んだ数で上下・左右・斜めに隣り合う数へすぐ置き換えたとき。文と流れの図で、同じ言い方で2つとも言う。
+        text={`置いた数は/外しても/置き換えても/「${undo}」・「${restart}」で/外れても/1回です。/列の端の色を/変えなかった数は/ほかのマスを/選ぶ前なら/外しても/置き換えても/「${undo}」で/外れても/数えません。/色を変えた数を/盤面の下に/並んだ数で/上下・左右・斜めに/隣の数へ/すぐ/置き換えたときも/数えません。`}
         figure={
           <CorrectionCountExamples
             examples={[
@@ -135,14 +134,14 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
               },
               {
                 figure: correctionCountFlows.mistyped,
-                flow: "隣の数を/押し間違えて/すぐ/置き換える",
+                flow: "列の端の色を/変えた数を/隣の数へ/すぐ/置き換える",
               },
             ]}
           />
         }
       />
       <HowToPlayScoreRow
-        measure={`「${undo}」・/「${restart}」`}
+        measure={`「${undo}」・「${restart}」`}
         // 正確さは置き直しの回数だけで決まり、待った・盤面を戻すを押した回数では点を引かない（score.ts）。
         text="押しただけでは/点は/下がりません。"
       />
@@ -153,7 +152,7 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
 /**
  * 遊び方。ルール・操作・採点のタブで、本番の盤面部品と盤面の下に並んだ数で描いた触れる例と、話し言葉の一文を並べる。
  * 例は本番と同じく、マスを選んで数を押すと置き・置き換え・外し、列の端の合計と色・受け付けない押し方の揺れと音をその場で返す。
- * 例はどれもレベル1と同じ 4×4 の盤面か、その1行だけで描き、5×5・6×6 の数と合計は一文で言う。
+ * 例はどれもレベル1と同じ 4×4 の盤面か、その1行か1列だけで描き、5×5・6×6 の数と合計はルールの後ろのまとまりで言う。
  */
 export function MagicSquareHowToPlayDialog({
   open,
@@ -171,14 +170,14 @@ export function MagicSquareHowToPlayDialog({
       rules={
         <>
           <HowToPlayRule
-            text="縦・横・斜めのどの列も/足して/左上の合計に/なれば/完成です。/列の端には/今の合計が/出て/そろったときと/もう/そろわないときに/色が/変わります。"
+            text="縦・横・斜めのどの列も/足して/左上の合計に/なれば/完成です。/列の端の今の合計は/そろうと緑に/もうそろわないと赤に/なります。"
             arrangement={lineRuleExample.arrangement}
             examples={
               <TouchableExample example={lineRuleExample} caption="line" />
             }
           />
           <HowToPlayRule
-            text={valueRangeText}
+            text="盤面の下に/並んだ数を/どれも/1回ずつ/置きます。"
             arrangement={usedValueRuleExample.arrangement}
             examples={
               <TouchableExample
@@ -194,6 +193,10 @@ export function MagicSquareHowToPlayDialog({
               <TouchableExample example={givenRuleExample} caption="given" />
             }
           />
+          <HowToPlaySection
+            title={otherBoardSizesTitle}
+            lead={otherBoardSizesText}
+          />
         </>
       }
       operations={
@@ -202,7 +205,7 @@ export function MagicSquareHowToPlayDialog({
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="マスを押して/選ぶと/そのマスを通る/列が/濃く/なります。/盤面の下に/並んだ数を/押すと/そのマスに/置けます。"
+                text="マスを押して/選ぶと/そのマスを通る/列が/濃くなります。/盤面の下に/並んだ数を/押すと/そのマスに/置けます。"
                 arrangement={placeOperationExample.arrangement}
                 examples={<TouchableExample example={placeOperationExample} />}
               />
@@ -247,7 +250,7 @@ export function MagicSquareHowToPlayDialog({
                 </span>
               }
               text={`「${undo}」で/置いた数も/メモも/1つ前に/戻せます。`}
-              note="時間は/戻りません。"
+              note="時間は/戻りません。/外れた数は/置き直しに/数えます。"
             />
             <HowToPlayMenuOperations operations={menuOperations} />
           </HowToPlaySection>

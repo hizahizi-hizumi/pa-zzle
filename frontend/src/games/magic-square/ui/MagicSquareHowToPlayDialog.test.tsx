@@ -54,21 +54,29 @@ describe("MagicSquareHowToPlayDialog", () => {
       ]);
     });
 
-    test("ルールで、例の盤面と違う大きさの盤面ごとに、使う数とそろえる合計を本番の盤面と同じ値で言うこと", () => {
+    test("ルールの後ろに、例の盤面と違う大きさの盤面のまとまりを置き、使う数とそろえる合計を本番の盤面と同じ値で言うこと", () => {
       const panel = within(getDialog()).getByRole("tabpanel", {
         name: "ルール",
       });
+      const otherSizes = magicSquareBoardSizes.filter(
+        (size) => size !== MAGIC_SQUARE_EXAMPLE_SIZE,
+      );
 
-      const phrases = magicSquareBoardSizes
-        .filter((size) => size !== MAGIC_SQUARE_EXAMPLE_SIZE)
-        .map(
-          (size) =>
-            `${size}×${size}なら1から${getMagicSquareMaxValue(size)}までで左上の合計は${getMagicSquareMagicSum(size)}です。`,
-        );
+      const section = within(panel)
+        .getByRole("heading", {
+          level: 3,
+          name: `${otherSizes.map((size) => `${size}×${size}`).join("と")}の盤面`,
+        })
+        .closest("section");
 
-      expect(
-        phrases.every((phrase) => panel.textContent?.includes(phrase)),
-      ).toBe(true);
+      expect(section?.textContent).toContain(
+        otherSizes
+          .map(
+            (size) =>
+              `${size}×${size}なら1から${getMagicSquareMaxValue(size)}までを置いて左上の合計は${getMagicSquareMagicSum(size)}です。`,
+          )
+          .join(""),
+      );
     });
 
     test("ルールの例を、本番の盤面部品で描いた触れる例として、元に戻すボタンのある面に置くこと", () => {
@@ -118,7 +126,7 @@ describe("MagicSquareHowToPlayDialog", () => {
       const [row] = within(panel).getAllByRole("listitem");
 
       expect(row?.textContent).toBe(
-        `基準時間${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒に空いたマス1つにつき${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / 1000}秒を足します。`,
+        `基準時間空いたマス1つにつき${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / 1000}秒を読み始めの${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒に足します。`,
       );
     });
 
