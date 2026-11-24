@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { GamePictogram } from "@/components/GamePictogram";
 import { HowToPlayPhrases } from "@/components/HowToPlayPhrases";
@@ -69,8 +69,66 @@ function isHowToPlayTab(value: string): value is HowToPlayTab {
 const hiddenPaneMaxLgClassName =
   "max-lg:invisible max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:h-0 max-lg:overflow-hidden";
 
+/**
+ * タブの中身。広い画面では右の列で中身だけを送り、下にまだ見えていない中身がある間は、下端の 96px を地の色へ薄めて、
+ * 続きがあると分かるようにする（最初の画面が面の下端でちょうど切れても、終わりに見えないようにする）。
+ * 薄める高さは、中身の中のいちばん広い間（まとまりどうしの 64px）より高くし、どこで切れても薄めた所に中身がかかるようにする。
+ */
 const tabContentClassName =
-  "@container isolate data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-x-0 data-[state=inactive]:top-0 data-[state=inactive]:h-0 data-[state=inactive]:overflow-hidden px-4 pt-6 pb-12 lg:col-start-2 lg:row-start-2 lg:min-h-0 lg:overflow-x-hidden lg:overflow-y-auto lg:px-0 lg:pt-8 lg:[clip-path:inset(0)]";
+  "@container isolate data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-x-0 data-[state=inactive]:top-0 data-[state=inactive]:h-0 data-[state=inactive]:overflow-hidden px-4 pt-6 pb-12 lg:col-start-2 lg:row-start-2 lg:min-h-0 lg:overflow-x-hidden lg:overflow-y-auto lg:px-0 lg:pt-8 lg:[clip-path:inset(0)] lg:data-[content-below]:[mask-image:linear-gradient(to_bottom,black_calc(100%-6rem),transparent)]";
+
+/** 送る領域の下に、まだ見えていない中身があるか。送ったとき・領域か中身の大きさが変わったときに測り直す。 */
+function useContentBelow(element: HTMLElement | null): boolean {
+  const [contentBelow, setContentBelow] = useState(false);
+  useEffect(() => {
+    if (element === null) {
+      return;
+    }
+    const scroller = element;
+    function measure() {
+      setContentBelow(
+        scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 1,
+      );
+    }
+    measure();
+    scroller.addEventListener("scroll", measure, { passive: true });
+    const resizes =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(measure);
+    resizes?.observe(scroller);
+    if (scroller.firstElementChild !== null) {
+      resizes?.observe(scroller.firstElementChild);
+    }
+    return () => {
+      scroller.removeEventListener("scroll", measure);
+      resizes?.disconnect();
+    };
+  }, [element]);
+  return contentBelow;
+}
+
+function HowToPlayTabContent({
+  value,
+  children,
+}: {
+  value: HowToPlayTab;
+  children: ReactNode;
+}) {
+  const [element, setElement] = useState<HTMLDivElement | null>(null);
+  const contentBelow = useContentBelow(element);
+  return (
+    <TabsContent
+      ref={setElement}
+      value={value}
+      forceMount
+      data-content-below={contentBelow || undefined}
+      className={tabContentClassName}
+    >
+      {children}
+    </TabsContent>
+  );
+}
 
 /**
  * 遊び方の全画面の層。チュートリアルと同じく、上の帯にピクトグラムと名前、閉じるを置く。
@@ -79,6 +137,7 @@ const tabContentClassName =
  * 広い画面では、何をするパズルかとゴールの盤面を左の列に留め、右の列（読みやすい幅に絞る）でタブを読む。
  * 狭い画面では1列にし、それらをルールのタブの先頭に置く。どちらの画面でも1つだけ描き、置き場所を格子で替える。
  * 狭い画面では、タブの列を上に留めたまま中身全体を1つの領域で送り、タブを替えたら先頭から見せる。
+ * 広い画面では、右の列のタブの中身だけを送り、下に続きがある間は下端を薄める。
  * チュートリアルのあるゲームでは、帯ではなくゴールの盤面の下に、チュートリアルを始めるボタンを置く。
  * 1列のときは、盤面とボタンの列を本文の幅いっぱいにして盤面を中央に置き、ボタンを本文の幅いっぱいにする。
  * 2列のときは、列を盤面の幅にして、ボタンを盤面と同じ幅にする。
@@ -239,28 +298,16 @@ export function HowToPlayOverlay({
                 >
                   {purpose}
                 </div>
-                <TabsContent
-                  value="rules"
-                  forceMount
-                  className={tabContentClassName}
-                >
+                <HowToPlayTabContent value="rules">
                   <div className="space-y-12">{rules}</div>
-                </TabsContent>
+                </HowToPlayTabContent>
                 {/* 操作と採点は見出しを付けたまとまりで並べるので、まとまりどうしの間を、まとまりの中の項目の間より大きく空ける。 */}
-                <TabsContent
-                  value="operations"
-                  forceMount
-                  className={tabContentClassName}
-                >
+                <HowToPlayTabContent value="operations">
                   <div className="space-y-16">{operations}</div>
-                </TabsContent>
-                <TabsContent
-                  value="scoring"
-                  forceMount
-                  className={tabContentClassName}
-                >
+                </HowToPlayTabContent>
+                <HowToPlayTabContent value="scoring">
                   <div className="space-y-16">{scoring}</div>
-                </TabsContent>
+                </HowToPlayTabContent>
               </div>
             </Tabs>
           </div>

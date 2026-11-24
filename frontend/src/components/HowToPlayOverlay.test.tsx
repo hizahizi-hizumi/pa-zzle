@@ -103,3 +103,53 @@ describe("HowToPlayOverlay", () => {
     expect(padding).toContain("scroll-pt-11");
   });
 });
+
+describe("広い画面でタブの中身が送る領域より高い場合", () => {
+  beforeEach(() => {
+    // タブの中身の高さは 1000px、送る領域の高さは 600px にする。
+    vi.spyOn(Element.prototype, "scrollHeight", "get").mockImplementation(
+      function getScrollHeight(this: Element) {
+        return this.getAttribute("role") === "tabpanel" ? 1000 : 0;
+      },
+    );
+    vi.spyOn(Element.prototype, "clientHeight", "get").mockImplementation(
+      function getClientHeight(this: Element) {
+        return this.getAttribute("role") === "tabpanel" ? 600 : 0;
+      },
+    );
+    render(
+      <HowToPlayOverlay
+        open
+        game={{ name: "橋", pictogramSvg: "<svg></svg>" }}
+        description="島を/橋で/つなぐ/パズルです。"
+        goal={<span>ゴール</span>}
+        rules={<p>ルール</p>}
+        operations={null}
+        scoring={null}
+        onClose={vi.fn()}
+      />,
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function getRules(): HTMLElement {
+    return within(screen.getByRole("dialog")).getByRole("tabpanel", {
+      name: "ルール",
+    });
+  }
+
+  test("下にまだ見えていない中身がある間は、続きがあると知らせ、下端まで送ると知らせをやめること", () => {
+    const rules = getRules();
+    const before = rules.hasAttribute("data-content-below");
+    rules.scrollTop = 400;
+    fireEvent.scroll(rules);
+
+    expect({
+      before,
+      after: rules.hasAttribute("data-content-below"),
+    }).toEqual({ before: true, after: false });
+  });
+});
