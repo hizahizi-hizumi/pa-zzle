@@ -720,13 +720,117 @@ function getCancelledLetters(
   return cancelled;
 }
 
+/** つないだ組の途中。繰り上がりは、まとめる桁の並びの位置ごとに持ち、まだつないでいない桁は -1。 */
 type JoinedPart = {
   assigned: readonly number[];
   assignedCount: number;
   mask: number;
-  firstCarryIn: number;
+  carryIns: readonly number[];
   carryOuts: readonly number[];
 };
+
+/** 3つの桁は、どの順でつないでもよい。どの段もつないだ組が上限までに収まる順があれば、その順で読む。 */
+const TRIPLE_JOIN_ORDERS: readonly (readonly number[])[] = [
+  [0, 1, 2],
+  [0, 2, 1],
+  [1, 0, 2],
+  [1, 2, 0],
+  [2, 0, 1],
+  [2, 1, 0],
+];
+
+/**
+ * まとめる桁の組を `order` の順につなぐ。組の中で隣り合う桁の繰り上がりは合わせる。2つ目の桁から、つないだ組
+ * （消える文字を除いた文字の値・最初につないだ桁に入る繰り上がり・つないだ桁から出る繰り上がり）が `joinedCap` を
+ * 超えたら `"exceeded"`。合う組が無ければ `null`。
+ */
+function joinGroupTuples(
+  model: FukumenzanColumnModel,
+  columns: readonly number[],
+  tupleLists: readonly ColumnTuples[],
+  cancelled: ReadonlySet<number>,
+  joinedCap: number | null,
+  order: readonly number[],
+): JoinedPart[] | "exceeded" | null {
+  let parts: JoinedPart[] = [
+    {
+      assigned: Array.from({ length: model.letterCount }, () => -1),
+      assignedCount: 0,
+      mask: 0,
+      carryIns: columns.map(() => -1),
+      carryOuts: columns.map(() => -1),
+    },
+  ];
+  for (const [stage, position] of order.entries()) {
+    const column = columns[position]!;
+    const previous = columns.indexOf(column - 1);
+    const following = columns.indexOf(column + 1);
+    const { letters, codes, masks } = tupleLists[position]!;
+    const next: JoinedPart[] = [];
+    const seen = new Set<string>();
+    for (const part of parts) {
+      for (const [index, code] of codes.entries()) {
+        const carryIn = (code >> CARRY_IN_SHIFT) & 0xf;
+        const carryOut = (code >> CARRY_OUT_SHIFT) & 0xf;
+        if (
+          (previous >= 0 &&
+            part.carryOuts[previous]! >= 0 &&
+            carryIn !== part.carryOuts[previous]) ||
+          (following >= 0 &&
+            part.carryIns[following]! >= 0 &&
+            carryOut !== part.carryIns[following])
+        ) {
+          continue;
+        }
+        let agrees = true;
+        let added = 0;
+        for (const [letterPosition, letter] of letters.entries()) {
+          const value = part.assigned[letter]!;
+          if (value < 0) {
+            added += 1;
+          } else if (value !== getTupleValue(code, letterPosition)) {
+            agrees = false;
+            break;
+          }
+        }
+        if (!agrees) {
+          continue;
+        }
+        const mask = part.mask | masks[index]!;
+        const assignedCount = part.assignedCount + added;
+        if (digitCountOfMask[mask] !== assignedCount) {
+          continue;
+        }
+        const assigned = [...part.assigned];
+        for (const [letterPosition, letter] of letters.entries()) {
+          assigned[letter] = getTupleValue(code, letterPosition);
+        }
+        const carryIns = [...part.carryIns];
+        const carryOuts = [...part.carryOuts];
+        carryIns[position] = carryIn;
+        carryOuts[position] = carryOut;
+        next.push({ assigned, assignedCount, mask, carryIns, carryOuts });
+        if (joinedCap === null || stage === 0) {
+          continue;
+        }
+        const joinedCarryOuts = order
+          .slice(0, stage + 1)
+          .map((joined) => carryOuts[joined]);
+        seen.add(
+          `${assigned.map((value, letter) => (cancelled.has(letter) ? -1 : value)).join(",")}|${carryIns[order[0]!]}|${joinedCarryOuts.join(",")}`,
+        );
+        if (seen.size > joinedCap) {
+          return "exceeded";
+        }
+      }
+    }
+    parts = next;
+    if (parts.length === 0) {
+      return null;
+    }
+  }
+  return parts;
+}
 
 export function readFukumenzanGroup(
   reader: FukumenzanReader,
@@ -765,81 +869,26 @@ export function readFukumenzanGroup(
     joinedCap = product <= limit.productCap ? null : limit.joinedCap;
   }
 
-  const [firstTuples] = tupleLists;
-  let parts: JoinedPart[] = firstTuples!.codes.map((code, index) => {
-    const assigned = Array.from({ length: model.letterCount }, () => -1);
-    for (const [position, letter] of firstTuples!.letters.entries()) {
-      assigned[letter] = getTupleValue(code, position);
+  const orders = columns.length === 3 ? TRIPLE_JOIN_ORDERS : [[0, 1]];
+  let parts: JoinedPart[] | "exceeded" | null = "exceeded";
+  for (const order of orders) {
+    parts = joinGroupTuples(
+      model,
+      columns,
+      tupleLists,
+      cancelled,
+      joinedCap,
+      order,
+    );
+    if (parts !== "exceeded") {
+      break;
     }
-    return {
-      assigned,
-      assignedCount: firstTuples!.letters.length,
-      mask: firstTuples!.masks[index]!,
-      firstCarryIn: (code >> CARRY_IN_SHIFT) & 0xf,
-      carryOuts: [(code >> CARRY_OUT_SHIFT) & 0xf],
-    };
-  });
-  for (const [listIndex, { letters, codes, masks }] of tupleLists
-    .slice(1)
-    .entries()) {
-    const followsPrevious = columns[listIndex + 1]! === columns[listIndex]! + 1;
-    const next: JoinedPart[] = [];
-    const seen = new Set<string>();
-    for (const part of parts) {
-      for (const [index, code] of codes.entries()) {
-        const carryIn = (code >> CARRY_IN_SHIFT) & 0xf;
-        if (
-          followsPrevious &&
-          carryIn !== part.carryOuts[part.carryOuts.length - 1]
-        ) {
-          continue;
-        }
-        let agrees = true;
-        let added = 0;
-        for (const [position, letter] of letters.entries()) {
-          const value = part.assigned[letter]!;
-          if (value < 0) {
-            added += 1;
-          } else if (value !== getTupleValue(code, position)) {
-            agrees = false;
-            break;
-          }
-        }
-        if (!agrees) {
-          continue;
-        }
-        const mask = part.mask | masks[index]!;
-        const assignedCount = part.assignedCount + added;
-        if (digitCountOfMask[mask] !== assignedCount) {
-          continue;
-        }
-        const assigned = [...part.assigned];
-        for (const [position, letter] of letters.entries()) {
-          assigned[letter] = getTupleValue(code, position);
-        }
-        const carryOuts = [...part.carryOuts, (code >> CARRY_OUT_SHIFT) & 0xf];
-        next.push({
-          assigned,
-          assignedCount,
-          mask,
-          firstCarryIn: part.firstCarryIn,
-          carryOuts,
-        });
-        if (joinedCap === null) {
-          continue;
-        }
-        seen.add(
-          `${assigned.map((value, letter) => (cancelled.has(letter) ? -1 : value)).join(",")}|${part.firstCarryIn}|${carryOuts.join(",")}`,
-        );
-        if (seen.size > joinedCap) {
-          return createUnconstrainedFacts(model);
-        }
-      }
-    }
-    parts = next;
-    if (parts.length === 0) {
-      return null;
-    }
+  }
+  if (parts === null) {
+    return null;
+  }
+  if (parts === "exceeded") {
+    return createUnconstrainedFacts(model);
   }
 
   const facts = createUnconstrainedFacts(model);
@@ -847,24 +896,27 @@ export function readFukumenzanGroup(
   for (const letter of groupLetters) {
     facts[letter] = 0;
   }
-  const carryVariables = linked
-    ? [
-        model.columns[columns[0]!]!.carryInVariable,
-        ...columns.map((column) => model.columns[column]!.carryOutVariable),
-      ]
+  const carryFacts = linked
+    ? columns.flatMap((column, position) => [
+        {
+          variable: model.columns[column]!.carryInVariable,
+          read: (part: JoinedPart) => part.carryIns[position]!,
+        },
+        {
+          variable: model.columns[column]!.carryOutVariable,
+          read: (part: JoinedPart) => part.carryOuts[position]!,
+        },
+      ])
     : [];
-  for (const variable of carryVariables) {
+  for (const { variable } of carryFacts) {
     facts[variable] = 0;
   }
-  for (const { assigned, firstCarryIn, carryOuts } of parts) {
+  for (const part of parts) {
     for (const letter of groupLetters) {
-      facts[letter]! |= 1 << assigned[letter]!;
+      facts[letter]! |= 1 << part.assigned[letter]!;
     }
-    if (linked) {
-      facts[carryVariables[0]!]! |= 1 << firstCarryIn;
-      for (const [index, carryOut] of carryOuts.entries()) {
-        facts[carryVariables[index + 1]!]! |= 1 << carryOut;
-      }
+    for (const { variable, read } of carryFacts) {
+      facts[variable]! |= 1 << read(part);
     }
   }
   return facts;
