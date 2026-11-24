@@ -202,7 +202,7 @@ describe("MagicSquareTutorial", () => {
       },
     );
 
-    test("印の数を入れると、入れたマスに合図を返し、横の列を覆いから抜いて、次のマスに指の無い印を付けること", () => {
+    test("印の数を置くと、置いたマスに合図を返し、横の列を覆いから抜いて、次のマスに指の無い印を付けること", () => {
       enter([1, 1, 14]);
 
       expect({
@@ -233,20 +233,20 @@ describe("MagicSquareTutorial", () => {
       }).toEqual({ markedWhileSelected: false, mark: true, recall: true });
     });
 
-    describe("横の列の手順で違う数を入れた場合", () => {
+    describe("横の列の手順で違う数を置いた場合", () => {
       beforeEach(() => {
         finishSteps(1);
         enter([1, 4, 15]);
       });
 
-      test("その列の違反を言い、入れ直し方を添えること", () => {
+      test("その列の違反を言い、置き換え方を添えること", () => {
         const message = queryShownText(
           "選んだマスの横の列は\n合計が34になっていません",
         );
 
         expect({
           message: message !== null,
-          detail: queryShownText("別の数を押すと入れ直せます") !== null,
+          detail: queryShownText("別の数を押すと置き換えられます") !== null,
         }).toEqual({ message: true, detail: true });
       });
 
@@ -256,7 +256,7 @@ describe("MagicSquareTutorial", () => {
         expect(column.textContent).toBe("4列目の合計 37");
       });
 
-      test("答えの数に入れ直すと、横の列を見せる間を置いてから縦の列の手順へ進むこと", () => {
+      test("答えの数に置き換えると、横の列を見せる間を置いてから縦の列の手順へ進むこと", () => {
         fireEvent.click(getValueButton(11));
         const held = queryMessage(steps[1]?.message) !== null;
         advanceTime(holdEnoughMs);
@@ -293,7 +293,7 @@ describe("MagicSquareTutorial", () => {
         ).not.toBeNull();
       });
 
-      test("空いたマスが2つ以上の列だけを通るマスに数を押すと、入れずに、まだ決まらないことを言うこと", () => {
+      test("空いたマスが2つ以上の列だけを通るマスに数を押すと、置かずに、まだ決まらないことを言うこと", () => {
         fireEvent.click(getCell(4, 3));
         fireEvent.click(getValueButton(10));
 
@@ -310,7 +310,7 @@ describe("MagicSquareTutorial", () => {
         expect({
           selected: getCell(1, 2).getAttribute("aria-pressed"),
           message:
-            queryShownText("選んだマスには最初から数が入っています") !== null,
+            queryShownText("選んだマスには最初から数が置いてあります") !== null,
         }).toEqual({ selected: "true", message: true });
       });
 
@@ -353,7 +353,7 @@ describe("MagicSquareTutorial", () => {
         }).toEqual({ message: true, mark: true, spotlights: 6 });
       });
 
-      test("ヒントで示したマスを選んでも手がかりを残し、数を入れると消すこと", () => {
+      test("ヒントで示したマスを選んでも手がかりを残し、数を置くと消すこと", () => {
         fireEvent.click(getHintButton());
         fireEvent.click(getCell(3, 4));
         const kept = {
@@ -396,9 +396,9 @@ describe("MagicSquareTutorial", () => {
         }).toEqual({ message: true, mark: true });
       });
 
-      describe("違反にならない違う数を入れてヒントを押した場合", () => {
+      describe("違反にならない違う数を置いてヒントを押した場合", () => {
         beforeEach(() => {
-          // 2行3列の数を外して3列目の空いたマスを2つにし、4行3列に違う数の1を入れる。
+          // 2行3列の数を外して3列目の空いたマスを2つにし、4行3列に違う数の1を置く。
           enter([2, 3, 7]);
           enter([4, 3, 1]);
           fireEvent.click(getHintButton());

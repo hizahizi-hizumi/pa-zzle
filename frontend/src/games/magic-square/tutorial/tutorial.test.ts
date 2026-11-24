@@ -79,7 +79,7 @@ function listDecidedCellIndices(
   );
 }
 
-/** 探す手順で入れるマス。手順の前の盤面で、空いたマスが1つだけ残った列のマスのうち最初のもの。 */
+/** 探す手順で置くマス。手順の前の盤面で、空いたマスが1つだけ残った列のマスのうち最初のもの。 */
 function findSearchCellIndex(board: MagicSquareBoard): number {
   return listDecidedCellIndices(board)[0] ?? -1;
 }
@@ -91,7 +91,7 @@ function getStepCellIndex(
   return step.kind === "search" ? findSearchCellIndex(board) : step.cellIndex;
 }
 
-/** 手順を1つずつ答えの数で終えたときの、各手順の前の盤面と入れたマス。 */
+/** 手順を1つずつ答えの数で終えたときの、各手順の前の盤面と置いたマス。 */
 const guidedMoves = steps.reduce<{
   progress: Progress;
   moves: {
@@ -182,7 +182,7 @@ describe("手を引く間", () => {
     });
   });
 
-  test("操作を教える手は、解き終えた盤面の数を入れること", () => {
+  test("操作を教える手は、解き終えた盤面の数を置くこと", () => {
     const step = operation?.step;
     const value = step?.kind === "operation" ? step.value : null;
 
@@ -228,13 +228,13 @@ describe("手を引く間", () => {
     ]);
   });
 
-  test("ルールを伝える手順と探す手順では、入れる数を印で示さないこと", () => {
+  test("ルールを伝える手順と探す手順では、置く数を印で示さないこと", () => {
     const kinds = ruleAndReadingMoves.map(({ step }) => step.kind);
 
     expect(kinds).toEqual(["line", "line", "line", "search"]);
   });
 
-  test("探す手順では、空いたマスが1つだけ残った列のマスが2つ以上あり、入れるマスを自分で選べること", () => {
+  test("探す手順では、空いたマスが1つだけ残った列のマスが2つ以上あり、置くマスを自分で選べること", () => {
     const search = ruleAndReadingMoves.at(-1);
     const board = search?.before.boardState.puzzleState ?? givens;
 
@@ -368,7 +368,7 @@ describe("magicSquareTutorial.perform", () => {
     });
   });
 
-  describe("ルールを伝える手順で違う数を入れた場合", () => {
+  describe("ルールを伝える手順で違う数を置いた場合", () => {
     test("違反にして、その列の名前を言うこと", () => {
       const message = magicSquareTutorial.describeViolation(
         getTutorialSituation(magicSquareTutorial, wrongInRow),
@@ -379,7 +379,7 @@ describe("magicSquareTutorial.perform", () => {
         violated: true,
         message: {
           headline: "選んだマスの横の列は\n合計が34になっていません",
-          detail: "別の数を押すと入れ直せます",
+          detail: "別の数を押すと置き換えられます",
         },
       });
     });
@@ -396,7 +396,7 @@ describe("magicSquareTutorial.perform", () => {
       });
     });
 
-    test("答えの数に入れ直すと次の手順へ進むこと", () => {
+    test("答えの数に置き換えると次の手順へ進むこと", () => {
       const progress = perform(
         [{ type: "enter", value: solutionValue(rowCellIndex) }],
         wrongInRow,
@@ -424,7 +424,7 @@ describe("magicSquareTutorial.perform", () => {
       search,
     );
 
-    test("空いたマスが2つ以上の列だけを通るマスには数を入れず、そのことを一言で返すこと", () => {
+    test("空いたマスが2つ以上の列だけを通るマスには数を置かず、そのことを一言で返すこと", () => {
       const progress = perform(
         [{ type: "enter", value: solutionValue(undecided ?? -1) }],
         undecidedSelected,
@@ -456,9 +456,9 @@ describe("magicSquareTutorial.perform", () => {
       [
         "最初から置いてある数",
         cellAt(1, 2),
-        "選んだマスには最初から数が入っています",
+        "選んだマスには最初から数が置いてあります",
       ],
-      ["置いた数", cellAt(1, 1), "選んだマスにはもう数が入っています"],
+      ["置いた数", cellAt(1, 1), "選んだマスにはもう数が置いてあります"],
     ] as const;
 
     test.each(filledCases)(
@@ -534,7 +534,7 @@ describe("magicSquareTutorial.perform", () => {
     const columnStep = guidedMoves.moves[2]?.before ?? start;
     const diagonalStep = guidedMoves.moves[3]?.before ?? start;
     const searchBefore = guidedMoves.moves[4]?.before ?? start;
-    /** 探す手順で4行2列を埋めて手を離した後、4行3列に違う数の7を入れて4行目を違反にした盤面。 */
+    /** 探す手順で4行2列を埋めて手を離した後、4行3列に違う数の7を置いて4行目を違反にした盤面。 */
     const rowViolated = perform(
       [
         ...placeActions(cellAt(4, 2)),
@@ -571,7 +571,7 @@ describe("magicSquareTutorial.perform", () => {
       };
     }
 
-    const selectedFix = "別の数を押すと入れ直せます";
+    const selectedFix = "別の数を押すと置き換えられます";
     const cases = [
       [
         "縦の列の手順で横の列にも違反が出た",
@@ -595,7 +595,7 @@ describe("magicSquareTutorial.perform", () => {
         "手を離した後に違反を残したまま別のマスを選んだ",
         otherCellSelected,
         "印の付いたマスの横の列は\n合計が34になっていません",
-        "そのマスを選んで\n別の数を押すと入れ直せます",
+        "そのマスを選んで\n別の数を押すと置き換えられます",
       ],
       [
         "手を離した後に横と縦と斜めの列が同じ違反になった",
@@ -644,8 +644,8 @@ describe("findMagicSquareTutorialHint", () => {
     expect(emptyCells).toEqual(hint?.kind === "line" ? [hint.cellIndex] : [-1]);
   });
 
-  describe("違反にならない違う数が入っている場合", () => {
-    // 2行3列の数を外して3列目の空いたマスを2つにし、4行3列に違う数の1を入れる。
+  describe("違反にならない違う数が置いてある場合", () => {
+    // 2行3列の数を外して3列目の空いたマスを2つにし、4行3列に違う数の1を置く。
     const wrongCellIndex = cellAt(4, 3);
     const wrongSelected = perform(
       [
@@ -679,13 +679,13 @@ describe("findMagicSquareTutorialHint", () => {
         "そのマスを選んだまま",
         wrongSelected,
         "選んだマスの数が違います",
-        "別の数を押すと入れ直せます",
+        "別の数を押すと置き換えられます",
       ],
       [
         "ほかのマスを選んで",
         otherSelected,
         "印の付いたマスの数が違います",
-        "そのマスを選んで\n別の数を押すと入れ直せます",
+        "そのマスを選んで\n別の数を押すと置き換えられます",
       ],
     ])(
       "%sヒントを求めると、違う数のマスを示し、見分け方に合わせて言うこと",

@@ -71,7 +71,7 @@ type MagicSquareTutorialProgress = TutorialProgress<
 const { givens } = magicSquareTutorialPuzzle;
 const goalBoardState = magicSquareTutorial.goal();
 
-/** 決め手の列で数を入れた後、その列がそろったのを見せてから、次の印と一言に替える。 */
+/** 決め手の列で数を置いた後、その列がそろったのを見せてから、次の印と一言に替える。 */
 const NEXT_STEP_CUE_DELAY_MS = 900;
 
 /** 効果音のフックへ渡す、本番のプレイの進み方。解き終えたら本番と同じクリア演出とクリア音にする。 */
@@ -185,7 +185,7 @@ export function MagicSquareTutorial({
       return null;
     }
     const { selectedCellIndex } = boardState;
-    // 違う数を入れたマスは、選び直して直すまで印を付ける。
+    // 違う数を置いたマスは、選び直して直すまで印を付ける。
     if (wrongCellIndex !== null) {
       return selectedCellIndex === wrongCellIndex && recallId === null
         ? null
@@ -295,7 +295,7 @@ export function MagicSquareTutorial({
       cellIndex: selectedCellIndex,
       value: action.value,
     });
-    // 手順を終えた手には、入れたマスに合図を返す。
+    // 手順を終えた手には、置いたマスに合図を返す。
     if (next.boardState.lastMove?.fitsStep) {
       setAcknowledgement({
         progress: next,

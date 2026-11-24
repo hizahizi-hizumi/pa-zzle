@@ -70,7 +70,7 @@ export type MagicSquareTutorialSituation = TutorialSituation<
 >;
 
 /**
- * どの列も空いたマスが2つの盤面。左上に数を入れると、1行目・1列目・左上からの斜めの空いたマスが1つずつになり、
+ * どの列も空いたマスが2つの盤面。左上に数を置くと、1行目・1列目・左上からの斜めの空いたマスが1つずつになり、
  * 横・縦・斜めの順に1つずつ決まる。
  */
 const givens = parseMagicSquareBoard([
@@ -135,7 +135,7 @@ function describeLineSumPlace(line: MagicSquareLine): string {
 }
 
 function describeLineFill(line: MagicSquareLine): string {
-  return `${describeLineSumPlace(line)}に今の合計が出ます\n${magicSum}に足りない分を空いたマスに入れます`;
+  return `${describeLineSumPlace(line)}に今の合計が出ます\n${magicSum}に足りない分を空いたマスに置きます`;
 }
 
 /** 探す手順とヒントで、そのマスの数を決める列を言う一言。 */
@@ -157,7 +157,7 @@ const searchHeadline = "空いたマスが1つだけ残った列を探します"
 
 const searchMessage: TutorialMessage = {
   headline: searchHeadline,
-  detail: `その列の空いたマスに${magicSum}に足りない分を入れます`,
+  detail: `その列の空いたマスに${magicSum}に足りない分を置きます`,
 };
 
 function createLineStep(
@@ -184,8 +184,8 @@ const steps: readonly MagicSquareTutorialStep[] = [
     kind: "operation",
     message: {
       headline:
-        "マスを選んで盤面の下に並んだ数を押すと\nその数がマスに入ります",
-      detail: `印の付いたマスに${operationValue}を入れます`,
+        "マスを選んで盤面の下に並んだ数を押すと\nその数をマスに置けます",
+      detail: `印の付いたマスに${operationValue}を置きます`,
     },
     introducedRuleId: null,
     cellIndex: operationCellIndex,
@@ -221,7 +221,7 @@ function listWrongCellIndices(state: MagicSquareState): number[] {
   );
 }
 
-/** 答えと違う数を除いた盤面。決め手は、正しく入れた数と最初から置いてある数だけから読む。 */
+/** 答えと違う数を除いた盤面。決め手は、正しく置いた数と最初から置いてある数だけから読む。 */
 function keepCorrectCells(state: MagicSquareState): MagicSquareBoard {
   return {
     size,
@@ -285,7 +285,7 @@ function listVisibleViolations(
 }
 
 /**
- * 手順の間に選べるマス。違う数が入っている間は、そのマスを直させる。
+ * 手順の間に選べるマス。違う数が置いてある間は、そのマスを直させる。
  * 印のある手順では印のマスだけ、探す手順では本番と同じくどのマスも選べる。
  */
 function isCellSelectable(
@@ -319,7 +319,7 @@ function isUndecidedEmptyCell(
   );
 }
 
-/** 手順のマスに答えの数が入ったか。探す手順では、入れたマスの数がその時点で決まっていたか。 */
+/** 手順のマスに答えの数を置いたか。探す手順では、置いたマスの数がその時点で決まっていたか。 */
 function completesStep(
   step: MagicSquareTutorialStep,
   cellIndex: number,
@@ -372,7 +372,7 @@ function selectCell(
 }
 
 /**
- * 選んだマスに数を入れる。探す手順では、まだ数が決まらない空いたマスには入れさせない。
+ * 選んだマスに数を置く。探す手順では、まだ数が決まらない空いたマスには置かせない。
  * 置いた数のマスは、本番と同じく外したり置き換えたりできる。
  */
 function enterValue(
@@ -446,7 +446,7 @@ function getViolationPhrase({
 }
 
 /**
- * 違う数を入れたマス。違反の出た列にあるマスを先に、その中でも直前の手のマスを先に返す。無ければ `null`。
+ * 違う数を置いたマス。違反の出た列にあるマスを先に、その中でも直前の手のマスを先に返す。無ければ `null`。
  */
 export function findMagicSquareTutorialWrongCellIndex(
   { earnedRuleIds }: MagicSquareTutorialSituation,
@@ -520,10 +520,10 @@ function describeWrongCell(
 ): { name: string; fix: string } {
   return state.selectedCellIndex !== null &&
     state.selectedCellIndex === wrongCellIndex
-    ? { name: "選んだマス", fix: "別の数を押すと入れ直せます" }
+    ? { name: "選んだマス", fix: "別の数を押すと置き換えられます" }
     : {
         name: "印の付いたマス",
-        fix: "そのマスを選んで\n別の数を押すと入れ直せます",
+        fix: "そのマスを選んで\n別の数を押すと置き換えられます",
       };
 }
 
@@ -561,9 +561,9 @@ function describeMagicSquareTutorialViolation(
 
 /**
  * 探す手順で選んだマスへの一言。マスを選んでいなければ `null`。
- * - 空いたマスが1つだけ残った列のマス: その列の決まりと、足りない分を入れること。
+ * - 空いたマスが1つだけ残った列のマス: その列の決まりと、足りない分を置くこと。
  * - どの列も空いたマスが2つ以上のマス: そのことと、探し方。
- * - 数の入ったマス: そのことと、探し方。
+ * - 数の置いてあるマス: そのことと、探し方。
  */
 export function describeMagicSquareTutorialSelection(
   { step, earnedRuleIds }: MagicSquareTutorialSituation,
@@ -575,14 +575,14 @@ export function describeMagicSquareTutorialSelection(
   }
   if (isMagicSquareGivenCell(givens, selectedCellIndex)) {
     return {
-      headline: "選んだマスには最初から数が入っています",
+      headline: "選んだマスには最初から数が置いてあります",
       detail: searchHeadline,
     };
   }
   const board = keepCorrectCells(state.puzzleState);
   if (board.cells[selectedCellIndex] !== null) {
     return {
-      headline: "選んだマスにはもう数が入っています",
+      headline: "選んだマスにはもう数が置いてあります",
       detail: searchHeadline,
     };
   }
@@ -686,7 +686,7 @@ export function findMagicSquareTutorialHint(
   return null;
 }
 
-/** 空いていたマスのうち、答えの数を入れたマスの割合。 */
+/** 空いていたマスのうち、答えの数を置いたマスの割合。 */
 export function getMagicSquareTutorialProgressRatio({
   puzzleState,
 }: MagicSquareTutorialBoardState): number {
@@ -737,14 +737,14 @@ export const magicSquareTutorial: Tutorial<
 > = {
   intro: {
     purpose:
-      "1から順の数を1つずつマスに入れて\n縦・横・斜めの列の合計を全て同じにするパズルです",
+      "1から順の数を1つずつマスに置いて\n縦・横・斜めの列の合計を全て同じにするパズルです",
     goalCaption: `列の端に今の合計が出ます\n全て${magicSum}になると完成です`,
   },
   rules,
   steps,
   freePlay: {
     headline: "残りのマスも埋めてみましょう",
-    detail: `空いたマスが1つだけ残った列を探して\n${magicSum}に足りない分を入れます`,
+    detail: `空いたマスが1つだけ残った列を探して\n${magicSum}に足りない分を置きます`,
   },
   completion: {
     home: {
