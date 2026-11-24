@@ -58,13 +58,12 @@ export type FukumenzanReaderSettings = {
 };
 
 /**
- * まとめて読む桁の組。`linked` は繰り上がりでつながる隣り合う桁の組。`linked` でない組も、組の中で隣り合う桁の繰り上がりは
- * 合わせてつなぐ。
+ * まとめて読む桁の組。組の中で隣り合う桁の繰り上がりは合わせてつなぐ。読みからは、文字の値と、組の各桁に入る繰り上がり・
+ * 出る繰り上がりの事実を出す。
  */
 export type FukumenzanColumnGroup = {
   columns: readonly number[];
   limit: FukumenzanGroupLimit;
-  linked: boolean;
 };
 
 /** `Σ 係数 × 変数 = 0` の式。 */
@@ -156,7 +155,6 @@ function listGroups(
       groups.push({
         columns: [column, column + 1],
         limit: adjacentPairs,
-        linked: true,
       });
     }
   }
@@ -165,7 +163,6 @@ function listGroups(
       groups.push({
         columns: [column, column + 1, column + 2],
         limit: adjacentTriples,
-        linked: true,
       });
     }
   }
@@ -179,7 +176,6 @@ function listGroups(
           groups.push({
             columns: [left, right],
             limit: sharedLetterPairs,
-            linked: false,
           });
         }
       }
@@ -195,7 +191,6 @@ function listGroups(
           groups.push({
             columns: [first, second, third],
             limit: separatedTriples,
-            linked: false,
           });
         }
       }
@@ -838,7 +833,7 @@ export function readFukumenzanGroup(
   domains: readonly number[],
 ): FukumenzanFacts {
   const { model, settings } = reader;
-  const { columns, limit, linked } = group;
+  const { columns, limit } = group;
   const tupleLists = columns.map((column) =>
     listColumnTuples(model, column, domains),
   );
@@ -896,18 +891,16 @@ export function readFukumenzanGroup(
   for (const letter of groupLetters) {
     facts[letter] = 0;
   }
-  const carryFacts = linked
-    ? columns.flatMap((column, position) => [
-        {
-          variable: model.columns[column]!.carryInVariable,
-          read: (part: JoinedPart) => part.carryIns[position]!,
-        },
-        {
-          variable: model.columns[column]!.carryOutVariable,
-          read: (part: JoinedPart) => part.carryOuts[position]!,
-        },
-      ])
-    : [];
+  const carryFacts = columns.flatMap((column, position) => [
+    {
+      variable: model.columns[column]!.carryInVariable,
+      read: (part: JoinedPart) => part.carryIns[position]!,
+    },
+    {
+      variable: model.columns[column]!.carryOutVariable,
+      read: (part: JoinedPart) => part.carryOuts[position]!,
+    },
+  ]);
   for (const { variable } of carryFacts) {
     facts[variable] = 0;
   }

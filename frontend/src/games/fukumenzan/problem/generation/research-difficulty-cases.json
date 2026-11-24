@@ -1164,8 +1164,20 @@
         "weakColumns": "stuck",
         "strongColumns": "stuck",
         "weakPairs": "stuck",
-        "strongCombined": "stuck",
-        "strongEquations": "solved"
+        "strongCombined": "solved"
+      },
+      "changedBy": ["group-carry-facts"],
+      "research": {
+        "readingClass": "mH",
+        "outcome": "margin",
+        "level": null,
+        "readers": {
+          "weakColumns": "stuck",
+          "strongColumns": "stuck",
+          "weakPairs": "stuck",
+          "strongCombined": "stuck",
+          "strongEquations": "solved"
+        }
       }
     },
     {
