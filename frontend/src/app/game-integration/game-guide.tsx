@@ -15,6 +15,8 @@ import { ParkingJamHowToPlayDialog } from "@/games/parking-jam/ui/ParkingJamHowT
 import { ParkingJamTutorial } from "@/games/parking-jam/ui/ParkingJamTutorial";
 import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowToPlayDialog";
 import { ReflectionTutorial } from "@/games/reflection/ui/ReflectionTutorial";
+import { ShuttleParkingHowToPlayDialog } from "@/games/shuttle-parking/ui/ShuttleParkingHowToPlayDialog";
+import { ShuttleParkingTutorial } from "@/games/shuttle-parking/ui/ShuttleParkingTutorial";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
 import { SlidePuzzleTutorial } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
@@ -53,6 +55,10 @@ const guides: Record<string, GuideComponents> = {
   reflection: {
     HowToPlay: ReflectionHowToPlayDialog,
     Tutorial: ReflectionTutorial,
+  },
+  "shuttle-parking": {
+    HowToPlay: ShuttleParkingHowToPlayDialog,
+    Tutorial: ShuttleParkingTutorial,
   },
   "slide-puzzle": {
     HowToPlay: SlidePuzzleHowToPlayDialog,
