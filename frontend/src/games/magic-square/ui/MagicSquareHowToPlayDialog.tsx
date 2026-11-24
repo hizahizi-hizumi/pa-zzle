@@ -7,6 +7,7 @@ import { HowToPlayOverlay } from "@/components/HowToPlayOverlay";
 import { HowToPlayRule } from "@/components/HowToPlayRule";
 import { HowToPlayScoreRow } from "@/components/HowToPlayScoreRow";
 import { HowToPlaySection } from "@/components/HowToPlaySection";
+import { HowToPlayValueTable } from "@/components/HowToPlayValueTable";
 import { playMenuOperationItems } from "@/components/play-menu-operations";
 import { UndoButton } from "@/components/UndoButton";
 import pictogramSvg from "@/games/magic-square/assets/pictogram.svg?raw";
@@ -76,18 +77,19 @@ const menuOperations: readonly HowToPlayMenuOperation[] = [
 ];
 
 /**
- * 例の盤面（レベル1と同じ大きさ）のほかの大きさの盤面。置く数と合計は例で見せられないので、ルールの後ろにまとめて言う。
+ * 例の盤面（レベル1と同じ大きさ）のほかの大きさの盤面。置く数と合計は例で見せられないので、ルールの後ろに表で並べ、
+ * 大きさごとに値を見比べられるようにする。
  */
 const otherBoardSizes = magicSquareBoardSizes.filter(
   (size) => size !== MAGIC_SQUARE_EXAMPLE_SIZE,
 );
 const otherBoardSizesTitle = `${otherBoardSizes.map((size) => `${size}×${size}`).join("と")}の盤面`;
-const otherBoardSizesText = otherBoardSizes
-  .map(
-    (size) =>
-      `${size}×${size}なら/1から${getMagicSquareMaxValue(size)}までを/置いて/左上の合計は${getMagicSquareMagicSum(size)}です。`,
-  )
-  .join("/");
+const otherBoardSizesColumns = ["盤面", "置く数", "左上の合計"] as const;
+const otherBoardSizesRows = otherBoardSizes.map((size) => [
+  `${size}×${size}`,
+  `1〜${getMagicSquareMaxValue(size)}`,
+  String(getMagicSquareMagicSum(size)),
+]);
 
 /** 結果画面と同じ順に、評価の項目を満点と並べる。 */
 const scoreItems = Object.entries(MAGIC_SQUARE_SCORE_MAXIMUMS) as [
@@ -104,11 +106,11 @@ const scoreLeads = {
 /** 点ごとに、数えるものを結果画面の採点基準と同じ呼び名で並べる。速さには基準時間の決まり方を置く。 */
 function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
   if (item === "speed") {
-    // score.ts の基準時間は、盤面を読み始める時間に、空いたマスごとの時間を足す。結果画面の採点内訳と同じ「読み始め」と呼ぶ。
+    // score.ts の基準時間は、盤面を読み始める時間に、空いたマスごとの時間を足す。式の形（20秒＋空いたマス1つにつき10秒）で言う。
     return (
       <HowToPlayScoreRow
         measure="基準時間"
-        text={`空いたマス/1つにつき/${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / SECOND_MS}秒を/読み始めの/${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / SECOND_MS}秒に/足します。`}
+        text={`${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / SECOND_MS}秒と/空いたマス/1つにつき/${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / SECOND_MS}秒を/合わせます。`}
       />
     );
   }
@@ -117,10 +119,16 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
       <HowToPlayScoreRow
         measure="置き直し"
         deduction={`1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点`}
-        // 本番の session は、置いた数がそのマスから外れた事実を数え、押し間違いの直しとして2つを除く。
-        // 列の端の色を変えなかった数を、ほかのマスを選ぶ前に外す・置き換える・待ったで外すときと、
-        // 色を変えた数を、盤面の下に並んだ数で上下・左右・斜めに隣り合う数へすぐ置き換えたとき。文と流れの図で、同じ言い方で2つとも言う。
-        text={`置いた数は/外しても/置き換えても/「${undo}」・「${restart}」で/外れても/1回です。/列の端の色を/変えなかった数は/ほかのマスを/選ぶ前なら/外しても/置き換えても/「${undo}」で/外れても/数えません。/色を変えた数を/盤面の下に/並んだ数で/上下・左右・斜めに/隣の数へ/すぐ/置き換えたときも/数えません。`}
+        // 本番の session（countEditingCorrection）は、置いた数がそのマスから外れた事実を数える。ほかのマスを選ぶまで同じマスを
+        // 変えている間は、最後に残った数で数え直し、次の3つを除く。その間に置いて列の端の色を変えなかった数、外してから元に戻した数、
+        // 色を変えてすぐ盤面の下に並んだ数で隣り合う数へ置き換えた数。盤面を戻すは同じマスを変える操作ではないので、どれも数える。
+        // 文は数え方の決まりと条件を言い、流れの図は数える直し方と、数えない直し方のうち盤面の外の並びで決まる押し間違いを見せる。
+        text={`置いた数が/外れるたびに/画面の上の/「置き直し」が/1回/増えます。/ただし/ほかのマスを/選ぶ前に/同じマスで/外す・置き換える・「${undo}」で/外れた/次の数は/数えません。`}
+        exceptions={[
+          "その間に/置いて/列の端の色を/変えなかった数",
+          "その間に/外して/元に戻した数",
+          "色を変えて/すぐ/盤面の下で/上下・左右・斜めに/隣の数へ/置き換えた数",
+        ]}
         figure={
           <CorrectionCountExamples
             examples={[
@@ -135,6 +143,7 @@ function renderScoreRows(item: keyof typeof MAGIC_SQUARE_SCORE_MAXIMUMS) {
               {
                 figure: correctionCountFlows.mistyped,
                 flow: "列の端の色を/変えた数を/隣の数へ/すぐ/置き換える",
+                showPlacedValues: true,
               },
             ]}
           />
@@ -193,10 +202,14 @@ export function MagicSquareHowToPlayDialog({
               <TouchableExample example={givenRuleExample} caption="given" />
             }
           />
-          <HowToPlaySection
-            title={otherBoardSizesTitle}
-            lead={otherBoardSizesText}
-          />
+          <HowToPlaySection title={otherBoardSizesTitle}>
+            <li>
+              <HowToPlayValueTable
+                columns={otherBoardSizesColumns}
+                rows={otherBoardSizesRows}
+              />
+            </li>
+          </HowToPlaySection>
         </>
       }
       operations={
@@ -221,13 +234,32 @@ export function MagicSquareHowToPlayDialog({
               />
             </li>
           </HowToPlaySection>
+          <HowToPlaySection title="やり直し">
+            <HowToPlayOperationRow
+              visual={
+                // 本番の待ったのボタンそのままの、押しても何も起きない静止の図。
+                <span aria-hidden="true" inert className="flex">
+                  <UndoButton disabled={false} onUndo={ignoreFigurePress} />
+                </span>
+              }
+              text={`「${undo}」で/置いた数も/メモも/1つ前に/戻せます。`}
+              // 待ったで外れた数を置き直しに数えるかは、採点のタブの例外に当たるかで変わるので、ここでは時間だけを言う。
+              note="時間は/戻りません。"
+            />
+            <HowToPlayMenuOperations operations={menuOperations} />
+          </HowToPlaySection>
           <HowToPlaySection title="メモ">
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text={`鉛筆のボタンを/押してから/数を/押すと/空いたマスに/メモを/${MAGIC_SQUARE_MEMO_CAPACITY}つまで/書けます。/同じ数を/もう一度/押すと/消えます。/鉛筆のボタンを/もう一度/押すと/また/数を/置けます。`}
+                text={`空いたマスを/選んで/鉛筆のボタンを/押してから/数を/押すと/メモを/${MAGIC_SQUARE_MEMO_CAPACITY}つまで/書けます。/同じ数を/もう一度/押すと/消えます。/鉛筆のボタンを/もう一度/押すと/また/数を/置けます。`}
                 arrangement={memoOperationExample.arrangement}
-                examples={<TouchableExample example={memoOperationExample} />}
+                examples={
+                  <TouchableExample
+                    example={memoOperationExample}
+                    caption="memo-limit"
+                  />
+                }
               />
             </li>
             <li>
@@ -240,19 +272,6 @@ export function MagicSquareHowToPlayDialog({
                 }
               />
             </li>
-          </HowToPlaySection>
-          <HowToPlaySection title="やり直し">
-            <HowToPlayOperationRow
-              visual={
-                // 本番の待ったのボタンそのままの、押しても何も起きない静止の図。
-                <span aria-hidden="true" inert className="flex">
-                  <UndoButton disabled={false} onUndo={ignoreFigurePress} />
-                </span>
-              }
-              text={`「${undo}」で/置いた数も/メモも/1つ前に/戻せます。`}
-              note="時間は/戻りません。/外れた数は/置き直しに/数えます。"
-            />
-            <HowToPlayMenuOperations operations={menuOperations} />
           </HowToPlaySection>
         </>
       }

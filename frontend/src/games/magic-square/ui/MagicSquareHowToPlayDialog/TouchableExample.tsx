@@ -1,14 +1,20 @@
-import { type CSSProperties, useLayoutEffect, useRef } from "react";
+import type { CSSProperties } from "react";
 
+import { HowToPlayCaptionLayers } from "@/components/HowToPlayCaptionLayers";
 import { HowToPlayExample } from "@/components/HowToPlayExample";
 import { HowToPlayMarkLegend } from "@/components/HowToPlayMarkLegend";
 import { HowToPlayPressHint } from "@/components/HowToPlayPressHint";
 import { HowToPlayVerdict } from "@/components/HowToPlayVerdict";
+import { HowToPlayVerdictLine } from "@/components/HowToPlayVerdictLine";
 import {
   HowToPlayVerdictMark,
   type HowToPlayVerdictMarkKind,
 } from "@/components/HowToPlayVerdictMark";
 import { UndoButton } from "@/components/UndoButton";
+import {
+  MAGIC_SQUARE_MEMO_CAPACITY,
+  type MagicSquareValueState,
+} from "@/games/magic-square/puzzle/rules";
 import {
   getMagicSquareFrameUnits,
   type MagicSquareBoardRegion,
@@ -20,6 +26,7 @@ import {
 } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/ExampleBoard";
 import {
   getMagicSquareExampleCellIndex,
+  isMagicSquareExampleMemoFull,
   judgeMagicSquareExampleCell,
   judgeMagicSquareExampleRow,
   MAGIC_SQUARE_EXAMPLE_SIZE,
@@ -30,26 +37,19 @@ import {
   magicSquareControlHintPlacement,
   magicSquareMarkedCellHintPlacement,
 } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/press-hint-placement";
-import {
-  useTouchableExample,
-  withExampleSelection,
-} from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/use-touchable-example";
+import { useTouchableExample } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/use-touchable-example";
 import { MagicSquareMemoToggle } from "@/games/magic-square/ui/MagicSquareMemoToggle";
 import { MagicSquareNumberPad } from "@/games/magic-square/ui/MagicSquareNumberPad";
 import { splitMagicSquareRejection } from "@/games/magic-square/ui/magic-square-rejection";
-import {
-  MOTION_DURATION_MS,
-  MOTION_EASING,
-  playRejectionShake,
-} from "@/lib/motion";
 
 /**
  * 例の下に添える言葉。
  * - `line`: 形のルールの判定（✓ そろう / ✕ そろわない / 途中）と ✕ のわけ。盤面ごとに、その行の列で判定する。
  * - `given`: 最初から置いてある数のルールの、数のあるマスごとの ✓ / ✕ の印と、その凡例（✓ 変えられる / ✕ 変えられない）。
- * - `used-values`: 盤面の下に並んだ数のくぼみの数に付けた ✕ の印と、その凡例。
+ * - `used-values`: 盤面の下に並んだ数ごとの ✓ / ✕ の印と、その凡例（✓ 置ける / ✕ 置けない）。
+ * - `memo-limit`: メモが4つ書いてあるマスに5つ目を書こうとして受け付けられなかったときだけ、そのわけを出す。
  */
-type TouchableExampleCaption = "line" | "given" | "used-values";
+type TouchableExampleCaption = "line" | "given" | "used-values" | "memo-limit";
 
 type TouchableExampleProps = {
   example: MagicSquareHowToPlayExample;
@@ -65,17 +65,16 @@ const valueUnitStyle = {
   "--how-to-play-unit": "2.75rem",
 } as CSSProperties;
 
-/** 盤面のマスの手がかりの単位。盤面部品が描くマスの大きさにする。 */
-const cellUnitStyle = {
-  "--how-to-play-unit": "var(--magic-square-cell)",
-} as CSSProperties;
-
-/** 受け付けなかった手で、そのわけの印を一度だけふくらませる。 */
-const markPulseKeyframes: Keyframe[] = [
-  { transform: "scale(1)" },
-  { transform: "scale(1.5)" },
-  { transform: "scale(1)" },
-];
+/**
+ * マスと数の札の右上の角の内側に置く ✓ / ✕ の印。大きさは単位（重ねる物の短い辺）の 0.28 倍にし、12〜20px に収める。
+ * 中央の数にかからず、隣の単位との間にもはみ出さない。単位は、重ねる物の箱をコンテナにして受け取る。
+ */
+const cornerMarkStyle = {
+  width: "clamp(12px, 28cqmin, 20px)",
+  height: "clamp(12px, 28cqmin, 20px)",
+  top: "max(2px, 4cqmin)",
+  right: "max(2px, 4cqmin)",
+} as const satisfies CSSProperties;
 
 /** 範囲のマスの番号。行ごとに左から並べる。 */
 function listRegionCellIndexes(region: MagicSquareBoardRegion): number[] {
@@ -89,42 +88,28 @@ function listRegionCellIndexes(region: MagicSquareBoardRegion): number[] {
   ).flat();
 }
 
-type CornerVerdictMarkProps = {
-  verdict: HowToPlayVerdictMarkKind;
-  /** 受け付けなかった手の知らせの番号。変わるたびに印をふくらませる。描き始めにある番号ではふくらませない。 */
-  pulseId: number | null;
-};
-
-/**
- * マスと数の札の右上の角に、半分を外へ出して置く ✓ / ✕ の印。中身の数と、縁や内側に引く手がかりの枠を隠さない。
- * その印のわけで受け付けなかった手では、盤面の揺れと合わせて印を一度ふくらませ、弾かれたわけを指す。
- */
-function CornerVerdictMark({ verdict, pulseId }: CornerVerdictMarkProps) {
-  const markRef = useRef<HTMLSpanElement>(null);
-  const shownPulseIdRef = useRef(pulseId);
-
-  useLayoutEffect(() => {
-    if (pulseId === null || shownPulseIdRef.current === pulseId) {
-      return;
-    }
-    shownPulseIdRef.current = pulseId;
-    playRejectionShake(markRef.current, markPulseKeyframes, {
-      durationMs: MOTION_DURATION_MS.slow,
-      easing: MOTION_EASING.standard,
-    });
-  }, [pulseId]);
-
+function CornerVerdictMark({ verdict }: { verdict: HowToPlayVerdictMarkKind }) {
   return (
-    <span ref={markRef} className="absolute -top-1.5 -right-1.5 size-3.5">
+    <span className="absolute" style={cornerMarkStyle}>
       <HowToPlayVerdictMark verdict={verdict} placement="board-tag" />
     </span>
   );
 }
 
+/** 盤面の下に並んだ数の状態ごとの印。置ける数に ✓、盤面にある数（くぼみ）に ✕。選んだマスの数（押すと外す札）には付けない。 */
+const valueVerdicts = {
+  available: "allowed",
+  used: "disallowed",
+  selected: null,
+} as const satisfies Record<
+  MagicSquareValueState,
+  HowToPlayVerdictMarkKind | null
+>;
+
 /**
  * 触れる例の面の中身。盤面ごとに、本番と同じく盤面の下にその盤面の数を並べ、待ったとメモの切り替えをその後ろに置く。
  * 本番と同じく、マスを押して選び、数を押して置く。列の合計と色、受け付けない押し方の揺れは、本番と同じく今の盤面から出す。
- * 次に押す所には、盤面のマスか、数の札か、メモの切り替えに手がかりを付ける。数の札の手がかりは、選んでいる盤面の下の数に付ける。
+ * 次に押す所には、盤面のマスか、数の札か、メモの切り替えに手がかりを付ける。数の札の手がかりは、手がかりの手が指す盤面の下の数に付ける。
  */
 export function TouchableExample({ example, caption }: TouchableExampleProps) {
   const {
@@ -148,7 +133,6 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
     ),
   );
   const boardWidth = getMagicSquareExampleWidth(columns);
-  const hintedValueBoard = state.selection?.board ?? 0;
 
   return (
     <>
@@ -157,7 +141,6 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
         if (session === undefined) {
           return null;
         }
-        const selected = withExampleSelection(session, state, boardIndex);
         const valueStates = valueStatesFor(boardIndex);
         const boardRejection =
           operationBoard === boardIndex
@@ -168,7 +151,7 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
             ? hint.cellIndex
             : null;
         const hintedValue =
-          hint?.kind === "value" && hintedValueBoard === boardIndex
+          hint?.kind === "value" && hint.board === boardIndex
             ? hint.value
             : null;
         const row = judgeMagicSquareExampleRow(session, definition.region);
@@ -179,8 +162,21 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
                 return verdict === null ? [] : [{ cellIndex, verdict }];
               })
             : [];
-        const usedValueShown =
-          caption === "used-values" && valueStates.includes("used");
+        const valueMarks =
+          caption === "used-values"
+            ? valueStates.map((valueState) => valueVerdicts[valueState])
+            : [];
+        const memoLimitShown =
+          caption === "memo-limit" &&
+          operation?.type === "rejected" &&
+          operation.cellIndex !== null &&
+          operationBoard === boardIndex &&
+          state.inputMode === "memo" &&
+          isMagicSquareExampleMemoFull(
+            session,
+            operation.cellIndex,
+            operation.value,
+          );
         const trailingActions = example.controls.map((control) =>
           control === "undo" ? (
             <UndoButton
@@ -211,7 +207,7 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
                 <ExampleBoard
                   session={session}
                   region={definition.region}
-                  selectedCellIndex={selected.selectedCellIndex}
+                  selectedCellIndex={session.selectedCellIndex}
                   width={boardWidth}
                   rejection={boardRejection.cell}
                   onSelectCell={(cellIndex) =>
@@ -225,19 +221,10 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
                       return null;
                     }
                     return (
-                      <span
-                        className="pointer-events-none absolute inset-0 rounded-[inherit]"
-                        style={cellUnitStyle}
-                      >
+                      // 手がかりと印の単位を、このマスの大きさにする。
+                      <span className="pointer-events-none absolute inset-0 rounded-[inherit] [container-type:size]">
                         {mark !== undefined ? (
-                          <CornerVerdictMark
-                            verdict={mark.verdict}
-                            pulseId={
-                              boardRejection.cell?.cellIndex === cellIndex
-                                ? boardRejection.cell.id
-                                : null
-                            }
-                          />
+                          <CornerVerdictMark verdict={mark.verdict} />
                         ) : null}
                         {cellIndex === hintedCellIndex ? (
                           <HowToPlayPressHint
@@ -260,22 +247,17 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
                     onEnterValue={(value) => enterValue(boardIndex, value)}
                     trailingActions={trailingActions}
                     renderValueOverlay={(value) => {
-                      const marked =
-                        caption === "used-values" &&
-                        valueStates[value - 1] === "used";
-                      if (!marked && value !== hintedValue) {
+                      const verdict = valueMarks[value - 1] ?? null;
+                      if (verdict === null && value !== hintedValue) {
                         return null;
                       }
                       return (
                         <span
-                          className="pointer-events-none absolute inset-0"
+                          className="pointer-events-none absolute inset-0 [container-type:size]"
                           style={valueUnitStyle}
                         >
-                          {marked ? (
-                            <CornerVerdictMark
-                              verdict="disallowed"
-                              pulseId={null}
-                            />
+                          {verdict !== null ? (
+                            <CornerVerdictMark verdict={verdict} />
                           ) : null}
                           {value === hintedValue ? (
                             <HowToPlayPressHint
@@ -311,7 +293,26 @@ export function TouchableExample({ example, caption }: TouchableExampleProps) {
               ) : caption === "used-values" ? (
                 <HowToPlayMarkLegend
                   labels={valueLabels}
-                  shownMarks={{ allowed: false, disallowed: usedValueShown }}
+                  shownMarks={{
+                    allowed: valueMarks.includes("allowed"),
+                    disallowed: valueMarks.includes("disallowed"),
+                  }}
+                />
+              ) : caption === "memo-limit" ? (
+                <HowToPlayCaptionLayers
+                  layers={[
+                    {
+                      id: "memo-limit",
+                      shown: memoLimitShown,
+                      content: (
+                        <HowToPlayVerdictLine
+                          mark={<HowToPlayVerdictMark verdict="disallowed" />}
+                        >
+                          {`メモは${MAGIC_SQUARE_MEMO_CAPACITY}つまで`}
+                        </HowToPlayVerdictLine>
+                      ),
+                    },
+                  ]}
                 />
               ) : undefined
             }

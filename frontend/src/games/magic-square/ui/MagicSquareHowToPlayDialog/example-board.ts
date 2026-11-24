@@ -5,6 +5,7 @@ import type {
 import {
   evaluateMagicSquareLine,
   isMagicSquareGivenCell,
+  MAGIC_SQUARE_MEMO_CAPACITY,
   type MagicSquareLineStatus,
 } from "@/games/magic-square/puzzle/rules";
 import { isSameMagicSquareState } from "@/games/magic-square/puzzle/state";
@@ -194,4 +195,19 @@ export function judgeMagicSquareExampleCell(
   return isMagicSquareGivenCell(session.problem.givens, cellIndex)
     ? "disallowed"
     : "allowed";
+}
+
+/** 空いたマスのメモが上限まで書いてあり、まだ書いていない数のメモは書けないか。 */
+export function isMagicSquareExampleMemoFull(
+  session: MagicSquareSession,
+  cellIndex: number,
+  value: number,
+): boolean {
+  const { cells, memos } = session.puzzleState;
+  const memo = memos[cellIndex] ?? [];
+  return (
+    cells[cellIndex] === null &&
+    !memo.includes(value) &&
+    memo.length >= MAGIC_SQUARE_MEMO_CAPACITY
+  );
 }

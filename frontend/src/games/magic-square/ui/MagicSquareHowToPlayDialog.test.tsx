@@ -69,14 +69,23 @@ describe("MagicSquareHowToPlayDialog", () => {
         })
         .closest("section");
 
-      expect(section?.textContent).toContain(
-        otherSizes
-          .map(
-            (size) =>
-              `${size}×${size}なら1から${getMagicSquareMaxValue(size)}までを置いて左上の合計は${getMagicSquareMagicSum(size)}です。`,
-          )
-          .join(""),
-      );
+      const rows = within(section as HTMLElement)
+        .getAllByRole("row")
+        .map((row) =>
+          Array.from(
+            row.querySelectorAll("th, td"),
+            (cell) => cell.textContent,
+          ),
+        );
+
+      expect(rows).toEqual([
+        ["盤面", "置く数", "左上の合計"],
+        ...otherSizes.map((size) => [
+          `${size}×${size}`,
+          `1〜${getMagicSquareMaxValue(size)}`,
+          String(getMagicSquareMagicSum(size)),
+        ]),
+      ]);
     });
 
     test("ルールの例を、本番の盤面部品で描いた触れる例として、元に戻すボタンのある面に置くこと", () => {
@@ -126,21 +135,50 @@ describe("MagicSquareHowToPlayDialog", () => {
       const [row] = within(panel).getAllByRole("listitem");
 
       expect(row?.textContent).toBe(
-        `基準時間空いたマス1つにつき${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / 1000}秒を読み始めの${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒に足します。`,
+        `基準時間${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒と空いたマス1つにつき${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / 1000}秒を合わせます。`,
       );
     });
 
     test("採点のタブで、置き直しの数え方と、待った・盤面を戻すの回数では点が下がらないことを言うこと", () => {
       const panel = openTab("採点");
 
-      const rows = within(panel)
+      const [, correction, , , , pressed] = within(panel)
         .getAllByRole("listitem")
-        .map((row) => row.textContent);
+        .map((row) => row.textContent ?? "");
+      const exceptions = within(panel)
+        .getAllByRole("list")
+        .filter((list) => list.tagName === "UL")
+        .flatMap((list) =>
+          within(list)
+            .getAllByRole("listitem")
+            .map((item) => item.textContent),
+        );
 
-      expect(rows.slice(1).map((row) => row?.split("。")[0])).toEqual([
-        `置き直し 1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点置いた数は外しても置き換えても「待った」・「盤面を戻す」で外れても1回です`,
-        "「待った」・「盤面を戻す」押しただけでは点は下がりません",
+      expect(correction).toContain(
+        `置き直し 1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点置いた数が外れるたびに画面の上の「置き直し」が1回増えます。`,
+      );
+      expect(exceptions).toEqual([
+        "・その間に置いて列の端の色を変えなかった数",
+        "・その間に外して元に戻した数",
+        "・色を変えてすぐ盤面の下で上下・左右・斜めに隣の数へ置き換えた数",
       ]);
+      expect(pressed).toBe(
+        "「待った」・「盤面を戻す」押しただけでは点は下がりません。",
+      );
+    });
+
+    test("操作のタブで、置き方・やり直し・メモの順にまとまりを並べ、待ったの図を押せない図にすること", () => {
+      const panel = openTab("操作");
+
+      const titles = within(panel)
+        .getAllByRole("heading", { level: 3 })
+        .map((heading) => heading.textContent);
+      const undoFigure = within(panel)
+        .getAllByRole("button", { name: "待った", hidden: true })
+        .find((button) => button.closest("[inert]") !== null);
+
+      expect(titles).toEqual(["置き方", "やり直し", "メモ"]);
+      expect(undoFigure?.closest('[aria-hidden="true"]')).not.toBeNull();
     });
 
     test("操作のタブで、メモを書ける数を本番の上限と同じ値で言うこと", () => {

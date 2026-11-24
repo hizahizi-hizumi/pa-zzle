@@ -19,11 +19,11 @@ export const magicSquareCellHintPlacement = {
 };
 
 /**
- * ✓ / ✕ の印を角に付けたマスの手がかり。印はマスの右上の角に半分を外へ出して置くので、枠はマスの内側に引き、
- * 角の印と重ならないようにする。数はマスの中央にあり、枠は数にかからない。
+ * ✓ / ✕ の印を角に付けたマスの手がかり。印はマスの右上の角の内側に置くので、枠はマスの外に引き、
+ * 角の印と重ならないようにする。マスどうしの間は盤の面なので、外の枠は隣のマスにかからない。
  */
 export const magicSquareMarkedCellHintPlacement = {
-  frame: "inside",
+  frame: "outside",
   outline: "rounded",
   pointer: "bottom-edge",
 } as const satisfies {

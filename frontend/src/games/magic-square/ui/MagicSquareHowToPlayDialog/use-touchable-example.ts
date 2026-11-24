@@ -28,7 +28,7 @@ import { useMagicSquareSoundEffects } from "@/games/magic-square/ui/use-magic-sq
 
 type MagicSquareTouchableExample = {
   state: MagicSquareExampleGroupState;
-  /** 盤面ごとの、その盤面の下に並んだ数の状態。その盤面のマスを選んでいなければ、どのマスも選んでいない姿で求める。 */
+  /** 盤面ごとの、その盤面の下に並んだ数の状態。その盤面で選んだマスと、面の入れ方から求める。 */
   valueStatesFor: (board: number) => readonly MagicSquareValueState[];
   hint: MagicSquareExamplePress | null;
   /** 押した結果の知らせ。受け付けなかったときの揺れと、効果音に使う。 */
@@ -50,7 +50,6 @@ function createInitialState(
 ): MagicSquareExampleGroupState {
   return {
     sessions: boards.map(createMagicSquareExampleSession),
-    selection: null,
     inputMode: "value",
   };
 }
@@ -60,11 +59,11 @@ function differsFromInitial(
   initial: MagicSquareExampleGroupState,
 ): boolean {
   return (
-    state.selection !== null ||
     state.inputMode !== initial.inputMode ||
     state.sessions.some((session, index) => {
       const initialSession = initial.sessions[index];
       return (
+        session.selectedCellIndex !== null ||
         initialSession === undefined ||
         !isSameMagicSquareExampleBoard(session, initialSession)
       );
@@ -72,23 +71,23 @@ function differsFromInitial(
   );
 }
 
-/** 盤面の session に、面の中で選んでいるマスを持たせる。その盤面のマスを選んでいなければ、どのマスも選んでいない姿にする。 */
-export function withExampleSelection(
-  session: MagicSquareSession,
+function replaceSession(
   state: MagicSquareExampleGroupState,
   board: number,
-): MagicSquareSession {
-  const cellIndex =
-    state.selection?.board === board ? state.selection.cellIndex : null;
-  return cellIndex === null
-    ? { ...session, selectedCellIndex: null }
-    : selectMagicSquareSessionCell(session, cellIndex);
+  session: MagicSquareSession,
+): MagicSquareExampleGroupState {
+  return {
+    ...state,
+    sessions: state.sessions.map((current, index) =>
+      index === board ? session : current,
+    ),
+  };
 }
 
 /**
- * 触れる例の面の状態。面に並べた盤面ごとに、本番と同じく盤面の下に並んだ数と待ったを持ち、メモの切り替えは面に1つ持つ。
- * 本番と同じく、マスを選んでから数を押して置く・外す・メモを書く。選べるマスは面の中で1つだけにし、盤面の下に並んだ数と
- * 待ったはその盤面に効く。マスを選んでいない盤面の数を押すと、本番でマスを選ばずに数を押したときと同じく受け付けない。
+ * 触れる例の面の状態。面に並べた盤面ごとに、本番の画面を1つずつ並べた形で、その盤面の選んだマスと、盤面の下に並んだ数と待ったを持つ。
+ * メモの切り替えは面に1つ持つ。本番と同じく、マスを選んでから数を押して置く・外す・メモを書く。盤面の下に並んだ数と待ったは
+ * その盤面に効き、その盤面のマスを選ばずに数を押すと、本番でマスを選ばずに数を押したときと同じく受け付けない。
  * 遷移・受け付けない押し方・音は、本番のプレイと同じ関数と効果音のフックで求める。盤面を解き終えたら、本番と同じくクリアの音を鳴らし、
  * その後は押しても何も起きない。
  * 押すたびに、最初の姿から変わったか（マスを選んだことも含む）を面に知らせ、最初の姿に戻すときは、面が例を作り直す。
@@ -129,65 +128,54 @@ export function useTouchableExample(
   }
 
   function selectCell(board: number, cellIndex: number) {
-    if (cleared) {
+    const session = state.sessions[board];
+    if (cleared || session === undefined) {
       return;
     }
     // 本番と同じく、盤面の操作が変わったら前の押した結果の知らせを消す。
     setOperation(null);
     apply(
       { kind: "cell", board, cellIndex },
-      { ...state, selection: { board, cellIndex } },
+      replaceSession(
+        state,
+        board,
+        selectMagicSquareSessionCell(session, cellIndex),
+      ),
     );
   }
 
   function enterValue(board: number, value: number) {
-    if (cleared) {
+    const session = state.sessions[board];
+    if (cleared || session === undefined) {
       return;
     }
-    const { selection } = state;
-    const session =
-      selection?.board === board ? state.sessions[board] : undefined;
-    setOperationBoard(board);
-    // その盤面のマスを選んでいなければ、選んだマスに届かない押し方なので、盤面も手がかりの進み具合も変えない。
-    if (selection === null || session === undefined) {
-      setOperation({
-        id: nextOperationId(),
-        type: "rejected",
-        cellIndex: null,
-        value,
-      });
-      return;
-    }
+    const { selectedCellIndex } = session;
     const input = inputMagicSquareSessionValue(
-      withExampleSelection(session, state, selection.board),
+      session,
       state.inputMode,
       value,
       0,
     );
-    if (input.type === "rejected") {
+    setOperationBoard(board);
+    if (input.type === "rejected" || selectedCellIndex === null) {
       setOperation({
         id: nextOperationId(),
         type: "rejected",
-        cellIndex: selection.cellIndex,
+        cellIndex: selectedCellIndex,
         value,
       });
-      apply({ kind: "value", value }, state);
+      apply({ kind: "value", board, value }, state);
       return;
     }
     setOperation({
       id: nextOperationId(),
       type: input.type,
-      cellIndex: selection.cellIndex,
+      cellIndex: selectedCellIndex,
       value,
     });
     apply(
-      { kind: "value", value },
-      {
-        ...state,
-        sessions: state.sessions.map((current, index) =>
-          index === selection.board ? input.session : current,
-        ),
-      },
+      { kind: "value", board, value },
+      replaceSession(state, board, input.session),
     );
   }
 
@@ -210,18 +198,14 @@ export function useTouchableExample(
 
   // 待ったは、本番と同じく音も揺れも返さず、その盤面の直前の盤面操作を取り消す。
   function undo(board: number) {
-    if (!canUndoFor(board)) {
+    const session = state.sessions[board];
+    if (session === undefined || !canUndoFor(board)) {
       return;
     }
     setOperation(null);
     apply(
-      { kind: "undo" },
-      {
-        ...state,
-        sessions: state.sessions.map((current, index) =>
-          index === board ? undoMagicSquareSession(current) : current,
-        ),
-      },
+      { kind: "undo", board },
+      replaceSession(state, board, undoMagicSquareSession(session)),
     );
   }
 
@@ -229,10 +213,7 @@ export function useTouchableExample(
     const session = state.sessions[board];
     return session === undefined
       ? []
-      : listMagicSquareSessionValueStates(
-          withExampleSelection(session, state, board),
-          state.inputMode,
-        );
+      : listMagicSquareSessionValueStates(session, state.inputMode);
   }
 
   return {

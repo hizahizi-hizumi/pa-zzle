@@ -45,6 +45,8 @@ export type MagicSquareHowToPlayFlowFigure = {
   steps: readonly string[];
   /** 本番の数え方で、最後のコマまでに数えた置き直しの回数。 */
   correctionCount: number;
+  /** 流れで置いた数。置いた順に並べる。 */
+  placedValues: readonly number[];
 };
 
 const firstRow: MagicSquareBoardRegion = {
@@ -79,8 +81,9 @@ function cellAt(
   return { kind: "cell", board, cellIndex: getMagicSquareExampleCellIndex(at) };
 }
 
-function value(entered: number): MagicSquareExamplePress {
-  return { kind: "value", value: entered };
+/** `board` 番目の盤面の下に並んだ数を押す手。 */
+function value(entered: number, board = 0): MagicSquareExamplePress {
+  return { kind: "value", board, value: entered };
 }
 
 /**
@@ -96,9 +99,10 @@ export const lineRuleExample: MagicSquareHowToPlayExample = {
 };
 
 /**
- * 数を1回ずつ使うルール。置いた数は盤面の下に並んだ数でくぼみに変わって押せなくなるので、くぼみの数に ✕ を付ける。
- * 手がかりは、空いたマスに残りの数を置き、ほかのマスを選んで、置いた数もくぼみに変わる所まで見せる手にする
- * （置いた数は、そのマスを選んでいる間は、外せる数として縁取った札になる）。
+ * 数を1回ずつ使うルール。手のルール（どの数を置けるか）で、本番は盤面にある数をくぼみにして押せなくするだけで弾く反応が無いので、
+ * 手がかりを付けず、盤面の下に並んだ数ごとに置けるか（✓）・置けないか（✕）の印で示す。
+ * 手がかりは、空いたマスに残りの数を置き、ほかのマスを選んで、置いた数も ✕ のくぼみに変わる所まで見せる手にする
+ * （置いた数は、そのマスを選んでいる間は、押すと外せる数として縁取った札になり、印を付けない）。
  */
 export const usedValueRuleExample: MagicSquareHowToPlayExample = {
   boards: [onFirstRow("+14 +4 +5 .")],
@@ -143,8 +147,8 @@ export const replaceOperationExample: MagicSquareHowToPlayExample = {
 };
 
 /**
- * 空いたマスに、メモに切り替えて数を書き、同じ数をもう一度押して消してから、数を置く入れ方に戻す。
- * 鉛筆のボタンは、本番と同じく待ったの後ろに置く。
+ * 空いたマスを選び、メモに切り替えて数を書き、同じ数をもう一度押して消してから、数を置く入れ方に戻す。
+ * 鉛筆のボタンは、本番と同じく待ったの後ろに置く。メモが4つ書いてあるマスに5つ目を押したときだけ、例の下にわけを出す。
  */
 export const memoOperationExample: MagicSquareHowToPlayExample = {
   boards: [onFirstRow("+14 +4 . .")],
@@ -266,6 +270,7 @@ function createFlow(
     frames: [flowStart, placed, replaced],
     steps: [`${first}を/置く`, `${second}を/置く`],
     correctionCount: getMagicSquareSessionCorrectionCount(replaced),
+    placedValues: [first, second],
   };
 }
 

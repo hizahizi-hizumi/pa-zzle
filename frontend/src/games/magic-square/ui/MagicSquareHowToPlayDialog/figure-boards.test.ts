@@ -56,12 +56,10 @@ function hasViolatedLine(session: MagicSquareSession): boolean {
 /** 手がかりの手を本番のプレイと同じ関数で順に押し、押すたびの盤面を返す。 */
 function followHints(example: MagicSquareHowToPlayExample) {
   let sessions = example.boards.map(createMagicSquareExampleSession);
-  let selectedBoard: number | null = null;
   let inputMode: "value" | "memo" = "value";
   return example.hints.map((press) => {
     switch (press.kind) {
       case "cell":
-        selectedBoard = press.board;
         sessions = sessions.map((session, index) =>
           index === press.board
             ? selectMagicSquareSessionCell(session, press.cellIndex)
@@ -73,7 +71,7 @@ function followHints(example: MagicSquareHowToPlayExample) {
         break;
       case "value":
         sessions = sessions.map((session, index) =>
-          index === selectedBoard
+          index === press.board
             ? inputMagicSquareSessionValue(session, inputMode, press.value, 0)
                 .session
             : session,
@@ -81,7 +79,7 @@ function followHints(example: MagicSquareHowToPlayExample) {
         break;
       case "undo":
         sessions = sessions.map((session, index) =>
-          index === selectedBoard ? undoMagicSquareSession(session) : session,
+          index === press.board ? undoMagicSquareSession(session) : session,
         );
         break;
     }

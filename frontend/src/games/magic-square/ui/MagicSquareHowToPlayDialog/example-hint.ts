@@ -4,24 +4,26 @@ import type {
 } from "@/games/magic-square/session/session";
 import { isSameMagicSquareExampleBoard } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
 
-/** 例で押す所。マスは、面に並べた盤面の番号と、盤面でのマスの番号で指す。`memo` はメモの切り替え、`undo` は待った。 */
+/**
+ * 例で押す所。面に並べた盤面の番号で、どの盤面のマスか、どの盤面の下の数か、どの盤面の待ったかを指す。
+ * `memo` はメモの切り替え（面に1つ）。
+ */
 export type MagicSquareExamplePress =
   | { kind: "cell"; board: number; cellIndex: number }
-  | { kind: "value"; value: number }
+  | { kind: "value"; board: number; value: number }
   | { kind: "memo" }
-  | { kind: "undo" };
+  | { kind: "undo"; board: number };
 
-/** 例の面の、押して変わるもの全体。マスを選んでいるのは、面の中で1つの盤面だけ。 */
+/**
+ * 例の面の、押して変わるもの全体。盤面ごとに、本番と同じく選んだマスを session に持つ（本番の画面を盤面の数だけ並べた形）。
+ * 数を置く入れ方とメモを書く入れ方は面に1つ持つ。
+ */
 export type MagicSquareExampleGroupState = {
   sessions: readonly MagicSquareSession[];
-  selection: { board: number; cellIndex: number } | null;
   inputMode: MagicSquareInputMode;
 };
 
-type MagicSquareExampleBoards = Pick<
-  MagicSquareExampleGroupState,
-  "sessions" | "inputMode"
->;
+type MagicSquareExampleBoards = MagicSquareExampleGroupState;
 
 /**
  * 手がかりの進み具合。`step` は手がかりの列のうち押し終えた数、`baseline` はその時の盤面と入れ方。
@@ -61,10 +63,15 @@ function isSamePress(
         right.cellIndex === left.cellIndex
       );
     case "value":
-      return right.kind === "value" && right.value === left.value;
+      return (
+        right.kind === "value" &&
+        right.board === left.board &&
+        right.value === left.value
+      );
     case "memo":
+      return right.kind === "memo";
     case "undo":
-      return right.kind === left.kind;
+      return right.kind === "undo" && right.board === left.board;
   }
 }
 
@@ -86,10 +93,7 @@ function isSelected(
   state: MagicSquareExampleGroupState,
   cell: Extract<MagicSquareExamplePress, { kind: "cell" }>,
 ): boolean {
-  return (
-    state.selection?.board === cell.board &&
-    state.selection.cellIndex === cell.cellIndex
-  );
+  return state.sessions[cell.board]?.selectedCellIndex === cell.cellIndex;
 }
 
 function toBoards(

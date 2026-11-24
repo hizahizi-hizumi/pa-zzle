@@ -1,5 +1,6 @@
 import {
   inputMagicSquareSessionValue,
+  selectMagicSquareSessionCell,
   undoMagicSquareSession,
 } from "@/games/magic-square/session/session";
 import { createMagicSquareExampleSession } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
@@ -11,7 +12,6 @@ import {
   type MagicSquareExampleHintProgress,
   type MagicSquareExamplePress,
 } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-hint";
-import { withExampleSelection } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/use-touchable-example";
 
 const emptyRows = [". . . .", ". . . .", ". . . ."];
 const region = { row: 0, column: 0, rowCount: 1, columnCount: 4 };
@@ -24,7 +24,6 @@ const initial: MagicSquareExampleGroupState = {
       rows: ["14 +4 +5 .", ...emptyRows],
     }),
   ],
-  selection: null,
   inputMode: "value",
 };
 
@@ -33,54 +32,54 @@ const selectEmptyCell: MagicSquareExamplePress = {
   board: 0,
   cellIndex: 3,
 };
-const placeAnswer: MagicSquareExamplePress = { kind: "value", value: 11 };
+const placeAnswer: MagicSquareExamplePress = {
+  kind: "value",
+  board: 0,
+  value: 11,
+};
 const hints = [selectEmptyCell, placeAnswer];
 
-/** 押した後の面の状態。数は本番のプレイと同じ関数で入れる。 */
+/** 押した後の面の状態。マスの選びと数は本番のプレイと同じ関数で、押した盤面に入れる。 */
 function press(
   state: MagicSquareExampleGroupState,
   pressed: MagicSquareExamplePress,
 ): MagicSquareExampleGroupState {
+  function update(
+    board: number,
+    operate: (
+      session: MagicSquareExampleGroupState["sessions"][number],
+    ) => MagicSquareExampleGroupState["sessions"][number],
+  ): MagicSquareExampleGroupState {
+    return {
+      ...state,
+      sessions: state.sessions.map((session, index) =>
+        index === board ? operate(session) : session,
+      ),
+    };
+  }
   switch (pressed.kind) {
     case "cell":
-      return {
-        ...state,
-        selection: { board: pressed.board, cellIndex: pressed.cellIndex },
-      };
+      return update(pressed.board, (session) =>
+        selectMagicSquareSessionCell(session, pressed.cellIndex),
+      );
     case "memo":
       return {
         ...state,
         inputMode: state.inputMode === "memo" ? "value" : "memo",
       };
-    case "undo": {
-      const board = state.selection?.board ?? 0;
-      return {
-        ...state,
-        sessions: state.sessions.map((current, index) =>
-          index === board ? undoMagicSquareSession(current) : current,
-        ),
-      };
-    }
-    case "value": {
-      const { selection } = state;
-      const session =
-        selection === null ? undefined : state.sessions[selection.board];
-      if (selection === null || session === undefined) {
-        return state;
-      }
-      const { session: next } = inputMagicSquareSessionValue(
-        withExampleSelection(session, state, selection.board),
-        state.inputMode,
-        pressed.value,
-        0,
+    case "undo":
+      return update(pressed.board, undoMagicSquareSession);
+    case "value":
+      return update(
+        pressed.board,
+        (session) =>
+          inputMagicSquareSessionValue(
+            session,
+            state.inputMode,
+            pressed.value,
+            0,
+          ).session,
       );
-      return {
-        ...state,
-        sessions: state.sessions.map((current, index) =>
-          index === selection.board ? next : current,
-        ),
-      };
-    }
   }
 }
 
@@ -138,7 +137,10 @@ describe("findMagicSquareExampleHint", () => {
   });
 
   test("手がかりから外れた数を置くと、盤面が手がかりの姿から離れるので出さないこと", () => {
-    const hint = findHint([selectEmptyCell, { kind: "value", value: 12 }]);
+    const hint = findHint([
+      selectEmptyCell,
+      { kind: "value", board: 0, value: 12 },
+    ]);
 
     expect(hint).toBeNull();
   });
@@ -146,8 +148,8 @@ describe("findMagicSquareExampleHint", () => {
   test("手がかりから外れた数を外して最初の盤面に戻ると、選んだままのマスの次の手から出し直すこと", () => {
     const hint = findHint([
       selectEmptyCell,
-      { kind: "value", value: 12 },
-      { kind: "value", value: 12 },
+      { kind: "value", board: 0, value: 12 },
+      { kind: "value", board: 0, value: 12 },
     ]);
 
     expect(hint).toEqual(placeAnswer);
@@ -157,7 +159,7 @@ describe("findMagicSquareExampleHint", () => {
 describe("受け付けられない手がかりの手を押した場合", () => {
   const givenHints: readonly MagicSquareExamplePress[] = [
     { kind: "cell", board: 0, cellIndex: 0 },
-    { kind: "value", value: 6 },
+    { kind: "value", board: 0, value: 6 },
   ];
 
   function findGivenHint(presses: readonly MagicSquareExamplePress[]) {
@@ -182,7 +184,10 @@ describe("受け付けられない手がかりの手を押した場合", () => {
   });
 
   test("続けて手がかりの外の数を押して、また受け付けられなくても、出さないままにすること", () => {
-    const hint = findGivenHint([...givenHints, { kind: "value", value: 7 }]);
+    const hint = findGivenHint([
+      ...givenHints,
+      { kind: "value", board: 0, value: 7 },
+    ]);
 
     expect(hint).toBeNull();
   });
@@ -201,8 +206,8 @@ describe("待ったで手がかりの姿へ戻した場合", () => {
   test("手がかりから外れた数を待ったで外すと、選んだままのマスの次の手から出し直すこと", () => {
     const hint = findHint([
       selectEmptyCell,
-      { kind: "value", value: 12 },
-      { kind: "undo" },
+      { kind: "value", board: 0, value: 12 },
+      { kind: "undo", board: 0 },
     ]);
 
     expect(hint).toEqual(placeAnswer);

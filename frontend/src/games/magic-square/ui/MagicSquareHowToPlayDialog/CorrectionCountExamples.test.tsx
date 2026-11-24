@@ -92,3 +92,32 @@ describe("CorrectionCountExamples", () => {
     expect(labels[0]).toEqual(["1行2列", "2行2列", "3行2列", "4行2列"]);
   });
 });
+
+describe("CorrectionCountExamples に盤面の下に並んだ数を添える場合", () => {
+  beforeEach(() => {
+    render(
+      <CorrectionCountExamples
+        examples={[
+          {
+            figure: correctionCountFlows.mistyped,
+            flow: "押し間違えた流れ",
+            showPlacedValues: true,
+          },
+        ]}
+      />,
+    );
+  });
+
+  test("流れで置いた16と8を囲んだ、押せない数の並びを図の下に添えること", () => {
+    const figure = getFigure("押し間違えた流れ");
+    const pad = figure.querySelector(
+      '[role="group"][aria-label="盤面の下に並んだ数"]',
+    );
+    const framed = [...(pad?.querySelectorAll("button") ?? [])]
+      .filter((button) => button.querySelector("span[style]") !== null)
+      .map((button) => button.textContent);
+
+    expect(pad?.closest("[inert]")).not.toBeNull();
+    expect(framed).toEqual(["8", "16"]);
+  });
+});

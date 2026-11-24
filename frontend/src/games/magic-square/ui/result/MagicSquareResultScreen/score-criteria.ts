@@ -48,9 +48,8 @@ export function getMagicSquareScoreCriteria(
           },
         ],
         [
-          `置いた数は、外しても、置き換えても、${formatOperationName("undo")}・${formatOperationName("restart")}で外れても1回と数える。`,
-          `列の端の色を変えなかった数は、ほかのマスを選ぶ前なら、外しても、置き換えても、${formatOperationName("undo")}で外れても数えない。`,
-          "色を変えた数を、盤面の下に並んだ数で上下・左右・斜めに隣の数へすぐ置き換えたときも数えない。",
+          `置いた数が外れるたびに1回と数える。外す・置き換える・${formatOperationName("undo")}・${formatOperationName("restart")}のどれで外れても同じ。`,
+          `ただし、ほかのマスを選ぶ前に同じマスで外す・置き換える・${formatOperationName("undo")}で外れた数のうち、その間に置いて列の端の色を変えなかった数と、その間に外して元に戻した数と、色を変えてすぐ盤面の下で上下・左右・斜めに隣の数へ置き換えた数は数えない。`,
           `${formatOperationName("undo")}・${formatOperationName("restart")}は、押しただけでは減らさない。`,
         ],
       ),
