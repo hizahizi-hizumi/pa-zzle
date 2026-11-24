@@ -1,0 +1,9 @@
+feat(how-to-play): 広い画面でタブの中身に続きがある間は下端を薄める
+
+- 広い画面では右の列のタブの中身だけを送るので、下にまだ見えていない中身がある間は、下端の 96px を地の色へ薄めて、
+  続きがあると分かるようにする。最初の画面が面の下端でちょうど切れても、終わりに見えないようにする。
+- 薄める高さは中身の中のいちばん広い間（まとまりどうしの 64px）より高くし、どこで切れても薄めた所に中身がかかるようにする。
+  下端まで送ると薄めるのをやめる。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

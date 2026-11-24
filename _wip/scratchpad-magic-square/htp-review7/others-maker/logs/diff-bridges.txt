@@ -1,0 +1,113 @@
+
+## bridges phone
+  goal btn same board={"x":55,"y":196,"w":280,"h":280,"r":335,"b":476}
+  [rules] headings H3:22px -> H3:16px; overflow 6 -> 6
+     after OVERFLOW BUTTON  x=210 r=456.3
+     after OVERFLOW BUTTON  x=210 r=440.3
+     after OVERFLOW BUTTON  x=210 r=456.3
+     after OVERFLOW BUTTON  x=210 r=456.3
+     after OVERFLOW BUTTON  x=210 r=456.3
+     after OVERFLOW BUTTON  x=210 r=456.3
+     panel0 figs=2 beside-caption 32px/32px h=236.4 -> beside-example 32px/32px h=236.4 "島から出す橋は数字と同じ本数にします。"
+     panel1 figs=2 beside-caption 32px/32px h=236.4 -> beside-example 32px/32px h=236.4 "全部の島を1つにつなげます。"
+     panel2 figs=1 beside-caption 32px/32px h=308.2 -> beside-example 32px/32px h=308.2 "ほかの橋と交差する橋は架けられません。"
+   before rules p0 h=236 f0:not-touched  f1:beside-caption/-(322,438) ok
+   before rules p1 h=236 f0:not-touched  f1:not-touched
+   before rules p2 h=308 f0:beside-caption/-(322,554) ok
+   after rules p0 h=236 f0:not-touched  f1:beside-example/right(322,438) ok
+   after rules p1 h=236 f0:not-touched  f1:not-touched
+   after rules p2 h=308 f0:beside-example/right(322,554) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=200.4 -> beside-example 32px/32px h=200.4 "島と島の間を押すたびに橋が1本・2本・な"
+     panel1 figs=1 beside-caption 32px/32px h=200.4 -> beside-example 32px/32px h=200.4 "島から相手の島へなぞっても架かります。"
+     panel2 figs=1 beside-caption 32px/32px h=200.4 -> beside-example 32px/32px h=200.4 "島を押してから相手の島を押しても架かりま"
+     panel3 figs=1 beside-caption 32px/32px h=200.4 -> beside-example 32px/32px h=200.4 "縦と横の橋が交差する所を押してもどちらの"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=200 f0:beside-caption/-(322,381) ok
+   before operations p1 h=200 f0:beside-caption/-(322,420) ok
+   before operations p2 h=200 f0:beside-caption/-(322,420) ok
+   before operations p3 h=200 f0:beside-caption/-(322,421) ok
+   after operations p0 h=200 f0:beside-example/right(322,375) ok
+   after operations p1 h=200 f0:beside-example/right(322,413) ok
+   after operations p2 h=200 f0:beside-example/right(322,414) ok
+   after operations p3 h=200 f0:beside-example/right(322,414) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     text[li] 14px 2L "考えないと決まらない所が多い問題も長くなります。" -> 16px 3L "多い問題も長くなります。" :: 島と橋が多い問題ほど長くなります。島のつながりまで考えないと決まらない所が多い問題も長く
+     text[li] 14px 2L "多い問題ほど6倍に近づきます。" -> 16px 2L "考える所が多い問題ほど6倍に近づきます。" :: 基準時間の3〜6倍です。島のつながりまで考える所が多い問題ほど6倍に近づきます。
+     text[li] 14px 2L "架けられなかったときも同じです。" -> 16px 2L "架けられなかったときも同じです。" :: 何回しても点は下がりません。交差して架けられなかったときも同じです。
+
+## bridges w320
+  goal btn same board={"x":48,"y":196,"w":224,"h":224,"r":272,"b":420}
+  [rules] headings H3:22px -> H3:16px; overflow 8 -> 8
+     after OVERFLOW BUTTON  x=175 r=352.7
+     after OVERFLOW BUTTON  x=175 r=421.3
+     after OVERFLOW BUTTON  x=175 r=405.3
+     after OVERFLOW BUTTON  x=175 r=421.3
+     after OVERFLOW BUTTON  x=175 r=421.3
+     after OVERFLOW BUTTON  x=175 r=421.3
+     after OVERFLOW BUTTON  x=175 r=421.3
+     after OVERFLOW BUTTON  x=90.1 r=336.4
+     panel0 figs=2 below-examples 32px/66px h=243.1 -> below-examples 32px/68px h=245.1 "島から出す橋は数字と同じ本数にします。"
+     panel1 figs=2 below-examples 32px/66px h=243.1 -> below-examples 32px/68px h=245.1 "全部の島を1つにつなげます。"
+     panel2 figs=1 top-corner 32px/32px h=266.6 -> beside-example 32px/32px h=266.6 "ほかの橋と交差する橋は架けられません。"
+   before rules p0 h=243 f0:not-touched  f1:not-touched
+   before rules p1 h=243 f0:not-touched  f1:not-touched
+   before rules p2 h=267 f0:top-corner/-(252,279) HITS [{"kind":"text","text":"1行2列の島 数字1 橋"},{"kind":"text","text":"1行4列の島 数字2 橋"}]
+   after rules p0 h=245 f0:not-touched  f1:not-touched
+   after rules p1 h=245 f0:not-touched  f1:not-touched
+   after rules p2 h=267 f0:beside-example/right(252,269) HITS [{"kind":"text","text":"1行2列の島 数字1 橋"},{"kind":"leaf","tag":"BUTTON","label":"","rect":{"x":90,"y":284,"r":268,"b":308}}]
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=173.1 -> beside-example 32px/32px h=173.1 "島と島の間を押すたびに橋が1本・2本・な"
+     panel1 figs=1 beside-caption 32px/32px h=173.1 -> beside-example 32px/32px h=173.1 "島から相手の島へなぞっても架かります。"
+     panel2 figs=1 beside-caption 32px/32px h=173.1 -> beside-example 32px/32px h=173.1 "島を押してから相手の島を押しても架かりま"
+     panel3 figs=1 beside-caption 32px/32px h=173.1 -> beside-example 32px/32px h=173.1 "縦と横の橋が交差する所を押してもどちらの"
+     text[li] NEW -> 16px 2L "選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 3L "やり直します。" -> 14px 3L "最初からやり直します。" :: 時間と「待った」の回数も0に戻して同じ問題を最初からやり直します。
+     text[menu] 14px 2L "変えます。" -> 14px 2L "別の問題に変えます。" :: 同じレベルの別の問題に変えます。
+   before operations p0 h=173 f0:beside-caption/-(252,354) ok
+   before operations p1 h=173 f0:beside-caption/-(252,358) ok
+   before operations p2 h=173 f0:beside-caption/-(252,358) ok
+   before operations p3 h=173 f0:not-touched
+   after operations p0 h=173 f0:beside-example/right(252,348) ok
+   after operations p1 h=173 f0:beside-example/right(252,352) ok
+   after operations p2 h=173 f0:beside-example/right(252,352) ok
+   after operations p3 h=173 f0:not-touched
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     text[li] 14px 3L "多い問題も長くなります。" -> 16px 4L "多い問題も長くなります。" :: 島と橋が多い問題ほど長くなります。島のつながりまで考えないと決まらない所が多い問題も長く
+     text[li] 14px 2L "考える所が多い問題ほど6倍に近づきます。" -> 16px 3L "多い問題ほど6倍に近づきます。" :: 基準時間の3〜6倍です。島のつながりまで考える所が多い問題ほど6倍に近づきます。
+     text[li] 14px 2L "架けられなかったときも同じです。" -> 16px 3L "ときも同じです。" :: 何回しても点は下がりません。交差して架けられなかったときも同じです。
+
+## bridges pc
+  goal btn same board={"x":32,"y":168,"w":468,"h":468,"r":500,"b":636}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=2 beside-caption 32px/32px h=328 -> beside-example 32px/32px h=328 "島から出す橋は数字と同じ本数にします。"
+     panel1 figs=2 beside-caption 32px/32px h=328 -> beside-example 32px/32px h=328 "全部の島を1つにつなげます。"
+     panel2 figs=1 beside-caption 32px/32px h=448 -> beside-example 32px/32px h=448 "ほかの橋と交差する橋は架けられません。"
+   before rules p0 h=328 f0:not-touched  f1:beside-caption/-(1196,444) ok
+   before rules p1 h=328 f0:not-touched  f1:beside-caption/-(1196,502) ok
+   before rules p2 h=448 f0:beside-caption/-(1196,690) ok
+   after rules p0 h=328 f0:not-touched  f1:beside-example/right(1196,434) ok
+   after rules p1 h=328 f0:not-touched  f1:beside-example/right(1196,502) ok
+   after rules p2 h=448 f0:beside-example/right(1196,690) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=292 -> beside-example 32px/32px h=292 "島と島の間を押すたびに橋が1本・2本・な"
+     panel1 figs=1 beside-caption 32px/32px h=292 -> beside-example 32px/32px h=292 "島から相手の島へなぞっても架かります。"
+     panel2 figs=1 beside-caption 32px/32px h=292 -> beside-example 32px/32px h=292 "島を押してから相手の島を押しても架かりま"
+     panel3 figs=1 beside-caption 32px/32px h=292 -> beside-example 32px/32px h=292 "縦と横の橋が交差する所を押してもどちらの"
+     panel4 figs=1 beside-caption 32px/32px h=292 -> beside-example 32px/32px h=292 "右クリックするとなし・2本・1本の順に変"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=292 f0:beside-caption/-(1196,457) ok
+   before operations p1 h=292 f0:beside-caption/-(1196,484) ok
+   before operations p2 h=292 f0:beside-caption/-(1196,484) ok
+   before operations p3 h=292 f0:beside-caption/-(1196,484) ok
+   before operations p4 h=292 f0:beside-caption/-(1196,484) ok
+   after operations p0 h=292 f0:beside-example/right(1196,451) ok
+   after operations p1 h=292 f0:beside-example/right(1196,478) ok
+   after operations p2 h=292 f0:beside-example/right(1196,478) ok
+   after operations p3 h=292 f0:beside-example/right(1196,478) ok
+   after operations p4 h=292 f0:beside-example/right(1196,478) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 1 -> 1
+     after OVERFLOW SPAN inline-block x=600.6 r=696.7
+     text[li] 14px 2L "多い問題も長くなります。" -> 16px 2L "決まらない所が多い問題も長くなります。" :: 島と橋が多い問題ほど長くなります。島のつながりまで考えないと決まらない所が多い問題も長く
+     text[li] 14px 1L "基準時間の3〜6倍です。島のつながりまで考える所が多い問題ほど6倍に近づきます。" -> 16px 1L "基準時間の3〜6倍です。島のつながりまで考える所が多い問題ほど6倍に近づきます。" :: 基準時間の3〜6倍です。島のつながりまで考える所が多い問題ほど6倍に近づきます。
+     text[li] 14px 1L "何回しても点は下がりません。交差して架けられなかったときも同じです。" -> 16px 1L "何回しても点は下がりません。交差して架けられなかったときも同じです。" :: 何回しても点は下がりません。交差して架けられなかったときも同じです。

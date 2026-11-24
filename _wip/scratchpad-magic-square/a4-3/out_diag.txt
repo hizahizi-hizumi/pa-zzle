@@ -1,0 +1,3 @@
+diag: 2 settings × 669 problems in 5s
+diag_t1only: 498/669 (74.4%) | 4×4 28/107 5×5 316/390 6×6 154/172 | k0-2 157/305 k12 341/364 | L5→requires-trial 140, L3→requires-trial 115, L4→requires-trial 57, L2→unlisted-combination 53, L3→L4 49
+diag_nochain: 12/669 (1.8%) | 4×4 0/107 5×5 8/390 6×6 4/172 | k0-2 5/305 k12 7/364 | L3→L4 8, L2→unlisted-combination 2, L4→L5 2

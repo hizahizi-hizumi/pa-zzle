@@ -1,0 +1,7 @@
+feat(magic-square): 問題の答えにする魔方陣の作り方を足す
+
+4×4 は全部の魔方陣（7,040 通り）から一様に選ぶ。5×5・6×6 は入れる数の順を
+乱数で並べ替えた探索で作り、節点の上限で打ち切ったら探し直す。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

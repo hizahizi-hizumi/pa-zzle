@@ -1,0 +1,36 @@
+replay disabled after settle: false
+skip present after skip: 0
+rule1-line step1 pressed 1行4列 11; caption: そろう // そろわない
+rule1-line step2 pressed 12; caption: そろわない // そろわない
+rule1-line reset; caption: そろう // そろわない
+rule1 after filling x board: そろう // そろわない
+rule1-line reset; caption: そろう // そろわない
+rule2-used step1 pressed 1行4列 空き; caption: まだ置ける、もう置いてある
+rule2-used step2 pressed 11; caption: まだ置ける、もう置いてある
+rule2-used step3 pressed 1行1列 14; caption: まだ置ける、もう置いてある
+rule2-used reset; caption: まだ置ける、もう置いてある
+rule3-given step1 pressed 1行1列 14; caption: 変えられる、変えられない
+rule3-given step2 pressed 6; caption: 変えられる、変えられない
+rule3-given reset; caption: 変えられる、変えられない
+op1-place step1 pressed 2行2列 空き; caption: 
+op1-place step2 pressed 2; caption: 
+op1-place reset; caption: 
+op2-replace step1 pressed 1行4列 9; caption: 
+op2-replace step2 pressed 11; caption: 
+op2-replace step3 pressed 11; caption: 
+op2-replace reset; caption: 
+op5-memo step1 pressed 1行3列 空き; caption: メモは4つまで
+op5-memo step2 pressed メモ; caption: メモは4つまで
+op5-memo step3 pressed 5; caption: メモは4つまで
+op5-memo step4 pressed 5; caption: メモは4つまで
+op5-memo step5 pressed メモ; caption: メモは4つまで
+op5-memo reset; caption: メモは4つまで
+op5 memo fifth caption: メモは4つまで
+op5 after undo caption: メモは4つまで
+op5-memo reset; caption: メモは4つまで
+op6-memo-cleared step1 pressed 1行3列 空き メモ 5 11; caption: 
+op6-memo-cleared step2 pressed 5; caption: 
+op6-memo-cleared reset; caption: 
+play: placed on 1行1列 空き
+play sums: そろえる合計 34 / 1行目の合計 16 / 2行目の合計 2 / 3行目の合計 13 / 4行目の合計 19 / 1列目の合計 10 / 2列目の合計 6 / 3列目の合計 27 / 4列目の合計 7 / 左上からの斜めの合計 27 埋まって合計が合わない / 右上からの斜めの合計 3
+errors: none

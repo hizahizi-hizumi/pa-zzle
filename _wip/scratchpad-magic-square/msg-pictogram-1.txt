@@ -1,0 +1,10 @@
+feat(magic-square): 数で埋めた3×3と行ごとにそろった合計のピクトグラムにする
+
+ゲーム一覧で数のパズルの魔方陣と分かるよう、洛書（4 9 2 / 3 5 7 / 8 1 6）で
+埋めた3×3の右に、行ごとの合計 15 を3つ縦に並べる。同じ合計の繰り返しで
+「どの行も同じ合計」を、プレイ画面の行の右の合計の帯と同じ置き方で見せる。
+数は Inter の SemiBold の等幅の数字を path にし、合計の帯を含めた全体が
+中央に来るよう格子を左へ寄せた。線幅は 4 と 2 にそろえた。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

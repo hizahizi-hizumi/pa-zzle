@@ -1,0 +1,1 @@
+[{"st":{"pi":1,"fi":0,"kind":"swipe","dx":90,"dy":0},"info":{"place":"beside-example","enabled":true,"btn":[16,223],"panelW":640}},{"st":{"pi":1,"fi":1,"kind":"swipe","dx":90,"dy":0},"info":{"place":"beside-example","enabled":true,"btn":[588,223],"panelW":640}}]

@@ -1,0 +1,12 @@
+refactor(magic-square): 盤面と数の欄に、範囲を切り出す描き方と重ねる物の口を足す
+
+遊び方の例は、本番の盤面の部品で 4×4 の盤面の一部（1行目だけ・1マスだけ）を
+描き、マス・数の札・メモの切り替えに押す所の手がかりと ✓ / ✕ の印を重ねる。
+盤面の部品は範囲のマスと、その範囲の行の合計だけを描き、左端を含むときだけ
+そろえる合計を出す。重ねる物は、マスと札とメモの切り替えのボタンの中に置く。
+
+数の欄で数を押した後の session と知らせの種類を、プレイ中と遊び方の例で同じ
+関数で求める。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

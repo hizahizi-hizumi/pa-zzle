@@ -1,0 +1,81 @@
+
+## hitofude-puzzle phone
+  goal btn same board={"x":55,"y":196,"w":280,"h":280,"r":335,"b":476}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=234.3 -> beside-example 32px/32px h=234.3 "同じマスは2回通れません。"
+     panel1 figs=2 beside-caption 32px/32px h=234.3 -> beside-example 32px/32px h=234.3 "すべてのマスを通れば完成です。"
+     panel2 figs=1 beside-caption 32px/32px h=234.3 -> beside-example 32px/32px h=234.3 "穴は通れません。"
+   before rules p0 h=234 f0:beside-caption/-(322,437) ok
+   before rules p1 h=234 f0:not-touched  f1:beside-caption/-(322,438) ok
+   before rules p2 h=234 f0:beside-caption/-(322,554) ok
+   after rules p0 h=234 f0:beside-example/right(322,437) ok
+   after rules p1 h=234 f0:not-touched  f1:beside-example/right(322,437) ok
+   after rules p2 h=234 f0:beside-example/right(322,554) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=198.3 -> beside-example 32px/32px h=198.3 "輪の付いたマスから隣のマスへなぞって道を"
+     panel1 figs=1 beside-caption 32px/32px h=198.3 -> beside-example 32px/32px h=198.3 "道の途中のマスを押すと道がそこまで縮みま"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "0に戻して同じ問題を最初からやり直します。" -> 14px 3L "最初からやり直します。" :: 時間・引き直し・「待った」の回数も0に戻して同じ問題を最初からやり直します。
+   before operations p0 h=198 f0:beside-caption/-(322,403) ok
+   before operations p1 h=198 f0:beside-caption/-(322,420) ok
+   after operations p0 h=198 f0:beside-example/right(322,397) ok
+   after operations p1 h=198 f0:beside-example/right(322,413) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 511->513 caps 1,1,2 -> 1,1,2 inert=false
+     text[li] 14px 2L "向きを決める所が多い問題ほど長くなります。" -> 16px 2L "向きを決める所が多い問題ほど長くなります。" :: 通るマス・分かれ道・試しに先までたどって向きを決める所が多い問題ほど長くなります。
+     text[li] 14px 3L "通れずに止まった分は数えません。" -> 16px 3L "通れずに止まった分は数えません。" :: 道を戻して前と違うマスへ引くと1回です。離さずに行ったり来たりした分と通れずに止まった分
+     text[li] 14px 1L "使った回数では点は下がりません。" -> 16px 1L "使った回数では点は下がりません。" :: 使った回数では点は下がりません。
+
+## hitofude-puzzle w320
+  goal btn same board={"x":48,"y":196,"w":224,"h":224,"r":272,"b":420}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=208 -> beside-example 32px/32px h=208 "同じマスは2回通れません。"
+     panel1 figs=2 below-examples 32px/66px h=242 -> below-examples 32px/68px h=244 "すべてのマスを通れば完成です。"
+     panel2 figs=1 beside-caption 32px/32px h=208 -> beside-example 32px/32px h=208 "穴は通れません。"
+   before rules p0 h=208 f0:beside-caption/-(252,376) ok
+   before rules p1 h=242 f0:not-touched  f1:below-examples/-(252,430) ok
+   before rules p2 h=208 f0:beside-caption/-(252,458) ok
+   after rules p0 h=208 f0:beside-example/right(252,376) ok
+   after rules p1 h=244 f0:not-touched  f1:below-examples/-(252,430) ok
+   after rules p2 h=208 f0:beside-example/right(252,458) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=172 -> beside-example 32px/32px h=172 "輪の付いたマスから隣のマスへなぞって道を"
+     panel1 figs=1 beside-caption 32px/32px h=172 -> beside-example 32px/32px h=172 "道の途中のマスを押すと道がそこまで縮みま"
+     text[li] NEW -> 16px 2L "選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "変えます。" -> 14px 2L "別の問題に変えます。" :: 同じレベルの別の問題に変えます。
+   before operations p0 h=172 f0:beside-caption/-(252,358) ok
+   before operations p1 h=172 f0:beside-caption/-(252,358) ok
+   after operations p0 h=172 f0:beside-example/right(252,352) ok
+   after operations p1 h=172 f0:beside-example/right(252,352) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 511->547 caps 1,1,2 -> 1,1,2 inert=false
+     text[li] 14px 3L "長くなります。" -> 16px 3L "多い問題ほど長くなります。" :: 通るマス・分かれ道・試しに先までたどって向きを決める所が多い問題ほど長くなります。
+     text[li] 14px 3L "通れずに止まった分は数えません。" -> 16px 4L "通れずに止まった分は数えません。" :: 道を戻して前と違うマスへ引くと1回です。離さずに行ったり来たりした分と通れずに止まった分
+     text[li] 14px 1L "使った回数では点は下がりません。" -> 16px 1L "使った回数では点は下がりません。" :: 使った回数では点は下がりません。
+
+## hitofude-puzzle pc
+  goal btn same board={"x":32,"y":168,"w":448,"h":448,"r":480,"b":616}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=310 -> beside-example 32px/32px h=310 "同じマスは2回通れません。"
+     panel1 figs=2 beside-caption 32px/32px h=310 -> beside-example 32px/32px h=310 "すべてのマスを通れば完成です。"
+     panel2 figs=1 beside-caption 32px/32px h=310 -> beside-example 32px/32px h=310 "穴は通れません。"
+   before rules p0 h=310 f0:beside-caption/-(1196,426) ok
+   before rules p1 h=310 f0:not-touched  f1:beside-caption/-(1196,493) ok
+   before rules p2 h=310 f0:beside-caption/-(1196,690) ok
+   after rules p0 h=310 f0:beside-example/right(1196,416) ok
+   after rules p1 h=310 f0:not-touched  f1:beside-example/right(1196,493) ok
+   after rules p2 h=310 f0:beside-example/right(1196,690) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=274 -> beside-example 32px/32px h=274 "輪の付いたマスから隣のマスへなぞって道を"
+     panel1 figs=1 beside-caption 32px/32px h=274 -> beside-example 32px/32px h=274 "道の途中のマスを押すと道がそこまで縮みま"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=274 f0:beside-caption/-(1196,463) ok
+   before operations p1 h=274 f0:beside-caption/-(1196,475) ok
+   after operations p0 h=274 f0:beside-example/right(1196,457) ok
+   after operations p1 h=274 f0:beside-example/right(1196,469) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 1 -> 1
+     after OVERFLOW SPAN inline-block x=600.6 r=696.7
+     flow0 h 672->674 caps 1,1,1 -> 1,1,1 inert=false
+     text[li] 14px 1L "通るマス・分かれ道・試しに先までたどって向きを決める所が多い問題ほど長くなります。" -> 16px 2L "多い問題ほど長くなります。" :: 通るマス・分かれ道・試しに先までたどって向きを決める所が多い問題ほど長くなります。
+     text[li] 14px 2L "通れずに止まった分は数えません。" -> 16px 2L "通れずに止まった分は数えません。" :: 道を戻して前と違うマスへ引くと1回です。離さずに行ったり来たりした分と通れずに止まった分
+     text[li] 14px 1L "使った回数では点は下がりません。" -> 16px 1L "使った回数では点は下がりません。" :: 使った回数では点は下がりません。

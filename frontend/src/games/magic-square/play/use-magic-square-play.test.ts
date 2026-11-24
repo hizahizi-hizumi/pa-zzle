@@ -4,6 +4,7 @@ import {
   inputMagicSquareValue,
   useMagicSquarePlay,
 } from "@/games/magic-square/play/use-magic-square-play";
+import { restoreMagicSquarePoolEntry } from "@/games/magic-square/problem/problem-pool";
 import { selectMagicSquareProblemForDifficulty } from "@/games/magic-square/problem-selection";
 import { calculateMagicSquareSpeedScoreRule } from "@/games/magic-square/score";
 import {
@@ -21,8 +22,17 @@ vi.mock("@/games/problem-seed", async (importOriginal) => ({
 type HookResult = { current: ReturnType<typeof useMagicSquarePlay> };
 
 const difficulty = "1";
-const initial = selectMagicSquareProblemForDifficulty(difficulty, "any");
-/** レベル1の問題の答え。空きマスと、そこに入る数。 */
+/**
+ * 答えの分かっている 4×4 の問題。答えはチュートリアルと遊び方の例の魔方陣（14 4 5 11 / 9 2 7 16 / 8 13 12 1 / 3 15 10 6）で、
+ * 問題集には入らない。
+ */
+const initial = restoreMagicSquarePoolEntry([
+  "0.4.5.0.0.2.0.0.0.0.12.1.3.0.10.6",
+  0,
+  0,
+  0,
+]);
+/** `initial` の答え。空きマスと、そこに入る数。 */
 const solvingEntries = [
   [0, 14],
   [3, 11],
@@ -48,6 +58,10 @@ afterEach(() => {
 describe("useMagicSquarePlay", () => {
   describe("難易度だけを渡した場合", () => {
     let result: HookResult;
+    const selected = selectMagicSquareProblemForDifficulty(
+      difficulty,
+      "use-magic-square-play",
+    );
 
     beforeEach(() => {
       vi.mocked(createProblemSeed).mockReturnValue("use-magic-square-play");
@@ -64,11 +78,19 @@ describe("useMagicSquarePlay", () => {
         progress,
         problemIdentity,
       }).toEqual({
-        cells: initial.problem.givens.cells,
+        cells: selected.problem.givens.cells,
         selectedCellIndex: null,
         progress: "playing",
-        problemIdentity: initial.identity,
+        problemIdentity: selected.identity,
       });
+    });
+  });
+
+  describe("問題を渡した場合", () => {
+    let result: HookResult;
+
+    beforeEach(() => {
+      ({ result } = renderHook(() => useMagicSquarePlay(difficulty, initial)));
     });
 
     test("ほかのマスを選んでから戻って置き換えると置き直しを数えること", () => {

@@ -1,0 +1,8 @@
+test(magic-square): 最初から置いてある数を変えられないことを途中の盤面の全サンプルで確かめる
+
+ランダムな途中の盤面の数を最初から置いてある数とみなし、そのどのマスにも
+置く・外す・入れる・メモを書く操作が受け取った状態をそのまま返すことを
+確かめる。describe の名前を、条件と対象の関数名に合わせる。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

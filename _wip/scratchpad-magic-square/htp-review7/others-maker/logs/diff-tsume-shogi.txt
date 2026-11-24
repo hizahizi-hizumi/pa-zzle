@@ -1,0 +1,147 @@
+
+## tsume-shogi phone
+  goal btn same board={"x":20,"y":196,"w":350,"h":380,"r":370,"b":576}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=480.5 -> beside-example 32px/32px h=480.5 "次に玉を取れる手（王手）だけを指せます。"
+     panel1 figs=1 beside-caption 32px/32px h=504.5 -> beside-example 32px/32px h=504.5 "「3手詰」なら玉方の手も入れて3手で詰ま"
+     panel2 figs=1 beside-caption 32px/32px h=504.5 -> beside-example 32px/32px h=504.5 "玉の逃げ道をふさぐ王手で詰ませます。"
+     panel3 figs=1 beside-caption 32px/32px h=508.5 -> beside-example 32px/32px h=508.5 "玉方は盤の上にも攻方の持駒にも無い駒を全"
+     panel4 figs=1 beside-caption 32px/32px h=749 -> beside-example 32px/32px h=749 "駒は図の向きへ動けます。成った銀・桂馬・"
+     panel5 figs=1 beside-caption 32px/32px h=208 -> beside-example 32px/32px h=208 "上の3段から動くか上の3段へ動くと成れま"
+     panel6 figs=2 beside-caption 32px/32px h=936.9 -> beside-example 32px/32px h=936.9 "歩は攻方の歩が無い縦の列にだけ打てます。"
+     panel7 figs=2 beside-caption 32px/32px h=936.9 -> beside-example 32px/32px h=936.9 "歩を打って王手をかけられるのはその手で詰"
+     panel8 figs=2 beside-caption 32px/32px h=872.9 -> beside-example 32px/32px h=872.9 "上の2段へ動く桂馬といちばん上の段へ動く"
+   before rules p0 h=480 f0:beside-caption/-(322,560) ok
+   before rules p1 h=504 f0:beside-caption/-(322,572) ok
+   before rules p2 h=504 f0:beside-caption/-(322,572) ok
+   before rules p3 h=508 f0:beside-caption/-(322,574) ok
+   before rules p4 h=749 f0:not-touched
+   before rules p5 h=208 f0:not-touched
+   before rules p6 h=937 f0:beside-caption/-(322,1017) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(322,560) ok
+   before rules p7 h=937 f0:beside-caption/-(322,1017) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(322,560) ok
+   before rules p8 h=873 f0:beside-caption/-(322,985) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(322,560) ok
+   after rules p0 h=480 f0:beside-example/right(322,559) ok
+   after rules p1 h=504 f0:beside-example/right(322,572) ok
+   after rules p2 h=504 f0:beside-example/right(322,571) ok
+   after rules p3 h=508 f0:beside-example/right(322,574) ok
+   after rules p4 h=749 f0:not-touched
+   after rules p5 h=208 f0:not-touched
+   after rules p6 h=937 f0:beside-example/right(322,560) ok  f1:beside-example/right(322,560) ok | seq→right/near f1 | scroll(122px from SPAN.absolut): right/418 -> right/875 near f0->f1
+   after rules p7 h=937 f0:beside-example/right(322,560) ok  f1:beside-example/right(322,560) ok | seq→right/near f1 | scroll(119px from SPAN.absolut): right/418 -> right/875 near f0->f1
+   after rules p8 h=873 f0:beside-example/right(322,528) ok  f1:beside-example/right(322,560) ok | seq→right/near f1 | scroll(6px from SPAN.absolut): right/354 -> right/811 near f0->f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 below-examples 46px/46px h=432.5 -> below-examples 32px/48px h=420.5 "動かす駒を押して選んでから行き先の升を押"
+     panel1 figs=1 below-examples 46px/46px h=496.5 -> below-examples 32px/48px h=484.5 "持駒を押して選んでから打つ升を押します。"
+     panel2 figs=1 below-examples 46px/46px h=496.5 -> below-examples 32px/48px h=484.5 "成っても成らなくても王手になるときは「成"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "指し直します。" -> 14px 2L "最初の盤面から指し直します。" :: 時間は戻さずに最初の盤面から指し直します。
+     text[menu] 14px 2L "やり直します。" -> 14px 2L "最初からやり直します。" :: 時間も0に戻して同じ問題を最初からやり直します。
+   before operations p0 h=432 f0:below-examples/-(322,556) ok
+   before operations p1 h=496 f0:below-examples/-(322,588) ok
+   before operations p2 h=496 f0:below-examples/-(322,588) ok
+   after operations p0 h=420 f0:below-examples/-(322,556) ok
+   after operations p1 h=484 f0:below-examples/-(322,588) ok
+   after operations p2 h=484 f0:below-examples/-(322,588) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 530->532 caps 1,2,2 -> 1,2,2 inert=true
+     text[li] 14px 2L "王手をかけると1回です。" -> 16px 2L "詰まない王手をかけると1回です。" :: まだ詰ませられる盤面から残りの手数では詰まない王手をかけると1回です。
+     text[li] 14px 1L "使っても指せない手を試しても点は下がりません。" -> 16px 2L "点は下がりません。" :: 使っても指せない手を試しても点は下がりません。
+     text[li] 14px 2L "王手が多い問題ほど長くなります。" -> 16px 2L "詰まない王手が多い問題ほど長くなります。" :: 手数・最初にかけられる王手・詰みそうで詰まない王手が多い問題ほど長くなります。
+
+## tsume-shogi w320
+  goal btn same board={"x":18,"y":220,"w":285,"h":321,"r":302,"b":541}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=421 -> beside-example 32px/32px h=421 "次に玉を取れる手（王手）だけを指せます。"
+     panel1 figs=1 beside-caption 32px/32px h=445 -> beside-example 32px/32px h=445 "「3手詰」なら玉方の手も入れて3手で詰ま"
+     panel2 figs=1 beside-caption 32px/32px h=445 -> beside-example 32px/32px h=445 "玉の逃げ道をふさぐ王手で詰ませます。"
+     panel3 figs=1 beside-caption 32px/32px h=449 -> beside-example 32px/32px h=449 "玉方は盤の上にも攻方の持駒にも無い駒を全"
+     panel4 figs=1 beside-caption 32px/32px h=749 -> beside-example 32px/32px h=749 "駒は図の向きへ動けます。成った銀・桂馬・"
+     panel5 figs=1 below-examples 46px/46px h=236 -> below-examples 32px/48px h=224 "上の3段から動くか上の3段へ動くと成れま"
+     panel6 figs=2 beside-caption 32px/32px h=818 -> beside-example 32px/32px h=818 "歩は攻方の歩が無い縦の列にだけ打てます。"
+     panel7 figs=2 beside-caption 32px/32px h=818 -> beside-example 32px/32px h=818 "歩を打って王手をかけられるのはその手で詰"
+     panel8 figs=2 beside-caption 32px/32px h=754 -> beside-example 32px/32px h=754 "上の2段へ動く桂馬といちばん上の段へ動く"
+   before rules p0 h=421 f0:beside-caption/-(252,482) ok
+   before rules p1 h=445 f0:beside-caption/-(252,494) ok
+   before rules p2 h=445 f0:beside-caption/-(252,494) ok
+   before rules p3 h=449 f0:beside-caption/-(252,496) ok
+   before rules p4 h=749 f0:not-touched
+   before rules p5 h=236 f0:not-touched
+   before rules p6 h=818 f0:beside-caption/-(252,879) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(252,482) ok
+   before rules p7 h=818 f0:beside-caption/-(252,879) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(252,482) ok
+   before rules p8 h=754 f0:beside-caption/-(252,847) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(252,482) ok
+   after rules p0 h=421 f0:beside-example/right(252,482) ok
+   after rules p1 h=445 f0:beside-example/right(252,494) ok
+   after rules p2 h=445 f0:beside-example/right(252,494) ok
+   after rules p3 h=449 f0:beside-example/right(252,496) ok
+   after rules p4 h=749 f0:not-touched
+   after rules p5 h=224 f0:not-touched
+   after rules p6 h=818 f0:beside-example/right(252,482) ok  f1:beside-example/right(252,482) ok | seq→right/near f1 | scroll(122px from SPAN.absolut): right/359 -> right/756 near f0->f1
+   after rules p7 h=818 f0:beside-example/right(252,482) ok  f1:beside-example/right(252,482) ok | seq→right/near f1 | scroll(117px from SPAN.absolut): right/359 -> right/756 near f0->f1
+   after rules p8 h=754 f0:beside-example/right(252,450) ok  f1:beside-example/right(252,482) ok | seq→right/near f1 | scroll(24px from SPAN.absolut): right/295 -> right/692 near f0->f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 below-examples 46px/46px h=373 -> below-examples 32px/48px h=361 "動かす駒を押して選んでから行き先の升を押"
+     panel1 figs=1 below-examples 46px/46px h=437 -> below-examples 32px/48px h=425 "持駒を押して選んでから打つ升を押します。"
+     panel2 figs=1 below-examples 46px/46px h=437 -> below-examples 32px/48px h=425 "成っても成らなくても王手になるときは「成"
+     text[li] NEW -> 16px 2L "選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "指し直します。" -> 14px 2L "最初の盤面から指し直します。" :: 時間は戻さずに最初の盤面から指し直します。
+     text[menu] 14px 2L "変えます。" -> 14px 2L "ほかの詰将棋に変えます。" :: 同じレベルのほかの詰将棋に変えます。
+   before operations p0 h=373 f0:below-examples/-(252,478) ok
+   before operations p1 h=437 f0:below-examples/-(252,510) ok
+   before operations p2 h=437 f0:below-examples/-(252,510) ok
+   after operations p0 h=361 f0:below-examples/-(252,478) ok
+   after operations p1 h=425 f0:below-examples/-(252,510) ok
+   after operations p2 h=425 f0:below-examples/-(252,510) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 549->551 caps 2,2,2 -> 2,2,2 inert=true
+     text[li] 14px 2L "詰まない王手をかけると1回です。" -> 16px 3L "かけると1回です。" :: まだ詰ませられる盤面から残りの手数では詰まない王手をかけると1回です。
+     text[li] 14px 2L "下がりません。" -> 16px 2L "点は下がりません。" :: 使っても指せない手を試しても点は下がりません。
+     text[li] 14px 2L "詰まない王手が多い問題ほど長くなります。" -> 16px 3L "多い問題ほど長くなります。" :: 手数・最初にかけられる王手・詰みそうで詰まない王手が多い問題ほど長くなります。
+
+## tsume-shogi pc
+  goal btn same board={"x":32,"y":192,"w":373,"h":401,"r":405,"b":593}
+  [rules] headings H3:22px -> H3:16px; overflow 1 -> 1
+     after OVERFLOW SPAN inline-block x=600.6 r=706.9
+     panel0 figs=1 beside-caption 32px/32px h=500.8 -> beside-example 32px/32px h=500.8 "次に玉を取れる手（王手）だけを指せます。"
+     panel1 figs=1 beside-caption 32px/32px h=524.8 -> beside-example 32px/32px h=524.8 "「3手詰」なら玉方の手も入れて3手で詰ま"
+     panel2 figs=1 beside-caption 32px/32px h=524.8 -> beside-example 32px/32px h=524.8 "玉の逃げ道をふさぐ王手で詰ませます。"
+     panel3 figs=1 beside-caption 32px/32px h=528.8 -> beside-example 32px/32px h=528.8 "玉方は盤の上にも攻方の持駒にも無い駒を全"
+     panel4 figs=1 beside-caption 32px/32px h=483 -> beside-example 32px/32px h=483 "駒は図の向きへ動けます。成った銀・桂馬・"
+     panel5 figs=1 beside-caption 32px/32px h=208 -> beside-example 32px/32px h=208 "上の3段から動くか上の3段へ動くと成れま"
+     panel6 figs=2 beside-caption 32px/32px h=500.8 -> beside-example 32px/32px h=500.8 "歩は攻方の歩が無い縦の列にだけ打てます。"
+     panel7 figs=2 beside-caption 32px/32px h=500.8 -> beside-example 32px/32px h=500.8 "歩を打って王手をかけられるのはその手で詰"
+     panel8 figs=2 beside-caption 32px/32px h=500.8 -> beside-example 32px/32px h=500.8 "上の2段へ動く桂馬といちばん上の段へ動く"
+   before rules p0 h=501 f0:beside-caption/-(1196,589) ok
+   before rules p1 h=525 f0:beside-caption/-(1196,601) ok
+   before rules p2 h=525 f0:beside-caption/-(1196,600) ok
+   before rules p3 h=529 f0:beside-caption/-(1196,602) ok
+   before rules p4 h=483 f0:not-touched
+   before rules p5 h=208 f0:not-touched
+   before rules p6 h=501 f0:beside-caption/-(1196,588) nearest=f1  f1:beside-caption/-(1196,588) ok
+   before rules p7 h=501 f0:beside-caption/-(1196,589) nearest=f1  f1:beside-caption/-(1196,589) ok
+   before rules p8 h=501 f0:beside-caption/-(1196,690) nearest=f1  f1:beside-caption/-(1196,690) ok
+   after rules p0 h=501 f0:beside-example/right(1196,589) ok
+   after rules p1 h=525 f0:beside-example/right(1196,601) ok
+   after rules p2 h=525 f0:beside-example/right(1196,601) ok
+   after rules p3 h=529 f0:beside-example/right(1196,602) ok
+   after rules p4 h=483 f0:not-touched
+   after rules p5 h=208 f0:not-touched
+   after rules p6 h=501 f0:beside-example/left(624,588) ok  f1:beside-example/right(1196,588) ok | seq→right/near f1
+   after rules p7 h=501 f0:beside-example/left(624,589) ok  f1:beside-example/right(1196,589) ok | seq→right/near f1
+   after rules p8 h=501 f0:beside-example/left(624,690) ok  f1:beside-example/right(1196,690) ok | seq→right/near f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=424.8 -> beside-example 32px/32px h=424.8 "動かす駒を押して選んでから行き先の升を押"
+     panel1 figs=1 beside-caption 32px/32px h=488.8 -> beside-example 32px/32px h=488.8 "持駒を押して選んでから打つ升を押します。"
+     panel2 figs=1 beside-caption 32px/32px h=488.8 -> beside-example 32px/32px h=488.8 "成っても成らなくても王手になるときは「成"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=425 f0:beside-caption/-(1196,551) ok
+   before operations p1 h=489 f0:beside-caption/-(1196,583) ok
+   before operations p2 h=489 f0:beside-caption/-(1196,582) ok
+   after operations p0 h=425 f0:beside-example/right(1196,545) ok
+   after operations p1 h=489 f0:beside-example/right(1196,577) ok
+   after operations p2 h=489 f0:beside-example/right(1196,577) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 1 -> 1
+     after OVERFLOW SPAN inline-block x=600.6 r=696.7
+     flow0 h 783.2->783.1 caps 1,1,1 -> 1,1,1 inert=true
+     text[li] 14px 1L "まだ詰ませられる盤面から残りの手数では詰まない王手をかけると1回です。" -> 16px 1L "まだ詰ませられる盤面から残りの手数では詰まない王手をかけると1回です。" :: まだ詰ませられる盤面から残りの手数では詰まない王手をかけると1回です。
+     text[li] 14px 1L "使っても指せない手を試しても点は下がりません。" -> 16px 1L "使っても指せない手を試しても点は下がりません。" :: 使っても指せない手を試しても点は下がりません。
+     text[li] 14px 1L "手数・最初にかけられる王手・詰みそうで詰まない王手が多い問題ほど長くなります。" -> 16px 1L "手数・最初にかけられる王手・詰みそうで詰まない王手が多い問題ほど長くなります。" :: 手数・最初にかけられる王手・詰みそうで詰まない王手が多い問題ほど長くなります。

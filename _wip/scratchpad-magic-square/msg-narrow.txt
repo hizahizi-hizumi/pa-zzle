@@ -1,0 +1,11 @@
+fix(magic-square): 高さの足りない画面で 6×6 の数の欄を詰め、待ったとメモの丸を保つ
+
+数の欄が5行になる 6×6 は、高さ 600px 以下の画面で数の札を 36px にして
+盤面に高さを回す。320×568 のマスは 25.2px から 29.4px になる。
+
+待ったとメモの切り替えは、最後の数の後ろの空いた枠をまとめて取り、操作ごとに
+1枠の幅か 48px の大きい方を割り当てる。1枠が 48px より狭い画面でも、丸い
+ボタンが縦長に潰れない。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

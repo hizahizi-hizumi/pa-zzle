@@ -1,0 +1,16 @@
+common:
+- rule h3 22px/700 -> 16px/600 in rules tab (all). PC: goal top now aligned with first panel (improvement).
+- menu lead "画面の右上の/「…」から/選べます。" : の+noun slash (基本の形 文). verify "右上" per game.
+- score rows text 14->16.
+- flow panel: bg-muted -> border; not inert before/after (pre-existing).
+- goal replay button: games wrapping GoalFrame in content-sized div keep button at board right; minesweeper (phone) moved to column right -> inconsistent.
+
+takuzu: multi-example panels: phone p1,p2 below-examples -> bottom 68px vs top 32px empty band; p0 top-corner beside right example. PC p1,p2 top-corner next to top example while touching bottom example.
+water-sort: p1-p3 top-corner (pair). need pour film for top-corner overlap. PC touches failed -> follow-hints.
+minesweeper: goal button moved on phone only (column right) -> differs from others.
+nanpure: top-corner existed before (phone p1,p3, ops), PC all top-corner before/after; only 26->16px. ops p3 below-examples 46/46 -> 32/48. Pre-existing: PC p0 touching 2nd row shows button beside 1st row (top-corner before too).
+bridges: phone pairs p0,p1 beside->below (+36px, 68 bottom band). PC pairs beside->top-corner, button 20px right of right board top.
+parking-jam: single examples only; no change except common.
+ice-floor-maze: phone stacked pairs p1,p4-p7 beside->top-corner; touching 2nd example shows button beside 1st board (new). overlaps g/line false positive (svg bbox).
+hitofude: phone p1 pair beside->top-corner, button 20px right of right board (svg overlap false positive: hidden 3rd column). flows ok.
+slide-puzzle: phone goal button moved to column right (like minesweeper). p1,p2 stacked tall (656px > viewport 664-100) beside->top-corner: touching bottom example -> button at panel top, offscreen. before: touching top example -> button at bottom offscreen (mirror).

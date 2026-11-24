@@ -1,0 +1,90 @@
+
+## parking-jam phone
+  goal btn same board={"x":55,"y":172,"w":280,"h":233,"r":335,"b":405}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=286.7 -> beside-example 32px/32px h=286.7 "車を前か後ろへまっすぐ進めて道路へ出しま"
+     panel1 figs=1 beside-caption 32px/32px h=212 -> beside-example 32px/32px h=212 "進む先に道路がないと出られません。"
+     panel2 figs=1 beside-caption 32px/32px h=212 -> beside-example 32px/32px h=212 "植え込みがあると通れません。"
+     panel3 figs=1 beside-caption 32px/32px h=286.7 -> beside-example 32px/32px h=286.7 "ほかの車があると通れません。じゃまな車か"
+   before rules p0 h=287 f0:beside-caption/-(322,463) ok
+   before rules p1 h=212 f0:beside-caption/-(322,426) ok
+   before rules p2 h=212 f0:beside-caption/-(322,426) ok
+   before rules p3 h=287 f0:beside-caption/-(322,554) ok
+   after rules p0 h=287 f0:beside-example/right(322,463) ok
+   after rules p1 h=212 f0:beside-example/right(322,426) ok
+   after rules p2 h=212 f0:beside-example/right(322,426) ok
+   after rules p3 h=287 f0:beside-example/right(322,554) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=176 -> beside-example 32px/32px h=176 "車を出したい向きへスワイプします。"
+     panel1 figs=1 beside-caption 32px/32px h=250.7 -> beside-example 32px/32px h=250.7 "車を押すと両端に矢印が出ます。矢印を押し"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 3L "「待った」の回数も0に戻します。" -> 14px 3L "0に戻します。" :: 同じ問題を最初からやり直します。時間・ミス・「待った」の回数も0に戻します。
+   before operations p0 h=176 f0:beside-caption/-(322,333) ok
+   before operations p1 h=251 f0:beside-caption/-(322,446) ok
+   after operations p0 h=176 f0:beside-example/right(322,327) ok
+   after operations p1 h=251 f0:beside-example/right(322,440) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     text[li] 14px 2L "「盤面を戻す」でも減りません。" -> 16px 2L "「待った」・「盤面を戻す」でも減りません。" :: 出られない向きへ動かすと1回です。「待った」・「盤面を戻す」でも減りません。
+     text[li] 14px 2L "出られない車は1台ごとにさらに3秒足します。" -> 16px 3L "さらに3秒足します。" :: 盤面を読む5秒に車1台ごとに3秒を足します。初めに出られない車は1台ごとにさらに3秒足し
+     text[li] 14px 1L "出した車を1台戻すと1回です。" -> 16px 1L "出した車を1台戻すと1回です。" :: 出した車を1台戻すと1回です。
+
+## parking-jam w320
+  goal btn same board={"x":48,"y":196,"w":224,"h":187,"r":272,"b":383}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 top-corner 32px/32px h=249.3 -> beside-example 32px/32px h=249.3 "車を前か後ろへまっすぐ進めて道路へ出しま"
+     panel1 figs=1 below-examples 32px/46px h=203.6 -> below-examples 32px/48px h=205.6 "進む先に道路がないと出られません。"
+     panel2 figs=1 below-examples 32px/46px h=203.6 -> below-examples 32px/48px h=205.6 "植え込みがあると通れません。"
+     panel3 figs=1 below-examples 32px/46px h=263.3 -> below-examples 32px/48px h=265.3 "ほかの車があると通れません。じゃまな車か"
+   before rules p0 h=249 f0:top-corner/-(252,236) ok
+   before rules p1 h=204 f0:below-examples/-(252,401) ok
+   before rules p2 h=204 f0:below-examples/-(252,401) ok
+   before rules p3 h=263 f0:below-examples/-(252,478) ok
+   after rules p0 h=249 f0:beside-example/right(252,226) ok
+   after rules p1 h=206 f0:below-examples/-(252,401) ok
+   after rules p2 h=206 f0:below-examples/-(252,401) ok
+   after rules p3 h=265 f0:below-examples/-(252,476) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=153.6 -> beside-example 32px/32px h=153.6 "車を出したい向きへスワイプします。"
+     panel1 figs=1 beside-caption 32px/32px h=213.3 -> beside-example 32px/32px h=213.3 "車を押すと両端に矢印が出ます。矢印を押し"
+     text[li] NEW -> 16px 2L "選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 3L "そのままです。" -> 14px 4L "そのままです。" :: 盤面を最初に戻します。時間・ミス・「待った」の回数はそのままです。
+     text[menu] 14px 3L "「待った」の回数も0に戻します。" -> 14px 4L "0に戻します。" :: 同じ問題を最初からやり直します。時間・ミス・「待った」の回数も0に戻します。
+     text[menu] 14px 2L "変えます。" -> 14px 2L "別の問題に変えます。" :: 同じレベルの別の問題に変えます。
+   before operations p0 h=154 f0:beside-caption/-(252,311) ok
+   before operations p1 h=213 f0:beside-caption/-(252,379) ok
+   after operations p0 h=154 f0:beside-example/right(252,305) ok
+   after operations p1 h=213 f0:beside-example/right(252,373) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     text[li] 14px 2L "「待った」・「盤面を戻す」でも減りません。" -> 16px 3L "減りません。" :: 出られない向きへ動かすと1回です。「待った」・「盤面を戻す」でも減りません。
+     text[li] 14px 3L "さらに3秒足します。" -> 16px 3L "1台ごとにさらに3秒足します。" :: 盤面を読む5秒に車1台ごとに3秒を足します。初めに出られない車は1台ごとにさらに3秒足し
+     text[li] 14px 1L "出した車を1台戻すと1回です。" -> 16px 1L "出した車を1台戻すと1回です。" :: 出した車を1台戻すと1回です。
+
+## parking-jam pc
+  goal btn same board={"x":32,"y":168,"w":384,"h":320,"r":416,"b":488}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=356 -> beside-example 32px/32px h=356 "車を前か後ろへまっすぐ進めて道路へ出しま"
+     panel1 figs=1 beside-caption 32px/32px h=253.6 -> beside-example 32px/32px h=253.6 "進む先に道路がないと出られません。"
+     panel2 figs=1 beside-caption 32px/32px h=253.6 -> beside-example 32px/32px h=253.6 "植え込みがあると通れません。"
+     panel3 figs=1 beside-caption 32px/32px h=356 -> beside-example 32px/32px h=356 "ほかの車があると通れません。じゃまな車か"
+   before rules p0 h=356 f0:beside-caption/-(1196,472) ok
+   before rules p1 h=254 f0:beside-caption/-(1196,465) ok
+   before rules p2 h=254 f0:beside-caption/-(1196,465) ok
+   before rules p3 h=356 f0:beside-caption/-(1196,690) ok
+   after rules p0 h=356 f0:beside-example/right(1196,462) ok
+   after rules p1 h=254 f0:beside-example/right(1196,465) ok
+   after rules p2 h=254 f0:beside-example/right(1196,466) ok
+   after rules p3 h=356 f0:beside-example/right(1196,690) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=217.6 -> beside-example 32px/32px h=217.6 "車を出したい向きへスワイプします。"
+     panel1 figs=1 beside-caption 32px/32px h=320 -> beside-example 32px/32px h=320 "車を押すと両端に矢印が出ます。矢印を押し"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=218 f0:beside-caption/-(1196,383) ok
+   before operations p1 h=320 f0:beside-caption/-(1196,498) ok
+   after operations p0 h=218 f0:beside-example/right(1196,377) ok
+   after operations p1 h=320 f0:beside-example/right(1196,492) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 2 -> 2
+     after OVERFLOW SPAN inline-block x=600.6 r=680.7
+     after OVERFLOW SPAN inline-block x=600.6 r=712.7
+     text[li] 14px 1L "出られない向きへ動かすと1回です。「待った」・「盤面を戻す」でも減りません。" -> 16px 1L "出られない向きへ動かすと1回です。「待った」・「盤面を戻す」でも減りません。" :: 出られない向きへ動かすと1回です。「待った」・「盤面を戻す」でも減りません。
+     text[li] 14px 1L "盤面を読む5秒に車1台ごとに3秒を足します。初めに出られない車は1台ごとにさらに3秒足します。" -> 16px 2L "1台ごとにさらに3秒足します。" :: 盤面を読む5秒に車1台ごとに3秒を足します。初めに出られない車は1台ごとにさらに3秒足し
+     text[li] 14px 1L "出した車を1台戻すと1回です。" -> 16px 1L "出した車を1台戻すと1回です。" :: 出した車を1台戻すと1回です。

@@ -1,0 +1,23 @@
+const { openHelp } = require('./lib');
+const out = 'goal';
+(async () => {
+  const kind = process.argv[2] || 'sp';
+  const { browser, page, errors } = await openHelp(kind);
+  const top = page.locator('[role=dialog] .isolate').first();
+  const cells = top.locator('button[aria-label*="行"]');
+  let n = 0;
+  const shot = async (name, wait = 0) => { if (wait) await page.waitForTimeout(wait); await page.screenshot({ path: `${out}/${kind}-${String(n++).padStart(2,'0')}-${name}.png` }); };
+  const tapAt = async (loc) => { const b = await loc.boundingBox(); if (kind === 'sp') await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2); else await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2); };
+  await page.waitForTimeout(300);
+  await shot('t800');
+  await tapAt(cells.nth(5)); await shot('tap-during-playback-100', 100); await shot('tap-during-playback-700', 600);
+  await page.waitForTimeout(5000); await shot('after-6s');
+  await tapAt(cells.nth(5)); await shot('tap-r2c2-after', 150); await shot('tap-r2c2-after-800', 650);
+  const replay = page.getByRole('button', { name: '始まりの盤面から見せ直す' });
+  console.log('replay visible', await replay.isVisible());
+  await replay.click(); await shot('replay-50', 50); await shot('replay-400', 350); await shot('replay-1200', 800);
+  await shot('replay-2400', 1200);
+  await tapAt(cells.nth(0)); await shot('tap-during-replay-100', 100);
+  console.log(errors.join('\n'));
+  await browser.close();
+})();

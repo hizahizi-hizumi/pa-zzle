@@ -1,0 +1,21 @@
+touch-each.js after phone bridges rules 0 0
+touch-each.js after phone bridges rules 1 0,1
+touch-each.js after pc bridges rules 0 0
+touch-each.js after pc bridges rules 1 0,1
+touch-each.js after phone hitofude-puzzle rules 1 0
+touch-each.js after pc hitofude-puzzle rules 1 0
+touch-each.js after w320 hitofude-puzzle rules 1 0
+touch-each.js after pc water-sort rules 1 0,1
+touch-each.js after pc water-sort rules 2 0
+touch-each.js after pc water-sort rules 3 0
+touch-each.js after phone tsume-shogi rules 4 0
+touch-each.js after phone tsume-shogi rules 5 0
+touch-each.js after pc tsume-shogi rules 4 0
+touch-each.js after pc tsume-shogi rules 5 0
+touch-each.js after w320 tsume-shogi rules 5 0
+frames.js after phone water-sort rules 1 0 2
+frames.js after phone water-sort rules 1 1 2
+frames.js after pc water-sort rules 1 1 2
+frames.js after phone water-sort operations 0 0 2
+frames.js after phone parking-jam rules 0 0 1
+frames.js after phone parking-jam rules 3 0 2

@@ -1,0 +1,9 @@
+refactor(magic-square): メモを書けないわけ・数を入れた結果・列の状態の言葉を本番の側から出す
+
+- メモに数を書けないわけ（空きマスでない・盤面にある数・上限まで埋まった）を `findMagicSquareMemoRejection` で返し、
+  `canToggleMagicSquareMemo` はわけが無いかで決める。
+- 選んだマスに今の入れ方で数を入れた結果と知らせを `inputMagicSquareValue` で求め、プレイの入力はこれを使う。
+- 列の状態の読み上げの言葉を `magicSquareLineStatusPhrases` として出す。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

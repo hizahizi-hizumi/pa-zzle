@@ -1,0 +1,42 @@
+const { openHelp } = require('./lib');
+const out = 'pc-int';
+(async () => {
+  const { browser, page, errors } = await openHelp('pc', { dsf: 2 });
+  let n = 0;
+  const shot = async (name, wait = 500, clip) => { await page.waitForTimeout(wait); await page.screenshot({ path: `${out}/${String(n++).padStart(2,'0')}-${name}.png`, clip }); };
+  await shot('open-300', 100);
+  // tap goal board during playback (skip)
+  const top = page.locator('[role=dialog] .isolate').first();
+  const gcell = top.locator('button[aria-label*="行"]').nth(5);
+  const gb = await gcell.boundingBox();
+  await page.mouse.move(gb.x + 10, gb.y + 10); await shot('hover-goal-during', 200);
+  await page.mouse.click(gb.x + 10, gb.y + 10); await shot('click-goal-skip', 300);
+  const replay = page.getByRole('button', { name: '始まりの盤面から見せ直す' });
+  await replay.hover(); await shot('hover-replay', 300);
+  const panel = page.locator('[role=tabpanel][data-state=active]');
+  const s0 = panel.locator(':scope > div > section').nth(0);
+  const cells = s0.locator('button[aria-label*="行"]');
+  const keys = s0.locator('button:not([aria-label])');
+  const pb = await s0.locator('.rounded-lg').first().boundingBox();
+  const clip = { x: pb.x - 10, y: pb.y - 10, width: pb.width + 20, height: pb.height + 20 };
+  await cells.nth(6).hover(); await shot('hover-cell-x-empty', 300, clip);
+  await cells.nth(6).click(); await shot('click-cell-x-empty', 400, clip);
+  await keys.filter({ hasText: /^7$/ }).hover(); await shot('hover-key7', 300, clip);
+  await keys.filter({ hasText: /^4$/ }).hover(); await shot('hover-key4-disabled', 300, clip);
+  await keys.filter({ hasText: /^7$/ }).click(); await shot('click-key7', 400, clip);
+  const reset = s0.getByRole('button', { name: '例を元に戻す' });
+  await reset.hover(); await shot('hover-reset', 400, clip);
+  await reset.click(); await shot('reset', 400, clip);
+  // ops tab
+  await page.getByRole('tab', { name: '操作' }).click(); await page.waitForTimeout(500);
+  const li0 = page.locator('[role=tabpanel][data-state=active] li').nth(0);
+  const b2 = await li0.locator('.rounded-lg').first().boundingBox();
+  const clip2 = { x: b2.x - 10, y: b2.y - 10, width: b2.width + 20, height: Math.min(b2.height + 20, 800 - b2.y + 10) };
+  const c = li0.locator('button[aria-label*="行"]');
+  await c.nth(5).click(); await shot('ops-click-r2c2', 400, clip2);
+  await c.nth(0).click(); await shot('ops-click-given', 400, clip2);
+  await li0.locator('button:not([aria-label])').filter({ hasText: /^2$/ }).click(); await shot('ops-press2-on-given', 400, clip2);
+  await page.screenshot({ path: `${out}/${String(n++).padStart(2,'0')}-ops-full.png` });
+  console.log(errors.join('\n'));
+  await browser.close();
+})();

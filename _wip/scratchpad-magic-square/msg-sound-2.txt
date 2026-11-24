@@ -1,0 +1,10 @@
+feat(magic-square): 置く・メモ・不成立・クリアの効果音を鳴らす
+
+数を置く（置き換えを含む）・メモを書く・消すは揺らぎを付けて鳴らし、
+外す操作は数の欄へ戻す操作なので鳴らさない。受け付けなかった押し方は、
+揺れが出るときだけ鳴らす。クリアは演出の3段と仕上げが始まる時刻に合わせ、
+動きを減らす設定ではそろった盤面に合わせて仕上げだけを鳴らす。
+チュートリアルも同じ効果音のフックで鳴らす。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

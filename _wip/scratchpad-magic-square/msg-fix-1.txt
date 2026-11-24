@@ -1,0 +1,11 @@
+fix(magic-square): 問題の識別情報の判定を復元できるものに合わせ、seed の読み方を1か所にまとめる
+
+今の生成器の識別情報かの判定は、seed を復号できるかに加えて、空きがあり
+最初から置いてある数だけで違反の列が無いかも確かめ、復元で受け付けるもの
+だけを真にする。seed から盤面の一辺と最初から置いてある数の個数を読む
+関数を problem に置き、問題集の identity と図鑑の特徴はそれを使う。
+本体から使わない識別情報の作成は export をやめ、テストは _private から
+参照する。問題集のテストは対象の関数ごとにまとめる。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

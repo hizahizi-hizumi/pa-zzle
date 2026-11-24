@@ -1,0 +1,397 @@
+## ルール
+h3 fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=132 :: 縦・横・斜めのどの列も足して左上の合計になれば完成です。列の端の合計はそろうと緑になります。このまま
+span fs=16px fw=400 lh=16px col=oklch(0.145 0 0) x=754.7 w=1.0 y=263 :: そろえる合計 34
+span fs=15.8387px fw=400 lh=15.8387px col=rgb(111, 104, 94) x=739.4 w=31.7 y=241 :: 合計
+span fs=24.478px fw=700 lh=24.478px col=rgb(43, 39, 34) x=739.4 w=31.6 y=261 :: 34
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=800.4 w=39.1 y=248 :: 14
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=882.2 w=19.6 y=248 :: 4
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=954.2 w=19.6 y=248 :: 5
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=1016.4 w=39.1 y=248 :: 11
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=263 :: 1行目の合計 34 そろった
+span fs=24.478px fw=600 lh=24.478px col=rgb(47, 122, 75) x=1084.9 w=31.7 y=251 :: 34
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=312 :: 1
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=312 :: 2
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=312 :: 3
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=859.5 w=66.5 y=312 :: 4
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=930.0 w=66.5 y=312 :: 5
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1000.5 w=66.5 y=312 :: 6
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=312 :: 7
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=312 :: 8
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=360 :: 9
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=360 :: 10
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=789.0 w=66.5 y=360 :: 11
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=859.5 w=66.5 y=360 :: 12
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=66.5 y=360 :: 13
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1000.5 w=66.5 y=360 :: 14
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=360 :: 15
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=360 :: 16
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=897.0 w=62.0 y=418 :: そろう
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=883.0 w=90.0 y=418 :: 
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=914.0 w=28.0 y=418 :: 
+span fs=16px fw=400 lh=16px col=oklch(0.145 0 0) x=754.7 w=1.0 y=519 :: そろえる合計 34
+span fs=15.8387px fw=400 lh=15.8387px col=rgb(111, 104, 94) x=739.4 w=31.7 y=497 :: 合計
+span fs=24.478px fw=700 lh=24.478px col=rgb(43, 39, 34) x=739.4 w=31.6 y=517 :: 34
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=800.4 w=39.1 y=504 :: 14
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=882.2 w=19.6 y=504 :: 4
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=1016.4 w=39.1 y=504 :: 16
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=519 :: 1行目の合計 34 空きがあるのに合計に届いた
+span fs=24.478px fw=600 lh=24.478px col=rgb(179, 52, 31) x=1084.9 w=31.7 y=507 :: 34
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=567 :: 1
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=567 :: 2
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=567 :: 3
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=859.5 w=66.5 y=567 :: 4
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=66.5 y=567 :: 5
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1000.5 w=66.5 y=567 :: 6
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=567 :: 7
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=567 :: 8
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=615 :: 9
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=615 :: 10
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=615 :: 11
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=859.5 w=66.5 y=615 :: 12
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=66.5 y=615 :: 13
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1000.5 w=66.5 y=615 :: 14
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=615 :: 15
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1141.5 w=66.5 y=615 :: 16
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=897.0 w=62.0 y=673 :: 
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=883.0 w=90.0 y=673 :: そろわない
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=914.0 w=28.0 y=673 :: 
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=836.0 w=1.0 y=692 :: ・
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=837.0 w=182.0 y=693 :: ・⏎空きがあるのに合計に届いた
+h3 fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=811 :: 盤面の下に並んだ数をどれも1回ずつ置きます。
+span fs=16px fw=400 lh=16px col=oklch(0.145 0 0) x=754.7 w=1.0 y=918 :: そろえる合計 34
+span fs=15.8387px fw=400 lh=15.8387px col=rgb(111, 104, 94) x=739.4 w=31.7 y=896 :: 合計
+span fs=24.478px fw=700 lh=24.478px col=rgb(43, 39, 34) x=739.4 w=31.6 y=917 :: 34
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=800.4 w=39.1 y=904 :: 14
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=882.2 w=19.6 y=904 :: 4
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=954.2 w=19.6 y=904 :: 5
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=918 :: 1行目の合計 23
+span fs=24.478px fw=600 lh=24.478px col=rgb(90, 84, 75) x=1084.9 w=31.7 y=907 :: 23
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=967 :: 1
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=967 :: 2
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=967 :: 3
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=859.5 w=66.5 y=967 :: 4
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=930.0 w=66.5 y=967 :: 5
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1000.5 w=66.5 y=967 :: 6
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=967 :: 7
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=967 :: 8
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=1015 :: 9
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=1015 :: 10
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=1015 :: 11
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=859.5 w=66.5 y=1015 :: 12
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=66.5 y=1015 :: 13
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1000.5 w=66.5 y=1015 :: 14
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=1015 :: 15
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=1015 :: 16
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=816.0 w=90.0 y=1073 :: まだ置ける
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=815.0 w=1.0 y=1082 :: 、
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=922.0 w=118.0 y=1073 :: もう置いてある
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=883.0 w=90.0 y=1073 :: 
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=869.0 w=118.0 y=1073 :: 
+h3 fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=1175 :: 最初から置いてある数は変えられません。
+span fs=16px fw=400 lh=16px col=oklch(0.145 0 0) x=754.7 w=1.0 y=1282 :: そろえる合計 34
+span fs=15.8387px fw=400 lh=15.8387px col=rgb(111, 104, 94) x=739.4 w=31.7 y=1260 :: 合計
+span fs=24.478px fw=700 lh=24.478px col=rgb(43, 39, 34) x=739.4 w=31.6 y=1280 :: 34
+span fs=30.2375px fw=700 lh=30.2375px col=rgb(43, 39, 34) x=800.5 w=39.1 y=1267 :: 14
+span fs=30.2375px fw=700 lh=30.2375px col=rgb(43, 39, 34) x=882.2 w=19.5 y=1267 :: 4
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=954.2 w=19.6 y=1267 :: 5
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=1282 :: 1行目の合計 23
+span fs=24.478px fw=600 lh=24.478px col=rgb(90, 84, 75) x=1084.9 w=31.7 y=1270 :: 23
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=1330 :: 1
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=1330 :: 2
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=1330 :: 3
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=859.5 w=66.5 y=1330 :: 4
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=930.0 w=66.5 y=1330 :: 5
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1000.5 w=66.5 y=1330 :: 6
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=1330 :: 7
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=1330 :: 8
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=1378 :: 9
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=1378 :: 10
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=1378 :: 11
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=859.5 w=66.5 y=1378 :: 12
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=66.5 y=1378 :: 13
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1000.5 w=66.5 y=1378 :: 14
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=1378 :: 15
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=1378 :: 16
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=823.0 w=90.0 y=1436 :: 変えられる
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=822.0 w=1.0 y=1446 :: 、
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=929.0 w=104.0 y=1436 :: 変えられない
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=883.0 w=90.0 y=1436 :: 
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=876.0 w=104.0 y=1436 :: 
+span fs=22px fw=700 lh=34px col=oklch(0.145 0 0) x=608.0 w=172.0 y=1538 :: 5×5と6×6の盤面
+th fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=608.0 w=213.3 y=1597 :: 盤面
+th fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=821.3 w=213.3 y=1597 :: 置く数
+th fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=1034.7 w=213.3 y=1597 :: 左上の合計
+th fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=213.3 y=1626 :: 5×5
+td fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=821.3 w=213.3 y=1626 :: 1〜25
+td fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1034.7 w=213.3 y=1626 :: 65
+th fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=213.3 y=1667 :: 6×6
+td fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=821.3 w=213.3 y=1667 :: 1〜36
+td fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1034.7 w=213.3 y=1667 :: 111
+
+## 操作
+span fs=22px fw=700 lh=34px col=oklch(0.145 0 0) x=608.0 w=66.0 y=132 :: 置き方
+h4 fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=191 :: マスを押して選ぶとそのマスを通る列が濃くなります。盤面の下に並んだ数を押すとそのマスに置けます。
+span fs=16px fw=400 lh=16px col=oklch(0.145 0 0) x=754.7 w=1.0 y=322 :: そろえる合計 34
+span fs=15.8394px fw=400 lh=15.8394px col=rgb(111, 104, 94) x=739.4 w=31.7 y=300 :: 合計
+span fs=24.4791px fw=700 lh=24.4791px col=rgb(43, 39, 34) x=739.4 w=31.6 y=320 :: 34
+span fs=30.2389px fw=700 lh=30.2389px col=rgb(43, 39, 34) x=800.5 w=39.1 y=307 :: 14
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=882.2 w=19.6 y=307 :: 4
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=954.2 w=19.6 y=307 :: 5
+span fs=30.2389px fw=700 lh=30.2389px col=rgb(43, 39, 34) x=1016.4 w=39.1 y=307 :: 11
+span fs=30.2389px fw=700 lh=30.2389px col=rgb(43, 39, 34) x=810.2 w=19.5 y=379 :: 9
+span fs=30.2389px fw=700 lh=30.2389px col=rgb(43, 39, 34) x=954.2 w=19.5 y=379 :: 7
+span fs=30.2389px fw=700 lh=30.2389px col=rgb(43, 39, 34) x=1016.4 w=39.1 y=379 :: 16
+span fs=30.2389px fw=700 lh=30.2389px col=rgb(43, 39, 34) x=810.2 w=19.5 y=451 :: 8
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=872.4 w=39.1 y=451 :: 13
+span fs=30.2389px fw=700 lh=30.2389px col=rgb(43, 39, 34) x=1026.2 w=19.5 y=451 :: 1
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=810.2 w=19.6 y=523 :: 3
+span fs=30.2389px fw=700 lh=30.2389px col=rgb(43, 39, 34) x=872.4 w=39.1 y=523 :: 15
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=944.4 w=39.1 y=523 :: 10
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=1026.2 w=19.6 y=523 :: 6
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=322 :: 1行目の合計 34 そろった
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(47, 122, 75) x=1084.9 w=31.7 y=310 :: 34
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=394 :: 2行目の合計 32
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=1084.9 w=31.7 y=382 :: 32
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=466 :: 3行目の合計 22
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=1084.9 w=31.7 y=454 :: 22
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=538 :: 4行目の合計 34 そろった
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(47, 122, 75) x=1084.9 w=31.7 y=526 :: 34
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=819.5 w=1.0 y=603 :: 1列目の合計 34 そろった
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(47, 122, 75) x=804.2 w=31.7 y=591 :: 34
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=891.5 w=1.0 y=603 :: 2列目の合計 32
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=876.1 w=31.7 y=591 :: 32
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=963.5 w=1.0 y=603 :: 3列目の合計 22
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=948.1 w=31.7 y=591 :: 22
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1035.5 w=1.0 y=603 :: 4列目の合計 34 そろった
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(47, 122, 75) x=1020.1 w=31.7 y=591 :: 34
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=603 :: 左上からの斜めの合計 20
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=1090.0 w=31.7 y=596 :: 20
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=754.7 w=1.0 y=603 :: 右上からの斜めの合計 34 そろった
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(47, 122, 75) x=734.3 w=31.7 y=596 :: 34
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=648.0 w=66.5 y=644 :: 1
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=644 :: 2
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=789.0 w=66.5 y=644 :: 3
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=859.5 w=66.5 y=644 :: 4
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=930.0 w=66.5 y=644 :: 5
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1000.5 w=66.5 y=644 :: 6
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1071.0 w=66.5 y=644 :: 7
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1141.5 w=66.5 y=644 :: 8
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=648.0 w=66.5 y=692 :: 9
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=718.5 w=66.5 y=692 :: 10
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=789.0 w=66.5 y=692 :: 11
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=859.5 w=66.5 y=692 :: 12
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=930.0 w=66.5 y=692 :: 13
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1000.5 w=66.5 y=692 :: 14
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1071.0 w=66.5 y=692 :: 15
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1141.5 w=66.5 y=692 :: 16
+h4 fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=800 :: 置いた数を選んで別の数を押すと置き換えられます。同じ数をもう一度押すと外せます。
+span fs=16px fw=400 lh=16px col=oklch(0.145 0 0) x=754.7 w=1.0 y=931 :: そろえる合計 34
+span fs=15.8387px fw=400 lh=15.8387px col=rgb(111, 104, 94) x=739.4 w=31.7 y=909 :: 合計
+span fs=24.478px fw=700 lh=24.478px col=rgb(43, 39, 34) x=739.4 w=31.6 y=930 :: 34
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=800.4 w=39.1 y=917 :: 14
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=882.2 w=19.6 y=917 :: 4
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=1026.2 w=19.6 y=917 :: 9
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=931 :: 1行目の合計 27
+span fs=24.478px fw=600 lh=24.478px col=rgb(90, 84, 75) x=1084.9 w=31.7 y=920 :: 27
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=980 :: 1
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=980 :: 2
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=980 :: 3
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=859.5 w=66.5 y=980 :: 4
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=66.5 y=980 :: 5
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1000.5 w=66.5 y=980 :: 6
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=980 :: 7
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=980 :: 8
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=648.0 w=66.5 y=1028 :: 9
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=1028 :: 10
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=1028 :: 11
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=859.5 w=66.5 y=1028 :: 12
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=66.5 y=1028 :: 13
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1000.5 w=66.5 y=1028 :: 14
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=1028 :: 15
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=1028 :: 16
+span fs=22px fw=700 lh=34px col=oklch(0.145 0 0) x=608.0 w=88.0 y=1184 :: やり直し
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=672.0 w=576.0 y=1243 :: 「待った」で置いた数もメモも1つ前に戻せます。
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=672.0 w=576.0 y=1271 :: 時間は戻りません。
+p fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=672.0 w=576.0 y=1307 :: 画面の右上の「…」から選べます。
+span fs=16px fw=600 lh=24px col=oklch(0.577 0.245 27.325) x=672.0 w=560.0 y=1351 :: 盤面を戻す
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=671.0 w=1.0 y=1374 :: ：
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=672.0 w=560.0 y=1375 :: 置いた数を外してメモも消して最初の盤面に戻します。時間は戻りません。外した数の分だけ置き直しが増えま
+span fs=16px fw=600 lh=24px col=oklch(0.577 0.245 27.325) x=672.0 w=560.0 y=1431 :: リセット
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=671.0 w=1.0 y=1454 :: ：
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=672.0 w=560.0 y=1455 :: 時間と置き直しの回数も0に戻して同じ問題を最初からやり直します。
+span fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=672.0 w=560.0 y=1491 :: 別の問題
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=671.0 w=1.0 y=1514 :: ：
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=672.0 w=560.0 y=1515 :: 同じレベルのまま問題を変えます。
+span fs=22px fw=700 lh=34px col=oklch(0.145 0 0) x=608.0 w=44.0 y=1611 :: メモ
+h4 fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=1670 :: 空いたマスを選んで鉛筆のボタンを押してから数を押すとメモを1マスに4つまで書けます。同じ数をもう一度
+span fs=16px fw=400 lh=16px col=oklch(0.145 0 0) x=754.7 w=1.0 y=1825 :: そろえる合計 34
+span fs=15.8387px fw=400 lh=15.8387px col=rgb(111, 104, 94) x=739.4 w=31.7 y=1803 :: 合計
+span fs=24.478px fw=700 lh=24.478px col=rgb(43, 39, 34) x=739.4 w=31.6 y=1823 :: 34
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=800.4 w=39.1 y=1810 :: 14
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=882.2 w=19.6 y=1810 :: 4
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=1825 :: 1行目の合計 18
+span fs=24.478px fw=600 lh=24.478px col=rgb(90, 84, 75) x=1084.9 w=31.7 y=1813 :: 18
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=1873 :: 1
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=1873 :: 2
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=1873 :: 3
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=859.5 w=66.5 y=1873 :: 4
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=66.5 y=1873 :: 5
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1000.5 w=66.5 y=1873 :: 6
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=1873 :: 7
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=1873 :: 8
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=1921 :: 9
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=1921 :: 10
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=1921 :: 11
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=859.5 w=66.5 y=1921 :: 12
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=66.5 y=1921 :: 13
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1000.5 w=66.5 y=1921 :: 14
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=1921 :: 15
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=1921 :: 16
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=871.6 w=112.9 y=2031 :: 
+h4 fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=2101 :: 数を置くと同じ数のメモはどのマスからも消えます。
+span fs=16px fw=400 lh=16px col=oklch(0.145 0 0) x=754.7 w=1.0 y=2208 :: そろえる合計 34
+span fs=15.8387px fw=400 lh=15.8387px col=rgb(111, 104, 94) x=739.4 w=31.7 y=2187 :: 合計
+span fs=24.478px fw=700 lh=24.478px col=rgb(43, 39, 34) x=739.4 w=31.6 y=2207 :: 34
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=800.4 w=39.1 y=2194 :: 14
+span fs=30.2375px fw=600 lh=30.2375px col=rgb(44, 77, 115) x=882.2 w=19.6 y=2194 :: 4
+span fs=18.7185px fw=500 lh=18.7185px col=rgb(61, 56, 49) x=942.8 w=12.1 y=2184 :: 5
+span fs=18.7185px fw=500 lh=18.7185px col=rgb(61, 56, 49) x=967.0 w=24.3 y=2184 :: 11
+span fs=18.7185px fw=500 lh=18.7185px col=rgb(61, 56, 49) x=1014.8 w=12.1 y=2184 :: 5
+span fs=18.7185px fw=500 lh=18.7185px col=rgb(61, 56, 49) x=1039.0 w=24.3 y=2184 :: 11
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1100.3 w=1.0 y=2208 :: 1行目の合計 18
+span fs=24.478px fw=600 lh=24.478px col=rgb(90, 84, 75) x=1084.9 w=31.7 y=2197 :: 18
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=2257 :: 1
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=2257 :: 2
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=2257 :: 3
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=859.5 w=66.5 y=2257 :: 4
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=66.5 y=2257 :: 5
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1000.5 w=66.5 y=2257 :: 6
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=2257 :: 7
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=2257 :: 8
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=648.0 w=66.5 y=2305 :: 9
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=718.5 w=66.5 y=2305 :: 10
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=789.0 w=66.5 y=2305 :: 11
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=859.5 w=66.5 y=2305 :: 12
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=66.5 y=2305 :: 13
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=1000.5 w=66.5 y=2305 :: 14
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1071.0 w=66.5 y=2305 :: 15
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1141.5 w=66.5 y=2305 :: 16
+
+## 採点
+span fs=22px fw=700 lh=34px col=oklch(0.145 0 0) x=608.0 w=44.0 y=132 :: 速さ
+span fs=22px fw=700 lh=34px col=oklch(0.145 0 0) x=1197.5 w=50.5 y=132 :: 70点
+p fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=191 :: 問題ごとの基準時間以内なら満点です。超えるほど下がって基準時間の2倍で0点になります。
+span fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=64.0 y=255 :: 基準時間
+p fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=283 :: 空いたマス1つにつき10秒を20秒に足します。
+span fs=22px fw=700 lh=34px col=oklch(0.145 0 0) x=608.0 w=66.0 y=371 :: 正確さ
+span fs=22px fw=700 lh=34px col=oklch(0.145 0 0) x=1197.5 w=50.5 y=371 :: 30点
+p fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=430 :: 置き直しのたびに30点から引きます。0点より下にはなりません。
+span fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=64.0 y=470 :: 置き直し
+span fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=1179.9 w=68.1 y=470 :: 1回 −3点
+p fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=498 :: 置いた数が外れるたびに画面の上の「置き直し」が1回増えます。ただし同じマスを選んでいる間に外れた数の
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=608.0 w=16.0 y=554 :: ・
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=628.0 w=320.1 y=554 :: その間に置いて列の端の色を変えなかった数
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=608.0 w=16.0 y=582 :: ・
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=628.0 w=208.0 y=582 :: その間に外して元に戻した数
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=608.0 w=16.0 y=610 :: ・
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=628.0 w=544.1 y=610 :: 押し間違えてすぐ盤面の下で上下・左右・斜めに隣り合う数に置き換えた数
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=788.2 w=19.6 y=703 :: 4
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=778.4 w=39.1 y=775 :: 14
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=797.5 w=1.0 y=999 :: 2列目の合計 18
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=782.2 w=31.7 y=987 :: 18
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=847.1 w=31.8 y=824 :: 16を
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=849.0 w=28.0 y=844 :: 置く
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=918.2 w=19.6 y=703 :: 4
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=908.4 w=39.1 y=775 :: 14
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=908.4 w=39.1 y=919 :: 16
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=927.5 w=1.0 y=999 :: 2列目の合計 34 空きがあるのに合計に届いた
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(179, 52, 31) x=912.2 w=31.7 y=987 :: 34
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=977.1 w=31.7 y=824 :: 11を
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=979.0 w=28.0 y=844 :: 置く
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=1048.2 w=19.6 y=703 :: 4
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=1038.4 w=39.1 y=775 :: 14
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=1038.4 w=39.1 y=919 :: 11
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1057.5 w=1.0 y=999 :: 2列目の合計 29
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=1042.2 w=31.7 y=987 :: 29
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=762.0 w=216.3 y=1043 :: 列の端の色を変えた数を置き換える
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=990.3 w=103.7 y=1040 :: → 置き直し 1回
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=788.2 w=19.6 y=1148 :: 4
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=778.4 w=39.1 y=1220 :: 14
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=797.5 w=1.0 y=1443 :: 2列目の合計 18
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=782.2 w=31.7 y=1431 :: 18
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=851.5 w=22.9 y=1268 :: 9を
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=849.0 w=28.0 y=1288 :: 置く
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=918.2 w=19.6 y=1148 :: 4
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=908.4 w=39.1 y=1220 :: 14
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=918.2 w=19.6 y=1364 :: 9
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=927.5 w=1.0 y=1443 :: 2列目の合計 27
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=912.2 w=31.7 y=1431 :: 27
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=977.1 w=31.7 y=1268 :: 11を
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=979.0 w=28.0 y=1288 :: 置く
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=1048.2 w=19.6 y=1148 :: 4
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=1038.4 w=39.1 y=1220 :: 14
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=1038.4 w=39.1 y=1364 :: 11
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1057.5 w=1.0 y=1443 :: 2列目の合計 29
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=1042.2 w=31.7 y=1431 :: 29
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=762.0 w=216.3 y=1487 :: 列の端の色を変えなかった数を置き換える
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=990.3 w=103.7 y=1484 :: → 置き直し 0回
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=788.2 w=19.6 y=1592 :: 4
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=778.4 w=39.1 y=1664 :: 14
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=797.5 w=1.0 y=1887 :: 2列目の合計 18
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=782.2 w=31.7 y=1876 :: 18
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=847.1 w=31.8 y=1712 :: 16を
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=849.0 w=28.0 y=1732 :: 置く
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=918.2 w=19.6 y=1592 :: 4
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=908.4 w=39.1 y=1664 :: 14
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=908.4 w=39.1 y=1808 :: 16
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=927.5 w=1.0 y=1887 :: 2列目の合計 34 空きがあるのに合計に届いた
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(179, 52, 31) x=912.2 w=31.7 y=1876 :: 34
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=981.6 w=22.9 y=1712 :: 8を
+span fs=14px fw=400 lh=20px col=oklch(0.556 0 0) x=979.0 w=28.0 y=1732 :: 置く
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=1048.2 w=19.6 y=1592 :: 4
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=1038.4 w=39.1 y=1664 :: 14
+span fs=30.2389px fw=600 lh=30.2389px col=rgb(44, 77, 115) x=1048.2 w=19.6 y=1808 :: 8
+span fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=1057.5 w=1.0 y=1887 :: 2列目の合計 26
+span fs=24.4791px fw=600 lh=24.4791px col=rgb(90, 84, 75) x=1042.2 w=31.7 y=1876 :: 26
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=762.0 w=38.0 y=1929 :: 1
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=804.0 w=38.0 y=1929 :: 2
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=846.0 w=38.0 y=1929 :: 3
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=888.0 w=38.0 y=1929 :: 4
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=38.0 y=1929 :: 5
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=972.0 w=38.0 y=1929 :: 6
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1014.0 w=38.0 y=1929 :: 7
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1056.0 w=38.0 y=1929 :: 8
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=762.0 w=38.0 y=1977 :: 9
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=804.0 w=38.0 y=1977 :: 10
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=846.0 w=38.0 y=1977 :: 11
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=888.0 w=38.0 y=1977 :: 12
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=930.0 w=38.0 y=1977 :: 13
+button fs=18px fw=600 lh=28px col=rgb(140, 132, 116) x=972.0 w=38.0 y=1977 :: 14
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1014.0 w=38.0 y=1977 :: 15
+button fs=18px fw=600 lh=28px col=rgb(44, 77, 115) x=1056.0 w=38.0 y=1977 :: 16
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=762.0 w=216.3 y=2036 :: 列の端の色を変えた数を隣り合う数にすぐ置き換える
+span fs=14px fw=400 lh=20px col=oklch(0.145 0 0) x=990.3 w=103.7 y=2033 :: → 置き直し 0回
+span fs=16px fw=600 lh=24px col=oklch(0.145 0 0) x=608.0 w=200.7 y=2125 :: 「待った」・「盤面を戻す」
+p fs=16px fw=400 lh=24px col=oklch(0.145 0 0) x=608.0 w=640.0 y=2153 :: 押しただけでは点は下がりません。
+
+## header
+h2 fs=18px fw=600
+p fs=14px fw=400 x=31 y=31.5 :: マスに数を置いて縦・横・斜めのどの列も同じ合計にそろえるパズ
+p fs=16px fw=400 x=32 y=132 :: マスに数を置いて縦・横・斜めのどの列も同じ合計にそろえるパズ
+p fs=16px fw=400 x=672 y=1186.78125 :: 
+p fs=16px fw=400 x=672 y=1250.78125 :: 
+p fs=16px fw=400 x=672 y=1294.78125 :: 
+p fs=16px fw=400 x=672 y=1374.78125 :: 
+p fs=16px fw=400 x=672 y=1434.78125 :: 
+p fs=16px fw=400 x=608 y=191 :: 問題ごとの基準時間以内なら満点です。超えるほど下がって基準時
+p fs=16px fw=600 x=608 y=255 :: 基準時間
+p fs=16px fw=400 x=608 y=283 :: 空いたマス1つにつき10秒を20秒に足します。
+p fs=16px fw=400 x=608 y=430 :: 置き直しのたびに30点から引きます。0点より下にはなりません
+p fs=16px fw=600 x=608 y=470 :: 置き直し
+1回 −3点
+p fs=16px fw=400 x=608 y=498 :: 置いた数が外れるたびに画面の上の「置き直し」が1回増えます。
+p fs=16px fw=600 x=608 y=2124.5625 :: 「待った」・「盤面を戻す」
+p fs=16px fw=400 x=608 y=2152.5625 :: 押しただけでは点は下がりません。
+tab fs=16px fw=500 x=608 w=210.65625 :: ルール
+tab fs=16px fw=500 x=822.65625 w=210.671875 :: 操作
+tab fs=16px fw=500 x=1037.328125 w=210.671875 :: 採点

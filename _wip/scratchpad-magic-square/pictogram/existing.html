@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pictogram review</title>
+<style>
+  :root { font-family: system-ui, sans-serif; color: #111; background: #fff; }
+  body { margin: 32px; }
+  h1 { margin: 0 0 28px; font-size: 24px; }
+  h2 { margin: 0 0 16px; font-size: 18px; }
+  .section { margin: 0 0 36px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }
+  .card { width: calc(var(--card-size, 112px) + 48px); border: 1px solid #ddd; border-radius: 12px; overflow: hidden; background: #fff; }
+  .art { --game-pictogram-strong: currentColor; --game-pictogram-soft: color-mix(in oklab, currentColor 55%, transparent); width: 100%; height: calc(var(--size) + 48px); display: grid; place-items: center; background: #fafafa; }
+  .art > svg { width: var(--size); height: var(--size); max-width: var(--size); max-height: var(--size); }
+  .caption { border-top: 1px solid #ddd; padding: 12px 16px; font-size: 14px; font-weight: 600; }
+  @media (max-width: 520px) { body { margin: 16px; } .grid { gap: 12px; } }
+</style>
+</head>
+<body>
+<h1>Pictogram review</h1>
+<section class="section"><h2>ラベルなし: 意味的距離・弁別性</h2><div class="grid"><article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ブリッジパズル">
+  <rect x="18" y="18" width="84" height="84" rx="7" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <rect x="53.06" y="34.00" width="14.06" height="6" fill="var(--game-pictogram-soft)"/>
+  <path d="M53.06 34.00H67.11M53.06 40.00H67.11" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <rect x="53.00" y="43.00" width="14.60" height="6" fill="var(--game-pictogram-soft)"/>
+  <path d="M53.00 43.00H67.61M53.00 49.00H67.61" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <rect x="76.00" y="54.09" width="8" height="12.77" fill="var(--game-pictogram-soft)"/>
+  <path d="M76.00 54.09V66.87M84.00 54.09V66.87" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <path d="M28 72q4.0 -4.0 8.0 0t8.0 0" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M38 86q4.0 -4.0 8.0 0t8.0 0" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="41.5" cy="41.5" r="13.25" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <circle cx="80.0" cy="41.5" r="13.25" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <circle cx="80.0" cy="80.0" r="13.25" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+</svg>
+</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="一筆パズル">
+  <path d="M18 18H82V38H102V102H18Z" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round"/>
+  <g fill="var(--game-pictogram-soft)">
+    <circle cx="90" cy="50" r="5"/>
+    <circle cx="70" cy="70" r="5"/>
+    <circle cx="90" cy="70" r="5"/>
+    <circle cx="70" cy="90" r="5"/>
+    <circle cx="90" cy="90" r="5"/>
+  </g>
+  <path d="M30 30V90H50V30H70V50" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="30" cy="30" r="7" fill="var(--game-pictogram-strong)"/>
+</svg>
+</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="アイスフロア迷路">
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <path fill="var(--game-pictogram-soft)" d="M30 30.5H64A5.5 5.5 0 0 1 69.5 36V84A5.5 5.5 0 0 1 58.5 84V41.5H30A5.5 5.5 0 0 1 30 30.5Z"/>
+  <rect x="77" y="27" width="18" height="18" rx="3.5" fill="var(--game-pictogram-strong)"/>
+  <circle cx="64" cy="84" r="12" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <circle cx="64" cy="84" r="8" fill="var(--game-pictogram-strong)"/>
+</svg>
+</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="魔方陣">
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M34 16v72M52 16v72M70 16v72M16 34h72M16 52h72M16 70h72"/>
+  <rect x="16" y="16" width="72" height="72" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="3" stroke-linecap="round"><path d="M25 43h54M61 25v54M25 25l54 54"/></g>
+  <g fill="var(--game-pictogram-strong)"><circle cx="102" cy="43" r="5"/><circle cx="61" cy="102" r="5"/><circle cx="100" cy="100" r="5"/></g>
+</svg>
+</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="マインスイーパー">
+  <g fill="var(--game-pictogram-soft)">
+    <rect x="19" y="19" width="26" height="26"/>
+    <rect x="47" y="19" width="26" height="26"/>
+    <rect x="19" y="47" width="26" height="26"/>
+    <rect x="75" y="47" width="26" height="26"/>
+    <rect x="47" y="75" width="26" height="26"/>
+  </g>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="var(--game-pictogram-strong)" stroke="var(--game-pictogram-strong)" stroke-linejoin="round">
+    <path d="M28 52V69" fill="none" stroke-width="4" stroke-linecap="round"/>
+    <path d="M29.5 52H38.5L35 56L38.5 60H29.5Z" stroke-width="2"/>
+  </g>
+  <g fill="var(--game-pictogram-strong)">
+    <path d="M62 0V94L242 273Q287 318 322 357Q357 396 377 434Q397 472 397 514Q397 565 368.5 590.5Q340 616 294 616Q251 616 212.5 597.5Q174 579 133 545L63 629Q98 659 132.5 680Q167 701 208 712.5Q249 724 302 724Q371 724 421 699Q471 674 498 630Q525 586 525 526Q525 466 500 415Q475 364 433 317.5Q391 271 338 222L223 115V107H551V0Z" transform="translate(54.115 66.950) scale(0.0192 -0.0192)"/>
+    <path d="M263 425Q263 452 263.5 479Q264 506 265 532Q266 558 267 580Q252 571 238 563.5Q224 556 208 547L134 508L79 606L285 714H386V99L526 86V0H121V86L263 99Z" transform="translate(26.192 94.854) scale(0.0192 -0.0192)"/>
+  </g>
+  <g stroke="var(--game-pictogram-strong)" stroke-linecap="round">
+    <circle cx="85.5" cy="88.5" r="6.5" fill="var(--game-pictogram-strong)" stroke="none"/>
+    <path d="M89.5 84.5L92.5 81.5" fill="none" stroke-width="2"/>
+  </g>
+</svg>
+</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ナンプレ">
+  <g fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2">
+    <path d="M46 18v84M74 18v84M18 46h84M18 74h84"/>
+  </g>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="var(--game-pictogram-strong)">
+    <path d="M142 0 412 607H54V713H546V627L276 0Z" transform="translate(54.3 38.773) scale(.019 -.019)"/>
+    <path d="M341 0V153H44V246L337 716H460V254H556V153H460V0ZM159 254H341V397Q341 414 342 440Q343 466 344 493Q345 520 346 541.5Q347 563 348 572H344Q336 552 324 530.5Q312 509 301 490Z" transform="translate(82.3 94.802) scale(.019 -.019)"/>
+  </g>
+</svg>
+</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="パーキングジャム">
+  <path d="M16 70.5V16H104V40M104 80V104H49.5"
+        fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round">
+    <rect x="24" y="24" width="20" height="44" rx="4"/>
+    <path d="M28 56H40" stroke-linecap="round"/>
+  </g>
+
+  <g fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round">
+    <rect x="56" y="48" width="36" height="20" rx="4"/>
+    <path d="M80 52V64" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round">
+    <rect x="24" y="76" width="72" height="20" rx="4"/>
+    <path d="M36 80V92" stroke-linecap="round"/>
+  </g>
+</svg>
+</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="リフレクション">
+  <rect x="22" y="20" width="80" height="80" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g stroke="var(--game-pictogram-soft)" stroke-width="5" fill="var(--game-pictogram-soft)" stroke-linecap="round" stroke-linejoin="bevel">
+    <path fill="none" d="M10 38H44V82H76"/>
+    <circle cx="10" cy="38" r="5" stroke="none"/>
+  </g>
+  <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" d="M32 26L56 50M32 70L56 94"/>
+  <circle cx="84" cy="82" r="11" fill="var(--game-pictogram-strong)"/>
+</svg>
+</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="スライドパズル">
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M24 24H45.33V45.33H24ZM49.33 24H70.67V45.33H49.33ZM74.67 24H96V45.33H74.67ZM24 49.33H45.33V70.67H24ZM49.33 49.33H70.67V70.67H49.33ZM74.67 49.33H96V70.67H74.67ZM24 74.67H45.33V96H24Z"/>
+  <path fill="var(--game-pictogram-soft)" d="M85.45 64.9Q84.68 64.9 84.06 64.62Q83.44 64.34 83.01 63.78Q82.58 63.23 82.34 62.41Q82.1 61.59 82.1 60.5Q82.1 59.3 82.34 58.31Q82.59 57.33 83.13 56.62Q83.68 55.9 84.57 55.51Q85.45 55.12 86.72 55.12Q87 55.12 87.32 55.14Q87.64 55.17 87.86 55.22V56.62Q87.6 56.56 87.3 56.52Q87 56.48 86.68 56.48Q85.89 56.48 85.35 56.71Q84.8 56.94 84.45 57.36Q84.11 57.78 83.93 58.39Q83.75 59.01 83.69 59.75H83.77Q83.97 59.41 84.27 59.15Q84.56 58.9 84.96 58.77Q85.36 58.63 85.88 58.63Q87.17 58.63 87.87 59.43Q88.57 60.22 88.57 61.62Q88.57 62.62 88.2 63.36Q87.82 64.1 87.13 64.5Q86.43 64.9 85.45 64.9ZM35.21 64.75V62.71H31.26V61.47L35.16 55.21H36.8V61.37H38.08V62.71H36.8V64.75ZM59.39 64.88Q58.78 64.88 58.14 64.75Q57.5 64.62 57.04 64.36V62.86Q57.57 63.15 58.17 63.3Q58.78 63.44 59.37 63.44Q60.27 63.44 60.75 63.05Q61.23 62.66 61.23 61.83Q61.23 61.22 60.99 60.85Q60.74 60.47 60.33 60.29Q59.91 60.11 59.39 60.11Q59.02 60.11 58.61 60.17Q58.21 60.23 57.93 60.34L57.21 59.94L57.57 55.24H62.43V56.66H59.03L58.85 58.9Q59.15 58.83 59.47 58.81Q59.78 58.78 60.01 58.78Q60.85 58.78 61.51 59.11Q62.18 59.45 62.57 60.1Q62.96 60.75 62.96 61.73Q62.96 62.74 62.51 63.44Q62.06 64.15 61.25 64.52Q60.45 64.88 59.39 64.88ZM56.74 39.42V38.16L59.14 35.78Q59.74 35.18 60.21 34.66Q60.67 34.14 60.94 33.63Q61.21 33.13 61.21 32.57Q61.21 31.89 60.83 31.55Q60.45 31.21 59.83 31.21Q59.26 31.21 58.75 31.46Q58.23 31.7 57.69 32.16L56.76 31.04Q57.22 30.64 57.68 30.36Q58.14 30.08 58.69 29.92Q59.23 29.77 59.94 29.77Q60.86 29.77 61.53 30.1Q62.19 30.44 62.55 31.02Q62.91 31.61 62.91 32.41Q62.91 33.21 62.58 33.89Q62.25 34.57 61.69 35.19Q61.13 35.81 60.42 36.46L58.89 37.88V37.99H63.26V39.42ZM84.89 39.55Q84.27 39.55 83.59 39.42Q82.9 39.3 82.28 39.03V37.54Q82.86 37.83 83.55 37.98Q84.23 38.14 84.83 38.14Q85.79 38.14 86.25 37.73Q86.71 37.32 86.71 36.62Q86.71 36.09 86.47 35.78Q86.23 35.47 85.74 35.33Q85.25 35.19 84.49 35.19H83.67V33.83H84.5Q85.18 33.83 85.62 33.66Q86.06 33.49 86.29 33.16Q86.51 32.83 86.51 32.38Q86.51 31.86 86.19 31.53Q85.87 31.2 85.17 31.2Q84.65 31.2 84.12 31.38Q83.59 31.57 83.03 31.89L82.28 30.72Q82.88 30.29 83.64 30.03Q84.41 29.77 85.26 29.77Q86.07 29.77 86.72 30.03Q87.37 30.29 87.74 30.8Q88.11 31.32 88.11 32.08Q88.11 32.66 87.88 33.14Q87.66 33.62 87.23 33.95Q86.81 34.27 86.21 34.41V34.45Q86.95 34.55 87.44 34.84Q87.92 35.13 88.16 35.59Q88.39 36.06 88.39 36.7Q88.39 37.63 87.96 38.27Q87.53 38.91 86.75 39.23Q85.97 39.55 84.89 39.55ZM34.14 33.75Q34.14 33.39 34.15 33.03Q34.15 32.67 34.17 32.33Q34.18 31.98 34.19 31.69Q33.99 31.81 33.81 31.91Q33.62 32.01 33.41 32.13L32.42 32.65L31.69 31.34L34.43 29.9H35.78V38.1L37.64 38.27V39.42H32.25V38.27L34.14 38.1ZM32.56 90.08 36.16 82H31.39V80.58H37.94V81.73L34.35 90.08ZM85.41 63.46Q86.12 63.46 86.53 63.02Q86.93 62.58 86.93 61.63Q86.93 60.82 86.57 60.38Q86.2 59.94 85.45 59.94Q84.99 59.94 84.61 60.16Q84.23 60.38 84.01 60.75Q83.79 61.11 83.79 61.61Q83.79 61.9 83.85 62.17Q83.92 62.44 84.05 62.68Q84.19 62.92 84.39 63.09Q84.59 63.26 84.85 63.36Q85.11 63.46 85.41 63.46ZM32.79 61.37H35.21V59.46Q35.21 59.23 35.23 58.89Q35.24 58.54 35.25 58.18Q35.27 57.82 35.28 57.54Q35.29 57.25 35.31 57.13H35.25Q35.15 57.4 34.99 57.68Q34.83 57.97 34.68 58.22Z"/>
+  <rect x="62" y="74.67" width="21.33" height="21.33" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <path fill="var(--game-pictogram-strong)" d="M72.65 90.22Q71.73 90.22 71.02 89.93Q70.31 89.64 69.91 89.08Q69.5 88.52 69.5 87.69Q69.5 87.09 69.72 86.61Q69.93 86.14 70.33 85.77Q70.73 85.39 71.3 85.11Q70.82 84.79 70.49 84.43Q70.16 84.07 69.98 83.65Q69.81 83.22 69.81 82.72Q69.81 81.97 70.2 81.46Q70.59 80.96 71.25 80.7Q71.91 80.45 72.67 80.45Q73.46 80.45 74.11 80.7Q74.77 80.96 75.15 81.46Q75.54 81.97 75.54 82.73Q75.54 83.51 75.1 84.07Q74.67 84.63 73.87 85.06Q74.51 85.39 74.95 85.79Q75.38 86.18 75.6 86.63Q75.83 87.09 75.83 87.65Q75.83 88.44 75.42 89.02Q75.01 89.59 74.29 89.9Q73.57 90.22 72.65 90.22ZM72.65 88.88Q73.43 88.88 73.83 88.52Q74.23 88.15 74.23 87.59Q74.23 87.22 74.05 86.93Q73.87 86.65 73.5 86.37Q73.13 86.1 72.55 85.79Q72.09 86.02 71.77 86.29Q71.45 86.55 71.28 86.88Q71.11 87.21 71.11 87.61Q71.11 88.18 71.5 88.53Q71.89 88.88 72.65 88.88ZM72.67 84.35Q73.09 84.15 73.36 83.94Q73.63 83.73 73.78 83.45Q73.93 83.18 73.93 82.85Q73.93 82.34 73.58 82.07Q73.23 81.8 72.66 81.8Q72.1 81.8 71.76 82.08Q71.42 82.36 71.42 82.85Q71.42 83.22 71.59 83.49Q71.75 83.77 72.04 83.97Q72.33 84.17 72.67 84.35Z"/>
+</svg>
+</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="バイナリパズル">
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M46 18v84M74 18v84M18 60h84"/>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="var(--game-pictogram-strong)"><rect x="23.5" y="30.5" width="17" height="17" rx="3"/><rect x="51.5" y="30.5" width="17" height="17" rx="3"/><rect x="79.5" y="72.5" width="17" height="17" rx="3"/></g>
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"><circle cx="88" cy="39" r="8.5"/><circle cx="32" cy="81" r="8.5"/><circle cx="60" cy="81" r="8.5"/></g>
+</svg>
+</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="詰将棋">
+  <g transform="translate(-2 1)">
+    <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M58 18V104M16 62H102"/>
+    <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M16 18H102V104"/>
+    <polygon points="79.5,57 92.94,48.36 95.5,25 63.5,25 66.06,48.36" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round"/>
+    <path fill="var(--game-pictogram-strong)" stroke="var(--game-pictogram-strong)" stroke-width="6.7" stroke-linejoin="round" paint-order="stroke" transform="translate(80.73 39.43) rotate(180) scale(0.0980)" d="m-84.4 92.4l-2.3-9.4q9.4 1.3 16.2 1.5 6.8 .2 6.8 .2l49.8 0 0-82.7-38.7 0q0 0-3.2 0-3.1 0-7.8 .2-4.7 .2-9.7 .8l-2.3-9.3q9.2 1.3 16.1 1.5 6.9 .2 6.9 .2l38.7 0 0-64.4-44.1 0q0 0-3.1 0-3.2 0-7.9 .2-4.7 .2-9.7 .8l-2.3-9.3q9.4 1.3 16.2 1.5 6.8 .2 6.8 .2l100.6 0q2 0 3-.3 1.1-.3 2-1.9 1-1.3 2.7-3.9 1.7-2.6 3.5-5.2 1.7-2.6 2.3-3.7 1.1-1.8 2.7-1.8 1.5 0 4.5 2.1 2.9 2.1 6.4 5 3.4 3 6.4 5.9 3 2.9 4.3 4.7 1 1.1 1 2.6 0 3.1-2.3 3.1l-68.5 0 0 64.4 32.2 0q3.1 0 4.8-2.2 .8-1.3 2.4-3.8 1.7-2.5 3.3-4.9 1.6-2.4 2.2-3.2 1.1-1.8 2.7-1.8 .7 0 1.9 .7 2.7 1.3 6.4 4.4 3.8 3.2 7.2 6.6 3.5 3.4 4.8 5.3 1 1.1 1 2.6 0 2.9-2.2 2.9l-66.7 0 0 82.7 35.3 0q2.1 0 3.1-.4 .9-.4 2.1-2 .9-1.3 2.8-4 1.8-2.7 3.6-5.5 1.8-2.9 2.6-4 1.1-1.7 2.9-1.7 1.7 0 4.9 2.1 3.1 2 6.8 5.1 3.6 3 6.6 6.1 2.9 3 4.3 4.8 1.1 1.3 1.1 3 0 3.1-2.5 3.1l-147.9 0q0 0-3.1 0-3.1 0-7.9 .2-4.8 .2-9.7 .9zm134.7-34q-3.4 0-6.2-2.2-2.8-2.2-3.8-7-2.1-10.9-7.1-21-5.1-10.1-12.6-16-.2-.4-.2-1.1 0-2.4 2.1-3.3 10.8 2 19.9 5.6 9.1 3.6 15.1 9.5 6 5.9 7.2 15.2 .2 .9 .2 1.8 0 .8 0 1.7 0 7.8-4.7 12.3-4.7 4.5-9.9 4.5z"/>
+    <polygon points="79.50,69.00 92.10,77.10 94.50,99.00 64.50,99.00 66.90,77.10" fill="var(--game-pictogram-strong)"/>
+    <polygon points="37.00,68.50 50.02,76.87 52.50,99.50 21.50,99.50 23.98,76.87" fill="var(--game-pictogram-soft)"/>
+  </g>
+</svg>
+</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ウォーターソート">
+<path fill="var(--game-pictogram-soft)" d="M32.18 72.48H49.98V89.1C49.98 94.76 46.74 98 41.08 98C35.42 98 32.18 94.76 32.18 89.1Z"/>
+<g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M28.18 41.8V89.1C28.18 96.84 33.34 102 41.08 102C48.82 102 53.98 96.84 53.98 89.1V41.8"/>
+<path d="M25.16 41.8H57"/>
+</g>
+<path fill="var(--game-pictogram-soft)" d="M70.02 85.24H87.82V89.1C87.82 94.76 84.58 98 78.92 98C73.26 98 70.02 94.76 70.02 89.1Z"/>
+<path fill="var(--game-pictogram-strong)" d="M70.02 72.48H87.82V85.24H70.02Z"/>
+<path fill="var(--game-pictogram-soft)" d="M70.02 46.96H87.82V72.48H70.02Z"/>
+<g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M66.02 34.92V89.1C66.02 96.84 71.18 102 78.92 102C86.66 102 91.82 96.84 91.82 89.1V34.92"/>
+<path d="M63 34.92H94.84"/>
+</g>
+</svg>
+</div></article></div></section>
+<section class="section"><h2>ラベルあり: 一覧での視覚重量</h2><div class="grid"><article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ブリッジパズル">
+  <rect x="18" y="18" width="84" height="84" rx="7" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <rect x="53.06" y="34.00" width="14.06" height="6" fill="var(--game-pictogram-soft)"/>
+  <path d="M53.06 34.00H67.11M53.06 40.00H67.11" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <rect x="53.00" y="43.00" width="14.60" height="6" fill="var(--game-pictogram-soft)"/>
+  <path d="M53.00 43.00H67.61M53.00 49.00H67.61" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <rect x="76.00" y="54.09" width="8" height="12.77" fill="var(--game-pictogram-soft)"/>
+  <path d="M76.00 54.09V66.87M84.00 54.09V66.87" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <path d="M28 72q4.0 -4.0 8.0 0t8.0 0" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M38 86q4.0 -4.0 8.0 0t8.0 0" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="41.5" cy="41.5" r="13.25" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <circle cx="80.0" cy="41.5" r="13.25" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <circle cx="80.0" cy="80.0" r="13.25" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+</svg>
+</div><div class="caption">pictogram</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="一筆パズル">
+  <path d="M18 18H82V38H102V102H18Z" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round"/>
+  <g fill="var(--game-pictogram-soft)">
+    <circle cx="90" cy="50" r="5"/>
+    <circle cx="70" cy="70" r="5"/>
+    <circle cx="90" cy="70" r="5"/>
+    <circle cx="70" cy="90" r="5"/>
+    <circle cx="90" cy="90" r="5"/>
+  </g>
+  <path d="M30 30V90H50V30H70V50" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="30" cy="30" r="7" fill="var(--game-pictogram-strong)"/>
+</svg>
+</div><div class="caption">pictogram</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="アイスフロア迷路">
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <path fill="var(--game-pictogram-soft)" d="M30 30.5H64A5.5 5.5 0 0 1 69.5 36V84A5.5 5.5 0 0 1 58.5 84V41.5H30A5.5 5.5 0 0 1 30 30.5Z"/>
+  <rect x="77" y="27" width="18" height="18" rx="3.5" fill="var(--game-pictogram-strong)"/>
+  <circle cx="64" cy="84" r="12" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <circle cx="64" cy="84" r="8" fill="var(--game-pictogram-strong)"/>
+</svg>
+</div><div class="caption">pictogram</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="魔方陣">
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M34 16v72M52 16v72M70 16v72M16 34h72M16 52h72M16 70h72"/>
+  <rect x="16" y="16" width="72" height="72" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="3" stroke-linecap="round"><path d="M25 43h54M61 25v54M25 25l54 54"/></g>
+  <g fill="var(--game-pictogram-strong)"><circle cx="102" cy="43" r="5"/><circle cx="61" cy="102" r="5"/><circle cx="100" cy="100" r="5"/></g>
+</svg>
+</div><div class="caption">pictogram</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="マインスイーパー">
+  <g fill="var(--game-pictogram-soft)">
+    <rect x="19" y="19" width="26" height="26"/>
+    <rect x="47" y="19" width="26" height="26"/>
+    <rect x="19" y="47" width="26" height="26"/>
+    <rect x="75" y="47" width="26" height="26"/>
+    <rect x="47" y="75" width="26" height="26"/>
+  </g>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="var(--game-pictogram-strong)" stroke="var(--game-pictogram-strong)" stroke-linejoin="round">
+    <path d="M28 52V69" fill="none" stroke-width="4" stroke-linecap="round"/>
+    <path d="M29.5 52H38.5L35 56L38.5 60H29.5Z" stroke-width="2"/>
+  </g>
+  <g fill="var(--game-pictogram-strong)">
+    <path d="M62 0V94L242 273Q287 318 322 357Q357 396 377 434Q397 472 397 514Q397 565 368.5 590.5Q340 616 294 616Q251 616 212.5 597.5Q174 579 133 545L63 629Q98 659 132.5 680Q167 701 208 712.5Q249 724 302 724Q371 724 421 699Q471 674 498 630Q525 586 525 526Q525 466 500 415Q475 364 433 317.5Q391 271 338 222L223 115V107H551V0Z" transform="translate(54.115 66.950) scale(0.0192 -0.0192)"/>
+    <path d="M263 425Q263 452 263.5 479Q264 506 265 532Q266 558 267 580Q252 571 238 563.5Q224 556 208 547L134 508L79 606L285 714H386V99L526 86V0H121V86L263 99Z" transform="translate(26.192 94.854) scale(0.0192 -0.0192)"/>
+  </g>
+  <g stroke="var(--game-pictogram-strong)" stroke-linecap="round">
+    <circle cx="85.5" cy="88.5" r="6.5" fill="var(--game-pictogram-strong)" stroke="none"/>
+    <path d="M89.5 84.5L92.5 81.5" fill="none" stroke-width="2"/>
+  </g>
+</svg>
+</div><div class="caption">pictogram</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ナンプレ">
+  <g fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2">
+    <path d="M46 18v84M74 18v84M18 46h84M18 74h84"/>
+  </g>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="var(--game-pictogram-strong)">
+    <path d="M142 0 412 607H54V713H546V627L276 0Z" transform="translate(54.3 38.773) scale(.019 -.019)"/>
+    <path d="M341 0V153H44V246L337 716H460V254H556V153H460V0ZM159 254H341V397Q341 414 342 440Q343 466 344 493Q345 520 346 541.5Q347 563 348 572H344Q336 552 324 530.5Q312 509 301 490Z" transform="translate(82.3 94.802) scale(.019 -.019)"/>
+  </g>
+</svg>
+</div><div class="caption">pictogram</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="パーキングジャム">
+  <path d="M16 70.5V16H104V40M104 80V104H49.5"
+        fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round">
+    <rect x="24" y="24" width="20" height="44" rx="4"/>
+    <path d="M28 56H40" stroke-linecap="round"/>
+  </g>
+
+  <g fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round">
+    <rect x="56" y="48" width="36" height="20" rx="4"/>
+    <path d="M80 52V64" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round">
+    <rect x="24" y="76" width="72" height="20" rx="4"/>
+    <path d="M36 80V92" stroke-linecap="round"/>
+  </g>
+</svg>
+</div><div class="caption">pictogram</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="リフレクション">
+  <rect x="22" y="20" width="80" height="80" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g stroke="var(--game-pictogram-soft)" stroke-width="5" fill="var(--game-pictogram-soft)" stroke-linecap="round" stroke-linejoin="bevel">
+    <path fill="none" d="M10 38H44V82H76"/>
+    <circle cx="10" cy="38" r="5" stroke="none"/>
+  </g>
+  <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" d="M32 26L56 50M32 70L56 94"/>
+  <circle cx="84" cy="82" r="11" fill="var(--game-pictogram-strong)"/>
+</svg>
+</div><div class="caption">pictogram</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="スライドパズル">
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M24 24H45.33V45.33H24ZM49.33 24H70.67V45.33H49.33ZM74.67 24H96V45.33H74.67ZM24 49.33H45.33V70.67H24ZM49.33 49.33H70.67V70.67H49.33ZM74.67 49.33H96V70.67H74.67ZM24 74.67H45.33V96H24Z"/>
+  <path fill="var(--game-pictogram-soft)" d="M85.45 64.9Q84.68 64.9 84.06 64.62Q83.44 64.34 83.01 63.78Q82.58 63.23 82.34 62.41Q82.1 61.59 82.1 60.5Q82.1 59.3 82.34 58.31Q82.59 57.33 83.13 56.62Q83.68 55.9 84.57 55.51Q85.45 55.12 86.72 55.12Q87 55.12 87.32 55.14Q87.64 55.17 87.86 55.22V56.62Q87.6 56.56 87.3 56.52Q87 56.48 86.68 56.48Q85.89 56.48 85.35 56.71Q84.8 56.94 84.45 57.36Q84.11 57.78 83.93 58.39Q83.75 59.01 83.69 59.75H83.77Q83.97 59.41 84.27 59.15Q84.56 58.9 84.96 58.77Q85.36 58.63 85.88 58.63Q87.17 58.63 87.87 59.43Q88.57 60.22 88.57 61.62Q88.57 62.62 88.2 63.36Q87.82 64.1 87.13 64.5Q86.43 64.9 85.45 64.9ZM35.21 64.75V62.71H31.26V61.47L35.16 55.21H36.8V61.37H38.08V62.71H36.8V64.75ZM59.39 64.88Q58.78 64.88 58.14 64.75Q57.5 64.62 57.04 64.36V62.86Q57.57 63.15 58.17 63.3Q58.78 63.44 59.37 63.44Q60.27 63.44 60.75 63.05Q61.23 62.66 61.23 61.83Q61.23 61.22 60.99 60.85Q60.74 60.47 60.33 60.29Q59.91 60.11 59.39 60.11Q59.02 60.11 58.61 60.17Q58.21 60.23 57.93 60.34L57.21 59.94L57.57 55.24H62.43V56.66H59.03L58.85 58.9Q59.15 58.83 59.47 58.81Q59.78 58.78 60.01 58.78Q60.85 58.78 61.51 59.11Q62.18 59.45 62.57 60.1Q62.96 60.75 62.96 61.73Q62.96 62.74 62.51 63.44Q62.06 64.15 61.25 64.52Q60.45 64.88 59.39 64.88ZM56.74 39.42V38.16L59.14 35.78Q59.74 35.18 60.21 34.66Q60.67 34.14 60.94 33.63Q61.21 33.13 61.21 32.57Q61.21 31.89 60.83 31.55Q60.45 31.21 59.83 31.21Q59.26 31.21 58.75 31.46Q58.23 31.7 57.69 32.16L56.76 31.04Q57.22 30.64 57.68 30.36Q58.14 30.08 58.69 29.92Q59.23 29.77 59.94 29.77Q60.86 29.77 61.53 30.1Q62.19 30.44 62.55 31.02Q62.91 31.61 62.91 32.41Q62.91 33.21 62.58 33.89Q62.25 34.57 61.69 35.19Q61.13 35.81 60.42 36.46L58.89 37.88V37.99H63.26V39.42ZM84.89 39.55Q84.27 39.55 83.59 39.42Q82.9 39.3 82.28 39.03V37.54Q82.86 37.83 83.55 37.98Q84.23 38.14 84.83 38.14Q85.79 38.14 86.25 37.73Q86.71 37.32 86.71 36.62Q86.71 36.09 86.47 35.78Q86.23 35.47 85.74 35.33Q85.25 35.19 84.49 35.19H83.67V33.83H84.5Q85.18 33.83 85.62 33.66Q86.06 33.49 86.29 33.16Q86.51 32.83 86.51 32.38Q86.51 31.86 86.19 31.53Q85.87 31.2 85.17 31.2Q84.65 31.2 84.12 31.38Q83.59 31.57 83.03 31.89L82.28 30.72Q82.88 30.29 83.64 30.03Q84.41 29.77 85.26 29.77Q86.07 29.77 86.72 30.03Q87.37 30.29 87.74 30.8Q88.11 31.32 88.11 32.08Q88.11 32.66 87.88 33.14Q87.66 33.62 87.23 33.95Q86.81 34.27 86.21 34.41V34.45Q86.95 34.55 87.44 34.84Q87.92 35.13 88.16 35.59Q88.39 36.06 88.39 36.7Q88.39 37.63 87.96 38.27Q87.53 38.91 86.75 39.23Q85.97 39.55 84.89 39.55ZM34.14 33.75Q34.14 33.39 34.15 33.03Q34.15 32.67 34.17 32.33Q34.18 31.98 34.19 31.69Q33.99 31.81 33.81 31.91Q33.62 32.01 33.41 32.13L32.42 32.65L31.69 31.34L34.43 29.9H35.78V38.1L37.64 38.27V39.42H32.25V38.27L34.14 38.1ZM32.56 90.08 36.16 82H31.39V80.58H37.94V81.73L34.35 90.08ZM85.41 63.46Q86.12 63.46 86.53 63.02Q86.93 62.58 86.93 61.63Q86.93 60.82 86.57 60.38Q86.2 59.94 85.45 59.94Q84.99 59.94 84.61 60.16Q84.23 60.38 84.01 60.75Q83.79 61.11 83.79 61.61Q83.79 61.9 83.85 62.17Q83.92 62.44 84.05 62.68Q84.19 62.92 84.39 63.09Q84.59 63.26 84.85 63.36Q85.11 63.46 85.41 63.46ZM32.79 61.37H35.21V59.46Q35.21 59.23 35.23 58.89Q35.24 58.54 35.25 58.18Q35.27 57.82 35.28 57.54Q35.29 57.25 35.31 57.13H35.25Q35.15 57.4 34.99 57.68Q34.83 57.97 34.68 58.22Z"/>
+  <rect x="62" y="74.67" width="21.33" height="21.33" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+  <path fill="var(--game-pictogram-strong)" d="M72.65 90.22Q71.73 90.22 71.02 89.93Q70.31 89.64 69.91 89.08Q69.5 88.52 69.5 87.69Q69.5 87.09 69.72 86.61Q69.93 86.14 70.33 85.77Q70.73 85.39 71.3 85.11Q70.82 84.79 70.49 84.43Q70.16 84.07 69.98 83.65Q69.81 83.22 69.81 82.72Q69.81 81.97 70.2 81.46Q70.59 80.96 71.25 80.7Q71.91 80.45 72.67 80.45Q73.46 80.45 74.11 80.7Q74.77 80.96 75.15 81.46Q75.54 81.97 75.54 82.73Q75.54 83.51 75.1 84.07Q74.67 84.63 73.87 85.06Q74.51 85.39 74.95 85.79Q75.38 86.18 75.6 86.63Q75.83 87.09 75.83 87.65Q75.83 88.44 75.42 89.02Q75.01 89.59 74.29 89.9Q73.57 90.22 72.65 90.22ZM72.65 88.88Q73.43 88.88 73.83 88.52Q74.23 88.15 74.23 87.59Q74.23 87.22 74.05 86.93Q73.87 86.65 73.5 86.37Q73.13 86.1 72.55 85.79Q72.09 86.02 71.77 86.29Q71.45 86.55 71.28 86.88Q71.11 87.21 71.11 87.61Q71.11 88.18 71.5 88.53Q71.89 88.88 72.65 88.88ZM72.67 84.35Q73.09 84.15 73.36 83.94Q73.63 83.73 73.78 83.45Q73.93 83.18 73.93 82.85Q73.93 82.34 73.58 82.07Q73.23 81.8 72.66 81.8Q72.1 81.8 71.76 82.08Q71.42 82.36 71.42 82.85Q71.42 83.22 71.59 83.49Q71.75 83.77 72.04 83.97Q72.33 84.17 72.67 84.35Z"/>
+</svg>
+</div><div class="caption">pictogram</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="バイナリパズル">
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M46 18v84M74 18v84M18 60h84"/>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="var(--game-pictogram-strong)"><rect x="23.5" y="30.5" width="17" height="17" rx="3"/><rect x="51.5" y="30.5" width="17" height="17" rx="3"/><rect x="79.5" y="72.5" width="17" height="17" rx="3"/></g>
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"><circle cx="88" cy="39" r="8.5"/><circle cx="32" cy="81" r="8.5"/><circle cx="60" cy="81" r="8.5"/></g>
+</svg>
+</div><div class="caption">pictogram</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="詰将棋">
+  <g transform="translate(-2 1)">
+    <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M58 18V104M16 62H102"/>
+    <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M16 18H102V104"/>
+    <polygon points="79.5,57 92.94,48.36 95.5,25 63.5,25 66.06,48.36" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round"/>
+    <path fill="var(--game-pictogram-strong)" stroke="var(--game-pictogram-strong)" stroke-width="6.7" stroke-linejoin="round" paint-order="stroke" transform="translate(80.73 39.43) rotate(180) scale(0.0980)" d="m-84.4 92.4l-2.3-9.4q9.4 1.3 16.2 1.5 6.8 .2 6.8 .2l49.8 0 0-82.7-38.7 0q0 0-3.2 0-3.1 0-7.8 .2-4.7 .2-9.7 .8l-2.3-9.3q9.2 1.3 16.1 1.5 6.9 .2 6.9 .2l38.7 0 0-64.4-44.1 0q0 0-3.1 0-3.2 0-7.9 .2-4.7 .2-9.7 .8l-2.3-9.3q9.4 1.3 16.2 1.5 6.8 .2 6.8 .2l100.6 0q2 0 3-.3 1.1-.3 2-1.9 1-1.3 2.7-3.9 1.7-2.6 3.5-5.2 1.7-2.6 2.3-3.7 1.1-1.8 2.7-1.8 1.5 0 4.5 2.1 2.9 2.1 6.4 5 3.4 3 6.4 5.9 3 2.9 4.3 4.7 1 1.1 1 2.6 0 3.1-2.3 3.1l-68.5 0 0 64.4 32.2 0q3.1 0 4.8-2.2 .8-1.3 2.4-3.8 1.7-2.5 3.3-4.9 1.6-2.4 2.2-3.2 1.1-1.8 2.7-1.8 .7 0 1.9 .7 2.7 1.3 6.4 4.4 3.8 3.2 7.2 6.6 3.5 3.4 4.8 5.3 1 1.1 1 2.6 0 2.9-2.2 2.9l-66.7 0 0 82.7 35.3 0q2.1 0 3.1-.4 .9-.4 2.1-2 .9-1.3 2.8-4 1.8-2.7 3.6-5.5 1.8-2.9 2.6-4 1.1-1.7 2.9-1.7 1.7 0 4.9 2.1 3.1 2 6.8 5.1 3.6 3 6.6 6.1 2.9 3 4.3 4.8 1.1 1.3 1.1 3 0 3.1-2.5 3.1l-147.9 0q0 0-3.1 0-3.1 0-7.9 .2-4.8 .2-9.7 .9zm134.7-34q-3.4 0-6.2-2.2-2.8-2.2-3.8-7-2.1-10.9-7.1-21-5.1-10.1-12.6-16-.2-.4-.2-1.1 0-2.4 2.1-3.3 10.8 2 19.9 5.6 9.1 3.6 15.1 9.5 6 5.9 7.2 15.2 .2 .9 .2 1.8 0 .8 0 1.7 0 7.8-4.7 12.3-4.7 4.5-9.9 4.5z"/>
+    <polygon points="79.50,69.00 92.10,77.10 94.50,99.00 64.50,99.00 66.90,77.10" fill="var(--game-pictogram-strong)"/>
+    <polygon points="37.00,68.50 50.02,76.87 52.50,99.50 21.50,99.50 23.98,76.87" fill="var(--game-pictogram-soft)"/>
+  </g>
+</svg>
+</div><div class="caption">pictogram</div></article>
+<article class="card"><div class="art" style="--size:112px" aria-label="pictogram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ウォーターソート">
+<path fill="var(--game-pictogram-soft)" d="M32.18 72.48H49.98V89.1C49.98 94.76 46.74 98 41.08 98C35.42 98 32.18 94.76 32.18 89.1Z"/>
+<g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M28.18 41.8V89.1C28.18 96.84 33.34 102 41.08 102C48.82 102 53.98 96.84 53.98 89.1V41.8"/>
+<path d="M25.16 41.8H57"/>
+</g>
+<path fill="var(--game-pictogram-soft)" d="M70.02 85.24H87.82V89.1C87.82 94.76 84.58 98 78.92 98C73.26 98 70.02 94.76 70.02 89.1Z"/>
+<path fill="var(--game-pictogram-strong)" d="M70.02 72.48H87.82V85.24H70.02Z"/>
+<path fill="var(--game-pictogram-soft)" d="M70.02 46.96H87.82V72.48H70.02Z"/>
+<g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M66.02 34.92V89.1C66.02 96.84 71.18 102 78.92 102C86.66 102 91.82 96.84 91.82 89.1V34.92"/>
+<path d="M63 34.92H94.84"/>
+</g>
+</svg>
+</div><div class="caption">pictogram</div></article></div></section>
+</body>
+</html>

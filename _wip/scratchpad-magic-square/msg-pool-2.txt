@@ -1,0 +1,8 @@
+feat(magic-square): 問題と答えの同型のキーと近さを足す
+
+縦・横・斜めの列を列へ移すマスの並べ替え（4×4・5×5 は32、6×6 は192）と
+補数で写した盤面の辞書順の最小を、問題・答え・置き場所のキーにする。
+答えが同じ類の2問は、写した与える数のある所の違いの最小を近さにする。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

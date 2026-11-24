@@ -1,0 +1,13 @@
+feat(magic-square): 難易度の読むモデルと読み方の部品を作る
+
+- 読むモデル（`readMagicSquare`）: 列と鎖を単位に、置いた数・列の残り・候補のメモだけから候補を絞り、所ごとの段・巡・
+  決まったマス・使った読みを返す。1巡は段 t 以下の単位を同じ写しから読んで台を重ね、行き詰まりでは段2〜4を
+  行き詰まりの始めから読む。近道を持つ読み方は、近道で初めて置けた所を1つ上の段と数え、巡は1つ上の段の巡を超えない。
+- 数 1〜36 の集まりを、32 ビットを超える分も扱える `value-mask.ts` で持つ。
+- 読み方の部品 34 と、その2つ・3つの組み合わせ 5,473 通り（`reading-parts.ts`）。設定は K 通りまでは大きい方、
+  段 t からは低い方で重ね、重ねられない組と設定が変わらない組を除く。4×4 の仮想の列も置く。
+- 調査コードの期待値を削った `difficulty-reference.json` で、88 候補の基準の読みの全記録と、34 の部品の読みの記録を
+  突き合わせる。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

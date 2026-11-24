@@ -1,0 +1,18 @@
+new3: 17 settings × 669 problems in 21s
+memo_hull<=0: 107/669 (16.0%) | 4×4 0/107 5×5 58/390 6×6 49/172 | k0-2 6/305 k12 101/364 | L5→requires-trial 71, L5→too-deep 13, L4→requires-trial 10, L5→long-line 8, L4→long-line 3
+memo_hull<=2: 78/669 (11.7%) | 4×4 0/107 5×5 39/390 6×6 39/172 | k0-2 5/305 k12 73/364 | L5→requires-trial 39, L5→too-deep 24, L5→long-line 8, L4→requires-trial 6, L4→too-deep 1
+memo<=6+lock_eph: 21/669 (3.1%) | 4×4 0/107 5×5 14/390 6×6 7/172 | k0-2 0/305 k12 21/364 | L5→too-deep 14, L5→requires-trial 6, L4→long-line 1
+memo<=6+memoryless: 21/669 (3.1%) | 4×4 0/107 5×5 13/390 6×6 8/172 | k0-2 0/305 k12 21/364 | L5→too-deep 13, L5→requires-trial 6, L4→long-line 1, L4→too-deep 1
+memo_hull<=4: 20/669 (3.0%) | 4×4 0/107 5×5 13/390 6×6 7/172 | k0-2 2/305 k12 18/364 | L5→too-deep 11, L5→requires-trial 6, L5→long-line 2, L4→too-deep 1
+memo<=6+range1: 19/669 (2.8%) | 4×4 0/107 5×5 13/390 6×6 6/172 | k0-2 0/305 k12 19/364 | L5→too-deep 12, L5→requires-trial 6, L4→long-line 1
+memo<=6+short3_1: 19/669 (2.8%) | 4×4 0/107 5×5 13/390 6×6 6/172 | k0-2 0/305 k12 19/364 | L5→too-deep 12, L5→requires-trial 6, L4→long-line 1
+memo<=6+viol1: 19/669 (2.8%) | 4×4 0/107 5×5 13/390 6×6 6/172 | k0-2 0/305 k12 19/364 | L5→too-deep 12, L5→requires-trial 6, L4→long-line 1
+memo<=6+one: 19/669 (2.8%) | 4×4 0/107 5×5 13/390 6×6 6/172 | k0-2 0/305 k12 19/364 | L5→too-deep 12, L5→requires-trial 6, L4→long-line 1
+memo<=6+fewest: 19/669 (2.8%) | 4×4 0/107 5×5 13/390 6×6 6/172 | k0-2 0/305 k12 19/364 | L5→too-deep 12, L5→requires-trial 6, L4→long-line 1
+memo<=8+weak: 12/669 (1.8%) | 4×4 0/107 5×5 8/390 6×6 4/172 | k0-2 0/305 k12 12/364 | L5→too-deep 11, L4→too-deep 1
+memo<=7: 12/669 (1.8%) | 4×4 0/107 5×5 7/390 6×6 5/172 | k0-2 0/305 k12 12/364 | L5→too-deep 9, L5→requires-trial 2, L4→long-line 1
+memo<=8+cum: 8/669 (1.2%) | 4×4 0/107 5×5 6/390 6×6 2/172 | k0-2 0/305 k12 8/364 | L5→too-deep 7, L4→too-deep 1
+memo<=10+weak: 5/669 (0.7%) | 4×4 0/107 5×5 5/390 6×6 0/172 | k0-2 0/305 k12 5/364 | L5→too-deep 4, L4→too-deep 1
+memo_hull<=6: 4/669 (0.6%) | 4×4 0/107 5×5 3/390 6×6 1/172 | k0-2 0/305 k12 4/364 | L5→too-deep 4
+memo<=6+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+line_hidden+lock_all: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 

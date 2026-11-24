@@ -1,0 +1,50 @@
+goal cell size {"cell":36,"slot":40,"count":16}
+replay visible: true
+overflow at open: {"vw":320,"docScroll":320,"overflow":[]}
+rules shots 6
+rule panels 3
+rule1 initial {"hints":["1行4列 11"],"captions":["そろう","そろわない ・ 空きがあるのに合計に届いた"],"sums":["そろえる合計 34","1行目の合計 34 そろった","そろえる合計 34","1行目の合計 34 空きがあるのに合計に届いた"],"reset":["例を元に戻す disabled=true vis=hidden"]} cell {"cell":41.1,"slot":45.7,"count":8}
+rule1: pressed "1行4列 11" -> {"hints":["12"],"captions":["そろう","そろわない ・ 空きがあるのに合計に届いた"],"sums":["そろえる合計 34","1行目の合計 34 そろった","そろえる合計 34","1行目の合計 34 空きがあるのに合計に届いた"],"reset":["例を元に戻す disabled=false vis=visible"]}
+rule1: pressed "12" -> {"hints":[],"captions":["そろわない ・ 埋まって合計が合わない","そろわない ・ 空きがあるのに合計に届いた"],"sums":["そろえる合計 34","1行目の合計 35 埋まって合計が合わない","そろえる合計 34","1行目の合計 34 空きがあるのに合計に届いた"],"reset":["例を元に戻す disabled=false vis=visible"]}
+rule1: hint steps done after 2
+rule2 initial {"hints":["1行4列 空き"],"captions":["まだ置ける 、 もう置いてある"],"sums":["そろえる合計 34","1行目の合計 23"],"reset":["例を元に戻す disabled=true vis=hidden"]} cell {"cell":41.1,"slot":45.7,"count":4}
+rule2: pressed "1行4列 空き" -> {"hints":["11"],"captions":["まだ置ける 、 もう置いてある"],"sums":["そろえる合計 34","1行目の合計 23"],"reset":["例を元に戻す disabled=false vis=visible"]}
+rule2: pressed "11" -> {"hints":["1行1列 14"],"captions":["まだ置ける 、 もう置いてある"],"sums":["そろえる合計 34","1行目の合計 34 そろった"],"reset":["例を元に戻す disabled=false vis=visible"]}
+rule2: pressed "1行1列 14" -> {"hints":[],"captions":["まだ置ける 、 もう置いてある"],"sums":["そろえる合計 34","1行目の合計 34 そろった"],"reset":["例を元に戻す disabled=false vis=visible"]}
+rule2: hint steps done after 3
+rule3 initial {"hints":["1行1列 14"],"captions":["変えられる 、 変えられない"],"sums":["そろえる合計 34","1行目の合計 23"],"reset":["例を元に戻す disabled=true vis=hidden"]} cell {"cell":41.1,"slot":45.7,"count":4}
+rule3: pressed "1行1列 14" -> {"hints":["6"],"captions":["変えられる 、 変えられない"],"sums":["そろえる合計 34","1行目の合計 23"],"reset":["例を元に戻す disabled=false vis=visible"]}
+rule3: pressed "6" -> {"hints":["1行3列 5"],"captions":["最初から置いてある数"],"sums":["そろえる合計 34","1行目の合計 23"],"reset":["例を元に戻す disabled=false vis=visible"]}
+rule3: pressed "1行3列 5" -> {"hints":["6"],"captions":["変えられる 、 変えられない"],"sums":["そろえる合計 34","1行目の合計 23"],"reset":["例を元に戻す disabled=false vis=visible"]}
+rule3: pressed "6" -> {"hints":[],"captions":["変えられる 、 変えられない"],"sums":["そろえる合計 34","1行目の合計 24"],"reset":["例を元に戻す disabled=false vis=visible"]}
+rule3: hint steps done after 4
+op panels 4
+op1 initial {"hints":["2行2列 空き"],"captions":[],"sums":["そろえる合計 34","1行目の合計 34 そろった","2行目の合計 32","3行目の合計 22","4行目の合計 34 そろった","1列目の合計 34 そろった","2列目の合計 32","3列目の合計 22","4列目の合計 34 そろった","左上からの斜めの合計 20","右上からの斜めの合計 34 そろった"],"reset":["例を元に戻す disabled=true vis=hidden"]} cell {"cell":41.1,"slot":45.7,"count":16}
+op1: pressed "2行2列 空き" -> {"hints":["2"],"captions":[],"sums":["そろえる合計 34","1行目の合計 34 そろった","2行目の合計 32","3行目の合計 22","4行目の合計 34 そろった","1列目の合計 34 そろった","2列目の合計 32","3列目の合計 22","4列目の合計 34 そろった","左上からの斜めの合計 20","右上からの斜めの合計 34 そろった"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op1: pressed "2" -> {"hints":[],"captions":[],"sums":["そろえる合計 34","1行目の合計 34 そろった","2行目の合計 34 そろった","3行目の合計 22","4行目の合計 34 そろった","1列目の合計 34 そろった","2列目の合計 34 そろった","3列目の合計 22","4列目の合計 34 そろった","左上からの斜めの合計 22","右上からの斜めの合計 34 そろった"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op1: hint steps done after 2
+op2 initial {"hints":["1行4列 9"],"captions":[],"sums":["そろえる合計 34","1行目の合計 27"],"reset":["例を元に戻す disabled=true vis=hidden"]} cell {"cell":41.1,"slot":45.7,"count":4}
+op2: pressed "1行4列 9" -> {"hints":["11"],"captions":[],"sums":["そろえる合計 34","1行目の合計 27"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op2: pressed "11" -> {"hints":["11"],"captions":[],"sums":["そろえる合計 34","1行目の合計 29"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op2: pressed "11" -> {"hints":[],"captions":[],"sums":["そろえる合計 34","1行目の合計 18"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op2: hint steps done after 3
+op3 initial {"hints":["1行3列 空き"],"captions":[""],"sums":["そろえる合計 34","1行目の合計 18"],"reset":["例を元に戻す disabled=true vis=hidden"]} cell {"cell":41.1,"slot":45.7,"count":4}
+op3: pressed "1行3列 空き" -> {"hints":["メモ"],"captions":[""],"sums":["そろえる合計 34","1行目の合計 18"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op3: pressed "メモ" -> {"hints":["5"],"captions":[""],"sums":["そろえる合計 34","1行目の合計 18"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op3: pressed "5" -> {"hints":["5"],"captions":[""],"sums":["そろえる合計 34","1行目の合計 18"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op3: pressed "5" -> {"hints":["メモ"],"captions":[""],"sums":["そろえる合計 34","1行目の合計 18"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op3: pressed "メモ" -> {"hints":[],"captions":[""],"sums":["そろえる合計 34","1行目の合計 18"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op3: hint steps done after 5
+op4 initial {"hints":["1行3列 空き メモ 5 11"],"captions":[],"sums":["そろえる合計 34","1行目の合計 18"],"reset":["例を元に戻す disabled=true vis=hidden"]} cell {"cell":41.1,"slot":45.7,"count":4}
+op4: pressed "1行3列 空き メモ 5 11" -> {"hints":["5"],"captions":[],"sums":["そろえる合計 34","1行目の合計 18"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op4: pressed "5" -> {"hints":["5"],"captions":[],"sums":["そろえる合計 34","1行目の合計 23"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op4: pressed "5" -> {"hints":[],"captions":[],"sums":["そろえる合計 34","1行目の合計 18"],"reset":["例を元に戻す disabled=false vis=visible"]}
+op4: hint steps done after 3
+score inert figures 6
+score text: 速さ | 70点 | 問題ごとの基準時間以内なら満点です。超えるほど下がって基準時間の2倍で0点になります。 | 基準時間 | 空いたマス1つにつき10秒ずつ20秒に足します。 | 正確さ | 30点 | 置き直しのたびに30点から引きます。0点より下にはなりません。 | 置き直し | 1回 −3点 | 置いた数が外れるたびに画面の上の「置き直し」が増えます。ただし列の端の色を変えなかった数はほかのマスを選ぶ前に直せば数えません。 | 4 | 14 | 2列目の合計 18 | 18 | 16を | 置く | 4 | 14 | 16 | 2列目の合計 34 空きがあるのに合計に届いた | 34 | 11を | 置く | 4 | 14 | 11 | 2列目の合計 29 | 29 | 列の端の色を変えた数を置き換える | → 置き直し 1回 | 4 | 14 | 2列目の合計 18 | 18 | 9を | 置く | 4 | 14 | 9 | 2列目の合計 27 | 27 | 11を | 置く | 4 | 14 | 11 | 2列目の合計 29 | 29 | 列の端の色を変えなかった数を置き換える | → 置き直し 0回 | 「待った」・「盤面を戻す」 | 「待った」で外れた数も同じように数えます。「盤面を戻す」で外れた数はどれも数えます。
+flow cells ["1行2列 4 41.4","2行2列 14 41.4","3行2列 空き 41.4","4行2列 空き 41.4"]
+overflow scoring: {"vw":320,"docScroll":320,"overflow":[]}
+errors: 0
+
+errors:
+

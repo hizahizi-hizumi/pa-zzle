@@ -1,0 +1,141 @@
+
+## nanpure phone
+  goal btn same board={"x":55,"y":196,"w":280,"h":280,"r":335,"b":476}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=2 below-examples 32px/46px h=353.5 -> beside-example 32px/32px h=339.5 "どの行にも1〜9が1つずつ入ります。"
+     panel1 figs=2 top-corner 32px/32px h=509.9 -> beside-example 32px/32px h=509.9 "どの列にも1〜9が1つずつ入ります。"
+     panel2 figs=2 below-examples 32px/46px h=309.3 -> beside-example 32px/32px h=295.3 "太線で区切ったブロックにも1〜9が1つず"
+     panel3 figs=1 top-corner 32px/32px h=339.3 -> beside-example 32px/32px h=339.3 "最初からある数字は変えられません。"
+   before rules p0 h=354 f0:below-examples/-(322,624) nearest=f1  f1:below-examples/-(322,508) ok
+   before rules p1 h=510 f0:top-corner/-(322,196) nearest=f1  f1:top-corner/-(322,196) ok
+   before rules p2 h=309 f0:below-examples/-(322,544) nearest=f1  f1:below-examples/-(322,544) ok
+   before rules p3 h=339 f0:top-corner/-(322,303) ok
+   after rules p0 h=340 f0:beside-example/right(322,390) ok  f1:beside-example/right(322,390) ok | seq→right/near f1 | scroll(117px from SPAN.): right/78 -> right/194 near f0->f1
+   after rules p1 h=510 f0:beside-example/left(32,534) ok  f1:beside-example/right(322,534) ok | seq→right/near f1 | scroll(119px from SPAN.): left/364 -> right/364 near f0->f1
+   after rules p2 h=295 f0:beside-example/left(32,425) ok  f1:beside-example/right(322,425) ok | seq→right/near f1 | scroll(124px from SPAN.): left/149 -> right/149 near f0->f1
+   after rules p3 h=339 f0:beside-example/right(322,426) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 top-corner 32px/32px h=235.3 -> beside-example 32px/32px h=235.3 "マスを選んで下の数字を押します。"
+     panel1 figs=1 top-corner 32px/32px h=235.3 -> beside-example 32px/32px h=235.3 "入れた数字は別の数字を押すと変わります。"
+     panel2 figs=1 top-corner 32px/32px h=235.3 -> beside-example 32px/32px h=235.3 "答えと違う数字は入れるとすぐ赤くなります"
+     panel3 figs=1 below-examples 46px/46px h=477.9 -> below-examples 32px/48px h=465.9 "正しい所に9つそろった数字は下の数字を押"
+     panel4 figs=1 top-corner 32px/32px h=307.3 -> beside-example 32px/32px h=307.3 "「メモ」をオンにして数字を押すと小さく書"
+     panel5 figs=1 top-corner 32px/32px h=235.3 -> beside-example 32px/32px h=235.3 "正しい数字を入れると同じ行・列・ブロック"
+     panel6 figs=1 top-corner 32px/32px h=255.3 -> beside-example 32px/32px h=255.3 "「消す」で選んだマスの数字もメモも消しま"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "メモも消して最初の盤面に戻します。" -> 14px 3L "最初の盤面に戻します。" :: 時間・ミス・「待った」の回数はそのままでメモも消して最初の盤面に戻します。
+   before operations p0 h=235 f0:top-corner/-(322,245) ok
+   before operations p1 h=235 f0:top-corner/-(322,320) ok
+   before operations p2 h=235 f0:top-corner/-(322,321) ok
+   before operations p3 h=478 f0:below-examples/-(322,609) ok
+   before operations p4 h=307 f0:top-corner/-(322,321) ok
+   before operations p5 h=235 f0:top-corner/-(322,320) ok
+   before operations p6 h=255 f0:top-corner/-(322,320) ok
+   after operations p0 h=235 f0:beside-example/right(322,326) ok
+   after operations p1 h=235 f0:beside-example/right(322,401) ok
+   after operations p2 h=235 f0:beside-example/right(322,402) ok
+   after operations p3 h=466 f0:below-examples/-(322,609) ok
+   after operations p4 h=307 f0:beside-example/right(322,402) ok
+   after operations p5 h=235 f0:beside-example/right(322,401) ok
+   after operations p6 h=255 f0:beside-example/right(322,401) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 334->336 caps 2,2 -> 2,2 inert=false
+     text[li] 14px 2L "「消す」は数えません。" -> 16px 2L "メモと「消す」は数えません。" :: 答えと違う数字を入れるたびに数えます。メモと「消す」は数えません。
+     text[li] 14px 1L "レベルによらずどの問題も15分です。" -> 16px 1L "レベルによらずどの問題も15分です。" :: レベルによらずどの問題も15分です。
+     text[li] 14px 1L "1分に満たなくても1分と数えます。" -> 16px 1L "1分に満たなくても1分と数えます。" :: 1分に満たなくても1分と数えます。
+     text[li] 14px 1L "新しいプレイとして時間も回数も0から数え直します。" -> 16px 2L "0から数え直します。" :: 新しいプレイとして時間も回数も0から数え直します。
+
+## nanpure w320
+  goal btn same board={"x":48,"y":196,"w":224,"h":224,"r":272,"b":420}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=2 below-examples 32px/46px h=338 -> beside-example 32px/32px h=324 "どの行にも1〜9が1つずつ入ります。"
+     panel1 figs=2 top-corner 32px/32px h=440 -> beside-example 32px/32px h=440 "どの列にも1〜9が1つずつ入ります。"
+     panel2 figs=2 below-examples 32px/46px h=286 -> below-examples 32px/48px h=288 "太線で区切ったブロックにも1〜9が1つず"
+     panel3 figs=1 top-corner 32px/32px h=316 -> beside-example 32px/32px h=316 "最初からある数字は変えられません。"
+   before rules p0 h=338 f0:below-examples/-(252,564) nearest=f1 OUT-OF-VIEW  f1:below-examples/-(252,456) ok
+   before rules p1 h=440 f0:top-corner/-(252,182) nearest=f1  f1:top-corner/-(252,182) ok
+   before rules p2 h=286 f0:below-examples/-(252,484) nearest=f1  f1:below-examples/-(252,484) ok
+   before rules p3 h=316 f0:top-corner/-(252,244) ok
+   after rules p0 h=324 f0:beside-example/right(252,338) ok  f1:beside-example/right(252,338) ok | seq→right/near f1 | scroll(122px from SPAN.): right/70 -> right/178 near f0->f1
+   after rules p1 h=440 f0:beside-example/left(32,172) ok  f1:beside-example/right(252,172) ok | seq→right/near f1 | scroll(124px from SPAN.): left/16 -> right/16 near f0->f1
+   after rules p2 h=288 f0:below-examples/-(252,484) nearest=f1  f1:below-examples/-(252,484) ok | seq→below-examples/near f1 | scroll(123px from SPAN.): null/244 -> null/244 near f1->f1
+   after rules p3 h=316 f0:beside-example/right(252,344) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 top-corner 32px/32px h=212 -> beside-example 32px/32px h=212 "マスを選んで下の数字を押します。"
+     panel1 figs=1 top-corner 32px/32px h=212 -> beside-example 32px/32px h=212 "入れた数字は別の数字を押すと変わります。"
+     panel2 figs=1 top-corner 32px/32px h=212 -> beside-example 32px/32px h=212 "答えと違う数字は入れるとすぐ赤くなります"
+     panel3 figs=1 below-examples 46px/46px h=408 -> below-examples 32px/48px h=396 "正しい所に9つそろった数字は下の数字を押"
+     panel4 figs=1 top-corner 32px/32px h=284 -> beside-example 32px/32px h=284 "「メモ」をオンにして数字を押すと小さく書"
+     panel5 figs=1 top-corner 32px/32px h=212 -> beside-example 32px/32px h=212 "正しい数字を入れると同じ行・列・ブロック"
+     panel6 figs=1 top-corner 32px/32px h=232 -> beside-example 32px/32px h=232 "「消す」で選んだマスの数字もメモも消しま"
+     text[li] NEW -> 16px 2L "選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 3L "最初の盤面に戻します。" -> 14px 4L "最初の盤面に戻します。" :: 時間・ミス・「待った」の回数はそのままでメモも消して最初の盤面に戻します。
+     text[menu] 14px 3L "やり直します。" -> 14px 4L "最初からやり直します。" :: 時間・ミス・「待った」の回数も0に戻して同じ問題を最初からやり直します。
+     text[menu] 14px 2L "変えます。" -> 14px 2L "別の問題に変えます。" :: 同じレベルの別の問題に変えます。
+   before operations p0 h=212 f0:top-corner/-(252,245) ok
+   before operations p1 h=212 f0:top-corner/-(252,284) ok
+   before operations p2 h=212 f0:top-corner/-(252,284) ok
+   before operations p3 h=408 f0:below-examples/-(252,526) ok
+   before operations p4 h=284 f0:top-corner/-(252,284) ok
+   before operations p5 h=212 f0:top-corner/-(252,284) ok
+   before operations p6 h=232 f0:top-corner/-(252,284) ok
+   after operations p0 h=212 f0:beside-example/right(252,303) ok
+   after operations p1 h=212 f0:beside-example/right(252,342) ok
+   after operations p2 h=212 f0:beside-example/right(252,342) ok
+   after operations p3 h=396 f0:below-examples/-(252,526) ok
+   after operations p4 h=284 f0:beside-example/right(252,342) ok
+   after operations p5 h=212 f0:beside-example/right(252,342) ok
+   after operations p6 h=232 f0:beside-example/right(252,342) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 334->336 caps 2,2 -> 2,2 inert=false
+     text[li] 14px 2L "メモと「消す」は数えません。" -> 16px 3L "「消す」は数えません。" :: 答えと違う数字を入れるたびに数えます。メモと「消す」は数えません。
+     text[li] 14px 1L "レベルによらずどの問題も15分です。" -> 16px 1L "レベルによらずどの問題も15分です。" :: レベルによらずどの問題も15分です。
+     text[li] 14px 1L "1分に満たなくても1分と数えます。" -> 16px 1L "1分に満たなくても1分と数えます。" :: 1分に満たなくても1分と数えます。
+     text[li] 14px 2L "数え直します。" -> 16px 2L "0から数え直します。" :: 新しいプレイとして時間も回数も0から数え直します。
+
+## nanpure pc
+  goal btn same board={"x":32,"y":168,"w":500,"h":500,"r":532,"b":668}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=2 top-corner 32px/32px h=372 -> beside-example 32px/32px h=372 "どの行にも1〜9が1つずつ入ります。"
+     panel1 figs=2 top-corner 32px/32px h=656 -> beside-example 32px/32px h=656 "どの列にも1〜9が1つずつ入ります。"
+     panel2 figs=2 top-corner 32px/32px h=344 -> beside-example 32px/32px h=344 "太線で区切ったブロックにも1〜9が1つず"
+     panel3 figs=1 top-corner 32px/32px h=388 -> beside-example 32px/32px h=388 "最初からある数字は変えられません。"
+   before rules p0 h=372 f0:top-corner/-(1196,204) ok  f1:top-corner/-(1196,204) nearest=f0
+   before rules p1 h=656 f0:top-corner/-(1196,140) nearest=f1  f1:top-corner/-(1196,140) ok
+   before rules p2 h=344 f0:top-corner/-(1196,296) nearest=f1  f1:top-corner/-(1196,296) ok
+   before rules p3 h=388 f0:top-corner/-(1196,390) ok
+   after rules p0 h=372 f0:beside-example/right(1196,262) ok  f1:beside-example/right(1196,394) ok | seq→right/near f1
+   after rules p1 h=656 f0:beside-example/left(624,624) ok  f1:beside-example/right(1196,624) ok | seq→right/near f1
+   after rules p2 h=344 f0:beside-example/left(624,468) ok  f1:beside-example/right(1196,468) ok | seq→right/near f1
+   after rules p3 h=388 f0:beside-example/right(1196,562) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 2 -> 2
+     after OVERFLOW SPAN inline-block x=600.6 r=680.7
+     after OVERFLOW SPAN inline-block x=600.6 r=680.7
+     panel0 figs=1 top-corner 32px/32px h=284 -> beside-example 32px/32px h=284 "マスを選んで下の数字を押します。"
+     panel1 figs=1 top-corner 32px/32px h=284 -> beside-example 32px/32px h=284 "入れた数字は別の数字を押すと変わります。"
+     panel2 figs=1 top-corner 32px/32px h=284 -> beside-example 32px/32px h=284 "答えと違う数字は入れるとすぐ赤くなります"
+     panel3 figs=1 top-corner 32px/32px h=596 -> beside-example 32px/32px h=596 "正しい所に9つそろった数字は下の数字を押"
+     panel4 figs=1 top-corner 32px/32px h=356 -> beside-example 32px/32px h=356 "「メモ」をオンにして数字を押すと小さく書"
+     panel5 figs=1 top-corner 32px/32px h=284 -> beside-example 32px/32px h=284 "正しい数字を入れると同じ行・列・ブロック"
+     panel6 figs=1 top-corner 32px/32px h=304 -> beside-example 32px/32px h=304 "「消す」で選んだマスの数字もメモも消しま"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=284 f0:top-corner/-(1196,253) ok
+   before operations p1 h=284 f0:top-corner/-(1196,314) ok
+   before operations p2 h=284 f0:top-corner/-(1196,314) ok
+   before operations p3 h=596 f0:top-corner/-(1196,158) ok
+   before operations p4 h=356 f0:top-corner/-(1196,314) ok
+   before operations p5 h=284 f0:top-corner/-(1196,314) ok
+   before operations p6 h=304 f0:top-corner/-(1196,314) ok
+   after operations p0 h=284 f0:beside-example/right(1196,383) ok
+   after operations p1 h=284 f0:beside-example/right(1196,444) ok
+   after operations p2 h=284 f0:beside-example/right(1196,444) ok
+   after operations p3 h=596 f0:beside-example/right(1196,600) ok
+   after operations p4 h=356 f0:beside-example/right(1196,444) ok
+   after operations p5 h=284 f0:beside-example/right(1196,444) ok
+   after operations p6 h=304 f0:beside-example/right(1196,444) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 334->336 caps 2,2 -> 2,2 inert=false
+     text[li] 14px 1L "答えと違う数字を入れるたびに数えます。メモと「消す」は数えません。" -> 16px 1L "答えと違う数字を入れるたびに数えます。メモと「消す」は数えません。" :: 答えと違う数字を入れるたびに数えます。メモと「消す」は数えません。
+     text[li] 14px 1L "レベルによらずどの問題も15分です。" -> 16px 1L "レベルによらずどの問題も15分です。" :: レベルによらずどの問題も15分です。
+     text[li] 14px 1L "1分に満たなくても1分と数えます。" -> 16px 1L "1分に満たなくても1分と数えます。" :: 1分に満たなくても1分と数えます。
+     text[li] 14px 1L "新しいプレイとして時間も回数も0から数え直します。" -> 16px 1L "新しいプレイとして時間も回数も0から数え直します。" :: 新しいプレイとして時間も回数も0から数え直します。

@@ -1,0 +1,246 @@
+
+## ice-floor-maze phone
+  goal btn same board={"x":55,"y":196,"w":280,"h":280,"r":335,"b":476}
+  [rules] headings H3:22px -> H3:16px; overflow 30 -> 30
+     after OVERFLOW g  x=-29.5 r=338.5
+     after OVERFLOW g  x=-29.5 r=338.5
+     after OVERFLOW line  x=-29.5 r=190.6
+     after OVERFLOW line  x=-4.8 r=215.2
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW line  x=-20.7 r=199.4
+     after OVERFLOW g  x=-113.1 r=239
+     after OVERFLOW g  x=-113.1 r=239
+     after OVERFLOW line  x=-113.1 r=107
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW line  x=-20.7 r=199.4
+     after OVERFLOW g  x=-113.1 r=239
+     after OVERFLOW g  x=-113.1 r=239
+     after OVERFLOW line  x=-113.1 r=107
+     after OVERFLOW g  x=-29.5 r=338.5
+     after OVERFLOW g  x=-29.5 r=338.5
+     after OVERFLOW line  x=-29.5 r=190.6
+     after OVERFLOW line  x=-4.8 r=215.2
+     after OVERFLOW g  x=-29.5 r=338.5
+     after OVERFLOW g  x=-29.5 r=338.5
+     after OVERFLOW line  x=-29.5 r=190.6
+     after OVERFLOW line  x=-4.8 r=215.2
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW line  x=-20.7 r=199.4
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW line  x=-20.7 r=199.4
+     panel0 figs=1 beside-caption 32px/32px h=247.9 -> beside-example 32px/32px h=247.9 "駒は岩か壁にぶつかるまで止まらずに滑りま"
+     panel1 figs=2 beside-caption 32px/32px h=471.8 -> beside-example 32px/32px h=471.8 "ゴールで止まれば完成です。通り過ぎるだけ"
+     panel2 figs=1 beside-caption 32px/32px h=247.9 -> beside-example 32px/32px h=247.9 "駒は床に入ると止まります。床からはまた滑"
+     panel3 figs=1 beside-caption 32px/32px h=247.9 -> beside-example 32px/32px h=247.9 "薄い氷は駒が通ると割れて水面になります。"
+     panel4 figs=2 beside-caption 32px/32px h=471.8 -> beside-example 32px/32px h=471.8 "もろい岩は駒が滑ってきてぶつかると崩れて"
+     panel5 figs=2 beside-caption 32px/32px h=471.8 -> beside-example 32px/32px h=471.8 "駒は雪に入ると止まり雪を1マス先へ押し出"
+     panel6 figs=2 beside-caption 32px/32px h=471.8 -> beside-example 32px/32px h=471.8 "駒は氷の塊にぶつかると塊を押しながら滑り"
+     panel7 figs=2 beside-caption 32px/32px h=471.8 -> beside-example 32px/32px h=471.8 "雪山が載ったゴールにはもう止まれません。"
+   before rules p0 h=248 f0:beside-caption/-(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":118,"y":254,"r":339,"b":474}}]
+   before rules p1 h=472 f0:beside-caption/-(322,668) nearest=f1 OUT-OF-VIEW HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":478,"r":329,"b":698}}]  f1:beside-caption/-(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":474}}]
+   before rules p2 h=248 f0:beside-caption/-(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":118,"y":254,"r":339,"b":474}}]
+   before rules p3 h=248 f0:beside-caption/-(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":118,"y":254,"r":339,"b":474}}]
+   before rules p4 h=472 f0:beside-caption/-(322,667) nearest=f1 OUT-OF-VIEW HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":477,"r":329,"b":698}}]  f1:beside-caption/-(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":475}}]
+   before rules p5 h=472 f0:beside-caption/-(322,668) nearest=f1 OUT-OF-VIEW HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":478,"r":329,"b":698}}]  f1:beside-caption/-(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":474}}]
+   before rules p6 h=472 f0:beside-caption/-(322,668) nearest=f1 OUT-OF-VIEW HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":478,"r":329,"b":698}}]  f1:beside-caption/-(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":474}}]
+   before rules p7 h=472 f0:beside-caption/-(322,668) nearest=f1 OUT-OF-VIEW HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":478,"r":329,"b":698}}]  f1:beside-caption/-(322,554) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":364,"r":329,"b":584}}]
+   after rules p0 h=248 f0:beside-example/right(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":118,"y":254,"r":339,"b":474}}]
+   after rules p1 h=472 f0:beside-example/right(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":474}},{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":478,"r":329,"b":698}}]  f1:beside-example/right(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":474}}] | seq→right/near f1 | scroll(124px from path.): right/186 -> right/410 near f0->f1
+   after rules p2 h=248 f0:beside-example/right(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":118,"y":254,"r":339,"b":474}}]
+   after rules p3 h=248 f0:beside-example/right(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":118,"y":254,"r":339,"b":474}}]
+   after rules p4 h=472 f0:beside-example/right(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":474}},{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":477,"r":329,"b":698}}]  f1:beside-example/right(322,445) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":475}}] | seq→right/near f1 | scroll(122px from polygon.): right/186 -> right/410 near f0->f1
+   after rules p5 h=472 f0:beside-example/right(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":474}},{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":478,"r":329,"b":698}}]  f1:beside-example/right(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":474}}] | seq→right/near f1 | scroll(128px from path.): right/186 -> right/410 near f0->f1
+   after rules p6 h=472 f0:beside-example/right(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":474}},{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":478,"r":329,"b":698}}]  f1:beside-example/right(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":474}}] | seq→right/near f1 | scroll(115px from path.): right/186 -> right/410 near f0->f1
+   after rules p7 h=472 f0:beside-example/right(322,444) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":254,"r":329,"b":474}},{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":478,"r":329,"b":698}}]  f1:beside-example/right(322,554) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":364,"r":329,"b":584}}] | seq→right/near f1 | scroll(0px from path.): right/186 -> right/410 near f0->f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 6 -> 6
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW line  x=-20.7 r=199.4
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW g  x=-20.7 r=328.8
+     after OVERFLOW line  x=-20.7 r=199.4
+     panel0 figs=1 beside-caption 32px/32px h=211.9 -> beside-example 32px/32px h=211.9 "盤面をスワイプした向きへ駒が滑ります。"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "やり直します。" -> 14px 2L "最初からやり直します。" :: 時間と手数も0に戻して同じ問題を最初からやり直します。
+   before operations p0 h=212 f0:beside-caption/-(322,369) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":215,"r":329,"b":435}}]
+   after operations p0 h=212 f0:beside-example/right(322,363) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":109,"y":215,"r":329,"b":435}}]
+  [scoring] headings H3:22px -> H3:22px; overflow 8 -> 8
+     after OVERFLOW g  x=-29.3 r=125.9
+     after OVERFLOW g  x=-29.3 r=125.9
+     after OVERFLOW line  x=-29.3 r=73.9
+     after OVERFLOW line  x=-20.6 r=82.5
+     after OVERFLOW g  x=-29.3 r=125.9
+     after OVERFLOW g  x=-29.3 r=125.9
+     after OVERFLOW line  x=-29.3 r=73.9
+     after OVERFLOW line  x=-20.6 r=82.5
+     flow0 h 316->316.7 caps 1,1 -> 1,1 inert=false
+     text[li] 14px 2L "「盤面を戻す」より前に滑った手も数えます。" -> 16px 3L "滑った手も数えます。" :: 駒が滑った回数です。「待った」で取り消した手も「盤面を戻す」より前に滑った手も数えます。
+     text[li] 14px 1L "使った回数では点が下がりません。" -> 16px 1L "使った回数では点が下がりません。" :: 使った回数では点が下がりません。
+     text[li] 14px 3L "多い問題ほど長くなります。" -> 16px 3L "多い問題ほど長くなります。" :: 盤面のマス・最短の手数・もろい岩・薄い氷・雪・氷の塊の数が多い問題ほど長くなります。
+
+## ice-floor-maze w320
+  goal btn same board={"x":48,"y":196,"w":224,"h":224,"r":272,"b":420}
+  [rules] headings H3:22px -> H3:16px; overflow 30 -> 30
+     after OVERFLOW g  x=-19.6 r=274.8
+     after OVERFLOW g  x=-19.6 r=274.8
+     after OVERFLOW line  x=-19.6 r=156.5
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW line  x=-12.6 r=163.5
+     after OVERFLOW g  x=-86.5 r=195.2
+     after OVERFLOW g  x=-86.5 r=195.2
+     after OVERFLOW line  x=-86.5 r=89.6
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW line  x=-12.6 r=163.5
+     after OVERFLOW g  x=-86.5 r=195.2
+     after OVERFLOW g  x=-86.5 r=195.2
+     after OVERFLOW line  x=-86.5 r=89.6
+     after OVERFLOW g  x=-19.6 r=274.8
+     after OVERFLOW g  x=-19.6 r=274.8
+     after OVERFLOW line  x=-19.6 r=156.5
+     after OVERFLOW g  x=-19.6 r=274.8
+     after OVERFLOW g  x=-19.6 r=274.8
+     after OVERFLOW line  x=-19.6 r=156.5
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW line  x=-12.6 r=163.5
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW line  x=-12.6 r=163.5
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW line  x=-12.6 r=163.5
+     panel0 figs=1 beside-caption 32px/32px h=218.3 -> beside-example 32px/32px h=218.3 "駒は岩か壁にぶつかるまで止まらずに滑りま"
+     panel1 figs=2 beside-caption 32px/32px h=412.7 -> beside-example 32px/32px h=412.7 "ゴールで止まれば完成です。通り過ぎるだけ"
+     panel2 figs=1 beside-caption 32px/32px h=218.3 -> beside-example 32px/32px h=218.3 "駒は床に入ると止まります。床からはまた滑"
+     panel3 figs=1 beside-caption 32px/32px h=218.3 -> beside-example 32px/32px h=218.3 "薄い氷は駒が通ると割れて水面になります。"
+     panel4 figs=2 beside-caption 32px/32px h=412.7 -> beside-example 32px/32px h=412.7 "もろい岩は駒が滑ってきてぶつかると崩れて"
+     panel5 figs=2 beside-caption 32px/32px h=412.7 -> beside-example 32px/32px h=412.7 "駒は雪に入ると止まり雪を1マス先へ押し出"
+     panel6 figs=2 beside-caption 32px/32px h=412.7 -> beside-example 32px/32px h=412.7 "駒は氷の塊にぶつかると塊を押しながら滑り"
+     panel7 figs=2 beside-caption 32px/32px h=412.7 -> beside-example 32px/32px h=412.7 "雪山が載ったゴールにはもう止まれません。"
+   before rules p0 h=218 f0:beside-caption/-(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":99,"y":228,"r":275,"b":404}}]
+   before rules p1 h=413 f0:beside-caption/-(252,576) nearest=f1 OUT-OF-VIEW HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":423,"r":267,"b":599}}]  f1:beside-caption/-(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}]
+   before rules p2 h=218 f0:beside-caption/-(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":99,"y":228,"r":275,"b":404}}]
+   before rules p3 h=218 f0:beside-caption/-(252,382) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":99,"y":228,"r":275,"b":404}}]
+   before rules p4 h=413 f0:beside-caption/-(252,575) nearest=f1 OUT-OF-VIEW HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":422,"r":267,"b":598}}]  f1:beside-caption/-(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}]
+   before rules p5 h=413 f0:beside-caption/-(252,576) nearest=f1 OUT-OF-VIEW HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":423,"r":267,"b":599}}]  f1:beside-caption/-(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}]
+   before rules p6 h=413 f0:beside-caption/-(252,576) nearest=f1 OUT-OF-VIEW HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":422,"r":267,"b":598}}]  f1:beside-caption/-(252,382) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}]
+   before rules p7 h=413 f0:beside-caption/-(252,575) nearest=f1 OUT-OF-VIEW HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":422,"r":267,"b":598}}]  f1:beside-caption/-(252,458) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":305,"r":267,"b":481}}]
+   after rules p0 h=218 f0:beside-example/right(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":99,"y":228,"r":275,"b":404}}]
+   after rules p1 h=413 f0:beside-example/right(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":405}}]  f1:beside-example/right(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}] | seq→right/near f1 | scroll(124px from path.): right/156 -> right/351 near f0->f1
+   after rules p2 h=218 f0:beside-example/right(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":99,"y":228,"r":275,"b":404}}]
+   after rules p3 h=218 f0:beside-example/right(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":99,"y":228,"r":275,"b":404}}]
+   after rules p4 h=413 f0:beside-example/right(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}]  f1:beside-example/right(252,382) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}] | seq→right/near f1 | scroll(123px from path.): right/156 -> right/351 near f0->f1
+   after rules p5 h=413 f0:beside-example/right(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}]  f1:beside-example/right(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}] | seq→right/near f1 | scroll(124px from path.): right/156 -> right/351 near f0->f1
+   after rules p6 h=413 f0:beside-example/right(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}]  f1:beside-example/right(252,382) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}] | seq→right/near f1 | scroll(124px from path.): right/156 -> right/351 near f0->f1
+   after rules p7 h=413 f0:beside-example/right(252,381) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":228,"r":267,"b":404}}]  f1:beside-example/right(252,459) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":305,"r":267,"b":481}}] | seq→right/near f1 | scroll(0px from path.): right/156 -> right/351 near f0->f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 6 -> 6
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW g  x=-12.6 r=267
+     after OVERFLOW line  x=-12.6 r=163.5
+     after OVERFLOW g  x=-12.6 r=267.1
+     after OVERFLOW g  x=-12.6 r=267.1
+     after OVERFLOW line  x=-12.6 r=163.5
+     panel0 figs=1 beside-caption 32px/32px h=182.3 -> beside-example 32px/32px h=182.3 "盤面をスワイプした向きへ駒が滑ります。"
+     text[li] NEW -> 16px 2L "選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "最初からやり直します。" -> 14px 3L "最初からやり直します。" :: 時間と手数も0に戻して同じ問題を最初からやり直します。
+   before operations p0 h=182 f0:beside-caption/-(252,363) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":246,"r":267,"b":422}}]
+   after operations p0 h=182 f0:beside-example/right(252,357) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":91,"y":246,"r":267,"b":422}}]
+  [scoring] headings H3:22px -> H3:22px; overflow 8 -> 8
+     after OVERFLOW g  x=-8.3 r=94.6
+     after OVERFLOW g  x=-8.3 r=94.6
+     after OVERFLOW line  x=-8.3 r=60.1
+     after OVERFLOW line  x=-2.6 r=65.9
+     after OVERFLOW g  x=-8.3 r=94.6
+     after OVERFLOW g  x=-8.3 r=94.6
+     after OVERFLOW line  x=-8.3 r=60.1
+     after OVERFLOW line  x=-2.6 r=65.9
+     flow0 h 315->317 caps 2,1 -> 2,1 inert=false
+     text[li] 14px 3L "滑った手も数えます。" -> 16px 3L "前に滑った手も数えます。" :: 駒が滑った回数です。「待った」で取り消した手も「盤面を戻す」より前に滑った手も数えます。
+     text[li] 14px 2L "取り消す" -> 14px 2L "「待った」で取り消す" :: 滑らせてから「待った」で取り消す
+     text[li] 14px 1L "使った回数では点が下がりません。" -> 16px 1L "使った回数では点が下がりません。" :: 使った回数では点が下がりません。
+     text[li] 14px 3L "多い問題ほど長くなります。" -> 16px 3L "多い問題ほど長くなります。" :: 盤面のマス・最短の手数・もろい岩・薄い氷・雪・氷の塊の数が多い問題ほど長くなります。
+
+## ice-floor-maze pc
+  goal btn same board={"x":32,"y":168,"w":350,"h":350,"r":382,"b":518}
+  [rules] headings H3:22px -> H3:16px; overflow 26 -> 26
+     after OVERFLOW g  x=518.6 r=955.3
+     after OVERFLOW g  x=518.6 r=955.3
+     after OVERFLOW line  x=518.6 r=793.6
+     after OVERFLOW line  x=545.6 r=820.5
+     after OVERFLOW g  x=403.1 r=843.1
+     after OVERFLOW g  x=403.1 r=843.1
+     after OVERFLOW line  x=403.1 r=678.1
+     after OVERFLOW g  x=518.6 r=955.3
+     after OVERFLOW g  x=518.6 r=955.3
+     after OVERFLOW line  x=518.6 r=793.6
+     after OVERFLOW line  x=545.6 r=820.5
+     after OVERFLOW g  x=518.6 r=955.3
+     after OVERFLOW g  x=518.6 r=955.3
+     after OVERFLOW line  x=518.6 r=793.6
+     after OVERFLOW line  x=545.6 r=820.5
+     after OVERFLOW g  x=518.6 r=955.3
+     after OVERFLOW g  x=518.6 r=955.3
+     after OVERFLOW line  x=518.6 r=793.6
+     after OVERFLOW line  x=545.6 r=820.5
+     after OVERFLOW g  x=518.6 r=955.3
+     after OVERFLOW g  x=518.6 r=955.3
+     after OVERFLOW line  x=518.6 r=793.6
+     after OVERFLOW line  x=545.6 r=820.5
+     after OVERFLOW g  x=403.1 r=898.1
+     after OVERFLOW g  x=403.1 r=898.1
+     after OVERFLOW line  x=403.1 r=678.1
+     panel0 figs=1 beside-caption 32px/32px h=284.8 -> beside-example 32px/32px h=284.8 "駒は岩か壁にぶつかるまで止まらずに滑りま"
+     panel1 figs=2 beside-caption 32px/32px h=284.8 -> beside-example 32px/32px h=284.8 "ゴールで止まれば完成です。通り過ぎるだけ"
+     panel2 figs=1 beside-caption 32px/32px h=284.8 -> beside-example 32px/32px h=284.8 "駒は床に入ると止まります。床からはまた滑"
+     panel3 figs=1 beside-caption 32px/32px h=284.8 -> beside-example 32px/32px h=284.8 "薄い氷は駒が通ると割れて水面になります。"
+     panel4 figs=2 beside-caption 32px/32px h=284.8 -> beside-example 32px/32px h=284.8 "もろい岩は駒が滑ってきてぶつかると崩れて"
+     panel5 figs=2 beside-caption 32px/32px h=284.8 -> beside-example 32px/32px h=284.8 "駒は雪に入ると止まり雪を1マス先へ押し出"
+     panel6 figs=2 beside-caption 32px/32px h=284.8 -> beside-example 32px/32px h=284.8 "駒は氷の塊にぶつかると塊を押しながら滑り"
+     panel7 figs=2 beside-caption 32px/32px h=284.8 -> beside-example 32px/32px h=284.8 "雪山が載ったゴールにはもう止まれません。"
+   before rules p0 h=285 f0:beside-caption/-(1196,401) ok
+   before rules p1 h=285 f0:beside-caption/-(1196,481) nearest=f1 HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":245,"r":1235,"b":520}}]  f1:beside-caption/-(1196,481) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":245,"r":1235,"b":520}}]
+   before rules p2 h=285 f0:beside-caption/-(1196,480) ok
+   before rules p3 h=285 f0:beside-caption/-(1196,480) ok
+   before rules p4 h=285 f0:beside-caption/-(1196,480) nearest=f1 HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":244,"r":1235,"b":519}}]  f1:beside-caption/-(1196,480) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":244,"r":1235,"b":519}}]
+   before rules p5 h=285 f0:beside-caption/-(1196,481) nearest=f1 HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":245,"r":1235,"b":520}}]  f1:beside-caption/-(1196,481) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":245,"r":1235,"b":520}}]
+   before rules p6 h=285 f0:beside-caption/-(1196,481) nearest=f1 HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":245,"r":1235,"b":520}}]  f1:beside-caption/-(1196,481) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":245,"r":1235,"b":520}}]
+   before rules p7 h=285 f0:beside-caption/-(1196,690) nearest=f1 HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":454,"r":1235,"b":729}}]  f1:beside-caption/-(1196,690) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":454,"r":1235,"b":729}}]
+   after rules p0 h=285 f0:beside-example/right(1196,391) ok
+   after rules p1 h=285 f0:beside-example/left(624,481) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":519,"y":245,"r":794,"b":520}},{"kind":"leaf","tag":"line","label":"","rect":{"x":546,"y":245,"r":821,"b":520}}]  f1:beside-example/right(1196,481) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":245,"r":1235,"b":520}}] | seq→right/near f1
+   after rules p2 h=285 f0:beside-example/right(1196,481) ok
+   after rules p3 h=285 f0:beside-example/right(1196,480) ok
+   after rules p4 h=285 f0:beside-example/left(624,480) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":519,"y":244,"r":794,"b":519}},{"kind":"leaf","tag":"line","label":"","rect":{"x":546,"y":244,"r":821,"b":519}}]  f1:beside-example/right(1196,480) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":244,"r":1235,"b":519}}] | seq→right/near f1
+   after rules p5 h=285 f0:beside-example/left(624,481) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":519,"y":245,"r":794,"b":520}},{"kind":"leaf","tag":"line","label":"","rect":{"x":546,"y":245,"r":821,"b":520}}]  f1:beside-example/right(1196,481) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":245,"r":1235,"b":520}}] | seq→right/near f1
+   after rules p6 h=285 f0:beside-example/left(624,481) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":519,"y":245,"r":794,"b":520}},{"kind":"leaf","tag":"line","label":"","rect":{"x":546,"y":245,"r":821,"b":520}}]  f1:beside-example/right(1196,481) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":245,"r":1235,"b":520}}] | seq→right/near f1
+   after rules p7 h=285 f0:beside-example/left(624,691) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":519,"y":454,"r":794,"b":729}},{"kind":"leaf","tag":"line","label":"","rect":{"x":546,"y":454,"r":821,"b":729}}]  f1:beside-example/right(1196,691) HITS [{"kind":"leaf","tag":"line","label":"","rect":{"x":960,"y":454,"r":1235,"b":729}}] | seq→right/near f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 1 -> 1
+     after OVERFLOW SPAN inline-block x=600.6 r=696.7
+     panel0 figs=1 beside-caption 32px/32px h=248.8 -> beside-example 32px/32px h=248.8 "盤面をスワイプした向きへ駒が滑ります。"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=249 f0:beside-caption/-(1196,414) ok
+   after operations p0 h=249 f0:beside-example/right(1196,408) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 14 -> 14
+     after OVERFLOW g  x=478.2 r=843.7
+     after OVERFLOW g  x=478.2 r=843.7
+     after OVERFLOW line  x=478.2 r=721.2
+     after OVERFLOW line  x=498.6 r=741.7
+     after OVERFLOW line  x=600.7 r=843.7
+     after OVERFLOW g  x=920.9 r=1286.4
+     after OVERFLOW g  x=920.9 r=1286.4
+     after OVERFLOW line  x=1043.4 r=1286.4
+     after OVERFLOW g  x=478.2 r=843.7
+     after OVERFLOW g  x=478.2 r=843.7
+     after OVERFLOW line  x=478.2 r=721.2
+     after OVERFLOW line  x=498.6 r=741.7
+     after OVERFLOW line  x=600.7 r=843.7
+     after OVERFLOW SPAN inline-block x=600.6 r=696.7
+     flow0 h 504->504.7 caps 1,1 -> 1,1 inert=false
+     text[li] 14px 1L "駒が滑った回数です。「待った」で取り消した手も「盤面を戻す」より前に滑った手も数えます。" -> 16px 2L "前に滑った手も数えます。" :: 駒が滑った回数です。「待った」で取り消した手も「盤面を戻す」より前に滑った手も数えます。
+     text[li] 14px 1L "使った回数では点が下がりません。" -> 16px 1L "使った回数では点が下がりません。" :: 使った回数では点が下がりません。
+     text[li] 14px 1L "盤面のマス・最短の手数・もろい岩・薄い氷・雪・氷の塊の数が多い問題ほど長くなります。" -> 16px 2L "多い問題ほど長くなります。" :: 盤面のマス・最短の手数・もろい岩・薄い氷・雪・氷の塊の数が多い問題ほど長くなります。

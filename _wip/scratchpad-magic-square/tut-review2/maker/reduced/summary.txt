@@ -1,0 +1,181 @@
+[01-howto.png] sel=-1 cue=[] padCue=[] spot=0
+   msg:    text: 魔方陣 の遊び方 1から順の数を1回ずつマスに置いて縦・横・斜めのどの列も同じ合計にそろえるパズルです。 ルール 操作 採点 1から順の数を1回ずつマスに置いて縦・横・斜めのどの列も同じ合計にそろえるパズルです。 そろえる合計 34 合計 34 14 4 5 11 9 2 7 16 8 13 12 1 3 15 10 6 1行目の合計 34 そろった 34 2行目の合計 34 そ
+[02-intro-burst0.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 魔方陣 1〜16の数を1つずつマスに入れて 縦・横・斜めの列の合計を全て同じにするパズルです 列の端に今の合計が出ます 全て34になると完成です はじめる
+[03-intro-burst1.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 魔方陣 1〜16の数を1つずつマスに入れて 縦・横・斜めの列の合計を全て同じにするパズルです 列の端に今の合計が出ます 全て34になると完成です はじめる
+[04-intro-burst2.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 魔方陣 1〜16の数を1つずつマスに入れて 縦・横・斜めの列の合計を全て同じにするパズルです 列の端に今の合計が出ます 全て34になると完成です はじめる
+[05-intro-burst3.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 魔方陣 1〜16の数を1つずつマスに入れて 縦・横・斜めの列の合計を全て同じにするパズルです 列の端に今の合計が出ます 全て34になると完成です はじめる
+[06-intro-burst4.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 魔方陣 1〜16の数を1つずつマスに入れて 縦・横・斜めの列の合計を全て同じにするパズルです 列の端に今の合計が出ます 全て34になると完成です はじめる
+[07-intro-burst5.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 魔方陣 1〜16の数を1つずつマスに入れて 縦・横・斜めの列の合計を全て同じにするパズルです 列の端に今の合計が出ます 全て34になると完成です はじめる
+[08-intro.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 魔方陣 1〜16の数を1つずつマスに入れて 縦・横・斜めの列の合計を全て同じにするパズルです 列の端に今の合計が出ます 全て34になると完成です はじめる
+[09-start-burst0.png] sel=-1 cue=["1,1:mark+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[10-start-burst1.png] sel=-1 cue=["1,1:mark+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[11-start-burst2.png] sel=-1 cue=["1,1:mark+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[12-start-burst3.png] sel=-1 cue=["1,1:mark+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[13-start-burst4.png] sel=-1 cue=["1,1:mark+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[14-start-burst5.png] sel=-1 cue=["1,1:mark+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[15-start-burst6.png] sel=-1 cue=["1,1:mark+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[16-start-burst7.png] sel=-1 cue=["1,1:mark+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[17-op-step.png] sel=-1 cue=["1,1:mark+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[18-op-number-before-select.png] sel=-1 cue=["1,1:mark+recall+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[19-op-other-cell.png] sel=-1 cue=["1,1:mark+recall+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[20-op-given-cell.png] sel=-1 cue=["1,1:mark+recall+pointer"] padCue=[] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[21-op-selected.png] sel=0 cue=[] padCue=[14] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+   (number 3 is disabled)
+[22-op-wrong-number.png] sel=0 cue=[] padCue=[14] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[23-op-done-burst0.png] sel=-1 cue=["1,1:acknowledgement","1,4:mark"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[24-op-done-burst1.png] sel=-1 cue=["1,1:acknowledgement","1,4:mark"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[25-op-done-burst2.png] sel=-1 cue=["1,1:acknowledgement","1,4:mark"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[26-op-done-burst3.png] sel=-1 cue=["1,1:acknowledgement","1,4:mark"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[27-op-done-burst4.png] sel=-1 cue=["1,1:acknowledgement","1,4:mark"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[28-op-done-burst5.png] sel=-1 cue=["1,1:acknowledgement","1,4:mark"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[29-row-step.png] sel=-1 cue=["1,1:acknowledgement","1,4:mark"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[30-row-number-before-select.png] sel=-1 cue=["1,1:acknowledgement","1,4:mark+recall"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[31-row-other-cell.png] sel=-1 cue=["1,1:acknowledgement","1,4:mark+recall"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[32-row-selected.png] sel=3 cue=[] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[33-row-wrong-15.png] sel=3 cue=[] padCue=[] spot=7
+   msg: この横の列は合計が34になっていません 別の数を押すと入れ直せます
+[34-row-other-cell-while-violated.png] sel=3 cue=["1,4:mark+recall"] padCue=[] spot=7
+   msg: この横の列は合計が34になっていません 別の数を押すと入れ直せます
+[35-row-wrong-1.png] sel=3 cue=[] padCue=[] spot=7
+   msg: この横の列は合計が34になっていません 別の数を押すと入れ直せます
+[36-row-remove-1.png] sel=3 cue=[] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[37-row-done-burst0.png] sel=-1 cue=["1,4:acknowledgement"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[38-row-done-burst1.png] sel=-1 cue=["1,4:acknowledgement"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[39-row-done-burst2.png] sel=-1 cue=["1,4:acknowledgement"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[40-row-done-burst3.png] sel=-1 cue=["1,4:acknowledgement","3,1:mark"] padCue=[] spot=7
+   msg: 横の列と同じく縦の列も 4つの数を足すと34になります 下に今の合計が出ます 34に足りない分を空いたマスに入れます
+[41-row-done-burst4.png] sel=-1 cue=["1,4:acknowledgement","3,1:mark"] padCue=[] spot=7
+   msg: 横の列と同じく縦の列も 4つの数を足すと34になります 下に今の合計が出ます 34に足りない分を空いたマスに入れます
+[42-row-done-burst5.png] sel=-1 cue=["1,4:acknowledgement","3,1:mark"] padCue=[] spot=7
+   msg: 横の列と同じく縦の列も 4つの数を足すと34になります 下に今の合計が出ます 34に足りない分を空いたマスに入れます
+[43-row-done-burst6.png] sel=-1 cue=["1,4:acknowledgement","3,1:mark"] padCue=[] spot=7
+   msg: 横の列と同じく縦の列も 4つの数を足すと34になります 下に今の合計が出ます 34に足りない分を空いたマスに入れます
+[44-row-done-burst7.png] sel=-1 cue=["1,4:acknowledgement","3,1:mark"] padCue=[] spot=7
+   msg: 横の列と同じく縦の列も 4つの数を足すと34になります 下に今の合計が出ます 34に足りない分を空いたマスに入れます
+[45-col-step.png] sel=-1 cue=["1,4:acknowledgement","3,1:mark"] padCue=[] spot=7
+   msg: 横の列と同じく縦の列も 4つの数を足すと34になります 下に今の合計が出ます 34に足りない分を空いたマスに入れます
+[46-col-selected.png] sel=8 cue=[] padCue=[] spot=7
+   msg: 横の列と同じく縦の列も 4つの数を足すと34になります 下に今の合計が出ます 34に足りない分を空いたマスに入れます
+[47-col-wrong-10.png] sel=8 cue=[] padCue=[] spot=7
+   msg: この縦の列は合計が34になっていません 別の数を押すと入れ直せます
+[48-col-done-burst0.png] sel=-1 cue=["3,1:acknowledgement"] padCue=[] spot=7
+   msg: 横の列と同じく縦の列も 4つの数を足すと34になります 下に今の合計が出ます 34に足りない分を空いたマスに入れます
+[49-col-done-burst1.png] sel=-1 cue=["3,1:acknowledgement"] padCue=[] spot=7
+   msg: 横の列と同じく縦の列も 4つの数を足すと34になります 下に今の合計が出ます 34に足りない分を空いたマスに入れます
+[50-col-done-burst2.png] sel=-1 cue=["2,2:mark","3,1:acknowledgement"] padCue=[] spot=7
+   msg: 横や縦の列と同じく斜めの列も 4つの数を足すと34になります 右下の角に今の合計が出ます 34に足りない分を空いたマスに入れます
+[51-diag-step.png] sel=-1 cue=["2,2:mark","3,1:acknowledgement"] padCue=[] spot=7
+   msg: 横や縦の列と同じく斜めの列も 4つの数を足すと34になります 右下の角に今の合計が出ます 34に足りない分を空いたマスに入れます
+[52-diag-selected.png] sel=5 cue=[] padCue=[] spot=7
+   msg: 横や縦の列と同じく斜めの列も 4つの数を足すと34になります 右下の角に今の合計が出ます 34に足りない分を空いたマスに入れます
+[53-diag-wrong-15.png] sel=5 cue=[] padCue=[] spot=7
+   msg: この斜めの列は合計が34になっていません 別の数を押すと入れ直せます
+[54-diag-done-burst0.png] sel=-1 cue=["2,2:acknowledgement"] padCue=[] spot=7
+   msg: 横や縦の列と同じく斜めの列も 4つの数を足すと34になります 右下の角に今の合計が出ます 34に足りない分を空いたマスに入れます
+[55-diag-done-burst1.png] sel=-1 cue=["2,2:acknowledgement"] padCue=[] spot=7
+   msg: 横や縦の列と同じく斜めの列も 4つの数を足すと34になります 右下の角に今の合計が出ます 34に足りない分を空いたマスに入れます
+[56-diag-done-burst2.png] sel=-1 cue=["2,2:acknowledgement"] padCue=[] spot=1
+   msg: 空いたマスが1つだけ残った列を探します その列の空いたマスに34に足りない分を入れます
+[57-search-step.png] sel=-1 cue=["2,2:acknowledgement"] padCue=[] spot=1
+   msg: 空いたマスが1つだけ残った列を探します その列の空いたマスに34に足りない分を入れます
+[58-search-number-before-select.png] sel=-1 cue=["2,2:acknowledgement"] padCue=[] spot=1
+   msg: 空いたマスが1つだけ残った列を探します その列の空いたマスに34に足りない分を入れます
+[59-search-given.png] sel=1 cue=[] padCue=[] spot=1
+   msg: 選んだマスには最初から数が入っています 空いたマスが1つだけ残った列を探します
+[60-search-given-enter.png] sel=1 cue=[] padCue=[] spot=1
+   msg: 選んだマスには最初から数が入っています 空いたマスが1つだけ残った列を探します
+[61-search-placed.png] sel=0 cue=[] padCue=[] spot=1
+   msg: 選んだマスにはもう数が入っています 空いたマスが1つだけ残った列を探します
+[62-search-undecided.png] sel=14 cue=[] padCue=[] spot=1
+   msg: 選んだマスの横の列と縦の列には 空いたマスが2つ以上あります 空いたマスが1つだけ残った列を探します
+[63-search-undecided-enter.png] sel=14 cue=[] padCue=[] spot=1
+   msg: 選んだマスに入る数はまだ決まりません 空いたマスが1つだけ残った列を探します
+[64-search-reselect-same.png] sel=14 cue=[] padCue=[] spot=1
+   msg: 選んだマスに入る数はまだ決まりません 空いたマスが1つだけ残った列を探します
+[65-search-decided.png] sel=6 cue=[] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[66-search-wrong-1.png] sel=6 cue=[] padCue=[] spot=1
+   msg: この横の列と斜めの列は合計が34になっていません 別の数を押すと入れ直せます
+[67-search-done-burst0.png] sel=-1 cue=["2,3:acknowledgement"] padCue=[] spot=7
+   msg: 空いたマスが1つだけ残った列を探します その列の空いたマスに34に足りない分を入れます
+[68-search-done-burst1.png] sel=-1 cue=["2,3:acknowledgement"] padCue=[] spot=7
+   msg: 空いたマスが1つだけ残った列を探します その列の空いたマスに34に足りない分を入れます
+[69-search-done-burst2.png] sel=-1 cue=["2,3:acknowledgement"] padCue=[] spot=1
+   msg: 残りのマスも埋めてみましょう 空いたマスが1つだけ残った列を探して 34に足りない分を入れます ヒント
+[70-free.png] sel=-1 cue=["2,3:acknowledgement"] padCue=[] spot=1
+   msg: 残りのマスも埋めてみましょう 空いたマスが1つだけ残った列を探して 34に足りない分を入れます ヒント
+[71-free-select.png] sel=14 cue=[] padCue=[] spot=1
+   msg: 残りのマスも埋めてみましょう 空いたマスが1つだけ残った列を探して 34に足りない分を入れます ヒント
+[72-free-idle-5s.png] sel=14 cue=[] padCue=[] spot=1
+   msg: 残りのマスも埋めてみましょう 空いたマスが1つだけ残った列を探して 34に足りない分を入れます ヒント
+[73-free-hint.png] sel=14 cue=["3,4:mark"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[74-free-hint-after-select.png] sel=13 cue=["3,4:mark"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[75-free-wrong-1.png] sel=13 cue=[] padCue=[] spot=1
+   msg: この縦の列は合計が34になっていません 別の数を押すと入れ直せます
+   hint button count while violated: 0
+[76-free-select-other-while-violated.png] sel=11 cue=["4,2:mark"] padCue=[] spot=1
+   msg: この縦の列は合計が34になっていません 印の付いたマスを選んで 別の数を押すと入れ直せます
+[77-free-fixed.png] sel=13 cue=[] padCue=[] spot=1
+   msg: 残りのマスも埋めてみましょう 空いたマスが1つだけ残った列を探して 34に足りない分を入れます ヒント
+[78-free-4-3.png] sel=14 cue=[] padCue=[] spot=1
+   msg: 残りのマスも埋めてみましょう 空いたマスが1つだけ残った列を探して 34に足りない分を入れます ヒント
+[79-solve-burst0.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 完成です 5×5と6×6の盤面の合計は 「遊び方」で見られます
+[80-solve-burst1.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 完成です 5×5と6×6の盤面の合計は 「遊び方」で見られます 横の列の4つの数を足すと34になります 縦の列の4つの数を足すと34になります 斜めの列の4つの数を足すと34になります レベル
+[81-solve-burst2.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 完成です 5×5と6×6の盤面の合計は 「遊び方」で見られます 横の列の4つの数を足すと34になります 縦の列の4つの数を足すと34になります 斜めの列の4つの数を足すと34になります レベル
+[82-solve-burst3.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 完成です 5×5と6×6の盤面の合計は 「遊び方」で見られます 横の列の4つの数を足すと34になります 縦の列の4つの数を足すと34になります 斜めの列の4つの数を足すと34になります レベル
+[83-solve-burst4.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 完成です 5×5と6×6の盤面の合計は 「遊び方」で見られます 横の列の4つの数を足すと34になります 縦の列の4つの数を足すと34になります 斜めの列の4つの数を足すと34になります レベル
+[84-solve-burst5.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 完成です 5×5と6×6の盤面の合計は 「遊び方」で見られます 横の列の4つの数を足すと34になります 縦の列の4つの数を足すと34になります 斜めの列の4つの数を足すと34になります レベル
+[85-solve-burst6.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 完成です 5×5と6×6の盤面の合計は 「遊び方」で見られます 横の列の4つの数を足すと34になります 縦の列の4つの数を足すと34になります 斜めの列の4つの数を足すと34になります レベル
+[86-solve-burst7.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 完成です 5×5と6×6の盤面の合計は 「遊び方」で見られます 横の列の4つの数を足すと34になります 縦の列の4つの数を足すと34になります 斜めの列の4つの数を足すと34になります レベル
+[87-solve-burst8.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 完成です 5×5と6×6の盤面の合計は 「遊び方」で見られます 横の列の4つの数を足すと34になります 縦の列の4つの数を足すと34になります 斜めの列の4つの数を足すと34になります レベル
+[88-solve-burst9.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 完成です 5×5と6×6の盤面の合計は 「遊び方」で見られます 横の列の4つの数を足すと34になります 縦の列の4つの数を足すと34になります 斜めの列の4つの数を足すと34になります レベル
+[89-completed.png] sel=-1 cue=[] padCue=[] spot=1
+   msg: 完成です 5×5と6×6の盤面の合計は 「遊び方」で見られます 横の列の4つの数を足すと34になります 縦の列の4つの数を足すと34になります 斜めの列の4つの数を足すと34になります レベル
+errors: []

@@ -1,0 +1,48 @@
+node play-menu.js takuzu water-sort minesweeper nanpure bridges parking-jam ice-floor-maze hitofude-puzzle slide-puzzle tsume-shogi reflection
+node follow-hints.js before phone water-sort rules 1 1 2
+node follow-hints.js before phone water-sort operations 0 0 2
+node follow-hints.js before pc water-sort rules 1 1 2
+node follow-hints.js before pc water-sort operations 0 0 2
+node user-scroll.js before phone slide-puzzle rules 1 1 bottom
+node user-scroll.js before phone slide-puzzle rules 1 0 top
+node follow-hints.js after phone water-sort rules 1 1 2
+node follow-hints.js after phone water-sort operations 0 0 2
+node follow-hints.js after pc water-sort rules 1 1 2
+node follow-hints.js after pc water-sort operations 0 0 2
+node user-scroll.js after phone slide-puzzle rules 1 1 bottom
+node user-scroll.js after phone slide-puzzle rules 1 0 top
+node capture320.js before w320 takuzu
+node capture320.js after w320 takuzu
+node capture320.js before w320 water-sort
+node capture320.js after w320 water-sort
+node capture320.js before w320 minesweeper
+node capture320.js after w320 minesweeper
+node capture320.js before w320 nanpure
+node capture320.js after w320 nanpure
+node capture320.js before w320 bridges
+node capture320.js after w320 bridges
+node capture320.js before w320 parking-jam
+node capture320.js after w320 parking-jam
+node capture320.js before w320 ice-floor-maze
+node capture320.js after w320 ice-floor-maze
+node capture320.js before w320 hitofude-puzzle
+node capture320.js after w320 hitofude-puzzle
+node capture320.js before w320 slide-puzzle
+node capture320.js after w320 slide-puzzle
+node capture320.js before w320 tsume-shogi
+node capture320.js after w320 tsume-shogi
+node capture320.js before w320 reflection
+node capture320.js after w320 reflection
+env TABS_ONLY=operations,scoring SUFFIX=-ops node capture-tabs.js before phone tsume-shogi
+env TABS_ONLY=operations,scoring SUFFIX=-ops node capture-tabs.js before pc tsume-shogi
+node follow-hints.js before phone tsume-shogi rules 6 0 2
+node follow-hints.js before phone tsume-shogi rules 6 1 2
+node user-scroll.js before phone tsume-shogi rules 6 1 bottom
+node user-scroll.js before phone tsume-shogi rules 6 0 top
+env TABS_ONLY=operations,scoring SUFFIX=-ops node capture-tabs.js after phone tsume-shogi
+env TABS_ONLY=operations,scoring SUFFIX=-ops node capture-tabs.js after pc tsume-shogi
+node follow-hints.js after phone tsume-shogi rules 6 0 2
+node follow-hints.js after phone tsume-shogi rules 6 1 2
+node user-scroll.js after phone tsume-shogi rules 6 1 bottom
+node user-scroll.js after phone tsume-shogi rules 6 0 top
+node flow-focus.js takuzu water-sort minesweeper nanpure ice-floor-maze hitofude-puzzle slide-puzzle tsume-shogi

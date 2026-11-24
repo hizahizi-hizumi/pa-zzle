@@ -1,0 +1,8 @@
+refactor(magic-square): 受け付けなかった押し方の揺らす所の振り分けを共有する
+
+選んでいたマスがあればそのマスを、無ければ押した数の札を揺らす振り分けを、
+プレイ画面の中から ui の小さなモジュールへ移す。チュートリアルでも本番と同じ
+揺れで返すために使う。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

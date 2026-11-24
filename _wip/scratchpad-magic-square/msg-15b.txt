@@ -1,0 +1,13 @@
+feat(magic-square): 難易度の特徴と分類（版 8）を作る
+
+- `analyzeMagicSquareDifficulty`: 完全な解法器で答えが1つかを確かめ（無い・2つ以上・上限に届いたら invalid）、
+  基準の読みの特徴、4×4 の仮想の列を足した読み、段1での極小を求める。部品とその組み合わせ（5,507 通り）の読みは、
+  1つずつ読んで返す。
+- `assessMagicSquareDifficulty`: 梯子（入口・段・深い所・最初の所が深いか）でレベルを付け、巡の上限・盤面の割り当て・
+  4×4 の仮想の列・L1 の極小・作るときの帯・部品の1〜3つの組み合わせの全部での一致を、この順に確かめる。
+  基準表（梯子・盤面・帯）は `as const satisfies Record<MagicSquareDifficulty, …>` で持つ。
+- 単体テストは 88 候補の特徴・節点の数・レベル・帯・部品ごとのレベルと、組み合わせを全部読まずに決まる候補の分類を
+  確かめる。組み合わせを全部読む候補は `analyze-magic-square-difficulty.ts reference` で確かめる。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

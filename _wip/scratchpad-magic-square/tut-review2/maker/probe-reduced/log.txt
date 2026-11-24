@@ -1,0 +1,31 @@
+[01-op-wrong-available-number.png] sel=0 cue=["1,1:mark+recall"] padCue=[14] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[02-op-wrong-available-number-later.png] sel=0 cue=["1,1:mark+recall"] padCue=[14] spot=1
+   msg: マスを選んで盤面の下に並んだ数を押すと その数がマスに入ります 印の付いたマスに14を入れます
+[03-hold-tap-unmarked.png] sel=-1 cue=["1,4:acknowledgement"] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[04-hold-after.png] sel=-1 cue=["1,4:acknowledgement","3,1:mark+recall"] padCue=[] spot=7
+   msg: 横の列と同じく縦の列も 4つの数を足すと34になります 下に今の合計が出ます 34に足りない分を空いたマスに入れます
+[05-hold-tap-next-marked.png] sel=5 cue=[] padCue=[] spot=7
+   msg: 横や縦の列と同じく斜めの列も 4つの数を足すと34になります 右下の角に今の合計が出ます 34に足りない分を空いたマスに入れます
+[06-search-step.png] sel=-1 cue=["2,2:acknowledgement"] padCue=[] spot=1
+   msg: 空いたマスが1つだけ残った列を探します その列の空いたマスに34に足りない分を入れます
+[07-search-replace-placed-with-1.png] sel=0 cue=[] padCue=[] spot=1
+   msg: この横の列と縦の列と斜めの列は合計が34になっていません 別の数を押すと入れ直せます
+[08-search-removed-placed.png] sel=0 cue=[] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[09-search-select-undecided-after-removal.png] sel=14 cue=[] padCue=[] spot=1
+   msg: 選んだマスの横の列と縦の列には 空いたマスが2つ以上あります 空いたマスが1つだけ残った列を探します
+[10-search-select-removed.png] sel=0 cue=[] padCue=[] spot=7
+   msg: 横の列の4つの数を足すと34になります 右に今の合計が出ます 34に足りない分を空いたマスに入れます
+[11-search-done-by-refill.png] sel=-1 cue=["1,1:acknowledgement"] padCue=[] spot=7
+   msg: 空いたマスが1つだけ残った列を探します その列の空いたマスに34に足りない分を入れます
+[12-free.png] sel=-1 cue=["1,1:acknowledgement"] padCue=[] spot=1
+   msg: 残りのマスも埋めてみましょう 空いたマスが1つだけ残った列を探して 34に足りない分を入れます ヒント
+[13-free-removed-14-and-2.png] sel=5 cue=[] padCue=[] spot=1
+   msg: 残りのマスも埋めてみましょう 空いたマスが1つだけ残った列を探して 34に足りない分を入れます ヒント
+[14-free-wrong-1-at-2-2-silent.png] sel=5 cue=[] padCue=[] spot=1
+   msg: 残りのマスも埋めてみましょう 空いたマスが1つだけ残った列を探して 34に足りない分を入れます ヒント
+[15-free-hint-with-silent-wrong.png] sel=5 cue=[] padCue=[] spot=1
+   msg: 印の付いたマスの数が違います そのマスを選んで 別の数を押すと入れ直せます
+errors: []

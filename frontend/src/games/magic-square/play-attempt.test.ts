@@ -1,8 +1,5 @@
 import { createMagicSquarePlayAttemptProgress } from "@/games/magic-square/play-attempt";
-import {
-  listMagicSquarePoolEntries,
-  restoreMagicSquarePoolEntry,
-} from "@/games/magic-square/problem/problem-pool";
+import { restoreMagicSquarePoolEntry } from "@/games/magic-square/problem/problem-pool";
 import {
   createMagicSquareSession,
   enterMagicSquareSessionValue,
@@ -11,9 +8,13 @@ import {
 } from "@/games/magic-square/session/session";
 
 describe("createMagicSquarePlayAttemptProgress", () => {
-  const { problem } = restoreMagicSquarePoolEntry(
-    listMagicSquarePoolEntries("1")[0]!,
-  );
+  // 左上が空きで、答えが14の問題（答えはチュートリアルと遊び方の例の魔方陣）。
+  const { problem } = restoreMagicSquarePoolEntry([
+    "0.4.5.0.0.2.0.0.0.0.12.1.3.0.10.6",
+    0,
+    0,
+    0,
+  ]);
   const initial = createMagicSquareSession(problem, 1_000);
   // 左上に置き、右上を選んでから待ったで左上の数を外すので、置き直しが1回になる。
   const session = undoMagicSquareSession(

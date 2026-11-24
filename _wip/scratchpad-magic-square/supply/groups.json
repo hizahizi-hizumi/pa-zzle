@@ -1,0 +1,87 @@
+{
+ "4": {
+  "line_automorphisms": 32,
+  "d4_in_group": true,
+  "identity_first": true,
+  "brute_force_equal": true,
+  "virtual_lines_preserved": true
+ },
+ "5": {
+  "line_automorphisms": 32,
+  "d4_in_group": true,
+  "identity_first": true,
+  "brute_force_equal": true
+ },
+ "6": {
+  "line_automorphisms": 192,
+  "d4_in_group": true,
+  "identity_first": true
+ },
+ "squares4": {
+  "total": 7040,
+  "classes_d4": 880,
+  "classes_d4_complement": 616,
+  "classes_G": 220,
+  "classes_G_complement": 166,
+  "seconds": 14.3,
+  "class_size_distribution": {
+   "32": 112,
+   "64": 54
+  }
+ },
+ "examples": {
+  "4": {
+   "square": [
+    14,
+    4,
+    5,
+    11,
+    9,
+    2,
+    7,
+    16,
+    8,
+    13,
+    12,
+    1,
+    3,
+    15,
+    10,
+    6
+   ],
+   "is_magic": true,
+   "orbit_size_G_complement": 64
+  },
+  "5": {
+   "square": [
+    4,
+    3,
+    24,
+    25,
+    9,
+    11,
+    21,
+    8,
+    2,
+    23,
+    13,
+    19,
+    18,
+    1,
+    14,
+    17,
+    16,
+    5,
+    15,
+    12,
+    20,
+    6,
+    10,
+    22,
+    7
+   ],
+   "is_magic": true,
+   "orbit_size_G_complement": 64
+  }
+ }
+}

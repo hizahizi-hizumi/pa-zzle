@@ -1,4 +1,5 @@
-import { difficultyLevels } from "@/games/difficulty";
+import { difficultyLevels, isInNumericRange } from "@/games/difficulty";
+import { magicSquareLevelBoardSizes } from "@/games/magic-square/difficulty";
 import {
   findMagicSquarePoolEntryByProblemId,
   findMagicSquarePoolProblemFeatures,
@@ -16,38 +17,45 @@ const entries = levels.flatMap((level) =>
 );
 
 describe("listMagicSquarePoolEntries", () => {
-  test("どのレベルにも問題を返すこと", () => {
+  test("どのレベルにも500問を返すこと", () => {
     const counts = levels.map(
       (level) => listMagicSquarePoolEntries(level).length,
     );
 
-    expect(counts.every((count) => count > 0)).toBe(true);
+    expect(counts).toEqual(levels.map(() => 500));
   });
 });
 
 describe("restoreMagicSquarePoolEntry", () => {
-  test("どの問題も復元でき、作業の量に空きマスの数を添えること", () => {
-    const restored = entries.map(({ entry }) => {
-      const { problem, workload } = restoreMagicSquarePoolEntry(entry);
+  test("どの問題も復元でき、作業の量に空きマスの数と問題集の読みの量を添えること", () => {
+    const mismatched = entries.filter(({ entry }) => {
+      const { problem, workload, readingWorkload } =
+        restoreMagicSquarePoolEntry(entry);
+      const [, stuckPlaceCount, tier3PlaceCount, stuckSweepTotal] = entry;
       return (
-        workload.emptyCellCount ===
-        problem.givens.cells.filter((cell) => cell === null).length
+        workload.emptyCellCount !==
+          problem.givens.cells.filter((cell) => cell === null).length ||
+        readingWorkload.stuckPlaceCount !== stuckPlaceCount ||
+        readingWorkload.tier3PlaceCount !== tier3PlaceCount ||
+        readingWorkload.stuckSweepTotal !== stuckSweepTotal
       );
     });
 
-    expect(restored.every(Boolean)).toBe(true);
+    expect(mismatched).toEqual([]);
   });
 });
 
 describe("toMagicSquarePoolIdentity", () => {
-  test("盤面の一辺を 4・5・6 のどれかにすること", () => {
-    const sizes = new Set(
-      entries.map(
-        ({ entry }) => toMagicSquarePoolIdentity(entry).conditions.size,
-      ),
+  test("盤面の一辺を、そのレベルが許す大きさにすること", () => {
+    const outside = entries.filter(
+      ({ level, entry }) =>
+        !isInNumericRange(
+          toMagicSquarePoolIdentity(entry).conditions.size,
+          magicSquareLevelBoardSizes[level],
+        ),
     );
 
-    expect([...sizes].sort()).toEqual([4, 5, 6]);
+    expect(outside).toEqual([]);
   });
 });
 
@@ -90,10 +98,15 @@ describe("findMagicSquarePoolEntryByProblemId", () => {
 describe("findMagicSquarePoolProblemFeatures", () => {
   const [problemId] = listMagicSquarePoolProblemIds("1");
 
+  const [seed] = listMagicSquarePoolEntries("1")[0]!;
+
   test("盤面の一辺と最初から置いてある数の個数を返すこと", () => {
     const features = findMagicSquarePoolProblemFeatures("1", problemId!);
 
-    expect(features).toEqual({ size: 4, givenCount: 8 });
+    expect(features).toEqual({
+      size: 4,
+      givenCount: seed.split(".").filter((value) => value !== "0").length,
+    });
   });
 
   test("問題集に無い ID には null を返すこと", () => {

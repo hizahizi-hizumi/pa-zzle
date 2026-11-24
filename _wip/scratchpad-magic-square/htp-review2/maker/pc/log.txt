@@ -1,0 +1,26 @@
+replay enabled after settle: true
+skip target count during replay: 1
+skip target after skip: 0
+rules captions initial: ["そろう","そろわない","(no caption)","置けない","変えられる、変えられない"]
+rules hints initial: ["1行4列 11","1行4列 空き","1行1列 14"]
+rule items: 3
+rule1 hints after select: ["13","1行4列 空き","1行1列 14"]
+rule1 captions after 13: ["そろわない","そろわない","(no caption)","置けない","変えられる、変えられない"]
+rule1 hints after 13: ["1行4列 空き","1行1列 14"]
+rule1 captions after board2 fill: ["そろわない","そろわない","(no caption)","置けない","変えられる、変えられない"]
+rule1 captions after reset: ["そろう","そろわない","(no caption)","置けない","変えられる、変えられない"]
+rule2 captions after 11: ["そろう","そろわない","(no caption)","置けない","変えられる、変えられない"]
+rule2 value 4 disabled: true
+rule3 hints after select: ["1行4列 11","6"]
+rule3 hints after 6 rejected: ["1行4列 11"]
+rule3 hints after another rejected 7: ["1行4列 11","6"]
+rule3 captions after replace: ["そろう","そろわない","(no caption)","置けない","変えられる、変えられない"]
+ops li count: 6
+op1 hints after select: ["2","1行4列 9","1行3列 空き","1行3列 空き メモ 5 11"]
+op2 hints after replace: ["11","1行3列 空き","1行3列 空き メモ 5 11"]
+op2 hints after remove: ["1行3列 空き","1行3列 空き メモ 5 11"]
+op3 cell after 5 memos: 1行3列 空き メモ 5 6 7 8
+rules captions after tab back: ["そろう","そろわない","(no caption)","置けない","変えられる、変えられない"]
+rules captions after reopen: ["そろう","そろわない","(no caption)","置けない","変えられる、変えられない"]
+play empties: 8
+errors: []

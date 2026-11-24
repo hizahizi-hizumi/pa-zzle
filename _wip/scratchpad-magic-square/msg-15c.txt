@@ -1,0 +1,12 @@
+feat(magic-square): 候補の生成器と素朴な解き方を作り、移植と時間を確かめるスクリプトを足す
+
+- 候補（`generateMagicSquareCandidate`）: 答えの魔方陣（4×4 は全部から一様に、5×5・6×6 は乱択の探索）を、
+  読むモデル（段 T まで）で解ける限り無作為な順に空け、k マス戻すか、レベル4・5向けの点を下げない向きに200回磨く。
+  磨く点から、7つの読み方で基準とレベルが違うごとに引く。候補は生成条件と番号から作る乱数列だけで決まる。
+- 素朴な解き方（`traceMagicSquareTrialSolve`）: 空き1マスの列を埋め、ほかは空きの最も少ない列のマスに残っている数を
+  試し、違反で戻す。表示（今の合計と違反・埋まった列だけ・何も出さない）と慣れた試し置きを引数に取る。
+- `analyze-magic-square-difficulty.ts`: `reference` で期待値の 88 候補の分類と、組み合わせで最初に違うレベルになる組を
+  全部突き合わせ、`timing` で生成条件ごとの1候補の時間と当たるレベルを出す。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

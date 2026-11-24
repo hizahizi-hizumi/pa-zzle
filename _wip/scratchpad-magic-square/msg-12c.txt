@@ -1,0 +1,10 @@
+feat(magic-square): チュートリアルで数をマスに置く動詞を「置く」にそろえる
+
+最初から置いてある数・置いた数・置き直しと同じ動詞で、数をマスに入れる操作を
+言う。チュートリアルの一言の「入れます」を「置きます」、「入れ直せます」を
+遊び方と同じ「置き換えられます」、「数が入っています」を「数が置いてあります」
+にする。空いたマスに入る数の決まり方は、操作でなく数の決まり方なので「入る」の
+まま言う。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

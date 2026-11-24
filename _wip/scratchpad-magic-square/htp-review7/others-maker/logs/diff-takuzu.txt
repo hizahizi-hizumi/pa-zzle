@@ -1,0 +1,87 @@
+
+## takuzu phone
+  goal btn same board={"x":55,"y":172,"w":280,"h":280,"r":335,"b":452}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=2 beside-caption 32px/32px h=223 -> beside-example 32px/32px h=223 "同じタイルが続くのは縦も横も2つまでです"
+     panel1 figs=2 beside-caption 32px/32px h=262 -> beside-example 32px/32px h=262 "どの行にも列にも四角と丸を4つずつ置きま"
+     panel2 figs=2 beside-caption 32px/32px h=342 -> beside-example 32px/32px h=342 "行どうし・列どうしはどれも違う並びにしま"
+     panel3 figs=1 beside-caption 32px/32px h=167 -> beside-example 32px/32px h=167 "最初からあるタイルは変えられません。"
+   before rules p0 h=223 f0:beside-caption/-(322,431) nearest=f1  f1:beside-caption/-(322,431) ok
+   before rules p1 h=262 f0:beside-caption/-(322,510) nearest=f1  f1:beside-caption/-(322,391) ok
+   before rules p2 h=342 f0:beside-caption/-(322,570) nearest=f1  f1:beside-caption/-(322,411) ok
+   before rules p3 h=167 f0:beside-caption/-(322,554) ok
+   after rules p0 h=223 f0:beside-example/left(32,431) ok  f1:beside-example/right(322,431) ok | seq→right/near f1 | scroll(122px from rect.): left/161 -> right/161 near f0->f1
+   after rules p1 h=262 f0:beside-example/right(322,391) ok  f1:beside-example/right(322,391) ok | seq→right/near f1 | scroll(119px from BUTTON.relat): right/81 -> right/200 near f0->f1
+   after rules p2 h=342 f0:beside-example/right(322,411) ok  f1:beside-example/right(322,411) ok | seq→right/near f1 | scroll(108px from BUTTON.relat): right/121 -> right/280 near f0->f1
+   after rules p3 h=167 f0:beside-example/right(322,530) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=206 -> beside-example 32px/32px h=206 "マスを押すたびに空き・四角・丸の順に変わ"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "0に戻して同じ問題を最初からやり直します。" -> 14px 3L "最初からやり直します。" :: 時間・置き直し・「待った」の回数も0に戻して同じ問題を最初からやり直します。
+   before operations p0 h=206 f0:beside-caption/-(322,373) ok
+   after operations p0 h=206 f0:beside-example/right(322,367) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 257.3->258.7 caps 1,1 -> 1,1 inert=false
+     text[li] 14px 2L "1回と数えます。" -> 16px 2L "1回と数えます。" :: ほかのマスを押してから戻って変えると1回と数えます。
+     text[li] 14px 1L "戻して消えたタイルは置き直しに数えません。" -> 16px 1L "戻して消えたタイルは置き直しに数えません。" :: 戻して消えたタイルは置き直しに数えません。
+     text[li] 14px 1L "取り消した操作は置き直しに数えません。" -> 16px 1L "取り消した操作は置き直しに数えません。" :: 取り消した操作は置き直しに数えません。
+     text[li] 14px 2L "並べ方を考えて決める所が多い問題も長くなります。" -> 16px 3L "多い問題も長くなります。" :: 空きのマスが多い問題ほど長くなります。行や列の並べ方を考えて決める所が多い問題も長くなり
+
+## takuzu w320
+  goal btn same board={"x":48,"y":196,"w":224,"h":224,"r":272,"b":420}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=2 top-corner 32px/32px h=197.9 -> top-corner 32px/32px h=197.9 "同じタイルが続くのは縦も横も2つまでです"
+     panel1 figs=2 below-examples 32px/66px h=279.3 -> below-examples 32px/68px h=281.3 "どの行にも列にも四角と丸を4つずつ置きま"
+     panel2 figs=2 below-examples 32px/66px h=342.5 -> below-examples 32px/68px h=344.5 "行どうし・列どうしはどれも違う並びにしま"
+     panel3 figs=1 beside-caption 32px/32px h=158.6 -> beside-example 32px/32px h=158.6 "最初からあるタイルは変えられません。"
+   before rules p0 h=198 f0:top-corner/-(252,261) nearest=f1  f1:top-corner/-(252,261) ok
+   before rules p1 h=279 f0:below-examples/-(252,504) nearest=f1  f1:below-examples/-(252,393) ok
+   before rules p2 h=343 f0:below-examples/-(252,552) nearest=f1 OUT-OF-VIEW  f1:below-examples/-(252,409) ok
+   before rules p3 h=159 f0:beside-caption/-(252,458) ok
+   after rules p0 h=198 f0:top-corner/-(252,251) nearest=f1  f1:top-corner/right(252,251) ok | seq→right/near f1 | scroll(105px from rect.): null/16 -> right/16 near f1->f1
+   after rules p1 h=281 f0:below-examples/-(252,504) nearest=f1  f1:below-examples/-(252,393) ok | seq→below-examples/near f1 | scroll(105px from BUTTON.relat): null/237 -> null/237 near f1->f1
+   after rules p2 h=345 f0:below-examples/-(252,552) nearest=f1 OUT-OF-VIEW  f1:below-examples/-(252,409) ok | seq→below-examples/near f1 | scroll(123px from BUTTON.relat): null/301 -> null/301 near f1->f1
+   after rules p3 h=159 f0:beside-example/right(252,435) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=189.3 -> beside-example 32px/32px h=189.3 "マスを押すたびに空き・四角・丸の順に変わ"
+     text[li] NEW -> 16px 2L "選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 4L "やり直します。" -> 14px 4L "最初からやり直します。" :: 時間・置き直し・「待った」の回数も0に戻して同じ問題を最初からやり直します。
+     text[menu] 14px 2L "変えます。" -> 14px 2L "別の問題に変えます。" :: 同じレベルの別の問題に変えます。
+   before operations p0 h=189 f0:beside-caption/-(252,321) ok
+   after operations p0 h=189 f0:beside-example/right(252,315) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 294->296 caps 2,2 -> 2,2 inert=false
+     text[li] 14px 2L "1回と数えます。" -> 16px 2L "戻って変えると1回と数えます。" :: ほかのマスを押してから戻って変えると1回と数えます。
+     text[li] 14px 2L "数えません。" -> 16px 2L "置き直しに数えません。" :: 戻して消えたタイルは置き直しに数えません。
+     text[li] 14px 1L "取り消した操作は置き直しに数えません。" -> 16px 2L "置き直しに数えません。" :: 取り消した操作は置き直しに数えません。
+     text[li] 14px 3L "多い問題も長くなります。" -> 16px 4L "多い問題も長くなります。" :: 空きのマスが多い問題ほど長くなります。行や列の並べ方を考えて決める所が多い問題も長くなり
+
+## takuzu pc
+  goal btn same board={"x":32,"y":168,"w":500,"h":500,"r":532,"b":668}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=2 beside-caption 32px/32px h=271 -> beside-example 32px/32px h=271 "同じタイルが続くのは縦も横も2つまでです"
+     panel1 figs=2 beside-caption 32px/32px h=294 -> beside-example 32px/32px h=294 "どの行にも列にも四角と丸を4つずつ置きま"
+     panel2 figs=2 beside-caption 32px/32px h=406 -> beside-example 32px/32px h=406 "行どうし・列どうしはどれも違う並びにしま"
+     panel3 figs=1 beside-caption 32px/32px h=183 -> beside-example 32px/32px h=183 "最初からあるタイルは変えられません。"
+   before rules p0 h=271 f0:beside-caption/-(1196,387) nearest=f1  f1:beside-caption/-(1196,387) ok
+   before rules p1 h=294 f0:beside-caption/-(1196,552) nearest=f1  f1:beside-caption/-(1196,417) ok
+   before rules p2 h=406 f0:beside-caption/-(1196,636) nearest=f1  f1:beside-caption/-(1196,445) ok
+   before rules p3 h=183 f0:beside-caption/-(1196,690) ok
+   after rules p0 h=271 f0:beside-example/left(624,377) ok  f1:beside-example/right(1196,377) ok | seq→right/near f1
+   after rules p1 h=294 f0:beside-example/right(1196,417) ok  f1:beside-example/right(1196,417) ok | seq→right/near f1
+   after rules p2 h=406 f0:beside-example/right(1196,445) ok  f1:beside-example/right(1196,445) ok | seq→right/near f1
+   after rules p3 h=183 f0:beside-example/right(1196,666) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=238 -> beside-example 32px/32px h=238 "マスを押すたびに空き・四角・丸の順に変わ"
+     panel1 figs=1 beside-caption 32px/32px h=238 -> beside-example 32px/32px h=238 "右クリックでは逆の順に変わります。"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=238 f0:beside-caption/-(1196,399) ok
+   before operations p1 h=238 f0:beside-caption/-(1196,399) ok
+   after operations p0 h=238 f0:beside-example/right(1196,393) ok
+   after operations p1 h=238 f0:beside-example/right(1196,393) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 294->296 caps 1,1 -> 1,1 inert=false
+     text[li] 14px 1L "ほかのマスを押してから戻って変えると1回と数えます。" -> 16px 1L "ほかのマスを押してから戻って変えると1回と数えます。" :: ほかのマスを押してから戻って変えると1回と数えます。
+     text[li] 14px 1L "戻して消えたタイルは置き直しに数えません。" -> 16px 1L "戻して消えたタイルは置き直しに数えません。" :: 戻して消えたタイルは置き直しに数えません。
+     text[li] 14px 1L "取り消した操作は置き直しに数えません。" -> 16px 1L "取り消した操作は置き直しに数えません。" :: 取り消した操作は置き直しに数えません。
+     text[li] 14px 2L "多い問題も長くなります。" -> 16px 2L "決める所が多い問題も長くなります。" :: 空きのマスが多い問題ほど長くなります。行や列の並べ方を考えて決める所が多い問題も長くなり

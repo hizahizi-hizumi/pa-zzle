@@ -1,0 +1,12 @@
+feat(magic-square): 問題集から例の魔方陣と似すぎた問題を除く判定を足す
+
+遊び方とチュートリアルで答えまで見せる魔方陣（4×4・5×5）と同じ類の答えの
+問題は、答えを写すだけで解けるので採らない。先に採った問題を写しただけの
+問題、4×4 で回転・裏返しで同じ答えの問題、答えが同じ類で与える数の所の
+違いが4以下の問題も採らない。
+
+チュートリアルと遊び方の図の答えが、除く例の魔方陣と同じであることを
+テストで確かめる。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

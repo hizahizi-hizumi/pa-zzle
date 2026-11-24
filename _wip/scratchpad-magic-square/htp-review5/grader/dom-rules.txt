@@ -1,0 +1,123 @@
+div[role=tabpanel] .flex-1 outline-none @container isolate data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inacti
+  div .space-y-12
+    section .space-y-3
+      h3 .font-semibold text-body
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+      div .relative rounded-lg bg-muted px-4 [--how-to-play-panel-padding-block:--spacing(8)] pt-8 pb-[calc(var(--how-to-play-reset
+        div .@container
+          div .flex flex-col items-center gap-10
+            figure .flex flex-col items-center gap-3
+              div .flex
+                div .flex flex-col items-center gap-3
+                  div .
+                  div .
+              figcaption .flex min-h-6 items-center justify-center self-stretch text-supporting
+                span .flex flex-col items-center
+                  span .grid
+            figure .flex flex-col items-center gap-3
+              div .flex
+                div .flex flex-col items-center gap-3
+                  div .
+                  div .
+              figcaption .flex min-h-6 items-center justify-center self-stretch text-supporting
+                span .flex flex-col items-center
+                  span .grid
+                  span .h-0 whitespace-nowrap text-foreground
+        span .absolute right-4 bottom-2
+          span .invisible flex
+            button[aria=例を元に戻す] .inline-flex items-center justify-center gap-2 whitespace-nowrap text-supporting font-medium transition-all disabled:poin
+              svg .
+                path .
+                path .
+                path .
+                path .
+    section .space-y-3
+      h3 .font-semibold text-body
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+        span .inline-block
+      div .relative rounded-lg bg-muted px-4 [--how-to-play-panel-padding-block:--spacing(8)] py-8
+        div .@container
+          div .flex flex-col items-center gap-10
+            figure .flex flex-col items-center gap-3
+              div .flex
+                div .flex flex-col items-center gap-3
+                  div .
+                  div .
+              figcaption .flex min-h-6 items-center justify-center self-stretch text-supporting
+                span .grid
+                  span .col-start-1 row-start-1 flex items-center justify-center
+                  span .col-start-1 row-start-1 flex items-center justify-center invisible
+                  span .col-start-1 row-start-1 flex items-center justify-center invisible
+        span .absolute right-4 bottom-6
+          span .invisible flex
+            button[aria=例を元に戻す] .inline-flex items-center justify-center gap-2 whitespace-nowrap text-supporting font-medium transition-all disabled:poin
+              svg .
+                path .
+                path .
+                path .
+                path .
+    section .space-y-3
+      h3 .font-semibold text-body
+        span .inline-block
+        span .inline-block
+        span .inline-block
+      div .relative rounded-lg bg-muted px-4 [--how-to-play-panel-padding-block:--spacing(8)] py-8
+        div .@container
+          div .flex flex-col items-center gap-10
+            figure .flex flex-col items-center gap-3
+              div .flex
+                div .flex flex-col items-center gap-3
+                  div .
+                  div .
+              figcaption .flex min-h-6 items-center justify-center self-stretch text-supporting
+                span .grid
+                  span .col-start-1 row-start-1 flex items-center justify-center
+                  span .col-start-1 row-start-1 flex items-center justify-center invisible
+                  span .col-start-1 row-start-1 flex items-center justify-center invisible
+        span .absolute right-4 bottom-6
+          span .invisible flex
+            button[aria=例を元に戻す] .inline-flex items-center justify-center gap-2 whitespace-nowrap text-supporting font-medium transition-all disabled:poin
+              svg .
+                path .
+                path .
+                path .
+                path .
+    section .space-y-4
+      h3 .flex items-baseline justify-between gap-x-4 border-b pb-2 text-section-title
+        span .
+          span .inline-block
+      ol .space-y-4
+        li .
+          table .w-full table-fixed border-collapse text-left
+            thead .
+              tr .border-b
+                th .pb-2 font-normal text-muted-foreground text-supporting
+                  span .inline-block
+                th .pb-2 font-normal text-muted-foreground text-supporting
+                  span .inline-block
+                th .pb-2 font-normal text-muted-foreground text-supporting
+                  span .inline-block
+            tbody .
+              tr .border-b last:border-b-0
+                th .py-2 font-semibold text-body tabular-nums
+                td .py-2 text-body tabular-nums
+                td .py-2 text-body tabular-nums
+              tr .border-b last:border-b-0
+                th .py-2 font-semibold text-body tabular-nums
+                td .py-2 text-body tabular-nums
+                td .py-2 text-body tabular-nums

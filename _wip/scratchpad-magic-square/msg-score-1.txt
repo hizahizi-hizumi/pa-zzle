@@ -1,0 +1,8 @@
+refactor(magic-square): 数の欄の並びを session に置き、隣り合う数を求める
+
+置き直しの数え方が、数の欄で隣の数を押し間違えた形を見分けるので、盤面の
+一辺ごとの列の数を数の欄の描き方と数え方で共有する。上下・左右・斜めに
+隣り合う札を隣り合う数とする。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

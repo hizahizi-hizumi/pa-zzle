@@ -1,0 +1,1068 @@
+[
+ {
+  "id": "last-tablet",
+  "playback": "cut",
+  "failures": [],
+  "warnings": [
+   "speed jump at 1720ms: 6 shapes at once, worst 0.988 of peak (49:path), also 50:path, 53:path, 54:path, ...; likely one cause; a stutter unless it is an intended collision, appearance, or start"
+  ],
+  "notes": [],
+  "themes": {
+   "light": {
+    "endVsStatic": [],
+    "endVsStaticPixels": {
+     "pixels": 1045,
+     "ratio": 0.033355676848925916,
+     "max": 76
+    },
+    "reducedMotion": {
+     "animations": 0,
+     "differences": []
+    }
+   },
+   "dark": {
+    "endVsStatic": [],
+    "endVsStaticPixels": {
+     "pixels": 816,
+     "ratio": 0.026046155319352678,
+     "max": 74
+    },
+    "reducedMotion": {
+     "animations": 0,
+     "differences": []
+    }
+   }
+  },
+  "staticBounds": {
+   "width": 103.2,
+   "height": 82,
+   "centerX": 61.6,
+   "centerY": 59,
+   "vsBase": {
+    "dx": 0,
+    "dy": 0,
+    "sizeRatio": 1
+   },
+   "vsOthers": {
+    "games": 11,
+    "sizeRatioToMedian": 1.05,
+    "centerYMedian": 60,
+    "bottomMedian": 104
+   }
+  },
+  "ink": {
+   "coverage": 0.217,
+   "listSize": 46,
+   "vsBase": 1.34,
+   "othersMedian": 0.17,
+   "vsOthersMedian": 1.28,
+   "others": [
+    {
+     "game": "bridges",
+     "coverage": 0.224
+    },
+    {
+     "game": "hitofude-puzzle",
+     "coverage": 0.167
+    },
+    {
+     "game": "ice-floor-maze",
+     "coverage": 0.17
+    },
+    {
+     "game": "minesweeper",
+     "coverage": 0.239
+    },
+    {
+     "game": "nanpure",
+     "coverage": 0.123
+    },
+    {
+     "game": "parking-jam",
+     "coverage": 0.218
+    },
+    {
+     "game": "reflection",
+     "coverage": 0.154
+    },
+    {
+     "game": "slide-puzzle",
+     "coverage": 0.16
+    },
+    {
+     "game": "takuzu",
+     "coverage": 0.189
+    },
+    {
+     "game": "tsume-shogi",
+     "coverage": 0.18
+    },
+    {
+     "game": "water-sort",
+     "coverage": 0.156
+    }
+   ],
+   "othersRange": [
+    0.123,
+    0.239
+   ]
+  },
+  "animationRules": [
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-band",
+    "matched": 2,
+    "names": [
+     {
+      "name": "pz-magic-square-band",
+      "defined": true,
+      "running": 2
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-select",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-select",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-lift-01",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-lift-01",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-drop-01",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-drop-01",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-shadow-01",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-shadow-01",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-placed-01",
+    "matched": 2,
+    "names": [
+     {
+      "name": "pz-magic-square-placed-01",
+      "defined": true,
+      "running": 2
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-sum-0-0",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-sum-0-0",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-sum-0-1",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-sum-0-1",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-glint-row-0",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-glint-row-0",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-glint-column-0",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-glint-column-0",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-glint-diagonal-0",
+    "matched": 2,
+    "names": [
+     {
+      "name": "pz-magic-square-glint-diagonal-0",
+      "defined": true,
+      "running": 2
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-glint-row-1",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-glint-row-1",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-glint-column-1",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-glint-column-1",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-glint-diagonal-1",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-glint-diagonal-1",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-glint-row-2",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-glint-row-2",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-glint-column-2",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-glint-column-2",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-glint-diagonal-2",
+    "matched": 2,
+    "names": [
+     {
+      "name": "pz-magic-square-glint-diagonal-2",
+      "defined": true,
+      "running": 2
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-pop-0",
+    "matched": 2,
+    "names": [
+     {
+      "name": "pz-magic-square-pop-0",
+      "defined": true,
+      "running": 2
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-pop-1",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-pop-1",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-pop-2",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-pop-2",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-finish",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-finish",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   }
+  ],
+  "periodMs": 5200,
+  "delayMs": 0,
+  "holdMs": 1990,
+  "startBeatMs": 300,
+  "stillRatio": 0.44,
+  "appEntry": {
+   "keyframeRestStartMs": 3220,
+   "entryMs": 4600,
+   "staticFromMs": 3210
+  },
+  "minViewBoxMargin": {
+   "margin": 4.55,
+   "element": "50:path",
+   "atMs": 1880
+  },
+  "overlaps": [],
+  "clearances": [
+   {
+    "pair": ".pz-magic-square-matched | .pz-magic-square-frame",
+    "min": 0.5,
+    "staticGap": 3.26,
+    "minGap": 1.08,
+    "atMs": 1880,
+    "elements": [
+     "49:path",
+     "23:rect.pz-magic-square-frame"
+    ]
+   }
+  ],
+  "smoothness": {
+   "stepMs": 2,
+   "threshold": 0.15,
+   "movingShapes": 9,
+   "shapes": [
+    {
+     "element": "49:path",
+     "peakUnitsPerSecond": 66.4,
+     "worstJump": 0.988,
+     "atMs": 1720
+    },
+    {
+     "element": "50:path",
+     "peakUnitsPerSecond": 69.1,
+     "worstJump": 0.988,
+     "atMs": 1720
+    },
+    {
+     "element": "53:path",
+     "peakUnitsPerSecond": 66.4,
+     "worstJump": 0.988,
+     "atMs": 1720
+    },
+    {
+     "element": "54:path",
+     "peakUnitsPerSecond": 69.1,
+     "worstJump": 0.988,
+     "atMs": 1720
+    },
+    {
+     "element": "57:path",
+     "peakUnitsPerSecond": 66.4,
+     "worstJump": 0.988,
+     "atMs": 1720
+    },
+    {
+     "element": "58:path",
+     "peakUnitsPerSecond": 69.1,
+     "worstJump": 0.988,
+     "atMs": 1720
+    },
+    {
+     "element": "62:rect",
+     "peakUnitsPerSecond": 105.1,
+     "worstJump": 0.088,
+     "atMs": 1348
+    },
+    {
+     "element": "64:path",
+     "peakUnitsPerSecond": 54.7,
+     "worstJump": 0.088,
+     "atMs": 1348
+    },
+    {
+     "element": "61:rect.pz-magic-square-shadow-01",
+     "peakUnitsPerSecond": 142.6,
+     "worstJump": 0.082,
+     "atMs": 1348
+    }
+   ]
+  },
+  "delayFlashes": [],
+  "firstFrame": "P0",
+  "realFrames": {
+   "frames": 1031,
+   "firstFrame": "P0",
+   "boundaries": [
+    {
+     "atMs": 5216,
+     "frameBefore": "S",
+     "frameAfter": "P0",
+     "intermediateFrames": 0,
+     "holdMs": 1983,
+     "startBeatMs": 283
+    },
+    {
+     "atMs": 10416,
+     "frameBefore": "S",
+     "frameAfter": "P0",
+     "intermediateFrames": 0,
+     "holdMs": 1983,
+     "startBeatMs": 283
+    },
+    {
+     "atMs": 15616,
+     "frameBefore": "S",
+     "frameAfter": "P0",
+     "intermediateFrames": 0,
+     "holdMs": 1983,
+     "startBeatMs": 283
+    }
+   ]
+  },
+  "filmstrip": {
+   "frames": 57,
+   "size": 138,
+   "file": "last-tablet-filmstrip.png"
+  },
+  "webkit": {
+   "available": false,
+   "reason": "browserType.launch: Executable doesn't exist at /opt/pw-browsers/webkit-2359/pw_run.sh"
+  },
+  "errors": []
+ },
+ {
+  "id": "row-by-row",
+  "playback": "cut",
+  "failures": [],
+  "warnings": [],
+  "notes": [],
+  "themes": {
+   "light": {
+    "endVsStatic": [],
+    "endVsStaticPixels": {
+     "pixels": 920,
+     "ratio": 0.029365763350250568,
+     "max": 76
+    },
+    "reducedMotion": {
+     "animations": 0,
+     "differences": []
+    }
+   },
+   "dark": {
+    "endVsStatic": [],
+    "endVsStaticPixels": {
+     "pixels": 691,
+     "ratio": 0.02205624182067733,
+     "max": 68
+    },
+    "reducedMotion": {
+     "animations": 0,
+     "differences": []
+    }
+   }
+  },
+  "staticBounds": {
+   "width": 103.2,
+   "height": 82,
+   "centerX": 61.6,
+   "centerY": 59,
+   "vsBase": {
+    "dx": 0,
+    "dy": 0,
+    "sizeRatio": 1
+   },
+   "vsOthers": {
+    "games": 11,
+    "sizeRatioToMedian": 1.05,
+    "centerYMedian": 60,
+    "bottomMedian": 104
+   }
+  },
+  "ink": {
+   "coverage": 0.217,
+   "listSize": 46,
+   "vsBase": 1.34,
+   "othersMedian": 0.17,
+   "vsOthersMedian": 1.28,
+   "others": [
+    {
+     "game": "bridges",
+     "coverage": 0.224
+    },
+    {
+     "game": "hitofude-puzzle",
+     "coverage": 0.167
+    },
+    {
+     "game": "ice-floor-maze",
+     "coverage": 0.17
+    },
+    {
+     "game": "minesweeper",
+     "coverage": 0.239
+    },
+    {
+     "game": "nanpure",
+     "coverage": 0.123
+    },
+    {
+     "game": "parking-jam",
+     "coverage": 0.218
+    },
+    {
+     "game": "reflection",
+     "coverage": 0.154
+    },
+    {
+     "game": "slide-puzzle",
+     "coverage": 0.16
+    },
+    {
+     "game": "takuzu",
+     "coverage": 0.189
+    },
+    {
+     "game": "tsume-shogi",
+     "coverage": 0.18
+    },
+    {
+     "game": "water-sort",
+     "coverage": 0.156
+    }
+   ],
+   "othersRange": [
+    0.123,
+    0.239
+   ]
+  },
+  "animationRules": [
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-lift-01",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-lift-01",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-drop-01",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-drop-01",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-shadow-01",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-shadow-01",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-placed-01",
+    "matched": 2,
+    "names": [
+     {
+      "name": "pz-magic-square-placed-01",
+      "defined": true,
+      "running": 2
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-lift-10",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-lift-10",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-drop-10",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-drop-10",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-shadow-10",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-shadow-10",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-placed-10",
+    "matched": 2,
+    "names": [
+     {
+      "name": "pz-magic-square-placed-10",
+      "defined": true,
+      "running": 2
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-lift-12",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-lift-12",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-drop-12",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-drop-12",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-shadow-12",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-shadow-12",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-placed-12",
+    "matched": 2,
+    "names": [
+     {
+      "name": "pz-magic-square-placed-12",
+      "defined": true,
+      "running": 2
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-lift-21",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-lift-21",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-drop-21",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-drop-21",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-shadow-21",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-shadow-21",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-placed-21",
+    "matched": 2,
+    "names": [
+     {
+      "name": "pz-magic-square-placed-21",
+      "defined": true,
+      "running": 2
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-sum-0-0",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-sum-0-0",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-sum-0-1",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-sum-0-1",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-sum-1-0",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-sum-1-0",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-sum-1-1",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-sum-1-1",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-sum-1-2",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-sum-1-2",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-sum-2-0",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-sum-2-0",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-sum-2-1",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-sum-2-1",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-pop-0",
+    "matched": 2,
+    "names": [
+     {
+      "name": "pz-magic-square-pop-0",
+      "defined": true,
+      "running": 2
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-pop-1",
+    "matched": 3,
+    "names": [
+     {
+      "name": "pz-magic-square-pop-1",
+      "defined": true,
+      "running": 3
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-pop-2",
+    "matched": 2,
+    "names": [
+     {
+      "name": "pz-magic-square-pop-2",
+      "defined": true,
+      "running": 2
+     }
+    ]
+   },
+   {
+    "selector": "[data-pictogram-motion=\"play\"] .pz-magic-square-finish",
+    "matched": 1,
+    "names": [
+     {
+      "name": "pz-magic-square-finish",
+      "defined": true,
+      "running": 1
+     }
+    ]
+   }
+  ],
+  "periodMs": 5200,
+  "delayMs": 0,
+  "holdMs": 2190,
+  "startBeatMs": 300,
+  "stillRatio": 0.479,
+  "appEntry": {
+   "keyframeRestStartMs": 3020,
+   "entryMs": 4600,
+   "staticFromMs": 3010
+  },
+  "minViewBoxMargin": {
+   "margin": 4.55,
+   "element": "36:path",
+   "atMs": 840
+  },
+  "overlaps": [],
+  "clearances": [
+   {
+    "pair": ".pz-magic-square-matched | .pz-magic-square-frame",
+    "min": 0.5,
+    "staticGap": 3.26,
+    "minGap": 1.08,
+    "atMs": 840,
+    "elements": [
+     "35:path",
+     "11:rect.pz-magic-square-frame"
+    ]
+   }
+  ],
+  "smoothness": {
+   "stepMs": 2,
+   "threshold": 0.15,
+   "movingShapes": 18,
+   "shapes": [
+    {
+     "element": "58:rect",
+     "peakUnitsPerSecond": 84.3,
+     "worstJump": 0.093,
+     "atMs": 678
+    },
+    {
+     "element": "60:path",
+     "peakUnitsPerSecond": 43.8,
+     "worstJump": 0.093,
+     "atMs": 678
+    },
+    {
+     "element": "64:rect",
+     "peakUnitsPerSecond": 84.3,
+     "worstJump": 0.093,
+     "atMs": 1198
+    },
+    {
+     "element": "66:path",
+     "peakUnitsPerSecond": 43.6,
+     "worstJump": 0.093,
+     "atMs": 1198
+    },
+    {
+     "element": "70:rect",
+     "peakUnitsPerSecond": 84.3,
+     "worstJump": 0.093,
+     "atMs": 1718
+    },
+    {
+     "element": "72:path",
+     "peakUnitsPerSecond": 41.3,
+     "worstJump": 0.093,
+     "atMs": 1718
+    },
+    {
+     "element": "76:rect",
+     "peakUnitsPerSecond": 84.3,
+     "worstJump": 0.093,
+     "atMs": 2238
+    },
+    {
+     "element": "78:path",
+     "peakUnitsPerSecond": 42,
+     "worstJump": 0.093,
+     "atMs": 2238
+    },
+    {
+     "element": "57:rect.pz-magic-square-shadow-01",
+     "peakUnitsPerSecond": 125.3,
+     "worstJump": 0.087,
+     "atMs": 678
+    },
+    {
+     "element": "63:rect.pz-magic-square-shadow-10",
+     "peakUnitsPerSecond": 126.3,
+     "worstJump": 0.087,
+     "atMs": 1198
+    },
+    {
+     "element": "69:rect.pz-magic-square-shadow-12",
+     "peakUnitsPerSecond": 126.3,
+     "worstJump": 0.087,
+     "atMs": 1718
+    },
+    {
+     "element": "75:rect.pz-magic-square-shadow-21",
+     "peakUnitsPerSecond": 125.3,
+     "worstJump": 0.087,
+     "atMs": 2238
+    },
+    {
+     "element": "35:path",
+     "peakUnitsPerSecond": 66.4,
+     "worstJump": 0.054,
+     "atMs": 704
+    },
+    {
+     "element": "36:path",
+     "peakUnitsPerSecond": 69.1,
+     "worstJump": 0.054,
+     "atMs": 704
+    },
+    {
+     "element": "45:path",
+     "peakUnitsPerSecond": 66.4,
+     "worstJump": 0.054,
+     "atMs": 1744
+    },
+    {
+     "element": "46:path",
+     "peakUnitsPerSecond": 69.1,
+     "worstJump": 0.054,
+     "atMs": 1744
+    },
+    {
+     "element": "53:path",
+     "peakUnitsPerSecond": 66.4,
+     "worstJump": 0.054,
+     "atMs": 2264
+    },
+    {
+     "element": "54:path",
+     "peakUnitsPerSecond": 69.1,
+     "worstJump": 0.054,
+     "atMs": 2264
+    }
+   ]
+  },
+  "delayFlashes": [],
+  "firstFrame": "P0",
+  "realFrames": {
+   "frames": 1023,
+   "firstFrame": "P0",
+   "boundaries": [
+    {
+     "atMs": 5216,
+     "frameBefore": "S",
+     "frameAfter": "P0",
+     "intermediateFrames": 0,
+     "holdMs": 2183,
+     "startBeatMs": 283
+    },
+    {
+     "atMs": 10416,
+     "frameBefore": "S",
+     "frameAfter": "P0",
+     "intermediateFrames": 0,
+     "holdMs": 2183,
+     "startBeatMs": 283
+    },
+    {
+     "atMs": 15616,
+     "frameBefore": "S",
+     "frameAfter": "P0",
+     "intermediateFrames": 0,
+     "holdMs": 2183,
+     "startBeatMs": 283
+    }
+   ]
+  },
+  "filmstrip": {
+   "frames": 58,
+   "size": 138,
+   "file": "row-by-row-filmstrip.png"
+  },
+  "webkit": {
+   "available": false,
+   "reason": "browserType.launch: Executable doesn't exist at /opt/pw-browsers/webkit-2359/pw_run.sh"
+  },
+  "errors": []
+ }
+]

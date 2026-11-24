@@ -1,0 +1,20 @@
+{
+ "candidates": 248,
+ "mismatch": 0,
+ "examples_of_mismatch": [],
+ "levels": {
+  "(1, None)": 9,
+  "(2, None)": 22,
+  "(3, None)": 19,
+  "(4, None)": 3,
+  "(5, None)": 15,
+  "(None, 'not-minimal')": 16,
+  "(None, 'reading-dependent')": 41,
+  "(None, 'size-not-allowed')": 77,
+  "(None, 'too-deep')": 6,
+  "(None, 'unlisted-combination')": 34,
+  "(None, 'virtual-shortcut')": 6
+ },
+ "cpu_ref_total": 17.1,
+ "cpu_fast_total": 2.6
+}

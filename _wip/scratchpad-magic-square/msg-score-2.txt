@@ -1,0 +1,8 @@
+feat(magic-square): 置いた数で列の端の数の見え方が変わったかを求める
+
+列が埋まって一致・違反になった、空きがあるのに合計に届いたときに、そのマスを
+空けた盤面と比べて、一致・違反・どちらでもないの見え方が変わったとする。
+前から合計に届いていた列を埋めて違反のままのときは変わらない。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

@@ -1,0 +1,12 @@
+feat(magic-square): 問題集を作るための完全な解法器を足す
+
+与える数から解を数え、2解で止め、節点の上限で打ち切る。調査コードの
+count_solutions と同じ順にマスと数を調べるので、解の数だけでなく調べた
+節点の数も同じになり、打ち切りで問題の採否が変わらない。
+
+6×6 の数 1〜36 は 37 ビット要り、JavaScript のビット演算に収まらないので、
+数の集まりを 32 ビットの語2つで持つ。移植の期待値は、調査コードの同型の
+期待値と、調査コードの解法器で数えた値を research-reference.json に置く。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

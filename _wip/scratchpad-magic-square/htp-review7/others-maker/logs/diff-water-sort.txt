@@ -1,0 +1,97 @@
+
+## water-sort phone
+  goal btn same board={"x":64,"y":196,"w":262,"h":210,"r":326,"b":406}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 below-examples 32px/46px h=340.3 -> below-examples 32px/48px h=342.3 "いちばん上の色が同じでまだ入るボトルに注"
+     panel1 figs=2 beside-caption 32px/32px h=286.2 -> beside-example 32px/32px h=286.2 "上から同じ色が重なっていれば入るだけまと"
+     panel2 figs=2 beside-caption 32px/32px h=286.2 -> beside-example 32px/32px h=286.2 "1色でいっぱいになったボトルはもう選べま"
+     panel3 figs=2 beside-caption 32px/32px h=286.2 -> beside-example 32px/32px h=286.2 "どこにも注げないボトルは選べません。"
+   before rules p0 h=340 f0:below-examples/-(322,518) ok
+   before rules p1 h=286 f0:beside-caption/-(322,463) nearest=f1  f1:beside-caption/-(322,463) ok
+   before rules p2 h=286 f0:beside-caption/-(322,463) nearest=f1  f1:not-touched
+   before rules p3 h=286 f0:beside-caption/-(322,554) nearest=f1  f1:not-touched
+   after rules p0 h=342 f0:below-examples/-(322,518) ok
+   after rules p1 h=286 f0:beside-example/left(32,463) ok  f1:beside-example/right(322,463) ok | seq→right/near f1 | scroll(118px from FIELDSET.gri): left/224 -> right/224 near f0->f1
+   after rules p2 h=286 f0:beside-example/left(32,463) ok  f1:not-touched | seq→right/near f1 | scroll(122px from FIELDSET.gri): left/224 -> right/224 near f0->f1
+   after rules p3 h=286 f0:beside-example/left(32,554) ok  f1:not-touched | seq→right/near f1 | scroll(0px from FIELDSET.gri): left/224 -> right/224 near f0->f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=250.2 -> beside-example 32px/32px h=250.2 "注ぐ元のボトルを押して選んでから注ぐ先の"
+     panel1 figs=0 beside-caption 32px/32px h=270.3 -> beside-caption 32px/32px h=270.3 "どう注いでも先へ進めなくなると盤面の下に"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "やり直します。" -> 14px 2L "最初からやり直します。" :: 時間と手数も0に戻して同じ問題を最初からやり直します。
+   before operations p0 h=250 f0:beside-caption/-(322,445) ok
+   before operations p1 h=270 
+   after operations p0 h=250 f0:beside-example/right(322,439) ok
+   after operations p1 h=270 
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 296->298 caps 1,1 -> 1,1 inert=false
+     text[li] 14px 2L "取り消した手は数えません。" -> 16px 2L "取り消した手は数えません。" :: そろうまでに注いだ手を数えます。取り消した手は数えません。
+     text[li] 14px 1L "色の数と最短の手数が多い問題ほど長くなります。" -> 16px 2L "多い問題ほど長くなります。" :: 色の数と最短の手数が多い問題ほど長くなります。
+     text[li] 14px 2L "プレイ画面の「手数」と同じです。" -> 16px 3L "「手数」と同じです。" :: 取り消した手も含めて注いだ手をすべて数えます。プレイ画面の「手数」と同じです。
+     text[li] 14px 1L "総手数のうち取り消した手を数えます。" -> 16px 1L "総手数のうち取り消した手を数えます。" :: 総手数のうち取り消した手を数えます。
+     text[li] 14px 1L "押した回数では下がりません。" -> 16px 1L "押した回数では下がりません。" :: 押した回数では下がりません。
+
+## water-sort w320
+  goal btn same board={"x":29,"y":196,"w":262,"h":210,"r":291,"b":406}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 below-examples 32px/46px h=340.2 -> below-examples 32px/48px h=342.2 "いちばん上の色が同じでまだ入るボトルに注"
+     panel1 figs=2 below-examples 32px/46px h=300.2 -> below-examples 32px/48px h=302.2 "上から同じ色が重なっていれば入るだけまと"
+     panel2 figs=2 below-examples 32px/66px h=320.2 -> below-examples 32px/68px h=322.2 "1色でいっぱいになったボトルはもう選べま"
+     panel3 figs=2 below-examples 32px/66px h=320.2 -> below-examples 32px/68px h=322.2 "どこにも注げないボトルは選べません。"
+   before rules p0 h=340 f0:below-examples/-(252,469) ok
+   before rules p1 h=300 f0:below-examples/-(252,449) nearest=f1  f1:below-examples/-(252,449) ok
+   before rules p2 h=320 f0:below-examples/-(252,469) nearest=f1  f1:not-touched
+   before rules p3 h=320 f0:below-examples/-(252,478) nearest=f1  f1:not-touched
+   after rules p0 h=342 f0:below-examples/-(252,469) ok
+   after rules p1 h=302 f0:below-examples/-(252,449) nearest=f1  f1:below-examples/-(252,449) ok | seq→below-examples/near f1 | scroll(122px from FIELDSET.gri): null/259 -> null/259 near f1->f1
+   after rules p2 h=322 f0:below-examples/-(252,469) nearest=f1  f1:not-touched | seq→below-examples/near f1 | scroll(119px from FIELDSET.gri): null/278 -> null/278 near f1->f1
+   after rules p3 h=322 f0:below-examples/-(252,476) nearest=f1  f1:not-touched | seq→below-examples/near f1 | scroll(0px from FIELDSET.gri): null/278 -> null/278 near f1->f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=250.2 -> beside-example 32px/32px h=250.2 "注ぐ元のボトルを押して選んでから注ぐ先の"
+     panel1 figs=0 below-examples 46px/46px h=298.3 -> below-examples 32px/48px h=286.3 "どう注いでも先へ進めなくなると盤面の下に"
+     text[li] NEW -> 16px 2L "選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "最初からやり直します。" -> 14px 3L "最初からやり直します。" :: 時間と手数も0に戻して同じ問題を最初からやり直します。
+     text[menu] 14px 2L "変えます。" -> 14px 2L "別の問題に変えます。" :: 同じレベルの別の問題に変えます。
+   before operations p0 h=250 f0:beside-caption/-(252,397) ok
+   before operations p1 h=298 
+   after operations p0 h=250 f0:beside-example/right(252,391) ok
+   after operations p1 h=286 
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 296->298 caps 1,1 -> 1,1 inert=false
+     text[li] 14px 2L "取り消した手は数えません。" -> 16px 2L "取り消した手は数えません。" :: そろうまでに注いだ手を数えます。取り消した手は数えません。
+     text[li] 14px 2L "長くなります。" -> 16px 2L "多い問題ほど長くなります。" :: 色の数と最短の手数が多い問題ほど長くなります。
+     text[li] 14px 3L "「手数」と同じです。" -> 16px 3L "「手数」と同じです。" :: 取り消した手も含めて注いだ手をすべて数えます。プレイ画面の「手数」と同じです。
+     text[li] 14px 1L "総手数のうち取り消した手を数えます。" -> 16px 2L "取り消した手を数えます。" :: 総手数のうち取り消した手を数えます。
+     text[li] 14px 1L "押した回数では下がりません。" -> 16px 1L "押した回数では下がりません。" :: 押した回数では下がりません。
+
+## water-sort pc
+  goal btn same board={"x":32,"y":168,"w":406,"h":344,"r":438,"b":512}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=460 -> beside-example 32px/32px h=460 "いちばん上の色が同じでまだ入るボトルに注"
+     panel1 figs=2 beside-caption 32px/32px h=420 -> beside-example 32px/32px h=420 "上から同じ色が重なっていれば入るだけまと"
+     panel2 figs=2 beside-caption 32px/32px h=420 -> beside-example 32px/32px h=420 "1色でいっぱいになったボトルはもう選べま"
+     panel3 figs=2 beside-caption 32px/32px h=420 -> beside-example 32px/32px h=420 "どこにも注げないボトルは選べません。"
+   before rules p0 h=460 f0:beside-caption/-(1196,568) ok
+   before rules p1 h=420 f0:not-touched  f1:not-touched
+   before rules p2 h=420 f0:not-touched  f1:not-touched
+   before rules p3 h=420 f0:not-touched  f1:not-touched
+   after rules p0 h=460 f0:beside-example/right(1196,526) ok
+   after rules p1 h=420 f0:not-touched  f1:not-touched | seq→right/near f1
+   after rules p2 h=420 f0:not-touched  f1:not-touched | seq→right/near f1
+   after rules p3 h=420 f0:not-touched  f1:not-touched | seq→right/near f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=384 -> beside-example 32px/32px h=384 "注ぐ元のボトルを押して選んでから注ぐ先の"
+     panel1 figs=0 beside-caption 32px/32px h=348 -> beside-caption 32px/32px h=348 "どう注いでも先へ進めなくなると盤面の下に"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=384 f0:not-touched
+   before operations p1 h=348 
+   after operations p0 h=384 f0:not-touched
+   after operations p1 h=348 
+  [scoring] headings H3:22px -> H3:22px; overflow 1 -> 1
+     after OVERFLOW SPAN inline-block x=600.6 r=696.7
+     flow0 h 450.5->451.3 caps 1,1 -> 1,1 inert=false
+     text[li] 14px 1L "そろうまでに注いだ手を数えます。取り消した手は数えません。" -> 16px 1L "そろうまでに注いだ手を数えます。取り消した手は数えません。" :: そろうまでに注いだ手を数えます。取り消した手は数えません。
+     text[li] 14px 1L "色の数と最短の手数が多い問題ほど長くなります。" -> 16px 1L "色の数と最短の手数が多い問題ほど長くなります。" :: 色の数と最短の手数が多い問題ほど長くなります。
+     text[li] 14px 1L "取り消した手も含めて注いだ手をすべて数えます。プレイ画面の「手数」と同じです。" -> 16px 1L "取り消した手も含めて注いだ手をすべて数えます。プレイ画面の「手数」と同じです。" :: 取り消した手も含めて注いだ手をすべて数えます。プレイ画面の「手数」と同じです。
+     text[li] 14px 1L "総手数のうち取り消した手を数えます。" -> 16px 1L "総手数のうち取り消した手を数えます。" :: 総手数のうち取り消した手を数えます。
+     text[li] 14px 1L "押した回数では下がりません。" -> 16px 1L "押した回数では下がりません。" :: 押した回数では下がりません。

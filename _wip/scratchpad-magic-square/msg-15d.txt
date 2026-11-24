@@ -1,0 +1,7 @@
+test(magic-square): 期待値の特徴を全部突き合わせる
+
+段2で2巡以上を深いとした前の版の量（`first_hard`・`is_deep`）と、段1だけで解ける問題の所の数（`t1depth`）も、
+移した特徴から調査コードの定義で求めて、88 候補の期待値と比べる。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

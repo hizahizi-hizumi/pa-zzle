@@ -1,0 +1,27 @@
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const errors = [];
+  page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+  page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.type() + ': ' + m.text()); });
+  await page.goto('http://127.0.0.1:5342/puzzles/magic-square');
+  await page.waitForTimeout(2000);
+  await page.getByRole('button', { name: 'メニュー' }).click();
+  await page.waitForTimeout(800);
+  const dir = '/tmp/claude-0/-home-user-pa-zzle/eceb8996-2d4e-58b4-89df-882aca916ab9/scratchpad/magic-square/tut-review/maker/shots';
+  await page.screenshot({ path: dir + '/x-menu.png' });
+  const items = await page.locator('[role=menuitem], button, a').evaluateAll(els => els.map(e => (e.tagName + ':' + (e.getAttribute('aria-label') || e.textContent.trim())).slice(0, 80)));
+  console.log(items.join('\n'));
+  await page.getByText('遊び方').first().click(); await page.waitForTimeout(1500); await page.screenshot({ path: dir + '/x-howto.png' }); const b2 = await page.locator('button').evaluateAll(els => els.map(e => (e.getAttribute('aria-label') || e.textContent.trim()).slice(0, 60))); console.log('HOWTO:', b2.join(' / ')); await page.getByRole('button', { name: /チュートリアル/ }).first().click();
+  await page.waitForTimeout(2500);
+  await page.screenshot({ path: dir + '/x-tut.png' });
+  const dlg = page.getByRole('dialog');
+  console.log('DIALOG TEXT:', (await dlg.first().innerText()).replace(/\n/g, ' | '));
+  const html = await dlg.first().evaluate(e => e.outerHTML.length);
+  console.log('html len', html);
+  const btns = await dlg.first().locator('button').evaluateAll(els => els.map(e => (e.getAttribute('aria-label') || e.textContent.trim()).slice(0, 60)));
+  console.log(btns.join('\n'));
+  console.log(errors.join('\n'));
+  await browser.close();
+})();

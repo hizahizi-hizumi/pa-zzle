@@ -186,9 +186,9 @@ export type MagicSquareReadStep = {
   kinds: readonly MagicSquarePlacementKind[];
   /** 「組の数を他で使わない」で候補が消えたか。 */
   lock: boolean;
-  /** 1巡目に読んだ、空きが2マス以上の単位ごとの組の数。 */
+  /** 段2以上の所の1巡目に読んだ、空きが2マス以上の単位ごとの組の数。 */
   combos: readonly number[];
-  /** 1巡目に読んだ鎖の列の数の最大。 */
+  /** 段2以上の所の1巡目に読んだ鎖の列の数の最大。 */
   chain: number;
   /** 置いたマス（番号の小さい順）。 */
   cells: readonly number[];
@@ -202,7 +202,7 @@ export type MagicSquareReadStep = {
 export type MagicSquareReadResult = {
   status: "solved" | "stuck" | "contradiction";
   steps: readonly MagicSquareReadStep[];
-  /** 置き終えた盤面。矛盾のときは `null`。 */
+  /** 読んで置いた盤面（止まったときは止まった所まで）。矛盾のときは `null`。 */
   grid: readonly number[] | null;
   /** 読む単位の節点の上限で読めなかった回数。 */
   cappedReads: number;

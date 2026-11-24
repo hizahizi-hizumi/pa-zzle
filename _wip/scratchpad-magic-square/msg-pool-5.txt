@@ -1,0 +1,8 @@
+docs(magic-square): 5×5 の例の魔方陣を取っておく理由を書く
+
+5×5 の例は、遊び方で 5×5 の読みを見せるときに使う魔方陣で、今の遊び方の
+図にはまだ出ていない。初手が2マス空いた列の組を突き合わせる読みになる
+盤面を作れることを、除く理由として書く。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

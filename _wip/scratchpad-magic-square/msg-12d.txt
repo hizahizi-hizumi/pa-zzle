@@ -1,0 +1,9 @@
+refactor(magic-square): 盤面の範囲が下端の行を含むとき、縦の列の合計の帯を取る
+
+遊び方の採点の流れの図は、下端の行の1マスとその下の縦の列の合計だけを描き、
+3つの姿を1行に並べても、マスを例と同じ大きさに近く保つ。範囲が下端の行を
+含むときは、範囲の縦の列の合計を下の帯に描く。斜めの合計は、置く角の帯を
+2つとも描くときだけ描く。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

@@ -1,0 +1,131 @@
+
+## reflection phone
+  goal btn same board={"x":55,"y":196,"w":280,"h":280,"r":335,"b":476}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=2 beside-caption 32px/32px h=496 -> beside-example 32px/32px h=496 "数字から入れた光がその数だけマスを通り印"
+     panel1 figs=2 beside-caption 32px/32px h=496 -> beside-example 32px/32px h=496 "別の所から出る光は出た先の数字も同じ数字"
+     panel2 figs=2 beside-caption 32px/32px h=496 -> beside-example 32px/32px h=496 "斜め鏡は光を直角に曲げます。"
+     panel3 figs=2 beside-caption 32px/32px h=496 -> beside-example 32px/32px h=496 "反射鏡はどの向きの光もはね返します。戻る"
+     panel4 figs=2 beside-caption 32px/32px h=416 -> beside-example 32px/32px h=416 "両面鏡は鏡に沿って進む光をそのまま通しま"
+     panel5 figs=2 beside-caption 32px/32px h=496 -> beside-example 32px/32px h=496 "ブラックホールは光を吸い込みます。ブラッ"
+     panel6 figs=1 beside-caption 32px/32px h=360 -> beside-example 32px/32px h=360 "手持ちのピースをすべて置いてどの数字も緑"
+   before rules p0 h=496 f0:beside-caption/-(322,686) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(322,450) ok
+   before rules p1 h=496 f0:beside-caption/-(322,686) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(322,450) ok
+   before rules p2 h=496 f0:beside-caption/-(322,686) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(322,450) ok
+   before rules p3 h=496 f0:beside-caption/-(322,686) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(322,450) ok
+   before rules p4 h=416 f0:beside-caption/-(322,626) nearest=f1  f1:beside-caption/-(322,430) ok
+   before rules p5 h=496 f0:beside-caption/-(322,686) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(322,450) ok
+   before rules p6 h=360 f0:beside-caption/-(322,554) ok
+   after rules p0 h=496 f0:beside-example/right(322,450) ok  f1:beside-example/right(322,450) ok | seq→right/near f1 | scroll(122px from BUTTON.relat): right/198 -> right/434 near f0->f1
+   after rules p1 h=496 f0:beside-example/right(322,450) ok  f1:beside-example/right(322,450) ok | seq→right/near f1 | scroll(123px from BUTTON.relat): right/198 -> right/434 near f0->f1
+   after rules p2 h=496 f0:beside-example/right(322,450) ok  f1:beside-example/right(322,450) ok | seq→right/near f1 | scroll(124px from BUTTON.relat): right/198 -> right/434 near f0->f1
+   after rules p3 h=496 f0:beside-example/right(322,450) ok  f1:beside-example/right(322,450) ok | seq→right/near f1 | scroll(123px from BUTTON.relat): right/198 -> right/434 near f0->f1
+   after rules p4 h=416 f0:beside-example/right(322,430) ok  f1:beside-example/right(322,430) ok | seq→right/near f1 | scroll(122px from BUTTON.relat): right/158 -> right/354 near f0->f1
+   after rules p5 h=496 f0:beside-example/right(322,450) ok  f1:beside-example/right(322,450) ok | seq→right/near f1 | scroll(124px from BUTTON.relat): right/198 -> right/434 near f0->f1
+   after rules p6 h=360 f0:beside-example/right(322,554) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=244 -> beside-example 32px/32px h=244 "ストックでピースを選んでから空いたマスを"
+     panel1 figs=1 beside-caption 32px/32px h=184 -> beside-example 32px/32px h=184 "置いたピースを押して選んでからほかのマス"
+     panel2 figs=1 beside-caption 32px/32px h=244 -> beside-example 32px/32px h=244 "置いたピースを選んでストックの別のピース"
+     panel3 figs=1 beside-caption 32px/32px h=264 -> beside-example 32px/32px h=264 "数字を押すとそこから入れた光の今の光路が"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "時間と置き直しの回数はそのままです。" -> 14px 3L "そのままです。" :: 置いたピースをすべてストックに戻します。時間と置き直しの回数はそのままです。
+     text[menu] 14px 2L "最初からやり直します。" -> 14px 2L "同じ問題を最初からやり直します。" :: 時間と置き直しの回数も0に戻して同じ問題を最初からやり直します。
+   before operations p0 h=244 f0:beside-caption/-(322,442) ok
+   before operations p1 h=184 f0:beside-caption/-(322,412) ok
+   before operations p2 h=244 f0:beside-caption/-(322,442) ok
+   before operations p3 h=264 f0:beside-caption/-(322,452) ok
+   after operations p0 h=244 f0:beside-example/right(322,436) ok
+   after operations p1 h=184 f0:beside-example/right(322,406) ok
+   after operations p2 h=244 f0:beside-example/right(322,436) ok
+   after operations p3 h=264 f0:beside-example/right(322,446) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     text[li] 14px 2L "かかる問題ほど長くなります。" -> 16px 2L "かかる問題ほど長くなります。" :: 外周の数字とピースが多くて解く手間のかかる問題ほど長くなります。
+     text[li] 14px 3L "「盤面を戻す」で戻したピースは数えません。" -> 16px 3L "「盤面を戻す」で戻したピースは数えません。" :: 置いたピースを移す・入れ替える・置き換える・ストックに戻すたびに1回と数えます。「盤面を
+
+## reflection w320
+  goal btn same board={"x":48,"y":220,"w":224,"h":224,"r":272,"b":444}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=2 beside-caption 32px/32px h=432 -> beside-example 32px/32px h=432 "数字から入れた光がその数だけマスを通り印"
+     panel1 figs=2 beside-caption 32px/32px h=432 -> beside-example 32px/32px h=432 "別の所から出る光は出た先の数字も同じ数字"
+     panel2 figs=2 beside-caption 32px/32px h=432 -> beside-example 32px/32px h=432 "斜め鏡は光を直角に曲げます。"
+     panel3 figs=2 beside-caption 32px/32px h=432 -> beside-example 32px/32px h=432 "反射鏡はどの向きの光もはね返します。戻る"
+     panel4 figs=2 beside-caption 32px/32px h=368 -> beside-example 32px/32px h=368 "両面鏡は鏡に沿って進む光をそのまま通しま"
+     panel5 figs=2 top-corner 32px/32px h=432 -> beside-example 32px/32px h=432 "ブラックホールは光を吸い込みます。ブラッ"
+     panel6 figs=1 beside-caption 32px/32px h=320 -> beside-example 32px/32px h=320 "手持ちのピースをすべて置いてどの数字も緑"
+   before rules p0 h=432 f0:beside-caption/-(252,590) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(252,386) ok
+   before rules p1 h=432 f0:beside-caption/-(252,590) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(252,386) ok
+   before rules p2 h=432 f0:beside-caption/-(252,590) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(252,386) ok
+   before rules p3 h=432 f0:beside-caption/-(252,590) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(252,386) ok
+   before rules p4 h=368 f0:beside-caption/-(252,542) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(252,370) ok
+   before rules p5 h=432 f0:top-corner/-(252,246) ok  f1:top-corner/-(252,42) nearest=f0 UNDER-STICKY
+   before rules p6 h=320 f0:beside-caption/-(252,458) ok
+   after rules p0 h=432 f0:beside-example/right(252,386) ok  f1:beside-example/right(252,386) ok | seq→right/near f1 | scroll(121px from BUTTON.relat): right/166 -> right/370 near f0->f1
+   after rules p1 h=432 f0:beside-example/right(252,386) ok  f1:beside-example/right(252,386) ok | seq→right/near f1 | scroll(123px from BUTTON.relat): right/166 -> right/370 near f0->f1
+   after rules p2 h=432 f0:beside-example/right(252,386) ok  f1:beside-example/right(252,386) ok | seq→right/near f1 | scroll(124px from BUTTON.relat): right/166 -> right/370 near f0->f1
+   after rules p3 h=432 f0:beside-example/right(252,386) ok  f1:beside-example/right(252,386) ok | seq→right/near f1 | scroll(121px from BUTTON.relat): right/166 -> right/370 near f0->f1
+   after rules p4 h=368 f0:beside-example/right(252,370) ok  f1:beside-example/right(252,370) ok | seq→right/near f1 | scroll(119px from BUTTON.relat): right/134 -> right/306 near f0->f1
+   after rules p5 h=432 f0:beside-example/right(252,236) ok  f1:beside-example/right(252,236) ok | seq→right/near f1 | scroll(121px from BUTTON.relat): right/16 -> right/220 near f0->f1
+   after rules p6 h=320 f0:beside-example/right(252,458) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=220 -> beside-example 32px/32px h=220 "ストックでピースを選んでから空いたマスを"
+     panel1 figs=1 beside-caption 32px/32px h=160 -> beside-example 32px/32px h=160 "置いたピースを押して選んでからほかのマス"
+     panel2 figs=1 beside-caption 32px/32px h=220 -> beside-example 32px/32px h=220 "置いたピースを選んでストックの別のピース"
+     panel3 figs=1 beside-caption 32px/32px h=224 -> beside-example 32px/32px h=224 "数字を押すとそこから入れた光の今の光路が"
+     text[li] NEW -> 16px 2L "選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 3L "置き直しの回数はそのままです。" -> 14px 4L "そのままです。" :: 置いたピースをすべてストックに戻します。時間と置き直しの回数はそのままです。
+     text[menu] 14px 3L "やり直します。" -> 14px 3L "最初からやり直します。" :: 時間と置き直しの回数も0に戻して同じ問題を最初からやり直します。
+     text[menu] 14px 2L "変えます。" -> 14px 2L "別の問題に変えます。" :: 同じレベルの別の問題に変えます。
+   before operations p0 h=220 f0:beside-caption/-(252,382) ok
+   before operations p1 h=160 f0:beside-caption/-(252,352) ok
+   before operations p2 h=220 f0:beside-caption/-(252,382) ok
+   before operations p3 h=224 f0:beside-caption/-(252,384) ok
+   after operations p0 h=220 f0:beside-example/right(252,376) ok
+   after operations p1 h=160 f0:beside-example/right(252,346) ok
+   after operations p2 h=220 f0:beside-example/right(252,376) ok
+   after operations p3 h=224 f0:beside-example/right(252,378) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     text[li] 14px 2L "かかる問題ほど長くなります。" -> 16px 3L "かかる問題ほど長くなります。" :: 外周の数字とピースが多くて解く手間のかかる問題ほど長くなります。
+     text[li] 14px 4L "戻したピースは数えません。" -> 16px 4L "戻したピースは数えません。" :: 置いたピースを移す・入れ替える・置き換える・ストックに戻すたびに1回と数えます。「盤面を
+
+## reflection pc
+  goal btn same board={"x":32,"y":192,"w":336,"h":336,"r":368,"b":528}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=2 beside-caption 32px/32px h=292 -> beside-example 32px/32px h=292 "数字から入れた光がその数だけマスを通り印"
+     panel1 figs=2 beside-caption 32px/32px h=292 -> beside-example 32px/32px h=292 "別の所から出る光は出た先の数字も同じ数字"
+     panel2 figs=2 beside-caption 32px/32px h=292 -> beside-example 32px/32px h=292 "斜め鏡は光を直角に曲げます。"
+     panel3 figs=2 beside-caption 32px/32px h=292 -> beside-example 32px/32px h=292 "反射鏡はどの向きの光もはね返します。戻る"
+     panel4 figs=2 beside-caption 32px/32px h=244 -> beside-example 32px/32px h=244 "両面鏡は鏡に沿って進む光をそのまま通しま"
+     panel5 figs=2 beside-caption 32px/32px h=292 -> beside-example 32px/32px h=292 "ブラックホールは光を吸い込みます。ブラッ"
+     panel6 figs=1 beside-caption 32px/32px h=400 -> beside-example 32px/32px h=400 "手持ちのピースをすべて置いてどの数字も緑"
+   before rules p0 h=292 f0:beside-caption/-(1196,442) nearest=f1  f1:beside-caption/-(1196,442) ok
+   before rules p1 h=292 f0:beside-caption/-(1196,484) nearest=f1  f1:beside-caption/-(1196,484) ok
+   before rules p2 h=292 f0:beside-caption/-(1196,484) nearest=f1  f1:beside-caption/-(1196,484) ok
+   before rules p3 h=292 f0:beside-caption/-(1196,484) nearest=f1  f1:beside-caption/-(1196,484) ok
+   before rules p4 h=244 f0:beside-caption/-(1196,460) nearest=f1  f1:beside-caption/-(1196,460) ok
+   before rules p5 h=292 f0:beside-caption/-(1196,484) nearest=f1  f1:beside-caption/-(1196,484) ok
+   before rules p6 h=400 f0:beside-caption/-(1196,690) ok
+   after rules p0 h=292 f0:beside-example/left(624,422) ok  f1:beside-example/right(1196,422) ok | seq→right/near f1
+   after rules p1 h=292 f0:beside-example/left(624,484) ok  f1:beside-example/right(1196,484) ok | seq→right/near f1
+   after rules p2 h=292 f0:beside-example/left(624,484) ok  f1:beside-example/right(1196,484) ok | seq→right/near f1
+   after rules p3 h=292 f0:beside-example/left(624,484) ok  f1:beside-example/right(1196,484) ok | seq→right/near f1
+   after rules p4 h=244 f0:beside-example/left(624,460) ok  f1:beside-example/right(1196,460) ok | seq→right/near f1
+   after rules p5 h=292 f0:beside-example/left(624,484) ok  f1:beside-example/right(1196,484) ok | seq→right/near f1
+   after rules p6 h=400 f0:beside-example/right(1196,690) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=268 -> beside-example 32px/32px h=268 "ストックでピースを選んでから空いたマスを"
+     panel1 figs=1 beside-caption 32px/32px h=208 -> beside-example 32px/32px h=208 "置いたピースを押して選んでからほかのマス"
+     panel2 figs=1 beside-caption 32px/32px h=268 -> beside-example 32px/32px h=268 "置いたピースを選んでストックの別のピース"
+     panel3 figs=1 beside-caption 32px/32px h=304 -> beside-example 32px/32px h=304 "数字を押すとそこから入れた光の今の光路が"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=268 f0:beside-caption/-(1196,457) ok
+   before operations p1 h=208 f0:beside-caption/-(1196,442) ok
+   before operations p2 h=268 f0:beside-caption/-(1196,472) ok
+   before operations p3 h=304 f0:beside-caption/-(1196,490) ok
+   after operations p0 h=268 f0:beside-example/right(1196,451) ok
+   after operations p1 h=208 f0:beside-example/right(1196,436) ok
+   after operations p2 h=268 f0:beside-example/right(1196,466) ok
+   after operations p3 h=304 f0:beside-example/right(1196,484) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 1 -> 0
+     text[li] 14px 1L "外周の数字とピースが多くて解く手間のかかる問題ほど長くなります。" -> 16px 1L "外周の数字とピースが多くて解く手間のかかる問題ほど長くなります。" :: 外周の数字とピースが多くて解く手間のかかる問題ほど長くなります。
+     text[li] 14px 2L "「盤面を戻す」で戻したピースは数えません。" -> 16px 2L "1回と数えます。「盤面を戻す」で戻したピースは数えません。" :: 置いたピースを移す・入れ替える・置き換える・ストックに戻すたびに1回と数えます。「盤面を

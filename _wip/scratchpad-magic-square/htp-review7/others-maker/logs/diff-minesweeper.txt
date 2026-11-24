@@ -1,0 +1,89 @@
+
+## minesweeper phone
+  goal btn same board={"x":55,"y":196,"w":280,"h":280,"r":335,"b":476}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=200 -> beside-example 32px/32px h=200 "数字の周りの8マスにはその数だけ地雷があ"
+     panel1 figs=1 beside-caption 32px/32px h=276 -> beside-example 32px/32px h=276 "地雷が全部でいくつかは上の「地雷」に出ま"
+     panel2 figs=1 beside-caption 32px/32px h=200 -> beside-example 32px/32px h=200 "地雷を踏んでも続けられます。地雷ではない"
+   before rules p0 h=200 f0:beside-caption/-(322,420) ok
+   before rules p1 h=276 f0:beside-caption/-(322,458) ok
+   before rules p2 h=200 f0:beside-caption/-(322,554) ok
+   after rules p0 h=200 f0:beside-example/right(322,420) ok
+   after rules p1 h=276 f0:beside-example/right(322,458) ok
+   after rules p2 h=200 f0:beside-example/right(322,554) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=208 -> beside-example 32px/32px h=208 "マスを押すと開きます。周りに地雷がなけれ"
+     panel1 figs=1 beside-caption 32px/32px h=164 -> beside-example 32px/32px h=164 "数字の周りに同じ数だけ旗を置いてその数字"
+     panel2 figs=1 beside-caption 32px/32px h=220 -> beside-example 32px/32px h=220 "旗に切り替えてマスを押すかマスを長押しす"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=208 f0:beside-caption/-(322,389) ok
+   before operations p1 h=164 f0:beside-caption/-(322,402) ok
+   before operations p2 h=220 f0:beside-caption/-(322,430) ok
+   after operations p0 h=208 f0:beside-example/right(322,383) ok
+   after operations p1 h=164 f0:beside-example/right(322,396) ok
+   after operations p2 h=220 f0:beside-example/right(322,424) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 372->372.7 caps 1,1 -> 1,1 inert=false
+     text[li] 14px 2L "2個と数えます。" -> 16px 2L "2個と数えます。" :: 上の「ミス」に出る数です。1回押して2個踏むと2個と数えます。
+     text[li] 14px 2L "要る手数が多い問題も長くなります。" -> 16px 2L "開くまでに要る手数が多い問題も長くなります。" :: 地雷が多い問題ほど長くなります。すべて開くまでに要る手数が多い問題も長くなります。
+
+## minesweeper w320
+  goal btn same board={"x":48,"y":196,"w":224,"h":224,"r":272,"b":420}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=200 -> beside-example 32px/32px h=200 "数字の周りの8マスにはその数だけ地雷があ"
+     panel1 figs=1 beside-caption 32px/32px h=276 -> beside-example 32px/32px h=276 "地雷が全部でいくつかは上の「地雷」に出ま"
+     panel2 figs=1 beside-caption 32px/32px h=200 -> beside-example 32px/32px h=200 "地雷を踏んでも続けられます。地雷ではない"
+   before rules p0 h=200 f0:beside-caption/-(252,372) ok
+   before rules p1 h=276 f0:beside-caption/-(252,410) ok
+   before rules p2 h=200 f0:beside-caption/-(252,458) ok
+   after rules p0 h=200 f0:beside-example/right(252,372) ok
+   after rules p1 h=276 f0:beside-example/right(252,410) ok
+   after rules p2 h=200 f0:beside-example/right(252,458) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 below-examples 46px/46px h=236 -> below-examples 32px/48px h=224 "マスを押すと開きます。周りに地雷がなけれ"
+     panel1 figs=1 below-examples 46px/46px h=192 -> below-examples 32px/48px h=180 "数字の周りに同じ数だけ旗を置いてその数字"
+     panel2 figs=1 beside-caption 32px/32px h=220 -> beside-example 32px/32px h=220 "旗に切り替えてマスを押すかマスを長押しす"
+     text[li] NEW -> 16px 2L "選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 3L "0に戻ります。" -> 14px 3L "ミスも0に戻ります。" :: 同じ問題を最初からやり直します。時間とミスも0に戻ります。
+     text[menu] 14px 2L "変えます。" -> 14px 2L "別の問題に変えます。" :: 同じレベルの別の問題に変えます。
+   before operations p0 h=236 f0:below-examples/-(252,410) ok
+   before operations p1 h=192 f0:below-examples/-(252,388) ok
+   before operations p2 h=220 f0:beside-caption/-(252,382) ok
+   after operations p0 h=224 f0:below-examples/-(252,410) ok
+   after operations p1 h=180 f0:below-examples/-(252,388) ok
+   after operations p2 h=220 f0:beside-example/right(252,376) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 344.4->345 caps 1,2 -> 1,2 inert=false
+     text[li] 14px 2L "踏むと2個と数えます。" -> 16px 2L "2個踏むと2個と数えます。" :: 上の「ミス」に出る数です。1回押して2個踏むと2個と数えます。
+     text[li] 14px 3L "長くなります。" -> 16px 3L "多い問題も長くなります。" :: 地雷が多い問題ほど長くなります。すべて開くまでに要る手数が多い問題も長くなります。
+
+## minesweeper pc
+  goal btn same board={"x":32,"y":168,"w":500,"h":500,"r":532,"b":668}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=216 -> beside-example 32px/32px h=216 "数字の周りの8マスにはその数だけ地雷があ"
+     panel1 figs=1 beside-caption 32px/32px h=300 -> beside-example 32px/32px h=300 "地雷が全部でいくつかは上の「地雷」に出ま"
+     panel2 figs=1 beside-caption 32px/32px h=216 -> beside-example 32px/32px h=216 "地雷を踏んでも続けられます。地雷ではない"
+   before rules p0 h=216 f0:beside-caption/-(1196,332) ok
+   before rules p1 h=300 f0:beside-caption/-(1196,488) ok
+   before rules p2 h=216 f0:beside-caption/-(1196,690) ok
+   after rules p0 h=216 f0:beside-example/right(1196,322) ok
+   after rules p1 h=300 f0:beside-example/right(1196,488) ok
+   after rules p2 h=216 f0:beside-example/right(1196,690) ok
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=232 -> beside-example 32px/32px h=232 "マスを押すと開きます。周りに地雷がなけれ"
+     panel1 figs=1 beside-caption 32px/32px h=180 -> beside-example 32px/32px h=180 "数字の周りに同じ数だけ旗を置いてその数字"
+     panel2 figs=1 beside-caption 32px/32px h=236 -> beside-example 32px/32px h=236 "旗に切り替えてマスを押すかマスを長押しす"
+     panel3 figs=1 beside-caption 32px/32px h=180 -> beside-example 32px/32px h=180 "右クリックでも旗を置いたり外したりできま"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=232 f0:beside-caption/-(1196,397) ok
+   before operations p1 h=180 f0:beside-caption/-(1196,428) ok
+   before operations p2 h=236 f0:beside-caption/-(1196,456) ok
+   before operations p3 h=180 f0:beside-caption/-(1196,428) ok
+   after operations p0 h=232 f0:beside-example/right(1196,391) ok
+   after operations p1 h=180 f0:beside-example/right(1196,422) ok
+   after operations p2 h=236 f0:beside-example/right(1196,450) ok
+   after operations p3 h=180 f0:beside-example/right(1196,422) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 408->410 caps 1,1 -> 1,1 inert=false
+     text[li] 14px 1L "上の「ミス」に出る数です。1回押して2個踏むと2個と数えます。" -> 16px 1L "上の「ミス」に出る数です。1回押して2個踏むと2個と数えます。" :: 上の「ミス」に出る数です。1回押して2個踏むと2個と数えます。
+     text[li] 14px 1L "地雷が多い問題ほど長くなります。すべて開くまでに要る手数が多い問題も長くなります。" -> 16px 2L "手数が多い問題も長くなります。" :: 地雷が多い問題ほど長くなります。すべて開くまでに要る手数が多い問題も長くなります。

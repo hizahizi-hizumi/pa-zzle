@@ -1,0 +1,68 @@
+{
+  "candidates": {
+    "last-tablet": {
+      "result": "pass",
+      "checks": {
+        "observed_hero_play_full_cycle": true,
+        "observed_key_moments_zoomed": true,
+        "observed_list_selected_static": true,
+        "observed_light_and_dark": true,
+        "observed_reduced_motion_static": true,
+        "aim_a_play_readable": true,
+        "aim_b_payoff_visible": true,
+        "aim_c_selection_response_emerges": true,
+        "aim_d_calm_first_impression": true,
+        "static_matches_base": true,
+        "static_colors_match_play_screen": true,
+        "static_readable_at_list_size": true,
+        "light_and_dark_both_hold": true,
+        "delayed_start_has_no_static_flash": true,
+        "cut_hold_matches_static": true,
+        "cut_switch_is_instant": true,
+        "motion_smooth_no_stutter": true,
+        "parts_stay_attached": true,
+        "moving_parts_clear_of_others": true,
+        "no_unintended_overlap_or_overflow": true,
+        "transform_and_clip_are_natural": true,
+        "no_broken_transient_frame": true,
+        "dual_instance_ok": true,
+        "no_pageerror": true,
+        "no_unexpected_console_error": true,
+        "no_obvious_unfinished_artifact": true
+      },
+      "notes": "cut（周期 5200ms）。observe: ライト/ダークとも周の終わり = 静止状態（computed style の差 0）、reduce でアニメーション 0 件。hold 1990ms、start beat 300ms、still ratio 0.44。実フレームの切り替え 3 回とも S→P0・途中フレーム 0、最初のフレーム P0。アプリの再生の入口 4600ms。viewBox 余白 4.55。合計と枠の余白は最小 1.08。速度の急変 WARN は 1720ms の行の合計の弾み始め（止まっている 15 が速く弾み始める、プレイ画面のクリアと同じ弾み方）で、意図した動き出し。持ち上げた札は 1.4 倍で、177px・DPR 3 の 1000〜1300ms の静止画（shots/07/lift-light-3x.png）で、漂う間（1010〜1050ms）と落ち始めは枠の外縁を越えて太線を細く残さないことを見た。落ちる途中で縁が枠の太線を通るのは一瞬。札の影はプレイ画面の札の影の色。選んだ間は行と縦の列に薄い色が付き（交わるマスは二重に塗らない）、着地の後は光が行（1450ms〜）・縦の列（1800ms〜）・斜め（2150ms〜）の順になぞり、2700ms から盤全体が光る。縦の列の光と行の光は 1800〜1990ms に重なり、十字に見える瞬間がある（プレイ画面の3段も重なって始まる）。観察は 138px の実時間のフィルムストリップ（observe/last-tablet-filmstrip.png、周の境界をまたぐ）、100ms ごとのコマ撮り（frames/）、1400〜3300ms の 50ms 刻み（frames-zoom/）、セルフレビュー用ギャラリーの 177/138px 再生・56/46px 静止・比較列（ライト/ダーク）で行った。静止状態の図形は前の回から変えていない（static bounds は白黒版と中心 +0,+0・大きさ x1、インク量 21.7%）。WebKit は起動できず Safari での表示は未確認。"
+    },
+    "row-by-row": {
+      "result": "pass",
+      "checks": {
+        "observed_hero_play_full_cycle": true,
+        "observed_key_moments_zoomed": true,
+        "observed_list_selected_static": true,
+        "observed_light_and_dark": true,
+        "observed_reduced_motion_static": true,
+        "aim_a_play_readable": true,
+        "aim_b_payoff_visible": true,
+        "aim_c_selection_response_emerges": true,
+        "aim_d_calm_first_impression": true,
+        "static_matches_base": true,
+        "static_colors_match_play_screen": true,
+        "static_readable_at_list_size": true,
+        "light_and_dark_both_hold": true,
+        "delayed_start_has_no_static_flash": true,
+        "cut_hold_matches_static": true,
+        "cut_switch_is_instant": true,
+        "motion_smooth_no_stutter": true,
+        "parts_stay_attached": true,
+        "moving_parts_clear_of_others": true,
+        "no_unintended_overlap_or_overflow": true,
+        "transform_and_clip_are_natural": true,
+        "no_broken_transient_frame": true,
+        "dual_instance_ok": true,
+        "no_pageerror": true,
+        "no_unexpected_console_error": true,
+        "no_obvious_unfinished_artifact": true
+      },
+      "notes": "cut。observe: ライト/ダークとも周の終わり = 静止状態（computed style の差 0）、reduce でアニメーション 0 件。hold 2190ms、start beat 300ms、still ratio 0.48。実フレームの切り替え 3 回とも S→P0・途中フレーム 0、最初のフレーム P0。アプリの再生の入口 4600ms。viewBox 余白 4.55。合計と枠の余白は最小 1.08。速度の急変 WARN なし（最大 0.093）。観察は 138px の実時間再生を周の境界2回をまたいで撮った連続画像（realtime/*-sheet.png）、100ms ごとのコマ撮り（frames/）、札が落ちる区間と最後の札から仕上げの光までの 30〜50ms 刻み（frames-zoom/）、セルフレビュー用ギャラリーの 177/138px 再生・56/46px 静止・比較列（ライト/ダーク）で行った。静止状態の字形は白黒版の path を字ごとに分けたもので、つなげると白黒版と一致する（gen.mjs で照合）。線と枠は白黒版と同じ座標。面は盤の面（slab）と置いた札（tablet）を線の下へ線まで敷いた。static bounds は白黒版と中心 +0,+0・大きさ x1。インク量 21.7%（他ゲームの範囲内、中央値の 1.28 倍）。ダークは明るい石の盤が暗い地に浮き、他ゲームより目立つ（manifest の notes に書いた）。ダークの盤の外の合計だけ明るい段へ代えた（理由は notes）。持ち上げた札が落ちる間だけ隣の線と枠に重なるのは、盤の手前にある札として意図したもの。WebKit は起動できず Safari での表示は未確認。"
+    }
+  }
+}

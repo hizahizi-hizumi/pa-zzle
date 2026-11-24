@@ -1,0 +1,11 @@
+feat(magic-square): 魔方陣の石の効果音を書き出すスクリプトと音を追加
+
+数を刻んだ石の札が盤のくぼみに収まる置く音、受け付けなかった押し方の
+鈍い打撃、メモを書く・消す音、クリアの行・縦の列・斜めの3段と仕上げの
+石の打楽器の響きを、Chromium の OfflineAudioContext で描いて書き出す。
+音の大きさは役割ごとに既存ゲームの同じ役割の音にそろえ、8本の合計は
+PADDING を外して 24.9 KiB にした。クリアの3段はどの向きも同じ高さを上に
+保って下に音を重ね、仕上げを C の長三和音で開く。
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NxQBQSVazxcWXJrVKy8QCg

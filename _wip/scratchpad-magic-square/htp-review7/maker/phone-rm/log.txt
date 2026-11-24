@@ -1,0 +1,16 @@
+skip target count: 1
+skip after: count=0 replay enabled=true
+rule2 overlaps: []
+rule3 overlaps: ["1行1列 14: mark overlaps glyph by 5.8x5.6px (mark 13px, glyph 28x26)"]
+rule2 after hints caption: ["まだ置ける、もう置いてある"]
+rule2 press ✓6 with given 14 selected -> caption ["まだ置ける、もう置いてある"]; cells ["1行1列 14","1行2列 4","1行3列 5","1行4列 11"]
+op1 after clear press: pressed=false
+op1 overlaps: []
+memo 5th caption: ["メモは4つまで"]
+op3 overlaps: []
+memo on placed cell caption: [""]
+overflow ops: {"vw":390,"docScroll":390,"overflow":[]}
+errors: 0 
+
+errors:
+

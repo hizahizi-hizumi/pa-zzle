@@ -1,0 +1,10 @@
+ルール elements touching 16px gutter: 0
+  
+ルール scroller {"h":2171,"c":512,"sw":320,"cw":320}
+操作 elements touching 16px gutter: 0
+  
+操作 scroller {"h":2463,"c":512,"sw":320,"cw":320}
+採点 elements touching 16px gutter: 2
+  SPAN.inline-block 8.6-120.7
+  SPAN.inline-block 8.6-216.7
+採点 scroller {"h":2054,"c":512,"sw":320,"cw":320}

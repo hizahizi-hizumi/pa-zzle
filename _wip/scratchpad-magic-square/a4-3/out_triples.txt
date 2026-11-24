@@ -1,0 +1,842 @@
+triples: 841 settings × 669 problems in 712s
+lock_eph+lock_next+nohidden: 41/669 (6.1%) | 4×4 0/107 5×5 24/390 6×6 17/172 | k0-2 2/305 k12 39/364 | L5→requires-trial 24, L5→long-line 7, L4→long-line 6, L4→requires-trial 2, L5→too-deep 1
+lock_eph+memoryless+lock_next: 32/669 (4.8%) | 4×4 0/107 5×5 18/390 6×6 14/172 | k0-2 1/305 k12 31/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L5→too-deep 3, L4→requires-trial 1
+cum+lock_eph+lock_next: 32/669 (4.8%) | 4×4 0/107 5×5 19/390 6×6 13/172 | k0-2 1/305 k12 31/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L5→too-deep 2, L4→requires-trial 1
+lock_eph+hidden_next+lock_next: 32/669 (4.8%) | 4×4 0/107 5×5 19/390 6×6 13/172 | k0-2 2/305 k12 30/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L5→too-deep 2, L4→too-deep 1
+lock_eph+lock_next+short3_2: 31/669 (4.6%) | 4×4 0/107 5×5 17/390 6×6 14/172 | k0-2 1/305 k12 30/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L5→too-deep 2, L4→requires-trial 1
+lock_eph+lock_next+chain2: 30/669 (4.5%) | 4×4 0/107 5×5 17/390 6×6 13/172 | k0-2 1/305 k12 29/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L4→requires-trial 1, L5→too-deep 1
+lock_eph+lock_next+range1: 30/669 (4.5%) | 4×4 0/107 5×5 17/390 6×6 13/172 | k0-2 1/305 k12 29/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L4→requires-trial 1, L5→too-deep 1
+lock_eph+lock_next+chain_nolock: 30/669 (4.5%) | 4×4 0/107 5×5 17/390 6×6 13/172 | k0-2 1/305 k12 29/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L4→requires-trial 1, L5→too-deep 1
+lock_eph+lock_next+short3_1: 30/669 (4.5%) | 4×4 0/107 5×5 17/390 6×6 13/172 | k0-2 1/305 k12 29/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L4→requires-trial 1, L5→too-deep 1
+lock_all+lock_eph+lock_next: 30/669 (4.5%) | 4×4 0/107 5×5 17/390 6×6 13/172 | k0-2 1/305 k12 29/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L4→requires-trial 1, L5→too-deep 1
+lock_eph+one+lock_next: 30/669 (4.5%) | 4×4 0/107 5×5 17/390 6×6 13/172 | k0-2 1/305 k12 29/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L4→requires-trial 1, L5→too-deep 1
+lock_eph+lock_next+range2: 30/669 (4.5%) | 4×4 0/107 5×5 17/390 6×6 13/172 | k0-2 1/305 k12 29/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L4→requires-trial 1, L5→too-deep 1
+lock_eph+fewest+lock_next: 30/669 (4.5%) | 4×4 0/107 5×5 17/390 6×6 13/172 | k0-2 1/305 k12 29/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L4→requires-trial 1, L5→too-deep 1
+lock_eph+lock_next+viol1: 30/669 (4.5%) | 4×4 0/107 5×5 17/390 6×6 13/172 | k0-2 1/305 k12 29/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L4→requires-trial 1, L5→too-deep 1
+lock_eph+lock_next+viol2: 30/669 (4.5%) | 4×4 0/107 5×5 17/390 6×6 13/172 | k0-2 1/305 k12 29/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L4→requires-trial 1, L5→too-deep 1
+carry+lock_eph+lock_next: 29/669 (4.3%) | 4×4 0/107 5×5 16/390 6×6 13/172 | k0-2 1/305 k12 28/364 | L5→requires-trial 14, L5→long-line 9, L4→long-line 5, L4→requires-trial 1
+cum+range2+short3_2: 15/669 (2.2%) | 4×4 0/107 5×5 11/390 6×6 4/172 | k0-2 1/305 k12 14/364 | L5→too-deep 12, L4→too-deep 3
+cum+viol2+short3_2: 15/669 (2.2%) | 4×4 0/107 5×5 11/390 6×6 4/172 | k0-2 2/305 k12 13/364 | L5→too-deep 11, L4→too-deep 4
+cum+memoryless+short3_2: 13/669 (1.9%) | 4×4 0/107 5×5 8/390 6×6 5/172 | k0-2 2/305 k12 11/364 | L5→too-deep 8, L4→too-deep 5
+cum+short3_2+nohidden: 12/669 (1.8%) | 4×4 0/107 5×5 8/390 6×6 4/172 | k0-2 2/305 k12 10/364 | L5→too-deep 8, L4→too-deep 4
+cum+hidden_next+short3_2: 12/669 (1.8%) | 4×4 0/107 5×5 8/390 6×6 4/172 | k0-2 2/305 k12 10/364 | L5→too-deep 8, L4→too-deep 4
+cum+lock_eph+short3_2: 12/669 (1.8%) | 4×4 0/107 5×5 6/390 6×6 6/172 | k0-2 1/305 k12 11/364 | L5→too-deep 8, L4→too-deep 4
+cum+memoryless+range2: 11/669 (1.6%) | 4×4 0/107 5×5 9/390 6×6 2/172 | k0-2 0/305 k12 11/364 | L5→too-deep 11
+lock_eph+lock_next+jointk2: 11/669 (1.6%) | 4×4 0/107 5×5 5/390 6×6 6/172 | k0-2 0/305 k12 11/364 | L5→requires-trial 5, L5→long-line 4, L4→long-line 2
+cum+lock_next+range2: 10/669 (1.5%) | 4×4 0/107 5×5 10/390 6×6 0/172 | k0-2 0/305 k12 10/364 | L5→too-deep 10
+cum+one+short3_2: 10/669 (1.5%) | 4×4 0/107 5×5 6/390 6×6 4/172 | k0-2 2/305 k12 8/364 | L5→too-deep 6, L4→too-deep 4
+cum+lock_next+short3_2: 10/669 (1.5%) | 4×4 0/107 5×5 6/390 6×6 4/172 | k0-2 1/305 k12 9/364 | L5→too-deep 7, L4→too-deep 3
+cum+short3_2+viol1: 10/669 (1.5%) | 4×4 0/107 5×5 6/390 6×6 4/172 | k0-2 2/305 k12 8/364 | L5→too-deep 6, L4→too-deep 4
+cum+short3_2+chain2: 10/669 (1.5%) | 4×4 0/107 5×5 6/390 6×6 4/172 | k0-2 2/305 k12 8/364 | L5→too-deep 6, L4→too-deep 4
+cum+range2+chain_nolock: 9/669 (1.3%) | 4×4 0/107 5×5 8/390 6×6 1/172 | k0-2 0/305 k12 9/364 | L5→too-deep 9
+cum+hidden_next+range2: 9/669 (1.3%) | 4×4 0/107 5×5 9/390 6×6 0/172 | k0-2 0/305 k12 9/364 | L5→too-deep 9
+cum+short3_2+chain_nolock: 9/669 (1.3%) | 4×4 0/107 5×5 5/390 6×6 4/172 | k0-2 1/305 k12 8/364 | L5→too-deep 6, L4→too-deep 3
+cum+range2+nohidden: 9/669 (1.3%) | 4×4 0/107 5×5 9/390 6×6 0/172 | k0-2 0/305 k12 9/364 | L5→too-deep 9
+cum+range2+chain2: 8/669 (1.2%) | 4×4 0/107 5×5 8/390 6×6 0/172 | k0-2 0/305 k12 8/364 | L5→too-deep 8
+cum+lock_eph+range2: 8/669 (1.2%) | 4×4 0/107 5×5 8/390 6×6 0/172 | k0-2 0/305 k12 8/364 | L5→too-deep 8
+cum+range2+short3_1: 8/669 (1.2%) | 4×4 0/107 5×5 8/390 6×6 0/172 | k0-2 0/305 k12 8/364 | L5→too-deep 8
+cum+lock_all+short3_2: 8/669 (1.2%) | 4×4 0/107 5×5 5/390 6×6 3/172 | k0-2 1/305 k12 7/364 | L5→too-deep 5, L4→too-deep 3
+cum+one+range2: 8/669 (1.2%) | 4×4 0/107 5×5 8/390 6×6 0/172 | k0-2 0/305 k12 8/364 | L5→too-deep 8
+cum+short3_2+range1: 7/669 (1.0%) | 4×4 0/107 5×5 3/390 6×6 4/172 | k0-2 1/305 k12 6/364 | L5→too-deep 4, L4→too-deep 3
+cum+memoryless+viol2: 7/669 (1.0%) | 4×4 0/107 5×5 6/390 6×6 1/172 | k0-2 0/305 k12 7/364 | L5→too-deep 7
+cum+lock_eph+viol2: 7/669 (1.0%) | 4×4 0/107 5×5 7/390 6×6 0/172 | k0-2 0/305 k12 7/364 | L5→too-deep 6, L4→too-deep 1
+cum+lock_all+range2: 7/669 (1.0%) | 4×4 0/107 5×5 7/390 6×6 0/172 | k0-2 0/305 k12 7/364 | L5→too-deep 7
+cum+hidden_next+viol2: 6/669 (0.9%) | 4×4 0/107 5×5 6/390 6×6 0/172 | k0-2 0/305 k12 6/364 | L5→too-deep 6
+cum+viol2+chain_nolock: 6/669 (0.9%) | 4×4 0/107 5×5 5/390 6×6 1/172 | k0-2 0/305 k12 6/364 | L5→too-deep 6
+cum+lock_eph+nohidden: 6/669 (0.9%) | 4×4 0/107 5×5 5/390 6×6 1/172 | k0-2 1/305 k12 5/364 | L5→long-line 2, L5→too-deep 2, L4→long-line 1, L4→too-deep 1
+lock_eph+memoryless+nohidden: 6/669 (0.9%) | 4×4 0/107 5×5 5/390 6×6 1/172 | k0-2 1/305 k12 5/364 | L5→long-line 2, L5→too-deep 2, L4→long-line 1, L4→too-deep 1
+cum+viol2+nohidden: 6/669 (0.9%) | 4×4 0/107 5×5 6/390 6×6 0/172 | k0-2 0/305 k12 6/364 | L5→too-deep 6
+cum+viol2+short3_1: 5/669 (0.7%) | 4×4 0/107 5×5 5/390 6×6 0/172 | k0-2 0/305 k12 5/364 | L5→too-deep 5
+lock_eph+memoryless+hidden_next: 5/669 (0.7%) | 4×4 0/107 5×5 4/390 6×6 1/172 | k0-2 1/305 k12 4/364 | L5→too-deep 3, L4→too-deep 2
+cum+viol2+chain2: 5/669 (0.7%) | 4×4 0/107 5×5 5/390 6×6 0/172 | k0-2 0/305 k12 5/364 | L5→too-deep 5
+cum+one+viol2: 5/669 (0.7%) | 4×4 0/107 5×5 5/390 6×6 0/172 | k0-2 0/305 k12 5/364 | L5→too-deep 5
+cum+lock_next+viol2: 5/669 (0.7%) | 4×4 0/107 5×5 5/390 6×6 0/172 | k0-2 0/305 k12 5/364 | L5→too-deep 5
+cum+lock_all+viol2: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 0/305 k12 4/364 | L5→too-deep 4
+memoryless+lock_next+short3_2: 4/669 (0.6%) | 4×4 0/107 5×5 2/390 6×6 2/172 | k0-2 1/305 k12 3/364 | L4→too-deep 2, L5→too-deep 2
+lock_eph+fewest+nohidden: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+lock_all+lock_eph+nohidden: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+lock_eph+range1+nohidden: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+lock_eph+range2+nohidden: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+lock_eph+one+nohidden: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+lock_eph+short3_2+nohidden: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+cum+lock_eph+hidden_next: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L4→too-deep 2, L5→too-deep 2
+lock_eph+nohidden+chain_nolock: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+lock_eph+viol1+nohidden: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+cum+lock_eph+memoryless: 4/669 (0.6%) | 4×4 0/107 5×5 3/390 6×6 1/172 | k0-2 0/305 k12 4/364 | L5→too-deep 2, L4→too-deep 2
+lock_eph+chain2+nohidden: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+lock_eph+hidden_next+nohidden: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+lock_eph+viol2+nohidden: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+lock_eph+short3_1+nohidden: 4/669 (0.6%) | 4×4 0/107 5×5 4/390 6×6 0/172 | k0-2 1/305 k12 3/364 | L5→long-line 2, L4→long-line 1, L5→too-deep 1
+lock_eph+memoryless+short3_2: 3/669 (0.4%) | 4×4 0/107 5×5 2/390 6×6 1/172 | k0-2 0/305 k12 3/364 | L5→too-deep 2, L4→too-deep 1
+lock_eph+memoryless+fewest: 3/669 (0.4%) | 4×4 0/107 5×5 2/390 6×6 1/172 | k0-2 0/305 k12 3/364 | L5→too-deep 2, L4→too-deep 1
+lock_all+lock_eph+memoryless: 3/669 (0.4%) | 4×4 0/107 5×5 2/390 6×6 1/172 | k0-2 0/305 k12 3/364 | L5→too-deep 2, L4→too-deep 1
+lock_eph+memoryless+range2: 3/669 (0.4%) | 4×4 0/107 5×5 2/390 6×6 1/172 | k0-2 0/305 k12 3/364 | L5→too-deep 2, L4→too-deep 1
+carry+lock_eph+nohidden: 3/669 (0.4%) | 4×4 0/107 5×5 3/390 6×6 0/172 | k0-2 1/305 k12 2/364 | L5→long-line 2, L4→long-line 1
+lock_eph+memoryless+one: 3/669 (0.4%) | 4×4 0/107 5×5 2/390 6×6 1/172 | k0-2 0/305 k12 3/364 | L5→too-deep 2, L4→too-deep 1
+lock_eph+memoryless+chain2: 3/669 (0.4%) | 4×4 0/107 5×5 2/390 6×6 1/172 | k0-2 0/305 k12 3/364 | L5→too-deep 2, L4→too-deep 1
+lock_eph+memoryless+range1: 3/669 (0.4%) | 4×4 0/107 5×5 2/390 6×6 1/172 | k0-2 0/305 k12 3/364 | L5→too-deep 2, L4→too-deep 1
+lock_eph+memoryless+chain_nolock: 3/669 (0.4%) | 4×4 0/107 5×5 2/390 6×6 1/172 | k0-2 0/305 k12 3/364 | L5→too-deep 2, L4→too-deep 1
+lock_eph+memoryless+viol1: 3/669 (0.4%) | 4×4 0/107 5×5 2/390 6×6 1/172 | k0-2 0/305 k12 3/364 | L5→too-deep 2, L4→too-deep 1
+lock_eph+memoryless+viol2: 3/669 (0.4%) | 4×4 0/107 5×5 2/390 6×6 1/172 | k0-2 0/305 k12 3/364 | L5→too-deep 2, L4→too-deep 1
+lock_eph+memoryless+short3_1: 3/669 (0.4%) | 4×4 0/107 5×5 2/390 6×6 1/172 | k0-2 0/305 k12 3/364 | L5→too-deep 2, L4→too-deep 1
+lock_eph+hidden_next+range2: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 1/305 k12 1/364 | L4→too-deep 1, L5→too-deep 1
+cum+lock_eph+short3_1: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 0/305 k12 2/364 | L5→too-deep 1, L4→too-deep 1
+lock_all+lock_eph+hidden_next: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 1/305 k12 1/364 | L4→too-deep 1, L5→too-deep 1
+lock_eph+hidden_next+short3_1: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 1/305 k12 1/364 | L4→too-deep 1, L5→too-deep 1
+lock_eph+hidden_next+short3_2: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 1/305 k12 1/364 | L4→too-deep 1, L5→too-deep 1
+lock_eph+fewest+hidden_next: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 1/305 k12 1/364 | L4→too-deep 1, L5→too-deep 1
+lock_eph+hidden_next+chain_nolock: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 1/305 k12 1/364 | L4→too-deep 1, L5→too-deep 1
+lock_eph+one+hidden_next: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 1/305 k12 1/364 | L4→too-deep 1, L5→too-deep 1
+lock_eph+hidden_next+viol2: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 1/305 k12 1/364 | L4→too-deep 1, L5→too-deep 1
+lock_eph+hidden_next+viol1: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 1/305 k12 1/364 | L4→too-deep 1, L5→too-deep 1
+lock_eph+hidden_next+range1: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 1/305 k12 1/364 | L4→too-deep 1, L5→too-deep 1
+cum+short3_2+jointk2: 2/669 (0.3%) | 4×4 0/107 5×5 0/390 6×6 2/172 | k0-2 0/305 k12 2/364 | L5→too-deep 1, L4→too-deep 1
+lock_all+memoryless+short3_2: 2/669 (0.3%) | 4×4 0/107 5×5 1/390 6×6 1/172 | k0-2 1/305 k12 1/364 | L4→too-deep 2
+lock_eph+hidden_next+chain2: 2/669 (0.3%) | 4×4 0/107 5×5 2/390 6×6 0/172 | k0-2 1/305 k12 1/364 | L4→too-deep 1, L5→too-deep 1
+cum+lock_next+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+carry+memoryless+short3_2: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+one+lock_next+short3_2: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+lock_eph+jointk2+nohidden: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→long-line 1
+memoryless+short3_2+nohidden: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+cum+lock_eph+viol1: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+cum+short3_1+nohidden: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+carry+lock_next+short3_2: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+short3_1+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+one+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+lock_all+lock_next+short3_2: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+short3_1+range1: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+memoryless+short3_1: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+lock_next+short3_1: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+lock_next+short3_2+range1: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+short3_1+viol1: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+short3_1+chain2: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+hidden_next+lock_next: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+hidden_next+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+one+short3_1: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+lock_eph+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+cum+lock_all+lock_next: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+nohidden+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+lock_next+chain2: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+short3_1+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+chain2+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+hidden_next+short3_2: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+memoryless+short3_2+jointk2: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+memoryless+short3_1+nohidden: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+lock_next+range2+short3_2: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+carry+memoryless+short3_1: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+lock_all+lock_eph: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+cum+lock_next+viol1: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+memoryless+lock_next: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+hidden_next+short3_1: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+viol2+short3_2: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+memoryless+range2+short3_1: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+short3_1+jointk2: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+short3_2+viol1: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+memoryless+one+short3_2: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+cum+lock_eph+chain2: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+lock_next+short3_2+chain2: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+lock_all+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+viol2+short3_1: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+lock_next+short3_2+viol1: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+memoryless+short3_2+chain2: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+cum+lock_next+nohidden: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+hidden_next+short3_1: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+viol1+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+lock_next+short3_2+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+lock_eph+one: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+memoryless+short3_2+chain_nolock: 1/669 (0.1%) | 4×4 0/107 5×5 0/390 6×6 1/172 | k0-2 0/305 k12 1/364 | L4→too-deep 1
+lock_next+short3_2+jointk2: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+lock_next+range1: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+lock_next+short3_2+nohidden: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+cum+one+lock_next: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+lock_next+viol2+short3_2: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+hidden_next+lock_next+short3_2: 1/669 (0.1%) | 4×4 0/107 5×5 1/390 6×6 0/172 | k0-2 0/305 k12 1/364 | L5→too-deep 1
+lock_all+lock_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_eph+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+fewest+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+hidden_next+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+range2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+viol2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+range2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+short3_1+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+hidden_next+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+range1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+range2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+range2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+viol2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+range2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+lock_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol1+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+range2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_1+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+fewest+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+hidden_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_eph+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+viol1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+lock_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+hidden_next+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+hidden_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+range2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+one+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+viol2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+range1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+viol2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+memoryless+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+viol2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+lock_next+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+hidden_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+range2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+viol1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+viol2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+hidden_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+one+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+one+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+viol1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_next+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+range2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+lock_next+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_2+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+short3_1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+viol1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol1+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+range1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+viol2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+memoryless+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+hidden_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+range2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+lock_next+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+hidden_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+hidden_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+range2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+short3_2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_2+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+range1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+viol2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+hidden_next+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+range2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+range1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+hidden_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+range2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+range2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+range1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+one+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+short3_1+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+one+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+viol1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+memoryless+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+hidden_next+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+viol1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+lock_next+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+viol1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+range1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_all+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+fewest+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+fewest+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+range2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_next+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+memoryless+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+range1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_all+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+viol2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+one+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+jointk2+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+lock_next+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+viol1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+hidden_next+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_eph+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+viol1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+hidden_next+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+viol1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+hidden_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+range2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+hidden_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+fewest+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+viol2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+fewest+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+range2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+range1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+short3_2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+viol2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+viol1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_1+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+lock_eph: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+lock_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_1+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+hidden_next+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+hidden_next+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+one+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+viol1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+hidden_next+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+short3_1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+range1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+hidden_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+one+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+hidden_next+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+hidden_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+range1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+lock_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+range1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+short3_1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_2+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+range2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_eph+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+memoryless+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+viol1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+viol1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+viol1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+lock_next+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+range2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+viol1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+range1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+viol2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+short3_1+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+hidden_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+hidden_next+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+viol2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_eph+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_2+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+range1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+viol2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+range1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+lock_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+one+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_1+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+hidden_next+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+memoryless: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+viol2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+viol1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+one+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+lock_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+one+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range1+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+viol2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range1+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+fewest+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+memoryless+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+one+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_all+memoryless: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+lock_next+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+lock_next+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+short3_2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+range1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+viol2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_all+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+lock_next+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+lock_next+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+range1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+lock_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+range2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+range1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+viol1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+one+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+lock_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+short3_2+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_eph+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+hidden_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_eph+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+short3_1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+hidden_next+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+range1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+viol2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+one: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+fewest+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+hidden_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+range1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+hidden_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+hidden_next+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+range2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+one: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+range1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+range2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+range1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+range1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_1+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+short3_2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+hidden_next+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+viol2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_all+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+range1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_eph+one: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+lock_next+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+lock_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+viol1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+hidden_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+hidden_next+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+hidden_next+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+viol2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+lock_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+short3_1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_eph+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+one: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+range1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+viol1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+hidden_next+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+range1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+viol2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+one+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+lock_next+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+lock_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+range2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+range1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+memoryless+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+viol2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range1+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+range2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+viol2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+short3_1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+range2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+viol1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+short3_1+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+range2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+hidden_next+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+lock_next+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+viol2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+hidden_next+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+viol1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_eph+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+hidden_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+memoryless+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+viol2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+hidden_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+short3_1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+range1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+one+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+memoryless+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_eph+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+range1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+range1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+range1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+lock_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_all+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+viol1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+viol2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_1+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+lock_next+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+hidden_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+viol2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+lock_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_all+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_next+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+range2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_all+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+viol1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+lock_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+hidden_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+range2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+lock_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+viol2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+short3_2+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_eph+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+one+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+viol2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+lock_next+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+range2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+hidden_next+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+viol2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_2+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+short3_2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+range1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+one+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+range2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_2+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_2+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+hidden_next+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+one+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+viol2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_2+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+viol2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+lock_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+viol1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+short3_1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+jointk2+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+viol2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+short3_1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+range2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+hidden_next+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_next+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_2+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+viol1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+range2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+one: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+one+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+lock_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+viol1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+range2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_eph+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+short3_1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+chain2+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+one+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+range2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+jointk2+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+short3_2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range1+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+viol1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+viol2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+short3_2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+hidden_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+one+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+range2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+hidden_next+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+short3_1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+short3_1+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range1+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+viol2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_all+one: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+memoryless+one: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_2+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+one+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+range2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+range1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+range1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+lock_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+viol2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+range1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+short3_1+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol1+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+one+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+hidden_next+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+viol1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol1+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+range1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+range2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+viol1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+range1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+lock_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+viol1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+range1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_1+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+one+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_eph+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+short3_2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+memoryless: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+viol1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+short3_1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range1+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+one+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+hidden_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+short3_1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+hidden_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+range2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+one+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+fewest: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+range2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_next+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+range1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+hidden_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+viol2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+fewest+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+short3_2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+range2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+jointk2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+range2+short3_1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+hidden_next+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+viol2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol1+jointk2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+hidden_next+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol1+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+short3_1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+viol2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+fewest+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+range2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+hidden_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+hidden_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+one+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+range2+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+viol1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_next+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+range2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+short3_1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+range1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+viol1+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+viol1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+viol1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+short3_2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_next+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+range1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_1+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+short3_1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+memoryless+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+viol1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+lock_next+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+viol2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+lock_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+range2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+short3_1+chain2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+hidden_next+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+lock_next+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+one+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+hidden_next+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+jointk2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+viol1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+short3_2+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+hidden_next+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+viol2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+viol1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+range2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+viol2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+one+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+viol1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+short3_2+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+range1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+hidden_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+hidden_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_all+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+viol2+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_1+viol1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_next+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_next+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+lock_next+short3_1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+viol2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+lock_all+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+short3_2+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+fewest+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+viol1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+one+short3_2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+short3_1+range1: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+one+fewest+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+range2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+memoryless+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+viol2+short3_2+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+hidden_next+range1+nohidden: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+fewest+viol2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+one+lock_next: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_next+viol2+chain2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+fewest+range2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_eph+short3_1+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+memoryless+nohidden+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+fewest+chain2+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+cum+viol1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+lock_all+short3_1+jointk2: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 
+carry+lock_eph+chain_nolock: 0/669 (0.0%) | 4×4 0/107 5×5 0/390 6×6 0/172 | k0-2 0/305 k12 0/364 | 

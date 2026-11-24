@@ -14,7 +14,12 @@ import {
 } from "react-router";
 import { magicSquareCatalogEntry } from "@/app/game-integration/magic-square/magic-square-catalog-entry";
 import { readPlayRecords } from "@/features/records/storage";
-import { listMagicSquarePoolProblemIds } from "@/games/magic-square/problem/problem-pool";
+import { countMagicSquareSolutions } from "@/games/magic-square/problem/generation/solver";
+import {
+  listMagicSquarePoolEntries,
+  listMagicSquarePoolProblemIds,
+  restoreMagicSquarePoolEntry,
+} from "@/games/magic-square/problem/problem-pool";
 import { testPlayUrl } from "@/testing/play-url";
 import { MagicSquarePlayView } from "@/views/MagicSquarePlayView";
 import { PlayResultView } from "@/views/PlayResultView";
@@ -35,18 +40,26 @@ afterEach(() => {
 });
 
 const [levelOneProblemId] = listMagicSquarePoolProblemIds("1");
+const levelOneGivens = restoreMagicSquarePoolEntry(
+  listMagicSquarePoolEntries("1")[0]!,
+).problem.givens;
+const [levelOneAnswer] = countMagicSquareSolutions(
+  levelOneGivens.size,
+  levelOneGivens.cells.map((cell) => cell ?? 0),
+  { limit: 1, collect: true },
+).solutions;
 
 /** レベル1の問題の答え。空きマスの名前と、そこに入る数。 */
-const solvingEntries = [
-  ["1行1列 空き", 14],
-  ["1行4列 空き", 11],
-  ["2行1列 空き", 9],
-  ["2行3列 空き", 7],
-  ["2行4列 空き", 16],
-  ["3行1列 空き", 8],
-  ["3行2列 空き", 13],
-  ["4行2列 空き", 15],
-] as const;
+const solvingEntries = levelOneGivens.cells.flatMap((cell, cellIndex) =>
+  cell === null
+    ? [
+        [
+          `${Math.floor(cellIndex / levelOneGivens.size) + 1}行${(cellIndex % levelOneGivens.size) + 1}列 空き`,
+          levelOneAnswer![cellIndex]!,
+        ] as const,
+      ]
+    : [],
+);
 
 function renderAt(path: string): void {
   render(

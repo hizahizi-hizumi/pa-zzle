@@ -41,7 +41,9 @@ describe("selectMagicSquareProblemById", () => {
   test("問題 ID の問題を問題集から復元すること", () => {
     const selected = selectMagicSquareProblemById("4", problemId!);
 
-    expect(selected?.identity.seed).toBe(listMagicSquarePoolEntries("4")[0]);
+    expect(selected?.identity.seed).toBe(
+      listMagicSquarePoolEntries("4")[0]![0],
+    );
   });
 
   test("別のレベルの問題 ID には null を返すこと", () => {

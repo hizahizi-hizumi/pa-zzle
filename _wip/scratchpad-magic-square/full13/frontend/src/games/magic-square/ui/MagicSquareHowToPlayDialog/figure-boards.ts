@@ -1,0 +1,288 @@
+import type { HowToPlayExampleArrangement } from "@/components/HowToPlayExamplePanel";
+import { magicSquareExampleSquares } from "@/games/magic-square/problem/example-squares";
+import {
+  getMagicSquareLineCellIndices,
+  listMagicSquareLines,
+  type MagicSquareBoard,
+} from "@/games/magic-square/puzzle/board";
+import {
+  getMagicSquareSessionCorrectionCount,
+  inputMagicSquareSessionValue,
+  type MagicSquareSession,
+  selectMagicSquareSessionCell,
+} from "@/games/magic-square/session/session";
+import type { MagicSquareBoardRegion } from "@/games/magic-square/ui/board/board-layout";
+import {
+  createMagicSquareExampleSession,
+  getMagicSquareExampleCellIndex,
+  MAGIC_SQUARE_EXAMPLE_SIZE,
+  type MagicSquareHowToPlayBoard,
+} from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
+import type { MagicSquareExamplePress } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-hint";
+
+/**
+ * 盤面の下に並んだ数の後ろに置く、本番の部品。本番と同じく待った・メモの切り替えの順に並べる。
+ * 盤面の下に並んだ数はどの例にも置く。
+ */
+export type MagicSquareExampleControl = "undo" | "memo";
+
+/**
+ * 触れる例1つ。面に並べる盤面と、その並べ方と、盤面の下に並んだ数の後ろに置く本番の部品と、押す所の手がかりの順。
+ * 1行だけの盤面は横に長いので、どの例も縦に並べる。本番と同じく、盤面ごとにその盤面の下に数を並べる。
+ */
+export type MagicSquareHowToPlayExample = {
+  boards: readonly MagicSquareHowToPlayBoard[];
+  arrangement: HowToPlayExampleArrangement;
+  controls: readonly MagicSquareExampleControl[];
+  hints: readonly MagicSquareExamplePress[];
+};
+
+/** 採点の流れの図1つ。始まりの盤面から、操作ごとの姿を本番の session の関数で求めて並べる。 */
+export type MagicSquareHowToPlayFlowFigure = {
+  region: MagicSquareBoardRegion;
+  frames: readonly MagicSquareSession[];
+  /** コマの間の操作の名前。`/` の所で行を分ける。 */
+  steps: readonly string[];
+  /** 本番の数え方で、最後のコマまでに数えた置き直しの回数。 */
+  correctionCount: number;
+};
+
+const firstRow: MagicSquareBoardRegion = {
+  row: 0,
+  column: 0,
+  rowCount: 1,
+  columnCount: MAGIC_SQUARE_EXAMPLE_SIZE,
+};
+
+const wholeBoard: MagicSquareBoardRegion = {
+  row: 0,
+  column: 0,
+  rowCount: MAGIC_SQUARE_EXAMPLE_SIZE,
+  columnCount: MAGIC_SQUARE_EXAMPLE_SIZE,
+};
+
+/** 1行だけの例の、2行目からの空き。 */
+const emptyRows = [". . . .", ". . . .", ". . . ."] as const;
+
+function onFirstRow(row: string, memos?: MagicSquareHowToPlayBoard["memos"]) {
+  return {
+    region: firstRow,
+    rows: [row, ...emptyRows],
+    ...(memos && { memos }),
+  } satisfies MagicSquareHowToPlayBoard;
+}
+
+function cellAt(
+  board: number,
+  at: readonly [number, number],
+): MagicSquareExamplePress {
+  return { kind: "cell", board, cellIndex: getMagicSquareExampleCellIndex(at) };
+}
+
+/** `board` 番目の盤面の下に並んだ数を押す手。 */
+function value(entered: number, board = 0): MagicSquareExamplePress {
+  return { kind: "value", board, value: entered };
+}
+
+/**
+ * 列の合計のルールの対。上は答えの魔方陣の1行目どおりに34にそろった形、下は空きがあるのに合計に届いた形。
+ * 下の形は、合計の数だけ見ればそろえる合計と同じなので、色とわけで、空きがあるうちに届いた列はもうそろわないと読ませる。
+ * そろった形の手がかりは、右端の数を1つ大きい数に置き換えて、埋まったまま合計と合わない形にする手にする。
+ */
+export const lineRuleExample: MagicSquareHowToPlayExample = {
+  boards: [onFirstRow("+14 +4 +5 +11"), onFirstRow("+14 +4 . +16")],
+  arrangement: "stacked",
+  controls: [],
+  hints: [cellAt(0, [0, 3]), value(12)],
+};
+
+/**
+ * 数を1回ずつ使うルール。手のルール（どの数を置けるか）で、本番は盤面にある数をくぼみにして押せなくするだけで弾く反応が無いので、
+ * 盤面の下に並んだ数ごとに、まだ置けるか（✓）・もう置いてあるか（✕）の印で示す。
+ * 行は、最初から置いてある14と、置いた4と5と、空き。最初から置いてある数も、置いた数と同じく盤面にある数として ✕ にする。
+ * 手がかりは、空いたマスに残りの数を置き、ほかのマスを選んで、置いた数も ✕ のくぼみに変わる所まで見せる手にする
+ * （置いた数は、そのマスを選んでいる間は、押すと外せる数として縁取った札になり、印を付けない）。
+ * ほかのマスには最初から置いてある14を選ぶので、選んでも14の札は ✕ のくぼみのまま変わらない。
+ */
+export const usedValueRuleExample: MagicSquareHowToPlayExample = {
+  boards: [onFirstRow("14 +4 +5 .")],
+  arrangement: "stacked",
+  controls: [],
+  hints: [cellAt(0, [0, 3]), value(11), cellAt(0, [0, 0])],
+};
+
+/**
+ * 最初から置いてある数（左の2つ）と置いた数と空きを混ぜた行。数のあるマスごとに、変えられるかの印を付ける。
+ * 手がかりは、最初から置いてある数を選んで別の数を押して受け付けられない手と、置いた数を選んで同じ数を押して置き換わる手を
+ * 続け、✕ と ✓ のマスの違いを同じ押し方で比べさせる。
+ */
+export const givenRuleExample: MagicSquareHowToPlayExample = {
+  boards: [onFirstRow("14 4 +5 .")],
+  arrangement: "stacked",
+  controls: [],
+  hints: [cellAt(0, [0, 0]), value(6), cellAt(0, [0, 2]), value(6)],
+};
+
+/**
+ * 盤面の全体。左上からの斜めの上で、横と縦の列の最後の空きのマスを選んで、答えの数を置く。
+ * 手がかりの後にもう1つ空きを残す。その空きも埋めると、本番と同じくクリア演出とクリアの音を返す。
+ */
+export const placeOperationExample: MagicSquareHowToPlayExample = {
+  boards: [
+    {
+      region: wholeBoard,
+      rows: ["14 +4 +5 11", "9 . 7 16", "8 +13 . 1", "+3 15 +10 +6"],
+    },
+  ],
+  arrangement: "stacked",
+  controls: [],
+  hints: [cellAt(0, [1, 1]), value(2)],
+};
+
+/** 置いた数を、別の数に置き換えてから、同じ数をもう一度押して外す。空きを残し、どの手でも列を埋めない。 */
+export const replaceOperationExample: MagicSquareHowToPlayExample = {
+  boards: [onFirstRow("+14 +4 . +9")],
+  arrangement: "stacked",
+  controls: [],
+  hints: [cellAt(0, [0, 3]), value(11), value(11)],
+};
+
+/**
+ * 空いたマスを選び、メモに切り替えて数を書き、同じ数をもう一度押して消してから、数を置く入れ方に戻す。
+ * 鉛筆のボタンは、本番と同じく待ったの後ろに置く。メモが4つ書いてあるマスに5つ目を押したときだけ、例の下にわけを出す。
+ */
+export const memoOperationExample: MagicSquareHowToPlayExample = {
+  boards: [onFirstRow("+14 +4 . .")],
+  arrangement: "stacked",
+  controls: ["undo", "memo"],
+  hints: [
+    cellAt(0, [0, 2]),
+    { kind: "memo" },
+    value(5),
+    value(5),
+    { kind: "memo" },
+  ],
+};
+
+/**
+ * 空いた2つのマスのどちらにも5と11のメモがあり、1つのマスに5を置くと、どちらのマスのメモからも5が消え、置いたマスの11のメモは隠れる。
+ * 手がかりは、5をもう一度押して外し、置いたマスに11のメモが戻る所まで見せる。
+ */
+export const memoClearedOperationExample: MagicSquareHowToPlayExample = {
+  boards: [
+    onFirstRow("+14 +4 . .", [
+      { at: [0, 2], values: [5, 11] },
+      { at: [0, 3], values: [5, 11] },
+    ]),
+  ],
+  arrangement: "stacked",
+  controls: [],
+  hints: [cellAt(0, [0, 2]), value(5), value(5)],
+};
+
+/**
+ * 入口のゴールの答え。チュートリアルと同じ、問題集から除く 4×4 の例の魔方陣。
+ * 最初から置いてある数は、レベル1の問題ともチュートリアルの盤面とも違う並びにし、どちらの問題も見せないようにする。
+ * 1マスだけ空いた列をたどれば解き切れる。
+ */
+const goalAnswer = magicSquareExampleSquares[4];
+const goalGivenCells = new Set([0, 3, 4, 6, 7, 8, 11, 13]);
+
+export const goalBoard = {
+  givens: {
+    size: MAGIC_SQUARE_EXAMPLE_SIZE,
+    cells: goalAnswer.map((cell, cellIndex) =>
+      goalGivenCells.has(cellIndex) ? cell : null,
+    ),
+  } satisfies MagicSquareBoard,
+  answer: {
+    size: MAGIC_SQUARE_EXAMPLE_SIZE,
+    cells: [...goalAnswer],
+  } satisfies MagicSquareBoard,
+};
+
+/** 1マスだけ空いた列を、列の並び（行・縦・斜め）の順に探して埋めていく順。ゴールの盤面を埋める順にする。 */
+export function listMagicSquareReadingOrder(
+  givens: MagicSquareBoard,
+): number[] {
+  const filled = new Set(
+    givens.cells.flatMap((cell, cellIndex) =>
+      cell === null ? [] : [cellIndex],
+    ),
+  );
+  const lines = listMagicSquareLines(givens.size).map((line) =>
+    getMagicSquareLineCellIndices(givens.size, line),
+  );
+  const order: number[] = [];
+  for (;;) {
+    const line = lines.find(
+      (cellIndices) =>
+        cellIndices.filter((cellIndex) => !filled.has(cellIndex)).length === 1,
+    );
+    const next = line?.find((cellIndex) => !filled.has(cellIndex));
+    if (next === undefined) {
+      return order;
+    }
+    filled.add(next);
+    order.push(next);
+  }
+}
+
+/**
+ * 採点の流れの図の、2列目の4つのマスと、その下の縦の列の合計。帯をマスの下に取るので、図の幅がマス1つに収まり、
+ * 3つの姿を1行に並べても、マスを例と同じ大きさに近く保てる。列のもう1つの空きも見えるので、合計に届いた色が
+ * 空きのある列の色だと読める。
+ */
+const flowRegion: MagicSquareBoardRegion = {
+  row: 0,
+  column: 1,
+  rowCount: MAGIC_SQUARE_EXAMPLE_SIZE,
+  columnCount: 1,
+};
+
+/** 流れで数を置くマス（4行2列）。斜めの列に乗らないので、置いた数で斜めの合計は変わらない。 */
+export const flowCellIndex = getMagicSquareExampleCellIndex([
+  MAGIC_SQUARE_EXAMPLE_SIZE - 1,
+  1,
+]);
+
+/**
+ * 流れの始まり。2列目は 4 と 14 を置いた2マスと空きの2マスで、下の端のマスを選んだ姿。空きがもう1つあるので、
+ * 置いた数で列が埋まらず、列の端の色を変えない数（合計に届かない数）と変える数（合計に届く16）のどちらも置ける。
+ */
+const flowStart = selectMagicSquareSessionCell(
+  createMagicSquareExampleSession({
+    region: flowRegion,
+    rows: [". +4 . .", ". +14 . .", ". . . .", ". . . ."],
+  }),
+  flowCellIndex,
+);
+
+function place(session: MagicSquareSession, value: number) {
+  return inputMagicSquareSessionValue(session, "value", value, 0).session;
+}
+
+/** 始まりから、同じマスに `first` を置いてから `second` を置いて置き換える流れ。 */
+function createFlow(
+  first: number,
+  second: number,
+): MagicSquareHowToPlayFlowFigure {
+  const placed = place(flowStart, first);
+  const replaced = place(placed, second);
+  return {
+    region: flowRegion,
+    frames: [flowStart, placed, replaced],
+    steps: [`${first}を/置く`, `${second}を/置く`],
+    correctionCount: getMagicSquareSessionCorrectionCount(replaced),
+  };
+}
+
+/**
+ * 置き直しの数え方の対。どちらも同じ始まりから、選んだマスに数を置いて、ほかのマスを選ぶ前に11に置き換える。
+ * - `changed`: 列の端の色を変えた16を置き換える。数える。
+ * - `unchanged`: 列の端の色を変えなかった9を置き換える。数えない。
+ */
+export const correctionCountFlows = {
+  changed: createFlow(16, 11),
+  unchanged: createFlow(9, 11),
+} as const satisfies Record<string, MagicSquareHowToPlayFlowFigure>;

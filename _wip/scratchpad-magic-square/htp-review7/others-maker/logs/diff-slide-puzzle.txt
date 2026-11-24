@@ -1,0 +1,73 @@
+
+## slide-puzzle phone
+  goal btn same board={"x":55,"y":196,"w":280,"h":280,"r":335,"b":476}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=340 -> beside-example 32px/32px h=340 "空白と同じ行・列のタイルをタップするとス"
+     panel1 figs=2 beside-caption 32px/32px h=656 -> beside-example 32px/32px h=656 "離れたタイルをタップすると間のタイルもス"
+     panel2 figs=2 beside-caption 32px/32px h=656 -> beside-example 32px/32px h=656 "左上から番号順に並んで右下が空白になった"
+   before rules p0 h=340 f0:beside-caption/-(322,490) ok
+   before rules p1 h=656 f0:beside-caption/-(322,806) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(322,490) ok
+   before rules p2 h=656 f0:beside-caption/-(322,806) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(322,554) ok
+   after rules p0 h=340 f0:beside-example/right(322,490) ok
+   after rules p1 h=656 f0:beside-example/right(322,490) ok  f1:beside-example/right(322,490) ok | seq→right/near f1 | scroll(124px from SPAN.relativ): right/278 -> right/594 near f0->f1
+   after rules p2 h=656 f0:beside-example/right(322,490) ok  f1:beside-example/right(322,554) ok | seq→right/near f1 | scroll(0px from SPAN.relativ): right/278 -> right/594 near f0->f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=304 -> beside-example 32px/32px h=304 "スライドさせたいタイルをタップします。"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "やり直します。" -> 14px 2L "最初からやり直します。" :: 時間と手数も0に戻して同じ問題を最初からやり直します。
+   before operations p0 h=304 f0:beside-caption/-(322,461) ok
+   after operations p0 h=304 f0:beside-example/right(322,455) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 422->422 caps 1,1 -> 1,1 inert=false
+     text[li] 14px 3L "タップは数えません。" -> 16px 3L "タップは数えません。" :: プレイ画面の「手数」と同じくスライドしたタイルの枚数を数えます。スライドしなかったタップ
+     text[li] 14px 2L "点は下がりません。" -> 16px 2L "点は下がりません。" :: 戻す前の手数も足して数えます。戻した回数では点は下がりません。
+     text[li] 14px 3L "足した時間です。" -> 16px 3L "2秒を足した時間です。" :: 盤面の大きさで決まる時間（3×3は5秒・4×4は10秒・5×5は15秒）に最短の手数1手
+
+## slide-puzzle w320
+  goal btn same board={"x":48,"y":196,"w":224,"h":224,"r":272,"b":420}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 below-examples 32px/46px h=354 -> below-examples 32px/48px h=356 "空白と同じ行・列のタイルをタップするとス"
+     panel1 figs=2 beside-caption 32px/32px h=656 -> beside-example 32px/32px h=656 "離れたタイルをタップすると間のタイルもス"
+     panel2 figs=2 beside-caption 32px/32px h=656 -> beside-example 32px/32px h=656 "左上から番号順に並んで右下が空白になった"
+   before rules p0 h=354 f0:below-examples/-(252,476) ok
+   before rules p1 h=656 f0:beside-caption/-(252,758) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(252,442) ok
+   before rules p2 h=656 f0:beside-caption/-(252,758) nearest=f1 OUT-OF-VIEW  f1:beside-caption/-(252,458) ok
+   after rules p0 h=356 f0:below-examples/-(252,476) ok
+   after rules p1 h=656 f0:beside-example/right(252,442) ok  f1:beside-example/right(252,442) ok | seq→right/near f1 | scroll(124px from SPAN.relativ): right/278 -> right/594 near f0->f1
+   after rules p2 h=656 f0:beside-example/right(252,442) ok  f1:beside-example/right(252,458) ok | seq→right/near f1 | scroll(0px from SPAN.relativ): right/278 -> right/594 near f0->f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 below-examples 46px/46px h=332 -> below-examples 32px/48px h=320 "スライドさせたいタイルをタップします。"
+     text[li] NEW -> 16px 2L "選べます。" :: 画面の右上の「…」から選べます。
+     text[menu] 14px 2L "最初からやり直します。" -> 14px 3L "最初からやり直します。" :: 時間と手数も0に戻して同じ問題を最初からやり直します。
+     text[menu] 14px 2L "変えます。" -> 14px 2L "別の問題に変えます。" :: 同じレベルの別の問題に変えます。
+   before operations p0 h=332 f0:below-examples/-(252,458) ok
+   after operations p0 h=320 f0:below-examples/-(252,458) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 0 -> 0
+     flow0 h 390->390 caps 2,2 -> 2,2 inert=false
+     text[li] 14px 3L "スライドしなかったタップは数えません。" -> 16px 4L "タップは数えません。" :: プレイ画面の「手数」と同じくスライドしたタイルの枚数を数えます。スライドしなかったタップ
+     text[li] 14px 2L "戻した回数では点は下がりません。" -> 16px 2L "戻した回数では点は下がりません。" :: 戻す前の手数も足して数えます。戻した回数では点は下がりません。
+     text[li] 14px 3L "1手ごとに2秒を足した時間です。" -> 16px 4L "足した時間です。" :: 盤面の大きさで決まる時間（3×3は5秒・4×4は10秒・5×5は15秒）に最短の手数1手
+
+## slide-puzzle pc
+  goal btn same board={"x":32,"y":168,"w":500,"h":500,"r":532,"b":668}
+  [rules] headings H3:22px -> H3:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=340 -> beside-example 32px/32px h=340 "空白と同じ行・列のタイルをタップするとス"
+     panel1 figs=2 beside-caption 32px/32px h=340 -> beside-example 32px/32px h=340 "離れたタイルをタップすると間のタイルもス"
+     panel2 figs=2 beside-caption 32px/32px h=340 -> beside-example 32px/32px h=340 "左上から番号順に並んで右下が空白になった"
+   before rules p0 h=340 f0:beside-caption/-(1196,456) ok
+   before rules p1 h=340 f0:beside-caption/-(1196,508) nearest=f1  f1:beside-caption/-(1196,508) ok
+   before rules p2 h=340 f0:beside-caption/-(1196,690) nearest=f1  f1:beside-caption/-(1196,690) ok
+   after rules p0 h=340 f0:beside-example/right(1196,446) ok
+   after rules p1 h=340 f0:beside-example/left(624,508) ok  f1:beside-example/right(1196,508) ok | seq→right/near f1
+   after rules p2 h=340 f0:beside-example/left(624,690) ok  f1:beside-example/right(1196,690) ok | seq→right/near f1
+  [operations] headings H3:22px H4:16px -> H3:22px H4:16px; overflow 0 -> 0
+     panel0 figs=1 beside-caption 32px/32px h=304 -> beside-example 32px/32px h=304 "スライドさせたいタイルをタップします。"
+     text[li] NEW -> 16px 1L "画面の右上の「…」から選べます。" :: 画面の右上の「…」から選べます。
+   before operations p0 h=304 f0:beside-caption/-(1196,469) ok
+   after operations p0 h=304 f0:beside-example/right(1196,463) ok
+  [scoring] headings H3:22px -> H3:22px; overflow 1 -> 1
+     after OVERFLOW SPAN inline-block x=600.6 r=712.7
+     flow0 h 656->658 caps 1,1 -> 1,1 inert=false
+     text[li] 14px 2L "タップは数えません。" -> 16px 2L "スライドしなかったタップは数えません。" :: プレイ画面の「手数」と同じくスライドしたタイルの枚数を数えます。スライドしなかったタップ
+     text[li] 14px 1L "戻す前の手数も足して数えます。戻した回数では点は下がりません。" -> 16px 1L "戻す前の手数も足して数えます。戻した回数では点は下がりません。" :: 戻す前の手数も足して数えます。戻した回数では点は下がりません。
+     text[li] 14px 2L "足した時間です。" -> 16px 2L "1手ごとに2秒を足した時間です。" :: 盤面の大きさで決まる時間（3×3は5秒・4×4は10秒・5×5は15秒）に最短の手数1手
