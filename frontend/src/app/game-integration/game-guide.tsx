@@ -17,6 +17,7 @@ import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowTo
 import { ReflectionTutorial } from "@/games/reflection/ui/ReflectionTutorial";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
 import { SlidePuzzleTutorial } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial";
+import { SolitaireHowToPlayDialog } from "@/games/solitaire/ui/SolitaireHowToPlayDialog";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
 import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
 import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
@@ -26,9 +27,10 @@ import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
 
 type GuideControl = { open: boolean; onClose: () => void };
 type TutorialControl = GuideControl & { playStart?: TutorialPlayStart };
+/** チュートリアルを持たないゲームは `Tutorial` を持たず、遊び方からチュートリアルを始める操作も出さない。 */
 type GuideComponents = {
   HowToPlay: ComponentType<HowToPlayDialogControl>;
-  Tutorial: ComponentType<TutorialControl>;
+  Tutorial?: ComponentType<TutorialControl>;
 };
 
 const guides: Record<string, GuideComponents> = {
@@ -54,6 +56,7 @@ const guides: Record<string, GuideComponents> = {
     HowToPlay: ReflectionHowToPlayDialog,
     Tutorial: ReflectionTutorial,
   },
+  solitaire: { HowToPlay: SolitaireHowToPlayDialog },
   "slide-puzzle": {
     HowToPlay: SlidePuzzleHowToPlayDialog,
     Tutorial: SlidePuzzleTutorial,

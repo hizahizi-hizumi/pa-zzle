@@ -10,6 +10,7 @@ import { nanpureCatalogEntry } from "@/app/game-integration/nanpure/nanpure-cata
 import { parkingJamCatalogEntry } from "@/app/game-integration/parking-jam/parking-jam-catalog-entry";
 import { reflectionCatalogEntry } from "@/app/game-integration/reflection/reflection-catalog-entry";
 import { slidePuzzleCatalogEntry } from "@/app/game-integration/slide-puzzle/slide-puzzle-catalog-entry";
+import { solitaireCatalogEntry } from "@/app/game-integration/solitaire/solitaire-catalog-entry";
 import { takuzuCatalogEntry } from "@/app/game-integration/takuzu/takuzu-catalog-entry";
 import { tsumeShogiCatalogEntry } from "@/app/game-integration/tsume-shogi/tsume-shogi-catalog-entry";
 import { waterSortCatalogEntry } from "@/app/game-integration/water-sort/water-sort-catalog-entry";
@@ -28,6 +29,7 @@ export const gameCatalog = [
   iceFloorMazeCatalogEntry,
   tsumeShogiCatalogEntry,
   bridgesCatalogEntry,
+  solitaireCatalogEntry,
 ] as const satisfies readonly [GameCatalogEntry, ...GameCatalogEntry[]];
 
 export function findGameCatalogEntry(

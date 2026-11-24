@@ -10,6 +10,13 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { GameHowToView } from "@/views/GameHowToView";
 import { GameTutorialView } from "@/views/GameTutorialView";
 
+// 見つからないページの画面は盤面の寸法を測って描くので、画面の無いテストでは文字だけの代わりを置く。
+const notFoundText = "見つからないページ";
+
+vi.mock("@/views/NotFoundView", () => ({
+  NotFoundView: () => <p>見つからないページ</p>,
+}));
+
 const homePath = "/puzzles/nanpure";
 const playPath = "/puzzles/nanpure/play/np-example";
 
@@ -90,5 +97,31 @@ describe("GameTutorialView", () => {
     fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
 
     expect(router.state.location.pathname).toBe(playPath);
+  });
+});
+
+describe("チュートリアルを持たないゲームの場合", () => {
+  test("遊び方を開き、チュートリアルを始める操作を出さないこと", () => {
+    renderGuide("/puzzles/solitaire/how-to");
+
+    const dialog = screen.getByRole("dialog", { name: "ソリティアの遊び方" });
+
+    expect(
+      within(dialog).queryByRole("button", {
+        name: "チュートリアルで遊んで覚える",
+      }),
+    ).toBeNull();
+  });
+
+  describe("チュートリアルの画面を開いた場合", () => {
+    beforeEach(() => {
+      renderGuide("/puzzles/solitaire/tutorial");
+    });
+
+    test("見つからないページにすること", () => {
+      const notFound = screen.getByText(notFoundText);
+
+      expect(notFound).toBeTruthy();
+    });
   });
 });

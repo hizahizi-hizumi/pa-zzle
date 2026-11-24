@@ -33,7 +33,7 @@ export function GameHowToView() {
       <guide.HowToPlay
         open={true}
         onClose={close}
-        onOpenTutorial={openTutorial}
+        onOpenTutorial={guide.Tutorial ? openTutorial : undefined}
       />
     </section>
   );
