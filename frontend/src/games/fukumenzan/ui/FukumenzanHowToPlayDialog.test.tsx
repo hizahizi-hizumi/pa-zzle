@@ -39,7 +39,7 @@ describe("FukumenzanHowToPlayDialog", () => {
     test("できない形の例を、押せない図にして、できない・合わないと添えること", () => {
       const panel = openTab("ルール");
       const figures = [
-        "D に 0 を入れて DDX の先頭が 0 になった式",
+        "D に 0 を入れて DDE の先頭が 0 になった式",
         "R に 7 を入れて十の位が合わない式",
       ].map((name) => within(panel).getByRole("img", { name }));
 

@@ -166,7 +166,7 @@ export function FukumenzanHowToPlayDialog({
           {renderPairRule(
             "2桁以上の数の/いちばん左には/1〜9を/入れます。",
             leadingZeroRuleExamples,
-            "D に 0 を入れて DDX の先頭が 0 になった式",
+            "D に 0 を入れて DDE の先頭が 0 になった式",
           )}
           {renderPairRule(
             "どの桁も/上の数字と/右の桁からの繰り上がりを/足すと/答えの数字に/なるように/します。/3つの数の足し算では/繰り上がりが/2に/なることも/あります。",

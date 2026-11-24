@@ -104,7 +104,7 @@ describe("GoalPlayback", () => {
     test("始まりを見せた後、一の位の D から札を1文字ずつ入れていくこと", () => {
       advance(GOAL_START_HOLD_MS + GOAL_STEP_INTERVAL_MS);
 
-      expect(new Set(listPlacedTiles())).toEqual(new Set(["D に 8", "X に 2"]));
+      expect(new Set(listPlacedTiles())).toEqual(new Set(["D に 8", "E に 2"]));
     });
 
     test("入れ終えたら、本番のクリア演出で答えの桁を動かすこと", () => {

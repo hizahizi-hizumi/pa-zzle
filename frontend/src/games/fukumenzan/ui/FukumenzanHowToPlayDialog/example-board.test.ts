@@ -120,24 +120,24 @@ describe("findExampleHint", () => {
 
   describe("運ぶ手の場合", () => {
     const initial = createExamplePuzzleState(sameLetterRuleExample);
-    const X = getExampleLetterIndex("X");
+    const E = getExampleLetterIndex("E");
 
     test("文字を押して選んだだけなら運び始める文字を示したままにすること", () => {
       expect(
         findExampleHint(
           sameLetterRuleExample,
           initial,
-          { kind: "letter", letter: X },
+          { kind: "letter", letter: E },
           null,
         ),
-      ).toEqual({ kind: "letter", letter: "X" });
+      ).toEqual({ kind: "letter", letter: "E" });
     });
 
     test("文字から運び始めると落とし先の文字を示すこと", () => {
       expect(
         findExampleHint(sameLetterRuleExample, initial, null, {
           digit: 8,
-          fromLetter: X,
+          fromLetter: E,
           x: 0,
           y: 0,
           overLetter: null,

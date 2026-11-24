@@ -5,5 +5,5 @@ import type { FukumenzanProblem } from "@/games/fukumenzan/problem/problem";
  * `howToPlay` は 198 + 882 = 1080 で解ける。
  */
 export const fukumenzanGuideExampleProblems = {
-  howToPlay: { addends: ["MRD", "DDX"], result: "MUDU" },
+  howToPlay: { addends: ["MRD", "DDE"], result: "MUDU" },
 } as const satisfies Record<string, FukumenzanProblem>;

@@ -238,16 +238,16 @@ describe("TouchableExample", () => {
       renderExample(sameLetterRuleExample);
     });
 
-    test("触る前は X の 8 に手がかりを付けること", () => {
-      expect(readHintTarget()).toBe("X に 8");
+    test("触る前は E の 8 に手がかりを付けること", () => {
+      expect(readHintTarget()).toBe("E に 8");
     });
 
-    test("X の 8 を D へ運ぶと、D の全部の場所に 8 が入り、X が空になること", () => {
-      dragByTouch(getLetter("X に 8"), getLetter("D"));
+    test("E の 8 を D へ運ぶと、D の全部の場所に 8 が入り、E が空になること", () => {
+      dragByTouch(getLetter("E に 8"), getLetter("D"));
 
       expect([
         getEquation().getAllByRole("button", { name: "D に 8" }).length,
-        getEquation().getAllByRole("button", { name: "X" }).length,
+        getEquation().getAllByRole("button", { name: "E" }).length,
       ]).toEqual([4, 1]);
     });
   });
