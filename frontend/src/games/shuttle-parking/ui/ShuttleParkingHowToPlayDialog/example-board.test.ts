@@ -1,5 +1,6 @@
 import {
   baysRuleExample,
+  boardOrderExample,
   boardRuleExample,
   createShuttleParkingExampleBoard,
   exitOperationExample,
@@ -77,6 +78,21 @@ describe("tapShuttleParkingExampleCar", () => {
       tried: true,
       boardedCount: 4,
       departedCount: 2,
+    });
+  });
+
+  test("同じ色の車が2台待つ例で青を押すと、7人が乗り3台が出発すること", () => {
+    const tapped = tapHint(boardOrderExample);
+
+    const verdict = judgeShuttleParkingExample(
+      tapped,
+      boardOrderExample.hintCarId,
+    );
+
+    expect(verdict).toMatchObject({
+      tried: true,
+      boardedCount: 7,
+      departedCount: 3,
     });
   });
 

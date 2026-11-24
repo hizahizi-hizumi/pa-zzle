@@ -22,6 +22,7 @@ import {
 } from "@/games/shuttle-parking/score";
 import {
   baysRuleExample,
+  boardOrderExample,
   boardRuleExample,
   exitOperationExample,
   exitRuleExamples,
@@ -134,7 +135,10 @@ export function ShuttleParkingHowToPlayDialog({
             text="乗客は/列の先頭から/順に/同じ色の/待っている車に/1人ずつ/乗ります。/同じ色の車が/2台あれば/先に入った車に/乗ります。/席が埋まった車は/出発して/枠が空きます。"
             arrangement="stacked"
             examples={
-              <TouchableExample example={boardRuleExample} caption="board" />
+              <>
+                <TouchableExample example={boardRuleExample} caption="board" />
+                <TouchableExample example={boardOrderExample} caption="board" />
+              </>
             }
           />
           <HowToPlayRule

@@ -217,6 +217,31 @@ export const boardRuleExample = {
   hintCarId: 0,
 } as const satisfies ShuttleParkingHowToPlayExample;
 
+/** 待機枠に赤の車が2台（2人乗りが先、3人乗りが後）待っている。青を出すと青の2人が乗り、赤は先に入った2人乗りから乗る。 */
+export const boardOrderExample = {
+  puzzle: {
+    lot: {
+      size: 4,
+      openSides: ["top", "right"],
+      cars: [
+        { row: 0, column: 0, orientation: "vertical", capacity: 2, color: "a" },
+        { row: 0, column: 1, orientation: "vertical", capacity: 3, color: "a" },
+        {
+          row: 3,
+          column: 2,
+          orientation: "horizontal",
+          capacity: 2,
+          color: "b",
+        },
+      ],
+    },
+    passengers: ["b", "b", "a", "a", "a", "a", "a"],
+    bayCount: 3,
+  },
+  setup: [0, 1],
+  hintCarId: 2,
+} as const satisfies ShuttleParkingHowToPlayExample;
+
 /** 待機枠2つが黄と青の車で埋まっていて、前の空いた赤の車も出せない。先頭の赤が乗れる車が無く、詰んでいる。 */
 export const baysRuleExample = {
   puzzle: {

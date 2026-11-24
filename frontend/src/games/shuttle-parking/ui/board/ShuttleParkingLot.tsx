@@ -120,16 +120,56 @@ const blockedShakeKeyframes = {
   ],
 } as const;
 
+/** 塞いでいる車の縁を2回光らせ、少し明るくする。押した車のぶつかる動きより長く残し、どの車が塞いでいるかを読ませる。 */
 const blockerFlashKeyframes = [
-  { outlineColor: "rgb(255 255 255 / 0)" },
-  { outlineColor: "rgb(255 255 255 / 0.95)" },
-  { outlineColor: "rgb(255 255 255 / 0)" },
+  { outlineColor: "rgb(255 255 255 / 0)", outlineWidth: "2px", filter: "none" },
+  {
+    outlineColor: "rgb(255 255 255 / 1)",
+    outlineWidth: "3px",
+    filter: "brightness(1.2)",
+    offset: 0.2,
+  },
+  {
+    outlineColor: "rgb(255 255 255 / 0.25)",
+    outlineWidth: "3px",
+    filter: "none",
+    offset: 0.45,
+  },
+  {
+    outlineColor: "rgb(255 255 255 / 1)",
+    outlineWidth: "3px",
+    filter: "brightness(1.2)",
+    offset: 0.7,
+  },
+  { outlineColor: "rgb(255 255 255 / 0)", outlineWidth: "2px", filter: "none" },
 ];
+
+/** 進路を塞がれた車が前へ出ようとして、塞いでいる車にぶつかって戻る動き。 */
+const BLOCKED_BUMP_CELLS = 0.3;
+
+function createBlockedBumpKeyframes(
+  car: ShuttleParkingCar,
+  front: ShuttleParkingSide,
+): Keyframe[] {
+  const ratio = `${((BLOCKED_BUMP_CELLS / car.capacity) * 100).toFixed(2)}%`;
+  const toward = {
+    top: `translateY(-${ratio})`,
+    bottom: `translateY(${ratio})`,
+    left: `translateX(-${ratio})`,
+    right: `translateX(${ratio})`,
+  }[front];
+  return [
+    { transform: "none", easing: "cubic-bezier(0.3, 0, 0.6, 1)" },
+    { transform: toward, offset: 0.4, easing: "ease-out" },
+    { transform: "none" },
+  ];
+}
 
 /**
  * 駐車場。開いた辺は出口の道路として矢印で、閉じた辺は壁として描く。車は前の端に進む向きの矢印を付ける。
  * 押す範囲は車の占めるマス全体。出た車は、待機枠へ移る間だけ出口へ走り抜ける姿で残す。
- * 進路を塞がれた車を押すと、その車を揺らし、塞いでいる車の縁を光らせる。
+ * 進路を塞がれた車を押すと、その車が前へ出ようとしてぶつかって戻り、塞いでいる車の縁を2回光らせる。
+ * 待機枠が満杯で出せない車を押すと、その車を揺らす。
  */
 export function ShuttleParkingLot({
   lot,
@@ -149,20 +189,30 @@ export function ShuttleParkingLot({
     if (operation?.type !== "blocked") return;
     const car = lot.cars[operation.carId];
     if (!car) return;
+    const element = carRefs.current.get(operation.carId);
+    if (operation.reason !== "path-blocked") {
+      playRejectionShake(element, [...blockedShakeKeyframes[car.orientation]], {
+        durationMs: 240,
+        easing: "ease-in-out",
+      });
+      return;
+    }
     playRejectionShake(
-      carRefs.current.get(operation.carId),
-      [...blockedShakeKeyframes[car.orientation]],
-      { durationMs: 240, easing: "ease-in-out" },
+      element,
+      createBlockedBumpKeyframes(car, findFront(lot, car)),
+      {
+        durationMs: 300,
+        easing: "linear",
+      },
     );
-    if (operation.reason !== "path-blocked") return;
     for (const blockerId of operation.blockerIds) {
       playRejectionShake(
         carRefs.current.get(blockerId),
         blockerFlashKeyframes,
-        { durationMs: 480, easing: "ease-in-out" },
+        { durationMs: 900, easing: "linear", delayMs: 100 },
       );
     }
-  }, [operation, lot.cars]);
+  }, [operation, lot]);
 
   return (
     <div
