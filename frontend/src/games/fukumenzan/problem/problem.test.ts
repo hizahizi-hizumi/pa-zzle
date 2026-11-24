@@ -1,3 +1,4 @@
+import researchCases from "@/games/fukumenzan/problem/generation/research-difficulty-cases.json";
 import {
   createFukumenzanProblemIdentity,
   FUKUMENZAN_GENERATOR_VERSION,
@@ -116,5 +117,17 @@ describe("getFukumenzanSameProblemKey", () => {
     const keys = [problem, differentProblem].map(getFukumenzanSameProblemKey);
 
     expect(keys[0]).not.toBe(keys[1]);
+  });
+});
+
+describe("研究用の期待値の同じ問題のキー", () => {
+  const cases = researchCases.sameProblem.flatMap(({ equation, key, sameAs }) =>
+    [equation, ...sameAs].map((text) => [text, key] as const),
+  );
+
+  test.each(cases)("%s のキーが %s になること", (text, expected) => {
+    const key = getFukumenzanSameProblemKey(parseFukumenzanEquation(text)!);
+
+    expect(key).toBe(expected);
   });
 });
