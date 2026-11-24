@@ -63,7 +63,7 @@ describe("MagicSquareHowToPlayDialog", () => {
         .filter((size) => size !== MAGIC_SQUARE_EXAMPLE_SIZE)
         .map(
           (size) =>
-            `${size}×${size}は1から${getMagicSquareMaxValue(size)}までで合計${getMagicSquareMagicSum(size)}`,
+            `${size}×${size}なら1から${getMagicSquareMaxValue(size)}までで左上の合計は${getMagicSquareMagicSum(size)}です。`,
         );
 
       expect(
@@ -118,7 +118,7 @@ describe("MagicSquareHowToPlayDialog", () => {
       const [row] = within(panel).getAllByRole("listitem");
 
       expect(row?.textContent).toBe(
-        `基準時間読み始めの${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒に空きマス1つにつき${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / 1000}秒を足した時間です。`,
+        `基準時間${MAGIC_SQUARE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒に空いたマス1つにつき${MAGIC_SQUARE_SPEED_PER_EMPTY_CELL_MS / 1000}秒を足します。`,
       );
     });
 
@@ -130,8 +130,8 @@ describe("MagicSquareHowToPlayDialog", () => {
         .map((row) => row.textContent);
 
       expect(rows.slice(1).map((row) => row?.split("。")[0])).toEqual([
-        `置き直し 1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点置いた数を外す・置き換える・「待った」・「盤面を戻す」のどれで外しても1回です`,
-        "「待った」・「盤面を戻す」使った回数では点は下がりません",
+        `置き直し 1回 −${MAGIC_SQUARE_CORRECTION_PENALTY}点置いた数は外しても置き換えても「待った」・「盤面を戻す」で外れても1回です`,
+        "「待った」・「盤面を戻す」押しただけでは点は下がりません",
       ]);
     });
 
@@ -139,7 +139,7 @@ describe("MagicSquareHowToPlayDialog", () => {
       const panel = openTab("操作");
 
       expect(panel.textContent).toContain(
-        `${MAGIC_SQUARE_MEMO_CAPACITY}つまでメモを書けます。`,
+        `メモを${MAGIC_SQUARE_MEMO_CAPACITY}つまで書けます。`,
       );
     });
   });

@@ -78,9 +78,9 @@ function getCell(row: number, column: number): HTMLElement {
 }
 
 function getValueButton(value: number): HTMLElement {
-  return within(screen.getByRole("group", { name: "数の欄" })).getByText(
-    String(value),
-  );
+  return within(
+    screen.getByRole("group", { name: "盤面の下に並んだ数" }),
+  ).getByText(String(value));
 }
 
 function hasMark(element: HTMLElement): boolean {

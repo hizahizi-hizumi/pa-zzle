@@ -737,7 +737,7 @@ export const magicSquareTutorial: Tutorial<
 > = {
   intro: {
     purpose:
-      "1から順の数を1つずつマスに置いて\n縦・横・斜めの列の合計を全て同じにするパズルです",
+      "マスに数を置いて\n縦・横・斜めの列の合計を全て同じにするパズルです",
     goalCaption: `列の端に今の合計が出ます\n全て${magicSum}になると完成です`,
   },
   rules,

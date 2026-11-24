@@ -73,7 +73,7 @@ function renderAt(path: string): void {
 function place(cellName: string, value: number): void {
   fireEvent.click(screen.getByRole("button", { name: cellName }));
   fireEvent.click(
-    within(screen.getByRole("group", { name: "数の欄" })).getByText(
+    within(screen.getByRole("group", { name: "盤面の下に並んだ数" })).getByText(
       String(value),
     ),
   );
@@ -89,7 +89,9 @@ describe("MagicSquarePlayView", () => {
       const cells = within(
         screen.getByRole("group", { name: "魔方陣の盤面" }),
       ).getAllByRole("button");
-      const values = within(screen.getByRole("group", { name: "数の欄" }))
+      const values = within(
+        screen.getByRole("group", { name: "盤面の下に並んだ数" }),
+      )
         .getAllByRole("button")
         .filter((button) => /^\d+$/.test(button.textContent ?? ""));
 

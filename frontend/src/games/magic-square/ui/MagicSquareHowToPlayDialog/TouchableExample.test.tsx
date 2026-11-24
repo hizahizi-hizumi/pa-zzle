@@ -72,10 +72,9 @@ function getCell(board: number, row: number, column: number): HTMLElement {
 }
 
 function getValue(value: number): HTMLButtonElement {
-  return within(screen.getByRole("group", { name: "数の欄" })).getByRole(
-    "button",
-    { name: String(value) },
-  );
+  return within(
+    screen.getByRole("group", { name: "盤面の下に並んだ数" }),
+  ).getByRole("button", { name: String(value) });
 }
 
 function readRowSum(board: number): string | undefined {
@@ -143,10 +142,13 @@ describe("列の合計のルールの例を描いた場合", () => {
     renderExample(lineRuleExample, "line");
   });
 
-  test("最初は、そろった行をできる、空きがあるのに合計に届いた行をできないとし、そろった行の右端に手がかりを付けること", () => {
+  test("最初は、そろった行をそろう、空きがあるのに合計に届いた行をそろわないとし、そろった行の右端に手がかりを付けること", () => {
     const captions = readCaptions();
 
-    expect(captions).toEqual(["できる", "できない 空きがあるのに合計に届いた"]);
+    expect(captions).toEqual([
+      "そろう",
+      "そろわない 空きがあるのに合計に届いた",
+    ]);
     expect(readRowSum(1)).toBe("1行目の合計 34 空きがあるのに合計に届いた");
     expect(findHinted()).toEqual([getCell(0, 1, 4)]);
     expect(getResetButton().disabled).toBe(true);
@@ -157,7 +159,7 @@ describe("列の合計のルールの例を描いた場合", () => {
       fireEvent.click(getCell(0, 1, 4));
     });
 
-    test("マスを選んだ姿にし、手がかりを数の欄の札へ移し、元に戻すボタンを出すこと", () => {
+    test("マスを選んだ姿にし、手がかりを盤面の下に並んだ数の札へ移し、元に戻すボタンを出すこと", () => {
       expect(getCell(0, 1, 4).getAttribute("aria-pressed")).toBe("true");
       expect(findHinted()).toEqual([getValue(13)]);
       expect(getResetButton().disabled).toBe(false);
@@ -168,9 +170,9 @@ describe("列の合計のルールの例を描いた場合", () => {
         fireEvent.click(getValue(13));
       });
 
-      test("置き換えた数で行の合計を出し直し、埋まって合計と違うとしてできないにし、手がかりを消すこと", () => {
-        expect(readRowSum(0)).toBe("1行目の合計 36 埋まって合計と違う");
-        expect(readCaptions()[0]).toBe("できない 埋まって合計と違う");
+      test("置き換えた数で行の合計を出し直し、埋まって合計が合わないとしてそろわないにし、手がかりを消すこと", () => {
+        expect(readRowSum(0)).toBe("1行目の合計 36 埋まって合計が合わない");
+        expect(readCaptions()[0]).toBe("そろわない 埋まって合計が合わない");
         expect(findHinted()).toEqual([]);
       });
 
@@ -185,8 +187,8 @@ describe("列の合計のルールの例を描いた場合", () => {
         fireEvent.click(getResetButton());
 
         expect(readCaptions()).toEqual([
-          "できる",
-          "できない 空きがあるのに合計に届いた",
+          "そろう",
+          "そろわない 空きがあるのに合計に届いた",
         ]);
         expect(findHinted()).toEqual([getCell(0, 1, 4)]);
         expect(getResetButton().disabled).toBe(true);
@@ -194,11 +196,11 @@ describe("列の合計のルールの例を描いた場合", () => {
     });
   });
 
-  test("できない行の空きに数を置いて埋めると、埋まって合計と違う行として判定し直すこと", () => {
+  test("そろわない行の空きに数を置いて埋めると、埋まって合計が合わない行として判定し直すこと", () => {
     fireEvent.click(getCell(1, 1, 3));
     fireEvent.click(getValue(1));
 
-    expect(readCaptions()[1]).toBe("できない 埋まって合計と違う");
+    expect(readCaptions()[1]).toBe("そろわない 埋まって合計が合わない");
   });
 
   test("マスを選ぶ前に数を押すと、本番と同じく受け付けずに受け付けない音を鳴らすこと", () => {
@@ -310,11 +312,27 @@ describe("メモの操作の例を描いてマスを選んだ場合", () => {
       expect(findHinted()).toEqual([getValue(5)]);
     });
 
-    test("2回目でメモを消し、本番のメモを消す音を鳴らし、手がかりを消すこと", () => {
+    test("2回目でメモを消し、本番のメモを消す音を鳴らし、手がかりをメモのボタンへ移すこと", () => {
       fireEvent.click(getValue(5));
 
       expect(getCell(0, 1, 3).getAttribute("aria-label")).toBe("1行3列 空き");
       expect(readPlayedSounds().at(-1)).toContain("memo-erased");
+      expect(findHinted()).toEqual([
+        screen.getByRole("button", { name: "メモ" }),
+      ]);
+    });
+
+    test("メモを消してからメモのボタンを押すと、数を置く入れ方に戻し、手がかりを消すこと", () => {
+      fireEvent.click(getValue(5));
+      fireEvent.click(screen.getByRole("button", { name: "メモ" }));
+      fireEvent.click(getValue(5));
+
+      expect(
+        screen
+          .getByRole("button", { name: "メモ" })
+          .getAttribute("aria-pressed"),
+      ).toBe("false");
+      expect(getCell(0, 1, 3).getAttribute("aria-label")).toBe("1行3列 5");
       expect(findHinted()).toEqual([]);
     });
   });

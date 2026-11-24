@@ -11,12 +11,16 @@ import {
   isMagicSquareLineViolation,
   listMagicSquareLineEvaluations,
 } from "@/games/magic-square/puzzle/rules";
+import { areMagicSquareNumberPadNeighbors } from "@/games/magic-square/session/number-pad";
 import {
   type MagicSquareSession,
   selectMagicSquareSessionCell,
 } from "@/games/magic-square/session/session";
 import { magicSquareTutorialPuzzle } from "@/games/magic-square/tutorial/tutorial";
-import { createMagicSquareExampleSession } from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
+import {
+  createMagicSquareExampleSession,
+  MAGIC_SQUARE_EXAMPLE_SIZE,
+} from "@/games/magic-square/ui/MagicSquareHowToPlayDialog/example-board";
 import {
   correctionCountFlows,
   givenRuleExample,
@@ -24,6 +28,7 @@ import {
   lineRuleExample,
   listMagicSquareReadingOrder,
   type MagicSquareHowToPlayExample,
+  type MagicSquareHowToPlayFlowFigure,
   memoClearedOperationExample,
   memoOperationExample,
   placeOperationExample,
@@ -176,22 +181,73 @@ describe("ゴールの盤面", () => {
 });
 
 describe("置き直しの数え方の流れ", () => {
-  test.each([
-    { name: "changed", flow: correctionCountFlows.changed, count: 1 },
-    { name: "mistyped", flow: correctionCountFlows.mistyped, count: 0 },
-  ])(
-    "$name は、置いた数で行の端の数の色が変わり、直すと合計にそろい、本番の数え方で $count 回と数えること",
-    ({ flow, count }) => {
-      const statuses = flow.frames.map(
-        (session) =>
-          evaluateMagicSquareLine(session.puzzleState, {
-            kind: "row",
-            index: 0,
-          }).status,
-      );
+  /** 流れの姿ごとの、選んだマスの縦の列（2列目）の状態。 */
+  function readColumnStatuses(flow: MagicSquareHowToPlayFlowFigure) {
+    return flow.frames.map(
+      (session) =>
+        evaluateMagicSquareLine(session.puzzleState, {
+          kind: "column",
+          index: 1,
+        }).status,
+    );
+  }
 
-      expect(statuses).toEqual(["incomplete", "unmatched", "matched"]);
-      expect(flow.correctionCount).toBe(count);
-    },
-  );
+  /** 流れで置いた2つの数が、盤面の下に並んだ数で隣り合うか。 */
+  function arePlacedValuesNeighbors(flow: MagicSquareHowToPlayFlowFigure) {
+    const [, first, second] = flow.frames.map((session) =>
+      session.selectedCellIndex === null
+        ? null
+        : (session.puzzleState.cells[session.selectedCellIndex] ?? null),
+    );
+    return (
+      first !== null &&
+      first !== undefined &&
+      second !== null &&
+      second !== undefined &&
+      areMagicSquareNumberPadNeighbors(MAGIC_SQUARE_EXAMPLE_SIZE, first, second)
+    );
+  }
+
+  test("色を変えた数を置き換える流れは、合計に届いて列の端の色を変えた数を、隣り合わない数に置き換えて1回と数えること", () => {
+    const flow = correctionCountFlows.changed;
+
+    expect(readColumnStatuses(flow)).toEqual([
+      "incomplete",
+      "overreached",
+      "incomplete",
+    ]);
+    expect(arePlacedValuesNeighbors(flow)).toBe(false);
+    expect(flow.correctionCount).toBe(1);
+  });
+
+  test("色を変えなかった数を置き換える流れは、列の端の色を変えないまま置き換えて数えないこと", () => {
+    const flow = correctionCountFlows.unchanged;
+
+    expect(readColumnStatuses(flow)).toEqual([
+      "incomplete",
+      "incomplete",
+      "incomplete",
+    ]);
+    expect(flow.correctionCount).toBe(0);
+  });
+
+  test("隣の数を押し間違えた流れは、列の端の色を変えた数を隣り合う数にすぐ置き換えて数えないこと", () => {
+    const flow = correctionCountFlows.mistyped;
+
+    expect(readColumnStatuses(flow)).toEqual([
+      "incomplete",
+      "overreached",
+      "incomplete",
+    ]);
+    expect(arePlacedValuesNeighbors(flow)).toBe(true);
+    expect(flow.correctionCount).toBe(0);
+  });
+
+  test("どの流れも同じ始まりの盤面から始めること", () => {
+    const [first, ...rest] = Object.values(correctionCountFlows).map(
+      (flow) => flow.frames[0],
+    );
+
+    expect(rest.every((start) => start === first)).toBe(true);
+  });
 });

@@ -34,7 +34,7 @@ import { splitMagicSquareRejection } from "@/games/magic-square/ui/magic-square-
 
 /**
  * 例の下に添える言葉。
- * - `line`: 形のルールの判定（✓ できる / ✕ できない / 途中）と ✕ のわけ。盤面ごとに、その行の列で判定する。
+ * - `line`: 形のルールの判定（✓ そろう / ✕ そろわない / 途中）と ✕ のわけ。盤面ごとに、その行の列で判定する。
  * - `given`: 最初から置いてある数のルールの、数のあるマスごとの ✓ / ✕ の印と、その凡例（✓ 変えられる / ✕ 変えられない）。
  * - `used-values`: 数の欄のくぼみの数に付けた ✕ の凡例。数の欄の下に添える。
  */
@@ -45,7 +45,7 @@ type TouchableExampleProps = {
   caption?: TouchableExampleCaption;
 };
 
-const shapeLabels = { allowed: "できる", disallowed: "できない" };
+const shapeLabels = { allowed: "そろう", disallowed: "そろわない" };
 const givenLabels = { allowed: "変えられる", disallowed: "変えられない" };
 const valueLabels = { allowed: "置ける", disallowed: "置けない" };
 
@@ -72,7 +72,7 @@ function listRegionCellIndexes(region: MagicSquareBoardRegion): number[] {
 }
 
 /**
- * 触れる例の面の中身。盤面を `HowToPlayExample` で並べ、その下に本番と同じ数の欄（とメモの切り替え）を盤面と同じ幅に置く。
+ * 触れる例の面の中身。盤面を `HowToPlayExample` で並べ、その下に本番と同じ盤面の下に並んだ数（とメモの切り替え）を盤面と同じ幅に置く。
  * 本番と同じく、マスを押して選び、数を押して置く。列の合計と色、受け付けない押し方の揺れは、本番と同じく今の盤面から出す。
  * 次に押す所には、盤面のマスか、数の欄の札か、メモの切り替えに手がかりを付ける。
  */

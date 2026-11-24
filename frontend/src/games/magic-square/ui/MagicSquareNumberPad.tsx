@@ -133,7 +133,7 @@ export function MagicSquareNumberPad({
   return (
     <div
       role="group"
-      aria-label="数の欄"
+      aria-label="盤面の下に並んだ数"
       className="grid touch-manipulation select-none items-center gap-1 font-sans [-webkit-touch-callout:none]"
       style={{
         gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,

@@ -140,7 +140,7 @@ const lineSumColors = {
 const lineStatusPhrases = {
   incomplete: null,
   matched: "そろった",
-  unmatched: "埋まって合計と違う",
+  unmatched: "埋まって合計が合わない",
   overreached: "空きがあるのに合計に届いた",
 } as const satisfies Record<MagicSquareLineStatus, string | null>;
 

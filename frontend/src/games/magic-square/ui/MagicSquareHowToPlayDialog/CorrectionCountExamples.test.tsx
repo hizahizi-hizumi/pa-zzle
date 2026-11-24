@@ -7,13 +7,13 @@ afterEach(() => {
   cleanup();
 });
 
-/** 図のコマごとの、マスの読み上げ名と行の合計の読み上げ。押せない図の要素から読む。 */
+/** 図のコマごとの、マスの読み上げ名と縦の列の合計の読み上げ。押せない図の要素から読む。 */
 function readFrames(figure: HTMLElement): string[] {
   return [...figure.querySelectorAll('[role="group"]')].map((board) => {
     const cell = board.querySelector("button")?.getAttribute("aria-label");
     const sum = [...board.querySelectorAll(".sr-only")]
       .map((label) => label.textContent ?? "")
-      .find((text) => text.startsWith("1行目の合計"));
+      .find((text) => text.startsWith("2列目の合計"));
     return `${cell} / ${sum}`;
   });
 }
@@ -27,31 +27,43 @@ describe("CorrectionCountExamples", () => {
     render(
       <CorrectionCountExamples
         examples={[
-          { figure: correctionCountFlows.changed, flow: "替える流れ" },
-          { figure: correctionCountFlows.mistyped, flow: "直す流れ" },
+          { figure: correctionCountFlows.changed, flow: "色を変えた流れ" },
+          { figure: correctionCountFlows.unchanged, flow: "色を変えない流れ" },
+          { figure: correctionCountFlows.mistyped, flow: "押し間違えた流れ" },
         ]}
       />,
     );
   });
 
-  test("離れた数へ替える流れは、空きから合計と違う数を置いて 11 に替え、置き直しを1回と数えること", () => {
-    const figure = getFigure("替える流れ");
+  test("色を変えた数を置き換える流れは、合計に届いた16を11に置き換え、置き直しを1回と数えること", () => {
+    const figure = getFigure("色を変えた流れ");
 
     expect(readFrames(figure)).toEqual([
-      "1行4列 空き / 1行目の合計 23",
-      "1行4列 9 / 1行目の合計 32 埋まって合計と違う",
-      "1行4列 11 / 1行目の合計 34 そろった",
+      "4行2列 空き / 2列目の合計 18",
+      "4行2列 16 / 2列目の合計 34 空きがあるのに合計に届いた",
+      "4行2列 11 / 2列目の合計 29",
     ]);
     expect(figure.textContent).toContain("→ 置き直し 1回");
   });
 
-  test("隣の数へ直す流れは、空きから合計と違う数を置いて 11 に直し、置き直しに数えないこと", () => {
-    const figure = getFigure("直す流れ");
+  test("色を変えなかった数を置き換える流れは、9を11に置き換え、置き直しに数えないこと", () => {
+    const figure = getFigure("色を変えない流れ");
 
     expect(readFrames(figure)).toEqual([
-      "1行4列 空き / 1行目の合計 23",
-      "1行4列 12 / 1行目の合計 35 埋まって合計と違う",
-      "1行4列 11 / 1行目の合計 34 そろった",
+      "4行2列 空き / 2列目の合計 18",
+      "4行2列 9 / 2列目の合計 27",
+      "4行2列 11 / 2列目の合計 29",
+    ]);
+    expect(figure.textContent).toContain("→ 置き直し 0回");
+  });
+
+  test("隣の数を押し間違えた流れは、合計に届いた16を隣の15にすぐ置き換え、置き直しに数えないこと", () => {
+    const figure = getFigure("押し間違えた流れ");
+
+    expect(readFrames(figure)).toEqual([
+      "4行2列 空き / 2列目の合計 18",
+      "4行2列 16 / 2列目の合計 34 空きがあるのに合計に届いた",
+      "4行2列 15 / 2列目の合計 33",
     ]);
     expect(figure.textContent).toContain("→ 置き直し 0回");
   });
@@ -59,7 +71,7 @@ describe("CorrectionCountExamples", () => {
   test("どのコマも押せない図にすること", () => {
     const frames = [...document.querySelectorAll('[role="group"]')];
 
-    expect(frames).toHaveLength(6);
+    expect(frames).toHaveLength(9);
     expect(frames.every((frame) => frame.closest("[inert]") !== null)).toBe(
       true,
     );

@@ -131,7 +131,9 @@ describe("MagicSquarePlay", () => {
 
     test("数の欄の数を押すとその数を入れる操作を知らせること", () => {
       fireEvent.click(
-        within(screen.getByRole("group", { name: "数の欄" })).getByText("11"),
+        within(
+          screen.getByRole("group", { name: "盤面の下に並んだ数" }),
+        ).getByText("11"),
       );
 
       expect(callbacks.onEnterValue).toHaveBeenCalledWith(11);
@@ -139,10 +141,9 @@ describe("MagicSquarePlay", () => {
 
     test("数の欄の最後の数の後ろの待ったで、待ったを知らせること", () => {
       fireEvent.click(
-        within(screen.getByRole("group", { name: "数の欄" })).getByRole(
-          "button",
-          { name: "待った" },
-        ),
+        within(
+          screen.getByRole("group", { name: "盤面の下に並んだ数" }),
+        ).getByRole("button", { name: "待った" }),
       );
 
       expect(callbacks.onUndo).toHaveBeenCalledTimes(1);
@@ -150,10 +151,9 @@ describe("MagicSquarePlay", () => {
 
     test("待ったの後ろのメモで、入れ方の切り替えを知らせること", () => {
       fireEvent.click(
-        within(screen.getByRole("group", { name: "数の欄" })).getByRole(
-          "button",
-          { name: "メモ" },
-        ),
+        within(
+          screen.getByRole("group", { name: "盤面の下に並んだ数" }),
+        ).getByRole("button", { name: "メモ" }),
       );
 
       expect(callbacks.onToggleMemoInput).toHaveBeenCalledTimes(1);
@@ -197,7 +197,7 @@ describe("MagicSquarePlay", () => {
       const criteria = screen.getByText(/置き直し1回につき/);
 
       expect(criteria.textContent).toBe(
-        "30点から、置き直し1回につき3点を減らす。置き直しは、置いた数を外した・別の数に替えた回数で、外す・置き換える・「待った」・「盤面を戻す」のどれで外れても数える。置いても列の端の数の色が変わらなかった数は、ほかのマスを選ぶ前に直せば数えない。数の欄で隣の数を押し間違えて、すぐ直したときも数えない。「待った」・「盤面を戻す」を使った回数では減らさない。",
+        "30点から、置き直し1回につき3点を減らす。置いた数は、外しても、置き換えても、「待った」・「盤面を戻す」で外れても1回と数える。列の端の色を変えなかった数は、ほかのマスを選ぶ前なら、外しても置き換えても数えない。隣の数を押し間違えて、すぐ置き換えたときも数えない。「待った」・「盤面を戻す」は、押しただけでは減らさない。",
       );
     });
   });

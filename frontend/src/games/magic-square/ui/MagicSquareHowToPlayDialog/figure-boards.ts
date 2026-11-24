@@ -137,12 +137,18 @@ export const replaceOperationExample: MagicSquareHowToPlayExample = {
   hints: [cellAt(0, [0, 3]), value(11), value(11)],
 };
 
-/** 空いたマスに、メモに切り替えて数を書いてから、同じ数をもう一度押して消す。 */
+/** 空いたマスに、メモに切り替えて数を書き、同じ数をもう一度押して消してから、数を置く入れ方に戻す。 */
 export const memoOperationExample: MagicSquareHowToPlayExample = {
   boards: [onFirstRow("+14 +4 . .")],
   arrangement: "stacked",
   controls: ["memo"],
-  hints: [cellAt(0, [0, 2]), { kind: "memo" }, value(5), value(5)],
+  hints: [
+    cellAt(0, [0, 2]),
+    { kind: "memo" },
+    value(5),
+    value(5),
+    { kind: "memo" },
+  ],
 };
 
 /** 空いた2つのマスのどちらにも5のメモがあり、1つのマスに5を置くと、もう1つのマスのメモから5が消える。 */
@@ -206,44 +212,61 @@ export function listMagicSquareReadingOrder(
   }
 }
 
-/** 採点の流れの図の、1行目の右端のマスと行の合計。 */
+/**
+ * 採点の流れの図の、4行2列のマスと、その下の縦の列の合計。帯をマスの下に取るので、図の幅がマス1つに収まり、
+ * 3つの姿を1行に並べても、マスを例と同じ大きさに近く保てる。
+ */
 const flowRegion: MagicSquareBoardRegion = {
-  row: 0,
-  column: MAGIC_SQUARE_EXAMPLE_SIZE - 1,
+  row: MAGIC_SQUARE_EXAMPLE_SIZE - 1,
+  column: 1,
   rowCount: 1,
   columnCount: 1,
 };
-const flowCell = getMagicSquareExampleCellIndex([0, 3]);
+const flowCell = getMagicSquareExampleCellIndex([
+  MAGIC_SQUARE_EXAMPLE_SIZE - 1,
+  1,
+]);
 
-/** 流れの始まり。1行目の右端だけが空き、そのマスを選んだ姿。 */
+/**
+ * 流れの始まり。2列目は 4 と 14 を置いた2マスと空きの2マスで、下の端のマスを選んだ姿。空きがもう1つあるので、
+ * 置いた数で列が埋まらず、列の端の色を変えない数（合計に届かない数）と変える数（合計に届く16）のどちらも置ける。
+ * 選んだマスは斜めの列に乗らないので、置いた数で斜めの合計は変わらない。
+ */
 const flowStart = selectMagicSquareSessionCell(
-  createMagicSquareExampleSession(onFirstRow("+14 +4 +5 .")),
+  createMagicSquareExampleSession({
+    region: flowRegion,
+    rows: [". +4 . .", ". . . .", ". +14 . .", ". . . ."],
+  }),
   flowCell,
 );
 
-function enter(session: MagicSquareSession, entered: number) {
-  return inputMagicSquareValue(session, "value", entered, 0).session;
+function place(session: MagicSquareSession, value: number) {
+  return inputMagicSquareValue(session, "value", value, 0).session;
 }
 
+/** 始まりから、同じマスに `first` を置いてから `second` を置いて置き換える流れ。 */
 function createFlow(
-  steps: readonly [number, number],
-  stepNames: readonly [string, string],
+  first: number,
+  second: number,
 ): MagicSquareHowToPlayFlowFigure {
-  const placed = enter(flowStart, steps[0]);
-  const corrected = enter(placed, steps[1]);
+  const placed = place(flowStart, first);
+  const replaced = place(placed, second);
   return {
     region: flowRegion,
-    frames: [flowStart, placed, corrected],
-    steps: stepNames,
-    correctionCount: getMagicSquareSessionCorrectionCount(corrected),
+    frames: [flowStart, placed, replaced],
+    steps: [`${first}を/置く`, `${second}を/置く`],
+    correctionCount: getMagicSquareSessionCorrectionCount(replaced),
   };
 }
 
 /**
- * 置き直しの数え方の流れ。どちらも1行目の最後の空きに数を置き、列が埋まって列の端の数が違反の色になったのを、同じマスで 11 に直す。
- * 9 から直すと数え、数の欄で隣り合う 12 から直すと押し間違いの直しとして数えない。
+ * 置き直しの数え方の流れ。どれも同じ始まりから、選んだマスに数を置いて、ほかのマスを選ぶ前に置き換える。
+ * - `changed`: 列の端の色を変えた16を、盤面の下に並んだ数で隣り合わない11に置き換える。数える。
+ * - `unchanged`: 列の端の色を変えなかった9を、11に置き換える。数えない。
+ * - `mistyped`: 列の端の色を変えた16を、盤面の下に並んだ数で隣り合う15にすぐ置き換える。押し間違いの直しとして数えない。
  */
 export const correctionCountFlows = {
-  changed: createFlow([9, 11], ["9を/置く", "11に/置き/換える"]),
-  mistyped: createFlow([12, 11], ["12を/置く", "11に/置き/換える"]),
+  changed: createFlow(16, 11),
+  unchanged: createFlow(9, 11),
+  mistyped: createFlow(16, 15),
 } as const satisfies Record<string, MagicSquareHowToPlayFlowFigure>;

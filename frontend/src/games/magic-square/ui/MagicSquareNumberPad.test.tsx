@@ -41,7 +41,7 @@ describe("MagicSquareNumberPad", () => {
   });
 
   test("1 から 16 までを小さい順に並べ、最後の数の後ろに操作を順に置くこと", () => {
-    const pad = screen.getByRole("group", { name: "数の欄" });
+    const pad = screen.getByRole("group", { name: "盤面の下に並んだ数" });
 
     const labels = within(pad)
       .getAllByRole("button")
@@ -55,7 +55,7 @@ describe("MagicSquareNumberPad", () => {
   });
 
   test("使った数を押せなくし、選んだマスの数を押された状態にすること", () => {
-    const pad = screen.getByRole("group", { name: "数の欄" });
+    const pad = screen.getByRole("group", { name: "盤面の下に並んだ数" });
 
     const states = [
       within(pad).getByText("4").closest("button")?.disabled,
@@ -70,7 +70,9 @@ describe("MagicSquareNumberPad", () => {
 
   test("数を押すとその数を入れる操作を知らせること", () => {
     fireEvent.click(
-      within(screen.getByRole("group", { name: "数の欄" })).getByText("7"),
+      within(
+        screen.getByRole("group", { name: "盤面の下に並んだ数" }),
+      ).getByText("7"),
     );
 
     expect(onEnterValue).toHaveBeenCalledWith(7);
