@@ -12,7 +12,14 @@ import {
   _private,
   GoalPlayback,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/GoalPlayback";
+import { playLayeredSound, playSound } from "@/lib/audio/sound-effects";
 import { prefersReducedMotion } from "@/lib/motion";
+
+vi.mock("@/lib/audio/sound-effects", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/audio/sound-effects")>()),
+  playSound: vi.fn(),
+  playLayeredSound: vi.fn(),
+}));
 
 vi.mock("@/lib/motion", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/motion")>()),
@@ -119,6 +126,16 @@ describe("GoalPlayback", () => {
       advance(celebrateAt - 1);
 
       expect(animate).not.toHaveBeenCalled();
+    });
+
+    test("札を入れていく間もクリア演出の間も、音を鳴らさないこと", async () => {
+      advance(celebrateAt);
+      await finishClearAnimation();
+
+      expect([
+        vi.mocked(playSound).mock.calls.length,
+        vi.mocked(playLayeredSound).mock.calls.length,
+      ]).toEqual([0, 0]);
     });
 
     test("クリア演出を終えたら、見せ直すボタンを出して飛ばす面を外すこと", async () => {
