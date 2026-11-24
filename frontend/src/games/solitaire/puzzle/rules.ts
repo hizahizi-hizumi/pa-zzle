@@ -12,6 +12,7 @@ import {
   getSolitaireFoundationTop,
   SOLITAIRE_COLUMN_COUNT,
   type SolitaireColumn,
+  type SolitaireFoundations,
   type SolitaireState,
 } from "@/games/solitaire/puzzle/state";
 
@@ -61,7 +62,8 @@ export const solitaireDestinations: readonly SolitaireDestination[] = [
   { pile: "foundation" },
 ];
 
-function canPlaceSolitaireCardOnColumn(
+/** 列の一番手前に `card` を置ける。空いた列には K だけを置ける。 */
+export function canPlaceSolitaireCardOnColumn(
   card: SolitaireCard,
   column: SolitaireColumn,
 ): boolean {
@@ -71,13 +73,13 @@ function canPlaceSolitaireCardOnColumn(
     : canStackSolitaireCard(card, base);
 }
 
-function canPlaceSolitaireCardOnFoundation(
-  state: SolitaireState,
+/** 札のマークの組札に `card` を置ける。組札へは A から数の順に置く。 */
+export function canPlaceSolitaireCardOnFoundation(
+  foundations: SolitaireFoundations,
   card: SolitaireCard,
 ): boolean {
   return (
-    state.foundations[getSolitaireCardSuit(card)] + 1 ===
-    getSolitaireCardRank(card)
+    foundations[getSolitaireCardSuit(card)] + 1 === getSolitaireCardRank(card)
   );
 }
 
@@ -135,7 +137,7 @@ export function findSolitaireTransfer(
   if (destination.pile === "foundation") {
     cardCount =
       source.pile !== "foundation" &&
-      canPlaceSolitaireCardOnFoundation(state, card)
+      canPlaceSolitaireCardOnFoundation(state.foundations, card)
         ? 1
         : 0;
   } else if (

@@ -55,6 +55,7 @@ describe("createSolitaireSession", () => {
       moveCount: 0,
       undoCount: 0,
       restartCount: 0,
+      retractedMoveCount: 0,
     });
   });
 });
@@ -71,7 +72,7 @@ describe("applySolitaireSessionMove", () => {
 
     expect(next).toMatchObject({
       moveCount: 1,
-      history: [session.puzzleState],
+      history: [{ state: session.puzzleState, move: heartAceToFoundation }],
       puzzleState: { foundations: { hearts: 1 } },
     });
   });
@@ -145,14 +146,25 @@ describe("undoSolitaireSession", () => {
     3_000,
   );
 
-  test("直前の盤面へ戻し、待ったの回数を数え、打った手の数は変えないこと", () => {
+  test("直前の盤面へ戻し、待ったの回数と取り消した手の数を数え、打った手の数は変えないこと", () => {
     const undone = undoSolitaireSession(moved);
 
     expect(undone).toMatchObject({
-      puzzleState: moved.history[1],
-      history: [initial.puzzleState],
+      puzzleState: moved.history[1]!.state,
+      history: [{ state: initial.puzzleState, move: draw }],
       moveCount: 2,
       undoCount: 1,
+      retractedMoveCount: 1,
+    });
+  });
+
+  describe("直前の手が山札をめくる手", () => {
+    const drawn = applySolitaireSessionMove(initial, draw, 2_000);
+
+    test("待ったの回数は数え、取り消した手には数えないこと", () => {
+      const undone = undoSolitaireSession(drawn);
+
+      expect(undone).toMatchObject({ undoCount: 1, retractedMoveCount: 0 });
     });
   });
 
@@ -188,6 +200,12 @@ describe("restartSolitaireSession", () => {
     });
   });
 
+  test("戻した手のうち、山札を押す手でない手を取り消した手に数えること", () => {
+    const restarted = restartSolitaireSession(moved);
+
+    expect(restarted.retractedMoveCount).toBe(1);
+  });
+
   describe("配った直後の盤面", () => {
     test("盤面を戻せず、回数も数えないこと", () => {
       const result = {
@@ -221,6 +239,7 @@ describe("getSolitaireSessionResult", () => {
     moveCount: 130,
     undoCount: 3,
     restartCount: 1,
+    retractedMoveCount: 7,
   };
 
   test("クリアしたプレイの経過時間と回数を返すこと", () => {
@@ -231,6 +250,7 @@ describe("getSolitaireSessionResult", () => {
       moveCount: 130,
       undoCount: 3,
       restartCount: 1,
+      retractedMoveCount: 7,
     });
   });
 
