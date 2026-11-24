@@ -10,6 +10,10 @@ import {
   HowToPlayVerdict,
   type HowToPlayVerdictLabels,
 } from "@/components/HowToPlayVerdict";
+import {
+  type FukumenzanOperation,
+  getFukumenzanCrossOperationType,
+} from "@/games/fukumenzan/play/use-fukumenzan-play";
 import { listFukumenzanLetters } from "@/games/fukumenzan/puzzle/equation";
 import {
   isFukumenzanSolved,
@@ -47,6 +51,7 @@ import {
   howToPlayProblem,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
 import { HOW_TO_PLAY_TILE_REM } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/figure-size";
+import { useFukumenzanSoundEffects } from "@/games/fukumenzan/ui/use-fukumenzan-sound-effects";
 
 const letters = listFukumenzanLetters(howToPlayProblem);
 const columnCount = howToPlayProblem.result.length + 1;
@@ -98,6 +103,7 @@ type TouchableExampleProps = {
  * 札の列は、例が使う札の段だけを見せる。先頭の0と計算違いの知らせは本番と同じ関数で出し直す。
  * 足し算が成り立つと本番のクリア演出を返し、それからは受け付けない。
  * 押す所の手がかりは、触る前の姿から例の手を打っていく途中でだけ付ける。
+ * 音は本番と同じフックで鳴らす。
  * 盤面が触る前と違うかを例を並べる面に知らせ、最初の姿に戻すときは、面が例を作り直す。
  */
 export function TouchableExample({ example }: TouchableExampleProps) {
@@ -107,13 +113,21 @@ export function TouchableExample({ example }: TouchableExampleProps) {
   // 盤面は、運んだ札を離すと選びを解く知らせと札を入れる手を続けて送る。次の手を今の姿へ当てるため、姿を同時に持つ。
   const puzzleStateRef = useRef(puzzleState);
   const [clearAnimationDone, setClearAnimationDone] = useState(false);
+  const [operation, setOperation] = useState<FukumenzanOperation | null>(null);
   const reportChange = useReportHowToPlayExampleChange();
   const scopeRef = useRef<HTMLDivElement>(null);
   const solved = isFukumenzanSolved(howToPlayProblem, puzzleState);
 
-  function apply(next: FukumenzanPuzzleState): void {
+  function apply(
+    next: FukumenzanPuzzleState,
+    type: FukumenzanOperation["type"],
+  ): void {
+    if (next === puzzleStateRef.current) {
+      return;
+    }
     puzzleStateRef.current = next;
     setPuzzleState(next);
+    setOperation((current) => ({ id: (current?.id ?? 0) + 1, type }));
     reportChange(isExampleChanged(example, next));
   }
 
@@ -122,16 +136,27 @@ export function TouchableExample({ example }: TouchableExampleProps) {
     crossUndoNotice: null,
     interactionDisabled: solved,
     onPlaceDigit(letter: number, digit: FukumenzanDigit) {
-      apply(placeFukumenzanDigit(puzzleStateRef.current, letter, digit));
+      apply(
+        placeFukumenzanDigit(puzzleStateRef.current, letter, digit),
+        "placed",
+      );
     },
     onReturnDigit(letter: number) {
-      apply(returnFukumenzanDigit(puzzleStateRef.current, letter));
+      apply(returnFukumenzanDigit(puzzleStateRef.current, letter), "returned");
     },
     onToggleCross(letter: number, digit: FukumenzanDigit) {
-      apply(toggleFukumenzanCross(puzzleStateRef.current, letter, digit));
+      const next = toggleFukumenzanCross(puzzleStateRef.current, letter, digit);
+      apply(next, getFukumenzanCrossOperationType(next, letter, digit));
     },
     dropScopeRef: scopeRef,
   });
+
+  const clearing = solved && !clearAnimationDone;
+  useFukumenzanSoundEffects(
+    operation,
+    !solved ? "playing" : clearing ? "clearing" : "result",
+    howToPlayProblem.result.length,
+  );
 
   const completeClearAnimation = useCallback(() => {
     setClearAnimationDone(true);
@@ -165,7 +190,7 @@ export function TouchableExample({ example }: TouchableExampleProps) {
                 )}
                 selection={input.selection}
                 drag={input.drag}
-                clearing={solved && !clearAnimationDone}
+                clearing={clearing}
                 interactionDisabled={solved}
                 getLetterHandlers={input.getLetterHandlers}
                 onClearAnimationComplete={completeClearAnimation}

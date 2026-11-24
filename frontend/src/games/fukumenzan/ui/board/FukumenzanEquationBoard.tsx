@@ -44,8 +44,8 @@ type FukumenzanEquationBoardProps = {
 };
 
 /** 答えの桁を、一の位から順に1つずつ跳ねさせる間隔と長さ。筆算を右から確かめ終える手つき。 */
-const CLEAR_STEP_MS = 110;
-const CLEAR_HOP_MS = 360;
+export const CLEAR_STEP_MS = 110;
+export const CLEAR_HOP_MS = 360;
 const CLEAR_HOLD_MS = 450;
 const CLEAR_REDUCED_MOTION_HOLD_MS = 700;
 

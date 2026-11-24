@@ -137,6 +137,57 @@ describe("useFukumenzanPlay", () => {
     });
   });
 
+  describe("× を付けて外した場合", () => {
+    test("付けたときと外したときで、別の知らせを返すこと", () => {
+      act(() => {
+        hook.current.toggleCross(0, 1);
+      });
+      const crossed = hook.current.operation;
+      act(() => {
+        hook.current.toggleCross(0, 1);
+      });
+      const uncrossed = hook.current.operation;
+
+      expect([crossed?.type, uncrossed?.type]).toEqual([
+        "crossed",
+        "uncrossed",
+      ]);
+      expect(uncrossed?.id).not.toBe(crossed?.id);
+    });
+  });
+
+  describe("札を入れて元の所へ戻した場合", () => {
+    test("入れたときと戻したときで、それぞれの知らせを返すこと", () => {
+      act(() => {
+        hook.current.placeDigit(0, 9);
+      });
+      const placed = hook.current.operation;
+      act(() => {
+        hook.current.returnDigit(0);
+      });
+
+      expect([placed?.type, hook.current.operation?.type]).toEqual([
+        "placed",
+        "returned",
+      ]);
+    });
+  });
+
+  describe("盤面の変わらない操作をした場合", () => {
+    test("前の知らせを変えないこと", () => {
+      act(() => {
+        hook.current.placeDigit(0, 9);
+      });
+      const placed = hook.current.operation;
+      act(() => {
+        hook.current.placeDigit(0, 9);
+        hook.current.returnDigit(1);
+      });
+
+      expect(hook.current.operation).toBe(placed);
+    });
+  });
+
   describe("最後の文字を残して埋めた場合", () => {
     beforeEach(() => {
       placeSolution(hook, true);

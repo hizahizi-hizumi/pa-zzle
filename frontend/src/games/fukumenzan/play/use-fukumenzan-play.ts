@@ -69,6 +69,23 @@ export type FukumenzanResult = FukumenzanSessionResult & {
  */
 export type FukumenzanCrossUndoNotice = { id: number; letter: number };
 
+/** 効果音を鳴らす盤面操作の知らせ。盤面が変わった操作だけを、操作ごとに変わる `id` で知らせる。 */
+export type FukumenzanOperation = {
+  id: number;
+  type: "placed" | "crossed" | "uncrossed" | "returned";
+};
+
+/** × を付け外しした後の盤面から、付けたか外したかを決める。 */
+export function getFukumenzanCrossOperationType(
+  puzzleState: FukumenzanPuzzleState,
+  letter: number,
+  digit: FukumenzanDigit,
+): "crossed" | "uncrossed" {
+  return puzzleState.crossedDigits[letter]?.includes(digit)
+    ? "crossed"
+    : "uncrossed";
+}
+
 export type FukumenzanPlay = GamePlay<
   FukumenzanDifficulty,
   FukumenzanProblemIdentity,
@@ -87,6 +104,8 @@ export type FukumenzanPlay = GamePlay<
     undoCount: number;
     /** 最後の待ったが × を戻さなかったときと、盤面を戻した後は `null`。 */
     crossUndoNotice: FukumenzanCrossUndoNotice | null;
+    /** 最後に盤面を変えた札・× の操作。待った・盤面を戻すでは変わらない。 */
+    operation: FukumenzanOperation | null;
     placeDigit: (letter: number, digit: FukumenzanDigit) => void;
     returnDigit: (letter: number) => void;
     toggleCross: (letter: number, digit: FukumenzanDigit) => void;
@@ -98,6 +117,7 @@ type FukumenzanPlayState = {
   session: FukumenzanSession;
   progress: GameProgress;
   crossUndoNotice: FukumenzanCrossUndoNotice | null;
+  operation: FukumenzanOperation | null;
 };
 
 function createPlayState(
@@ -110,6 +130,7 @@ function createPlayState(
     session: createFukumenzanSession(problem, startedAt),
     progress: "playing",
     crossUndoNotice: null,
+    operation: null,
   };
 }
 
@@ -131,6 +152,17 @@ export function createFukumenzanResult(
   };
 }
 
+/** 盤面が変わった操作だけ、効果音の知らせを付ける。 */
+function withOperation(
+  current: FukumenzanPlayState,
+  next: FukumenzanPlayState,
+  createOperation: (puzzleState: FukumenzanPuzzleState) => FukumenzanOperation,
+): FukumenzanPlayState {
+  return next.session.puzzleState === current.session.puzzleState
+    ? next
+    : { ...next, operation: createOperation(next.session.puzzleState) };
+}
+
 function selectProblem(
   difficulty: FukumenzanDifficulty,
   avoidedProblemId: ProblemId | undefined,
@@ -147,7 +179,7 @@ export function useFukumenzanPlay(
   avoidedProblemId?: ProblemId,
   playProblemId?: ProblemId,
 ): FukumenzanPlay {
-  // 待ったの知らせはその操作のときだけ盤面が受けるので、戻したプレイには持ち込まない。
+  // 待ったと操作の知らせはその操作のときだけ盤面と音が受けるので、戻したプレイには持ち込まない。
   const [play, setPlay] = useState<FukumenzanPlayState>(() => ({
     ...restorePlayState("fukumenzan", playProblemId, () =>
       createPlayState(
@@ -156,6 +188,7 @@ export function useFukumenzanPlay(
       ),
     ),
     crossUndoNotice: null,
+    operation: null,
   }));
   useEffect(
     () => savePlayState("fukumenzan", playProblemId, play),
@@ -165,30 +198,55 @@ export function useFukumenzanPlay(
   const elapsedMs = useSessionElapsedMs(session);
   const { problem, puzzleState } = session;
 
+  const nextOperationId = useRef(0);
+
   const placeDigit = useCallback((letter: number, digit: FukumenzanDigit) => {
     const operatedAt = Date.now();
+    const id = nextOperationId.current++;
     setPlay((current) =>
-      applyPlaySession(
+      withOperation(
         current,
-        placeFukumenzanSessionDigit(current.session, letter, digit, operatedAt),
+        applyPlaySession(
+          current,
+          placeFukumenzanSessionDigit(
+            current.session,
+            letter,
+            digit,
+            operatedAt,
+          ),
+        ),
+        () => ({ id, type: "placed" }),
       ),
     );
   }, []);
 
   const returnDigit = useCallback((letter: number) => {
+    const id = nextOperationId.current++;
     setPlay((current) =>
-      applyPlaySession(
+      withOperation(
         current,
-        returnFukumenzanSessionDigit(current.session, letter),
+        applyPlaySession(
+          current,
+          returnFukumenzanSessionDigit(current.session, letter),
+        ),
+        () => ({ id, type: "returned" }),
       ),
     );
   }, []);
 
   const toggleCross = useCallback((letter: number, digit: FukumenzanDigit) => {
+    const id = nextOperationId.current++;
     setPlay((current) =>
-      applyPlaySession(
+      withOperation(
         current,
-        toggleFukumenzanSessionCross(current.session, letter, digit),
+        applyPlaySession(
+          current,
+          toggleFukumenzanSessionCross(current.session, letter, digit),
+        ),
+        (puzzleState) => ({
+          id,
+          type: getFukumenzanCrossOperationType(puzzleState, letter, digit),
+        }),
       ),
     );
   }, []);
@@ -284,6 +342,7 @@ export function useFukumenzanPlay(
     miscalculatedColumns,
     undoCount: session.undoCount,
     crossUndoNotice: play.crossUndoNotice,
+    operation: play.operation,
     canUndo: canUndoFukumenzanSession(session),
     canRestart: canRestartFukumenzanSession(session),
     placeDigit,

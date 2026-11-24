@@ -77,6 +77,7 @@ export function PlayableFukumenzan({
         miscalculatedColumns={play.miscalculatedColumns}
         undoCount={play.undoCount}
         crossUndoNotice={play.crossUndoNotice}
+        operation={play.operation}
         canUndo={play.canUndo}
         canRestart={play.canRestart}
         onPlaceDigit={play.placeDigit}

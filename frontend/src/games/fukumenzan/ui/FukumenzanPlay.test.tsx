@@ -73,6 +73,7 @@ describe("FukumenzanPlay", () => {
     miscalculatedColumns: [],
     undoCount: performance.undoCount,
     crossUndoNotice: null,
+    operation: null,
     canUndo: true,
     canRestart: true,
     ...callbacks,

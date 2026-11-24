@@ -4,6 +4,7 @@ import type { FukumenzanDifficulty } from "@/games/fukumenzan/difficulty";
 import { FUKUMENZAN_DISPLAY_NAME } from "@/games/fukumenzan/display-name";
 import type {
   FukumenzanCrossUndoNotice,
+  FukumenzanOperation,
   FukumenzanResult,
 } from "@/games/fukumenzan/play/use-fukumenzan-play";
 import type { FukumenzanProblem } from "@/games/fukumenzan/problem/problem";
@@ -18,6 +19,7 @@ import { useFukumenzanInput } from "@/games/fukumenzan/ui/board/use-fukumenzan-i
 import { FukumenzanGround } from "@/games/fukumenzan/ui/FukumenzanGround";
 import { FukumenzanHowToPlayDialog } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog";
 import { FukumenzanResultScreen } from "@/games/fukumenzan/ui/result/FukumenzanResultScreen";
+import { useFukumenzanSoundEffects } from "@/games/fukumenzan/ui/use-fukumenzan-sound-effects";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,
@@ -38,6 +40,7 @@ type FukumenzanPlayProps = GamePlayScreenProps<
     miscalculatedColumns: readonly number[];
     undoCount: number;
     crossUndoNotice: FukumenzanCrossUndoNotice | null;
+    operation: FukumenzanOperation | null;
     onPlaceDigit: (letter: number, digit: FukumenzanDigit) => void;
     onReturnDigit: (letter: number) => void;
     onToggleCross: (letter: number, digit: FukumenzanDigit) => void;
@@ -56,6 +59,7 @@ export function FukumenzanPlay({
   miscalculatedColumns,
   undoCount,
   crossUndoNotice,
+  operation,
   canUndo,
   canRestart,
   onPlaceDigit,
@@ -74,6 +78,7 @@ export function FukumenzanPlay({
   renderSettingsDialog,
 }: FukumenzanPlayProps) {
   const interactionDisabled = progress !== "playing";
+  useFukumenzanSoundEffects(operation, progress, problem.result.length);
   const input = useFukumenzanInput({
     puzzleState,
     crossUndoNotice,

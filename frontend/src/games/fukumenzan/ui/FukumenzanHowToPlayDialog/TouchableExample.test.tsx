@@ -15,6 +15,13 @@ import {
   tapOperationExample,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
 import { TouchableExample } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/TouchableExample";
+import { playSound, type SoundEffect } from "@/lib/audio/sound-effects";
+
+vi.mock("@/lib/audio/sound-effects", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/audio/sound-effects")>()),
+  playSound: vi.fn(),
+  playLayeredSound: vi.fn(),
+}));
 
 /** クリア演出の動き。動かした要素を記録し、すぐ終える。 */
 const animate = vi.fn(function createFinishedAnimation(): Animation {
@@ -31,6 +38,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.mocked(playSound).mockClear();
   Reflect.deleteProperty(Element.prototype, "animate");
   Reflect.deleteProperty(document, "elementFromPoint");
 });
@@ -138,6 +146,17 @@ describe("TouchableExample", () => {
         expect(
           getEquation().getAllByRole("button", { name: "D に 8" }),
         ).toHaveLength(4);
+      });
+
+      test("本番と同じく札を入れる音を鳴らすこと", () => {
+        expect(
+          vi
+            .mocked(playSound)
+            .mock.calls.map(
+              ([sound]) =>
+                (sound as SoundEffect).url.match(/([\w-]+)\.flac/)?.[1],
+            ),
+        ).toEqual(["placed"]);
       });
 
       test("手がかりを消すこと", () => {
