@@ -12,13 +12,14 @@ import {
 import type { FukumenzanPuzzleState } from "@/games/fukumenzan/puzzle/state";
 import { placeFukumenzanDigit } from "@/games/fukumenzan/puzzle/transitions";
 import { FukumenzanEquationBoard } from "@/games/fukumenzan/ui/board/FukumenzanEquationBoard";
-import { ExampleGround } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/ExampleGround";
 import { createExamplePuzzleState } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-board";
 import {
   goalSteps,
   howToPlayProblem,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
+import { GoalGround } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/GoalGround";
 import { getStaticLetterHandlers } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/static-input";
+import { exampleEquationAttributes } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/use-equation-grid";
 import { prefersReducedMotion } from "@/lib/motion";
 
 /** 始まりの式を見せておく間。式の文字と並びを読み取れる長さにする。 */
@@ -27,7 +28,7 @@ const GOAL_START_HOLD_MS = 800;
 /** 札を1文字ずつ入れる間。入った札の数字を読んでから次の文字へ移る長さにする。 */
 const GOAL_STEP_INTERVAL_MS = 450;
 
-/** 盤面の下に敷く紙（`ExampleGround`）の、内側の余白の両側の合計（px）。 */
+/** 盤面の下に敷く紙（`GoalGround`）の、内側の余白の両側の合計（px）。 */
 const GOAL_GROUND_PADDING_PX = 16;
 
 const letters = listFukumenzanLetters(howToPlayProblem);
@@ -46,7 +47,7 @@ function getStateAfter(stepCount: number): FukumenzanPuzzleState {
 
 /**
  * 式のマスの一辺。置き場所の幅と、高さ（広い画面で渡される）から見せ直すボタンの段と遊び方の層が盤面の下に置くボタンの段を除いた高さの、
- * 小さい方に合わせる。マスはスマホの幅では 4rem まで、広い画面では左の列の幅に合わせて 6rem までにする。
+ * 小さい方に合わせる。マスはスマホの幅では 4rem まで、広い画面では例のマス（3.375rem）の約1.1倍の 3.75rem までにし、例と同じ物に見せる。
  */
 const goalTileStyle = {
   "--fukumenzan-goal-tile": `min((min(100cqw, var(--how-to-play-goal-board-max, 100cqw)) - ${GOAL_GROUND_PADDING_PX}px) / ${columnCount}, (100cqh - ${HOW_TO_PLAY_GOAL_REPLAY_ROW_HEIGHT_PX + GOAL_GROUND_PADDING_PX}px - var(--how-to-play-goal-below, 0px) - 1rem) / ${rowCount}, var(--fukumenzan-goal-tile-max))`,
@@ -125,13 +126,14 @@ export function GoalPlayback() {
 
   return (
     <div
-      className="flex justify-center [--fukumenzan-goal-tile-max:4rem] lg:[--fukumenzan-goal-tile-max:6rem]"
+      className="flex justify-center [--fukumenzan-goal-tile-max:4rem] lg:[--fukumenzan-goal-tile-max:3.75rem]"
       style={goalTileStyle}
     >
       <HowToPlayGoalFrame
         board={
-          <ExampleGround>
+          <GoalGround>
             <div
+              {...exampleEquationAttributes}
               role="img"
               aria-label="ゴールの式"
               inert
@@ -158,7 +160,7 @@ export function GoalPlayback() {
                 onClearAnimationComplete={finishCelebration}
               />
             </div>
-          </ExampleGround>
+          </GoalGround>
         }
         skippable={!settled}
         skipLabel="札を入れ終えた姿まで飛ばす"

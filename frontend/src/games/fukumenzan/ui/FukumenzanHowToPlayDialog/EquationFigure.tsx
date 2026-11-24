@@ -14,14 +14,16 @@ import {
   howToPlayProblem,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
 import {
+  candidateFigureClassName,
+  exampleCardRowClassName,
   exampleEquationStyle,
-  exampleUnitClassName,
+  exampleUnitStyle,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/figure-size";
 import {
   getStaticLetterHandlers,
   ignoreFigureEvent,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/static-input";
-import { cn } from "@/lib/utils";
+import { exampleEquationAttributes } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/use-equation-grid";
 
 type EquationFigureProps = {
   figure: Pick<FukumenzanHowToPlayExample, "placed" | "crossed">;
@@ -52,9 +54,14 @@ export function EquationFigure({
       role="img"
       aria-label={label}
       inert
-      className={cn("grid gap-3", exampleUnitClassName)}
+      className={candidateFigureClassName}
+      style={exampleUnitStyle}
     >
-      <div className="[container-type:size]" style={exampleEquationStyle}>
+      <div
+        {...exampleEquationAttributes}
+        className="[container-type:size]"
+        style={exampleEquationStyle}
+      >
         <FukumenzanEquationBoard
           problem={howToPlayProblem}
           letters={letters}
@@ -75,7 +82,7 @@ export function EquationFigure({
           onClearAnimationComplete={ignoreFigureEvent}
         />
       </div>
-      <div style={{ width: exampleEquationStyle.width }}>
+      <div className={exampleCardRowClassName}>
         <FukumenzanCardRow
           puzzleState={puzzleState}
           selection={selection}
@@ -83,7 +90,7 @@ export function EquationFigure({
           interactionDisabled
           getCardHandlers={getStaticLetterHandlers}
           getEmptySlotHandlers={getStaticLetterHandlers}
-          layout="two-rows"
+          layout="example"
         />
       </div>
     </div>

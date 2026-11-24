@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import {
   type FukumenzanDigit,
@@ -32,10 +32,11 @@ type FukumenzanCardRowProps = {
    */
   scrollLock?: "all-slots" | "cards";
   /**
-   * 札の段の組み方。`fit` は画面の幅で決める（スマホの幅では2段、広い画面では1段）。`two-rows` は画面の幅によらず5枚ずつの段にし、
-   * 札の並びを式の幅にそろえる遊び方の例が使う。
+   * 札の段の組み方。
+   * - `fit`: 画面の幅で決める（スマホの幅では2段、広い画面では1段）。
+   * - `example`: 遊び方の例と図。式のマス（`--fukumenzan-example-unit`）に対する札の大きさと縦横の比を、本番のプレイ画面と同じにする。
    */
-  layout?: "fit" | "two-rows";
+  layout?: "fit" | "example";
 };
 
 const slotClassName =
@@ -77,9 +78,22 @@ export function FukumenzanCardRow({
               shownDigits.length > 5 &&
                 "sm:auto-rows-[4.5rem] sm:grid-cols-10 sm:gap-2",
             ]
-          : // 式のマスの 48px の幅にそろえた並びで、札の幅を 44px 以上に保つよう、札の間を狭くする。
-            "auto-rows-[3.25rem] gap-1 lg:auto-rows-[3.75rem] lg:gap-1.5",
+          : [
+              // スマホの幅の本番は、札の列と式がどちらも画面の幅に広がり、札の幅がマスの約0.94倍になる。札の高さは本番の 52px を、
+              // 本番より小さく描く例の式に合わせて縮めた 46px にし、44px を下回らないようにする。
+              "auto-rows-[2.875rem] gap-1",
+              // 広い画面の本番は、札の幅がマスの約0.7倍で、縦が横の15/14倍になる。札は 44px を下回らないようにする。
+              "sm:[--fukumenzan-example-card:max(2.75rem,var(--fukumenzan-example-unit)*0.7)]",
+              "sm:auto-rows-[calc(var(--fukumenzan-example-card)*15/14)] sm:grid-cols-[repeat(var(--fukumenzan-card-columns),var(--fukumenzan-example-card))] sm:justify-center sm:gap-[calc(var(--fukumenzan-example-unit)/12)]",
+            ],
       )}
+      style={
+        layout === "example"
+          ? ({
+              "--fukumenzan-card-columns": shownDigits.length > 5 ? 10 : 5,
+            } as CSSProperties)
+          : undefined
+      }
     >
       {shownDigits.map((digit) => {
         const hintContent = hint?.digit === digit ? hint.content : null;

@@ -17,7 +17,6 @@ import {
   FUKUMENZAN_SPEED_ZERO_SCORE_RATIO,
 } from "@/games/fukumenzan/score";
 import { EquationFigure } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/EquationFigure";
-import { PanelGround } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/ExampleGround";
 import {
   candidateCountFigure,
   crossedCardPlaceOperationExample,
@@ -34,6 +33,7 @@ import {
   sumRuleExamples,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
 import { GoalPlayback } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/GoalPlayback";
+import { PanelGround } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/PanelGround";
 import { ignoreFigureEvent } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/static-input";
 import { TouchableExample } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/TouchableExample";
 import {
@@ -69,8 +69,8 @@ function renderPairRule(
       ground={panelGround}
       examples={
         <>
-          <TouchableExample example={allowed} />
-          <TouchableExample example={disallowed} />
+          <TouchableExample example={allowed} pair="allowed" />
+          <TouchableExample example={disallowed} pair="disallowed" />
         </>
       }
     />

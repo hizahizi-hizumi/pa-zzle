@@ -1,4 +1,4 @@
-import { type CSSProperties, useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { HowToPlayCaptionLayers } from "@/components/HowToPlayCaptionLayers";
 import { HowToPlayExample } from "@/components/HowToPlayExample";
@@ -54,9 +54,13 @@ import {
   howToPlayProblem,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
 import {
+  exampleCardRowClassName,
   exampleEquationStyle,
-  exampleUnitClassName,
+  exampleFigureClassName,
+  exampleUnitStyle,
+  pairedExampleClassNames,
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/figure-size";
+import { exampleEquationAttributes } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/use-equation-grid";
 import { useFukumenzanSoundEffects } from "@/games/fukumenzan/ui/use-fukumenzan-sound-effects";
 import { cn } from "@/lib/utils";
 
@@ -67,10 +71,6 @@ const verdictLabels = {
   "leading-zero": { allowed: "できる", disallowed: "できない" },
   sum: { allowed: "合う", disallowed: "合わない" },
 } as const satisfies Record<FukumenzanExampleVerdict, HowToPlayVerdictLabels>;
-
-const exampleStyle = {
-  "--how-to-play-unit": "var(--fukumenzan-example-unit)",
-} as CSSProperties;
 
 function renderHint(pointer: HowToPlayPressHintPointer) {
   return <HowToPlayPressHint frame="inside" pointer={pointer} />;
@@ -127,6 +127,8 @@ function renderCaption(
 
 type TouchableExampleProps = {
   example: FukumenzanHowToPlayExample;
+  /** できる形とできない形の対のどちらとして並べるか。対でなければ渡さない。 */
+  pair?: keyof typeof pairedExampleClassNames;
 };
 
 /**
@@ -138,7 +140,7 @@ type TouchableExampleProps = {
  * 音は本番と同じフックで鳴らす。
  * 盤面が触る前と違うかを例を並べる面に知らせ、最初の姿に戻すときは、面が例を作り直す。
  */
-export function TouchableExample({ example }: TouchableExampleProps) {
+export function TouchableExample({ example, pair }: TouchableExampleProps) {
   const [puzzleState, setPuzzleState] = useState(() =>
     createExamplePuzzleState(example),
   );
@@ -203,10 +205,17 @@ export function TouchableExample({ example }: TouchableExampleProps) {
       figure={
         <div
           ref={scopeRef}
-          className={cn("grid gap-3", exampleUnitClassName)}
-          style={exampleStyle}
+          className={cn(
+            exampleFigureClassName,
+            pair && pairedExampleClassNames[pair],
+          )}
+          style={exampleUnitStyle}
         >
-          <div className="[container-type:size]" style={exampleEquationStyle}>
+          <div
+            {...exampleEquationAttributes}
+            className="[container-type:size]"
+            style={exampleEquationStyle}
+          >
             <FukumenzanEquationBoard
               problem={howToPlayProblem}
               letters={letters}
@@ -236,7 +245,7 @@ export function TouchableExample({ example }: TouchableExampleProps) {
               scrollLock="placed-letters"
             />
           </div>
-          <div style={{ width: exampleEquationStyle.width }}>
+          <div className={exampleCardRowClassName}>
             <FukumenzanCardRow
               puzzleState={puzzleState}
               selection={input.selection}
@@ -260,7 +269,7 @@ export function TouchableExample({ example }: TouchableExampleProps) {
               }
               shownDigits={exampleCardRows[example.cardRow]}
               scrollLock="cards"
-              layout="two-rows"
+              layout="example"
             />
           </div>
           {input.drag && (
