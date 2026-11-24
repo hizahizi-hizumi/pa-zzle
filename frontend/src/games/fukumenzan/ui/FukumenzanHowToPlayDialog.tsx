@@ -123,7 +123,7 @@ const scoreItems = Object.entries(FUKUMENZAN_SCORE_MAXIMUMS) as [
 ][];
 
 const scoreLeads = {
-  speed: `問題ごとの/基準時間以内なら/満点です。/超えると/下がり/基準時間の/${FUKUMENZAN_SPEED_ZERO_SCORE_RATIO}倍で/0点に/なります。`,
+  speed: `問題ごとの基準時間/以内なら/満点です。/超えると/下がります。/基準時間が/1分なら/${FUKUMENZAN_SPEED_ZERO_SCORE_RATIO}分で/0点です。`,
 } as const satisfies Record<keyof typeof FUKUMENZAN_SCORE_MAXIMUMS, string>;
 
 /**
@@ -150,15 +150,15 @@ export function FukumenzanHowToPlayDialog({
             sameLetterRuleExample,
           )}
           {renderPairRule(
-            "2桁以上の数の/いちばん左には/1〜9を/入れます。",
+            "2桁以上の数は/いちばん左に/1〜9のどれかを/入れます。",
             leadingZeroRuleExamples,
           )}
           {renderPairRule(
-            "どの桁も/上の数字と/右の桁からの繰り上がりを/足すと/答えの数字に/なるように/します。/3つの数の足し算では/繰り上がりが/2に/なることも/あります。",
+            "どの桁も/上の数字と/右の桁からの繰り上がりを/足した数の一の位が/答えの数字に/なるように/します。/3つの数の足し算では/繰り上がりが/2に/なることも/あります。",
             sumRuleExamples,
           )}
           {renderSingleRule(
-            "足し算の合わない桁には/答えの下に/赤い線が/出ます。/線は/一の位から/続けて/埋めた桁にだけ/出ます。",
+            "足し算が/合わない桁には/答えの下に/赤い線が/出ます。/線は/一の位から/すき間なく/埋まっている桁にだけ/出ます。",
             miscalculationLineRuleExample,
           )}
         </>
@@ -185,17 +185,17 @@ export function FukumenzanHowToPlayDialog({
           </HowToPlaySection>
           <HowToPlaySection title="×の付け方">
             {renderOperation(
-              "文字を/押してから/札を/押すと/その札に/×が/付きます。/もう一度/押すと/外れます。",
+              "その文字に/入らないと/思う札に/×を/付けられます。/文字を/押してから/札を/押すと/×が/付いて/もう一度/押すと/外れます。",
               crossOperationExample,
             )}
             {renderOperation(
-              "×は/その文字を/選んでいる間だけ/札に/出ます。/同じ文字を/もう一度/押すか/式と札の/外を/押すと/選ぶのを/やめます。",
+              "×は/付けた文字を/選んでいる間だけ/札に/出ます。/同じ文字を/もう一度/押すか/何もない所を/押すと/選ぶ前に/戻ります。",
               crossShownOperationExample,
             )}
             <li>
               <HowToPlayRule
                 headingLevel={4}
-                text="×を/付けた/空の文字の/右上の/点線の丸には/×の付いていない/札の数が/出ます。/ほかの文字に/入った札も/数に/入ります。"
+                text="空の文字に/×を/付けると/右上の点線の丸に/10から/その文字に付けた×の数を/引いた数が/出ます。/ほかの文字に/札が/入っても/この数は/減りません。"
                 arrangement="stacked"
                 resettable={false}
                 ground={panelGround}
@@ -213,7 +213,7 @@ export function FukumenzanHowToPlayDialog({
               />
             </li>
             {renderOperation(
-              "×を/付けた札も/その文字へ/運べば/入ります。",
+              "×は/メモなので/×を/付けた札も/文字へ/運べば/入ります。",
               crossedCardPlaceOperationExample,
             )}
           </HowToPlaySection>
@@ -226,7 +226,7 @@ export function FukumenzanHowToPlayDialog({
                 </span>
               }
               text={`「${undo}」を/押すと/最後に/動かした札か/付け外しした×が/元に/戻ります。`}
-              note={`時間は/そのまま/進み/「${undo}」の回数が/増えます。/「${restart}」より/前の手には/戻れません。`}
+              note={`時間は/止まりません。/「${undo}」の回数が/増えます。/「${restart}」を/使うと/それより前の手には/戻れません。`}
             />
             <HowToPlayMenuOperations operations={menuOperations} />
           </HowToPlaySection>
@@ -241,7 +241,7 @@ export function FukumenzanHowToPlayDialog({
         >
           <HowToPlayScoreRow
             measure="基準時間"
-            text="文字の種類が/多く/式の長い問題ほど/長く/なります。"
+            text="文字の種類が/多いほど/式が/長いほど/長く/なります。"
           />
           <HowToPlayScoreRow
             measure={`「${undo}」・「${restart}」と/札の入れ直し・×の付け外し`}
