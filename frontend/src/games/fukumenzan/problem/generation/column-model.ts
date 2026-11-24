@@ -141,10 +141,16 @@ export function createFukumenzanColumnModel(
 /**
  * 解き始めの候補。先頭の文字は0にならず、値が0に決まっている繰り上がりは0。
  * 途中の繰り上がりは、足す数の数より小さい（3つの足し算の1桁の和は 9×3＋2＝29 まで）。
+ * 答えが1桁長いときの答えの先頭の文字は最上位の繰り上がりなので、ほかの繰り上がりと同じ範囲の0でない値（2つの足し算は1、
+ * 3つの足し算は1か2）から始める。
  */
 export function createInitialDomains(model: FukumenzanColumnModel): number[] {
   const carryMask = (1 << model.addendCount) - 1;
+  const topCarryOut = model.columns[model.columnCount - 1]!.carryOutVariable;
   return Array.from({ length: model.variableCount }, (_, variable) => {
+    if (variable === topCarryOut && variable < model.letterCount) {
+      return carryMask & NONZERO_DIGIT_MASK;
+    }
     if (variable < model.letterCount) {
       return model.leadingLetters.has(variable)
         ? NONZERO_DIGIT_MASK

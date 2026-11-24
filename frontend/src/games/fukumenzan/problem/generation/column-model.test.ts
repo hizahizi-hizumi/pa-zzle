@@ -26,6 +26,21 @@ describe("createFukumenzanColumnModel", () => {
 
       expect(domains.slice(model.letterCount)).toEqual([0b1, 0b11, 0b11]);
     });
+
+    test("2つの足し算では答えの先頭の文字を1から始めること", () => {
+      const domains = createInitialDomains(model);
+
+      expect(domains[3]).toBe(0b10);
+    });
+  });
+
+  test("3つの足し算では答えの先頭の文字を1か2から始めること", () => {
+    // 文字は N Y B C M の順。答えの先頭は C。
+    const model = createFukumenzanColumnModel(
+      parseFukumenzanEquation("NNY+YBC+NNY=CCMY")!,
+    );
+
+    expect(createInitialDomains(model)[3]).toBe(0b110);
   });
 
   describe("答えが足す数と同じ桁の場合", () => {

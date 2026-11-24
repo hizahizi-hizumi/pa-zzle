@@ -70,22 +70,11 @@
       "solution": "38291",
       "scale": "2s",
       "readingClass": "E",
-      "outcome": "unlisted-combination",
-      "level": null,
+      "outcome": "classified",
+      "level": "1",
       "readers": {
         "weakColumns": "solved",
-        "weakLightColumns": "stuck",
-        "strongLightColumns": "stuck"
-      },
-      "changedBy": ["top-carry"],
-      "research": {
-        "readingClass": "E",
-        "outcome": "classified",
-        "level": "1",
-        "readers": {
-          "weakColumns": "solved",
-          "weakLightColumns": "solved"
-        }
+        "weakLightColumns": "solved"
       }
     },
     {
@@ -107,22 +96,11 @@
       "solution": "61842",
       "scale": "2s",
       "readingClass": "E",
-      "outcome": "margin",
-      "level": null,
+      "outcome": "classified",
+      "level": "1",
       "readers": {
         "weakColumns": "solved",
-        "weakLightColumns": "stuck",
-        "strongLightColumns": "solved"
-      },
-      "changedBy": ["top-carry"],
-      "research": {
-        "readingClass": "E",
-        "outcome": "classified",
-        "level": "1",
-        "readers": {
-          "weakColumns": "solved",
-          "weakLightColumns": "solved"
-        }
+        "weakLightColumns": "solved"
       }
     },
     {
@@ -1195,25 +1173,13 @@
     "uniquePatternCount": 2283,
     "problemCount": 1150,
     "levels": {
-      "1": 571,
-      "none": 579
+      "none": 506,
+      "1": 644
     },
     "levelOneLetterCounts": {
-      "5": 569,
+      "5": 642,
       "6": 2
     },
-    "levelOneWithoutNearCount": 201,
-    "changedBy": ["top-carry", "cancelled-letters"],
-    "research": {
-      "levels": {
-        "none": 506,
-        "1": 644
-      },
-      "levelOneLetterCounts": {
-        "5": 642,
-        "6": 2
-      },
-      "levelOneWithoutNearCount": 222
-    }
+    "levelOneWithoutNearCount": 222
   }
 }
