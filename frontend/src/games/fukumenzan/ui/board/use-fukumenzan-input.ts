@@ -20,13 +20,13 @@ export type FukumenzanSelection =
   | { kind: "card"; digit: FukumenzanDigit }
   | null;
 
-/** 運んでいる札。`x`・`y` は運んでいる札の中心の、画面上の位置。 */
+/** 運んでいる札。`x`・`y` は運んでいる札を描く中心の、画面上の位置。 */
 export type FukumenzanCardDrag = {
   digit: FukumenzanDigit;
   fromLetter: number | null;
   x: number;
   y: number;
-  /** 運んでいる札の下にある文字。 */
+  /** 指の下にある文字。離すとこの文字に入る。 */
   overLetter: number | null;
 };
 
@@ -50,7 +50,10 @@ export type FukumenzanInputHandlers = {
 
 /** 押すと運ぶを分ける、指が動いた距離。 */
 const DRAG_THRESHOLD_PX = 8;
-/** 指で隠れないよう、タッチで運ぶ札を指より上に描く距離（札の中心まで）。 */
+/**
+ * 指で隠れないよう、タッチで運ぶ札を指より上に描く距離（札の中心まで）。落とし先は指の下で決め、その文字に輪郭を付けて示す。
+ * 落とし先を描いた札の下で決めると、指で狙った文字の1段上の文字に入ってしまう。
+ */
 const TOUCH_DRAG_LIFT_PX = 56;
 
 const LETTER_ATTRIBUTE = "data-fukumenzan-letter";
@@ -125,13 +128,9 @@ export function useFukumenzanInput({
     });
     return {
       onPointerDown(event) {
+        if (!event.isPrimary) return;
         draggedRef.current = false;
-        if (
-          interactionDisabled ||
-          dragSource === null ||
-          !event.isPrimary ||
-          event.button !== 0
-        ) {
+        if (interactionDisabled || dragSource === null || event.button !== 0) {
           return;
         }
         event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -157,30 +156,31 @@ export function useFukumenzanInput({
           return;
         }
         pending.active = true;
-        const x = event.clientX;
-        const y = event.clientY - pending.lift;
-        const target = findDropTarget(x, y);
+        const target = findDropTarget(event.clientX, event.clientY);
         setDrag({
           digit: pending.digit,
           fromLetter: pending.fromLetter,
-          x,
-          y,
+          x: event.clientX,
+          y: event.clientY - pending.lift,
           overLetter: target?.kind === "letter" ? target.letter : null,
         });
       },
       onPointerUp(event) {
         const pending = pendingRef.current;
-        pendingRef.current = null;
-        if (pending?.active && pending.pointerId === event.pointerId) {
-          draggedRef.current = true;
-          setDrag(null);
-          setSelection(null);
-          drop(pending, event.clientX, event.clientY - pending.lift);
-          return;
+        if (pending?.pointerId === event.pointerId) {
+          pendingRef.current = null;
+          if (pending.active) {
+            draggedRef.current = true;
+            setDrag(null);
+            setSelection(null);
+            drop(pending, event.clientX, event.clientY);
+            return;
+          }
         }
         tapHandlers.onPointerUp(event);
       },
-      onPointerCancel() {
+      onPointerCancel(event) {
+        if (pendingRef.current?.pointerId !== event.pointerId) return;
         pendingRef.current = null;
         setDrag(null);
       },
