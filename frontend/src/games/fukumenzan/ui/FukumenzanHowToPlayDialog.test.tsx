@@ -36,21 +36,24 @@ describe("FukumenzanHowToPlayDialog", () => {
   });
 
   describe("ルールのタブの場合", () => {
-    test("できない形の例を、押せない図にして、できない・合わないと添えること", () => {
-      const panel = openTab("ルール");
-      const figures = [
-        "D に 0 を入れて DDE の先頭が 0 になった式",
-        "R に 7 を入れて十の位が合わない式",
-      ].map((name) => within(panel).getByRole("img", { name }));
+    test("ルールの例はどれも触れる例にし、対の例はできる形とできない形の判定で始めること", () => {
+      const captions: string[] = [];
+      const figures = within(openTab("ルール")).getAllByRole("figure", {
+        name: (name) => {
+          captions.push(name);
+          return true;
+        },
+      });
 
-      expect([
-        figures.every(isInert),
-        figures.map((figure) => figure.closest("figure")?.textContent),
-      ]).toEqual([
-        true,
+      expect([figures.some(isInert), captions]).toEqual([
+        false,
         [
-          expect.stringContaining("できない"),
-          expect.stringContaining("合わない"),
+          "",
+          "できる",
+          "できない・いちばん左が0",
+          "合う",
+          "合わない・十の位が合わない",
+          "一の位が空いていて線が出ない",
         ],
       ]);
     });

@@ -1,5 +1,6 @@
 import { type CSSProperties, useCallback, useRef, useState } from "react";
 
+import { HowToPlayCaptionLayers } from "@/components/HowToPlayCaptionLayers";
 import { HowToPlayExample } from "@/components/HowToPlayExample";
 import { useReportHowToPlayExampleChange } from "@/components/HowToPlayExamplePanel";
 import {
@@ -39,7 +40,9 @@ import {
 import {
   createExamplePuzzleState,
   describeOtherRuleMark,
+  describeRuleReason,
   findExampleHint,
+  findExampleStep,
   getExampleLetterIndex,
   isExampleChanged,
   judgeExample,
@@ -59,8 +62,8 @@ import { cn } from "@/lib/utils";
 
 const letters = listFukumenzanLetters(howToPlayProblem);
 
-/** 判定の言葉。押せない図の判定も同じ言葉で言う。 */
-export const verdictLabels = {
+/** 判定の言葉。 */
+const verdictLabels = {
   "leading-zero": { allowed: "できる", disallowed: "できない" },
   sum: { allowed: "合う", disallowed: "合わない" },
 } as const satisfies Record<FukumenzanExampleVerdict, HowToPlayVerdictLabels>;
@@ -91,6 +94,37 @@ function getCardHintPointer(
     : "inside-corner";
 }
 
+/** 例の下の言葉。判定のある例は判定とわけを、判定の無い例は打ち終えた手で起きたことを出す。 */
+function renderCaption(
+  example: FukumenzanHowToPlayExample,
+  puzzleState: FukumenzanPuzzleState,
+  selection: FukumenzanSelection,
+) {
+  if (example.verdict !== undefined) {
+    return (
+      <HowToPlayVerdict
+        verdict={judgeExample(example.verdict, puzzleState)}
+        labels={verdictLabels[example.verdict]}
+        reason={describeOtherRuleMark(example.verdict, puzzleState)}
+        ruleReason={describeRuleReason(example.verdict, puzzleState)}
+      />
+    );
+  }
+  if (example.outcomes === undefined) {
+    return undefined;
+  }
+  const step = findExampleStep(example, puzzleState, selection);
+  return (
+    <HowToPlayCaptionLayers
+      layers={example.outcomes.flatMap((outcome, index) =>
+        outcome === null
+          ? []
+          : [{ id: String(index), shown: step === index, content: outcome }],
+      )}
+    />
+  );
+}
+
 type TouchableExampleProps = {
   example: FukumenzanHowToPlayExample;
 };
@@ -100,7 +134,7 @@ type TouchableExampleProps = {
  * 文字を押してから札を押すと × を付け外しし、札の入った文字を押してから空いた場所を押すと札が列へ戻る。
  * 札の列は、例が使う札の段だけを見せる。先頭の0と計算違いの知らせは本番と同じ関数で出し直す。
  * 足し算が成り立つと本番のクリア演出を返し、それからは受け付けない。
- * 押す所の手がかりは、触る前の姿から例の手を打っていく途中でだけ付ける。
+ * 押す所の手がかりは、触る前の姿から例の手を順に打っていく途中でだけ付ける。判定の無い例は、打ち終えた手で起きたことを下に出す。
  * 音は本番と同じフックで鳴らす。
  * 盤面が触る前と違うかを例を並べる面に知らせ、最初の姿に戻すときは、面が例を作り直す。
  */
@@ -234,15 +268,7 @@ export function TouchableExample({ example }: TouchableExampleProps) {
           )}
         </div>
       }
-      caption={
-        example.verdict === undefined ? undefined : (
-          <HowToPlayVerdict
-            verdict={judgeExample(example.verdict, puzzleState)}
-            labels={verdictLabels[example.verdict]}
-            reason={describeOtherRuleMark(example.verdict, puzzleState)}
-          />
-        )
-      }
+      caption={renderCaption(example, puzzleState, input.selection)}
     />
   );
 }

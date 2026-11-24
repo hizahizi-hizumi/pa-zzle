@@ -8,7 +8,6 @@ import { HowToPlayOverlay } from "@/components/HowToPlayOverlay";
 import { HowToPlayRule } from "@/components/HowToPlayRule";
 import { HowToPlayScoreRow } from "@/components/HowToPlayScoreRow";
 import { HowToPlaySection } from "@/components/HowToPlaySection";
-import { HowToPlayVerdict } from "@/components/HowToPlayVerdict";
 import { playMenuOperationItems } from "@/components/play-menu-operations";
 import { UndoButton } from "@/components/UndoButton";
 import pictogramSvg from "@/games/fukumenzan/assets/pictogram.svg?raw";
@@ -20,16 +19,13 @@ import {
 import { EquationFigure } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/EquationFigure";
 import { PanelGround } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/ExampleGround";
 import {
-  createExamplePuzzleState,
-  judgeExample,
-} from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-board";
-import {
   candidateCountFigure,
+  crossedCardPlaceOperationExample,
   crossOperationExample,
   crossShownOperationExample,
-  type FukumenzanExampleVerdict,
   type FukumenzanHowToPlayExample,
   leadingZeroRuleExamples,
+  miscalculationLineRuleExample,
   moveOperationExample,
   placeOperationExample,
   replaceOperationExample,
@@ -39,10 +35,7 @@ import {
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
 import { GoalPlayback } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/GoalPlayback";
 import { ignoreFigureEvent } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/static-input";
-import {
-  TouchableExample,
-  verdictLabels,
-} from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/TouchableExample";
+import { TouchableExample } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/TouchableExample";
 import {
   PLAY_OPERATION_LABELS,
   SCORE_ITEM_LABELS,
@@ -62,17 +55,13 @@ const { undo, restart } = PLAY_OPERATION_LABELS;
 /** 例と図を並べる面に敷く地。式のマスは地を透かして描くので、面そのものを本番と同じ方眼の紙にする。 */
 const panelGround = <PanelGround />;
 
-/**
- * 形のルール。できる形を触れる例、できない形を押せない図にして対で並べる。できない形は最初から崩れた盤面なので、触る手が無い。
- * 図は札の並びを持たないので、対を短くして見比べやすくする。
- */
+/** 形のルール。できる形とできない形を、どちらも触れる例にして対で並べる。 */
 function renderPairRule(
   text: string,
   [allowed, disallowed]: readonly [
-    FukumenzanHowToPlayExample & { verdict: FukumenzanExampleVerdict },
-    FukumenzanHowToPlayExample & { verdict: FukumenzanExampleVerdict },
+    FukumenzanHowToPlayExample,
+    FukumenzanHowToPlayExample,
   ],
-  disallowedLabel: string,
 ) {
   return (
     <HowToPlayRule
@@ -81,22 +70,21 @@ function renderPairRule(
       examples={
         <>
           <TouchableExample example={allowed} />
-          <HowToPlayExample
-            figure={
-              <EquationFigure figure={disallowed} label={disallowedLabel} />
-            }
-            caption={
-              <HowToPlayVerdict
-                verdict={judgeExample(
-                  disallowed.verdict,
-                  createExamplePuzzleState(disallowed),
-                )}
-                labels={verdictLabels[disallowed.verdict]}
-              />
-            }
-          />
+          <TouchableExample example={disallowed} />
         </>
       }
+    />
+  );
+}
+
+/** ルール1つの、触れる例1つ。 */
+function renderSingleRule(text: string, example: FukumenzanHowToPlayExample) {
+  return (
+    <HowToPlayRule
+      text={text}
+      arrangement="stacked"
+      ground={panelGround}
+      examples={<TouchableExample example={example} />}
     />
   );
 }
@@ -157,21 +145,21 @@ export function FukumenzanHowToPlayDialog({
       onOpenTutorial={onOpenTutorial}
       rules={
         <>
-          <HowToPlayRule
-            text="同じ文字には/同じ数字を/入れます。/札は/0〜9が/1枚ずつしか/ないので/違う文字には/違う数字が/入ります。"
-            arrangement="stacked"
-            ground={panelGround}
-            examples={<TouchableExample example={sameLetterRuleExample} />}
-          />
+          {renderSingleRule(
+            "同じ文字には/同じ数字を/入れます。/札は/0〜9が/1枚ずつしか/ないので/違う文字には/違う数字が/入ります。",
+            sameLetterRuleExample,
+          )}
           {renderPairRule(
             "2桁以上の数の/いちばん左には/1〜9を/入れます。",
             leadingZeroRuleExamples,
-            "D に 0 を入れて DDE の先頭が 0 になった式",
           )}
           {renderPairRule(
             "どの桁も/上の数字と/右の桁からの繰り上がりを/足すと/答えの数字に/なるように/します。/3つの数の足し算では/繰り上がりが/2に/なることも/あります。",
             sumRuleExamples,
-            "R に 7 を入れて十の位が合わない式",
+          )}
+          {renderSingleRule(
+            "足し算の合わない桁には/答えの下に/赤い線が/出ます。/線は/一の位から/続けて/埋めた桁にだけ/出ます。",
+            miscalculationLineRuleExample,
           )}
         </>
       }
@@ -203,6 +191,10 @@ export function FukumenzanHowToPlayDialog({
             {renderOperation(
               "×は/その文字を/選んでいる間だけ/札に/出ます。/同じ文字を/もう一度/押すか/式と札の/外を/押すと/選ぶのを/やめます。",
               crossShownOperationExample,
+            )}
+            {renderOperation(
+              "×を/付けた札も/その文字へ/運べば/入ります。",
+              crossedCardPlaceOperationExample,
             )}
             <li>
               <HowToPlayRule

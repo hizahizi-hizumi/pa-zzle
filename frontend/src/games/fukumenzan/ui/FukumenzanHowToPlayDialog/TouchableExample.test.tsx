@@ -9,10 +9,12 @@ import type { ReactElement } from "react";
 
 import { HowToPlayExamplePanel } from "@/components/HowToPlayExamplePanel";
 import {
+  crossedCardPlaceOperationExample,
   crossOperationExample,
   crossShownOperationExample,
   type FukumenzanHowToPlayExample,
   leadingZeroRuleExamples,
+  miscalculationLineRuleExample,
   moveOperationExample,
   placeOperationExample,
   replaceOperationExample,
@@ -22,7 +24,11 @@ import {
 } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/example-definitions";
 import { TouchableExample } from "@/games/fukumenzan/ui/FukumenzanHowToPlayDialog/TouchableExample";
 import { fukumenzanToneClassNames } from "@/games/fukumenzan/ui/fukumenzan-tone";
-import { playSound, type SoundEffect } from "@/lib/audio/sound-effects";
+import {
+  playLayeredSound,
+  playSound,
+  type SoundEffect,
+} from "@/lib/audio/sound-effects";
 
 vi.mock("@/lib/audio/sound-effects", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/audio/sound-effects")>()),
@@ -46,6 +52,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.mocked(playSound).mockClear();
+  vi.mocked(playLayeredSound).mockClear();
   Reflect.deleteProperty(Element.prototype, "animate");
   Reflect.deleteProperty(document, "elementFromPoint");
 });
@@ -90,6 +97,20 @@ function readHintTarget(): string | null {
   return hint?.closest("button")?.getAttribute("aria-label") ?? null;
 }
 
+/** 鳴らした1つの音の名前を、鳴らした順に並べる。 */
+function listPlayedSounds(): (string | undefined)[] {
+  return vi
+    .mocked(playSound)
+    .mock.calls.map(
+      ([sound]) => (sound as SoundEffect).url.match(/([\w-]+)\.flac/)?.[1],
+    );
+}
+
+function pressCard(name: string): void {
+  fireEvent.click(getCardRow().getByRole("button", { name }));
+}
+
+/** 例の下の言葉。判定の例では判定と、添えたわけ。 */
 function readVerdict(): string {
   let caption = "";
   screen.getByRole("figure", {
@@ -171,14 +192,7 @@ describe("TouchableExample", () => {
       });
 
       test("本番と同じく札を入れる音を鳴らすこと", () => {
-        expect(
-          vi
-            .mocked(playSound)
-            .mock.calls.map(
-              ([sound]) =>
-                (sound as SoundEffect).url.match(/([\w-]+)\.flac/)?.[1],
-            ),
-        ).toEqual(["placed"]);
+        expect(listPlayedSounds()).toEqual(["placed"]);
       });
 
       test("元に戻すと、触る前の姿と手がかりに戻ること", () => {
@@ -238,17 +252,66 @@ describe("TouchableExample", () => {
       renderExample(sameLetterRuleExample);
     });
 
-    test("触る前は E の 8 に手がかりを付けること", () => {
-      expect(readHintTarget()).toBe("E に 8");
+    test("空の式から始め、8 の札に手がかりを付け、起きたことはまだ言わないこと", () => {
+      expect([
+        getEquation().queryAllByRole("button", { name: / に / }).length,
+        readHintTarget(),
+        readVerdict(),
+      ]).toEqual([0, "8 の札", ""]);
     });
 
-    test("E の 8 を D へ運ぶと、D の全部の場所に 8 が入り、E が空になること", () => {
-      dragByTouch(getLetter("E に 8"), getLetter("D"));
+    describe("1つ目の手（8 を D へ）を打った場合", () => {
+      beforeEach(() => {
+        dragByTouch(
+          getCardRow().getByRole("button", { name: "8 の札" }),
+          getLetter("D"),
+        );
+      });
+
+      test("D の全部の場所に 8 が入ったと言い、2つ目の手の D に手がかりを移すこと", () => {
+        expect([
+          getEquation().getAllByRole("button", { name: "D に 8" }).length,
+          readVerdict(),
+          readHintTarget(),
+        ]).toEqual([4, "4つの D に 8 が入る", "D に 8"]);
+      });
+
+      test("2つ目の手（D の 8 を E へ）を打つと、D が空いたと言い、手がかりを消すこと", () => {
+        dragByTouch(getLetter("D に 8"), getLetter("E"));
+
+        expect([
+          getEquation().getAllByRole("button", { name: "D" }).length,
+          getEquation().getAllByRole("button", { name: "E に 8" }).length,
+          readVerdict(),
+          readHintTarget(),
+        ]).toEqual([4, 1, "8 が E へ移り D が空く", null]);
+      });
+    });
+  });
+
+  describe("線の例の場合", () => {
+    beforeEach(() => {
+      renderExample(miscalculationLineRuleExample);
+    });
+
+    test("触る前は線が無いことを言い、0 の札に手がかりを付けること", () => {
+      expect([readVerdict(), readHintTarget()]).toEqual([
+        "一の位が空いていて線が出ない",
+        "0 の札",
+      ]);
+    });
+
+    test("U に 0 を入れると、十の位に本番と同じ線を引き、線が出たと言うこと", () => {
+      pressCard("0 の札");
+      fireEvent.click(getLetter("U"));
 
       expect([
-        getEquation().getAllByRole("button", { name: "D に 8" }).length,
-        getEquation().getAllByRole("button", { name: "E" }).length,
-      ]).toEqual([4, 1]);
+        hasClassTokens(
+          getLetter("D に 8").closest("[role=group]")!,
+          fukumenzanToneClassNames.noticeLine,
+        ),
+        readVerdict(),
+      ]).toEqual([true, "十の位の答えの下に線が出る"]);
     });
   });
 
@@ -355,13 +418,25 @@ describe("TouchableExample", () => {
       ]);
     });
 
-    test("U を押すと × を付けた札に × を出し、手がかりを消すこと", () => {
+    test("U を押すと × を付けた札に × を出し、2つ目の手としてもう一度 U に手がかりを付けること", () => {
       fireEvent.click(getLetter("U（候補 7）"));
 
       expect([
         listCardNames().filter((name) => name?.endsWith("（×）")),
         readHintTarget(),
-      ]).toEqual([["5 の札（×）", "6 の札（×）", "7 の札（×）"], null]);
+      ]).toEqual([
+        ["5 の札（×）", "6 の札（×）", "7 の札（×）"],
+        "U（候補 7）",
+      ]);
+    });
+
+    test("U をもう一度押すと、選ぶのをやめて × を消すこと", () => {
+      fireEvent.click(getLetter("U（候補 7）"));
+      fireEvent.click(getLetter("U（候補 7）"));
+
+      expect(listCardNames().filter((name) => name?.endsWith("（×）"))).toEqual(
+        [],
+      );
     });
 
     test("U を選んで式と札の外を押すと、選ぶのをやめて × を消すこと", () => {
@@ -372,44 +447,109 @@ describe("TouchableExample", () => {
         [],
       );
     });
+
+    describe("札を入れて式を解いた場合", () => {
+      beforeEach(() => {
+        for (const [digit, letter] of [
+          ["1", "M"],
+          ["9", "R"],
+          ["8", "D"],
+          ["2", "E"],
+          ["0", "U（候補 7）"],
+        ] as const) {
+          pressCard(`${digit} の札`);
+          fireEvent.click(getLetter(letter));
+        }
+      });
+
+      test("本番と同じく答えの桁を跳ねさせ、クリアの音を鳴らすこと", () => {
+        expect([
+          animate.mock.calls.length > 0,
+          vi.mocked(playLayeredSound).mock.calls.length,
+        ]).toEqual([true, 1]);
+      });
+
+      test("それからは札を押しても受け付けないこと", () => {
+        const sounds = listPlayedSounds().length;
+        fireEvent.click(getLetter("M に 1"));
+        fireEvent.click(
+          getCardRow().getByRole("button", { name: "1 の札の場所" }),
+        );
+
+        expect([
+          getEquation().getAllByRole("button", { name: "M に 1" }).length,
+          listPlayedSounds().length,
+        ]).toEqual([2, sounds]);
+      });
+    });
   });
 
-  describe("先頭の0の例の場合", () => {
+  describe("× を付けた札を入れる例の場合", () => {
+    beforeEach(() => {
+      renderExample(crossedCardPlaceOperationExample);
+    });
+
+    test("触る前は U に、U を選ぶと × の付いた 8 の札に手がかりを付けること", () => {
+      const before = readHintTarget();
+      fireEvent.click(getLetter("U（候補 9）"));
+
+      expect([before, readHintTarget()]).toEqual([
+        "U（候補 9）",
+        "8 の札（×）",
+      ]);
+    });
+
+    test("U を選んだまま × の付いた 8 を U へ運ぶと入り、手がかりを消すこと", () => {
+      fireEvent.click(getLetter("U（候補 9）"));
+      dragByTouch(
+        getCardRow().getByRole("button", { name: "8 の札（×）" }),
+        getLetter("U（候補 9）"),
+      );
+
+      expect([
+        getEquation().getAllByRole("button", { name: "U に 8" }).length,
+        readHintTarget(),
+      ]).toEqual([2, null]);
+    });
+  });
+
+  describe("先頭の0のできる形の例の場合", () => {
     beforeEach(() => {
       renderExample(leadingZeroRuleExamples[0]);
     });
 
-    test("D が空なので途中と言い、8 の札に手がかりを付けること", () => {
-      expect([readVerdict(), readHintTarget()]).toEqual(["途中", "8 の札"]);
+    test("触る前はできると言い、0 を入れる手の 0 の札に手がかりを付けること", () => {
+      expect([readVerdict(), readHintTarget()]).toEqual(["できる", "0 の札"]);
     });
 
-    test("手がかりのとおり D に 8 を入れると、できると言うこと", () => {
-      fireEvent.click(getCardRow().getByRole("button", { name: "8 の札" }));
-      fireEvent.click(getLetter("D"));
+    test("手がかりのとおり D に 0 を入れると、D の札を本番と同じ赤で描き、できないとわけを言うこと", () => {
+      pressCard("0 の札");
+      fireEvent.click(getLetter("D に 8"));
 
-      expect(readVerdict()).toBe("できる");
+      expect([
+        getEquation()
+          .getAllByRole("button", { name: "D に 0" })
+          .some((tile) =>
+            hasClassTokens(tile, fukumenzanToneClassNames.notice),
+          ),
+        readVerdict(),
+        readHintTarget(),
+      ]).toEqual([true, "できない・いちばん左が0", null]);
     });
   });
 
-  describe("足し算の例の場合", () => {
+  describe("足し算の合う形の例の場合", () => {
     beforeEach(() => {
       renderExample(sumRuleExamples[0]);
     });
 
-    test("R が空なので途中と言い、9 の札に手がかりを付けること", () => {
-      expect([readVerdict(), readHintTarget()]).toEqual(["途中", "9 の札"]);
+    test("触る前は合うと言い、7 の札に手がかりを付けること", () => {
+      expect([readVerdict(), readHintTarget()]).toEqual(["合う", "7 の札"]);
     });
 
-    test("手がかりのとおり R に 9 を入れると、合うと言うこと", () => {
-      fireEvent.click(getCardRow().getByRole("button", { name: "9 の札" }));
-      fireEvent.click(getLetter("R"));
-
-      expect(readVerdict()).toBe("合う");
-    });
-
-    test("R に 7 を入れると、十の位に本番と同じ計算違いの線を引いて合わないと言うこと", () => {
-      fireEvent.click(getCardRow().getByRole("button", { name: "7 の札" }));
-      fireEvent.click(getLetter("R"));
+    test("手がかりのとおり R に 7 を入れると、十の位に本番と同じ線を引き、合わないとわけを言うこと", () => {
+      pressCard("7 の札");
+      fireEvent.click(getLetter("R に 9"));
 
       expect([
         hasClassTokens(
@@ -417,18 +557,90 @@ describe("TouchableExample", () => {
           fukumenzanToneClassNames.noticeLine,
         ),
         readVerdict(),
-      ]).toEqual([true, "合わない"]);
+      ]).toEqual([true, "合わない・十の位が合わない"]);
     });
   });
 
-  test("先頭の文字に 0 を入れた盤面では、その札を本番と同じ赤で描くこと", () => {
-    renderExample({ ...leadingZeroRuleExamples[0], placed: { M: 1, D: 0 } });
+  describe("できない形の例の場合", () => {
+    test("先頭の0の例は、手がかりを付けず、D の 0 を本番と同じ赤で描いて、できないとわけを言うこと", () => {
+      renderExample(leadingZeroRuleExamples[1]);
 
-    expect(
-      getEquation()
-        .getAllByRole("button", { name: "D に 0" })
-        .some((tile) => hasClassTokens(tile, fukumenzanToneClassNames.notice)),
-    ).toBe(true);
+      expect([
+        getEquation()
+          .getAllByRole("button", { name: "D に 0" })
+          .some((tile) =>
+            hasClassTokens(tile, fukumenzanToneClassNames.notice),
+          ),
+        readVerdict(),
+        readHintTarget(),
+      ]).toEqual([true, "できない・いちばん左が0", null]);
+    });
+
+    test("足し算の例は、手がかりを付けず、十の位に本番と同じ線を引いて、合わないとわけを言うこと", () => {
+      renderExample(sumRuleExamples[1]);
+
+      expect([
+        hasClassTokens(
+          getLetter("D に 8").closest("[role=group]")!,
+          fukumenzanToneClassNames.noticeLine,
+        ),
+        readVerdict(),
+        readHintTarget(),
+      ]).toEqual([true, "合わない・十の位が合わない", null]);
+    });
+  });
+
+  test("先頭の0の例で足し算の線が出ると、別のルールのわけを言うこと", () => {
+    renderExample(leadingZeroRuleExamples[0]);
+    for (const [digit, letter] of [
+      ["2", "E"],
+      ["3", "U"],
+    ] as const) {
+      pressCard(`${digit} の札`);
+      fireEvent.click(getLetter(letter));
+    }
+
+    expect(readVerdict()).toBe(
+      "できる・足し算の合わない桁に赤い線が出ています",
+    );
+  });
+
+  describe("クリアしない例", () => {
+    test.each([
+      ["先頭の0", leadingZeroRuleExamples[0], "0 の札", "D に 8"],
+      ["足し算", sumRuleExamples[0], "7 の札", "R に 9"],
+    ] as const)(
+      "%s のできる形は、触る前も手がかりの手を打った後もクリアの演出と音を出さないこと",
+      (_, example, card, letter) => {
+        renderExample(example);
+        pressCard(card);
+        fireEvent.click(getLetter(letter));
+
+        expect([
+          animate.mock.calls.length,
+          vi.mocked(playLayeredSound).mock.calls.length,
+        ]).toEqual([0, 0]);
+      },
+    );
+  });
+
+  describe("音", () => {
+    test("× を付けると付ける音を、外すと外す音を鳴らすこと", () => {
+      renderExample(crossOperationExample);
+      fireEvent.click(getLetter("U"));
+      pressCard("5 の札");
+      pressCard("5 の札（×）");
+
+      expect(listPlayedSounds()).toEqual(["crossed", "uncrossed"]);
+    });
+
+    test("札を列へ戻すと戻す音を鳴らすこと", () => {
+      renderExample(returnOperationExample);
+      fireEvent.click(getLetter("D に 8"));
+      pressCard("8 の札の場所");
+
+      expect(listPlayedSounds()).toEqual(["returned"]);
+    });
   });
 
   describe("元に戻すボタン", () => {
@@ -440,8 +652,12 @@ describe("TouchableExample", () => {
       戻す: returnOperationExample,
       "× を付ける": crossOperationExample,
       "× を出す": crossShownOperationExample,
+      "× の札を入れる": crossedCardPlaceOperationExample,
+      線: miscalculationLineRuleExample,
       先頭の0: leadingZeroRuleExamples[0],
+      先頭の0のできない形: leadingZeroRuleExamples[1],
       足し算: sumRuleExamples[0],
+      足し算のできない形: sumRuleExamples[1],
     } as const satisfies Record<string, FukumenzanHowToPlayExample>;
 
     test.each(Object.entries(examples))(
@@ -449,7 +665,9 @@ describe("TouchableExample", () => {
       (_, example) => {
         renderExample(example);
         const before = isResetShown();
-        fireEvent.click(getCardRow().getAllByRole("button")[0]!);
+        fireEvent.click(
+          getCardRow().getAllByRole("button", { name: /の札$/ })[0]!,
+        );
         fireEvent.click(
           getEquation().getAllByRole("button", { name: /^[A-Z]/ })[0]!,
         );
